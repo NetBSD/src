@@ -1,4 +1,4 @@
-/* 	$NetBSD: proto.h,v 1.3 1994/12/02 00:43:39 phil Exp $  */
+/* 	$NetBSD: proto.h,v 1.4 1996/06/07 19:42:58 phil Exp $  */
 
 /* proto.h: Prototype function definitions for "external" functions. */
 
@@ -120,8 +120,8 @@ _PROTOTYPE(long num2long, (bc_num num));
 _PROTOTYPE(int bc_compare, (bc_num n1, bc_num n2));
 _PROTOTYPE(char is_zero, (bc_num num));
 _PROTOTYPE(char is_neg, (bc_num num));
-_PROTOTYPE(void bc_add, (bc_num n1, bc_num n2, bc_num *result));
-_PROTOTYPE(void bc_sub, (bc_num n1, bc_num n2, bc_num *result));
+_PROTOTYPE(void bc_add, (bc_num n1, bc_num n2, bc_num *result, int scale_min));
+_PROTOTYPE(void bc_sub, (bc_num n1, bc_num n2, bc_num *result, int scale_min));
 _PROTOTYPE(void bc_multiply, (bc_num n1, bc_num n2, bc_num *prod, int scale));
 _PROTOTYPE(int bc_divide, (bc_num n1, bc_num n2, bc_num *quot, int scale));
 _PROTOTYPE(int bc_modulo, (bc_num num1, bc_num num2, bc_num *result, int scale));

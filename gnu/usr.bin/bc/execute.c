@@ -1,4 +1,4 @@
-/* 	$NetBSD: execute.c,v 1.4 1995/10/10 00:22:54 phil Exp $  */
+/* 	$NetBSD: execute.c,v 1.5 1996/06/07 19:42:49 phil Exp $  */
 
 /* execute.c - run a bc program. */
 
@@ -321,7 +321,7 @@ execute ()
 	break;
 
       case 'n' : /* Negate top of stack. */
-	bc_sub (_zero_, ex_stack->s_num, &ex_stack->s_num);
+	bc_sub (_zero_, ex_stack->s_num, &ex_stack->s_num, 0);
 	break;
 
       case 'p' : /* Pop the execution stack. */
@@ -384,7 +384,7 @@ execute ()
       case '+' : /* add */
 	if (check_stack(2))
 	  {
-	    bc_add (ex_stack->s_next->s_num, ex_stack->s_num, &temp_num);
+	    bc_add (ex_stack->s_next->s_num, ex_stack->s_num, &temp_num, 0);
 	    pop();
 	    pop();
 	    push_num (temp_num);
@@ -395,7 +395,7 @@ execute ()
       case '-' : /* subtract */
 	if (check_stack(2))
 	  {
-	    bc_sub (ex_stack->s_next->s_num, ex_stack->s_num, &temp_num);
+	    bc_sub (ex_stack->s_next->s_num, ex_stack->s_num, &temp_num, 0);
 	    pop();
 	    pop();
 	    push_num (temp_num);
@@ -649,7 +649,7 @@ push_constant (in_char, conv_base)
       if (in_ch < 16 && in_ch >= conv_base) in_ch = conv_base-1;
       bc_multiply (build, mult, &result, 0);
       int2num (&temp, (int) in_ch);
-      bc_add (result, temp, &build);
+      bc_add (result, temp, &build, 0);
       in_ch = in_char();
     }
   if (in_ch == '.')
@@ -665,19 +665,19 @@ push_constant (in_char, conv_base)
 	{
 	  bc_multiply (result, mult, &result, 0);
 	  int2num (&temp, (int) in_ch);
-	  bc_add (result, temp, &result);
+	  bc_add (result, temp, &result, 0);
 	  bc_multiply (divisor, mult, &divisor, 0);
 	  digits++;
 	  in_ch = in_char();
 	  if (in_ch < 16 && in_ch >= conv_base) in_ch = conv_base-1;
 	}
       bc_divide (result, divisor, &result, digits);
-      bc_add (build, result, &build);
+      bc_add (build, result, &build, 0);
     }
   
   /* Final work.  */
   if (negative)
-    bc_sub (_zero_, build, &build);
+    bc_sub (_zero_, build, &build, 0);
 
   push_num (build);
   free_num (&temp);

@@ -1,4 +1,4 @@
-/* 	$NetBSD: storage.c,v 1.3 1994/12/02 00:43:43 phil Exp $ */
+/* 	$NetBSD: storage.c,v 1.4 1996/06/07 19:43:02 phil Exp $ */
 
 /* storage.c:  Code and data storage manipulations.  This includes labels. */
 
@@ -679,7 +679,7 @@ decr_var (var_name)
     default: /* It is a simple variable. */
       var_ptr = get_var (var_name);
       if (var_ptr != NULL)
-	bc_sub (var_ptr->v_value,_one_,&var_ptr->v_value);
+	bc_sub (var_ptr->v_value,_one_,&var_ptr->v_value, 0);
     }
 }
 
@@ -706,7 +706,7 @@ decr_array (var_name)
       if (num_ptr != NULL)
 	{
 	  pop ();
-	  bc_sub (*num_ptr, _one_, num_ptr);
+	  bc_sub (*num_ptr, _one_, num_ptr, 0);
 	}
     }
 }
@@ -748,7 +748,7 @@ incr_var (var_name)
     default:  /* It is a simple variable. */
       var_ptr = get_var (var_name);
       if (var_ptr != NULL)
-	bc_add (var_ptr->v_value, _one_, &var_ptr->v_value);
+	bc_add (var_ptr->v_value, _one_, &var_ptr->v_value, 0);
 
     }
 }
@@ -775,7 +775,7 @@ incr_array (var_name)
       if (num_ptr != NULL)
 	{
 	  pop ();
-	  bc_add (*num_ptr, _one_, num_ptr);
+	  bc_add (*num_ptr, _one_, num_ptr, 0);
 	}
     }
 }
