@@ -1,4 +1,4 @@
-/*	$NetBSD: asic.h,v 1.8 1996/05/19 01:42:54 jonathan Exp $	*/
+/*	$NetBSD: asic.h,v 1.9 1998/06/22 11:57:47 jonathan Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University
@@ -218,9 +218,9 @@
 #define	IOASIC_INTR_R2_HALF_PAGE	0x02000000	/* rz */
 #define	IOASIC_INTR_R2_DMA_OVRUN	0x01000000	/* rz */
 #define	IOASIC_INTR_FLOPPY_DMA_E	0x00800000	/* rz */
-#define	IOASIC_INTR_ISDN_PTR_LOAD	0x00400000	/* rz */
-#define	IOASIC_INTR_ISDN_OVRUN		0x00200000	/* rz */
-#define	IOASIC_INTR_ISDN_READ_E		0x00100000	/* rz */
+#define	IOASIC_INTR_ISDN_TXLOAD		0x00400000	/* rz */
+#define	IOASIC_INTR_ISDN_RXLOAD		0x00200000	/* rz */
+#define	IOASIC_INTR_ISDN_OVRUN		0x00100000	/* rz */
 #define	IOASIC_INTR_SCSI_PTR_LOAD	0x00080000	/* rz */
 #define	IOASIC_INTR_SCSI_OVRUN		0x00040000	/* rz */
 #define	IOASIC_INTR_SCSI_READ_E		0x00020000	/* rz */
