@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.54 2001/09/15 20:36:47 chs Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.55 2001/11/01 03:49:30 chs Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -313,8 +313,8 @@ swaplist_insert(sdp, newspp, priority)
 	/*
 	 * find entry at or after which to insert the new device.
 	 */
-	for (pspp = NULL, spp = LIST_FIRST(&swap_priority); spp != NULL;
-	     spp = LIST_NEXT(spp, spi_swappri)) {
+	pspp = NULL;
+	LIST_FOREACH(spp, &swap_priority, spi_swappri) {
 		if (priority <= spp->spi_priority)
 			break;
 		pspp = spp;
@@ -367,11 +367,9 @@ swaplist_find(vp, remove)
 	/*
 	 * search the lists for the requested vp
 	 */
-	for (spp = LIST_FIRST(&swap_priority); spp != NULL;
-	     spp = LIST_NEXT(spp, spi_swappri)) {
-		for (sdp = CIRCLEQ_FIRST(&spp->spi_swapdev);
-		     sdp != (void *)&spp->spi_swapdev;
-		     sdp = CIRCLEQ_NEXT(sdp, swd_next))
+
+	LIST_FOREACH(spp, &swap_priority, spi_swappri) {
+		CIRCLEQ_FOREACH(sdp, &spp->spi_swapdev, swd_next) {
 			if (sdp->swd_vp == vp) {
 				if (remove) {
 					CIRCLEQ_REMOVE(&spp->spi_swapdev,
@@ -380,6 +378,7 @@ swaplist_find(vp, remove)
 				}
 				return(sdp);
 			}
+		}
 	}
 	return (NULL);
 }
@@ -420,11 +419,8 @@ swapdrum_getsdp(pgno)
 	struct swapdev *sdp;
 	struct swappri *spp;
 
-	for (spp = LIST_FIRST(&swap_priority); spp != NULL;
-	     spp = LIST_NEXT(spp, spi_swappri))
-		for (sdp = CIRCLEQ_FIRST(&spp->spi_swapdev);
-		     sdp != (void *)&spp->spi_swapdev;
-		     sdp = CIRCLEQ_NEXT(sdp, swd_next)) {
+	LIST_FOREACH(spp, &swap_priority, spi_swappri) {
+		CIRCLEQ_FOREACH(sdp, &spp->spi_swapdev, swd_next) {
 			if (sdp->swd_flags & SWF_FAKE)
 				continue;
 			if (pgno >= sdp->swd_drumoffset &&
@@ -432,6 +428,7 @@ swapdrum_getsdp(pgno)
 				return sdp;
 			}
 		}
+	}
 	return NULL;
 }
 
@@ -499,8 +496,7 @@ sys_swapctl(p, v, retval)
 		sep = (struct swapent *)SCARG(uap, arg);
 		count = 0;
 
-		for (spp = LIST_FIRST(&swap_priority); spp != NULL;
-		    spp = LIST_NEXT(spp, spi_swappri)) {
+		LIST_FOREACH(spp, &swap_priority, spi_swappri) {
 			for (sdp = CIRCLEQ_FIRST(&spp->spi_swapdev);
 			     sdp != (void *)&spp->spi_swapdev && misc-- > 0;
 			     sdp = CIRCLEQ_NEXT(sdp, swd_next)) {
@@ -546,19 +542,18 @@ sys_swapctl(p, v, retval)
 		error = 0;
 		goto out;
 	}
-
-	/*
-	 * all other requests require superuser privs.   verify.
-	 */
-	if ((error = suser(p->p_ucred, &p->p_acflag)))
-		goto out;
-
 	if (SCARG(uap, cmd) == SWAP_GETDUMPDEV) {
 		dev_t	*devp = (dev_t *)SCARG(uap, arg);
 
 		error = copyout(&dumpdev, devp, sizeof(dumpdev));
 		goto out;
 	}
+
+	/*
+	 * all other requests require superuser privs.   verify.
+	 */
+	if ((error = suser(p->p_ucred, &p->p_acflag)))
+		goto out;
 
 	/*
 	 * at this point we expect a path name in arg.   we will
@@ -1439,11 +1434,8 @@ uvm_swap_alloc(nslots, lessok)
 	simple_lock(&uvm.swap_data_lock);
 
 ReTry:	/* XXXMRG */
-	for (spp = LIST_FIRST(&swap_priority); spp != NULL;
-	     spp = LIST_NEXT(spp, spi_swappri)) {
-		for (sdp = CIRCLEQ_FIRST(&spp->spi_swapdev);
-		     sdp != (void *)&spp->spi_swapdev;
-		     sdp = CIRCLEQ_NEXT(sdp,swd_next)) {
+	LIST_FOREACH(spp, &swap_priority, spi_swappri) {
+		CIRCLEQ_FOREACH(sdp, &spp->spi_swapdev, swd_next) {
 			/* if it's not enabled, then we can't swap from it */
 			if ((sdp->swd_flags & SWF_ENABLE) == 0)
 				continue;
@@ -1467,7 +1459,7 @@ ReTry:	/* XXXMRG */
 			UVMHIST_LOG(pdhist,
 			    "success!  returning %d slots starting at %d",
 			    *nslots, result + sdp->swd_drumoffset, 0, 0);
-			return(result + sdp->swd_drumoffset);
+			return (result + sdp->swd_drumoffset);
 		}
 	}
 
@@ -1479,7 +1471,7 @@ ReTry:	/* XXXMRG */
 	/* XXXMRG: END HACK */
 
 	simple_unlock(&uvm.swap_data_lock);
-	return 0;		/* failed */
+	return 0;
 }
 
 /*
