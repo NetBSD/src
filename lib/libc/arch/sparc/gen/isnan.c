@@ -1,4 +1,4 @@
-/*	$NetBSD: isnan.c,v 1.4 1998/10/13 14:43:38 kleink Exp $	*/
+/*	$NetBSD: isnan.c,v 1.5 1999/08/29 18:08:31 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,22 +36,22 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Header: isnan.c,v 1.1 91/07/08 19:03:34 torek Exp
+ * from: Header: isinf.c,v 1.1 91/07/08 19:03:34 torek Exp
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char sccsid[] = "@(#)isnan.c	8.1 (Berkeley) 6/4/93";
+static char sccsid[] = "@(#)isinf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: isnan.c,v 1.4 1998/10/13 14:43:38 kleink Exp $");
+__RCSID("$NetBSD: isnan.c,v 1.5 1999/08/29 18:08:31 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
-#include <math.h>
 #include <sys/types.h>
 #include <machine/ieee.h>
+#include <math.h>
 
 #ifdef __weak_alias
 __weak_alias(isnan,_isnan);
@@ -61,7 +61,7 @@ int
 isnan(d)
 	double d;
 {
-	register struct ieee_double *p = (struct ieee_double *)&d;
+	register struct ieee_double *p = (struct ieee_double *)(void *)&d;
 
 	return (p->dbl_exp == DBL_EXP_INFNAN &&
 	    (p->dbl_frach != 0 || p->dbl_fracl != 0));
