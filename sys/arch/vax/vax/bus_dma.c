@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.4 1999/08/03 19:45:47 ragge Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.5 1999/11/13 00:32:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -474,8 +474,8 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			if (vax_boardtype == VAX_BTYP_43)
 				addr |= KA43_DIAGMEM;
 			pmap_enter(pmap_kernel(), va, addr,
-			    VM_PROT_READ | VM_PROT_WRITE, TRUE,
-			    VM_PROT_READ | VM_PROT_WRITE);
+			    VM_PROT_READ | VM_PROT_WRITE,
+			    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
 		}
 	}
 	return (0);

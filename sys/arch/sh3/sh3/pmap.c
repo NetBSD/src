@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.2 1999/09/14 10:22:36 tsubai Exp $	*/
+/*	$NetBSD: pmap.c,v 1.3 1999/11/13 00:30:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1835,7 +1835,7 @@ pmap_map(va, spa, epa, prot)
 	vm_prot_t prot;
 {
 	while (spa < epa) {
-		pmap_enter(pmap_kernel(), va, spa, prot, FALSE, 0);
+		pmap_enter(pmap_kernel(), va, spa, prot, 0);
 		va += NBPG;
 		spa += NBPG;
 	}
@@ -3085,20 +3085,20 @@ pmap_transfer_ptes(srcpmap, srcl, dstpmap, dstl, toxfer, move)
  * => we set pmap => pv_head locking
  */
 
-void
-pmap_enter(pmap, va, pa, prot, wired, access_type)
+int
+pmap_enter(pmap, va, pa, prot, flags)
 	struct pmap *pmap;
 	vaddr_t va;
 	paddr_t pa;
 	vm_prot_t prot;
-	boolean_t wired;
-	vm_prot_t access_type;
+	int flags;
 {
 	pt_entry_t *ptes, opte, npte;
 	struct vm_page *ptp;
 	struct pv_head *pvh;
 	struct pv_entry *pve;
 	int bank, off;
+	boolean_t wired = (flags & PMAP_WIRED) != 0;
 
 #ifdef DIAGNOSTIC
 	/* sanity check: totally out of range? */
@@ -3240,7 +3240,7 @@ enter_now:
 		npte |= pmap_pg_g;
 		npte |= PG_M;		/* XXX */
 	}
-	if (access_type & VM_PROT_WRITE)
+	if (flags & VM_PROT_WRITE)
 		npte |= PG_M;
 
 	ptes[sh3_btop(va)] = npte;		/* zap! */
@@ -3250,6 +3250,8 @@ enter_now:
 
 	pmap_unmap_ptes(pmap);
 	PMAP_MAP_TO_HEAD_UNLOCK();
+
+	return (KERN_SUCCESS);
 }
 
 /*

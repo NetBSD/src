@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.50 1999/09/19 19:05:44 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.51 1999/11/13 00:32:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -1671,14 +1671,13 @@ pmap_stroll(pmap, va, a_tbl, b_tbl, c_tbl, pte, a_idx, b_idx, pte_idx)
  * would save my hair!!)
  * This function ought to be easier to read.
  */
-void
-pmap_enter(pmap, va, pa, prot, wired, access_type)
+int
+pmap_enter(pmap, va, pa, prot, flags)
 	pmap_t	pmap;
 	vm_offset_t va;
 	vm_offset_t pa;
 	vm_prot_t prot;
-	boolean_t wired;
-	vm_prot_t access_type;
+	int flags;
 {
 	boolean_t insert, managed; /* Marks the need for PV insertion.*/
 	u_short nidx;            /* PV list index                     */
@@ -1692,13 +1691,14 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 	mmu_short_dte_t *b_dte;  /* B: short descriptor table         */
 	mmu_short_pte_t *c_pte;  /* C: short page descriptor table    */
 	pv_t      *pv;           /* pv list head                      */
+	boolean_t wired = (flags & PMAP_WIRED) != 0;
 	enum {NONE, NEWA, NEWB, NEWC} llevel; /* used at end   */
 
 	if (pmap == NULL)
-		return;
+		return (KERN_SUCCESS);
 	if (pmap == pmap_kernel()) {
 		pmap_enter_kernel(va, pa, prot);
-		return;
+		return (KERN_SUCCESS);
 	}
 
 	flags  = (pa & ~MMU_PAGE_MASK);
@@ -2033,6 +2033,8 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 		default:
 			break;
 	}
+
+	return (KERN_SUCCESS);
 }
 
 /* pmap_enter_kernel			INTERNAL
@@ -2135,7 +2137,7 @@ pmap_kenter_pa(va, pa, prot)
 	paddr_t pa;
 	vm_prot_t prot;
 {
-	pmap_enter(pmap_kernel(), va, pa, prot, TRUE, 0);
+	pmap_enter(pmap_kernel(), va, pa, prot, PMAP_WIRED);
 }
 
 void
@@ -2148,7 +2150,7 @@ pmap_kenter_pgs(va, pgs, npgs)
 
 	for (i = 0; i < npgs; i++, va += PAGE_SIZE) {
 		pmap_enter(pmap_kernel(), va, VM_PAGE_TO_PHYS(pgs[i]),
-				VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
+				VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
 	}
 }
 
