@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.10 1998/08/31 00:03:02 thorpej Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.11 1998/10/11 23:18:20 chuck Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -221,7 +221,7 @@ uvm_pagermapout(kva, npages)
 	 */
 
 	vm_map_lock(pager_map);
-	(void) uvm_unmap_remove(pager_map, kva, kva + size, 0, &entries);
+	(void) uvm_unmap_remove(pager_map, kva, kva + size, &entries);
 	simple_lock(&pager_map_wanted_lock);
 	if (pager_map_wanted) {
 		pager_map_wanted = FALSE;
@@ -390,7 +390,7 @@ uvm_shareprot(entry, prot)
 	vaddr_t start, stop;
 	UVMHIST_FUNC("uvm_shareprot"); UVMHIST_CALLED(maphist);
 
-	if (UVM_ET_ISMAP(entry)) 
+	if (UVM_ET_ISSUBMAP(entry)) 
 		panic("uvm_shareprot: non-object attached");
 
 	start = entry->offset;

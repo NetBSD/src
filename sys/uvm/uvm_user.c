@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_user.c,v 1.5 1998/08/13 02:11:03 eeh Exp $	*/
+/*	$NetBSD: uvm_user.c,v 1.6 1998/10/11 23:18:21 chuck Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -67,6 +67,6 @@ uvm_deallocate(map, start, size)
 	if (size == (vaddr_t) 0)
 		return (KERN_SUCCESS);
 
-	return(uvm_unmap(map, trunc_page(start), round_page(start+size), 0));
+	return(uvm_unmap(map, trunc_page(start), round_page(start+size)));
 
 }

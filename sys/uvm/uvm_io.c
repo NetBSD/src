@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_io.c,v 1.6 1998/08/13 02:11:00 eeh Exp $	*/
+/*	$NetBSD: uvm_io.c,v 1.7 1998/10/11 23:18:20 chuck Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -147,7 +147,7 @@ uvm_io(map, uio)
 		 */
 
 		vm_map_lock(kernel_map);
-		(void)uvm_unmap_remove(kernel_map, kva, kva+chunksz, 1,
+		(void)uvm_unmap_remove(kernel_map, kva, kva+chunksz,
 		    &dead_entries);
 		vm_map_unlock(kernel_map);
 
