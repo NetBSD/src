@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.43 2001/12/13 21:41:58 rafal Exp $	 */
+/*	$NetBSD: reloc.c,v 1.44 2001/12/13 22:34:51 thorpej Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -778,13 +778,7 @@ _rtld_relocate_objects(first, bind_now, dodebug)
 			obj->pltgot[2] = (Elf_Addr) & _rtld_bind_start;
 #endif
 #if defined(__alpha__)
-			/*
-			 * This function will be called to perform the
-			 * relocation.
-			 */
-			obj->pltgot[2] = (Elf_Addr) & _rtld_bind_start;
-			/* Identify this shared object */
-			obj->pltgot[3] = (Elf_Addr) obj;
+			_rtld_setup_alpha_pltgot(obj);
 #endif
 #if defined(__mips__)
 			_rtld_relocate_mips_got(obj);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.30 2001/04/25 12:24:50 kleink Exp $	 */
+/*	$NetBSD: rtld.h,v 1.31 2001/12/13 22:34:52 thorpej Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -290,6 +290,14 @@ const Elf_Sym *_rtld_symlook_list(const char *, unsigned long,
 Obj_Entry *_rtld_map_object __P((const char *, int, const struct stat *));
 void _rtld_obj_free(Obj_Entry *);
 Obj_Entry *_rtld_obj_new(void);
+
+#if defined(__alpha__)
+/* alpha_reloc.c */
+void	_rtld_setup_alpha_pltgot __P((const Obj_Entry *));
+
+/* rtld_start.S */
+void	_rtld_bind_start_old __P((void));
+#endif
 
 #if defined(__mips__)
 /* mips_reloc.c */
