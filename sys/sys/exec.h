@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.62 1997/01/22 07:09:13 mikel Exp $	*/
+/*	$NetBSD: exec.h,v 1.63 1997/05/13 21:37:06 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -61,10 +61,18 @@ struct ps_strings {
 };
 
 /*
- * Address of ps_strings structure (in user space).
+ * Address of ps_strings structure.  In user space, we get this
+ * from a variable set in crt0 (because the stack address may not
+ * be constant across all machines where the program might run).
+ * In the kernel, this is just a constant.
  */
+#ifdef	_KERNEL
 #define	PS_STRINGS \
 	((struct ps_strings *)(USRSTACK - sizeof(struct ps_strings)))
+#else	/* _KERNEL */
+extern struct ps_strings *__ps_strings;
+#define	PS_STRINGS __ps_strings
+#endif	/* _KERNEL */
 
 /*
  * Below the PS_STRINGS and sigtramp, we may require a gap on the stack
