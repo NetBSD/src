@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.1 1995/03/24 17:27:37 gwr Exp $	*/
+/*	$NetBSD: fpu.c,v 1.2 1995/06/27 14:40:14 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -53,7 +53,7 @@
 #include "interreg.h"
 
 extern int fpu_type;
-extern int *nofault;
+extern long *nofault;
 
 int fpu_match __P((struct device *, void *vcf, void *args));
 void fpu_attach __P((struct device *, struct device *, void *));
@@ -122,14 +122,14 @@ int fpu_probe()
 	jmp_buf	faultbuf;
 	int null_fpframe[2];
 
-	nofault = (int *) &faultbuf;
+	nofault = (long *) &faultbuf;
 	if (setjmp(nofault)) {
-		nofault = (int *) 0;
+		nofault = NULL;
 		return(0);
 	}
 	null_fpframe[0] = 0;
 	null_fpframe[1] = 0;
 	m68881_restore(null_fpframe);
-	nofault = (int *) 0;
+	nofault = NULL;
 	return(1);
 }
