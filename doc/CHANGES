@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.115 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.116 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -317,3 +317,5 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		LFS, in addition to allowing it to use much more memory for
 		its buffers.  [perseant 20030308]
 	amd: update to 6.1b2 [christos 20030309]
+	evbppc: Add support for the NCD Explora451 ThinClient.
+		[hannken 20030311]
