@@ -1,5 +1,5 @@
-#	from: @(#)bsd.man.mk	5.2 (Berkeley) 5/11/90
-#	$Id: bsd.man.mk,v 1.13 1994/02/09 23:50:37 cgd Exp $
+#	$NetBSD: bsd.man.mk,v 1.14 1994/06/30 05:31:15 cgd Exp $
+#	@(#)bsd.man.mk	5.2 (Berkeley) 5/11/90
 
 .if !target(.MAIN)
 .if exists(${.CURDIR}/../Makefile.inc)

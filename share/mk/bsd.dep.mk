@@ -1,4 +1,4 @@
-#	$Id: bsd.dep.mk,v 1.8 1994/06/30 05:21:28 cgd Exp $
+#	$NetBSD: bsd.dep.mk,v 1.9 1994/06/30 05:31:10 cgd Exp $
 
 # some of the rules involve .h sources, so remove them from mkdep line
 .if !target(depend)
