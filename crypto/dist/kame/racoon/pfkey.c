@@ -1,4 +1,4 @@
-/*	$KAME: pfkey.c,v 1.138 2003/06/30 11:01:18 sakane Exp $	*/
+/*	$KAME: pfkey.c,v 1.142 2003/12/16 01:13:30 suz Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -35,10 +35,12 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/queue.h>
+#include <sys/sysctl.h>
 
 #include <net/route.h>
 #include <net/pfkeyv2.h>
 #include <netkey/key_debug.h>
+#include <netkey/key_var.h>
 
 #include <netinet/in.h>
 #ifdef IPV6_INRIA_VERSION
@@ -254,6 +256,66 @@ vchar_t *
 pfkey_dump_sadb(satype)
 	int satype;
 {
+#ifdef KEYCTL_DUMPSA
+	vchar_t *buf = NULL;
+	int mib[] = { CTL_NET, PF_KEY, KEYCTL_DUMPSA, 0 };
+	size_t len;
+	struct sadb_msg *msg;
+	int error;
+
+	mib[3] = satype;
+	if (sysctl(mib, 4, NULL, &len, NULL, 0) < 0) {
+		error = errno;
+		plog(LLV_ERROR, LOCATION, NULL,
+			"libipsec failed sysctl: %s\n", strerror(errno));
+		goto goterror;
+	}
+
+	buf = vmalloc(len);
+	if (buf == NULL) {
+		plog(LLV_ERROR, LOCATION, NULL,
+			"failed to reallocate buffer to dump.\n");
+		goto fail;
+	}
+
+	if (sysctl(mib, 4, buf->v, &len, NULL, 0) < 0) {
+		error = errno;
+		plog(LLV_ERROR, LOCATION, NULL,
+			"libipsec failed sysctl: %s\n", strerror(errno));
+		goto goterror;
+	}
+
+	return buf;
+
+fail:
+	if (buf)
+		vfree(buf);
+	return (NULL);
+
+goterror:
+	buf = vrealloc(buf, sizeof(*msg));
+	if (buf == NULL) {
+		plog(LLV_ERROR, LOCATION, NULL,
+			"failed to reallocate buffer for error msg.\n");
+		goto fail;
+	}
+
+	/*
+	 * mimic an error from keysock
+	 */
+	msg = (struct sadb_msg *)buf->v;
+	memset(msg, 0, sizeof(*msg));
+	msg->sadb_msg_version = PF_KEY_V2;
+	msg->sadb_msg_type = SADB_DUMP;
+	msg->sadb_msg_errno = error;
+	msg->sadb_msg_satype = satype;
+	msg->sadb_msg_len = PFKEY_UNIT64(sizeof(struct sadb_msg));
+	msg->sadb_msg_reserved = 0;
+	msg->sadb_msg_seq = 0;
+	msg->sadb_msg_pid = getpid();
+
+	return buf;
+#else
 	int s = -1;
 	vchar_t *buf = NULL;
 	pid_t pid = getpid();
@@ -314,6 +376,7 @@ done:
 	if (s >= 0)
 		close(s);
 	return buf;
+#endif
 }
 
 /*
@@ -1423,7 +1486,7 @@ pk_recvexpire(mhp)
 		/*
 		 * If the status is not equal to PHASE2ST_ESTABLISHED,
 		 * racoon ignores this expire message.  There are two reason.
-		 * One is that the phase 2 probably starts becuase there is
+		 * One is that the phase 2 probably starts because there is
 		 * a potential that racoon receives the acquire message
 		 * without receiving a expire message.  Another is that racoon
 		 * may receive the multiple expire messages from the kernel.
@@ -1529,17 +1592,17 @@ pk_recvacquire(mhp)
 	 * If there is a phase 2 handler against the policy identifier in
 	 * the acquire message, and if
 	 *    1. its state is less than PHASE2ST_ESTABLISHED, then racoon
-	 *       should ignore such a acquire message becuase the phase 2
+	 *       should ignore such a acquire message because the phase 2
 	 *       is just negotiating.
 	 *    2. its state is equal to PHASE2ST_ESTABLISHED, then racoon
-	 *       has to prcesss such a acquire message becuase racoon may
+	 *       has to prcesss such a acquire message because racoon may
 	 *       lost the expire message.
 	 */
 	iph2[0] = getph2byspid(xpl->sadb_x_policy_id);
 	if (iph2[0] != NULL) {
 		if (iph2[0]->status < PHASE2ST_ESTABLISHED) {
 			plog(LLV_DEBUG, LOCATION, NULL,
-				"ignore the acquire becuase ph2 found\n");
+				"ignore the acquire because ph2 found\n");
 			return -1;
 		}
 		if (iph2[0]->status == PHASE2ST_EXPIRED)
@@ -2209,6 +2272,12 @@ pk_recvspddump(mhp)
 	saddr = (struct sadb_address *)mhp[SADB_EXT_ADDRESS_SRC];
 	daddr = (struct sadb_address *)mhp[SADB_EXT_ADDRESS_DST];
 	xpl = (struct sadb_x_policy *)mhp[SADB_X_EXT_POLICY];
+
+	if (saddr == NULL || daddr == NULL || xpl == NULL) {
+		plog(LLV_ERROR, LOCATION, NULL,
+			"inappropriate sadb spddump message passed.\n");
+		return -1;
+	}
 
 	KEY_SETSECSPIDX(xpl->sadb_x_policy_dir,
 			saddr + 1,

@@ -1,4 +1,4 @@
-/*	$KAME: strnames.c,v 1.24 2003/08/19 09:10:24 itojun Exp $	*/
+/*	$KAME: strnames.c,v 1.25 2003/11/13 10:53:26 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -492,7 +492,7 @@ s_ipsecdoi_attr_v(type, val)
 	int type, val;
 {
 	int i;
-	for (i = 0; i < ARRAYLEN(name_ipsecdoi_proto); i++)
+	for (i = 0; i < ARRAYLEN(name_attr_ipsec); i++)
 		if (name_attr_ipsec[i].key == type
 		 && name_attr_ipsec[i].f)
 			return (name_attr_ipsec[i].f)(val);

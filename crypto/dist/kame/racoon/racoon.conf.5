@@ -1,4 +1,4 @@
-.\"	$KAME: racoon.conf.5,v 1.106 2003/07/05 00:02:56 itojun Exp $
+.\"	$KAME: racoon.conf.5,v 1.109 2003/12/17 01:43:57 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -464,8 +464,10 @@ define the group used for the Diffie-Hellman exponentiations.
 This directive must be defined.
 .Ar group
 is one of following:
-.Ic modp768 , modp1024 , modp1536 .
-Or you can define 1, 2, or 5 as the DH group number.
+.Ic modp768 , modp1024 , modp1536 ,
+.Ic modp2048 , modp3072 , modp4096 ,
+.Ic modp6144 , modp8192 .
+Or you can define 1, 2, 5, 14, 15, 16, 17 or 18 as the DH group number.
 When you want to use aggressive mode,
 you must define same DH group in each proposal.
 .It Ic lifetime time Ar number Ar timeunit ;
@@ -532,8 +534,10 @@ If you do not require PFS then you can omit this directive.
 Any proposal will be accepted if you do not specify one.
 .Ar group
 is one of following:
-.Ic modp768 , modp1024 , modp1536 .
-Or you can define 1, 2, or 5 as the DH group number.
+.Ic modp768 , modp1024 , modp1536 ,
+.Ic modp2048 , modp3072 , modp4096 ,
+.Ic modp6144 , modp8192 .
+Or you can define 1, 2, 5, 14, 15, 16, 17 or 18 as the DH group number.
 .\"
 .It Ic lifetime time Ar number Ar timeunit ;
 define the lifetime of amount of time
@@ -725,6 +729,9 @@ Yokogawa IPsec implementation.
 Some statements may not be handled by
 .Xr racoon 8
 yet.
+.Pp
+Diffie-Hellman computation can take a very long time,
+and may cause unwanted timeouts, specifically when large D-H group is used.
 .\"
 .Sh SECURITY CONSIDERATIONS
 The use of IKE phase 1 aggressive mode is not recommended,

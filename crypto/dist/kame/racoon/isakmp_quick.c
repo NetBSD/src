@@ -1,4 +1,4 @@
-/*	$KAME: isakmp_quick.c,v 1.94 2003/06/27 07:32:38 sakane Exp $	*/
+/*	$KAME: isakmp_quick.c,v 1.95 2003/10/21 07:18:03 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -114,7 +114,7 @@ quick_i1prep(iph2, msg)
 	iph2->msgid = isakmp_newmsgid2(iph2->ph1);
 	iph2->ivm = oakley_newiv2(iph2->ph1, iph2->msgid);
 	if (iph2->ivm == NULL)
-		return NULL;
+		return 0;
 
 	iph2->status = PHASE2ST_GETSPISENT;
 

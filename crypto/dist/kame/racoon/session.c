@@ -1,4 +1,4 @@
-/*	$KAME: session.c,v 1.31 2002/11/20 02:06:18 itojun Exp $	*/
+/*	$KAME: session.c,v 1.32 2003/09/24 02:01:17 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -326,6 +326,11 @@ check_flushsa()
 	int n;
 
 	buf = pfkey_dump_sadb(SADB_SATYPE_UNSPEC);
+	if (buf == NULL) {
+		plog(LLV_DEBUG, LOCATION, NULL,
+		    "pfkey_dump_sadb: returned nothing.\n");
+		return;
+	}
 
 	msg = (struct sadb_msg *)buf->v;
 	end = (struct sadb_msg *)(buf->v + buf->l);

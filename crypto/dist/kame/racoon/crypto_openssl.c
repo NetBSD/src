@@ -1,4 +1,4 @@
-/*	$KAME: crypto_openssl.c,v 1.81 2003/07/29 04:50:38 itojun Exp $	*/
+/*	$KAME: crypto_openssl.c,v 1.84 2004/04/07 01:12:46 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -661,7 +661,7 @@ eay_check_x509sign(source, sig, cert)
 {
 	X509 *x509;
 	u_char *bp;
-	vchar_t pubkey;
+	EVP_PKEY *evp;
 
 	bp = cert->v;
 
@@ -673,10 +673,16 @@ eay_check_x509sign(source, sig, cert)
 		return -1;
 	}
 
-	pubkey.v = x509->cert_info->key->public_key->data;
-	pubkey.l = x509->cert_info->key->public_key->length;
-	
-	return eay_rsa_verify(source, sig, &pubkey);
+	evp = X509_get_pubkey(x509);
+	if (!evp) {
+#ifndef EAYDEBUG
+		plog(LLV_ERROR, LOCATION, NULL,
+		    "X509_get_pubkey: %s\n", eay_strerror());
+#endif
+		return -1;
+	}
+
+	return eay_rsa_verify(source, sig, evp);
 }
 
 /*
@@ -877,24 +883,16 @@ eay_rsa_sign(src, privkey)
 }
 
 int
-eay_rsa_verify(src, sig, pubkey)
-	vchar_t *src, *sig, *pubkey;
-{
+eay_rsa_verify(src, sig, evp)
+	vchar_t *src, *sig;
 	EVP_PKEY *evp;
-	u_char *bp = pubkey->v;
+{
 	vchar_t *xbuf = NULL;
 	int pad = RSA_PKCS1_PADDING;
 	int len = 0;
 	int error;
 
-	evp = d2i_PUBKEY(NULL, &bp, pubkey->l);
-	if (evp == NULL)
-#ifndef EAYDEBUG
-		return NULL;
-#endif
-
 	len = RSA_size(evp->pkey.rsa);
-
 	xbuf = vmalloc(len);
 	if (xbuf == NULL) {
 #ifndef EAYDEBUG
@@ -978,6 +976,9 @@ eay_des_encrypt(data, key, iv)
 #else
 	des_key_schedule ks;
 #endif
+
+	if (data->l % 8)
+		return NULL;
 
 #ifdef USE_NEW_DES_API
 	if (DES_key_sched((void *)key->v, &ks) != 0)
@@ -1345,7 +1346,7 @@ eay_3des_weakkey(key)
 	vchar_t *key;
 {
 	if (key->l < 24)
-		return NULL;
+		return 0;
 
 #ifdef USE_NEW_DES_API
 	return (DES_is_weak_key((void *)key->v) ||

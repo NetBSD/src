@@ -1,4 +1,4 @@
-/*	$KAME: cftoken.l,v 1.72 2003/07/12 09:34:48 itojun Exp $	*/
+/*	$KAME: cftoken.l,v 1.73 2003/10/21 07:18:03 itojun Exp $	*/
 
 %{
 /*
@@ -298,7 +298,7 @@ off		{ YYD; yylval.num = FALSE; return(SWITCH); }
 			char *p = yytext;
 			YYD;
 			while (*++p != ']') ;
-			*p = NULL;
+			*p = 0;
 			yytext++;
 			yylval.num = atoi(yytext);
 			return(PORT);

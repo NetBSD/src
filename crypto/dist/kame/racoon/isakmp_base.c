@@ -1,4 +1,4 @@
-/*	$KAME: isakmp_base.c,v 1.48 2001/12/12 15:29:13 sakane Exp $	*/
+/*	$KAME: isakmp_base.c,v 1.50 2004/03/03 05:39:59 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -86,7 +86,7 @@ base_i1send(iph1, msg)
 	vchar_t *msg; /* must be null */
 {
 	struct isakmp_gen *gen;
-	caddr_t p;
+	struct isakmp_construct p;
 	int tlen;
 	int error = -1;
 
@@ -134,18 +134,18 @@ base_i1send(iph1, msg)
 	}
 
 	/* set isakmp header */
-	p = set_isakmp_header(iph1->sendbuf, iph1, ISAKMP_NPTYPE_SA);
-	if (p == NULL)
+	p = set_isakmp_header(iph1->sendbuf, iph1);
+	if (p.buff == NULL)
 		goto end;
 
 	/* set SA payload to propose */
-	p = set_isakmp_payload(p, iph1->sa, ISAKMP_NPTYPE_ID);
+	p = set_isakmp_payload_c(p, iph1->sa, ISAKMP_NPTYPE_SA);
 
 	/* create isakmp ID payload */
-	p = set_isakmp_payload(p, iph1->id, ISAKMP_NPTYPE_NONCE);
+	p = set_isakmp_payload_c(p, iph1->id, ISAKMP_NPTYPE_ID);
 
 	/* create isakmp NONCE payload */
-	p = set_isakmp_payload(p, iph1->nonce, ISAKMP_NPTYPE_NONE);
+	p = set_isakmp_payload_c(p, iph1->nonce, ISAKMP_NPTYPE_NONCE);
 
 #ifdef HAVE_PRINT_ISAKMP_C
 	isakmp_printpacket(iph1->sendbuf, iph1->local, iph1->remote, 0);
@@ -253,10 +253,7 @@ base_i2recv(iph1, msg)
 		/* XXX send information */
 		goto end;
 	}
-	if (iph1->sa_ret) {
-		vfree(iph1->sa_ret);
-		iph1->sa_ret = NULL;
-	}
+	VPTRINIT(iph1->sa_ret);
 
 	iph1->status = PHASE1ST_MSG2RECEIVED;
 
@@ -289,7 +286,7 @@ base_i2send(iph1, msg)
 	vchar_t *msg;
 {
 	struct isakmp_gen *gen;
-	caddr_t p;
+	struct isakmp_construct p;
 	vchar_t *vid = NULL;
 	int tlen;
 	int need_cert = 0;
@@ -342,20 +339,19 @@ base_i2send(iph1, msg)
 		}
 
 		/* set isakmp header */
-		p = set_isakmp_header(iph1->sendbuf, iph1, ISAKMP_NPTYPE_KE);
-		if (p == NULL)
+		p = set_isakmp_header(iph1->sendbuf, iph1);
+		if (p.buff == NULL)
 			goto end;
 
 		/* create isakmp KE payload */
-		p = set_isakmp_payload(p, iph1->dhpub, ISAKMP_NPTYPE_HASH);
+		p = set_isakmp_payload_c(p, iph1->dhpub, ISAKMP_NPTYPE_KE);
 
 		/* create isakmp HASH payload */
-		p = set_isakmp_payload(p, iph1->hash,
-			vid ? ISAKMP_NPTYPE_VID : ISAKMP_NPTYPE_NONE);
+		p = set_isakmp_payload_c(p, iph1->hash, ISAKMP_NPTYPE_HASH);
 
 		/* append vendor id, if needed */
 		if (vid)
-			p = set_isakmp_payload(p, vid, ISAKMP_NPTYPE_NONE);
+			p = set_isakmp_payload_c(p, vid, ISAKMP_NPTYPE_VID);
 		break;
 #ifdef HAVE_SIGNING_C
 	case OAKLEY_ATTR_AUTH_METHOD_DSSSIG:
@@ -384,20 +380,18 @@ base_i2send(iph1, msg)
 		}
 
 		/* set isakmp header */
-		p = set_isakmp_header(iph1->sendbuf, iph1, ISAKMP_NPTYPE_KE);
-		if (p == NULL)
+		p = set_isakmp_header(iph1->sendbuf, iph1);
+		if (p.buff == NULL)
 			goto end;
 
 		/* create isakmp KE payload */
-		p = set_isakmp_payload(p, iph1->dhpub, need_cert
-							? ISAKMP_NPTYPE_CERT
-							: ISAKMP_NPTYPE_SIG);
+		p = set_isakmp_payload_c(p, iph1->dhpub, ISAKMP_NPTYPE_KE);
 
 		/* add CERT payload if there */
 		if (need_cert)
-			p = set_isakmp_payload(p, iph1->cert->pl, ISAKMP_NPTYPE_SIG);
+			p = set_isakmp_payload_c(p, iph1->cert->pl, ISAKMP_NPTYPE_CERT);
 		/* add SIG payload */
-		p = set_isakmp_payload(p, iph1->sig, ISAKMP_NPTYPE_NONE);
+		p = set_isakmp_payload_c(p, iph1->sig, ISAKMP_NPTYPE_SIG);
 		break;
 #endif
 	case OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB:
@@ -705,7 +699,7 @@ base_r1send(iph1, msg)
 	vchar_t *msg;
 {
 	struct isakmp_gen *gen;
-	caddr_t p;
+	struct isakmp_construct p;
 	int tlen;
 	int error = -1;
 
@@ -742,18 +736,18 @@ base_r1send(iph1, msg)
 	}
 
 	/* set isakmp header */
-	p = set_isakmp_header(iph1->sendbuf, iph1, ISAKMP_NPTYPE_SA);
-	if (p == NULL)
+	p = set_isakmp_header(iph1->sendbuf, iph1);
+	if (p.buff == NULL)
 		goto end;
 
 	/* set SA payload to reply */
-	p = set_isakmp_payload(p, iph1->sa_ret, ISAKMP_NPTYPE_ID);
+	p = set_isakmp_payload_c(p, iph1->sa_ret, ISAKMP_NPTYPE_SA);
 
 	/* create isakmp ID payload */
-	p = set_isakmp_payload(p, iph1->id, ISAKMP_NPTYPE_NONCE);
+	p = set_isakmp_payload_c(p, iph1->id, ISAKMP_NPTYPE_ID);
 
 	/* create isakmp NONCE payload */
-	p = set_isakmp_payload(p, iph1->nonce, ISAKMP_NPTYPE_NONE);
+	p = set_isakmp_payload_c(p, iph1->nonce, ISAKMP_NPTYPE_NONCE);
 
 #ifdef HAVE_PRINT_ISAKMP_C
 	isakmp_printpacket(iph1->sendbuf, iph1->local, iph1->remote, 0);
@@ -776,10 +770,7 @@ base_r1send(iph1, msg)
 	error = 0;
 
 end:
-	if (iph1->sa_ret) {
-		vfree(iph1->sa_ret);
-		iph1->sa_ret = NULL;
-	}
+	VPTRINIT(iph1->sa_ret);
 
 	return error;
 }
@@ -911,7 +902,7 @@ base_r2send(iph1, msg)
 	vchar_t *msg;
 {
 	struct isakmp_gen *gen;
-	char *p;
+	struct isakmp_construct p;
 	vchar_t *vid = NULL;
 	int tlen;
 	int need_cert = 0;
@@ -964,20 +955,19 @@ base_r2send(iph1, msg)
 		}
 
 		/* set isakmp header */
-		p = set_isakmp_header(iph1->sendbuf, iph1, ISAKMP_NPTYPE_KE);
-		if (p == NULL)
+		p = set_isakmp_header(iph1->sendbuf, iph1);
+		if (p.buff == NULL)
 			goto end;
 
 		/* create isakmp KE payload */
-		p = set_isakmp_payload(p, iph1->dhpub, ISAKMP_NPTYPE_HASH);
+		p = set_isakmp_payload_c(p, iph1->dhpub, ISAKMP_NPTYPE_KE);
 
 		/* create isakmp HASH payload */
-		p = set_isakmp_payload(p, iph1->hash,
-			vid ? ISAKMP_NPTYPE_VID : ISAKMP_NPTYPE_NONE);
+		p = set_isakmp_payload_c(p, iph1->hash, ISAKMP_NPTYPE_HASH);
 
 		/* append vendor id, if needed */
 		if (vid)
-			p = set_isakmp_payload(p, vid, ISAKMP_NPTYPE_NONE);
+			p = set_isakmp_payload_c(p, vid, ISAKMP_NPTYPE_VID);
 		break;
 #ifdef HAVE_SIGNING_C
 	case OAKLEY_ATTR_AUTH_METHOD_DSSSIG:
@@ -1006,20 +996,18 @@ base_r2send(iph1, msg)
 		}
 
 		/* set isakmp header */
-		p = set_isakmp_header(iph1->sendbuf, iph1, ISAKMP_NPTYPE_KE);
-		if (p == NULL)
+		p = set_isakmp_header(iph1->sendbuf, iph1);
+		if (p.buff == NULL)
 			goto end;
 
 		/* create isakmp KE payload */
-		p = set_isakmp_payload(p, iph1->dhpub, need_cert
-							? ISAKMP_NPTYPE_CERT
-							: ISAKMP_NPTYPE_SIG);
+		p = set_isakmp_payload_c(p, iph1->dhpub, ISAKMP_NPTYPE_KE);
 
 		/* add CERT payload if there */
 		if (need_cert)
-			p = set_isakmp_payload(p, iph1->cert->pl, ISAKMP_NPTYPE_SIG);
+			p = set_isakmp_payload_c(p, iph1->cert->pl, ISAKMP_NPTYPE_CERT);
 		/* add SIG payload */
-		p = set_isakmp_payload(p, iph1->sig, ISAKMP_NPTYPE_NONE);
+		p = set_isakmp_payload_c(p, iph1->sig, ISAKMP_NPTYPE_SIG);
 		break;
 #endif
 	case OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB:

@@ -1,4 +1,4 @@
-/*	$KAME: algorithm.c,v 1.28 2003/07/12 08:44:44 itojun Exp $	*/
+/*	$KAME: algorithm.c,v 1.29 2003/10/21 07:18:03 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -295,7 +295,7 @@ alg_oakley_hashdef_hashlen(doi)
 
 	f = alg_oakley_hashdef(doi);
 	if (f == NULL || f->hashlen == NULL)
-		return NULL;
+		return 0;
 
 	return (f->hashlen)();
 }

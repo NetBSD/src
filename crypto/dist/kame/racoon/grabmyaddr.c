@@ -1,4 +1,4 @@
-/*	$KAME: grabmyaddr.c,v 1.35 2003/01/14 07:07:36 sakane Exp $	*/
+/*	$KAME: grabmyaddr.c,v 1.36 2003/10/23 09:53:58 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -156,6 +156,8 @@ grab_myaddrs()
 	old = lcconf->myaddrs;
 
 	for (ifap = ifa0; ifap; ifap = ifap->ifa_next) {
+		if (!ifap->ifa_addr)
+			continue;
 
 		if (ifap->ifa_addr->sa_family != AF_INET
 #ifdef INET6

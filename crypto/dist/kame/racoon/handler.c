@@ -1,4 +1,4 @@
-/*	$KAME: handler.c,v 1.57 2002/01/21 08:45:54 sakane Exp $	*/
+/*	$KAME: handler.c,v 1.58 2004/03/27 03:27:45 suz Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -62,7 +62,7 @@
 #include "gcmalloc.h"
 
 #ifdef HAVE_GSSAPI
-#include "gssapi.h"
+#include "auth_gssapi.h"
 #endif
 
 static LIST_HEAD(_ph1tree_, ph1handle) ph1tree;
