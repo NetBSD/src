@@ -33,11 +33,9 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: version.c,v 1.1.1.1 2000/06/16 18:33:03 thorpej Exp $");
+RCSID("$Id: version.c,v 1.2 2000/07/15 17:02:18 thorpej Exp $");
 
 /* this is just to get a version stamp in the library file */
 
-#define heimdal_version __heimdal_version
-#define heimdal_long_version __heimdal_long_version
+#define	__KRB5_VERSION
 #include "version.h"
-
