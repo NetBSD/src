@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.41 2003/11/14 19:00:03 scw Exp $	*/
+/*	$NetBSD: fault.c,v 1.42 2003/11/14 21:22:08 briggs Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.41 2003/11/14 19:00:03 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.42 2003/11/14 21:22:08 briggs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -390,8 +390,11 @@ data_abort_handler(trapframe_t *tf)
 #ifdef DEBUG
 	last_fault_code = fsr;
 #endif
-	if (pmap_fault_fixup(map->pmap, va, ftype, user))
+	if (pmap_fault_fixup(map->pmap, va, ftype, user)) {
+		if (map != kernel_map)
+			l->l_flag &= ~L_SA_PAGEFAULT;
 		goto out;
+	}
 
 #ifdef DIAGNOSTIC
 	if (__predict_false(current_intr_depth > 0)) {
