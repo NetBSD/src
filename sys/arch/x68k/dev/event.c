@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.4 1996/11/27 14:40:46 oki Exp $ */
+/*	$NetBSD: event.c,v 1.4.48.1 2002/01/08 00:28:37 nathanw Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -71,7 +71,7 @@ ev_init(ev)
 	ev->ev_get = ev->ev_put = 0;
 	ev->ev_q = malloc((u_long)EV_QSIZE * sizeof(struct firm_event),
 	    M_DEVBUF, M_WAITOK);
-	bzero((caddr_t)ev->ev_q, EV_QSIZE * sizeof(struct firm_event));
+	memset((caddr_t)ev->ev_q, 0, EV_QSIZE * sizeof(struct firm_event));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.9 2001/03/04 09:28:35 mrg Exp $ */
+/*	$NetBSD: frame.h,v 1.9.8.1 2002/01/08 00:27:59 nathanw Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,6 +43,10 @@
  *
  *	@(#)frame.h	8.1 (Berkeley) 6/11/93
  */
+
+#if defined(_KERNEL_OPT)
+#include "opt_sparc_arch.h"
+#endif
 
 /*
  * Sparc stack frame format.

@@ -1,4 +1,4 @@
-#	$NetBSD: files.evbarm,v 1.4.2.2 2001/11/14 23:50:02 thorpej Exp $
+#	$NetBSD: files.evbarm,v 1.4.2.3 2002/01/08 00:24:11 nathanw Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -7,7 +7,7 @@ maxpartitions	8
 maxusers	2 8 64
 
 # Maintain Interrupt statistics
-defopt	IRQSTATS
+defflag			IRQSTATS
 
 # Include WSCONS stuff
 include "dev/wscons/files.wscons"
@@ -22,7 +22,7 @@ major	{wd = 16}
 
 # Memory disk driver
 file	arch/arm32/dev/md_hooks.c		md & memory_disk_hooks
-major   {md = 18}
+major	{md = 18}
 
 # RAIDframe
 major	{raid = 71}
@@ -32,8 +32,8 @@ major	{raid = 71}
 #
 
 include "dev/scsipi/files.scsipi"
-major   {sd = 24}
-major   {cd = 26}
+major	{sd = 24}
+major	{cd = 26}
 
 # Generic MD files
 file	arch/evbarm/evbarm/autoconf.c
@@ -42,6 +42,9 @@ file	arch/arm/arm32/conf.c
 file	arch/arm/arm/disksubr.c			disk
 file	arch/arm/arm/disksubr_acorn.c		disk
 file	arch/arm/arm/disksubr_mbr.c		disk
+
+file	arch/arm/arm32/intr.c
+file	arch/arm/arm32/spl.S
 
 # ARM FPE
 file	arch/arm32/fpe-arm/armfpe_glue.S	armfpe
@@ -72,6 +75,6 @@ file	arch/evbarm/pci/pciide_machdep.c	pciide
 
 # We need to define the Integrator's "plcom" device here since
 # it we need to generate a "plcom.h" header file for conf.c
-defopt	opt_plcom.h	PLCOM_DEBUG PLCOM_MPLOCK
+defflag	opt_plcom.h	PLCOM_DEBUG PLCOM_MPLOCK
 device	plcom { }: tty
 file	arch/evbarm/dev/plcom.c			plcom needs-flag

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunkbd.c,v 1.5.2.3 2001/11/15 11:03:05 pk Exp $	*/
+/*	$NetBSD: sunkbd.c,v 1.5.2.4 2002/01/08 00:31:59 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunkbd.c,v 1.5.2.3 2001/11/15 11:03:05 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunkbd.c,v 1.5.2.4 2002/01/08 00:31:59 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,6 +97,8 @@ static int	sunkbdiopen(struct device *, int mode);
 int	sunkbdinput(int, struct tty *);
 int	sunkbdstart(struct tty *);
 
+/* Default keyboard baud rate */
+int	sunkbd_bps = KBD_DEFAULT_BPS;
 
 struct cfattach kbd_ca = {
 	sizeof(struct kbd_softc), sunkbd_match, sunkbd_attach
@@ -168,7 +170,7 @@ sunkbd_attach(parent, self, aux)
 		/*
 		 * Hookup ourselves as the console input channel
 		 */
-		args->kmta_baud = KBD_BPS;
+		args->kmta_baud = sunkbd_bps;
 		args->kmta_cflag = CLOCAL|CS8;
 		cons_attach_input(cc, args->kmta_consdev);
 
@@ -231,8 +233,8 @@ sunkbdiopen(dev, flags)
 
 	/* Now configure it for the console. */
 	tp->t_ospeed = 0;
-	t.c_ispeed = KBD_BPS;
-	t.c_ospeed = KBD_BPS;
+	t.c_ispeed = sunkbd_bps;
+	t.c_ospeed = sunkbd_bps;
 	t.c_cflag =  CLOCAL|CS8;
 	(*tp->t_param)(tp, &t);
 

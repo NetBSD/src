@@ -1,7 +1,7 @@
-/*	$NetBSD: ehcivar.h,v 1.1.4.1 2001/11/14 19:16:14 nathanw Exp $	*/
+/*	$NetBSD: ehcivar.h,v 1.1.4.2 2002/01/08 00:32:03 nathanw Exp $	*/
 
 /*
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -36,7 +36,42 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+typedef struct ehci_soft_qtd {
+	ehci_qtd_t qtd;
+	struct ehci_soft_qtd *nextqtd; /* mirrors nextqtd in TD */
+	ehci_physaddr_t physaddr;
+	usbd_xfer_handle xfer;
+	LIST_ENTRY(ehci_soft_qtd) hnext;
+	u_int16_t len;
+} ehci_soft_qtd_t;
+#define EHCI_SQTD_SIZE ((sizeof (struct ehci_soft_qtd) + EHCI_QTD_ALIGN - 1) / EHCI_QTD_ALIGN * EHCI_QTD_ALIGN)
+#define EHCI_SQTD_CHUNK (EHCI_PAGE_SIZE / EHCI_SQTD_SIZE)
+
+typedef struct ehci_soft_qh {
+	ehci_qh_t qh;
+	struct ehci_soft_qh *next;
+	struct ehci_soft_qtd *sqtd;
+	ehci_physaddr_t physaddr;
+} ehci_soft_qh_t;
+#define EHCI_SQH_SIZE ((sizeof (struct ehci_soft_qh) + EHCI_QH_ALIGN - 1) / EHCI_QH_ALIGN * EHCI_QH_ALIGN)
+#define EHCI_SQH_CHUNK (EHCI_PAGE_SIZE / EHCI_SQH_SIZE)
+
+struct ehci_xfer {
+	struct usbd_xfer xfer;
+	struct usb_task	abort_task;
+	LIST_ENTRY(ehci_xfer) inext; /* list of active xfers */
+	ehci_soft_qtd_t *sqtdstart;
+	ehci_soft_qtd_t *sqtdend;
+#ifdef DIAGNOSTIC
+	int isdone;
+#endif
+};
+#define EXFER(xfer) ((struct ehci_xfer *)(xfer))
+
+
+#define EHCI_HASH_SIZE 128
 #define EHCI_COMPANION_MAX 8
+
 typedef struct ehci_softc {
 	struct usbd_bus sc_bus;		/* base device */
 	bus_space_tag_t iot;
@@ -51,12 +86,36 @@ typedef struct ehci_softc {
 	void *sc_shutdownhook;		/* cookie from shutdown hook */
 
 	u_int sc_ncomp;
+	u_int sc_npcomp;
 	struct usbd_bus *sc_comps[EHCI_COMPANION_MAX];
 
 	usb_dma_t sc_fldma;
 	u_int sc_flsize;
 
+	LIST_HEAD(, ehci_xfer) sc_intrhead;
+
+	ehci_soft_qh_t *sc_freeqhs;
+	ehci_soft_qtd_t *sc_freeqtds;
+
+	int sc_noport;
+	u_int8_t sc_addr;		/* device address */
+	u_int8_t sc_conf;		/* device configuration */
+	usbd_xfer_handle sc_intrxfer;
+	char sc_isreset;
+	char sc_softwake;
+
+	u_int32_t sc_eintrs;
+	ehci_soft_qh_t *sc_async_head;
+
+	SIMPLEQ_HEAD(, usbd_xfer) sc_free_xfers; /* free xfers */
+
+	struct lock sc_doorbell_lock;
+
+	usb_callout_t sc_tmo_pcd;
+
 	device_ptr_t sc_child;		/* /dev/usb# device */
+
+	char sc_dying;
 } ehci_softc_t;
 
 #define EREAD1(sc, a) bus_space_read_1((sc)->iot, (sc)->ioh, (a))

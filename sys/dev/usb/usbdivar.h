@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.63.2.1 2001/11/14 19:16:23 nathanw Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.63.2.2 2002/01/08 00:32:22 nathanw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
@@ -79,7 +79,7 @@ struct usbd_port {
 	u_int8_t		portno;
 	u_int8_t		restartcnt;
 #define USBD_RESTART_MAX 5
-	struct usbd_device     *device;
+	struct usbd_device     *device;	/* Connected device */
 	struct usbd_device     *parent;	/* The ports hub */
 };
 
@@ -135,13 +135,15 @@ struct usbd_device {
 	u_int8_t		address;       /* device addess */
 	u_int8_t		config;	       /* current configuration # */
 	u_int8_t		depth;         /* distance from root hub */
-	u_int8_t		lowspeed;      /* lowspeed flag */
+	u_int8_t		speed;         /* low/full/high speed */
 	u_int8_t		self_powered;  /* flag for self powered */
 	u_int16_t		power;         /* mA the device uses */
 	int16_t			langid;	       /* language for strings */
 #define USBD_NOLANG (-1)
 	usb_event_cookie_t	cookie;	       /* unique connection id */
 	struct usbd_port       *powersrc;      /* upstream hub port, or 0 */
+	struct usbd_device     *myhub; 	       /* upstream hub */
+	struct usbd_device     *myhighhub;     /* closest high speed hub */
 	struct usbd_endpoint	def_ep;	       /* for pipe 0 */
 	usb_endpoint_descriptor_t def_ep_desc; /* for pipe 0 */
 	struct usbd_interface  *ifaces;        /* array of all interfaces */
@@ -194,7 +196,8 @@ struct usbd_xfer {
 #ifdef DIAGNOSTIC
 	u_int32_t		busy_free;
 #define XFER_FREE 0x46524545
-#define XFER_BUSY 0x42555357
+#define XFER_BUSY 0x42555359
+#define XFER_ONQU 0x4f4e5155
 #endif
 
 	/* For control pipe */
@@ -223,11 +226,13 @@ struct usbd_xfer {
 void usbd_init(void);
 void usbd_finish(void);
 
+#ifdef USB_DEBUG
 void usbd_dump_iface(struct usbd_interface *iface);
 void usbd_dump_device(struct usbd_device *dev);
 void usbd_dump_endpoint(struct usbd_endpoint *endp);
 void usbd_dump_queue(usbd_pipe_handle pipe);
 void usbd_dump_pipe(usbd_pipe_handle pipe);
+#endif
 
 /* Routines from usb_subr.c */
 int		usbctlprint(void *, const char *);

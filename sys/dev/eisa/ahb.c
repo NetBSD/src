@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.31.2.2 2001/11/14 19:14:03 nathanw Exp $	*/
+/*	$NetBSD: ahb.c,v 1.31.2.3 2002/01/08 00:29:26 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.31.2.2 2001/11/14 19:14:03 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.31.2.3 2002/01/08 00:29:26 nathanw Exp $");
 
 #include "opt_ddb.h"
 
@@ -64,7 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.31.2.2 2001/11/14 19:14:03 nathanw Exp $")
 #define	integrate	static inline
 #endif
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

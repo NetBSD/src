@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.5.4.2 2001/11/05 19:46:16 briggs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.5.4.3 2002/01/08 00:27:09 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#undef NOCACHE
+#undef PPC_4XX_NOCACHE
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -748,7 +748,7 @@ void
 pmap_zero_page(paddr_t pa)
 {
 
-#ifdef NOCACHE
+#ifdef PPC_4XX_NOCACHE
 	memset((caddr_t)pa, 0, NBPG);
 #else
 	int i;
@@ -887,7 +887,7 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	if (flags & PME_NOCACHE)
 		/* Must be I/O mapping */
 		tte |= TTE_I | TTE_G;
-#ifdef NOCACHE
+#ifdef PPC_4XX_NOCACHE
 	tte |= TTE_I;
 #else
 	else if (flags & PME_WRITETHROUG)
@@ -1007,7 +1007,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 		if (prot & PME_NOCACHE)
 			/* Must be I/O mapping */
 			tte |= TTE_I | TTE_G;
-#ifdef NOCACHE
+#ifdef PPC_4XX_NOCACHE
 		tte |= TTE_I;
 #else
 		else if (prot & PME_WRITETHROUG)
@@ -1349,7 +1349,7 @@ ppc4xx_tlb_enter(int ctx, vaddr_t va, u_int pte)
 	th = (va & TLB_EPN_MASK) |
 		(((pte & TTE_SZ_MASK) >> TTE_SZ_SHIFT) << TLB_SIZE_SHFT) |
 		TLB_VALID;
-	tl = pte;
+	tl = pte & ~(TTE_SZ_MASK|TTE_ENDIAN);
 
 	s = splhigh();
 	idx = ppc4xx_tlb_find_victim();
@@ -1446,7 +1446,7 @@ pmap_tlbmiss(vaddr_t va, int ctx)
 		}
 	} else {
 		/* Create a 16MB writeable mapping. */
-#ifdef NOCACHE
+#ifdef PPC_4XX_NOCACHE
 		tte = TTE_PA(va) | TTE_ZONE(ZONE_PRIV) | TTE_SZ_16M | TTE_I | TTE_WR;
 #else
 		tte = TTE_PA(va) | TTE_ZONE(ZONE_PRIV) | TTE_SZ_16M | TTE_WR;

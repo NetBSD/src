@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14.8.4 2001/11/21 20:15:42 scw Exp $
+#	$NetBSD: Makefile,v 1.14.8.5 2002/01/08 00:25:54 nathanw Exp $
 
 KDIR=	/sys/arch/m68k/include
 INCSDIR= /usr/include/m68k
@@ -16,8 +16,8 @@ INCS=	ansi.h aout_machdep.h asm.h asm_single.h \
 	limits.h lock.h lwp.h \
 	m68k.h math.h mcontext.h \
 	param.h pcb.h profile.h psl.h ptrace.h \
-	reg.h setjmp.h signal.h stdarg.h svr4_machdep.h sync_icache.h \
-	saframe.h sysctl.h \
+	reg.h setjmp.h signal.h stdarg.h sync_icache.h \
+	sysctl.h \
 	trap.h types.h \
 	varargs.h
 

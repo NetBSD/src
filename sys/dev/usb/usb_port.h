@@ -1,5 +1,5 @@
 /*	$OpenBSD: usb_port.h,v 1.18 2000/09/06 22:42:10 rahnds Exp $ */
-/*	$NetBSD: usb_port.h,v 1.40.2.3 2001/11/14 19:16:20 nathanw Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.40.2.4 2002/01/08 00:32:17 nathanw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -81,12 +81,17 @@
 #define USCANNER_DEBUG 1
 #define USSCANNER_DEBUG 1
 #define EHCI_DEBUG 1
+#define UIRDA_DEBUG 1
+#define UISDATA_DEBUG 1
+#define UDSBR_DEBUG 1
 #define Static
 #else
 #define Static static
 #endif
 
 #define SCSI_MODE_SENSE		MODE_SENSE
+
+typedef struct proc *usb_proc_ptr;
 
 typedef struct device *device_ptr_t;
 #define USBBASEDEVICE struct device
@@ -135,21 +140,13 @@ struct cfattach __CONCAT(dname,_ca) = { \
 }
 
 #define USB_MATCH(dname) \
-int \
-__CONCAT(dname,_match)(parent, match, aux) \
-	struct device *parent; \
-	struct cfdata *match; \
-	void *aux;
+int __CONCAT(dname,_match)(struct device *parent, struct cfdata *match, void *aux)
 
 #define USB_MATCH_START(dname, uaa) \
 	struct usb_attach_arg *uaa = aux
 
 #define USB_ATTACH(dname) \
-void \
-__CONCAT(dname,_attach)(parent, self, aux) \
-	struct device *parent; \
-	struct device *self; \
-	void *aux;
+void __CONCAT(dname,_attach)(struct device *parent, struct device *self, void *aux)
 
 #define USB_ATTACH_START(dname, sc, uaa) \
 	struct __CONCAT(dname,_softc) *sc = \
@@ -163,10 +160,7 @@ __CONCAT(dname,_attach)(parent, self, aux) \
 #define USB_ATTACH_SETUP printf("\n")
 
 #define USB_DETACH(dname) \
-int \
-__CONCAT(dname,_detach)(self, flags) \
-	struct device *self; \
-	int flags;
+int __CONCAT(dname,_detach)(struct device *self, int flags)
 
 #define USB_DETACH_START(dname, sc) \
 	struct __CONCAT(dname,_softc) *sc = \
@@ -214,6 +208,8 @@ __CONCAT(dname,_detach)(self, flags) \
 #endif
 
 #define Static
+
+typedef struct proc *usb_proc_ptr;
 
 #define UCOMBUSCF_PORTNO		-1
 #define UCOMBUSCF_PORTNO_DEFAULT	-1
@@ -397,6 +393,8 @@ __CONCAT(dname,_detach)(self, flags) \
 #define USBGETSOFTC(bdev) (device_get_softc(bdev))
 
 #define DECLARE_USB_DMA_T typedef void * usb_dma_t
+
+typedef struct proc *usb_proc_ptr;
 
 /* XXX Change this when FreeBSD has memset
  */

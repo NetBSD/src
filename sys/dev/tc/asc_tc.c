@@ -1,4 +1,4 @@
-/* $NetBSD: asc_tc.c,v 1.14.6.2 2001/11/14 19:16:09 nathanw Exp $ */
+/* $NetBSD: asc_tc.c,v 1.14.6.3 2002/01/08 00:32:00 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,9 +37,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc_tc.c,v 1.14.6.2 2001/11/14 19:16:09 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_tc.c,v 1.14.6.3 2002/01/08 00:32:00 nathanw Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.70.2.4 2001/11/14 19:14:31 nathanw Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.70.2.5 2002/01/08 00:30:01 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,9 +77,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.70.2.4 2001/11/14 19:14:31 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.70.2.5 2002/01/08 00:30:01 nathanw Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
@@ -173,6 +172,7 @@ static const char *ncr53c9x_variant_names[] = {
 	"FAS216",
 	"AM53C974",
 	"FAS366/HME",
+	"NCR53C90 (86C01)",
 };
 
 /*
@@ -354,6 +354,7 @@ ncr53c9x_reset(sc)
 	case NCR_VARIANT_ESP100A:
 		sc->sc_features |= NCR_F_SELATN3;
 		NCR_WRITE_REG(sc, NCR_CFG2, sc->sc_cfg2);
+	case NCR_VARIANT_NCR53C90_86C01:
 	case NCR_VARIANT_ESP100:
 		NCR_WRITE_REG(sc, NCR_CFG1, sc->sc_cfg1);
 		NCR_WRITE_REG(sc, NCR_CCF, sc->sc_ccf);

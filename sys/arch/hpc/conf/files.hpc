@@ -1,0 +1,18 @@
+#	$NetBSD: files.hpc,v 1.3.8.2 2002/01/08 00:24:49 nathanw Exp $
+
+#
+# STANDALONE BOOT or BOOT from WinCE
+#
+defflag	BOOT_STANDALONE
+#
+# Specified platform only?
+#
+defparam SPEC_PLATFORM
+
+#
+# hpc support functions
+#
+file	arch/hpc/hpc/config_hook.c
+file	arch/hpc/hpc/platid.c
+file	arch/hpc/hpc/platid_mask.c
+file	arch/hpc/hpc/platid_name.c

@@ -1,4 +1,4 @@
-/*      $NetBSD: rndpool.c,v 1.10.4.3 2001/11/14 19:13:42 nathanw Exp $        */
+/*      $NetBSD: rndpool.c,v 1.10.4.4 2002/01/08 00:29:20 nathanw Exp $        */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,10 +38,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpool.c,v 1.10.4.3 2001/11/14 19:13:42 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpool.c,v 1.10.4.4 2002/01/08 00:29:20 nathanw Exp $");
 
 #include <sys/param.h>
-#include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/sha1.h>
 

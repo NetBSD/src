@@ -1,4 +1,4 @@
-/*	$NetBSD: macromasm.s,v 1.18 2000/11/15 07:15:36 scottr Exp $	*/
+/*	$NetBSD: macromasm.s,v 1.18.8.1 2002/01/08 00:26:06 nathanw Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -43,21 +43,16 @@
 
 	/* Define this symbol as global with (v) value */
 #define loglob(g, v)	\
-	.global _/**/g ;\
-	.set	_/**/g, v
-
-	/* Define this as an externally available function */
-#define function(f)	\
-	.global _/**/f ;\
-	_/**/f:
+	.global _C_LABEL(g) ;\
+	.set	_C_LABEL(g), v
 
 	/* Return from a pascal function; pop (pbytes) number of bytes */
 	/*  passed as parameters.  Should have picked up "pascal" extension */
 	/*  to GCC... */
 #define pascalret(pbytes)	\
-	movl	sp@+, a0		/* get PC (I hate Pascal) */ ; \
-	addl	# pbytes , sp		/* pop params (I hate Pascal) */ ; \
-	jra	a0@			/* return (I hate Pascal) */ ; \
+	movl	%sp@+,%a1		/* get PC (I hate Pascal) */ ; \
+	addl	#pbytes,%sp		/* pop params (I hate Pascal) */ ; \
+	jra	%a1@			/* return (I hate Pascal) */ ; \
 
 
 /*
@@ -94,7 +89,7 @@
 	loglob(ADBState, 0xde0) 	/* ptr to ADB state information? */
 	loglob(jUnimplTrap, 0x61c)	/* ptr to UnimplTrap routine */
 	loglob(jEgret, 0x648)		/* ptr to Egret trap routine */
-	loglob(HwCfgFlags , 0xb22)	/* 2 bytes, h/w config flags */
+	loglob(HwCfgFlags, 0xb22)	/* 2 bytes, h/w config flags */
 	loglob(HwCfgFlags2, 0xdd0)	/* 4 bytes, more h/w config flags */
 	loglob(HwCfgFlags3, 0xdd4)	/* 4 bytes, more h/w config flags */
 	loglob(ADBReInit_JTBL, 0xdd8)	/* 4 bytes, pointer to patch table */
@@ -122,8 +117,8 @@
 
 	.text
 	.even
-	.global _panic
-	.global _printf
+	.global _C_LABEL(panic)
+	.global _C_LABEL(printf)
 
 #ifdef MRG_ADB
 /*
@@ -135,93 +130,85 @@
  * the parameters to the MacOS Trap parameters, and then tries to
  * return the result correctly.  About the only thing our C functions
  * and MacOS' traps have in common is returning numerical results in
- * d0.
+ * %d0.
  *
  * If some code actually pulls down the a-trap line, we jump right
  * to the ROMs; none of this is called. 
  */
 
 /* Initialize Utils, mainly XPRam */
-	.global _InitUtil
 	/*
 	 * void
 	 */
-_InitUtil:
+ENTRY(InitUtil)
 	.word 0xa03f
 	rts
 
 
 /* Initialize the ADB ------------------------------------------------------*/
-	.global _ADBReInit
 	/*
 	 * void
 	 */
-_ADBReInit:
+ENTRY(ADBReInit)
 	.word	0xa07b
-	clrl	d0
 	rts
 
 
 /* Set the ADB device info for a device; routine handler and so on ---------*/
-	.global _SetADBInfo
 	/*
-	 * sp@(4)	ADBSetInfoBlock *info
-	 * sp@(8)	int		adbAddr
+	 * %sp@(4)	ADBSetInfoBlock *info
+	 * %sp@(8)	int		adbAddr
 	 */
-_SetADBInfo:
-	movl	sp@(4), a0
-	movl	sp@(8), d0
+ENTRY(SetADBInfo)
+	movl	%sp@(4),%a0
+	movl	%sp@(8),%d0
 	.word	0xa07a
 	rts
 
 
 /* Find the number of ADB devices in the device table ----------------------*/
-	.global _CountADBs
 	/*
 	 * void
 	 */
-_CountADBs:
+ENTRY(CountADBs)
 	.word 0xa077
 	rts
 
 
 /* Get ADB entry from index in table ---------------------------------------*/
-	.global _GetIndADB
 	/*
 	 * sp@(4)	ADBDataBlock	*info
 	 * sp@(8)	u_short 	devTableIndex
 	 */
-_GetIndADB:
-	movl	sp@(4), a0
-	movl	sp@(8), d0
+ENTRY(GetIndADB)
+	movl	%sp@(4),%a0
+	movl	%sp@(8),%d0
 	.word 0xa078
 	rts
 
 
 /* Get ADB device information ----------------------------------------------*/
-	.global _GetADBInfo /*
 	/*
 	 * sp@(4)	ADBSetInfoBlock *info
 	 * sp@(8)	int		adbAddr
 	 */
-_GetADBInfo:
-	movl	sp@(4), a0
-	movl	sp@(8), d0
+ENTRY(GetADBInfo)
+	movl	%sp@(4),%a0
+	movl	%sp@(8),%d0
 	.word 0xa079
 	rts
 
 
 /* Perform an ADB transaction ----------------------------------------------*/
-	.global _ADBOp
 	/*
 	 * sp@(4)	Ptr	buffer
 	 * sp@(8)	Ptr	compRout
 	 * sp@(12)	Ptr	data
 	 * sp@(16)	short	commandNum
 	 */
-_ADBOp:
-	lea	sp@(4), a0
-	movl	sp@(16), d0
+ENTRY(ADBOp)
+	lea	%sp@(4),%a0
+	movl	%sp@(16),%d0
 	.word 0xa07c
 	rts
 #endif /* MRG_ADB */
@@ -244,81 +231,79 @@ _KnownRTS:
 
 
 /* Allocate memory ---------------------------------------------------------*/
-	function(NewPtr)
+ENTRY(NewPtr)
 	/*
 	 * int size
 	 */
-	movl	sp@(4), d0
+	movl	%sp@(4),%d0
 	.word	0xa71e		/* clear and sys */
-	movl	a0, d0
 	rts
 
 
 /* Free memory -------------------------------------------------------------*/
-	function(DisposPtr)
+ENTRY(DisposPtr)
 	/*
 	 * Ptr ptr
 	 */
-	movl	sp@(4), a0
+	movl	%sp@(4),%a0
 	.word	0xa01f
 	rts
 
 
 /* Get size of allocated memory --------------------------------------------*/
-	function(GetPtrSize)
+ENTRY(GetPtrSize)
 	/*
 	 * Ptr ptr
 	 */
-	movl	sp@(4), a0
+	movl	%sp@(4),%a0
 	.word	0xa021
 	rts
 
 
 /* Extend allocated memory -------------------------------------------------*/
-	function(SetPtrSize)
+ENTRY(SetPtrSize)
 	/*
 	 * Ptr ptr
 	 * int bytesdiff
 	 */
-	movl	sp@(4), a0
-	movl	sp@(8), d0
+	movl	%sp@(4),%a0
+	movl	%sp@(8),%d0
 	.word	0xa020
 	rts
 
 
 /* Resource manager */
 	.data
-	.global _mrg_ResErr
-_mrg_ResErr:
+GLOBAL(mrg_ResErr)
 	.word	0
 
 	.text
 /* Return the current Resource Manager Error -------------------------------*/
-	function(ResError)
+ENTRY(ResError)
 	/*
 	 * void
 	 */
-	movl	d2, sp@-		| Toolbox trap may alter d0-d2, a0, a1
-					| but C caller would save d1,a0,a1
-	clrw	sp@-			| space for return arg (ugh)
+	movl	%d2,%sp@-		| Toolbox trap may alter %d0-%d2,%a0,%a1
+					| but C caller would save %d1,%a0,%a1
+	clrw	%sp@-			| space for return arg (ugh)
 	.word	0xa9af			| ResError
-	movw	sp@+, d0
-	movl	sp@+, d2		| restore d2
+	movw	%sp@+,%d0
+	movl	%sp@+,%d2		| restore %d2
 	rts     
 
-	/* pascal */ function(mrg_ResError)
+ENTRY(mrg_ResError)
 	/*
-	 * sp@(4)	:short
+	 * %sp@(4)	:short
 	 */
 #if defined(MRG_SHOWTRAPS)
-		movml	#0xc0c0, sp@-
+		movml	#0xc0c0,%sp@-
 		pea	LRE_enter
-		jbsr	_printf
-		addql	#4, sp
-		movml	sp@+, #0x0303
+		jbsr	_C_LABEL(printf)
+		addql	#4,%sp
+		movml	%sp@+,#0x0303
 #endif
-	movw	_mrg_ResErr, sp@(4)
-	| movw	d0, sp@(4)
+	movw	_C_LABEL(mrg_ResErr),%sp@(4)
+	| movw	%d0,%sp@(4)
 	pascalret(0)
 
 LRE_enter:
@@ -326,24 +311,24 @@ LRE_enter:
 	.even
 
 /* Find a resource in open resource files ----------------------------------*/
-	function(GetResource)
+ENTRY(GetResource)
 	/*
 	 * sp@(4)	u_int theType
 	 * sp@(8)	short theID
 	 */
-	movl	sp@(8), a1
-	movl	sp@(4), a0
-	movl	d2, sp@-		| Toolbox trap may alter d0-d2, a0, a1
-					| but C caller would save d1,a0,a1
-	clrl	sp@-			| space for :Handle
-	movl	a0, sp@-
-	movw	a1, sp@-		| pascal parameters upside down
+	movl	%sp@(8),%a1
+	movl	%sp@(4),%a0
+	movl	%d2,%sp@-		| Toolbox trap may alter %d0-%d2,%a0,%a1
+					| but C caller would save %d1,%a0,%a1
+	clrl	%sp@-			| space for :Handle
+	movl	%a0,%sp@-
+	movw	%a1,%sp@-		| pascal parameters upside down
 	.word	0xa9a0			| GetResource
-	movl	sp@+, d0		| return Handle
-	movl	sp@+, d2		| restore registers
+	movl	%sp@+,%d0		| return Handle
+	movl	%sp@+,%d2		| restore registers
 	rts
 
-	/* pascal */ function(mrg_GetResource)
+ENTRY(mrg_GetResource)
 	/*
 	 * sp@(10)	:Handle
 	 * sp@(6)	u_int	theType
@@ -351,63 +336,63 @@ LRE_enter:
 	 */
 	/* For now, we return NIL, because, well, we have no resources. */
 #if defined(MRG_SHOWTRAPS)
-		movml	#0xc0c0, sp@-
-		movw	sp@(20), d0
-		movl	sp@(22), d1
-		movl	d0, sp@-
-		movl	d1, sp@-
+		movml	#0xc0c0,%sp@-
+		movw	%sp@(20),%d0
+		movl	%sp@(22),%d1
+		movl	%d0,%sp@-
+		movl	%d1,%sp@-
 		pea	LGR_enter
-		jbsr	_printf
-		addl	#12, sp
-		movml	sp@+, #0x0303
+		jbsr	_C_LABEL(printf)
+		addl	#12,%sp
+		movml	%sp@+,#0x0303
 #endif
-	clrl	d0			| okay to change d0 ?
-	movl	d0, sp@(10)		| return value is NIL
-	movl	#-192, d0		| resNotFound; that's pretty accurate.
-	movw	d0, _mrg_ResErr 	| set current ResMan error
+	clrl	%d0			| okay to change %d0 ?
+	movl	%d0,%sp@(10)		| return value is NIL
+	movl	#-192,%d0		| resNotFound; that's pretty accurate.
+	movw	%d0,_C_LABEL(mrg_ResErr)| set current ResMan error
 	pascalret(6)			| I hate Pascal.
 
 
 
-function(mrg_CountResources)
+ENTRY(mrg_CountResources)
 /* Original from WRU: 960120
  * sp@(4)	u_int32_t  rsrc_type
  * sp@(8)	u_int16_t  nr_of_rsrcs
  */
-	movl 	sp@(4), d0
-  	movl	d0, sp@-
-	jbsr	_Count_Resources
-	addl	#4, sp			| pop C params
-	movw	d0, sp@(8)		| store result
+	movl 	%sp@(4),%d0
+  	movl	%d0,%sp@-
+	jbsr	_C_LABEL(Count_Resources)
+	addl	#4,%sp			| pop C params
+	movw	%d0,%sp@(8)		| store result
 	pascalret(4)
 
-function(mrg_GetIndResource)
+ENTRY(mrg_GetIndResource)
 /* Original from WRU: 960120
  * sp@(4)	u_int16_t  rsrc_index
  * sp@(6)	u_int32_t  rsrc_type
  * sp@(10)	caddr_t   *rsrc_handle
  */
-	movl	sp@(6), a0
-	clrl	d0
-	movw	sp@(4), d0
-  	movl	d0, sp@-
-	movl	a0, sp@-
-	jbsr	_Get_Ind_Resource
-	addl	#8, sp		| pop C params
-	movl	d0, sp@(10)	| store result
+	movl	%sp@(6),%a0
+	clrl	%d0
+	movw	%sp@(4),%d0
+  	movl	%d0,%sp@-
+	movl	%a0,%sp@-
+	jbsr	_C_LABEL(Get_Ind_Resource)
+	addl	#8,%sp		| pop C params
+	movl	%d0,%sp@(10)	| store result
 	pascalret(6)
 
 /*
  * I'd like to take a moment here to talk about the calling convention
  * for ToolBox routines.  Inside Mac "Operating System Utilities,"
  * page 8-16, "About the Trap Manager," states that ToolBox routines
- * may alter D0-D2 and A0-A1.  However, a crucial bit of code in
- * ADBReInit on the Mac II, 0x40807834, does not save its own D1 or A1
+ * may alter %D0-%D2 and %A0-%A1.  However, a crucial bit of code in
+ * ADBReInit on the Mac II, 0x40807834, does not save its own %D1 or %A1
  * before calling GetResource.	Therefore, it is imperative that our
- * MacBSD ToolBox trap handler save at least D1, D2, A0, and A1.  I
- * believe that the system uses D0 in most places to hold the function's
- * return value, as in "movl	sp@+, d0", and so I don't think it's
- * that necessary to save d0 unless we find a specific case of ugliness.
+ * MacBSD ToolBox trap handler save at least %D1, %D2, %A0, and %A1.  I
+ * believe that the system uses %D0 in most places to hold the function's
+ * return value, as in "movl	%sp@+,%d0", and so I don't think it's
+ * that necessary to save %d0 unless we find a specific case of ugliness.
  *
  * It surprises me during every moment that I deal with the Macintosh
  * architecture how wonderful and ugly it really is.  I continue to find
@@ -427,110 +412,109 @@ LGR_enter:
  * 1010 line emulator; A-line trap
  * (we fake MacOS traps from here)
  */
-	.global _mrg_aline_super
-	.global _mrg_ToolBoxtraps
-	.global _alinetrap
-_alinetrap:
-	clrl	sp@-		| pad SR to longword (I still don't know
+	.global _C_LABEL(mrg_aline_super)
+	.global _C_LABEL(mrg_ToolBoxtraps)
+ENTRY_NOPROFILE(alinetrap)
+	clrl	%sp@-		| pad %SR to longword (I still don't know
 				| why we do this.)
-	moveml	#0xffff,sp@-	| save registers
-	movl	sp, sp@-	| save pointer to frame
-	movw	sp@(FR_HW + 4), d0	| retrieve status register
-	andw	#PSL_S, d0	| supervisor state?
+	moveml	#0xffff,%sp@-	| save registers
+	movl	%sp,%sp@-	| save pointer to frame
+	movw	%sp@(FR_HW + 4),%d0	| retrieve status register
+	andw	#PSL_S,%d0	| supervisor state?
 	bne	Lalnosup	| branch if supervisor
-	addql	#4, sp		| pop frame ptr
-	movql	#T_ILLINST, d0	| user-mode fault
+	addql	#4,%sp		| pop frame ptr
+	movql	#T_ILLINST,%d0	| user-mode fault
 	jra	_ASM_LABEL(fault)
 Lalnosup:
 #define FR_PC (FR_HW+2)
-	movl	sp@(FR_PC + 4), a0	| retrieve PC
-	movw	a0@, d0 	| retrieve trap word
-	btst	#11, d0 	| ToolBox trap?
+	movl	%sp@(FR_PC + 4),%a0	| retrieve PC
+	movw	%a0@,%d0 	| retrieve trap word
+	btst	#11,%d0 	| ToolBox trap?
 	bne	Laltoolbox	| branch if ToolBox
-	jbsr	_mrg_aline_super	| supervisor a-line trap
+	jbsr	_C_LABEL(mrg_aline_super) | supervisor a-line trap
 Lalrts:
-	addql	#4, sp		| pop frame ptr
-	movw	sp@(FR_HW), sr	| restore status register (I hate MacOS traps)
-	movl	sp@(FR_PC), a0	| move PC to correct location
-	movl	a0, sp@(FR_PC+2)
-	moveml	sp@+, #0xffff	| restore registers (some of which may have
+	addql	#4,%sp		| pop frame ptr
+	movw	%sp@(FR_HW),%sr	| restore status register (I hate MacOS traps)
+	movl	%sp@(FR_PC),%a0	| move PC to correct location
+	movl	%a0,%sp@(FR_PC+2)
+	moveml	%sp@+,#0xffff	| restore registers (some of which may have
 				| been magically changed)
-	addql	#8, sp		| pop alignment long, make stack look like
+	addql	#8,%sp		| pop alignment long, make stack look like
 				| ordinary jbsr
-	tstw	d0		| Gotta do this because call might depend on it
+	tstw	%d0		| Gotta do this because call might depend on it
 	rts			| Go home (God, this is ugly.)
 Laltoolbox:
-	addql	#4, sp		| pop frame ptr
+	addql	#4,%sp		| pop frame ptr
 #if defined(MRG_DEBUG)
-		movml	#0xC0C0, sp@-	| better save
+		movml	#0xC0C0,%sp@-	| better save
 		pea	LalP1	        
-		jbsr	_printf
+		jbsr	_C_LABEL(printf)
 			| printf ("Toolbox trap\n"); 
-		lea	sp@(4), sp	| pop
-		movml	sp@+, #0x0303	| restore
+		lea	%sp@(4),%sp	| pop
+		movml	%sp@+,#0x0303	| restore
 #endif
-	movl	a0, a1		| save PC
-	movw	sp@(FR_HW), sr	| restore status register
+	movl	%a0,%a1		| save PC
+	movw	%sp@(FR_HW),%sr	| restore status register
 #if defined(MRG_DEBUG)
-		movml	#0xC0C0, sp@-	| better save
-		movw	sr, sp@-
-		clrw	sp@-		| coerce to int
+		movml	#0xC0C0,%sp@-	| better save
+		movw	%sr,%sp@-
+		clrw	%sp@-		| coerce to int
 		pea	LalP2
-		jbsr	_printf
+		jbsr	_C_LABEL(printf)
 			| printf ("Status register 0x%x\n", sr);
-		lea	sp@(8), sp	| pop
-		movml	sp@+, #0x0303	| restore
+		lea	%sp@(8),%sp	| pop
+		movml	%sp@+,#0x0303	| restore
 #endif
-	btst	#10, d0 	| auto-pop the jump address?
+	btst	#10,%d0 	| auto-pop the jump address?
 	beq	Lalnoauto	| branch if no auto-pop
 	pea	Lalautopanic	| I really don't know how to handle this
-	jbsr	_panic
+	jbsr	_C_LABEL(panic)
 Lalnoauto:
-	addl	#2, a1		| add 2 to PC
+	addl	#2,%a1		| add 2 to PC
 #if defined(MRG_DEBUG)
-		movml	#0xC0C0, sp@-	| better save
-		movl	a1, sp@-
+		movml	#0xC0C0,%sp@-	| better save
+		movl	%a1,%sp@-
 		pea	LalP4
-		jbsr	_printf
+		jbsr	_C_LABEL(printf)
 			| printf ("return address is 0x%x\n", new pc);
-		lea	sp@(8), sp	| pop
-		movml	sp@+, #0x0303	| restore
+		lea	%sp@(8),%sp	| pop
+		movml	%sp@+,#0x0303	| restore
 #endif
-	movl	a1, sp@(FR_PC+2)	| push new return address
-	movl	d0, d1		| just in case of panic
-	andl	#0x3ff, d0	| d0 = trap number
+	movl	%a1,%sp@(FR_PC+2)	| push new return address
+	movl	%d0,%d1		| just in case of panic
+	andl	#0x3ff,%d0	| %d0 = trap number
 #if defined(MRG_DEBUG)
-		movml	#0xC0C0, sp@-	| better save
-		movl	d0, sp@-
+		movml	#0xC0C0,%sp@-	| better save
+		movl	%d0,%sp@-
 		pea	LalP5
-		jbsr	_printf
+		jbsr	_C_LABEL(printf)
 			| printf ("trap number is 0x%x\n", trapnum);
-		lea	sp@(8), sp	| pop
-		movml	sp@+, #0x0303	| restore
+		lea	%sp@(8),%sp	| pop
+		movml	%sp@+,#0x0303	| restore
 #endif
-	lsll	#2, d0		| ptr = 4 bytes
-	lea	_mrg_ToolBoxtraps, a0
-	addl	d0, a0		| get trap address
-	movl	a0@, a0
+	lsll	#2,%d0		| ptr = 4 bytes
+	lea	_C_LABEL(mrg_ToolBoxtraps),%a0
+	addl	%d0,%a0		| get trap address
+	movl	%a0@,%a0
 	bne	Laltbok 	| branch on trap addr non-zero
-	movl	d1, sp@+	| trap word
+	movl	%d1,%sp@+	| trap word
 	pea	Laltbnotrap
-	jbsr	_printf
+	jbsr	_C_LABEL(printf)
 	pea	Laltbnogo
-	jbsr	_panic
+	jbsr	_C_LABEL(panic)
 Laltbok:
 #if defined(MRG_DEBUG)
-		movml	#0xC0C0, sp@-	| better save
-		movl	a0, sp@-
+		movml	#0xC0C0,%sp@-	| better save
+		movl	%a0,%sp@-
 		pea	LalP6
-		jbsr	_printf
+		jbsr	_C_LABEL(printf)
 			| printf ("trap address is 0x%x\n", trapaddr);
-		lea	sp@(8), sp	| pop
-		movml	sp@+, #0x0303	| restore
+		lea	%sp@(8),%sp	| pop
+		movml	%sp@+,#0x0303	| restore
 #endif
-	movl	a0, sp@(FR_HW)	| we will RTS to trap routine (ick)
-	moveml	sp@+, #0xffff	| restore registers
-	addql	#4, sp		| pop alignment long
+	movl	%a0,%sp@(FR_HW)	| we will RTS to trap routine (ick)
+	moveml	%sp@+,#0xffff	| restore registers
+	addql	#4,%sp		| pop alignment long
 	rts			| go for it
 
 Lalautopanic:
@@ -553,56 +537,52 @@ LalP6:
 
 
 	.data
-	.global _traceloopptr
-	.global _traceloopstart
-	.global _traceloopend
 
-_traceloopstart:
+GLOBAL(traceloopstart)
 	.space	20 * 4		| save last 20 program counters on trace trap
-_traceloopend:
-_traceloopptr:
-	.long	_traceloopstart
+GLOBAL(traceloopend)
+GLOBAL(traceloopptr)
+	.long	_C_LABEL(traceloopstart)
 
 	.text
-	.global _mrg_tracetrap
-_mrg_tracetrap:
-	movl	d0, sp@-		| save d0
-	movl	a0, sp@-		| save a0
-	movl	sp@(0x10), d0		| address of instruction
-		| sp@	old a0
-		|sp@(4) old d0
-		|sp@(8) old sr
-		|sp@(10) old PC
-		|sp@(14) exception vector
-		|sp@(16) address of instruction
+ENTRY_NOPROFILE(mrg_tracetrap)
+	movl	%d0,%sp@-		| save %d0
+	movl	%a0,%sp@-		| save %a0
+	movl	%sp@(0x10),%d0		| address of instruction
+		|%sp@	 old %a0
+		|%sp@(4) old %d0
+		|%sp@(8) old %sr
+		|%sp@(10) old %PC
+		|%sp@(14) exception vector
+		|%sp@(16) address of instruction
 #if defined(MRG_FOLLOW)
-		movml	#0xc0c0, sp@-
-		movl	d0, sp@-
+		movml	#0xc0c0,%sp@-
+		movl	%d0,%sp@-
 		pea	Ltraceprint
-		jbsr	_printf 	| printf("PC is %x\n", pc);
-		addql	#8, sp
-		movml	sp@+,#0x0303
-		tstl	d0
+		jbsr	_C_LABEL(printf) | printf("PC is %x\n", pc);
+		addql	#8,%sp
+		movml	%sp@+,#0x0303
+		tstl	%d0
 #endif
 	beq	LPCiszero		| if PC goes to zero, freak!
-	movl	_traceloopptr, a0	| ptr = traceloopptr;
-	movl	d0, a0@+		| *ptr++ = PC;
-	cmpl	#_traceloopend, a0	| if(ptr == traceloopend)
+	movl	_C_LABEL(traceloopptr),%a0	| ptr = traceloopptr;
+	movl	%d0,%a0@+		| *ptr++ = PC;
+	cmpl	#_C_LABEL(traceloopend),%a0	| if(ptr == traceloopend)
 	bne	Lnotpast		|  {
-	movl	#_traceloopstart, a0	|   ptr = traceloopstart;
+	movl	#_C_LABEL(traceloopstart),%a0	|   ptr = traceloopstart;
 Lnotpast:				|  }
-	movl	a0, _traceloopptr	| traceloopptr = ptr;
-	movl	sp@+, a0		| restore a0
-	movl	sp@+, d0		| restore d0
+	movl	%a0,_C_LABEL(traceloopptr)	| traceloopptr = ptr;
+	movl	%sp@+,%a0		| restore %a0
+	movl	%sp@+,%d0		| restore %d0
 	rte				| everything cool, return.
 LPCiszero:
-	movl	sp@+, a0		| restore a0
-	movl	sp@+, d0		| restore d0
-		movml	#0xc0c0, sp@-
-		pea	LtracePCzero
-		jbsr	_panic		| panic("PC is zero!", pc);
-		addql	#4, sp
-		movml	sp@+,#0x0303
+	movl	%sp@+,%a0		| restore %a0
+	movl	%sp@+,%d0		| restore %d0
+	movml	#0xc0c0,%sp@-
+	pea	LtracePCzero
+	jbsr	_C_LABEL(panic)		| panic("PC is zero!", pc);
+	addql	#4,%sp
+	movml	%sp@+,#0x0303
 
 Ltraceprint:
 	.asciz	"tracing, pc at 0x%08x\n"

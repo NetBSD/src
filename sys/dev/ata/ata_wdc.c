@@ -1,7 +1,7 @@
-/*	$NetBSD: ata_wdc.c,v 1.28.4.2 2001/11/14 19:13:59 nathanw Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.28.4.3 2002/01/08 00:29:21 nathanw Exp $	*/
 
 /*
- * Copyright (c) 1998 Manuel Bouyer.
+ * Copyright (c) 1998, 2001 Manuel Bouyer.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.28.4.2 2001/11/14 19:13:59 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.28.4.3 2002/01/08 00:29:21 nathanw Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -118,6 +118,7 @@ int wdcdebug_wd_mask = 0;
 
 #define ATA_DELAY 10000 /* 10s for a drive I/O */
 
+int wdc_ata_bio __P((struct ata_drive_datas*, struct ata_bio*));
 void  wdc_ata_bio_start  __P((struct channel_softc *,struct wdc_xfer *));
 void  _wdc_ata_bio_start  __P((struct channel_softc *,struct wdc_xfer *));
 int   wdc_ata_bio_intr   __P((struct channel_softc *, struct wdc_xfer *, int));
@@ -128,6 +129,21 @@ int   wdc_ata_err __P((struct ata_drive_datas *, struct ata_bio *));
 #define WDC_ATA_NOERR 0x00 /* Drive doesn't report an error */
 #define WDC_ATA_RECOV 0x01 /* There was a recovered error */
 #define WDC_ATA_ERR   0x02 /* Drive reports an error */
+int wdc_ata_addref __P((struct ata_drive_datas *));
+void wdc_ata_delref __P((struct ata_drive_datas *));
+void wdc_ata_kill_pending __P((struct ata_drive_datas *));
+
+const struct ata_bustype wdc_ata_bustype = {
+	SCSIPI_BUSTYPE_ATA,
+	wdc_ata_bio,
+	wdc_reset_channel,
+	wdc_exec_command,
+	ata_get_params,
+	wdc_ata_addref,
+	wdc_ata_delref,
+	wdc_ata_kill_pending,
+};
+
 
 /*
  * Handle block I/O operation. Return WDC_COMPLETE, WDC_QUEUED, or

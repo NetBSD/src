@@ -1,12 +1,29 @@
-# $NetBSD: GENERIC,v 1.191.2.4 2001/11/14 19:12:40 nathanw Exp $
+# $NetBSD: GENERIC,v 1.191.2.5 2002/01/08 00:22:52 nathanw Exp $
 #
-# Generic Alpha kernel.  Enough to get booted, etc., but not much more.
+# GENERIC machine description file
+# 
+# This machine description file is used to generate the default NetBSD
+# kernel.  The generic kernel on NetBSD/alpha does enough to get booted,
+# etc., but not much more.  For a more complete kernel see the ALPHA
+# machine description file.
 #
+# The machine description file can be customised for your specific
+# machine to reduce the kernel size and improve its performance.
+#
+# For further information on compiling NetBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
+
 # If you add stuff to this, please add it to the ALPHA configuration, too.
 
-include	"arch/alpha/conf/std.alpha"
+include		"arch/alpha/conf/std.alpha"
 
-#ident 		"GENERIC-$Revision: 1.191.2.4 $"
+#ident 		"GENERIC-$Revision: 1.191.2.5 $"
 
 maxusers 32
 
@@ -42,7 +59,7 @@ options 	DDB			# kernel debugger
 #makeoptions	DEBUGLIST="pattern1 pattern2 ..."
 
 #options 	KGDB			# Remote kernel GDB support
-#options 	"KGDB_DEVNAME=\"com\""	# device to use for KGDB
+#options 	KGDB_DEVNAME="\"com\""	# device to use for KGDB
 #options 	KGDB_DEVADDR=0x2f8	# at this address
 #options 	KGDB_DEVRATE=57600	# at this comm. rate
 
@@ -88,10 +105,10 @@ options 	COMPAT_LINUX
 
 # System V-like message queues
 options 	SYSVMSG
-#options	SEMMNI=10	# number of semaphore identifiers
-#options	SEMMNS=60	# number of semaphores in system
-#options	SEMUME=10	# max number of undo entries per process
-#options	SEMMNU=30	# number of undo structures in system
+#options 	SEMMNI=10	# number of semaphore identifiers
+#options 	SEMMNS=60	# number of semaphores in system
+#options 	SEMUME=10	# max number of undo entries per process
+#options 	SEMMNU=30	# number of undo structures in system
 
 # System V-like semaphores
 options 	SYSVSEM
@@ -334,8 +351,8 @@ vga*	at	isa?				# ISA (EISA: XXX) VGA
 wdc0	at	isa? port 0x1f0 irq 14		# ST506/ESDI/IDE controllers
 wdc1	at	isa? port 0x170 irq 15
 #wdc*	at	isapnp?
-we0     at 	isa? port 0x280 iomem 0xd0000 irq 9  # WD/SMC Ethernet
-we1     at 	isa? port 0x300 iomem 0xcc000 irq 10
+we0	at	isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC Ethernet
+we1	at	isa? port 0x300 iomem 0xcc000 irq 10
 #wss*	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
 #wss*	at	isapnp?
 #audio*	at	wss?
@@ -425,16 +442,19 @@ usb*	at ohci?
 uhub*	at usb?
 uhub*	at uhub? port ? configuration ? interface ?
 
+# USB HID device
+uhidev*	at uhub? port ? configuration ? interface ?
+
 # USB Mice
-ums*	at uhub? port ? configuration ? interface ?
+ums*	at uhidev? reportid ?
 wsmouse*	at ums?
 
 # USB Keyboards
-ukbd*	at uhub? port ? configuration ? interface ?
+ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ?
 
 # USB Generic HID devices
-uhid*	at uhub? port ? configuration ? interface ?
+uhid*	at uhidev? reportid ?
 
 # USB Printer
 ulpt*	at uhub? port ? configuration ? interface ?
@@ -477,12 +497,13 @@ wsmouse*	at	pms?
 
 pseudo-device	bpfilter	16
 pseudo-device	ccd		4
-#pseudo-device	raid		4		# RAIDframe disk driver
-#options 	RAID_AUTOCONFIG      # auto-configuration of RAID components
+#pseudo-device	raid		4	# RAIDframe disk driver
+#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	ipfilter	1
 pseudo-device	loop		1
 pseudo-device	md		1
 pseudo-device	ppp		4
+pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	sl		4
 pseudo-device	vnd		4

@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.3.2.6 2001/11/14 19:15:38 nathanw Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.3.2.7 2002/01/08 00:31:25 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.3.2.6 2001/11/14 19:15:38 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.3.2.7 2002/01/08 00:31:25 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,6 +153,11 @@ static const struct wi_pcmcia_product {
 	  PCMCIA_CIS_NANOSPEED_PRISM2,
 	  PCMCIA_STR_NANOSPEED_PRISM2 },
 
+	{ PCMCIA_VENDOR_LINKSYS2,
+	  PCMCIA_PRODUCT_LINKSYS2_IWN,
+	  PCMCIA_CIS_NANOSPEED_PRISM2,
+	  PCMCIA_STR_NANOSPEED_PRISM2 },
+
 	{ PCMCIA_VENDOR_ELSA,
 	  PCMCIA_PRODUCT_ELSA_XI300_IEEE,
 	  PCMCIA_CIS_ELSA_XI300_IEEE,
@@ -193,6 +198,11 @@ static const struct wi_pcmcia_product {
 	  PCMCIA_CIS_BUFFALO_WLI_PCM_S11,
 	  PCMCIA_STR_BUFFALO_WLI_PCM_S11 },
 
+	{ PCMCIA_VENDOR_BUFFALO,
+	  PCMCIA_PRODUCT_BUFFALO_WLI_CF_S11G,
+	  PCMCIA_CIS_BUFFALO_WLI_CF_S11G,
+	  PCMCIA_STR_BUFFALO_WLI_CF_S11G },
+
 	{ PCMCIA_VENDOR_EMTAC,
 	  PCMCIA_PRODUCT_EMTAC_WLAN,
 	  PCMCIA_CIS_EMTAC_WLAN,
@@ -207,6 +217,11 @@ static const struct wi_pcmcia_product {
 	  PCMCIA_PRODUCT_ELSA_XI800_IEEE,
 	  PCMCIA_CIS_ELSA_XI800_IEEE,
 	  PCMCIA_STR_ELSA_XI800_IEEE },
+
+	{ PCMCIA_VENDOR_SIMPLETECH,
+	  PCMCIA_PRODUCT_SIMPLETECH_SPECTRUM24_ALT,
+	  PCMCIA_CIS_SIMPLETECH_SPECTRUM24_ALT,
+	  PCMCIA_STR_SIMPLETECH_SPECTRUM24_ALT },
 
 	{ 0,
 	  0,

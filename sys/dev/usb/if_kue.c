@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.39.2.5 2001/11/14 19:16:15 nathanw Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.39.2.6 2002/01/08 00:32:05 nathanw Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.39.2.5 2001/11/14 19:16:15 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.39.2.6 2002/01/08 00:32:05 nathanw Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -148,7 +148,7 @@ int	kuedebug = 0;
 /*
  * Various supported device vendors/products.
  */
-Static const struct kue_type kue_devs[] = {
+Static const struct usb_devno kue_devs[] = {
 	{ USB_VENDOR_3COM, USB_PRODUCT_3COM_3C19250 },
 	{ USB_VENDOR_3COM, USB_PRODUCT_3COM_3C460 },
 	{ USB_VENDOR_ABOCOM, USB_PRODUCT_ABOCOM_URE450 },
@@ -180,8 +180,8 @@ Static const struct kue_type kue_devs[] = {
 	{ USB_VENDOR_PORTSMITH, USB_PRODUCT_PORTSMITH_EEA },
 	{ USB_VENDOR_SHARK, USB_PRODUCT_SHARK_PA },
 	{ USB_VENDOR_SMC, USB_PRODUCT_SMC_2102USB },
-	{ 0, 0 }
 };
+#define kue_lookup(v, p) (usb_lookup(kue_devs, v, p))
 
 USB_DECLARE_DRIVER(kue);
 
@@ -403,18 +403,14 @@ kue_reset(struct kue_softc *sc)
 USB_MATCH(kue)
 {
 	USB_MATCH_START(kue, uaa);
-	const struct kue_type			*t;
 
 	DPRINTFN(25,("kue_match: enter\n"));
 
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
 
-	for (t = kue_devs; t->kue_vid != 0; t++)
-		if (uaa->vendor == t->kue_vid && uaa->product == t->kue_did)
-			return (UMATCH_VENDOR_PRODUCT);
-
-	return (UMATCH_NONE);
+	return (kue_lookup(uaa->vendor, uaa->product) != NULL ?
+		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
 /*

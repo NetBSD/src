@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxlreg.h,v 1.4.2.3 2001/11/14 19:14:22 nathanw Exp $	*/
+/*	$NetBSD: elinkxlreg.h,v 1.4.2.4 2002/01/08 00:29:43 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  * Counter in window 4 for packets with a bad start-of-stream delimiter/
  */
 #define ELINK_W4_BADSSD		0x0c
-#define ELINK_W4_UBYTESOK	0x0c
+#define ELINK_W4_UBYTESOK	0x0d
 
 /*
  * Define for extra multicast hash filter bit implemented in the 90xB
@@ -134,13 +134,13 @@
 /*
  * Defines for the interrupt status register, only for the 90x[B]
  */
-#define S_HOST_ERROR		0x0002
-#define S_LINK_EVENT		0x0100
-#define S_DN_COMPLETE		0x0200
-#define S_UP_COMPLETE		0x0400
+#define HOST_ERROR		0x0002
+#define LINK_EVENT		0x0100
+#define DN_COMPLETE		0x0200
+#define UP_COMPLETE		0x0400
 
-#define S_MASK \
-    (S_HOST_ERROR | S_TX_COMPLETE | S_UPD_STATS | S_DN_COMPLETE | S_UP_COMPLETE)
+#define XL_WATCHED_INTERRUPTS \
+    (HOST_ERROR | TX_COMPLETE | UPD_STATS | DN_COMPLETE | UP_COMPLETE)
 
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_zs.c,v 1.6.6.3 2001/11/14 19:16:08 nathanw Exp $	*/
+/*	$NetBSD: kbd_zs.c,v 1.6.6.4 2002/01/08 00:31:59 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd_zs.c,v 1.6.6.3 2001/11/14 19:16:08 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd_zs.c,v 1.6.6.4 2002/01/08 00:31:59 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ struct cfattach kbd_zs_ca = {
 };
 
 /* Fall-back baud rate */
-int	kbd_zs_bps = KBD_BPS;
+int	kbd_zs_bps = KBD_DEFAULT_BPS;
 
 /*
  * kbd_zs_match: how is this zs channel configured?

@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.5 2000/07/23 20:40:45 jdc Exp $
+#	$NetBSD: Makefile,v 1.5.8.1 2002/01/08 00:23:43 nathanw Exp $
 
 PROG=	sdboot
 SRCS=	sdboot.s
-MKMAN=	no
+NOMAN=	# defined
 LIBCRT0=
 INCL=	-I${.CURDIR} -I${.CURDIR}/..
 

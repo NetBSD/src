@@ -1,4 +1,4 @@
-/*	$NetBSD: sram.c,v 1.6 1999/06/15 15:04:56 minoura Exp $	*/
+/*	$NetBSD: sram.c,v 1.6.20.1 2002/01/08 00:28:42 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 Kazuhisa Shimizu.
@@ -157,7 +157,8 @@ sramioctl (dev, cmd, data, flag, p)
 		if (sram_io == NULL ||
 		    sram_io->offset + SRAM_IO_SIZE > SRAM_SIZE)
 			return(EFAULT);
-		bcopy(sramtop + sram_io->offset, &(sram_io->sram), SRAM_IO_SIZE);
+		memcpy(&(sram_io->sram), sramtop + sram_io->offset,
+		    SRAM_IO_SIZE);
 		break;
 	case SIOPSRAM:
 		if ((su->flags & SRF_WRITE) == 0)
@@ -178,7 +179,8 @@ sramioctl (dev, cmd, data, flag, p)
 		}
 #endif
 		sysport.sramwp = 0x31;
-		bcopy(&(sram_io->sram), sramtop + sram_io->offset,SRAM_IO_SIZE);
+		memcpy(sramtop + sram_io->offset, &(sram_io->sram),
+		    SRAM_IO_SIZE);
 		sysport.sramwp = 0x00;
 		break;
 	default:

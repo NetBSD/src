@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.11.4.4 2001/11/14 19:16:20 nathanw Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.11.4.5 2002/01/08 00:32:16 nathanw Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.11.4.4 2001/11/14 19:16:20 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.11.4.5 2002/01/08 00:32:16 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,7 @@ Static	void uplcom_break(struct uplcom_softc *, int);
 Static	void uplcom_set_line_state(struct uplcom_softc *);
 Static	void uplcom_get_status(void *, int portno, u_char *lsr, u_char *msr);
 #if TODO
-Static	int  uplcom_ioctl(void *, int, u_long, caddr_t, int, struct proc *);
+Static	int  uplcom_ioctl(void *, int, u_long, caddr_t, int, usb_proc_ptr );
 #endif
 Static	int  uplcom_param(void *, int, struct termios *);
 Static	int  uplcom_open(void *, int);
@@ -150,10 +150,7 @@ struct	ucom_methods uplcom_methods = {
 	NULL,
 };
 
-static const struct uplcom_product {
-	uint16_t	vendor;
-	uint16_t	product;
-} uplcom_products [] = {
+static const struct usb_devno uplcom_devs[] = {
 	/* I/O DATA USB-RSAQ2 */
 	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_RSAQ2 },
 	/* I/O DATA USB-RSAQ */
@@ -162,26 +159,22 @@ static const struct uplcom_product {
 	{ USB_VENDOR_ATEN, USB_PRODUCT_ATEN_UC232A },
 	/* IOGEAR/ATEN UC-232A */
 	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2303 },
-	{ 0, 0 }
+	/* ELECOM UC-SGT */
+	{ USB_VENDOR_ELECOM, USB_PRODUCT_ELECOM_UCSGT },
 };
+#define uplcom_lookup(v, p) usb_lookup(uplcom_devs, v, p)
 
 USB_DECLARE_DRIVER(uplcom);
 
 USB_MATCH(uplcom)
 {
 	USB_MATCH_START(uplcom, uaa);
-	int i;
 
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
 
-	for (i = 0; uplcom_products[i].vendor != 0; i++) {
-		if (uplcom_products[i].vendor == uaa->vendor &&
- 		    uplcom_products[i].product == uaa->product) {
-			return (UMATCH_VENDOR_PRODUCT);
-		}
-	}
-	return (UMATCH_NONE);
+	return (uplcom_lookup(uaa->vendor, uaa->product) != NULL ?
+		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
 USB_ATTACH(uplcom)
@@ -717,7 +710,7 @@ uplcom_get_status(void *addr, int portno, u_char *lsr, u_char *msr)
 #if TODO
 int
 uplcom_ioctl(void *addr, int portno, u_long cmd, caddr_t data, int flag,
-	     struct proc *p)
+	     usb_proc_ptr p)
 {
 	struct uplcom_softc *sc = addr;
 	int error = 0;

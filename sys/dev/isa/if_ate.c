@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ate.c,v 1.24.4.3 2001/11/14 19:14:47 nathanw Exp $	*/
+/*	$NetBSD: if_ate.c,v 1.24.4.4 2002/01/08 00:30:25 nathanw Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.24.4.3 2001/11/14 19:14:47 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.24.4.4 2002/01/08 00:30:25 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -265,7 +265,7 @@ ate_find(iot, ioh, iobase, irq)
 	 * We are now almost sure we have an AT1700 at the given
 	 * address.  So, read EEPROM through 86965.  We have to write
 	 * into LSI registers to read from EEPROM.  I want to avoid it
-	 * at this stage, but I cannot test the presense of the chip
+	 * at this stage, but I cannot test the presence of the chip
 	 * any further without reading EEPROM.  FIXME.
 	 */
 	ate_read_eeprom(iot, ioh, eeprom);

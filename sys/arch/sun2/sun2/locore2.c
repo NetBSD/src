@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.5.8.2 2001/11/18 19:45:50 scw Exp $	*/
+/*	$NetBSD: locore2.c,v 1.5.8.3 2002/01/08 00:28:11 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -167,7 +167,7 @@ _save_symtab()
 static void
 _vm_init()
 {
-	vm_offset_t nextva;
+	vaddr_t nextva;
 
 	/*
 	 * First preserve our symbol table, which might have been
@@ -194,8 +194,8 @@ _vm_init()
 	 */
 	proc0paddr = (struct user *) nextva;
 	nextva += USPACE;
-	bzero((caddr_t)proc0paddr, USPACE);
-	lwp0.l_addr = proc0paddr;
+	memset((caddr_t)proc0paddr, 0, USPACE);
+	lwp0.p_addr = proc0paddr;
 
 	/*
 	 * Now that lwp0 exists, make it the "current" one.
@@ -263,10 +263,10 @@ _verify_hardware()
 void
 _bootstrap()
 {
-	vm_offset_t va;
+	vaddr_t va;
 
 	/* First, Clear BSS. */
-	bzero(edata, end - edata);
+	memset(edata, 0, end - edata);
 
 	/* Initialize the PROM. */
 	prom_init();

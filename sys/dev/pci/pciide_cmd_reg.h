@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_cmd_reg.h,v 1.9.2.1 2001/10/22 20:41:28 nathanw Exp $	*/
+/*	$NetBSD: pciide_cmd_reg.h,v 1.9.2.2 2002/01/08 00:31:16 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -98,7 +98,7 @@
 #define CMD_UDMATIM_TIM_MASK	0x3
 #define CMD_UDMATIM_TIM_OFF(drive) (4 + ((drive) * 2))
 static const int8_t cmd0646_9_tim_udma[] __attribute__((__unused__)) =
-    {0x03, 0x02, 0x01, 0x02, 0x01};
+    {0x03, 0x02, 0x01, 0x02, 0x01, 0x00};
 
 /*
  * timings values for the 0643/6/8/9

@@ -1,4 +1,4 @@
-/*	$NetBSD: esmvar.h,v 1.4 2001/02/12 23:56:40 ichiro Exp $	*/
+/*	$NetBSD: esmvar.h,v 1.4.2.1 2002/01/08 00:31:02 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Rene Hexel <rh@netbsd.org>
@@ -118,14 +118,14 @@ struct esm_softc {
 	void   *esm_powerhook;	
 };
 
+enum esm_quirk_flags {
+	ESM_QUIRKF_GPIO = 0x1,		/* needs GPIO operation */
+	ESM_QUIRKF_SWAPPEDCH = 0x2,	/* left/right is reversed */
+};
+
 struct esm_quirks {
 	pci_vendor_id_t		eq_vendor;	/* subsystem vendor */
 	pci_product_id_t	eq_product;	/* and product */
-
-	enum esm_quirk_flags {
-		ESM_QUIRKF_GPIO = 0x1,		/* needs GPIO operation */
-		ESM_QUIRKF_SWAPPEDCH = 0x2,	/* left/right is reversed */
-	};
 
 	enum esm_quirk_flags	eq_quirks;	/* needed quirks */
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_wfq.c,v 1.2.4.2 2001/11/14 19:12:39 nathanw Exp $	*/
+/*	$NetBSD: altq_wfq.c,v 1.2.4.3 2002/01/08 00:22:42 nathanw Exp $	*/
 /*	$KAME: altq_wfq.c,v 1.7 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_wfq.c,v 1.2.4.2 2001/11/14 19:12:39 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_wfq.c,v 1.2.4.3 2002/01/08 00:22:42 nathanw Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: altq_wfq.c,v 1.2.4.2 2001/11/14 19:12:39 nathanw Exp
 #endif /* __FreeBSD__ || __NetBSD__ */
 #ifdef ALTQ_WFQ
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>

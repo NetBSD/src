@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.3.10.2 2001/11/15 08:28:22 thorpej Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.3.10.3 2002/01/08 00:23:06 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -36,11 +36,9 @@
  * SUCH DAMAGE.
  */
 
-#include "opt_progmode.h"
-
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.3.10.2 2001/11/15 08:28:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.3.10.3 2002/01/08 00:23:06 nathanw Exp $");
 
 #include <sys/systm.h>
 #include <sys/signalvar.h>
@@ -76,11 +74,11 @@ compat_13_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
 	 * Make sure the processor mode has not been tampered with and
 	 * interrupts have not been disabled.
 	 */
-#ifdef PROG32
+#ifdef __PROG32
 	if ((context.sc_spsr & PSR_MODE) != PSR_USR32_MODE ||
 	    (context.sc_spsr & (I32_bit | F32_bit)) != 0)
 		return (EINVAL);
-#else /* PROG26 */
+#else /* __PROG26 */
 	if ((context.sc_pc & R15_MODE) != R15_MODE_USR ||
 	    (context.sc_pc & (R15_IRQ_DISABLE | R15_FIQ_DISABLE)) != 0)
 		return EINVAL;

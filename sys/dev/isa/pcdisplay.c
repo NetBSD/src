@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay.c,v 1.11.2.1 2001/11/14 19:14:52 nathanw Exp $ */
+/* $NetBSD: pcdisplay.c,v 1.11.2.2 2002/01/08 00:30:30 nathanw Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcdisplay.c,v 1.11.2.1 2001/11/14 19:14:52 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcdisplay.c,v 1.11.2.2 2002/01/08 00:30:30 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -307,7 +307,7 @@ pcdisplay_attach(parent, self, aux)
 		sc->sc_weasel.wh_st = dc->dc_ph.ph_memt;
 		sc->sc_weasel.wh_sh = dc->dc_ph.ph_memh;
 		sc->sc_weasel.wh_parent = &sc->sc_dev;
-		weasel_init(&sc->sc_weasel);
+		weasel_isa_init(&sc->sc_weasel);
 	}
 #endif /* NPCWEASEL > 0 */
 

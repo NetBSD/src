@@ -1,7 +1,7 @@
-/*	$NetBSD: if_pcn.c,v 1.4.6.3 2001/11/14 19:15:17 nathanw Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.4.6.4 2002/01/08 00:31:04 nathanw Exp $	*/
 
 /*
- * Copyright 2001 Wasabi Systems, Inc.
+ * Copyright (c) 2001 Wasabi Systems, Inc.
  * All rights reserved.
  *
  * Written by Jason R. Thorpe for Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.4.6.3 2001/11/14 19:15:17 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.4.6.4 2002/01/08 00:31:04 nathanw Exp $");
 
 #include "bpfilter.h"
 
@@ -1000,11 +1000,10 @@ pcn_start(struct ifnet *ifp)
 				sc->sc_txdescs[nexttx].tmd2 =
 				    htole32(dmamap->dm_segs[seg].ds_addr);
 				sc->sc_txdescs[nexttx].tmd1 =
-				    ((nexttx == sc->sc_txnext) ? 0 :
-				     htole32(LE_T1_OWN)) |
-				    htole32((LE_BCNT(dmamap->dm_segs[
-								seg].ds_len) &
-					     LE_T1_BCNT_MASK));
+				    htole32(LE_T1_ONES |
+				    (nexttx == sc->sc_txnext ? 0 : LE_T1_OWN) |
+				    (LE_BCNT(dmamap->dm_segs[seg].ds_len) &
+				     LE_T1_BCNT_MASK));
 				lasttx = nexttx;
 			}
 		} else {
@@ -1021,11 +1020,10 @@ pcn_start(struct ifnet *ifp)
 				    htole32(dmamap->dm_segs[seg].ds_addr);
 				sc->sc_txdescs[nexttx].tmd2 = 0;
 				sc->sc_txdescs[nexttx].tmd1 =
-				    ((nexttx == sc->sc_txnext) ? 0 :
-				     htole32(LE_T1_OWN)) |
-				    htole32((LE_BCNT(dmamap->dm_segs[
-								seg].ds_len) &
-					     LE_T1_BCNT_MASK));
+				    htole32(LE_T1_ONES |
+				    (nexttx == sc->sc_txnext ? 0 : LE_T1_OWN) |
+				    (LE_BCNT(dmamap->dm_segs[seg].ds_len) &
+				     LE_T1_BCNT_MASK));
 				lasttx = nexttx;
 			}
 		}

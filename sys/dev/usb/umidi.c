@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.5.2.4 2001/11/14 19:16:19 nathanw Exp $	*/
+/*	$NetBSD: umidi.c,v 1.5.2.5 2002/01/08 00:32:15 nathanw Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.5.2.4 2001/11/14 19:16:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.5.2.5 2002/01/08 00:32:15 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -355,12 +355,12 @@ alloc_pipe(struct umidi_endpoint *ep)
 	DPRINTF(("%s: alloc_pipe %p\n", USBDEVNAME(sc->sc_dev), ep));
 	LIST_INIT(&ep->queue_head);
 	ep->xfer = usbd_alloc_xfer(sc->sc_udev);
-	if (!ep->xfer) {
+	if (ep->xfer == NULL) {
 	    err = USBD_NOMEM;
 	    goto quit;
 	}
 	ep->buffer = usbd_alloc_buffer(ep->xfer, UMIDI_PACKET_SIZE);
-	if (!ep->buffer) {
+	if (ep->buffer == NULL) {
 	    usbd_free_xfer(ep->xfer);
 	    err = USBD_NOMEM;
 	    goto quit;
@@ -1147,7 +1147,7 @@ start_input_transfer(struct umidi_endpoint *ep)
 	usbd_setup_xfer(ep->xfer, ep->pipe,
 			(usbd_private_handle)ep,
 			ep->buffer, UMIDI_PACKET_SIZE,
-			0, USBD_NO_TIMEOUT, in_intr);
+			USBD_NO_COPY, USBD_NO_TIMEOUT, in_intr);
 	return usbd_transfer(ep->xfer);
 }
 
@@ -1157,7 +1157,7 @@ start_output_transfer(struct umidi_endpoint *ep)
 	usbd_setup_xfer(ep->xfer, ep->pipe,
 			(usbd_private_handle)ep,
 			ep->buffer, UMIDI_PACKET_SIZE,
-			0, USBD_NO_TIMEOUT, out_intr);
+			USBD_NO_COPY, USBD_NO_TIMEOUT, out_intr);
 	return usbd_transfer(ep->xfer);
 }
 

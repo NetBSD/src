@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.10.6.4 2001/12/08 08:22:43 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.10.6.5 2002/01/08 00:27:10 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -93,7 +93,7 @@ struct cpu_info {
 
 #ifdef MULTIPROCESSOR
 static __inline int
-cpu_number()
+cpu_number(void)
 {
 	int pir;
 
@@ -102,13 +102,15 @@ cpu_number()
 }
 
 static __inline struct cpu_info *
-curcpu()
+curcpu(void)
 {
 	struct cpu_info *ci;
 
 	asm volatile ("mfsprg %0,0" : "=r"(ci));
 	return ci;
 }
+
+void	cpu_boot_secondary_processors(void);
 
 extern struct cpu_info cpu_info[];
 

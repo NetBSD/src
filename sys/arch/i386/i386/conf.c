@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.138.2.5 2001/09/26 19:54:44 nathanw Exp $	*/
+/*	$NetBSD: conf.c,v 1.138.2.6 2002/01/08 00:25:19 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.138.2.6 2002/01/08 00:25:19 nathanw Exp $");
 
 #include "opt_compat_svr4.h"
 
@@ -166,6 +169,8 @@ cdev_decl(audio);
 cdev_decl(midi);
 #include "sequencer.h"
 cdev_decl(music);
+#include "radio.h"
+cdev_decl(radio);
 cdev_decl(svr4_net);
 cdev_decl(ccd);
 cdev_decl(raid);
@@ -210,6 +215,10 @@ cdev_decl(esh_fp);
 #include "scsibus.h"
 cdev_decl(scsibus);
 #include "bktr.h"
+#include "irframe.h"
+cdev_decl(irframe);
+#include "cir.h"
+cdev_decl(cir);
 
 #include "i4b.h"
 #include "i4bctl.h"
@@ -341,6 +350,9 @@ struct cdevsw	cdevsw[] =
 	cdev__ocim_init(NAGP,agp),	/* 82: AGP graphics aperture device */
 	cdev_pci_init(NPCI,pci),	/* 83: PCI bus access device */
 	cdev__oci_init(NDPTI,dpti),	/* 84: DPT/Adaptec RAID management */
+	cdev_ir_init(NIRFRAMEDRV,irframe),/* 85: IrDA frame driver */
+	cdev_ir_init(NCIR,cir),		/* 86: Consumer Ir */
+	cdev_radio_init(NRADIO,radio),	/* 87: generic radio I/O */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -467,6 +479,9 @@ static int chrtoblktbl[] = {
 	/* 82 */	NODEV,
 	/* 83 */	NODEV,
 	/* 84 */	NODEV,
+	/* 85 */	NODEV,
+	/* 86 */	NODEV,
+	/* 87 */	NODEV,
 };
 
 /*

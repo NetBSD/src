@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.1 2000/02/29 15:21:46 nonaka Exp $	*/
+/*	$NetBSD: pchb.c,v 1.1.14.1 2002/01/08 00:27:16 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,6 +48,8 @@
 
 #include <dev/pci/pcidevs.h>
 
+#include <dev/ic/mpc105reg.h>
+
 int	pchbmatch __P((struct device *, struct cfdata *, void *));
 void	pchbattach __P((struct device *, struct device *, void *));
 
@@ -80,7 +82,9 @@ pchbattach(parent, self, aux)
 	void *aux;
 {
 	struct pci_attach_args *pa = aux;
+	pcireg_t reg1, reg2;
 	char devinfo[256];
+	const char *s;
 
 	printf("\n");
 
@@ -93,4 +97,46 @@ pchbattach(parent, self, aux)
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
 	printf("%s: %s (rev. 0x%02x)\n", self->dv_xname, devinfo,
 	    PCI_REVISION(pa->pa_class));
+
+	switch (PCI_VENDOR(pa->pa_id)) {
+	case PCI_VENDOR_MOT:
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_MOT_MPC105:
+			reg1 = pci_conf_read(pa->pa_pc, pa->pa_tag,
+			    MPC105_PICR1);
+			reg2 = pci_conf_read(pa->pa_pc, pa->pa_tag,
+			    MPC105_PICR2);
+			printf("%s: L2 cache: ", self->dv_xname);
+			switch (reg2 & MPC105_PICR2_L2_SIZE) {
+			case MPC105_PICR2_L2_SIZE_256K:
+				s = "256K";
+				break;
+			case MPC105_PICR2_L2_SIZE_512K:
+				s = "512K";
+				break;
+			case MPC105_PICR2_L2_SIZE_1M:
+				s = "1M";
+				break;
+			default:
+				s = "reserved size";
+				break;
+			}
+			printf("%s, ", s);
+			switch (reg1 & MPC105_PICR1_L2_MP) {
+			case MPC105_PICR1_L2_MP_NONE:
+				s = "uniprocessor/none";
+				break;
+			case MPC105_PICR1_L2_MP_WT:
+				s = "write-through";
+				break;
+			case MPC105_PICR1_L2_MP_WB:
+				s = "write-back";
+				break;
+			case MPC105_PICR1_L2_MP_MP:
+				s = "multiprocessor";
+				break;
+			}
+			printf("%s mode\n", s);
+		}
+	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.66.2.7 2001/11/14 19:14:14 nathanw Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.66.2.8 2002/01/08 00:29:34 nathanw Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.66.2.7 2001/11/14 19:14:14 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.66.2.8 2002/01/08 00:29:34 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ahc.h"
@@ -2043,7 +2043,7 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 		       ahc_inb(ahc, SCBPTR));
 		printf("TRACEPOINT: WAITING_SCBH = %d\n", ahc_inb(ahc, WAITING_SCBH));
 		printf("TRACEPOINT: SCB_TAG = %d\n", ahc_inb(ahc, SCB_TAG));
-#if DDB > 0
+#ifdef DDB
 		cpu_Debugger();
 #endif
 #endif

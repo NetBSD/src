@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.70.6.3 2001/11/14 19:14:14 nathanw Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.70.6.4 2002/01/08 00:29:33 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.70.6.3 2001/11/14 19:14:14 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.70.6.4 2002/01/08 00:29:33 nathanw Exp $");
 
 #include "opt_ddb.h"
 #ifdef DDB
@@ -123,7 +123,6 @@ __KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.70.6.3 2001/11/14 19:14:14 nathanw Exp
 #error "I said not yet! Start paying attention... grumble"
 #endif
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>

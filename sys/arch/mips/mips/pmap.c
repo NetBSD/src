@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.138.2.2 2001/11/17 23:43:43 wdk Exp $	*/
+/*	$NetBSD: pmap.c,v 1.138.2.3 2002/01/08 00:26:24 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.138.2.2 2001/11/17 23:43:43 wdk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.138.2.3 2002/01/08 00:26:24 nathanw Exp $");
 
 /*
  *	Manages physical address maps.
@@ -961,7 +961,7 @@ pmap_procwr(p, va, len)
 #if 0
 		printf("pmap_procwr: va %lx len %lx\n", va, len);
 #endif
-		if (p == curproc->l_proc)
+		if (p == curproc)
 			mips_icache_sync_range(va, len);
 		else
 			mips_icache_sync_range_index(va, len);
@@ -1569,7 +1569,7 @@ pmap_zero_page(phys)
 	 *
 	 * XXXJRT This is totally disgusting.
 	 */
-	if (CPUISMIPS3 && mips_sdcache_line_size == 0) 
+	if (CPUISMIPS3 && mips_sdcache_line_size == 0)
 		mips_dcache_wbinv_range(MIPS_PHYS_TO_KSEG0(phys), NBPG);
 #endif
 }

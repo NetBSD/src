@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.104.4.2 2001/11/05 19:46:14 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.104.4.3 2002/01/08 00:26:12 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -66,6 +66,7 @@
 #include <machine/powerpc.h>
 #include <machine/trap.h>
 #include <machine/bus.h>
+#include <machine/fpu.h>
 
 #include <dev/cons.h>
 #include <dev/ofw/openfirm.h>
@@ -324,6 +325,43 @@ initppc(startkernel, endkernel, args)
 		*args++ = 0;
 		while (*args)
 			BOOT_FLAG(*args++, boothowto);
+	}
+
+	/*
+	 * If the bootpath doesn't start with a / then it isn't
+	 * an OFW path and probably is an alias, so look up the alias
+	 * and regenerate the full bootpath so device_register will work.
+	 */
+	if (bootpath[0] != '/' && bootpath[0] != '\0') {
+		int aliases = OF_finddevice("/aliases");
+		char tmpbuf[100];
+		char aliasbuf[256];
+		if (aliases != 0) {
+			char *cp1, *cp2, *cp;
+			char saved_ch = 0;
+			int len;
+			cp1 = strchr(bootpath, ':');
+			cp2 = strchr(bootpath, ',');
+			cp = cp1;
+			if (cp1 == NULL || (cp2 != NULL && cp2 < cp1))
+				cp = cp2;
+			tmpbuf[0] = '\0';
+			if (cp != NULL) {
+				strcpy(tmpbuf, cp);
+				saved_ch = *cp;
+				*cp = '\0';
+			}
+			len = OF_getprop(aliases, bootpath, aliasbuf,
+			    sizeof(aliasbuf));
+			if (len > 0) {
+				if (aliasbuf[len-1] == '\0')
+					len--;
+				memcpy(bootpath, aliasbuf, len);
+				strcpy(&bootpath[len], tmpbuf);
+			} else {
+				*cp = saved_ch;
+			}
+		}
 	}
 
 #ifdef DDB
@@ -914,8 +952,16 @@ cninit_kd()
 	if (OF_call_method("`usb-kbd-ihandles", stdin, 0, 1, &ukbds) != -1 &&
 	    ukbds != NULL && ukbds->ihandle != 0 &&
 	    OF_instance_to_package(ukbds->ihandle) != -1) {
-
 		printf("console keyboard type: USB\n");
+		ukbd_cnattach();
+		goto kbd_found;
+	}
+	/* Try old method name. */
+	if (OF_call_method("`usb-kbd-ihandle", stdin, 0, 1, &akbd) != -1 &&
+	    akbd != 0 &&
+	    OF_instance_to_package(akbd) != -1) {
+		printf("console keyboard type: USB\n");
+		stdin = akbd;
 		ukbd_cnattach();
 		goto kbd_found;
 	}
@@ -925,7 +971,6 @@ cninit_kd()
 	if (OF_call_method("`adb-kbd-ihandle", stdin, 0, 1, &akbd) != -1 &&
 	    akbd != 0 &&
 	    OF_instance_to_package(akbd) != -1) {
-
 		printf("console keyboard type: ADB\n");
 		stdin = akbd;
 		akbd_cnattach();

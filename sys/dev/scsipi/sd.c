@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.169.2.4 2001/11/14 19:16:04 nathanw Exp $	*/
+/*	$NetBSD: sd.c,v 1.169.2.5 2002/01/08 00:31:53 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,12 +54,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.169.2.4 2001/11/14 19:16:04 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.169.2.5 2002/01/08 00:31:53 nathanw Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

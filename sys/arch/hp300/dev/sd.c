@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.46.8.2 2001/11/18 18:09:32 scw Exp $	*/
+/*	$NetBSD: sd.c,v 1.46.8.3 2002/01/08 00:24:37 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -359,7 +359,7 @@ sdgetcapacity(sc, dev)
 			panic("sdgetcapacity");
 		bp = malloc(sizeof *bp, M_DEVBUF, M_WAITOK);
 		sc->sc_format_pid = curproc->l_proc->p_pid;
-		bcopy(&cap, &sc->sc_cmdstore, sizeof cap);
+		memcpy(&sc->sc_cmdstore, &cap, sizeof cap);
 		bp->b_dev = dev;
 		bp->b_flags = B_READ | B_BUSY;
 		bp->b_data = (caddr_t)capbuf;
@@ -444,7 +444,7 @@ sdgetinfo(dev)
 		usedefault = 0;
 #endif
 
-	bzero((caddr_t)lp, sizeof *lp);
+	memset((caddr_t)lp, 0, sizeof *lp);
 	msg = NULL;
 
 	/*
@@ -636,7 +636,7 @@ sdlblkstrat(bp, bsize)
 	int bn, resid;
 	caddr_t addr;
 
-	bzero((caddr_t)cbp, sizeof(*cbp));
+	memset((caddr_t)cbp, 0, sizeof(*cbp));
 	cbp->b_proc = curproc->l_proc;		/* XXX */
 	cbp->b_dev = bp->b_dev;
 	bn = bp->b_blkno;
@@ -673,10 +673,10 @@ sdlblkstrat(bp, bsize)
 				break;
 			}
 			if (bp->b_flags & B_READ) {
-				bcopy(&cbuf[boff], addr, count);
+				memcpy(addr, &cbuf[boff], count);
 				goto done;
 			}
-			bcopy(addr, &cbuf[boff], count);
+			memcpy(&cbuf[boff], addr, count);
 #ifdef DEBUG
 			if (sddebug & SDB_PARTIAL)
 				printf(" writeback: bn %x cnt %x off %x addr %p\n",
@@ -1151,7 +1151,7 @@ sdioctl(dev, cmd, data, flag, p)
 			return (EPERM);
 		if (legal_cmds[((struct scsi_fmt_cdb *)data)->cdb[0]] == 0)
 			return (EINVAL);
-		bcopy(data, &sc->sc_cmdstore, sizeof(struct scsi_fmt_cdb));
+		memcpy(&sc->sc_cmdstore, data, sizeof(struct scsi_fmt_cdb));
 		return (0);
 
 	case SDIOCSENSE:
@@ -1159,7 +1159,7 @@ sdioctl(dev, cmd, data, flag, p)
 		 * return the SCSI sense data saved after the last
 		 * operation that completed with "check condition" status.
 		 */
-		bcopy(&sc->sc_sensestore, data, sizeof(sc->sc_sensestore));
+		memcpy(data, &sc->sc_sensestore, sizeof(sc->sc_sensestore));
 		return (0);
 		
 	}

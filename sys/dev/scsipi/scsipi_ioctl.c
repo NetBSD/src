@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.37.14.3 2001/11/14 19:16:03 nathanw Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.37.14.4 2002/01/08 00:31:52 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,14 +44,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.37.14.3 2001/11/14 19:16:03 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.37.14.4 2002/01/08 00:31:52 nathanw Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
 
-#include <sys/types.h>
-#include <sys/errno.h>
 #include <sys/param.h>
+#include <sys/errno.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>

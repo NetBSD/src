@@ -1,9 +1,9 @@
-# $NetBSD: FRAU-FARBISSINA.PROF,v 1.1 2000/09/02 21:38:19 thorpej Exp $
+# $NetBSD: FRAU-FARBISSINA.PROF,v 1.1.4.1 2002/01/08 00:22:52 nathanw Exp $
 #
 # FRAU-FARBISSINA hard-wired with profiling support
 
 include	"arch/alpha/conf/FRAU-FARBISSINA"
 
 # Always include profiling support; does not need 'config -p'.
-makeoptions 	PROF="-pg"
+makeoptions	PROF="-pg"
 options 	GPROF

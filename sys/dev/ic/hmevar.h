@@ -1,4 +1,4 @@
-/*	$NetBSD: hmevar.h,v 1.6 2000/09/28 10:56:57 tsutsui Exp $	*/
+/*	$NetBSD: hmevar.h,v 1.6.2.1 2002/01/08 00:29:45 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

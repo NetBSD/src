@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons_subr.c,v 1.7.6.2 2001/11/14 19:15:55 nathanw Exp $ */
+/*	$NetBSD: rcons_subr.c,v 1.7.6.3 2002/01/08 00:31:40 nathanw Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -45,14 +45,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rcons_subr.c,v 1.7.6.2 2001/11/14 19:15:55 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rcons_subr.c,v 1.7.6.3 2002/01/08 00:31:40 nathanw Exp $");
 
-#ifdef _KERNEL
 #include <sys/param.h>
+#ifdef _KERNEL
 #include <sys/device.h>
 #include <sys/systm.h>
 #else
-#include <sys/types.h>
 #include "myfbdevice.h"
 #endif
 

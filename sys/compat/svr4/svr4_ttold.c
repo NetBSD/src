@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ttold.c,v 1.13.14.1 2001/11/14 19:13:28 nathanw Exp $	 */
+/*	$NetBSD: svr4_ttold.c,v 1.13.14.2 2002/01/08 00:29:11 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_ttold.c,v 1.13.14.1 2001/11/14 19:13:28 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_ttold.c,v 1.13.14.2 2002/01/08 00:29:11 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_ttold.c,v 1.13.14.1 2001/11/14 19:13:28 nathanw
 #include <sys/mount.h>
 #include <net/if.h>
 #include <sys/malloc.h>
+#include <sys/ioctl_compat.h>
 
 #include <sys/syscallargs.h>
 
@@ -64,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_ttold.c,v 1.13.14.1 2001/11/14 19:13:28 nathanw
 #include <compat/svr4/svr4_stropts.h>
 #include <compat/svr4/svr4_ttold.h>
 #include <compat/svr4/svr4_ioctl.h>
+
 
 static void svr4_tchars_to_bsd_tchars __P((const struct svr4_tchars *st,
 					   struct tchars *bt));

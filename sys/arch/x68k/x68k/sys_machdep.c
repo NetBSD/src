@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.23.8.1 2001/11/18 18:44:19 scw Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.23.8.2 2002/01/08 00:28:58 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -201,14 +201,16 @@ cachectl1(req, addr, len, p)
  * DMA cache control
  */
 
+#if defined(M68040) || defined(M68060)
 /*ARGSUSED1*/
 int
 dma_cachectl(addr, len)
 	caddr_t	addr;
 	int len;
 {
-#if defined(M68040) || defined(M68060)
+#if defined(M68020) || defined(M68030)
 	if (mmutype == MMU_68040) {
+#endif
 		int inc = 0;
 		int pa = 0;
 		caddr_t end;
@@ -238,10 +240,12 @@ dma_cachectl(addr, len)
 			pa += inc;
 			addr += inc;
 		} while (addr < end);
+#if defined(M68020) || defined(M68030)
 	}
-#endif	/* M68040 || M68060 */
+#endif
 	return(0);
 }
+#endif	/* M68040 || M68060 */
 
 int
 sys_sysarch(l, v, retval)

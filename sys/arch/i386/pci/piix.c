@@ -1,4 +1,4 @@
-/*	$NetBSD: piix.c,v 1.2 2000/07/18 11:10:22 soda Exp $	*/
+/*	$NetBSD: piix.c,v 1.2.6.1 2002/01/08 00:25:43 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -65,6 +65,9 @@
 /*
  * Support for the Intel PIIX PCI-ISA bridge interrupt controller.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: piix.c,v 1.2.6.1 2002/01/08 00:25:43 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

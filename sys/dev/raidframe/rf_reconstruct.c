@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.27.2.4 2001/11/14 19:15:52 nathanw Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.27.2.5 2002/01/08 00:31:36 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,13 +33,12 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.27.2.4 2001/11/14 19:15:52 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.27.2.5 2002/01/08 00:31:36 nathanw Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
 #include <sys/errno.h>
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>

@@ -1,0 +1,15 @@
+#	$NetBSD: std.milan,v 1.2.4.2 2002/01/08 00:23:36 nathanw Exp $
+#
+# standard atari information
+#
+machine		atari m68k
+
+options 	_MILANHW_
+
+options 	EXEC_SCRIPT		# Support #!
+options 	EXEC_ELF32		# 32-bit ELF executables
+
+mainbus0	at root
+
+clock0		at mainbus0		# system clock
+

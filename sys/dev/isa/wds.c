@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.41.2.3 2001/11/14 19:14:54 nathanw Exp $	*/
+/*	$NetBSD: wds.c,v 1.41.2.4 2002/01/08 00:30:33 nathanw Exp $	*/
 
 /*
  * XXX
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.41.2.3 2001/11/14 19:14:54 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.41.2.4 2002/01/08 00:30:33 nathanw Exp $");
 
 #include "opt_ddb.h"
 
@@ -97,7 +97,6 @@ __KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.41.2.3 2001/11/14 19:14:54 nathanw Exp $")
 #define	integrate	static inline
 #endif
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

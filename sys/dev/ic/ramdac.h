@@ -1,4 +1,4 @@
-/* $NetBSD: ramdac.h,v 1.2 2000/04/02 18:54:33 nathanw Exp $ */
+/* $NetBSD: ramdac.h,v 1.2.8.1 2002/01/08 00:30:04 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -75,6 +75,10 @@ struct ramdac_funcs {
 		    struct wsdisplay_cursor *));
 	int	(*ramdac_get_curcmap) __P((struct ramdac_cookie *,
 		    struct wsdisplay_cursor *));
+
+	/* XXXrcd:  new test code for setting the DOTCLOCK */
+	int	(*ramdac_set_dotclock) __P((struct ramdac_cookie *,
+		    unsigned));
 };
 
 #endif

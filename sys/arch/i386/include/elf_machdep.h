@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.8 2000/04/02 15:35:49 minoura Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.8.8.1 2002/01/08 00:25:32 nathanw Exp $	*/
 
 #define	ELF32_MACHDEP_ENDIANNESS	ELFDATA2LSB
 #define	ELF32_MACHDEP_ID_CASES						\
@@ -9,6 +9,8 @@
 #define	ELF64_MACHDEP_ENDIANNESS	XXX	/* break compilation */
 #define	ELF64_MACHDEP_ID_CASES						\
 		/* no 64-bit ELF machine types supported */
+
+#define	ELF32_MACHDEP_ID		EM_386
 
 #define ARCH_ELFSIZE		32	/* MD native binary size */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_pnpbios.c,v 1.1.10.1 2001/04/09 01:53:38 nathanw Exp $	*/
+/*	$NetBSD: pckbc_pnpbios.c,v 1.1.10.2 2002/01/08 00:25:45 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,6 +47,9 @@
  * driver.  After both of them have been found, then we attach
  * sub-devices.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pckbc_pnpbios.c,v 1.1.10.2 2002/01/08 00:25:45 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

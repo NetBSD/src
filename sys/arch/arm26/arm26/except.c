@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.38.4.7 2001/12/17 21:34:41 nathanw Exp $ */
+/* $NetBSD: except.c,v 1.38.4.8 2002/01/08 00:23:19 nathanw Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.38.4.7 2001/12/17 21:34:41 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.38.4.8 2002/01/08 00:23:19 nathanw Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
@@ -81,37 +81,6 @@ void checkvectors(void);
 #endif
 
 int want_resched;
-
-/*
- * userret() is called just before any return to userland after a trap.
- * It's all boilerplate stuff.
- */
-
-void
-userret(struct lwp *l)
-{
-	struct proc *p = l->l_proc;
-	int sig;
-
-	/* take pending signals */
-	while ((sig = CURSIG(l)) != 0)
-		postsig(sig);
-
-	/* Invoke per-process kernel-exit handling, if any */
-	if (p->p_userret) 
-		(p->p_userret)(l, p->p_userret_arg);
-
-	/* Invoke any pending upcalls. */
-	if (l->l_flag & L_SA_UPCALL)
-		sa_upcall_userret(l);
-
-	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
-#ifdef DIAGNOSTIC
-	/* Mark trapframe as invalid. */
-	l->l_addr->u_pcb.pcb_tf = (void *)-1;
-	checkvectors();
-#endif
-}
 
 #ifdef DIAGNOSTIC
 void
@@ -653,46 +622,6 @@ address_exception_handler(struct trapframe *tf)
 #endif
 #endif
 	trapsignal(l, SIGBUS, pc);
-	userret(l);
-}
-
-/*
- * An AST isn't a real hardware trap, but locore.S makes it look like one
- * for consistency.
- */
-int astpending;
-
-void
-ast_handler(struct trapframe *tf)
-{
-	struct lwp *l = curproc;
-	struct proc *p;
-
-	/* Enable interrupts if they were enabled before the trap. */
-	if ((tf->tf_r15 & R15_IRQ_DISABLE) == 0)
-		int_on();
-
-	astpending = 0;
-
-#ifdef DEBUG
-	if (l == NULL)
-		panic("ast_handler: no curproc!");
-#endif
-
-	p = l->l_proc;
-
-	if ((tf->tf_r15 & R15_MODE) == R15_MODE_USR)
-		l->l_addr->u_pcb.pcb_tf = tf;
-
-	if (p->p_flag & P_OWEUPC) {
-		p->p_flag &= ~P_OWEUPC;
-		ADDUPROF(p);
-	}
-
-	/* Allow a forced task switch. */
-	if (want_resched)
-		preempt(NULL);
-
 	userret(l);
 }
 

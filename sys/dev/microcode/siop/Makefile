@@ -1,17 +1,20 @@
-# $NetBSD: Makefile,v 1.1.8.1 2001/06/21 20:04:13 nathanw Exp $
+# $NetBSD: Makefile,v 1.1.8.2 2002/01/08 00:30:53 nathanw Exp $
 
-all: siop.out osiop.out
+all: siop.out osiop.out oosiop.out
 
 PROG=	ncr53cxxx
-MKSHARE=no
+NOSHARE=# defined
 
 .include <bsd.prog.mk>
 
-regen: siop.out osiop.out
-headers: siop.out osiop.out
+regen: siop.out osiop.out oosiop.out
+headers: siop.out osiop.out oosiop.out
 
 siop.out: siop.ss ${PROG}
-	./${PROG} siop.ss -o siop.out
+	./${PROG} siop.ss -p siop.out
 
 osiop.out: osiop.ss ${PROG}
 	./${PROG} osiop.ss -p osiop.out
+
+oosiop.out: oosiop.ss ${PROG}
+	./${PROG} oosiop.ss -o oosiop.out

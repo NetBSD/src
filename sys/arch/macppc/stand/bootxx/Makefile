@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.4 2000/02/07 16:27:00 tsubai Exp $
+#	$NetBSD: Makefile,v 1.4.12.1 2002/01/08 00:26:13 nathanw Exp $
 
 PROG= bootxx
-MKMAN=	no
+NOMAN=	# defined
 STRIPFLAG=
 BINMODE=444
 

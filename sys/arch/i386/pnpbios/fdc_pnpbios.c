@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_pnpbios.c,v 1.2 2000/12/17 07:58:37 jmc Exp $	*/
+/*	$NetBSD: fdc_pnpbios.c,v 1.2.4.1 2002/01/08 00:25:44 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * PNPBIOS attachment for the PC Floppy Controller driver.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fdc_pnpbios.c,v 1.2.4.1 2002/01/08 00:25:44 nathanw Exp $");
 
 #include "rnd.h"
 

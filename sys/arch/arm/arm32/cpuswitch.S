@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.3.2.3 2001/11/29 16:20:54 thorpej Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.3.2.4 2002/01/08 00:23:08 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -231,8 +231,7 @@ Lblock_userspace_access:
 /*
  * Idle loop, exercised while waiting for a process to wake up.
  */
-
-idle:
+ASENTRY_NP(idle)
 	/* Enable interrupts */
 	IRQenable
 
@@ -254,7 +253,7 @@ Lidle_slept:
 	bne	sw1
 
 	/* All processes are still asleep so idle a while longer */
-	b	idle
+	b	_ASM_LABEL(idle)
 
 
 /*
@@ -294,12 +293,17 @@ ENTRY(cpu_switch)
 	/* Lower the spl level to spl0 and get the current spl level. */
 	mov	r7, r1
 
+#ifdef __NEWINTR
+	mov	r0, #(IPL_NONE)
+	bl	_C_LABEL(_spllower)
+#else /* ! __NEWINTR */
 #ifdef spl0
 	mov	r0, #(_SPL_0)
 	bl	_C_LABEL(splx)
 #else
 	bl	_C_LABEL(spl0)
-#endif
+#endif /* spl0 */
+#endif /* __NEWINTR */
 
 	/* Push the old spl level onto the stack */
 	str	r0, [sp, #-0x0004]!
@@ -319,34 +323,12 @@ switch_search:
 
 	/* If not we must idle until we do. */
 	teq	r3, #0x00000000
-	beq	idle
+	beq	_ASM_LABEL(idle)
 
 sw1:
 	/* rem: r1 = old lwp */
 	/* rem: r3 = whichqs */
 	/* rem: interrupts are disabled */
-
-	/*
-	 * Paranoid debug time ....
-	 * Is this overkill ? If we are not in SVC mode then things are
-	 * very sick and will probably have already died.
-	 */
-#ifdef DIAGNOSTIC
-	mrs	r4, cpsr_all
-	and	r4, r4, #(PSR_MODE)
-	teq	r4, #(PSR_SVC32_MODE)
-	beq	switchmodeok
-
-	add	r0, pc, #switchpanic - . - 8
-	mrs	r1, cpsr_all
-	bl	_C_LABEL(panic)
-
-switchpanic:
-	.asciz	"Yikes! In cpu_switch() but not in SVC mode (%08x)\n"
-	.align	0
-
-switchmodeok:
-#endif
 
 	/*
 	 * We have found an active queue. Currently we do not know which queue
@@ -418,15 +400,14 @@ switchmodeok:
 	/* rem: interrupts are disabled */
 
 	/* Clear the want_resched flag */
-	mov	r0, #0x00000000
 	ldr	r7, Lwant_resched
+	mov	r0, #0x00000000
 	str	r0, [r7]
 
 	/*
 	 * Clear the back pointer of the lwp we have removed from
 	 * the head of the queue. The new lwp is isolated now.
 	 */
-	mov	r0, #0x00000000
 	str	r0, [r6, #(L_BACK)]
 
 switch_resume:
@@ -451,7 +432,7 @@ switch_resume:
 	/* rem: r1 = old lwp */
 	/* rem: r4 = return value */
 	/* rem: r6 = new process */
-	/* rem: interrupts are disabled */
+	/* rem: interrupts are enabled */
 
 	/*
 	 * If the new process is the same as the process that called
@@ -482,7 +463,7 @@ switch_resume:
 	/* rem: r1 = old proc */
 	/* rem: r4 = return value */
 	/* rem: r6 = new process */
-	/* rem: interrupts are disabled */
+	/* rem: interrupts are enabled */
 
 	/* Stage two : Save old context */
 
@@ -510,10 +491,10 @@ switch_resume:
         msr	cpsr_all, r3		/* Restore the old mode */
 
 	/* rem: r0 = old proc */
-	/* rem: r0 = old pcb */
+	/* rem: r1 = old pcb */
 	/* rem: r4 = return value */
 	/* rem: r6 = new process */
-	/* rem: interrupts are disabled */
+	/* rem: interrupts are enabled */
 
 	/* What else needs to be saved  Only FPA stuff when that is supported */
 
@@ -572,10 +553,6 @@ Lcs_context_switched:
 	add	r7, r1, #PCB_R8
 	ldmia	r7, {r8-r13}
 
-	/* Remember the pcb currently in use */
-	ldr	r7, Lcurpcb
-	str	r1, [r7]
-
 #ifdef ARMFPE
 	add	r0, r1, #(USER_SIZE) & 0x00ff
 	add	r0, r0, #(USER_SIZE) & 0xff00 
@@ -586,11 +563,6 @@ Lcs_context_switched:
 	IRQenable
 
 switch_return:
-	/* We have a new curproc now so make a note it */
-/*
-	ldr	r7, Lcurproc
-	str	r6, [r7]
-*/
 
 	/* Get the spl level from the stack and update the current spl level */
 	ldr	r0, [sp], #0x0004
@@ -716,8 +688,8 @@ ENTRY(switch_exit)
  	ldr	r1, Llwp0
 
 	/* In case we fault */
-	mov	r2, #0x00000000
 	ldr	r0, Lcurproc
+	mov	r2, #0x00000000
 	str	r2, [r0]
 
 /*	ldr	r0, Lcurpcb
@@ -831,15 +803,12 @@ Lsle_context_switched:
 	bl	_C_LABEL(lwp_exit2)
 
 	/* Paranoia */
-	mov	r0, #0x00000000
 	ldr	r1, Lcurproc
+	mov	r0, #0x00000000
 	str	r0, [r1]
 
         ldr     r1, Llwp0
 	b	switch_search
-
-Lcurrent_spl_level:
-	.word	_C_LABEL(current_spl_level)
 
 ENTRY(savectx)
 	/*

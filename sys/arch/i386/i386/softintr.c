@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.1.6.2 2001/06/21 19:25:38 nathanw Exp $	*/
+/*	$NetBSD: softintr.c,v 1.1.6.3 2002/01/08 00:25:29 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -44,6 +44,9 @@
  *
  * Also note: the netisr processing is left in i386/isa/icu.s
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.1.6.3 2002/01/08 00:25:29 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>

@@ -1,12 +1,12 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.120.2.7 2001/11/14 19:15:42 nathanw Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.120.2.8 2002/01/08 00:31:29 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.145 2001/11/08 17:05:42 christos Exp 
+ *	NetBSD: pcmciadevs,v 1.156 2001/12/29 15:00:45 pooka Exp 
  */
-/*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
+/* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,13 +92,6 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "3Com/Megahertz 3CXEM556-INT Ethernet/Modem",	}
 	,
 	{
-	    PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3C1,
-	    PCMCIA_CIS_3COM_3C1,
-	    0,
-	    "3Com Corporation",
-	    "3Com Megahertz 3C1 10Mbps LAN CF+ Card",	}
-	,
-	{
 	    PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CCFEM556BI,
 	    PCMCIA_CIS_3COM_3CCFEM556BI,
 	    0,
@@ -125,6 +118,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "3Com Corporation",
 	    "3Com 3c574-TX 10/100Mbps Ethernet",	}
+	,
+	{
+	    PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3C1,
+	    PCMCIA_CIS_3COM_3C1,
+	    0,
+	    "3Com Corporation",
+	    "3Com Megahertz 3C1 10Mbps LAN CF+ Card",	}
 	,
 	{
 	    PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CRWE62092A,
@@ -176,6 +176,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Allied Telesis LA-PCM",	}
 	,
 	{
+	    PCMCIA_VENDOR_ARCHOS, PCMCIA_PRODUCT_ARCHOS_ARC_ATAPI,
+	    PCMCIA_CIS_ARCHOS_ARC_ATAPI,
+	    0,
+	    "Archos",
+	    "MiniCD",	}
+	,
+	{
 	    PCMCIA_VENDOR_BAY, PCMCIA_PRODUCT_BAY_STACK_650,
 	    PCMCIA_CIS_BAY_STACK_650,
 	    0,
@@ -197,11 +204,25 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "BayStack 660 Wireless LAN",	}
 	,
 	{
+	    PCMCIA_VENDOR_BREEZECOM, PCMCIA_PRODUCT_BREEZECOM_BREEZENET,
+	    PCMCIA_CIS_BREEZECOM_BREEZENET,
+	    0,
+	    "BreezeCOM",
+	    "BreezeCOM BreezeNET",	}
+	,
+	{
 	    PCMCIA_VENDOR_BUFFALO, PCMCIA_PRODUCT_BUFFALO_WLI_PCM_S11,
 	    PCMCIA_CIS_BUFFALO_WLI_PCM_S11,
 	    0,
 	    "BUFFALO (Melco Corporation)",
 	    "BUFFALO AirStation 11Mbps WLAN",	}
+	,
+	{
+	    PCMCIA_VENDOR_BUFFALO, PCMCIA_PRODUCT_BUFFALO_WLI_CF_S11G,
+	    PCMCIA_CIS_BUFFALO_WLI_CF_S11G,
+	    0,
+	    "BUFFALO (Melco Corporation)",
+	    "BUFFALO AirStation 11Mbps CF WLAN",	}
 	,
 	{
 	    PCMCIA_VENDOR_COMPAQ, PCMCIA_PRODUCT_COMPAQ_NC5004,
@@ -216,6 +237,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Compaq",
 	    "Compaq Netelligent 10/100 Ethernet",	}
+	,
+	{
+	    PCMCIA_VENDOR_COMPEX, PCMCIA_PRODUCT_COMPEX_AMP_WIRELESS,
+	    PCMCIA_CIS_COMPEX_AMP_WIRELESS,
+	    0,
+	    "Compex Corporation",
+	    "AMP",	}
 	,
 	{
 	    PCMCIA_VENDOR_COMPEX, PCMCIA_PRODUCT_COMPEX_LINKPORT_ENET_B,
@@ -265,6 +293,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "D-Link",
 	    "D-Link DMF-650TX",	}
+	,
+	{
+	    PCMCIA_VENDOR_DUAL, PCMCIA_PRODUCT_DUAL_NE2000,
+	    PCMCIA_CIS_DUAL_NE2000,
+	    0,
+	    "Dual",
+	    "Dual NE2000",	}
 	,
 	{
 	    PCMCIA_VENDOR_ELSA, PCMCIA_PRODUCT_ELSA_MC2_IEEE,
@@ -358,6 +393,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "IBM Token Ring 4/16",	}
 	,
 	{
+	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_SCSI,
+	    PCMCIA_CIS_IBM_SCSI,
+	    0,
+	    "IBM Corporation",
+	    "IBM SCSI PCMCIA",	}
+	,
+	{
 	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_PORTABLE_CDROM,
 	    PCMCIA_CIS_IBM_PORTABLE_CDROM,
 	    0,
@@ -377,6 +419,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "IBM Corporation",
 	    "IBM Wireless LAN Entry",	}
+	,
+	{
+	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_SMART_CAPTURE_II,
+	    PCMCIA_CIS_IBM_SMART_CAPTURE_II,
+	    0,
+	    "IBM Corporation",
+	    "IBM Smart Capture Card II",	}
 	,
 	{
 	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_ETHERJET,
@@ -463,6 +512,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Linksys Combo EthernetCard",	}
 	,
 	{
+	    PCMCIA_VENDOR_LINKSYS2, PCMCIA_PRODUCT_LINKSYS2_IWN,
+	    PCMCIA_CIS_LINKSYS2_IWN,
+	    0,
+	    "The Linksys Group",
+	    "Instant Wireless Network PC Card",	}
+	,
+	{
 	    PCMCIA_VENDOR_LUCENT, PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
 	    PCMCIA_CIS_LUCENT_WAVELAN_IEEE,
 	    0,
@@ -505,6 +561,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Megahertz X-JACK 56kbps Modem",	}
 	,
 	{
+	    PCMCIA_VENDOR_MEGAHERTZ2, PCMCIA_PRODUCT_MEGAHERTZ2_XJEM1144,
+	    PCMCIA_CIS_MEGAHERTZ2_XJEM1144,
+	    0,
+	    "Megahertz Corporation",
+	    "Megahertz X-JACK",	}
+	,
+	{
 	    PCMCIA_VENDOR_MEGAHERTZ2, PCMCIA_PRODUCT_MEGAHERTZ2_XJACK,
 	    PCMCIA_CIS_MEGAHERTZ2_XJACK,
 	    0,
@@ -533,6 +596,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Motorola Personal Messenger 100C CDPD Modem",	}
 	,
 	{
+	    PCMCIA_VENDOR_MOTOROLA, PCMCIA_PRODUCT_MOTOROLA_MONTANA_336,
+	    PCMCIA_CIS_MOTOROLA_MONTANA_336,
+	    0,
+	    "Motorola Corporation",
+	    "Motorola Montana 33.6",	}
+	,
+	{
 	    PCMCIA_VENDOR_NEWMEDIA, PCMCIA_PRODUCT_NEWMEDIA_BASICS,
 	    PCMCIA_CIS_NEWMEDIA_BASICS,
 	    0,
@@ -540,11 +610,53 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "New Media BASICS Ethernet",	}
 	,
 	{
+	    PCMCIA_VENDOR_NEWMEDIA, PCMCIA_PRODUCT_NEWMEDIA_LANSURFER,
+	    PCMCIA_CIS_NEWMEDIA_LANSURFER,
+	    0,
+	    "New Media Corporation",
+	    "NewMedia LANSurfer",	}
+	,
+	{
+	    PCMCIA_VENDOR_NEWMEDIA, PCMCIA_PRODUCT_NEWMEDIA_LIVEWIRE,
+	    PCMCIA_CIS_NEWMEDIA_LIVEWIRE,
+	    0,
+	    "New Media Corporation",
+	    "NewMedia LiveWire Ethernet LAN Adapter",	}
+	,
+	{
+	    PCMCIA_VENDOR_NEWMEDIA, PCMCIA_PRODUCT_NEWMEDIA_MULTIMEDIA,
+	    PCMCIA_CIS_NEWMEDIA_MULTIMEDIA,
+	    0,
+	    "New Media Corporation",
+	    "NewMedia Multimedia",	}
+	,
+	{
 	    PCMCIA_VENDOR_NEWMEDIA, PCMCIA_PRODUCT_NEWMEDIA_BUSTOASTER,
 	    PCMCIA_CIS_NEWMEDIA_BUSTOASTER,
 	    0,
 	    "New Media Corporation",
 	    "New Media BusToaster SCSI Host Adapter",	}
+	,
+	{
+	    PCMCIA_VENDOR_NEWMEDIA, PCMCIA_PRODUCT_NEWMEDIA_WAVJAMMER,
+	    PCMCIA_CIS_NEWMEDIA_WAVJAMMER,
+	    0,
+	    "New Media Corporation",
+	    "NewMedia .WAVjammer",	}
+	,
+	{
+	    PCMCIA_VENDOR_NEWMEDIA2, PCMCIA_PRODUCT_NEWMEDIA2_BUSTOASTER,
+	    PCMCIA_CIS_NEWMEDIA2_BUSTOASTER,
+	    0,
+	    "NewMedia",
+	    "NewMedia BusToaster",	}
+	,
+	{
+	    PCMCIA_VENDOR_NETGEAR, PCMCIA_PRODUCT_NETGEAR_FA410TXC,
+	    PCMCIA_CIS_NETGEAR_FA410TXC,
+	    0,
+	    "Netgear",
+	    "Netgear FA410TXC",	}
 	,
 	{
 	    PCMCIA_VENDOR_NI, PCMCIA_PRODUCT_NI_PCMCIA_GPIB,
@@ -589,11 +701,39 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Panasonic 16X CD-ROM Interface Card",	}
 	,
 	{
+	    PCMCIA_VENDOR_PANASONIC, PCMCIA_PRODUCT_PANASONIC_KME,
+	    PCMCIA_CIS_PANASONIC_KME,
+	    0,
+	    "Matsushita Electric Industrial Co.",
+	    "Panasonic CD-R/RW Interface",	}
+	,
+	{
+	    PCMCIA_VENDOR_PROXIM, PCMCIA_PRODUCT_PROXIM_ROAMABOUT_2400FH,
+	    PCMCIA_CIS_PROXIM_ROAMABOUT_2400FH,
+	    0,
+	    "Proxim",
+	    "Digital RoamAbout 2400FH",	}
+	,
+	{
+	    PCMCIA_VENDOR_PROXIM, PCMCIA_PRODUCT_PROXIM_RANGELAN2_7401,
+	    PCMCIA_CIS_PROXIM_RANGELAN2_7401,
+	    0,
+	    "Proxim",
+	    "Proxim RangeLAN2 7401",	}
+	,
+	{
 	    PCMCIA_VENDOR_PSION, PCMCIA_PRODUCT_PSION_GOLDCARD,
 	    PCMCIA_CIS_PSION_GOLDCARD,
 	    0,
 	    "Psion",
 	    "Psion Gold Card",	}
+	,
+	{
+	    PCMCIA_VENDOR_QUATECH, PCMCIA_PRODUCT_QUATECH_DSP_225,
+	    PCMCIA_CIS_QUATECH_DSP_225,
+	    0,
+	    "Quatech",
+	    "Quatech Dual Serial Port",	}
 	,
 	{
 	    PCMCIA_VENDOR_RATOC, PCMCIA_PRODUCT_RATOC_REX_R280,
@@ -664,6 +804,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Socket Communications",
 	    "Socket Communications EA",	}
+	,
+	{
+	    PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCKET_LP_WLAN_CF,
+	    PCMCIA_CIS_SOCKET_LP_WLAN_CF,
+	    0,
+	    "Socket Communications",
+	    "Socket Communications Low Power WLAN Card",	}
 	,
 	{
 	    PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCKET_PAGECARD,
@@ -750,18 +897,18 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Xircom CreditCard Ethernet",	}
 	,
 	{
-	    PCMCIA_VENDOR_XIRCOM, PCMCIA_PRODUCT_XIRCOM_CE2,
-	    PCMCIA_CIS_XIRCOM_CE2,
-	    0,
-	    "Xircom",
-	    "Xircom CreditCard Ethernet II",	}
-	,
-	{
 	    PCMCIA_VENDOR_XIRCOM, PCMCIA_PRODUCT_XIRCOM_CE3,
 	    PCMCIA_CIS_XIRCOM_CE3,
 	    0,
 	    "Xircom",
 	    "Xircom CreditCard 10/100 Ethernet",	}
+	,
+	{
+	    PCMCIA_VENDOR_XIRCOM, PCMCIA_PRODUCT_XIRCOM_CE2,
+	    PCMCIA_CIS_XIRCOM_CE2,
+	    0,
+	    "Xircom",
+	    "Xircom CreditCard Ethernet II",	}
 	,
 	{
 	    PCMCIA_VENDOR_XIRCOM, PCMCIA_PRODUCT_XIRCOM_XE2000,
@@ -984,7 +1131,7 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_GEMTEK_WLAN,
 	    PCMCIA_CIS_GEMTEK_WLAN,
 	    0,
-	    "",
+	    "Gem Tek",
 	    "GEMTEK Prism2_5 WaveLAN Card",	}
 	,
 	{
@@ -1054,7 +1201,7 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_NDC_ND5100_E,
 	    PCMCIA_CIS_NDC_ND5100_E,
 	    0,
-	    "",
+	    "NDC",
 	    "Sohoware ND5100E NE2000 Compatible Card",	}
 	,
 	{
@@ -1114,6 +1261,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "PreMax PE-200",	}
 	,
 	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_SIMPLETECH_SPECTRUM24_ALT,
+	    PCMCIA_CIS_SIMPLETECH_SPECTRUM24_ALT,
+	    0,
+	    "Simple Technology",
+	    "LA4111 Spectrum24 Wireless LAN PC Card",	}
+	,
+	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_SMC_2632W,
 	    PCMCIA_CIS_SMC_2632W,
 	    0,
@@ -1170,6 +1324,41 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Y-E DATA External FDD",	}
 	,
 	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_ZOOM_AIR_4000,
+	    PCMCIA_CIS_ZOOM_AIR_4000,
+	    0,
+	    "",
+	    "Zoom Air-4000",	}
+	,
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_FUJITSU_FMV_J181,
+	    PCMCIA_CIS_FUJITSU_FMV_J181,
+	    0,
+	    "Fujitsu Corporation",
+	    "FUJITSU FMV-J181 PCMCIA Card",	}
+	,
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_FUJITSU_FMV_J182,
+	    PCMCIA_CIS_FUJITSU_FMV_J182,
+	    0,
+	    "Fujitsu Corporation",
+	    "FUJITSU FMV-J182 PCMCIA Card",	}
+	,
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_FUJITSU_FMV_J182A,
+	    PCMCIA_CIS_FUJITSU_FMV_J182A,
+	    0,
+	    "Fujitsu Corporation",
+	    "FUJITSU FMV-J182A PCMCIA Card",	}
+	,
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_FUJITSU_ITCFJ182A,
+	    PCMCIA_CIS_FUJITSU_ITCFJ182A,
+	    0,
+	    "Fujitsu Corporation",
+	    "FUJITSU ITCFJ182A CompactCard",	}
+	,
+	{
 	    PCMCIA_VENDOR_FUJITSU,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -1215,14 +1404,6 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_INVALID,
 	    0,
 	    "IBM Corporation",
-	    NULL,
-	},
-	{
-	    PCMCIA_VENDOR_MOTOROLA,
-	    PCMCIA_KNOWNDEV_NOPROD,
-	    PCMCIA_CIS_INVALID,
-	    0,
-	    "Motorola Corporation",
 	    NULL,
 	},
 	{
@@ -1274,6 +1455,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCMCIA_VENDOR_MOTOROLA,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "Motorola Corporation",
+	    NULL,
+	},
+	{
 	    PCMCIA_VENDOR_NI,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -1298,6 +1487,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCMCIA_VENDOR_PROXIM,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "Proxim",
+	    NULL,
+	},
+	{
 	    PCMCIA_VENDOR_MEGAHERTZ2,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -1311,6 +1508,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_INVALID,
 	    0,
 	    "Adaptec Corporation",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_QUATECH,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "Quatech",
 	    NULL,
 	},
 	{
@@ -1338,11 +1543,27 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCMCIA_VENDOR_NETGEAR,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "Netgear",
+	    NULL,
+	},
+	{
 	    PCMCIA_VENDOR_SIMPLETECH,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    0,
 	    "Simple Technology",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_SYMBOL2,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "Symbol",
 	    NULL,
 	},
 	{
@@ -1474,6 +1695,22 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCMCIA_VENDOR_BREEZECOM,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "BreezeCOM",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_NEWMEDIA2,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "NewMedia",
+	    NULL,
+	},
+	{
 	    PCMCIA_VENDOR_LASAT,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -1487,6 +1724,22 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_INVALID,
 	    0,
 	    "Lexar Media",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_ARCHOS,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "Archos",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_DUAL,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "Dual",
 	    NULL,
 	},
 	{
@@ -1578,6 +1831,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCMCIA_VENDOR_LINKSYS2,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "The Linksys Group",
+	    NULL,
+	},
+	{
 	    PCMCIA_VENDOR_ELSA,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -1666,6 +1927,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCMCIA_VENDOR_GEMTEK,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "Gem Tek",
+	    NULL,
+	},
+	{
 	    PCMCIA_VENDOR_ICOM,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -1687,6 +1956,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_INVALID,
 	    0,
 	    "NAKAGAWA METAL",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_NDC,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "NDC",
 	    NULL,
 	},
 	{

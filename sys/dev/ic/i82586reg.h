@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586reg.h,v 1.7.26.1 2001/04/09 01:56:14 nathanw Exp $	*/
+/*	$NetBSD: i82586reg.h,v 1.7.26.2 2002/01/08 00:29:47 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,6 +83,15 @@
  * We use integer offsets exclusively to access the i82586 data structures.
  */
 
+/*
+ * The i82596 has a hardware port that can be used to command the 
+ * chip to perform special functions.  For all but IE_PORT_RESET, 
+ * a 16-byte aligned memory address is ORed into the port command.
+ */
+#define IE_PORT_RESET		0x00	/* software reset */
+#define IE_PORT_SELF_TEST	0x01	/* self-test */
+#define IE_PORT_ALT_SCP		0x02	/* set alternate SCP address */
+#define IE_PORT_DUMP		0x03	/* dump state */
 
 /*
  * This is the master configuration block.
@@ -98,6 +107,25 @@ struct __ie_sys_conf_ptr {
 #define IE_SCP_SZ		12
 #define IE_SCP_BUS_USE(base)	((base) + 2)
 #define IE_SCP_ISCP(base)	((base) + 8)
+
+/*
+ * SYSBUS byte flags.  Most are specific to the i82596, and so 
+ * far we always run an i82596 in i82586-compatible mode.
+ */
+#define IE_SYSBUS_16BIT		(0x0 << 0)
+#define IE_SYSBUS_8BIT		(0x1 << 0)
+#define IE_SYSBUS_596_82586	(0x0 << 1)
+#define IE_SYSBUS_596_32SEG	(0x1 << 1)
+#define IE_SYSBUS_596_LINEAR	(0x2 << 1)
+#define IE_SYSBUS_596_TRGINT	(0x0 << 3)
+#define IE_SYSBUS_596_TRGEXT	(0x1 << 3)
+#define IE_SYSBUS_596_NOLOCK	(0x0 << 4)
+#define IE_SYSBUS_596_LOCK	(0x1 << 4)
+#define IE_SYSBUS_596_INTHIGH	(0x0 << 4)
+#define IE_SYSBUS_596_INTLOW	(0x1 << 5)
+#define IE_SYSBUS_596_RSVD_SET	(0x1 << 6)
+#define IE_SYSBUS_596_LE	(0x0 << 7)
+#define IE_SYSBUS_596_BE	(0x1 << 7)
 
 /*
  * Note that this is wired in hardware; the SCP is always located here, no

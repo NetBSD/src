@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.187.4.4 2001/12/28 06:12:21 nathanw Exp $ */
+/*	$NetBSD: machdep.c,v 1.187.4.5 2002/01/08 00:27:47 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -83,6 +83,7 @@
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
+#include "opt_sparc_arch.h"
 
 #include <sys/param.h>
 #include <sys/signal.h>
@@ -1195,7 +1196,7 @@ cpu_exec_aout_makecmds(p, epp)
 	return (ENOEXEC);
 }
 
-#ifdef SUN4
+#if defined(SUN4)
 void
 oldmon_w_trace(va)
 	u_long va;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciavar.h,v 1.14 2001/01/18 20:28:26 jdolecek Exp $	*/
+/*	$NetBSD: pcmciavar.h,v 1.14.2.1 2002/01/08 00:31:30 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -31,8 +31,6 @@
 
 #include <sys/types.h>
 #include <sys/queue.h>
-
-#include <machine/bus.h>
 
 #include <dev/pcmcia/pcmciachip.h>
 
@@ -139,7 +137,7 @@ struct pcmcia_function {
 #define	pf_ccrh		pf_pcmh.memh
 #define	pf_ccr_mhandle	pf_pcmh.mhandle
 #define	pf_ccr_realsize	pf_pcmh.realsize
-	bus_addr_t	pf_ccr_offset;
+	bus_size_t	pf_ccr_offset;
 	int		pf_ccr_window;
 	long		pf_mfc_iobase;
 	long		pf_mfc_iomax;
@@ -218,7 +216,7 @@ struct pcmcia_tuple {
 	unsigned int	code;
 	unsigned int	length;
 	u_long		mult;
-	bus_addr_t	ptr;
+	bus_size_t	ptr;
 	bus_space_tag_t	memt;
 	bus_space_handle_t memh;
 };

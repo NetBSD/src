@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3reg.h,v 1.22.6.2 2001/11/14 19:14:22 nathanw Exp $	*/
+/*	$NetBSD: elink3reg.h,v 1.22.6.3 2002/01/08 00:29:42 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Herb Peyerl <hpeyerl@beer.org>
@@ -244,40 +244,27 @@
  *     10-0:   11-bit arg if any. For commands with no args;
  *	      this can be set to anything.
  */
-#define GLOBAL_RESET		(u_int16_t) 0x0000   /* Wait at least 1ms after issuing */
-#define WINDOW_SELECT		(u_int16_t) (0x1<<11)
-#define START_TRANSCEIVER	(u_int16_t) (0x2<<11) /* Read ADDR_CFG reg to determine
-						      whether this is needed. If so;
-						      wait 800 uSec before using trans-
-						      ceiver. */
-#define RX_DISABLE		(u_int16_t) (0x3<<11) /* state disabled on power-up */
-#define RX_ENABLE		(u_int16_t) (0x4<<11)
-#define RX_RESET		(u_int16_t) (0x5<<11)
-#define RX_DISCARD_TOP_PACK	(u_int16_t) (0x8<<11)
-#define TX_ENABLE		(u_int16_t) (0x9<<11)
-#define TX_DISABLE		(u_int16_t) (0xa<<11)
-#define TX_RESET		(u_int16_t) (0xb<<11)
-#define REQ_INTR		(u_int16_t) (0xc<<11)
-
+/* Wait at least 1ms after issuing */
+#define GLOBAL_RESET		(u_int16_t) 0x0000
+#define WINDOW_SELECT		(u_int16_t) (0x01<<11)
 /*
- * The following C_* acknowledge the various interrupts.
- * Some of them don't do anything.  See the manual.
+ * Read ADDR_CFG reg to determine whether this is needed. If so; wait 800
+ * uSec before using transceiver.
  */
-#define ACK_INTR		(u_int16_t) (0xd << 11)
-#      define C_INTR_LATCH	(u_int16_t) (ACK_INTR|0x01)
-#      define C_CARD_FAILURE	(u_int16_t) (ACK_INTR|0x02)
-#      define C_TX_COMPLETE	(u_int16_t) (ACK_INTR|0x04)
-#      define C_TX_AVAIL	(u_int16_t) (ACK_INTR|0x08)
-#      define C_RX_COMPLETE	(u_int16_t) (ACK_INTR|0x10)
-#      define C_RX_EARLY	(u_int16_t) (ACK_INTR|0x20)
-#      define C_INT_RQD		(u_int16_t) (ACK_INTR|0x40)
-#      define C_UPD_STATS	(u_int16_t) (ACK_INTR|0x80)
-
+#define START_TRANSCEIVER	(u_int16_t) (0x02<<11)
+/* state disabled on power-up */
+#define RX_DISABLE		(u_int16_t) (0x03<<11)
+#define RX_ENABLE		(u_int16_t) (0x04<<11)
+#define RX_RESET		(u_int16_t) (0x05<<11)
+#define RX_DISCARD_TOP_PACK	(u_int16_t) (0x08<<11)
+#define TX_ENABLE		(u_int16_t) (0x09<<11)
+#define TX_DISABLE		(u_int16_t) (0x0a<<11)
+#define TX_RESET		(u_int16_t) (0x0b<<11)
+#define REQ_INTR		(u_int16_t) (0x0c<<11)
+#define ACK_INTR		(u_int16_t) (0x0d<<11)
 #define SET_INTR_MASK		(u_int16_t) (0x0e<<11)
-
 /* busmastering-cards only? */
-#define STATUS_ENABLE		(u_int16_t) (0xf<<11)
-
+#define STATUS_ENABLE		(u_int16_t) (0x0f<<11)
 #define SET_RD_0_MASK		(u_int16_t) (0x0f<<11)
 
 #define SET_RX_FILTER		(u_int16_t) (0x10<<11)
@@ -331,17 +318,22 @@
  *     1:      Adapter Failure.
  *     0:      Interrupt Latch.
  */
-#define S_INTR_LATCH		(u_int16_t) (0x0001)
-#define S_CARD_FAILURE		(u_int16_t) (0x0002)
-#define S_TX_COMPLETE		(u_int16_t) (0x0004)
-#define S_TX_AVAIL		(u_int16_t) (0x0008)
-#define S_RX_COMPLETE		(u_int16_t) (0x0010)
-#define S_RX_EARLY		(u_int16_t) (0x0020)
-#define S_INT_RQD		(u_int16_t) (0x0040)
-#define S_UPD_STATS		(u_int16_t) (0x0080)
-#define S_DMA_DONE		(u_int16_t) (0x0100)	/* DMA cards only */
-#define S_DMA_IN_PROGRESS	(u_int16_t) (0x0800)	/* DMA cards only */
-#define S_COMMAND_IN_PROGRESS	(u_int16_t) (0x1000)
+#define INTR_LATCH		(u_int16_t) (0x0001)
+#define CARD_FAILURE		(u_int16_t) (0x0002)
+#define TX_COMPLETE		(u_int16_t) (0x0004)
+#define TX_AVAIL		(u_int16_t) (0x0008)
+#define RX_COMPLETE		(u_int16_t) (0x0010)
+#define RX_EARLY		(u_int16_t) (0x0020)
+#define INT_RQD			(u_int16_t) (0x0040)
+#define UPD_STATS		(u_int16_t) (0x0080)
+#define DMA_DONE		(u_int16_t) (0x0100)	/* DMA cards only */
+#define DMA_IN_PROGRESS		(u_int16_t) (0x0800)	/* DMA cards only */
+#define COMMAND_IN_PROGRESS	(u_int16_t) (0x1000)
+
+#define ALL_INTERRUPTS	(CARD_FAILURE | TX_COMPLETE | TX_AVAIL | RX_COMPLETE | \
+    RX_EARLY | INT_RQD | UPD_STATS)
+
+#define WATCHED_INTERRUPTS (CARD_FAILURE | TX_COMPLETE | RX_COMPLETE | TX_AVAIL)
 
 /*
  * FIFO Registers.  RX Status.

@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.135.2.5 2001/11/14 19:13:40 nathanw Exp $	*/
+/*	$NetBSD: audio.c,v 1.135.2.6 2002/01/08 00:29:17 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.135.2.5 2001/11/14 19:13:40 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.135.2.6 2002/01/08 00:29:17 nathanw Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -236,7 +236,7 @@ audioattach(struct device *parent, struct device *self, void *aux)
         }
 #endif
 
-#define	PRINT(s)	do { printf("%s%s", sep, s); sep = ", "; } while (0)
+#define	PRINT(str)	do { printf("%s%s", sep, str); sep = ", "; } while (0)
 
 	props = hwp->get_props(hdlp);
 

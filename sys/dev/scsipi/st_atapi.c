@@ -1,4 +1,4 @@
-/*	$NetBSD: st_atapi.c,v 1.3.2.3 2001/11/14 19:16:06 nathanw Exp $ */
+/*	$NetBSD: st_atapi.c,v 1.3.2.4 2002/01/08 00:31:58 nathanw Exp $ */
 
 /*
  * Copyright (c) 2001 Manuel Bouyer.
@@ -33,12 +33,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st_atapi.c,v 1.3.2.3 2001/11/14 19:16:06 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st_atapi.c,v 1.3.2.4 2002/01/08 00:31:58 nathanw Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/buf.h>
@@ -57,7 +56,8 @@ int	st_atapibus_mode_select __P((struct st_softc *, int));
 int	st_atapibus_do_ms __P((struct st_softc *, int, void *, int, int));
 
 struct cfattach st_atapibus_ca = {
-	sizeof(struct st_softc), st_atapibus_match, st_atapibus_attach
+	sizeof(struct st_softc), st_atapibus_match, st_atapibus_attach,
+	stdetach, stactivate
 };
 
 const struct scsipi_inquiry_pattern st_atapibus_patterns[] = {
@@ -90,6 +90,31 @@ st_atapibus_attach(parent, self, aux)
 	void *aux;
 {
 	struct st_softc *st = (void *)self;
+	struct scsipibus_attach_args *sa = aux;
+	struct scsipi_periph *periph = sa->sa_periph;
+
+	if (strcmp(sa->sa_inqbuf.vendor, "OnStream DI-30") == 0) {
+		struct ast_identifypage identify;
+		int error;
+
+		error = scsipi_mode_sense(periph, SMS_DBD,
+		    ATAPI_TAPE_IDENTIFY_PAGE, &identify.header,
+		    sizeof(identify), XS_CTL_DISCOVERY | XS_CTL_DATA_ONSTACK,
+		    ST_RETRIES, ST_CTL_TIME);
+		if (error) {
+			printf("onstream get identify: error %d\n", error);
+			return;
+		}
+		strncpy(identify.ident, "NBSD", 4);
+		error = scsipi_mode_select(periph, SMS_PF,
+		    &identify.header, sizeof(identify),
+		    XS_CTL_DISCOVERY | XS_CTL_DATA_ONSTACK,
+		    ST_RETRIES, ST_CTL_TIME);
+		if (error) {
+			printf("onstream set identify: error %d\n", error);
+			return;
+		}
+	}
 
 	st->ops = st_atapibus_ops;
 	stattach(parent, st, aux);

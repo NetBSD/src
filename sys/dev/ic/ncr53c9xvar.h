@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.30.2.3 2001/11/14 19:14:32 nathanw Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.30.2.4 2002/01/08 00:30:02 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -92,7 +92,8 @@
 #define	NCR_VARIANT_FAS216		7
 #define	NCR_VARIANT_AM53C974		8
 #define	NCR_VARIANT_FAS366		9
-#define	NCR_VARIANT_MAX			10
+#define	NCR_VARIANT_NCR53C90_86C01	10
+#define	NCR_VARIANT_MAX			11
 
 /*
  * ECB. Holds additional information for each SCSI command Comments: We

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.74.4.5 2002/01/04 19:12:32 eeh Exp $ */
+/*	$NetBSD: trap.c,v 1.74.4.6 2002/01/08 00:28:05 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -177,6 +177,8 @@ int	trapdebug = 0/*|TDB_SYSCALL|TDB_STOPSIG|TDB_STOPCPIO|TDB_ADDFLT|TDB_FOLLOW*/
 __asm(".align 64");
 struct	fpstate64 initfpstate = {
 	{ ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0,
+	  ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0,
+	  ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0,
 	  ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0 }
 };
 
@@ -723,6 +725,10 @@ badtrap:
 			Debugger();
 #endif
 		trapsignal(l, SIGILL, 0);	/* XXX code?? */
+		break;
+
+	case T_PRIVACT:
+		trapsignal(p, SIGILL, 0);
 		break;
 
 	case T_FPDISABLED: {

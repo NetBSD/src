@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.3.4.4 2001/11/14 19:15:11 nathanw Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.3.4.5 2002/01/08 00:31:01 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.3.4.4 2001/11/14 19:15:11 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.3.4.5 2002/01/08 00:31:01 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.3.4.4 2001/11/14 19:15:11 nathanw Exp $
 #include <sys/malloc.h>
 #include <sys/fcntl.h>
 #include <sys/device.h>
-#include <sys/types.h>
 #include <sys/systm.h>
 
 #include <dev/pci/pcidevs.h>
@@ -653,7 +652,6 @@ cs4281_trigger_input(addr, start, end, blksize, intr, arg, param)
 	u_int32_t fmt=0;
 	int dma_count;
 
-	printf("cs4281_trigger_input: not implemented yet\n");
 #ifdef DIAGNOSTIC
 	if (sc->sc_rrun)
 		printf("cs4281_trigger_input: already running\n");

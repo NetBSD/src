@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.111.2.3 2001/10/08 20:11:05 nathanw Exp $
+#	$NetBSD: files.isa,v 1.111.2.4 2002/01/08 00:30:23 nathanw Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -139,7 +139,7 @@ file	dev/isa/wds.c			wds
 device	mcd: disk
 attach	mcd at isa
 file	dev/isa/mcd.c			mcd			needs-flag
-defopt	MCD_PROMISC			# enable "promiscuous" match
+defflag			MCD_PROMISC		# enable "promiscuous" match
 
 # Sony CDU-3[13]A CD-ROM drives
 device	scd: disk
@@ -202,10 +202,9 @@ attach	ate at isa with ate_isa
 file	dev/isa/if_ate.c		ate_isa
 
 # Crystal Semiconductor CS8900, CS8920, and CS8920M Ethernet
-device	cs: arp, ether, ifnet, isadma
-file	dev/isa/cs89x0.c		cs
-
-attach	cs at isa with cs_isa
+define	cs_isa_common
+file	dev/isa/cs89x0isa.c		cs_isa_common
+attach	cs at isa with cs_isa: cs_isa_common, isadma
 file	dev/isa/if_cs_isa.c		cs_isa
 
 # Fujitsu MB86960-based boards
@@ -356,7 +355,7 @@ file	dev/isa/opl_isa.c		opl_isa
 # Yamaha OPL3-SA3
 device	ym { }: audio, isadma, ad1848, auconv
 file	dev/isa/ym.c			ym
-defopt	opt_ym.h	YM_POWER_MODE YM_POWER_OFF_SEC
+defparam opt_ym.h	YM_POWER_MODE YM_POWER_OFF_SEC
 
 attach	opl at ym with opl_ym
 file	dev/isa/opl_ym.c		opl_ym
@@ -413,7 +412,27 @@ file	dev/isa/pcdisplay.c		pcdisplay		needs-flag
 # but we can't use an `option', because options can't have
 # attributes.
 defpseudo pcweasel: sysmon_wdog
-file	dev/isa/weasel.c		pcweasel		needs-flag
+file	dev/isa/weasel_isa.c		pcweasel		needs-flag
+
+# Sound Forte RadioLink SF16-FMR2 FM Radio Card
+device sf2r: radio, tea5757
+attach sf2r at isa
+file	dev/isa/sf16fmr2.c		sf2r
+
+# Aztech/PackardBell FM Radio Card
+device az: radio, lm700x
+attach az at isa
+file	dev/isa/aztech.c		az
+
+# AIMS Lab Radiotrack & compatible
+device	rt: radio, lm700x
+attach	rt at isa
+file	dev/isa/radiotrack.c		rt
+
+# AIMS Lab Radiotrack II FM Radio Card
+device	rtii: radio, tea5757
+attach	rtii at isa
+file	dev/isa/radiotrack2.c		rtii
 
 # PC PPI + TIMER 1 (speaker interface)
 device	pcppi {}
@@ -439,7 +458,7 @@ file	dev/isa/isic_isa.c		isic_isa
 attach	daic at isa with daic_isa
 file	dev/isa/daic_isa.c		daic_isa
 
-defopt	opt_isicisa.h	ISICISA_TEL_S0_8 ISICISA_TEL_S0_16 ISICISA_TEL_S0_16_3
+defflag	opt_isicisa.h	ISICISA_TEL_S0_8 ISICISA_TEL_S0_16 ISICISA_TEL_S0_16_3
 			ISICISA_AVM_A1 ISICISA_USR_STI ISICISA_ITKIX1
 
 file	dev/isa/isic_isa_tel_s08.c	isic_isa

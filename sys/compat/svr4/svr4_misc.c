@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.89.2.4 2001/11/14 19:13:26 nathanw Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.89.2.5 2002/01/08 00:29:11 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.89.2.4 2001/11/14 19:13:26 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.89.2.5 2002/01/08 00:29:11 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1156,7 +1156,8 @@ svr4_setinfo(p, st, s)
 	}
 
 	DPRINTF(("siginfo [pid %ld signo %d code %d errno %d status %d]\n",
-		 i.si_pid, i.si_signo, i.si_code, i.si_errno, i.si_status));
+		(long) i.si_pid,
+		i.si_signo, i.si_code, i.si_errno, i.si_status));
 
 	return copyout(&i, s, sizeof(i));
 }

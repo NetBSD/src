@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.10.8.1 2001/09/26 19:54:42 nathanw Exp $
+#	$NetBSD: Makefile,v 1.10.8.2 2002/01/08 00:25:08 nathanw Exp $
 
 CPPFLAGS=	${APMCPPFLAGS}
 KSRC=${.CURDIR}/../../..
 ARCHSRC=${.CURDIR}/../..
 I386=${KSRC}/arch/i386
-CFLAGS+= -I${ARCHSRC} -I${KSRC} -D_LKM
+CPPFLAGS+=-I${ARCHSRC} -I${KSRC} -I${.CURDIR} -I${.OBJDIR} -D_LKM
 
 SRCS=	biostramp.S
 OBJS=	biostramp.o
@@ -14,8 +14,11 @@ STRIP?=	strip
 all: biostramp.inc
 
 biostramp.inc: biostramp.bin Makefile
-	-mv -f biostramp.inc biostramp.inc.bak
+	@([ -f biostramp.inc ] && mv -f biostramp.inc biostramp.inc.bak; exit 0)
 	sh ${.CURDIR}/bin2asm.sh biostramp.bin > biostramp.inc
+
+machine:
+	@rm -f machine && ln -s ${I386}/include machine
 
 .include <bsd.own.mk>
 
@@ -35,20 +38,22 @@ biostramp.bin: biostramp.obj
 .endif
 
 biostramp.obj: ${OBJS} ${DEPS}
-	${LD} -Bstatic -N -Ttext 0 -o $@ $(OBJS)
+	${LD} -Bstatic -N -Ttext 0 -e do_bios_call -o $@ $(OBJS)
 
-assym.h: ${KSRC}/kern/genassym.sh genassym.cf
+assym.h: machine ${KSRC}/kern/genassym.sh genassym.cf
 	sh ${KSRC}/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
-	    < genassym.cf > assym.h.tmp && \
+	    < ${.CURDIR}/genassym.cf > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h
 
 biostramp.S: assym.h
+
 biostramp.o: biostramp.S
-	${CC} ${CFLAGS} -DASM -D_LOCORE -c biostramp.S
+	${CC} ${CPPFLAGS} -DASM -D_LOCORE -c ${.IMPSRC}
 
 clean:
-	rm -f *.o biostramp.bin biostramp.sym biostramp.inc assym.h
+	rm -f *.o biostramp.obj biostramp.bin biostramp.sym biostramp.inc \
+	    assym.h biostramp.inc.bak machine
 
 .include <bsd.dep.mk>
 .include <bsd.subdir.mk>
-#.include <bsd.prog.mk>
+.include <bsd.obj.mk>

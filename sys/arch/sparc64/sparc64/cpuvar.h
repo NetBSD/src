@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.2.12.1 2002/01/04 19:12:27 eeh Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.2.12.2 2002/01/08 00:28:01 nathanw Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,6 +38,10 @@
 
 #ifndef _sparc64_cpuvar_h
 #define _sparc64_cpuvar_h
+
+#if defined(_KERNEL_OPT)
+#include "opt_sparc_arch.h"
+#endif
 
 #include <sys/device.h>
 

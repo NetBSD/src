@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_isa.c,v 1.7.26.1 2001/11/14 19:14:44 nathanw Exp $	*/
+/*	$NetBSD: aic_isa.c,v 1.7.26.2 2002/01/08 00:30:20 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -51,9 +51,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic_isa.c,v 1.7.26.1 2001/11/14 19:14:44 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic_isa.c,v 1.7.26.2 2002/01/08 00:30:20 nathanw Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

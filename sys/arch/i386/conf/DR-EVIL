@@ -1,4 +1,4 @@
-#	$NetBSD: DR-EVIL,v 1.26.6.4 2001/11/14 19:12:42 nathanw Exp $
+#	$NetBSD: DR-EVIL,v 1.26.6.5 2002/01/08 00:25:10 nathanw Exp $
 #
 #	DR-EVIL -- Dell Inspiron 3800 laptop used by thorpej@netbsd.org
 #
@@ -7,7 +7,7 @@ include "arch/i386/conf/std.i386"
 
 maxusers	32		# estimated number of users
 
-#options IFAREF_DEBUG
+#options 	IFAREF_DEBUG
 
 # CPU support.  At least one is REQUIRED.
 #options 	I386_CPU
@@ -37,7 +37,7 @@ options 	XSERVER		# X server support in console drivers
 
 # This option allows you to force a serial console at the specified
 # I/O address.   see console(4) for details.
-#options 	"CONSDEVNAME=\"com\"",CONADDR=0x2f8,CONSPEED=57600
+#options 	CONSDEVNAME="\"com\"",CONADDR=0x2f8,CONSPEED=57600
 #	you don't want the option below ON iff you are using the
 #	serial console option of the new boot strap code.
 #options 	CONS_OVERRIDE	# Always use above! independent of boot info
@@ -74,7 +74,7 @@ options 	DIAGNOSTIC	# expensive kernel consistency checks
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 #options 	KGDB		# remote debugger
-#options 	"KGDB_DEVNAME=\"com\"",KGDBADDR=0x3f8,KGDBRATE=9600
+#options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
 makeoptions	DEBUG="-g"	# compile full symbol table
 
 # Compatibility options
@@ -193,7 +193,7 @@ options 	APMDEBUG
 
 # Basic Bus Support
 
-# Plug-and-Play BIOS and attached devices 
+# Plug-and-Play BIOS and attached devices
 
 pnpbios*	at mainbus?
 
@@ -201,10 +201,10 @@ options 	PNPBIOSEVENTS
 options 	PNPBIOSEVENTSDEBUG
 
 # mainboard audio chips
-#ess*		at pnpbios? index ?	# ESS AudioDrive  
+#ess*		at pnpbios? index ?	# ESS AudioDrive
 #sb*		at pnpbios? index ?	# NeoMagic 256AV in sb mode
 #wss*		at pnpbios? index ?	# NeoMagic 256AV in wss mode
-#ym*		at pnpbios? index ?	# OPL3-SA3 
+#ym*		at pnpbios? index ?	# OPL3-SA3
 
 # com port
 # If enabled, consider changing "com0", "com1", and "com2" under "ISA Serial
@@ -463,7 +463,7 @@ ca*	at cac? unit ?			# Compaq array disk devices
 pciide* at pci ? dev ? function ? flags 0x0000
 
 # ISA Plug-and-Play IDE controllers
-#wdc*	at isapnp? 
+#wdc*	at isapnp?
 
 # PCMCIA IDE controllers
 wdc*	at pcmcia? function ?
@@ -593,8 +593,8 @@ sm*	at mhzc?
 #ne0	at isa? port 0x280 irq 9		# NE[12]000 ethernet cards
 #ne1	at isa? port 0x300 irq 10
 #sm0	at isa? port 0x300 irq 10		# SMC91C9x Ethernet
-#tr0	at isa? port 0xa20 iomem 0xd8000 irq ?  # IBM TROPIC based Token-Ring
-#tr1	at isa? port 0xa24 iomem 0xd0000 irq ?  # IBM TROPIC based Token-Ring
+#tr0	at isa? port 0xa20 iomem 0xd8000 irq ?	# IBM TROPIC based Token-Ring
+#tr1	at isa? port 0xa24 iomem 0xd0000 irq ?	# IBM TROPIC based Token-Ring
 #tr*	at isa? port ? irq ?			# 3COM TROPIC based Token-Ring
 #we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC Ethernet
 #we1	at isa? port 0x300 iomem 0xcc000 irq 10
@@ -637,16 +637,19 @@ usb*	at ohci?
 uhub*	at usb?
 uhub*	at uhub? port ? configuration ? interface ?
 
+# USB HID device
+uhidev*	at uhub? port ? configuration ? interface ?
+
 # USB Mice
-ums*	at uhub? port ? configuration ? interface ?
+ums*	at uhidev? reportid ?
 wsmouse*	at ums? mux 0
 
 # USB Keyboards
-ukbd*	at uhub? port ? configuration ? interface ?
+ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ? mux 1
 
 # USB Generic HID devices
-uhid*	at uhub? port ? configuration ? interface ?
+uhid*	at uhidev? reportid ?
 
 # USB Printer
 ulpt*	at uhub? port ? configuration ? interface ?
@@ -709,7 +712,7 @@ ugen*	at uhub? port ? configuration ? interface ?
 #aria0	at isa? port 0x290 irq 10 		# Aria
 #gus0	at isa? port 0x220 irq 7 drq 1 drq2 6	# Gravis Ultra Sound
 #pas0	at isa? port 0x220 irq 7 drq 1		# ProAudio Spectrum
-#pss0	at isa? port 0x220 irq 7 drq 6  	# Personal Sound System
+#pss0	at isa? port 0x220 irq 7 drq 6		# Personal Sound System
 #sp0	at pss0 port 0x530 irq 10 drq 0		# 	sound port driver
 #sb0	at isa? port 0x220 irq 5 drq 1 drq2 5	# SoundBlaster
 #wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System

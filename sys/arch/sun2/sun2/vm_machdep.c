@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.5.4.3 2001/12/08 04:22:23 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.5.4.4 2002/01/08 00:28:14 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -95,10 +95,10 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	void (*func) __P((void *));
 	void *arg;
 {
-	register struct pcb *p1pcb = &l1->l_addr->u_pcb;
-	register struct pcb *p2pcb = &l2->l_addr->u_pcb;
-	register struct trapframe *p2tf;
-	register struct switchframe *p2sf;
+	struct pcb *p1pcb = &l1->l_addr->u_pcb;
+	struct pcb *p2pcb = &l2->l_addr->u_pcb;
+	struct trapframe *p2tf;
+	struct switchframe *p2sf;
 
 	/*
 	 * Before copying the PCB from the current process,
@@ -114,8 +114,8 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	/* copy over the machdep part of struct proc */
 	l2->l_md.md_flags = l1->l_md.md_flags;
 
-	/* Copy pcb from proc l1 to l2. */
-	bcopy(p1pcb, p2pcb, sizeof(*p2pcb));
+	/* Copy pcb from proc p1 to p2. */
+	memcpy(p2pcb, p1pcb, sizeof(*p2pcb));
 
 	/* Child can start with low IPL (XXX - right?) */
 	p2pcb->pcb_ps = PSL_LOWIPL;
@@ -136,7 +136,7 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	 */
 	p2tf = (struct trapframe *)((char*)p2pcb + USPACE-4) - 1;
 	l2->l_md.md_regs = (int *)p2tf;
-	bcopy(l1->l_md.md_regs, p2tf, sizeof(*p2tf));
+	memcpy(p2tf, l1->l_md.md_regs, sizeof(*p2tf));
 
 	/*
 	 * If specified, give the child a different stack.
@@ -247,7 +247,7 @@ cpu_exit(l, proc)
  */
 void
 cpu_swapout(p)
-	register struct proc *p;
+	struct proc *p;
 {
 
 	/*
@@ -264,7 +264,7 @@ cpu_swapout(p)
  */
 void
 cpu_swapin(p)
-	register struct proc *p;
+	struct proc *p;
 {
 
 	/*
@@ -379,13 +379,13 @@ pagemove(from, to, len)
 void
 vmapbuf(bp, len)
 	struct buf *bp;
-	vm_size_t len;
+	vsize_t len;
 {
 	struct pmap *upmap, *kpmap;
-	vm_offset_t uva;	/* User VA (map from) */
-	vm_offset_t kva;	/* Kernel VA (new to) */
-	vm_offset_t pa; 	/* physical address */
-	vm_size_t off;
+	vaddr_t uva;	/* User VA (map from) */
+	vaddr_t kva;	/* Kernel VA (new to) */
+	paddr_t pa; 	/* physical address */
+	vsize_t off;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
@@ -396,7 +396,7 @@ vmapbuf(bp, len)
 	 */
 	bp->b_saveaddr = bp->b_data;
 	uva = m68k_trunc_page(bp->b_data);
-	off = (vm_offset_t)bp->b_data - uva;
+	off = (vaddr_t)bp->b_data - uva;
 	len = m68k_round_page(off + len);
 	kva = uvm_km_valloc_wait(kernel_map, len);
 	bp->b_data = (caddr_t)(kva + off);
@@ -427,16 +427,16 @@ vmapbuf(bp, len)
 void
 vunmapbuf(bp, len)
 	struct buf *bp;
-	vm_size_t len;
+	vsize_t len;
 {
-	vm_offset_t kva;
-	vm_size_t off;
+	vaddr_t kva;
+	vsize_t off;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
 
 	kva = m68k_trunc_page(bp->b_data);
-	off = (vm_offset_t)bp->b_data - kva;
+	off = (vaddr_t)bp->b_data - kva;
 	len = m68k_round_page(off + len);
 	pmap_remove(vm_map_pmap(kernel_map), kva, kva + len);
 	pmap_update(vm_map_pmap(kernel_map));

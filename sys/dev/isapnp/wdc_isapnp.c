@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isapnp.c,v 1.13.20.1 2001/11/14 19:14:59 nathanw Exp $	*/
+/*	$NetBSD: wdc_isapnp.c,v 1.13.20.2 2002/01/08 00:30:38 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,9 +37,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_isapnp.c,v 1.13.20.1 2001/11/14 19:14:59 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_isapnp.c,v 1.13.20.2 2002/01/08 00:30:38 nathanw Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>

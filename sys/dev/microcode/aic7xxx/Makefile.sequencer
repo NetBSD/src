@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sequencer,v 1.2 2000/03/15 02:09:08 fvdl Exp $
+#	$NetBSD: Makefile.sequencer,v 1.2.6.1 2002/01/08 00:30:46 nathanw Exp $
 
 SEQHEADER=aic7xxx_seq.h
 REGHEADER=aic7xxx_reg.h
@@ -14,7 +14,7 @@ YHEADER=1
 DPADD+= ${LIBL}
 LDADD+= -ll
 
-MKSHARE=no
+NOSHARE=# defined
 
 .include <bsd.prog.mk>
 

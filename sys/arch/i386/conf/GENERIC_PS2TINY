@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_PS2TINY,v 1.2.4.4 2001/11/14 19:12:43 nathanw Exp $
+#	$NetBSD: GENERIC_PS2TINY,v 1.2.4.5 2002/01/08 00:25:12 nathanw Exp $
 #
 #	GENERIC-style kernel config for IBM PS/2 with MCA bus. It only contains
 #	IBM PS/2 related stuff and has been generally trimmed down somewhat,
@@ -31,7 +31,7 @@ options 	USER_LDT	# user-settable LDT; used by WINE
 
 # This option allows you to force a serial console at the specified
 # I/O address.   see console(4) for details.
-#options 	"CONSDEVNAME=\"com\"",CONADDR=0x2f8,CONSPEED=57600
+#options 	CONSDEVNAME="\"com\"",CONADDR=0x2f8,CONSPEED=57600
 #	you don't want the option below ON iff you are using the
 #	serial console option of the new boot strap code.
 #options 	CONS_OVERRIDE	# Always use above! independent of boot info
@@ -46,13 +46,13 @@ options 	USER_LDT	# user-settable LDT; used by WINE
 
 # Standard system options
 
-options 	UCONSOLE        # users can use TIOCCONS (for xconsole)
-options 	INSECURE        # disable kernel security levels
+options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
+options 	INSECURE	# disable kernel security levels
 
 options 	RTC_OFFSET=-600 # hardware clock is this many mins. west of GMT
 options 	NTP		# NTP phase/frequency locked loop
 
-#options 	KTRACE          # system call tracing via ktrace(1)
+#options 	KTRACE		# system call tracing via ktrace(1)
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
@@ -66,13 +66,13 @@ options 	SYSVSHM		# System V-like memory sharing
 options 	LKM		# loadable kernel modules
 
 # Diagnostic/debugging support options
-#options 	DIAGNOSTIC      # expensive kernel consistency checks
-#options 	DEBUG           # expensive debugging checks/support
-#options 	KMEMSTATS       # kernel memory statistics (vmstat -m)
-options 	DDB             # in-kernel debugger
+#options 	DIAGNOSTIC	# expensive kernel consistency checks
+#options 	DEBUG		# expensive debugging checks/support
+#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
+options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
-#options 	"KGDB_DEVNAME=\"com\"",KGDBADDR=0x3f8,KGDBRATE=9600
+#options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
 #makeoptions	DEBUG="-g"	# compile full symbol table
 makeoptions	COPTS="-Os"	# generates smaller code than -O2, -O1
 
@@ -98,7 +98,7 @@ file-system 	KERNFS		# /kern
 # File system options
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP		# FFS soft updates support.
 #options 	NFSSERVER	# Network File System server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
@@ -135,17 +135,17 @@ options 	INET6		# IPV6
 #options 	PNPBIOSVERBOSE	# verbose PnP BIOS messages
 #options 	PNPBIOSDEBUG	# more fulsome PnP BIOS debugging messages
 #options 	I2OVERBOSE	# verbose I2O driver messages
-options 	MCAVERBOSE      # verbose MCA device autoconfig messages
+options 	MCAVERBOSE	# verbose MCA device autoconfig messages
 
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 
-options 	WSEMUL_VT100            # VT100 / VT220 emulation
+options 	WSEMUL_VT100	# VT100 / VT220 emulation
 options 	WS_KERNEL_FG=WSCOL_GREEN
 
 # Kernel root file system and dump configuration.
-config		netbsd  root on ? type ?
-#config		netbsd  root on ? type nfs
-#config		netbsd	root on ed0a type ffs
+config		netbsd root on ? type ?
+#config		netbsd root on ? type nfs
+#config		netbsd root on ed0a type ffs
 
 #
 # Device Configuration
@@ -155,9 +155,9 @@ mainbus0 at root
 mca0	at mainbus0
 isa0	at mainbus0
 
-#npx0	at isa? port 0xf0 irq 13        # x86 math coprocessor
+#npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 
-#pc0	at isa? port 0x60 irq 1   
+#pc0	at isa? port 0x60 irq 1
 
 # wscons
 pckbc0		at isa?			# pc keyboard controller
@@ -165,7 +165,7 @@ options 	PCKBCDEBUG
 #pcconskbd*	at pckbc?
 #pms*		at pckbc?		# PS/2 mouse for wsmouse
 #wsmouse*	at pms?
-pckbd*		at pckbc?               # PC keyboard
+pckbd*		at pckbc?		# PC keyboard
 wskbd*		at pckbd? console ?
 vga0		at isa?
 wsdisplay*	at vga? console ?
@@ -190,13 +190,15 @@ le*	at mca? slot ?			# SKNET Personal/MC2+
 
 # MCA ESDI controllers & disks
 edc*	at mca? slot ?			# IBM ESDI Disk Controllers
-ed*	at edc?
+ed*	at edc? drive ?
 
 # MCA SCSI controllers
 aha*	at mca? slot ?			# Adaptec AHA-1640
+esp*	at mca? slot ?			# NCR 53C90
 
 # SCSI bus support
 scsibus* at aha?
+scsibus* at esp?
 
 # SCSI devices
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
@@ -209,6 +211,7 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 
 # network pseudo-devices
 pseudo-device	bpfilter	4	# Berkeley packet filter
+pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	loop			# network loopback
 

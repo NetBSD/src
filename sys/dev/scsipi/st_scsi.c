@@ -1,4 +1,4 @@
-/*	$NetBSD: st_scsi.c,v 1.2.2.4 2001/11/14 19:16:06 nathanw Exp $ */
+/*	$NetBSD: st_scsi.c,v 1.2.2.5 2002/01/08 00:31:58 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -57,12 +57,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st_scsi.c,v 1.2.2.4 2001/11/14 19:16:06 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st_scsi.c,v 1.2.2.5 2002/01/08 00:31:58 nathanw Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/buf.h>
@@ -83,7 +82,8 @@ int	st_scsibus_mode_select __P((struct st_softc *, int));
 int	st_scsibus_cmprss __P((struct st_softc *, int, int));
 
 struct cfattach st_scsibus_ca = {
-	sizeof(struct st_softc), st_scsibus_match, st_scsibus_attach
+	sizeof(struct st_softc), st_scsibus_match, st_scsibus_attach,
+	stdetach, stactivate
 };
 
 const struct scsipi_inquiry_pattern st_scsibus_patterns[] = {

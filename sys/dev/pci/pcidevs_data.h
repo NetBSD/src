@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.310.2.8 2001/11/14 19:15:26 nathanw Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.310.2.9 2002/01/08 00:31:12 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.369 2001/11/07 21:12:49 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.379 2002/01/01 21:47:08 augustss Exp 
  */
 
 /*
@@ -1840,6 +1840,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "EX110TX PCI Fast Ethernet Adapter",
 	},
 	{
+	    PCI_VENDOR_COLOGNECHIP, PCI_PRODUCT_COLOGNECHIP_HFC,
+	    0,
+	    "Cologne Chip Designs",
+	    "HFC-S",
+	},
+	{
 	    PCI_VENDOR_COMPAL, PCI_PRODUCT_COMPAL_38W2,
 	    0,
 	    "COMPAL Electronics, Inc.",
@@ -1892,6 +1898,24 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Compaq",
 	    "Triflex Host-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA5300,
+	    0,
+	    "Compaq",
+	    "Smart Array 5300",
+	},
+	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA5i,
+	    0,
+	    "Compaq",
+	    "Smart Array 5i",
+	},
+	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA532,
+	    0,
+	    "Compaq",
+	    "Smart Array 532",
 	},
 	{
 	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_USB,
@@ -2548,6 +2572,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "GT-64260 System Controller",
 	},
 	{
+	    PCI_VENDOR_GUILLEMOT, PCI_PRODUCT_GUILLEMOT_MAXIRADIO,
+	    0,
+	    "Guillemot",
+	    "MAXIRADIO",
+	},
+	{
 	    PCI_VENDOR_HP, PCI_PRODUCT_HP_J2585A,
 	    0,
 	    "Hewlett-Packard",
@@ -2762,6 +2792,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82434LX/NX PCI, Cache and Memory Controller (PCMC)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_GDT_RAID1,
+	    0,
+	    "Intel",
+	    "GDT RAID",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_GDT_RAID2,
+	    0,
+	    "Intel",
+	    "GDT RAID",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80960RM,
@@ -3178,6 +3220,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "82801BA AC-97 PCI Modem",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BAM_HPB,
+	    0,
+	    "Intel",
+	    "82801BAM Hub-to-PCI Bridge",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_LAN,
 	    0,
 	    "Intel",
@@ -3194,6 +3242,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82801BA IDE Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BAM_LPC,
+	    0,
+	    "Intel",
+	    "82801BAM LPC Interface Bridge",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_HPB,
@@ -3790,6 +3844,24 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "MQ200",
 	},
 	{
+	    PCI_VENDOR_MIDDLE_DIGITAL, PCI_PRODUCT_MIDDLE_DIGITAL_WEASEL_VGA,
+	    0,
+	    "Middle Digital, Inc.",
+	    "Weasel Virtual VGA",
+	},
+	{
+	    PCI_VENDOR_MIDDLE_DIGITAL, PCI_PRODUCT_MIDDLE_DIGITAL_WEASEL_SERIAL,
+	    0,
+	    "Middle Digital, Inc.",
+	    "Weasel Serial Port",
+	},
+	{
+	    PCI_VENDOR_MIDDLE_DIGITAL, PCI_PRODUCT_MIDDLE_DIGITAL_WEASEL_CONTROL,
+	    0,
+	    "Middle Digital, Inc.",
+	    "Weasel Control",
+	},
+	{
 	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_MPC105,
 	    0,
 	    "Motorola",
@@ -3806,6 +3878,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Motorola",
 	    "MPC8240 \"Kahlua\" Host Bridge",
+	},
+	{
+	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_MPC107,
+	    0,
+	    "Motorola",
+	    "MPC107 \"Chaparral\" Host Bridge",
 	},
 	{
 	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_RAID_V2,
@@ -4432,6 +4510,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "Ultra100TX2/ATA Bus Master IDE Accelerator",
 	},
 	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_ULTRA100TX2v2,
+	    0,
+	    "Promise Technology",
+	    "Ultra100TX2v2/ATA Bus Master IDE Accelerator",
+	},
+	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_ULTRA133,
+	    0,
+	    "Promise Technology",
+	    "Ultra133/ATA Bus Master IDE Accelerator",
+	},
+	{
 	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP1020,
 	    0,
 	    "Q Logic",
@@ -4942,6 +5032,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "SiS 645 Host Bridge",
 	},
 	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_630,
+	    0,
+	    "Silicon Integrated System",
+	    "SiS 630 Host Bridge",
+	},
+	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_650,
 	    0,
 	    "Silicon Integrated System",
@@ -5288,6 +5384,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Texas Instruments",
 	    "TSB12LV26 OHCI IEEE 1394 Host Controller",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB43AA22,
+	    0,
+	    "Texas Instruments",
+	    "TSB43AA22 OHCI IEEE 1394 Host Controller",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4451LYNX,
@@ -5782,6 +5884,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "V96DPC i960 (Dual) Host-PCI Bridge",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6305,
+	    0,
+	    "VIA Technologies",
+	    "VT6305 OCHI IEEE 1394 Controller",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8363_HB,
 	    0,
 	    "VIA Technologies",
@@ -5924,6 +6032,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "VIA Technologies",
 	    "VT3043 (Rhine) 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6306,
+	    0,
+	    "VIA Technologies",
+	    "VT3606 OCHI IEEE 1394 Controller",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_SMB,
@@ -6097,13 +6211,13 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x17RP,
 	    0,
 	    "Vortex Computer Systems",
-	    "GDT6117RP/GDT6517RP",
+	    "GDT6[15]17RP",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x27RP,
 	    0,
 	    "Vortex Computer Systems",
-	    "GDT6127RP/GDT6527RP",
+	    "GDT6[15]27RP",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6537RP,
@@ -6121,25 +6235,25 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x11RP,
 	    0,
 	    "Vortex Computer Systems",
-	    "GDT6111RP/GDT6511RP",
+	    "GDT6[15]11RP",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x21RP,
 	    0,
 	    "Vortex Computer Systems",
-	    "GDT6121RP/GDT6521RP",
+	    "GDT6[15]21RP",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x17RD,
 	    0,
 	    "Vortex Computer Systems",
-	    "GDT6117RD/GDT6517RD",
+	    "GDT6[15]17RD",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x27RD,
 	    0,
 	    "Vortex Computer Systems",
-	    "GDT6127RD/GDT6527RD",
+	    "GDT6[5]127RD",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6537RD,
@@ -6157,37 +6271,79 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x11RD,
 	    0,
 	    "Vortex Computer Systems",
-	    "GDT6111RD/GDT6511RD",
+	    "GDT6[15]11RD",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x21RD,
 	    0,
 	    "Vortex Computer Systems",
-	    "GDT6121RD/GDT6521RD",
+	    "GDT6[15]21RD",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x18RD,
 	    0,
 	    "Vortex Computer Systems",
-	    "GDT6118RD/GDT6518RD/GDT6618RD",
+	    "GDT6[156]18RD",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x28RD,
 	    0,
 	    "Vortex Computer Systems",
-	    "GDT6128RD/GDT6528RD/GDT6628RD",
+	    "GDT6[156]28RD",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x38RD,
 	    0,
 	    "Vortex Computer Systems",
-	    "GDT6538RD/GDT6638RD",
+	    "GDT6[56]38RD",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x58RD,
 	    0,
 	    "Vortex Computer Systems",
-	    "GDT6558RD/GDT6658RD",
+	    "GDT6[56]58RD",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x17RP2,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT6[15]17RP2",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x27RP2,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT6[15]27RP2",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6537RP2,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT6537RP2",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x11RP2,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT6[15]11RP2",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x21RP2,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT6[15]21RP2",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x13RS,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT6513RS",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x23RS,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT6523RS",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6518RS,
@@ -6196,52 +6352,178 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "GDT6518RS",
 	},
 	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x28RS,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT6x28RS",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x38RS,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT6x38RS",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x58RS,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT6x58RS",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x33RS,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT6x33RS",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x43RS,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT6x43RS",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x53RS,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT6x53RS",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x63RS,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT6x63RS",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x13RN,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT7x13RN",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x23RN,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT7x23RN",
+	},
+	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x18RN,
 	    0,
 	    "Vortex Computer Systems",
-	    "GDT7118RN/GDT7518RN/GDT7618RN",
+	    "GDT7[156]18RN",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x28RN,
 	    0,
 	    "Vortex Computer Systems",
-	    "GDT7128RN/GDT7528RN/GDT7628RN",
+	    "GDT7[156]28RN",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x38RN,
 	    0,
 	    "Vortex Computer Systems",
-	    "GDT7538RN/GDT7638RN",
+	    "GDT7[56]38RN",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x58RN,
 	    0,
 	    "Vortex Computer Systems",
-	    "GDT7558RN/GDT7658RN",
+	    "GDT7[56]58RN",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x43RN,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT7[56]43RN",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x53RN,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT7x53RN",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x63RN,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT7x63RN",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_4x13RZ,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT4x13RZ",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_4x23RZ,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT4x23RZ",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_8x13RZ,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT8x13RZ",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_8x23RZ,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT8x23RZ",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_8x33RZ,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT8x33RZ",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_8x43RZ,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT8x43RZ",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_8x53RZ,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT8x53RZ",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_8x63RZ,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT8x63RZ",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x19RD,
 	    0,
 	    "Vortex Computer Systems",
-	    "GDT6519RD/GDT6619RD",
+	    "GDT6[56]19RD",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x29RD,
 	    0,
 	    "Vortex Computer Systems",
-	    "GDT6529RD/GDT6629RD",
+	    "GDT6[56]29RD",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x19RN,
 	    0,
 	    "Vortex Computer Systems",
-	    "GDT7519RN/GDT7619RN",
+	    "GDT7[56]19RN",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x29RN,
 	    0,
 	    "Vortex Computer Systems",
-	    "GDT7529RN/GDT7629RN",
+	    "GDT7[56]29RN",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_ICP,
+	    0,
+	    "Vortex Computer Systems",
+	    "ICP",
 	},
 	{
 	    PCI_VENDOR_VLSI, PCI_PRODUCT_VLSI_82C592,
@@ -9340,6 +9622,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCI_VENDOR_COLOGNECHIP, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Cologne Chip Designs",
+	    NULL,
+	},
+	{
 	    PCI_VENDOR_HIFN, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Hi/Fn",
@@ -9520,6 +9808,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCI_VENDOR_GUILLEMOT, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Guillemot",
+	    NULL,
+	},
+	{
 	    PCI_VENDOR_S3, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "S3",
@@ -9601,6 +9895,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_CHRYSALIS, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Chrysalis-ITS",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_MIDDLE_DIGITAL, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Middle Digital, Inc.",
 	    NULL,
 	},
 	{

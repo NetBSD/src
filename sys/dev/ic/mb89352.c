@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.5.6.3 2001/11/14 19:14:29 nathanw Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.5.6.4 2002/01/08 00:29:57 nathanw Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 /*-
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.5.6.3 2001/11/14 19:14:29 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.5.6.4 2002/01/08 00:29:57 nathanw Exp $");
 
 #ifdef DDB
 #define	integrate
@@ -130,7 +130,6 @@ __KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.5.6.3 2001/11/14 19:14:29 nathanw Exp 
 
 #include "opt_ddb.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

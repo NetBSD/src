@@ -1,4 +1,4 @@
-/*	$NetBSD: dma_sbus.c,v 1.5.2.2 2001/11/14 19:15:57 nathanw Exp $ */
+/*	$NetBSD: dma_sbus.c,v 1.5.2.3 2002/01/08 00:31:41 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,9 +66,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma_sbus.c,v 1.5.2.2 2001/11/14 19:15:57 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma_sbus.c,v 1.5.2.3 2002/01/08 00:31:41 nathanw Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.63.2.3 2001/11/14 19:16:37 nathanw Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.63.2.4 2002/01/08 00:32:33 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.63.2.3 2001/11/14 19:16:37 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.63.2.4 2002/01/08 00:32:33 nathanw Exp $");
 
 #include "opt_compat_43.h"
 
@@ -745,6 +745,21 @@ crdup(cr)
 	*newcr = *cr;
 	newcr->cr_ref = 1;
 	return (newcr);
+}
+
+/*
+ * convert from userland credentials to kernel one
+ */
+void
+crcvt(uc, uuc)
+	struct ucred *uc;
+	const struct uucred *uuc;
+{
+	uc->cr_ref = 0;
+	uc->cr_uid = uuc->cr_uid;
+	uc->cr_gid = uuc->cr_gid;
+	uc->cr_ngroups = uuc->cr_ngroups;
+	(void)memcpy(uc->cr_groups, uuc->cr_groups, sizeof(uuc->cr_groups));
 }
 
 /*

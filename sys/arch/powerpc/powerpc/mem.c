@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.12.4.2 2001/11/05 19:46:18 briggs Exp $ */
+/*	$NetBSD: mem.c,v 1.12.4.3 2002/01/08 00:27:12 nathanw Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,6 +51,7 @@
 #include <sys/uio.h>
 #include <sys/lwp.h>
 #include <sys/malloc.h>
+#include <sys/proc.h>
 
 #include <uvm/uvm_extern.h>
 

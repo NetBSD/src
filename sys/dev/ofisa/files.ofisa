@@ -1,4 +1,4 @@
-#	$NetBSD: files.ofisa,v 1.10 2001/02/26 02:39:30 matt Exp $
+#	$NetBSD: files.ofisa,v 1.10.2.1 2002/01/08 00:30:56 nathanw Exp $
 
 # OFW ISA bus support
 # XXX eventually we should do something with these locators
@@ -32,7 +32,7 @@ attach	ess at ofisa with ess_ofisa
 file	dev/ofisa/ess_ofisa.c		ess_ofisa
 
 # attachment of ISA CS8900 driver
-attach	cs at ofisa with cs_ofisa: of_network_dev
+attach	cs at ofisa with cs_ofisa: of_network_dev, cs_isa_common, isadma
 file	dev/ofisa/if_cs_ofisa.c		cs_ofisa
 
 # attachment of ISA Game port driver

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.19.8.2 2001/12/15 07:09:12 gmcgarry Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.19.8.3 2002/01/08 00:26:19 nathanw Exp $	*/
 
 /*
  * Mach Operating System
@@ -124,12 +124,8 @@ const struct db_variable db_regs[] = {
 const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
 void
-db_stack_trace_print(addr, have_addr, count, modif, pr)
-	db_expr_t	addr;
-	boolean_t	have_addr;
-	db_expr_t	count;
-	char		*modif;
-	void		(*pr) __P((const char *, ...));
+db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
+    char *modif, void (*pr)(const char *, ...))
 {
 #ifndef DDB_TRACE
 	struct pcb *pcb;
@@ -237,21 +233,19 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 }
 
 void
-db_mips_stack_trace(count, stackp, the_pc, the_ra, flags, kstackp)
-	int count;
-	vaddr_t stackp, the_pc, the_ra;
-	int flags;
-	vaddr_t kstackp;
+db_mips_stack_trace(int count, vaddr_t stackp, vaddr_t the_pc, vaddr_t the_ra,
+    int flags, vaddr_t kstackp)
 {
-	return;
+
+	/* nothing... */
 }
 
 
 int
-db_mips_variable_func (const struct db_variable *vp,
-	db_expr_t *valuep,
-	int db_var_fcn)
+db_mips_variable_func (const struct db_variable *vp, db_expr_t *valuep,
+    int db_var_fcn)
 {
+
 	switch (db_var_fcn) {
 	case DB_VAR_GET:
 		*valuep = *(mips_reg_t *) vp->valuep;

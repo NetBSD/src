@@ -1,4 +1,4 @@
-/*	$NetBSD: via82c586.c,v 1.3 2001/01/05 19:08:04 tsutsui Exp $	*/
+/*	$NetBSD: via82c586.c,v 1.3.4.1 2002/01/08 00:25:43 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -65,6 +65,9 @@
 /*
  * Support for the VIA 82c586 PCI-ISA bridge interrupt controller.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: via82c586.c,v 1.3.4.1 2002/01/08 00:25:43 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

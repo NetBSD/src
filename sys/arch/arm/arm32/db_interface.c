@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.8.2.2 2001/11/15 06:39:21 thorpej Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.8.2.3 2002/01/08 00:23:08 nathanw Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -44,9 +44,8 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/db_machdep.h>
-#include <machine/katelib.h>
-#include <machine/pte.h>
-#include <machine/undefined.h>
+#include <arm/arm32/katelib.h>
+#include <arm/undefined.h>
 #include <ddb/db_command.h>
 #include <ddb/db_output.h>
 #include <ddb/db_variables.h>
@@ -301,13 +300,11 @@ cpu_Debugger()
 	asm(".word	0xe7ffffff");
 }
 
-void db_show_intrchain_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
 void db_show_panic_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
 void db_show_frame_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
 
 const struct db_command db_machine_command_table[] = {
 	{ "frame",	db_show_frame_cmd,	0, NULL },
-	{ "intrchain",	db_show_intrchain_cmd,	0, NULL },
 	{ "panic",	db_show_panic_cmd,	0, NULL },
 #ifdef ARM32_DB_COMMANDS
 	ARM32_DB_COMMANDS,

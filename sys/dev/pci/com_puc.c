@@ -1,4 +1,4 @@
-/*	$NetBSD: com_puc.c,v 1.1.26.2 2001/11/14 19:15:10 nathanw Exp $	*/
+/*	$NetBSD: com_puc.c,v 1.1.26.3 2002/01/08 00:31:00 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -38,9 +38,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_puc.c,v 1.1.26.2 2001/11/14 19:15:10 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_puc.c,v 1.1.26.3 2002/01/08 00:31:00 nathanw Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>

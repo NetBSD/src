@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_machdep.c,v 1.5.4.2 2002/01/04 19:12:32 eeh Exp $	*/
+/*	$NetBSD: sunos32_machdep.c,v 1.5.4.3 2002/01/08 00:28:05 nathanw Exp $	*/
 /* from: NetBSD: sunos_machdep.c,v 1.14 2001/01/29 01:37:56 mrg Exp 	*/
 
 /*
@@ -111,9 +111,7 @@ sunos32_setregs(p, pack, stack)
 	/* Mark this as a 32-bit emulation */
 	p->p_flag |= P_32;
 
-	/* Setup the coredump32 and ev_out32 hook's */
-	if (coredump32_hook == NULL)
-		coredump32_hook = coredump32;
+	/* Setup the ev_out32 hook */
 	if (ev_out32_hook == NULL)
 		ev_out32_hook = ev_out32;
 

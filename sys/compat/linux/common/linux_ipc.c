@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipc.c,v 1.22.2.3 2001/11/14 19:13:11 nathanw Exp $	*/
+/*	$NetBSD: linux_ipc.c,v 1.22.2.4 2002/01/08 00:29:04 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,13 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.22.2.3 2001/11/14 19:13:11 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.22.2.4 2002/01/08 00:29:04 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
 #endif
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/shm.h>
 #include <sys/sem.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.c,v 1.5.6.1 2001/08/24 00:08:38 nathanw Exp $	*/
+/*	$NetBSD: pcibios.c,v 1.5.6.2 2002/01/08 00:25:42 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -65,6 +65,9 @@
 /*
  * Interface to the PCI BIOS and PCI Interrupt Routing table.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.5.6.2 2002/01/08 00:25:42 nathanw Exp $");
 
 #include "opt_pcibios.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_bus_fixup.c,v 1.1.12.1 2001/08/24 00:08:37 nathanw Exp $	*/
+/*	$NetBSD: pci_bus_fixup.c,v 1.1.12.2 2002/01/08 00:25:41 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -28,6 +28,9 @@
 /*
  * PCI bus renumbering support.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pci_bus_fixup.c,v 1.1.12.2 2002/01/08 00:25:41 nathanw Exp $");
 
 #include "opt_pcibios.h"
 

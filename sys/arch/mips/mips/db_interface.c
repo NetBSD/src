@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.38.2.2 2001/11/17 23:43:41 wdk Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.38.2.3 2002/01/08 00:26:18 nathanw Exp $	*/
 
 /*
  * Mach Operating System

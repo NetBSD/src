@@ -1,4 +1,4 @@
-/*	$NetBSD: wi_ieee.h,v 1.3.2.5 2001/11/15 17:43:57 thorpej Exp $	*/
+/*	$NetBSD: wi_ieee.h,v 1.3.2.6 2002/01/08 00:30:14 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -66,7 +66,7 @@
  * Technically I don't think there's a limit to a record
  * length. The largest record is the one that contains the CIS
  * data, which is 240 words long, so 256 should be a safe
- * value.  But 512 is more safe?
+ * value.
  */
 #define WI_MAX_DATALEN	512
 
@@ -75,13 +75,6 @@ struct wi_req {
 	u_int16_t	wi_type;
 	u_int16_t	wi_val[WI_MAX_DATALEN];
 };
-
-#define WI_IOCTL_SET_SCAN		1
-#define WI_IOCTL_GET_SCAN		2
-#define WI_IOCTL_GET_SCAN_RESULTS	3
-#define WI_IOCTL_SET_TESTMODE		4
-#define WI_IOCTL_MGMT_XMIT		5
-#define WI_IOCTL_IFACE_STATS		6
 
 /*
  * Private LTV records (interpreted only by the driver). This is
@@ -188,16 +181,19 @@ struct wi_counters {
 };
 
 /*
- * results of last ap scan
+ * These are all the LTV record types that we can read or write
+ * from the WaveLAN. Not all of them are temendously useful, but I
+ * list as many as I know about here for completeness.
  */
-#define WI_SCAN_RESULTS_MAXLEN	512
-struct wi_scan_results {
-	int			truncated;	/* incomplete data in result */
-	u_int			scanning;	/* in hz units */
-	struct timeval		lastscan;	/* time scan was completed */
-	u_int16_t		len;		/* number of words */
-	u_int16_t		scan_results[WI_SCAN_RESULTS_MAXLEN];
-};
+
+#define WI_RID_DNLD_BUF		0xFD01
+#define WI_RID_MEMSZ		0xFD02
+#define WI_RID_CARDID		0xFD0B
+#define WI_RID_DOMAINS		0xFD11
+#define WI_RID_CIS		0xFD13
+#define WI_RID_COMMQUAL		0xFD43
+#define WI_RID_SCALETHRESH	0xFD46
+#define WI_RID_PCF		0xFD87
 
 /*
  * Network parameters, static configuration entities.
@@ -243,15 +239,11 @@ struct wi_scan_results {
 /*
  * Network parameters, dynamic configuration entities
  */
-#define WI_RID_MCAST_LIST	0xFC80 /* multicast addrs to put in filter */
+#define WI_RID_MCAST_LIST	0xFC80 /* list of multicast addrs */
 #define WI_RID_CREATE_IBSS	0xFC81 /* create IBSS */
 #define WI_RID_FRAG_THRESH	0xFC82 /* frag len, unicast msg xmit */
 #define WI_RID_RTS_THRESH	0xFC83 /* frame len for RTS/CTS handshake */
-#define WI_RID_TX_RATE		0xFC84 /* data rate for message xmit
- 					* 0 == Fixed 1mbps
- 					* 1 == Fixed 2mbps
- 					* 2 == auto fallback
-					*/
+#define WI_RID_TX_RATE		0xFC84 /* data rate for message xmit */
 #define WI_RID_PROMISC		0xFC85 /* enable promisc mode */
 #define WI_RID_FRAG_THRESH0	0xFC90
 #define WI_RID_FRAG_THRESH1	0xFC91
@@ -276,7 +268,7 @@ struct wi_scan_results {
 #define WI_RID_TX_RATE6		0xFCA4
 #define WI_RID_DEFLT_CRYPT_KEYS	0xFCB0
 #define WI_RID_TX_CRYPT_KEY	0xFCB1
-#define WI_RID_TICK_TIME	0xFCE0 	/* Auxiliary Timer tick interval */
+#define WI_RID_TICK_TIME	0xFCE0
 #define WI_RID_SCAN_REQ		0xFCE1
 #define WI_RID_JOIN_REQ		0xFCE2
 
@@ -294,8 +286,7 @@ struct wi_ltv_keys {
 /*
  * NIC information
  */
-#define WI_RID_DNLD_BUF		0xFD01
-#define WI_RID_MEMSZ		0xFD02 /* memory size info */
+#define WI_RID_FIRM_ID		0xFD02 /* Primary func firmware ID. */
 #define WI_RID_PRI_SUP_RANGE	0xFD03 /* primary supplier compatibility */
 #define WI_RID_CIF_ACT_RANGE	0xFD04 /* controller sup. compatibility */
 #define WI_RID_SERIALNO		0xFD0A /* card serial number */
@@ -310,9 +301,6 @@ struct wi_ltv_keys {
 #define WI_RID_STA_SUP_RANGE	0xFD21 /* station supplier compat */
 #define WI_RID_MFI_ACT_RANGE	0xFD22
 #define WI_RID_CFI_ACT_RANGE	0xFD33
-#define WI_RID_COMMQUAL		0xFD43
-#define WI_RID_SCALETHRESH	0xFD46
-#define WI_RID_PCF		0xFD87
 
 /*
  * MAC information

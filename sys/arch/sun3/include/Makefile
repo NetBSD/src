@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16.4.2 2001/11/10 21:22:53 scw Exp $
+#	$NetBSD: Makefile,v 1.16.4.3 2002/01/08 00:28:18 nathanw Exp $
 
 KDIR=	/sys/arch/sun3/include
 INCSDIR= /usr/include/sun3
@@ -18,7 +18,7 @@ INCS=	ansi.h aout_machdep.h asm.h autoconf.h \
 	param.h param3.h param3x.h pcb.h pmap.h pmap3.h pmap3x.h \
 	proc.h profile.h psl.h pte.h pte3.h pte3x.h ptrace.h \
 	reg.h \
-	setjmp.h signal.h stdarg.h svr4_machdep.h \
+	setjmp.h signal.h stdarg.h \
 	trap.h types.h \
 	varargs.h vmparam.h vmparam3.h vmparam3x.h vuid_event.h \
 	z8530var.h

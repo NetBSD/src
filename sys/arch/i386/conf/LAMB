@@ -1,13 +1,11 @@
-#	$NetBSD: LAMB,v 1.2.2.4 2001/11/14 19:12:44 nathanw Exp $
+#	$NetBSD: LAMB,v 1.2.2.5 2002/01/08 00:25:14 nathanw Exp $
 #
-#	LAMB -- for "LAMB" router, http://www.wildlab.com/
-#	Be sure to check pkgsrc/sysutils/lambd as well.
+#	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-# based on:
-#ident 		"GENERIC-Revision: 1.414"
+#ident 		"GENERIC-$Revision: 1.2.2.5 $"
 
 maxusers	32		# estimated number of users
 
@@ -24,12 +22,14 @@ options 	USER_LDT	# user-settable LDT; used by WINE
 # eliminate delay no-ops in I/O; recommended on all but very old machines
 #options 	DUMMY_NOPS
 
+options 	MTRR		# memory-type range register syscall support
+
 # delay between "rebooting ..." message and hardware reset, in milliseconds
 #options 	CPURESET_DELAY=2000
 
 # This option allows you to force a serial console at the specified
 # I/O address.   see console(4) for details.
-#options 	"CONSDEVNAME=\"com\"",CONADDR=0x2f8,CONSPEED=57600
+#options 	CONSDEVNAME="\"com\"",CONADDR=0x2f8,CONSPEED=57600
 #	you don't want the option below ON iff you are using the
 #	serial console option of the new boot strap code.
 #options 	CONS_OVERRIDE	# Always use above! independent of boot info
@@ -63,7 +63,7 @@ options 	SYSVSHM		# System V-like memory sharing
 
 options 	LKM		# loadable kernel modules
 
-options 	"TIMER_FREQ=1189200"	# LAMB uses nonstandard timer freq
+options 	TIMER_FREQ=1189200	# LAMB uses nonstandard timer freq
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks
@@ -72,7 +72,7 @@ options 	"TIMER_FREQ=1189200"	# LAMB uses nonstandard timer freq
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
-#options 	"KGDB_DEVNAME=\"com\"",KGDBADDR=0x3f8,KGDBRATE=9600
+#options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
 #makeoptions	DEBUG="-g"	# compile full symbol table
 
 # Compatibility options
@@ -118,7 +118,7 @@ file-system	CODA		# Coda File System; also needs vcoda (below)
 # File system options
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER	# Network File System server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
@@ -233,7 +233,7 @@ mainbus0 at root
 #options 	PCIINTR_DEBUG		# super-verbose PCI interrupt fixup
 
 # ISA bus support
-isa*	at mainbus?
+isa0	at mainbus?
 
 # ISA Plug-and-Play bus support
 isapnp0	at isa?
@@ -291,7 +291,7 @@ com0	at isa? port 0x3f8 irq 4	# Standard PC serial ports
 
 # IDE and related devices
 # ISA Plug-and-Play IDE controllers
-wdc*	at isapnp? 
+wdc*	at isapnp?
 
 # ISA ST506, ESDI, and IDE controllers
 # Use flags 0x01 if you want to try to use 32bits data I/O (the driver will
@@ -358,6 +358,7 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
+pseudo-device	bridge			# simple inter-network bridging
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
@@ -370,5 +371,7 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 # a pseudo device needed for Coda	# also needs CODA (above)
 pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 
-# mouse & keyboard multiplexor pseudo-devices
-pseudo-device	wsmux
+# wscons pseudo-devices
+pseudo-device	wsmux			# mouse & keyboard multiplexor
+pseudo-device	wsfont
+

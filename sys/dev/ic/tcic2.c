@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2.c,v 1.6.2.1 2001/11/14 19:14:38 nathanw Exp $	*/
+/*	$NetBSD: tcic2.c,v 1.6.2.2 2002/01/08 00:30:05 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christoph Badura.  All rights reserved.
@@ -31,11 +31,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.6.2.1 2001/11/14 19:14:38 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.6.2.2 2002/01/08 00:30:05 nathanw Exp $");
 
 #undef	TCICDEBUG
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -942,7 +941,7 @@ tcic_chip_mem_map(pch, kind, card_addr, size, pcmhp, offsetp, windowp)
 	bus_addr_t card_addr;
 	bus_size_t size;
 	struct pcmcia_mem_handle *pcmhp;
-	bus_addr_t *offsetp;
+	bus_size_t *offsetp;
 	int *windowp;
 {
 	struct tcic_handle *h = (struct tcic_handle *) pch;

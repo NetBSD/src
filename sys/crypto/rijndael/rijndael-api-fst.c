@@ -1,4 +1,4 @@
-/*	$NetBSD: rijndael-api-fst.c,v 1.5.2.3 2001/11/14 19:13:35 nathanw Exp $	*/
+/*	$NetBSD: rijndael-api-fst.c,v 1.5.2.4 2002/01/08 00:29:14 nathanw Exp $	*/
 /*	$KAME: rijndael-api-fst.c,v 1.8 2001/03/02 05:53:05 itojun Exp $	*/
 
 /*
@@ -17,13 +17,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rijndael-api-fst.c,v 1.5.2.3 2001/11/14 19:13:35 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rijndael-api-fst.c,v 1.5.2.4 2002/01/08 00:29:14 nathanw Exp $");
 
 #include <sys/param.h>
-#include <sys/types.h>
 #ifdef _KERNEL
 #include <sys/systm.h>
 #else
+#include <stdlib.h>
 #include <string.h>
 #endif
 #include <crypto/rijndael/rijndael-alg-fst.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: lsi64854.c,v 1.14.2.3 2001/11/14 19:14:29 nathanw Exp $ */
+/*	$NetBSD: lsi64854.c,v 1.14.2.4 2002/01/08 00:29:56 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,9 +37,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lsi64854.c,v 1.14.2.3 2001/11/14 19:14:29 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lsi64854.c,v 1.14.2.4 2002/01/08 00:29:56 nathanw Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: trm.c,v 1.4.2.2 2001/11/14 19:15:31 nathanw Exp $	*/
+/*	$NetBSD: trm.c,v 1.4.2.3 2002/01/08 00:31:18 nathanw Exp $	*/
 /*
  * Device Driver for Tekram DC395U/UW/F, DC315/U
  * PCI SCSI Bus Master Host Adapter
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.4.2.2 2001/11/14 19:15:31 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.4.2.3 2002/01/08 00:31:18 nathanw Exp $");
 
 /* #define TRM_DEBUG */
 
@@ -96,7 +96,7 @@ struct nvram_target {
 #define NTC_DO_SEND_START	0x08	/* Send start command SPINUP */
 #define NTC_DO_DISCONNECT	0x04	/* Enable SCSI disconnect    */
 #define NTC_DO_SYNC_NEGO	0x02	/* Sync negotiation	     */
-#define NTC_DO_PARITY_CHK	0x01	/* (it should define at NAC) Parity check enable */
+#define NTC_DO_PARITY_CHK	0x01	/* Parity check enable 	     */
 	u_int8_t period;		/* Target period	       */
 	u_int8_t config2;		/* Target configuration byte 2 */
 	u_int8_t config3;		/* Target configuration byte 3 */
@@ -153,16 +153,11 @@ struct trm_srb {
 	struct trm_dcb *dcb;
 
 	struct trm_sg_entry *sgentry;
-	struct trm_sg_entry tempsg;	/* Temp sgentry when Request Sense */
-	/*
-	 * the scsipi_xfer for this cmd
-	 */
-	struct scsipi_xfer *xs;
+	struct scsipi_xfer *xs;		/* scsipi_xfer for this cmd */
 	bus_dmamap_t dmap;
 	bus_size_t sgoffset;		/* Xfer buf offset */
 
 	u_int32_t buflen;		/* Total xfer length */
-	u_int32_t templen;		/* Temp buflen when Request Sense */
 	u_int32_t sgaddr;		/* SGList physical starting address */
 
 	u_int state;			/* SRB State */
@@ -218,12 +213,10 @@ struct trm_srb {
 #define PARITY_ERROR		0x10
 #define SRB_ERROR		0x20
 	int tagnum;			/* Tag number */
-	int retry;			/* Retry Count */
 	int msgcnt;
 
 	int cmdlen;			/* SCSI command length */
 	u_int8_t cmd[12];       	/* SCSI command */
-	u_int8_t tempcmd[6];		/* Temp cmd when Request Sense */
 
 	u_int8_t msgin[6];
 	u_int8_t msgout[6];
@@ -270,7 +263,6 @@ struct trm_dcb {
 	u_int8_t flag;
 #define ABORT_DEV_		0x01
 #define SHOW_MESSAGE_		0x02
-	u_int8_t type;		/* Device Type */
 };
 
 /*
@@ -372,7 +364,7 @@ static void trm_srb_done(struct trm_softc *, struct trm_dcb *,
 static void trm_doing_srb_done(struct trm_softc *);
 static void trm_scsi_reset_detect(struct trm_softc *);
 static void trm_reset_scsi_bus(struct trm_softc *);
-static void trm_request_sense(struct trm_softc *, struct trm_dcb *,
+static int  trm_request_sense(struct trm_softc *, struct trm_dcb *,
     struct trm_srb *);
 static void trm_msgout_abort(struct trm_softc *, struct trm_srb *);
 static void trm_timeout(void *);
@@ -434,7 +426,7 @@ static void *trm_scsi_phase1[] = {
 
 /* real period: */
 static const u_int8_t trm_clock_period[] = {
-	13,	/*  52  ns 20.0 MB/sec */
+	12,	/*  48  ns 20.0 MB/sec */
 	18,	/*  72  ns 13.3 MB/sec */
 	25,	/* 100  ns 10.0 MB/sec */
 	31,	/* 124  ns  8.0 MB/sec */
@@ -708,7 +700,7 @@ trm_scsipi_request(chan, req, arg)
 		 * Request Block for SCSI processor command doing.
 		 */
 		memcpy(srb->cmd, xs->cmd, xs->cmdlen);
-		if (xs->datalen > 0) {
+		if (xs->xs_control & (XS_CTL_DATA_IN | XS_CTL_DATA_OUT)) {
 #ifdef TRM_DEBUG
 			printf("xs->datalen...\n");
 			printf("sc->sc_dmat=%x\n", (int) sc->sc_dmat);
@@ -718,8 +710,11 @@ trm_scsipi_request(chan, req, arg)
 #endif
 			if ((error = bus_dmamap_load(sc->sc_dmat, srb->dmap,
 			    xs->data, xs->datalen, NULL,
-			    (xs->xs_control & XS_CTL_NOSLEEP) ?
-			    BUS_DMA_NOWAIT : BUS_DMA_WAITOK)) != 0) {
+			    ((xs->xs_control & XS_CTL_NOSLEEP) ?
+			    BUS_DMA_NOWAIT : BUS_DMA_WAITOK) |
+			    BUS_DMA_STREAMING |
+			    ((xs->xs_control & XS_CTL_DATA_IN) ?
+			    BUS_DMA_READ : BUS_DMA_WRITE))) != 0) {
 				printf("%s: DMA transfer map unable to load, "
 				    "error = %d\n", sc->sc_dev.dv_xname, error);
 				xs->error = XS_DRIVER_STUFFUP;
@@ -753,11 +748,6 @@ trm_scsipi_request(chan, req, arg)
 		}
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
 		    srb->sgoffset, TRM_SG_SIZE, BUS_DMASYNC_PREWRITE);
-
-		if (dcb->type != T_SEQUENTIAL)
-			srb->retry = 1;
-		else
-			srb->retry = 0;
 
 		srb->sgindex = 0;
 		srb->hastat = 0;
@@ -968,8 +958,7 @@ trm_start_scsi(sc, dcb, srb)
 	idmsg = dcb->idmsg;
 
 	if ((srb->cmd[0] == INQUIRY) ||
-	    (srb->cmd[0] == REQUEST_SENSE) ||
-	    (srb->flag & AUTO_REQSENSE)) {
+	    (srb->cmd[0] == REQUEST_SENSE)) {
 		if (((dcb->mode & WIDE_NEGO_ENABLE) &&
 		     (dcb->mode & WIDE_NEGO_DONE) == 0) ||
 		    ((dcb->mode & SYNC_NEGO_ENABLE) &&
@@ -1015,18 +1004,7 @@ polling:
 	/*
 	 * Send CDB ..command block...
 	 */
-	if (srb->flag & AUTO_REQSENSE) {
-		bus_space_write_1(iot, ioh, TRM_SCSI_FIFO, REQUEST_SENSE);
-		bus_space_write_1(iot, ioh, TRM_SCSI_FIFO,
-		    dcb->idmsg << SCSI_CMD_LUN_SHIFT);
-		bus_space_write_1(iot, ioh, TRM_SCSI_FIFO, 0);
-		bus_space_write_1(iot, ioh, TRM_SCSI_FIFO, 0);
-		bus_space_write_1(iot, ioh, TRM_SCSI_FIFO,
-		    sizeof(struct scsipi_sense_data));
-		bus_space_write_1(iot, ioh, TRM_SCSI_FIFO, 0);
-	} else
-		bus_space_write_multi_1(iot, ioh, TRM_SCSI_FIFO,
-		    srb->cmd, srb->cmdlen);
+	bus_space_write_multi_1(iot, ioh, TRM_SCSI_FIFO, srb->cmd, srb->cmdlen);
 
 	if (bus_space_read_2(iot, ioh, TRM_SCSI_STATUS) & SCSIINTERRUPT) {
 		/*
@@ -1182,8 +1160,7 @@ trm_msgout_phase1(sc, srb, pstat)
 				srb->state = SRB_ABORT_SENT;
 		} else {
 			if ((srb->cmd[0] == INQUIRY) ||
-			    (srb->cmd[0] == REQUEST_SENSE) ||
-			    (srb->flag & AUTO_REQSENSE))
+			    (srb->cmd[0] == REQUEST_SENSE))
 				if (dcb->mode & SYNC_NEGO_ENABLE)
 					goto mop1;
 
@@ -1270,24 +1247,9 @@ trm_command_phase1(sc, srb, pstat)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	struct trm_dcb *dcb;
 
 	bus_space_write_2(iot, ioh, TRM_SCSI_CONTROL, DO_CLRATN | DO_CLRFIFO);
-	if (srb->flag & AUTO_REQSENSE) {
-		bus_space_write_1(iot, ioh, TRM_SCSI_FIFO, REQUEST_SENSE);
-		dcb = sc->sc_actdcb;
-		/* target id */
-		bus_space_write_1(iot, ioh, TRM_SCSI_FIFO,
-		    dcb->idmsg << SCSI_CMD_LUN_SHIFT);
-		bus_space_write_1(iot, ioh, TRM_SCSI_FIFO, 0);
-		bus_space_write_1(iot, ioh, TRM_SCSI_FIFO, 0);
-		/* sizeof(struct scsi_sense_data) */
-		bus_space_write_1(iot, ioh, TRM_SCSI_FIFO,
-		    sizeof(struct scsipi_sense_data));
-		bus_space_write_1(iot, ioh, TRM_SCSI_FIFO, 0);
-	} else
-		bus_space_write_multi_1(iot, ioh, TRM_SCSI_FIFO,
-		    srb->cmd, srb->cmdlen);
+	bus_space_write_multi_1(iot, ioh, TRM_SCSI_FIFO, srb->cmd, srb->cmdlen);
 
 	srb->state = SRB_COMMAND;
 	/* it's important for atn stop */
@@ -2196,99 +2158,36 @@ trm_srb_done(sc, dcb, srb)
 	struct scsipi_xfer *xs = srb->xs;
 	struct scsipi_inquiry_data *ptr;
 	struct trm_dcb *tempdcb;
-	int i, j, id, lun, s, tastat;
+	int i, j, id, lun, s;
 	u_int8_t bval;
 
 #ifdef	TRM_DEBUG
 	printf("trm_srb_done..................\n");
 #endif
-	if ((xs->xs_control & XS_CTL_POLL) == 0)
-		callout_stop(&xs->xs_callout);
 
 	if (xs == NULL)
 		return;
 
-	/*
-	 * target status
-	 */
-	tastat = srb->tastat;
+	if ((xs->xs_control & XS_CTL_POLL) == 0)
+		callout_stop(&xs->xs_callout);
 
-	if (srb->flag & AUTO_REQSENSE) {
-		/*
-		 * status of auto request sense
-		 */
-		srb->flag &= ~AUTO_REQSENSE;
-		srb->hastat = 0;
-		srb->tastat = SCSI_CHECK;
-		if (tastat == SCSI_CHECK) {
-			xs->error = XS_TIMEOUT;
-			goto ckc_e;
-		}
-		memcpy(srb->cmd, srb->tempcmd, sizeof(srb->tempcmd));
-
-		srb->buflen = srb->templen;
-		srb->sgentry[0].address = srb->tempsg.address;
-		srb->sgentry[0].length = srb->tempsg.length;
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, srb->sgoffset,
-		    TRM_SG_SIZE, BUS_DMASYNC_PREWRITE);
-		xs->status = SCSI_CHECK;
-		goto ckc_e;
+	if (xs->xs_control & (XS_CTL_DATA_IN | XS_CTL_DATA_OUT) ||
+	    srb->flag & AUTO_REQSENSE) {
+		bus_dmamap_sync(sc->sc_dmat, srb->dmap, 0,
+		    srb->dmap->dm_mapsize,
+		    ((xs->xs_control & XS_CTL_DATA_IN) ||
+		    (srb->flag & AUTO_REQSENSE)) ?
+		    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(sc->sc_dmat, srb->dmap);
 	}
+
 	/*
 	 * target status
 	 */
-	if (tastat)
-		switch (tastat) {
-		case SCSI_CHECK:
-			trm_request_sense(sc, dcb, srb);
-			return;
-		case SCSI_QUEUE_FULL:
-			dcb->maxcmd = dcb->gosrb_cnt - 1;
-			trm_rewait_srb(dcb, srb);
-			srb->hastat = 0;
-			srb->tastat = 0;
-			goto ckc_e;
-		case SCSI_SEL_TIMEOUT:
-			srb->hastat = H_SEL_TIMEOUT;
-			srb->tastat = 0;
-			xs->error = XS_TIMEOUT;
-			break;
-		case SCSI_BUSY:
-			xs->error = XS_BUSY;
-			break;
-		case SCSI_RESV_CONFLICT:
-#ifdef TRM_DEBUG
-			printf("%s: target reserved at ", sc->sc_dev.dv_xname);
-			printf("%s %d\n", __FILE__, __LINE__);
-#endif
-			xs->error = XS_BUSY;
-			break;
-		default:
-			srb->hastat = 0;
-			if (srb->retry) {
-				srb->retry--;
-				srb->tastat = 0;
-				srb->sgindex = 0;
-				if (trm_start_scsi(sc, dcb, srb))
-					/*
-					 * If trm_start_scsi return 1 :
-					 * current interrupt status is
-					 * interrupt disreenable.  It's said
-					 * that SCSI processor has more one
-					 * SRB need to do.
-					 */
-					trm_rewait_srb(dcb, srb);
-				return;
-			} else {
-#ifdef TRM_DEBUG
-				printf("%s: driver stuffup at %s %d\n",
-				    sc->sc_dev.dv_xname, __FILE__, __LINE__);
-#endif
-				xs->error = XS_DRIVER_STUFFUP;
-				break;
-			}
-		}
-	else {
+	xs->status = srb->tastat;
+
+	switch (xs->status) {
+	case SCSI_OK:
 		/*
 		 * process initiator status......
 		 * Adapter (initiator) status
@@ -2304,26 +2203,67 @@ trm_srb_done(sc, dcb, srb)
 #endif
 			/* Driver failed to perform operation */
 			xs->error = XS_DRIVER_STUFFUP;
-		} else {	/* No error */
+		} else {
+			/* No error */
 			srb->hastat = 0;
-			srb->tastat = 0;
-			xs->error = XS_NOERROR;
-			/* there is no error, (sense is invalid) */
+			if (srb->flag & AUTO_REQSENSE) {
+				/* there is no error, (sense is invalid) */
+				xs->error = XS_SENSE;
+			} else {
+				srb->tastat = 0;
+				xs->error = XS_NOERROR;
+			}
 		}
+		break;
+	case SCSI_CHECK:
+		if ((srb->flag & AUTO_REQSENSE) != 0 ||
+		    trm_request_sense(sc, dcb, srb) != 0) {
+			printf("%s: request sense failed\n",
+			    sc->sc_dev.dv_xname);
+			xs->error = XS_DRIVER_STUFFUP;
+			break;
+		}
+		xs->error = XS_SENSE;
+		return;
+	case SCSI_QUEUE_FULL:
+		dcb->maxcmd = dcb->gosrb_cnt - 1;
+		trm_rewait_srb(dcb, srb);
+		srb->hastat = 0;
+		srb->tastat = 0;
+		break;
+	case SCSI_SEL_TIMEOUT:
+		srb->hastat = H_SEL_TIMEOUT;
+		srb->tastat = 0;
+		xs->error = XS_TIMEOUT;
+		break;
+	case SCSI_BUSY:
+		xs->error = XS_BUSY;
+		break;
+	case SCSI_RESV_CONFLICT:
+#ifdef TRM_DEBUG
+		printf("%s: target reserved at ", sc->sc_dev.dv_xname);
+		printf("%s %d\n", __FILE__, __LINE__);
+#endif
+		xs->error = XS_BUSY;
+		break;
+	default:
+		srb->hastat = 0;
+#ifdef TRM_DEBUG
+		printf("%s: driver stuffup at %s %d\n",
+		    sc->sc_dev.dv_xname, __FILE__, __LINE__);
+#endif
+		xs->error = XS_DRIVER_STUFFUP;
+		break;
 	}
-ckc_e:
+
 	id = srb->xs->xs_periph->periph_target;
 	lun = srb->xs->xs_periph->periph_lun;
 	if (sc->devscan[id][lun]) {
 		/*
 		 * if SCSI command in "scan devices" duty
+		 * XXX XXX XXX should not be done here! XXX XXX XXX
 		 */
-		if (srb->cmd[0] == TEST_UNIT_READY) {
-			/* SCSI command phase: test unit ready */
-#ifdef TRM_DEBUG
-			printf("srb->cmd[0] == TEST_UNIT_READY....\n");
-#endif
-		} else if (srb->cmd[0] == INQUIRY) {
+		if (srb->cmd[0] == INQUIRY) {
 			/*
 			 * SCSI command phase: inquiry scsi device data
 			 * (type,capacity,manufacture....
@@ -2333,9 +2273,7 @@ ckc_e:
 
 			ptr = (struct scsipi_inquiry_data *)xs->data;
 			bval = ptr->device & SID_TYPE;
-			/*
-			 * #define T_NODEVICE 0x1f   Unknown or no device type
-			 */
+
 			if (bval == T_NODEVICE) {
 		NO_DEV:
 #ifdef TRM_DEBUG
@@ -2404,7 +2342,6 @@ ckc_e:
 				}
 				splx(s);
 			} else {
-				dcb->type = bval;
 				if (bval == T_DIRECT || bval == T_OPTICAL) {
 					if ((((ptr->version & 0x07) >= 2) ||
 					     ((ptr->response_format & 0x0F)
@@ -2419,17 +2356,9 @@ ckc_e:
 						dcb->mode |= EN_ATN_STOP;
 				}
 			}
-			/* srb->cmd[0] == INQUIRY */
 		}
-		/* sc->devscan[id][lun] */
 	}
 exit:
-	if (xs->datalen > 0) {
-		bus_dmamap_sync(sc->sc_dmat, srb->dmap, 0,
-		    srb->dmap->dm_mapsize, (xs->xs_control & XS_CTL_DATA_IN) ?
-		    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
-		bus_dmamap_unload(sc->sc_dmat, srb->dmap);
-	}
 	trm_release_srb(sc, dcb, srb);
 	trm_wait_srb(sc);
 	xs->xs_status |= XS_STS_DONE;
@@ -2550,7 +2479,7 @@ trm_scsi_reset_detect(sc)
 	splx(s);
 }
 
-static void
+static int
 trm_request_sense(sc, dcb, srb)
 	struct trm_softc *sc;
 	struct trm_dcb *dcb;
@@ -2561,11 +2490,6 @@ trm_request_sense(sc, dcb, srb)
 	int error, lun = xs->xs_periph->periph_lun;
 
 	srb->flag |= AUTO_REQSENSE;
-	memcpy(srb->tempcmd, srb->cmd, sizeof(srb->tempcmd));
-
-	srb->templen = srb->buflen;
-	srb->tempsg.address = srb->sgentry[0].address;
-	srb->tempsg.length = srb->sgentry[0].length;
 
 	/* Status of initiator/target */
 	srb->hastat = 0;
@@ -2586,9 +2510,7 @@ trm_request_sense(sc, dcb, srb)
 	if ((error = bus_dmamap_load(sc->sc_dmat, srb->dmap,
 	    &xs->sense.scsi_sense, srb->buflen, NULL,
 	    BUS_DMA_READ|BUS_DMA_NOWAIT)) != 0) {
-		printf("trm_request_sense: can not bus_dmamap_load()\n");
-		xs->error = XS_DRIVER_STUFFUP;
-		return;
+		return error;
 	}
 	bus_dmamap_sync(sc->sc_dmat, srb->dmap, 0,
 	    srb->buflen, BUS_DMASYNC_PREREAD);
@@ -2605,6 +2527,7 @@ trm_request_sense(sc, dcb, srb)
 		 * has more one SRB need to do.
 		 */
 		trm_rewait_srb(dcb, srb);
+	return 0;
 }
 
 static void
@@ -2701,12 +2624,11 @@ trm_link_srb(sc)
 	int i;
 
 	sc->sc_srb = malloc(sizeof(struct trm_srb) * TRM_MAX_SRB,
-	    M_DEVBUF, M_NOWAIT);
+	    M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (sc->sc_srb == NULL) {
 		printf("%s: can not allocate SRB\n", sc->sc_dev.dv_xname);
 		return;
 	}
-	memset(sc->sc_srb, 0, sizeof(struct trm_srb) * TRM_MAX_SRB);
 
 	for (i = 0, srb = sc->sc_srb; i < TRM_MAX_SRB; i++, srb++) {
 		srb->sgentry = sc->sc_sglist + TRM_MAX_SG_ENTRIES * i;

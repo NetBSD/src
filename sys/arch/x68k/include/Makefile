@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19.8.2 2001/11/10 21:22:53 scw Exp $
+#	$NetBSD: Makefile,v 1.19.8.3 2002/01/08 00:28:43 nathanw Exp $
 
 KDIR=	/sys/arch/x68k/include
 INCSDIR= /usr/include/x68k
@@ -20,7 +20,7 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	param.h parioctl.h pcb.h pci_machdep.h pmap.h powioctl.h proc.h \
 	profile.h psl.h pte.h ptrace.h \
 	reg.h remote-sl.h \
-	setjmp.h signal.h sram.h stdarg.h svr4_machdep.h \
+	setjmp.h signal.h sram.h stdarg.h \
 	trap.h types.h \
 	varargs.h vmparam.h vuid_event.h
 

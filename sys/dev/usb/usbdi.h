@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.49.2.2 2001/08/24 00:11:15 nathanw Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.49.2.3 2002/01/08 00:32:22 nathanw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -47,25 +47,25 @@ typedef void			*usbd_private_handle;
 
 typedef enum {		/* keep in sync with usbd_status_msgs */ 
 	USBD_NORMAL_COMPLETION = 0, /* must be 0 */
-	USBD_IN_PROGRESS,
+	USBD_IN_PROGRESS,	/* 1 */
 	/* errors */
-	USBD_PENDING_REQUESTS,
-	USBD_NOT_STARTED,
-	USBD_INVAL,
-	USBD_NOMEM,
-	USBD_CANCELLED,
-	USBD_BAD_ADDRESS,
-	USBD_IN_USE,
-	USBD_NO_ADDR,
-	USBD_SET_ADDR_FAILED,
-	USBD_NO_POWER,
-	USBD_TOO_DEEP,
-	USBD_IOERROR,
-	USBD_NOT_CONFIGURED,
-	USBD_TIMEOUT,
-	USBD_SHORT_XFER,
-	USBD_STALLED,
-	USBD_INTERRUPTED,
+	USBD_PENDING_REQUESTS,	/* 2 */
+	USBD_NOT_STARTED,	/* 3 */
+	USBD_INVAL,		/* 4 */
+	USBD_NOMEM,		/* 5 */
+	USBD_CANCELLED,		/* 6 */
+	USBD_BAD_ADDRESS,	/* 7 */
+	USBD_IN_USE,		/* 8 */
+	USBD_NO_ADDR,		/* 9 */
+	USBD_SET_ADDR_FAILED,	/* 10 */
+	USBD_NO_POWER,		/* 11 */
+	USBD_TOO_DEEP,		/* 12 */
+	USBD_IOERROR,		/* 13 */
+	USBD_NOT_CONFIGURED,	/* 14 */
+	USBD_TIMEOUT,		/* 15 */
+	USBD_SHORT_XFER,	/* 16 */
+	USBD_STALLED,		/* 17 */
+	USBD_INTERRUPTED,	/* 18 */
 
 	USBD_ERROR_MAX		/* must be last */
 } usbd_status;
@@ -116,16 +116,17 @@ usb_endpoint_descriptor_t *usbd_interface2endpoint_descriptor
 usbd_status usbd_abort_pipe(usbd_pipe_handle pipe);
 usbd_status usbd_clear_endpoint_stall(usbd_pipe_handle pipe);
 usbd_status usbd_clear_endpoint_stall_async(usbd_pipe_handle pipe);
+void usbd_clear_endpoint_toggle(usbd_pipe_handle pipe);
 usbd_status usbd_endpoint_count(usbd_interface_handle dev, u_int8_t *count);
 usbd_status usbd_interface_count(usbd_device_handle dev, u_int8_t *count);
-usbd_status usbd_interface2device_handle(usbd_interface_handle iface,
+void usbd_interface2device_handle(usbd_interface_handle iface,
 					 usbd_device_handle *dev);
 usbd_status usbd_device2interface_handle(usbd_device_handle dev,
 			      u_int8_t ifaceno, usbd_interface_handle *iface);
 
 usbd_device_handle usbd_pipe2device_handle(usbd_pipe_handle);
-void *usbd_alloc_buffer(usbd_xfer_handle req, u_int32_t size);
-void usbd_free_buffer(usbd_xfer_handle req);
+void *usbd_alloc_buffer(usbd_xfer_handle xfer, u_int32_t size);
+void usbd_free_buffer(usbd_xfer_handle xfer);
 void *usbd_get_buffer(usbd_xfer_handle xfer);
 usbd_status usbd_sync_transfer(usbd_xfer_handle req);
 usbd_status usbd_open_pipe_intr(usbd_interface_handle iface, u_int8_t address,
@@ -191,6 +192,16 @@ struct usb_task {
 void usb_add_task(usbd_device_handle dev, struct usb_task *task);
 void usb_rem_task(usbd_device_handle dev, struct usb_task *task);
 #define usb_init_task(t, f, a) ((t)->fun = (f), (t)->arg = (a), (t)->onqueue = 0)
+
+struct usb_devno {
+	u_int16_t ud_vendor;
+	u_int16_t ud_product;
+};
+const struct usb_devno *usb_match_device(const struct usb_devno *tbl,
+	u_int nentries, u_int sz, u_int16_t vendor, u_int16_t product);
+#define usb_lookup(tbl, vendor, product) \
+	usb_match_device((const struct usb_devno *)(tbl), sizeof (tbl) / sizeof ((tbl)[0]), sizeof ((tbl)[0]), (vendor), (product))
+#define	USB_PRODUCT_ANY		0xffff
 
 /* NetBSD attachment information */
 

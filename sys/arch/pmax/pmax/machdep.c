@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.197.2.2 2001/12/15 07:11:00 gmcgarry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.197.2.3 2002/01/08 00:27:07 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.197.2.2 2001/12/15 07:11:00 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.197.2.3 2002/01/08 00:27:07 nathanw Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -782,7 +782,7 @@ microtime(tvp)
 	static struct timeval lasttime;
 
 	*tvp = time;
-#if (DEC_3MIN + DEC_MAXINE + DEC_3MAXPLUS) > 0
+#if defined(DEC_3MIN) || defined(DEC_MAXINE) || defined(DEC_3MAXPLUS)
 	tvp->tv_usec += (*platform.clkread)();
 #endif
 	if (tvp->tv_usec >= 1000000) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_pnpbios.c,v 1.4 2000/04/22 06:38:24 thorpej Exp $	*/
+/*	$NetBSD: ess_pnpbios.c,v 1.4.10.1 2002/01/08 00:25:44 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ess_pnpbios.c,v 1.4.10.1 2002/01/08 00:25:44 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

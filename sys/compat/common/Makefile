@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.24.14.1 2001/11/14 23:42:08 thorpej Exp $
+#	$NetBSD: Makefile,v 1.24.14.2 2002/01/08 00:29:00 nathanw Exp $
 
 LIB=	compat
-MKPIC=	no
+NOPIC=	# defined
 
 CPPFLAGS=	${COMPATCPPFLAGS}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_ipc.c,v 1.2.2.3 2001/11/18 00:07:49 gmcgarry Exp $	*/
+/*	$NetBSD: hpux_ipc.c,v 1.2.2.4 2002/01/08 00:29:00 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -48,13 +48,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_ipc.c,v 1.2.2.3 2001/11/18 00:07:49 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_ipc.c,v 1.2.2.4 2002/01/08 00:29:00 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
 #endif
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/shm.h>

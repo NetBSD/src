@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_14.c,v 1.5.2.1 2001/11/14 19:13:16 nathanw Exp $	*/
+/*	$NetBSD: netbsd32_compat_14.c,v 1.5.2.2 2002/01/08 00:29:08 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999 Eduardo E. Horvath
@@ -29,11 +29,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_14.c,v 1.5.2.1 2001/11/14 19:13:16 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_14.c,v 1.5.2.2 2002/01/08 00:29:08 nathanw Exp $");
 
-#include <sys/types.h>
-#include <sys/ipc.h>
 #include <sys/param.h>
+#include <sys/ipc.h>
 #include <sys/systm.h>
 #include <sys/signal.h>
 #include <sys/proc.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.10 2000/03/23 06:47:33 thorpej Exp $ */
+/*	$NetBSD: ms.c,v 1.10.12.1 2002/01/08 00:28:41 nathanw Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -222,7 +222,6 @@ msopen(dev, flags, mode, p)
 {
 	struct ms_softc *ms;
 	int unit;
-	int s;
 
 	unit = minor(dev);
 	if (unit >= ms_cd.cd_ndevs)

@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.5.2.2 2001/11/14 19:12:45 nathanw Exp $	*/
+/*	$NetBSD: consinit.c,v 1.5.2.3 2002/01/08 00:25:19 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -25,6 +25,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.5.2.3 2002/01/08 00:25:19 nathanw Exp $");
 
 #include "opt_kgdb.h"
 
@@ -111,18 +114,18 @@ const struct btinfo_console default_consinfo = {
 const char kgdb_devname[] = KGDB_DEVNAME;
 
 #if (NCOM > 0)
-#ifndef KGDBADDR
-#define KGDBADDR 0x3f8
+#ifndef KGDB_DEVADDR
+#define KGDB_DEVADDR 0x3f8
 #endif
-int comkgdbaddr = KGDBADDR;
-#ifndef KGDBRATE
-#define KGDBRATE TTYDEF_SPEED
+int comkgdbaddr = KGDB_DEVADDR;
+#ifndef KGDB_DEVRATE
+#define KGDB_DEVRATE TTYDEF_SPEED
 #endif
-int comkgdbrate = KGDBRATE;
-#ifndef KGDBMODE
-#define KGDBMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
+int comkgdbrate = KGDB_DEVRATE;
+#ifndef KGDB_DEVMODE
+#define KGDB_DEVMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
 #endif
-int comkgdbmode = KGDBMODE;
+int comkgdbmode = KGDB_DEVMODE;
 #endif /* NCOM */
 
 #endif /* KGDB */

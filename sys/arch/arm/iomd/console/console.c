@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.1.4.2 2001/11/15 08:30:11 thorpej Exp $	*/
+/*	$NetBSD: console.c,v 1.1.4.3 2002/01/08 00:23:17 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -63,7 +63,7 @@
 
 #include <arm/iomd/vidc.h>
 #include <machine/vconsole.h>
-#include <machine/katelib.h>
+#include <arm/arm32/katelib.h>
 #include <machine/bootconfig.h>
 
 #include "vt.h"

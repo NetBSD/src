@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.22.8.1 2001/11/18 18:09:32 scw Exp $
+#	$NetBSD: genassym.cf,v 1.22.8.2 2002/01/08 00:24:40 nathanw Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -58,6 +58,7 @@ endif
 
 include <machine/hp300spu.h>
 include <machine/cpu.h>
+include <machine/intr.h>
 include <machine/psl.h>
 include <machine/reg.h>
 include <machine/pte.h>
@@ -168,6 +169,10 @@ define	P_VMSPACE		offsetof(struct proc, p_vmspace)
 define	LSSLEEP			LSSLEEP
 define	LSRUN			LSRUN
 define	LSONPROC		LSONPROC
+
+# interrupt event counters
+define	HI_EVCNT		offsetof(struct hp300_intr, hi_evcnt)
+define	SIZEOF_HI		sizeof(struct hp300_intr)
 
 # interrupt/fault metering
 define	UVMEXP_INTRS		offsetof(struct uvmexp, intrs)

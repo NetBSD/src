@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_conf.c,v 1.31.2.3 2001/11/14 19:16:45 nathanw Exp $	*/
+/*	$NetBSD: tty_conf.c,v 1.31.2.4 2002/01/08 00:32:41 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_conf.c,v 1.31.2.3 2001/11/14 19:16:45 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_conf.c,v 1.31.2.4 2002/01/08 00:32:41 nathanw Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_43.h"
@@ -99,9 +99,22 @@ int	stripinput __P((int c, struct tty *tp));
 int	stripstart __P((struct tty *tp));
 #endif
 
+#include "irframetty.h"
+#if NIRFRAMETTY > 0
+int	irframetopen __P((dev_t dev, struct tty *tp));
+int	irframetclose __P((struct tty *tp, int flags));
+int	irframetioctl __P((struct tty *tp, u_long cmd, caddr_t data,
+			int flag, struct proc *p));
+int	irframetinput __P((int c, struct tty *tp));
+int	irframetstart __P((struct tty *tp));
+int	irframetread __P((struct tty *tp, struct uio *uio, int flag));
+int	irframetwrite __P((struct tty *tp, struct uio *uio, int flag));
+int	irframetpoll __P((struct tty *tp, int events, struct proc *p));
+#endif
+
 
 struct  linesw termios_disc =
-	{ "termios", 0, ttylopen, ttylclose, ttread, ttwrite, nullioctl,
+	{ "termios", TTYDISC, ttylopen, ttylclose, ttread, ttwrite, nullioctl,
 	  ttyinput, ttstart, ttymodem, ttpoll };	/* 0- termios */
 struct  linesw defunct_disc =
 	{ "defunct", 1, ttynodisc, ttyerrclose, ttyerrio, ttyerrio, nullioctl,
@@ -113,23 +126,30 @@ struct  linesw ntty_disc =
 #endif
 #if NTB > 0
 struct  linesw table_disc =
-	{ "tablet", 3, tbopen, tbclose, tbread, ttyerrio, tbtioctl,
+	{ "tablet", TABLDISC, tbopen, tbclose, tbread, ttyerrio, tbtioctl,
 	  tbinput, ttstart, nullmodem, ttyerrpoll };	/* 3- TABLDISC */
 #endif
 #if NSL > 0
 struct  linesw slip_disc =
-	{ "slip", 4, slopen, slclose, ttyerrio, ttyerrio, sltioctl,
+	{ "slip", SLIPDISC, slopen, slclose, ttyerrio, ttyerrio, sltioctl,
 	  slinput, slstart, nullmodem, ttyerrpoll };	/* 4- SLIPDISC */
 #endif
 #if NPPP > 0
 struct  linesw ppp_disc =
-	{ "ppp", 5, pppopen, pppclose, pppread, pppwrite, ppptioctl,
+	{ "ppp", PPPDISC, pppopen, pppclose, pppread, pppwrite, ppptioctl,
 	  pppinput, pppstart, ttymodem, ttpoll };	/* 5- PPPDISC */
 #endif
 #if NSTRIP > 0
 struct  linesw strip_disc =
-	{ "strip", 6, stripopen, stripclose, ttyerrio, ttyerrio, striptioctl,
-	  stripinput, stripstart, nullmodem, ttyerrpoll }; /* 6- STRIPDISC */
+	{ "strip", STRIPDISC, stripopen, stripclose, ttyerrio, ttyerrio,
+	  striptioctl, stripinput, stripstart, nullmodem, ttyerrpoll };
+							/* 6- STRIPDISC */
+#endif
+#if NIRFRAMETTY > 0
+struct  linesw irframet_disc =
+	{ "irframe", IRFRAMEDISC, irframetopen, irframetclose, ttyerrio,
+	  ttyerrio, irframetioctl, irframetinput, irframetstart,
+	  ttymodem, ttyerrpoll };			/* 10- IRFRAMEDISC */
 #endif
 
 /*
@@ -311,5 +331,8 @@ ttyldisc_init()
 #endif
 #if NSTRIP > 0
 	TTYLDISCINIT(strip_disc, 6);
+#endif
+#if NIRFRAMETTY > 0
+	ttyldisc_add(&irframet_disc, -1);
 #endif
 }

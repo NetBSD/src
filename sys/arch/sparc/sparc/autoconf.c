@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.157.4.2 2001/11/20 16:31:53 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.157.4.3 2002/01/08 00:27:40 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,9 +49,11 @@
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_multiprocessor.h"
+#include "opt_sparc_arch.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/endian.h>
 #include <sys/proc.h>
 #include <sys/map.h>
 #include <sys/buf.h>
@@ -89,10 +91,16 @@
 #include <sparc/sparc/cpuvar.h>
 #include <sparc/sparc/timerreg.h>
 
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pcidevs.h>
+#include <dev/pci/pcivar.h>
+#include <sparc/sparc/msiiepreg.h>
+
 #ifdef DDB
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
+#include <ddb/ddbvar.h>
 #endif
 
 
@@ -198,6 +206,15 @@ str2hex(str, vp)
 	return (str);
 }
 
+
+#if defined(SUN4M)
+#if !defined(MSIIEP)
+static void bootstrap4m(void);
+#else
+static void bootstrapIIep(void);
+#endif
+#endif /* SUN4M */
+
 /*
  * locore.s code calls bootstrap() just before calling main(), after double
  * mapping the kernel to high memory and setting up the trap base register.
@@ -254,89 +271,21 @@ bootstrap()
 	}
 #endif
 
-	/*
-	 * On sun4ms we have to do some nasty stuff here. We need to map
-	 * in the interrupt registers (since we need to find out where
-	 * they are from the PROM, since they aren't in a fixed place), and
-	 * disable all interrupts. We can't do this easily from locore
-	 * since the PROM is ugly to use from assembly. We also need to map
-	 * in the counter registers because we can't disable the level 14
-	 * (statclock) interrupt, so we need a handler early on (ugh).
-	 *
-	 * NOTE: We *demand* the psl to stay at splhigh() at least until
-	 * we get here. The system _cannot_ take interrupts until we map
-	 * the interrupt registers.
-	 */
-
 #if defined(SUN4M)
-	/* First we'll do the interrupt registers */
+	/*
+	 * sun4m bootstrap is complex and is totally different for "normal" 4m
+	 * and for microSPARC-IIep - so it's split into separate functions.
+	 */
 	if (CPU_ISSUN4M) {
-		int node;
-		int nvaddrs, *vaddrs, vstore[10];
-		u_int pte;
-		int i;
-		extern void setpte4m __P((u_int, u_int));
-
-		if ((node = prom_opennode("/obio/interrupt")) == 0 &&
-		    (node = prom_finddevice("/obio/interrupt")) == 0)
-			panic("bootstrap: could not get interrupt "
-			      "node from prom");
-
-		vaddrs = vstore;
-		nvaddrs = sizeof(vstore)/sizeof(vstore[0]);
-		if (PROM_getprop(node, "address", sizeof(int),
-			    &nvaddrs, (void **)&vaddrs) != 0) {
-			printf("bootstrap: could not get interrupt properties");
-			prom_halt();
-		}
-		if (nvaddrs < 2 || nvaddrs > 5) {
-			printf("bootstrap: cannot handle %d interrupt regs\n",
-				nvaddrs);
-			prom_halt();
-		}
-
-		for (i = 0; i < nvaddrs - 1; i++) {
-
-			pte = getpte4m((u_int)vaddrs[i]);
-			if ((pte & SRMMU_TETYPE) != SRMMU_TEPTE) {
-			    panic("bootstrap: PROM has invalid mapping for "
-				  "processor interrupt register %d",i);
-			    prom_halt();
-			}
-			pte |= PPROT_S;
-
-			/* Duplicate existing mapping */
-
-			setpte4m(PI_INTR_VA + (_MAXNBPG * i), pte);
-		}
-		cpuinfo.intreg_4m = (struct icr_pi *)(PI_INTR_VA);
-
-		/*
-		 * That was the processor register...now get system register;
-		 * it is the last returned by the PROM
-		 */
-		pte = getpte4m((u_int)vaddrs[i]);
-		if ((pte & SRMMU_TETYPE) != SRMMU_TEPTE)
-		    panic("bootstrap: PROM has invalid mapping for system "
-			  "interrupt register");
-		pte |= PPROT_S;
-
-		setpte4m(SI_INTR_VA, pte);
-
-		/* Now disable interrupts */
-		ienab_bis(SINTR_MA);
-
-		/* Send all interrupts to primary processor */
-		*((u_int *)ICR_ITR) = 0;
-
-#ifdef DEBUG
-/*		printf("SINTR: mask: 0x%x, pend: 0x%x\n", *(int*)ICR_SI_MASK,
-		       *(int*)ICR_SI_PEND);
-*/
+#if !defined(MSIIEP)
+		bootstrap4m();
+#else
+		bootstrapIIep();
 #endif
 	}
 #endif /* SUN4M */
 
+#if defined(SUN4) || defined(SUN4C)
 	if (CPU_ISSUN4OR4C) {
 		/* Map Interrupt Enable Register */
 		pmap_kenter_pa(INTRREG_VA,
@@ -346,7 +295,138 @@ bootstrap()
 		/* Disable all interrupts */
 		*((unsigned char *)INTRREG_VA) = 0;
 	}
+#endif /* SUN4 || SUN4C */
 }
+
+#if defined(SUN4M) && !defined(MSIIEP)
+/*
+ * On sun4ms we have to do some nasty stuff here. We need to map
+ * in the interrupt registers (since we need to find out where
+ * they are from the PROM, since they aren't in a fixed place), and
+ * disable all interrupts. We can't do this easily from locore
+ * since the PROM is ugly to use from assembly. We also need to map
+ * in the counter registers because we can't disable the level 14
+ * (statclock) interrupt, so we need a handler early on (ugh).
+ *
+ * NOTE: We *demand* the psl to stay at splhigh() at least until
+ * we get here. The system _cannot_ take interrupts until we map
+ * the interrupt registers.
+ */
+static void
+bootstrap4m()
+{
+	int node;
+	int nvaddrs, *vaddrs, vstore[10];
+	u_int pte;
+	int i;
+	extern void setpte4m __P((u_int, u_int));
+
+	if ((node = prom_opennode("/obio/interrupt")) == 0
+	    && (node = prom_finddevice("/obio/interrupt")) == 0)
+		panic("bootstrap: could not get interrupt "
+		      "node from prom");
+
+	vaddrs = vstore;
+	nvaddrs = sizeof(vstore)/sizeof(vstore[0]);
+	if (PROM_getprop(node, "address", sizeof(int),
+		    &nvaddrs, (void **)&vaddrs) != 0) {
+		printf("bootstrap: could not get interrupt properties");
+		prom_halt();
+	}
+	if (nvaddrs < 2 || nvaddrs > 5) {
+		printf("bootstrap: cannot handle %d interrupt regs\n",
+		       nvaddrs);
+		prom_halt();
+	}
+
+	for (i = 0; i < nvaddrs - 1; i++) {
+		pte = getpte4m((u_int)vaddrs[i]);
+		if ((pte & SRMMU_TETYPE) != SRMMU_TEPTE) {
+			panic("bootstrap: PROM has invalid mapping for "
+			      "processor interrupt register %d",i);
+			prom_halt();
+		}
+		pte |= PPROT_S;
+
+		/* Duplicate existing mapping */
+		setpte4m(PI_INTR_VA + (_MAXNBPG * i), pte);
+	}
+	cpuinfo.intreg_4m = (struct icr_pi *)(PI_INTR_VA);
+
+	/*
+	 * That was the processor register...now get system register;
+	 * it is the last returned by the PROM
+	 */
+	pte = getpte4m((u_int)vaddrs[i]);
+	if ((pte & SRMMU_TETYPE) != SRMMU_TEPTE)
+		panic("bootstrap: PROM has invalid mapping for system "
+		      "interrupt register");
+	pte |= PPROT_S;
+
+	setpte4m(SI_INTR_VA, pte);
+
+	/* Now disable interrupts */
+	ienab_bis(SINTR_MA);
+
+	/* Send all interrupts to primary processor */
+	*((u_int *)ICR_ITR) = 0;
+
+#ifdef DEBUG
+/*	printf("SINTR: mask: 0x%x, pend: 0x%x\n", *(int*)ICR_SI_MASK,
+	       *(int*)ICR_SI_PEND);
+*/
+#endif
+}
+#endif /* SUN4M && !MSIIEP */
+
+
+#if defined(SUN4M) && defined(MSIIEP)
+#define msiiep ((volatile struct msiiep_pcic_reg *)MSIIEP_PCIC_VA)
+
+/*
+ * On ms-IIep all the interrupt registers, counters etc
+ * are PCIC registers, so we need to map it early.
+ */
+static void
+bootstrapIIep()
+{
+	extern struct sparc_bus_space_tag mainbus_space_tag;
+
+	int node;
+	bus_space_handle_t bh;
+	pcireg_t id;
+
+	if ((node = prom_opennode("/pci")) == 0
+	    && (node = prom_finddevice("/pci")) == 0)
+		panic("bootstrap: could not get pci "
+		      "node from prom");
+
+	if (bus_space_map2(&mainbus_space_tag,
+			   (bus_type_t)0, (bus_addr_t)MSIIEP_PCIC_PA,
+			   (bus_size_t)sizeof(struct msiiep_pcic_reg),
+			   BUS_SPACE_MAP_LINEAR,
+			   MSIIEP_PCIC_VA, &bh) != 0)
+		panic("bootstrap: unable to map ms-IIep pcic registers");
+
+	/* verify that it's PCIC (it's still little-endian at this point) */
+	id = le32toh(msiiep->pcic_id);
+	if (PCI_VENDOR(id) != PCI_VENDOR_SUN
+	    && PCI_PRODUCT(id) != PCI_PRODUCT_SUN_MS_IIep)
+		panic("bootstrap: PCI id %08x", id);
+
+	/* turn on automagic endian-swapping for PCI accesses */
+	msiiep_swap_endian(1);
+
+	/* sanity check (it's big-endian now!) */
+	id = msiiep->pcic_id;
+	if (PCI_VENDOR(id) != PCI_VENDOR_SUN
+	    && PCI_PRODUCT(id) != PCI_PRODUCT_SUN_MS_IIep)
+		panic("bootstrap: PCI id %08x (big-endian mode)", id);
+}
+
+#undef msiiep
+#endif /* SUN4M && MSIIEP */
+
 
 /*
  * bootpath_build: build a bootpath. Used when booting a generic
@@ -423,7 +503,7 @@ bootpath_build()
 					++nbootpath;
 					bp = &bootpath[2];
 					continue;
-				} else 
+				} else
 					bp = &bootpath[1];
 			}
 #endif /* SUN4M */
@@ -829,9 +909,15 @@ cpu_configure()
 
 	/* Enable device interrupts */
 #if defined(SUN4M)
+#if !defined(MSIIEP)
 	if (CPU_ISSUN4M)
 		ienab_bic(SINTR_MA);
-#endif
+#else
+	if (CPU_ISSUN4M)
+		/* nothing for ms-IIep so far */;
+#endif /* MSIIEP */
+#endif /* SUN4M */
+
 #if defined(SUN4) || defined(SUN4C)
 	if (CPU_ISSUN4OR4C)
 		ienab_bis(IE_ALLIE);
@@ -875,6 +961,10 @@ void
 sync_crash()
 {
 
+#if defined(MSIIEP)
+	/* we are back from prom */
+	msiiep_swap_endian(1);
+#endif
 	panic("PROM sync command");
 }
 
@@ -984,7 +1074,11 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 #if defined(SUN4M)
 	static const char *const openboot_special4m[] = {
 		/* find these first */
+#if !defined(MSIIEP)
 		"obio",		/* smart enough to get eeprom/etc mapped */
+#else
+		"pci",		/* ms-IIep */
+#endif
 		"",
 
 		/* ignore these (end with NULL) */
@@ -1000,6 +1094,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		"openprom",
 		"options",
 		"packages",
+		"udp",			/* OFW in Krups */
 		/* we also skip any nodes with device_type == "cpu" */
 		NULL
 	};
@@ -1487,6 +1582,8 @@ getdevunit(name, unit)
 #define BUSCLASS_XDC		6
 #define BUSCLASS_XYC		7
 #define BUSCLASS_FDC		8
+#define BUSCLASS_PCIC		9
+#define BUSCLASS_PCI		10
 
 static int bus_class __P((struct device *));
 static char *bus_compatible __P((char *));
@@ -1514,6 +1611,8 @@ static struct {
 	{ "xdc",	BUSCLASS_XDC },
 	{ "xyc",	BUSCLASS_XYC },
 	{ "fdc",	BUSCLASS_FDC },
+	{ "msiiep",	BUSCLASS_PCIC },
+	{ "pci",	BUSCLASS_PCI },
 };
 
 /*
@@ -1530,6 +1629,7 @@ static struct {
 	{ "PTI,isp",	"isp" },
 	{ "ptisp",	"isp" },
 	{ "SUNW,fdtwo",	"fdc" },
+	{ "network",	"hme" }, /* Krups */
 };
 
 static char *
@@ -1581,6 +1681,8 @@ instance_match(dev, aux, bp)
 	struct mainbus_attach_args *ma;
 	struct sbus_attach_args *sa;
 	struct iommu_attach_args *iom;
+  	struct pcibus_attach_args *pba;
+	struct pci_attach_args *pa;
 
 	/*
 	 * Several devices are represented on bootpaths in one of
@@ -1640,6 +1742,24 @@ instance_match(dev, aux, bp)
 			return (1);
 
 		}
+		break;
+	case BUSCLASS_PCIC:
+		pba = aux;
+		DPRINTF(ACDB_BOOTDEV, ("instance_match: pci bus "
+		    "want bus %d pa %#x have bus %d pa %#lx\n",
+		    bp->val[0], bp->val[1], pba->pba_bus, MSIIEP_PCIC_PA));
+		if ((int)bp->val[0] == pba->pba_bus
+		    && (bus_addr_t)bp->val[1] == MSIIEP_PCIC_PA)
+			return (1);
+		break;
+	case BUSCLASS_PCI:
+		pa = aux;
+		DPRINTF(ACDB_BOOTDEV, ("instance_match: pci device "
+		    "want dev %d function %d have dev %d function %d\n",
+		    bp->val[0], bp->val[1], pa->pa_device, pa->pa_function));
+		if ((u_int)bp->val[0] == pa->pa_device
+		    && (u_int)bp->val[1] == pa->pa_function)
+			return (1);
 		break;
 	default:
 		break;

@@ -1,6 +1,6 @@
-#	$NetBSD: std.luna68k,v 1.2 2000/06/22 20:27:53 fvdl Exp $
+#	$NetBSD: std.luna68k,v 1.2.10.1 2002/01/08 00:25:50 nathanw Exp $
 
 machine luna68k m68k
 
-options	EXEC_AOUT	# exec a.out binaries
-options	EXEC_SCRIPT	# exec #! scripts
+options 	EXEC_ELF32	# exec ELF binaries
+options 	EXEC_SCRIPT	# exec #! scripts

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.50.4.5 2001/11/14 19:12:46 nathanw Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.50.4.6 2002/01/08 00:25:29 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.50.4.6 2002/01/08 00:25:29 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -606,8 +609,19 @@ svr4_fasttrap(frame)
 		}
 		break;
 
-	case SVR4_TRAP_CLOCK_SETTIME:
-		uprintf("unimplemented svr4 fast trap CLOCK_SETTIME\n");
+	case SVR4_TRAP_GETHRESTIME:
+		/*
+		 * This is like clock_gettime(CLOCK_REALTIME, tp), returning
+		 * proc's wall time. Seconds are returned in %eax, nanoseconds
+		 * in %edx.
+		 */
+		{
+			struct timeval tv;
+			microtime(&tv);
+
+			frame.tf_eax = (u_int32_t) tv.tv_sec;
+			frame.tf_edx = (u_int32_t) tv.tv_usec * 1000;
+		}
 		break;
 
 	default:

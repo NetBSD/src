@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_rrip.c,v 1.22.2.1 2001/11/14 19:16:30 nathanw Exp $	*/
+/*	$NetBSD: cd9660_rrip.c,v 1.22.2.2 2002/01/08 00:32:27 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_rrip.c,v 1.22.2.1 2001/11/14 19:16:30 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_rrip.c,v 1.22.2.2 2002/01/08 00:32:27 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: cd9660_rrip.c,v 1.22.2.1 2001/11/14 19:16:30 nathanw
 #include <sys/mount.h>
 #include <sys/kernel.h>
 #include <sys/stat.h>
-#include <sys/types.h>
 
 #include <sys/time.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.1.4.2 2001/11/15 08:30:30 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.1.4.3 2002/01/08 00:22:45 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -114,13 +114,18 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <arm/fiq.h>
+
 #include <machine/cpu.h>
-#include <machine/irqhandler.h>
+#include <machine/intr.h>
 #include <machine/conf.h>
 #include <machine/io.h>
-#include <machine/katelib.h>
+#include <arm/arm32/katelib.h>
 #include <machine/bus.h>
+
 #include <arm/iomd/iomdreg.h>
+#include <arm/iomd/iomdvar.h>
+
 #include <acorn32/mainbus/piocvar.h>
 #include <acorn32/mainbus/fdreg.h>
 
@@ -156,9 +161,6 @@ enum fdc_state {
 /* software state, per controller */
 struct fdc_softc {
 	struct device sc_dev;		/* boilerplate */
-#ifdef NEWCONFIG
-	struct isadev sc_id;
-#endif
 	void *sc_ih;
 
 	bus_space_tag_t sc_iot;		/* ISA i/o space identifier */
@@ -167,6 +169,9 @@ struct fdc_softc {
 	struct callout sc_timo_ch;	/* timeout callout */
 	struct callout sc_intr_ch;	/* pseudo-intr callout */
 
+	/* ...for pseudo-DMA... */
+	struct fiqhandler sc_fh;	/* FIQ handler descriptor */
+	struct fiqregs sc_fr;		/* FIQ handler reg context */
 	int sc_drq;
 
 	struct fd_softc *sc_fd[4];	/* pointers to children */
@@ -179,9 +184,6 @@ struct fdc_softc {
 /* controller driver configuration */
 int fdcprobe __P((struct device *, struct cfdata *, void *));
 int fdprint __P((void *, const char *));
-#ifdef NEWCONFIG
-void fdcforceintr __P((void *));
-#endif
 void fdcattach __P((struct device *, struct device *, void *));
 
 struct cfattach fdc_ca = {
@@ -259,7 +261,8 @@ struct fd_softc {
 int fdprobe __P((struct device *, struct cfdata *, void *));
 void fdattach __P((struct device *, struct device *, void *));
 
-static fiqhandler_t fiqhandler;
+extern char floppy_read_fiq[], floppy_read_fiq_end[];
+extern char floppy_write_fiq[], floppy_write_fiq_end[];
 
 void floppy_read_fiq __P((void));
 void floppy_write_fiq __P((void));
@@ -325,22 +328,6 @@ fdcprobe(parent, cf, aux)
 	out_fdc(iot, ioh, 0xdf);
 	out_fdc(iot, ioh, 2);
 
-#ifdef NEWCONFIG
-	if (pa->pa_iobase == PIOCCF_BASE_DEFAULT || pa->pa_drq == PIOCCF_DACK_DEFAULT)
-		return 0;
-
-	if (pa->pa_irq == PIOCCF_IRQ_DEFAULT) {
-		pa->pa_irq = isa_discoverintr(fdcforceintr, aux);
-		if (pa->pa_irq == IRQNONE)
-			goto out;
-
-		/* reset it again */
-		bus_space_write_2(iot, ioh, fdout, 0);
-		delay(100);
-		bus_space_write_2(iot, ioh, fdout, FDO_FRST);
-	}
-#endif
-
 	rv = 1;
 	pa->pa_iosize = FDC_NPORT;
 
@@ -348,26 +335,6 @@ fdcprobe(parent, cf, aux)
 	bus_space_unmap(iot, ioh, FDC_NPORT);
 	return rv;
 }
-
-#ifdef NEWCONFIG
-/*
- * XXX This is broken, and needs fixing.  In general, the interface needs
- * XXX to change.
- */
-void
-fdcforceintr(aux)
-	void *aux;
-{
-	struct isa_attach_args *ia = aux;
-	int iobase = ia->ia_iobase;
-
-	/* the motor is off; this should generate an error with or
-	   without a disk drive present */
-	out_fdc(iot, ioh, NE7CMD_SEEK);
-	out_fdc(iot, ioh, 0);
-	out_fdc(iot, ioh, 0);
-}
-#endif
 
 /*
  * Arguments passed between fdcattach and fdprobe.
@@ -426,10 +393,6 @@ fdcattach(parent, self, aux)
 	callout_init(&fdc->sc_timo_ch); 
 	callout_init(&fdc->sc_intr_ch);
 
-#ifdef NEWCONFIG
-	at_setup_dmachan(fdc->sc_drq, FDC_MAXIOSIZE);
-	isa_establish(&fdc->sc_id, &fdc->sc_dev);
-#endif
 	fdc->sc_ih = intr_claim(pa->pa_irq, IPL_BIO, "fdc",
 	    fdcintr, fdc);
 	if (!fdc->sc_ih)
@@ -1090,30 +1053,29 @@ loop:
 		 }}
 #endif
 		read = bp->b_flags & B_READ;
-#ifdef NEWCONFIG
-		at_dma(read, bp->b_data + fd->sc_skip, fd->sc_nbytes,
-		       fdc->sc_drq);
-#else
-/*		isa_dmastart(read, bp->b_data + fd->sc_skip, fd->sc_nbytes,
-		       fdc->sc_drq);*/
-		if (read)
-			fiqhandler.fh_func = floppy_read_fiq;
-		else
-			fiqhandler.fh_func = floppy_write_fiq;
-		fiqhandler.fh_r9 = IOMD_BASE + (IOMD_FIQRQ << 2);
-		fiqhandler.fh_r10 = fd->sc_nbytes;
-		fiqhandler.fh_r11 = (u_int)(bp->b_data + fd->sc_skip);
-		fiqhandler.fh_r12 = fdc->sc_drq;
-/*		fiqhandler.fh_r13 = 0;*/
-		fiqhandler.fh_mask = 0x01;
+		if (read) {
+			fdc->sc_fh.fh_func = floppy_read_fiq;
+			fdc->sc_fh.fh_size = floppy_read_fiq_end -
+			    floppy_read_fiq;
+		} else {
+			fdc->sc_fh.fh_func = floppy_write_fiq;
+			fdc->sc_fh.fh_size = floppy_read_fiq_end -
+			    floppy_read_fiq;
+		}
+		fdc->sc_fh.fh_flags = 0;
+		fdc->sc_fh.fh_regs = &fdc->sc_fr;
+		fdc->sc_fr.fr_r9 = IOMD_BASE + (IOMD_FIQRQ << 2);
+		fdc->sc_fr.fr_r10 = fd->sc_nbytes;
+		fdc->sc_fr.fr_r11 = (u_int)(bp->b_data + fd->sc_skip);
+		fdc->sc_fr.fr_r12 = fdc->sc_drq;
 #ifdef FD_DEBUG
-		printf("fdc-doio:r9=%x r10=%x r11=%x r12=%x data=%x skip=%x\n", fiqhandler.fh_r9,
-		    fiqhandler.fh_r10, fiqhandler.fh_r11,
-		    fiqhandler.fh_r12, (u_int)bp->b_data, fd->sc_skip);
+		printf("fdc-doio:r9=%x r10=%x r11=%x r12=%x data=%x skip=%x\n",
+		    fdc->sc_fr.fr_r9, fdc->sc_fr.fh_r10, fdc->sc_fr.fh_r11,
+		    fdc->sc_fr.fh_r12, (u_int)bp->b_data, fd->sc_skip);
 #endif
-		if (fiq_claim(&fiqhandler) == -1)
+		if (fiq_claim(&fdc->sc_fh) == -1)
 			panic("%s: Cannot claim FIQ vector\n", fdc->sc_dev.dv_xname);
-#endif
+		IOMD_WRITE_BYTE(IOMD_FIQMSK, 0x01);
 		bus_space_write_2(iot, ioh, fdctl, type->rate);
 #ifdef FD_DEBUG
 		printf("fdcintr: %s drive %d track %d head %d sec %d nblks %d\n",
@@ -1180,13 +1142,8 @@ loop:
 		goto doio;
 
 	case IOTIMEDOUT:
-#ifdef NEWCONFIG
-		at_dma_abort(fdc->sc_drq);
-#else
-/*		isa_dmaabort(fdc->sc_drq);*/
-		if (fiq_release(&fiqhandler) == -1)
-			panic("%s: Cannot release FIQ vector\n", fdc->sc_dev.dv_xname);
-#endif
+		fiq_release(&fdc->sc_fh);
+		IOMD_WRITE_BYTE(IOMD_FIQMSK, 0x00);
 	case SEEKTIMEDOUT:
 	case RECALTIMEDOUT:
 	case RESETTIMEDOUT:
@@ -1199,13 +1156,8 @@ loop:
 		disk_unbusy(&fd->sc_dk, (bp->b_bcount - bp->b_resid));
 
 		if (fdcresult(fdc) != 7 || (st0 & 0xf8) != 0) {
-#ifdef NEWCONFIG
-			at_dma_abort(fdc->sc_drq);
-#else
-/*			isa_dmaabort(fdc->sc_drq);*/
-			if (fiq_release(&fiqhandler) == -1)
-				panic("%s: Cannot release FIQ vector\n", fdc->sc_dev.dv_xname);
-#endif
+			fiq_release(&fdc->sc_fh);
+			IOMD_WRITE_BYTE(IOMD_FIQMSK, 0x00);
 #ifdef FD_DEBUG
 			fdcstatus(&fd->sc_dev, 7, bp->b_flags & B_READ ?
 			    "read failed" : "write failed");
@@ -1215,15 +1167,8 @@ loop:
 			fdcretry(fdc);
 			goto loop;
 		}
-#ifdef NEWCONFIG
-		at_dma_terminate(fdc->sc_drq);
-#else
-/*		read = bp->b_flags & B_READ ? DMAMODE_READ : DMAMODE_WRITE;
-		isa_dmadone(read, bp->b_data + fd->sc_skip, fd->sc_nbytes,
-		    fdc->sc_drq);*/
-		if (fiq_release(&fiqhandler) == -1)
-			panic("%s: Cannot release FIQ vector\n", fdc->sc_dev.dv_xname);
-#endif
+		fiq_release(&fdc->sc_fh);
+		IOMD_WRITE_BYTE(IOMD_FIQMSK, 0x00);
 		if (fdc->sc_errors) {
 #if 0
 			diskerr(bp, "fd", "soft error (corrected)", LOG_PRINTF,

@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_afmap.c,v 1.2.4.2 2001/11/14 19:12:37 nathanw Exp $	*/
+/*	$NetBSD: altq_afmap.c,v 1.2.4.3 2002/01/08 00:22:42 nathanw Exp $	*/
 /*	$KAME: altq_afmap.c,v 1.7 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_afmap.c,v 1.2.4.2 2001/11/14 19:12:37 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_afmap.c,v 1.2.4.3 2002/01/08 00:22:42 nathanw Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: altq_afmap.c,v 1.2.4.2 2001/11/14 19:12:37 nathanw E
 #endif /* __FreeBSD__ || __NetBSD__ */
 #ifdef ALTQ_AFMAP
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>

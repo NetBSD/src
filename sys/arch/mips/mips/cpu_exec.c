@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.30.2.3 2001/12/15 07:08:00 gmcgarry Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.30.2.4 2002/01/08 00:26:18 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

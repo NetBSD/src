@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.61.2.6 2001/11/14 19:15:22 nathanw Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.61.2.7 2002/01/08 00:31:09 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.61.2.6 2001/11/14 19:15:22 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.61.2.7 2002/01/08 00:31:09 nathanw Exp $");
 
 /*
 #define CBB_DEBUG
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.61.2.6 2001/11/14 19:15:22 nathanw Exp $
 #define LEVEL2
 */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -86,7 +85,7 @@ struct cfdriver cbb_cd = {
 };
 #endif
 
-#if defined CBB_DEBUG
+#ifdef CBB_DEBUG
 #define DPRINTF(x) printf x
 #define STATIC
 #else
@@ -2856,7 +2855,7 @@ pccbb_pcmcia_poll(arg)
 	{
 		if ((*poll->func) (poll->arg) > 0) {
 			++poll->count;
-//      printf("intr: reported from poller, 0x%x\n", spsr);
+/*      printf("intr: reported from poller, 0x%x\n", spsr); */
 #if defined LEVEL2
 		} else {
 			printf("intr: miss! 0x%x\n", spsr);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipkdb_step.c,v 1.2 1997/10/14 09:57:29 mark Exp $	*/
+/*	$NetBSD: ipkdb_step.c,v 1.2.34.1 2002/01/08 00:23:24 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -34,7 +34,6 @@
 #include <sys/param.h>
 
 #include <machine/cpu.h>
-#include <machine/psl.h>
 #include <machine/ipkdb.h>
 #include <machine/trap.h>
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: intiovar.h,v 1.4 1998/01/11 21:53:06 thorpej Exp $	*/
+/*	$NetBSD: intiovar.h,v 1.4.32.1 2002/01/08 00:24:35 nathanw Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1998, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -42,11 +42,87 @@
  */
 
 #include <machine/bus.h>
+#include <machine/cpu.h>
+
+#include <arch/hp300/dev/intioreg.h>
+
+#define INTIO_MOD_LEN	8
 
 /*
  * Arguments used to attach a device to the internal i/o space.
  */
 struct intio_attach_args {
-	bus_space_tag_t ia_bst;		/* bus space tag */
-	bus_addr_t ia_addr;		/* physical address */
+	char ia_modname[INTIO_MOD_LEN+1];	/* module name */
+	bus_space_tag_t ia_bst;			/* bus space tag */
+	bus_addr_t ia_addr;			/* physical address */
+	bus_size_t ia_iobase;			/* intio iobase */
+	int ia_ipl;				/* interrupt priority level */
 };
+
+struct intio_builtins {
+	char *ib_modname;			/* module name */
+	bus_size_t ib_offset;			/* intio offset */
+	int ib_ipl;				/* interrupt priority level */
+};
+
+/*
+ * Devices such as the HIL and RTC chips are wired in a consistent
+ * fashion.  These routines provide a uniform mechanism for accessing
+ * the devices that are wired to the machine.  Doesn't include
+ * memory-mapped devices such as framebuffers.
+ */
+
+#define WAIT(bst,bsh)		\
+	while (bus_space_read_1(bst,bsh,INTIO_DEV_3xx_STAT) \
+		& INTIO_DEV_BUSY)
+#define DATAWAIT(bst,bsh)	\
+	while (!(bus_space_read_1(bst, bsh, INTIO_DEV_3xx_STAT) \
+		& INTIO_DEV_DATA_READY))
+
+static __inline int
+intio_device_readcmd(bus_space_tag_t bst, bus_space_handle_t bsh, int cmd,
+	u_int8_t *datap)
+{
+        u_int8_t status;
+
+	if (cmd != 0) {
+		WAIT(bst, bsh);
+		bus_space_write_1(bst, bsh, INTIO_DEV_3xx_CMD, cmd);
+	}
+        do {
+		DATAWAIT(bst, bsh);
+		status = bus_space_read_1(bst, bsh, INTIO_DEV_3xx_STAT);
+		*datap = bus_space_read_1(bst, bsh, INTIO_DEV_3xx_DATA);
+	} while (((status >> INTIO_DEV_SRSHIFT) & INTIO_DEV_SRMASK)
+		!= INTIO_DEV_SR_DATAAVAIL);
+	return (0);		
+}
+
+static __inline int
+intio_device_writecmd(bus_space_tag_t bst, bus_space_handle_t bsh,
+	int cmd, u_int8_t *datap, int len)
+{
+        WAIT(bst,bsh);
+	bus_space_write_1(bst, bsh, INTIO_DEV_3xx_CMD, cmd);
+        while (len--) {
+                WAIT(bst,bsh);
+		bus_space_write_1(bst, bsh, INTIO_DEV_3xx_DATA, *datap++);
+        }
+	return (0);
+}
+
+static __inline int
+intio_device_readstate(bus_space_tag_t bst, bus_space_handle_t bsh,
+	u_int8_t *statusp, u_int8_t *datap)
+{
+	*statusp = bus_space_read_1(bst, bsh, INTIO_DEV_3xx_STAT);
+	*datap = bus_space_read_1(bst, bsh, INTIO_DEV_3xx_DATA);
+	return (0);
+}
+#undef WAIT
+#undef DATAWAIT
+
+#define INTIO_DEVSIZE	4096	/* large enough for all machines */
+
+#define intio_intr_establish(func, arg, ipl, priority)			\
+	intr_establish((func),(arg),(ipl),(priority))

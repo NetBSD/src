@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.116.6.2 2001/11/18 18:09:32 scw Exp $	*/
+/*	$NetBSD: locore.s,v 1.116.6.3 2002/01/08 00:24:41 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -108,7 +108,7 @@ ASLOCAL(tmpstk)
 #define DOREBOOT						\
 	/* Reset Vector Base Register to what PROM expects. */	\
 	movl	#0,%d0;						\
-	movc	%d0,%vbr;						\
+	movc	%d0,%vbr;					\
 	/* Jump to REQ_REBOOT */				\
 	jmp	0x1A4;
 
@@ -126,19 +126,19 @@ BSS(lowram,4)
 BSS(esym,4)
 
 ASENTRY_NOPROFILE(start)
-	movw	#PSL_HIGHIPL,%sr		| no interrupts
+	movw	#PSL_HIGHIPL,%sr	| no interrupts
 	ASRELOC(tmpstk, %a0)
 	movl	%a0,%sp			| give ourselves a temporary stack
 	RELOC(esym, %a0)
 #if 1
-	movl	%a4,%a0@			| store end of symbol table
+	movl	%a4,%a0@		| store end of symbol table
 #else
 	clrl	%a0@			| no symbol table, yet
 #endif
 	RELOC(lowram, %a0)
-	movl	%a5,%a0@			| store start of physical memory
+	movl	%a5,%a0@		| store start of physical memory
 	movl	#CACHE_OFF,%d0
-	movc	%d0,%cacr			| clear and disable on-chip cache(s)
+	movc	%d0,%cacr		| clear and disable on-chip cache(s)
 
 /* check for internal HP-IB in SYSFLAG */
 	btst	#5,0xfffffed2		| internal HP-IB?
@@ -161,8 +161,8 @@ Lhaveihpib:
 /* determine our CPU/MMU combo - check for all regardless of kernel config */
 	movl	#INTIOBASE+MMUBASE,%a1
 	movl	#0x200,%d0		| data freeze bit
-	movc	%d0,%cacr			|   only exists on 68030
-	movc	%cacr,%d0			| read it back
+	movc	%d0,%cacr		|   only exists on 68030
+	movc	%cacr,%d0		| read it back
 	tstl	%d0			| zero?
 	jeq	Lnot68030		| yes, we have 68020/68040
 
@@ -176,11 +176,11 @@ Lhaveihpib:
 	movl	#CPU_68030,%a0@		| and 68030 CPU
 	RELOC(machineid, %a0)
 	movl	#0x80,%a1@(MMUCMD)	| set magic cookie
-	movl	%a1@(MMUCMD),%d0		| read it back
+	movl	%a1@(MMUCMD),%d0	| read it back
 	btst	#7,%d0			| cookie still on?
 	jeq	Lnot370			| no, 360 or 375
 	movl	#0,%a1@(MMUCMD)		| clear magic cookie
-	movl	%a1@(MMUCMD),%d0		| read it back
+	movl	%a1@(MMUCMD),%d0	| read it back
 	btst	#7,%d0			| still on?
 	jeq	Lisa370			| no, must be a 370
 	movl	#HP_340,%a0@		| yes, must be a 340
@@ -188,7 +188,7 @@ Lhaveihpib:
 Lnot370:
 	movl	#HP_360,%a0@		| type is at least a 360
 	movl	#0,%a1@(MMUCMD)		| clear magic cookie2
-	movl	%a1@(MMUCMD),%d0		| read it back
+	movl	%a1@(MMUCMD),%d0	| read it back
 	btst	#16,%d0			| still on?
 	jeq	Lstart1			| no, must be a 360
 	RELOC(mmuid, %a0)		| save MMU ID
@@ -221,12 +221,12 @@ Lhaspac:
 
 Lnot68030:
 	bset	#31,%d0			| data cache enable bit
-	movc	%d0,%cacr			|   only exists on 68040
-	movc	%cacr,%d0			| read it back
+	movc	%d0,%cacr		|   only exists on 68040
+	movc	%cacr,%d0		| read it back
 	tstl	%d0			| zero?
 	beq	Lis68020		| yes, we have 68020
 	moveq	#0,%d0			| now turn it back off
-	movec	%d0,%cacr			|   before we access any data
+	movec	%d0,%cacr		|   before we access any data
 
 	/*
 	 * 68040 models
@@ -240,21 +240,21 @@ Lnot68030:
 	movl	#FPU_68040,%a0@		| ...and FPU
 	RELOC(ectype, %a0)
 	movl	#EC_NONE,%a0@		| and no cache (for now XXX)
-	RELOC(mmuid,%a0)			| save MMU ID
+	RELOC(mmuid,%a0)		| save MMU ID
 	movl	%a1@(MMUCMD),%d0
 	lsrl	#MMUID_SHIFT,%d0
 	andl	#MMUID_MASK,%d0
 	movl	%d0,%a0@
 	RELOC(machineid, %a0)
-	cmpb	#MMUID_425_T,%d0		| are we a 425t?
+	cmpb	#MMUID_425_T,%d0	| are we a 425t?
 	jeq	Lisa425
-	cmpb	#MMUID_425_S,%d0		| how about 425s?
+	cmpb	#MMUID_425_S,%d0	| how about 425s?
 	jeq	Lisa425
-	cmpb	#MMUID_425_E,%d0		| or maybe a 425e?
+	cmpb	#MMUID_425_E,%d0	| or maybe a 425e?
 	jeq	Lisa425
-	cmpb	#MMUID_433_T,%d0		| or a 433t?
+	cmpb	#MMUID_433_T,%d0	| or a 433t?
 	jeq	Lisa433
-	cmpb	#MMUID_433_S,%d0		| or a 433s?
+	cmpb	#MMUID_433_S,%d0	| or a 433s?
 	jeq	Lisa433
 	cmpb	#MMUID_385,%d0		| or a 385?
 	jeq	Lisa385
@@ -282,7 +282,7 @@ Lis68020:
 	RELOC(fputype, %a0)		| all of the 68020 systems
 	movl	#FPU_68881,%a0@		|   have a 68881 FPU
 	movl	#1,%a1@(MMUCMD)		| a 68020, write HP MMU location
-	movl	%a1@(MMUCMD),%d0		| read it back
+	movl	%a1@(MMUCMD),%d0	| read it back
 	btst	#0,%d0			| non-zero?
 	jne	Lishpmmu		| yes, we have HP MMU
 	RELOC(mmutype, %a0)
@@ -294,7 +294,7 @@ Lishpmmu:
 	RELOC(ectype, %a0)		| 320 or 350
 	movl	#EC_VIRT,%a0@		| both have a virtual address cache
 	movl	#0x80,%a1@(MMUCMD)	| set magic cookie
-	movl	%a1@(MMUCMD),%d0		| read it back
+	movl	%a1@(MMUCMD),%d0	| read it back
 	btst	#7,%d0			| cookie still on?
 	jeq	Lis320			| no, just a 320
 	RELOC(machineid, %a0)
@@ -347,19 +347,19 @@ Lstart2:
 	movl	#0,%a1@(MMUCMD)		| clear out MMU again
 /* initialize source/destination control registers for movs */
 	moveq	#FC_USERD,%d0		| user space
-	movc	%d0,%sfc			|   as source
-	movc	%d0,%dfc			|   and destination of transfers
+	movc	%d0,%sfc		|   as source
+	movc	%d0,%dfc		|   and destination of transfers
 /* initialize memory sizes (for pmap_bootstrap) */
 	movl	#MAXADDR,%d1		| last page
 	moveq	#PGSHIFT,%d2
 	lsrl	%d2,%d1			| convert to page (click) number
 	RELOC(maxmem, %a0)
-	movl	%d1,%a0@			| save as maxmem
+	movl	%d1,%a0@		| save as maxmem
 	movl	%a5,%d0			| lowram value from ROM via boot
 	lsrl	%d2,%d0			| convert to page number
 	subl	%d0,%d1			| compute amount of RAM present
 	RELOC(physmem, %a0)
-	movl	%d1,%a0@			| and physmem
+	movl	%d1,%a0@		| and physmem
 
 /* configure kernel and lwp0 VA space so we can get going */
 #ifdef DDB
@@ -390,7 +390,7 @@ Lstart3:
  * Is this all really necessary, or am I paranoid??
  */
 	RELOC(Sysseg, %a0)		| system segment table addr
-	movl	%a0@,%d1			| read value (a KVA)
+	movl	%a0@,%d1		| read value (a KVA)
 	addl	%a5,%d1			| convert to PA
 	RELOC(mmutype, %a0)
 	tstl	%a0@			| HP MMU?
@@ -401,10 +401,10 @@ Lstart3:
 	jra	Lstploaddone
 Lmotommu1:
 	RELOC(protorp, %a0)
-	movl	#0x80000202,%a0@		| nolimit + share global + 4 byte PTEs
+	movl	#0x80000202,%a0@	| nolimit + share global + 4 byte PTEs
 	movl	%d1,%a0@(4)		| + segtable address
-	pmove	%a0@,%srp			| load the supervisor root pointer
-	movl	#0x80000002,%a0@		| reinit upper half for CRP loads
+	pmove	%a0@,%srp		| load the supervisor root pointer
+	movl	#0x80000002,%a0@	| reinit upper half for CRP loads
 	jra	Lstploaddone		| done
 Lhpmmu2:
 	moveq	#PGSHIFT,%d2
@@ -413,7 +413,7 @@ Lhpmmu2:
 Lstploaddone:
 	lea	MAXADDR,%a2		| PA of last RAM page
 	ASRELOC(Lhighcode, %a1)		| addr of high code
-	ASRELOC(Lehighcode, %a3)		| end addr
+	ASRELOC(Lehighcode, %a3)	| end addr
 Lcodecopy:
 	movw	%a1@+,%a2@+		| copy a word
 	cmpl	%a3,%a1			| done yet?
@@ -452,19 +452,19 @@ Lhighcode:
 	movl	#0x8000,%d0
 	.long	0x4e7b0003		| movc %d0,%tc
 	movl	#0x80008000,%d0
-	movc	%d0,%cacr			| turn on both caches
+	movc	%d0,%cacr		| turn on both caches
 	jmp	Lenab1
 Lmotommu2:
 	movl	#MMU_IEN+MMU_FPE,INTIOBASE+MMUBASE+MMUCMD
 					| enable 68881 and i-cache
 	RELOC(prototc, %a2)
-	movl	#0x82c0aa00,%a2@		| value to load TC with
-	pmove	%a2@,%tc			| load it
+	movl	#0x82c0aa00,%a2@	| value to load TC with
+	pmove	%a2@,%tc		| load it
 	jmp	Lenab1
 Lhpmmu3:
-	movl	#0,INTIOBASE+MMUBASE+MMUCMD	| clear external cache
-	movl	#MMU_ENAB,INTIOBASE+MMUBASE+MMUCMD | turn on MMU
-	jmp	Lenab1				| jmp to mapped code
+	movl	#0,INTIOBASE+MMUBASE+MMUCMD		| clear external cache
+	movl	#MMU_ENAB,INTIOBASE+MMUBASE+MMUCMD	| turn on MMU
+	jmp	Lenab1					| jmp to mapped code
 Lehighcode:
 
 	/*
@@ -476,8 +476,8 @@ Lehighcode:
  */
 Lenab1:
 /* select the software page size now */
-	lea	_ASM_LABEL(tmpstk),%sp	| temporary stack
-	jbsr	_C_LABEL(uvm_setpagesize)  | select software page size
+	lea	_ASM_LABEL(tmpstk),%sp		| temporary stack
+	jbsr	_C_LABEL(uvm_setpagesize)  	| select software page size
 /* set kernel stack, user SP, and initial pcb */
 	movl	_C_LABEL(proc0paddr),%a1	| get lwp0 pcb addr
 	lea	%a1@(USPACE-4),%sp	| set kernel stack to end of area
@@ -499,7 +499,7 @@ Lenab2:
 	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
 	jeq	Lnocache0		| yes, cache already on
 	movl	#CACHE_ON,%d0
-	movc	%d0,%cacr			| clear cache(s)
+	movc	%d0,%cacr		| clear cache(s)
 	tstl	_C_LABEL(ectype)
 	jeq	Lnocache0
 	MMUADDR(%a0)
@@ -530,11 +530,11 @@ Lnocache0:
  * and then rei.
  */
 GLOBAL(proc_trampoline)
-	movl	%a3,%sp@-			| push function arg
+	movl	%a3,%sp@-		| push function arg
 	jbsr	%a2@			| call function
 	addql	#4,%sp			| pop arg
 	movl	%sp@(FR_SP),%a0		| grab and load
-	movl	%a0,%usp			|   user SP
+	movl	%a0,%usp		|   user SP
 	moveml	%sp@+,#0x7FFF		| restore most user regs
 	addql	#8,%sp			| toss SP and stack adjust
 	jra	_ASM_LABEL(rei)		| and return
@@ -553,7 +553,7 @@ GLOBAL(m68k_fault_addr)
 ENTRY_NOPROFILE(addrerr4060)
 	clrl	%sp@-			| stack adjust count
 	moveml	#0xFFFF,%sp@-		| save user registers
-	movl	%usp,%a0			| save the user SP
+	movl	%usp,%a0		| save the user SP
 	movl	%a0,%sp@(FR_SP)		|   in the savearea
 	movl	%sp@(FR_HW+8),%sp@-
 	clrl	%sp@-			| dummy code
@@ -565,7 +565,7 @@ ENTRY_NOPROFILE(addrerr4060)
 ENTRY_NOPROFILE(buserr60)
 	clrl	%sp@-			| stack adjust count
 	moveml	#0xFFFF,%sp@-		| save user registers
-	movl	%usp,%a0			| save the user SP
+	movl	%usp,%a0		| save the user SP
 	movl	%a0,%sp@(FR_SP)		|   in the savearea
 	movel	%sp@(FR_HW+12),%d0	| FSLW
 	btst	#2,%d0			| branch prediction error?
@@ -579,16 +579,16 @@ ENTRY_NOPROFILE(buserr60)
 	jeq	_ASM_LABEL(faultstkadjnotrap2)
 Lnobpe:
 | we need to adjust for misaligned addresses
-	movl	%sp@(FR_HW+8),%d1		| grab VA
+	movl	%sp@(FR_HW+8),%d1	| grab VA
 	btst	#27,%d0			| check for mis-aligned access
 	jeq	Lberr3			| no, skip
 	addl	#28,%d1			| yes, get into next page
 					| operand case: 3,
 					| instruction case: 4+12+12
-	andl	#PG_FRAME,%d1            | and truncate
+	andl	#PG_FRAME,%d1           | and truncate
 Lberr3:
 	movl	%d1,%sp@-
-	movl	%d0,%sp@-			| code is FSLW now.
+	movl	%d0,%sp@-		| code is FSLW now.
 	andw	#0x1f80,%d0 
 	jeq	Lberr60			| it is a bus error
 	movl	#T_MMUFLT,%sp@-		| show that we are an MMU fault
@@ -605,7 +605,7 @@ Lberr60:
 ENTRY_NOPROFILE(buserr40)
 	clrl	%sp@-			| stack adjust count
 	moveml	#0xFFFF,%sp@-		| save user registers
-	movl	%usp,%a0			| save the user SP
+	movl	%usp,%a0		| save the user SP
 	movl	%a0,%sp@(FR_SP)		|   in the savearea
 	movl	%sp@(FR_HW+20),%d1	| get fault address
 	moveq	#0,%d0
@@ -615,8 +615,8 @@ ENTRY_NOPROFILE(buserr40)
 	addl	#3,%d1			| get into next page
 	andl	#PG_FRAME,%d1		| and truncate
 Lbe1stpg:
-	movl	%d1,%sp@-			| pass fault address.
-	movl	%d0,%sp@-			| pass SSW as code
+	movl	%d1,%sp@-		| pass fault address.
+	movl	%d0,%sp@-		| pass SSW as code
 	btst	#10,%d0			| test ATC
 	jeq	Lberr40			| it is a bus error
 	movl	#T_MMUFLT,%sp@-		| show that we are an MMU fault
@@ -634,7 +634,7 @@ Lberr40:
 ENTRY_NOPROFILE(busaddrerr2030)
 	clrl	%sp@-			| stack adjust count
 	moveml	#0xFFFF,%sp@-		| save user registers
-	movl	%usp,%a0			| save the user SP
+	movl	%usp,%a0		| save the user SP
 	movl	%a0,%sp@(FR_SP)		|   in the savearea
 	moveq	#0,%d0
 	movw	%sp@(FR_HW+10),%d0	| grab SSW for fault processing
@@ -653,9 +653,9 @@ LbeX1:
 	movl	%sp@(FR_HW+16),%d1	| fault address is as given in frame
 	jra	Lbe10			| thats it
 Lbe0:
-	btst	#4,%sp@(FR_HW+6)		| long (type B) stack frame?
+	btst	#4,%sp@(FR_HW+6)	| long (type B) stack frame?
 	jne	Lbe4			| yes, go handle
-	movl	%sp@(FR_HW+2),%d1		| no, can use save PC
+	movl	%sp@(FR_HW+2),%d1	| no, can use save PC
 	btst	#14,%d0			| FB set?
 	jeq	Lbe3			| no, try FC
 	addql	#4,%d1			| yes, adjust address
@@ -671,8 +671,8 @@ Lbe4:
 	jeq	Lbe10			| no, all done
 	subql	#2,%d1			| yes, adjust address
 Lbe10:
-	movl	%d1,%sp@-			| push fault VA
-	movl	%d0,%sp@-			| and padded SSW
+	movl	%d1,%sp@-		| push fault VA
+	movl	%d0,%sp@-		| and padded SSW
 	movw	%sp@(FR_HW+8+6),%d0	| get frame format/vector offset
 	andw	#0x0FFF,%d0		| clear out frame format
 	cmpw	#12,%d0			| address error vector?
@@ -683,17 +683,17 @@ Lbe10:
 	jeq	Lbehpmmu		| yes, different MMU fault handler
 #endif
 	movl	%d1,%a0			| fault address
-	movl	%sp@,%d0			| function code from ssw
+	movl	%sp@,%d0		| function code from ssw
 	btst	#8,%d0			| data fault?
 	jne	Lbe10a
 	movql	#1,%d0			| user program access FC
 					| (we dont separate data/program)
-	btst	#5,%sp@(FR_HW+8)		| supervisor mode?
+	btst	#5,%sp@(FR_HW+8)	| supervisor mode?
 	jeq	Lbe10a			| if no, done
 	movql	#5,%d0			| else supervisor program access
 Lbe10a:
 	ptestr	%d0,%a0@,#7		| do a table search
-	pmove	%psr,%sp@			| save result
+	pmove	%psr,%sp@		| save result
 	movb	%sp@,%d1
 	btst	#2,%d1			| invalid (incl. limit viol. and berr)?
 	jeq	Lmightnotbemerr		| no -> wp check
@@ -716,15 +716,15 @@ Lmightnotbemerr:
 #if defined(M68K_MMU_HP)
 Lbehpmmu:
 	MMUADDR(%a0)
-	movl	%a0@(MMUSTAT),%d0		| read MMU status
+	movl	%a0@(MMUSTAT),%d0	| read MMU status
 	btst	#3,%d0			| MMU fault?
 	jeq	Lisberr1		| no, just a non-MMU bus error
 	andl	#~MMU_FAULT,%a0@(MMUSTAT)| yes, clear fault bits
-	movw	%d0,%sp@			| pass MMU stat in upper half of code
+	movw	%d0,%sp@		| pass MMU stat in upper half of code
 	jra	Lismerr			| and handle it
 #endif
 Lisaerr:
-	movl	#T_ADDRERR,%sp@-		| mark address error
+	movl	#T_ADDRERR,%sp@-	| mark address error
 	jra	_ASM_LABEL(faultstkadj)	| and deal with it
 Lisberr1:
 	clrw	%sp@			| re-clear pad word
@@ -789,28 +789,28 @@ Lfp_unsupp:
  * after the trap call.
  */
 ENTRY_NOPROFILE(fpfault)
-	clrl	%sp@-		| stack adjust count
-	moveml	#0xFFFF,%sp@-	| save user registers
+	clrl	%sp@-			| stack adjust count
+	moveml	#0xFFFF,%sp@-		| save user registers
 	movl	%usp,%a0		| and save
-	movl	%a0,%sp@(FR_SP)	|   the user stack pointer
-	clrl	%sp@-		| no VA arg
-	movl	_C_LABEL(curpcb),%a0 | current pcb
-	lea	%a0@(PCB_FPCTX),%a0 | address of FP savearea
-	fsave	%a0@		| save state
+	movl	%a0,%sp@(FR_SP)		|   the user stack pointer
+	clrl	%sp@-			| no VA arg
+	movl	_C_LABEL(curpcb),%a0	| current pcb
+	lea	%a0@(PCB_FPCTX),%a0	| address of FP savearea
+	fsave	%a0@			| save state
 #if defined(M68040) || defined(M68060)
 	/* always null state frame on 68040, 68060 */
 	cmpl	#FPU_68040,_C_LABEL(fputype)
 	jle	Lfptnull
 #endif
-	tstb	%a0@		| null state frame?
-	jeq	Lfptnull	| yes, safe
-	clrw	%d0		| no, need to tweak BIU
-	movb	%a0@(1),%d0	| get frame size
+	tstb	%a0@			| null state frame?
+	jeq	Lfptnull		| yes, safe
+	clrw	%d0			| no, need to tweak BIU
+	movb	%a0@(1),%d0		| get frame size
 	bset	#3,%a0@(0,%d0:w)	| set exc_pend bit of BIU
 Lfptnull:
-	fmovem	%fpsr,%sp@-	| push %fpsr as code argument
-	frestore %a0@		| restore state
-	movl	#T_FPERR,%sp@-	| push type arg
+	fmovem	%fpsr,%sp@-		| push %fpsr as code argument
+	frestore %a0@			| restore state
+	movl	#T_FPERR,%sp@-		| push type arg
 	jra	_ASM_LABEL(faultstkadj) | call trap and deal with stack cleanup
 
 /*
@@ -831,9 +831,9 @@ ENTRY_NOPROFILE(badtrap)
 ENTRY_NOPROFILE(trap0)
 	clrl	%sp@-			| stack adjust count
 	moveml	#0xFFFF,%sp@-		| save user registers
-	movl	%usp,%a0			| save the user SP
+	movl	%usp,%a0		| save the user SP
 	movl	%a0,%sp@(FR_SP)		|   in the savearea
-	movl	%d0,%sp@-			| push syscall number
+	movl	%d0,%sp@-		| push syscall number
 	jbsr	_C_LABEL(syscall)	| handle it
 	addql	#4,%sp			| pop syscall arg
 	tstl	_C_LABEL(astpending)
@@ -858,9 +858,9 @@ Ltrap1:
 ENTRY_NOPROFILE(trap12)
 	movl	_C_LABEL(curproc),%a0
 	movl	%a0@(L_PROC),%sp@-	| push current proc pointer
-	movl	%d1,%sp@-			| push length
-	movl	%a1,%sp@-			| push addr
-	movl	%d0,%sp@-			| push command
+	movl	%d1,%sp@-		| push length
+	movl	%a1,%sp@-		| push addr
+	movl	%d0,%sp@-		| push command
 	jbsr	_C_LABEL(cachectl1)	| do it
 	lea	%sp@(16),%sp		| pop args
 	jra	_ASM_LABEL(rei)		| all done
@@ -904,8 +904,8 @@ ENTRY_NOPROFILE(trap15)
 
 Lkbrkpt: | Kernel-mode breakpoint or trace trap. (%d0=trap_type)
 	| Save the system sp rather than the user sp.
-	movw	#PSL_HIGHIPL,%sr		| lock out interrupts
-	lea	%sp@(FR_SIZE),%a6		| Save stack pointer
+	movw	#PSL_HIGHIPL,%sr	| lock out interrupts
+	lea	%sp@(FR_SIZE),%a6	| Save stack pointer
 	movl	%a6,%sp@(FR_SP)		|  from before trap
 
 	| If were are not on tmpstk switch to it.
@@ -935,8 +935,8 @@ Lbrkpt2:
 	movl	%sp,%a2			| frame ptr
 #ifdef KGDB
 	| Let KGDB handle it (if connected)
-	movl	%a2,%sp@-			| push frame ptr
-	movl	%d2,%sp@-			| push trap type
+	movl	%a2,%sp@-		| push frame ptr
+	movl	%d2,%sp@-		| push trap type
 	jbsr	_C_LABEL(kgdb_trap)	| handle the trap
 	addql	#8,%sp			| pop args
 	cmpl	#0,%d0			| did kgdb handle it?
@@ -944,8 +944,8 @@ Lbrkpt2:
 #endif
 #ifdef DDB
 	| Let DDB handle it
-	movl	%a2,%sp@-			| push frame ptr
-	movl	%d2,%sp@-			| push trap type
+	movl	%a2,%sp@-		| push frame ptr
+	movl	%d2,%sp@-		| push trap type
 	jbsr	_C_LABEL(kdb_trap)	| handle the trap
 	addql	#8,%sp			| pop args
 #if 0	/* not needed on hp300 */
@@ -961,12 +961,12 @@ Lbrkpt3:
 	| before restoring registers and returning.
 
 	movl	%sp@(FR_SP),%a0		| modified %sp
-	lea	%sp@(FR_SIZE),%a1		| end of our frame
+	lea	%sp@(FR_SIZE),%a1	| end of our frame
 	movl	%a1@-,%a0@-		| copy 2 longs with
 	movl	%a1@-,%a0@-		| ... predecrement
 	movl	%a0,%sp@(FR_SP)		| %sp = h/w frame
 	moveml	%sp@+,#0x7FFF		| restore all but %sp
-	movl	%sp@,%sp			| ... and %sp
+	movl	%sp@,%sp		| ... and %sp
 	rte				| all done
 
 /* Use common m68k sigreturn */
@@ -982,20 +982,25 @@ Lbrkpt3:
 #define INTERRUPT_SAVEREG	moveml	#0xC0C0,%sp@-
 #define INTERRUPT_RESTOREREG	moveml	%sp@+,#0x0303
 
+/* 64-bit evcnt counter increments */
+#define EVCNT_COUNTER(ipl)					\
+	_C_LABEL(hp300_intr_list) + (ipl)*SIZEOF_HI + HI_EVCNT
+#define EVCNT_INCREMENT(ipl)					\
+	movel	%d2,-(%sp);					\
+	clrl	%d0;						\
+	moveql	#1,%d1;						\
+	addl	%d1,EVCNT_COUNTER(ipl)+4;			\
+	movel	EVCNT_COUNTER(ipl),%d2;				\
+	addxl	%d0,%d2;					\
+	movel	%d2,EVCNT_COUNTER(ipl);				\
+	movel	(%sp)+,%d2
+
 ENTRY_NOPROFILE(spurintr)	/* level 0 */
-	addql	#1,_C_LABEL(intrcnt)+0
+	EVCNT_INCREMENT(0)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 	jra	_ASM_LABEL(rei)
 
-ENTRY_NOPROFILE(lev1intr)	/* level 1: HIL XXX this needs to go away */
-	INTERRUPT_SAVEREG
-	jbsr	_C_LABEL(hilint)
-	INTERRUPT_RESTOREREG
-	addql	#1,_C_LABEL(intrcnt)+4
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-	jra	_ASM_LABEL(rei)
-
-ENTRY_NOPROFILE(intrhand)	/* levels 2 through 5 */
+ENTRY_NOPROFILE(intrhand)	/* levels 1 through 5 */
 	INTERRUPT_SAVEREG
 	movw	%sp@(22),%sp@-		| push exception vector info
 	clrw	%sp@-
@@ -1011,23 +1016,22 @@ ENTRY_NOPROFILE(lev6intr)	/* level 6: clock */
 Lclkagain:
 	btst	#0,%d0			| clear timer1 int immediately to
 	jeq	Lnotim1			|  minimize chance of losing another
-	movpw	%a0@(CLKMSB1),%d1		|  due to statintr processing delay
+	movpw	%a0@(CLKMSB1),%d1	|  due to statintr processing delay
 Lnotim1:
 	btst	#2,%d0			| timer3 interrupt?
 	jeq	Lnotim3			| no, skip statclock
-	movpw	%a0@(CLKMSB3),%d1		| clear timer3 interrupt
-	addql	#1,_C_LABEL(intrcnt)+28	| count clock interrupts
+	movpw	%a0@(CLKMSB3),%d1	| clear timer3 interrupt
 	lea	%sp@(16),%a1		| a1 = &clockframe
-	movl	%d0,%sp@-			| save status
+	movl	%d0,%sp@-		| save status
 	movl	%a1,%sp@-
 	jbsr	_C_LABEL(statintr)	| statintr(&frame)
 	addql	#4,%sp
-	movl	%sp@+,%d0			| restore pre-statintr status
+	movl	%sp@+,%d0		| restore pre-statintr status
 	CLKADDR(%a0)
 Lnotim3:
 	btst	#0,%d0			| timer1 interrupt?
 	jeq	Lrecheck		| no, skip hardclock
-	addql	#1,_C_LABEL(intrcnt)+24	| count hardclock interrupts
+	EVCNT_INCREMENT(6)
 	lea	%sp@(16),%a1		| a1 = &clockframe
 	movl	%a1,%sp@-
 #ifdef USELEDS
@@ -1038,7 +1042,7 @@ Lnotim3:
 	movl	_C_LABEL(hz),%d1
 	addl	#50,%d1			| get the timing a little closer
 	tstb	_ASM_LABEL(beatstatus)	| time to slow down?
-	jeq	Lslowthrob		  | yes, slow down
+	jeq	Lslowthrob		| yes, slow down
 	lsrl	#3,%d1			| no, fast throb
 Lslowthrob:
 	lsrl	#1,%d1			| slow throb
@@ -1070,14 +1074,14 @@ Lrecheck:
 	jra	_ASM_LABEL(rei)		| all done
 
 ENTRY_NOPROFILE(lev7intr)	/* level 7: parity errors, reset key */
-	addql	#1,_C_LABEL(intrcnt)+32
+	EVCNT_INCREMENT(7)
 	clrl	%sp@-
 	moveml	#0xFFFF,%sp@-		| save registers
-	movl	%usp,%a0			| and save
+	movl	%usp,%a0		| and save
 	movl	%a0,%sp@(FR_SP)		|   the user stack pointer
 	jbsr	_C_LABEL(nmihand)	| call handler
 	movl	%sp@(FR_SP),%a0		| restore
-	movl	%a0,%usp			|   user SP
+	movl	%a0,%usp		|   user SP
 	moveml	%sp@+,#0x7FFF		| and remaining registers
 	addql	#8,%sp			| pop SP and stack adjust
 	jra	_ASM_LABEL(rei)		| all done
@@ -1085,18 +1089,14 @@ ENTRY_NOPROFILE(lev7intr)	/* level 7: parity errors, reset key */
 /*
  * Emulation of VAX REI instruction.
  *
- * This code deals with checking for and servicing ASTs
- * (profiling, scheduling) and software interrupts (network, softclock).
- * We check for ASTs first, just like the VAX.  To avoid excess overhead
- * the T_ASTFLT handling code will also check for software interrupts so we
- * do not have to do it here.  After identifing that we need an AST we
+ * This code deals with checking for and servicing ASTs (profiling,
+ * scheduling) and software interrupts.  We check for ASTs first, just
+ * like the VAX.  After identifing that we need an AST we
  * drop the IPL to allow device interrupts.
  *
  * This code is complicated by the fact that sendsig may have been called
  * necessitating a stack cleanup.
  */
-
-BSS(ssir,1)
 
 ASENTRY_NOPROFILE(rei)
 	tstl	_C_LABEL(astpending)	| AST pending?
@@ -1107,7 +1107,7 @@ Lrei1:
 	movw	#PSL_LOWIPL,%sr		| lower SPL
 	clrl	%sp@-			| stack adjust
 	moveml	#0xFFFF,%sp@-		| save all registers
-	movl	%usp,%a1			| including
+	movl	%usp,%a1		| including
 	movl	%a1,%sp@(FR_SP)		|    the users SP
 Lrei2:
 	clrl	%sp@-			| VA == none
@@ -1116,8 +1116,8 @@ Lrei2:
 	jbsr	_C_LABEL(trap)		| go handle it
 	lea	%sp@(12),%sp		| pop value args
 	movl	%sp@(FR_SP),%a0		| restore user SP
-	movl	%a0,%usp			|   from save area
-	movw	%sp@(FR_ADJ),%d0		| need to adjust stack?
+	movl	%a0,%usp		|   from save area
+	movw	%sp@(FR_ADJ),%d0	| need to adjust stack?
 	jne	Laststkadj		| yes, go to it
 	moveml	%sp@+,#0x7FFF		| no, restore most user regs
 	addql	#8,%sp			| toss SP and stack adjust
@@ -1131,23 +1131,23 @@ Laststkadj:
 	movl	%a1@-,%a0@-		|  8 bytes
 	movl	%a0,%sp@(FR_SP)		| new SSP
 	moveml	%sp@+,#0x7FFF		| restore user registers
-	movl	%sp@,%sp			| and our SP
+	movl	%sp@,%sp		| and our SP
 	rte				| and do real RTE
 Lchksir:
 	tstb	_C_LABEL(ssir)		| SIR pending?
 	jeq	Ldorte			| no, all done
-	movl	%d0,%sp@-			| need a scratch register
+	movl	%d0,%sp@-		| need a scratch register
 	movw	%sp@(4),%d0		| get SR
 	andw	#PSL_IPL7,%d0		| mask all but IPL
 	jne	Lnosir			| came from interrupt, no can do
-	movl	%sp@+,%d0			| restore scratch register
+	movl	%sp@+,%d0		| restore scratch register
 Lgotsir:
 	movw	#SPL1,%sr		| prevent others from servicing int
 	tstb	_C_LABEL(ssir)		| too late?
 	jeq	Ldorte			| yes, oh well...
 	clrl	%sp@-			| stack adjust
 	moveml	#0xFFFF,%sp@-		| save all registers
-	movl	%usp,%a1			| including
+	movl	%usp,%a1		| including
 	movl	%a1,%sp@(FR_SP)		|    the users SP
 Lsir1:	
 	clrl	%sp@-			| VA == none
@@ -1156,12 +1156,12 @@ Lsir1:
 	jbsr	_C_LABEL(trap)		| go handle it
 	lea	%sp@(12),%sp		| pop value args
 	movl	%sp@(FR_SP),%a0		| restore
-	movl	%a0,%usp			|   user SP
+	movl	%a0,%usp		|   user SP
 	moveml	%sp@+,#0x7FFF		| and all remaining registers
 	addql	#8,%sp			| pop SP and stack adjust
 	rte
 Lnosir:
-	movl	%sp@+,%d0			| restore scratch register
+	movl	%sp@+,%d0		| restore scratch register
 Ldorte:
 	rte				| real return
 
@@ -1203,17 +1203,17 @@ ENTRY(suline)
 	movl	_C_LABEL(curpcb),%a1	| current pcb
 	movl	#Lslerr,%a1@(PCB_ONFAULT) | where to return to on a fault
 	movl	%sp@(8),%a1		| address of line
-	movl	%a1@+,%d0			| get lword
-	movsl	%d0,%a0@+			| put lword
+	movl	%a1@+,%d0		| get lword
+	movsl	%d0,%a0@+		| put lword
 	nop				| sync
-	movl	%a1@+,%d0			| get lword
-	movsl	%d0,%a0@+			| put lword
+	movl	%a1@+,%d0		| get lword
+	movsl	%d0,%a0@+		| put lword
 	nop				| sync
-	movl	%a1@+,%d0			| get lword
-	movsl	%d0,%a0@+			| put lword
+	movl	%a1@+,%d0		| get lword
+	movsl	%d0,%a0@+		| put lword
 	nop				| sync
-	movl	%a1@+,%d0			| get lword
-	movsl	%d0,%a0@+			| put lword
+	movl	%a1@+,%d0		| get lword
+	movsl	%d0,%a0@+		| put lword
 	nop				| sync
 	moveq	#0,%d0			| indicate no fault
 	jra	Lsldone
@@ -1243,7 +1243,7 @@ Lmotommu3:
 	pflusha				| flush entire TLB
 	jpl	Lmc68851a		| 68851 implies no d-cache
 	movl	#DC_CLEAR,%d0
-	movc	%d0,%cacr			| invalidate on-chip d-cache
+	movc	%d0,%cacr		| invalidate on-chip d-cache
 Lmc68851a:
 	rts
 Lhpmmu6:
@@ -1289,7 +1289,7 @@ Lmotommu4:
 	jpl	Lmc68851b		| is 68851?
 	pflush	#0,#0,%a0@		| flush address from both sides
 	movl	#DC_CLEAR,%d0
-	movc	%d0,%cacr			| invalidate on-chip data cache
+	movc	%d0,%cacr		| invalidate on-chip data cache
 	rts
 Lmc68851b:
 	pflushs	#0,#0,%a0@		| flush address from both sides
@@ -1301,13 +1301,13 @@ Lhpmmu5:
 	bclr	#0,%d0			| ensure even
 	movl	%d0,%a0
 	movw	%sr,%d1			| go critical
-	movw	#PSL_HIGHIPL,%sr		|   while in purge space
+	movw	#PSL_HIGHIPL,%sr	|   while in purge space
 	moveq	#FC_PURGE,%d0		| change address space
-	movc	%d0,%dfc			|   for destination
+	movc	%d0,%dfc		|   for destination
 	moveq	#0,%d0			| zero to invalidate?
-	movsl	%d0,%a0@			| hit it
+	movsl	%d0,%a0@		| hit it
 	moveq	#FC_USERD,%d0		| back to old
-	movc	%d0,%dfc			|   address space
+	movc	%d0,%dfc		|   address space
 	movw	%d1,%sr			| restore IPL
 #endif
 	rts
@@ -1333,7 +1333,7 @@ Lmotommu5:
 	jpl	Lmc68851c		| 68851?
 	pflush #4,#4			| flush supervisor TLB entries
 	movl	#DC_CLEAR,%d0
-	movc	%d0,%cacr			| invalidate on-chip d-cache
+	movc	%d0,%cacr		| invalidate on-chip d-cache
 	rts
 Lmc68851c:
 	pflushs #4,#4			| flush supervisor TLB entries
@@ -1372,7 +1372,7 @@ Lmotommu6:
 	jpl	Lmc68851d		| 68851?
 	pflush	#0,#4			| flush user TLB entries
 	movl	#DC_CLEAR,%d0
-	movc	%d0,%cacr			| invalidate on-chip d-cache
+	movc	%d0,%cacr		| invalidate on-chip d-cache
 	rts
 Lmc68851d:
 	pflushs	#0,#4			| flush user TLB entries
@@ -1403,7 +1403,7 @@ ENTRY(ICPA)
 Lmotommu7:
 #endif
 	movl	#IC_CLEAR,%d0
-	movc	%d0,%cacr			| invalidate i-cache
+	movc	%d0,%cacr		| invalidate i-cache
 	rts
 
 /*
@@ -1446,8 +1446,8 @@ Lmotommu9:
 	tstl	_C_LABEL(ectype)	| got external VAC?
 	jle	Lnocache3		| no, all done
 	MMUADDR(%a0)
-	movl	%a0@(MMUSSTP),%d0		| read the supervisor STP
-	movl	%d0,%a0@(MMUSSTP)		| write it back
+	movl	%a0@(MMUSSTP),%d0	| read the supervisor STP
+	movl	%d0,%a0@(MMUSSTP)	| write it back
 Lnocache3:
 #endif
 	rts
@@ -1465,8 +1465,8 @@ LmotommuA:
 	tstl	_C_LABEL(ectype)	| got external VAC?
 	jle	Lnocache4		| no, all done
 	MMUADDR(%a0)
-	movl	%a0@(MMUUSTP),%d0		| read the user STP
-	movl	%d0,%a0@(MMUUSTP)		| write it back
+	movl	%a0@(MMUUSTP),%d0	| read the user STP
+	movl	%d0,%a0@(MMUUSTP)	| write it back
 Lnocache4:
 #endif
 	rts
@@ -1512,7 +1512,7 @@ LmotommuB:
 #endif
 #if defined(M68K_MMU_MOTOROLA)
 	movl	#DC_CLEAR,%d0
-	movc	%d0,%cacr			| invalidate on-chip d-cache
+	movc	%d0,%cacr		| invalidate on-chip d-cache
 	tstl	_C_LABEL(ectype)	| got external PAC?
 	jge	Lnocache6		| no, all done
 	MMUADDR(%a0)
@@ -1567,15 +1567,15 @@ LmotommuC:
 	pflusha				| flush entire TLB
 	lea	_C_LABEL(protorp),%a0	| CRP prototype
 	movl	%d0,%a0@(4)		| stash USTP
-	pmove	%a0@,%crp			| load root pointer
+	pmove	%a0@,%crp		| load root pointer
 	movl	#CACHE_CLR,%d0
-	movc	%d0,%cacr			| invalidate cache(s)
+	movc	%d0,%cacr		| invalidate cache(s)
 	rts
 Lhpmmu9:
 #endif
 #if defined(M68K_MMU_HP)
 	movl	#CACHE_CLR,%d0
-	movc	%d0,%cacr			| invalidate cache(s)
+	movc	%d0,%cacr		| invalidate cache(s)
 	MMUADDR(%a0)
 	movl	%a0@(MMUTBINVAL),%d1	| invalidate TLB
 	tstl	_C_LABEL(ectype)	| have external VAC?
@@ -1618,7 +1618,7 @@ ENTRY(spl0)
 	subql	#4,%sp			| make room for RTE frame
 	movl	%sp@(4),%sp@(2)		| position return address
 	clrw	%sp@(6)			| set frame type 0
-	movw	#PSL_LOWIPL,%sp@		| and new SR
+	movw	#PSL_LOWIPL,%sp@	| and new SR
 	jra	Lgotsir			| go handle it
 Lspldone:
 	rts
@@ -1691,7 +1691,7 @@ ENTRY_NOPROFILE(doboot)
 	jeq	Lnocache5		| yes, skip
 #endif
 	movl	#CACHE_OFF,%d0
-	movc	%d0,%cacr			| disable on-chip cache(s)
+	movc	%d0,%cacr		| disable on-chip cache(s)
 	tstl	_C_LABEL(ectype)	| external cache?
 	jeq	Lnocache5		| no, skip
 	MMUADDR(%a0)
@@ -1720,7 +1720,7 @@ Lbootcode:
 	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
 	jne	LmotommuF		| no, skip
 	movl	#0,%d0
-	movc	%d0,%cacr			| caches off
+	movc	%d0,%cacr		| caches off
 	.long	0x4e7b0003		| movc %d0,%tc
 	movl	%d2,MAXADDR+NBPG-4	| restore old high page contents
 	DOREBOOT
@@ -1730,7 +1730,7 @@ LmotommuF:
 	tstl	_C_LABEL(mmutype)	| HP MMU?
 	jeq	LhpmmuB			| yes, skip
 	movl	#0,%a0@			| value for pmove to TC (turn off MMU)
-	pmove	%a0@,%tc			| disable MMU
+	pmove	%a0@,%tc		| disable MMU
 	DOREBOOT
 LhpmmuB:
 #endif
@@ -1747,59 +1747,59 @@ Lebootcode:
  */
 	.data
 GLOBAL(machineid)
-	.long	HP_320		| default to 320
+	.long	HP_320			| default to 320
 
 GLOBAL(mmuid)
-	.long	0		| default to nothing
+	.long	0			| default to nothing
 
 GLOBAL(mmutype)
-	.long	MMU_HP		| default to HP MMU
+	.long	MMU_HP			| default to HP MMU
 
 GLOBAL(cputype)
-	.long	CPU_68020	| default to 68020 CPU
+	.long	CPU_68020		| default to 68020 CPU
 
 GLOBAL(ectype)
-	.long	EC_NONE		| external cache type, default to none
+	.long	EC_NONE			| external cache type, default to none
 
 GLOBAL(fputype)
-	.long	FPU_68882	| default to 68882 FPU
+	.long	FPU_68882		| default to 68882 FPU
 
 GLOBAL(protorp)
-	.long	0,0		| prototype root pointer
+	.long	0,0			| prototype root pointer
 
 GLOBAL(prototc)
-	.long	0		| prototype translation control
+	.long	0			| prototype translation control
 
 GLOBAL(internalhpib)
-	.long	1		| has internal HP-IB, default to yes
+	.long	1			| has internal HP-IB, default to yes
 
 GLOBAL(want_resched)
 	.long	0
 
 GLOBAL(proc0paddr)
-	.long	0		| KVA of lwp0 u-area
+	.long	0			| KVA of lwp0 u-area
 
 GLOBAL(intiobase)
-	.long	0		| KVA of base of internal IO space
+	.long	0			| KVA of base of internal IO space
 
 GLOBAL(intiolimit)
-	.long	0		| KVA of end of internal IO space
+	.long	0			| KVA of end of internal IO space
 
 GLOBAL(extiobase)
-	.long	0		| KVA of base of external IO space
+	.long	0			| KVA of base of external IO space
 
 GLOBAL(CLKbase)
-	.long	0		| KVA of base of clock registers
+	.long	0			| KVA of base of clock registers
 
 GLOBAL(MMUbase)
-	.long	0		| KVA of base of HP MMU registers
+	.long	0			| KVA of base of HP MMU registers
 
 #ifdef USELEDS
 ASLOCAL(heartbeat)
-	.long	0		| clock ticks since last pulse of heartbeat
+	.long	0			| clock ticks since last heartbeat
 
 ASLOCAL(beatstatus)
-	.long	0		| for determining a fast or slow throb
+	.long	0			| for determining a fast or slow throb
 #endif
 
 #ifdef DEBUG
@@ -1810,21 +1810,15 @@ ASGLOBAL(fullcflush)
 	.long	0
 #endif
 
-/* interrupt counters */
+/*
+ * Interrupt Counters
+ *
+ * We now use the evcnt(9) subsystem, but these are provided to keep
+ * vmstat(8) happy.
+ */
 
 GLOBAL(intrnames)
-	.asciz	"spur"
-	.asciz	"hil"
-	.asciz	"lev2"
-	.asciz	"lev3"
-	.asciz	"lev4"
-	.asciz	"lev5"
-	.asciz	"clock"
-	.asciz  "statclock"
-	.asciz	"nmi"
 GLOBAL(eintrnames)
-	.even
-
 GLOBAL(intrcnt)
-	.long	0,0,0,0,0,0,0,0,0
 GLOBAL(eintrcnt)
+	.long 0

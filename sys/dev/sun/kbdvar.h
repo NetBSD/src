@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdvar.h,v 1.7 2000/09/21 23:40:47 eeh Exp $	*/
+/*	$NetBSD: kbdvar.h,v 1.7.2.1 2002/01/08 00:31:59 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,9 +59,9 @@
 #define	KBD_TX_RING_SIZE	16
 #define KBD_TX_RING_MASK (KBD_TX_RING_SIZE-1)
 /*
- * Keyboard serial line speed is fixed at 1200 bps.
+ * Keyboard serial line speed defaults to 1200 bps.
  */
-#define KBD_BPS 1200
+#define KBD_DEFAULT_BPS 1200
 #define KBD_RESET_TIMO 1000 /* mS. */
 
 /*
