@@ -36,7 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: kern_lkm.c,v 1.8 1994/01/08 05:51:17 mycroft Exp $
+ *	$Id: kern_lkm.c,v 1.9 1994/01/09 16:47:40 ws Exp $
  */
 
 #include <sys/param.h>
@@ -130,7 +130,10 @@ lkmunreserve()
 	/*
 	 * Actually unreserve the memory
 	 */
-	kmem_free( kmem_map, curp->area, curp->size);/**/
+	if (curp && curp->area) {
+		kmem_free( kmem_map, curp->area, curp->size);/**/
+		curp->area = 0;
+	}
 
 	lkm_state = LKMS_IDLE;
 }
@@ -150,7 +153,7 @@ struct proc	*p;
 	}
 
 	/* do this before waking the herd...*/
-	if( !curp->used) {
+	if( curp && !curp->used) {
 		/*
 		 * If we close before setting used, we have aborted
 		 * by way of error or by way of close-on-exit from
@@ -229,13 +232,14 @@ int		flag;
 			return EPERM;
 
 		loadbufp = (struct lmc_loadbuf *)data;
-		if( lkm_state != LKMS_RESERVED && lkm_state != LKMS_LOADING) {
+		i = loadbufp->cnt;
+		if( (lkm_state != LKMS_RESERVED && lkm_state != LKMS_LOADING)
+		    || i < 0
+		    || i > MODIOBUF
+		    || i > curp->size - curp->offset) {
 			err = ENOMEM;
 			break;
 		}
-
-		/* account for odd size (non-page multiple) copyin*/
-		i = MIN( curp->size - curp->offset, MODIOBUF);
 
 		/* copy in buffer full of data*/
 		if( err = copyin( (caddr_t)loadbufp->data, (caddr_t)curp->area + curp->offset, i))
@@ -253,7 +257,7 @@ int		flag;
 			printf( "LKM: LMLOADBUF (loaded)\n");
 #endif	/* DEBUG*/
 		}
-		curp->offset += MODIOBUF;
+		curp->offset += i
 		break;
 
 	case LMUNRESRV:		/* discard reserved pages for a module*/
@@ -309,9 +313,11 @@ int		flag;
 		if( ( i = unloadp->id) == -1) {		/* unload by name*/
 			/*
 			 * Copy name and lookup id from all loaded
-			 * modules.
+			 * modules.  May fail.
 			 */
-		 	copystr( unloadp->name, istr, MAXLKMNAME-1, NULL);
+		 	if (err = copyinstr( unloadp->name, istr, MAXLKMNAME-1, NULL))
+				break;
+
 			/*
 			 * look up id...
 			 */
@@ -813,7 +819,7 @@ int			cmd;
 		i = args->lkm_offset;
 
 		/* replace current slot contents with old contents*/
-		bcopy( &execsw[ i], &(args->lkm_oldexec), sizeof( struct execsw));
+		bcopy( &(args->lkm_oldexec), &execsw[i], sizeof( struct execsw));
 
 		break;
 
