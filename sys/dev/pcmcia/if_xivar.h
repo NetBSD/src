@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xivar.h,v 1.1 2004/08/08 05:56:08 mycroft Exp $	*/
+/*	$NetBSD: if_xivar.h,v 1.2 2004/08/12 19:42:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -32,7 +32,6 @@ struct xi_softc {
 
 	bus_space_tag_t sc_bst;			/* Bus cookie */
 	bus_space_handle_t sc_bsh;		/* Bus I/O handle */
-	bus_size_t sc_offset;			/* Offset of registers */
 
         /* Power management hooks and state. */
 	int	(*sc_enable) __P((struct xi_softc *));
