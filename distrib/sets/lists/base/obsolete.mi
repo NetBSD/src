@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.64 2002/12/18 20:07:23 wiz Exp $
+# $NetBSD: obsolete.mi,v 1.65 2002/12/21 23:44:05 wiz Exp $
 ./bin/rcorder
 ./dev/i4b
 ./dev/i4bctl
@@ -17,6 +17,7 @@
 ./sbin/nfsd
 ./sbin/nfsiod
 ./sbin/quotacheck
+./sbin/verifiedexec_load
 ./usr/bin/kf
 ./usr/include/compat
 ./usr/include/gssapi/rpc
@@ -193,6 +194,8 @@
 ./usr/share/man/cat8/arm32/makedev.0
 ./usr/share/man/cat8/tahoe
 ./usr/share/man/cat8/walnut
+./usr/share/man/cat8/walnut/MAKEDEV.0
+./usr/share/man/cat8/walnut/makedev.0
 ./usr/share/man/cat9/arm26
 ./usr/share/man/cat9/arm32
 ./usr/share/man/html4/arm26
@@ -233,6 +236,8 @@
 ./usr/share/man/man8/arm32/makedev.8
 ./usr/share/man/man8/tahoe
 ./usr/share/man/man8/walnut
+./usr/share/man/man8/walnut/MAKEDEV.8
+./usr/share/man/man8/walnut/makedev.8
 ./usr/share/man/man9/arm26
 ./usr/share/man/man9/arm32
 ./usr/share/misc/getopt
