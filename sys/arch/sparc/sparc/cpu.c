@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.70 1998/09/20 19:37:50 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.71 1998/09/21 10:29:20 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -133,7 +133,10 @@ alloc_cpuinfo()
 	struct pglist mlist;
 
 	/*
-	 * Allocate aligned KVA.
+	 * Allocate aligned KVA. `cpuinfo' resides at a fixed virtual
+	 * address. Since we need to access an other CPU's cpuinfo
+	 * structure occasionally, this must be done at a virtual address
+	 * that's cache congruent to the fixed address CPUINFO_VA.
 	 */
 	align = NBPG;
 	if (CACHEINFO.c_totalsize > align)
@@ -541,7 +544,7 @@ struct module_info module_sun4 = {
 	sun4_vcache_flush_context,
 	noop_pcache_flush_line,
 	noop_pure_vcache_flush,
-	memerr4
+	0
 };
 
 void
@@ -666,7 +669,7 @@ struct module_info module_sun4c = {
 	sun4_vcache_flush_context,
 	noop_pcache_flush_line,
 	noop_pure_vcache_flush,
-	memerr4c
+	0
 };
 
 void
