@@ -41,8 +41,8 @@ To prepare for installing via a tape:
 		dd if=<2nd file> of=<tape device>
 		...
 
-	where "<tape_device>" is the name of the tape device
-	that describes the tape drive you're using (possibly
+	where "<tape_device>" is the name of the non-rewinding tape
+	device that describes the tape drive you're using (possibly
 	something like /dev/nrst0, but we make no guarantees 8-).
 	If you can't figure it out, ask your system administrator.
 	"<files>" are the names of the "set_name.tgz" files
