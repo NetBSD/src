@@ -8,5 +8,6 @@ games:*:7:13::0:0:Games pseudo-user:/usr/games:/sbin/nologin
 postfix:*:12:12::0:0:Postfix pseudo-user:/var/spool/postfix:/sbin/nologin
 named:*:14:14::0:0:Named pseudo-user:/var/chroot/named:/sbin/nologin
 ntpd:*:15:15::0:0:Ntpd pseudo-user:/var/chroot/ntpd:/sbin/nologin
+sshd:*:16:16::0:0:sshd privsep:/var/empty:/sbin/nologin
 uucp:*:66:1::0:0:UNIX-to-UNIX Copy:/var/spool/uucppublic:/usr/libexec/uucp/uucico
 nobody:*:32767:39::0:0:Unprivileged user:/nonexistent:/sbin/nologin
