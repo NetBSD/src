@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.46 2002/11/28 19:29:20 martin Exp $
+#	$NetBSD: MAKEDEV,v 1.47 2003/02/20 13:37:33 martin Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -118,8 +118,13 @@
 #	systrace syscall tracer
 #	wsmux*	wscons event multiplexor
 #	wsfont*	console font control
+#	dpt*	DPT/Adaptec EATA RAID management interface
+#	nsmb*	SMB requester
+#	kttcp	kernel ttcp helper device
+#	dmoverio hardware-assisted data movers
+#	veriexec verified executable fingerprint loader
+#	twe	3ware Escalade control interface
 #
-
 
 dialin=0
 dialout=524288		# high bit of the minor number
@@ -755,6 +760,53 @@ systrace)
 	rm -f systrace
 	mknod systrace c 126 0
 	chmod 644 systrace
+	;;
+
+
+dpt*)
+	unit=${i#dpt}
+	rm -f dpt$unit
+	mknod dpt$unit c 132 $unit
+	chmod 600 dpt$unit
+	;;
+
+nsmb)
+	makedev nsmb0 nsmb1 nsmb2 nsmb3
+	;;
+
+nsmb*)
+	unit=${i#nsmb}
+	nsmb=nsmb$unit
+	major=134
+	rm -f $nsmb
+	mknod $nsmb c $major $unit
+	chmod 644 $nsmb
+	;;
+
+
+kttcp)
+	rm -f kttcp
+	mknod kttcp c 128 0
+	chmod 600 kttcp
+	;;
+
+dmoverio)
+	rm -f dmoverio
+	mknod dmoverio c 129 0
+	chmod 644 dmoverio
+	;;
+
+veriexec)
+	rm -f veriexec
+	mknod veriexec c 130 0
+	chmod 644 veriexec
+	;;
+
+twe*)
+	unit=${i#twe}
+	rm -f twe$unit
+	mknod twe$unit c 133 $unit
+	chmod 600 twe$unit
 	;;
 
 local)
