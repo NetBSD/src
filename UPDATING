@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.58 2002/04/26 15:54:41 lukem Exp $
+$NetBSD: UPDATING,v 1.59 2002/04/29 08:36:20 lukem Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -7,6 +7,13 @@ For a more detailed description see Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20020426:
+	etc/postinstall added, which performs various checks for 
+	configuration file updates and changes, and can fix most of
+	the problems identified.
+	This should make it much easier to upgrade a system's
+	configuration from earlier systems (as far back as NetBSD 1.5).
 
 20020320:
 	<bsd.lib.mk> needs a new install(1) for it's "-a cmd" support.
