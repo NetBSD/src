@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.14 1998/12/29 15:27:16 augustss Exp $	*/
+/*	$NetBSD: usb.h,v 1.15 1998/12/29 16:02:55 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -236,6 +236,7 @@ typedef struct {
 	uWord		bString[127];
 } usb_string_descriptor_t;
 #define USB_MAX_STRING_LEN 128
+#define USB_LANGUAGE_TABLE 0	/* # of the string language id table */
 
 /* Hub specific request */
 #define UR_GET_BUS_STATE	0x02

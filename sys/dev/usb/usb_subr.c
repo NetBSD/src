@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.21 1998/12/29 15:27:16 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.22 1998/12/29 16:02:55 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -164,7 +164,17 @@ usbd_get_string(dev, si, buf)
 		return (0);
 	if (dev->quirks->uq_flags & UQ_NO_STRINGS)
 		return (0);
-	r = usbd_get_string_desc(dev, si, 0, &us);
+	if (dev->langid == USBD_NOLANG) {
+		/* Set up default language */
+		r = usbd_get_string_desc(dev, USB_LANGUAGE_TABLE, 0, &us);
+		if (r != USBD_NORMAL_COMPLETION || us.bLength < 4) {
+			dev->langid = 0; /* Well, just pick English then */
+		} else {
+			/* Pick the first language as the default. */
+			dev->langid = UGETW(us.bString[0]);
+		}
+	}
+	r = usbd_get_string_desc(dev, si, dev->langid, &us);
 	if (r != USBD_NORMAL_COMPLETION)
 		return (0);
 	s = buf;
@@ -845,6 +855,7 @@ usbd_new_device(parent, bus, depth, lowspeed, port, up)
 	dev->lowspeed = lowspeed != 0;
 	dev->depth = depth;
 	dev->powersrc = up;
+	dev->langid = USBD_NOLANG;
 
 	/* Establish the the default pipe. */
 	r = usbd_setup_pipe(dev, 0, &dev->def_ep, &dev->default_pipe);
