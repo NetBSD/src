@@ -3704,7 +3704,6 @@ md_begin ()
   register struct m68k_incant *hack, *slak;
   register const char *retval = 0;	/* empty string, or error msg text */
   register int i;
-  register char c;
 
   if (flag_mri)
     {
@@ -3800,7 +3799,7 @@ md_begin ()
     }
 
   for (i = 0; i < (int) sizeof (mklower_table); i++)
-    mklower_table[i] = (isupper (c = (char) i)) ? tolower (c) : c;
+    mklower_table[i] = (isupper (i)) ? tolower (i) : i;
 
   for (i = 0; i < (int) sizeof (notend_table); i++)
     {
