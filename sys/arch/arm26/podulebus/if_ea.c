@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.9 2000/08/10 23:06:38 bjh21 Exp $ */
+/* $NetBSD: if_ea.c,v 1.10 2000/08/12 11:56:46 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -52,7 +52,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-__RCSID("$NetBSD: if_ea.c,v 1.9 2000/08/10 23:06:38 bjh21 Exp $");
+__RCSID("$NetBSD: if_ea.c,v 1.10 2000/08/12 11:56:46 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/errno.h>
@@ -118,7 +118,6 @@ struct ea_softc {
 	struct irq_handler *sc_ih;
 	u_int sc_iobase;		/* base I/O addr */
 	struct ethercom sc_ethercom;	/* Ethernet common */
-	char sc_pktbuf[EA_BUFSIZ]; 	/* frame buffer */
 	int sc_config1;			/* Current config1 bits */
 	int sc_config2;			/* Current config2 bits */
 	int sc_command;			/* Current command bits */
@@ -939,7 +938,7 @@ eatxpacket(struct ea_softc *sc)
 
 	ifp = &sc->sc_ethercom.ec_if;
 
-	/* Dequeue the next datagram. */
+	/* Dequeue the next packet. */
 	IF_DEQUEUE(&ifp->if_snd, m0);
 
 	/* If there's nothing to send, return. */
@@ -963,17 +962,18 @@ eatxpacket(struct ea_softc *sc)
 	dprintf(("Tx new packet\n"));
 #endif
 
+	sc->sc_config2 &= ~EA_CFG2_OUTPUT;
+	WriteShort(iobase + EA_8005_CONFIG2, sc->sc_config2);
+
 	/*
-	 * Copy the datagram to the temporary buffer.
-	 *
-	 * Eventually we may as well just copy straight into the
-	 * interface buffer.
+	 * Copy the frame to the start of the transmit area on the card,
+	 * leaving four bytes for the transmit header.
 	 */
 	len = 0;
 	for (m = m0; m; m = m->m_next) {
 		if (m->m_len == 0)
 			continue;
-		bcopy(mtod(m, caddr_t), sc->sc_pktbuf + len, m->m_len);
+		ea_writebuf(sc, mtod(m, caddr_t), 4 + len, m->m_len);
 		len += m->m_len;
 	}
 	m_freem(m0);
@@ -986,31 +986,17 @@ eatxpacket(struct ea_softc *sc)
 	len = max(len, ETHER_MIN_LEN);
 	
 	if (len > (ETHER_MAX_LEN - ETHER_CRC_LEN))
-		log(LOG_WARNING, "ea: oversize packet = %d bytes\n", len);
+		log(LOG_WARNING, "%s: oversize packet = %d bytes\n",
+		    sc->sc_dev.dv_xname, len);
 
-
-	/* Ok we now have a packet len bytes long in our packet buffer */
-
-	/* Transfer datagram to board. */
-#ifdef EA_TX_DEBUG
+#if 0 /*def EA_TX_DEBUG*/
 	dprintf(("ea: xfr pkt length=%d...\n", len));
 
 	dprintf(("%s-->", ether_sprintf(sc->sc_pktbuf+6)));
 	dprintf(("%s\n", ether_sprintf(sc->sc_pktbuf)));
 #endif
 
-	sc->sc_config2 &= ~EA_CFG2_OUTPUT;
-	WriteShort(iobase + EA_8005_CONFIG2, sc->sc_config2);
-
 /*	dprintf(("st=%04x\n", ReadShort(iobase + EA_8005_STATUS)));*/
-
-
-	/*
-	 * Write the packet to the interface buffer, skipping the
-	 * packet header
-	 */
-	ea_writebuf(sc, sc->sc_pktbuf, 0x0004, len);
-
 
 	/* Follow it with a NULL packet header */
 	WriteShort(iobase + EA_8005_BUFWIN, 0x00);
