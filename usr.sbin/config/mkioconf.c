@@ -798,7 +798,7 @@ struct device *dp;
 {
 	static char buf[32+20];
 
-	if(dp->d_irq==-1)
+	if(dp->d_irq==-2)
 		return NULL;
 	sprintf(buf, "V%.32s%d", dp->d_name, dp->d_unit);
 	return buf;
