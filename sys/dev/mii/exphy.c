@@ -1,4 +1,4 @@
-/*	$NetBSD: exphy.c,v 1.2 1998/08/12 20:46:47 thorpej Exp $	*/
+/*	$NetBSD: exphy.c,v 1.3 1998/08/12 20:56:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -286,7 +286,7 @@ exphy_status(sc)
 		 */
 		if ((bmsr & BMSR_ACOMP) == 0) {
 			/* Erg, still trying, I guess... */
-			mii->mii_media_active |= IFM_AUTO;
+			mii->mii_media_active |= IFM_NONE;
 			return;
 		}
 
