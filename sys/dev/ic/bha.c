@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.32 1999/10/01 18:17:13 thorpej Exp $	*/
+/*	$NetBSD: bha.c,v 1.33 1999/10/09 22:46:20 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@ void	bha_queue_ccb __P((struct bha_softc *, struct bha_ccb *));
 void	bha_start_ccbs __P((struct bha_softc *));
 void	bha_finish_ccbs __P((struct bha_softc *));
 
-struct bha_ccb *bha_ccb_phys_kv __P((struct bha_softc *, u_long));
+struct bha_ccb *bha_ccb_phys_kv __P((struct bha_softc *, bus_addr_t));
 void	bha_create_ccbs __P((struct bha_softc *, int));
 int	bha_init_ccb __P((struct bha_softc *, struct bha_ccb *));
 struct bha_ccb *bha_get_ccb __P((struct bha_softc *, int));
