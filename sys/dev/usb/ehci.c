@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.82 2004/10/24 22:07:04 augustss Exp $ */
+/*	$NetBSD: ehci.c,v 1.83 2004/10/24 22:09:15 augustss Exp $ */
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.82 2004/10/24 22:07:04 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.83 2004/10/24 22:09:15 augustss Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -2660,6 +2660,7 @@ ehci_device_request(usbd_xfer_handle xfer)
 			  &next, &end);
 		if (err)
 			goto bad3;
+		end->qtd.qtd_status &= htole32(~EHCI_QTD_IOC);
 		end->nextqtd = stat;
 		end->qtd.qtd_next =
 		end->qtd.qtd_altnext = htole32(stat->physaddr);
