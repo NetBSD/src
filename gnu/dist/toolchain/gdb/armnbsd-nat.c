@@ -120,13 +120,6 @@ _initialize_core_netbsd ()
 static char breakpoint_shadow[BREAKPOINT_MAX];
 static CORE_ADDR next_pc;
 
-/* Non-zero if we just simulated a single-step ptrace call.  This is
- * needed because we cannot remove the breakpoints in the inferior
- * process until after the `wait' in `wait_for_inferior'.
- */
-
-int one_stepped;
-
 /* single_step() is called just before we want to resume the inferior,
  * if we want to single-step it but there is no hardware or kernel
  * single-step support.  We find all the possible targets of the
@@ -137,12 +130,13 @@ int one_stepped;
  */
 
 void
-single_step (ignore)
-     enum target_signal ignore; /* signal, but we don't need it */
+arm_single_step (ignore, insert_breakpoints_p)
+     unsigned int ignore; /* signal, but we don't need it */
+     int insert_breakpoints_p;
 {
   CORE_ADDR arm_pc;
 
-  if (!one_stepped)
+  if (insert_breakpoints_p)
     {
       /*
        * Ok arm_pc is the address of the instruction will will run
@@ -157,16 +151,12 @@ single_step (ignore)
       target_insert_breakpoint(next_pc, breakpoint_shadow);
 /*      printf_unfiltered("pc=%x: set break at %x\n", arm_pc, next_pc);*/
 
-      /* We are ready to let it go */
-      one_stepped = 1;
       return;
     }
   else
     {
       /* Remove breakpoints */
       target_remove_breakpoint(next_pc, breakpoint_shadow);
-
-      one_stepped = 0;
     }
 }
 
@@ -174,8 +164,12 @@ single_step (ignore)
  * Temporary routine to warn folks this code is still experimental
  */
 
+extern int arm_apcs_32;
+
 extern char *target_name;
 void
 _initialize_armnbsd_nat ()
 {
+
+/*  arm_apcs_32 = 0; */
 }
