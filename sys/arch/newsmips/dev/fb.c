@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.16.2.3 2004/09/21 13:19:32 skrll Exp $	*/
+/*	$NetBSD: fb.c,v 1.16.2.4 2005/01/27 09:02:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.16.2.3 2004/09/21 13:19:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.16.2.4 2005/01/27 09:02:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -62,7 +62,7 @@ void fb_attach(struct device *, struct device *, void *);
 int fb_common_init(struct fb_devconfig *);
 int fb_is_console(void);
 
-int fb_ioctl(void *, u_long, caddr_t, int, struct proc *);
+int fb_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 paddr_t fb_mmap(void *, off_t, int);
 int fb_alloc_screen(void *, const struct wsscreen_descr *, void **, int *,
 		    int *, long *);
@@ -237,12 +237,12 @@ fb_is_console()
 }
 
 int
-fb_ioctl(v, cmd, data, flag, p)
+fb_ioctl(v, cmd, data, flag, l)
 	void *v;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct fb_softc *sc = v;
 	struct fb_devconfig *dc = sc->sc_dc;

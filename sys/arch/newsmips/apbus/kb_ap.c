@@ -1,4 +1,4 @@
-/*	$NetBSD: kb_ap.c,v 1.4.6.3 2004/09/21 13:19:32 skrll Exp $	*/
+/*	$NetBSD: kb_ap.c,v 1.4.6.4 2005/01/27 09:02:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kb_ap.c,v 1.4.6.3 2004/09/21 13:19:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kb_ap.c,v 1.4.6.4 2005/01/27 09:02:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ void kb_ap_cnpollc(void *, int);
 
 int kb_ap_enable(void *, int);
 void kb_ap_setleds(void *, int);
-int kb_ap_ioctl(void *, u_long, caddr_t, int, struct proc *);
+int kb_ap_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 
 extern struct wscons_keydesc newskb_keydesctab[];
 
@@ -235,12 +235,12 @@ kb_ap_setleds(v, on)
 }
 
 int
-kb_ap_ioctl(v, cmd, data, flag, p)
+kb_ap_ioctl(v, cmd, data, flag, l)
 	void *v;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	switch (cmd) {
 	case WSKBDIO_GTYPE:
