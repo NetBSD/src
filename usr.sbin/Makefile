@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.68 1996/10/18 07:08:56 thorpej Exp $
+#	$NetBSD: Makefile,v 1.69 1996/12/04 23:00:35 thorpej Exp $
 #	from: @(#)Makefile	5.6.1.2 (Berkeley) 5/8/91
 
 # not yet done: catman
 
-SUBDIR=	ac accton arp bootpd bootpgw bootpef bootptest \
+SUBDIR=	ac accton amd arp bootpd bootpgw bootpef bootptest \
 	chown chroot config cron dev_mkdb dhcpd \
 	diskpart edquota gettable gspa htable inetd iostat kgmon \
 	kvm_mkdb lpr map-mbone mrinfo mrouted mtrace mtree named \
@@ -14,11 +14,6 @@ SUBDIR=	ac accton arp bootpd bootpgw bootpef bootptest \
 	slstats spray sysctl \
 	syslogd tcpdump timed traceroute trpt trsp update \
 	vipw vnconfig ypbind yppoll ypserv ypset zdump zic
-
-# should be listed above, but doesn't work on the Alpha.
-.if   (${MACHINE_ARCH} != "alpha") || make(clean) || make(cleandir)
-SUBDIR+=amd
-.endif
 
 .if   make(clean) || make(cleandir)
 SUBDIR+=apm apmd bad144 config.old dbsym eeprom grfconfig grfinfo hilinfo \
