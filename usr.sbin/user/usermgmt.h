@@ -1,4 +1,4 @@
-/* $NetBSD: usermgmt.h,v 1.4 1999/12/24 09:08:51 agc Exp $ */
+/* $NetBSD: usermgmt.h,v 1.4.8.1 2002/06/26 17:21:54 he Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -45,6 +45,6 @@ int userinfo __P((int, char **));
 int groupinfo __P((int, char **));
 #endif
 
-void usermgmt_usage __P((char *));
+void usermgmt_usage __P((const char *));
 
 #endif
