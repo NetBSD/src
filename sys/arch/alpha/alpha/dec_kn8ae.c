@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn8ae.c,v 1.16 1998/04/15 00:46:17 mjacob Exp $ */
+/* $NetBSD: dec_kn8ae.c,v 1.17 1998/07/08 00:49:06 mjacob Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.16 1998/04/15 00:46:17 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.17 1998/07/08 00:49:06 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,6 +44,9 @@ __KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.16 1998/04/15 00:46:17 mjacob Exp $"
 #include <machine/autoconf.h>
 #include <machine/conf.h>
 #include <machine/bus.h>
+#include <machine/frame.h>
+#include <machine/cpuconf.h>
+#include <machine/logout.h>
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
@@ -56,8 +59,17 @@ __KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.16 1998/04/15 00:46:17 mjacob Exp $"
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
+#include <alpha/tlsb/tlsbreg.h>
+#include <alpha/tlsb/tlsbvar.h>
+#include <alpha/tlsb/kftxxreg.h>
+#define	KV(_addr)	((caddr_t)ALPHA_PHYS_TO_K0SEG((_addr)))
+
+
 void dec_kn8ae_init __P((void));
 static void dec_kn8ae_device_register __P((struct device *, void *));
+
+static void dec_kn8ae_mcheck_handler
+    __P((unsigned long, struct trapframe *, unsigned long, unsigned long));
 
 const struct alpha_variation_table dec_kn8ae_variations[] = {
 	{ 0, "AlphaServer 8400" },
@@ -80,6 +92,7 @@ dec_kn8ae_init()
 
 	platform.iobus = "tlsb";
 	platform.device_register = dec_kn8ae_device_register;
+	platform.mcheck_handler = dec_kn8ae_mcheck_handler;
 }
 
 /*
@@ -213,5 +226,368 @@ dec_kn8ae_device_register(dev, aux)
 			found = 1;
 			return;
 		}
+	}
+}
+
+/*
+ * KN8AE Machine Check Handlers.
+ */
+void kn8ae_harderr __P((unsigned long, unsigned long,
+    unsigned long, struct trapframe *));
+
+static void kn8ae_softerr __P((unsigned long, unsigned long,
+    unsigned long, struct trapframe *));
+
+void kn8ae_mcheck __P((unsigned long, unsigned long,
+    unsigned long, struct trapframe *));
+
+/*
+ * Support routine for clearing errors
+ */
+static void clear_tlsb_ebits __P((int));
+
+static void
+clear_tlsb_ebits(cpuonly)
+	int cpuonly;
+{
+	int node;
+	u_int32_t tldev;
+
+	for (node = 0; node <= TLSB_NODE_MAX; ++node) {
+		if ((tlsb_found & (1 << node)) == 0)
+			continue;
+		tldev = TLSB_GET_NODEREG(node, TLDEV);
+		if (tldev == 0) {
+			/* "cannot happen" */
+			continue;
+		}
+		/*
+		 * Registers to clear for all nodes.
+		 */
+		if (TLSB_GET_NODEREG(node, TLBER) &
+		    (TLBER_UDE|TLBER_CWDE|TLBER_CRDE)) {
+			TLSB_PUT_NODEREG(node, TLESR0,
+			    TLSB_GET_NODEREG(node, TLESR0));
+			TLSB_PUT_NODEREG(node, TLESR1,
+			    TLSB_GET_NODEREG(node, TLESR1));
+			TLSB_PUT_NODEREG(node, TLESR2,
+			    TLSB_GET_NODEREG(node, TLESR2));
+			TLSB_PUT_NODEREG(node, TLESR3,
+			    TLSB_GET_NODEREG(node, TLESR3));
+		}
+		TLSB_PUT_NODEREG(node, TLBER,
+		    TLSB_GET_NODEREG(node, TLBER));
+		TLSB_PUT_NODEREG(node, TLFADR0,
+		    TLSB_GET_NODEREG(node, TLFADR0));
+		TLSB_PUT_NODEREG(node, TLFADR1,
+		    TLSB_GET_NODEREG(node, TLFADR1));
+
+		if (TLDEV_ISCPU(tldev)) {
+			TLSB_PUT_NODEREG(node, TLEPAERR,
+			    TLSB_GET_NODEREG(node, TLEPAERR));
+			TLSB_PUT_NODEREG(node, TLEPDERR,
+			    TLSB_GET_NODEREG(node, TLEPDERR));
+			TLSB_PUT_NODEREG(node, TLEPMERR,
+			    TLSB_GET_NODEREG(node, TLEPMERR));
+			continue;
+		}
+		/*
+		 * If we're only doing CPU nodes, or this was a memory
+		 * node, we're done. Onwards.
+		 */
+		if (cpuonly || TLDEV_ISMEM(tldev)) {
+			continue;
+		}
+
+		TLSB_PUT_NODEREG(node, KFT_ICCNSE,
+		    TLSB_GET_NODEREG(node, KFT_ICCNSE));
+		TLSB_PUT_NODEREG(node, KFT_IDPNSE0,
+		    TLSB_GET_NODEREG(node, KFT_IDPNSE0));
+		TLSB_PUT_NODEREG(node, KFT_IDPNSE1,
+		    TLSB_GET_NODEREG(node, KFT_IDPNSE1));
+		if (TLDEV_DTYPE(tldev) == TLDEV_DTYPE_KFTHA) {
+			TLSB_PUT_NODEREG(node, KFT_IDPNSE2,
+			    TLSB_GET_NODEREG(node, KFT_IDPNSE2));
+			TLSB_PUT_NODEREG(node, KFT_IDPNSE3,
+			    TLSB_GET_NODEREG(node, KFT_IDPNSE3));
+		}
+		/*
+		 * Digital Unix cleares the Mailbox Transaction Register
+		 * here. I don't think we should because we aren't using
+		 * mailboxes yet, and the tech manual makes dire warnings
+		 * about *not* rewriting this register.
+		 */
+	}
+}
+
+/*
+ * System Corrected Errors.
+ */
+static const char *fmt1 = "        %-25s = 0x%l016x\n";
+
+void
+kn8ae_harderr(mces, type, logout, framep)
+	unsigned long mces;
+	unsigned long type;
+	unsigned long logout;
+	struct trapframe *framep;
+{
+	int whami, cpuwerr, dof_cnt;
+	mc_hdr_ev5 *hdr;
+	mc_cc_ev5 *mptr;
+	struct tlsb_mchk_fatal *ptr;
+
+	hdr = (mc_hdr_ev5 *) logout;
+	mptr = (mc_cc_ev5 *) (logout + sizeof (*hdr));
+	ptr = (struct tlsb_mchk_fatal *)
+		(logout + sizeof (*hdr) + sizeof (*mptr));
+	whami = alpha_pal_whami();
+
+	printf("kn8ae: CPU ID %d system correctable error\n", whami);
+
+	printf("    Machine Check Code 0x%lx\n", hdr->mcheck_code);
+	printf(fmt1, "EI Status", mptr->ei_stat);
+	printf(fmt1, "EI Address", mptr->ei_addr);
+	printf(fmt1, "Fill Syndrome", mptr->fill_syndrome);
+	printf(fmt1, "Interrupt Status Reg.", mptr->isr);
+	printf("\n");
+	dof_cnt = (ptr->rsvdheader & 0xffffffff00000000) >> 32; 
+	cpuwerr = ptr->rsvdheader & 0xffff;
+	
+	printf(fmt1, "CPU W/Error.", cpuwerr);
+	printf(fmt1, "DOF Count.", dof_cnt);
+	printf(fmt1, "TLDEV", ptr->tldev);
+	printf(fmt1, "TLSB Bus Error", ptr->tlber);
+	printf(fmt1, "TLSB CNR", ptr->tlcnr);
+	printf(fmt1, "TLSB VID", ptr->tlvid);
+	printf(fmt1, "TLSB Error Syndrome 0", ptr->tlesr0);
+	printf(fmt1, "TLSB Error Syndrome 1", ptr->tlesr1);
+	printf(fmt1, "TLSB Error Syndrome 2", ptr->tlesr2);
+	printf(fmt1, "TLSB Error Syndrome 3", ptr->tlesr3);
+	printf(fmt1, "TLSB LEP_AERR", ptr->tlepaerr);
+	printf(fmt1, "TLSB MODCONF", ptr->tlmodconfig);
+	printf(fmt1, "TLSB LEP_MERR", ptr->tlepmerr);
+	printf(fmt1, "TLSB LEP_DERR", ptr->tlepderr);
+	printf(fmt1, "TLSB INTRMASK0", ptr->tlintrmask0);
+	printf(fmt1, "TLSB INTRMASK1", ptr->tlintrmask1);
+	printf(fmt1, "TLSB INTRSUM0", ptr->tlintrsum0);
+	printf(fmt1, "TLSB INTRSUM1", ptr->tlintrsum1);
+	printf(fmt1, "TLSB VMG", ptr->tlep_vmg);
+
+	/* CLEAN UP */
+	/*
+	 * Here's what Digital Unix says to do-
+	 *
+	 * 1. Log the ECC error that got us here
+	 *
+	 * 2. Turn off error reporting
+	 *
+	 * 3. Attempt to have CPU read bad memory location (specified by the
+	 *    tlfadr reg of the TIOP or TMEM (depending on type of error,
+	 *    see upcoming code branches) and write data back to location.
+	 *
+         * 4. When the CPU attempts to read the location, another 620 interrupt
+         *    should occur for the cpu at which instant PAL will scrub the
+         *    location. Then the o.s. scrub routine finishes. If the PAL scrubs
+	 *    the location then the scrubbed flag should be 0 (this is what we
+	 *    expect).
+	 *
+         *    If it's a 1 then the alpha_scrub_long routine did the scrub.
+	 *
+         * 5. We renable correctable error logging and continue
+	 */
+	printf("WARNING THIS IS NOT DONE YET YOU MAY GET DATA CORRUPTION");
+	clear_tlsb_ebits(0);
+	/*
+	 * Clear error by rewriting register.
+	 */
+        alpha_pal_wrmces(mces);
+}
+
+/*
+ *  Processor Corrected Errors- BCACHE ECC errors.
+ */
+
+static void
+kn8ae_softerr(mces, type, logout, framep)
+	unsigned long mces;
+	unsigned long type;
+	unsigned long logout;
+	struct trapframe *framep;
+{
+	int whami, cpuwerr, dof_cnt;
+	mc_hdr_ev5 *hdr;
+	mc_cc_ev5 *mptr;
+	struct tlsb_mchk_soft *ptr;
+
+	hdr = (mc_hdr_ev5 *) logout;
+	mptr = (mc_cc_ev5 *) (logout + sizeof (*hdr));
+	ptr = (struct tlsb_mchk_soft *)
+		(logout + sizeof (*hdr) + sizeof (*mptr));
+	whami = alpha_pal_whami();
+
+	printf("kn8ae: CPU ID %d processor correctable error\n", whami);
+	printf("    Machine Check Code 0x%lx\n", hdr->mcheck_code);
+	printf(fmt1, "EI Status", mptr->ei_stat);
+	printf(fmt1, "EI Address", mptr->ei_addr);
+	printf(fmt1, "Fill Syndrome", mptr->fill_syndrome);
+	printf(fmt1, "Interrupt Status Reg.", mptr->isr);
+	printf("\n");
+	dof_cnt = (ptr->rsvdheader & 0xffffffff00000000) >> 32; 
+	cpuwerr = ptr->rsvdheader & 0xffff;
+	
+	printf(fmt1, "CPU W/Error.", cpuwerr);
+	printf(fmt1, "DOF Count.", dof_cnt);
+	printf(fmt1, "TLDEV", ptr->tldev);
+	printf(fmt1, "TLSB Bus Error", ptr->tlber);
+	printf(fmt1, "TLSB Error Syndrome 0", ptr->tlesr0);
+	printf(fmt1, "TLSB Error Syndrome 1", ptr->tlesr1);
+	printf(fmt1, "TLSB Error Syndrome 2", ptr->tlesr2);
+	printf(fmt1, "TLSB Error Syndrome 3", ptr->tlesr3);
+
+	/*
+	 * Clear TLSB bits on all CPU TLSB nodes.
+	 */
+	clear_tlsb_ebits(1);
+
+	/*
+	 * Clear error by rewriting register.
+	 */
+        alpha_pal_wrmces(mces);
+}
+
+/*
+ * KN8AE specific machine check handler
+ */
+
+void
+kn8ae_mcheck(mces, type, logout, framep)
+	unsigned long mces;
+	unsigned long type;
+	unsigned long logout;
+	struct trapframe *framep;
+{
+	struct mchkinfo *mcp;
+	int get_dwlpx_regs;
+	struct tlsb_mchk_fatal mcs[TLSB_NODE_MAX+1], *ptr;
+	mc_hdr_ev5 *hdr;
+	mc_uc_ev5 *mptr;
+
+	/*
+	 * If we expected a machine check, just go handle it in common code.
+	 */
+	mcp = &mchkinfo[alpha_pal_whami()];
+	if (mcp->mc_expected) {
+		machine_check(mces, framep, type, logout);
+		return;
+	}
+
+	get_dwlpx_regs = 0;
+	ptr = NULL;
+	bzero(mcs, sizeof (mcs));
+
+	hdr = (mc_hdr_ev5 *) logout;
+	mptr = (mc_uc_ev5 *) (logout + sizeof (*hdr));
+
+	/*
+	 * If detected by the system, we print out some TLASER registers.
+	 */
+	if (type == ALPHA_SYS_MCHECK) {
+#if	0
+		int get_lsb_regs = 0;
+		int get_dwlpx_regs = 0;
+#endif
+
+		ptr = (struct tlsb_mchk_fatal *)
+		    (logout + sizeof (*hdr) + sizeof (*mptr));
+
+#if	0
+		if (ptr->tlepaerr & TLEPAERR_WSPC_RD) {
+			get_dwlpx_regs++;
+		}
+		if ((ptr->tlepaerr & TLEPAERR_IBOX_TMO) &&
+		    (mptr->ic_perr_stat & EV5_IC_PERR_IBOXTMO) &&
+		    (ptr->tlepderr & TLEPDERR_GBTMO)) {
+			get_dwlpx_regs++;
+		}
+#endif
+	} else {
+		/*
+		 * We have a processor machine check- which doesn't
+		 * have information with it about any TLSB related
+		 * failures.
+		 */
+	}
+
+	/*
+	 * Now we can finally print some stuff...
+	 */
+	ev5_logout_print(hdr, mptr);
+	if (type == ALPHA_SYS_MCHECK) {
+		if (ptr->tlepaerr & TLEPAERR_WSPC_RD) {
+			printf("\tWSPC READ error\n");
+		}
+		if ((ptr->tlepaerr & TLEPAERR_IBOX_TMO) &&
+		    (mptr->ic_perr_stat & EV5_IC_PERR_IBOXTMO) &&
+		    (ptr->tlepderr & TLEPDERR_GBTMO)) {
+			printf ("\tWSPC IBOX timeout detected\n");
+		}
+#ifdef	DIAGNOSTIC
+		printf(fmt1, "TLDEV", ptr->tldev);
+		printf(fmt1, "TLSB Bus Error", ptr->tlber);
+		printf(fmt1, "TLSB CNR", ptr->tlcnr);
+		printf(fmt1, "TLSB VID", ptr->tlvid);
+		printf(fmt1, "TLSB Error Syndrome 0", ptr->tlesr0);
+		printf(fmt1, "TLSB Error Syndrome 1", ptr->tlesr1);
+		printf(fmt1, "TLSB Error Syndrome 2", ptr->tlesr2);
+		printf(fmt1, "TLSB Error Syndrome 3", ptr->tlesr3);
+		printf(fmt1, "TLSB LEP_AERR", ptr->tlepaerr);
+		printf(fmt1, "TLSB MODCONF", ptr->tlmodconfig);
+		printf(fmt1, "TLSB LEP_MERR", ptr->tlepmerr);
+		printf(fmt1, "TLSB LEP_DERR", ptr->tlepderr);
+		printf(fmt1, "TLSB INTRMASK0", ptr->tlintrmask0);
+		printf(fmt1, "TLSB INTRMASK1", ptr->tlintrmask1);
+		printf(fmt1, "TLSB INTRSUM0", ptr->tlintrsum0);
+		printf(fmt1, "TLSB INTRSUM1", ptr->tlintrsum1);
+		printf(fmt1, "TLSB VMG", ptr->tlep_vmg);
+#endif
+	} else {
+	}
+
+	/*
+	 * Now that we've printed all sorts of useful information
+	 * and have decided that we really can't do any more to
+	 * respond to the error, go on to the common code for
+	 * final disposition. Usually this means that we die.
+	 */
+	clear_tlsb_ebits(0);
+
+	machine_check(mces, framep, type, logout);
+}
+
+static void
+dec_kn8ae_mcheck_handler(mces, framep, vector, param)
+	unsigned long mces;
+	struct trapframe *framep;
+	unsigned long vector;
+	unsigned long param;
+{
+	switch (vector) {
+	case ALPHA_SYS_ERROR:
+		kn8ae_harderr(mces, vector, param, framep);
+		break;
+
+	case ALPHA_PROC_ERROR:
+		kn8ae_softerr(mces, vector, param, framep);
+		break;
+
+	case ALPHA_SYS_MCHECK:
+	case ALPHA_PROC_MCHECK:
+		kn8ae_mcheck(mces, vector, param, framep);
+		break;
+	default:
+		printf("KN8AE_MCHECK: unknown check vector %x\n", vector);
+		machine_check(mces, framep, vector, param);
+		break;
 	}
 }
