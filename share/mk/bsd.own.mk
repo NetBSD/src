@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.269 2002/02/15 10:20:24 matthias Exp $
+#	$NetBSD: bsd.own.mk,v 1.270 2002/02/15 21:28:04 is Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -20,7 +20,6 @@ NEED_OWN_INSTALL_TARGET?=	yes
       ${MACHINE_ARCH} == "ns32k" || \
       ${MACHINE_ARCH} == "sh3eb" || ${MACHINE_ARCH} == "sh3el" || \
       ${MACHINE_ARCH} == "vax"   || \
-      ${MACHINE} == "amiga"      || \
       ${MACHINE} == "mac68k")
 USE_NEW_TOOLCHAIN=nowarn
 .endif
