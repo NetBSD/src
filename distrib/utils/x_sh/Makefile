@@ -1,11 +1,11 @@
-# 	$NetBSD: Makefile,v 1.9 1999/05/19 04:17:50 gwr Exp $
+# 	$NetBSD: Makefile,v 1.10 1999/06/21 01:19:38 cgd Exp $
 # Build a smaller sh (e.g. for boot media)
 
 .include <bsd.own.mk>
 
 MKMAN=no
 
-SRCDIR= ${BSDSRCDIR}/bin/sh
+SRCDIR= ${.CURDIR}/../../../bin/sh
 
 CPPFLAGS+= -I${SRCDIR} -DSMALL
 
