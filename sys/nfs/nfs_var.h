@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.45 2004/05/22 22:52:16 jonathan Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.46 2004/09/15 09:50:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -261,6 +261,7 @@ void nfs_initdircache __P((struct vnode *));
 void nfs_initdirxlatecookie __P((struct vnode *));
 struct nfsdircache *nfs_searchdircache __P((struct vnode *, off_t, int, int *));
 struct nfsdircache *nfs_enterdircache __P((struct vnode *, off_t, off_t,						   int, daddr_t));
+void nfs_putdircache __P((struct nfsnode *, struct nfsdircache *));
 void nfs_invaldircache __P((struct vnode *, int));
 void nfs_init __P((void));
 int nfsm_loadattrcache __P((struct vnode **, struct mbuf **, caddr_t *,
