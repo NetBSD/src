@@ -1,4 +1,4 @@
-/*	$NetBSD: swap.c,v 1.8 1997/07/21 07:03:15 mrg Exp $	*/
+/*	$NetBSD: swap.c,v 1.9 1998/12/26 07:05:08 marc Exp $	*/
 
 /*-
  * Copyright (c) 1997 Matthew R. Green.  All rights reserved.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)swap.c	8.3 (Berkeley) 4/29/95";
 #endif
-__RCSID("$NetBSD: swap.c,v 1.8 1997/07/21 07:03:15 mrg Exp $");
+__RCSID("$NetBSD: swap.c,v 1.9 1998/12/26 07:05:08 marc Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -124,9 +124,8 @@ fetchswap()
 void
 labelswap()
 {
-	struct	swapent *sep;
-	char	*header, *p;
-	int	row, i;
+	char	*header;
+	int	row;
 
 	row = 0;
 	wmove(wnd, row, 0);
@@ -141,24 +140,25 @@ labelswap()
 	mvwprintw(wnd, row++, 0, "%-5s%*s%9s  %55s",
 	    "Disk", hlen, header, "Used",
 	    "/0%  /10% /20% /30% /40% /50% /60% /70% /80% /90% /100%");
-	for (sep = swap_devices, i = 0; i < nswap; i++, sep++) {
-		if (sep == NULL)
-			continue;
-		p = sep ? devname(sep->se_dev, S_IFBLK) : "swfl";
-		mvwprintw(wnd, i + 1, 0, "%-5s", p ? p : "??");
-	}
 }
 
 void
 showswap() {
 	int	col, div, i, j, avail, used, xsize, free;
 	struct	swapent *sep;
+	char	*p;
 
 	div = blocksize / 512;
 	free = avail = 0;
 	for (sep = swap_devices, i = 0; i < nswap; i++, sep++) {
 		if (sep == NULL)
 			continue;
+
+		p = strrchr(sep->se_path, '/');
+		p = p ? p+1 : sep->se_path;
+
+		mvwprintw(wnd, i + 1, 0, "%-5s", p);
+
 		col = 5;
 		mvwprintw(wnd, i + 1, col, "%*d", hlen, sep->se_nblks / div);
 
