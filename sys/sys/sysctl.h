@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.13 1996/03/07 14:29:46 christos Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.14 1996/03/12 00:22:43 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -163,6 +163,7 @@ struct ctlname {
 	{ "maxpartitions", CTLTYPE_INT }, \
 	{ "rawpartition", CTLTYPE_INT }, \
 	{ "ntptime", CTLTYPE_STRUCT }, \
+	{ "timex", CTLTYPE_STRUCT }, \
 }
 
 /* 
