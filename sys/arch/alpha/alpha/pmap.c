@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.134 2000/06/04 18:09:36 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.135 2000/06/05 21:47:15 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.134 2000/06/04 18:09:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.135 2000/06/05 21:47:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3891,7 +3891,7 @@ pmap_tlb_shootdown(pmap_t pmap, vaddr_t va, pt_entry_t pte)
 	s = splimp();
 
 	for (i = 0; i < hwrpb->rpb_pcs_cnt; i++) {
-		if (i == cpu_id || cpu_info[i].ci_dev == NULL)
+		if (i == cpu_id || cpu_info[i].ci_softc == NULL)
 			continue;
 		pq = &pmap_tlb_shootdown_q[i];
 		simple_lock(&pq->pq_slock);
