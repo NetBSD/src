@@ -62,7 +62,7 @@
  * rights to redistribute these changes.
  */
 
-static char rcsid[] = "$Header: /cvsroot/src/sys/vm/Attic/vm_fault.c,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/vm/Attic/vm_fault.c,v 1.2 1993/04/09 15:54:56 cgd Exp $";
 
 /*
  *	Page fault handling module.
@@ -246,6 +246,7 @@ vm_fault(map, vaddr, fault_type, change_wiring)
 
 				PAGE_ASSERT_WAIT(m, !change_wiring);
 				UNLOCK_THINGS;
+thread_wakeup(&vm_pages_needed); /* XXX! -- what does this do? */
 				thread_block();
 				wait_result = current_thread()->wait_result;
 				vm_object_deallocate(first_object);
@@ -279,6 +280,7 @@ thread_wakeup(&vm_pages_needed); /* XXX! */
 
 				PAGE_ASSERT_WAIT(m, !change_wiring);
 				UNLOCK_THINGS;
+thread_wakeup(&vm_pages_needed); /* XXX! -- what does this do? */
 				thread_block();
 				wait_result = current_thread()->wait_result;
 				vm_object_deallocate(first_object);
@@ -528,7 +530,7 @@ thread_wakeup(&vm_pages_needed); /* XXX */
 			 */
 
 			vm_page_lock_queues();
-			vm_page_deactivate(m);
+			vm_page_activate(m);
 			pmap_page_protect(VM_PAGE_TO_PHYS(m), VM_PROT_NONE);
 			vm_page_unlock_queues();
 
@@ -625,6 +627,7 @@ thread_wakeup(&vm_pages_needed); /* XXX */
 					copy_object->ref_count--;
 					vm_object_unlock(copy_object);
 					UNLOCK_THINGS;
+thread_wakeup(&vm_pages_needed); /* XXX! -- what does this do? */
 					thread_block();
 					wait_result = current_thread()->wait_result;
 					vm_object_deallocate(first_object);
