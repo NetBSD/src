@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.13 1997/10/19 04:40:00 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -36,17 +36,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $";
+__RCSID("$NetBSD: main.c,v 1.13 1997/10/19 04:40:00 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,12 +57,13 @@ static char rcsid[] = "$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $";
  */
 
 #include <sys/types.h>
-#include <signal.h>
-#include <errno.h>
-#include <unistd.h>
-#include <stdio.h>
 #include <ctype.h>
+#include <err.h>
+#include <errno.h>
+#include <signal.h>
+#include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 #include "mdef.h"
 #include "stdd.h"
 #include "extern.h"
@@ -95,69 +96,68 @@ char scommt[MAXCCHARS+1] = {SCOMMT};	/* start character for comment */
 char ecommt[MAXCCHARS+1] = {ECOMMT};	/* end character for comment   */
 
 struct keyblk keywrds[] = {	/* m4 keywords to be installed */
-	"include",      INCLTYPE,
-	"sinclude",     SINCTYPE,
-	"define",       DEFITYPE,
-	"defn",         DEFNTYPE,
-	"divert",       DIVRTYPE,
-	"expr",         EXPRTYPE,
-	"eval",         EXPRTYPE,
-	"substr",       SUBSTYPE,
-	"ifelse",       IFELTYPE,
-	"ifdef",        IFDFTYPE,
-	"len",          LENGTYPE,
-	"incr",         INCRTYPE,
-	"decr",         DECRTYPE,
-	"dnl",          DNLNTYPE,
-	"changequote",  CHNQTYPE,
-	"changecom",    CHNCTYPE,
-	"index",        INDXTYPE,
+	{ "include",      INCLTYPE },
+	{ "sinclude",     SINCTYPE },
+	{ "define",       DEFITYPE },
+	{ "defn",         DEFNTYPE },
+	{ "divert",       DIVRTYPE },
+	{ "expr",         EXPRTYPE },
+	{ "eval",         EXPRTYPE },
+	{ "substr",       SUBSTYPE },
+	{ "ifelse",       IFELTYPE },
+	{ "ifdef",        IFDFTYPE },
+	{ "len",          LENGTYPE },
+	{ "incr",         INCRTYPE },
+	{ "decr",         DECRTYPE },
+	{ "dnl",          DNLNTYPE },
+	{ "changequote",  CHNQTYPE },
+	{ "changecom",    CHNCTYPE },
+	{ "index",        INDXTYPE },
 #ifdef EXTENDED
-	"paste",        PASTTYPE,
-	"spaste",       SPASTYPE,
+	{ "paste",        PASTTYPE },
+	{ "spaste",       SPASTYPE },
 #endif
-	"popdef",       POPDTYPE,
-	"pushdef",      PUSDTYPE,
-	"dumpdef",      DUMPTYPE,
-	"shift",        SHIFTYPE,
-	"translit",     TRNLTYPE,
-	"undefine",     UNDFTYPE,
-	"undivert",     UNDVTYPE,
-	"divnum",       DIVNTYPE,
-	"maketemp",     MKTMTYPE,
-	"errprint",     ERRPTYPE,
-	"m4wrap",       M4WRTYPE,
-	"m4exit",       EXITTYPE,
-	"syscmd",       SYSCTYPE,
-	"sysval",       SYSVTYPE,
+	{ "popdef",       POPDTYPE },
+	{ "pushdef",      PUSDTYPE },
+	{ "dumpdef",      DUMPTYPE },
+	{ "shift",        SHIFTYPE },
+	{ "translit",     TRNLTYPE },
+	{ "undefine",     UNDFTYPE },
+	{ "undivert",     UNDVTYPE },
+	{ "divnum",       DIVNTYPE },
+	{ "maketemp",     MKTMTYPE },
+	{ "errprint",     ERRPTYPE },
+	{ "m4wrap",       M4WRTYPE },
+	{ "m4exit",       EXITTYPE },
+	{ "syscmd",       SYSCTYPE },
+	{ "sysval",       SYSVTYPE },
 
 #if defined(unix) || defined(__NetBSD__)
-	"unix",         MACRTYPE,
+	{ "unix",         MACRTYPE },
 #else
 #ifdef vms
-	"vms",          MACRTYPE,
+	{ "vms",          MACRTYPE },
 #endif
 #endif
 };
 
 #define MAXKEYS	(sizeof(keywrds)/sizeof(struct keyblk))
 
-extern int optind;
-extern char *optarg;
-
-void macro();
-void initkwds();
-extern int getopt();
+int	do_look_ahead __P((int, char *));
+ndptr	inspect __P((char *));
+void	initkwds __P((void));
+void	macro __P((void));
+int	main __P((int, char **));
 
 int
 main(argc,argv)
 	int argc;
 	char *argv[];
 {
-	register int c;
-	register int n;
+	int c;
+	int n;
 	char *p;
-	register FILE *ifp;
+	FILE *ifp;
 
 	progname = basename(argv[0]);
 
@@ -166,7 +166,7 @@ main(argc,argv)
 
 	initkwds();
 
-	while ((c = getopt(argc, argv, "tD:U:o:")) != EOF)
+	while ((c = getopt(argc, argv, "tD:U:o:")) != -1)
 		switch(c) {
 
 		case 'D':               /* define something..*/
@@ -204,7 +204,7 @@ main(argc,argv)
 			if (p[0] == '-' && p[1] == '\0')
 				ifp = stdin;
 			else if ((ifp = fopen(p, "r")) == NULL)
-				oops("%s: %s", p, strerror(errno));
+				err(1, "%s", p);
 			sp = -1;
 			fp = 0; 
 			infile[0] = ifp;
@@ -240,8 +240,6 @@ main(argc,argv)
 	return 0;
 }
 
-ndptr inspect();
-
 /*
  * Look ahead (at most MAXCCHARS characters) for `token'.
  * (on input `t == token[0]')
@@ -257,7 +255,7 @@ do_look_ahead(t, token)
 	int i;
 
 	if (t != token[0])
-		oops("internal error", "");
+		errx(1, "internal error");
 
 	for (i = 1; *++token; i++) {
 		t = gpbc();
@@ -278,13 +276,15 @@ do_look_ahead(t, token)
  * macro - the work horse..
  */
 void
-macro() {
+macro()
+{
 	char token[MAXTOK], chars[2];
-	register char *s;
-	register int t, l;
-	register ndptr p;
-	register int  nlpar;
+	char *s;
+	int t, l;
+	ndptr p;
+	int  nlpar;
 
+	s = NULL;
 	cycle {
 		t = gpbc();
 		if (t == '_' || isalpha(t)) {
@@ -321,7 +321,7 @@ macro() {
 		}
 		else if (t == EOF) {
 			if (sp > -1)
-				oops("unexpected end of input", "");
+				errx(1, "unexpected end of input");
 			if (ilevel <= 0)
 				break;			/* all done thanks.. */
 			--ilevel;
@@ -345,7 +345,7 @@ macro() {
 					nlpar++;
 					s = lquote;
 				} else if (l == EOF)
-					oops("missing right quote", "");
+					errx(1, "missing right quote");
 				else {
 					chars[0] = l;
 					chars[1] = '\0';
@@ -404,7 +404,7 @@ macro() {
 				chrsave(EOS);
 
 				if (sp == STACKMAX)
-					oops("internal stack overflow", "");
+					errx(1, "internal stack overflow");
 
 				if (CALTYP == MACRTYPE)
 					expand((char **) mstack+fp+1, sp-fp);
@@ -442,19 +442,19 @@ macro() {
  */
 ndptr
 inspect(tp) 
-register char *tp;
+	char *tp;
 {
-	register char c;
-	register char *name = tp;
-	register char *etp = tp+MAXTOK;
-	register ndptr p;
-	register unsigned long h = 0;
+	char c;
+	char *name = tp;
+	char *etp = tp+MAXTOK;
+	ndptr p;
+	unsigned long h = 0;
 
 	while ((isalnum(c = gpbc()) || c == '_') && tp < etp)
 		h = (h << 5) + h + (*tp++ = c);
 	putback(c);
 	if (tp == etp)
-		oops("token too long", "");
+		errx(1, "token too long");
 
 	*tp = EOS;
 
@@ -468,14 +468,15 @@ register char *tp;
  * initkwds - initialise m4 keywords as fast as possible. 
  * This very similar to install, but without certain overheads,
  * such as calling lookup. Malloc is not used for storing the 
- * keyword strings, since we simply use the static  pointers
+ * keyword strings, since we simply use the static pointers
  * within keywrds block.
  */
 void
-initkwds() {
-	register int i;
-	register int h;
-	register ndptr p;
+initkwds()
+{
+	int i;
+	int h;
+	ndptr p;
 
 	for (i = 0; i < MAXKEYS; i++) {
 		h = hash(keywrds[i].knam);
