@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gzboot,v 1.3 2002/02/23 20:19:52 thorpej Exp $
+#	$NetBSD: Makefile.gzboot,v 1.4 2002/02/24 20:29:44 thorpej Exp $
 
 NOMAN=  # defined
 
@@ -26,7 +26,7 @@ LIBCRTEND=
 .PATH: ${EVBARM_STAND}/gzboot
 .PATH: ${EVBARM_STAND}/board
 
-SRCS+=	gzboot.c image.c
+SRCS+=	gzboot.c image.S
 
 STARTFILE= srtbegin.o
 
@@ -86,7 +86,7 @@ cleandir distclean: cleanlibdir
 cleanlibdir:
 	rm -rf lib
 
-LDFLAGS= -M -e start -T ${LDSCRIPT}
+LDFLAGS= -M -T ${LDSCRIPT}
 
 LIBLIST=${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} ${LIBSA}
 

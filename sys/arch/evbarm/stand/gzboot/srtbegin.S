@@ -1,4 +1,4 @@
-/*	$NetBSD: srtbegin.S,v 1.2 2002/02/23 18:19:09 thorpej Exp $	*/
+/*	$NetBSD: srtbegin.S,v 1.3 2002/02/24 20:29:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -55,7 +55,31 @@ ENTRY(start)
 	nop
 
 	/*
-	 * Check to see if &_etext == &__data_start.  If not,
+	 * Check to see if __text_store == &start.  If not, we're most
+	 * likely running from flash.  Flash is slow, and we'd
+	 * really like to run the code from RAM.  Copy it out.
+	 */
+	add	r1, pc, #(Ltext - . - 8)
+	ldmia	r1, {r1-r3}
+	cmp	r1, r2			/* RELOC == &start? */
+	beq	relocated		/* yes, in RAM */
+
+	/* Copy text segment from ROM to RAM */
+1:	ldrb	r0, [r1], #0x01
+	strb	r0, [r2], #0x01
+	cmp	r2, r3			/* copy done? */
+	bne	1b
+
+	/*
+	 * Okay, we are finished relocating the text segment.  Now
+	 * we need to leap to the next instruction.
+	 */
+	add	r1, pc, #(Lrelocated - . - 8)
+	ldr	pc, [r1]
+
+relocated:
+	/*
+	 * Check to see if __data_store == __data_start.  If not,
 	 * we're most likely built for running from flash,
 	 * and must copy the data segment out to RAM.
 	 */
@@ -88,8 +112,16 @@ ENTRY(start)
 
 	b	_C_LABEL(main)
 
-Ldata:
+Lrelocated:
+	.word	relocated
+
+Ltext:
+	.word	_C_LABEL(__text_store)
+	.word	_C_LABEL(start)
 	.word	_C_LABEL(_etext)
+
+Ldata:
+	.word	_C_LABEL(__data_store)
 	.word	_C_LABEL(__data_start)
 
 Lbss:
