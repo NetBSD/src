@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.16 2003/07/07 12:30:23 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.17 2003/09/20 15:40:42 dsl Exp $	*/
 
 /*
  * Copyright 1997,2002 Piermont Information Systems Inc.
@@ -108,7 +108,8 @@ md_copy_filesystem(void)
 	}
 
 	/* Copy the instbin(s) to the disk */
-	if (run_prog (RUN_DISPLAY, NULL, "pax -X -O -r -w -pe / /mnt") != 0)
+	if (run_prog(RUN_DISPLAY, NULL,
+	    "pax -X -O -r -w -pe / %s", targetroot_mnt) != 0)
 		return 1;
 
 	/* Copy next-stage install profile into target /.profile. */
