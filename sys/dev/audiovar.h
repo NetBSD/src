@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.31.2.8 2005/01/01 11:28:26 kent Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.31.2.9 2005/01/01 16:18:26 kent Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -96,6 +96,7 @@ struct audio_ringbuffer {
 	int	usedhigh;	/* stop writer when used goes above this */
 	u_long	stamp;		/* bytes transferred */
 	u_long	stamp_last;	/* old value of bytes transferred */
+	u_long	fstamp;		/* bytes transferred from/to the buffer near to userland */
 	u_long	drops;		/* missed samples from over/underrun */
 	u_long	pdrops;		/* paused samples */
 	boolean_t pause;	/* transfer is paused */
@@ -196,7 +197,7 @@ struct audio_softc {
 	audio_params_t		sc_rparams;	/* record encoding parameters */
 
 	int		sc_eof;		/* EOF, i.e. zero sized write, counter */
-	u_long		sc_wstamp;
+	u_long		sc_wstamp;	/* # of bytes read with read(2) */
 	u_long		sc_playdrop;
 
 	int		sc_full_duplex;	/* device in full duplex mode */
