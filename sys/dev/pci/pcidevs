@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.428.2.8 2002/08/01 05:46:50 lukem Exp $
+$NetBSD: pcidevs,v 1.428.2.9 2002/08/01 05:59:09 lukem Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1406,7 +1406,6 @@ product INTEL 82801CA_USBC	0x2487	82801CA/CAM USB Controller
 product INTEL 82801CA_IDE_1	0x248A	82801CA IDE Controller
 product INTEL 82801CA_IDE_2	0x248B	82801CA IDE Controller
 product INTEL 82801CAM_LPC	0x248C	82801CAM LPC Interface
-product INTEL 82801DB_LPC	0x24C0	82801DB LPC Interface Bridge
 product INTEL 82801DB_LPC	0x24C0	82801DB LPC Interface Bridge
 product INTEL 82801DB_USB_1	0x24C2	82801DB USB UHCI Controller #1
 product INTEL 82801DB_SMB	0x24C3	82801DB SMBus Controller
