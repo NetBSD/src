@@ -1,4 +1,4 @@
-/* $NetBSD: mfb.c,v 1.5 1998/11/19 15:38:25 mrg Exp $ */
+/* $NetBSD: mfb.c,v 1.6 1998/12/14 02:45:51 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.5 1998/11/19 15:38:25 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.6 1998/12/14 02:45:51 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,7 @@ struct bt455reg {
 };
 
 /*
- * N.B. a paif of Bt431s are located adjascently.
+ * N.B. a pair of Bt431s are located adjascently.
  * 	struct bt431twin {
  *		struct {
  *			u_int8_t u0;	for sprite image
@@ -452,7 +452,7 @@ mfbioctl(v, cmd, data, flag, p)
 	case WSDISPLAYIO_SCURSOR:
 		return set_cursor(sc, (struct wsdisplay_cursor *)data);
 	}
-	return ENOTTY;
+	return (ENOTTY);
 }
 
 int
@@ -535,7 +535,7 @@ mfb_cnattach(addr)
         wsdisplay_cnattach(&mfb_stdscreen, &dcp->dc_rcons,
                            0, 0, defattr);
         mfb_consaddr = addr;
-        return(0);
+        return (0);
 }
 
 
