@@ -1,17 +1,14 @@
-#	$NetBSD: bsd.nls.mk,v 1.25 2000/06/07 17:28:52 matt Exp $
+#	$NetBSD: bsd.nls.mk,v 1.26 2000/06/08 03:51:56 mycroft Exp $
 
 .if !target(__initialized__)
 __initialized__:
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
 .endif
-
 .MAIN:		all
 .endif
+
 .PHONY:		cleannls nlsinstall
-.if ${MKNLS} != "no"
-realinstall:	nlsinstall
-.endif
 cleandir distclean: cleannls
 
 .SUFFIXES: .cat .msg
@@ -23,18 +20,11 @@ cleandir distclean: cleannls
 .if defined(NLS) && !empty(NLS)
 NLSALL= ${NLS:.msg=.cat}
 .NOPATH: ${NLSALL}
-.endif
 
-.if !defined(NLSNAME)
-.if defined(PROG)
-NLSNAME=${PROG}
-.else
-NLSNAME=lib${LIB}
-.endif
-.endif
+NLSNAME?=${PROG:Ulib${LIB}}
 
-.if defined(NLSALL)
 .if ${MKNLS} != "no"
+realinstall: nlsinstall
 realall: ${NLSALL}
 .endif
 
@@ -72,8 +62,4 @@ ${DESTDIR}${NLSDIR}/${F:T:R}/${NLSNAME}.cat: ${F} __nlsinstall
 .endfor
 .else
 cleannls:
-.endif
-
-.if !target(nlsinstall)
-nlsinstall::
 .endif
