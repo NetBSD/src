@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.16 1998/03/02 17:00:00 ragge Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.17 1998/11/05 19:46:18 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -164,7 +164,7 @@ setdisklabel(olp, nlp, openmask, osdep)
 	u_long openmask;
 	struct cpu_disklabel *osdep;
 {
-	register i;
+	register int i;
 	register struct partition *opp, *npp;
 
 	if (nlp->d_magic != DISKMAGIC || nlp->d_magic2 != DISKMAGIC ||

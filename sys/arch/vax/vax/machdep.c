@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.65 1998/10/19 22:09:18 tron Exp $	 */
+/* $NetBSD: machdep.c,v 1.66 1998/11/05 19:46:18 ragge Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -384,11 +384,12 @@ allocsys(v)
 	 * physical memory, but at least 16). Allocate 1/2 as many swap
 	 * buffer headers as file i/o buffers.
 	 */
-	if (bufpages == 0)
+	if (bufpages == 0) {
 		if (physmem < btoc(2 * 1024 * 1024))
 			bufpages = (physmem / 10) / CLSIZE;
 		else
 			bufpages = (physmem / 20) / CLSIZE;
+	}
 	if (nbuf == 0) {
 		nbuf = bufpages;
 		if (nbuf < 16)
@@ -639,7 +640,7 @@ static	volatile int showto; /* Must be volatile to survive MM on -> MM off */
 
 void
 cpu_reboot(howto, b)
-	register howto;
+	register int howto;
 	char *b;
 {
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.s,v 1.29 1998/10/06 02:07:30 matt Exp $	   */
+/*	$NetBSD: subr.s,v 1.30 1998/11/05 19:46:18 ragge Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -118,8 +118,12 @@ _ultrix_esigcode:
 		.globl	_idsptch, _eidsptch
 _idsptch:	pushr	$0x3f
 		pushl	$1
-		nop
-		calls	$1, *$0x12345678
+		.long	0x9f01fb01
+		.long	0x12345678
+#
+#	gas do not accept this :-/ use hexcode instead
+#		nop
+#		calls	$1, *$0x12345678
 		popr	$0x3f
 		rei
 _eidsptch:
