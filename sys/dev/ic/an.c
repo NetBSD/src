@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.18 2001/07/07 05:35:39 thorpej Exp $	*/
+/*	$NetBSD: an.c,v 1.19 2001/07/07 15:53:17 thorpej Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1873,7 +1873,7 @@ void an_cache_store (sc, eh, m, rx_quality)
 	if (saanp) {
 		sc->an_sigcache[cache_slot].ipsrc = ip->ip_src.s_addr;
 	}
-	bcopy(eh->ether_shost, sc->an_sigcache[cache_slot].macsrc, 6);
+	memcpy(sc->an_sigcache[cache_slot].macsrc, eh->ether_shost, 6);
 
 	sc->an_sigcache[cache_slot].signal = rx_quality;
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: sgec.c,v 1.14 2001/07/07 05:35:41 thorpej Exp $ */
+/*      $NetBSD: sgec.c,v 1.15 2001/07/07 15:53:21 thorpej Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -617,7 +617,7 @@ ze_setup(sc)
 	 * Init the setup packet with valid info.
 	 */
 	memset(zc->zc_setup, 0xff, sizeof(zc->zc_setup)); /* Broadcast */
-	bcopy(enaddr, zc->zc_setup, ETHER_ADDR_LEN);
+	memcpy(zc->zc_setup, enaddr, ETHER_ADDR_LEN);
 
 	/*
 	 * Multicast handling. The SGEC can handle up to 16 direct 
@@ -631,7 +631,7 @@ ze_setup(sc)
 			ifp->if_flags |= IFF_ALLMULTI;
 			break;
 		}
-		bcopy(enm->enm_addrlo, &zc->zc_setup[j], ETHER_ADDR_LEN);
+		memcpy(&zc->zc_setup[j], enm->enm_addrlo, ETHER_ADDR_LEN);
 		j += 8;
 		ETHER_NEXT_MULTI(step, enm);
 		if ((enm != NULL)&& (j == 128)) {

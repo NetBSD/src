@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.80 2001/05/23 18:32:26 petrov Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.81 2001/07/07 15:53:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -856,7 +856,7 @@ ncr53c9x_scsipi_request(chan, req, arg)
 			ecb->clen = 0;
 			ecb->dleft = 0;
 		} else {
-			bcopy(xs->cmd, &ecb->cmd.cmd, xs->cmdlen);
+			memcpy(&ecb->cmd.cmd, xs->cmd, xs->cmdlen);
 			ecb->clen = xs->cmdlen;
 			ecb->daddr = xs->data;
 			ecb->dleft = xs->datalen;

@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.35 2001/01/18 20:28:17 jdolecek Exp $ */
+/* $NetBSD: vga.c,v 1.36 2001/07/07 15:53:22 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -987,7 +987,7 @@ vga_copyrows(id, srcrow, dstrow, nrows)
 					nrows * ncols);
 		}
 	} else
-		bcopy(&scr->pcs.mem[srcoff], &scr->pcs.mem[dstoff],
+		memcpy(&scr->pcs.mem[dstoff], &scr->pcs.mem[srcoff],
 		      nrows * ncols * 2);
 }
 

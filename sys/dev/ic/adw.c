@@ -1,4 +1,4 @@
-/* $NetBSD: adw.c,v 1.30 2001/04/30 02:55:08 lukem Exp $	 */
+/* $NetBSD: adw.c,v 1.31 2001/07/07 15:53:13 thorpej Exp $	 */
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -654,10 +654,10 @@ adw_build_req(ADW_SOFTC *sc, ADW_CCB *ccb)
 	 * For wide  boards a CDB length maximum of 16 bytes
 	 * is supported.
 	 */
-	bcopy(xs->cmd, &scsiqp->cdb, ((scsiqp->cdb_len = xs->cmdlen) <= 12)?
+	memcpy(&scsiqp->cdb, xs->cmd, ((scsiqp->cdb_len = xs->cmdlen) <= 12)?
 			xs->cmdlen : 12 );
 	if(xs->cmdlen > 12)
-		bcopy(&(xs->cmd[12]),  &scsiqp->cdb16, xs->cmdlen - 12);
+		memcpy(&scsiqp->cdb16, &(xs->cmd[12]), xs->cmdlen - 12);
 
 	scsiqp->target_id = periph->periph_target;
 	scsiqp->target_lun = periph->periph_lun;

@@ -659,7 +659,7 @@ daic_register_port(struct daic *sc, int port)
 	/* attach a new unit */
 	if (unit_map) {
 		struct daic_unit_map *temp = malloc(next_unit*sizeof(struct daic_unit_map), 0, M_DEVBUF);
-		bcopy(unit_map, temp, unit*sizeof(struct daic_unit_map));
+		memcpy(temp, unit_map, unit*sizeof(struct daic_unit_map));
 		free(unit_map, M_DEVBUF);
 		unit_map = temp;
 	} else {
