@@ -1,4 +1,4 @@
-.\"	$NetBSD: whatis,v 1.9 1999/03/23 21:02:09 perry Exp $
+.\"	$NetBSD: whatis,v 1.10 2000/10/02 08:01:55 lukem Exp $
 .Pp
 As is usual between releases, the i386 port has had many improvements
 made to it -- too many to detail all of them here.
@@ -10,23 +10,14 @@ Some (but not all!) notable i386-specific improvements include:
 .Pp
 .Bl -bullet
 .It
-New i386 boot blocks now support INT13 extensions. This means that on
-modern BIOSes, it is possible to boot a NetBSD partition that is past
-the old 1024 cylinder boundary. The new boot blocks also support a
-mechanism to pass BIOS geometry information to the kernel, permitting
-improved automation during installs.
+Migration to the ELF binary format from a.out.
 .It
-The i386 port also now uses libkvm -- libkvm.old has finally been purged.
+Preliminary support for MCA (MicroChannel Architecture)
 .El
 .Pp
-.Nx 1.4
+.Nx \*V
 on i386 is, as usual, also fully backward compatible with old
 .Nx
 i386 binaries, so you don't need to recompile all your local programs
 provided you set the appropriate binary compatibility options in your
 kernel configuration.
-.Pp
-The i386 will be switching executable formats from a.out to ELF in
-the next release. The support for this has already been completed, but 
-was judged too new to be included in
-.Nx 1.4 .
