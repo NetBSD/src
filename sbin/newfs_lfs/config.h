@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.7 2003/08/07 10:04:34 agc Exp $	*/
+/*	$NetBSD: config.h,v 1.8 2003/12/17 05:08:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,16 +35,6 @@
  * Version of the LFS to make.  Default to the newest one.
  */
 #define DFL_VERSION LFS_VERSION
-
-/*
- * The following two constants set the default block and fragment sizes.
- * Both constants must be a power of 2 and meet the following constraints:
- *	MINBSIZE <= DESBLKSIZE <= MAXBSIZE
- *	sectorsize <= DESFRAGSIZE <= DESBLKSIZE
- *	DESBLKSIZE / DESFRAGSIZE <= 8
- */
-#define	DFL_FRAGSIZE	512
-#define	DFL_BLKSIZE	8192
 
 /*
  * 1/DFL_MIN_FREE_SEGS gives the fraction of segments to be reserved for
