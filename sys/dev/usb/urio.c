@@ -1,4 +1,4 @@
-/*	$NetBSD: urio.c,v 1.5 2000/10/24 14:53:59 augustss Exp $	*/
+/*	$NetBSD: urio.c,v 1.6 2001/09/25 21:08:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -138,8 +138,9 @@ USB_MATCH(urio)
 
 	if ( ( uaa->vendor == USB_VENDOR_DIAMOND &&
 	      uaa->product == USB_PRODUCT_DIAMOND_RIO500USB ) ||
-	      ( uaa->vendor == USB_VENDOR_DIAMOND2 &&
-	       uaa->product == USB_PRODUCT_DIAMOND2_RIO600USB )
+	     ( uaa->vendor == USB_VENDOR_DIAMOND2 &&
+	       ( uaa->product == USB_PRODUCT_DIAMOND2_RIO600USB ||
+		 uaa->product == USB_PRODUCT_DIAMOND2_RIO800USB ) )
 	   )
 		return (UMATCH_VENDOR_PRODUCT);
 	else
