@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.10 1998/08/09 02:05:52 mycroft Exp $	*/
+/*	$NetBSD: ess.c,v 1.11 1998/08/09 02:54:50 mycroft Exp $	*/
 
 /*
  * Copyright 1997
@@ -1244,17 +1244,19 @@ ess_set_in_channels(addr, channels)
 
 	switch(channels) {
 	case 1:
-		ess_set_xreg_bits(sc, ESS_XCMD_AUDIO_CTRL,
-				  ESS_AUDIO_CTRL_MONO);
-		ess_clear_xreg_bits(sc, ESS_XCMD_AUDIO_CTRL,
-				    ESS_AUDIO_CTRL_STEREO);
+		ess_write_x_reg(sc, ESS_XCMD_AUDIO_CTRL,
+		    (ess_read_x_reg(sc, ESS_XCMD_AUDIO_CTRL) |
+		     ESS_AUDIO_CTRL_MONO) &~ ESS_AUDIO_CTRL_STEREO);
+		ess_clear_xreg_bits(sc, ESS_XCMD_AUDIO1_CTRL1,
+		    ESS_AUDIO1_CTRL1_FIFO_STEREO);
 		break;
 
 	case 2:
-		ess_set_xreg_bits(sc, ESS_XCMD_AUDIO_CTRL,
-				  ESS_AUDIO_CTRL_STEREO);
-		ess_clear_xreg_bits(sc, ESS_XCMD_AUDIO_CTRL,
-				    ESS_AUDIO_CTRL_MONO);
+		ess_write_x_reg(sc, ESS_XCMD_AUDIO_CTRL,
+		    (ess_read_x_reg(sc, ESS_XCMD_AUDIO_CTRL) |
+		     ESS_AUDIO_CTRL_STEREO) &~ ESS_AUDIO_CTRL_MONO);
+		ess_set_xreg_bits(sc, ESS_XCMD_AUDIO1_CTRL1,
+		    ESS_AUDIO1_CTRL1_FIFO_STEREO);
 		break;
 
 	default:
@@ -1350,15 +1352,6 @@ ess_dma_output(addr, p, cc, intr, arg)
 			  ESS_AUDIO2_CTRL1_FIFO_ENABLE |
 			  ESS_AUDIO2_CTRL1_AUTO_INIT);
 
-#if 0
-/* XXX
- * seems like the 888 and 1888 have an interlock that
- * prevents audio2 channel from working if audio1 channel is not
- * connected to the FIFO.
- */
-	ess_set_xreg_bits(sc, 0xB7, 0x80);
-#endif
-
 	return (0);
 
 }
@@ -1396,9 +1389,6 @@ ess_dma_input(addr, p, cc, intr, arg)
 	}
 #endif
 
-	/* REVISIT: Hack to enable Audio1 FIFO connection to CODEC. */
-	ess_set_xreg_bits(sc, 0xB7, 0x80);
-
 	sc->sc_in.intr = intr;
 	sc->sc_in.arg = arg;
 	if (sc->sc_in.active)
@@ -1407,6 +1397,10 @@ ess_dma_input(addr, p, cc, intr, arg)
 	DPRINTF(("ess_dma_input: set up DMA\n"));
 
 	sc->sc_in.active = 1;
+
+	/* REVISIT: Hack to enable Audio1 FIFO connection to CODEC. */
+	ess_set_xreg_bits(sc, ESS_XCMD_AUDIO1_CTRL1,
+	    ESS_AUDIO1_CTRL1_FIFO_CONNECT);
 
 	if (IS16BITDRQ(sc->sc_out.drq))
 		cc >>= 1;	/* use word count for 16 bit DMA */
