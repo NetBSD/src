@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.36 2000/03/26 10:53:39 soren Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.37 2000/04/04 19:22:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -1101,7 +1101,6 @@ tlp_pci_cobalt_21142_quirks(psc, enaddr)
 	 * pretty quickly, so we select that from the beginning to
 	 * avoid initial timeouts.
 	 */
-#define TXTH_SF		4
 	sc->sc_txthresh = TXTH_SF;
 }
 
