@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: dsinit - Object initialization namespace walk
- *              $Revision: 1.1.1.1 $
+ *              $Revision: 1.2 $
  *
  *****************************************************************************/
 
@@ -200,7 +200,8 @@ AcpiDsInitOneObject (
 
         /* Print a dot for each method unless we are going to print the entire pathname */
 
-        if (!(AcpiDbgLevel & ACPI_LV_INIT_NAMES))
+        if (!(AcpiDbgLevel & ACPI_LV_INIT_NAMES)
+	    && (AcpiDbgLevel & ACPI_LV_LOAD))
         {
             AcpiOsPrintf (".");
         }
