@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.59 1999/07/30 23:58:26 matt Exp $ */
+/*	$NetBSD: conf.c,v 1.60 1999/08/01 00:23:49 matt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -87,6 +87,7 @@
 #include "cgeight.h"
 #include "tcx.h"
 #include "cgfourteen.h"
+#include "pnozz.h"
 #include "fb.h"
 
 #include "xd.h"
@@ -251,6 +252,7 @@ struct cdevsw	cdevsw[] =
 	cdev_rnd_init(NRND,rnd),	/* 119: random source pseudo-device */
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 120: SCSI bus */
 	cdev_disk_init(NRAID,raid),	/* 121: RAIDframe disk driver */
+	cdev_fb_init(NPNOZZ,p9100),	/* 122: /dev/cgfourteen */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

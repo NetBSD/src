@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.81 1999/07/30 23:58:25 matt Exp $
+#	$NetBSD: files.sparc,v 1.82 1999/08/01 00:23:48 matt Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -181,6 +181,10 @@ file	arch/sparc/dev/tcx.c		tcx needs-flag
 device cgfourteen: fb, rasops32
 attach cgfourteen at obio
 file	arch/sparc/dev/cgfourteen.c	cgfourteen needs-flag
+
+device pnozz: fb, bt_dac, rasops8, rasops16, rasops32
+attach pnozz at sbus
+file	arch/sparc/dev/p9100.c		pnozz needs-flag
 
 file	arch/sparc/dev/bt_subr.c	bt_dac
 file	arch/sparc/dev/fb.c		fb needs-flag
