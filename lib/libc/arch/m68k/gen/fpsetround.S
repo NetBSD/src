@@ -3,7 +3,7 @@
  * Public Domain.
  */
 
-/* #include <machine/asm.h> */
+#include <machine/asm.h>
 
 ENTRY(fpsetround)
 	movel	d2,sp@-

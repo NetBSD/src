@@ -3,7 +3,7 @@
  * Public domain.
  */
 
-/* #include <machine/asm.h> */
+#include <machine/asm.h>
 
 ENTRY(fpsetsticky)
 	movl	d2,sp@-
