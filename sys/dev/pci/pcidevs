@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.236.2.25 2002/03/25 17:55:22 he Exp $
+$NetBSD: pcidevs,v 1.236.2.26 2002/06/06 19:44:09 he Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1060,6 +1060,14 @@ product INTEL SIO		0x0484	82378ZB System I/O (SIO)
 product INTEL 82426EX		0x0486	82426EX PCI-to-ISA Bridge (PCIB)
 product INTEL PCMC		0x04a3	82434LX/NX PCI, Cache and Memory Controller (PCMC)
 product INTEL IN_BUSINESS	0x1030	InBusiness Fast Ethernet LAN Controller
+product INTEL PRO_100_VE_0	0x1031	PRO/100 VE Network Controller
+product INTEL PRO_100_VE_1	0x1032	PRO/100 VE Network Controller
+product INTEL PRO_100_VM_0	0x1033	PRO/100 VM Network Controller
+product INTEL PRO_100_VM_1	0x1034	PRO/100 VM Network Controller
+product INTEL 82562EH_HPNA_0	0x1035	82562EH HomePNA Network Controller
+product INTEL 82562EH_HPNA_1	0x1036	82562EH HomePNA Network Controller
+product INTEL 82562EH_HPNA_2	0x1037	82562EH HomePNA Network Controller
+product INTEL PRO_100_VM_2	0x1038	PRO/100 VM Network Controller
 product INTEL 82559ER		0x1209	82559ER Fast Ethernet LAN Controller
 product INTEL 82092AA		0x1222	82092AA IDE controller
 product INTEL SAA7116		0x1223	SAA7116
