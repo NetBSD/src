@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.26.2.1 1997/12/14 01:17:06 mellon Exp $	*/
+/*	$NetBSD: main.c,v 1.26.2.2 1998/11/10 18:49:04 cgd Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.26.2.1 1997/12/14 01:17:06 mellon Exp $");
+__RCSID("$NetBSD: main.c,v 1.26.2.2 1998/11/10 18:49:04 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,7 @@ __RCSID("$NetBSD: main.c,v 1.26.2.1 1997/12/14 01:17:06 mellon Exp $");
 #include <err.h>
 #include <netdb.h>
 #include <pwd.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -76,6 +77,7 @@ main(argc, argv)
 	long port;
 	struct passwd *pw = NULL;
 	char *cp, *ep, homedir[MAXPATHLEN];
+	char *outfile = NULL;
 	int dumbterm;
 
 	sp = getservbyname("ftp", "tcp");
@@ -92,8 +94,8 @@ main(argc, argv)
 	cp = getenv("FTPSERVERPORT");
 	if (cp != NULL) {
 		port = strtol(cp, &ep, 10);
-		if (port < 1 || port > 0xffff || *ep != '\0')
-			warnx("bad FTPSERVERPORT port number: %s (ignored)",
+		if (port < 1 || port > MAX_IN_PORT_T || *ep != '\0')
+			warnx("bad $FTPSERVERPORT port number: %s (ignored)",
 			    cp);
 		else
 			gateport = htons(port);
@@ -108,7 +110,8 @@ main(argc, argv)
 	doglob = 1;
 	interactive = 1;
 	autologin = 1;
-	passivemode = 0;
+	passivemode = 1;
+	activefallback = 1;
 	preserve = 1;
 	verbose = 0;
 	progress = 0;
@@ -123,11 +126,27 @@ main(argc, argv)
 	if ((tmpdir = getenv("TMPDIR")) == NULL)
 		tmpdir = _PATH_TMP;
 
-	cp = strrchr(argv[0], '/');
-	cp = (cp == NULL) ? argv[0] : cp + 1;
-	if (strcmp(cp, "pftp") == 0)
+	/* Set default operation mode based on FTPMODE environment variable */
+	if ((cp = getenv("FTPMODE")) != NULL) {
+		if (strcmp(cp, "passive") == 0) {
+			passivemode = 1;
+			activefallback = 0;
+		} else if (strcmp(cp, "active") == 0) {
+			passivemode = 0;
+			activefallback = 0;
+		} else if (strcmp(cp, "gate") == 0) {
+			gatemode = 1;
+		} else if (strcmp(cp, "auto") == 0) {
+			passivemode = 1;
+			activefallback = 1;
+		} else
+			warnx("unknown $FTPMODE '%s'; using defaults", cp);
+	}
+
+	if (strcmp(__progname, "pftp") == 0) {
 		passivemode = 1;
-	else if (strcmp(cp, "gate-ftp") == 0)
+		activefallback = 0;
+	} else if (strcmp(__progname, "gate-ftp") == 0)
 		gatemode = 1;
 
 	gateserver = getenv("FTPSERVER");
@@ -136,7 +155,7 @@ main(argc, argv)
 	if (gatemode) {
 		if (*gateserver == '\0') {
 			warnx(
-"Neither $FTPSERVER nor GATE_SERVER is defined; disabling gate-ftp");
+"Neither $FTPSERVER nor $GATE_SERVER is defined; disabling gate-ftp");
 			gatemode = 0;
 		}
 	}
@@ -154,13 +173,19 @@ main(argc, argv)
 			editing = 1;	/* editing mode on if tty is usable */
 #endif
 	}
+	ttyout = stdout;
 #ifndef SMALL
-	if (isatty(fileno(stdout)) && !dumbterm)
+	if (isatty(fileno(ttyout)) && !dumbterm && foregroundproc())
 		progress = 1;		/* progress bar on if tty is usable */
 #endif
 
-	while ((ch = getopt(argc, argv, "adeginpP:tvV")) != -1) {
+	while ((ch = getopt(argc, argv, "Aadegino:pP:r:tvV")) != -1) {
 		switch (ch) {
+		case 'A':
+			activefallback = 0;
+			passivemode = 0;
+			break;
+
 		case 'a':
 			anonftp = 1;
 			break;
@@ -188,16 +213,30 @@ main(argc, argv)
 			autologin = 0;
 			break;
 
+		case 'o':
+			outfile = optarg;
+			if (strcmp(outfile, "-") == 0)
+				ttyout = stderr;
+			break;
+
 		case 'p':
 			passivemode = 1;
+			activefallback = 0;
 			break;
 
 		case 'P':
 			port = strtol(optarg, &ep, 10);
-			if (port < 1 || port > 0xffff || *ep != '\0')
+			if (port < 1 || port > MAX_IN_PORT_T || *ep != '\0')
 				warnx("bad port number: %s (ignored)", optarg);
 			else
-				ftpport = htons(port);
+				ftpport = htons((in_port_t)port);
+			break;
+
+		case 'r':
+			retry_connect = strtol(optarg, &ep, 10);
+			if (retry_connect < 1 || retry_connect > MAX_IN_PORT_T
+			    || *ep != '\0')
+				errx(1, "bad retry value: %s", optarg);
 			break;
 
 		case 't':
@@ -238,9 +277,9 @@ main(argc, argv)
 	}
 
 	setttywidth(0);
-	(void)signal(SIGWINCH, setttywidth);
+	(void)xsignal(SIGWINCH, setttywidth);
 
-#ifdef __GNUC__			/* XXX: to shut up gcc warnings */
+#ifdef __GNUC__			/* to shut up gcc warnings */
 	(void)&argc;
 	(void)&argv;
 #endif
@@ -248,7 +287,7 @@ main(argc, argv)
 	if (argc > 0) {
 		if (strchr(argv[0], ':') != NULL) {
 			anonftp = 1;	/* Handle "automatic" transfers. */
-			rval = auto_fetch(argc, argv);
+			rval = auto_fetch(argc, argv, outfile);
 			if (rval >= 0)		/* -1 == connected and cd-ed */
 				exit(rval);
 		} else {
@@ -263,7 +302,19 @@ main(argc, argv)
 			xargv[2] = argv[1];
 			xargv[3] = argv[2];
 			xargv[4] = NULL;
-			setpeer(argc+1, xargv);
+			do {
+				setpeer(argc+1, xargv);
+				if (!retry_connect)
+					break;
+				if (!connected) {
+					macnum = 0;
+					fprintf(ttyout,
+					    "Retrying in %d seconds...\n",
+					    retry_connect);
+					sleep(retry_connect);
+				}
+			} while (!connected);
+			retry_connect = 0; /* connected, stop hiding msgs */
 		}
 	}
 #ifndef SMALL
@@ -343,14 +394,14 @@ cmdscanner(top)
 	    && !editing
 #endif /* !SMALL */
 	    )
-		(void)putchar('\n');
+		(void)putc('\n', ttyout);
 	for (;;) {
 #ifndef SMALL
 		if (!editing) {
 #endif /* !SMALL */
 			if (fromatty) {
-				fputs(prompt(), stdout);
-				(void)fflush(stdout);
+				fputs(prompt(), ttyout);
+				(void)fflush(ttyout);
 			}
 			if (fgets(line, sizeof(line), stdin) == NULL)
 				quit(0, 0);
@@ -362,7 +413,7 @@ cmdscanner(top)
 					break;
 				line[num] = '\0';
 			} else if (num == sizeof(line) - 2) {
-				puts("sorry, input line too long.");
+				fputs("sorry, input line too long.\n", ttyout);
 				while ((num = getchar()) != '\n' && num != EOF)
 					/* void */;
 				break;
@@ -379,7 +430,7 @@ cmdscanner(top)
 				if (num == 0)
 					break;
 			} else if (num >= sizeof(line)) {
-				puts("sorry, input line too long.");
+				fputs("sorry, input line too long.\n", ttyout);
 				break;
 			}
 			memcpy(line, buf, num);
@@ -391,31 +442,34 @@ cmdscanner(top)
 		makeargv();
 		if (margc == 0)
 			continue;
-#if 0 && !defined(SMALL)	/* XXX: don't want el_parse */
-		/*
-		 * el_parse returns -1 to signal that it's not been handled
-		 * internally.
-		 */
-		if (el_parse(el, margc, margv) != -1)
-			continue;
-#endif /* !SMALL */
 		c = getcmd(margv[0]);
 		if (c == (struct cmd *)-1) {
-			puts("?Ambiguous command.");
+			fputs("?Ambiguous command.\n", ttyout);
 			continue;
 		}
-		if (c == 0) {
-			puts("?Invalid command.");
+		if (c == NULL) {
+#if !defined(SMALL)
+			/*
+			 * attempt to el_parse() unknown commands.
+			 * any command containing a ':' would be parsed
+			 * as "[prog:]cmd ...", and will result in a
+			 * false positive if prog != "ftp", so treat
+			 * such commands as invalid.
+			 */
+			if (strchr(margv[0], ':') != NULL || 
+			    el_parse(el, margc, margv) != 0)
+#endif /* !SMALL */
+				fputs("?Invalid command.\n", ttyout);
 			continue;
 		}
 		if (c->c_conn && !connected) {
-			puts("Not connected.");
+			fputs("Not connected.\n", ttyout);
 			continue;
 		}
 		confirmrest = 0;
 		(*c->c_handler)(margc, margv);
 		if (bell && c->c_bell)
-			(void)putchar('\007');
+			(void)putc('\007', ttyout);
 		if (c->c_handler != help)
 			break;
 	}
@@ -624,12 +678,12 @@ OUT:
 			break;
 		case 1:
 			slrflag++;
-			altarg = (char *) 0;
+			altarg = NULL;
 			break;
 		default:
 			break;
 	}
-	return ((char *)0);
+	return (NULL);
 }
 
 /*
@@ -647,7 +701,8 @@ help(argc, argv)
 		StringList *buf;
 
 		buf = sl_init();
-		printf("%sommands may be abbreviated.  Commands are:\n\n",
+		fprintf(ttyout,
+		    "%sommands may be abbreviated.  Commands are:\n\n",
 		    proxy ? "Proxy c" : "C");
 		for (c = cmdtab; c < &cmdtab[NCMDS]; c++)
 			if (c->c_name && (!proxy || c->c_proxy))
@@ -665,11 +720,11 @@ help(argc, argv)
 		arg = *++argv;
 		c = getcmd(arg);
 		if (c == (struct cmd *)-1)
-			printf("?Ambiguous help command %s\n", arg);
-		else if (c == (struct cmd *)0)
-			printf("?Invalid help command %s\n", arg);
+			fprintf(ttyout, "?Ambiguous help command %s\n", arg);
+		else if (c == NULL)
+			fprintf(ttyout, "?Invalid help command %s\n", arg);
 		else
-			printf("%-*s\t%s\n", HELPINDENT,
+			fprintf(ttyout, "%-*s\t%s\n", HELPINDENT,
 				c->c_name, c->c_help);
 	}
 }
@@ -678,10 +733,10 @@ void
 usage()
 {
 	(void)fprintf(stderr,
-	    "usage: %s [-adeginptvV] [host [port]]\n"
-	    "       %s host:path[/]\n"
-	    "       %s ftp://host[:port]/path[/]\n"
-	    "       %s http://host[:port]/file\n",
+	    "usage: %s [-AadeginptvV] [-r retry] [-P port] [host [port]]\n"
+	    "       %s [-o outfile] host:path[/]\n"
+	    "       %s [-o outfile] ftp://host[:port]/path[/]\n"
+	    "       %s [-o outfile] http://host[:port]/file\n",
 	    __progname, __progname, __progname, __progname);
 	exit(1);
 }
