@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.2 2003/07/14 23:32:33 lukem Exp $	*/
+/*	$NetBSD: syscall.c,v 1.3 2003/08/20 21:48:49 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.2 2003/07/14 23:32:33 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.3 2003/08/20 21:48:49 fvdl Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
@@ -65,8 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.2 2003/07/14 23:32:33 lukem Exp $");
 #include <machine/userret.h>
 
 void syscall_intern __P((struct proc *));
-void syscall_plain __P((struct trapframe));
-void syscall_fancy __P((struct trapframe));
+void syscall_plain __P((struct trapframe *));
+void syscall_fancy __P((struct trapframe *));
 
 void
 syscall_intern(p)
@@ -94,7 +94,7 @@ syscall_intern(p)
  */
 void
 syscall_plain(frame)
-	struct trapframe frame;
+	struct trapframe *frame;
 {
 	caddr_t params;
 	const struct sysent *callp;
@@ -108,7 +108,7 @@ syscall_plain(frame)
 	l = curlwp;
 	p = l->l_proc;
 
-	code = frame.tf_rax;
+	code = frame->tf_rax;
 	callp = p->p_emul->e_sysent;
 	argoff = 0;
 	argp = &args[0];
@@ -119,7 +119,7 @@ syscall_plain(frame)
 		/*
 		 * Code is first argument, followed by actual args.
 		 */
-		code = frame.tf_rdi;
+		code = frame->tf_rdi;
 		argp = &args[1];
 		argoff = 1;
 		break;
@@ -134,24 +134,24 @@ syscall_plain(frame)
 	if (argsize) {
 		switch (MIN(argsize, 6)) {
 		case 6:
-			args[5] = frame.tf_r9;
+			args[5] = frame->tf_r9;
 		case 5:
-			args[4] = frame.tf_r8;
+			args[4] = frame->tf_r8;
 		case 4:
-			args[3] = frame.tf_r10;
+			args[3] = frame->tf_r10;
 		case 3:
-			args[2] = frame.tf_rdx;
+			args[2] = frame->tf_rdx;
 		case 2:	
-			args[1] = frame.tf_rsi;
+			args[1] = frame->tf_rsi;
 		case 1:
-			args[0] = frame.tf_rdi;
+			args[0] = frame->tf_rdi;
 			break;
 		default:
 			panic("impossible syscall argsize");
 		}
 		if (argsize > 6) {
 			argsize -= 6;
-			params = (caddr_t)frame.tf_rsp + sizeof(register_t);
+			params = (caddr_t)frame->tf_rsp + sizeof(register_t);
 			error = copyin(params, (caddr_t)&args[6],
 					argsize << 3);
 			if (error != 0)
@@ -171,9 +171,9 @@ syscall_plain(frame)
 
 	switch (error) {
 	case 0:
-		frame.tf_rax = rval[0];
-		frame.tf_rdx = rval[1];
-		frame.tf_rflags &= ~PSL_C;	/* carry bit */
+		frame->tf_rax = rval[0];
+		frame->tf_rdx = rval[1];
+		frame->tf_rflags &= ~PSL_C;	/* carry bit */
 		break;
 	case ERESTART:
 		/*
@@ -181,15 +181,15 @@ syscall_plain(frame)
 		 * the kernel through the trap or call gate.  We pushed the
 		 * size of the instruction into tf_err on entry.
 		 */
-		frame.tf_rip -= frame.tf_err;
+		frame->tf_rip -= frame->tf_err;
 		break;
 	case EJUSTRETURN:
 		/* nothing to do */
 		break;
 	default:
 	bad:
-		frame.tf_rax = error;
-		frame.tf_rflags |= PSL_C;	/* carry bit */
+		frame->tf_rax = error;
+		frame->tf_rflags |= PSL_C;	/* carry bit */
 		break;
 	}
 
@@ -201,7 +201,7 @@ syscall_plain(frame)
 
 void
 syscall_fancy(frame)
-	struct trapframe frame;
+	struct trapframe *frame;
 {
 	caddr_t params;
 	const struct sysent *callp;
@@ -215,7 +215,7 @@ syscall_fancy(frame)
 	l = curlwp;
 	p = l->l_proc;
 
-	code = frame.tf_rax;
+	code = frame->tf_rax;
 	callp = p->p_emul->e_sysent;
 	argp = &args[0];
 	argoff = 0;
@@ -226,7 +226,7 @@ syscall_fancy(frame)
 		/*
 		 * Code is first argument, followed by actual args.
 		 */
-		code = frame.tf_rdi;
+		code = frame->tf_rdi;
 		argp = &args[1];
 		argoff = 1;
 		break;
@@ -240,24 +240,24 @@ syscall_fancy(frame)
 	if (argsize) {
 		switch (MIN(argsize, 6)) {
 		case 6:
-			args[5] = frame.tf_r9;
+			args[5] = frame->tf_r9;
 		case 5:
-			args[4] = frame.tf_r8;
+			args[4] = frame->tf_r8;
 		case 4:
-			args[3] = frame.tf_r10;
+			args[3] = frame->tf_r10;
 		case 3:
-			args[2] = frame.tf_rdx;
+			args[2] = frame->tf_rdx;
 		case 2:	
-			args[1] = frame.tf_rsi;
+			args[1] = frame->tf_rsi;
 		case 1:
-			args[0] = frame.tf_rdi;
+			args[0] = frame->tf_rdi;
 			break;
 		default:
 			panic("impossible syscall argsize");
 		}
 		if (argsize > 6) {
 			argsize -= 6;
-			params = (caddr_t)frame.tf_rsp + sizeof(register_t);
+			params = (caddr_t)frame->tf_rsp + sizeof(register_t);
 			error = copyin(params, (caddr_t)&args[6],
 					argsize << 3);
 			if (error != 0)
@@ -277,9 +277,9 @@ syscall_fancy(frame)
 	KERNEL_PROC_UNLOCK(l);
 	switch (error) {
 	case 0:
-		frame.tf_rax = rval[0];
-		frame.tf_rdx = rval[1];
-		frame.tf_rflags &= ~PSL_C;	/* carry bit */
+		frame->tf_rax = rval[0];
+		frame->tf_rdx = rval[1];
+		frame->tf_rflags &= ~PSL_C;	/* carry bit */
 		break;
 	case ERESTART:
 		/*
@@ -287,15 +287,15 @@ syscall_fancy(frame)
 		 * the kernel through the trap or call gate.  We pushed the
 		 * size of the instruction into tf_err on entry.
 		 */
-		frame.tf_rip -= frame.tf_err;
+		frame->tf_rip -= frame->tf_err;
 		break;
 	case EJUSTRETURN:
 		/* nothing to do */
 		break;
 	default:
 	bad:
-		frame.tf_rax = error;
-		frame.tf_rflags |= PSL_C;	/* carry bit */
+		frame->tf_rax = error;
+		frame->tf_rflags |= PSL_C;	/* carry bit */
 		break;
 	}
 

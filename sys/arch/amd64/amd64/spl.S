@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.1 2003/04/26 18:39:32 fvdl Exp $	*/
+/*	$NetBSD: spl.S,v 1.2 2003/08/20 21:48:48 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -182,6 +182,7 @@ IDTVEC(doreti)
 	sti
 	movl	$T_ASTFLT,TF_TRAPNO(%rsp)	/* XXX undo later.. */
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
+	movq	%rsp,%rdi
 	call	_C_LABEL(trap)
 	cli
 	jmp	5b

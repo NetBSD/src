@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.21 2003/08/04 18:43:38 drochner Exp $	*/
+/*	$NetBSD: syscall.c,v 1.22 2003/08/20 21:48:42 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.21 2003/08/04 18:43:38 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.22 2003/08/20 21:48:42 fvdl Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_vm86.h"
@@ -66,10 +66,10 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.21 2003/08/04 18:43:38 drochner Exp $"
 #include <machine/userret.h>
 
 void syscall_intern __P((struct proc *));
-void syscall_plain __P((struct trapframe));
-void syscall_fancy __P((struct trapframe));
+void syscall_plain __P((struct trapframe *));
+void syscall_fancy __P((struct trapframe *));
 #ifdef VM86
-void syscall_vm86 __P((struct trapframe));
+void syscall_vm86 __P((struct trapframe *));
 #endif
 
 void
@@ -98,7 +98,7 @@ syscall_intern(p)
  */
 void
 syscall_plain(frame)
-	struct trapframe frame;
+	struct trapframe *frame;
 {
 	register caddr_t params;
 	register const struct sysent *callp;
@@ -112,9 +112,9 @@ syscall_plain(frame)
 	l = curlwp;
 	p = l->l_proc;
 
-	code = frame.tf_eax;
+	code = frame->tf_eax;
 	callp = p->p_emul->e_sysent;
-	params = (caddr_t)frame.tf_esp + sizeof(int);
+	params = (caddr_t)frame->tf_esp + sizeof(int);
 
 	switch (code) {
 	case SYS_syscall:
@@ -158,9 +158,9 @@ syscall_plain(frame)
 
 	switch (error) {
 	case 0:
-		frame.tf_eax = rval[0];
-		frame.tf_edx = rval[1];
-		frame.tf_eflags &= ~PSL_C;	/* carry bit */
+		frame->tf_eax = rval[0];
+		frame->tf_edx = rval[1];
+		frame->tf_eflags &= ~PSL_C;	/* carry bit */
 		break;
 	case ERESTART:
 		/*
@@ -168,15 +168,15 @@ syscall_plain(frame)
 		 * the kernel through the trap or call gate.  We pushed the
 		 * size of the instruction into tf_err on entry.
 		 */
-		frame.tf_eip -= frame.tf_err;
+		frame->tf_eip -= frame->tf_err;
 		break;
 	case EJUSTRETURN:
 		/* nothing to do */
 		break;
 	default:
 	bad:
-		frame.tf_eax = error;
-		frame.tf_eflags |= PSL_C;	/* carry bit */
+		frame->tf_eax = error;
+		frame->tf_eflags |= PSL_C;	/* carry bit */
 		break;
 	}
 
@@ -188,7 +188,7 @@ syscall_plain(frame)
 
 void
 syscall_fancy(frame)
-	struct trapframe frame;
+	struct trapframe *frame;
 {
 	register caddr_t params;
 	register const struct sysent *callp;
@@ -202,9 +202,9 @@ syscall_fancy(frame)
 	l = curlwp;
 	p = l->l_proc;
 
-	code = frame.tf_eax;
+	code = frame->tf_eax;
 	callp = p->p_emul->e_sysent;
-	params = (caddr_t)frame.tf_esp + sizeof(int);
+	params = (caddr_t)frame->tf_esp + sizeof(int);
 
 	switch (code) {
 	case SYS_syscall:
@@ -247,9 +247,9 @@ syscall_fancy(frame)
 	KERNEL_PROC_UNLOCK(l);
 	switch (error) {
 	case 0:
-		frame.tf_eax = rval[0];
-		frame.tf_edx = rval[1];
-		frame.tf_eflags &= ~PSL_C;	/* carry bit */
+		frame->tf_eax = rval[0];
+		frame->tf_edx = rval[1];
+		frame->tf_eflags &= ~PSL_C;	/* carry bit */
 		break;
 	case ERESTART:
 		/*
@@ -257,15 +257,15 @@ syscall_fancy(frame)
 		 * the kernel through the trap or call gate.  We pushed the
 		 * size of the instruction into tf_err on entry.
 		 */
-		frame.tf_eip -= frame.tf_err;
+		frame->tf_eip -= frame->tf_err;
 		break;
 	case EJUSTRETURN:
 		/* nothing to do */
 		break;
 	default:
 	bad:
-		frame.tf_eax = error;
-		frame.tf_eflags |= PSL_C;	/* carry bit */
+		frame->tf_eax = error;
+		frame->tf_eflags |= PSL_C;	/* carry bit */
 		break;
 	}
 
@@ -277,7 +277,7 @@ syscall_fancy(frame)
 #ifdef VM86
 void
 syscall_vm86(frame)
-	struct trapframe frame;
+	struct trapframe *frame;
 {
 	struct lwp *l;
 	struct proc *p;

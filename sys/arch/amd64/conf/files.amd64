@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.4 2003/07/27 01:19:25 thorpej Exp $
+#	$NetBSD: files.amd64,v 1.5 2003/08/20 21:48:52 fvdl Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -32,7 +32,7 @@ file	arch/amd64/amd64/db_disasm.c		ddb
 file	arch/amd64/amd64/db_interface.c	ddb
 file	arch/amd64/amd64/db_memrw.c		ddb | kgdb
 file	arch/amd64/amd64/db_trace.c		ddb
-file	arch/amd64/amd64/disksubr.c		disk
+file	kern/subr_disk_mbr.c			disk
 file	arch/amd64/amd64/gdt.c
 
 #

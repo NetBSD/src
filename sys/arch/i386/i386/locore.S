@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.14 2003/08/11 21:15:50 fvdl Exp $	*/
+/*	$NetBSD: locore.S,v 1.15 2003/08/20 21:48:37 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -2143,7 +2143,9 @@ syscall1:
 	movl	CPUVAR(CURLWP),%edx
 	movl	%esp,L_MD_REGS(%edx)	# save pointer to frame
 	movl	L_PROC(%edx),%edx
+	pushl	%esp
 	call	*P_MD_SYSCALL(%edx)	# get pointer to syscall() function
+	addl	$4,%esp
 2:	/* Check for ASTs on exit to user mode. */
 	cli
 	CHECK_ASTPENDING(%eax)
@@ -2152,7 +2154,9 @@ syscall1:
 	CLEAR_ASTPENDING(%eax)
 	sti
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
+	pushl	%esp
 	call	_C_LABEL(trap)
+	addl	$4,%esp
 	jmp	2b
 #ifndef DIAGNOSTIC
 1:	INTRFASTEXIT
