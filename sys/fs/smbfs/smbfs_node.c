@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.4 2003/02/18 10:24:58 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.5 2003/02/18 20:00:35 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -63,23 +63,18 @@
 #define	smbfs_hash_lock(smp)	lockmgr(&smp->sm_hashlock, LK_EXCLUSIVE, NULL)
 #define	smbfs_hash_unlock(smp)	lockmgr(&smp->sm_hashlock, LK_RELEASE, NULL)
 
-#ifndef __NetBSD__
-extern vop_t **smbfs_vnodeop_p;
-#endif /* !NetBSD */
-
 MALLOC_DEFINE(M_SMBNODE, "SMBFS node", "SMBFS vnode private part");
 static MALLOC_DEFINE(M_SMBNODENAME, "SMBFS nname", "SMBFS node name");
 
 #ifdef __NetBSD__
-#define VI_LOCK(vp) simple_lock(&(vp)->v_interlock)
-#define VI_UNLOCK(vp) simple_unlock(&(vp)->v_interlock)
-#define VLKTIMEOUT      (hz / 20 + 1)
 extern int (**smbfs_vnodeop_p) __P((void *));
-#endif
-
-int smbfs_hashprint(struct mount *mp);
+#else
+extern vop_t **smbfs_vnodeop_p;
+#endif /* !NetBSD */
 
 #if 0
+static int smbfs_hashprint(struct mount *mp);
+
 #ifdef SYSCTL_DECL
 SYSCTL_DECL(_vfs_smbfs);
 #endif
@@ -102,7 +97,8 @@ smbfs_hash(const u_char *name, int nmlen)
 	return v;
 }
 
-int
+#if 0
+static int
 smbfs_hashprint(struct mount *mp)
 {
 	struct smbmount *smp = VFSTOSMBFS(mp);
@@ -117,6 +113,7 @@ smbfs_hashprint(struct mount *mp)
 	}
 	return 0;
 }
+#endif
 
 static char *
 smbfs_name_alloc(const u_char *name, int nmlen)
@@ -214,7 +211,7 @@ loop:
 		if (np->n_parent != dnp ||
 		    np->n_nmlen != nmlen || bcmp(name, np->n_name, nmlen) != 0)
 			continue;
-		VI_LOCK(vp);
+		simple_lock(&(vp)->v_interlock);
 		smbfs_hash_unlock(smp);
 		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK) != 0)
 			goto retry;
@@ -255,7 +252,6 @@ loop:
 	} else if (vp->v_type == VREG)
 		SMBERROR("new vnode '%s' born without parent ?\n", np->n_name);
 
-	lockinit(&vp->v_lock, PINOD, "smbnode", VLKTIMEOUT, LK_CANRECURSE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 
 	smbfs_hash_lock(smp);
@@ -315,8 +311,8 @@ smbfs_reclaim(v)
 	dvp = (np->n_parent && (np->n_flag & NREFPARENT)) ?
 	    np->n_parent->n_vnode : NULL;
 
-	if (np->n_hash.le_prev)
-		LIST_REMOVE(np, n_hash);
+	LIST_REMOVE(np, n_hash);
+
 	cache_purge(vp);
 	if (smp->sm_root == np) {
 		SMBVDEBUG("root vnode\n");
@@ -327,16 +323,8 @@ smbfs_reclaim(v)
 	if (np->n_name)
 		smbfs_name_free(np->n_name);
 	FREE(np, M_SMBNODE);
-	if (dvp) {
-		VI_LOCK(dvp);
-		if (dvp->v_usecount >= 1) {
-			VI_UNLOCK(dvp);
-			vrele(dvp);
-		} else {
-			VI_UNLOCK(dvp);
-			SMBERROR("BUG: negative use count for parent!\n");
-		}
-	}
+	if (dvp)
+		vrele(dvp);
 	return 0;
 }
 
