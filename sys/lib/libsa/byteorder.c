@@ -1,4 +1,4 @@
-/*	$NetBSD: byteorder.c,v 1.1 2001/10/30 23:35:33 thorpej Exp $	*/
+/*	$NetBSD: byteorder.c,v 1.2 2001/10/31 20:19:52 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -46,6 +46,11 @@ typedef union {
 	uint32_t val;
 	uint8_t bytes[4];
 } un32;
+
+typedef union {
+	uint64_t val;
+	uint32_t words[2];
+} un64;
 
 /* 16-bit */
 
@@ -145,4 +150,60 @@ sa_le32toh(uint32_t val)
 		(un.bytes[2] << 16) |
 		(un.bytes[1] << 8) |
 		 un.bytes[0]);
+}
+
+/* 64-bit */
+
+uint64_t
+sa_htobe64(uint64_t val)
+{
+	un64 un;
+
+	un.words[BE64_HI] = sa_htobe32(val >> 32);
+	un.words[BE64_LO] = sa_htobe32(val & 0xffffffffU);
+
+	return (un.val);
+}
+
+uint64_t
+sa_htole64(uint64_t val)
+{
+	un64 un;
+
+	un.words[LE64_HI] = sa_htole32(val >> 32);
+	un.words[LE64_LO] = sa_htole32(val & 0xffffffffU);
+
+	return (un.val);
+}
+
+uint64_t
+sa_be64toh(uint64_t val)
+{
+	un64 un;
+	uint64_t rv;
+
+	un.val = val;
+	un.words[BE64_HI] = sa_be32toh(un.words[BE64_HI]);
+	un.words[BE64_LO] = sa_be32toh(un.words[BE64_LO]);
+
+	rv = (((uint64_t)un.words[BE64_HI]) << 32) |
+	     un.words[BE64_LO];
+
+	return (rv);
+}
+
+uint64_t
+sa_le64toh(uint64_t val)
+{
+	un64 un;
+	uint64_t rv;
+
+	un.val = val;
+	un.words[LE64_HI] = sa_le32toh(un.words[LE64_HI]);
+	un.words[LE64_LO] = sa_le32toh(un.words[LE64_LO]);
+
+	rv = (((uint64_t)un.words[LE64_HI]) << 32) |
+	     un.words[LE64_LO];
+
+	return (rv);
 }
