@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.24 2000/06/09 04:48:12 soda Exp $ */
+/* $NetBSD: tga.c,v 1.25 2000/06/14 00:34:33 soda Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -355,7 +355,7 @@ tgaattach(parent, self, aux)
 	u_int8_t rev;
 	int console;
 
-#ifdef __alpha__
+#if defined(__alpha__) || defined(arc)
 	console = (pa->pa_tag == tga_console_dc.dc_pcitag);
 #else
 	console = 0;
