@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.44 1998/08/18 06:32:13 thorpej Exp $	*/
+/*	$NetBSD: bpf.c,v 1.45 1998/11/05 22:50:15 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -89,7 +89,7 @@ static caddr_t bpf_alloc();
 #define BPF_BUFSIZE (MCLBYTES-8)
 #define UIOMOVE(cp, len, code, uio) uiomove(cp, len, code, uio)
 #else
-#define BPF_BUFSIZE 4096
+#define BPF_BUFSIZE 8192		/* 4096 too small for FDDI frames */
 #define UIOMOVE(cp, len, code, uio) uiomove(cp, len, uio)
 #endif
 
