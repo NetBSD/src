@@ -1,11 +1,11 @@
-#	$NetBSD: P4032,v 1.1 2001/06/01 16:00:04 thorpej Exp $
+#	$NetBSD: P4032,v 1.2 2001/06/22 14:15:56 thorpej Exp $
 #
 # Algorithmics P-4032 kernel.
 #
 
 include	"arch/algor/conf/std.algor"
 
-#ident 		"P4032-$Revision: 1.1 $"
+#ident 		"P4032-$Revision: 1.2 $"
 
 maxusers 32
 
@@ -13,6 +13,11 @@ maxusers 32
 options 	ALGOR_P4032	# Algorithmics P-4032
 #options 	ALGOR_P5064	# Algorithmics P-5064
 #options 	ALGOR_P6032	# Algorithmics P-6032
+
+# Set these to the appropriate values, in case you have a buggy PMON
+# that doesn't provide environment variables properly.
+#options 	MEMSIZE=48		# memory size, in MB
+#options 	ETHADDR="\"00:40:bc:03:00:6c\""
 
 options 	MIPS3_L2CACHE_ABSENT	# No L2 cache on this machine
 
@@ -35,6 +40,7 @@ file-system	NTFS		# Windows/NT file system (experimental)
 file-system	NFS		# Sun NFS-compatible file system client
 file-system	KERNFS		# Kernel variable file system (/kern)
 file-system	PROCFS		# Process file system (/proc)
+file-system	FDESC		# /dev/fd file system
 
 # File system options
 options 	NFSSERVER	# Sun NFS-compatible file system server
@@ -138,7 +144,7 @@ pci*	at	vtpbc?
 #le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
 #ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
 #pcib*	at	pci? dev ? function ?		# Intel PCI-ISA Bridges
-siop*	at	pci? dev ? function ?		# Symbios 53c8xx SCSI
+#siop*	at	pci? dev ? function ?		# Symbios 53c8xx SCSI
 #mlx*	at	pci? dev ? function ?		# Mylex DAC960 / DEC SWXCR (untested)
 #ne*	at	pci? dev ? function ?		# NE2000-compatible Ethernet
 #ohci*	at	pci? dev ? function ?		# USB Open Host Controller
@@ -191,12 +197,12 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 #scsibus* at	bha?
 #scsibus* at	dpt?
 #scsibus* at	isp?
-scsibus* at	siop?
+#scsibus* at	siop?
 #scsibus* at	pcscp?
 
 # SCSI devices
-cd*	at	scsibus? target ? lun ?		# SCSI CD-ROM drives
-sd*	at	scsibus? target ? lun ?		# SCSI disk drives
+#cd*	at	scsibus? target ? lun ?		# SCSI CD-ROM drives
+#sd*	at	scsibus? target ? lun ?		# SCSI disk drives
 #st*	at	scsibus? target ? lun ?		# SCSI tape drives
 
 # ST506/ESDI/IDE devices
