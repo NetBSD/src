@@ -1,4 +1,4 @@
-/*	$NetBSD: optimize.c,v 1.7 1997/10/03 15:53:11 christos Exp $	*/
+/*	$NetBSD: optimize.c,v 1.8 1999/07/02 10:05:22 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994, 1995, 1996
@@ -28,7 +28,7 @@
 static const char rcsid[] =
     "@(#) Header: optimize.c,v 1.60 96/09/26 23:28:14 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: optimize.c,v 1.7 1997/10/03 15:53:11 christos Exp $");
+__RCSID("$NetBSD: optimize.c,v 1.8 1999/07/02 10:05:22 itojun Exp $");
 #endif
 #endif
 
@@ -1111,6 +1111,14 @@ opt_blk(b, do_stmts)
 	int i;
 	bpf_int32 aval;
 
+#if 0
+	for (s = b->stmts; s && s->next; s = s->next)
+		if (BPF_CLASS(s->s.code) == BPF_JMP) {
+			do_stmts = 0;
+			break;
+		}
+#endif
+
 	/*
 	 * Initialize the atom values.
 	 * If we have no predecessors, everything is undefined.
@@ -1480,8 +1488,6 @@ opt_blks(root, do_stmts)
 
 	init_val();
 	maxlevel = root->level;
-
-	find_inedges(root);
 	for (i = maxlevel; i >= 0; --i)
 		for (p = levels[i]; p; p = p->link)
 			opt_blk(p, do_stmts);
@@ -1499,8 +1505,6 @@ opt_blks(root, do_stmts)
 			opt_j(&p->ef);
 		}
 	}
-
-	find_inedges(root);
 	for (i = 1; i <= maxlevel; ++i) {
 		for (p = levels[i]; p; p = p->link) {
 			or_pullup(p);
@@ -1580,6 +1584,7 @@ opt_loop(root, do_stmts)
 		find_levels(root);
 		find_dom(root);
 		find_closure(root);
+		find_inedges(root);
 		find_ud(root);
 		find_edom(root);
 		opt_blks(root, do_stmts);
@@ -1896,6 +1901,7 @@ convert_code_r(p)
 	int slen;
 	u_int off;
 	int extrajmps;		/* number of extra jumps inserted */
+	struct slist **offset;
 
 	if (p == 0 || isMarked(p))
 		return (1);
@@ -1912,13 +1918,88 @@ convert_code_r(p)
 
 	p->offset = dst - fstart;
 
+	/* generate offset[] for convenience  */
+	offset = (struct slist **)calloc(sizeof(struct slist *), slen);
+	if (!offset) {
+		bpf_error("not enough core");
+		/*NOTREACHED*/
+	}
+	src = p->stmts;
+	for (off = 0; off < slen && src; off++) {
+#if 0
+		printf("off=%d src=%x\n", off, src);
+#endif
+		offset[off] = src;
+		src = src->next;
+	}
+
+	off = 0;
 	for (src = p->stmts; src; src = src->next) {
 		if (src->s.code == NOP)
 			continue;
 		dst->code = (u_short)src->s.code;
 		dst->k = src->s.k;
+
+		/* fill block-local relative jump */
+		if (BPF_CLASS(src->s.code) != BPF_JMP
+		 || src->s.code == (BPF_JMP|BPF_JA)) {
+#if 0
+			if (src->s.jt || src->s.jf) {
+				bpf_error("illegal jmp destination");
+				/*NOTREACHED*/
+			}
+#endif
+			goto filled;
+		}
+		if (off == slen - 2)	/*???*/
+			goto filled;
+
+	    {
+		int i;
+		int jt, jf;
+		char *ljerr = "%s for block-local relative jump: off=%d";
+
+#if 0
+		printf("code=%x off=%d %x %x\n", src->s.code,
+			off, src->s.jt, src->s.jf);
+#endif
+
+		if (!src->s.jt || !src->s.jf) {
+			bpf_error(ljerr, "no jmp destination", off);
+			/*NOTREACHED*/
+		}
+
+		jt = jf = 0;
+		for (i = 0; i < slen; i++) {
+			if (offset[i] == src->s.jt) {
+				if (jt) {
+					bpf_error(ljerr, "multiple matches", off);
+					/*NOTREACHED*/
+				}
+
+				dst->jt = i - off - 1;
+				jt++;
+			}
+			if (offset[i] == src->s.jf) {
+				if (jf) {
+					bpf_error(ljerr, "multiple matches", off);
+					/*NOTREACHED*/
+				}
+				dst->jf = i - off - 1;
+				jf++;
+			}
+		}
+		if (!jt || !jf) {
+			bpf_error(ljerr, "no destination found", off);
+			/*NOTREACHED*/
+		}
+	    }
+filled:
 		++dst;
+		++off;
 	}
+	free(offset);
+
 #ifdef BDEBUG
 	bids[dst - fstart] = p->id + 1;
 #endif

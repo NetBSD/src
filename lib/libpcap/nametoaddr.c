@@ -1,4 +1,4 @@
-/*	$NetBSD: nametoaddr.c,v 1.9 1997/11/05 21:37:27 cgd Exp $	*/
+/*	$NetBSD: nametoaddr.c,v 1.10 1999/07/02 10:05:22 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -30,7 +30,7 @@
 static const char rcsid[] =
     "@(#) Header: nametoaddr.c,v 1.47 97/06/13 13:16:19 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: nametoaddr.c,v 1.9 1997/11/05 21:37:27 cgd Exp $");
+__RCSID("$NetBSD: nametoaddr.c,v 1.10 1999/07/02 10:05:22 itojun Exp $");
 #endif
 #endif
 
@@ -46,12 +46,12 @@ struct rtentry;
 
 #include <net/if.h>
 #include <netinet/in.h>
-#ifdef __NetBSD__
-#include <net/if_ether.h>
-#else
 #include <netinet/if_ether.h>
-#endif
 #include <arpa/inet.h>
+#ifdef INET6
+#include <netdb.h>
+#include <sys/socket.h>
+#endif /*INET6*/
 
 #include <ctype.h>
 #include <errno.h>
@@ -104,6 +104,23 @@ pcap_nametoaddr(const char *name)
 	else
 		return 0;
 }
+
+#ifdef INET6
+struct addrinfo *
+pcap_nametoaddrinfo(const char *name)
+{
+	struct addrinfo hints, *res;
+	int error;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = PF_UNSPEC;
+	error = getaddrinfo(name, NULL, &hints, &res);
+	if (error)
+		return NULL;
+	else
+		return res;
+}
+#endif /*INET6*/
 
 /*
  *  Convert net name to internet address.
@@ -196,6 +213,9 @@ struct eproto eproto_db[] = {
 	{ "pup", ETHERTYPE_PUP },
 	{ "xns", ETHERTYPE_NS },
 	{ "ip", ETHERTYPE_IP },
+#ifdef INET6
+	{ "ip6", ETHERTYPE_IPV6 },
+#endif
 	{ "arp", ETHERTYPE_ARP },
 	{ "rarp", ETHERTYPE_REVARP },
 	{ "sprite", ETHERTYPE_SPRITE },
