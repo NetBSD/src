@@ -1,4 +1,4 @@
-/*	$NetBSD: pmax_trap.c,v 1.35.4.1 1996/06/15 07:16:23 jonathan Exp $	*/
+/*	$NetBSD: pmax_trap.c,v 1.35.4.2 1996/06/16 17:26:29 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -766,6 +766,7 @@ kn03_intr(mask, pc, statusReg, causeReg)
  *
  *----------------------------------------------------------------------
  */
+#ifdef DS3100
 static void
 pmax_errintr()
 {
@@ -782,6 +783,7 @@ pmax_errintr()
 	}
 	*sysCSRPtr = (csr & ~KN01_CSR_MBZ) | 0xff;
 }
+#endif /* DS3100 */
 
 static void
 kn02_errintr()
