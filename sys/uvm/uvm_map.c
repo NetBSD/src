@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.131 2003/02/20 22:16:08 atatat Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.132 2003/02/21 16:38:44 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.131 2003/02/20 22:16:08 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.132 2003/02/21 16:38:44 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -2976,7 +2976,7 @@ uvmspace_alloc(min, max)
  * uvmspace_init: initialize a vmspace structure.
  *
  * - XXX: no locking on this structure
- * - refcnt set to 1, rest must me init'd by caller
+ * - refcnt set to 1, rest must be init'd by caller
  */
 void
 uvmspace_init(vm, pmap, min, max)
