@@ -1,4 +1,4 @@
-/*	$NetBSD: cgeight.c,v 1.16 1998/03/21 20:11:30 pk Exp $	*/
+/*	$NetBSD: cgeight.c,v 1.17 1998/03/29 22:10:32 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -173,9 +173,11 @@ cgeightmatch(parent, cf, aux)
 		return (0);
 
 	oba = &uoba->uoba_oba4;
-	return (obio_bus_probe(oba->oba_bustag, oba->oba_paddr,
-			       0, 4, cg8_pfour_probe, NULL));
-
+	return (bus_space_probe(oba->oba_bustag, 0, oba->oba_paddr,
+				4,	/* probe size */
+				0,	/* offset */
+				0,	/* flags */
+				cg8_pfour_probe, NULL));
 }
 
 int
