@@ -1,11 +1,12 @@
-/*	$NetBSD: if_ex_pci.c,v 1.2 1998/11/07 16:53:19 drochner Exp $	*/
+/*	$NetBSD: if_ex_pci.c,v 1.3 1998/11/09 23:12:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Frank van der Linden.
+ * by Frank van der Linden; Jason R. Thorpe of the Numerical Aerospace
+ * Simulation Facility, NASA Ames Research Center.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -104,6 +105,53 @@ struct cfattach ex_pci_ca = {
 	sizeof(struct ex_softc), ex_pci_match, ex_pci_attach
 };
 
+const struct ex_pci_product {
+	u_int32_t	epp_prodid;	/* PCI product ID */
+	int		epp_flags;	/* initial softc flags */
+	const char	*epp_name;	/* device name */
+} ex_pci_products[] = {
+	{ PCI_PRODUCT_3COM_3C900TPO,	0,
+	  "3c900-TPO" },
+	{ PCI_PRODUCT_3COM_3C900COMBO,	0,
+	  "3c900-COMBO" },
+
+	{ PCI_PRODUCT_3COM_3C905TX,	EX_CONF_MII,
+	  "3c905-TX" },
+	{ PCI_PRODUCT_3COM_3C905T4,	EX_CONF_MII,
+	  "3c905-T4" },
+
+	{ PCI_PRODUCT_3COM_3C900BTPO,	EX_CONF_90XB,
+	  "3c900B-TPO" },
+	{ PCI_PRODUCT_3COM_3C900BCOMBO,	EX_CONF_90XB,
+	  "3c900B-COMBO" },
+
+	{ PCI_PRODUCT_3COM_3C905BTX,	EX_CONF_90XB|EX_CONF_MII|EX_CONF_INTPHY,
+	  "3c905B-TX" },
+	{ PCI_PRODUCT_3COM_3C905BT4,	EX_CONF_90XB|EX_CONF_MII,
+	  "3c905B-T4" },
+
+	{ 0,				0,
+	  NULL },
+};
+
+const struct ex_pci_product *ex_pci_lookup
+    __P((const struct pci_attach_args *));
+
+const struct ex_pci_product *
+ex_pci_lookup(pa)
+	const struct pci_attach_args *pa;
+{
+	const struct ex_pci_product *epp;
+
+	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_3COM)
+		return (NULL);
+
+	for (epp = ex_pci_products; epp->epp_name != NULL; epp++)
+		if (PCI_PRODUCT(pa->pa_id) == epp->epp_prodid)
+			return (epp);
+	return (NULL);
+}
+
 int
 ex_pci_match(parent, match, aux)
 	struct device *parent;
@@ -112,24 +160,10 @@ ex_pci_match(parent, match, aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
-	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_3COM)
-		return 0;
+	if (ex_pci_lookup(pa) != NULL)
+		return (2);	/* beat ep_pci */
 
-	switch (PCI_PRODUCT(pa->pa_id)) {
-	case PCI_PRODUCT_3COM_3C900TPO:
-	case PCI_PRODUCT_3COM_3C900COMBO:
-	case PCI_PRODUCT_3COM_3C905TX:
-	case PCI_PRODUCT_3COM_3C905T4:
-	case PCI_PRODUCT_3COM_3C900BTPO:
-	case PCI_PRODUCT_3COM_3C900BCOMBO:
-	case PCI_PRODUCT_3COM_3C905BT4:
-	case PCI_PRODUCT_3COM_3C905BTX:
-		break;
-	default:
-		return 0;
-	}
-
-	return 2; /* better than ep_pci */
+	return (0);
 }
 
 void
@@ -141,7 +175,7 @@ ex_pci_attach(parent, self, aux)
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
-	char *model;
+	const struct ex_pci_product *epp;
 	const char *intrstr = NULL;
 	int pmode;
 
@@ -151,43 +185,22 @@ ex_pci_attach(parent, self, aux)
 		return;
 	}
 
-	sc->sc_dmat = pa->pa_dmat;
-
-	sc->ex_bustype = EX_BUS_PCI;
-	sc->ex_conf = 0;
-
-	switch (PCI_PRODUCT(pa->pa_id)) {
-	case PCI_PRODUCT_3COM_3C900TPO:
-	case PCI_PRODUCT_3COM_3C900COMBO:
-		model = "3Com 3C900 Ethernet";
-		break;
-	case PCI_PRODUCT_3COM_3C905TX:
-	case PCI_PRODUCT_3COM_3C905T4:
-		sc->ex_conf = EX_CONF_MII;
-		model = "3Com 3C905 Ethernet";
-		break;
-	case PCI_PRODUCT_3COM_3C900BTPO:
-	case PCI_PRODUCT_3COM_3C900BCOMBO:
-		sc->ex_conf = EX_CONF_90XB;
-		model = "3Com 3C900B Ethernet";
-		break;
-	case PCI_PRODUCT_3COM_3C905BTX:
-	case PCI_PRODUCT_3COM_3C905BT4:
-		sc->ex_conf = (EX_CONF_MII | EX_CONF_90XB);
-		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_3COM_3C905BTX)
-			sc->ex_conf |= EX_CONF_INTPHY;
-		model = "3Com 3C905B Ethernet";
-		break;
-	default:
-		model = "unknown model!";
-		break;
+	epp = ex_pci_lookup(pa);
+	if (epp == NULL) {
+		printf("\n");
+		panic("ex_pci_attach: impossible");
 	}
 
-	printf(": %s\n", model);
+	printf(": 3Com %s Ethernet\n", epp->epp_name);
 
 	sc->enable = NULL;
 	sc->disable = NULL;
 	sc->enabled = 1;
+
+	sc->sc_dmat = pa->pa_dmat;
+
+	sc->ex_bustype = EX_BUS_PCI;
+	sc->ex_conf = epp->epp_flags;
 
 	/* Enable the card. */
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
@@ -232,5 +245,4 @@ ex_pci_attach(parent, self, aux)
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
 	ex_config(sc);
-
 }
