@@ -1,0 +1,20 @@
+$NetBSD: UPDATING,v 1.114.4.2 2004/04/11 02:23:45 jmc Exp $
+
+This file is intended to be a brief introduction to the build
+process and a reference on what to do if something doesn't work.
+
+For a more detailed description see Makefile.
+
+Recent changes:
+^^^^^^^^^^^^^^^
+
+20040410:
+
+	In order to build a complete release of 1.5 (post 1.5.3) the following
+	steps should be performed first:
+
+		1. Build and install a new make (usr.bin/make)
+		2. Build and install new copies of libcrypto and libssl
+		   (they are at new major versions so they won't conflict w.
+		    existing libraries).
+
