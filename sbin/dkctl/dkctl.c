@@ -1,4 +1,4 @@
-/*	$NetBSD: dkctl.c,v 1.4 2003/04/15 19:07:37 darrenr Exp $	*/
+/*	$NetBSD: dkctl.c,v 1.5 2003/04/16 08:39:56 dsl Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -281,7 +281,7 @@ disk_badsectors(int argc, char *argv[])
 	SLIST_HEAD(, disk_badsectors) dbstop;
 	struct disk_badsecinfo dbsi;
 	daddr_t blk, totbad, bad;
-	u_int32_t count, size;
+	u_int32_t count;
 	struct stat sb;
 	u_char *block;
 
@@ -306,7 +306,7 @@ disk_badsectors(int argc, char *argv[])
 
 			dbs = (struct disk_badsectors *)dbsi.dbsi_buffer;
 			for (count = dbsi.dbsi_copied; count > 0; count--) {
-				printf("%s: blocks %d - %d failed at %s",
+				printf("%s: blocks %" PRIdaddr " - %" PRIdaddr " failed at %s",
 					dvname, dbs->dbs_min, dbs->dbs_max,
 					ctime(&dbs->dbs_failedat.tv_sec));
 				dbs++;
@@ -402,8 +402,8 @@ disk_badsectors(int argc, char *argv[])
 			for (blk = dbs->dbs_min; blk <= dbs->dbs_max; blk++) {
 				if (lseek(fd, (off_t)blk * DEV_BSIZE,
 				    SEEK_SET) == -1) {
-					warn("%s: lseek block %d", dvname,
-					     blk);
+					warn("%s: lseek block %" PRIdaddr "",
+					    dvname, blk);
 					continue;
 				}
 				printf("%s: block %"PRIdaddr" - ", dvname, blk);
