@@ -1,4 +1,4 @@
-.\" $NetBSD: wsmoused.8,v 1.2 2002/06/27 15:12:23 christos Exp $
+.\" $NetBSD: wsmoused.8,v 1.3 2002/06/27 16:10:03 christos Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -108,10 +108,24 @@ order to get mouse console support.
 When you return from the X screen to another terminal there is a small
 time delay until the mouse works again. The delay is needed to allow X
 to close the mouse device properly.
+.Pp
+It's needed that you change the getty program which runs in the first
+virtual terminal to use
+.Pa /dev/ttyE0
+instead of
+.Pa /dev/console .
+If you do not change this, you may have problems.
+You need to edit
+.Pa /etc/ttys
+and
+.Pa /etc/wscons.conf
+to make this change.
 .Sh SEE ALSO
 .Xr wscons 4 ,
 .Xr wsdisplay 4 ,
-.Xr wsmouse 4
+.Xr wsmouse 4 ,
+.Xr ttys 5 ,
+.Xr wscons.conf 5
 .Sh HISTORY
 The
 .Nm
