@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.8 2003/08/07 11:13:20 agc Exp $	*/
+/*	$NetBSD: print.c,v 1.9 2003/12/20 23:41:38 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: print.c,v 1.8 2003/08/07 11:13:20 agc Exp $");
+__RCSID("$NetBSD: print.c,v 1.9 2003/12/20 23:41:38 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -45,9 +45,10 @@ __RCSID("$NetBSD: print.c,v 1.8 2003/08/07 11:13:20 agc Exp $");
 void
 pcrc(fn, val, len)
 	char *fn;
-	u_int32_t val, len;
+	u_int32_t val;
+	off_t len;
 {
-	(void)printf("%lu %lu", (unsigned long)val, (unsigned long)len);
+	(void)printf("%lu %lld", (unsigned long)val, (long long)len);
 	if (fn)
 		(void)printf(" %s", fn);
 	(void)printf("\n");
@@ -56,10 +57,11 @@ pcrc(fn, val, len)
 void
 psum1(fn, val, len)
 	char *fn;
-	u_int32_t val, len;
+	u_int32_t val;
+	off_t len;
 {
-	(void)printf("%lu %lu", (unsigned long)val,
-	    (unsigned long)(len + 1023) / 1024);
+	(void)printf("%lu %lld", (unsigned long)val,
+	    (long long)(len + 1023) / 1024);
 	if (fn)
 		(void)printf(" %s", fn);
 	(void)printf("\n");
@@ -68,10 +70,11 @@ psum1(fn, val, len)
 void
 psum2(fn, val, len)
 	char *fn;
-	u_int32_t val, len;
+	u_int32_t val;
+	off_t len;
 {
-	(void)printf("%lu %lu", (unsigned long)val,
-	    (unsigned long)(len + 511) / 512);
+	(void)printf("%lu %lld", (unsigned long)val,
+	    (long long)(len + 511) / 512);
 	if (fn)
 		(void)printf(" %s", fn);
 	(void)printf("\n");
