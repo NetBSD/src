@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3 2001/02/28 18:15:44 bjh21 Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4 2001/03/04 23:25:02 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -37,7 +37,6 @@
  *
  */
 
-#include "opt_compat_netbsd.h"
 #include "opt_md.h"
 
 #include <sys/param.h>
@@ -48,7 +47,6 @@
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
 #include <sys/map.h>
-#include <sys/exec.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/msgbuf.h>
@@ -480,58 +478,6 @@ consinit(void)
 
 	consinit_called = 1;
 	cninit();
-}
-
-/*
- * Clear registers on exec
- */
-
-void
-setregs(p, pack, stack)
-	struct proc *p;
-	struct exec_package *pack;
-	u_long stack;
-{
-	struct trapframe *tf;
-
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= -1)
-		printf("setregs: ip=%08lx sp=%08lx proc=%p\n",
-		    pack->ep_entry, stack, p);
-#endif
-
-	tf = p->p_addr->u_pcb.pcb_tf;
-
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= -1)
-		printf("mdregs=%08x pc=%08x lr=%08x sp=%08x\n",
-		    (u_int) tf, tf->tf_pc, tf->tf_usr_lr, tf->tf_usr_sp);
-#endif
-
-	tf->tf_r0 = (u_int)PS_STRINGS;
-	tf->tf_r1 = 0;
-	tf->tf_r2 = 0;
-	tf->tf_r3 = 0;
-	tf->tf_r4 = 0;
-	tf->tf_r5 = 0;
-	tf->tf_r6 = 0;
-	tf->tf_r7 = 0;
-	tf->tf_r8 = 0;
-	tf->tf_r9 = 0;
-	tf->tf_r10 = 0;
-	tf->tf_r11 = 0;				/* bottom of the fp chain */
-#ifdef COMPAT_13
-	tf->tf_r12 = stack;			/* needed by pre 1.4 crt0.c */
-#else
-	tf->tf_r12 = 0;
-#endif
-	tf->tf_usr_sp = stack;
-	tf->tf_usr_lr = pack->ep_entry;
-	tf->tf_svc_lr = 0x77777777;		/* Something we can see */
-	tf->tf_pc = pack->ep_entry;
-	tf->tf_spsr = PSR_USR32_MODE;
-
-	p->p_addr->u_pcb.pcb_flags = 0;
 }
 
 
