@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.20 2000/08/12 17:44:02 sommerfeld Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.21 2000/08/16 16:32:06 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -238,7 +238,6 @@ struct vm_map {
 #define	VM_MAP_WANTLOCK		0x10		/* rw: want to write-lock */
 
 /* XXX: number of kernel maps and entries to statically allocate */
-#define MAX_KMAP	10
 
 #if !defined(MAX_KMAPENT)
 #if (50 + (2 * NPROC) > 1000)
