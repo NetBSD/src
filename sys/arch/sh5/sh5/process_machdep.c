@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.9 2002/12/06 10:22:15 scw Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.10 2003/01/19 19:49:56 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -53,9 +53,9 @@
 #include <sh5/fpu.h>
 
 void
-setregs(struct proc *p, struct exec_package *pack, u_long stack)
+setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 {
-	struct trapframe *tf = p->p_md.md_regs;
+	struct trapframe *tf = l->l_md.md_regs;
 	register_t sstack;
 	long argc;
 
@@ -85,13 +85,13 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack)
 	 * passed by the dynamic loader. The kernel always sets them to 0.
 	 */
 
-	tf->tf_caller.r7 = (register_t)(long)p->p_psstr;
+	tf->tf_caller.r7 = (register_t)(long)l->l_proc->p_psstr;
 
 	/* Align the stack as required by the SH-5 ABI */
 	tf->tf_caller.r15 = tf->tf_caller.r14 = (register_t) (sstack & ~0xf);
 
 	/* Give the new process a clean set of FP regs */
-	memset(&p->p_addr->u_pcb.pcb_ctx.sf_fpregs, 0, sizeof(struct fpregs));
+	memset(&l->l_addr->u_pcb.pcb_ctx.sf_fpregs, 0, sizeof(struct fpregs));
 
 	/*
 	 * I debated with myself about the following for a wee while.
@@ -107,10 +107,10 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack)
 	 *
 	 * With FPSCR.DN set, denormalised numbers are quietly flushed to zero.
 	 */
-	p->p_addr->u_pcb.pcb_ctx.sf_fpregs.fpscr = SH5_FPSCR_DN_FLUSH_ZERO;
+	l->l_addr->u_pcb.pcb_ctx.sf_fpregs.fpscr = SH5_FPSCR_DN_FLUSH_ZERO;
 
 	sh5_fprestore(SH5_CONREG_USR_FPRS_MASK << SH5_CONREG_USR_FPRS_SHIFT,
-	    &p->p_addr->u_pcb);
+	    &l->l_addr->u_pcb);
 
 	/*
 	 * XXX: This is a disgusting hack to work-around an unknown
@@ -129,9 +129,9 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack)
 }
 
 int
-process_read_regs(struct proc *p, struct reg *regs)
+process_read_regs(struct lwp *l, struct reg *regs)
 {
-	struct trapframe *tf = p->p_md.md_regs;
+	struct trapframe *tf = l->l_md.md_regs;
 
 	regs->r_intregs[0]  = tf->tf_caller.r0;
 	regs->r_intregs[1]  = tf->tf_caller.r1;
@@ -219,9 +219,9 @@ process_read_regs(struct proc *p, struct reg *regs)
 }
 
 int
-process_read_fpregs(struct proc *p, struct reg *regs)
+process_read_fpregs(struct lwp *l, struct reg *regs)
 {
-	struct fpregs *fpr = &p->p_addr->u_pcb.pcb_ctx.sf_fpregs;
+	struct fpregs *fpr = &l->l_addr->u_pcb.pcb_ctx.sf_fpregs;
 
 	memcpy(regs->r_fpregs, fpr->fp, sizeof(regs->r_fpregs));
 
@@ -231,9 +231,9 @@ process_read_fpregs(struct proc *p, struct reg *regs)
 }
 
 int
-process_write_regs(struct proc *p, struct reg *regs)
+process_write_regs(struct lwp *l, struct reg *regs)
 {
-	struct trapframe *tf = p->p_md.md_regs;
+	struct trapframe *tf = l->l_md.md_regs;
 
 	tf->tf_caller.r0 = regs->r_intregs[0];
 	tf->tf_caller.r1 = regs->r_intregs[1];
@@ -325,9 +325,9 @@ process_write_regs(struct proc *p, struct reg *regs)
 }
 
 int
-process_write_fpregs(struct proc *p, struct reg *regs)
+process_write_fpregs(struct lwp *l, struct reg *regs)
 {
-	struct fpregs *fpr = &p->p_addr->u_pcb.pcb_ctx.sf_fpregs;
+	struct fpregs *fpr = &l->l_addr->u_pcb.pcb_ctx.sf_fpregs;
 
 	memcpy(fpr->fp, regs->r_fpregs, sizeof(regs->r_fpregs));
 
@@ -341,7 +341,7 @@ process_write_fpregs(struct proc *p, struct reg *regs)
  * useful way.
  */
 int
-process_sstep(struct proc *p, int set)
+process_sstep(struct lwp *l, int set)
 {
 #if 0
 	struct trapframe *tf = p->p_md.md_regs;
@@ -361,10 +361,10 @@ process_sstep(struct proc *p, int set)
  * XXX: This will barf when userland's sizeof(void *) != kernel's.
  */
 int
-process_set_pc(struct proc *p, caddr_t pc)
+process_set_pc(struct lwp *l, caddr_t pc)
 {
 
-	p->p_md.md_regs->tf_state.sf_spc = (register_t)(uintptr_t)pc;
+	l->l_md.md_regs->tf_state.sf_spc = (register_t)(uintptr_t)pc;
 
 	return (0);
 }

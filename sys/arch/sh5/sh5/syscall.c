@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.6 2002/12/21 16:23:59 manu Exp $	*/
+/*	$NetBSD: syscall.c,v 1.7 2003/01/19 19:49:56 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -135,10 +135,12 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/syscall.h>
 #include <sys/user.h>
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
 #ifdef KTRACE
@@ -154,8 +156,8 @@
 #include <uvm/uvm_extern.h>
 
 void	syscall_intern(struct proc *);
-static void syscall_plain(struct proc *, struct trapframe *);
-static void syscall_fancy(struct proc *, struct trapframe *);
+static void syscall_plain(struct lwp *, struct trapframe *);
+static void syscall_fancy(struct lwp *, struct trapframe *);
 
 void
 syscall_intern(struct proc *p)
@@ -175,7 +177,7 @@ syscall_intern(struct proc *p)
 }
 
 static void
-syscall_plain(struct proc *p, struct trapframe *tf)
+syscall_plain(struct lwp *l, struct trapframe *tf)
 {
 	const struct sysent *callp;
 	register_t rval[2];
@@ -183,6 +185,7 @@ syscall_plain(struct proc *p, struct trapframe *tf)
 	register_t code;
 	register_t *args;
 	int nargs, hidden, error;
+	struct proc *p = l->l_proc;
 
 	uvmexp.syscalls++;
 
@@ -240,12 +243,12 @@ syscall_plain(struct proc *p, struct trapframe *tf)
 	args += hidden;
 
 #ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, args);
+	scdebug_call(l, code, args);
 #endif
 
 	rval[0] = 0;
 	rval[1] = tf->tf_caller.r3;
-	error = (*callp->sy_call)(p, args, rval);
+	error = (*callp->sy_call)(l, args, rval);
 	switch (error) {
 	case 0:
 		tf->tf_caller.r2 = rval[0];
@@ -268,12 +271,12 @@ syscall_plain(struct proc *p, struct trapframe *tf)
 	}
 
 #ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, rval)
+	scdebug_ret(l, code, error, rval);
 #endif
 }
 
 static void
-syscall_fancy(struct proc *p, struct trapframe *tf)
+syscall_fancy(struct lwp *l, struct trapframe *tf)
 {
 	const struct sysent *callp;
 	register_t rval[2];
@@ -281,6 +284,7 @@ syscall_fancy(struct proc *p, struct trapframe *tf)
 	register_t code;
 	register_t *args;
 	int nargs, hidden, error;
+	struct proc *p = l->l_proc;
 
 	uvmexp.syscalls++;
 
@@ -337,12 +341,12 @@ syscall_fancy(struct proc *p, struct trapframe *tf)
 
 	args += hidden;
 
-	if ((error = trace_enter(p, code, code, NULL, args, rval)) != 0)
+	if ((error = trace_enter(l, code, code, NULL, args, rval)) != 0)
 		goto bad;
 
 	rval[0] = 0;
 	rval[1] = tf->tf_caller.r3;
-	error = (*callp->sy_call)(p, args, rval);
+	error = (*callp->sy_call)(l, args, rval);
 	switch (error) {
 	case 0:
 		tf->tf_caller.r2 = rval[0];
@@ -364,11 +368,38 @@ syscall_fancy(struct proc *p, struct trapframe *tf)
 		break;
 	}
 
-	trace_exit(p, code, args, rval, error);
+	trace_exit(l, code, args, rval, error);
+}
+
+/*
+ * Start a new LWP
+ */
+void
+startlwp(void *arg)
+{
+	struct lwp *l = curlwp;
+	ucontext_t *uc = arg;
+	int err;
+
+	err = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
+#if DIAGNOSTIC
+        if (err)
+		printf("Error %d from cpu_setmcontext.", err);
+#endif
+
+	pool_put(&lwp_uc_pool, uc);
+	userret(l);
+}
+
+void
+upcallret(struct lwp *l)
+{
+
+	userret(l);
 }
 
 int
-sys_sysarch(struct proc *p, void *v, register_t *retval)
+sys_sysarch(struct lwp *l, void *v, register_t *retval)
 {
 #if 0 /* unused */
 	struct sysarch_args /* {
@@ -383,12 +414,12 @@ sys_sysarch(struct proc *p, void *v, register_t *retval)
 void
 child_return(void *arg)
 {
-	struct proc *p = arg;
+	struct lwp *l = arg;
 
-	userret(p);
+	userret(l);
 
 #ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p, SYS_fork, 0, 0);
+	if (KTRPOINT(l->l_proc, KTR_SYSRET))
+		ktrsysret(l->l_proc, SYS_fork, 0, 0);
 #endif
 }
