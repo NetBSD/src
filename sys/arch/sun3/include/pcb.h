@@ -66,3 +66,6 @@ struct pcb
 #define PCB_HPUXTRACE	0x0020	/* being traced by an HPUX process */
 #define PCB_HPUXBIN	0x0040	/* loaded from an HPUX format binary */
 				/* note: does NOT imply SHPUX */
+
+struct md_coredump {
+};
