@@ -1,4 +1,4 @@
-/* $NetBSD: pic.c,v 1.5 2004/04/10 19:07:06 pooka Exp $	 */
+/* $NetBSD: pic.c,v 1.6 2004/04/10 19:07:58 pooka Exp $	 */
 
 /*
  * Copyright (c) 2002 Steve Rumble
@@ -194,7 +194,7 @@ pic_watchdog_disable()
 {
 	uint32_t reg;
 
-	reg = bus_space_read_4(psc.iot, psc.ioh, PIC_CPUCTRL)
+	reg = bus_space_read_4(psc.iot, psc.ioh, PIC_CPUCTRL);
 	reg &= ~(PIC_CPUCTRL_WDOG);
 	bus_space_write_4(psc.iot, psc.ioh, PIC_CPUCTRL, reg);
 }
@@ -204,10 +204,10 @@ pic_watchdog_tickle()
 {
 	uint32_t reg;
 
-	reg = bus_space_read_4(psc.iot, psc.ioh, PIC_CPUCTRL)
+	reg = bus_space_read_4(psc.iot, psc.ioh, PIC_CPUCTRL);
 	reg &= ~(PIC_CPUCTRL_WDOG);
 	bus_space_write_4(psc.iot, psc.ioh, PIC_CPUCTRL, reg);
-	reg = bus_space_read_4(psc.iot, psc.ioh, PIC_CPUCTRL)
-	reg =| (PIC_CPUCTRL_WDOG);
+	reg = bus_space_read_4(psc.iot, psc.ioh, PIC_CPUCTRL);
+	reg |= (PIC_CPUCTRL_WDOG);
 	bus_space_write_4(psc.iot, psc.ioh, PIC_CPUCTRL, reg);
 }
