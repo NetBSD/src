@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_sun3x.c,v 1.4 1997/08/15 02:22:04 mikel Exp $	*/
+/*	$NetBSD: kvm_sun3x.c,v 1.5 1997/10/12 11:04:22 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_sparc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_sun3x.c,v 1.4 1997/08/15 02:22:04 mikel Exp $");
+__RCSID("$NetBSD: kvm_sun3x.c,v 1.5 1997/10/12 11:04:22 briggs Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: kvm_sun3x.c,v 1.4 1997/08/15 02:22:04 mikel Exp $");
  * Sun3x machine dependent routines for kvm.
  *
  * Note: This file has to build on ALL m68k machines,
- * so do NOT include any <machine/*.h> files here.
+ * so do NOT include any <machine / *.h> files here.
  */
 
 #include <sys/types.h>
