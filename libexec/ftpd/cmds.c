@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.20 2003/01/08 18:07:31 manu Exp $	*/
+/*	$NetBSD: cmds.c,v 1.21 2003/02/24 19:25:25 erh Exp $	*/
 
 /*
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cmds.c,v 1.20 2003/01/08 18:07:31 manu Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.21 2003/02/24 19:25:25 erh Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -812,7 +812,7 @@ static void
 mlsname(FILE *fp, factelem *fe)
 {
 	char realfile[MAXPATHLEN];
-	int i, userf;
+	int i, userf = 0;
 
 	for (i = 0; i < FACTTABSIZE; i++) {
 		if (facttab[i].enabled)
