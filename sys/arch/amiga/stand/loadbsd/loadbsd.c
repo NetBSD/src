@@ -16,6 +16,33 @@
 /* Get definitions for boothowto */
 #include "reboot.h"
 
+static char usage[] =
+"
+NAME
+\t%s - loads NetBSD from amiga dos.
+SYNOPSIS
+\t%s some-vmunix [-a] [-b] [-k] [-m memory] [-p] [-t] [-V]
+OPTIONS
+\t-a  Boot up to multiuser mode.
+\t-b  Ask for which root device.
+\t    Its possible to have multiple roots and choose between them.
+\t-k  Reserve the first 4M of fast mem [Some one else
+\t    is going to have to answer what that it is used for].
+\t-m  Tweak amount of available memory, for finding minimum amount
+\t    of memory required to run. Sets fastmem size to specified
+\t    size in Kbytes.
+\t-p  Use highest priority fastmem segement instead of the largest
+\t    segment. The higher priority segment is usually faster
+\t    (i.e. 32 bit memory), but some people have smaller amounts
+\t    of 32 bit memory.
+\t-t  This is a *test* option.  It prints out the memory
+\t    list information being passed to the kernel and also
+\t    exits without actually starting NetBSD.
+\t-V  Version of loadbsd program.
+HISTORY
+      This version supports Kernel version 720 +
+";
+
 struct ExpansionBase *ExpansionBase;
 struct GfxBase *GfxBase;
 
@@ -23,6 +50,11 @@ struct GfxBase *GfxBase;
 #define __LDPGSZ 8192
 
 #define MAX_MEM_SEG	16
+
+/*
+ * Kernel parameter passing version
+ */
+#define KERNEL_PARAMETER_VERSION	1
 
 struct MEM_LIST {
 	u_long	num_mem;
@@ -39,11 +71,16 @@ int a_opt;
 int b_opt;
 int p_opt;
 int t_opt;
+int m_opt;
 
 extern char *optarg;
 extern int optind;
 
 void get_mem_config (void **fastmem_start, u_long *fastmem_size, u_long *chipmem_size);
+void Usage (char *program_name);
+void Version (void);
+
+static const char _version[] = "$VER: LoadBSD 1.744 (28.1.94)";
 
 int 
 main (int argc, char *argv[])
@@ -67,6 +104,7 @@ main (int argc, char *argv[])
 		  void *fastmem_start;
 		  u_long fastmem_size, chipmem_size;
 		  int i;
+		  u_short *kern_vers;
 		  
 		  GfxBase = (struct GfxBase *) OpenLibrary ("graphics.library", 0);
 		  if (! GfxBase)	/* not supposed to fail... */
@@ -75,7 +113,7 @@ main (int argc, char *argv[])
 		  if (! ExpansionBase)	/* not supposed to fail... */
 		    abort();
 		  optind = 2;
-		  while ((i = getopt (argc, argv, "kabpt")) != EOF)
+		  while ((i = getopt (argc, argv, "kabptVm:")) != EOF)
 		    switch (i) {
 		    case 'k':
 		      k_opt = 1;
@@ -92,6 +130,16 @@ main (int argc, char *argv[])
 		    case 't':
 		      t_opt = 1;
 		      break;
+		    case 'm':
+		      m_opt = atoi (optarg) * 1024;
+		      break;
+                    case 'V':
+                      Version();
+                      break;
+                    default:
+                      Usage(argv[0]);
+                      fprintf(stderr,"Unrecognized option \n");
+                      exit(-1);
 		    }
 
 		  for (cd = 0, num_cd = 0; cd = FindConfigDev (cd, -1, -1); num_cd++) ;
@@ -125,6 +173,11 @@ main (int argc, char *argv[])
 			      fastmem_start += 4*1024*1024;
 			      fastmem_size  -= 4*1024*1024;
 			    }
+
+			  if (m_opt && m_opt <= fastmem_size)
+			    {
+			      fastmem_size = m_opt;
+			    }
 			  
 			  if (a_opt)
 			    {
@@ -140,18 +193,25 @@ main (int argc, char *argv[])
 			  
 			  printf ("Using %dM FASTMEM at 0x%x, %dM CHIPMEM\n",
 				  fastmem_size>>20, fastmem_start, chipmem_size>>20);
-			  if (t_opt)
-			    exit (0);
+			  kern_vers = (u_short *) (kernel + e.a_entry - 2);
+			  if (*kern_vers > KERNEL_PARAMETER_VERSION &&
+			      *kern_vers != 0x4e73)
+			    {
+			      printf ("This kernel requires a newer version of loadbsd: %d\n", *kern_vers);
+			      exit (0);
+			    }
+			  if (t_opt)		/* if test option */
+			    exit (0);		/*   don't start kernel */
 			  /* give them a chance to read the information... */
 			  sleep(2);
 
 			  bzero (kernel + text_size + e.a_data, e.a_bss);
 			  knum_cd = (int *) (kernel + text_size + e.a_data + e.a_bss);
 			  *knum_cd = num_cd;
-			  cd = 0;
 			  for (kcd = (struct ConfigDev *) (knum_cd+1);
 			       cd = FindConfigDev (cd, -1, -1);
-			       *kcd++ = *cd) ;
+			       *kcd++ = *cd)
+				;
 			  kmem_list = (struct MEM_LIST *)kcd;
 			  kmem_list->num_mem = mem_list.num_mem;
 			  for (mem_ix = 0; mem_ix < mem_list.num_mem; mem_ix++)
@@ -185,9 +245,9 @@ main (int argc, char *argv[])
 	perror ("open");
     }
   else
-    fprintf (stderr, "%s some-vmunix [-a] [-b] [-k] [-p] [-t]\n", argv[0]);
-}
-
+    Usage(argv[0]);
+  Version();
+}/* main() */
 
 void
 get_mem_config (void **fastmem_start, u_long *fastmem_size, u_long *chipmem_size)
@@ -221,8 +281,7 @@ get_mem_config (void **fastmem_start, u_long *fastmem_size, u_long *chipmem_size
 	  /* there should hardly be more than one entry for chip mem, but
 	     handle it the same nevertheless */
 	  /* chipmem always starts at 0, so include vector area */
-	  if (seg_start < 0x500)
-	  	mem_list.mem_seg[num_mem].mem_start = seg_start = 0;
+	  mem_list.mem_seg[num_mem].mem_start = seg_start = 0;
 	  /* round to multiple of 512K */
 	  seg_size = (seg_size + 512*1024 - 1) & -(512*1024);
 	  mem_list.mem_seg[num_mem].mem_size = seg_size;
@@ -249,7 +308,8 @@ get_mem_config (void **fastmem_start, u_long *fastmem_size, u_long *chipmem_size
 	  mem_list.mem_seg[num_mem].mem_start = seg_start;
 	  mem_list.mem_seg[num_mem].mem_size = seg_size;
 /* if p_opt is set, select memory by priority instead of size */
-	  if (seg_size > *fastmem_size)
+	  if ((!p_opt && seg_size > *fastmem_size) ||
+            (p_opt && *fastmem_size == 0))
 	    {
 	      *fastmem_size = seg_size;
 	      *fastmem_start = (void *)seg_start;
@@ -346,3 +406,12 @@ zero:	.long	0
 
 ");
 
+void Usage(char *program_name)
+{
+   fprintf(stderr,usage,program_name,program_name);
+}
+
+void Version()
+{
+  fprintf(stderr,"%s\n",_version + 6);
+}
