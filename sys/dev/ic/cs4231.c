@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231.c,v 1.1 1999/06/05 14:29:10 mrg Exp $	*/
+/*	$NetBSD: cs4231.c,v 1.2 2000/01/28 15:49:44 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -317,8 +317,8 @@ cs4231_open(addr, flags)
 	delay(10);
 	dma->dmacsr = 0;
 	delay(10);
-	ad1848_reset(&sc->sc_ad1848);
 #endif
+	ad1848_reset(&sc->sc_ad1848);
 
 	DPRINTF(("saopen: ok -> sc=%p\n", sc));
 	return (0);
