@@ -1,4 +1,4 @@
-/*	$NetBSD: telnetd.c,v 1.27 2001/08/20 11:01:48 wiz Exp $	*/
+/*	$NetBSD: telnetd.c,v 1.28 2001/08/20 11:14:05 wiz Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnetd.c,v 1.27 2001/08/20 11:01:48 wiz Exp $");
+__RCSID("$NetBSD: telnetd.c,v 1.28 2001/08/20 11:14:05 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -147,7 +147,7 @@ int	registerd_host_only = 0;
 
 /*
  * Because of the way ptyibuf is used with streams messages, we need
- * ptyibuf+1 to be on a full-word boundary.  The following wierdness
+ * ptyibuf+1 to be on a full-word boundary.  The following weirdness
  * is simply to make that happen.
  */
 long	ptyibufbuf[BUFSIZ/sizeof(long)+1];
@@ -507,7 +507,7 @@ main(argc, argv)
 
 	    s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 	    if (s < 0) {
-		perror("telnetd: socket");;
+		perror("telnetd: socket");
 		exit(1);
 	    }
 	    (void) setsockopt(s, SOL_SOCKET, SO_REUSEADDR,
