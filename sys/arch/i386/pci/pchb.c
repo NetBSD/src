@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.33 2002/05/16 01:01:37 thorpej Exp $	*/
+/*	$NetBSD: pchb.c,v 1.34 2002/06/21 16:03:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.33 2002/05/16 01:01:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.34 2002/06/21 16:03:33 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -156,6 +156,14 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 
 	case PCI_VENDOR_INTEL:
 		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_INTEL_82452_PB:
+			bcreg = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x40);
+			pbnum = PCISET_BRIDGE_NUMBER(bcreg);
+			if (pbnum != 0xff) {
+				pbnum++;
+				doattach = 1;
+			}
+			break;
 		case PCI_PRODUCT_INTEL_82443BX_AGP:
 		case PCI_PRODUCT_INTEL_82443BX_NOAGP:
 			/*
