@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.213 2000/06/05 23:44:55 jhawk Exp $ */
+/* $NetBSD: machdep.c,v 1.214 2000/06/09 01:40:13 cgd Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.213 2000/06/05 23:44:55 jhawk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.214 2000/06/09 01:40:13 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1762,7 +1762,7 @@ setregs(p, pack, stack)
 		fpcurproc = NULL;
 }
 
-int
+void
 spl0()
 {
 
@@ -1771,7 +1771,7 @@ spl0()
 		softintr_dispatch();
 	}
 
-	return (alpha_pal_swpipl(ALPHA_PSL_IPL_0));
+	(void) alpha_pal_swpipl(ALPHA_PSL_IPL_0);
 }
 
 /*
