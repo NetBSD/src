@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.43 2002/02/18 00:33:40 pk Exp $	*/
+/*	$NetBSD: make.c,v 1.44 2002/02/18 12:13:59 pk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: make.c,v 1.43 2002/02/18 00:33:40 pk Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.44 2002/02/18 12:13:59 pk Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.43 2002/02/18 00:33:40 pk Exp $");
+__RCSID("$NetBSD: make.c,v 1.44 2002/02/18 12:13:59 pk Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -161,7 +161,7 @@ MakeTimeStamp (pgn, cgn)
  */
 Boolean
 Make_OODate (gn)
-    register GNode *gn;	      /* the node to check */
+    GNode *gn;	      /* the node to check */
 {
     Boolean         oodate;
 
@@ -352,18 +352,16 @@ MakeFindChild (gnp, pgnp)
  *-----------------------------------------------------------------------
  * Make_HandleUse --
  *	Function called by Make_Run and SuffApplyTransform on the downward
- *	pass to handle .USE and transformation nodes. A callback function
- *	for Lst_ForEach, it implements the .USE and transformation
- *	functionality by copying the node's commands, type flags
- *	and children to the parent node. Should be called before the
- *	children are enqueued to be looked at by MakeAddChild.
+ *	pass to handle .USE and transformation nodes. It implements the
+ *	.USE and transformation functionality by copying the node's commands,
+ *	type flags and children to the parent node.
  *
  *	A .USE node is much like an explicit transformation rule, except
  *	its commands are always added to the target node, even if the
  *	target already has commands.
  *
  * Results:
- *	returns 0.
+ *	none
  *
  * Side Effects:
  *	Children and commands may be added to the parent and the parent's
@@ -373,13 +371,19 @@ MakeFindChild (gnp, pgnp)
  */
 void
 Make_HandleUse (cgn, pgn)
-    register GNode	*cgn;	/* The .USE node */
-    register GNode   	*pgn;	/* The target of the .USE node */
+    GNode	*cgn;	/* The .USE node */
+    GNode   	*pgn;	/* The target of the .USE node */
 {
-    register LstNode	ln; 	/* An element in the children list */
+    LstNode	ln; 	/* An element in the children list */
 
-    if (cgn->type & (OP_USE|OP_USEBEFORE|OP_TRANSFORM)) {
-	if ((cgn->type & (OP_USE|OP_USEBEFORE)) || Lst_IsEmpty(pgn->commands)) {
+#ifdef DEBUG_SRC
+    if ((cgn->type & (OP_USE|OP_USEBEFORE|OP_TRANSFORM)) == 0) {
+	printf("Make_HandleUse: called for plain node %s\n", cgn->name);
+	return;
+    }
+#endif
+
+    if ((cgn->type & (OP_USE|OP_USEBEFORE)) || Lst_IsEmpty(pgn->commands)) {
 	    if (cgn->type & OP_USEBEFORE) {
 		/*
 		 * .USEBEFORE --
@@ -396,43 +400,59 @@ Make_HandleUse (cgn, pgn)
 		 */
 		(void) Lst_Concat (pgn->commands, cgn->commands, LST_CONCNEW);
 	    }
-	}
-
-	if (Lst_Open (cgn->children) == SUCCESS) {
-	    while ((ln = Lst_Next (cgn->children)) != NILLNODE) {
-		register GNode *tgn, *gn = (GNode *)Lst_Datum (ln);
-
-		/*
-		 * Expand variables in the .USE node's name
-		 * and save the unexpanded form.
-		 * We don't need to do this for commands.
-		 * They get expanded properly when we execute.
-		 */
-		if (gn->uname == NULL) {
-		    gn->uname = gn->name;
-		} else {
-		    if (gn->name)
-			free(gn->name);
-		}
-		gn->name = Var_Subst(NULL, gn->uname, pgn, FALSE);
-		if (gn->name && gn->uname && strcmp(gn->name, gn->uname) != 0) {
-		    /* See if we have a target for this node. */
-		    tgn = Targ_FindNode(gn->name, TARG_NOCREATE);
-		    if (tgn != NILGNODE)
-			gn = tgn;
-		}
-
-		(void) Lst_AtEnd (pgn->children, gn);
-		(void) Lst_AtEnd (gn->parents, pgn);
-		pgn->unmade += 1;
-	    }
-	    Lst_Close (cgn->children);
-	}
-
-	pgn->type |= cgn->type & ~(OP_OPMASK|OP_USE|OP_USEBEFORE|OP_TRANSFORM);
     }
+
+    if (Lst_Open (cgn->children) == SUCCESS) {
+	while ((ln = Lst_Next (cgn->children)) != NILLNODE) {
+	    GNode *tgn, *gn = (GNode *)Lst_Datum (ln);
+
+	    /*
+	     * Expand variables in the .USE node's name
+	     * and save the unexpanded form.
+	     * We don't need to do this for commands.
+	     * They get expanded properly when we execute.
+	     */
+	    if (gn->uname == NULL) {
+		gn->uname = gn->name;
+	    } else {
+		if (gn->name)
+		    free(gn->name);
+	    }
+	    gn->name = Var_Subst(NULL, gn->uname, pgn, FALSE);
+	    if (gn->name && gn->uname && strcmp(gn->name, gn->uname) != 0) {
+		/* See if we have a target for this node. */
+		tgn = Targ_FindNode(gn->name, TARG_NOCREATE);
+		if (tgn != NILGNODE)
+		    gn = tgn;
+	    }
+
+	    (void) Lst_AtEnd (pgn->children, gn);
+	    (void) Lst_AtEnd (gn->parents, pgn);
+	    pgn->unmade += 1;
+	}
+	Lst_Close (cgn->children);
+    }
+
+    pgn->type |= cgn->type & ~(OP_OPMASK|OP_USE|OP_USEBEFORE|OP_TRANSFORM);
 }
 
+/*-
+ *-----------------------------------------------------------------------
+ * MakeHandleUse --
+ *	Callback function for Lst_ForEach, used by Make_Run on the downward
+ *	pass to handle .USE nodes. Should be called before the children
+ *	are enqueued to be looked at by MakeAddChild.
+ *	This function calls Make_HandleUse to copy the .USE node's commands,
+ *	type flags and children to the parent node.
+ *
+ * Results:
+ *	returns 0.
+ *
+ * Side Effects:
+ *	After expansion, .USE child nodes are removed from the parent
+ *
+ *-----------------------------------------------------------------------
+ */
 static int
 MakeHandleUse (cgnp, pgnp)
     ClientData	cgnp;	/* the child we've just examined */
@@ -441,11 +461,16 @@ MakeHandleUse (cgnp, pgnp)
     GNode	*cgn = (GNode *) cgnp;
     GNode	*pgn = (GNode *) pgnp;
     LstNode	ln; 	/* An element in the children list */
+    int		unmarked;
 
-    if ((cgn->type & OP_MARK) == 0) {
+    unmarked = ((cgn->type & OP_MARK) == 0);
+    cgn->type |= OP_MARK;
+
+    if ((cgn->type & (OP_USE|OP_USEBEFORE)) == 0)
+	return (0);
+
+    if (unmarked)
 	Make_HandleUse(cgn, pgn);
-	cgn->type |= OP_MARK;
-    }
 
     /*
      * This child node is now "made", so we decrement the count of
@@ -454,8 +479,7 @@ MakeHandleUse (cgnp, pgnp)
      * children the parent has. This is used by Make_Run to decide
      * whether to queue the parent or examine its children...
      */
-    if ((cgn->type & (OP_USE|OP_USEBEFORE)) &&
-	    (ln = Lst_Member (pgn->children, (ClientData) cgn)) != NILLNODE) {
+    if ((ln = Lst_Member (pgn->children, (ClientData) cgn)) != NILLNODE) {
 	Lst_Remove(pgn->children, ln);
 	pgn->unmade--;
     }
@@ -584,13 +608,13 @@ Make_Recheck (gn)
  */
 void
 Make_Update (cgn)
-    register GNode *cgn;	/* the child node */
+    GNode *cgn;	/* the child node */
 {
-    register GNode 	*pgn;	/* the parent node */
-    register char  	*cname;	/* the child's name */
-    register LstNode	ln; 	/* Element in parents and iParents lists */
-    time_t mtime = -1;
-    char *p1;
+    GNode 	*pgn;	/* the parent node */
+    char  	*cname;	/* the child's name */
+    LstNode	ln; 	/* Element in parents and iParents lists */
+    time_t	mtime = -1;
+    char	*p1;
 
     cname = Var_Value (TARGET, cgn, &p1);
     if (p1)
@@ -820,7 +844,7 @@ Make_DoAllVar (gn)
 static Boolean
 MakeStartJobs ()
 {
-    register GNode	*gn;
+    GNode	*gn;
 
     while (!Lst_IsEmpty (toBeMade)) {
 	gn = (GNode *) Lst_DeQueue (toBeMade);
@@ -962,9 +986,9 @@ Lst
 Make_ExpandUse (targs)
     Lst             targs;	/* the initial list of targets */
 {
-    register GNode  *gn;	/* a temporary pointer */
-    register Lst    examine; 	/* List of targets to examine */
-    register Lst    ntargs;	/* List of new targets to be made */
+    GNode  *gn;		/* a temporary pointer */
+    Lst    examine; 	/* List of targets to examine */
+    Lst    ntargs;	/* List of new targets to be made */
 
     ntargs = Lst_Init (FALSE);
 
