@@ -1,4 +1,4 @@
-.\"	$NetBSD: inet.4,v 1.12 2002/05/13 08:23:58 kleink Exp $
+.\"	$NetBSD: inet.4,v 1.13 2003/02/04 22:38:15 perry Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -47,7 +47,7 @@ The Internet protocol family is a collection of protocols
 layered atop the
 .Em Internet  Protocol
 .Pq Tn IP
-transport layer, and utilizing the Internet address format.
+transport layer, and using the Internet address format.
 The Internet family provides protocol support for the
 .Dv SOCK_STREAM , SOCK_DGRAM ,
 and
@@ -67,7 +67,7 @@ reversed).  The include file
 defines this address
 as a discriminated union.
 .Pp
-Sockets bound to the Internet protocol family utilize
+Sockets bound to the Internet protocol family use
 the following addressing structure,
 .Bd -literal -offset indent
 struct sockaddr_in {
