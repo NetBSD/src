@@ -1,4 +1,4 @@
-/*	$NetBSD: bzero.S,v 1.3 2000/07/08 16:02:15 eeh Exp $	*/
+/*	$NetBSD: bzero.S,v 1.4 2000/07/23 20:34:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1999
@@ -51,7 +51,7 @@
 #if 0
 	.asciz "@(#)bzero.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: bzero.S,v 1.3 2000/07/08 16:02:15 eeh Exp $")
+	RCSID("$NetBSD: bzero.S,v 1.4 2000/07/23 20:34:07 mycroft Exp $")
 #endif
 #endif  /* LIBC_SCCS and not lint */
 
@@ -132,7 +132,7 @@ Lbzero_internal:
 	bl,a,pn	%icc, Lbzero_cleanup	! Less than 8 left
 	 dec	8, %o1			! Fixup count -8
 2:
-	!! Now we're 64-bit aligned
+	!! Now we are 64-bit aligned
 	cmp	%o1, 256		! Use block clear if len > 256
 	bge,pt	%xcc, Lbzero_block	! use block store insns
 	 deccc	8, %o1
@@ -223,22 +223,10 @@ Lbzero_block:
 	 dec	8, %i1
 
 2:
-	brz,pt	%i2, 4f					! Do we have a pattern to load?
-	 fzero	%f0					! Set up FPU
-
-	btst	1, %fp
-	bnz,pt	%icc, 3f				! 64-bit stack?
-	 nop
-	stw	%i2, [%fp + 0x28]			! Flush this puppy to RAM
-	membar	#StoreLoad
-	ld	[%fp + 0x28], %f0
-	ba,pt	%icc, 4f
-	 fmovsa	%icc, %f0, %f1
-3:	
 	stx	%i2, [%fp + BIAS + 0x50]		! Flush this puppy to RAM
 	membar	#StoreLoad
 	ldd	[%fp + BIAS + 0x50], %f0
-4:	
+
 	fmovda	%icc, %f0, %f2				! Duplicate the pattern
 	fmovda	%icc, %f0, %f4
 	fmovda	%icc, %f0, %f6
@@ -246,14 +234,6 @@ Lbzero_block:
 	fmovda	%icc, %f0, %f10
 	fmovda	%icc, %f0, %f12
 	fmovda	%icc, %f0, %f14
-	fmovda	%icc, %f0, %f16				! And second bank
-	fmovda	%icc, %f0, %f18
-	fmovda	%icc, %f0, %f20
-	fmovda	%icc, %f0, %f22
-	fmovda	%icc, %f0, %f24
-	fmovda	%icc, %f0, %f26
-	fmovda	%icc, %f0, %f28
-	fmovda	%icc, %f0, %f30
 	
 	!! Remember: we were 8 bytes too far
 	dec	56, %i1			! Go one iteration too far
