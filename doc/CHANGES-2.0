@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.395 2004/08/12 20:10:09 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.396 2004/08/12 20:12:37 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6479,3 +6479,8 @@ libexec/ftpd/ftpcmd.y				1.78
 
 	Fix minor memory leak with fromname.
 	[lukem, ticket #755]
+
+libexec/ftpd/ftpcmd.y				1.79
+
+	Correctly clamp illegal "SITE CHMOD" mode values.
+	[lukem, ticket #756]
