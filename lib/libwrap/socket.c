@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.9 2001/11/05 15:05:18 lukem Exp $	*/
+/*	$NetBSD: socket.c,v 1.10 2002/05/24 05:38:20 itojun Exp $	*/
 
  /*
   * This module determines the type of socket (datagram, stream), the client
@@ -22,7 +22,7 @@
 #if 0
 static char sccsid[] = "@(#) socket.c 1.15 97/03/21 19:27:24";
 #else
-__RCSID("$NetBSD: socket.c,v 1.9 2001/11/05 15:05:18 lukem Exp $");
+__RCSID("$NetBSD: socket.c,v 1.10 2002/05/24 05:38:20 itojun Exp $");
 #endif
 #endif
 
@@ -45,36 +45,6 @@ __RCSID("$NetBSD: socket.c,v 1.9 2001/11/05 15:05:18 lukem Exp $");
 /* Forward declarations. */
 
 static void sock_sink __P((int));
-
-#ifdef APPEND_DOT
-static struct hostent *gethostbyname_dot __P((char *));
-
- /*
-  * Speed up DNS lookups by terminating the host name with a dot. Should be
-  * done with care. The speedup can give problems with lookups from sources
-  * that lack DNS-style trailing dot magic, such as local files or NIS maps.
-  */
-
-static struct hostent *gethostbyname_dot(name)
-char   *name;
-{
-    char    dot_name[MAXHOSTNAMELEN + 1];
-
-    /*
-     * Don't append dots to unqualified names. Such names are likely to come
-     * from local hosts files or from NIS.
-     */
-
-    if (strchr(name, '.') == 0 || strlen(name) >= MAXHOSTNAMELEN - 1) {
-	return (gethostbyname(name));
-    } else {
-	(void)snprintf(dot_name, sizeof dot_name, "%s.", name);
-	return (gethostbyname(dot_name));
-    }
-}
-
-#define gethostbyname gethostbyname_dot
-#endif
 
 /* sock_host - look up endpoint addresses and install conversion methods */
 
