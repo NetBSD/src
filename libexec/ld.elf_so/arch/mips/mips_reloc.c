@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.42 2003/09/24 09:59:45 mycroft Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.43 2003/09/24 10:18:52 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -214,9 +214,7 @@ _rtld_relocate_nonplt_objects(const Obj_Entry *obj)
 			 * link ordering rules if the symbol is defined in
 			 * more than one module.  For now, if there is a
 			 * definition, we fail the test above and force a full
-			 * symbol lookup.  Unfortunately, a similar problem
-			 * also seems to happen with references to data items,
-			 * and we can't fix that here.  - mycroft, 2003/09/24
+			 * symbol lookup.  - mycroft, 2003/09/24
 			 */
 			*got = sym->st_value + (Elf_Addr)obj->relocbase;
 		} else if (sym->st_info == ELF_ST_INFO(STB_GLOBAL, STT_SECTION)) {
