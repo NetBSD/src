@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_cardbus.c,v 1.9 1999/11/17 08:49:16 thorpej Exp $	*/
+/*	$NetBSD: if_ex_cardbus.c,v 1.10 2000/01/26 09:04:59 haya Exp $	*/
 
 /*
  * CardBus specific routines for 3Com 3C575-family CardBus ethernet adapter
@@ -339,11 +339,14 @@ ex_cardbus_detach(self, arg)
 	struct ex_softc *sc = &psc->sc_softc;
 	cardbus_function_tag_t cf = psc->sc_ct->ct_cf;
 	cardbus_chipset_tag_t cc = psc->sc_ct->ct_cc;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 	/*
 	 * XXX Currently, no detach.
 	 */
 	printf("- ex_cardbus_detach\n");
+
+	if_down(ifp);
 
 	cardbus_intr_disestablish(cc, cf, sc->sc_ih);
 
