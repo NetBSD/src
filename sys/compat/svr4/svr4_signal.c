@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.c,v 1.30 1998/10/04 16:21:13 christos Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.31 1998/10/06 08:51:14 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -415,6 +415,12 @@ svr4_sys_sigprocmask(p, v, retval)
 	sigset_t nbss, obss;
 	int how;
 	int error;
+
+	/*
+	 * Initialize how to 0 to avoid a compiler warning.  Note that
+	 * this is safe because of the check in the default: case.
+	 */
+	how = 0;
 
 	switch (SCARG(uap, how)) {
 	case SVR4_SIG_BLOCK:
