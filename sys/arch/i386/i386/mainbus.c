@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.49 2003/02/26 21:28:23 fvdl Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.50 2003/03/04 01:06:38 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.49 2003/02/26 21:28:23 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.50 2003/03/04 01:06:38 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,13 +122,13 @@ union mainbus_attach_args {
  * time it's checked below, then mainbus attempts to attach an ISA.
  */
 int	isa_has_been_seen;
-struct x86_isa_chipset i386_isa_chipset;
+struct x86_isa_chipset x86_isa_chipset;
 #if NISA > 0
 struct isabus_attach_args mba_iba = {
 	"isa",
 	X86_BUS_SPACE_IO, X86_BUS_SPACE_MEM,
 	&isa_bus_dma_tag,
-	&i386_isa_chipset
+	&x86_isa_chipset
 };
 #endif
 
@@ -240,7 +240,7 @@ mainbus_attach(parent, self, aux)
 	/*
 	 * ACPI and PNPBIOS need ISA DMA initialized before they start probing.
 	 */
-	isa_dmainit(&i386_isa_chipset, X86_BUS_SPACE_IO, &isa_bus_dma_tag,
+	isa_dmainit(&x86_isa_chipset, X86_BUS_SPACE_IO, &isa_bus_dma_tag,
 	    self);
 #endif
 
@@ -254,7 +254,7 @@ mainbus_attach(parent, self, aux)
 		    PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
 		    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY |
 		    PCI_FLAGS_MWI_OKAY;
-		mba.mba_acpi.aa_ic = &i386_isa_chipset;
+		mba.mba_acpi.aa_ic = &x86_isa_chipset;
 		config_found(self, &mba.mba_acpi, mainbus_print);
 #if 0 /* XXXJRT not yet */
 		if (acpi_active) {
@@ -274,7 +274,7 @@ mainbus_attach(parent, self, aux)
 #endif
 	if (pnpbios_probe()) {
 		mba.mba_paa.paa_busname = "pnpbios";
-		mba.mba_paa.paa_ic = &i386_isa_chipset;
+		mba.mba_paa.paa_ic = &x86_isa_chipset;
 		config_found(self, &mba.mba_paa, mainbus_print);
 	}
 #endif
