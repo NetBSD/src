@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.14 1999/08/27 07:59:49 tsubai Exp $
+#	$NetBSD: INSTALL,v 1.15 1999/08/28 16:50:36 tsubai Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -12,7 +12,7 @@ makeoptions	TEXTADDR=0x800000
 # Enable the hooks used for initializing the ram-disk.
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# Force root on ram-disk
-options 	MINIROOTSIZE=3072	# 1.5 Megabytes
+options 	MINIROOTSIZE=4096	# 2 Megabytes
 
 # Standard system options
 options 	BUFPAGES=800
