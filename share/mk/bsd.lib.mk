@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.162 2000/01/22 19:31:01 mycroft Exp $
+#	$NetBSD: bsd.lib.mk,v 1.163 2000/02/19 05:36:23 erh Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -254,6 +254,7 @@ LOBJS+=${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
 .endif
 
 ALLOBJS=${OBJS} ${POBJS} ${SOBJS} ${LOBJS}
+.NOPATH: ${ALLOBJS} ${_LIBS}
 
 realall: ${SRCS} ${ALLOBJS:O} ${_LIBS}
 
