@@ -1,4 +1,4 @@
-.\"	$NetBSD: reboot.8,v 1.6 1997/10/20 09:11:35 enami Exp $
+.\"	$NetBSD: reboot.8,v 1.7 1998/01/20 23:37:27 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)reboot.8	8.1 (Berkeley) 6/9/93
 .\"
-.Dd June 9, 1993
+.Dd January 20, 1998
 .Dt REBOOT 8
 .Os
 .Sh NAME
@@ -43,9 +43,9 @@
 stopping and restarting the system
 .Sh SYNOPSIS
 .Nm halt
-.Op Fl nqd
+.Op Fl dlnq
 .Nm ""
-.Op Fl nqd
+.Op Fl dlnq
 .Sh DESCRIPTION
 The
 .Nm halt
@@ -59,26 +59,20 @@ accounting file.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl n
-If the
-.Fl n
-option is specified,
-the file system cache is not flushed.
-This option should probably not be used.
-.It Fl q
-If the
-.Fl q
-option is specified,
-the system is halted or restarted quickly and ungracefully, and only
-the flushing of the file system cache is performed.
-This option should probably not be used.
 .It Fl d
-If the
-.Fl d
-option is specified,
-the system will create a dump before rebooting.
+Create a dump before halting or restarting.
 This option is useful for debugging system dump procedures or
 capturing the state of a corrupted or misbehaving system.
+.It Fl l
+Send a message via
+.Xr syslog 3
+before halting or restarting.
+.It Fl n
+Do not flush the file system cache.
+Use this option with extreme caution.
+.It Fl q
+Do not give processes a chance to shut down before halting or restarting.
+This option should not normally be used.
 .El
 .Pp
 Normally, the
@@ -86,6 +80,7 @@ Normally, the
 utility is used when the system needs to be halted or restarted, giving
 users advance warning of their impending doom.
 .Sh SEE ALSO
+.Xr syslog 3 ,
 .Xr utmp 5 ,
 .Xr boot 8 ,
 .Xr shutdown 8 ,
