@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.113 1998/03/17 05:00:18 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.114 1998/03/18 19:02:50 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.113 1998/03/17 05:00:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.114 1998/03/18 19:02:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -754,12 +754,8 @@ nobootinfo:
 	 * Initialize the virtual memory system, and set the
 	 * page table base register in proc 0's PCB.
 	 */
-#ifndef NEW_PMAP
-	pmap_bootstrap(ALPHA_PHYS_TO_K0SEG(ptb << PGSHIFT));
-#else
 	pmap_bootstrap(ALPHA_PHYS_TO_K0SEG(ptb << PGSHIFT),
 	    hwrpb->rpb_max_asn);
-#endif
 
 	/*
 	 * Initialize the rest of proc 0's PCB, and cache its physical
