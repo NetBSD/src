@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.24 1995/04/07 04:30:13 gwr Exp $	*/
+/*	$NetBSD: clock.c,v 1.25 1995/08/08 21:05:48 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -282,14 +282,15 @@ microtime(tvp)
 	static struct timeval lasttime;
 
 	*tvp = time;
-	tvp->tv_usec;
+	tvp->tv_usec++; 	/* XXX */
 	while (tvp->tv_usec > 1000000) {
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;
 	}
 	if (tvp->tv_sec == lasttime.tv_sec &&
 		tvp->tv_usec <= lasttime.tv_usec &&
-		(tvp->tv_usec = lasttime.tv_usec + 1) > 1000000) {
+		(tvp->tv_usec = lasttime.tv_usec + 1) > 1000000)
+	{
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;
 	}
