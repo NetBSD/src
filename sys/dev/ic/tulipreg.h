@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipreg.h,v 1.26 2002/03/26 07:57:16 chs Exp $	*/
+/*	$NetBSD: tulipreg.h,v 1.27 2002/04/04 05:45:54 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -890,12 +890,18 @@ struct tulip_desc {
 #define	GPP_PNIC_PIN_LNK100X	3
 
 /*
- * Defintitions used for the SMC 9332DST (21140) board.
+ * Definitions used for the SMC 9332DST (21140) board.
  */
 #define GPP_SMC9332DST_PINS	0x3f	/* General Purpose Pin directions */
 #define GPP_SMC9332DST_OK10	0x80	/* 10 Mb/sec Signal Detect gep<7> */
 #define GPP_SMC9332DST_OK100	0x40	/* 100 Mb/sec Signal Detect gep<6> */
 #define GPP_SMC9332DST_INIT	0x09	/* No loopback --- point-to-point */
+
+/*
+ * Definitions used for the Cogent EM1x0 (21140) board.
+ */
+#define GPP_COGENT_EM1x0_PINS	0x3f	/* General Purpose Pin directions */
+#define GPP_COGENT_EM1x0_INIT	0x09	/* No loopback --- point-to-point */
 
 
 /*
