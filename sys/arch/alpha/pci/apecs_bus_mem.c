@@ -1,4 +1,4 @@
-/* $NetBSD: apecs_bus_mem.c,v 1.4 1997/04/07 23:40:28 cgd Exp $ */
+/* $NetBSD: apecs_bus_mem.c,v 1.5 1997/04/10 23:21:30 cgd Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -30,7 +30,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(1, "$NetBSD: apecs_bus_mem.c,v 1.4 1997/04/07 23:40:28 cgd Exp $");
+__KERNEL_RCSID(1, "$NetBSD: apecs_bus_mem.c,v 1.5 1997/04/10 23:21:30 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,4 +75,4 @@ __KERNEL_RCSID(1, "$NetBSD: apecs_bus_mem.c,v 1.4 1997/04/07 23:40:28 cgd Exp $"
 #define	CHIP_S_MEM_W2_SYS_END(v)					\
     (APECS_PCI_SPARSE + (0x08000000UL << 5) - 1)
 
-#include "pcs_bus_mem_common.c"
+#include "pci_swiz_mem_chipdep.c"
