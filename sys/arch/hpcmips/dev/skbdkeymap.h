@@ -1,4 +1,4 @@
-/*	$NetBSD: skbdkeymap.h,v 1.5 2000/01/16 21:47:01 uch Exp $ */
+/*	$NetBSD: skbdkeymap.h,v 1.6 2000/02/27 16:28:13 uch Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, by UCHIYAMA Yasushi
@@ -110,7 +110,7 @@ const u_int8_t tc5165_compaq_c_jp_keymap[] = {
 /* 3 */	77,  75,  80,  72,  39,  53,  52,  51,
 /* 4 */	24,  25,  40,  IGN, 43,  26,  115, 58,
 /* 5 */	54,  IGN, IGN, IGN, IGN, IGN, IGN, IGN,
-/* 6 */	IGN, IGN, IGN, SPL,  IGN, IGN, IGN, IGN, /* Light */
+/* 6 */	IGN, IGN, IGN, SPL, IGN, IGN, IGN, IGN, /* Light */
 /* 7 */	IGN, IGN, IGN, IGN, IGN, IGN, IGN, IGN,
 /* 8 */	42,  IGN, IGN, IGN, IGN, IGN, IGN, IGN,
 /* 9 */	29,  IGN, IGN, IGN, IGN, IGN, IGN, IGN,
