@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.14 2003/08/10 01:22:03 uwe Exp $	*/
+/*	$NetBSD: asm.h,v 1.15 2003/08/27 19:59:57 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -80,7 +80,18 @@
 	x:
 #endif /* __ELF__ */
 
+#ifdef GPROF
+#define	_PROF_PROLOGUE				  \
+	mov.l	1f,r1				; \
+	mova	2f,r0				; \
+	jmp	@r1				; \
+	 nop					; \
+	.align	2				; \
+1:	.long	__mcount			; \
+2:
+#else  /* !GPROF */
 #define	_PROF_PROLOGUE
+#endif /* !GPROF */
 
 #define	ENTRY(y)	_ENTRY(_C_LABEL(y))				;\
 	_PROF_PROLOGUE
