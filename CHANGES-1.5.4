@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.78 2002/11/10 20:00:45 itojun Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.79 2002/11/13 00:25:17 itojun Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1780,3 +1780,7 @@ sbin/sysctl/sysctl.c				1.59
 
   When printing out nodes of type "string", don't print anything if
   sysctl() reports that 0 bytes were returned.  Reported by Matt Green.
+
+lib/libc/net/getnetnamadr.c			1.25
+
+  Fix remote buffer overrun.
