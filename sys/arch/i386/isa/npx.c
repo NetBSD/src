@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.60.2.1 1998/01/29 11:59:56 mellon Exp $	*/
+/*	$NetBSD: npx.c,v 1.60.2.2 1998/05/05 08:07:14 mycroft Exp $	*/
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -7,7 +7,7 @@
 #endif
 
 /*-
- * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
+ * Copyright (c) 1994, 1995, 1998 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1990 William Jolitz.
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
@@ -381,21 +381,33 @@ npxintr(arg)
 	if (p == 0 || npx_type == NPX_NONE) {
 		printf("npxintr: p = %p, curproc = %p, npx_type = %d\n",
 		    p, curproc, npx_type);
-		panic("npxintr from nowhere");
+		panic("npxintr: came from nowhere");
 	}
+
 	/*
 	 * Clear the interrupt latch.
 	 */
 	outb(0xf0, 0);
+
 	/*
-	 * If we're saving, ignore the interrupt.  The FPU will happily
-	 * generate another one when we restore the state later.
+	 * If we're saving, ignore the interrupt.  The FPU will generate
+	 * another one when we restore the state later.
 	 */
 	if (npx_nointr != 0)
 		return (1);
+
+#ifdef DIAGNOSTIC
 	/*
-	 * Find the address of npxproc's savefpu.  This is not necessarily
-	 * the one in curpcb.
+	 * At this point, npxproc should be curproc.  If it wasn't, the TS bit
+	 * should be set, and we should have gotten a DNA exception.
+	 */
+	if (p != curproc)
+		panic("npxintr: wrong process");
+#endif
+
+	/*
+	 * Find the address of npxproc's saved FPU state.  (Given the invariant
+	 * above, this is always the one in curpcb.)
 	 */
 	addr = &p->p_addr->u_pcb.pcb_savefpu;
 	/*
@@ -421,10 +433,9 @@ npxintr(arg)
 	addr->sv_ex_tw = addr->sv_env.en_tw;
 
 	/*
-	 * Pass exception to process.  If it's the current process, try to do
-	 * it immediately.
+	 * Pass exception to process.
 	 */
-	if (p == curproc && USERMODE(frame->if_cs, frame->if_eflags)) {
+	if (USERMODE(frame->if_cs, frame->if_eflags)) {
 		/*
 		 * Interrupt is essentially a trap, so we can afford to call
 		 * the SIGFPE handler (if any) as soon as the interrupt
@@ -449,18 +460,13 @@ npxintr(arg)
 		trapsignal(p, SIGFPE, code);
 	} else {
 		/*
-		 * Nested interrupt.  These losers occur when:
-		 *	o an IRQ13 is bogusly generated at a bogus time, e.g.:
-		 *		o immediately after an fnsave or frstor of an
-		 *		  error state.
-		 *		o a couple of 386 instructions after
-		 *		  "fstpl _memvar" causes a stack overflow.
-		 *	  These are especially nasty when combined with a
-		 *	  trace trap.
-		 *	o an IRQ13 occurs at the same time as another higher-
-		 *	  priority interrupt.
+		 * This is a nested interrupt.  This should only happen when
+		 * an IRQ13 occurs at the same time as a higher-priority
+		 * interrupt.
 		 *
-		 * Treat them like a true async interrupt.
+		 * XXX
+		 * Currently, we treat this like an asynchronous interrupt, but
+		 * this has disadvantages.
 		 */
 		psignal(p, SIGFPE);
 	}
@@ -469,9 +475,11 @@ npxintr(arg)
 }
 
 /*
- * Wrapper for fnsave instruction to handle h/w bugs.  If there is an error
- * pending, then fnsave generates a bogus IRQ13 on some systems.  Force any
- * IRQ13 to be handled immediately, and then ignore it.
+ * Wrapper for the fnsave instruction.  We set the TS bit in the saved CR0 for
+ * this process, so that it will get a DNA exception on the FPU instruction and
+ * force a reload.  This routine is always called with npx_nointr set, so that
+ * any pending exception will be thrown away.  (It will be caught again if/when
+ * the FPU state is restored.)
  *
  * This routine is always called at spl0.  If it might called with the NPX
  * interrupt masked, it would be necessary to forcibly unmask the NPX interrupt
@@ -480,14 +488,11 @@ npxintr(arg)
 static inline void
 npxsave1()
 {
-	register struct pcb *pcb;
+	struct proc *p = npxproc;
 
-	npx_nointr = 1;
-	pcb = &npxproc->p_addr->u_pcb;
-	fnsave(&pcb->pcb_savefpu);
-	pcb->pcb_cr0 |= CR0_TS;
+	fnsave(&p->p_addr->u_pcb.pcb_savefpu);
+	p->p_addr->u_pcb.pcb_cr0 |= CR0_TS;
 	fwait();
-	npx_nointr = 0;
 }
 
 /*
@@ -501,7 +506,6 @@ int
 npxdna(p)
 	struct proc *p;
 {
-	u_short cw;
 
 	if (npx_type == NPX_NONE) {
 		IPRINTF(("Emul"));
@@ -516,30 +520,27 @@ npxdna(p)
 	p->p_addr->u_pcb.pcb_cr0 &= ~CR0_TS;
 	clts();
 
-	if ((p->p_md.md_flags & MDP_USEDFPU) == 0) {
+	/*
+	 * Initialize the FPU state to clear any exceptions.  If someone else
+	 * was using the FPU, save their state (which does an implicit
+	 * initialization).
+	 */
+	npx_nointr = 1;
+	if (npxproc != 0 && npxproc != p) {
+		IPRINTF(("Save"));
+		npxsave1();
+	} else {
 		IPRINTF(("Init"));
-		cw = p->p_addr->u_pcb.pcb_savefpu.sv_env.en_cw;
-		if (npxproc != 0 && npxproc != p)
-			npxsave1();
-		else {
-			npx_nointr = 1;
-			fninit();
-			fwait();
-			npx_nointr = 0;
-		}
-		npxproc = p;
-		fldcw(&cw);
+		fninit();
+		fwait();
+	}
+	npx_nointr = 0;
+	npxproc = p;
+
+	if ((p->p_md.md_flags & MDP_USEDFPU) == 0) {
+		fldcw(&p->p_addr->u_pcb.pcb_savefpu.sv_env.en_cw);
 		p->p_md.md_flags |= MDP_USEDFPU;
 	} else {
-		if (npxproc != 0) {
-#ifdef DIAGNOSTIC
-			if (npxproc == p)
-				panic("npxdna: same process");
-#endif
-			IPRINTF(("Save"));
-			npxsave1();
-		}
-		npxproc = p;
 		/*
 		 * The following frstor may cause an IRQ13 when the state being
 		 * restored has a pending error.  The error will appear to have
@@ -565,10 +566,11 @@ npxdna(p)
 void
 npxdrop()
 {
+	struct proc *p = npxproc;
 
-	stts();
-	npxproc->p_addr->u_pcb.pcb_cr0 |= CR0_TS;
 	npxproc = 0;
+	stts();
+	p->p_addr->u_pcb.pcb_cr0 |= CR0_TS;
 }
 
 /*
@@ -577,8 +579,8 @@ npxdrop()
  * The FNSAVE instruction clears the FPU state.  Rather than reloading the FPU
  * immediately, we clear npxproc and turn on CR0_TS to force a DNA and a reload
  * of the FPU state the next time we try to use it.  This routine is only
- * called when forking or core dump, so this algorithm at worst forces us to
- * trap once per fork(), and at best saves us a reload once per fork().
+ * called when forking or core dumping, so the lazy reload at worst forces us
+ * to trap once per fork(), and at best saves us a reload once per fork().
  */
 void
 npxsave()
@@ -590,7 +592,9 @@ npxsave()
 #endif
 	IPRINTF(("Fork"));
 	clts();
+	npx_nointr = 1;
 	npxsave1();
-	stts();
+	npx_nointr = 0;
 	npxproc = 0;
+	stts();
 }
