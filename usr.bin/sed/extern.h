@@ -34,7 +34,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)extern.h	8.1 (Berkeley) 6/6/93
+ *	from: @(#)extern.h	8.1 (Berkeley) 6/6/93
+ *	$Id: extern.h,v 1.4 1994/02/03 23:44:52 cgd Exp $
  */
 
 extern struct s_command *prog;
