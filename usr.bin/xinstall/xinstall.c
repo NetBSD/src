@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)xinstall.c	5.24 (Berkeley) 7/1/90";*/
-static char rcsid[] = "$Id: xinstall.c,v 1.3 1993/08/01 18:00:57 mycroft Exp $";
+static char rcsid[] = "$Id: xinstall.c,v 1.4 1994/10/02 21:32:31 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -278,10 +278,10 @@ build(path)
 {
         register char *p;
         struct stat sb;
-        int create, ch;
+        int ch;
 
-        for (create = 0, p = path;; ++p)
-                if (!*p || *p  == '/') {
+        for (p = path;; ++p)
+                if (!*p || (p != path && *p  == '/')) {
                         ch = *p;
                         *p = '\0';
                         if (stat(path, &sb)) {
@@ -289,10 +289,9 @@ build(path)
                                         error(path);
                                         return(1);
                                 }
-                                create = 1;
                         }
                         if (!(*p = ch))
-                                break;
+				break;
                 }
 
 	if ((group || owner) &&
