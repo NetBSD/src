@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.9 2001/12/12 12:06:49 lukem Exp $
+#	$NetBSD: Makefile,v 1.10 2002/12/26 12:31:25 jdolecek Exp $
 
 .include "../Makefile.inc"
 
-.PATH:	$S/msdosfs ${.CURDIR}/..
+.PATH:	$S/fs/msdosfs ${.CURDIR}/..
 
 KMOD=	msdosfs
 
