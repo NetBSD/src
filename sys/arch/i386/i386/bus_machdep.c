@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_machdep.c,v 1.1 2000/01/26 18:48:00 drochner Exp $	*/
+/*	$NetBSD: bus_machdep.c,v 1.1.2.1 2000/02/20 17:52:01 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -298,6 +298,9 @@ i386_mem_add_mapping(bpa, size, cacheable, bshp)
 		 * PG_N doesn't exist on 386's, so we assume that
 		 * the mainboard has wired up device space non-cacheable
 		 * on those machines.
+		 *
+		 * XXX should hand this bit to pmap_kenter_pa to
+		 * save the extra invalidate!
 		 */
 		if (cpu_class != CPUCLASS_386) {
 			pte = kvtopte(va);
