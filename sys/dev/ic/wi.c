@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.105 2002/12/27 07:54:35 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.106 2002/12/27 08:29:46 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.105 2002/12/27 07:54:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.106 2002/12/27 08:29:46 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -666,7 +666,9 @@ wi_init(struct ifnet *ifp)
 			IEEE80211_ADDR_COPY(&join.wi_bssid, ic->ic_des_bssid);
 		if (ic->ic_des_chan != IEEE80211_CHAN_ANY)
 			join.wi_chan = htole16(ic->ic_des_chan);
-		wi_write_rid(sc, WI_RID_JOIN_REQ, &join, sizeof(join));
+		/* Lucent firmware does not support the JOIN RID. */
+		if (sc->sc_firmware_type != WI_LUCENT)
+			wi_write_rid(sc, WI_RID_JOIN_REQ, &join, sizeof(join));
 	}
 
  out:
@@ -946,6 +948,15 @@ wi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				error = 0;
 		}
 		break;
+	case SIOCS80211BSSID:
+		/* No use pretending that Lucent firmware supports
+		 * 802.11 MLME-JOIN.request.
+		 */
+		if (sc->sc_firmware_type == WI_LUCENT) {
+			error = ENODEV;
+			break;
+		}
+		/* fall through */
 	default:
 		error = ieee80211_ioctl(ifp, cmd, data);
 		if (error == ENETRESET) {
