@@ -18,7 +18,7 @@
    along with GAS; see the file COPYING.  If not, write to
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /*
- * $Id: read.h,v 1.5 1994/05/19 18:10:35 pk Exp $
+ * $Id: read.h,v 1.6 1994/12/18 13:09:54 pk Exp $
  */
 
 
@@ -102,6 +102,7 @@ void s_size(void);
 void s_space(void);
 void s_text(void);
 void s_type(void);
+void s_weak(void);
 
 #else /* not __STDC__ */
 
@@ -143,6 +144,7 @@ void s_size();
 void s_space();
 void s_text();
 void s_type();
+void s_weak();
 
 #endif /* not __STDC__ */
 
