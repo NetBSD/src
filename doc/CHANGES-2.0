@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.182 2004/05/06 05:29:48 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.183 2004/05/06 05:33:31 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1855,3 +1855,10 @@ bin/pax/file_subs.c				1.45-1.46
 	Don't exit with 1 on broken archives that mark directories as files for
 	the benefit of pkgsrc. 
 	[snj, ticket #252]
+
+sys/arch/amd64/amd64/cpu.c			1.5
+sys/arch/amd64/isa/clock.c			1.4
+sys/arch/x86/x86/lapic.c			1.6
+
+	Compile TSC support code when __x86_64__ is defined.
+	[toshii, ticket #254]
