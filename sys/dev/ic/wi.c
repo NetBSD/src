@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.174 2004/07/22 20:13:20 mycroft Exp $	*/
+/*	$NetBSD: wi.c,v 1.175 2004/07/22 20:23:31 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.174 2004/07/22 20:13:20 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.175 2004/07/22 20:23:31 mycroft Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -757,6 +757,10 @@ wi_init(struct ifnet *ifp)
 	/* Set multicast filter. */
 	wi_write_multi(sc);
 
+	sc->sc_txalloced = 0;
+	sc->sc_txcur = 0;
+	sc->sc_txnext = 0;
+
 	if (sc->sc_firmware_type != WI_SYMBOL || !wasenabled) {
 		sc->sc_buflen = IEEE80211_MAX_LEN + sizeof(struct wi_frame);
 		if (sc->sc_firmware_type == WI_SYMBOL)
@@ -771,10 +775,9 @@ wi_init(struct ifnet *ifp)
 			}
 			DPRINTF2(("wi_init: txbuf %d allocated %x\n", i,
 			    sc->sc_txd[i].d_fid));
-			sc->sc_txd[i].d_len = 0;
+			++sc->sc_txalloced;
 		}
 	}
-	sc->sc_txcur = sc->sc_txnext = 0;
 
 	wi_rssdescs_init(&sc->sc_rssd, &sc->sc_rssdfree);
 
@@ -959,8 +962,7 @@ wi_start(struct ifnet *ifp)
 	cur = sc->sc_txnext;
 	for (;;) {
 		ni = ic->ic_bss;
-		if (sc->sc_txd[cur].d_len != 0 ||
-		    SLIST_EMPTY(&sc->sc_rssdfree)) {
+		if (sc->sc_txalloced == 0 || SLIST_EMPTY(&sc->sc_rssdfree)) {
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
@@ -1095,18 +1097,20 @@ wi_start(struct ifnet *ifp)
 		off = sizeof(frmhdr);
 		if (wi_write_bap(sc, fid, 0, &frmhdr, sizeof(frmhdr)) != 0 ||
 		    wi_mwrite_bap(sc, fid, off, m0, m0->m_pkthdr.len) != 0) {
+			printf("%s: %s write fid %x failed\n",
+			    sc->sc_dev.dv_xname, __func__, fid);
 			ifp->if_oerrors++;
 			m_freem(m0);
 			goto next;
 		}
 		m_freem(m0);
-		sc->sc_txd[cur].d_len = off;
 		sc->sc_txpending[ni->ni_txrate]++;
+		--sc->sc_txalloced;
 		if (sc->sc_txcur == cur) {
 			if (wi_cmd(sc, WI_CMD_TX | WI_RECLAIM, fid, 0, 0)) {
 				printf("%s: xmit failed\n",
 				    sc->sc_dev.dv_xname);
-				sc->sc_txd[cur].d_len = 0;
+				/* XXX ring might have a hole */
 				goto next;
 			}
 			sc->sc_tx_timer = 5;
@@ -1649,15 +1653,15 @@ wi_txalloc_intr(struct wi_softc *sc)
 		return;
 	}
 	sc->sc_tx_timer = 0;
-	sc->sc_txd[cur].d_len = 0;
+	++sc->sc_txalloced;
 	sc->sc_txcur = cur = (cur + 1) % WI_NTXBUF;
-	if (sc->sc_txd[cur].d_len == 0)
+	if (sc->sc_txalloced >= WI_NTXBUF)
 		ifp->if_flags &= ~IFF_OACTIVE;
 	else {
 		if (wi_cmd(sc, WI_CMD_TX | WI_RECLAIM, sc->sc_txd[cur].d_fid,
 		    0, 0)) {
 			printf("%s: xmit failed\n", sc->sc_dev.dv_xname);
-			sc->sc_txd[cur].d_len = 0;
+			/* XXX ring might have a hole */
 		} else {
 			sc->sc_tx_timer = 5;
 			ifp->if_timer = 1;
