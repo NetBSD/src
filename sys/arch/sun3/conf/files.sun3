@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.71 2003/11/15 17:52:30 bouyer Exp $
+#	$NetBSD: files.sun3,v 1.72 2004/12/07 04:33:24 chs Exp $
 
 #
 # sun3-specific configuration info
@@ -37,7 +37,6 @@ file arch/sun3/sun3/db_memrw.c			ddb | kgdb
 file arch/sun3/sun3/fpu.c
 file arch/sun3/sun3/isr.c
 file arch/sun3/sun3/leds.c
-file arch/sun3/sun3/procfs_machdep.c		procfs
 file arch/sun3/sun3/stub.c
 file arch/sun3/sun3/sunmon.c
 file arch/sun3/sun3/sys_machdep.c
@@ -45,6 +44,7 @@ file arch/sun3/sun3/trap.c
 file arch/sun3/sun3/vector.c
 file arch/m68k/m68k/cacheops.c			_sun3x_
 file arch/m68k/m68k/kgdb_machdep.c 		kgdb
+file arch/m68k/m68k/procfs_machdep.c		procfs
 file arch/m68k/m68k/vm_machdep.c
 file dev/sun/disksubr.c
 
