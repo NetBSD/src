@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.9 1996/02/25 21:46:08 pk Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.10 1996/02/27 22:09:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -124,6 +124,11 @@ cgtwomatch(parent, vcf, aux)
 	struct romaux *ra = &ca->ca_ra;
 	int probe;
 	caddr_t tmp;
+
+	/*
+	 * Mask out invalid flags from the user.
+	 */
+	cf->cf_flags &= FB_USERMASK;
 
 	if (ca->ca_bustype != BUS_VME16)
 		return (0);

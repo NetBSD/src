@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.13 1996/01/01 22:44:05 thorpej Exp $
+#	$NetBSD: files.sparc,v 1.14 1996/02/27 22:09:18 thorpej Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -70,10 +70,16 @@ file	arch/sparc/dev/cgtwo.c		cgtwo needs-flag
 device cgthree at sbus
 file	arch/sparc/dev/cgthree.c	cgthree needs-flag
 
-device cgsix at sbus
+device cgfour at obio
+file	arch/sparc/dev/cgfour.c		cgfour needs-flag
+
+device cgsix at sbus, obio
 file	arch/sparc/dev/cgsix.c		cgsix needs-flag
 
-file	arch/sparc/dev/bt_subr.c	cgsix cgthree
+device cgeight at obio
+file	arch/sparc/dev/cgeight.c	cgeight needs-flag
+
+file	arch/sparc/dev/bt_subr.c	cgsix cgthree cgfour cgeight
 
 device le at sbus, ledma, obio: ifnet, ether
 file	arch/sparc/dev/if_le.c		le

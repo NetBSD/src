@@ -1,4 +1,4 @@
-/*	$NetBSD: btreg.h,v 1.3 1996/02/27 00:09:23 pk Exp $ */
+/*	$NetBSD: btreg.h,v 1.4 1996/02/27 22:09:21 thorpej Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -78,29 +78,32 @@ struct bt_regs {
 	u_int	bt_ctrl;		/* control register */
 	u_int	bt_omap;		/* overlay (cursor) map register */
 };
-#define BT_INIT(bt) do { /* whatever this means.. */ \
-	(bt)->bt_addr = 0x06;	/* command reg */ \
-	(bt)->bt_ctrl = 0x73;	/* overlay plane */ \
-	(bt)->bt_addr = 0x04;	/* read mask */ \
-	(bt)->bt_ctrl = 0xff;	/* color planes */ \
+#define BT_INIT(bt, shift) do { /* whatever this means.. */ \
+	(bt)->bt_addr = 0x06 << (shift);	/* command reg */ \
+	(bt)->bt_ctrl = 0x73 << (shift);	/* overlay plane */ \
+	(bt)->bt_addr = 0x04 << (shift);	/* read mask */ \
+	(bt)->bt_ctrl = 0xff << (shift);	/* color planes */ \
 } while(0)
-#define BT_UNBLANK(bt, x) do { \
+#define BT_UNBLANK(bt, x, shift) do { \
 	/* restore color 0 (and R of color 1) */ \
-	(bt)->bt_addr = 0; \
+	(bt)->bt_addr = 0 << (shift); \
 	(bt)->bt_cmap = (x); \
+	if ((shift)) { \
+		(bt)->bt_cmap = (x) << 8; \
+		(bt)->bt_cmap = (x) << 16; \
 	/* restore read mask */ \
-	BT_INIT(bt); \
+	BT_INIT((bt), (shift)); \
 } while(0)
-#define BT_BLANK(bt) do { \
-	(bt)->bt_addr = 0x06;	/* command reg */ \
-	(bt)->bt_ctrl = 0x70;	/* overlay plane */ \
-	(bt)->bt_addr = 0x04;	/* read mask */ \
-	(bt)->bt_ctrl = 0x00;	/* color planes */ \
+#define BT_BLANK(bt, shift) do { \
+	(bt)->bt_addr = 0x06 << (shift);	/* command reg */ \
+	(bt)->bt_ctrl = 0x70 << (shift);	/* overlay plane */ \
+	(bt)->bt_addr = 0x04 << (shift);	/* read mask */ \
+	(bt)->bt_ctrl = 0x00 << (shift);	/* color planes */ \
 	/* Set color 0 to black -- note that this overwrites R of color 1. */\
-	(bt)->bt_addr = 0; \
-	(bt)->bt_cmap = 0; \
+	(bt)->bt_addr = 0 << (shift); \
+	(bt)->bt_cmap = 0 << (shift); \
 	/* restore read mask */ \
-	BT_INIT(bt); \
+	BT_INIT((bt), (shift)); \
 } while(0)
 
 
