@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.9 2000/04/09 00:13:54 soren Exp $	*/
+/*	$NetBSD: machdep.c,v 1.10 2000/04/12 02:01:07 nisimura Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -107,7 +107,7 @@ extern void	stacktrace(void);
  * safepri is a safe priority for sleep to set for a spin-wait during
  * autoconfiguration or after a panic.  Used as an argument to splx().
  */
-int	safepri = MIPS1_PSL_LOWIPL;
+int	safepri = PSL_LOWIPL;
 
 extern caddr_t esym;
 extern struct user *proc0paddr;
