@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee1394reg.h,v 1.16 2002/12/28 10:52:41 jmc Exp $	*/
+/*	$NetBSD: ieee1394reg.h,v 1.17 2003/08/04 07:00:19 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -176,7 +176,7 @@ struct ieee1394_async_nodata {
  */
 #define	CSR_BASE_HI			0x0000ffff
 #define	CSR_BASE_LO			0xf0000000
-#define	CSR_BASE			0x0000fffff0000000
+#define	CSR_BASE			0x0000fffff0000000LL
 
 #define	CSR_STATE_CLEAR			0x0000
 #define	CSR_STATE_SET			0x0004
@@ -232,8 +232,8 @@ struct ieee1394_async_nodata {
 #define IEEE1394_GET_MAX_REC(i) ((i & 0x0000f000) >> 12)
 #define IEEE1394_GET_LINK_SPD(i) (i & 0x00000007)
 
-#define IEEE1394_CREATE_ADDR_HIGH(x) (htonl((x & 0xffffffff00000000) >> 32))
-#define IEEE1394_CREATE_ADDR_LOW(x)  (htonl((x & 0x00000000ffffffff)))
+#define IEEE1394_CREATE_ADDR_HIGH(x) (htonl((x & 0xffffffff00000000LL) >> 32))
+#define IEEE1394_CREATE_ADDR_LOW(x)  (htonl((x & 0x00000000ffffffffLL)))
 
 
 /*
@@ -254,26 +254,26 @@ struct ieee1394_async_nodata {
 
 #define FW_FIFO_HI      0xffff
 #define FW_FIFO_LO      0xf0010000
-#define FW_FIFO		0x0000fffff0010000
+#define FW_FIFO		0x0000fffff0010000LL
 
 #define SBP_ADDR_BEG_HI	0x0000
 #define SBP_ADDR_BEG_LO	0xf0010004
-#define SBP_ADDR_BEG	0x00000000f0010004
+#define SBP_ADDR_BEG	0x00000000f0010004LL
 
 #define SBP_ADDR_MAX_HI	0x0000
 #define SBP_ADDR_MAX_LO	0xf0020004
-#define SBP_ADDR_MAX	0x00000000f0020004
+#define SBP_ADDR_MAX	0x00000000f0020004LL
 
 #define SBP_ADDR_SIZE	(SBP_ADDR_MAX - SBP_ADDR_BEG)
 #define SBP_ADDR_BLOCK_SIZE	4
 
 #define SBP_DATA_BEG_HI	0x0000
 #define SBP_DATA_BEG_LO	0xf0020000
-#define SBP_DATA_BEG	0x00000000f0020000
+#define SBP_DATA_BEG	0x00000000f0020000LL
 
 #define SBP_DATA_MAX_HI	0x0000
 #define SBP_DATA_MAX_LO 0xf101ffff
-#define SBP_DATA_MAX	0x00000000f1020000
+#define SBP_DATA_MAX	0x00000000f1020000LL
 
 #define SBP_DATA_SIZE	(SBP_DATA_MAX - SBP_DATA_BEG)
 #define SBP_DATA_BLOCK_SIZE	512
