@@ -35,7 +35,7 @@
 .\"
 .\"     from: @(#)dca.4	5.2 (Berkeley) 3/27/91
 .\"	from: Id: com.4,v 1.1 1993/08/06 11:19:07 cgd Exp
-.\"	$Id: rtfps.4,v 1.1 1994/08/07 11:05:57 mycroft Exp $
+.\"	$Id: rtfps.4,v 1.2 1994/08/11 22:18:50 mycroft Exp $
 .\"
 .Dd August 7, 1994
 .Dt RTFPS 4 i386
@@ -54,10 +54,12 @@ multiplexing serial communications interface
 The
 .Nm rtfps
 driver provides support for IBM RT PC boards that multiplex together up to four
-.\" EIA
+.Rn EIA
+.Tn RS-232C
+.Pf ( Tn CCITT
+.Tn V.28 )
+or
 .Tn RS-422A
-.\" .Pf ( Tn CCITT
-.\" .Tn V.28 )
 communications interfaces.
 .Pp
 Each
