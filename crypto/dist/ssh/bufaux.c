@@ -1,4 +1,4 @@
-/*	$NetBSD: bufaux.c,v 1.1.1.8 2002/06/24 05:25:43 itojun Exp $	*/
+/*	$NetBSD: bufaux.c,v 1.1.1.9 2002/06/26 14:02:54 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -38,7 +38,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: bufaux.c,v 1.26 2002/06/23 09:46:51 deraadt Exp $");
+RCSID("$OpenBSD: bufaux.c,v 1.27 2002/06/26 08:53:12 markus Exp $");
 
 #include <openssl/bn.h>
 #include "bufaux.h"
@@ -89,6 +89,8 @@ buffer_get_bignum(Buffer *buffer, BIGNUM *value)
 	bits = GET_16BIT(buf);
 	/* Compute the number of binary bytes that follow. */
 	bytes = (bits + 7) / 8;
+	if (bytes > 8 * 1024)
+		fatal("buffer_get_bignum: cannot handle BN of size %d", bytes);
 	if (buffer_len(buffer) < bytes)
 		fatal("buffer_get_bignum: input buffer too small");
 	bin = buffer_ptr(buffer);
@@ -130,13 +132,15 @@ buffer_put_bignum2(Buffer *buffer, BIGNUM *value)
 	xfree(buf);
 }
 
+/* XXX does not handle negative BNs */
 void
 buffer_get_bignum2(Buffer *buffer, BIGNUM *value)
 {
-	/**XXX should be two's-complement */
-	int len;
-	u_char *bin = buffer_get_string(buffer, (u_int *)&len);
+	u_int len;
+	u_char *bin = buffer_get_string(buffer, &len);
 
+	if (len > 8 * 1024)
+		fatal("buffer_get_bignum2: cannot handle BN of size %d", len);
 	BN_bin2bn(bin, len, value);
 	xfree(bin);
 }
