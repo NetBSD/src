@@ -25,6 +25,6 @@
 
 #define HAVE_STRERROR
 
-extern int free();
+extern void free();
 
 /* end of ho-generic.h */
