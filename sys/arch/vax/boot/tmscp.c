@@ -1,4 +1,4 @@
-/*	$NetBSD: tmscp.c,v 1.4 1997/03/15 13:04:31 ragge Exp $ */
+/*	$NetBSD: tmscp.c,v 1.5 1998/10/09 06:15:33 matt Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,7 +40,7 @@
 #include "lib/libsa/stand.h"
 
 #include "../include/pte.h"
-#include "../include/macros.h"
+/*#include "../include/macros.h"*/
 #include "../uba/ubareg.h"
 #include "../uba/udareg.h"
 #include "../mscp/mscp.h"
