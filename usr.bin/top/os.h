@@ -30,9 +30,5 @@ caddr_t malloc();
 
 /* some systems declare sys_errlist in stdio.h! */
 #if defined(__NetBSD__) || defined(__FreeBSD__)
-#if !defined(__m68k__)
-#  if !defined(__NetBSD132__)
 #define SYS_ERRLIST_DECLARED
-#  endif	/* __NetBSD132__ */
-#endif
 #endif

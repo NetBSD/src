@@ -23,8 +23,11 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 
+#include "top.h"
+#include "top.local.h"
 #include "sigdesc.h"		/* generated automatically */
 #include "boolean.h"
+#include "machine.h"
 #include "utils.h"
 
 extern int  errno;
@@ -42,8 +45,8 @@ char *err_string();
  *		either 'h' or '?'.
  */
 
-show_help()
-
+show_help(statics)
+    struct statics *statics;
 {
     printf("Top version %s, %s\n", version_string(), copyright);
     fputs("\n\n\
@@ -72,8 +75,15 @@ I       - same as 'i'\n\
 k       - kill processes; send a signal to a list of processes\n\
 n or #  - change number of processes to display\n", stdout);
 #ifdef ORDER
+	{
+	    int i;
+
 	fputs("\
-o       - specify sort order (size, res, cpu, time)\n", stdout);
+o       - specify sort order (", stdout);
+	    for (i = 0; statics->order_names[i] != NULL; i++)
+		printf("%s%s", i == 0 ? "" : ", ", statics->order_names[i]);
+	    puts(")");
+	}
 #endif
 	fputs("\
 r       - renice a process\n\

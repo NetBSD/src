@@ -16,6 +16,8 @@
 #include "top.h"
 #include "os.h"
 
+#include <errno.h>
+
 int atoiwi(str)
 
 char *str;
