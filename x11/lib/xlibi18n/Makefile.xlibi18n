@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xlibi18n,v 1.2 2003/09/12 08:08:23 lukem Exp $
+#	$NetBSD: Makefile.xlibi18n,v 1.3 2003/09/13 20:18:59 lukem Exp $
 
 MKLINKLIB=	no
 
@@ -6,7 +6,6 @@ MKLINKLIB=	no
 
 .PATH:		${X11SRCDIR.xc}/lib/X11
 
-LIBDIR=		${X11LIBDIR}/locale/lib/common
 SHLIB_MAJOR=	2
 SHLIB_MINOR=	0
 
@@ -15,11 +14,16 @@ CPPFLAGS+=	${X11FLAGS.THREADLIB}
 LDADD+=		-lX11
 DPADD+=		${LIBX11}
 
+.include <bsd.x11.mk>
+
+# override <bsd.x11.mk>'s setting of LIBDIR
+#
+LIBDIR=		${X11LIBDIR}/locale/lib/common
+
 .PRECIOUS:	${DESTDIR}${LIBDIR}/${LIB}.so.${SHLIB_MAJOR}
 libinstall::	${DESTDIR}${LIBDIR}/${LIB}.so.${SHLIB_MAJOR}
 
 .include <bsd.lib.mk>
-.include <bsd.x11.mk>
 
 ${DESTDIR}${LIBDIR}/${LIB}.so.${SHLIB_MAJOR}: lib${LIB}.so.${SHLIB_FULLVERSION}
 	${INSTALL_FILE} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/11 19:26:34 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/13 20:19:04 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -482,5 +482,5 @@ LNFILES=BlkPScrn.man BlackPixelOfScreen.man Dis3C.man DisplayOfCCC.man \
 
 .PATH:  ${X11SRCDIR.xc}/doc/man/X11
 
-.include <bsd.man.mk>
 .include <bsd.x11.mk>
+.include <bsd.man.mk>

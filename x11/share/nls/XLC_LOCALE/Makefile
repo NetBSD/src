@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/12 03:06:29 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/13 20:19:08 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -29,5 +29,5 @@ realall: ${FILES}
 
 .PATH: ${X11SRCDIR.xc}/nls/XLC_LOCALE
 
-.include <bsd.prog.mk>
 .include <bsd.x11.mk>
+.include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/12 02:52:18 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/13 20:18:43 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -26,5 +26,5 @@ CPPFLAGS.misc.c=	$(TRANS_INCLUDES) $(CONN_DEFINES)
 CPPFLAGS.shutdown.c=	$(TRANS_INCLUDES) $(CONN_DEFINES)
 CPPFLAGS.transport.c=	$(TRANS_INCLUDES) $(CONN_DEFINES) $(SOCK_DEFINES)
 
-.include <bsd.lib.mk>
 .include <bsd.x11.mk>
+.include <bsd.lib.mk>
