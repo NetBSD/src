@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.S,v 1.4 1997/05/12 07:56:00 thorpej Exp $	*/
+/*	$NetBSD: srt0.S,v 1.5 1999/02/08 10:45:11 he Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -175,7 +175,7 @@ not68030:
 	jeq	isa433
 	cmpb	#MMUID_433_S,d0		| last chance...
 	jeq	isa433
-	movl	#HP_380,a0@		| guess we're a 380
+	movl	#HP_380,a0@		| guess we are a 380
 	jra	ihpibcheck
 isa425:
 	movl	#HP_425,a0@
