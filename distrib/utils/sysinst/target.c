@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.11 1997/11/25 20:35:02 phil Exp $	*/
+/*	$NetBSD: target.c,v 1.12 1997/12/02 03:02:29 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.11 1997/11/25 20:35:02 phil Exp $");
+__RCSID("$NetBSD: target.c,v 1.12 1997/12/02 03:02:29 jonathan Exp $");
 #endif
 
 
@@ -265,18 +265,24 @@ is_active_rootpart(const char *devpart)
 {
 	const char *root = 0;
 	int result;
+	static char devdirdevpart[STRSIZE];
 
 	/* check to see if the devices match? */
 
 	/* this changes on mounts, so don't cache it. */
 	root = mounted_rootpart();
 
-	result = (strcmp(devpart, root) == 0);
+	/* prepend /dev. */
+	/* XXX post-1.3, use strstr to strip "/dev" from input. */
+	snprintf(devdirdevpart, STRSIZE, "/dev/%s", devpart);
+
+	result = (strcmp(devdirdevpart, root) == 0);
+
 
 #if defined(DEBUG) || defined(DEBUG_ROOT)
 	endwin();
-	printf("is_active_rootpart: root devpart = %s, query=%s, answer=%d\n",
-	       root, devpart, result);
+	printf("is_active_rootpart: activeroot = %s, query=%s, mung=%s, answer=%d\n",
+	       root, devpart, devdirdevpart, result);
 	fflush(stdout);
 	backtowin();
 #endif
