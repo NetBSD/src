@@ -1,4 +1,4 @@
-.\"	$NetBSD: ld.elf_so.1,v 1.5 2002/09/08 23:44:09 wiz Exp $
+.\"	$NetBSD: ld.elf_so.1,v 1.6 2002/09/11 23:11:41 bjh21 Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -152,13 +152,13 @@ If the following environment variables exist they will be used by
 A colon separated list of directories, overriding the default search path
 for shared libraries.
 .It Ev LD_PRELOAD
-A colon or space separated list of shared object filenames to be loaded.
-Space is allowed as a separator for backwards compatibility only. Support
-may be removed in a future release and should not be relied upon.
+A colon or space separated list of shared object filenames to be loaded
 .Em after
 the main program but
 .Em before
 its shared object dependencies.
+Space is allowed as a separator for backwards compatibility only. Support
+may be removed in a future release and should not be relied upon.
 .It Ev LD_BIND_NOW
 If defined immediate binding of Procedure Link Table (PLT) entries is
 performed instead of the default lazy method.
