@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.17 2002/03/09 19:11:21 bjh21 Exp $	*/
+/*	$NetBSD: cpu.c,v 1.18 2002/03/09 21:30:58 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -65,11 +65,10 @@ cpu_t cpus[MAX_CPUS];
 
 char cpu_model[64];
 volatile int undefined_test;	/* Used for FPA test */
-extern int cpuctrl;		/* cpu control register value */
 
 /* Prototypes */
 void identify_master_cpu(struct device *dv, int cpu_number);
-void identify_arm_cpu(struct device *dv, int cpu_number);
+void identify_arm_cpu(struct device *dv, int cpu_number, struct cpu_info *);
 void identify_arm_fpu(struct device *dv, int cpu_number);
 int fpa_test(u_int, u_int, trapframe_t *, int);
 int fpa_handler(u_int, u_int, trapframe_t *, int);
@@ -140,23 +139,21 @@ identify_master_cpu(struct device *dv, int cpu_number)
 	evcnt_attach_dynamic(&curcpu()->ci_arm700bugcount, EVCNT_TYPE_MISC,
 	    NULL, dv->dv_xname, "arm700swibug");
 	
-	cpus[cpu_number].cpu_ctrl = cpuctrl;
-
 	/* Get the cpu ID from coprocessor 15 */
 
-	cpus[cpu_number].cpu_id = cpu_id();
+	curcpu()->ci_cpuid = cpu_id();
 
-	identify_arm_cpu(dv, cpu_number);
+	identify_arm_cpu(dv, cpu_number, curcpu());
 	strcpy(cpu_model, cpus[cpu_number].cpu_model);
 
 	if (cpus[CPU_MASTER].cpu_class == CPU_CLASS_SA1
-	    && (cpus[CPU_MASTER].cpu_id & CPU_ID_REVISION_MASK) < 3) {
+	    && (curcpu()->ci_cpuid & CPU_ID_REVISION_MASK) < 3) {
 		printf("%s: SA-110 with bugged STM^ instruction\n",
 		       dv->dv_xname);
 	}
 
 #ifdef CPU_ARM8
-	if ((cpus[CPU_MASTER].cpu_id & CPU_ID_CPU_MASK) == CPU_ID_ARM810) {
+	if ((curcpu()->ci_cpuid & CPU_ID_CPU_MASK) == CPU_ID_ARM810) {
 		int clock = arm8_clock_config(0, 0);
 		char *fclk;
 		printf("%s: ARM810 cp15=%02x", dv->dv_xname, clock);
@@ -401,14 +398,14 @@ static const char *wtnames[] = {
 };
 
 void
-identify_arm_cpu(struct device *dv, int cpu_number)
+identify_arm_cpu(struct device *dv, int cpu_number, struct cpu_info *ci)
 {
 	cpu_t *cpu;
 	u_int cpuid;
 	int i;
 
 	cpu = &cpus[cpu_number];
-	cpuid = cpu->cpu_id;
+	cpuid = ci->ci_cpuid;
 
 	if (cpuid == 0) {
 		printf("Processor failed probe - no CPU ID\n");
@@ -434,7 +431,7 @@ identify_arm_cpu(struct device *dv, int cpu_number)
 	case CPU_CLASS_ARM7:
 	case CPU_CLASS_ARM7TDMI:
 	case CPU_CLASS_ARM8:
-		if ((cpu->cpu_ctrl & CPU_CONTROL_IDC_ENABLE) == 0)
+		if ((ci->ci_ctrl & CPU_CONTROL_IDC_ENABLE) == 0)
 			strcat(cpu->cpu_model, " IDC disabled");
 		else
 			strcat(cpu->cpu_model, " IDC enabled");
@@ -442,27 +439,27 @@ identify_arm_cpu(struct device *dv, int cpu_number)
 	case CPU_CLASS_ARM9TDMI:
 	case CPU_CLASS_SA1:
 	case CPU_CLASS_XSCALE:
-		if ((cpu->cpu_ctrl & CPU_CONTROL_DC_ENABLE) == 0)
+		if ((ci->ci_ctrl & CPU_CONTROL_DC_ENABLE) == 0)
 			strcat(cpu->cpu_model, " DC disabled");
 		else
 			strcat(cpu->cpu_model, " DC enabled");
-		if ((cpu->cpu_ctrl & CPU_CONTROL_IC_ENABLE) == 0)
+		if ((ci->ci_ctrl & CPU_CONTROL_IC_ENABLE) == 0)
 			strcat(cpu->cpu_model, " IC disabled");
 		else
 			strcat(cpu->cpu_model, " IC enabled");
 		break;
 	}
-	if ((cpu->cpu_ctrl & CPU_CONTROL_WBUF_ENABLE) == 0)
+	if ((ci->ci_ctrl & CPU_CONTROL_WBUF_ENABLE) == 0)
 		strcat(cpu->cpu_model, " WB disabled");
 	else
 		strcat(cpu->cpu_model, " WB enabled");
 
-	if (cpu->cpu_ctrl & CPU_CONTROL_LABT_ENABLE)
+	if (ci->ci_ctrl & CPU_CONTROL_LABT_ENABLE)
 		strcat(cpu->cpu_model, " LABT");
 	else
 		strcat(cpu->cpu_model, " EABT");
 
-	if (cpu->cpu_ctrl & CPU_CONTROL_BPRD_ENABLE)
+	if (ci->ci_ctrl & CPU_CONTROL_BPRD_ENABLE)
 		strcat(cpu->cpu_model, " branch prediction enabled");
 
 	/* Print the info */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.29 2002/01/30 00:37:18 thorpej Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.30 2002/03/09 21:30:57 bjh21 Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -1166,7 +1166,6 @@ late_abort_fixup(arg)
 #if defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_ARM7TDMI) || \
 	defined(CPU_ARM8) || defined (CPU_ARM9) || defined(CPU_SA110) || \
 	defined(CPU_XSCALE)
-int cpuctrl;
 
 #define IGN	0
 #define OR	1
@@ -1239,7 +1238,7 @@ void
 arm6_setup(args)
 	char *args;
 {
-	int cpuctrlmask;
+	int cpuctrl, cpuctrlmask;
 
 	/* Set up default control registers bits */
 	cpuctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
@@ -1261,7 +1260,8 @@ arm6_setup(args)
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
 
-	/* Set the control register */    
+	/* Set the control register */
+	curcpu()->ci_ctrl = cpuctrl;
 	cpu_control(0xffffffff, cpuctrl);
 }
 #endif	/* CPU_ARM6 */
@@ -1283,7 +1283,7 @@ void
 arm7_setup(args)
 	char *args;
 {
-	int cpuctrlmask;
+	int cpuctrl, cpuctrlmask;
 
 	cpuctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
 		 | CPU_CONTROL_32BD_ENABLE | CPU_CONTROL_SYST_ENABLE
@@ -1301,7 +1301,8 @@ arm7_setup(args)
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
 
-	/* Set the control register */    
+	/* Set the control register */
+	curcpu()->ci_ctrl = cpuctrl;
 	cpu_control(0xffffffff, cpuctrl);
 }
 #endif	/* CPU_ARM7 */
@@ -1323,6 +1324,8 @@ void
 arm7tdmi_setup(args)
 	char *args;
 {
+	int cpuctrl;
+
 	cpuctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
 		 | CPU_CONTROL_32BD_ENABLE | CPU_CONTROL_SYST_ENABLE
 		 | CPU_CONTROL_IDC_ENABLE | CPU_CONTROL_WBUF_ENABLE;
@@ -1333,7 +1336,8 @@ arm7tdmi_setup(args)
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
 
-	/* Set the control register */    
+	/* Set the control register */
+	curcpu()->ci_ctrl = cpuctrl;
 	cpu_control(0xffffffff, cpuctrl);
 }
 #endif	/* CPU_ARM7TDMI */
@@ -1357,7 +1361,7 @@ arm8_setup(args)
 	char *args;
 {
 	int integer;
-	int cpuctrlmask;
+	int cpuctrl, cpuctrlmask;
 	int clocktest;
 	int setclock = 0;
 
@@ -1407,7 +1411,8 @@ arm8_setup(args)
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
 
-	/* Set the control register */    
+	/* Set the control register */
+	curcpu()->ci_ctrl = cpuctrl;
 	cpu_control(0xffffffff, cpuctrl);
 
 	/* Set the clock/test register */    
@@ -1433,7 +1438,7 @@ void
 arm9_setup(args)
 	char *args;
 {
-	int cpuctrlmask;
+	int cpuctrl, cpuctrlmask;
 
 	cpuctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
 	    | CPU_CONTROL_32BD_ENABLE | CPU_CONTROL_SYST_ENABLE
@@ -1452,7 +1457,8 @@ arm9_setup(args)
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
 
-	/* Set the control register */    
+	/* Set the control register */
+	curcpu()->ci_ctrl = cpuctrl;
 	cpu_control(0xffffffff, cpuctrl);
 
 }
@@ -1479,7 +1485,7 @@ void
 sa110_setup(args)
 	char *args;
 {
-	int cpuctrlmask;
+	int cpuctrl, cpuctrlmask;
 
 	cpuctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
 		 | CPU_CONTROL_32BD_ENABLE | CPU_CONTROL_SYST_ENABLE
@@ -1498,7 +1504,8 @@ sa110_setup(args)
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
 
-	/* Set the control register */    
+	/* Set the control register */
+	curcpu()->ci_ctrl = cpuctrl;
 /*	cpu_control(cpuctrlmask, cpuctrl);*/
 	cpu_control(0xffffffff, cpuctrl);
 
@@ -1530,7 +1537,7 @@ void
 xscale_setup(args)
 	char *args;
 {
-	int cpuctrlmask;
+	int cpuctrl, cpuctrlmask;
 
 	/*
 	 * The XScale Write Buffer is always enabled.  Our option
@@ -1559,6 +1566,7 @@ xscale_setup(args)
 	 * Set the control register.  Note that bits 6:3 must always
 	 * be set to 1.
 	 */
+	curcpu()->ci_ctrl = cpuctrl;
 /*	cpu_control(cpuctrlmask, cpuctrl);*/
 	cpu_control(0xffffffff, cpuctrl);
 
