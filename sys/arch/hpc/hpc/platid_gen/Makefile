@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 2001/01/28 02:52:24 uch Exp $
+#	$NetBSD: Makefile,v 1.2 2001/02/04 05:19:14 takemura Exp $
 
 S=	../../../..
 
-GENHDR		=	$S/arch/${MACHINE}/include/platid_generated.h
-MASK_H		=	$S/arch/${MACHINE}/include/platid_mask.h
-MASK_C		=	$S/arch/${MACHINE}/${MACHINE}/platid_mask.c
-NAME_C		=	$S/arch/${MACHINE}/${MACHINE}/platid_name.c
+GENHDR		=	$S/arch/hpc/include/platid_generated.h
+MASK_H		=	$S/arch/hpc/include/platid_mask.h
+MASK_C		=	$S/arch/hpc/hpc/platid_mask.c
+NAME_C		=	$S/arch/hpc/hpc/platid_name.c
 GENERATEDS	=	${GENHDR} ${MASK_H} ${MASK_C} ${NAME_C}
 
 PROG	=	platid_gen
@@ -21,7 +21,7 @@ MAN		=
 
 all: ${PROG} ${GENERATEDS}
 
-DEFFILE		=	$S/arch/${MACHINE}/conf/platid.def
+DEFFILE		=	$S/arch/hpc/conf/platid.def
 PLATIDGEN	=	$S/arch/hpc/hpc/platid_gen/${PROG}
 
 ${GENHDR}: ${DEFFILE}
