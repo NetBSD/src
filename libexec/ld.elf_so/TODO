@@ -1,5 +1,4 @@
 rtld:
-* map hints file read-only
 * resolve MIPS binding lossage
 
 binutils/gcc:
