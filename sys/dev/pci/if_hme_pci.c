@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_pci.c,v 1.1 2000/04/05 02:31:19 mrg Exp $	*/
+/*	$NetBSD: if_hme_pci.c,v 1.1.4.1 2000/07/31 05:34:18 mrg Exp $	*/
 
 /*
  * Copyright (c) 2000 Matthew R. Green
@@ -123,6 +123,7 @@ hmeattach_pci(parent, self, aux)
 
 	sc->sc_dmatag = pa->pa_dmat;
 
+	sc->sc_pci = 1; /* XXXXX should all be done in bus_dma. */
 	/*
 	 * Map five register banks:
 	 *
