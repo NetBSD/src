@@ -1,4 +1,4 @@
-/*	$NetBSD: libi386.h,v 1.10 1999/12/21 14:22:54 drochner Exp $	*/
+/*	$NetBSD: libi386.h,v 1.11 2000/04/23 19:57:14 tsarna Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -50,6 +50,7 @@ void delay __P((int));
 int getbasemem __P((void));
 int getextmemx __P((void));
 int getextmem1 __P((void));
+int biosvideomode __P((void));
 #ifdef CONSERVATIVE_MEMDETECT
 #define getextmem() getextmem1()
 #else
