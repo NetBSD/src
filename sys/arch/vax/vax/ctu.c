@@ -1,4 +1,4 @@
-/*	$NetBSD: ctu.c,v 1.1 1996/02/17 18:48:53 ragge Exp $ */
+/*	$NetBSD: ctu.c,v 1.2 1996/03/02 13:41:24 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -250,7 +250,9 @@ cturintr()
 		if (tu_sc.sc_xbytes == tu_sc.sc_nbytes) {
 			tu_sc.sc_bbytes++;
 			if (tu_sc.sc_bbytes == 146) { /* We're finished! */
+#ifdef TUDEBUG
 				printf("Xfer ok\n");
+#endif
 				tu_sc.sc_q.b_actf = bp->b_actf;
 				iodone(bp);
 				tu_sc.sc_xmtok = 1;
