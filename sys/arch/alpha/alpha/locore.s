@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.97.2.7 2002/07/09 16:52:32 nathanw Exp $ */
+/* $NetBSD: locore.s,v 1.97.2.8 2002/07/19 22:20:36 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.97.2.7 2002/07/09 16:52:32 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.97.2.8 2002/07/19 22:20:36 nathanw Exp $");
 
 #include "assym.h"
 
@@ -295,27 +295,10 @@ NESTED_NOPROFILE(sigcode,0,0,ra,0,0)
 	CALLSYS_NOERROR(__sigreturn14)	/* and call sigreturn() with it. */
 	mov	v0, a0			/* if that failed, get error code */
 	CALLSYS_NOERROR(exit)		/* and call exit() with it. */
+XNESTED(esigcode,0)
 	END(sigcode)
 
-	/*
-/* Upcall "trampoline" code. Invoked from RTE setup by cpu_upcall().
- *
- * On entry, stack & registers look like:
- *	
- *      a0	upcall type	
- *      a1	pointer to sa_t array
- *      a2	count of "event" SAs	
- *	a3	count of "interrupted" SAs
- *	a4	arg
- *      pv	address of upcallhandler
- */
 
-NESTED(upcallcode,0,0,ra,0,0)
-	jsr	ra, (t12)
-	subq	zero, 1, a0
-	CALLSYS_NOERROR(exit)
-XNESTED(esigcode,0)
-	END(upcallcode)
 	
 
 
