@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.14 1995/02/01 12:37:52 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.15 1996/03/14 21:09:01 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,12 +45,16 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/device.h>
+
+#include <vm/vm.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/trap.h>
+#include <machine/pmap.h>
 
 #include <sparc/sparc/cache.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.32 1996/02/18 15:38:41 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.33 1996/03/14 21:08:58 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,6 +58,7 @@
 #include <sys/resourcevar.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
 #ifdef GPROF
 #include <sys/gmon.h>
 #endif
@@ -66,6 +67,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/eeprom.h>
+#include <machine/cpu.h>
 
 #include <sparc/sparc/clockreg.h>
 #include <sparc/sparc/intreg.h>
@@ -134,15 +136,17 @@ struct cfdriver oclockcd =
  * attached.
  */
 char		*eeprom_va = NULL;
+#if defined(SUN4)
 static int	eeprom_busy = 0;
 static int	eeprom_wanted = 0;
 static int	eeprom_nvram = 0;	/* non-zero if eeprom is on Mostek */
+static int	eeprom_take __P((void));
+static void	eeprom_give __P((void));
+static int	eeprom_update __P((char *, int, int));
+#endif
 
 static int	eeprom_match __P((struct device *, void *, void *));
 static void	eeprom_attach __P((struct device *, struct device *, void *));
-static int	eeprom_update __P((char *, int, int));
-static int	eeprom_take __P((void));
-static void	eeprom_give __P((void));
 struct	cfdriver eepromcd = {
 	NULL, "eeprom", eeprom_match, eeprom_attach,
 	DV_DULL, sizeof(struct device)
@@ -162,11 +166,18 @@ struct cfdriver timercd = {
 	DV_DULL, sizeof(struct device)
 };
 
+struct chiptime;
+void clk_wenable __P((int));
+void myetheraddr __P((u_char *));
+int chiptotime __P((int, int, int, int, int, int));
+void timetochip __P((struct chiptime *));
+
 
 /*
  * old clock match routine
  */
 
+#if defined(SUN4)
 static int
 oclockmatch(parent, vcf, aux)
 	struct device *parent;
@@ -174,17 +185,13 @@ oclockmatch(parent, vcf, aux)
 {
 	register struct confargs *ca = aux;
 
-#if defined(SUN4)
 	if (cputyp == CPU_SUN4) {
 		if (cpumod == SUN4_100 || cpumod == SUN4_200)
 			return (strcmp(oclockcd.cd_name, ca->ca_ra.ra_name) == 0);
 		return (0);
 	}
-#endif /* SUN4 */
 	return (0); /* only sun4 has oclock */
 }
-
-#if defined(SUN4)
 
 /* ARGSUSED */
 static void
@@ -294,7 +301,7 @@ clockattach(parent, self, aux)
 	register struct idprom *idp;
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
-	char *prop;
+	char *prop = NULL;
 
 #if defined(SUN4)
 	if (cputyp == CPU_SUN4)
@@ -303,6 +310,10 @@ clockattach(parent, self, aux)
 #if defined(SUN4C) || defined(SUN4M)
 	if (cputyp == CPU_SUN4C || cputyp == CPU_SUN4M)
 		prop = getpropstring(ra->ra_node, "model");
+#endif
+#ifdef DIAGNOSTIC
+	if (prop == NULL)
+		panic("no prop");
 #endif
 	printf(": %s (eeprom)\n", prop);
 	/*
@@ -459,13 +470,13 @@ myetheraddr(cp)
  */
 void
 delay(n)
-	volatile register unsigned int n;
+	register volatile unsigned int n;
 {
 	register int c, t;
 
 #if defined(SUN4)
 	if (oldclk) {
-		volatile register int lcv;
+		register volatile int lcv;
 
 		/*
 		 * feel free to improve this code
@@ -572,7 +583,7 @@ int
 clockintr(cap)
 	void *cap;
 {
-	volatile register int discard;
+	register volatile int discard;
 	int s;
 	extern int rom_console_input;
 
@@ -594,7 +605,9 @@ clockintr(cap)
 #endif
 	/* read the limit register to clear the interrupt */
 	discard = TIMERREG->t_c10.t_limit;
+#if defined(SUN4)
 forward:
+#endif
 	splx(s);
 
 	hardclock((struct clockframe *)cap);
@@ -611,7 +624,7 @@ int
 statintr(cap)
 	void *cap;
 {
-	volatile register int discard;
+	register volatile int discard;
 	register u_long newint, r, var;
 
 #if defined(SUN4)
@@ -779,7 +792,9 @@ inittodr(base)
 	clk_wenable(0);
 	time.tv_sec = chiptotime(sec, min, hour, day, mon, year);
 
+#if defined(SUN4)
 forward:
+#endif
 	if (time.tv_sec == 0) {
 		printf("WARNING: bad date in battery clock");
 		/*
@@ -1131,6 +1146,7 @@ eeprom_uio(uio)
 #endif /* SUN4 */
 }
 
+#if defined(SUN4)
 /*
  * Update the EEPROM from the passed buf.
  */
@@ -1139,7 +1155,6 @@ eeprom_update(buf, off, cnt)
 	char *buf;
 	int off, cnt;
 {
-#if defined(SUN4)
 	int error = 0;
 	volatile char *ep;
 	char *bp;
@@ -1189,16 +1204,12 @@ eeprom_update(buf, off, cnt)
 		clk_wenable(0);
 
 	return (error);
-#else /* ! SUN4 */
-	return (0);
-#endif /* SUN4 */
 }
 
 /* Take a lock on the eeprom. */
 static int
 eeprom_take()
 {
-#if defined(SUN4)
 	int error = 0;
 	while (eeprom_busy) {
 		eeprom_wanted = 1;
@@ -1210,20 +1221,16 @@ eeprom_take()
 	eeprom_busy = 1;
  out:
 	return (error);
-#else /* ! SUN4 */
-	return (ENODEV);
-#endif /* SUN4 */
 }
 
 /* Give a lock on the eeprom away. */
 static void
 eeprom_give()
 {
-#if defined(SUN4)
 	eeprom_busy = 0;
 	if (eeprom_wanted) {
 		eeprom_wanted = 0;
 		wakeup(&eeprom_busy);
 	}
-#endif /* SUN4 */
 }
+#endif /* SUN4 */

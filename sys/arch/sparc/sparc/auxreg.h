@@ -1,4 +1,4 @@
-/*	$NetBSD: auxreg.h,v 1.4 1996/02/01 22:32:40 mycroft Exp $ */
+/*	$NetBSD: auxreg.h,v 1.5 1996/03/14 21:08:54 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -75,4 +75,6 @@
  * as AUXREG_VA depends on NBPG which is not a constant.
  */
 volatile u_char *auxio_reg;
+unsigned int auxregbisc __P((int, int));
 #endif
+
