@@ -1,4 +1,4 @@
-/*	$NetBSD: dumprmt.c,v 1.16 1997/06/05 11:13:23 lukem Exp $	*/
+/*	$NetBSD: dumprmt.c,v 1.17 1997/06/05 16:10:47 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)dumprmt.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: dumprmt.c,v 1.16 1997/06/05 11:13:23 lukem Exp $";
+static char rcsid[] = "$NetBSD: dumprmt.c,v 1.17 1997/06/05 16:10:47 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -125,7 +125,7 @@ rmtgetconn()
 #ifdef notdef
 	static int on = 1;
 #endif
-	char *tuser;
+	char *tuser, *name;
 	int size;
 
 	if (sp == NULL) {
@@ -136,6 +136,8 @@ rmtgetconn()
 		if (pwd == NULL)
 			errx(1, "who are you?");
 	}
+	if ((name = strdup(pwd->pw_name)) == NULL)
+		err(1, "malloc");
 	if ((cp = strchr(rmtpeer, '@')) != NULL) {
 		tuser = rmtpeer;
 		*cp = '\0';
@@ -143,10 +145,11 @@ rmtgetconn()
 			exit(1);
 		rmtpeer = ++cp;
 	} else
-		tuser = pwd->pw_name;
+		tuser = name;
 
-	rmtape = rcmd(&rmtpeer, (u_short)sp->s_port, pwd->pw_name, tuser,
-	    _PATH_RMT, (int *)0);
+	rmtape = rcmd(&rmtpeer, (u_short)sp->s_port, name, tuser, _PATH_RMT,
+	    (int *)0);
+	(void)free(name);
 	if (rmtape < 0)
 		return;
 
