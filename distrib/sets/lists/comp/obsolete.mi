@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.52 2001/06/30 21:24:06 tron Exp $
+# $NetBSD: obsolete.mi,v 1.53 2001/07/07 11:28:22 simonb Exp $
 /usr/bin/genclass
 /usr/bin/gettextize
 /usr/include/bfd
@@ -13,7 +13,6 @@
 /usr/include/dev/clock_subr.h
 /usr/include/dev/cons.h
 /usr/include/dev/dec/clockvar.h
-/usr/include/dev/dec/dec_boot.h
 /usr/include/dev/dec/mcclock_pad32.h
 /usr/include/dev/dec/mcclockvar.h
 /usr/include/dev/eisa
