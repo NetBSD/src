@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.6 1999/08/06 00:11:03 thorpej Exp $	*/
+/*	$NetBSD: dump.c,v 1.7 2000/01/26 14:23:41 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: dump.c,v 1.6 1999/08/06 00:11:03 thorpej Exp $");
+__RCSID("$NetBSD: dump.c,v 1.7 2000/01/26 14:23:41 sommerfeld Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -226,8 +226,10 @@ dumprecord(ktr, trpoints, sizep, mp, fp)
 		break;
 	}
 
-	if (mcopy)
+	if (mcopy) {
 		free(mcopy);
+		mcopy = NULL;
+	}
 }
 
 void
@@ -541,16 +543,13 @@ void
 ktrpsig(psig)
 	struct ktr_psig *psig;
 {
-	u_long msk;
-
 	(void)printf("SIG%s ", sys_signame[psig->signo]);
 	if (psig->action == SIG_DFL)
 		(void)printf("SIG_DFL\n");
 	else {
-		msk = 0;
-		bcopy((char *)&psig->mask, (char *)&msk, sizeof(psig->mask));
 		(void)printf("caught handler=0x%lx mask=0x%lx code=0x%x\n",
-		    (u_long)psig->action, msk, psig->code);
+		    (u_long)psig->action, (unsigned long)psig->mask.__bits[0],
+		    psig->code);
 	}
 }
 
