@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 2001/02/05 19:22:25 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3 2001/02/08 18:31:25 briggs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -582,7 +582,9 @@ void
 consinit()
 {
 	static int initted;
+#if (NCOM > 0)
 	bus_space_tag_t tag;
+#endif
 
 	if (initted)
 		return;
