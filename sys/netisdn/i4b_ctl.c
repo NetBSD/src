@@ -27,7 +27,7 @@
  *	i4b_ctl.c - i4b system control port driver
  *	------------------------------------------
  *
- *	$Id: i4b_ctl.c,v 1.2 2001/03/24 12:40:31 martin Exp $
+ *	$Id: i4b_ctl.c,v 1.3 2001/04/21 07:23:41 martin Exp $
  *
  * $FreeBSD$
  *
@@ -150,11 +150,7 @@ static void *devfs_token;
 void i4bctlattach __P((void));
 int i4bctlopen __P((dev_t dev, int flag, int fmt, struct proc *p));
 int i4bctlclose __P((dev_t dev, int flag, int fmt, struct proc *p));
-#ifdef __bsdi__
 int i4bctlioctl __P((dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p));
-#else
-int i4bctlioctl __P((dev_t dev, int cmd, caddr_t data, int flag, struct proc *p));
-#endif
 #endif	/* !FreeBSD */
 
 #if BSD > 199306 && defined(__FreeBSD__)
@@ -264,13 +260,7 @@ i4bctlclose(dev_t dev, int flag, int fmt, struct proc *p)
  *	i4bctlioctl - device driver ioctl routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-#if defined (__FreeBSD_version) && __FreeBSD_version >= 300003
 i4bctlioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
-#elif defined(__bsdi__)
-i4bctlioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
-#else
-i4bctlioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
-#endif
 {
 #if DO_I4B_DEBUG
 	ctl_debug_t *cdbg;	
