@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_allocsys.c,v 1.15 2001/06/25 16:24:31 thorpej Exp $	*/
+/*	$NetBSD: kern_allocsys.c,v 1.16 2001/06/25 22:08:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 /*
  * Declare these as initialized data so we can patch them.
  */
