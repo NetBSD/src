@@ -1,4 +1,4 @@
-/* $NetBSD: svr4_syscalls.c,v 1.67.2.1 2001/03/05 22:49:31 nathanw Exp $ */
+/* $NetBSD: svr4_syscalls.c,v 1.67.2.2 2001/06/21 20:00:44 nathanw Exp $ */
 
 /*
  * System call names.
@@ -7,8 +7,8 @@
  * created from	NetBSD: syscalls.master,v 1.50 2001/02/11 01:13:01 eeh Exp 
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
+#if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
 #include "opt_sysv.h"
 #endif
@@ -27,7 +27,7 @@
 #include <compat/svr4/svr4_statvfs.h>
 #include <compat/svr4/svr4_resource.h>
 #include <compat/svr4/svr4_acl.h>
-#endif /* _KERNEL && ! _LKM */
+#endif /* _KERNEL_OPT */
 
 const char *const svr4_syscallnames[] = {
 	"syscall",			/* 0 = syscall */

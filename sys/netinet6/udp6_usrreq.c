@@ -1,5 +1,5 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.40 2001/02/11 06:49:53 itojun Exp $	*/
-/*	$KAME: udp6_usrreq.c,v 1.84 2001/02/07 07:38:25 itojun Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.40.2.1 2001/06/21 20:09:07 nathanw Exp $	*/
+/*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -103,6 +103,9 @@
 #endif /*IPSEC*/
 
 #include "faith.h"
+#if defined(NFAITH) && NFAITH > 0
+#include <net/if_faith.h>
+#endif
 
 /*
  * UDP protocol inplementation.
@@ -161,18 +164,18 @@ udp6_input(mp, offp, proto)
 	u_int32_t plen, ulen;
 	struct sockaddr_in6 udp_in6;
 
+	ip6 = mtod(m, struct ip6_hdr *);
+
 #if defined(NFAITH) && 0 < NFAITH
-	if (m->m_pkthdr.rcvif) {
-		if (m->m_pkthdr.rcvif->if_type == IFT_FAITH) {
-			/* send icmp6 host unreach? */
-			m_freem(m);
-			return IPPROTO_DONE;
-		}
+	if (faithprefix(&ip6->ip6_dst)) {
+		/* send icmp6 host unreach? */
+		m_freem(m);
+		return IPPROTO_DONE;
 	}
 #endif
+
 	udp6stat.udp6s_ipackets++;
 
-	ip6 = mtod(m, struct ip6_hdr *);
 	/* check for jumbogram is done in ip6_input.  we can trust pkthdr.len */
 	plen = m->m_pkthdr.len - off;
 #ifndef PULLDOWN_TEST
@@ -397,7 +400,6 @@ udp6_input(mp, offp, proto)
 	if (in6p == 0) {
 		udp6stat.udp6s_noport++;
 		if (m->m_flags & M_MCAST) {
-			printf("UDP6: M_MCAST is set in a unicast packet.\n");
 			udp6stat.udp6s_noportmcast++;
 			goto bad;
 		}
@@ -518,8 +520,11 @@ udp6_ctlinput(cmd, sa, d)
 		 */
 
 		/* check if we can safely examine src and dst ports */
-		if (m->m_pkthdr.len < off + sizeof(*uhp))
+		if (m->m_pkthdr.len < off + sizeof(*uhp)) {
+			if (cmd == PRC_MSGSIZE)
+				icmp6_mtudisc_update((struct ip6ctlparam *)d, 0);
 			return;
+		}
 
 		bzero(&uh, sizeof(uh));
 		m_copydata(m, off, sizeof(*uhp), (caddr_t)&uh);
@@ -739,10 +744,8 @@ udp6_usrreq(so, req, m, addr6, control, p)
 	}
 
 release:
-	if (control) {
-		printf("udp control data unexpectedly retained\n");
+	if (control)
 		m_freem(control);
-	}
 	if (m)
 		m_freem(m);
 	return(error);

@@ -1,4 +1,4 @@
-/* $NetBSD: ispvar.h,v 1.42.2.1 2001/04/09 01:56:23 nathanw Exp $ */
+/* $NetBSD: ispvar.h,v 1.42.2.2 2001/06/21 20:02:46 nathanw Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -499,6 +499,7 @@ typedef struct ispsoftc {
 #define	ISP_HA_FC		0xf0
 #define	ISP_HA_FC_2100		0x10
 #define	ISP_HA_FC_2200		0x20
+#define	ISP_HA_FC_2300		0x30
 
 #define	IS_SCSI(isp)	(isp->isp_type & ISP_HA_SCSI)
 #define	IS_1240(isp)	(isp->isp_type == ISP_HA_SCSI_1240)
@@ -511,9 +512,13 @@ typedef struct ispsoftc {
 #define	IS_ULTRA2(isp)	(IS_1080(isp) || IS_1280(isp) || IS_12160(isp))
 #define	IS_ULTRA3(isp)	(IS_12160(isp))
 
-#define	IS_FC(isp)	(isp->isp_type & ISP_HA_FC)
-#define	IS_2100(isp)	(isp->isp_type == ISP_HA_FC_2100)
-#define	IS_2200(isp)	(isp->isp_type == ISP_HA_FC_2200)
+#define	IS_FC(isp)	((isp)->isp_type & ISP_HA_FC)
+#define	IS_2100(isp)	((isp)->isp_type == ISP_HA_FC_2100)
+#define	IS_2200(isp)	((isp)->isp_type == ISP_HA_FC_2200)
+#define	IS_2300(isp)	((isp)->isp_type == ISP_HA_FC_2300)
+
+/* 2300 Support isn't ready yet */
+#define	ISP_DISABLE_2300_SUPPORT	1
 
 /*
  * DMA cookie macros
@@ -658,6 +663,8 @@ typedef enum {
 	ISPASYNC_BUS_RESET,		/* Bus Was Reset */
 	ISPASYNC_LOOP_DOWN,		/* FC Loop Down */
 	ISPASYNC_LOOP_UP,		/* FC Loop Up */
+	ISPASYNC_LIP,			/* LIP Received */
+	ISPASYNC_LOOP_RESET,		/* Loop Reset Received */
 	ISPASYNC_CHANGE_NOTIFY,		/* FC Change Notification */
 	ISPASYNC_FABRIC_DEV,		/* FC Fabric Device Arrival */
 	ISPASYNC_PROMENADE,		/* FC Objects coming && going */
@@ -810,7 +817,6 @@ void isp_prt(struct ispsoftc *, int level, const char *, ...);
  *	ISP_SWIZZLE_SNS_REQ
  *	ISP_UNSWIZZLE_SNS_RSP
  *	ISP_SWIZZLE_NVRAM_WORD
- *
- *
  */
+
 #endif	/* _ISPVAR_H */

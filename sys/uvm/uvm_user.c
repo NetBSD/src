@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_user.c,v 1.8.2.1 2001/04/09 01:59:24 nathanw Exp $	*/
+/*	$NetBSD: uvm_user.c,v 1.8.2.2 2001/06/21 20:10:51 nathanw Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
 
 void
 uvm_deallocate(map, start, size)
-	vm_map_t map;
+	struct vm_map *map;
 	vaddr_t start;
 	vsize_t size;
 {

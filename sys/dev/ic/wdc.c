@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.94.2.1 2001/04/09 01:56:33 nathanw Exp $ */
+/*	$NetBSD: wdc.c,v 1.94.2.2 2001/06/21 20:03:28 nathanw Exp $ */
 
 
 /*
@@ -149,7 +149,7 @@ wdprint(aux, pnp)
 }
 
 int
-atapi_print(aux, pnp)
+atapiprint(aux, pnp)
 	void *aux;
 	const char *pnp;
 {
@@ -165,7 +165,9 @@ atapi_print(aux, pnp)
  * 0x02 for drive 1).
  * Logic:
  * - If a status register is at 0xff, assume there is no drive here
- *   (ISA has pull-up resistors). If no drive at all -> return.
+ *   (ISA has pull-up resistors).  Similarly if the status register has
+ *   the value we last wrote to the bus (for IDE interfaces without pullups).
+ *   If no drive at all -> return.
  * - reset the controller, wait for it to complete (may take up to 31s !).
  *   If timeout -> return.
  * - test ATA/ATAPI signatures. If at last one drive found -> return.
@@ -200,9 +202,9 @@ wdcprobe(chp)
 		    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
 		    chp->channel, st0, st1), DEBUG_PROBE);
 
-		if (st0 == 0xff)
+		if (st0 == 0xff || st0 == WDSD_IBM)
 			ret_value &= ~0x01;
-		if (st1 == 0xff)
+		if (st1 == 0xff || st1 == (WDSD_IBM | 0x10))
 			ret_value &= ~0x02;
 		if (ret_value == 0)
 			return 0;
@@ -429,7 +431,7 @@ wdcattach(chp)
 		aa_link.aa_drv_data = 0;
 		aa_link.aa_bus_private = NULL;
 		chp->atapibus = config_found(&chp->wdc->sc_dev,
-		    (void *)&aa_link, atapi_print);
+		    (void *)&aa_link, atapiprint);
 #endif
 	}
 
@@ -651,6 +653,8 @@ wdcstart(chp)
 		chp->ch_drive[xfer->drive].drive_flags &= ~DRIVE_RESET;
 		chp->ch_drive[xfer->drive].state = 0;
 	}
+	if (chp->wdc->cap & WDC_CAPABILITY_NOIRQ)
+		KASSERT(xfer->c_flags & C_POLL);
 	xfer->c_start(chp, xfer);
 }
 
@@ -1256,6 +1260,8 @@ wdc_exec_command(drvp, wdc_c)
 		return WDC_TRY_AGAIN;
 	 }
 
+	if (chp->wdc->cap & WDC_CAPABILITY_NOIRQ)
+		wdc_c->flags |= AT_POLL;
 	if (wdc_c->flags & AT_POLL)
 		xfer->c_flags |= C_POLL;
 	xfer->drive = drvp->drive;
@@ -1586,15 +1592,15 @@ wdc_addref(chp)
 	struct channel_softc *chp;
 {
 	struct wdc_softc *wdc = chp->wdc; 
-	struct atapi_adapter *adapter = &wdc->sc_atapi_adapter;
+	struct scsipi_adapter *adapt = &wdc->sc_atapi_adapter._generic;
 	int s, error = 0;
 
 	s = splbio();
-	if (adapter->_generic.scsipi_refcnt++ == 0 &&
-	    adapter->_generic.scsipi_enable != NULL) {
-		error = (*adapter->_generic.scsipi_enable)(wdc, 1);
+	if (adapt->adapt_refcnt++ == 0 &&
+	    adapt->adapt_enable != NULL) {
+		error = (*adapt->adapt_enable)(&wdc->sc_dev, 1);
 		if (error)
-			adapter->_generic.scsipi_refcnt--;
+			adapt->adapt_refcnt--;
 	}
 	splx(s);
 	return (error);
@@ -1605,13 +1611,13 @@ wdc_delref(chp)
 	struct channel_softc *chp;
 {
 	struct wdc_softc *wdc = chp->wdc;
-	struct atapi_adapter *adapter = &wdc->sc_atapi_adapter;
+	struct scsipi_adapter *adapt = &wdc->sc_atapi_adapter._generic;
 	int s;
 
 	s = splbio();
-	if (adapter->_generic.scsipi_refcnt-- == 1 &&
-	    adapter->_generic.scsipi_enable != NULL)
-		(void) (*adapter->_generic.scsipi_enable)(wdc, 0);
+	if (adapt->adapt_refcnt-- == 1 &&
+	    adapt->adapt_enable != NULL)
+		(void) (*adapt->adapt_enable)(&wdc->sc_dev, 0);
 	splx(s);
 }
 

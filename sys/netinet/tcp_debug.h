@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_debug.h,v 1.9 1999/07/31 18:41:15 itojun Exp $	*/
+/*	$NetBSD: tcp_debug.h,v 1.9.14.1 2001/06/21 20:08:42 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -38,7 +38,7 @@
 #ifndef _NETINET_TCP_DEBUG_H_
 #define _NETINET_TCP_DEBUG_H_
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_inet.h"
 #endif
 
@@ -72,7 +72,9 @@ char	*tanames[] =
     { "input", "output", "user", "respond", "drop" };
 #endif
 
+#ifndef TCP_NDEBUG
 #define	TCP_NDEBUG 100
+#endif
 struct	tcp_debug tcp_debug[TCP_NDEBUG];
 int	tcp_debx;
 

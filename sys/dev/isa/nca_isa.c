@@ -1,4 +1,4 @@
-/*	$NetBSD: nca_isa.c,v 1.6 2000/03/25 15:27:58 tsutsui Exp $	*/
+/*	$NetBSD: nca_isa.c,v 1.6.8.1 2001/06/21 20:03:51 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -421,8 +421,17 @@ nca_isa_attach(parent, self, aux)
 	sc->sc_regt = iot;
 	sc->sc_regh = ioh;
 
-	sc->sc_link.scsipi_scsi.adapter_target = 7;
-	sc->sc_adapter.scsipi_minphys = minphys;
+	/*
+	 * Fill in our portion of the scsipi_adapter.
+	 */
+	sc->sc_adapter.adapt_request = ncr5380_scsipi_request;
+	sc->sc_adapter.adapt_minphys = minphys;
+
+	/*
+	 * Fill in our portion of the scsipi_channel.
+	 */
+
+	sc->sc_channel.chan_id = 7;
 
 	/*
 	 *  Initialize nca board itself.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.40.2.1 2001/03/05 22:50:06 nathanw Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.40.2.2 2001/06/21 20:10:06 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  *	@(#)ffs_inode.c	8.13 (Berkeley) 4/21/95
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
 #include "opt_quota.h"
 #endif

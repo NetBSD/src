@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.53.2.1 2001/03/05 22:49:52 nathanw Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.53.2.2 2001/06/21 20:07:45 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -573,8 +573,8 @@ spec_close(v)
 	int (*devclose) __P((dev_t, int, int, struct proc *));
 	int mode, error, count, flags, flags1;
 
-	simple_lock(&vp->v_interlock);
 	count = vcount(vp);
+	simple_lock(&vp->v_interlock);
 	flags = vp->v_flag;
 	simple_unlock(&vp->v_interlock);
 

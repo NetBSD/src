@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohcivar.h,v 1.7.2.1 2001/04/09 01:56:37 nathanw Exp $	*/
+/*	$NetBSD: fwohcivar.h,v 1.7.2.2 2001/06/21 20:03:42 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -51,12 +51,15 @@
 #define	OHCI_BUF_ATRQ_CNT	(8*8)
 #define	OHCI_BUF_ATRS_CNT	(8*8)
 #define	OHCI_BUF_IR_CNT		16
-#define	OHCI_BUF_CNT		(OHCI_BUF_ARRQ_CNT + OHCI_BUF_ARRS_CNT + OHCI_BUF_ATRQ_CNT + OHCI_BUF_ATRS_CNT + OHCI_BUF_IR_CNT + 1 + 1)
+#define	OHCI_BUF_CNT							\
+	(OHCI_BUF_ARRQ_CNT + OHCI_BUF_ARRS_CNT + OHCI_BUF_ATRQ_CNT +	\
+	    OHCI_BUF_ATRS_CNT + OHCI_BUF_IR_CNT + 1 + 1)
 
 #define	OHCI_LOOP		1000
 #define	OHCI_SELFID_TIMEOUT	(hz * 3)
 
 struct fwohci_softc;
+struct fwohci_pkt;
 
 struct fwohci_buf {
 	TAILQ_ENTRY(fwohci_buf) fb_list;
@@ -68,7 +71,9 @@ struct fwohci_buf {
 	bus_addr_t fb_daddr;
 	int fb_off;
 	struct mbuf *fb_m;
+	void *fb_statusarg;
 	void (*fb_callback)(struct device *, struct mbuf *);
+	int (*fb_statuscb)(struct fwohci_softc *, void *, struct fwohci_pkt *);
 };
 
 struct fwohci_pkt {
@@ -80,6 +85,9 @@ struct fwohci_pkt {
 	struct iovec fp_iov[6];
 	u_int32_t *fp_trail;
 	struct mbuf *fp_m;
+	u_int16_t fp_status;
+	void *fp_statusarg;
+	int (*fp_statuscb)(struct fwohci_softc *, void *, struct fwohci_pkt *);
 	void (*fp_callback)(struct device *, struct mbuf *);
 };
 
@@ -89,7 +97,7 @@ struct fwohci_handler {
 	u_int32_t	fh_key1;	/* addrhi / srcid  / chan */
 	u_int32_t	fh_key2;	/* addrlo / tlabel / tag  */
 	int		(*fh_handler)(struct fwohci_softc *, void *,
-			    struct fwohci_pkt *);
+	    struct fwohci_pkt *);
 	void		*fh_handarg;
 };
 
@@ -105,6 +113,19 @@ struct fwohci_ctx {
 struct fwohci_uidtbl {
 	int		fu_valid;
 	u_int8_t	fu_uid[8];
+};
+
+/*
+ * Needed to keep track of outstanding packets during a read op. Since the
+ * packet stream is asynch it's possible to parse a response packet before the
+ * ack bits are processed. In this case something needs to track whether the
+ * abuf is still valid before possibly attempting to use items from within it.
+ */
+
+struct fwohci_cb {
+	struct ieee1394_abuf *ab;
+	int count;
+	int abuf_valid;
 };
 
 struct fwohci_softc {
@@ -146,6 +167,12 @@ struct fwohci_softc {
 	struct fwohci_buf sc_buf_cnfrom;
 	struct fwohci_buf sc_buf_selfid;
 
+	struct proc *sc_event_thread;
+
+	int sc_dying;
+	u_int32_t sc_intmask;
+	u_int32_t sc_iso;
+    
 	u_int8_t sc_csr[CSR_SB_END];
 
 	struct fwohci_uidtbl *sc_uidtbl;
@@ -153,6 +180,8 @@ struct fwohci_softc {
 	u_int8_t sc_rootid;			/* Phy ID of Root */
 	u_int8_t sc_irmid;			/* Phy ID of IRM */
 	u_int8_t sc_tlabel;			/* Transaction Label */
+	
+	LIST_HEAD(, ieee1394_softc) sc_nodelist;
 };
 
 int fwohci_init (struct fwohci_softc *, const struct evcnt *);
@@ -165,5 +194,15 @@ int fwohci_print (void *, const char *);
 	bus_space_write_4((sc)->sc_memt, (sc)->sc_memh, reg, htole32(val))
 #define	OHCI_CSR_READ(sc, reg) \
 	le32toh(bus_space_read_4((sc)->sc_memt, (sc)->sc_memh, reg))
+
+/* Locators. */
+
+#include "locators.h"
+
+#define fwbuscf_idhi cf_loc[FWBUSCF_IDHI]
+#define FWBUS_UNK_IDHI FWBUSCF_IDHI_DEFAULT
+
+#define fwbuscf_idlo cf_loc[FWBUSCF_IDLO]
+#define FWBUS_UNK_IDLO FWBUSCF_IDLO_DEFAULT
 
 #endif	/* _DEV_IEEE1394_FWOHCIVAR_H_ */

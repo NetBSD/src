@@ -1,4 +1,4 @@
-/* $NetBSD: aout_syscallargs.h,v 1.17.2.1 2001/03/13 20:48:46 nathanw Exp $ */
+/* $NetBSD: aout_syscallargs.h,v 1.17.2.2 2001/06/21 19:58:51 nathanw Exp $ */
 
 /*
  * System call argument lists.
@@ -8,7 +8,7 @@
  */
 
 #ifndef _AOUT_SYS__SYSCALLARGS_H_
-#define _AOUT_SYS__SYSCALLARGS_H_
+#define	_AOUT_SYS__SYSCALLARGS_H_
 
 #ifdef	syscallarg
 #undef	syscallarg
@@ -32,11 +32,6 @@ struct aout_sys_open_args {
 	syscallarg(mode_t) mode;
 };
 
-struct aout_sys_creat_args {
-	syscallarg(const char *) path;
-	syscallarg(mode_t) mode;
-};
-
 struct aout_sys_link_args {
 	syscallarg(const char *) path;
 	syscallarg(const char *) link;
@@ -50,12 +45,6 @@ struct aout_sys_chdir_args {
 	syscallarg(const char *) path;
 };
 
-struct aout_sys_mknod_args {
-	syscallarg(const char *) path;
-	syscallarg(mode_t) mode;
-	syscallarg(dev_t) dev;
-};
-
 struct aout_sys_chmod_args {
 	syscallarg(const char *) path;
 	syscallarg(mode_t) mode;
@@ -65,13 +54,6 @@ struct aout_sys_chown_args {
 	syscallarg(const char *) path;
 	syscallarg(uid_t) uid;
 	syscallarg(gid_t) gid;
-};
-
-struct aout_sys_mount_args {
-	syscallarg(const char *) type;
-	syscallarg(const char *) path;
-	syscallarg(int) flags;
-	syscallarg(void *) data;
 };
 
 struct aout_sys_unmount_args {
@@ -97,17 +79,6 @@ struct aout_compat_43_sys_stat_args {
 struct aout_compat_43_sys_lstat_args {
 	syscallarg(const char *) path;
 	syscallarg(struct stat43 *) ub;
-};
-
-struct aout_sys_ktrace_args {
-	syscallarg(const char *) fname;
-	syscallarg(int) ops;
-	syscallarg(int) facs;
-	syscallarg(int) pid;
-};
-
-struct aout_sys_acct_args {
-	syscallarg(const char *) path;
 };
 
 struct aout_sys_revoke_args {
@@ -145,16 +116,6 @@ struct aout_compat_43_sys_truncate_args {
 	syscallarg(long) length;
 };
 
-struct aout_sys_mkfifo_args {
-	syscallarg(const char *) path;
-	syscallarg(mode_t) mode;
-};
-
-struct aout_sys_mkdir_args {
-	syscallarg(const char *) path;
-	syscallarg(mode_t) mode;
-};
-
 struct aout_sys_rmdir_args {
 	syscallarg(const char *) path;
 };
@@ -162,13 +123,6 @@ struct aout_sys_rmdir_args {
 struct aout_sys_utimes_args {
 	syscallarg(const char *) path;
 	syscallarg(const struct timeval *) tptr;
-};
-
-struct aout_sys_quotactl_args {
-	syscallarg(const char *) path;
-	syscallarg(int) cmd;
-	syscallarg(int) uid;
-	syscallarg(caddr_t) arg;
 };
 
 struct aout_sys_statfs_args {
@@ -244,19 +198,19 @@ int	sys_write(struct lwp *, void *, register_t *);
 int	aout_sys_open(struct lwp *, void *, register_t *);
 int	sys_close(struct lwp *, void *, register_t *);
 int	sys_wait4(struct lwp *, void *, register_t *);
-int	aout_sys_creat(struct lwp *, void *, register_t *);
+int	compat_43_sys_creat(struct lwp *, void *, register_t *);
 int	aout_sys_link(struct lwp *, void *, register_t *);
 int	aout_sys_unlink(struct lwp *, void *, register_t *);
 int	aout_sys_chdir(struct lwp *, void *, register_t *);
 int	sys_fchdir(struct lwp *, void *, register_t *);
-int	aout_sys_mknod(struct lwp *, void *, register_t *);
+int	sys_mknod(struct lwp *, void *, register_t *);
 int	aout_sys_chmod(struct lwp *, void *, register_t *);
 int	aout_sys_chown(struct lwp *, void *, register_t *);
 int	sys_obreak(struct lwp *, void *, register_t *);
 int	sys_getfsstat(struct lwp *, void *, register_t *);
 int	compat_43_sys_lseek(struct lwp *, void *, register_t *);
 int	sys_getpid(struct lwp *, void *, register_t *);
-int	aout_sys_mount(struct lwp *, void *, register_t *);
+int	sys_mount(struct lwp *, void *, register_t *);
 int	aout_sys_unmount(struct lwp *, void *, register_t *);
 int	sys_setuid(struct lwp *, void *, register_t *);
 int	sys_getuid(struct lwp *, void *, register_t *);
@@ -281,7 +235,7 @@ int	sys_pipe(struct lwp *, void *, register_t *);
 int	sys_getegid(struct lwp *, void *, register_t *);
 int	sys_profil(struct lwp *, void *, register_t *);
 #if defined(KTRACE) || !defined(_KERNEL)
-int	aout_sys_ktrace(struct lwp *, void *, register_t *);
+int	sys_ktrace(struct lwp *, void *, register_t *);
 #else
 #endif
 int	compat_13_sys_sigaction(struct lwp *, void *, register_t *);
@@ -289,7 +243,7 @@ int	sys_getgid(struct lwp *, void *, register_t *);
 int	compat_13_sys_sigprocmask(struct lwp *, void *, register_t *);
 int	sys___getlogin(struct lwp *, void *, register_t *);
 int	sys_setlogin(struct lwp *, void *, register_t *);
-int	aout_sys_acct(struct lwp *, void *, register_t *);
+int	sys_acct(struct lwp *, void *, register_t *);
 int	compat_13_sys_sigpending(struct lwp *, void *, register_t *);
 int	compat_13_sys_sigaltstack(struct lwp *, void *, register_t *);
 int	sys_ioctl(struct lwp *, void *, register_t *);
@@ -361,11 +315,11 @@ int	aout_sys_rename(struct lwp *, void *, register_t *);
 int	aout_compat_43_sys_truncate(struct lwp *, void *, register_t *);
 int	compat_43_sys_ftruncate(struct lwp *, void *, register_t *);
 int	sys_flock(struct lwp *, void *, register_t *);
-int	aout_sys_mkfifo(struct lwp *, void *, register_t *);
+int	sys_mkfifo(struct lwp *, void *, register_t *);
 int	sys_sendto(struct lwp *, void *, register_t *);
 int	sys_shutdown(struct lwp *, void *, register_t *);
 int	sys_socketpair(struct lwp *, void *, register_t *);
-int	aout_sys_mkdir(struct lwp *, void *, register_t *);
+int	sys_mkdir(struct lwp *, void *, register_t *);
 int	aout_sys_rmdir(struct lwp *, void *, register_t *);
 int	aout_sys_utimes(struct lwp *, void *, register_t *);
 int	sys_adjtime(struct lwp *, void *, register_t *);
@@ -376,7 +330,7 @@ int	compat_43_sys_getrlimit(struct lwp *, void *, register_t *);
 int	compat_43_sys_setrlimit(struct lwp *, void *, register_t *);
 int	compat_43_sys_killpg(struct lwp *, void *, register_t *);
 int	sys_setsid(struct lwp *, void *, register_t *);
-int	aout_sys_quotactl(struct lwp *, void *, register_t *);
+int	sys_quotactl(struct lwp *, void *, register_t *);
 int	compat_43_sys_quota(struct lwp *, void *, register_t *);
 int	compat_43_sys_getsockname(struct lwp *, void *, register_t *);
 #if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)

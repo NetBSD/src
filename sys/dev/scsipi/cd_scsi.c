@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_scsi.c,v 1.18 2000/06/09 08:54:21 enami Exp $	*/
+/*	$NetBSD: cd_scsi.c,v 1.18.4.1 2001/06/21 20:05:45 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,10 +78,6 @@
 
 int	cd_scsibus_match __P((struct device *, struct cfdata *, void *));
 void	cd_scsibus_attach __P((struct device *, struct device *, void *));
-int	cd_scsibus_get_mode __P((struct cd_softc *,
-	    struct scsi_cd_mode_data *, int, int, int));
-int	cd_scsibus_set_mode __P((struct cd_softc *,
-	    struct scsi_cd_mode_data *, int, int));
 
 struct cfattach cd_scsibus_ca = {
 	sizeof(struct cd_softc), cd_scsibus_match, cd_scsibus_attach,
@@ -124,7 +120,7 @@ cd_scsibus_match(parent, match, aux)
 	struct scsipibus_attach_args *sa = aux;
 	int priority;
 
-	if (sa->sa_sc_link->type != BUS_SCSI)
+	if (scsipi_periph_bustype(sa->sa_periph) != SCSIPI_BUSTYPE_SCSI)
 		return (0);
 
 	(void)scsipi_inqmatch(&sa->sa_inqbuf,
@@ -145,66 +141,21 @@ cd_scsibus_attach(parent, self, aux)
 {
 	struct cd_softc *cd = (void *)self;
 	struct scsipibus_attach_args *sa = aux;
-	struct scsipi_link *sc_link = sa->sa_sc_link;
+	struct scsipi_periph *periph = sa->sa_periph;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("cd_scsibus_attach: "));
+	SC_DEBUG(periph, SCSIPI_DB2, ("cd_scsibus_attach: "));
 
 	scsipi_strvis(cd->name, 16, sa->sa_inqbuf.product, 16);
 
-	cdattach(parent, cd, sc_link, &cd_scsibus_ops);
+	cdattach(parent, cd, periph, &cd_scsibus_ops);
 
 	/*
 	 * Note if this device is ancient.  This is used in cdminphys().
-	 * XXX should be in scsipi_link.
 	 */
-	if ((sa->scsipi_info.scsi_version & SID_ANSII) == 0)
+	if (periph->periph_version == 0)
 		cd->flags |= CDF_ANCIENT;
 
 	/* should I get the SCSI_CAP_PAGE here ? */
-}
-
-/*
- * Get the requested page into the buffer given
- */
-int
-cd_scsibus_get_mode(cd, data, page, len, flags)
-	struct cd_softc *cd;
-	struct scsi_cd_mode_data *data;
-	int page, len, flags;
-{
-	struct scsi_mode_sense scsipi_cmd;
-
-	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
-	bzero(data, sizeof(*data));
-	scsipi_cmd.opcode = SCSI_MODE_SENSE;
-	scsipi_cmd.page = page;
-	scsipi_cmd.length = len & 0xff;
-	return (scsipi_command(cd->sc_link,
-	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
-	    (u_char *)data, sizeof(*data), CDRETRIES, 20000, NULL,
-	    XS_CTL_DATA_IN));
-}
-
-/*
- * Get the requested page into the buffer given
- */
-int
-cd_scsibus_set_mode(cd, data, len, flags)
-	struct cd_softc *cd;
-	struct scsi_cd_mode_data *data;
-	int len, flags;
-{
-	struct scsi_mode_select scsipi_cmd;
-
-	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
-	scsipi_cmd.opcode = SCSI_MODE_SELECT;
-	scsipi_cmd.byte2 |= SMS_PF;
-	scsipi_cmd.length = len & 0xff;
-	data->header.data_length = 0;
-	return (scsipi_command(cd->sc_link,
-	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
-	    (u_char *)data, sizeof(*data), CDRETRIES, 20000, NULL,
-	    XS_CTL_DATA_OUT));
 }
 
 int
@@ -215,13 +166,15 @@ cd_scsibus_set_pa_immed(cd, flags)
 	struct scsi_cd_mode_data data;
 	int error;
 
-	if ((error = cd_scsibus_get_mode(cd, &data, SCSI_AUDIO_PAGE,
-	    AUDIOPAGESIZE, flags | XS_CTL_DATA_ONSTACK)) != 0)
+	if ((error = scsipi_mode_sense(cd->sc_periph, 0, SCSI_AUDIO_PAGE,
+	    &data.header, AUDIOPAGESIZE, flags | XS_CTL_DATA_ONSTACK,
+	    CDRETRIES, 20000)) != 0)
 		return (error);
 	data.page.audio.flags &= ~CD_PA_SOTC;
 	data.page.audio.flags |= CD_PA_IMMED;
-	return (cd_scsibus_set_mode(cd, &data, AUDIOPAGESIZE,
-	    flags | XS_CTL_DATA_ONSTACK));
+	return (scsipi_mode_select(cd->sc_periph, SMS_PF,
+	    &data.header, AUDIOPAGESIZE,
+	    flags | XS_CTL_DATA_ONSTACK, CDRETRIES, 20000));
 }
 
 int
@@ -233,15 +186,17 @@ cd_scsibus_setchan(cd, p0, p1, p2, p3, flags)
 	struct scsi_cd_mode_data data;
 	int error;
 
-	if ((error = cd_scsibus_get_mode(cd, &data, SCSI_AUDIO_PAGE,
-	    AUDIOPAGESIZE, flags | XS_CTL_DATA_ONSTACK)) != 0)
+	if ((error = scsipi_mode_sense(cd->sc_periph, 0, SCSI_AUDIO_PAGE,
+	    &data.header, AUDIOPAGESIZE, flags | XS_CTL_DATA_ONSTACK,
+	    CDRETRIES, 20000)) != 0)
 		return (error);
 	data.page.audio.port[LEFT_PORT].channels = p0;
 	data.page.audio.port[RIGHT_PORT].channels = p1;
 	data.page.audio.port[2].channels = p2;
 	data.page.audio.port[3].channels = p3;
-	return (cd_scsibus_set_mode(cd, &data, AUDIOPAGESIZE,
-	    flags | XS_CTL_DATA_ONSTACK));
+	return (scsipi_mode_select(cd->sc_periph, SMS_PF,
+	    &data.header, AUDIOPAGESIZE,
+	    flags | XS_CTL_DATA_ONSTACK, CDRETRIES, 20000));
 }
 
 int
@@ -254,8 +209,9 @@ cd_scsibus_getvol(cd, arg, flags)
 	struct scsi_cd_mode_data data;
 	int error;
 
-	if ((error = cd_scsibus_get_mode(cd, &data, SCSI_AUDIO_PAGE,
-	    AUDIOPAGESIZE, flags | XS_CTL_DATA_ONSTACK)) != 0)
+	if ((error = scsipi_mode_sense(cd->sc_periph, 0, SCSI_AUDIO_PAGE,
+	    &data.header, AUDIOPAGESIZE,
+	    flags | XS_CTL_DATA_ONSTACK, CDRETRIES, 20000)) != 0)
 		return (error);
 	arg->vol[LEFT_PORT] = data.page.audio.port[LEFT_PORT].volume;
 	arg->vol[RIGHT_PORT] = data.page.audio.port[RIGHT_PORT].volume;
@@ -273,8 +229,9 @@ cd_scsibus_setvol(cd, arg, flags)
 	struct scsi_cd_mode_data data;
 	int error;
 
-	if ((error = cd_scsibus_get_mode(cd, &data, SCSI_AUDIO_PAGE,
-	    AUDIOPAGESIZE, flags | XS_CTL_DATA_ONSTACK)) != 0)
+	if ((error = scsipi_mode_sense(cd->sc_periph, 0, SCSI_AUDIO_PAGE,
+	    &data.header, AUDIOPAGESIZE,
+	    flags | XS_CTL_DATA_ONSTACK, CDRETRIES, 20000)) != 0)
 		return (error);
 	data.page.audio.port[LEFT_PORT].channels = CHANNEL_0;
 	data.page.audio.port[LEFT_PORT].volume = arg->vol[LEFT_PORT];
@@ -282,8 +239,9 @@ cd_scsibus_setvol(cd, arg, flags)
 	data.page.audio.port[RIGHT_PORT].volume = arg->vol[RIGHT_PORT];
 	data.page.audio.port[2].volume = arg->vol[2];
 	data.page.audio.port[3].volume = arg->vol[3];
-	return (cd_scsibus_set_mode(cd, &data, AUDIOPAGESIZE,
-	    flags | XS_CTL_DATA_ONSTACK));
+	return (scsipi_mode_select(cd->sc_periph, SMS_PF,
+	    &data.header, AUDIOPAGESIZE,
+	    flags | XS_CTL_DATA_ONSTACK, CDRETRIES, 20000));
 }
 
 int

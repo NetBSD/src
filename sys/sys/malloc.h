@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.59.2.1 2001/03/05 22:50:02 nathanw Exp $	*/
+/*	$NetBSD: malloc.h,v 1.59.2.2 2001/06/21 20:09:49 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,7 +38,7 @@
 #ifndef _SYS_MALLOC_H_
 #define	_SYS_MALLOC_H_
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_kmemstats.h"
 #include "opt_malloclog.h"
 #include "opt_lockdebug.h"
@@ -171,8 +171,9 @@
 #define	M_EMULDATA	115	/* Per-process emulation data */
 #define	M_1394CTL	116	/* IEEE 1394 control structures */
 #define	M_1394DATA	117	/* IEEE 1394 data buffers */
-#define	M_SA	118	/* Scheduler activation structures */
-#define	M_LAST	119	/* Must be last type + 1 */
+#define	M_PIPE		118	/* Pipe structures */
+#define M_SA		119	/* Scheduler activation structures */
+#define	M_LAST		120	/* Must be last type + 1 */
 
 
 #define	INITKMEMNAMES { \
@@ -294,8 +295,9 @@
 	"emuldata",	/* 115 M_EMULDATA */ \
 	"1394ctl",	/* 116 M_1394CTL */ \
 	"1394data",	/* 117 M_1394DATA */ \
-	"sa",		/* 118 M_SA */ \
-	NULL,		/* 119 */ \
+	"pipe",		/* 118 M_PIPE */ \
+	"sa",		/* 119 M_SA */ \
+	NULL,		/* 120 */ \
 }
 
 struct kmemstats {
@@ -385,30 +387,30 @@ struct kmembuckets {
 #if defined(KMEMSTATS) || defined(DIAGNOSTIC) || defined(_LKM) || \
     defined(MALLOCLOG) || defined(LOCKDEBUG)
 #define	MALLOC(space, cast, size, type, flags) \
-	(space) = (cast)malloc((u_long)(size), type, flags)
-#define	FREE(addr, type) free((caddr_t)(addr), type)
+	(space) = (cast)malloc((u_long)(size), (type), (flags))
+#define	FREE(addr, type) free((caddr_t)(addr), (type))
 
 #else /* do not collect statistics */
 #define	MALLOC(space, cast, size, type, flags)				\
 do {									\
-	register struct kmembuckets *kbp = &bucket[BUCKETINDX(size)];	\
+	register struct kmembuckets *kbp = &bucket[BUCKETINDX((size))];	\
 	long s = splvm();						\
 	if (kbp->kb_next == NULL) {					\
-		(space) = (cast)malloc((u_long)(size), type, flags);	\
+		(space) = (cast)malloc((u_long)(size), (type), (flags)); \
 	} else {							\
 		(space) = (cast)kbp->kb_next;				\
 		kbp->kb_next = *(caddr_t *)(space);			\
 	}								\
 	splx(s);							\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #define	FREE(addr, type)						\
 do {									\
 	register struct kmembuckets *kbp;				\
-	register struct kmemusage *kup = btokup(addr);			\
+	register struct kmemusage *kup = btokup((addr));		\
 	long s = splvm();						\
 	if (1 << kup->ku_indx > MAXALLOCSAVE) {				\
-		free((caddr_t)(addr), type);				\
+		free((caddr_t)(addr), (type));				\
 	} else {							\
 		kbp = &bucket[kup->ku_indx];				\
 		if (kbp->kb_next == NULL)				\
@@ -419,7 +421,7 @@ do {									\
 		kbp->kb_last = (caddr_t)(addr);				\
 	}								\
 	splx(s);							\
-} while(0)
+} while(/* CONSTCOND */ 0)
 #endif /* do not collect statistics */
 
 extern struct kmemstats		kmemstats[];

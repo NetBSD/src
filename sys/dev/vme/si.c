@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.2 2000/07/04 01:29:14 thorpej Exp $	*/
+/*	$NetBSD: si.c,v 1.2.6.1 2001/06/21 20:06:34 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996,2000 The NetBSD Foundation, Inc.
@@ -122,7 +122,6 @@
 
 #ifdef	DEBUG
 int si_debug = 0;
-static int si_link_flags = 0 /* | SDEV_DB2 */ ;
 #endif
 
 /*
@@ -348,12 +347,9 @@ si_attach(parent, self, aux)
 			bitmask_snprintf(sc->sc_options, SI_OPTIONS_BITS,
 			    bits, sizeof(bits)));
 	}
-#ifdef	DEBUG
-	ncr_sc->sc_link.flags |= si_link_flags;
-#endif
 
-	ncr_sc->sc_link.scsipi_scsi.adapter_target = 7;
-	ncr_sc->sc_adapter.scsipi_minphys = minphys;
+	ncr_sc->sc_channel.chan_id = 7;
+	ncr_sc->sc_adapter.adapt_minphys = minphys;
 
 	/*
 	 *  Initialize si board itself.

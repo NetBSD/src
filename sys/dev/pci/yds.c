@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.3.2.2 2001/04/09 01:57:14 nathanw Exp $	*/
+/*	$NetBSD: yds.c,v 1.3.2.3 2001/06/21 20:05:12 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -778,6 +778,7 @@ yds_attach(parent, self, aux)
 		if (ac97_id2 == 4)
 			ac97_id2 = -1;
 detected:
+		;
 	}
 
 	pci_conf_write(pc, pa->pa_tag, YDS_PCI_DSCTRL, reg | YDS_DSCTRL_CRST);
@@ -1449,6 +1450,7 @@ yds_trigger_output(addr, start, end, blksize, intr, arg, param)
 			if (i == 0) {
 				psb->lchgain = psb->lchgainend = gain;
 			} else {
+				psb->lchgain = psb->lchgainend = 0;
 				psb->rchgain = psb->rchgainend = gain;
 				psb->format |= PSLT_FORMAT_RCH;
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.130.2.1 2001/03/05 22:50:00 nathanw Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.130.2.2 2001/06/21 20:09:37 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -841,16 +841,22 @@ nfs_lookup(v)
 		}
 
 		if (cnp->cn_flags & PDIRUNLOCK) {
-			error = vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
-			if (error) {
+			err2 = vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
+			if (err2 != 0) {
 				*vpp = NULLVP;
-				return error;
+				return err2;
 			}
 			cnp->cn_flags &= ~PDIRUNLOCK;
 		}
 
 		err2 = VOP_ACCESS(dvp, VEXEC, cnp->cn_cred, cnp->cn_proc);
-		if (err2) {
+		if (err2 != 0) {
+			if (error == 0) {
+				if (*vpp != dvp)
+					vput(*vpp);
+				else
+					vrele(*vpp);
+			}
 			*vpp = NULLVP;
 			return err2;
 		}
@@ -863,9 +869,6 @@ nfs_lookup(v)
 			cache_purge(dvp);
 			np->n_nctime = 0;
 			goto dorpc;
-		} else if (error > 0) {
-			*vpp = NULLVP;
-			return error;
 		}
 
 		newvp = *vpp;
@@ -1254,7 +1257,8 @@ nfs_writerpc(vp, uiop, iomode, must_commit)
 					break;
 				} else if (rlen < len) {
 					backup = len - rlen;
-					(caddr_t)uiop->uio_iov->iov_base -=
+					uiop->uio_iov->iov_base =
+					    (caddr_t)uiop->uio_iov->iov_base -
 					    backup;
 					uiop->uio_iov->iov_len += backup;
 					uiop->uio_offset -= backup;
@@ -1793,6 +1797,14 @@ nfs_link(v)
 		vput(dvp);
 		return (EXDEV);
 	}
+	if (dvp != vp) {
+		error = vn_lock(vp, LK_EXCLUSIVE);
+		if (error != 0) {
+			VOP_ABORTOP(dvp, cnp);
+			vput(dvp);
+			return error;
+		}
+	}
 
 	/*
 	 * Push all writes to the server, so that the attribute cache
@@ -1820,6 +1832,8 @@ nfs_link(v)
 		VTONFS(vp)->n_attrstamp = 0;
 	if (!wccflag)
 		VTONFS(dvp)->n_attrstamp = 0;
+	if (dvp != vp)
+		VOP_UNLOCK(vp, 0);
 	vput(dvp);
 	/*
 	 * Kludge: Map EEXIST => 0 assuming that it is a reply to a retry.
@@ -2236,7 +2250,8 @@ nfs_readdirrpc(vp, uiop, cred)
 			left = NFS_DIRFRAGSIZ - blksiz;
 			if (reclen > left) {
 				dp->d_reclen += left;
-				(caddr_t)uiop->uio_iov->iov_base += left;
+				uiop->uio_iov->iov_base =
+				    (caddr_t)uiop->uio_iov->iov_base + left;
 				uiop->uio_iov->iov_len -= left;
 				uiop->uio_resid -= left;
 				blksiz = 0;
@@ -2254,13 +2269,15 @@ nfs_readdirrpc(vp, uiop, cred)
 				if (blksiz == NFS_DIRFRAGSIZ)
 					blksiz = 0;
 				uiop->uio_resid -= DIRHDSIZ;
-				(caddr_t)uiop->uio_iov->iov_base += DIRHDSIZ;
+				uiop->uio_iov->iov_base =
+				    (caddr_t)uiop->uio_iov->iov_base + DIRHDSIZ;
 				uiop->uio_iov->iov_len -= DIRHDSIZ;
 				nfsm_mtouio(uiop, len);
 				cp = uiop->uio_iov->iov_base;
 				tlen -= len;
 				*cp = '\0';	/* null terminate */
-				(caddr_t)uiop->uio_iov->iov_base += tlen;
+				uiop->uio_iov->iov_base =
+				    (caddr_t)uiop->uio_iov->iov_base + tlen;
 				uiop->uio_iov->iov_len -= tlen;
 				uiop->uio_resid -= tlen;
 			} else
@@ -2310,7 +2327,8 @@ nfs_readdirrpc(vp, uiop, cred)
 		left = NFS_DIRFRAGSIZ - blksiz;
 		dp->d_reclen += left;
 		NFS_STASHCOOKIE(dp, uiop->uio_offset);
-		(caddr_t)uiop->uio_iov->iov_base += left;
+		uiop->uio_iov->iov_base = (caddr_t)uiop->uio_iov->iov_base +
+		    left;
 		uiop->uio_iov->iov_len -= left;
 		uiop->uio_resid -= left;
 	}
@@ -2420,7 +2438,8 @@ nfs_readdirplusrpc(vp, uiop, cred)
 				 * again here.
 				 */
 				dp->d_reclen += left;
-				(caddr_t)uiop->uio_iov->iov_base += left;
+				uiop->uio_iov->iov_base =
+				    (caddr_t)uiop->uio_iov->iov_base + left;
 				uiop->uio_iov->iov_len -= left;
 				uiop->uio_resid -= left;
 				NFS_STASHCOOKIE(dp, uiop->uio_offset);
@@ -2438,7 +2457,9 @@ nfs_readdirplusrpc(vp, uiop, cred)
 				if (blksiz == NFS_DIRFRAGSIZ)
 					blksiz = 0;
 				uiop->uio_resid -= DIRHDSIZ;
-				(caddr_t)uiop->uio_iov->iov_base += DIRHDSIZ;
+				uiop->uio_iov->iov_base =
+				    (caddr_t)uiop->uio_iov->iov_base +
+				    DIRHDSIZ;
 				uiop->uio_iov->iov_len -= DIRHDSIZ;
 				cnp->cn_nameptr = uiop->uio_iov->iov_base;
 				cnp->cn_namelen = len;
@@ -2446,7 +2467,8 @@ nfs_readdirplusrpc(vp, uiop, cred)
 				cp = uiop->uio_iov->iov_base;
 				tlen -= len;
 				*cp = '\0';
-				(caddr_t)uiop->uio_iov->iov_base += tlen;
+				uiop->uio_iov->iov_base =
+				    (caddr_t)uiop->uio_iov->iov_base + tlen;
 				uiop->uio_iov->iov_len -= tlen;
 				uiop->uio_resid -= tlen;
 			} else
@@ -2532,7 +2554,8 @@ nfs_readdirplusrpc(vp, uiop, cred)
 		left = NFS_DIRFRAGSIZ - blksiz;
 		dp->d_reclen += left;
 		NFS_STASHCOOKIE(dp, uiop->uio_offset);
-		(caddr_t)uiop->uio_iov->iov_base += left;
+		uiop->uio_iov->iov_base = (caddr_t)uiop->uio_iov->iov_base +
+		    left;
 		uiop->uio_iov->iov_len -= left;
 		uiop->uio_resid -= left;
 	}
@@ -2804,28 +2827,6 @@ nfs_strategy(v)
 	    nfs_asyncio(bp))
 		error = nfs_doio(bp, p);
 	return (error);
-}
-
-/*
- * Mmap a file
- *
- * NB Currently unsupported.
- */
-/* ARGSUSED */
-int
-nfs_mmap(v)
-	void *v;
-{
-#if 0
-	struct vop_mmap_args /* {
-		struct vnode *a_vp;
-		int a_fflags;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *ap = v;
-#endif
-
-	return (EINVAL);
 }
 
 /*

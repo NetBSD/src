@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.97 2001/03/04 00:01:06 kim Exp $	*/
+/*	$NetBSD: if_de.c,v 1.97.2.1 2001/06/21 20:04:37 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -10,7 +10,7 @@
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  * 2. The name of the author may not be used to endorse or promote products
- *    derived from this software withough specific prior written permission
+ *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -1284,7 +1284,7 @@ static const tulip_phy_attr_t tulip_mii_phy_attrlist[] = {
     { 0x0281F400, 0,		/* 00-A0-7D */
       {
 	{ 0x12, 0x0010, 0x0000 },	/* 10T */
-	{ },				/* 100TX */
+	{ 0 },				/* 100TX */
 	{ 0x12, 0x0010, 0x0010 },	/* 100T4 */
 	{ 0x12, 0x0008, 0x0008 },	/* FULL_DUPLEX */
       },
@@ -1296,7 +1296,7 @@ static const tulip_phy_attr_t tulip_mii_phy_attrlist[] = {
       {
 	{ 0x12, 0x0080, 0x0000 },	/* 10T */
 	{ 0x12, 0x0080, 0x0080 },	/* 100TX */
-	{ },				/* 100T4 */
+	{ 0 },				/* 100T4 */
 	{ 0x12, 0x0040, 0x0040 },	/* FULL_DUPLEX */
       },
 #if defined(TULIP_DEBUG)
@@ -1307,7 +1307,7 @@ static const tulip_phy_attr_t tulip_mii_phy_attrlist[] = {
     { 0x0015F420, 0,	/* 00-A0-7D */
       {
 	{ 0x12, 0x0010, 0x0000 },	/* 10T */
-	{ },				/* 100TX */
+	{ 0 },				/* 100TX */
 	{ 0x12, 0x0010, 0x0010 },	/* 100T4 */
 	{ 0x12, 0x0008, 0x0008 },	/* FULL_DUPLEX */
       },
@@ -1320,7 +1320,7 @@ static const tulip_phy_attr_t tulip_mii_phy_attrlist[] = {
       {
 	{ 0x11, 0x8000, 0x0000 },	/* 10T */
 	{ 0x11, 0x8000, 0x8000 },	/* 100TX */
-	{ },				/* 100T4 */
+	{ 0 },				/* 100T4 */
 	{ 0x11, 0x4000, 0x4000 },	/* FULL_DUPLEX */
       },
 #if defined(TULIP_DEBUG)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.8 2000/12/14 07:02:53 thorpej Exp $ */
+/*	$NetBSD: if_ni.c,v 1.8.2.1 2001/06/21 20:01:20 nathanw Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -44,6 +44,7 @@
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/sockio.h>
+#include <sys/sched.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -344,7 +345,7 @@ niattach(parent, self, aux)
 #if NBPG < 4096
 #error pagesize too small
 #endif
-	s = splimp();
+	s = splvm();
 	/* Set up message free queue */
 	ni_getpgs(sc, NMSGBUF * 512, &va, 0);
 	for (i = 0; i < NMSGBUF; i++) {
@@ -602,6 +603,7 @@ niintr(void *arg)
 	if ((NI_RREG(NI_PSR) & PSR_ERR))
 		printf("%s: PSR %x\n", sc->sc_dev.dv_xname, NI_RREG(NI_PSR));
 
+	KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 	/* Got any response packets?  */
 	while ((NI_RREG(NI_PSR) & PSR_RSQ) && (data = REMQHI(&gvp->nc_forwr))) {
 
@@ -610,7 +612,8 @@ niintr(void *arg)
 			idx = data->bufs[0]._index;
 			bd = &bbd[idx];
 			m = (void *)data->nd_cmdref;
-			m->m_pkthdr.len = m->m_len = data->bufs[0]._len;
+			m->m_pkthdr.len = m->m_len =
+			    data->bufs[0]._len - ETHER_CRC_LEN;
 			m->m_pkthdr.rcvif = ifp;
 			if (ni_add_rxbuf(sc, data, idx)) {
 				bd->nb_len = (m->m_ext.ext_size - 2);
@@ -686,6 +689,7 @@ niintr(void *arg)
 	nistart(ifp);
 
 	NI_WREG(NI_PSR, NI_RREG(NI_PSR) & ~(PSR_OWN|PSR_RSQ));
+	KERNEL_UNLOCK();
 }
 
 /*

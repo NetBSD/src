@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.20 2001/01/29 01:24:42 enami Exp $ */
+/* $NetBSD: if_ti.c,v 1.20.2.1 2001/06/21 20:04:51 nathanw Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -110,6 +110,8 @@
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
+#include <netinet/in_systm.h>
+#include <netinet/ip.h>
 #endif
 
 #ifdef NS
@@ -126,10 +128,6 @@
 #include <dev/pci/if_tireg.h>
 #include <dev/pci/ti_fw.h>
 #include <dev/pci/ti_fw2.h>
-
-#ifdef M_HWCKSUM
-/*#define TI_CSUM_OFFLOAD*/
-#endif
 
 /*
  * Various supported device vendors/types and their names.
@@ -776,11 +774,12 @@ static int ti_newbuf_std(sc, i, m, dmamap)
 	r = &sc->ti_rdata->ti_rx_std_ring[i];
 	TI_HOSTADDR(r->ti_addr) = dmamap->dm_segs[0].ds_addr;
 	r->ti_type = TI_BDTYPE_RECV_BD;
-#ifdef TI_CSUM_OFFLOAD
-	r->ti_flags = TI_BDFLAG_TCP_UDP_CKSUM|TI_BDFLAG_IP_CKSUM;
-#else
 	r->ti_flags = 0;
-#endif
+	if (sc->ethercom.ec_if.if_capenable & IFCAP_CSUM_IPv4)
+		r->ti_flags |= TI_BDFLAG_IP_CKSUM;
+	if (sc->ethercom.ec_if.if_capenable &
+	    (IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4))
+		r->ti_flags |= TI_BDFLAG_TCP_UDP_CKSUM;
 	r->ti_len = m_new->m_len; /* == ds_len */
 	r->ti_idx = i;
 
@@ -845,9 +844,11 @@ static int ti_newbuf_mini(sc, i, m, dmamap)
 	TI_HOSTADDR(r->ti_addr) = dmamap->dm_segs[0].ds_addr;
 	r->ti_type = TI_BDTYPE_RECV_BD;
 	r->ti_flags = TI_BDFLAG_MINI_RING;
-#ifdef TI_CSUM_OFFLOAD
-	r->ti_flags |= TI_BDFLAG_TCP_UDP_CKSUM|TI_BDFLAG_IP_CKSUM;
-#endif
+	if (sc->ethercom.ec_if.if_capenable & IFCAP_CSUM_IPv4)
+		r->ti_flags |= TI_BDFLAG_IP_CKSUM;
+	if (sc->ethercom.ec_if.if_capenable &
+	    (IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4))
+		r->ti_flags |= TI_BDFLAG_TCP_UDP_CKSUM;
 	r->ti_len = m_new->m_len; /* == ds_len */
 	r->ti_idx = i;
 
@@ -890,14 +891,14 @@ static int ti_newbuf_jumbo(sc, i, m)
 		m_new->m_data = m_new->m_ext.ext_buf = (void *)buf;
 		m_new->m_flags |= M_EXT;
 		m_new->m_len = m_new->m_pkthdr.len =
-		    m_new->m_ext.ext_size = TI_JUMBO_FRAMELEN;
+		    m_new->m_ext.ext_size = ETHER_MAX_LEN_JUMBO;
 		m_new->m_ext.ext_free = ti_jfree;
 		m_new->m_ext.ext_arg = sc;
 		MCLINITREFERENCE(m_new);
 	} else {
 		m_new = m;
 		m_new->m_data = m_new->m_ext.ext_buf;
-		m_new->m_ext.ext_size = TI_JUMBO_FRAMELEN;
+		m_new->m_ext.ext_size = ETHER_MAX_LEN_JUMBO;
 	}
 
 	m_adj(m_new, ETHER_ALIGN);
@@ -909,9 +910,11 @@ static int ti_newbuf_jumbo(sc, i, m)
 		 - (caddr_t)sc->ti_cdata.ti_jumbo_buf);
 	r->ti_type = TI_BDTYPE_RECV_JUMBO_BD;
 	r->ti_flags = TI_BDFLAG_JUMBO_RING;
-#ifdef TI_CSUM_OFFLOAD
-	r->ti_flags |= TI_BDFLAG_TCP_UDP_CKSUM|TI_BDFLAG_IP_CKSUM;
-#endif
+	if (sc->ethercom.ec_if.if_capenable & IFCAP_CSUM_IPv4)
+		r->ti_flags |= TI_BDFLAG_IP_CKSUM;
+	if (sc->ethercom.ec_if.if_capenable &
+	    (IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4))
+		r->ti_flags |= TI_BDFLAG_TCP_UDP_CKSUM;
 	r->ti_len = m_new->m_len;
 	r->ti_idx = i;
 
@@ -1079,8 +1082,8 @@ static int ti_init_tx_ring(sc)
 	SIMPLEQ_INIT(&sc->txdma_list);
 	for (i = 0; i < TI_RSLOTS; i++) {
 		/* I've seen mbufs with 30 fragments. */
-		if ((error = bus_dmamap_create(sc->sc_dmat, TI_JUMBO_FRAMELEN,
-					       40, TI_JUMBO_FRAMELEN, 0,
+		if ((error = bus_dmamap_create(sc->sc_dmat, ETHER_MAX_LEN_JUMBO,
+					       40, ETHER_MAX_LEN_JUMBO, 0,
 					       BUS_DMA_NOWAIT, &dmamap)) != 0) {
 			printf("%s: can't create tx map, error = %d\n",
 			       sc->sc_dev.dv_xname, error);
@@ -1401,10 +1404,11 @@ static int ti_chipinit(sc)
 	 * I don't think this is a good idea, but without it
 	 * the firmware racks up lots of nicDmaReadRingFull
 	 * errors.
+	 * Incompatible with hardware assisted checksums.
 	 */
-#ifndef TI_CSUM_OFFLOAD
-	TI_SETBIT(sc, TI_GCR_OPMODE, TI_OPMODE_1_DMA_ACTIVE);
-#endif
+	if ((sc->ethercom.ec_if.if_capenable &
+	    (IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4|IFCAP_CSUM_IPv4)) == 0)
+		TI_SETBIT(sc, TI_GCR_OPMODE, TI_OPMODE_1_DMA_ACTIVE);
 
 	/* Recommended settings from Tigon manual. */
 	CSR_WRITE_4(sc, TI_GCR_DMA_WRITECFG, TI_DMA_STATE_THRESH_8W);
@@ -1485,23 +1489,27 @@ static int ti_gibinit(sc)
 	TI_HOSTADDR(rcb->ti_hostaddr) = sc->info_dmaaddr +
 		((caddr_t)&sc->ti_rdata->ti_rx_std_ring
 		 - (caddr_t)sc->ti_rdata);
-	rcb->ti_max_len = TI_FRAMELEN;
+	rcb->ti_max_len = ETHER_MAX_LEN;
 	rcb->ti_flags = 0;
-#ifdef TI_CSUM_OFFLOAD
-	rcb->ti_flags |= TI_RCB_FLAG_TCP_UDP_CKSUM|TI_RCB_FLAG_IP_CKSUM;
-#endif
-	rcb->ti_flags |= TI_RCB_FLAG_VLAN_ASSIST;
+	if (ifp->if_capenable & IFCAP_CSUM_IPv4)
+		rcb->ti_flags |= TI_RCB_FLAG_IP_CKSUM;
+	if (ifp->if_capenable & (IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4))
+		rcb->ti_flags |= TI_RCB_FLAG_TCP_UDP_CKSUM;
+	if (sc->ethercom.ec_nvlans != 0)
+		rcb->ti_flags |= TI_RCB_FLAG_VLAN_ASSIST;
 
 	/* Set up the jumbo receive ring. */
 	rcb = &sc->ti_rdata->ti_info.ti_jumbo_rx_rcb;
 	TI_HOSTADDR(rcb->ti_hostaddr) = sc->info_dmaaddr +
 	    ((caddr_t)&sc->ti_rdata->ti_rx_jumbo_ring - (caddr_t)sc->ti_rdata);
-	rcb->ti_max_len = TI_JUMBO_FRAMELEN;
+	rcb->ti_max_len = ETHER_MAX_LEN_JUMBO;
 	rcb->ti_flags = 0;
-#ifdef TI_CSUM_OFFLOAD
-	rcb->ti_flags |= TI_RCB_FLAG_TCP_UDP_CKSUM|TI_RCB_FLAG_IP_CKSUM;
-#endif
-	rcb->ti_flags |= TI_RCB_FLAG_VLAN_ASSIST;
+	if (ifp->if_capenable & IFCAP_CSUM_IPv4)
+		rcb->ti_flags |= TI_RCB_FLAG_IP_CKSUM;
+	if (ifp->if_capenable & (IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4))
+		rcb->ti_flags |= TI_RCB_FLAG_TCP_UDP_CKSUM;
+	if (sc->ethercom.ec_nvlans != 0)
+		rcb->ti_flags |= TI_RCB_FLAG_VLAN_ASSIST;
 
 	/*
 	 * Set up the mini ring. Only activated on the
@@ -1516,10 +1524,12 @@ static int ti_gibinit(sc)
 		rcb->ti_flags = TI_RCB_FLAG_RING_DISABLED;
 	else
 		rcb->ti_flags = 0;
-#ifdef TI_CSUM_OFFLOAD
-	rcb->ti_flags |= TI_RCB_FLAG_TCP_UDP_CKSUM|TI_RCB_FLAG_IP_CKSUM;
-#endif
-	rcb->ti_flags |= TI_RCB_FLAG_VLAN_ASSIST;
+	if (ifp->if_capenable & IFCAP_CSUM_IPv4)
+		rcb->ti_flags |= TI_RCB_FLAG_IP_CKSUM;
+	if (ifp->if_capenable & (IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4))
+		rcb->ti_flags |= TI_RCB_FLAG_TCP_UDP_CKSUM;
+	if (sc->ethercom.ec_nvlans != 0)
+		rcb->ti_flags |= TI_RCB_FLAG_VLAN_ASSIST;
 
 	/*
 	 * Set up the receive return ring.
@@ -1554,7 +1564,18 @@ static int ti_gibinit(sc)
 		rcb->ti_flags = 0;
 	else
 		rcb->ti_flags = TI_RCB_FLAG_HOST_RING;
-	rcb->ti_flags |= TI_RCB_FLAG_VLAN_ASSIST;
+	if (ifp->if_capenable & IFCAP_CSUM_IPv4)
+		rcb->ti_flags |= TI_RCB_FLAG_IP_CKSUM;
+	/*
+	 * When we get the packet, there is a pseudo-header seed already
+	 * in the th_sum or uh_sum field.  Make sure the firmware doesn't
+	 * compute the pseudo-header checksum again!
+	 */
+	if (ifp->if_capenable & (IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4))
+		rcb->ti_flags |= TI_RCB_FLAG_TCP_UDP_CKSUM|
+		    TI_RCB_FLAG_NO_PHDR_CKSUM;
+	if (sc->ethercom.ec_nvlans != 0)
+		rcb->ti_flags |= TI_RCB_FLAG_VLAN_ASSIST;
 	rcb->ti_max_len = TI_TX_RING_CNT;
 	if (sc->ti_hwrev == TI_HWREV_TIGON)
 		TI_HOSTADDR(rcb->ti_hostaddr) = TI_TX_RING_BASE;
@@ -1834,6 +1855,12 @@ static void ti_attach(parent, self, aux)
 	sc->ethercom.ec_capabilities |=
 	    ETHERCAP_VLAN_MTU | ETHERCAP_VLAN_HWTAGGING;
 
+	/*
+	 * We can do IPv4, TCPv4, and UDPv4 checksums in hardware.
+	 */
+	ifp->if_capabilities |= IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 |
+	    IFCAP_CSUM_UDPv4;
+
 	/* Set up ifmedia support. */
 	ifmedia_init(&sc->ifmedia, IFM_IMASK, ti_ifmedia_upd, ti_ifmedia_sts);
 	if (sc->ti_copper) {
@@ -1881,7 +1908,7 @@ fail2:
  * Note: we have to be able to handle three possibilities here:
  * 1) the frame is from the mini receive ring (can only happen)
  *    on Tigon 2 boards)
- * 2) the frame is from the jumbo recieve ring
+ * 2) the frame is from the jumbo receive ring
  * 3) the frame is from the standard receive ring
  */
 
@@ -1899,9 +1926,7 @@ static void ti_rxeof(sc)
 		struct mbuf		*m = NULL;
 		u_int16_t		vlan_tag = 0;
 		int			have_tag = 0;
-#ifdef TI_CSUM_OFFLOAD
-		struct ip		*ip;
-#endif
+		struct ether_header	*eh;
 		bus_dmamap_t dmamap;
 
 		cur_rx =
@@ -1980,12 +2005,50 @@ static void ti_rxeof(sc)
 			bpf_mtap(ifp->if_bpf, m);
 #endif
 
-#ifdef TI_CSUM_OFFLOAD /* XXX NetBSD: broken because m points to ether pkt */
-		ip = mtod(m, struct ip *);
-		if (!(cur_rx->ti_tcp_udp_cksum ^ 0xFFFF) &&
-		    !(ip->ip_off & htons(IP_MF | IP_OFFMASK | IP_RF)))
-			m->m_flags |= M_HWCKSUM;
-#endif
+		eh = mtod(m, struct ether_header *);
+		switch (ntohs(eh->ether_type)) {
+		case ETHERTYPE_IP:
+		    {
+			struct ip *ip = (struct ip *) (eh + 1);
+
+			/*
+			 * Note the Tigon firmware does not invert
+			 * the checksum for us, hence the XOR.
+			 */
+			m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
+			if ((cur_rx->ti_ip_cksum ^ 0xffff) != 0)
+				m->m_pkthdr.csum_flags |= M_CSUM_IPv4_BAD;
+			/*
+			 * ntohs() the constant so the compiler can
+			 * optimize...
+			 *
+			 * XXX Figure out a sane way to deal with
+			 * fragmented packets.
+			 */
+			if ((ip->ip_off & htons(IP_MF|IP_OFFMASK)) == 0) {
+				switch (ip->ip_p) {
+				case IPPROTO_TCP:
+					m->m_pkthdr.csum_data =
+					    cur_rx->ti_tcp_udp_cksum;
+					m->m_pkthdr.csum_flags |=
+					    M_CSUM_TCPv4|M_CSUM_DATA;
+					break;
+				case IPPROTO_UDP:
+					m->m_pkthdr.csum_data =
+					    cur_rx->ti_tcp_udp_cksum;
+					m->m_pkthdr.csum_flags |=
+					    M_CSUM_UDPv4|M_CSUM_DATA;
+					break;
+				default:
+					/* Nothing */;
+				}
+			}
+			break;
+		    }
+		default:
+			/* Nothing. */
+			break;
+		}
 
 		if (have_tag) {
 			struct mbuf *n;
@@ -2140,6 +2203,7 @@ static int ti_encap(sc, m_head, txidx)
 	bus_dmamap_t dmamap;
 	int error, i;
 	struct mbuf *n;
+	u_int16_t csum_flags = 0;
 
 	dma = SIMPLEQ_FIRST(&sc->txdma_list);
 	if (dma == NULL) {
@@ -2159,6 +2223,15 @@ static int ti_encap(sc, m_head, txidx)
 	}
 
 	cur = frag = *txidx;
+
+	if (m_head->m_pkthdr.csum_flags & M_CSUM_IPv4) {
+		/* IP header checksum field must be 0! */
+		csum_flags |= TI_BDFLAG_IP_CKSUM;
+	}
+	if (m_head->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4))
+		csum_flags |= TI_BDFLAG_TCP_UDP_CKSUM;
+
+	/* XXX fragmented packet checksum capability? */
 
 	/*
  	 * Start packing the mbufs in this chain into
@@ -2186,7 +2259,7 @@ static int ti_encap(sc, m_head, txidx)
 				break;
 			TI_HOSTADDR(f->ti_addr) = dmamap->dm_segs[i].ds_addr;
 			f->ti_len = dmamap->dm_segs[i].ds_len;
-			f->ti_flags = 0;
+			f->ti_flags = csum_flags;
 			n = m_aux_find(m_head, AF_LINK, ETHERTYPE_VLAN);
 			if (n) {
 				f->ti_flags |= TI_BDFLAG_VLAN_TAG;
@@ -2315,13 +2388,12 @@ static void ti_init2(sc)
 
 	/* Specify MTU and interface index. */
 	CSR_WRITE_4(sc, TI_GCR_IFINDEX, sc->sc_dev.dv_unit); /* ??? */
-	if ((sc->ethercom.ec_capenable & ETHERCAP_VLAN_MTU) &&
-	    ifp->if_mtu < ETHERMTU + ETHER_VLAN_ENCAP_LEN)
-		CSR_WRITE_4(sc, TI_GCR_IFMTU, ETHER_MAX_LEN +
-		    ETHER_VLAN_ENCAP_LEN);
-	else
-		CSR_WRITE_4(sc, TI_GCR_IFMTU, ifp->if_mtu +
-		    ETHER_HDR_LEN + ETHER_CRC_LEN);
+
+	tmp = ifp->if_mtu + ETHER_HDR_LEN + ETHER_CRC_LEN;
+	if (sc->ethercom.ec_capenable & ETHERCAP_VLAN_MTU)
+		tmp += ETHER_VLAN_ENCAP_LEN;
+	CSR_WRITE_4(sc, TI_GCR_IFMTU, tmp);
+
 	TI_DO_CMD(TI_CMD_UPDATE_GENCOM, 0, 0);
 
 	/* Load our MAC address. */
@@ -2585,7 +2657,7 @@ static int ti_ioctl(ifp, command, data)
 		error = ti_ether_ioctl(ifp, command, data);
 		break;
 	case SIOCSIFMTU:
-		if (ifr->ifr_mtu > TI_JUMBO_MTU)
+		if (ifr->ifr_mtu > ETHERMTU_JUMBO)
 			error = EINVAL;
 		else {
 			ifp->if_mtu = ifr->ifr_mtu;

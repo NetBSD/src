@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.26.2.1 2001/04/09 01:57:21 nathanw Exp $	*/
+/*	$NetBSD: dz.c,v 1.26.2.2 2001/06/21 20:05:25 nathanw Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -371,6 +371,21 @@ dzwrite(dev_t dev, struct uio *uio, int flag)
 
 	tp = sc->sc_dz[DZ_PORT(minor(dev))].dz_tty;
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
+}
+
+int
+dzpoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	struct tty *tp;
+	struct	dz_softc *sc;
+
+	sc = dz_cd.cd_devs[DZ_I2C(minor(dev))];
+
+	tp = sc->sc_dz[DZ_PORT(minor(dev))].dz_tty;
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 /*ARGSUSED*/

@@ -1,4 +1,4 @@
-/* $NetBSD: sunos32_syscallargs.h,v 1.4 2001/02/06 15:42:34 mrg Exp $ */
+/* $NetBSD: sunos32_syscallargs.h,v 1.4.4.1 2001/06/21 20:00:34 nathanw Exp $ */
 
 /*
  * System call argument lists.
@@ -8,7 +8,7 @@
  */
 
 #ifndef _SUNOS32_SYS__SYSCALLARGS_H_
-#define _SUNOS32_SYS__SYSCALLARGS_H_
+#define	_SUNOS32_SYS__SYSCALLARGS_H_
 
 #ifdef	syscallarg
 #undef	syscallarg

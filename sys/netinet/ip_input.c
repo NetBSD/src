@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.130.2.1 2001/04/09 01:58:25 nathanw Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.130.2.2 2001/06/21 20:08:37 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -105,6 +105,7 @@
 #include "opt_pfil_hooks.h"
 #include "opt_ipsec.h"
 #include "opt_mrouting.h"
+#include "opt_inet_csum.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,7 +213,7 @@ struct pfil_head inet_pfil_hook;
 struct ipqhead ipq;
 int	ipq_locked;
 int	ip_nfragpackets = 0;
-int	ip_maxfragpackets = -1;
+int	ip_maxfragpackets = 200;
 
 static __inline int ipq_lock_try __P((void));
 static __inline void ipq_unlock __P((void));
@@ -222,7 +223,11 @@ ipq_lock_try()
 {
 	int s;
 
-	s = splimp();
+	/*
+	 * Use splvm() -- we're bloking things that would cause
+	 * mbuf allocation.
+	 */
+	s = splvm();
 	if (ipq_locked) {
 		splx(s);
 		return (0);
@@ -237,7 +242,7 @@ ipq_unlock()
 {
 	int s;
 
-	s = splimp();
+	s = splvm();
 	ipq_locked = 0;
 	splx(s);
 }
@@ -265,6 +270,24 @@ do {									\
 #define	IPQ_UNLOCK()		ipq_unlock()
 
 struct pool ipqent_pool;
+
+#ifdef INET_CSUM_COUNTERS
+#include <sys/device.h>
+
+struct evcnt ip_hwcsum_bad = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    NULL, "inet", "hwcsum bad");
+struct evcnt ip_hwcsum_ok = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    NULL, "inet", "hwcsum ok");
+struct evcnt ip_swcsum = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    NULL, "inet", "swcsum");
+
+#define	INET_CSUM_COUNTER_INCR(ev)	(ev)->ev_count++
+
+#else
+
+#define	INET_CSUM_COUNTER_INCR(ev)	/* nothing */
+
+#endif /* INET_CSUM_COUNTERS */
 
 /*
  * We need to save the IP options in case a protocol wants to respond
@@ -328,6 +351,12 @@ ip_init()
 		printf("ip_init: WARNING: unable to register pfil hook, "
 		    "error %d\n", i);
 #endif /* PFIL_HOOKS */
+
+#ifdef INET_CSUM_COUNTERS
+	evcnt_attach_static(&ip_hwcsum_bad);
+	evcnt_attach_static(&ip_hwcsum_ok);
+	evcnt_attach_static(&ip_swcsum);
+#endif /* INET_CSUM_COUNTERS */
 }
 
 struct	sockaddr_in ipaddr = { sizeof(ipaddr), AF_INET };
@@ -343,7 +372,7 @@ ipintr()
 	struct mbuf *m;
 
 	while (1) {
-		s = splimp();
+		s = splnet();
 		IF_DEQUEUE(&ipintrq, m);
 		splx(s);
 		if (m == 0)
@@ -429,9 +458,24 @@ ip_input(struct mbuf *m)
 		}
 	}
 
-	if (in_cksum(m, hlen) != 0) {
-		ipstat.ips_badsum++;
-		goto bad;
+	switch (m->m_pkthdr.csum_flags &
+		((m->m_pkthdr.rcvif->if_csum_flags & M_CSUM_IPv4) |
+		 M_CSUM_IPv4_BAD)) {
+	case M_CSUM_IPv4|M_CSUM_IPv4_BAD:
+		INET_CSUM_COUNTER_INCR(&ip_hwcsum_bad);
+		goto badcsum;
+
+	case M_CSUM_IPv4:
+		/* Checksum was okay. */
+		INET_CSUM_COUNTER_INCR(&ip_hwcsum_ok);
+		break;
+
+	default:
+		/* Must compute it ourselves. */
+		INET_CSUM_COUNTER_INCR(&ip_swcsum);
+		if (in_cksum(m, hlen) != 0)
+			goto bad;
+		break;
 	}
 
 	/* Retrieve the packet length. */
@@ -749,6 +793,11 @@ found:
 	return;
     }
 bad:
+	m_freem(m);
+	return;
+
+badcsum:
+	ipstat.ips_badsum++;
 	m_freem(m);
 }
 
@@ -1430,6 +1479,11 @@ ip_forward(m, srcrt)
 	struct ifnet dummyifp;
 #endif
 
+	/*
+	 * Clear any in-bound checksum flags for this packet.
+	 */
+	m->m_pkthdr.csum_flags = 0;
+
 	dest = 0;
 #ifdef DIAGNOSTIC
 	if (ipprintfs)
@@ -1510,7 +1564,7 @@ ip_forward(m, srcrt)
 	}
 
 #ifdef IPSEC
-	/* Don't lookup socket in forwading case */
+	/* Don't lookup socket in forwarding case */
 	(void)ipsec_setsocket(m, NULL);
 #endif
 	error = ip_output(m, (struct mbuf *)0, &ipforward_rt,

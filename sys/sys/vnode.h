@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.89.2.1 2001/04/09 01:59:04 nathanw Exp $	*/
+/*	$NetBSD: vnode.h,v 1.89.2.2 2001/06/21 20:10:00 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,6 +42,7 @@
 #include <sys/queue.h>
 
 /* XXX: clean up includes later */
+#include <uvm/uvm_param.h>	/* XXX */
 #include <uvm/uvm_pglist.h>	/* XXX */
 #include <uvm/uvm_object.h>	/* XXX */
 #include <uvm/uvm_extern.h>	/* XXX */

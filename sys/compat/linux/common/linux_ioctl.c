@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.c,v 1.25.2.1 2001/03/05 22:49:25 nathanw Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.25.2.2 2001/06/21 19:59:50 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "sequencer.h"
 #endif
 
@@ -115,8 +115,7 @@ linux_sys_ioctl(l, v, retval)
 			__P((dev_t, u_long, caddr_t, int, struct proc *));
 
 		fdp = p->p_fd;
-		if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
-		    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
+		if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 			return EBADF;
 		if (fp->f_type == DTYPE_VNODE &&
 		    (vp = (struct vnode *)fp->f_data) != NULL &&

@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.42.2.1 2001/04/09 01:59:03 nathanw Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.42.2.2 2001/06/21 20:09:55 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -143,6 +143,7 @@ struct socket {
 					 * hint from sosend to lower layer;
 					 * more data coming
 					 */
+#define 	SS_ISAPIPE 		0x800 /* socket is implementing a pipe */
 
 
 /*
@@ -190,7 +191,7 @@ do {									\
 	(sb)->sb_mbcnt += MSIZE;					\
 	if ((m)->m_flags & M_EXT)					\
 		(sb)->sb_mbcnt += (m)->m_ext.ext_size;			\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 /* adjust counters in sb reflecting freeing of m */
 #define	sbfree(sb, m)							\
@@ -199,7 +200,7 @@ do {									\
 	(sb)->sb_mbcnt -= MSIZE;					\
 	if ((m)->m_flags & M_EXT)					\
 		(sb)->sb_mbcnt -= (m)->m_ext.ext_size;			\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 /*
  * Set lock on sockbuf sb; sleep if lock is already held.
@@ -219,19 +220,19 @@ do {									\
 		(sb)->sb_flags &= ~SB_WANT;				\
 		wakeup((caddr_t)&(sb)->sb_flags);			\
 	}								\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #define	sorwakeup(so)							\
 do {									\
 	if (sb_notify(&(so)->so_rcv))					\
 		sowakeup((so), &(so)->so_rcv);				\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #define	sowwakeup(so)							\
 do {									\
 	if (sb_notify(&(so)->so_snd))					\
 		sowakeup((so), &(so)->so_snd);				\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #ifdef _KERNEL
 extern u_long		sb_max;
@@ -260,7 +261,7 @@ int	soo_fcntl(struct file *fp, u_int cmd, caddr_t data, struct proc *p);
 int	soo_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p);
 int	soo_poll(struct file *fp, int events, struct proc *p);
 int 	soo_close(struct file *fp, struct proc *p);
-int	soo_stat(void *fdata, struct stat *ub, struct proc *p);
+int	soo_stat(struct file *fp, struct stat *ub, struct proc *p);
 int	uipc_usrreq(struct socket *, int , struct mbuf *,
 	    struct mbuf *, struct mbuf *, struct proc *);
 int	uipc_ctloutput(int, struct socket *, int, int, struct mbuf **);

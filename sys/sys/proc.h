@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.124.2.1 2001/03/05 22:50:02 nathanw Exp $	*/
+/*	$NetBSD: proc.h,v 1.124.2.2 2001/06/21 20:09:51 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -43,7 +43,7 @@
 #ifndef _SYS_PROC_H_
 #define	_SYS_PROC_H_
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
 #endif
 
@@ -89,7 +89,7 @@ struct emul {
 	const char	*e_name;	/* Symbolic name */
 	const char	*e_path;	/* Extra emulation path (NULL if none)*/
 #ifndef __HAVE_MINIMAL_EMUL
-	int		e_flags;	/* Miscellaneous flags */
+	int		e_flags;	/* Miscellaneous flags, see above */
 					/* Syscall handling function */
 	const int	*e_errno;	/* Errno array */
 	int		e_nosys;	/* Offset of the nosys() syscall */
@@ -99,6 +99,7 @@ struct emul {
 	const char * const *e_syscallnames; /* System call name array */
 					/* Signal sending function */
 	void		(*e_sendsig) __P((sig_t, int, sigset_t *, u_long));
+	void		(*e_trapsignal) __P((struct lwp *, int, u_long));
 	char		*e_sigcode;	/* Start of sigcode */
 	char		*e_esigcode;	/* End of sigcode */
 
@@ -116,6 +117,9 @@ struct emul {
 #endif
 };
 
+/* 
+ * Emulation miscelaneous flags
+ */
 #define	EMUL_HAS_SYS___syscall	0x001	/* Has SYS___syscall */
 
 /*
@@ -208,7 +212,7 @@ struct proc {
 	struct sigctx 	p_sigctx;	/* Signal state */
 
 	u_char		p_nice;		/* Process "nice" value */
-	char		p_comm[MAXCOMLEN+1];
+	char		p_comm[MAXCOMLEN+1];	/* basename of last exec file */
 
 	struct pgrp 	*p_pgrp;	/* Pointer to process group */
 
@@ -313,7 +317,7 @@ struct proclist_desc {
 do {									\
 	if (--(s)->s_count == 0)					\
 		FREE(s, M_SESSION);					\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 
 /*

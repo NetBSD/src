@@ -1,7 +1,7 @@
-/*	$NetBSD: miivar.h,v 1.19.2.1 2001/04/09 01:56:54 nathanw Exp $	*/
+/*	$NetBSD: miivar.h,v 1.19.2.2 2001/06/21 20:04:23 nathanw Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -128,7 +128,9 @@ struct mii_softc {
 
 	int mii_flags;			/* misc. flags; see below */
 	int mii_capabilities;		/* capabilities from BMSR */
+	int mii_extcapabilities;	/* extended capabilities */
 	int mii_ticks;			/* MII_TICK counter */
+	int mii_anegticks;		/* ticks before retrying aneg */
 
 	struct callout mii_nway_ch;	/* NWAY callout */
 
@@ -142,8 +144,13 @@ typedef struct mii_softc mii_softc_t;
 #define	MIIF_NOISOLATE	0x0002		/* do not isolate the PHY */
 #define	MIIF_NOLOOP	0x0004		/* no loopback capability */
 #define	MIIF_DOINGAUTO	0x0008		/* doing autonegotiation (mii_softc) */
+#define MIIF_AUTOTSLEEP	0x0010		/* use tsleep(), not callout() */
+#define MIIF_HAVEFIBER	0x0020		/* from parent: has fiber interface */
+#define	MIIF_HAVE_GTCR	0x0040		/* has 100base-T2/1000base-T CR */
 
-#define	MIIF_INHERIT_MASK	(MIIF_NOISOLATE|MIIF_NOLOOP)
+/* XXX ununsed
+#define	MIIF_INHERIT_MASK	(MIIF_NOISOLATE|MIIF_NOLOOP|MIIF_AUTOTSLEEP)
+*/
 
 /*
  * Special `locators' passed to mii_attach().  If one of these is not
@@ -167,11 +174,21 @@ struct mii_attach_args {
 typedef struct mii_attach_args mii_attach_args_t;
 
 /*
+ * Used to match a PHY.
+ */
+struct mii_phydesc {
+	u_int32_t mpd_oui;		/* the PHY's OUI */
+	u_int32_t mpd_model;		/* the PHY's model */
+	const char *mpd_name;		/* the PHY's name */
+};
+
+/*
  * An array of these structures map MII media types to BMCR/ANAR settings.
  */
 struct mii_media {
 	int	mm_bmcr;		/* BMCR settings for this media */
 	int	mm_anar;		/* ANAR settings for this media */
+	int	mm_gtcr;		/* 100base-T2 or 1000base-T CR */
 };
 
 #define	MII_MEDIA_NONE		0
@@ -180,7 +197,11 @@ struct mii_media {
 #define	MII_MEDIA_100_T4	3
 #define	MII_MEDIA_100_TX	4
 #define	MII_MEDIA_100_TX_FDX	5
-#define	MII_NMEDIA		6
+#define	MII_MEDIA_1000_X	6
+#define	MII_MEDIA_1000_X_FDX	7
+#define	MII_MEDIA_1000_T	8
+#define	MII_MEDIA_1000_T_FDX	9
+#define	MII_NMEDIA		10
 
 #ifdef _KERNEL
 #include "locators.h"
@@ -214,6 +235,9 @@ void	mii_down __P((struct mii_data *));
 
 int	mii_phy_activate __P((struct device *, enum devact));
 int	mii_phy_detach __P((struct device *, int));
+
+const struct mii_phydesc *mii_phy_match __P((const struct mii_attach_args *,
+	    const struct mii_phydesc *));
 
 void	mii_phy_add_media __P((struct mii_softc *));
 void	mii_phy_delete_media __P((struct mii_softc *));

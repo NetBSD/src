@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.17.2.1 2001/03/05 22:49:54 nathanw Exp $ */
+/*	$NetBSD: if_gre.c,v 1.17.2.2 2001/06/21 20:08:04 nathanw Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -101,11 +101,14 @@
 
 #include <net/if_gre.h>
 
-#define GREMTU 1450	/* XXX this is below the standard MTU of
-                         1500 Bytes, allowing for headers, 
-                         but we should possibly do path mtu discovery
-                         before changing if state to up to find the 
-                         correct value */
+/*
+ * XXX this is below the standard MTU of
+ * 1500 Bytes, allowing for headers,
+ * but we should possibly do path mtu discovery
+ * before changing if state to up to find the
+ * correct value
+ */
+#define GREMTU 1450
 #define LINK_MASK (IFF_LINK0|IFF_LINK1|IFF_LINK2)
 
 struct gre_softc_head gre_softc_list;
@@ -117,9 +120,6 @@ struct if_clone gre_cloner =
     IF_CLONE_INITIALIZER("gre", gre_clone_create, gre_clone_destroy);
 
 void gre_compute_route(struct gre_softc *sc);
-#ifdef DIAGNOSTIC
-void gre_inet_ntoa(struct in_addr in);
-#endif
 
 void	greattach __P((int));
 
@@ -149,7 +149,7 @@ gre_clone_create(ifc, unit)
 	sc->sc_if.if_addrlen = 4;
 	sc->sc_if.if_hdrlen = 24; /* IP + GRE */
 	sc->sc_if.if_dlt = DLT_NULL;
-	sc->sc_if.if_mtu = GREMTU; 
+	sc->sc_if.if_mtu = GREMTU;
 	sc->sc_if.if_flags = IFF_POINTOPOINT|IFF_MULTICAST;
 	sc->sc_if.if_output = gre_output;
 	sc->sc_if.if_ioctl = gre_ioctl;
@@ -178,16 +178,10 @@ gre_clone_destroy(ifp)
 	free(sc, M_DEVBUF);
 }
 
-/* 
+/*
  * The output routine. Takes a packet and encapsulates it in the protocol
  * given by sc->g_proto. See also RFC 1701 and RFC 2004
  */
-
-#if 0
-struct ip ip_h;
-#endif
-struct mobile_h mob_h;
-
 int
 gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	   struct rtentry *rt)
@@ -198,7 +192,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	struct ip *inp;
 	u_char ttl, osrc;
 	u_short etype = 0;
-	
+	struct mobile_h mob_h;
 
 	gh = NULL;
 	inp = NULL;
@@ -213,7 +207,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		m0.m_next = m;
 		m0.m_len = 4;
 		m0.m_data = (char *)&af;
-		
+
 		bpf_mtap(ifp->if_bpf, &m0);
 	}
 #endif
@@ -265,7 +259,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 				memcpy(mtod(m0, caddr_t), (caddr_t)inp,
 				       sizeof(struct ip));
 				m = m0;
-			} else {  /* we have some spave left in the old one */
+			} else {  /* we have some space left in the old one */
 				m->m_data -= msiz;
 				m->m_len += msiz;
 				m->m_pkthdr.len += msiz;
@@ -282,7 +276,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 			return (EINVAL);
 		}
 	} else if (sc->g_proto == IPPROTO_GRE) {
-		switch(dst->sa_family) {
+		switch (dst->sa_family) {
 		case AF_INET:
 			inp = mtod(m, struct ip *);
 			ttl = inp->ip_ttl;
@@ -310,7 +304,6 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		m_freem(m);
 		return (error);
 	}
-			
 
 	if (m == NULL) {
 		IF_DROP(&ifp->if_snd);
@@ -329,10 +322,10 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	if (sc->g_proto != IPPROTO_MOBILE) {
 		gh->gi_src = sc->g_src;
 		gh->gi_dst = sc->g_dst;
-		((struct ip*)gh)->ip_hl = (sizeof(struct ip)) >> 2; 
+		((struct ip*)gh)->ip_hl = (sizeof(struct ip)) >> 2;
 		((struct ip*)gh)->ip_ttl = ttl;
 		((struct ip*)gh)->ip_tos = inp->ip_tos;
-	    gh->gi_len = m->m_pkthdr.len;
+		gh->gi_len = m->m_pkthdr.len;
 	}
 
 	ifp->if_opackets++;
@@ -342,7 +335,6 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	if (error)
 		ifp->if_oerrors++;
 	return (error);
-
 }
 
 int
@@ -360,17 +352,17 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	error = 0;
 
-	s = splimp();
-	switch(cmd) {
-	case SIOCSIFADDR:		
-	case SIOCSIFDSTADDR: 	
+	s = splnet();
+	switch (cmd) {
+	case SIOCSIFADDR:
+	case SIOCSIFDSTADDR: 
 		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 			break;
-		/* 
-                 * set tunnel endpoints in case that we "only"
-                 * have ip over ip encapsulation. This allows to
-                 * set tunnel endpoints with ifconfig.
-                 */
+		/*
+		 * set tunnel endpoints in case that we "only"
+		 * have ip over ip encapsulation. This allows to
+		 * set tunnel endpoints with ifconfig.
+		 */
 		if (ifa->ifa_addr->sa_family == AF_INET) {
 			sa = ifa->ifa_addr;
 			sc->g_src = (satosin(sa))->sin_addr;
@@ -387,11 +379,11 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSIFFLAGS:
 		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 			break;
-		if ((sc->g_dst.s_addr == INADDR_ANY) || 
+		if ((sc->g_dst.s_addr == INADDR_ANY) ||
 		    (sc->g_src.s_addr == INADDR_ANY))
 			ifp->if_flags &= ~IFF_UP;
 
-		switch(ifr->ifr_flags & LINK_MASK) {
+		switch (ifr->ifr_flags & LINK_MASK) {
 			case IFF_LINK0:
 				sc->g_proto = IPPROTO_GRE;
 				ifp->if_flags |= IFF_LINK0;
@@ -404,7 +396,7 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				break;
 		}
 		break;
-	case SIOCSIFMTU: 
+	case SIOCSIFMTU:
 		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 			break;
 		if (ifr->ifr_mtu > GREMTU || ifr->ifr_mtu < 576) {
@@ -459,9 +451,9 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 			break;
 		/*
-	         * set tunnel endpoints, compute a less specific route
-	         * to the remote end and mark if as up
-                 */
+		 * set tunnel endpoints, compute a less specific route
+		 * to the remote end and mark if as up
+		 */
 		sa = &ifr->ifr_addr;
 		if (cmd == GRESADDRS )
 			sc->g_src = (satosin(sa))->sin_addr;
@@ -493,18 +485,17 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	return (error);
 }
 
-/* 
+/*
  * computes a route to our destination that is not the one
  * which would be taken by ip_output(), as this one will loop back to
  * us. If the interface is p2p as  a--->b, then a routing entry exists
  * If we now send a packet to b (e.g. ping b), this will come down here
- * gets src=a, dst=b tacked on and would from ip_ouput() sent back to 
+ * gets src=a, dst=b tacked on and would from ip_ouput() sent back to
  * if_gre.
  * Goal here is to compute a route to b that is less specific than
  * a-->b. We know that this one exists as in normal operation we have
  * at least a default route which matches.
  */
-
 void
 gre_compute_route(struct gre_softc *sc)
 {
@@ -512,7 +503,7 @@ gre_compute_route(struct gre_softc *sc)
 	u_int32_t a, b, c;
 
 	ro = &sc->route;
-	
+
 	memset(ro, 0, sizeof(struct route));
 	((struct sockaddr_in *)&ro->ro_dst)->sin_addr = sc->g_dst;
 	ro->ro_dst.sa_family = AF_INET;
@@ -520,10 +511,10 @@ gre_compute_route(struct gre_softc *sc)
 
 	/*
 	 * toggle last bit, so our interface is not found, but a less
-         * specific route. I'd rather like to specify a shorter mask,
- 	 * but this is not possible. Should work though. XXX
+	 * specific route. I'd rather like to specify a shorter mask,
+	 * but this is not possible. Should work though. XXX
 	 * there is a simpler way ...
-         */
+	 */
 	if ((sc->sc_if.if_flags & IFF_LINK1) == 0) {
 		a = ntohl(sc->g_dst.s_addr);
 		b = a & 0x01;
@@ -531,73 +522,56 @@ gre_compute_route(struct gre_softc *sc)
 		b = b ^ 0x01;
 		a = b | c;
 		((struct sockaddr_in *)&ro->ro_dst)->sin_addr.s_addr
-			= htonl(a);
+		    = htonl(a);
 	}
 
 #ifdef DIAGNOSTIC
-	printf("%s: searching a route to ", sc->sc_if.if_xname);
-	gre_inet_ntoa(((struct sockaddr_in *)&ro->ro_dst)->sin_addr);
+	printf("%s: searching a route to %s", sc->sc_if.if_xname,
+	    inet_ntoa(((struct sockaddr_in *)&ro->ro_dst)->sin_addr));
 #endif
 
 	rtalloc(ro);
 
 	/*
-	 * now change it back - else ip_output will just drop 
-         * the route and search one to this interface ...
-         */
+	 * now change it back - else ip_output will just drop
+	 * the route and search one to this interface ...
+	 */
 	if ((sc->sc_if.if_flags & IFF_LINK1) == 0)
 		((struct sockaddr_in *)&ro->ro_dst)->sin_addr = sc->g_dst;
 
 #ifdef DIAGNOSTIC
-	printf(", choosing %s with gateway ",ro->ro_rt->rt_ifp->if_xname);
-	gre_inet_ntoa(((struct sockaddr_in *)(ro->ro_rt->rt_gateway))->sin_addr);
+	printf(", choosing %s with gateway %s", ro->ro_rt->rt_ifp->if_xname,
+	    inet_ntoa(((struct sockaddr_in *)(ro->ro_rt->rt_gateway))->sin_addr));
 	printf("\n");
 #endif
 }
 
 /*
- * do a checksum of a buffer - much like in_cksum, which operates on  
- * mbufs. 
+ * do a checksum of a buffer - much like in_cksum, which operates on
+ * mbufs.
  */
-
 u_short
 gre_in_cksum(u_short *p, u_int len)
 {
-	u_int sum = 0; 
+	u_int sum = 0;
 	int nwords = len >> 1;
-  
+
 	while (nwords-- != 0)
 		sum += *p++;
-  
-		if (len & 1) {
-			union {
-				u_short w;
-				u_char c[2]; 
-			} u;
-			u.c[0] = *(u_char *)p;
-			u.c[1] = 0;
-			sum += u.w;
-		} 
- 
-		/* end-around-carry */
-		sum = (sum >> 16) + (sum & 0xffff);
-		sum += (sum >> 16);
-		return (~sum);
+
+	if (len & 1) {
+		union {
+			u_short w;
+			u_char c[2];
+		} u;
+		u.c[0] = *(u_char *)p;
+		u.c[1] = 0;
+		sum += u.w;
+	}
+
+	/* end-around-carry */
+	sum = (sum >> 16) + (sum & 0xffff);
+	sum += (sum >> 16);
+	return (~sum);
 }
-
-
-/* while testing ... */
-#ifdef DIAGNOSTIC
-void
-gre_inet_ntoa(struct in_addr in)
-{
-	char *p;
-
-	p = (char *)&in;
-#define UC(b)   (((int)b)&0xff)
-	printf("%d.%d.%d.%d", UC(p[0]), UC(p[1]), UC(p[2]), UC(p[3]));
-}
-
 #endif
-#endif
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.20 2001/02/23 08:02:41 itojun Exp $	*/
+/*	$NetBSD: nd6.h,v 1.20.2.1 2001/06/21 20:09:04 nathanw Exp $	*/
 /*	$KAME: nd6.h,v 1.52 2001/02/19 04:40:37 itojun Exp $	*/
 
 /*
@@ -202,7 +202,7 @@ struct nd_prefix {
  */
 struct inet6_ndpr_msghdr {
 	u_short	inpm_msglen;	/* to skip over non-understood messages */
-	u_char	inpm_version;	/* future binary compatability */
+	u_char	inpm_version;	/* future binary compatibility */
 	u_char	inpm_type;	/* message type */
 	struct in6_addr inpm_prefix;
 	u_long	prm_vltim;

@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.8.2.1 2001/04/09 01:56:28 nathanw Exp $ */
+/* $NetBSD: seeq8005.c,v 1.8.2.2 2001/06/21 20:03:14 nathanw Exp $ */
 
 /*
  * Copyright (c) 2000 Ben Harris
@@ -60,13 +60,10 @@
  *	- Does not support 8-bit busses
  */
 
-#include "opt_inet.h"
-#include "opt_ns.h"
-
 #include <sys/types.h>
 #include <sys/param.h>
 
-__RCSID("$NetBSD: seeq8005.c,v 1.8.2.1 2001/04/09 01:56:28 nathanw Exp $");
+__RCSID("$NetBSD: seeq8005.c,v 1.8.2.2 2001/06/21 20:03:14 nathanw Exp $");
 
 #include <sys/systm.h>
 #include <sys/endian.h>
@@ -82,19 +79,6 @@ __RCSID("$NetBSD: seeq8005.c,v 1.8.2.1 2001/04/09 01:56:28 nathanw Exp $");
 #include <net/if_types.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
-
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/in_var.h>
-#include <netinet/ip.h>
-#include <netinet/if_inarp.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #include "bpfilter.h"
 #if NBPFILTER > 0

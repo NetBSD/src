@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.41 2000/11/24 03:59:09 chs Exp $	*/
+/*	$NetBSD: lock.h,v 1.41.2.1 2001/06/21 20:09:48 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
 #ifndef	_SYS_LOCK_H_
 #define	_SYS_LOCK_H_
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
 #endif
@@ -113,12 +113,6 @@ struct simplelock {
 #else
 #define	SIMPLELOCK_INITIALIZER	{ __SIMPLELOCK_UNLOCKED }
 #endif
-
-/* XXXCDC: kill typedefs later? */
-typedef struct simplelock       simple_lock_data_t;
-typedef struct simplelock       *simple_lock_t;
-typedef struct lock             lock_data_t;
-typedef struct lock             *lock_t;
 
 /*
  * The general lock structure.  Provides for multiple shared locks,
@@ -324,6 +318,7 @@ void	_simple_lock(__volatile struct simplelock *, const char *, int);
 int	_simple_lock_try(__volatile struct simplelock *, const char *, int);
 void	_simple_unlock(__volatile struct simplelock *, const char *, int);
 int	_simple_lock_held(__volatile struct simplelock *);
+void	simple_lock_only_held(__volatile struct simplelock *, const char *);
 
 #define	simple_lock(alp)	_simple_lock((alp), __FILE__, __LINE__)
 #define	simple_lock_try(alp)	_simple_lock_try((alp), __FILE__, __LINE__)
@@ -342,11 +337,18 @@ void	simple_lock_switchcheck(void);
 #define	simple_lock_try(alp)	__cpu_simple_lock_try(&(alp)->lock_data)
 #define	simple_unlock(alp)	__cpu_simple_unlock(&(alp)->lock_data)
 #define	LOCK_ASSERT(x)		/* nothing */
+#define	simple_lock_only_held(x,y)		/* nothing */
 #else
 #define	simple_lock_init(alp)	(alp)->lock_data = __SIMPLELOCK_UNLOCKED
-#define	simple_lock(alp)	(void)(alp)
 #define	simple_lock_try(alp)	(1)
+#ifndef lint
+#define	simple_lock(alp)	(void)(alp)
 #define	simple_unlock(alp)	(void)(alp)
+#else /* lint */
+#define	simple_lock(alp)	/* nothing */
+#define	simple_unlock(alp)	/* nothing */
+#define	simple_lock_only_held(x,y)		/* nothing */
+#endif /* lint */
 #define	LOCK_ASSERT(x)		/* nothing */
 #endif
 

@@ -1,5 +1,5 @@
-/*	$NetBSD: raw_ip6.c,v 1.31.2.2 2001/03/13 20:29:51 nathanw Exp $	*/
-/*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.31.2.3 2001/06/21 20:09:06 nathanw Exp $	*/
+/*	$KAME: raw_ip6.c,v 1.76 2001/04/29 13:45:09 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,6 +102,9 @@
 #include <machine/stdarg.h>
 
 #include "faith.h"
+#if defined(NFAITH) && 0 < NFAITH
+#include <net/if_faith.h>
+#endif
 
 struct	in6pcb rawin6pcb;
 #define ifatoia6(ifa)	((struct in6_ifaddr *)(ifa))
@@ -137,12 +140,10 @@ rip6_input(mp, offp, proto)
 	struct mbuf *opts = NULL;
 
 #if defined(NFAITH) && 0 < NFAITH
-	if (m->m_pkthdr.rcvif) {
-		if (m->m_pkthdr.rcvif->if_type == IFT_FAITH) {
-			/* send icmp6 host unreach? */
-			m_freem(m);
-			return IPPROTO_DONE;
-		}
+	if (faithprefix(&ip6->ip6_dst)) {
+		/* send icmp6 host unreach? */
+		m_freem(m);
+		return IPPROTO_DONE;
 	}
 #endif
 

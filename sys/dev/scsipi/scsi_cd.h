@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_cd.h,v 1.12 1998/02/13 08:28:30 enami Exp $	*/
+/*	$NetBSD: scsi_cd.h,v 1.12.26.1 2001/06/21 20:05:50 nathanw Exp $	*/
 
 /*
  * Written by Julian Elischer (julian@tfs.com)
@@ -77,11 +77,11 @@ union scsi_cd_pages {
 };
 
 struct scsi_cd_mode_data {
-	struct scsi_mode_header header;
+	struct scsipi_mode_header header;
 	struct scsi_blk_desc blk_desc;
 	union scsi_cd_pages page;
 };
 
 #define AUDIOPAGESIZE \
-	(sizeof(struct scsi_mode_header) + sizeof(struct scsi_blk_desc) \
+	(sizeof(struct scsipi_mode_header) + sizeof(struct scsi_blk_desc) \
 	    + sizeof(struct cd_audio_page))

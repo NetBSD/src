@@ -1,4 +1,4 @@
-/*	$NetBSD: xebec.c,v 1.4 1994/06/29 06:41:23 cgd Exp $	*/
+/*	$NetBSD: xebec.c,v 1.4.46.1 2001/06/21 20:09:20 nathanw Exp $	*/
 
 #include "xebec.h"
 #include "llparse.h"
@@ -8,10 +8,12 @@
 
 #include "main.h"
 #include "sets.h"
+#include "procs.h"
 #include <stdio.h> 
 
 extern FILE *eventfile_h, *actfile; 
 
+void
 llaction(lln,token)
 LLtoken *token;
 {

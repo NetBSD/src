@@ -1,5 +1,5 @@
-/*	$NetBSD: if_stf.c,v 1.12 2001/02/20 07:58:17 itojun Exp $	*/
-/*	$KAME: if_stf.c,v 1.53 2001/02/16 03:00:30 itojun Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.12.2.1 2001/06/21 20:08:14 nathanw Exp $	*/
+/*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $	*/
 
 /*
  * Copyright (C) 2000 WIDE Project.
@@ -287,6 +287,10 @@ stf_encapcheck(m, off, proto, arg)
 	if ((sc->sc_if.if_flags & IFF_UP) == 0)
 		return 0;
 
+	/* IFF_LINK0 means "no decapsulation" */
+	if ((sc->sc_if.if_flags & IFF_LINK0) != 0)
+		return 0;
+
 	if (proto != IPPROTO_IPV6)
 		return 0;
 
@@ -390,6 +394,7 @@ stf_output(ifp, m, dst, rt)
 {
 	struct stf_softc *sc;
 	struct sockaddr_in6 *dst6;
+	struct in_addr *in4;
 	struct sockaddr_in *dst4;
 	u_int8_t tos;
 	struct ip *ip;
@@ -424,6 +429,43 @@ stf_output(ifp, m, dst, rt)
 	ip6 = mtod(m, struct ip6_hdr *);
 	tos = (ntohl(ip6->ip6_flow) >> 20) & 0xff;
 
+	/*
+	 * Pickup the right outer dst addr from the list of candidates.
+	 * ip6_dst has priority as it may be able to give us shorter IPv4 hops.
+	 */
+	if (IN6_IS_ADDR_6TO4(&ip6->ip6_dst))
+		in4 = GET_V4(&ip6->ip6_dst);
+	else if (IN6_IS_ADDR_6TO4(&dst6->sin6_addr))
+		in4 = GET_V4(&dst6->sin6_addr);
+	else {
+		m_freem(m);
+		return ENETUNREACH;
+	}
+
+#if NBPFILTER > 0
+	if (ifp->if_bpf) {
+		/*
+		 * We need to prepend the address family as
+		 * a four byte field.  Cons up a dummy header
+		 * to pacify bpf.  This is safe because bpf
+		 * will only read from the mbuf (i.e., it won't
+		 * try to free it or keep a pointer a to it).
+		 */
+		struct mbuf m0;
+		u_int32_t af = AF_INET6;
+		
+		m0.m_next = m;
+		m0.m_len = 4;
+		m0.m_data = (char *)&af;
+		
+#ifdef HAVE_OLD_BPF
+		bpf_mtap(ifp, &m0);
+#else
+		bpf_mtap(ifp->if_bpf, &m0);
+#endif
+	}
+#endif /*NBPFILTER > 0*/
+
 	M_PREPEND(m, sizeof(struct ip), M_DONTWAIT);
 	if (m && m->m_len < sizeof(struct ip))
 		m = m_pullup(m, sizeof(struct ip));
@@ -435,12 +477,14 @@ stf_output(ifp, m, dst, rt)
 
 	bcopy(GET_V4(&((struct sockaddr_in6 *)&ia6->ia_addr)->sin6_addr),
 	    &ip->ip_src, sizeof(ip->ip_src));
-	bcopy(GET_V4(&dst6->sin6_addr), &ip->ip_dst, sizeof(ip->ip_dst));
+	bcopy(in4, &ip->ip_dst, sizeof(ip->ip_dst));
 	ip->ip_p = IPPROTO_IPV6;
 	ip->ip_ttl = ip_gif_ttl;	/*XXX*/
 	ip->ip_len = m->m_pkthdr.len;	/*host order*/
 	if (ifp->if_flags & IFF_LINK1)
 		ip_ecn_ingress(ECN_ALLOWED, &ip->ip_tos, &tos);
+	else
+		ip_ecn_ingress(ECN_NOCARE, &ip->ip_tos, &tos);
 
 	dst4 = (struct sockaddr_in *)&sc->sc_ro.ro_dst;
 	if (dst4->sin_family != AF_INET ||
@@ -636,6 +680,8 @@ in_stf_input(m, va_alist)
 	itos = (ntohl(ip6->ip6_flow) >> 20) & 0xff;
 	if ((ifp->if_flags & IFF_LINK1) != 0)
 		ip_ecn_egress(ECN_ALLOWED, &otos, &itos);
+	else
+		ip_ecn_egress(ECN_NOCARE, &otos, &itos);
 	ip6->ip6_flow &= ~htonl(0xff << 20);
 	ip6->ip6_flow |= htonl((u_int32_t)itos << 20);
 
@@ -674,7 +720,7 @@ in_stf_input(m, va_alist)
 	ifq = &ip6intrq;
 	isr = NETISR_IPV6;
 
-	s = splimp();
+	s = splnet();
 	if (IF_QFULL(ifq)) {
 		IF_DROP(ifq);	/* update statistics */
 		m_freem(m);

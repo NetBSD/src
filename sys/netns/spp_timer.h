@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_timer.h,v 1.6 1995/03/26 20:36:22 jtc Exp $	*/
+/*	$NetBSD: spp_timer.h,v 1.6.44.1 2001/06/21 20:09:27 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -104,7 +104,7 @@
 #define	SPP_MAXRXTSHIFT	12			/* maximum retransmits */
 
 #ifdef	SPPTIMERS
-char *spptimers[] =
+const char * const spptimers[] =
     { "REXMT", "PERSIST", "KEEP", "2MSL" };
 #endif
 

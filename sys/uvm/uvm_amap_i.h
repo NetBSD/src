@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap_i.h,v 1.15 2000/11/25 06:27:59 chs Exp $	*/
+/*	$NetBSD: uvm_amap_i.h,v 1.15.2.1 2001/06/21 20:10:20 nathanw Exp $	*/
 
 /*
  *
@@ -108,10 +108,9 @@ amap_lookups(aref, offset, anons, npages)
 /*
  * amap_add: add (or replace) a page to an amap
  *
- * => caller must lock amap.   
+ * => caller must lock amap.
  * => if (replace) caller must lock anon because we might have to call
  *	pmap_page_protect on the anon's page.
- * => returns an "offset" which is meaningful to amap_unadd().
  */
 AMAP_INLINE void
 amap_add(aref, offset, anon, replace)
@@ -134,7 +133,7 @@ amap_add(aref, offset, anon, replace)
 
 		if (amap->am_anon[slot] == NULL)
 			panic("amap_add: replacing null anon");
-		if (amap->am_anon[slot]->u.an_page != NULL && 
+		if (amap->am_anon[slot]->u.an_page != NULL &&
 		    (amap->am_flags & AMAP_SHARED) != 0) {
 			pmap_page_protect(amap->am_anon[slot]->u.an_page,
 			    VM_PROT_NONE);

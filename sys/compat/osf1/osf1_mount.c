@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_mount.c,v 1.17 2000/12/01 19:20:56 jdolecek Exp $	*/
+/*	$NetBSD: osf1_mount.c,v 1.17.2.1 2001/06/21 20:00:17 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -57,7 +57,7 @@
  * rights to redistribute these changes.
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
 #endif
 

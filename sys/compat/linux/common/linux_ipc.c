@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipc.c,v 1.22.2.1 2001/03/05 22:49:25 nathanw Exp $	*/
+/*	$NetBSD: linux_ipc.c,v 1.22.2.2 2001/06/21 19:59:51 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
 #endif
 

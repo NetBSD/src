@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.h,v 1.18 2000/12/28 21:40:59 thorpej Exp $	*/
+/*	$NetBSD: pfil.h,v 1.18.2.1 2001/06/21 20:08:19 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthew R. Green
@@ -33,6 +33,7 @@
 
 #include <sys/queue.h>
 #include <net/dlt.h>
+#include <sys/null.h>
 
 struct mbuf;
 struct ifnet;
@@ -98,7 +99,7 @@ pfil_hook_get(int dir, struct pfil_head *ph)
 }
 
 /* XXX */
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "ipfilter.h"
 #endif
 

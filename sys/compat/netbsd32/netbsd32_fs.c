@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.1.4.1 2001/04/09 01:55:43 nathanw Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.1.4.2 2001/06/21 20:00:01 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -28,7 +28,7 @@
  * SUCH DAMAGE.
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
 #endif
 
@@ -141,9 +141,10 @@ netbsd32_readv(p, v, retval)
 	struct file *fp;
 	struct filedesc *fdp = p->p_fd;
 
-	if ((u_int)fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL ||
-	    (fp->f_flag & FREAD) == 0)
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
+		return (EBADF);
+
+	if ((fp->f_flag & FREAD) == 0)
 		return (EBADF);
 
 	return (dofilereadv32(p, fd, fp, (struct netbsd32_iovec *)(u_long)SCARG(uap, iovp), 
@@ -253,9 +254,10 @@ netbsd32_writev(p, v, retval)
 	struct file *fp;
 	struct filedesc *fdp = p->p_fd;
 
-	if ((u_int)fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL ||
-	    (fp->f_flag & FWRITE) == 0)
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
+		return (EBADF);
+
+	if ((fp->f_flag & FWRITE) == 0)
 		return (EBADF);
 
 	return (dofilewritev32(p, fd, fp, (struct netbsd32_iovec *)(u_long)SCARG(uap, iovp),
@@ -597,23 +599,13 @@ netbsd32___fstat13(p, v, retval)
 	struct stat ub;
 	int error = 0;
 
-	if ((u_int)fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL)
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
-	switch (fp->f_type) {
 
-	case DTYPE_VNODE:
-		error = vn_stat((struct vnode *)fp->f_data, &ub, p);
-		break;
+	FILE_USE(fp);
+	error = (*fp->f_ops->fo_stat)(fp, &ub, p);
+	FILE_UNUSE(fp, p);
 
-	case DTYPE_SOCKET:
-		error = soo_stat((struct socket *)fp->f_data, &ub, p);
-		break;
-
-	default:
-		panic("fstat");
-		/*NOTREACHED*/
-	}
 	if (error == 0) {
 		netbsd32_from___stat13(&ub, &sb32);
 		error = copyout(&sb32, (caddr_t)(u_long)SCARG(uap, sb), sizeof(sb32));
@@ -673,9 +665,10 @@ netbsd32_preadv(p, v, retval)
 	off_t offset;
 	int error, fd = SCARG(uap, fd);
 
-	if ((u_int)fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL ||
-	    (fp->f_flag & FREAD) == 0)
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
+		return (EBADF);
+
+	if ((fp->f_flag & FREAD) == 0)
 		return (EBADF);
 
 	vp = (struct vnode *)fp->f_data;
@@ -715,9 +708,10 @@ netbsd32_pwritev(p, v, retval)
 	off_t offset;
 	int error, fd = SCARG(uap, fd);
 
-	if ((u_int)fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL ||
-	    (fp->f_flag & FWRITE) == 0)
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
+		return (EBADF);
+
+	if ((fp->f_flag & FWRITE) == 0)
 		return (EBADF);
 
 	vp = (struct vnode *)fp->f_data;

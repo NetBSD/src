@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.20 2000/12/11 05:22:55 thorpej Exp $	*/
+/*	$NetBSD: pool.h,v 1.20.2.1 2001/06/21 20:09:50 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -42,6 +42,10 @@
 
 #ifdef _KERNEL
 #define	__POOL_EXPOSE
+#endif
+
+#if defined(_KERNEL_OPT)
+#include "opt_pool.h"
 #endif
 
 #ifdef __POOL_EXPOSE
@@ -169,11 +173,6 @@ struct pool {
 #endif /* __POOL_EXPOSE */
 
 #ifdef _KERNEL
-struct pool	*pool_create(size_t, u_int, u_int,
-				 int, const char *, size_t,
-				 void *(*)__P((unsigned long, int, int)),
-				 void  (*)__P((void *, unsigned long, int)),
-				 int);
 void		pool_init(struct pool *, size_t, u_int, u_int,
 				 int, const char *, size_t,
 				 void *(*)__P((unsigned long, int, int)),
@@ -181,8 +180,13 @@ void		pool_init(struct pool *, size_t, u_int, u_int,
 				 int);
 void		pool_destroy(struct pool *);
 
+void		*pool_get(struct pool *, int);
+void		pool_put(struct pool *, void *);
+void		pool_reclaim(struct pool *);
+
+#ifdef POOL_DIAGNOSTIC
 /*
- * These routines do reentrancy checking.
+ * These versions do reentrancy checking.
  */
 void		*_pool_get(struct pool *, int, const char *, long);
 void		_pool_put(struct pool *, void *, const char *, long);
@@ -190,8 +194,9 @@ void		_pool_reclaim(struct pool *, const char *, long);
 #define		pool_get(h, f)	_pool_get((h), (f), __FILE__, __LINE__)
 #define		pool_put(h, v)	_pool_put((h), (v), __FILE__, __LINE__)
 #define		pool_reclaim(h)	_pool_reclaim((h), __FILE__, __LINE__)
+#endif /* POOL_DIAGNOSTIC */
 
-int		pool_prime(struct pool *, int, caddr_t);
+int		pool_prime(struct pool *, int);
 void		pool_setlowat(struct pool *, int);
 void		pool_sethiwat(struct pool *, int);
 void		pool_sethardlimit(struct pool *, int, const char *, int);
@@ -222,6 +227,7 @@ void		pool_cache_init(struct pool_cache *, struct pool *,
 void		pool_cache_destroy(struct pool_cache *);
 void		*pool_cache_get(struct pool_cache *, int);
 void		pool_cache_put(struct pool_cache *, void *);
+void		pool_cache_destruct_object(struct pool_cache *, void *);
 void		pool_cache_invalidate(struct pool_cache *);
 #endif /* _KERNEL */
 

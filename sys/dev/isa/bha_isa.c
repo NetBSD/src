@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_isa.c,v 1.16 2000/10/03 14:07:37 simonb Exp $	*/
+/*	$NetBSD: bha_isa.c,v 1.16.2.1 2001/06/21 20:03:45 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,6 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
-#include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
@@ -87,7 +86,7 @@ bha_isa_probe(parent, match, aux)
 	if (bus_space_map(iot, ia->ia_iobase, BHA_ISA_IOSIZE, 0, &ioh))
 		return (0);
 
-	rv = bha_find(iot, ioh, &bpd);
+	rv = bha_probe_inquiry(iot, ioh, &bpd);
 
 	bus_space_unmap(iot, ioh, BHA_ISA_IOSIZE);
 
@@ -130,8 +129,8 @@ bha_isa_attach(parent, self, aux)
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
 	sc->sc_dmat = ia->ia_dmat;
-	if (!bha_find(iot, ioh, &bpd)) {
-		printf("%s: bha_find failed\n", sc->sc_dev.dv_xname);
+	if (!bha_probe_inquiry(iot, ioh, &bpd)) {
+		printf("%s: bha_isa_attach failed\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
@@ -149,7 +148,7 @@ bha_isa_attach(parent, self, aux)
 		 * we can do 32-bit DMA (earlier revisions are buggy
 		 * in this regard).
 		 */
-		bha_inquire_setup_information(sc);
+		(void) bha_info(sc);
 		if (strcmp(sc->sc_firmware, "3.37") < 0)
 		    printf("%s: buggy VLB controller, disabling 32-bit DMA\n",
 		        sc->sc_dev.dv_xname);
@@ -165,5 +164,5 @@ bha_isa_attach(parent, self, aux)
 		return;
 	}
 
-	bha_attach(sc, &bpd);
+	bha_attach(sc);
 }

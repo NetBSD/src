@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_io.c,v 1.12.2.1 2001/04/09 01:59:15 nathanw Exp $	*/
+/*	$NetBSD: uvm_io.c,v 1.12.2.2 2001/06/21 20:10:31 nathanw Exp $	*/
 
 /*
  *
@@ -60,12 +60,12 @@
 
 int
 uvm_io(map, uio)
-	vm_map_t map;
+	struct vm_map *map;
 	struct uio *uio;
 {
 	vaddr_t baseva, endva, pageoffset, kva;
 	vsize_t chunksz, togo, sz;
-	vm_map_entry_t dead_entries;
+	struct vm_map_entry *dead_entries;
 	int error;
 
 	/*
@@ -105,7 +105,7 @@ uvm_io(map, uio)
 		 */
 
 		error = uvm_map_extract(map, baseva, chunksz, kernel_map, &kva,
-			    UVM_EXTRACT_QREF | UVM_EXTRACT_CONTIG | 
+			    UVM_EXTRACT_QREF | UVM_EXTRACT_CONTIG |
 			    UVM_EXTRACT_FIXPROT);
 		if (error) {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.28.2.1 2001/04/09 01:55:53 nathanw Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.28.2.2 2001/06/21 20:01:21 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -442,12 +442,7 @@ cardbus_attach_card(struct cardbus_softc *sc)
 	}
 
 	bhlc = cardbus_conf_read(cc, cf, tag, CARDBUS_BHLC_REG);
-	if (CARDBUS_LATTIMER(bhlc) < 0x10) {
-		bhlc &= ~(CARDBUS_LATTIMER_MASK << CARDBUS_LATTIMER_SHIFT);
-		bhlc |= (0x10 << CARDBUS_LATTIMER_SHIFT);
-		cardbus_conf_write(cc, cf, tag, CARDBUS_BHLC_REG, bhlc);
-	}
-
+	DPRINTF(("%s bhlc 0x%08x -> ", sc->sc_dev.dv_xname, bhlc));
 	nfunction = CARDBUS_HDRTYPE_MULTIFN(bhlc) ? 8 : 1;
 
 	for (function = 0; function < nfunction; function++) {
@@ -479,6 +474,25 @@ cardbus_attach_card(struct cardbus_softc *sc)
 		cardbus_conf_write(cc, cf, tag, CARDBUS_BASE4_REG, 0);
 		cardbus_conf_write(cc, cf, tag, CARDBUS_BASE5_REG, 0);
 		cardbus_conf_write(cc, cf, tag, CARDBUS_ROM_REG, 0);
+
+		/* set initial latency and cacheline size */
+		bhlc = cardbus_conf_read(cc, cf, tag, CARDBUS_BHLC_REG);
+		DPRINTF(("%s func%d bhlc 0x%08x -> ", sc->sc_dev.dv_xname,
+		    function, bhlc));
+		bhlc &= ~((CARDBUS_LATTIMER_MASK << CARDBUS_LATTIMER_SHIFT) |
+		    (CARDBUS_CACHELINE_MASK << CARDBUS_CACHELINE_SHIFT));
+		bhlc |= ((sc->sc_cacheline & CARDBUS_CACHELINE_MASK) << CARDBUS_CACHELINE_SHIFT);
+		bhlc |= ((sc->sc_lattimer & CARDBUS_LATTIMER_MASK) << CARDBUS_LATTIMER_SHIFT);
+
+		cardbus_conf_write(cc, cf, tag, CARDBUS_BHLC_REG, bhlc);
+		bhlc = cardbus_conf_read(cc, cf, tag, CARDBUS_BHLC_REG);
+		DPRINTF(("0x%08x\n", bhlc));
+		
+		if (CARDBUS_LATTIMER(bhlc) < 0x10) {
+			bhlc &= ~(CARDBUS_LATTIMER_MASK << CARDBUS_LATTIMER_SHIFT);
+			bhlc |= (0x10 << CARDBUS_LATTIMER_SHIFT);
+			cardbus_conf_write(cc, cf, tag, CARDBUS_BHLC_REG, bhlc);
+		}
 
 		/*
 		 * We need to allocate the ct here, since we might
@@ -614,7 +628,7 @@ cardbus_detach_card(struct cardbus_softc *sc)
 		/* call device detach function */
 
 		if (0 != config_detach(fndev, 0)) {
-			printf("%s: cannot detaching dev %s, function %d\n",
+			printf("%s: cannot detach dev %s, function %d\n",
 			    sc->sc_dev.dv_xname, fndev->dv_xname, ct->ct_func);
 			prev_next = &(ct->ct_next);
 		} else {
@@ -671,6 +685,12 @@ enable_function(struct cardbus_softc *sc, int cdstatus, int function)
 	if (sc->sc_poweron_func == 0) {
 		/* switch to 3V and/or wait for power to stabilize */
 		if (cdstatus & CARDBUS_3V_CARD) {
+			/*
+			 * sc_poweron_func must be substituted before
+			 * entering sleep, in order to avoid turn on
+			 * power twice.
+			 */
+			sc->sc_poweron_func |= (1 << function);
 			(*sc->sc_cf->cardbus_power)(sc->sc_cc, CARDBUS_VCC_3V);
 		} else {
 			/* No cards other than 3.3V cards. */

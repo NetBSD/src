@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.26.2.2 2001/04/09 01:58:59 nathanw Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.26.2.3 2001/06/21 20:09:40 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -208,7 +208,7 @@ ntfs_ntvattrget(
 	}
 	/* Scan $ATTRIBUTE_LIST for requested attribute */
 	len = lvap->va_datalen;
-	MALLOC(alpool, caddr_t, len, M_TEMP, M_WAITOK);
+	alpool = (caddr_t) malloc(len, M_TEMP, M_WAITOK);
 	error = ntfs_readntvattr_plain(ntmp, ip, lvap, 0, len, alpool, &len,
 			NULL);
 	if (error)
@@ -264,7 +264,7 @@ ntfs_ntvattrget(
 	       "ino: %d, type: 0x%x, name: %.*s, vcn: %d\n", \
 	       ip->i_number, type, (int) namelen, name, (u_int32_t) vcn));
 out:
-	FREE(alpool, M_TEMP);
+	free(alpool, M_TEMP);
 	return (error);
 }
 
@@ -286,7 +286,7 @@ ntfs_loadntnode(
 
 	dprintf(("ntfs_loadntnode: loading ino: %d\n",ip->i_number));
 
-	MALLOC(mfrp, struct filerec *, ntfs_bntob(ntmp->ntm_bpmftrec),
+	mfrp = (struct filerec *) malloc(ntfs_bntob(ntmp->ntm_bpmftrec),
 	       M_TEMP, M_WAITOK);
 
 	if (ip->i_number < NTFS_SYSNODESNUM) {
@@ -359,7 +359,7 @@ ntfs_loadntnode(
 	ip->i_flag |= IN_LOADED;
 
 out:
-	FREE(mfrp, M_TEMP);
+	free(mfrp, M_TEMP);
 	return (error);
 }
 		
@@ -527,12 +527,12 @@ ntfs_freentvattr(vap)
 {
 	if (vap->va_flag & NTFS_AF_INRUN) {
 		if (vap->va_vruncn)
-			FREE(vap->va_vruncn, M_NTFSRUN);
+			free(vap->va_vruncn, M_NTFSRUN);
 		if (vap->va_vruncl)
-			FREE(vap->va_vruncl, M_NTFSRUN);
+			free(vap->va_vruncl, M_NTFSRUN);
 	} else {
 		if (vap->va_datap)
-			FREE(vap->va_datap, M_NTFSRDATA);
+			free(vap->va_datap, M_NTFSRDATA);
 	}
 	FREE(vap, M_NTFSNTVATTR);
 }
@@ -591,7 +591,7 @@ ntfs_attrtontvattr(
 		vap->va_allocated = rap->a_r.a_datalen;
 		vap->va_vcnstart = 0;
 		vap->va_vcnend = ntfs_btocn(vap->va_allocated);
-		MALLOC(vap->va_datap, caddr_t, vap->va_datalen,
+		vap->va_datap = (caddr_t) malloc(vap->va_datalen,
 		       M_NTFSRDATA, M_WAITOK);
 		memcpy(vap->va_datap, (caddr_t) rap + rap->a_r.a_dataoff,
 		       rap->a_r.a_datalen);
@@ -633,8 +633,8 @@ ntfs_runtovrun(
 		off += (run[off] & 0xF) + ((run[off] >> 4) & 0xF) + 1;
 		cnt++;
 	}
-	MALLOC(cn, cn_t *, cnt * sizeof(cn_t), M_NTFSRUN, M_WAITOK);
-	MALLOC(cl, cn_t *, cnt * sizeof(cn_t), M_NTFSRUN, M_WAITOK);
+	cn = (cn_t *) malloc(cnt * sizeof(cn_t), M_NTFSRUN, M_WAITOK);
+	cl = (cn_t *) malloc(cnt * sizeof(cn_t), M_NTFSRUN, M_WAITOK);
 
 	off = 0;
 	cnt = 0;
@@ -850,7 +850,7 @@ ntfs_ntlookupattr(
 
     out:
 	if (namelen) {
-		MALLOC((*attrname), char *, namelen, M_TEMP, M_WAITOK);
+		*attrname = (char *) malloc(namelen, M_TEMP, M_WAITOK);
 		memcpy((*attrname), name, namelen);
 		(*attrname)[namelen] = '\0';
 		*attrtype = NTFS_A_DATA;
@@ -1197,7 +1197,7 @@ ntfs_ntreaddir(
 
 	if (fp->f_dirblbuf == NULL) {
 		fp->f_dirblsz = vap->va_a_iroot->ir_size;
-		MALLOC(fp->f_dirblbuf, caddr_t,
+		fp->f_dirblbuf = (caddr_t) malloc(
 		       max(vap->va_datalen,fp->f_dirblsz), M_NTFSDIR, M_WAITOK);
 	}
 
@@ -1213,7 +1213,7 @@ ntfs_ntreaddir(
 			error = ENOTDIR;
 			goto fail;
 		}
-		MALLOC(bmp, u_char *, bmvap->va_datalen, M_TEMP, M_WAITOK);
+		bmp = (u_char *) malloc(bmvap->va_datalen, M_TEMP, M_WAITOK);
 		error = ntfs_readattr(ntmp, ip, NTFS_A_INDXBITMAP, "$I30", 0,
 				       bmvap->va_datalen, bmp, NULL);
 		if (error)

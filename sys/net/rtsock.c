@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.45.2.1 2001/03/05 22:49:55 nathanw Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.45.2.2 2001/06/21 20:08:20 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -426,13 +426,19 @@ flush:
 	}
 	if (rtm) {
 		m_copyback(m, 0, rtm->rtm_msglen, (caddr_t)rtm);
+		if (m->m_pkthdr.len < rtm->rtm_msglen) {
+			m_freem(m);
+			m = NULL;
+		} else if (m->m_pkthdr.len > rtm->rtm_msglen)
+			m_adj(m, rtm->rtm_msglen - m->m_pkthdr.len);
 		Free(rtm);
 	}
 	if (rp)
 		rp->rcb_proto.sp_family = 0; /* Avoid us */
 	if (dst)
 		route_proto.sp_protocol = dst->sa_family;
-	raw_input(m, &route_proto, &route_src, &route_dst);
+	if (m)
+		raw_input(m, &route_proto, &route_src, &route_dst);
 	if (rp)
 		rp->rcb_proto.sp_family = PF_ROUTE;
     }
@@ -559,6 +565,10 @@ rt_msg1(type, rtinfo, data, datalen)
 		dlen = ROUNDUP(sa->sa_len);
 		m_copyback(m, len, dlen, (caddr_t)sa);
 		len += dlen;
+	}
+	if (m->m_pkthdr.len != len) {
+		m_freem(m);
+		return (NULL);
 	}
 	rtm->rtm_msglen = len;
 	rtm->rtm_version = RTM_VERSION;

@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.31.2.2 2001/04/09 01:58:08 nathanw Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.31.2.3 2001/06/21 20:07:34 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -419,6 +419,13 @@ genfs_lease_check(v)
 #endif /* NFSSERVER */
 }
 
+int
+genfs_mmap(v)
+	void *v;
+{
+	return 0;
+}
+
 /*
  * generic VM getpages routine.
  * Return PG_BUSY pages for the given range,
@@ -432,7 +439,7 @@ genfs_getpages(v)
 	struct vop_getpages_args /* {
 		struct vnode *a_vp;
 		voff_t a_offset;
-		vm_page_t *a_m;
+		struct vm_page **a_m;
 		int *a_count;
 		int a_centeridx;
 		vm_prot_t a_access_type;
@@ -588,7 +595,8 @@ genfs_getpages(v)
 	 * find any additional pages needed to cover the expanded range.
 	 */
 
-	if (startoffset != origoffset) {
+	npages = (endoffset - startoffset) >> PAGE_SHIFT;
+	if (startoffset != origoffset || npages != orignpages) {
 
 		/*
 		 * XXXUBC we need to avoid deadlocks caused by locking
@@ -597,19 +605,18 @@ genfs_getpages(v)
 		 * start over.
 		 */
 
-		for (i = 0; i < npages; i++) {
+		for (i = 0; i < orignpages; i++) {
 			struct vm_page *pg = pgs[ridx + i];
 
 			if (pg->flags & PG_FAKE) {
 				pg->flags |= PG_RELEASED;
 			}
 		}
-		uvm_page_unbusy(&pgs[ridx], npages);
+		uvm_page_unbusy(&pgs[ridx], orignpages);
 		memset(pgs, 0, sizeof(pgs));
 
 		UVMHIST_LOG(ubchist, "reset npages start 0x%x end 0x%x",
 			    startoffset, endoffset, 0,0);
-		npages = (endoffset - startoffset) >> PAGE_SHIFT;
 		npgs = npages;
 		uvn_findpages(uobj, startoffset, &npgs, pgs, UFP_ALL);
 	}
@@ -666,7 +673,7 @@ genfs_getpages(v)
 		 */
 
 		pidx = (offset - startoffset) >> PAGE_SHIFT;
-		while ((pgs[pidx]->flags & PG_FAKE) == 0) {
+		while ((pgs[pidx]->flags & (PG_FAKE|PG_RDONLY)) == 0) {
 			size_t b;
 
 			KASSERT((offset & (PAGE_SIZE - 1)) == 0);
@@ -721,6 +728,8 @@ genfs_getpages(v)
 		 */
 
 		if (blkno < 0) {
+			int holepages = (round_page(offset + iobytes) - 
+					 trunc_page(offset)) >> PAGE_SHIFT;
 			UVMHIST_LOG(ubchist, "lbn 0x%x -> HOLE", lbn,0,0,0);
 
 			sawhole = TRUE;
@@ -728,11 +737,10 @@ genfs_getpages(v)
 			       iobytes);
 			skipbytes += iobytes;
 
-			if (!write) {
-				int holepages =
-					(round_page(offset + iobytes) - 
-					 trunc_page(offset)) >> PAGE_SHIFT;
-				for (i = 0; i < holepages; i++) {
+			for (i = 0; i < holepages; i++) {
+				if (write) {
+					pgs[pidx + i]->flags &= ~PG_CLEAN;
+				} else {
 					pgs[pidx + i]->flags |= PG_RDONLY;
 				}
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_x25subr.c,v 1.23 2001/01/17 04:05:43 itojun Exp $	*/
+/*	$NetBSD: if_x25subr.c,v 1.23.2.1 2001/06/21 20:08:24 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -174,7 +174,6 @@ x25_ifinput(m, v)
 	struct llinfo_x25 *lx = (struct llinfo_x25 *) lcp->lcd_upnext;
 	struct ifnet *ifp;
 	struct ifqueue *inq;
-	extern struct timeval time;
 	int             s, isr;
 
 	if (m == 0 || lcp->lcd_state != DATA_TRANSFER)
@@ -182,7 +181,6 @@ x25_ifinput(m, v)
 
 	pk_flowcontrol(lcp, 0, 1);	/* Generate RR */
 	ifp = m->m_pkthdr.rcvif;
-	ifp->if_lastchange = time;
 	switch (m->m_type) {
 	default:
 		if (m)
@@ -218,7 +216,7 @@ x25_ifinput(m, v)
 		ifp->if_noproto++;
 		return 0;
 	}
-	s = splimp();
+	s = splnet();
 	schednetisr(isr);
 	if (IF_QFULL(inq)) {
 		IF_DROP(inq);
@@ -423,7 +421,7 @@ x25_iftimeout(ifp)
 {
 	struct pkcb *pkcb = 0;
 	struct pklcd **lcpp, *lcp;
-	int             s = splimp();
+	int             s = splnet();
 
 	FOR_ALL_PKCBS(pkcb)
 		if (pkcb->pk_ia->ia_ifp == ifp)

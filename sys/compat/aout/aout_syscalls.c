@@ -1,4 +1,4 @@
-/* $NetBSD: aout_syscalls.c,v 1.17.2.1 2001/03/13 20:48:46 nathanw Exp $ */
+/* $NetBSD: aout_syscalls.c,v 1.17.2.2 2001/06/21 19:58:51 nathanw Exp $ */
 
 /*
  * System call names.
@@ -7,8 +7,8 @@
  * created from	NetBSD: syscalls.master,v 1.13 2001/01/27 07:50:11 thorpej Exp 
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
+#if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"
 #include "opt_ntp.h"
@@ -24,7 +24,7 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <compat/aout/aout_syscallargs.h>
-#endif /* _KERNEL && ! _LKM */
+#endif /* _KERNEL_OPT */
 
 const char *const aout_syscallnames[] = {
 	"syscall",			/* 0 = syscall */

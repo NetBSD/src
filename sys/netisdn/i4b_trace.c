@@ -27,7 +27,7 @@
  *	i4btrc - device driver for trace data read device
  *	---------------------------------------------------
  *
- *	$Id: i4b_trace.c,v 1.3.2.1 2001/04/09 01:58:51 nathanw Exp $
+ *	$Id: i4b_trace.c,v 1.3.2.2 2001/06/21 20:09:10 nathanw Exp $
  *
  *	last edit-date: [Fri Jan  5 11:33:47 2001]
  *
@@ -82,7 +82,7 @@ void i4btrcattach __P((void));
 int i4btrcopen __P((dev_t dev, int flag, int fmt, struct proc *p));
 int i4btrcclose __P((dev_t dev, int flag, int fmt, struct proc *p));
 int i4btrcread __P((dev_t dev, struct uio * uio, int ioflag));
-int i4btrcioctl __P((dev_t dev, int cmd, caddr_t data, int flag, struct proc *p));
+int i4btrcioctl __P((dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p));
 
 /*---------------------------------------------------------------------------*
  *	interface attach routine
@@ -357,13 +357,7 @@ i4btrcpoll(dev_t dev, int events, struct proc *p)
  *	device driver ioctl routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-#if defined (__FreeBSD_version) && __FreeBSD_version >= 300003
 i4btrcioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
-#elif defined(__bsdi__)
-i4btrcioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
-#else
-i4btrcioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
-#endif
 {
 	int error = 0;
 	int bri = minor(dev);

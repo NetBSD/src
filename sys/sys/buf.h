@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.45 2000/11/27 18:26:40 chs Exp $	*/
+/*	$NetBSD: buf.h,v 1.45.2.1 2001/06/21 20:09:43 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -173,7 +173,7 @@ struct buf {
 	LIST_ENTRY(buf) b_vnbufs;	/* Buffer's associated vnode. */
 	TAILQ_ENTRY(buf) b_freelist;	/* Free list position if not active. */
 	TAILQ_ENTRY(buf) b_actq;	/* Device driver queue when active. */
-	struct  proc *b_proc;		/* Associated proc; NULL if kernel. */
+	struct  proc *b_proc;		/* Associated proc if B_PHYS set. */
 	volatile long	b_flags;	/* B_* flags. */
 	int	b_error;		/* Errno value. */
 	long	b_bufsize;		/* Allocated buffer size. */
@@ -258,7 +258,7 @@ struct cluster_save {
 do {									\
 	memset((bp)->b_data, 0, (u_int)(bp)->b_bcount);			\
 	(bp)->b_resid = 0;						\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 /* Flags to low-level allocation routines. */
 #define B_CLRBUF	0x01	/* Request allocated buffer be cleared. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.5.4.1 2001/04/09 01:55:38 nathanw Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.5.4.2 2001/06/21 19:59:39 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -73,6 +73,7 @@
 #include <compat/linux/linux_syscallargs.h>
 
 #include <machine/cpu.h>
+#include <machine/fpu.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/vmparam.h>
@@ -80,14 +81,12 @@
 /*
  * To see whether wscons is configured (for virtual console ioctl calls).
  */
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "wsdisplay.h"
 #endif
 #if (NWSDISPLAY > 0)
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplay_usl_io.h>
-#if defined(_KERNEL) && !defined(_LKM)
-#endif
 #endif
 
 /* 
@@ -123,9 +122,10 @@ linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 {
 	struct proc *p = curproc;
 	struct trapframe *tf;
-	struct linux_sigregs *fp, frame;
+	struct linux_sigregs frame;
 	struct linux_pt_regs linux_regs;
 	struct linux_sigcontext sc;
+	register_t fp;
 	int onstack;
 	int i;
 
@@ -148,20 +148,25 @@ linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 	 * Allocate space for the signal handler context. 
 	 */
 	if (onstack) {
-		fp = (struct linux_sigregs *)
+		fp = (register_t)
 		    ((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
 		    p->p_sigctx.ps_sigstk.ss_size);
 	} else {
-		fp = (struct linux_sigregs *)tf->fixreg[1];
+		fp = tf->fixreg[1];
 	}
-	fp = (struct linux_sigregs *)((int)(fp - 1) & ~0xf); 
+#ifdef DEBUG_LINUX
+	printf("fp at start of linux_sendsig = %x\n", fp);
+#endif
+	fp -= sizeof(struct linux_sigregs);
+	fp &= ~0xf;
 
 	/* 
 	 * Prepare a sigcontext for later.
 	 */
+	memset(&sc, 0, sizeof sc);
 	sc.lsignal = (int)native_to_linux_sig[sig];
 	sc.lhandler = (unsigned long)catcher;
-	native_to_linux_old_sigset(mask, &sc.lmask);
+	native_to_linux_old_extra_sigset(mask, &sc.lmask, &sc._unused[3]);
 	sc.lregs = (struct linux_pt_regs*)fp;
 
 	/*
@@ -180,19 +185,17 @@ linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 	linux_regs.lxer = tf->xer;
 	linux_regs.lccr = tf->cr; 
 	linux_regs.lmq = 0;  			/* Unused, 601 only */
-	linux_regs.ltrap = 0; 	/* XXX What is ltrap counterpart in NetBSD ? */
+	linux_regs.ltrap = tf->exc;
 	linux_regs.ldar = tf->dar; 
-	linux_regs.ldsisr = tf->dsisr; 
-	linux_regs.lresult = tf->exc; 
-	memcpy(&frame.lgp_regs, &linux_regs, sizeof(frame.lgp_regs));
+	linux_regs.ldsisr = tf->dsisr;
+	linux_regs.lresult = 0;
 
-	/* 
-	 * NetBSD does not uses the FPU in the kernel, so there is no
-	 * need to save floating point register. However, Linux expects
-	 * them to be saved on the stack. Therefore we just keep a 
-	 * gap of zero'ed data where the FP registers should be stored
-	 */
-	memset(&frame.lfp_regs, 0, sizeof (frame.lfp_regs));
+	memset(&frame, 0, sizeof(frame));
+	memcpy(&frame.lgp_regs, &linux_regs, sizeof(linux_regs));
+
+	if (curproc == fpuproc)
+		save_fpu(curproc);
+	memcpy(&frame.lfp_regs, curpcb->pcb_fpu.fpr, sizeof(frame.lfp_regs));
 
 	/*
 	 * Copy Linux's signal trampoline on the user stack It should not
@@ -208,55 +211,41 @@ linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 	 * binaries. But the Linux kernel seems to do without it, and it
 	 * just skip it when building the stack frame. Hence the LINUX_ABIGAP.
 	 */
-	if (copyout(&frame, fp, sizeof (frame) - LINUX_ABIGAP) != 0) { 
+	if (copyout(&frame, (caddr_t)fp, sizeof (frame) - LINUX_ABIGAP) != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
-		 * instructoin to halt it in its tracks.
+		 * instruction to halt it in its tracks.
 		 */
 		sigexit(p, SIGILL);
 		/* NOTREACHED */
 	}
-
-	/*
-	 * adjust stack pointer after the previous data copy
-	 */
-	fp = (struct linux_sigregs *)
-	    ((unsigned long)fp - (sizeof (frame) - LINUX_ABIGAP));
-
-	/*
-	 * "Mind the gap" Linux expects a gap here.
-	 */
-	fp = (struct linux_sigregs *)
-	    ((unsigned long)fp - LINUX__SIGNAL_FRAMESIZE);
 
 	/*
 	 * Add a sigcontext on the stack
 	 */
-	if (copyout(&sc, fp, sizeof (struct linux_sigcontext)) != 0) {
+	fp -= sizeof(struct linux_sigcontext);
+	if (copyout(&sc, (caddr_t)fp, sizeof (struct linux_sigcontext)) != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
-		 * instructoin to halt it in its tracks.
+		 * instruction to halt it in its tracks.
 		 */
 		sigexit(p, SIGILL);
 		/* NOTREACHED */
 	}
 
-	/* 
-	 * Here, I expected to need a stack pointer adjust after the copy.
-	 * Something like this: (unsigned long)fp-=sizeof(struct sigcontext)
-	 * But if we do it, the signal handler does not get its arguments as
-	 * expected. 
-	 */
-	 
 	/*
-	 * Set the registers according to how the Linux process expects them
+	 * Set the registers according to how the Linux process expects them.
+	 * "Mind the gap" Linux expects a gap here.
 	 */
-	tf->fixreg[1] = (int)fp;
+	tf->fixreg[1] = fp - LINUX__SIGNAL_FRAMESIZE;
 	tf->lr = (int)catcher;
 	tf->fixreg[3] = (int)native_to_linux_sig[sig];
-	tf->fixreg[4] = (int)&fp->lgp_regs;
+	tf->fixreg[4] = fp;
 	tf->srr0 = (int)p->p_sigctx.ps_sigcode;
 
+#ifdef DEBUG_LINUX
+	printf("fp at end of linux_sendsig = %x\n", fp);
+#endif
 	/* 
 	 * Remember that we're now on the signal stack. 
 	 */
@@ -289,6 +278,8 @@ linux_sys_rt_sigreturn(p, v, retval)
 		syscallarg(struct linux_rt_sigframe *) sfp;
 	} */ *uap = v;
 	struct linux_rt_sigframe *scp, sigframe;
+	struct linux_sigregs sregs;
+	struct linux_pt_regs *lregs;
 	struct trapframe *tf;
 	sigset_t mask;
 	int i;
@@ -301,46 +292,45 @@ linux_sys_rt_sigreturn(p, v, retval)
 	scp = SCARG(uap, sfp);
 
 	/*
-	 * It seems we need a 16 bytes alignement here (it just works with it,
-	 * don't ask me why
-	 */
-	scp = (struct linux_rt_sigframe *)((unsigned long)scp & ~0xfUL); 
-
-	/*
 	 * Get the context from user stack
 	 */
-	if (copyin((caddr_t)scp, &sigframe, sizeof(*scp)) != 0)
+	if (copyin((caddr_t)scp, &sigframe, sizeof(*scp)))
 		return (EFAULT);
 
 	/*
-	 * Grab the signal mask
+	 * Make sure, fpu is sync'ed
 	 */
-	linux_to_native_sigset(&sigframe.luc.luc_sigmask, &mask);
+	if (curproc == fpuproc)
+		save_fpu(curproc);
 
 	/*
-	 *  Restore register context. XXX need security review 
+	 *  Restore register context.
 	 */
+	if (copyin((caddr_t)sigframe.luc.luc_context.lregs,
+		   &sregs, sizeof(sregs)))
+		return (EFAULT);
+	lregs = (struct linux_pt_regs *)&sregs.lgp_regs;
+
 	tf = trapframe(p);
 #ifdef DEBUG_LINUX
 	printf("linux_sys_sigreturn: trapframe=0x%lx scp=0x%lx\n",
 	    (unsigned long)tf, (unsigned long)scp);
 #endif
 
-	if ((sigframe.luc.luc_context.lregs->lmsr & PSL_USERSTATIC) != 
-	    (tf->srr1 & PSL_USERSTATIC))
+	if ((lregs->lmsr & PSL_USERSTATIC) !=  (tf->srr1 & PSL_USERSTATIC))
 		return (EINVAL);  
 
 	for (i = 0; i < 32; i++) 
-		tf->fixreg[i] = sigframe.luc.luc_context.lregs->lgpr[i];
-	tf->lr = sigframe.luc.luc_context.lregs->llink;
-	tf->cr = sigframe.luc.luc_context.lregs->lccr;
-	tf->xer = sigframe.luc.luc_context.lregs->lxer;
-	tf->ctr = sigframe.luc.luc_context.lregs->lctr;
-	tf->srr0 = sigframe.luc.luc_context.lregs->lnip;
-	tf->srr1 = sigframe.luc.luc_context.lregs->lmsr;
-	tf->dar = sigframe.luc.luc_context.lregs->ldar;
-	tf->dsisr = sigframe.luc.luc_context.lregs->ldsisr;
-	tf->exc = sigframe.luc.luc_context.lregs->lresult;
+		tf->fixreg[i] = lregs->lgpr[i];
+	tf->lr = lregs->llink;
+	tf->cr = lregs->lccr;
+	tf->xer = lregs->lxer;
+	tf->ctr = lregs->lctr;
+	tf->srr0 = lregs->lnip;
+	tf->srr1 = lregs->lmsr;
+
+	memcpy(curpcb->pcb_fpu.fpr, (caddr_t)&sregs.lfp_regs,
+	       sizeof(curpcb->pcb_fpu.fpr));
 
 	/* 
 	 * Restore signal stack. 
@@ -354,6 +344,12 @@ linux_sys_rt_sigreturn(p, v, retval)
 		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 	else */
 		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
+
+	/*
+	 * Grab the signal mask
+	 */
+	linux_to_native_sigset(&sigframe.luc.luc_sigmask, &mask);
+	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
 
 	return (EJUSTRETURN);
 }
@@ -372,6 +368,8 @@ linux_sys_sigreturn(p, v, retval)
 		syscallarg(struct linux_sigcontext *) scp;
 	} */ *uap = v;
 	struct linux_sigcontext *scp, context;
+	struct linux_sigregs sregs;
+	struct linux_pt_regs *lregs;
 	struct trapframe *tf;
 	sigset_t mask;
 	int i;
@@ -384,41 +382,44 @@ linux_sys_sigreturn(p, v, retval)
 	scp = SCARG(uap, scp);
 
 	/*
-	 * It seems we need a 16 bytes alignement here (it just works with it,
-	 * don't ask me why
-	 */
-	(unsigned long)scp = (unsigned long) scp & ~0xfUL; 
-
-	/*
 	 * Get the context from user stack
 	 */
-	if (copyin(scp, &context, sizeof(struct linux_sigcontext)) != 0)
+	if (copyin(scp, &context, sizeof(*scp)))
 		return (EFAULT);
 
 	/*
-	 *  Restore register context. XXX need security review 
+	 * Make sure, fpu is in sync
 	 */
+	if (curproc == fpuproc)
+		save_fpu(curproc);
+
+	/*
+	 *  Restore register context.
+	 */
+	if (copyin((caddr_t)context.lregs, &sregs, sizeof(sregs)))
+		return (EFAULT);
+	lregs = (struct linux_pt_regs *)&sregs.lgp_regs;
+
 	tf = trapframe(p);
 #ifdef DEBUG_LINUX
 	printf("linux_sys_sigreturn: trapframe=0x%lx scp=0x%lx\n",
 	    (unsigned long)tf, (unsigned long)scp);
 #endif
 
-	if ((context.lregs->lmsr & PSL_USERSTATIC) !=
-	    (tf->srr1 & PSL_USERSTATIC))
+	if ((lregs->lmsr & PSL_USERSTATIC) != (tf->srr1 & PSL_USERSTATIC))
 		return (EINVAL);  
 
 	for (i = 0; i < 32; i++) 
-		tf->fixreg[i] = context.lregs->lgpr[i];
-	tf->lr = context.lregs->llink;
-	tf->cr = context.lregs->lccr;
-	tf->xer = context.lregs->lxer;
-	tf->ctr = context.lregs->lctr;
-	tf->srr0 = context.lregs->lnip;
-	tf->srr1 = context.lregs->lmsr;
-	tf->dar = context.lregs->ldar;
-	tf->dsisr = context.lregs->ldsisr;
-	tf->exc = context.lregs->lresult;
+		tf->fixreg[i] = lregs->lgpr[i];
+	tf->lr = lregs->llink;
+	tf->cr = lregs->lccr;
+	tf->xer = lregs->lxer;
+	tf->ctr = lregs->lctr;
+	tf->srr0 = lregs->lnip;
+	tf->srr1 = lregs->lmsr;
+
+	memcpy(curpcb->pcb_fpu.fpr, (caddr_t)&sregs.lfp_regs,
+	       sizeof(curpcb->pcb_fpu.fpr));
 
 	/* 
 	 * Restore signal stack. 
@@ -434,13 +435,16 @@ linux_sys_sigreturn(p, v, retval)
 		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
-	linux_old_to_native_sigset(&context.lmask, &mask); 
+	linux_old_extra_to_native_sigset(&context.lmask,
+					 &context._unused[3],
+					 &mask); 
 	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
 
 	return (EJUSTRETURN);
 }
 
 
+#if 0
 int
 linux_sys_modify_ldt(p, v, retval)
 	struct proc *p;
@@ -456,6 +460,7 @@ linux_sys_modify_ldt(p, v, retval)
 #endif
   return 0;
 }
+#endif
 
 /* 
  * major device numbers remapping
@@ -497,6 +502,7 @@ linux_machdepioctl(p, v, retval)
 	SCARG(&bia, com) = com;
 	return sys_ioctl(p, &bia, retval);
 }
+#if 0
 /*
  * Set I/O permissions for a process. Just set the maximum level
  * right away (ignoring the argument), otherwise we would have
@@ -516,6 +522,7 @@ linux_sys_iopl(p, v, retval)
 #endif
 	return 0;
 }
+#endif
 
 /*
  * See above. If a root process tries to set access to an I/O port,

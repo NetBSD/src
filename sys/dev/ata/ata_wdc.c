@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.28 2000/06/12 21:10:40 bouyer Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.28.4.1 2001/06/21 20:01:17 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -128,7 +128,7 @@ int   wdc_ata_err __P((struct ata_drive_datas *, struct ata_bio *));
 
 /*
  * Handle block I/O operation. Return WDC_COMPLETE, WDC_QUEUED, or
- * WDC_TRY_AGAIN. Must be called at splio().
+ * WDC_TRY_AGAIN. Must be called at splbio().
  */
 int
 wdc_ata_bio(drvp, ata_bio)
@@ -141,6 +141,8 @@ wdc_ata_bio(drvp, ata_bio)
 	xfer = wdc_get_xfer(WDC_NOSLEEP);
 	if (xfer == NULL)
 		return WDC_TRY_AGAIN;
+	if (chp->wdc->cap & WDC_CAPABILITY_NOIRQ)
+		ata_bio->flags |= ATA_POLL;
 	if (ata_bio->flags & ATA_POLL)
 		xfer->c_flags |= C_POLL;
 	if ((drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) &&
@@ -592,10 +594,8 @@ wdc_ata_bio_kill_xfer(chp, xfer)
 	ata_bio->flags |= ATA_ITSDONE;
 	ata_bio->error = ERR_NODEV;
 	ata_bio->r_error = WDCE_ABRT;
-	if ((ata_bio->flags & ATA_POLL) == 0) {
-		WDCDEBUG_PRINT(("wdc_ata_done: wddone\n"), DEBUG_XFERS);
-		wddone(chp->ch_drive[drive].drv_softc);
-	}
+	WDCDEBUG_PRINT(("wdc_ata_done: wddone\n"), DEBUG_XFERS);
+	wddone(chp->ch_drive[drive].drv_softc);
 }
 
 void
@@ -620,10 +620,8 @@ wdc_ata_bio_done(chp, xfer)
 	wdc_free_xfer(chp, xfer);
 
 	ata_bio->flags |= ATA_ITSDONE;
-	if ((ata_bio->flags & ATA_POLL) == 0) {
-		WDCDEBUG_PRINT(("wdc_ata_done: wddone\n"), DEBUG_XFERS);
-		wddone(chp->ch_drive[drive].drv_softc);
-	}
+	WDCDEBUG_PRINT(("wdc_ata_done: wddone\n"), DEBUG_XFERS);
+	wddone(chp->ch_drive[drive].drv_softc);
 	WDCDEBUG_PRINT(("wdcstart from wdc_ata_done, flags 0x%x\n",
 	    chp->ch_flags), DEBUG_XFERS);
 	wdcstart(chp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_exec.c,v 1.8 2001/01/15 17:05:32 oki Exp $	*/
+/*	$NetBSD: pecoff_exec.c,v 1.8.2.1 2001/06/21 20:00:23 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Masaru OKI
@@ -105,6 +105,7 @@ const struct emul emul_pecoff = {
 	0,
 #endif
 	sendsig,
+	trapsignal,
 	sigcode,
 	esigcode,
 	NULL,

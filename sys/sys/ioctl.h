@@ -1,4 +1,4 @@
-/*	$NetBSD: ioctl.h,v 1.27 2000/12/18 18:57:11 fvdl Exp $	*/
+/*	$NetBSD: ioctl.h,v 1.27.2.1 2001/06/21 20:09:48 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -99,13 +99,13 @@ __END_DECLS
 
 /*
  * Keep outside _SYS_IOCTL_H_
- * Compatability with old terminal driver
+ * Compatibility with old terminal driver
  *
  * Source level -> #define USE_OLD_TTY
  * Kernel level -> options COMPAT_43 or COMPAT_SUNOS or ...
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_compat_freebsd.h"
 #include "opt_compat_sunos.h"
 #include "opt_compat_svr4.h"
@@ -114,6 +114,7 @@ __END_DECLS
 #endif
 
 #if defined(USE_OLD_TTY) || defined(COMPAT_43) || defined(COMPAT_SUNOS) || \
-    defined(COMPAT_SVR4) || defined(COMPAT_FREEBSD) || defined(COMPAT_OSF1)
+    defined(COMPAT_SVR4) || defined(COMPAT_FREEBSD) || defined(COMPAT_OSF1) || \
+    defined(LKM)
 #include <sys/ioctl_compat.h>
 #endif

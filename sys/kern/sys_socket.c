@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.22.6.1 2001/04/09 01:57:57 nathanw Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.22.6.2 2001/06/21 20:07:03 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -45,6 +45,7 @@
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/poll.h>
+#include <sys/proc.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -191,12 +192,12 @@ soo_poll(fp, events, p)
 }
 
 int
-soo_stat(fdata, ub, p)
-	void *fdata;
+soo_stat(fp, ub, p)
+	struct file *fp;
 	struct stat *ub;
 	struct proc *p;
 {
-	struct socket *so = fdata;
+	struct socket *so = (struct socket *)fp->f_data;
 
 	memset((caddr_t)ub, 0, sizeof(*ub));
 	ub->st_mode = S_IFSOCK;

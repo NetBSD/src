@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.41.2.1 2001/03/05 22:49:59 nathanw Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.41.2.2 2001/06/21 20:09:33 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -188,6 +188,9 @@ loop:
 	error = VOP_GETATTR(vp, np->n_vattr, curproc->l_proc->p_ucred, 
 	    curproc->l_proc);
 	if (error) {
+		lockmgr(&vp->v_lock, LK_RELEASE, 0);
+		lockmgr(&nfs_hashlock, LK_RELEASE, 0);
+		vgone(vp);
 		return error;
 	}
 	uvm_vnp_setsize(vp, np->n_vattr->va_size);
@@ -217,9 +220,13 @@ nfs_inactive(v)
 		sp = np->n_sillyrename;
 		np->n_sillyrename = (struct sillyrename *)0;
 	} else
-		sp = (struct sillyrename *)0;
-	if (sp) {
+		sp = NULL;
+	if (sp != NULL)
 		nfs_vinvalbuf(vp, 0, sp->s_cred, p, 1);
+	np->n_flag &= (NMODIFIED | NFLUSHINPROG | NFLUSHWANT | NQNFSEVICTED |
+		NQNFSNONCACHE | NQNFSWRITE);
+	VOP_UNLOCK(vp, 0);
+	if (sp != NULL) {
 
 		/*
 		 * Remove the silly file that was rename'd earlier
@@ -231,9 +238,6 @@ nfs_inactive(v)
 		vput(sp->s_dvp);
 		FREE(sp, M_NFSREQ);
 	}
-	np->n_flag &= (NMODIFIED | NFLUSHINPROG | NFLUSHWANT | NQNFSEVICTED |
-		NQNFSNONCACHE | NQNFSWRITE);
-	VOP_UNLOCK(vp, 0);
 	return (0);
 }
 

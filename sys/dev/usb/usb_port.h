@@ -1,5 +1,5 @@
 /*	$OpenBSD: usb_port.h,v 1.18 2000/09/06 22:42:10 rahnds Exp $ */
-/*	$NetBSD: usb_port.h,v 1.40.2.1 2001/04/09 01:57:39 nathanw Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.40.2.2 2001/06/21 20:06:26 nathanw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -53,7 +53,7 @@
 
 #include "opt_usbverbose.h"
 
-/*#define USB_USE_SOFTINTR */
+#define USB_USE_SOFTINTR
 
 #ifdef USB_DEBUG
 #define UKBD_DEBUG 1
@@ -83,6 +83,8 @@
 #else
 #define Static static
 #endif
+
+#define SCSI_MODE_SENSE		MODE_SENSE
 
 typedef struct device *device_ptr_t;
 #define USBBASEDEVICE struct device

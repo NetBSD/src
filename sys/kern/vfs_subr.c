@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.146.2.2 2001/04/09 01:58:00 nathanw Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.146.2.3 2001/06/21 20:07:10 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -1071,7 +1071,14 @@ loop:
 	}
 	if (vp == NULL || vp->v_tag != VT_NON || vp->v_type != VBLK) {
 		MALLOC(nvp->v_specinfo, struct specinfo *,
-			sizeof(struct specinfo), M_VNODE, M_WAITOK);
+			sizeof(struct specinfo), M_VNODE, M_NOWAIT);
+		/* XXX Erg. */
+		if (nvp->v_specinfo == NULL) {
+			simple_unlock(&spechash_slock);
+			uvm_wait("checkalias");
+			goto loop;
+		}
+
 		nvp->v_rdev = nvp_rdev;
 		nvp->v_hashchain = vpp;
 		nvp->v_specnext = *vpp;
@@ -2395,8 +2402,15 @@ vfs_unmountall(p)
 		printf("unmounting %s (%s)...\n",
 		    mp->mnt_stat.f_mntonname, mp->mnt_stat.f_mntfromname);
 #endif
-		if (vfs_busy(mp, 0, 0))
+		/*
+		 * XXX Freeze syncer.  Must do this before locking the
+		 * mount point.  See dounmount() for details.
+		 */
+		lockmgr(&syncer_lock, LK_EXCLUSIVE, NULL);
+		if (vfs_busy(mp, 0, 0)) {
+			lockmgr(&syncer_lock, LK_RELEASE, NULL);
 			continue;
+		}
 		if ((error = dounmount(mp, MNT_FORCE, p)) != 0) {
 			printf("unmount of %s failed with error %d\n",
 			    mp->mnt_stat.f_mntonname, error);
@@ -2703,7 +2717,7 @@ vfs_buf_print(bp, full, pr)
 
 const char vnode_flagbits[] =
 	"\20\1ROOT\2TEXT\3SYSTEM\4ISTTY\11XLOCK\12XWANT\13BWAIT\14ALIASED"
-	"\15DIROP\17DIRTY";
+	"\15DIROP\16LAYER\17ONWORKLIST\20DIRTY";
 
 const char *vnode_types[] = {
 	"VNON",

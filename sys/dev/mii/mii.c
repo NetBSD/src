@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.c,v 1.21.2.1 2001/04/09 01:56:52 nathanw Exp $	*/
+/*	$NetBSD: mii.c,v 1.21.2.2 2001/06/21 20:04:21 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.30.2.1 2001/04/09 01:56:26 nathanw Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.30.2.2 2001/06/21 20:03:03 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -268,7 +268,8 @@ struct ncr53c9x_softc {
 	struct device sc_dev;			/* us as a device */
 
 	struct evcnt sc_intrcnt;		/* intr count */
-	struct scsipi_link sc_link;		/* scsipi link struct */
+	struct scsipi_adapter sc_adapter;	/* out scsipi adapter */
+	struct scsipi_channel sc_channel;	/* our scsipi channel */
 	struct device *sc_child;		/* attached scsibus, if any */
 	struct callout sc_watchdog;		/* periodic timer */
 
@@ -361,7 +362,8 @@ struct ncr53c9x_softc {
 /* values for sc_features */
 #define	NCR_F_HASCFG3	0x01	/* chip has CFG3 register */
 #define	NCR_F_FASTSCSI	0x02	/* chip supports Fast mode */
-#define NCR_F_DMASELECT 0x04	/*      can do dmaselect */
+#define	NCR_F_DMASELECT 0x04	/*      can do dmaselect */
+#define	NCR_F_SELATN3	0x08	/* chip supports SELATN3 command */
 
 /* values for sc_msgout */
 #define SEND_DEV_RESET		0x0001
@@ -434,10 +436,10 @@ struct ncr53c9x_softc {
 #define	ncr53c9x_cpb2stp(sc, cpb)	\
 	((250 * (cpb)) / (sc)->sc_freq)
 
-void	ncr53c9x_attach(struct ncr53c9x_softc *,
-			struct scsipi_adapter *, struct scsipi_device *);
-int	ncr53c9x_detach(struct ncr53c9x_softc *, int);
-int	ncr53c9x_scsi_cmd(struct scsipi_xfer *);
-void	ncr53c9x_reset(struct ncr53c9x_softc *);
-int	ncr53c9x_intr(void *);
-void	ncr53c9x_init(struct ncr53c9x_softc *, int);
+void	ncr53c9x_attach __P((struct ncr53c9x_softc *));
+int	ncr53c9x_detach __P((struct ncr53c9x_softc *, int));
+void	ncr53c9x_scsipi_request __P((struct scsipi_channel *chan,
+	    scsipi_adapter_req_t req, void *));
+void	ncr53c9x_reset __P((struct ncr53c9x_softc *));
+int	ncr53c9x_intr __P((void *));
+void	ncr53c9x_init __P((struct ncr53c9x_softc *, int));

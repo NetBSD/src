@@ -1,6 +1,4 @@
-/*	$NetBSD: pcmcia_cis_quirks.c,v 1.8 2001/01/18 20:28:26 jdolecek Exp $	*/
-
-#define	PCMCIADEBUG
+/*	$NetBSD: pcmcia_cis_quirks.c,v 1.8.2.1 2001/06/21 20:05:21 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 Marc Horowitz.  All rights reserved.
@@ -65,7 +63,7 @@ static const struct pcmcia_config_entry pcmcia_dlink_de650_func0_cfe0 = {
 	{ { 0x20, 0x360 } },
 	0xbe7c,
 	0,
-	{ },
+	{ { 0 } },
 	0,
 };
 
@@ -78,7 +76,7 @@ static const struct pcmcia_config_entry pcmcia_dlink_de650_func0_cfe1 = {
 	{ { 0x20, 0x340 } },
 	0xbe7c,
 	0,
-	{ },
+	{ { 0 } },
 	0,
 };
 
@@ -91,7 +89,7 @@ static const struct pcmcia_config_entry pcmcia_dlink_de650_func0_cfe2 = {
 	{ { 0x20, 0x320 } },
 	0xbe7c,
 	0,
-	{ },
+	{ { 0 } },
 	0,
 };
 
@@ -104,7 +102,7 @@ static const struct pcmcia_config_entry pcmcia_dlink_de650_func0_cfe3 = {
 	{ { 0x20, 0x300 } },
 	0xbe7c,
 	0,
-	{ },
+	{ { 0 } },
 	0,
 };
 
@@ -125,7 +123,7 @@ static const struct pcmcia_config_entry pcmcia_3cxem556_func0_cfe0 = {
 	{ { 0x0010, 0 } },	/* iospace */
 	0xffff,			/* irqmask */
 	0,			/* num_memspace */
-	{ },			/* memspace */
+	{ { 0 } },		/* memspace */
 	0,			/* maxtwins */
 };
 
@@ -146,7 +144,7 @@ static const struct pcmcia_config_entry pcmcia_3cxem556_func1_cfe0 = {
 	{ { 0x0008, 0 } },	/* iospace */
 	0xffff,			/* irqmask */
 	0,			/* num_memspace */
-	{ },			/* memspace */
+	{ { 0 } },		/* memspace */
 	0,			/* maxtwins */
 };
 
@@ -167,7 +165,7 @@ static const struct pcmcia_config_entry pcmcia_3ccfem556bi_func0_cfe0 = {
 	{ { 0x0020, 0 } },	/* iospace */
 	0xffff,			/* irqmask */
 	0,			/* num_memspace */
-	{ },			/* memspace */
+	{ { 0 } },		/* memspace */
 	0,			/* maxtwins */
 };
 
@@ -188,7 +186,7 @@ static const struct pcmcia_config_entry pcmcia_3ccfem556bi_func1_cfe0 = {
 	{ { 0x0008, 0 } },	/* iospace */
 	0xffff,			/* irqmask */
 	0,			/* num_memspace */
-	{ },			/* memspace */
+	{ { 0 } },		/* memspace */
 	0,			/* maxtwins */
 };
 
@@ -210,7 +208,7 @@ static const struct pcmcia_config_entry pcmcia_sveclancard_func0_cfe0 = {
 	{ { 0x20, 0x300 } },	/* iospace */
 	0xdeb8,			/* irqmask */
 	0,			/* num_memspace */
-	{ },			/* memspace */
+	{ { 0 } },		/* memspace */
 	0,			/* maxtwins */
 };
 
@@ -231,7 +229,7 @@ static const struct pcmcia_config_entry pcmcia_ndc_nd5100_func0_cfe0 = {
 	{ { 0x20, 0x300 } },	/* iospace */
 	0xdeb8,			/* irqmask */
 	0,			/* num_memspace */
-	{ },			/* memspace */
+	{ { 0 } },		/* memspace */
 	0,			/* maxtwins */
 };
 

@@ -1,8 +1,8 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.29.2.1 2001/04/09 01:59:22 nathanw Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.29.2.2 2001/06/21 20:10:44 nathanw Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
- * Copyright (c) 1991, 1993, The Regents of the University of California.  
+ * Copyright (c) 1991, 1993, The Regents of the University of California.
  *
  * All rights reserved.
  *
@@ -20,7 +20,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *	This product includes software developed by Charles D. Cranor,
- *      Washington University, the University of California, Berkeley and 
+ *      Washington University, the University of California, Berkeley and
  *      its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
@@ -44,17 +44,17 @@
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
  * All rights reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -873,12 +873,7 @@ uvmpd_scan()
 
 	got_it = FALSE;
 	pages_freed = uvmexp.pdfreed;
-	if ((uvmexp.pdrevs & 1) != 0 && uvmexp.nswapdev != 0)
-		got_it = uvmpd_scan_inactive(&uvm.page_inactive_swp);
-	if (!got_it)
-		got_it = uvmpd_scan_inactive(&uvm.page_inactive_obj);
-	if (!got_it && (uvmexp.pdrevs & 1) == 0 && uvmexp.nswapdev != 0)
-		(void) uvmpd_scan_inactive(&uvm.page_inactive_swp);
+	(void) uvmpd_scan_inactive(&uvm.page_inactive);
 	pages_freed = uvmexp.pdfreed - pages_freed;
 
 	/*
@@ -966,13 +961,14 @@ uvmpd_scan()
 		}
 
 		/*
-		 * If the page has not been referenced since the
-		 * last scan, deactivate the page if there is a
-		 * shortage of inactive pages.
+		 * If we're short on inactive pages, move this over
+		 * to the inactive list.  The second hand will sweep
+		 * it later, and if it has been referenced again, it
+		 * will be moved back to active.
 		 */
 
-		if (inactive_shortage > 0 &&
-		    pmap_clear_reference(p) == FALSE) {
+		if (inactive_shortage > 0) {
+			pmap_clear_reference(p);
 			/* no need to check wire_count as pg is "active" */
 			uvm_pagedeactivate(p);
 			uvmexp.pddeact++;

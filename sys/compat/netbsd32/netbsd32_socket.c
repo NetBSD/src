@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_socket.c,v 1.1 2001/02/08 13:19:34 mrg Exp $	*/
+/*	$NetBSD: netbsd32_socket.c,v 1.1.4.1 2001/06/21 20:00:06 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -28,7 +28,7 @@
  * SUCH DAMAGE.
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
 #endif
 

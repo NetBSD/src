@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.135 2001/01/25 15:25:34 toshii Exp $	*/
+/*	$NetBSD: audio.c,v 1.135.2.1 2001/06/21 20:01:13 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -894,7 +894,7 @@ audio_sleep_timo(chan, label, timo)
 	*chan = 0;
 #ifdef AUDIO_DEBUG
 	if (st != 0 && st != EINTR)
-	    printf("audio_sleep: woke up st=%d\n", st);
+	    DPRINTF(("audio_sleep: woke up st=%d\n", st));
 #endif
 	return (st);
 }
@@ -2220,8 +2220,11 @@ audio_check_params(p)
 	switch (p->encoding) {
 	case AUDIO_ENCODING_ULAW:
 	case AUDIO_ENCODING_ALAW:
-	case AUDIO_ENCODING_ADPCM:
 		if (p->precision != 8)
+			return (EINVAL);
+		break;
+	case AUDIO_ENCODING_ADPCM:
+		if (p->precision != 4 && p->precision != 8)
 			return (EINVAL);
 		break;
 	case AUDIO_ENCODING_SLINEAR_LE:

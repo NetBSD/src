@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ioctl.c,v 1.20.6.1 2001/03/05 22:49:29 nathanw Exp $	 */
+/*	$NetBSD: svr4_ioctl.c,v 1.20.6.2 2001/06/21 20:00:38 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -121,8 +121,7 @@ svr4_sys_ioctl(l, v, retval)
 	fdp = p->p_fd;
 	cmd = SCARG(uap, com);
 
-	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
+	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return EBADF;
 
 	if ((fp->f_flag & (FREAD | FWRITE)) == 0)

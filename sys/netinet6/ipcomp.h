@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp.h,v 1.8 2000/09/26 08:40:25 itojun Exp $	*/
+/*	$NetBSD: ipcomp.h,v 1.8.2.1 2001/06/21 20:09:00 nathanw Exp $	*/
 /*	$KAME: ipcomp.h,v 1.8 2000/09/26 07:55:14 itojun Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #ifndef _NETINET6_IPCOMP_H_
 #define _NETINET6_IPCOMP_H_
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_inet.h"
 #endif
 

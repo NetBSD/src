@@ -1,4 +1,4 @@
-/* 	$Id: lwp.h,v 1.1.2.2 2001/04/08 20:51:35 nathanw Exp $	*/
+/* 	$Id: lwp.h,v 1.1.2.3 2001/06/21 20:09:48 nathanw Exp $	*/
 
 /* XXX Copyright 
 */
@@ -100,7 +100,7 @@ extern struct lwp lwp0;			/* LWP for proc0 */
 do {									\
 	if ((l)->l_holdcnt++ == 0 && ((l)->l_flag & L_INMEM) == 0)	\
 		uvm_swapin(l);						\
-} while (0)
+} while (/* CONSTCOND */ 0)
 #define	PRELE(l)	(--(l)->l_holdcnt)
 
 

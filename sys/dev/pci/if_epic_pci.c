@@ -1,4 +1,4 @@
-/*	$NetBSD: if_epic_pci.c,v 1.15 2000/12/28 22:59:13 sommerfeld Exp $	*/
+/*	$NetBSD: if_epic_pci.c,v 1.15.2.1 2001/06/21 20:04:41 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -42,8 +42,6 @@
  * Ethernet PCI Integrated Controller (EPIC/100) driver.
  */
 
-#include "opt_inet.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -64,16 +62,6 @@
 #if NBPFILTER > 0 
 #include <net/bpf.h>
 #endif 
-
-#ifdef INET
-#include <netinet/in.h> 
-#include <netinet/if_inarp.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -134,6 +122,38 @@ epic_pci_lookup(pa)
 	return (NULL);
 }
 
+const struct epic_pci_subsys_info {
+	pcireg_t subsysid;
+	int flags;
+} epic_pci_subsys_info[] = {
+	{ PCI_ID_CODE(PCI_VENDOR_SMC, 0xa024), /* SMC9432BTX1 */
+	  EPIC_HAS_BNC },
+	{ PCI_ID_CODE(PCI_VENDOR_SMC, 0xa016), /* SMC9432FTX */
+	  EPIC_HAS_MII_FIBER | EPIC_DUPLEXLED_ON_694 },
+	{ 0xffffffff,
+	  0 }
+};
+
+const struct epic_pci_subsys_info *
+  epic_pci_subsys_lookup(const struct pci_attach_args *);
+
+const struct epic_pci_subsys_info *
+epic_pci_subsys_lookup(pa)
+	const struct pci_attach_args *pa;
+{
+	pci_chipset_tag_t pc = pa->pa_pc;
+	pcireg_t reg;
+	const struct epic_pci_subsys_info *esp;
+
+	reg = pci_conf_read(pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
+
+	for (esp = epic_pci_subsys_info; esp->subsysid != 0xffffffff; esp++)
+		if (esp->subsysid == reg)
+			return (esp);
+
+	return (NULL);
+}
+
 int
 epic_pci_match(parent, match, aux)
 	struct device *parent;
@@ -160,6 +180,7 @@ epic_pci_attach(parent, self, aux)
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
 	const struct epic_pci_product *epp;
+	const struct epic_pci_subsys_info *esp;
 	bus_space_tag_t iot, memt;
 	bus_space_handle_t ioh, memh;
 	pcireg_t reg;
@@ -244,6 +265,10 @@ epic_pci_attach(parent, self, aux)
 		return;
 	}
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+
+	esp = epic_pci_subsys_lookup(pa);
+	if (esp)
+		sc->sc_hwflags = esp->flags;
 
 	/*
 	 * Finish off the attach.

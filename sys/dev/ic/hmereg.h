@@ -1,4 +1,4 @@
-/*	$NetBSD: hmereg.h,v 1.6 2000/11/17 19:08:00 bouyer Exp $	*/
+/*	$NetBSD: hmereg.h,v 1.6.2.1 2001/06/21 20:02:31 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -269,11 +269,13 @@
 
 /*
  * Buffer Descriptors.
- *
+ */
+#ifdef notdef
 struct hme_xd {
 	volatile u_int32_t	xd_flags;
-	volatile u_int32_t	xd_addr;	// Buffer address (DMA)
-}; */
+	volatile u_int32_t	xd_addr;	/* Buffer address (DMA) */
+};
+#endif
 #define HME_XD_SIZE			8
 #define HME_XD_FLAGS(base, index)	((base) + ((index) * HME_XD_SIZE) + 0)
 #define HME_XD_ADDR(base, index)	((base) + ((index) * HME_XD_SIZE) + 4)

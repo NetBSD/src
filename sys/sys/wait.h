@@ -1,4 +1,4 @@
-/*	$NetBSD: wait.h,v 1.15 1999/05/13 00:59:03 thorpej Exp $	*/
+/*	$NetBSD: wait.h,v 1.15.14.1 2001/06/21 20:10:02 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1994
@@ -88,7 +88,7 @@
 #endif
 
 #ifndef _POSIX_SOURCE
-/* POSIX extensions and 4.2/4.3 compatability: */
+/* POSIX extensions and 4.2/4.3 compatibility: */
 
 /*
  * Tokens for special values of the "pid" parameter to wait4.

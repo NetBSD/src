@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.54.2.1 2001/03/05 22:49:44 nathanw Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.54.2.2 2001/06/21 20:07:01 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -86,10 +86,11 @@ sys_read(struct lwp *l, void *v, register_t *retval)
 	fd = SCARG(uap, fd);
 	p = l->l_proc;
 	fdp = p->p_fd;
-	if ((u_int)fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL ||
-	    (fp->f_iflags & FIF_WANTCLOSE) != 0 ||
-	    (fp->f_flag & FREAD) == 0)
+
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
+		return (EBADF);
+
+	if ((fp->f_flag & FREAD) == 0)
 		return (EBADF);
 
 	FILE_USE(fp);
@@ -173,10 +174,11 @@ sys_readv(struct lwp *l, void *v, register_t *retval)
 	fd = SCARG(uap, fd);
 	p = l->l_proc;
 	fdp = p->p_fd;
-	if ((u_int)fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL ||
-	    (fp->f_iflags & FIF_WANTCLOSE) != 0 ||
-	    (fp->f_flag & FREAD) == 0)
+
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
+		return (EBADF);
+
+	if ((fp->f_flag & FREAD) == 0)
 		return (EBADF);
 
 	FILE_USE(fp);
@@ -292,10 +294,11 @@ sys_write(struct lwp *l, void *v, register_t *retval)
 	fd = SCARG(uap, fd);
 	p = l->l_proc;
 	fdp = p->p_fd;
-	if ((u_int)fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL ||
-	    (fp->f_iflags & FIF_WANTCLOSE) != 0 ||
-	    (fp->f_flag & FWRITE) == 0)
+
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
+		return (EBADF);
+
+	if ((fp->f_flag & FWRITE) == 0)
 		return (EBADF);
 
 	FILE_USE(fp);
@@ -382,10 +385,11 @@ sys_writev(struct lwp *l, void *v, register_t *retval)
 	fd = SCARG(uap, fd);
 	p = l->l_proc;
 	fdp = p->p_fd;
-	if ((u_int)fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL ||
-	    (fp->f_iflags & FIF_WANTCLOSE) != 0 ||
-	    (fp->f_flag & FWRITE) == 0)
+
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
+		return (EBADF);
+
+	if ((fp->f_flag & FWRITE) == 0)
 		return (EBADF);
 
 	FILE_USE(fp);
@@ -509,9 +513,8 @@ sys_ioctl(struct lwp *l, void *v, register_t *retval)
 	error = 0;
 	p = l->l_proc;
 	fdp = p->p_fd;
-	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL ||
-	    (fp->f_iflags & FIF_WANTCLOSE) != 0)
+
+	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return (EBADF);
 
 	FILE_USE(fp);
@@ -611,7 +614,8 @@ sys_ioctl(struct lwp *l, void *v, register_t *retval)
 			break;
 		}
 		error = (*fp->f_ops->fo_ioctl)(fp, TIOCGPGRP, data, p);
-		*(int *)data = -*(int *)data;
+		if (error == 0)
+			*(int *)data = -*(int *)data;
 		break;
 
 	default:
@@ -765,9 +769,7 @@ selscan(struct proc *p, fd_mask *ibitp, fd_mask *obitp, int nfd,
 			obits = 0;
 			while ((j = ffs(ibits)) && (fd = i + --j) < nfd) {
 				ibits &= ~(1 << j);
-				fp = fdp->fd_ofiles[fd];
-				if (fp == NULL ||
-				    (fp->f_iflags & FIF_WANTCLOSE) != 0)
+				if ((fp = fd_getfile(fdp, fd)) == NULL)
 					return (EBADF);
 				FILE_USE(fp);
 				if ((*fp->f_ops->fo_poll)(fp, flag[msk], p)) {
@@ -885,9 +887,7 @@ pollscan(struct proc *p, struct pollfd *fds, int nfd, register_t *retval)
 			fds->revents = POLLNVAL;
 			n++;
 		} else {
-			fp = fdp->fd_ofiles[fds->fd];
-			if (fp == NULL ||
-			    (fp->f_iflags & FIF_WANTCLOSE) != 0) {
+			if ((fp = fd_getfile(fdp, fds->fd)) == NULL) {
 				fds->revents = POLLNVAL;
 				n++;
 			} else {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394arp.c,v 1.2 2001/01/17 04:05:44 itojun Exp $	*/
+/*	$NetBSD: if_ieee1394arp.c,v 1.2.2.1 2001/06/21 20:08:30 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@ struct arpstat {
 
 	u_quad_t	as_rcvtotal;	/* total packets received */
 	u_quad_t	as_rcvrequest;	/* valid requests received */
-	u_quad_t	as_rcvreply;	/* replies recieved */
+	u_quad_t	as_rcvreply;	/* replies received */
 	u_quad_t	as_rcvmcast;    /* multicast/broadcast received */
 	u_quad_t	as_rcvbadproto;	/* unknown protocol type received */
 	u_quad_t	as_rcvbadlen;	/* bad (short) length received */
@@ -120,7 +120,11 @@ arp_lock_try(recurse)
 {
 	int s;
 
-	s = splimp();
+	/*
+	 * Use splvm() -- we're blocking things that would cause
+	 * mbuf allocation.
+	 */
+	s = splvm();
 	if (!recurse && arp_locked) {
 		splx(s);
 		return 0;
@@ -135,7 +139,7 @@ arp_unlock()
 {
 	int s;
 
-	s = splimp();
+	s = splvm();
 	arp_locked--;
 	splx(s);
 }
@@ -261,7 +265,7 @@ ieee1394arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 		rt->rt_llinfo = 0;
 		rt->rt_flags &= ~RTF_LLINFO;
 
-		s = splimp();
+		s = splnet();
 		mold = la->la_hold;
 		la->la_hold = 0;
 		splx(s);
@@ -358,7 +362,7 @@ ieee1394arpresolve(struct ifnet *ifp, struct rtentry *rt, struct mbuf *m,
 	 */
 
 	arpstat.as_dfrtotal++;
-	s = splimp();
+	s = splnet();
 	mold = la->la_hold;
 	la->la_hold = m;
 	splx(s);
@@ -543,7 +547,7 @@ in_ieee1394arpinput(struct mbuf *m)
 		rt->rt_flags &= ~RTF_REJECT;
 		la->la_asked = 0;
 
-		s = splimp();
+		s = splnet();
 		mold = la->la_hold;
 		la->la_hold = 0;
 		splx(s);

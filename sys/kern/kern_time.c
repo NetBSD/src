@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.54.2.1 2001/03/05 22:49:43 nathanw Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.54.2.2 2001/06/21 20:06:57 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -120,11 +120,15 @@ settime(tv)
 	/* WHAT DO WE DO ABOUT PENDING REAL-TIME TIMEOUTS??? */
 	s = splclock();
 	timersub(tv, &time, &delta);
-	if ((delta.tv_sec < 0 || delta.tv_usec < 0) && securelevel > 1)
+	if ((delta.tv_sec < 0 || delta.tv_usec < 0) && securelevel > 1) {
+		splx(s);
 		return (EPERM);
+	}
 #ifdef notyet
-	if ((delta.tv_sec < 86400) && securelevel > 0)
+	if ((delta.tv_sec < 86400) && securelevel > 0) {
+		splx(s);
 		return (EPERM);
+	}
 #endif
 	time = *tv;
 	(void) spllowersoftclock();

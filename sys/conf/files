@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.427.2.2 2001/04/09 01:55:51 nathanw Exp $
+#	$NetBSD: files,v 1.427.2.3 2001/06/21 20:01:02 nathanw Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -11,6 +11,7 @@ defopt	MAXUPRC
 defopt	RTC_OFFSET
 defopt	DEFCORENAME
 defopt	UCONSOLE
+defopt	NEW_PIPE
 
 defopt	MULTIPROCESSOR
 
@@ -33,7 +34,7 @@ defopt	opt_poollog.h	POOL_LOGSIZE
 
 defopt	opt_revcache.h	NAMECACHE_ENTER_REVERSE
 
-defopt	opt_execfmt.h	EXEC_AOUT EXEC_COFF EXEC_ECOFF EXEC_ELF32 EXEC_ELF64 EXEC_SCRIPT
+defopt	opt_execfmt.h	EXEC_AOUT EXEC_COFF EXEC_ECOFF EXEC_ELF32 EXEC_ELF64 EXEC_SCRIPT EXEC_ELF_CATCHALL
 
 # compatibility options
 defopt	COMPAT_FREEBSD
@@ -55,7 +56,7 @@ defopt	opt_compat_netbsd.h	COMPAT_09 COMPAT_10 COMPAT_11 COMPAT_12
 				COMPAT_13 COMPAT_14 COMPAT_15 COMPAT_NOMID
 
 # networking protocols
-defopt	opt_inet.h	INET INET6
+defopt	opt_inet.h	INET INET6 INET6_MD_CKSUM
 defopt	opt_ipsec.h	IPSEC IPSEC_ESP
 defopt	opt_inet_conf.h	SUBNETSARELOCAL HOSTZEROBROADCAST
 defopt	opt_atalk.h	NETATALK
@@ -80,6 +81,8 @@ defopt	TCP_COMPAT_42
 
 defopt	TCP_RECVSPACE
 defopt	TCP_SENDSPACE
+
+defopt	opt_inet_csum.h	INET_CSUM_COUNTERS TCP_CSUM_COUNTERS UDP_CSUM_COUNTERS
 
 defopt	opt_altq_enabled.h ALTQ
 defopt	opt_altq.h	ALTQ_CBQ ALTQ_WFQ ALTQ_FIFOQ ALTQ_RED ALTQ_FLOWVALVE
@@ -127,7 +130,9 @@ defopt	opt_mbr.h	COMPAT_386BSD_MBRPART
 
 # debugging options
 defopt	DDB
-defopt	opt_ddbparam.h	DDB_FROMCONSOLE DDB_ONPANIC DDB_HISTORY_SIZE DDB_BREAK_CHAR
+defopt	opt_ddbparam.h	DDB_FROMCONSOLE DDB_ONPANIC DDB_HISTORY_SIZE
+defopt	opt_ddbparam.h	DDB_BREAK_CHAR SYMTAB_SPACE
+defopt	KGDB
 defopt	LOCKDEBUG
 defopt	SYSCALL_DEBUG
 
@@ -275,6 +280,10 @@ file	dev/ic/bha.c			bha
 device	aha: scsi
 file	dev/ic/aha.c			aha
 
+# Initio INIC-940/950 SCSI controllers
+device	iha: scsi
+file	dev/ic/iha.c			iha
+
 # Qlogic ISP 10x0 SCSI Controllers
 defopt	opt_isp.h	ISP_DISABLE_1020_SUPPORT ISP_DISABLE_1080_SUPPORT
 			ISP_DISABLE_2100_SUPPORT ISP_DISABLE_2200_SUPPORT
@@ -283,6 +292,10 @@ device	isp: scsi
 file	dev/ic/isp.c			isp
 file	dev/ic/isp_netbsd.c		isp
 file	dev/ic/isp_target.c		isp
+
+# Symbios/NCR 53c710 SCSI controllers
+device	osiop: scsi
+file	dev/ic/osiop.c			osiop
 
 # common stuff for siop and esiop
 define	siop_common
@@ -306,6 +319,10 @@ file	dev/ic/awi.c			awi
 file	dev/ic/awi_wep.c		awi
 file	dev/ic/awi_wicfg.c		awi
 file	dev/ic/am79c930.c		awi
+
+# Lucent & Intersil WaveLan IEEE (802.11)
+device wi: arp, wlan, ifnet
+file	dev/ic/wi.c			wi
 
 # 3Com Etherlink-III Ethernet controller
 device	ep: arp, ether, ifnet, mii, mii_bitbang
@@ -349,6 +366,11 @@ file	dev/ic/tropic.c			tr
 define	ncr5380sbc
 file	dev/ic/ncr5380sbc.c		ncr5380sbc
 device	nca: scsi, ncr5380sbc
+
+# Sun sc PAL SCSI Bus Controller
+define	sunscpal
+file	dev/ic/sunscpal.c		sunscpal
+device	ssc: scsi, sunscpal
 
 # DEC FDDI Chipset
 define	pdq
@@ -475,6 +497,10 @@ file	dev/ic/cs4231.c			audiocs
 define	ac97
 file	dev/ic/ac97.c			ac97
 
+# Oki MSM6258 support code
+define msm6258
+file	dev/ic/msm6258.c		msm6258
+
 # LSI64854 DMA controller back-end
 define	lsi64854
 file	dev/ic/lsi64854.c		lsi64854
@@ -523,6 +549,10 @@ file	dev/ic/mk48txx.c		mk48txx
 define	intersil7170
 file	dev/ic/intersil7170.c		intersil7170
 
+# National Semiconductor MM58167 time-of-day clock
+define	mm58167
+file	dev/ic/mm58167.c		mm58167
+
 # D-Link DL10019/10022 NE2000-compatible network interface subroutines
 define	dl10019
 file	dev/ic/dl10019.c		dl10019
@@ -552,6 +582,9 @@ file	dev/ic/pcdisplay_chars.c	pcdisplayops
 device	vga: wsemuldisplaydev, pcdisplayops
 file	dev/ic/vga.c			vga			needs-flag
 file	dev/ic/vga_subr.c		vga
+# CyberPro 20x0 graphics (linear non-VGA mode)
+device	cprofb: wsemuldisplaydev
+file	dev/ic/cyberpro.c		cprofb needs-flag
 
 # Attributes which machine-independent bus support can be attached to.
 # These should be defined here, because some of these busses can have
@@ -563,7 +596,7 @@ define	pcibus {[bus = -1]}		# PCI attachment
 define	tcbus { }			# TurboChannel attachment
 define	mcabus { }			# MicroChannel attachment
 define	usbus { }			# USB attachment
-define	fwbus { }			# IEEE 1394 attachment
+define	fwbus {[idhi=-1],[idlo=-1]}	# IEEE 1394 attachment
 define	vmebus { }			# VME bus attachment
 define	pcmciabus { [controller = -1], [socket = -1]}	# PCMCIA bus attachment
 define	cbbus {[slot = -1]}		# CardBus attachment
@@ -624,9 +657,11 @@ defpseudo rnd
 defpseudo loop: ifnet
 defpseudo sl: ifnet
 defpseudo ppp: ifnet, bpf_filter
+defpseudo pppoe: ifnet, ether, sppp
 defpseudo sppp: ifnet
 defpseudo tun: ifnet
 defpseudo vlan: ifnet, ether
+defpseudo bridge: ifnet, ether
 defpseudo bpfilter: ifnet, bpf_filter
 defpseudo strip: ifnet
 defpseudo ipfilter: ifnet
@@ -831,6 +866,7 @@ file	kern/subr_prof.c
 file	kern/subr_rmap.c
 file	kern/subr_xxx.c
 file	kern/sys_generic.c
+file	kern/sys_pipe.c			new_pipe
 file	kern/sys_process.c
 file	kern/sys_socket.c
 file	kern/syscalls.c			syscall_debug
@@ -912,9 +948,11 @@ file	net/bsd-comp.c			ppp & ppp_bsdcomp
 file	net/if.c
 file	net/if_arcsubr.c		arc			needs-flag
 file	net/if_atmsubr.c		atm
+file	net/if_bridge.c			bridge			needs-flag
+file	net/bridgestp.c			bridge
 file	net/if_ethersubr.c		ether | fddi | netatalk | token |
-					    wlan | vlan
-file	net/if_faith.c			faith			needs-flag
+					    wlan | vlan | pppoe
+file	net/if_faith.c			faith & inet & inet6	needs-flag
 file	net/if_fddisubr.c		fddi			needs-flag
 file	net/if_gif.c			gif			needs-flag
 file	net/if_gre.c			gre			needs-count	
@@ -930,6 +968,7 @@ file	net/if_strip.c			strip			needs-count
 file	net/if_tokensubr.c		token			needs-flag
 file	net/if_tun.c			tun			needs-count
 file	net/if_vlan.c			vlan			needs-flag
+file	net/if_pppoe.c			pppoe			needs-count
 #file net/net_osdep.c
 file	net/pfil.c			pfil_hooks | ipfilter
 file	net/ppp-deflate.c		ppp & ppp_deflate
@@ -1011,7 +1050,7 @@ file	netinet6/esp_rijndael.c		ipsec & ipsec_esp
 file	netinet6/frag6.c		inet6
 file	netinet6/icmp6.c		inet6
 file	netinet6/in6.c			inet6
-file	netinet6/in6_cksum.c		inet6
+file	netinet6/in6_cksum.c		inet6 & !inet6_md_cksum
 file	netinet6/in6_gif.c		gif & inet6
 file	netinet6/in6_ifattach.c		inet6
 file	netinet6/in6_pcb.c		inet6

@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_ioctl.c,v 1.15 2000/11/29 22:05:38 jdolecek Exp $ */
+/*	$NetBSD: ultrix_ioctl.c,v 1.15.2.1 2001/06/21 20:00:58 nathanw Exp $ */
 /*	from : NetBSD: sunos_ioctl.c,v 1.21 1995/10/07 06:27:31 mycroft Exp */
 
 /*
@@ -27,7 +27,7 @@
  * loosely from: Header: sunos_ioctl.c,v 1.7 93/05/28 04:40:43 torek Exp 
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_compat_ultrix.h"
 #include "opt_compat_sunos.h"
 #endif
@@ -456,8 +456,7 @@ ultrix_sys_ioctl(p, v, retval)
 	int (*ctl) __P((struct file *, u_long, caddr_t, struct proc *));
 	int error;
 
-	if ( (unsigned)SCARG(uap, fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
+	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return EBADF;
 
 	if ((fp->f_flag & (FREAD|FWRITE)) == 0)

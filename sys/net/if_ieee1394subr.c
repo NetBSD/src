@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.9 2001/01/17 19:08:59 thorpej Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.9.2.1 2001/06/21 20:08:05 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,6 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
-	ifp->if_lastchange = time;
 	if ((rt = rt0) != NULL) {
 		if ((rt->rt_flags & RTF_UP) == 0) {
 			if ((rt0 = rt = rtalloc1(dst, 1)) != NULL) {
@@ -223,7 +222,7 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	if (m0 == NULL)
 		senderr(ENOBUFS);
 
-	s = splimp();
+	s = splnet();
 	if (IF_QFULL(&ifp->if_snd)) {
 		IF_DROP(&ifp->if_snd);
 		splx(s);
@@ -399,7 +398,7 @@ ieee1394_input(struct ifnet *ifp, struct mbuf *m)
 		return;
 	}
 
-	s = splimp();
+	s = splnet();
 	if (IF_QFULL(inq)) {
 		IF_DROP(inq);
 		m_freem(m);

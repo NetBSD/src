@@ -1,4 +1,4 @@
-/* $NetBSD: svr4_syscallargs.h,v 1.66.2.1 2001/03/05 22:49:31 nathanw Exp $ */
+/* $NetBSD: svr4_syscallargs.h,v 1.66.2.2 2001/06/21 20:00:43 nathanw Exp $ */
 
 /*
  * System call argument lists.
@@ -8,7 +8,7 @@
  */
 
 #ifndef _SVR4_SYS__SYSCALLARGS_H_
-#define _SVR4_SYS__SYSCALLARGS_H_
+#define	_SVR4_SYS__SYSCALLARGS_H_
 
 #ifdef	syscallarg
 #undef	syscallarg

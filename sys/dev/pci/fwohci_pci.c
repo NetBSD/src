@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_pci.c,v 1.6.2.1 2001/04/09 01:56:59 nathanw Exp $	*/
+/*	$NetBSD: fwohci_pci.c,v 1.6.2.2 2001/06/21 20:04:36 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscalls.c,v 1.35.2.1 2001/04/09 01:55:32 nathanw Exp $ */
+/* $NetBSD: linux_syscalls.c,v 1.35.2.2 2001/06/21 19:59:26 nathanw Exp $ */
 
 /*
  * System call names.
@@ -7,8 +7,8 @@
  * created from	NetBSD: syscalls.master,v 1.33 2001/03/30 17:59:46 jdolecek Exp 
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
+#if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
 #include "opt_compat_43.h"
 #include "opt_compat_osf1.h"
@@ -28,7 +28,7 @@
 #include <compat/linux/common/linux_shm.h>
 #include <compat/linux/common/linux_mmap.h>
 #include <compat/linux/linux_syscallargs.h>
-#endif /* _KERNEL && ! _LKM */
+#endif /* _KERNEL_OPT */
 
 const char *const linux_syscallnames[] = {
 	"syscall",			/* 0 = syscall */

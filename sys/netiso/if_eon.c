@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.32 2001/01/17 15:13:37 itojun Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.32.2.1 2001/06/21 20:09:11 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -191,7 +191,7 @@ eonioctl(ifp, cmd, data)
 	u_long          cmd;
 	caddr_t data;
 {
-	int             s = splimp();
+	int             s = splnet();
 	int    error = 0;
 
 #ifdef ARGO_DEBUG
@@ -375,7 +375,6 @@ eonoutput(ifp, m, sdst, rt)
 	}
 #endif
 
-	ifp->if_lastchange = time;
 	ifp->if_opackets++;
 	if (rt == 0 || (el = (struct eon_llinfo *) rt->rt_llinfo) == 0) {
 		if (dst->siso_family == AF_LINK) {
@@ -505,7 +504,6 @@ eoninput(m, va_alist)
 		}
 	}
 	eonif->if_ibytes += m->m_pkthdr.len;
-	eonif->if_lastchange = time;
 	iphdr = mtod(m, struct ip *);
 	/* do a few checks for debugging */
 	if (iphdr->ip_p != IPPROTO_EON) {
@@ -566,7 +564,7 @@ eoninput(m, va_alist)
 		}
 #endif
 		ifq = &clnlintrq;
-		s = splimp();
+		s = splnet();
 		if (IF_QFULL(ifq)) {
 			IF_DROP(ifq);
 			m_freem(m);

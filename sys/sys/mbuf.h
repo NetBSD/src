@@ -1,7 +1,7 @@
-/*	$NetBSD: mbuf.h,v 1.56 2001/01/14 02:07:22 thorpej Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.56.2.1 2001/06/21 20:09:49 nathanw Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -111,12 +111,40 @@ struct m_hdr {
 	short	mh_flags;		/* flags; see below */
 };
 
-/* record/packet header in first mbuf of chain; valid if M_PKTHDR set */
+/*
+ * record/packet header in first mbuf of chain; valid if M_PKTHDR set
+ *
+ * A note about csum_data: For the out-bound direction, this indicates the
+ * offset after the L3 header where the final L4 checksum value is to be
+ * stored.  For the in-bound direction, it is only valid if the M_CSUM_DATA
+ * flag is set.  In this case, an L4 checksum has been calculated by
+ * hardware, but it is up to software to perform final verification.
+ *
+ * Note for in-bound TCP/UDP checksums, we expect the csum_data to NOT
+ * be bit-wise inverted (the final step in the calculation of an IP
+ * checksum) -- this is so we can accumulate the checksum for fragmented
+ * packets during reassembly.
+ */
 struct	pkthdr {
 	struct	ifnet *rcvif;		/* rcv interface */
 	int	len;			/* total packet length */
+	int	csum_flags;		/* checksum flags */
+	u_int32_t csum_data;		/* checksum data */
 	struct mbuf *aux;		/* extra data buffer; ipsec/others */
 };
+
+/*
+ * Note: These bits are carefully arrange so that the compiler can have
+ * a prayer of generating a jump table.
+ */
+#define	M_CSUM_TCPv4		0x00000001	/* TCP header/payload */
+#define	M_CSUM_UDPv4		0x00000002	/* UDP header/payload */
+#define	M_CSUM_TCP_UDP_BAD	0x00000004	/* TCP/UDP checksum bad */
+#define	M_CSUM_DATA		0x00000008	/* consult csum_data */
+#define	M_CSUM_TCPv6		0x00000010	/* IPv6 TCP header/payload */
+#define	M_CSUM_UDPv6		0x00000020	/* IPv6 UDP header/payload */
+#define	M_CSUM_IPv4		0x00000040	/* IPv4 header */
+#define	M_CSUM_IPv4_BAD		0x00000080	/* IPv4 header checksum bad */
 
 /* description of external storage mapped into mbuf, valid if M_EXT set */
 struct m_ext {
@@ -209,7 +237,7 @@ struct mbuf {
 	do { int ms = splvm(); \
 	  { code } \
 	  splx(ms); \
-	} while (0)
+	} while (/* CONSTCOND */ 0)
 
 /*
  * mbuf allocation/deallocation macros:
@@ -235,7 +263,7 @@ struct mbuf {
 		(m)->m_flags = 0; \
 	} else \
 		(m) = m_retry((how), (type)); \
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #define	MGETHDR(m, how, type) do { \
 	MBUFLOCK((m) = pool_get(&mbpool, (how) == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : 0);); \
@@ -246,10 +274,12 @@ struct mbuf {
 		(m)->m_nextpkt = (struct mbuf *)NULL; \
 		(m)->m_data = (m)->m_pktdat; \
 		(m)->m_flags = M_PKTHDR; \
+		(m)->m_pkthdr.csum_flags = 0; \
+		(m)->m_pkthdr.csum_data = 0; \
 		(m)->m_pkthdr.aux = (struct mbuf *)NULL; \
 	} else \
 		(m) = m_retryhdr((how), (type)); \
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 /*
  * Macros for tracking external storage associated with an mbuf.
@@ -260,11 +290,11 @@ struct mbuf {
 #define MCLREFDEBUGN(m, file, line) do {				\
 		(m)->m_ext.ext_nfile = (file);				\
 		(m)->m_ext.ext_nline = (line);				\
-	} while (0)
+	} while (/* CONSTCOND */ 0)
 #define MCLREFDEBUGO(m, file, line) do {				\
 		(m)->m_ext.ext_ofile = (file);				\
 		(m)->m_ext.ext_oline = (line);				\
-	} while (0)
+	} while (/* CONSTCOND */ 0)
 #else
 #define MCLREFDEBUGN(m, file, line)
 #define MCLREFDEBUGO(m, file, line)
@@ -277,7 +307,7 @@ struct mbuf {
 			(m)->m_ext.ext_prevref;				\
 		(m)->m_ext.ext_prevref->m_ext.ext_nextref =		\
 			(m)->m_ext.ext_nextref;				\
-	} while (0)
+	} while (/* CONSTCOND */ 0)
 #define	_MCLADDREFERENCE(o, n)	do {					\
 		(n)->m_flags |= ((o)->m_flags & (M_EXT|M_CLUSTER));	\
 		(n)->m_ext.ext_nextref = (o)->m_ext.ext_nextref;	\
@@ -285,13 +315,13 @@ struct mbuf {
 		(o)->m_ext.ext_nextref = (n);				\
 		(n)->m_ext.ext_nextref->m_ext.ext_prevref = (n);	\
 		MCLREFDEBUGN((n), __FILE__, __LINE__);			\
-	} while (0)
+	} while (/* CONSTCOND */ 0)
 #define	MCLINITREFERENCE(m)	do {					\
 		(m)->m_ext.ext_prevref = (m);				\
 		(m)->m_ext.ext_nextref = (m);				\
 		MCLREFDEBUGO((m), __FILE__, __LINE__);			\
 		MCLREFDEBUGN((m), NULL, 0);				\
-	} while (0)
+	} while (/* CONSTCOND */ 0)
 
 #define	MCLADDREFERENCE(o, n)	MBUFLOCK(_MCLADDREFERENCE((o), (n));)
 
@@ -327,7 +357,7 @@ struct mbuf {
 		(m)->m_ext.ext_arg = NULL;  \
 		MCLINITREFERENCE(m); \
 	} \
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #define	MEXTMALLOC(m, size, how) do { \
 	(m)->m_ext.ext_buf = \
@@ -342,7 +372,7 @@ struct mbuf {
 		(m)->m_ext.ext_type = mbtypes[(m)->m_type]; \
 		MCLINITREFERENCE(m); \
 	} \
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #define	MEXTADD(m, buf, size, type, free, arg) do { \
 	(m)->m_data = (m)->m_ext.ext_buf = (caddr_t)(buf); \
@@ -353,7 +383,7 @@ struct mbuf {
 	(m)->m_ext.ext_arg = (arg); \
 	(m)->m_ext.ext_type = (type); \
 	MCLINITREFERENCE(m); \
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #define	_MEXTREMOVE(m) do { \
 	if (MCLISREFERENCED(m)) { \
@@ -368,7 +398,7 @@ struct mbuf {
 	} \
 	(m)->m_flags &= ~(M_CLUSTER|M_EXT); \
 	(m)->m_ext.ext_size = 0;	/* why ??? */ \
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #define	MEXTREMOVE(m) \
 	MBUFLOCK(_MEXTREMOVE((m));)
@@ -384,7 +414,7 @@ do {									\
 		(m)->m_data = (m)->m_pktdat;				\
 	else								\
 		(m)->m_data = (m)->m_dat;				\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 /*
  * MFREE(struct mbuf *m, struct mbuf *n)
@@ -419,20 +449,24 @@ do {									\
 	(from)->m_pkthdr.aux = (struct mbuf *)NULL; \
 	(to)->m_flags = (from)->m_flags & M_COPYFLAGS; \
 	(to)->m_data = (to)->m_pktdat; \
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 /*
  * Set the m_data pointer of a newly-allocated mbuf (m_get/MGET) to place
  * an object of the specified size at the end of the mbuf, longword aligned.
  */
 #define	M_ALIGN(m, len) \
-	do { (m)->m_data += (MLEN - (len)) &~ (sizeof(long) - 1); } while (0)
+	do { \
+		(m)->m_data += (MLEN - (len)) &~ (sizeof(long) - 1); \
+	} while (/* CONSTCOND */ 0)
 /*
  * As above, for mbufs allocated with m_gethdr/MGETHDR
  * or initialized by M_COPY_PKTHDR.
  */
 #define	MH_ALIGN(m, len) \
-	do { (m)->m_data += (MHLEN - (len)) &~ (sizeof(long) - 1); } while (0)
+	do { \
+		(m)->m_data += (MHLEN - (len)) &~ (sizeof(long) - 1); \
+	} while (/* CONSTCOND */ 0)
 
 /*
  * Compute the amount of space available
@@ -466,13 +500,13 @@ do {									\
 		(m) = m_prepend((m), (plen), (how)); \
 	if ((m) && (m)->m_flags & M_PKTHDR) \
 		(m)->m_pkthdr.len += (plen); \
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 /* change mbuf to new type */
 #define MCHTYPE(m, t) do { \
 	MBUFLOCK(mbstat.m_mtypes[(m)->m_type]--; mbstat.m_mtypes[t]++;); \
 	(m)->m_type = t; \
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 /* length to m_copy to copy all */
 #define	M_COPYALL	1000000000

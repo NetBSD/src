@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.120.2.1 2001/04/09 01:57:19 nathanw Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.120.2.2 2001/06/21 20:05:23 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.123 2001/04/06 09:26:29 onoe Exp 
+ *	NetBSD: pcmciadevs,v 1.130 2001/05/21 13:44:48 ichiro Exp 
  */
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
@@ -305,6 +305,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Intel EtherExpress PRO/100"	},
 	},
 	{
+	    PCMCIA_VENDOR_INTEL, PCMCIA_PRODUCT_INTEL_PRO_WLAN_2011,
+	    PCMCIA_CIS_INTEL_PRO_WLAN_2011,
+	    0,
+	    "Intel",
+	    "Intel PRO/Wireless 2011 LAN PC Card"	},
+	},
+	{
 	    PCMCIA_VENDOR_IODATA, PCMCIA_PRODUCT_IODATA_PCLATE,
 	    PCMCIA_CIS_IODATA_PCLATE,
 	    0,
@@ -403,6 +410,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Melco LPC3-TX"	},
 	},
 	{
+	    PCMCIA_VENDOR_NI, PCMCIA_PRODUCT_NI_PCMCIA_GPIB,
+	    PCMCIA_CIS_NI_PCMCIA_GPIB,
+	    0,
+	    "National Instruments",
+	    "National Instruments PCMCIA-GPIB"	},
+	},
+	{
 	    PCMCIA_VENDOR_NOKIA, PCMCIA_PRODUCT_NOKIA_C020_WLAN,
 	    PCMCIA_CIS_NOKIA_C020_WLAN,
 	    0,
@@ -457,6 +471,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Simple Technology",
 	    "Symbol Spectrum24 WLAN Adapter"	},
+	},
+	{
+	    PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCKET_EA_ETHER,
+	    PCMCIA_CIS_SOCKET_EA_ETHER,
+	    0,
+	    "Socket Communications",
+	    "Socket Communications EA"	},
 	},
 	{
 	    PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCKET_PAGECARD,
@@ -739,6 +760,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "EMTAC A2424i 11Mbps WLAN Card"	},
 	},
 	{
+	    PCMCIA_VENDOR_BUFFALO, PCMCIA_PRODUCT_BUFFALO_WLI_PCM_S11,
+	    PCMCIA_CIS_BUFFALO_WLI_PCM_S11,
+	    0,
+	    "BUFFALO (Melco Corporation)",
+	    "BUFFALO AirStation 11Mbps WLAN"	},
+	},
+	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_MEGAHERTZ_XJ2288,
 	    PCMCIA_CIS_MEGAHERTZ_XJ2288,
 	    0,
@@ -856,6 +884,20 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Corega K.K.",
 	    "Corega FastEther PCC-TX"	},
+	},
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_COREGA_FETHER_PCC_TXD,
+	    PCMCIA_CIS_COREGA_FETHER_PCC_TXD,
+	    0,
+	    "Corega K.K.",
+	    "Corega FEther PCC-TXD"	},
+	},
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_COREGA_FETHER_PCC_TXF,
+	    PCMCIA_CIS_COREGA_FETHER_PCC_TXF,
+	    0,
+	    "Corega K.K.",
+	    "Corega FEther PCC-TXF"	},
 	},
 	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_COREGA_WIRELESS_LAN_PCC_11,
@@ -1110,6 +1152,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCMCIA_VENDOR_NI, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "National Instruments",
+	    NULL,
+	},
+	{
 	    PCMCIA_VENDOR_USROBOTICS, 0,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -1247,6 +1296,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "Samsung",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_BUFFALO, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "BUFFALO (Melco Corporation)",
 	    NULL,
 	},
 	{

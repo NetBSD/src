@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.58.2.1 2001/04/09 01:58:07 nathanw Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.58.2.2 2001/06/21 20:07:32 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -393,7 +393,8 @@ fdesc_lookup(v)
 			goto bad;
 		}
 
-		if (fd >= nfiles || p->p_fd->fd_ofiles[fd] == NULL) {
+		if (fd >= nfiles || p->p_fd->fd_ofiles[fd] == NULL ||
+		    FILE_IS_USABLE(p->p_fd->fd_ofiles[fd]) == 0) {
 			error = EBADF;
 			goto bad;
 		}
@@ -472,7 +473,7 @@ fdesc_attr(fd, vap, cred, p)
 	struct stat stb;
 	int error;
 
-	if (fd >= fdp->fd_nfiles || (fp = fdp->fd_ofiles[fd]) == NULL)
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
 
 	switch (fp->f_type) {
@@ -488,10 +489,16 @@ fdesc_attr(fd, vap, cred, p)
 		break;
 
 	case DTYPE_SOCKET:
-		error = soo_stat(fp->f_data, &stb, p);
+	case DTYPE_PIPE:
+		FILE_USE(fp);
+		error = (*fp->f_ops->fo_stat)(fp, &stb, p);
+		FILE_UNUSE(fp, p);
 		if (error == 0) {
 			vattr_null(vap);
-			vap->va_type = VSOCK;
+			if (fp->f_type == DTYPE_SOCKET)
+				vap->va_type = VSOCK;
+			else
+				vap->va_type = VFIFO;
 			vap->va_mode = stb.st_mode;
 			vap->va_nlink = stb.st_nlink;
 			vap->va_uid = stb.st_uid;
@@ -629,9 +636,8 @@ fdesc_setattr(v)
 	}
 
 	fd = VTOFDESC(ap->a_vp)->fd_fd;
-	if (fd >= fdp->fd_nfiles || (fp = fdp->fd_ofiles[fd]) == NULL) {
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
-	}
 
 	/*
 	 * Can setattr the underlying vnode, but not sockets!
@@ -741,7 +747,8 @@ fdesc_readdir(v)
 			case FD_STDERR:
 				if ((ft->ft_fileno - FD_STDIN) >= fdp->fd_nfiles)
 					continue;
-				if (fdp->fd_ofiles[ft->ft_fileno - FD_STDIN] == NULL)
+				if (fdp->fd_ofiles[ft->ft_fileno - FD_STDIN] == NULL
+				    || FILE_IS_USABLE(fdp->fd_ofiles[ft->ft_fileno - FD_STDIN]) == 0)
 					continue;
 				break;
 			}
@@ -777,7 +784,8 @@ fdesc_readdir(v)
 				break;
 	
 			default:
-				if (fdp->fd_ofiles[i - 2] == NULL)
+				if (fdp->fd_ofiles[i - 2] == NULL ||
+				    FILE_IS_USABLE(fdp->fd_ofiles[i - 2]) == 0)
 					continue;
 				d.d_fileno = i - 2 + FD_STDIN;
 				d.d_namlen = sprintf(d.d_name, "%d", (int) i - 2);

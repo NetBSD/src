@@ -1,4 +1,4 @@
-/* $Id: hpccmapvar.h,v 1.1 2001/02/22 18:37:55 uch Exp $ */
+/*	$NetBSD: hpccmapvar.h,v 1.1.2.1 2001/06/21 20:01:37 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999

@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.72.2.1 2001/04/09 01:56:35 nathanw Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.72.2.2 2001/06/21 20:03:33 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -97,6 +97,8 @@
  * The driver was massively overhauled in November 1997 by Charles Hannum,
  * fixing *many* bugs, and substantially improving performance.
  */
+
+#include "opt_kgdb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -396,7 +398,7 @@ zstty_attach(parent, self, aux)
 		zs_modem(zst, 1);
 
 		splx(s);
-	} else {
+	} else if (!ISSET(zst->zst_hwflags, ZS_HWFLAG_NORESET)) {
 		/* Not the console; may need reset. */
 		int reset;
 
@@ -683,6 +685,18 @@ zswrite(dev, uio, flags)
 	struct tty *tp = zst->zst_tty;
 
 	return ((*tp->t_linesw->l_write)(tp, uio, flags));
+}
+
+int
+zspoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	struct zstty_softc *zst = device_lookup(&zstty_cd, ZSUNIT(dev));
+	struct tty *tp = zst->zst_tty;
+
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 int

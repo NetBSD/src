@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.37.2.1 2001/04/09 01:56:20 nathanw Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.37.2.2 2001/06/21 20:02:43 nathanw Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -71,6 +71,7 @@
 #include <sys/buf.h> 
 #include <sys/proc.h>
 #include <sys/user.h>
+#include <sys/kthread.h>
 
 
 #include <dev/scsipi/scsi_all.h>
@@ -83,20 +84,24 @@
 #include "opt_isp.h"
 
 
-#define	ISP_PLATFORM_VERSION_MAJOR	1
-#define	ISP_PLATFORM_VERSION_MINOR	1
+#define	ISP_PLATFORM_VERSION_MAJOR	2
+#define	ISP_PLATFORM_VERSION_MINOR	0
 
 struct isposinfo {
 	struct device		_dev;
-	struct scsipi_link	_link;
-	struct scsipi_link	_link_b;
+	struct scsipi_channel	_chan;
+	struct scsipi_channel	_chan_b;
 	struct scsipi_adapter   _adapter;
 	int	splsaved;
 	int	mboxwaiting;
 	u_int32_t	islocked;
 	u_int32_t	onintstack;
-	unsigned int		: 30,
+	unsigned int		: 26,
+		loop_checked	: 1,
+		mbox_wanted	: 1,
+		mbox_locked	: 1,
 		no_mbox_ints	: 1,
+		paused		: 1,
 		blocked		: 1;
 	union {
 		u_int64_t	_wwn;
@@ -104,17 +109,19 @@ struct isposinfo {
 #define	wwn_seed	un._wwn
 #define	discovered	un._discovered
 	} un;
-	TAILQ_HEAD(, scsipi_xfer) waitq; 
-	struct callout _restart;
+	u_int32_t threadwork;
+	struct proc *thread;
 };
 #define	ISP_MUSTPOLL(isp)	\
 	(isp->isp_osinfo.onintstack || isp->isp_osinfo.no_mbox_ints)
+
+#define	HANDLE_LOOPSTATE_IN_OUTER_LAYERS	1
 
 /*
  * Required Macros/Defines
  */
 
-#define	INLINE			inline
+#define	INLINE			__inline
 
 #define	ISP2100_SCRLEN		0x400
 
@@ -143,7 +150,22 @@ struct isposinfo {
 #define	MEMORYBARRIER(isp, type, offset, size)
 #endif
 
-#define	MBOX_ACQUIRE(isp)
+#define	MBOX_ACQUIRE(isp)						\
+	if (isp->isp_osinfo.onintstack) {				\
+		if (isp->isp_osinfo.mbox_locked) {			\
+			mbp->param[0] = MBOX_HOST_INTERFACE_ERROR;	\
+			isp_prt(isp, ISP_LOGERR, "cannot acquire MBOX lock"); \
+			return;						\
+		}							\
+	} else {							\
+		while (isp->isp_osinfo.mbox_locked) {			\
+			isp->isp_osinfo.mbox_wanted = 1;		\
+			(void) tsleep(&isp->isp_osinfo.mboxwaiting+1,	\
+			    PRIBIO, "mbox_acquire", 0);			\
+		}							\
+	}								\
+	isp->isp_osinfo.mbox_locked = 1
+
 #define	MBOX_WAIT_COMPLETE	isp_wait_complete
 
 #define	MBOX_NOTIFY_COMPLETE(isp)					\
@@ -153,7 +175,12 @@ struct isposinfo {
         }								\
 	isp->isp_mboxbsy = 0
 
-#define	MBOX_RELEASE(isp)
+#define	MBOX_RELEASE(isp)						\
+	if (isp->isp_osinfo.mbox_wanted) {				\
+		isp->isp_osinfo.mbox_wanted = 0;			\
+		wakeup(&isp->isp_osinfo.mboxwaiting+1);			\
+	}								\
+	isp->isp_osinfo.mbox_locked = 0
 
 #ifndef	SCSI_GOOD
 #define	SCSI_GOOD	0x0
@@ -169,12 +196,11 @@ struct isposinfo {
 #endif
 
 #define	XS_T			struct scsipi_xfer
-#define	XS_CHANNEL(xs)		\
-	(((int) (xs)->sc_link->scsipi_scsi.channel == SCSI_CHANNEL_ONLY_ONE) ? \
-	    0 : (xs)->sc_link->scsipi_scsi.channel)
-#define	XS_ISP(xs)		(xs)->sc_link->adapter_softc
-#define	XS_LUN(xs)		((int) (xs)->sc_link->scsipi_scsi.lun)
-#define	XS_TGT(xs)		((int) (xs)->sc_link->scsipi_scsi.target)
+#define	XS_CHANNEL(xs)		((int) (xs)->xs_periph->periph_channel->chan_channel)
+#define	XS_ISP(xs)		\
+	((void *)(xs)->xs_periph->periph_channel->chan_adapter->adapt_dev)
+#define	XS_LUN(xs)		((int) (xs)->xs_periph->periph_lun)
+#define	XS_TGT(xs)		((int) (xs)->xs_periph->periph_target)
 #define	XS_CDBP(xs)		((caddr_t) (xs)->cmd)
 #define	XS_CDBLEN(xs)		(xs)->cmdlen
 #define	XS_XFRLEN(xs)		(xs)->datalen
@@ -249,12 +275,16 @@ struct isposinfo {
 #include <dev/ic/ispreg.h>
 #include <dev/ic/ispvar.h>
 #include <dev/ic/ispmbox.h>
+#include <dev/ic/isp_ioctl.h>
 
 /*
  * isp_osinfo definitions, extensions and shorthand.
  */
 #define	isp_name	isp_osinfo._dev.dv_xname
 #define	isp_unit	isp_osinfo._dev.dv_unit
+#define	isp_chanA	isp_osinfo._chan
+#define	isp_chanB	isp_osinfo._chan_b
+
 
 /*
  * Driver prototypes..
@@ -262,20 +292,20 @@ struct isposinfo {
 void isp_attach(struct ispsoftc *);
 void isp_uninit(struct ispsoftc *);
 
-static inline void isp_lock(struct ispsoftc *);
-static inline void isp_unlock(struct ispsoftc *);
-static inline char *strncat(char *, const char *, size_t);
-static inline u_int64_t
+static INLINE void isp_lock(struct ispsoftc *);
+static INLINE void isp_unlock(struct ispsoftc *);
+static INLINE char *strncat(char *, const char *, size_t);
+static INLINE u_int64_t
 isp_microtime_sub(struct timeval *, struct timeval *);
 static void isp_wait_complete(struct ispsoftc *);
 #if	_BYTE_ORDER == _BIG_ENDIAN
-static inline void isp_swizzle_request(struct ispsoftc *, ispreq_t *);
-static inline void isp_unswizzle_response(struct ispsoftc *, void *, u_int16_t);
-static inline void isp_swizzle_icb(struct ispsoftc *, isp_icb_t *);
-static inline void
+static INLINE void isp_swizzle_request(struct ispsoftc *, ispreq_t *);
+static INLINE void isp_unswizzle_response(struct ispsoftc *, void *, u_int16_t);
+static INLINE void isp_swizzle_icb(struct ispsoftc *, isp_icb_t *);
+static INLINE void
 isp_unswizzle_and_copy_pdbp(struct ispsoftc *, isp_pdb_t *, void *);
-static inline void isp_swizzle_sns_req(struct ispsoftc *, sns_screq_t *);
-static inline void isp_unswizzle_sns_rsp(struct ispsoftc *, sns_scrsp_t *, int);
+static INLINE void isp_swizzle_sns_req(struct ispsoftc *, sns_screq_t *);
+static INLINE void isp_unswizzle_sns_rsp(struct ispsoftc *, sns_scrsp_t *, int);
 #endif
 
 /*
@@ -315,7 +345,7 @@ static inline void isp_unswizzle_sns_rsp(struct ispsoftc *, sns_scrsp_t *, int);
 /*
  * Platform specific 'inline' or support functions
  */
-static inline void
+static INLINE void
 isp_lock(struct ispsoftc *isp)
 {
 	int s = splbio();
@@ -326,7 +356,7 @@ isp_lock(struct ispsoftc *isp)
 	}
 }
 
-static inline void
+static INLINE void
 isp_unlock(struct ispsoftc *isp)
 {
 	if (isp->isp_osinfo.islocked-- <= 1) {
@@ -335,7 +365,7 @@ isp_unlock(struct ispsoftc *isp)
 	}
 }
 
-static inline char *
+static INLINE char *
 strncat(char *d, const char *s, size_t c)
 {
         char *t = d;
@@ -353,7 +383,7 @@ strncat(char *d, const char *s, size_t c)
         return (t);
 }
 
-static inline u_int64_t
+static INLINE u_int64_t
 isp_microtime_sub(struct timeval *b, struct timeval *a)
 {
 	struct timeval x;
@@ -365,7 +395,7 @@ isp_microtime_sub(struct timeval *b, struct timeval *a)
 	return (elapsed);
 }
 
-static inline void
+static INLINE void
 isp_wait_complete(struct ispsoftc *isp)
 {
 	if (isp->isp_osinfo.onintstack || isp->isp_osinfo.no_mbox_ints) {
@@ -413,7 +443,7 @@ isp_wait_complete(struct ispsoftc *isp)
 }
 
 #if	_BYTE_ORDER == _BIG_ENDIAN
-static inline void
+static INLINE void
 isp_swizzle_request(struct ispsoftc *isp, ispreq_t *rq)
 {
 	if (IS_FC(isp)) {
@@ -436,7 +466,7 @@ isp_swizzle_request(struct ispsoftc *isp, ispreq_t *rq)
 	}
 }
 
-static inline void
+static INLINE void
 isp_unswizzle_response(struct ispsoftc *isp, void *rp, u_int16_t optr)
 {
 	ispstatusreq_t *sp = rp;
@@ -461,7 +491,7 @@ isp_unswizzle_response(struct ispsoftc *isp, void *rp, u_int16_t optr)
 	}
 }
 
-static inline void
+static INLINE void
 isp_swizzle_icb(struct ispsoftc *isp, isp_icb_t *icbp)
 {
 	_ISP_SWAP8(icbp->icb_version, icbp->_reserved0);
@@ -492,7 +522,7 @@ isp_swizzle_icb(struct ispsoftc *isp, isp_icb_t *icbp)
 	icbp->icb_respaddr[3] = bswap16(icbp->icb_respaddr[3]);
 }
 
-static inline void
+static INLINE void
 isp_unswizzle_and_copy_pdbp(struct ispsoftc *isp, isp_pdb_t *dst, void *src)
 {
 	isp_pdb_t *pdbp = src;
@@ -556,7 +586,7 @@ isp_unswizzle_and_copy_pdbp(struct ispsoftc *isp, isp_pdb_t *dst, void *src)
 	dst->pdb_initiator = pdbp->pdb_target;
 }
 
-static inline void
+static INLINE void
 isp_swizzle_sns_req(struct ispsoftc *isp, sns_screq_t *reqp)
 {
 	u_int16_t index, nwords = reqp->snscb_sblen;
@@ -571,7 +601,7 @@ isp_swizzle_sns_req(struct ispsoftc *isp, sns_screq_t *reqp)
 	}
 }
 
-static inline void
+static INLINE void
 isp_unswizzle_sns_rsp(struct ispsoftc *isp, sns_scrsp_t *resp, int nwords)
 {
 	int index;
@@ -591,7 +621,6 @@ isp_unswizzle_sns_rsp(struct ispsoftc *isp, sns_scrsp_t *resp, int nwords)
 /*
  * Common inline functions
  */
-#define	INLINE	inline
 #include <dev/ic/isp_inline.h>
 
 #if	!defined(ISP_DISABLE_FW) && !defined(ISP_COMPILE_FW)

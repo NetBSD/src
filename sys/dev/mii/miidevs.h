@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.14.2.1 2001/04/09 01:56:53 nathanw Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.14.2.2 2001/06/21 20:04:23 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.15 2001/03/28 14:14:57 drochner Exp 
+ *	NetBSD: miidevs,v 1.23 2001/06/19 19:51:04 thorpej Exp 
  */
 
 /*-
@@ -67,8 +67,10 @@
 #define	MII_OUI_ICS	0x00a0be	/* Integrated Circuit Systems */
 #define	MII_OUI_INTEL	0x00aa00	/* Intel */
 #define	MII_OUI_LEVEL1	0x00207b	/* Level 1 */
+#define	MII_OUI_MARVELL	0x005043	/* Marvell Semiconductor */
 #define	MII_OUI_MYSON	0x00c0b4	/* Myson Technology */
 #define	MII_OUI_NATSEMI	0x080017	/* National Semiconductor */
+#define	MII_OUI_PMCSIERRA	0x00e004	/* PMC-Sierra */
 #define	MII_OUI_QUALSEMI	0x006051	/* Quality Semiconductor */
 #define	MII_OUI_SEEQ	0x00a07d	/* Seeq */
 #define	MII_OUI_SIS	0x00e006	/* Silicon Integrated Systems */
@@ -97,9 +99,7 @@
 
 /* Don't know what's going on here. */
 #define	MII_OUI_xxDAVICOM	0x000602	/* Davicom Semiconductor */
-
-/* Contrived vendor for dcphy */
-#define	MII_OUI_xxDEC	0x040440	/* Digital Clone */
+#define	MII_OUI_xxPMCSIERRA	0x0009c0	/* PMC-Sierra */
 
 
 /*
@@ -125,16 +125,18 @@
 #define	MII_STR_xxBROADCOM_3C905C	"Broadcom 3C905C internal PHY"
 #define	MII_MODEL_xxBROADCOM_BCM5201	0x0021
 #define	MII_STR_xxBROADCOM_BCM5201	"BCM5201 10/100 media interface"
+#define	MII_MODEL_BROADCOM_BCM5221	0x001e
+#define	MII_STR_BROADCOM_BCM5221	"BCM5221 10/100 PHY"
 #define	MII_MODEL_BROADCOM_BCM5400	0x0004
 #define	MII_STR_BROADCOM_BCM5400	"BCM5400 1000baseTX PHY"
+#define	MII_MODEL_BROADCOM_BCM5401	0x0005
+#define	MII_STR_BROADCOM_BCM5401	"BCM5401 1000baseTX PHY"
+#define	MII_MODEL_BROADCOM_BCM5411	0x0007
+#define	MII_STR_BROADCOM_BCM5411	"BCM5411 1000baseTX PHY"
 
 /* Davicom Semiconductor PHYs */
 #define	MII_MODEL_xxDAVICOM_DM9101	0x0000
 #define	MII_STR_xxDAVICOM_DM9101	"DM9101 10/100 media interface"
-
-/* Contrived vendor/model for dcphy */
-#define	MII_MODEL_xxDEC_xxDC	0x0001
-#define	MII_STR_xxDEC_xxDC	"DC"
 
 /* Integrated Circuit Systems PHYs */
 #define	MII_MODEL_ICS_1890	0x0002
@@ -145,12 +147,22 @@
 #define	MII_STR_xxINTEL_I82553	"i82553 10/100 media interface"
 #define	MII_MODEL_yyINTEL_I82555	0x0015
 #define	MII_STR_yyINTEL_I82555	"i82555 10/100 media interface"
+#define	MII_MODEL_yyINTEL_I82562EH	0x0017
+#define	MII_STR_yyINTEL_I82562EH	"i82562EH HomePNA interface"
+#define	MII_MODEL_yyINTEL_I82562EM	0x0032
+#define	MII_STR_yyINTEL_I82562EM	"i82562EM 10/100 media interface"
+#define	MII_MODEL_yyINTEL_I82562ET	0x0033
+#define	MII_STR_yyINTEL_I82562ET	"i82562ET 10/100 media interface"
 #define	MII_MODEL_yyINTEL_I82553	0x0035
 #define	MII_STR_yyINTEL_I82553	"i82553 10/100 media interface"
 
 /* Level 1 PHYs */
 #define	MII_MODEL_xxLEVEL1_LXT970	0x0000
 #define	MII_STR_xxLEVEL1_LXT970	"LXT970 10/100 media interface"
+
+/* Marvell Semiconductor PHYs */
+#define	MII_MODEL_MARVELL_E1000	0x0000
+#define	MII_STR_MARVELL_E1000	"Marvell 88E1000 Gigabit PHY"
 
 /* Myson Technology PHYs */
 #define	MII_MODEL_xxMYSON_MTD972	0x0000
@@ -161,6 +173,16 @@
 #define	MII_STR_xxNATSEMI_DP83840	"DP83840 10/100 media interface"
 #define	MII_MODEL_xxNATSEMI_DP83843	0x0001
 #define	MII_STR_xxNATSEMI_DP83843	"DP83843 10/100 media interface"
+#define	MII_MODEL_xxNATSEMI_DP83815	0x0002
+#define	MII_STR_xxNATSEMI_DP83815	"DP83815 10/100 media interface"
+#define	MII_MODEL_xxNATSEMI_DP83891	0x0005
+#define	MII_STR_xxNATSEMI_DP83891	"DP83891 1000baseTX PHY"
+#define	MII_MODEL_xxNATSEMI_DP83861	0x0006
+#define	MII_STR_xxNATSEMI_DP83861	"DP83861 1000baseTX PHY"
+
+/* PMC Sierra PHYs */
+#define	MII_MODEL_xxPMCSIERRA_PM8351	0x0000
+#define	MII_STR_xxPMCSIERRA_PM8351	"PM8351 OctalPHY Gigabit interface"
 
 /* Quality Semiconductor PHYs */
 #define	MII_MODEL_xxQUALSEMI_QS6612	0x0000
@@ -171,6 +193,8 @@
 #define	MII_STR_SEEQ_80220	"Seeq 80220 10/100 media interface"
 #define	MII_MODEL_SEEQ_84220	0x0004
 #define	MII_STR_SEEQ_84220	"Seeq 84220 10/100 media interface"
+#define	MII_MODEL_SEEQ_80225	0x0008
+#define	MII_STR_SEEQ_80225	"Seeq 80225 10/100 media interface"
 
 /* Silicon Integrated Systems PHYs */
 #define	MII_MODEL_SIS_900	0x0000

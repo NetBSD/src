@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.34.2.1 2001/04/09 01:56:14 nathanw Exp $	*/
+/*	$NetBSD: i82586.c,v 1.34.2.2 2001/06/21 20:02:34 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -147,7 +147,7 @@ Mode of operation:
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.34.2.1 2001/04/09 01:56:14 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.34.2.2 2001/06/21 20:02:34 nathanw Exp $");
 
 #include <sys/systm.h>
 #include <sys/mbuf.h>
@@ -1683,13 +1683,13 @@ i82586_init(ifp)
 	 * Send the configure command first.
 	 */
 	if (ie_cfg_setup(sc, cmd, sc->promisc, 0) == 0)
-		return (1);
+		return EIO;
 
 	/*
 	 * Send the Individual Address Setup command.
 	 */
 	if (ie_ia_setup(sc, cmd) == 0)
-		return (1);
+		return EIO;
 
 	/*
 	 * Run the time-domain reflectometer.
@@ -1700,7 +1700,7 @@ i82586_init(ifp)
 	 * Set the multi-cast filter, if any
 	 */
 	if (ie_mc_setup(sc, cmd) == 0)
-		return (1);
+		return EIO;
 
 	/*
 	 * Acknowledge any interrupts we have generated thus far.

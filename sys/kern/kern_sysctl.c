@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.86.2.4 2001/06/20 13:44:47 nathanw Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.86.2.5 2001/06/21 20:06:56 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -45,6 +45,7 @@
 #include "opt_ddb.h"
 #include "opt_insecure.h"
 #include "opt_defcorename.h"
+#include "opt_new_pipe.h"
 #include "opt_sysv.h"
 #include "pty.h"
 
@@ -338,6 +339,7 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case KERN_MBUF:
 	case KERN_PROC_ARGS:
 	case KERN_SYSVIPC_INFO:
+	case KERN_PIPE:
 		/* Not terminal. */
 		break;
 	default:
@@ -538,6 +540,11 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 #if NPTY > 0
 	case KERN_MAXPTYS:
 		return sysctl_pty(oldp, oldlenp, newp, newlen);
+#endif
+#ifdef NEW_PIPE
+	case KERN_PIPE:
+		return (sysctl_dopipe(name + 1, namelen - 1, oldp, oldlenp,
+		    newp, newlen));
 #endif
 	default:
 		return (EOPNOTSUPP);
@@ -1284,7 +1291,7 @@ sysctl_msgbuf(vwhere, sizep)
 {
 	char *where = vwhere;
 	size_t len, maxlen = *sizep;
-	long pos;
+	long beg, end;
 	int error;
 
 	/*
@@ -1304,18 +1311,29 @@ sysctl_msgbuf(vwhere, sizep)
 
 	error = 0;
 	maxlen = min(msgbufp->msg_bufs, maxlen);
-	pos = msgbufp->msg_bufx;
+
+	/*
+	 * First, copy from the write pointer to the end of
+	 * message buffer.
+	 */
+	beg = msgbufp->msg_bufx;
+	end = msgbufp->msg_bufs;
 	while (maxlen > 0) {
-		len = pos == 0 ? msgbufp->msg_bufx : msgbufp->msg_bufs - msgbufp->msg_bufx;
-		len = min(len, maxlen);
+		len = min(end - beg, maxlen);
 		if (len == 0)
 			break;
-		error = copyout(&msgbufp->msg_bufc[pos], where, len);
+		error = copyout(&msgbufp->msg_bufc[beg], where, len);
 		if (error)
 			break;
 		where += len;
 		maxlen -= len;
-		pos = 0;
+
+		/*
+		 * ... then, copy from the beginning of message buffer to
+		 * the write pointer.
+		 */
+		beg = 0;
+		end = msgbufp->msg_bufx;
 	}
 	return (error);
 }

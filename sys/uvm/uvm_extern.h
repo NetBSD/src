@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.56.2.2 2001/04/09 01:59:12 nathanw Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.56.2.3 2001/06/21 20:10:26 nathanw Exp $	*/
 
 /*
  *
@@ -87,23 +87,11 @@
  * typedefs, necessary for standard UVM headers.
  */
 
-typedef unsigned int  uvm_flag_t;
+typedef unsigned int uvm_flag_t;
 typedef int vm_fault_t;
 
 typedef int vm_inherit_t;	/* XXX: inheritance codes */
 typedef off_t voff_t;		/* XXX: offset within a uvm_object */
-
-union vm_map_object;
-typedef union vm_map_object vm_map_object_t;
-
-struct vm_map_entry;
-typedef struct vm_map_entry *vm_map_entry_t;
-
-struct vm_map;
-typedef struct vm_map *vm_map_t;
-
-struct vm_page;
-typedef struct vm_page  *vm_page_t;
 
 /*
  * defines
@@ -230,6 +218,9 @@ struct pmap;
 struct vnode;
 struct pool;
 struct simplelock;
+struct vm_map_entry;
+struct vm_map;
+struct vm_page;
 
 extern struct pool *uvm_aiobuf_pool;
 
@@ -252,7 +243,10 @@ struct uvmexp {
 	int paging;	/* number of pages in the process of being paged out */
 	int wired;      /* number of wired pages */
 
-	/* 
+	int ncolors;	/* number of page color buckets: must be p-o-2 */
+	int colormask;	/* color bucket mask */
+
+	/*
 	 * Adding anything before this line will break binary compatibility
 	 * with top(1) on NetBSD 1.5.
 	 */
@@ -308,6 +302,8 @@ struct uvmexp {
 				   not available */
 	int zeroaborts;		/* number of times page zeroing was
 				   aborted */
+	int colorhit;		/* pagealloc where we got optimal color */
+	int colormiss;		/* pagealloc where we didn't */
 
 	/* fault subcounters */
 	int fltnoram;	/* number of times fault was out of ram */
@@ -431,6 +427,9 @@ struct uvmexp_sysctl {
 	int64_t	anonpages;
 	int64_t	vnodepages;
 	int64_t	vtextpages;
+	int64_t colorhit;
+	int64_t colormiss;
+	int64_t ncolors;
 };
 
 #ifdef _KERNEL
@@ -462,7 +461,7 @@ struct vmspace {
 	caddr_t	vm_shm;		/* SYS5 shared memory private data XXX */
 /* we copy from vm_startcopy to the end of the structure on fork */
 #define vm_startcopy vm_rssize
-	segsz_t vm_rssize; 	/* current resident set size in pages */
+	segsz_t vm_rssize;	/* current resident set size in pages */
 	segsz_t vm_swrss;	/* resident set size before last swap */
 	segsz_t vm_tsize;	/* text size (pages) XXX */
 	segsz_t vm_dsize;	/* data size (pages) XXX */
@@ -478,11 +477,11 @@ struct vmspace {
 /*
  * the various kernel maps, owned by MD code
  */
-extern vm_map_t	exec_map;
-extern vm_map_t	kernel_map;
-extern vm_map_t	kmem_map;
-extern vm_map_t	mb_map;
-extern vm_map_t	phys_map;
+extern struct vm_map *exec_map;
+extern struct vm_map *kernel_map;
+extern struct vm_map *kmem_map;
+extern struct vm_map *mb_map;
+extern struct vm_map *phys_map;
 
 /*
  * macros
@@ -494,11 +493,7 @@ extern vm_map_t	phys_map;
 
 #endif /* _KERNEL */
 
-#ifdef	pmap_resident_count
 #define vm_resident_count(vm) (pmap_resident_count((vm)->vm_map.pmap))
-#else
-#define vm_resident_count(vm) ((vm)->vm_rssize)
-#endif
 
 /* XXX clean up later */
 struct buf;
@@ -539,7 +534,7 @@ void			ubc_release __P((void *, vsize_t));
 void			ubc_flush __P((struct uvm_object *, voff_t, voff_t));
 
 /* uvm_fault.c */
-int			uvm_fault __P((vm_map_t, vaddr_t, vm_fault_t,
+int			uvm_fault __P((struct vm_map *, vaddr_t, vm_fault_t,
 				       vm_prot_t));
 				/* handle a page fault */
 
@@ -563,45 +558,49 @@ void			uvm_vsunlock __P((struct proc *, caddr_t, size_t));
 
 
 /* uvm_init.c */
-void			uvm_init __P((void));	
+void			uvm_init __P((void));
 				/* init the uvm system */
 
 /* uvm_io.c */
-int			uvm_io __P((vm_map_t, struct uio *));
+int			uvm_io __P((struct vm_map *, struct uio *));
 
 /* uvm_km.c */
-vaddr_t			uvm_km_alloc1 __P((vm_map_t, vsize_t, boolean_t));
-void			uvm_km_free __P((vm_map_t, vaddr_t, vsize_t));
-void			uvm_km_free_wakeup __P((vm_map_t, vaddr_t,
-						vsize_t));
-vaddr_t			uvm_km_kmemalloc __P((vm_map_t, struct uvm_object *,
-						vsize_t, int));
-struct vm_map		*uvm_km_suballoc __P((vm_map_t, vaddr_t *,
-				vaddr_t *, vsize_t, int,
-				boolean_t, vm_map_t));
-vaddr_t			uvm_km_valloc __P((vm_map_t, vsize_t));
-vaddr_t			uvm_km_valloc_align __P((vm_map_t, vsize_t, vsize_t));
-vaddr_t			uvm_km_valloc_wait __P((vm_map_t, vsize_t));
-vaddr_t			uvm_km_valloc_prefer_wait __P((vm_map_t, vsize_t,
-					voff_t));
-vaddr_t			uvm_km_alloc_poolpage1 __P((vm_map_t,
-				struct uvm_object *, boolean_t));
-void			uvm_km_free_poolpage1 __P((vm_map_t, vaddr_t));
+vaddr_t			uvm_km_alloc1 __P((struct vm_map *, vsize_t,
+			    boolean_t));
+void			uvm_km_free __P((struct vm_map *, vaddr_t, vsize_t));
+void			uvm_km_free_wakeup __P((struct vm_map *, vaddr_t,
+			    vsize_t));
+vaddr_t			uvm_km_kmemalloc __P((struct vm_map *, struct
+			    uvm_object *, vsize_t, int));
+struct vm_map		*uvm_km_suballoc __P((struct vm_map *, vaddr_t *,
+			    vaddr_t *, vsize_t, int, boolean_t,
+			    struct vm_map *));
+vaddr_t			uvm_km_valloc __P((struct vm_map *, vsize_t));
+vaddr_t			uvm_km_valloc_align __P((struct vm_map *, vsize_t,
+			    vsize_t));
+vaddr_t			uvm_km_valloc_wait __P((struct vm_map *, vsize_t));
+vaddr_t			uvm_km_valloc_prefer_wait __P((struct vm_map *, vsize_t,
+			    voff_t));
+vaddr_t			uvm_km_alloc_poolpage1 __P((struct vm_map *,
+			    struct uvm_object *, boolean_t));
+void			uvm_km_free_poolpage1 __P((struct vm_map *, vaddr_t));
 
-#define	uvm_km_alloc_poolpage(waitok)	uvm_km_alloc_poolpage1(kmem_map, \
-						uvmexp.kmem_object, (waitok))
-#define	uvm_km_free_poolpage(addr)	uvm_km_free_poolpage1(kmem_map, (addr))
+#define	uvm_km_alloc_poolpage(waitok) \
+	uvm_km_alloc_poolpage1(kmem_map, uvmexp.kmem_object, (waitok))
+#define	uvm_km_free_poolpage(addr) \
+	uvm_km_free_poolpage1(kmem_map, (addr))
 
 /* uvm_map.c */
-int			uvm_map __P((vm_map_t, vaddr_t *, vsize_t,
+int			uvm_map __P((struct vm_map *, vaddr_t *, vsize_t,
 				struct uvm_object *, voff_t, vsize_t,
 				uvm_flag_t));
-int			uvm_map_pageable __P((vm_map_t, vaddr_t, 
+int			uvm_map_pageable __P((struct vm_map *, vaddr_t,
 				vaddr_t, boolean_t, int));
-int			uvm_map_pageable_all __P((vm_map_t, int, vsize_t));
-boolean_t		uvm_map_checkprot __P((vm_map_t, vaddr_t,
+int			uvm_map_pageable_all __P((struct vm_map *, int,
+				vsize_t));
+boolean_t		uvm_map_checkprot __P((struct vm_map *, vaddr_t,
 				vaddr_t, vm_prot_t));
-int			uvm_map_protect __P((vm_map_t, vaddr_t, 
+int			uvm_map_protect __P((struct vm_map *, vaddr_t,
 				vaddr_t, vm_prot_t, boolean_t));
 struct vmspace		*uvmspace_alloc __P((vaddr_t, vaddr_t,
 				boolean_t));
@@ -616,12 +615,12 @@ void			uvmspace_unshare __P((struct lwp *));
 
 /* uvm_meter.c */
 void			uvm_meter __P((void));
-int			uvm_sysctl __P((int *, u_int, void *, size_t *, 
+int			uvm_sysctl __P((int *, u_int, void *, size_t *,
 				void *, size_t, struct proc *));
 
 /* uvm_mmap.c */
-int			uvm_mmap __P((vm_map_t, vaddr_t *, vsize_t,
-				vm_prot_t, vm_prot_t, int, 
+int			uvm_mmap __P((struct vm_map *, vaddr_t *, vsize_t,
+				vm_prot_t, vm_prot_t, int,
 				void *, voff_t, vsize_t));
 
 /* uvm_page.c */
@@ -630,7 +629,7 @@ struct vm_page		*uvm_pagealloc_strat __P((struct uvm_object *,
 #define	uvm_pagealloc(obj, off, anon, flags) \
 	    uvm_pagealloc_strat((obj), (off), (anon), (flags), \
 				UVM_PGA_STRAT_NORMAL, 0)
-void			uvm_pagerealloc __P((struct vm_page *, 
+void			uvm_pagerealloc __P((struct vm_page *,
 					     struct uvm_object *, voff_t));
 /* Actually, uvm_page_physload takes PF#s which need their own type */
 void			uvm_page_physload __P((paddr_t, paddr_t,
@@ -649,23 +648,23 @@ void			uvm_aiodone_daemon __P((void *));
 /* uvm_pglist.c */
 int			uvm_pglistalloc __P((psize_t, paddr_t,
 				paddr_t, paddr_t, paddr_t,
-				struct pglist *, int, int)); 
+				struct pglist *, int, int));
 void			uvm_pglistfree __P((struct pglist *));
 
 /* uvm_swap.c */
 void			uvm_swap_init __P((void));
 
 /* uvm_unix.c */
-int			uvm_coredump __P((struct proc *, struct vnode *, 
+int			uvm_coredump __P((struct proc *, struct vnode *,
 				struct ucred *, struct core *));
 int			uvm_grow __P((struct proc *, vaddr_t));
 /* should only be needed if COMPAT_NETBSD32 is defined */
 struct core32;
-int			uvm_coredump32 __P((struct proc *, struct vnode *, 
+int			uvm_coredump32 __P((struct proc *, struct vnode *,
 				struct ucred *, struct core32 *));
 
 /* uvm_user.c */
-void			uvm_deallocate __P((vm_map_t, vaddr_t, vsize_t));
+void			uvm_deallocate __P((struct vm_map *, vaddr_t, vsize_t));
 
 /* uvm_vnode.c */
 void			uvm_vnp_setsize __P((struct vnode *, voff_t));

@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_dev.c,v 1.1 2000/12/07 03:48:09 deberg Exp $	*/
+/*	$NetBSD: smb_dev.c,v 1.1.4.1 2001/06/21 20:09:30 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000, Boris Popov
@@ -206,7 +206,7 @@ nsmb_dev_open(dev_t dev, int oflags, int devtype, struct proc *p)
 	STAILQ_INIT(&sdp->sd_rplist);
 	bzero(&sdp->sd_pollinfo, sizeof(struct selinfo));
 */
-	s = splimp();
+	s = splnet();
 	sdp->sd_level = -1;
 	sdp->sd_flags |= NSMBFL_OPEN;
 	splx(s);
@@ -224,7 +224,7 @@ nsmb_dev_close(dev_t dev, int flag, int fmt, struct proc *p)
 	int s;
 
 	SMB_CHECKMINOR(dev);
-	s = splimp();
+	s = splnet();
 	if ((sdp->sd_flags & NSMBFL_OPEN) == 0) {
 		splx(s);
 		return EBADF;
@@ -493,10 +493,12 @@ nsmb_getfp(struct filedesc* fdp, int fd, int flag)
 {
 	struct file* fp;
 
-	if (((u_int)fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL ||
-	    (fp->f_flag & flag) == 0)
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (NULL);
+
+	if ((fp->f_flag & flag) == 0)
+		return (NULL);
+
 	return (fp);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.125.2.2 2001/04/09 01:57:57 nathanw Exp $	*/
+/*	$NetBSD: tty.c,v 1.125.2.3 2001/06/21 20:07:05 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -1020,12 +1020,10 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 }
 
 int
-ttpoll(dev_t dev, int events, struct proc *p)
+ttpoll(struct tty *tp, int events, struct proc *p)
 {
-	struct tty	*tp;
-	int		revents, s;
+	int	revents, s;
 
-	tp = (*cdevsw[major(dev)].d_tty)(dev);
 	revents = 0;
 	s = spltty();
 	if (events & (POLLIN | POLLRDNORM))

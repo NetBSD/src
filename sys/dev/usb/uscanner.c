@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.12.2.1 2001/04/09 01:57:42 nathanw Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.12.2.2 2001/06/21 20:06:32 nathanw Exp $	*/
 /*	$FreeBSD$	*/
 
 /*
@@ -97,6 +97,7 @@ static const struct scanner_id {
 
 	/* HP */
 	{ USB_VENDOR_HP, USB_PRODUCT_HP_3300C },
+	{ USB_VENDOR_HP, USB_PRODUCT_HP_3400CSE },
 	{ USB_VENDOR_HP, USB_PRODUCT_HP_4100C },
 	{ USB_VENDOR_HP, USB_PRODUCT_HP_4200C },
 	{ USB_VENDOR_HP, USB_PRODUCT_HP_S20 },
@@ -165,10 +166,8 @@ static const struct scanner_id {
 	{ USB_VENDOR_VISIONEER, USB_PRODUCT_VISIONEER_8100 },
 	{ USB_VENDOR_VISIONEER, USB_PRODUCT_VISIONEER_8600 },
 
-#if NOT_TEST
 	/* Canon */
 	{ USB_VENDOR_CANON, USB_PRODUCT_CANON_N656U },
-#endif
 
 	{ 0, 0 }
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: aout_misc.c,v 1.6.2.1 2001/03/13 20:47:44 nathanw Exp $	*/
+/*	$NetBSD: aout_misc.c,v 1.6.2.2 2001/06/21 19:58:50 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"
 #include "opt_compat_netbsd.h"
@@ -79,24 +79,6 @@ aout_sys_open(l, v, retval)
 		CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	return sys_open(l, v, retval);
-}
-
-
-int
-aout_sys_creat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-#if 0
-	struct aout_sys_creat_args *uap = v;
-	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p->p_emul);
-
-	CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
-#endif
-
-	return compat_43_sys_creat(l, v, retval);
 }
 
 
@@ -152,24 +134,6 @@ aout_sys_chdir(l, v, retval)
 
 
 int
-aout_sys_mknod(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-#if 0
-	struct aout_sys_mknod_args *uap = v;
-	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p->p_emul);
-
-	CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
-#endif
-
-	return sys_mknod(l, v, retval);
-}
-
-
-int
 aout_sys_chmod(l, v, retval)
 	struct lwp *l;
 	void *v;
@@ -198,28 +162,6 @@ aout_sys_chown(l, v, retval)
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	return sys_chown(l, v, retval);
-}
-
-
-int
-aout_sys_mount(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-/*
- * Don't try to translate the mount point,
- * to avoid e.g. mounting the /usr filesystem on /emul/aout/usr.
- */
-#if 0
-	struct aout_sys_mount_args *uap = v;
-	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p->p_emul);
-
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
-#endif
-
-	return sys_mount(l, v, retval);
 }
 
 
@@ -300,43 +242,6 @@ aout_compat_43_sys_lstat(l, v, retval)
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	return compat_43_sys_lstat(l, v, retval);
-}
-
-#ifdef KTRACE
-int
-aout_sys_ktrace(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-#if 0
-	struct aout_sys_ktrace_args *uap = v;
-	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p->p_emul);
-
-	CHECK_ALT_CREAT(p, &sg, SCARG(uap, fname));
-#endif
-
-	return sys_ktrace(l, v, retval);
-}
-#endif
-
-
-int
-aout_sys_acct(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-#if 0
-	struct aout_sys_acct_args *uap = v;
-	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p->p_emul);
-
-	CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
-#endif
-
-	return sys_acct(l, v, retval);
 }
 
 
@@ -459,42 +364,6 @@ aout_compat_43_sys_truncate(l, v, retval)
 
 
 int
-aout_sys_mkfifo(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-#if 0
-	struct aout_sys_mkfifo_args *uap = v;
-	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p->p_emul);
-
-	CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
-#endif
-
-	return sys_mkfifo(l, v, retval);
-}
-
-
-int
-aout_sys_mkdir(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-#if 0
-	struct aout_sys_mkdir_args *uap = v;
-	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p->p_emul);
-
-	CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
-#endif
-
-	return sys_mkdir(l, v, retval);
-}
-
-
-int
 aout_sys_rmdir(l, v, retval)
 	struct lwp *l;
 	void *v;
@@ -526,22 +395,6 @@ aout_sys_utimes(l, v, retval)
 }
 
 
-int
-aout_sys_quotactl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-#if 0
-	struct aout_sys_quotactl_args *uap = v;
-	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p->p_emul);
-
-	CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
-#endif
-
-	return sys_quotactl(l, v, retval);
-}
 
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.63.2.2 2001/04/09 01:58:56 nathanw Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.63.2.3 2001/06/21 20:09:31 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -229,6 +229,9 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 		nfsstats.biocache_reads++;
 
 		error = 0;
+		if (uio->uio_offset >= np->n_size) {
+			break;
+		}
 		while (uio->uio_resid > 0) {
 			void *win;
 			vsize_t bytelen = MIN(np->n_size - uio->uio_offset,
@@ -972,7 +975,7 @@ nfs_getpages(v)
 	struct vop_getpages_args /* {
 		struct vnode *a_vp;
 		voff_t a_offset;
-		vm_page_t *a_m;
+		struct vm_page **a_m;
 		int *a_count;
 		int a_centeridx;
 		vm_prot_t a_access_type;

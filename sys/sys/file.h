@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.23.2.1 2001/04/09 01:59:02 nathanw Exp $	*/
+/*	$NetBSD: file.h,v 1.23.2.2 2001/06/21 20:09:47 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -58,6 +58,7 @@ struct file {
 	int		f_flag;		/* see fcntl.h */
 #define	DTYPE_VNODE	1		/* file */
 #define	DTYPE_SOCKET	2		/* communications endpoint */
+#define	DTYPE_PIPE	3		/* pipe */
 	short		f_type;		/* descriptor type */
 	short		f_count;	/* reference count */
 	short		f_msgcount;	/* references from message queue */
@@ -76,7 +77,7 @@ struct file {
 					    caddr_t data, struct proc *p);
 		int	(*fo_poll)	(struct file *fp, int events,
 					    struct proc *p);
-		int	(*fo_stat)	(void *fdata, struct stat *sp,
+		int	(*fo_stat)	(struct file *fp, struct stat *sp,
 					    struct proc *p);
 		int	(*fo_close)	(struct file *fp, struct proc *p);
 	} *f_ops;
@@ -87,13 +88,22 @@ struct file {
 };
 
 #define	FIF_WANTCLOSE		0x01	/* a close is waiting for usecount */
+#define	FIF_LARVAL		0x02	/* not fully constructed; don't use */
+
+#define	FILE_IS_USABLE(fp)	(((fp)->f_iflags &			\
+				  (FIF_WANTCLOSE|FIF_LARVAL)) == 0)
+
+#define	FILE_SET_MATURE(fp)						\
+do {									\
+	(fp)->f_iflags &= ~FIF_LARVAL;					\
+} while (/*CONSTCOND*/0)
 
 #ifdef DIAGNOSTIC
 #define	FILE_USE_CHECK(fp, str)						\
 do {									\
 	if ((fp)->f_usecount < 0)					\
 		panic(str);						\
-} while (0)
+} while (/* CONSTCOND */ 0)
 #else
 #define	FILE_USE_CHECK(fp, str)		/* nothing */
 #endif
@@ -102,7 +112,7 @@ do {									\
 do {									\
 	(fp)->f_usecount++;						\
 	FILE_USE_CHECK((fp), "f_usecount overflow");			\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #define	FILE_UNUSE(fp, p)						\
 do {									\
@@ -113,7 +123,7 @@ do {									\
 		(fp)->f_usecount--;					\
 		FILE_USE_CHECK((fp), "f_usecount underflow");		\
 	}								\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 /*
  * Flags for fo_read and fo_write.

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.92.2.1 2001/04/09 01:58:57 nathanw Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.92.2.2 2001/06/21 20:09:35 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -857,7 +857,8 @@ nfsm_mbuftouio(mrep, uiop, siz, dpos)
 			uiop->uio_iovcnt--;
 			uiop->uio_iov++;
 		} else {
-			(caddr_t)uiop->uio_iov->iov_base += uiosiz;
+			uiop->uio_iov->iov_base =
+			    (caddr_t)uiop->uio_iov->iov_base + uiosiz;
 			uiop->uio_iov->iov_len -= uiosiz;
 		}
 		siz -= uiosiz;
@@ -936,7 +937,8 @@ nfsm_uiotombuf(uiop, mq, siz, bpos)
 			uiop->uio_offset += xfer;
 			uiop->uio_resid -= xfer;
 		}
-		(caddr_t)uiop->uio_iov->iov_base += uiosiz;
+		uiop->uio_iov->iov_base = (caddr_t)uiop->uio_iov->iov_base +
+		    uiosiz;
 		uiop->uio_iov->iov_len -= uiosiz;
 		siz -= uiosiz;
 	}
@@ -1599,16 +1601,19 @@ nfs_loadattrcache(vpp, fp, vaper)
 				 * Since the nfsnode does not have a lock, its
 				 * vnode lock has to be carried over.
 				 */
+				/*
+				 * XXX is the old node sure to be locked here?
+				 */
+				KASSERT(lockstatus(&vp->v_lock) ==
+				    LK_EXCLUSIVE);
 				nvp->v_data = vp->v_data;
 				vp->v_data = NULL;
 				VOP_UNLOCK(vp, 0);
 				vp->v_op = spec_vnodeop_p;
 				vrele(vp);
 				vgone(vp);
-				/*
-				 * XXX When nfs starts locking, we need to
-				 * lock the new node here.
-				 */
+				lockmgr(&nvp->v_lock, LK_EXCLUSIVE,
+				    &nvp->v_interlock);
 				/*
 				 * Reinitialize aliased node.
 				 */

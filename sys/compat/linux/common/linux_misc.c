@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.83.2.2 2001/04/09 01:55:42 nathanw Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.83.2.3 2001/06/21 19:59:53 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -1227,25 +1227,22 @@ linux_sys_ptrace(l, v, retval)
 	register_t *retval;
 {
 	struct linux_sys_ptrace_args /* {
-		i386, m68k: T=int
+		i386, m68k, powerpc: T=int
 		alpha: T=long
 		syscallarg(T) request;
 		syscallarg(T) pid;
 		syscallarg(T) addr;
 		syscallarg(T) data;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	const int *ptr;
 	int request;
+	int error;
 
 	ptr = linux_ptrace_request_map;
 	request = SCARG(uap, request);
 	while (*ptr != -1)
 		if (*ptr++ == request) {
 			struct sys_ptrace_args pta;
-			caddr_t sg;
-
-			sg = stackgap_init(p->p_emul);
 
 			SCARG(&pta, req) = *ptr;
 			SCARG(&pta, pid) = SCARG(uap, pid);
@@ -1254,14 +1251,27 @@ linux_sys_ptrace(l, v, retval)
 
 			/*
 			 * Linux ptrace(PTRACE_CONT, pid, 0, 0) means actually
-			 * to continue as the process left off previously,
-			 * i.e. same as if NetBSD ptrace called with
-			 * addr == (caddr_t) 1.
+			 * to continue where the process left off previously.
+			 * The same thing is achieved by addr == (caddr_t) 1
+			 * on NetBSD, so rewrite 'addr' appropriately.
 			 */
 			if (request == LINUX_PTRACE_CONT && SCARG(uap, addr)==0)
 				SCARG(&pta, addr) = (caddr_t) 1;
 			
-			return sys_ptrace(l, &pta, retval);
+			error = sys_ptrace(l, &pta, retval);
+			if (error) 
+				return error;
+			switch (request) {
+			case LINUX_PTRACE_PEEKTEXT:
+			case LINUX_PTRACE_PEEKDATA:
+				error = copyout (retval, 
+				    (caddr_t)SCARG(uap, data), sizeof *retval);
+				*retval = SCARG(uap, data);
+				break;
+			default:	
+				break;
+			}
+			return error;
 		}
 		else
 			ptr++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dmphy.c,v 1.8 2000/07/04 03:28:59 thorpej Exp $	*/
+/*	$NetBSD: dmphy.c,v 1.8.4.1 2001/06/21 20:04:17 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -103,6 +103,17 @@ const struct mii_phy_funcs dmphy_funcs = {
 	dmphy_service, dmphy_status, mii_phy_reset,
 };
 
+const struct mii_phydesc dmphys[] = {
+	{ MII_OUI_xxDAVICOM,		MII_MODEL_xxDAVICOM_DM9101,
+	  MII_STR_xxDAVICOM_DM9101 },
+
+	{ MII_OUI_DAVICOM,		MII_MODEL_xxDAVICOM_DM9101,
+	  MII_STR_xxDAVICOM_DM9101 },
+
+	{ 0,				0,
+	  NULL },
+};
+
 int
 dmphymatch(parent, match, aux)
 	struct device *parent;
@@ -111,9 +122,7 @@ dmphymatch(parent, match, aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	if ((MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxDAVICOM ||
-	     MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_DAVICOM) &&
-	    (MII_MODEL(ma->mii_id2) == MII_MODEL_xxDAVICOM_DM9101))
+	if (mii_phy_match(ma, dmphys) != NULL)
 		return (10);
 
 	return (0);
@@ -127,15 +136,17 @@ dmphyattach(parent, self, aux)
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
+	const struct mii_phydesc *mpd;
 
-	printf(": %s, rev. %d\n", MII_STR_xxDAVICOM_DM9101,
-	    MII_REV(ma->mii_id2));
+	mpd = mii_phy_match(ma, dmphys);  
+	printf(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &dmphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags;
+	sc->mii_anegticks = 5;
 
 	PHY_RESET(sc);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.10.2.2 2001/04/09 01:56:08 nathanw Exp $	*/
+/*	$NetBSD: an.c,v 1.10.2.3 2001/06/21 20:02:13 nathanw Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1038,8 +1038,14 @@ static int an_ioctl(ifp, command, data)
 	ifr = (struct ifreq *)data;
 	s = splnet();
 
-	switch(command) {
+	switch (command) {
 	case SIOCSIFFLAGS:
+		/*
+		 * Handle special case for IFF_PROMISC.  If only IFF_PROMISC
+		 * flag is changed, do not call an_init() to avoid initiating
+		 * reassociation to another access point.  It is really
+		 * helpful for tcpdump(8).
+		 */
 		if ((ifp->if_flags & sc->an_if_flags &
 		    (IFF_UP | IFF_RUNNING)) == (IFF_UP | IFF_RUNNING)) {
 			if (ifp->if_flags & IFF_PROMISC &&
@@ -1184,6 +1190,19 @@ static int an_ioctl(ifp, command, data)
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, command);
 		break;
 #endif
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		error = (command == SIOCADDMULTI) ?
+			ether_addmulti(ifr, &sc->arpcom) :
+			ether_delmulti(ifr, &sc->arpcom);
+		if (error == ENETRESET) {
+			/*
+			 * Multicast list has changed.  Should set the
+			 * hardware filter accordingly here.
+			 */
+			error = 0;
+		}
+		break;
 	default:
 		error = ether_ioctl(ifp, command, data);
 		break;
@@ -1416,7 +1435,7 @@ static void an_start(ifp)
 	idx = sc->an_rdata.an_tx_prod;
 	bzero((char *)&tx_frame_802_3, sizeof(tx_frame_802_3));
 
-	while(sc->an_rdata.an_tx_ring[idx] == 0) {
+	while (sc->an_rdata.an_tx_ring[idx] == 0) {
 		IFQ_DEQUEUE(&ifp->if_snd, m0);
 		if (m0 == NULL)
 			break;
@@ -1620,7 +1639,7 @@ void an_cache_store (sc, eh, m, rx_quality)
 
 	/* filter for ip packets only 
 	*/
-	if ( an_cache_iponly && !saanp) {
+	if (an_cache_iponly && !saanp) {
 		return;
 	}
 
@@ -1673,7 +1692,7 @@ void an_cache_store (sc, eh, m, rx_quality)
 		 * note: an_nextitem also holds number of entries
 		 * added in the cache table 
 		 */
-		if ( sc->an_nextitem < MAXANCACHE ) {
+		if (sc->an_nextitem < MAXANCACHE ) {
 			cache_slot = sc->an_nextitem;
 			sc->an_nextitem++;                 
 			sc->an_sigitems = sc->an_nextitem;
@@ -1707,7 +1726,7 @@ void an_cache_store (sc, eh, m, rx_quality)
 	if (saanp) {
 		sc->an_sigcache[cache_slot].ipsrc = ip->ip_src.s_addr;
 	}
-	bcopy( eh->ether_shost, sc->an_sigcache[cache_slot].macsrc,  6);
+	bcopy(eh->ether_shost, sc->an_sigcache[cache_slot].macsrc, 6);
 
 	sc->an_sigcache[cache_slot].signal = rx_quality;
 

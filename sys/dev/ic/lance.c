@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.17 2000/12/14 06:27:25 thorpej Exp $	*/
+/*	$NetBSD: lance.c,v 1.17.2.1 2001/06/21 20:02:47 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -75,10 +75,8 @@
  *	@(#)if_le.c	8.2 (Berkeley) 11/16/93
  */
 
-#include "opt_inet.h"
 #include "opt_ccitt.h"
 #include "opt_llc.h"
-#include "opt_ns.h"
 #include "bpfilter.h"
 #include "rnd.h"
 
@@ -100,19 +98,6 @@
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/if_inarp.h>
-#include <netinet/in_systm.h>
-#include <netinet/in_var.h>
-#include <netinet/ip.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
-
 #if defined(CCITT) && defined(LLC)
 #include <sys/socketvar.h>
 #include <netccitt/x25.h>
@@ -129,7 +114,7 @@
 #include <dev/ic/lancereg.h>
 #include <dev/ic/lancevar.h>
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
 #endif
 
@@ -150,7 +135,7 @@ void lance_mediastatus __P((struct ifnet *, struct ifmediareq *));
 
 static inline u_int16_t ether_cmp __P((void *, void *));
 
-void lance_stop __P((struct lance_softc *));
+void lance_stop __P((struct ifnet *, int));
 int lance_ioctl __P((struct ifnet *, u_long, caddr_t));
 void lance_watchdog __P((struct ifnet *));
 
@@ -204,16 +189,12 @@ ether_cmp(one, two)
 static u_int16_t bcast_enaddr[3] = { ~0, ~0, ~0 };
 #endif
 
-#define	ifp	(&sc->sc_ethercom.ec_if)
-
 void
 lance_config(sc)
 	struct lance_softc *sc;
 {
-	int i;
-
-	/* Make sure the chip is stopped. */
-	lance_stop(sc);
+	int i, nbuf;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 	/* Initialize ifnet structure. */
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
@@ -221,6 +202,8 @@ lance_config(sc)
 	ifp->if_start = sc->sc_start;
 	ifp->if_ioctl = lance_ioctl;
 	ifp->if_watchdog = lance_watchdog;
+	ifp->if_init = lance_init;
+	ifp->if_stop = lance_stop;
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 #ifdef LANCE_REVC_BUG
@@ -266,12 +249,18 @@ lance_config(sc)
 		sc->sc_ntbuf = 32;
 		break;
 	default:
-		panic("lance_config: weird memory size");
+		/* weird memory size; cope with it */
+		nbuf = sc->sc_memsize / LEBLEN;
+		sc->sc_ntbuf = nbuf / 5;
+		sc->sc_nrbuf = nbuf - sc->sc_ntbuf;
 	}
 
 	printf(": address %s\n", ether_sprintf(sc->sc_enaddr));
 	printf("%s: %d receive buffers, %d transmit buffers\n",
 	    sc->sc_dev.dv_xname, sc->sc_nrbuf, sc->sc_ntbuf);
+
+	/* Make sure the chip is stopped. */
+	lance_stop(ifp, 0);
 
 	/* claim 802.1q capability */
 	sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
@@ -279,7 +268,7 @@ lance_config(sc)
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
 
-	sc->sc_sh = shutdownhook_establish(lance_shutdown, sc);
+	sc->sc_sh = shutdownhook_establish(lance_shutdown, ifp);
 	if (sc->sc_sh == NULL)
 		panic("lance_config: can't establish shutdownhook");
 	sc->sc_rbufaddr = malloc(sc->sc_nrbuf * sizeof(int), M_DEVBUF,
@@ -300,14 +289,16 @@ lance_reset(sc)
 	int s;
 
 	s = splnet();
-	lance_init(sc);
+	lance_init(&sc->sc_ethercom.ec_if);
 	splx(s);
 }
 
 void
-lance_stop(sc)
-	struct lance_softc *sc;
+lance_stop(ifp, disable)
+	struct ifnet *ifp;
+	int disable;
 {
+	struct lance_softc *sc = ifp->if_softc;
 
 	(*sc->sc_wrcsr)(sc, LE_CSR0, LE_C0_STOP);
 }
@@ -316,10 +307,11 @@ lance_stop(sc)
  * Initialization of interface; set up initialization block
  * and transmit/receive descriptor rings.
  */
-void
-lance_init(sc)
-	struct lance_softc *sc;
+int
+lance_init(ifp)
+	struct ifnet *ifp;
 {
+	struct lance_softc *sc = ifp->if_softc;
 	int timo;
 	u_long a;
 
@@ -363,6 +355,8 @@ lance_init(sc)
 			sc->sc_dev.dv_xname);
 	if (sc->sc_hwinit)
 		(*sc->sc_hwinit)(sc);
+
+	return (0);
 }
 
 /*
@@ -413,7 +407,7 @@ lance_get(sc, boff, totlen)
 	MGETHDR(m0, M_DONTWAIT, MT_DATA);
 	if (m0 == 0)
 		return (0);
-	m0->m_pkthdr.rcvif = ifp;
+	m0->m_pkthdr.rcvif = &sc->sc_ethercom.ec_if;
 	m0->m_pkthdr.len = totlen;
 	len = MHLEN;
 	m = m0;
@@ -464,6 +458,7 @@ lance_read(sc, boff, len)
 	int boff, len;
 {
 	struct mbuf *m;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 #ifdef LANCE_REVC_BUG
 	struct ether_header *eh;
 #endif
@@ -571,7 +566,6 @@ lance_ioctl(ifp, cmd, data)
 	caddr_t data;
 {
 	struct lance_softc *sc = ifp->if_softc;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
@@ -580,80 +574,23 @@ lance_ioctl(ifp, cmd, data)
 	switch (cmd) {
 
 	case SIOCSIFADDR:
-		ifp->if_flags |= IFF_UP;
-
-		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
-		case AF_INET:
-			lance_init(sc);
-			arp_ifinit(ifp, ifa);
-			break;
-#endif
-#ifdef NS
-		case AF_NS:
-		    {
-			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			if (ns_nullhost(*ina))
-				ina->x_host =
-				    *(union ns_host *)LLADDR(ifp->if_sadl);
-			else {
-				bcopy(ina->x_host.c_host,
-				    LLADDR(ifp->if_sadl),
-				    sizeof(sc->sc_enaddr));
-			}	
-			/* Set new address. */
-			lance_init(sc);
-			break;
-		    }
-#endif
-		default:
-			lance_init(sc);
-			break;
-		}
+	case SIOCSIFFLAGS:
+		error = ether_ioctl(ifp, cmd, data);
 		break;
 
 #if defined(CCITT) && defined(LLC)
 	case SIOCSIFCONF_X25:
+	    {
+		struct ifaddr *ifa = (struct ifaddr *) data;
+
 		ifp->if_flags |= IFF_UP;
 		ifa->ifa_rtrequest = cons_rtrequest; /* XXX */
 		error = x25_llcglue(PRC_IFUP, ifa->ifa_addr);
 		if (error == 0)
-			lance_init(sc);
+			lance_init(&sc->sc_ethercom.ec_if);
 		break;
+	    }
 #endif /* CCITT && LLC */
-
-	case SIOCSIFFLAGS:
-		if ((ifp->if_flags & IFF_UP) == 0 &&
-		    (ifp->if_flags & IFF_RUNNING) != 0) {
-			/*
-			 * If interface is marked down and it is running, then
-			 * stop it.
-			 */
-			lance_stop(sc);
-			ifp->if_flags &= ~IFF_RUNNING;
-		} else if ((ifp->if_flags & IFF_UP) != 0 &&
-		    	   (ifp->if_flags & IFF_RUNNING) == 0) {
-			/*
-			 * If interface is marked up and it is stopped, then
-			 * start it.
-			 */
-			lance_init(sc);
-		} else if ((ifp->if_flags & IFF_UP) != 0) {
-			/*
-			 * Reset the interface to pick up changes in any other
-			 * flags that affect hardware registers.
-			 */
-			/*lance_stop(sc);*/
-			lance_init(sc);
-		}
-#ifdef LEDEBUG
-		if (ifp->if_flags & IFF_DEBUG)
-			sc->sc_debug = 1;
-		else
-			sc->sc_debug = 0;
-#endif
-		break;
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
@@ -690,7 +627,7 @@ lance_shutdown(arg)
 	void *arg;
 {
 
-	lance_stop((struct lance_softc *)arg);
+	lance_stop((struct ifnet *)arg, 0);
 }
 
 /*

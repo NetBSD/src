@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.21.2.1 2001/04/09 01:57:20 nathanw Exp $	*/
+/*	$NetBSD: dhu.c,v 1.21.2.2 2001/06/21 20:05:24 nathanw Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -144,13 +144,8 @@ static	void	dhustart __P((struct tty *));
 static	int	dhuparam __P((struct tty *, struct termios *));
 static	int	dhuiflow __P((struct tty *, int));
 static unsigned	dhumctl __P((struct dhu_softc *,int, int, int));
-	int	dhuopen __P((dev_t, int, int, struct proc *));
-	int	dhuclose __P((dev_t, int, int, struct proc *));
-	int	dhuread __P((dev_t, struct uio *, int));
-	int	dhuwrite __P((dev_t, struct uio *, int));
-	int	dhuioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-	void	dhustop __P((struct tty *, int));
-struct tty *	dhutty __P((dev_t));
+
+cdev_decl(dhu);
 
 struct	cfattach dhu_ca = {
 	sizeof(struct dhu_softc), dhu_match, dhu_attach
@@ -484,6 +479,21 @@ dhuwrite(dev, uio, flag)
 
 	tp = sc->sc_dhu[DHU_LINE(minor(dev))].dhu_tty;
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
+}
+
+int
+dhupoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	struct dhu_softc *sc;
+	struct tty *tp;
+
+	sc = dhu_cd.cd_devs[DHU_M2U(minor(dev))];
+
+	tp = sc->sc_dhu[DHU_LINE(minor(dev))].dhu_tty;
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 /*ARGSUSED*/

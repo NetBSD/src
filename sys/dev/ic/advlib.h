@@ -1,4 +1,4 @@
-/*      $NetBSD: advlib.h,v 1.11.14.1 2001/04/09 01:56:04 nathanw Exp $        */
+/*      $NetBSD: advlib.h,v 1.11.14.2 2001/06/21 20:01:54 nathanw Exp $        */
 
 /*
  * Definitions for low level routines and data structures
@@ -854,10 +854,9 @@ typedef struct asc_softc
 
 	struct adv_ccb		*sc_ccbhash[CCB_HASH_SIZE];
 	TAILQ_HEAD(, adv_ccb)	sc_free_ccb, sc_waiting_ccb;
-	struct scsipi_link	sc_link;	/* prototype for devs */
-	struct scsipi_adapter	sc_adapter;
 
-	TAILQ_HEAD(, scsipi_xfer) sc_queue;
+	struct scsipi_adapter	sc_adapter;
+	struct scsipi_channel	sc_channel;
 
 	bus_addr_t		overrun_buf;
 

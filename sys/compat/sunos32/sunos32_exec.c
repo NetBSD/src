@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_exec.c,v 1.2 2001/02/05 12:48:13 mrg Exp $	 */
+/*	$NetBSD: sunos32_exec.c,v 1.2.4.1 2001/06/21 20:00:31 nathanw Exp $	 */
 
 /*
  * Copyright (c) 2001 Matthew R. Green
@@ -28,7 +28,7 @@
  * SUCH DAMAGE.
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
 #endif
 
@@ -61,6 +61,7 @@ struct emul emul_sunos = {
 	NULL,
 #endif
 	sunos32_sendsig,
+	trapsignal,
 	sunos_sigcode,
 	sunos_esigcode,
 	NULL,

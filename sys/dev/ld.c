@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.7 2001/02/04 17:15:37 ad Exp $	*/
+/*	$NetBSD: ld.c,v 1.7.2.1 2001/06/21 20:01:15 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -95,6 +95,22 @@ ldattach(struct ld_softc *sc)
 
 	if (sc->sc_maxxfer > MAXPHYS)
 		sc->sc_maxxfer = MAXPHYS;
+
+	/* Build synthetic geometry. */
+	if (sc->sc_secperunit <= 528 * 2048)		/* 528MB */
+		sc->sc_nheads = 16;
+	else if (sc->sc_secperunit <= 1024 * 2048)	/* 1GB */
+		sc->sc_nheads = 32;
+	else if (sc->sc_secperunit <= 21504 * 2048)	/* 21GB */
+		sc->sc_nheads = 64;
+	else if (sc->sc_secperunit <= 43008 * 2048)	/* 42GB */
+		sc->sc_nheads = 128;
+	else
+		sc->sc_nheads = 255;
+
+	sc->sc_nsectors = 63;
+	sc->sc_ncylinders = sc->sc_secperunit / 
+	    (sc->sc_nheads * sc->sc_nsectors);
 
 	format_bytes(buf, sizeof(buf), (u_int64_t)sc->sc_secperunit *
 	    sc->sc_secsize);
@@ -204,6 +220,7 @@ ldenddetach(struct ld_softc *sc)
 			    sc->sc_dv.dv_xname);
 }
 
+/* ARGSUSED */
 static void
 ldshutdown(void *cookie)
 {
@@ -219,6 +236,7 @@ ldshutdown(void *cookie)
 	}
 }
 
+/* ARGSUSED */
 int
 ldopen(dev_t dev, int flags, int fmt, struct proc *p)
 {
@@ -259,6 +277,7 @@ ldopen(dev_t dev, int flags, int fmt, struct proc *p)
 	return (0);
 }
 
+/* ARGSUSED */
 int
 ldclose(dev_t dev, int flags, int fmt, struct proc *p)
 {
@@ -290,6 +309,7 @@ ldclose(dev_t dev, int flags, int fmt, struct proc *p)
 	return (0);
 }
 
+/* ARGSUSED */
 int
 ldread(dev_t dev, struct uio *uio, int ioflag)
 {
@@ -297,6 +317,7 @@ ldread(dev_t dev, struct uio *uio, int ioflag)
 	return (physio(ldstrategy, NULL, dev, B_READ, ldminphys, uio));
 }
 
+/* ARGSUSED */
 int
 ldwrite(dev_t dev, struct uio *uio, int ioflag)
 {
@@ -304,6 +325,7 @@ ldwrite(dev_t dev, struct uio *uio, int ioflag)
 	return (physio(ldstrategy, NULL, dev, B_WRITE, ldminphys, uio));
 }
 
+/* ARGSUSED */
 int
 ldioctl(dev_t dev, u_long cmd, caddr_t addr, int32_t flag, struct proc *p)
 {

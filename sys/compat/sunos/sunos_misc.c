@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.108 2001/02/12 19:49:20 fvdl Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.108.2.1 2001/06/21 20:00:26 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
 
 #define COMPAT_SUNOS 1
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
 #include "fs_nfs.h"
 #endif
@@ -632,8 +632,7 @@ sunos_sys_mmap(p, v, retval)
 	 * Special case: if fd refers to /dev/zero, map as MAP_ANON.  (XXX)
 	 */
 	fdp = p->p_fd;
-	if ((unsigned)SCARG(&ouap, fd) < fdp->fd_nfiles &&		/*XXX*/
-	    (fp = fdp->fd_ofiles[SCARG(&ouap, fd)]) != NULL &&		/*XXX*/
+	if ((fp = fd_getfile(fdp, SCARG(&ouap, fd))) != NULL &&		/*XXX*/
 	    fp->f_type == DTYPE_VNODE &&				/*XXX*/
 	    (vp = (struct vnode *)fp->f_data)->v_type == VCHR &&	/*XXX*/
 	    iszerodev(vp->v_rdev)) {					/*XXX*/
@@ -819,10 +818,12 @@ sunos_sys_open(p, v, retval)
 
 	if (!ret && !noctty && SESS_LEADER(p) && !(p->p_flag & P_CONTROLT)) {
 		struct filedesc *fdp = p->p_fd;
-		struct file *fp = fdp->fd_ofiles[*retval];
+		struct file *fp;
+
+		fp = fd_getfile(fdp, *retval);
 
 		/* ignore any error, just give it a try */
-		if (fp->f_type == DTYPE_VNODE)
+		if (fp != NULL && fp->f_type == DTYPE_VNODE)
 			(fp->f_ops->fo_ioctl)(fp, TIOCSCTTY, (caddr_t)0, p);
 	}
 	return ret;

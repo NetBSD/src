@@ -1,4 +1,4 @@
-/* $NetBSD: if_tireg.h,v 1.3 2000/11/17 19:33:25 bouyer Exp $ */
+/* $NetBSD: if_tireg.h,v 1.3.2.1 2001/06/21 20:04:52 nathanw Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -768,11 +768,7 @@ struct ti_tx_desc {
 
 #define ETHER_ALIGN 2
 
-#define TI_FRAMELEN		1518
-#define TI_JUMBO_FRAMELEN	9018
-#define TI_JUMBO_MTU		(TI_JUMBO_FRAMELEN-ETHER_HDR_LEN-ETHER_CRC_LEN)
 #define TI_PAGE_SIZE		PAGE_SIZE
-#define TI_MIN_FRAMELEN		60
 
 /*
  * Buffer descriptor error flags.
@@ -973,15 +969,15 @@ struct ti_event_desc {
  */
 
 #define CSR_WRITE_4(sc, reg, val)	\
-	bus_space_write_4(sc->ti_btag, sc->ti_bhandle, reg, val)
+	bus_space_write_4(sc->ti_btag, sc->ti_bhandle, (reg), (val))
 
 #define CSR_READ_4(sc, reg)		\
-	bus_space_read_4(sc->ti_btag, sc->ti_bhandle, reg)
+	bus_space_read_4(sc->ti_btag, sc->ti_bhandle, (reg))
 
 #define TI_SETBIT(sc, reg, x)	\
-	CSR_WRITE_4(sc, reg, (CSR_READ_4(sc, reg) | x))
+	CSR_WRITE_4(sc, (reg), (CSR_READ_4(sc, (reg)) | (x)))
 #define TI_CLRBIT(sc, reg, x)	\
-	CSR_WRITE_4(sc, reg, (CSR_READ_4(sc, reg) & ~x))
+	CSR_WRITE_4(sc, (reg), (CSR_READ_4(sc, (reg)) & ~(x)))
 
 /*
  * Memory management stuff. Note: the SSLOTS, MSLOTS and JSLOTS
@@ -994,7 +990,7 @@ struct ti_event_desc {
 #define TI_JSLOTS	64 /* 256 */
 #define TI_RSLOTS	128
 
-#define TI_JRAWLEN (TI_JUMBO_FRAMELEN + ETHER_ALIGN + sizeof(u_int64_t))
+#define TI_JRAWLEN (ETHER_MAX_LEN_JUMBO + ETHER_ALIGN + sizeof(u_int64_t))
 #define TI_JLEN (TI_JRAWLEN + (sizeof(u_int64_t) - \
 	(TI_JRAWLEN % sizeof(u_int64_t))))
 #define TI_JPAGESZ PAGE_SIZE

@@ -1,3 +1,5 @@
+/*        $NetBSD: ieee1212reg.h,v 1.1.8.1 2001/06/21 20:06:09 nathanw Exp $ */
+
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -113,9 +115,13 @@
  */
 #define	P1212_ROMFMT_GET_CRCLEN(quadlet)	(((quadlet) >> 16) & 0xff)
 
-/*	size_t P1212_ROMGET_GET_INFOLEN(uint32_t quadlet);
+/*	size_t P1212_ROMGET_GET_CRC(uint32_t quadlet);
  */
 #define	P1212_ROMFMT_GET_CRC(quadlet)		((uint16_t)(quadlet))
+
+/*      uint8_t      P1212_DIRENT_GET_KEY(uint32_t quadlet);
+ */
+#define P1212_DIRENT_GET_KEY(quadlet)           (((quadlet) >> 24) & 0xff)
 
 /*	unsigned int P1212_DIRENT_GET_KEYTYPE(uint32_t quadlet);
  */
@@ -125,17 +131,21 @@
  */
 #define	P1212_DIRENT_GET_KEYVALUE(quadlet)	(((quadlet) >> 24) & 0x3f)
 
-/*	unsigned int P1212_DIRECT_GET_OFFSET(uint32_t quadlet);
+/*	unsigned int P1212_DIRENT_GET_OFFSET(uint32_t quadlet);
  */
 #define	P1212_DIRENT_GET_OFFSET(quadlet)	((quadlet) & 0xffffff)
 
-/*	unsigned int P1212_DIRECT_GET_OFFSET(uint32_t quadlet);
- */
-#define	P1212_DIRENT_GET_OFFSET(quadlet)	((quadlet) & 0xffffff)
-
-/*	unsigned int P1212_DIRECT_GET_VALUE(uint32_t quadlet);
+/*	unsigned int P1212_DIRENT_GET_VALUE(uint32_t quadlet);
  */
 #define	P1212_DIRENT_GET_VALUE(quadlet)		((quadlet) & 0xffffff)
+
+/*      u_int16_t P1212_DIRENT_GET_LEN(quadlet);
+ */
+#define P1212_DIRENT_GET_LEN(quadlet)           (((quadlet) >> 16) & 0xffff)
+
+/*      u_int16_t P1212_DIRENT_GET_CRC(quadlet);
+ */
+#define P1212_DIRENT_GET_CRC(quadlet)           ((uint16_t)(quadlet))
 
 /* Key Types are stored in bits 31-30 of a directory entry.
  */
@@ -169,6 +179,7 @@
 #define	P1212_KEYVALUE_Unit_Dependent_Info	0x14	/* leaf | directory */
 #define	P1212_KEYVALUE_Unit_Location		0x15	/* leaf */
 #define	P1212_KEYVALUE_Unit_Poll_Mask		0x16	/* immediate */
+#define	P1212_KEYVALUE_Model_Id 		0x17	/* immediate */
 
 #define	P1212_KEYTYPE_STRINGS { "Immediate", "Offset", "Leaf", "Directory" }
 
@@ -180,7 +191,7 @@
 	"Node-Unique-Id", "Node-Units-Extent", "Node-Memory-Extent", \
 	"Node-Dependent-Info", "Unit-Directory", "Unit-Spec-Id", \
 	"Unit-Sw-Version", "Unit-Dependent-Info", "Unit-Location", \
-	"Unit-Poll-Mask", }
+	"Unit-Poll-Mask", "Model-Id" }
 
 /* Leaf nodes look like:
  *

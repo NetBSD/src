@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.21.2.1 2001/04/09 01:58:42 nathanw Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.21.2.2 2001/06/21 20:09:05 nathanw Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -1337,7 +1337,10 @@ in6_ifadd(ifp, in6, addr, prefixlen)
 		sol6.s6_addr32[2] = htonl(1);
 		sol6.s6_addr32[3] = ia->ia_addr.sin6_addr.s6_addr32[3];
 		sol6.s6_addr8[12] = 0xff;
-		(void)in6_addmulti(&sol6, ifp, &error);
+		if (!in6_addmulti(&sol6, ifp, &error)) {
+			nd6log((LOG_ERR, "%s: failed to join %s (errno=%d)\n",
+			    if_name(ifp), ip6_sprintf(&sol6), error));
+		}
 	}
 
 	ia->ia6_flags |= IN6_IFF_TENTATIVE;
@@ -1345,7 +1348,7 @@ in6_ifadd(ifp, in6, addr, prefixlen)
 	/*
 	 * To make the interface up. Only AF_INET6 in ia is used...
 	 */
-	s = splimp();
+	s = splnet();
 	if (ifp->if_ioctl && (*ifp->if_ioctl)(ifp, SIOCSIFADDR, (caddr_t)ia)) {
 		splx(s);
 		return NULL;

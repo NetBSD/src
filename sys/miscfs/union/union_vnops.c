@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.50.2.1 2001/03/05 22:49:52 nathanw Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.50.2.2 2001/06/21 20:07:47 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995 Jan-Simon Pendry.
@@ -1981,7 +1981,7 @@ union_getpages(v)
 	struct vop_getpages_args /* {
 		struct vnode *a_vp;
 		voff_t a_offset;
-		vm_page_t *a_m;
+		struct vm_page **a_m;
 		int *a_count;
 		int a_centeridx;
 		vm_prot_t a_access_type;
@@ -2007,12 +2007,13 @@ union_getpages(v)
 	}
 	npages = *ap->a_count;
 	simple_lock(&ap->a_vp->v_uvm.u_obj.vmobjlock);
-	for (i = 0; i < npages; i++) {
+	for (i = 0; npages > 0; i++) {
 		pg = ap->a_m[i];
-		if (pg == NULL) {
+		if (pg == NULL || pg == PGO_DONTCARE) {
 			continue;
 		}
 		pg->flags |= PG_RDONLY;
+		npages--;
 	}
 	simple_unlock(&ap->a_vp->v_uvm.u_obj.vmobjlock);
 	return 0;

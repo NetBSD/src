@@ -1,6 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.21.2.1 2001/04/09 01:57:17 nathanw Exp $	*/
-
-#define	PCMCIACISDEBUG
+/*	$NetBSD: pcmcia_cis.c,v 1.21.2.2 2001/06/21 20:05:20 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.

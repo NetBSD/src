@@ -1,6 +1,6 @@
-/*	$NetBSD: uvm_bio.c,v 1.7.2.1 2001/04/09 01:59:11 nathanw Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.7.2.2 2001/06/21 20:10:23 nathanw Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1998 Chuck Silvers.
  * All rights reserved.
  *
@@ -53,9 +53,8 @@
  * local functions
  */
 
-static int	ubc_fault __P((struct uvm_faultinfo *, vaddr_t, 
-			       vm_page_t *, int, int, vm_fault_t, vm_prot_t,
-			       int));
+static int	ubc_fault __P((struct uvm_faultinfo *, vaddr_t,
+		    struct vm_page **, int, int, vm_fault_t, vm_prot_t, int));
 static struct ubc_map *ubc_find_mapping __P((struct uvm_object *, voff_t));
 
 /*
@@ -131,6 +130,12 @@ ubc_init(void)
 	int i;
 
 	/*
+	 * Make sure ubc_winshift is sane.
+	 */
+	if (ubc_winshift < PAGE_SHIFT)
+		ubc_winshift = PAGE_SHIFT;
+
+	/*
 	 * init ubc_object.
 	 * alloc and init ubc_map's.
 	 * init inactive queues.
@@ -199,7 +204,7 @@ int
 ubc_fault(ufi, ign1, ign2, ign3, ign4, fault_type, access_type, flags)
 	struct uvm_faultinfo *ufi;
 	vaddr_t ign1;
-	vm_page_t *ign2;
+	struct vm_page **ign2;
 	int ign3, ign4;
 	vm_fault_t fault_type;
 	vm_prot_t access_type;
@@ -331,6 +336,7 @@ again:
 		UVM_PAGE_OWN(pg, NULL);
 	}
 	simple_unlock(&uobj->vmobjlock);
+	pmap_update();
 	return 0;
 }
 
@@ -416,6 +422,7 @@ again:
 		va = (vaddr_t)(ubc_object.kva +
 			       ((umap - ubc_object.umap) << ubc_winshift));
 		pmap_remove(pmap_kernel(), va, va + ubc_winsize);
+		pmap_update();
 	}
 
 	if (umap->refcount == 0) {
@@ -487,6 +494,7 @@ ubc_release(va, wlen)
 			va = (vaddr_t)(ubc_object.kva +
 			    ((umap - ubc_object.umap) << ubc_winshift));
 			pmap_remove(pmap_kernel(), va, va + ubc_winsize);
+			pmap_update();
 			LIST_REMOVE(umap, hash);
 			umap->uobj = NULL;
 			TAILQ_INSERT_HEAD(UBC_QUEUE(umap->offset), umap,
@@ -519,13 +527,13 @@ ubc_flush(uobj, start, end)
 	UVMHIST_LOG(ubchist, "uobj %p start 0x%lx end 0x%lx",
 		    uobj, start, end,0);
 
-	s = splbio(); 
+	s = splbio();
 	simple_lock(&ubc_object.uobj.vmobjlock);
 	for (umap = ubc_object.umap;
 	     umap < &ubc_object.umap[ubc_nwins];
 	     umap++) {
 
-		if (umap->uobj != uobj || 
+		if (umap->uobj != uobj ||
 		    umap->offset < start ||
 		    (umap->offset >= end && end != 0) ||
 		    umap->refcount > 0) {
@@ -540,6 +548,7 @@ ubc_flush(uobj, start, end)
 		va = (vaddr_t)(ubc_object.kva +
 			       ((umap - ubc_object.umap) << ubc_winshift));
 		pmap_remove(pmap_kernel(), va, va + ubc_winsize);
+		pmap_update();
 
 		LIST_REMOVE(umap, hash);
 		umap->uobj = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec.c,v 1.42 2001/02/21 23:53:01 eeh Exp $	 */
+/*	$NetBSD: svr4_exec.c,v 1.42.2.1 2001/06/21 20:00:36 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -66,6 +66,7 @@ const struct emul emul_svr4 = {
 	svr4_sysent,
 	svr4_syscallnames,
 	svr4_sendsig,
+	trapsignal,
 	svr4_sigcode,
 	svr4_esigcode,
 	NULL,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.21.42.1 2001/03/05 22:50:03 nathanw Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.21.42.2 2001/06/21 20:09:51 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -79,8 +79,6 @@ int	process_write_regs __P((struct lwp *l, struct reg *regs));
 #ifndef FIX_SSTEP
 #define FIX_SSTEP(p)
 #endif
-
-int	trace_req __P((struct proc *));
 
 #else /* !_KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_fcntl.c,v 1.10.2.1 2001/03/05 22:49:21 nathanw Exp $	*/
+/*	$NetBSD: ibcs2_fcntl.c,v 1.10.2.2 2001/06/21 19:59:15 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -184,10 +184,12 @@ ibcs2_sys_open(l, v, retval)
 
 	if (!ret && !noctty && SESS_LEADER(p) && !(p->p_flag & P_CONTROLT)) {
 		struct filedesc *fdp = p->p_fd;
-		struct file *fp = fdp->fd_ofiles[*retval];
+		struct file *fp;
+
+		fp = fd_getfile(fdp, *retval);
 
 		/* ignore any error, just give it a try */
-		if (fp->f_type == DTYPE_VNODE)
+		if (fp != NULL && fp->f_type == DTYPE_VNODE)
 			(fp->f_ops->fo_ioctl)(fp, TIOCSCTTY, (caddr_t) 0, p);
 	}
 	return ret;

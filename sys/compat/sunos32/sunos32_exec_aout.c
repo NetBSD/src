@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_exec_aout.c,v 1.1 2001/02/02 07:28:54 mrg Exp $	*/
+/*	$NetBSD: sunos32_exec_aout.c,v 1.1.4.1 2001/06/21 20:00:32 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew R. Green
@@ -28,7 +28,7 @@
  * SUCH DAMAGE.
  */
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_execfmt.h"
 #endif
 

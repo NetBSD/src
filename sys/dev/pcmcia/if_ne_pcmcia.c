@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.70 2001/02/20 22:34:23 aymeric Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.70.2.1 2001/06/21 20:05:16 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -55,6 +55,8 @@
 
 #include <dev/ic/rtl80x9reg.h>
 #include <dev/ic/rtl80x9var.h>
+
+#include <dev/ic/dl10019var.h>
 
 int	ne_pcmcia_match __P((struct device *, struct cfdata *, void *));
 void	ne_pcmcia_attach __P((struct device *, struct device *, void *));
@@ -314,6 +316,16 @@ static const struct ne2000dev {
       PCMCIA_CIS_COREGA_FAST_ETHER_PCC_TX,
       0, -1, { 0x00, 0x00, 0xf4 }, NE2000DVF_DL10019 },
 
+    { PCMCIA_STR_COREGA_FETHER_PCC_TXF,
+      PCMCIA_VENDOR_COREGA, PCMCIA_PRODUCT_COREGA_FETHER_PCC_TXF,
+      PCMCIA_CIS_COREGA_FETHER_PCC_TXF,
+      0, -1, { 0x00, 0x90, 0x99 }, NE2000DVF_DL10019 },
+
+    { PCMCIA_STR_COREGA_FETHER_PCC_TXD,
+      PCMCIA_VENDOR_COREGA, PCMCIA_PRODUCT_COREGA_FETHER_PCC_TXD,
+      PCMCIA_CIS_COREGA_FETHER_PCC_TXD,
+      0, -1, { 0x00, 0x90, 0x99 } },
+
     { PCMCIA_STR_COMPEX_LINKPORT_ENET_B,
       PCMCIA_VENDOR_COMPEX, PCMCIA_PRODUCT_COMPEX_LINKPORT_ENET_B,
       PCMCIA_CIS_COMPEX_LINKPORT_ENET_B,
@@ -324,6 +336,11 @@ static const struct ne2000dev {
       PCMCIA_CIS_SMC_EZCARD,
       0, 0x01c0, { 0x00, 0xe0, 0x29 } },
 
+    { PCMCIA_STR_SOCKET_EA_ETHER,
+      PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCKET_EA_ETHER,
+      PCMCIA_CIS_SOCKET_EA_ETHER,
+      0, -1, { 0x00, 0xc0, 0x1b } },
+
     { PCMCIA_STR_SOCKET_LP_ETHER_CF,
       PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCKET_LP_ETHER_CF,
       PCMCIA_CIS_SOCKET_LP_ETHER_CF,
@@ -333,6 +350,11 @@ static const struct ne2000dev {
       PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCKET_LP_ETHER,
       PCMCIA_CIS_SOCKET_LP_ETHER,
       0, -1, { 0x00, 0xc0, 0x1b } },
+
+    { PCMCIA_STR_KINGSTON_KNE2,
+      PCMCIA_VENDOR_KINGSTON, PCMCIA_PRODUCT_KINGSTON_KNE2,
+      PCMCIA_CIS_KINGSTON_KNE2,
+      0, -1, { 0x00, 0xc0, 0xf0 } },
 
     { PCMCIA_STR_XIRCOM_CFE_10,
       PCMCIA_VENDOR_XIRCOM, PCMCIA_PRODUCT_XIRCOM_CFE_10,
@@ -419,9 +441,6 @@ static const struct ne2000dev {
     { "Kingston KNE-PCM/x",
       0x0000, 0x0000, NULL, NULL, 0,
       0x0ff0, { 0xe2, 0x0c, 0x0f } },
-    { "Kingston KNE-PC2",
-      0x0000, 0x0000, NULL, NULL, 0,
-      0x0180, { 0x00, 0xc0, 0xf0 } },
     { "Longshine LCS-8534",
       0x0000, 0x0000, NULL, NULL, 0,
       0x0000, { 0x08, 0x00, 0x00 } },
@@ -443,9 +462,6 @@ static const struct ne2000dev {
     { "SCM Ethernet",
       0x0000, 0x0000, NULL, NULL, 0,
       0x0ff0, { 0x00, 0x20, 0xcb } },
-    { "Socket EA",
-      0x0000, 0x0000, NULL, NULL, 0,
-      0x4000, { 0x00, 0xc0, 0x1b } },
     { "Volktek NPL-402CT",
       0x0000, 0x0000, NULL, NULL, 0,
       0x0060, { 0x00, 0x40, 0x05 } },
@@ -632,13 +648,30 @@ again:
 	}
 
 	if ((ne_dev->flags & NE2000DVF_DL10019) != 0) {
+		u_int8_t type;
+
 		enaddr = ne_pcmcia_dl10019_get_enaddr(psc, myea);
 		if (enaddr == NULL) {
 			++i;
 			goto again;
 		}
-		nsc->sc_type = NE2000_TYPE_DL10019;
-		typestr = " (DL10019)";
+
+		dsc->sc_mediachange = dl10019_mediachange;
+		dsc->sc_mediastatus = dl10019_mediastatus;
+		dsc->init_card = dl10019_init_card;
+		dsc->stop_card = dl10019_stop_card;
+		dsc->sc_media_init = dl10019_media_init;
+		dsc->sc_media_fini = dl10019_media_fini;
+
+		/* Determine if this is a DL10019 or a DL10022. */
+		type = bus_space_read_1(nsc->sc_asict, nsc->sc_asich, 0x0f);
+		if (type == 0x91 || type == 0x99) {
+			nsc->sc_type = NE2000_TYPE_DL10022;
+			typestr = " (DL10022)";
+		} else {
+			nsc->sc_type = NE2000_TYPE_DL10019;
+			typestr = " (DL10019)";
+		}
 	}
 
 	if ((ne_dev->flags & NE2000DVF_AX88190) != 0) {
@@ -665,17 +698,19 @@ again:
 	/*
 	 * Check for a RealTek 8019.
 	 */
-	bus_space_write_1(dsc->sc_regt, dsc->sc_regh, ED_P0_CR,
-	    ED_CR_PAGE_0 | ED_CR_STP);
-	if (bus_space_read_1(dsc->sc_regt, dsc->sc_regh, NERTL_RTL0_8019ID0)
-		== RTL0_8019ID0 &&
-	    bus_space_read_1(dsc->sc_regt, dsc->sc_regh, NERTL_RTL0_8019ID1)
-		== RTL0_8019ID1) {
-		typestr = " (RTL8019)";
-		dsc->sc_mediachange = rtl80x9_mediachange;
-		dsc->sc_mediastatus = rtl80x9_mediastatus;
-		dsc->init_card = rtl80x9_init_card;
-		dsc->sc_media_init = rtl80x9_media_init;
+	if (nsc->sc_type == 0) {
+		bus_space_write_1(dsc->sc_regt, dsc->sc_regh, ED_P0_CR,
+		    ED_CR_PAGE_0 | ED_CR_STP);
+		if (bus_space_read_1(dsc->sc_regt, dsc->sc_regh,
+		    NERTL_RTL0_8019ID0) == RTL0_8019ID0 &&
+		    bus_space_read_1(dsc->sc_regt, dsc->sc_regh,
+		    NERTL_RTL0_8019ID1) == RTL0_8019ID1) {
+			typestr = " (RTL8019)";
+			dsc->sc_mediachange = rtl80x9_mediachange;
+			dsc->sc_mediastatus = rtl80x9_mediastatus;
+				dsc->init_card = rtl80x9_init_card;
+			dsc->sc_media_init = rtl80x9_media_init;
+		}
 	}
 
 	printf("%s: %s%s Ethernet\n", dsc->sc_dev.dv_xname, ne_dev->name,

@@ -8,7 +8,7 @@
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  * 2. The name of the author may not be used to endorse or promote products
- *    derived from this software withough specific prior written permission
+ *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -26,7 +26,7 @@
  *	i4b_itk_ix1.c - ITK ix1 micro passive card driver for isdn4bsd
  *	--------------------------------------------------------------
  *
- *	$Id: isic_isa_itk_ix1.c,v 1.2 2001/02/20 22:24:38 martin Exp $
+ *	$Id: isic_isa_itk_ix1.c,v 1.2.2.1 2001/06/21 20:03:50 nathanw Exp $
  *
  *      last edit-date: [Fri Jan  5 12:31:50 2001]
  *
@@ -55,7 +55,7 @@
  *
  * The probe routine was derived by trial and error from a representative
  * sample of two cards ;-) The standard way (checking HSCX versions)
- * was extended by reading a zero from a non existant HSCX register (register
+ * was extended by reading a zero from a non existent HSCX register (register
  * 0xff). Reading the config register gives varying results, so this doesn't
  * seem to be used as an id register (like the Teles S0/16.3).
  *

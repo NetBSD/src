@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we_mca.c,v 1.3.2.2 2001/04/09 01:56:48 nathanw Exp $	*/
+/*	$NetBSD: if_we_mca.c,v 1.3.2.3 2001/06/21 20:04:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -277,7 +277,7 @@ we_mca_attach(parent, self, aux)
 	nict = asict = ma->ma_iot;
 	memt = ma->ma_memt;
 
-	printf(" slot %d: %s\n", ma->ma_slot + 1, wep->we_name);
+	printf(" slot %d irq %d: %s\n", ma->ma_slot + 1, irq, wep->we_name);
 
 	/* Map the device. */
 	if (bus_space_map(asict, iobase, WE_NPORTS, 0, &asich)) {
@@ -333,7 +333,6 @@ we_mca_attach(parent, self, aux)
 		printf("%s: can't establish interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}
-	printf("%s: interrupting at irq %d\n", sc->sc_dev.dv_xname, irq);
 }
 
 void

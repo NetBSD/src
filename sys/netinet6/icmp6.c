@@ -1,5 +1,5 @@
-/*	$NetBSD: icmp6.c,v 1.59.2.1 2001/04/09 01:58:34 nathanw Exp $	*/
-/*	$KAME: icmp6.c,v 1.204 2001/03/20 02:44:39 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.59.2.2 2001/06/21 20:08:49 nathanw Exp $	*/
+/*	$KAME: icmp6.c,v 1.212 2001/06/01 05:35:52 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -103,6 +103,9 @@
 #endif
 
 #include "faith.h"
+#if defined(NFAITH) && 0 < NFAITH
+#include <net/if_faith.h>
+#endif
 
 #include <net/net_osdep.h>
 
@@ -454,7 +457,7 @@ icmp6_input(mp, offp, proto)
 	}
 
 #if defined(NFAITH) && 0 < NFAITH
-	if (m->m_pkthdr.rcvif && m->m_pkthdr.rcvif->if_type == IFT_FAITH) {
+	if (faithprefix(&ip6->ip6_dst)) {
 		/*
 		 * Deliver very specific ICMP6 type only.
 		 * This is important to deilver TOOBIG.  Otherwise PMTUD
@@ -2144,7 +2147,8 @@ icmp6_reflect(m, off)
 	if (m->m_pkthdr.rcvif) {
 		/* XXX: This may not be the outgoing interface */
 		ip6->ip6_hlim = nd_ifinfo[m->m_pkthdr.rcvif->if_index].chlim;
-	}
+	} else
+		ip6->ip6_hlim = ip6_defhlim;
 
 	icmp6->icmp6_cksum = 0;
 	icmp6->icmp6_cksum = in6_cksum(m, IPPROTO_ICMPV6,

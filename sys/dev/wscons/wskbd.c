@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.39.2.1 2001/04/09 01:57:45 nathanw Exp $ */
+/* $NetBSD: wskbd.c,v 1.39.2.2 2001/06/21 20:06:36 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.39.2.1 2001/04/09 01:57:45 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.39.2.2 2001/06/21 20:06:36 nathanw Exp $");
 
 /*
  * Copyright (c) 1992, 1993
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.39.2.1 2001/04/09 01:57:45 nathanw Exp $
  */
 
 #include "opt_ddb.h"
+#include "opt_kgdb.h"
 
 #include <sys/param.h>
 #include <sys/conf.h>

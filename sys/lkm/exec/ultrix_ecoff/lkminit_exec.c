@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.1 2000/12/08 23:05:48 jdolecek Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.1.4.1 2001/06/21 20:07:31 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@ int exec_ultrix_ecoff_lkmentry __P((struct lkm_table *, int, int));
 
 static struct execsw exec_ultrix_ecoff =
 	{ ECOFF_HDR_SIZE, exec_ecoff_makecmds,
-	  { ecoff_probe_func: ultrix_exec_ecoff_probe },
+	  { .ecoff_probe_func = ultrix_exec_ecoff_probe },
 	  NULL, EXECSW_PRIO_LAST, /* XXX probe func alw. succeeds */
   	  0, copyargs, cpu_exec_ecoff_setregs }; /* Ultrix ecoff binaries */
 

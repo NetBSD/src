@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.33 2001/01/18 20:28:28 jdolecek Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.33.2.1 2001/06/21 20:00:22 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -92,9 +92,7 @@ oss_ioctl_audio(p, uap, retval)
 	int (*ioctlf) __P((struct file *, u_long, caddr_t, struct proc *));
 
 	fdp = p->p_fd;
-	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL ||
-	    (fp->f_iflags & FIF_WANTCLOSE) != 0)
+	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return (EBADF);
 
 	FILE_USE(fp);
@@ -397,15 +395,33 @@ oss_ioctl_audio(p, uap, retval)
 			goto out;
 		break;
 	case OSS_SNDCTL_DSP_GETOSPACE:
+		error = ioctlf(fp, AUDIO_GETINFO, (caddr_t)&tmpinfo, p);
+		if (error)
+			goto out;
+		setblocksize(fp, &tmpinfo, p);
+		bufinfo.fragsize = tmpinfo.blocksize;
+		bufinfo.fragments = tmpinfo.hiwat -
+		    (tmpinfo.play.seek + tmpinfo.blocksize - 1) /
+		    tmpinfo.blocksize;
+		bufinfo.fragstotal = tmpinfo.hiwat;
+		bufinfo.bytes =
+		    tmpinfo.hiwat * tmpinfo.blocksize - tmpinfo.play.seek;
+		error = copyout(&bufinfo, SCARG(uap, data), sizeof bufinfo);
+		if (error)
+			goto out;
+		break;
 	case OSS_SNDCTL_DSP_GETISPACE:
 		error = ioctlf(fp, AUDIO_GETINFO, (caddr_t)&tmpinfo, p);
 		if (error)
 			goto out;
 		setblocksize(fp, &tmpinfo, p);
 		bufinfo.fragsize = tmpinfo.blocksize;
-		bufinfo.fragments = /* XXX */
-		bufinfo.fragstotal = tmpinfo.play.buffer_size / bufinfo.fragsize;
-		bufinfo.bytes = tmpinfo.play.buffer_size;
+		bufinfo.fragments = tmpinfo.hiwat -
+		    (tmpinfo.record.seek + tmpinfo.blocksize - 1) /
+		    tmpinfo.blocksize;
+                bufinfo.fragstotal = tmpinfo.hiwat;
+		bufinfo.bytes =
+		    tmpinfo.hiwat * tmpinfo.blocksize - tmpinfo.record.seek;
 		DPRINTF(("oss_sys_ioctl: SNDCTL_DSP_GETxSPACE = %d %d %d %d\n",
 			 bufinfo.fragsize, bufinfo.fragments, 
 			 bufinfo.fragstotal, bufinfo.bytes));
@@ -710,9 +726,7 @@ oss_ioctl_mixer(p, uap, retval)
 	int (*ioctlf) __P((struct file *, u_long, caddr_t, struct proc *));
 
 	fdp = p->p_fd;
-	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL ||
-	    (fp->f_iflags & FIF_WANTCLOSE) != 0)
+	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return (EBADF);
 
 	FILE_USE(fp);
@@ -911,9 +925,7 @@ oss_ioctl_sequencer(p, uap, retval)
 	int (*ioctlf) __P((struct file *, u_long, caddr_t, struct proc *));
 
 	fdp = p->p_fd;
-	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL ||
-	    (fp->f_iflags & FIF_WANTCLOSE) != 0)
+	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return (EBADF);
 
 	FILE_USE(fp);

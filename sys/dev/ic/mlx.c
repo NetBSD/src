@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.4.2.1 2001/04/09 01:56:25 nathanw Exp $	*/
+/*	$NetBSD: mlx.c,v 1.4.2.2 2001/06/21 20:02:54 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -197,7 +197,7 @@ static const char * const mlx_status_msgs[] = {
 	"command terminated abnormally",		/* 19 */
 	"controller wedged",				/* 20 */
 	"software timeout",				/* 21 */
-	"command busy (???)",				/* 22 */
+	"command busy (?)",				/* 22 */
 };
 
 struct {
@@ -302,8 +302,8 @@ mlx_init(struct mlx_softc *mlx, const char *intrstr)
 		return;
 	}
 
-	if ((rv = bus_dmamap_create(mlx->mlx_dmat, size, size, 1, 0, 
-	    BUS_DMA_NOWAIT, &mlx->mlx_dmamap)) != 0) {
+	if ((rv = bus_dmamap_create(mlx->mlx_dmat, size, 1, size, 0, 
+	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &mlx->mlx_dmamap)) != 0) {
 		printf("%s: unable to create sglist DMA map, rv = %d\n",
 		    mlx->mlx_dv.dv_xname, rv);
 		return;
@@ -328,7 +328,7 @@ mlx_init(struct mlx_softc *mlx, const char *intrstr)
 	for (i = 0; i < MLX_MAX_QUEUECNT; i++, mc++) {
 		mc->mc_ident = i;
 		rv = bus_dmamap_create(mlx->mlx_dmat, MLX_MAX_XFER,
-		    MLX_MAX_SEGS, PAGE_SIZE, 0,
+		    MLX_MAX_SEGS, MLX_MAX_XFER, 0,
 		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
 		    &mc->mc_xfer_map);
 		if (rv != 0)
@@ -342,6 +342,15 @@ mlx_init(struct mlx_softc *mlx, const char *intrstr)
 
 	/* Disable interrupts before we start talking to the controller */
 	(*mlx->mlx_intaction)(mlx, 0);
+
+	/* If we've got a reset routine, then reset the controller now. */
+	if (mlx->mlx_reset != NULL) {
+		printf("%s: resetting controller...\n", mlx->mlx_dv.dv_xname);
+		if ((*mlx->mlx_reset)(mlx) != 0) {
+			printf("%s: reset failed\n", mlx->mlx_dv.dv_xname);
+			return;
+		}
+	}
 
 	/* 
 	 * Wait for the controller to come ready, handshaking with the
@@ -402,8 +411,8 @@ mlx_init(struct mlx_softc *mlx, const char *intrstr)
 		}
 		mlx->mlx_enq2->me_firmware_id[0] = meo->me_fwmajor;
 		mlx->mlx_enq2->me_firmware_id[1] = meo->me_fwminor;
-		mlx->mlx_enq2->me_firmware_id[2] = '0';
-		mlx->mlx_enq2->me_firmware_id[3] = 0;
+		mlx->mlx_enq2->me_firmware_id[2] = 0;
+		mlx->mlx_enq2->me_firmware_id[3] = '0';
 		free(meo, M_DEVBUF);
 	}
 
@@ -514,7 +523,7 @@ mlx_describe(struct mlx_softc *mlx)
 	    mlx->mlx_dv.dv_xname, model, me->me_actual_channels,
 	    me->me_actual_channels > 1 ? "s" : "",
 	    me->me_firmware_id[0], me->me_firmware_id[1],
-	    me->me_firmware_id[2], me->me_firmware_id[3],
+	    me->me_firmware_id[3], me->me_firmware_id[2],
 	    le32toh(me->me_mem_size) >> 20);
 }
 
@@ -524,32 +533,52 @@ mlx_describe(struct mlx_softc *mlx)
 static void
 mlx_configure(struct mlx_softc *mlx, int waitok)
 {
+	struct mlx_enquiry *me;
+	struct mlx_enquiry_old *meo;
 	struct mlx_enq_sys_drive *mes;
 	struct mlx_sysdrive *ms;
 	struct mlx_attach_args mlxa;
 	int i, nunits;
 	u_int size;
 
+	if (mlx->mlx_iftype == 2) {
+		meo = mlx_enquire(mlx, MLX_CMD_ENQUIRY_OLD,
+		    sizeof(struct mlx_enquiry_old), NULL, waitok);
+		if (meo == NULL) {
+			printf("%s: ENQUIRY_OLD failed\n",
+			    mlx->mlx_dv.dv_xname);
+			return;
+		}
+		mlx->mlx_numsysdrives = meo->me_num_sys_drvs;
+		free(meo, M_DEVBUF);
+	} else {
+		me = mlx_enquire(mlx, MLX_CMD_ENQUIRY,
+		    sizeof(struct mlx_enquiry), NULL, waitok);
+		if (me == NULL) {
+			printf("%s: ENQUIRY failed\n", mlx->mlx_dv.dv_xname);
+			return;
+		}
+		mlx->mlx_numsysdrives = me->me_num_sys_drvs;
+		free(me, M_DEVBUF);
+	}
+
 	mes = mlx_enquire(mlx, MLX_CMD_ENQSYSDRIVE,
 	    sizeof(*mes) * MLX_MAX_DRIVES, NULL, waitok);
 	if (mes == NULL) {
 		printf("%s: error fetching drive status\n",
 		    mlx->mlx_dv.dv_xname);
+		free(me, M_DEVBUF);
 		return;
 	}
-
-	for (i = 0, nunits = 0; i < MLX_MAX_DRIVES; i++)
-		if (mes[i].sd_size != 0xffffffffU && mes[i].sd_size != 0)
-			nunits++;
-	if (nunits == 0)
-		nunits = 1;
 
 	/* Allow 1 queued command per unit while re-configuring. */
 	mlx_adjqparam(mlx, 1, 0);
 
 	ms = &mlx->mlx_sysdrive[0];
+	nunits = 0;
 	for (i = 0; i < MLX_MAX_DRIVES; i++, ms++) {
 		size = le32toh(mes[i].sd_size);
+		ms->ms_state = mes[i].sd_state;
 
 		/*
 		 * If an existing device has changed in some way (e.g. no
@@ -564,6 +593,8 @@ mlx_configure(struct mlx_softc *mlx, int waitok)
 		ms->ms_state = mes[i].sd_state;
 		ms->ms_dv = NULL;
 
+		if (i >= mlx->mlx_numsysdrives)
+			continue;
 		if (size == 0xffffffffU || size == 0)
 			continue;
 
@@ -573,11 +604,14 @@ mlx_configure(struct mlx_softc *mlx, int waitok)
 		mlxa.mlxa_unit = i;
 		ms->ms_dv = config_found_sm(&mlx->mlx_dv, &mlxa, mlx_print,
 		    mlx_submatch);
+		nunits += (ms->ms_dv != NULL);
 	}
 
 	free(mes, M_DEVBUF);
-	mlx_adjqparam(mlx, mlx->mlx_max_queuecnt / nunits,
-	    mlx->mlx_max_queuecnt % nunits);
+
+	if (nunits != 0)
+		mlx_adjqparam(mlx, mlx->mlx_max_queuecnt / nunits,
+		    mlx->mlx_max_queuecnt % nunits);
 }
 
 /*
@@ -1125,11 +1159,7 @@ mlx_periodic_enquiry(struct mlx_ccb *mc)
 
 		dr = &mlx->mlx_sysdrive[0];
 
-		for (i = 0; i < MLX_MAX_DRIVES; i++) {
-			if (mes[i].sd_size == 0xffffffffU ||
-			    mes[i].sd_size == 0)
-				 break;
-
+		for (i = 0; i < mlx->mlx_numsysdrives; i++) {
 			/* Has state been changed by controller? */
 			if (dr->ms_state != mes[i].sd_state) {
 				switch (mes[i].sd_state) {
@@ -1143,6 +1173,10 @@ mlx_periodic_enquiry(struct mlx_ccb *mc)
 
 				case MLX_SYSD_CRITICAL:
 					statestr = "critical";
+					break;
+				
+				default:
+					statestr = "unknown";
 					break;
 				}
 
@@ -1195,6 +1229,11 @@ mlx_periodic_eventlog_poll(struct mlx_softc *mlx)
 	}
 	if ((rv = mlx_ccb_map(mlx, mc, result, 1024, MC_XFER_IN)) != 0)
 		goto out;
+	if (mc->mc_nsgent != 1) {
+		mlx_ccb_unmap(mlx, mc);
+		printf("mlx_periodic_eventlog_poll: too many segs\n");
+		goto out;
+	}
 
 	/* Build the command to get one log entry. */
 	mlx_make_type3(mc, MLX_CMD_LOGOP, MLX_LOGOP_GET, 1,
@@ -1499,6 +1538,10 @@ mlx_enquire(struct mlx_softc *mlx, int command, size_t bufsize,
 	if ((rv = mlx_ccb_map(mlx, mc, result, bufsize, MC_XFER_IN)) != 0)
 		goto out;
 	mapped = 1;
+	if (mc->mc_nsgent != 1) {
+		printf("mlx_enquire: too many segs\n");
+		goto out;
+	}
 
 	/* Build an enquiry command. */
 	mlx_make_type2(mc, command, 0, 0, 0, 0, 0, 0, mc->mc_xfer_phys, 0);
@@ -1511,20 +1554,12 @@ mlx_enquire(struct mlx_softc *mlx, int command, size_t bufsize,
 		mlx_ccb_enqueue(mlx, mc);
 	} else {
 		/* Run the command in either polled or wait mode. */
-		if (waitok) {
-			if ((rv = mlx_ccb_wait(mlx, mc)) != 0)
-				goto out;
-		} else {
-			if ((rv = mlx_ccb_poll(mlx, mc, 5000)) != 0)
-				goto out;
-		}
-
-		/* Command completed OK? */
-		if (mc->mc_status != 0)
-			goto out;
+		if (waitok)
+			rv = mlx_ccb_wait(mlx, mc);
+		else
+			rv = mlx_ccb_poll(mlx, mc, 5000);
 	}
 
-	rv = 0;
  out:
 	/* We got a command, but nobody else will free it. */
 	if (handler == NULL && mc != NULL) {
@@ -1917,11 +1952,11 @@ mlx_ccb_unmap(struct mlx_softc *mlx, struct mlx_ccb *mc)
 	    BUS_DMASYNC_POSTWRITE);
 
 	if ((mc->mc_flags & MC_XFER_OUT) != 0)
-		i = BUS_DMASYNC_PREWRITE;
+		i = BUS_DMASYNC_POSTWRITE;
 	else
 		i = 0;
 	if ((mc->mc_flags & MC_XFER_IN) != 0)
-		i |= BUS_DMASYNC_PREREAD;
+		i |= BUS_DMASYNC_POSTREAD;
 
 	bus_dmamap_sync(mlx->mlx_dmat, mc->mc_xfer_map, 0, mc->mc_xfer_size, i);
 	bus_dmamap_unload(mlx->mlx_dmat, mc->mc_xfer_map);

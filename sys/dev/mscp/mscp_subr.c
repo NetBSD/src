@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_subr.c,v 1.15 2000/03/30 12:45:34 augustss Exp $	*/
+/*	$NetBSD: mscp_subr.c,v 1.15.6.1 2001/06/21 20:04:28 nathanw Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -482,7 +482,7 @@ mscp_strategy(bp, usc)
 	struct device *usc;
 {
 	struct	mscp_softc *mi = (void *)usc;
-	int s = splimp();
+	int s = spluba();
 
 	BUFQ_INSERT_TAIL(&mi->mi_resq, bp);
 	mscp_kickaway(mi);

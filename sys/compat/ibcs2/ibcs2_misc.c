@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.55.2.1 2001/03/05 22:49:21 nathanw Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.55.2.2 2001/06/21 19:59:17 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -1266,6 +1266,7 @@ ibcs2_sys_sysfs(l, v, retval)
 	case IBCS2_GETFSIND:
 	case IBCS2_GETFSTYP:
 	case IBCS2_GETNFSTYP:
+		break;
 	}
 	return EINVAL;		/* XXX - TODO */
 }
@@ -1691,8 +1692,7 @@ xenix_sys_locking(l, v, retval)
 		return ibcs2_sys_fcntl(l, v, retval);
 	}
 
-	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
+	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return (EBADF);
 	off = fp->f_offset;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.49 2001/01/04 01:33:37 enami Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.49.2.1 2001/06/21 20:06:35 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.49 2001/01/04 01:33:37 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.49.2.1 2001/06/21 20:06:35 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -849,6 +849,30 @@ wsdisplaywrite(dev, uio, flag)
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
+int
+wsdisplaypoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	struct wsdisplay_softc *sc;
+	struct tty *tp;
+	struct wsscreen *scr;
+
+	sc = device_lookup(&wsdisplay_cd, WSDISPLAYUNIT(dev));
+
+	if (ISWSDISPLAYCTL(dev))
+		return (0);
+
+	scr = sc->sc_scr[WSDISPLAYSCREEN(dev)];
+
+	if (!WSSCREEN_HAS_TTY(scr))
+		return (ENODEV);
+
+	tp = scr->scr_tty;
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
+}
+
 struct tty *
 wsdisplaytty(dev)
 	dev_t dev;
@@ -1143,27 +1167,6 @@ wsdisplaymmap(dev, offset, prot)
 
 	/* pass mmap to display */
 	return ((*sc->sc_accessops->mmap)(sc->sc_accesscookie, offset, prot));
-}
-
-int
-wsdisplaypoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
-{
-	struct wsdisplay_softc *sc =
-	    device_lookup(&wsdisplay_cd, WSDISPLAYUNIT(dev));
-	struct wsscreen *scr;
-
-	if (ISWSDISPLAYCTL(dev))
-		return (0);
-
-	scr = sc->sc_scr[WSDISPLAYSCREEN(dev)];
-
-	if (WSSCREEN_HAS_TTY(scr))
-		return (ttpoll(dev, events, p));
-	else
-		return (0);
 }
 
 void
@@ -1779,19 +1782,18 @@ wsdisplay_pollc(dev, on)
 	dev_t dev;
 	int on;
 {
-	struct wsdisplay_softc *sc;
-
-	sc = device_lookup(&wsdisplay_cd, WSDISPLAYUNIT(dev));
 
 	wsdisplay_cons_pollmode = on;
 
 	/* notify to fb drivers */
-	if (sc != NULL && sc->sc_accessops->pollc != NULL)
-		(*sc->sc_accessops->pollc)(sc->sc_accesscookie, on);
+	if (wsdisplay_console_device != NULL &&
+	    wsdisplay_console_device->sc_accessops->pollc != NULL)
+		(*wsdisplay_console_device->sc_accessops->pollc)
+			(wsdisplay_console_device->sc_accesscookie, on);
 
 	/* notify to kbd drivers */
 	if (wsdisplay_cons_kbd_pollc)
-		(*wsdisplay_cons_kbd_pollc)(dev, on);
+		(*wsdisplay_cons_kbd_pollc)(NODEV, on);
 }
 
 void

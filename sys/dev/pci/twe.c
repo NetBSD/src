@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.12.2.1 2001/04/09 01:57:14 nathanw Exp $	*/
+/*	$NetBSD: twe.c,v 1.12.2.2 2001/06/21 20:05:12 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -941,11 +941,11 @@ twe_ccb_poll(struct twe_softc *sc, struct twe_ccb *ccb, int timo)
 	if ((rv = twe_ccb_submit(sc, ccb)) != 0)
 		return (rv);
 
-	for (; timo != 0; timo--) {
+	for (timo *= 1000; timo != 0; timo--) {
 		twe_poll(sc);
 		if ((ccb->ccb_flags & TWE_CCB_COMPLETE) != 0)
 			break;
-		DELAY(100000);
+		DELAY(100);
 	}
 
 	return (timo == 0);
