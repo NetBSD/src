@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.7 1994/10/26 02:03:48 cgd Exp $	*/
+/*	$NetBSD: if_le.c,v 1.8 1994/12/01 17:25:16 chopps Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -137,7 +137,7 @@ void leattach __P((struct device *, struct device *, void *));
 int lematch __P((struct device *, struct cfdata *, void *args));
 
 struct cfdriver lecd = {
-	NULL, "le", lematch, leattach, DV_IFNET,
+	NULL, "le", (cfmatch_t)lematch, leattach, DV_IFNET,
 	sizeof(struct le_softc), NULL, 0};
 
 int
@@ -765,7 +765,7 @@ leget(lebuf, totlen, off0, ifp)
  */
 leioctl(ifp, cmd, data)
 	register struct ifnet *ifp;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 {
 	register struct ifaddr *ifa = (struct ifaddr *)data;

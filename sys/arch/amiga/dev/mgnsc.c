@@ -1,4 +1,4 @@
-/*	$NetBSD: mgnsc.c,v 1.6 1994/10/26 02:04:20 cgd Exp $	*/
+/*	$NetBSD: mgnsc.c,v 1.7 1994/12/01 17:25:26 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -76,7 +76,7 @@ struct scsi_device mgnsc_scsidev = {
 #endif
 
 struct cfdriver mgnsccd = {
-	NULL, "mgnsc", mgnscmatch, mgnscattach, 
+	NULL, "mgnsc", (cfmatch_t)mgnscmatch, mgnscattach, 
 	DV_DULL, sizeof(struct siop_softc), NULL, 0 };
 
 /*

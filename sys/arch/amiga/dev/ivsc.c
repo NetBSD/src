@@ -1,4 +1,4 @@
-/*	$NetBSD: ivsc.c,v 1.5 1994/10/26 02:04:07 cgd Exp $	*/
+/*	$NetBSD: ivsc.c,v 1.6 1994/12/01 17:25:24 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -87,7 +87,7 @@ extern int sci_debug;
 extern int sci_data_wait;
 
 struct cfdriver ivsccd = {
-	NULL, "ivsc", ivscmatch, ivscattach, 
+	NULL, "ivsc", (cfmatch_t)ivscmatch, ivscattach, 
 	DV_DULL, sizeof(struct sci_softc), NULL, 0 };
 
 /*

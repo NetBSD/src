@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.6 1994/10/26 02:02:51 cgd Exp $	*/
+/*	$NetBSD: clock.c,v 1.7 1994/12/01 17:24:54 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -85,7 +85,7 @@ int clockmatch __P((struct device *, struct cfdata *, void *));
 void clockattach __P((struct device *, struct device *, void *));
 
 struct cfdriver clockcd = {
-	NULL, "clock", clockmatch, clockattach, 
+	NULL, "clock", (cfmatch_t)clockmatch, clockattach, 
 	DV_DULL, sizeof(struct device), NULL, 0 };
 
 int
@@ -406,6 +406,7 @@ clockclose(dev, flags)
 /*ARGSUSED*/
 clockioctl(dev, cmd, data, flag, p)
 	dev_t dev;
+	u_long cmd;
 	caddr_t data;
 	struct proc *p;
 {

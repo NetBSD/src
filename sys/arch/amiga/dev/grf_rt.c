@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rt.c,v 1.18 1994/10/26 02:03:16 cgd Exp $	*/
+/*	$NetBSD: grf_rt.c,v 1.19 1994/12/01 17:25:09 chopps Exp $	*/
 
 #include "grfrt.h"
 #if NGRFRT > 0
@@ -16,6 +16,8 @@
 #include <amiga/dev/grfioctl.h>
 #include <amiga/dev/grfvar.h>
 #include <amiga/dev/grf_rtreg.h>
+
+int rt_ioctl __P((struct grf_softc *gp, u_long, void *));
 
 /*
  * marked true early so that retina_cnprobe() can tell if we are alive. 
@@ -742,7 +744,7 @@ int grfrtprint __P((void *, char *));
 int grfrtmatch __P((struct device *, struct cfdata *, void *));
  
 struct cfdriver grfrtcd = {
-	NULL, "grfrt", grfrtmatch, grfrtattach, 
+	NULL, "grfrt", (cfmatch_t)grfrtmatch, grfrtattach, 
 	DV_DULL, sizeof(struct grf_softc), NULL, 0 };
 
 /*
@@ -976,7 +978,7 @@ rt_mode(gp, cmd, arg, a2, a3)
 int
 rt_ioctl (gp, cmd, data)
 	register struct grf_softc *gp;
-	int cmd;
+	u_long cmd;
 	void *data;
 {
   switch (cmd)

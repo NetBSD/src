@@ -1,4 +1,4 @@
-/*	$NetBSD: wstsc.c,v 1.4 1994/10/26 02:05:13 cgd Exp $	*/
+/*	$NetBSD: wstsc.c,v 1.5 1994/12/01 17:25:39 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -88,7 +88,7 @@ extern int sci_data_wait;
 int supradma_pseudo = 0;	/* 0=none, 1=byte, 2=word */
 
 struct cfdriver wstsccd = {
-	NULL, "wstsc", wstscmatch, wstscattach, 
+	NULL, "wstsc", (cfmatch_t)wstscmatch, wstscattach, 
 	DV_DULL, sizeof(struct sci_softc), NULL, 0 };
 
 /*

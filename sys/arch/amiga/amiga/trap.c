@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.24 1994/10/26 02:02:10 cgd Exp $	*/
+/*	$NetBSD: trap.c,v 1.25 1994/12/01 17:24:32 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -69,9 +69,9 @@
 struct	sysent	sysent[];
 int	nsysent;
 #ifdef COMPAT_SUNOS
-#include <compat/sunos/sun_syscall.h>
-struct	sysent	sun_sysent[];
-int	nsun_sysent;
+#include <compat/sunos/sunos_syscall.h>
+struct	sysent	sunos_sysent[];
+int	nsunos_sysent;
 #endif
 
 /*
@@ -711,8 +711,8 @@ syscall(code, frame)
 	switch (p->p_emul) {
 #ifdef COMPAT_SUNOS
 	case EMUL_SUNOS:
-		systab = sun_sysent;
-		numsys = nsun_sysent;
+		systab = sunos_sysent;
+		numsys = nsunos_sysent;
 
 		/*
 		 * SunOS passes the syscall-number on the stack, whereas
@@ -724,11 +724,11 @@ syscall(code, frame)
 		code = fuword ((caddr_t) frame.f_regs[SP]);
 
 		/*
-		 * XXX don't do this for sun_sigreturn, as there's no
+		 * XXX don't do this for sunos_sigreturn, as there's no
 		 * XXX stored pc on the stack to skip, the argument follows
 		 * XXX the syscall number without a gap.
 		 */
-		if (code != SUN_SYS_sigreturn) {
+		if (code != SUNOS_SYS_sigreturn) {
 			frame.f_regs[SP] += sizeof (int);
 			/*
 			 * remember that we adjusted the SP, 
