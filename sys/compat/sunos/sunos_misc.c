@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.57 1995/10/11 12:50:23 pk Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.58 1995/11/07 22:27:33 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -247,7 +247,7 @@ sunos_sys_mount(p, v, retval)
 
 	if (strncmp(fsname, "4.2", sizeof fsname) == 0) {
 		SCARG(uap, type) = STACKGAPBASE;
-		if (error = copyout("ufs", SCARG(uap, type), sizeof("ufs")))
+		if (error = copyout("ffs", SCARG(uap, type), sizeof("ffs")))
 			return (error);
 	} else if (strncmp(fsname, "nfs", sizeof fsname) == 0) {
 		struct sunos_nfs_args sna;

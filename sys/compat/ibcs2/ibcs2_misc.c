@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.11 1995/10/09 11:24:01 mycroft Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.12 1995/11/07 22:27:30 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -276,7 +276,7 @@ ibcs2_sys_mount(p, v, retval)
 
 	if (strncmp(fsname, "4.2", sizeof fsname) == 0) {
 		SCARG(uap, type) = (caddr_t)STACK_ALLOC();
-		if (error = copyout("ufs", SCARG(uap, type), sizeof("ufs")))
+		if (error = copyout("ffs", SCARG(uap, type), sizeof("ffs")))
 			return (error);
 	} else if (strncmp(fsname, "nfs", sizeof fsname) == 0) {
 		struct ibcs2_nfs_args sna;
