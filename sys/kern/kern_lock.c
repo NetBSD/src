@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.14 1999/01/22 07:55:17 chs Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.15 1999/02/28 14:09:15 fvdl Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -241,6 +241,7 @@ lockmgr(lkp, flags, interlkp)
 			panic("lockmgr: not holding exclusive lock");
 		lkp->lk_sharecount += lkp->lk_exclusivecount;
 		lkp->lk_exclusivecount = 0;
+		lkp->lk_recurselevel = 0;
 		lkp->lk_flags &= ~LK_HAVE_EXCL;
 		lkp->lk_lockholder = LK_NOPROC;
 		if (lkp->lk_waitcount)
@@ -299,6 +300,8 @@ lockmgr(lkp, flags, interlkp)
 			if (lkp->lk_exclusivecount != 0)
 				panic("lockmgr: non-zero exclusive count");
 			lkp->lk_exclusivecount = 1;
+			if (extflags & LK_SETRECURSE)
+				lkp->lk_recurselevel = 1;
 			COUNT(p, 1);
 			break;
 		}
@@ -316,9 +319,13 @@ lockmgr(lkp, flags, interlkp)
 			/*
 			 *	Recursive lock.
 			 */
-			if ((extflags & LK_CANRECURSE) == 0)
+			if ((extflags & LK_CANRECURSE) == 0 &&
+			     lkp->lk_recurselevel == 0)
 				panic("lockmgr: locking against myself");
 			lkp->lk_exclusivecount++;
+			if (extflags & LK_SETRECURSE &&
+			    lkp->lk_recurselevel == 0)
+				lkp->lk_recurselevel = lkp->lk_exclusivecount;
 			COUNT(p, 1);
 			break;
 		}
@@ -352,6 +359,8 @@ lockmgr(lkp, flags, interlkp)
 		if (lkp->lk_exclusivecount != 0)
 			panic("lockmgr: non-zero exclusive count");
 		lkp->lk_exclusivecount = 1;
+		if (extflags & LK_SETRECURSE)
+			lkp->lk_recurselevel = 1;
 		COUNT(p, 1);
 		break;
 
@@ -361,6 +370,8 @@ lockmgr(lkp, flags, interlkp)
 				panic("lockmgr: pid %d, not exclusive lock "
 				    "holder %d unlocking", pid,
 				    lkp->lk_lockholder);
+			if (lkp->lk_exclusivecount == lkp->lk_recurselevel)
+				lkp->lk_recurselevel = 0;
 			lkp->lk_exclusivecount--;
 			COUNT(p, -1);
 			if (lkp->lk_exclusivecount == 0) {
@@ -411,6 +422,9 @@ lockmgr(lkp, flags, interlkp)
 		lkp->lk_flags |= LK_DRAINING | LK_HAVE_EXCL;
 		lkp->lk_lockholder = pid;
 		lkp->lk_exclusivecount = 1;
+		/* XXX unlikely that we'd want this */
+		if (extflags & LK_SETRECURSE)
+			lkp->lk_recurselevel = 1;
 		COUNT(p, 1);
 		break;
 
