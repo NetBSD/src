@@ -1,4 +1,4 @@
-/*	$NetBSD: usscanner.c,v 1.4 2001/01/15 03:52:03 augustss Exp $	*/
+/*	$NetBSD: usscanner.c,v 1.5 2001/01/18 17:48:05 tv Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

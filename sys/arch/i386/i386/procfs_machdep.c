@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.4 2001/01/17 01:21:12 fvdl Exp $	*/
+/*	$NetBSD: procfs_machdep.c,v 1.5 2001/01/18 17:48:00 tv Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
