@@ -33,7 +33,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)ex_substitute.c	8.33 (Berkeley) 1/9/94"; */
-static char *rcsid = "$Id: ex_subst.c,v 1.2 1994/01/24 06:40:41 cgd Exp $";
+static char *rcsid = "$Id: ex_subst.c,v 1.3 1994/03/03 23:26:31 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -130,8 +130,19 @@ ex_substitute(sp, ep, cmdp)
 			*t = '\0';
 			break;
 		}
-		if (p[0] == '\\' && p[1] == delim)
-			++p;
+		if (p[0] == '\\') {
+			if (p[1] == delim)
+				++p;
+			else if (p[1] == '\\') {
+				/*
+				 * Skip over an escaped escape character;
+				 * otherwise the check for an escaped
+				 * delimiter will be confused on the next
+				 * iteration.
+		 		 */
+				*t++ = *p++;
+			}
+		}
 		*t++ = *p++;
 	}
 
