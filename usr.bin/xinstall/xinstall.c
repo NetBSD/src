@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.30 1998/12/20 15:07:46 christos Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.31 1999/01/25 01:42:57 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.30 1998/12/20 15:07:46 christos Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.31 1999/01/25 01:42:57 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,15 +68,17 @@ __RCSID("$NetBSD: xinstall.c,v 1.30 1998/12/20 15:07:46 christos Exp $");
 #include "stat_flags.h"
 
 #define STRIP_ARGS_MAX 32
+#define BACKUP_SUFFIX ".old"
 
 struct passwd *pp;
 struct group *gp;
-int docopy=0, dodir=0, dostrip=0, dolink=0, dopreserve=0;
+int dobackup=0, docopy=0, dodir=0, dostrip=0, dolink=0, dopreserve=0;
 int mode = S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
 char pathbuf[MAXPATHLEN];
 uid_t uid;
 gid_t gid;
 char *stripArgs=NULL;
+char *suffix=BACKUP_SUFFIX;
 
 #define LN_ABSOLUTE	0x01
 #define LN_RELATIVE	0x02
@@ -109,8 +111,14 @@ main(argc, argv)
 	char *flags = NULL, *to_name, *group = NULL, *owner = NULL;
 
 	iflags = 0;
-	while ((ch = getopt(argc, argv, "cdf:g:l:m:o:psS:")) != -1)
+	while ((ch = getopt(argc, argv, "cbB:df:g:l:m:o:psS:")) != -1)
 		switch((char)ch) {
+		case 'B':
+			suffix = optarg;
+			/* fall through; -B implies -b */
+		case 'b':
+			dobackup = 1;
+			break;
 		case 'c':
 			docopy = 1;
 			break;
@@ -233,7 +241,12 @@ main(argc, argv)
 		if (to_sb.st_flags & NOCHANGEBITS)
 			(void)chflags(to_name,
 			    to_sb.st_flags & ~(NOCHANGEBITS));
-		(void)unlink(to_name);
+		if (dobackup) {
+			char backup[FILENAME_MAX];
+			(void)snprintf(backup, FILENAME_MAX, "%s%s", to_name, suffix);
+			(void)rename(to_name, backup);
+		} else
+			(void)unlink(to_name);
 	}
 	install(*argv, to_name, fset, iflags);
 	exit(0);
@@ -347,7 +360,12 @@ install(from_name, to_name, fset, flags)
 	if (stat(to_name, &to_sb) == 0 &&
 	    to_sb.st_flags & (NOCHANGEBITS))
 		(void)chflags(to_name, to_sb.st_flags & ~(NOCHANGEBITS));
-	(void)unlink(to_name);
+	if (dobackup) {
+		char backup[FILENAME_MAX];
+		(void)snprintf(backup, FILENAME_MAX, "%s%s", to_name, suffix);
+		(void)rename(to_name, backup);
+	} else
+		(void)unlink(to_name);
 
 	if (dolink) {
 		makelink(from_name, to_name);
@@ -551,8 +569,8 @@ void
 usage()
 {
 	(void)fprintf(stderr, "\
-usage: install [-cps] [-f flags] [-m mode] [-o owner] [-g group] [-l linkflags] [-S stripflags] file1 file2\n\
-       install [-cps] [-f flags] [-m mode] [-o owner] [-g group] [-l linkflags] [-S stripflags] file1 ... fileN directory\n\
+usage: install [-bcps] [-B suffix] [-f flags] [-m mode] [-o owner] [-g group] [-l linkflags] [-S stripflags] file1 file2\n\
+       install [-bcps] [-B suffix] [-f flags] [-m mode] [-o owner] [-g group] [-l linkflags] [-S stripflags] file1 ... fileN directory\n\
        install -pd [-m mode] [-o owner] [-g group] directory ...\n");
 	exit(1);
 }
