@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.61 1999/01/15 01:23:12 castor Exp $	*/
+/*	$NetBSD: locore.S,v 1.62 1999/01/16 03:17:06 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -104,9 +104,9 @@ _C_LABEL(kernel_text):
 	jal	_C_LABEL(mach_init)		# mach_init(a0, a1, a2, a3)
 	nop
 
-	lw	sp, _C_LABEL(curpcb)
+	lw	sp, _C_LABEL(proc0paddr)	# switch to proc0 stack
 	nop
-	addu	sp, sp, USPACE - CALLFRAME_SIZ;	# switch to proc0 stack
+	addu	sp, sp, USPACE - FRAME_SIZ - CALLFRAME_SIZ
 	jal	_C_LABEL(main)			# main(void)
 	nop
 	PANIC("main() returned")		# main never returns
@@ -344,7 +344,7 @@ LEAF(switch_exit)
 	lw	v0, P_ADDR(v0)			# v0 = proc0.p_addr
 	nop
 	sw	v0, _C_LABEL(curpcb)
-	addu	sp, v0, USPACE - CALLFRAME_SIZ
+	addu	sp, v0, USPACE - FRAME_SIZ - CALLFRAME_SIZ
 	la	ra, sw1				# rathole to cpu_switch()
 	j	_C_LABEL(exit2)			# proc already in a0
 	nop
