@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.1 1998/12/28 14:01:16 hannken Exp $ */
+/*	$NetBSD: display.c,v 1.2 2002/04/07 10:40:04 hannken Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,9 +43,11 @@
 #include "wsconsctl.h"
 
 static int dpytype;
+static struct wsdisplay_usefontdata font;
 
 struct field display_field_tab[] = {
     { "type",			&dpytype,	FMT_DPYTYPE,	FLG_RDONLY },
+    { "font",			&font.name,	FMT_STRING,	FLG_WRONLY },
 };
 
 int display_field_tab_len = sizeof(display_field_tab)/
@@ -64,4 +66,9 @@ void
 display_put_values(fd)
 	int fd;
 {
+	if (field_by_value(&font.name)->flags & FLG_SET) {
+		if (ioctl(fd, WSDISPLAYIO_SFONT, &font) < 0)
+			err(1, "WSDISPLAYIO_SFONT");
+		pr_field(field_by_value(&font.name), " -> ");
+	}
 }
