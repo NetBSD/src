@@ -1,4 +1,4 @@
-.\"	$NetBSD: uuencode.5,v 1.2 1997/04/10 20:22:50 jeremy Exp $
+.\"	$NetBSD: uuencode.5,v 1.3 1997/08/03 08:51:33 jeremy Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)uuencode.format.5	8.2 (Berkeley) 1/12/94
 .\"
-.Dd January 12, 1994
+.Dd April 9, 1997
 .Dt UUENCODE 5
 .Os BSD 4
 .Sh NAME
@@ -53,48 +53,95 @@ following the trailer.
 Lines preceding a header must not, of course,
 look like a header.
 .Pp
-The header line is distinguished by having the first
-6 characters
-.Dq begin\ \&
-(note the trailing space).
-The word
-.Em begin
-is followed by a mode (in octal),
-and a string which names the remote file.
-A space separates the three items in the header line.
+The header line starts with the word
+.Dq begin ,
+a space,
+a file mode (in octal),
+a space,
+and finally a string which names the file being encoded.
 .Pp
-The body consists of a number of lines, each at most 62 characters
-long (including the trailing newline).
-These consist of a character count,
-followed by encoded characters,
-followed by a newline.
-The character count is a single printing character,
-and represents an integer, the number of bytes
-the rest of the line represents.
-Such integers are always in the range from 0 to 63 and can
-be determined by subtracting the character space (octal 40)
-from the character.
-.Pp
-Groups of 3 bytes are stored in 4 characters, 6 bits per character.
-All are offset by a space to make the characters printing.
-The last line may be shorter than the normal 45 bytes.
-If the size is not a multiple of 3, this fact can be determined
-by the value of the count on the last line.
-Extra garbage will be included to make the character count a multiple
-of 4.
-The body is terminated by a line with a count of zero.
-This line consists of one
+The central engine of
+.Xr uuencode 1
+is a six-bit encoding function which outputs an
 .Tn ASCII
-\` (opening single quote) character.
+character.
+The six bits to be encoded are treated as a small integer and added
+with the
+.Tn ASCII
+value for the space character (octal 40).
+The result is a printable
+.Tn ASCII
+character.
+In the case where all six bits to be encoded are zero,
+the
+.Tn ASCII
+character \` (octal 140) is emitted instead of what would normally be
+a space.
+.Pp
+The body of an encoded file consists of one or more lines,
+each of which may be a maximum of 86 characters long (including the trailing
+newline).
+Each line represents an encoded chunk of data from the input file and begins
+with a byte count,
+followed by encoded bytes,
+followed by a newline.
+.Pp
+The byte count is a six-bit integer encoded with the above function,
+representing the number of bytes encoded in the rest of the line.
+The method used to encode the data expands its size by
+133% (described below).
+Therefore it is important to note that the byte count describes the size of
+the chunk of data before it is encoded, not afterwards.
+The six bit size of this number effectively limits the number of bytes
+that can be encoded in each line to a maximum of 63.
+While
+.Xr uuencode 1
+will not encode more than 45 bytes per line,
+.Xr uudecode 1
+will tolerate the maximum line size.
+.Pp
+The remaining characters in the line represent the data of the input
+file encoded as follows.
+Input data are broken into groups of three eight-bit bytes,
+which are then interpreted together as a 24-bit block.
+The first bit of the block is the lowest order bit of the first character,
+and the last is the highest order bit of the third character.
+This block is then broken into four six-bit integers which are encoded one by
+one starting from the first bit of the block.
+The result is a four character
+.Tn ASCII
+string for every three bytes of input data.
+.Pp
+Encoded lines of data continue in this manner until the input file is
+exhausted.
+The end of the body is signaled by an encoded line with a byte count
+of zero (the
+.Tn ASCII
+character \`).
+.Pp
+Obviously, not every input file will be a multiple of three bytes in size.
+In these cases,
+.Xr uuencode 1
+will pad the remaining one or two bytes of data with garbage bytes until
+a three byte group is created.  The byte count in a line containing
+garbage padding will reflect the actual number of bytes encoded, making
+it possible to convey how many bytes are garbage.
 .Pp
 The trailer line consists of
 .Dq end
 on a line by itself.
+.Sh BUGS
+The interpretation of the
+.Nm
+format relies on properties of the
+.Tn ASCII
+character set and may not work correctly on non-ASCII systems.
 .Sh SEE ALSO
 .Xr uuencode 1 ,
 .Xr uudecode 1 ,
 .Xr uucp 1 ,
-.Xr mail 1
+.Xr mail 1 ,
+.Xr ascii 7
 .Sh HISTORY
 The
 .Nm uuencode
