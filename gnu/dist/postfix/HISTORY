@@ -3670,3 +3670,46 @@ Apologies for any names omitted.
 	be issued in an SMTP session (ex.: NOOP, VRFY, ETRN, RSET).
 	Problem report by Michael Ju. Tokarev @ tls.msk.ru.  Files:
 	global/mail_params.h, smtpd/smtpd.c.
+
+20000413
+
+	Bugfix: RFC 822 requires the presence of at least one
+	destination message header. The cleanup daemon now generates
+	a generic "To: undisclosed-recipients:;" message header
+	when no destination header is present.  The header content
+	is specified with the undisclosed_recipients_header parameter.
+	Problem pointed out by Geoff Gibbs, UK-Human Genome Mapping
+	Project-Resource Centre.
+
+20000416
+
+	Workaround: allow <(comment)> as SMTP MAIL FROM address.
+
+20000423
+
+	Bugfix: mail_copy() could prepend > or . in the middle of
+	long lines. Found by code inspection.
+
+20000505
+
+	Bugfix: the SMTP server now flushes unwritten output before
+	tarpit delays, to avoid protocol timeouts in pipelined
+	sessions when a client causes lots of errors. Found by
+	Lamont Jones, HP. File:  smtpd/smtpd_chat.c.
+
+20000510
+
+	Bugfix: configuration parameters for one mysql dictionary
+	would become default settings for the next one. File:
+	dict_mysql.c. This patch was merged into Postfix a while
+	back but apparently that Postfix version was nuked when
+	other parts were redesigned. Update by Scott Cotton.
+
+	Bugfix: some Postfix delivery agents would abort on addresses
+	of the form `stuff@.' which could be generated only locally.
+	Found by Patrik Rak. File:  trivial-rewrite/resolve.c.
+
+20000511
+
+	Bugfix: Postfix would incorrectly reject domain names with
+	adjacent - characters. File: util/valid_hostname.c.
