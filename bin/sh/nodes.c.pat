@@ -1,4 +1,4 @@
-/*	$NetBSD: nodes.c.pat,v 1.7 1995/05/11 21:29:43 christos Exp $	*/
+/*	$NetBSD: nodes.c.pat,v 1.8 1997/04/11 23:03:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -80,7 +80,7 @@ copyfunc(n)
 	funcstringsize = 0;
 	calcsize(n);
 	funcblock = ckmalloc(funcblocksize + funcstringsize);
-	funcstring = funcblock + funcblocksize;
+	funcstring = (char *) funcblock + funcblocksize;
 	return copynode(n);
 }
 
@@ -129,7 +129,7 @@ copynodelist(lp)
 	lpp = &start;
 	while (lp) {
 		*lpp = funcblock;
-		funcblock += ALIGN(sizeof(struct nodelist));
+		funcblock = (char *) funcblock + ALIGN(sizeof(struct nodelist));
 		(*lpp)->n = copynode(lp->n);
 		lp = lp->next;
 		lpp = &(*lpp)->next;
