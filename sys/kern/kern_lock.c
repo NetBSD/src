@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.9 1998/09/24 22:30:11 thorpej Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.10 1998/09/29 07:29:53 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -465,6 +465,7 @@ simple_lock_init(alp)
 	alp->lock_line = 0;
 	alp->unlock_file = NULL;
 	alp->unlock_line = 0;
+	alp->lock_holder = 0;
 }
 
 void
