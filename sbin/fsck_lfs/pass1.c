@@ -1,4 +1,4 @@
-/* $NetBSD: pass1.c,v 1.10 2001/01/06 23:08:26 joff Exp $	 */
+/* $NetBSD: pass1.c,v 1.11 2001/07/13 20:30:19 perseant Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -84,7 +84,7 @@ void
 pass1()
 {
 	ino_t           inumber;
-	int             i, total_segments;
+	int             i;
 	struct inodesc  idesc;
 	struct dinode  *idinode, *tinode;
 	struct ifile   *ifp;
@@ -105,7 +105,6 @@ pass1()
 
 	cp = (CLEANERINFO *)(pbp->b_un.b_buf);
 #endif
-	total_segments = sblock.lfs_size / sblock.lfs_bsize;
 
 	/*
 	 * Find all allocated blocks, initialize numdirs.
@@ -362,7 +361,7 @@ pass1check(struct inodesc * idesc)
 	register struct dups *dlp;
 	struct dups    *new;
 
-	if ((anyout = chkrange(blkno, fragstodb(&sblock, idesc->id_numfrags))) != 0) {
+	if ((anyout = chkrange(blkno, fragstofsb(&sblock, idesc->id_numfrags))) != 0) {
 		blkerror(idesc->id_number, "BAD", blkno);
 		if (badblk++ >= MAXBAD) {
 			pwarn("EXCESSIVE BAD BLKS I=%u",
@@ -374,9 +373,9 @@ pass1check(struct inodesc * idesc)
 			return (STOP);
 		}
 	} else if (!testbmap(blkno)) {
-		seg_table[datosn(&sblock, blkno)].su_nbytes += idesc->id_numfrags * sblock.lfs_fsize;
+		seg_table[dtosn(&sblock, blkno)].su_nbytes += idesc->id_numfrags * sblock.lfs_fsize;
 	}
-	for (ndblks = fragstodb(&sblock, idesc->id_numfrags); ndblks > 0; blkno++, ndblks--) {
+	for (ndblks = fragstofsb(&sblock, idesc->id_numfrags); ndblks > 0; blkno++, ndblks--) {
 		if (anyout && chkrange(blkno, 1)) {
 			res = SKIP;
 		} else if (!testbmap(blkno)) {
