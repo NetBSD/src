@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.213 2002/09/07 04:04:05 lukem Exp $
+.\"	$NetBSD: main,v 1.214 2002/09/20 01:30:41 jdarrow Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1718,6 +1718,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Alistair Crooks Ta Mt agc@netbsd.org
 .It Ta Aidan Cully Ta Mt aidan@netbsd.org
 .It Ta Johan Danielsson Ta Mt joda@netbsd.org
+.It Ta John Darrow Ta Mt jdarrow@netbsd.org
 .It Ta Matt DeBergalis Ta Mt deberg@netbsd.org
 .It Ta Rob Deker Ta Mt deker@netbsd.org
 .It Ta Chris G. Demetriou Ta Mt cgd@netbsd.org
