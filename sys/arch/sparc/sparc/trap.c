@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.94 2000/11/21 00:37:52 jdolecek Exp $ */
+/*	$NetBSD: trap.c,v 1.95 2000/11/23 21:58:54 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1137,7 +1137,7 @@ syscall(code, tf, pc)
 	register_t pc;
 {
 	int i, nsys, *ap, nap;
-	struct const sysent *callp;
+	const struct sysent *callp;
 	struct proc *p;
 	int error, new;
 	struct args {
