@@ -8,7 +8,7 @@ maxusers 2 16 64
 device	isa at root {[port = -1], [size = 0],
 		     [iomem = -1], [iosiz = 0],
 		     [irq = -1], [drq = -1]}
-file	arch/i386/isa/isa.c		isa device-driver needs-flag
+file	arch/i386/isa/isa.c		isa needs-flag
 
 #device	eisa at root ...
 
@@ -17,84 +17,84 @@ file	arch/i386/isa/isa.c		isa device-driver needs-flag
 
 device	timer at isa
 device	clock at isa
-file	arch/i386/isa/clock.c		clock timer device-driver
+file	arch/i386/isa/clock.c		clock timer
 
 device	npx at isa
-file	arch/i386/isa/npx.c		npx device-driver needs-flag
+file	arch/i386/isa/npx.c		npx needs-flag
 device	dcfclk at isa
-file	arch/i386/isa/dcfclk.c		dcfclk device-driver needs-flag
+file	arch/i386/isa/dcfclk.c		dcfclk needs-flag
 
 
 device	com at isa: tty
-file	arch/i386/isa/com.c		com device-driver needs-count
+file	arch/i386/isa/com.c		com needs-count
 device	pc at isa: tty
-file	arch/i386/isa/pccons.c		pc device-driver needs-count
+file	arch/i386/isa/pccons.c		pc needs-count
 device	cy at isa: tty
-file	arch/i386/isa/cy.c		cy device-driver needs-count
+file	arch/i386/isa/cy.c		cy needs-count
 device	spkr at isa: tty
-file	arch/i386/isa/spkr.c		speaker device-driver needs-flag
+file	arch/i386/isa/spkr.c		speaker needs-flag
 
 
 device	ed at isa: ether, ifnet
-file	arch/i386/isa/if_ed.c		ed device-driver
+file	arch/i386/isa/if_ed.c		ed
 #device	hp at isa: ether, ifnet
-#file	arch/i386/isa/if_hp.c		hp device-driver
+#file	arch/i386/isa/if_hp.c		hp
 device	is at isa: ether, ifnet
-file	arch/i386/isa/if_is.c		is device-driver
+file	arch/i386/isa/if_is.c		is
 
 
 device	lms at isa
-file	arch/i386/isa/lms.c		lms device-driver needs-flag
+file	arch/i386/isa/lms.c		lms needs-flag
 device	mms at isa
-file	arch/i386/isa/mms.c		mms device-driver needs-flag
+file	arch/i386/isa/mms.c		mms needs-flag
 device	pms at isa
-file	arch/i386/isa/pms.c		pms device-driver needs-flag
+file	arch/i386/isa/pms.c		pms needs-flag
 
 
 device	lpt at isa
-file	arch/i386/isa/lpt.c		lpt device-driver needs-flag
+file	arch/i386/isa/lpt.c		lpt needs-flag
 
 
 device	fdc at isa {drive = -1}
 device	fd at fdc: disk
-file	arch/i386/isa/fd.c		fdc device-driver needs-flag
+file	arch/i386/isa/fd.c		fdc needs-flag
 major	{fd = 2}
 
 device	wdc at isa {drive = -1}
 device	wd at wdc: disk
-file	arch/i386/isa/wd.c		wdc device-driver needs-flag
+file	arch/i386/isa/wd.c		wdc needs-flag
 major	{wd = 0}
 
 device	wt at isa: tape
-file	arch/i386/isa/wt.c		wt device-driver needs-flag
+file	arch/i386/isa/wt.c		wt needs-flag
 major	{wt = 3}
 
 
 define	scsi {target = -1}
 
 device	aha at isa: scsi
-file	arch/i386/isa/aha1542.c		aha device-driver
+file	arch/i386/isa/aha1542.c		aha
 device	ahb at isa: scsi
-file	arch/i386/isa/aha1742.c		ahb device-driver
+file	arch/i386/isa/aha1742.c		ahb
 device	bt at isa: scsi
-file	arch/i386/isa/bt742a.c		bt device-driver
+file	arch/i386/isa/bt742a.c		bt
 device	uha at isa: scsi
-file	arch/i386/isa/ultra14f.c	uha device-driver
+file	arch/i386/isa/ultra14f.c	uha
 device	wds at isa: scsi
-file	arch/i386/isa/wd7000.c		wds device-driver
+file	arch/i386/isa/wd7000.c		wds
 
 device	tg at scsi {drive = -1}
 
 device	cd at tg: disk
-file	scsi/cd.c			cd device-driver needs-flag
+file	scsi/cd.c			cd needs-flag
 major	{cd = 6}
 device	ch at tg: disk
-file	scsi/ch.c			ch device-driver needs-flag
+file	scsi/ch.c			ch needs-flag
 device	sd at tg: disk
-file	scsi/sd.c			sd device-driver needs-flag
+file	scsi/sd.c			sd needs-flag
 major	{sd = 4}
 device	st at tg: tape
-file	scsi/st.c			st device-driver needs-flag
+file	scsi/st.c			st needs-flag
 major	{st = 5}
 
 
