@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.13 1997/03/23 01:25:29 christos Exp $	*/
+/*	$NetBSD: make.c,v 1.14 1997/03/28 22:31:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: make.c,v 1.13 1997/03/23 01:25:29 christos Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.14 1997/03/28 22:31:21 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -299,6 +299,7 @@ MakeAddChild (gnp, lp)
 {
     GNode          *gn = (GNode *) gnp;
     Lst            l = (Lst) lp;
+
     if (!gn->make && !(gn->type & OP_USE)) {
 	(void)Lst_EnQueue (l, (ClientData)gn);
     }
@@ -315,16 +316,23 @@ MakeAddChild (gnp, lp)
  *	Always returns 0
  *
  * Side Effects:
- *	The path of the node is updated
+ *	The path and mtime of the node and the cmtime of the parent are
+ *	updated
  *-----------------------------------------------------------------------
  */
 static int
-MakeFindChild (gnp, dum)
+MakeFindChild (gnp, pgnp)
     ClientData     gnp;		/* the node to find */
-    ClientData     dum;
+    ClientData     pgnp;
 {
     GNode          *gn = (GNode *) gnp;
-    gn->path = Dir_FindFile(gn->name, dirSearchPath);
+    GNode          *pgn = (GNode *) pgnp;
+
+    (void) Dir_MTime(gn);
+    if (pgn->cmtime < gn->mtime)
+	pgn->cmtime = gn->mtime;
+    gn->made = UPTODATE;
+
     return (0);
 }
 
@@ -906,7 +914,7 @@ Make_ExpandUse (targs)
 	    } else {
 		(void)Lst_EnQueue (ntargs, (ClientData)gn);
 		if (gn->type & OP_MADE)
-		    Lst_ForEach (gn->children, MakeFindChild, (ClientData)NULL);
+		    Lst_ForEach (gn->children, MakeFindChild, (ClientData)gn);
 	    }
 	}
     }
