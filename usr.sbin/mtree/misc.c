@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.3 1995/03/07 21:12:08 cgd Exp $	*/
+/*	$NetBSD: misc.c,v 1.4 1995/03/07 21:26:23 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -61,6 +61,7 @@ static KEY keylist[] = {
 	"link",		F_SLINK,	NEEDVALUE,
 	"mode",		F_MODE,		NEEDVALUE,
 	"nlink",	F_NLINK,	NEEDVALUE,
+	"optional",	F_OPT,		0,
 	"size",		F_SIZE,		NEEDVALUE,
 	"time",		F_TIME,		NEEDVALUE,
 	"type",		F_TYPE,		NEEDVALUE,
