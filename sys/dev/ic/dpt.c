@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.24 2000/11/14 18:21:01 thorpej Exp $	*/
+/*	$NetBSD: dpt.c,v 1.25 2001/02/24 00:03:12 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.24 2000/11/14 18:21:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.25 2001/02/24 00:03:12 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -284,8 +284,8 @@ dpt_init(sc, intrstr)
 
 	for (i = 0; ei->ei_model[i] != ' ' && i < 7; i++)
 		model[i] = ei->ei_model[i];
-	for (j = 0; ei->ei_suffix[j] != ' ' && j < 7; j++)
-		model[i++] = ei->ei_model[i];
+	for (j = 0; ei->ei_suffix[j] != ' ' && j < 7; i++, j++)
+		model[i] = ei->ei_model[i];
 	model[i] = '\0';
 
 	/* Find the cannonical name for the board */
