@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.63.2.5 2001/05/26 22:13:11 sommerfeld Exp $	*/
+/*	$NetBSD: clock.c,v 1.63.2.6 2001/05/27 00:02:18 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -747,7 +747,10 @@ inittodr(base)
 	mc_todregs rtclk;
 	struct clock_ymdhms dt;
 	int s;
-
+#if defined(I586_CPU) || defined(I686_CPU)
+	struct cpu_info *ci = curcpu();
+	extern struct timeval tsc_time;
+#endif
 	/*
 	 * We mostly ignore the suggested time and go for the RTC clock time
 	 * stored in the CMOS RAM.  If the time can't be obtained from the
@@ -804,6 +807,12 @@ inittodr(base)
 	time.tv_sec = clock_ymdhms_to_secs(&dt) + rtc_offset * 60;
 #ifdef DEBUG_CLOCK
 	printf("readclock: %ld (%ld)\n", time.tv_sec, base);
+#endif
+#if defined(I586_CPU) || defined(I686_CPU)
+	if (ci->ci_feature_flags & CPUID_TSC) {
+		tsc_time = time;
+		tsc_microset(ci);
+	}
 #endif
 
 	if (base < time.tv_sec - 5*SECYR)
