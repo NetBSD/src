@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.23 1997/02/11 08:01:03 scottr Exp $
+#	$NetBSD: MAKEDEV,v 1.24 1997/02/19 07:53:42 scottr Exp $
 #
 # Device "make" file.  Valid arguments:
 #	all	a smattering--at least one of each except
@@ -61,7 +61,7 @@
 #	uk*	SCSI unknown
 #	ch*	SCSI changer
 #	adb	Apple Desktop Bus
-#	asc	Apple Sound Chip
+#	asc*	Apple Sound Chip
 #
 
 PATH=/sbin:/bin/:/usr/bin:/usr/sbin
@@ -77,7 +77,7 @@ all)
 	sh $0 ttye0 adb grf0 grf1 grf2 grf3
 	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	sh $0 bpf8 bpf9 bpf10 bpf11
-	sh $0 tun0 tun1 tun2 tun3 lkm ipl asc local
+	sh $0 tun0 tun1 tun2 tun3 asc0 lkm ipl local
 	;;
 
 std)
