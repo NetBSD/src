@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.8 2000/11/27 08:39:54 chs Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.9 2000/11/27 18:26:40 chs Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -190,6 +190,7 @@ struct bio_ops bioops = {
 	softdep_process_worklist,		/* io_sync */
 	softdep_move_dependencies,		/* io_movedeps */
 	softdep_count_dependencies,		/* io_countdeps */
+	softdep_pageiodone,			/* io_pageiodone */
 };
 
 /*
