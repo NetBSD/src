@@ -1,4 +1,4 @@
-/*	$NetBSD: dmesg.c,v 1.14 1997/09/20 09:43:22 enami Exp $	*/
+/*	$NetBSD: dmesg.c,v 1.15 1997/09/20 09:48:35 enami Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dmesg.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: dmesg.c,v 1.14 1997/09/20 09:43:22 enami Exp $");
+__RCSID("$NetBSD: dmesg.c,v 1.15 1997/09/20 09:48:35 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -115,7 +115,7 @@ main(argc, argv)
 		errx(1, "%s: msgbufp not found", nlistf ? nlistf : "namelist");
 	if (KREAD(nl[X_MSGBUF].n_value, bufp))
 		errx(1, "kvm_read: %s (0x%lx)", kvm_geterr(kd),
-			nl[X_MSGBUF].n_value);
+		    nl[X_MSGBUF].n_value);
 	if (KREAD((long)bufp, cur))
 		errx(1, "kvm_read: %s (0x%lx)", kvm_geterr(kd),
 		    (unsigned long)bufp);
@@ -125,7 +125,7 @@ main(argc, argv)
 	if (bufdata == NULL)
 		errx(1, "couldn't allocate space for buffer data");
 	if (kvm_read(kd, (long)&bufp->msg_bufc, bufdata,
-			cur.msg_bufs) != cur.msg_bufs)
+	    cur.msg_bufs) != cur.msg_bufs)
 		errx(1, "kvm_read: %s", kvm_geterr(kd));
 	kvm_close(kd);
 	if (cur.msg_bufx >= cur.msg_bufs)
@@ -170,6 +170,7 @@ main(argc, argv)
 void
 usage()
 {
+
 	(void)fprintf(stderr, "usage: dmesg [-M core] [-N system]\n");
 	exit(1);
 }
