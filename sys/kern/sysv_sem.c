@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.13 1994/12/05 06:46:29 mycroft Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.14 1994/12/05 07:22:12 mycroft Exp $	*/
 
 /*
  * Implementation of SVID semaphores
@@ -826,11 +826,6 @@ semexit(p)
 {
 	register struct sem_undo *suptr;
 	register struct sem_undo **supptr;
-	int did_something;
-
-	semwait();
-
-	did_something = 0;
 
 	/*
 	 * Go through the chain of undo vectors looking for one
@@ -843,8 +838,83 @@ semexit(p)
 			break;
 	}
 
-	if (suptr == NULL)
-		goto unlock;
+	/*
+	 * There are a few possibilities to consider here ...
+	 *
+	 * 1) The semaphore facility isn't currently locked.  In this case,
+	 *    this call should proceed normally.
+	 * 2) The semaphore facility is locked by this process (i.e. the one
+	 *    that is exiting).  In this case, this call should proceed as
+	 *    usual and the facility should be unlocked at the end of this
+	 *    routine (since the locker is exiting).
+	 * 3) The semaphore facility is locked by some other process and this
+	 *    process doesn't have an undo structure allocated for it.  In this
+	 *    case, this call should proceed normally (i.e. not accomplish
+	 *    anything and, most importantly, not block since that is
+	 *    unnecessary and could result in a LOT of processes blocking in
+	 *    here if the facility is locked for a long time).
+	 * 4) The semaphore facility is locked by some other process and this
+	 *    process has an undo structure allocated for it.  In this case,
+	 *    this call should block until the facility has been unlocked since
+	 *    the holder of the lock may be examining this process's proc entry
+	 *    (the ipcs utility does this when printing out the information
+	 *    from the allocated sem undo elements).
+	 *
+	 * This leads to the conclusion that we should not block unless we
+	 * discover that the someone else has the semaphore facility locked and
+	 * this process has an undo structure.  Let's do that...
+	 *
+	 * Note that we do this in a separate pass from the one that processes
+	 * any existing undo structure since we don't want to risk blocking at
+	 * that time (it would make the actual unlinking of the element from
+	 * the chain of allocated undo structures rather messy).
+	 */
+
+	/*
+	 * Does someone else hold the semaphore facility's lock?
+	 */
+
+	if (semlock_holder != NULL && semlock_holder != p) {
+		/*
+		 * Yes (i.e. we are in case 3 or 4).
+		 *
+		 * If we didn't find an undo record associated with this
+		 * process than we can just return (i.e. we are in case 3).
+		 *
+		 * Note that we know that someone else is holding the lock so
+		 * we don't even have to see if we're holding it...
+		 */
+
+		if (suptr == NULL)
+			return;
+
+		/*
+		 * We are in case 4.
+		 *
+		 * Go to sleep as long as someone else is locking the semaphore
+		 * facility (note that we won't get here if we are holding the
+		 * lock so we don't need to check for that possibility).
+		 */
+
+		while (semlock_holder != NULL)
+			sleep((caddr_t)&semlock_holder, (PZERO - 4));
+
+		/*
+		 * Nobody is holding the facility (i.e. we are now in case 1).
+		 * We can proceed safely according to the argument outlined
+		 * above.
+		 */
+	} else {
+		/*
+		 * No (i.e. we are in case 1 or 2).
+		 *
+		 * If there is no undo record, skip to the end and unlock the
+		 * semaphore facility if necessary.
+		 */
+
+		if (suptr == NULL)
+			goto unlock;
+	}
 
 #ifdef SEM_DEBUG
 	printf("proc @%08x has undo structure with %d entries\n", p,
@@ -877,13 +947,10 @@ semexit(p)
 			    semaptr->sem_base[semnum].semval);
 #endif
 
-			if (adjval < 0) {
-				if (semaptr->sem_base[semnum].semval < -adjval)
-					semaptr->sem_base[semnum].semval = 0;
-				else
-					semaptr->sem_base[semnum].semval +=
-					    adjval;
-			} else
+			if (adjval < 0 &&
+			    semaptr->sem_base[semnum].semval < -adjval)
+				semaptr->sem_base[semnum].semval = 0;
+			else
 				semaptr->sem_base[semnum].semval += adjval;
 
 #ifdef SEM_WAKEUP
@@ -909,7 +976,7 @@ semexit(p)
 unlock:
 	/*
 	 * If the exiting process is holding the global semaphore facility
-	 * lock then release it.
+	 * lock (i.e. we are in case 2) then release it.
 	 */
 	if (semlock_holder == p) {
 		semlock_holder = NULL;
