@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.10 1994/08/04 16:32:29 ws Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.11 1994/08/09 17:51:29 ws Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -581,7 +581,7 @@ chainlength(pmp, start, count)
 	u_int map;
 	u_long len;
 	
-	max_idx = (pmp->pm_maxcluster - 1) / N_INUSEBITS;
+	max_idx = pmp->pm_maxcluster / N_INUSEBITS;
 	idx = start / N_INUSEBITS;
 	start %= N_INUSEBITS;
 	map = pmp->pm_inusemap[idx];
@@ -689,7 +689,7 @@ clusteralloc(pmp, start, count, fillwith, retcluster, got)
 	 * Start at a (pseudo) random place to maximize cluster runs
 	 * under multiple writers.
 	 */
-	foundcn = newst = (start * 1103515245 + 12345) % (pmp->pm_maxcluster - 1);
+	foundcn = newst = (start * 1103515245 + 12345) % (pmp->pm_maxcluster + 1);
 	foundl = 0;
 	
 	for (cn = newst; cn <= pmp->pm_maxcluster;) {
@@ -809,7 +809,7 @@ fillinusemap(pmp)
 	 * Mark all clusters in use, we mark the free ones in the fat scan
 	 * loop further down.
 	 */
-	for (cn = 0; cn < (pmp->pm_maxcluster + N_INUSEBITS - 1) / N_INUSEBITS; cn++)
+	for (cn = 0; cn < (pmp->pm_maxcluster + N_INUSEBITS) / N_INUSEBITS; cn++)
 		pmp->pm_inusemap[cn] = (u_int)-1;
 
 	/*
