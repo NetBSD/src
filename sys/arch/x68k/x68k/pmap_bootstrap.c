@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.27.2.1 2005/02/23 08:45:13 yamt Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.27.2.2 2005/02/23 10:03:04 yamt Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.27.2.1 2005/02/23 08:45:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.27.2.2 2005/02/23 10:03:04 yamt Exp $");
 
 #include "opt_m680x0.h"
 
@@ -205,10 +205,9 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		*ste = (u_int)pte | SG_U | SG_RW | SG_V;
 		/*
 		 * Now initialize the final portion of that block of
-		 * descriptors to map Sysmap.
+		 * descriptors to map kptmpa.
 		 */
-		pte = ((u_int *)kstpa)
-				[kstsize*NPTEPG - NPTEPG/SG4_LEV3SIZE];
+		pte = &((u_int *)kstpa)[kstsize*NPTEPG - NPTEPG/SG4_LEV3SIZE];
 		epte = &pte[NPTEPG/SG4_LEV3SIZE];
 		protoste = kptmpa | SG_U | SG_RW | SG_V;
 		while (pte < epte) {
@@ -218,14 +217,6 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		/*
 		 * Initialize Sysptmap
 		 */
-		pte = ((u_int *)kstpa)
-				[kstsize*NPTEPG - NPTEPG/SG4_LEV3SIZE];
-		epte = &pte[NPTEPG/SG4_LEV3SIZE];
-		protoste = kptmpa | SG_U | SG_RW | SG_V;
-		while (pte < epte) {
-			*pte++ = protoste;
-			protoste += (SG4_LEV3SIZE * sizeof(st_entry_t));
-		}
 		pte = (u_int *)kptmpa;
 		epte = &pte[nptpages];
 		protopte = kptpa | PG_RW | PG_CI | PG_V;
