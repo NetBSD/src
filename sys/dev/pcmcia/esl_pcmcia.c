@@ -1,4 +1,4 @@
-/*	$NetBSD: esl_pcmcia.c,v 1.9 2004/08/08 23:17:12 mycroft Exp $	*/
+/*	$NetBSD: esl_pcmcia.c,v 1.10 2004/08/10 18:39:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2000 Jared D. McNeill <jmcneill@invisible.yi.org>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esl_pcmcia.c,v 1.9 2004/08/08 23:17:12 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esl_pcmcia.c,v 1.10 2004/08/10 18:39:08 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,19 +54,12 @@ __KERNEL_RCSID(0, "$NetBSD: esl_pcmcia.c,v 1.9 2004/08/08 23:17:12 mycroft Exp $
 #include <dev/isa/essreg.h>
 #include <dev/pcmcia/eslvar.h>
 
-static const struct esl_pcmcia_product {
-	char *name;
-	int32_t manufacturer;
-	int32_t product;
-	char *cis_info[4];
-	int function;
-} esl_pcmcia_products[] = {
-	{ PCMCIA_STR_EIGERLABS_EPX_AA2000,
-	  PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
-	  PCMCIA_CIS_EIGERLABS_EPX_AA2000, 0 },
-
-	{ NULL }
+static const struct pcmcia_product esl_pcmcia_products[] = {
+	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+	  PCMCIA_CIS_EIGERLABS_EPX_AA2000 },
 };
+static const size_t esl_pcmcia_nproducts =
+    sizeof(esl_pcmcia_products) / sizeof(esl_pcmcia_products[0]);
 
 int	esl_pcmcia_match(struct device *, struct cfdata *, void *); 
 void	esl_pcmcia_attach(struct device *, struct device *, void *);  
@@ -78,30 +71,14 @@ void	esl_pcmcia_disable(struct esl_pcmcia_softc *);
 CFATTACH_DECL(esl_pcmcia, sizeof(struct esl_pcmcia_softc),
     esl_pcmcia_match, esl_pcmcia_attach, esl_pcmcia_detach, NULL);
 
-#define ESL_NDEVS (sizeof(esl_pcmcia_products) / sizeof(esl_pcmcia_products[0]))
-
-#define esl_pcmcia_product_lookup(card, fct, n) \
-	(((card)->manufacturer != PCMCIA_VENDOR_INVALID) && \
-	 ((card)->product != PCMCIA_PRODUCT_INVALID) && \
-	 (esl_pcmcia_products[(n)].cis_info[0]) && \
-	 (esl_pcmcia_products[(n)].cis_info[1]) && \
-	 (strcmp((card)->cis1_info[0], esl_pcmcia_products[(n)].cis_info[0]) \
-	    == 0) && \
-	 (strcmp((card)->cis1_info[1], esl_pcmcia_products[(n)].cis_info[1]) \
-	    == 0) && \
-	 ((fct) == esl_pcmcia_products[(n)].function) ? \
-	 &esl_pcmcia_products[(n)] : NULL)
-
 int
 esl_pcmcia_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
-	int i;
 
-	for (i = 0; i < ESL_NDEVS; i++)
-		if (esl_pcmcia_product_lookup(pa->card, pa->pf->number, i))
-			return (2); 
-
+	if (pcmcia_product_lookup(pa, esl_pcmcia_products, esl_pcmcia_nproducts,
+	    sizeof(esl_pcmcia_products[0]), NULL))
+		return (2); 
 	return (0);
 }
 
@@ -112,9 +89,8 @@ esl_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	struct pcmcia_function *pf = pa->pf;
-	const struct esl_pcmcia_product *pp;
-	int i;
 
+	printf("\n");
 	esc->sc_pf = pf;
 
 	SIMPLEQ_FOREACH(cfe, &pf->cfe_head, cfe_list) {
@@ -128,7 +104,7 @@ esl_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if (cfe == 0) {
-		printf(": can't alloc i/o space\n");
+		printf("%s: can't alloc i/o space\n", self->dv_xname);
 		goto no_config_entry;
 	}
 
@@ -139,30 +115,16 @@ esl_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 	/* Enable the card. */
 	pcmcia_function_init(pf, cfe);
 	if (pcmcia_function_enable(pf)) {
-		printf(": function enable failed\n");
+		printf("%s: function enable failed\n", self->dv_xname);
 		goto enable_failed;
 	}
 
 	/* Map in the I/O space */
 	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, &esc->sc_pcioh,
 	    &esc->sc_io_window)) {
-		printf(": can't map i/o space\n");
+		printf("%s: can't map i/o space\n", self->dv_xname);
 		goto iomap_failed;
 	}
-
-	pp = NULL;
-	for (i = 0; i < ESL_NDEVS; i++) {
-		pp = esl_pcmcia_product_lookup(pa->card, pa->pf->number, i);
-		if (pp != NULL)
-			break;
-	}
-
-	if (pp == NULL) {
-		printf("\n");
-		panic("esl_pcmcia_attach: impossible");
-	}
-
-	printf(": %s\n", pp->name);
 
 	if (esl_init(esc)) {
 		printf("esl_init: failed\n");

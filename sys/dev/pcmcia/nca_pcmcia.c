@@ -1,4 +1,4 @@
-/*	$NetBSD: nca_pcmcia.c,v 1.13 2004/08/10 16:04:16 mycroft Exp $	*/
+/*	$NetBSD: nca_pcmcia.c,v 1.14 2004/08/10 18:39:08 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nca_pcmcia.c,v 1.13 2004/08/10 16:04:16 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nca_pcmcia.c,v 1.14 2004/08/10 18:39:08 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,9 +88,11 @@ CFATTACH_DECL(nca_pcmcia, sizeof(struct nca_pcmcia_softc),
 #define NCA_NO_PARITY_CHK	0xff00
 
 const struct pcmcia_product nca_pcmcia_products[] = {
-
-	{ NULL }
+	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+	  PCMCIA_CIS_INVALID },
 };
+const size_t nca_pcmcia_nproducts =
+    sizeof(nca_pcmcia_products) / sizeof(nca_pcmcia_products[0]);
 
 int
 nca_pcmcia_match(parent, match, aux)
@@ -100,8 +102,8 @@ nca_pcmcia_match(parent, match, aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
-	if (pcmcia_product_lookup(pa, nca_pcmcia_products,
-	    sizeof nca_pcmcia_products[0], NULL) != NULL)
+	if (pcmcia_product_lookup(pa, nca_pcmcia_products, nca_pcmcia_nproducts,
+	    sizeof(nca_pcmcia_products[0]), NULL))
 		return (1);
 	return (0);
 }

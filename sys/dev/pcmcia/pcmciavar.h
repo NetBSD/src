@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciavar.h,v 1.23 2004/08/10 02:50:52 mycroft Exp $	*/
+/*	$NetBSD: pcmciavar.h,v 1.24 2004/08/10 18:39:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -231,18 +231,17 @@ struct pcmcia_tuple {
 };
 
 struct pcmcia_product {
-	const char	*pp_name;		/* NULL if end of table */
 	u_int32_t	pp_vendor;
 	u_int32_t	pp_product;
-	int		pp_expfunc;
+	const char	*pp_cisinfo[4];
 };
 
 typedef int (*pcmcia_product_match_fn) __P((struct pcmcia_attach_args *,
     const struct pcmcia_product *, int));
 
-const struct pcmcia_product
-	*pcmcia_product_lookup __P((struct pcmcia_attach_args *,
-	    const struct pcmcia_product *, size_t, pcmcia_product_match_fn));
+const void *
+	pcmcia_product_lookup __P((struct pcmcia_attach_args *, const void *,
+	    size_t, size_t, pcmcia_product_match_fn));
 
 void	pcmcia_devinfo __P((struct pcmcia_card *, int, char *, size_t));
 

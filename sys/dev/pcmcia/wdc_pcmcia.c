@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.80 2004/08/10 16:04:16 mycroft Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.81 2004/08/10 18:39:08 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.80 2004/08/10 16:04:16 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.81 2004/08/10 18:39:08 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -85,12 +85,7 @@ static int wdc_pcmcia_detach	__P((struct device *, int));
 CFATTACH_DECL(wdc_pcmcia, sizeof(struct wdc_pcmcia_softc),
     wdc_pcmcia_match, wdc_pcmcia_attach, wdc_pcmcia_detach, wdcactivate);
 
-const struct wdc_pcmcia_product {
-	u_int32_t	wpp_vendor;	/* vendor ID */
-	u_int32_t	wpp_product;	/* product ID */
-	const char	*wpp_cis_info[4];	/* XXX necessary? */
-} wdc_pcmcia_products[] = {
-
+const struct pcmcia_product wdc_pcmcia_products[] = {
 	{ PCMCIA_VENDOR_DIGITAL,
 	  PCMCIA_PRODUCT_DIGITAL_MOBILE_MEDIA_CDROM,
 	  {NULL, "Digital Mobile Media CD-ROM", NULL, NULL} },
@@ -116,73 +111,41 @@ const struct wdc_pcmcia_product {
 	 * EXP IDE/ATAPI DVD Card use with some DVD players.
 	 * Does not have a vendor ID or product ID.
 	 */
-	{ -1, -1,
+	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
 	  PCMCIA_CIS_EXP_EXPMULTIMEDIA },
 
 	/* Mobile Dock 2, neither vendor ID nor product ID */
-	{ -1, -1,
+	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
 	  {"SHUTTLE TECHNOLOGY LTD.", "PCCARD-IDE/ATAPI Adapter", NULL, NULL} },
 
 	/* Toshiba Portege 3110 CD, neither vendor ID nor product ID */
-	{ -1, -1,
+	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
 	  {"FREECOM", "PCCARD-IDE", NULL, NULL} },
 
 	/* Random CD-ROM, (badged AMACOM), neither vendor ID nor product ID */ 
-	{ -1, -1,
+	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
 	  {"PCMCIA", "CD-ROM", NULL, NULL} },
 
 	/* IO DATA CBIDE2, with neither vendor ID nor product ID */
-	{ -1, -1,
+	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
 	  PCMCIA_CIS_IODATA_CBIDE2 },
 
 	/* TOSHIBA PA2673U(IODATA_CBIDE2 OEM), */
 	/*  with neither vendor ID nor product ID */
-	{ -1, -1,
+	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
 	  PCMCIA_CIS_TOSHIBA_CBIDE2 },
 
 	/* 
 	 * Novac PCMCIA-IDE Card for HD530P IDE Box, 
 	 * with neither vendor ID nor product ID
 	 */
-	{ -1, -1,
+	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
 	  {"PCMCIA", "PnPIDE", NULL, NULL} },
 };
-
-const struct wdc_pcmcia_product *
-	wdc_pcmcia_lookup __P((struct pcmcia_attach_args *));
+const size_t wdc_pcmcia_nproducts =
+    sizeof(wdc_pcmcia_products) / sizeof(wdc_pcmcia_products[0]);
 
 int	wdc_pcmcia_enable __P((struct device *, int));
-
-const struct wdc_pcmcia_product *
-wdc_pcmcia_lookup(pa)
-	struct pcmcia_attach_args *pa;
-{
-	const struct wdc_pcmcia_product *wpp;
-	int i, cis_match;
-	int n;
-
-	for (wpp = wdc_pcmcia_products,
-	    n = sizeof(wdc_pcmcia_products) / sizeof(wdc_pcmcia_products[0]);
-	    n; wpp++, n--) {
-		if ((wpp->wpp_vendor == -1 ||
-		     pa->manufacturer == wpp->wpp_vendor) &&
-		    (wpp->wpp_product == -1 ||
-		     pa->product == wpp->wpp_product)) {
-			cis_match = 1;
-			for (i = 0; i < 4; i++) {
-				if (!(wpp->wpp_cis_info[i] == NULL ||
-				      (pa->card->cis1_info[i] != NULL &&
-				       strcmp(pa->card->cis1_info[i],
-					      wpp->wpp_cis_info[i]) == 0)))
-					cis_match = 0;
-			}
-			if (cis_match)
-				return (wpp);
-		}
-	}
-
-	return (NULL);
-}
 
 static int
 wdc_pcmcia_match(parent, match, aux)
@@ -193,13 +156,11 @@ wdc_pcmcia_match(parent, match, aux)
 	struct pcmcia_attach_args *pa = aux;
 
 	if (pa->pf->function == PCMCIA_FUNCTION_DISK && 
-	    pa->pf->pf_funce_disk_interface == PCMCIA_TPLFE_DDI_PCCARD_ATA) {
-		return 10;
-	}
-
-	if (wdc_pcmcia_lookup(pa) != NULL)
+	    pa->pf->pf_funce_disk_interface == PCMCIA_TPLFE_DDI_PCCARD_ATA)
 		return (1);
-
+	if (pcmcia_product_lookup(pa, wdc_pcmcia_products, wdc_pcmcia_nproducts,
+	    sizeof(wdc_pcmcia_products[0]), NULL))
+		return (2);
 	return (0);
 }
 

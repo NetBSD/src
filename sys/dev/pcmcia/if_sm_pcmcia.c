@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_pcmcia.c,v 1.42 2004/08/10 16:04:16 mycroft Exp $	*/
+/*	$NetBSD: if_sm_pcmcia.c,v 1.43 2004/08/10 18:39:08 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_pcmcia.c,v 1.42 2004/08/10 16:04:16 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_pcmcia.c,v 1.43 2004/08/10 18:39:08 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,9 +76,9 @@ int	sm_pcmcia_detach __P((struct device *, int));
 struct sm_pcmcia_softc {
 	struct	smc91cxx_softc sc_smc;		/* real "smc" softc */
 
+	struct	pcmcia_function *sc_pf;		/* our PCMCIA function */
 	void	*sc_ih;				/* interrupt cookie */
 
-	struct	pcmcia_function *sc_pf;		/* our PCMCIA function */
 	int	sc_state;
 #define	SM_PCMCIA_ATTACHED	3
 };
@@ -92,26 +92,24 @@ void	sm_pcmcia_disable __P((struct smc91cxx_softc *));
 int	sm_pcmcia_ascii_enaddr __P((const char *, u_int8_t *));
 
 const struct pcmcia_product sm_pcmcia_products[] = {
-	{ "",	PCMCIA_VENDOR_MEGAHERTZ2,
-	  PCMCIA_PRODUCT_MEGAHERTZ2_EM1144,	 0, },
-	{ "",	PCMCIA_VENDOR_MEGAHERTZ2,
-	  PCMCIA_PRODUCT_MEGAHERTZ2_EM1144,	 1, },
+	{ PCMCIA_VENDOR_MEGAHERTZ2, PCMCIA_PRODUCT_MEGAHERTZ2_EM1144,
+	  PCMCIA_CIS_INVALID },
 
-	{ "",	PCMCIA_VENDOR_MEGAHERTZ2,
-	  PCMCIA_PRODUCT_MEGAHERTZ2_XJACK,	 0, },
+	{ PCMCIA_VENDOR_MEGAHERTZ2, PCMCIA_PRODUCT_MEGAHERTZ2_XJACK,
+	  PCMCIA_CIS_INVALID },
 
-	{ "",	PCMCIA_VENDOR_NEWMEDIA,
-	  PCMCIA_PRODUCT_NEWMEDIA_BASICS,	0, },
+	{ PCMCIA_VENDOR_NEWMEDIA, PCMCIA_PRODUCT_NEWMEDIA_BASICS,
+	  PCMCIA_CIS_INVALID },
 
 #if 0
-	{ "",	PCMCIA_VENDOR_SMC,
-	  PCMCIA_PRODUCT_SMC_8020BT,		0, },
+	{ PCMCIA_VENDOR_SMC, PCMCIA_PRODUCT_SMC_8020BT,
+	  PCMCIA_CIS_INVALID },
 #endif
-	{ "",	PCMCIA_VENDOR_PSION,
-	  PCMCIA_PRODUCT_PSION_GOLDCARD,	0, },
-
-	{ NULL }
+	{ PCMCIA_VENDOR_PSION, PCMCIA_PRODUCT_PSION_GOLDCARD,
+	  PCMCIA_CIS_INVALID },
 };
+const size_t sm_pcmcia_nproducts =
+    sizeof(sm_pcmcia_products) / sizeof(sm_pcmcia_products[0]);
 
 int
 sm_pcmcia_match(parent, match, aux)
@@ -121,12 +119,12 @@ sm_pcmcia_match(parent, match, aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
-	/* This is to differentiate the serial function of Megahertz cards. */
+	/* This is to differentiate the serial function of some cards. */
 	if (pa->pf->function != PCMCIA_FUNCTION_NETWORK)
 		return (0);
 
-	if (pcmcia_product_lookup(pa, sm_pcmcia_products,
-	    sizeof sm_pcmcia_products[0], NULL) != NULL)
+	if (pcmcia_product_lookup(pa, sm_pcmcia_products, sm_pcmcia_nproducts,
+	    sizeof(sm_pcmcia_products[0]), NULL))
 		return (1);
 	return (0);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: if_awi_pcmcia.c,v 1.30 2004/08/10 16:43:47 mycroft Exp $ */
+/* $NetBSD: if_awi_pcmcia.c,v 1.31 2004/08/10 18:39:08 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1999, 2004 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_awi_pcmcia.c,v 1.30 2004/08/10 16:43:47 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_awi_pcmcia.c,v 1.31 2004/08/10 18:39:08 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,66 +101,30 @@ struct awi_pcmcia_softc {
 CFATTACH_DECL(awi_pcmcia, sizeof(struct awi_pcmcia_softc),
     awi_pcmcia_match, awi_pcmcia_attach, awi_pcmcia_detach, awi_activate);
 
-static const struct awi_pcmcia_product {
-	u_int32_t	app_vendor;	/* vendor ID */
-	u_int32_t	app_product;	/* product ID */
-	const char	*app_cisinfo[4]; /* CIS information */
-	const char	*app_name;	/* product name */
-} awi_pcmcia_products[] = {
+static const struct pcmcia_product awi_pcmcia_products[] = {
 	{ PCMCIA_VENDOR_BAY,		PCMCIA_PRODUCT_BAY_STACK_650,
-	  PCMCIA_CIS_BAY_STACK_650,	"" },
+	  PCMCIA_CIS_BAY_STACK_650 },
 
 	{ PCMCIA_VENDOR_BAY,		PCMCIA_PRODUCT_BAY_STACK_660,
-	  PCMCIA_CIS_BAY_STACK_660,	"" },
+	  PCMCIA_CIS_BAY_STACK_660 },
 
 	{ PCMCIA_VENDOR_BAY,		PCMCIA_PRODUCT_BAY_SURFER_PRO,
-	  PCMCIA_CIS_BAY_SURFER_PRO,	"" },
+	  PCMCIA_CIS_BAY_SURFER_PRO },
 
 	{ PCMCIA_VENDOR_AMD,		PCMCIA_PRODUCT_AMD_AM79C930,
-	  PCMCIA_CIS_AMD_AM79C930,	"" },
+	  PCMCIA_CIS_AMD_AM79C930 },
 
 	{ PCMCIA_VENDOR_ICOM,		PCMCIA_PRODUCT_ICOM_SL200,
-	  PCMCIA_CIS_ICOM_SL200,	"" },
+	  PCMCIA_CIS_ICOM_SL200 },
 
 	{ PCMCIA_VENDOR_NOKIA,		PCMCIA_PRODUCT_NOKIA_C020_WLAN,
-	  PCMCIA_CIS_NOKIA_C020_WLAN,	"" },
+	  PCMCIA_CIS_NOKIA_C020_WLAN },
 
 	{ PCMCIA_VENDOR_FARALLON,	PCMCIA_PRODUCT_FARALLON_SKYLINE,
-	  PCMCIA_CIS_FARALLON_SKYLINE,	"" },
-
-	{ 0,				0,
-	  { NULL, NULL, NULL, NULL },	NULL },
+	  PCMCIA_CIS_FARALLON_SKYLINE },
 };
-
-static const struct awi_pcmcia_product *
-	awi_pcmcia_lookup __P((struct pcmcia_attach_args *));
-
-static const struct awi_pcmcia_product *
-awi_pcmcia_lookup(pa)
-	struct pcmcia_attach_args *pa;
-{
-	const struct awi_pcmcia_product *app;
-
-	for (app = awi_pcmcia_products; app->app_name != NULL; app++) {
-		/* match by vendor/product id */
-		if (pa->manufacturer != PCMCIA_VENDOR_INVALID &&
-		    pa->manufacturer == app->app_vendor &&
-		    pa->product != PCMCIA_PRODUCT_INVALID &&
-		    pa->product == app->app_product)
-			return (app);
-
-		/* match by CIS information */
-		if (pa->card->cis1_info[0] != NULL &&
-		    app->app_cisinfo[0] != NULL &&
-		    strcmp(pa->card->cis1_info[0], app->app_cisinfo[0]) == 0 &&
-		    pa->card->cis1_info[1] != NULL &&
-		    app->app_cisinfo[1] != NULL &&
-		    strcmp(pa->card->cis1_info[1], app->app_cisinfo[1]) == 0)
-			return (app);
-	}
-
-	return (NULL);
-}
+static const size_t awi_pcmcia_nproducts =
+    sizeof(awi_pcmcia_products) / sizeof(awi_pcmcia_products[0]);
 
 static int
 awi_pcmcia_enable(sc)
@@ -209,9 +173,9 @@ awi_pcmcia_match(parent, match, aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
-	if (awi_pcmcia_lookup(pa) != NULL)
+	if (pcmcia_product_lookup(pa, awi_pcmcia_products, awi_pcmcia_nproducts,
+	    sizeof(awi_pcmcia_products[0]), NULL))
 		return (1);
-
 	return (0);
 }
 

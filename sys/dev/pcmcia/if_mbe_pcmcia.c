@@ -1,7 +1,7 @@
-/*	$NetBSD: if_mbe_pcmcia.c,v 1.31 2004/08/08 23:17:13 mycroft Exp $	*/
+/*	$NetBSD: if_mbe_pcmcia.c,v 1.32 2004/08/10 18:39:08 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mbe_pcmcia.c,v 1.31 2004/08/08 23:17:13 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mbe_pcmcia.c,v 1.32 2004/08/10 18:39:08 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,9 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_mbe_pcmcia.c,v 1.31 2004/08/08 23:17:13 mycroft E
 int	mbe_pcmcia_match __P((struct device *, struct cfdata *, void *));
 void	mbe_pcmcia_attach __P((struct device *, struct device *, void *));
 int	mbe_pcmcia_detach __P((struct device *, int));
-
-static const struct mbe_pcmcia_product
-		*mbe_pcmcia_lookup __P((struct pcmcia_attach_args *pa));
 
 struct mbe_pcmcia_softc {
 	struct	mb86960_softc sc_mb86960;	/* real "mb" softc */
@@ -92,94 +89,60 @@ int	mbe_pcmcia_get_enaddr_from_io __P((struct mbe_pcmcia_softc *,
 	    struct mbe_pcmcia_get_enaddr_args *));
 
 static const struct mbe_pcmcia_product {
-	const char	*mpp_name;		/* product name */
-	u_int32_t	mpp_vendor;		/* vendor ID */
-	u_int32_t	mpp_product;		/* product ID */
-	const char	*mpp_cisinfo[4];	/* CIS information */
+	struct pcmcia_product mpp_product;
 	u_int32_t	mpp_ioalign;		/* required alignment */
 	int		mpp_enet_maddr;
-	int		flags;
+	int		mpp_flags;
 #define MBH10302	0x0001			/* FUJITSU MBH10302 */
 } mbe_pcmcia_products[] = {
-	{ PCMCIA_STR_TDK_LAK_CD021BX,		PCMCIA_VENDOR_TDK,
-	  PCMCIA_PRODUCT_TDK_LAK_CD021BX,	PCMCIA_CIS_TDK_LAK_CD021BX,
+	{ { PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_LAK_CD021BX,
+	    PCMCIA_CIS_TDK_LAK_CD021BX },
 	  0, -1 }, 
 
-	{ PCMCIA_STR_TDK_LAK_CF010,		PCMCIA_VENDOR_TDK,
-	  PCMCIA_PRODUCT_TDK_LAK_CF010,		PCMCIA_CIS_TDK_LAK_CF010,
+	{ { PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_LAK_CF010,
+	    PCMCIA_CIS_TDK_LAK_CF010 },
 	  0, -1 },
 
 #if 0 /* XXX 86960-based? */
-	{ PCMCIA_STR_TDK_LAK_DFL9610,		PCMCIA_VENDOR_TDK,
-	  PCMCIA_PRODUCT_TDK_LAK_DFL9610,	PCMCIA_CIS_TDK_DFL9610,
+	{ { PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_LAK_DFL9610,
+	    PCMCIA_CIS_TDK_DFL9610 },
 	  0, -1, MBH10302 /* XXX */ },
 #endif
 
-	{ PCMCIA_STR_CONTEC_CNETPC,		PCMCIA_VENDOR_CONTEC,
-	  PCMCIA_PRODUCT_CONTEC_CNETPC,		PCMCIA_CIS_CONTEC_CNETPC,
+	{ { PCMCIA_VENDOR_CONTEC, PCMCIA_PRODUCT_CONTEC_CNETPC,
+	    PCMCIA_CIS_CONTEC_CNETPC },
 	  0, -1 },
 
-	{ PCMCIA_STR_FUJITSU_LA501,		PCMCIA_VENDOR_FUJITSU,
-	  PCMCIA_PRODUCT_FUJITSU_LA501,		PCMCIA_CIS_FUJITSU_LA501,
+	{ { PCMCIA_VENDOR_FUJITSU, PCMCIA_PRODUCT_FUJITSU_LA501,
+	    PCMCIA_CIS_FUJITSU_LA501 },
 	  0x20, -1 },
 
-	{ PCMCIA_STR_FUJITSU_FMV_J181,		PCMCIA_VENDOR_FUJITSU,
-	  PCMCIA_PRODUCT_FUJITSU_FMV_J181,	PCMCIA_CIS_FUJITSU_FMV_J181,
+	{ { PCMCIA_VENDOR_FUJITSU, PCMCIA_PRODUCT_FUJITSU_FMV_J181,
+	    PCMCIA_CIS_FUJITSU_FMV_J181 },
 	  0x20, -1, MBH10302 },
 
-	{ PCMCIA_STR_FUJITSU_FMV_J182,		PCMCIA_VENDOR_FUJITSU,
-	  PCMCIA_PRODUCT_FUJITSU_FMV_J182,	PCMCIA_CIS_FUJITSU_FMV_J182,
+	{ { PCMCIA_VENDOR_FUJITSU, PCMCIA_PRODUCT_FUJITSU_FMV_J182,
+	    PCMCIA_CIS_FUJITSU_FMV_J182 },
 	  0, 0xf2c },
 
-	{ PCMCIA_STR_FUJITSU_FMV_J182A,		PCMCIA_VENDOR_FUJITSU,
-	  PCMCIA_PRODUCT_FUJITSU_FMV_J182A,	PCMCIA_CIS_FUJITSU_FMV_J182A,
+	{ { PCMCIA_VENDOR_FUJITSU, PCMCIA_PRODUCT_FUJITSU_FMV_J182A,
+	    PCMCIA_CIS_FUJITSU_FMV_J182A },
 	  0, 0x1cc },
 
-	{ PCMCIA_STR_FUJITSU_ITCFJ182A,		PCMCIA_VENDOR_FUJITSU,
-	  PCMCIA_PRODUCT_FUJITSU_ITCFJ182A,	PCMCIA_CIS_FUJITSU_ITCFJ182A,
+	{ { PCMCIA_VENDOR_FUJITSU, PCMCIA_PRODUCT_FUJITSU_ITCFJ182A,
+	    PCMCIA_CIS_FUJITSU_ITCFJ182A },
 	  0, 0x1cc },
 
-	{ PCMCIA_STR_FUJITSU_LA10S,		PCMCIA_VENDOR_FUJITSU,
-	  PCMCIA_PRODUCT_FUJITSU_LA10S,		PCMCIA_CIS_FUJITSU_LA10S,
+	{ { PCMCIA_VENDOR_FUJITSU, PCMCIA_PRODUCT_FUJITSU_LA10S,
+	    PCMCIA_CIS_FUJITSU_LA10S },
 	  0, -1 },
 
-	{ PCMCIA_STR_RATOC_REX_R280,		PCMCIA_VENDOR_RATOC,
-	  PCMCIA_PRODUCT_RATOC_REX_R280,	PCMCIA_CIS_RATOC_REX_R280,
+	{ { PCMCIA_VENDOR_RATOC, PCMCIA_PRODUCT_RATOC_REX_R280,
+	    PCMCIA_CIS_RATOC_REX_R280 },
 	  0, 0x1fc },
-
-	{ NULL,					0,
-          0,					{ NULL, NULL, NULL, NULL },
-          0, 0 }
 };
-
-static const struct mbe_pcmcia_product *
-mbe_pcmcia_lookup(pa)
-	struct pcmcia_attach_args *pa;
-{
-	const struct mbe_pcmcia_product *mpp;
-
-	for (mpp = mbe_pcmcia_products; mpp->mpp_name != NULL; mpp++) {
-		/* match by CIS information */
-		if (pa->card->cis1_info[0] != NULL &&
-		    mpp->mpp_cisinfo[0] != NULL &&
-		    strcmp(pa->card->cis1_info[0], mpp->mpp_cisinfo[0]) == 0 &&
-		    pa->card->cis1_info[1] != NULL &&
-		    mpp->mpp_cisinfo[1] != NULL &&
-		    strcmp(pa->card->cis1_info[1], mpp->mpp_cisinfo[1]) == 0 &&
-		   (mpp->mpp_cisinfo[2] == NULL ||
-		    strcmp(pa->card->cis1_info[2], mpp->mpp_cisinfo[2]) == 0))
-			return (mpp);
-
-		/* match by vendor/product id */
-		if (pa->manufacturer != PCMCIA_VENDOR_INVALID &&
-		    pa->manufacturer == mpp->mpp_vendor &&
-		    pa->product != PCMCIA_PRODUCT_INVALID &&
-		    pa->product == mpp->mpp_product)
-			return (mpp);
-	}
-
-	return (NULL);
-}
+static const size_t mbe_pcmcia_nproducts =
+    sizeof(mbe_pcmcia_products) / sizeof(mbe_pcmcia_products[0]);
 
 int
 mbe_pcmcia_match(parent, match, aux)
@@ -189,7 +152,8 @@ mbe_pcmcia_match(parent, match, aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
-	if (mbe_pcmcia_lookup(pa) != NULL)
+	if (pcmcia_product_lookup(pa, mbe_pcmcia_products, mbe_pcmcia_nproducts,
+	    sizeof(mbe_pcmcia_products[0]), NULL))
 		return (1);
 	return (0);
 }
@@ -207,11 +171,12 @@ mbe_pcmcia_attach(parent, self, aux)
 	const struct mbe_pcmcia_product *mpp;
 	int rv;
 
-	mpp = mbe_pcmcia_lookup(pa);
-	if (mpp == NULL) {
-		printf("\n");
+	printf("\n");
+
+	mpp = pcmcia_product_lookup(pa, mbe_pcmcia_products,
+	    mbe_pcmcia_nproducts, sizeof(mbe_pcmcia_products[0]), NULL);
+	if (!mpp)
 		panic("mbe_pcmcia_attach: impossible");
-	}
 
 	psc->sc_pf = pa->pf;
 	cfe = SIMPLEQ_FIRST(&pa->pf->cfe_head);
@@ -219,7 +184,7 @@ mbe_pcmcia_attach(parent, self, aux)
 	/* Enable the card. */
 	pcmcia_function_init(pa->pf, cfe);
 	if (pcmcia_function_enable(pa->pf)) {
-		printf(": function enable failed\n");
+		printf("%s: function enable failed\n", sc->sc_dev.dv_xname);
 		goto enable_failed;
 	}
 
@@ -228,7 +193,7 @@ mbe_pcmcia_attach(parent, self, aux)
 	    cfe->iospace[0].length,
 	    mpp->mpp_ioalign ? mpp->mpp_ioalign : cfe->iospace[0].length,
 	    &psc->sc_pcioh)) {
-		printf(": can't allocate i/o space\n");
+		printf("%s: can't allocate i/o space\n", sc->sc_dev.dv_xname);
 		goto ioalloc_failed;
 	}
 
@@ -244,11 +209,9 @@ mbe_pcmcia_attach(parent, self, aux)
 	 */
 	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_IO16, &psc->sc_pcioh,
 	    &psc->sc_io_window)) {
-		printf(": can't map i/o space\n");
+		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
 		goto iomap_failed;
 	}
-
-	printf(": %s\n", mpp->mpp_name);
 
 	/* Read station address from io/mem or CIS. */
 	if (mpp->mpp_enet_maddr >= 0) {
@@ -258,7 +221,7 @@ mbe_pcmcia_attach(parent, self, aux)
 			    "from mem\n", sc->sc_dev.dv_xname);
 			goto no_enaddr;
 		}
-	} else if ((mpp->flags & MBH10302) != 0) {
+	} else if ((mpp->mpp_flags & MBH10302) != 0) {
 		bus_space_write_1(sc->sc_bst, sc->sc_bsh, FE_MBH0 ,
 				  FE_MBH0_MASK | FE_MBH0_INTR_ENABLE);
 		if (mbe_pcmcia_get_enaddr_from_io(psc, &pgea) != 0) {
@@ -290,7 +253,7 @@ mbe_pcmcia_attach(parent, self, aux)
 	}
 
 	/* Perform generic initialization. */
-	if ((mpp->flags & MBH10302) != 0) 
+	if ((mpp->mpp_flags & MBH10302) != 0) 
 		sc->sc_flags |= FE_FLAGS_MB86960;
 
 	mb86960_attach(sc, pgea.enaddr);
