@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.39 2003/10/23 21:59:35 he Exp $
+#	$NetBSD: Makefile,v 1.40 2003/11/14 23:11:20 simonb Exp $
 
 SUBDIR+= _setjmp atexit basename clone convfp db dirname div divrem \
-	gen getaddrinfo hsearch int_fmtio locale md5sha popen regex rpc \
-	setjmp sigsetjmp stdio stdlib string sys time
+	gen getaddrinfo hsearch int_fmtio locale md5sha popen randomid \
+	regex rpc setjmp sigsetjmp stdio stdlib string sys time
 .if (${MACHINE_ARCH} != "vax" && ${MACHINE_ARCH} != "m68000")
 SUBDIR+= ieeefp
 .endif
