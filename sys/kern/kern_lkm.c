@@ -36,7 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: kern_lkm.c,v 1.2 1993/06/07 23:10:09 cgd Exp $
+ *	$Id: kern_lkm.c,v 1.3 1993/07/19 09:57:22 cgd Exp $
  */
 
 #include "param.h"
@@ -129,7 +129,7 @@ lkmunreserve()
 	/*
 	 * Actually unreserve the memory
 	 */
-	kmem_free( buffer_map, curp->area, curp->size);/**/
+	kmem_free( kmem_map, curp->area, curp->size);/**/
 
 	lkm_state = LKMS_IDLE;
 }
@@ -209,7 +209,7 @@ int		flag;
 		 */
 		curp->size = resrvp->size;
 
-		curp->area = (char *)kmem_alloc( buffer_map, curp->size);/**/
+		curp->area = (char *)kmem_alloc( kmem_map, curp->size);/**/
 
 		curp->offset = 0;		/* load offset*/
 
