@@ -1,10 +1,10 @@
 /*
- *	a.out file structure definitions
+ *	m68k a.out / ELF file structure definitions
  *
  *	written by Yasha (ITOH Yasufumi)
  *	public domain
  *
- *	$NetBSD: aout68k.h,v 1.1 1998/09/01 19:51:08 itohy Exp $
+ *	$NetBSD: aout68k.h,v 1.2 1999/11/16 00:48:12 itohy Exp $
  */
 /*
  * NetBSD/m68k a.out format (OMAGIC, NMAGIC)
@@ -57,3 +57,108 @@ struct aout_m68k {
 
 #define AOUT_PAGESIZE(e)	(AOUT_GET_MAGIC(e) == AOUT_OMAGIC ? 1 :	\
 				AOUT_GET_MID(e) == AOUT_MID_M68K ? 8192 : 4096)
+
+/*
+ * m68k ELF executable format
+ *
+ *	--------------------------------------
+ *	|  ELF header     (52 bytes)         |
+ *	|------------------------------------|
+ *	|  Program header (32bytes x 1 or 2) |
+ *	|------------------------------------|
+ *	|  section 1 (text)                  |
+ *	|------------------------------------|
+ *	|  section 2 (data)                  |
+ *	|------------------------------------|
+ *	|  ...                               |
+ *	|------------------------------------|
+ *	|  section header table (optional)   |
+ *	--------------------------------------
+ */
+
+/*
+ * ELF header for m68k
+ */
+struct elf_m68k_hdr {
+#define EI_MAG0		0
+#define EI_MAG1		1
+#define EI_MAG2		2
+#define EI_MAG3		3
+#define EI_CLASS	4
+#define EI_DATA		5
+#define EI_VERSION	6
+#define EL_NIDENT	16
+	u_int8_t	e_ident[EL_NIDENT];	/* ELF magic */
+#define ELFMAG0		0x7f
+#define ELFMAG1		0x45	/* 'E' */
+#define ELFMAG2		0x4c	/* 'L' */
+#define ELFMAG3		0x46	/* 'F' */
+#define ELFCLASS32	1	/* 32bit */
+#define ELFDATA2MSB	2	/* big endian */
+	be_uint16_t	e_type;		/* type of this file */
+#define EL_EXEC		2
+	be_uint16_t	e_machine;	/* architecture id */
+#define EM_68K		4
+	be_uint32_t	e_version;
+#define EV_CURRENT	1
+	be_uint32_t	e_entry;	/* entry address */
+	be_uint32_t	e_phoff;	/* program header address */
+	be_uint32_t	e_shoff;
+	be_uint32_t	e_flags;
+	be_uint16_t	e_ehsize;
+	be_uint16_t	e_phentsize;	/* program header entry size */
+	be_uint16_t	e_phnum;	/* number of program header entries */
+	be_uint16_t	e_shentsize;	/* section header entry size */
+	be_uint16_t	e_shnum;	/* number of section header entries */
+	be_uint16_t	e_shstrndx;
+};
+
+#define SIZE_ELF68K_HDR		(sizeof(struct elf_m68k_hdr))
+
+/*
+ * Section header for m68k ELF
+ */
+struct elf_m68k_shdr {
+	be_uint32_t	sh_name;
+	be_uint32_t	sh_type;
+#define SHT_PROGBITS	1
+	be_uint32_t	sh_flags;
+#define SHF_WRITE	1
+#define SHF_ALLOC	2
+#define SHF_EXECINSTR	4
+	be_uint32_t	sh_addr;
+	be_uint32_t	sh_offset;
+	be_uint32_t	sh_size;
+	be_uint32_t	sh_link;
+	be_uint32_t	sh_info;
+	be_uint32_t	sh_addralign;
+	be_uint32_t	sh_entsize;
+};
+
+#define ELF68K_ISDATASEG(sh)	\
+	(get_uint32(&(sh)->sh_type) == SHT_PROGBITS &&		\
+	 (get_uint32(&(sh)->sh_flags) &				\
+		(SHF_WRITE | SHF_ALLOC | SHF_EXECINSTR)) ==	\
+			(SHF_WRITE | SHF_ALLOC))	/* no SHF_EXECINSTR */
+
+#define SIZE_ELF68K_SHDR	(sizeof(struct elf_m68k_shdr))
+
+/*
+ * Program header for m68k ELF
+ */
+struct elf_m68k_phdr {
+	be_uint32_t	p_type;		/* type of segment */
+#define PT_LOAD		1
+	be_uint32_t	p_offset;	/* file offset */
+	be_uint32_t	p_vaddr;	/* virtual address */
+	be_uint32_t	p_paddr;	/* physical address (ignored) */
+	be_uint32_t	p_filesz;	/* size on file */
+	be_uint32_t	p_memsz;	/* size on memory */
+	be_uint32_t	p_flags;
+#define PF_R		4
+#define PF_W		2
+#define PF_X		1
+	be_uint32_t	p_align;
+};
+
+#define SIZE_ELF68K_PHDR	(sizeof(struct elf_m68k_phdr))
