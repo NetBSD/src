@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.19 1997/07/23 01:29:36 phil Exp $
+#	$NetBSD: MAKEDEV,v 1.20 1997/07/31 04:08:17 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -335,7 +335,7 @@ satlink*)
 
 local)
 	umask 0
-	sh MAKEDEV.local
+	sh MAKEDEV.local all
 	;;
 
 *)
