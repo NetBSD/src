@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we_isa.c,v 1.1 2001/03/23 17:34:42 jdolecek Exp $	*/
+/*	$NetBSD: if_we_isa.c,v 1.2 2001/07/01 01:50:05 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -58,7 +58,6 @@
 #include "opt_inet.h"
 #include "opt_ns.h"
 #include "bpfilter.h"
-#include "rnd.h" 
 
 #include <sys/param.h>
 #include <sys/systm.h>
