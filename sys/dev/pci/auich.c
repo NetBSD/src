@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.6 2002/01/12 00:13:42 enami Exp $	*/
+/*	$NetBSD: auich.c,v 1.7 2002/01/12 16:17:06 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.6 2002/01/12 00:13:42 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.7 2002/01/12 16:17:06 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -722,10 +722,9 @@ auich_allocm(void *v, int direction, size_t size, int pool, int flags)
 	if (size > (ICH_DMALIST_MAX * ICH_DMASEG_MAX))
 		return (NULL);
 
-	p = malloc(sizeof(*p), pool, flags);
+	p = malloc(sizeof(*p), pool, flags|M_ZERO);
 	if (p == NULL)
 		return (NULL);
-	memset(p, 0, sizeof(*p));
 
 	error = auich_allocmem(sc, size, 0, p);
 	if (error) {
