@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.35 2004/08/10 00:57:20 dyoung Exp $	*/
+/*	$NetBSD: ath.c,v 1.36 2004/08/10 01:03:52 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.54 2004/04/05 04:42:42 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.35 2004/08/10 00:57:20 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.36 2004/08/10 01:03:52 dyoung Exp $");
 #endif
 
 /*
@@ -142,7 +142,7 @@ static void	ath_bmiss_proc(void *, int);
 static void	ath_initkeytable(struct ath_softc *);
 static void	ath_mode_init(struct ath_softc *);
 static int	ath_beacon_alloc(struct ath_softc *, struct ieee80211_node *);
-static void	ath_beacon_proc(void *, int);
+static void	ath_beacon_proc(struct ath_softc *, int);
 static void	ath_beacon_free(struct ath_softc *);
 static void	ath_beacon_config(struct ath_softc *);
 static int	ath_desc_alloc(struct ath_softc *);
@@ -174,6 +174,8 @@ static int	ath_rate_setup(struct ath_softc *sc, u_int mode);
 static void	ath_setcurmode(struct ath_softc *, enum ieee80211_phymode);
 static void	ath_rate_ctl_reset(struct ath_softc *, enum ieee80211_state);
 static void	ath_rate_ctl(void *, struct ieee80211_node *);
+static void	ath_recv_mgmt(struct ieee80211com *, struct mbuf *,
+			struct ieee80211_node *, int, int, u_int32_t);
 
 #ifdef __NetBSD__
 int	ath_enable(struct ath_softc *);
@@ -579,6 +581,9 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	ic->ic_node_getrssi = ath_node_getrssi;
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = ath_newstate;
+	sc->sc_recv_mgmt = ic->ic_recv_mgmt;
+	ic->ic_recv_mgmt = ath_recv_mgmt;
+
 	/* complete initialization */
 	ieee80211_media_init(ifp, ath_media_change, ieee80211_media_status);
 
@@ -1549,6 +1554,7 @@ ath_beacon_alloc(struct ath_softc *sc, struct ieee80211_node *ni)
 	u_int16_t capinfo;
 	struct ieee80211_rateset *rs;
 	const HAL_RATE_TABLE *rt;
+	u_int flags;
 
 	bf = sc->sc_bcbuf;
 	if (bf->bf_m != NULL) {
@@ -1654,7 +1660,10 @@ ath_beacon_alloc(struct ath_softc *sc, struct ieee80211_node *ni)
 	/* setup descriptors */
 	ds = bf->bf_desc;
 
-	ds->ds_link = 0;
+	if (ic->ic_opmode == IEEE80211_M_IBSS)
+		ds->ds_link = bf->bf_daddr;	/* link to self */
+	else
+		ds->ds_link = 0;
 	ds->ds_data = bf->bf_segs[0].ds_addr;
 
 	DPRINTF(ATH_DEBUG_ANY, ("%s: segaddr %p seglen %u\n", __func__,
@@ -1670,6 +1679,11 @@ ath_beacon_alloc(struct ath_softc *sc, struct ieee80211_node *ni)
 		rate = rt->info[0].rateCode | rt->info[0].shortPreamble;
 	else
 		rate = rt->info[0].rateCode;
+
+	flags = HAL_TXDESC_NOACK;
+	if (ic->ic_opmode == IEEE80211_M_IBSS)
+		flags |= HAL_TXDESC_VEOL;
+
 	if (!ath_hal_setuptxdesc(ah, ds
 		, m->m_pkthdr.len + IEEE80211_CRC_LEN	/* packet length */
 		, sizeof(struct ieee80211_frame)	/* header length */
@@ -1678,7 +1692,7 @@ ath_beacon_alloc(struct ath_softc *sc, struct ieee80211_node *ni)
 		, rate, 1			/* series 0 rate/tries */
 		, HAL_TXKEYIX_INVALID		/* no encryption */
 		, 0				/* antenna mode */
-		, HAL_TXDESC_NOACK		/* no ack for beacons */
+		, flags				/* no ack for beacons */
 		, 0				/* rts/cts rate */
 		, 0				/* rts/cts duration */
 	)) {
@@ -1702,9 +1716,8 @@ ath_beacon_alloc(struct ath_softc *sc, struct ieee80211_node *ni)
 }
 
 static void
-ath_beacon_proc(void *arg, int pending)
+ath_beacon_proc(struct ath_softc *sc, int pending)
 {
-	struct ath_softc *sc = arg;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ath_buf *bf = sc->sc_bcbuf;
 	struct ath_hal *ah = sc->sc_ah;
@@ -1830,13 +1843,35 @@ ath_beacon_config(struct ath_softc *sc)
 		sc->sc_imask |= HAL_INT_BMISS;
 		ath_hal_intrset(ah, sc->sc_imask);
 	} else {
+		ath_hal_intrset(ah, 0);
+		sc->sc_imask |= HAL_INT_SWBA;	/* beacon prepare */
+		intval |= HAL_BEACON_ENA;
+		switch (ic->ic_opmode) {
+		/* No beacons in monitor, ad hoc-demo modes. */
+		case IEEE80211_M_MONITOR:
+		case IEEE80211_M_AHDEMO:
+			intval &= ~HAL_BEACON_ENA;
+			/*FALLTHROUGH*/
+		/* In IBSS mode, I am uncertain how SWBA interrupts
+		 * work, so I just turn them off and use a self-linked
+		 * descriptor.
+		 */
+		case IEEE80211_M_IBSS:
+			sc->sc_imask &= ~HAL_INT_SWBA;
+			nexttbtt = ni->ni_intval;
+			/*FALLTHROUGH*/
+		case IEEE80211_M_HOSTAP:
+		default:
+			if (nexttbtt == ni->ni_intval)
+				intval |= HAL_BEACON_RESET_TSF;
+			break;
+		}
 		DPRINTF(ATH_DEBUG_BEACON, ("%s: intval %u nexttbtt %u\n",
 			__func__, ni->ni_intval, nexttbtt));
-		ath_hal_intrset(ah, 0);
-		ath_hal_beaconinit(ah, nexttbtt, ni->ni_intval);
-		if (ic->ic_opmode != IEEE80211_M_MONITOR)
-			sc->sc_imask |= HAL_INT_SWBA;	/* beacon prepare */
+		ath_hal_beaconinit(ah, nexttbtt, intval);
 		ath_hal_intrset(ah, sc->sc_imask);
+		if (ic->ic_opmode == IEEE80211_M_IBSS)
+			ath_beacon_proc(sc, 0);
 	}
 }
 
@@ -3271,6 +3306,31 @@ bad:
 	callout_stop(&sc->sc_cal_ch);
 	/* NB: do not invoke the parent */
 	return error;
+}
+
+static void
+ath_recv_mgmt(struct ieee80211com *ic, struct mbuf *m,
+    struct ieee80211_node *ni, int subtype, int rssi, u_int32_t rstamp)
+{
+	struct ath_softc *sc = (struct ath_softc*)ic->ic_softc;
+	struct ath_hal *ah = sc->sc_ah;
+
+	(*sc->sc_recv_mgmt)(ic, m, ni, subtype, rssi, rstamp);
+
+	switch (subtype) {
+	case IEEE80211_FC0_SUBTYPE_PROBE_RESP:
+	case IEEE80211_FC0_SUBTYPE_BEACON:
+		if (ic->ic_opmode != IEEE80211_M_IBSS ||
+		    ic->ic_state != IEEE80211_S_RUN)
+			break;
+		if (ieee80211_ibss_merge(ic, ni, ath_hal_gettsf64(ah)) ==
+		    ENETRESET)
+			ath_hal_setassocid(ah, ic->ic_bss->ni_bssid, 0);
+		break;
+	default:
+		break;
+	}
+	return;
 }
 
 /*
