@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.10 1997/04/13 14:21:09 briggs Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.11 1997/04/18 12:04:37 briggs Exp $	*/
 
 /*
  * National Semiconductor  SONIC Driver
@@ -838,6 +838,7 @@ initialise_rra(sc)
 	/* rea must point just past the end of the rra space */
 	NIC_PUT(sc, SNR_REA, LOWER(sc->v_rea));
 	NIC_PUT(sc, SNR_RRP, LOWER(sc->v_rra[0]));
+	NIC_PUT(sc, SNR_RSC, 0);
 
 	/* fill up SOME of the rra with buffers */
 	for (i = 0; i < NRBA; i++) {
