@@ -1,4 +1,4 @@
-/*	$NetBSD: identd.c,v 1.13 2002/09/18 20:17:55 mycroft Exp $	*/
+/*	$NetBSD: identd.c,v 1.14 2002/09/18 20:20:28 mycroft Exp $	*/
 
 /*
 ** identd.c                       A TCP/IP link identification protocol server
@@ -702,7 +702,7 @@ int main(argc,argv)
 	    ** An error occurred in select? Just die
 	    */
 	    if (nfds < 0)
-		ERROR("main: select");
+		ERROR("main: poll");
 	    
 	    /*
 	    ** Timeout limit reached. Exit nicely
