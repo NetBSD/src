@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.19 2000/01/17 15:57:29 itojun Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.20 2000/01/22 23:54:20 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@ static const struct explore explore[] = {
 static int str_isnumber __P((const char *));
 static int explore_fqdn __P((const struct addrinfo *, const char *,
 	const char *, struct addrinfo **));
-static int explore_null __P((const struct addrinfo *, const char *,
+static int explore_null __P((const struct addrinfo *,
 	const char *, struct addrinfo **));
 static int explore_numeric __P((const struct addrinfo *, const char *,
 	const char *, struct addrinfo **));
@@ -192,7 +192,7 @@ do { \
 		error = EAI_MEMORY; \
 		goto free; \
 	} \
-} while (0)
+} while (/*CONSTCOND*/0)
 
 #define GET_PORT(ai, serv) \
 do { \
@@ -200,7 +200,7 @@ do { \
 	error = get_port((ai), (serv), 0); \
 	if (error != 0) \
 		goto free; \
-} while (0)
+} while (/*CONSTCOND*/0)
 
 #define GET_CANONNAME(ai, str) \
 do { \
@@ -208,19 +208,19 @@ do { \
 	error = get_canonname(pai, (ai), (str)); \
 	if (error != 0) \
 		goto free; \
-} while (0)
+} while (/*CONSTCOND*/0)
 
 #define ERR(err) \
 do { \
 	/* external reference: error, and label bad */ \
 	error = (err); \
 	goto bad; \
-} while (0)
+} while (/*CONSTCOND*/0)
 
 #define MATCH_FAMILY(x, y, w) \
-	((x) == (y) || ((w) && ((x) == PF_UNSPEC || (y) == PF_UNSPEC)))
+	((x) == (y) || (/*CONSTCOND*/(w) && ((x) == PF_UNSPEC || (y) == PF_UNSPEC)))
 #define MATCH(x, y, w) \
-	((x) == (y) || ((w) && ((x) == ANY || (y) == ANY)))
+	((x) == (y) || (/*CONSTCOND*/(w) && ((x) == ANY || (y) == ANY)))
 
 char *
 gai_strerror(ecode)
@@ -250,9 +250,9 @@ static int
 str_isnumber(p)
 	const char *p;
 {
-	char *q = (char *)p;
+	const char *q = (const char *)p;
 	while (*q) {
-		if (! isdigit(*q))
+		if (!isdigit(*q))
 			return NO;
 		q++;
 	}
@@ -346,15 +346,11 @@ getaddrinfo(hostname, servname, hints, res)
 	 */
 	if (MATCH_FAMILY(pai->ai_family, PF_INET, 1)
 	 || MATCH_FAMILY(pai->ai_family, PF_INET6, 1)) {
-		ai0 = *pai;
-
 		if (pai->ai_family == PF_UNSPEC)
 			pai->ai_family = PF_INET6;
 		error = get_portmatch(pai, servname);
 		if (error)
 			ERR(error);
-
-		*pai = ai0;
 	}
 
 	ai0 = *pai;
@@ -378,7 +374,7 @@ getaddrinfo(hostname, servname, hints, res)
 			pai->ai_protocol = ex->e_protocol;
 
 		if (hostname == NULL)
-			error = explore_null(pai, hostname, servname, &cur->ai_next);
+			error = explore_null(pai, servname, &cur->ai_next);
 		else
 			error = explore_numeric_scope(pai, hostname, servname, &cur->ai_next);
 
@@ -568,7 +564,7 @@ explore_fqdn(pai, hostname, servname, res)
 		;
 	naddrs++;
 	aplist = (char **)malloc(sizeof(aplist[0]) * naddrs);
-	apbuf = (char *)malloc(hp->h_length * naddrs);
+	apbuf = (char *)malloc((size_t)hp->h_length * naddrs);
 	if (aplist == NULL || apbuf == NULL) {
 		error = EAI_MEMORY;
 		goto free;
@@ -580,7 +576,7 @@ explore_fqdn(pai, hostname, servname, res)
 			continue;
 		}
 		memcpy(&apbuf[i * hp->h_length], hp->h_addr_list[i],
-			hp->h_length);
+			(size_t)hp->h_length);
 		aplist[i] = &apbuf[i * hp->h_length];
 	}
 #endif
@@ -643,9 +639,8 @@ free:
  * non-passive socket -> localhost (127.0.0.1 or ::1)
  */
 static int
-explore_null(pai, hostname, servname, res)
+explore_null(pai, servname, res)
 	const struct addrinfo *pai;
-	const char *hostname;
 	const char *servname;
 	struct addrinfo **res;
 {
@@ -892,11 +887,11 @@ get_name(addr, afd, res, numaddr, pai, servname)
 		GET_CANONNAME(cur, hp->h_name);
 #else
 		/* hp will be damaged if we use gethostbyaddr() */
-		if ((ap = (char *)malloc(hp->h_length)) == NULL) {
+		if ((ap = (char *)malloc((size_t)hp->h_length)) == NULL) {
 			error = EAI_MEMORY;
 			goto free;
 		}
-		memcpy(ap, hp->h_addr_list[0], hp->h_length);
+		memcpy(ap, hp->h_addr_list[0], (size_t)hp->h_length);
 		if ((cn = strdup(hp->h_name)) == NULL) {
 			error = EAI_MEMORY;
 			goto free;
@@ -965,12 +960,12 @@ get_ai(pai, afd, addr)
 
 	memcpy(ai, pai, sizeof(struct addrinfo));
 	ai->ai_addr = (struct sockaddr *)(ai + 1);
-	memset(ai->ai_addr, 0, afd->a_socklen);
+	memset(ai->ai_addr, 0, (size_t)afd->a_socklen);
 	ai->ai_addr->sa_len = afd->a_socklen;
 	ai->ai_addrlen = afd->a_socklen;
 	ai->ai_addr->sa_family = ai->ai_family = afd->a_af;
 	p = (char *)(ai->ai_addr);
-	memcpy(p + afd->a_off, addr, afd->a_addrlen);
+	memcpy(p + afd->a_off, addr, (size_t)afd->a_addrlen);
 	return ai;
 }
 
