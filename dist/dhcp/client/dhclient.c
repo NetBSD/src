@@ -41,7 +41,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhclient.c,v 1.8 2003/02/18 17:08:39 drochner Exp $ Copyright (c) 1995-2002 Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.9 2003/10/24 05:27:55 mellon Exp $ Copyright (c) 1995-2002 Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -262,6 +262,12 @@ int main (argc, argv, envp)
 #endif
 		system (command);
 	}
+
+	/* This isn't the final pid, but it may be needed so that
+	 * /etc/rc.d/dhclient can kill the client before it's done with
+	 * initially configuring an interface.
+	 */
+	write_client_pid_file();
 
 	if (!quiet) {
 		log_info ("%s %s", message, DHCP_VERSION);
