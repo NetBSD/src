@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.98 1999/05/23 22:37:02 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.99 1999/05/24 01:35:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.98 1999/05/23 22:37:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.99 1999/05/24 01:35:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -517,7 +517,7 @@ void	pmap_asn_alloc __P((pmap_t, long));
 /*
  * Misc. functions.
  */
-paddr_t	pmap_physpage_alloc __P((int));
+boolean_t pmap_physpage_alloc __P((int, paddr_t *));
 void	pmap_physpage_free __P((paddr_t));
 int	pmap_physpage_addref __P((void *));
 int	pmap_physpage_delref __P((void *));
@@ -3201,8 +3201,9 @@ pmap_pv_page_alloc(size, flags, mtype)
 {
 	paddr_t pg;
 
-	pg = pmap_physpage_alloc(PGU_PVENT);
-	return ((void *)ALPHA_PHYS_TO_K0SEG(pg));
+	if (pmap_physpage_alloc(PGU_PVENT, &pg))
+		return ((void *)ALPHA_PHYS_TO_K0SEG(pg));
+	return (NULL);
 }
 
 /*
@@ -3228,9 +3229,10 @@ pmap_pv_page_free(v, size, mtype)
  *	Allocate a single page from the VM system and return the
  *	physical address for that page.
  */
-paddr_t
-pmap_physpage_alloc(usage)
+boolean_t
+pmap_physpage_alloc(usage, pap)
 	int usage;
+	paddr_t *pap;
 {
 	struct vm_page *pg;
 	struct pv_head *pvh;
@@ -3263,7 +3265,8 @@ pmap_physpage_alloc(usage)
 #endif
 			pvh->pvh_usage = usage;
 			simple_unlock(&pvh->pvh_slock);
-			return (pa);
+			*pap = pa;
+			return (TRUE);
 		}
 
 		/*
@@ -3296,10 +3299,11 @@ pmap_physpage_alloc(usage)
 	 */
 	printf("pmap_physpage_alloc: no pages for %s page available after "
 	    "5 tries\n", pmap_pgu_strings[usage]);
+	return (FALSE);
 #ifdef DIAGNOSTIC
  die:
-#endif
 	panic("pmap_physpage_alloc");
+#endif
 }
 
 /*
@@ -3436,7 +3440,8 @@ pmap_lev1map_create(pmap, cpu_id)
 	/*
 	 * Allocate a page for the level 1 table.
 	 */
-	ptpa = pmap_physpage_alloc(PGU_L1PT);
+	if (pmap_physpage_alloc(PGU_L1PT, &ptpa) == FALSE)
+		panic("pmap_lev1map_create: no pages available");
 	pmap->pm_lev1map = (pt_entry_t *) ALPHA_PHYS_TO_K0SEG(ptpa);
 
 	/*
@@ -3536,7 +3541,8 @@ pmap_ptpage_alloc(pmap, pte, usage)
 	/*
 	 * Allocate the page table page.
 	 */
-	ptpa = pmap_physpage_alloc(usage);
+	if (pmap_physpage_alloc(usage, &ptpa) == FALSE)
+		panic("pmap_ptpage_alloc: no pages available");
 
 	/*
 	 * Initialize the referencing PTE.
