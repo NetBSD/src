@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.133 2000/12/11 05:29:02 mycroft Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.134 2000/12/22 22:58:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -541,7 +541,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	/* copy out the process's signal trapoline code */
 	if (szsigcode) {
 		if (copyout((char *)pack.ep_es->es_emul->e_sigcode,
-		    p->p_sigacts->ps_sigcode = (char *)p->p_psstr - szsigcode,
+		    p->p_sigctx.ps_sigcode = (char *)p->p_psstr - szsigcode,
 		    szsigcode)) {
 #ifdef DEBUG
 			printf("execve: sig trampoline copyout failed\n");
@@ -550,7 +550,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 		}
 #ifdef PMAP_NEED_PROCWR
 		/* This is code. Let the pmap do what is needed. */
-		pmap_procwr(p, (vaddr_t)p->p_sigacts->ps_sigcode, szsigcode);
+		pmap_procwr(p, (vaddr_t)p->p_sigctx.ps_sigcode, szsigcode);
 #endif
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.79 2000/12/21 20:19:22 thorpej Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.80 2000/12/22 22:58:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -199,7 +199,7 @@ linux_sys_wait4(p, v, retval)
 	if ((error = sys_wait4(p, &w4a, retval)))
 		return error;
 
-	sigdelset(&p->p_siglist, SIGCHLD);
+	sigdelset(&p->p_sigctx.ps_siglist, SIGCHLD);
 
 	if (status != NULL) {
 		if ((error = copyin(status, &tstat, sizeof tstat)))

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.12 2000/12/06 01:47:50 mrg Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.13 2000/12/22 22:58:56 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Matthew R. Green
@@ -86,7 +86,6 @@ sunos_sendsig(catcher, sig, mask, code)
 	u_long code;
 {
 	register struct proc *p = curproc;
-	register struct sigacts *psp = p->p_sigacts;
 	register struct sunos_sigframe *fp;
 	register struct trapframe64 *tf;
 	register int addr, onstack; 
@@ -101,12 +100,12 @@ sunos_sendsig(catcher, sig, mask, code)
 	 * one signal frame, and align.
 	 */
 	onstack =
-	    (psp->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-	    (psp->ps_sigact[sig].sa_flags & SA_ONSTACK) != 0;
+	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	if (onstack)
-		fp = (struct sunos_sigframe *)((char *)psp->ps_sigstk.ss_sp +
-					       psp->ps_sigstk.ss_size);
+		fp = (struct sunos_sigframe *)((char *)p->p_sigctx.ps_sigstk.ss_sp +
+					p->p_sigctx.ps_sigstk.ss_size);
 	else
 		fp = (struct sunos_sigframe *)oldsp;
 	fp = (struct sunos_sigframe *)((long)(fp - 1) & ~7);
@@ -134,7 +133,7 @@ sunos_sendsig(catcher, sig, mask, code)
 	/*
 	 * Build the signal context to be used by sigreturn.
 	 */
-	sf.sf_sc.sc_onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
+	sf.sf_sc.sc_onstack = p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK;
 	native_sigset_to_sigset13(mask, &sf.sf_sc.sc_mask);
 	sf.sf_sc.sc_sp = (long)oldsp;
 	sf.sf_sc.sc_pc = tf->tf_pc;
@@ -271,9 +270,9 @@ sunos_sys_sigreturn(p, v, retval)
 #endif
 
 	if (scp->sc_onstack & SS_ONSTACK)
-		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask */
 	native_sigset13_to_sigset(&scp->sc_mask, &mask);

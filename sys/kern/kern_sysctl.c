@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.85 2000/11/20 01:46:56 simonb Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.86 2000/12/22 22:59:00 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -1620,10 +1620,10 @@ fill_kproc2(p, ki)
 
 	ki->p_holdcnt = p->p_holdcnt;
 
-	memcpy(&ki->p_siglist, &p->p_siglist, sizeof(ki_sigset_t));
-	memcpy(&ki->p_sigmask, &p->p_sigmask, sizeof(ki_sigset_t));
-	memcpy(&ki->p_sigignore, &p->p_sigignore, sizeof(ki_sigset_t));
-	memcpy(&ki->p_sigcatch, &p->p_sigcatch, sizeof(ki_sigset_t));
+	memcpy(&ki->p_siglist, &p->p_sigctx.ps_siglist, sizeof(ki_sigset_t));
+	memcpy(&ki->p_sigmask, &p->p_sigctx.ps_sigmask, sizeof(ki_sigset_t));
+	memcpy(&ki->p_sigignore, &p->p_sigctx.ps_sigignore,sizeof(ki_sigset_t));
+	memcpy(&ki->p_sigcatch, &p->p_sigctx.ps_sigcatch, sizeof(ki_sigset_t));
 
 	ki->p_stat = p->p_stat;
 	ki->p_priority = p->p_priority;

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.2 1999/08/16 02:59:23 simonb Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.3 2000/12/22 22:58:54 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -125,9 +125,9 @@ compat_13_sys_sigreturn(p, v, retval)
 
 	/* Restore signal stack. */
 	if (scp->sc_onstack & SS_ONSTACK)
-		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
 	native_sigset13_to_sigset(&scp->sc_mask, &mask);

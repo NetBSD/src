@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.5 2000/12/16 22:59:32 scw Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.6 2000/12/22 22:58:57 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ extern int sigpid;
 void setup_linux_sigframe __P((struct frame *frame, int sig, sigset_t *mask,
 				caddr_t usp));
 void setup_linux_rt_sigframe __P((struct frame *frame, int sig, sigset_t *mask,
-				caddr_t usp, struct sigacts *psp));
+				caddr_t usp, struct proc *p));
 
 /*
  * Deal with some m68k-specific things in the Linux emulation code.
@@ -264,14 +264,13 @@ setup_linux_sigframe(frame, sig, mask, usp)
  * Setup signal frame for new RT signal interface.
  */
 void
-setup_linux_rt_sigframe(frame, sig, mask, usp, psp)
+setup_linux_rt_sigframe(frame, sig, mask, usp, p)
 	struct frame *frame;
 	int sig;
 	sigset_t *mask;
 	caddr_t usp;
-	struct sigacts *psp;
+	struct proc *p;
 {
-	struct proc *p = curproc;
 	struct linux_rt_sigframe *fp, kf;
 	short ft;
 
@@ -404,11 +403,11 @@ setup_linux_rt_sigframe(frame, sig, mask, usp, psp)
 
 	/* Build the signal context to be used by sigreturn. */
 	native_to_linux_sigset(mask, &kf.sf_uc.uc_sigmask);
-	kf.sf_uc.uc_stack.ss_sp = psp->ps_sigstk.ss_sp;
+	kf.sf_uc.uc_stack.ss_sp = p->p_sigctx.ps_sigstk.ss_sp;
 	kf.sf_uc.uc_stack.ss_flags =
-		(psp->ps_sigstk.ss_flags & SS_ONSTACK ? LINUX_SS_ONSTACK : 0) |
-		(psp->ps_sigstk.ss_flags & SS_DISABLE ? LINUX_SS_DISABLE : 0);
-	kf.sf_uc.uc_stack.ss_size = psp->ps_sigstk.ss_size;
+		(p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK ? LINUX_SS_ONSTACK : 0) |
+		(p->p_sigctx.ps_sigstk.ss_flags & SS_DISABLE ? LINUX_SS_DISABLE : 0);
+	kf.sf_uc.uc_stack.ss_size = p->p_sigctx.ps_sigstk.ss_size;
 
 	if (copyout(&kf, fp, sizeof(struct linux_rt_sigframe))) {
 #ifdef DEBUG
@@ -454,25 +453,25 @@ linux_sendsig(catcher, sig, mask, code)
 {
 	struct proc *p = curproc;
 	struct frame *frame;
-	struct sigacts *psp = p->p_sigacts;
 	caddr_t usp;		/* user stack for signal context */
 	int onstack;
 
 	frame = (struct frame *)p->p_md.md_regs;
 
 	/* Do we need to jump onto the signal stack? */
-	onstack = (psp->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-		  (psp->ps_sigact[sig].sa_flags & SA_ONSTACK) != 0;
+	onstack = (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+		  (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	/* Determine user stack for the signal handler context. */
 	if (onstack)
-		usp = (caddr_t)psp->ps_sigstk.ss_sp + psp->ps_sigstk.ss_size;
+		usp = (caddr_t)p->p_sigctx.ps_sigstk.ss_sp
+				+ p->p_sigctx.ps_sigstk.ss_size;
 	else
 		usp = (caddr_t)frame->f_regs[SP];
 
 	/* Setup the signal frame (and part of the trapframe). */
-	if (p->p_sigacts->ps_sigact[sig].sa_flags & SA_SIGINFO)
-		setup_linux_rt_sigframe(frame, sig, mask, usp, psp);
+	if (SIGACTION(p, sig).sa_flags & SA_SIGINFO)
+		setup_linux_rt_sigframe(frame, sig, mask, usp, p);
 	else
 		setup_linux_sigframe(frame, sig, mask, usp);
 
@@ -481,7 +480,7 @@ linux_sendsig(catcher, sig, mask, code)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
@@ -563,7 +562,7 @@ bad:		sigexit(p, SIGSEGV);
 #endif
 
 	/* Restore signal stack. */
-	p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+	p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
 #if LINUX__NSIG_WORDS > 1
@@ -667,7 +666,6 @@ linux_sys_rt_sigreturn(p, v, retval)
 	struct linux_ucontext *ucp;	/* ucontext in user space */
 	struct linux_ucontext tuc;	/* copy of *ucp */
 	sigset_t mask;
-	struct sigacts *psp;
 	int sz = 0;			/* extra frame size */
 
 	/*
@@ -715,9 +713,8 @@ bad:		sigexit(p, SIGSEGV);
 		goto bad;
 
 	/* Restore signal stack. */
-	psp = p->p_sigacts;
-	psp->ps_sigstk.ss_flags =
-		(psp->ps_sigstk.ss_flags & ~SS_ONSTACK) |
+	p->p_sigctx.ps_sigstk.ss_flags =
+		(p->p_sigctx.ps_sigstk.ss_flags & ~SS_ONSTACK) |
 		(tuc.uc_stack.ss_flags & LINUX_SS_ONSTACK ? SS_ONSTACK : 0);
 
 	/* Restore signal mask. */
