@@ -1,4 +1,4 @@
-/*	$Id: boot.c,v 1.2 1998/01/19 03:00:57 sakamoto Exp $	*/
+/*	$Id: boot.c,v 1.3 1998/10/05 01:58:03 sakamoto Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,6 +34,7 @@
 
 #include <sys/exec_elf.h>
 #include <sys/reboot.h>
+#include <machine/cpu.h>
 #include <machine/param.h>
 #include <bebox/include/bootinfo.h>
 #ifdef CONS_SERIAL
@@ -269,6 +270,7 @@ exec_kernel(fd, howto)
 			printf("read text error: %s\n", strerror(errno));
 			return;
 		}
+		syncicache((void *)phdr.p_vaddr, phdr.p_filesz);
 
 		/* Zero out bss. */
 		if (phdr.p_filesz < phdr.p_memsz) {
