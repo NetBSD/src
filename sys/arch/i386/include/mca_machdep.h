@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.h,v 1.8 2001/12/02 17:02:33 jdolecek Exp $	*/
+/*	$NetBSD: mca_machdep.h,v 1.9 2003/02/26 21:29:01 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * i386-specific definitions for MCA autoconfiguration.
  */
 
-extern struct i386_bus_dma_tag mca_bus_dma_tag;
+extern struct x86_bus_dma_tag mca_bus_dma_tag;
 
 /* set to 1 if MCA bus is detected */
 extern int MCA_system;
@@ -46,11 +46,11 @@ int	mca_nmi(void);
 /*
  * Types provided to machine-independent MCA code.
  */
-struct i386_mca_chipset {
+struct x86_mca_chipset {
         void * /*struct mca_dma_state*/ ic_dmastate;
 };
 
-typedef struct i386_mca_chipset *mca_chipset_tag_t;
+typedef struct x86_mca_chipset *mca_chipset_tag_t;
 typedef int mca_intr_handle_t;
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.53 2002/11/02 17:30:15 perry Exp $	*/
+/*	$NetBSD: param.h,v 1.54 2003/02/26 21:29:02 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -177,13 +177,13 @@
 /*
  * Mach derived conversion macros
  */
-#define	i386_round_pdr(x)	((((unsigned)(x)) + PDOFSET) & ~PDOFSET)
-#define	i386_trunc_pdr(x)	((unsigned)(x) & ~PDOFSET)
-#define	i386_btod(x)		((unsigned)(x) >> PDSHIFT)
-#define	i386_dtob(x)		((unsigned)(x) << PDSHIFT)
-#define	i386_round_page(x)	((((unsigned)(x)) + PGOFSET) & ~PGOFSET)
-#define	i386_trunc_page(x)	((unsigned)(x) & ~PGOFSET)
-#define	i386_btop(x)		((unsigned)(x) >> PGSHIFT)
-#define	i386_ptob(x)		((unsigned)(x) << PGSHIFT)
+#define	x86_round_pdr(x)	((((unsigned)(x)) + PDOFSET) & ~PDOFSET)
+#define	x86_trunc_pdr(x)	((unsigned)(x) & ~PDOFSET)
+#define	x86_btod(x)		((unsigned)(x) >> PDSHIFT)
+#define	x86_dtob(x)		((unsigned)(x) << PDSHIFT)
+#define	x86_round_page(x)	((((unsigned)(x)) + PGOFSET) & ~PGOFSET)
+#define	x86_trunc_page(x)	((unsigned)(x) & ~PGOFSET)
+#define	x86_btop(x)		((unsigned)(x) >> PGSHIFT)
+#define	x86_ptob(x)		((unsigned)(x) << PGSHIFT)
 
 #endif /* _I386_PARAM_H_ */

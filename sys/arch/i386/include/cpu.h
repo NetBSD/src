@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.96 2003/02/05 12:18:04 nakayama Exp $	*/
+/*	$NetBSD: cpu.h,v 1.97 2003/02/26 21:29:00 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -161,7 +161,7 @@ struct cpu_info {
 	char *ci_doubleflt_stack;
 	char *ci_ddbipi_stack;
 
-	struct evcnt ci_ipi_events[I386_NIPI];
+	struct evcnt ci_ipi_events[X86_NIPI];
 };
 
 /*
@@ -198,7 +198,7 @@ extern struct cpu_info *cpu_info_list;
 
 #if defined(MULTIPROCESSOR)
 
-#define I386_MAXPROCS		32	/* because we use a bitmask */
+#define X86_MAXPROCS		32	/* because we use a bitmask */
 
 #define CPU_STARTUP(_ci)	((_ci)->ci_func->start(_ci))
 #define CPU_STOP(_ci)	        ((_ci)->ci_func->stop(_ci))
@@ -212,14 +212,14 @@ extern struct cpu_info *cpu_info_list;
 #define CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CPUF_PRIMARY)
 
 #if 0
-#define i386_ipisend(ci)	(((ci) != curcpu()) ? i386_send_ipi((ci),0) : 0)
+#define x86_ipisend(ci)	(((ci) != curcpu()) ? x86_send_ipi((ci),0) : 0)
 #else
-#define i386_ipisend(ci)	0
+#define x86_ipisend(ci)	0
 #endif
 
 #define aston(p)		((p)->p_md.md_astpending = 1)
 
-extern	struct cpu_info *cpu_info[I386_MAXPROCS];
+extern	struct cpu_info *cpu_info[X86_MAXPROCS];
 
 void cpu_boot_secondary_processors __P((void));
 void cpu_init_idle_pcbs __P((void));
@@ -232,7 +232,7 @@ extern void need_resched __P((struct cpu_info *));
 
 #else /* !MULTIPROCESSOR */
 
-#define	I386_MAXPROCS		1
+#define	X86_MAXPROCS		1
 
 #ifdef _KERNEL
 extern struct cpu_info cpu_info_primary;
@@ -435,8 +435,8 @@ void	vm86_gpfault __P((struct lwp *, int));
 void kgdb_port_init __P((void));
 
 /* bus_machdep.c */
-void i386_bus_space_init __P((void));
-void i386_bus_space_mallocok __P((void));
+void x86_bus_space_init __P((void));
+void x86_bus_space_mallocok __P((void));
 
 #endif /* _KERNEL */
 

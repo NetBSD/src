@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.22 2002/11/22 15:23:45 fvdl Exp $	*/
+/*	$NetBSD: asm.h,v 1.23 2003/02/26 21:28:59 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -75,6 +75,8 @@
 # endif
 #endif
 #define	_ASM_LABEL(x)	x
+
+#define CVAR(x)		_C_LABEL(x)
 
 #ifdef __STDC__
 # define __CONCAT(x,y)	x ## y
