@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.235 2004/07/30 07:05:11 lukem Exp $
+#	$NetBSD: Makefile,v 1.236 2004/08/28 00:18:38 thorpej Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -68,6 +68,8 @@
 #   includes:        installs include files.
 #   do-tools-compat: builds the "libnbcompat" library; needed for some
 #                    random host tool programs in the source tree.
+#   do-gnu-lib-crtstuff3: builds and installs prerequisites from
+#			  gnu/lib/crtstuff3
 #   do-gnu-lib-libgcc3: builds and installs prerequisites from gnu/lib/libgcc3
 #   do-lib-csu:      builds and installs prerequisites from lib/csu.
 #   do-lib-libc:     builds and installs prerequisites from lib/libc.
@@ -186,6 +188,7 @@ BUILDTARGETS+=	includes
 BUILDTARGETS+=	do-tools-compat
 BUILDTARGETS+=	do-lib-csu
 .if ${MKGCC} != "no"
+BUILDTARGETS+=	do-gnu-lib-crtstuff${LIBGCC_EXT}
 BUILDTARGETS+=	do-gnu-lib-libgcc${LIBGCC_EXT}
 .endif
 BUILDTARGETS+=	do-lib-libc
@@ -323,7 +326,7 @@ do-${targ}: .PHONY ${targ}
 	@true
 .endfor
 
-.for dir in tools tools/compat lib/csu gnu/lib/libgcc${LIBGCC_EXT} lib/libc lib/libdes lib gnu/lib
+.for dir in tools tools/compat lib/csu gnu/lib/crtstuff${LIBGCC_EXT} gnu/lib/libgcc${LIBGCC_EXT} lib/libc lib/libdes lib gnu/lib
 do-${dir:S/\//-/g}: .PHONY
 .for targ in dependall install
 	${MAKEDIRTARGET} ${dir} ${targ}
