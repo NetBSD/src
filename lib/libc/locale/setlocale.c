@@ -1,4 +1,4 @@
-/*	$NetBSD: setlocale.c,v 1.11 1997/06/02 09:52:50 kleink Exp $	*/
+/*	$NetBSD: setlocale.c,v 1.12 1997/07/13 19:54:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)setlocale.c	8.1 (Berkeley) 7/4/93";
 #else
-static char rcsid[] = "$NetBSD: setlocale.c,v 1.11 1997/06/02 09:52:50 kleink Exp $";
+__RCSID("$NetBSD: setlocale.c,v 1.12 1997/07/13 19:54:57 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
