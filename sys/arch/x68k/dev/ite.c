@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.19 1999/05/05 14:31:16 minoura Exp $	*/
+/*	$NetBSD: ite.c,v 1.20 1999/06/27 14:14:30 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -309,6 +309,8 @@ iteon(dev, flag)
 	if (ip->flags & ITE_INGRF)
 		return(0);
 	iteinit(dev);
+	if (flag & 2)
+		ite_reset(ip);
 #if NKBD > 0
 	mfp_send_usart (0x49);	/* XXX */
 #endif
