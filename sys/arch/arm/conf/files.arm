@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.44 2001/11/24 03:39:17 thorpej Exp $
+#	$NetBSD: files.arm,v 1.45 2001/11/26 20:33:43 thorpej Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defopt	ARM32
@@ -78,12 +78,10 @@ file	arch/arm/arm32/cpuswitch.S		arm32
 file	arch/arm/arm32/exception.S		arm32
 file	arch/arm/arm32/fault.c			arm32
 file	arch/arm/arm32/fusu.S			arm32
-file	arch/arm/arm32/intr.c			arm32 & !newintr
 file	arch/arm/arm32/mem.c			arm32
 file	arch/arm/arm32/pmap.c			arm32
 file	arch/arm/arm32/setcpsr.S		arm32
 file	arch/arm/arm32/setstack.S		arm32
-file	arch/arm/arm32/spl.S			arm32 & !newintr
 file	arch/arm/arm32/stubs.c			arm32
 file	arch/arm/arm32/syscall.c		arm32
 file	arch/arm/arm32/sys_machdep.c		arm32

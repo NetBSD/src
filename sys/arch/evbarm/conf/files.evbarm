@@ -1,4 +1,4 @@
-#	$NetBSD: files.evbarm,v 1.6 2001/11/20 12:56:25 lukem Exp $
+#	$NetBSD: files.evbarm,v 1.7 2001/11/26 20:33:45 thorpej Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -42,6 +42,9 @@ file	arch/arm/arm32/conf.c
 file	arch/arm/arm/disksubr.c			disk
 file	arch/arm/arm/disksubr_acorn.c		disk
 file	arch/arm/arm/disksubr_mbr.c		disk
+
+file	arch/arm/arm32/intr.c
+file	arch/arm/arm32/spl.S
 
 # ARM FPE
 file	arch/arm32/fpe-arm/armfpe_glue.S	armfpe
