@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40 2004/01/08 01:48:45 lukem Exp $
+#	$NetBSD: Makefile,v 1.41 2004/01/29 08:34:21 lukem Exp $
 
 # The `all' target must appear before bsd.own.mk is pulled in.
 all:
@@ -23,7 +23,7 @@ MAKEFLIST_FLAGS=
 MAKETARSETS!= ${SETSENV} ${HOST_SH} ${.CURDIR}/makeflist -l ${MAKEFLIST_FLAGS}
 .endif
 
-print_have_gcc3:
+print_have_gcc3: .PHONY
 	@echo ${HAVE_GCC3}
 
 print_machine: .PHONY
@@ -61,17 +61,15 @@ METALOG.unpriv=
 METALOG.unpriv=	-M ${METALOG}
 .endif
 
-.PRECIOUS: checkflist
-checkflist: check_DESTDIR
+checkflist: .PRECIOUS .PHONY check_DESTDIR
 	${SETSENV} ${HOST_SH} ${.CURDIR}/checkflist \
 	    ${MAKEFLIST_FLAGS} ${CHECKFLIST_FLAGS} ${METALOG.unpriv}
 
-.PRECIOUS: checkflist-x11
-checkflist-x11: check_DESTDIR
+checkflist-x11: .PHONY check_DESTDIR
 	${SETSENV} ${HOST_SH} ${.CURDIR}/checkflist -x ${CHECKFLIST_FLAGS}
 
-.PRECIOUS: maketars
-maketars: check_DESTDIR check_RELEASEDIR .WAIT maketarsetup .WAIT ${MAKETARSETS:@.TARS.@do-${.TARS.}@}
+maketars: .PRECIOUS .PHONY check_DESTDIR check_RELEASEDIR .WAIT \
+		maketarsetup .WAIT ${MAKETARSETS:@.TARS.@do-${.TARS.}@}
 	@true
 
 maketarsetup: .PHONY
@@ -89,45 +87,45 @@ do-${tar}: .PHONY
 	    -t ${RELEASEDIR}/${MACHINE}/binary/sets ${tar}
 .endfor
 
-.PRECIOUS: makesrctars
-makesrctars: check_RELEASEDIR
+makesrctars: .PRECIOUS .PHONY check_RELEASEDIR
 	mkdir -p ${RELEASEDIR}/source/sets
 	${SETSENV} ${HOST_SH} ${.CURDIR}/makesrctars \
 	    ${NETBSDSRCDIR} ${RELEASEDIR}/source/sets
 
-.PRECIOUS: makesums
-makesums: check_RELEASEDIR .WAIT ${MAKETARSETS:@.TARS.@do-sum-${.TARS.}@}
+makesums: .PRECIOUS .PHONY check_RELEASEDIR .WAIT \
+		${MAKETARSETS:@.TARS.@do-sum-${.TARS.}@}
 	for i in BSDSUM CKSUM MD5 SYSVSUM; do \
 		mv ${RELEASEDIR}/${MACHINE}/binary/sets/$$i.tmp \
 			${RELEASEDIR}/${MACHINE}/binary/sets/$$i; done
 
 .for tar in ${MAKETARSETS}
 do-sum-${tar}: .PHONY do-${tar}
-	${SETSENV} ${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/binary/sets ${tar}.tgz
+	${SETSENV} ${MAKESUMS} \
+	    -t ${RELEASEDIR}/${MACHINE}/binary/sets ${tar}.tgz
 	for i in BSDSUM CKSUM MD5 SYSVSUM; do \
-		${TOOL_CAT} ${RELEASEDIR}/${MACHINE}/binary/sets/$$i >> ${RELEASEDIR}/${MACHINE}/binary/sets/$$i.tmp; \
+		${TOOL_CAT} ${RELEASEDIR}/${MACHINE}/binary/sets/$$i \
+		    >> ${RELEASEDIR}/${MACHINE}/binary/sets/$$i.tmp; \
 	done
 .endfor
 .ORDER: ${MAKETARSETS:@.TARS.@do-sum-${.TARS.}@}
 
-.PRECIOUS: installsets
-installsets: check_DESTDIR
+installsets: .PHONY check_DESTDIR
 .if !defined(INSTALLDIR)
 	@echo "setenv INSTALLDIR before doing that!"
 	@false
 .endif
 	${SETSENV} ${HOST_SH} ${.CURDIR}/maketars -d ${DESTDIR:S,^$,/,} \
-	    ${METALOG.unpriv} -N ${NETBSDSRCDIR}/etc \
+	    ${METALOG.unpriv} -N ${NETBSDSRCDIR}/etc ${MAKEFLIST_FLAGS} \
 	    -i ${INSTALLDIR} ${INSTALLSETS}
 
 #
 # MAIN ENTRY POINTS
 #
 
-sets: maketars .WAIT makesums
+sets: .PHONY maketars .WAIT makesums
 	@true
 
-sourcesets: makesrctars
+sourcesets: .PHONY makesrctars
 	@true
 
 .include <bsd.sys.mk>
