@@ -1,4 +1,4 @@
-/*	$NetBSD: memcpy.S,v 1.2 2000/12/14 19:44:58 bjh21 Exp $	*/
+/*	$NetBSD: bcopy.S,v 1.1 2000/12/29 20:51:56 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,11 +38,11 @@
 
 #include <machine/asm.h>
 
-ENTRY(memcpy)
-	stmfd	sp!, {r0, lr}
-	bl	_C_LABEL(_memcpy)
-#ifdef __APCS_26__
-	ldmfd	sp!, {r0, pc}^
-#else
-	ldmfd	sp!, {r0, pc}
-#endif
+/* bcopy = memcpy/memmove with arguments reversed. */
+
+ENTRY(bcopy)
+	/* switch the source and destination registers */
+	eor     r0, r1, r0 
+	eor     r1, r0, r1 
+	eor     r0, r1, r0 
+	b	_C_LABEL(_memcpy)
