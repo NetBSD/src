@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: parse.c,v 1.1.1.1 2001/08/03 11:35:33 drochner Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: parse.c,v 1.1.1.2 2002/06/11 12:24:37 drochner Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -975,7 +975,7 @@ void parse_option_space_decl (cfile)
 		universes = ua;
 	}
 	universes [nu -> index] = nu;
-	nu -> hash = new_hash (0, 0, 1, MDL);
+	option_new_hash (&nu -> hash, 1, MDL);
 	if (!nu -> hash)
 		log_fatal ("Can't allocate %s option hash table.", nu -> name);
 	universe_hash_add (universe_hash, nu -> name, 0, nu, MDL);
@@ -1804,7 +1804,11 @@ int parse_executable_statement (result, cfile, lose, case_context)
 				executable_statement_dereference (result, MDL);
 				return 0;
 			}
-			parse_semi (cfile);
+			if (!parse_semi (cfile)) {
+				*lose = 1;
+				executable_statement_dereference (result, MDL);
+				return 0;
+			}
 		}
 		break;
 
@@ -1828,7 +1832,11 @@ int parse_executable_statement (result, cfile, lose, case_context)
 		if (!(*result)->data.unset)
 			log_fatal ("can't allocate variable name");
 		strcpy ((*result) -> data.unset, val);
-		parse_semi (cfile);
+		if (!parse_semi (cfile)) {
+			*lose = 1;
+			executable_statement_dereference (result, MDL);
+			return 0;
+		}
 		break;
 
 	      case EVAL:
@@ -1850,7 +1858,10 @@ int parse_executable_statement (result, cfile, lose, case_context)
 			executable_statement_dereference (result, MDL);
 			return 0;
 		}
-		parse_semi (cfile);
+		if (!parse_semi (cfile)) {
+			*lose = 1;
+			executable_statement_dereference (result, MDL);
+		}
 		break;
 
 	      case RETURN:
@@ -1872,7 +1883,11 @@ int parse_executable_statement (result, cfile, lose, case_context)
 			executable_statement_dereference (result, MDL);
 			return 0;
 		}
-		parse_semi (cfile);
+		if (!parse_semi (cfile)) {
+			*lose = 1;
+			executable_statement_dereference (result, MDL);
+			return 0;
+		}
 		break;
 
 	      case LOG:
@@ -1949,8 +1964,8 @@ int parse_executable_statement (result, cfile, lose, case_context)
 			log_fatal ("no memory for new zone.");
 		zone -> name = parse_host_name (cfile);
 		if (!zone -> name) {
-		      badzone:
 			parse_warn (cfile, "expecting hostname.");
+		      badzone:
 			*lose = 1;
 			skip_to_semi (cfile);
 			dns_zone_dereference (&zone, MDL);
@@ -1959,8 +1974,10 @@ int parse_executable_statement (result, cfile, lose, case_context)
 		i = strlen (zone -> name);
 		if (zone -> name [i - 1] != '.') {
 			s = dmalloc ((unsigned)i + 2, MDL);
-			if (!s)
+			if (!s) {
+				parse_warn (cfile, "no trailing '.' on zone");
 				goto badzone;
+			}
 			strcpy (s, zone -> name);
 			s [i] = '.';
 			s [i + 1] = 0;
@@ -1971,10 +1988,8 @@ int parse_executable_statement (result, cfile, lose, case_context)
 			goto badzone;
 		status = enter_dns_zone (zone);
 		if (status != ISC_R_SUCCESS) {
-			if (parse_semi (cfile))
-				parse_warn (cfile, "dns zone key %s: %s",
-					    zone -> name,
-					    isc_result_totext (status));
+			parse_warn (cfile, "dns zone key %s: %s",
+				    zone -> name, isc_result_totext (status));
 			dns_zone_dereference (&zone, MDL);
 			return 0;
 		}
@@ -2024,7 +2039,11 @@ int parse_executable_statement (result, cfile, lose, case_context)
 				executable_statement_dereference (result, MDL);
 				return 0;
 			}
-			parse_semi (cfile);
+			if (!parse_semi (cfile)) {
+				*lose = 1;
+				executable_statement_dereference (result, MDL);
+				return 0;
+			}
 			break;
 		}
 

@@ -47,7 +47,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: bpf.c,v 1.1.1.1 2001/08/03 11:35:31 drochner Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: bpf.c,v 1.1.1.2 2002/06/11 12:24:35 drochner Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -421,7 +421,7 @@ ssize_t receive_packet (interface, buf, len, from, hfrom)
 		if (interface -> rbuf_offset == interface -> rbuf_len) {
 			length = read (interface -> rfdesc,
 				       interface -> rbuf,
-				       interface -> rbuf_max);
+				       (size_t)interface -> rbuf_max);
 			if (length <= 0) {
 				if (errno == EIO) {
 					dhcp_interface_remove

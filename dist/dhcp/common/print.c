@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: print.c,v 1.1.1.1 2001/08/03 11:35:33 drochner Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: print.c,v 1.1.1.2 2002/06/11 12:24:37 drochner Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -1197,6 +1197,14 @@ void print_dns_status (int status, ns_updque *uq)
 			}
 			predicate = "and";
 		}
+		if (u -> r_dname) {
+			if (s + 1 < end)
+				*s++ = ' ';
+			if (s + strlen (u -> r_dname) < end) {
+				strcpy (s, u -> r_dname);
+				s += strlen (s);
+			}
+		}
 		if (ttlp) {
 			if (s + 1 < end)
 				*s++ = ' ';
@@ -1253,14 +1261,6 @@ void print_dns_status (int status, ns_updque *uq)
 			strcpy (s, en);
 			s += strlen (en);
 		}
-		if (u -> r_dname) {
-			if (s + 1 < end)
-				*s++ = ' ';
-			if (s + strlen (u -> r_dname) < end) {
-				strcpy (s, u -> r_dname);
-				s += strlen (s);
-			}
-		}
 		if (u -> r_data) {
 			if (s + 1 < end)
 				*s++ = ' ';
@@ -1292,7 +1292,10 @@ void print_dns_status (int status, ns_updque *uq)
 		strcpy (s, "empty update");
 		s += strlen (s);
 	}
-	errorp = 1;
+	if (status == NOERROR)
+		errorp = 0;
+	else
+		errorp = 1;
 	en = isc_result_totext (status);
 #if 0
 	switch (status) {
@@ -1363,8 +1366,8 @@ void print_dns_status (int status, ns_updque *uq)
 		*s++ = '.';
 	*s++ = 0;
 	if (errorp)
-		log_error (obuf);
+		log_error ("%s", obuf);
 	else
-		log_info (obuf);
+		log_info ("%s", obuf);
 }
 #endif /* NSUPDATE */

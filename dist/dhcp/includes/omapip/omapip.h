@@ -125,6 +125,7 @@ typedef struct __omapi_object_type_t {
 	isc_result_t (*allocator) (omapi_object_t **, const char *, int);
 	isc_result_t (*sizer) (size_t);
 	size_t size;
+	int rc_flag;
 	isc_result_t (*initialize) (omapi_object_t *, const char *, int);
 } omapi_object_type_t;
 
@@ -503,7 +504,8 @@ isc_result_t omapi_object_type_register (omapi_object_type_t **,
 							   const char *, int),
 					 isc_result_t (*) (size_t), size_t,
 					 isc_result_t (*) (omapi_object_t *,
-							   const char *, int));
+							   const char *, int),
+					 int);
 isc_result_t omapi_signal (omapi_object_t *, const char *, ...);
 isc_result_t omapi_signal_in (omapi_object_t *, const char *, ...);
 isc_result_t omapi_set_value (omapi_object_t *, omapi_object_t *,

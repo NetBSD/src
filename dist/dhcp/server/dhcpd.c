@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhcpd.c,v 1.1.1.1 2001/08/03 11:35:41 drochner Exp $ Copyright 1995-2001 Internet Software Consortium.";
+"$Id: dhcpd.c,v 1.1.1.2 2002/06/11 12:24:43 drochner Exp $ Copyright 1995-2001 Internet Software Consortium.";
 #endif
 
   static char copyright[] =
@@ -484,7 +484,7 @@ int main (argc, argv, envp)
 	    }		
 	    trace_file_replay (traceinfile);
 
-#if defined (DEBUG_MEMORY_LEAKAGE) || \
+#if defined (DEBUG_MEMORY_LEAKAGE) && \
                 defined (DEBUG_MEMORY_LEAKAGE_ON_EXIT)
             free_everything ();
             omapi_print_dmalloc_usage_by_caller (); 
@@ -1129,7 +1129,7 @@ static isc_result_t dhcp_io_shutdown_countdown (void *vlp)
 		    dhcp_failover_set_state (state, recover);
 		}
 	    }
-#if defined (DEBUG_MEMORY_LEAKAGE) || \
+#if defined (DEBUG_MEMORY_LEAKAGE) && \
 		defined (DEBUG_MEMORY_LEAKAGE_ON_EXIT)
 	    free_everything ();
 	    omapi_print_dmalloc_usage_by_caller ();
@@ -1138,10 +1138,10 @@ static isc_result_t dhcp_io_shutdown_countdown (void *vlp)
 	}		
 #else
 	if (shutdown_state == shutdown_done) {
-#if defined (DEBUG_MEMORY_LEAKAGE) || \
-                defined (DEBUG_MEMORY_LEAKAGE_ON_EXIT)
-            free_everything ();
-            omapi_print_dmalloc_usage_by_caller (); 
+#if defined (DEBUG_MEMORY_LEAKAGE) && \
+		defined (DEBUG_MEMORY_LEAKAGE_ON_EXIT)
+		free_everything ();
+		omapi_print_dmalloc_usage_by_caller (); 
 #endif
 		exit (0);
 	}

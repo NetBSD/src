@@ -3,7 +3,7 @@
    DHCP/BOOTP Relay Agent. */
 
 /*
- * Copyright (c) 1997-2001 Internet Software Consortium.
+ * Copyright (c) 1997-2002 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhcrelay.c,v 1.1.1.1 2001/08/03 11:35:40 drochner Exp $ Copyright (c) 1997-2000 Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhcrelay.c,v 1.1.1.2 2002/06/11 12:24:42 drochner Exp $ Copyright (c) 1997-2000 Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -423,6 +423,8 @@ void relay (ip, packet, length, from_port, from, hfrom)
 	   that set giaddr, so we won't see it. */
 	if (!packet -> giaddr.s_addr)
 		packet -> giaddr = ip -> primary_address;
+	if (packet -> hops != 255)
+		packet -> hops = packet -> hops + 1;
 
 	/* Otherwise, it's a BOOTREQUEST, so forward it to all the
 	   servers. */

@@ -68,7 +68,8 @@ dhcpctl_status dhcpctl_initialize ()
 					     dhcpctl_callback_stuff_values,
 					     0, 0, 0, 0, 0, 0,
 					     sizeof
-					     (dhcpctl_callback_object_t), 0);
+					     (dhcpctl_callback_object_t), 0,
+					     RC_MISC);
 	if (status != ISC_R_SUCCESS)
 		return status;
 
@@ -81,7 +82,7 @@ dhcpctl_status dhcpctl_initialize ()
 					     dhcpctl_remote_stuff_values,
 					     0, 0, 0, 0, 0, 0,
 					     sizeof (dhcpctl_remote_object_t),
-					     0);
+					     0, RC_MISC);
 	if (status != ISC_R_SUCCESS)
 		return status;
 

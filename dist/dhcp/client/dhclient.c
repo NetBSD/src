@@ -3,7 +3,7 @@
    DHCP Client. */
 
 /*
- * Copyright (c) 1995-2001 Internet Software Consortium.
+ * Copyright (c) 1995-2002 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,7 +41,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhclient.c,v 1.1.1.1 2001/08/03 11:35:30 drochner Exp $ Copyright (c) 1995-2001 Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.1.1.2 2002/06/11 12:24:35 drochner Exp $ Copyright (c) 1995-2001 Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -198,8 +198,6 @@ int main (argc, argv, envp)
 		} else if (!strcmp (argv [i], "-w")) {
 			/* do not exit if there are no broadcast interfaces. */
 			persist = 1;
- 		} else if (argv [i][0] == '-') {
- 		    usage ();
 		} else if (!strcmp (argv [i], "-e")) {
 			struct string_list *tmp;
 			if (++i == argc)
@@ -216,7 +214,9 @@ int main (argc, argv, envp)
 			exit (0);
 		} else if (!strcmp (argv [i], "-nw")) {
 			nowait = 1;
- 		} else {
+ 		} else if (argv [i][0] == '-') {
+ 		    usage ();
+		} else {
  		    struct interface_info *tmp = (struct interface_info *)0;
 		    status = interface_allocate (&tmp, MDL);
  		    if (status != ISC_R_SUCCESS)
@@ -882,7 +882,11 @@ void bind_lease (client)
 	client -> state = S_BOUND;
 	reinitialize_interfaces ();
 	go_daemon ();
-	client_dns_update (client, 1);
+	if (client -> config -> do_forward_update) {
+		client -> dns_update_timeout = 1;
+		add_timeout (cur_time + 1, client_dns_update_timeout,
+			     client, 0, 0);
+	}
 }  
 
 /* state_bound is called when we've successfully bound to a particular
@@ -1183,12 +1187,13 @@ struct client_lease *packet_to_lease (packet, client)
 	memcpy (lease -> address.iabuf, &packet -> raw -> yiaddr,
 		lease -> address.len);
 
+	memset (&data, 0, sizeof data);
+
 	if (client -> config -> vendor_space_name) {
 		i = DHO_VENDOR_ENCAPSULATED_OPTIONS;
 
 		/* See if there was a vendor encapsulation option. */
 		oc = lookup_option (&dhcp_universe, lease -> options, i);
-		memset (&data, 0, sizeof data);
 		if (oc &&
 		    client -> config -> vendor_space_name &&
 		    evaluate_option_cache (&data, packet,
@@ -1867,6 +1872,7 @@ void make_discover (client, lease)
 			      (struct option_state *)0, options,
 			      &global_scope, 0, 0, 0, (struct data_string *)0,
 			      client -> config -> vendor_space_name);
+	option_state_dereference (&options, MDL);
 	if (client -> packet_length < BOOTP_MIN_LEN)
 		client -> packet_length = BOOTP_MIN_LEN;
 
@@ -1933,6 +1939,7 @@ void make_request (client, lease)
 			      (struct option_state *)0, client -> sent_options,
 			      &global_scope, 0, 0, 0, (struct data_string *)0,
 			      client -> config -> vendor_space_name);
+	option_state_dereference (&client -> sent_options, MDL);
 	if (client -> packet_length < BOOTP_MIN_LEN)
 		client -> packet_length = BOOTP_MIN_LEN;
 
@@ -2003,6 +2010,7 @@ void make_decline (client, lease)
 			      (struct option_state *)0, options,
 			      &global_scope, 0, 0, 0, (struct data_string *)0,
 			      client -> config -> vendor_space_name);
+	option_state_dereference (&options, MDL);
 	if (client -> packet_length < BOOTP_MIN_LEN)
 		client -> packet_length = BOOTP_MIN_LEN;
 	option_state_dereference (&options, MDL);
@@ -2654,6 +2662,7 @@ void go_daemon ()
 {
 	static int state = 0;
 	int pid;
+	int i;
 
 	/* Don't become a daemon if the user requested otherwise. */
 	if (no_daemon) {
@@ -2681,6 +2690,16 @@ void go_daemon ()
         close(0);
         close(1);
         close(2);
+
+	/* Reopen them on /dev/null. */
+	i = open ("/dev/null", O_RDWR);
+	if (i == 0)
+		i = open ("/dev/null", O_RDWR);
+	if (i == 1) {
+		i = open ("/dev/null", O_RDWR);
+		log_perror = 0; /* No sense logging to /dev/null. */
+	} else if (i != -1)
+		close (i);
 
 	write_client_pid_file ();
 }
@@ -2949,7 +2968,8 @@ isc_result_t dhcp_set_control_state (control_object_state_t oldstate,
 		  case server_shutdown:
 		    if (client -> active &&
 			client -> active -> expiry > cur_time) {
-			    client_dns_update (client, 0);
+			    if (client -> config -> do_forward_update)
+				    client_dns_update (client, 0, 0);
 			    do_release (client);
 		    }
 		    break;
@@ -2969,9 +2989,30 @@ isc_result_t dhcp_set_control_state (control_object_state_t oldstate,
 	return ISC_R_SUCCESS;
 }
 
+/* Called after a timeout if the DNS update failed on the previous try.
+   Retries the update, and if it times out, schedules a retry after
+   ten times as long of a wait. */
+
+void client_dns_update_timeout (void *cp)
+{
+	struct client_state *client = cp;
+	isc_result_t status;
+
+	if (client -> active) {
+		status = client_dns_update (client, 1,
+					    (client -> active -> renewal -
+					     cur_time));
+		if (status == ISC_R_TIMEDOUT) {
+			client -> dns_update_timeout *= 10;
+			add_timeout (cur_time + client -> dns_update_timeout,
+				     client_dns_update_timeout, client, 0, 0);
+		}
+	}
+}
+			
 /* See if we should do a DNS update, and if so, do it. */
 
-void client_dns_update (struct client_state *client, int addp)
+isc_result_t client_dns_update (struct client_state *client, int addp, int ttl)
 {
 	struct data_string ddns_fqdn, ddns_fwd_name,
 	       ddns_dhcid, client_identifier;
@@ -2983,11 +3024,11 @@ void client_dns_update (struct client_state *client, int addp)
 	/* If we didn't send an FQDN option, we certainly aren't going to
 	   be doing an update. */
 	if (!client -> sent_options)
-		return;
+		return ISC_R_SUCCESS;
 
 	/* If we don't have a lease, we can't do an update. */
 	if (!client -> active)
-		return;
+		return ISC_R_SUCCESS;
 
 	/* If we set the no client update flag, don't do the update. */
 	if ((oc = lookup_option (&fqdn_universe, client -> sent_options,
@@ -2997,7 +3038,7 @@ void client_dns_update (struct client_state *client, int addp)
 					   client -> sent_options,
 					   (struct option_state *)0,
 					   &global_scope, oc, MDL))
-		return;
+		return ISC_R_SUCCESS;
 	
 	/* If we set the "server, please update" flag, or didn't set it
 	   to false, don't do the update. */
@@ -3008,7 +3049,7 @@ void client_dns_update (struct client_state *client, int addp)
 					   client -> sent_options,
 					   (struct option_state *)0,
 					   &global_scope, oc, MDL))
-		return;
+		return ISC_R_SUCCESS;
 	
 	/* If no FQDN option was supplied, don't do the update. */
 	memset (&ddns_fwd_name, 0, sizeof ddns_fwd_name);
@@ -3019,7 +3060,7 @@ void client_dns_update (struct client_state *client, int addp)
 				    client -> sent_options,
 				    (struct option_state *)0,
 				    &global_scope, oc, MDL))
-		return;
+		return ISC_R_SUCCESS;
 
 	/* Make a dhcid string out of either the client identifier,
 	   if we are sending one, or the interface's MAC address,
@@ -3045,7 +3086,7 @@ void client_dns_update (struct client_state *client, int addp)
 				    client -> interface -> hw_address.hlen);
 	if (!result) {
 		data_string_forget (&ddns_fwd_name, MDL);
-		return;
+		return ISC_R_SUCCESS;
 	}
 
 	/* Start the resolver, if necessary. */
@@ -3063,7 +3104,7 @@ void client_dns_update (struct client_state *client, int addp)
 		if (addp)
 			rcode = ddns_update_a (&ddns_fwd_name,
 					       client -> active -> address,
-					       &ddns_dhcid, DEFAULT_DDNS_TTL,
+					       &ddns_dhcid, ttl,
 					       1);
 		else
 			rcode = ddns_remove_a (&ddns_fwd_name,
@@ -3073,4 +3114,5 @@ void client_dns_update (struct client_state *client, int addp)
 	
 	data_string_forget (&ddns_fwd_name, MDL);
 	data_string_forget (&ddns_dhcid, MDL);
+	return rcode;
 }
