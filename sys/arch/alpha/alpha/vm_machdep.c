@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.11 1996/07/11 03:53:34 cgd Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.12 1996/07/11 20:14:23 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -181,6 +181,7 @@ cpu_fork(p1, p2)
 	 * part of the stack.  The stack and pcb need to agree;
 	 */
 	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
+	p2->p_addr->u_pcb.pcb_hw.apcb_usp = alpha_pal_rdusp();
 #ifdef OLD_PMAP
 	PMAP_ACTIVATE(&p2->p_vmspace->vm_pmap, 0);
 #endif

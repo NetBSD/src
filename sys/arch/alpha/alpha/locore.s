@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.18 1996/07/11 05:31:19 cgd Exp $	*/
+/*	$NetBSD: locore.s,v 1.19 1996/07/11 20:14:17 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -226,10 +226,7 @@ Lsetfpenable:
 	call_pal PAL_OSF1_wrfen
 
 Lrestoreregs:
-	/* restore the USP and the registers, and return */
-	ldq	a0,(FRAME_SP*8)(sp)
-	call_pal PAL_OSF1_wrusp
-
+	/* restore the registers, and return */
 	.set noat
 	ldq	v0,(FRAME_V0*8)(sp)
 	ldq	t0,(FRAME_T0*8)(sp)
@@ -301,9 +298,6 @@ LEAF(XentArith, 2)				/* XXX should be NESTED */
 	stq	t12,(FRAME_T12*8)(sp)
 	stq	at_reg,(FRAME_AT*8)(sp)
 
-	call_pal PAL_OSF1_rdusp
-	stq	v0,(FRAME_SP*8)(sp)
-
 	.set at
 
 	br	pv, 1f
@@ -355,9 +349,6 @@ LEAF(XentIF, 1)					/* XXX should be NESTED */
 	stq	ra,(FRAME_RA*8)(sp)
 	stq	t12,(FRAME_T12*8)(sp)
 	stq	at_reg,(FRAME_AT*8)(sp)
-
-	call_pal PAL_OSF1_rdusp
-	stq	v0,(FRAME_SP*8)(sp)
 
 	.set at
 
@@ -413,9 +404,6 @@ LEAF(XentInt, 2)				/* XXX should be NESTED */
 	stq	t12,(FRAME_T12*8)(sp)
 	stq	at_reg,(FRAME_AT*8)(sp)
 
-	call_pal PAL_OSF1_rdusp
-	stq	v0,(FRAME_SP*8)(sp)
-
 	.set at
 
 	br	pv, 1f
@@ -470,9 +458,6 @@ LEAF(XentMM, 3)					/* XXX should be NESTED */
 	stq	t12,(FRAME_T12*8)(sp)
 	stq	at_reg,(FRAME_AT*8)(sp)
 
-	call_pal PAL_OSF1_rdusp
-	stq	v0,(FRAME_SP*8)(sp)
-
 	.set at
 
 	br	pv, 1f
@@ -515,9 +500,6 @@ LEAF(XentSys, 0)				/* XXX should be NESTED */
 
 	/* save syscall number, which was passed in v0. */
 	mov	v0,s0
-
-	call_pal PAL_OSF1_rdusp
-	stq	v0,(FRAME_SP*8)(sp)
 
 	.set at
 
@@ -570,9 +552,6 @@ LEAF(XentUna, 3)				/* XXX should be NESTED */
 	stq	ra,(FRAME_RA*8)(sp)
 	stq	t12,(FRAME_T12*8)(sp)
 	stq	at_reg,(FRAME_AT*8)(sp)
-
-	call_pal PAL_OSF1_rdusp
-	stq	v0,(FRAME_SP*8)(sp)
 
 	.set at
 
