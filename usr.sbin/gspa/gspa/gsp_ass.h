@@ -1,4 +1,4 @@
-/*	$NetBSD: gsp_ass.h,v 1.3 1997/10/17 06:58:49 lukem Exp $	*/
+/*	$NetBSD: gsp_ass.h,v 1.3.4.1 2000/10/19 17:05:07 he Exp $	*/
 /*
  * GSP assembler - definitions
  *
@@ -145,8 +145,10 @@ void list_error(char *);
 void listing(void);
 symbol lookup(char *id, bool makeit);
 expr num_expr(int);
-void p1err(char *fmt, ...);
-void perr(char *fmt, ...);
+void p1err(char *fmt, ...)
+	__attribute__((__format__(__printf__, 1, 2)));
+void perr(char *fmt, ...)
+	__attribute__((__format__(__printf__, 1, 2)));
 void pseudo(int code, operand operands);
 void push_input(char *fn);
 void putcode(u_int16_t *, int);
