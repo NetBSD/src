@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.84 2002/12/11 19:14:34 jdolecek Exp $
+.\"	$NetBSD: sysctl.8,v 1.85 2003/02/01 00:42:03 kleink Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)sysctl.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd June 6, 1993
+.Dd February 1, 2003
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -177,10 +177,15 @@ privilege can change the value.
 .It kern.autonicetime	integer	yes
 .It kern.autoniceval	integer	yes
 .It kern.boottime	struct	no
+.It kern.ccpu	integer	no
 .It kern.chown_restricted	integer	no
 .It kern.clockrate	struct	no
+.It kern.consdev	integer	no
+.It kern.cp_time	struct	no
 .It kern.defcorename	string	yes
+.It kern.domainname	string	yes
 .It kern.forkfsleep	integer	yes
+.It kern.fscale	integer	no
 .It kern.fsync	integer	no
 .It kern.hostid	integer	yes
 .It kern.hostname	string	yes
@@ -199,18 +204,22 @@ privilege can change the value.
 .It kern.maxptys	integer	yes, special
 .It kern.maxvnodes	integer	raise only
 .It kern.mapped_files	integer	no
+.It kern.maxphys	integer	no
 .It kern.memlock	integer	no
-.It kern.memlock_rage	integer	no
+.It kern.memlock_range	integer	no
 .It kern.memory_protection	integer	no
 .It kern.mbuf.mblowat	integer	yes
 .It kern.mbuf.mcllowat	integer	yes
 .It kern.mbuf.mclsize	integer	no
 .It kern.mbuf.msize	integer	no
 .It kern.mbuf.nmbclusters	integer	raise only
+.It kern.monotonic_clock	integer	no
+.It kern.msgbuf	struct	no
 .It kern.msgbufsize	integer	no
 .It kern.name_max	integer	no
 .It kern.ngroups	integer	no
 .It kern.no_trunc	integer	no
+.It kern.ntptime	struct	no
 .It kern.osrelease	string	no
 .It kern.osrevision	integer	no
 .It kern.ostype	string	no
@@ -221,17 +230,24 @@ privilege can change the value.
 .It kern.pipe.nbigpipes	integer	no
 .It kern.pipe.kvasize	integer	no
 .It kern.posix1version	integer	no
+.It kern.proc2	struct	no
+.It kern.proc_args	string	yes
 .It kern.rawpartition	integer	no
+.It kern.rtc_offset	integer	no
 .It kern.saved_ids	integer	no
+.It kern.sbmax	integer	yes
 .It kern.securelevel	integer	raise only
 .It kern.synchronized_io	integer	no
+.It kern.sysvipc_info	struct	no
 .It kern.sysvmsg	integer	no
 .It kern.sysvsem	integer	no
 .It kern.sysvshm	integer	no
+.It kern.timex	struct	no
 .It kern.tkstat.nin	quad	no
 .It kern.tkstat.nout	quad	no
 .It kern.tkstat.cancc	quad	no
 .It kern.tkstat.rawcc	quad	no
+.It kern.urnd	integer	no
 .It kern.vdisable	integer	no
 .It kern.version	string	no
 .It machdep.console_device	dev_t	no
