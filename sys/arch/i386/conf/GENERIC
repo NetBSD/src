@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.231 1999/03/29 21:51:25 perry Exp $
+#	$NetBSD: GENERIC,v 1.232 1999/04/17 16:50:26 drochner Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -536,7 +536,8 @@ wss*	at isapnp?			# Windows Sound System
 ym*	at isapnp?			# Yamaha OPL3-SA3 audio
 
 # ISA audio devices
-aria0	at isa? port 0x290 irq 10 		# Aria
+# the "aria" probe might give false hits
+#aria0	at isa? port 0x290 irq 10 		# Aria
 gus0	at isa? port 0x220 irq 7 drq 1 drq2 6	# Gravis Ultra Sound
 pas0	at isa? port 0x220 irq 7 drq 1		# ProAudio Spectrum
 pss0	at isa? port 0x220 irq 7 drq 6  	# Personal Sound System
