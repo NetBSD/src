@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.1 2002/05/21 20:54:17 rafal Exp $
+#	$NetBSD: list,v 1.1.2.1 2002/07/19 01:41:09 lukem Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin sys/arch/sgimips/stand
 
@@ -47,7 +47,7 @@ PROG	usr/bin/sed
 PROG	usr/bin/tip
 PROG	usr/bin/tset
 
-PROG	usr/mdec/installboot
+PROG	usr/mdec/sgivol
 
 PROG	usr/sbin/chown	usr/bin/chgrp
 PROG	usr/sbin/chroot
@@ -55,6 +55,7 @@ PROG	usr/sbin/chroot
 # init invokes the shell as -sh
 ARGVLN	sh -sh
 
+SPECIAL	sgivol	srcdir	sys/arch/sgimips/stand/sgivol
 SPECIAL	ping	srcdir	distrib/utils/x_ping
 
 LIBS	-ledit -lbz2 -lutil -lcurses -ltermcap -lrmt -lcrypt -ll -lm
