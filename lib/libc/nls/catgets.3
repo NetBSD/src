@@ -1,9 +1,9 @@
-.\"	$NetBSD: catgets.3,v 1.6 1998/02/05 18:49:00 perry Exp $
+.\"	$NetBSD: catgets.3,v 1.7 1998/02/08 19:45:22 kleink Exp $
 .\"
 .\" Written by J.T. Conklin <jtc@netbsd.org>.
 .\" Public domain.
 .\"
-.Dd May 29, 1994
+.Dd February 8, 1998
 .Dt CATGETS 3
 .Os
 .Sh NAME
@@ -34,6 +34,24 @@ If the specified message was retrieved successfully,
 returns a pointer to an internal buffer containing the message string;
 otherwise it returns
 .Fa s .
+.Sh ERRORS
+The
+.Fn catgets
+function will fail if:
+.Bl -tag -width Er
+.It Bq Er EBADF
+The
+.Fa catd
+argument is not a valid message catalog descriptor open for reading. 
+.It Bq Er EINTR
+The operation was interrupted by a signal.
+.It Bq Er ENOMSG
+The message identified by
+.Fa set_id
+and
+.Fa msg_id
+is not in the message catalog. 
+.El
 .Sh SEE ALSO
 .Xr catclose 3 ,
 .Xr catopen 3
@@ -41,4 +59,4 @@ otherwise it returns
 The
 .Fn catgets
 function conforms to
-.St -xpg3 .
+.St -xpg4.2 .
