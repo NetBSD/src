@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.63.2.1 1997/11/09 20:25:30 mellon Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.63.2.2 1997/11/19 00:04:08 mellon Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -33,17 +33,17 @@
  */
 /*
  * Written by Paul Popelka (paulp@uts.amdahl.com)
- * 
+ *
  * You can do anything you want with this software, just don't say you wrote
  * it, and don't remove this notice.
- * 
+ *
  * This software is provided "as is".
- * 
+ *
  * The author supplies this software to be publicly redistributed on the
  * understanding that the author is not responsible for the correct
  * functioning of this software in any circumstances and is not liable for
  * any damages caused by this software.
- * 
+ *
  * October 1992
  */
 
@@ -76,7 +76,7 @@
 
 /*
  * Some general notes:
- * 
+ *
  * In the ufs filesystem the inodes, superblocks, and indirect blocks are
  * read/written using the vnode for the filesystem. Blocks that represent
  * the contents of a file are read/written using the vnode for the file
@@ -116,7 +116,7 @@ msdosfs_create(v)
 	struct timespec ts;
 
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_create(cnp %08x, vap %08x\n", cnp, ap->a_vap);
+	printf("msdosfs_create(cnp %p, vap %p\n", cnp, ap->a_vap);
 #endif
 
 	/*
@@ -143,7 +143,7 @@ msdosfs_create(v)
 	bzero(&ndirent, sizeof(ndirent));
 	if ((error = uniqdosname(pdep, cnp, ndirent.de_Name)) != 0)
 		goto bad;
-		
+
 	ndirent.de_Attributes = (ap->a_vap->va_mode & S_IWUSR) ?
 				ATTR_ARCHIVE : ATTR_ARCHIVE | ATTR_READONLY;
 	ndirent.de_StartCluster = 0;
@@ -178,7 +178,7 @@ msdosfs_mknod(v)
 		struct componentname *a_cnp;
 		struct vattr *a_vap;
 	} */ *ap = v;
-	
+
 	switch (ap->a_vap->va_type) {
 	case VDIR:
 		return (msdosfs_mkdir((struct vop_mkdir_args *)ap));
@@ -336,9 +336,9 @@ msdosfs_setattr(v)
 	struct msdosfsmount *pmp = dep->de_pmp;
 	struct vattr *vap = ap->a_vap;
 	struct ucred *cred = ap->a_cred;
-	
+
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_setattr(): vp %08x, vap %08x, cred %08x, p %08x\n",
+	printf("msdosfs_setattr(): vp %p, vap %p, cred %p, p %p\n",
 	    ap->a_vp, vap, cred, ap->a_p);
 #endif
 	if ((vap->va_type != VNON) || (vap->va_nlink != (nlink_t)VNOVAL) ||
@@ -348,9 +348,9 @@ msdosfs_setattr(v)
 	    (vap->va_uid != VNOVAL) || (vap->va_gid != VNOVAL)) {
 #ifdef MSDOSFS_DEBUG
 		printf("msdosfs_setattr(): returning EINVAL\n");
-		printf("    va_type %d, va_nlink %x, va_fsid %x, va_fileid %x\n",
+		printf("    va_type %d, va_nlink %x, va_fsid %lx, va_fileid %lx\n",
 		    vap->va_type, vap->va_nlink, vap->va_fsid, vap->va_fileid);
-		printf("    va_blocksize %x, va_rdev %x, va_bytes %x, va_gen %x\n",
+		printf("    va_blocksize %lx, va_rdev %x, va_bytes %qx, va_gen %lx\n",
 		    vap->va_blocksize, vap->va_rdev, vap->va_bytes, vap->va_gen);
 		printf("    va_uid %x, va_gid %x\n",
 		    vap->va_uid, vap->va_gid);
@@ -371,7 +371,7 @@ msdosfs_setattr(v)
 	if (vap->va_atime.tv_sec != VNOVAL || vap->va_mtime.tv_sec != VNOVAL) {
 		if (cred->cr_uid != pmp->pm_uid &&
 		    (error = suser(cred, &ap->a_p->p_acflag)) &&
-		    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 || 
+		    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 ||
 		    (error = VOP_ACCESS(ap->a_vp, VWRITE, cred, ap->a_p))))
 			return (error);
 		if ((pmp->pm_flags & MSDOSFSMNT_NOWIN95) == 0 &&
@@ -523,11 +523,11 @@ msdosfs_write(v)
 	struct denode *dep = VTODE(vp);
 	struct msdosfsmount *pmp = dep->de_pmp;
 	struct ucred *cred = ap->a_cred;
-	
+
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_write(vp %08x, uio %08x, ioflag %08x, cred %08x\n",
+	printf("msdosfs_write(vp %p, uio %p, ioflag %x, cred %p\n",
 	    vp, uio, ioflag, cred);
-	printf("msdosfs_write(): diroff %d, dirclust %d, startcluster %d\n",
+	printf("msdosfs_write(): diroff %lu, dirclust %lu, startcluster %lu\n",
 	    dep->de_diroffset, dep->de_dirclust, dep->de_StartCluster);
 #endif
 
@@ -589,13 +589,13 @@ msdosfs_write(v)
 		lastcn = dep->de_fc[FC_LASTFC].fc_frcn;
 	} else
 		lastcn = de_clcount(pmp, osize) - 1;
-	
+
 	do {
 		if (de_cluster(pmp, uio->uio_offset) > lastcn) {
 			error = ENOSPC;
 			break;
 		}
-		
+
 		bn = de_blk(pmp, uio->uio_offset);
 		if ((uio->uio_offset & pmp->pm_crbomask) == 0
 		    && (de_blk(pmp, uio->uio_offset + uio->uio_resid) > de_blk(pmp, uio->uio_offset)
@@ -765,7 +765,7 @@ msdosfs_update(v)
 
 /*
  * Flush the blocks of a file to disk.
- * 
+ *
  * This function is worthless for vnodes that represent directories. Maybe we
  * could just do a sync if they try an fsync on a directory file.
  */
@@ -787,7 +787,7 @@ msdosfs_remove(v)
 	else
 		error = removede(ddep, dep);
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_remove(), dep %08x, v_usecount %d\n", dep, ap->a_vp->v_usecount);
+	printf("msdosfs_remove(), dep %p, v_usecount %d\n", dep, ap->a_vp->v_usecount);
 #endif
 	if (ddep == dep)
 		vrele(ap->a_vp);
@@ -822,9 +822,9 @@ msdosfs_link(v)
  * Renames on files require moving the denode to a new hash queue since the
  * denode's location is used to compute which hash queue to put the file
  * in. Unless it is a rename in place.  For example "mv a b".
- * 
+ *
  * What follows is the basic algorithm:
- * 
+ *
  * if (file move) {
  *	if (dest file exists) {
  *		remove dest file
@@ -856,13 +856,13 @@ msdosfs_link(v)
  *		clear old directory entry for moved directory
  *	}
  * }
- * 
+ *
  * On entry:
  *	source's parent directory is unlocked
  *	source file or directory is unlocked
  *	destination's parent directory is locked
  *	destination file or directory is locked if it exists
- * 
+ *
  * On exit:
  *	all denodes should be released
  *
@@ -983,7 +983,7 @@ abortit:
 	 * directory heirarchy above the target, as this would
 	 * orphan everything below the source directory. Also
 	 * the user must have write permission in the source so
-	 * as to be able to change "..". We must repeat the call 
+	 * as to be able to change "..". We must repeat the call
 	 * to namei, as the parent directory is unlocked by the
 	 * call to doscheckpath().
 	 */
@@ -1138,7 +1138,7 @@ abortit:
 		if (newparent)
 			VOP_UNLOCK(fdvp);
 	}
-	
+
 	/*
 	 * If we moved a directory to a new parent directory, then we must
 	 * fixup the ".." entry in the moved directory.
@@ -1251,7 +1251,7 @@ msdosfs_mkdir(v)
 	ndirent.de_flag = DE_ACCESS | DE_CREATE | DE_UPDATE;
 	TIMEVAL_TO_TIMESPEC(&time, &ts);
 	DETIMES(&ndirent, &ts, &ts, &ts);
-	
+
 	/*
 	 * Now fill the cluster with the "." and ".." entries. And write
 	 * the cluster to disk.  This way it is there for the parent
@@ -1299,7 +1299,7 @@ msdosfs_mkdir(v)
 #endif
 	if ((error = uniqdosname(pdep, cnp, ndirent.de_Name)) != 0)
 		goto bad;
-	
+
 	ndirent.de_Attributes = ATTR_DIRECTORY;
 	ndirent.de_StartCluster = newcluster;
 	ndirent.de_FileSize = 0;
@@ -1442,9 +1442,9 @@ msdosfs_readdir(v)
 	int ncookies;
 	off_t offset;
 	int chksum = -1;
-	
+
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_readdir(): vp %08x, uio %08x, cred %08x, eofflagp %08x\n",
+	printf("msdosfs_readdir(): vp %p, uio %p, cred %p, eofflagp %p\n",
 	    ap->a_vp, uio, ap->a_cred, ap->a_eofflag);
 #endif
 
@@ -1461,7 +1461,7 @@ msdosfs_readdir(v)
 	 * To be safe, initialize dirbuf
 	 */
 	bzero(dirbuf.d_name, sizeof(dirbuf.d_name));
-	
+
 	/*
 	 * If the user buffer is smaller than the size of one dos directory
 	 * entry or the file offset is not a multiple of the size of a
@@ -1556,7 +1556,7 @@ msdosfs_readdir(v)
 		     (char *)dentp < bp->b_data + on + n;
 		     dentp++, offset += sizeof(struct direntry)) {
 #if 0
-			
+
 			printf("rd: dentp %08x prev %08x crnt %08x deName %02x attr %02x\n",
 			    dentp, prev, crnt, dentp->deName[0], dentp->deAttributes);
 #endif
@@ -1574,7 +1574,7 @@ msdosfs_readdir(v)
 				chksum = -1;
 				continue;
 			}
-			
+
 			/*
 			 * Handle Win95 long directory entries
 			 */
@@ -1584,7 +1584,7 @@ msdosfs_readdir(v)
 				chksum = win2unixfn((struct winentry *)dentp, &dirbuf, chksum);
 				continue;
 			}
-			
+
 			/*
 			 * Skip volume labels
 			 */
