@@ -1,4 +1,4 @@
-/*	$NetBSD: bootp.h,v 1.3 1996/09/26 23:22:01 cgd Exp $	*/
+/*	$NetBSD: bootp.h,v 1.3.10.1 1997/09/06 19:06:51 thorpej Exp $	*/
 
 /*
  * Bootstrap Protocol (BOOTP).  RFC951 and RFC1048.
@@ -28,7 +28,7 @@ struct bootp {
 	unsigned char	bp_hops;	/* gateway hops */
 	unsigned int	bp_xid;		/* transaction ID */
 	unsigned short	bp_secs;	/* seconds since boot began */
-	unsigned short	bp_unused;
+	unsigned short	bp_flags;
 	struct in_addr	bp_ciaddr;	/* client IP address */
 	struct in_addr	bp_yiaddr;	/* 'your' IP address */
 	struct in_addr	bp_siaddr;	/* server IP address */
@@ -36,7 +36,12 @@ struct bootp {
 	unsigned char	bp_chaddr[16];	/* client hardware address */
 	unsigned char	bp_sname[64];	/* server host name */
 	unsigned char	bp_file[128];	/* boot file name */
-	unsigned char	bp_vend[64];	/* vendor-specific area */
+#ifdef SUPPORT_DHCP
+#define BOOTP_VENDSIZE 312
+#else
+#define BOOTP_VENDSIZE 64
+#endif
+	unsigned char	bp_vend[BOOTP_VENDSIZE];	/* vendor-specific area */
 };
 
 /*
@@ -84,9 +89,33 @@ struct bootp {
 #define TAG_DOMAINNAME		((unsigned char)  15)
 #define TAG_SWAPSERVER		((unsigned char)  16)
 #define TAG_ROOTPATH		((unsigned char)  17)
+
+#ifdef SUPPORT_DHCP
+#define TAG_REQ_ADDR		((unsigned char)  50)
+#define TAG_LEASETIME		((unsigned char)  51)
+#define TAG_OVERLOAD		((unsigned char)  52)
+#define TAG_DHCP_MSGTYPE	((unsigned char)  53)
+#define TAG_SERVERID		((unsigned char)  54)
+#define TAG_PARAM_REQ		((unsigned char)  55)
+#define TAG_MSG			((unsigned char)  56)
+#define TAG_MAXSIZE		((unsigned char)  57)
+#define TAG_T1			((unsigned char)  58)
+#define TAG_T2			((unsigned char)  59)
+#define TAG_CLASSID		((unsigned char)  60)
+#define TAG_CLIENTID		((unsigned char)  61)
+#endif
+
 #define TAG_END			((unsigned char) 255)
 
-
+#ifdef SUPPORT_DHCP
+#define DHCPDISCOVER 1
+#define DHCPOFFER 2
+#define DHCPREQUEST 3
+#define DHCPDECLINE 4
+#define DHCPACK 5
+#define DHCPNAK 6
+#define DHCPRELEASE 7
+#endif
 
 /*
  * "vendor" data permitted for CMU bootp clients.

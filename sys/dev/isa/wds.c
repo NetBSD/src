@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.17.4.1 1997/08/27 23:32:18 thorpej Exp $	*/
+/*	$NetBSD: wds.c,v 1.17.4.2 1997/09/06 19:00:29 thorpej Exp $	*/
 
 #undef WDSDIAG
 #ifdef DDB
@@ -12,6 +12,43 @@
  * sense data
  * aborts
  * resets
+ */
+
+/*-   
+ * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ * 
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ * 
+ * Redistribution and use in source and binary forms, with or without  
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
@@ -68,8 +105,8 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 
+#include <machine/bus.h>
 #include <machine/intr.h>
-#include <machine/pio.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -85,6 +122,8 @@
 #ifndef DDB
 #define Debugger() panic("should call debugger here (wds.c)")
 #endif /* ! DDB */
+
+#define	WDS_MAXXFER	((WDS_NSEG - 1) << PGSHIFT)
 
 #define WDS_MBX_SIZE	16
 
@@ -107,23 +146,24 @@ struct wds_mbx {
 	struct wds_mbx_in *tmbi;	/* Target Mail Box in */
 };
 
-#define	KVTOPHYS(x)	vtophys(x)
-
 struct wds_softc {
 	struct device sc_dev;
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
+	bus_dma_tag_t sc_dmat;
+	bus_dmamap_t sc_dmamap_mbox;	/* maps the mailbox */
 	void *sc_ih;
 
-	struct wds_mbx sc_mbx;
-#define	wmbx	(&sc->sc_mbx)
+	struct wds_mbx *sc_mbx;
+#define	wmbx	(sc->sc_mbx)
 	struct wds_scb *sc_scbhash[SCB_HASH_SIZE];
 	TAILQ_HEAD(, wds_scb) sc_free_scb, sc_waiting_scb;
 	int sc_numscbs, sc_mbofull;
 	struct scsipi_link sc_link;	/* prototype for subdevs */
 
 	int sc_revision;
+	int sc_maxsegs;
 };
 
 struct wds_probe_data {
@@ -133,21 +173,6 @@ struct wds_probe_data {
 	int sc_scsi_dev;
 };
 
-/* Define the bounce buffer length... */
-#define BUFLEN (64*1024)
-/* ..and how many there are. One per device! Non-FASST boards need these. */
-#define BUFCNT 8
-/* The macro for deciding whether the board needs a buffer. */
-#define NEEDBUFFER(sc)	(sc->sc_revision < 0x800)
-
-struct wds_buf {
-	u_char data[BUFLEN];
-	int    busy;
-	TAILQ_ENTRY(wds_buf) chain;
-} wds_buffer[BUFCNT];
-
-TAILQ_HEAD(, wds_buf) wds_free_buffer;
-
 integrate void
 	wds_wait __P((bus_space_tag_t, bus_space_handle_t, int, int, int));
 int     wds_cmd __P((bus_space_tag_t, bus_space_handle_t, u_char *, int));
@@ -155,10 +180,8 @@ integrate void wds_finish_scbs __P((struct wds_softc *));
 int     wdsintr __P((void *));
 integrate void wds_reset_scb __P((struct wds_softc *, struct wds_scb *));
 void    wds_free_scb __P((struct wds_softc *, struct wds_scb *));
-void	wds_free_buf __P((struct wds_softc *, struct wds_buf *));
 integrate void wds_init_scb __P((struct wds_softc *, struct wds_scb *));
-struct	wds_scb *wds_get_scb __P((struct wds_softc *, int, int));
-struct	wds_buf *wds_get_buf __P((struct wds_softc *, int));
+struct	wds_scb *wds_get_scb __P((struct wds_softc *, int));
 struct	wds_scb *wds_scb_phys_kv __P((struct wds_softc *, u_long));
 void	wds_queue_scb __P((struct wds_softc *, struct wds_scb *));
 void	wds_collect_mbo __P((struct wds_softc *));
@@ -166,7 +189,7 @@ void	wds_start_scbs __P((struct wds_softc *));
 void    wds_done __P((struct wds_softc *, struct wds_scb *, u_char));
 int	wds_find __P((bus_space_tag_t, bus_space_handle_t, struct wds_probe_data *));
 void	wds_attach __P((struct wds_softc *, struct wds_probe_data *));
-void	wds_init __P((struct wds_softc *));
+void	wds_init __P((struct wds_softc *, int));
 void	wds_inquire_setup_information __P((struct wds_softc *));
 void    wdsminphys __P((struct buf *));
 int     wds_scsi_cmd __P((struct scsipi_xfer *));
@@ -174,6 +197,7 @@ void	wds_sense  __P((struct wds_softc *, struct wds_scb *));
 int	wds_poll __P((struct wds_softc *, struct scsipi_xfer *, int));
 int	wds_ipoll __P((struct wds_softc *, struct wds_scb *, int));
 void	wds_timeout __P((void *));
+int	wds_create_scbs __P((struct wds_softc *, void *, size_t));
 
 struct scsipi_adapter wds_switch = {
 	wds_scsi_cmd,
@@ -202,6 +226,9 @@ struct cfdriver wds_cd = {
 };
 
 #define	WDS_ABORT_TIMEOUT	2000	/* time to wait for abort (mSec) */
+
+/* XXX Should put this in a better place. */ 
+#define	offsetof(type, member)	((size_t)(&((type *)0)->member))
 
 integrate void
 wds_wait(iot, ioh, port, mask, val)
@@ -335,10 +362,22 @@ wds_attach(sc, wpd)
 	struct wds_probe_data *wpd;
 {
 
-	wds_init(sc);
 	TAILQ_INIT(&sc->sc_free_scb);
 	TAILQ_INIT(&sc->sc_waiting_scb);
+
+	wds_init(sc, 0);
 	wds_inquire_setup_information(sc);
+
+	/*
+	 * Since DMA memory allocation is always rounded up to a
+	 * page size, create some scbs from the leftovers.
+	 * Done here since we need the revision number to know
+	 * the number of allowed segments per DMA map.
+	 */
+	if (wds_create_scbs(sc, ((caddr_t)wmbx) +
+	    ALIGN(sizeof(struct wds_mbx)),
+	    NBPG - ALIGN(sizeof(struct wds_mbx))))
+		panic("wds_init: can't create scbs");
 
 	/*
 	 * fill in the prototype scsipi_link.
@@ -477,11 +516,6 @@ wds_free_scb(sc, scb)
 {
 	int s;
 
-	if (scb->buf != 0) {
-		wds_free_buf(sc, scb->buf);
-		scb->buf = 0;
-	}
-
 	s = splbio();
 
 	wds_reset_scb(sc, scb);
@@ -497,45 +531,95 @@ wds_free_scb(sc, scb)
 	splx(s);
 }
 
-void
-wds_free_buf(sc, buf)
-	struct wds_softc *sc;
-	struct wds_buf *buf;
-{
-	int s;
-
-	s = splbio();
-
-	buf->busy = 0;
-	TAILQ_INSERT_HEAD(&wds_free_buffer, buf, chain);
-
-	/*
-	 * If there were none, wake anybody waiting for one to come free,
-	 * starting with queued entries.
-	 */
-	if (buf->chain.tqe_next == 0)
-		wakeup(&wds_free_buffer);
-
-	splx(s);
-}
-
 integrate void
 wds_init_scb(sc, scb)
 	struct wds_softc *sc;
 	struct wds_scb *scb;
 {
+	bus_dma_tag_t dmat = sc->sc_dmat;
 	int hashnum;
 
+	/*
+	 * XXX Should we put a DIAGNOSTIC check for multiple
+	 * XXX SCB inits here?
+	 */
+
 	bzero(scb, sizeof(struct wds_scb));
+
+	/*
+	 * Create DMA maps for this SCB.
+	 */
+	if (bus_dmamap_create(dmat, sizeof(struct wds_scb), 1,
+	    sizeof(struct wds_scb), 0, BUS_DMA_NOWAIT, &scb->dmamap_self) ||
+
+					/* XXX What's a good value for this? */
+	    bus_dmamap_create(dmat, WDS_MAXXFER, WDS_NSEG, WDS_MAXXFER,
+	    0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW, &scb->dmamap_xfer))
+		panic("wds_init_scb: can't create DMA maps");
+
+	/*
+	 * Load the permanent DMA maps.
+	 */
+	if (bus_dmamap_load(dmat, scb->dmamap_self, scb,
+	    sizeof(struct wds_scb), NULL, BUS_DMA_NOWAIT))
+		panic("wds_init_scb: can't load permanent maps");
+
 	/*
 	 * put in the phystokv hash table
 	 * Never gets taken out.
 	 */
-	scb->hashkey = KVTOPHYS(scb);
+	scb->hashkey = scb->dmamap_self->dm_segs[0].ds_addr;
 	hashnum = SCB_HASH(scb->hashkey);
 	scb->nexthash = sc->sc_scbhash[hashnum];
 	sc->sc_scbhash[hashnum] = scb;
 	wds_reset_scb(sc, scb);
+}
+
+/*
+ * Create a set of scbs and add them to the free list.
+ */
+int
+wds_create_scbs(sc, mem, size)
+	struct wds_softc *sc;
+	void *mem;
+	size_t size;
+{
+	bus_dma_segment_t seg;
+	struct wds_scb *scb;
+	int rseg, error;
+
+	if (sc->sc_numscbs >= WDS_SCB_MAX)
+		return (0);
+
+	if ((scb = mem) != NULL)
+		goto have_mem;
+
+	size = NBPG;
+	error = bus_dmamem_alloc(sc->sc_dmat, size, NBPG, 0, &seg, 1, &rseg,
+	    BUS_DMA_NOWAIT);
+	if (error)
+		return (error);
+
+	error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, size,
+	    (caddr_t *)&scb, BUS_DMA_NOWAIT|BUS_DMAMEM_NOSYNC);
+	if (error) {
+		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
+		return (error);
+	}
+
+ have_mem:
+	bzero(scb, size);
+	while (size > sizeof(struct wds_scb)) {
+		wds_init_scb(sc, scb);
+		sc->sc_numscbs++;
+		if (sc->sc_numscbs >= WDS_SCB_MAX)
+			break;
+		TAILQ_INSERT_TAIL(&sc->sc_free_scb, scb, chain);
+		(caddr_t)scb += ALIGN(sizeof(struct wds_scb));
+		size -= ALIGN(sizeof(struct wds_scb));
+	}
+
+	return (0);
 }
 
 /*
@@ -545,10 +629,9 @@ wds_init_scb(sc, scb)
  * the hash table too otherwise either return an error or sleep.
  */
 struct wds_scb *
-wds_get_scb(sc, flags, needbuffer)
+wds_get_scb(sc, flags)
 	struct wds_softc *sc;
 	int flags;
-	int needbuffer;
 {
 	struct wds_scb *scb;
 	int s;
@@ -566,16 +649,12 @@ wds_get_scb(sc, flags, needbuffer)
 			break;
 		}
 		if (sc->sc_numscbs < WDS_SCB_MAX) {
-			scb = (struct wds_scb *) malloc(sizeof(struct wds_scb),
-			    M_TEMP, M_NOWAIT);
-			if (!scb) {
-				printf("%s: can't malloc scb\n",
+			if (wds_create_scbs(sc, NULL, 0)) {
+				printf("%s: can't allocate scbs\n",
 				    sc->sc_dev.dv_xname);
 				goto out;
 			}
-			wds_init_scb(sc, scb);
-			sc->sc_numscbs++;
-			break;
+			continue;
 		}
 		if ((flags & SCSI_NOSLEEP) != 0)
 			goto out;
@@ -584,45 +663,9 @@ wds_get_scb(sc, flags, needbuffer)
 
 	scb->flags |= SCB_ALLOC;
 
-	if (needbuffer) {
-		scb->buf = wds_get_buf(sc, flags);
-		if (scb->buf == 0) {
-			wds_free_scb(sc, scb);
-			scb = 0;
-		}
-	}
-
 out:
 	splx(s);
 	return (scb);
-}
-
-struct wds_buf *
-wds_get_buf(sc, flags)
-	struct wds_softc *sc;
-	int flags;
-{
-	struct wds_buf *buf;
-	int s;
-
-	s = splbio();
-
-	for (;;) {
-		buf = wds_free_buffer.tqh_first;
-		if (buf) {
-			TAILQ_REMOVE(&wds_free_buffer, buf, chain);
-			break;
-		}
-		if ((flags & SCSI_NOSLEEP) != 0)
-			goto out;
-		tsleep(&wds_free_buffer, PRIBIO, "wdsbuf", 0);
-	}
-
-	buf->busy = 1;
-
-out:
-	splx(s);
-	return (buf);
 }
 
 struct wds_scb *
@@ -719,9 +762,11 @@ wds_start_scbs(sc)
 
 		/* Link scb to mbo. */
 		if (scb->flags & SCB_SENSE)
-			ltophys(KVTOPHYS(&scb->sense), wmbo->scb_addr);
+			ltophys(scb->dmamap_self->dm_segs[0].ds_addr +
+			    offsetof(struct wds_scb, sense), wmbo->scb_addr);
 		else
-			ltophys(KVTOPHYS(&scb->cmd), wmbo->scb_addr);
+			ltophys(scb->dmamap_self->dm_segs[0].ds_addr +
+			    offsetof(struct wds_scb, cmd), wmbo->scb_addr);
 		/* XXX What about aborts? */
 		wmbo->cmd = WDS_MBO_START;
 
@@ -748,6 +793,7 @@ wds_done(sc, scb, stat)
 	struct wds_scb *scb;
 	u_char stat;
 {
+	bus_dma_tag_t dmat = sc->sc_dmat;
 	struct scsipi_xfer *xs = scb->xs;
 
 	/* XXXXX */
@@ -763,6 +809,16 @@ wds_done(sc, scb, stat)
 		bcopy(&scb->sense_data, &xs->sense.scsi_sense,
 			sizeof (struct scsipi_sense_data));
 	} else {
+		/*
+		 * If we were a data transfer, unload the map that described
+		 * the data buffer.
+		 */
+		if (xs->datalen) {
+			bus_dmamap_sync(dmat, scb->dmamap_xfer,
+			    (xs->flags & SCSI_DATA_IN) ? BUS_DMASYNC_POSTREAD :
+			    BUS_DMASYNC_POSTWRITE);
+			bus_dmamap_unload(dmat, scb->dmamap_xfer);
+		}
 		if (xs->error == XS_NOERROR) {
 			/* If all went well, or an error is acceptable. */
 			if (stat == WDS_MBI_OK) {
@@ -772,31 +828,57 @@ wds_done(sc, scb, stat)
 				/* Check the mailbox status. */
 				switch (stat) {
 				case WDS_MBI_OKERR:
-					/* SCSI error recorded in scb, counts as WDS_MBI_OK */
+					/*
+					 * SCSI error recorded in scb,
+					 * counts as WDS_MBI_OK
+					 */
 					switch (scb->cmd.venderr) {
 					case 0x00:
-						printf("%s: Is this an error?\n", sc->sc_dev.dv_xname);
-						xs->error = XS_DRIVER_STUFFUP; /* Experiment */
+						printf("%s: Is this "
+						    "an error?\n",
+						    sc->sc_dev.dv_xname);
+						/* Experiment. */
+						xs->error = XS_DRIVER_STUFFUP;
 						break;
 					case 0x01:
-						/*printf("%s: OK, see SCSI error field.\n", sc->sc_dev.dv_xname);*/
-						if (scb->cmd.stat == SCSI_CHECK) {
+#if 0
+						printf("%s: OK, see SCSI "
+						    "error field.\n",
+						    sc->sc_dev.dv_xname);
+#endif
+						if (scb->cmd.stat ==
+						    SCSI_CHECK) {
 							/* Do sense. */
-							wds_sense (sc, scb);
+							wds_sense(sc, scb);
 							return;
-						} else if (scb->cmd.stat == SCSI_BUSY) {
+						} else if (scb->cmd.stat ==
+						    SCSI_BUSY) {
 							xs->error = XS_BUSY;
 						}
 						break;
 					case 0x40:
-						/*printf("%s: DMA underrun!\n", sc->sc_dev.dv_xname);*/
-						/* Hits this if the target returns fewer that datalen bytes (eg my CD-ROM,
-						which returns a short version string, or if DMA is turned off etc. */
+#if 0
+						printf("%s: DMA underrun!\n",
+						    sc->sc_dev.dv_xname);
+#endif
+						/*
+						 * Hits this if the target
+						 * returns fewer that datalen
+						 * bytes (eg my CD-ROM, which
+						 * returns a short version
+						 * string, or if DMA is
+						 * turned off etc.
+						 */
 						xs->resid = 0;
 						break;
 					default:
-						printf("%s: VENDOR ERROR %02x, scsi %02x\n", sc->sc_dev.dv_xname, scb->cmd.venderr, scb->cmd.stat);
-						xs->error = XS_DRIVER_STUFFUP; /* Experiment */
+						printf("%s: VENDOR ERROR "
+						    "%02x, scsi %02x\n",
+						    sc->sc_dev.dv_xname,
+						    scb->cmd.venderr,
+						    scb->cmd.stat);
+						/* Experiment. */
+						xs->error = XS_DRIVER_STUFFUP;
 						break;
 					}
 					break;
@@ -821,11 +903,6 @@ wds_done(sc, scb, stat)
 				}
 			}
 		} /* else sense */
-
-		if (NEEDBUFFER(sc) && xs->datalen) {
-			if (xs->flags & SCSI_DATA_IN)
-				bcopy(scb->buf->data, xs->data, xs->datalen);
-		}
 	} /* XS_NOERROR */
 
 	wds_free_scb(sc, scb);
@@ -891,15 +968,40 @@ wds_find(iot, ioh, sc)
  * Initialise the board and driver.
  */
 void
-wds_init(sc)
+wds_init(sc, isreset)
 	struct wds_softc *sc;
+	int isreset;
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
+	bus_dma_segment_t seg;
 	struct wds_setup init;
 	u_char c;
-	int i;
+	int i, rseg;
 
+	if (isreset)
+		goto doinit;
+
+	/*
+	 * Allocate the mailbox.
+	 */
+	if (bus_dmamem_alloc(sc->sc_dmat, NBPG, NBPG, 0, &seg, 1,
+	    &rseg, BUS_DMA_NOWAIT) ||
+	    bus_dmamem_map(sc->sc_dmat, &seg, rseg, NBPG,
+	    (caddr_t *)&wmbx, BUS_DMA_NOWAIT|BUS_DMAMEM_NOSYNC))
+		panic("wds_init: can't create or map mailbox");
+
+
+	/*
+	 * Create and load the mailbox DMA map.
+	 */
+	if (bus_dmamap_create(sc->sc_dmat, sizeof(struct wds_mbx), 1,
+	    sizeof(struct wds_mbx), 0, BUS_DMA_NOWAIT, &sc->sc_dmamap_mbox) ||
+	    bus_dmamap_load(sc->sc_dmat, sc->sc_dmamap_mbox, wmbx,
+	    sizeof(struct wds_mbx), NULL, BUS_DMA_NOWAIT))
+		panic("wds_ionit: can't craete or load mailbox dma map");
+
+ doinit:
 	/*
 	 * Set up initial mail box for round-robin operation.
 	 */
@@ -911,19 +1013,12 @@ wds_init(sc)
 	wmbx->tmbi = &wmbx->mbi[0];
 	sc->sc_mbofull = 0;
 
-	/* Clear the buffers. */
-	TAILQ_INIT(&wds_free_buffer);
-	for (i = 0; i < BUFCNT; i++) {
-		wds_buffer[i].busy = 0;
-		TAILQ_INSERT_HEAD(&wds_free_buffer, &wds_buffer[i], chain);
-	}
-
 	init.opcode = WDSC_INIT;
 	init.scsi_id = sc->sc_link.scsipi_scsi.adapter_target;
 	init.buson_t = 48;
 	init.busoff_t = 24;
 	init.xx = 0;
-	ltophys(KVTOPHYS(wmbx), init.mbaddr);
+	ltophys(sc->sc_dmamap_mbox->dm_segs[0].ds_addr, init.mbaddr);
 	init.nomb = init.nimb = WDS_MBX_SIZE;
 	wds_cmd(iot, ioh, (u_char *)&init, sizeof init);
 
@@ -946,10 +1041,29 @@ wds_inquire_setup_information(sc)
 	u_char *j;
 	int s;
 
-	if ((scb = wds_get_scb(sc, SCSI_NOSLEEP, 0)) == NULL) {
-		printf("%s: no request slot available in getvers()!\n", sc->sc_dev.dv_xname);
-		return;
-	}
+	/* XXX EVIL KLUDGE HERE!
+	 * So, we have a slight chicken-egg problem... we need the
+	 * board revision to determine the number of segments
+	 * an scb's DMA map can map.  But we need an scb to get
+	 * that information.
+	 *
+	 * So, here is what we do... We know that we are called
+	 * before the initial set of scbs are created with the
+	 * mailbox leftovers (see wds_attach()).  This means that
+	 * there are still leftovers to play with.  So, we manually
+	 * create an scb here, create a DMA map for it (with one
+	 * segment that is large enough to get the setup info),
+	 * and then destroy the DMA map.  The scb will be recycled
+	 * when the initial set is created in wds_attach().
+	 *
+	 * Geez, I really hate hardware like this.
+	 */
+
+	sc->sc_maxsegs = 1;
+	scb = (struct wds_scb *)
+	    ((caddr_t)wmbx) + ALIGN(sizeof(struct wds_mbx));
+	wds_init_scb(sc, scb);
+
 	scb->xs = NULL;
 	scb->timeout = 40;
 
@@ -978,9 +1092,25 @@ wds_inquire_setup_information(sc)
 		j++;
 	}
 
+	/*
+	 * Determine if we can use scatter/gather.
+	 */
+	if (sc->sc_revision >= 0x800)
+		sc->sc_maxsegs = WDS_NSEG;
+
 out:
 	printf("\n");
-	wds_free_scb(sc, scb);
+	
+	/*
+	 * Free up the resources used by this scb.
+	 */
+	bus_dmamap_unload(sc->sc_dmat, scb->dmamap_self);
+	bus_dmamap_destroy(sc->sc_dmat, scb->dmamap_self);
+
+	/*
+	 * Clear the scb hash table, as if we were never here.
+	 */
+	bzero(sc->sc_scbhash, sizeof(sc->sc_scbhash));
 }
 
 void
@@ -988,8 +1118,8 @@ wdsminphys(bp)
 	struct buf *bp;
 {
 
-	if (bp->b_bcount > ((WDS_NSEG - 1) << PGSHIFT))
-		bp->b_bcount = ((WDS_NSEG - 1) << PGSHIFT);
+	if (bp->b_bcount > WDS_MAXXFER)
+		bp->b_bcount = WDS_MAXXFER;
 	minphys(bp);
 }
 
@@ -1002,25 +1132,23 @@ wds_scsi_cmd(xs)
 {
 	struct scsipi_link *sc_link = xs->sc_link;
 	struct wds_softc *sc = sc_link->adapter_softc;
+	bus_dma_tag_t dmat = sc->sc_dmat;
 	struct wds_scb *scb;
 	struct wds_scat_gath *sg;
-	int seg;
-	u_long thiskv, thisphys, nextphys;
-	int bytes_this_seg, bytes_this_page, datalen, flags;
+	int error, seg, flags, s;
 #ifdef TFS
 	struct iovec *iovp;
 #endif
-	int s;
 
 	if (xs->flags & SCSI_RESET) {
 		/* XXX Fix me! */
 		printf("%s: reset!\n", sc->sc_dev.dv_xname);
-		wds_init(sc);
+		wds_init(sc, 1);
 		return COMPLETE;
 	}
 
 	flags = xs->flags;
-	if ((scb = wds_get_scb(sc, flags, NEEDBUFFER(sc))) == NULL) {
+	if ((scb = wds_get_scb(sc, flags)) == NULL) {
 		xs->error = XS_DRIVER_STUFFUP;
 		return TRY_AGAIN_LATER;
 	}
@@ -1031,7 +1159,8 @@ wds_scsi_cmd(xs)
 		/* XXX Fix me! */
 		/* Let's not worry about UIO. There isn't any code for the *
 		 * non-SG boards anyway! */
-		printf("%s: UIO is untested and disabled!\n", sc->sc_dev.dv_xname);
+		printf("%s: UIO is untested and disabled!\n",
+		    sc->sc_dev.dv_xname);
 		goto bad;
 	}
 
@@ -1048,112 +1177,74 @@ wds_scsi_cmd(xs)
  	 */
 	scb->cmd.write = (xs->flags & SCSI_DATA_IN) ? 0x80 : 0x00;
 
-	if (!NEEDBUFFER(sc) && xs->datalen) {
+	if (xs->datalen) {
 		sg = scb->scat_gath;
 		seg = 0;
 #ifdef TFS
 		if (flags & SCSI_DATA_UIO) {
-			iovp = ((struct uio *)xs->data)->uio_iov;
-			datalen = ((struct uio *)xs->data)->uio_iovcnt;
-			xs->datalen = 0;
-			while (datalen && seg < WDS_NSEG) {
-				ltophys(iovp->iov_base, sg->seg_addr);
-				ltophys(iovp->iov_len, sg->seg_len);
-				xs->datalen += iovp->iov_len;
-				SC_DEBUGN(sc_link, SDEV_DB4, ("UIO(0x%x@0x%x)",
-				    iovp->iov_len, iovp->iov_base));
-				sg++;
-				iovp++;
-				seg++;
-				datalen--;
-			}
+			error = bus_Dmamap_load_uio(dmat,
+			    scb->dmamap_xfer, (struct uio *)xs->data,
+			    (flags & SCSI_NOSLEEP) ? BUS_DMA_NOWAIT :
+			    BUS_DMA_WAITOK);
 		} else
 #endif /* TFS */
 		{
-			/*
-			 * Set up the scatter-gather block.
-			 */
-			SC_DEBUG(sc_link, SDEV_DB4,
-			    ("%d @0x%p:- ", xs->datalen, xs->data));
+			error = bus_dmamap_load(dmat,
+			    scb->dmamap_xfer, xs->data, xs->datalen, NULL,
+			    (flags & SCSI_NOSLEEP) ? BUS_DMA_NOWAIT :
+			    BUS_DMA_WAITOK);
+		}
 
-			datalen = xs->datalen;
-			thiskv = (int)xs->data;
-			thisphys = KVTOPHYS(xs->data);
-
-			while (datalen && seg < WDS_NSEG) {
-				bytes_this_seg = 0;
-
-				/* put in the base address */
-				ltophys(thisphys, sg->seg_addr);
-
-				SC_DEBUGN(sc_link, SDEV_DB4, ("0x%lx", thisphys));
-
-				/* do it at least once */
-				nextphys = thisphys;
-				while (datalen && thisphys == nextphys) {
-					/*
-					 * This page is contiguous (physically)
-					 * with the the last, just extend the
-					 * length
-					 */
-					/* check it fits on the ISA bus */
-					if (thisphys > 0xFFFFFF) {
-						printf("%s: DMA beyond"
-							" end of ISA\n",
-							sc->sc_dev.dv_xname);
-						goto bad;
-					}
-					/* how far to the end of the page */
-					nextphys = (thisphys & ~PGOFSET) + NBPG;
-					bytes_this_page = nextphys - thisphys;
-					/**** or the data ****/
-					bytes_this_page = min(bytes_this_page,
-							      datalen);
-					bytes_this_seg += bytes_this_page;
-					datalen -= bytes_this_page;
-
-					/* get more ready for the next page */
-					thiskv = (thiskv & ~PGOFSET) + NBPG;
-					if (datalen)
-						thisphys = KVTOPHYS(thiskv);
-				}
-				/*
-				 * next page isn't contiguous, finish the seg
-				 */
-				SC_DEBUGN(sc_link, SDEV_DB4,
-				    ("(0x%x)", bytes_this_seg));
-				ltophys(bytes_this_seg, sg->seg_len);
-				sg++;
-				seg++;
+		if (error) {
+			if (error == EFBIG) {
+				printf("%s: wds_scsi_cmd, more than %d"
+				    " dma segments\n",
+				    sc->sc_dev.dv_xname, sc->sc_maxsegs);
+			} else {
+				printf("%s: wds_scsi_cmd, error %d loading"
+				    " dma map\n",
+				    sc->sc_dev.dv_xname, error);
 			}
+			goto bad;
 		}
-		/* end of iov/kv decision */
-		SC_DEBUGN(sc_link, SDEV_DB4, ("\n"));
-		if (datalen) {
+
+		bus_dmamap_sync(dmat, scb->dmamap_xfer,
+		    (flags & SCSI_DATA_IN) ? BUS_DMASYNC_PREREAD :
+		    BUS_DMASYNC_PREWRITE);
+
+		if (sc->sc_maxsegs > 1) {
 			/*
-			 * there's still data, must have run out of segs!
+			 * Load the hardware scatter/gather map with the
+			 * contents of the DMA map.
 			 */
-			printf("%s: wds_scsi_cmd, more than %d dma segs\n",
-			    sc->sc_dev.dv_xname, WDS_NSEG);
-			goto bad;
+			for (seg = 0; seg < scb->dmamap_xfer->dm_nsegs;
+			    seg++) {
+				ltophys(scb->dmamap_xfer->dm_segs[seg].ds_addr,
+				    scb->scat_gath[seg].seg_addr);
+				ltophys(scb->dmamap_xfer->dm_segs[seg].ds_len,
+				    scb->scat_gath[seg].seg_len);
+			}
+
+			/*
+			 * Set up for scatter/gather transfer.
+			 */
+			scb->cmd.opcode = WDSX_SCSISG;
+			ltophys(scb->dmamap_self->dm_segs[0].ds_addr +
+			    offsetof(struct wds_scb, scat_gath),
+			    scb->cmd.data);
+			ltophys(scb->dmamap_self->dm_nsegs *
+			    sizeof(struct wds_scat_gath), scb->cmd.len);
+		} else {
+			/*
+			 * This board is an ASC or an ASE, and the
+			 * transfer has been mapped contig for us.
+			 */
+			scb->cmd.opcode = WDSX_SCSICMD;
+			ltophys(scb->dmamap_xfer->dm_segs[0].ds_addr,
+			    scb->cmd.data);
+			ltophys(scb->dmamap_xfer->dm_segs[0].ds_len,
+			    scb->cmd.len);
 		}
-		scb->cmd.opcode = WDSX_SCSISG;
-		ltophys(KVTOPHYS(scb->scat_gath), scb->cmd.data);
-		ltophys(seg * sizeof(struct wds_scat_gath), scb->cmd.len);
-	} else if (xs->datalen > 0) {
-		/* The board is an ASC or ASE. Do not use scatter/gather. */
-		if (xs->datalen > BUFLEN) {
-			printf("%s: wds_scsi_cmd, I/O too large for bounce buffer\n",
-			    sc->sc_dev.dv_xname);
-			goto bad;
-		}
-		if (xs->flags & SCSI_DATA_OUT)
-			bcopy(xs->data, scb->buf->data, xs->datalen);
-		else
-			bzero(scb->buf->data, xs->datalen);
-		scb->cmd.opcode = WDSX_SCSICMD;
-		ltophys(KVTOPHYS(scb->buf->data), scb->cmd.data);
-		ltophys(xs->datalen, scb->cmd.len);
 	} else {
 		scb->cmd.opcode = WDSX_SCSICMD;
 		ltophys(0, scb->cmd.data);
@@ -1213,12 +1304,6 @@ wds_sense(sc, scb)
 	xs->error = XS_SENSE;
 	scb->flags |= SCB_SENSE;
 
-	/* First, save the return values */
-	if (NEEDBUFFER(sc) && xs->datalen) {
-		if (xs->flags & SCSI_DATA_IN)
-			bcopy(scb->buf->data, xs->data, xs->datalen);
-	}
-
 	/* Next, setup a request sense command block */
 	bzero(ss, sizeof(*ss));
 	ss->opcode = REQUEST_SENSE;
@@ -1229,7 +1314,8 @@ wds_sense(sc, scb)
 	scb->sense.targ = scb->cmd.targ;
 	scb->sense.write = 0x80;
 	scb->sense.opcode = WDSX_SCSICMD;
-	ltophys(KVTOPHYS(&scb->sense_data), scb->sense.data);
+	ltophys(scb->dmamap_self->dm_segs[0].ds_addr +
+	    offsetof(struct wds_scb, sense_data), scb->sense.data);
 	ltophys(sizeof(struct scsipi_sense_data), scb->sense.len);
 
 	s = splbio();
