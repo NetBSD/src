@@ -1,4 +1,4 @@
-/* $NetBSD: copyinout.S,v 1.2 2002/03/24 23:37:42 bjh21 Exp $ */
+/* $NetBSD: copyinout.S,v 1.2.4.1 2002/11/18 02:36:15 he Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -32,109 +32,10 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: copyinout.S,v 1.2 2002/03/24 23:37:42 bjh21 Exp $")
+RCSID("$NetBSD: copyinout.S,v 1.2.4.1 2002/11/18 02:36:15 he Exp $")
 
 #include <sys/errno.h>
 #include "assym.h"
-
-/*
- * int copyin(const void *ua, void *ka, size_t len);
- * int copyout(const void *ka, void *ua, size_t len);
- * int kcopy(const void *src, void *dst, size_t len);
- */
-
-/*
- * memcpy isn't currently data-abort-safe (it uses R14).  This is much
- * slower, but safer.
- */
-
-/* LINTSTUB: Func: int copyin(const void *uaddr, void *kaddr, size_t len) */
-ENTRY(copyin)
-	mov	ip, sp
-	stmfd	sp!, {r4, fp, ip, lr, pc}
-	sub	fp, ip, #4
-	adr	r3, Lcopyfault
-	ldr	r4, Lcurproc
-	ldr	r4, [r4]
-	ldr	r4, [r4, #P_ADDR]
-	str	r3, [r4, #(U_PCB + PCB_ONFAULT)]
-	teq	r2, #0
-	beq	Lcopyinskip
-Lcopyinloop:
-	ldrbt	r3, [r0], #1
-	strb	r3, [r1], #1
-	subs	r2, r2, #1
-	bne	Lcopyinloop
-Lcopyinskip:
-	mov	r0, #0
-	str	r0, [r4, #(U_PCB + PCB_ONFAULT)]
-#ifdef __APCS_26__
-	ldmdb	fp, {r4, fp, sp, pc}^
-#else
-	ldmdb	fp, {r4, fp, sp, pc}
-#endif
-
-/* LINTSTUB: Func: int copyout(const void *kaddr, void *uaddr, size_t len) */
-ENTRY(copyout)
-	mov	ip, sp
-	stmfd	sp!, {r4, fp, ip, lr, pc}
-	sub	fp, ip, #4
-	adr	r3, Lcopyfault
-	ldr	r4, Lcurproc
-	ldr	r4, [r4]
-	ldr	r4, [r4, #P_ADDR]
-	str	r3, [r4, #(U_PCB + PCB_ONFAULT)]
-	teq	r2, #0
-	beq	Lcopyoutskip
-Lcopyoutloop:
-	ldrb	r3, [r0], #1
-	strbt	r3, [r1], #1
-	subs	r2, r2, #1
-	bne	Lcopyoutloop
-Lcopyoutskip:
-	mov	r0, #0
-	str	r0, [r4, #(U_PCB + PCB_ONFAULT)]
-#ifdef __APCS_26__
-	ldmdb	fp, {r4, fp, sp, pc}^
-#else
-	ldmdb	fp, {r4, fp, sp, pc}
-#endif
-
-/* LINTSTUB: Func: int kcopy(const void *kfaddr, void *kdaddr, size_t len) */
-ENTRY(kcopy)
-	mov	ip, sp
-	stmfd	sp!, {r4, fp, ip, lr, pc}
-	sub	fp, ip, #4
-	adr	r3, Lcopyfault
-	ldr	r4, Lcurproc
-	ldr	r4, [r4]
-	ldr	r4, [r4, #P_ADDR]
-	str	r3, [r4, #(U_PCB + PCB_ONFAULT)]
-	teq	r2, #0
-	beq	Lkcopyskip
-Lkcopyloop:
-	ldrb	r3, [r0], #1
-	strb	r3, [r1], #1
-	subs	r2, r2, #1
-	bne	Lkcopyloop
-Lkcopyskip:
-	mov	r0, #0
-	str	r0, [r4, #(U_PCB + PCB_ONFAULT)]
-#ifdef __APCS_26__
-	ldmdb	fp, {r4, fp, sp, pc}^
-#else
-	ldmdb	fp, {r4, fp, sp, pc}
-#endif
-
-Lcopyfault:
-	mov	r1, #0
-	str	r1, [r4, #(U_PCB + PCB_ONFAULT)]
-	/* Return value is provided by fault handler. */
-#ifdef __APCS_26__
-	ldmdb	fp, {r4, fp, sp, pc}^
-#else
-	ldmdb	fp, {r4, fp, sp, pc}
-#endif
 
 /* LINTSTUB: Func: int copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done) */
 ENTRY(copyinstr)
