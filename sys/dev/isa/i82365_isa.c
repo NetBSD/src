@@ -1,3 +1,5 @@
+#define PCICISADEBUG
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -19,6 +21,13 @@
 
 #include <dev/ic/i82365reg.h>
 #include <dev/ic/i82365var.h>
+
+#ifdef PCICISADEBUG
+int	pcicisa_debug = 0 /* XXX */;
+#define DPRINTF(arg) if (pcicisa_debug) printf arg;
+#else
+#define DPRINTF(arg)
+#endif
 
 int pcic_isa_probe __P((struct device *, void *, void *));
 void pcic_isa_attach __P((struct device *, struct device *, void *));
@@ -117,6 +126,17 @@ pcic_isa_probe(parent, match, aux)
     return(1);
 }
 
+#ifndef PCIC_ISA_ALLOC_IOBASE
+#define PCIC_ISA_ALLOC_IOBASE 0
+#endif
+
+#ifndef PCIC_ISA_ALLOC_IOSIZE
+#define PCIC_ISA_ALLOC_IOSIZE 0
+#endif
+
+int pcic_isa_alloc_iobase = PCIC_ISA_ALLOC_IOBASE;
+int pcic_isa_alloc_iosize = PCIC_ISA_ALLOC_IOSIZE;
+
 void
 pcic_isa_attach(parent, self, aux)
      struct device *parent, *self;
@@ -129,6 +149,8 @@ pcic_isa_attach(parent, self, aux)
     bus_space_tag_t memt = ia->ia_memt;
     bus_space_handle_t ioh;
     bus_space_handle_t memh;
+    bus_space_handle_t ioh_high;
+    int i, iobuswidth, tmp1, tmp2;
 
     /* Map i/o space. */
     if (bus_space_map(iot, ia->ia_iobase, ia->ia_iosize, 0, &ioh))
@@ -164,6 +186,68 @@ pcic_isa_attach(parent, self, aux)
     printf("\n");
 
     pcic_attach(sc);
+
+    /* figure out how wide the isa bus is.  Do this by checking if
+       the pcic controller is mirrored 0x400 above where we expect it
+       to be. */
+
+    iobuswidth = 12;
+
+    /* Map i/o space. */
+    if (bus_space_map(iot, ia->ia_iobase+0x400, ia->ia_iosize, 0, &ioh_high))
+	panic("pcic_isa_attach: can't map high i/o space");
+
+    for (i=0; i<PCIC_NSLOTS; i++) {
+	if (sc->handle[i].flags & PCIC_FLAG_SOCKETP) {
+	    /* read the ident flags from the normal space
+	       and from the mirror, and compare them */
+
+	    bus_space_write_1(iot, ioh, PCIC_REG_INDEX,
+			      sc->handle[i].sock+PCIC_IDENT);
+	    tmp1 = bus_space_read_1(iot, ioh, PCIC_REG_DATA);
+
+	    bus_space_write_1(iot, ioh_high, PCIC_REG_INDEX,
+			      sc->handle[i].sock+PCIC_IDENT);
+	    tmp2 = bus_space_read_1(iot, ioh_high, PCIC_REG_DATA);
+
+	    if (tmp1 == tmp2)
+		iobuswidth = 10;
+	}
+    }
+
+    bus_space_free(iot, ioh_high, ia->ia_iosize);
+
+/* XXX mycroft recommends I/O space range 0x400-0xfff .  I should put
+   this in a header somewhere */
+
+/* XXX some hardware doesn't seem to grok addresses in 0x400 range--
+   apparently missing a bit or more of address lines.
+   (e.g. CIRRUS_PD672X with Linksys EthernetCard ne2000 clone in TI
+   TravelMate 5000--not clear which is at fault)
+
+   Add a kludge to detect 10 bit wide buses and deal with them, and
+   also a config file option to override the probe. */
+
+    if (iobuswidth == 10) {
+	sc->iobase = 0x300;
+	sc->iosize = 0x0ff;
+    } else {
+	sc->iobase = 0x400;
+	sc->iosize = 0xbff;
+    }
+
+    DPRINTF(("%s: bus_space_alloc range 0x%04lx-0x%04lx (probed)\n",
+	     sc->dev.dv_xname, (long) sc->iobase,
+	     (long) sc->iobase+sc->iosize));
+
+    if (pcic_isa_alloc_iobase && pcic_isa_alloc_iosize) {
+	sc->iobase = pcic_isa_alloc_iobase;
+	sc->iosize = pcic_isa_alloc_iosize;
+
+	DPRINTF(("%s: bus_space_alloc range 0x%04lx-0x%04lx (config override)\n",
+		 sc->dev.dv_xname, (long) sc->iobase,
+		 (long) sc->iobase+sc->iosize));
+    }
 
     sc->ih = isa_intr_establish(ic, sc->irq, IST_EDGE, IPL_TTY, pcic_intr, sc);
 
@@ -209,9 +293,10 @@ pcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg)
 
     reg = pcic_read(h, PCIC_INTR);
     reg &= ~PCIC_INTR_IRQ_MASK;
-    reg |= PCIC_INTR_ENABLE;
     reg |= irq;
     pcic_write(h, PCIC_INTR, reg);
+
+    h->ih_irq = irq;
 
     printf("%s: card irq %d\n", h->pcmcia->dv_xname, irq);
 
@@ -224,6 +309,8 @@ void pcic_isa_chip_intr_disestablish(pch, ih)
 {
     struct pcic_handle *h = (struct pcic_handle *) pch;
     int reg;
+
+    h->ih_irq = 0;
 
     reg = pcic_read(h, PCIC_INTR);
     reg &= ~(PCIC_INTR_IRQ_MASK|PCIC_INTR_ENABLE);
