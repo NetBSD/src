@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: vector.s,v 1.10.2.13 1993/11/01 00:15:09 mycroft Exp $
+ *	$Id: vector.s,v 1.10.2.14 1993/11/01 08:36:52 mycroft Exp $
  */
 
 #include <i386/isa/icu.h>
@@ -35,8 +35,21 @@
 #define	IRQ_BIT(irq_num)	(1 << ((irq_num) % 8))
 #define	IRQ_BYTE(irq_num)	((irq_num) / 8)
 
+#ifndef NO_SPECIAL_MASK_MODE
+
+#define	ENABLE_ICU1(irq_num)
+#define	ENABLE_ICU1_AND_2(irq_num) \
+	movb	$(0x60|2),%al ;	/* specific EOI for chain IRQ */ \
+	outb	%al,$IO_ICU1
+#define MASK(irq_num, icu)
+#define	UNMASK(irq_num, icu) \
+	movb	$(0x60|(irq_num%8)),%al ; /* specific EOI for interrupt */ \
+	outb	%al,$icu
+
+#else /* SPECIAL_MASK_MODE */
+
 #ifndef AUTO_EOI_1
-#define	ENABLE_ICU1 \
+#define	ENABLE_ICU1(irq_num) \
 	movb	$ICU_EOI,%al ;	/* non-specific EOI */ \
 	outb	%al,$IO_ICU1 ;
 #else /* AUTO_EOI_1 */
@@ -44,7 +57,7 @@
 #endif
 
 #ifndef AUTO_EOI_2
-#define	ENABLE_ICU1_AND_2 \
+#define	ENABLE_ICU1_AND_2(irq_num) \
 	movb	$ICU_EOI,%al ;	/* non-specific EOI */ \
 	outb	%al,$IO_ICU2 ;	/* do second icu first */ \
 	outb	%al,$IO_ICU1 ;	/* then first */
@@ -66,6 +79,8 @@
 	movb	%al,_imask + IRQ_BYTE(irq_num) ; \
 	outb	%al,$(icu+1) ; \
 	sti ;
+
+#endif /* SPECIAL_MASK_MODE */
 
 /*
  * Macros for interrupt entry, call to handler, and exit.
@@ -138,7 +153,7 @@ IDTVEC(fast/**/irq_num) ; \
 	incl	8(%eax) ; 	/* increment counter */ \
 	pushl	4(%eax) ;	/* argument */ \
 	call	(%eax) ; 	/* call handler */ \
-	enable_icus ;		/* (re)enable */ \
+	enable_icus(irq_num) ;	/* (re)enable */ \
 	addl	$4,%esp ; \
 	incl	_cnt+V_INTR ;   /* statistical information */ \
 	incl	_intrcnt_actv + 4*irq_num ; \
@@ -185,10 +200,10 @@ IDTVEC(intr/**/irq_num) ; \
 	pushl	%ds ; 		/* save our data and extra segments ... */ \
 	pushl	%es ; \
 	pushal ; \
-	enable_icus ;		/* reenable hw interrupts */ \
 	movl	$KDSEL,%eax ;	/* ... and reload with kernel's own ... */ \
 	movl	%ax,%ds ; \
 	movl	%ax,%es ; \
+	enable_icus(irq_num) ;	/* reenable hw interrupts */ \
 	MASK(irq_num,icu) ; \
 	testb	$IRQ_BIT(irq_num),_cpl + IRQ_BYTE(irq_num) ; \
 	jnz	2f ; \
