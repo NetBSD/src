@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.66 1997/03/30 17:29:41 christos Exp $	*/
+/*	$NetBSD: systm.h,v 1.67 1997/04/16 23:46:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -156,6 +156,20 @@ void	printf __P((const char *, ...))
     __kprintf_attribute__((__format__(__kprintf__,1,2)));
 int	sprintf __P((char *buf, const char *, ...))
     __attribute__((__format__(__printf__,2,3)));
+
+#ifdef __powerpc__			/* XXX XXX XXX */
+/*
+ * Comment stolen from <sys/syslog.h>
+ *
+ * Don't use va_list in the vprintf() prototype.   Va_list is typedef'd in two
+ * places (<machine/varargs.h> and <machine/stdarg.h>), so if we include one
+ * of them here we may collide with the other includes.  We instead get
+ * _BSD_VA_LIST_ from <machine/ansi.h> and use it.
+ */
+#include <machine/ansi.h>
+#include <sys/cdefs.h>
+void	vprintf __P((const char *, _BSD_VA_LIST_));
+#endif /* __powerpc__ */		/* XXX XXX XXX */
 
 void	panic __P((const char *, ...))
 #ifdef __KPRINTF_ATTRIBUTE__
