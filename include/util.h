@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.21 2001/08/18 19:31:47 ad Exp $	*/
+/*	$NetBSD: util.h,v 1.22 2002/05/22 07:31:40 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -72,7 +72,7 @@ void		logwtmp(const char *, const char *, const char *);
 int		opendisk(const char *, int, char *, size_t, int);
 int		openpty(int *, int *, char *, struct termios *,
 			struct winsize *);
-void		pidfile(const char *);
+int		pidfile(const char *);
 int		pidlock(const char *, int, pid_t *, const char *);
 int		pw_abort(void);
 void		pw_copy(int, int, struct passwd *, struct passwd *);
