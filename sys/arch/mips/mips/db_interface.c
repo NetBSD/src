@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.24 2000/02/17 23:52:23 mycroft Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.25 2000/02/18 00:02:43 mycroft Exp $	*/
 
 /*
  * Mach Operating System
@@ -204,6 +204,17 @@ kdb_trap(type, tfp)
 		tfp[19] = f->f_regs[MULLO];
 		tfp[20] = f->f_regs[MULHI];
 		tfp[21] = f->f_regs[PC];
+		kdbaux[0] = f->f_regs[S0];
+		kdbaux[1] = f->f_regs[S1];
+		kdbaux[2] = f->f_regs[S2];
+		kdbaux[3] = f->f_regs[S3];
+		kdbaux[4] = f->f_regs[S4];
+		kdbaux[5] = f->f_regs[S5];
+		kdbaux[6] = f->f_regs[S6];
+		kdbaux[7] = f->f_regs[S7];
+		kdbaux[8] = f->f_regs[SP];
+		kdbaux[9] = f->f_regs[S8];
+		kdbaux[10] = f->f_regs[GP];
 	}
 
 	return (1);
