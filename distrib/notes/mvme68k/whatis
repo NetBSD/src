@@ -1,5 +1,5 @@
-.\"	$NetBSD: whatis,v 1.4 1999/02/20 16:18:11 scw Exp $	
+.\"	$NetBSD: whatis,v 1.4.10.1 2000/11/01 03:48:21 tv Exp $
 .
-This is the fifth public release of
+This is the fifth major release of
 .Nx
-for the mvme68k series of boards, and the first to support MVME167.
+for the \*M series of boards.

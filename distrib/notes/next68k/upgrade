@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.1 1999/04/24 18:47:15 dbj Exp $
+.\"	$NetBSD: upgrade,v 1.1.10.1 2000/11/01 03:48:25 tv Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -31,4 +31,6 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-NetBSD/\*m does not currently support an upgrade procedure.
+.
+.Nx*M
+does not currently support an upgrade procedure.

@@ -1,83 +1,349 @@
-.\"$NetBSD: hardware,v 1.12 1999/01/13 07:30:08 ross Exp $	
+.\"	$NetBSD: hardware,v 1.12.10.1 2000/11/01 03:48:32 tv Exp $
 .
-NetBSD/sparc \*V runs on the following classes of machines:
-.Bl -bullet -compact
-.	It
-sun4c (e.g. the SS1, SS1+, SS2, IPC, ELC, IPX, and SLC)
-.	It
-sun4 (e.g. the 4/100, 4/200, and 4/300 \- note that support
-for the 4/400 processor is incomplete)
-.	It
-sun4m (e.g. Classic, LX, SS4, SS5, SS10, and SS20)
-.El
+.Ss2 Supported machines
+.(bullet -offset indent
+sun4
+.(bullet -compact
+4/100
+.It
+4/200
+.It
+4/300
+.It
+4/400
+.bullet)
+.It
+sun4c
+.(bullet -compact
+SPARCstation/server 1
+.It
+SPARCstation/server 1+
+.It
+SPARCstation/server 2
+.It
+IPC
+.It
+ELC
+.It
+IPX
+.It
+SLC
+.bullet)
+.It
+sun4c clones
+.(bullet -compact
+Aries Parrot II
+.It
+Opus/5000
+.It
+Opus/5250
+.It
+FORCE Sparc CPU1e/4
+.It
+FORCE Sparc CPU2e/4
+.bullet)
+(and possibly more)
+.(Note
+NetBSD doesn't support the VME interface on the FORCE models
+.Note)
+.It
+sun4m
+.(bullet -compact
+4/600
+.It
+SPARC Classic
+.It
+SPARC LX
+.It
+SPARCstation 4
+.It
+SPARCstation/server 5
+.It
+SPARCstation/server 10
+.It
+SPARCstation/server 20
+.It
+Voyager
+.It
+JavaStation 1
+.bullet)
+.(Note
+All known MBus modules are supported
+.Note)
+.It
+sun4m clones
+.(bullet -compact
+Axil 245
+.It
+Axil 311
+.It
+Axil 320
+.It
+Cycle C C Cycle 5-IP
+.It
+DTKstation/Classic+
+.It
+RDI PowerLite-85
+.It
+RDI PowerLite-110
+.It
+RDI BriteLite
+.It
+Transtec SS5/170
+.It
+Tatung microCOMPstation 5
+.It
+TWS SuperCOMPstation-20S
+.It
+Tadpole SPARCbook 3 series
+.bullet)
+(and possibly more)
+.bullet)
+.
+.Ss2 Machines not supported by NetBSD/\*M
+.(bullet -offset indent
+sun4d
+.(bullet -compact
+SPARCcenter 1000
+.It
+SPARCcenter 2000
+.bullet)
+.It
+sun4u and other UltraSPARC based machines
 .Pp
-NetBSD/sparc \*V does
-.Em not
-run on these machines (yet):
-.Bl -bullet -compact
-.	It
-sun-4/400 (lacking support for the I/O cache, and has
-ethernet problems)
-.	It
-sun4d (e.g. sparc center 2000)
-.	It
-sun4u (e.g. Ultrasparcs)
-.El
+These are supported by the
+.Nx
+sparc64 port.  Refer to
+.Lk http://www.netbsd.org/Ports/sparc64/index.html
+.It
+Solbourne machines
+.It
+Other JavaStation models
+.bullet)
 .Pp
-The minimal configuration requires 4M of RAM and ~60M of disk space.
+The minimal configuration requires 4 MB of RAM and ~60 MB of disk space.
 To install the entire system requires much more disk space, and to run
-X or compile the system, more RAM is recommended.  (NetBSD with 4M of
-RAM feels like Solaris with 4M of RAM.) Note that until you have
-around 16M of RAM, getting more RAM is more important than getting a
-faster CPU.)
-.Pp
-Supported devices include:
-.Bl -tag -width indent
-.	It Em sun4c/sun4m sbus video: 
-cgsix, cgthree, and bwtwo frame buffers
-.		br
-cgfourteen and tcx frame buffers (limited
-.Dq emulation
-mode)
-.	It Em sun4 video (not thoroughly tested?): 
-P4 on-board bwtwo, and VME cgtwo card
-.	It Em serial ports: 
-ttya and ttyb (can be used as console if needed)
-.	It Em ethernet: 
-on-board AMD Lance ethernet ("le0"), 
-.		br
-Sbus AMD Lance ethernet cards, 
-.		br
-on-board Intel 82586 ethernet (ie0 on 4/100's and 4/200's), 
-.		br
-VME Intel 82586 ethernet cards
-.	It Em SCSI: 
-on-board "esp" SCSI controller (sun4c, sun4m and the 4/300),
-.		br
-sbus "esp" SCSI controller, 
-.		br
-Sun "SUN-3"/"si" VME SCSI controller (polled mode only, slow),
-.		br
-Sun "SCSI Weird"/"sw" on-board controller (4/110 only, polled)
-.	It Em VME disks:
-Xylogics 7053 VME/SMD disk controller ("xd"),
-.		br
-Xylogics 450/451 VME disk controller ("xy")
-.		br
-[note: VME/IPI disks are not supported]
-.	It Em sun floppy disk drive
-.	It Em sun keyboard and mouse
-.	It Em sun4c audio
-.	It Em sun4m audio on Sparcstation Classic
-.El
-.Pp
-Hardware the we do NOT currently support, but get many questions
-about:
-.Bl -bullet -compact
-.	It
-multiprocessor sun4m machines
-.	It
-audio drivers for sun4m machines (other than the Sparcstation Classic)
-.	It
-interrupt driven SCSI driver for sun-4/100's and sun-4/200's
-.El
+X or compile the system, more RAM is recommended, as
+.Nx
+with 4 MB of RAM feels like
+.Tn Solaris
+with 4 MB of RAM - slow.
+Note that until you have around 16 MB of RAM, getting more RAM is more
+important than getting a faster CPU.
+.
+.Ss2 Supported devices
+.(bullet -offset indent
+sun4c and sun4m video; Sbus card, on-board, or optional
+.(bullet -compact
+.Em bwtwo ;
+1 bpp framebuffer.
+On-board and Sbus card (MG1 and MG2)
+.It
+.Em cgthree ;
+8 bpp framebuffer.
+On-board and Sbus card
+.It
+.Em cgsix ;
+8 bpp accelerated framebuffer.
+On-board and Sbus card (GX, GX+, TGX, and TGX+)
+.It
+.Em cgfourteen ;
+SX 24 bpp accelerated framebuffer.
+On-board SPARCstation 10SX and SPARCstation 20, requires optional 4 or 8 MB
+VSIMM, limited to
+.Em cgthree
+emulation
+.It
+.Em tcx ;
+S24 accelerated color framebuffer.
+On-board SPARCstation 4 (8 bpp) and optional on SPARCstation 5 (24 bpp),
+limited to
+.Em cgthree
+emulation
+.It
+.Em pnozz ;
+Weitek p9100 24 bpp accelerated framebuffer.
+On-board Tadpole SPARCbook 3GS and 3GX, limited to
+.Em cgthree
+emulation
+.bullet)
+.It
+sun4 video; VME card, on-board, or P4 (supported only on 4/100 and 4/300 series machines)
+.(bullet -compact
+.Em bwtwo ;
+1 bpp framebuffer.
+On-board and P4
+.It
+.Em cgtwo ;
+8 bpp framebuffer.
+VME card
+.It
+.Em cgfour ;
+8 bpp framebuffer with overlay.
+P4
+.It
+.Em cgsix ;
+LEO 8 bpp accelerated framebuffer.
+P4
+.It
+.Em cgeight ;
+24 bpp framebuffer with overlay.
+P4 (not well tested)
+.bullet)
+.It
+Network interfaces
+.(bullet -compact
+.Em be ;
+100 Mbps half-duplex
+.Dq Big Mac
+ethernet.
+Sbus card
+.It
+.Em en ;
+Efficient Networks, Inc. ATM interface.
+Sbus card
+.It
+.Em hme ;
+100 Mbps full-duplex
+.Dq Happy Meal
+ethernet.
+Sbus card (not well tested)
+.It
+.Em ie ;
+10 Mbps Intel 82586 ethernet.
+On-board (4/100 and 4/200, may not be working properly on 4/400) and VME card
+.It
+.Em le ;
+10 Mbps AMD 9790 Lance ethernet.
+On-board (4/300, sun4c, and sun4m) and Sbus card
+.It
+.Em qec ;
+One 100 Mbps be interface and four 10 Mbps Mace ethernet interfaces.
+Sbus card
+.It
+.Em qfe ;
+quad 100 Mbps full-duplex
+.Dq Happy Meal
+ethernet (four ethernet interfaces).
+Sbus card (not well tested)
+.It
+misc: various ethernet interfaces are found on multi-function Sbus cards
+(e.g. along with SCSI), the ethernet interfaces work even if the other
+functions do not
+.bullet)
+.It
+SCSI interfaces
+.(bullet -compact
+.Em esp ;
+5 MB/s and 10 MB/s (Fast) NCR 53C9x SCSI controller,
+On-board (sun4c, sun4m, and 4/300) and Sbus card
+.It
+.Em isp ;
+10 MB/s (Fast) and 20 MB/s (Fast+Wide) Qlogic ISP 10x0 family.
+Sbus card
+.It
+.Em si ;
+5 MB/s NCR 5380 SCSI controller.
+VME card (Interrupt driven and polled DMA)
+.It
+.Em sw ;
+.Dq "SCSI Weird"
+controller
+Onboard 4/110 (polled DMA only)
+.It
+misc: SCSI functionality is sometimes found on multi-function Sbus cards
+(e.g. along with ethernet), the SCSI
+.Em esp
+and
+.Em isp
+portions of those cards should work, even if the other functions do not.
+.(Note
+See
+.Lk http://saturn.tlug.org/suncdfaq/
+for information on bootable CD-ROMs
+.Note)
+.bullet)
+.It
+VME disk interfaces
+.(bullet -compact
+.Em xd ;
+Xylogics 7053 VME/SMD disk controller
+.It
+.Em xy ;
+Xylogics 450/451 VME disk controller
+.bullet)
+.(Note
+VME/IPI disks are not supported
+.Note)
+.It
+Floppy drives
+.(bullet -compact
+.Em fd ;
+floppy disk drive.
+On-board sun4c and sun4m
+.It
+.Em sd ;
+SCSI floppy drive, acts as a SCSI drive to kernel.
+found with some SPARCBook 3 machines
+.bullet)
+.It
+Serial interfaces
+.(bullet -compact
+On-board serial ports based on Zilog 8530 and Zilog 85C30
+(can be used as console if needed)
+.bullet)
+.It
+Input devices
+.(bullet -compact
+Sun keyboard and mouse
+.It
+SPARCBook 3 keyboard and joystick
+.It
+Third-party keyboards, mice, and trackballs
+.bullet)
+.It
+Audio
+.(bullet -compact
+.Em audioamd ;
+AMD 7930-based 8000 Hz, 8 bit, mono, mu-law.
+On-board sun4c and SPARC Classic
+.It
+.Em audiocs ;
+CS4231-based 44 KHz, 16 bit, stereo, PCM.
+On-board SPARCStation 5 and optional on SPARCStation 4
+(does not support audio input)
+.bullet)
+.It
+Misc cards
+.(bullet -compact
+.Em mtty /
+.Em mbpp ;
+Magma Serial/Parallel Sbus card
+.It
+.Em xbox ;
+Sun Sbus expander device
+.bullet)
+.bullet)
+.Ss2 Unsupported devices
+.(bullet -offset indent
+Use of more than one processor in sun4m machines (it boots, but only uses
+one processor)
+.It
+DBRIe-based audio and ISDN on-board some sun4m machines (such as SS10,
+SS20, SPARC LX, and Tadpole SPARCbook)
+.It
+.Em sc ;
+Sun SCSI VME card
+.It
+.Em bpp ;
+Bi-directional parallel port, on-board and Sbus card
+.It
+.Em cgtwelve ;
+I.e. GS, 24 bpp Sbus framebuffer
+.It
+.Em leo ;
+I.e. ZX and TZX, 24 bpp Sbus framebuffer
+.It
+.Em nell ;
+Sbus-to-PCMCIA bridge
+.bullet)

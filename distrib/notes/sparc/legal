@@ -1,19 +1,7 @@
-.\" $NetBSD: legal,v 1.4 1999/01/13 07:30:08 ross Exp $	
-
+.\"	$NetBSD: legal,v 1.4.10.1 2000/11/01 03:48:33 tv Exp $
+.
+.\"	NOTE:	This file is shared between the sparc and the sparc64
+.
 This product includes software developed by the Alice Group.
-
-This product includes software developed by Charles D. Cranor.
-
-This product includes software developed by Peter Galbavy.
-
-This product includes software developed by Rolf Grossmann.
-
+.Pp
 This product includes software developed by David Miller.
-
-This product includes software developed by Gordon W. Ross.
-
-This product includes software developed by Charles Hannum, by the
-University of Vermont and State Agricultural College and Garrett A.
-Wollman, by William F. Jolitz, and by the University of California,
-Berkeley, Lawrence Berkeley Laboratory, and its contributors.
-

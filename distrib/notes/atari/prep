@@ -1,61 +1,86 @@
-.\"	$NetBSD: prep,v 1.5 1999/01/13 07:30:03 ross Exp $	
+.\"	$NetBSD: prep,v 1.5.10.1 2000/11/01 03:47:54 tv Exp $
+.
 Note you will be modifying your HD's if you mess something up here you
 could lose everything on all the drives that you work with.  It is
 therefore advised that you:
-.Bl -bullet
-.It
+.(bullet
 Write down your current configurations.  Do this
 by writing down all partition info (especially their sizes).
 .It
 .Em Back up the partitions you are keeping.
-.El
+.bullet)
 .Pp
-If NetBSD has a disk of it's own, you can delay the partitioning until
-the installer requests you to do it. This means that you can safely skip
-the rest of this section.
+If
+.Nx
+has to share the disk with another operating system, you can
+either take care of partitioning your harddisk before installing
+.Nx
+or delay this until the installer requests you to do it. If you decide to do
+it now, please create space for at least
+.Pa /
+(root), swap and
+.Pa /usr
+partitions and possibly at least one more for
+.Pa /local
+if you have the space.
+Whatever you decide, take note of the paragraphs below!
+You need this info to create bootable disks.
 .Pp
-If NetBSD has to share the disk with another operating system, you must
-take care of partitioning your harddisk before installing NetBSD; creating
-space for at least root, swap and /usr partitions and possibly at
-least one more for /local if you have the space.
-.(note Em Warning:
+.(tag Warning:
+.It Em Warning:
 The AHDI partioning function erases all partions on your harddisk
 even if they are not changed!
-I know this is rather stupid, but don't say I didn't warn you.
-.note)
-If you want to use an AHDI partitioning sceme and you want to be able to boot
-directly into NetBSD, there are some constraints on the partition layout.
+We know this is rather stupid, but don't say we didn't warn you.
+.tag)
 .Pp
-As you might know; every hard disk has a "root sector" that contains
-information about the size of the hard disk and the partitions on the hard
-disk. The root sector can only contain the neccessary data for four
+If you want to use an AHDI partitioning scheme and you want to be able to
+boot directly into
+.Nx ,
+there are some constraints on the partition layout.
+.Pp
+As you might know; every hard disk has a
+.Sq root sector
+that contains information about the size of the hard disk and the partitions
+on the hard disk.
+The root sector can only contain the neccessary data for four
 partitions. Nobody thought that this limitation would cause any problems.
 After all, 640 KByte should be enough.  As hard disk grew, it was neccessary
 to define more than four partitions. In order to be more or less compatible
-with the old format, a new type of partition entry was defined: XGM partions. 
+with the old format, a new type of partition entry was defined: XGM partions.
 .Pp
-An XGM partition is a "look over there" sign: Another root sector can be
+An XGM partition is a
+.Sq look over there
+sign: Another root sector can be
 found at the start of the XGM partition. This root sector contains the
 remaining real partitions.  And this is the big mystery: Partitions defined
-in the root sector of the hard disk are called "primary partitions",
+in the root sector of the hard disk are called
+.Sq "primary partitions" ,
 partitions defined in the root sector of an XGM partition are called
-"extended partitions".
+.Sq "extended partitions" .
 .Pp
 The bootblock will only work if the first NBD partition is a primary
-partition. This is not a limitation of NetBSD but a limitation of TOS/AHDI:
+partition. This is not a limitation of
+.Nx
+but a limitation of
+.Tn TOS Ns / Ns AHDI:
 You can only boot from primary partitions.
 .Pp
 If you are creating your partitions with HDX, you'll have to be very careful
 to fulfill this rule. HDX has some very strange ideas when it comes to
 extended partitions. Fortunately, you can edit this stuff: The
-"Edit partition scheme of the unit" dialog box has a button label "expert".
+.Dq "Edit partition scheme of the unit"
+dialog box has a button labelled
+.Dq "expert" .
 This button is inactive unless you have defined more than four partitions.
-Click on it *after* you have defined the sizes of the partitions.
+Click on it
+.Em after
+you have defined the sizes of the partitions.
 .Pp
 A new dialog box appears on the screen. The left side contains two blocks of
 partitions: The upper block always contains the first four partitions, the
 lower block contains the last three partitions. If you have defined less than
-7 partitions, some fields of the lower block will contain the string "unused".
+7 partitions, some fields of the lower block will contain the string
+.Dq "unused" .
 Some of the partitions will be displayed in reverse video: These are the
 extended partitions.
 .Pp
@@ -68,26 +93,46 @@ have defined 7 partitions, partitions #2 to #5 will be extended partitions,
 while partitions #1, #6 and #7 will be primary partitions.
 .Pp
 You can move the extended partition range by clicking on one of the buttons
-on the right side of the dalog box. Try to find one where your first NetBSD
+on the right side of the dalog box. Try to find one where your first
+.Nx
 partition is a primary partition. Golden rules:
-.Bl -bullet
-.It
-If the disk contains no GEMDOS partitions, don't use AHDI. Let NetBSD
+.(bullet
+If the disk contains no
+.Tn GEMDOS
+partitions, don't use AHDI.
+Let
+.Nx
 handle it alone.
 .It
-If the disk contains one GEMDOS partition, make it partition #1 and
+If the disk contains one
+.Tn GEMDOS
+partition, make it partition #1 and
 start the extended partition range at partition #3. This allows you
-to boot from both the GEMDOS and the NetBSD partitions.
+to boot from both the
+.Tn GEMDOS
+and the
+.Nx
+partitions.
 .It
-If the disk contains two GEMDOS partitions, use partitions #1 and #2
-for GEMDOS, partition #3 for NetBSD-root. Start the extended partition
+If the disk contains two
+.Tn GEMDOS
+partitions, use partitions #1 and #2
+for
+.Tn GEMDOS ,
+partition #3 for NetBSD-root. Start the extended partition
 range with partition #4.
 .It
-If your disks contains three or more GEMDOS partitions, you are in
-trouble. Try using partitions #1 and #2 as the first two GEMDOS
-partitions. Use partition #3 as the first NetBSD partition. Start the
-extended partition range with partition #4. Put the other NetBSD
+If your disks contains three or more
+.Tn GEMDOS
+partitions, you are in
+trouble. Try using partitions #1 and #2 as the first two
+.Tn GEMDOS
+partitions. Use partition #3 as the first
+.Nx
+partition. Start the
+extended partition range with partition #4. Put the other
+.Nx
 extended partition range.
-.El
+.bullet)
 .Pp
 Good luck, you'll need it...
