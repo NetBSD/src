@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.12 1998/05/20 00:53:57 christos Exp $	*/
+/*	$NetBSD: complete.c,v 1.13 1998/06/01 14:46:11 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -40,12 +40,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.12 1998/05/20 00:53:57 christos Exp $");
+__RCSID("$NetBSD: complete.c,v 1.13 1998/06/01 14:46:11 lukem Exp $");
 #endif /* not lint */
 
 /*
  * FTP user program - command and file completion routines
  */
+
+#include <sys/stat.h>
 
 #include <ctype.h>
 #include <err.h>
@@ -78,6 +80,7 @@ comparstr(a, b)
  *	word	word which started the match
  *	list	list by default
  *	words	stringlist containing possible matches
+ * Returns a result as per el_set(EL_ADDFN, ...)
  */
 static unsigned char
 complete_ambiguous(word, list, words)
@@ -119,10 +122,7 @@ complete_ambiguous(word, list, words)
 			if (el_insertstr(el, insertstr + wordlen) == -1)
 				return (CC_ERROR);
 			else	
-					/*
-					 * XXX: really want CC_REFRESH_BEEP
-					 */
-				return (CC_REFRESH);
+				return (CC_REFRESH_BEEP);
 		}
 	}
 
@@ -156,6 +156,10 @@ complete_command(word, list)
 	}
 
 	rv = complete_ambiguous(word, list, words);
+	if (rv == CC_REFRESH) {
+		if (el_insertstr(el, " ") == -1)
+			rv = CC_ERROR;
+	}
 	sl_free(words, 0);
 	return (rv);
 }
@@ -221,6 +225,20 @@ complete_local(word, list)
 	closedir(dd);
 
 	rv = complete_ambiguous(file, list, words);
+	if (rv == CC_REFRESH) {
+		struct stat sb;
+		char path[MAXPATHLEN];
+
+		snprintf(path, sizeof(path), "%s/%s", dir, words->sl_str[0]);
+		if (stat(path, &sb) >= 0) {
+			char suffix[2] = " ";
+
+			if (S_ISDIR(sb.st_mode))
+				suffix[0] = '/';
+			if (el_insertstr(el, suffix) == -1)
+				rv = CC_ERROR;
+		}
+	}
 	sl_free(words, 1);
 	return (rv);
 }
