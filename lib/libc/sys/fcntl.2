@@ -1,4 +1,4 @@
-.\"	$NetBSD: fcntl.2,v 1.7 1997/05/16 15:18:22 kleink Exp $
+.\"	$NetBSD: fcntl.2,v 1.8 1997/07/10 07:44:49 mikel Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -72,7 +72,7 @@ share the same file status flags).
 .It
 The close-on-exec flag associated with the new file descriptor
 is set to remain open across
-.Xr execv 2
+.Xr execve 2
 system calls.
 .El
 .It Dv F_GETFD
@@ -130,9 +130,9 @@ flags are as follows:
 .Bl -tag -width O_NONBLOCKX
 .It Dv O_NONBLOCK
 Non-blocking I/O; if no data is available to a
-.Xr read
+.Xr read 2
 call, or if a
-.Xr write
+.Xr write 2
 operation would block,
 the read or write call returns -1 with the error
 .Er EAGAIN .
@@ -429,7 +429,7 @@ and
 .Fa arg
 is negative or greater than the maximum allowable number
 (see
-.Xr getdtablesize 2 ) .
+.Xr getdtablesize 3 ) .
 .Pp
 The argument
 .Fa cmd
@@ -473,8 +473,8 @@ the process ID given as argument is not in use.
 .Xr close 2 ,
 .Xr execve 2 ,
 .Xr flock 2 ,
-.Xr getdtablesize 2 ,
 .Xr open 2 ,
+.Xr getdtablesize 3 ,
 .Xr sigaction 3
 .Sh STANDARDS
 The
