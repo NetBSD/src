@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.33 2001/04/24 04:31:12 thorpej Exp $	*/
+/*	$NetBSD: iommu.c,v 1.34 2001/05/18 21:35:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -173,14 +173,10 @@ iommu_init(name, is, tsbsize)
 	 * address depends on the size of the map.  The map size is 1024 * 2 ^
 	 * is->is_tsbsize entries, where each entry is 8 bytes.  The start of
 	 * the map can be calculated by (0xffffe000 << (8 + is->is_tsbsize)).
-	 *
-	 * Note: the stupid IOMMU ignores the high bits of an address, so a
-	 * NULL DMA pointer will be translated by the first page of the IOTSB.
-	 * To trap bugs we'll skip the first entry in the IOTSB.
 	 */
 	is->is_cr = (tsbsize << 16) | IOMMUCR_EN;
 	is->is_tsbsize = tsbsize;
-	is->is_dvmabase = IOTSB_VSTART(is->is_tsbsize) + NBPG;
+	is->is_dvmabase = IOTSB_VSTART(is->is_tsbsize);
 
 	/*
 	 * Allocate memory for I/O pagetables.  They need to be physically
