@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.c,v 1.33 2004/02/28 02:22:31 enami Exp $	*/
+/*	$NetBSD: ktrace.c,v 1.34 2004/02/28 02:42:45 enami Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ktrace.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ktrace.c,v 1.33 2004/02/28 02:22:31 enami Exp $");
+__RCSID("$NetBSD: ktrace.c,v 1.34 2004/02/28 02:42:45 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -224,7 +224,7 @@ main(argc, argv)
 		if ((fd = open(outfile, O_CREAT | O_WRONLY |
 		    (append ? 0 : O_TRUNC) | (synclog ? 0 : O_SYNC),
 		    DEFFILEMODE)) < 0)
-			err(1, "%s", outfile);
+			err(EXIT_FAILURE, "%s", outfile);
 		(void)close(fd);
 	}
 
@@ -232,12 +232,12 @@ main(argc, argv)
 #ifdef KTRUSS
 		if (do_ktrace(outfile, ops, trpoints, getpid()) == 1) {
 			execvp(argv[0], &argv[0]);
-			err(1, "exec of '%s' failed", argv[0]);
+			err(EXIT_FAILURE, "exec of '%s' failed", argv[0]);
 		}
 #else
 		(void)do_ktrace(outfile, ops, trpoints, getpid());
 		execvp(argv[0], &argv[0]);
-		err(1, "exec of '%s' failed", argv[0]);
+		err(EXIT_FAILURE, "exec of '%s' failed", argv[0]);
 #endif
 	} else
 		(void)do_ktrace(outfile, ops, trpoints, pid);
@@ -294,7 +294,8 @@ no_ktrace(sig)
 
 	if (ktracefile)
 		(void)unlink(ktracefile);
-	(void)errx(1, "ktrace(2) system call not supported in the running"
+	(void)errx(EXIT_FAILURE,
+	    "ktrace(2) system call not supported in the running"
 	    " kernel; re-compile kernel with `options KTRACE'");
 }
 
@@ -312,7 +313,7 @@ do_ktrace(tracefile, ops, trpoints, pid)
 		int pi[2], dofork, fpid;
 
 		if (pipe(pi) < 0)
-			err(1, "pipe(2)");
+			err(EXIT_FAILURE, "pipe(2)");
 		fcntl(pi[0], F_SETFD, FD_CLOEXEC | fcntl(pi[0], F_GETFD, 0));
 		fcntl(pi[1], F_SETFD, FD_CLOEXEC | fcntl(pi[1], F_GETFD, 0));
 
