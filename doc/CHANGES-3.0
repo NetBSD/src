@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.26 2005/04/03 13:45:51 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.27 2005/04/04 17:34:57 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -492,4 +492,85 @@ etc/MAKEDEV.tmpl				1.41
 
 	Add pf to the all target.
 	[peter, ticket #86]
+
+usr.bin/telnet/commands.c			1.61
+
+	Fix typo in online help.
+	[atatat, ticket #87]
+
+sys/netinet/ip_input.c				1.213
+
+	ip_reass: clear stale csum_flags.
+	[yamt, ticket #88]
+
+sys/nfs/nfs_socket.c				1.113
+sys/netinet/tcp_output.c			1.129
+
+	nfsrv_rcv: don't do so_receive from socket upcall context.
+	While there's little benefits, it complicates locking and confuses
+	flow control.
+	tcp_output: lock reass queue when building sack.
+	[yamt, ticket #89]
+
+sys/netinet/tcp_input.c				1.225
+sys/netinet/tcp_subr.c				1.188
+sys/netinet/tcp_var.h				1.124
+
+	Protect tcpipqent with splvm.
+	[yamt, ticket #90]
+
+sys/dev/ic/rtl8169.c				1.15
+sys/dev/ic/rtl81x9reg.h				1.12
+sys/dev/ic/rtl81x9var.h				1.18
+
+	- restructure tx descriptor handling code to decouple
+	  number of tx descriptors, number of rx descriptors, and number of
+	  mbufs.
+	- bump number of tx descriptors for rtl8169. 64 doesn't seem to be
+	  sufficient when doing TSO.
+	[yamt, ticket #91]
+
+sys/dev/ic/rtl8169.c				1.16
+
+	re_encap: set RTK_TDESC_CMD_IPCSUM if any of checksum offloading is
+	requested. Otherwise, RTK_TDESC_CMD_TCPCSUM/UDPCSUM don't seem to
+	make any effect.
+	[yamt, ticket #92]
+
+sys/arch/xen/i386/gdt.c				1.3
+
+	Don't bother to allocate gdt slots for tss as we don't actually
+	use them.
+	[yamt, ticket #93]
+
+sys/dev/ic/rtl8169.c				1.17
+
+	- use IFQ_POLL/DEQUEUE rather than IF_DEQUEUE/PREPEND.
+	- handle tx queue full correctly.
+	[yamt, ticket #94]
+
+distrib/sets/lists/misc/mi			1.115
+share/examples/fstab/Makefile			1.2
+share/examples/fstab/fstab.cdrom		1.1
+share/examples/fstab/fstab.md			delete
+share/examples/fstab/fstab.nfs.1		1.2
+share/examples/fstab/fstab.nfs.2		1.2
+share/examples/fstab/fstab.nfs.3		1.2
+share/examples/fstab/fstab.pseudo		1.1
+share/examples/fstab/fstab.ra			1.2
+share/examples/fstab/fstab.ramdisk		1.1
+share/examples/fstab/fstab.rd			1.2
+share/examples/fstab/fstab.sd0.1		1.2
+share/examples/fstab/fstab.sd0.2		1.2
+share/examples/fstab/fstab.sd0.amiga		1.2
+share/examples/fstab/fstab.sd0.atari		1.2
+share/examples/fstab/fstab.wd0.1		1.2
+share/examples/fstab/fstab.wd0.2		1.2
+share/examples/fstab/fstab.wd0.3		1.2
+share/examples/fstab/fstab.wd0.cobalt		1.2
+
+	Extract commonly used things like CDROMs, pseudo-filesystems
+	(/proc, ...) and mfs-based /tmp into their own files. Hint at them
+	in the existing files. (fstab needs an #include statement :)
+	[hubertf, ticket #95]
 
