@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)clock.c	7.2 (Berkeley) 5/12/91
- *	$Id: clock.c,v 1.13.2.6 1993/10/07 14:49:07 mycroft Exp $
+ *	$Id: clock.c,v 1.13.2.7 1993/10/09 08:43:43 mycroft Exp $
  */
 /* 
  * Mach Operating System
@@ -90,8 +90,8 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "systm.h"
 #include "time.h"
 #include "kernel.h"
-#include "machine/segments.h"
 #include "sys/device.h"
+#include "machine/cpu.h"
 #include "i386/isa/icu.h"
 #include "i386/isa/isavar.h"
 #include "i386/isa/nvram.h"
