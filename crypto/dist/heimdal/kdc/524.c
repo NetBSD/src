@@ -33,7 +33,7 @@
 
 #include "kdc_locl.h"
 
-RCSID("$Id: 524.c,v 1.6 2001/09/17 12:32:35 assar Exp $");
+RCSID("$Id: 524.c,v 1.6.2.1 2003/03/21 09:22:11 tron Exp $");
 
 #ifdef KRB4
 
@@ -251,6 +251,14 @@ do_524(const Ticket *t, krb5_data *reply,
 	free_EncTicketPart(&et);
 	goto out;
     }
+    if (!enable_v4_cross_realm && strcmp (et.crealm, t->realm) != 0) {
+	kdc_log(0, "524 cross-realm %s -> %s disabled", et.crealm,
+		t->realm);
+	free_EncTicketPart(&et);
+	ret = KRB5KDC_ERR_POLICY;
+	goto out;
+    }
+
     ret = encode_v4_ticket(buf + sizeof(buf) - 1, sizeof(buf),
 			   &et, &t->sname, &len);
     free_EncTicketPart(&et);
