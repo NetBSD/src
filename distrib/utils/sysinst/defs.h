@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.88 2003/06/13 11:45:49 dsl Exp $	*/
+/*	$NetBSD: defs.h,v 1.89 2003/06/13 11:57:28 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -204,8 +204,6 @@ EXTERN int editpart;
 
 /* Area of disk we can allocate, start and size in disk sectors. */
 EXTERN int ptstart, ptsize;	
-
-EXTERN int minfsdmb;
 
 /* Actual values for current disk - set by md_get_info() */
 EXTERN int dlcyl, dlhead, dlsec, dlsize, dlcylsize;

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.29 2003/06/12 10:51:40 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.30 2003/06/13 11:57:31 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -82,9 +82,6 @@ md_get_info(void)
 	md_bios_info(diskdev);
 
 	edit_mbr(&mbr);
-
-	/* Compute minimum NetBSD partition sizes (in sectors). */
-	minfsdmb = STDNEEDMB * (MEG / sectorsize);
 
 	return 1;
 }

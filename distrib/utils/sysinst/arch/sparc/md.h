@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.16 2003/06/11 21:35:50 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.17 2003/06/13 11:57:35 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -54,7 +54,6 @@
 #define DEFROOTSIZE	32	/* Default root size */
 #define DEFVARSIZE	32	/* Default /var size, if created */
 #define DEFUSRSIZE	100	/* Default /usr size, if /home */
-#define STDNEEDMB	110	/* Min space for non X install */
 #define XNEEDMB		35	/* Extra megs for full X installation */
 
 #define LIB_COUNT	0
