@@ -1,4 +1,4 @@
-/*	$NetBSD: clk_schmid.c,v 1.2 1998/01/09 06:06:31 perry Exp $	*/
+/*	$NetBSD: clk_schmid.c,v 1.3 1998/04/01 15:01:21 christos Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/v4/libparse/clk_schmid.c,v 3.22 1997/01/19 12:44:41 kardel Exp
@@ -65,15 +65,15 @@
 #define   WS_MEST	0x04
 #define WS_LEAP		0x10
 
-static u_long cvt_schmid();
+static u_long cvt_schmid P((char *, unsigned int, void *, clocktime_t *, void *));
 
 clockformat_t clock_schmid =
 {
-  (unsigned long (*)())0,	/* no input handling */
+  NULL,				/* no input handling */
   cvt_schmid,			/* Schmid conversion */
   syn_simple,			/* easy time stamps */
-  (u_long (*)())0,		/* not direct PPS monitoring */
-  (u_long (*)())0,		/* no time code synthesizer monitoring */
+  NULL,				/* not direct PPS monitoring */
+  NULL,				/* no time code synthesizer monitoring */
   (void *)0,			/* conversion configuration */
   "Schmid",			/* Schmid receiver */
   12,				/* binary data buffer */
@@ -87,12 +87,14 @@ clockformat_t clock_schmid =
 
 
 static u_long
-cvt_schmid(buffer, size, format, clock)
-  register unsigned char *buffer;
-  register int            size;
-  register struct format *format;
+cvt_schmid(bp, size, vf, clock, vt)
+  register char 	 *bp;
+  register unsigned int   size;
+  register void 	 *vf;
   register clocktime_t   *clock;
+  register void 	 *vt;
 {
+  register unsigned char *buffer = (unsigned char *) bp;
   if ((size != 11) || (buffer[10] != (unsigned char)'\375'))
     {
       return CVT_NONE;

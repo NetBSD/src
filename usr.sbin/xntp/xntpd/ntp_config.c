@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_config.c,v 1.6 1998/03/06 18:17:20 christos Exp $	*/
+/*	$NetBSD: ntp_config.c,v 1.7 1998/04/01 15:01:21 christos Exp $	*/
 
 /*
  * ntp_config.c - read and apply configuration information
@@ -1132,8 +1132,8 @@ getconfig(argc, argv)
 			if (SRCADR(&peeraddr) == htonl(INADDR_ANY))
 				maskaddr.sin_addr.s_addr = 0;
 			if (!errflg)
-				restrict(RESTRICT_FLAGS, &peeraddr, &maskaddr,
-				    (int)peerkey, peerversion);
+				restrict_addr(RESTRICT_FLAGS, &peeraddr,
+				    &maskaddr, (int)peerkey, peerversion);
 			break;
 			
 		case CONFIG_BDELAY:

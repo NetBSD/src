@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1998/03/06 18:17:20 christos Exp $
+#	$NetBSD: Makefile,v 1.4 1998/04/01 15:01:19 christos Exp $
 
 PROG= xntpd
 SRCS=	clk_trimtsip.c clk_trimtaip.c clk_schmid.c clk_rcc8000.c clk_rawdcf.c clk_meinberg.c \
@@ -11,5 +11,6 @@ ntpd.c ntp_util.c ntp_unixclock.c ntp_timer.c ntp_restrict.c ntp_request.c \
 ntp_refclock.c ntp_proto.c ntp_peer.c ntp_monitor.c ntp_loopfilter.c ntp_leap.c \
 ntp_io.c ntp_intres.c ntp_filegen.c ntp_control.c ntp_config.c map_vme.c 
 MAN+= xntpd.8
+CPPFLAGS=-Drestrict=1
 
 .include <bsd.prog.mk>

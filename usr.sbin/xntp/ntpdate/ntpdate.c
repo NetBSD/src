@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdate.c,v 1.5 1998/03/30 02:27:56 mrg Exp $	*/
+/*	$NetBSD: ntpdate.c,v 1.6 1998/04/01 15:01:18 christos Exp $	*/
 
 /*
  * ntpdate - set the time of day by polling one or more NTP servers
@@ -70,7 +70,7 @@ struct timeval tv0 = {0,0};
 #define	NTPDATE_PRIO	(100)
 #endif
 
-#if defined(HAVE_TIMER_SETTIME) || defined (HAVE_TIMER_CREATE)
+#if defined(HAVE_TIMER_SETTIME) && defined (HAVE_TIMER_CREATE)
 /* POSIX TIMERS - vxWorks doesn't have itimer - casey */
 static timer_t ntpdate_timerid;
 #endif
@@ -207,6 +207,11 @@ static	int	l_step_systime	P((l_fp *));
 
 static	int	getnetnum	P((char *, u_int32 *));
 static	void	printserver	P((struct server *, FILE *));
+#ifndef NO_MAIN_ALLOWED
+int main P((int, char *[]));
+#else
+int ntpdatemain P((int, char *[]));
+#endif /* NO_MAIN_ALLOWED */
 
 #ifdef SYS_WINNT
 int on = 1;
