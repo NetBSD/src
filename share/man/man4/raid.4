@@ -1,4 +1,4 @@
-.\"     $NetBSD: raid.4,v 1.26 2004/01/31 18:02:52 heinz Exp $
+.\"     $NetBSD: raid.4,v 1.27 2004/02/29 22:04:11 oster Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -60,7 +60,7 @@
 .\" any improvements or extensions that they make and grant Carnegie the
 .\" rights to redistribute these changes.
 .\"
-.Dd April 9, 2003
+.Dd February 29, 2004
 .Dt RAID 4
 .Os
 .Sh NAME
@@ -69,6 +69,15 @@
 .Sh SYNOPSIS
 .Cd options RAID_AUTOCONFIG
 .Cd options RAID_DIAGNOSTIC
+.Cd options RF_ACC_TRACE=n
+.Cd options RF_DEBUG_MAP=n
+.Cd options RF_DEBUG_PSS=n
+.Cd options RF_DEBUG_QUEUE=n
+.Cd options RF_DEBUG_QUIESCE=n
+.Cd options RF_DEBUG_STRIPELOCK=n
+.Cd options RF_DEBUG_RECON=n
+.Cd options RF_DEBUG_VALIDATE_DAG=n
+.Cd options RF_DEBUG_VERIFYPARITY=n
 .Cd options RF_INCLUDE_EVENODD=n
 .Cd options RF_INCLUDE_RAID5_RS=n
 .Cd options RF_INCLUDE_PARITYLOGGING=n
@@ -222,7 +231,7 @@ in this case), specifies the number of RAIDframe drivers to configure.
 To turn on component auto-detection and auto-configuration of RAID
 sets, simply add:
 .Bd -unfilled -offset indent
-options    RAID_AUTOCONFIG
+options RAID_AUTOCONFIG
 .Ed
 .Pp
 to the kernel configuration file.
@@ -248,11 +257,72 @@ result in data loss.
 .Pp
 Additional internal consistency checking can be enabled by specifying:
 .Bd -unfilled -offset indent
-options    RAID_DIAGNOSTIC
+options RAID_DIAGNOSTIC
 .Ed
 .Pp
 These assertions are disabled by default in order to improve
 performance.
+.Pp
+RAIDframe supports an access tracing facility for tracking both
+requests made and performance of various parts of the RAID systems
+as the request is processed.
+To enable this tracing the following option may be specified:
+.Bd -unfilled -offset indent
+options RF_ACC_TRACE=1
+.Ed
+.Pp
+For extensive debugging there are a number of kernel options which
+will aid in performing extra diagnosis of various parts of the
+RAIDframe sub-systems.
+Note that in order to make full use of these options it is often 
+necessary to enable one or more debugging options as listed in 
+src/sys/dev/raidframe/rf_options.h.  
+As well, these options are also only typically useful for people who wish
+to debug various parts of RAIDframe.
+The options include:
+.Pp
+For debugging the code which maps RAID addresses to physical
+addresses:
+.Bd -unfilled -offset indent
+options RF_DEBUG_MAP=1
+.Ed
+.Pp
+Parity stripe status debugging is enabled with:
+.Bd -unfilled -offset indent
+options RF_DEBUG_PSS=1
+.Ed
+.Pp
+Additional debugging for queueing is enabled with:
+.Bd -unfilled -offset indent
+options RF_DEBUG_QUEUE=1
+.Ed
+.Pp
+Problems with non-quiescent filesystems should be easier to debug if
+the following is enabled:
+.Bd -unfilled -offset indent
+options RF_DEBUG_QUIESCE=1
+.Ed
+.Pp
+Stripelock debugging is enabled with:
+.Bd -unfilled -offset indent
+options RF_DEBUG_STRIPELOCK=1
+.Ed
+.Pp
+Additional diagnostic checks during reconstruction are enabled with:
+.Bd -unfilled -offset indent
+options RF_DEBUG_RECON=1
+.Ed
+.Pp
+Validation of the DAGs (Directed Acyclic Graphs) used to describe an
+I/O access can be performed when the following is enabled:
+.Bd -unfilled -offset indent
+options RF_DEBUG_VALIDATE_DAG=1
+.Ed
+.Pp
+Additional diagnostics during parity verification is enabled with:
+.Bd -unfilled -offset indent
+options RF_DEBUG_VERIFYPARITY=1
+.Ed
 .Pp
 There are a number of less commonly used RAID levels supported by
 RAIDframe.
