@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pioc.c,v 1.10 2003/10/08 11:01:16 bouyer Exp $	*/
+/*	$NetBSD: wdc_pioc.c,v 1.11 2003/12/02 23:47:20 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pioc.c,v 1.10 2003/10/08 11:01:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pioc.c,v 1.11 2003/12/02 23:47:20 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_pioc.c,v 1.10 2003/10/08 11:01:16 bouyer Exp $")
 #include <acorn32/mainbus/piocvar.h>
 
 #include <dev/ata/atavar.h>
+#include <dev/ic/wdcreg.h>
 #include <dev/ic/wdcvar.h>
 
 #include "locators.h"
@@ -85,7 +86,7 @@ wdc_pioc_probe(parent, cf, aux)
 {
 	struct pioc_attach_args *pa = aux;
 	struct channel_softc ch;
-	int res;
+	int res, i;
 	u_int iobase;
 
 	if (pa->pa_name && strcmp(pa->pa_name, "wdc") != 0)
@@ -102,18 +103,28 @@ wdc_pioc_probe(parent, cf, aux)
 	ch.ctl_iot = pa->pa_iot;
 
 	if (bus_space_map(ch.cmd_iot, iobase, WDC_PIOC_REG_NPORTS, 0,
-	    &ch.cmd_ioh))
+	    &ch.cmd_baseioh))
 		return(0);
+	for (i = 0; i < WDC_PIOC_REG_NPORTS; i++) {
+		if (bus_space_subregion(ch.cmd_iot, ch.cmd_baseioh, i,
+			i == 0 ? 4 : 1, &ch.cmd_iohs[i]) != 0) {
+			bus_space_unmap(ch.cmd_iot, ch.cmd_baseioh,
+			    WDC_PIOC_REG_NPORTS);
+			return 0;
+		}
+	}
+
 	if (bus_space_map(ch.ctl_iot, iobase + WDC_PIOC_AUXREG_OFFSET,
 	    WDC_PIOC_AUXREG_NPORTS, 0, &ch.ctl_ioh)) {
-		bus_space_unmap(ch.cmd_iot, ch.cmd_ioh, WDC_PIOC_REG_NPORTS);
+		bus_space_unmap(ch.cmd_iot, ch.cmd_baseioh,
+		    WDC_PIOC_REG_NPORTS);
 		return(0);
 	}
 
 	res = wdcprobe(&ch);
 
 	bus_space_unmap(ch.ctl_iot, ch.ctl_ioh, WDC_PIOC_AUXREG_NPORTS);
-	bus_space_unmap(ch.cmd_iot, ch.cmd_ioh, WDC_PIOC_REG_NPORTS);
+	bus_space_unmap(ch.cmd_iot, ch.cmd_baseioh, WDC_PIOC_REG_NPORTS);
 
 	if (res)
 		 pa->pa_iosize = WDC_PIOC_REG_NPORTS;
@@ -134,6 +145,7 @@ wdc_pioc_attach(parent, self, aux)
 	struct wdc_pioc_softc *sc = (void *)self;
 	struct pioc_attach_args *pa = aux;
 	u_int iobase;
+	int i;
 
 	printf("\n");
 
@@ -141,8 +153,15 @@ wdc_pioc_attach(parent, self, aux)
 	sc->wdc_channel.cmd_iot = pa->pa_iot;
 	sc->wdc_channel.ctl_iot = pa->pa_iot;
 	if (bus_space_map(sc->wdc_channel.cmd_iot, iobase,
-	    WDC_PIOC_REG_NPORTS, 0, &sc->wdc_channel.cmd_ioh))
+	    WDC_PIOC_REG_NPORTS, 0, &sc->wdc_channel.cmd_baseioh))
 		panic("%s: couldn't map drive registers", self->dv_xname);
+	for (i = 0; i < WDC_PIOC_REG_NPORTS; i++) {
+		if (bus_space_subregion(sc->wdc_channel.cmd_iot,
+			sc->wdc_channel.cmd_baseioh, i,	i == 0 ? 4 : 1,
+			&sc->wdc_channel.cmd_iohs[i]) != 0)
+			panic("%s: couldn't submap drive registers",
+			    self->dv_xname);
+	}
 	    
 	if (bus_space_map(sc->wdc_channel.ctl_iot,
 	    iobase + WDC_PIOC_AUXREG_OFFSET, WDC_PIOC_AUXREG_NPORTS, 0,

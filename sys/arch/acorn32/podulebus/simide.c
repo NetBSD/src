@@ -1,4 +1,4 @@
-/*	$NetBSD: simide.c,v 1.13 2003/10/19 19:29:50 he Exp $	*/
+/*	$NetBSD: simide.c,v 1.14 2003/12/02 23:47:20 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: simide.c,v 1.13 2003/10/19 19:29:50 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: simide.c,v 1.14 2003/12/02 23:47:20 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: simide.c,v 1.13 2003/10/19 19:29:50 he Exp $");
 #include <acorn32/podulebus/simidereg.h>
 
 #include <dev/ata/atavar.h>
+#include <dev/ic/wdcreg.h>
 #include <dev/ic/wdcvar.h>
 #include <dev/podulebus/podules.h>
 
@@ -160,7 +161,7 @@ simide_attach(parent, self, aux)
 	struct podule_attach_args *pa = (void *)aux;
 	int status;
 	u_int iobase;
-	int channel;
+	int channel, i;
 	struct simide_channel *scp;
 	struct channel_softc *cp;
 	irqhandler_t *ihp;
@@ -265,11 +266,19 @@ simide_attach(parent, self, aux)
 		iobase = pa->pa_podule->mod_base;
 		if (bus_space_map(cp->cmd_iot, iobase +
 		    simide_info[channel].drive_registers,
-		    DRIVE_REGISTERS_SPACE, 0, &cp->cmd_ioh)) 
+		    DRIVE_REGISTERS_SPACE, 0, &cp->cmd_baseioh)) 
 			continue;
+		for (i = 0; i < DRIVE_REGISTERS_SPACE; i++) {
+			if (bus_space_subregion(cp->cmd_iot, cp->cmd_baseioh,
+				i, i == 0 ? 4 : 1, &cp->cmd_iohs[i]) != 0) {
+				bus_space_unmap(cp->cmd_iot, cp->cmd_baseioh,
+				    DRIVE_REGISTERS_SPACE);
+				continue;
+			}
+		}
 		if (bus_space_map(cp->ctl_iot, iobase +
 		    simide_info[channel].aux_register, 4, 0, &cp->ctl_ioh)) {
-			bus_space_unmap(cp->cmd_iot, cp->cmd_ioh,
+			bus_space_unmap(cp->cmd_iot, cp->cmd_baseioh,
 			    DRIVE_REGISTERS_SPACE);
 			continue;
 		}
