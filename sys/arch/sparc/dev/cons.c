@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.25 1996/09/02 06:44:15 mycroft Exp $ */
+/*	$NetBSD: cons.c,v 1.26 1996/09/05 09:32:47 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -263,7 +263,7 @@ setup_console:
 	default:
 		printf("unknown console output sink %d; using rom\n", out);
 		tp->t_oproc = cnstart;
-		fcnstop = (int (*)(struct tty *, int))nullop;
+		fcnstop = (void (*)(struct tty *, int))nullop;
 		break;
 	}
 }
