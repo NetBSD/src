@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ip.c,v 1.4 2002/05/31 09:45:45 itojun Exp $	*/
+/*	$NetBSD: print-ip.c,v 1.5 2002/10/18 23:13:57 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-ip.c,v 1.104 2002/05/29 09:47:04 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-ip.c,v 1.4 2002/05/31 09:45:45 itojun Exp $");
+__RCSID("$NetBSD: print-ip.c,v 1.5 2002/10/18 23:13:57 itojun Exp $");
 #endif
 #endif
 
@@ -268,30 +268,6 @@ ip_print(register const u_char *bp, register u_int length)
 	struct protoent *proto;
 
 	ip = (const struct ip *)bp;
-#ifdef LBL_ALIGN
-	/*
-	 * If the IP header is not aligned, copy into abuf.
-	 */
-	if ((long)ip & 3) {
-		static u_char *abuf = NULL;
-		static int didwarn = 0;
-
-		if (abuf == NULL) {
-			abuf = (u_char *)malloc(snaplen);
-			if (abuf == NULL)
-				error("ip_print: malloc");
-		}
-		memcpy((char *)abuf, (char *)ip, min(length, snaplen));
-		snapend += abuf - (u_char *)ip;
-		packetp = abuf;
-		ip = (struct ip *)abuf;
-		/* We really want libpcap to give us aligned packets */
-		if (!didwarn) {
-			warning("compensating for unaligned libpcap packets");
-			++didwarn;
-		}
-	}
-#endif
 	if ((u_char *)(ip + 1) > snapend) {
 		printf("[|ip]");
 		return;
