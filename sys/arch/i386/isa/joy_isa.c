@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_isa.c,v 1.1 1997/01/16 23:17:48 christos Exp $	*/
+/*	$NetBSD: joy_isa.c,v 1.2 1997/10/31 07:59:54 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Jean-Marc Zucconi
@@ -81,7 +81,7 @@ joy_isa_probe(parent, match, aux)
 
 	ia->ia_iosize = JOY_NPORTS;
 	ia->ia_msize = 0;
-	return rval;
+	return (rval);
 }
 
 void
