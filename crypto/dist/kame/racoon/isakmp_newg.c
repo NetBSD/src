@@ -1,4 +1,4 @@
-/*	$KAME: isakmp_newg.c,v 1.9 2000/12/17 23:06:28 sakane Exp $	*/
+/*	$KAME: isakmp_newg.c,v 1.10 2002/09/27 05:55:52 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -45,7 +45,7 @@
 #include "debug.h"
 
 #include "schedule.h"
-#include "cfparse.h"
+#include "cfparse_proto.h"
 #include "isakmp_var.h"
 #include "isakmp.h"
 #include "isakmp_newg.h"
