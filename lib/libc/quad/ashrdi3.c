@@ -1,4 +1,4 @@
-/*	$NetBSD: ashrdi3.c,v 1.2 1995/02/27 17:29:45 cgd Exp $	*/
+/*	$NetBSD: ashrdi3.c,v 1.3 1996/06/01 21:21:52 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)ashrdi3.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: ashrdi3.c,v 1.2 1995/02/27 17:29:45 cgd Exp $";
+static char rcsid[] = "$NetBSD: ashrdi3.c,v 1.3 1996/06/01 21:21:52 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -69,10 +69,9 @@ __ashrdi3(a, shift)
 		 * then 1 more, to get our answer.
 		 */
 		s = (aa.sl[H] >> (LONG_BITS - 1)) >> 1;
-		aa.ul[L] = shift >= QUAD_BITS ? s :
-		    aa.sl[H] >> (shift - LONG_BITS);
+		aa.ul[L] = aa.sl[H] >> (shift - LONG_BITS);
 		aa.ul[H] = s;
-	} else if (shift > 0) {
+	} else {
 		aa.ul[L] = (aa.ul[L] >> shift) |
 		    (aa.ul[H] << (LONG_BITS - shift));
 		aa.sl[H] >>= shift;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lshldi3.c,v 1.2 1995/02/27 17:30:23 cgd Exp $	*/
+/*	$NetBSD: lshldi3.c,v 1.3 1996/06/01 21:21:53 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lshldi3.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: lshldi3.c,v 1.2 1995/02/27 17:30:23 cgd Exp $";
+static char rcsid[] = "$NetBSD: lshldi3.c,v 1.3 1996/06/01 21:21:53 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,10 +60,9 @@ __lshldi3(a, shift)
 
 	aa.q = a;
 	if (shift >= LONG_BITS) {
-		aa.ul[H] = shift >= QUAD_BITS ? 0 :
-		    aa.ul[L] << (shift - LONG_BITS);
+		aa.ul[H] = aa.ul[L] << (shift - LONG_BITS);
 		aa.ul[L] = 0;
-	} else if (shift > 0) {
+	} else {
 		aa.ul[H] = (aa.ul[H] << shift) |
 		    (aa.ul[L] >> (LONG_BITS - shift));
 		aa.ul[L] <<= shift;
