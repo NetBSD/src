@@ -1,4 +1,4 @@
-/*	$NetBSD: esiop.c,v 1.13 2002/04/29 15:44:16 bouyer Exp $	*/
+/*	$NetBSD: esiop.c,v 1.14 2002/05/04 17:51:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.13 2002/04/29 15:44:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.14 2002/05/04 17:51:16 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -596,6 +596,12 @@ none:
 			    (u_long)(bus_space_read_4(sc->sc_c.sc_rt, sc->sc_c.sc_rh,
 				SIOP_DSP) -
 			    sc->sc_c.sc_scriptaddr));
+			printf("SDID 0x%x SCNTL3 0x%x SXFER 0x%x SCNTL4 0x%x\n",
+			    bus_space_read_1(sc->sc_c.sc_rt, sc->sc_c.sc_rh, SIOP_SDID),
+			     bus_space_read_1(sc->sc_c.sc_rt, sc->sc_c.sc_rh, SIOP_SCNTL3),
+			     bus_space_read_1(sc->sc_c.sc_rt, sc->sc_c.sc_rh, SIOP_SXFER),
+			     bus_space_read_1(sc->sc_c.sc_rt, sc->sc_c.sc_rh, SIOP_SCNTL4));
+
 #endif
 			goto reset;
 		}
