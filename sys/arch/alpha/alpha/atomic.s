@@ -1,7 +1,7 @@
-/* $NetBSD: atomic.s,v 1.6 1999/05/31 20:40:23 ross Exp $ */
+/* $NetBSD: atomic.s,v 1.7 1999/11/28 19:47:13 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(4, "$NetBSD: atomic.s,v 1.6 1999/05/31 20:40:23 ross Exp $")
+__KERNEL_RCSID(4, "$NetBSD: atomic.s,v 1.7 1999/11/28 19:47:13 thorpej Exp $")
 
 /*
  * Misc. `atomic' operations.
@@ -179,3 +179,53 @@ LEAF(alpha_atomic_loadlatch_q,2)
 	RET
 2:	br	1b
 	END(alpha_atomic_loadlatch_q)
+
+/*
+ * alpha_atomic_add_q:
+ *
+ *	Atomically add a value to a quadword.
+ *
+ * Inputs:
+ *
+ *	a0	Address of quadword to add to.
+ *	a1	Value to add to quadword.
+ *
+ * Outputs:
+ *
+ *	None.
+ */
+	.text
+LEAF(alpha_atomic_add_q,2)
+1:	ldq_l	t0, 0(a0)
+	addq	t0, a1, t0
+	stq_c	t0, 0(a0)
+	beq	t0, 2f
+	mb
+	RET
+2:	br	1b
+	END(alpha_atomic_add_q)
+
+/*
+ * alpha_atomic_sub_q:
+ *
+ *	Atomically subtract a value from a quadword.
+ *
+ * Inputs:
+ *
+ *	a0	Address of quadword to subtract from.
+ *	a1	Value to subtract from quadword.
+ *
+ * Outputs:
+ *
+ *	None.
+ */
+	.text
+LEAF(alpha_atomic_sub_q,2)
+1:	ldq_l	t0, 0(a0)
+	subq	t0, a1, t0
+	stq_c	t0, 0(a0)
+	beq	t0, 2f
+	mb
+	RET
+2:	br	1b
+	END(alpha_atomic_sub_q)
