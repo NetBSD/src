@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.201 2000/03/26 20:42:21 kleink Exp $ */
+/* $NetBSD: machdep.c,v 1.202 2000/03/27 04:01:54 enami Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.201 2000/03/26 20:42:21 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.202 2000/03/27 04:01:54 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -680,7 +680,8 @@ nobootinfo:
 
 		/* warn if the message buffer had to be shrunk */
 		if (sz != round_page(MSGBUFSIZE))
-			printf("WARNING: %ld bytes not available for msgbuf in last cluster (%ld used)\n",
+			printf("WARNING: %d bytes not available for msgbuf "
+			    "in last cluster (%ld used)\n",
 			    round_page(MSGBUFSIZE), sz);
 
 	}
