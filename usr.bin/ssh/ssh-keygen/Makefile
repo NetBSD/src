@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.3 2005/01/03 06:05:50 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2005/02/13 06:07:21 christos Exp $
 
 PROG=	ssh-keygen
-SRCS=	ssh-keygen.c
+SRCS=	ssh-keygen.c moduli.c
 
 .include <bsd.prog.mk>
