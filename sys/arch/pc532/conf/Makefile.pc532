@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pc532,v 1.38 1997/02/08 09:33:27 matthias Exp $
+#	$NetBSD: Makefile.pc532,v 1.39 1997/02/10 10:54:00 matthias Exp $
 
 # Makefile for NetBSD
 #
@@ -102,7 +102,7 @@ LINKFLAGS+=	-S
 
 assym.h: ${PC532}/pc532/genassym.cf $S/kern/genassym.sh
 	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} \
-	<${PC532}/pc532/genassym.cf >assym.h || rm assym.h && exit 1
+	<${PC532}/pc532/genassym.cf >assym.h || (rm assym.h && exit 1)
 
 param.c: $S/conf/param.c
 	rm -f param.c
