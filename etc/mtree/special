@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.70 2003/04/15 06:21:51 lukem Exp $
+#	$NetBSD: special,v 1.71 2003/04/16 03:16:38 cjs Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -73,7 +73,7 @@
 ./etc/ipf.conf			type=file mode=0644 optional
 ./etc/ipf6.conf			type=file mode=0644 optional
 ./etc/ipnat.conf		type=file mode=0644 optional
-./etc/ipsec.conf		type=file mode=0644 optional
+./etc/ipsec.conf		type=file mode=0600 optional tags=nodiff
 ./etc/kerberosIV		type=dir  mode=0755 ignore optional
 ./etc/ld.so.conf		type=file mode=0644 optional
 ./etc/lkm.conf			type=file mode=0644 optional
@@ -249,6 +249,10 @@
 ./etc/weekly.conf		type=file mode=0644
 ./etc/weekly.local		type=file mode=0644 optional
 ./etc/wscons.conf		type=file mode=0644
+
+./etc/racoon			type=dir  mode=0755 optional
+./etc/racoon/racoon.conf	type=file mode=0644 optional
+./etc/racoon/psk.txt		type=file mode=0600 optional tags=nodiff
 
 ./root				type=dir  mode=0755
 ./root/.cshrc			type=file mode=0644
