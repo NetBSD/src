@@ -1,5 +1,5 @@
-.\" Copyright (c) 1990, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1990, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)esis.4	6.2 (Berkeley) 3/28/91
+.\"     @(#)esis.4	8.2 (Berkeley) 11/30/93
 .\"
-.Dd March 28, 1991
+.Dd November 30, 1993
 .Dt ESIS 4
 .Os
 .Sh NAME
@@ -114,7 +114,7 @@ received will be processed. This processing
 consists of adding an entry in the routing table. If the
 redirect is towards an Intermediate System, then an entry is made in the
 routing table as well.
-The entry in the routing table will may mark the
+The entry in the routing table will mark the
 .Tn NSAP
 address contained in the redirect
 .Tn PDU
@@ -197,11 +197,6 @@ of the
 .%R ISO
 .%N 9542
 .Re
-.Sh HISTORY
-The
-.Nm
-protocol implementation
-.Ud
 .Sh BUGS
 Redirect
 .Tn PDU Ns s

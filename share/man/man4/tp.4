@@ -1,5 +1,5 @@
-.\" Copyright (c) 1990, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1990, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)tp.4	6.4 (Berkeley) 3/28/91
+.\"     @(#)tp.4	8.4 (Berkeley) 4/19/94
 .\"
-.Dd March 28, 1991
+.Dd April 19, 1994
 .Dt TP 4
 .Os
 .Sh NAME
@@ -139,14 +139,14 @@ domain.
 .Pp
 Two system calls were modified from the previous
 release of the Berkeley Software Distribution
-to permit the support the end-of-transport-service-data-unit
+to permit the support of the end-of-transport-service-data-unit
 .Pq Dv EOTSDU
 indication, and for the receipt and transmission of user
 connect, confirm, and disconnect data.
 See
 .Xr sendmsg 2
 and
-.Xr recmsgv 2 ,
+.Xr recvmsg 2 ,
 and further discussion
 below for the formats of the data in the ancillary data buffer.
 If the
@@ -246,7 +246,7 @@ the connection.
 (char *) [none]
 .br
 Data to send when confirming a connection.
-This may aslo be sent by a 
+This may also be sent by a 
 .Xr setsockopt
 system call, or by issuing a
 .Xr sendmsg
@@ -349,7 +349,7 @@ nonzero short integer [various]
 .br
 Number of clock ticks that the local TP entity
 will wait before sending an acknowledgment for normal data
-(not applicable if the acknowlegement strategy is
+(not applicable if the acknowledgement strategy is
 .Dv TPACK_EACH ) .
 This parameter applies only to class 4.
 .It Ar p_ref_ticks
@@ -420,7 +420,7 @@ with an AK TPDU.
 .Pp
 .Dv TPACK_WINDOW
 means that upon receipt of the packet that represents
-the high edge of the last window advertised, and AK TPDU is generated.
+the high edge of the last window advertised, an AK TPDU is generated.
 .It Ar p_rx_strat
 4 bit mask
 .Bq Dv TPRX_USE_CW No \&|\  Dv TPRX_FASTSTART
@@ -449,7 +449,7 @@ Begin sending the maximum amount of data permitted
 by the peer (subject to availability).
 The alternative is to start sending slowly by 
 pretending the peer's window is smaller than it is, and letting
-it slowly grow up to the real peer's window size.
+it slowly grow up to the peer window's real size.
 This is to smooth the effect of new connections on a congested network
 by preventing a transport connection from suddenly 
 overloading the network with a burst of packets.
@@ -469,7 +469,7 @@ during connection establishment.
 Boolean.
 [false]
 .br
-Boolean indicating that extended format shall be negotiated.
+Boolean indicating that extended format is negotiated.
 This parameter applies only to class 4.
 .It Ar p_xpd_service
 Boolean.
@@ -496,7 +496,7 @@ Boolean.
 .Pp
 Boolean indicating that the local
 .Tn TP
-entity shall not issue
+entity will not issue
 indications (signals) when a
 .Tn TP
 connection is disconnected.
@@ -627,7 +627,7 @@ value upon return from the system call is
 If the signal
 .Dv SIGURG
 is being handled by reading
-from the socket, and it was a
+from the socket, and it was an
 .Xr accept 2
 that
 timed out, the read may result in
@@ -680,11 +680,6 @@ will return
 .Xr clnp 4 ,
 .Xr cltp 4 ,
 .Xr ifconfig 8 .
-.Sh HISTORY
-The
-.Nm
-protocol
-.Ud
 .Sh BUGS
 The protocol definition of expedited data is slightly problematic,
 in a way that renders expedited data almost useless,
@@ -723,5 +718,5 @@ The
 .Tn ARGO
 implementation acknowledges XPD TPDUs
 immediately,
-in the hope that most users will not use expedited data requently
+in the hope that most users will not use expedited data frequently
 enough for this to be a problem.

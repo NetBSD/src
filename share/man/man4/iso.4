@@ -1,5 +1,5 @@
-.\" Copyright (c) 1990, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1990, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)iso.4	6.2 (Berkeley) 3/28/91
+.\"     @(#)iso.4	8.2 (Berkeley) 11/30/93
 .\"
-.Dd March 28, 1991
+.Dd November 30, 1993
 .Dt ISO 4
 .Os
 .Sh NAME
@@ -103,7 +103,7 @@ The fields of this structure are:
 .Bl -tag -width Ds
 .It Ar siso_len:
 Length of the entire address structure, in bytes, which may grow to
-be longer than the 32 bytes show above.
+be longer than the 32 bytes shown above.
 .It Ar siso_family:
 Identifies the domain:
 .Dv AF_ISO .
@@ -139,7 +139,7 @@ While ports are always 16 bits,
 transport selectors may be
 of (almost) arbitrary size.
 .Pp
-Since the C language does not provide conveninent variable
+Since the C language does not provide convenient variable
 length structures, we have separated the selector lengths
 from the data themselves.
 The network address and various selectors are stored contiguously,
@@ -184,8 +184,3 @@ debugging only.
 .Xr tp 4 ,
 .Xr clnp 4 ,
 .Xr cltp 4
-.Sh HISTORY
-The
-.Nm
-protocol family implementation
-.Ud

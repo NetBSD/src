@@ -1,5 +1,5 @@
-.\" Copyright (c) 1990, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1990, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)clnp.4	6.3 (Berkeley) 7/31/91
+.\"     @(#)clnp.4	8.2 (Berkeley) 4/2/94
 .\"
-.Dd July 31, 1991
+.Dd April 2, 1994
 .Dt CLNP 4
 .Os
 .Sh NAME
@@ -39,8 +39,8 @@
 .Nd Connectionless-Mode Network Protocol
 .Sh SYNOPSIS
 .Fd #include <sys/socket.h>
-.Fd #include <netargo/iso.h>
-.Fd #include <netargo/clnp.h>
+.Fd #include <netiso/iso.h>
+.Fd #include <netiso/clnp.h>
 .Ft int
 .Fn socket AF_ISO SOCK_RAW 0
 .Sh DESCRIPTION
@@ -156,11 +156,6 @@ When specifying unsupported options.
 .Xr recv 2 ,
 .Xr intro 4 ,
 .Xr iso 4
-.Sh HISTORY
-The
-.Nm
-protocol implementation
-.Ud
 .Sh BUGS
 Packets are sent with the type code of 0x1d (technically an invalid
 packet type) for lack of a better way to identify raw
