@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_machdep.c,v 1.2 2001/11/09 06:52:26 thorpej Exp $	*/
+/*	$NetBSD: ofwgencfg_machdep.c,v 1.3 2001/11/09 07:21:39 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -218,17 +218,19 @@ initarm(ofw_handle)
 	irq_init();
 
 #ifdef DDB
-	printf("ddb: ");
 	db_machine_init();
+#ifdef __ELF__
+	ddb_init(0, NULL, NULL);	/* XXX */
+#else
 	{
 		struct exec *kernexec = (struct exec *)KERNEL_BASE;
 		extern int end;
 		extern char *esym;
 
 		ddb_init(kernexec->a_syms, &end, esym);
-		printf("ddb_init: a_syms = 0x%lx, end = %p, esym = %p\n",
-		    kernexec->a_syms, &end, esym);
-		}
+	}
+#endif /* __ELF__ */
+
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
