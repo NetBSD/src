@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.48 2000/06/27 17:41:31 mrg Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.49 2000/07/09 06:40:08 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -644,11 +644,14 @@ ratecheck(lasttime, mininterval)
 	struct timeval *lasttime;
 	const struct timeval *mininterval;
 {
-	struct timeval delta;
+	struct timeval tv, delta;
 	int s, rv = 0;
 
 	s = splclock(); 
-	timersub(&mono_time, lasttime, &delta);
+	tv = mono_time;
+	splx(s);
+
+	timersub(&tv, lasttime, &delta);
 
 	/*
 	 * check for 0,0 is so that the message will be seen at least once,
@@ -656,10 +659,9 @@ ratecheck(lasttime, mininterval)
 	 */
 	if (timercmp(&delta, mininterval, >=) ||
 	    (lasttime->tv_sec == 0 && lasttime->tv_usec == 0)) {
-		*lasttime = mono_time;
+		*lasttime = tv;
 		rv = 1;
 	}
-	splx(s);
 
 	return (rv);
 }
