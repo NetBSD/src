@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.29 2000/03/30 02:46:36 simonb Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.29.4.1 2000/12/14 23:37:30 he Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -134,7 +134,19 @@ struct nfsnode {
 	uid_t			n_accuid;	/* Last access requester */
 	int			n_accmode;	/* Mode last requested */
 	int			n_accerror;	/* Error last returned */
+	off_t			n_pushedlo;	/* 1st blk in commited range */
+	off_t			n_pushedhi;	/* Last block in range */
+	off_t			n_pushlo;	/* 1st block in commit range */
+	off_t			n_pushhi;	/* Last block in range */
+	struct lock		n_commitlock;	/* Serialize commits XXX */
+	int			n_commitflags;
 };
+
+/*
+ * Values for n_commitflags
+ */
+#define NFS_COMMIT_PUSH_VALID	0x0001		/* push range valid */
+#define NFS_COMMIT_PUSHED_VALID	0x0002		/* pushed range valid */
 
 #define n_atim		n_un1.nf_atim
 #define n_mtim		n_un2.nf_mtim
