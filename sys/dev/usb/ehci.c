@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.61 2004/06/22 18:05:18 mycroft Exp $	*/
+/*	$NetBSD: ehci.c,v 1.62 2004/06/22 18:27:46 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.61 2004/06/22 18:05:18 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.62 2004/06/22 18:27:46 mycroft Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -2521,14 +2521,8 @@ ehci_device_request(usbd_xfer_handle xfer)
 	sqh = epipe->sqh;
 	epipe->u.ctl.length = len;
 
-	/* XXX
-	 * Since we're messing with the QH we must know the HC is in sync.
-	 * This needs to go away since it slows down control transfers.
-	 * Removing it entails:
-	 *  - fill the QH only once with addr & wMaxPacketSize
-	 */
-	/* ehci_sync_hc(sc); */
-	/* Update device address and length since they may have changed. */
+	/* Update device address and length since they may have changed
+	   during the setup of the control pipe in usbd_new_device(). */
 	/* XXX This only needs to be done once, but it's too early in open. */
 	/* XXXX Should not touch ED here! */
 	sqh->qh.qh_endp =
