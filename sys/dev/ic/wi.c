@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.108 2003/01/09 08:49:39 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.109 2003/01/09 08:52:19 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.108 2003/01/09 08:49:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.109 2003/01/09 08:52:19 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -148,7 +148,7 @@ wi_write_val(struct wi_softc *sc, int rid, u_int16_t val)
 }
 
 #ifdef WI_DEBUG
-int wi_debug = 1;
+int wi_debug = 0;
 
 #define	DPRINTF(X)	if (wi_debug) printf X
 #define	DPRINTF2(X)	if (wi_debug > 1) printf X
