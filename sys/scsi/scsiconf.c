@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.42 1995/09/26 23:37:50 thorpej Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.43 1995/10/13 20:01:03 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -336,6 +336,10 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "SONY    ", "SDT-5000        ", "3.17", SDEV_NOSYNCWIDE},
 	{T_SEQUENTIAL, T_REMOV,
 	 "TANDBERG", " TDC 3600       ", "",     SDEV_NOLUNS},
+	{T_SEQUENTIAL, T_REMOV,
+	 "WANGTEK ", "5099ES SCSI",      "",     SDEV_NOLUNS},
+	{T_SEQUENTIAL, T_REMOV,
+	 "WANGTEK ", "5150ES SCSI",      "",     SDEV_NOLUNS},
 	{T_SEQUENTIAL, T_REMOV,
 	 "WangDAT ", "Model 1300      ", "02.4", SDEV_NOSYNCWIDE},
 	{T_SEQUENTIAL, T_REMOV,
