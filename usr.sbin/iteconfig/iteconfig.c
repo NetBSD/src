@@ -27,114 +27,110 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: iteconfig.c,v 1.1 1994/04/05 01:56:46 chopps Exp $
+ *      $Id: iteconfig.c,v 1.2 1994/04/05 04:34:51 cgd Exp $
  */
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/queue.h>
-#include <unistd.h>
-#include <termios.h>
-#include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <limits.h>
-#include <errno.h>
-
 #include <amiga/dev/grfabs_reg.h>
 #include <amiga/dev/viewioctl.h>
 #include <amiga/dev/iteioctl.h>
 
-colormap_t *xgetcmap __P((int, int));
-void printcmap __P((colormap_t *, int));
-void xioctl __P((int, int, void *));
-long xstrtol __P((char *));
-void xusage __P((void));
+#include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <termios.h>
+#include <unistd.h>
 
-char *pname;
-char *optstr = "W:w:H:h:D:d:V:v:T:t:P:p:X:x:Y:y:i";
+#include "pathnames.h"
+
+void	printcmap __P((colormap_t *, int));
+void	usage __P((void));
+void	xioctl __P((int, int, void *));
+colormap_t *xgetcmap __P((int, int));
+long	xstrtol __P((char *));
 
 int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern int optind;
-	extern char *optarg;
 	struct ite_window_size is, newis;
 	struct ite_bell_values ib, newib;
 	struct winsize ws;
 	colormap_t *cm;
-	int opt, fd, f_info, i, max_colors, rv;
+	int ch, fd, i, iflag, max_colors;
 	long val;
 
-	f_info = 0;
-	pname = argv[0];
+	iflag = 0;
 
-	fd = open("/dev/ite0", O_NONBLOCK | O_RDONLY);
-	if (fd == -1) {
-		perror("open console");
-		exit(1);
-	}
+	fd = open(_PATH_AMIGACONSOLE, O_RDONLY | O_NONBLOCK);
+	if (fd == -1)
+		err(1, "open console");
 
 	xioctl(fd, ITE_GET_WINDOW_SIZE, &is);
 	xioctl(fd, ITE_GET_BELL_VALUES, &ib);
 
-	bcopy(&is, &newis, sizeof(is));
-	bcopy(&ib, &newib, sizeof(ib));
+	memcpy(&newis, &is, sizeof(is));
+	memcpy(&newib, &ib, sizeof(ib));
 
-	while ((opt = getopt(argc, argv, optstr)) != EOF) {
-		switch (opt) {
-		case 'i':
-			f_info = 1;
-			break;
-		case 'X':
-		case 'x':
-			newis.x = xstrtol(optarg);
-			break;
-		case 'Y':
-		case 'y':
-			newis.y = xstrtol(optarg);
-			break;
-		case 'W':
-		case 'w':
-			newis.width = xstrtol(optarg);
-			break;
-		case 'H':
-		case 'h':
-			newis.height = xstrtol(optarg);
-			break;
-		case 'D':
+	while ((ch = getopt(argc, argv, "D:H:P:T:V:W:X:Y:d:h:ip:t:v:w:x:y:"))
+	    != EOF) {
+		switch (ch) {
+		case 'D':		/* undocumented backward compat */
 		case 'd':
 			newis.depth = xstrtol(optarg);
 			break;
-		case 'V':
-		case 'v':
-			newib.volume = xstrtol(optarg);
+		case 'H':		/* undocumented backward compat */
+		case 'h':
+			newis.height = xstrtol(optarg);
 			break;
-		case 'P':
+		case 'i':
+			iflag = 1;
+			break;
+		case 'P':		/* undocumented backward compat */
 		case 'p':
 			newib.period = xstrtol(optarg);
 			break;
-		case 'T':
+		case 'T':		/* undocumented backward compat */
 		case 't':
 			newib.time = xstrtol(optarg);
 			break;
-		default:
+		case 'V':		/* undocumented backward compat */
+		case 'v':
+			newib.volume = xstrtol(optarg);
+			break;
+		case 'W':		/* undocumented backward compat */
+		case 'w':
+			newis.width = xstrtol(optarg);
+			break;
+		case 'X':		/* undocumented backward compat */
+		case 'x':
+			newis.x = xstrtol(optarg);
+			break;
+		case 'Y':		/* undocumented backward compat */
+		case 'y':
+			newis.y = xstrtol(optarg);
+			break;
 		case '?':
-			xusage();
+		default:
+			usage();
 			/* NOTREACHED */
 		}
 	}
 	argc -= optind;
 	argv += optind;
 
-	if (bcmp(&newis, &is, sizeof(is))) {
+	if (memcmp(&newis, &is, sizeof(is))) {
 		xioctl(fd, ITE_SET_WINDOW_SIZE, &newis);
 		xioctl(fd, ITE_GET_WINDOW_SIZE, &is);
 	}
-	if (bcmp(&newib, &ib, sizeof(ib))) {
+	if (memcmp(&newib, &ib, sizeof(ib))) {
 		xioctl(fd, ITE_SET_BELL_VALUES, &newib);
 		xioctl(fd, ITE_GET_BELL_VALUES, &ib);
 	}
@@ -148,7 +144,7 @@ main(argc, argv)
 	while (argc--) {
 		val = xstrtol(*argv++);
 		if (i >= max_colors) {
-			fprintf(stderr, "%s: warn: to many colors\n", pname);
+			warnx("warning: too many colors");
 			break;
 		}
 		cm->entry[i] = val;
@@ -161,14 +157,13 @@ main(argc, argv)
 	/* do tty stuff to get it to register the changes. */
 	xioctl(fd, TIOCGWINSZ, &ws);
 
-	if (f_info) {
+	if (iflag) {
 		printf("tty size: rows %d cols %d\n", ws.ws_row, ws.ws_col);
 		printf("ite size: w: %d  h: %d  d: %d  [x: %d  y: %d]\n",
 		    is.width, is.height, is.depth, is.x, is.y);
 		printf("ite bell: vol: %d  count: %d  period: %d\n",
 		    ib.volume, ib.time, ib.period);
 		printcmap(cm, ws.ws_col);
-
 	}
 	close(fd);
 	exit(0);
@@ -179,11 +174,8 @@ xioctl(fd, cmd, addr)
 	int fd, cmd;
 	void *addr;
 {
-	if (ioctl(fd, cmd, addr) != -1) 
-		return;
-
-	perror("ioctl");
-	exit(1);
+	if (ioctl(fd, cmd, addr) == -1) 
+		err(1, "ioctl");
 }
 
 long
@@ -193,11 +185,9 @@ xstrtol(s)
 	long rv;
 
 	rv = strtol(s, NULL, 0);
-	if (errno != ERANGE || (rv != LONG_MAX && rv != LONG_MIN))
-		return(rv);
-
-	fprintf(stderr, "%s: bad format \"%s\"\n", pname, s);
-	exit(1);
+	if (errno == ERANGE && (rv == LONG_MIN || rv == LONG_MAX))
+		err(1, "bad format: \"%s\"", s);
+	return(rv);
 }
 
 colormap_t *
@@ -208,10 +198,8 @@ xgetcmap(fd, ncolors)
 	colormap_t *cm;
 
 	cm = malloc(sizeof(colormap_t) + ncolors * sizeof(u_long));
-	if (cm == NULL) {
-		perror("malloc");
-		exit(1);
-	}
+	if (cm == NULL)
+		err(1, "malloc");
 	cm->first = 0;
 	cm->size = ncolors;
 	cm->entry = (u_long *) & cm[1];
@@ -228,16 +216,17 @@ printcmap(cm, ncols)
 
 	switch (cm->type) {
 	case CM_MONO:
-		printf("monochrome\n");
+		printf("monochrome");
 		return;
 	case CM_COLOR:
-		printf("color levels: red: %d  green: %d  blue: %d\n",
+		printf("color levels: red: %d  green: %d  blue: %d",
 		    cm->red_mask + 1, cm->green_mask + 1, cm->blue_mask + 1);
 		break;
 	case CM_GREYSCALE:
-		printf("greyscale levels: %d\n", cm->grey_mask + 1);
+		printf("greyscale levels: %d", cm->grey_mask + 1);
 		break;
 	}
+	printf("\n");
 	
 	nel = ncols / 11 - 1;
 	for (i = 0; i < cm->size; i++) {
@@ -250,10 +239,10 @@ printcmap(cm, ncols)
 }
 
 void
-xusage()
+usage()
 {
-	fprintf(stderr, "usage: %s [-i] [-w width] [-h height] [-d depth]"
-	    " [-x off] [-y off] [-v volume] [-p period] [-t count]"
-	    " [color ...]\n", pname);
+	fprintf(stderr, "%s\n\t\t%s\n",
+	    "usage: iteconfig [-i] [-v volume] [-p period] [-t count]",
+	    "[-w width] [-h height] [-d depth] [-x off] [-y off] [color ...]");
 	exit(1);
 }
