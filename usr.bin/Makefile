@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.106 1999/07/20 09:47:08 mrg Exp $
+#	$NetBSD: Makefile,v 1.107 1999/09/02 20:48:27 tron Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 SRCTOP=	..
@@ -13,9 +13,9 @@ SUBDIR=	apply apropos asa at audio banner basename biff \
 	hexdump id indent innetgr ipcrm ipcs join jot kdump ktrace ktruss \
 	lam last lastcomm ldd leave less lex locate lock \
 	logger login logname look lorder m4 machine mail \
-	make man menuc mesg midiplay mixerctl mkdep mkfifo mkstr modstat \
-	msgc msgs netgroup netstat newsyslog nfsstat nice nl nohup pagesize \
-	passwd paste patch pr printenv printf quota rdist \
+	make man menuc mesg midiplay mixerctl mkdep mkfifo mkstr mktemp \
+	modstat msgc msgs netgroup netstat newsyslog nfsstat nice nl nohup \
+	pagesize passwd paste patch pr printenv printf quota rdist \
 	renice rev rlogin rpcgen rpcinfo rs rsh rup \
 	ruptime rusers rwall rwho script sed shar shlock \
 	showmount shuffle skey skeyinfo skeyinit soelim split \
