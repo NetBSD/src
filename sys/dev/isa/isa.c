@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.53 1994/05/03 08:23:55 mycroft Exp $
+ *	$Id: isa.c,v 1.54 1994/05/03 20:32:22 mycroft Exp $
  */
 
 /*
@@ -56,14 +56,10 @@
 #include <i386/isa/isa_device.h>
 #include <i386/isa/isavar.h>
 #include <i386/isa/ic/i8042.h>
-#include <i386/isa/timerreg.h>
-#include <i386/isa/spkrreg.h>
 
 /* sorry, has to be here, no place else really suitable */
 #include <machine/pc/display.h>
 u_short *Crtat = (u_short *)MONO_BUF;
-
-static void sysbeepstop(int);
 
 /*
  * Configure all ISA devices
