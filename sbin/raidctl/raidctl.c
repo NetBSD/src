@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.28 2001/09/26 02:59:40 oster Exp $   */
+/*      $NetBSD: raidctl.c,v 1.29 2001/10/04 16:02:08 oster Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -59,7 +59,9 @@
 #include <unistd.h>
 #include <util.h>
 
-#include "rf_raidframe.h"
+#include <dev/raidframe/raidframevar.h>
+#include <dev/raidframe/raidframeio.h>
+#include "rf_configure.h"
 
 int     main __P((int, char *[]));
 void	do_ioctl __P((int, u_long, void *, const char *));

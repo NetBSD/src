@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_configure.c,v 1.14 2001/02/04 21:05:42 christos Exp $	*/
+/*	$NetBSD: rf_configure.c,v 1.15 2001/10/04 16:02:08 oster Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -53,11 +53,18 @@
 #include <strings.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include "rf_raid.h"
-#include "rf_raidframe.h"
-#include "rf_general.h"
-#include "rf_decluster.h"
+
+#include <dev/raidframe/raidframevar.h>
+#include <dev/raidframe/raidframeio.h>
 #include "rf_configure.h"
+
+RF_LayoutSW_t *rf_GetLayout(RF_ParityConfig_t parityConfig);
+char   *rf_find_non_white(char *p);
+char   *rf_find_white(char *p);
+#define RF_MIN(a,b) (((a) < (b)) ? (a) : (b))
+#define RF_ERRORMSG(s)            printf((s))
+#define RF_ERRORMSG1(s,a)         printf((s),(a))
+#define RF_ERRORMSG2(s,a,b)       printf((s),(a),(b))
 
 /*
  * XXX we include this here so we don't need to drag rf_debugMem.c into
@@ -129,7 +136,6 @@ rf_GetLayout(RF_ParityConfig_t parityConfig)
 			break;
 	if (!p->parityConfig)
 		return (NULL);
-	RF_ASSERT(p->parityConfig == parityConfig);
 	return (p);
 }
 
@@ -158,12 +164,12 @@ rf_MakeConfig(configname, cfgPtr)
 
 	fp = fopen(configname, "r");
 	if (!fp) {
-		RF_ERRORMSG1("Can't open config file %s\n", configname);
+		printf("Can't open config file %s\n", configname);
 		return (-1);
 	}
 	rewind(fp);
 	if (rf_search_file_for_start_of("array", buf, 256, fp)) {
-		RF_ERRORMSG1("Unable to find start of \"array\" params in config file %s\n", configname);
+		printf("Unable to find start of \"array\" params in config file %s\n", configname);
 		retcode = -1;
 		goto out;
 	}
@@ -175,7 +181,7 @@ rf_MakeConfig(configname, cfgPtr)
          */
 	numscanned = sscanf(buf, "%d %d %d", &aa, &bb, &cc);
 	if (numscanned != 3) {
-		RF_ERRORMSG("Config file error (\"array\" section):  unable to get numRow, numCol, numSpare\n");
+		printf("Config file error (\"array\" section):  unable to get numRow, numCol, numSpare\n");
 		retcode = -1;
 		goto out;
 	}
@@ -549,12 +555,6 @@ rf_ReadSpareTable(req, fname)
 			fprintf(stderr, "Sparemap file prematurely exhausted after %d of %d lines\n", i, linecount);
 			return (NULL);
 		}
-		RF_ASSERT(tableNum >= 0 &&
-		    tableNum < req->TablesPerSpareRegion);
-		RF_ASSERT(tupleNum >= 0 && tupleNum < req->BlocksPerTable);
-		RF_ASSERT(spareDisk >= 0 && spareDisk < req->C);
-		RF_ASSERT(spareBlkOffset >= 0 && spareBlkOffset <
-		    req->SpareSpaceDepthPerRegionInSUs / req->SUsPerPU);
 
 		table[tableNum][tupleNum].spareDisk = spareDisk;
 		table[tableNum][tupleNum].spareBlockOffsetInSUs =
