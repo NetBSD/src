@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.17 1998/05/19 00:29:03 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.18 1998/05/19 00:42:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -152,11 +152,9 @@ struct pv_page_info {
 	int pgi_nfree;
 };
 
-#define	NPVPPG ((NBPG - sizeof(struct pv_page_info)) / sizeof(struct pv_entry))
-
 struct pv_page {
 	struct pv_page_info pvp_pgi;
-	struct pv_entry pvp_pv[NPVPPG];
+	struct pv_entry pvp_pv[1];		/* variable length */
 };
 
 #ifdef _KERNEL
