@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.30 2000/01/25 19:53:34 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.31 2000/01/26 15:50:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -246,6 +246,26 @@ const struct tlp_pci_quirks tlp_pci_21142_quirks[] = {
 	{ NULL,				{ 0, 0, 0 } }
 };
 
+/*
+ * Even more disgusting... some 21143 implementations (namely Cobalt's)
+ * which should have a 8-address-bit SROM actually only have a
+ * 6-address-bit SROM (even though it's rev 4.1!).  Broken!  This
+ * quirk detects that.
+ */
+#define	TPSQ_NOMATCH			0
+#define	TPSQ_CONTINUE			1
+#define	TPSQ_READ_AGAIN_AND_CONTINUE	2
+
+typedef	int (*tlp_pci_srom_quirk_t) __P((struct tulip_pci_softc *));
+
+int	tlp_pci_cobalt_21143_srom_quirks __P((struct tulip_pci_softc *));
+int	tlp_pci_21143_srom_quirks __P((struct tulip_pci_softc *));
+
+tlp_pci_srom_quirk_t tlp_pci_21143_srom_quirks_list[] = {
+	tlp_pci_cobalt_21143_srom_quirks,
+	tlp_pci_21143_srom_quirks,		/* MUST BE AT THE END */
+};
+
 int	tlp_pci_shared_intr __P((void *));
 
 const struct tulip_pci_product *tlp_pci_lookup
@@ -393,12 +413,6 @@ tlp_pci_attach(parent, self, aux)
 	case TULIP_CHIP_21142:
 		if (sc->sc_rev >= 0x20)
 			sc->sc_chip = TULIP_CHIP_21143;
-		if (sc->sc_rev >= 0x41) {
-			/*
-			 * 21143 rev. 4.1 has a larger SROM.
-			 */
-			sc->sc_srom_addrbits = 8;
-		}
 		break;
 
 	case TULIP_CHIP_82C168:
@@ -554,6 +568,7 @@ tlp_pci_attach(parent, self, aux)
 	/*
 	 * Read the contents of the Ethernet Address ROM/SROM.
 	 */
+ read_srom_again:
 	memset(sc->sc_srom, 0, sizeof(sc->sc_srom));
 	switch (sc->sc_chip) {
 	case TULIP_CHIP_21040:
@@ -720,8 +735,26 @@ tlp_pci_attach(parent, self, aux)
 			goto cant_cope;
 		break;
 
-	case TULIP_CHIP_21142:
 	case TULIP_CHIP_21143:
+		/*
+		 * Check for SROM quirkiness.
+		 */
+		for (i = 0; sc->sc_srom_addrbits != 8; i++) {
+			switch ((*tlp_pci_21143_srom_quirks_list[i])(psc)) {
+			case TPSQ_NOMATCH:
+				continue;
+
+			case TPSQ_CONTINUE:
+				break;
+
+			case TPSQ_READ_AGAIN_AND_CONTINUE:
+				goto read_srom_again;
+			}
+			break;	/* for TPSQ_CONTINUE */
+		}
+		/* FALLTHROUGH */
+
+	case TULIP_CHIP_21142:
 		/* Check for new format SROM. */
 		if (tlp_isv_srom_enaddr(sc, enaddr) == 0) {
 			/*
@@ -1120,4 +1153,43 @@ tlp_pci_cobalt_21142_quirks(psc, enaddr)
 	 * Cobalt Networks interfaces are just MII-on-SIO.
 	 */
 	sc->sc_mediasw = &tlp_sio_mii_mediasw;
+}
+
+int
+tlp_pci_cobalt_21143_srom_quirks(psc)
+	struct tulip_pci_softc *psc;
+{
+	struct tulip_softc *sc = &psc->sc_tulip;
+
+	/*
+	 * Check for broken Cobalt interface; pass 4.1 Tulip with
+	 * only 6-bit SROM.
+	 */
+	if (sc->sc_srom[0] == 0x00 &&
+	    sc->sc_srom[1] == 0x10 &&
+	    sc->sc_srom[2] == 0xe0)
+		return (TPSQ_CONTINUE);
+
+	return (TPSQ_NOMATCH);
+}
+
+int
+tlp_pci_21143_srom_quirks(psc)
+	struct tulip_pci_softc *psc;
+{
+	struct tulip_softc *sc = &psc->sc_tulip;
+
+	/*
+	 * Pass 4.1 21143s have an 8-address-bit SROM.  We need to read
+	 * them again.
+	 */
+	if (sc->sc_rev >= 0x41) {
+		sc->sc_srom_addrbits = 8;
+		return (TPSQ_READ_AGAIN_AND_CONTINUE);
+	}
+
+	/*
+	 * ...otherwise, what we read is just fine.
+	 */
+	return (TPSQ_CONTINUE);
 }
