@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.20 2000/02/25 19:56:32 oster Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.21 2000/03/03 03:10:03 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -159,9 +159,9 @@ rf_ConfigureDisks( listp, raidPtr, cfgPtr )
 			goto fail;
 		}
 		for (c = 0; c < raidPtr->numCol; c++) {
-				ret = rf_ConfigureDisk(raidPtr, 
-						       &cfgPtr->devnames[r][c][0],
-						       &disks[r][c], r, c);
+			ret = rf_ConfigureDisk(raidPtr, 
+					       &cfgPtr->devnames[r][c][0],
+					       &disks[r][c], r, c);
 			
 			if (ret)
 				goto fail;
