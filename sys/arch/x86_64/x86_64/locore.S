@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.8 2002/07/04 10:34:22 fvdl Exp $	*/
+/*	$NetBSD: locore.S,v 1.9 2002/07/14 12:20:45 fvdl Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -666,10 +666,6 @@ NENTRY(sigcode)
 	 * Handler has returned here as if we called it.  The sigcontext
 	 * is now the first thing on the stack.
 	 */
-	movl	SC_FS(%rsp),%ecx	/* XXXfvdl these are wrong */
-	movl	SC_GS(%rsp),%edx
-	movl	%ecx,%fs
-	movl	%edx,%gs
 	movq	%rsp,%rdi
 	pushq	%rdi			/* fake return address */
 	movq	$SYS___sigreturn14,%rax
@@ -1114,12 +1110,6 @@ ENTRY(switch_exit)
 	ltr	%dx
 
 	/* We're always in the kernel, so we don't need the LDT. */
-
-#if 0
-	movl	$GSEL(GUDATA_SEL,SEL_KPL),%ecx
-	movl	%ecx,%fs
-	movl	%ecx,%gs
-#endif
 
 	/* Restore cr0 (including FPU state). */
 	movl	PCB_CR0(%rsi),%ecx
