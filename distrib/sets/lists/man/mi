@@ -334,6 +334,7 @@
 ./usr/share/man/cat4/guspnp.0
 ./usr/share/man/cat4/icmp.0
 ./usr/share/man/cat4/idp.0
+./usr/share/man/cat4/ifmedia.0
 ./usr/share/man/cat4/inet.0
 ./usr/share/man/cat4/ip.0
 ./usr/share/man/cat4/ipf.0
@@ -1266,6 +1267,7 @@
 ./usr/share/man/man4/guspnp.4
 ./usr/share/man/man4/icmp.4
 ./usr/share/man/man4/idp.4
+./usr/share/man/man4/ifmedia.4
 ./usr/share/man/man4/inet.4
 ./usr/share/man/man4/ip.4
 ./usr/share/man/man4/ipf.4
