@@ -623,6 +623,7 @@ $   WRITE SYS$OUTPUT "	",APPLICATION,".exe"
 $!
 $! Link The Program, Check To See If We Need To Link With RSAREF Or Not.
 $!
+$   ON ERROR THEN GOTO NEXT_APPLICATION
 $   IF (RSAREF.EQS."TRUE")
 $   THEN
 $!
@@ -1456,6 +1457,7 @@ $!
 $! Save directory information
 $!
 $ __HERE = F$PARSE(F$PARSE("A.;",F$ENVIRONMENT("PROCEDURE"))-"A.;","[]A.;") - "A.;"
+$ __HERE = F$EDIT(__HERE,"UPCASE")
 $ __TOP = __HERE - "CRYPTO]"
 $ __INCLUDE = __TOP + "INCLUDE.OPENSSL]"
 $!
