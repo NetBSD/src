@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.15 2003/03/10 22:16:37 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.16 2003/04/07 21:29:48 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.15 2003/03/10 22:16:37 nathanw Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.16 2003/04/07 21:29:48 nathanw Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -151,6 +151,21 @@ pthread_init(void)
 	__isthreaded = 1;
 }
 
+static void
+pthread__child_callback(void)
+{
+	/*
+	 * Clean up data structures that a forked child process might
+	 * trip over. Note that if threads have been created (causing
+	 * this handler to be registered) the standards say that the
+	 * child will trigger undefined behavior if it makes any
+	 * pthread_* calls (or any other calls that aren't
+	 * async-signal-safe), so we don't really have to clean up
+	 * much. Anything that permits some pthread_* calls to work is
+	 * merely being polite.
+	 */
+	pthread__started = 0;
+}
 
 static void
 pthread__start(void)
@@ -160,6 +175,7 @@ pthread__start(void)
 
 	self = pthread__self(); /* should be the "main()" thread */
 
+	pthread_atfork(NULL, NULL, pthread__child_callback);
 
 	/* Create idle threads */
 	for (i = 0; i < NIDLETHREADS; i++) {
