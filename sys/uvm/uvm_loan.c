@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.2 1998/02/06 22:31:58 thorpej Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.3 1998/02/07 02:17:48 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -149,7 +149,7 @@ int flags;
    * lock us the rest of the way down
    */
   if (aref->ar_amap)
-    simple_lock(&aref->ar_amap->am_lock);
+    simple_lock(&aref->ar_amap->am_l);
   if (uobj)
     simple_lock(&uobj->vmobjlock);
 
@@ -472,7 +472,7 @@ vm_offset_t va;
 
     locked = uvmfault_relock(ufi);
     if (locked && amap)
-      simple_lock(&amap->am_lock);
+      simple_lock(&amap->am_l);
     simple_lock(&uobj->vmobjlock);
 
     /*
@@ -624,9 +624,9 @@ int flags;
       if (!uvmfault_relock(ufi))
 	return(0);
       if (ufi->entry->aref.ar_amap)
-	simple_lock(&ufi->entry->aref.ar_amap);
+	simple_lock(&ufi->entry->aref.ar_amap->am_l);
       if (ufi->entry->object.uvm_obj)
-	simple_lock(&ufi->entry->object.uvm_obj);
+	simple_lock(&ufi->entry->object.uvm_obj->vmobjlock);
       /* ... and try again */
     }
     
@@ -663,9 +663,9 @@ int flags;
 
     /* relock everything else */
     if (ufi->entry->aref.ar_amap)
-      simple_lock(&ufi->entry->aref.ar_amap);
+      simple_lock(&ufi->entry->aref.ar_amap->am_l);
     if (ufi->entry->object.uvm_obj)
-      simple_lock(&ufi->entry->object.uvm_obj);
+      simple_lock(&ufi->entry->object.uvm_obj->vmobjlock);
     /* ... and try again */
   }
 
