@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.6 1997/07/30 21:25:00 perry Exp $	*/
+/*	$NetBSD: pcib.c,v 1.7 1997/08/03 23:42:06 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -76,22 +76,45 @@ pcibmatch(parent, match, aux)
 	/*
 	 * Match all known PCI-ISA bridges.
 	 */
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL) {
+	switch (PCI_VENDOR(pa->pa_id)) {
+	case PCI_VENDOR_INTEL:
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_INTEL_SIO:
 		case PCI_PRODUCT_INTEL_PCIB:
 		case PCI_PRODUCT_INTEL_82371MX:
 		case PCI_PRODUCT_INTEL_82371SB:
+		case PCI_PRODUCT_INTEL_82371AB:
 		case PCI_PRODUCT_INTEL_82471:
 			return (1);
 		}
-	}
+		break;
 
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_UMC) {
+	case PCI_VENDOR_UMC:
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_UMC_UM8886F:
+		case PCI_PRODUCT_UMC_UM82C886:
 			return (1);
 		}
+		break;
+	case PCI_VENDOR_ALI:
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_ALI_M1449:
+			return (1);
+		}
+		break;
+	case PCI_VENDOR_COMPAQ:
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_COMPAQ_PCI_ISA_BRIDGE:
+			return (1);
+		}
+		break;
+	case PCI_VENDOR_VIATECH:
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_VIATECH_VT82C570MV:
+		case PCI_PRODUCT_VIATECH_VT82C586:
+			return (1);
+		}
+		break;
 	}
 
 	return (0);
