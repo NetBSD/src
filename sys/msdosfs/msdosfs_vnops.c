@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.57 1997/05/08 16:45:02 mycroft Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.58 1997/06/26 22:24:00 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -940,7 +940,9 @@ abortit:
 		 * Avoid ".", "..", and aliases of "." for obvious reasons.
 		 */
 		if ((fcnp->cn_namelen == 1 && fcnp->cn_nameptr[0] == '.') ||
-		    dp == ip || (fcnp->cn_flags & ISDOTDOT) ||
+		    dp == ip ||
+		    (fcnp->cn_flags & ISDOTDOT) ||
+		    (tcnp->cn_flags & ISDOTDOT) ||
 		    (ip->de_flag & DE_RENAME)) {
 			VOP_UNLOCK(fvp);
 			error = EINVAL;
