@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.104 1998/09/01 07:27:06 mycroft Exp $	*/
+/*	$NetBSD: audio.c,v 1.105 1998/09/27 16:43:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -2793,6 +2793,14 @@ mixer_ioctl(dev, cmd, addr, flag, p)
 #endif /* NAUDIO > 0 */
 
 #include "midi.h"
+
+#if NAUDIO == 0 && NMIDI > 0
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/device.h>
+#include <sys/audioio.h>
+#include <dev/audio_if.h>
+#endif
 
 #if NAUDIO > 0 || NMIDI > 0
 int
