@@ -1,4 +1,0 @@
-$Id: version,v 1.2 1998/01/19 03:01:05 sakamoto Exp $
-
-1.1:		Boot program for BeBox; initial revision
-1.2:		check BUS FREQ, add clock information

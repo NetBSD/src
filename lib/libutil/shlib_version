@@ -1,4 +1,0 @@
-#	$NetBSD: shlib_version,v 1.13 1998/03/18 16:40:45 bouyer Exp $
-#
-major=4
-minor=4
