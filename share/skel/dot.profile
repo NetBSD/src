@@ -1,4 +1,6 @@
-PATH=$HOME/bin:/bin:/usr/bin:/usr/X11/bin:/usr/contrib/bin:/usr/games/bin:/usr/old/bin:/usr/local/bin
+#	$NetBSD: dot.profile,v 1.2 1997/10/17 09:27:09 mrg Exp $
+
+PATH=$HOME/bin:/bin:/usr/bin:/usr/X11R6/bin:/usr/pkg/bin:/usr/games/bin
 export PATH
 
 EDITOR=vi
