@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.18 1996/09/17 14:44:05 mycroft Exp $	*/
+/*	$NetBSD: jobs.c,v 1.19 1996/10/16 14:42:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: jobs.c,v 1.18 1996/09/17 14:44:05 mycroft Exp $";
+static char rcsid[] = "$NetBSD: jobs.c,v 1.19 1996/10/16 14:42:20 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,10 +56,15 @@ static char rcsid[] = "$NetBSD: jobs.c,v 1.18 1996/09/17 14:44:05 mycroft Exp $"
 #include <sys/time.h>
 #include <sys/resource.h>
 #endif
+#include <sys/ioctl.h>
 
 #include "shell.h"
 #if JOBS
+#if OLD_TTY_DRIVER
 #include "sgtty.h"
+#else
+#include <termios.h>
+#endif
 #undef CEOF			/* syntax.h redefines this */
 #endif
 #include "redir.h"
@@ -107,7 +112,7 @@ STATIC void cmdputs __P((char *));
 MKINIT int jobctl;
 
 void
-setjobctl(on) 
+setjobctl(on)
 	int on;
 {
 #ifdef OLD_TTY_DRIVER
@@ -184,7 +189,7 @@ SHELLPROC {
 int
 fgcmd(argc, argv)
 	int argc;
-	char **argv; 
+	char **argv;
 {
 	struct job *jp;
 	int pgrp;
@@ -210,7 +215,7 @@ fgcmd(argc, argv)
 int
 bgcmd(argc, argv)
 	int argc;
-	char **argv; 
+	char **argv;
 {
 	struct job *jp;
 
@@ -249,7 +254,7 @@ restartjob(jp)
 int
 jobscmd(argc, argv)
 	int argc;
-	char **argv; 
+	char **argv;
 {
 	showjobs(0);
 	return 0;
@@ -266,7 +271,7 @@ jobscmd(argc, argv)
  */
 
 void
-showjobs(change) 
+showjobs(change)
 	int change;
 {
 	int jobno;
@@ -362,9 +367,9 @@ freejob(jp)
 
 
 int
-waitcmd(argc, argv) 
+waitcmd(argc, argv)
 	int argc;
-	char **argv; 
+	char **argv;
 {
 	struct job *job;
 	int status;
@@ -407,9 +412,9 @@ waitcmd(argc, argv)
 
 
 int
-jobidcmd(argc, argv)  
+jobidcmd(argc, argv)
 	int argc;
-	char **argv; 
+	char **argv;
 {
 	struct job *jp;
 	int i;
@@ -536,7 +541,7 @@ makejob(node, nprocs)
 	TRACE(("makejob(0x%lx, %d) returns %%%d\n", (long)node, nprocs,
 	    jp - jobtab + 1));
 	return jp;
-}	
+}
 
 
 /*
@@ -598,10 +603,10 @@ forkshell(jp, n, mode)
 				/*** this causes superfluous TIOCSPGRPS ***/
 #ifdef OLD_TTY_DRIVER
 				if (ioctl(2, TIOCSPGRP, (char *)&pgrp) < 0)
-					error("TIOCSPGRP failed, errno=%d\n", errno);
+					error("TIOCSPGRP failed, errno=%d", errno);
 #else
 				if (tcsetpgrp(2, pgrp) < 0)
-					error("tcsetpgrp failed, errno=%d\n", errno);
+					error("tcsetpgrp failed, errno=%d", errno);
 #endif
 			}
 			setsignal(SIGTSTP);
