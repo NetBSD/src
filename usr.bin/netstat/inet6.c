@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.5 1999/12/13 15:22:55 itojun Exp $	*/
+/*	$NetBSD: inet6.c,v 1.6 1999/12/16 00:58:17 thorpej Exp $	*/
 
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 /*
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.5 1999/12/13 15:22:55 itojun Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.6 1999/12/16 00:58:17 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -679,7 +679,8 @@ ip6_ifstats(ifname)
 	struct in6_ifreq ifr;
 	int s;
 #define	p(f, m) if (ifr.ifr_ifru.ifru_stat.f || sflag <= 1) \
-    printf(m, ifr.ifr_ifru.ifru_stat.f, plural(ifr.ifr_ifru.ifru_stat.f))
+    printf(m, (unsigned long long)ifr.ifr_ifru.ifru_stat.f, \
+    plural(ifr.ifr_ifru.ifru_stat.f))
 #define	p_5(f, m) if (ifr.ifr_ifru.ifru_stat.f || sflag <= 1) \
     printf(m, ip6stat.f)
 
@@ -1044,7 +1045,8 @@ icmp6_ifstats(ifname)
 	struct in6_ifreq ifr;
 	int s;
 #define	p(f, m) if (ifr.ifr_ifru.ifru_icmp6stat.f || sflag <= 1) \
-    printf(m, (u_quad_t)ifr.ifr_ifru.ifru_icmp6stat.f, plural(ifr.ifr_ifru.ifru_icmp6stat.f))
+    printf(m, (unsigned long long)ifr.ifr_ifru.ifru_icmp6stat.f, \
+    plural(ifr.ifr_ifru.ifru_icmp6stat.f))
 
 	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
 		perror("Warning: socket(AF_INET6)");
