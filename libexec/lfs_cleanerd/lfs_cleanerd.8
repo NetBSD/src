@@ -1,4 +1,4 @@
-.\"	$NetBSD: lfs_cleanerd.8,v 1.9 2001/07/13 20:30:22 perseant Exp $
+.\"	$NetBSD: lfs_cleanerd.8,v 1.10 2002/01/15 02:23:17 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -95,7 +95,7 @@ single call to lfs_markv.
 .It Fl q
 Quit after cleaning once.
 .It Fl r Ar report-frequency
-Give an efficiency report after every 
+Give an efficiency report after every
 .Ar report-frequency
 times through the main loop.
 .It Fl s
@@ -113,10 +113,10 @@ not usually necessary to set
 to a low value.
 .El
 .Sh SEE ALSO
+.Xr lfs_bmapv 2 ,
+.Xr lfs_markv 2 ,
+.Xr lfs_segwait 2 ,
 .Xr mount_lfs 8
-.Xr lfs_bmapv 2
-.Xr lfs_markv 2
-.Xr lfs_segwait 2
 .Sh HISTORY
 The
 .Nm
