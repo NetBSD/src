@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.15 1997/11/11 05:48:07 mrg Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.16 1997/11/11 06:17:22 mrg Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1993, 1994
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.15 1997/11/11 05:48:07 mrg Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.16 1997/11/11 06:17:22 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -159,7 +159,7 @@ cmd
 	| PORT check_login SP host_port CRLF
 		{
 			/* be paranoid, if told so */
-			if (checkportcmd &&
+			if (curclass.checkportcmd &&
 			    ((ntohs(data_dest.sin_port) < IPPORT_RESERVED) ||
 			    memcmp(&data_dest.sin_addr, &his_addr.sin_addr,
 			    sizeof(data_dest.sin_addr)) != 0)) {
