@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2001/10/02 06:34:52 chs Exp $
+#	$NetBSD: Makefile,v 1.9 2001/10/07 01:39:51 tsutsui Exp $
 
 #	MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
 #	M68000 Hi-Performance Microprocessor Division
@@ -38,14 +38,16 @@
 
 TARGET = fpsp
 
+CPPFLAGS=	${FPSPCPPFLAGS} ${FPSPMISCCPPFLAGS}
 .SUFFIXES:	.o .s .sa .defs .h
 
 .PATH.h: ${FPSPDIR}
 .PATH.s: ${FPSPDIR}
 .PATH.sa: ${FPSPDIR}
 
-AS		= ${CC} -x assembler-with-cpp -traditional-cpp -c -m68040 -I${.CURDIR}
+AS?		= as
 LD?		= ld
+AFLAGS		= -x assembler-with-cpp -traditional-cpp -m68040
 
 #
 # For the Library Version:
@@ -76,7 +78,7 @@ PREFIX		= L_
 .h.defs:
 	sh ${FPSPDIR}/asm2gas ${.IMPSRC} >${.TARGET}
 .s.o:
-	$(AS) -o ${.TARGET} ${.IMPSRC}
+	${CC} ${AFLAGS} ${CPPFLAGS} -c -o ${.TARGET} ${.IMPSRC}
 
 H_FILES = \
 	fpsp.defs \
