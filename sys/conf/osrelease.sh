@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: osrelease.sh,v 1.4.2.4 1998/02/08 22:00:11 mellon Exp $
+#	$NetBSD: osrelease.sh,v 1.4.2.5 1998/02/08 23:24:05 mellon Exp $
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -38,7 +38,7 @@
 #
 
 # Release number to use
-release=1.3p1
+release=1.3.1
 
 
 case $1 in
