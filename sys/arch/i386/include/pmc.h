@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.h,v 1.1 2000/09/13 04:47:01 thorpej Exp $	*/
+/*	$NetBSD: pmc.h,v 1.1.6.1 2002/06/21 07:31:41 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -34,10 +34,10 @@
  */
 
 #ifdef _KERNEL
-int	pmc_info(struct proc *, struct i386_pmc_info_args *,
+int	pmc_info(struct lwp *, struct i386_pmc_info_args *,
 	    register_t *);
-int	pmc_startstop(struct proc *, struct i386_pmc_startstop_args *,
+int	pmc_startstop(struct lwp *, struct i386_pmc_startstop_args *,
 	    register_t *);
-int	pmc_read(struct proc *, struct i386_pmc_read_args *,
+int	pmc_read(struct lwp *, struct i386_pmc_read_args *,
 	    register_t *);
 #endif
