@@ -1,4 +1,4 @@
-/*	$NetBSD: xdrtest.c,v 1.3 2002/02/10 13:22:58 bjh21 Exp $	*/
+/*	$NetBSD: xdrtest.c,v 1.4 2002/03/09 01:34:18 pk Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -33,7 +33,7 @@
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 
-#include <testbits.h>
+#include "testbits.h"
 
 char xdrdata[] = {
 	0x3f, 0xf0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* double 1.0 */
