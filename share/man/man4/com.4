@@ -1,4 +1,4 @@
-.\"	$NetBSD: com.4,v 1.9 2003/10/23 02:25:36 simonb Exp $
+.\"	$NetBSD: com.4,v 1.10 2003/11/15 22:58:11 mbw Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -56,6 +56,9 @@
 .Ss Arm32
 .Cd "com0 at mainbus? base 0x00210fe0"
 .Cd "com1 at mainbus? base 0x00210be0"
+.Ss HP 9000/300 and 400 Series
+.Cd "com* at dio? scode ?"
+.Cd "com* at frodo? offset ?"
 .Ss IBM PowerPC 4xx
 .Cd "com* at opb?"
 .Sh DESCRIPTION
@@ -118,6 +121,7 @@ with the code listed.
 .Xr acpi 4 ,
 .Xr ast 4 ,
 .Xr cardbus 4 ,
+.Xr dca 4 ,
 .Xr isa 4 ,
 .Xr isapnp 4 ,
 .Xr mca 4 ,
