@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.yppasswdd.c,v 1.3 1999/06/06 02:44:52 thorpej Exp $	*/
+/*	$NetBSD: rpc.yppasswdd.c,v 1.4 2000/08/03 08:22:33 ad Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -31,8 +31,14 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: rpc.yppasswdd.c,v 1.4 2000/08/03 08:22:33 ad Exp $");
+#endif /* not lint */
+
 #include <sys/types.h>
 #include <sys/wait.h>
+
 #include <err.h>
 #include <limits.h>
 #include <stdio.h>
@@ -46,21 +52,19 @@
 #include <rpc/pmap_clnt.h>
 #include <rpcsvc/yppasswd.h>
 
+#include "extern.h"
+
 extern	char *__progname;		/* from crt0.s */
 
 int	noshell, nogecos, nopw, domake;
 char	make_arg[_POSIX2_LINE_MAX] = "make";
 
-extern	void make_passwd __P((yppasswd *, struct svc_req *, SVCXPRT *));
-
-int	main __P((int, char *[]));
-void	yppasswddprog_1 __P((struct svc_req *, SVCXPRT *));
-void	usage __P((void));
+int	main(int, char *[]);
+void	yppasswddprog_1(struct svc_req *, SVCXPRT *);
+void	usage(void);
 
 int
-main(argc, argv)
-	int     argc;
-	char   *argv[];
+main(int argc, char *argv[])
 {
 	SVCXPRT *transp;
 	int i;
@@ -86,35 +90,36 @@ main(argc, argv)
 	}
 
 	if (daemon(0, 0))
-		err(1, "can't detach");
+		err(EXIT_FAILURE, "can't detach");
 	pidfile(NULL);
 
 	(void) pmap_unset(YPPASSWDPROG, YPPASSWDVERS);
 
 	transp = svcudp_create(RPC_ANYSOCK);
 	if (transp == NULL)
-		errx(1, "cannot create UDP service");
+		errx(EXIT_FAILURE, "cannot create UDP service");
 
 	if (!svc_register(transp, YPPASSWDPROG, YPPASSWDVERS, yppasswddprog_1,
 	    IPPROTO_UDP))
-		errx(1, "unable to register YPPASSWDPROG/YPPASSWDVERS/UDP");
+		errx(EXIT_FAILURE,
+		    "unable to register YPPASSWDPROG/YPPASSWDVERS/UDP");
 
 	transp = svctcp_create(RPC_ANYSOCK, 0, 0);
 	if (transp == NULL)
-		errx(1, "cannot create TCP service");
+		errx(EXIT_FAILURE, "cannot create TCP service");
 
 	if (!svc_register(transp, YPPASSWDPROG, YPPASSWDVERS, yppasswddprog_1,
 	    IPPROTO_TCP))
-		errx(1, "unable to register YPPASSWDPROG/YPPASSWDVERS/TCP");
+		errx(EXIT_FAILURE,
+		    "unable to register YPPASSWDPROG/YPPASSWDVERS/TCP");
 
 	svc_run();
-	errx(1, "svc_run returned");
+	errx(EXIT_FAILURE, "svc_run returned");
+	/* NOTREACHED */
 }
 
 void
-yppasswddprog_1(rqstp, transp)
-	struct svc_req *rqstp;
-	SVCXPRT *transp;
+yppasswddprog_1(struct svc_req *rqstp, SVCXPRT *transp)
 {
 	union {
 		yppasswd yppasswdproc_update_1_arg;
@@ -140,7 +145,7 @@ yppasswddprog_1(rqstp, transp)
 		}
 		make_passwd((yppasswd *)&argument, rqstp, transp);
 		if (!svc_freeargs(transp, xdr_yppasswd, (caddr_t) &argument))
-			errx(1, "unable to free arguments");
+			errx(EXIT_FAILURE, "unable to free arguments");
 		return;
 	}
 
@@ -148,10 +153,10 @@ yppasswddprog_1(rqstp, transp)
 }
 
 void
-usage()
+usage(void)
 {
 
 	fprintf(stderr, "usage: %s [-noshell] [-nogecos] [-nopw] "
 	    "[-m arg1 arg2 ...]\n", __progname);
-	exit(1);
+	exit(EXIT_FAILURE);
 }
