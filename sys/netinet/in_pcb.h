@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.17 1996/09/15 18:11:07 mycroft Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.18 1996/09/17 17:10:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -49,8 +49,6 @@ struct inpcb {
 	CIRCLEQ_ENTRY(inpcb) inp_queue;
 	struct	  inpcbtable *inp_table;
 	int	  inp_state;		/* bind/connect state */
-	struct	  in_addr inp_faddr;	/* foreign host table entry */
-	struct	  in_addr inp_laddr;	/* local host table entry */
 	u_int16_t inp_fport;		/* foreign port */
 	u_int16_t inp_lport;		/* local port */
 	struct	  socket *inp_socket;	/* back pointer to socket */
@@ -61,6 +59,8 @@ struct inpcb {
 	struct	  mbuf *inp_options;	/* IP options */
 	struct	  ip_moptions *inp_moptions; /* IP multicast options */
 };
+#define	inp_faddr	inp_ip.ip_dst
+#define	inp_laddr	inp_ip.ip_src
 
 LIST_HEAD(inpcbhead, inpcb);
 
