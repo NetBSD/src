@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.7 2002/09/26 04:07:36 thorpej Exp $	*/
+/*	$NetBSD: defs.h,v 1.8 2002/10/09 20:17:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -153,6 +153,8 @@ struct attr {
 	int	a_loclen;		/* length of above list */
 	struct	nvlist *a_devs;		/* children */
 	struct	nvlist *a_refs;		/* parents */
+	struct	nvlist *a_deps;		/* we depend on these other attrs */
+	int	a_expanding;		/* to detect cycles in attr graph */
 };
 
 /*
