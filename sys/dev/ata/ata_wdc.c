@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.2 1998/10/12 16:09:15 bouyer Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.3 1998/10/13 05:39:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -104,7 +104,7 @@
 #define DEBUG_FUNCS  0x08
 #define DEBUG_PROBE  0x10
 #ifdef WDCDEBUG
-int wdcdebug_wd_mask = DEBUG_PROBE;
+int wdcdebug_wd_mask = 0;
 #define WDCDEBUG_PRINT(args, level) \
 	if (wdcdebug_wd_mask & (level)) \
 		printf args
