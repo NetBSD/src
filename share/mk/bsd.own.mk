@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.431 2005/01/10 21:06:39 manu Exp $
+#	$NetBSD: bsd.own.mk,v 1.432 2005/01/11 16:20:49 he Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -561,7 +561,7 @@ MK${var}:=	yes
 	MAN \
 	NLS \
 	OBJ \
-	PIC PICINSTALL PICLIB POSTFIX PROFILE \
+	PAM PIC PICINSTALL PICLIB POSTFIX PROFILE \
 	SENDMAIL SHARE SKEY STATICLIB \
 	UUCP \
 	YP
