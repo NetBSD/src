@@ -47,8 +47,6 @@ OK
 >>> client foo 123.123.123.123
 OK
 >>> helo foo.
-./smtpd_check: warning: valid_hostname: misplaced delimiter: foo.
-./smtpd_check: warning: valid_hostname: misplaced delimiter: foo.
 ./smtpd_check: reject: HELO from foo[123.123.123.123]: 450 <foo.>: Helo command rejected: Host not found
 450 <foo.>: Helo command rejected: Host not found
 >>> helo foo
@@ -174,8 +172,8 @@ OK
 >>> client spike.porcupine.org 168.100.189.2
 OK
 >>> client foo 127.0.0.2
-./smtpd_check: reject: CONNECT from foo[127.0.0.2]: 554 Service unavailable; [127.0.0.2] blocked using rbl.maps.vix.com, reason: Blackholed - see <URL:http://mail-abuse.org/cgi-bin/lookup?127.0.0.2>; from=<foo@friend.bad.domain>
-554 Service unavailable; [127.0.0.2] blocked using rbl.maps.vix.com, reason: Blackholed - see <URL:http://mail-abuse.org/cgi-bin/lookup?127.0.0.2>
+./smtpd_check: reject: CONNECT from foo[127.0.0.2]: 554 Service unavailable; [127.0.0.2] blocked using blackholes.mail-abuse.org, reason: Blackholed - see <URL:http://mail-abuse.org/cgi-bin/lookup?127.0.0.2>; from=<foo@friend.bad.domain>
+554 Service unavailable; [127.0.0.2] blocked using blackholes.mail-abuse.org, reason: Blackholed - see <URL:http://mail-abuse.org/cgi-bin/lookup?127.0.0.2>
 >>> #
 >>> # unknown sender/recipient domain
 >>> #
