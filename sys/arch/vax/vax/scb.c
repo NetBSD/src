@@ -1,4 +1,4 @@
-/*	$NetBSD: scb.c,v 1.12 2000/06/04 06:16:59 matt Exp $ */
+/*	$NetBSD: scb.c,v 1.13 2000/06/04 19:30:17 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -99,16 +99,17 @@ scb_init(paddr_t avail_start)
 void
 scb_stray(void *arg)
 {
-	struct	callsframe *cf = FRAMEOFFSET(arg);
-	int *a = &cf->ca_arg1;
-
 	gotintr = 1;
 	vector = ((int) arg) & ~3;
 	ipl = mfpr(PR_IPL);
-	if (cold == 0)
+
+	if (cold == 0) {
 		printf("stray interrupt: vector 0x%x, ipl %d\n", vector, ipl);
-	else if (dep_call->cpu_flags & CPU_RAISEIPL)
-		a[8] = (a[8] & 0xffe0ffff) | ipl << 16;
+	} else if (dep_call->cpu_flags & CPU_RAISEIPL) {
+		struct icallsframe *icf = (void *) __builtin_frame_address(0);
+
+		icf->ica_psl = (icf->ica_psl & ~PSL_IPL) | ipl << 16;
+	}
 
 	mtpr(ipl + 1, PR_IPL);
 }
