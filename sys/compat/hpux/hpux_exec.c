@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_exec.c,v 1.17 2000/11/13 21:32:17 jdolecek Exp $	*/
+/*	$NetBSD: hpux_exec.c,v 1.18 2000/11/21 00:37:53 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ static	int exec_hpux_prep_nmagic __P((struct proc *, struct exec_package *));
 static	int exec_hpux_prep_zmagic __P((struct proc *, struct exec_package *));
 static	int exec_hpux_prep_omagic __P((struct proc *, struct exec_package *));
 
-struct emul emul_hpux = {
+const struct emul emul_hpux = {
 	"hpux",
 	native_to_hpux_errno,
 	hpux_sendsig,
@@ -112,9 +112,6 @@ struct emul emul_hpux = {
 	HPUX_SYS_MAXSYSCALL,
 	hpux_sysent,
 	hpux_syscallnames,
-	0,
-	copyargs,
-	hpux_setregs,
 	sigcode,
 	esigcode,
 };
@@ -158,10 +155,7 @@ exec_hpux_makecmds(p, epp)
 		break;
 	}
 
-	if (error == 0) {
-		/* set up our emulation information */
-		epp->ep_emul = &emul_hpux;
-	} else
+	if (error != 0)
 		kill_vmcmds(&epp->ep_vmcmds);
 
 	return (error);

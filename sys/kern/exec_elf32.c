@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.57 2000/11/14 22:14:53 thorpej Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.58 2000/11/21 00:37:56 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -68,12 +68,7 @@
 #define	ELFSIZE		32
 #endif
 
-#include "opt_compat_linux.h"
-#include "opt_compat_ibcs2.h"
-#include "opt_compat_svr4.h"
-#include "opt_compat_freebsd.h"
-#include "opt_compat_netbsd32.h"
-#include "opt_syscall_debug.h"
+#include "opt_compat_ibcs2.h"	/* XXX quirk for PT_SHLIB section */ 
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -87,27 +82,10 @@
 #include <sys/mount.h>
 #include <sys/stat.h>
 
-#include <uvm/uvm_extern.h>
+#include <machine/cpu.h>
+#include <machine/reg.h>
 
-#ifdef COMPAT_NETBSD32
-#include <compat/netbsd32/netbsd32_exec.h>
-#endif
-
-#ifdef COMPAT_LINUX
-#include <compat/linux/common/linux_exec.h>
-#endif
-
-#ifdef COMPAT_SVR4
-#include <compat/svr4/svr4_exec.h>
-#endif
-
-#ifdef COMPAT_IBCS2
-#include <compat/ibcs2/ibcs2_exec.h>
-#endif
-
-#ifdef COMPAT_FREEBSD
-#include <compat/freebsd/freebsd_exec.h>
-#endif
+extern const struct emul emul_netbsd;
 
 int	ELFNAME(check_header)(Elf_Ehdr *, int);
 int	ELFNAME(load_file)(struct proc *, struct exec_package *, char *,
@@ -115,55 +93,10 @@ int	ELFNAME(load_file)(struct proc *, struct exec_package *, char *,
 void	ELFNAME(load_psection)(struct exec_vmcmd_set *, struct vnode *,
 	    const Elf_Phdr *, Elf_Addr *, u_long *, int *, int);
 
-int ELFNAME2(netbsd,signature)(struct proc *, struct exec_package *,
+static int ELFNAME2(netbsd,signature)(struct proc *, struct exec_package *,
     Elf_Ehdr *);
-static int ELFNAME2(netbsd,probe)(struct proc *, struct exec_package *,
-    Elf_Ehdr *, char *, Elf_Addr *);
-
-extern char sigcode[], esigcode[];
-#ifdef SYSCALL_DEBUG
-extern const char * const syscallnames[];
-#endif
-
-struct emul ELFNAMEEND(emul_netbsd) = {
-	"netbsd",
-	NULL,
-	sendsig,
-	SYS_syscall,
-	SYS_MAXSYSCALL,
-	sysent,
-#ifdef SYSCALL_DEBUG
-	syscallnames,
-#else
-	NULL,
-#endif
-	howmany(ELF_AUX_ENTRIES * sizeof(AuxInfo), sizeof (Elf_Addr)),
-	ELFNAME(copyargs),
-	setregs,
-	sigcode,
-	esigcode,
-};
-
-int (*ELFNAME(probe_funcs)[])(struct proc *, struct exec_package *,
-    Elf_Ehdr *, char *, Elf_Addr *) = {
-#if defined(COMPAT_NETBSD32) && (ELFSIZE == 32)
-	    /* This one should go first so it matches instead of netbsd */
-	ELFNAME2(netbsd32,probe),
-#endif
-	ELFNAME2(netbsd,probe),
-#if defined(COMPAT_FREEBSD) && (ELFSIZE == 32)
-	ELFNAME2(freebsd,probe),		/* XXX not 64-bit safe */
-#endif
-#if defined(COMPAT_LINUX)
-	ELFNAME2(linux,probe),
-#endif
-#if defined(COMPAT_SVR4) && (ELFSIZE == 32)
-	ELFNAME2(svr4,probe),			/* XXX not 64-bit safe */
-#endif
-#if defined(COMPAT_IBCS2) && (ELFSIZE == 32)
-	ELFNAME2(ibcs2,probe),			/* XXX not 64-bit safe */
-#endif
-};
+int ELFNAME2(netbsd,probe)(struct proc *, struct exec_package *,
+    void *, char *, vaddr_t *);
 
 /* round up and down to page boundaries. */
 #define	ELF_ROUND(a, b)		(((a) + (b) - 1) & ~((b) - 1))
@@ -513,8 +446,8 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 	Elf_Ehdr *eh = epp->ep_hdr;
 	Elf_Phdr *ph, *pp;
 	Elf_Addr phdr = 0, pos = 0;
-	int error, i, n, nload;
-	char interp[MAXPATHLEN];
+	int error, i, nload;
+	char *interp = NULL;
 	u_long phsize;
 
 	if (epp->ep_hdrvalid < sizeof(Elf_Ehdr))
@@ -554,12 +487,13 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 	epp->ep_taddr = epp->ep_tsize = ELFDEFNNAME(NO_ADDR);
 	epp->ep_daddr = epp->ep_dsize = ELFDEFNNAME(NO_ADDR);
 
+	MALLOC(interp, char *, MAXPATHLEN, M_TEMP, M_WAITOK);
 	interp[0] = '\0';
 
 	for (i = 0; i < eh->e_phnum; i++) {
 		pp = &ph[i];
 		if (pp->p_type == PT_INTERP) {
-			if (pp->p_filesz >= sizeof(interp))
+			if (pp->p_filesz >= MAXPATHLEN)
 				goto bad;
 			if ((error = ELFNAME(read_from)(p, epp->ep_vp,
 			    pp->p_offset, (caddr_t) interp,
@@ -570,12 +504,6 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 	}
 
 	/*
-	 * Setup things for native emulation.
-	 */
-	epp->ep_emul = &ELFNAMEEND(emul_netbsd);
-	pos = ELFDEFNNAME(NO_ADDR);
-
-	/*
 	 * On the same architecture, we may be emulating different systems.
 	 * See which one will accept this executable. This currently only
 	 * applies to SVR4, and IBCS2 on the i386 and Linux on the i386
@@ -583,25 +511,16 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 	 *
 	 * Probe functions would normally see if the interpreter (if any)
 	 * exists. Emulation packages may possibly replace the interpreter in
-	 * interp[] with a changed path (/emul/xxx/<path>), and also
-	 * set the ep_emul field in the exec package structure.
+	 * interp[] with a changed path (/emul/xxx/<path>).
 	 */
-	n = sizeof(ELFNAME(probe_funcs)) / sizeof(ELFNAME(probe_funcs)[0]);
-	if (n != 0) {
-		error = ENOEXEC;
-		for (i = 0; i < n && error; i++)
-			error = ELFNAME(probe_funcs)[i](p, epp, eh,
-			    interp, &pos);
-#ifdef notyet
-		/*
-		 * We should really use a signature in our native binaries
-		 * and have our own probe function for matching binaries,
-		 * before trying the emulations. For now, if the emulation
-		 * probes failed we default to native.
-		 */
+	if (!epp->ep_esch->u.elf_probe_func) {
+		p->p_emul = epp->ep_esch->es_emul;
+		pos = ELFDEFNNAME(NO_ADDR);
+	} else {
+		error = (*epp->ep_esch->u.elf_probe_func)(p, epp, eh, interp,
+				(vaddr_t *)&pos);
 		if (error)
 			goto bad;
-#endif
 	}
 
 	/*
@@ -686,11 +605,11 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 	if (interp[0]) {
 		struct elf_args *ap;
 
-		ap = (struct elf_args *)malloc(sizeof(struct elf_args),
+		MALLOC(ap, struct elf_args *, sizeof(struct elf_args),
 		    M_TEMP, M_WAITOK);
 		if ((error = ELFNAME(load_file)(p, epp, interp,
 		    &epp->ep_vmcmds, &epp->ep_entry, ap, &pos)) != 0) {
-			free((char *)ap, M_TEMP);
+			FREE((char *)ap, M_TEMP);
 			goto bad;
 		}
 		pos += phsize;
@@ -709,17 +628,20 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn, PAGE_SIZE, 0,
 	    epp->ep_vp, 0, VM_PROT_READ);
 #endif
+	FREE(interp, M_TEMP);
 	free((char *)ph, M_TEMP);
 	vn_marktext(epp->ep_vp);
 	return exec_elf_setup_stack(p, epp);
 
 bad:
+	if (interp)
+		FREE(interp, M_TEMP);
 	free((char *)ph, M_TEMP);
 	kill_vmcmds(&epp->ep_vmcmds);
 	return ENOEXEC;
 }
 
-int
+static int
 ELFNAME2(netbsd,signature)(struct proc *p, struct exec_package *epp,
     Elf_Ehdr *eh)
 {
@@ -776,15 +698,14 @@ out1:
 	return error;
 }
 
-static int
+int
 ELFNAME2(netbsd,probe)(struct proc *p, struct exec_package *epp,
-    Elf_Ehdr *eh, char *itp, Elf_Addr *pos)
+    void *eh, char *itp, vaddr_t *pos)
 {
 	int error;
 
 	if ((error = ELFNAME2(netbsd,signature)(p, epp, eh)) != 0)
 		return error;
-	epp->ep_emul = &ELFNAMEEND(emul_netbsd);
 	*pos = ELFDEFNNAME(NO_ADDR);
 	return 0;
 }
