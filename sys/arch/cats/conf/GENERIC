@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.18 2002/02/10 17:36:55 wiz Exp $
+# $NetBSD: GENERIC,v 1.19 2002/02/12 09:11:45 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -258,7 +258,7 @@ uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 # PCI network interfaces
 de*	at pci? dev ? function ?	# DC21X4X-based ethernet cards
 #en*	at pci? dev ? function ?	# ENI/Adaptec ATM
-#ep*	at pci? dev ? function ?	# 3C590 ethernet cards
+ep*	at pci? dev ? function ?	# 3C590 ethernet cards
 ex*	at pci? dev ? function ?	# 3Com 90x[B]
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 #esh*	at pci? dev ? function ?	# Essential HIPPI card
