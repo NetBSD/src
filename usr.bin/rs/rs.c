@@ -50,6 +50,7 @@ static char sccsid[] = "@(#)rs.c	8.1 (Berkeley) 6/6/93";
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 long	flags;
 #define	TRANSPOSE	000001
