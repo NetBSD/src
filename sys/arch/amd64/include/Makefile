@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2004/05/08 21:51:47 kleink Exp $
+#	$NetBSD: Makefile,v 1.3 2004/07/02 17:02:24 drochner Exp $
 
 INCSDIR= /usr/include/amd64
 
@@ -12,6 +12,7 @@ INCS=	ansi.h aout_machdep.h asm.h atomic.h \
 	ieee.h ieeefp.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
 	intr.h intrdefs.h \
+	joystick.h \
 	kcore.h \
 	limits.h lock.h \
 	math.h mcontext.h mtrr.h \
