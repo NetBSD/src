@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.152 2002/03/22 21:39:36 mjacob Exp $ */
+/*	$NetBSD: st.c,v 1.153 2002/05/02 12:36:23 bouyer Exp $ */
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.152 2002/03/22 21:39:36 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.153 2002/05/02 12:36:23 bouyer Exp $");
 
 #include "opt_scsi.h"
 
@@ -2099,9 +2099,14 @@ st_interpret_sense(xs)
 	}
 
 	/*
-	 * If the device is not open yet, let generic handle
+	 * If the device is not open yet, a Not Ready To Ready Transition
+	 * is acceptable. Let generic code handle other ASC/ASQ.
 	 */
 	if ((periph->periph_flags & PERIPH_OPEN) == 0) {
+		if (key == SKEY_UNIT_ATTENTION &&
+		    st->asc == 0x28 && st->ascq == 0x0) {
+			return (0);
+		}
 		return (retval);
 	}
 
