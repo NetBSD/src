@@ -1,11 +1,11 @@
-/*	$NetBSD: pen.c,v 1.22 2002/07/20 08:36:19 grant Exp $	*/
+/*	$NetBSD: pen.c,v 1.23 2003/01/05 21:27:32 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pen.c,v 1.25 1997/10/08 07:48:12 charnier Exp";
 #else
-__RCSID("$NetBSD: pen.c,v 1.22 2002/07/20 08:36:19 grant Exp $");
+__RCSID("$NetBSD: pen.c,v 1.23 2003/01/05 21:27:32 agc Exp $");
 #endif
 #endif
 
@@ -156,7 +156,7 @@ make_playpen(char *pen, size_t pensize, size_t sz)
 		strcpy(Previous, Current);
 	else if (!getcwd(Previous, FILENAME_MAX)) {
 		cleanup(0);
-		err(1, "fatal error during execution: getcwd");
+		err(EXIT_FAILURE, "fatal error during execution: getcwd");
 	}
 	if (chdir(pen) == FAIL) {
 		cleanup(0);

@@ -1,11 +1,11 @@
-/*	$NetBSD: plist.c,v 1.35 2002/07/20 08:36:19 grant Exp $	*/
+/*	$NetBSD: plist.c,v 1.36 2003/01/05 21:27:33 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: plist.c,v 1.24 1997/10/08 07:48:15 charnier Exp";
 #else
-__RCSID("$NetBSD: plist.c,v 1.35 2002/07/20 08:36:19 grant Exp $");
+__RCSID("$NetBSD: plist.c,v 1.36 2003/01/05 21:27:33 agc Exp $");
 #endif
 #endif
 
@@ -332,7 +332,7 @@ delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg)
 	char    tmp[FILENAME_MAX], *name = NULL;
 
 	if (pkgdb_open(0) == -1) {
-		err(1, "cannot open pkgdb");
+		err(EXIT_FAILURE, "cannot open pkgdb");
 	}
 
 	preserve = find_plist_option(pkg, "preserve") ? TRUE : FALSE;
