@@ -1,10 +1,12 @@
-# $NetBSD: Makefile.boot,v 1.2 2003/04/26 19:13:37 fvdl Exp $
+# $NetBSD: Makefile.boot,v 1.3 2003/05/12 14:35:54 dsl Exp $
 
 S=	${.CURDIR}/../../../../../
 
 NOMAN=
 STRIPFLAG=
-PROG= boot
+BINDIR= /usr/mdec
+BINMODE= 0444
+PROG?= boot
 NEWVERSWHAT= BIOS
 VERSIONFILE?= ${.CURDIR}/../version
 
