@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_name.c,v 1.1 2001/02/04 05:19:14 takemura Exp $	*/
+/*	$NetBSD: platid_name.c,v 1.2 2001/02/09 18:34:02 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -79,6 +79,16 @@ struct platid_name platid_name_table[] = {
 	{ &platid_mask_CPU_SH_4_7750,
 	 TEXT("SH 4 7750") },
 #endif /* hpcsh */
+#ifdef hpcarm
+	{ &platid_mask_CPU_ARM,
+	 TEXT("ARM") },
+	{ &platid_mask_CPU_ARM_STRONGARM,
+	 TEXT("ARM STRONGARM") },
+	{ &platid_mask_CPU_ARM_STRONGARM_SA1100,
+	 TEXT("ARM STRONGARM SA1100") },
+	{ &platid_mask_CPU_ARM_STRONGARM_SA1110,
+	 TEXT("ARM STRONGARM SA1110") },
+#endif /* hpcarm */
 #ifdef hpcmips
 	{ &platid_mask_MACH_NEC,
 	 TEXT("NEC") },
@@ -287,9 +297,9 @@ struct platid_name platid_name_table[] = {
 	{ &platid_mask_MACH_HP_LX,
 	 TEXT("HP LX") },
 	{ &platid_mask_MACH_HP_LX_620,
-	 TEXT(" HP620LX") },
+	 TEXT("HP620LX") },
 	{ &platid_mask_MACH_HP_LX_620JP,
-	 TEXT(" HP620LX (Japanese)") },
+	 TEXT("HP620LX (Japanese)") },
 	{ &platid_mask_MACH_HP_JORNADA,
 	 TEXT("HP Jornada") },
 	{ &platid_mask_MACH_HP_JORNADA_6XX,
@@ -297,11 +307,17 @@ struct platid_name platid_name_table[] = {
 	{ &platid_mask_MACH_HP_JORNADA_680,
 	 TEXT("HP Jornada 680") },
 	{ &platid_mask_MACH_HP_JORNADA_680JP,
-	 TEXT("HP Jornada680 (Japanese)") },
+	 TEXT("HP Jornada 680 (Japanese)") },
 	{ &platid_mask_MACH_HP_JORNADA_690,
 	 TEXT("HP Jornada 690") },
 	{ &platid_mask_MACH_HP_JORNADA_690JP,
-	 TEXT("HP Jornada690 (Japanese)") },
+	 TEXT("HP Jornada 690 (Japanese)") },
+	{ &platid_mask_MACH_HITACHI,
+	 TEXT("HITACHI") },
+	{ &platid_mask_MACH_HITACHI_PERSONA,
+	 TEXT("HITACHI PERSONA") },
+	{ &platid_mask_MACH_HITACHI_PERSONA_HPW230JC,
+	 TEXT("HITACHI PERSONA HPW230JC") },
 	{ &platid_mask_MACH_LGE,
 	 TEXT("LGE") },
 	{ &platid_mask_MACH_LGE_PHENOM,
@@ -309,5 +325,17 @@ struct platid_name platid_name_table[] = {
 	{ &platid_mask_MACH_LGE_PHENOM_H220C,
 	 TEXT("LGE H-220C") },
 #endif /* hpcsh */
+#ifdef hpcarm
+	{ &platid_mask_MACH_HP,
+	 TEXT("HP") },
+	{ &platid_mask_MACH_HP_JORNADA,
+	 TEXT("HP Jornada") },
+	{ &platid_mask_MACH_HP_JORNADA_8XX,
+	 TEXT("HP Jornada 8XX") },
+	{ &platid_mask_MACH_HP_JORNADA_820,
+	 TEXT("HP Jornada 820") },
+	{ &platid_mask_MACH_HP_JORNADA_820JP,
+	 TEXT("HP Jornada 820 (Japanese)") },
+#endif /* hpcarm */
 };
 int platid_name_table_size = sizeof(platid_name_table)/sizeof(*platid_name_table);
