@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.1 1995/02/13 00:27:37 chopps Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.2 1996/01/28 19:43:34 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -112,7 +112,7 @@ db_write_text(dst, ch)
 
 	*pte = oldpte;
 	TBIS(dst);
-	cachectl (4, dst, 1);
+	dma_cachectl (dst, 1);
 }
 
 /*
