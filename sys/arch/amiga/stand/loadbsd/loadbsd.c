@@ -1,4 +1,4 @@
-/*	$Id: loadbsd.c,v 1.2 1993/08/02 17:52:07 mycroft Exp $ */
+/*	$Id: loadbsd.c,v 1.3 1993/09/02 18:08:26 mw Exp $ */
 
 #include <sys/types.h>
 #include <a.out.h>
@@ -13,6 +13,9 @@
 #include <inline/exec.h>
 #include <inline/expansion.h>
 
+/* Get definitions for boothowto */
+#include "reboot.h"
+
 struct ExpansionBase *ExpansionBase;
 
 #undef __LDPGSZ
@@ -25,6 +28,7 @@ main (int argc, char *argv[])
 {
   struct exec e;
   int fd;
+  int boothowto = RB_SINGLE;
 
   if (argc >= 2)
     {
@@ -60,10 +64,18 @@ main (int argc, char *argv[])
 			  
 			  get_mem_config (&fastmem_start, &fastmem_size, &chipmem_size);
 			  
-			  if (argc == 3 && !strcmp (argv[2], "-k"))
+			  if (argc >= 3 && (!strcmp (argv[2], "-k")
+			      || !strcmp (argv[3], "-k")) )
 			    {
 			      fastmem_start += 4*1024*1024;
 			      fastmem_size  -= 4*1024*1024;
+			    }
+			  
+			  if (argc >= 3 && (!strcmp (argv[2], "-a")
+			      || !strcmp (argv[3], "-a")) )
+			    {
+			      printf("Autobooting...");
+			      boothowto = RB_AUTOBOOT;
 			    }
 			  
 			  printf ("Using %dM FASTMEM at 0x%x, %dM CHIPMEM\n",
@@ -81,7 +93,8 @@ main (int argc, char *argv[])
 			  startit (kernel, 
 				   text_size + e.a_data + e.a_bss + num_cd*sizeof(*cd) + 4,
 				   e.a_entry, fastmem_start,
-				   fastmem_size, chipmem_size);
+				   fastmem_size, chipmem_size,
+				   boothowto );
 			}
 		      else
 			fprintf (stderr, "Executable corrupt!\n");
@@ -102,7 +115,7 @@ main (int argc, char *argv[])
 	perror ("open");
     }
   else
-    fprintf (stderr, "%0 some-vmunix\n", argv[0]);
+    fprintf (stderr, "%s some-vmunix [-a] [-k]\n", argv[0]);
 }
 
 
@@ -179,6 +192,7 @@ start_super:
 	| a0:  fastmem-start
 	| d0:  fastmem-size
 	| d1:  chipmem-size
+	| d7:  boothowto
 
 	movel	a3@(4),a1		| loaded kernel
 	movel	a3@(8),d2		| length of loaded kernel
@@ -186,6 +200,7 @@ start_super:
 	movel	a3@(16),a0		| fastmem-start
 	movel	a3@(20),d0		| fastmem-size
 	movel	a3@(24),d1		| chipmem-size
+	movel	a3@(28),d7		| boothowto
 	subl	a4,a4			| target, load to 0
 
 	lea	pc@(zero-.+2),a3

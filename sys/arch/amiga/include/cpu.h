@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: cpu.h 1.16 91/03/25
  *	from: @(#)cpu.h	7.7 (Berkeley) 6/27/91
- *	$Id: cpu.h,v 1.2 1993/08/01 19:23:31 mycroft Exp $
+ *	$Id: cpu.h,v 1.3 1993/09/02 18:08:19 mw Exp $
  */
 
 /*
@@ -145,8 +145,6 @@ extern unsigned char ssir;
 
 #ifdef KERNEL
 extern	int machineid, mmutype;
-extern  char *chipmembase, *chipmemlimit;
-extern  char *customchipbase, *customchiplimit;
 
 /* what is this supposed to do? i.e. how is it different than startrtclock? 
    #define	enablertclock()
@@ -167,6 +165,7 @@ extern  char *customchipbase, *customchiplimit;
 #define CIABASE		(0x00BFC000)
 #define CIATOP		(0x00C00000)
 #define CIASIZE		btoc(CIATOP-CIABASE)
+#if 0
 #define CUSTOMBASE	(0x00DFE000)
 #define CUSTOMTOP	(0x00E00000)
 #define CUSTOMSIZE	btoc(CUSTOMTOP-CUSTOMBASE)
@@ -175,6 +174,15 @@ extern  char *customchipbase, *customchiplimit;
 #define SCSITOP		(0x00DD0000+AMIGA_PAGE_SIZE)
 #define SCSISIZE	btoc(SCSITOP-SCSIBASE)
 #endif
+#else
+/* zorro2 really starts at 0x00E00000, but starting mapping at D8 also
+   includes the clock and scsi space on the A3000, as well as the 
+   normal custom chip area on any amiga. That's nice :-)) */
+#define ZORRO2BASE	(0x00D80000)
+#define ZORRO2TOP	(0x00F80000)
+#define ZORRO2SIZE	btoc(ZORRO2TOP-ZORRO2BASE)
+#define CUSTOMBASE	(0x00DFF000)	/* now just offset rel to zorro2 */
+#endif
 
 /* XXX only correct for A3000 memory map!
  * corresponds to address of last physical memory page, for A3000
@@ -182,6 +190,9 @@ extern  char *customchipbase, *customchiplimit;
  */
 #define MAXADDR		(0x08000000 - UPAGES)
 
+
+#if 0
+/* these are not used, verbatim from hp300, but not used :-)) */
 
 /* Amiga specific mappings:
  *
@@ -211,6 +222,7 @@ extern  char *customchipbase, *customchiplimit;
 #define	CUSTOMCHIPP(va)	((int)(va)-(int)customchipbase+CUSTOMCHIPBASE)
 #define	CUSTOMCHIPPOFF(pa)	((int)(pa)-CUSTOMCHIPBASE)
 #define	CUSTOMCHIPMAPSIZE	btoc(CUSTOMCHIPTOP-CUSTOMCHIPBASE)	/* 1.5mb */
+#endif
 
 
 /*

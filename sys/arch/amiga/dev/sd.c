@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sd.c	7.8 (Berkeley) 6/9/91
- *	$Id: sd.c,v 1.2 1993/08/01 19:23:18 mycroft Exp $
+ *	$Id: sd.c,v 1.3 1993/09/02 18:08:13 mw Exp $
  */
 
 /*
@@ -44,7 +44,7 @@
 #if NSD > 0
 
 #ifndef lint
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/Attic/sd.c,v 1.2 1993/08/01 19:23:18 mycroft Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/Attic/sd.c,v 1.3 1993/09/02 18:08:13 mw Exp $";
 #endif
 
 #include "sys/param.h"
@@ -88,9 +88,6 @@ static void sdfinish (int unit, register struct sd_softc *sc, register struct bu
 extern void disksort();
 extern int physio();
 extern void TBIS();
-
-int	sdinit();
-void	sdstrategy(), sdstart(), sdustart(), sdgo(), sdintr();
 
 struct	driver sddriver = {
 	sdinit, "sd", (int (*)())sdstart, (int (*)())sdgo, (int (*)())sdintr, 0,
@@ -155,6 +152,7 @@ struct	sd_softc {
 int sddebug = 0;
 #define SDB_ERROR	0x01
 #define SDB_PARTIAL	0x02
+#define SDB_BOOTDEV	0x04
 /*#define QUASEL*/
 #endif
 
@@ -240,7 +238,7 @@ sdident(sc, ad)
 	/*
 	 * See if unit exists and is a disk then read block size & nblocks.
 	 */
-	while ((i = scsi_test_unit_rdy(slave)) != 0) {
+	while ((i = scsi_test_unit_rdy(ctlr, slave, unit)) != 0) {
 retry_TUR:
 		if (i == -1 || --tries < 0) {
 			if (ismo)
@@ -252,7 +250,8 @@ retry_TUR:
 			u_char sensebuf[128];
 			struct scsi_xsense *sp = (struct scsi_xsense *)sensebuf;
 
-			i = scsi_request_sense(slave, sensebuf, sizeof(sensebuf));
+			i = scsi_request_sense(ctlr, slave, unit, sensebuf, 
+					       sizeof(sensebuf));
 			if (sp->class == 7)
 				switch (sp->key) {
 				/* not ready -- might be MO with no media */
@@ -274,7 +273,8 @@ retry_TUR:
 	/*
 	 * Find out about device
 	 */
-	if (i = scsi_immed_command(slave, &inq, (u_char *)&inqbuf, sizeof(inqbuf), B_READ))
+	if (i = scsi_immed_command(ctlr, slave, unit, &inq, 
+				   (u_char *)&inqbuf, sizeof(inqbuf), B_READ))
 	  {
 	    if (i == STS_CHECKCOND)
 	      goto retry_TUR;
@@ -312,7 +312,8 @@ retry_TUR:
 				break;
 		sc->sc_idstr[i+1] = 0;
 	}
-	i = scsi_immed_command(slave, &cap, (u_char *)&capbuf, sizeof(capbuf), B_READ);
+	i = scsi_immed_command(ctlr, slave, unit, &cap, 
+			       (u_char *)&capbuf, sizeof(capbuf), B_READ);
 	if (i) {
 		if (i != STS_CHECKCOND ||
 		    bcmp(&sc->sc_idstr[0], "HP", 3) ||
@@ -363,32 +364,27 @@ sdinit(ad)
 	struct PartitionBlock *pb  = (struct PartitionBlock *) block;
 	int bnum, npbnum, num_bsd_part = 0;
 	struct disklabel *dl;
+	int s;
+
+	/* I seem to be interrupted every leap year while in here..
+	   
+	   Note: do this *only* if you don't need interrupt driven
+	         SCSI in here. We currently don't, as all I/O in here
+		 is done with PIO, but beware.. */
+	s = splbio();
 
 	sc->sc_ad = ad;
 	sc->sc_punit = sdpunit(ad->amiga_flags);
 	sc->sc_type = sdident(sc, ad);
 	if (sc->sc_type < 0)
-		return(0);
+	  {
+	    splx (s);
+	    return(0);
+	  }
 	sc->sc_dq.dq_ctlr = ad->amiga_ctlr;
 	sc->sc_dq.dq_unit = ad->amiga_unit;
 	sc->sc_dq.dq_slave = ad->amiga_slave;
 	sc->sc_dq.dq_driver = &sddriver;
-
-	/* read RDB and partition blocks to find out about which partitions
-	   are ok to be scribbled upon by BSD. This is quite Amiga specific. */
-
-	for (bnum = 0; bnum < RDB_LOCATION_LIMIT; bnum++)
-	  {
-	    if (scsi_tt_read (ad->amiga_slave, block, DEV_BSIZE, bnum, sc->sc_bshift))
-	      /* read error on block */
-	      return 0;
-
-	    if (rdb->rdb_ID == IDNAME_RIGIDDISK)
-	      break;
-	  }
-	if (bnum == RDB_LOCATION_LIMIT)
-	  /* no RDB on this disk */
-	  return 0;
 
 	/* fill in as much as we can of the disklabel */
 	dl = &sc->sc_label;
@@ -399,6 +395,40 @@ sdinit(ad)
 	strncpy (dl->d_typename, sc->sc_idstr, sizeof (dl->d_typename) - 1);
 	strcpy (dl->d_packname, "some pack");
 	
+	/* if drive doesn't use DEV_BSIZE blocks, it's (probably) not an amiga
+	   drive, but a CDROM, for example. In that case, just set up one
+	   partition, C, containing the whole disk. */
+	if (sc->sc_bshift != 0)
+	  {
+no_rdb:
+	    dl->d_magic2 = DISKMAGIC;
+	    /* A and B come out offset=0, size=0. That way, we keep the 
+	       meaning of C being the whole drive, even if there's no A and
+	       B partition */
+	    dl->d_partitions[2].p_offset = 0;
+	    dl->d_partitions[2].p_size = sc->sc_blks;
+	    dl->d_partitions[2].p_fstype = FS_UNUSED;
+	    dl->d_npartitions = 3; /* just #2 used */
+	    goto do_chksum;
+	  }
+
+	/* read RDB and partition blocks to find out about which partitions
+	   are ok to be scribbled upon by BSD. This is quite Amiga specific. */
+
+	for (bnum = 0; bnum < RDB_LOCATION_LIMIT; bnum++)
+	  {
+	    if (scsi_tt_read (ad->amiga_ctlr, ad->amiga_slave, sc->sc_punit,
+			      (char *) block, DEV_BSIZE, bnum, sc->sc_bshift))
+	      /* read error on block */
+	      goto no_rdb;
+
+	    if (rdb->rdb_ID == IDNAME_RIGIDDISK)
+	      break;
+	  }
+	if (bnum == RDB_LOCATION_LIMIT)
+	  /* no RDB on this disk */
+	  goto no_rdb;
+
 	/* now for more serious information.. */
 	dl->d_secsize	 = rdb->rdb_BlockBytes;
 	dl->d_nsectors   = rdb->rdb_Sectors;
@@ -421,7 +451,8 @@ sdinit(ad)
 	    u_int reserved;
 	    int part;
 
-	    if (scsi_tt_read (ad->amiga_slave, block, DEV_BSIZE, npbnum, sc->sc_bshift))
+	    if (scsi_tt_read (ad->amiga_ctlr, ad->amiga_slave, sc->sc_punit,
+			      (char *) block, DEV_BSIZE, npbnum, sc->sc_bshift))
 	      break;
 	  
 	    if (pb->pb_ID != IDNAME_PARTITION)
@@ -451,11 +482,15 @@ sdinit(ad)
 
 		    /* 4: 		sd major
 		       0: 		adaptor number
-		       0: 		controller number
+		       ad->amiga_ctlr:	controller number
 		       ad->amiga_unit:  scsi-unit
 		       part:		partition (A) */
 
-		    bootdev = MAKEBOOTDEV (4, 0, 0, ad->amiga_unit, part);
+		    bootdev = MAKEBOOTDEV (4, 0, ad->amiga_ctlr, ad->amiga_unit, part);
+#ifdef DEBUG
+		    if (sddebug & SDB_BOOTDEV)
+		      printf ("sdinit: setting bootdev to 0x%08x\n", bootdev);
+#endif
 		  }
 		break;
 
@@ -516,6 +551,7 @@ sdinit(ad)
 	/* C gets everything */
 	dl->d_partitions[2].p_size = sc->sc_blks;
 
+do_chksum:
 	dl->d_checksum = 0;
 	dl->d_checksum = dkcksum (dl);
 
@@ -523,6 +559,7 @@ sdinit(ad)
 	sc->sc_write_label = 0;
 
 	sc->sc_flags = SDF_ALIVE;
+	splx (s);
 	return(1);
 }
 
@@ -736,7 +773,8 @@ sderror(unit, sc, am, stat)
 	if (stat & STS_CHECKCOND) {
 		struct scsi_xsense *sp;
 
-		scsi_request_sense(am->amiga_slave,
+		scsi_request_sense(am->amiga_ctlr, am->amiga_slave,
+				   sc->sc_punit,
 				   sdsense[unit].sense,
 				   sizeof(sdsense[unit].sense));
 		sp = (struct scsi_xsense *)sdsense[unit].sense;
@@ -794,7 +832,8 @@ sdstart(unit)
 		register struct buf *bp = sdtab[unit].b_actf;
 		register int sts;
 
-		sts = scsi_immed_command(am->amiga_slave,
+		sts = scsi_immed_command(am->amiga_ctlr, am->amiga_slave,
+					 sc->sc_punit,
 					 &sdcmd[unit],
 					 bp->b_un.b_addr, bp->b_bcount,
 					 bp->b_flags & B_READ);
@@ -844,7 +883,7 @@ sdgo(unit)
 #endif
 		sdstats[unit].sdtransfers++;
 	}
-	if (scsigo(am->amiga_ctlr, am->amiga_slave, bp, cmd, pad) == 0) {
+	if (scsigo(am->amiga_ctlr, am->amiga_slave, sc->sc_punit, bp, cmd, pad) == 0) {
 		if (am->amiga_dk >= 0) {
 			dk_busy |= 1 << am->amiga_dk;
 			++dk_seek[am->amiga_dk];
@@ -1129,7 +1168,7 @@ sddump(dev)
 	baddr = dumplo + sc->sc_label.d_partitions[part].p_offset;
 	/* scsi bus idle? */
 	if (!scsireq(&sc->sc_dq)) {
-		scsireset(/*am->amiga_ctlr*/);
+		scsireset(am->amiga_ctlr);
 		sdreset(sc, sc->sc_ad);
 		printf("[ drive %d reset ] ", unit);
 	}
@@ -1140,7 +1179,8 @@ sddump(dev)
 			printf("%d ", i / NPGMB);
 #undef NPBMG
 		pmap_enter(pmap_kernel(), vmmap, maddr, VM_PROT_READ, TRUE);
-		stat = scsi_tt_write(am->amiga_slave,
+		stat = scsi_tt_write(am->amiga_ctlr, am->amiga_slave,
+				     sc->sc_punit,
 				     vmmap, NBPG, baddr, sc->sc_bshift);
 		if (stat) {
 			printf("sddump: scsi write error 0x%x\n", stat);

@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: kbd.c,v 1.2 1993/08/02 18:33:36 mycroft Exp $
+ *	$Id: kbd.c,v 1.3 1993/09/02 18:08:06 mw Exp $
  */
 
 #include "ite.h"
@@ -63,7 +63,7 @@ kbdenable ()
   /* collides with external ints from SCSI, watch out for this when
      enabling/disabling interrupts there !! */
   custom.intena = INTF_SETCLR | INTF_PORTS;
-  ciaa.icr = (1<<7) | (1<<3);	/* SP interrupt enable */
+  ciaa.icr = CIA_ICR_IR_SC | CIA_ICR_SP;  /* SP interrupt enable */
   ciaa.cra &= ~(1<<6);		/* serial line == input */
   
   splx (s);
@@ -71,16 +71,13 @@ kbdenable ()
 
 
 int
-kbdintr ()
+kbdintr (mask)
+     int mask;
 {
-  /* THIS CLEARS ALL INTERRUPTS FROM CIAA! Will need a special cia
-     interrupt handler to be able to use the ciaa timers besides driving
-     the keyboard !! */
-  u_char ints = ciaa.icr;
   u_char c, in;
  
-  if (! (ints & (1<<3)))
-    return 0;
+  /* now only invoked from generic CIA interrupt handler if there *is*
+     a keyboard interrupt pending */
     
   in = ciaa.sdr;
   /* ack */
@@ -97,15 +94,19 @@ kbdintr ()
   c = (c >> 1) | (c << 7);	/* rotate right once */
 
   itefilter (c, ITEFILT_TTY);
+  
+  /* XXX THIS IS WRONG!!! The screenblanker should route thru ite.c, which 
+     should call thru it's driver table, ie. we need a new driver-dependant
+     function for this feature! */
+  cc_unblank ();
 }
 
 
 int
 kbdbell()
 {
-
- /* not yet.. */
-
+  /* nice, mykes provided audio-support! */
+  cc_bell ();
 }
 
 
@@ -113,10 +114,9 @@ int
 kbdgetcn ()
 {
   int s = spltty ();
-  u_char ints, c, in;
+  u_char ints, mask, c, in;
 
-  /* this is very very nasty... */
-  while (! (ciaa.icr & (1<<3))) ;
+  for (ints = 0; ! ((mask = ciaa.icr) & CIA_ICR_SP); ints |= mask) ;
 
   in = ciaa.sdr;
   c = ~in;
@@ -131,6 +131,11 @@ kbdgetcn ()
 
   splx (s);
   c = (c >> 1) | (c << 7);
+
+  /* take care that no CIA-interrupts are lost */
+  if (mask)
+    dispatch_cia_ints (0, mask);
+
   return c;
 }
 

@@ -37,14 +37,14 @@
  *
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.2 1993/08/01 19:22:44 mycroft Exp $
+ *	$Id: machdep.c,v 1.3 1993/09/02 18:05:34 mw Exp $
  */
 
 #include "param.h"
 #include "systm.h"
 #include "signalvar.h"
 #include "kernel.h"
-#include "rlist.h"
+#include "map.h"
 #include "proc.h"
 #include "buf.h"
 #include "reboot.h"
@@ -81,6 +81,10 @@
 #include "cia.h"
 
 #include "ite.h"
+#include "le.h"
+#include "a3000scsi.h"
+#include "a2091scsi.h"
+#include "gvp11scsi.h"
 
 /* vm_map_t buffer_map; */
 extern vm_offset_t avail_end;
@@ -203,7 +207,7 @@ again:
 	    (name) = (type *)v; v = (caddr_t)((lim) = ((name)+(num)))
 /*	valloc(cfree, struct cblock, nclist); */
 	valloc(callout, struct callout, ncallout);
-/*	valloc(swapmap, struct map, nswapmap = maxproc * 2);*/
+	valloc(swapmap, struct map, nswapmap = maxproc * 2);
 #ifdef SYSVSHM
 	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
 #endif
@@ -366,11 +370,19 @@ setregs(p, entry, stack, retval)
 
 identifycpu()
 {
+        /* there's alot of XXX in here... */
+
 	printf ("AMIGA/");
 
-	printf ("A3000");	/* XXX */
+	if (is_a3000 ())
+	  printf ("A3000");	/* XXX */
+	else
+	  printf ("A2000");
 
-	cpu_type = "m68030";	/* XXX */
+	if (mmutype == MMU_68030)
+	  cpu_type = "m68030";	/* XXX */
+	else
+	  cpu_type = "m68020";
 
 	printf(" MC680%s CPU", mmutype == MMU_68030 ? "30" : "20");
 	switch (mmutype) {
@@ -384,6 +396,7 @@ identifycpu()
 		printf("\nunknown MMU type %d\n", mmutype);
 		panic("startup");
 	}
+	/* XXX */
 	if (mmutype == MMU_68030)
 		printf(", %sMhz MC68882 FPU", "25");
 	else
@@ -724,18 +737,12 @@ sigreturn(p, uap, retval)
 	return (EJUSTRETURN);
 }
 
-int	waittime = -1;
+static int waittime = -1;
 
-__dead void
-boot(howto)
-	register int howto;
+void
+bootsync(void)
 {
-	/* take a snap shot before clobbering any registers */
-	if (curproc)
-		savectx(curproc->p_addr, 0);
-
-	boothowto = howto;
-	if ((howto&RB_NOSYNC) == 0 && waittime < 0 && bfreelist[0].b_forw) {
+	if (waittime < 0 && bfreelist[0].b_forw) {
 		register struct buf *bp;
 		int iter, nbusy;
 
@@ -775,6 +782,19 @@ boot(howto)
 		 */
 		resettodr();
 	}
+}
+
+__dead void
+boot(howto)
+	register int howto;
+{
+	/* take a snap shot before clobbering any registers */
+	if (curproc)
+		savectx(curproc->p_addr, 0);
+
+	boothowto = howto;
+	if ((howto&RB_NOSYNC) == 0)
+		bootsync();
 	splhigh();			/* extreme priority */
 	if (howto&RB_HALT) {
 		printf("halted\n\n");
@@ -788,7 +808,7 @@ boot(howto)
 	/*NOTREACHED*/
 }
 
-int	dumpmag = 0x8fca0101;	/* magic number for savecore */
+unsigned	dumpmag = 0x8fca0101;	/* magic number for savecore */
 int	dumpsize = 0;		/* also for savecore */
 long	dumplo = 0;
 
@@ -963,6 +983,116 @@ netintr()
 #endif
 }
 
+
+/* this is a handy package to have asynchronously executed
+   function calls executed at very low interrupt priority.
+   Example for use is keyboard repeat, where the repeat 
+   handler running at splclock() triggers such a (hardware
+   aided) software interrupt.
+
+   Note: the installed functions are currently called in a
+         LIFO fashion, might want to change this to FIFO
+	 later. */
+
+struct si_callback {
+  struct si_callback *next;
+  void (*function) __P((void *rock1, void *rock2));
+  void *rock1, *rock2;
+};
+
+static struct si_callback *si_callbacks = 0;
+
+void
+add_sicallback (function, rock1, rock2)
+     void (*function) __P((void *rock1, void *rock2));
+     void *rock1, *rock2;
+{
+  struct si_callback *si;
+  int s;
+
+  /* Note: this function may be called from high-priority
+           interrupt handlers. We may NOT block for 
+	   memory-allocation in here!. */
+
+  si = (struct si_callback *) malloc (sizeof (*si), M_TEMP, M_NOWAIT);
+
+  /* bad luck really.. */
+  if (! si)
+    return;
+
+  si->function = function;
+  si->rock1    = rock1;
+  si->rock2    = rock2;
+
+  s = splhigh();
+  si->next     = si_callbacks;
+  si_callbacks = si;
+  splx (s);
+
+  /* make sure we have software ints enabled at all.. */
+  custom.intena = INTF_SETCLR | INTF_SOFTINT;
+
+  /* and cause a software interrupt (spl1). This interrupt might happen
+     immediately, or after returning to a safe enough level. */
+  custom.intreq = INTF_SETCLR | INTF_SOFTINT;
+}
+
+
+void
+rem_sicallback (function)
+     void (*function) __P((void *rock1, void *rock2));
+{
+  struct si_callback *si, *psi;
+  int s;
+
+  s = splhigh();
+
+  for (psi = 0, si = si_callbacks; si; )
+    {
+      struct si_callback *nsi = si->next;
+
+      if (si->function == function)
+	{
+	  free (si, M_TEMP);
+	  if (psi)
+	    psi->next = nsi;
+	  else
+	    si_callbacks = nsi;
+	}
+      else
+	psi = si;
+
+      si = nsi;
+    }
+
+  splx (s);
+
+}
+
+/* purge the list */
+static void
+call_sicallbacks ()
+{
+  int s;
+  struct si_callback *si;
+
+  do
+    {
+      s = splhigh ();
+      if (si = si_callbacks)
+	si_callbacks = si->next;
+      splx (s);
+
+      if (si)
+	{
+	  si->function (si->rock1, si->rock2);
+	  free (si, M_TEMP);
+	}
+    }
+  while (si);
+}
+
+
 intrhand(sr)
 	int sr;
 {
@@ -975,30 +1105,42 @@ intrhand(sr)
   switch (ipl) 
     {
     case 1:
-      /* check RS232 TBE or softints */
-      serintr (0);
-      
-      custom.intreq = INTF_DSKBLK | INTF_SOFTINT;
+      if (ireq & INTF_TBE)
+	{
+	  ser_outintr ();
+	}
+
+      if (ireq & INTF_SOFTINT)
+	{
+	  /* first call installed callbacks, then clear the softint-bit */
+	  call_sicallbacks ();
+	  custom.intreq = INTF_SOFTINT;
+	}
+
+      custom.intreq = INTF_DSKBLK;
       break;
 
     case 2:
+      custom.intreq = INTF_PORTS;
       /* dmaintr() also calls scsiintr() if the corresponding bit is set in
          the interrupt status register of the sdmac */
-#if 0
-      if (! dmaintr ())
-#if NITE > 0
-      /* check for keyboard too here. */
-        kbdintr ();
-#else
-        ;
+#if NA3000SCSI > 0
+      if (a3000dmaintr ())
+        break;
 #endif
-#else
-      dmaintr ();
-#if NITE > 0
-      kbdintr ();
+#if NA2091SCSI > 0
+      if (a2091dmaintr ())
+	break;
 #endif
+#if NGVP11SCSI > 0
+      if (gvp11dmaintr ())
+	break;
 #endif
-      custom.intreq = INTF_PORTS;
+#if NLE > 0
+      if (leintr (0))
+        break;
+#endif
+      ciaa_intr ();
       break;
 
     case 3:
@@ -1006,14 +1148,18 @@ intrhand(sr)
       custom.intreq = INTF_VERTB | INTF_COPER | INTF_BLIT;
       /* do modem-control check in vbl */
       sermint (0);
+      cc_vbl ();
       break;
 
+#if 0
+/* now dealt with in locore.s for speed reasons */
     case 5:
       /* check RS232 RBF */
       serintr (0);
 
       custom.intreq = INTF_DSKSYNC;
       break;
+#endif
 
     case 4:
       custom.intreq = INTF_AUD0 | INTF_AUD1 | INTF_AUD2 | INTF_AUD3;

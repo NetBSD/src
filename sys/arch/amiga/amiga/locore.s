@@ -35,9 +35,23 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+<<<<<<< locore.s
  *	from: Utah Hdr: locore.s 1.58 91/04/22
  *	from: @(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.2 1993/08/01 19:22:40 mycroft Exp $
+ *	$Id: locore.s,v 1.3 1993/09/02 18:05:32 mw Exp $
+||||||| 1.1.1.2
+ * from: Utah $Hdr: locore.s 1.58 91/04/22$
+ *
+ *	@(#)locore.s	7.11 (Berkeley) 5/9/91
+=======
+ * from: Utah $Hdr: locore.s 1.58 91/04/22$
+ *
+ *	@(#)locore.s	7.11 (Berkeley) 5/9/91
+ *
+ * Original (hp300) Author: unknown, maybe Mike Hibler?
+ * Amiga author: Markus Wild
+ * Other contributors: Bryan Ford (kernel reload stuff)
+>>>>>>> /tmp/T4009466
  */
 
 #include "assym.s"
@@ -418,7 +432,7 @@ Lsigr1:
  *	Level 0:	Spurious: ignored.
  *	Level 1:	builtin-RS232 TBE, softint (not used yet)
  *	Level 2:	keyboard (CIA-A) + DMA + SCSI
- *	Level 3:	VBL (not used)
+ *	Level 3:	VBL
  *	Level 4:	not used
  *	Level 5:	builtin-RS232 RBF
  *	Level 6:	Clock (CIA-B-Timers)
@@ -436,11 +450,19 @@ _spurintr:
 	addql	#1,_cnt+V_INTR
 	jra	rei
 
+_lev5intr:
+	addql	#1,_intrcnt+20
+	addql	#1,_cnt+V_INTR
+	moveml	d0/d1/a0/a1,sp@-
+	jsr	_ser_fastint
+	moveml	sp@+,d0/d1/a0/a1
+	rte
+	
+	
 _lev1intr:
 _lev2intr:
 _lev3intr:
 _lev4intr:
-_lev5intr:
 	clrw	sp@-
 	moveml	#0xC0C0,sp@-
 Lnotdma:
@@ -726,6 +748,25 @@ start:
 	moveq	#0,d0
 	movc	d0,vbr
 
+#if 1
+	| WHY THE @#$@#$@ DOESN'T THIS WORK????????
+	
+	| add code to determine MMU. This should be passed from
+	| AmigaOS really...
+	movl	#0x200,d0		| data freeze bit
+	movc	d0,cacr			|   only exists on 68030
+	movc	cacr,d0			| read it back
+	tstl	d0			| zero?
+	jeq	Lis68020		| yes, we have 68020
+	| movl	#-1,_mmutype		| no, we have 68030
+	bra	Lskip
+Lis68020:
+	| movl	#1,_mmutype		| hope we have 68851...
+Lskip:
+	movl	#CACHE_OFF,d0
+	movc	d0,cacr
+#endif
+	
 /* initialize source/destination control registers for movs */
 	moveq	#FC_USERD,d0		| user space
 	movc	d0,sfc			|   as source
@@ -759,8 +800,9 @@ start:
 	
 	movw	#PSL_LOWIPL,sr		| lower SPL
 
-/*
+
 	movl	d7,_boothowto		| save reboot flags
+/*
 	movl	d6,_bootdev		|   and boot device
 */
 	jbsr	_main			| call main()
@@ -2149,7 +2191,49 @@ Ldoreboot:
 	| now rely on prefetch for next jmp
 	jmp	a0@
 	| NOTE REACHED
-	
+
+
+/*
+ * Reboot directly into a new kernel image.
+ * kernel_reload(image, image_size, entry,
+ *		 fastram_start, fastram_size, chipram_start)
+ */
+	.globl	_kernel_reload
+_kernel_reload:
+	CUSTOMADDR(a5)
+
+	movew	#(1<<9),a5@(0x096)	| disable DMA (before clobbering chipmem)
+
+	movl	#CACHE_OFF,d0
+	movc	d0,cacr			| disable on-chip cache(s)
+
+	movw	#0x2700,sr		| cut off any interrupts
+	movel	_boothowto,d7		| save boothowto
+
+	movel	sp@(16),a0		| load memory parameters
+	movel	sp@(20),d0
+	movel	sp@(24),d1
+
+	movel	sp@(12),a4		| find entrypoint (a4)
+
+	movel	sp@(4),a2		| copy kernel to low chip memory
+	movel	sp@(8),d2
+	movl	_CHIPMEMADDR,a3
+Lreload_copy:
+	movel	a2@+,a3@+
+	subl	#4,d2
+	bcc	Lreload_copy
+
+	| ok, turn off MMU.. 
+	lea	pc@(zero-.+2),a3
+	pmove	a3@,tc			| Turn off MMU
+	lea	pc@(nullrp-.+2),a3
+	pmove	a3@,crp			| Turn off MMU some more
+	pmove	a3@,srp			| Really, really, turn off MMU
+
+	jmp	a4@			| start new kernel
+
+
 | A do-nothing MMU root pointer (includes the following long as well)
 
 nullrp:	.long	0x7fff0001
@@ -2192,6 +2276,7 @@ _intrnames:
 	.asciz	"vbl"
 	.asciz	"lev4"
 	.asciz	"rbf"
+	.asciz	"dunno"
 	.asciz	"clock"
 #ifdef PROFTIMER
 	.asciz  "pclock"

@@ -34,15 +34,25 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)scsivar.h	7.1 (Berkeley) 5/8/90
- *	$Id: scsivar.h,v 1.2 1993/08/01 19:23:17 mycroft Exp $
+ *	$Id: scsivar.h,v 1.3 1993/09/02 18:08:12 mw Exp $
  */
 
 struct	scsi_softc {
 	struct	amiga_ctlr *sc_ac;
 	struct	devqueue sc_dq;
 	struct	devqueue sc_sq;
+	dmareq_t  dmareq;
+	dmafree_t dmafree;
+	dmago_t   dmago;
+	dmanext_t dmanext;
+	dmastop_t dmastop;
 	u_char	sc_flags;
-	u_char	sc_sync;
+	u_long	sc_clock_freq;
+	/* one for each target */
+	struct syncpar {
+	  u_char state;
+	  u_char period, offset;
+	} sc_sync[8];
 	u_char	sc_scsi_addr;
 	u_char	sc_stat[2];
 	u_char	sc_msg[7];
@@ -56,3 +66,11 @@ struct	scsi_softc {
 #endif
 #define SCSI_SELECTED	0x04	/* bus is in selected state. Needed for
 				   correct abort procedure. */
+
+/* sync states */
+#define SYNC_START	0	/* no sync handshake started */
+#define SYNC_SENT	1	/* we sent sync request, no answer yet */
+#define SYNC_DONE	2	/* target accepted our (or inferior) settings,
+				   or it rejected the request and we stay async */
+
+

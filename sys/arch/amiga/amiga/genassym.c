@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)genassym.c	7.8 (Berkeley) 5/7/91
- *	$Id: genassym.c,v 1.2 1993/08/01 19:22:36 mycroft Exp $
+ *	$Id: genassym.c,v 1.3 1993/09/02 18:05:31 mw Exp $
  */
 
 #define KERNEL
@@ -99,7 +99,7 @@ main()
 	printf("#define\tSHMMAXPGS %d\n", SHMMAXPGS);
 #endif
 	printf("#define\tUSRSTACK %d\n", USRSTACK);
-	printf("#define\TUSRTEXT %d\n", USRTEXT);
+	printf("#define\tUSRTEXT %d\n", USRTEXT);
 	printf("#define\tMSGBUFPTECNT %d\n", btoc(sizeof (struct msgbuf)));
 	printf("#define\tNMBCLUSTERS %d\n", NMBCLUSTERS);
 	printf("#define\tMCLBYTES %d\n", MCLBYTES);

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)scsireg.h	7.3 (Berkeley) 2/5/91
- *	$Id: scsireg.h,v 1.2 1993/08/01 19:23:16 mycroft Exp $
+ *	$Id: scsireg.h,v 1.3 1993/09/02 18:08:11 mw Exp $
  */
 
 /*
@@ -781,17 +781,17 @@ struct scsi_fmt_sense {
 
 extern void scsi_delay (int delay);
 extern int scsiinit (register struct amiga_ctlr *ac);
-extern void scsireset (void);
-extern int scsi_test_unit_rdy (int slave);
-extern int scsi_request_sense (int slave, u_char *buf, unsigned int len);
-extern int scsi_immed_command (int slave, struct scsi_fmt_cdb *cdb, u_char *buf, unsigned int len, int rd);
-extern int scsi_tt_read (int slave, u_char *buf, u_int len, daddr_t blk, int bshift);
-extern int scsi_tt_write (int slave, u_char *buf, u_int len, daddr_t blk, int bshift);
+extern void scsireset (int unit);
+extern int scsi_test_unit_rdy (int ctlr, int slave, int unit);
+extern int scsi_request_sense (int ctlr, int slave, int unit, u_char *buf, unsigned int len);
+extern int scsi_immed_command (int ctlr, int slave, int unit, struct scsi_fmt_cdb *cdb, u_char *buf, unsigned int len, int rd);
+extern int scsi_tt_read (int ctlr, int slave, int unit, u_char *buf, u_int len, daddr_t blk, int bshift);
+extern int scsi_tt_write (int ctlr, int slave, int unit, u_char *buf, u_int len, daddr_t blk, int bshift);
 extern int scsireq (register struct devqueue *dq);
 extern int scsiustart (int unit);
 extern void scsistart (int unit);
-extern int scsigo (int unit, int slave, struct buf *bp, struct scsi_fmt_cdb *cdb, int pad);
+extern int scsigo (int ctlr, int slave, int unit, struct buf *bp, struct scsi_fmt_cdb *cdb, int pad);
 extern void scsidone (int unit);
 extern int scsiintr (int unit);
 extern void scsifree (register struct devqueue *dq);
-extern int scsi_tt_oddio (int slave, u_char *buf, u_int len, int b_flags, int freedma);
+extern int scsi_tt_oddio (int ctlr, int slave, int unit, u_char *buf, u_int len, int b_flags, int freedma);

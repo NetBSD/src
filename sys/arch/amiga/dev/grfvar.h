@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: grfvar.h 1.9 91/01/21
  *	from: @(#)grfvar.h	7.3 (Berkeley) 5/7/91
- *	$Id: grfvar.h,v 1.2 1993/08/01 19:23:08 mycroft Exp $
+ *	$Id: grfvar.h,v 1.3 1993/09/02 18:08:01 mw Exp $
  */
 
 /* internal structure of lock page */
@@ -51,8 +51,8 @@ struct	grf_lockpage {
 struct	grf_softc {
 	int	g_flags;		/* software flags */
 	int	g_type;			/* type of display */
-	caddr_t	g_regkva;		/* KVA of registers */
-	caddr_t	g_fbkva;		/* KVA of framebuffer */
+	volatile caddr_t g_regkva;	/* KVA of registers */
+	volatile caddr_t g_fbkva;	/* KVA of framebuffer */
 	struct	grfinfo g_display;	/* hardware description (for ioctl) */
 	struct	grf_lockpage *g_lock;	/* lock page associated with device */
 	struct	proc *g_lockp;		/* process holding lock */
@@ -66,10 +66,12 @@ struct	grf_softc {
 #define GF_OPEN		0x02
 #define GF_EXCLUDE	0x04
 #define GF_WANTED	0x08
+#define GF_GRFON	0x10
 
 /* display types - indices into grfdev */
 #define GT_CUSTOMCHIPS	0
 #define GT_TIGA_A2410	1
+#define GT_RETINA	2
 
 struct	grfdev {
 	int	gd_manuf;
@@ -87,6 +89,9 @@ struct	grfdev {
 #define GM_GRFOVON	3
 #define GM_GRFOVOFF	4
 #define GM_GRFCONFIG	5
+#define GM_GRFGETVMODE	6
+#define GM_GRFSETVMODE	7
+#define GM_GRFGETNUMVM	8
 
 /* minor device interpretation */
 #define GRFOVDEV	0x10	/* overlay planes */

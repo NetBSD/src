@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: grf.c 1.31 91/01/21
  *	from: @(#)grf.c	7.8 (Berkeley) 5/7/91
- *	$Id: grf.c,v 1.2 1993/08/01 19:23:06 mycroft Exp $
+ *	$Id: grf.c,v 1.3 1993/09/02 18:07:56 mw Exp $
  */
 
 /*
@@ -79,12 +79,15 @@
 int	grfprobe();
 int	cc_init(), cc_mode();
 int	tg_init(), tg_mode();
+int	rt_init(), rt_mode();
 
 struct grfdev grfdev[] = {
 	MANUF_BUILTIN,		PROD_BUILTIN_DISPLAY,
 		cc_init,  cc_mode,  "custom chips",
 	MANUF_UNILOWELL,	PROD_UNILOWELL_A2410,
-		tg_init,  tg_mode,    "A2410 TIGA board",
+		tg_init,  tg_mode,    "A2410 TIGA",
+	MANUF_MACROSYSTEM,	PROD_MACROSYSTEM_RETINA,
+		rt_init,  rt_mode,    "Retina",
 };
 int	ngrfdev = sizeof(grfdev) / sizeof(grfdev[0]);
 
@@ -141,8 +144,8 @@ grfconfig()
 		/*
 		 * Found a match, initialize
 		 */
-		if (nad && grfinit (nad))
-			nad->amiga_addr = addr;
+		if (nad && grfinit (nad, hw))
+		  nad->amiga_addr = addr;
 	}
 }
 
@@ -154,8 +157,10 @@ grfprobe(ad)
 {
 	struct grf_softc *gp = &grf_softc[ad->amiga_unit];
 
-	if ((gp->g_flags & GF_ALIVE) == 0 &&
-	    !grfinit (ad))
+	/* can't reinit, as ad->amiga_addr no longer contains
+	   manuf/prod information */
+	if ((gp->g_flags & GF_ALIVE) == 0 /* &&
+	    !grfinit (ad) */)
 		return(0);
 	printf("grf%d: %d x %d ", ad->amiga_unit,
 	       gp->g_display.gd_dwidth, gp->g_display.gd_dheight);
@@ -167,8 +172,9 @@ grfprobe(ad)
 	return(1);
 }
 
-grfinit(ad)
+grfinit(ad, ahw)
 	struct amiga_device *ad;
+	struct amiga_hw *ahw;
 {
 	struct grf_softc *gp = &grf_softc[ad->amiga_unit];
 	register struct grfdev *gd;
@@ -177,7 +183,7 @@ grfinit(ad)
 	  if (((gd->gd_manuf << 16) | gd->gd_prod) == ad->amiga_addr)
 	    break;
 
-	if (gd < &grfdev[ngrfdev] && (*gd->gd_init)(gp, ad)) {
+	if (gd < &grfdev[ngrfdev] && (*gd->gd_init)(gp, ad, ahw)) {
 		gp->g_type = gd - grfdev;
 		gp->g_flags = GF_ALIVE;
 		return(1);
@@ -197,6 +203,7 @@ grfopen(dev, flags)
 		return(ENXIO);
 	if ((gp->g_flags & (GF_OPEN|GF_EXCLUDE)) == (GF_OPEN|GF_EXCLUDE))
 		return(EBUSY);
+#if 0
 	/*
 	 * First open.
 	 * XXX: always put in graphics mode.
@@ -206,6 +213,7 @@ grfopen(dev, flags)
 		gp->g_flags |= GF_OPEN;
 		error = grfon(dev);
 	}
+#endif
 	return(error);
 }
 
@@ -256,7 +264,22 @@ grfioctl(dev, cmd, data, flag, p)
 	case GRFIOCSINFO:
 		error = grfsinfo (dev, (struct grfdyninfo *) data);
 		break;
-		
+
+	case GRFGETVMODE:
+		return grfdev[gp->g_type].gd_mode (gp, GM_GRFGETVMODE, data);
+
+	case GRFSETVMODE:
+		error = grfdev[gp->g_type].gd_mode (gp, GM_GRFSETVMODE, data);
+		if (! error)
+		  {
+		    /* XXX */
+		    itereinit (GRFUNIT (dev));
+		  }
+		break;
+
+	case GRFGETNUMVM:
+		return grfdev[gp->g_type].gd_mode (gp, GM_GRFGETNUMVM, data);
+
 	default:
 		error = EINVAL;
 		break;
@@ -337,6 +360,10 @@ grfon(dev)
 	int unit = GRFUNIT(dev);
 	struct grf_softc *gp = &grf_softc[unit];
 
+	if (gp->g_flags & GF_GRFON)
+	  return 0;
+	gp->g_flags |= GF_GRFON;
+
 	/*
 	 * XXX: iteoff call relies on devices being in same order
 	 * as ITEs and the fact that iteoff only uses the minor part
@@ -353,6 +380,10 @@ grfoff(dev)
 	int unit = GRFUNIT(dev);
 	struct grf_softc *gp = &grf_softc[unit];
 	int error;
+
+	if (!(gp->g_flags & GF_GRFON))
+	  return 0;
+	gp->g_flags &= ~GF_GRFON;
 
 	(void) grfunmmap(dev, (caddr_t)0, curproc);
 	error = (*grfdev[gp->g_type].gd_mode)

@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	7.5 (Berkeley) 5/10/91
- *	$Id: pmap.c,v 1.2 1993/08/01 19:22:48 mycroft Exp $
+ *	$Id: pmap.c,v 1.3 1993/09/02 18:05:37 mw Exp $
  */
 
 /*
@@ -334,7 +334,11 @@ pmap_init(phys_start, phys_end)
 	 */
 	addr = (vm_offset_t) CHIPMEMADDR;
 	(void) vm_map_find(kernel_map, NULL, (vm_offset_t) 0,
+#if 0
 			   &addr, amiga_ptob(CHIPMEMSIZE + CIASIZE + CUSTOMSIZE + SCSISIZE), FALSE);
+#else
+			   &addr, amiga_ptob(CHIPMEMSIZE + CIASIZE + ZORRO2SIZE), FALSE);
+#endif
 	if (addr != (vm_offset_t)CHIPMEMADDR)
 		goto bogons;
 
