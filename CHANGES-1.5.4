@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.115 2003/10/01 09:19:04 msaitoh Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.116 2003/10/06 09:26:50 itojun Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -2253,3 +2253,15 @@ sys/netinet/if_arp.c			1.94 (via patch)
 	On arplookup() failure, nuke cloned route - otherwise outsider could
 	use massive number of bogus ARPs for DoS attack.  FreeBSD-SA-03:14.arp
 	[itojun, ticket #86]
+
+sys/ufs/ffs/ffs_vfsops.c		1.121
+
+	make sure to not get flags which are for internal use only from the
+	on-disk superblock.
+	Proposed in http://mail-index.netbsd.org/tech-kern/2003/09/06/0005.html
+	[bouyer, ticket #80]
+
+sys/dev/ic/wdc.c			1.132
+
+	Fix a typo that prevented pre-ata drives from working since 1999.
+	[bouyer, ticket #85]
