@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.30 2000/05/23 04:21:40 soren Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.31 2000/05/29 23:40:04 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -351,16 +351,16 @@ mips3_SlowFault:
  * trapframe is pointed to by the 5th arg
  * and a dummy sixth argument is used to avoid alignment problems
  *	{
- *  	register_t cf_args[4 + 1];
+ *	register_t cf_args[4 + 1];
  *	register_t cf_pad;		(for 8 word alignment)
- *  	register_t cf_sp;
- *  	register_t cf_ra;
- *  	mips_reg_t kf_regs[17];		- trapframe begins here
+ *	register_t cf_sp;
+ *	register_t cf_ra;
+ *	mips_reg_t kf_regs[17];		- trapframe begins here
  * 	mips_reg_t kf_sr;		-
  * 	mips_reg_t kf_mullo;		-
  * 	mips_reg_t kf_mulhi;		-
  * 	mips_reg_t kf_epc;		- may be changed by trap() call
- *  };
+ * };
  */
 NESTED_NOPROFILE(mips3_KernGenException, KERNFRAME_SIZ, ra)
 	.set	noat
@@ -1204,7 +1204,7 @@ outofworld:
 END(mips3_TLBMissException)
 
 /*
- *  Mark where code entered from exception hander jumptable
+ * Mark where code entered from exception hander jumptable
  * ends, for stack traceback code.
  */
 
@@ -1336,11 +1336,11 @@ LEAF(mips3_TLBUpdate)
 	nop
 1:
 #ifdef MIPS3_4100				/* VR4100 core */
-	lw	v0, _C_LABEL(default_pg_mask)	# default_pg_mask declared 
-	mtc0	v0, MIPS_COP_0_TLB_PG_MASK	#           in mips_machdep.c
+	lw	v0, _C_LABEL(default_pg_mask)	# default_pg_mask declared
+	mtc0	v0, MIPS_COP_0_TLB_PG_MASK	#	in mips_machdep.c
 #else
 	mtc0	zero, MIPS_COP_0_TLB_PG_MASK	# init mask.
-#endif	
+#endif
 	dmtc0	a0, MIPS_COP_0_TLB_HI		# init high reg.
 	dmtc0	a1, MIPS_COP_0_TLB_LO0		# init low reg0.
 	dmtc0	a2, MIPS_COP_0_TLB_LO1		# init low reg1.
@@ -1372,11 +1372,11 @@ LEAF(mips3_TLBUpdate)
 	nop
 3:
 #ifdef MIPS3_4100				/* VR4100 core */
-	lw	v0, _C_LABEL(default_pg_mask)	# default_pg_mask declared 
-	mtc0	v0, MIPS_COP_0_TLB_PG_MASK	#           in mips_machdep.c
+	lw	v0, _C_LABEL(default_pg_mask)	# default_pg_mask declared
+	mtc0	v0, MIPS_COP_0_TLB_PG_MASK	#	in mips_machdep.c
 #else
 	mtc0	zero, MIPS_COP_0_TLB_PG_MASK	# init mask.
-#endif	
+#endif
 	dmtc0	a0, MIPS_COP_0_TLB_HI		# init high reg.
 	dmtc0	a2, MIPS_COP_0_TLB_LO0		# init low reg0.
 	dmtc0	a1, MIPS_COP_0_TLB_LO1		# init low reg1.
@@ -1781,22 +1781,22 @@ LEAF(mips5200_FlushCache)
 	bne	t0, t1, 1b
 	addu	t3, t3, 128		# Branch delay slot
 
-        lw      t2, mips_L2CacheSize
-        beq     t2, zero, 2f
-        nop
-        li      t0, MIPS_KSEG0_START
-        addu    t1, t0, t2
-        subu    t1, t1, 128
+	lw	t2, mips_L2CacheSize
+	beq	t2, zero, 2f
+	nop
+	li	t0, MIPS_KSEG0_START
+	addu	t1, t0, t2
+	subu	t1, t1, 128
 1:
-        cache   3, 0(t0)
-        cache   3, 32(t0)
-        cache   3, 64(t0)
-        cache   3, 96(t0)
-        bne     t0, t1, 1b
-        addu    t0, t0, 128
-2:      
-        j       ra 
-        nop
+	cache	3,  0(t0)
+	cache	3, 32(t0)
+	cache	3, 64(t0)
+	cache	3, 96(t0)
+	bne	t0, t1, 1b
+	addu	t0, t0, 128
+2:
+	j	ra
+	nop
 END(mips5200_FlushCache)
 
 /*----------------------------------------------------------------------------
@@ -1837,16 +1837,16 @@ LEAF(mips5200_FlushICache)
 	srl	a1, a1, 7	# Number of unrolled loops
 	or	t0, t0, a0	# Way 1 index offset.
 1:
-	cache	C_ICACHE|C_IINV,   0(a0)
-	cache	C_ICACHE|C_IINV,   0(t0)	# other way
-	cache	C_ICACHE|C_IINV,  32(a0)
-	cache	C_ICACHE|C_IINV,  32(t0)	# other way
+	cache	C_ICACHE|C_IINV,  0(a0)
+	cache	C_ICACHE|C_IINV,  0(t0)		# other way
+	cache	C_ICACHE|C_IINV, 32(a0)
+	cache	C_ICACHE|C_IINV, 32(t0)		# other way
 	addu	a1, -1
-	cache	C_ICACHE|C_IINV,  64(a0)
-	cache	C_ICACHE|C_IINV,  64(t0)	# other way
-	cache	C_ICACHE|C_IINV,  96(a0)
+	cache	C_ICACHE|C_IINV, 64(a0)
+	cache	C_ICACHE|C_IINV, 64(t0)		# other way
+	cache	C_ICACHE|C_IINV, 96(a0)
 	addu	a0, 128
-	cache	C_ICACHE|C_IINV,  96(t0)	# other way
+	cache	C_ICACHE|C_IINV, 96(t0)		# other way
 	bgt	a1, zero, 1b
 	addu	t0, 128		# Branch delay slot
 
@@ -2277,7 +2277,7 @@ LEAF_NOPROFILE(mips3_TBIS)
 	#nop					# -slip-
 	bltz	v0, 1f				# index < 0 then skip
 	li	t1, MIPS_KSEG0_START		# invalid address
-	dmtc0	t1, MIPS_COP_0_TLB_HI		# make entryHi invalid 
+	dmtc0	t1, MIPS_COP_0_TLB_HI		# make entryHi invalid
 	dmtc0	zero, MIPS_COP_0_TLB_LO0	# zero out entryLo0
 	dmtc0	zero, MIPS_COP_0_TLB_LO1	# zero out entryLo1
 	mtc0	zero, MIPS_COP_0_TLB_PG_MASK	# zero out pageMask
@@ -2507,7 +2507,7 @@ END(mips3_write_count)
  * unconditionally masked out on mips3 CPUs.)
  */
 LEAF(mips3_read_compare)
-	mfc0	v0,  MIPS_COP_0_COMPARE
+	mfc0	v0, MIPS_COP_0_COMPARE
 	nop
 	j	ra
 	nop
@@ -2527,7 +2527,7 @@ END(mips3_read_config)
  *	Clears interrupt request from cycle-counter clock.
  */
 LEAF(mips3_write_compare)
-	mtc0	a0,  MIPS_COP_0_COMPARE
+	mtc0	a0, MIPS_COP_0_COMPARE
 	nop
 	j	ra
 	nop
@@ -2544,9 +2544,9 @@ END(mips3_write_xcontext_upper)
 
 /*
  * Clear BEV bit if it was set.
- */   
+ */
 LEAF(mips3_clearBEV)
-	mfc0	v0, MIPS_COP_0_STATUS 
+	mfc0	v0, MIPS_COP_0_STATUS
 	or	v0, MIPS3_SR_DIAG_BEV
 	xor	v0, MIPS3_SR_DIAG_BEV
 	mtc0	v0, MIPS_COP_0_STATUS
