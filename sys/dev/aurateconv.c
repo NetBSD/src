@@ -1,4 +1,4 @@
-/*	$NetBSD: aurateconv.c,v 1.5 2002/03/18 00:42:36 enami Exp $	*/
+/*	$NetBSD: aurateconv.c,v 1.6 2002/10/13 11:34:54 kent Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aurateconv.c,v 1.5 2002/03/18 00:42:36 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aurateconv.c,v 1.6 2002/10/13 11:34:54 kent Exp $");
 
 #include <sys/systm.h>
 #include <sys/types.h>
@@ -49,20 +49,29 @@ __KERNEL_RCSID(0, "$NetBSD: aurateconv.c,v 1.5 2002/03/18 00:42:36 enami Exp $")
 #include <dev/audio_if.h>
 #include <dev/audiovar.h>
 
+#undef AURATECONV_DEBUG
 #ifdef AURATECONV_DEBUG
 #define DPRINTF(x)	printf x
 #else
 #define DPRINTF(x)
 #endif
 
-static int auconv_play_slinear16_le(struct auconv_context *,
+static int auconv_play_slinear16_LE(struct auconv_context *,
 	const struct audio_params *, uint8_t *, const uint8_t *, int);
-static int auconv_play_slinear24_le(struct auconv_context *,
+static int auconv_play_slinear24_LE(struct auconv_context *,
+	const struct audio_params *, uint8_t *, const uint8_t *, int);
+static int auconv_play_slinear16_BE(struct auconv_context *,
+	const struct audio_params *, uint8_t *, const uint8_t *, int);
+static int auconv_play_slinear24_BE(struct auconv_context *,
 	const struct audio_params *, uint8_t *, const uint8_t *, int);
 
-static int auconv_record_slinear16_le(struct auconv_context *,
+static int auconv_record_slinear16_LE(struct auconv_context *,
 	const struct audio_params *, uint8_t *, const uint8_t *, int);
-static int auconv_record_slinear24_le(struct auconv_context *,
+static int auconv_record_slinear24_LE(struct auconv_context *,
+	const struct audio_params *, uint8_t *, const uint8_t *, int);
+static int auconv_record_slinear16_BE(struct auconv_context *,
+	const struct audio_params *, uint8_t *, const uint8_t *, int);
+static int auconv_record_slinear24_BE(struct auconv_context *,
 	const struct audio_params *, uint8_t *, const uint8_t *, int);
 
 int
@@ -76,7 +85,8 @@ auconv_check_params(const struct audio_params *params)
 	    && params->hw_sample_rate == params->sample_rate)
 		return 0;	/* No conversion */
 
-	if (params->hw_encoding != AUDIO_ENCODING_SLINEAR_LE
+	if ((params->hw_encoding != AUDIO_ENCODING_SLINEAR_LE
+	     && params->hw_encoding != AUDIO_ENCODING_SLINEAR_BE)
 	    || (params->hw_precision != 16 && params->hw_precision != 24))
 		return (EINVAL);
 
@@ -139,19 +149,32 @@ auconv_record(struct auconv_context *context,
 		return srcsize;
 	}
 
-	if (params->hw_encoding != AUDIO_ENCODING_SLINEAR_LE) {
+	switch (params->hw_encoding) {
+	case AUDIO_ENCODING_SLINEAR_LE:
+		switch (params->hw_precision) {
+		case 16:
+			return auconv_record_slinear16_LE(context, params,
+							  dest, src, srcsize);
+		case 24:
+			return auconv_record_slinear24_LE(context, params,
+							  dest, src, srcsize);
+		}
+		break;
+	case AUDIO_ENCODING_SLINEAR_BE:
+		switch (params->hw_precision) {
+		case 16:
+			return auconv_record_slinear16_BE(context, params,
+							  dest, src, srcsize);
+		case 24:
+			return auconv_record_slinear24_BE(context, params,
+							  dest, src, srcsize);
+		}
+		break;
+	default:
 		/* This should be rejected in auconv_check_params() */
 		printf("auconv_record: unimplemented encoding: %d\n",
 		       params->hw_encoding);
 		return 0;
-	}
-	switch (params->hw_precision) {
-	case 16:
-		return auconv_record_slinear16_le(context, params,
-						  dest, src, srcsize);
-	case 24:
-		return auconv_record_slinear24_le(context, params,
-						  dest, src, srcsize);
 	}
 	printf("auconv_record: unimplemented precision: %d\n",
 	       params->hw_precision);
@@ -179,19 +202,32 @@ auconv_play(struct auconv_context *context, const struct audio_params *params,
 		return srcsize;
 	}
 
-	if (params->hw_encoding != AUDIO_ENCODING_SLINEAR_LE) {
+	switch (params->hw_encoding) {
+	case AUDIO_ENCODING_SLINEAR_LE:
+		switch (params->hw_precision) {
+		case 16:
+			return auconv_play_slinear16_LE(context, params,
+							dest, src, srcsize);
+		case 24:
+			return auconv_play_slinear24_LE(context, params,
+							dest, src, srcsize);
+		}
+		break;
+	case AUDIO_ENCODING_SLINEAR_BE:
+		switch (params->hw_precision) {
+		case 16:
+			return auconv_play_slinear16_BE(context, params,
+							dest, src, srcsize);
+		case 24:
+			return auconv_play_slinear24_BE(context, params,
+							dest, src, srcsize);
+		}
+		break;
+	default:
 		/* This should be rejected in auconv_check_params() */
 		printf("auconv_play: unimplemented encoding: %d\n",
 		       params->hw_encoding);
 		return 0;
-	}
-	switch (params->hw_precision) {
-	case 16:
-		return auconv_play_slinear16_le(context, params,
-						dest, src, srcsize);
-	case 24:
-		return auconv_play_slinear24_le(context, params,
-						dest, src, srcsize);
 	}
 	printf("auconv_play: unimplemented precision: %d\n",
 	       params->hw_precision);
@@ -205,9 +241,20 @@ auconv_play(struct auconv_context *context, const struct audio_params *params,
 			V = (C)->ring_start; \
 	} while (0)
 
+#define READ_S8LE(P)		*(int8_t*)(P)
+#define WRITE_S8LE(P, V)	*(int8_t*)(P) = V
+#define READ_S8BE(P)		*(int8_t*)(P)
+#define WRITE_S8BE(P, V)	*(int8_t*)(P) = V
 #if BYTE_ORDER == LITTLE_ENDIAN
 # define READ_S16LE(P)		*(int16_t*)(P)
 # define WRITE_S16LE(P, V)	*(int16_t*)(P) = V
+# define READ_S16BE(P)		(int16_t)((P)[0] | ((P)[1]<<8))
+# define WRITE_S16BE(P, V)	\
+	do { \
+		int vv = V; \
+		(P)[0] = vv; \
+		(P)[1] = vv >> 8; \
+	} while (0)
 #else
 # define READ_S16LE(P)		(int16_t)((P)[0] | ((P)[1]<<8))
 # define WRITE_S16LE(P, V)	\
@@ -216,6 +263,8 @@ auconv_play(struct auconv_context *context, const struct audio_params *params,
 		(P)[0] = vv; \
 		(P)[1] = vv >> 8; \
 	} while (0)
+# define READ_S16BE(P)		*(int16_t*)(P)
+# define WRITE_S16BE(P, V)	*(int16_t*)(P) = V
 #endif
 #define READ_S24LE(P)		(int32_t)((P)[0] | ((P)[1]<<8) | (((int8_t)((P)[2]))<<16))
 #define WRITE_S24LE(P, V)	\
@@ -225,37 +274,45 @@ auconv_play(struct auconv_context *context, const struct audio_params *params,
 		(P)[1] = vvv >> 8; \
 		(P)[2] = vvv >> 16; \
 	} while (0)
+#define READ_S24BE(P)		(int32_t)((P)[2] | ((P)[1]<<8) | (((int8_t)((P)[0]))<<16))
+#define WRITE_S24BE(P, V)	\
+	do { \
+		int vvv = V; \
+		(P)[0] = vvv >> 16; \
+		(P)[1] = vvv >> 8; \
+		(P)[2] = vvv; \
+	} while (0)
 
-#define P_READ_SnLE(BITS, V, RP, PAR)	\
+#define P_READ_Sn(BITS, EN, V, RP, PAR)	\
 	do { \
 		int j; \
 		for (j = 0; j < (PAR)->channels; j++) { \
-			(V)[j] = READ_S##BITS##LE(RP); \
+			(V)[j] = READ_S##BITS####EN##(RP); \
 			RP += (BITS) / NBBY; \
 		} \
 	} while (0)
-#define P_WRITE_SnLE(BITS, V, WP, PAR, CON, WC)	\
+#define P_WRITE_Sn(BITS, EN, V, WP, PAR, CON, WC)	\
 	do { \
 		if ((PAR)->channels == 2 && (PAR)->hw_channels == 1) { \
-			WRITE_S##BITS##LE(WP, ((V)[0] + (V)[1]) / 2); \
+			WRITE_S##BITS####EN##(WP, ((V)[0] + (V)[1]) / 2); \
 			WP += (BITS) / NBBY; \
 			RING_CHECK(CON, WP); \
 			WC += (BITS) / NBBY; \
 		} else { /* channels <= hw_channels */ \
 			int j; \
 			for (j = 0; j < (PAR)->channels; j++) { \
-				WRITE_S##BITS##LE(WP, (V)[j]); \
+				WRITE_S##BITS####EN##(WP, (V)[j]); \
 				WP += (BITS) / NBBY; \
 				RING_CHECK(CON, WP); \
 			} \
 			if (j == 1 && 1 < (PAR)->hw_channels) { \
-				WRITE_S##BITS##LE(WP, (V)[0]); \
+				WRITE_S##BITS####EN##(WP, (V)[0]); \
 				WP += (BITS) / NBBY; \
 				RING_CHECK(CON, WP); \
 				j++; \
 			} \
 			for (; j < (PAR)->hw_channels; j++) { \
-				WRITE_S##BITS##LE(WP, 0); \
+				WRITE_S##BITS####EN##(WP, 0); \
 				WP += (BITS) / NBBY; \
 				RING_CHECK(CON, WP); \
 			} \
@@ -263,32 +320,32 @@ auconv_play(struct auconv_context *context, const struct audio_params *params,
 		} \
 	} while (0)
 
-#define R_READ_SnLE(BITS, V, RP, PAR, CON, RC)	\
+#define R_READ_Sn(BITS, EN, V, RP, PAR, CON, RC)	\
 	do { \
 		int j; \
 		for (j = 0; j < (PAR)->hw_channels; j++) { \
-			(V)[j] = READ_S##BITS##LE(RP); \
+			(V)[j] = READ_S##BITS####EN##(RP); \
 			RP += (BITS) / NBBY; \
 			RING_CHECK(CON, RP); \
 			RC += (BITS) / NBBY; \
 		} \
 	} while (0)
-#define R_WRITE_SnLE(BITS, V, WP, PAR, WC)	\
+#define R_WRITE_Sn(BITS, EN, V, WP, PAR, WC)	\
 	do { \
 		if ((PAR)->channels == 2 && (PAR)->hw_channels == 1) { \
-			WRITE_S##BITS##LE(WP, (V)[0]); \
+			WRITE_S##BITS####EN##(WP, (V)[0]); \
 			WP += (BITS) / NBBY; \
-			WRITE_S##BITS##LE(WP, (V)[0]); \
+			WRITE_S##BITS####EN##(WP, (V)[0]); \
 			WP += (BITS) / NBBY; \
 			WC += (BITS) / NBBY * 2; \
 		} else if ((PAR)->channels == 1 && (PAR)->hw_channels >= 2) { \
-			WRITE_S##BITS##LE(WP, ((V)[0] + (V)[1]) / 2); \
+			WRITE_S##BITS####EN##(WP, ((V)[0] + (V)[1]) / 2); \
 			WP += (BITS) / NBBY; \
 			WC += (BITS) / NBBY; \
 		} else {	/* channels <= hw_channels */ \
 			int j; \
 			for (j = 0; j < (PAR)->channels; j++) { \
-				WRITE_S##BITS##LE(WP, (V)[j]); \
+				WRITE_S##BITS####EN##(WP, (V)[j]); \
 				WP += (BITS) / NBBY; \
 			} \
 			WC += (BITS) / NBBY * j; \
@@ -303,9 +360,9 @@ auconv_play(struct auconv_context *context, const struct audio_params *params,
  *   Don't use them for 32bit data because this linear interpolation overflows
  *   for 32bit data.
  */
-#define AUCONV_PLAY_SLINEAR_LE(BITS)	\
+#define AUCONV_PLAY_SLINEAR(BITS, EN)	\
 static int \
-auconv_play_slinear##BITS##_le(struct auconv_context *context, \
+auconv_play_slinear##BITS##_##EN##(struct auconv_context *context, \
 			       const struct audio_params *params, \
 			       uint8_t *dest, const uint8_t *src, \
 			       int srcsize) \
@@ -324,37 +381,37 @@ auconv_play_slinear##BITS##_le(struct auconv_context *context, \
 	src_end = src + srcsize; \
 	if (params->sample_rate == params->hw_sample_rate) { \
 		while (r < src_end) { \
-			P_READ_SnLE(BITS, v, r, params); \
-			P_WRITE_SnLE(BITS, v, w, params, context, wrote); \
+			P_READ_Sn(BITS, EN, v, r, params); \
+			P_WRITE_Sn(BITS, EN, v, w, params, context, wrote); \
 		} \
 	} else if (params->hw_sample_rate < params->sample_rate) { \
 		for (;;) { \
 			do { \
 				if (r >= src_end) \
 					return wrote; \
-				P_READ_SnLE(BITS, v, r, params); \
+				P_READ_Sn(BITS, EN, v, r, params); \
 				context->count += params->hw_sample_rate; \
 			} while (context->count < params->sample_rate); \
 			context->count -= params->sample_rate; \
-			P_WRITE_SnLE(BITS, v, w, params, context, wrote); \
+			P_WRITE_Sn(BITS, EN, v, w, params, context, wrote); \
 		} \
 	} else { \
 		/* Initial value of context->count is params->sample_rate */ \
 		values_size = sizeof(int32_t) * params->channels; \
 		memcpy(prev, context->prev, values_size); \
-		P_READ_SnLE(BITS, next, r, params); \
+		P_READ_Sn(BITS, EN, next, r, params); \
 		for (;;) { \
 			c256 = context->count * 256 / params->hw_sample_rate; \
 			for (i = 0; i < params->channels; i++) \
 				v[i] = (c256 * next[i] + (256 - c256) * prev[i]) >> 8; \
-			P_WRITE_SnLE(BITS, v, w, params, context, wrote); \
+			P_WRITE_Sn(BITS, EN, v, w, params, context, wrote); \
 			context->count += params->sample_rate; \
 			if (context->count >= params->hw_sample_rate) { \
 				context->count -= params->hw_sample_rate; \
 				memcpy(prev, next, values_size); \
 				if (r >= src_end) \
 					break; \
-				P_READ_SnLE(BITS, next, r, params); \
+				P_READ_Sn(BITS, EN, next, r, params); \
 			} \
 		} \
 		memcpy(context->prev, next, values_size); \
@@ -362,9 +419,9 @@ auconv_play_slinear##BITS##_le(struct auconv_context *context, \
 	return wrote; \
 }
 
-#define AUCONV_RECORD_SLINEAR_LE(BITS)	\
+#define AUCONV_RECORD_SLINEAR(BITS, EN)	\
 static int \
-auconv_record_slinear##BITS##_le(struct auconv_context *context, \
+auconv_record_slinear##BITS##_##EN##(struct auconv_context *context, \
 				 const struct audio_params *params, \
 				 uint8_t *dest, const uint8_t *src, \
 				 int srcsize) \
@@ -382,37 +439,37 @@ auconv_record_slinear##BITS##_le(struct auconv_context *context, \
 	r = src; \
 	if (params->sample_rate == params->hw_sample_rate) { \
 		while (rsize < srcsize) { \
-			R_READ_SnLE(BITS, v, r, params, context, rsize); \
-			R_WRITE_SnLE(BITS, v, w, params, wrote); \
+			R_READ_Sn(BITS, EN, v, r, params, context, rsize); \
+			R_WRITE_Sn(BITS, EN, v, w, params, wrote); \
 		} \
 	} else if (params->sample_rate < params->hw_sample_rate) { \
 		for (;;) { \
 			do { \
 				if (rsize >= srcsize) \
 					return wrote; \
-				R_READ_SnLE(BITS, v, r, params, context, rsize); \
+				R_READ_Sn(BITS, EN, v, r, params, context, rsize); \
 				context->count += params->sample_rate; \
 			} while (context->count < params->hw_sample_rate); \
 			context->count -= params->hw_sample_rate; \
-			R_WRITE_SnLE(BITS, v, w, params, wrote); \
+			R_WRITE_Sn(BITS, EN, v, w, params, wrote); \
 		} \
 	} else { \
 		/* Initial value of context->count is params->hw_sample_rate */ \
 		values_size = sizeof(int32_t) * params->hw_channels; \
 		memcpy(prev, context->prev, values_size); \
-		R_READ_SnLE(BITS, next, r, params, context, rsize); \
+		R_READ_Sn(BITS, EN, next, r, params, context, rsize); \
 		for (;;) { \
 			c256 = context->count * 256 / params->sample_rate; \
 			for (i = 0; i < params->hw_channels; i++) \
 				v[i] = (c256 * next[i] + (256 - c256) * prev[i]) >> 8; \
-			R_WRITE_SnLE(BITS, v, w, params, wrote); \
+			R_WRITE_Sn(BITS, EN, v, w, params, wrote); \
 			context->count += params->hw_sample_rate; \
 			if (context->count >= params->sample_rate) { \
 				context->count -= params->sample_rate; \
 				memcpy(prev, next, values_size); \
 				if (rsize >= srcsize) \
 					break; \
-				R_READ_SnLE(BITS, next, r, params, context, rsize); \
+				R_READ_Sn(BITS, EN, next, r, params, context, rsize); \
 			} \
 		} \
 		memcpy(context->prev, next, values_size); \
@@ -420,7 +477,11 @@ auconv_record_slinear##BITS##_le(struct auconv_context *context, \
 	return wrote; \
 }
 
-AUCONV_PLAY_SLINEAR_LE(16)
-AUCONV_PLAY_SLINEAR_LE(24)
-AUCONV_RECORD_SLINEAR_LE(16)
-AUCONV_RECORD_SLINEAR_LE(24)
+AUCONV_PLAY_SLINEAR(16, LE)
+AUCONV_PLAY_SLINEAR(24, LE)
+AUCONV_PLAY_SLINEAR(16, BE)
+AUCONV_PLAY_SLINEAR(24, BE)
+AUCONV_RECORD_SLINEAR(16, LE)
+AUCONV_RECORD_SLINEAR(24, LE)
+AUCONV_RECORD_SLINEAR(16, BE)
+AUCONV_RECORD_SLINEAR(24, BE)
