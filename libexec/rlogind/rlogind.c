@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogind.c,v 1.34 2004/11/15 20:45:52 christos Exp $	*/
+/*	$NetBSD: rlogind.c,v 1.35 2004/11/15 21:01:18 christos Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rlogind.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: rlogind.c,v 1.34 2004/11/15 20:45:52 christos Exp $");
+__RCSID("$NetBSD: rlogind.c,v 1.35 2004/11/15 21:01:18 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -403,7 +403,7 @@ doit(f, fromp)
 			(void) close(f);
 		setup_term(0);
 		(void)strvisx(hostaddrbuf, (const char *)(const void *)fromp,
-		    fromlen, VIS_WHITE);
+		    sizeof(*fromp), VIS_WHITE);
 		if (authenticated)
 			execl(_PATH_LOGIN, "login", "-p",
 			    "-h", hostname, "-a", hostaddrbuf,
