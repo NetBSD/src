@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv_db.c,v 1.2 1996/11/27 09:16:01 thorpej Exp $	*/
+/*	$NetBSD: ypserv_db.c,v 1.3 1997/01/12 20:42:41 tls Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -409,7 +409,7 @@ lookup_host(nametable, host_lookup, db, keystr, result)
 
 	if ((_res.options & RES_INIT) == 0)
 		res_init();
-	bcopy("b", _res.lookups, sizeof("b"));
+	memcpy(_res.lookups, "b", sizeof("b"));
 
 	if (nametable) {
 		host = gethostbyname(keystr);
@@ -446,7 +446,7 @@ lookup_host(nametable, host_lookup, db, keystr, result)
 
 	l = 0;
 	for (; host->h_addr_list[0] != NULL; host->h_addr_list++)
-		if (!bcmp(host->h_addr_list[0], &addr_addr, sizeof(addr_addr)))
+		if (!memcmp(host->h_addr_list[0], &addr_addr, sizeof(addr_addr)))
 			l++;
 
 	if (l == 0) {
