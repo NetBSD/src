@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.17 1997/01/11 02:04:44 tls Exp $	*/
+/*	$NetBSD: output.c,v 1.18 1997/04/11 23:05:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)output.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: output.c,v 1.17 1997/01/11 02:04:44 tls Exp $";
+static char rcsid[] = "$NetBSD: output.c,v 1.18 1997/04/11 23:05:43 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,11 +60,6 @@ static char rcsid[] = "$NetBSD: output.c,v 1.17 1997/01/11 02:04:44 tls Exp $";
 
 #include <stdio.h>	/* defines BUFSIZ */
 #include <string.h>
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 #include <errno.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -83,7 +78,7 @@ static char rcsid[] = "$NetBSD: output.c,v 1.17 1997/01/11 02:04:44 tls Exp $";
 
 
 struct output output = {NULL, 0, NULL, OUTBUFSIZ, 1, 0};
-struct output errout = {NULL, 0, NULL, 100, 2, 0};;
+struct output errout = {NULL, 0, NULL, 100, 2, 0};
 struct output memout = {NULL, 0, NULL, 0, MEM_OUT, 0};
 struct output *out1 = &output;
 struct output *out2 = &errout;
@@ -372,8 +367,13 @@ doformat(dest, f, ap)
 	int isquad;
 	char *p;
 	int sign;
+#ifdef BSD4_4
 	quad_t l;
 	u_quad_t num;
+#else
+	long l;
+	u_long num;
+#endif
 	unsigned base;
 	int len;
 	int size;
@@ -427,9 +427,12 @@ doformat(dest, f, ap)
 		}
 		switch (*f) {
 		case 'd':
+#ifdef BSD4_4
 			if (isquad)
 				l = va_arg(ap, quad_t);
-			else if (islong)
+			else
+#endif
+			if (islong)
 				l = va_arg(ap, long);
 			else
 				l = va_arg(ap, int);
@@ -453,9 +456,12 @@ doformat(dest, f, ap)
 			base = 16;
 uns_number:	  /* an unsigned number */
 			sign = 0;
+#ifdef BSD4_4
 			if (isquad)
 				num = va_arg(ap, u_quad_t);
-			else if (islong)
+			else
+#endif
+			if (islong)
 				num = va_arg(ap, unsigned long);
 			else
 				num = va_arg(ap, unsigned int);
