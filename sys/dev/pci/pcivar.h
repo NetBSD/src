@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.52 2002/05/30 12:06:43 drochner Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.53 2002/06/18 13:18:37 tshiozak Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -208,6 +208,17 @@ const struct pci_quirkdata *
 struct proc;
 int	pci_devioctl __P((pci_chipset_tag_t, pcitag_t, u_long, caddr_t,
 	    int flag, struct proc *));
+
+/*
+ * Power Management (PCI 2.2)
+ */
+
+#define PCI_PWR_D0	0
+#define PCI_PWR_D1	1
+#define PCI_PWR_D2	2
+#define PCI_PWR_D3	3
+int	pci_set_powerstate __P((pci_chipset_tag_t, pcitag_t, int));
+int	pci_get_powerstate __P((pci_chipset_tag_t, pcitag_t));
 
 /*
  * Misc.
