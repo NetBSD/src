@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2003/07/10 10:34:15 lukem Exp $
+#	$NetBSD: Makefile,v 1.15 2003/12/13 22:05:28 chs Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -6,7 +6,7 @@
 .include <bsd.kernobj.mk>
 
 IMAGE=		miniroot.fs
-IMAGESIZE=	12m
+IMAGESIZE=	13m
 MAKEFS_FLAGS=	-o minfree=0,optimization=space,density=8k
 
 KERNEL=		${KERNOBJDIR}/INSTALL/netbsd
@@ -18,7 +18,7 @@ LISTS=		${.CURDIR}/list
 MTREECONF=	${.CURDIR}/mtree.conf
 IMAGEENDIAN=	be
 PARSELISTENV=	KERNEL=${KERNEL}
-MAKEDEVTARGETS=	std md0 cd0 st0 st1 sd0 sd1 sd2 xd0 xy0 fd0
+MAKEDEVTARGETS=	std md0 cd0 st0 st1 sd0 sd1 sd2 xd0 xy0
 IMAGEDEPENDS=	${KERNEL} \
 		fstab install.md profile termcap \
 		${DESTDIR}/bin/cat ${DESTDIR}/bin/chmod ${DESTDIR}/bin/cp \
