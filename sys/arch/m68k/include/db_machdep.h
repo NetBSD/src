@@ -30,7 +30,6 @@
 #ifndef	_M68K_DB_MACHDEP_H_
 #define	_M68K_DB_MACHDEP_H_
 
-#include <vm/queue.h>
 #include <vm/vm_prot.h>
 #include <vm/vm_param.h>
 #include <vm/vm_inherit.h>
