@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.61 2002/03/13 17:43:31 pk Exp $	*/
+/*	$NetBSD: job.c,v 1.62 2002/03/13 17:46:03 pk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.61 2002/03/13 17:43:31 pk Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.62 2002/03/13 17:46:03 pk Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.61 2002/03/13 17:43:31 pk Exp $");
+__RCSID("$NetBSD: job.c,v 1.62 2002/03/13 17:46:03 pk Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2936,6 +2936,7 @@ JobInterrupt(runINTERRUPT, signo)
 	}
 #endif /* RMT_WANTS_SIGNALS */
     }
+    Lst_Close(jobs);
 
 #ifdef REMOTE
    (void)Lst_Open(stoppedJobs);
@@ -2995,8 +2996,8 @@ JobInterrupt(runINTERRUPT, signo)
 	}
 #endif /* RMT_WANTS_SIGNALS */
     }
-#endif
     Lst_Close(stoppedJobs);
+#endif /* REMOTE */
 
     if (runINTERRUPT && !touchFlag) {
 	interrupt = Targ_FindNode(".INTERRUPT", TARG_NOCREATE);
