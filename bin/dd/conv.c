@@ -1,4 +1,4 @@
-/*	$NetBSD: conv.c,v 1.9 2000/07/07 15:10:32 itojun Exp $	*/
+/*	$NetBSD: conv.c,v 1.10 2001/01/16 02:41:17 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)conv.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: conv.c,v 1.9 2000/07/07 15:10:32 itojun Exp $");
+__RCSID("$NetBSD: conv.c,v 1.10 2001/01/16 02:41:17 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -235,8 +235,8 @@ unblock()
 
 	/* Translation and case conversion. */
 	if ((t = ctab) != NULL)
-		for (cnt = in.dbrcnt, inp = in.dbp; cnt--;)
-			*--inp = t[*inp];
+		for (cnt = in.dbrcnt, inp = in.dbp - 1; cnt--; inp--)
+			*inp = t[*inp];
 	/*
 	 * Copy records (max cbsz size chunks) into the output buffer.  The
 	 * translation has to already be done or we might not recognize the

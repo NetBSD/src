@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanerd.c,v 1.28 2001/01/10 01:13:54 lukem Exp $	*/
+/*	$NetBSD: cleanerd.c,v 1.29 2001/01/16 02:41:17 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";
 #else
-__RCSID("$NetBSD: cleanerd.c,v 1.28 2001/01/10 01:13:54 lukem Exp $");
+__RCSID("$NetBSD: cleanerd.c,v 1.29 2001/01/16 02:41:17 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -938,8 +938,8 @@ sig_report(sig)
 	syslog(LOG_INFO, "\t\t%s%5.2f\n\t\t%s%5.2f",
 		"util_tot       ", cleaner_stats.util_tot,
 		"util_sos       ", cleaner_stats.util_sos);
-	syslog(LOG_INFO, "\t\tavg util: %4.2f std dev: %9.6f",
-	       avg = cleaner_stats.util_tot / MAX(cleaner_stats.segs_cleaned, 1.0),
+	avg = cleaner_stats.util_tot / MAX(cleaner_stats.segs_cleaned, 1.0);
+	syslog(LOG_INFO, "\t\tavg util: %4.2f std dev: %9.6f", avg,
 		cleaner_stats.util_sos / MAX(cleaner_stats.segs_cleaned - avg * avg, 1.0));
 
 
