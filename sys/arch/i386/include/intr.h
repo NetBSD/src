@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3 1996/05/13 01:28:01 mycroft Exp $	*/
+/*	$NetBSD: intr.h,v 1.4 1996/05/13 01:35:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
@@ -28,6 +28,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _I386_INTR_H_
+#define _I386_INTR_H_
 
 /* Interrupt priority `levels'; not mutually exclusive. */
 #define	IPL_BIO		0	/* block I/O */
@@ -153,4 +156,5 @@ softintr(mask)
 #define	setsofttty()	softintr(1 << SIR_TTY)
 
 #endif /* !_LOCORE */
-#endif /* _KERNEL */
+
+#endif /* !_I386_INTR_H_ */
