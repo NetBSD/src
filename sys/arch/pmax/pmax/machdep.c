@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.50 1996/05/19 17:58:25 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.51 1996/05/20 23:27:27 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -244,6 +244,7 @@ struct	proc nullproc;		/* for use by swtch_exit() */
  * Process arguments passed to us by the prom monitor.
  * Return the first page address following the system.
  */
+void
 mach_init(argc, argv, code, cv)
 	int argc;
 	char *argv[];
@@ -629,7 +630,7 @@ mach_init(argc, argv, code, cv)
 		 * Have to be tricky here.
 		 */
 		((int *)cp)[4] = 0x5a5a5a5a;
-		MachEmptyWriteBuffer();
+		wbflush();
 		if (*(int *)cp != 0xa5a5a5a5)
 			break;
 		*(int *)cp = i;
@@ -1082,6 +1083,88 @@ sys_sigreturn(p, v, retval)
 
 int	waittime = -1;
 
+
+int	dumpmag = (int)0x8fca0101;	/* magic number for savecore */
+int	dumpsize = 0;		/* also for savecore */
+long	dumplo = 0;
+
+void
+dumpconf()
+{
+	int nblks;
+
+	dumpsize = physmem;
+	if (dumpdev != NODEV && bdevsw[major(dumpdev)].d_psize) {
+		nblks = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
+		if (dumpsize > btoc(dbtob(nblks - dumplo)))
+			dumpsize = btoc(dbtob(nblks - dumplo));
+		else if (dumplo == 0)
+			dumplo = nblks - btodb(ctob(physmem));
+	}
+	/*
+	 * Don't dump on the first CLBYTES (why CLBYTES?)
+	 * in case the dump device includes a disk label.
+	 */
+	if (dumplo < btodb(CLBYTES))
+		dumplo = btodb(CLBYTES);
+}
+
+/*
+ * Doadump comes here after turning off memory management and
+ * getting on the dump stack, either when called above, or by
+ * the auto-restart code.
+ */
+void
+dumpsys()
+{
+	int error;
+
+	msgbufmapped = 0;
+	if (dumpdev == NODEV)
+		return;
+	/*
+	 * For dumps during autoconfiguration,
+	 * if dump device has already configured...
+	 */
+	if (dumpsize == 0)
+		dumpconf();
+	if (dumplo < 0)
+		return;
+	printf("\ndumping to dev %x, offset %d\n", dumpdev, dumplo);
+	printf("dump ");
+	/*
+	 * XXX
+	 * All but first arguments to  dump() bogus.
+	 * What should blkno, va, size be?
+	 */
+	error = (*bdevsw[major(dumpdev)].d_dump)(dumpdev, 0, 0, 0);
+	switch (error) {
+
+	case ENXIO:
+		printf("device bad\n");
+		break;
+
+	case EFAULT:
+		printf("device not ready\n");
+		break;
+
+	case EINVAL:
+		printf("area improper\n");
+		break;
+
+	case EIO:
+		printf("i/o error\n");
+		break;
+
+	default:
+		printf("error %d\n", error);
+		break;
+
+	case 0:
+		printf("succeeded\n");
+	}
+}
+
 void
 boot(howto)
 	register int howto;
@@ -1133,86 +1216,6 @@ boot(howto)
 	while(1) ;	/* fool gcc */
 	/*NOTREACHED*/
 }
-
-int	dumpmag = (int)0x8fca0101;	/* magic number for savecore */
-int	dumpsize = 0;		/* also for savecore */
-long	dumplo = 0;
-
-dumpconf()
-{
-	int nblks;
-
-	dumpsize = physmem;
-	if (dumpdev != NODEV && bdevsw[major(dumpdev)].d_psize) {
-		nblks = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
-		if (dumpsize > btoc(dbtob(nblks - dumplo)))
-			dumpsize = btoc(dbtob(nblks - dumplo));
-		else if (dumplo == 0)
-			dumplo = nblks - btodb(ctob(physmem));
-	}
-	/*
-	 * Don't dump on the first CLBYTES (why CLBYTES?)
-	 * in case the dump device includes a disk label.
-	 */
-	if (dumplo < btodb(CLBYTES))
-		dumplo = btodb(CLBYTES);
-}
-
-/*
- * Doadump comes here after turning off memory management and
- * getting on the dump stack, either when called above, or by
- * the auto-restart code.
- */
-dumpsys()
-{
-	int error;
-
-	msgbufmapped = 0;
-	if (dumpdev == NODEV)
-		return;
-	/*
-	 * For dumps during autoconfiguration,
-	 * if dump device has already configured...
-	 */
-	if (dumpsize == 0)
-		dumpconf();
-	if (dumplo < 0)
-		return;
-	printf("\ndumping to dev %x, offset %d\n", dumpdev, dumplo);
-	printf("dump ");
-	/*
-	 * XXX
-	 * All but first arguments to  dump() bogus.
-	 * What should blkno, va, size be?
-	 */
-	error = (*bdevsw[major(dumpdev)].d_dump)(dumpdev, 0, 0, 0);
-	switch (error) {
-
-	case ENXIO:
-		printf("device bad\n");
-		break;
-
-	case EFAULT:
-		printf("device not ready\n");
-		break;
-
-	case EINVAL:
-		printf("area improper\n");
-		break;
-
-	case EIO:
-		printf("i/o error\n");
-		break;
-
-	default:
-		printf("error %d\n", error);
-		break;
-
-	case 0:
-		printf("succeeded\n");
-	}
-}
-
 
 
 
@@ -1323,6 +1326,7 @@ microtime(tvp)
 	splx(s);
 }
 
+int
 initcpu()
 {
 	register volatile struct chiptime *c;
@@ -1331,7 +1335,7 @@ initcpu()
 	/* Reset after bus errors during probe */
 	if (Mach_reset_addr) {
 		*Mach_reset_addr = 0;
-		MachEmptyWriteBuffer();
+		wbflush();
 	}
 
 	/* clear any pending interrupts */
@@ -1345,7 +1349,7 @@ initcpu()
 		break;
 	case DS_3MAX:
 		*(u_int *)MACH_PHYS_TO_UNCACHED(KN02_SYS_CHKSYN) = 0;
-		MachEmptyWriteBuffer();
+		wbflush();
 		break;
 	default:
 		printf("initcpu(): unknown system type 0x%x\n", pmax_boardtype);
