@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2003/09/30 06:41:31 lukem Exp $
-
-NOPIC=	1
+#	$NetBSD: Makefile,v 1.5 2004/01/05 02:29:30 rtr Exp $
 
 .include <bsd.own.mk>
 
