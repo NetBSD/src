@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_2100_a50.c,v 1.10 1996/10/13 03:00:09 christos Exp $	*/
+/*	$NetBSD: pci_2100_a50.c,v 1.11 1996/10/23 04:12:26 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -64,7 +64,7 @@ void
 pci_2100_a50_pickintr(acp)
 	struct apecs_config *acp;
 {
-	bus_chipset_tag_t bc = &acp->ac_bc;
+	bus_space_tag_t iot = acp->ac_iot;
 	pci_chipset_tag_t pc = &acp->ac_pc;
 	pcireg_t sioclass;
 	int sioII;
@@ -83,7 +83,7 @@ pci_2100_a50_pickintr(acp)
 	pc->pc_intr_disestablish = dec_2100_a50_intr_disestablish;
 
 #if NSIO
-        sio_intr_setup(bc);
+        sio_intr_setup(iot);
 	set_iointr(&sio_iointr);
 #else
 	panic("pci_2100_a50_pickintr: no I/O interrupt handler (no sio)");

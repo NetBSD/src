@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_kn20aa.c,v 1.12 1996/10/13 02:59:33 christos Exp $	*/
+/*	$NetBSD: dec_kn20aa.c,v 1.13 1996/10/23 04:12:15 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -82,13 +82,10 @@ dec_kn20aa_consinit()
 		/* serial console ... */
 		/* XXX */
 		{
-			extern bus_chipset_tag_t comconsbc;	/* set */
-			extern bus_io_handle_t comcomsioh;	/* set */
-			extern int comconsaddr, comconsinit;	/* set */
-			extern int comdefaultrate;
-			extern int comcngetc __P((dev_t));
-			extern void comcnputc __P((dev_t, int));
-			extern void comcnpollc __P((dev_t, int));
+			extern int comconsinit, comdefaultrate;		/*XXX*/
+			extern int comcngetc __P((dev_t));		/*XXX*/
+			extern void comcnputc __P((dev_t, int));	/*XXX*/
+			extern void comcnpollc __P((dev_t, int));	/*XXX*/
 			static struct consdev comcons = { NULL, NULL,
 			    comcngetc, comcnputc, comcnpollc, NODEV, 1 };
 
@@ -97,12 +94,12 @@ dec_kn20aa_consinit()
 
 			comconsaddr = 0x3f8;
 			comconsinit = 0;
-			comconsbc = &ccp->cc_bc;
-			if (bus_io_map(comconsbc, comconsaddr, COM_NPORTS,
-			    &comconsioh))
+			comconstag = ccp->cc_iot;
+			if (bus_space_map(comconstag, comconsaddr, COM_NPORTS,
+			    0, &comconsbah))
 				panic("can't map serial console I/O ports");
 			comconscflag = (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8;
-			cominit(comconsbc, comconsioh, comdefaultrate);
+			cominit(comconstag, comconsbah, comdefaultrate);
 
 			cn_tab = &comcons;
 			comcons.cn_dev = makedev(26, 0);	/* XXX */
@@ -112,7 +109,7 @@ dec_kn20aa_consinit()
 	case 3:
 		/* display console ... */
 		/* XXX */
-		pci_display_console(&ccp->cc_bc, &ccp->cc_pc,
+		pci_display_console(ccp->cc_iot, ccp->cc_memt, &ccp->cc_pc,
 		    (ctb->ctb_turboslot >> 8) & 0xff,
 		    ctb->ctb_turboslot & 0xff, 0);
 		break;

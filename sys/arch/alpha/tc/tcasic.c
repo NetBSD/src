@@ -1,4 +1,4 @@
-/*	$NetBSD: tcasic.c,v 1.11 1996/10/22 21:34:24 cgd Exp $	*/
+/*	$NetBSD: tcasic.c,v 1.12 1996/10/23 04:12:38 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -131,6 +131,13 @@ tcasicattach(parent, self, aux)
 	}
 
 	tba.tba_memt = tc_bus_mem_init(NULL);
+
+	/* XXX XXX BEGIN XXX XXX */
+	{							/* XXX */
+		extern vm_offset_t alpha_XXX_dmamap_or;		/* XXX */
+		alpha_XXX_dmamap_or = 0;			/* XXX */
+	}							/* XXX */
+	/* XXX XXX END XXX XXX */
 
 	(*intr_setup)();
 	set_iointr(iointr);
