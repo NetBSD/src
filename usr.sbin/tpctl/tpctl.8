@@ -1,4 +1,5 @@
-.\"	$NetBSD: tpctl.8,v 1.1 2002/08/27 14:12:18 takemura Exp $
+.\"	$NetBSD: tpctl.8,v 1.2 2002/08/29 11:07:11 wiz Exp $
+.\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -50,13 +51,13 @@
 .Op Fl hnuv
 .Sh DESCRIPTION
 .Nm
-is touch panel calibration utility.
+is a touch panel calibration utility.
 .Nm
-calibrate touch panel,
-save and restore calibration parameters into/from parameter database file.
+calibrates a touch panel and saves and restores the calibration parameters
+into/from a parameter database file.
 .Pp
 Available command-line flags are:
-.Bl -tag -width indent -compact
+.Bl -tag -width dispdevnameXXXX -compact
 .It Fl D Ar dispdevname
 Specify display device name.
 .It Fl d Ar devname
@@ -68,32 +69,27 @@ Print brief description.
 .It Fl n
 Do not change the parameter database file.
 .It Fl u
-Force to do
-.Dq calibration .
+Force calibration.
 Without this flag,
 .Nm
-won't do
-.Dq calibration
-if the database file already contains parameters for the touch panel.
+won't do calibration if the database file already contains parameters
+for the touch panel.
 .It Fl v
 Verbose mode.
 .El
 .Pp
-You should do
-.Dq calibration
-at first time you run
+You calibrate the touch panel the first time you run
 .Nm "" .
-If you see the cross cursor on the screen, you should tap the center of the cursor
-to calibrate the touch panel, or you can abort
-.Dq calibration
-with ESC key.
+If you see a cross cursor on the screen, you should tap the center of
+the cursor to calibrate the touch panel, or you can abort the
+calibration with the
+.Sq ESC
+key.
 Five cursors will appear on the screen in turn.
-Once
-.Dq calibration
-is done, 
+Once calibration is done,
 .Nm
-saves calibration parameters into the database file and use saved parameters to calibrate
-the touch panel.
+saves the calibration parameters into the database file and uses the saved
+parameters to calibrate the touch panel.
 .Pp
 You can run
 .Nm
@@ -107,16 +103,16 @@ The
 .Fl f
 flag may be used to specify an alternate database file name.
 .Nm
-will create empty database file if it doesn't exist.
+will create an empty database file if it doesn't exist.
 .It Pa /dev/ttyE0
-The default display device, which used to display cursor in
-.Dq calibration .
+The default display device, which is used to display the cursor during
+calibration.
 The
 .Fl D
 flag may be used to specify an alternate display device name.
-The display device must provides
+The display device must provide the
 .Sq hpcfb
-interface defined in
+interface as defined in
 .Pa /usr/include/dev/hpc/hpcfbio.h .
 .It Pa /dev/wsmux0
 The default touch panel device.
@@ -128,6 +124,7 @@ flag may be used to specify an alternate touch panel device name.
 .Xr rc.conf 5
 .Sh BUGS
 .Nm
-isn't available all ports because it requires a display device which provides
+isn't available on all ports because it requires a display device which
+provides the
 .Sq hpcfb
 interface.
