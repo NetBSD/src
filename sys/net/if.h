@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.85 2003/02/26 06:31:12 matt Exp $	*/
+/*	$NetBSD: if.h,v 1.86 2003/03/05 22:56:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -724,9 +724,11 @@ do {									\
 #define	IFQ_INC_DROPS(ifq)		((ifq)->ifq_drops++)
 #define	IFQ_SET_MAXLEN(ifq, len)	((ifq)->ifq_maxlen = (len))
 
+#ifdef _KERNEL
 #include <sys/mallocvar.h>
 MALLOC_DECLARE(M_IFADDR);
 MALLOC_DECLARE(M_IFMADDR);
+#endif
 
 extern struct ifnet_head ifnet;
 extern struct ifnet **ifindex2ifnet;
