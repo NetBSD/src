@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_log.c,v 1.2 2005/02/08 07:01:55 martti Exp $	*/
+/*	$NetBSD: ip_log.c,v 1.3 2005/03/26 18:08:42 christos Exp $	*/
 
 /*
  * Copyright (C) 1997-2003 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_log.c,v 1.2 2005/02/08 07:01:55 martti Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_log.c,v 1.3 2005/03/26 18:08:42 christos Exp $");
 
 #include <sys/param.h>
 #if defined(KERNEL) || defined(_KERNEL)
@@ -20,7 +20,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_log.c,v 1.2 2005/02/08 07:01:55 martti Exp $");
 #endif
 #if defined(__NetBSD__) && (NetBSD >= 199905) && !defined(IPFILTER_LKM) && \
     defined(_KERNEL)
-# include "opt_ipfilter_log.h"
+# include "opt_ipfilter.h"
 #endif
 #if defined(__FreeBSD__) && !defined(IPFILTER_LKM)
 # if defined(_KERNEL)
