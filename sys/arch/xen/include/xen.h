@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.10 2005/03/09 22:39:20 bouyer Exp $	*/
+/*	$NetBSD: xen.h,v 1.11 2005/03/26 20:00:49 bouyer Exp $	*/
 
 /*
  *
@@ -129,7 +129,7 @@ do {									\
 	volatile shared_info_t *_shared = HYPERVISOR_shared_info;	\
 	__insn_barrier();						\
 	if ((_shared->vcpu_data[0].evtchn_upcall_mask = (x)) == 0) {	\
-		__insn_barrier();					\
+		x86_lfence();					\
 		if (__predict_false(_shared->vcpu_data[0].evtchn_upcall_pending)) \
 			hypervisor_force_callback();			\
 	}								\
@@ -138,7 +138,7 @@ do {									\
 #define __cli()								\
 do {									\
 	HYPERVISOR_shared_info->vcpu_data[0].evtchn_upcall_mask = 1;	\
-	__insn_barrier();						\
+	x86_lfence();						\
 } while (0)
 
 #define __sti()								\
@@ -146,7 +146,7 @@ do {									\
 	volatile shared_info_t *_shared = HYPERVISOR_shared_info;	\
 	__insn_barrier();						\
 	_shared->vcpu_data[0].evtchn_upcall_mask = 0;			\
-	__insn_barrier(); /* unmask then check (avoid races) */		\
+	x86_lfence(); /* unmask then check (avoid races) */		\
 	if (__predict_false(_shared->vcpu_data[0].evtchn_upcall_pending)) \
 		hypervisor_force_callback();				\
 } while (0)
@@ -161,18 +161,19 @@ do {									\
 } while (/* CONSTCOND */ 0)
 #define save_and_sti(x)		__save_and_sti(x)
 
-#ifdef MULTIPROCESSOR
+/*
+ * always assume we're on multiprocessor. We don't know how many CPU the
+ * underlying hardware has.
+ */
 #define __LOCK_PREFIX "lock; "
-#else
-#define __LOCK_PREFIX ""
-#endif
 
 static __inline__ uint32_t
 x86_atomic_xchg(volatile uint32_t *ptr, unsigned long val)
 {
 	unsigned long result;
 
-        __asm __volatile("xchgl %0,%1"
+        __asm __volatile(__LOCK_PREFIX
+	    "xchgl %0,%1"
 	    :"=r" (result)
 	    :"m" (*ptr), "0" (val)
 	    :"memory");
