@@ -1,4 +1,4 @@
-/*	$NetBSD: version.c,v 1.4 1997/10/10 08:59:39 lukem Exp $	*/
+/*	$NetBSD: version.c,v 1.5 1999/02/10 12:29:47 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1993
@@ -38,11 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)version.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: version.c,v 1.4 1997/10/10 08:59:39 lukem Exp $");
+__RCSID("$NetBSD: version.c,v 1.5 1999/02/10 12:29:47 hubertf Exp $");
 #endif
 #endif /* not lint */
 
-char   *message[] = {
+const char   *const message[] = {
 	"Last updated on Friday, October 10, 1997.",
 	0
 };
