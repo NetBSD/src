@@ -1,4 +1,4 @@
-.\"	$NetBSD: tty.4,v 1.11 2001/02/10 23:24:12 eeh Exp $
+.\"	$NetBSD: tty.4,v 1.12 2001/06/11 01:13:28 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -54,7 +54,7 @@ When a user logs into
 the system on one of these hardware terminal ports, the system has already
 opened the associated device and prepared the line for normal interactive
 use (see
-.Xr getty 8 .)
+.Xr getty 8 . )
 .Pp
 The ``/dev/dtyXX'' special file is a SunOS-compatible dialout device.  Unlike
 the dialin device, opening the dialout device never blocks.  If the
@@ -109,7 +109,7 @@ essentially glues the low level device driver code with the high
 level generic interface routines (such as
 .Xr read 2
 and
-.Xr write 2 ),
+.Xr write 2 ) ,
 and is responsible for implementing the semantics associated
 with the device.  When a terminal file is first opened by a program,
 the default
@@ -355,7 +355,7 @@ Clear To Send.
 .It TIOCM_CAR
 Carrier Detect.
 .It TIOCM_CD
-Carier Detect (synonym).
+Carrier Detect (synonym).
 .It TIOCM_RNG
 Ring Indication.
 .It TIOCM_RI
@@ -442,9 +442,9 @@ Separate dialout device files were implemented in SunOS 4.  They were cloned
 by Charles M. Hannum for
 .Nx 1.4 .
 .Sh SEE ALSO
-.Xr getty 8 ,
+.Xr stty 1 ,
 .Xr ioctl 2 ,
 .Xr pty 4 ,
-.Xr stty 1 ,
-.Xr termios 4,
+.Xr termios 4 ,
+.Xr getty 8 ,
 .Xr linedisc 9

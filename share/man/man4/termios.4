@@ -1,4 +1,4 @@
-.\"	$NetBSD: termios.4,v 1.15 2000/01/31 14:54:11 dmcmahill Exp $
+.\"	$NetBSD: termios.4,v 1.16 2001/06/11 01:13:28 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -356,7 +356,7 @@ characters (see the
 is received.
 This processing affects data in the input queue that has not yet been
 delimited by a newline
-.Dv NL,
+.Dv NL ,
 .Dv EOF ,
 or
 .Dv EOL
@@ -449,9 +449,9 @@ and
 .Dv VTIME
 mechanisms are
 activated by the receipt of the first byte, or a signal is received.
-If data is in the buffer at the time of the 
+If data is in the buffer at the time of the
 .Xr read 2 ,
-the result is as if data had been received immediately after the 
+the result is as if data had been received immediately after the
 .Xr read 2 .
 .Ss "Case B: VMIN > 0, VTIME = 0"
 In this case, since the value of
@@ -505,7 +505,7 @@ field (see the
 .Sx "Output Modes"
 section).
 The implementation may provide a buffering mechanism; as such, when
-a call to 
+a call to
 .Xr write 2
 completes, all of the bytes written have been scheduled for
 transmission to the device, but the transmission will not necessarily
@@ -698,7 +698,7 @@ Secondary
 .Dv EOL
 character.
 Same function as
-.Dv EOL.
+.Dv EOL .
 .It Dv WERASE
 Special character on input and is recognized if the
 .Dv ICANON
@@ -716,7 +716,7 @@ is set, first any preceding whitespace is erased, and then the
 maximal sequence of alphabetic/underscores or non alphabetic/underscores.
 As a special case in this second algorithm, the first previous
 non-whitespace character is skipped in determining whether the
-preceding word is a sequence of alphabetic/undercores.
+preceding word is a sequence of alphabetic/underscores.
 This sounds confusing but turns out to be quite practical.
 .It Dv REPRINT
 Special character on input and is recognized if the
@@ -731,7 +731,7 @@ character, except that
 the
 .Dv SIGTSTP
 signal is delivered when one of the processes
-in the foreground process group issues a 
+in the foreground process group issues a
 .Xr read 2
 to the controlling terminal.
 .It Dv LNEXT
@@ -796,7 +796,7 @@ signal is sent to the controlling
 process associated with the terminal.
 Unless other arrangements have
 been made, this causes the controlling process to terminate.
-Any subsequent call to the 
+Any subsequent call to the
 .Xr read 2
 function returns the value zero, indicating end of file.
 Thus, processes that read a terminal file and test for end-of-file
@@ -810,7 +810,7 @@ can terminate appropriately after a disconnect.
 .\" condition or the
 .\" .Pf [ Dv EIO
 .\" ] is returned.
-Any subsequent 
+Any subsequent
 .Xr write 2
 to the terminal device returns -1, with
 .Va errno
@@ -1058,7 +1058,7 @@ is set and the input queue is full, subsequent input shall cause an
 .Dv BEL
 character to be transmitted to the output queue.
 .Pp
-The initial input control value after 
+The initial input control value after
 .Xr open 2
 is implementation defined.
 .Ss Output Modes
@@ -1072,7 +1072,7 @@ and are composed of the following masks:
 /* enable following output processing */
 .It Dv ONLCR
 /* map NL to CR-NL (ala
-.Dv CRMOD)
+.Dv CRMOD )
 */
 .It Dv OCRNL
 /* map CR to NL */
@@ -1086,7 +1086,7 @@ on output) */
 .It Dv ONOCR
 /* do not transmit CRs on column 0 */
 .It Dv ONLRET
-/* on the termianl NL performs the CR function */
+/* on the terminal NL performs the CR function */
 .El
 .Pp
 If
@@ -1220,7 +1220,7 @@ If
 .Dv CLOCAL
 is clear, the modem status lines are monitored.
 .Pp
-Under normal circumstances, a call to the 
+Under normal circumstances, a call to the
 .Xr open 2
 function waits for the modem connection to complete.
 However, if the
@@ -1228,7 +1228,7 @@ However, if the
 flag is set
 or if
 .Dv CLOCAL
-has been set, the 
+has been set, the
 .Xr open 2
 function returns immediately without waiting for the connection.
 .Pp
@@ -1387,10 +1387,10 @@ is set, canonical processing is enabled.
 This enables the
 erase and kill edit functions, and the assembly of input characters into
 lines delimited by
-.Dv NL,
+.Dv NL ,
 .Dv EOF ,
 and
-.Dv EOL,
+.Dv EOL ,
 as described in
 .Sx "Canonical Mode Input Processing" .
 .Pp
@@ -1538,7 +1538,7 @@ entries of the
 array.
 .Pp
 The initial values of the flags and control characters
-after 
+after
 .Xr open 2
 is set according to the values in the header
 .Aq Pa sys/ttydefaults.h .

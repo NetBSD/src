@@ -1,4 +1,4 @@
-.\"     $NetBSD: stf.4,v 1.14 2001/05/02 06:24:38 itojun Exp $
+.\"     $NetBSD: stf.4,v 1.15 2001/06/11 01:13:28 wiz Exp $
 .\"     $KAME: stf.4,v 1.34 2001/05/02 05:57:54 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -131,7 +131,7 @@ interface filters out the following packets.
 Note that the checks are no way complete:
 .Bl -bullet
 .It
-Packets with IPv4 unspecified addrss as outer IPv4 source/destination
+Packets with IPv4 unspecified address as outer IPv4 source/destination
 .Pq Li 0.0.0.0/8
 .It
 Packets with loopback address as outer IPv4 source/destination
@@ -153,7 +153,7 @@ Ingress filter can be turned off by
 .Dv IFF_LINK2
 bit.
 .It
-The same set of rules are appplied against the IPv4 address embedded into
+The same set of rules are applied against the IPv4 address embedded into
 inner IPv6 address, if the IPv6 address matches 6to4 prefix.
 .El
 .Pp

@@ -1,4 +1,4 @@
-.\"	$NetBSD: scsi.4,v 1.15 2001/06/05 13:45:10 wiz Exp $
+.\"	$NetBSD: scsi.4,v 1.16 2001/06/11 01:13:28 wiz Exp $
 .\" Copyright (c) 1996
 .\"	Julian Elischer <julian@freebsd.org>.  All rights reserved.
 .\"
@@ -77,7 +77,7 @@ bus host adapters or
 controllers.
 .Tn SCSI
 bus is capable of supporting a wide variety of peripherals, including
-hard disks, removeable disks,
+hard disks, removable disks,
 .Tn CD-ROMs ,
 scanners, tape drives, and other miscellaneous high-speed devices.
 .Pp
@@ -249,7 +249,7 @@ If no debugging is configured into the kernel, debugging will have
 no effect.
 .Tn SCSI
 debugging is controlled by the configuration option
-.Dv SCSIDEBUG.
+.Dv SCSIDEBUG .
 .It Dv SCIOCCOMMAND
 Take a
 .Tn SCSI
@@ -354,7 +354,7 @@ Not every device obeys the
 specification as faithfully as it should.
 As such devices are discovered by the
 .Nx
-Project, their names are added to a 
+Project, their names are added to a
 .Em quirk list
 compiled into the
 .Nm
