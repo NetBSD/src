@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.18 1993/07/05 00:08:27 deraadt Exp $
+ *	$Id: wd.c,v 1.19 1993/07/05 03:20:57 deraadt Exp $
  */
 
 /* Note: This code heavily modified by tih@barsoom.nhh.no; use at own risk! */
@@ -74,6 +74,10 @@
 #include "i386/isa/wdreg.h"
 #include "syslog.h"
 #include "vm/vm.h"
+
+#ifndef WDCTIMEOUT
+#define WDCTIMEOUT	500000  /* arbitrary timeout for drive ready waits */
+#endif
 
 #define	RETRIES		5	/* number of retries before giving up */
 
@@ -398,7 +402,7 @@ wdstart(int ctrlr)
 	struct disklabel *lp;
 	struct buf *dp;
 	long	blknum, cylin, head, sector;
-	long	secpertrk, secpercyl, addr;
+	long	secpertrk, secpercyl, addr, timeout;
 	int	lunit, wdc;
 	int xfrblknum;
 	unsigned char status;
@@ -531,6 +535,7 @@ loop:
 	}
 #endif
 
+retry:
 	/* if starting a multisector transfer, or doing single transfers */
 	if (du->dk_skipm == 0 || (du->dk_flags & DKFL_SINGLE)) {
 		if (wdtab[ctrlr].b_errcnt && (bp->b_flags & B_READ) == 0) {
@@ -539,8 +544,21 @@ loop:
 		}
 
 		/* controller idle? */
-		while (inb(wdc+wd_status) & WDCS_BUSY)
-			;
+		timeout = 0;
+		while (inb(wdc+wd_status) & WDCS_BUSY) {
+			DELAY(1);
+			if (++timeout < WDCTIMEOUT)
+				continue;
+			printf("wdc%d: busy too long, resetting\n", ctrlr);
+			/* reset the device */
+			outb(wdc+wd_ctlr, (WDCTL_RST|WDCTL_IDS));
+			DELAY(1000);
+			outb(wdc+wd_ctlr, WDCTL_IDS);
+			DELAY(1000);
+			(void) inb(wdc+wd_error);       /* XXX! */
+			outb(wdc+wd_ctlr, WDCTL_4BIT);
+			break;
+		}
 	
 		/* stuff the task file */
 		outb(wdc+wd_precomp, lp->d_precompcyl / 4);
@@ -569,8 +587,21 @@ loop:
 		outb(wdc+wd_sdh, WDSD_IBM | (du->dk_unit<<4) | (head & 0xf));
 	
 		/* wait for drive to become ready */
-		while ((inb(wdc+wd_status) & WDCS_READY) == 0)
-			;
+		timeout = 0;
+		while ((inb(wdc+wd_status) & WDCS_READY) == 0) {
+			DELAY(1);
+			if (++timeout < WDCTIMEOUT)
+				continue;
+			printf("wdc%d: busy too long, resetting\n", ctrlr);
+			/* reset the device */
+			outb(wdc+wd_ctlr, (WDCTL_RST|WDCTL_IDS));
+			DELAY(1000);
+			outb(wdc+wd_ctlr, WDCTL_IDS);
+			DELAY(1000);
+			(void) inb(wdc+wd_error);       /* XXX! */
+			outb(wdc+wd_ctlr, WDCTL_4BIT);
+			goto retry;
+		}
 	
 		/* initiate command! */
 #ifdef	B_FORMAT
@@ -593,8 +624,21 @@ loop:
 		return;
     
 	/* ready to send data?	*/
-	while ((inb(wdc+wd_altsts) & WDCS_DRQ) == 0)
-		;
+	timeout = 0;
+	while ((inb(wdc+wd_altsts) & WDCS_DRQ) == 0) {
+		DELAY(1);
+		if (++timeout < WDCTIMEOUT)
+			continue;
+		printf("wdc%d: busy too long, resetting\n", ctrlr);
+		/* reset the device */
+		outb(wdc+wd_ctlr, (WDCTL_RST|WDCTL_IDS));
+		DELAY(1000);
+		outb(wdc+wd_ctlr, WDCTL_IDS);
+		DELAY(1000);
+		(void) inb(wdc+wd_error);       /* XXX! */
+		outb(wdc+wd_ctlr, WDCTL_4BIT);
+		goto retry;
+	}
     
 	/* then send it! */
 outagain:
@@ -1033,31 +1077,38 @@ badopen:
 static int
 wdcommand(struct disk *du, int cmd)
 {
-	int timeout = 10000000, stat, wdc;
+	int timeout=0, stat, wdc;
     
 	DELAY(2000);
 	/* controller ready for command? */
 	wdc = du->dk_port;
-	while (((stat = inb(wdc + wd_status)) & WDCS_BUSY) && timeout > 0)
-		timeout--;
-	if (timeout <= 0)
-		return(-1);
+
+	while ( (stat = inb(wdc + wd_status)) & WDCS_BUSY ) {
+		DELAY(1);
+		if(++timeout > WDCTIMEOUT*10) {
+			printf("timeout 1\n");
+			return -1;
+		}
+	}
     
 	/* send command, await results */
 	outb(wdc+wd_command, cmd);
-	while (((stat = inb(wdc+wd_status)) & WDCS_BUSY) && timeout > 0)
-		timeout--;
-	if (timeout <= 0)
-		return(-1);
+	while ( (stat = inb(wdc+wd_status)) & WDCS_BUSY ) {
+		DELAY(1);
+		if(++timeout > WDCTIMEOUT*10) {
+			printf("timeout 2\n");
+			return -1;
+		}
+	}
 	if (cmd != WDCC_READP)
 		return (stat);
     
 	/* is controller ready to return data? */
-	while (((stat = inb(wdc+wd_status)) & (WDCS_ERR|WDCS_DRQ)) == 0 &&
-	    timeout > 0)
-		timeout--;
-	if (timeout <= 0)
-		return(-1);
+	while (( (stat = inb(wdc+wd_status)) & (WDCS_ERR|WDCS_DRQ)) == 0) {
+		DELAY(1);
+		if(++timeout > WDCTIMEOUT*10)
+			return -1;
+	}
 	return (stat);
 }
 
