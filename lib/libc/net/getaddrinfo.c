@@ -1,5 +1,5 @@
-/*	$NetBSD: getaddrinfo.c,v 1.45 2000/07/09 04:23:49 itojun Exp $	*/
-/*	$KAME: getaddrinfo.c,v 1.24 2000/07/09 04:19:22 itojun Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.46 2000/07/09 04:48:17 itojun Exp $	*/
+/*	$KAME: getaddrinfo.c,v 1.28 2000/07/09 04:37:24 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.45 2000/07/09 04:23:49 itojun Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.46 2000/07/09 04:48:17 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -343,6 +343,8 @@ str_isnumber(p)
 {
 	char *ep;
 
+	if (*p == '\0')
+		return NO;
 	ep = NULL;
 	(void)strtoul(p, &ep, 10);
 	if (ep && *ep == '\0')
@@ -1011,6 +1013,10 @@ ip6_str2scopeid(scope, sin6)
 	int scopeid;
 	struct in6_addr *a6 = &sin6->sin6_addr;
 	char *ep;
+
+	/* empty scopeid portion is invalid */
+	if (*scope == '\0')
+		return -1;
 
 	if (IN6_IS_ADDR_LINKLOCAL(a6) || IN6_IS_ADDR_MC_LINKLOCAL(a6)) {
 		/*
