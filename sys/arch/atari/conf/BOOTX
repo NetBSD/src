@@ -1,12 +1,12 @@
 #
-# $NetBSD: BOOTX,v 1.28 2001/04/06 21:55:11 leo Exp $
+# $NetBSD: BOOTX,v 1.29 2001/04/10 06:39:10 leo Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from: 
-#		NetBSD: FALCON.in,v 1.2 2001/04/06 21:53:39 leo Exp $
-#		NetBSD: GENERIC,v 1.76 2001/04/05 12:21:30 leo Exp $
+#		NetBSD: FALCON.in,v 1.4 2001/04/10 06:28:38 leo Exp $
+#		NetBSD: GENERIC.in,v 1.1 2001/04/10 05:52:14 leo Exp $
 
 #This configuration file is for a generic ATARI-Falcon
 
@@ -17,7 +17,7 @@
 
 include "arch/atari/conf/std.atari"
 
-#ident  		"GENERIC-$Revision: 1.28 $"
+#ident  		"GENERIC-$Revision: 1.29 $"
 
 #Add support for about 16 users. This variable is used to size
 #various kernel structures.
@@ -121,7 +121,7 @@ ser0		at mainbus0	# UART on first 68901 (ttyB0)
 wdc0		at mainbus0	# IDE-bus
 wd*		at wdc? channel ? drive ?
 
- # ATAPI bus support
+ #ATAPI bus support
 atapibus* at wdc? channel ?
 
 #ATAPI devices
