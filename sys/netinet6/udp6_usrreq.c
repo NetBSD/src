@@ -1,5 +1,5 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.33 2000/10/13 17:53:45 itojun Exp $	*/
-/*	$KAME: udp6_usrreq.c,v 1.59 2000/10/13 17:46:20 itojun Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.34 2000/10/19 01:14:13 itojun Exp $	*/
+/*	$KAME: udp6_usrreq.c,v 1.62 2000/10/19 01:11:05 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -473,6 +473,8 @@ udp6_ctlinput(cmd, sa, d)
 	register struct ip6_hdr *ip6;
 	struct mbuf *m;
 	int off;
+	struct in6_addr s;
+	struct in6_addr finaldst;
 	void (*notify) __P((struct in6pcb *, int)) = udp6_notify;
 
 	if (sa->sa_family != AF_INET6 ||
@@ -485,6 +487,8 @@ udp6_ctlinput(cmd, sa, d)
 		notify = in6_rtchange, d = NULL;
 	else if (cmd == PRC_HOSTDEAD)
 		d = NULL;
+	else if (cmd == PRC_MSGSIZE)
+		; /* special code is present, see below */
 	else if (inet6ctlerrmap[cmd] == 0)
 		return;
 
@@ -494,6 +498,16 @@ udp6_ctlinput(cmd, sa, d)
 		m = ip6cp->ip6c_m;
 		ip6 = ip6cp->ip6c_ip6;
 		off = ip6cp->ip6c_off;
+
+		/* translate addresses into internal form */
+		bcopy(ip6cp->ip6c_finaldst, &finaldst, sizeof(finaldst));
+		if (IN6_IS_ADDR_LINKLOCAL(&finaldst)) {
+			finaldst.s6_addr16[1] =
+			    htons(m->m_pkthdr.rcvif->if_index);
+		}
+		bcopy(&ip6->ip6_src, &s, sizeof(s));
+		if (IN6_IS_ADDR_LINKLOCAL(&s))
+			s.s6_addr16[1] = htons(m->m_pkthdr.rcvif->if_index);
 	} else {
 		m = NULL;
 		ip6 = NULL;
@@ -509,12 +523,6 @@ udp6_ctlinput(cmd, sa, d)
 		 * XXX: We assume that when IPV6 is non NULL,
 		 * M and OFF are valid.
 		 */
-		struct in6_addr s;
-
-		/* translate addresses into internal form */
-		memcpy(&s, &ip6->ip6_src, sizeof(s));
-		if (IN6_IS_ADDR_LINKLOCAL(&s))
-			s.s6_addr16[1] = htons(m->m_pkthdr.rcvif->if_index);
 
 		/* check if we can safely examine src and dst ports */
 		if (m->m_pkthdr.len < off + sizeof(uh))
@@ -529,6 +537,42 @@ udp6_ctlinput(cmd, sa, d)
 			uhp = &uh;
 		} else
 			uhp = (struct udphdr *)(mtod(m, caddr_t) + off);
+
+		if (cmd == PRC_MSGSIZE) {
+			/*
+			 * Check to see if we have a valid UDP socket
+			 * corresponding to the address in the ICMPv6 message
+			 * payload.
+			 */
+			if (in6_pcblookup_connect(&udb6, &finaldst,
+			    uhp->uh_dport, &s, uhp->uh_sport, 0))
+				;
+#if 0
+			/*
+			 * As the use of sendto(2) is fairly popular,
+			 * we may want to allow non-connected pcb too.
+			 * But it could be too weak against attacks...
+			 * We should at least check if the local address (= s)
+			 * is really ours.
+			 */
+			else if (in6_pcblookup_bind(&udb6, &finaldst,
+			    uhp->uh_dport, 0))
+				;
+#endif
+			else
+				return;
+
+			/*
+			 * Now that we've validated that we are actually
+			 * communicating with the host indicated in the ICMPv6
+			 * message, recalculate the new MTU, and create the
+			 * corresponding routing entry.
+			 */
+			icmp6_mtudisc_update((struct ip6ctlparam *)d);
+
+			return;
+		}
+
 		(void) in6_pcbnotify(&udb6, (struct sockaddr *)&sa6,
 					uhp->uh_dport, &s,
 					uhp->uh_sport, cmd, notify);
