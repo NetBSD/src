@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.25.2.3 1999/08/22 18:12:49 he Exp $	*/
+/*	$NetBSD: file.c,v 1.25.2.4 1999/09/13 22:24:11 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.25.2.3 1999/08/22 18:12:49 he Exp $");
+__RCSID("$NetBSD: file.c,v 1.25.2.4 1999/09/13 22:24:11 he Exp $");
 #endif
 #endif
 
@@ -40,18 +40,19 @@ __RCSID("$NetBSD: file.c,v 1.25.2.3 1999/08/22 18:12:49 he Exp $");
 #include <time.h>
 #include <fcntl.h>
 
-/* This is as ftpGetURL from FreeBSD's ftpio.c, except that it uses
+/*
+ * This is as ftpGetURL from FreeBSD's ftpio.c, except that it uses
  * NetBSD's ftp command to do all FTP, which will DTRT for proxies,
  * etc.
  */
 static FILE *
 ftpGetURL(char *url, int *retcode)
 {
-	FILE *ftp;
-	pid_t pid_ftp;
-	int p[2];
+	FILE   *ftp;
+	pid_t   pid_ftp;
+	int     p[2];
 
-	*retcode=0;
+	*retcode = 0;
 
 	if (pipe(p) < 0) {
 		*retcode = 1;
@@ -65,15 +66,15 @@ ftpGetURL(char *url, int *retcode)
 	}
 	if (pid_ftp == 0) {
 		/* child */
-		dup2(p[1],1);
+		dup2(p[1], 1);
 		close(p[1]);
 
-		fprintf(stderr, ">>> ftp -o - %s\n",url); 
-		execl("/usr/bin/ftp","ftp","-V","-o","-",url,NULL);
+		fprintf(stderr, ">>> ftp -o - %s\n", url);
+		execl("/usr/bin/ftp", "ftp", "-V", "-o", "-", url, NULL);
 		exit(1);
 	} else {
 		/* parent */
-		ftp = fdopen(p[0],"r");
+		ftp = fdopen(p[0], "r");
 
 		close(p[1]);
 
@@ -85,113 +86,128 @@ ftpGetURL(char *url, int *retcode)
 	return ftp;
 }
 
-/* Quick check to see if a file exists */
+/*
+ * Quick check to see if a file exists
+ */
 Boolean
 fexists(char *fname)
 {
-    struct stat dummy;
-    if (!lstat(fname, &dummy))
-	return TRUE;
-    return FALSE;
-}
-
-/* Quick check to see if something is a directory */
-Boolean
-isdir(char *fname)
-{
-    struct stat sb;
-
-    if (lstat(fname, &sb) != FAIL && S_ISDIR(sb.st_mode))
-	return TRUE;
-    else
+	struct stat dummy;
+	if (!lstat(fname, &dummy))
+		return TRUE;
 	return FALSE;
 }
 
-/* Check if something is a link to a directory */
+/*
+ * Quick check to see if something is a directory
+ */
+Boolean
+isdir(char *fname)
+{
+	struct stat sb;
+
+	if (lstat(fname, &sb) != FAIL && S_ISDIR(sb.st_mode))
+		return TRUE;
+	else
+		return FALSE;
+}
+
+/*
+ * Check if something is a link to a directory
+ */
 Boolean
 islinktodir(char *fname)
 {
-    struct stat sb;
+	struct stat sb;
 
-    if (lstat(fname, &sb) != FAIL && S_ISLNK(sb.st_mode)) {
-        if (stat(fname, &sb) != FAIL && S_ISDIR(sb.st_mode))
-	    return TRUE; /* link to dir! */
-        else
-	    return FALSE; /* link to non-dir */
-    } else
-        return FALSE;  /* non-link */
+	if (lstat(fname, &sb) != FAIL && S_ISLNK(sb.st_mode)) {
+		if (stat(fname, &sb) != FAIL && S_ISDIR(sb.st_mode))
+			return TRUE;	/* link to dir! */
+		else
+			return FALSE;	/* link to non-dir */
+	} else
+		return FALSE;	/* non-link */
 }
 
-/* Check to see if file is a dir, and is empty */
+/*
+ * Check to see if file is a dir, and is empty
+ */
 Boolean
 isemptydir(char *fname)
 {
-    if (isdir(fname) || islinktodir(fname)) {
-	DIR *dirp;
-	struct dirent *dp;
+	if (isdir(fname) || islinktodir(fname)) {
+		DIR    *dirp;
+		struct dirent *dp;
 
-	dirp = opendir(fname);
-	if (!dirp)
-	    return FALSE;	/* no perms, leave it alone */
-	for (dp = readdir(dirp); dp != NULL; dp = readdir(dirp)) {
-	    if (strcmp(dp->d_name, ".") && strcmp(dp->d_name, "..")) {
-		closedir(dirp);
-		return FALSE;
-	    }
+		dirp = opendir(fname);
+		if (!dirp)
+			return FALSE;	/* no perms, leave it alone */
+		for (dp = readdir(dirp); dp != NULL; dp = readdir(dirp)) {
+			if (strcmp(dp->d_name, ".") && strcmp(dp->d_name, "..")) {
+				closedir(dirp);
+				return FALSE;
+			}
+		}
+		(void) closedir(dirp);
+		return TRUE;
 	}
-	(void)closedir(dirp);
-	return TRUE;
-    }
-    return FALSE;
+	return FALSE;
 }
 
+/*
+ * Check if something is a regular file
+ */
 Boolean
 isfile(char *fname)
 {
-    struct stat sb;
-    if (stat(fname, &sb) != FAIL && S_ISREG(sb.st_mode))
-	return TRUE;
-    return FALSE;
+	struct stat sb;
+	if (stat(fname, &sb) != FAIL && S_ISREG(sb.st_mode))
+		return TRUE;
+	return FALSE;
 }
 
-/* Check to see if file is a file and is empty. If nonexistent or not
-   a file, say "it's empty", otherwise return TRUE if zero sized. */
+/*
+ * Check to see if file is a file and is empty. If nonexistent or not
+ * a file, say "it's empty", otherwise return TRUE if zero sized.
+ */
 Boolean
 isemptyfile(char *fname)
 {
-    struct stat sb;
-    if (stat(fname, &sb) != FAIL && S_ISREG(sb.st_mode)) {
-	if (sb.st_size != 0)
-	    return FALSE;
-    }
-    return TRUE;
+	struct stat sb;
+	if (stat(fname, &sb) != FAIL && S_ISREG(sb.st_mode)) {
+		if (sb.st_size != 0)
+			return FALSE;
+	}
+	return TRUE;
 }
 
-/* this struct defines the leading part of a valid URL name */
+/* This struct defines the leading part of a valid URL name */
 typedef struct url_t {
-	char	*u_s;		/* the leading part of the URL */
-	int	u_len;		/* its length */
-} url_t;
+	char   *u_s;		/* the leading part of the URL */
+	int     u_len;		/* its length */
+}       url_t;
 
-/* a table of valid leading strings for URLs */
-static url_t	urls[] = {
-	{	"ftp://",	6	},
-	{	"http://",	7	},
-	{	NULL	}
+/* A table of valid leading strings for URLs */
+static url_t urls[] = {
+	{"ftp://", 6},
+	{"http://", 7},
+	{NULL}
 };
 
-/* Returns length of leading part of any URL from urls table, or -1 */
+/*
+ * Returns length of leading part of any URL from urls table, or -1
+ */
 int
 URLlength(char *fname)
 {
-	url_t	*up;
-	int	 i;
+	url_t  *up;
+	int     i;
 
 	if (fname != (char *) NULL) {
-		for (i = 0 ; isspace((unsigned char)*fname) ; i++) {
+		for (i = 0; isspace((unsigned char) *fname); i++) {
 			fname++;
 		}
-		for (up = urls ; up->u_s ; up++) {
+		for (up = urls; up->u_s; up++) {
 			if (strncmp(fname, up->u_s, up->u_len) == 0) {
 				return i + up->u_len;
 			}
@@ -200,14 +216,16 @@ URLlength(char *fname)
 	return -1;
 }
 
-/* Returns the host part of a URL */
-char *
+/*
+ * Returns the host part of a URL
+ */
+char   *
 fileURLHost(char *fname, char *where, int max)
 {
-	char	*ret;
-	int	 i;
+	char   *ret;
+	int     i;
 
-	if ((i = URLlength(fname)) < 0) {
+	if ((i = URLlength(fname)) < 0) {	/* invalid URL? */
 		errx(1, "fileURLhost called with a bad URL: `%s'", fname);
 	}
 	fname += i;
@@ -226,14 +244,16 @@ fileURLHost(char *fname, char *where, int max)
 	return ret;
 }
 
-/* Returns the filename part of a URL */
-char *
+/*
+ * Returns the filename part of a URL
+ */
+char   *
 fileURLFilename(char *fname, char *where, int max)
 {
-	char	*ret;
-	int	 i;
+	char   *ret;
+	int     i;
 
-	if ((i = URLlength(fname)) < 0) {
+	if ((i = URLlength(fname)) < 0) {	/* invalid URL? */
 		errx(1, "fileURLhost called with a bad URL: `%s'", fname);
 	}
 	fname += i;
@@ -258,97 +278,92 @@ fileURLFilename(char *fname, char *where, int max)
  * Try and fetch a file by URL, returning the directory name for where
  * it's unpacked, if successful.
  */
-char *
+char   *
 fileGetURL(char *base, char *spec)
 {
-    char host[MAXHOSTNAMELEN], file[FILENAME_MAX];
-    char *cp, *rp;
-    char fname[FILENAME_MAX];
-    char pen[FILENAME_MAX];
-    FILE *ftp;
-    pid_t tpid;
-    int i, status;
-    char *hint;
+	char    host[MAXHOSTNAMELEN], file[FILENAME_MAX];
+	char   *cp, *rp;
+	char    fname[FILENAME_MAX];
+	char    pen[FILENAME_MAX];
+	FILE   *ftp;
+	pid_t   tpid;
+	int     i, status;
+	char   *hint;
 
-    rp = NULL;
-    /* Special tip that sysinstall left for us */
-    hint = getenv("PKG_ADD_BASE");
-    if (URLlength(spec) < 0) {
-	if (!base && !hint)
-	    return NULL;
-	/* We've been given an existing URL (that's known-good) and now we need
-	   to construct a composite one out of that and the basename we were
-	   handed as a dependency. */
-	if (base) {
-	    strcpy(fname, base);
-	    /* Advance back two slashes to get to the root of the package hierarchy */
-	    cp = strrchr(fname, '/');
-	    if (cp) {
-		*cp = '\0';	/* chop name */
-		cp = strrchr(fname, '/');
-	    }
-	    if (cp) {
-		*(cp + 1) = '\0';
-		strcat(cp, "All/");
-		strcat(cp, spec);
-		strcat(cp, ".tgz");
-	    }
-	    else
+	rp = NULL;
+	/* Special tip that sysinstall left for us */
+	hint = getenv("PKG_ADD_BASE");
+	if (!IS_URL(spec)) {
+		if (!base && !hint)
+			return NULL;
+		/* We've been given an existing URL (that's known-good) and
+		 * now we need to construct a composite one out of that and
+		 * the basename we were handed as a dependency. */
+		if (base) {
+			strcpy(fname, base);
+			/* Advance back two slashes to get to the root of the package hierarchy */
+			cp = strrchr(fname, '/');
+			if (cp) {
+				*cp = '\0';	/* chop name */
+				cp = strrchr(fname, '/');
+			}
+			if (cp) {
+				*(cp + 1) = '\0';
+				strcat(cp, "All/");
+				strcat(cp, spec);
+				strcat(cp, ".tgz");
+			} else
+				return NULL;
+		} else {
+			/* Otherwise, we've been given an environment variable hinting at the right location from sysinstall */
+			strcpy(fname, hint);
+			strcat(fname, spec);
+		}
+	} else
+		strcpy(fname, spec);
+	cp = fileURLHost(fname, host, MAXHOSTNAMELEN);
+	if (!*cp) {
+		warnx("URL `%s' has bad host part!", fname);
 		return NULL;
-	} else {
-	    /* Otherwise, we've been given an environment variable hinting at the right location from sysinstall */
-	    strcpy(fname, hint);
-	    strcat(fname, spec);
 	}
-    }
-    else
-	strcpy(fname, spec);
-    cp = fileURLHost(fname, host, MAXHOSTNAMELEN);
-    if (!*cp) {
-	warnx("URL `%s' has bad host part!", fname);
-	return NULL;
-    }
 
-    cp = fileURLFilename(fname, file, FILENAME_MAX);
-    if (!*cp) {
-	warnx("URL `%s' has bad filename part!", fname);
-	return NULL;
-    }
+	cp = fileURLFilename(fname, file, FILENAME_MAX);
+	if (!*cp) {
+		warnx("URL `%s' has bad filename part!", fname);
+		return NULL;
+	}
 
-    if (Verbose)
-	printf("Trying to fetch %s.\n", fname);
-    ftp = ftpGetURL(fname, &status);
-    if (ftp) {
-	pen[0] = '\0';
-	if ((rp = make_playpen(pen, sizeof(pen), 0)) != NULL) {
-            rp=strdup(pen); /* be safe for nested calls */
-	    if (Verbose)
-		printf("Extracting from FTP connection into %s\n", pen);
-	    tpid = fork();
-	    if (!tpid) {
-		dup2(fileno(ftp), 0);
-		i = execl(TAR_FULLPATHNAME, TAR_CMD, Verbose ? "-xzvf" : "-xzf", "-", 0);
-		err(i, TAR_FULLPATHNAME " failed");
-	    }
-	    else {
-		int pstat;
+	if (Verbose)
+		printf("Trying to fetch %s.\n", fname);
+	ftp = ftpGetURL(fname, &status);
+	if (ftp) {
+		pen[0] = '\0';
+		if ((rp = make_playpen(pen, sizeof(pen), 0)) != NULL) {
+			rp = strdup(pen);	/* be safe for nested calls */
+			if (Verbose)
+				printf("Extracting from FTP connection into %s\n", pen);
+			tpid = fork();
+			if (!tpid) {
+				dup2(fileno(ftp), 0);
+				i = execl(TAR_FULLPATHNAME, TAR_CMD, Verbose ? "-xzvf" : "-xzf", "-", 0);
+				err(i, TAR_FULLPATHNAME " failed");
+			} else {
+				int     pstat;
 
+				fclose(ftp);
+				tpid = waitpid(tpid, &pstat, 0);
+				if (Verbose)
+					printf("%s command returns %d status\n", TAR_CMD, WEXITSTATUS(pstat));
+			}
+		} else
+			printf("Error: Unable to construct a new playpen for FTP!\n");
 		fclose(ftp);
-		tpid = waitpid(tpid, &pstat, 0);
-		if (Verbose)
-		    printf("%s command returns %d status\n", TAR_CMD, WEXITSTATUS(pstat));
-	    }
-	}
-	else
-	    printf("Error: Unable to construct a new playpen for FTP!\n");
-	fclose(ftp);
-    }
-    else
-	printf("Error: FTP Unable to get %s: %s\n",
-	       fname,
-	       status ? "Error while performing FTP" :
-	       hstrerror(h_errno));
-    return rp;
+	} else
+		printf("Error: FTP Unable to get %s: %s\n",
+		    fname,
+		    status ? "Error while performing FTP" :
+		    hstrerror(h_errno));
+	return rp;
 }
 
 /*
@@ -357,150 +372,153 @@ fileGetURL(char *base, char *spec)
  *   - $base/../All
  *   - all dirs in $PKG_PATH
  */
-char *
+char   *
 fileFindByPath(char *base, char *fname)
 {
-    static char tmp[FILENAME_MAX];
-    char *cp;
+	static char tmp[FILENAME_MAX];
+	char   *cp;
 
-    if (ispkgpattern(fname)) {
-	if ((cp=findbestmatchingname(".",fname)) != NULL) {
-	    strcpy (tmp, cp);
-	    return tmp;
+	if (ispkgpattern(fname)) {
+		if ((cp = findbestmatchingname(".", fname)) != NULL) {
+			strcpy(tmp, cp);
+			return tmp;
+		}
+	} else {
+		if (fexists(fname) && isfile(fname)) {
+			strcpy(tmp, fname);
+			return tmp;
+		}
 	}
-    }else{
-	if (fexists(fname) && isfile(fname)) {
-	    strcpy(tmp, fname);
-	    return tmp;
-	}
-    }
-    
-    if (base) {
-	strcpy(tmp, base);
 
-	cp = strrchr(tmp, '/');
-	if (cp) {
-	    *cp = '\0';	/* chop name */
-	    cp = strrchr(tmp, '/');
-	}
-	if (cp) {
-	    *(cp + 1) = '\0';
-	    strcat(cp, "All/");
-	    strcat(cp, fname);
-	    strcat(cp, ".tgz");
-	    if (ispkgpattern(tmp)) {
-		cp=findbestmatchingname(dirname_of(tmp), basename_of(tmp));
+	if (base) {
+		strcpy(tmp, base);
+
+		cp = strrchr(tmp, '/');
 		if (cp) {
-		    char *s;
-		    s=strrchr(tmp,'/');
-		    assert(s != NULL);
-		    strcpy(s+1, cp);
-		    return tmp;
+			*cp = '\0';	/* chop name */
+			cp = strrchr(tmp, '/');
 		}
-	    } else {
-		if (fexists(tmp)) {
-		    return tmp;
+		if (cp) {
+			*(cp + 1) = '\0';
+			strcat(cp, "All/");
+			strcat(cp, fname);
+			strcat(cp, ".tgz");
+			if (ispkgpattern(tmp)) {
+				cp = findbestmatchingname(dirname_of(tmp), basename_of(tmp));
+				if (cp) {
+					char   *s;
+					s = strrchr(tmp, '/');
+					assert(s != NULL);
+					strcpy(s + 1, cp);
+					return tmp;
+				}
+			} else {
+				if (fexists(tmp)) {
+					return tmp;
+				}
+			}
 		}
-	    }
 	}
-    }
 
-    cp = getenv("PKG_PATH");
-    while (cp) {
-	char *cp2 = strsep(&cp, ":");
+	cp = getenv("PKG_PATH");
+	while (cp) {
+		char   *cp2 = strsep(&cp, ":");
 
-	(void) snprintf(tmp, sizeof(tmp), "%s/%s.tgz", cp2 ? cp2 : cp, fname);
-	if (ispkgpattern(tmp)) {
-	    char *s;
-	    s = findbestmatchingname(dirname_of(tmp), basename_of(tmp));
-	    if (s){
-		char *t;
-		t=strrchr(tmp, '/');
-		strcpy(t+1, s);
-		return tmp;
-	    }
-	}else{
-	    if (fexists(tmp) && isfile(tmp)) {
-		return tmp;
-	    }
+		(void) snprintf(tmp, sizeof(tmp), "%s/%s.tgz", cp2 ? cp2 : cp, fname);
+		if (ispkgpattern(tmp)) {
+			char   *s;
+			s = findbestmatchingname(dirname_of(tmp), basename_of(tmp));
+			if (s) {
+				char   *t;
+				t = strrchr(tmp, '/');
+				strcpy(t + 1, s);
+				return tmp;
+			}
+		} else {
+			if (fexists(tmp) && isfile(tmp)) {
+				return tmp;
+			}
+		}
 	}
-    }
-    
-    return NULL;
+
+	return NULL;
 }
 
 /*
- *  expect "fname" to point at a +CONTENTS file, and read it into
- *  the buffer returned. 
+ *  Expect "fname" to point at a +CONTENTS file, and read it into
+ *  the buffer returned.
  */
-char *
+char   *
 fileGetContents(char *fname)
 {
-    char *contents;
-    struct stat sb;
-    int fd;
+	char   *contents;
+	struct stat sb;
+	int     fd;
 
-    if (stat(fname, &sb) == FAIL) {
-	cleanup(0);
-	errx(2, "can't stat '%s'", fname);
-    }
+	if (stat(fname, &sb) == FAIL) {
+		cleanup(0);
+		errx(2, "can't stat '%s'", fname);
+	}
 
-    contents = (char *)malloc((size_t)(sb.st_size) + 1);
-    fd = open(fname, O_RDONLY, 0);
-    if (fd == FAIL) {
-	cleanup(0);
-	errx(2, "unable to open '%s' for reading", fname);
-    }
-    if (read(fd, contents, (size_t) sb.st_size) != (size_t) sb.st_size) {
-	cleanup(0);
-	errx(2, "short read on '%s' - did not get %qd bytes",
-			fname, (long long)sb.st_size);
-    }
-    close(fd);
-    contents[(size_t)sb.st_size] = '\0';
-    return contents;
+	contents = (char *) malloc((size_t) (sb.st_size) + 1);
+	fd = open(fname, O_RDONLY, 0);
+	if (fd == FAIL) {
+		cleanup(0);
+		errx(2, "unable to open '%s' for reading", fname);
+	}
+	if (read(fd, contents, (size_t) sb.st_size) != (size_t) sb.st_size) {
+		cleanup(0);
+		errx(2, "short read on '%s' - did not get %qd bytes",
+		    fname, (long long) sb.st_size);
+	}
+	close(fd);
+	contents[(size_t) sb.st_size] = '\0';
+	return contents;
 }
 
-/* Takes a filename and package name, returning (in "try") the canonical
+/*
+ * Takes a filename and package name, returning (in "try") the canonical
  * "preserve" name for it.
  */
 Boolean
 make_preserve_name(char *try, size_t max, char *name, char *file)
 {
-    int len, i;
+	int     len, i;
 
-    if ((len = strlen(file)) == 0)
-	return FALSE;
-    else
-	i = len - 1;
-    strncpy(try, file, max);
-    if (try[i] == '/') /* Catch trailing slash early and save checking in the loop */
-	--i;
-    for (; i; i--) {
-	if (try[i] == '/') {
-	    try[i + 1]= '.';
-	    strncpy(&try[i + 2], &file[i + 1], max - i - 2);
-	    break;
+	if ((len = strlen(file)) == 0)
+		return FALSE;
+	else
+		i = len - 1;
+	strncpy(try, file, max);
+	if (try[i] == '/')	/* Catch trailing slash early and save checking in the loop */
+		--i;
+	for (; i; i--) {
+		if (try[i] == '/') {
+			try[i + 1] = '.';
+			strncpy(&try[i + 2], &file[i + 1], max - i - 2);
+			break;
+		}
 	}
-    }
-    if (!i) {
-	try[0] = '.';
-	strncpy(try + 1, file, max - 1);
-    }
-    /* I should probably be called rude names for these inline assignments */
-    strncat(try, ".",  max -= strlen(try));
-    strncat(try, name, max -= strlen(name));
-    strncat(try, ".",  max--);
-    strncat(try, "backup", max -= 6);
-    return TRUE;
+	if (!i) {
+		try[0] = '.';
+		strncpy(try + 1, file, max - 1);
+	}
+	/* I should probably be called rude names for these inline assignments */
+	strncat(try, ".", max -= strlen(try));
+	strncat(try, name, max -= strlen(name));
+	strncat(try, ".", max--);
+	strncat(try, "backup", max -= 6);
+	return TRUE;
 }
 
-/* Write the contents of "str" to a file */
+/*
+ * Write the contents of "str" to a file
+ */
 void
 write_file(char *name, char *str)
 {
-	size_t	len;
-	FILE	*fp;
+	size_t  len;
+	FILE   *fp;
 
 	if ((fp = fopen(name, "w")) == (FILE *) NULL) {
 		cleanup(0);
@@ -510,7 +528,7 @@ write_file(char *name, char *str)
 	if (fwrite(str, 1, len, fp) != len) {
 		cleanup(0);
 		errx(2, "short fwrite on '%s', tried to write %ld bytes",
-			name, (long) len);
+		    name, (long) len);
 	}
 	if (fclose(fp)) {
 		cleanup(0);
@@ -521,89 +539,90 @@ write_file(char *name, char *str)
 void
 copy_file(char *dir, char *fname, char *to)
 {
-    char cmd[FILENAME_MAX];
+	char    cmd[FILENAME_MAX];
 
-    if (fname[0] == '/')
-	(void) snprintf(cmd, sizeof(cmd), "cp -p -r %s %s", fname, to);
-    else
-	(void) snprintf(cmd, sizeof(cmd), "cp -p -r %s/%s %s", dir, fname, to);
-    if (vsystem(cmd)) {
-	cleanup(0);
-	errx(2, "could not perform '%s'", cmd);
-    }
+	if (fname[0] == '/')
+		(void) snprintf(cmd, sizeof(cmd), "cp -p -r %s %s", fname, to);
+	else
+		(void) snprintf(cmd, sizeof(cmd), "cp -p -r %s/%s %s", dir, fname, to);
+	if (vsystem(cmd)) {
+		cleanup(0);
+		errx(2, "could not perform '%s'", cmd);
+	}
 }
 
 void
 move_file(char *dir, char *fname, char *to)
 {
-    char cmd[FILENAME_MAX];
+	char    cmd[FILENAME_MAX];
 
-    if (fname[0] == '/')
-	(void) snprintf(cmd, sizeof(cmd), "mv %s %s", fname, to);
-    else
-	(void) snprintf(cmd, sizeof(cmd), "mv %s/%s %s", dir, fname, to);
-    if (vsystem(cmd)) {
-	cleanup(0);
-	errx(2, "could not perform '%s'", cmd);
-    }
+	if (fname[0] == '/')
+		(void) snprintf(cmd, sizeof(cmd), "mv %s %s", fname, to);
+	else
+		(void) snprintf(cmd, sizeof(cmd), "mv %s/%s %s", dir, fname, to);
+	if (vsystem(cmd)) {
+		cleanup(0);
+		errx(2, "could not perform '%s'", cmd);
+	}
 }
 
-/* Unpack a tar file */
+/*
+ * Unpack a tar file
+ */
 int
 unpack(char *pkg, char *flist)
 {
-    char args[10], suff[80], *cp;
+	char    args[10], suff[80], *cp;
 
-    args[0] = '\0';
-    /*
-     * Figure out by a crude heuristic whether this or not this is probably
-     * compressed.
-     */
-    if (strcmp(pkg, "-")) {
-	cp = strrchr(pkg, '.');
-	if (cp) {
-	    strcpy(suff, cp + 1);
-	    if (strchr(suff, 'z') || strchr(suff, 'Z'))
-		strcpy(args, "-z");
+	args[0] = '\0';
+	/*
+         * Figure out by a crude heuristic whether this or not this is probably
+         * compressed.
+         */
+	if (strcmp(pkg, "-")) {
+		cp = strrchr(pkg, '.');
+		if (cp) {
+			strcpy(suff, cp + 1);
+			if (strchr(suff, 'z') || strchr(suff, 'Z'))
+				strcpy(args, "-z");
+		}
+	} else
+		strcpy(args, "z");
+	strcat(args, "xpf");
+	if (vsystem("%s %s %s %s", TAR_CMD, args, pkg, flist ? flist : "")) {
+		warnx("%s extract of %s failed!", TAR_CMD, pkg);
+		return 1;
 	}
-    }
-    else
-	strcpy(args, "z");
-    strcat(args, "xpf");
-    if (vsystem("%s %s %s %s", TAR_CMD, args, pkg, flist ? flist : "")) {
-	warnx("%s extract of %s failed!", TAR_CMD, pkg);
-	return 1;
-    }
-    return 0;
+	return 0;
 }
 
 /*
  * Using fmt, replace all instances of:
- * 
+ *
  * %F	With the parameter "name"
  * %D	With the parameter "dir"
  * %B	Return the directory part ("base") of %D/%F
  * %f	Return the filename part of %D/%F
- * 
+ *
  * Check that no overflows can occur.
  */
 void
 format_cmd(char *buf, size_t size, char *fmt, char *dir, char *name)
 {
-	char	scratch[FILENAME_MAX * 2];
+	char    scratch[FILENAME_MAX * 2];
 	char   *bufp;
 	char   *cp;
 
-	for (bufp = buf ; (int)(bufp - buf) < size && *fmt ; ) {
+	for (bufp = buf; (int) (bufp - buf) < size && *fmt;) {
 		if (*fmt == '%') {
 			switch (*++fmt) {
 			case 'F':
-				strnncpy(bufp, size - (int)(bufp - buf), name, strlen(name));
+				strnncpy(bufp, size - (int) (bufp - buf), name, strlen(name));
 				bufp += strlen(bufp);
 				break;
 
 			case 'D':
-				strnncpy(bufp, size - (int)(bufp - buf), dir, strlen(dir));
+				strnncpy(bufp, size - (int) (bufp - buf), dir, strlen(dir));
 				bufp += strlen(bufp);
 				break;
 
@@ -612,7 +631,7 @@ format_cmd(char *buf, size_t size, char *fmt, char *dir, char *name)
 				if ((cp = strrchr(scratch, '/')) == (char *) NULL) {
 					cp = scratch;
 				}
-				strnncpy(bufp, size - (int)(bufp - buf), scratch, (size_t)(cp - scratch));
+				strnncpy(bufp, size - (int) (bufp - buf), scratch, (size_t) (cp - scratch));
 				bufp += strlen(bufp);
 				break;
 
@@ -623,7 +642,7 @@ format_cmd(char *buf, size_t size, char *fmt, char *dir, char *name)
 				} else {
 					cp++;
 				}
-				strnncpy(bufp, size - (int)(bufp - buf), cp, strlen(cp));
+				strnncpy(bufp, size - (int) (bufp - buf), cp, strlen(cp));
 				bufp += strlen(bufp);
 				break;
 
