@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.398 2002/02/02 11:28:46 tsutsui Exp $
+$NetBSD: pcidevs,v 1.399 2002/02/02 11:56:43 tsutsui Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -431,7 +431,7 @@ vendor ACARD		0x1191	Acard
 vendor DENSAN		0x1192	Densan
 vendor ZEINET		0x1193	Zeinet
 vendor TOUCAN		0x1194	Toucan Technology
-vendor RATOC		0x1195	Ratoc System
+vendor RATOC		0x1195	Ratoc Systems
 vendor HYTEC		0x1196	Hytec Electronic
 vendor GAGE		0x1197	Gage Applied Sciences
 vendor LAMBDA		0x1198	Lambda Systems
@@ -1225,6 +1225,8 @@ product INDCOMPSRC WDT50x	0x22c0	PCI-WDT50x Watchdog Timer
 
 /* Initio products */
 product INITIO I920	0x0002	INIC-920 SCSI
+product INITIO I850	0x0850	INIC-850 SCSI
+product INITIO I1060	0x1060	INIC-1060 SCSI
 product INITIO I940	0x9400	INIC-940 SCSI
 product INITIO I935	0x9401	INIC-935 SCSI
 product INITIO I950	0x9500	INIC-950 SCSI
@@ -1651,6 +1653,9 @@ product QUANTUMDESIGNS 8580	0x0002	8580
 
 /* Rainbow Technologies products */
 product	RAINBOW	CS200		0x0200	CryptoSwift 200 PKI Accelerator
+
+/* RATOC Systems products */
+product	RATOC	REXPCI31	0x0853	REX PCI-31/33 SCSI
 
 /* Realtek (Creative Labs?) products */
 product	REALTEK	RT8029		0x8029	8029 Ethernet
