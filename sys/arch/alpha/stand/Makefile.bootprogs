@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootprogs,v 1.20 2001/12/30 16:32:29 lukem Exp $
+# $NetBSD: Makefile.bootprogs,v 1.21 2002/01/05 01:22:21 thorpej Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -29,15 +29,12 @@ realall: machine-links ${PROG}
 AFLAGS+=	-DASSEMBLER
 # -I${.CURDIR}/../.. done by Makefile.inc
 CPPFLAGS+=	-nostdinc -I${.OBJDIR} -D_STANDALONE -I${S}
-CFLAGS=		-mno-fp-regs -g
+CFLAGS=		-ffreestanding -mno-fp-regs -g
 
 NETBSD_VERS!=sh ${.CURDIR}/../../../../conf/osrelease.sh
 CPPFLAGS+= -DNETBSD_VERS='"${NETBSD_VERS}"'
 
-HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
-.if (${HAVE_GCC28} != "")
 CWARNFLAGS+=	-Wno-main
-.endif
 
 # if there is a 'version' file, add rule for vers.c and add it to SRCS
 # and CLEANFILES
