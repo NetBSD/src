@@ -1,4 +1,4 @@
-.\" $NetBSD: installboot.old.8,v 1.9 1999/04/05 03:27:50 cgd Exp $
+.\" $NetBSD: installboot.old.8,v 1.10 1999/04/05 05:52:09 cgd Exp $
 .\"
 .\" Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
 .\" Copyright (c) 1995 Paul Kranenburg
@@ -163,8 +163,13 @@ program resides in a file system on the disk's raw partition.
 .Xr init 8 ,
 .Xr sysctl 8
 .Sh HISTORY
-The
+This version of the
 .Nx Ns Tn /alpha
-.Nm
+.Nm installboot
 command first appeared in
 .Nx 1.2 .
+In
+.Nx 1.4
+it was replaced with a new version, and this
+version was renamed to
+.Nm installboot.old .
