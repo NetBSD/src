@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2003/10/21 10:01:22 lukem Exp $	
+#	$NetBSD: Makefile,v 1.34 2004/06/29 04:46:35 itojun Exp $	
 
 .include <bsd.own.mk>
 
@@ -45,7 +45,7 @@ version.c: VERSION
 LDADD+=	-lpcap -ll
 DPADD+=	${LIBPCAP} ${LIBL}
 
-CPPFLAGS+=	-I${.CURDIR} -I${SRCDIR}
+CPPFLAGS+=	-I${.CURDIR} -I${SRCDIR} -I${NETBSDSRCDIR}/sys/dist/pf
 
 AWKS= atime.awk packetdat.awk stime.awk send-ack.awk   
 
