@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)sigsetmask.2	6.7 (Berkeley) 3/10/91
-.\"	$Id: sigsetmask.3,v 1.6 1994/12/05 18:51:51 jtc Exp $
+.\"	$NetBSD: sigsetmask.3,v 1.7 1997/05/12 07:37:37 mikel Exp $
 .\"
 .Dd March 10, 1991
 .Dt SIGSETMASK 3
@@ -45,7 +45,7 @@
 .Fn sigmask signum
 .Sh DESCRIPTION
 .Bf -symbolic
-This interface is made obsoleted by:
+This interface is made obsolete by:
 .Ef
 .Xr sigprocmask 2 .
 .Pp
@@ -68,13 +68,13 @@ to be blocked.
 .Sh RETURN VALUES
 The previous set of masked signals is returned.
 .Sh SEE ALSO
-.Xr sigprocmask 2 ,
 .Xr kill 2 ,
 .Xr sigaction 2 ,
+.Xr sigprocmask 2 ,
 .Xr sigsuspend 2 ,
-.Xr sigvec 3 ,
-.Xr sigblock 2 ,
-.Xr sigsetops 3
+.Xr sigblock 3 ,
+.Xr sigsetops 3 ,
+.Xr sigvec 3
 .Sh HISTORY
 The
 .Fn sigsetmask

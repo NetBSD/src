@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)sigvec.2	6.7 (Berkeley) 4/29/91
-.\"	$Id: sigvec.3,v 1.7 1997/01/17 03:44:59 perry Exp $
+.\"	$NetBSD: sigvec.3,v 1.8 1997/05/12 07:37:38 mikel Exp $
 .\"
 .Dd April 29, 1991
 .Dt SIGVEC 3
@@ -50,7 +50,8 @@ struct sigvec {
 .Fn sigvec "int sig" "struct sigvec *vec" "struct sigvec *ovec"
 .Sh DESCRIPTION
 .Bf -symbolic
-This interface is made obsolete by sigaction(2).
+This interface is made obsolete by
+.Xr sigaction 2 .
 .Ef
 .Pp
 The system defines a set of signals that may be delivered to a process.
@@ -81,9 +82,9 @@ defines the set of signals currently blocked from delivery
 to a process.  The signal mask for a process is initialized
 from that of its parent (normally 0).  It
 may be changed with a
-.Xr sigblock 2
+.Xr sigblock 3
 or
-.Xr sigsetmask 2
+.Xr sigsetmask 3
 call, or when a signal is delivered to the process.
 .Pp
 When a signal
@@ -103,9 +104,9 @@ must arrange to restore the previous context itself.
 When a signal is delivered to a process a new signal mask is
 installed for the duration of the process' signal handler
 (or until a
-.Xr sigblock
+.Xr sigblock 3
 or
-.Xr sigsetmask
+.Xr sigsetmask 3
 call is made).
 This mask is formed by taking the current signal mask,
 adding the signal to be delivered, and 
@@ -278,19 +279,19 @@ or
 .Dv SIGSTOP .
 .El
 .Sh SEE ALSO
-.Xr sigaction 2 ,
 .Xr kill 1 ,
-.Xr ptrace 2 ,
 .Xr kill 2 ,
+.Xr ptrace 2 ,
+.Xr sigaction 2 ,
 .Xr sigprocmask 2 ,
-.Xr sigblock 3 ,
-.Xr sigsetmask 3 ,
-.Xr sigsuspend 2 ,
-.Xr sigpause 3 ,
 .Xr sigstack 2 ,
-.Xr sigsetops 3 ,
+.Xr sigsuspend 2 ,
 .Xr setjmp 3 ,
+.Xr sigblock 3 ,
 .Xr siginterrupt 3 ,
+.Xr sigpause 3 ,
+.Xr sigsetmask 3 ,
+.Xr sigsetops 3 ,
 .Xr tty 4
 .Sh EXAMPLE
 On the
