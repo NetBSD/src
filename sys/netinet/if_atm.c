@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atm.c,v 1.9 1998/07/05 22:48:07 jonathan Exp $       */
+/*      $NetBSD: if_atm.c,v 1.10 1998/09/13 15:45:40 christos Exp $       */
 
 /*
  *
@@ -15,8 +15,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Charles D. Cranor and 
- *	Washington University.
+ *      This product includes software developed by Charles D. Cranor and
+ *      Washington University.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
