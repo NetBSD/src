@@ -1,4 +1,4 @@
-/*	$NetBSD: ppc_reloc.c,v 1.26 2002/09/24 15:04:48 mycroft Exp $	*/
+/*	$NetBSD: ppc_reloc.c,v 1.27 2002/09/25 07:27:53 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -38,7 +38,6 @@
 #include "debug.h"
 #include "rtld.h"
 
-caddr_t _rtld_bind_powerpc __P((const Obj_Entry *, Elf_Word));
 void _rtld_powerpc_pltcall __P((Elf_Word));
 void _rtld_powerpc_pltresolve __P((Elf_Word, Elf_Word));
 
@@ -48,83 +47,7 @@ void _rtld_powerpc_pltresolve __P((Elf_Word, Elf_Word));
 
 void _rtld_bind_start(void);
 void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);
-
-/*
- * Bind a pltgot slot indexed by reloff.
- */
-caddr_t
-_rtld_bind_powerpc(obj, reloff)
-	const Obj_Entry *obj;
-	Elf_Word reloff;
-{
-	const Elf_Rela *rela;
-	caddr_t		addr;
-
-	if (reloff < 0 || reloff >= 0x8000) {
-		dbg(("_rtld_bind_powerpc: broken reloff %x", reloff));
-		_rtld_die();
-	}
-
-	rela = obj->pltrela + reloff;
-
-	if (_rtld_relocate_plt_object(obj, rela, &addr) < 0)
-		_rtld_die();
-
-	return addr;
-}
-
-int
-_rtld_relocate_plt_object(
-	const Obj_Entry *obj,
-	const Elf_Rela *rela,
-	caddr_t *addrp)
-{
-	Elf_Word *where = (Elf_Word *)(obj->relocbase + rela->r_offset);
-	int distance;
-
-	const Elf_Sym *def;
-	const Obj_Entry *defobj;
-	Elf_Addr value;
-
-	assert(ELF_R_TYPE(rela->r_info) == R_TYPE(JMP_SLOT));
-
-	def = _rtld_find_symdef(ELF_R_SYM(rela->r_info), obj, &defobj,
-	    true);
-	if (def == NULL)
-		return (-1);
-
-	value = (Elf_Addr)(defobj->relocbase + def->st_value);
-	distance = value - (Elf_Addr)where;
-
-	if (abs(distance) < 32*1024*1024) {	/* inside 32MB? */
-		/* b	value	# branch directly */
-		*where = 0x48000000 | (distance & 0x03fffffc);
-		__syncicache(where, 4);
-	} else {
-		Elf_Addr *pltcall, *jmptab;
-		int N = obj->pltrelalim - obj->pltrela;
-		int reloff = rela - obj->pltrela;
-	
-		if (reloff < 0 || reloff >= 0x8000)
-			return (-1);
-	
-		pltcall = obj->pltgot;
-	
-		jmptab = pltcall + 18 + N * 2;
-		jmptab[reloff] = value;
-
-		distance = (Elf_Addr)pltcall - (Elf_Addr)(where + 1);
-	
-		/* li	r11,reloff */
-		/* b	pltcall		# use pltcall routine */
-		where[0] = 0x39600000 | reloff;
-		where[1] = 0x48000000 | (distance & 0x03fffffc);
-		__syncicache(where, 8);
-	}
-
-	*addrp = (caddr_t)value;
-	return (0);
-}
+caddr_t _rtld_bind __P((const Obj_Entry *, Elf_Word));
 
 /*
  * Setup the plt glue routines.
@@ -293,4 +216,50 @@ _rtld_relocate_plt_lazy(obj)
 	}
 
 	return 0;
+}
+
+caddr_t
+_rtld_bind(obj, reloff)
+	const Obj_Entry *obj;
+	Elf_Word reloff;
+{
+	const Elf_Rela *rela = obj->pltrela + reloff;
+	Elf_Word *where = (Elf_Word *)(obj->relocbase + rela->r_offset);
+	Elf_Addr value;
+	const Elf_Sym *def;
+	const Obj_Entry *defobj;
+	int distance;
+
+	assert(ELF_R_TYPE(rela->r_info) == R_TYPE(JMP_SLOT));
+
+	def = _rtld_find_symdef(ELF_R_SYM(rela->r_info), obj, &defobj, true);
+	if (def == NULL)
+		_rtld_die();
+
+	value = (Elf_Addr)(defobj->relocbase + def->st_value);
+	distance = value - (Elf_Addr)where;
+
+	if (abs(distance) < 32*1024*1024) {	/* inside 32MB? */
+		/* b	value	# branch directly */
+		*where = 0x48000000 | (distance & 0x03fffffc);
+		__syncicache(where, 4);
+	} else {
+		Elf_Addr *pltcall, *jmptab;
+		int N = obj->pltrelalim - obj->pltrela;
+	
+		pltcall = obj->pltgot;
+	
+		jmptab = pltcall + 18 + N * 2;
+		jmptab[reloff] = value;
+
+		distance = (Elf_Addr)pltcall - (Elf_Addr)(where + 1);
+	
+		/* li	r11,reloff */
+		/* b	pltcall		# use pltcall routine */
+		where[0] = 0x39600000 | reloff;
+		where[1] = 0x48000000 | (distance & 0x03fffffc);
+		__syncicache(where, 8);
+	}
+
+	return (caddr_t)value;
 }
