@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irq.S,v 1.20 1999/03/24 05:50:56 mrg Exp $	*/
+/*	$NetBSD: iomd_irq.S,v 1.21 1999/10/26 06:53:43 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -68,16 +68,16 @@
  */
 
 Ldisabled_mask:
-	.word	_disabled_mask
+	.word	_C_LABEL(disabled_mask)
 
 Lcurrent_spl_level:	
-	.word	_current_spl_level
+	.word	_C_LABEL(current_spl_level)
 
 Lcurrent_intr_depth:
-	.word	_current_intr_depth
+	.word	_C_LABEL(current_intr_depth)
 
 Lspl_masks:
-	.word	_spl_masks
+	.word	_C_LABEL(spl_masks)
 
 /*
  * Regsister usage
@@ -170,7 +170,7 @@ Lfind_highest_ipl:
 	stmfd	sp!, {r1}
 
 	/* Update the IOMD irq masks */
-	bl	_irq_setmasks
+	bl	_C_LABEL(irq_setmasks)
 
         mrs     r0, cpsr_all		/* Enable IRQ's */
 	bic	r0, r0, #I32_bit
@@ -188,7 +188,7 @@ irqloop:
 
 	teq	r6, #0x00000000		/* Do we have a handler */
 	moveq	r0, r8			/* IRQ requests as arg 0 */
-	beq	_stray_irqhandler	/* call special handler */
+	beq	_C_LABEL(stray_irqhandler) /* call special handler */
 
         ldr	r0, Lcnt		/* Stat info */
 	ldr	r1, [r0, #(V_INTR)]
@@ -244,9 +244,9 @@ nextirq:
 	ldmfd	sp!, {r2}
 	ldr	r1, Ldisabled_mask
 	str	r2, [r1]
-	bl	_irq_setmasks
+	bl	_C_LABEL(irq_setmasks)
 
-	bl	_dosoftints		/* Handle the soft interrupts */
+	bl	_C_LABEL(dosoftints)	/* Handle the soft interrupts */
 
 	/* Manage AST's. Maybe this should be done as a soft interrupt ? */
 	ldr	r0, [sp]		/* Get the SPSR from stack */
@@ -302,7 +302,7 @@ irqast:
         msr     cpsr_all, r2
 
 	mov	r0, sp
-	bl	_ast
+	bl	_C_LABEL(ast)
 
 	/* Kill IRQ's in preparation for exit */
         mrs     r0, cpsr_all
@@ -316,10 +316,10 @@ irqast:
 	
 
 Lspl_mask:
-	.word	_spl_mask		/* irq's allowed at current spl level */
+	.word	_C_LABEL(spl_mask)	/* irq's allowed at current spl level */
 
 Lcurrent_mask:
-	.word	_current_mask		/* irq's that are usable */
+	.word	_C_LABEL(current_mask)	/* irq's that are usable */
 
 ENTRY(irq_setmasks)
 	/* Disable interrupts */
@@ -359,30 +359,30 @@ ENTRY(irq_setmasks)
 	mov	pc, lr
 
 Lcnt:
-	.word	_uvmexp
+	.word	_C_LABEL(uvmexp)
 
 Lintrcnt:
-	.word	_intrcnt
+	.word	_C_LABEL(intrcnt)
 
 
 Lirqhandlers:
-	.word	_irqhandlers		/* Pointer to array of irqhandlers */
+	.word	_C_LABEL(irqhandlers)	/* Pointer to array of irqhandlers */
 
 Lastpending:
-	.word	_astpending
+	.word	_C_LABEL(astpending)
 
 #ifdef IRQSTATS
 /* These symbols are used by vmstat */
 
 	.text
-	.global	__intrnames
-__intrnames:
-	.word	_intrnames
+	.global	_C_LABEL(_intrnames)
+_C_LABEL(_intrnames):
+	.word	_C_LABEL(intrnames)
 
 	.data
 
-        .globl  _intrnames, _eintrnames, _intrcnt, _sintrcnt, _eintrcnt
-_intrnames:
+        .globl  _C_LABEL(intrnames), _C_LABEL(eintrnames), _C_LABEL(intrcnt), _C_LABEL(sintrcnt), _C_LABEL(eintrcnt)
+_C_LABEL(intrnames):
 	.asciz	"interrupt  0 "
 	.asciz	"interrupt  1 "	/* reserved0 */
 	.asciz	"interrupt  2 "
@@ -416,7 +416,7 @@ _intrnames:
 	.asciz	"exp card 6   "
 	.asciz	"exp card 7   "
 
-_sintrnames:
+_C_LABEL(sintrnames):
 	.asciz	"softclock    "
 	.asciz	"softnet      "
 	.asciz	"softserial   "
@@ -449,29 +449,29 @@ _sintrnames:
 	.asciz	"softintr 29  "
 	.asciz	"softintr 30  "
 	.asciz	"softintr 31  "
-_eintrnames:
+_C_LABEL(eintrnames):
 
 	.bss
 	.align	0
-_intrcnt:
+_C_LABEL(intrcnt):
 	.space	32*4	/* XXX Should be linked to number of interrupts */
 
-_sintrcnt:
+_C_LABEL(sintrcnt):
 	.space	32*4	/* XXX Should be linked to number of interrupts */
-_eintrcnt:
+_C_LABEL(eintrcnt):
 
 #else	/* IRQSTATS */
 	/* Dummy entries to keep vmstat happy */
 
 	.text
-        .globl  _intrnames, _eintrnames, _intrcnt, _eintrcnt
-_intrnames:
+        .globl  _C_LABEL(intrnames), _C_LABEL(eintrnames), _C_LABEL(intrcnt), _C_LABEL(eintrcnt)
+_C_LABEL(intrnames):
 	.long	0
-_eintrnames:
+_C_LABEL(eintrnames):
 
-_intrcnt:
+_C_LABEL(intrcnt):
 	.long	0
-_eintrcnt:
+_C_LABEL(eintrcnt):
 #endif	/* IRQSTATS */
 
 /* FIQ code */
