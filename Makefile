@@ -1,8 +1,8 @@
-#	$Id: Makefile,v 1.13 1993/07/07 12:55:48 brezak Exp $
+#	$Id: Makefile,v 1.14 1993/12/08 04:51:25 cgd Exp $
 
 # NOTE THAT etc *DOES NOT* BELONG IN THE LIST BELOW
 
-SUBDIR+= bin include lib libexec sbin usr.bin usr.sbin share games
+SUBDIR+= lib include bin libexec sbin usr.bin usr.sbin share games
 SUBDIR+= gnu
 
 SUBDIR+= sys
