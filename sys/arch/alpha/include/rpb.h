@@ -1,4 +1,4 @@
-/* $NetBSD: rpb.h,v 1.38 2000/07/06 23:29:13 thorpej Exp $ */
+/* $NetBSD: rpb.h,v 1.39 2001/05/03 20:52:19 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -81,6 +81,7 @@ struct rpb {
 #define	ST_DEC_WILDFIRE		35		/* "Wildfire" */
 #define	ST_DEC_CUSCO		36		/* "CUSCO" */
 #define	ST_DEC_EIGER		37		/* "Eiger" */
+#define	ST_DEC_TITAN		38		/* "Titan" */
 
 	/* Alpha Processor, Inc. systypes */
 #define	ST_API_NAUTILUS		201		/* EV6-AMD 751 UP1000 */
