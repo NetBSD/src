@@ -1,4 +1,4 @@
-/* $NetBSD: wsmoused.c,v 1.18 2004/01/20 22:11:02 matt Exp $ */
+/* $NetBSD: wsmoused.c,v 1.19 2004/01/20 22:24:28 matt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\n"
 "The NetBSD Foundation, Inc.  All rights reserved.\n");
-__RCSID("$NetBSD: wsmoused.c,v 1.18 2004/01/20 22:11:02 matt Exp $");
+__RCSID("$NetBSD: wsmoused.c,v 1.19 2004/01/20 22:24:28 matt Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -50,7 +50,6 @@ __RCSID("$NetBSD: wsmoused.c,v 1.18 2004/01/20 22:11:02 matt Exp $");
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
