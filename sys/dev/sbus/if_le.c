@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.10 2000/01/11 12:59:43 pk Exp $	*/
+/*	$NetBSD: if_le.c,v 1.11 2000/05/09 22:51:34 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -74,6 +74,7 @@ struct	le_softc {
 	struct	sbusdev		sc_sd;		/* sbus device */
 	bus_space_tag_t		sc_bustag;
 	bus_dma_tag_t		sc_dmatag;
+	bus_dmamap_t		sc_dmamap;
 	bus_space_handle_t	sc_reg;
 };
 
@@ -166,13 +167,14 @@ leattach_sbus(parent, self, aux)
 	struct sbus_attach_args *sa = aux;
 	struct le_softc *lesc = (struct le_softc *)self;
 	struct lance_softc *sc = &lesc->sc_am7990.lsc;
+	bus_dma_tag_t dmatag;
 	struct sbusdev *sd;
 	/* XXX the following declarations should be elsewhere */
 	extern void myetheraddr __P((u_char *));
 
 
 	lesc->sc_bustag = sa->sa_bustag;
-	lesc->sc_dmatag = sa->sa_dmatag;
+	lesc->sc_dmatag = dmatag = sa->sa_dmatag;
 
 	if (sbus_bus_map(sa->sa_bustag,
 			 sa->sa_slot,
@@ -224,25 +226,46 @@ leattach_sbus(parent, self, aux)
 /* XXX - This flag is not defined on all archs */
 #define BUS_DMA_24BIT	0
 #endif
-		error = bus_dmamem_alloc(lesc->sc_dmatag, MEMSIZE, NBPG, 0,
+		/* Get a DMA handle */
+		if ((error = bus_dmamap_create(dmatag, MEMSIZE, 1, MEMSIZE, 0,
+						BUS_DMA_NOWAIT|BUS_DMA_24BIT,
+						&lesc->sc_dmamap)) != 0) {
+			printf("%s: DMA map create error %d\n",
+				self->dv_xname, error);
+			return;
+		}
+
+		/* Allocate DMA buffer */
+		if ((error = bus_dmamem_alloc(dmatag, MEMSIZE, NBPG, 0,
 					 &seg, 1, &rseg,
-					 BUS_DMA_NOWAIT | BUS_DMA_24BIT);
-		if (error) {
+					 BUS_DMA_NOWAIT|BUS_DMA_24BIT)) != 0){
 			printf("%s: DMA buffer allocation error %d\n",
 				self->dv_xname, error);
 			return;
 		}
-		error = bus_dmamem_map(lesc->sc_dmatag, &seg, rseg, MEMSIZE,
+
+		/* Map DMA buffer into kernel space */
+		if ((error = bus_dmamem_map(dmatag, &seg, rseg, MEMSIZE,
 				       (caddr_t *)&sc->sc_mem,
-				       BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
-		if (error) {
+				       BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 			printf("%s: DMA buffer map error %d\n",
 				self->dv_xname, error);
 			bus_dmamem_free(lesc->sc_dmatag, &seg, rseg);
 			return;
 		}
 
-		sc->sc_addr = seg.ds_addr & 0xffffff;
+		/* Load DMA buffer */
+		if ((error = bus_dmamap_load_raw(dmatag, lesc->sc_dmamap,
+					&seg, rseg,
+					MEMSIZE, BUS_DMA_NOWAIT)) != 0) {
+			printf("%s: DMA buffer map load error %d\n",
+				self->dv_xname, error);
+			bus_dmamem_unmap(dmatag, (caddr_t)sc->sc_mem, MEMSIZE);
+			bus_dmamem_free(dmatag, &seg, rseg);
+			return;
+		}
+
+		sc->sc_addr = lesc->sc_dmamap->dm_segs[0].ds_addr & 0xffffff;
 		sc->sc_memsize = MEMSIZE;
 		sc->sc_conf3 = LE_C3_BSWP | LE_C3_ACON | LE_C3_BCON;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586var.h,v 1.12 1999/08/23 12:12:43 pk Exp $	*/
+/*	$NetBSD: i82586var.h,v 1.13 2000/05/09 22:51:34 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -172,6 +172,8 @@ struct ie_softc {
 
 	bus_space_tag_t	bt;	/* bus-space tag of card memory */
 	bus_space_handle_t bh;	/* bus-space handle of card memory */
+
+	bus_dmamap_t	sc_dmamap;	/* bus dma handle */
 
 	void	*sc_iobase;	/* (MD) KVA of base of 24 bit addr space */
 	void	*sc_maddr;	/* (MD) KVA of base of chip's RAM
