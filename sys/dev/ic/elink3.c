@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.32.4.3 1997/08/29 18:47:07 thorpej Exp $	*/
+/*	$NetBSD: elink3.c,v 1.32.4.4 1997/09/27 01:57:29 marc Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -1086,6 +1086,9 @@ epintr(arg)
 	u_int16_t status;
 	int ret = 0;
 
+	if (!sc->enabled)
+		return(0);
+
 	for (;;) {
 		bus_space_write_2(iot, ioh, EP_COMMAND, C_INTR_LATCH);
 
@@ -1429,8 +1432,17 @@ epioctl(ifp, cmd, data)
 	switch (cmd) {
 
 	case SIOCSIFADDR:
+		if (sc->enable && !sc->enabled) {
+			if ((*sc->enable)(sc->able_arg)) {
+				printf("%s: device enable failed\n",
+				       sc->sc_dev.dv_xname);
+				error = EIO;
+				break;
+			}
+			sc->enabled = 1;
+		}
+		/* epinit is called just below */
 		ifp->if_flags |= IFF_UP;
-
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
@@ -1475,12 +1487,25 @@ epioctl(ifp, cmd, data)
 			 */
 			epstop(sc);
 			ifp->if_flags &= ~IFF_RUNNING;
+			if (sc->disable && sc->enabled) {
+			    sc->enabled = 0;
+			    (*sc->disable)(sc->able_arg);
+			}
 		} else if ((ifp->if_flags & IFF_UP) != 0 &&
 			   (ifp->if_flags & IFF_RUNNING) == 0) {
 			/*
 			 * If interface is marked up and it is stopped, then
 			 * start it.
 			 */
+			if (sc->enable && !sc->enabled) {
+				if ((*sc->enable)(sc->able_arg)) {
+					printf("%s: device enable failed\n",
+					       sc->sc_dev.dv_xname);
+					error = EIO;
+					break;
+				}
+				sc->enabled = 1;
+			}
 			epinit(sc);
 		} else {
 			/*
@@ -1575,8 +1600,10 @@ epshutdown(arg)
 {
 	register struct ep_softc *sc = arg;
 
-	epstop(sc);
-	ep_complete_cmd(sc, EP_COMMAND, GLOBAL_RESET);
+	if (sc->enabled) {
+		epstop(sc);
+		ep_complete_cmd(sc, EP_COMMAND, GLOBAL_RESET);
+	}
 }
 
 /*
