@@ -1,4 +1,4 @@
-/*	$NetBSD: sysfpgavar.h,v 1.5 2002/10/05 10:59:10 scw Exp $	*/
+/*	$NetBSD: sysfpgavar.h,v 1.6 2002/10/14 14:19:29 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -92,9 +92,9 @@ struct sysfpga_attach_args {
 #define	SYSFPGA_PCI2_NINTR		8
 
 struct evcnt;
-extern struct evcnt *sysfpga_intr_evcnt(int);
 extern void *sysfpga_intr_establish(int, int, int, int (*)(void *), void *);
 extern void sysfpga_intr_disestablish(void *);
+extern struct evcnt *sysfpga_intr_evcnt(int, int);
 extern void sysfpga_nmi_clear(void);
 extern void sysfpga_sreset(void);
 
