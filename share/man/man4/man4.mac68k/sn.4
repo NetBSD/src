@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: sn.4,v 1.6 2000/01/19 14:54:13 abs Exp $
+.\"	$NetBSD: sn.4,v 1.7 2002/01/15 01:48:19 wiz Exp $
 .\"
 .Dd June 7, 1997
 .Os
@@ -59,8 +59,7 @@ local network.
 The
 .Nm
 interface is currently known to support the following NuBus cards:
-.Bd -filled -offset indent
-.Bl -item -compact
+.Bl -bullet -offset indent -compact
 .It
 Apple LC Twisted-pair (part #820-0532-A) PDS card
 .It
@@ -68,7 +67,6 @@ Cayman Gatorcard PDS
 .It
 Dayna DaynaPort/E30
 .El
-.Ed
 .Pp
 In addition, the
 .Nm
@@ -81,13 +79,12 @@ This is a normal autoconfiguration message noting the 6 byte physical
 Ethernet address of the adapter, its manufacturer, and how much buffer
 memory it has.
 .El
-.\" .Sh ERRORS
 .Sh SEE ALSO
+.Xr ae 4 ,
 .Xr arp 4 ,
-.Xr ifconfig 8 ,
 .Xr inet 4 ,
 .Xr netintro 4 ,
-.Xr ae 4
+.Xr ifconfig 8
 .Sh HISTORY
 The
 .Nm
