@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.52.2.7 2002/02/23 17:59:36 he Exp $	*/
+/*	$NetBSD: perform.c,v 1.52.2.8 2002/06/26 16:51:41 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.52.2.7 2002/02/23 17:59:36 he Exp $");
+__RCSID("$NetBSD: perform.c,v 1.52.2.8 2002/06/26 16:51:41 he Exp $");
 #endif
 #endif
 
@@ -45,33 +45,144 @@ static int zapLogDir;		/* Should we delete LogDir? */
 static package_t Plist;
 static char *Home;
 
-/*
- * Called to see if pkg is already installed as some other version, 
- * note found version in "note".
- */
-static int
-note_whats_installed(const char *found, char *note)
-{
-	(void) strcpy(note, found);
-	return 0;
-}
-
 static int
 sanity_check(char *pkg)
 {
-	int     code = 0;
+	int     errc = 0;
 
 	if (!fexists(CONTENTS_FNAME)) {
 		warnx("package %s has no CONTENTS file!", pkg);
-		code = 1;
+		errc = 1;
 	} else if (!fexists(COMMENT_FNAME)) {
 		warnx("package %s has no COMMENT file!", pkg);
-		code = 1;
+		errc = 1;
 	} else if (!fexists(DESC_FNAME)) {
 		warnx("package %s has no DESC file!", pkg);
-		code = 1;
+		errc = 1;
 	}
-	return code;
+	return errc;
+}
+
+/* install a pre-requisite package. Returns 1 if it installed it */
+static int
+installprereq(char *pkg, char *name, int *errc)
+{
+	int	ret;
+
+	ret = 0;
+	if (!IS_URL(pkg) && !getenv("PKG_ADD_BASE")) {
+		/* install depending pkg from local disk */
+
+		char    path[FILENAME_MAX], *cp = NULL;
+
+		/* is there a .tbz file? */
+		(void) snprintf(path, sizeof(path), "%s/%s.tbz", Home, name);
+		if (fexists(path))
+			cp = path;
+		else {
+			/* no, maybe .tgz? */
+			(void) snprintf(path, sizeof(path), "%s/%s.tgz", Home, name);
+			if (fexists(path)) {
+				cp = path;
+			} else {
+				/* neither - let's do some digging! */
+				cp = fileFindByPath(pkg, name); /* files & wildcards */
+			}
+		}
+		if (cp == NULL) {
+			warnx("<%s> (1) add of dependency `%s' failed%s",
+			    pkg, name, Force ? " (proceeding anyway)" : "!");
+			if (!Force)
+				++errc;
+		} else {
+			if (Verbose)
+				printf("Loading it from %s.\n", cp);
+			if (vsystem("%s/pkg_add -s %s %s%s%s %s%s",
+				    BINDIR,
+				    get_verification(),
+				    Force ? "-f " : "",
+				    Prefix ? "-p " : "",
+				    Prefix ? Prefix : "",
+				    Verbose ? "-v " : "",
+				    cp)) {
+				warnx("autoload of dependency `%s' failed%s",
+				    cp, Force ? " (proceeding anyway)" : "!");
+				if (!Force)
+					++errc;
+			} else {
+				ret = 1;
+			}
+		}
+	} else {
+		/* pkg is url -> install depending pkg via FTP */
+
+		char   *saved_Current;	/* allocated/set by save_dirs(), */
+		char   *saved_Previous;	/* freed by restore_dirs() */
+		char   *cp, *new_pkg, *new_name;
+		char   *vertype;
+
+		if (strcmp(vertype = get_verification(), "none") != 0) {
+			(void) fprintf(stderr, "Warning: %s verification requested for a URL package\n", vertype);
+		}
+
+		new_pkg = pkg;
+		new_name = name;
+
+		if (ispkgpattern(name)) {
+			/* Handle wildcard depends here */
+
+			char *s;
+			s=fileFindByPath(pkg, name);
+
+			/* adjust new_pkg and new_name */
+			new_pkg = NULL;
+			new_name = s;
+		}
+
+		/* makeplaypen() and leave_playpen() clobber Current and
+		 * Previous, save them! */
+			save_dirs(&saved_Current, &saved_Previous);
+
+		if ((cp = fileGetURL(new_pkg, new_name)) != NULL) {
+			if (Verbose)
+				printf("Finished loading %s over FTP.\n", new_name);
+			if (!fexists(CONTENTS_FNAME)) {
+				warnx("autoloaded package %s has no %s file?",
+					    name, CONTENTS_FNAME);
+					if (!Force)
+						++errc;
+			} else {
+				if (vsystem("(pwd; cat %s) | pkg_add %s%s%s %s-S",
+						CONTENTS_FNAME,
+						Force ? "-f " : "",
+						Prefix ? "-p " : "",
+						Prefix ? Prefix : "",
+					Verbose ? "-v " : "")) {
+					warnx("<%s> (2) add of dependency `%s' failed%s",
+					      pkg, name, Force ? " (proceeding anyway)" : "!");
+					if (!Force)
+						++errc;
+				} else {
+					ret = 1;
+					if (Verbose) {
+						printf("\t`%s' loaded successfully as `%s'.\n", name, new_name);
+					}
+				}
+			}
+			/* Nuke the temporary playpen */
+			leave_playpen(cp);
+
+		} else {
+			if (Verbose)
+				warnx("fileGetURL('%s', '%s') failed", new_pkg, new_name);
+			if (!Force)
+				errc++;
+		}
+		
+		restore_dirs(saved_Current, saved_Previous);
+	}
+
+	return ret;
 }
 
 /*
@@ -91,14 +202,15 @@ pkg_do(char *pkg)
 	int	upgrading = 0;
 	char   *where_to, *tmp, *extract;
 	char   *dbdir;
+	char   *exact;
 	FILE   *cfile;
-	int     code;
+	int     errc;
 	plist_t *p;
 	struct stat sb;
 	int     inPlace;
 	int	rc;
 
-	code = 0;
+	errc = 0;
 	zapLogDir = 0;
 	LogDir[0] = '\0';
 	strcpy(playpen, FirstPen);
@@ -371,7 +483,7 @@ pkg_do(char *pkg)
 				} else {
 					warnx("other version '%s' already installed", installed);
 
-					code = 1;
+					errc = 1;
 					goto success;	/* close enough for government work */
 				}
 			}
@@ -392,7 +504,7 @@ pkg_do(char *pkg)
 		if (findmatchingname(dbdir, p->name, note_whats_installed, installed) > 0) {
 			warnx("Conflicting package `%s'installed, please use\n"
 			      "\t\"pkg_delete %s\" first to remove it!\n", installed, installed);
-			++code;
+			++errc;
 		}
 	}
 
@@ -449,7 +561,7 @@ pkg_do(char *pkg)
 						warnx("Proceeding anyways.");
 					} else {	
 						warnx("Please resolve this conflict!");
-						code = 1;
+						errc = 1;
 						goto success; /* close enough */
 					}
 				}
@@ -459,136 +571,48 @@ pkg_do(char *pkg)
 	
 
 	/* Now check the packing list for dependencies */
-	for (p = Plist.head; p; p = p->next) {
+	for (exact = NULL, p = Plist.head; p; p = p->next) {
 		char    installed[FILENAME_MAX];
+		int	done;
 
-		if (p->type != PLIST_PKGDEP)
+		if (p->type == PLIST_BLDDEP) {
+			exact = p->name;
 			continue;
+		}
+		if (p->type != PLIST_PKGDEP) {
+			exact = NULL;
+			continue;
+		}
 		if (Verbose)
 			printf("Package `%s' depends on `%s'.\n", PkgName, p->name);
-		/* if (vsystem("/usr/sbin/pkg_info -qe '%s'", p->name)) { */
+
 		if (findmatchingname(dbdir, p->name, note_whats_installed, installed) != 1) {
 			/* required pkg not found - need to pull in */
 
-			if (!Fake) {
-				if (!IS_URL(pkg) && !getenv("PKG_ADD_BASE")) {
-					/* install depending pkg from local disk */
-
-					char    path[FILENAME_MAX], *cp = NULL;
-
-					/* is there a .tbz file? */
-					(void) snprintf(path, sizeof(path), "%s/%s.tbz", Home, p->name);
-					if (fexists(path))
-						cp = path;
-					else {
-						/* no, maybe .tgz? */
-						(void) snprintf(path, sizeof(path), "%s/%s.tgz", Home, p->name);
-						if (fexists(path)) {
-							cp = path;
-						} else {
-							/* neither - let's do some digging! */
-							cp = fileFindByPath(pkg, p->name); /* files & wildcards */
-						}
-					}
-					if (cp) {
-						if (Verbose)
-							printf("Loading it from %s.\n", cp);
-						if (vsystem("%s/pkg_add -s %s %s%s%s %s%s",
-							    BINDIR,
-							    get_verification(),
-							    Force ? "-f " : "",
-							    Prefix ? "-p " : "",
-							    Prefix ? Prefix : "",
-							    Verbose ? "-v " : "",
-							    cp)) {
-							warnx("autoload of dependency `%s' failed%s",
-							    cp, Force ? " (proceeding anyway)" : "!");
-							if (!Force)
-								++code;
-						}
-					} else {
-						warnx("<%s> (1) add of dependency `%s' failed%s",
-						    pkg, p->name, Force ? " (proceeding anyway)" : "!");
-						if (!Force)
-							++code;
-					} /* cp */
-				} else {
-					/* pkg is url -> install depending pkg via FTP */
-
-					char   *saved_Current;	/* allocated/set by save_dirs(), */
-					char   *saved_Previous;	/* freed by restore_dirs() */
-					char   *cp, *new_pkg, *new_name;
-					char   *vertype;
-
-					if (strcmp(vertype = get_verification(), "none") != 0) {
-						(void) fprintf(stderr, "Warning: %s verification requested for a URL package\n", vertype);
-					}
-
-					new_pkg = pkg;
-					new_name = p->name;
-
-					if (ispkgpattern(p->name)) {
-						/* Handle wildcard depends here */
-
-						char *s;
-						s=fileFindByPath(pkg, p->name);
-
-						/* adjust new_pkg and new_name */
-						new_pkg = NULL;
-						new_name = s;
-					}
-
-					/* makeplaypen() and leave_playpen() clobber Current and
-					 * Previous, save them! */
-						save_dirs(&saved_Current, &saved_Previous);
-
-					if ((cp = fileGetURL(new_pkg, new_name)) != NULL) {
-							if (Verbose)
-							printf("Finished loading %s over FTP.\n", new_name);
-							if (!fexists(CONTENTS_FNAME)) {
-								warnx("autoloaded package %s has no %s file?",
-								    p->name, CONTENTS_FNAME);
-								if (!Force)
-									++code;
-						} else {
-							if (vsystem("(pwd; cat %s) | pkg_add %s%s%s %s-S",
-									CONTENTS_FNAME,
-									Force ? "-f " : "",
-									Prefix ? "-p " : "",
-									Prefix ? Prefix : "",
-								Verbose ? "-v " : "")) {
-								warnx("<%s> (2) add of dependency `%s' failed%s",
-								      pkg, p->name, Force ? " (proceeding anyway)" : "!");
-								if (!Force)
-									++code;
-							} else if (Verbose) {
-								printf("\t`%s' loaded successfully as `%s'.\n", p->name, new_name);
-							}
-						}
-							/* Nuke the temporary playpen */
-							leave_playpen(cp);
-
-					} else {
-						if (Verbose)
-							warnx("fileGetURL('%s', '%s') failed", new_pkg, new_name);
-						if (!Force)
-							code++;
-					}
-					
-					restore_dirs(saved_Current, saved_Previous);
-				}
-			} else {
+			if (Fake) {
 			        /* fake install (???) */
 				if (Verbose)
 					printf("Package dependency %s for %s not installed%s\n", p->name, pkg,
 					    Force ? " (proceeding anyway)" : "!");
+			} else {
+				done = 0;
+				if (exact != NULL) {
+					/* first try the exact name, from the @blddep */
+					done = installprereq(pkg, exact, &errc);
+				}
+				if (!done) {
+					done = installprereq(pkg, p->name, &errc);
+				}
+				if (!done) {
+					errc = 1;
+				}
 			}
 		} else if (Verbose) {
 			printf(" - %s already installed.\n", installed);
 		}
 	}
 
-	if (code != 0)
+	if (errc != 0)
 		goto bomb;
 
 	/* Look for the requirements file */
@@ -600,7 +624,7 @@ pkg_do(char *pkg)
 			warnx("package %s fails requirements %s", pkg_fullname,
 			    Force ? "installing anyway" : "- not installed");
 			if (!Force) {
-				code = 1;
+				errc = 1;
 				goto success;	/* close enough for government work */
 			}
 		}
@@ -613,7 +637,7 @@ pkg_do(char *pkg)
 			printf("Running install with PRE-INSTALL for %s.\n", PkgName);
 		if (!Fake && vsystem("./%s %s PRE-INSTALL", INSTALL_FNAME, PkgName)) {
 			warnx("install script returned error status");
-			code = 1;
+			errc = 1;
 			goto success;	/* nothing to uninstall yet */
 		}
 	}
@@ -621,7 +645,7 @@ pkg_do(char *pkg)
 	/* Now finally extract the entire show if we're not going direct */
 	if (!inPlace && !Fake)
 	    if (!extract_plist(".", &Plist)) {
-		code = 1;
+		errc = 1;
 		goto fail;
 	    }
 
@@ -644,7 +668,7 @@ pkg_do(char *pkg)
 			printf("Running install with POST-INSTALL for %s.\n", PkgName);
 		if (!Fake && vsystem("./%s %s POST-INSTALL", INSTALL_FNAME, PkgName)) {
 			warnx("install script returned error status");
-			code = 1;
+			errc = 1;
 			goto fail;
 		}
 	}
@@ -652,14 +676,13 @@ pkg_do(char *pkg)
 	/* Time to record the deed? */
 	if (!NoRecord && !Fake) {
 		char    contents[FILENAME_MAX];
-		FILE   *cfile;
 
 		umask(022);
 		if (getuid() != 0)
 			warnx("not running as root - trying to record install anyway");
 		if (!PkgName) {
 			warnx("no package name! can't record package, sorry");
-			code = 1;
+			errc = 1;
 			goto success;	/* well, partial anyway */
 		}
 		(void) snprintf(LogDir, sizeof(LogDir), "%s/%s", dbdir, PkgName);
@@ -670,7 +693,7 @@ pkg_do(char *pkg)
 			warnx("can't record package into '%s', you're on your own!",
 			    LogDir);
 			memset(LogDir, 0, sizeof(LogDir));
-			code = 1;
+			errc = 1;
 			goto success;	/* close enough for government work */
 		}
 		/* Make sure pkg_info can read the entry */
@@ -720,6 +743,7 @@ pkg_do(char *pkg)
 					char   *t;
 					t = strrchr(contents, '/');
 					strcpy(t + 1, s);
+					free(s);
 				} else {
 					errx(1, "Where did our dependency go?!");
 					/* this shouldn't happen... X-) */
@@ -761,7 +785,7 @@ pkg_do(char *pkg)
 	goto success;
 
 bomb:
-	code = 1;
+	errc = 1;
 	goto success;
 
 fail:
@@ -779,7 +803,7 @@ success:
 		assert(rc == 0);
 	}
 
-	return code;
+	return errc;
 }
 
 void
