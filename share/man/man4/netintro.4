@@ -1,5 +1,7 @@
-.\" Copyright (c) 1983, 1990, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\"	$NetBSD: netintro.4,v 1.3 1994/11/30 16:22:24 jtc Exp $
+.\"
+.\" Copyright (c) 1983, 1990, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,10 +31,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)netintro.4	6.10 (Berkeley) 3/28/91
-.\"	$Id: netintro.4,v 1.2 1993/08/01 07:55:56 mycroft Exp $
+.\"     @(#)netintro.4	8.2 (Berkeley) 11/30/93
 .\"
-.Dd March 28, 1991
+.Dd November 30, 1993
 .Dt NETINTRO 4
 .Os BSD 4.2
 .Sh NAME
@@ -68,8 +69,7 @@ type.  It is not required that a protocol family support
 all socket types.  A protocol family may contain multiple
 protocols supporting the same socket abstraction. 
 .Pp
-A protocol supports one of the socket abstractions detailed
-in
+A protocol supports one of the socket abstractions detailed in
 .Xr socket 2 .
 A specific protocol may be accessed either by creating a
 socket of the appropriate type and protocol family, or
@@ -105,7 +105,6 @@ and/or in the system error log,
 due to errors in device operation.
 .Sh PROTOCOLS
 The system currently supports the
-.Tn DARPA
 Internet
 protocols, the Xerox Network Systems(tm) protocols,
 and some of the
@@ -115,11 +114,7 @@ Raw socket interfaces are provided to the
 .Tn IP
 protocol
 layer of the
-.Tn DARPA
-Internet, to the
-.Tn IMP
-link layer (1822), and to
-the
+Internet, and to the
 .Tn IDP
 protocol of Xerox
 .Tn NS .
@@ -151,7 +146,6 @@ are known to the system
 .Bd -literal
 #define    AF_UNIX      1    /* local to host (pipes, portals) */
 #define    AF_INET      2    /* internetwork: UDP, TCP, etc. */
-#define    AF_IMPLINK   3    /* arpanet imp addresses */
 #define    AF_NS        6    /* Xerox NS protocols */
 #define    AF_CCITT     10   /* CCITT protocols, X.25 etc */
 #define    AF_HYLINK    15   /* NSC Hyperchannel */
@@ -214,7 +208,7 @@ struct	ifreq {
 };
 .Ed
 .Pp
-Calls which are now depricated are:
+Calls which are now deprecated are:
 .Bl -tag -width SIOCGIFBRDADDR
 .It Dv SIOCSIFADDR
 Set interface address for protocol family.  Following the address
@@ -228,7 +222,7 @@ Set broadcast address for protocol family and interface.
 .Pp
 .Xr Ioctl
 requests to obtain addresses and requests both to set and
-retreive other data are still fully supported
+retrieve other data are still fully supported
 and use the
 .Ar ifreq
 structure:
