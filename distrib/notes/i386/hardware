@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.45.2.8 2000/02/12 20:34:31 he Exp $	
+.\"	$NetBSD: hardware,v 1.45.2.9 2000/07/07 17:38:27 he Exp $	
 .Nx \*V
 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
 with 386-family processors, with or without math coprocessors. It
@@ -20,9 +20,12 @@ Supported devices include:
 		There is complete support (including IDE DMA or Ultra-
 		DMA) for the following PCI controllers:
                 -  Acer labs M5229 IDE Controller
-                -  CMD Tech PCI0643 and PCI0646 IDE Controllers
+                -  CMD Tech PCI0643, 0646, 0648 and 0649 IDE Controllers
                 -  Contaq Microsystems/Cypress CY82C693 IDE Controller
+		-  HighPoint HPT366 IDE Controller
                 -  Intel PIIX, PIIX3 and PIIX4 IDE Controllers
+		-  Intel 82801 (ICH/ICH0) IDE Controllers
+		-  Promise PDC20246 (Ultra/33) and PDC20262 (Ultra/66)
                 -  Silicon Integrated System 5597/5598 IDE controller
                 -  VIA Technologies VT82C586 and VT82C586A IDE Controllers
                 Most of these controllers are only available in
