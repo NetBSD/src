@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.20 1995/10/07 06:25:34 mycroft Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.21 1995/10/08 22:45:20 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -437,12 +437,8 @@ linux_machdepioctl(p, v, retval)
 	switch (com) {
 #if NVT > 0
 	case LINUX_KDGKBMODE:
-		/*
-		 * Could be implemented but somehow KDGKBMODE is the
-		 * same as KBDGLEDS.
-		 */
-		mode = K_XLATE;
-		return copyout(&mode, SCARG(uap, data), sizeof mode);
+		com = KDGKBMODE;
+		break;
 	case LINUX_KDSKBMODE:
 		com = KDSKBMODE;
 		if ((unsigned)SCARG(uap, data) == LINUX_K_MEDIUMRAW)
