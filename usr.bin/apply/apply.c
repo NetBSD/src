@@ -1,4 +1,4 @@
-/*	$NetBSD: apply.c,v 1.5 1997/10/18 12:23:21 lukem Exp $	*/
+/*	$NetBSD: apply.c,v 1.6 1997/12/31 05:53:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)apply.c	8.4 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: apply.c,v 1.5 1997/10/18 12:23:21 lukem Exp $");
+__RCSID("$NetBSD: apply.c,v 1.6 1997/12/31 05:53:45 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -217,11 +217,12 @@ system(command)
 	omask = sigblock(sigmask(SIGCHLD));
 	switch(pid = vfork()) {
 	case -1:			/* error */
-		err(1, "fork");
+		err(1, "vfork");
 	case 0:				/* child */
 		(void)sigsetmask(omask);
 		execl(shell, name, "-c", command, NULL);
-		err(1, "%s", shell);
+		warn("%s", shell);
+		_exit(1);
 	}
 	intsave = signal(SIGINT, SIG_IGN);
 	quitsave = signal(SIGQUIT, SIG_IGN);
