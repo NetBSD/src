@@ -1,4 +1,4 @@
-.\"	$NetBSD: getopt_long.3,v 1.4 2000/11/26 22:35:53 wiz Exp $
+.\"	$NetBSD: getopt_long.3,v 1.5 2001/09/16 01:31:52 wiz Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
 .\"
 .Dd April 1, 2000
 .Dt GETOPT_LONG 3
-.Os 
+.Os
 .Sh NAME
 .Nm getopt_long
 .Nd get long options from command line argument list
@@ -48,46 +48,46 @@
 .Sh DESCRIPTION
 The
 .Fn getopt_long
-function is similar to 
+function is similar to
 .Xr getopt 3
 but it accepts options in two forms: words and characters. The
 .Fn getopt_long
-function provides a superset of of the functionality of 
+function provides a superset of of the functionality of
 .Xr getopt 3 .
 .Fn getopt_long
 can be used in two ways. In the first way, every long option understood
 by the program has a corresponding short option, and the option
 structure is only used to translate from long options to short
-options. When used in this fashion, 
+options. When used in this fashion,
 .Fn getopt_long
-behaves identically to 
+behaves identically to
 .Xr getopt 3 .
 This is a good way to add long option processing to an existing program
 with the minimum of rewriting.
 .Pp
-In the second mechanism, a long option sets a flag in the 
+In the second mechanism, a long option sets a flag in the
 .Fa option
 structure passed, or will store a pointer to the command line argument
-in the 
-.Fa option 
+in the
+.Fa option
 structure passed to it for options that take arguments. Additionally,
 the long option's argument may be specified as a single argument with
-an equal sign, e.g. 
+an equal sign, e.g.
 .Bd -literal
 myprogram --myoption=somevalue
 .Ed
 .Pp
-When a long option is processed the call to 
+When a long option is processed the call to
 .Fn getopt_long
 will return 0. For this reason, long option processing without
-shortcuts is not backwards compatible with 
+shortcuts is not backwards compatible with
 .Xr getopt 3 .
 .Pp
 It is possible to combine these methods, providing for long options
 processing with short option equivalents for some options. Less
 frequently used options would be processed as long options only.
 .Pp
-The 
+The
 .Fn getopt_long
 call requires a structure to be initialized describing the long
 options. The structure is:
@@ -100,11 +100,11 @@ struct option {
 };
 .Ed
 .Pp
-The 
+The
 .Fa name
 field should contain the option name without the leading double dash.
 .Pp
-The 
+The
 .Fa has_arg
 field should be one of:
 .Bl -tag -width "optional_argument"
@@ -118,14 +118,14 @@ an argument to the option may be presented.
 .Pp
 If
 .Fa flag
-is non-NULL, then the integer pointed to by it will be set to the 
-value in the 
+is non-NULL, then the integer pointed to by it will be set to the
+value in the
 .Fa val
-field. If the 
-.Fa flag 
-field is NULL, then the 
+field. If the
+.Fa flag
+field is NULL, then the
 .Fa val
-field will be returned. Setting 
+field will be returned. Setting
 .Fa flag
 to NULL and setting
 .Fa val
@@ -174,7 +174,6 @@ argc -= optind;
 argv += optind;
 .Ed
 .Sh IMPLEMENTATION DIFFERENCES
-.Pp
 This section describes differences to the GNU implementation
 found in glibc-2.1.3:
 .Bl -tag -width "xxx"
@@ -210,7 +209,7 @@ handling of --a in getopt:
 .It Li GNU
 parses this as option '-', option 'a'.
 .It Li NetBSD
-parses this as '--', and returns -1 (ignoring the a).  (Because 
+parses this as '--', and returns -1 (ignoring the a).  (Because
 the original getopt does.)
 .El
 .It Li o
@@ -227,7 +226,7 @@ handling of -W with W; in option string in getopt (not getopt_long):
 .It Li GNU
 causes a segfault.
 .It Li NetBSD
-returns -1, with optind pointing past the argument of -W 
+returns -1, with optind pointing past the argument of -W
 (as if `-W arg' were `--arg', and thus '--' had been found).
 .\" How should we treat W; in the option string when called via
 .\" getopt?  Ignore the ';' or treat it as a ':'? Issue a warning?
@@ -266,7 +265,7 @@ swaps.)
 .Sh HISTORY
 The
 .Fn getopt_long
-function first appeared in GNU libiberty. The first 
+function first appeared in GNU libiberty. The first
 .Nx
 implementation appeared in 1.5.
 .Sh BUGS
