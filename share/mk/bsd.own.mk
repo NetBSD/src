@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.90 1998/09/28 16:43:41 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.91 1998/10/04 19:46:07 tv Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -128,9 +128,7 @@ NOPROFILE=
 
 # Some platforms are already transitioned to egcs.
 .if (${MACHINE_ARCH} == "alpha") || \
-    (${MACHINE_ARCH} == "i386") || \
     (${MACHINE_ARCH} == "ns32k") || \
-    (${MACHINE_ARCH} == "sparc") || \
     (${MACHINE_ARCH} == "sparc64")
 USE_EGCS=1
 .endif
