@@ -2,6 +2,9 @@ Things to do for scheduler activations/LWP code.
 
 - Document! Not everyone wants to read the thesis. Man pages, etc.
 
+- Prevent multiple LWP/SAs from entering sigexit(). Not at all useful,
+  and causes deadlock panics in exit1().
+
 - Port to other architectures. I have alpha, m68k, arm32, mips, sparc.
   Other people will need to do the intimately MD parts for ppc, sh3, sparc64,
   pc532, vax. Documenting what is needed and what changes have been made
