@@ -1,4 +1,4 @@
-/*	$NetBSD: audioctl.c,v 1.14 1998/04/27 16:55:23 augustss Exp $	*/
+/*	$NetBSD: audioctl.c,v 1.15 1998/07/13 15:11:03 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -88,7 +88,8 @@ struct field {
 	{ "config",		&adev.config,		STRING, READONLY },
 	{ "encodings",		encbuf,			STRING, READONLY },
 	{ "properties",		&properties,		PROPS,	READONLY },
-	{ "full_duplex",	&fullduplex,		INT,    0 },
+	{ "full_duplex",	&fullduplex,		UINT,   0 },
+	{ "fullduplex",		&fullduplex,		UINT,   0 },
 	{ "blocksize",		&info.blocksize,	UINT,	0 },
 	{ "hiwat",		&info.hiwat,		UINT,	0 },
 	{ "lowat",		&info.lowat,		UINT,	0 },
