@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.93 1997/06/29 13:49:45 is Exp $	*/
+/*	$NetBSD: machdep.c,v 1.94 1997/07/16 00:01:44 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -482,7 +482,12 @@ setregs(p, pack, stack, retval)
 #ifdef FPCOPROC
 	/* restore a null state frame */
 	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
-	m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
+#ifdef FPU_EMULATE
+	if (!fputype)
+		bzero(&p->p_addr->u_pcb.pcb_fpregs, sizeof(struct fpframe));
+	else
+#endif
+		m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
 #endif
 }
 
@@ -533,8 +538,16 @@ identifycpu()
 		    pcr & 0x10000 ? "LC/EC" : "", (pcr>>8)&0xff);
 		cpu_type = cpubuf;
 		mmu = "/MMU";
-		fpu = "/FPU";
-		fputype = FPU_68040; /* XXX */
+		if (pcr & 2) {
+			fpu = "/FPU disabled";
+			fputype = FPU_NONE;
+		} else if (m68060_pcr_init & 2){
+			fpu = "/FPU will be disabled";
+			fputype = FPU_NONE;
+		} else  if (machineid & AMIGA_FPU40) {
+			fpu = "/FPU";
+			fputype = FPU_68040; /* XXX */
+		}
 	} else 
 #endif
 	if (machineid & AMIGA_68040) {
@@ -742,7 +755,8 @@ printf("sendsig %d %d %x %x %x\n", p->p_pid, sig, mask, code, catcher);
 	}
 #ifdef FPCOPROC
 	kfp->sf_state.ss_flags |= SS_FPSTATE;
-	m68881_save(&kfp->sf_state.ss_fpstate);
+	if (fputype)
+		m68881_save(&kfp->sf_state.ss_fpstate);
 #ifdef DEBUG
 	if ((sigdebug & SDB_FPSTATE) && *(char *)&kfp->sf_state.ss_fpstate)
 		printf("sendsig(%d): copy out FP state (%x) to %p\n",
@@ -899,7 +913,11 @@ sys_sigreturn(p, v, retval)
 	/*
 	 * Finally we restore the original FP context
 	 */
-	if (flags & SS_FPSTATE)
+#ifdef FPU_EMULATE
+	if ((flags & SS_FPSTATE) && fputype)
+#else
+	if (fputype)
+#endif
 		m68881_restore(&tstate.ss_fpstate);
 #ifdef DEBUG
 	if ((sigdebug & SDB_FPSTATE) && *(char *)&tstate.ss_fpstate)
@@ -1246,7 +1264,7 @@ initcpu()
 	typedef void trapfun __P((void));
 
 	/* XXX should init '40 vecs here, too */
-#if defined(M68060) || defined(M68040) || defined(DRACO)
+#if defined(M68060) || defined(M68040) || defined(DRACO) || defined(FPU_EMULATE)
 	extern trapfun *vectab[256];
 #endif
 
@@ -1275,8 +1293,21 @@ initcpu()
 	u_char dracorev;
 #endif
 
+#ifdef FPU_EMULATE
+	extern trapfun fpemuli;
+#endif
+
 #ifdef M68060
 	if (machineid & AMIGA_68060) {
+		if (machineid & AMIGA_FPU40 && m68060_pcr_init & 2) {
+			/* 
+			 * in this case, we're about to switch the FPU off;
+			 * do a FNOP to avoid stray FP traps later
+			 */
+			__asm("fnop");
+			/* ... and mark FPU as absent for identifyfpu() */
+			machineid &= ~(AMIGA_FPU40|AMIGA_68882|AMIGA_68881);
+		}
 		asm volatile ("movl %0,d0; .word 0x4e7b,0x0808" : : 
 			"d"(m68060_pcr_init):"d0" );
 
@@ -1325,6 +1356,17 @@ initcpu()
 		vectab[3] = addrerr4060;
 	}
 #endif
+
+#ifdef FPU_EMULATE
+	if (!(machineid & (AMIGA_68881|AMIGA_68882|AMIGA_FPU40))) {
+		vectab[11] = fpemuli;
+		printf("FPU software emulation initialized.\n");
+	}
+#endif
+
+/*
+ * Vector initialization for special motherboards 
+ */
 
 #ifdef DRACO
 	dracorev = is_draco();
