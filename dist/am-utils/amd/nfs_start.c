@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_start.c,v 1.3 2003/03/09 01:38:40 christos Exp $	*/
+/*	$NetBSD: nfs_start.c,v 1.4 2003/03/10 00:02:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2003 Erez Zadok
@@ -360,10 +360,8 @@ mount_automounter(int ppid)
   if (ret != 0)
     return ret;
   /* security: if user sets -D noamq, don't even create listening socket */
-#ifdef DEBUG
-  amuDebug(D_AMQ)
-#endif
-  {
+  /* security: if user sets -D amq, don't even create listening socket */
+  if (!amuDebug(D_AMQ)) {
     ret = create_amq_service(&udp_soAMQ, &udp_amqp, &udp_amqncp, &tcp_soAMQ, &tcp_amqp, &tcp_amqncp);
     if (ret != 0)
       return ret;
@@ -419,10 +417,7 @@ mount_automounter(int ppid)
     return 0;
   }
 
-#ifdef DEBUG
-  amuDebug(D_AMQ)
-#endif
-  {
+  if (!amuDebug(D_AMQ)) {
     /*
      * Complete registration of amq (first TCP service then UDP)
      */
