@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.5 1999/06/20 05:42:09 tsubai Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.6 1999/08/05 18:08:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -151,7 +151,7 @@ LEAF(spl0)
 	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
 END(spl0)
 
-LEAF(splsoftclock)
+LEAF(spllowersoftclock)
 	mfc0	v0, MIPS_COP_0_STATUS_REG	# read status register
 	li	t0, ~MIPS_SOFT_INT_MASK_0	# disable soft clock
 	and	t0, t0, v0
@@ -159,7 +159,7 @@ LEAF(splsoftclock)
 	nop					# 3 ins to disable on r4x00
 	j	ra
 	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-END(splsoftclock)
+END(spllowersoftclock)
 
 LEAF(splsoftnet)
 	mfc0	v0, MIPS_COP_0_STATUS_REG	# read status register

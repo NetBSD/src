@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.15 1999/05/22 16:37:03 scw Exp $	*/
+/*	$NetBSD: param.h,v 1.16 1999/08/05 18:08:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -71,41 +71,23 @@
 # define	NKMEMCLUSTERS	(4096 * 1024 / CLBYTES)
 #endif
 
-/*
- * spl functions; all but spl0 are done in-line
- */
 #include <machine/psl.h>
 
-#define _spl(s) \
-({ \
-        int _spl_r; \
-\
-        __asm __volatile ("clrl %0; movew sr,%0; movew %1,sr" : \
-                "&=d" (_spl_r) : "di" (s)); \
-        _spl_r; \
-})
-
 /* spl0 requires checking for software interrupts */
-#define spl1()  _spl(PSL_S|PSL_IPL1)
-#define spl2()  _spl(PSL_S|PSL_IPL2)
-#define spl3()  _spl(PSL_S|PSL_IPL3)
-#define spl4()  _spl(PSL_S|PSL_IPL4)
-#define spl5()  _spl(PSL_S|PSL_IPL5)
-#define spl6()  _spl(PSL_S|PSL_IPL6)
-#define spl7()  _spl(PSL_S|PSL_IPL7)
 
-#define splsoftclock()  spl1()
-#define splsoftnet()    spl1()
-#define splbio()        spl2()
-#define splnet()        spl3()
-#define spltty()        spl3()
-#define splimp()        spl3()
-#define splserial()     spl4()
-#define splclock()      spl5()
-#define splstatclock()	spl5()
-#define splvm()         spl5()
-#define splhigh()       spl7()
-#define splsched()      spl7()
+#define spllowersoftclock()	spl1()
+#define splsoftclock()		splraise1()
+#define splsoftnet()		splraise1()
+#define splbio()		splraise2()
+#define splnet()		splraise3()
+#define spltty()		splraise3()
+#define splimp()		splraise3()
+#define splserial()		splraise4()
+#define splclock()		splraise5()
+#define splstatclock()		splraise5()
+#define splvm()			splraise5()
+#define splhigh()		spl7()
+#define splsched()		spl7()
 
 /* watch out for side effects */
 #define splx(s)         (s & PSL_IPL ? _spl(s) : spl0())

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.37 1999/06/07 22:33:53 thorpej Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.38 1999/08/05 18:08:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -91,7 +91,7 @@ settime(tv)
 		return (EPERM);
 #endif
 	time = *tv;
-	(void) splsoftclock();
+	(void) spllowersoftclock();
 	timeradd(&boottime, &delta, &boottime);
 	timeradd(&runtime, &delta, &runtime);
 #	if defined(NFS) || defined(NFSSERVER)
