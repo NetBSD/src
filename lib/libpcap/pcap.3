@@ -1,4 +1,4 @@
-.\" $NetBSD: pcap.3,v 1.22 2004/09/28 09:33:53 wiz Exp $
+.\" $NetBSD: pcap.3,v 1.23 2004/09/28 09:36:14 wiz Exp $
 .\
 .\" @(#) Header: /tcpdump/master/libpcap/pcap.3,v 1.51.2.9 2004/03/28 21:45:32 fenner Exp
 .\"
@@ -31,8 +31,7 @@
 .Lb libpcap
 .Sh SYNOPSIS
 .In pcap.h
-.Ft char
-.Dv errbuf[PCAP_ERRBUF_SIZE];
+.Vt char errbuf[PCAP_ERRBUF_SIZE] ;
 .Ft pcap_t *
 .Fn pcap_open_live "const char *device" "int snaplen" "int promisc" \
 "int to_ms" "char *errbuf"
