@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.56 2004/12/23 06:18:49 jonathan Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.57 2005/01/17 13:16:50 scw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.55 2004/12/23 06:13:24 jonathan Exp 
+ *	NetBSD: miidevs,v 1.56 2005/01/17 13:16:19 scw Exp 
  */
 
 /*-
@@ -143,6 +143,8 @@
 #define	MII_STR_xxBROADCOM_BCM5214	"BCM5214 Quad 10/100 media interface"
 #define	MII_MODEL_xxBROADCOM_BCM5221	0x001e
 #define	MII_STR_xxBROADCOM_BCM5221	"BCM5221 10/100 media interface"
+#define	MII_MODEL_xxBROADCOM_BCM5222	0x0032
+#define	MII_STR_xxBROADCOM_BCM5222	"BCM5222 Dual 10/100 media interface"
 #define	MII_MODEL_xxBROADCOM_BCM4401	0x0036
 #define	MII_STR_xxBROADCOM_BCM4401	"BCM4401 10/100 media interface"
 #define	MII_MODEL_BROADCOM_BCM5400	0x0004
