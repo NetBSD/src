@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1998/09/05 14:46:14 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 1998/11/05 02:47:14 ross Exp $
 
 MOUNT_POINT?=	/mnt
 VND?=		vnd0
@@ -22,6 +22,8 @@ DISKTYPE=	floppy
 INO_BYTES?=	6144
 
 CLEANFILES+=	${IMAGE} ${GZKERNEL}
+
+all: GENERIC.fs
 
 GENERIC.fs: ${GZKERNEL} ${MDEC}/boot ${MDEC}/bootxx
 	@echo Creating vn image
