@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.49.2.1 2002/06/24 11:08:24 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.49.2.2 2002/06/24 11:09:01 lukem Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -75,7 +75,7 @@
 #
 # Pseudo terminals:
 #	pty*	set of 62 master and slave pseudo terminals
-#	opty	first 16 ptys, to save inodes on install media
+#	opty	minimum set of ptys, to save inodes on install media
 #
 # Printers:
 #	par*	motherboard parallel port
@@ -414,16 +414,13 @@ kbd)
 	;;
 
 opty)
-	rm -f ttyp[0-3] ptyp[0-3]
-	for j in 0 1 2 3
+	rm -f ttyp[0-1] ptyp[0-1]
+	for j in 0 1
 	do
-		case $j in
-		[0-3])	jn=$j ;;
-		esac
-		mknod ttyp$j c 4 $jn
-		mknod ptyp$j c 5 $jn
+		mknod ttyp$j c 4 $j
+		mknod ptyp$j c 5 $j
 	done
-	chmod 666 ttyp[0-3] ptyp[0-3]
+	chmod 666 ttyp[0-1] ptyp[0-1]
 	;;
 
 		
