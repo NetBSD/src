@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.33 1999/09/09 15:52:40 drochner Exp $	*/
+/*	$NetBSD: stand.h,v 1.34 1999/11/11 18:11:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -237,6 +237,10 @@ ssize_t	read __P((int, void *, size_t));
 ssize_t	write __P((int, void *, size_t));
 off_t	lseek __P((int, off_t, int));
 int	ioctl __P((int, u_long, char *));
+
+size_t	strlen __P((const char *));
+int	strcmp __P((const char *, const char *));
+int	strncmp __P((const char *, const char *, size_t));
 
 extern int opterr, optind, optopt, optreset;
 extern char *optarg;
