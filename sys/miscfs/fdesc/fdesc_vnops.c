@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.25 1995/10/09 11:19:04 mycroft Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.26 1995/10/09 14:03:32 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -536,7 +536,6 @@ fdesc_readdir(ap)
 	struct uio *uio = ap->a_uio;
 	struct dirent d;
 	struct filedesc *fdp;
-	off_t off;
 	int i;
 	int error;
 	u_long *cookies = ap->a_cookies;
@@ -554,12 +553,11 @@ fdesc_readdir(ap)
 
 	if (uio->uio_resid < UIO_MX)
 		return (EINVAL);
-	off = uio->uio_offset;
-	if (off & (UIO_MX - 1) || off < 0)
+	if (uio->uio_offset < 0)
 		return (EINVAL);
 
 	error = 0;
-	i = off / UIO_MX;
+	i = uio->uio_offset;
 	bzero((caddr_t)&d, UIO_MX);
 	d.d_reclen = UIO_MX;
 
@@ -592,7 +590,7 @@ fdesc_readdir(ap)
 			if (error = uiomove((caddr_t)&d, UIO_MX, uio))
 				break;
 			if (ncookies-- > 0)
-				*cookies++ = (i + 1) * UIO_MX;
+				*cookies++ = i + 1;
 		}
 	} else {
 		for (; i - 2 < fdp->fd_nfiles && uio->uio_resid >= UIO_MX;
@@ -619,11 +617,11 @@ fdesc_readdir(ap)
 			if (error = uiomove((caddr_t)&d, UIO_MX, uio))
 				break;
 			if (ncookies-- > 0)
-				*cookies++ = (i + 1) * UIO_MX;
+				*cookies++ = i + 1;
 		}
 	}
 
-	uio->uio_offset = (i + 1) * UIO_MX;
+	uio->uio_offset = i;
 	return (error);
 }
 

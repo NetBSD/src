@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.37 1995/10/09 11:18:59 mycroft Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.38 1995/10/09 14:03:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -491,7 +491,6 @@ kernfs_readdir(ap)
 	struct uio *uio = ap->a_uio;
 	struct dirent d;
 	struct kern_target *kt;
-	off_t off;
 	int i;
 	int error;
 	u_long *cookies = ap->a_cookies;
@@ -502,12 +501,11 @@ kernfs_readdir(ap)
 
 	if (uio->uio_resid < UIO_MX)
 		return (EINVAL);
-	off = uio->uio_offset;
-	if (off & (UIO_MX - 1) || off < 0)
+	if (uio->uio_offset < 0)
 		return (EINVAL);
 
 	error = 0;
-	i = off / UIO_MX;
+	i = uio->uio_offset;
 	bzero((caddr_t)&d, UIO_MX);
 	d.d_reclen = UIO_MX;
 
@@ -533,10 +531,10 @@ kernfs_readdir(ap)
 		if (error = uiomove((caddr_t)&d, UIO_MX, uio))
 			break;
 		if (ncookies-- > 0)
-			*cookies++ = (i + 1) * UIO_MX;
+			*cookies++ = i + 1;
 	}
 
-	uio->uio_offset = (i + 1) * UIO_MX;
+	uio->uio_offset = i;
 	return (error);
 }
 
