@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.123 2000/03/26 10:01:32 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.124 2000/05/01 17:10:40 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -293,10 +293,12 @@ audioattach(parent, self, aux)
 
 	iclass = oclass = -1;
 	sc->sc_inports.index = -1;
+	sc->sc_inports.master = -1;
 	sc->sc_inports.nports = 0;
 	sc->sc_inports.isenum = 0;
 	sc->sc_inports.allports = 0;
 	sc->sc_outports.index = -1;
+	sc->sc_outports.master = -1;
 	sc->sc_outports.nports = 0;
 	sc->sc_outports.isenum = 0;
 	sc->sc_outports.allports = 0;
@@ -324,8 +326,10 @@ audioattach(parent, self, aux)
 		    (strcmp(mi.label.name, AudioNmonitor) == 0))
 			sc->sc_monitor_port = mi.index;
 	}
-	DPRINTF(("audio_attach: inputs ports=0x%x, output ports=0x%x\n",
-		 sc->sc_inports.allports, sc->sc_outports.allports));
+	DPRINTF(("audio_attach: inputs ports=0x%x, input master=%d, "
+		 "output ports=0x%x, output master=%d\n",
+		 sc->sc_inports.allports, sc->sc_inports.master,
+		 sc->sc_outports.allports, sc->sc_outports.master));
 }
 
 int
