@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.8.2.6 1999/10/20 20:40:52 thorpej Exp $	*/
+/*	$NetBSD: dpt.c,v 1.8.2.7 1999/10/20 22:31:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -65,12 +65,11 @@
  * o Test with a bunch of different boards.
  * o dpt_readcfg() should not be using CP_PIO_GETCFG.
  * o An interface to userland applications.
- * o A port of DPT Storage Manager included in the base system would be nice.
  * o Some sysctls or a utility (eg dptctl(8)) to control parameters.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.8.2.6 1999/10/20 20:40:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.8.2.7 1999/10/20 22:31:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,6 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.8.2.6 1999/10/20 20:40:52 thorpej Exp $");
 #include <sys/buf.h>
 
 #include <machine/endian.h>
+#include <machine/bswap.h>
 #include <machine/bus.h>
 
 #include <dev/scsipi/scsi_all.h>
@@ -818,8 +818,6 @@ dpt_scsipi_request(chan, req, arg)
 	bus_dma_tag_t dmat;
 	bus_dmamap_t xfer;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("dpt_scsipi_request\n"));
-
 	sc = (void *)chan->chan_adapter->adapt_dev;
 	dmat = sc->sc_dmat;
 
@@ -890,16 +888,16 @@ dpt_scsipi_request(chan, req, arg)
 		cp->cp_senseaddr =
 		    SWAP32(sc->sc_dmamap_ccb->dm_segs[0].ds_addr +
 		    CCB_OFF(sc, ccb) + offsetof(struct dpt_ccb, ccb_sense));
-	    
+
 		if (xs->datalen) {
 			xfer = ccb->ccb_dmamap_xfer;
-#ifdef	TFS
+#ifdef TFS
 			if (flags & XS_CTL_DATA_UIO) {
 				error = bus_dmamap_load_uio(dmat, xfer,
 				    (struct uio *)xs->data,
 				    BUS_DMA_NOWAIT);
 			} else
-#endif /*TFS */
+#endif /* TFS */
 			{
 				error = bus_dmamap_load(dmat, xfer,
 				    xs->data, xs->datalen, NULL,
