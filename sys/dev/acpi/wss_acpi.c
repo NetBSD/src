@@ -1,4 +1,4 @@
-/* $NetBSD: wss_acpi.c,v 1.8 2003/11/03 17:24:22 mycroft Exp $ */
+/* $NetBSD: wss_acpi.c,v 1.9 2003/11/03 18:07:10 mycroft Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.8 2003/11/03 17:24:22 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.9 2003/11/03 18:07:10 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,7 +132,7 @@ wss_acpi_attach(struct device *parent, struct device *self, void *aux)
 	/* Parse our resources */
 	rv = acpi_resource_parse(&sc->sc_ad1848.sc_ad1848.sc_dev,
 	    aa->aa_node, &res, &acpi_resource_parse_ops_default);
-	if (rv != AE_OK)
+	if (ACPI_FAILURE(rv))
 		return;
 
 	/* Find and map our i/o registers */

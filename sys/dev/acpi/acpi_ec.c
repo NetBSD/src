@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.17 2003/11/03 17:23:38 mycroft Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.18 2003/11/03 18:07:10 mycroft Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -172,7 +172,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.17 2003/11/03 17:23:38 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.18 2003/11/03 18:07:10 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -373,11 +373,8 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 	ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES, "parsing EC resources\n"));
 	rv = acpi_resource_parse(&sc->sc_dev, sc->sc_node, &sc->sc_res,
 	    &acpi_resource_parse_ops_default);
-	if (rv != AE_OK) {
-		printf("%s: unable to parse resources: %d\n",
-		    sc->sc_dev.dv_xname, rv);
+	if (ACPI_FAILURE(rv))
 		return;
-	}
 
 	sc->sc_data_st = aa->aa_iot;
 	io0 = acpi_res_io(&sc->sc_res, 0);
@@ -413,10 +410,10 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 	 * We evaluate the _GPE method to find the GPE bit used by the
 	 * Embedded Controller to signal status (SCI).
 	 */
-	if ((rv = acpi_eval_integer(sc->sc_node->ad_handle, "_GPE",
-	     &sc->sc_gpebit)) != AE_OK) {
-		printf("%s: unable to evaluate _GPE: %d\n",
-		    sc->sc_dev.dv_xname, rv);
+	rv = acpi_eval_integer(sc->sc_node->ad_handle, "_GPE", &sc->sc_gpebit);
+	if (ACPI_FAILURE(rv)) {
+		printf("%s: unable to evaluate _GPE: %s\n",
+		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		return;
 	}
 
@@ -424,11 +421,11 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 	 * evaluate _GLK to see if we should acquire global lock
 	 * when accessing the EC.
 	 */
-	if ((rv = acpi_eval_integer(sc->sc_node->ad_handle, "_GLK",
-	     &sc->sc_glk)) != AE_OK) {
+	rv = acpi_eval_integer(sc->sc_node->ad_handle, "_GLK", &sc->sc_glk);
+	if (ACPI_FAILURE(rv)) {
 		if (rv != AE_NOT_FOUND)
-			printf("%s: unable to evaluate _GLK: %d\n",
-			    sc->sc_dev.dv_xname, rv);
+			printf("%s: unable to evaluate _GLK: %s\n",
+			    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		sc->sc_glk = 0;
 	}
 
@@ -440,18 +437,20 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 	 * events we cause while performing a transaction (e.g. IBE/OBF) get 
 	 * cleared before re-enabling the GPE.
 	 */
-	if ((rv = AcpiInstallGpeHandler(NULL, sc->sc_gpebit,
-	     ACPI_EVENT_EDGE_TRIGGERED, EcGpeHandler, sc)) != AE_OK) {
-		printf("%s: unable to install GPE handler: %d\n",
-		    sc->sc_dev.dv_xname, rv);
+	rv = AcpiInstallGpeHandler(NULL, sc->sc_gpebit,
+	     ACPI_EVENT_EDGE_TRIGGERED, EcGpeHandler, sc);
+	if (ACPI_FAILURE(rv)) {
+		printf("%s: unable to install GPE handler: %s\n",
+		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		return;
 	}
 
 	/* Install address space handler. */
-	if ((rv = AcpiInstallAddressSpaceHandler(sc->sc_node->ad_handle,
-	     ACPI_ADR_SPACE_EC, EcSpaceHandler, EcSpaceSetup, sc)) != AE_OK) {
-		printf("%s: unable to install address space handler: %d\n",
-		    sc->sc_dev.dv_xname, rv);
+	rv = AcpiInstallAddressSpaceHandler(sc->sc_node->ad_handle,
+	     ACPI_ADR_SPACE_EC, EcSpaceHandler, EcSpaceSetup, sc);
+	if (ACPI_FAILURE(rv)) {
+		printf("%s: unable to install address space handler: %s\n",
+		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		return;
 	}
 
@@ -492,9 +491,9 @@ EcGpeQueryHandler(void *Context)
 		/*
 		 * If we failed to get anything from the EC, give up.
 		 */
-		if (Status != AE_OK) {
-			printf("%s: GPE query failed: %d\n",
-			    sc->sc_dev.dv_xname, Status);
+		if (ACPI_FAILURE(Status)) {
+			printf("%s: GPE query failed: %s\n",
+			    sc->sc_dev.dv_xname, AcpiFormatException(Status));
 			break;
 		}
 
@@ -509,16 +508,19 @@ EcGpeQueryHandler(void *Context)
 		/*
 		 * Ignore spurious query requests.
 		 */
-		if (Status != AE_OK &&
+		if (ACPI_FAILURE(Status) &&
 		    (Data != 0 || Status != AE_NOT_FOUND)) {
 			printf("%s: evaluation of GPE query method %s "
-			    "failed: %d\n", sc->sc_dev.dv_xname, qxx, Status);
+			    "failed: %s\n", sc->sc_dev.dv_xname, qxx,
+			    AcpiFormatException(Status));
 		}
 	}
 
 	/* I know I request Level trigger cleanup */
-	if (AcpiClearGpe(NULL, sc->sc_gpebit, ACPI_NOT_ISR) != AE_OK)
-		printf("%s: AcpiClearGpe failed\n", sc->sc_dev.dv_xname);
+	Status = AcpiClearGpe(NULL, sc->sc_gpebit, ACPI_NOT_ISR);
+	if (ACPI_FAILURE(Status))
+		printf("%s: AcpiClearGpe failed: %s\n", sc->sc_dev.dv_xname,
+		    AcpiFormatException(Status));
 
 	return_VOID;
 }
@@ -528,6 +530,7 @@ EcGpeHandler(void *Context)
 {
 	struct acpi_ec_softc *sc = Context;
 	uint32_t csrvalue;
+	ACPI_STATUS Status;
 
 	/* 
 	 * If EC is locked, the intr must process EcRead/Write wait only.
@@ -545,11 +548,11 @@ EcGpeHandler(void *Context)
 		}
 	} else {
 		/* Enqueue GpeQuery handler. */
-		if (AcpiOsQueueForExecution(OSD_PRIORITY_HIGH,
-		    EcGpeQueryHandler, Context) != AE_OK) {
-			printf("%s: failed to enqueue query handler\n",
-			    sc->sc_dev.dv_xname);
-		}
+		Status = AcpiOsQueueForExecution(OSD_PRIORITY_HIGH,
+		    EcGpeQueryHandler, Context);
+		if (ACPI_FAILURE(Status))
+			printf("%s: failed to enqueue query handler: %s\n",
+			    sc->sc_dev.dv_xname, AcpiFormatException(Status));
 	}
 }
 
@@ -610,7 +613,8 @@ EcSpaceHandler(UINT32 Function, ACPI_PHYSICAL_ADDRESS Address, UINT32 width,
 		else
 			EcRequest.Data = (UINT8)((*Value) >> i);
 
-		if ((Status = EcTransaction(sc, &EcRequest)) != AE_OK)
+		Status = EcTransaction(sc, &EcRequest);
+		if (ACPI_FAILURE(Status))
 			break;
 
 		(*Value) |= (UINT32)EcRequest.Data << i;
@@ -714,12 +718,12 @@ EcQuery(struct acpi_ec_softc *sc, UINT8 *Data)
 
 	EC_CSR_WRITE(sc, EC_COMMAND_QUERY);
 	Status = EcWaitEvent(sc, EC_EVENT_OUTPUT_BUFFER_FULL);
-	if (Status == AE_OK)
+	if (ACPI_SUCCESS(Status))
 		*Data = EC_DATA_READ(sc);
 
 	EcUnlock(sc);
 
-	if (Status != AE_OK)
+	if (ACPI_FAILURE(Status))
 		printf("%s: timed out waiting for EC to respond to "
 		    "EC_COMMAND_QUERY\n", sc->sc_dev.dv_xname);
 
@@ -760,10 +764,13 @@ EcTransaction(struct acpi_ec_softc *sc, EC_REQUEST *EcRequest)
 	 * immediately after we re-enabling it.
 	 */
 	if (sc->sc_flags & EC_F_PENDQUERY) {
-		if (AcpiOsQueueForExecution(OSD_PRIORITY_HIGH,
-		    EcGpeQueryHandler, sc) != AE_OK)
-			printf("%s: unable to queue pending query\n",
-			    sc->sc_dev.dv_xname);
+		ACPI_STATUS Status2;
+
+		Status2 = AcpiOsQueueForExecution(OSD_PRIORITY_HIGH,
+		    EcGpeQueryHandler, sc);
+		if (ACPI_FAILURE(Status2))
+			printf("%s: unable to queue pending query: %s\n",
+			    sc->sc_dev.dv_xname, AcpiFormatException(Status2));
 		sc->sc_flags &= ~EC_F_PENDQUERY;
 	}
 

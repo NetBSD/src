@@ -1,4 +1,4 @@
-/*	$NetBSD: vald_acpi.c,v 1.16 2003/11/03 17:54:39 mycroft Exp $	*/
+/*	$NetBSD: vald_acpi.c,v 1.17 2003/11/03 18:07:10 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.16 2003/11/03 17:54:39 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.17 2003/11/03 18:07:10 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -199,9 +199,9 @@ vald_acpi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_node = aa->aa_node;
 
 	/* Get AC adaptor status via _PSR. */
-	rv = acpi_eval_integer(ACPI_ROOT_OBJECT,
-		"\\_SB_.ADP1._PSR",&sc->sc_ac_status);
-	if (rv != AE_OK)
+	rv = acpi_eval_integer(ACPI_ROOT_OBJECT, "\\_SB_.ADP1._PSR",
+	    &sc->sc_ac_status);
+	if (ACPI_FAILURE(rv))
 		printf("%s: Unable to evaluate _PSR: %s\n",
 		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 	else
@@ -210,7 +210,7 @@ vald_acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Get LCD backlight status. */
 	rv = vald_acpi_ghci_get(sc, GHCI_BACKLIGHT, &value, &result);
-	if (rv == AE_OK) {
+	if (ACPI_SUCCESS(rv)) {
 		if (result != 0)
 			printf("%s: can't get backlight status error=%d\n",
 			    sc->sc_dev.dv_xname, result);
@@ -222,12 +222,12 @@ vald_acpi_attach(struct device *parent, struct device *self, void *aux)
 	/* Enable SystemEventFIFO,HotkeyEvent */
 	rv = vald_acpi_ghci_set(sc, GHCI_SYSTEM_EVENT_FIFO, GHCI_ENABLE,
 	    &result); 
-	if (rv == AE_OK && result != 0)
+	if (ACPI_SUCCESS(rv) && result != 0)
 		printf("%s: can't enable SystemEventFIFO error=%d\n",
 		    sc->sc_dev.dv_xname, result);
 
 	rv = vald_acpi_ghci_set(sc, GHCI_HOTKEY_EVENT, GHCI_ENABLE, &result); 
-	if (rv == AE_OK && result != 0)
+	if (ACPI_SUCCESS(rv) && result != 0)
 		printf("%s: can't enable HotkeyEvent error=%d\n",
 		    sc->sc_dev.dv_xname, result);
 
@@ -244,7 +244,7 @@ vald_acpi_attach(struct device *parent, struct device *self, void *aux)
 	AcpiEvaluateObject(sc->sc_node->ad_handle, "ENAB", NULL, NULL);
 	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
 	    ACPI_DEVICE_NOTIFY, vald_acpi_notify_handler, sc);
-	if (rv != AE_OK)
+	if (ACPI_FAILURE(rv))
 		printf("%s: can't install DEVICE NOTIFY handler: %s\n",
 		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 }
@@ -298,7 +298,7 @@ vald_acpi_event(void *arg)
 	while(1) {
 		rv = vald_acpi_ghci_get(sc, GHCI_SYSTEM_EVENT_FIFO, &value,
 		    &result);
-		if ((rv == AE_OK) && (result == 0)) {
+		if (ACPI_SUCCESS(rv) && result == 0) {
 #ifdef VALD_ACPI_DEBUG
 			printf("%s: System Event %x\n", sc->sc_dev.dv_xname, 
 			    value);
@@ -322,7 +322,7 @@ vald_acpi_event(void *arg)
 				break;
 			}
 		}
-		if (rv != AE_OK || result == GHCI_FIFO_EMPTY) 
+		if (ACPI_FAILURE(rv) || result == GHCI_FIFO_EMPTY) 
 			break;
 	}	
 }
@@ -360,7 +360,7 @@ vald_acpi_ghci_get(struct vald_acpi_softc *sc,
 
 	rv = AcpiEvaluateObject(sc->sc_node->ad_handle, 
 	    "GHCI", &ArgList, &buf);
-	if (rv != AE_OK) {
+	if (ACPI_FAILURE(rv)) {
 		printf("%s: failed to evaluate GHCI: %s\n",
 		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		return (rv);
@@ -418,7 +418,7 @@ vald_acpi_ghci_set(struct vald_acpi_softc *sc,
 
 	rv = AcpiEvaluateObject(sc->sc_node->ad_handle, 
 	    "GHCI", &ArgList, &buf);	
-	if (rv != AE_OK) {
+	if (ACPI_FAILURE(rv)) {
 		printf("%s: failed to evaluate GHCI: %s\n",
 		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		return (rv);
@@ -504,13 +504,15 @@ void
 vald_acpi_libright_get(struct vald_acpi_softc *sc)
 {
 	ACPI_HANDLE parent;
+	ACPI_STATUS rv;
 
 	printf("%s: get LCD brightness via _BCL\n", sc->sc_dev.dv_xname);
 
 #ifdef ACPI_DEBUG
 	printf("acpi_libright_get: start\n");
 #endif
-	if (AcpiGetHandle(ACPI_ROOT_OBJECT, "\\_SB_", &parent) != AE_OK)
+	rv = AcpiGetHandle(ACPI_ROOT_OBJECT, "\\_SB_", &parent);
+	if (ACPI_FAILURE(rv))
 		return;
 
 	AcpiWalkNamespace(ACPI_TYPE_DEVICE, parent, 100,
@@ -535,7 +537,7 @@ vald_acpi_libright_set(struct vald_acpi_softc *sc, int UpDown)
 
 	/* Get LCD backlight status. */
 	rv = vald_acpi_ghci_get(sc, GHCI_BACKLIGHT, &backlight, &result);
-	if (rv != AE_OK || result != 0)
+	if (ACPI_FAILURE(rv) || result != 0)
 		return;
 
 	/* Figure up next status. */
@@ -568,7 +570,7 @@ vald_acpi_libright_set(struct vald_acpi_softc *sc, int UpDown)
 	if (backlight_new != backlight) {
 		rv = vald_acpi_ghci_set(sc, GHCI_BACKLIGHT, backlight_new,
 		    &result);
-		if (rv == AE_OK && result != 0)
+		if (ACPI_SUCCESS(rv) && result != 0)
 			printf("%s: can't set LCD backlight %s error=%x\n",
 			    sc->sc_dev.dv_xname, 
 			    ((backlight_new == 1) ? "on" : "off"), result);
@@ -580,7 +582,7 @@ vald_acpi_libright_set(struct vald_acpi_softc *sc, int UpDown)
 		bright = *(pi + sc->lcd_index);
 
 		rv = vald_acpi_bcm_set(sc->lcd_handle, bright);
-		if (rv != AE_OK)
+		if (ACPI_FAILURE(rv))
 			printf("%s: unable to evaluate _BCM: %s\n",
 			    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 	} else { 
@@ -607,7 +609,7 @@ vald_acpi_video_switch(struct vald_acpi_softc *sc)
 
 	/* Get video status. */
 	rv = vald_acpi_ghci_get(sc, GHCI_DISPLAY_DEVICE, &value, &result);
-	if (rv != AE_OK)
+	if (ACPI_FAILURE(rv))
 		return;
 	if (result != 0) {
 		printf("%s: can't get video status  error=%x\n",
@@ -632,7 +634,7 @@ vald_acpi_video_switch(struct vald_acpi_softc *sc)
 	} 
 
 	rv = vald_acpi_dssx_set(value);
-	if (rv != AE_OK)
+	if (ACPI_FAILURE(rv))
 		printf("%s: unable to evaluate DSSX: %s\n",
 		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 
@@ -697,7 +699,7 @@ vald_acpi_fan_switch(struct vald_acpi_softc *sc)
 
 	/* Get FAN status */
 	rv = vald_acpi_ghci_get(sc, GHCI_FAN, &value, &result); 
-	if (rv != AE_OK) 
+	if (ACPI_FAILURE(rv))
 		return;
 	if (result != 0) {
 		printf("%s: can't get FAN status error=%d\n",
@@ -719,7 +721,7 @@ vald_acpi_fan_switch(struct vald_acpi_softc *sc)
 
 	/* Set FAN new status. */
 	rv = vald_acpi_ghci_set(sc, GHCI_FAN, value, &result); 
-	if (rv != AE_OK) 
+	if (ACPI_FAILURE(rv))
 		return;
 	if (result != 0) {
 		printf("%s: can't set FAN status error=%d\n",
