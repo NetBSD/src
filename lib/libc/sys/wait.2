@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)wait.2	6.5 (Berkeley) 3/10/91
-.\"	$Id: wait.2,v 1.2 1993/08/01 07:42:00 mycroft Exp $
+.\"	$Id: wait.2,v 1.3 1993/10/05 16:42:40 jtc Exp $
 .\"
 .Dd March 10, 1991
 .Dt WAIT 2
@@ -46,10 +46,10 @@
 .Fd #include <sys/wait.h>
 .Ft pid_t
 .Fn wait "int *status"
-.Fd #include <sys/time.h>
-.Fd #include <sys/resource.h>
 .Ft pid_t
 .Fn waitpid "pid_t wpid" "int *status" "int options"
+.Fd #include <sys/time.h>
+.Fd #include <sys/resource.h>
 .Ft pid_t
 .Fn wait3 "int *status" "int options" "struct rusage *rusage"
 .Ft pid_t
