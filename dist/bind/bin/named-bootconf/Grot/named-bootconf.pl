@@ -1,7 +1,5 @@
 #!/usr/bin/perl
 
-##	$NetBSD: named-bootconf.pl,v 1.1.1.2 2000/11/10 09:34:27 itojun Exp $
-##
 ## Copyright (c) 1996-1999 by Internet Software Consortium
 ##
 ## Permission to use, copy, modify, and distribute this software for any

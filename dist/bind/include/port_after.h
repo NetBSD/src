@@ -1,8 +1,7 @@
-/*	$NetBSD: port_after.h,v 1.1.1.1 1999/11/20 18:54:03 veego Exp $	*/
+/*	$NetBSD: port_after.h,v 1.1.1.2 2001/01/27 06:18:40 itojun Exp $	*/
 
 #ifndef	PORT_AFTER_H
 #define	PORT_AFTER_H
-#define CAN_RECONNECT
 #define USE_POSIX
 #define POSIX_SIGNALS
 #define USE_UTIME
@@ -77,4 +76,8 @@ struct sockaddr_in6 {
 	u_int32_t	sin6_scope_id;	/* set of interfaces for a scope */
 };
 #endif	/* HAS_INET6_STRUCTS */
+#ifndef ISC_FACILITY
+#define ISC_FACILITY LOG_DAEMON
+#endif
+
 #endif	/* ! PORT_AFTER_H */

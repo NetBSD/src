@@ -1,8 +1,8 @@
-/*	$NetBSD: db_load.c,v 1.1.1.1 1999/11/20 18:53:59 veego Exp $	*/
+/*	$NetBSD: db_load.c,v 1.1.1.2 2001/01/27 06:16:48 itojun Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char sccsid[] = "@(#)db_load.c	4.38 (Berkeley) 3/2/91";
-static const char rcsid[] = "Id: db_load.c,v 8.97 1999/10/30 03:21:35 vixie Exp";
+static const char rcsid[] = "Id: db_load.c,v 8.110 2001/01/25 05:50:53 marka Exp";
 #endif /* not lint */
 
 /*
@@ -84,7 +84,7 @@ static const char rcsid[] = "Id: db_load.c,v 8.97 1999/10/30 03:21:35 vixie Exp"
  */
 
 /*
- * Portions Copyright (c) 1996-1999 by Internet Software Consortium.
+ * Portions Copyright (c) 1996-2000 by Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -254,6 +254,7 @@ db_load(const char *filename, const char *in_origin,
 	int genstart, genend, genstep;
 	char *thisfile;
 	void *state = NULL;
+	int loggenerr;
 
 	empty_from.sin_family = AF_INET;
 	empty_from.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -269,7 +270,16 @@ db_load(const char *filename, const char *in_origin,
 
 	switch (zp->z_type) {
 	case Z_PRIMARY:
+		/* Any updates should be saved before we attempt to reload. */
+		INSIST((zp->z_flags & (Z_NEED_DUMP|Z_NEED_SOAUPDATE)) == 0);
 	case Z_HINT:
+		if(filename == NULL) {
+		 	ns_error(ns_log_load,
+		 	    "Required filename not specified for Hint zone");
+		 	zp->z_flags |= Z_DB_BAD;
+		 	zp->z_ftime = 0;
+		 	return (0);
+		}
 		transport = primary_trans;
 		break;
 	case Z_SECONDARY:
@@ -294,6 +304,7 @@ db_load(const char *filename, const char *in_origin,
 		default_warn = 1;
 		clev = nlabels(in_origin);
 		filenames = NULL;
+		zp->z_minimum = USE_MINIMUM;
 	}
 	ttl = default_ttl;
 
@@ -313,7 +324,10 @@ db_load(const char *filename, const char *in_origin,
 		ns_warning(ns_log_load, "db_load could not open: %s: %s",
 			   filename, strerror(errno));
 		zp->z_ftime = 0;
-		return (-1);
+		if (ininclude)
+			return (-1);
+		errs = -1;
+		goto cleanup;
 	}
 	if (zp->z_type == Z_HINT) {
 		dbflags = DB_NODATA | DB_NOHINTS;
@@ -360,7 +374,8 @@ db_load(const char *filename, const char *in_origin,
 				endline(fp);
 			}
 			didinclude = 1;
-			errs += db_load(buf, tmporigin, zp, domain, ISNOTIXFR);
+			i = db_load(buf, tmporigin, zp, domain, ISNOTIXFR);
+			errs += (i == -1) ? 1 : i;
 			continue;
 
 		case ORIGIN:
@@ -412,10 +427,21 @@ db_load(const char *filename, const char *in_origin,
 			}
 			if (!getword(genrhs, sizeof(genrhs), fp, 2))
 				ERRTOZ("$GENERATE missing RHS");
+			loggenerr = 1;
 			for (i = genstart; i <= genend; i += genstep) {
 				if (genname(genlhs, i, origin, domain,
 						sizeof domain) == -1)
 					ERRTOZ("$GENERATE genname LHS failed");
+				if (!ns_samedomain(domain, zp->z_origin)) {
+					/* Log first per $GENERATE. */
+					if (loggenerr) {
+						ns_info(ns_log_load,
+			           "%s:%d: $GENERATE LHS out of zone (ignored)",
+						filename, lineno);
+						loggenerr = 0;
+					}
+					continue;
+				}
 				context = ns_ownercontext(type, transport);
 				if (!ns_nameok(NULL, domain, class, zp, transport,
 					       context, domain, inaddr_any)) {
@@ -528,7 +554,7 @@ db_load(const char *filename, const char *in_origin,
 					ns_warning(ns_log_load,
 					   "Zone \"%s\" (file %s): %s",
 						zp->z_origin, filename,
-			"No default TTL set using SOA minimum instead");
+		"No default TTL ($TTL <value>) set, using SOA minimum instead");
 					default_warn = 0;
 				}
 				ttl = (u_int32_t)default_ttl;
@@ -666,7 +692,7 @@ db_load(const char *filename, const char *in_origin,
 						 filename, lineno, domain,
 						 zp->z_origin);
 				}
-				c = getnonblank(fp, filename);
+				c = getnonblank(fp, filename, 0);
 				if (c == '(') {
 					multiline = 1;
 				} else {
@@ -675,7 +701,8 @@ db_load(const char *filename, const char *in_origin,
 				}
 				serial = zp->z_serial;
 				zp->z_serial = getnum(fp, filename,
-						      GETNUM_SERIAL);
+						      GETNUM_SERIAL,
+						      &multiline);
 				if (getnum_error)
 					errs++;
 				n = (u_int32_t) zp->z_serial;
@@ -744,14 +771,15 @@ db_load(const char *filename, const char *in_origin,
 					zp->z_minimum = 0;
 				} else
 					zp->z_minimum = n;
-				if (default_ttl == USE_MINIMUM)
+				if (ttl == USE_MINIMUM)
 					ttl = n;
 				n = cp - (char *)data;
 				if (multiline) {
-					buf[0] = getnonblank(fp, filename);
+					buf[0] = getnonblank(fp, filename, 1);
 					buf[1] = '\0';
 					if (buf[0] != ')')
 						ERRTO("SOA \")\"");
+					multiline = 0;
 					endline(fp);
 				}
                                 read_soa++;
@@ -804,7 +832,8 @@ db_load(const char *filename, const char *in_origin,
 				PUTSHORT((u_int16_t)n, cp);
 
 				/* Preference */
-				n = getnum(fp, filename, GETNUM_NONE);
+				n = getnum(fp, filename, GETNUM_NONE,
+					   &multiline);
 				if (getnum_error || n > 65536)
 					ERRTO("NAPTR Preference");
 				PUTSHORT((u_int16_t)n, cp);
@@ -871,12 +900,14 @@ db_load(const char *filename, const char *in_origin,
 				PUTSHORT((u_int16_t)n, cp);
 
 				if (type == ns_t_srv) {
-					n = getnum(fp, filename, GETNUM_NONE);
+					n = getnum(fp, filename, GETNUM_NONE,
+						   &multiline);
 					if (getnum_error || n > 65536)
 						ERRTO("SRV RR");
 					PUTSHORT((u_int16_t)n, cp);
 
-					n = getnum(fp, filename, GETNUM_NONE);
+					n = getnum(fp, filename, GETNUM_NONE,
+						   &multiline);
 					if (getnum_error || n > 65536)
 						ERRTO("SRV RR");
 					PUTSHORT((u_int16_t)n, cp);
@@ -973,7 +1004,10 @@ db_load(const char *filename, const char *in_origin,
 			case ns_t_cert:
 		        case ns_t_sig: {
 				char *errmsg = NULL;
-				int ret = parse_sec_rdata(buf, sizeof(buf), 0,
+				int ret;
+				if (ttl == USE_MINIMUM)	/* no ttl set */
+					ttl = 0;
+				ret = parse_sec_rdata(buf, sizeof(buf), 0,
 							  data, sizeof(data),
 							  fp, zp, domain, ttl,
 							  type, domain_ctx,
@@ -1024,6 +1058,8 @@ db_load(const char *filename, const char *in_origin,
 					zp->z_origin);
 				continue;
 			}
+			if (ttl == USE_MINIMUM)	/* no ttl set */
+				ttl = 0;
 			dp = savedata(class, type, (u_int32_t)ttl,
 				      (u_char *)data, (int)n);
 			dp->d_zone = zp - zones;
@@ -1085,18 +1121,29 @@ db_load(const char *filename, const char *in_origin,
 					   zp->z_origin, filename, msg);
 			}
 		}
+		errs += purge_nonglue(zp->z_origin, 
+				      (dataflags & DB_F_HINT) ? fcachetab :
+				      hashtab, zp->z_class,
+				      zp->z_type == z_master);
+ cleanup:
 		while (filenames) {
 			fn = filenames;
 			filenames = filenames->next;
 			freestr(fn->name);
 			memput(fn, sizeof *fn);
 		}
-		if (errs != 0)
-			ns_warning(ns_log_load,
+		if (errs != 0) {
+			if (errs != -1)
+				ns_warning(ns_log_load,
 		   "%s zone \"%s\" (%s) rejected due to errors (serial %u)",
-				   zoneTypeString(zp->z_type), zp->z_origin,
-				   p_class(zp->z_class), zp->z_serial);
-		else
+					   zoneTypeString(zp->z_type),
+					   zp->z_origin,
+					   p_class(zp->z_class), zp->z_serial);
+			if ((zp->z_flags & Z_NOTIFY) != 0)
+				ns_stopnotify(zp->z_origin, zp->z_class);
+			do_reload(zp->z_origin, zp->z_type, zp->z_class,
+				  loading);
+		} else
 			ns_info(ns_log_load,
 				"%s zone \"%s\" (%s) loaded (serial %u)",
 				zoneTypeString(zp->z_type), zp->z_origin,
@@ -1117,8 +1164,8 @@ db_load(const char *filename, const char *in_origin,
 void
 db_err(int err, char *domain, int type, const char *filename, int lineno) {
 	if (filename != NULL && err == CNAMEANDOTHER)
-		ns_notice(ns_log_load, "%s:%d:%s: CNAME and OTHER data error",
-			  filename, lineno, domain);
+		ns_warning(ns_log_load, "%s:%d:%s: CNAME and OTHER data error",
+			   filename, lineno, domain);
 	if (err != DATAEXISTS)
 		ns_debug(ns_log_load, 1, "update failed %s %d", 
 			 domain, type);
@@ -1355,7 +1402,7 @@ getttl(FILE *fp, const char *fn, int lineno, u_int32_t *ttl, int *multiline) {
 		return (-1);
 	}
 	if (*multiline) {
-		ch = getnonblank(fp, fn);
+		ch = getnonblank(fp, fn, 1);
 		if (ch == EOF)
 			return (-1);
 		if (ch == ';')
@@ -1436,7 +1483,7 @@ getallwords(char *buf, size_t size, FILE *fp, int preserve) {
 }
 
 int
-getnum(FILE *fp, const char *src, int opt) {
+getnum(FILE *fp, const char *src, int opt, int *multiline) {
 	int c, n;
 	int seendigit = 0;
 	int seendecimal = 0;
@@ -1450,8 +1497,12 @@ getnum(FILE *fp, const char *src, int opt) {
 #endif
 	for (n = 0; (c = getc(fp)) != EOF; ) {
 		if (isspace(c)) {
-			if (c == '\n')
-				lineno++;
+			if (c == '\n') {
+				if (*multiline)
+					lineno++;
+				else if (!seendigit)
+					goto eol;
+			}
 			if (seendigit)
 				break;
 			continue;
@@ -1459,8 +1510,12 @@ getnum(FILE *fp, const char *src, int opt) {
 		if (c == ';') {
 			while ((c = getc(fp)) != EOF && c != '\n')
 				;
-			if (c == '\n')
-				lineno++;
+			if (c == '\n') {
+				if (*multiline)
+					lineno++;
+				else if (!seendigit)
+					goto eol;
+			}
 			if (seendigit)
 				break;
 			continue;
@@ -1530,32 +1585,50 @@ getnum(FILE *fp, const char *src, int opt) {
 			src, lineno, n+m);
 	}
 	return (n + m);
+
+ eol:
+	ns_error(ns_log_db, "%s:%d: unexpected end of line", src, lineno);
+	getnum_error = 1;
+	(void) ungetc(c, fp);
+	return (0);
 }
 
 #ifndef BIND_UPDATE
 static
 #endif
 int
-getnonblank(FILE *fp, const char *src) {
+getnonblank(FILE *fp, const char *src, int multiline) {
 	int c;
 
 	while ((c = getc(fp)) != EOF) {
 		if (isspace(c)) {
-			if (c == '\n')
-				lineno++;
+			if (c == '\n') {
+				if (multiline)
+					lineno++;
+				else
+					goto eol;
+			}
 			continue;
 		}
 		if (c == ';') {
 			while ((c = getc(fp)) != EOF && c != '\n')
 				;
-			if (c == '\n')
-				lineno++;
+			if (c == '\n') {
+				if (multiline)
+					lineno++;
+				else
+					goto eol;
+			}
 			continue;
 		}
 		return (c);
 	}
 	ns_info(ns_log_db, "%s:%d: unexpected EOF", src, lineno);
 	return (EOF);
+ eol:
+	ns_error(ns_log_db, "%s:%d: unexpected end of line", src, lineno);
+	/* don't ungetc(c, fp); as the caller will do this. */
+	return(c);
 }
 
 /*
@@ -2080,7 +2153,8 @@ parse_sig_rr(char *buf, int buf_len, u_char *data, int data_size,
 	if (!getmlword(buf, my_buf_size, fp, 0))
 		ERRTO("Missing label count");
 	la = wordtouint32(buf);
-	if (0 == la || wordtouint32_error || 255 <= la)
+	if (wordtouint32_error || 255 <= la ||
+	    (0 == la && *domain != '\0'))
 		ERRTO("Bad label count number");
 	data[i] = (u_char) la;
 	i++;
@@ -2106,7 +2180,7 @@ parse_sig_rr(char *buf, int buf_len, u_char *data, int data_size,
 	} else {
 		/* Parse and output OTTL; scan TEXP */
 		origTTL = wordtouint32(buf);
-		if (0 >= origTTL || wordtouint32_error ||
+		if (origTTL >= 0 || wordtouint32_error ||
 		    (origTTL > 0x7fffffff))
 			ERRTO("Original TTL value bad");
 		cp = &data[i];

@@ -1,4 +1,4 @@
-/*	$NetBSD: logging.h,v 1.1.1.1 1999/11/20 18:54:03 veego Exp $	*/
+/*	$NetBSD: logging.h,v 1.1.1.2 2001/01/27 06:18:46 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 by Internet Software Consortium.
@@ -20,8 +20,10 @@
 #ifndef LOGGING_H
 #define LOGGING_H
 
+#include <sys/types.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <unistd.h>
 
 #define log_critical		(-5)
 #define log_error   		(-4)
@@ -66,6 +68,7 @@ typedef struct log_channel *log_channel;
 #define log_category_is_active	__log_category_is_active
 #define log_new_syslog_channel	__log_new_syslog_channel
 #define log_new_file_channel	__log_new_file_channel
+#define log_set_file_owner	__log_set_file_owner
 #define log_new_null_channel	__log_new_null_channel
 #define log_inc_references	__log_inc_references
 #define log_dec_references	__log_dec_references
@@ -91,6 +94,7 @@ log_channel		log_new_syslog_channel(unsigned int, int, int);
 log_channel		log_new_file_channel(unsigned int, int, char *,
 					     FILE *, unsigned int,
 					     unsigned long);
+int			log_set_file_owner(log_channel, uid_t, gid_t);
 log_channel		log_new_null_channel(void);
 int			log_inc_references(log_channel);
 int			log_dec_references(log_channel);

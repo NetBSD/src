@@ -1,6 +1,4 @@
 #!/bin/sh
-#
-#	$NetBSD: probe_ipv6,v 1.1.1.2 2000/11/10 09:34:01 itojun Exp $
 
 set -e
 PATH=/bin:/usr/bin:$PATH; export PATH

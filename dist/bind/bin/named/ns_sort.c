@@ -1,8 +1,8 @@
-/*	$NetBSD: ns_sort.c,v 1.1.1.1 1999/11/20 18:54:00 veego Exp $	*/
+/*	$NetBSD: ns_sort.c,v 1.1.1.2 2001/01/27 06:17:54 itojun Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char sccsid[] = "@(#)ns_sort.c	4.10 (Berkeley) 3/3/91";
-static const char rcsid[] = "Id: ns_sort.c,v 8.5 1999/10/13 16:39:12 vixie Exp";
+static const char rcsid[] = "Id: ns_sort.c,v 8.6 2000/04/21 06:54:13 vixie Exp";
 #endif /* not lint */
 
 /*
@@ -59,7 +59,7 @@ static const char rcsid[] = "Id: ns_sort.c,v 8.5 1999/10/13 16:39:12 vixie Exp";
  */
 
 /*
- * Portions Copyright (c) 1996-1999 by Internet Software Consortium.
+ * Portions Copyright (c) 1996-2000 by Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

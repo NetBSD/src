@@ -1,11 +1,11 @@
-/*	$NetBSD: ns_ctl.c,v 1.1.1.2 2000/11/10 09:34:12 itojun Exp $	*/
+/*	$NetBSD: ns_ctl.c,v 1.1.1.3 2001/01/27 06:17:04 itojun Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "Id: ns_ctl.c,v 8.28.2.1 2000/11/09 23:15:28 vixie Exp";
+static const char rcsid[] = "Id: ns_ctl.c,v 8.39 2000/12/19 23:31:38 marka Exp";
 #endif /* not lint */
 
 /*
- * Copyright (c) 1997-1999 by Internet Software Consortium.
+ * Copyright (c) 1997-2000 by Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -70,12 +70,14 @@ struct control {
 			struct sockaddr_in in;
 			ip_match_list allow;
 		} v_inet;
+#ifndef NO_SOCKADDR_UN
 		struct {
 			struct sockaddr_un un;
 			mode_t mode;
 			uid_t owner;
 			gid_t group;
 		} v_unix;
+#endif
 	} var;
 };
 
@@ -152,9 +154,9 @@ static struct ctl_verb verbs[] = {
 	{ "stop",	verb_stop,	"stop"},
 	{ "exec",	verb_exec,	"exec"},
 	{ "reload",	verb_reload,	"reload [zone] ..."},
-	{ "reconfig",	verb_reconfig,	"reconfig (just sees new/gone zones)"},
+	{ "reconfig",	verb_reconfig,	"reconfig [-noexpired] (just sees new/gone zones)"},
 	{ "dumpdb",	verb_dumpdb,	"dumpdb"},
-	{ "stats",	verb_stats,	"stats"},
+	{ "stats",	verb_stats,	"stats [clear]"},
 	{ "trace",	verb_trace,	"trace [level]"},
 	{ "notrace",	verb_notrace,	"notrace"},
 	{ "querylog",	verb_querylog,	"querylog"},
@@ -179,7 +181,29 @@ ns_ctl_shutdown(void) {
 
 void
 ns_ctl_defaults(controls *list) {
+#ifdef NO_SOCKADDR_UN
+	struct in_addr saddr;
+	ip_match_list iml;
+	ip_match_element ime;
+
+	/*
+	 * If the operating system does not support local domain sockets, 
+	 * connect with ndc on 127.0.0.1, port 101, and only allow
+	 * connections from 127.0.0.1.
+	 */
+	saddr.s_addr = htonl (INADDR_LOOPBACK);
+	iml = new_ip_match_list();
+	ime = new_ip_match_pattern(saddr, 32);
+	add_to_ip_match_list(iml, ime);
+
+	ns_ctl_add(list, ns_ctl_new_inet(saddr, htons (101), iml));
+#else
+#ifdef NEED_SECURE_DIRECTORY
+	ns_ctl_add(list, ns_ctl_new_unix(_PATH_NDCSOCK, 0700, 0, 0));
+#else
 	ns_ctl_add(list, ns_ctl_new_unix(_PATH_NDCSOCK, 0600, 0, 0));
+#endif
+#endif /*NO_SOCKADDR_UN*/
 }
 
 void
@@ -202,6 +226,7 @@ ns_ctl_new_inet(struct in_addr saddr, u_int sport, ip_match_list allow) {
 	return (new);
 }
 
+#ifndef NO_SOCKADDR_UN
 control
 ns_ctl_new_unix(char *path, mode_t mode, uid_t owner, gid_t group) {
 	control new = new_control();
@@ -217,6 +242,7 @@ ns_ctl_new_unix(char *path, mode_t mode, uid_t owner, gid_t group) {
 	new->var.v_unix.group = group;
 	return (new);
 }
+#endif
 
 void
 ns_ctl_install(controls *new) {
@@ -291,6 +317,7 @@ free_control(controls *list, control this) {
 			this->var.v_inet.allow = NULL;
 		}
 		break;
+#ifndef NO_SOCKADDR_UN
 	case t_unix:
 		/* XXX Race condition. */
 		if (was_live &&
@@ -300,6 +327,7 @@ free_control(controls *list, control this) {
 			unlink(this->var.v_unix.un.sun_path);
 		}
 		break;
+#endif
 	default:
 		panic("impossible type in free_control", NULL);
 		/* NOTREACHED */
@@ -336,6 +364,7 @@ match_control(control l, control r) {
 			    r->var.v_inet.in.sin_addr.s_addr)
 				match = 0;
 			break;
+#ifndef NO_SOCKADDR_UN
 		case t_unix:
 			if (l->var.v_unix.un.sun_family !=
 			    r->var.v_unix.un.sun_family ||
@@ -343,6 +372,7 @@ match_control(control l, control r) {
 				   r->var.v_unix.un.sun_path) != 0)
 				match = 0;
 			break;
+#endif
 		default:
 			panic("impossible type in match_control", NULL);
 			/* NOTREACHED */
@@ -373,6 +403,7 @@ propagate_changes(const control diff, control base) {
 		diff->var.v_inet.allow = NULL;
 		need_install++;
 		break;
+#ifndef NO_SOCKADDR_UN
 	case t_unix:
 		if (base->var.v_unix.mode != diff->var.v_unix.mode) {
 			base->var.v_unix.mode = diff->var.v_unix.mode;
@@ -387,6 +418,7 @@ propagate_changes(const control diff, control base) {
 			need_install++;
 		}
 		break;
+#endif
 	default:
 		panic("impossible type in ns_ctl::propagate_changes", NULL);
 		/* NOTREACHED */
@@ -401,9 +433,11 @@ install(control ctl) {
 	case t_inet:
 		install_inet(ctl);
 		break;
+#ifndef NO_SOCKADDR_UN
 	case t_unix:
 		install_unix(ctl);
 		break;
+#endif
 	default:
 		panic("impossible type in ns_ctl::install", NULL);
 		/* NOTREACHED */
@@ -419,6 +453,7 @@ install_inet(control ctl) {
 	}
 }
 
+#ifndef NO_SOCKADDR_UN
 /*
  * Unattach an old unix domain socket if it exists.
  */
@@ -481,6 +516,35 @@ unattach(control ctl) {
 
 static void
 install_unix(control ctl) {
+	char *path;
+#ifdef NEED_SECURE_DIRECTORY
+	char *slash;
+
+	path = savestr(ctl->var.v_unix.un.sun_path, 1);
+
+	slash = strrchr(path, '/');
+	if (slash != NULL) {
+		if (slash != path)
+			*slash = '\0';
+		else {
+			freestr(path);
+			path = savestr("/", 1);
+		}
+	} else {
+		freestr(path);
+		path = savestr(".", 1);
+	}
+	if (mkdir(path, ctl->var.v_unix.mode) < 0) {
+		if (errno != EEXIST) {
+			ns_warning(ns_log_config,
+				   "unix control \"%s\" mkdir failed: %s",
+				   path, strerror(errno));
+		}
+	}
+#else
+	path = ctl->var.v_unix.un.sun_path;
+#endif
+
 	if (ctl->sctx == NULL) {
 		unattach(ctl);
 		ctl->sctx = mksrvr(ctl,
@@ -489,15 +553,13 @@ install_unix(control ctl) {
 	}
 	if (ctl->sctx != NULL) {
 		/* XXX Race condition. */
-		if (chmod(ctl->var.v_unix.un.sun_path,
-			  ctl->var.v_unix.mode) < 0) {
+		if (chmod(path, ctl->var.v_unix.mode) < 0) {
 			ns_warning(ns_log_config, "chmod(\"%s\", 0%03o): %s",
 				   ctl->var.v_unix.un.sun_path,
 				   ctl->var.v_unix.mode,
 				   strerror(errno));
 		}
-		if (chown(ctl->var.v_unix.un.sun_path,
-			  ctl->var.v_unix.owner,
+		if (chown(path, ctl->var.v_unix.owner,
 			  ctl->var.v_unix.group) < 0) {
 			ns_warning(ns_log_config, "chown(\"%s\", %d, %d): %s",
 				   ctl->var.v_unix.un.sun_path,
@@ -506,7 +568,11 @@ install_unix(control ctl) {
 				   strerror(errno));
 		}
 	}
+#ifdef NEED_SECURE_DIRECTORY
+	freestr(path);
+#endif
 }
+#endif
 
 static void
 logger(enum ctl_severity ctlsev, const char *format, ...) {
@@ -573,6 +639,7 @@ getpid_closure(struct ctl_sctx *sctx, struct ctl_sess *sess, void *uap) {
 
 enum state {
 	e_version = 0,
+	e_config,
 	e_nzones,
 	e_debug,
 	e_xfersrun,
@@ -580,7 +647,6 @@ enum state {
 	e_qserials,
 	e_qrylog,
 	e_priming,
-	e_loading,
 	e_finito
 };
 
@@ -603,13 +669,17 @@ verb_status(struct ctl_sctx *ctl, struct ctl_sess *sess,
 				     0, NULL, NULL, NULL, NULL, 0);
 			return;
 		}
-		pvt->state = e_version;
+		pvt->state = (enum state)0;
 		(void)ctl_setcsctx(sess, pvt);
 	}
 	switch (pvt->state++) {
 	case e_version:
 		strncpy(pvt->text, Version, sizeof pvt->text);
 		pvt->text[sizeof pvt->text - 1] = '\0';
+		break;
+	case e_config:
+		sprintf(pvt->text, "config (%s) last loaded at age: %24s",
+			conffile, ctime(&confmtime));
 		break;
 	case e_nzones:
 		sprintf(pvt->text, "number of zones allocated: %d", nzones);
@@ -632,12 +702,10 @@ verb_status(struct ctl_sctx *ctl, struct ctl_sess *sess,
 			qrylog ? "ON" : "OFF");
 		break;
 	case e_priming:
-		sprintf(pvt->text, "server is %s priming",
-			priming ? "STILL" : "DONE");
-		break;
-	case e_loading:
-		sprintf(pvt->text, "server %s loading its configuration",
-			loading ? "IS" : "IS NOT");
+		if (priming)
+			sprintf(pvt->text, "server is initialising itself");
+		else
+			sprintf(pvt->text, "server is up and running");
 		break;
 	case e_finito:
 		return;
@@ -750,6 +818,8 @@ verb_reload(struct ctl_sctx *ctl, struct ctl_sess *sess,
 	case z_slave:
 	case z_stub:
 		ns_stopxfrs(zp);
+		if (zonefile_changed_p(zp))
+			zp->z_serial = 0;	/* force xfer */
 		addxfer(zp);
 		code = 251;
 		msg = "Slave transfer queued.";
@@ -773,7 +843,10 @@ verb_reconfig(struct ctl_sctx *ctl, struct ctl_sess *sess,
 	      const struct ctl_verb *verb, const char *rest,
 	      u_int respflags, void *respctx, void *uctx)
 {
-	ns_need(main_need_reconfig);
+	if (strcmp(rest, "-noexpired") != 0)
+		ns_need(main_need_reconfig);
+	else
+		ns_need(main_need_noexpired);
 	ctl_response(sess, 250, "Reconfig initiated.",
 		     0, NULL, NULL, NULL, NULL, 0);
 }
@@ -793,9 +866,15 @@ verb_stats(struct ctl_sctx *ctl, struct ctl_sess *sess,
 	   const struct ctl_verb *verb, const char *rest,
 	   u_int respflags, void *respctx, void *uctx)
 {
-	ns_need(main_need_statsdump);
-	ctl_response(sess, 250, "Statistics dump initiated.",
-		     0, NULL, NULL, NULL, NULL, 0);
+	if (rest != NULL && strcmp(rest, "clear") == 0) {
+		ns_need(main_need_statsdumpandclear);
+		ctl_response(sess, 250, "Statistics dump and clear initiated.",
+			     0, NULL, NULL, NULL, NULL, 0);
+	} else {
+		ns_need(main_need_statsdump);
+		ctl_response(sess, 250, "Statistics dump initiated.",
+			     0, NULL, NULL, NULL, NULL, 0);
+	}
 }
 
 static void

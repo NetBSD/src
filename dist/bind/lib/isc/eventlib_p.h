@@ -1,4 +1,4 @@
-/*	$NetBSD: eventlib_p.h,v 1.1.1.1 1999/11/20 18:54:11 veego Exp $	*/
+/*	$NetBSD: eventlib_p.h,v 1.1.1.2 2001/01/27 06:20:11 itojun Exp $	*/
 
 /*
  * Copyright (c) 1995-1999 by Internet Software Consortium
@@ -20,7 +20,7 @@
 /* eventlib_p.h - private interfaces for eventlib
  * vix 09sep95 [initial]
  *
- * Id: eventlib_p.h,v 1.27 1999/06/03 20:36:05 vixie Exp
+ * Id: eventlib_p.h,v 1.28 2000/02/04 08:28:34 vixie Exp
  */
 
 #ifndef _EVENTLIB_P_H
@@ -29,6 +29,8 @@
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
+#include <sys/un.h>
 
 #define EVENTLIB_DEBUG 1
 
@@ -78,9 +80,21 @@ typedef struct evConn {
 
 typedef struct evAccept {
 	int		fd;
-	struct sockaddr	la;
+	union {
+		struct sockaddr		sa;
+		struct sockaddr_in	in;
+#ifndef NO_SOCKADDR_UN
+		struct sockaddr_un	un;
+#endif
+	}		la;
 	int		lalen;
-	struct sockaddr	ra;
+	union {
+		struct sockaddr		sa;
+		struct sockaddr_in	in;
+#ifndef NO_SOCKADDR_UN
+		struct sockaddr_un	un;
+#endif
+	}		ra;
 	int		ralen;
 	int		ioErrno;
 	evConn *	conn;
