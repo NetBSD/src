@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mroute.c	8.1 (Berkeley) 6/6/93
- *	$Id: mroute.c,v 1.4 1994/05/13 08:08:17 mycroft Exp $
+ *	$Id: mroute.c,v 1.5 1994/06/09 16:08:46 brezak Exp $
  */
 
 /*
@@ -220,4 +220,6 @@ mrt_stats(mrpaddr, mstaddr)
 	  mrtstat.mrts_bad_tunnel, plural(mrtstat.mrts_bad_tunnel));
 	printf(" %10u datagram%s with no room for tunnel options\n",
 	  mrtstat.mrts_cant_tunnel, plural(mrtstat.mrts_cant_tunnel));
+	printf(" %10u datagram%s arrived on the wrong interface\n",
+	  mrtstat.mrts_wrong_if, plural(mrtstat.mrts_wrong_if));
 }
