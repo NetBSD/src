@@ -171,11 +171,13 @@ extern int kludgelinemode;
  *	1	Do add this character
  */
 
+void intp(), sendbrk(), sendabort();
+
     int
 TerminalSpecialChars(c)
     int	c;
 {
-    void xmitAO(), xmitEL(), xmitEC(), intp(), sendbrk();
+    void xmitAO(), xmitEL(), xmitEC();
 
     if (c == termIntChar) {
 	intp();
@@ -375,6 +377,7 @@ TerminalRestoreState()
  *		local/no signal mapping
  */
 
+SIG_FUNC_RET ayt_status();
 
     void
 TerminalNewMode(f)
@@ -649,8 +652,6 @@ TerminalNewMode(f)
 #endif
     } else {
 #ifdef	SIGINFO
-	SIG_FUNC_RET ayt_status();
-
 	(void) signal(SIGINFO, ayt_status);
 #endif	SIGINFO
 #ifdef	SIGTSTP

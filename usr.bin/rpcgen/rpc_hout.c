@@ -31,8 +31,8 @@
 static char sccsid[] = "@(#)rpc_hout.c 1.6 87/07/28 (C) 1987 SMI";
 #endif
 
-int pconstdef(), pstructdef(), puniondef(), pdefine(), pprogramdef(),
-    penumdef(), ptypedef(), pdeclaration(), undefined2();
+static int pconstdef(), pstructdef(), puniondef(), pdefine(), pprogramdef(),
+	   penumdef(), ptypedef(), pdeclaration(), undefined2();
 
 /*
  * rpc_hout.c, Header file outputter for the RPC protocol compiler 

@@ -55,7 +55,7 @@ FILE *fin;	/* file pointer of current input */
 
 list *defined;	/* list of defined things */
 
-int printwhere();
+static int printwhere();
 
 /*
  * Reinitialize the world 
