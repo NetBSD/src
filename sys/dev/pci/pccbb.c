@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.42 2000/06/16 23:41:35 cgd Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.42.2.1 2000/07/12 21:45:34 jhawk Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -384,7 +384,7 @@ pccbbattach(parent, self, aux)
 	struct pccbb_softc *sc = (void *)self;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
-	pcireg_t sock_base, busreg;
+	pcireg_t busreg, reg, sock_base;
 	bus_addr_t sockbase;
 	char devinfo[256];
 	int flags;
@@ -494,6 +494,30 @@ pccbbattach(parent, self, aux)
 
 	shutdownhook_establish(pccbb_shutdown, sc);
 
+	/* Disable legacy register mapping. */
+	switch (sc->sc_chipset) {
+	case CB_RX5C46X:	       /* fallthrough */
+#if 0
+	/* The RX5C47X-series requires writes to the PCI_LEGACY register. */
+	case CB_RX5C47X:
+#endif
+		/* 
+		 * The legacy pcic io-port on Ricoh RX5C46X CardBus bridges
+		 * cannot be disabled by substituting 0 into PCI_LEGACY
+		 * register.  Ricoh CardBus bridges have special bits on Bridge
+		 * control reg (addr 0x3e on PCI config space).
+		 */
+		reg = pci_conf_read(pc, pa->pa_tag, PCI_BCR_INTR);
+		reg &= ~(CB_BCRI_RL_3E0_ENA | CB_BCRI_RL_3E2_ENA);
+		pci_conf_write(pc, pa->pa_tag, PCI_BCR_INTR, reg);
+		break;
+
+	default:
+		/* XXX I don't know proper way to kill legacy I/O. */
+		pci_conf_write(pc, pa->pa_tag, PCI_LEGACY, 0x0);
+		break;
+	}
+
 	config_defer(self, pccbb_pci_callback);
 }
 
@@ -508,9 +532,7 @@ pccbbattach(parent, self, aux)
  *
  *   This function should be deferred because this device may obtain
  *   memory space dynamically.  This function must avoid obtaining
- *   memory area which has already kept for another device.  Also,
- *   this function MUST be done before ISA attach process because this
- *   function kills pcic compatible port used by ISA pcic.
+ *   memory area which has already kept for another device.
  */
 static void
 pccbb_pci_callback(self)
@@ -673,9 +695,8 @@ pccbb_pci_callback(self)
  *   This function initialize YENTA chip registers listed below:
  *     1) PCI command reg,
  *     2) PCI and CardBus latency timer,
- *     3) disable legacy (PCIC-compatible) io,
- *     4) route PCI interrupt,
- *     5) close all memory and io windows.
+ *     3) route PCI interrupt,
+ *     4) close all memory and io windows.
  */
 static void
 pccbb_chipinit(sc)
@@ -719,28 +740,6 @@ pccbb_chipinit(sc)
 	DPRINTF(("PCI latency timer 0x%x (%x)\n",
 	    PCI_LATTIMER(reg), pci_conf_read(pc, tag, PCI_BHLC_REG)));
 
-	/* Disable legacy register mapping. */
-	switch (sc->sc_chipset) {
-	case CB_RX5C46X:	       /* fallthrough */
-#if 0
-	case CB_RX5C47X:
-#endif
-		/* 
-		 * The legacy pcic io-port on Ricoh CardBus bridges cannot be
-		 * disabled by substituting 0 into PCI_LEGACY register.  Ricoh
-		 * CardBus bridges have special bits on Bridge control reg (addr
-		 * 0x3e on PCI config space).
-		 */
-		reg = pci_conf_read(pc, tag, PCI_BCR_INTR);
-		reg &= ~(CB_BCRI_RL_3E0_ENA | CB_BCRI_RL_3E2_ENA);
-		pci_conf_write(pc, tag, PCI_BCR_INTR, reg);
-		break;
-
-	default:
-		/* XXX I don't know proper way to kill legacy I/O. */
-		pci_conf_write(pc, tag, PCI_LEGACY, 0x0);
-		break;
-	}
 
 	/* Route functional interrupts to PCI. */
 	reg = pci_conf_read(pc, tag, PCI_BCR_INTR);
