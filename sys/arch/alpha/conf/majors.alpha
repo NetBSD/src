@@ -1,4 +1,4 @@
-#	$NetBSD: majors.alpha,v 1.8 2003/06/01 20:19:38 martin Exp $
+#	$NetBSD: majors.alpha,v 1.9 2003/07/27 14:18:15 itojun Exp $
 #
 # Device majors for alpha
 #
@@ -76,3 +76,4 @@ device-major	radio		char 74			radio
 device-major	ksyms		char 75			ksyms
 device-major	wsfont		char 76			wsfont
 device-major	nsmb		char 77			nsmb
+device-major	pf		char 78			pf

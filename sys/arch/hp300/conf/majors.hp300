@@ -1,4 +1,4 @@
-#	$NetBSD: majors.hp300,v 1.4 2003/04/25 21:10:53 ragge Exp $
+#	$NetBSD: majors.hp300,v 1.5 2003/07/27 14:18:20 itojun Exp $
 #
 # Device majors for hp300
 #
@@ -40,3 +40,4 @@ device-major	clockctl	char 42			clockctl
 device-major	systrace	char 43			systrace
 device-major	cgd		char 44  block 16	cgd
 device-major	ksyms		char 45			ksyms
+device-major	pf		char 46			pf

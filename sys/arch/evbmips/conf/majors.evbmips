@@ -1,4 +1,4 @@
-#	$NetBSD: majors.evbmips,v 1.5 2003/04/25 21:10:52 ragge Exp $
+#	$NetBSD: majors.evbmips,v 1.6 2003/07/27 14:18:19 itojun Exp $
 #
 # Device majors for evbmips
 #
@@ -75,3 +75,4 @@ device-major	aucom		char 73			aucom
 device-major	sysmon		char 74			sysmon_envsys | sysmon_wdog
 device-major	cgd		char 75  block 18	cgd
 device-major	ksyms		char 76			ksyms
+device-major	pf		char 77			pf

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.arc,v 1.4 2003/04/25 21:10:48 ragge Exp $
+#	$NetBSD: majors.arc,v 1.5 2003/07/27 14:18:16 itojun Exp $
 #
 # Device majors for arc
 #
@@ -49,3 +49,4 @@ device-major	clockctl	char 52			clockctl
 device-major	systrace	char 53			systrace
 device-major	cgd		char 54  block 10	cgd
 device-major	ksyms		char 55			ksyms
+device-major	pf		char 56			pf

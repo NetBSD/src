@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.26 2003/05/07 13:41:38 christos Exp $
+#	$NetBSD: MAKEDEV,v 1.27 2003/07/27 14:18:10 itojun Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -72,6 +72,7 @@
 #	fd	file descriptors
 #	bpf*	packet filter
 #	ipl	IP Filter
+#	pf	PF packet filter
 #	random	Random number generator
 #	tun*	network tunnel driver
 #	systrace syscall tracer
@@ -108,7 +109,7 @@ init|all)
 	makedev vnd0 vnd1 vnd2 vnd3
 	makedev local
 	makedev random
-	makedev ipl
+	makedev ipl pf
 	makedev tun0 tun1
 	makedev md0
 	makedev usbs
@@ -335,6 +336,12 @@ ipl)
 	mknod ipstate c 23 2
 	mknod ipauth c 23 3
 	chmod 600 ipl ipnat ipstate ipauth
+	;;
+
+pf)
+	rm -f pf
+	mknod pf c 42 0
+	chmod 600 pf
 	;;
 
 random)

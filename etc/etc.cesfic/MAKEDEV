@@ -1,6 +1,6 @@
 #!/bin/sh -
 
-# $NetBSD: MAKEDEV,v 1.6 2003/04/27 13:15:32 ragge Exp $
+# $NetBSD: MAKEDEV,v 1.7 2003/07/27 14:18:00 itojun Exp $
 #
 ###########################################################################
 #
@@ -30,6 +30,7 @@
 #	random	Random number generator, see rnd(4)
 #	systrace syscall tracer
 #	tun*	network tunnel driver
+#	pf	PF packet filter
 #
 
 dialin=0
@@ -143,6 +144,12 @@ tty*)
 	mknod tty$unit c 10 $(($ounit + $dialin ))
 	mknod dty$unit c 10 $(($ounit + $dialout))
 	chown uucp tty$unit dty$unit
+	;;
+
+pf)
+	rm -f pf
+	mknod pf c 26 0
+	chmod 600 pf
 	;;
 
 lkm)

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.acorn26,v 1.4 2003/04/25 21:10:46 ragge Exp $
+#	$NetBSD: majors.acorn26,v 1.5 2003/07/27 14:18:14 itojun Exp $
 #
 # Device majors for acorn26
 #
@@ -34,3 +34,4 @@ device-major	clockctl	char 27			clockctl
 device-major	systrace	char 28			systrace
 device-major	cgd		char 29  block 8	cgd
 device-major	ksyms		char 30			ksyms
+device-major	pf		char 31			pf

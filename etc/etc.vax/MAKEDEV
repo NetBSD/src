@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.57 2003/04/27 13:15:47 ragge Exp $
+#	$NetBSD: MAKEDEV,v 1.58 2003/07/27 14:18:14 itojun Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -73,6 +73,7 @@
 #	ch*	SCSI media changer
 #	random	Random number generator
 #	systrace syscall tracer
+#	pf	PF packet filter
 #
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 umask 77
@@ -582,6 +583,12 @@ systrace)
 	rm -f systrace
 	mknod systrace c 76 0
 	chmod 644 systrace
+	;;
+
+pf)
+	rm -f pf
+	mknod pf c 80 0
+	chmod 600 pf
 	;;
 
 local)

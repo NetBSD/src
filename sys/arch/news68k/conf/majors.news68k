@@ -1,4 +1,4 @@
-#	$NetBSD: majors.news68k,v 1.5 2003/04/25 21:10:57 ragge Exp $
+#	$NetBSD: majors.news68k,v 1.6 2003/07/27 14:18:23 itojun Exp $
 #
 # Device majors for news68k
 #
@@ -45,3 +45,4 @@ device-major	clockctl	char 76			clockctl
 device-major	systrace	char 77			systrace
 device-major	cgd		char 78  block 33	cgd
 device-major	ksyms		char 79			ksyms
+device-major	pf		char 80			pf

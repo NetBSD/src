@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.27 2003/05/15 13:18:08 wiz Exp $
+#	$NetBSD: MAKEDEV,v 1.28 2003/07/27 14:18:02 itojun Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -71,6 +71,7 @@
 #	fd	file descriptors
 #	bpf*	packet filter
 #	ipl	IP Filter
+#	pf	PF packet filter
 #	cbq	Alternate Queueing (ALTQ)
 #	random	Random number generator
 #	speaker	PC speaker				(XXX - installed)
@@ -105,7 +106,7 @@ init|all)
 	makedev std fd fd0
 	makedev tty0 tty1 pty0
 	makedev vnd0 vnd1
-	makedev bpf0 bpf1 bpf2 bpf3 tun0 tun1 ipl
+	makedev bpf0 bpf1 bpf2 bpf3 tun0 tun1 ipl pf
 	makedev ccd0 ccd1 ccd2 ccd3 md0 random
 	makedev cgd0 cgd1 cgd2 cgd3
 	makedev lkm audio local
@@ -294,6 +295,12 @@ ipl)
 	mknod ipstate c 44 2
 	mknod ipauth c 44 3
 	chmod 600 ipl ipnat ipstate ipauth
+	;;
+
+pf)
+	rm -f pf
+	mknod pf c 56 0
+	chmod 600 pf
 	;;
 
 lkm)

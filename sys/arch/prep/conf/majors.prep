@@ -1,4 +1,4 @@
-#	$NetBSD: majors.prep,v 1.4 2003/04/25 21:11:01 ragge Exp $
+#	$NetBSD: majors.prep,v 1.5 2003/07/27 14:18:26 itojun Exp $
 #
 # Device majors for prep
 #
@@ -64,3 +64,4 @@ device-major	clockctl	char 73			clockctl
 device-major	systrace	char 74			systrace
 device-major	cgd		char 75  block 19	cgd
 device-major	ksyms		char 76			ksyms
+device-major	pf		char 77			pf

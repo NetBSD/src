@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.65 2003/05/07 13:41:39 christos Exp $
+#	$NetBSD: MAKEDEV,v 1.66 2003/07/27 14:18:14 itojun Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -104,6 +104,7 @@
 #	lkm	loadable kernel modules interface
 #	bpf*	Berkeley Packet Filter
 #	ipl	IP Filter
+#	pf	PF packet filter
 #	random	Random number generator
 #	audio	audio device
 #	sram	battery backuped memory
@@ -145,7 +146,7 @@ init|all)
 	makedev raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
 	makedev cd0 ss0 fd0 fd1 fd2 fd3
 	makedev bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
-	makedev ccd0 ccd1 ccd2 ccd3 tun0 tun1 par0 lkm ipl
+	makedev ccd0 ccd1 ccd2 ccd3 tun0 tun1 par0 lkm ipl pf
 	makedev cgd0 cgd1 cgd2 cgd3
 	makedev sram audio pow0 pow1 bell random local
 	makedev md0 md1 bmd0 bmd1 ch0 uk0 uk1 ss0
@@ -498,6 +499,12 @@ ipl)
 	mknod ipstate c 38 2
 	mknod ipauth c 38 3
 	chmod 600 ipl ipnat ipstate ipauth
+	;;
+
+pf)
+	rm -f pf
+	mknod pf c 55 0
+	chmod 600 pf
 	;;
 
 lkm)

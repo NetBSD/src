@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sun3,v 1.5 2003/04/25 21:11:03 ragge Exp $
+#	$NetBSD: majors.sun3,v 1.6 2003/07/27 14:18:28 itojun Exp $
 #
 # Device majors for sun3/sun3x
 #
@@ -62,3 +62,4 @@ device-major	clockctl	char 84			clockctl
 device-major	systrace	char 85			systrace
 device-major	cgd		char 86  block 26	cgd
 device-major	ksyms		char 87			ksyms
+device-major	pf		char 88			pf

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.bebox,v 1.4 2003/04/25 21:10:50 ragge Exp $
+#	$NetBSD: majors.bebox,v 1.5 2003/07/27 14:18:17 itojun Exp $
 #
 # Device majors for bebox
 #
@@ -60,3 +60,4 @@ device-major	clockctl	char 58			clockctl
 device-major	systrace	char 59			systrace
 device-major	cgd		char 60  block 19	cgd
 device-major	ksyms		char 61			ksyms
+device-major	pf		char 62			pf

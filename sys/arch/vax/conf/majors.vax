@@ -1,4 +1,4 @@
-#	$NetBSD: majors.vax,v 1.6 2003/04/25 21:11:03 ragge Exp $
+#	$NetBSD: majors.vax,v 1.7 2003/07/27 14:18:28 itojun Exp $
 #
 # Device majors for vax
 #
@@ -81,6 +81,7 @@ device-major	systrace	char 76			systrace
 device-major	cgd		char 77  block 26	cgd
 device-major	rf		char 78  block 27	rf
 device-major	ksyms		char 79			ksyms
+device-major	pf		char 80			pf
 
 #
 # block-device-only devices
