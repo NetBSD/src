@@ -1,5 +1,5 @@
-/* 
- * Copyright (c) 1993 Charles Hannum.
+/*
+ * Copyright (c) 1993, 1994 Charles Hannum.
  * Copyright (c) 1991 Regents of the University of California.
  * All rights reserved.
  *
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	7.7 (Berkeley)	5/12/91
- *	$Id: pmap.c,v 1.13 1994/02/12 07:14:15 mycroft Exp $
+ *	$Id: pmap.c,v 1.14 1994/03/07 22:30:30 mycroft Exp $
  */
 
 /*
@@ -153,13 +153,17 @@ int pmapvacflush = 0;
  */
 #define	pmap_pde(m, v)	(&((m)->pm_pdir[((vm_offset_t)(v) >> PDSHIFT)&1023]))
 
-#define	pmap_pte_pa(pte)	(*(int *)(pte) & PG_FRAME)
+#define	pmap_pte_pa(pte)		(*(int *)(pte) & PG_FRAME)
 
-#define	pmap_pde_v(pte)		((pte)->pd_v)
-#define	pmap_pte_w(pte)		((pte)->pg_w)
-#define	pmap_pte_m(pte)		((pte)->pg_m)
-#define	pmap_pte_u(pte)		((pte)->pg_u)
-#define	pmap_pte_v(pte)		((pte)->pg_v)
+/*
+ * Empty PTEs and PDEs are always 0, but checking only the valid bit allows
+ * the compiler to generate `testb' rather than `testl'.
+ */
+#define	pmap_pde_v(pde)			((pde)->pd_v)
+#define	pmap_pte_w(pte)			((pte)->pg_w)
+#define	pmap_pte_m(pte)			((pte)->pg_m)
+#define	pmap_pte_u(pte)			((pte)->pg_u)
+#define	pmap_pte_v(pte)			((pte)->pg_v)
 #define	pmap_pte_set_w(pte, v)		((pte)->pg_w = (v))
 #define	pmap_pte_set_prot(pte, v)	((pte)->pg_prot = (v) >> 1)
 
@@ -410,12 +414,7 @@ pmap_create(size)
 	if (size)
 		return NULL;
 
-	/* XXX: is it ok to wait here? */
 	pmap = (pmap_t) malloc(sizeof *pmap, M_VMPMAP, M_WAITOK);
-#ifdef notifwewait
-	if (pmap == NULL)
-		panic("pmap_create: cannot allocate a pmap");
-#endif
 	bzero(pmap, sizeof(*pmap));
 	pmap_pinit(pmap);
 	return pmap;
@@ -542,17 +541,13 @@ pmap_remove(pmap, sva, eva)
 	register pv_entry_t pv, npv;
 	int s, bits;
 
-#ifdef DEBUG
-	if (pmapdebug & (PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT))
-		pg("pmap_remove(%x, %x, %x)", pmap, sva, eva);
-
-	remove_stats.calls++;
-#endif
-	
 	sva &= PG_FRAME;
 	eva &= PG_FRAME;
 
-	/* this is essential since we must check the PDE(sva) for precense */
+	/*
+	 * We need to acquire a pointer to a page table page before entering
+	 * the following loop.
+	 */
 	while (sva < eva) {
 		pte = pmap_pte(pmap, sva);
 		if (pte)
@@ -560,26 +555,42 @@ pmap_remove(pmap, sva, eva)
 		sva = (sva & PD_MASK) + NBPD;
 	}
 
-	for (; sva < eva; sva += NBPG, pte++) {
-
+	while (sva < eva) {
 		/* only check once in a while */
-		if (!(sva & PT_MASK)) {
+		if ((sva & PT_MASK) == 0) {
 			if (!pmap_pde_v(pmap_pde(pmap, sva))) {
-				/* We can race ahead here, straight to next pde.. */
-				sva += NBPD -NBPG;
-				pte += i386_btop(NBPD) -1;
+				/* We can race ahead here, to the next pde. */
+				sva += NBPD;
+				pte += i386_btop(NBPD);
 				continue;
 			}
 		}
 
-	        if (!pmap_pte_v(pte))
-			continue;
+		if (!pmap_pte_v(pte)) {
+#ifdef __GNUC__
+			/*
+			 * Scan ahead in a tight loop for the next used PTE in
+			 * this page.  We don't scan the whole region here
+			 * because we don't want to zero-fill unused page table
+			 * pages.
+			 */
+			int n, m;
 
-		pa = pmap_pte_pa(pte);
-
-#ifdef DEBUG
-		remove_stats.removes++;
+			n = min(eva - sva, NBPD - (sva & PT_MASK)) >> PGSHIFT;
+			__asm __volatile("xorl %%eax,%%eax\n\tcld\n\t"
+			    "repe\n\tscasl\n\tje 1f\n\tincl %1\n\t1:"
+			    : "=D" (pte), "=c" (m)
+			    : "0" (pte), "1" (n)
+			    : "%eax");
+			sva += (n - m) << PGSHIFT;
+			if (!m)
+				continue;
+			/* Overshot. */
+			--pte;
+#else
+			goto next;
 #endif
+		}
 
 		/*
 		 * Update statistics
@@ -587,6 +598,8 @@ pmap_remove(pmap, sva, eva)
 		if (pmap_pte_w(pte))
 			pmap->pm_stats.wired_count--;
 		pmap->pm_stats.resident_count--;
+
+		pa = pmap_pte_pa(pte);
 
 		/*
 		 * Invalidate the PTEs.
@@ -606,7 +619,7 @@ reduce wiring count on page table pages as references drop
 #endif
 
 		if (!pmap_valid_page(pa))
-			continue;
+			goto next;
 
 		/*
 		 * Remove from the PV table (raise IPL since we
@@ -627,24 +640,16 @@ reduce wiring count on page table pages as references drop
 				free((caddr_t)npv, M_VMPVENT);
 			} else
 				pv->pv_pmap = NULL;
-#ifdef DEBUG
-			remove_stats.pvfirst++;
-#endif
 		} else {
 			for (npv = pv->pv_next; npv; npv = npv->pv_next) {
-#ifdef DEBUG
-				remove_stats.pvsearch++;
-#endif
 				if (pmap == npv->pv_pmap && sva == npv->pv_va)
 					break;
 				pv = npv;
 			}
-#ifdef DEBUG
-			if (npv == NULL)
-				panic("pmap_remove: PA not in pv_tab");
-#endif
-			pv->pv_next = npv->pv_next;
-			free((caddr_t)npv, M_VMPVENT);
+			if (npv) {
+				pv->pv_next = npv->pv_next;
+				free((caddr_t)npv, M_VMPVENT);
+			}
 		}
 
 #ifdef notdef
@@ -655,6 +660,10 @@ reduce wiring count on page table pages as references drop
 		 */
 		pmap_attributes[pmap_page_index(pa)] |= bits;
 		splx(s);
+
+	next:
+		sva += NBPG;
+		pte++;
 	}
 
 	/* only need to flush once */
@@ -730,7 +739,10 @@ pmap_protect(pmap, sva, eva, prot)
 	sva &= PG_FRAME;
 	eva &= PG_FRAME;
 
-	/* this is essential since we must check the PDE(sva) for precense */
+	/*
+	 * We need to acquire a pointer to a page table page before entering
+	 * the following loop.
+	 */
 	while (sva < eva) {
 		pte = pmap_pte(pmap, sva);
 		if (pte)
@@ -738,20 +750,42 @@ pmap_protect(pmap, sva, eva, prot)
 		sva = (sva & PD_MASK) + NBPD;
 	}
 
-	for (; sva < eva; sva += NBPG, pte++) {
-
+	while (sva < eva) {
 		/* only check once in a while */
-		if (!(sva & PT_MASK)) {
+		if ((sva & PT_MASK) == 0) {
 			if (!pmap_pde_v(pmap_pde(pmap, sva))) {
-				/* We can race ahead here, straight to next pde.. */
-				sva += NBPD -NBPG;
-				pte += i386_btop(NBPD) -1;
+				/* We can race ahead here, to the next pde. */
+				sva += NBPD;
+				pte += i386_btop(NBPD);
 				continue;
 			}
 		}
 
-		if (!pmap_pte_v(pte))
-			continue;
+		if (!pmap_pte_v(pte)) {
+#ifdef __GNUC__
+			/*
+			 * Scan ahead in a tight loop for the next used PTE in
+			 * this page.  We don't scan the whole region here
+			 * because we don't want to zero-fill unused page table
+			 * pages.
+			 */
+			int n, m;
+
+			n = min(eva - sva, NBPD - (sva & PT_MASK)) >> PGSHIFT;
+			__asm __volatile("xorl %%eax,%%eax\n\tcld\n\t"
+			    "repe\n\tscasl\n\tje 1f\n\tincl %1\n\t1:"
+			    : "=D" (pte), "=c" (m)
+			    : "0" (pte), "1" (n)
+			    : "%eax");
+			sva += (n - m) << PGSHIFT;
+			if (!m)
+				continue;
+			/* Overshot. */
+			--pte;
+#else
+			goto next;
+#endif
+		}
 
 		i386prot = pte_prot(pmap, prot);
 		if (sva < VM_MAXUSER_ADDRESS)	/* see also pmap_enter() */
@@ -760,6 +794,10 @@ pmap_protect(pmap, sva, eva, prot)
 			i386prot |= PG_u | PG_RW;
 		/* clear VAC here if PG_RO? */
 		pmap_pte_set_prot(pte, i386prot);
+
+	next:
+		sva += NBPG;
+		pte++;
 	}
 
 	if (curproc && pmap == &curproc->p_vmspace->vm_pmap)
@@ -985,21 +1023,21 @@ validate:
  */
 void
 pmap_page_protect(phys, prot)
-        vm_offset_t     phys;
-        vm_prot_t       prot;
+	vm_offset_t     phys;
+	vm_prot_t       prot;
 {
 
-        switch (prot) {
+	switch (prot) {
 	    case VM_PROT_READ:
 	    case VM_PROT_READ|VM_PROT_EXECUTE:
-                PMAP_COPY_ON_WRITE(phys);
-                break;
+		PMAP_COPY_ON_WRITE(phys);
+		break;
 	    case VM_PROT_ALL:
-                break;
+		break;
 	    default:
-                pmap_remove_all(phys);
-                break;
-        }
+		pmap_remove_all(phys);
+		break;
+	}
 }
 
 /*
@@ -1515,16 +1553,16 @@ pmap_changebit(pa, setbits, maskbits)
 #endif
 			va = pv->pv_va;
 
-                        /*
-                         * XXX don't write protect pager mappings
-                         */
-                        if ((PG_RO && setbits == PG_RO) ||
+			/*
+			 * XXX don't write protect pager mappings
+			 */
+			if ((PG_RO && setbits == PG_RO) ||
 			    (PG_RW && maskbits == ~PG_RW)) {
-                                extern vm_offset_t pager_sva, pager_eva;
+				extern vm_offset_t pager_sva, pager_eva;
 
-                                if (va >= pager_sva && va < pager_eva)
-                                        continue;
-                        }
+				if (va >= pager_sva && va < pager_eva)
+					continue;
+			}
 
 			pte = (int *) pmap_pte(pv->pv_pmap, va);
 			npte = (*pte & maskbits) | setbits;
@@ -1593,23 +1631,27 @@ pmap_check_wiring(str, va)
 #endif
 
 /* print address space of pmap*/
-pads(pm) pmap_t pm; {
+pads(pm)
+	pmap_t pm;
+{
 	unsigned va, i, j;
 	register struct pte *pte;
 
-	if(pm == kernel_pmap) return;
+	if (pm == kernel_pmap)
+		return;
 	for (i = 0; i < 1024; i++) 
-		if(pm->pm_pdir[i].pd_v)
+		if (pmap_pde_v(&pm->pm_pdir[i]))
 			for (j = 0; j < 1024 ; j++) {
-				va = (i<<22)+(j<<12);
-				if (pm == kernel_pmap && va < VM_MIN_KERNEL_ADDRESS)
-						continue;
-				if (pm != kernel_pmap && va > VM_MAX_ADDRESS)
-						continue;
+				va = (i << PDSHIFT) | (j << PGSHIFT);
+				if (pm == kernel_pmap &&
+				    va < VM_MIN_KERNEL_ADDRESS)
+					continue;
+				if (pm != kernel_pmap &&
+				    va > VM_MAX_ADDRESS)
+					continue;
 				pte = pmap_pte(pm, va);
-				if(pmap_pte_v(pte)) 
+				if (pmap_pte_v(pte)) 
 					printf("%x:%x ", va, *(int *)pte); 
-			} ;
-				
+			}
 }
 #endif
