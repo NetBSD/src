@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.14.14.1 1998/11/23 03:12:56 cgd Exp $	*/
+/*	$NetBSD: rcons.c,v 1.14.14.2 1998/11/24 06:05:03 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -64,6 +64,7 @@
 #include <pmax/pmax/asic.h>
 #include <pmax/pmax/turbochannel.h>
 #include <pmax/pmax/pmaxtype.h>
+#include <pmax/dev/rconsvar.h>
 #include <dev/cons.h>
 
 #include <sys/device.h>
@@ -86,7 +87,6 @@
 extern struct tty *constty;	/* virtual console output device */
 struct tty *fbconstty;		/* Frame buffer console tty... */
 struct tty rcons_tty [NRASTERCONSOLE];	/* Console tty struct... */
-extern struct consdev *cn_tab;	/* Console I/O table... */
 
 struct	vnode *cn_in_devvp;	/* vnode for underlying input device. */
 dev_t	cn_in_dev = NODEV;	/* console input device. */
@@ -99,10 +99,12 @@ void	rcons_vputc __P ((dev_t dev, int c));
 
 
 void	rconsreset __P((struct tty *tp, int rw));
-void	rconsstrategy __P((struct buf *bp));
 void	rcons_input __P((dev_t dev, int ic));
 
-void rconsstart		__P((struct tty *));
+#ifdef notyet
+void		rconsstart		__P((struct tty *));
+static void	rcons_later __P((void*));
+#endif
 
 void nobell __P ((int));
 
@@ -192,6 +194,26 @@ rcons_vputc(dev, c)
 	 */
 	extern void rcons_cnputc __P((int c));
 	rcons_cnputc(c);
+}
+
+/*
+ * Set up the console device to take input from `dev'
+ * and send output via rcons.
+ */
+void
+rcons_indev(cn)
+	struct consdev *cn;
+{
+ 	register int s;
+
+	s = spltty();
+
+	/* Send any subsequent console calls to this cn_tab to rcons. */
+	cn->cn_dev = makedev (RCONSDEV, 0);	
+
+	/* fixup for signature mismatch. */
+	cn->cn_putc = rcons_vputc;
+	splx(s);
 }
 
 /*
@@ -377,15 +399,12 @@ rconsmmap (dev, off, prot)
 	return -1;
 }
 
-void
-rconsstrategy(bp)
-	struct buf *bp;
-{
-}
 
-/* Called by real input device when there is input for rcons.   Passes
-   input through line discpline interrupt routine... */
-
+/*
+ * Our "interrupt" routine for input.
+ * Called by the  keyboard device driver at spltty when it has
+ * input for rcons.
+ */
 void
 rcons_input (dev, ic)
 	dev_t dev;
@@ -393,6 +412,11 @@ rcons_input (dev, ic)
 {
 	struct tty *tp;
 	int unit = minor (dev);
+
+#ifdef RCONS_DEBUG
+	printf("rcons_input: unit %d gives %c on \n", unit, ic);
+#endif
+
 	if (unit > NRASTERCONSOLE)
 		return;
 	tp = &rcons_tty [unit];
