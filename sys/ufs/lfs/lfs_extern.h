@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.22 2000/11/17 19:14:41 perseant Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.23 2000/11/25 02:39:35 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -111,6 +111,7 @@ extern struct pool lfs_inode_pool;		/* memory pool for inodes */
 
 __BEGIN_DECLS
 /* lfs_alloc.c */
+int lfs_rf_valloc __P((struct lfs *, ino_t, int, struct proc *, struct vnode **));
 void lfs_vcreate __P((struct mount *, ino_t, struct vnode *));
 /* lfs_bio.c */
 int lfs_availwait __P((struct lfs *, int));
@@ -124,8 +125,8 @@ void lfs_countlocked __P((int *, long *));
 int lfs_reserve __P((struct lfs *, struct vnode *, int));
 
 /* lfs_cksum.c */
-u_long cksum __P((void *, size_t));
-u_long lfs_sb_cksum __P((struct dlfs *));
+u_int32_t cksum __P((void *, size_t));
+u_int32_t lfs_sb_cksum __P((struct dlfs *));
 
 /* lfs_debug.c */
 #ifdef DEBUG
