@@ -1,4 +1,4 @@
-/*	$NetBSD: spawn.c,v 1.1.1.5 2004/07/28 22:49:30 heas Exp $	*/
+/*	$NetBSD: spawn.c,v 1.1.1.6 2004/11/13 05:05:59 heas Exp $	*/
 
 /*++
 /* NAME
@@ -249,6 +249,10 @@ static void get_service_attr(SPAWN_ATTR *attr, char *service, char **argv)
 	msg_fatal("request to use privileged group id %ld", (long) attr->gid);
     if (attr->gid == var_owner_gid)
 	msg_fatal("request to use mail system owner group id %ld", (long) attr->gid);
+    if (attr->uid == (uid_t) (-1))
+	msg_fatal("user must not have user ID -1");
+    if (attr->gid == (gid_t) (-1))
+	msg_fatal("user must not have group ID -1");
 
     /*
      * Give the poor tester a clue of what is going on.

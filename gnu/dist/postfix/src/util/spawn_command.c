@@ -1,4 +1,4 @@
-/*	$NetBSD: spawn_command.c,v 1.1.1.2 2004/05/31 00:25:01 heas Exp $	*/
+/*	$NetBSD: spawn_command.c,v 1.1.1.3 2004/11/13 05:06:03 heas Exp $	*/
 
 /*++
 /* NAME
@@ -45,9 +45,11 @@
 /*	Each of these specifies I/O redirection of one of the standard file
 /*	descriptors for the command.
 /* .IP "SPAWN_CMD_UID (int)"
-/*	The user ID to execute the command as.
+/*	The user ID to execute the command as. The value -1 is reserved
+/*	and cannot be specified.
 /* .IP "SPAWN_CMD_GID (int)"
-/*	The group ID to execute the command as.
+/*	The group ID to execute the command as. The value -1 is reserved
+/*	and cannot be specified.
 /* .IP "SPAWN_CMD_TIME_LIMIT (int)"
 /*	The amount of time in seconds the command is allowed to run before
 /*	it is terminated with SIGKILL. The default is no time limit.
@@ -164,10 +166,14 @@ static void get_spawn_args(struct spawn_args * args, int init_key, va_list ap)
 	    args->stderr_fd = va_arg(ap, int);
 	    break;
 	case SPAWN_CMD_UID:
-	    args->uid = va_arg(ap, int);	/* in case uid_t is short */
+	    args->uid = va_arg(ap, uid_t);
+	    if (args->uid == (uid_t) (-1))
+		msg_panic("spawn_command: request with reserved user ID: -1");
 	    break;
 	case SPAWN_CMD_GID:
-	    args->gid = va_arg(ap, int);	/* in case gid_t is short */
+	    args->gid = va_arg(ap, gid_t);
+	    if (args->gid == (gid_t) (-1))
+		msg_panic("spawn_command: request with reserved group ID: -1");
 	    break;
 	case SPAWN_CMD_TIME_LIMIT:
 	    args->time_limit = va_arg(ap, int);

@@ -262,7 +262,7 @@
 # .ti +4
 #	/^content-(type|disposition):.*name[[:space:]]*=.*\\.(exe|vbs)/
 # .ti +8
-#	REJECT Bad attachment file name extension: $1
+#	REJECT Bad attachment file name extension: $2
 #
 # .ad
 # .fi

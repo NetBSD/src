@@ -303,7 +303,7 @@ HEADER_CHECKS(5)                                 HEADER_CHECKS(5)
 
        /etc/postfix/header_checks:
            /^content-(type|disposition):.*name[[:space:]]*=.*\.(exe|vbs)/
-               REJECT Bad attachment file name extension: $1
+               REJECT Bad attachment file name extension: $2
 
        Body pattern to stop a specific HTML browser vulnerability
        exploit.
