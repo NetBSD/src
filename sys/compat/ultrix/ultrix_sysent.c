@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_sysent.c,v 1.29 1998/02/19 03:34:20 thorpej Exp $	*/
+/*	$NetBSD: ultrix_sysent.c,v 1.30 1998/06/25 22:20:05 thorpej Exp $	*/
 
 /*
  * System call switch table.
@@ -7,6 +7,7 @@
  * created from	NetBSD: syscalls.master,v 1.24 1998/02/19 00:46:02 thorpej Exp 
  */
 
+#include "opt_nfsserver.h"
 #include "fs_nfs.h"
 #include <sys/param.h>
 #include <sys/systm.h>
