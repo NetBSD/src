@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.448 2004/09/16 03:25:04 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.449 2004/09/16 03:29:29 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7343,9 +7343,20 @@ sys/kern/kern_clock.c				1.92
 	port, once the Xen port's timer interrupts are made somewhat more sane.
 	[tls, ticket #847]
 
-libexec/ld.elf_so/arch/sh3/rtld_start.S			1.4
+libexec/ld.elf_so/arch/sh3/rtld_start.S		1.4
 
 	Preserve r2 in _rtld_bind_start - in r2 functions that return
 	aggregate types are passed the address of the memory area to store the
 	returned result to. PR#26949
 	[uwe, ticket #848]
+
+bin/pax/cpio.1					1.8
+bin/pax/tar.1					1.15
+distrib/notes/common/legal.common		1.37
+lib/libc/gen/ftok.3				1.13
+lib/libc/gen/ftok.c				1.10
+usr.bin/ipcs/ipcs.1				1.16
+usr.bin/ipcs/ipcs.c				1.33
+
+	Change copyright to 2-clause BSD-copyright.
+	[hubertf, ticket #850]
