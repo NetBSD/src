@@ -1,4 +1,4 @@
-/*	$NetBSD: ldexp.c,v 1.6 1999/08/30 15:11:33 augustss Exp $	*/
+/*	$NetBSD: ldexp.c,v 1.7 1999/08/30 18:01:42 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ldexp.c,v 1.6 1999/08/30 15:11:33 augustss Exp $");
+__RCSID("$NetBSD: ldexp.c,v 1.7 1999/08/30 18:01:42 mycroft Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -83,7 +83,7 @@ ldexp(val, exp)
 				errno = ERANGE;
 				return (0.0);
 			}
-			mul.v = 1.0;
+			mul.v = 0.0;
 			mul.s.dbl_exp = exp + DBL_EXP_BIAS;
 			u.v *= mul.v;
 			if (u.v == 0.0) {
@@ -97,7 +97,7 @@ ldexp(val, exp)
 			 * result cannot be denormal (though it may be Inf).
 			 * Shift u.v by just enough to make it normal.
 			 */
-			mul.v = 1.0;
+			mul.v = 0.0;
 			mul.s.dbl_exp = DBL_FRACBITS + DBL_EXP_BIAS;
 			u.v *= mul.v;
 			exp -= DBL_FRACBITS;
@@ -139,7 +139,7 @@ ldexp(val, exp)
 			u.s.dbl_exp = 1;
 			exp += oldexp - 1;
 		}
-		mul.v = 1.0;
+		mul.v = 0.0;
 		mul.s.dbl_exp = exp + DBL_EXP_BIAS;
 		u.v *= mul.v;
 		return (u.v);
