@@ -1,4 +1,4 @@
-/*	$NetBSD: flockfile.c,v 1.4 2003/02/01 03:25:00 nathanw Exp $	*/
+/*	$NetBSD: flockfile.c,v 1.5 2003/07/18 21:50:41 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: flockfile.c,v 1.4 2003/02/01 03:25:00 nathanw Exp $");
+__RCSID("$NetBSD: flockfile.c,v 1.5 2003/07/18 21:50:41 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -68,21 +68,7 @@ void
 flockfile(FILE *fp)
 {
 
-	if (__isthreaded == 0)
-		return;
-
-	mutex_lock(&_LOCK(fp));
-	
-	if (_LOCKOWNER(fp) == thr_self()) {
-		_LOCKCOUNT(fp)++;
-	} else {
-		while (_LOCKOWNER(fp) != NULL)
-			cond_wait(&_LOCKCOND(fp), &_LOCK(fp));
-		_LOCKOWNER(fp) = thr_self();
-		_LOCKCOUNT(fp) = 1;
-	}
-
-	mutex_unlock(&_LOCK(fp));
+	__flockfile_internal(fp, 0);
 }
 
 int
@@ -113,11 +99,52 @@ void
 funlockfile(FILE *fp)
 {
 
+	__funlockfile_internal(fp, 0);
+}
+
+void
+__flockfile_internal(FILE *fp, int internal)
+{
+
 	if (__isthreaded == 0)
 		return;
 
 	mutex_lock(&_LOCK(fp));
 	
+	if (_LOCKOWNER(fp) == thr_self()) {
+		_LOCKCOUNT(fp)++;
+		if (internal) {
+			if (_LOCKINTERNAL(fp) == 0)
+				/* stash cancellation state and disable */
+				pthread_setcancelstate(PTHREAD_CANCEL_DISABLE,
+				    &_LOCKCANCELSTATE(fp));
+			_LOCKINTERNAL(fp)++;
+		}
+	} else {
+		while (_LOCKOWNER(fp) != NULL)
+			cond_wait(&_LOCKCOND(fp), &_LOCK(fp));
+		_LOCKOWNER(fp) = thr_self();
+		_LOCKCOUNT(fp) = 1;
+	}
+
+	mutex_unlock(&_LOCK(fp));
+}
+ 
+void
+__funlockfile_internal(FILE *fp, int internal)
+{
+
+	if (__isthreaded == 0)
+		return;
+
+	mutex_lock(&_LOCK(fp));
+
+	if (internal) {
+		_LOCKINTERNAL(fp)--;
+		if (_LOCKINTERNAL(fp) == 0)
+			pthread_setcancelstate(_LOCKCANCELSTATE(fp), NULL);
+	}
+
 	_LOCKCOUNT(fp)--;
 	if (_LOCKCOUNT(fp) == 0) {
 		_LOCKOWNER(fp) = NULL;
