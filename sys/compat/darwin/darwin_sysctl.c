@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.29 2004/07/25 07:54:54 manu Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.30 2004/07/27 20:41:48 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.29 2004/07/25 07:54:54 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.30 2004/07/27 20:41:48 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -490,10 +490,10 @@ darwin_sysctl_kdebug(SYSCTLFN_ARGS)
 		else
 			mstimeout = name[1];
 
-		if (*oldlenp > DARWIN_ENTROPYMAX)
+		/* Try to mimmic Darwin a bit better */
+		count = 9 * mstimeout / 10;
+		if (count > DARWIN_ENTROPYMAX)
 			return ENOMEM;
-
-		count = *oldlenp;
 
 		buf = malloc(sizeof(*buf) * count, M_TEMP, M_ZERO|M_WAITOK);
 
@@ -525,8 +525,19 @@ darwin_sysctl_kdebug(SYSCTLFN_ARGS)
 		tsleep(&timeout, PZERO|PCATCH, "darwin_entropy", 
 			(mstimeout * hz / 1000));
 
-		error = copyout(buf, oldp, sizeof(*buf) * count);
+		/* Just in case... */
+		if (sizeof(*buf) * count < *oldlenp)
+			*oldlenp = sizeof(*buf) * count;
+		
+		error = copyout(buf, oldp, *oldlenp);
 		free(buf, M_TEMP);
+
+		/* 
+		 * The return value is the number of record
+		 * instead of the size of the copied data.
+		 */
+		*oldlenp = *oldlenp / sizeof(*buf);
+
 		return error;
 
 		break;
