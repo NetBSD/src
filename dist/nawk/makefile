@@ -26,7 +26,9 @@ CFLAGS = -g
 CFLAGS = -O2
 CFLAGS =
 
+CC = gcc -Wall -g -Wwrite-strings
 CC = gcc -Wall -g
+CC = /opt/SUNWspro/bin/cc
 CC = /opt/pure/purify/purify cc
 CC = cc
 
@@ -36,37 +38,40 @@ YFLAGS = -d
 
 OFILES = b.o main.o parse.o proctab.o tran.o lib.o run.o lex.o
 
-SOURCE = awk.h awkgram.c awkgram.h proto.h awkgram.y lex.c b.c main.c maketab.c parse.c lib.c run.c tran.c proctab.c missing95.c
+SOURCE = awk.h ytab.c ytab.h proto.h awkgram.y lex.c b.c main.c \
+	maketab.c parse.c lib.c run.c tran.c proctab.c missing95.c
 
-LISTING = awk.h proto.h awkgram.y lex.c b.c main.c maketab.c parse.c lib.c run.c tran.c missing95.c
+LISTING = awk.h proto.h awkgram.y lex.c b.c main.c maketab.c parse.c \
+	lib.c run.c tran.c missing95.c
 
-SHIP = README FIXES $(SOURCE) awkgram[ch].bak makefile awk.1 buildwin.bat mac.code
+SHIP = README FIXES $(SOURCE) ytab[ch].bak makefile makefile.win \
+	vcvars32.bat buildwin.bat mac.code awk.1
 
-a.out:	awkgram.o $(OFILES)
-	$(CC) $(CFLAGS) awkgram.o $(OFILES) $(ALLOC)  -lm
+a.out:	ytab.o $(OFILES)
+	$(CC) $(CFLAGS) ytab.o $(OFILES) $(ALLOC)  -lm
 
-$(OFILES):	awk.h awkgram.h proto.h
+$(OFILES):	awk.h ytab.h proto.h
 
-awkgram.o:	awk.h proto.h awkgram.y
+ytab.o:	awk.h proto.h awkgram.y
 	$(YACC) $(YFLAGS) awkgram.y
-	mv y.tab.c awkgram.c
-	mv y.tab.h awkgram.h
-	$(CC) $(CFLAGS) -c awkgram.c
+	mv y.tab.c ytab.c
+	mv y.tab.h ytab.h
+	$(CC) $(CFLAGS) -c ytab.c
 
 proctab.c:	maketab
 	./maketab >proctab.c
 
-maketab:	awkgram.h maketab.c
+maketab:	ytab.h maketab.c
 	$(CC) $(CFLAGS) maketab.c -o maketab
 
 bundle:
-	@cp awkgram.h awkgramh.bak
-	@cp awkgram.c awkgramc.bak
+	@cp ytab.h ytabh.bak
+	@cp ytab.c ytabc.bak
 	@bundle $(SHIP)
 
 tar:
-	@cp awkgram.h awkgramh.bak
-	@cp awkgram.c awkgramc.bak
+	@cp ytab.h ytabh.bak
+	@cp ytab.c ytabc.bak
 	@bundle $(SHIP) >awk.shar
 	@tar cf awk.tar $(SHIP)
 	gzip awk.tar
@@ -78,4 +83,4 @@ names:
 	@echo $(LISTING)
 
 clean:
-	rm -f a.out *.o maketab # proctab.c
+	rm -f a.out *.o *.obj maketab maketab.exe # proctab.c

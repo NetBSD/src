@@ -33,7 +33,7 @@ THIS SOFTWARE.
 #include "awk.h"
 #include "awkgram.h"
 
-#define	HAT	(NCHARS-2)	/* matches ^ in regular expr */
+#define	HAT	(NCHARS+2)	/* matches ^ in regular expr */
 				/* NCHARS is 2**n */
 #define MAXLIN 22
 
@@ -75,7 +75,7 @@ int	patlen;
 fa	*fatab[NFA];
 int	nfatab	= 0;	/* entries in fatab */
 
-fa *makedfa(char *s, int anchor)	/* returns dfa for reg expr s */
+fa *makedfa(const char *s, int anchor)	/* returns dfa for reg expr s */
 {
 	int i, use, nuse;
 	fa *pfa;
@@ -93,7 +93,7 @@ fa *makedfa(char *s, int anchor)	/* returns dfa for reg expr s */
 		return mkdfa(s, anchor);
 	for (i = 0; i < nfatab; i++)	/* is it there already? */
 		if (fatab[i]->anchor == anchor
-		  && strcmp(fatab[i]->restr, s) == 0) {
+		  && strcmp((const char *) fatab[i]->restr, s) == 0) {
 			fatab[i]->use = now++;
 			return fatab[i];
 		}
@@ -117,7 +117,7 @@ fa *makedfa(char *s, int anchor)	/* returns dfa for reg expr s */
 	return pfa;
 }
 
-fa *mkdfa(char *s, int anchor)	/* does the real work of making a dfa */
+fa *mkdfa(const char *s, int anchor)	/* does the real work of making a dfa */
 				/* anchor = 1 for anchored matches, else 0 */
 {
 	Node *p, *p1;
@@ -282,7 +282,7 @@ int quoted(char **pp)	/* pick up next thing after a \\ */
 	return c;
 }
 
-char *cclenter(char *argp)	/* add a character class */
+char *cclenter(const char *argp)	/* add a character class */
 {
 	int i, c, c2;
 	uschar *p = (uschar *) argp;
@@ -328,7 +328,7 @@ char *cclenter(char *argp)	/* add a character class */
 	return (char *) tostring((char *) buf);
 }
 
-void overflo(char *s)
+void overflo(const char *s)
 {
 	FATAL("regular expression too big: %.30s...", s);
 }
@@ -446,7 +446,7 @@ void follow(Node *v)	/* collects leaves that can follow v into setvec */
 	}
 }
 
-int member(int c, char *sarg)	/* is c in s? */
+int member(int c, const char *sarg)	/* is c in s? */
 {
 	uschar *s = (uschar *) sarg;
 
@@ -456,7 +456,7 @@ int member(int c, char *sarg)	/* is c in s? */
 	return(0);
 }
 
-int match(fa *f, char *p0)	/* shortest match ? */
+int match(fa *f, const char *p0)	/* shortest match ? */
 {
 	int s, ns;
 	uschar *p = (uschar *) p0;
@@ -475,7 +475,7 @@ int match(fa *f, char *p0)	/* shortest match ? */
 	return(0);
 }
 
-int pmatch(fa *f, char *p0)	/* longest match, for sub */
+int pmatch(fa *f, const char *p0)	/* longest match, for sub */
 {
 	int s, ns;
 	uschar *p = (uschar *) p0;
@@ -528,7 +528,7 @@ int pmatch(fa *f, char *p0)	/* longest match, for sub */
 	return (0);
 }
 
-int nematch(fa *f, char *p0)	/* non-empty match, for sub */
+int nematch(fa *f, const char *p0)	/* non-empty match, for sub */
 {
 	int s, ns;
 	uschar *p = (uschar *) p0;
@@ -580,15 +580,17 @@ int nematch(fa *f, char *p0)	/* non-empty match, for sub */
 	return (0);
 }
 
-Node *reparse(char *p)	/* parses regular expression pointed to by p */
+Node *reparse(const char *p)	/* parses regular expression pointed to by p */
 {			/* uses relex() to scan regular expression */
 	Node *np;
 
 	dprintf( ("reparse <%s>\n", p) );
 	lastre = prestr = (uschar *) p;	/* prestr points to string to be parsed */
 	rtok = relex();
+	/* GNU compatibility: an empty regexp matches anything */
 	if (rtok == '\0')
-		FATAL("empty regular expression");
+		/* FATAL("empty regular expression"); previous */
+		return(op2(ALL, NIL, NIL));
 	np = regexp();
 	if (rtok != '\0')
 		FATAL("syntax error in regular expression %s at %s", lastre, prestr);
@@ -683,6 +685,56 @@ Node *unary(Node *np)
 	}
 }
 
+/*
+ * Character class definitions conformant to the POSIX locale as
+ * defined in IEEE P1003.1 draft 7 of June 2001, assuming the source
+ * and operating character sets are both ASCII (ISO646) or supersets
+ * thereof.
+ *
+ * Note that to avoid overflowing the temporary buffer used in
+ * relex(), the expanded character class (prior to range expansion)
+ * must be less than twice the size of their full name.
+ */
+
+/* Because isblank doesn't show up in any of the header files on any
+ * system i use, it's defined here.  if some other locale has a richer
+ * definition of "blank", define HAS_ISBLANK and provide your own
+ * version.
+ * the parentheses here are an attempt to find a path through the maze
+ * of macro definition and/or function and/or version provided.  thanks
+ * to nelson beebe for the suggestion; let's see if it works everywhere.
+ */
+
+#ifndef HAS_ISBLANK
+
+int (isblank)(int c)
+{
+	return c==' ' || c=='\t';
+}
+
+#endif
+
+static const struct charclass {
+	const char *cc_name;
+	int cc_namelen;
+	int (*cc_func)(int);
+} charclasses[] = {
+	{ "alnum",	5,	isalnum },
+	{ "alpha",	5,	isalpha },
+	{ "blank",	5,	isblank },
+	{ "cntrl",	5,	iscntrl },
+	{ "digit",	5,	isdigit },
+	{ "graph",	5,	isgraph },
+	{ "lower",	5,	islower },
+	{ "print",	5,	isprint },
+	{ "punct",	5,	ispunct },
+	{ "space",	5,	isspace },
+	{ "upper",	5,	isupper },
+	{ "xdigit",	6,	isxdigit },
+	{ NULL,		0,	NULL },
+};
+
+
 int relex(void)		/* lexical analyzer for reparse */
 {
 	int c, n;
@@ -690,6 +742,8 @@ int relex(void)		/* lexical analyzer for reparse */
 	static uschar *buf = 0;
 	static int bufsz = 100;
 	uschar *bp;
+	const struct charclass *cc;
+	int i;
 
 	switch (c = *prestr++) {
 	case '|': return OR;
@@ -719,7 +773,7 @@ int relex(void)		/* lexical analyzer for reparse */
 		}
 		else
 			cflag = 0;
-		n = 2 * strlen(prestr)+1;
+		n = 2 * strlen((const char *) prestr)+1;
 		if (!adjbuf((char **) &buf, &bufsz, n, n, (char **) &bp, 0))
 			FATAL("out of space for reg expr %.10s...", lastre);
 		for (; ; ) {
@@ -730,6 +784,24 @@ int relex(void)		/* lexical analyzer for reparse */
 				*bp++ = c;
 			/* } else if (c == '\n') { */
 			/* 	FATAL("newline in character class %.20s...", lastre); */
+			} else if (c == '[' && *prestr == ':') {
+				/* POSIX char class names, Dag-Erling Smorgrav, des@ofug.org */
+				for (cc = charclasses; cc->cc_name; cc++)
+					if (strncmp((const char *) prestr + 1, (const char *) cc->cc_name, cc->cc_namelen) == 0)
+						break;
+				if (cc->cc_name != NULL && prestr[1 + cc->cc_namelen] == ':' &&
+				    prestr[2 + cc->cc_namelen] == ']') {
+					prestr += cc->cc_namelen + 3;
+					for (i = 0; i < NCHARS; i++) {
+						if (!adjbuf((char **) &buf, &bufsz, bp-buf+1, 100, (char **) &bp, 0))
+						    FATAL("out of space for reg expr %.10s...", lastre);
+						if (cc->cc_func(i)) {
+							*bp++ = i;
+							n++;
+						}
+					}
+				} else
+					*bp++ = c;
 			} else if (c == '\0') {
 				FATAL("nonterminated character class %.20s", lastre);
 			} else if (bp == buf) {	/* 1st char is special */
@@ -752,8 +824,6 @@ int cgoto(fa *f, int s, int c)
 	int i, j, k;
 	int *p, *q;
 
-	if (c < 0 || c > 255)
-		FATAL("can't happen: neg char %d in cgoto", c);
 	while (f->accept >= maxsetvec) {	/* guessing here! */
 		maxsetvec *= 4;
 		setvec = (int *) realloc(setvec, maxsetvec * sizeof(int));
