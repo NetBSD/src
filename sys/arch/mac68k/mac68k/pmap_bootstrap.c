@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.38.2.1 1998/11/23 04:47:42 cgd Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.38.2.2 1998/11/23 06:04:21 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -127,7 +127,8 @@ pmap_bootstrap(nextpa, firstpa)
 	register st_entry_t protoste, *ste;
 	register pt_entry_t protopte, *pte, *epte;
 
-	vidlen = ((videosize >> 16) & 0xffff) * videorowbytes + PGOFSET;
+	vidlen = m68k_round_page(((videosize >> 16) & 0xffff) * videorowbytes +
+	    (mac68k_vidphys & PGOFSET));
 
 	/*
 	 * Calculate important physical addresses:
