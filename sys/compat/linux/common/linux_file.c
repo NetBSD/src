@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.28.4.1 2000/08/30 03:59:20 sommerfeld Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.28.4.2 2001/03/30 21:39:13 he Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -778,6 +778,24 @@ linux_sys_symlink(p, v, retval)
 	LINUX_CHECK_ALT_CREAT(p, &sg, SCARG(uap, to));
 
 	return sys_symlink(p, uap, retval);
+}
+
+int
+linux_sys_link(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_link_args /* {
+		syscallarg(const char *) path;
+		syscallarg(const char *) link;
+	} */ *uap = v;
+	caddr_t sg = stackgap_init(p->p_emul);
+
+	LINUX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	LINUX_CHECK_ALT_CREAT(p, &sg, SCARG(uap, link));
+
+	return sys_link(p, uap, retval);
 }
 
 int
