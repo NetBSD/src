@@ -1,4 +1,4 @@
-$NetBSD: README.mknative,v 1.2 2002/02/27 17:49:19 tv Exp $
+$NetBSD: README.mknative,v 1.3 2002/02/27 18:18:59 tv Exp $
 
 This file describes how to bootstrap the native toolchain on a new NetBSD
 platform (and how to update the new toolchain files, if needed).  These
@@ -31,7 +31,8 @@ work.
    -DCROSS_COMPILE, they are not suitable for committing.  Step 7 below
    will regenerate the "proper" libgcc config files.
 
-4. At top level, do "nbmake-MACHINE obj includes MKGCC=no MKBFD=no".
+4. At top level, do
+   "nbmake-MACHINE do-distrib-dirs obj includes MKGCC=no MKBFD=no".
 
 5. In src/gnu/lib/libgcc, do "nbmake-MACHINE obj includes".
 
