@@ -1,4 +1,4 @@
-/*	$NetBSD: pat_rep.c,v 1.8 1999/01/20 14:45:09 mrg Exp $	*/
+/*	$NetBSD: pat_rep.c,v 1.9 1999/03/24 17:00:23 pk Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)pat_rep.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pat_rep.c,v 1.8 1999/01/20 14:45:09 mrg Exp $");
+__RCSID("$NetBSD: pat_rep.c,v 1.9 1999/03/24 17:00:23 pk Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,7 +85,7 @@ static char * range_match __P((char *, int));
 #ifdef NET2_REGEX
 static int resub __P((regexp *, char *, char *, char *));
 #else
-static int resub __P((regex_t *, regmatch_t *, char *, char *, char *));
+static int resub __P((regex_t *, regmatch_t *, char *, char *, char *, char *));
 #endif
 
 /*
@@ -978,8 +978,8 @@ rep_name(name, nlen, prnt)
 #			ifdef NET2_REGEX
 			if ((res = resub(pt->rcmp,pt->nstr,outpt,endpt)) < 0) {
 #			else
-			if ((res = resub(&(pt->rcmp),pm,pt->nstr,outpt,endpt))
-			    < 0) {
+			if ((res = resub(&(pt->rcmp),pm,pt->nstr,inpt,
+					 outpt,endpt)) < 0) {
 #			endif
 				if (prnt)
 					tty_warn(1, "Replacement name error %s",
@@ -1129,14 +1129,15 @@ resub(prog, src, dest, destend)
 
 #if __STDC__
 static int
-resub(regex_t *rp, regmatch_t *pm, char *src, char *dest,
+resub(regex_t *rp, regmatch_t *pm, char *src, char *txt, char *dest,
 	char *destend)
 #else
 static int
-resub(rp, pm, src, dest, destend)
+resub(rp, pm, src, txt, dest, destend)
 	regex_t *rp;
 	regmatch_t *pm;
 	char *src;
+	char *txt;
 	char *dest;
 	char *destend;
 #endif
@@ -1158,7 +1159,7 @@ resub(rp, pm, src, dest, destend)
 		 */
 		if (c == '&') {
 			pmpt = pm;
-		} else if ((c == '\\') && (*spt >= '0') && (*spt <= '9')) {
+		} else if ((c == '\\') && (*spt >= '1') && (*spt <= '9')) {
 			/*
 			 * make sure there is a subexpression as specified
 			 */
@@ -1188,7 +1189,7 @@ resub(rp, pm, src, dest, destend)
 		 */
 		if (len > (destend - dpt))
 			len = destend - dpt;
-		if (l_strncpy(dpt, src + pmpt->rm_so, len) != len)
+		if (l_strncpy(dpt, txt + pmpt->rm_so, len) != len)
 			return(-1);
 		dpt += len;
 	}
