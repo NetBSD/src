@@ -1,4 +1,4 @@
-/*	$NetBSD: displayq.c,v 1.12 1997/10/05 15:12:01 mrg Exp $	*/
+/*	$NetBSD: displayq.c,v 1.13 1997/10/05 16:45:43 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)displayq.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: displayq.c,v 1.12 1997/10/05 15:12:01 mrg Exp $");
+__RCSID("$NetBSD: displayq.c,v 1.13 1997/10/05 16:45:43 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -453,7 +453,7 @@ ldump(nfile, file, copies)
 	else
 		printf("%-32s", nfile);
 	if (*file && !stat(file, &lbuf))
-		printf(" %qd bytes", lbuf.st_size);
+		printf(" %qd bytes", (long long)lbuf.st_size);
 	else
 		printf(" ??? bytes");
 	putchar('\n');
