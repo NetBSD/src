@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.26 2001/04/26 18:50:13 tron Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.27 2001/04/26 19:43:53 kleink Exp $	*/
 /*	$KAME: getnameinfo.c,v 1.45 2000/09/25 22:43:56 itojun Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnameinfo.c,v 1.26 2001/04/26 18:50:13 tron Exp $");
+__RCSID("$NetBSD: getnameinfo.c,v 1.27 2001/04/26 19:43:53 kleink Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -70,10 +70,10 @@ __weak_alias(getnameinfo,_getnameinfo)
 #define NO  0
 
 static const struct afd {
-	int	a_af;
-	size_t	a_addrlen;
-	int	a_socklen;
-	int	a_off;
+	int		a_af;
+	socklen_t	a_addrlen;
+	socklen_t	a_socklen;
+	int		a_off;
 } afdl [] = {
 #ifdef INET6
 	{PF_INET6, sizeof(struct in6_addr), sizeof(struct sockaddr_in6),
