@@ -128,7 +128,7 @@ Boston, MA 02111-1307, USA.  */
 
 #undef CPP_SPEC
 #define CPP_SPEC \
- "%{posix:-D_POSIX_SOURCE} %{pthread:-D_PTHREADS} \
+ "%{posix:-D_POSIX_SOURCE} %{pthread:-D_REENTRANT -D_PTHREADS} \
   %{!mno-abicalls:-D__ABICALLS__} \
   %{mlong64:-D__SIZE_TYPE__=long\\ unsigned\\ int -D__PTRDIFF_TYPE__=long\\ int} \
   %{!mlong64:-D__SIZE_TYPE__=unsigned\\ int -D__PTRDIFF_TYPE__=int} \
