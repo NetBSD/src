@@ -1,3 +1,5 @@
+/*	$NetBSD: if_devar.h,v 1.2 1997/01/11 04:47:36 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1994, 1995, 1996 Matt Thomas (matt@3am-software.com)
  * All rights reserved.
