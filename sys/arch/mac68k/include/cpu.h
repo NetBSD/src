@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.42 1996/10/12 07:35:29 scottr Exp $	*/
+/*	$NetBSD: cpu.h,v 1.43 1996/10/15 14:42:49 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -220,6 +220,7 @@ extern unsigned char ssir;
 #define MACH_CLASSIIfx	0x0080	/* The IIfx is in a class by itself. */
 #define MACH_CLASSQ	0x0100	/* non-A/V Centris/Quadras. */
 #define MACH_CLASSAV	0x0101	/* A/V Centris/Quadras. */
+#define MACH_CLASSQ2	0x0102	/* More Centris/Quadras, different sccA. */
 
 #define MACH_68020	0
 #define MACH_68030	1
@@ -316,7 +317,6 @@ void	DCIU __P((void));
 void	ICIA __P((void));
 void	DCFL __P((vm_offset_t));
 int	suline __P((caddr_t, caddr_t));
-int	susword __P((caddr_t, u_int));
 void	savectx __P((struct pcb *));
 void	proc_trampoline __P((void));
 
