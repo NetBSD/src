@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hippisubr.c,v 1.3 1999/05/18 23:57:20 thorpej Exp $	*/
+/*	$NetBSD: if_hippisubr.c,v 1.4 2000/03/06 20:51:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -344,6 +344,7 @@ hippi_ifattach(ifp, lla)
 	ifp->if_mtu = HIPPIMTU;
 	ifp->if_output = hippi_output;
 	ifp->if_input = hippi_input;
+	ifp->if_baudrate = IF_Mbps(800);	/* XXX double-check */
 	if ((sdl = ifp->if_sadl) &&
 	    sdl->sdl_family == AF_LINK) {
 		sdl->sdl_type = IFT_HIPPI;
