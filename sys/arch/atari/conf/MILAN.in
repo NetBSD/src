@@ -1,5 +1,5 @@
 #
-#	$NetBSD: MILAN.in,v 1.7 2001/07/26 15:05:09 wiz Exp $
+#	$NetBSD: MILAN.in,v 1.8 2001/11/20 11:29:41 lukem Exp $
 #
 # Milan
 #
@@ -17,8 +17,8 @@
 #options 	WSEMUL_SUN	# sun terminal emulation
 options 	WSEMUL_VT100	# VT100 / VT220 emulation
 # different kernel output - see dev/wscons/wsdisplayvar.h
-# XXX: Since the Milan VGA works in monochrome for the moment, _only_
-#      use black and white here!
+# XXX:	Since the Milan VGA works in monochrome for the moment, _only_
+#	use black and white here!
 options 	WS_KERNEL_FG=WSCOL_WHITE
 options 	WS_KERNEL_BG=WSCOL_BLACK
 
@@ -44,7 +44,7 @@ isa0 		at isabus0
 pcibus0 	at mainbus0			# PCI-bus
 pci0 		at pcibus0
 ser0 		at mainbus0
-fdcisa0 	at isa? port 0x3f0 irq 6 drq 2  # standard PC floppy contr.
+fdcisa0 	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy contr.
 fdisa0 		at fdcisa0 drive 0
 
 #
