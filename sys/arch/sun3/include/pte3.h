@@ -1,4 +1,4 @@
-/*	$NetBSD: pte3.h,v 1.8 1994/11/21 21:34:12 gwr Exp $	*/
+/*	$NetBSD: pte3.h,v 1.9 1995/03/10 02:28:01 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -78,6 +78,6 @@
 #define VA_PTE_NUM_MASK (0xF << VA_PTE_NUM_SHIFT)
 #define VA_PTE_NUM(va) ((va & VA_PTE_NUM_MASK) >> VA_PTE_NUM_SHIFT)
 
-#define PA_PGNUM(pa) (pa >>PGSHIFT)
+#define PA_PGNUM(pa) ((unsigned)pa >> PGSHIFT)
 
 #endif /* !_MACHINE_PTE_H*/
