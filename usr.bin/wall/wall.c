@@ -157,19 +157,20 @@ makemsg(fname)
 	}
 	(void)fprintf(fp, "%79s\r\n", " ");
 
-	if (*fname && !(freopen(fname, "r", stdin))) {
+	if (fname && !(freopen(fname, "r", stdin))) {
 		(void)fprintf(stderr, "wall: can't read %s.\n", fname);
 		exit(1);
 	}
 	while (fgets(lbuf, sizeof(lbuf), stdin))
-		for (cnt = 0, p = lbuf; ch = *p; ++p, ++cnt) {
+		for (cnt = 0, p = lbuf; ch = *p; ++p, cnt++) {
 			if (cnt == 79 || ch == '\n') {
 				for (; cnt < 79; ++cnt)
 					putc(' ', fp);
 				putc('\r', fp);
 				putc('\n', fp);
-				cnt = 0;
-			} else
+				cnt = -1;
+			}
+			if (ch != '\n')
 				putc(ch, fp);
 		}
 	(void)fprintf(fp, "%79s\r\n", " ");
