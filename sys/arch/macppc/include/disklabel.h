@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.5 2000/08/18 22:40:28 wrstuden Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.6 2000/08/23 19:15:25 wrstuden Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -173,7 +173,7 @@ struct part_map_entry {
 #define PART_TYPE_DRIVER	"APPLE_DRIVER"
 #define PART_TYPE_DRIVER43	"APPLE_DRIVER43"
 #define PART_TYPE_DRIVERATA	"APPLE_DRIVER_ATA"
-#define PART_TYPE_DIRVERIOKIT	"APPLE_DRIVER_IOKIT"
+#define PART_TYPE_DRIVERIOKIT	"APPLE_DRIVER_IOKIT"
 #define PART_TYPE_FWB_COMPONENT	"FWB DRIVER COMPONENTS"
 #define PART_TYPE_FREE		"APPLE_FREE"
 #define PART_TYPE_MAC		"APPLE_HFS"
