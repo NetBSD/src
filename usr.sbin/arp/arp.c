@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.20.2.1 1997/11/18 00:54:26 mellon Exp $ */
+/*	$NetBSD: arp.c,v 1.20.2.2 1997/11/19 19:49:56 mellon Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\n\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: arp.c,v 1.20.2.1 1997/11/18 00:54:26 mellon Exp $");
+__RCSID("$NetBSD: arp.c,v 1.20.2.2 1997/11/19 19:49:56 mellon Exp $");
 #endif
 #endif /* not lint */
 
@@ -396,6 +396,8 @@ dump(addr)
 	mib[5] = RTF_LLINFO;
 	if (sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
 		err(1, "route-sysctl-estimate");
+	if (needed == 0)
+		return;
 	if ((buf = malloc(needed)) == NULL)
 		err(1, "malloc");
 	if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
