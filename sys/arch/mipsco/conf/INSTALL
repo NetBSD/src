@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.14 2004/11/10 17:54:05 christos Exp $
+# 	$NetBSD: INSTALL,v 1.15 2005/01/31 16:55:00 hannken Exp $
 #
 include		"arch/mipsco/conf/std.mipsco"
 
@@ -91,5 +91,6 @@ pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 #pseudo-device	tun		4	# Network "tunnel" device
 pseudo-device	ccd		4	# concatenated and striped disks
 #pseudo-device	raid		4	# RAIDframe disk driver
+#pseudo-device	fss		4	# file system snapshot device
 
 pseudo-device	rnd			# /dev/random and in-kernel generator
