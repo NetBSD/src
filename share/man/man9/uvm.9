@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.4 1998/05/09 15:04:39 kleink Exp $
+.\"	$NetBSD: uvm.9,v 1.5 1998/08/14 05:05:07 eeh Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -118,18 +118,18 @@ initialises the swap sub-system.
 .Pp
 .nr nS 1
 .Ft int
-.Fn uvm_map "vm_map_t map" "vm_offset_t *startp" "vm_size_t size" "struct uvm_object *uobj" "vm_offset_t uoffset" "uvm_flag_t flags"
+.Fn uvm_map "vm_map_t map" "vaddr_t *startp" "vsize_t size" "struct uvm_object *uobj" "vaddr_t uoffset" "uvm_flag_t flags"
 .Ft int
-.Fn uvm_map_pageable "vm_map_t map" "vm_offset_t start" "vm_offset_t end" "boolean_t new_pageable"
+.Fn uvm_map_pageable "vm_map_t map" "vaddr_t start" "vaddr_t end" "boolean_t new_pageable"
 .Ft boolean_t
-.Fn uvm_map_checkprot "vm_map_t map" "vm_offset_t start" "vm_offset_t end" "vm_prot_t protection"
+.Fn uvm_map_checkprot "vm_map_t map" "vaddr_t start" "vaddr_t end" "vm_prot_t protection"
 .Ft int
-.Fn uvm_map_protect "vm_map_t map" "vm_offset_t start" "vm_offset_t end" "vm_prot_t new_prot" "boolean_t set_max"
+.Fn uvm_map_protect "vm_map_t map" "vaddr_t start" "vaddr_t end" "vm_prot_t new_prot" "boolean_t set_max"
 .Ft int
-.Fn uvm_deallocate "vm_map_t map" "vm_offset_t start" "vm_size_t size"
+.Fn uvm_deallocate "vm_map_t map" "vaddr_t start" "vsize_t size"
 
 .Ft struct vmspace *
-.Fn uvmspace_alloc "vm_offset_t min" "vm_offset_t max" "int pageable"
+.Fn uvmspace_alloc "vaddr_t min" "vaddr_t max" "int pageable"
 .Ft void
 .Fn uvmspace_exec "struct proc *p"
 .Ft struct vmspace *
@@ -367,7 +367,7 @@ necessary by calling
 .Pp
 .nr nS 1
 .Ft int
-.Fn uvm_fault "vm_map_t orig_map" "vm_offset_t vaddr" "vm_fault_t fault_type" "vm_prot_t access_type"
+.Fn uvm_fault "vm_map_t orig_map" "vaddr_t vaddr" "vm_fault_t fault_type" "vm_prot_t access_type"
 .nr nS 0
 .Pp
 .Fn uvm_fault
@@ -464,24 +464,24 @@ on the memory described in
 
 .Pp
 .nr nS 1
-.Ft vm_offset_t
-.Fn uvm_km_alloc "vm_map_t map" "vm_size_t size"
-.Ft vm_offset_t
-.Fn uvm_km_zalloc "vm_map_t map" "vm_size_t size"
-.Ft vm_offset_t
-.Fn uvm_km_alloc1 "vm_map_t map" "vm_size_t size" "boolean_t zeroit"
-.Ft vm_offset_t
-.Fn uvm_km_kmemalloc "vm_map_t map" "struct uvm_object *obj" "vm_size_t size" "int flags"
-.Ft vm_offset_t
-.Fn uvm_km_valloc "vm_map_t map" "vm_size_t size"
-.Ft vm_offset_t
-.Fn uvm_km_valloc_wait "vm_map_t map" "vm_size_t size"
+.Ft vaddr_t
+.Fn uvm_km_alloc "vm_map_t map" "vsize_t size"
+.Ft vaddr_t
+.Fn uvm_km_zalloc "vm_map_t map" "vsize_t size"
+.Ft vaddr_t
+.Fn uvm_km_alloc1 "vm_map_t map" "vsize_t size" "boolean_t zeroit"
+.Ft vaddr_t
+.Fn uvm_km_kmemalloc "vm_map_t map" "struct uvm_object *obj" "vsize_t size" "int flags"
+.Ft vaddr_t
+.Fn uvm_km_valloc "vm_map_t map" "vsize_t size"
+.Ft vaddr_t
+.Fn uvm_km_valloc_wait "vm_map_t map" "vsize_t size"
 .Ft struct vm_map *
-.Fn uvm_km_suballoc "vm_map_t map" "vm_offset_t *min" "vm_offset_t *max " "vm_size_t size" "boolean_t pageable" "boolean_t fixed" "vm_map_t submap"
+.Fn uvm_km_suballoc "vm_map_t map" "vaddr_t *min" "vaddr_t *max " "vsize_t size" "boolean_t pageable" "boolean_t fixed" "vm_map_t submap"
 .Ft void
-.Fn uvm_km_free "vm_map_t map" "vm_offset_t addr" "vm_size_t size"
+.Fn uvm_km_free "vm_map_t map" "vaddr_t addr" "vsize_t size"
 .Ft void
-.Fn uvm_km_free_wakeup "vm_map_t map" "vm_offset_t addr" "vm_size_t size"
+.Fn uvm_km_free_wakeup "vm_map_t map" "vaddr_t addr" "vsize_t size"
 .nr nS 0
 
 .Pp
@@ -550,17 +550,17 @@ memory shortage.
 .Pp
 .nr nS 1
 .Ft struct vm_page *
-.Fn uvm_pagealloc "struct uvm_object *uobj" "vm_offset_t off" "struct vm_anon *anon"
+.Fn uvm_pagealloc "struct uvm_object *uobj" "vaddr_t off" "struct vm_anon *anon"
 .Ft void
-.Fn uvm_pagerealloc "struct vm_page *pg" "struct uvm_object *newobj" "vm_offset_t newoff"
+.Fn uvm_pagerealloc "struct vm_page *pg" "struct uvm_object *newobj" "vaddr_t newoff"
 .Ft void
 .Fn uvm_pagefree "struct vm_page *pg"
 .Ft int
-.Fn uvm_pglistalloc "vm_size_t size" "vm_offset_t low" "vm_offset_t high" "vm_offset_t alignment" "vm_offset_t boundary" "struct pglist *rlist" "int nsegs" "int waitok"
+.Fn uvm_pglistalloc "psize_t size" "paddr_t low" "paddr_t high" "paddr_t alignment" "paddr_t boundary" "struct pglist *rlist" "int nsegs" "int waitok"
 .Ft void
 .Fn uvm_pglistfree "struct pglist *list"
 .Ft void
-.Fn uvm_page_physload "vm_offset_t start" "vm_offset_t end" "vm_offset_t avail_start" "vm_offset_t avail_end"
+.Fn uvm_page_physload "vaddr_t start" "vaddr_t end" "vaddr_t avail_start" "vaddr_t avail_end"
 .nr nS 0
 
 .Pp
@@ -706,7 +706,7 @@ swaps in the named process.
 .nr nS 1
 .Pp
 .Ft struct uvm_object *
-.Fn uao_create "vm_size_t size" "int flags"
+.Fn uao_create "vsize_t size" "int flags"
 .Ft void
 .Fn uao_detach "struct uvm_object *uobj"
 .Ft void
@@ -732,7 +732,7 @@ swaps in the named process.
 .Ft void
 .Fn uvm_fork "struct proc *p1" "struct proc *p2" "boolean_t shared"
 .Ft int
-.Fn uvm_grow "struct proc *p" "vm_offset_t sp"
+.Fn uvm_grow "struct proc *p" "vaddr_t sp"
 .Ft int
 .Fn uvm_coredump "struct proc *p" "struct vnode *vp" "struct ucred *cred" "struct core *chdr"
 .nr nS 0
