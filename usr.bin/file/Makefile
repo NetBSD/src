@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2001/03/27 00:53:43 pooka Exp $
+#	$NetBSD: Makefile,v 1.29 2001/03/27 08:45:02 pooka Exp $
 
 .include <bsd.own.mk>
 
@@ -30,7 +30,7 @@ MAGFILES=	$(.CURDIR)/Header \
 .if ${MKSHARE} != "no"
 magic:		$(MAGFILES)
 	cat $(MAGFILES) > $(.TARGET)
-	$(.CURDIR)/$(PROG) -C -m $(.TARGET)
+	$(.OBJDIR)/$(PROG) -C -m $(.TARGET)
 .else
 magic:
 .endif
