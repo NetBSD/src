@@ -1,4 +1,4 @@
-/*	$NetBSD: md_hooks.c,v 1.8 1997/01/26 02:02:09 mark Exp $	*/
+/*	$NetBSD: md_hooks.c,v 1.9 1997/07/31 23:13:12 mark Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -38,27 +38,25 @@
 
 #include <dev/md.h>
 
-#ifndef MEMORY_DISK_SIZE
-#define MEMORY_DISK_SIZE 0
-#endif
-
-extern u_int memory_disc_size;
-struct md_conf *bootmd = NULL;
-
-int md_match_hook __P((struct device *parent, void *self, void *aux));
-extern int load_memory_disc_from_floppy __P((struct md_conf *md, dev_t dev));
+#ifdef	MINIROOTSIZE
+#define ROOTBYTES (MINIROOTSIZE << DEV_BSHIFT)
 
 /*
- * This is called during autoconfig.
+ * This array will be patched to contain a file-system image.
+ * See the program:  src/distrib/sun3/common/rdsetroot.c
  */
-int
-md_match_hook(parent, self, aux)
-	struct device	*parent;
-	void	*self;
-	void	*aux;
-{
-	return (1);
-}
+int md_root_size = ROOTBYTES;
+char md_root_image[ROOTBYTES] = "|This is the root ramdisk!\n";
+
+#else	/* MINIROOTSIZE */
+
+extern u_int memory_disc_size;		/* from machdep.c */
+static struct md_conf *bootmd = NULL;
+
+extern int load_memory_disc_from_floppy __P((struct md_conf *md, dev_t dev));
+
+#include "fdc.h"
+#endif	/* MINIROOTSIZE */
 
 void
 md_attach_hook(unit, md)
@@ -66,17 +64,25 @@ md_attach_hook(unit, md)
 	struct md_conf *md;
 {
 	if (unit == 0) {
+#ifdef MINIROOTSIZE
+		/* Setup root ramdisk */
+		md->md_addr = (caddr_t) md_root_image;
+		md->md_size = (size_t)  md_root_size;
+		md->md_type = MD_KMEM_FIXED;
+#else	/* MINIROOTSIZE */
+#ifdef MEMORY_DISK_SIZE
 		if (memory_disc_size == 0 && MEMORY_DISK_SIZE)
-			memory_disc_size = (MEMORY_DISK_SIZE * 1024);
-
+			memory_disc_size = (MEMORY_DISK_SIZE << DEV_BSHIFT);
+#endif	/* MEMORY_DISK_SIZE */
 		if (memory_disc_size != 0) {
 			md->md_size = round_page(memory_disc_size);
 			md->md_addr = (caddr_t)kmem_alloc(kernel_map, memory_disc_size);
 			md->md_type = MD_KMEM_FIXED;
 			bootmd = md;
 		}
+#endif	/* MINIROOTSIZE */
+		printf("md%d: allocated %dK (%d blocks)\n", unit, md->md_size / 1024, md->md_size / DEV_BSIZE);
 	}
-	printf("md%d: allocated %dK (%d blocks)\n", unit, md->md_size / 1024, md->md_size / DEV_BSIZE);
 }
 
 
@@ -89,11 +95,11 @@ md_open_hook(unit, md)
 	int unit;
 	struct md_conf *md;
 {
-/* I use the memory disc for other testing ... */
-#if 0
 	if (unit == 0) {
 		/* The root memory disk only works single-user. */
 		boothowto |= RB_SINGLE;
-	}
+#if !defined(MINIROOTSIZE) && NFDC > 0
+		load_memory_disc_from_floppy(bootmd, makedev(17, 1));	/* XXX 1.44MB FD */
 #endif
+	}
 }
