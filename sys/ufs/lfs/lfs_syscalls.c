@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.18 1998/06/24 20:58:48 sommerfe Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.19 1998/09/15 10:53:22 pk Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -192,6 +192,15 @@ lfs_markv(p, v, retval)
 				lastino = LFS_UNUSED_INUM;
 				v_daddr = LFS_UNUSED_DADDR;
 				continue;
+			}
+			if(((SEGSUM *)(sp->segsum))->ss_nfinfo == 0) {
+				sp->sum_bytes_left -=
+					sizeof(FINFO) - sizeof(ufs_daddr_t);
+				INC_FINFO(sp);
+				sp->start_lbp = &sp->fip->fi_blocks[0];
+				sp->fip->fi_version = blkp->bi_version;
+				sp->fip->fi_nblocks = 0;
+				sp->fip->fi_ino = blkp->bi_inode;
 			}
 			sp->vp = vp;
 			ip = VTOI(vp);
