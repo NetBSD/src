@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.26 1998/10/19 22:00:14 is Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.27 1998/10/20 22:18:13 is Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1998 Ignatios Souvatzis
@@ -36,7 +36,7 @@
  * compatibility mode) boards
  */
 
-#undef BAHSOFTCOPY /**/
+#define BAHSOFTCOPY /**/
 #define BAHRETRANSMIT /**/
 
 #include "opt_inet.h"
@@ -211,7 +211,9 @@ bah_attach_subr(sc)
 	bpfattach(&ifp->if_bpf, ifp, DLT_ARCNET, ARC_HDRLEN);
 #endif
 #ifdef BAHSOFTCOPY
-	sc->sc_softcookie = softintr_establish(IPL_SOFTNET, bah_srint, sc);
+	sc->sc_rxcookie = softintr_establish(IPL_SOFTNET, bah_srint, sc);
+	sc->sc_txcookie = softintr_establish(IPL_SOFTNET,
+		(void (*) __P((void *)))bah_start, ifp);
 #endif
 
 }
@@ -718,9 +720,8 @@ bah_tint(sc, isr)
 
 	/* XXXX TODO */
 #ifdef BAHSOFTCOPY
-Error	this is broken currently!
 	/* schedule soft int to fill a new buffer for us */
-	softintr_schedule(sc->sc_softcookie);
+	softintr_schedule(sc->sc_txcookie);
 #else
 	/* call it directly */
 	bah_start(ifp);
@@ -852,7 +853,7 @@ bahintr(arg)
 				 * this one starts a soft int to copy out
 				 * of the hw
 				 */
-				softintr_schedule(sc->sc_softcookie);
+				softintr_schedule(sc->sc_rxcookie);
 #else
 				/* this one does the copy here */
 				bah_srint(sc);
