@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.43 2001/02/06 10:53:23 chs Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.44 2001/02/08 06:43:05 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -439,13 +439,6 @@ uvn_flush(uobj, start, stop, flags)
 	} else {
 		start = trunc_page(start);
 		stop = round_page(stop);
-#ifdef DEBUG
-		if (stop > round_page(uvn->u_size)) {
-			printf("uvn_flush: oor vp %p start 0x%x stop 0x%x "
-			       "size 0x%x\n", uvn, (int)start, (int)stop,
-			       (int)round_page(uvn->u_size));
-		}
-#endif
 		all = FALSE;
 		by_list = (uobj->uo_npages <= 
 		    ((stop - start) >> PAGE_SHIFT) * UVN_HASH_PENALTY);
