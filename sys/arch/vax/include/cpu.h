@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.58 2001/06/03 15:12:57 ragge Exp $      */
+/*      $NetBSD: cpu.h,v 1.59 2001/06/04 15:34:15 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -93,6 +93,7 @@ struct cpu_mp_dep {
 #define	IPI_START_CNTX	1	/* Start console transmitter, proc out */
 #define	IPI_SEND_CNCHAR	2	/* Write char to console, kernel printf */
 #define	IPI_RUNNING	3	/* This CPU just started to run */
+#define	IPI_TBIA	4	/* Flush the TLB */
 
 #define	IPI_DEST_MASTER	-1	/* Destination is mastercpu */
 #define	IPI_DEST_ALL	-2	/* Broadcast */
@@ -158,7 +159,6 @@ struct cpu_mp_softc {
 
 extern char tramp;
 #endif
-#define	NO_KPRINTF_SPINLOCK	/* Separate consoles */
 
 /*
  * Notify the current process (p) that it has a signal pending,
