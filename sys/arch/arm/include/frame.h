@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.1 2001/01/18 21:48:25 bjh21 Exp $	*/
+/*	$NetBSD: frame.h,v 1.2 2001/01/20 17:14:19 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -44,6 +44,37 @@
 #ifndef _LOCORE
 
 #include <sys/signal.h>
+
+/*
+ * Trap frame.  Pushed onto the kernel stack on a trap (synchronous exception).
+ */
+
+typedef struct trapframe {
+	register_t tf_spsr; /* Zero on arm26 */
+	register_t tf_r0;
+	register_t tf_r1;
+	register_t tf_r2;
+	register_t tf_r3;
+	register_t tf_r4;
+	register_t tf_r5;
+	register_t tf_r6;
+	register_t tf_r7;
+	register_t tf_r8;
+	register_t tf_r9;
+	register_t tf_r10;
+	register_t tf_r11;
+	register_t tf_r12;
+	register_t tf_usr_sp;
+	register_t tf_usr_lr;
+	register_t tf_svc_sp; /* Not used on arm26 */
+	register_t tf_svc_lr; /* Not used on arm26 */
+	register_t tf_pc;
+} trapframe_t;
+
+/* Register numbers */
+#define tf_r13 tf_usr_sp
+#define tf_r14 tf_usr_lr
+#define tf_r15 tf_pc
 
 /*
  * Signal frame.  Pushed onto user stack before calling sigcode.

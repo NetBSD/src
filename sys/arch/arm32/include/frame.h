@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.7 2001/01/18 21:48:27 bjh21 Exp $	*/
+/*	$NetBSD: frame.h,v 1.8 2001/01/20 17:14:20 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -77,28 +77,6 @@ typedef struct irqframe {
 } irqframe_t;
 
 #define clockframe irqframe
-
-typedef struct trapframe {
-	unsigned int tf_spsr;
-	unsigned int tf_r0;
-	unsigned int tf_r1;
-	unsigned int tf_r2;
-	unsigned int tf_r3;
-	unsigned int tf_r4;
-	unsigned int tf_r5;
-	unsigned int tf_r6;
-	unsigned int tf_r7;
-	unsigned int tf_r8;
-	unsigned int tf_r9;
-	unsigned int tf_r10;
-	unsigned int tf_r11;
-	unsigned int tf_r12;
-	unsigned int tf_usr_sp;
-	unsigned int tf_usr_lr;
-	unsigned int tf_svc_sp;
-	unsigned int tf_svc_lr;
-	unsigned int tf_pc;
-} trapframe_t;
 
 /*
  * Switch frame
