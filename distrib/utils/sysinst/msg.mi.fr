@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.42 2002/02/04 14:35:10 mrg Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.43 2002/03/29 01:03:15 shin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -468,8 +468,8 @@ message badlocalsetdir
 {%s n'est pas un répertoire}
 
 message badsetdir
-{%s ne contient pas les composants indispensables etc.tgz, base.tgz
-et kern.tgz.  Etes-vous sur que c'est le bon répertoire ?}
+{%s ne contient pas les composants indispensables etc.tgz et base.tgz.
+ Etes-vous sur que c'est le bon répertoire ?}
 
 message nonet
 {Je ne peux trouver aucune interface réseau utilisable par NetBSD. Vous allez
