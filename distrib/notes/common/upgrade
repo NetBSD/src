@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.20.2.1 2004/06/15 22:45:46 he Exp $
+.\"	$NetBSD: upgrade,v 1.20.2.2 2004/08/25 21:50:41 he Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -63,7 +63,7 @@ section.
 .ie \n[x68k] \{\
 As noted above, you must have the
 .Pa loadbsd.x
-utility and the installation kernel you chose, or, the
+utility and the installation kernel you chose, or the
 boot floppies available to do the upgrade.
 .\}
 .el \{\
@@ -88,17 +88,17 @@ and
 .Pa /usr
 partitions, you should have enough space.
 .Pp
-Since upgrading involves replacing the boot blocks on your
+Since upgrading involves replacing the kernel, the boot blocks on your
 .Nx
-partition, the kernel, and most of the system binaries, it has the
+partition, and most of the system binaries, it has the
 potential to cause data loss.
 You are strongly advised to 
 .Em back up 
-any important data on your disk, whether on the
+any important data on the
 .Nx
 partition or on
-another operating system's partition, before beginning the upgrade
-process.
+another operating system's partition on your disk
+before beginning the upgrade process.
 .if \n[macppc] \{\
 Since installation of the bootloader will prevent
 .Tn Mac OS
