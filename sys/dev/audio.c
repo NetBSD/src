@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.180 2003/06/29 22:29:56 fvdl Exp $	*/
+/*	$NetBSD: audio.c,v 1.181 2003/10/02 07:15:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.180 2003/06/29 22:29:56 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.181 2003/10/02 07:15:20 mycroft Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -130,7 +130,7 @@ void	audio_calc_blksize(struct audio_softc *, int);
 void	audio_fill_silence(struct audio_params *, u_char *, int);
 int	audio_silence_copyout(struct audio_softc *, int, struct uio *);
 
-void	audio_init_ringbuffer(struct audio_ringbuffer *);
+void	audio_init_ringbuffer(struct audio_softc *, struct audio_ringbuffer *);
 int	audio_initbufs(struct audio_softc *);
 void	audio_calcwater(struct audio_softc *);
 static __inline int audio_sleep_timo(int *, char *, int);
@@ -144,6 +144,7 @@ static __inline void audio_pint_silence
 int	audio_alloc_ring
 	(struct audio_softc *, struct audio_ringbuffer *, int, size_t);
 void	audio_free_ring(struct audio_softc *, struct audio_ringbuffer *);
+int	audio_set_defaults(struct audio_softc *, u_int);
 
 int	audioprobe(struct device *, struct cfdata *, void *);
 void	audioattach(struct device *, struct device *, void *);
@@ -197,8 +198,15 @@ const struct cdevsw audio_cdevsw = {
 };
 
 /* The default audio mode: 8 kHz mono mu-law */
-const struct audio_params audio_default =
-	{ 8000, AUDIO_ENCODING_ULAW, 8, 1, 0, 1, 1 };
+const struct audio_params audio_default = {
+	.sample_rate = 8000,
+	.encoding = AUDIO_ENCODING_ULAW,
+	.precision = 8,
+	.channels = 1,
+	.sw_code = 0,
+	.factor = 1,
+	.factor_denom = 1
+};
 
 CFATTACH_DECL(audio, sizeof(struct audio_softc),
     audioprobe, audioattach, audiodetach, audioactivate);
@@ -283,19 +291,10 @@ audioattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pconvbuffer_size = AU_RING_SIZE;
 	sc->sc_rconvbuffer = malloc(AU_RING_SIZE, M_DEVBUF, M_WAITOK);
 	sc->sc_rconvbuffer_size = AU_RING_SIZE;
-	/*
-	 * Set default softc params
-	 */
-	sc->sc_pparams = audio_default;
-	sc->sc_rparams = audio_default;
 
-	/* Set up some default values */
-	sc->sc_blkset = 0;
-	audio_calc_blksize(sc, AUMODE_RECORD);
-	audio_calc_blksize(sc, AUMODE_PLAY);
-	audio_init_ringbuffer(&sc->sc_rr);
-	audio_init_ringbuffer(&sc->sc_pr);
-	audio_calcwater(sc);
+	if (audio_set_defaults(sc, 0))
+		panic("audioattach: audio_set_defaults failed");
+
 	sc->sc_input_fragment_length = 0;
 
 	iclass = oclass = -1;
@@ -779,19 +778,22 @@ audiommap(dev_t dev, off_t off, int prot)
  * Audio driver
  */
 void
-audio_init_ringbuffer(struct audio_ringbuffer *rp)
+audio_init_ringbuffer(struct audio_softc *sc, struct audio_ringbuffer *rp)
 {
 	int nblks;
 	int blksize = rp->blksize;
 
 	if (blksize < AUMINBLK)
 		blksize = AUMINBLK;
+	if (blksize > rp->bufsize / AUMINNOBLK)
+		blksize = rp->bufsize / AUMINNOBLK;
+	ROUNDSIZE(blksize);
+	if (sc->hw_if->round_blocksize)
+		blksize = sc->hw_if->round_blocksize(sc->hw_hdl, blksize);
+	if (blksize <= 0)
+		panic("audio_init_ringbuffer: blksize");
 	nblks = rp->bufsize / blksize;
-	if (nblks < AUMINNOBLK) {
-		nblks = AUMINNOBLK;
-		blksize = rp->bufsize / nblks;
-		ROUNDSIZE(blksize);
-	}
+
 	DPRINTF(("audio_init_ringbuffer: blksize=%d\n", blksize));
 	rp->blksize = blksize;
 	rp->maxblks = nblks;
@@ -813,7 +815,7 @@ audio_initbufs(struct audio_softc *sc)
 	int error;
 
 	DPRINTF(("audio_initbufs: mode=0x%x\n", sc->sc_mode));
-	audio_init_ringbuffer(&sc->sc_rr);
+	audio_init_ringbuffer(sc, &sc->sc_rr);
 #if NAURATECONV > 0
 	auconv_init_context(&sc->sc_rconv, sc->sc_rparams.hw_sample_rate,
 			    sc->sc_rparams.sample_rate,
@@ -826,7 +828,7 @@ audio_initbufs(struct audio_softc *sc)
 			return error;
 	}
 
-	audio_init_ringbuffer(&sc->sc_pr);
+	audio_init_ringbuffer(sc, &sc->sc_pr);
 #if NAURATECONV > 0
 	auconv_init_context(&sc->sc_pconv, sc->sc_pparams.sample_rate,
 			    sc->sc_pparams.hw_sample_rate,
@@ -918,9 +920,8 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	   struct proc *p)
 {
 	int error;
-	int mode;
+	u_int mode;
 	struct audio_hw_if *hw;
-	struct audio_info ai;
 
 	hw = sc->hw_if;
 	if (!hw)
@@ -939,7 +940,6 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	sc->sc_async_audio = 0;
 	sc->sc_rchan = 0;
 	sc->sc_wchan = 0;
-	sc->sc_blkset = 0; /* Block sizes not set yet */
 	sc->sc_sil_count = 0;
 	sc->sc_rbus = 0;
 	sc->sc_pbus = 0;
@@ -968,10 +968,17 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	 * For the other devices, you get what they were last set to.
 	 */
 	if (ISDEVAUDIO(dev)) {
-		/* /dev/audio */
-		sc->sc_rparams = audio_default;
-		sc->sc_pparams = audio_default;
+		error = audio_set_defaults(sc, mode);
+	} else {
+		struct audio_info ai;
+
+		AUDIO_INITINFO(&ai);
+		ai.mode = mode;
+		error = audiosetinfo(sc, &ai);
 	}
+	if (error)
+		goto bad;
+
 #ifdef DIAGNOSTIC
 	/*
 	 * Sample rate and precision are supposed to be set to proper
@@ -984,19 +991,6 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	}
 #endif
 
-	AUDIO_INITINFO(&ai);
-	ai.record.sample_rate = sc->sc_rparams.sample_rate;
-	ai.record.encoding    = sc->sc_rparams.encoding;
-	ai.record.channels    = sc->sc_rparams.channels;
-	ai.record.precision   = sc->sc_rparams.precision;
-	ai.play.sample_rate   = sc->sc_pparams.sample_rate;
-	ai.play.encoding      = sc->sc_pparams.encoding;
-	ai.play.channels      = sc->sc_pparams.channels;
-	ai.play.precision     = sc->sc_pparams.precision;
-	ai.mode		      = mode;
-	error = audiosetinfo(sc, &ai);
-	if (error)
-		goto bad;
 	/* audio_close() decreases sc_pr.usedlow, recalculate here */
 	audio_calcwater(sc);
 
@@ -1374,10 +1368,8 @@ audio_clear(struct audio_softc *sc)
 void
 audio_calc_blksize(struct audio_softc *sc, int mode)
 {
-	struct audio_hw_if *hw = sc->hw_if;
 	struct audio_params *parm;
 	struct audio_ringbuffer *rb;
-	int bs;
 
 	if (sc->sc_blkset)
 		return;
@@ -1390,22 +1382,12 @@ audio_calc_blksize(struct audio_softc *sc, int mode)
 		rb = &sc->sc_rr;
 	}
 
-	bs = parm->hw_sample_rate * audio_blk_ms / 1000 *
+	rb->blksize = parm->hw_sample_rate * audio_blk_ms / 1000 *
 	     parm->hw_channels * parm->precision / NBBY *
 	     parm->factor;
-	ROUNDSIZE(bs);
-	if (hw->round_blocksize)
-		bs = hw->round_blocksize(sc->hw_hdl, bs);
-	/*
-	 * The blocksize should never be 0, but a faulty
-	 * driver might set it wrong.  Just use something.
-	 */
-	if (bs <= 0)
-		bs = 512;
-	rb->blksize = bs;
 
 	DPRINTF(("audio_calc_blksize: %s blksize=%d\n",
-		 mode == AUMODE_PLAY ? "play" : "record", bs));
+		 mode == AUMODE_PLAY ? "play" : "record", rb->blksize));
 }
 
 void
@@ -1765,6 +1747,7 @@ audio_ioctl(struct audio_softc *sc, u_long cmd, caddr_t addr, int flag,
 	struct audio_hw_if *hw = sc->hw_if;
 	struct audio_offset *ao;
 	int error = 0, s, offs, fd;
+	u_long stamp;
 	int rbus, pbus;
 
 	DPRINTF(("audio_ioctl(%lu,'%c',%lu)\n",
@@ -1823,30 +1806,35 @@ audio_ioctl(struct audio_softc *sc, u_long cmd, caddr_t addr, int flag,
 	 * Offsets into buffer.
 	 */
 	case AUDIO_GETIOFFS:
+		ao = (struct audio_offset *)addr;
 		s = splaudio();
 		/* figure out where next DMA will start */
-		ao = (struct audio_offset *)addr;
-		ao->samples = sc->sc_rr.stamp;
-		ao->deltablks =
-		  (sc->sc_rr.stamp - sc->sc_rr.stamp_last) / sc->sc_rr.blksize;
-		sc->sc_rr.stamp_last = sc->sc_rr.stamp;
-		ao->offset = sc->sc_rr.inp - sc->sc_rr.start;
+		stamp = sc->sc_rr.stamp;
+		offs = sc->sc_rr.inp - sc->sc_rr.start;
 		splx(s);
+		ao->samples = stamp;
+		ao->deltablks =
+		  (stamp / sc->sc_rr.blksize) -
+		  (sc->sc_rr.stamp_last / sc->sc_rr.blksize);
+		sc->sc_rr.stamp_last = stamp;
+		ao->offset = offs;
 		break;
 
 	case AUDIO_GETOOFFS:
+		ao = (struct audio_offset *)addr;
 		s = splaudio();
 		/* figure out where next DMA will start */
-		ao = (struct audio_offset *)addr;
+		stamp = sc->sc_pr.stamp;
 		offs = sc->sc_pr.outp - sc->sc_pr.start + sc->sc_pr.blksize;
+		splx(s);
+		ao->samples = stamp;
+		ao->deltablks =
+		  (stamp / sc->sc_pr.blksize) -
+		  (sc->sc_pr.stamp_last / sc->sc_pr.blksize);
+		sc->sc_pr.stamp_last = stamp;
 		if (sc->sc_pr.start + offs >= sc->sc_pr.end)
 			offs = 0;
-		ao->samples = sc->sc_pr.stamp;
-		ao->deltablks =
-		  (sc->sc_pr.stamp - sc->sc_pr.stamp_last) / sc->sc_pr.blksize;
-		sc->sc_pr.stamp_last = sc->sc_pr.stamp;
 		ao->offset = offs;
-		splx(s);
 		break;
 
 	/*
@@ -2515,6 +2503,30 @@ audio_check_params(struct audio_params *p)
 }
 
 int
+audio_set_defaults(struct audio_softc *sc, u_int mode)
+{
+	struct audio_info ai;
+
+	/* default parameters */
+	sc->sc_rparams = audio_default;
+	sc->sc_pparams = audio_default;
+	sc->sc_blkset = 0;
+
+	AUDIO_INITINFO(&ai);
+	ai.record.sample_rate = sc->sc_rparams.sample_rate;
+	ai.record.encoding    = sc->sc_rparams.encoding;
+	ai.record.channels    = sc->sc_rparams.channels;
+	ai.record.precision   = sc->sc_rparams.precision;
+	ai.play.sample_rate   = sc->sc_pparams.sample_rate;
+	ai.play.encoding      = sc->sc_pparams.encoding;
+	ai.play.channels      = sc->sc_pparams.channels;
+	ai.play.precision     = sc->sc_pparams.precision;
+	ai.mode		      = mode;
+
+	return (audiosetinfo(sc, &ai));
+}
+
+int
 au_set_lr_value(struct	audio_softc *sc, mixer_ctrl_t *ct, int l, int r)
 {
 	ct->type = AUDIO_MIXER_VALUE;
@@ -2840,9 +2852,11 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 		return error;
 	setmode = 0;
 	if (nr) {
-		if (!cleared)
+		if (!cleared) {
 			audio_clear(sc);
-		modechange = cleared = 1;
+			cleared = 1;
+		}
+		modechange = 1;
 		rp.sw_code = 0;
 		rp.factor = 1;
 		rp.factor_denom = 1;
@@ -2853,9 +2867,11 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 		setmode |= AUMODE_RECORD;
 	}
 	if (np) {
-		if (!cleared)
+		if (!cleared) {
 			audio_clear(sc);
-		modechange = cleared = 1;
+			cleared = 1;
+		}
+		modechange = 1;
 		pp.sw_code = 0;
 		pp.factor = 1;
 		pp.factor_denom = 1;
@@ -2867,9 +2883,11 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 	}
 
 	if (ai->mode != ~0) {
-		if (!cleared)
+		if (!cleared) {
 			audio_clear(sc);
-		modechange = cleared = 1;
+			cleared = 1;
+		}
+		modechange = 1;
 		sc->sc_mode = ai->mode;
 		if (sc->sc_mode & AUMODE_PLAY_ALL)
 			sc->sc_mode |= AUMODE_PLAY;
@@ -2952,19 +2970,19 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 #endif
 
 	if (p->port != ~0) {
-		if (!cleared)
+		if (!cleared) {
 			audio_clear(sc);
-		cleared = 1;
-
+			cleared = 1;
+		}
 		error = au_set_port(sc, &sc->sc_outports, p->port);
 		if (error)
 			return(error);
 	}
 	if (r->port != ~0) {
-		if (!cleared)
+		if (!cleared) {
 			audio_clear(sc);
-		cleared = 1;
-
+			cleared = 1;
+		}
 		error = au_set_port(sc, &sc->sc_inports, r->port);
 		if (error)
 			return(error);
@@ -3032,27 +3050,17 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 
 	if (ai->blocksize != ~0) {
 		/* Block size specified explicitly. */
-		if (!cleared)
+		if (!cleared) {
 			audio_clear(sc);
-		cleared = 1;
-
+			cleared = 1;
+		}
 		if (ai->blocksize == 0) {
+			sc->sc_blkset = 0;
 			audio_calc_blksize(sc, AUMODE_RECORD);
 			audio_calc_blksize(sc, AUMODE_PLAY);
-			sc->sc_blkset = 0;
 		} else {
-			int bs = ai->blocksize;
-			if (hw->round_blocksize)
-				bs = hw->round_blocksize(sc->hw_hdl, bs);
-			/*
-			 * The blocksize should never be 0, but a faulty
-			 * driver might set it wrong.  Just use something.
-			 */
-			if (bs <= 0)
-				bs = 512;
-
-			sc->sc_pr.blksize = sc->sc_rr.blksize = bs;
 			sc->sc_blkset = 1;
+			sc->sc_pr.blksize = sc->sc_rr.blksize = ai->blocksize;
 		}
 	}
 
