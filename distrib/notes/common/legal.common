@@ -1,6 +1,6 @@
-.\"	$NetBSD: legal.common,v 1.12 2000/09/11 13:34:48 tsutsui Exp $	
+.\"	$NetBSD: legal.common,v 1.13 2000/10/03 00:02:44 lukem Exp $	
 .\"
-.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
