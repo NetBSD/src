@@ -86,7 +86,7 @@
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
  *	from: @(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.20 1994/07/09 06:33:46 briggs Exp $
+ *	$Id: locore.s,v 1.21 1994/07/10 16:58:08 briggs Exp $
  */
 
 #include "assym.s"
@@ -546,6 +546,17 @@ Lsigr1:
  *      Level 5:
  *      Level 6:
  *      Level 7:        Non-maskable: parity errors, RESET button, FOO key
+ *
+ * On the Q700, at least, in "A/UX mode," this should become:
+ *
+ *	Level 0:        Spurious: ignored
+ *	Level 1:        Software
+ *	Level 2:        VIA2 (except ethernet, sound)
+ *	Level 3:        Ethernet
+ *	Level 4:        Serial (SCC)
+ *	Level 5:        Sound
+ *	Level 6:        VIA1
+ *	Level 7:        NMIs: parity errors, RESET button, YANCC error
  */
 /* BARF We must re-configure this. */
 	.globl	_hardclock, _nmihand
@@ -563,7 +574,7 @@ _lev1intr:
 	clrl	sp@-
 	moveml	#0xFFFF,sp@-
 	movl	sp, sp@-
-	jbsr	_via1_intr		| ALICE: Used to be _hilint
+	jbsr	_via1_intr
 	addql	#4,sp
 	moveml	sp@+,#0xFFFF
 	addql	#4,sp
@@ -600,42 +611,6 @@ _lev4intr:
 
 /* MAJORBARF: Fix this routine to be like Mac clocks */
 _rtclock_intr:
-#ifdef PROFTIMER
-	.globl  _profon
-	tstb	_profon			| profile clock on?
-	jeq     Ltimer1			| no, then must be timer1 interrupt
-	btst	#2,d0			| timer3 interrupt?
-	jeq     Ltimer1			| no, must be timer1
-	movb	a0@(CLKMSB3),d1		| clear timer3 interrupt
-	lea	sp@(16),a1		| get pointer to PS
-#ifdef GPROF
-	.globl	_profclock
-	movl	d0,sp@-			| save status so jsr will not clobber
-	movl	a1@,sp@-		| push padded PS
-	movl	a1@(4),sp@-		| push PC
-	jbsr	_profclock		| profclock(pc, ps)
-	addql	#8,sp			| pop params
-#else /* notdef GPROF */
-	btst	#5,a1@(2)		| saved PS in user mode?
-	jne	Lttimer1		| no, go check timer1
-	movl	_curpcb,a0		| current pcb
-	tstl	a0@(U_PROFSCALE)	| process being profiled?
-	jeq	Lttimer1		| no, go check timer1
-	movl	d0,sp@-			| save status so jsr will not clobber
-	movl	#1,sp@-
-	pea	a0@(U_PROF)
-	movl	a1@(4),sp@-
-	jbsr    _addupc			| addupc(pc, &u.u_prof, 1)
-	lea	sp@(12),sp		| pop params
-#endif /* GPROF */
-	addql	#1,_intrcnt+32		| add another profile clock interrupt
-	movl	sp@+,d0			| get saved clock status
-	CLKADDR(a0)
-Lttimer1:
-	btst	#0,d0			| timer1 interrupt?
-	jeq     Ltimend		        | no, check state of kernel profiling
-Ltimer1:
-#endif /* PROFTIMER */
 	movl	a6@(8),a1		| get pointer to frame in via1_intr
 	movl	a1@(64), sp@-		| push ps
 	movl	a1@(68), sp@-		| push pc
@@ -643,22 +618,9 @@ Ltimer1:
 	jbsr	_hardclock		| call generic clock int routine
 	lea	sp@(12), sp		| pop params
 	addql	#1,_intrcnt+28		| add another system clock interrupt
-#ifdef PROFTIMER
-Ltimend:
-#ifdef GPROF
-	.globl	_profiling, _startprofclock
-	tstl	_profiling		| kernel profiling desired?
-	jne	Ltimdone		| no, all done
-	bset	#7,_profon		| mark continuous timing
-	jne	Ltimdone		| was already enabled, all done
-	jbsr	_startprofclock		| else turn it on
-Ltimdone:
-#endif /* GPROF */
-#endif /* PROFTIMER */
+
 	addql	#1,_cnt+V_INTR		| chalk up another interrupt
 
-	/* BARF -- We should look at this "rei" crap.  in any case, via1_intr */
-	 /* goes back to it. */
 	movl	#1, d0			| clock taken care of
 	rts				| go back to lev1intr...
 	|jra	rei			| all done
@@ -869,7 +831,6 @@ abouttouser:
 	.globl	start
 	.globl _gray_bar
 |	.globl _macinit
-	.globl _root_scsi_id		| CPC - for scsi id passed in on d7 from booter
 	.globl _serial_boot_echo
 	.globl _videoaddr, _videorowbytes
 	.globl _videobitdepth
@@ -1189,7 +1150,7 @@ List2:
 
 	movl	sp@,a1			| Get start of PM
 	movl	sp@(4),a0		| and ST
-	movl	#INTIOBASE,d1		| Find offset to IO space
+	movl	_IOBase,d1		| Find offset to IO space
 	movl	#SG_ISHIFT,d0
 	lsrl	d0,d1			| Find which segment it is (/4M)
 	lsll	#2,d1			| 4 bytes per PTE
@@ -1311,8 +1272,6 @@ Lipt4:
 	cmpl	a2,a0			| done yet?
 	jcs	Lipt4			| no, keep going
 /* record base KVA of IO spaces (they are mapped PA == VA) */
-	movl	#INTIOBASE,d0
-	movl	d0,_IOBase
 	movl	#NBBASE,d0		| base of NuBus
 	movl	d0,_NuBusBase		| and record
 	| BARF: intiolimit is wrong:
@@ -1677,44 +1636,6 @@ _esigcode:
  */ 
 
 #include "m68k/asm.h"
-
-/*
- * update profiling information for the user
- * addupc(pc, &u.u_prof, ticks)
- */
-ENTRY(addupc)
-	movl	a2,sp@-			| scratch register
-	movl	sp@(12),a2		| get &u.u_prof
-	movl	sp@(8),d0		| get user pc
-	subl	a2@(8),d0		| pc -= pr->pr_off
-	jlt	Lauexit			| less than 0, skip it
-	movl	a2@(12),d1		| get pr->pr_scale
-	lsrl	#1,d0			| pc /= 2
-	lsrl	#1,d1			| scale /= 2
-	mulul	d1,d0			| pc /= scale
-	moveq	#14,d1
-	lsrl	d1,d0			| pc >>= 14
-	bclr	#0,d0			| pc &= ~1
-	cmpl	a2@(4),d0		| too big for buffer?
-	jge	Lauexit			| yes, screw it
-	addl	a2@,d0			| no, add base
-	movl	d0,sp@-			| push address
-	jbsr	_fusword		| grab old value
-	movl	sp@+,a0			| grab address back
-	cmpl	#-1,d0			| access ok
-	jeq	Lauerror		| no, skip out
-	addw	sp@(18),d0		| add tick to current value
-	movl	d0,sp@-			| push value
-	movl	a0,sp@-			| push address
-	jbsr	_susword		| write back new value
-	addql	#8,sp			| pop params
-	tstl	d0			| fault?
-	jeq	Lauexit			| no, all done
-Lauerror:
-	clrl	a2@(12)			| clear scale (turn off prof)
-Lauexit:
-	movl	sp@+,a2			| restore scratch reg
-	rts
 
 /*
  * non-local gotos
@@ -2737,7 +2658,7 @@ _doboot:
 	movw	#PSL_HIGHIPL,sr		| no interrupts
 	movl	#CACHE_OFF,d0
 	movc	d0,cacr			| disable on-chip cache(s)
-	/* LAK: Store boothowto and bootdev somewhere */
+
 	lea	longscratch,a0		| make sure we have real memory
 	movl	#0,a0@			| value for pmove to TC (turn off MMU)
 	pmove	a0@,tc			| disable MMU
