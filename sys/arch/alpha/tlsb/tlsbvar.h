@@ -1,8 +1,7 @@
-/*	$NetBSD: tlsbvar.h,v 1.1 1997/03/12 19:20:21 cgd Exp $	*/
+/*	$NetBSD: tlsbvar.h,v 1.2 1997/03/12 21:11:13 cgd Exp $	*/
 
 /*
- * Copyright (c) 1997
- * Matthew Jacob
+ * Copyright (c) 1997 by Matthew Jacob
  * NASA AMES Research Center.
  * All rights reserved.
  *

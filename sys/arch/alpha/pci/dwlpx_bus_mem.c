@@ -1,8 +1,7 @@
-/*	$NetBSD: dwlpx_bus_mem.c,v 1.1 1997/03/12 19:20:00 cgd Exp $	*/
+/*	$NetBSD: dwlpx_bus_mem.c,v 1.2 1997/03/12 21:10:02 cgd Exp $	*/
 
 /*
- * Copyright (c) 1997
- * Matthew Jacob
+ * Copyright (c) 1997 by Matthew Jacob
  * NASA AMES Research Center.
  * All rights reserved.
  *

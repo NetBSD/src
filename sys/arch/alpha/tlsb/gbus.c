@@ -1,8 +1,7 @@
-/*	$NetBSD: gbus.c,v 1.1 1997/03/12 19:20:09 cgd Exp $	*/
+/*	$NetBSD: gbus.c,v 1.2 1997/03/12 21:10:35 cgd Exp $	*/
 
 /*
- * Copyright (c) 1997
- * Matthew Jacob
+ * Copyright (c) 1997 by Matthew Jacob
  * NASA AMES Research Center.
  * All rights reserved.
  *
