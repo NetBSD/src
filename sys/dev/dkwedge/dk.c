@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.3 2004/10/23 17:16:45 thorpej Exp $	*/
+/*	$NetBSD: dk.c,v 1.4 2004/10/26 22:50:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.3 2004/10/23 17:16:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.4 2004/10/26 22:50:16 thorpej Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -1165,6 +1165,18 @@ dkioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return (ENXIO);
 
 	switch (cmd) {
+	case DIOCCACHESYNC:
+		/*
+		 * XXX Do we really need to care about having a writable
+		 * file descriptor here?
+		 */
+		if ((flag & FWRITE) == 0)
+			error = EBADF;
+		else
+			error = VOP_IOCTL(sc->sc_parent->dk_rawvp,
+					  cmd, data, flag,
+					  p != NULL ? p->p_ucred : NOCRED, p);
+		break;
 	case DIOCGWEDGEINFO:
 	    {
 	    	struct dkwedge_info *dkw = (void *) data;
