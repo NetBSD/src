@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.21 1996/07/14 04:21:09 cgd Exp $	*/
+/*	$NetBSD: locore.s,v 1.22 1996/07/16 04:40:32 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -90,7 +90,7 @@ NESTED_NOPROFILE(__start,1,0,ra,0,0)
 	lda	t0,proc0			/* get phys addr of pcb */
 	ldq	a0,P_MD_PCBPADDR(t0)
 	call_pal PAL_OSF1_swpctx
-	CONST(-1, a0)
+	CONST(-2, a0)
 	call_pal PAL_OSF1_tbi
 
 	/*
