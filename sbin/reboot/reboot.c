@@ -1,4 +1,4 @@
-/*	$NetBSD: reboot.c,v 1.11 1996/09/16 18:09:34 mrg Exp $	*/
+/*	$NetBSD: reboot.c,v 1.12 1997/07/17 02:52:22 perry Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)reboot.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: reboot.c,v 1.11 1996/09/16 18:09:34 mrg Exp $";
+static char rcsid[] = "$NetBSD: reboot.c,v 1.12 1997/07/17 02:52:22 perry Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,7 +72,8 @@ main(argc, argv)
 	int ch, howto, lflag, nflag, qflag, sverrno, len;
 	char *p, *user, *bootstr, **av;
 
-	if (!strcmp((p = rindex(*argv, '/')) ? p + 1 : *argv, "halt")) {
+	p = (p = rindex(*argv, '/')) ? p + 1 : *argv;
+	if (!strcmp(p, "halt") || !strcmp(p, "-halt")) {
 		dohalt = 1;
 		howto = RB_HALT;
 	} else
