@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_vsbus.c,v 1.11 2000/04/23 16:38:54 matt Exp $	*/
+/*	$NetBSD: asc_vsbus.c,v 1.12 2000/04/24 21:59:22 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.11 2000/04/23 16:38:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.12 2000/04/24 21:59:22 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -142,16 +142,28 @@ static struct ncr53c9x_glue asc_vsbus_glue = {
 	NULL,
 };
 
+static u_int8_t asc_attached;		/* can't have more than one asc */
+
 static int
 asc_vsbus_match( struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct vsbus_attach_args *va = aux;
-	int dummy;
 	volatile u_int8_t *ncr_regs;
+	int dummy;
+
+	if (asc_attached)
+		return 0;
 
 	if (vax_boardtype != VAX_BTYP_46
 	   && vax_boardtype != VAX_BTYP_48
 	   && vax_boardtype != VAX_BTYP_49)
+		return 0;
+
+	if (vax_boardtype == VAX_BTYP_49 && cf->cf_loc[0] != 0x26000080)
+		return 0;
+
+	if ((vax_boardtype == VAX_BTYP_46 || vax_boardtype == VAX_BTYP_48)
+	    && cf->cf_loc[0] != 0x200c0080)
 		return 0;
 
 	ncr_regs = (volatile u_int8_t *) va->va_addr;
@@ -187,6 +199,7 @@ asc_vsbus_attach(struct device *parent, struct device *self, void *aux)
 	struct ncr53c9x_softc *sc = &asc->sc_ncr53c9x;
 	int error;
 
+	asc_attached = 1;
 	/*
 	 * Set up glue for MI code early; we use some of it here.
 	 */
