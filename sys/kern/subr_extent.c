@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.38 2000/08/12 23:56:50 augustss Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.39 2000/12/06 18:05:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@ simple_unlock(l)		((void)(l))
 #define	KMEM_IS_RUNNING			(1)
 #endif
 
-static	pool_handle_t expool_create __P((void));
+static	struct pool *expool_create __P((void));
 static	void extent_insert_and_optimize __P((struct extent *, u_long, u_long,
 	    int, struct extent_region *, struct extent_region *));
 static	struct extent_region *extent_alloc_region_descriptor
@@ -108,7 +108,7 @@ static	struct extent_region *extent_alloc_region_descriptor
 static	void extent_free_region_descriptor __P((struct extent *,
 	    struct extent_region *));
 
-static pool_handle_t expool;
+static struct pool *expool;
 
 /*
  * Macro to align to an arbitrary power-of-two boundary.
@@ -121,13 +121,13 @@ static pool_handle_t expool;
  * (This is deferred until one of our callers thinks we can malloc()).
  */
 
-static pool_handle_t expool_create()
+static struct pool *expool_create()
 {
 #if defined(_KERNEL)
 	expool = pool_create(sizeof(struct extent_region), 0, 0,
 			     0, "extent", 0, 0, 0, 0);
 #else
-	expool = (pool_handle_t)malloc(sizeof(*expool),0,0);
+	expool = (struct pool *)malloc(sizeof(*expool),0,0);
 	expool->pr_size = sizeof(struct extent_region);
 #endif
 	return (expool);
