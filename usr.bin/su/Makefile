@@ -1,14 +1,28 @@
-#	$NetBSD: Makefile,v 1.36 2005/01/08 09:54:36 lukem Exp $
+#	$NetBSD: Makefile,v 1.37 2005/01/10 03:11:50 christos Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 7/19/93
 
 .include <bsd.own.mk>
+MKPAM=no
 
 PROG=	su
-DPADD+=	${LIBCRYPT}
-LDADD+=	-lcrypt -lutil
+CPPFLAGS+=-DLOGIN_CAP
 BINOWN=	root
 BINMODE=4555
-CPPFLAGS+=-DLOGIN_CAP
+
+.if ${MKPAM} != "no"
+
+CPPFLAGS+=-DUSE_PAM -DPAM_DEBUG
+# XXX: Need libcrypt here, because libcrypto defines it too.
+DPADD+=	${LIBPAM} ${LIBCRYPT} ${LIBUTIL}
+LDADD+= -lpam -lcrypt -lutil
+SRCS=su_pam.c
+
+.else
+
+SRCS=su.c
+
+DPADD+=	${LIBCRYPT} ${LIBUTIL}
+LDADD+=	-lcrypt -lutil
 
 # Uncomment the following line to change the group that may su root to "sugroup"
 #
@@ -39,7 +53,6 @@ DPADD+=	${LIBCRYPTO} ${LIBROKEN} ${LIBCOM_ERR}
 LDADD+=	-lcrypto -lroken -lcom_err
 .endif
 
-.include <bsd.prog.mk>
 
 .if (${USE_SKEY} != "no")
 CPPFLAGS+=-DSKEY
@@ -51,8 +64,6 @@ LDADD+= -lskey
 CPPFLAGS+=-DSU_ROOTAUTH=\"${SU_ROOTAUTH}\"
 .endif
 
-.if (${USE_PAM} != "no")
-CPPFLAGS+=-DUSE_PAM
-DPADD+=	${LIBPAM}
-LDADD+= -lpam
 .endif
+
+.include <bsd.prog.mk>
