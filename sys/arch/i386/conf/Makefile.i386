@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.49 1994/11/04 00:02:39 mycroft Exp $
+#	$NetBSD: Makefile.i386,v 1.50 1994/11/04 01:22:26 mycroft Exp $
 # 	@(#)Makefile.hp300	8.2 (Berkeley) 1/23/94
 #
 # Makefile for NetBSD
@@ -90,6 +90,8 @@ SYSTEM_LD_TAIL=	@size $@; chmod 755 $@; \
 		echo strip -d $@; strip -d $@; } || true
 
 %LOAD
+
+newvers: vers.o
 
 vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	sh $S/conf/newvers.sh
