@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.44 2001/12/08 03:34:39 gmcgarry Exp $	*/
+/*	$NetBSD: hil.c,v 1.45 2001/12/14 08:34:28 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -70,6 +70,7 @@
 #include <hp300/dev/itevar.h>
 #include <hp300/dev/kbdmap.h>
 
+#include <machine/bus.h>
 #include <machine/cpu.h>
 
 int	hilmatch __P((struct device *, struct cfdata *, void *));
@@ -96,8 +97,8 @@ int 	hildebug = 0;
 extern struct emul emul_hpux;
 #endif
 
-/* XXX ITE interface */
-char *kbd_keymap; 
+/* ITE interface */
+char *kbd_keymap;
 char *kbd_shiftmap;
 char *kbd_ctrlmap; 
 char *kbd_ctrlshiftmap;
@@ -222,7 +223,7 @@ hilattach_deferred(self)
 	 */
 	hilreset(hilp);
 	hilinfo(hilp);
-	kbdenable(hilp);
+	hilkbdenable(hilp);
 }
 
 /* ARGSUSED */
@@ -383,7 +384,7 @@ hilclose(dev, flags, mode, p)
 			printf("hilclose: keyboard %d cooked\n",
 			       hilp->hl_kbddev);
 #endif
-		kbdenable(hilp);
+		hilkbdenable(hilp);
 	}
 	splx(s);
 	return (0);
@@ -1182,23 +1183,19 @@ hilqunmap(hilp, qnum, device, p)
  */
 
 void
-kbdbell(hilp)
-	struct hil_softc *hilp;
+hilkbdbell(v)
+	void *v;
 {
-	hilbeep(hilp, &default_bell);
+	hilbeep(v, &default_bell);
 }
 
 void
-kbdenable(hilp)
-	struct hil_softc *hilp;
+hilkbdenable(v)
+	void  *v;
 {
-	struct hil_dev *hildevice;
+	struct hil_softc *hilp = v;
+	struct hil_dev *hildevice = hilp->hl_addr;
 	char db;
-
-	if (hilp == NULL)
-		hildevice = HILADDR;		/* XXX */
-	else
-		hildevice = hilp->hl_addr;
 
 	/* Set the autorepeat rate */
 	db = ar_format(KBD_ARR);
@@ -1213,8 +1210,8 @@ kbdenable(hilp)
 }
 
 void
-kbddisable(hilp)
-	struct hil_softc *hilp;
+hilkbddisable(v)
+	void *v;
 {
 }
 
@@ -1223,10 +1220,14 @@ kbddisable(hilp)
  * support.
  */
 
-struct	hil_dev *hilkbd_cn_device;
-char	*kbd_cn_keymap;
-char	*kbd_cn_shiftmap;
-char	*kbd_cn_ctrlmap;
+static struct	hil_dev *hilkbd_cn_device;
+static struct ite_kbdmap hilkbd_cn_map;
+static struct ite_kbdops hilkbd_cn_ops = {
+	hilkbdcngetc,
+	hilkbdenable,
+	hilkbdbell,
+	NULL,
+};
 
 /*
  * XXX: read keyboard directly and return code.
@@ -1234,7 +1235,7 @@ char	*kbd_cn_ctrlmap;
  * reading from the keyboard in the normal, interrupt driven fashion.
  */
 int
-kbdgetc(statp)
+hilkbdcngetc(statp)
 	int *statp;
 {
 	int c, stat;
@@ -1260,40 +1261,50 @@ kbdgetc(statp)
  * Perform basic initialization of the HIL keyboard, suitable
  * for early console use.
  */
-void
-kbdcninit()
+int
+hilkbdcnattach(bus_space_tag_t bst, bus_addr_t addr)
 {
-	struct hil_dev *h = HILADDR;	/* == VA (see hilreg.h) */
+	caddr_t va;
 	struct kbdmap *km;
+	bus_space_handle_t bsh;
 	u_char lang;
 
 	/* XXX from hil_keymaps.c */
 	extern char us_keymap[], us_shiftmap[], us_ctrlmap[];
 
-	hilkbd_cn_device = h;
+	if (bus_space_map(bst, addr, NBPG, 0, &bsh))
+		return (1);
+
+	va = bus_space_vaddr(bst, bsh);
+	hilkbd_cn_device = (struct hil_dev *)va;
 
 	/* Default to US-ASCII keyboard. */
-	kbd_cn_keymap = us_keymap;
-	kbd_cn_shiftmap = us_shiftmap;
-	kbd_cn_ctrlmap = us_ctrlmap;
+	hilkbd_cn_map.keymap = us_keymap;
+	hilkbd_cn_map.shiftmap = us_shiftmap;
+	hilkbd_cn_map.ctrlmap = us_ctrlmap;
 
-	HILWAIT(h);
-	WRITEHILCMD(h, HIL_SETARR);
-	HILWAIT(h);
-	WRITEHILDATA(h, ar_format(KBD_ARR));
-	HILWAIT(h);
-	WRITEHILCMD(h, HIL_READKBDLANG);
-	HILDATAWAIT(h);
-	lang = READHILDATA(h);
+	HILWAIT(hilkbd_cn_device);
+	WRITEHILCMD(hilkbd_cn_device, HIL_SETARR);
+	HILWAIT(hilkbd_cn_device);
+	WRITEHILDATA(hilkbd_cn_device, ar_format(KBD_ARR));
+	HILWAIT(hilkbd_cn_device);
+	WRITEHILCMD(hilkbd_cn_device, HIL_READKBDLANG);
+	HILDATAWAIT(hilkbd_cn_device);
+	lang = READHILDATA(hilkbd_cn_device);
 	for (km = kbd_map; km->kbd_code; km++) {
 		if (km->kbd_code == lang) {
-			kbd_cn_keymap = km->kbd_keymap;
-			kbd_cn_shiftmap = km->kbd_shiftmap;
-			kbd_cn_ctrlmap = km->kbd_ctrlmap;
+			hilkbd_cn_map.keymap = km->kbd_keymap;
+			hilkbd_cn_map.shiftmap = km->kbd_shiftmap;
+			hilkbd_cn_map.ctrlmap = km->kbd_ctrlmap;
 		}
 	}
-	HILWAIT(h);
-	WRITEHILCMD(h, HIL_INTON);
+	HILWAIT(hilkbd_cn_device);
+	WRITEHILCMD(hilkbd_cn_device, HIL_INTON);
+
+	hilkbd_cn_ops.arg = va;
+	itekbdcnattach(&hilkbd_cn_ops, &hilkbd_cn_map);
+
+	return (0);
 }
 
 /* End of HIL console keyboard code. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rb.c,v 1.18 2001/12/08 03:34:39 gmcgarry Exp $	*/
+/*	$NetBSD: grf_rb.c,v 1.19 2001/12/14 08:34:28 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -121,9 +121,7 @@ void	rbox_intio_attach __P((struct device *, struct device *, void *));
 int	rbox_dio_match __P((struct device *, struct cfdata *, void *));
 void	rbox_dio_attach __P((struct device *, struct device *, void *));
 
-int	rbox_console_scan __P((int, caddr_t, void *));
-void	rboxcnprobe __P((struct consdev *cp));
-void	rboxcninit __P((struct consdev *cp));
+int	rboxcnattach __P((bus_space_tag_t, bus_addr_t, int));
 
 struct cfattach rbox_intio_ca = {
 	sizeof(struct grfdev_softc), rbox_intio_match, rbox_intio_attach
@@ -137,6 +135,9 @@ struct cfattach rbox_dio_ca = {
 struct grfsw rbox_grfsw = {
 	GID_RENAISSANCE, GRFRBOX, "renaissance", rb_init, rb_mode
 };
+
+static int rbconscode;
+static caddr_t rbconaddr;
 
 #if NITE > 0
 void	rbox_init __P((struct ite_data *));
@@ -192,6 +193,7 @@ rbox_intio_attach(parent, self, aux)
 	grf = (caddr_t)ia->ia_addr;
 	sc->sc_scode = -1;	/* XXX internal i/o */
 
+	sc->sc_isconsole = (sc->sc_scode == rbconscode);
 	grfdev_attach(sc, rb_init, grf, &rbox_grfsw);
 }
 
@@ -220,8 +222,8 @@ rbox_dio_attach(parent, self, aux)
 	caddr_t grf;
 
 	sc->sc_scode = da->da_scode;
-	if (sc->sc_scode == conscode)
-		grf = conaddr;
+	if (sc->sc_scode == rbconscode)
+		grf = rbconaddr;
 	else {
 		grf = iomap(dio_scodetopa(sc->sc_scode), da->da_size);
 		if (grf == 0) {
@@ -231,6 +233,7 @@ rbox_dio_attach(parent, self, aux)
 		}
 	}
 
+	sc->sc_isconsole = (sc->sc_scode == rbconscode);
 	grfdev_attach(sc, rb_init, grf, &rbox_grfsw);
 }
 
@@ -253,7 +256,7 @@ rb_init(gp, scode, addr)
 	 * If the console has been initialized, and it was us, there's
 	 * no need to repeat this.
 	 */
-	if (consinit_active || (scode != conscode)) {
+	if (scode != rbconscode) {
 		rbp = (struct rboxfb *) addr;
 		if (ISIIOVA(addr))
 			gi->gd_regaddr = (caddr_t) IIOP(addr);
@@ -594,131 +597,56 @@ rbox_windowmove(ip, sy, sx, dy, dx, h, w, func)
 /*
  * Renaissance console support
  */
-
 int
-rbox_console_scan(scode, va, arg)
-	int scode;
-	caddr_t va;
-	void *arg;
+rboxcnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 {
-	struct grfreg *grf = (struct grfreg *)va;
-	struct consdev *cp = arg;
-	u_char *dioiidev;
-	int force = 0, pri;
-
-	if ((grf->gr_id == GRFHWID) && (grf->gr_id2 == GID_RENAISSANCE)) {
-		pri = CN_NORMAL;
-
-#ifdef CONSCODE
-		/*
-		 * Raise our priority, if appropriate.
-		 */
-		if (scode == CONSCODE) {
-			pri = CN_REMOTE;
-			force = conforced = 1;
-		}
-#endif
-
-		/* Only raise priority. */
-		if (pri > cp->cn_pri)
-			cp->cn_pri = pri;
-
-		/*
-		 * If our priority is higher than the currently-remembered
-		 * console, stash our priority.
-		 */
-		if (((cn_tab == NULL) || (cp->cn_pri > cn_tab->cn_pri))
-		    || force) {
-			cn_tab = cp;
-			if (scode >= 132) {
-				dioiidev = (u_char *)va;
-				return ((dioiidev[0x101] + 1) * 0x100000);
-			}
-			return (DIOCSIZE);
-		}
-	}
-	return (0);
-}
-
-void
-rboxcnprobe(cp)
-	struct consdev *cp;
-{
-	int maj;
+	bus_space_handle_t bsh;
 	caddr_t va;
 	struct grfreg *grf;
-	int force = 0;
+	struct grf_data *gp = &grf_cn;
+	u_int8_t *dioiidev;
+	int size;
 
-	maj = ite_major();
-
-	/* initialize required fields */
-	cp->cn_dev = makedev(maj, 0);		/* XXX */
-	cp->cn_pri = CN_DEAD;
-
-	/* Abort early if console is already forced. */
-	if (conforced)
-		return;
-
-	/* Look for "internal" framebuffer. */
-	va = (caddr_t)IIOV(GRFIADDR);
+	if (bus_space_map(bst, addr, NBPG, 0, &bsh))
+		return (1);
+	va = bus_space_vaddr(bst, bsh);
 	grf = (struct grfreg *)va;
-	if (!badaddr(va) &&
-	    ((grf->gr_id == GRFHWID) && (grf->gr_id2 == GID_RENAISSANCE))) {
-		cp->cn_pri = CN_INTERNAL;
 
-#ifdef CONSCODE
-		/*
-		 * Raise our priority and save some work, if appropriate.
-		 */
-		if (CONSCODE == -1) {
-			cp->cn_pri = CN_REMOTE;
-			force = conforced = 1;
-		}
-#endif
-
-		/*
-		 * If our priority is higher than the currently
-		 * remembered console, stash our priority, and
-		 * unmap whichever device might be currently mapped.
-		 * Since we're internal, we set the saved size to 0
-		 * so they don't attempt to unmap our fixed VA later.
-		 */
-		if (((cn_tab == NULL) || (cp->cn_pri > cn_tab->cn_pri))
-		    || force) {
-			cn_tab = cp;
-			if (convasize)
-				iounmap(conaddr, convasize);
-			conscode = -1;
-			conaddr = va;
-			convasize = 0;
-		}
+	if ((grf->gr_id != GRFHWID) || (grf->gr_id2 != GID_RENAISSANCE)) {
+		bus_space_unmap(bst, bsh, NBPG);
+		return (1);
 	}
 
-	console_scan(rbox_console_scan, cp);
-}
+	if (scode > 132) {
+		dioiidev = (u_int8_t *)va;
+		size =  ((dioiidev[0x101] + 1) * 0x100000);
+	} else
+		size = DIOCSIZE;
 
-void
-rboxcninit(cp)
-	struct consdev *cp;
-{
-	struct grf_data *gp = &grf_cn;
+	bus_space_unmap(bst, bsh, NBPG);
+	if (bus_space_map(bst, addr, size, 0, &bsh))
+		return (1);
+	va = bus_space_vaddr(bst, bsh);
 
 	/*
 	 * Initialize the framebuffer hardware.
 	 */
-	(void)rb_init(gp, conscode, conaddr);
+	(void)rb_init(gp, scode, va);
+	rbconscode = scode;
+	rbconaddr = va;
 
 	/*
 	 * Set up required grf data.
-	 */
+	*/
 	gp->g_sw = &rbox_grfsw;
 	gp->g_display.gd_id = gp->g_sw->gd_swid;
 	gp->g_flags = GF_ALIVE;
 
 	/*
 	 * Initialize the terminal emulator.
-	 */
-	itecninit(gp, &rbox_itesw);
+	*/
+	itedisplaycnattach(gp, &rbox_itesw);
+	return (0);
 }
 
 #endif /* NITE > 0 */

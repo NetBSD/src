@@ -1,4 +1,4 @@
-/*	$NetBSD: dio.c,v 1.14 2001/12/08 03:34:38 gmcgarry Exp $	*/
+/*	$NetBSD: dio.c,v 1.15 2001/12/14 08:34:27 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -114,12 +114,9 @@ dioattach(parent, self, aux)
 		 * Temporarily map the space corresponding to
 		 * the current select code unless:
 		 *	- this is the internal hpib select code,
-		 *	- this is the console select code.
 		 */
 		pa = dio_scodetopa(scode);
-		if (scode == conscode)
-			va = conaddr;
-		else if ((scode == 7) && internalhpib)
+		if ((scode == 7) && internalhpib)
 			va = internalhpib = (caddr_t)IIOV(pa);
 		else {
 			va = iomap(pa, NBPG);

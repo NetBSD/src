@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.47 2001/05/30 15:24:29 lukem Exp $	*/
+/*	$NetBSD: dcm.c,v 1.48 2001/12/14 08:34:27 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -157,18 +157,6 @@ struct	dcmischeme {
 	int	dis_char;	/* characters read during last interval */
 };
 
-/*
- * Stuff for DCM console support.  This could probably be done a little
- * better.
- */
-static	struct dcmdevice *dcm_cn = NULL;	/* pointer to hardware */
-static	int dcmconsinit;			/* has been initialized */
-/* static	int dcm_lastcnpri = CN_DEAD; */	/* XXX last priority */
-
-int	dcmdefaultrate = DEFAULT_BAUD_RATE;
-int	dcmconbrdbusy = 0;
-int	dcmmajor;
-
 #ifdef KGDB
 /*
  * Kernel GDB support
@@ -303,9 +291,7 @@ void	dcminit __P((struct dcmdevice *, int, int));
 
 int	dcmselftest __P((struct dcm_softc *));
 
-int	dcm_console_scan __P((int, caddr_t, void *));
-void	dcmcnprobe __P((struct consdev *));
-void	dcmcninit __P((struct consdev *));
+int	dcmcnattach __P((bus_space_tag_t, bus_addr_t, int));
 int	dcmcngetc __P((dev_t));
 void	dcmcnputc __P((dev_t, int));
 
@@ -315,6 +301,22 @@ void	dcmattach __P((struct device *, struct device *, void *));
 struct cfattach dcm_ca = {
 	sizeof(struct dcm_softc), dcmmatch, dcmattach
 };
+
+/*
+ * Stuff for DCM console support.  This could probably be done a little
+ * better.
+ */
+static	struct dcmdevice *dcm_cn = NULL;	/* pointer to hardware */
+static	int dcmconsinit;			/* has been initialized */
+/* static	int dcm_lastcnpri = CN_DEAD; */	/* XXX last priority */
+
+static struct consdev dcm_cons = {
+       NULL, NULL, dcmcngetc, dcmcnputc, nullcnpollc, NULL, NODEV, CN_REMOTE
+};
+int	dcmconscode;
+int	dcmdefaultrate = DEFAULT_BAUD_RATE;
+int	dcmconbrdbusy = 0;
+int	dcmmajor;
 
 extern struct cfdriver dcm_cd;
 
@@ -349,8 +351,8 @@ dcmattach(parent, self, aux)
 
 	sc->sc_flags = 0;
 
-	if (scode == conscode) {
-		dcm = (struct dcmdevice *)conaddr;
+	if (scode == dcmconscode) {
+		dcm = dcm_cn;
 		sc->sc_flags |= DCM_ISCONSOLE;
 
 		/*
@@ -1520,77 +1522,41 @@ dcmselftest(sc)
  */
 
 int
-dcm_console_scan(scode, va, arg)
-	int scode;
-	caddr_t va;
-	void *arg;
+dcmcnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 {
-	struct dcmdevice *dcm = (struct dcmdevice *)va;
-	struct consdev *cp = arg;
-	u_char *dioiidev;
-	int force = 0, pri;
+        bus_space_handle_t bsh;
+        caddr_t va;
+        struct dcmdevice *dcm;
+
+        if (bus_space_map(bst, addr, DIOCSIZE, 0, &bsh))
+                return (1);
+
+        va = bus_space_vaddr(bst, bsh);
+	dcm = (struct dcmdevice *)va;
 
 	switch (dcm->dcm_rsid) {
-	case DCMID:
-		pri = CN_NORMAL;
-		break;
-
-	case DCMID|DCMCON:
-		pri = CN_REMOTE;
-		break;
-
-	default:
-		return (0);
-	}
-
 #ifdef CONSCODE
-	/*
-	 * Raise our priority, if appropriate.
-	 */
-	if (scode == CONSCODE) {
-		pri = CN_REMOTE;
-		force = conforced = 1;
-	}
+	case DCMID:
 #endif
-
-	/* Only raise priority. */
-	if (pri > cp->cn_pri)
-		cp->cn_pri = pri;
-
-	/*
-	 * If our priority is higher than the currently-remembered
-	 * console, stash our priority, for the benefit of dcmcninit().
-	 */
-	if (((cn_tab == NULL) || (cp->cn_pri > cn_tab->cn_pri)) || force) {
-		cn_tab = cp;
-		if (scode >= 132) {
-			dioiidev = (u_char *)va;
-			return ((dioiidev[0x101] + 1) * 0x100000);
-		}
-		return (DIOCSIZE);
+	case DCMID|DCMCON:
+		break;
+	default:
+		goto error;
 	}
-	return (0);
-}
 
-void
-dcmcnprobe(cp)
-	struct consdev *cp;
-{
+	dcminit(dcm, DCMCONSPORT, dcmdefaultrate);
+        dcmconsinit = 1;
+	dcmconscode = scode;
+        dcm_cn = dcm;
 
-	/* locate the major number */
-	for (dcmmajor = 0; dcmmajor < nchrdev; dcmmajor++)
-		if (cdevsw[dcmmajor].d_open == dcmopen)
-			break;
+        /* locate the major number */
+        for (dcmmajor = 0; dcmmajor < nchrdev; dcmmajor++)
+                if (cdevsw[dcmmajor].d_open == dcmopen)
+                        break;
 
-	/* initialize required fields */
-	cp->cn_dev = makedev(dcmmajor, 0);	/* XXX */
-	cp->cn_pri = CN_DEAD;
-
-	/* Abort early if console already forced. */
-	if (conforced)
-		return;
-
-	console_scan(dcm_console_scan, cp);
+        /* initialize required fields */
+        cn_tab = &dcm_cons;
+        cn_tab->cn_dev = makedev(dcmmajor, 0);
 
 #ifdef KGDB_CHEAT
 	/* XXX this needs to be fixed. */
@@ -1613,17 +1579,13 @@ dcmcnprobe(cp)
 		}
 	}
 #endif
-}
 
-/* ARGSUSED */
-void
-dcmcninit(cp)
-	struct consdev *cp;
-{
 
-	dcm_cn = (struct dcmdevice *)conaddr;
-	dcminit(dcm_cn, DCMCONSPORT, dcmdefaultrate);
-	dcmconsinit = 1;
+        return (0);
+
+error:
+        bus_space_unmap(bst, bsh, DIOCSIZE);
+        return (1);
 }
 
 /* ARGSUSED */

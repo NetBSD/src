@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_tc.c,v 1.18 2001/12/08 03:34:39 gmcgarry Exp $	*/
+/*	$NetBSD: grf_tc.c,v 1.19 2001/12/14 08:34:28 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -123,9 +123,7 @@ void	topcat_intio_attach __P((struct device *, struct device *, void *));
 int	topcat_dio_match __P((struct device *, struct cfdata *, void *));
 void	topcat_dio_attach __P((struct device *, struct device *, void *));
 
-int	topcat_console_scan __P((int, caddr_t, void *));
-void	topcatcnprobe __P((struct consdev *cp));
-void	topcatcninit __P((struct consdev *cp));
+int	topcatcnattach __P((bus_space_tag_t, bus_addr_t, int));
 
 struct cfattach topcat_intio_ca = {
 	sizeof(struct grfdev_softc), topcat_intio_match, topcat_intio_attach
@@ -154,6 +152,9 @@ struct grfsw hrcatseye_grfsw = {
 struct grfsw hrmcatseye_grfsw = {
 	GID_HRMCATSEYE, GRFCATSEYE, "hi-res catseye", tc_init, tc_mode
 };
+
+static int tcconscode;
+static caddr_t tcconaddr;
 
 #if NITE > 0
 void	topcat_init __P((struct ite_data *));
@@ -217,6 +218,7 @@ topcat_intio_attach(parent, self, aux)
 	grf = (struct grfreg *)ia->ia_addr;
 	sc->sc_scode = -1;	/* XXX internal i/o */
 
+	
 	topcat_common_attach(sc, (caddr_t)grf, grf->gr_id2);
 }
 
@@ -254,8 +256,8 @@ topcat_dio_attach(parent, self, aux)
 	caddr_t grf;
 
 	sc->sc_scode = da->da_scode;
-	if (sc->sc_scode == conscode)
-		grf = conaddr;
+	if (sc->sc_scode == tcconscode)
+		grf = tcconaddr;
 	else {
 		grf = iomap(dio_scodetopa(sc->sc_scode), da->da_size);
 		if (grf == 0) {
@@ -303,8 +305,8 @@ topcat_common_attach(sc, grf, secid)
 		panic("topcat_common_attach");
 	}
 
+	sc->sc_isconsole = (sc->sc_scode == tcconscode);
 	grfdev_attach(sc, tc_init, grf, sw);
-
 }
 
 /*
@@ -328,7 +330,7 @@ tc_init(gp, scode, addr)
 	 * If the console has been initialized, and it was us, there's
 	 * no need to repeat this.
 	 */
-	if (consinit_active || (scode != conscode)) {
+	if (scode != tcconscode) {
 		if (ISIIOVA(addr))
 			gi->gd_regaddr = (caddr_t) IIOP(addr);
 		else
@@ -696,172 +698,79 @@ topcat_windowmove(ip, sy, sx, dy, dx, h, w, func)
 	rp->wmove    = ip->planemask;
 }
 
+
 /*
- * Topcat/catseye console support
+ *   Topcat/catseye console attachment
  */
 
 int
-topcat_console_scan(scode, va, arg)
-	int scode;
-	caddr_t va;
-	void *arg;
+topcatcnattach(bus_space_tag_t bst, bus_addr_t addr, int scode)
 {
-	struct grfreg *grf = (struct grfreg *)va;
-	struct consdev *cp = arg;
-	u_char *dioiidev; 
-	int force = 0, pri; 
+        bus_space_handle_t bsh;
+        caddr_t va;
+        struct grfreg *grf;
+        struct grf_data *gp = &grf_cn;
+        u_int8_t *dioiidev;
+        int size;
 
-	if (grf->gr_id != GRFHWID)
-		return (0);
+        if (bus_space_map(bst, addr, NBPG, 0, &bsh))
+                return (1);
+        va = bus_space_vaddr(bst, bsh);
+        grf = (struct grfreg *)va;
 
-	switch (grf->gr_id2) {
-	case GID_TOPCAT:
-	case GID_LRCATSEYE:
-	case GID_HRCCATSEYE:
-	case GID_HRMCATSEYE:
-		break;
+        if (grf->gr_id != GRFHWID)
+                return (1);
 
-	default:
-		return (0);
-	}
+        switch (grf->gr_id2) {
+        case GID_TOPCAT:
+                gp->g_sw = &topcat_grfsw;
+                break;
 
-	pri = CN_NORMAL;
+        case GID_LRCATSEYE:
+                gp->g_sw = &lrcatseye_grfsw;
+                break;
 
-#ifdef CONSCODE
-	/*
-	 * Raise our priority, if appropriate.
-	 */
-	if (scode == CONSCODE) {
-		pri = CN_REMOTE;
-		force = conforced = 1;
-	}
-#endif
+        case GID_HRCCATSEYE:
+                gp->g_sw = &hrcatseye_grfsw;
+                break;
 
-	/* Only raise priority. */
-	if (pri > cp->cn_pri)
-		cp->cn_pri = pri;
+        case GID_HRMCATSEYE:
+                gp->g_sw = &hrmcatseye_grfsw;
+                break;
 
-	/*
-	 * If our priority is higher than the currently-remembered
-	 * console, stash our priority.
-	 */
-	if (((cn_tab == NULL) || (cp->cn_pri > cn_tab->cn_pri)) || force) {
-		cn_tab = cp;
-		if (scode >= 132) {
-			dioiidev = (u_char *)va;
-			return ((dioiidev[0x101] + 1) * 0x100000);
-		}
-		return (DIOCSIZE);
-	}
-	return (0);
-}
+        default:
+                return (1);
+        }
 
-void
-topcatcnprobe(cp)
-	struct consdev *cp;
-{
-	int maj;
-	caddr_t va;
-	struct grfreg *grf;
-	int force = 0;
+	if (scode > 132) {
+		dioiidev = (u_int8_t *)va;
+		size =  ((dioiidev[0x101] + 1) * 0x100000);
+	} else
+		size = DIOCSIZE;
 
-	maj = ite_major();
-
-	/* initialize required fields */
-	cp->cn_dev = makedev(maj, 0);		/* XXX */
-	cp->cn_pri = CN_DEAD;
-
-	/* Abort early if the console is already forced. */
-	if (conforced)
-		return;
-
-	/* Look for "internal" framebuffer. */
-	va = (caddr_t)IIOV(GRFIADDR);
-	grf = (struct grfreg *)va;
-	if (!badaddr(va) && (grf->gr_id == GRFHWID)) {
-		switch (grf->gr_id2) {
-		case GID_TOPCAT:
-		case GID_LRCATSEYE:
-		case GID_HRCCATSEYE:
-		case GID_HRMCATSEYE:
-			cp->cn_pri = CN_INTERNAL;
-
-#ifdef CONSCODE
-			/*
-			 * Raise our priority and save some work,
-			 * if appropriate.
-			 */
-			if (CONSCODE == -1) {
-				cp->cn_pri = CN_REMOTE;
-				force = conforced = 1;
-			}
-#endif
-
-			/*
-			 * If our priority is higher than the currently
-			 * remembered console, stash our priority, and unmap
-			 * whichever device might be currently mapped.
-			 * Since we're internal, we set the saved size to 0
-			 * so they don't attempt to unmap our fixed VA later.
-			 */
-			if (((cn_tab == NULL) || (cp->cn_pri > cn_tab->cn_pri))
-			    || force) {
-				cn_tab = cp;
-				if (convasize)
-					iounmap(conaddr, convasize);
-				conscode = -1;
-				conaddr = va;
-				convasize = 0;
-			}
-		}
-	}
-
-	console_scan(topcat_console_scan, cp);
-}
-
-void
-topcatcninit(cp)
-	struct consdev *cp;
-{
-	struct grf_data *gp = &grf_cn;
-	struct grfreg *grf = (struct grfreg *)conaddr;
+        bus_space_unmap(bst, bsh, NBPG);
+        if (bus_space_map(bst, addr, size, 0, &bsh))
+                return (1);
+        va = bus_space_vaddr(bst, bsh);
 
 	/*
 	 * Initialize the framebuffer hardware.
 	 */
-	(void)tc_init(gp, conscode, conaddr);
+        (void)tc_init(gp, scode, va);
+	tcconscode = scode;
+	tcconaddr = va;
 
-	/*
-	 * Set up required grf data.
-	 */
-	switch (grf->gr_id2) {
-	case GID_TOPCAT:
-		gp->g_sw = &topcat_grfsw;
-		break;
+        /*
+         * Set up required grf data.
+         */
+        gp->g_display.gd_id = gp->g_sw->gd_swid;
+        gp->g_flags = GF_ALIVE;
 
-	case GID_LRCATSEYE:
-		gp->g_sw = &lrcatseye_grfsw;
-		break;
-
-	case GID_HRCCATSEYE:
-		gp->g_sw = &hrcatseye_grfsw;
-		break;
-
-	case GID_HRMCATSEYE:
-		gp->g_sw = &hrmcatseye_grfsw;
-		break;
-
-	default:
-		/* THIS SHOULD NEVER HAPPEN! */
-		panic("topcat console: impossible!");	/* XXX won't see it */
-	}
-	gp->g_display.gd_id = gp->g_sw->gd_swid;
-	gp->g_flags = GF_ALIVE;
-
-	/*
-	 * Initialize the terminal emulator.
-	 */
-	itecninit(gp, &topcat_itesw);
+        /*
+         * Initialize the terminal emulator.
+         */
+        itedisplaycnattach(gp, &topcat_itesw);
+        return (0);
 }
 
 #endif /* NITE > 0 */
