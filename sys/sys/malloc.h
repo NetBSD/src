@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.49 1999/12/03 04:52:05 itojun Exp $	*/
+/*	$NetBSD: malloc.h,v 1.50 1999/12/04 12:33:04 ragge Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -370,7 +370,7 @@ struct kmembuckets {
  */
 #define	kmemxtob(alloc)	(kmembase + (alloc) * NBPG)
 #define	btokmemx(addr)	(((caddr_t)(addr) - kmembase) / NBPG)
-#define	btokup(addr)	(&kmemusage[((caddr_t)(addr) - kmembase) >> CLSHIFT])
+#define	btokup(addr)	(&kmemusage[((caddr_t)(addr) - kmembase) >> PGSHIFT])
 
 /*
  * Macro versions for the usual cases of malloc/free
