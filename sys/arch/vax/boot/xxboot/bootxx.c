@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.13 2000/11/03 00:30:34 simonb Exp $ */
+/* $NetBSD: bootxx.c,v 1.14 2000/11/09 01:54:20 matt Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -279,10 +279,10 @@ romstrategy(sc, func, dblk, size, buf, rsize)
 	int	block = dblk;
 	int     nsize = size;
 
-	if (romlabel.d_magic == DISKLABEL && romlabel.d_magic2 == DISKLABEL) {
+	if (romlabel.d_magic == DISKMAGIC && romlabel.d_magic2 == DISKMAGIC) {
 		if (romlabel.d_npartitions > 1) {
 			block += romlabel.d_partitions[0].p_offset;
-			if (romlabel.d_partitions[0].p_type == FS_RAID) {
+			if (romlabel.d_partitions[0].p_fstype == FS_RAID) {
 				block += RF_PROTECTED_SECTORS;
 			}
 		}
