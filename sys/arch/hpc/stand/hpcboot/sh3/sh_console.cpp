@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: sh_console.cpp,v 1.6 2001/05/08 18:51:25 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: sh_console.cpp,v 1.7 2001/05/21 15:54:25 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,19 +40,49 @@
 #include <sh3/sh_console.h>
 #include <sh3/hd64461.h>
 
+// XXX don't define here. arch/hpcsh/include/bootinfo.h
 #define BI_CNUSE_SCI		2
 #define BI_CNUSE_SCIF		3
 #define BI_CNUSE_HD64461COM	4
+#define BI_CNUSE_HD64461VIDEO	5
 
 SHConsole *SHConsole::_instance = 0;
 
 struct SHConsole::console_info
 SHConsole::_console_info[] = {
-	{ PLATID_CPU_SH_3        , PLATID_MACH_HP                          , SCIFPrint       , BI_CNUSE_SCIF },
-	{ PLATID_CPU_SH_3_7709   , PLATID_MACH_HITACHI                     , HD64461COMPrint , BI_CNUSE_HD64461COM },
-	{ PLATID_CPU_SH_3_7709   , PLATID_MACH_CASIO_CASSIOPEIAA_A55V      , 0               , BI_CNUSE_BUILTIN },
+	{ PLATID_CPU_SH_3        , PLATID_MACH_HP                          , SCIFPrint       , BI_CNUSE_SCIF       , BI_CNUSE_HD64461VIDEO},
+	{ PLATID_CPU_SH_3_7709   , PLATID_MACH_HITACHI                     , HD64461COMPrint , BI_CNUSE_HD64461COM , BI_CNUSE_HD64461VIDEO},
+	{ PLATID_CPU_SH_3_7709   , PLATID_MACH_CASIO_CASSIOPEIAA_A55V      , 0               , BI_CNUSE_BUILTIN    , BI_CNUSE_BUILTIN },
 	{ 0, 0, 0 } // terminator.
 };
+
+struct SHConsole::console_info *
+SHConsole::selectBootConsole(Console &cons, enum consoleSelect select)
+{
+	struct console_info *tab = _console_info;
+	platid_mask_t target, entry;
+
+	target.dw.dw0 = HPC_PREFERENCE.platid_hi;
+	target.dw.dw1 = HPC_PREFERENCE.platid_lo;
+
+	// search apriori setting if any.
+	for (; tab->cpu; tab++) {
+		entry.dw.dw0 = tab->cpu;
+		entry.dw.dw1 = tab->machine;
+		if (platid_match(&target, &entry)) {
+			switch (select) {
+			case SERIAL:
+				cons.setBootConsole(tab->serial_console);
+				break;
+			case VIDEO:
+				cons.setBootConsole(tab->video_console);
+				break;
+			}
+		}
+	}
+
+	return tab;
+}
 
 SHConsole::SHConsole()
 {
@@ -61,6 +91,7 @@ SHConsole::SHConsole()
 
 SHConsole::~SHConsole()
 {
+	// NO-OP
 }
 
 SHConsole *
@@ -75,28 +106,16 @@ SHConsole::Instance()
 BOOL
 SHConsole::init()
 {
-	struct console_info *tab = _console_info;
-	platid_mask_t target, entry;
 	
 	if (!super::init())
 		return FALSE;
 
 	_kmode = SetKMode(1);
+
+	struct console_info *tab = selectBootConsole(*this, SERIAL);
+	if (tab != 0)
+		_print = tab->print;
 	
-	target.dw.dw0 = HPC_PREFERENCE.platid_hi;
-	target.dw.dw1 = HPC_PREFERENCE.platid_lo;
-
-	// search apriori setting if any.
-	for (; tab->cpu; tab++) {
-		entry.dw.dw0 = tab->cpu;
-		entry.dw.dw1 = tab->machine;
-		if (platid_match(&target, &entry)) {
-			_print = tab->print;
-			_boot_console = tab->boot_console;
-			break;
-		}
-	}
-
 	return TRUE;
 }
 

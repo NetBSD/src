@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: sh_console.h,v 1.5 2001/04/24 19:28:01 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: sh_console.h,v 1.6 2001/05/21 15:54:25 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -53,9 +53,13 @@ public:
 	struct console_info {
 		u_int32_t cpu, machine;
 		print_func_t print;
-		int16_t boot_console;
+		int16_t serial_console;
+		int16_t video_console;
 	};
 	static struct console_info _console_info[];
+	enum consoleSelect { VIDEO, SERIAL };
+	static struct console_info *selectBootConsole(Console &,
+	    enum consoleSelect);
 	static void SCIPrint(const char *);
 	static void SCIFPrint(const char *);
 	static void HD64461COMPrint(const char *);
@@ -73,6 +77,5 @@ public:
 
 	virtual BOOL init(void);
 	virtual void print(const TCHAR *fmt, ...);
-	virtual int16_t getBootConsole(void) { return _boot_console; }
 };
 #endif //_HPCBOOT_SH_CONSOLE_H_

@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: console.h,v 1.4 2001/04/24 19:27:59 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: console.h,v 1.5 2001/05/21 15:54:25 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
 class Console {
 private:
 	static Console *_instance;
+	int16_t _boot_console;
 
 protected:
 	enum { CONSOLE_BUFSIZE = 256 };
@@ -52,9 +53,7 @@ protected:
 	BOOL _on;
 
 protected:
-	int16_t _boot_console;
-
-	Console(void) { /* NO-OP */ }
+	Console(void);
 	~Console(void) { /* NO-OP */ }
 
 public:
@@ -63,7 +62,9 @@ public:
 	virtual void print(const TCHAR *fmt, ...);
 	virtual BOOL init(void) { return TRUE; }
 	BOOL &on(void) { return _on; }
-	virtual int16_t getBootConsole(void) { return BI_CNUSE_BUILTIN; }
+
+	void setBootConsole(u_int16_t cnuse) { _boot_console = cnuse; }
+	int16_t getBootConsole(void) const { return _boot_console; }
 };
 
 class SerialConsole : public Console
