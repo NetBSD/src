@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.44 2001/07/18 20:52:48 thorpej Exp $	*/
+/*	$NetBSD: wds.c,v 1.45 2001/07/19 16:38:40 thorpej Exp $	*/
 
 #include "opt_ddb.h"
 
@@ -1179,13 +1179,17 @@ wds_scsipi_request(chan, req, arg)
 			if (flags & XS_CTL_DATA_UIO) {
 				error = bus_dmamap_load_uio(dmat,
 				    scb->dmamap_xfer, (struct uio *)xs->data,
-				    BUS_DMA_NOWAIT);
+				    BUS_DMA_NOWAIT |
+				    ((flags & XS_CTL_DATA_IN) ? BUS_DMA_READ :
+				     BUS_DMA_WRITE));
 			} else
 #endif /* TFS */
 			{
 				error = bus_dmamap_load(dmat,
 				    scb->dmamap_xfer, xs->data, xs->datalen,
-				    NULL, BUS_DMA_NOWAIT);
+				    NULL, BUS_DMA_NOWAIT |
+				    ((flags & XS_CTL_DATA_IN) ? BUS_DMA_READ :
+				     BUS_DMA_WRITE));
 			}
 
 			switch (error) {
