@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.163 1998/01/12 21:27:09 scottr Exp $
+#	$NetBSD: files,v 1.164 1998/01/14 23:36:31 cgd Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -27,6 +27,7 @@ define	ifnet
 define	tty
 define	audio { }
 define	scsi {[channel = -1]}
+define	ata {[drive = -1]}
 define	atapi { }
 define  miibus { }
 
@@ -163,6 +164,14 @@ file	dev/ic/com.c			com needs-flag
 # Device description for i2c bus and i2c eeprom
 define  i2c
 define  i2c_eeprom
+
+# XXX THE FOLLOWING BLOCK SHOULD BE UNCOMMENTED, BUT CANNOT
+# XXX BECAUSE NOT ALL PORTS USE THE MI wdc DRIVER YET.
+#
+# # ESDI/IDE/etc. controllers
+# device  wdc class dull: ata, atapi
+# file    dev/ic/wdc.c
+#				wdc & (wd | !wd) needs-flag # XXX
 
 # Attributes which machine-independent bus support can be attached to.
 # These should be defined here, because some of these busses can have
