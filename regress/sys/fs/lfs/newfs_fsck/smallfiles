@@ -1,0 +1,31 @@
+#!/bin/sh
+
+#
+# Create a bunch of small files at once, then delete most of them.
+# This forces live blocks in nearly empty segments.
+# If the filesystem is small enough, the cleaner will have to run in
+# order for this to complete.
+#
+# Argument is directory in which to run.
+#
+for i in 0 1 2 3 4 5
+do
+	for j in 0 1
+	do
+			# Quarter megabyte files, two at a time
+			# for a maximum of six at once
+			# (enough to force cleaning on a 2.88 disk)
+			dd if=/dev/zero of=$1/f$i$j bs=512 count=512 &
+	done
+	wait
+	sync
+	rm -f $1/f*1
+	df -k $1
+	ls -l $1
+done
+
+echo "Sleeping for 10 seconds...."
+sleep 10
+
+echo "Trying with another half meg"
+dd if=/dev/zero of=$1/f61 bs=512 count=1024
