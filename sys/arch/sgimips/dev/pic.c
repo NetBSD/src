@@ -1,4 +1,4 @@
-/* $NetBSD: pic.c,v 1.3 2004/01/13 14:31:37 sekiya Exp $	 */
+/* $NetBSD: pic.c,v 1.4 2004/04/10 19:06:33 pooka Exp $	 */
 
 /*
  * Copyright (c) 2002 Steve Rumble
@@ -54,6 +54,8 @@ static int      pic_match(struct device *, struct cfdata *, void *);
 static void     pic_attach(struct device *, struct device *, void *);
 static int      pic_print(void *, const char *);
 void		pic_bus_reset(void);
+void		pic_watchdog_enable(void);
+void		pic_watchdog_disable(void);
 void		pic_watchdog_tickle(void);
 
 CFATTACH_DECL(pic, sizeof(struct pic_softc),
@@ -75,10 +77,10 @@ pic_match(struct device * parent, struct cfdata * match, void *aux)
 	 * PIC exists on IP12 systems. It appears to be the immediate
 	 * ancestor of the mc, for mips1 processors.
 	 */
-	if (mach_type != MACH_SGI_IP12)
+	if (mach_type == MACH_SGI_IP12)
+		return (1);
+	else
 		return (0);
-
-	return (1);
 }
 
 static void
@@ -95,6 +97,8 @@ pic_attach(struct device * parent, struct device * self, void *aux)
 		panic("pic_attach: could not allocate memory\n");
 
 	platform.bus_reset = pic_bus_reset;
+	platform.watchdog_enable = pic_watchdog_enable;
+	platform.watchdog_disable = pic_watchdog_disable;
 	platform.watchdog_reset = pic_watchdog_tickle;
 
 	reg = bus_space_read_4(psc.iot, psc.ioh, PIC_SYSID);
@@ -176,14 +180,34 @@ pic_bus_reset(void)
 }
 
 void
-pic_watchdog_tickle(void)
+pic_watchdog_enable()
 {
-	u_int32_t reg;
+	uint32_t reg;
+
+	reg = bus_space_read_4(psc.iot, psc.ioh, PIC_CPUCTRL);
+	reg |= PIC_CPUCTRL_WDOG;
+	bus_space_write_4(psc.iot, psc.ioh, PIC_CPUCTRL, reg);
+}
+
+void
+pic_watchdog_disable()
+{
+	uint32_t reg;
 
 	reg = bus_space_read_4(psc.iot, psc.ioh, PIC_CPUCTRL)
-		& ~(PIC_CPUCTRL_WDOG);
+	reg &= ~(PIC_CPUCTRL_WDOG);
+	bus_space_write_4(psc.iot, psc.ioh, PIC_CPUCTRL, reg);
+}
+
+void
+pic_watchdog_tickle()
+{
+	uint32_t reg;
+
+	reg = bus_space_read_4(psc.iot, psc.ioh, PIC_CPUCTRL)
+	reg &= ~(PIC_CPUCTRL_WDOG);
 	bus_space_write_4(psc.iot, psc.ioh, PIC_CPUCTRL, reg);
 	reg = bus_space_read_4(psc.iot, psc.ioh, PIC_CPUCTRL)
-		| (PIC_CPUCTRL_WDOG);
+	reg =| (PIC_CPUCTRL_WDOG);
 	bus_space_write_4(psc.iot, psc.ioh, PIC_CPUCTRL, reg);
 }
