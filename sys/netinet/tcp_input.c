@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.141.4.2 2002/08/28 02:33:36 lukem Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.141.4.3 2002/09/06 06:21:17 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.141.4.2 2002/08/28 02:33:36 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.141.4.3 2002/09/06 06:21:17 lukem Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1503,8 +1503,12 @@ after_listen:
 			 * Drop TCP, IP headers and TCP options then add data
 			 * to socket buffer.
 			 */
-			m_adj(m, toff + off);
-			sbappend(&so->so_rcv, m);
+			if (so->so_state & SS_CANTRCVMORE)
+				m_freem(m);
+			else {
+				m_adj(m, toff + off);
+				sbappend(&so->so_rcv, m);
+			}
 			sorwakeup(so);
 			TCP_SETUP_ACK(tp, th);
 			if (tp->t_flags & TF_ACKNOW)
@@ -2250,8 +2254,12 @@ dodata:							/* XXX */
 			tcpstat.tcps_rcvpack++;
 			tcpstat.tcps_rcvbyte += tlen;
 			ND6_HINT(tp);
-			m_adj(m, hdroptlen);
-			sbappend(&(so)->so_rcv, m);
+			if (so->so_state & SS_CANTRCVMORE)
+				m_freem(m);
+			else {
+				m_adj(m, hdroptlen);
+				sbappend(&(so)->so_rcv, m);
+			}
 			sorwakeup(so);
 		} else {
 			m_adj(m, hdroptlen);
