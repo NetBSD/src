@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.30.2.8 2004/10/17 07:44:37 skrll Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.30.2.9 2005/02/15 18:04:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -64,23 +64,29 @@ struct ktr_compat {
  */
 struct ktr_header {
 	int	ktr_len;		/* length of record minus length of old header */
-	short	ktr_type;		/* trace record version and type */
-
-#define	KTR_MASK	0x0fff
-#define	KTR_VER_MASK	0xf000
-#define	KTR_VER_SHIFT	12
-#define	KTR_VERSION(kh)	(((kh)->ktr_type & KTR_VER_MASK) >> KTR_VER_SHIFT)
-
-#define	KTRv0	(0 << KTR_VER_SHIFT)
-#define	KTRv1	(1 << KTR_VER_SHIFT)
-
+#if BYTE_ORDER == LITTLE_ENDIAN
+	short	ktr_type;		/* trace record type */
+	short	ktr_version;		/* trace record version */
+#else
+	short	ktr_version;		/* trace record version */
+	short	ktr_type;		/* trace record type */
+#endif
 	pid_t	ktr_pid;		/* process id */
 	char	ktr_comm[MAXCOMLEN+1];	/* command name */
-
-	/* Changes to version 0 record start here */
-	struct	timespec ktr_time;	/* timestamp */
-	lwpid_t	ktr_lid;		/* lwp id */
+	union {
+		struct timeval _tv;	/* v0 timestamp */
+		struct timespec _ts;	/* v1 timespec */
+	} _ktr_time;
+	union {
+		const void *_buf;	/* v0 unused */
+		lwpid_t _lid;		/* v1 lwp id */
+	} _ktr_id;
 };
+
+#define ktr_lid	_ktr_id._lid
+#define ktr_time _ktr_time._ts
+#define ktr_tv _ktr_time._tv
+#define ktr_unused _ktr_id._buf
 
 #define	KTR_SHIMLEN	offsetof(struct ktr_header, ktr_pid)
 #define	KTRv0_LEN	sizeof(struct ktr_compat)

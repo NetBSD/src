@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.74.2.11 2004/11/02 07:53:23 skrll Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.74.2.12 2005/02/15 18:04:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.74.2.11 2004/11/02 07:53:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.74.2.12 2005/02/15 18:04:48 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -71,12 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.74.2.11 2004/11/02 07:53:23 skrll 
 
 struct ktrace_entry {
 	TAILQ_ENTRY(ktrace_entry) kte_list;
-	union {
-		struct ktr_header un_kte_kth;
-		struct ktr_compat un_kte_ktc;
-	} kte_un;
-#define	kte_ktc kte_un.un_kte_ktc
-#define	kte_kth kte_un.un_kte_kth
+	struct ktr_header kte_kth;
 	void *kte_buf;
 };
 
@@ -395,7 +390,7 @@ ktrinitheader(struct ktr_header *kth, struct lwp *l, int type)
 	kth->ktr_pid = p->p_pid;
 	memcpy(kth->ktr_comm, p->p_comm, MAXCOMLEN);
 
-	kth->ktr_type |= KTRFAC_VERSION(p->p_traceflag) << KTR_VER_SHIFT;
+	kth->ktr_version = KTRFAC_VERSION(p->p_traceflag);
 
 	switch (KTRFAC_VERSION(p->p_traceflag)) {
 	case 0:
@@ -1108,7 +1103,6 @@ ktrwrite(struct ktr_desc *ktd, struct ktrace_entry *kte)
 	struct iovec aiov[64], *iov;
 	struct ktrace_entry *top = kte;
 	struct ktr_header *kth;
-	struct ktr_compat *ktc;
 	struct file *fp = ktd->ktd_fp;
 	struct proc *p;
 	int rl, hl;
@@ -1127,14 +1121,13 @@ next:
 		rl = kth->ktr_len;
 		hl = KTRv0_LEN;
 
-		switch (KTR_VERSION(kth)) {
+		switch (kth->ktr_version) {
 		case 0:
 			/*
-			 * Convert the old format fields to the new
+			 * Convert back to the old format fields
 			 */
-			ktc = &kte->kte_ktc;
-			TIMESPEC_TO_TIMEVAL(&ktc->ktc_time, &kth->ktr_time);
-			ktc->ktc_unused = NULL;
+			TIMESPEC_TO_TIMEVAL(&kth->ktr_tv, &kth->ktr_time);
+			kth->ktr_unused = NULL;
 			hl = KTRv0_LEN;
 			break;
 		/*
