@@ -1,11 +1,11 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.29 2003/07/16 05:42:02 itojun Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.30 2003/07/18 04:04:03 lukem Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
 .include <bsd.sys.mk>
 
 ##### Basic targets
-.PHONY:		cleanprog 
+.PHONY:		cleanprog
 clean:		cleanprog
 
 ##### Default values

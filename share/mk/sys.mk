@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.74 2003/05/04 12:05:50 fvdl Exp $
+#	$NetBSD: sys.mk,v 1.75 2003/07/18 04:04:04 lukem Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 
 unix?=		We run NetBSD.
@@ -55,7 +55,7 @@ COMPILE.m?=	${OBJC} ${OBJCFLAGS} ${CPPFLAGS} -c
 LINK.m?=	${OBJC} ${OBJCFLAGS} ${CPPFLAGS} ${LDFLAGS}
 
 CPP?=		cpp
-CPPFLAGS?=	
+CPPFLAGS?=
 
 FC?=		f77
 FFLAGS?=	-O
@@ -188,7 +188,7 @@ YACC.y?=	${YACC} ${YFLAGS}
 	mv lex.yy.c ${.TARGET}
 .l.o:
 	${LEX.l} ${.IMPSRC}
-	${COMPILE.c} -o ${.TARGET} lex.yy.c 
+	${COMPILE.c} -o ${.TARGET} lex.yy.c
 	rm -f lex.yy.c
 
 # Yacc
