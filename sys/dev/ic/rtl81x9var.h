@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.5.4.1 2001/01/25 07:23:15 jhawk Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.5.4.2 2001/10/27 20:22:27 he Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -37,22 +37,6 @@
 #define RTK_ETHER_ALIGN	2
 #define RTK_RXSTAT_LEN	4
 
-struct rtk_chain_data {
-	caddr_t			rtk_rx_buf;
-
-	struct mbuf		*rtk_tx_chain[RTK_TX_LIST_CNT];
-	int			last_tx;
-	int			cur_tx;
-};
-
-#define RTK_INC(x)		(x = (x + 1) % RTK_TX_LIST_CNT)
-#define RTK_CUR_TXADDR(x)	((x->rtk_cdata.cur_tx * 4) + RTK_TXADDR0)
-#define RTK_CUR_TXSTAT(x)	((x->rtk_cdata.cur_tx * 4) + RTK_TXSTAT0)
-#define RTK_CUR_TXMBUF(x)	(x->rtk_cdata.rtk_tx_chain[x->rtk_cdata.cur_tx])
-#define RTK_LAST_TXADDR(x)	((x->rtk_cdata.last_tx * 4) + RTK_TXADDR0)
-#define RTK_LAST_TXSTAT(x)	((x->rtk_cdata.last_tx * 4) + RTK_TXSTAT0)
-#define RTK_LAST_TXMBUF(x)	(x->rtk_cdata.rtk_tx_chain[x->rtk_cdata.last_tx])
-
 struct rtk_type {
 	u_int16_t		rtk_vid;
 	u_int16_t		rtk_did;
@@ -80,6 +64,14 @@ struct rtk_mii_frame {
 #define RTK_8129		1
 #define RTK_8139		2
 
+struct rtk_tx_desc {
+	SIMPLEQ_ENTRY(rtk_tx_desc) txd_q;
+	struct mbuf		*txd_mbuf;
+	bus_dmamap_t		txd_dmamap;
+	bus_addr_t		txd_txaddr;
+	bus_addr_t		txd_txstat;
+};
+
 struct rtk_softc {
 	struct device sc_dev;		/* generic device structures */
 	struct ethercom		ethercom;	/* interface info */
@@ -88,13 +80,20 @@ struct rtk_softc {
 	bus_space_handle_t	rtk_bhandle;	/* bus space handle */
 	bus_space_tag_t		rtk_btag;	/* bus space tag */
 	int			rtk_type;
-	struct rtk_chain_data	rtk_cdata;
 	bus_dma_tag_t 		sc_dmat;
 	bus_dma_segment_t 	sc_dmaseg;
 	int			sc_dmanseg;
-	bus_dmamap_t 		recv_dmamap, snd_dmamap[RTK_TX_LIST_CNT];
+
+	bus_dmamap_t 		recv_dmamap;
+	caddr_t			rtk_rx_buf;
+
+	struct rtk_tx_desc	rtk_tx_descs[RTK_TX_LIST_CNT];
+	SIMPLEQ_HEAD(, rtk_tx_desc) rtk_tx_free;
+	SIMPLEQ_HEAD(, rtk_tx_desc) rtk_tx_dirty;
 
 	int			sc_flags;	/* misc flags */
+	int			sc_txthresh;	/* Early tx threshold */
+
 	void	*sc_sdhook;			/* shutdown hook */
 	void	*sc_powerhook;			/* power management hook */
 
@@ -108,6 +107,11 @@ struct rtk_softc {
 #define RTK_ENABLED  0x00000002 /* chip is enabled	*/
 
 #define RTK_IS_ENABLED(sc)	((sc)->sc_flags & RTK_ENABLED)
+#define RTK_TX_THRESH(sc)	(((sc)->sc_txthresh << 16) & 0x003F0000)
+
+#define TXTH_256	8
+#define TXTH_MAX	48
+
 /*
  * register space access macros
  */
