@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.2 1997/04/08 06:53:28 scottr Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.3 1997/04/14 16:56:26 scottr Exp $	*/
 
 /*
  * Copyright (C) 1996, 1997 John P. Wittkoski
@@ -36,6 +36,8 @@
  * But it works, so I'm happy. :-) jpw */
 
 #ifdef __NetBSD__
+#include "opt_mrg_adb.h"
+
 #include <sys/param.h>
 #include <sys/cdefs.h>
 #include <sys/systm.h>

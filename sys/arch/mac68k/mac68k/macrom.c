@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.33 1997/04/08 06:16:07 scottr Exp $	*/
+/*	$NetBSD: macrom.c,v 1.34 1997/04/14 16:56:32 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -44,6 +44,8 @@
  * can be generalized somewhat for others.  It looks like most machines
  * are similar to the IIsi ("Universal ROMs"?).
  */
+
+#include "opt_mrg_adb.h"
 
 #include <sys/param.h>
 #include <sys/malloc.h>

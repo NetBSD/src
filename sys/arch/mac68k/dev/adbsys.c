@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsys.c,v 1.25 1997/04/08 03:19:05 scottr Exp $	*/
+/*	$NetBSD: adbsys.c,v 1.26 1997/04/14 16:56:28 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -29,6 +29,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_mrg_adb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

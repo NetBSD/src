@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.143 1997/04/11 00:58:23 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.144 1997/04/14 16:56:30 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -76,6 +76,8 @@
  *
  *	@(#)machdep.c	7.16 (Berkeley) 6/3/91
  */
+
+#include "opt_mrg_adb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
