@@ -1,4 +1,4 @@
-/*	$NetBSD: sdvar.h,v 1.5 1998/08/05 16:29:06 drochner Exp $	*/
+/*	$NetBSD: sdvar.h,v 1.6 1998/08/15 01:10:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -60,6 +60,8 @@ struct sd_softc {
 #define	SDF_WLABEL	0x04		/* label is writable */
 #define	SDF_LABELLING	0x08		/* writing label */
 #define	SDF_ANCIENT	0x10		/* disk is ancient; for minphys */
+#define	SDF_DIRTY	0x20		/* disk is dirty; needs cache flush */
+#define	SDF_FLUSHING	0x40		/* flushing, for sddone() */
 	struct scsipi_link *sc_link;	/* contains our targ, lun, etc. */
 	struct disk_parms {
 		u_long	heads;		/* number of heads */
@@ -84,6 +86,7 @@ struct sd_softc {
 struct sd_ops {
 	int	(*sdo_get_parms) __P((struct sd_softc *, struct disk_parms *,
 		    int));
+	void	(*sdo_flush) __P((struct sd_softc *, int));
 };
 #define	SDGP_RESULT_OK		0	/* paramters obtained */
 #define	SDGP_RESULT_OFFLINE	1	/* no media, or otherwise losing */

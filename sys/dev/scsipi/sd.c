@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.131 1998/08/05 16:29:06 drochner Exp $	*/
+/*	$NetBSD: sd.c,v 1.132 1998/08/15 01:10:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -95,6 +95,7 @@ void	sdgetdefaultlabel __P((struct sd_softc *, struct disklabel *));
 void	sdgetdisklabel __P((struct sd_softc *));
 void	sdstart __P((void *));
 void	sddone __P((struct scsipi_xfer *));
+void	sd_shutdown __P((void *));
 int	sd_reassign_blocks __P((struct sd_softc *, u_long));
 int	sd_interpret_sense __P((struct scsipi_xfer *));
 
@@ -209,6 +210,19 @@ sdattach(parent, sd, sc_link, ops)
 #endif
 	}
 	printf("\n");
+
+	/*
+	 * Establish a shutdown hook so that we can ensure that
+	 * our data has actually made it onto the platter at
+	 * shutdown time.  Note that this relies on the fact
+	 * that the shutdown hook code puts us at the head of
+	 * the list (thus guaranteeing that our hook runs before
+	 * our ancestors').
+	 */
+	if ((sd->sc_sdhook =
+	    shutdownhook_establish(sd_shutdown, sd)) == NULL)
+		printf("%s: WARNING: unable to establish shutdown hook\n",
+		    sd->sc_dev.dv_xname);
 
 #if NRND > 0
 	/*
@@ -412,6 +426,14 @@ sdclose(dev, flag, fmt, p)
 	    sd->sc_dk.dk_copenmask | sd->sc_dk.dk_bopenmask;
 
 	if (sd->sc_dk.dk_openmask == 0) {
+		/*
+		 * If the disk cache needs flushing, and the disk supports
+		 * it, do it now.
+		 */
+		if ((sd->flags & SDF_DIRTY) != 0 &&
+		    sd->sc_ops->sdo_flush != NULL)
+			(*sd->sc_ops->sdo_flush)(sd, 0);
+
 		/* XXXX Must wait for I/O to complete! */
 
 		scsipi_prevent(sd->sc_link, PR_ALLOW,
@@ -612,6 +634,12 @@ sdstart(v)
 		disk_busy(&sd->sc_dk);
 
 		/*
+		 * Mark the disk dirty so that the cache will be
+		 * flushed on close.
+		 */
+		sd->flags |= SDF_DIRTY;
+
+		/*
 		 * Call the routine that chats with the adapter.
 		 * Note: we cannot sleep as we may be an interrupt
 		 */
@@ -632,6 +660,11 @@ sddone(xs)
 	struct scsipi_xfer *xs;
 {
 	struct sd_softc *sd = xs->sc_link->device_softc;
+
+	if (sd->flags & SDF_FLUSHING) {
+		/* Flush completed, no longer dirty. */
+		sd->flags &= ~(SDF_FLUSHING|SDF_DIRTY);
+	}
 
 	if (xs->bp != NULL) {
 		disk_unbusy(&sd->sc_dk, xs->bp->b_bcount - xs->bp->b_resid);
@@ -851,6 +884,21 @@ sdgetdisklabel(sd)
 		printf("%s: %s\n", sd->sc_dev.dv_xname, errstring);
 		return;
 	}
+}
+
+void
+sd_shutdown(arg)
+	void *arg;
+{
+	struct sd_softc *sd = arg;
+
+	/*
+	 * If the disk cache needs to be flushed, and the disk supports
+	 * it, flush it.  We're cold at this point, so we poll for
+	 * completion.
+	 */
+	if ((sd->flags & SDF_DIRTY) != 0 && sd->sc_ops->sdo_flush != NULL)
+		(*sd->sc_ops->sdo_flush)(sd, SCSI_AUTOCONF);
 }
 
 /*
