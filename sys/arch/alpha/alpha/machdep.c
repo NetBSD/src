@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.248.2.3 2001/09/13 18:38:57 nathanw Exp $ */
+/* $NetBSD: machdep.c,v 1.248.2.4 2001/09/14 23:28:50 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.248.2.3 2001/09/13 18:38:57 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.248.2.4 2001/09/14 23:28:50 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1628,11 +1628,20 @@ ucontext_t *
 cpu_stashcontext(struct lwp *l)
 {
 	ucontext_t u, *up;
-	struct trapframe *frame;
 	void *stack;
+	unsigned long usp;
 
-	frame = l->l_md.md_tf;
-	stack = (char *)alpha_pal_rdusp() - sizeof(ucontext_t);
+	/* XXX if there's a better, general way to get the USP of
+	 * an LWP that might or might not be curproc, I'd like to know
+	 * about it.
+	 */
+	if (l == curproc)
+		usp = alpha_pal_rdusp();
+	else
+		usp = l->l_addr->u_pcb.pcb_hw.apcb_usp;
+
+	stack = (void *)(usp - sizeof(ucontext_t));
+
 	getucontext(l, &u);
 	up = stack;
 
