@@ -1,7 +1,7 @@
 #
 #	GENERIC -- everything that's currently supported
 #
-#	$Id: TEST,v 1.20 1993/11/14 17:41:37 mycroft Exp $
+#	$Id: TEST,v 1.21 1993/11/14 17:42:19 mycroft Exp $
 #
 
 # standard options
@@ -50,7 +50,7 @@ options		GATEWAY			# packet forwarding
 options		DIRECTED_BROADCAST	# broadcast across subnets
 options		INET			# IP
 options		NS			# XNS
-optoins		NSIP			# IDP over IP
+options		NSIP			# IDP over IP
 options		CCITT			# X.25
 options		ISO			# OSI
 options		ISO_X25ESIS		# ESIS over X.25
