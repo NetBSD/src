@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile.c,v 1.18 2001/10/30 23:51:03 thorpej Exp $ */
+/* $NetBSD: loadfile.c,v 1.19 2001/10/31 01:51:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -93,21 +93,6 @@
 
 #include "loadfile.h"
 
-#ifdef BOOT_ECOFF
-#include <sys/exec_ecoff.h>
-static int coff_exec __P((int, struct ecoff_exechdr *, u_long *, int));
-#endif
-
-#ifdef BOOT_ELF
-#include <sys/exec_elf.h>
-static int elf_exec __P((int, Elf_Ehdr *, u_long *, int));
-#endif
-
-#ifdef BOOT_AOUT
-#include <sys/exec_aout.h>
-static int aout_exec __P((int, struct exec *, u_long *, int));
-#endif
-
 /*
  * Open 'filename', read in program and and return 0 if ok 1 on error.
  * Fill in marks
@@ -147,13 +132,13 @@ loadfile(fname, marks, flags)
 
 #ifdef BOOT_ECOFF
 	if (!ECOFF_BADMAG(&hdr.coff)) {
-		rval = coff_exec(fd, &hdr.coff, marks, flags);
+		rval = loadfile_coff(fd, &hdr.coff, marks, flags);
 	} else
 #endif
 #ifdef BOOT_ELF
 	if (memcmp(hdr.elf.e_ident, ELFMAG, SELFMAG) == 0 &&
 	    hdr.elf.e_ident[EI_CLASS] == ELFCLASS) {
-		rval = elf_exec(fd, &hdr.elf, marks, flags);
+		rval = loadfile_elf(fd, &hdr.elf, marks, flags);
 	} else
 #endif
 #ifdef BOOT_AOUT
@@ -162,7 +147,7 @@ loadfile(fname, marks, flags)
 	    && N_GETMID(hdr.aout) == MID_MACHINE
 #endif
 	    ) {
-		rval = aout_exec(fd, &hdr.aout, marks, flags);
+		rval = loadfile_aout(fd, &hdr.aout, marks, flags);
 	} else
 #endif
 	{
@@ -179,15 +164,3 @@ err:
 	(void)close(fd);
 	return -1;
 }
-
-#ifdef BOOT_ECOFF
-#include "loadfile_ecoff.c"
-#endif
-
-#ifdef BOOT_ELF
-#include "loadfile_elf32.c"
-#endif
-
-#ifdef BOOT_AOUT
-#include "loadfile_aout.c"
-#endif
