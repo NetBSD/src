@@ -1,4 +1,4 @@
-/*	$NetBSD: eject.c,v 1.13 2001/01/21 09:55:40 mycroft Exp $	*/
+/*	$NetBSD: eject.c,v 1.14 2001/08/20 08:21:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,8 +43,17 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: eject.c,v 1.13 2001/01/21 09:55:40 mycroft Exp $");
+__RCSID("$NetBSD: eject.c,v 1.14 2001/08/20 08:21:10 ad Exp $");
 #endif /* not lint */
+
+#include <sys/types.h>
+#include <sys/cdio.h>
+#include <sys/disklabel.h>
+#include <sys/ioctl.h>
+#include <sys/param.h>
+#include <sys/ucred.h>
+#include <sys/mount.h>
+#include <sys/mtio.h>
 
 #include <ctype.h>
 #include <err.h>
@@ -53,13 +62,7 @@ __RCSID("$NetBSD: eject.c,v 1.13 2001/01/21 09:55:40 mycroft Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/cdio.h>
-#include <sys/disklabel.h>
-#include <sys/ioctl.h>
-#include <sys/param.h>
-#include <sys/ucred.h>
-#include <sys/mount.h>
-#include <sys/mtio.h>
+#include <util.h>
 
 struct nicknames_s {
     char *name;			/* The name given on the command line. */
@@ -298,7 +301,7 @@ nick2rdev(char *nn)
 		    devnum);
 	    if((nicknames[n].type & TYPEMASK) != TAPE) {
 		strcat(devname, "a");
-		devname[strlen(devname) - 1] += RAW_PART;
+		devname[strlen(devname) - 1] += getrawpartition();
 	    }
 	    return(devname);
 	}

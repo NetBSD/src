@@ -1,4 +1,4 @@
-/*	$NetBSD: mbrlabel.c,v 1.17 2001/07/26 22:47:35 wiz Exp $	*/
+/*	$NetBSD: mbrlabel.c,v 1.18 2001/08/20 08:21:10 ad Exp $	*/
 
 /*
  * Copyright (C) 1998 Wolfgang Solfrank.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mbrlabel.c,v 1.17 2001/07/26 22:47:35 wiz Exp $");
+__RCSID("$NetBSD: mbrlabel.c,v 1.18 2001/08/20 08:21:10 ad Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -75,8 +75,8 @@ getlabel(int sd)
 	 * Some ports seem to not set the number of partitions
 	 * correctly, albeit they seem to set the raw partition ok!
 	 */
-	if (label.d_npartitions <= RAW_PART)
-		label.d_npartitions = RAW_PART + 1;
+	if (label.d_npartitions <= getrawpartition())
+		label.d_npartitions = getrawpartition() + 1;
 }
 
 void
