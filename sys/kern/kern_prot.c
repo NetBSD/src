@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.75 2003/02/28 23:24:40 enami Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.76 2003/03/05 18:42:19 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.75 2003/02/28 23:24:40 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.76 2003/03/05 18:42:19 dsl Exp $");
 
 #include "opt_compat_43.h"
 
@@ -312,6 +312,124 @@ sys_setpgid(struct lwp *l, void *v, register_t *retval)
 	return (enterpgrp(targp, SCARG(uap, pgid), 0));
 }
 
+/*
+ * Set real, effective and saved uids to the requested values.
+ * non-root callers can only ever change uids to values that match
+ * one of the processes current uid values.
+ * This is further restricted by the flags argument.
+ */
+
+int
+do_setresuid(struct lwp *l, uid_t r, uid_t e, uid_t sv, u_int flags)
+{
+	int error;
+	struct proc *p = l->l_proc;
+	struct pcred *pcred = p->p_cred;
+	struct ucred *cred = pcred->pc_ucred;
+
+	/* Superuser can do anything it wants to.... */
+	error = suser(cred, &p->p_acflag);
+	if (error) {
+		/* Otherwise check new value is one of the allowed
+		   existing values. */
+		if (r != -1 && !((flags & ID_R_EQ_R) && r == pcred->p_ruid)
+			    && !((flags & ID_R_EQ_E) && r == cred->cr_uid)
+			    && !((flags & ID_R_EQ_S) && r == pcred->p_svuid))
+			return error;
+		if (e != -1 && !((flags & ID_E_EQ_R) && e == pcred->p_ruid)
+			    && !((flags & ID_E_EQ_E) && e == cred->cr_uid)
+			    && !((flags & ID_E_EQ_S) && e == pcred->p_svuid))
+			return error;
+		if (sv != -1 && !((flags & ID_S_EQ_R) && sv == pcred->p_ruid)
+			    && !((flags & ID_S_EQ_E) && sv == cred->cr_uid)
+			    && !((flags & ID_S_EQ_S) && sv == pcred->p_svuid))
+			return error;
+	}
+
+	/* If nothing has changed, short circuit the request */
+	if ((r == -1 || r == pcred->p_ruid)
+	    && (e == -1 || e == cred->cr_uid)
+	    && (sv == -1 || sv == pcred->p_svuid))
+		/* nothing to do */
+		return 0;
+
+	/* The pcred structure is not actually shared... */
+	if (r != -1 && r != pcred->p_ruid) {
+		/* Update count of processes for this user */
+		(void)chgproccnt(pcred->p_ruid, -1);
+		(void)chgproccnt(r, 1);
+		pcred->p_ruid = r;
+	}
+	if (sv != -1)
+		pcred->p_svuid = sv;
+	if (e != -1 && e != cred->cr_uid) {
+		/* Update a clone of the current credentials */
+		pcred->pc_ucred = cred = crcopy(cred);
+		cred->cr_uid = e;
+	}
+
+	/* Mark process as having changed credentials, stops tracing etc */
+	p_sugid(p);
+	return 0;
+}
+
+/*
+ * Set real, effective and saved gids to the requested values.
+ * non-root callers can only ever change gids to values that match
+ * one of the processes current gid values.
+ * This is further restricted by the flags argument.
+ */
+
+int
+do_setresgid(struct lwp *l, gid_t r, gid_t e, gid_t sv, u_int flags)
+{
+	int error;
+	struct proc *p = l->l_proc;
+	struct pcred *pcred = p->p_cred;
+	struct ucred *cred = pcred->pc_ucred;
+
+	/* Superuser can do anything it wants to.... */
+	error = suser(cred, &p->p_acflag);
+	if (error) {
+		/* Otherwise check new value is one of the allowed
+		   existing values. */
+		if (r != -1 && !((flags & ID_R_EQ_R) && r == pcred->p_rgid)
+			    && !((flags & ID_R_EQ_E) && r == cred->cr_gid)
+			    && !((flags & ID_R_EQ_S) && r == pcred->p_svgid))
+			return error;
+		if (e != -1 && !((flags & ID_E_EQ_R) && e == pcred->p_rgid)
+			    && !((flags & ID_E_EQ_E) && e == cred->cr_gid)
+			    && !((flags & ID_E_EQ_S) && e == pcred->p_svgid))
+			return error;
+		if (sv != -1 && !((flags & ID_S_EQ_R) && sv == pcred->p_rgid)
+			    && !((flags & ID_S_EQ_E) && sv == cred->cr_gid)
+			    && !((flags & ID_S_EQ_S) && sv == pcred->p_svgid))
+			return error;
+	}
+
+	/* If nothing has changed, short circuit the request */
+	if ((r == -1 || r == pcred->p_rgid)
+	    && (e == -1 || e == cred->cr_gid)
+	    && (sv == -1 || sv == pcred->p_svgid))
+		/* nothing to do */
+		return 0;
+
+	/* The pcred structure is not actually shared... */
+	if (r != -1)
+		pcred->p_rgid = r;
+	if (sv != -1)
+		pcred->p_svgid = sv;
+	if (e != -1 && e != cred->cr_gid) {
+		/* Update a clone of the current credentials */
+		pcred->pc_ucred = cred = crcopy(cred);
+		cred->cr_gid = e;
+	}
+
+	/* Mark process as having changed credentials, stops tracing etc */
+	p_sugid(p);
+	return 0;
+}
+
 /* ARGSUSED */
 int
 sys_setuid(struct lwp *l, void *v, register_t *retval)
@@ -319,34 +437,10 @@ sys_setuid(struct lwp *l, void *v, register_t *retval)
 	struct sys_setuid_args /* {
 		syscallarg(uid_t) uid;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct pcred *pc = p->p_cred;
-	uid_t uid;
-	int error;
+	uid_t uid = SCARG(uap, uid);
 
-	uid = SCARG(uap, uid);
-	if (uid != pc->p_ruid &&
-	    (error = suser(pc->pc_ucred, &p->p_acflag)))
-		return (error);
-	/*
-	 * Check if we are all set, and this is a no-op.
-	 */
-	if (pc->p_ruid == uid && pc->p_svuid == uid &&
-	    pc->pc_ucred->cr_uid == uid)
-		return (0);
-	/*
-	 * Everything's okay, do it.
-	 * Transfer proc count to new user.
-	 * Copy credentials so other references do not see our changes.
-	 */
-	(void)chgproccnt(pc->p_ruid, -1);
-	(void)chgproccnt(uid, 1);
-	pc->pc_ucred = crcopy(pc->pc_ucred);
-	pc->pc_ucred->cr_uid = uid;
-	pc->p_ruid = uid;
-	pc->p_svuid = uid;
-	p_sugid(p);
-	return (0);
+	return do_setresuid(l, uid, uid, uid,
+			    ID_R_EQ_R | ID_E_EQ_R | ID_S_EQ_R);
 }
 
 /* ARGSUSED */
@@ -356,29 +450,8 @@ sys_seteuid(struct lwp *l, void *v, register_t *retval)
 	struct sys_seteuid_args /* {
 		syscallarg(uid_t) euid;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct pcred *pc = p->p_cred;
-	uid_t euid;
-	int error;
 
-	euid = SCARG(uap, euid);
-	if (euid != pc->p_ruid && euid != pc->p_svuid &&
-	    (error = suser(pc->pc_ucred, &p->p_acflag)))
-		return (error);
-	/*
-	 * Check if we are all set, and this is a no-op.
-	 */
-	if (pc->pc_ucred->cr_uid == euid)
-		return (0);
-
-	/*
-	 * Everything's okay, do it.  Copy credentials so other references do
-	 * not see our changes.
-	 */
-	pc->pc_ucred = crcopy(pc->pc_ucred);
-	pc->pc_ucred->cr_uid = euid;
-	p_sugid(p);
-	return (0);
+	return do_setresuid(l, -1, SCARG(uap, euid), -1, ID_E_EQ_R | ID_E_EQ_S);
 }
 
 int
@@ -389,42 +462,21 @@ sys_setreuid(struct lwp *l, void *v, register_t *retval)
 		syscallarg(uid_t) euid;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	struct pcred *pc = p->p_cred;
-	uid_t ruid, euid;
-	int error, changed = 0;
+	uid_t ruid, euid, svuid;
 
 	ruid = SCARG(uap, ruid);
 	euid = SCARG(uap, euid);
+	if (ruid == -1)
+		ruid = p->p_cred->p_ruid;
+	if (euid == -1)
+		euid = p->p_ucred->cr_uid;
+	/* Saved uid is set to the new euid if the ruid changed */
+	svuid = ruid == p->p_cred->p_ruid ? -1 : euid;
 
-	if (ruid != (uid_t)-1 &&
-	    ruid != pc->p_ruid && ruid != pc->pc_ucred->cr_uid &&
-	    (error = suser(pc->pc_ucred, &p->p_acflag)))
-		return (error);
-
-	if (euid != (uid_t)-1 &&
-	    euid != pc->p_ruid && euid != pc->pc_ucred->cr_uid &&
-	    euid != pc->p_svuid &&
-	    (error = suser(pc->pc_ucred, &p->p_acflag)))
-		return (error);
-
-	if (euid != (uid_t)-1 && euid != pc->pc_ucred->cr_uid) {
-		pc->pc_ucred = crcopy(pc->pc_ucred);
-		pc->pc_ucred->cr_uid = euid;
-		changed++;
-	}
-
-	if (ruid != (uid_t)-1 &&
-	    (pc->p_ruid != ruid || pc->p_svuid != pc->pc_ucred->cr_uid)) {
-		(void)chgproccnt(pc->p_ruid, -1);
-		(void)chgproccnt(ruid, 1);
-		pc->p_ruid = ruid;
-		pc->p_svuid = pc->pc_ucred->cr_uid;
-		changed++;
-	}
-
-	if (changed)
-		p_sugid(p);
-	return (0);
+	return do_setresuid(l, ruid, euid, svuid,
+			    ID_R_EQ_R | ID_R_EQ_E |
+			    ID_E_EQ_R | ID_E_EQ_E | ID_E_EQ_S |
+			    ID_S_EQ_R | ID_S_EQ_E | ID_S_EQ_S);
 }
 
 /* ARGSUSED */
@@ -434,28 +486,10 @@ sys_setgid(struct lwp *l, void *v, register_t *retval)
 	struct sys_setgid_args /* {
 		syscallarg(gid_t) gid;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct pcred *pc = p->p_cred;
-	gid_t gid;
-	int error;
+	gid_t gid = SCARG(uap, gid);
 
-	gid = SCARG(uap, gid);
-	if (gid != pc->p_rgid &&
-	    (error = suser(pc->pc_ucred, &p->p_acflag)))
-		return (error);
-	/*
-	 * Check if we are all set, and this is a no-op.
-	 */
-	if (pc->pc_ucred->cr_gid == gid && pc->p_rgid == gid &&
-	    pc->p_svgid == gid)
-		return (0);
-
-	pc->pc_ucred = crcopy(pc->pc_ucred);
-	pc->pc_ucred->cr_gid = gid;
-	pc->p_rgid = gid;
-	pc->p_svgid = gid;
-	p_sugid(p);
-	return (0);
+	return do_setresgid(l, gid, gid, gid,
+			    ID_R_EQ_R | ID_E_EQ_R | ID_S_EQ_R);
 }
 
 /* ARGSUSED */
@@ -465,25 +499,8 @@ sys_setegid(struct lwp *l, void *v, register_t *retval)
 	struct sys_setegid_args /* {
 		syscallarg(gid_t) egid;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct pcred *pc = p->p_cred;
-	gid_t egid;
-	int error;
 
-	egid = SCARG(uap, egid);
-	if (egid != pc->p_rgid && egid != pc->p_svgid &&
-	    (error = suser(pc->pc_ucred, &p->p_acflag)))
-		return (error);
-	/*
-	 * Check if we are all set, and this is a no-op.
-	 */
-	if (pc->pc_ucred->cr_gid == egid)
-		return (0);
-
-	pc->pc_ucred = crcopy(pc->pc_ucred);
-	pc->pc_ucred->cr_gid = egid;
-	p_sugid(p);
-	return (0);
+	return do_setresgid(l, -1, SCARG(uap, egid), -1, ID_E_EQ_R | ID_E_EQ_S);
 }
 
 int
@@ -494,40 +511,21 @@ sys_setregid(struct lwp *l, void *v, register_t *retval)
 		syscallarg(gid_t) egid;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	struct pcred *pc = p->p_cred;
-	gid_t rgid, egid;
-	int error, changed = 0;
+	gid_t rgid, egid, svgid;
 
 	rgid = SCARG(uap, rgid);
 	egid = SCARG(uap, egid);
+	if (rgid == -1)
+		rgid = p->p_cred->p_rgid;
+	if (egid == -1)
+		egid = p->p_ucred->cr_gid;
+	/* Saved gid is set to the new egid if the rgid changed */
+	svgid = rgid == p->p_cred->p_rgid ? -1 : egid;
 
-	if (rgid != (gid_t)-1 &&
-	    rgid != pc->p_rgid && rgid != pc->pc_ucred->cr_gid &&
-	    (error = suser(pc->pc_ucred, &p->p_acflag)))
-		return (error);
-
-	if (egid != (gid_t)-1 &&
-	    egid != pc->p_rgid && egid != pc->pc_ucred->cr_gid &&
-	    egid != pc->p_svgid &&
-	    (error = suser(pc->pc_ucred, &p->p_acflag)))
-		return (error);
-
-	if (egid != (gid_t)-1 && pc->pc_ucred->cr_gid != egid) {
-		pc->pc_ucred = crcopy(pc->pc_ucred);
-		pc->pc_ucred->cr_gid = egid;
-		changed++;
-	}
-
-	if (rgid != (gid_t)-1 &&
-	    (pc->p_rgid != rgid || pc->p_svgid != pc->pc_ucred->cr_gid)) {
-		pc->p_rgid = rgid;
-		pc->p_svgid = pc->pc_ucred->cr_gid;
-		changed++;
-	}
-
-	if (changed)
-		p_sugid(p);
-	return (0);
+	return do_setresgid(l, rgid, egid, svgid,
+			ID_R_EQ_R | ID_R_EQ_E |
+			ID_E_EQ_R | ID_E_EQ_E | ID_E_EQ_S |
+			ID_S_EQ_R | ID_S_EQ_E | ID_S_EQ_S);
 }
 
 int
