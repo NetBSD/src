@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.49 2004/03/14 01:08:47 cl Exp $	*/
+/*	$NetBSD: fault.c,v 1.50 2004/08/08 14:21:29 rearnsha Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.49 2004/03/14 01:08:47 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.50 2004/08/08 14:21:29 rearnsha Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,6 +91,10 @@ __KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.49 2004/03/14 01:08:47 cl Exp $");
 #include <sys/kernel.h>
 
 #include <uvm/uvm_extern.h>
+#include <uvm/uvm_stat.h>
+#ifdef UVMHIST
+#include <uvm/uvm.h>
+#endif
 
 #include <arm/cpuconf.h>
 
@@ -218,10 +222,13 @@ data_abort_handler(trapframe_t *tf)
 	int error;
 	ksiginfo_t ksi;
 
+	UVMHIST_FUNC("data_abort_handler"); 
+
 	/* Grab FAR/FSR before enabling interrupts */
 	far = cpu_faultaddress();
 	fsr = cpu_faultstatus();
 
+	UVMHIST_CALLED(maphist);
 	/* Update vmmeter statistics */
 	uvmexp.traps++;
 
@@ -231,6 +238,9 @@ data_abort_handler(trapframe_t *tf)
 
 	/* Get the current lwp structure or lwp0 if there is none */
 	l = (curlwp != NULL) ? curlwp : &lwp0;
+
+	UVMHIST_LOG(maphist, " (pc=0x%x, l=0x%x, far=0x%x, fsr=0x%x)",
+	    tf->tf_pc, l, far, fsr);
 
 	/* Data abort came from user mode? */
 	user = TRAP_USERMODE(tf);
@@ -392,6 +402,7 @@ data_abort_handler(trapframe_t *tf)
 	if (pmap_fault_fixup(map->pmap, va, ftype, user)) {
 		if (map != kernel_map)
 			l->l_flag &= ~L_SA_PAGEFAULT;
+		UVMHIST_LOG(maphist, " <- ref/mod emul", 0, 0, 0, 0);
 		goto out;
 	}
 
@@ -416,6 +427,7 @@ data_abort_handler(trapframe_t *tf)
 	if (__predict_true(error == 0)) {
 		if (user)
 			uvm_grow(l->l_proc, va); /* Record any stack growth */
+		UVMHIST_LOG(maphist, " <- uvm", 0, 0, 0, 0);
 		goto out;
 	}
 
@@ -445,6 +457,7 @@ data_abort_handler(trapframe_t *tf)
 	ksi.ksi_code = (error == EACCES) ? SEGV_ACCERR : SEGV_MAPERR;
 	ksi.ksi_addr = (u_int32_t *)(intptr_t) far;
 	ksi.ksi_trap = fsr;
+	UVMHIST_LOG(maphist, " <- erorr (%d)", error, 0, 0, 0);
 
 do_trapsignal:
 	call_trapsignal(l, &ksi);
@@ -700,6 +713,8 @@ prefetch_abort_handler(trapframe_t *tf)
 	ksiginfo_t ksi;
 	int error;
 
+	UVMHIST_FUNC("prefetch_abort_handler"); UVMHIST_CALLED(maphist);
+
 	/* Update vmmeter statistics */
 	uvmexp.traps++;
 
@@ -736,6 +751,8 @@ prefetch_abort_handler(trapframe_t *tf)
 	fault_pc = tf->tf_pc;
 	l = curlwp;
 	l->l_addr->u_pcb.pcb_tf = tf;
+	UVMHIST_LOG(maphist, " (pc=0x%x, l=0x%x, tf=0x%x)", fault_pc, l, tf,
+	    0);
 
 	/* Ok validate the address, can only execute in USER space */
 	if (__predict_false(fault_pc >= VM_MAXUSER_ADDRESS ||
@@ -757,8 +774,10 @@ prefetch_abort_handler(trapframe_t *tf)
 #ifdef DEBUG
 	last_fault_code = -1;
 #endif
-	if (pmap_fault_fixup(map->pmap, va, VM_PROT_READ, 1))
+	if (pmap_fault_fixup(map->pmap, va, VM_PROT_READ, 1)) {
+		UVMHIST_LOG (maphist, " <- emulated", 0, 0, 0, 0);
 		goto out;
+	}
 
 #ifdef DIAGNOSTIC
 	if (__predict_false(current_intr_depth > 0)) {
@@ -768,11 +787,13 @@ prefetch_abort_handler(trapframe_t *tf)
 #endif
 
 	error = uvm_fault(map, va, 0, VM_PROT_READ);
-	if (__predict_true(error == 0))
+	if (__predict_true(error == 0)) {
+		UVMHIST_LOG (maphist, " <- uvm", 0, 0, 0, 0);
 		goto out;
-
+	}
 	KSI_INIT_TRAP(&ksi);
 
+	UVMHIST_LOG (maphist, " <- fatal (%d)", error, 0, 0, 0);
 	if (error == ENOMEM) {
 		printf("UVM: pid %d (%s), uid %d killed: "
 		    "out of swap\n", l->l_proc->p_pid, l->l_proc->p_comm,
