@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.176 2000/07/14 07:21:21 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.177 2000/08/12 22:41:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -142,8 +142,6 @@ __volatile int start_init_exec;		/* semaphore for start_init() */
 
 static void check_console(struct proc *p);
 static void start_init(void *);
-static void start_pagedaemon(void *);
-static void start_reaper(void *);
 void main(void);
 
 extern char sigcode[], esigcode[];
@@ -482,11 +480,11 @@ main(void)
 
 	/* Create the pageout daemon kernel thread. */
 	uvm_swap_init();
-	if (kthread_create1(start_pagedaemon, NULL, NULL, "pagedaemon"))
+	if (kthread_create1(uvm_pageout, NULL, NULL, "pagedaemon"))
 		panic("fork pagedaemon");
 
 	/* Create the process reaper kernel thread. */
-	if (kthread_create1(start_reaper, NULL, NULL, "reaper"))
+	if (kthread_create1(reaper, NULL, NULL, "reaper"))
 		panic("fork reaper");
 
 	/* Create the filesystem syncer kernel thread. */
@@ -675,22 +673,4 @@ start_init(void *arg)
 	}
 	printf("init: not found\n");
 	panic("no init");
-}
-
-/* ARGSUSED */
-static void
-start_pagedaemon(void *arg)
-{
-
-	uvm_pageout();
-	/* NOTREACHED */
-}
-
-/* ARGSUSED */
-static void
-start_reaper(void *arg)
-{
-
-	reaper();
-	/* NOTREACHED */
 }
