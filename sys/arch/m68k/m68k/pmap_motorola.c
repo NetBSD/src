@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.12.4.1 2005/01/26 12:10:35 yamt Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.12.4.2 2005/01/27 14:30:33 yamt Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.12.4.1 2005/01/26 12:10:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.12.4.2 2005/01/27 14:30:33 yamt Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -821,10 +821,8 @@ pmap_release(pmap)
 	if (pmap->pm_ptab) {
 		pmap_remove(pmap_kernel(), (vaddr_t)pmap->pm_ptab,
 		    (vaddr_t)pmap->pm_ptab + M68K_MAX_PTSIZE);
-		uvm_km_pgremove(uvm.kernel_object,
-		    (vaddr_t)pmap->pm_ptab - vm_map_min(kernel_map),
-		    (vaddr_t)pmap->pm_ptab + M68K_MAX_PTSIZE
-				- vm_map_min(kernel_map));
+		uvm_km_pgremove((vaddr_t)pmap->pm_ptab,
+		    (vaddr_t)pmap->pm_ptab + M68K_MAX_PTSIZE);
 		uvm_km_free(pt_map, (vaddr_t)pmap->pm_ptab,
 		    M68K_MAX_PTSIZE, UVM_KMF_VAONLY);
 	}
