@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.25 1999/04/01 05:27:54 simonb Exp $	*/
+/*	$NetBSD: ufs.c,v 1.26 1999/08/17 02:26:32 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -600,6 +600,8 @@ ufs_open(path, f)
 	rc = read_inode(inumber, f);
 
 #endif /* !LIBSA_FS_SINGLECOMPONENT */
+
+        fp->f_seekp = 0;		/* reset seek pointer */
 
 out:
 #ifndef LIBSA_NO_FS_SYMLINK
