@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.8 1997/03/29 03:05:14 thorpej Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.9 1997/03/29 04:39:16 darrenr Exp $	*/
 
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-1995 Darren Reed";
-static	char	rcsid[] = "$Id: ip_fil.c,v 1.8 1997/03/29 03:05:14 thorpej Exp $";
+static	char	rcsid[] = "$Id: ip_fil.c,v 1.9 1997/03/29 04:39:16 darrenr Exp $";
 #endif
 
 #ifndef	SOLARIS
@@ -138,8 +138,13 @@ struct devsw iplsw = {
 /*
  * We provide the fr_checkp name just to minimize changes later.
  */
+#ifndef	_KERNEL
+int (*fr_checkp) __P((ip_t *ip, int hlen, struct ifnet *ifp, int out,
+    char **mp));
+#else
 int (*fr_checkp) __P((ip_t *ip, int hlen, struct ifnet *ifp, int out,
     struct mbuf **mp));
+#endif /* _KERNEL */
 #endif /* NETBSD_PF */
 #endif /* __NetBSD__ */
 
@@ -1134,9 +1139,10 @@ frdest_t *fdp;
 }
 
 
-void ipllog()
+int ipllog __P((void))
 {
 	verbose("l");
+	return 0;
 }
 
 

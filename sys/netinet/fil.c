@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.5 1997/03/29 00:54:55 thorpej Exp $	*/
+/*	$NetBSD: fil.c,v 1.6 1997/03/29 04:39:15 darrenr Exp $	*/
 
 /*
  * (C)opyright 1993-1996 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-1996 Darren Reed";
-static	char	rcsid[] = "$Id: fil.c,v 1.5 1997/03/29 00:54:55 thorpej Exp $";
+static	char	rcsid[] = "$Id: fil.c,v 1.6 1997/03/29 04:39:15 darrenr Exp $";
 #endif
 
 #include <sys/errno.h>
@@ -68,6 +68,7 @@ extern	int	opts;
 # define	FR_DEBUG(verb_pr)			debug verb_pr
 # define	FR_SCANLIST(p, ip, fi, m)	fr_scanlist(p, ip, fi, m)
 # define	SEND_RESET(ip, qif, q, if)		send_reset(ip, if)
+# define	IPLLOG(a, b, c, d, e)		ipllog()
 # if SOLARIS
 #  define	ICMP_ERROR(b, ip, t, c, if, src) 	icmp_error(ip)
 #  define	bcmp	memcmp
@@ -81,6 +82,7 @@ extern	int	opts;
 # define	FR_VERBOSE(verb_pr)
 # define	FR_DEBUG(verb_pr)
 # define	FR_SCANLIST(p, ip, fi, m)	fr_scanlist(p, ip, fi, m)
+# define	IPLLOG(a, b, c, d, e)		ipllog(a, b, c, d, e)
 # if SOLARIS
 extern	kmutex_t	ipf_mutex;
 #  define	SEND_RESET(ip, qif, q, if)	send_reset(ip, qif, q)
@@ -472,7 +474,7 @@ void *m;
 			pass = (*fr->fr_func)(pass, ip, fin);
 #ifdef  IPFILTER_LOG
 		if ((pass & FR_LOGMASK) == FR_LOG) {
-			if (!ipllog(fr->fr_flags, 0, ip, fin, m))
+			if (!IPLLOG(fr->fr_flags, 0, ip, fin, m))
 				frstats[fin->fin_out].fr_skip++;
 			frstats[fin->fin_out].fr_pkl++;
 		}
@@ -650,7 +652,7 @@ int out;
 				pass |= FF_LOGBLOCK;
 			frstats[out].fr_bpkl++;
 logit:
-			if (!ipllog(pass, 0, ip, fin, m)) {
+			if (!IPLLOG(pass, 0, ip, fin, m)) {
 				frstats[out].fr_skip++;
 				if ((pass & (FR_PASS|FR_LOGORBLOCK)) ==
 				    (FR_PASS|FR_LOGORBLOCK))
