@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.22 2001/02/19 23:03:53 cgd Exp $ */
+/* $NetBSD: xlint.c,v 1.23 2001/05/28 12:40:38 lukem Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: xlint.c,v 1.22 2001/02/19 23:03:53 cgd Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.23 2001/05/28 12:40:38 lukem Exp $");
 #endif
 
 #include <sys/param.h>
@@ -54,7 +54,7 @@ __RCSID("$NetBSD: xlint.c,v 1.22 2001/02/19 23:03:53 cgd Exp $");
 #include "lint.h"
 #include "pathnames.h"
 
-int main __P((int, char *[]));
+int main(int, char *[]);
 
 /* directory for temporary files */
 static	const	char *tmpdir;
@@ -119,61 +119,60 @@ static	int	first = 1;
 static	const	char *currfn;
 
 
-static	void	appstrg __P((char ***, char *));
-static	void	appcstrg __P((char ***, const char *));
-static	void	applst __P((char ***, char *const *));
-static	void	freelst __P((char ***));
-static	char	*concat2 __P((const char *, const char *));
-static	char	*concat3 __P((const char *, const char *, const char *));
-static	void	terminate __P((int)) __attribute__((__noreturn__));
-static	const	char *basename __P((const char *, int));
-static	void	appdef __P((char ***, const char *));
-static	void	usage __P((void));
-static	void	fname __P((const char *, int));
-static	void	runchild __P((const char *, char *const *, const char *, int));
-static	void	findlibs __P((char *const *));
-static	int	rdok __P((const char *));
-static	void	lint2 __P((void));
-static	void	cat __P((char *const *, const char *));
+static	void	appstrg(char ***, char *);
+static	void	appcstrg(char ***, const char *);
+static	void	applst(char ***, char *const *);
+static	void	freelst(char ***);
+static	char	*concat2(const char *, const char *);
+static	char	*concat3(const char *, const char *, const char *);
+static	void	terminate(int) __attribute__((__noreturn__));
+static	const	char *basename(const char *, int);
+static	void	appdef(char ***, const char *);
+static	void	usage(void);
+static	void	fname(const char *, int);
+static	void	runchild(const char *, char *const *, const char *, int);
+static	void	findlibs(char *const *);
+static	int	rdok(const char *);
+static	void	lint2(void);
+static	void	cat(char *const *, const char *);
 
 /*
  * Some functions to deal with lists of strings.
  * Take care that we get no surprises in case of asyncron signals.
  */
 static void
-appstrg(lstp, s)
-	char	***lstp, *s;
+appstrg(char ***lstp, char *s)
 {
 	char	**lst, **olst;
 	int	i;
 
 	olst = *lstp;
-	for (i = 0; olst[i] != NULL; i++) ;
+	for (i = 0; olst[i] != NULL; i++)
+		continue;
 	lst = xrealloc(olst, (i + 2) * sizeof (char *));
 	lst[i] = s;
 	lst[i + 1] = NULL;
 	*lstp = lst;
-}	
+}
 
 static void
-appcstrg(lstp, s)
-	char	***lstp;
-	const	char *s;
+appcstrg(char ***lstp, const char *s)
 {
+
 	appstrg(lstp, xstrdup(s));
 }
 
 static void
-applst(destp, src)
-	char	***destp;
-	char	*const *src;
+applst(char ***destp, char *const *src)
 {
 	int	i, k;
 	char	**dest, **odest;
 
 	odest = *destp;
-	for (i = 0; odest[i] != NULL; i++) ;
-	for (k = 0; src[k] != NULL; k++) ;
+	for (i = 0; odest[i] != NULL; i++)
+		continue;
+	for (k = 0; src[k] != NULL; k++)
+		continue;
 	dest = xrealloc(odest, (i + k + 1) * sizeof (char *));
 	for (k = 0; src[k] != NULL; k++)
 		dest[i + k] = xstrdup(src[k]);
@@ -182,13 +181,13 @@ applst(destp, src)
 }
 
 static void
-freelst(lstp)
-	char	***lstp;
+freelst(char ***lstp)
 {
 	char	*s;
 	int	i;
 
-	for (i = 0; (*lstp)[i] != NULL; i++) ;
+	for (i = 0; (*lstp)[i] != NULL; i++)
+		continue;
 	while (i-- > 0) {
 		s = (*lstp)[i];
 		(*lstp)[i] = NULL;
@@ -197,8 +196,7 @@ freelst(lstp)
 }
 
 static char *
-concat2(s1, s2)
-	const	char *s1, *s2;
+concat2(const char *s1, const char *s2)
 {
 	char	*s;
 
@@ -210,8 +208,7 @@ concat2(s1, s2)
 }
 
 static char *
-concat3(s1, s2, s3)
-	const	char *s1, *s2, *s3;
+concat3(const char *s1, const char *s2, const char *s3)
 {
 	char	*s;
 
@@ -227,8 +224,7 @@ concat3(s1, s2, s3)
  * Clean up after a signal.
  */
 static void
-terminate(signo)
-	int	signo;
+terminate(int signo)
 {
 	int	i;
 
@@ -256,9 +252,7 @@ terminate(signo)
  * Returns strg if the string does not contain delim.
  */
 static const char *
-basename(strg, delim)
-	const	char *strg;
-	int	delim;
+basename(const char *strg, int delim)
 {
 	const	char *cp, *cp1, *cp2;
 
@@ -273,22 +267,21 @@ basename(strg, delim)
 }
 
 static void
-appdef(lstp, def)
-	char	***lstp;
-	const	char *def;
+appdef(char ***lstp, const char *def)
 {
+
 	appstrg(lstp, concat2("-D__", def));
 	appstrg(lstp, concat3("-D__", def, "__"));
 }
 
 static void
-usage()
+usage(void)
 {
 
 	(void)fprintf(stderr,
 	    "Usage: %s [-abceghprvwxzHF] [-s|-t] [-i|-nu] [-Dname[=def]]"
 	    " [-Uname] [-X <id>[,<id>]...\n", getprogname());
-	(void)fprintf(stderr, 
+	(void)fprintf(stderr,
 	    "\t[-Idirectory] [-Ldirectory] [-llibrary] [-ooutputfile]"
 	    " file...\n");
 	(void)fprintf(stderr,
@@ -301,9 +294,7 @@ usage()
 
 
 int
-main(argc, argv)
-	int	argc;
-	char	*argv[];
+main(int argc, char *argv[])
 {
 	int	c;
 	char	flgbuf[3], *tmp, *s;
@@ -465,7 +456,7 @@ main(argc, argv)
 			appcstrg(&cflags, "-idirafter");
 			appcstrg(&cflags, optarg);
 			break;
-			
+
 		case 'D':
 		case 'I':
 		case 'U':
@@ -548,9 +539,7 @@ main(argc, argv)
  * and pass it through lint1 if it is a C source.
  */
 static void
-fname(name, last)
-	const	char *name;
-	int	last;
+fname(const char *name, int last)
 {
 	const	char *bn, *suff;
 	char	**args, *ofn, *path;
@@ -631,7 +620,7 @@ fname(name, last)
 		warn("ftruncate");
 		terminate(-1);
 	}
-	 
+
 	runchild(path, args, cppout, cppoutfd);
 	free(path);
 	freelst(&args);
@@ -662,10 +651,7 @@ fname(name, last)
 }
 
 static void
-runchild(path, args, crfn, fdout)
-	const	char *path, *crfn;
-	char	*const *args;
-	int	fdout;
+runchild(const char *path, char *const *args, const char *crfn, int fdout)
 {
 	int	status, rv, signo, i;
 
@@ -717,8 +703,7 @@ runchild(path, args, crfn, fdout)
 }
 
 static void
-findlibs(liblst)
-	char	*const *liblst;
+findlibs(char *const *liblst)
 {
 	int	i, k;
 	const	char *lib, *path;
@@ -750,8 +735,7 @@ findlibs(liblst)
 }
 
 static int
-rdok(path)
-	const	char *path;
+rdok(const char *path)
 {
 	struct	stat sbuf;
 
@@ -765,7 +749,7 @@ rdok(path)
 }
 
 static void
-lint2()
+lint2(void)
 {
 	char	*path, **args;
 
@@ -777,8 +761,8 @@ lint2()
 	} else {
 		path = xmalloc(strlen(libexec_path) + sizeof ("/lint2"));
 		(void)sprintf(path, "%s/lint2", libexec_path);
-	}		
-	
+	}
+
 	appcstrg(&args, path);
 	applst(&args, l2flags);
 	applst(&args, l2libs);
@@ -791,9 +775,7 @@ lint2()
 }
 
 static void
-cat(srcs, dest)
-	char	*const *srcs;
-	const	char *dest;
+cat(char *const *srcs, const char *dest)
 {
 	int	ifd, ofd, i;
 	char	*src, *buf;
@@ -829,4 +811,3 @@ cat(srcs, dest)
 	(void)close(ofd);
 	free(buf);
 }
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: main2.c,v 1.3 1998/02/22 15:40:41 christos Exp $	*/
+/*	$NetBSD: main2.c,v 1.4 2001/05/28 12:40:38 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main2.c,v 1.3 1998/02/22 15:40:41 christos Exp $");
+__RCSID("$NetBSD: main2.c,v 1.4 2001/05/28 12:40:38 lukem Exp $");
 #endif
 
 #include <stdio.h>
@@ -84,14 +84,12 @@ int	Fflag;
  */
 const	char	**libs;
 
-static	void	usage __P((void));
+static	void	usage(void);
 
-int main __P((int, char *[]));
+int main(int, char *[]);
 
 int
-main(argc, argv)
-	int	argc;
-	char	*argv[];
+main(int argc, char *argv[])
 {
 	int	c, i;
 	size_t	len;
@@ -135,8 +133,9 @@ main(argc, argv)
 			Fflag = 1;
 			break;
 		case 'l':
-			for (i = 0; libs[i] != NULL; i++) ;
-			libs = xrealloc(libs, (i + 2) * sizeof (char *)); 
+			for (i = 0; libs[i] != NULL; i++)
+				continue;
+			libs = xrealloc(libs, (i + 2) * sizeof (char *));
 			libs[i] = xstrdup(optarg);
 			libs[i + 1] = NULL;
 			break;
@@ -144,7 +143,7 @@ main(argc, argv)
 			usage();
 		}
 	}
-	
+
 	argc -= optind;
 	argv += optind;
 
@@ -183,10 +182,9 @@ main(argc, argv)
 }
 
 static void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr,
 		      "usage: lint2 -hpstxuHF -Clib -l lib ... src1 ...\n");
 	exit(1);
 }
-

@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.9 2001/02/24 00:43:51 cgd Exp $ */
+/* $NetBSD: emit1.c,v 1.10 2001/05/28 12:40:37 lukem Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,15 +34,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: emit1.c,v 1.9 2001/02/24 00:43:51 cgd Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.10 2001/05/28 12:40:37 lukem Exp $");
 #endif
 
 #include <ctype.h>
 
 #include "lint1.h"
 
-static	void	outtt __P((sym_t *, sym_t *));
-static	void	outfstrg __P((strg_t *));
+static	void	outtt(sym_t *, sym_t *);
+static	void	outfstrg(strg_t *);
 
 /*
  * Write type into the output buffer.
@@ -84,8 +84,7 @@ static	void	outfstrg __P((strg_t *));
  * and 'v' (for volatile)
  */
 void
-outtype(tp)
-	type_t	*tp;
+outtype(type_t *tp)
 {
 	int	t, s, na;
 	sym_t	*arg;
@@ -155,8 +154,7 @@ outtype(tp)
  * it uses its own output buffer for conversion
  */
 const char *
-ttos(tp)
-	type_t	*tp;
+ttos(type_t *tp)
 {
 	static	ob_t	tob;
 	ob_t	tmp;
@@ -186,8 +184,7 @@ ttos(tp)
  * refers to this tag, this typename is written
  */
 static void
-outtt(tag, tdef)
-	sym_t	*tag, *tdef;
+outtt(sym_t *tag, sym_t *tdef)
 {
 
 	/*
@@ -217,11 +214,9 @@ outtt(tag, tdef)
  * not here
  */
 void
-outsym(sym, sc, def)
-        sym_t	*sym;
-	scl_t	sc;
-	def_t	def;
+outsym(sym_t *sym, scl_t sc, def_t def)
 {
+
 	/*
 	 * Static function declarations must also be written to the output
 	 * file. Compatibility of function declarations (for both static
@@ -294,10 +289,7 @@ outsym(sym, sc, def)
  * they are called with proper argument types
  */
 void
-outfdef(fsym, posp, rval, osdef, args)
-	sym_t	*fsym, *args;
-	pos_t	*posp;
-	int	rval, osdef;
+outfdef(sym_t *fsym, pos_t *posp, int rval, int osdef, sym_t *args)
 {
 	int	narg;
 	sym_t	*arg;
@@ -399,9 +391,7 @@ outfdef(fsym, posp, rval, osdef, args)
  * (casted to void)
  */
 void
-outcall(tn, rvused, rvdisc)
-	tnode_t	*tn;
-	int	rvused, rvdisc;
+outcall(tnode_t *tn, int rvused, int rvdisc)
 {
 	tnode_t	*args, *arg;
 	int	narg, n, i;
@@ -433,7 +423,8 @@ outcall(tn, rvused, rvdisc)
 	/* informations about arguments */
 	for (n = 1; n <= narg; n++) {
 		/* the last argument is the top one in the tree */
-		for (i = narg, arg = args; i > n; i--, arg = arg->tn_right) ;
+		for (i = narg, arg = args; i > n; i--, arg = arg->tn_right)
+			continue;
 		arg = arg->tn_left;
 		if (arg->tn_op == CON) {
 			if (isityp(t = arg->tn_type->t_tspec)) {
@@ -474,7 +465,8 @@ outcall(tn, rvused, rvdisc)
 	outint(narg);
 	for (n = 1; n <= narg; n++) {
 		/* the last argument is the top one in the tree */
-		for (i = narg, arg = args; i > n; i--, arg = arg->tn_right) ;
+		for (i = narg, arg = args; i > n; i--, arg = arg->tn_right)
+			continue;
 		outtype(arg->tn_left->tn_type);
 	}
 	/* expected type of return value */
@@ -486,8 +478,7 @@ outcall(tn, rvused, rvdisc)
  * writes them, enclosed in "" and qouted if necessary, to the output buffer
  */
 static void
-outfstrg(strg)
-	strg_t	*strg;
+outfstrg(strg_t *strg)
 {
 	int	c, oc, first;
 	u_char	*cp;
@@ -586,8 +577,7 @@ outfstrg(strg)
  * writes a record if sym was used
  */
 void
-outusg(sym)
-	sym_t	*sym;
+outusg(sym_t *sym)
 {
 	/* reset buffer */
 	outclr();

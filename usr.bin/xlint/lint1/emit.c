@@ -1,4 +1,4 @@
-/*	$NetBSD: emit.c,v 1.4 2001/02/24 00:43:51 cgd Exp $	*/
+/*	$NetBSD: emit.c,v 1.5 2001/05/28 12:40:37 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: emit.c,v 1.4 2001/02/24 00:43:51 cgd Exp $");
+__RCSID("$NetBSD: emit.c,v 1.5 2001/05/28 12:40:37 lukem Exp $");
 #endif
 
 #include <stdio.h>
@@ -50,23 +50,23 @@ static	FILE	*lout;
 /* output buffer data */
 ob_t	ob;
 
-static	void	outxbuf __P((void));
+static	void	outxbuf(void);
 
 
 /*
  * initialize output
  */
 void
-outopen(name)
-	const	char *name;
+outopen(const char *name)
 {
+
 	loname = name;
 
-	/* Ausgabedatei oeffnen */
+	/* Open output file */
 	if ((lout = fopen(name, "w")) == NULL)
 		err(1, "cannot open '%s'", name);
 
-	/* Ausgabepuffer anlegen */
+	/* Create output buffer */
 	ob.o_len = 1024;
 	ob.o_end = (ob.o_buf = ob.o_nxt = xmalloc(ob.o_len)) + ob.o_len;
 }
@@ -75,8 +75,9 @@ outopen(name)
  * flush output buffer and close file
  */
 void
-outclose()
+outclose(void)
 {
+
 	outclr();
 	if (fclose(lout) == EOF)
 		err(1, "cannot close '%s'", loname);
@@ -86,7 +87,7 @@ outclose()
  * resize output buffer
  */
 static void
-outxbuf()
+outxbuf(void)
 {
 	ptrdiff_t coffs;
 
@@ -101,7 +102,7 @@ outxbuf()
  * if it is not empty, it is flushed
  */
 void
-outclr()
+outclr(void)
 {
 	size_t	sz;
 
@@ -120,9 +121,9 @@ outclr()
  * write a character to the output buffer
  */
 void
-outchar(c)
-	int	c;
+outchar(int c)
 {
+
 	if (ob.o_nxt == ob.o_end)
 		outxbuf();
 	*ob.o_nxt++ = (char)c;
@@ -132,9 +133,9 @@ outchar(c)
  * write a character to the output buffer, qouted if necessary
  */
 void
-outqchar(c)
-	int	c;
+outqchar(int c)
 {
+
 	if (isprint(c) && c != '\\' && c != '"' && c != '\'') {
 		outchar(c);
 	} else {
@@ -164,18 +165,10 @@ outqchar(c)
 		case '\r':
 			outchar('r');
 			break;
-#ifdef __STDC__
 		case '\v':
-#else
-		case '\013':
-#endif
 			outchar('v');
 			break;
-#ifdef __STDC__
 		case '\a':
-#else
-		case '\007':
-#endif
 			outchar('a');
 			break;
 		default:
@@ -193,9 +186,9 @@ outqchar(c)
  * should be quoted
  */
 void
-outstrg(s)
-	const	char *s;
+outstrg(const char *s)
 {
+
 	while (*s != '\0') {
 		if (ob.o_nxt == ob.o_end)
 			outxbuf();
@@ -207,9 +200,9 @@ outstrg(s)
  * write an integer value to toe output buffer
  */
 void
-outint(i)
-	int	i;
+outint(int i)
 {
+
 	if ((ob.o_end - ob.o_nxt) < 3 * sizeof (int))
 		outxbuf();
 	ob.o_nxt += sprintf(ob.o_nxt, "%d", i);
@@ -220,9 +213,9 @@ outint(i)
  * the name is preceeded by its length
  */
 void
-outname(name)
-	const	char *name;
+outname(const char *name)
 {
+
 	if (name == NULL)
 		errx(1, "internal error: outname() 1");
 	outint((int)strlen(name));
@@ -233,9 +226,9 @@ outname(name)
  * write the name of the .c source
  */
 void
-outsrc(name)
-	const	char *name;
+outsrc(const char *name)
 {
+
 	outclr();
 	outchar('S');
 	outstrg(name);

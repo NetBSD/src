@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.c,v 1.4 1998/02/22 15:40:41 christos Exp $	*/
+/*	$NetBSD: msg.c,v 1.5 2001/05/28 12:40:38 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,17 +33,13 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: msg.c,v 1.4 1998/02/22 15:40:41 christos Exp $");
+__RCSID("$NetBSD: msg.c,v 1.5 2001/05/28 12:40:38 lukem Exp $");
 #endif
 
 #include <string.h>
 
 #include <stdio.h>
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #include "lint2.h"
 
@@ -70,27 +66,14 @@ static	const	char *msgs[] = {
 	"%s renamed multiple times  \t%s  ::  %s",		      /* 18 */
 };
 
-static	const	char *basename __P((const char *));
+static	const	char *basename(const char *);
 
-#ifdef __STDC__
 void
 msg(int n, ...)
 {
-#else
-void
-msg(va_alist)
-	va_dcl
-	int	n;
-{
-#endif
 	va_list	ap;
 
-#ifdef __STDC__
 	va_start(ap, n);
-#else
-	va_start(ap);
-	n = va_arg(ap, int);
-#endif
 
 	(void)vprintf(msgs[n], ap);
 	(void)printf("\n");
@@ -102,8 +85,7 @@ msg(va_alist)
  * Return a pointer to the last component of a path.
  */
 static const char *
-basename(path)
-	const	char *path;
+basename(const char *path)
 {
 	const	char *cp, *cp1, *cp2;
 
@@ -124,8 +106,7 @@ basename(path)
  * Create a string which describes a position in a source file.
  */
 const char *
-mkpos(posp)
-	pos_t	*posp;
+mkpos(pos_t *posp)
 {
 	size_t	len;
 	const	char *fn;
@@ -156,4 +137,3 @@ mkpos(posp)
 
 	return (buf);
 }
-

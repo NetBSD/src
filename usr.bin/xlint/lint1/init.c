@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.6 2001/02/24 00:43:51 cgd Exp $	*/
+/*	$NetBSD: init.c,v 1.7 2001/05/28 12:40:37 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: init.c,v 1.6 2001/02/24 00:43:51 cgd Exp $");
+__RCSID("$NetBSD: init.c,v 1.7 2001/05/28 12:40:37 lukem Exp $");
 #endif
 
 #include <stdlib.h>
@@ -54,12 +54,12 @@ sym_t	*initsym;
 istk_t	*initstk;
 
 
-static	void	popi2 __P((void));
-static	void	popinit __P((int));
-static	void	pushinit __P((void));
-static	void	testinit __P((void));
-static	void	nextinit __P((int));
-static	int	strginit __P((tnode_t *));
+static	void	popi2(void);
+static	void	popinit(int);
+static	void	pushinit(void);
+static	void	testinit(void);
+static	void	nextinit(int);
+static	int	strginit(tnode_t *);
 
 
 /*
@@ -67,7 +67,7 @@ static	int	strginit __P((tnode_t *));
  * which is to be initialized on it.
  */
 void
-prepinit()
+prepinit(void)
 {
 	istk_t	*istk;
 
@@ -94,7 +94,7 @@ prepinit()
 }
 
 static void
-popi2()
+popi2(void)
 {
 	istk_t	*istk;
 	sym_t	*m;
@@ -125,9 +125,9 @@ popi2()
 }
 
 static void
-popinit(brace)
-	int	brace;
+popinit(int brace)
 {
+
 	if (brace) {
 		/*
 		 * Take all entries, including the first which requires
@@ -151,7 +151,7 @@ popinit(brace)
 }
 
 static void
-pushinit()
+pushinit(void)
 {
 	istk_t	*istk;
 	int	cnt;
@@ -236,7 +236,7 @@ pushinit()
 }
 
 static void
-testinit()
+testinit(void)
 {
 	istk_t	*istk;
 
@@ -267,9 +267,9 @@ testinit()
 }
 
 static void
-nextinit(brace)
-	int	brace;
+nextinit(int brace)
 {
+
 	if (!brace) {
 		if (initstk->i_type == NULL &&
 		    !issclt(initstk->i_subt->t_tspec)) {
@@ -304,8 +304,9 @@ nextinit(brace)
 }
 
 void
-initlbr()
+initlbr(void)
 {
+
 	if (initerr)
 		return;
 
@@ -326,8 +327,9 @@ initlbr()
 }
 
 void
-initrbr()
+initrbr(void)
 {
+
 	if (initerr)
 		return;
 
@@ -335,8 +337,7 @@ initrbr()
 }
 
 void
-mkinit(tn)
-	tnode_t	*tn;
+mkinit(tnode_t *tn)
 {
 	ptrdiff_t offs;
 	sym_t	*sym;
@@ -413,7 +414,7 @@ mkinit(tn)
 	tmem = tsave();
 	expr(tn, 1, 0);
 	trestor(tmem);
-	
+
 	if (isityp(lt) && ln->tn_type->t_isfield && !isityp(rt)) {
 		/*
 		 * Bit-fields can be initialized in trad. C only by integer
@@ -447,8 +448,7 @@ mkinit(tn)
 
 
 static int
-strginit(tn)
-	tnode_t	*tn;
+strginit(tnode_t *tn)
 {
 	tspec_t	t;
 	istk_t	*istk;

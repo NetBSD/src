@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.7 2001/02/24 00:43:51 cgd Exp $	*/
+/*	$NetBSD: main1.c,v 1.8 2001/05/28 12:40:37 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main1.c,v 1.7 2001/02/24 00:43:51 cgd Exp $");
+__RCSID("$NetBSD: main1.c,v 1.8 2001/05/28 12:40:37 lukem Exp $");
 #endif
 
 #define FD_SETSIZE 512	/* more than the total number of error messages */
@@ -115,14 +115,12 @@ int	zflag = 1;
 
 fd_set	msgset;
 
-static	void	usage __P((void));
+static	void	usage(void);
 
-int main __P((int, char *[]));
+int main(int, char *[]);
 
 int
-main(argc, argv)
-	int	argc;
-	char	*argv[];
+main(int argc, char *argv[])
 {
 	int	c;
 	char	*ptr;
@@ -208,7 +206,7 @@ main(argc, argv)
 }
 
 static void
-usage()
+usage(void)
 {
 
 	(void)fprintf(stderr,
@@ -216,10 +214,11 @@ usage()
 	    getprogname());
 	exit(1);
 }
-	
+
 void
-norecover()
+norecover(void)
 {
+
 	/* cannot recover from previous errors */
 	error(224);
 	exit(1);

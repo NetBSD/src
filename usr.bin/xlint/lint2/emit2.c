@@ -1,4 +1,4 @@
-/* $NetBSD: emit2.c,v 1.5 2000/06/14 06:49:23 cgd Exp $ */
+/* $NetBSD: emit2.c,v 1.6 2001/05/28 12:40:38 lukem Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,24 +34,23 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: emit2.c,v 1.5 2000/06/14 06:49:23 cgd Exp $");
+__RCSID("$NetBSD: emit2.c,v 1.6 2001/05/28 12:40:38 lukem Exp $");
 #endif
 
 #include <err.h>
 
 #include "lint2.h"
 
-static	void	outtype __P((type_t *));
-static	void	outdef __P((hte_t *, sym_t *));
-static	void	dumpname __P((hte_t *));
-static	void	outfiles __P((void));
+static	void	outtype(type_t *);
+static	void	outdef(hte_t *, sym_t *);
+static	void	dumpname(hte_t *);
+static	void	outfiles(void);
 
 /*
  * Write type into the output buffer.
  */
 static void
-outtype(tp)
-	type_t	*tp;
+outtype(type_t *tp)
 {
 	int	t, s, na;
 	tspec_t	ts;
@@ -137,10 +136,9 @@ outtype(tp)
  * Write a definition.
  */
 static void
-outdef(hte, sym)
-	hte_t	*hte;
-	sym_t	*sym;
+outdef(hte_t *hte, sym_t *sym)
 {
+
 	/* reset output buffer */
 	outclr();
 
@@ -189,8 +187,7 @@ outdef(hte, sym)
  * Write the first definition of a name into the lint library.
  */
 static void
-dumpname(hte)
-	hte_t	*hte;
+dumpname(hte_t *hte)
 {
 	sym_t	*sym, *def;
 
@@ -222,8 +219,7 @@ dumpname(hte)
  * Write a new lint library.
  */
 void
-outlib(name)
-	const	char *name;
+outlib(const char *name)
 {
 	/* Open of output file and initialisation of the output buffer */
 	outopen(name);
@@ -254,14 +250,13 @@ outlib(name)
  * Write out the name of a file referenced by a type.
  */
 struct outflist {
-	short ofl_num;
+	short		ofl_num;
 	struct outflist *ofl_next;
 };
 static struct outflist *outflist;
 
 int
-addoutfile(num)
-	short num;
+addoutfile(short num)
 {
 	struct outflist *ofl, **pofl;
 	int i;
@@ -273,7 +268,7 @@ addoutfile(num)
 	while (ofl != NULL) {
 		if (ofl->ofl_num == num)
 			break;
-	
+
 		pofl = &ofl->ofl_next;
 		ofl = ofl->ofl_next;
 		i++;
@@ -288,13 +283,13 @@ addoutfile(num)
 }
 
 static void
-outfiles()
+outfiles(void)
 {
 	struct outflist *ofl;
 	int i;
 
 	for (ofl = outflist, i = 1; ofl != NULL; ofl = ofl->ofl_next, i++) {
-		/* reset output buffer */ 
+		/* reset output buffer */
 		outclr();
 
 		outint(i);
