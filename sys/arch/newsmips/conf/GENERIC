@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC,v 1.29 2000/10/12 03:18:41 onoe Exp $
+# 	$NetBSD: GENERIC,v 1.30 2000/10/30 10:14:44 tsubai Exp $
 #
 #	GENERIC kernel for RISC-NEWS
 
 include		"arch/newsmips/conf/std.newsmips"
 
-#ident 		"GENERIC-$Revision: 1.29 $"
+#ident 		"GENERIC-$Revision: 1.30 $"
 
 maxusers	16
 
@@ -122,6 +122,9 @@ fb0	at hb0 addr 0x88000000		# frame buffer
 
 sc0	at hb0 addr 0xbfe00100 level 0	# on-board cxd1185 SCSI controller
 scsibus0 at sc0
+
+#spifi*	at ap?				# SPIFI SCSI
+#scsibus* at spifi?
 
 sd*	at scsibus? target ? lun ?	# SCSI disks
 st*	at scsibus? target ? lun ?	# SCSI tapes
