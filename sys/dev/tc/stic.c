@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.4 2000/12/17 13:52:04 ad Exp $	*/
+/*	$NetBSD: stic.c,v 1.5 2000/12/17 14:46:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -590,10 +590,10 @@ sticmmap(void *v, off_t offset, int prot)
 	offset -= sizeof(sxm.sxm_stic);
 
 	if (offset < sizeof(sxm.sxm_poll)) {
-		pa = STIC_KSEG_TO_PHYS(si->si_slotkva);
+		pa = STIC_KSEG_TO_PHYS(si->si_poll);
 		return (machine_btop(pa + pffset));
 	}
-	offset -= sizeof(sxm.sxm_slotkva);
+	offset -= sizeof(sxm.sxm_poll);
 
 	if (offset < si->si_buf_size) {
 		pa = STIC_KSEG_TO_PHYS(si->si_buf_phys);
