@@ -1,3 +1,5 @@
+/*	$NetBSD: i4b_l4mgmt.c,v 1.11 2003/09/25 15:16:08 pooka Exp $	*/
+
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
  *
@@ -27,7 +29,7 @@
  *	i4b_l4mgmt.c - layer 4 calldescriptor management utilites
  *	-----------------------------------------------------------
  *
- *	$Id: i4b_l4mgmt.c,v 1.10 2002/09/27 15:37:56 provos Exp $ 
+ *	$Id: i4b_l4mgmt.c,v 1.11 2003/09/25 15:16:08 pooka Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +38,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4mgmt.c,v 1.10 2002/09/27 15:37:56 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4mgmt.c,v 1.11 2003/09/25 15:16:08 pooka Exp $");
 
 #include "isdn.h"
 
@@ -83,7 +85,6 @@ static unsigned int get_cdid(void);
 static void i4b_init_callout(call_desc_t *);
 static void i4b_stop_callout(call_desc_t *cd);
 
-#define N_CALL_DESC 40	/* XXX - make this sizeable */
 call_desc_t call_desc[N_CALL_DESC];	/* call descriptor array */
 int num_call_desc = 0;
 

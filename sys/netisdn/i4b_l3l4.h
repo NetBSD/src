@@ -1,3 +1,5 @@
+/*	$NetBSD: i4b_l3l4.h,v 1.14 2003/09/25 15:16:08 pooka Exp $	*/
+
 /*
  * Copyright (c) 1997, 1999 Hellmuth Michaelis. All rights reserved.
  *
@@ -27,7 +29,7 @@
  *	i4b_l3l4.h - layer 3 / layer 4 interface
  *	------------------------------------------
  *
- *	$Id: i4b_l3l4.h,v 1.13 2002/03/30 11:43:33 martin Exp $
+ *	$Id: i4b_l3l4.h,v 1.14 2003/09/25 15:16:08 pooka Exp $
  *
  * $FreeBSD$
  *
@@ -46,6 +48,8 @@
 #define T313VAL	(hz*4)			/* 4 seconds timeout		*/
 #define T400DEF	(hz*10)			/* 10 seconds timeout		*/
 
+#define MAX_BCHAN	2
+#define N_CALL_DESC	(20*(MAX_BCHAN)) /* XXX: make resizable */
 
 typedef struct bchan_statistics {
 	int outbytes;
@@ -264,12 +268,13 @@ struct isdn_l3_driver {
 #define DL_DOWN	0
 #define DL_UP	1	
 
-	int	bch_state[2];		/* states of the b channels */
+	int	bch_state[MAX_BCHAN];	/* states of the b channels */
 #define BCH_ST_FREE	0	/* free to be used, idle */
 #define BCH_ST_RSVD	1	/* reserved, may become free or used */
 #define BCH_ST_USED	2	/* in use for data transfer */
 
 	int	tei;			/* current tei or -1 if invalid */
+	int	nbch;			/* number of B-channels */
 
 	/* pointers to functions to be called from L4 */
 	const struct isdn_l3_driver_functions * l3driver;
