@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.74 1999/03/29 08:58:30 minoura Exp $
+.\"	$NetBSD: options.4,v 1.75 1999/03/29 20:28:45 aidan Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -912,6 +912,11 @@ See
 and
 .Xr sysctl 3
 for details.
+.It Cd options IFA_STATS
+Tells the kernel to maintain per-address statistics on bytes sent
+and received over (currently) internet and appletalk addresses.
+This can be a fairly expensive operation, so you probably want to
+keep this disabled.
 .It Cd options MROUTING
 Includes support for IP multicast routers.
 You certainly want
