@@ -1,4 +1,4 @@
-# $NetBSD: country,v 1.6 2000/10/13 03:22:49 hubertf Exp $
+# $NetBSD: country,v 1.7 2002/02/26 13:11:05 kleink Exp $
 #
 # ISO 3166-1 Country Codes
 #
@@ -6,7 +6,8 @@
 # <Country name><TAB><Alpha-2-code><TAB><Alpha-3-code><TAB><Numeric-3-code>
 #
 # Further information can be found at the ISO 3166 Maintenance Agency
-# (ISO 3166/MA) web site, <http://www.din.de/gremien/nas/nabd/iso3166ma/>.
+# (ISO 3166/MA) web site,
+# <http://www.iso.org/iso/en/prods-services/iso3166ma/index.html>.
 # This list is up-to-date as of 1999-10-01.
 #
 Afghanistan	AF	AFG	004
