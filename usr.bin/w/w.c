@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.47 2001/11/05 03:35:49 enami Exp $	*/
+/*	$NetBSD: w.c,v 1.48 2002/07/27 23:58:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.47 2001/11/05 03:35:49 enami Exp $");
+__RCSID("$NetBSD: w.c,v 1.48 2002/07/27 23:58:40 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,12 @@ __RCSID("$NetBSD: w.c,v 1.47 2001/11/05 03:35:49 enami Exp $");
 #include <time.h>
 #include <tzfile.h>
 #include <unistd.h>
+#ifdef SUPPORT_UTMP
 #include <utmp.h>
+#endif
+#ifdef SUPPORT_UTMPX
+#include <utmpx.h>
+#endif
 #include <vis.h>
 
 #include "extern.h"
@@ -89,7 +94,6 @@ __RCSID("$NetBSD: w.c,v 1.47 2001/11/05 03:35:49 enami Exp $");
 #define	max(a,b)	(((a)>(b))?(a):(b))
 
 struct timeval	boottime;
-struct utmp	utmp;
 struct winsize	ws;
 kvm_t	       *kd;
 time_t		now;		/* the current time of day */
@@ -101,13 +105,17 @@ int		nflag;		/* true if -n flag: don't convert addrs */
 int		sortidle;	/* sort bu idle time */
 char	       *sel_user;	/* login of particular user selected */
 char		domain[MAXHOSTNAMELEN + 1];
+int maxname = 8, maxline = 3, maxhost = 16;
 
 /*
  * One of these per active utmp entry.
  */
 struct	entry {
 	struct	entry *next;
-	struct	utmp utmp;
+	char name[65];
+	char line[65];
+	char host[257];
+	struct timeval tv;
 	dev_t	tdev;			/* dev_t of terminal */
 	time_t	idle;			/* idle time of terminal in seconds */
 	struct	kinfo_proc2 *kp;	/* `most interesting' proc */
@@ -118,7 +126,10 @@ struct	entry {
 
 static void	 pr_args(struct kinfo_proc2 *);
 static void	 pr_header(time_t *, int);
-static struct stat *ttystat(char *, size_t);
+#if defined(SUPPORT_UTMP) || defined(SUPPORT_UTMPX)
+static struct stat *ttystat(char *);
+static void	process(struct entry *);
+#endif
 static void	 usage(int);
 int	main(int, char **);
 
@@ -127,12 +138,16 @@ main(int argc, char **argv)
 {
 	struct kinfo_proc2 *kp;
 	struct hostent *hp;
-	struct stat *stp;
-	FILE *ut;
 	struct in_addr l;
-	time_t touched;
-	int ch, i, nentries, nusers, wcmd, lognamelen;
+	int ch, i, nentries, nusers, wcmd;
 	char *memf, *nlistf, *p, *x;
+	time_t then;
+#ifdef SUPPORT_UTMP
+	struct utmp *ut;
+#endif
+#ifdef SUPPORT_UTMPX
+	struct utmpx *utx;
+#endif
 	const char *progname;
 	char buf[MAXHOSTNAMELEN], errbuf[_POSIX2_LINE_MAX];
 
@@ -182,66 +197,82 @@ main(int argc, char **argv)
 		errx(1, "%s", errbuf);
 
 	(void)time(&now);
-	if ((ut = fopen(_PATH_UTMP, "r")) == NULL && wcmd)
-		err(1, "%s", _PATH_UTMP);
+	if (wcmd) {
+#ifdef SUPPORT_UTMP
+		setutent();
+#endif
+#ifdef SUPPORT_UTMP
+		setutxent();
+#endif
+	}
 
 	if (*argv)
 		sel_user = *argv;
 
-	for (nusers = 0; ut && fread(&utmp, sizeof(utmp), 1, ut);) {
-		if (utmp.ut_name[0] == '\0')
+	nusers = 0;
+#ifdef SUPPORT_UTMPX
+	while ((utx = getutxent()) != NULL) {
+		if (utx->ut_type != USER_PROCESS)
 			continue;
 		++nusers;
 		if (wcmd == 0 || (sel_user &&
-		    strncmp(utmp.ut_name, sel_user, UT_NAMESIZE) != 0))
+		    strncmp(utx->ut_name, sel_user, sizeof(utx->ut_name) != 0)))
 			continue;
 		if ((ep = calloc(1, sizeof(struct entry))) == NULL)
 			err(1, NULL);
+		(void)memcpy(ep->name, utx->ut_name, sizeof(utx->ut_name));
+		(void)memcpy(ep->line, utx->ut_line, sizeof(utx->ut_line));
+		(void)memcpy(ep->host, utx->ut_host, sizeof(utx->ut_host));
+		ep->name[sizeof(utx->ut_name)] = '\0';
+		ep->line[sizeof(utx->ut_line)] = '\0';
+		ep->host[sizeof(utx->ut_host)] = '\0';
+		ep->tv = utx->ut_tv;
 		*nextp = ep;
 		nextp = &(ep->next);
-		memmove(&(ep->utmp), &utmp, sizeof(struct utmp));
-		if (!(stp = ttystat(ep->utmp.ut_line, UT_LINESIZE))) {
-#ifdef SUPPORT_FTPD_UTMP
-			/*
-			 * Hack to recognize and correctly parse
-			 * utmp entry made by ftpd. The "tty" used
-			 * by ftpd is not a real tty, just identifier in
-			 * form ftpPROCESS_ID. Pid parsed from the "tty name"
-			 * is used later to match corresponding process.
-			 */
-			if (strncmp(ep->utmp.ut_line, "ftp", 3) == 0)
-				ep->ftpd_pid =
-				    strtol(ep->utmp.ut_line + 3, NULL, 10);
-#endif /* SUPPORT_FTPD_UTMP */
-			
-			continue;
-		}
-		ep->tdev = stp->st_rdev;
-		/*
-		 * If this is the console device, attempt to ascertain
-		 * the true console device dev_t.
-		 */
-		if (ep->tdev == 0) {
-			int mib[2];
-			size_t size;
-
-			mib[0] = CTL_KERN;
-			mib[1] = KERN_CONSDEV;
-			size = sizeof(dev_t);
-			(void) sysctl(mib, 2, &ep->tdev, &size, NULL, 0);
-		}
-
-		touched = stp->st_atime;
-		if (touched < ep->utmp.ut_time) {
-			/* tty untouched since before login */
-			touched = ep->utmp.ut_time;
-		}
-		if ((ep->idle = now - touched) < 0)
-			ep->idle = 0;
+		process(ep);
 	}
-	if (ut)
-		(void)fclose(ut);
-	else
+#endif
+
+#ifdef SUPPORT_UTMP
+	while ((ut = getutent()) != NULL) {
+		++nusers;
+		if (wcmd == 0 || (sel_user &&
+		    strncmp(ut->ut_name, sel_user, sizeof(ut->ut_name) != 0)))
+			continue;
+
+		/* Don't process entries that we have utmpx for */
+		for (ep = ehead; ep != NULL; ep = ep->next) {
+			if (strncmp(ep->line, ut->ut_line,
+			    sizeof(ut->ut_line)) == 0)
+				break;
+		}
+		if (ep != NULL)
+			continue;
+
+		if ((ep = calloc(1, sizeof(struct entry))) == NULL)
+			err(1, NULL);
+		(void)memcpy(ep->name, ut->ut_name, sizeof(ut->ut_name));
+		(void)memcpy(ep->line, ut->ut_line, sizeof(ut->ut_line));
+		(void)memcpy(ep->host, ut->ut_host, sizeof(ut->ut_host));
+		ep->name[sizeof(ut->ut_name)] = '\0';
+		ep->line[sizeof(ut->ut_line)] = '\0';
+		ep->host[sizeof(ut->ut_host)] = '\0';
+		ep->tv.tv_sec = ut->ut_time;
+		ep->tv.tv_usec = 0;
+		*nextp = ep;
+		nextp = &(ep->next);
+		process(ep);
+	}
+#endif
+
+	if (wcmd) {
+#ifdef SUPPORT_UTMPX
+		endutxent();
+#endif
+#ifdef SUPPORT_UTMP
+		endutent();
+#endif
+	} else
 		nusers = 1;
 
 	if (header || wcmd == 0) {
@@ -255,7 +286,6 @@ main(int argc, char **argv)
 		errx(1, "%s", kvm_geterr(kd));
 
 	/* Include trailing space because TTY header starts one column early. */
-	lognamelen = sizeof("USER ") - 1 /* NUL */;
 	for (i = 0; i < nentries; i++, kp++) {
 
 		if (kp->p_stat == SIDL || kp->p_stat == SZOMB)
@@ -269,8 +299,6 @@ main(int argc, char **argv)
 				 */
 				if (proc_compare(ep->kp, kp)) {
 					ep->kp = kp;
-					lognamelen = max(lognamelen,
-					    strlen(kp->p_login));
 				}
 				break;
 			}
@@ -281,15 +309,13 @@ main(int argc, char **argv)
 			else if (ep->tdev == 0 && kp->p_tdev == NODEV &&
 			    ep->ftpd_pid == kp->p_pid) {
 				ep->kp = kp;
-				lognamelen = max(lognamelen,
-				    strlen(kp->p_login));
 			}
 #endif /* SUPPORT_FTPD_UTMP */
 		}
 	}
 
 	argwidth = printf("%-*sTTY %-*s %*s  IDLE WHAT\n",
-	    lognamelen, "USER", UT_HOSTSIZE, "FROM",
+	    maxname, "USER", maxhost, "FROM",
 	    7 /* "dddhhXm" */, "LOGIN@");
 	argwidth -= sizeof("WHAT\n") - 1 /* NUL */;
 
@@ -318,6 +344,23 @@ main(int argc, char **argv)
 			*nextp = save;
 		}
 	}
+#if defined(SUPPORT_UTMP) && defined(SUPPORT_UTMPX)
+	else if (ehead != NULL) {
+		struct entry *from = ehead, *save;
+		
+		ehead = NULL;
+		while (from != NULL) {
+			for (nextp = &ehead;
+			    (*nextp) && strcmp(from->line, (*nextp)->line) > 0;
+			    nextp = &(*nextp)->next)
+				continue;
+			save = from;
+			from = from->next;
+			save->next = *nextp;
+			*nextp = save;
+		}
+	}
+#endif
 			
 	if (!nflag) {
 		int	rv;
@@ -331,16 +374,16 @@ main(int argc, char **argv)
 	}
 
 	for (ep = ehead; ep != NULL; ep = ep->next) {
-		char host_buf[UT_HOSTSIZE + 1];
+		char host_buf[MAXHOSTNAMELEN + 1];
 
-		host_buf[UT_HOSTSIZE] = '\0';
-		strncpy(host_buf, ep->utmp.ut_host, UT_HOSTSIZE);
+		host_buf[MAXHOSTNAMELEN] = '\0';
+		strncpy(host_buf, ep->host, MAXHOSTNAMELEN);
 		p = *host_buf ? host_buf : "-";
 
-		for (x = p; x < p + UT_HOSTSIZE; x++)
+		for (x = p; x < p + MAXHOSTNAMELEN; x++)
 			if (*x == '\0' || *x == ':')
 				break;
-		if (x == p + UT_HOSTSIZE || *x != ':')
+		if (x == p + MAXHOSTNAMELEN || *x != ':')
 			x = NULL;
 		else
 			*x++ = '\0';
@@ -362,19 +405,18 @@ main(int argc, char **argv)
 			p = buf;
 		}
 		if (ep->kp == NULL) {
-			warnx("Stale utmp entry: %.*s %.*s %.*s",
-			    UT_NAMESIZE, ep->utmp.ut_name,
-			    UT_LINESIZE, ep->utmp.ut_line,
-			    UT_HOSTSIZE, ep->utmp.ut_host);
+			warnx("Stale utmp entry: %s %s %s",
+			    ep->name, ep->line, ep->host);
 			continue;
 		}
 		(void)printf("%-*s %-2.2s %-*.*s ",
-		    lognamelen, ep->kp->p_login,
-		    (strncmp(ep->utmp.ut_line, "tty", 3) &&
-		    strncmp(ep->utmp.ut_line, "dty", 3)) ?
-		    ep->utmp.ut_line : ep->utmp.ut_line + 3,
-		    UT_HOSTSIZE, UT_HOSTSIZE, *p ? p : "-");
-		pr_attime(&ep->utmp.ut_time, &now);
+		    maxname, ep->kp->p_login,
+		    (strncmp(ep->line, "tty", 3) &&
+		    strncmp(ep->line, "dty", 3)) ?
+		    ep->line : ep->line + 3,
+		    maxhost, maxhost, *p ? p : "-");
+		then = (time_t)ep->tv.tv_sec;
+		pr_attime(&then, &now);
 		pr_idle(ep->idle);
 		pr_args(ep->kp);
 		(void)printf("\n");
@@ -477,18 +519,75 @@ pr_header(time_t *nowp, int nusers)
 	}
 }
 
+#if defined(SUPPORT_UTMP) || defined(SUPPORT_UTMPX)
 static struct stat *
-ttystat(char *line, size_t sz)
+ttystat(char *line)
 {
 	static struct stat sb;
 	char ttybuf[MAXPATHLEN];
 
-	(void)snprintf(ttybuf, sizeof(ttybuf), "%s%.*s", _PATH_DEV, (int) sz,
-	    line);
+	(void)snprintf(ttybuf, sizeof(ttybuf), "%s%s", _PATH_DEV, line);
 	if (stat(ttybuf, &sb))
 		return (NULL);
 	return (&sb);
 }
+
+static void
+process(struct entry *ep)
+{
+	struct stat *stp;
+	time_t touched;
+	int max;
+
+	if ((max = strlen(ep->name)) > maxname)
+		maxname = max;
+	if ((max = strlen(ep->line)) > maxline)
+		maxline = max;
+	if ((max = strlen(ep->host)) > maxhost)
+		maxhost = max;
+
+	if ((stp = ttystat(ep->line)) == NULL)
+		return;
+
+#ifdef SUPPORT_FTPD_UTMP
+	/*
+	 * Hack to recognize and correctly parse
+	 * ut entry made by ftpd. The "tty" used
+	 * by ftpd is not a real tty, just identifier in
+	 * form ftpSUPPORT_ID. Pid parsed from the "tty name"
+	 * is used later to match corresponding process.
+	 */
+	if (strncmp(ep->line, "ftp", 3) == 0) {
+		ep->ftpd_pid = strtol(ep->line + 3, NULL, 10);
+		
+		return;
+	}
+#endif /* SUPPORT_FTPD_UTMP */
+
+	ep->tdev = stp->st_rdev;
+	/*
+	 * If this is the console device, attempt to ascertain
+	 * the true console device dev_t.
+	 */
+	if (ep->tdev == 0) {
+		int mib[2];
+		size_t size;
+
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_CONSDEV;
+		size = sizeof(dev_t);
+		(void) sysctl(mib, 2, &ep->tdev, &size, NULL, 0);
+	}
+
+	touched = stp->st_atime;
+	if (touched < ep->tv.tv_sec) {
+		/* tty untouched since before login */
+		touched = ep->tv.tv_sec;
+	}
+	if ((ep->idle = now - touched) < 0)
+		ep->idle = 0;
+}
+#endif
 
 static void
 usage(int wcmd)
