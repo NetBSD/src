@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.60 1996/08/26 23:39:28 mrg Exp $
+#	$NetBSD: GENERIC,v 1.61 1996/10/21 11:13:39 veego Exp $
 
 #
 # GENERIC AMIGA
@@ -6,7 +6,7 @@
 # This configuration file contains all possible options
 #
 
-include "std.amiga"
+include "arch/amiga/conf/std.amiga"
 
 maxusers	8
 options		TIMEZONE=300, DST=1
@@ -249,7 +249,7 @@ pseudo-device	loop	1		# network loopback
 pseudo-device	sl	1		# slip
 pseudo-device	ppp	1		# ppp
 #pseudo-device	tun	1		# network tunnel line discipline
-pseudo-device	bpfilter	4	# berkeley packet filters
+pseudo-device	bpfilter	16	# berkeley packet filters
 
 pseudo-device	view	10		# views
 pseudo-device	pty	16		# pseudo terminals
