@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.11 1996/10/17 02:50:14 mark Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.12 1996/11/23 04:09:01 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -84,13 +84,13 @@ extern int pmap_debug_level;
 int process_read_regs	__P((struct proc *p, struct reg *regs));
 int process_read_fpregs	__P((struct proc *p, struct fpreg *regs));
 
-void	switch_exit	__P((struct proc */*p*/, struct proc */*proc0*/));
+void	switch_exit	__P((struct proc *p, struct proc *proc0));
 int	savectx		__P((struct pcb *pcb));
-void	pmap_activate	__P((pmap_t /*pmap*/, struct pcb */*pcbp*/));
+void	pmap_activate	__P((pmap_t pmap, struct pcb *pcbp));
 extern void proc_trampoline	__P(());
 extern void child_return	__P(());
 
-pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
+pt_entry_t *pmap_pte	__P((pmap_t, vm_offset_t));
 
 /*
  * Special compilation symbols
@@ -136,15 +136,6 @@ cpu_fork(p1, p2)
 	/* Sync the pcb */
 	savectx(curpcb);
 #endif
-
-	{
-		pt_entry_t *pte;
-
-/*		pte = pmap_pte(kernel_pmap, (vm_offset_t)p2->p_addr);
-		*pte = (*pte) & ~(PT_B);*/
-		pte = pmap_pte(kernel_pmap, (vm_offset_t)p2->p_addr + NBPG);
-		*pte = (*pte) & ~(PT_C);
-	}
 
 	/* Copy the pcb */
 	*pcb = p1->p_addr->u_pcb;
@@ -429,7 +420,7 @@ pagemove(from, to, size)
 	 * pages we are moving.
 	 */
 
-	cache_clean();
+	cache_clean();	/* XXX - SA Only ? */
 
 	while (size > 0) {
 		*tpte++ = *fpte;
@@ -494,7 +485,7 @@ vmapbuf(bp, len)
 	 * pages we are replacing
 	 */
 
-	cache_clean();
+	cache_clean();	/* XXX - SA Only ? */
 
 	do {
 		*fpte = (*fpte) & ~(PT_C | PT_B);
@@ -528,7 +519,7 @@ vunmapbuf(bp, len)
 	 * pages we had mapped.
 	 */
 
-	cache_clean();
+	cache_clean();	/* XXX - SA Only ? */
 
 	addr = trunc_page(bp->b_data);
 	off = (vm_offset_t)bp->b_data - addr;
