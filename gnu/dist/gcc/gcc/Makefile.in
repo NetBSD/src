@@ -2098,6 +2098,8 @@ gengtype-yacc.o : $(srcdir)/gengtype-yacc.c gengtype.h $(HCONFIG_H) $(SYSTEM_H)
 
 # The sed command works around a bug in flex-2.5.4.
 $(srcdir)/gengtype-lex.c : $(srcdir)/gengtype-lex.l
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_gengtype-lex.c:
 	cd $(srcdir) && \
 	$(FLEX) $(FLEXFLAGS) -t -o$@ gengtype-lex.l | \
 	  sed 's/^\(char msg\[\];\)/yyconst \1/' > g-$$$$ ; \
@@ -2109,6 +2111,8 @@ $(srcdir)/gengtype-lex.c : $(srcdir)/gengtype-lex.l
 	fi
 
 $(srcdir)/gengtype-yacc.c: $(srcdir)/gengtype-yacc.y
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_gengtype-yacc.c:
 	(cd $(srcdir) && \
 	 $(BISON) $(BISONFLAGS) -d -o gengtype-yacc.c gengtype-yacc.y || \
 	 ( rm -f $@ && false ) )
