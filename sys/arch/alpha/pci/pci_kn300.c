@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn300.c,v 1.15 1999/12/15 22:21:45 thorpej Exp $ */
+/* $NetBSD: pci_kn300.c,v 1.16 1999/12/15 22:25:21 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.15 1999/12/15 22:21:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.16 1999/12/15 22:25:21 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.15 1999/12/15 22:21:45 thorpej Exp $
 #endif
 
 #include "sio.h"
-#if NSIO > 0
+#if NSIO > 0 || NPCEB > 0
 #include <alpha/pci/siovar.h>
 #endif
 
@@ -119,7 +119,7 @@ pci_kn300_pickintr(ccp, first)
 
 	if (EISA_PRESENT(REGVAL(MCPCIA_PCI_REV(ccp)))) {
 		mcpcia_eisaccp = ccp;
-#if NSIO > 0
+#if NSIO > 0 || NPCEB > 0
 		sio_intr_setup(pc, &ccp->cc_iot);
 		kn300_enable_intr(ccp, KN300_PCEB_IRQ);
 #endif
@@ -235,7 +235,7 @@ kn300_iointr(framep, vec)
 	u_long irq;
 
 	if (vec >= MCPCIA_VEC_EISA && vec < MCPCIA_VEC_PCI) {
-#if NSIO > 0
+#if NSIO > 0 || NPCEB > 0
 		sio_iointr(framep, vec);
 		return;
 #else
