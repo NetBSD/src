@@ -1,4 +1,4 @@
-/*	$NetBSD: control.h,v 1.1 2001/03/29 05:01:42 fredette Exp $	*/
+/*	$NetBSD: control.h,v 1.2 2001/04/06 14:52:56 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,14 +37,14 @@
  */
 
 /*
- * defines for sun2 control space
+ * Macros for Sun2 control space
  */
 
 /*
- * On the sun3, the 32 bytes of IDPROM are at consecutive addresses in
- * control space starting at 0x00000000.  On the sun2, the 32 bytes of
+ * On the Sun3, the 32 bytes of IDPROM are at consecutive addresses in
+ * control space starting at 0x00000000.  On the Sun2, the 32 bytes of
  * IDPROM are at offset 8 in each of the the first 32 pages of control
- * space, i.e., on the sun2, in control space the page frame is used
+ * space, i.e., on the Sun2, in control space the page frame is used
  * as an index, and the page offset bits are used to select something
  * to use that index with.  I'm not sure which I like better.
  */
