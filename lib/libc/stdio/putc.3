@@ -1,4 +1,4 @@
-.\"	$NetBSD: putc.3,v 1.5 1998/08/29 08:32:34 lukem Exp $
+.\"	$NetBSD: putc.3,v 1.6 2001/04/25 22:06:54 kleink Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,13 +37,15 @@
 .\"
 .\"     @(#)putc.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 4, 1993
+.Dd April 25, 2001
 .Dt PUTC 3
 .Os
 .Sh NAME
 .Nm fputc ,
 .Nm putc ,
 .Nm putchar ,
+.Nm putc_unlocked ,
+.Nm putchar_unlocked ,
 .Nm putw
 .Nd output a character or word to a stream
 .Sh LIBRARY
@@ -56,6 +58,10 @@
 .Fn putc "int c" "FILE *stream"
 .Ft int
 .Fn putchar "int c"
+.Ft int
+.Fn putc_unlocked "int c" "FILE *stream"
+.Ft int
+.Fn putchar_unlocked "int c"
 .Ft int
 .Fn putw "int w" "FILE *stream"
 .Sh DESCRIPTION
@@ -82,6 +88,26 @@ is identical to
 .Fn putc
 with an output stream of
 .Em stdout .
+.Pp
+The
+.Fn putc_unlocked
+and
+.Fn putchar_unlocked
+functions provide functionality identical to that of
+.Fn putc
+and
+.Fn putchar ,
+respectively, but do not perform implicit locking of the streams they
+operate on.
+In multi-threaded programs they may be used
+.Em only
+within a scope in which the stream
+has been successfully locked by the calling thread using either
+.Xr flockfile 3
+or
+.Xr ftrylockfile 3 ,
+and may later be released using
+.Xr funlockfile 3 .
 .Pp
 The
 .Fn putw
@@ -121,6 +147,12 @@ and
 .Fn putchar ,
 conform to
 .St -ansiC .
+The functions
+.Fn putc_unlocked
+and
+.Fn putchar_unlocked
+conform to
+.St -p1003.1-96 .
 A function
 .Fn putw
 function appeared in
