@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsys.c,v 1.26 1997/04/14 16:56:28 scottr Exp $	*/
+/*	$NetBSD: adbsys.c,v 1.27 1997/06/16 06:35:27 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -89,6 +89,47 @@ adb_complete(buffer, data_area, adb_command)
 	adb_processevent(&event);
 }
 
+void 
+adb_msa3_complete(buffer, data_area, adb_command)
+	caddr_t buffer;
+	caddr_t data_area;
+	int adb_command;
+{
+	adb_event_t event;
+	ADBDataBlock adbdata;
+	int adbaddr;
+	int error;
+#ifdef MRG_DEBUG
+	register int i;
+
+	printf("adb: transaction completion\n");
+#endif
+
+	adbaddr = (adb_command & 0xf0) >> 4;
+	error = GetADBInfo(&adbdata, adbaddr);
+#ifdef MRG_DEBUG
+	printf("adb: GetADBInfo returned %d\n", error);
+#endif
+
+	event.addr = adbaddr;
+	event.hand_id = ADBMS_MSA3;
+	event.def_addr = adbdata.origADBAddr;
+	event.byte_count = buffer[0];
+	memcpy(event.bytes, buffer + 1, event.byte_count);
+
+#ifdef MRG_DEBUG
+	printf("adb: from %d at %d (org %d) %d:",
+	    event.addr, event.hand_id, event.def_addr, buffer[0]);
+	for (i = 1; i <= buffer[0]; i++)
+		printf(" %x", buffer[i]);
+	printf("\n");
+#endif
+
+	microtime(&event.timestamp);
+
+	adb_processevent(&event);
+}
+
 static volatile int extdms_done;
 
 /*
@@ -155,6 +196,7 @@ extdms_init(totaladbs)
 			while (!extdms_done)
 				/* busy wait until done */;
 
+			/* Attempt to initialize Extended Mouse Protocol */
 			buffer[2] = '\004'; /* make handler ID 4 */
 			extdms_done = 0;
 			cmd = (cmd & 0xf3) | 0x08; /* listen command */
@@ -162,6 +204,56 @@ extdms_init(totaladbs)
 			      (Ptr)&extdms_done, cmd);
 			while (!extdms_done)
 				/* busy wait until done */;
+
+			/* Check to see if successful, if not
+			 * try to initialize it as other types */
+			cmd = ((adbaddr << 4) & 0xf0) | 0x3;
+			extdms_done = 0;
+			cmd = (cmd & 0xf3) | 0x0c; /* talk command */
+			ADBOp((Ptr)buffer, (Ptr)extdms_complete,
+			      (Ptr)&extdms_done, cmd);
+			while (!extdms_done)
+				/* busy wait until done */;
+				
+			if (buffer[2] != ADBMS_EXTENDED) {
+				/* Attempt to initialize as an A3 mouse */
+				buffer[2] = 0x03; /* make handler ID 3 */
+				extdms_done = 0;
+				cmd = (cmd & 0xf3) | 0x08; /* listen command */
+				ADBOp((Ptr)buffer, (Ptr)extdms_complete,
+				      (Ptr)&extdms_done, cmd);
+				while (!extdms_done)
+					/* busy wait until done */;
+		
+				/* Check to see if successful, if not
+				 * try to initialize it as other types */
+				cmd = ((adbaddr << 4) & 0xf0) | 0x3;
+				extdms_done = 0;
+				cmd = (cmd & 0xf3) | 0x0c; /* talk command */
+				ADBOp((Ptr)buffer, (Ptr)extdms_complete,
+				      (Ptr)&extdms_done, cmd);
+				while (!extdms_done)
+					/* busy wait until done */;
+					
+				if (buffer[2] == ADBMS_MSA3) {
+					/* Initialize as above */
+					cmd = ((adbaddr << 4) & 0xF0) | 0xA;
+					/* listen 2 */
+					buffer[0] = 3;
+					buffer[1] = 0x00;
+					/* Irrelevant, buffer has 0x77 */
+					buffer[2] = 0x07;
+					/* enable 3 button mode = 0111b,
+					 * speed = normal */
+					extdms_done = 0;
+					ADBOp((Ptr)buffer, (Ptr)extdms_complete,
+					      (Ptr)&extdms_done, cmd);
+					while (!extdms_done)
+						/* busy wait until done */;
+				} else {
+					/* No special support for this mouse */
+				}
+			}
 		}
 	}
 }
@@ -256,6 +348,9 @@ adb_init()
 			case ADBMS_200DPI:
 				printf("200 dpi mouse");
 				break;
+			case ADBMS_MSA3:
+				printf("Mouse Systems A3 mouse, default parameters");
+				break;
 			case ADBMS_USPEED:
 				printf("MicroSpeed mouse, default parameters");
 				break;
@@ -296,7 +391,14 @@ adb_init()
 		printf(" at %d\n", adbaddr);
 
 		/* Set completion routine to be MacBSD's */
-		adbinfo.siServiceRtPtr = (Ptr) adb_asmcomplete;
+		if ((adbdata.origADBAddr == ADBADDR_REL) && 
+		    (buffer[0] > 0) && (buffer[2] == ADBMS_MSA3)) {
+			/* Special device handler for the A3 mouse */
+			adbinfo.siServiceRtPtr = (Ptr)adb_msa3_asmcomplete;
+		} else {
+			/* Default completion routine */
+			adbinfo.siServiceRtPtr = (Ptr)adb_asmcomplete;
+		}
 		adbinfo.siDataAreaAddr = NULL;
 		error = SetADBInfo(&adbinfo, adbaddr);
 #ifdef MRG_DEBUG

@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsysasm.s,v 1.4 1996/10/13 16:54:24 christos Exp $	*/
+/*	$NetBSD: adbsysasm.s,v 1.5 1997/06/16 06:35:28 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -45,6 +45,20 @@ _adb_asmcomplete:
 	/*	a1 is the pointer to this routine itself. */
 	movl	a0, sp@-	/* device data buffer */
 	jbsr	_adb_complete
+	addl	#12, sp		/* pop params */
+	moveml	sp@+, #0x0303	| restore scratch regs
+	rts
+
+/* This routine is called when an A3 mouse has sent us some data. */
+/* (provided it has been set up with SetADBInfo) */
+	.global	_adb_msa3_asmcomplete
+_adb_msa3_asmcomplete:
+	moveml	#0xc0c0, sp@-	| save scratch regs
+	movl	d0, sp@-	/* ADB command byte */
+	movl	a2, sp@-	/* data area pointer */
+	/*	a1 is the pointer to this routine itself. */
+	movl	a0, sp@-	/* device data buffer */
+	jbsr	_adb_msa3_complete
 	addl	#12, sp		/* pop params */
 	moveml	sp@+, #0x0303	| restore scratch regs
 	rts

@@ -1,4 +1,4 @@
-/*	$NetBSD: adbvar.h,v 1.6 1997/04/08 03:19:06 scottr Exp $	*/
+/*	$NetBSD: adbvar.h,v 1.7 1997/06/16 06:35:29 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -45,7 +45,6 @@ typedef struct adb_trace_xlate_s {
 extern adb_trace_xlate_t adb_trace_xlations[];
 
 /* adb.c */
-void    adb_asmcomplete __P((void));
 void	adb_enqevent __P((adb_event_t *event));
 void	adb_handoff __P((adb_event_t *event));
 void	adb_autorepeat __P((void *keyp));
@@ -59,11 +58,14 @@ int	adbwrite __P((dev_t dev, struct uio *uio, int flag));
 int	adbioctl __P((dev_t , int , caddr_t , int , struct proc *));
 int	adbpoll __P((dev_t dev, int events, struct proc *p));
 
-/* adbsysadm.s */
+/* adbsysasm.s */
+void	adb_asmcomplete __P((void));
+void	adb_msa3_asmcomplete __P((void));
 void	extdms_complete __P((void));
 
 /* adbsys.c */
 void	adb_complete __P((caddr_t buffer, caddr_t data_area, int adb_command));
+void	adb_msa3_complete __P((caddr_t buffer, caddr_t data_area, int adb_command));
 void	extdms_init __P((int));
 
 #ifndef MRG_ADB

@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsys.h,v 1.5 1996/05/05 14:34:07 briggs Exp $	*/
+/*	$NetBSD: adbsys.h,v 1.6 1997/06/16 06:36:28 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994	Allen K. Briggs, Chris P. Caputo,
@@ -97,6 +97,7 @@ typedef struct adb_dev_s{
 #define ADB_PBKBD	12
 #define ADBMS_100DPI	1
 #define ADBMS_200DPI	2
+#define ADBMS_MSA3	3	/* Mouse Systems A3 Mouse */
 #define ADBMS_EXTENDED	4
 #define ADBMS_USPEED	47	/* MicroSpeed mouse */
 
