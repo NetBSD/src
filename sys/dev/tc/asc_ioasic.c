@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_ioasic.c,v 1.14 1998/08/13 02:10:56 eeh Exp $	*/
+/*	$NetBSD: asc_ioasic.c,v 1.15 1999/01/16 06:36:42 nisimura Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -33,7 +33,7 @@
 
 /*XXX*/
 #include <pmax/pmax/asic.h>		/* XXX ioasic register defs? */
-#include <pmax/pmax/kmin.h>	/* XXX ioasic register defs? */
+#include <pmax/pmax/kmin.h>		/* XXX ioasic register defs? */
 #include <pmax/pmax/pmaxtype.h>
 extern int pmax_boardtype;
 
@@ -51,17 +51,10 @@ struct cfattach asc_ioasic_ca = {
 	sizeof(struct asc_softc), asc_ioasic_match, asc_ioasic_attach
 };
 
-#ifdef notdef
-extern struct cfdriver asc_cd;
-#endif
-
 /*
  * DMA callback declarations
  */
 
-#ifdef ASC_IOASIC_BOUNCE
-extern u_long asc_iomem;
-#endif
 static int
 asic_dma_start __P((asc_softc_t asc, State *state, caddr_t cp, int flag,
     int len, int off));
@@ -76,15 +69,13 @@ asc_ioasic_match(parent, match, aux)
 	void *aux;
 {
 	struct ioasicdev_attach_args *d = aux;
-	void *ascaddr;
 
 	if (strncmp(d->iada_modname, "asc", TC_ROM_LLEN) &&
 	    strncmp(d->iada_modname, "PMAZ-AA ", TC_ROM_LLEN))
 		return (0);
 
 	/* probe for chip */
-	ascaddr = (void*)d->iada_addr;
-	if (tc_badaddr(ascaddr + ASC_OFFSET_53C94))
+	if (tc_badaddr(d->iada_addr + ASC_OFFSET_53C94))
 		return (0);
 
 	return (1);
@@ -98,15 +89,11 @@ asc_ioasic_attach(parent, self, aux)
 {
 	register struct ioasicdev_attach_args *d = aux;
 	register asc_softc_t asc = (asc_softc_t) self;
-#ifdef ASC_IOASIC_BOUNCE
-	u_char *buff;
-	int i;
-#endif
 
-	void *ascaddr;
+	tc_addr_t ascaddr;
 	int unit;
 
-	ascaddr = (void*)MIPS_PHYS_TO_KSEG1(d->iada_addr);
+	ascaddr = (tc_addr_t)MIPS_PHYS_TO_KSEG1(d->iada_addr);
 	unit = asc->sc_dev.dv_unit;
 	
 	/*
@@ -120,27 +107,6 @@ asc_ioasic_attach(parent, self, aux)
 	 * (2) timing based on turbochannel frequency
 	 */
 
-#ifdef ASC_IOASIC_BOUNCE
-#if USE_CACHED_BUFFER
-	/* XXX Use cached address for DMA buffer to increase raw read speed */
-	buff = (u_char *)MIPS_PHYS_TO_KSEG0(asc_iomem);
-#else
-	buff = (u_char *)MIPS_PHYS_TO_KSEG1(asc_iomem);
-#endif	/* USE_CACHED_BUFFER */
-	/*
-	 * Statically partition the DMA buffer between targets.
-	 * This way we will eventually be able to attach/detach
-	 * drives on-fly.  And 18k/target is plenty for normal use.
-	 */
-
-	/*
-	 * Give each target its own DMA buffer region.
-	 * We may want to try ping ponging buffers later.
-	 */
-	for (i = 0; i < ASC_NCMD; i++)
-		asc->st[i].dmaBufAddr = buff + 8192 * i;
-
-#endif	/* ASC_IOASIC_BOUNCE */
 	*((volatile int *)IOASIC_REG_SCSI_DMAPTR(ioasic_base)) = -1;
 	*((volatile int *)IOASIC_REG_SCSI_DMANPTR(ioasic_base)) = -1;
 	*((volatile int *)IOASIC_REG_SCSI_SCR(ioasic_base)) = 0;
@@ -178,7 +144,6 @@ asic_dma_start(asc, state, cp, flag, len, off)
 	*ssr &= ~IOASIC_CSR_DMAEN_SCSI;
 	*((volatile int *)IOASIC_REG_SCSI_SCR(ioasic_base)) = 0;
 
-#ifndef ASC_IOASIC_BOUNCE
 	/* restrict len to the maximum the IOASIC can transfer */
 	if (len > ((caddr_t)mips_trunc_page(cp + NBPG * 2) - cp))
 		len = (caddr_t)mips_trunc_page(cp + NBPG * 2) - cp;
@@ -205,29 +170,6 @@ asic_dma_start(asc, state, cp, flag, len, off)
 			MachFlushDCache(MIPS_PHYS_TO_KSEG0(nphys),
 			    NBPG);	/* XXX */
 	}
-#else	/* ASC_IOASIC_BOUNCE */
-	/* restrict len to the maximum the IOASIC can transfer */
-	if (len > ((caddr_t)mips_trunc_page(state->dmaBufAddr + off + NBPG * 2) - (caddr_t)(state->dmaBufAddr + off)))
-		len = (caddr_t)mips_trunc_page(state->dmaBufAddr + off + NBPG * 2) - (caddr_t)(state->dmaBufAddr + off);
-
-	if (flag == ASCDMA_WRITE)
-		bcopy(cp, state->dmaBufAddr + off, len);
-	cp = state->dmaBufAddr + off;
-#if USE_CACHED_BUFFER
-#ifdef MIPS3
-	/* If R4K, need to writeback the bounce buffer */
-	if (CPUISMIPS3)
-		mips3_HitFlushDCache((vaddr_t)cp, len);
-#endif /* MIPS3 */
-	phys = MIPS_KSEG0_TO_PHYS(cp);
-	cp = (caddr_t)mips_trunc_page(cp + NBPG);
-	nphys = MIPS_KSEG0_TO_PHYS(cp);
-#else
-	phys = MIPS_KSEG1_TO_PHYS(cp);
-	cp = (caddr_t)mips_trunc_page(cp + NBPG);
-	nphys = MIPS_KSEG1_TO_PHYS(cp);
-#endif	/* USE_CACHED_BUFFER */
-#endif	/* ASC_IOASIC_BOUNCE */
 
 #ifdef notyet
 	asc->dma_next = cp;
@@ -298,13 +240,16 @@ asic_dma_end(asc, state, flag)
 				*to++ = w;
 			}
 		}
-#ifdef ASC_IOASIC_BOUNCE
-		bcopy(state->dmaBufAddr, state->buf, state->dmalen);
-#endif
 	}
 }
 
 #ifdef notdef
+/*
+ * XXX Below is just informational for how IOASIC DMA is handled. XXX
+ */
+
+extern struct cfdriver asc_cd;
+
 /*
  * Called by asic_intr() for scsi dma pointer update interrupts.
  */

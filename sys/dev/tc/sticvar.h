@@ -1,4 +1,4 @@
-/*	$NetBSD: sticvar.h,v 1.1 1997/11/08 07:27:51 jonathan Exp $	*/
+/*	$NetBSD: sticvar.h,v 1.2 1999/01/16 06:36:42 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone
@@ -43,10 +43,11 @@
  */
 struct stic_softc {
 	struct stic_reg *stic_addr;
-	void * stamp_addr;
-	void * vdac_addr;
-	void*   stic_pktbuf;		/* kva of packet/polling area. */
+	caddr_t stamp_addr;
+	caddr_t vdac_addr;
+	caddr_t stic_pktbuf;		/* kva of packet/polling area. */
 };
 
 int stic_init __P((struct stic_softc *stic_sc));
+
 #endif	/*_TC_STICVAR_H_ */

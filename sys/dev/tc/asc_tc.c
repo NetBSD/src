@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_tc.c,v 1.8 1997/10/31 06:29:59 jonathan Exp $	*/
+/*	$NetBSD: asc_tc.c,v 1.9 1999/01/16 06:36:42 nisimura Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -61,14 +61,11 @@ asc_tc_match(parent, match, aux)
 	void *aux;
 {
 	struct tc_attach_args *t = aux;
-	void *ascaddr;
 
 	if (strncmp(t->ta_modname, "PMAZ-AA ", TC_ROM_LLEN))
 		return (0);
 
-	ascaddr = (void*)t->ta_addr;
-
-	if (tc_badaddr(ascaddr + ASC_OFFSET_53C94))
+	if (tc_badaddr(t->ta_addr + ASC_OFFSET_53C94))
 		return (0);
 
 	return (1);
@@ -86,12 +83,11 @@ asc_tc_attach(parent, self, aux)
 	register asc_softc_t asc = (asc_softc_t) self;
 	u_char *buff;
 	int i, speed;
-
-	void *ascaddr;
+	tc_addr_t ascaddr;
 	int unit;
 
 	/* Use uncached address for chip registers.  */
-	ascaddr = (void*)MIPS_PHYS_TO_KSEG1(t->ta_addr);
+	ascaddr = (tc_addr_t)MIPS_PHYS_TO_KSEG1(t->ta_addr);
 	unit = asc->sc_dev.dv_unit;
 	
 	/*

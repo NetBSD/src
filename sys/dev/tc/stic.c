@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.1 1997/11/11 04:47:57 jonathan Exp $	*/
+/*	$NetBSD: stic.c,v 1.2 1999/01/16 06:36:42 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone
@@ -63,6 +63,9 @@
 /*
  * HISTORY
  * $Log: stic.c,v $
+ * Revision 1.2  1999/01/16 06:36:42  nisimura
+ * - Don't use void pointer for arithmetic.
+ *
  * Revision 1.1  1997/11/11 04:47:57  jonathan
  * chipset driver for DEC pixelstamp  and STIC (stamp Interface chip).
  *
@@ -110,7 +113,7 @@
  ************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.1 1997/11/11 04:47:57 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.2 1999/01/16 06:36:42 nisimura Exp $");
 
 
 /*
@@ -136,7 +139,7 @@ stic_init(stic_sc)
 {
 	int modtype, xconfig, yconfig, config;
 	volatile struct stic_regs *stic = STICADDR(stic_sc->stic_addr);
-	void *stamp_addr = (void*)(stic_sc->stamp_addr);
+	caddr_t stamp_addr = stic_sc->stamp_addr;
 
 	/*
 	 *  Initialize STIC interface chip registers.
