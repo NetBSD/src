@@ -1,4 +1,4 @@
-/*	$NetBSD: collect.c,v 1.28 2002/03/06 17:36:44 wiz Exp $	*/
+/*	$NetBSD: collect.c,v 1.29 2002/03/08 02:05:25 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-__RCSID("$NetBSD: collect.c,v 1.28 2002/03/06 17:36:44 wiz Exp $");
+__RCSID("$NetBSD: collect.c,v 1.29 2002/03/08 02:05:25 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,7 +55,7 @@ __RCSID("$NetBSD: collect.c,v 1.28 2002/03/06 17:36:44 wiz Exp $");
 extern char *tmpdir;
 
 /*
- * Read a message from standard output and return a read file to it
+ * Read a message from standard input and return a read file to it
  * or NULL on error.
  */
 
