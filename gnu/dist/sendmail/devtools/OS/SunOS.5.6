@@ -1,5 +1,7 @@
-#	Id: SunOS.5.6,v 8.14 1999/06/02 22:53:42 gshapiro Exp
+#	Id: SunOS.5.6,v 8.14.18.2 2000/06/05 17:29:47 gshapiro Exp
 define(`confCC', `gcc')
+define(`confLDOPTS_SO',`-G')
+define(`confSONAME',`-h')
 define(`confBEFORE', `sysexits.h')
 define(`confMAPDEF', `-DNDBM -DNIS -DNISPLUS -DMAP_REGEX')
 define(`confENVDEF', `-DSOLARIS=20600')

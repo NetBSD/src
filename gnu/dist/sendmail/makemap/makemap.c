@@ -21,8 +21,9 @@ static char copyright[] =
 #endif /* ! lint */
 
 #ifndef lint
-static char id[] = "@(#)Id: makemap.c,v 8.135 2000/04/07 17:05:21 ca Exp";
+static char id[] = "@(#)Id: makemap.c,v 8.135.4.10 2000/07/18 05:41:39 gshapiro Exp";
 #endif /* ! lint */
+
 
 #include <sys/types.h>
 #ifndef ISC_UNIX
@@ -56,6 +57,7 @@ BITMAP256 DontBlameSendmail;
 #else /* _FFR_DELIM */
 # define ISSEP(c) (isascii(c) && isspace(c))
 #endif /* _FFR_DELIM */
+
 
 static void
 usage(progname)
@@ -132,8 +134,8 @@ main(argc, argv)
 	if (pw != NULL)
 		(void) strlcpy(rnamebuf, pw->pw_name, sizeof rnamebuf);
 	else
-		snprintf(rnamebuf, sizeof rnamebuf,
-			"Unknown UID %d", (int) RealUid);
+		(void) snprintf(rnamebuf, sizeof rnamebuf, "Unknown UID %d",
+				(int) RealUid);
 	RunAsUserName = RealUserName = rnamebuf;
 	user_info.smdbu_id = RunAsUid;
 	user_info.smdbu_group_id = RunAsGid;
@@ -142,7 +144,7 @@ main(argc, argv)
 
 
 #define OPTIONS		"C:Nc:t:deflorsuv"
-	while ((opt = getopt(argc, argv, OPTIONS)) != EOF)
+	while ((opt = getopt(argc, argv, OPTIONS)) != -1)
 	{
 		switch (opt)
 		{

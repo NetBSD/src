@@ -9,10 +9,11 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)Id: control.c,v 8.44 1999/11/29 22:03:49 ca Exp";
+static char id[] = "@(#)Id: control.c,v 8.44.14.7 2000/07/03 21:49:05 geir Exp";
 #endif /* ! lint */
 
 #include <sendmail.h>
+
 
 int ControlSocket = -1;
 
@@ -300,7 +301,7 @@ control_command(sock, e)
 	/* decode command */
 	for (c = CmdTab; c->cmd_name != NULL; c++)
 	{
-		if (!strcasecmp(c->cmd_name, cmdbuf))
+		if (strcasecmp(c->cmd_name, cmdbuf) == 0)
 			break;
 	}
 
@@ -328,8 +329,23 @@ control_command(sock, e)
 
 	  case CMDSTATUS:	/* daemon status */
 		proc_list_probe();
-		fprintf(s, "%d/%d/%ld/%d\r\n", CurChildren, MaxChildren,
-			freediskspace(QueueDir, NULL), sm_getla(NULL));
+		{
+			long bsize;
+			long free;
+
+			free = freediskspace(QueueDir, &bsize);
+
+			/*
+			**  Prevent overflow and don't lose
+			**  precision (if bsize == 512)
+			*/
+
+			free = (long)((double)free * ((double)bsize / 1024));
+
+			fprintf(s, "%d/%d/%ld/%d\r\n",
+				CurChildren, MaxChildren,
+				free, sm_getla(NULL));
+		}
 		proc_list_display(s);
 		break;
 
@@ -343,3 +359,4 @@ control_command(sock, e)
 	exit(exitstat);
 }
 #endif /* ! NOT_SENDMAIL */
+
