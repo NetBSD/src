@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 1996/02/02 15:26:21 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 1997/03/24 22:02:49 christos Exp $
 
 .PATH:	${.CURDIR}/../man
 
 PROG=	dnsquery
 
-.include <bsd.prog.mk>
 .include "../../Makefile.inc"
+.include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.9 1996/01/09 22:39:31 pk Exp $
+# $Id: Makefile,v 1.10 1997/03/24 22:06:21 christos Exp $
 
 # Paths to libraries
 #
@@ -48,8 +48,8 @@ SRCS=		blockframe.c core.c gdbtypes.c main.c source.c		\
 
 CLEANFILES+=	c-exp.tab.h ch-exp.tab.h m2-exp.tab.h c-exp.c ch-exp.c m2-exp.c
 
-LDADD=		$(LIBBFD) $(LIBREADLINE) $(LIBIBERTY)
-DPADD=		$(LIBBFD) $(LIBREADLINE) $(LIBIBERTY)
+LDADD+=		$(LIBBFD) $(LIBREADLINE) $(LIBIBERTY)
+DPADD+=		$(LIBBFD) $(LIBREADLINE) $(LIBIBERTY)
 
 LDADD+=		-ltermcap -lkvm
 DPADD+=		$(LIBTERMCAP) $(LIBKVM)

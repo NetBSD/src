@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1995/04/23 07:58:37 cgd Exp $
+#	$NetBSD: Makefile,v 1.6 1997/03/24 22:06:14 christos Exp $
 
 PROG=		awk
 SRCS=		main.c eval.c builtin.c msg.c iop.c io.c field.c array.c \
@@ -6,7 +6,7 @@ SRCS=		main.c eval.c builtin.c msg.c iop.c io.c field.c array.c \
 		getopt.c getopt1.c
 CFLAGS+=	-DGAWK
 LDADD=		-lm -lgnumalloc
-DPADD=		${LIBM} /usr/lib/libgnumalloc.a
+DPADD=		${LIBM} ${LIBGNUMALLOC}
 CLEANFILES+=	awk.c y.tab.h
 
 .include <bsd.prog.mk>
