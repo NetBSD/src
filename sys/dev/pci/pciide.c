@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.177 2003/01/24 04:53:13 thorpej Exp $	*/
+/*	$NetBSD: pciide.c,v 1.178 2003/01/24 05:51:04 thorpej Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.177 2003/01/24 04:53:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.178 2003/01/24 05:51:04 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -2056,7 +2056,7 @@ amd7x6_chip_map(sc, pa)
 			sc->sc_wdcdev.UDMA_cap = 5;
 			break;
 		case PCI_PRODUCT_NVIDIA_NFORCE2_ATA133:
-			sc->sc_wdcdev.UDMA_cap = 5;	/* XXX */
+			sc->sc_wdcdev.UDMA_cap = 6;
 			break;
 		}
 		sc->sc_amd_regbase = AMD7X6_NVIDIA_REGBASE;
@@ -2154,7 +2154,8 @@ amd7x6_setup_channel(chp)
 			 * PCIIDE_AMD756_ENABLEDMA. It causes a hard hang if
 			 * triggered. 
 			 */
-			if (sc->sc_pp->ide_product ==
+			if (sc->sc_pci_vendor == PCI_VENDOR_AMD &&
+			    sc->sc_pp->ide_product ==
 			      PCI_PRODUCT_AMD_PBC756_IDE &&
 			    AMD756_CHIPREV_DISABLEDMA(rev)) {
 				printf("%s:%d:%d: multi-word DMA disabled due "
