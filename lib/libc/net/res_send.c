@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.18 1999/07/01 18:19:35 itojun Exp $	*/
+/*	$NetBSD: res_send.c,v 1.19 1999/07/04 03:52:55 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_send.c,v 8.13 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_send.c,v 1.18 1999/07/01 18:19:35 itojun Exp $");
+__RCSID("$NetBSD: res_send.c,v 1.19 1999/07/04 03:52:55 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -432,7 +432,13 @@ res_send(buf, buflen, ans, anssiz)
 				if (s < 0) {
 					terrno = errno;
 					Perror(stderr, "socket(vc)", errno);
+#if 0
 					return (-1);
+#else
+					badns |= (1 << ns);
+					res_close();
+					goto next_ns;
+#endif
 				}
 				errno = 0;
 				if (connect(s, (struct sockaddr *)(void *)nsap,
@@ -569,7 +575,13 @@ read_len:
 #endif
 					terrno = errno;
 					Perror(stderr, "socket(dg)", errno);
+#if 0
 					return (-1);
+#else
+					badns |= (1 << ns);
+					res_close();
+					goto next_ns;
+#endif
 				}
 				connected = 0;
 			}
