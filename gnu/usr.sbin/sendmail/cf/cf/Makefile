@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2000/05/08 00:37:54 itojun Exp $
+#	$NetBSD: Makefile,v 1.6.2.1 2000/07/07 11:10:55 itojun Exp $
 #	install these sources in /usr/share/sendmail/cf
 
 DIST=		${.CURDIR}/../../../../dist
@@ -6,7 +6,7 @@ DIST=		${.CURDIR}/../../../../dist
 
 FILESDIR=	/usr/share/sendmail/cf
 FILES=		boat-anchor.mc chimera.mc ihack.net.mc minbar.mc \
-		netbsd-proto.mc netbsd-proto-IPv6.mc sun-lamp.mc zhadum.mc \
+		netbsd-proto.mc netbsd-proto-IPv4only.mc sun-lamp.mc zhadum.mc \
 		Makefile
 
 .if (${.CURDIR} == ${FILESDIR})
@@ -19,15 +19,16 @@ M4=		m4
 ROMODE=		444
 RM=		rm -f
 
-ALL=		netbsd-proto.cf netbsd-proto-IPv6.cf
+ALL=		netbsd-proto.cf netbsd-proto-IPv4only.cf
 
-OTHERS=		${FILES:C/Makefile//:C/\.mc/.cf/g:C/netbsd-proto\.cf//:C/netbsd-proto-IPv6\.cf//}
+OTHERS=		${FILES:S/Makefile//:C/netbsd-proto.*//:S/.mc/.cf/g}
 
 .SUFFIXES: .mc .cf
 
 .mc.cf:
 	${RM} $@
-	(cd ${CFDIR}/cf && ${M4} ${CFDIR}/m4/cf.m4 ${.CURDIR}/${@:R}.mc > ${.OBJDIR}/$@)
+	(cd ${CFDIR}/cf && \
+	    ${M4} ${CFDIR}/m4/cf.m4 ${.CURDIR}/${@:R}.mc > ${.OBJDIR}/$@)
 	${CHMOD} ${ROMODE} $@
 
 realall: ${ALL}
@@ -41,10 +42,10 @@ clean cleandir distclean:
 realdepend:
 
 distribution: netbsd-proto.cf
-	${INSTALL} -c -o root -g wheel -m 444 netbsd-proto.cf \
-	    ${DESTDIR}/etc/mail/sendmail.cf
-	${INSTALL} -c -o root -g wheel -m 444 netbsd-proto-IPv6.cf \
-	    ${DESTDIR}/etc/mail/sendmail-IPv6.cf
+	${INSTALL} ${INSTPRIV} -c -o root -g wheel -m 444 \
+	    netbsd-proto.cf ${DESTDIR}/etc/mail/sendmail.cf
+	${INSTALL} ${INSTPRIV} -c -o root -g wheel -m 444 \
+	    netbsd-proto-IPv4only.cf ${DESTDIR}/etc/mail/sendmail-IPv4only.cf
 
 # this is overkill, but....
 M4FILES=	${CFDIR}/domain/Berkeley.EDU.m4 \
