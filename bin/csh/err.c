@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.6 1995/03/21 09:02:47 cgd Exp $	*/
+/*	$NetBSD: err.c,v 1.7 1997/01/13 17:53:18 tls Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: err.c,v 1.6 1995/03/21 09:02:47 cgd Exp $";
+static char rcsid[] = "$NetBSD: err.c,v 1.7 1997/01/13 17:53:18 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -346,7 +346,7 @@ stderror(id, va_alist)
 #endif
 {
     va_list va;
-    register Char **v;
+    Char **v;
     int     flags = id & ERR_FLAGS;
 
     id &= ~ERR_FLAGS;
