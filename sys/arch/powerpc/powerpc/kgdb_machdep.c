@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.11 2004/03/02 00:35:54 kleink Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.12 2004/08/02 13:30:08 uebayasi Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.11 2004/03/02 00:35:54 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.12 2004/08/02 13:30:08 uebayasi Exp $");
 
 #include "opt_ddb.h"
 
@@ -156,7 +156,7 @@ kgdb_signal(int type)
 #ifdef PPC_IBM4XX
 	case EXC_PIT:		/* 40x - Programmable interval timer */
 	case EXC_FIT:		/* 40x - Fixed interval timer */
-		return SIGALRM
+		return SIGALRM;
 
 	case EXC_CII:		/* 40x - Critical input interrupt */
 	case EXC_WDOG:		/* 40x - Watchdog timer */
