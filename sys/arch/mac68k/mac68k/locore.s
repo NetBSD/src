@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.93 1998/01/05 23:16:30 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.94 1998/02/13 07:39:02 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1816,6 +1816,9 @@ GLOBAL(protorp)
 
 GLOBAL(cold)
 	.long	1		| cold start flag
+
+GLOBAL(want_resched)
+	.long	0
 
 GLOBAL(proc0paddr)
 	.long	0		| KVA of proc0 u-area
