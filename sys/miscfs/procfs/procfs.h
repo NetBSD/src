@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.11 1994/06/29 06:34:44 cgd Exp $	*/
+/*	$NetBSD: procfs.h,v 1.12 1994/10/29 07:58:53 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -86,11 +86,11 @@ struct pfsnode {
  */
 #define PROCFS_NAMELEN 8
 struct pfsdent {
-	u_long	d_fileno;
-	u_short	d_reclen;
-	u_char	d_type;
-	u_char	d_namlen;
-	char	d_name[PROCFS_NAMELEN];
+	u_int32_t	d_fileno;
+	u_int16_t	d_reclen;
+	u_int8_t	d_type;
+	u_int8_t	d_namlen;
+	char		d_name[PROCFS_NAMELEN];
 };
 #define UIO_MX sizeof(struct pfsdent)
 #define PROCFS_FILENO(pid, type) \

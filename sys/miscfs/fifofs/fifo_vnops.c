@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.10 1994/10/20 04:26:25 cgd Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.11 1994/10/29 07:58:48 cgd Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -291,7 +291,7 @@ fifo_write(ap)
 fifo_ioctl(ap)
 	struct vop_ioctl_args /* {
 		struct vnode *a_vp;
-		int  a_command;
+		u_long a_command;
 		caddr_t  a_data;
 		int  a_fflag;
 		struct ucred *a_cred;

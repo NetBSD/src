@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.18 1994/10/20 04:26:38 cgd Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.19 1994/10/29 07:59:00 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -378,7 +378,7 @@ spec_write(ap)
 spec_ioctl(ap)
 	struct vop_ioctl_args /* {
 		struct vnode *a_vp;
-		int  a_command;
+		u_long a_command;
 		caddr_t  a_data;
 		int  a_fflag;
 		struct ucred *a_cred;
@@ -394,7 +394,7 @@ spec_ioctl(ap)
 		    ap->a_fflag, ap->a_p));
 
 	case VBLK:
-		if (ap->a_command == 0 && (int)ap->a_data == B_TAPE)
+		if (ap->a_command == 0 && (long)ap->a_data == B_TAPE)
 			if (bdevsw[major(dev)].d_flags & B_TAPE)
 				return (0);
 			else

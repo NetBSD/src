@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.12 1994/10/20 04:24:00 cgd Exp $	*/
+/*	$NetBSD: advnops.c,v 1.13 1994/10/29 07:58:27 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -30,6 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/time.h>
