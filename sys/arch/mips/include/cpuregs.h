@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.7 1997/05/19 21:24:10 jonathan Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.8 1997/06/15 17:27:03 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -81,25 +81,6 @@
 
 
 /*
- * XXX
- * Port-specific constants:
- * Kernel virtual address at which kernel is loaded, and
- * Kernel virtual address for user page table entries
- * (i.e., the address for the context register).
- */
-#ifdef pmax
-#define MACH_CODE_START			0x80030000
-#define VMMACH_PTE_BASE			0xFFC00000
-#endif	/* pmax */
-
-#ifdef pica
-#define MACH_CODE_START			0x80080000
-#define VMMACH_PTE_BASE			0xFF800000
-#endif	/* pica */
-
-
-
-/*
  * The bits in the cause register.
  *
  * Bits common to r3000 and r4000:
@@ -120,13 +101,11 @@
 #define MACH_CR_IP		0x0000FF00
 #define MACH_CR_EXC_CODE_SHIFT	2
 
-#ifdef pmax /* XXX not used any more, only to satisfy regression tests */
-#define MACH_CR_EXC_CODE	MIPS_3K_CR_EXC_CODE
-#endif	/* pmax */
-#ifdef pica
+#ifdef MIPS3 /* XXX not used any more, only to satisfy regression tests */
 #define MACH_CR_EXC_CODE	MIPS_4K_CR_EXC_CODE
-#endif	/* pica */
-
+#else
+#define MACH_CR_EXC_CODE	MIPS_3K_CR_EXC_CODE
+#endif	/* MIPs3 */
 
 /*
  * The bits in the status register.  All bits are active when set to 1.
@@ -206,7 +185,6 @@
 #define MACH_SR_KU_CUR		MIPS_3K_SR_KU_CUR
 #define MACH_SR_INT_ENA_PREV	MIPS_3K_SR_INT_ENA_PREV
 
-
 /*
  * R4000 status register bit definitons,
  * where different from r2000/r3000.
@@ -265,6 +243,7 @@
 #define MACH_SOFT_INT_MASK_1	0x0200
 #define MACH_SOFT_INT_MASK_0	0x0100
 
+
 /*
  * nesting interrupt masks.
  */
@@ -278,18 +257,14 @@
 #define MACH_INT_MASK_SPL5	(MACH_INT_MASK_5|MACH_INT_MASK_SPL4)
 
 
-#ifdef pmax
+#ifdef MIPS3
+/* r4000 has on-chip timer at INT_MASK_5 */
+#define MACH_INT_MASK		(MIPS_INT_MASK &  ~MACH_INT_MASK_5)
+#define MACH_HARD_INT_MASK	(MIPS_HARD_INT_MASK & ~MACH_INT_MASK_5)
+#else
 #define MACH_INT_MASK		MIPS_INT_MASK
 #define MACH_HARD_INT_MASK	MIPS_HARD_INT_MASK
 #endif
-
-/* r4000 has on-chip timer at INT_MASK_5 */
-#ifdef pica
-#define MACH_INT_MASK		(MIPS_INT_MASK &  ~MACH_INT_MASK_5)
-#define MACH_HARD_INT_MASK	(MIPS_HARD_INT_MASK & ~MACH_INT_MASK_5)
-#endif
-
-
 
 /*
  * The bits in the context register.
@@ -303,17 +278,13 @@
 /*
  * Backwards compatbility -- XXX more thought
  */
-#ifdef pmax
-#define MACH_CNTXT_PTE_BASE	MIPS_3K_CNTXT_PTE_BASE
-#define MACH_CNTXT_BAD_VPN	MIPS_3K_CNTXT_BAD_VPN
-#endif	/* pmax */
-
-#ifdef pica
+#ifdef MIPS3
 #define MACH_CNTXT_PTE_BASE	MIPS_4K_CNTXT_PTE_BASE
 #define MACH_CNTXT_BAD_VPN2	MIPS_4K_CNTXT_BAD_VPN2
-#endif	/* pica */
-
-
+#else
+#define MACH_CNTXT_PTE_BASE	MIPS_3K_CNTXT_PTE_BASE
+#define MACH_CNTXT_BAD_VPN	MIPS_3K_CNTXT_BAD_VPN
+#endif
 
 /*
  * Location of exception vectors.
@@ -334,22 +305,6 @@
 #define MIPS_4K_XTLB_MISS_EXC_VEC	0x80000080
 #define MIPS_4K_CACHE_ERR_EXC_VEC	0x80000100
 #define MIPS_4K_GEN_EXC_VEC		0x80000180
-
-/*
- * Backwards compatbility -- XXX more thought
- */
-#ifdef pmax
-#define MACH_GEN_EXC_VEC	MIPS_3K_GEN_EXC_VEC
-#endif	/* pmax */
-
-#ifdef pica
-#define MACH_GEN_EXC_VEC	MIPS_4K_GEN_EXC_VEC
-#define MACH_TLB_MISS_EXC_VEC	MACH_UTLB_MISS_EXC_VEC	/* locore compat */
-#define MACH_XTLB_MISS_EXC_VEC	MIPS_4K_XTLB_MISS_EXC_VEC
-#define MACH_CACHE_ERR_EXC_VEC	MIPS_4K_CACHE_ERR_EXC_VEC
-#endif	/* pica */
-
-
 
 /*
  * Coprocessor 0 registers:
@@ -494,25 +449,21 @@
 #define VMMACH_MIPS_4K_TLB_GLOBAL_BIT		0x00000001
 
 
-#ifdef pmax /* XXX */
-#define VMMACH_TLB_PHYS_PAGE_SHIFT	VMMACH_MIPS_3K_TLB_PHYS_PAGE_SHIFT
-#define VMMACH_TLB_PF_NUM		VMMACH_MIPS_3K_TLB_PF_NUM
-#define VMMACH_TLB_NON_CACHEABLE_BIT	VMMACH_MIPS_3K_TLB_NON_CACHEABLE_BIT
-#define VMMACH_TLB_MOD_BIT		VMMACH_MIPS_3K_TLB_MOD_BIT
-#define VMMACH_TLB_VALID_BIT		VMMACH_MIPS_3K_TLB_VALID_BIT
-#define VMMACH_TLB_GLOBAL_BIT		VMMACH_MIPS_3K_TLB_GLOBAL_BIT
-#endif /* pmax */
-
-#ifdef pica /*  XXX */
+#ifdef MIPS3
 #define VMMACH_TLB_PHYS_PAGE_SHIFT	VMMACH_MIPS_4K_TLB_PHYS_PAGE_SHIFT
 #define VMMACH_TLB_PF_NUM		VMMACH_MIPS_4K_TLB_PF_NUM
 #define VMMACH_TLB_ATTR_MASK		VMMACH_MIPS_4K_TLB_ATTR_MASK
 #define VMMACH_TLB_MOD_BIT		VMMACH_MIPS_4K_TLB_MOD_BIT
 #define VMMACH_TLB_VALID_BIT		VMMACH_MIPS_4K_TLB_VALID_BIT
 #define VMMACH_TLB_GLOBAL_BIT		VMMACH_MIPS_4K_TLB_GLOBAL_BIT
-#endif	/* pica */
-
-
+#else
+#define VMMACH_TLB_PHYS_PAGE_SHIFT	VMMACH_MIPS_3K_TLB_PHYS_PAGE_SHIFT
+#define VMMACH_TLB_PF_NUM		VMMACH_MIPS_3K_TLB_PF_NUM
+#define VMMACH_TLB_NON_CACHEABLE_BIT	VMMACH_MIPS_3K_TLB_NON_CACHEABLE_BIT
+#define VMMACH_TLB_MOD_BIT		VMMACH_MIPS_3K_TLB_MOD_BIT
+#define VMMACH_TLB_VALID_BIT		VMMACH_MIPS_3K_TLB_VALID_BIT
+#define VMMACH_TLB_GLOBAL_BIT		VMMACH_MIPS_3K_TLB_GLOBAL_BIT
+#endif
 
 /*
  * The high part of the TLB entry.
@@ -532,16 +483,14 @@
  * backwards XXX needs more thought, should support runtime decisions.
  */
 
-#ifdef pmax
-#define VMMACH_TLB_VIRT_PAGE_NUM	VMMACH_TLB_MIPS_3K_VIRT_PAGE_NUM
-#define VMMACH_TLB_PID			VMMACH_TLB_MIPS_3K_PID      
-#define VMMACH_TLB_PID_SHIFT		VMMACH_TLB_MIPS_3K_PID_SHIFT
-#endif
-
-#ifdef pica
+#ifdef MIPS3
 #define VMMACH_TLB_VIRT_PAGE_NUM	VMMACH_TLB_MIPS_4K_VIRT_PAGE_NUM
 #define VMMACH_TLB_PID			VMMACH_TLB_MIPS_4K_PID      
 #define VMMACH_TLB_PID_SHIFT		VMMACH_TLB_MIPS_4K_PID_SHIFT
+#else
+#define VMMACH_TLB_VIRT_PAGE_NUM	VMMACH_TLB_MIPS_3K_VIRT_PAGE_NUM
+#define VMMACH_TLB_PID			VMMACH_TLB_MIPS_3K_PID      
+#define VMMACH_TLB_PID_SHIFT		VMMACH_TLB_MIPS_3K_PID_SHIFT
 #endif
 
 /*
@@ -561,16 +510,13 @@
 #define VMMACH_MIPS_4K_WIRED_ENTRIES	8
 
 /* compatibility with existing locore -- XXX more thought */
-#ifdef pmax
-#define VMMACH_NUM_TLB_ENTRIES		VMMACH_MIPS_3K_NUM_TLB_ENTRIES
-#define VMMACH_FIRST_RAND_ENTRY 	VMMACH_MIPS_3K_FIRST_RAND_ENTRY
-#endif	/* pmax */
-
-#ifdef pica
+#ifdef MIPS3
 #define VMMACH_NUM_TLB_ENTRIES		VMMACH_MIPS_4K_NUM_TLB_ENTRIES
 #define VMMACH_WIRED_ENTRIES	 	VMMACH_MIPS_4K_WIRED_ENTRIES
-#endif	/* pica */
-
+#else
+#define VMMACH_NUM_TLB_ENTRIES		VMMACH_MIPS_3K_NUM_TLB_ENTRIES
+#endif
+#define VMMACH_FIRST_RAND_ENTRY 	VMMACH_MIPS_3K_FIRST_RAND_ENTRY
 
 /*
  * The number of process id entries.
@@ -578,13 +524,11 @@
 #define	VMMACH_MIPS_3K_NUM_PIDS			64
 #define	VMMACH_MIPS_4K_NUM_PIDS			256
 
-#ifdef pmax
-#define	VMMACH_NUM_PIDS		VMMACH_MIPS_3K_NUM_PIDS
-#endif	/* pmax */
-#ifdef pica
+#ifdef MIPS3
 #define	VMMACH_NUM_PIDS		VMMACH_MIPS_4K_NUM_PIDS
-#endif	/* pica */
-
+#else
+#define	VMMACH_NUM_PIDS		VMMACH_MIPS_3K_NUM_PIDS
+#endif
 
 /*
  * TLB probe return codes.
