@@ -1,4 +1,4 @@
-/* $NetBSD: tc_3000_300.c,v 1.17 1998/10/23 23:49:31 briggs Exp $ */
+/* $NetBSD: tc_3000_300.c,v 1.18 1999/02/12 01:49:07 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_3000_300.c,v 1.17 1998/10/23 23:49:31 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_3000_300.c,v 1.18 1999/02/12 01:49:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ tc_3000_300_intr_establish(tcadev, cookie, level, func, arg)
 #endif
 
 	if (tc_3000_300_intr[dev].tci_func != tc_3000_300_intrnull)
-		panic("tc_3000_300_intr_establish: cookie %d twice", dev);
+		panic("tc_3000_300_intr_establish: cookie %lu twice", dev);
 
 	tc_3000_300_intr[dev].tci_func = func;
 	tc_3000_300_intr[dev].tci_arg = arg;
@@ -156,7 +156,7 @@ tc_3000_300_intr_disestablish(tcadev, cookie)
 #endif
 
 	if (tc_3000_300_intr[dev].tci_func == tc_3000_300_intrnull)
-		panic("tc_3000_300_intr_disestablish: cookie %d bad intr",
+		panic("tc_3000_300_intr_disestablish: cookie %lu bad intr",
 		    dev);
 
 	imskp = (volatile u_int32_t *)IOASIC_REG_IMSK(DEC_3000_300_IOASIC_ADDR);
