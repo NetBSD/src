@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_req.c,v 1.7 1998/05/06 05:21:47 mrg Exp $	*/
+/*	$NetBSD: ns_req.c,v 1.8 1998/06/03 00:13:02 lukem Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static char sccsid[] = "@(#)ns_req.c	4.47 (Berkeley) 7/1/91";
@@ -483,6 +483,7 @@ req_query(hp, cpp, eom, qsp, buflenp, msglenp, msg, dfd, from)
 
 	qtypeIncr(type);
 
+#if 0			/* no info leakage for NetBSD */
 	/*
 	 * Yow!
 	 */
@@ -509,6 +510,7 @@ req_query(hp, cpp, eom, qsp, buflenp, msglenp, msg, dfd, from)
 		*msglenp = *cpp - msg;		/* Total message length */
 		return (Finish);
 	}
+#endif
 
 	/*
 	 * Process query.
