@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.33 1999/01/06 19:19:38 thorpej Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.34 1999/02/12 00:52:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1524,13 +1524,13 @@ again:
 				if (sc->sc_phase != MESSAGE_IN_PHASE)
 				    printf("%s: !TC on MSG OUT"
 				       " [intr %x, stat %x, step %d]"
-				       " prevphase %x, resid %x\n",
+				       " prevphase %x, resid %lx\n",
 					sc->sc_dev.dv_xname,
 					sc->sc_espintr,
 					sc->sc_espstat,
 					sc->sc_espstep,
 					sc->sc_prevphase,
-					sc->sc_omlen);
+					(u_long)sc->sc_omlen);
 			} else if (sc->sc_dleft == 0) {
 				/*
 				 * The DMA operation was started for
@@ -1829,12 +1829,12 @@ printf("<<RESELECT CONT'd>>");
 				if (ncr53c9x_dmaselect &&
 				    sc->sc_cmdlen != 0)
 					printf("(%s:%d:%d): select; "
-					       "%d left in DMA buffer "
+					       "%lu left in DMA buffer "
 					"[intr %x, stat %x, step %d]\n",
 						sc->sc_dev.dv_xname,
 						sc_link->scsipi_scsi.target,
 						sc_link->scsipi_scsi.lun,
-						sc->sc_cmdlen,
+						(u_long)sc->sc_cmdlen,
 						sc->sc_espintr,
 						sc->sc_espstat,
 						sc->sc_espstep);
