@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.23 1999/03/26 17:34:15 chs Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.24 1999/04/11 04:04:11 chs Exp $	*/
 
 /*
  *
@@ -118,7 +118,6 @@
 /*
  * the following defines are for uvm_km_kmemalloc's flags
  */
-
 #define UVM_KMF_NOWAIT	0x1			/* matches M_NOWAIT */
 #define UVM_KMF_VALLOC	0x2			/* allocate VA only */
 #define UVM_KMF_TRYLOCK	UVM_FLAG_TRYLOCK	/* try locking only */
@@ -129,6 +128,11 @@
 #define	UVM_PGA_STRAT_NORMAL	0	/* high -> low free list walk */
 #define	UVM_PGA_STRAT_ONLY	1	/* only specified free list */
 #define	UVM_PGA_STRAT_FALLBACK	2	/* ONLY falls back on NORMAL */
+
+/*
+ * flags for uvm_pagealloc_strat()
+ */
+#define UVM_PGA_USERESERVE		0x0001
 
 /*
  * structures
@@ -340,9 +344,10 @@ int			uvm_mmap __P((vm_map_t, vaddr_t *, vsize_t,
 
 /* uvm_page.c */
 struct vm_page		*uvm_pagealloc_strat __P((struct uvm_object *,
-				vaddr_t, struct vm_anon *, int, int));
-#define	uvm_pagealloc(obj, off, anon) \
-	    uvm_pagealloc_strat((obj), (off), (anon), UVM_PGA_STRAT_NORMAL, 0)
+				vaddr_t, struct vm_anon *, int, int, int));
+#define	uvm_pagealloc(obj, off, anon, flags) \
+	    uvm_pagealloc_strat((obj), (off), (anon), (flags), \
+				UVM_PGA_STRAT_NORMAL, 0)
 void			uvm_pagerealloc __P((struct vm_page *, 
 					     struct uvm_object *, vaddr_t));
 /* Actually, uvm_page_physload takes PF#s which need their own type */
