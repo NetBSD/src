@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.41 2002/11/22 17:55:56 tron Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.42 2002/11/22 22:32:14 tron Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -1440,6 +1440,13 @@ syssrc/sys/arch/sparc64/sparc64/machdep.c	1.131,1.133 via patch
 	ignores PMAP_LITTLE, don't bother to pass that as flags. We've
 	already changed the ASIs used to access the mapped pages acordingly.
 	[martin, ticket #917]
+
+sys/arch/sparc/include/bsd_openprom.h		1.18
+sys/arch/sparc64/include/bsd_openprom.h		1.4
+
+	* Refine the comment describing openprom_addr.
+	* Add openprom_range and openprom_intr structures.
+	[martin, ticket #948]
 
 sys/arch/sparc/dev/cgfourteen.c			1.25
 sys/arch/sparc/dev/cgfourteenvar.h		1.4
