@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.10 2002/06/28 18:39:45 fvdl Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.11 2002/06/28 18:44:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2785,6 +2785,23 @@ bge_watchdog(ifp)
 	ifp->if_oerrors++;
 }
 
+static void
+bge_stop_block(struct bge_softc *sc, bus_addr_t reg, uint32_t bit)
+{
+	int i;
+
+	BGE_CLRBIT(sc, reg, bit);
+
+	for (i = 0; i < BGE_TIMEOUT; i++) {
+		if ((CSR_READ_4(sc, reg) & bit) == 0)
+			return;
+		delay(100);
+	}
+
+	printf("%s: block failed to stop: reg 0x%lx, bit 0x%08x\n",
+	    sc->bge_dev.dv_xname, (u_long) reg, bit);
+}
+
 /*
  * Stop the adapter and free any mbufs allocated to the
  * RX and TX lists.
@@ -2800,36 +2817,38 @@ bge_stop(sc)
 	/*
 	 * Disable all of the receiver blocks
 	 */
-	BGE_CLRBIT(sc, BGE_RX_MODE, BGE_RXMODE_ENABLE);
-	BGE_CLRBIT(sc, BGE_RBDI_MODE, BGE_RBDIMODE_ENABLE);
-	BGE_CLRBIT(sc, BGE_RXLP_MODE, BGE_RXLPMODE_ENABLE);
-	BGE_CLRBIT(sc, BGE_RXLS_MODE, BGE_RXLSMODE_ENABLE);
-	BGE_CLRBIT(sc, BGE_RDBDI_MODE, BGE_RBDIMODE_ENABLE);
-	BGE_CLRBIT(sc, BGE_RDC_MODE, BGE_RDCMODE_ENABLE);
-	BGE_CLRBIT(sc, BGE_RBDC_MODE, BGE_RBDCMODE_ENABLE);
+	bge_stop_block(sc, BGE_RX_MODE, BGE_RXMODE_ENABLE);
+	bge_stop_block(sc, BGE_RBDI_MODE, BGE_RBDIMODE_ENABLE);
+	bge_stop_block(sc, BGE_RXLP_MODE, BGE_RXLPMODE_ENABLE);
+	bge_stop_block(sc, BGE_RXLS_MODE, BGE_RXLSMODE_ENABLE);
+	bge_stop_block(sc, BGE_RDBDI_MODE, BGE_RBDIMODE_ENABLE);
+	bge_stop_block(sc, BGE_RDC_MODE, BGE_RDCMODE_ENABLE);
+	bge_stop_block(sc, BGE_RBDC_MODE, BGE_RBDCMODE_ENABLE);
 
 	/*
 	 * Disable all of the transmit blocks
 	 */
-	BGE_CLRBIT(sc, BGE_SRS_MODE, BGE_SRSMODE_ENABLE);
-	BGE_CLRBIT(sc, BGE_SBDI_MODE, BGE_SBDIMODE_ENABLE);
-	BGE_CLRBIT(sc, BGE_SDI_MODE, BGE_SDIMODE_ENABLE);
-	BGE_CLRBIT(sc, BGE_RDMA_MODE, BGE_RDMAMODE_ENABLE);
-	BGE_CLRBIT(sc, BGE_SDC_MODE, BGE_SDCMODE_ENABLE);
-	BGE_CLRBIT(sc, BGE_DMAC_MODE, BGE_DMACMODE_ENABLE);
-	BGE_CLRBIT(sc, BGE_SBDC_MODE, BGE_SBDCMODE_ENABLE);
+	bge_stop_block(sc, BGE_SRS_MODE, BGE_SRSMODE_ENABLE);
+	bge_stop_block(sc, BGE_SBDI_MODE, BGE_SBDIMODE_ENABLE);
+	bge_stop_block(sc, BGE_SDI_MODE, BGE_SDIMODE_ENABLE);
+	bge_stop_block(sc, BGE_RDMA_MODE, BGE_RDMAMODE_ENABLE);
+	bge_stop_block(sc, BGE_SDC_MODE, BGE_SDCMODE_ENABLE);
+	bge_stop_block(sc, BGE_DMAC_MODE, BGE_DMACMODE_ENABLE);
+	bge_stop_block(sc, BGE_SBDC_MODE, BGE_SBDCMODE_ENABLE);
 
 	/*
 	 * Shut down all of the memory managers and related
 	 * state machines.
 	 */
-	BGE_CLRBIT(sc, BGE_HCC_MODE, BGE_HCCMODE_ENABLE);
-	BGE_CLRBIT(sc, BGE_WDMA_MODE, BGE_WDMAMODE_ENABLE);
-	BGE_CLRBIT(sc, BGE_MBCF_MODE, BGE_MBCFMODE_ENABLE);
+	bge_stop_block(sc, BGE_HCC_MODE, BGE_HCCMODE_ENABLE);
+	bge_stop_block(sc, BGE_WDMA_MODE, BGE_WDMAMODE_ENABLE);
+	bge_stop_block(sc, BGE_MBCF_MODE, BGE_MBCFMODE_ENABLE);
+
 	CSR_WRITE_4(sc, BGE_FTQ_RESET, 0xFFFFFFFF);
 	CSR_WRITE_4(sc, BGE_FTQ_RESET, 0);
-	BGE_CLRBIT(sc, BGE_BMAN_MODE, BGE_BMANMODE_ENABLE);
-	BGE_CLRBIT(sc, BGE_MARB_MODE, BGE_MARBMODE_ENABLE);
+
+	bge_stop_block(sc, BGE_BMAN_MODE, BGE_BMANMODE_ENABLE);
+	bge_stop_block(sc, BGE_MARB_MODE, BGE_MARBMODE_ENABLE);
 
 	/* Disable host interrupts. */
 	BGE_SETBIT(sc, BGE_PCI_MISC_CTL, BGE_PCIMISCCTL_MASK_PCI_INTR);
