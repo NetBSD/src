@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.sun3,v 1.2 2000/08/09 10:34:37 tv Exp $
+# $NetBSD: obsolete.sun3,v 1.2.2.1 2002/05/31 11:28:24 tv Exp $
 /usr/include/machine
 /usr/include/machine/_G_config.h
 /usr/include/machine/ansi.h
@@ -58,3 +58,4 @@
 /usr/include/machine/vuid_event.h
 /usr/include/machine/z8530var.h
 /usr/include/sun3
+/usr/mdec/installboot
