@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iso2022.c,v 1.4 2002/03/28 01:59:50 yamt Exp $	*/
+/*	$NetBSD: citrus_iso2022.c,v 1.5 2002/03/28 10:29:11 yamt Exp $	*/
 
 /*-
  * Copyright (c)1999, 2002 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_iso2022.c,v 1.4 2002/03/28 01:59:50 yamt Exp $");
+__RCSID("$NetBSD: citrus_iso2022.c,v 1.5 2002/03/28 10:29:11 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -90,6 +90,8 @@ typedef struct {
 		singlegr:3;
 	char ch[7];	/* longest escape sequence (ESC & V ESC $ ( F) */
 	int chlen;
+	int flags;
+#define _ISO2022STATE_FLAG_INITIALIZED	1
 } _ISO2022State;
 
 typedef struct {
@@ -141,6 +143,8 @@ typedef struct {
 #define _ENCODING_STATE			_ISO2022State
 #define _ENCODING_MB_CUR_MAX(_ei_)	MB_LEN_MAX
 #define _ENCODING_IS_STATE_DEPENDENT	1
+#define _STATE_NEEDS_EXPLICIT_INIT(_ps_)	\
+    (!((_ps_)->flags & _ISO2022STATE_FLAG_INITIALIZED))
 
 
 #define _ISO2022INVALID (wchar_t)-1
@@ -417,6 +421,7 @@ _citrus_ISO2022_init_state(_ISO2022EncodingInfo * __restrict ei,
 		}
 	}
 	s->singlegl = s->singlegr = -1;
+	s->flags |= _ISO2022STATE_FLAG_INITIALIZED;
 }
 
 static __inline void
