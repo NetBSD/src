@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.28 1996/06/13 04:54:01 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.29 1996/06/13 23:16:43 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -136,7 +136,7 @@ u_int32_t no_optimize;
 
 /* the following is used externally (sysctl_hw) */
 char	machine[] = "alpha";
-char	*cpu_model;
+char	cpu_model[128];
 char	*model_names[] = {
 	"UNKNOWN (0)",
 	"Alpha Demonstration Unit",
@@ -430,9 +430,11 @@ alpha_init(pfn, ptb)
 			    model_names[cputype]);
 	}
 
-	cpu_model = (*cpu_modelname)();
-	if (cpu_model == NULL)
-		cpu_model = model_names[cputype];
+	if ((*cpu_modelname)() != NULL)
+		strncpy(cpu_model, (*cpu_modelname)(), sizeof cpu_model - 1);
+	else
+		strncpy(cpu_model, model_names[cputype], sizeof cpu_model - 1);
+	cpu_model[sizeof cpu_model - 1] = '\0';
 
 #if NLE_IOASIC > 0
 	/*
