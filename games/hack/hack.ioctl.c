@@ -3,37 +3,23 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: hack.ioctl.c,v 1.4 1995/03/23 08:30:29 cgd Exp $";
+static char rcsid[] = "$NetBSD: hack.ioctl.c,v 1.5 1995/04/28 23:01:45 mycroft Exp $";
 #endif /* not lint */
 
 /* This cannot be part of hack.tty.c (as it was earlier) since on some
    systems (e.g. MUNIX) the include files <termio.h> and <sgtty.h>
    define the same constants, and the C preprocessor complains. */
 #include <stdio.h>
+#include <termios.h>
 #include "config.h"
-#ifdef BSD
-#include	<sgtty.h>
-struct ltchars ltchars, ltchars0;
-#else
-#include	<termio.h>	/* also includes part of <sgtty.h> */
-struct termio termio;
-#endif BSD
+struct termios termios;
 
 getioctls() {
-#ifdef BSD
-	(void) ioctl(fileno(stdin), (int) TIOCGLTC, (char *) &ltchars);
-	(void) ioctl(fileno(stdin), (int) TIOCSLTC, (char *) &ltchars0);
-#else
-	(void) ioctl(fileno(stdin), (int) TCGETA, &termio);
-#endif BSD
+	(void) tcgetattr(fileno(stdin), &termios);
 }
 
 setioctls() {
-#ifdef BSD
-	(void) ioctl(fileno(stdin), (int) TIOCSLTC, (char *) &ltchars);
-#else
-	(void) ioctl(fileno(stdin), (int) TCSETA, &termio);
-#endif BSD
+	(void) tcsetattr(fileno(stdin), TCSADRAIN, &termios);
 }
 
 #ifdef SUSPEND		/* implies BSD */
