@@ -2,6 +2,12 @@
 
 /* #define	SHOW_A_LOT */
 
+#ifdef INTR_DEBUG
+#define INTRLOCAL(label) label
+#else /* not INTR_DEBUG */
+#define INTRLOCAL(label) L/**/label
+#endif /* INTR_DEBUG */
+
 #define	BDBTRAP(name) \
 	ss ; \
 	cmpb	$0,_bdb_exists ; \
@@ -13,11 +19,13 @@ bdb_/**/name/**/_ljmp: ; \
 	ljmp	$0,$0 ; \
 1:
 
-#if 1
+#ifdef INTR_DEBUG
 #define	COUNT_EVENT(group, event)	incl	(group) + (event) * 4
-#else
+#else /* not INTR_DEBUG */
 #define	COUNT_EVENT(group, event)
-#endif
+#endif /* INTR_DEBUG */
+
+#define	COUNT_INTR(group, event)	incl	(group) + (event) * 4
 
 #ifdef SHOW_A_LOT
 
