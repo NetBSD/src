@@ -23,54 +23,7 @@
  * any improvements or extensions that they make and grant Carnegie Mellon 
  * the rights to redistribute these changes.
  */
-/*
- * HISTORY
- * $Log: db_trace.c,v $
- * Revision 1.2  1993/08/10 08:42:55  glass
- * fixed problem that caused two consecutive segments to be using the same
- * pmeg unknowingly.  still too many printfs, not sure how many are actualy
- * in the machine dependent code.  reaches cpu_startup() where it stops
- * deliberately. next project: autoconfig(), maybe kgdb
- *
- * Revision 1.1  93/08/08  12:22:09  glass
- * lots of changes, too many printfs
  * 
- * Revision 2.5  91/10/09  16:17:23  af
- * 	Added parens in initializers for db_regs.
- * 	[91/10/07            af]
- * 
- * Revision 2.4  91/07/31  18:13:03  dbg
- * 	Stack switching support.
- * 	[91/07/12            dbg]
- * 
- * Revision 2.3  91/03/16  14:58:27  rpd
- * 	Replaced db_jmpbuf with db_recover.
- * 	[91/03/14            rpd]
- * 
- * Revision 2.2  90/08/27  22:11:36  dbg
- * 	Import ddb/db_sym.h.
- * 	[90/08/21            dbg]
- * 	Detect the bad return address at the end of the stack trace.
- * 	[90/08/07            dbg]
- * 	Rewrote for new debugger.
- * 	[90/07/23            dbg]
- * 
- * Revision 2.3  90/05/29  18:38:17  rwd
- * 	Don't continue trace when cursym == NULL
- * 	[90/05/07            rwd]
- * 
- * Revision 2.2  89/12/08  19:52:49  rwd
- * 	Make <thread>$C work correctly
- * 	[89/11/28            rwd]
- * 
- * Revision 2.1  89/08/03  16:50:22  rwd
- * Created.
- * 
- * 25-May-89  Randall Dean (rwd) at Carnegie-Mellon University
- *	Added copyright to version originated by dbg.  Fixed frame
- *	tracing to recognize fp=0 as end.
- *
- */
 
 #include "param.h"
 #include "proc.h"
@@ -80,9 +33,8 @@
 #include <ddb/db_sym.h>
 #include <ddb/db_variables.h>
 
-#include <machine/setjmp.h>
-#define jmp_buf_t jmp_buf
-jmp_buf_t *db_recover;
+#include <setjmp.h>
+struct jmp_buf	*db_recover;
 
 /*
  * Register list
