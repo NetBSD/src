@@ -1,6 +1,6 @@
-.\"	$NetBSD: sleep.9,v 1.20 2002/09/29 17:14:16 jdolecek Exp $
+.\"	$NetBSD: sleep.9,v 1.21 2002/09/29 17:34:29 wiz Exp $
 .\"
-.\" Copyright (c) 1996 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1996, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -34,8 +34,8 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 23, 1996
-.Dt SLEEP 9
+.Dd September 29, 2002
+.Dt LTSLEEP 9
 .Os
 .Sh NAME
 .Nm ltsleep ,
@@ -155,7 +155,7 @@ function will mark all processes which are currently sleeping on the identifier
 as runnable.
 Eventually, each of the processes will resume execution in the kernel
 context, causing a return from
-.Fn [t]sleep .
+.Fn tsleep .
 Note that processes returning from sleep should always re-evaluate the
 conditions that blocked them, since a call to
 .Fn wakeup
