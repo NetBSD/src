@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.29 2000/04/11 04:53:57 nisimura Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.30 2000/04/16 09:00:26 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1657,6 +1657,34 @@ LEAF(mips1_TBIA)
 	j	ra
 	mtc0	v1, MIPS_COP_0_STATUS		# restore status register
 	END(mips1_TBIA)
+
+/*
+ * void mips1_TBRPL(vpn1, vpn2, pte)
+ *	probe TLB entry which has vpn1 address; if found, have it new
+ *	entryHi and entryLo pair of [vpn2, pte]
+ */
+LEAF(mips1_TBRPL)
+	mfc0	v1, MIPS_COP_0_STATUS
+	mtc0	zero, MIPS_COP_0_STATUS
+	mfc0	v0, MIPS_COP_0_TLB_HI
+	nop
+	mtc0	a0, MIPS_COP_0_TLB_HI
+	nop
+	tlbp
+	mfc0	t0, MIPS_COP_0_TLB_INDEX
+	nop
+	bltz	t0, 1f
+	nop
+	or	a2, a2, MIPS1_PG_G
+	mtc0	a1, MIPS_COP_0_TLB_HI
+	mtc0	a2, MIPS_COP_0_TLB_LOW
+	nop
+	tlbwi
+1:
+	mtc0	v0, MIPS_COP_0_TLB_HI
+	j	ra
+	mtc0	v1, MIPS_COP_0_STATUS
+	END(mips1_TBRPL)
 
 	.data
 mips1_excausesw:
