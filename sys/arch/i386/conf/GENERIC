@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.499 2002/06/27 06:34:23 junyoung Exp $
+# $NetBSD: GENERIC,v 1.500 2002/07/01 13:19:05 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.499 $"
+#ident 		"GENERIC-$Revision: 1.500 $"
 
 maxusers	32		# estimated number of users
 
@@ -204,6 +204,10 @@ options 	PCDISPLAY_SOFTCURSOR
 #options 	VGA_CONSOLE_SCREENTYPE="\"80x24\""
 # work around a hardware bug that loaded fonts don't work; found on ATI cards
 #options 	VGA_CONSOLE_ATI_BROKEN_FONTSEL
+# the following enables some functions to get mouse console support.
+# if you want a really secure system, it may be better not to enable them,
+# see wsmoused(8), section SECURITY CONSIDERATIONS for more info.
+#options 	WSDISPLAY_CHARFUNCS		# mouse console support
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
