@@ -88,7 +88,7 @@ Boston, MA 02111-1307, USA.  */
 
 #undef ENDFILE_SPEC
 #define ENDFILE_SPEC \
-  "crtsavres%O%s %(netbsd_endfile_spec)"
+  "%(netbsd_endfile_spec)"
 
 #undef LIB_SPEC
 #define LIB_SPEC NETBSD_LIB_SPEC
