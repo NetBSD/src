@@ -1,4 +1,4 @@
-/*	$NetBSD: lsystem.c,v 1.4 2001/07/26 13:43:45 mrg Exp $	*/
+/*	$NetBSD: lsystem.c,v 1.5 2002/03/05 12:28:34 mrg Exp $	*/
 
 /*
  * Copyright (C) 1984-2000  Mark Nudelman
@@ -16,8 +16,8 @@
  * Necessarily very OS dependent.
  */
 
-#include <signal.h>
 #include "less.h"
+#include <signal.h>
 #include "position.h"
 
 #if MSDOS_COMPILER
@@ -109,7 +109,12 @@ lsystem(cmd, donemsg)
 	 */
 	inp = dup(0);
 	close(0);
+#if OS2
+	/* The __open() system call translates "/dev/tty" to "con". */
+	if (__open("/dev/tty", OPEN_READ) < 0)
+#else
 	if (open("/dev/tty", OPEN_READ) < 0)
+#endif
 		dup(inp);
 #endif
 
@@ -127,8 +132,8 @@ lsystem(cmd, donemsg)
 			p = save(shell);
 		else
 		{
-			char *esccmd;
-			if ((esccmd = esc_metachars(cmd)) == NULL)
+			char *esccmd = shell_quote(cmd);
+			if (esccmd != NULL)
 			{
 				p = (char *) ecalloc(strlen(shell) +
 					strlen(cmd) + 7, sizeof(char));
@@ -137,7 +142,7 @@ lsystem(cmd, donemsg)
 			{
 				p = (char *) ecalloc(strlen(shell) +
 					strlen(esccmd) + 5, sizeof(char));
-				sprintf(p, "%s -c %s", shell, esccmd);
+				sprintf(p, "%s %s %s", shell, shell_coption(), esccmd);
 				free(esccmd);
 			}
 		}
@@ -149,7 +154,6 @@ lsystem(cmd, donemsg)
 		else
 			p = save(cmd);
 	}
-
 	system(p);
 	free(p);
 #else

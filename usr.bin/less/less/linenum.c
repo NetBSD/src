@@ -1,4 +1,4 @@
-/*	$NetBSD: linenum.c,v 1.4 2001/07/26 13:43:45 mrg Exp $	*/
+/*	$NetBSD: linenum.c,v 1.5 2002/03/05 12:28:34 mrg Exp $	*/
 
 /*
  * Copyright (C) 1984-2000  Mark Nudelman
@@ -303,7 +303,6 @@ find_linenum(pos)
 	 * The decision is based on which way involves 
 	 * traversing fewer bytes in the file.
 	 */
-	flush();
 #if HAVE_TIME
 	startime = get_time();
 #endif
@@ -392,7 +391,6 @@ find_pos(lno)
 		/* Found it exactly. */
 		return (p->pos);
 
-	flush();
 	if (p == &anchor || lno - p->prev->line < p->line - lno)
 	{
 		/*
