@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.47 2000/09/06 23:32:13 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.48 2000/09/07 17:20:59 thorpej Exp $	*/
 
 /*
  *
@@ -41,6 +41,7 @@
 
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_user_ldt.h"
+#include "opt_largepages.h"
 #endif
 
 #include <machine/cpufunc.h>
@@ -506,6 +507,16 @@ kvtopte(vaddr_t va)
 {
 
 	KASSERT(va >= (PDSLOT_KERN << PDSHIFT));
+
+#ifdef LARGEPAGES
+	{
+		pd_entry_t *pde;
+
+		pde = &pmap_kernel()->pm_pdir[pdei(va)];
+		if (*pde & PG_PS)
+			return ((pt_entry_t *)pde);
+	}
+#endif
 
 	return (PTE_BASE + i386_btop(va));
 }
