@@ -1,4 +1,4 @@
-.\"	$NetBSD: vlan.4,v 1.1 2000/09/28 06:59:58 thorpej Exp $
+.\"	$NetBSD: vlan.4,v 1.2 2000/09/28 10:23:57 ad Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -45,16 +45,15 @@
 .Sh DESCRIPTION
 The
 .Nm
-interface provides support 802.1Q Virtual LANs.  This allows the
+interface provides support for 802.1Q Virtual LANs.  This allows the
 trunking of more than one network on a single network interface.
 This is particularly useful on routers or on hosts which must be
 connected to many different networks.
 .Pp
-To use
-.Nm vlan ,
-the administrator must first create the interface and then
-specify the VLAN tag and physical interface associated with
-the VLAN.
+To use a
+.Nm vlan
+interface, the administrator must first create the interface and then
+specify the VLAN tag and physical interface associated with the VLAN.
 This can be done by using the
 .Xr ifconfig 8
 .Sq create ,
@@ -82,6 +81,9 @@ interfaces's MTU.
 Promiscuous mode does not currently work on
 .Nm
 interfaces.
+.Pp
+Certian types of Ethernet interface have the ability to insert and/or
+extract VLAN tags using hardware.  This ability is not yet exploited.
 .Sh AUTHOR
 The
 .Nm
