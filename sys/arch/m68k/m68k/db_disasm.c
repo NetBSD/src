@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: db_disasm.c,v 1.8 1994/06/16 14:32:05 chopps Exp $
+ *	$Id: db_disasm.c,v 1.9 1994/06/30 12:54:44 gwr Exp $
  */
 /*
  * Notes:
@@ -184,6 +184,8 @@ db_disasm(loc, moto_syntax)
 	dbuf.dasm[0] = 0;
 	dbuf.info[0] = 0;
 		
+#if 0
+	/* This is now done in db_examine. */
 	diff = INT_MAX;
 	sym = db_search_symbol(loc, DB_STGY_PROC, &diff);
 	db_symbol_values(sym, &symname, 0);
@@ -201,6 +203,7 @@ db_disasm(loc, moto_syntax)
 		printu(&dbuf, diff, SIZE_LONG);
 	}
 	addstr(&dbuf, ":  ");
+#endif
 
 	opc = *dbuf.val;
 	dbuf.used++;
@@ -882,6 +885,7 @@ opcode_branch(dbuf, opc)
 		sz = SIZE_LONG;
 		addchar('l');
 	} else {
+		disp = *(char *)(dbuf->val + 1);
 		/*
 		 * XXX gas chokes on this, I am not sure if
 		 * XXX it can even be made to emit it (short of .word)
