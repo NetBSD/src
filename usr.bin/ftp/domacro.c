@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1985 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1985, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,29 +32,24 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)domacro.c	1.8 (Berkeley) 9/28/90";*/
-static char rcsid[] = "$Id: domacro.c,v 1.2 1993/08/01 18:15:29 mycroft Exp $";
+static char sccsid[] = "@(#)domacro.c	8.3 (Berkeley) 4/2/94";
 #endif /* not lint */
+
+#include <ctype.h>
+#include <signal.h>
+#include <stdio.h>
+#include <strings.h>
 
 #include "ftp_var.h"
 
-#include <signal.h>
-#include <stdio.h>
-#include <errno.h>
-#include <ctype.h>
-#include <sys/ttychars.h>
-
+void
 domacro(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register int i, j;
-	register char *cp1, *cp2;
-	int count = 2, loopflg = 0;
-	char line2[200];
-	extern char **glob(), *globerr;
-	struct cmd *getcmd(), *c;
-	extern struct cmd cmdtab[];
+	int i, j, count = 2, loopflg = 0;
+	char *cp1, *cp2, line2[200];
+	struct cmd *c;
 
 	if (argc < 2 && !another(&argc, &argv, "macro name")) {
 		printf("Usage: %s macro_name.\n", argv[0]);

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1985, 1989 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1985, 1989, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,29 +32,15 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)cmdtab.c	5.10 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: cmdtab.c,v 1.2 1993/08/01 18:15:30 mycroft Exp $";
+static char sccsid[] = "@(#)cmdtab.c	8.3 (Berkeley) 4/2/94";
 #endif /* not lint */
 
+#include <stdio.h>
 #include "ftp_var.h"
 
 /*
  * User FTP -- Command Tables.
  */
-int	setascii(), setbell(), setbinary(), setdebug(), setform();
-int	setglob(), sethash(), setmode(), setpeer(), setport();
-int	setprompt(), setstruct();
-int	settenex(), settrace(), settype(), setverbose();
-int	disconnect(), restart(), reget(), syst();
-int	cd(), lcd(), delete(), mdelete(), user();
-int	ls(), mls(), get(), mget(), help(), append(), put(), mput();
-int	quit(), renamefile(), status();
-int	quote(), rmthelp(), shell(), site();
-int	pwd(), makedir(), removedir(), setcr();
-int	account(), doproxy(), reset(), setcase(), setntrans(), setnmap();
-int	setsunique(), setrunique(), cdup(), macdef(), domacro();
-int	sizecmd(), modtime(), newer(), rmtstatus();
-int	do_chmod(), do_umask(), idle();
 
 char	accounthelp[] =	"send account command to remote server";
 char	appendhelp[] =	"append to a file";
@@ -156,7 +142,7 @@ struct cmd cmdtab[] = {
 	{ "mget",	mgethelp,	1,	1,	1,	mget },
 	{ "mkdir",	mkdirhelp,	0,	1,	1,	makedir },
 	{ "mls",	mlshelp,	1,	1,	1,	mls },
-	{ "mode",	modehelp,	0,	1,	1,	setmode },
+	{ "mode",	modehelp,	0,	1,	1,	setftmode },
 	{ "modtime",	modtimehelp,	0,	1,	1,	modtime },
 	{ "mput",	mputhelp,	1,	1,	1,	mput },
 	{ "newer",	newerhelp,	1,	1,	1,	newer },
