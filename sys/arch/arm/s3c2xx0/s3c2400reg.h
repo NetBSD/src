@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2400reg.h,v 1.1 2003/07/31 19:49:41 bsh Exp $ */
+/* $NetBSD: s3c2400reg.h,v 1.2 2003/08/27 03:46:05 bsh Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec corp.  All rights reserved.
@@ -55,9 +55,7 @@
  * Physical address of integrated peripherals
  */
 #define S3C2400_MEMCTL_BASE	0x14000000 /* memory controller */
-#define S3C2400_MEMCTL_SIZE	0x34
 #define	S3C2400_USBHC_BASE 	0x14200000 /* USB Host controller */
-#define	S3C2400_USBHC_SIZE	0x5c
 #define S3C2400_INTCTL_BASE	0x14400000 /* Interrupt controller */
 #define S3C2400_INTCTL_SIZE	0x18
 #define S3C2400_DMAC_BASE	0x14600000 /* DMA controllers */
@@ -65,20 +63,14 @@
 #define S3C2400_CLKMAN_BASE	0x14800000 /* clock & power management */
 #define S3C2400_CLKMAN_SIZE	0x18
 #define	S3C2400_LCDC_BASE 	0x14a00000
-#define	S3C2400_LCDC_SIZE 	0x54
 #define S3C2400_UART_BASE	0x15000000
 #define S3C2400_UART_BASE(n)	(S3C2400_UART_BASE+0x4000*(n))
-#define	S3C2400_UART_SIZE 	0x2c
 #define	S3C2400_TIMER_BASE 	0x15100000 /* Timers */
-#define	S3C2400_PWM_SIZE 	0x44
 #define	S3C2400_USBDC_BASE 	0x15200000 /* USB Device controller */
 #define	S3C2400_USBDC_SIZE 	0x1fc
 #define	S3C2400_WDT_BASE 	0x15300000 /* Watch dog timer */
-#define	S3C2400_WDT_SIZE 	0x0c
 #define	S3C2400_IIC_BASE 	0x15400000
-#deifne	S3C2400_IIC_SIZE 	0x0c
 #define	S3C2400_IIS_BASE 	0x15508000
-#deifne	S3C2400_IIS_SIZE 	0x14
 #define S3C2400_GPIO_BASE	0x15600000
 #define S3C2400_GPIO_SIZE	0x5c
 #define	S3C2400_RTC_BASE 	0x15700040
@@ -86,7 +78,6 @@
 #define	S3C2400_ADC_BASE 	0x15800000 /* A/D converter */
 #define	S3C2400_ADC_SIZE 	0x08
 #define	S3C2400_SPI_BASE 	0x15900000
-#define	S3C2400_SPI_SIZE 	0x18
 #define	S3C2400_MMC_BASE 	0x15a00000
 #define	S3C2400_MMC_SIZE 	0x40
 
