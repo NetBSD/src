@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.13 1998/12/31 00:04:07 tron Exp $	*/
+/*	$NetBSD: main.c,v 1.14 1999/01/19 17:02:00 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.14 1997/10/08 07:47:26 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.13 1998/12/31 00:04:07 tron Exp $");
+__RCSID("$NetBSD: main.c,v 1.14 1999/01/19 17:02:00 hubertf Exp $");
 #endif
 #endif
 
@@ -38,10 +38,11 @@ __RCSID("$NetBSD: main.c,v 1.13 1998/12/31 00:04:07 tron Exp $");
 #include "lib.h"
 #include "info.h"
 
-static char Options[] = "aBbcDde:fIikLl:mpqRrvh";
+static char Options[] = "aBbcDde:fFIikLl:mpqRrvh";
 
 int	Flags		= 0;
 Boolean AllInstalled	= FALSE;
+Boolean File2Pkg	= FALSE;
 Boolean Quiet		= FALSE;
 char *InfoPrefix	= "";
 char PlayPen[FILENAME_MAX];
@@ -53,7 +54,7 @@ static void
 usage(void)
 {
     fprintf(stderr, "%s\n%s\n%s\n",
-	"usage: pkg_info [-BbcDdfIikLmpqRrvh] [-e package] [-l prefix]",
+	"usage: pkg_info [-BbcDdFfIikLmpqRrvh] [-e package] [-l prefix]",
 	"                pkg-name [pkg-name ...]",
 	"       pkg_info -a [flags]");
     exit(1);
@@ -72,13 +73,13 @@ main(int argc, char **argv)
 	    AllInstalled = TRUE;
 	    break;
 
-	    case 'B':
-		Flags |= SHOW_BUILD_INFO;
-		break;
-
-	    case 'b':
-		Flags |= SHOW_BUILD_VERSION;
-		break;
+	case 'B':
+	    Flags |= SHOW_BUILD_INFO;
+	    break;
+	    
+	case 'b':
+	    Flags |= SHOW_BUILD_VERSION;
+	    break;
 
 	case 'c':
 	    Flags |= SHOW_COMMENT;
@@ -98,6 +99,10 @@ main(int argc, char **argv)
 
 	case 'f':
 	    Flags |= SHOW_PLIST;
+	    break;
+
+	case 'F':
+	    File2Pkg = 1;
 	    break;
 
 	case 'I':
@@ -168,9 +173,53 @@ main(int argc, char **argv)
     if (!Flags)
 	Flags = SHOW_COMMENT | SHOW_DESC | SHOW_REQBY;
 
+    /* -Fe /filename -> change CheckPkg to real packagename */
+    if (CheckPkg && File2Pkg) {
+	char *s;
+	
+	if (pkgdb_open(1)==-1) {
+	    err(1, "cannot open pkgdb");
+	}
+
+	s=pkgdb_retrieve(CheckPkg);
+
+	if (s)
+	    CheckPkg = s;
+	else {
+	    errx(1, "No matching pkg for %s.", CheckPkg);
+	}
+	
+	pkgdb_close();
+    }
+    
     /* Get all the remaining package names, if any */
-    while (*argv)
-	*pkgs++ = *argv++;
+    if (File2Pkg && !AllInstalled)
+	if (pkgdb_open(1)==-1) {
+	    err(1, "cannot open pkgdb");
+	}
+    while (*argv) {
+	/* pkgdb: if -F flag given, don't add pkgnames to *pkgs but
+	 * rather resolve the given filenames to pkgnames using
+	 * pkgdb_retrieve, then add them. 
+	 */
+	if (File2Pkg) {
+	    char *s;
+
+	    s = pkgdb_retrieve(*argv);
+
+	    if (s)
+		*pkgs++ = s;
+	    else 
+		warnx("No matching pkg for %s.", *argv);
+	        /* should we bomb out here instead? - HF */
+	} else {
+	    *pkgs++ = *argv;
+	}
+	argv++;
+    }
+    
+    if (File2Pkg)
+	pkgdb_close();
 
     /* If no packages, yelp */
     if (pkgs == start && !AllInstalled && !CheckPkg)

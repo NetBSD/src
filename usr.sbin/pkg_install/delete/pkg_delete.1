@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_delete.1,v 1.5 1998/06/08 12:36:55 lukem Exp $
+.\" $NetBSD: pkg_delete.1,v 1.6 1999/01/19 17:02:00 hubertf Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -17,7 +17,7 @@
 .\"
 .\"     from FreeBSD: @(#)pkg_delete.1
 .\"
-.Dd November 25, 1994
+.Dd January 12, 1999
 .Dt pkg_delete 1
 .Os FreeBSD 2.0
 .Sh NAME
@@ -25,7 +25,7 @@
 .Nd a utility for deleting previously installed software package distributions
 .Sh SYNOPSIS
 .Nm
-.Op Fl vDdnf
+.Op Fl vDdnFf
 .Op Fl p Ar prefix
 .Ar pkg-name ...
 .Sh DESCRIPTION
@@ -67,7 +67,11 @@ command to examine the installed package control files.
 The following command line options are supported:
 .Bl -tag -width indent
 .It Ar pkg-name ...
-The named packages are deinstalled.
+The named packages are deinstalled. If the
+.Fl F
+flag is given, one or more (absolute) filenames may be specified and
+the Package Database will be consulted for the package to which the
+given file belongs. These packages are then deinstalled.
 .It Fl v
 Turn on verbose output.
 .It Fl D
@@ -91,6 +95,11 @@ directive) will be removed at deinstallation time.  This option tells
 .Nm
 to also remove any directories that were emptied as a result of removing
 the package.  
+.It Fl F
+Any pkg-name given will be interpreted as pathname which is
+subsequently transformed in a (real) package name via the Package
+Database. That way, packges can be deleted by giving a filename
+instead of the package-name. 
 .It Fl f
 Force removal of the package, even if a dependency is recorded or the
 deinstall or require script fails.
@@ -109,6 +118,14 @@ will list those dependent packages and refuse to delete the package
 (unless the
 .Fl f
 option is given).
+.Pp
+If a filename is given instead of a package name, the package of which
+the given file belongs to can be deleted if the
+.Fl F
+Flag is given. The filename needs to be absolute, see the output
+produced by the pkg_info
+.Fl aF
+command. 
 .Pp
 If the package contains a
 .Ar require
@@ -175,4 +192,7 @@ most of the work
 .It "John Kohl"
 refined it for
 .Nx
+.It "Hubert Feyrer"
+.Nx
+wildcard dependency processing, pkgdb, etc. 
 .El

@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.6 1998/10/12 12:03:25 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.7 1999/01/19 17:01:59 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.11 1997/10/08 07:46:48 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.6 1998/10/12 12:03:25 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.7 1999/01/19 17:01:59 hubertf Exp $");
 #endif
 #endif
 
@@ -34,16 +34,17 @@ __RCSID("$NetBSD: main.c,v 1.6 1998/10/12 12:03:25 agc Exp $");
 #include "lib.h"
 #include "delete.h"
 
-static char Options[] = "hvDdnfp:";
+static char Options[] = "hvDdnfFp:";
 
 char	*Prefix		= NULL;
 Boolean	NoDeInstall	= FALSE;
 Boolean	CleanDirs	= FALSE;
+Boolean File2Pkg	= FALSE;
 
 static void
 usage(void)
 {
-    fprintf(stderr, "usage: pkg_delete [-vDdnf] [-p prefix] pkg-name ...\n");
+    fprintf(stderr, "usage: pkg_delete [-vDdnFf] [-p prefix] pkg-name ...\n");
     exit(1);
 }
 
@@ -62,6 +63,10 @@ main(int argc, char **argv)
 
 	case 'f':
 	    Force = TRUE;
+	    break;
+
+	case 'F':
+	    File2Pkg = TRUE;
 	    break;
 
 	case 'p':
@@ -92,9 +97,33 @@ main(int argc, char **argv)
     argv += optind;
 
     /* Get all the remaining package names, if any */
+    if (File2Pkg)
+	if (pkgdb_open(1)==-1) {
+	    err(1, "cannot open pkgdb");
+	}
     /* Get all the remaining package names, if any */
-    while (*argv)
-	*pkgs++ = *argv++;
+    while (*argv) {
+	/* pkgdb: if -F flag given, don't add pkgnames to *pkgs but
+	 * rather resolve the given filenames to pkgnames using
+	 * pkgdb_retrieve, then add them. 
+	 */
+	if (File2Pkg) {
+	    char *s;
+
+	    s = pkgdb_retrieve(*argv);
+
+	    if (s)
+		*pkgs++ = s;
+	    else
+		warnx("No matching pkg for %s.", *argv);
+	} else {
+	    *pkgs++ = *argv;
+	}
+	argv++;
+    }
+
+    if (File2Pkg)
+	pkgdb_close();
 
     /* If no packages, yelp */
     if (pkgs == start)
