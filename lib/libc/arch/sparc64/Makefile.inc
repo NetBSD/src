@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.7 2002/10/27 18:45:12 chs Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2003/10/27 00:46:05 christos Exp $
 
 KMINCLUDES= arch/sparc64/SYS.h
 KMSRCS=	bzero.S ffs.S strlen.S htonl.S htons.S \
 	ntohl.S ntohs.S divrem.m4 \
 	mul.S saveregs.S umul.S
 
-SRCS+=	__sigaction14_sigtramp.c __sigtramp1.S
+SRCS+=	__sigaction14_sigtramp.c __sigtramp1.S __sigtramp2.S
 
 # Some assembler files use v9a extensions.
 AFLAGS+= -Wa,-Av9a
