@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2 1998/03/04 22:22:36 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.3 1998/09/03 13:18:44 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -60,20 +60,14 @@
 #include <sys/reboot.h>
 #include <sys/device.h>
 
-#include <newsmips/newsmips/machid.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
+
 #include <machine/cpu.h>
+#include <machine/adrsmap.h>
 
-void dumpconf __P((void)); 	/* XXX */
-
-#if 0
-/*
- * XXX system-dependent, should call through a pointer.
- * (spl0 should _NOT_ enable TC interrupts on a 3MIN.)
- *
- */
-int spl0 __P((void));
-#endif
-
+#include <newsmips/newsmips/machid.h>
 
 /*
  * The following several variables are related to
@@ -81,25 +75,11 @@ int spl0 __P((void));
  * the machine.
  */
 int	cold = 1;	/* if 1, still working on cold-start */
-int	cpuspeed = 7;	/* approx # instr per usec. */
-
-extern int cputype;	/* glue for new-style config */
-int cputype;
+int	cpuspeed = 10;	/* approx # instr per usec. */
 
 extern int initcpu __P((void));		/*XXX*/
 
 void	findroot __P((struct device **, int *));
-
-struct devnametobdevmaj pmax_nam2blk[] = {
-	{ "sd",		0 },
-	{ "fd",		1 },
-	{ "md",		2 },
-	{ "cd",		16 },
-	{ "st",		17 },
-	{ NULL,		0 },
-};
-
-extern struct idrom	idrom;
 
 /*
  * Determine mass storage and memory configuration for a machine.
@@ -112,18 +92,21 @@ void
 configure()
 {
 	int s;
+	extern struct idrom idrom;
 
 	printf("SONY NET WORK STATION, Model %s, ", idrom.id_model);
 	printf("Machine ID #%d\n", idrom.id_serial);
-
-	cputype = idrom.id_modelid;
 
 	/*
 	 * Kick off autoconfiguration
 	 */
 	s = splhigh();
+
+	*(char *)INTEN0 = INTEN0_BERR;		/* only buserr occurs */
+	*(char *)INTEN1 = 0;
+
 	if (config_rootfound("mainbus", "mainbus") == NULL)
-	    panic("no mainbus found");
+		panic("no mainbus found");
 
 	initcpu();
 
@@ -139,9 +122,9 @@ cpu_rootconf()
 	findroot(&booted_device, &booted_partition);
 
 	printf("boot device: %s\n",
-	    booted_device ? booted_device->dv_xname : "<unknown>");
+	       booted_device ? booted_device->dv_xname : "<unknown>");
 
-	setroot(booted_device, booted_partition, pmax_nam2blk);
+	setroot(booted_device, booted_partition, dev_name2blk);
 }
 
 u_long	bootdev = 0;		/* should be dev_t, but not until 32 bits */
@@ -154,46 +137,33 @@ findroot(devpp, partp)
 	struct device **devpp;
 	int *partp;
 {
-	int i, majdev, unit, part, controller;
+	int unit, part, controller;
 	struct device *dv;
-	char buf[32];
-	const char *bootdv_name;
 
 	/*
 	 * Default to "not found".
 	 */
 	*devpp = NULL;
 	*partp = 0;
-	bootdv_name = NULL;
 
 	if ((bootdev & B_MAGICMASK) != 0x50000000) /* NEWS-OS's B_DEVMAGIC */
 		return;
 
-	majdev = B_TYPE(bootdev);
-	for (i = 0; pmax_nam2blk[i].d_name != NULL; i++) {
-		if (majdev == pmax_nam2blk[i].d_maj) {
-			bootdv_name = pmax_nam2blk[i].d_name;
-			break;
-		}
-	}
-
-	if (bootdv_name == NULL) {
-#if defined(DEBUG)
-		printf("findroot(): no name2blk for boot device %d\n", majdev);
-#endif
-		return;
-	}
-
 	controller = B_CONTROLLER(bootdev);
-	/* part = B_PARTITION(bootdev); */
-	/* unit = B_UNIT(bootdev); */
 	part = (bootdev >> 8) & 0x0f;
 	unit = (bootdev >> 20) & 0x0f;
 
-	sprintf(buf, "%s%d", pmax_nam2blk[i].d_name, unit);
+	/*
+	 * XXX assumes only one controller exists.
+	 */
 	for (dv = alldevs.tqh_first; dv; dv=dv->dv_list.tqe_next) {
-		if (strcmp(buf, dv->dv_xname) == 0) {
-			*devpp = dv;
+		if (strcmp(dv->dv_xname, "scsibus0") == 0) {
+			struct scsibus_softc *sdv = (void *)dv;
+
+			if (sdv->sc_link[unit][0] == NULL)
+				continue;
+
+			*devpp = sdv->sc_link[unit][0]->device_softc;
 			*partp = part;
 			return;
 		}
