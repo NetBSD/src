@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.15.2.1 1997/11/04 23:04:35 mellon Exp $	*/
+/*	$NetBSD: zs.c,v 1.15.2.2 1997/12/09 20:20:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Bill Studenmund
@@ -1102,6 +1102,8 @@ zs_abort(cs)
 	/* If we time out, turn off the abort ability! */
 	}
 
+#ifdef DDB
 	Debugger();
+#endif
 }
 
