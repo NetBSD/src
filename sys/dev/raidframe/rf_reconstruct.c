@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.84 2005/02/06 02:29:36 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.85 2005/02/12 03:27:33 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.84 2005/02/06 02:29:36 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.85 2005/02/12 03:27:33 oster Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -1190,9 +1190,7 @@ TryToRead(RF_Raid_t *raidPtr, RF_RowCol_t col)
 #else
 				     NULL,
 #endif
-				     (void *) raidPtr, 0, NULL);
-
-	RF_ASSERT(req);		/* XXX -- fix this -- XXX */
+				     (void *) raidPtr, 0, NULL, PR_WAITOK);
 
 	ctrl->rbuf->arg = (void *) req;
 	rf_DiskIOEnqueue(&raidPtr->Queues[col], req, RF_IO_RECON_PRIORITY);
@@ -1380,9 +1378,7 @@ IssueNextWriteRequest(RF_Raid_t *raidPtr)
 #else
 				     NULL, 
 #endif
-	    (void *) raidPtr, 0, NULL);
-
-	RF_ASSERT(req);		/* XXX -- fix this -- XXX */
+	    (void *) raidPtr, 0, NULL, PR_WAITOK);
 
 	rbuf->arg = (void *) req;
 	RF_LOCK_MUTEX(raidPtr->reconControl->rb_mutex);
@@ -1706,10 +1702,7 @@ rf_ForceOrBlockRecon(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 					 * should be in kernel space */
 					req = rf_CreateDiskQueueData(RF_IO_TYPE_READ, offset + which_ru * sectorsPerRU, sectorsPerRU, new_rbuf->buffer,
 					    psid, which_ru, (int (*) (void *, int)) ForceReconReadDoneProc, (void *) new_rbuf, NULL,
-					    NULL, (void *) raidPtr, 0, NULL);
-
-					RF_ASSERT(req);	/* XXX -- fix this --
-							 * XXX */
+					    NULL, (void *) raidPtr, 0, NULL, PR_WAITOK);
 
 					new_rbuf->arg = req;
 					rf_DiskIOEnqueue(&raidPtr->Queues[diskno], req, RF_IO_NORMAL_PRIORITY);	/* enqueue the I/O */
