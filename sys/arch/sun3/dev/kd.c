@@ -1,7 +1,7 @@
-/*	$NetBSD: kd.c,v 1.10 1995/03/24 19:48:44 gwr Exp $	*/
+/*	$NetBSD: kd.c,v 1.11 1995/03/28 16:09:41 gwr Exp $	*/
 
 /*
- * Copyright (c) 1994 Gordon W. Ross
+ * Copyright (c) 1994, 1995 Gordon W. Ross
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -14,6 +14,9 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
+ * 4. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Gordon Ross
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -47,6 +50,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/mon.h>
+#include <machine/psl.h>
 
 #include <dev/cons.h>
 
@@ -183,47 +187,100 @@ kdioctl(dev, cmd, data, flag, p)
 	return ENOTTY;
 }
 
+static void kd_later(void*);
+static void kd_putfb(struct tty *);
+
 void
 kdstart(tp)
 	struct tty *tp;
 {
 	struct clist *cl;
-	int s, len;
-	u_char buf[BURST];
+	register int s;
 
 	s = spltty();
 	if (tp->t_state & (TS_BUSY|TS_TTSTOP|TS_TIMEOUT))
 		goto out;
-	tp->t_state |= TS_BUSY;
+
 	cl = &tp->t_outq;
-
-	/*
-	 * XXX - It might be nice to have our own fbputs() so
-	 * we would not have to use the (slow) PROM printf.
-	 */
-	while ((len = q_to_b(cl, buf, BURST-1)) > 0) {
-		buf[len] = '\0';
-
-		/*
-		 * Note that this device might NOT be the console.
-		 * Using the PROM to put text on the screen is easy,
-		 * but it only works if this is the console (sigh).
-		 * If this is not the console, you are typing blind!
-		 */
+	if (cl->c_cc) {
 		if (kd_is_console) {
-			(romVectorPtr->fbWriteStr)(buf, len);
+			tp->t_state |= TS_BUSY;
+			if ((s & PSL_IPL) == 0) {
+				/* called at level zero - update screen now. */
+				(void) splsoftclock();
+				kd_putfb(tp);
+				(void) spltty();
+				tp->t_state &= ~TS_BUSY;
+			} else {
+				/* called at interrupt level - do it later */
+				timeout(kd_later, (void*)tp, 0);
+			}
+		} else {
+			/*
+			 * This driver uses the PROM for writing the screen,
+			 * and that only works if this is the console device.
+			 * If this is not the console, just flush the output.
+			 * Sorry.  (In that case, use xdm instead of getty.)
+			 */
+			ndflush(cl, cl->c_cc);
 		}
 	}
-
-	tp->t_state &= ~TS_BUSY;
-	if (tp->t_state & TS_ASLEEP) {
-		tp->t_state &= ~TS_ASLEEP;
-		wakeup((caddr_t)cl);
+	if (cl->c_cc <= tp->t_lowat) {
+		if (tp->t_state & TS_ASLEEP) {
+			tp->t_state &= ~TS_ASLEEP;
+			wakeup((caddr_t)cl);
+		}
+		selwakeup(&tp->t_wsel);
 	}
-	selwakeup(&tp->t_wsel);
 out:
 	splx(s);
 }
+
+/*
+ * Timeout function to do delayed writes to the screen.
+ * Called at splsoftclock when requested by kdstart.
+ */
+static void
+kd_later(tpaddr)
+	void *tpaddr;
+{
+	struct tty *tp = tpaddr;
+	register int s;
+
+	kd_putfb(tp);
+
+	s = spltty();
+	tp->t_state &= ~TS_BUSY;
+	if (tp->t_line)
+		(*linesw[tp->t_line].l_start)(tp);
+	else
+		kdstart(tp);
+	splx(s);
+}
+
+/*
+ * Put text on the screen using the PROM monitor.
+ * This can take a while, so to avoid missing
+ * interrupts, this is called at splsoftclock.
+ */
+static void kd_putfb(tp)
+	struct tty *tp;
+{
+	char buf[BURST];
+	struct clist *cl = &tp->t_outq;
+	char *p, *end;
+	int len;
+
+	while ((len = q_to_b(cl, buf, BURST-1)) > 0) {
+		/* PROM will barf if high bits are set. */
+		p = buf;
+		end = buf + len;
+		while (p < end)
+			*p++ &= 0x7f;
+		(romVectorPtr->fbWriteStr)(buf, len);
+	}
+}
+
 
 static int
 kdparam(tp, t)
@@ -292,16 +349,7 @@ kdcnputc(dev, c)
 	dev_t dev;
 	int c;
 {
-	int s;
-
-	s = splhigh();
-#if 0
-	/* XXX - Is this worth doing? */
-	(romVectorPtr->fbWriteChar)(c);
-#else
-	mon_putchar(c);
-#endif
-	splx(s);
+	(romVectorPtr->fbWriteChar)(c & 0x7f);
 }
 
 extern void fb_unblank();
