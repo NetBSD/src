@@ -1,4 +1,4 @@
-/*	$NetBSD: print-tcp.c,v 1.13 1999/07/02 14:51:22 itojun Exp $	*/
+/*	$NetBSD: print-tcp.c,v 1.14 1999/09/04 03:58:13 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-tcp.c,v 1.55 97/06/15 13:20:28 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-tcp.c,v 1.13 1999/07/02 14:51:22 itojun Exp $");
+__RCSID("$NetBSD: print-tcp.c,v 1.14 1999/09/04 03:58:13 itojun Exp $");
 #endif
 #endif
 
@@ -172,7 +172,7 @@ tcp_print(register const u_char *bp, register u_int length,
 	u_int16_t sport, dport, win, urp;
 	tcp_seq seq, ack;
 #ifdef INET6
-	struct ip6_hdr *ip6;
+	register const struct ip6_hdr *ip6;
 #endif
 
 	tp = (struct tcphdr *)bp;
