@@ -1,8 +1,19 @@
-/*	$NetBSD: sshconnect.h,v 1.1.1.5 2001/05/15 15:02:38 itojun Exp $	*/
-/*	$OpenBSD: sshconnect.h,v 1.9 2001/04/12 19:15:25 markus Exp $	*/
-
+/*	$NetBSD: sshtty.h,v 1.1.1.1 2001/05/15 15:02:41 itojun Exp $	*/
+/* $OpenBSD: sshtty.h,v 1.1 2001/04/14 16:33:20 stevesk Exp $ */
 /*
- * Copyright (c) 2000 Markus Friedl.  All rights reserved.
+ * Author: Tatu Ylonen <ylo@cs.hut.fi>
+ * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
+ *                    All rights reserved
+ *
+ * As far as I am concerned, the code I have written for this software
+ * can be used freely for any purpose.  Any derived versions of this
+ * software must be clearly marked as such, and if the derived work is
+ * incompatible with the protocol description in the RFC file, it must be
+ * called by a name other than "ssh" or "Secure Shell".
+ */
+/*
+ * Copyright (c) 2001 Markus Friedl.  All rights reserved.
+ * Copyright (c) 2001 Kevin Steves.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -24,33 +35,32 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef SSHCONNECT_H
-#define SSHCONNECT_H
 
-int
-ssh_connect(const char *host, struct sockaddr_storage * hostaddr,
-    u_short port, int connection_attempts,
-    int anonymous, struct passwd *pw,
-    const char *proxy_command);
+#ifndef SSHTTY_H
+#define SSHTTY_H
 
-void
-ssh_login(Key **keys, int nkeys, const char *orighost,
-    struct sockaddr *hostaddr, struct passwd *pw);
+#include <termios.h>
 
-void
-check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key,
-    const char *user_hostfile, const char *system_hostfile);
+/*
+ * Accessor function indicating whether we are in raw mode.  Set by
+ * enter_raw_mode() and leave_raw_mode().
+ */
+int in_raw_mode(void);
 
-void	ssh_kex(char *host, struct sockaddr *hostaddr);
-void	ssh_kex2(char *host, struct sockaddr *hostaddr);
+/*
+ * Return terminal modes, as saved by enter_raw_mode().
+ */
+struct termios get_saved_tio(void);
 
-void
-ssh_userauth1(const char *local_user, const char *server_user, char *host,
-    Key **keys, int nkeys);
-void
-ssh_userauth2(const char *local_user, const char *server_user, char *host,
-    Key **keys, int nkeys);
+/*
+ * Returns the user's terminal to normal mode if it had been
+ * put in raw mode.
+ */
+void leave_raw_mode(void);
 
-void	ssh_put_password(char *password);
+/*
+ * Puts the user's terminal in raw mode.
+ */
+void enter_raw_mode(void);
 
 #endif
