@@ -1,4 +1,4 @@
-/*	$NetBSD: gzboot.c,v 1.6 2002/04/17 17:38:58 thorpej Exp $	*/
+/*	$NetBSD: gzboot.c,v 1.7 2003/04/29 05:01:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -133,7 +133,14 @@ main(void)
 	board_init();
 
 	printf(">> Load address: 0x%x\n", md_root_loadaddr);
-	printf(">> Image size: %u\n", md_root_size);
+
+	/*
+	 * If md_root_size is 0, then it means that we are simply
+	 * decompressing from an image which was concatenated onto
+	 * the end of the gzboot binary.
+	 */
+	if (md_root_size != 0)
+		printf(">> Image size: %u\n", md_root_size);
 
 	printf("Uncompressing image...");
 	gzcopy((void *) loadaddr, md_root_image, md_root_size);
@@ -169,7 +176,7 @@ static ssize_t
 readbuf(struct state *s, void *buf, size_t len)
 {
 
-	if (len > (s->srcsize - s->srcoff))
+	if (s->srcsize != 0 && len > (s->srcsize - s->srcoff))
 		len = s->srcsize - s->srcoff;
 
 	if ((s->spinny++ & 7) == 0)
