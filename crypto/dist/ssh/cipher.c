@@ -1,4 +1,4 @@
-/*	$NetBSD: cipher.c,v 1.1.1.1 2000/09/28 22:09:53 thorpej Exp $	*/
+/*	$NetBSD: cipher.c,v 1.2 2000/10/23 11:40:55 simonb Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cipher.c,v 1.1.1.1 2000/09/28 22:09:53 thorpej Exp $");
+__RCSID("$NetBSD: cipher.c,v 1.2 2000/10/23 11:40:55 simonb Exp $");
 #endif
 
 #include "includes.h"
@@ -113,28 +113,21 @@ SSH_3CBC_DECRYPT(des_key_schedule ks1,
  * and after encryption/decryption. Thus the swap_bytes stuff (yuk).
  */
 static void
-swap_bytes(const unsigned char *src, unsigned char *dst_, int n)
+swap_bytes(const unsigned char *src, unsigned char *dst, int n)
 {
-	/* dst must be properly aligned. */
-	u_int32_t *dst = (u_int32_t *) dst_;
-	union {
-		u_int32_t i;
-		char c[4];
-	} t;
+	char c[4];
 
-	/* Process 8 bytes every lap. */
-	for (n = n / 8; n > 0; n--) {
-		t.c[3] = *src++;
-		t.c[2] = *src++;
-		t.c[1] = *src++;
-		t.c[0] = *src++;
-		*dst++ = t.i;
+	/* Process 4 bytes every lap. */
+	for (n = n / 4; n > 0; n--) {
+		c[3] = *src++;
+		c[2] = *src++;
+		c[1] = *src++;
+		c[0] = *src++;
 
-		t.c[3] = *src++;
-		t.c[2] = *src++;
-		t.c[1] = *src++;
-		t.c[0] = *src++;
-		*dst++ = t.i;
+		*dst++ = c[0];
+		*dst++ = c[1];
+		*dst++ = c[2];
+		*dst++ = c[3];
 	}
 }
 
