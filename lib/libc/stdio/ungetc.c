@@ -1,4 +1,4 @@
-/*	$NetBSD: ungetc.c,v 1.7 1998/02/03 18:41:22 perry Exp $	*/
+/*	$NetBSD: ungetc.c,v 1.8 1998/09/07 14:37:13 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)ungetc.c	8.2 (Berkeley) 11/3/93";
 #else
-__RCSID("$NetBSD: ungetc.c,v 1.7 1998/02/03 18:41:22 perry Exp $");
+__RCSID("$NetBSD: ungetc.c,v 1.8 1998/09/07 14:37:13 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: ungetc.c,v 1.7 1998/02/03 18:41:22 perry Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include "local.h"
+#include "reentrant.h"
 
 static int __submore __P((FILE *));
 /*
@@ -99,16 +100,21 @@ ungetc(c, fp)
 		return (EOF);
 	if (!__sdidinit)
 		__sinit();
+	FLOCKFILE(fp);
 	if ((fp->_flags & __SRD) == 0) {
 		/*
 		 * Not already reading: no good unless reading-and-writing.
 		 * Otherwise, flush any current write stuff.
 		 */
-		if ((fp->_flags & __SRW) == 0)
+		if ((fp->_flags & __SRW) == 0) {
+			FUNLOCKFILE(fp);
 			return (EOF);
+		}
 		if (fp->_flags & __SWR) {
-			if (__sflush(fp))
+			if (__sflush(fp)) {
+				FUNLOCKFILE(fp);
 				return (EOF);
+			}
 			fp->_flags &= ~__SWR;
 			fp->_w = 0;
 			fp->_lbfsize = 0;
@@ -122,10 +128,13 @@ ungetc(c, fp)
 	 * This may require expanding the current ungetc buffer.
 	 */
 	if (HASUB(fp)) {
-		if (fp->_r >= fp->_ub._size && __submore(fp))
+		if (fp->_r >= fp->_ub._size && __submore(fp)) {
+			FUNLOCKFILE(fp);
 			return (EOF);
+		}
 		*--fp->_p = c;
 		fp->_r++;
+		FUNLOCKFILE(fp);
 		return (c);
 	}
 	fp->_flags &= ~__SEOF;
@@ -139,6 +148,7 @@ ungetc(c, fp)
 	    fp->_p[-1] == c) {
 		fp->_p--;
 		fp->_r++;
+		FUNLOCKFILE(fp);
 		return (c);
 	}
 
@@ -153,5 +163,6 @@ ungetc(c, fp)
 	fp->_ubuf[sizeof(fp->_ubuf) - 1] = c;
 	fp->_p = &fp->_ubuf[sizeof(fp->_ubuf) - 1];
 	fp->_r = 1;
+	FUNLOCKFILE(fp);
 	return (c);
 }

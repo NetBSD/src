@@ -1,4 +1,4 @@
-/*	$NetBSD: puts.c,v 1.6 1997/07/13 20:15:20 christos Exp $	*/
+/*	$NetBSD: puts.c,v 1.7 1998/09/07 14:37:13 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,13 +41,14 @@
 #if 0
 static char sccsid[] = "@(#)puts.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: puts.c,v 1.6 1997/07/13 20:15:20 christos Exp $");
+__RCSID("$NetBSD: puts.c,v 1.7 1998/09/07 14:37:13 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
 #include <string.h>
 #include "fvwrite.h"
+#include "reentrant.h"
 
 /*
  * Write the given string to stdout, appending a newline.
@@ -59,6 +60,7 @@ puts(s)
 	size_t c = strlen(s);
 	struct __suio uio;
 	struct __siov iov[2];
+	int r;
 
 	iov[0].iov_base = (void *)s;
 	iov[0].iov_len = c;
@@ -67,5 +69,8 @@ puts(s)
 	uio.uio_resid = c + 1;
 	uio.uio_iov = &iov[0];
 	uio.uio_iovcnt = 2;
-	return (__sfvwrite(stdout, &uio) ? EOF : '\n');
+	FLOCKFILE(stdout);
+	r = __sfvwrite(stdout, &uio);
+	FUNLOCKFILE(stdout);
+	return (r ? EOF : '\n');
 }
