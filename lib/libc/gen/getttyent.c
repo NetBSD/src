@@ -1,4 +1,4 @@
-/*	$NetBSD: getttyent.c,v 1.13 1998/02/03 18:23:46 perry Exp $	*/
+/*	$NetBSD: getttyent.c,v 1.14 1999/01/15 18:47:49 tsarna Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getttyent.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getttyent.c,v 1.13 1998/02/03 18:23:46 perry Exp $");
+__RCSID("$NetBSD: getttyent.c,v 1.14 1999/01/15 18:47:49 tsarna Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -136,6 +136,8 @@ getttyent()
 			tty.ty_status |= TTY_MDMBUF;
 		else if (vcmp(_TTYS_WINDOW))
 			tty.ty_window = value(p);
+		else if (vcmp(_TTYS_CLASS))
+			tty.ty_class = value(p);
 		else
 			break;
 	}
