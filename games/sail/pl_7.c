@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_7.c,v 1.7 1997/10/13 19:45:39 christos Exp $	*/
+/*	$NetBSD: pl_7.c,v 1.8 1997/10/13 21:04:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_7.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_7.c,v 1.7 1997/10/13 19:45:39 christos Exp $");
+__RCSID("$NetBSD: pl_7.c,v 1.8 1997/10/13 21:04:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -218,17 +218,13 @@ prompt(p, ship)
 char *p;
 struct ship *ship;
 {
-	static char buf[60];
+	static char buf[BUFSIZ];
 
-	if (ship != 0) {
-		(void)sprintf(buf, p, ship->shipname, colours(ship),
-			sterncolour(ship));
-		p = buf;
-	}
-	sc_prompt = p;
+	fmtship(buf, sizeof(buf), p, ship);
+	sc_prompt = buf;
 	sc_buf = "";
 	sc_hasprompt = 1;
-	(void) waddstr(scroll_w, p);
+	(void) waddstr(scroll_w, buf);
 }
 
 void
@@ -247,7 +243,6 @@ struct ship *ship;
 char flag;
 {
 	int c;
-
 	prompt(p, ship);
 	blockalarm();
 	(void) wrefresh(scroll_w);

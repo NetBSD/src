@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_3.c,v 1.4 1997/10/13 19:45:10 christos Exp $	*/
+/*	$NetBSD: pl_3.c,v 1.5 1997/10/13 21:04:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_3.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_3.c,v 1.4 1997/10/13 19:45:10 christos Exp $");
+__RCSID("$NetBSD: pl_3.c,v 1.5 1997/10/13 21:04:09 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,7 +99,7 @@ acceptcombat()
 		target = range(ms, closest);
 		if (target > rangeofshot[load] || (!guns && target >= 3))
 			goto cant;
-		Signal("%$ within range of %s broadside.",
+		Signal("$$ within range of %s broadside.",
 			closest, r ? "right" : "left");
 		if (load > L_CHAIN && target < 6) {
 			switch (sgetch("Aim for hull or rigging? ",
@@ -133,9 +133,10 @@ acceptcombat()
 		sternrake = temp > 4 && temp < 6;
 		if (rakehim)
 			if (!sternrake)
-				Signal("%$ Raking the %s!", closest);
+				Msg("Raking the %s!", closest->shipname);
 			else
-				Signal("%$ Stern Rake! %s splintering!", closest);
+				Msg("Stern Rake! %s splintering!",
+				    closest->shipname);
 		index = guns;
 		if (target < 3)
 			index += car;
@@ -224,7 +225,7 @@ grapungrap()
 			continue;
 		if (range(ms, sp) > 1 && !grappled2(ms, sp))
 			continue;
-		switch (sgetch("Attempt to grapple or ungrapple %s (%c%c): ",
+		switch (sgetch("Attempt to grapple or ungrapple $$: ",
 			sp, 1)) {
 		case 'g':
 			if (die() < 3
@@ -232,7 +233,7 @@ grapungrap()
 				Write(W_GRAP, ms, 0, sp->file->index, 0, 0, 0);
 				Write(W_GRAP, sp, 0, player, 0, 0, 0);
 				Msg("Attempt succeeds!");
-				makesignal(ms, "grappled with %s (%c%c)", sp);
+				makesignal(ms, "grappled with $$", sp);
 			} else
 				Msg("Attempt fails.");
 			break;
@@ -243,8 +244,7 @@ grapungrap()
 				    || die() < 3) {
 					cleangrapple(ms, sp, 0);
 					Msg("Attempt succeeds!");
-					makesignal(ms,
-						"ungrappling with %s (%c%c)",
+					makesignal(ms, "ungrappling with $$",
 						sp);
 				} else
 					Msg("Attempt fails.");
@@ -263,13 +263,13 @@ unfoulplayer()
 	foreachship(to) {
 		if (fouled2(ms, to) == 0)
 			continue;
-		if (sgetch("Attempt to unfoul with the %s (%c%c)? ", to, 1) != 'y')
+		if (sgetch("Attempt to unfoul with the $$? ", to, 1) != 'y')
 			continue;
 		for (i = fouled2(ms, to); --i >= 0;) {
 			if (die() <= 2) {
 				cleanfoul(ms, to, 0);
 				Msg("Attempt succeeds!");
-				makesignal(ms, "Unfouling %s (%c%c)", to);
+				makesignal(ms, "Unfouling $$", to);
 			} else
 				Msg("Attempt fails.");
 		}

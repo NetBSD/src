@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_1.c,v 1.4 1997/10/13 19:44:53 christos Exp $	*/
+/*	$NetBSD: pl_1.c,v 1.5 1997/10/13 21:04:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,13 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)pl_1.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_1.c,v 1.4 1997/10/13 19:44:53 christos Exp $");
+__RCSID("$NetBSD: pl_1.c,v 1.5 1997/10/13 21:04:02 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include "player.h"
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <unistd.h>
 
 /*
  * If we get here before a ship is chosen, then ms == 0 and
@@ -106,13 +107,14 @@ int conditions;
 	if (ms != 0) {
 		logger(ms);
 		if (conditions != LEAVE_SYNC) {
-			makesignal(ms, "Captain %s relinquishing.",
-				(struct ship *)0, mf->captain);
+			makemsg(ms, "Captain %s relinquishing.",
+				mf->captain);
 			Write(W_END, ms, 0, 0, 0, 0, 0);
 			(void) Sync();
 		}
 	}
 	sync_close(!hasdriver);
+	sleep(5);
 	cleanupscreen();
 	exit(0);
 }

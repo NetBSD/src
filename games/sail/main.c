@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.5 1997/10/13 19:44:30 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.6 1997/10/13 21:03:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.5 1997/10/13 19:44:30 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.6 1997/10/13 21:03:55 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,7 +65,7 @@ main(argc, argv)
 
 	(void) srand(getpid());
 	issetuid = getuid() != geteuid();
-	if ((p = strrchr(*argv, '/')) != '\0')
+	if ((p = strrchr(*argv, '/')) != NULL)
 		p++;
 	else
 		p = *argv;
