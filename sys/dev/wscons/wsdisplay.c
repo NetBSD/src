@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.76 2003/09/21 18:47:59 manu Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.77 2004/05/28 21:42:29 christos Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.76 2003/09/21 18:47:59 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.77 2004/05/28 21:42:29 christos Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_compat_netbsd.h"
@@ -114,6 +114,9 @@ struct wsdisplay_softc {
 	void	*sc_accesscookie;
 
 	const struct wsscreen_list *sc_scrdata;
+#ifdef WSDISPLAY_SCROLLSUPPORT
+	struct wsdisplay_scroll_data sc_scroll_values;
+#endif
 
 	struct wsscreen *sc_scr[WSDISPLAY_MAXSCREEN];
 	int sc_focusidx;	/* available only if sc_focus isn't null */
@@ -134,6 +137,15 @@ struct wsdisplay_softc {
 #endif
 #endif /* NWSKBD > 0 */
 };
+
+#ifdef WSDISPLAY_SCROLLSUPPORT
+
+struct wsdisplay_scroll_data wsdisplay_default_scroll_values = {
+	WSDISPLAY_SCROLL_DOALL,
+	25,
+	2,
+};
+#endif
 
 extern struct cfdriver wsdisplay_cd;
 
@@ -406,6 +418,30 @@ wsdisplay_closescreen(struct wsdisplay_softc *sc, struct wsscreen *scr)
 	vdevgone(maj, mn, mn, VCHR);
 }
 
+#ifdef WSDISPLAY_SCROLLSUPPORT
+void
+wsdisplay_scroll(void *arg, int op)
+{
+	struct wsdisplay_softc *sc = arg;
+	int lines;
+
+	if (op == WSDISPLAY_SCROLL_RESET)
+		lines = 0;
+	else {
+		lines = (op & WSDISPLAY_SCROLL_LOW) ?
+			sc->sc_scroll_values.slowlines :
+			sc->sc_scroll_values.fastlines;
+		if (op & WSDISPLAY_SCROLL_BACKWARD)
+			lines = -(lines);
+	}
+	
+	if (sc->sc_accessops->scroll) {
+		(*sc->sc_accessops->scroll)(sc->sc_accesscookie,
+		    sc->sc_focus->scr_dconf->emulcookie, lines);
+	}
+}
+#endif
+
 int
 wsdisplay_delscreen(struct wsdisplay_softc *sc, int idx, int flags)
 {
@@ -621,6 +657,10 @@ wsdisplay_common_attach(struct wsdisplay_softc *sc, int console, int kbdmux,
 	sc->sc_accessops = accessops;
 	sc->sc_accesscookie = accesscookie;
 	sc->sc_scrdata = scrdata;
+
+#ifdef WSDISPLAY_SCROLLSUPPORT
+	sc->sc_scroll_values = wsdisplay_default_scroll_values;
+#endif
 
 	/*
 	 * Set up a number of virtual screens if wanted. The
@@ -979,6 +1019,9 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 	int error;
 	char namebuf[16];
 	struct wsdisplay_font fd;
+#ifdef WSDISPLAY_SCROLLSUPPORT
+	struct wsdisplay_scroll_data *ksdp, *usdp;
+#endif
 
 #if NWSKBD > 0
 	struct wsevsrc *inp;
@@ -1027,6 +1070,32 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 
 	    return (0);
 #undef d
+
+#ifdef WSDISPLAY_SCROLLSUPPORT
+#define	SETSCROLLLINES(dstp, srcp, dfltp)				\
+    do {								\
+	(dstp)->fastlines = ((srcp)->which &				\
+			     WSDISPLAY_SCROLL_DOFASTLINES) ?		\
+			     (srcp)->fastlines : (dfltp)->fastlines;	\
+	(dstp)->slowlines = ((srcp)->which &				\
+			     WSDISPLAY_SCROLL_DOSLOWLINES) ?		\
+			     (srcp)->slowlines : (dfltp)->slowlines;	\
+	(dstp)->which = WSDISPLAY_SCROLL_DOALL;				\
+    } while (0)
+
+
+	case WSDISPLAYIO_DSSCROLL:
+		usdp = (struct wsdisplay_scroll_data *)data;
+		ksdp = &sc->sc_scroll_values;
+		SETSCROLLLINES(ksdp, usdp, ksdp);
+		return (0);
+
+	case WSDISPLAYIO_DGSCROLL:
+		usdp = (struct wsdisplay_scroll_data *)data;
+		ksdp = &sc->sc_scroll_values;
+		SETSCROLLLINES(usdp, ksdp, ksdp);
+		return (0);
+#endif
 
 	case WSDISPLAYIO_SFONT:
 #define d ((struct wsdisplay_usefontdata *)data)

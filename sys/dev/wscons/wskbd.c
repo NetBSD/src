@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.73 2004/02/08 13:49:43 bjh21 Exp $ */
+/* $NetBSD: wskbd.c,v 1.74 2004/05/28 21:42:29 christos Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.73 2004/02/08 13:49:43 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.74 2004/05/28 21:42:29 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -109,6 +109,7 @@ __KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.73 2004/02/08 13:49:43 bjh21 Exp $");
 #include <dev/wscons/wskbdvar.h>
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
+#include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wseventvar.h>
 #include <dev/wscons/wscons_callbacks.h>
 
@@ -158,6 +159,9 @@ struct wskbd_softc {
 
 	struct wskbd_bell_data sc_bell_data;
 	struct wskbd_keyrepeat_data sc_keyrepeat_data;
+#ifdef WSDISPLAY_SCROLLSUPPORT
+	struct wskbd_scroll_data sc_scroll_data;
+#endif
 
 	int	sc_repeating;		/* we've called timeout() */
 	struct callout sc_repeat_ch;
@@ -194,6 +198,16 @@ struct wskbd_softc {
 
 #define MOD_ONESET(id, mask)	(((id)->t_modifiers & (mask)) != 0)
 #define MOD_ALLSET(id, mask)	(((id)->t_modifiers & (mask)) == (mask))
+
+#define GETMODSTATE(src, dst)		\
+	do {							\
+		dst |= (src & MOD_SHIFT_L) ? MOD_SHIFT_L : 0; \
+		dst |= (src & MOD_SHIFT_R) ? MOD_SHIFT_R : 0; \
+		dst |= (src & MOD_CONTROL_L) ? MOD_CONTROL_L : 0; \
+		dst |= (src & MOD_CONTROL_R) ? MOD_CONTROL_R : 0; \
+		dst |= (src & MOD_META_L) ? MOD_META_L : 0; \
+		dst |= (src & MOD_META_R) ? MOD_META_R : 0; \
+	} while (0)
 
 static int  wskbd_match(struct device *, struct cfdata *, void *);
 static void wskbd_attach(struct device *, struct device *, void *);
@@ -265,6 +279,18 @@ struct wskbd_bell_data wskbd_default_bell_data = {
 	WSKBD_DEFAULT_BELL_PERIOD,
 	WSKBD_DEFAULT_BELL_VOLUME,
 };
+
+#ifdef WSDISPLAY_SCROLLSUPPORT
+struct wskbd_scroll_data wskbd_default_scroll_data = {
+ 	WSKBD_SCROLL_DOALL,
+ 	WSKBD_SCROLL_MODE_NORMAL,
+#ifdef WSDISPLAY_SCROLLCOMBO
+ 	WSDISPLAY_SCROLLCOMBO,
+#else
+ 	MOD_SHIFT_L,
+#endif
+};
+#endif
 
 #ifndef WSKBD_DEFAULT_KEYREPEAT_DEL1
 #define	WSKBD_DEFAULT_KEYREPEAT_DEL1	400	/* 400ms to start repeating */
@@ -402,6 +428,10 @@ wskbd_attach(struct device *parent, struct device *self, void *aux)
 	/* set default bell and key repeat data */
 	sc->sc_bell_data = wskbd_default_bell_data;
 	sc->sc_keyrepeat_data = wskbd_default_keyrepeat_data;
+
+#ifdef WSDISPLAY_SCROLLSUPPORT
+	sc->sc_scroll_data = wskbd_default_scroll_data;
+#endif
 
 	if (ap->console) {
 		KASSERT(wskbd_console_initted);
@@ -581,6 +611,10 @@ wskbd_input(struct device *dev, u_int type, int value)
 		num = wskbd_translate(sc->id, type, value);
 		if (num > 0) {
 			if (sc->sc_base.me_dispdv != NULL) {
+				if (sc->id->t_symbols [0] != KS_Print_Screen) {
+					wsdisplay_scroll (sc->sc_base.
+					me_dispdv, WSDISPLAY_SCROLL_RESET);
+				}
 				for (i = 0; i < num; i++)
 					wsdisplay_kbdinput(
 						sc->sc_base.me_dispdv,
@@ -897,6 +931,9 @@ static int
 wskbd_displayioctl(struct device *dev, u_long cmd, caddr_t data, int flag,
 	struct proc *p)
 {
+#ifdef WSDISPLAY_SCROLLSUPPORT
+	struct wskbd_scroll_data *usdp, *ksdp;
+#endif
 	struct wskbd_softc *sc = (struct wskbd_softc *)dev;
 	struct wskbd_bell_data *ubdp, *kbdp;
 	struct wskbd_keyrepeat_data *ukdp, *kkdp;
@@ -996,6 +1033,29 @@ getkeyrepeat:
 	case WSKBDIO_GETDEFAULTKEYREPEAT:
 		kkdp = &wskbd_default_keyrepeat_data;
 		goto getkeyrepeat;
+
+#ifdef WSDISPLAY_SCROLLSUPPORT
+#define	SETSCROLLMOD(dstp, srcp, dfltp)					\
+    do {								\
+	(dstp)->mode = ((srcp)->which & WSKBD_SCROLL_DOMODE) ?		\
+	    (srcp)->mode : (dfltp)->mode;				\
+	(dstp)->modifier = ((srcp)->which & WSKBD_SCROLL_DOMODIFIER) ?	\
+	    (srcp)->modifier : (dfltp)->modifier;			\
+	(dstp)->which = WSKBD_SCROLL_DOALL;				\
+    } while (0)
+
+	case WSKBDIO_SETSCROLL:
+		usdp = (struct wskbd_scroll_data *)data;
+		ksdp = &sc->sc_scroll_data;
+		SETSCROLLMOD(ksdp, usdp, ksdp);
+		return (0);
+
+	case WSKBDIO_GETSCROLL:
+		usdp = (struct wskbd_scroll_data *)data;
+		ksdp = &sc->sc_scroll_data;
+		SETSCROLLMOD(usdp, ksdp, ksdp);
+		return (0);
+#endif
 
 #undef SETKEYREPEAT
 
@@ -1323,7 +1383,48 @@ static int
 internal_command(struct wskbd_softc *sc, u_int *type, keysym_t ksym,
 	keysym_t ksym2)
 {
+	u_int state=0;
 	switch (ksym) {
+#ifdef WSDISPLAY_SCROLLSUPPORT
+	case KS_Cmd_ScrollFastUp:
+	case KS_Cmd_ScrollFastDown:
+		if (*type == WSCONS_EVENT_KEY_DOWN) {
+			GETMODSTATE(sc->id->t_modifiers, state);
+			if ((sc->sc_scroll_data.mode == WSKBD_SCROLL_MODE_HOLD
+			   	&& MOD_ONESET(sc->id, MOD_HOLDSCREEN))
+			|| (sc->sc_scroll_data.mode == WSKBD_SCROLL_MODE_NORMAL
+				&& sc->sc_scroll_data.modifier == state)) {
+					update_modifier(sc->id, *type, 0, MOD_COMMAND);
+					wsdisplay_scroll(sc->sc_base.me_dispdv,
+						(ksym == KS_Cmd_ScrollFastUp) ?
+						WSDISPLAY_SCROLL_BACKWARD :
+						WSDISPLAY_SCROLL_FORWARD);
+					return (1);
+			} else {
+				return (0);
+			}
+		}
+
+	case KS_Cmd_ScrollSlowUp:
+	case KS_Cmd_ScrollSlowDown:
+		if (*type == WSCONS_EVENT_KEY_DOWN) {
+			GETMODSTATE(sc->id->t_modifiers, state);
+			if ((sc->sc_scroll_data.mode == WSKBD_SCROLL_MODE_HOLD
+			   	&& MOD_ONESET(sc->id, MOD_HOLDSCREEN))
+			|| (sc->sc_scroll_data.mode == WSKBD_SCROLL_MODE_NORMAL
+				&& sc->sc_scroll_data.modifier == state)) {
+					update_modifier(sc->id, *type, 0, MOD_COMMAND);
+					wsdisplay_scroll(sc->sc_base.me_dispdv,
+					   	(ksym == KS_Cmd_ScrollSlowUp) ?
+						WSDISPLAY_SCROLL_BACKWARD | WSDISPLAY_SCROLL_LOW:
+						WSDISPLAY_SCROLL_FORWARD | WSDISPLAY_SCROLL_LOW);
+					return (1);
+			} else {
+				return (0);
+			}
+		}
+#endif
+
 	case KS_Cmd:
 		update_modifier(sc->id, *type, 0, MOD_COMMAND);
 		ksym = ksym2;
