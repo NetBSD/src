@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.59 2002/11/25 02:30:38 thorpej Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.60 2002/11/30 06:09:42 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.59 2002/11/25 02:30:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.60 2002/11/30 06:09:42 jmc Exp $");
 
 #define DOUBLEBUF 1
 #define NO_THREAD 1
@@ -1348,6 +1348,9 @@ fwohci_buf_input(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 	caddr_t p;
 	struct fwohci_buf *fb;
 	int len, count, i;
+#ifdef FW_DEBUG
+	int tlabel;
+#endif
 
 	memset(pkt, 0, sizeof(*pkt));
 	pkt->fp_uio.uio_iov = pkt->fp_iov;
@@ -1417,8 +1420,11 @@ fwohci_buf_input(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 	if (pkt->fp_hlen == 16 &&
 	    pkt->fp_tcode != IEEE1394_TCODE_READ_REQ_BLOCK)
 		pkt->fp_dlen = pkt->fp_hdr[3] >> 16;
-	DPRINTFN(1, ("fwohci_buf_input: tcode=0x%x, hlen=%d, dlen=%d\n",
-	    pkt->fp_tcode, pkt->fp_hlen, pkt->fp_dlen));
+#ifdef FW_DEBUG
+	tlabel = (pkt->fp_hdr[0] & 0x0000fc00) >> 10; 
+#endif
+	DPRINTFN(1, ("fwohci_buf_input: tcode=0x%x, tlabel=0x%x, hlen=%d, "
+	    "dlen=%d\n", pkt->fp_tcode, tlabel, pkt->fp_hlen, pkt->fp_dlen));
 
 	/* get data */
 	count = 0;
@@ -1825,6 +1831,7 @@ fwohci_at_output(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 	u_int32_t val;
 #ifdef FW_DEBUG
 	struct iovec *iov;
+        int tlabel = (pkt->fp_hdr[0] & 0x0000fc00) >> 10; 
 #endif
 	
 	if ((sc->sc_nodeid & OHCI_NodeId_NodeNumber) == IEEE1394_BCAST_PHY_ID)
@@ -1832,8 +1839,8 @@ fwohci_at_output(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 		return EAGAIN;
 
 #ifdef FW_DEBUG
-	DPRINTFN(1, ("fwohci_at_output: tcode 0x%x, hlen %d, dlen %d",
-	    pkt->fp_tcode, pkt->fp_hlen, pkt->fp_dlen));
+	DPRINTFN(1, ("fwohci_at_output: tcode 0x%x, tlabel 0x%x hlen %d, "
+	    "dlen %d", pkt->fp_tcode, tlabel, pkt->fp_hlen, pkt->fp_dlen));
 	for (i = 0; i < pkt->fp_hlen/4; i++) 
 		DPRINTFN(2, ("%s%08x", i?" ":"\n    ", pkt->fp_hdr[i]));
 	DPRINTFN(2, ("$"));
@@ -3590,6 +3597,7 @@ fwohci_inreg(struct ieee1394_abuf *ab, int allow)
 					fwohci_handler_set(psc, ab->ab_tcode,
 					    high, lo + (i * 4), NULL, NULL);
 			}
+
 			/*
 			 * XXX: Need something to indicate writing a smaller
 			 * amount is ok.
@@ -3632,7 +3640,7 @@ fwohci_parse_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 	struct ieee1394_abuf *ab = (struct ieee1394_abuf *)arg;
 	u_int64_t addr;
 	u_int32_t *cur;
-	int i, count;
+	int i, count, ret;
 
 	ab->ab_tcode = (pkt->fp_hdr[0] >> 4) & 0xf;
 	ab->ab_tlabel = (pkt->fp_hdr[0] >> 10) & 0x3f;
@@ -3644,6 +3652,8 @@ fwohci_parse_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 	switch (ab->ab_tcode) {
 	case IEEE1394_TCODE_READ_REQ_QUAD:
 		ab->ab_retlen = 4;
+		/* Response's (if required) will come from callback code */
+		ret = -1;
 		break;
 	case IEEE1394_TCODE_READ_REQ_BLOCK:
 		ab->ab_retlen = (pkt->fp_hdr[3] >> 16) & 0xffff;
@@ -3654,6 +3664,8 @@ fwohci_parse_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 		} else
 			if (ab->ab_retlen != ab->ab_length)
 				return IEEE1394_RCODE_ADDRESS_ERROR;
+		/* Response's (if required) will come from callback code */
+		ret = -1;
 		break;
 	case IEEE1394_TCODE_WRITE_REQ_QUAD:
 		ab->ab_retlen = 4;
@@ -3687,6 +3699,7 @@ fwohci_parse_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 				    "but only %d bytes returned\n",
 				    ab->ab_retlen, count);
 		}
+		ret = IEEE1394_RCODE_COMPLETE;
 		break;
 	default:
 		panic("Got a callback for a tcode that wasn't requested: %d",
@@ -3695,7 +3708,7 @@ fwohci_parse_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 	}
 	ab->ab_addr = addr;
 	ab->ab_cb(ab, IEEE1394_RCODE_COMPLETE);
-	return -1;
+	return ret;
 }
 
 static int
