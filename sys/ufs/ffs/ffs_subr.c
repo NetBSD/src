@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_subr.c,v 1.30 2003/10/27 00:12:42 lukem Exp $	*/
+/*	$NetBSD: ffs_subr.c,v 1.31 2003/12/02 04:40:43 dbj Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.30 2003/10/27 00:12:42 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.31 2003/12/02 04:40:43 dbj Exp $");
 
 #include <sys/param.h>
 
@@ -232,6 +232,8 @@ ffs_checkoverlap(bp, ip)
  * block operations
  *
  * check if a block is available
+ *  returns true if all the correponding bits in the free map are 1
+ *  returns false if any corresponding bit in the free map is 0 
  */
 int
 ffs_isblock(fs, cp, h)
@@ -260,7 +262,9 @@ ffs_isblock(fs, cp, h)
 }
 
 /*
- * check if a block is free
+ * check if a block is completely allocated
+ *  returns true if all the corresponding bits in the free map are 0
+ *  returns false if any corresponding bit in the free map is 1
  */
 int
 ffs_isfreeblock(fs, cp, h)
