@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.138 2001/12/16 23:35:52 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.139 2001/12/18 16:32:54 bouyer Exp $	*/
 
 
 /*
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.138 2001/12/16 23:35:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.139 2001/12/18 16:32:54 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -2279,7 +2279,7 @@ cmd_channel_map(pa, sc, channel)
 	struct pciide_channel *cp = &sc->pciide_channels[channel];
 	bus_size_t cmdsize, ctlsize;
 	u_int8_t ctrl = pciide_pci_read(sc->sc_pc, sc->sc_tag, CMD_CTRL);
-	int interface;
+	int interface, one_channel;
 
 	/* 
 	 * The 0648/0649 can be told to identify as a RAID controller.
@@ -2301,7 +2301,19 @@ cmd_channel_map(pa, sc, channel)
 	cp->wdc_channel.channel = channel;
 	cp->wdc_channel.wdc = &sc->sc_wdcdev;
 
-	if (channel > 0) {
+	/*
+	 * Older CMD64X doesn't have independant channels
+	 */
+	switch (sc->sc_pp->ide_product) {
+	case PCI_PRODUCT_CMDTECH_649:
+		one_channel = 0;
+		break;
+	default:
+		one_channel = 1;
+		break;
+	}
+
+	if (channel > 0 && one_channel) {
 		cp->wdc_channel.ch_queue =
 		    sc->pciide_channels[0].wdc_channel.ch_queue;
 	} else {
