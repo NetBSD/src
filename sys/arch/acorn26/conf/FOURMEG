@@ -1,8 +1,10 @@
-# $NetBSD: FOURMEG,v 1.5 2002/04/12 08:10:45 gmcgarry Exp $
+# $NetBSD: FOURMEG,v 1.6 2002/04/25 15:06:20 atatat Exp $
 
 # FOURMEG arm26 configuration -- something small
 
 include "arch/acorn26/conf/std.acorn26"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers 2
 

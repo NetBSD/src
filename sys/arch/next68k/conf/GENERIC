@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.54 2002/04/12 08:11:13 gmcgarry Exp $
+# $NetBSD: GENERIC,v 1.55 2002/04/25 15:06:34 atatat Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,9 @@
 
 include 	"arch/next68k/conf/std.next68k"
 
-#ident 		"GENERIC-$Revision: 1.54 $"
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERIC-$Revision: 1.55 $"
 
 # Needs to be set per system.  i.e change these as you see fit
 maxusers	16

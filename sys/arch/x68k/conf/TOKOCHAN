@@ -1,4 +1,4 @@
-#	$NetBSD: TOKOCHAN,v 1.26 2002/04/12 08:11:28 gmcgarry Exp $
+#	$NetBSD: TOKOCHAN,v 1.27 2002/04/25 15:06:40 atatat Exp $
 
 #
 #	TOKOCHAN -- Believe in the BSD power; Toko to issyo-ni make all!
@@ -6,7 +6,9 @@
 
 include "arch/x68k/conf/std.x68k"
 
-#ident 		"TOKOCHAN-$Revision: 1.26 $"
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"TOKOCHAN-$Revision: 1.27 $"
 
 maxusers	10
 

@@ -1,11 +1,13 @@
 #
 # kernel config file for debugging.
 #
-# 	$NetBSD: DEBUG,v 1.6 2002/04/12 08:11:15 gmcgarry Exp $
+# 	$NetBSD: DEBUG,v 1.7 2002/04/25 15:06:35 atatat Exp $
 #
 
 include 	"arch/playstation2/conf/std.playstation2"
 include 	"arch/playstation2/conf/config.playstation2"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 config		netbsd		root on ? type ?
 

@@ -1,8 +1,10 @@
-#	$NetBSD: INSTALLSBC,v 1.7 2002/04/12 08:11:05 gmcgarry Exp $
+#	$NetBSD: INSTALLSBC,v 1.8 2002/04/25 15:06:30 atatat Exp $
 #
 # INSTALLSBC
 
 include	"arch/mac68k/conf/std.mac68k"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 

@@ -1,6 +1,8 @@
-#	$NetBSD: INDY,v 1.15 2002/04/16 11:49:55 wiz Exp $
+#	$NetBSD: INDY,v 1.16 2002/04/25 15:06:36 atatat Exp $
 
 include		"arch/sgimips/conf/std.sgimips"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # XXX _LOW _HOW og/eller TEXTADDR
 

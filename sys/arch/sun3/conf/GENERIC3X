@@ -1,9 +1,11 @@
-# $NetBSD: GENERIC3X,v 1.49 2002/04/12 08:11:24 gmcgarry Exp $
+# $NetBSD: GENERIC3X,v 1.50 2002/04/25 15:06:39 atatat Exp $
 
 # GENERIC Sun3X (3/80, 3/470)
 # Supports root on: ie0, le0, sd*, ...
 
 include "arch/sun3/conf/std.sun3x"
+
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # Machines to be supported by this kernel
 # options 	FPU_EMULATE	# XXX - Ever needed?

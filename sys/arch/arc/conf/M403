@@ -1,9 +1,11 @@
-#	$NetBSD: M403,v 1.20 2002/04/15 14:47:04 tsutsui Exp $
+#	$NetBSD: M403,v 1.21 2002/04/25 15:06:23 atatat Exp $
 #
 #	configuration file for MIPS Magnum 4000 system
 #
 
 include		"arch/arc/conf/std.arc"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	32		# estimated number of users
 

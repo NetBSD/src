@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.29 2002/04/12 08:11:04 gmcgarry Exp $
+# $NetBSD: GENERIC,v 1.30 2002/04/25 15:06:30 atatat Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,9 @@
 
 include		"arch/luna68k/conf/std.luna68k"
 
-#ident 		"GENERIC-$Revision: 1.29 $"
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERIC-$Revision: 1.30 $"
 
 maxusers	8
 

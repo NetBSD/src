@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.75 2002/04/12 08:11:28 gmcgarry Exp $
+# $NetBSD: GENERIC,v 1.76 2002/04/25 15:06:40 atatat Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,9 @@
 
 include 	"arch/x68k/conf/std.x68k"
 
-#ident 		"GENERIC-$Revision: 1.75 $"
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERIC-$Revision: 1.76 $"
 
 maxusers	8
 

@@ -1,9 +1,11 @@
-#	$NetBSD: MMTA,v 1.14 2002/04/02 05:30:44 lukem Exp $
+#	$NetBSD: MMTA,v 1.15 2002/04/25 15:06:32 atatat Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/mmeye/conf/std.mmeye"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # Enable the hooks used for initializing the root memory-disk.
 #options 	MEMORY_DISK_HOOKS

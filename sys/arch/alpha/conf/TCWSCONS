@@ -1,10 +1,12 @@
-# $NetBSD: TCWSCONS,v 1.26 2002/04/12 08:10:48 gmcgarry Exp $
+# $NetBSD: TCWSCONS,v 1.27 2002/04/25 15:06:22 atatat Exp $
 #
 # TURBOchannel Alpha DEC3000
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"TCWSCONS-$Revision: 1.26 $"
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"TCWSCONS-$Revision: 1.27 $"
 
 maxusers 32
 

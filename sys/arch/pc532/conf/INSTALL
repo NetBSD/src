@@ -1,10 +1,12 @@
-#	$NetBSD: INSTALL,v 1.27 2002/04/12 08:11:14 gmcgarry Exp $
+#	$NetBSD: INSTALL,v 1.28 2002/04/25 15:06:35 atatat Exp $
 #
 # INSTALL -- install kernel
 #
 #
 
 include	"arch/pc532/conf/std.pc532"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 makeoptions	COPTS="-Os -msb"	# Don't inline, save space
 

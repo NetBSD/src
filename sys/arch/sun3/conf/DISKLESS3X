@@ -1,4 +1,4 @@
-# $NetBSD: DISKLESS3X,v 1.24 2002/04/12 08:11:24 gmcgarry Exp $
+# $NetBSD: DISKLESS3X,v 1.25 2002/04/25 15:06:38 atatat Exp $
 
 # DISKLESS - Root and swap on NFS
 # Desktop machines only (3/80)
@@ -6,6 +6,8 @@
 # Includes devices needed to run as an X-terminal
 
 include "arch/sun3/conf/std.sun3x"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # Machines to be supported by this kernel
 # options 	FPU_EMULATE	# XXX - Ever needed?
