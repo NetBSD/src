@@ -1,4 +1,4 @@
-.\"	$NetBSD: aha.4,v 1.2 1997/02/23 22:20:20 jonathan Exp $
+.\"	$NetBSD: aha.4,v 1.2.2.1 1997/10/28 04:41:58 mellon Exp $
 .\"
 .\" Copyright (c) 1994 James A. Jegers
 .\" All rights reserved.
@@ -43,21 +43,6 @@ driver provides support for the following SCSI adapters:
 .It Adaptec AHA-154xCF
 .It Buslogic BT-54x
 .El
-.Sh BUGS
-The
-.Nm
-driver can not be used on systems with more than 16 megabytes of
-memory.
-.Pp
-Due to the 24 bit addressing limitation of the ISA bus, The SCSI
-adapter's onboard DMA controller is unable to access memory with
-addresses greater than 16 megabytes.  
-.Pp
-This restriction can be fixed with "bounce buffers", buffers in low
-memory which are used whenever data to be transfered to or from the
-SCSI adapter is above the 16 megabyte threshold.  The data is copied
-to the bounce buffer, then copied from the bounce buffer to its
-destination.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr sd 4 ,
