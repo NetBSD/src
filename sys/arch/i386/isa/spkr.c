@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.31 1998/03/22 12:53:56 drochner Exp $	*/
+/*	$NetBSD: spkr.c,v 1.32 1998/03/24 11:37:06 frueauf Exp $	*/
 
 /*
  * spkr.c -- device driver for console speaker on 80386
@@ -440,7 +440,7 @@ spkrprobe (parent, match, aux)
 	   ((strcmp(parent->dv_cfdata->cf_driver->cd_name, "pc") != 0) &&
 	    (strcmp(parent->dv_cfdata->cf_driver->cd_name, "vt") != 0)))
 		return (0);
-	if (cf->cf_loc[PCKBDCF_PORT] != PITAUX_PORT)
+	if (cf->cf_loc[PCKBCPORTCF_PORT] != PITAUX_PORT)
 		return (0);
 
 	return (1);
@@ -454,7 +454,7 @@ spkrattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	printf(" port 0x%x\n", self->dv_cfdata->cf_loc[PCKBDCF_PORT]);
+	printf(" port 0x%x\n", self->dv_cfdata->cf_loc[PCKBCPORTCF_PORT]);
 	spkr_attached = 1;
 }
 
