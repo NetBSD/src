@@ -1,3 +1,5 @@
+/*	$NetBSD: fwohcivar.h,v 1.7 2000/12/13 11:30:15 enami Exp $	*/
+
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
