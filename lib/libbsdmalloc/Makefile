@@ -1,4 +1,6 @@
-# $NetBSD: Makefile,v 1.1 2003/04/21 22:21:06 elric Exp $
+# $NetBSD: Makefile,v 1.2 2003/07/10 11:27:45 lukem Exp $
+
+NOMAN=1
 
 .include <bsd.own.mk>
 
@@ -7,7 +9,5 @@ SRCS=	malloc.c
 
 CPPFLAGS= -D_REENTRANT
 CPPFLAGS= -I${.CURDIR}/../libc/include/
-
-NOMAN=1
 
 .include <bsd.lib.mk>
