@@ -1,4 +1,4 @@
-/*	$NetBSD: vald_acpi.c,v 1.5 2002/10/02 05:47:11 thorpej Exp $	*/
+/*	$NetBSD: vald_acpi.c,v 1.6 2003/04/23 15:48:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.5 2002/10/02 05:47:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.6 2003/04/23 15:48:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,6 +147,7 @@ void	vald_acpi_attach(struct device *, struct device *, void *);
 
 void		vald_acpi_event(void *);
 static void	vald_acpi_tick(void *);
+static void	vald_acpi_notifyhandler(ACPI_HANDLE, UINT32, void *);
 
 ACPI_STATUS	vald_acpi_ghci_get(struct vald_acpi_softc *, UINT32, UINT32 *,
     UINT32 *);
@@ -250,19 +251,46 @@ vald_acpi_attach(struct device *parent, struct device *self, void *aux)
 	/* Check SystemFIFO events. */
 	vald_acpi_event(sc);
 
-	/*
-	 * XXX poll hotkey event in the driver for now.
-	 * in the future, when we have an API, let userland do this polling
-	 */
-	callout_init(&sc->sc_callout);
-	callout_reset(&sc->sc_callout, sc->sc_timer, vald_acpi_tick, sc);
-
 	/* Get LCD brightness level via _BCL. */
 	vald_acpi_libright_get(sc);
 
 	/* Set LCD brightness level via _BCM. */
 	vald_acpi_libright_set(sc, LIBRIGHT_HOLD);
 
+	/* enable vald notify */
+	rv = AcpiEvaluateObject(sc->sc_node->ad_handle, "ENAB", NULL, NULL);
+	if (rv == AE_OK) {
+		rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
+		    ACPI_DEVICE_NOTIFY, vald_acpi_notifyhandler, sc);
+		if (rv != AE_OK)
+			printf("%s: Can't install notify handler (%04x)\n",
+			    sc->sc_dev.dv_xname, (uint)rv);
+	} else {
+		/*
+		 * XXX poll hotkey event in the driver for now.
+		 * in the future, when we have an API, let userland do this
+		 * polling
+		 */
+		callout_init(&sc->sc_callout);
+		callout_reset(&sc->sc_callout, sc->sc_timer,
+		    vald_acpi_tick, sc);
+	}
+}
+
+/*
+ * vald_acpi_notifyhandler:
+ *
+ *	Notify handler.
+ */
+static void
+vald_acpi_notifyhandler(ACPI_HANDLE handle, UINT32 value, void *context)
+{
+
+	if (value == 0x80)
+		vald_acpi_event(context);
+	else
+		printf("vald_acpi_notifyhandler: unknown event: %04"
+		    PRIu32 "\n", value);
 }
 
 /*
