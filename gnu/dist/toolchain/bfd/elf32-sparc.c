@@ -1463,6 +1463,28 @@ elf32_sparc_relocate_section (output_bfd, info, input_bfd, input_section,
 	      outrel.r_offset += (input_section->output_section->vma
 				  + input_section->output_offset);
 
+	      /* Optimize unaligned reloc usage now that we know where
+		 it finally resides.  */
+	      switch (r_type)
+		{
+		case R_SPARC_16:
+		  if (outrel.r_offset & 1)
+		    r_type = R_SPARC_UA16;
+		  break;
+		case R_SPARC_UA16:
+		  if (!(outrel.r_offset & 1))
+		    r_type = R_SPARC_16;
+		  break;
+		case R_SPARC_32:
+		  if (outrel.r_offset & 3)
+		    r_type = R_SPARC_UA32;
+		  break;
+		case R_SPARC_UA32:
+		  if (!(outrel.r_offset & 3))
+		    r_type = R_SPARC_32;
+		  break;
+		}
+
 	      if (skip)
 		memset (&outrel, 0, sizeof outrel);
 	      /* h->dynindx may be -1 if the symbol was marked to
