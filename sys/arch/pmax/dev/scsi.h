@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1992 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Ralph Campbell.
@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)scsi.h	7.3 (Berkeley) 10/11/92
+ *	from: @(#)scsi.h	8.1 (Berkeley) 6/10/93
+ *      $Id: scsi.h,v 1.2 1994/05/27 08:39:59 glass Exp $
  *
  * scsi.h --
  *
@@ -43,8 +44,9 @@
  *	Some of the references from the proceedings of the
  *	1984 Mini/Micro Northeast conference might help in understanding SCSI. 
  *
- * from: $Header: /sprite/src/kernel/dev/RCS/scsi.h,
- *	v 9.1 90/02/13 23:11:24 jhh Exp $ SPRITE (Berkeley)
+ * from: Header: /sprite/src/kernel/dev/RCS/scsi.h,
+ *	v 9.1 90/02/13 23:11:24 jhh Exp  SPRITE (Berkeley)
+ * $Id: scsi.h,v 1.2 1994/05/27 08:39:59 glass Exp $
  */
 
 #ifndef _SCSI_H
@@ -551,6 +553,6 @@ struct scsi_fmt_sense {
  */
 extern void scsiGroup0Cmd();
 extern void scsiGroup1Cmd();
-#endif KERNEL
+#endif /* KERNEL */
 
 #endif /* _SCSI_H */

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1989 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: @(#)float.h	7.1 (Berkeley) 5/8/90
- * $Id: float.h,v 1.1.1.1 1993/10/12 03:22:40 deraadt Exp $
+ *	from: @(#)float.h	8.1 (Berkeley) 6/10/93
+ *      $Id: float.h,v 1.2 1994/05/27 08:40:36 glass Exp $
  */
 
 #define FLT_RADIX	2		/* b */

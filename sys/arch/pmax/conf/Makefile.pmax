@@ -1,5 +1,5 @@
-# $Id: Makefile.pmax,v 1.3 1994/04/16 08:38:22 cgd Exp $
-# from:	@(#)Makefile.pmax	7.7 (Berkeley) 2/20/93
+#	from: @(#)Makefile.pmax	8.2 (Berkeley) 2/16/94
+#	$Id: Makefile.pmax,v 1.4 1994/05/27 08:39:07 glass Exp $
 #
 # Makefile for 4.4 BSD
 #
@@ -23,19 +23,17 @@
 # DEBUG is set to -g by config if debugging is requested (config -g).
 # PROF is set to -pg by config if profiling is requested (config -p).
 AS=	as ${DEBUG}
-#CC=	cc ${DEBUG}
-CC=	gcc -nostdinc ${DEBUG}			# TEMP
-#CPP=	cpp ${DEBUG}
-CPP=	/lib/cpp				# TEMP
+CC=	gcc ${DEBUG}
+CPP=	cpp
 LD=	ld
 TOUCH=	touch -f -c
 
 # source tree is located via $S relative to the compilation directory
-S=	../../../..
-PMAX=	../..
+S=	/sys
+PMAX=	$S/pmax
 
-INCLUDES= -I. -I${S}/arch -I${S} -I${S}/sys
-COPTS=	${INCLUDES} ${IDENT} -DKERNEL -DNETBSD
+INCLUDES= -I. -I$S
+COPTS=	${INCLUDES} ${IDENT} -DKERNEL
 CFLAGS=	-O ${COPTS}
 
 # compile rules: rules are named ${TYPE}_${SUFFIX}${CONFIG_DEP}
@@ -51,9 +49,8 @@ DRIVER_C_C=	${CC} -c ${CFLAGS} ${PROF} ${PARAM} $<
 
 PROFILE_C=	${CC} -p -c ${COPTS} $<
 
-# TEMP commented out
-#NORMAL_S=	${CPP} ${COPTS} $< | ${AS} -o $@
-#NORMAL_S_C=	${CPP} ${COPTS} ${PARAM} $< | ${AS} -o $@
+NORMAL_S=	${CPP} ${COPTS} $< | ${AS} -o $@
+NORMAL_S_C=	${CPP} ${COPTS} ${PARAM} $< | ${AS} -o $@
 
 %OBJS
 
@@ -64,7 +61,8 @@ PROFILE_C=	${CC} -p -c ${COPTS} $<
 #	${SYSTEM_LD_HEAD}
 #	${SYSTEM_LD} swapxxx.o
 #	${SYSTEM_LD_TAIL}
-SYSTEM_OBJ=	locore.o ${OBJS} param.o ioconf.o
+SYSTEM_OBJ=	locore.o ${OBJS} param.o ioconf.o vnode_if.o
+#SYSTEM_DEP=	Makefile symbols.sort ${SYSTEM_OBJ} libkern.a
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ} libkern.a
 SYSTEM_LD_HEAD=	rm -f $@
 SYSTEM_LD=	-@if [ X${DEBUG} = X-g ]; \
@@ -75,11 +73,13 @@ SYSTEM_LD=	-@if [ X${DEBUG} = X-g ]; \
 			'$${SYSTEM_OBJ}' vers.o libkern.a; \
 		${LD} $$strip -N -o $@ -e start -Ttext 80030000 \
 			${SYSTEM_OBJ} vers.o libkern.a
+#SYSTEM_LD_TAIL= @echo rearranging symbols;\
+#		symorder symbols.sort $@;\
 #SYSTEM_LD_TAIL=	@size $@; chmod 755 $@; \
 #		[ X${DEBUG} = X-g ] && { \
 #		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
 #		echo strip -d $@; strip -d $@; } || true
-SYSTEM_LD_TAIL=	@size $@; chmod 755 $@
+SYSTEM_LD_TAIL=	chmod 755 $@
 
 %LOAD
 
@@ -95,7 +95,7 @@ newvers:
 	${CC} $(CFLAGS) -c vers.c
 
 clean:
-	rm -f eddep *netbsd netbsd.gdb tags *.o locore.i [a-z]*.s \
+	rm -f eddep *vmunix vmunix.gdb tags *.o locore.i [a-z]*.s \
 		Errs errs linterrs makelinks
 
 lint: /tmp param.c
@@ -110,12 +110,7 @@ symbols.sort: ${PMAX}/pmax/symbols.raw
 locore.o: ${PMAX}/pmax/locore.s ${PMAX}/include/machAsmDefs.h \
 	${PMAX}/include/machConst.h ${PMAX}/include/reg.h assym.h
 	${CPP} ${COPTS} ${PARAM} -DLOCORE ${PMAX}/pmax/locore.s | \
-		${AS} -o locore.o
-
-fp.o: ${PMAX}/pmax/fp.s ${PMAX}/include/machAsmDefs.h \
-	${PMAX}/include/machConst.h ${PMAX}/include/regdef.h assym.h
-	${CPP} ${COPTS} ${PARAM} -DLOCORE ${PMAX}/pmax/fp.s | \
-		${AS} -o fp.o
+	${AS} -o locore.o
 
 # the following is necessary because autoconf.o depends on #if GENERIC
 autoconf.o: Makefile
@@ -125,7 +120,7 @@ autoconf.o: Makefile
 clock.o machdep.o autoconf.o conf.o: Makefile
 
 # depend on network configuration
-af.o uipc_proto.o vfs_conf.o: Makefile
+uipc_proto.o vfs_conf.o: Makefile
 
 assym.h: genassym
 	./genassym >assym.h
@@ -133,7 +128,7 @@ assym.h: genassym
 genassym: ${PMAX}/pmax/genassym.c
 	${CC} ${INCLUDES} ${IDENT} ${PARAM} -o genassym ${PMAX}/pmax/genassym.c
 
-depend: assym.h param.c
+depend: assym.h param.c vnode_if.h
 	mkdep ${COPTS} ${CFILES} ioconf.c param.c
 	mkdep -a -p ${INCLUDES} ${IDENT} ${PARAM} ${PMAX}/pmax/genassym.c
 
@@ -157,5 +152,10 @@ param.c: $S/conf/param.c
 
 param.o: param.c Makefile
 	${CC} -c ${CFLAGS} ${PARAM} param.c
+
+vnode_if.c: $S/kern/vnode_if.sh $S/kern/vnode_if.src
+	sh $S/kern/vnode_if.sh $S/kern/vnode_if.src
+vnode_if.h: $S/kern/vnode_if.sh $S/kern/vnode_if.src
+	sh $S/kern/vnode_if.sh $S/kern/vnode_if.src
 
 %RULES

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1992 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -36,8 +36,9 @@
  * SUCH DAMAGE.
  *
  * from: Utah Hdr: pcb.h 1.13 89/04/23
- * from: @(#)pcb.h	7.2 (Berkeley) 7/27/92
- * $Id: pcb.h,v 1.1.1.1 1993/10/12 03:22:40 deraadt Exp $
+ *
+ *	from: @(#)pcb.h	8.1 (Berkeley) 6/10/93
+ *      $Id: pcb.h,v 1.2 1994/05/27 08:40:48 glass Exp $
  */
 
 /*
@@ -48,6 +49,7 @@ struct pcb
 	int	pcb_regs[69];	/* saved CPU and floating point registers */
 	label_t	pcb_context;	/* kernel context for resume */
 	int	pcb_onfault;	/* for copyin/copyout faults */
+	void	*pcb_segtab;	/* copy of pmap pm_segtab */
 };
 
 /*

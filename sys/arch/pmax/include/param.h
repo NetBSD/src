@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1992 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -36,20 +36,15 @@
  * SUCH DAMAGE.
  *
  * from: Utah Hdr: machparam.h 1.11 89/08/14
- * from: @(#)param.h	7.9 (Berkeley) 2/4/93
- * $Id: param.h,v 1.2 1994/01/14 04:53:41 deraadt Exp $
+ *
+ *	from: @(#)param.h	8.1 (Berkeley) 6/10/93
+ *      $Id: param.h,v 1.3 1994/05/27 08:40:45 glass Exp $
  */
 
 /*
  * Machine dependent constants for DEC Station 3100.
  */
-#define	MACHINE		"pmax"
-#define	MACHINE_ARCH	"mips"
-#define	MID_MACHINE	MID_PMAX
-
-#ifdef KERNEL				/* XXX */
-#include <machine/cpu.h>		/* XXX */
-#endif					/* XXX */
+#define	MACHINE	"mips"
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value for all
@@ -64,13 +59,17 @@
 #define	PGSHIFT		12		/* LOG2(NBPG) */
 #define	NPTEPG		(NBPG/4)
 
+#define NBSEG		0x400000	/* bytes/segment */
+#define	SEGOFSET	(NBSEG-1)	/* byte offset into segment */
+#define	SEGSHIFT	22		/* LOG2(NBSEG) */
+
 #define	KERNBASE	0x80000000	/* start of kernel virtual */
 #define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
 
 #define	DEV_BSIZE	512
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
 #define BLKDEV_IOSIZE	2048
-#define	MAXPHYS		(24 * 1024)	/* max raw I/O transfer size */
+#define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
 
 #define	CLSIZE		1
 #define	CLSIZELOG2	0

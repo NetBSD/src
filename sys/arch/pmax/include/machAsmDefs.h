@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1992 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Ralph Campbell.
@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: @(#)machAsmDefs.h	7.4 (Berkeley) 2/26/93
+ *	from: @(#)machAsmDefs.h	8.1 (Berkeley) 6/10/93
+ *      $Id: machAsmDefs.h,v 1.2 1994/05/27 08:40:41 glass Exp $
  */
 
 /*
@@ -50,8 +51,8 @@
  *	without express or implied warranty.
  *
  * from: Header: /sprite/src/kernel/mach/ds3100.md/RCS/machAsmDefs.h,
- *	v 1.2 89/08/15 18:28:24 rab Exp SPRITE (DECWRL)
- * $Id: machAsmDefs.h,v 1.1.1.1 1993/10/12 03:22:43 deraadt Exp $
+ *	v 1.2 89/08/15 18:28:24 rab Exp  SPRITE (DECWRL)
+ * $Id: machAsmDefs.h,v 1.2 1994/05/27 08:40:41 glass Exp $
  */
 
 #ifndef _MACHASMDEFS
@@ -62,7 +63,7 @@
 /*
  * Define -pg profile entry code.
  */
-#ifdef PROF
+#if defined(GPROF) || defined(PROF)
 #define	MCOUNT	.set noreorder; \
 		.set noat; \
 		move $1,$31; \
@@ -72,7 +73,7 @@
 		.set at;
 #else
 #define	MCOUNT
-#endif PROF
+#endif
 
 /*
  * LEAF(x)
@@ -116,6 +117,18 @@ x:
 x: ; \
 	.frame sp, fsize, retpc; \
 	MCOUNT
+
+/*
+ * NNON_LEAF(x)
+ *
+ *	Declare a non-profiled non-leaf routine
+ *	(a routine that makes other C calls).
+ */
+#define NNON_LEAF(x, fsize, retpc) \
+	.globl x; \
+	.ent x, 0; \
+x: ; \
+	.frame sp, fsize, retpc
 
 /*
  * END(x)
