@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.30 1997/08/04 20:00:47 pk Exp $ */
+/*	$NetBSD: pmap.h,v 1.31 1998/01/02 22:57:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -239,14 +239,15 @@ int             pmap_dumpmmu __P((int (*)__P((dev_t, daddr_t, caddr_t, size_t)),
 #define	pmap_resident_count(pmap)	pmap_count_ptes(pmap)
 #define	managed(pa)	((unsigned)((pa) - vm_first_phys) < vm_num_phys)
 
-#define PMAP_ACTIVATE(pmap, pcb, iscurproc)
-#define PMAP_DEACTIVATE(pmap, pcb)
 #define PMAP_PREFER(fo, ap)		pmap_prefer((fo), (ap))
 
 #define PMAP_EXCLUDE_DECLS	/* tells MI pmap.h *not* to include decls */
 
 /* FUNCTION DECLARATIONS FOR COMMON PMAP MODULE */
 
+struct proc;
+void		pmap_activate __P((struct proc *));
+void		pmap_deactivate __P((struct proc *));
 void		pmap_bootstrap __P((int nmmu, int nctx, int nregion));
 int		pmap_count_ptes __P((struct pmap *));
 void		pmap_prefer __P((vm_offset_t, vm_offset_t *));
