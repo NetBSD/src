@@ -240,7 +240,7 @@ kcore_open (filename, from_tty)
 	*cp = '?';
     *cp = '\0';
     if (buf[0] != '\0')
-      printf("panic: %s\n", buf);
+      printf_filtered("panic: %s\n", buf);
   }
 
   if (!ontop) {
@@ -297,7 +297,7 @@ static void
 kcore_files_info (t)
   struct target_ops *t;
 {
-  printf("\t`%s'\n", core_file);
+  printf_filtered ("\t`%s'\n", core_file);
 }
 
 /* If mourn is being called in all the right places, this could be say
@@ -407,8 +407,8 @@ set_pcb_cmd(arg)
 }
 
 struct target_ops kcore_ops = {
-  "kcore",	/* to_shortname */
-  "Kernel memory image",
+  "kcore",			/* to_shortname */
+  "Kernel memory image",	/* to_longname */
   "Use a kernel core dump file or live kernel as a target.\n\
 Specify the filename of the core file or /dev/mem for the live kernel.",
   kcore_open,			/* to_open */
