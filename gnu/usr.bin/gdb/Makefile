@@ -1,116 +1,104 @@
-# $NetBSD: Makefile,v 1.22 1999/02/10 16:15:21 tron Exp $
+#	$NetBSD: Makefile,v 1.23 1999/02/10 22:04:51 tv Exp $
 
-TOP=	$(.CURDIR)/../..
-dist=	$(TOP)/dist
-srcdir= $(dist)/gdb
-
-.PATH:	$(srcdir)
-
-.if	(${MACHINE_ARCH} != "powerpc") && (${MACHINE_ARCH} != "mipseb")
-
-PROG=	gdb
-
-BFDOBJ!=cd ${TOP}/lib/libbfd; \
-        printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
-
-# Note: nm.h, tm.h are in $(.OBJDIR),
-# and config.h, xm.h are in $(.CURDIR)
-INCLS+= -I$(.OBJDIR) -I$(.CURDIR)
-
-# GDB_CFLAGS
-INCLS+= -I$(srcdir) -I$(srcdir)/config
-
-# READLINE_CFLAGS
-INCLS+= -I$(dist)/readline
-
-# BFD_CFLAGS: Make sure we get the installed bfd.h
-INCLS+= -I${BFDOBJ}
-INCLS+= -I$(dist)/bfd
-INCLS+= -I$(dist)/include
-
+# for OBJECT_FMT
 .include <bsd.own.mk>
-# misc. -DHAVE_TERMIOS
-# KERNEL_DEBUG no longer used.  See ADDITIONAL_OPTIONS*
-DEFS= -DNO_MMALLOC
 
-.if ${OBJECT_FMT} == "ELF"
-DEFS+= -DSVR4_SHARED_LIBS
+PROG=		gdb
+MAN=		gdb.1
+SRCS=		main.c ${COMMON_SRCS} annotate.c inflow.c gnu-regex.c
+OBJS=		init.o
+DPSRCS=		nm.h tm.h
+CLEANFILES=	init.c
+
+CPPFLAGS+=	-I. -I${.CURDIR} -I${DIST}/gdb/config -I${DIST}/gdb \
+		-I${BFDOBJ} -I${DIST}/bfd -I${DIST}/include \
+		-DHOST_NAME=\"${MACHINE_GNU_ARCH}--netbsd\" \
+		-DTARGET_NAME=\"${MACHINE_GNU_ARCH}--netbsd\"
+.if (${OBJECT_FMT} == "ELF")
+CPPFLAGS+=	-DSVR4_SHARED_LIBS
 .endif
 
-CPPFLAGS+= $(INCLS) $(DEFS)
-
-.include "_${MACHINE_ARCH:S/^mips$/mipsel/}.mk"
-
-# Any NetBSD: (i386 m68k ns32k sparc vax)
-NDEP_CMN?= infptrace.c inftarg.c fork-child.c corelow.c kcore-nbsd.c
-XDEP_FILES= ser-tcp.c ser-unix.c
-REMOTE_SRCS = remote.c dcache.c remote-utils.c
-
-DEPFILES = $(TDEP_FILES) $(XDEP_FILES) \
- $(NDEP_CMN) $(NDEP_FILES) $(REMOTE_SRCS)
-
-YYSRCS= c-exp.y f-exp.y m2-exp.y
+LDADD+=		-ledit -lkvm -ltermcap -L${BFDOBJ} -lbfd
+DPADD+=		${LIBEDIT} ${LIBKVM} ${LIBTERMCAP} ${BFDOBJ}/libbfd_pic.a
 
 # This exists only for easy comparison with the GNU Makefile.
 COMMON_SRCS = version.c blockframe.c breakpoint.c findvar.c stack.c thread.c \
 	source.c values.c eval.c valops.c valarith.c valprint.c printcmd.c \
 	symtab.c symfile.c symmisc.c infcmd.c infrun.c command.c \
-	expprint.c environ.c gdbtypes.c copying.c $(DEPFILES) \
-	mem-break.c target.c parse.c language.c $(YYSRCS) buildsym.c \
+	expprint.c environ.c gdbtypes.c copying.c ${DEPFILES} \
+	mem-break.c target.c parse.c language.c ${YYSRCS} buildsym.c \
 	exec.c bcache.c objfiles.c minsyms.c maint.c demangle.c \
 	dbxread.c coffread.c elfread.c \
-	dwarfread.c mipsread.c stabsread.c corefile.c \
-	c-lang.c ch-exp.c ch-lang.c f-lang.c m2-lang.c \
+	dwarfread.c dwarf2read.c mipsread.c stabsread.c corefile.c \
+	c-lang.c ch-exp.c ch-lang.c f-lang.c \
+	jv-lang.c jv-valprint.c jv-typeprint.o m2-lang.c \
 	scm-exp.c scm-lang.c scm-valprint.c complaints.c typeprint.c \
 	c-typeprint.c ch-typeprint.c f-typeprint.c m2-typeprint.c \
 	c-valprint.c cp-valprint.c ch-valprint.c f-valprint.c m2-valprint.c \
-	nlmread.c serial.c mdebugread.c os9kread.c top.c utils.c callback.c
+	nlmread.c serial.c mdebugread.c os9kread.c top.c utils.c
+YYSRCS= c-exp.y f-exp.y jv-exp.y m2-exp.y
+REMOTE_SRCS = remote.c dcache.c remote-utils.c tracepoint.c
+DEPFILES = ${TDEPFILES.${MACHINE_ARCH}} ${XDEPFILES} ${SER_HARDWIRE} ${NATDEPFILES} \
+	   ${REMOTE_SRCS} ${SIM_SRCS}
 
-SRCS=	main.c $(COMMON_SRCS) annotate.c inflow.c gnu-regex.c
-OBJS=	init.o
-
-LDADD+= -ledit
-DPADD+= $(LIBEDIT)
-
-LDADD+= -L${BFDOBJ} -lbfd
-DPADD+= ${BFDOBJ}/libbfd.a
-
-LDADD+= -lkvm
-DPADD+= $(LIBKVM)
-
-LDADD+= -ltermcap
-DPADD+= $(LIBTERMCAP)
-
-DPSRCS+= nm.h tm.h
-
+XDEPFILES= ser-tcp.c
+SER_HARDWIRE = ser-unix.c
+NATDEPFILES= infptrace.c inftarg.c fork-child.c corelow.c ${NATDEPFILES.${MACHINE_ARCH}}
+.if (${MACHINE_ARCH} != "arm32") && (${MACHINE_ARCH} != "powerpc")
+NATDEPFILES+= kcore-nbsd.c
+.endif
+.if !defined(NOPIC)
+NATDEPFILES+= solib.c
 .endif
 
-MAN=	gdb.1
+NATDEPFILES.alpha=	alphanbsd-nat.c
+TDEPFILES.alpha=	alpha-tdep.c
+
+NATDEPFILES.arm32=	armb-nat.c arm-convert.s
+TDEPFILES.arm32=	arm-tdep.c
+
+NATDEPFILES.i386=	i386nbsd-nat.c
+TDEPFILES.i386=		i386-tdep.c i387-tdep.c
+
+NATDEPFILES.m68k=	m68knbsd-nat.c
+TDEPFILES.m68k=		m68k-tdep.c
+
+NATDEPFILES.mipseb=	mipsnbsd-nat.c
+TDEPFILES.mipseb=	mips-tdep.c
+
+NATDEPFILES.mipsel=	mipsnbsd-nat.c
+TDEPFILES.mipsel=	mips-tdep.c
+
+NATDEPFILES.ns32k=	ns32knbsd-nat.c
+TDEPFILES.ns32k=	ns32k-tdep.c
+
+NATDEPFILES.powerpc=	rs6000-nat.c
+TDEPFILES.powerpc=	rs6000-tdep.c
+
+NATDEPFILES.sparc=	sparcnbsd-nat.c
+TDEPFILES.sparc=	sparc-tdep.c
+
+NATDEPFILES.vax=	vaxnbsd-nat.c
+TDEPFILES.vax=		vax-tdep.c
+
+DIST=		${.CURDIR}/../../dist
+BFDOBJ!=	cd ${.CURDIR}/../../lib/libbfd && ${MAKE} -s print-objdir
+
+.PATH: ${DIST}/gdb
 
 .include <bsd.prog.mk>
 
-# Note: this rule does something similar to the gcc "collect" program,
-# by scanning all the objects for initialization functions, collecting
-# them all into the generated init.c file, which is called by main.
-CLEANFILES+= init.c
-init.o : $(OBJS:S/init.o//)
-	-rm -f init.c
-	sh $(.CURDIR)/mkinit.sh $(OBJS:S/init.o//) > init.c
+init.o: ${OBJS:Ninit.o} Makefile
+	@-rm -f init.c
+	sh ${.CURDIR}/mkinit.sh ${OBJS:Ninit.o} >init.c
 	${COMPILE.c} init.c
 
-# Need these headers before any objects.
-$(OBJS) : nm.h tm.h xm.h
+${OBJS}: nm.h tm.h xm.h
 
-nm.h : $(srcdir)/$(NM_FILE)
-	-rm -f $@
-	cp -p $(srcdir)/$(NM_FILE) $@
+nm.h: ${DIST}/gdb/config/${MACHINE_GNU_ARCH}/nm-nbsd.h
+	@-rm -f $@
+	cp $> $@
 
-tm.h : $(srcdir)/$(TM_FILE)
-	-rm -f $@
-	cp -p $(srcdir)/$(TM_FILE) $@
-
-version.o : version.c
-	$(CC) $(CFLAGS) $(CPPFLAGS) \
-	  -DHOST_NAME=\"${MACHINE_GNU_ARCH}--netbsd\" \
-	  -DTARGET_NAME=\"${MACHINE_GNU_ARCH}--netbsd\" \
-	  -c $(.IMPSRC)
+tm.h: ${DIST}/gdb/config/${MACHINE_GNU_ARCH}/tm-nbsd.h
+	@-rm -f $@
+	cp $> $@
