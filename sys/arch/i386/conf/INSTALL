@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.167 2001/06/18 22:45:54 thorpej Exp $
+#	$NetBSD: INSTALL,v 1.168 2001/07/07 17:09:49 tsutsui Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -300,7 +300,6 @@ bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
 dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID
 iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
 isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
-#ncr*	at pci? dev ? function ?	# NCR 53c8xx SCSI
 siop*	at pci? dev ? function ?	# NCR 53c8xx SCSI (new driver)
 pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 
@@ -349,7 +348,6 @@ scsibus* at iha?
 scsibus* at iopsp?
 scsibus* at isp?
 #scsibus* at nca?
-#scsibus* at ncr?
 scsibus* at siop?
 scsibus* at pcscp?
 scsibus* at sea?
