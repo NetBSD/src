@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.43 2003/08/18 09:16:22 taca Exp $
+ * $Id: ahc_pci.c,v 1.44 2004/01/13 14:07:09 augustss Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.43 2003/08/18 09:16:22 taca Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.44 2004/01/13 14:07:09 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -793,6 +793,7 @@ ahc_pci_attach(parent, self, aux)
 	entry = ahc_find_pci_device(pa->pa_id, subid, pa->pa_function);
 	if (entry == NULL)
 		return;
+	printf(": %s\n", entry->name);
 
 	/* Keep information about the PCI bus */
 	bd = malloc(sizeof (struct ahc_pci_busdata), M_DEVBUF, M_NOWAIT);
@@ -961,7 +962,6 @@ ahc_pci_attach(parent, self, aux)
 		ahc_free(ahc);
 		return;
 	}
-	printf("\n");
 	if (intrstr != NULL)
 		printf("%s: interrupting at %s\n", ahc_name(ahc), intrstr);
 
