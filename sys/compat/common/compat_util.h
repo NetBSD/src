@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_util.h,v 1.1 1995/06/24 20:16:05 christos Exp $	*/
+/*	$NetBSD: compat_util.h,v 1.2 1996/10/12 02:12:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -32,32 +32,11 @@
 #ifndef	_COMPAT_UTIL_H_
 #define	_COMPAT_UTIL_H_
 
-#include <machine/vmparam.h>
-#include <sys/exec.h>
-#include <sys/cdefs.h>
-#include <sys/proc.h>
+struct emul;
+struct proc;
 
-static __inline caddr_t	stackgap_init __P((struct emul *));
-static __inline void *stackgap_alloc __P((caddr_t *, size_t));
-
-static __inline caddr_t
-stackgap_init(e)
-	struct emul *e;
-{
-#define szsigcode ((caddr_t)(e->e_esigcode - e->e_sigcode))
-	return STACKGAPBASE;
-}
-
-
-static __inline void *
-stackgap_alloc(sgp, sz)
-	caddr_t	*sgp;
-	size_t   sz;
-{
-	void	*p = (void *) *sgp;
-	*sgp += ALIGN(sz);
-	return p;
-}
+caddr_t	stackgap_init __P((struct emul *));
+void	*stackgap_alloc __P((caddr_t *, size_t));
 
 int emul_find __P((struct proc *, caddr_t *, const char *, char *,
 		   char **, int));
