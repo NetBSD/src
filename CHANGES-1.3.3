@@ -14,7 +14,8 @@ include/ctype.h					1.16
 
 distrib/notes/amiga/prep			1.16
 
-  Add a warning to reinstall miniroot.fs before retrying installation.  (is)
+  Add a warning to reinstall miniroot.fs before retrying
+  installation.  (is)
 
 libexec/ld.elf_so/rtld.c			1.7
 
@@ -46,7 +47,8 @@ gnu/usr.bin/cpio/Makefile			1.6
 
 lib/libc/stdio/fseek.3				1.10-1.11
 
-  Fix typo (PR#6053), and make return value description match XSH5.  (kleink)
+  Fix typo (PR#6053), and make return value description match
+  XSH5.  (kleink)
 
 include/time.h					1.22
 
@@ -66,23 +68,24 @@ sys/arch/amiga/amiga/locore.s			patch
   exiting from the first timer interupt.  (is)
 
 sys/dev/scsipi/scsi_tape.h			1.15
-	       st.c				1.98 (patch)
+sys/dev/scsipi/st.c				1.98 (patch)
 
   Fix incorrect length of LOCATE CDB (PR#5306).  (drochner)
 
 sys/compat/freebsd/freebsd_misc.c		1.4
-		       syscalls.master		1.16
-		       freebsd_syscall.h	regen
-		       freebsd_syscallargs.h	regen
-		       freebsd_syscalls.c	regen
-		       freebsd_sysent.c		regen
+sys/compat/freebsd/syscalls.master		1.16
+sys/compat/freebsd/freebsd_syscall.h		regenerate
+sys/compat/freebsd/freebsd_syscallargs.h	regenerate
+sys/compat/freebsd/freebsd_syscalls.c		regenerate
+sys/compat/freebsd/freebsd_sysent.c		regenerate
 
   Implement FreeBSD issetugid().  (tv)
 
 sys/kern/kern_subr.c				1.35 (patch)
 
-  Remove rounding-down of hash size in hashinit(); support non &hashmask
-  hash func tions such as % [prime number] without bletcherous hacks.  (tls)
+  Remove rounding-down of hash size in hashinit(); allow easy
+  support for hash functions other than "& hashmask" (such as
+  "& prime_number").  (tls)
 
 sys/netinet/if_arp.c				1.43-1.45, 1.47-1.49, 1.52
 sys/netinet/igmp.c				1.18
@@ -91,7 +94,8 @@ sys/netinet/in_pcb.c				1.49-1.50, 1.53 (patch)
 sys/netinet/in_var.h				1.21-1.22, 1.27, 1.29-1.30,
 						1.31 (patch)
 sys/netinet/ip_icmp.c				1.27-1.28, 1.30
-sys/netinet/ip_input.c				1.57-1.58 (patch), 1.71 (patch)
+sys/netinet/ip_input.c				1.57-1.58 (patch),
+						1.71 (patch)
 sys/netinet/ip_output.c				1.44-1.45, 1.51 (patch)
 
   Change list of interface IP addresses to a hash.  Improves performance
@@ -487,3 +491,77 @@ lib/libc/stdio/vfscanf.c			1.21
   string white space in the input stream since there may be `conversion'
   specifiers following the (format string) white space that do not
   operate on the input stream, e.g., %n.  (kleink)
+
+usr.sbin/rpc.yppasswdd/yppasswdd_mkpw.c		1.4
+
+  Allow changing of formerly empty passwords (PR#5659 and
+  PR#6394).  (is)
+
+sys/ufs/ext2fs/ext2fs_vnops.c			patch
+sys/ufs/ufs/ufs_vnops.c				patch
+
+  Show correct number of blocks used for files larger than 2GB.  (cgd)
+
+sys/arch/pmax/dev/sfb.c				1.25-1.27
+sys/arch/pmax/dev/bt459.c			1.12
+
+  Fix the smart frame buffer driver on DECstations to work properly
+  on cards with an alternate clock which provides a lower display
+  resolution.  (mhitch)
+
+sys/arch/pmax/dev/rz.c				1.40
+
+  Fix an error with non-DEC (block size != 512 byte) CDROM drives.
+  Without this change, a third-party CDROM drive that doesn't allow
+  configuration for 512 byte blocks can not be used.  (mhitch)
+
+lib/csu/mips/crt0.c				1.10
+lib/csu/mips/Makefile				1.18
+lib/csu/mips/crtbegin.c				1.1-1.5 (new)
+lib/csu/mips/crtend.c				1.2
+share/mk/bsd.lib.mk				patch
+gnu/usr.bin/gcc/arch/mips/netbsd.h		1.10
+
+  Fix C++ constructors and destructors on mips systems (PR#5352).
+  (jonathan and mhitch)
+
+gnu/usr.bin/binutils/Makefile			1.1-1.7 (new)
+gnu/usr.bin/binutils/Makefile.inc		1.1-1.5 (new)
+gnu/usr.bin/binutils/addr2line/Makefile		1.1-1.2 (new)
+gnu/usr.bin/binutils/ar/Makefile		1.1-1.2 (new)
+gnu/usr.bin/binutils/c++filt/Makefile		1.1-1.6 (new)
+gnu/usr.bin/binutils/c++filt/underscore.c	1.1 (new)
+gnu/usr.bin/binutils/common/Makefile		1.1-1.3 (new)
+gnu/usr.bin/binutils/common/config.h		1.1 (new)
+gnu/usr.bin/binutils/nm/Makefile		1.1-1.2 (new)
+gnu/usr.bin/binutils/objdump/Makefile		1.1-1.2 (new)
+gnu/usr.bin/binutils/ranlib/Makefile		1.1-1.2 (new)
+gnu/usr.bin/binutils/size/Makefile		1.1-1.2 (new)
+gnu/usr.bin/binutils/strings/Makefile		1.1-1.2 (new)
+gnu/usr.bin/binutils/strip/Makefile		1.1-1.2 (new)
+gnu/usr.bin/gas.new/Makefile			1.1-1.4 (new)
+gnu/usr.bin/gas.new/arch/mips/Makefile.inc	1.1-1.2 (new)
+gnu/usr.bin/gas.new/arch/mips/itbl-cpu.h	1.1 (new)
+gnu/usr.bin/gas.new/arch/mips/obj-format.h	1.1 (new)
+gnu/usr.bin/gas.new/arch/mips/targ-cpu.h	1.1 (new)
+gnu/usr.bin/gas.new/arch/mips/targ-env.h	1.1 (new)
+gnu/usr.bin/gas.new/config.h			1.1-1.3 (new)
+gnu/usr.bin/ld.new/Makefile			1.1-1.3 (new)
+gnu/usr.bin/ld.new/_mips.mk			1.1 (new)
+gnu/usr.bin/ld.new/config.h			1.1 (new)
+gnu/usr.bin/ld.new/ldemul-list.h		1.1-1.2 (new)
+
+  Add infrastructure to build assembler, linker, and binutils
+  out of gnu/dist for mips ports.  (jonathan)
+
+share/mk/bsd.obj.mk				1.14-1.15
+
+  Implement the "print-objdir" target.  (jonathan)
+
+share/mk/bsd.own.mk				1.59, 1.69-1.70, 1.74
+
+  Set OBJECT_FMT and MACHINE_GNU_ARCH.  (jonathan)
+
+sys/sys/param.h					1.44 (patch)
+
+  Implement __NetBSD_Version__ version identification.  (cgd)
