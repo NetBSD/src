@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.10 2002/03/25 04:51:21 thorpej Exp $	*/
+/*	$NetBSD: ofw.c,v 1.11 2002/03/31 00:42:50 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -75,6 +75,11 @@
 
 #define IO_VIRT_BASE (OFW_VIRT_BASE + OFW_VIRT_SIZE)
 #define IO_VIRT_SIZE 0x01000000
+
+#define	KERNEL_IMG_PTS		2
+#define	KERNEL_VMDATA_PTS	(KERNEL_VM_SIZE >> (PDSHIFT + 2))
+#define	KERNEL_OFW_PTS		4
+#define	KERNEL_IO_PTS		4
 
 /*
  *  Imported variables
@@ -295,11 +300,12 @@ ofw_init(ofw_handle)
 	 *  the legal range.  OFW will have loaded the kernel text+data+bss
 	 *  starting at the bottom of the range, and we will allocate
 	 *  objects from the top, moving downwards.  The two sub-regions
-	 *  will collide if their total sizes hit 4MB.  The current total
-	 *  is <1.5MB, so we aren't in any real danger yet.  The variable
-	 *  virt-freeptr represents the next free va (moving downwards).
+	 *  will collide if their total sizes hit 8MB.  The current total
+	 *  is <1.5MB, but INSTALL kernels are > 4MB, so hence the 8MB
+	 *  limit.  The variable virt-freeptr represents the next free va
+	 *  (moving downwards).
 	 */
-	virt_freeptr = KERNEL_BASE + 0x00400000;
+	virt_freeptr = KERNEL_BASE + (0x00400000 * KERNEL_IMG_PTS);
 }
 
 
@@ -1179,10 +1185,6 @@ ofw_callbackhandler(args)
 	}
 }
 
-#define	KERNEL_VMDATA_PTS	(KERNEL_VM_SIZE >> (PDSHIFT + 2))
-#define	KERNEL_OFW_PTS		4
-#define	KERNEL_IO_PTS		4
-
 static void
 ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 	pv_addr_t *proc0_ttbbase;
@@ -1192,7 +1194,7 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 	pv_addr_t proc0_pagedir;
 	pv_addr_t proc0_pt_pte;
 	pv_addr_t proc0_pt_sys;
-	pv_addr_t proc0_pt_kernel;
+	pv_addr_t proc0_pt_kernel[KERNEL_IMG_PTS];
 	pv_addr_t proc0_pt_vmdata[KERNEL_VMDATA_PTS];
 	pv_addr_t proc0_pt_ofw[KERNEL_OFW_PTS];
 	pv_addr_t proc0_pt_io[KERNEL_IO_PTS];
@@ -1229,7 +1231,8 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 	ofw_claimpages(&virt_freeptr, &proc0_pagedir, PD_SIZE);
 	ofw_claimpages(&virt_freeptr, &proc0_pt_pte, PT_SIZE);
 	ofw_claimpages(&virt_freeptr, &proc0_pt_sys, PT_SIZE);
-	ofw_claimpages(&virt_freeptr, &proc0_pt_kernel, PT_SIZE);
+	for (i = 0; i < KERNEL_IMG_PTS; i++)
+		ofw_claimpages(&virt_freeptr, &proc0_pt_kernel[i], PT_SIZE);
 	for (i = 0; i < KERNEL_VMDATA_PTS; i++)
 		ofw_claimpages(&virt_freeptr, &proc0_pt_vmdata[i], PT_SIZE);
 	for (i = 0; i < KERNEL_OFW_PTS; i++)
@@ -1253,7 +1256,9 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 	L1pagetable = proc0_pagedir.pv_va;
 
 	pmap_link_l2pt(L1pagetable, 0x0, &proc0_pt_sys);
-	pmap_link_l2pt(L1pagetable, KERNEL_BASE, &proc0_pt_kernel);
+	for (i = 0; i < KERNEL_IMG_PTS; i++)
+		pmap_link_l2pt(L1pagetable, KERNEL_BASE + i * 0x00400000,
+		    &proc0_pt_kernel[i]);
 	pmap_link_l2pt(L1pagetable, PTE_BASE,
 	    &proc0_pt_pte);
 	for (i = 0; i < KERNEL_VMDATA_PTS; i++)
@@ -1297,7 +1302,11 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 				/* page0 */
 				break;
 
-			case (KERNEL_BASE >> (PDSHIFT +	2)):
+#if KERNEL_IMG_PTS != 2
+#error "Update ofw translation range list"
+#endif
+			case ( KERNEL_BASE                 >> (PDSHIFT + 2)):
+			case ((KERNEL_BASE   + 0x00400000) >> (PDSHIFT + 2)):
 				/* kernel static area */
 				break;
 
@@ -1335,20 +1344,21 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 	 * we don't want aliases to physical addresses that the kernel
 	 * has-mapped/will-map elsewhere.
 	 */
-	ofw_discardmappings(proc0_pt_kernel.pv_va,
+	ofw_discardmappings(proc0_pt_kernel[KERNEL_IMG_PTS - 1].pv_va,
 	    proc0_pt_sys.pv_va, PT_SIZE);
-	ofw_discardmappings(proc0_pt_kernel.pv_va,
-	    proc0_pt_kernel.pv_va, PT_SIZE);
+	for (i = 0; i < KERNEL_IMG_PTS; i++)
+		ofw_discardmappings(proc0_pt_kernel[KERNEL_IMG_PTS - 1].pv_va,
+		    proc0_pt_kernel[i].pv_va, PT_SIZE);
 	for (i = 0; i < KERNEL_VMDATA_PTS; i++)
-		ofw_discardmappings(proc0_pt_kernel.pv_va,
+		ofw_discardmappings(proc0_pt_kernel[KERNEL_IMG_PTS - 1].pv_va,
 		    proc0_pt_vmdata[i].pv_va, PT_SIZE);
 	for (i = 0; i < KERNEL_OFW_PTS; i++)
-		ofw_discardmappings(proc0_pt_kernel.pv_va,
+		ofw_discardmappings(proc0_pt_kernel[KERNEL_IMG_PTS - 1].pv_va,
 		    proc0_pt_ofw[i].pv_va, PT_SIZE);
 	for (i = 0; i < KERNEL_IO_PTS; i++)
-		ofw_discardmappings(proc0_pt_kernel.pv_va,
+		ofw_discardmappings(proc0_pt_kernel[KERNEL_IMG_PTS - 1].pv_va,
 		    proc0_pt_io[i].pv_va, PT_SIZE);
-	ofw_discardmappings(proc0_pt_kernel.pv_va,
+	ofw_discardmappings(proc0_pt_kernel[KERNEL_IMG_PTS - 1].pv_va,
 	    msgbuf.pv_va, MSGBUFSIZE);
 
 	/*
@@ -1374,10 +1384,11 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 	    PTE_BASE + (0x00000000 >> (PGSHIFT-2)),
 	    proc0_pt_sys.pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
-	pmap_map_entry(L1pagetable,
-	    PTE_BASE + (KERNEL_BASE >> (PGSHIFT-2)),
-	    proc0_pt_kernel.pv_pa,
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+	for (i = 0; i < KERNEL_IMG_PTS; i++)
+		pmap_map_entry(L1pagetable,
+		    PTE_BASE + ((KERNEL_BASE + i * 0x00400000) >> (PGSHIFT-2)),
+		    proc0_pt_kernel[i].pv_pa,
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	pmap_map_entry(L1pagetable,
 	    PTE_BASE + (PTE_BASE >> (PGSHIFT-2)),
 	    proc0_pt_pte.pv_pa,
