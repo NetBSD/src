@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.238 2001/04/22 18:21:48 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.239 2001/04/23 15:42:30 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.238 2001/04/22 18:21:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.239 2001/04/23 15:42:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -624,6 +624,12 @@ nobootinfo:
 			    "in last cluster (%ld used)\n", reqsz, sz);
 
 	}
+
+	/*
+	 * NOTE: It is safe to use uvm_pageboot_alloc() before
+	 * pmap_bootstrap() because our pmap_virtual_space()
+	 * returns compile-time constants.
+	 */
 
 	/*
 	 * Init mapping for u page(s) for proc 0
