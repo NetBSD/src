@@ -1,27 +1,30 @@
-#	$NetBSD: Makefile,v 1.14 1997/01/16 04:06:17 cgd Exp $
+#	$NetBSD: Makefile,v 1.15 1997/01/23 22:19:56 cgd Exp $
 
 LIB=	sa
+NOPIC=
+NOPROFILE=
 
-DIR=${SAREL}${SADIR}
+SA_USE_CREAD?= no
+SA_INCLUDE_NET?= yes
 
-.PATH: ${DIR}
+#DEBUGCPPFLAGS= -DBOOTP_DEBUG -DNETIF_DEBUG -DETHER_DEBUG -DNFS_DEBUG -DRPC_DEBUG -DRARP_DEBUG -DDEBUG -DPARANOID
+CPPFLAGS=	-I. ${SACPPFLAGS} -DSTANDALONE -DCOMPAT_UFS ${DEBUGCPPFLAGS}
 
-#DEBUGFLAGS= -DBOOTP_DEBUG -DNETIF_DEBUG -DETHER_DEBUG -DNFS_DEBUG -DRPC_DEBUG -DRARP_DEBUG -DDEBUG -DPARANOID -Wall
-#DEBUGFLAGS= -ansi -pedantic -Wall
-CFLAGS+=-DSTANDALONE -DCOMPAT_UFS $(DEBUGFLAGS) -I${DIR} -I${DIR}/../..
-#
-# Needed for PowerPC
-CFLAGS+=$(EXTRACFLAGS)
+#CFLAGS+= -ansi -pedantic -Wall
 
 # stand routines
 SRCS+=	alloc.c bcopy.c exit.c exec.c getfile.c gets.c globals.c \
 	memcmp.c memcpy.c printf.c strerror.c
 
 # io routines
-SRCS+=	close.c closeall.c dev.c disklabel.c dkcksum.c ioctl.c \
-	lseek.c open.c nullfs.c read.c stat.c fstat.c write.c
+SRCS+=	closeall.c dev.c disklabel.c dkcksum.c ioctl.c nullfs.c stat.c fstat.c
+SRCS+=	close.c lseek.c open.c read.c write.c
+.if (${SA_USE_CREAD} == "yes")
+CPPFLAGS+= -D__INTERNAL_LIBSA_CREAD
+SRCS+=	cread.c
+.endif
 
-.if !defined(NO_NET)
+.if (${SA_INCLUDE_NET} == "yes")
 # network routines
 SRCS+=	arp.c ether.c in_cksum.c net.c netif.c rpc.c
 .endif
@@ -32,10 +35,11 @@ SRCS+=	bootp.c rarp.c bootparam.c
 # boot filesystems
 SRCS+=	ufs.c nfs.c cd9660.c
 
-NOPROFILE=
-NOPIC=
-OBJMACHINE=
-
 install:
 
 .include <bsd.lib.mk>
+
+lib${LIB}.o:: ${OBJS}
+	@echo building standard ${LIB} library
+	@rm -f lib${LIB}.o
+	@${LD} -r -o lib${LIB}.o `lorder ${OBJS} | tsort`
