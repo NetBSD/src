@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.h,v 1.15 2001/08/02 21:04:45 thorpej Exp $	*/
+/*	$NetBSD: npx.h,v 1.16 2001/08/03 01:11:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -118,6 +118,7 @@ struct savexmm {
 	/* 512-bytes --- end of hardware portion of save area */
 	uint32_t sv_ex_sw;		/* saved SW from last exception */
 	uint32_t sv_ex_tw;		/* saved TW from last exception */
+	uint32_t sv_ex_mxcsr;		/* saved MXCSR from last exception */
 };
 
 union savefpu {
