@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.126 1999/11/25 01:20:27 simonb Exp $
+#	$NetBSD: Makefile,v 1.127 1999/11/29 12:55:06 itojun Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 # XXX Temporary for NO_SENDMAIL and BUILD_POSTFIX
@@ -8,7 +8,7 @@ SRCTOP=	..
 .include <bsd.crypto.mk>
 
 SUBDIR=	ac accton amd apm apmd arp bad144 bind bootp catman \
-	chown chroot chrtbl config cron dbsym dev_mkdb \
+	chown chroot chrtbl cnwctl config cron dbsym dev_mkdb \
 	dhcp diskpart dumpfs dumplfs edquota eeprom eshconfig greconfig \
 	grfconfig grfinfo gspa hilinfo inetd iostat ipf iteconfig kgmon \
 	kvm_mkdb lastlogin link lpr mailwrapper map-mbone mbrlabel \
