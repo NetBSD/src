@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.13 1997/01/31 01:55:40 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.14 1997/03/18 21:21:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -78,7 +78,7 @@ struct device *booted_device;	/* boot device */
 int	cold;			/* if 1, still working on cold-start */
 
 void mainbus_attach __P((struct device *, struct device *, void *));
-int  mainbus_match __P((struct device *, void *, void *));
+int  mainbus_match __P((struct device *, struct cfdata *, void *));
 int  mainbus_print __P((void *, const char *));
 
 struct mainbus_softc {
@@ -114,7 +114,7 @@ static	char *mainbusdevs_1x7[] = {	/* includes 166, 177 */
 int
 mainbus_match(parent, cf, args)
 	struct device *parent;
-	void *cf;
+	struct cfdata *cf;
 	void *args;
 {
 	static int mainbus_matched;
