@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.102 2004/02/13 11:36:14 wiz Exp $	*/
+/*	$NetBSD: npx.c,v 1.103 2004/03/21 10:56:24 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.102 2004/02/13 11:36:14 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.103 2004/03/21 10:56:24 simonb Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -435,9 +435,6 @@ npxintr(void *arg, struct intrframe iframe)
 	/*
 	 * Pass exception to process.
 	 */
-	KSI_INIT_TRAP(&ksi);
-	ksi.ksi_signo = SIGFPE;
-	ksi.ksi_addr = (void *)frame->if_eip;
 	if (USERMODE(frame->if_cs, frame->if_eflags)) {
 		/*
 		 * Interrupt is essentially a trap, so we can afford to call
@@ -451,6 +448,10 @@ npxintr(void *arg, struct intrframe iframe)
 		 * just before it is used).
 		 */
 		l->l_md.md_regs = (struct trapframe *)&frame->if_gs;
+
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGFPE;
+		ksi.ksi_addr = (void *)frame->if_eip;
 
 		/*
 		 * Encode the appropriate code for detailed information on
