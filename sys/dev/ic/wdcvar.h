@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.6 1998/10/12 16:09:18 bouyer Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.7 1998/11/17 14:14:52 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -118,6 +118,7 @@ struct wdc_xfer {
 #define C_NEEDDONE  	0x0010 /* need to call upper-level done */
 #define C_POLL		0x0020 /* cmd is polled */
 #define C_DMA		0x0040 /* cmd uses DMA */
+#define C_SENSE		0x0080 /* cmd is a internal command */
 
 	/* Information about our location */
 	u_int8_t drive;
