@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.27 2005/01/16 23:52:12 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.28 2005/02/13 02:03:54 chs Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.27 2005/01/16 23:52:12 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.28 2005/02/13 02:03:54 chs Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_altivec.h"
@@ -1544,13 +1544,6 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 	int i;
 	int poolflags = PR_NOWAIT;
 
-#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
-	if (pmap_pvo_remove_depth > 0)
-		panic("pmap_pvo_enter: called while pmap_pvo_remove active!");
-	if (++pmap_pvo_enter_depth > 1)
-		panic("pmap_pvo_enter: called recursively!");
-#endif
-
 	/*
 	 * Compute the PTE Group index.
 	 */
@@ -1558,6 +1551,14 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 	ptegidx = va_to_pteg(pm, va);
 
 	msr = pmap_interrupts_off();
+
+#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
+	if (pmap_pvo_remove_depth > 0)
+		panic("pmap_pvo_enter: called while pmap_pvo_remove active!");
+	if (++pmap_pvo_enter_depth > 1)
+		panic("pmap_pvo_enter: called recursively!");
+#endif
+
 	/*
 	 * Remove any existing mapping for this page.  Reuse the
 	 * pvo entry if there a mapping.
