@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.133 1999/03/28 01:56:41 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.134 1999/04/01 00:17:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.133 1999/03/28 01:56:41 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.134 1999/04/01 00:17:49 thorpej Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -649,11 +649,6 @@ cpu_startup()
 		le_iomem = VM_PAGE_TO_PHYS(mlist.tqh_first);
 	}
 #endif /* NLE_IOASIC */
-
-	/*
-	 * Configure the system.
-	 */
-	configure();
 }
 
 

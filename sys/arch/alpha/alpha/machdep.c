@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.165 1999/03/26 23:41:25 mycroft Exp $ */
+/* $NetBSD: machdep.c,v 1.166 1999/04/01 00:17:45 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.165 1999/03/26 23:41:25 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.166 1999/04/01 00:17:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1122,11 +1122,6 @@ cpu_startup()
 	 * CPUs.
 	 */
 	hwrpb_primary_init();
-
-	/*
-	 * Configure the system.
-	 */
-	configure();
 }
 
 /*

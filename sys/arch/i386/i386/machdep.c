@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.347 1999/03/30 08:21:54 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.348 1999/04/01 00:17:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -531,11 +531,8 @@ cpu_startup()
 #endif
 #endif
 
-	/*
-	 * Configure the system.
-	 */
+	/* Safe for i/o port allocation to use malloc now. */
 	ioport_malloc_safe = 1;
-	configure();
 
 	/*
 	 * Set up proc0's TSS and LDT.

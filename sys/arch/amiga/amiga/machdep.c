@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.132 1999/03/26 23:41:27 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.133 1999/04/01 00:17:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -484,13 +484,6 @@ again:
 
 #ifdef DEBUG_KERNEL_START
 	printf("survived bufinit...\n");
-#endif
-	/*
-	 * Configure the system.
-	 */
-	configure();
-#ifdef DEBUG_KERNEL_START
-	printf("survived configure...\n");
 #endif
 }
 

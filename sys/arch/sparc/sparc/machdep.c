@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.142 1999/03/26 23:41:35 mycroft Exp $ */
+/*	$NetBSD: machdep.c,v 1.143 1999/04/01 00:17:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -330,11 +330,6 @@ cpu_startup()
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
-
-	/*
-	 * Configure the system.  The cpu code will turn on the cache.
-	 */
-	configure();
 
 	pmap_redzone();
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.226 1999/03/27 05:01:28 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.227 1999/04/01 00:17:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -570,11 +570,8 @@ again:
 	 */
 	bufinit();
 
-	/*
-	 * Configure the system.
-	 */
+	/* Safe for extent allocation to use malloc now. */
 	iomem_malloc_safe = 1;
-	configure();
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.64 1999/03/26 22:00:25 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.65 1999/04/01 00:17:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -506,11 +506,6 @@ cpu_startup()
 	    (vm_offset_t)(kernel_pmap)->pm_pdir);
 	    
 	proc0.p_md.md_regs = (struct trapframe *)curpcb->pcb_sp - 1;
-
-	/*
-	 * Configure the hardware
-	 */
-	configure();
 }
 
 

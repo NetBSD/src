@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.32 1999/03/26 23:41:28 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.33 1999/04/01 00:17:46 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -573,11 +573,6 @@ cpu_startup()
 		asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
 			      : "=r"(msr) : "K"(PSL_EE));
 	}
-
-	/*
-	 * Configure devices.
-	 */
-	configure();
 }
 
 /*
