@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.20 1995/08/13 00:23:56 mycroft Exp $	*/
+/*	$NetBSD: param.h,v 1.21 1995/08/13 01:52:16 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -204,14 +204,18 @@
 /* These should be used for:
    1) ensuring mutual exclusion (why use processor level?)
    2) allowing faster devices to take priority
+
+   Note that on the mac, most things are masked at spl1, almost
+   everything at spl2, and everything but the panic switch and
+   power at spl4.
  */
 #define splsoftclock()  spl1()	/* disallow softclock */
 #define splsoftnet()    spl1()	/* disallow network */
+#define splclock()      spl1()	/* disallow clock interrupt */
 #define splbio()        spl2()	/* disallow block I/O */
 #define splnet()        spl2()	/* disallow network */
-#define spltty()        spl4()	/* disallow tty interrupts */
+#define spltty()        spl4()	/* disallow tty interrupts (serial) */
 #define splimp()        spl4()	/* disallow imput */
-#define splclock()      spl1()	/* disallow clock interrupt */
 #define splhigh()       spl7()	/* disallow everything */
 #define splsched()      spl7()	/* disallow scheduling */
 
