@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.38 1999/08/17 20:59:04 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.39 1999/08/19 19:51:37 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -129,6 +129,25 @@ char *usbd_error_strs[] = {
 	"XXX",
 };
 #endif
+
+char *
+usbd_errstr(err)
+	usbd_status err;
+{
+	static char buffer[5];
+
+#ifdef  USB_DEBUG
+	if ( err < USBD_ERROR_MAX ) {
+		return usbd_error_strs[err];
+	} else {
+		snprintf(buffer, sizeof buffer, "%d", err);
+		return buffer;
+	}
+#else
+	snprintf(buffer, sizeof buffer, "%d", err);
+	return buffer;
+#endif
+}
 
 usbd_status
 usbd_get_string_desc(dev, sindex, langid, sdesc)
@@ -312,8 +331,8 @@ usbd_reset_port(dev, port, ps)
 	USETW(req.wIndex, port);
 	USETW(req.wLength, 0);
 	r = usbd_do_request(dev, &req, 0);
-	DPRINTFN(1,("usbd_reset_port: port %d reset done, error=%d(%s)\n",
-		    port, r, usbd_error_strs[r]));
+	DPRINTFN(1,("usbd_reset_port: port %d reset done, error=%s\n",
+		    port, usbd_errstr(r)));
 	if (r != USBD_NORMAL_COMPLETION)
 		return (r);
 	n = 10;
@@ -573,8 +592,8 @@ usbd_set_config_index(dev, index, msg)
 			    (UGETW(ds.wStatus) & UDS_SELF_POWERED))
 				selfpowered = 1;
 			DPRINTF(("usbd_set_config_index: status=0x%04x, "
-				 "error=%d(%s)\n",
-				 UGETW(ds.wStatus), r, usbd_error_strs[r]));
+				 "error=%s\n",
+				 UGETW(ds.wStatus), usbd_errstr(r)));
 		} else
 			selfpowered = 1;
 	}
@@ -608,8 +627,8 @@ usbd_set_config_index(dev, index, msg)
 	r = usbd_set_config(dev, cdp->bConfigurationValue);
 	if (r != USBD_NORMAL_COMPLETION) {
 		DPRINTF(("usbd_set_config_index: setting config=%d failed, "
-			 "error=%d(%s)\n",
-			 cdp->bConfigurationValue, r, usbd_error_strs[r]));
+			 "error=%s\n",
+			 cdp->bConfigurationValue, usbd_errstr(r)));
 		goto bad;
 	}
 	DPRINTF(("usbd_set_config_index: setting new config %d\n",
@@ -668,9 +687,9 @@ usbd_setup_pipe(dev, iface, ep, pipe)
 	SIMPLEQ_INIT(&p->queue);
 	r = dev->bus->open_pipe(p);
 	if (r != USBD_NORMAL_COMPLETION) {
-		DPRINTFN(-1,("usbd_setup_pipe: endpoint=0x%x failed, error=%d"
-			 "(%s)\n",
-			 ep->edesc->bEndpointAddress, r, usbd_error_strs[r]));
+		DPRINTFN(-1,("usbd_setup_pipe: endpoint=0x%x failed, error="
+			 "%s\n",
+			 ep->edesc->bEndpointAddress, usbd_errstr(r)));
 		free(p, M_USB);
 		return (r);
 	}
@@ -763,8 +782,8 @@ usbd_probe_and_attach(parent, dev, port, addr)
 		if (r != USBD_NORMAL_COMPLETION) {
 #ifdef USB_DEBUG
 			DPRINTF(("%s: port %d, set config at addr %d failed, "
-				 "error=%d(%s)\n", USBDEVNAME(*parent), port,
-				 addr, r, usbd_error_strs[r]));
+				 "error=%s\n", USBDEVNAME(*parent), port,
+				 addr, usbd_errstr(r)));
 #else
 			printf("%s: port %d, set config at addr %d failed\n",
 			       USBDEVNAME(*parent), port, addr);
@@ -925,6 +944,12 @@ usbd_new_device(parent, bus, depth, lowspeed, port, up)
 		return (r);
 	}
 
+	DPRINTF(("usbd_new_device: adding unit addr=%d, rev=%02x, class=%d, "
+		 "subclass=%d, protocol=%d, maxpacket=%d, len=%d, ls=%d\n", 
+		 addr,UGETW(dd->bcdUSB), dd->bDeviceClass, dd->bDeviceSubClass,
+		 dd->bDeviceProtocol, dd->bMaxPacketSize, dd->bLength, 
+		 dev->lowspeed));
+
 	if (dd->bDescriptorType != UDESC_DEVICE) {
 		/* Illegal device descriptor */
 		DPRINTFN(-1,("usbd_new_device: illegal descriptor %d\n",
@@ -933,10 +958,11 @@ usbd_new_device(parent, bus, depth, lowspeed, port, up)
 		return (USBD_INVAL);
 	}
 
-	DPRINTF(("usbd_new_device: adding unit addr=%d, rev=%02x, class=%d, "
-		 "subclass=%d, protocol=%d, maxpacket=%d, ls=%d\n", 
-		 addr,UGETW(dd->bcdUSB), dd->bDeviceClass, dd->bDeviceSubClass,
-		 dd->bDeviceProtocol, dd->bMaxPacketSize, dev->lowspeed));
+	if (dd->bLength < USB_DEVICE_DESCRIPTOR_SIZE) {
+		DPRINTFN(-1,("usbd_new_device: bad length %d\n", dd->bLength));
+		usbd_remove_device(dev, up);
+		return (USBD_INVAL);
+	}
 
 	USETW(dev->def_ep_desc.wMaxPacketSize, dd->bMaxPacketSize);
 

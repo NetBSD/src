@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.20 1999/08/17 16:06:21 augustss Exp $	*/
+/*	$NetBSD: uhub.c,v 1.21 1999/08/19 19:51:36 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -126,8 +126,8 @@ USB_ATTACH(uhub)
 
 	r = usbd_set_config_index(dev, 0, 1);
 	if (r != USBD_NORMAL_COMPLETION) {
-		DPRINTF(("%s: configuration failed, error=%d(%s)\n",
-			 USBDEVNAME(sc->sc_dev), r, usbd_error_strs[r]));
+		DPRINTF(("%s: configuration failed, error=%s\n",
+			 USBDEVNAME(sc->sc_dev), usbd_errstr(r)));
 		USB_ATTACH_ERROR_RETURN;
 	}
 
@@ -151,8 +151,8 @@ USB_ATTACH(uhub)
 		r = usbd_do_request(dev, &req, &hubdesc);
 	}
 	if (r != USBD_NORMAL_COMPLETION) {
-		DPRINTF(("%s: getting hub descriptor failed, error=%d(%s)\n",
-			 USBDEVNAME(sc->sc_dev), r, usbd_error_strs[r]));
+		DPRINTF(("%s: getting hub descriptor failed, error=%s\n",
+			 USBDEVNAME(sc->sc_dev), usbd_errstr(r)));
 		USB_ATTACH_ERROR_RETURN;
 	}
 
@@ -327,8 +327,8 @@ uhub_explore(dev)
 		r = usbd_get_port_status(dev, port, &up->status);
 		if (r != USBD_NORMAL_COMPLETION) {
 			DPRINTF(("uhub_explore: get port status failed, "
-				 "error=%d(%s)\n",
-				 r, usbd_error_strs[r]));
+				 "error=%s\n",
+				 usbd_errstr(r)));
 			continue;
 		}
 		status = UGETW(up->status.wPortStatus);
@@ -402,7 +402,7 @@ uhub_explore(dev)
 		/* XXX retry a few times? */
 		if (r != USBD_NORMAL_COMPLETION) {
 			DPRINTFN(-1,("uhub_explore: usb_new_device failed, "
-				     "error=%d(%s)\n", r, usbd_error_strs[r]));
+				     "error=%s\n", usbd_errstr(r)));
 			/* Avoid addressing problems by disabling. */
 			/* usbd_reset_port(dev, port, &up->status); */
 /* XXX
