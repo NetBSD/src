@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 2005/03/04 20:41:09 he Exp $
+#	$NetBSD: Makefile,v 1.36.2.1 2005/03/23 11:10:56 tron Exp $
 
 .include <bsd.own.mk>
 
@@ -19,12 +19,12 @@ CPPFLAGS+= -I${PPPDDIR} -DPPP_FILTER
 CPPFLAGS+= -DCBCP_SUPPORT -DUSE_CRYPT -DCHAPMS -DMSLANMAN -DMPPE
 CPPFLAGS+= -DHAVE_MULTILINK -DUSE_TDB
 
-.if (${USE_INET6} != "no")
+.if (!defined(SMALLPROG) || defined(SMALLPROG_INET6)) && (${USE_INET6} != "no")
 CPPFLAGS+= -DINET6
 SRCS+=	eui64.c ipv6cp.c
 .endif
 
-.if (${USE_PAM} != "no")
+.if (!defined(SMALLPROG)) && (${USE_PAM} != "no")
 CPPFLAGS+= -DUSE_PAM
 LDADD+=-lpam ${PAM_STATIC_LDADD}
 DPADD+=${LIBPAM} ${PAM_STATIC_DPADD}
