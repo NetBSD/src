@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.14 1995/09/06 04:15:59 thorpej Exp $	*/
+/*	$NetBSD: ccd.c,v 1.15 1995/10/09 00:46:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.
@@ -158,6 +158,8 @@ static	struct ccdbuf *ccdbuffer __P((struct ccd_softc *, struct buf *,
 		daddr_t, caddr_t, long));
 static	void ccdgetdisklabel __P((dev_t));
 static	void ccdmakedisklabel __P((struct ccd_softc *));
+static	int ccdlock __P((struct ccd_softc *));
+static	void ccdunlock __P((struct ccd_softc *));
 
 #ifdef DEBUG
 static	void printiinfo __P((struct ccdiinfo *));
@@ -507,7 +509,7 @@ ccdopen(dev, flags, fmt, p)
 	int unit = ccdunit(dev);
 	struct ccd_softc *cs;
 	struct disklabel *lp;
-	int part, pmask;
+	int error = 0, part, pmask;
 
 #ifdef DEBUG
 	if (ccddebug & CCDB_FOLLOW)
@@ -516,19 +518,29 @@ ccdopen(dev, flags, fmt, p)
 	if (unit >= numccd)
 		return (ENXIO);
 	cs = &ccd_softc[unit];
-	lp = &cs->sc_dkdev.dk_label;
 
-	/* If we're initialized, make sure the disklabel is current. */
-	if (cs->sc_flags & CCDF_INITED)
-		ccdgetdisklabel(dev);
+	if (error = ccdlock(cs))
+		return (error);
+
+	lp = &cs->sc_dkdev.dk_label;
 
 	part = DISKPART(dev);
 	pmask = (1 << part);
 
+	/*
+	 * If we're initialized, check to see if there are any other
+	 * open partitions.  If not, then it's safe to update
+	 * the in-core disklabel.
+	 */
+	if ((cs->sc_flags & CCDF_INITED) && (cs->sc_dkdev.dk_openmask == 0))
+		ccdgetdisklabel(dev);
+
 	/* Check that the partition exists. */
 	if (part != RAW_PART && ((part > lp->d_npartitions) ||
-	    (lp->d_partitions[part].p_fstype == FS_UNUSED)))
-		return (ENXIO);
+	    (lp->d_partitions[part].p_fstype == FS_UNUSED))) {
+		error = ENXIO;
+		goto done;
+	}
 
 	/* Prevent our unit from being unconfigured while open. */
 	switch (fmt) {
@@ -543,6 +555,8 @@ ccdopen(dev, flags, fmt, p)
 	cs->sc_dkdev.dk_openmask =
 	    cs->sc_dkdev.dk_copenmask | cs->sc_dkdev.dk_bopenmask;
 
+ done:
+	ccdunlock(cs);
 	return (0);
 }
 
@@ -555,7 +569,7 @@ ccdclose(dev, flags, fmt, p)
 {
 	int unit = ccdunit(dev);
 	struct ccd_softc *cs;
-	int part;
+	int error = 0, part;
 
 #ifdef DEBUG
 	if (ccddebug & CCDB_FOLLOW)
@@ -565,6 +579,10 @@ ccdclose(dev, flags, fmt, p)
 	if (unit >= numccd)
 		return (ENXIO);
 	cs = &ccd_softc[unit];
+
+	if (error = ccdlock(cs))
+		return (error);
+
 	part = DISKPART(dev);
 
 	/* ...that much closer to allowing unconfiguration... */
@@ -580,6 +598,7 @@ ccdclose(dev, flags, fmt, p)
 	cs->sc_dkdev.dk_openmask =
 	    cs->sc_dkdev.dk_copenmask | cs->sc_dkdev.dk_bopenmask;
 
+	ccdunlock(cs);
 	return (0);
 }
 
@@ -592,7 +611,8 @@ ccdstrategy(bp)
 	register daddr_t bn;
 	register int sz, s;
 	int wlabel;
-	struct partition *p;
+	struct disklabel *lp;
+	struct partition *pp;
 
 #ifdef DEBUG
 	if (ccddebug & CCDB_FOLLOW)
@@ -608,6 +628,9 @@ ccdstrategy(bp)
 	if (bp->b_bcount == 0)
 		goto done;
 
+	lp = &cs->sc_dkdev.dk_label;
+	pp = &lp->d_partitions[DISKPART(bp->b_dev)];
+
 	/*
 	 * Do bounds checking, adjust transfer, and translate the
 	 * partition-relative block to an absolute.  If there's an
@@ -615,11 +638,9 @@ ccdstrategy(bp)
 	 */
 	wlabel = cs->sc_flags & (CCDF_WLABEL|CCDF_LABELLING);
 	if (DISKPART(bp->b_dev) != RAW_PART) {
-		if (bounds_check_with_label(bp,
-		    &cs->sc_dkdev.dk_label, wlabel) <= 0)
+		if (bounds_check_with_label(bp, lp, wlabel) <= 0)
 			goto done;
-		p = &cs->sc_dkdev.dk_label.d_partitions[DISKPART(bp->b_dev)];
-		bp->b_blkno += p->p_offset;
+		bp->b_blkno += pp->p_offset;
 	}
 
 	bp->b_resid = bp->b_bcount;
@@ -943,6 +964,9 @@ ccdioctl(dev, cmd, data, flag, p)
 		if ((flag & FWRITE) == 0)
 			return (EBADF);
 
+		if (error = ccdlock(cs))
+			return (error);
+
 		/* Fill in some important bits. */
 		ccd.ccd_unit = unit;
 		ccd.ccd_interleave = ccio->ccio_ileave;
@@ -962,6 +986,7 @@ ccdioctl(dev, cmd, data, flag, p)
 		if (error) {
 			free(vpp, M_DEVBUF);
 			free(cpp, M_DEVBUF);
+			ccdunlock(cs);
 			return (error);
 		}
 
@@ -983,6 +1008,7 @@ ccdioctl(dev, cmd, data, flag, p)
 					    p->p_ucred, p);
 				free(vpp, M_DEVBUF);
 				free(cpp, M_DEVBUF);
+				ccdunlock(cs);
 				return (error);
 			}
 			++lookedup;
@@ -1018,6 +1044,7 @@ ccdioctl(dev, cmd, data, flag, p)
 			bzero(&ccd_softc[unit], sizeof(struct ccd_softc));
 			free(vpp, M_DEVBUF);
 			free(cpp, M_DEVBUF);
+			ccdunlock(cs);
 			return (error);
 		}
 
@@ -1030,6 +1057,8 @@ ccdioctl(dev, cmd, data, flag, p)
 		ccio->ccio_size = cs->sc_size;
 		ccdgetdisklabel(dev);
 
+		ccdunlock(cs);
+
 		break;
 
 	case CCDIOCCLR:
@@ -1038,6 +1067,9 @@ ccdioctl(dev, cmd, data, flag, p)
 
 		if ((flag & FWRITE) == 0)
 			return (EBADF);
+
+		if (error = ccdlock(cs))
+			return (error);
 
 		/*
 		 * Don't unconfigure if any other partitions are open
@@ -1048,8 +1080,10 @@ ccdioctl(dev, cmd, data, flag, p)
 		pmask = (1 << part);
 		if ((cs->sc_dkdev.dk_openmask & ~pmask) ||
 		    ((cs->sc_dkdev.dk_bopenmask & pmask) &&
-		    (cs->sc_dkdev.dk_copenmask & pmask)))
+		    (cs->sc_dkdev.dk_copenmask & pmask))) {
+			ccdunlock(cs);
 			return (EBUSY);
+		}
 
 		/*
 		 * Free ccd_softc information and clear entry.
@@ -1081,6 +1115,9 @@ ccdioctl(dev, cmd, data, flag, p)
 		free(ccddevs[unit].ccd_vpp, M_DEVBUF);
 		ccd.ccd_dk = -1;
 		bcopy(&ccd, &ccddevs[unit], sizeof(ccd));
+
+		ccdunlock(cs);
+
 		break;
 
 	case DIOCGDINFO:
@@ -1107,6 +1144,9 @@ ccdioctl(dev, cmd, data, flag, p)
 		if ((flag & FWRITE) == 0)
 			return (EBADF);
 
+		if (error = ccdlock(cs))
+			return (error);
+
 		cs->sc_flags |= CCDF_LABELLING;
 
 		error = setdisklabel(&cs->sc_dkdev.dk_label,
@@ -1119,6 +1159,8 @@ ccdioctl(dev, cmd, data, flag, p)
 		}
 
 		cs->sc_flags &= ~CCDF_LABELLING;
+
+		ccdunlock(cs);
 
 		if (error)
 			return (error);
@@ -1314,6 +1356,42 @@ ccdmakedisklabel(cs)
 	lp->d_partitions[RAW_PART].p_fstype = FS_BSDFFS;
 
 	strncpy(lp->d_packname, "default label", sizeof(lp->d_packname));
+}
+
+/*
+ * Wait interruptibly for an exclusive lock.
+ *
+ * XXX
+ * Several drivers do this; it should be abstracted and made MP-safe.
+ */
+static int
+ccdlock(cs)
+	struct ccd_softc *cs;
+{
+	int error;
+
+	while ((cs->sc_flags & CCDF_LOCKED) != 0) {
+		cs->sc_flags |= CCDF_WANTED;
+		if ((error = tsleep(cs, PRIBIO | PCATCH, "ccdlck", 0)) != 0)
+			return (error);
+	}
+	cs->sc_flags |= CCDF_LOCKED;
+	return (0);
+}
+
+/*
+ * Unlock and wake up any waiters.
+ */
+static void
+ccdunlock(cs)
+	struct ccd_softc *cs;
+{
+
+	cs->sc_flags &= ~CCDF_LOCKED;
+	if ((cs->sc_flags & CCDF_WANTED) != 0) {
+		cs->sc_flags &= ~CCDF_WANTED;
+		wakeup(cs);
+	}
 }
 
 #ifdef DEBUG
