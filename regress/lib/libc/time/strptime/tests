@@ -1,3 +1,4 @@
+# some intial checks to make sure common things work
 --- ctime --- 1
 Tue Jan 20 23:27:46 1998
 %a %b %d %T %Y
@@ -7,6 +8,8 @@ Tue Jan 20 23:27:46 1998
 --- ctime --- 3
 Tue Jan 20 23:27:46 1998
 %c
+
+# test some valid and invalid day names
 --- %a --- 1
 Sun
 %a
@@ -103,6 +106,8 @@ Saturn
 --- %A --- 16
 Moon
 %A
+
+# test some valid and invalid month names
 --- %b --- 1
 Jan
 %b

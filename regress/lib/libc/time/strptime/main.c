@@ -32,6 +32,10 @@ main()
 
 		if (!strcmp(title, "EOF\n"))
 			return(0);
+		if (title[0] == '#' || title[0] == '\n') {
+			free(title);
+			continue;
+		}
 
 		p = fgetln(stdin, &len);
 		if (p == 0)
