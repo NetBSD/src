@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)times.3	6.4 (Berkeley) 4/19/91
-.\"	$Id: times.3,v 1.2 1993/07/30 08:39:51 mycroft Exp $
+.\"	$Id: times.3,v 1.3 1993/11/30 00:51:00 jtc Exp $
 .\"
 .Dd April 19, 1991
 .Dt TIMES 3
@@ -112,7 +112,9 @@ If an error occurs,
 .Fn times
 returns the value
 .Pq (clock_t)\-1 ,
-and sets errno to indicate the error.
+and sets 
+.Va errno
+to indicate the error.
 .Sh ERRORS
 The
 .Fn times
