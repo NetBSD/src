@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.59 1994/04/06 04:22:40 mycroft Exp $
+ *	$Id: locore.s,v 1.60 1994/04/06 04:30:18 mycroft Exp $
  */
 
 /*
@@ -1841,10 +1841,10 @@ ENTRY(proffault)
 #define	TRAP(a)		pushl $(a) ; jmp _alltraps
 #define	ZTRAP(a)	pushl $0 ; TRAP(a)
 #ifdef KGDB
-#define	BPTTRAP(a)	testl $(PSL_I >> 8),13(%esp) ; jz 1f ; sti ; 1: ; \
+#define	BPTTRAP(a)	testb $(PSL_I>>8),13(%esp) ; jz 1f ; sti ; 1: ; \
 			pushl $(a) ; jmp _bpttraps
 #else
-#define	BPTTRAP(a)	testl $(PSL_I >> 8),13(%esp) ; jz 1f ; sti ; 1: ; \
+#define	BPTTRAP(a)	testb $(PSL_I>>8),13(%esp) ; jz 1f ; sti ; 1: ; \
 			TRAP(a)
 #endif
 
