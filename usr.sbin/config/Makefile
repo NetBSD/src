@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2001/09/25 01:40:09 tv Exp $
+#	$NetBSD: Makefile,v 1.24 2002/03/05 15:00:07 pk Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 4/19/94
 
 PROG=	config
@@ -12,7 +12,8 @@ CLEANFILES+=gram.h
 MAN=	config.8
 
 # XXX should use "YHEADER", but make this work on 1.3 as well as 1.4+
-gram.c gram.h: gram.y
+gram.h: gram.c
+gram.c: gram.y
 	${YACC.y} -d ${.ALLSRC}
 	mv -f y.tab.c gram.c
 	mv -f y.tab.h gram.h
