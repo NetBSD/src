@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.5 1998/01/09 13:39:57 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 1999/03/22 18:15:08 sommerfe Exp $
 
-SUBDIR+= execve unfdpass
+SUBDIR+= execve unfdpass getcwd
 
 .include <bsd.subdir.mk>
