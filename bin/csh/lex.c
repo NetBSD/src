@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.19 2001/09/14 14:04:00 wiz Exp $ */
+/* $NetBSD: lex.c,v 1.20 2001/11/03 13:35:39 lukem Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: lex.c,v 1.19 2001/09/14 14:04:00 wiz Exp $");
+__RCSID("$NetBSD: lex.c,v 1.20 2001/11/03 13:35:39 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1476,9 +1476,9 @@ again:
 	    if (c >= 0)
 		break;
 	    if (errno == EWOULDBLOCK) {
-		int     off = 0;
+		int     iooff = 0;
 
-		(void)ioctl(SHIN, FIONBIO, (ioctl_t) & off);
+		(void)ioctl(SHIN, FIONBIO, (ioctl_t) & iooff);
 	    }
 	    else if (errno != EINTR)
 		break;
