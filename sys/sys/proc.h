@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.112 2000/12/01 12:28:30 jdolecek Exp $	*/
+/*	$NetBSD: proc.h,v 1.113 2000/12/01 17:59:12 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -109,6 +109,10 @@ struct	emul {
 
 };
 
+#define EMUL_HAS_SYS___syscall	0x001	/* has SYS___syscall */
+#define EMUL_GETPID_PASS_PPID	0x002	/* pass parent pid in getpid() */
+#define EMUL_GETID_PASS_EID	0x003	/* pass also effective id in
+					 * get[ug]id() */
 /*
  * Description of a process.
  *
