@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.28 2000/06/09 04:45:53 soda Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.28.2.1 2000/08/10 22:25:56 soda Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999
@@ -398,5 +398,6 @@ typedef u_int8_t pci_intr_line_t;
 #define	PCI_INTERRUPT_PIN_B			0x02
 #define	PCI_INTERRUPT_PIN_C			0x03
 #define	PCI_INTERRUPT_PIN_D			0x04
+#define	PCI_INTERRUPT_PIN_MAX			0x04
 
 #endif /* _DEV_PCI_PCIREG_H_ */
