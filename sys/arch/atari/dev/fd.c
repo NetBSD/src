@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.31 2000/01/21 23:29:01 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.32 2000/02/07 20:16:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -612,6 +612,9 @@ struct buf	*bp;
 			bp->b_bcount = sz << DEV_BSHIFT;
 		else bp->b_bcount = sz * lp->d_secsize;
 	}
+
+	/* No partition translation. */
+	bp->b_rawblkno = bp->b_blkno;
 
 	/*
 	 * queue the buf and kick the low level code
