@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.142 2004/01/28 10:54:23 yamt Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.143 2004/01/28 20:57:15 he Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.142 2004/01/28 10:54:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.143 2004/01/28 20:57:15 he Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1275,7 +1275,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	if (fs->lfs_ivnode->v_size > LFS_MAX_BYTES) {
 		fs->lfs_flags |= LFS_WARNED;
 		printf("lfs_mountfs: please consider increasing BUFPAGES to at least %lld\n",
-			(long long)fs->lfs_ivnode->v_size * bufpages / LFS_MAX_BYTES);
+			(long long)(fs->lfs_ivnode->v_size * bufpages / LFS_MAX_BYTES));
 	}
 
 	return (0);
@@ -1365,8 +1365,8 @@ lfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 		if (fs->lfs_ivnode->v_size > LFS_MAX_BYTES)
 			printf("lfs_unmount: please consider increasing"
 				" BUFPAGES to at least %lld\n",
-				(long long)fs->lfs_ivnode->v_size *
-				bufpages / LFS_MAX_BYTES);
+				(long long)(fs->lfs_ivnode->v_size *
+				bufpages / LFS_MAX_BYTES));
 	}
 
 	/* Explicitly write the superblock, to update serial and pflags */
