@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_emul.c,v 1.2.2.2 2002/08/01 02:42:34 nathanw Exp $ */
+/*	$NetBSD: mips_emul.c,v 1.2.2.3 2002/08/02 09:26:14 gmcgarry Exp $ */
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
@@ -248,7 +248,7 @@ MachEmulateInst(status, cause, opc, frame)
 	default:
 		frame->f_regs[CAUSE] = cause;
 		frame->f_regs[BADVADDR] = opc;
-		trapsignal(curproc, SIGSEGV, opc);
+		trapsignal(curlwp, SIGSEGV, opc);
 	}
 }
 
@@ -261,7 +261,7 @@ send_sigsegv(u_int32_t vaddr, u_int32_t exccode, struct frame *frame,
 
 	frame->f_regs[CAUSE] = cause;
 	frame->f_regs[BADVADDR] = vaddr;
-	trapsignal(curproc, SIGSEGV, vaddr);
+	trapsignal(curlwp, SIGSEGV, vaddr);
 }
 
 static __inline void
@@ -292,7 +292,7 @@ MachEmulateLWC0(u_int32_t inst, struct frame *frame, u_int32_t cause)
 	if (vaddr > VM_MAX_ADDRESS || vaddr & 0x3) {
 		frame->f_regs[CAUSE] = cause;
 		frame->f_regs[BADVADDR] = vaddr;
-		trapsignal(curproc, SIGBUS, vaddr);
+		trapsignal(curlwp, SIGBUS, vaddr);
 		return;
 	}
 
@@ -327,7 +327,7 @@ MachEmulateSWC0(u_int32_t inst, struct frame *frame, u_int32_t cause)
 	if (vaddr > VM_MAX_ADDRESS || vaddr & 0x3) {
 		frame->f_regs[CAUSE] = cause;
 		frame->f_regs[BADVADDR] = vaddr;
-		trapsignal(curproc, SIGBUS, vaddr);
+		trapsignal(curlwp, SIGBUS, vaddr);
 		return;
 	}
 
@@ -375,7 +375,7 @@ MachEmulateSpecial(u_int32_t inst, struct frame *frame, u_int32_t cause)
 	default:
 		frame->f_regs[CAUSE] = cause;
 		frame->f_regs[BADVADDR] = frame->f_regs[PC];
-		trapsignal(curproc, SIGSEGV, frame->f_regs[PC]);
+		trapsignal(curlwp, SIGSEGV, frame->f_regs[PC]);
 	}
 
 	update_pc(frame, cause);
