@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.16 1999/03/22 19:14:22 kleink Exp $	*/
+/*	$NetBSD: unistd.h,v 1.17 1999/06/24 14:18:12 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -75,6 +75,14 @@
 #define	_POSIX_FSYNC		1
 				/* synchronized I/O is available */
 #define	_POSIX_SYNCHRONIZED_IO	1
+				/* memory mapped files */
+#define	_POSIX_MAPPED_FILES	1
+				/* memory locking of whole address space */
+#define	_POSIX_MEMLOCK		1
+				/* memory locking address ranges */
+#define	_POSIX_MEMLOCK_RANGE	1
+				/* memory access protections */
+#define	_POSIX_MEMORY_PROTECTION 1
 
 
 /* access function */
@@ -142,6 +150,10 @@
 #define	_SC_XOPEN_SHM		30
 #define	_SC_SYNCHRONIZED_IO	31
 #define	_SC_IOV_MAX		32
+#define	_SC_MAPPED_FILES	33
+#define	_SC_MEMLOCK		34
+#define	_SC_MEMLOCK_RANGE	35
+#define	_SC_MEMORY_PROTECTION	36
 
 /* configurable system strings */
 #define	_CS_PATH		 1

@@ -1,4 +1,4 @@
-/*	$NetBSD: getconf.c,v 1.9 1999/03/22 19:18:10 kleink Exp $	*/
+/*	$NetBSD: getconf.c,v 1.10 1999/06/24 14:18:12 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getconf.c,v 1.9 1999/03/22 19:18:10 kleink Exp $");
+__RCSID("$NetBSD: getconf.c,v 1.10 1999/06/24 14:18:12 kleink Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -136,10 +136,13 @@ const struct conf_variable conf_table[] =
   /* POSIX.1b Configurable System Variables */
   { "PAGESIZE",			SYSCONF,	_SC_PAGESIZE		},
   { "_POSIX_FSYNC",		SYSCONF,	_SC_FSYNC		},
+  { "_POSIX_MAPPED_FILES",	SYSCONF,	_SC_MAPPED_FILES	},
+  { "_POSIX_MEMLOCK",		SYSCONF,	_SC_MEMLOCK		},
+  { "_POSIX_MEMLOCK_RANGE",	SYSCONF,	_SC_MEMLOCK_RANGE	},
+  { "_POSIX_MEMORY_PROTECTION",	SYSCONF,	_SC_MEMORY_PROTECTION	},
   { "_POSIX_SYNCHRONIZED_IO",	SYSCONF,	_SC_SYNCHRONIZED_IO	},
 
   { "_POSIX_SYNC_IO",		PATHCONF,	_PC_SYNC_IO		},
-
 
   /* XPG4.2 Configurable System Variables */
   { "IOV_MAX",			SYSCONF,	_SC_IOV_MAX		},

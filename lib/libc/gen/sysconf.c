@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.c,v 1.9 1998/08/03 14:41:21 kleink Exp $	*/
+/*	$NetBSD: sysconf.c,v 1.10 1999/06/24 14:18:10 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)sysconf.c	8.2 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: sysconf.c,v 1.9 1998/08/03 14:41:21 kleink Exp $");
+__RCSID("$NetBSD: sysconf.c,v 1.10 1999/06/24 14:18:10 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -130,6 +130,22 @@ sysconf(name)
 	case _SC_SYNCHRONIZED_IO:
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_SYNCHRONIZED_IO;
+		goto yesno;
+	case _SC_MAPPED_FILES:
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_MAPPED_FILES;
+		goto yesno;
+	case _SC_MEMLOCK:
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_MEMLOCK;
+		goto yesno;
+	case _SC_MEMLOCK_RANGE:
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_MEMLOCK_RANGE;
+		goto yesno;
+	case _SC_MEMORY_PROTECTION:
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_MEMORY_PROTECTION;
 		goto yesno;
 
 /* 1003.2 */
