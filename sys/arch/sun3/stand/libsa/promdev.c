@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.2 1995/06/09 22:23:04 gwr Exp $ */
+/*	$NetBSD: promdev.c,v 1.3 1995/08/12 18:39:00 gwr Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -64,6 +64,13 @@ prom_iopen(void **devdatap)
 
 #ifdef DEBUG_PROM
 	printf("Boot device type: %s\n", ops->b_desc);
+	printf("d_devbytes=%d\n", dip->d_devbytes);
+	printf("d_dmabytes=%d\n", dip->d_dmabytes);
+	printf("d_localbytes=%d\n", dip->d_localbytes);
+	printf("d_stdcount=%d\n", dip->d_stdcount);
+	printf("d_stdaddrs[%d]=%x\n", bp->ctlrNum, dip->d_stdaddrs[bp->ctlrNum]);
+	printf("d_devtype=%d\n", dip->d_devtype);
+	printf("d_maxiobytes=%d\n", dip->d_maxiobytes);
 #endif
 
 	dvma_init();
@@ -93,6 +100,13 @@ prom_iopen(void **devdatap)
 		si->si_dmaaddr = dvma_alloc(dip->d_dmabytes);
 #ifdef	DEBUG_PROM
 		printf("prom_iopen: dmaaddr=0x%x\n", si->si_dmaaddr);
+#endif
+	}
+
+	if (dip->d_localbytes) {
+		si->si_devdata = alloc(dip->d_localbytes);
+#ifdef	DEBUG_PROM
+		printf("prom_iopen: devdata=0x%x\n", si->si_devdata);
 #endif
 	}
 

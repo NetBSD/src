@@ -3,7 +3,6 @@
 #include "stand.h"
 
 extern volatile void abort();
-extern int _estack[];
 
 volatile void
 panic(const char *fmt, ...)
@@ -14,18 +13,5 @@ panic(const char *fmt, ...)
     printf(fmt, ap);
     printf("\n");
     va_end(ap);
-	stackdump(0);
 	abort();
-}
-
-stackdump(dummy)
-	int dummy;
-{
-	int *ip;
-
-	printf("stackdump:\n");
-	for (ip = &dummy; ip < _estack; ip += 4) {
-		printf("%08x: %08x %08x %08x %08x\n",
-			   (int)ip, ip[0], ip[1], ip[2], ip[3]);
-	}
 }
