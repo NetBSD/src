@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.26 2002/09/30 20:37:20 thorpej Exp $	*/
+/*	$NetBSD: eso.c,v 1.27 2002/10/02 16:51:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Klaus J. Klein
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.26 2002/09/30 20:37:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.27 2002/10/02 16:51:14 thorpej Exp $");
 
 #include "mpu.h"
 
@@ -88,7 +88,7 @@ static void eso_defer __P((struct device *));
 static int eso_print __P((void *, const char *));
 
 CFATTACH_DECL(eso, sizeof (struct eso_softc),
-    eso_match, eso_attach, NULL, NULL)
+    eso_match, eso_attach, NULL, NULL);
 
 /* PCI interface */
 static int eso_intr __P((void *));

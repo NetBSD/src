@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.51 2002/09/30 20:37:16 thorpej Exp $	*/
+/*	$NetBSD: eap.c,v 1.52 2002/10/02 16:51:09 thorpej Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.51 2002/09/30 20:37:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.52 2002/10/02 16:51:09 thorpej Exp $");
 
 #include "midi.h"
 
@@ -158,7 +158,7 @@ int	eap_freemem(struct eap_softc *, struct eap_dma *);
 #define EREAD4(sc, r) bus_space_read_4((sc)->iot, (sc)->ioh, (r))
 
 CFATTACH_DECL(eap, sizeof(struct eap_softc),
-    eap_match, eap_attach, NULL, NULL)
+    eap_match, eap_attach, NULL, NULL);
 
 int	eap_open(void *, int);
 void	eap_close(void *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: fms.c,v 1.14 2002/09/30 20:37:22 thorpej Exp $	*/
+/*	$NetBSD: fms.c,v 1.15 2002/10/02 16:51:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.14 2002/09/30 20:37:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.15 2002/10/02 16:51:14 thorpej Exp $");
 
 #include "mpu.h"
 
@@ -107,7 +107,7 @@ int	fms_trigger_input __P((void *, void *, void *, int, void (*)(void *),
 			       void *, struct audio_params *));
 
 CFATTACH_DECL(fms, sizeof (struct fms_softc),
-    fms_match, fms_attach, NULL, NULL)
+    fms_match, fms_attach, NULL, NULL);
 
 struct audio_device fms_device = {
 	"Forte Media 801",

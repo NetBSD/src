@@ -1,4 +1,4 @@
-/*	$NetBSD: cy_pci.c,v 1.15 2002/09/30 20:37:15 thorpej Exp $	*/
+/*	$NetBSD: cy_pci.c,v 1.16 2002/10/02 16:51:08 thorpej Exp $	*/
 
 /*
  * cy_pci.c
@@ -10,7 +10,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy_pci.c,v 1.15 2002/09/30 20:37:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy_pci.c,v 1.16 2002/10/02 16:51:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,7 +38,7 @@ int	cy_pci_match(struct device *, struct cfdata *, void *);
 void	cy_pci_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(cy_pci, sizeof(struct cy_pci_softc),
-    cy_pci_match, cy_pci_attach, NULL, NULL)
+    cy_pci_match, cy_pci_attach, NULL, NULL);
 
 static const struct cy_pci_product {
 	pci_product_id_t cp_product;	/* product ID */

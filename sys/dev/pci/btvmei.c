@@ -1,4 +1,4 @@
-/* $NetBSD: btvmei.c,v 1.10 2002/09/30 20:37:10 thorpej Exp $ */
+/* $NetBSD: btvmei.c,v 1.11 2002/10/02 16:51:04 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.10 2002/09/30 20:37:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.11 2002/10/02 16:51:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ struct b3_617_vmeresc {
 };
 
 CFATTACH_DECL(btvmei, sizeof(struct b3_617_softc),
-    b3_617_match, b3_617_attach, NULL, NULL)
+    b3_617_match, b3_617_attach, NULL, NULL);
 
 static int
 b3_617_match(parent, match, aux)

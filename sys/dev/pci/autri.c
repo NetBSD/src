@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.7 2002/09/30 20:37:09 thorpej Exp $	*/
+/*	$NetBSD: autri.c,v 1.8 2002/10/02 16:51:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -115,7 +115,7 @@ static void autri_disable_loop_interrupt(void *sc);
 #endif
 
 CFATTACH_DECL(autri, sizeof(struct autri_softc),
-    autri_match, autri_attach, NULL, NULL)
+    autri_match, autri_attach, NULL, NULL);
 
 int	autri_open(void *, int);
 void	autri_close(void *);

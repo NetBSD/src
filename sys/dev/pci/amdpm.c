@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm.c,v 1.3 2002/09/30 20:37:07 thorpej Exp $	*/
+/*	$NetBSD: amdpm.c,v 1.4 2002/10/02 16:51:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.3 2002/09/30 20:37:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.4 2002/10/02 16:51:01 thorpej Exp $");
 
 #include "opt_amdpm.h"
 
@@ -77,7 +77,7 @@ void	amdpm_attach(struct device *, struct device *, void *);
 void	amdpm_rnd_callout(void *);
 
 CFATTACH_DECL(amdpm, sizeof(struct amdpm_softc),
-    amdpm_match, amdpm_attach, NULL, NULL)
+    amdpm_match, amdpm_attach, NULL, NULL);
 
 #ifdef AMDPM_RND_COUNTERS
 #define	AMDPM_RNDCNT_INCR(ev)	(ev)->ev_count++
