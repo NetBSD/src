@@ -38,7 +38,7 @@
  * from: Utah $Hdr: vmparam.h 1.16 91/01/18$
  *
  *	@(#)vmparam.h	7.3 (Berkeley) 5/7/91
- *	$Id: vmparam.h,v 1.9 1994/04/10 02:28:41 chopps Exp $
+ *	$Id: vmparam.h,v 1.10 1994/06/04 05:25:04 chopps Exp $
  */
 #ifndef _MACHINE_VMPARAM_H_
 #define _MACHINE_VMPARAM_H_
@@ -229,7 +229,7 @@
 
 /* user/kernel map constants */
 #define VM_MIN_ADDRESS		((vm_offset_t)0)
-#define VM_MAXUSER_ADDRESS	((vm_offset_t)(0-(UPAGES*NBPG)))
+#define VM_MAXUSER_ADDRESS	((vm_offset_t)(USRSTACK))
 #define VM_MAX_ADDRESS		((vm_offset_t)(0-(UPAGES*NBPG)))
 #define VM_MIN_KERNEL_ADDRESS	((vm_offset_t)0)
 #define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)(0-NBPG))
