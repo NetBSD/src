@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.13 2002/10/22 13:30:23 christos Exp $	*/
+/*	$NetBSD: init.c,v 1.14 2002/10/22 21:09:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,10 +33,11 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.13 2002/10/22 13:30:23 christos Exp $");
+__RCSID("$NetBSD: init.c,v 1.14 2002/10/22 21:09:34 christos Exp $");
 #endif
 
 #include <stdlib.h>
+#include <ctype.h>
 
 #include "lint1.h"
 
@@ -508,7 +509,7 @@ mkinit(tnode_t *tn)
 		goto end;
 
 	initstk->i_cnt--;
-	DPRINTF(("mkinit() cnt=%d\n", initstk->i_cnt));
+	DPRINTF(("mkinit() cnt=%d tn=%p\n", initstk->i_cnt, tn));
 	/* Create a temporary node for the left side. */
 	ln = tgetblk(sizeof (tnode_t));
 	ln->tn_op = NAME;
@@ -564,7 +565,13 @@ mkinit(tnode_t *tn)
 	}
 
  end:
-	tfreeblk();
+	/*
+	 * We only free the block, if we are not a compound declaration
+	 * We know that the only symbols that start with a digit are the
+	 * ones we allocate with mktempsym() for compound declarations
+	 */
+	if (!isdigit((unsigned char)initsym->s_name[0]))
+		tfreeblk();
 }
 
 
