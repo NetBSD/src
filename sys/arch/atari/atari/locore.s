@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.39 1997/05/19 21:07:05 leo Exp $	*/
+/*	$NetBSD: locore.s,v 1.40 1997/06/02 12:03:41 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -106,6 +106,37 @@ _addrerr:
 	andw	#0x0fff,d0
 	cmpw	#12,d0			|  is it address error
 	jeq	Lisaerr
+#ifdef M68060
+	cmpl	#CPU_68060,_cputype	| is it 68060?
+	jne	Lbe040
+	movel	a1@(12),d0		| FSLW
+	btst	#2,d0			| branch prediction error?
+	jeq	Lnobpe			
+	movc	cacr,d2
+	orl	#IC60_CABC,d2		| clear all branch cache entries
+	movc	d2,cacr
+	movl	d0,d1
+	andl	#0x7ffd,d1
+	addql	#1,L60bpe
+	jeq	_ASM_LABEL(faultstkadjnotrap)
+Lnobpe:
+	movl	d0,sp@			| code is FSLW now.
+| we need to adjust for misaligned addresses
+	movl	a1@(8),d1		| grab VA
+	btst	#27,d0			| check for mis-aligned access
+	jeq	Lberr3			| no, skip
+	addl	#28,d1			| yes, get into next page
+					| operand case: 3,
+					| instruction case: 4+12+12
+					| XXX instr. case not done yet
+	andl	#PG_FRAME,d1            | and truncate
+Lberr3:
+	movl	d1,sp@(4)
+	andw	#0x1f80,d0 
+	jeq	Lisberr
+	jra	Lismerr
+Lbe040:
+#endif /* M68060 */
 	movl	a1@(20),d1		|  get fault address
 	moveq	#0,d0
 	movw	a1@(12),d0		|  get SSW
@@ -762,13 +793,22 @@ Ltestfor040:
 	movl	#CACHE_OFF,d0		|  68020/030 cache
 	movl	#ATARI_68040,d1
 	andl	d1,d2
-|	movl	d2,_cpu040		|  set 68040 CPU flag
-	jeq	Lstartnot040		|  it's not 68040
+	jeq	Ltestfor060
 	movl	#MMU_68040,_mmutype	|  Use a 68040 MMU
 	movl	#CPU_68040,_cputype	|    and a 68040 CPU
 	.word	0xf4f8			|  cpusha bc - push and inval caches
 	movl	#CACHE40_OFF,d0		|  68040 cache disable
-Lstartnot040:
+	jra	Lstartnot060
+Ltestfor060:
+	movl    #ATARI_68060,d1
+	andl	d1,d2
+	jeq	Lstartnot060
+	movl	#MMU_68040,_mmutype	| Use a 68040 MMU
+	movl	#CPU_68060,_cputype	|   and a 68060 CPU
+	.word	0xf4f8			| cpusha bc - push and inval caches
+	movl	#CACHE40_OFF,d0		| 68040 cache disable
+	orl	#IC60_CABC,d0		|   and clear all 060 branch cache
+Lstartnot060:
 	movc	d0,cacr			| clear and disable on-chip cache(s)
 	movl	#Lvectab,a0		| set address of vector table
 	movc	a0,vbr
@@ -811,6 +851,11 @@ Lstartnot040:
 	/*  is this needed? MLH */
 	.word	0xf4f8			|  cpusha bc - push & invalidate caches
 	movl	#CACHE40_ON,d0
+#ifdef M68060
+	cmpl	#CPU_68060,_cputype
+	jne	Lcacheon
+	movl	#CACHE60_ON,d0
+#endif
 Lcacheon:
 	movc	d0,cacr			|  clear cache(s)
 
@@ -1039,61 +1084,75 @@ Lswchk:
 	jne	Lswchk
 	jra	idle
 Lswfnd:
-	movw	#PSL_HIGHIPL,sr		|  lock out interrupts
-	movl	a0@,d1			|  and check again...
+	movw	#PSL_HIGHIPL,sr		| lock out interrupts
+	movl	a0@,d1			| and check again...
 	bclr	d0,d1
-	jeq	Lsw1			|  proc moved, rescan
-	movl	d1,a0@			|  update whichqs
-	moveq	#1,d1			|  double check for higher priority
-	lsll	d0,d1			|  process (which may have snuck in
-	subql	#1,d1			|  while we were finding this one)
+	jeq	Lsw1			| proc moved, rescan
+	movl	d1,a0@			| update whichqs
+	moveq	#1,d1			| double check for higher priority
+	lsll	d0,d1			| process (which may have snuck in
+	subql	#1,d1			| while we were finding this one)
 	andl	a0@,d1
-	jeq	Lswok			|  no one got in, continue
+	jeq	Lswok			| no one got in, continue
 	movl	a0@,d1
-	bset	d0,d1			|  otherwise put this one back
+	bset	d0,d1			| otherwise put this one back
 	movl	d1,a0@
-	jra	Lsw1			|  and rescan
+	jra	Lsw1			| and rescan
 Lswok:
 	movl	d0,d1
-	lslb	#3,d1			|  convert queue number to index
-	addl	#_qs,d1			|  locate queue (q)
+	lslb	#3,d1			| convert queue number to index
+	addl	#_qs,d1			| locate queue (q)
 	movl	d1,a1
-	cmpl	a1@(P_FORW),a1		|  anyone on queue?
-	jeq		Lbadsw		|  no, panic
-	movl	a1@(P_FORW),a0		|  p = q->p_forw
-	movl	a0@(P_FORW),a1@(P_FORW)	|  q->p_forw = p->p_forw
-	movl	a0@(P_FORW),a1		|  q = p->p_forw
-	movl	a0@(P_BACK),a1@(P_BACK)	|  q->p_back = p->p_back
-	cmpl	a0@(P_FORW),d1		|  anyone left on queue?
-	jeq	Lsw2			|  no, skip
+	cmpl	a1@(P_FORW),a1		| anyone on queue?
+	jeq		Lbadsw		| no, panic
+	movl	a1@(P_FORW),a0		| p = q->p_forw
+	movl	a0@(P_FORW),a1@(P_FORW)	| q->p_forw = p->p_forw
+	movl	a0@(P_FORW),a1		| q = p->p_forw
+	movl	a0@(P_BACK),a1@(P_BACK)	| q->p_back = p->p_back
+	cmpl	a0@(P_FORW),d1		| anyone left on queue?
+	jeq	Lsw2			| no, skip
 	movl	_whichqs,d1
-	bset	d0,d1			|  yes, reset bit
+	bset	d0,d1			| yes, reset bit
 	movl	d1,_whichqs
 Lsw2:
 	movl	a0,_curproc
 	clrl	_want_resched
 #ifdef notyet
 	movl	sp@+,a1
-	cmpl	a0,a1			|  switching to same proc?
-	jeq	Lswdone			|  yes, skip save and restore
+	cmpl	a0,a1			| switching to same proc?
+	jeq	Lswdone			| yes, skip save and restore
 #endif
 
 	/*
 	 * Save state of previous process in its pcb.
 	 */
 	movl	_curpcb,a1
-	moveml	#0xFCFC,a1@(PCB_REGS)	|  save non-scratch registers
-	movl	usp,a2			|  grab USP (a2 has been saved)
-	movl	a2,a1@(PCB_USP)		|  and save it
-	movl	_CMAP2,a1@(PCB_CMAP2)	|  save temporary map PTE
-	tstl	_fputype		|  do we have an FPU?
-	jeq	Lswnofpsave		|  no? don't attempt to save
-	lea	a1@(PCB_FPCTX),a2	|  pointer to FP save area
-	fsave	a2@			|  save FP state
-	tstb	a2@			|  null state frame?
-	jeq	Lswnofpsave		|  yes, all done
-	fmovem	fp0-fp7,a2@(216)	|  save FP general registers
-	fmovem	fpcr/fpsr/fpi,a2@(312)	|  save FP control registers
+	moveml	#0xFCFC,a1@(PCB_REGS)	| save non-scratch registers
+	movl	usp,a2			| grab USP (a2 has been saved)
+	movl	a2,a1@(PCB_USP)		| and save it
+	movl	_CMAP2,a1@(PCB_CMAP2)	| save temporary map PTE
+	tstl	_fputype		| do we have an FPU?
+	jeq	Lswnofpsave		| no? don't attempt to save
+	lea	a1@(PCB_FPCTX),a2	| pointer to FP save area
+	fsave	a2@			| save FP state
+#ifdef M68060
+	cmpl	#CPU_68060,_cputype	| a 060?
+	jeq	Lsavfp60
+#endif
+	tstb	a2@			| null state frame?
+	jeq	Lswnofpsave		| yes, all done
+	fmovem	fp0-fp7,a2@(216)	| save FP general registers
+	fmovem	fpcr/fpsr/fpi,a2@(312)	| save FP control registers
+#ifdef M68060
+	jra	Lswnofpsave
+Lsavfp60:
+	tstb	a2@(2)			| null state frame?
+	jeq	Lswnofpsave		| yes, all done
+	fmovem	fp0-fp7,a2@(216)	| save FP general registers
+	fmovem	fpcr,a2@(312)		| save FP control registers
+	fmovem  fpsr,a2@(316)
+	fmovem  fpi,a2@(320)
+#endif
 Lswnofpsave:
 
 #ifdef DIAGNOSTIC
@@ -1102,68 +1161,94 @@ Lswnofpsave:
 	cmpb	#SRUN,a0@(P_STAT)
 	jne	Lbadsw
 #endif
-	clrl	a0@(P_BACK)		|  clear back link
-	movl	a0@(P_ADDR),a1		|  get p_addr
+	clrl	a0@(P_BACK)		| clear back link
+	movl	a0@(P_ADDR),a1		| get p_addr
 	movl	a1,_curpcb
-	movb	a1@(PCB_FLAGS+1),pcbflag |  copy of pcb_flags low byte
+	movb	a1@(PCB_FLAGS+1),pcbflag | copy of pcb_flags low byte
 
 	/* see if pmap_activate needs to be called; should remove this */
-	movl	a0@(P_VMSPACE),a0	|  vmspace = p->p_vmspace
+	movl	a0@(P_VMSPACE),a0	| vmspace = p->p_vmspace
 #ifdef DIAGNOSTIC
-	tstl	a0			|  map == VM_MAP_NULL? 
-	jeq	Lbadsw			|  panic 
+	tstl	a0			| map == VM_MAP_NULL? 
+	jeq	Lbadsw			| panic 
 #endif
-	movl	a0@(VM_PMAP),a0		|  pmap = vmspace->vm_map.pmap
-	tstl	a0@(PM_STCHG)		|  pmap->st_changed? 
-	jeq	Lswnochg		|  no, skip 
-	pea	a1@			|  push pcb (at p_addr) 
-	pea	a0@			|  push pmap 
-	jbsr	_pmap_activate		|  pmap_activate(pmap, pcb) 
+	movl	a0@(VM_PMAP),a0		| pmap = vmspace->vm_map.pmap
+	tstl	a0@(PM_STCHG)		| pmap->st_changed? 
+	jeq	Lswnochg		| no, skip 
+	pea	a1@			| push pcb (at p_addr) 
+	pea	a0@			| push pmap 
+	jbsr	_pmap_activate		| pmap_activate(pmap, pcb) 
 	addql	#8,sp
-	movl	_curpcb,a1		|  restore p_addr 
+	movl	_curpcb,a1		| restore p_addr 
 Lswnochg:
-	lea	tmpstk,sp		|  now goto a tmp stack for NMI 
+	lea	tmpstk,sp		| now goto a tmp stack for NMI 
 	cmpl	#MMU_68040,_mmutype
 	jeq	Lres2
 	movl	#CACHE_CLR,d0
-	movc	d0,cacr			|  invalidate cache(s) 
-	pflusha				|  flush entire TLB 
+	movc	d0,cacr			| invalidate cache(s) 
+	pflusha				| flush entire TLB 
 	jra	Lres3
 Lres2:
-	.word	0xf518			|  pflusha (68040)
+	.word	0xf518			| pflusha (68040)
 	movl	#CACHE40_ON,d0
-	movc	d0,cacr			|  invalidate cache(s)
+	movc	d0,cacr			| invalidate cache(s)
+#ifdef M68060
+	cmpl	#CPU_68060,_cputype	| a 060?
+	jne	Lres3			| no
+	movc	cacr,d2
+	orl	#IC60_CUBC,d2		| clear user branch cache entries
+	movc	d2,cacr
+#endif
 Lres3:
-	movl	a1@(PCB_USTP),d0	|  get USTP
+	movl	a1@(PCB_USTP),d0	| get USTP
 	moveq	#PGSHIFT,d1
-	lsll	d1,d0			|  convert to addr
+	lsll	d1,d0			| convert to addr
 	cmpl	#MMU_68040,_mmutype
 	jeq	Lres4
-	lea	_protorp,a0		|  CRP prototype
-	movl	d0,a0@(4)		|  stash USTP
-	pmove	a0@,crp			|  load new user root pointer
+	lea	_protorp,a0		| CRP prototype
+	movl	d0,a0@(4)		| stash USTP
+	pmove	a0@,crp			| load new user root pointer
 	jra	Lres5
 Lres4:
-	.word	0x4e7b,0x0806		|  movc d0,URP
+	.word	0x4e7b,0x0806		| movc d0,URP
 Lres5:
-	movl	a1@(PCB_CMAP2),_CMAP2	|  reload tmp map
-	moveml	a1@(PCB_REGS),#0xFCFC	|  and registers
+	movl	a1@(PCB_CMAP2),_CMAP2	| reload tmp map
+	moveml	a1@(PCB_REGS),#0xFCFC	| and registers
 	movl	a1@(PCB_USP),a0
-	movl	a0,usp			|  and USP
-	tstl	_fputype		|  do we have an FPU?
-	jeq	Lnofprest		|  no, don't attempt to restore
-	lea	a1@(PCB_FPCTX),a0	|  pointer to FP save area
-	tstb	a0@			|  null state frame?
-	jeq	Lresfprest		|  yes, easy
-	fmovem	a0@(312),fpcr/fpsr/fpi	|  restore FP control registers
-	fmovem	a0@(216),fp0-fp7	|  restore FP general registers
+	movl	a0,usp			| and USP
+	tstl	_fputype		| do we have an FPU?
+	jeq	Lnofprest		| no, don't attempt to restore
+	lea	a1@(PCB_FPCTX),a0	| pointer to FP save area
+#ifdef M68060
+	cmpl	#CPU_68060,_cputype	| a 060?
+	jeq	Lresfp60rest1
+#endif
+	tstb	a0@			| null state frame?
+	jeq	Lresfprest		| yes, easy
+	fmovem	a0@(312),fpcr/fpsr/fpi	| restore FP control registers
+	fmovem	a0@(216),fp0-fp7	| restore FP general registers
 Lresfprest:
-	frestore a0@			|  restore state
+	frestore a0@			| restore state
 
 Lnofprest:
-	movw	a1@(PCB_PS),sr		|  no, restore PS
-	moveq	#1,d0			|  return 1 (for alternate returns)
+	movw	a1@(PCB_PS),sr		| no, restore PS
+	moveq	#1,d0			| return 1 (for alternate returns)
 	rts
+
+#ifdef M68060
+Lresfp60rest1:
+	tstb	a0@(2)			| null state frame?
+	jeq	Lresfp60rest2		| yes, easy
+	fmovem	a0@(312),fpcr		| restore FP control registers
+	fmovem	a0@(316),fpsr
+	fmovem	a0@(320),fpi
+	fmovem	a0@(216),fp0-fp7	| restore FP general registers
+Lresfp60rest2:
+	frestore a0@			| restore state
+	movw	a1@(PCB_PS),sr		| no, restore PS
+	moveq	#1,d0			| return 1 (for alternate returns)
+	rts
+#endif
 
 /*
  * savectx(pcb)
@@ -1172,21 +1257,37 @@ Lnofprest:
 ENTRY(savectx)
 	movl	sp@(4),a1
 	movw	sr,a1@(PCB_PS)
-	movl	usp,a0			|  grab USP 
-	movl	a0,a1@(PCB_USP)		|  and save it 
-	moveml	#0xFCFC,a1@(PCB_REGS)	|  save non-scratch registers 
-	movl	_CMAP2,a1@(PCB_CMAP2)	|  save temporary map PTE 
-	tstl	_fputype		|  do we have an FPU?
-	jeq	Lsavedone		|  no, don't attempt to save
-	lea	a1@(PCB_FPCTX),a0	|  pointer to FP save area 
-	fsave	a0@			|  save FP state 
-	tstb	a0@			|  null state frame? 
-	jeq	Lsavedone		|  yes, all done 
-	fmovem	fp0-fp7,a0@(216)	|  save FP general registers 
-	fmovem	fpcr/fpsr/fpi,a0@(312)	|  save FP control registers 
+	movl	usp,a0			| grab USP 
+	movl	a0,a1@(PCB_USP)		| and save it 
+	moveml	#0xFCFC,a1@(PCB_REGS)	| save non-scratch registers 
+	movl	_CMAP2,a1@(PCB_CMAP2)	| save temporary map PTE 
+	tstl	_fputype		| do we have an FPU?
+	jeq	Lsavedone		| no, don't attempt to save
+	lea	a1@(PCB_FPCTX),a0	| pointer to FP save area 
+	fsave	a0@			| save FP state 
+#ifdef M68060
+	cmpl	#CPU_68060,_cputype	| a 060?
+	jeq	Lsavctx60
+#endif
+	tstb	a0@			| null state frame? 
+	jeq	Lsavedone		| yes, all done 
+	fmovem	fp0-fp7,a0@(216)	| save FP general registers 
+	fmovem	fpcr/fpsr/fpi,a0@(312)	| save FP control registers 
 Lsavedone:
-	moveq	#0,d0			|  return 0 
+	moveq	#0,d0			| return 0 
 	rts
+
+#ifdef M68060
+Lsavctx60:
+	tstb	a0@(2)
+	jeq	Lsavedone
+	fmovem	fp0-fp7,a0@(216)	| save FP general registers
+	fmovem	fpcr,a0@(312)		| save FP control registers
+	fmovem	fpsr,a0@(316)
+	fmovem	fpi,a0@(320)
+	moveq	#0,d0			| return 0
+	rts
+#endif
 
 #if defined(M68040)
 ENTRY(suline)
@@ -1315,6 +1416,14 @@ Lmc68851a:
 	rts
 Ltbia040:
 	.word	0xf518			|  pflusha
+#ifdef M68060
+	cmpl	#CPU_68060,_cputype	| a 060?
+	jne	Ltbiano60
+	movc	cacr,d0
+	orl	#IC60_CABC,d0		| and clear all branch cache entries
+	movc	d0,cacr
+Ltbiano60:
+#endif
 	rts
 
 /*
@@ -1344,6 +1453,15 @@ Ltbis040:
 	moveq	#FC_USERD,d0		|  select user
 	movc	d0,dfc
 	.word	0xf508			|  pflush a0@
+#if defined(M68060)
+	cmpl	#CPU_68060,_cputype	|  a 060?
+	jne	Ltbisnot060		|   no...
+	movc	cacr,d0
+	orl	#IC60_CABC,d0		| and clear all branch cache entries
+	movc	d0,cacr
+Ltbisnot060:
+#endif /* defined(M68060) */
+
 	rts
 
 /*
@@ -1548,17 +1666,27 @@ ENTRY(probeva)
  * Load a new user segment table pointer.
  */
 ENTRY(loadustp)
-	movl	sp@(4),d0		|  new USTP
+	movl	sp@(4),d0		| new USTP
 	moveq	#PGSHIFT,d1
-	lsll	d1,d0			|  convert to addr
+	lsll	d1,d0			| convert to addr
+#if defined(M68060)
+	cmpl	#CPU_68060,_cputype	| a 060?
+	jeq	Lldustp060
+#endif
 	cmpl	#MMU_68040,_mmutype
 	jeq	Lldustp040
-	lea	_protorp,a0		|  CRP prototype
-	movl	d0,a0@(4)		|  stash USTP
-	pmove	a0@,crp			|  load root pointer
+	lea	_protorp,a0		| CRP prototype
+	movl	d0,a0@(4)		| stash USTP
+	pmove	a0@,crp			| load root pointer
 	movl	#DC_CLEAR,d0
-	movc	d0,cacr			|  invalidate on-chip d-cache
-	rts				|    since pmove flushes TLB
+	movc	d0,cacr			| invalidate on-chip d-cache
+	rts				|   since pmove flushes TLB
+#if defined(M68060)
+Lldustp060:
+	movc	cacr,d1
+	orl	#IC60_CUBC,d1		| clear user branch cache entries
+	movc	d1,cacr
+#endif
 Lldustp040:
 	.word	0x4e7b,0x0806		|  movec d0,URP
 	rts
@@ -1569,6 +1697,10 @@ Lldustp040:
  * and ATC entries in PMMU.
  */
 ENTRY(flushustp)
+#if defined(M68060)
+	cmpl	#CPU_68060,_cputype	| a 060?
+	jeq	Lflustp060
+#endif
 	cmpl	#MMU_68040,_mmutype
 	jeq	Lnot68851
 	tstl	_mmutype		|  68851 PMMU?
@@ -1580,6 +1712,13 @@ ENTRY(flushustp)
 	pflushr	_protorp		|  flush RPT/TLB entries
 Lnot68851:
 	rts
+#if defined(M68060)
+Lflustp060:
+	movc	cacr,d1
+	orl	IC60_CUBC,d1		| clear user branch cache entries
+	movc	d1,cacr
+	rts
+#endif
 
 ENTRY(ploadw)
 	movl	sp@(4),a0		|  address to load
@@ -1615,24 +1754,57 @@ Lspldone:
  * recognize FP mnemonics.
  */
 ENTRY(m68881_save)
-	movl	sp@(4),a0		|  save area pointer
-	fsave	a0@			|  save state
-	tstb	a0@			|  null state frame?
-	jeq	Lm68881sdone		|  yes, all done
-	fmovem	fp0-fp7,a0@(216)	|  save FP general registers
-	fmovem	fpcr/fpsr/fpi,a0@(312)	|  save FP control registers
+	movl	sp@(4),a0		| save area pointer
+	fsave	a0@			| save state
+#if defined(M68060)
+	cmpl	#CPU_68060,_cputype	| a 060?
+	jeq	Lm68060fpsave
+#endif
+	tstb	a0@			| null state frame?
+	jeq	Lm68881sdone		| yes, all done
+	fmovem	fp0-fp7,a0@(216)	| save FP general registers
+	fmovem	fpcr/fpsr/fpi,a0@(312)	| save FP control registers
 Lm68881sdone:
 	rts
 
-ENTRY(m68881_restore)
-	movl	sp@(4),a0		|  save area pointer
-	tstb	a0@			|  null state frame?
-	jeq	Lm68881rdone		|  yes, easy
-	fmovem	a0@(312),fpcr/fpsr/fpi	|  restore FP control registers
-	fmovem	a0@(216),fp0-fp7	|  restore FP general registers
-Lm68881rdone:
-	frestore a0@			|  restore state
+#if defined(M68060)
+Lm68060fpsave:
+	tstb	a0@(2)			| null state frame?
+	jeq	Lm68060sdone		| yes, all done
+	fmovem	fp0-fp7,a0@(216)	| save FP general registers
+	fmovem	fpcr,a0@(312)		| save FP control registers
+	fmovem	fpsr,a0@(316)
+	fmovem	fpi,a0@(320)
+Lm68060sdone:
 	rts
+#endif
+
+ENTRY(m68881_restore)
+	movl	sp@(4),a0		| save area pointer
+#if defined(M68060)
+	cmpl	#CPU_68060,_cputype	| a 060?
+	jeq	Lm68060fprestore
+#endif
+	tstb	a0@			| null state frame?
+	jeq	Lm68881rdone		| yes, easy
+	fmovem	a0@(312),fpcr/fpsr/fpi	| restore FP control registers
+	fmovem	a0@(216),fp0-fp7	| restore FP general registers
+Lm68881rdone:
+	frestore a0@			| restore state
+	rts
+
+#if defined(M68060)
+Lm68060fprestore:
+	tstb	a0@(2)			| null state frame?
+	jeq	Lm68060fprdone		| yes, easy
+	fmovem	a0@(312),fpcr		| restore FP control registers
+	fmovem	a0@(316),fpsr
+	fmovem	a0@(320),fpi
+	fmovem	a0@(216),fp0-fp7	| restore FP general registers
+Lm68060fprdone:
+	frestore a0@			| restore state
+	rts
+#endif
 
 /*
  * Handle the nitty-gritty of rebooting the machine.
@@ -1715,6 +1887,13 @@ _cold:
 	.globl	_proc0paddr
 _proc0paddr:
 	.long	0			|  KVA of proc0 u-area
+#ifdef M68060 /* XXX */
+L60iem:		.long	0
+L60fpiem:	.long	0
+L60fpdem:	.long	0
+L60fpeaem:	.long	0
+L60bpe:		.long	0
+#endif
 #ifdef DEBUG
 	.globl	fulltflush, fullcflush
 fulltflush:
