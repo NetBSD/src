@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.16 2004/04/25 06:45:02 christos Exp $
+# $NetBSD: Makefile,v 1.17 2004/06/06 07:03:53 christos Exp $
 #
 # Stubs to kill off some things from libc:
 # This save space on a boot system.
@@ -11,7 +11,7 @@ CPPFLAGS+=	-DSMALL
 LIB=		hack
 SRCS=		getcap.c getgrent.c getnet.c getnetgr.c getpwent.c \
 		localeconv.c perror.c setlocale.c \
-		strerror.c strsignal.c utmp.c yplib.c
+		strerror.c strsignal.c syslog.c utmp.c yplib.c
 
 WARNS=		1
 NOLINKLIB=	# defined
