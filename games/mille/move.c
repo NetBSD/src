@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.8 1999/03/29 05:12:39 mrg Exp $	*/
+/*	$NetBSD: move.c,v 1.9 1999/09/08 20:43:48 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: move.c,v 1.8 1999/03/29 05:12:39 mrg Exp $");
+__RCSID("$NetBSD: move.c,v 1.9 1999/09/08 20:43:48 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,10 +55,6 @@ __RCSID("$NetBSD: move.c,v 1.8 1999/03/29 05:12:39 mrg Exp $");
 
 #undef	CTRL
 #define	CTRL(c)		(c - 'A' + 1)
-
-char	*Movenames[] = {
-		"M_DISCARD", "M_DRAW", "M_PLAY", "M_ORDER"
-	};
 
 void
 domove()
