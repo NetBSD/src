@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.1 2001/02/23 03:48:13 ichiro Exp $	*/
+/*	$NetBSD: syscall.c,v 1.2 2001/02/28 18:15:44 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@ syscall(frame, code)
 
 	uvmexp.syscalls++;
 	p = curproc;
-	p->p_md.md_regs = frame;
+	p->p_addr->u_pcb.pcb_tf = frame;
 
 	/*
 	 * Support for architecture dependant SWIs
@@ -253,7 +253,7 @@ child_return(arg)
 	void *arg;
 {
 	struct proc *p = arg;
-	struct trapframe *frame = p->p_md.md_regs;
+	struct trapframe *frame = p->p_addr->u_pcb.pcb_tf;
 
 	frame->tf_r0 = 0;
 	frame->tf_spsr &= ~PSR_C_bit;	/* carry bit */	

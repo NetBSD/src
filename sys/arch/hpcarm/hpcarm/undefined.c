@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.1 2001/02/23 03:48:13 ichiro Exp $	*/
+/*	$NetBSD: undefined.c,v 1.2 2001/02/28 18:15:45 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -170,7 +170,7 @@ undefinedinstruction(frame)
 		/* Modify the fault_code to reflect the USR/SVC state at time of fault */
 
 		fault_code = FAULT_USER;
-		p->p_md.md_regs = frame;
+		p->p_addr->u_pcb.pcb_tf = frame;
 	} else
 		fault_code = 0;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.49 2001/01/12 13:43:13 bjh21 Exp $	*/
+/*	$NetBSD: fault.c,v 1.50 2001/02/28 18:15:43 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -241,7 +241,7 @@ copyfault:
 		 * Note that the fault was from USR mode.
 		 */
 		user = 1;
-		p->p_md.md_regs = frame;
+		p->p_addr->u_pcb.pcb_tf = frame;
 	} else
 		user = 0;
 
@@ -538,7 +538,7 @@ prefetch_abort_handler(frame)
 	/* Was the prefectch abort from USR32 mode ? */
 
 	if ((frame->tf_spsr & PSR_MODE) == PSR_USR32_MODE) {
-		p->p_md.md_regs = frame;
+		p->p_addr->u_pcb.pcb_tf = frame;
 	} else {
 		/*
 		 * All the kernel code pages are loaded at boot time
