@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.19 1995/08/25 07:30:42 phil Exp $ */
+/*	$NetBSD: scn.c,v 1.20 1995/08/29 22:44:45 phil Exp $ */
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -313,7 +313,7 @@ scnattach(parent, self, aux)
   if (rs->a_or_b == 0) {
     /* Arg 0 is special, so we must pass "unit + 1" */
     intr_establish(scnints[unit >> 1], (void (*)(void *))scnintr,
-    			(void *)(unit + 1), "scn", IPL_TTY, FALLING_EDGE);
+	(void *)(unit + 1), sc->scn_dev.dv_xname, IPL_TTY, FALLING_EDGE);
   }
 
   /* Precalculate port numbers for speed. Magic numbers in the code (once). */
