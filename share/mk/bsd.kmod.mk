@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.70 2003/10/11 07:15:59 jdolecek Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.71 2003/11/04 14:52:22 scw Exp $
 
 .include <bsd.init.mk>
 
@@ -38,7 +38,8 @@ CLEANFILES+=	x86
 .elif ${MACHINE} == "amd64"
 CLEANFILES+=	x86
 CFLAGS+=	-mcmodel=kernel
-.elif ${MACHINE_ARCH} == "powerpc"
+.elif ${MACHINE_CPU} == "powerpc" || \
+      ${MACHINE_CPU} == "arm"
 CLEANFILES+=	${KMOD}_tramp.o ${KMOD}_tramp.S tmp.S ${KMOD}_tmp.o
 .endif
 
@@ -51,24 +52,25 @@ realall:	${PROG}
 
 ${OBJS} ${LOBJS}: ${DPSRCS}
 
-.if ${MACHINE_ARCH} == "powerpc"
+.if ${MACHINE_CPU} == "powerpc" || \
+    ${MACHINE_CPU} == "arm"
 ${KMOD}_tmp.o: ${OBJS} ${DPADD}
 	${LD} -r ${LDFLAGS} -o tmp.o ${OBJS}
 	mv tmp.o ${.TARGET}
 
-${KMOD}_tramp.S: ${KMOD}_tmp.o $S/lkm/arch/${MACHINE_ARCH}/lkmtramp.awk
+${KMOD}_tramp.S: ${KMOD}_tmp.o $S/lkm/arch/${MACHINE_CPU}/lkmtramp.awk
 	${OBJDUMP} --reloc ${KMOD}_tmp.o | \
-		 awk -f $S/lkm/arch/${MACHINE_ARCH}/lkmtramp.awk > tmp.S
+		 awk -f $S/lkm/arch/${MACHINE_CPU}/lkmtramp.awk > tmp.S
 	mv tmp.S ${.TARGET}
 
 ${PROG}: ${KMOD}_tmp.o ${KMOD}_tramp.o
 	${LD} -r ${LDFLAGS} \
 		`${OBJDUMP} --reloc ${KMOD}_tmp.o | \
-			 awk -f $S/lkm/arch/${MACHINE_ARCH}/lkmwrap.awk` \
+			 awk -f $S/lkm/arch/${MACHINE_CPU}/lkmwrap.awk` \
 		 -o tmp.o ${KMOD}_tmp.o ${KMOD}_tramp.o
-.if exists($S/lkm/arch/${MACHINE_ARCH}/lkmhide.awk)
+.if exists($S/lkm/arch/${MACHINE_CPU}/lkmhide.awk)
 	${OBJCOPY} \
-		`${NM} tmp.o | awk -f $S/lkm/arch/${MACHINE_ARCH}/lkmhide.awk` \
+		`${NM} tmp.o | awk -f $S/lkm/arch/${MACHINE_CPU}/lkmhide.awk` \
 		tmp.o tmp1.o
 	mv tmp1.o tmp.o
 .endif
