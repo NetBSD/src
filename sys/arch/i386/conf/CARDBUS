@@ -1,4 +1,4 @@
-#	$NetBSD: CARDBUS,v 1.7 1999/12/07 19:37:40 thorpej Exp $
+#	$NetBSD: CARDBUS,v 1.8 1999/12/12 11:53:41 soren Exp $
 #
 #	CARDBUS -- GENERIC + CardBus support
 #
@@ -261,7 +261,7 @@ sysbeep0	at pcppi?
 # Serial Devices
 
 # PCI serial interfaces
-com*	at puc? port ?			# 16x450s on "universal" comm boards
+com*	at puc? port ?			# 16x50s on "universal" comm boards
 cy*	at pci? dev ? function ?	# Cyclades Cyclom-Y serial boards
 
 # ISA Plug-and-Play serial interfaces
