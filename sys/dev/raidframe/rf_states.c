@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.c,v 1.27 2004/02/29 21:38:41 oster Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.28 2004/02/29 22:11:54 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.27 2004/02/29 21:38:41 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.28 2004/02/29 22:11:54 oster Exp $");
 
 #include <sys/errno.h>
 
@@ -165,12 +165,10 @@ rf_ContinueDagAccess(RF_DagList_t *dagList)
 {
 #if RF_ACC_TRACE > 0
 	RF_AccTraceEntry_t *tracerec = &(dagList->desc->tracerec);
+	RF_Etimer_t timer;
 #endif
 	RF_RaidAccessDesc_t *desc;
 	RF_DagHeader_t *dag_h;
-#if RF_ACC_TRACE > 0
-	RF_Etimer_t timer;
-#endif
 	int     i;
 
 	desc = dagList->desc;
@@ -359,13 +357,11 @@ rf_State_Lock(RF_RaidAccessDesc_t *desc)
 {
 #if RF_ACC_TRACE > 0
 	RF_AccTraceEntry_t *tracerec = &desc->tracerec;
+	RF_Etimer_t timer;
 #endif
 	RF_Raid_t *raidPtr = desc->raidPtr;
 	RF_AccessStripeMapHeader_t *asmh = desc->asmap;
 	RF_AccessStripeMap_t *asm_p;
-#if RF_ACC_TRACE > 0
-	RF_Etimer_t timer;
-#endif
 	int     suspended = RF_FALSE;
 
 #if RF_ACC_TRACE > 0
@@ -647,14 +643,12 @@ rf_State_Cleanup(RF_RaidAccessDesc_t *desc)
 {
 #if RF_ACC_TRACE > 0
 	RF_AccTraceEntry_t *tracerec = &desc->tracerec;
+	RF_Etimer_t timer;
 #endif
 	RF_AccessStripeMapHeader_t *asmh = desc->asmap;
 	RF_Raid_t *raidPtr = desc->raidPtr;
 	RF_AccessStripeMap_t *asm_p;
 	RF_DagList_t *dagList;
-#if RF_ACC_TRACE > 0
-	RF_Etimer_t timer;
-#endif
 	int i;
 
 	desc->state++;
