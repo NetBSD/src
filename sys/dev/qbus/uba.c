@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.67 2003/08/07 16:31:17 agc Exp $	   */
+/*	$NetBSD: uba.c,v 1.68 2003/08/28 14:59:06 ragge Exp $	   */
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uba.c,v 1.67 2003/08/07 16:31:17 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uba.c,v 1.68 2003/08/28 14:59:06 ragge Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -265,6 +265,12 @@ uba_attach(struct uba_softc *sc, paddr_t iopagephys)
 	if (bus_space_map(sc->uh_iot, iopagephys, UBAIOSIZE, 0, &sc->uh_ioh))
 		return;
 
+	/*
+	 * Keep track of which addressed devices are found.
+	 */
+	sc->uh_used = malloc(UBAIOSIZE, M_TEMP, M_WAITOK);
+	memset(sc->uh_used, 0, UBAIOSIZE);
+
 	if (sc->uh_beforescan)
 		(*sc->uh_beforescan)(sc);
 	/*
@@ -274,6 +280,8 @@ uba_attach(struct uba_softc *sc, paddr_t iopagephys)
 
 	if (sc->uh_afterscan)
 		(*sc->uh_afterscan)(sc);
+
+	free(sc->uh_used, M_TEMP);
 }
 
 int
@@ -282,6 +290,9 @@ ubasearch(struct device *parent, struct cfdata *cf, void *aux)
 	struct	uba_softc *sc = (struct uba_softc *)parent;
 	struct	uba_attach_args ua;
 	int	i, vec, br;
+
+	if (sc->uh_used[ubdevreg(cf->cf_loc[0])])
+		return 0; /* something are already at this address */
 
 	ua.ua_ioh = ubdevreg(cf->cf_loc[0]) + sc->uh_ioh;
 	ua.ua_iot = sc->uh_iot;
@@ -310,6 +321,8 @@ ubasearch(struct device *parent, struct cfdata *cf, void *aux)
 	ua.ua_cvec = vec;
 	ua.ua_iaddr = cf->cf_loc[0];
 	ua.ua_evcnt = NULL;
+
+	sc->uh_used[ubdevreg(cf->cf_loc[0])] = 1;
 
 	config_attach(parent, cf, &ua, ubaprint);
 	return 0;
