@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.31.6.3 2002/03/12 00:14:25 thorpej Exp $	*/
+/*	$NetBSD: uvm.h,v 1.31.6.4 2002/03/12 00:35:30 thorpej Exp $	*/
 
 /*
  *
@@ -112,7 +112,7 @@ struct uvm {
 
 	/* static kernel map entry pool */
 	struct vm_map_entry *kentry_free;	/* free page pool */
-	struct simplelock kentry_lock;
+	kmutex_t kentry_mutex;
 
 	/* aio_done is locked by uvm.pagedaemon_lock and splbio! */
 	TAILQ_HEAD(, buf) aio_done;		/* done async i/o reqs */
