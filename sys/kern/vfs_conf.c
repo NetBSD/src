@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vfs_conf.c	7.3 (Berkeley) 6/28/90
- *	$Id: vfs_conf.c,v 1.14 1993/12/22 13:43:18 cgd Exp $
+ *	$Id: vfs_conf.c,v 1.15 1994/03/09 21:23:48 ws Exp $
  */
 
 #include <sys/param.h>
@@ -47,7 +47,9 @@ struct vnode *rootdir;
  * Set up the filesystem operations for vnodes.
  * The types are defined in mount.h.
  */
+#ifdef FFS
 extern	struct vfsops ufs_vfsops;
+#endif
 
 #ifdef NFSCLIENT
 extern	struct vfsops nfs_vfsops;
@@ -91,7 +93,11 @@ extern struct vfsops portal_vfsops;
 
 struct vfsops *vfssw[] = {
 	(struct vfsops *)0,	/* 0 = MOUNT_NONE */
+#ifdef FFS
 	&ufs_vfsops,		/* 1 = MOUNT_UFS */
+#else
+	(struct vfsops *)0,
+#endif
 #ifdef NFSCLIENT
 	&nfs_vfsops,		/* 2 = MOUNT_NFS */
 #else
