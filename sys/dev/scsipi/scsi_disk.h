@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_disk.h,v 1.23 2003/02/04 18:09:40 wrstuden Exp $	*/
+/*	$NetBSD: scsi_disk.h,v 1.24 2003/09/05 09:00:08 mycroft Exp $	*/
 
 /*
  * SCSI-specific interface description
@@ -262,8 +262,7 @@ union scsi_disk_pages {
 		u_int8_t head_unload;	/* head unload delay */
 		u_int8_t pin_34_2;	/* pin 34 (6) pin 2 (7/11) definition */
 		u_int8_t pin_4_1;	/* pin 4 (8/9) pin 1 (13) definition */
-		u_int8_t reserved1;
-		u_int8_t reserved2;
+		u_int8_t rpm[2];	/* rotational rate */
 		u_int8_t reserved3;
 		u_int8_t reserved4;
 	} flex_geometry;
