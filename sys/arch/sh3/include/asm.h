@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.7 2001/06/10 19:06:26 msaitoh Exp $	*/
+/*	$NetBSD: asm.h,v 1.8 2001/12/16 18:11:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -48,11 +48,13 @@
 #define PIC_GOT(x)	x
 #define PIC_GOTOFF(x)	x
 
-#ifdef __ELF__
-#define __LEADING_UNDERSCORE
-#endif
+/*
+ * The old NetBSD/sh3 ELF toolchain used underscores.  The new
+ * NetBSD/sh3 ELF toolchain does not.  The C pre-processor
+ * defines __NO_LEADING_UNDERSCORES__ for the new ELF toolchain.
+ */
 
-#if (defined(__ELF__) && !defined(__LEADING_UNDERSCORE))
+#if (defined(__ELF__) && defined(__NO_LEADING_UNDERSCORES__))
 # define _C_LABEL(x)	x
 #else
 #ifdef __STDC__
