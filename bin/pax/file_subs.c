@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.39 2004/02/13 00:11:30 matt Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.40 2004/02/13 08:27:12 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.39 2004/02/13 00:11:30 matt Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.40 2004/02/13 08:27:12 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,11 +96,6 @@ file_creat(ARCHD *arcn)
 		syswarn(1, errno, "Cannot malloc %d bytes", arcn->nlen + 8);
 		return(-1);
 	}
-	(void)snprintf(arcn->tmp_name, arcn->nlen + 8, "%s.XXXXXX", arcn->name);
-
-	fd = mkstemp(arcn->tmp_name);
-	if (fd >= 0)
-		return(fd);
 
 	for (;;) {
 		/*
@@ -109,11 +104,13 @@ file_creat(ARCHD *arcn)
 		 * in the path until chk_path() finds that it cannot fix
 		 * anything further.  if that happens we just give up.
 		 */
+		(void)snprintf(arcn->tmp_name, arcn->nlen + 8, "%s.XXXXXX",
+		    arcn->name);
 		fd = mkstemp(arcn->tmp_name);
 		if (fd >= 0)
 			break;
 		oerrno = errno;
-		if (nodirs || chk_path(arcn->tmp_name,arcn->sb.st_uid,arcn->sb.st_gid) < 0) {
+		if (nodirs || chk_path(arcn->name,arcn->sb.st_uid,arcn->sb.st_gid) < 0) {
 			(void)fflush(listf);
 			syswarn(1, oerrno, "Cannot create %s", arcn->tmp_name);
 			free(arcn->tmp_name);
