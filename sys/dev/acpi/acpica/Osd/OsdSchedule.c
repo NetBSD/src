@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdSchedule.c,v 1.8 2003/06/29 22:30:05 fvdl Exp $	*/
+/*	$NetBSD: OsdSchedule.c,v 1.9 2003/08/03 08:19:58 kochi Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.8 2003/06/29 22:30:05 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.9 2003/08/03 08:19:58 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -100,10 +100,12 @@ UINT32
 AcpiOsGetThreadId(void)
 {
 
-	KASSERT(curlwp != NULL);
+	/* XXX ACPI CA can call this function in interrupt context */
+	if (curlwp == NULL)
+		return 1;
 
 	/* XXX Bleh, we're not allowed to return 0 (how stupid!) */
-	return (curproc->p_pid + 1);
+	return (curproc->p_pid + 2);
 }
 
 /*
