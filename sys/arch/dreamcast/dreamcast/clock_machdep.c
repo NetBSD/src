@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_machdep.c,v 1.3 2003/08/07 23:14:13 marcus Exp $	*/
+/*	$NetBSD: clock_machdep.c,v 1.4 2005/02/19 15:42:33 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock_machdep.c,v 1.3 2003/08/07 23:14:13 marcus Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock_machdep.c,v 1.4 2005/02/19 15:42:33 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,8 +56,8 @@ STATIC void dreamcast_rtc_init(void *);
 STATIC void dreamcast_rtc_get(void *, time_t, struct clock_ymdhms *);
 STATIC void dreamcast_rtc_set(void *, struct clock_ymdhms *);
 
-STATIC u_int32_t dreamcast_read_rtc(void);
-STATIC void dreamcast_write_rtc(u_int32_t);
+STATIC uint32_t dreamcast_read_rtc(void);
+STATIC void dreamcast_write_rtc(uint32_t);
 
 STATIC struct rtc_ops dreamcast_rtc_ops = {
 	.init	= dreamcast_rtc_init,
@@ -69,7 +69,7 @@ static bus_space_tag_t rtc_tag;
 static bus_space_handle_t rtc_handle;
 
 void
-machine_clock_init()
+machine_clock_init(void)
 {
 
 	sh_clock_init(SH_CLOCK_NORTC, &dreamcast_rtc_ops); 	
@@ -108,10 +108,10 @@ dreamcast_rtc_set(void *cookie, struct clock_ymdhms *dt)
 	dreamcast_write_rtc(clock_ymdhms_to_secs(dt));
 }
 
-u_int32_t
-dreamcast_read_rtc()
+uint32_t
+dreamcast_read_rtc(void)
 {
-	u_int32_t new, old;
+	uint32_t new, old;
 	int i;
 	
 	for (old = 0;;) {
@@ -130,13 +130,13 @@ dreamcast_read_rtc()
 	}
 
 	/* offset 20 years */
-	return (new - 631152000);
+	return new - 631152000;
 }
 
 void
-dreamcast_write_rtc(u_int32_t secs)
+dreamcast_write_rtc(uint32_t secs)
 {
-	u_int32_t new;
+	uint32_t new;
 	int i, retry;
 
 	/* offset 20 years */
