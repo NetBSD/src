@@ -1,4 +1,4 @@
-/*	$NetBSD: pboot.c,v 1.3 1994/10/26 07:27:48 cgd Exp $	*/
+/*	$NetBSD: pboot.c,v 1.4 1995/02/21 06:39:02 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: pboot.c,v 1.3 1994/10/26 07:27:48 cgd Exp $";
+static char rcsid[] = "$NetBSD: pboot.c,v 1.4 1995/02/21 06:39:02 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -71,7 +71,7 @@ main()
 	int io;
 
 	printf("\n>> NetBSD BOOT HP9000/%s CPU [%s]\n",
-	       getmachineid(), "$Revision: 1.3 $");
+	       getmachineid(), "$Revision: 1.4 $");
 
 	bdev   = B_TYPE(bootdev);
 	badapt = B_ADAPTOR(bootdev);
@@ -154,7 +154,7 @@ copyunix(howto, devtype, io)
 	ssym = addr;
 	bcopy(&x.a_syms, addr, sizeof(x.a_syms));
 	addr += sizeof(x.a_syms);
-	printf(" [%d+", x.a_syms);
+	printf("+[%d", x.a_syms);
 	if (read(io, addr, x.a_syms) != x.a_syms)
 		goto shread;
 	addr += x.a_syms;
@@ -173,7 +173,7 @@ copyunix(howto, devtype, io)
 
 	/* and that many bytes of (debug symbols?) */
 
-	printf("%d] ", i);
+	printf("+%d] ", i);
 
 #define	round_to_size(x) \
 	(((int)(x) + sizeof(int) - 1) & ~(sizeof(int) - 1))
