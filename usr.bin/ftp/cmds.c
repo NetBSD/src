@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.80 1999/11/26 21:41:55 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.81 1999/12/05 22:54:35 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.80 1999/11/26 21:41:55 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.81 1999/12/05 22:54:35 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -133,6 +133,7 @@ __RCSID("$NetBSD: cmds.c,v 1.80 1999/11/26 21:41:55 lukem Exp $");
 #include <unistd.h>
 
 #include "ftp_var.h"
+#include "version.h"
 
 struct	types {
 	char	*t_name;
