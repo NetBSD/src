@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.1 2002/04/11 16:33:59 skrll Exp $
+# $NetBSD: dot.profile,v 1.2 2003/03/23 13:47:00 chris Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -39,6 +39,10 @@ TERM=pc3
 export TERM
 HOME=/
 export HOME
+BLOCKSIZE=1k
+export BLOCKSIZE
+EDITOR=ed
+export EDITOR
 
 umask 022
 
@@ -50,7 +54,7 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 
 	# set up some sane defaults
 	echo 'erase ^?, werase ^W, kill ^U, intr ^C'
-	stty newcrt werase ^W intr ^C kill ^U erase ^? 9600
+	stty newcrt werase ^W intr ^C kill ^U erase ^? 38400
 	echo ''
 
 	# mount the ramdisk read write
@@ -59,6 +63,18 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	# mount the kern_fs so that we can examine the dmesg state
 	mount -t kernfs /kern /kern
 
+	# pull in the functions that people will use from the shell prompt.
+	# . /.commonutils
+	# . /.instutils
+	dmesg() cat /kern/msgbuf
+	grep() sed -n "/$1/p"
+
 	# run the installation or upgrade script.
-	sysinst
+	if [ -x /sysinst ]; then
+		# run the installation or upgrade script.
+		sysinst
+	else
+		echo "This image contains utilities which may be needed"
+		echo "to get you out of a pinch."
+	fi
 fi
