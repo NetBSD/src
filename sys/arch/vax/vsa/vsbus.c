@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.5 1997/03/15 16:07:17 ragge Exp $ */
+/*	$NetBSD: vsbus.c,v 1.6 1997/03/22 23:05:31 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -89,7 +89,7 @@ void	vsbus_intr_dispatch __P((int i));
 
 struct confargs *vsbus_devs = NULL;
 
-#ifdef VAX410	/* also: KA420 */
+#ifdef VAX410
 struct confargs ka410_devs[] = {
 	/* name		intslot intpri intvec	intbit	ioaddr	*/
 	{ "dc",		7,	7,	0x2C0,	(1<<7), KA410_SER_BASE, 
@@ -111,6 +111,22 @@ struct confargs ka410_devs[] = {
 	{ "am7990",	5,	5,	0x250,	(1<<5), KA410_LAN_BASE, },
 	{ "NETOPT",	4,	4,	0x254,	(1<<4), KA410_LAN_BASE, },
 #endif
+	{ "" },
+};
+
+/*
+ * It would be better if we could use the (provided) system config
+ * information for each CPU instead of this.
+ */
+struct confargs ka420_devs[] = {
+	{ "le",		5,	5,	0x250,	(1<<5),	KA410_LAN_BASE,
+		KA410_NWA_BASE,	0x00,					},
+	{ "ncr",	1,	1,	0x3F8,	(1<<1),	KA410_SCS_BASE,
+			KA410_SCS_DADR,	KA410_SCS_DCNT,	KA410_SCS_DDIR,
+			KA410_DMA_BASE,	KA410_DMA_SIZE,	0x00,	0x07,	},
+	{ "ncr",	0,	0,	0x3FC,	(1<<0),	0x200C0180,
+			0x200C01A0,	0x200C01C0,	0x200C01C4,
+			KA410_DMA_BASE,	KA410_DMA_SIZE,	0x00,	0x07,	},
 	{ "" },
 };
 #endif
@@ -233,8 +249,11 @@ vsbus_attach(parent, self, aux)
 	trace (("vsbus_attach()\n"));
 
 	switch (vax_boardtype) {
-	case VAX_BTYP_410:
 	case VAX_BTYP_420:
+		vsbus_devs = ka420_devs;
+		break;
+
+	case VAX_BTYP_410:
 		vsbus_devs = ka410_devs;
 		break;
 
