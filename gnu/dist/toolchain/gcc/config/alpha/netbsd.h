@@ -134,6 +134,18 @@ do {								\
   alpha_output_lineno (STREAM, LINE)
 extern void alpha_output_lineno ();
 
+/* netbsd.h re-defined these, but we want the values from alpha.h  */
+
+#undef ASM_DECLARE_FUNCTION_NAME
+#define ASM_DECLARE_FUNCTION_NAME(FILE,NAME,DECL) \
+  alpha_start_function(FILE,NAME,DECL);
+extern void alpha_start_function ();
+
+#undef ASM_DECLARE_FUNCTION_SIZE
+#define ASM_DECLARE_FUNCTION_SIZE(FILE,NAME,DECL) \
+  alpha_end_function(FILE,NAME,DECL)
+extern void alpha_end_function ();
+
 extern void output_file_directive ();
 
 /* Attach a special .ident directive to the end of the file to identify
