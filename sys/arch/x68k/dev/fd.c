@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.40 2001/12/27 02:23:24 wiz Exp $	*/
+/*	$NetBSD: fd.c,v 1.41 2002/07/31 11:01:26 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -307,7 +307,7 @@ fdc_dmastart(fdc, read, addr, count)
 {
 	int error;
 
-	DPRINTF(("fdc_dmastart: (%s, addr = %p, count = %d\n",
+	DPRINTF(("fdc_dmastart: (%s, addr = %p, count = %ld\n",
 		 read ? "read" : "write", (caddr_t) addr, count));
 
 	error = bus_dmamap_load(fdc->sc_dmat, fdc->sc_dmamap, addr, count,
@@ -651,7 +651,7 @@ fdstrategy(bp)
 	    (fd = fd_cd.cd_devs[unit]) == 0 ||
 	    bp->b_blkno < 0 ||
 	    (bp->b_bcount % FDC_BSIZE) != 0) {
-		DPRINTF(("fdstrategy: unit=%d, blkno=%d, bcount=%d\n", unit,
+		DPRINTF(("fdstrategy: unit=%d, blkno=%d, bcount=%ld\n", unit,
 			 bp->b_blkno, bp->b_bcount));
 		bp->b_error = EINVAL;
 		goto bad;
