@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.21 1999/12/20 17:08:52 jwise Exp $	*/
+/*	$NetBSD: main.c,v 1.22 1999/12/20 21:04:41 jwise Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.21 1999/12/20 17:08:52 jwise Exp $");
+__RCSID("$NetBSD: main.c,v 1.22 1999/12/20 21:04:41 jwise Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -246,6 +246,11 @@ display(signo)
 	int signo;
 {
 	int i, j;
+	sigset_t set;
+
+	sigemptyset(&set);
+	sigaddset(&set, SIGALRM);
+	sigprocmask(SIG_BLOCK, &set, NULL);
 
 	/* Get the load average over the last minute. */
 	(void)getloadavg(avenrun, sizeof(avenrun) / sizeof(avenrun[0]));
@@ -274,6 +279,7 @@ display(signo)
 	wrefresh(wnd);
 	move(CMDLINE, col);
 	refresh();
+	sigprocmask(SIG_UNBLOCK, &set, NULL);
 	alarm(naptime);
 }
 
