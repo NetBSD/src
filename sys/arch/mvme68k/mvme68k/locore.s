@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.15 1996/12/10 18:33:51 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.16 1996/12/10 18:41:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -156,7 +156,8 @@ start:					| start of kernel and .text!
 	/* XXXCDC SHUTUP 147 CALL */
 
 	/* Save our ethernet address */
-	movl	0xfffe0778,_myea	| XXXCDC -- HARDWIRED HEX
+	RELOC(_myea, a0)
+	movl	0xfffe0778,a0@		| XXXCDC -- HARDWIRED HEX
 
 	/* initialize memory sizes (for pmap_bootstrap) */
 	movl	0xfffe0774,d1		| XXXCDC -- hardwired HEX
