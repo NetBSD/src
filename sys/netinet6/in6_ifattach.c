@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.46 2002/05/29 07:53:40 itojun Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.47 2002/06/07 04:30:40 itojun Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.46 2002/05/29 07:53:40 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.47 2002/06/07 04:30:40 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -306,13 +306,10 @@ get_ifid(ifp0, altifp, in6)
 	return -1;
 
 success:
-	nd6log((LOG_INFO, "%s: ifid: "
-		"%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x\n",
-		if_name(ifp0),
-		in6->s6_addr[8], in6->s6_addr[9],
-		in6->s6_addr[10], in6->s6_addr[11],
-		in6->s6_addr[12], in6->s6_addr[13],
-		in6->s6_addr[14], in6->s6_addr[15]));
+	nd6log((LOG_INFO, "%s: ifid: %02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x\n",
+	    if_name(ifp0), in6->s6_addr[8], in6->s6_addr[9], in6->s6_addr[10],
+	    in6->s6_addr[11], in6->s6_addr[12], in6->s6_addr[13],
+	    in6->s6_addr[14], in6->s6_addr[15]));
 	return 0;
 }
 
@@ -791,11 +788,10 @@ in6_ifdetach(ifp)
 		 && (rt = rtalloc1((struct sockaddr *)&ia->ia_addr, 0))) {
 			rtflags = rt->rt_flags;
 			rtfree(rt);
-			rtrequest(RTM_DELETE,
-				(struct sockaddr *)&ia->ia_addr,
-				(struct sockaddr *)&ia->ia_addr,
-				(struct sockaddr *)&ia->ia_prefixmask,
-				rtflags, (struct rtentry **)0);
+			rtrequest(RTM_DELETE, (struct sockaddr *)&ia->ia_addr,
+			    (struct sockaddr *)&ia->ia_addr,
+			    (struct sockaddr *)&ia->ia_prefixmask,
+			    rtflags, (struct rtentry **)0);
 		}
 
 		/* remove from the linked list */
@@ -813,8 +809,8 @@ in6_ifdetach(ifp)
 				ia->ia_next = oia->ia_next;
 			else {
 				nd6log((LOG_ERR, 
-				    "%s: didn't unlink in6ifaddr from "
-				    "list\n", if_name(ifp)));
+				    "%s: didn't unlink in6ifaddr from list\n",
+				    if_name(ifp)));
 			}
 		}
 
