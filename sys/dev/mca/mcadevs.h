@@ -1,10 +1,10 @@
-/*	$NetBSD: mcadevs.h,v 1.13 2001/04/20 10:05:16 jdolecek Exp $	*/
+/*	$NetBSD: mcadevs.h,v 1.14 2001/04/20 11:19:51 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: mcadevs,v 1.12 2001/04/20 10:03:35 jdolecek Exp 
+ *	NetBSD: mcadevs,v 1.13 2001/04/20 11:19:27 jdolecek Exp 
  */
 
 /*-
@@ -82,6 +82,7 @@
 #define	MCA_PRODUCT_EVERAM	0x77FB	/* Everex EV-136 4Mb Memory Expansion */
 #define	MCA_PRODUCT_BOCARAM	0x7A7A	/* Boca BOCARAM/2 PLUS Memory Expansion */
 #define	MCA_PRODUCT_IBM_ESDIC	0xDDFF	/* IBM ESDI Fixed Disk Controller */
+#define	MCA_PRODUCT_IBM_MPCOM	0xDEFF	/* IBM Multi-Protocol Communications Adapter */
 #define	MCA_PRODUCT_IBM_ESDIC_IG	0xDF9F	/* IBM Integ. ESDI Fixed Disk & Controller */
 #define	MCA_PRODUCT_ITR	0xE001	/* IBM Token Ring 16/4 Adapter/A */
 #define	MCA_PRODUCT_IBM_MOD	0xEDFF	/* IBM Internal Modem */
