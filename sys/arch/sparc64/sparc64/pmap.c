@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.90 2001/01/14 03:25:17 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.91 2001/01/22 22:10:09 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -1863,16 +1863,6 @@ pmap_deactivate(p)
  *
  *	Note: no locking is necessary in this function.
  */
-#if 0
-void
-pmap_kenter_pa(va, pa, prot)
-	vaddr_t va;
-	paddr_t pa;
-	vm_prot_t prot;
-{
-	pmap_enter(pmap_kernel(), va, pa, prot, prot|PMAP_WIRED);
-}
-#else
 void
 pmap_kenter_pa(va, pa, prot)
 	vaddr_t va;
@@ -1919,6 +1909,7 @@ pmap_kenter_pa(va, pa, prot)
 				/*
 				 * Let the pager run a bit--however this may deadlock
 				 */
+				panic("pmap_kenter_pa: no free pages");
 #ifdef NOTDEF_DEBUG
 				printf("pmap_kenter_pa: calling uvm_wait()\n");
 #endif
@@ -1964,7 +1955,7 @@ pmap_kenter_pa(va, pa, prot)
 	/* this is correct */
 	dcache_flush_page(pa);
 }
-#endif
+
 /*
  * pmap_kenter_pgs:		[ INTERFACE ]
  *
@@ -2220,6 +2211,8 @@ pmap_enter(pm, va, pa, prot, flags)
 				/*
 				 * Let the pager run a bit--however this may deadlock
 				 */
+				if (pm == pmap_kernel())
+					panic("pmap_enter: no free pages");
 #ifdef NOTDEF_DEBUG
 				printf("pmap_enter: calling uvm_wait()\n");
 #endif
