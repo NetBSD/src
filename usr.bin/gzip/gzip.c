@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.29.2.11 2004/05/30 14:54:53 tron Exp $	*/
+/*	$NetBSD: gzip.c,v 1.29.2.12 2004/05/30 14:55:57 tron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.29.2.11 2004/05/30 14:54:53 tron Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.29.2.12 2004/05/30 14:55:57 tron Exp $");
 #endif /* not lint */
 
 /*
@@ -123,9 +123,8 @@ static	int	vflag;			/* verbose mode */
 #define		qflag	0
 #endif
 
-static	char	*suffix;
+static	const char	*suffix;
 #define suffix_len	(strlen(suffix) + 1)	/* len + nul */
-static	char	*newfile;		/* name of newly created file */
 static	char	*infile;		/* name of file coming in */
 
 static	void	maybe_err(int rv, const char *fmt, ...);
@@ -135,8 +134,8 @@ static	void	maybe_warnx(const char *fmt, ...);
 static	enum filetype file_gettype(u_char *);
 static	off_t	gz_compress(FILE *, int, off_t *, const char *, time_t);
 static	off_t	gz_uncompress(int, int, char *, size_t, off_t *);
-static	off_t	file_compress(char *);
-static	off_t	file_uncompress(char *);
+static	off_t	file_compress(char *, char *, size_t);
+static	off_t	file_uncompress(char *, char *, size_t);
 static	void	handle_pathname(char *);
 static	void	handle_file(char *, struct stat *);
 static	void	handle_stdin(void);
@@ -150,7 +149,7 @@ static	void	display_version(void);
 static	void	prepend_gzip(char *, int *, char ***);
 static	void	handle_dir(char *, struct stat *);
 static	void	print_verbage(char *, char *, off_t, off_t);
-static	void	print_test(char *, int);
+static	void	print_test(const char *, int);
 static	void	copymodes(const char *, struct stat *);
 #endif
 
@@ -375,7 +374,7 @@ prepend_gzip(char *gzip, int *argc, char ***argv)
 		for (; *s; s++)
 			if (*s == ' ' || *s == '\t')
 				break;
-		if (*s == 0)
+		if (*s == 0x0)
 			break;
 	}
 	/* punt early */
@@ -826,12 +825,11 @@ file_gettype(u_char *buf)
  * original.
  */
 static off_t
-file_compress(char *file)
+file_compress(char *file, char *outfile, size_t outsize)
 {
 	FILE *in;
 	int out;
 	struct stat isb, osb;
-	char outfile[MAXPATHLEN];
 	off_t size;
 #ifndef SMALL
 	u_int32_t mtime = 0;
@@ -839,9 +837,9 @@ file_compress(char *file)
 #endif
 
 	if (cflag == 0) {
-		(void)strncpy(outfile, file, MAXPATHLEN - suffix_len);
-		outfile[MAXPATHLEN - suffix_len] = '\0';
-		(void)strlcat(outfile, suffix, sizeof(outfile));
+		(void)strncpy(outfile, file, outsize - suffix_len);
+		outfile[outsize - suffix_len] = '\0';
+		(void)strlcat(outfile, suffix, outsize);
 
 #ifndef SMALL
 		if (fflag == 0) {
@@ -864,7 +862,7 @@ file_compress(char *file)
 #endif
 	}
 	in = fopen(file, "r");
-	if (in == 0)
+	if (in == NULL)
 		maybe_err(1, "can't fopen %s", file);
 
 #ifndef SMALL
@@ -909,14 +907,12 @@ file_compress(char *file)
 			unlink(file);
 			size = osb.st_size;
 		}
-		newfile = outfile;
 #ifndef SMALL
 		copymodes(outfile, &isb);
 #endif
 	} else {
 lose:
 		size = 0;
-		newfile = 0;
 	}
 
 	return (size);
@@ -924,11 +920,10 @@ lose:
 
 /* uncompress the given file and remove the original */
 static off_t
-file_uncompress(char *file)
+file_uncompress(char *file, char *outfile, size_t outsize)
 {
 	struct stat isb, osb;
-	char buf[PATH_MAX];
-	char *outfile = buf, *s;
+	char *s;
 	off_t size;
 	ssize_t len = strlen(file);
 	int fd;
@@ -1001,13 +996,16 @@ file_uncompress(char *file)
 			if (i < rbytes) {
 				name[i] = 0;
 				/* now maybe merge old dirname */
-				if (strchr(outfile, '/') == 0)
-					outfile = name;
+				if (strchr(outfile, '/') == NULL)
+					(void) strlcpy(outfile, name, outsize);
 				else {
-					char *dir = dirname(outfile);
-					if (asprintf(&outfile, "%s/%s", dir,
-					    name) == -1)
-						maybe_err(1, "malloc");
+					char	newbuf[PATH_MAX + 1];
+
+					(void) snprintf(newbuf, sizeof(newbuf),
+						"%s/%s", dirname(outfile),
+						name);
+					(void) strlcpy(outfile, newbuf,
+						outsize);
 				}
 			}
 		}
@@ -1068,7 +1066,7 @@ file_uncompress(char *file)
 #ifndef NO_COMPRESS_SUPPORT
 	if (method == FT_Z) {
 		FILE *in, *out;
-		int fd;
+		int zfd;
 
 		/* XXX */
 		if (lflag)
@@ -1078,13 +1076,13 @@ file_uncompress(char *file)
 			maybe_err(1, "open for read: %s", file);
 
 		if (cflag == 1)
-			fd = STDOUT_FILENO;
+			zfd = STDOUT_FILENO;
 		else {
-			fd = open(outfile, O_WRONLY|O_CREAT|O_EXCL, 0600);
-			if (fd == -1)
+			zfd = open(outfile, O_WRONLY|O_CREAT|O_EXCL, 0600);
+			if (zfd == -1)
 				maybe_err(1, "open for write: %s", outfile);
 		}
-		out = fdopen(fd, "w");
+		out = fdopen(zfd, "w");
 		if (out == NULL)
 			maybe_err(1, "open for write: %s", outfile);
 
@@ -1106,12 +1104,12 @@ file_uncompress(char *file)
 	} else
 #endif
 	{
-		int fd, in;
+		int zfd, in;
 
 		if (lflag) {
-			if ((fd = open(file, O_RDONLY)) == -1)
+			if ((zfd = open(file, O_RDONLY)) == -1)
 				maybe_err(1, "open");
-			print_list(fd, isb.st_size, outfile, isb.st_mtime);
+			print_list(zfd, isb.st_size, outfile, isb.st_mtime);
 			return 0;	/* XXX */
 		}
 
@@ -1121,19 +1119,19 @@ file_uncompress(char *file)
 
 		if (cflag == 0) {
 			/* Use open(2) directly to get a safe file.  */
-			fd = open(outfile, O_WRONLY|O_CREAT|O_EXCL, 0600);
-			if (fd < 0) {
+			zfd = open(outfile, O_WRONLY|O_CREAT|O_EXCL, 0600);
+			if (zfd < 0) {
 				maybe_warn("can't open %s", outfile);
 				close(in);
 				goto lose;
 			}
 		} else
-			fd = STDOUT_FILENO;
+			zfd = STDOUT_FILENO;
 
-		size = gz_uncompress(in, fd, NULL, 0, NULL);
+		size = gz_uncompress(in, zfd, NULL, 0, NULL);
 		(void)close(in);
 		if (cflag == 0) {
-			if (close(fd))
+			if (close(zfd))
 				maybe_warn("failed close");
 			if (size == -1) {
 				unlink(outfile);
@@ -1170,7 +1168,6 @@ file_uncompress(char *file)
 			    (unsigned long long)osb.st_size);
 			goto lose;
 		}
-		newfile = strdup(outfile);
 		if (cflag == 0)
 			unlink(file);
 		size = osb.st_size;
@@ -1183,7 +1180,6 @@ file_uncompress(char *file)
 lose_close_it:
 	close(fd);
 lose:
-	newfile = 0;
 	return 0;
 }
 
@@ -1354,15 +1350,16 @@ static void
 handle_file(char *file, struct stat *sbp)
 {
 	off_t usize, gsize;
+	char	outfile[PATH_MAX];
 
 	infile = file;
 	if (dflag) {
-		usize = file_uncompress(file);
+		usize = file_uncompress(file, outfile, sizeof(outfile));
 		if (usize == 0)
 			return;
 		gsize = sbp->st_size;
 	} else {
-		gsize = file_compress(file);
+		gsize = file_compress(file, outfile, sizeof(outfile));
 		if (gsize == 0)
 			return;
 		usize = sbp->st_size;
@@ -1371,7 +1368,7 @@ handle_file(char *file, struct stat *sbp)
 
 #ifndef SMALL
 	if (vflag && !tflag)
-		print_verbage(file, cflag == 0 ? newfile : 0, usize, gsize);
+		print_verbage(file, (cflag) ? NULL : outfile, usize, gsize);
 #endif
 }
 
@@ -1461,7 +1458,7 @@ print_verbage(char *file, char *nfile, off_t usize, off_t gsize)
 
 /* print test results */
 static void
-print_test(char *file, int ok)
+print_test(const char *file, int ok)
 {
 
 	fprintf(stderr, "%s:%s  %s\n", file,
