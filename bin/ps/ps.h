@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.h,v 1.17.4.1 2002/04/23 20:41:14 nathanw Exp $	*/
+/*	$NetBSD: ps.h,v 1.17.4.2 2002/04/24 21:42:31 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@
 
 enum type {
 	CHAR, UCHAR, SHORT, USHORT, INT, UINT, LONG, ULONG, KPTR, KPTR24,
-	INT32, UINT32, SIGLIST
+	INT32, UINT32, SIGLIST, INT64, UINT64
 };
 
 /* Variables. */
