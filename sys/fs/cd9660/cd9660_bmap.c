@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_bmap.c,v 1.8 2001/11/12 15:29:48 lukem Exp $	*/
+/*	$NetBSD: cd9660_bmap.c,v 1.1 2002/12/23 17:52:08 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_bmap.c,v 1.8 2001/11/12 15:29:48 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_bmap.c,v 1.1 2002/12/23 17:52:08 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -50,9 +50,9 @@ __KERNEL_RCSID(0, "$NetBSD: cd9660_bmap.c,v 1.8 2001/11/12 15:29:48 lukem Exp $"
 #include <sys/vnode.h>
 #include <sys/mount.h>
 
-#include <isofs/cd9660/iso.h>
-#include <isofs/cd9660/cd9660_extern.h>
-#include <isofs/cd9660/cd9660_node.h>
+#include <fs/cd9660/iso.h>
+#include <fs/cd9660/cd9660_extern.h>
+#include <fs/cd9660/cd9660_node.h>
 
 /*
  * Bmap converts a the logical block number of a file to its physical block
