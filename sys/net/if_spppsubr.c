@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.25 2001/07/18 16:43:09 thorpej Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.26 2001/08/23 00:56:03 itojun Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -1019,8 +1019,8 @@ sppp_flush(struct ifnet *ifp)
 	struct sppp *sp = (struct sppp*) ifp;
 
 	IFQ_PURGE (&sp->pp_if.if_snd);
-	IFQ_PURGE (&sp->pp_fastq);
-	IFQ_PURGE (&sp->pp_cpq);
+	IF_PURGE (&sp->pp_fastq);
+	IF_PURGE (&sp->pp_cpq);
 }
 
 /*
@@ -1230,7 +1230,7 @@ sppp_cisco_input(struct sppp *sp, struct mbuf *m)
 				sp->pp_loopcnt = 0;
 				if (ifp->if_flags & IFF_UP) {
 					if_down (ifp);
-					IFQ_PURGE (&sp->pp_cpq);
+					IF_PURGE (&sp->pp_cpq);
 				}
 			}
 			++sp->pp_loopcnt;
@@ -1739,7 +1739,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 			/* Line loopback mode detected. */
 			printf(SPP_FMT "loopback\n", SPP_ARGS(ifp));
 			if_down (ifp);
-			IFQ_PURGE (&sp->pp_cpq);
+			IF_PURGE (&sp->pp_cpq);
 
 			/* Shut down the PPP link. */
 			/* XXX */
@@ -2289,7 +2289,7 @@ sppp_lcp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 				sp->pp_loopcnt = 0;
 				if (ifp->if_flags & IFF_UP) {
 					if_down(ifp);
-					IFQ_PURGE(&sp->pp_cpq);
+					IF_PURGE(&sp->pp_cpq);
 					/* XXX ? */
 					lcp.Down(sp);
 					lcp.Up(sp);
@@ -4670,7 +4670,7 @@ sppp_keepalive(void *dummy)
 			/* No keepalive packets got.  Stop the interface. */
 			printf (SPP_FMT "down\n", SPP_ARGS(ifp));
 			if_down (ifp);
-			IFQ_PURGE (&sp->pp_cpq);
+			IF_PURGE (&sp->pp_cpq);
 			if (! (sp->pp_flags & PP_CISCO)) {
 				/* XXX */
 				/* Shut down the PPP link. */
