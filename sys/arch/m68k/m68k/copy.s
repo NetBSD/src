@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.s,v 1.22 1995/12/11 02:37:55 thorpej Exp $	*/
+/*	$NetBSD: copy.s,v 1.23 1996/02/02 02:36:44 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995 Charles Hannum.
@@ -41,7 +41,7 @@
 #include <sys/errno.h>
 #include <machine/asm.h>
 
-#include "assym.s"
+#include "assym.h"
 
 	.file	"copy.s"
 	.text

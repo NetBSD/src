@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sun3,v 1.36 1996/02/01 22:33:05 mycroft Exp $
+#	$NetBSD: Makefile.sun3,v 1.37 1996/02/02 02:37:35 mycroft Exp $
 
 #
 # Makefile for NetBSD
@@ -115,7 +115,7 @@ lint: /tmp param.c
 	    grep -v 'struct/union .* never defined' | \
 	    grep -v 'possible pointer alignment problem'
 
-locore.o: assym.s ${SUN3}/sun3/locore.s ${SUN3}/include/asm.h \
+locore.o: assym.h ${SUN3}/sun3/locore.s ${SUN3}/include/asm.h \
 	  ${SUN3}/include/trap.h $S/arch/m68k/include/trap.h
 	${CPP} -D_LOCORE ${COPTS} ${SUN3}/sun3/locore.s | ${AS} -o locore.o
 
@@ -129,16 +129,16 @@ locore.o sun3_startup.o pmap.o trap.o : Makefile
 uipc_proto.o vfs_conf.o kern_xxx.o : Makefile
 
 # depend on maxusers
-assym.s: Makefile
+assym.h: Makefile
 
-assym.s: genassym
-	./genassym >assym.s
+assym.h: genassym
+	./genassym >assym.h
 
 genassym:
 	${CC} ${INCLUDES} ${IDENT} ${PARAM} -Dmc68020 -Dsun3 \
 	    -o genassym ${SUN3}/sun3/genassym.c
 
-depend: assym.s ioconf.c param.c vnode_if.c
+depend: assym.h ioconf.c param.c vnode_if.c
 	mkdep ${COPTS} ${CFILES} ioconf.c param.c vnode_if.c
 	mkdep -a -p ${INCLUDES} ${IDENT} ${PARAM} ${SUN3}/sun3/genassym.c
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_fdintr.s,v 1.5 1996/02/01 22:32:43 mycroft Exp $ */
+/*	$NetBSD: bsd_fdintr.s,v 1.6 1996/02/02 02:37:22 mycroft Exp $ */
 
 /*
  * Copyright (c) 1995 Paul Kranenburg
@@ -35,7 +35,7 @@
 #ifndef _LOCORE
 #define _LOCORE
 #endif
-#include "assym.s"
+#include "assym.h"
 #include <sparc/sparc/intreg.h>
 #include <sparc/sparc/auxreg.h>
 #include <sparc/sparc/vaddrs.h>

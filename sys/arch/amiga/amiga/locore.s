@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.48 1995/12/11 02:37:59 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.49 1996/02/02 02:34:55 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,7 +46,7 @@
  * Other contributors: Bryan Ford (kernel reload stuff)
  */
 
-#include "assym.s"
+#include "assym.h"
 
 	.long	0x4ef80400+NBPG	/* jmp jmp0.w */
 	.fill	NBPG/4-1,4,0/*xdeadbeef*/

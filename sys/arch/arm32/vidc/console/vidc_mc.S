@@ -1,4 +1,4 @@
-/* $NetBSD: vidc_mc.S,v 1.1 1996/01/31 23:19:45 mark Exp $ */
+/* $NetBSD: vidc_mc.S,v 1.2 1996/02/02 02:36:04 mycroft Exp $ */
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -41,10 +41,10 @@
  * Created      : 17/09/94
  * Last updated : 15/11/95
  *
- *    $Id: vidc_mc.S,v 1.1 1996/01/31 23:19:45 mark Exp $
+ *    $Id: vidc_mc.S,v 1.2 1996/02/02 02:36:04 mycroft Exp $
  */
 
-#include "assym.s"
+#include "assym.h"
 #include <machine/iomd.h>
 
 lr	.req	r14

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.60 1996/02/01 22:30:32 mycroft Exp $
+#	$NetBSD: Makefile.i386,v 1.61 1996/02/02 02:36:34 mycroft Exp $
 # 	@(#)Makefile.hp300	8.2 (Berkeley) 1/23/94
 #
 # Makefile for NetBSD
@@ -118,7 +118,7 @@ lint: /tmp param.c
 	    grep -v 'struct/union .* never defined' | \
 	    grep -v 'possible pointer alignment problem'
 
-locore.o: assym.s ${I386}/i386/locore.s machine/trap.h machine/psl.h
+locore.o: assym.h ${I386}/i386/locore.s machine/trap.h machine/psl.h
 locore.o: machine/pte.h ${I386}/isa/vector.s ${I386}/isa/icu.s
 locore.o: $S/sys/errno.h machine/specialreg.h ${I386}/isa/debug.h
 locore.o: ${I386}/isa/icu.h $S/dev/isa/isareg.h $S/net/netisr.h
@@ -135,19 +135,19 @@ locore.o machdep.o: Makefile
 uipc_proto.o vfs_conf.o locore.o: Makefile
 
 # depend on maxusers
-assym.s: Makefile
+assym.h: Makefile
 
 # depends on KDB (cons.o also depends on GENERIC)
 trap.o cons.o: Makefile
 
-assym.s: genassym
-	./genassym >assym.s
+assym.h: genassym
+	./genassym >assym.h
 
 genassym: ${I386}/i386/genassym.c
 	${CC} ${INCLUDES} ${IDENT} ${PARAM} -Di386 -o genassym \
 	    ${I386}/i386/genassym.c
 
-depend: assym.s param.c vnode_if.h
+depend: assym.h param.c vnode_if.h
 	mkdep ${COPTS} ${CFILES} ioconf.c param.c
 	mkdep -a -p ${INCLUDES} ${IDENT} ${PARAM} ${I386}/i386/genassym.c
 
