@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf_y.y,v 1.7 2004/06/03 20:32:40 christos Exp $	*/
+/*	$NetBSD: ipf_y.y,v 1.8 2004/06/29 22:33:25 christos Exp $	*/
 
 %{
 #include "ipf.h"
@@ -605,22 +605,30 @@ andwith:
 	| IPFY_AND			{ nowith = 0; setipftype(); }
 	;
 
-flags:	| IPFY_FLAGS flagset	
+flags:	| startflags flagset	
 		{ DOALL(fr->fr_tcpf = $2; fr->fr_tcpfm = FR_TCPFMAX;) }
-	| IPFY_FLAGS flagset '/' flagset
+	| startflags flagset '/' flagset
 		{ DOALL(fr->fr_tcpf = $2; fr->fr_tcpfm = $4;) }
-	| IPFY_FLAGS '/' flagset
+	| startflags '/' flagset
 		{ DOALL(fr->fr_tcpf = 0; fr->fr_tcpfm = $3;) }
-	| IPFY_FLAGS YY_NUMBER
+	| startflags YY_NUMBER
 		{ DOALL(fr->fr_tcpf = $2; fr->fr_tcpfm = FR_TCPFMAX;) }
-	| IPFY_FLAGS '/' YY_NUMBER
+	| startflags '/' YY_NUMBER
 		{ DOALL(fr->fr_tcpf = 0; fr->fr_tcpfm = $3;) }
-	| IPFY_FLAGS YY_NUMBER '/' YY_NUMBER
+	| startflags YY_NUMBER '/' YY_NUMBER
 		{ DOALL(fr->fr_tcpf = $2; fr->fr_tcpfm = $4;) }
-	| IPFY_FLAGS flagset '/' YY_NUMBER
+	| startflags flagset '/' YY_NUMBER
 		{ DOALL(fr->fr_tcpf = $2; fr->fr_tcpfm = $4;) }
-	| IPFY_FLAGS YY_NUMBER '/' flagset
+	| startflags YY_NUMBER '/' flagset
 		{ DOALL(fr->fr_tcpf = $2; fr->fr_tcpfm = $4;) }
+	;
+
+startflags:
+	IPFY_FLAGS	{ if (frc->fr_type != FR_T_IPF)
+				yyerror("flags with non-ipf type rule");
+			  if (frc->fr_proto != IPPROTO_TCP)
+				yyerror("flags with non-TCP rule");
+			}
 	;
 
 flagset:
