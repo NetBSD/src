@@ -1,4 +1,4 @@
-/*	$NetBSD: iommuvar.h,v 1.2 1998/03/21 12:29:29 pk Exp $	*/
+/*	$NetBSD: iommuvar.h,v 1.3 1998/08/21 13:29:57 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,5 +46,8 @@ struct iommu_attach_args {
         int		iom_node;	/* PROM handle */
 	struct bootpath	*iom_bp;	/* used for locating boot device */
 };
+
+void	iommu_enter __P((bus_addr_t, paddr_t));
+void	iommu_remove __P((bus_addr_t, bus_size_t));
 
 #endif /* _IOMMU_VAR_H */
