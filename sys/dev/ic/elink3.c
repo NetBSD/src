@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.31 1997/05/11 05:47:08 jonathan Exp $	*/
+/*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -218,6 +218,13 @@ epconfig(sc, chipset)
 	u_int8_t myla[6];
 
 	sc->ep_chipset = chipset;
+
+	/*
+	 * We could have been groveling around in other register
+	 * windows in the front-end; make sure we're in window 0
+	 * to read the EEPROM.
+	 */
+	GO_WINDOW(0);
 
 	/*
 	 * Read the station address from the eeprom
