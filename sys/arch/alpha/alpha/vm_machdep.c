@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.73.2.7 2002/10/06 21:26:31 nathanw Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.73.2.8 2003/01/03 22:27:52 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.73.2.7 2002/10/06 21:26:31 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.73.2.8 2003/01/03 22:27:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,10 +115,7 @@ cpu_exit(struct lwp *l, int proc)
 	pmap_deactivate(l);
 
 	(void) splhigh();
-	if (proc)
-		switch_exit(l);
-	else
-		switch_lwp_exit(l);
+	switch_exit(l, proc ? exit2 : lwp_exit2);
 	/* NOTREACHED */
 }
 

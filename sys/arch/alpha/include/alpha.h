@@ -1,4 +1,4 @@
-/* $NetBSD: alpha.h,v 1.17.4.3 2001/12/17 20:57:59 nathanw Exp $ */
+/* $NetBSD: alpha.h,v 1.17.4.4 2003/01/03 22:27:54 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -105,8 +105,7 @@ void	hwrpb_restart_setup(void);
 void	regdump(struct trapframe *);
 void	regtoframe(const struct reg *, struct trapframe *);
 void	savectx(struct pcb *);
-void    switch_exit(struct lwp *);				/* MAGIC */
-void    switch_lwp_exit(struct lwp *);				/* MAGIC */
+void    switch_exit(struct lwp *, void (*)(struct lwp *));	/* MAGIC */
 void	proc_trampoline(void);					/* MAGIC */
 void	trap(unsigned long, unsigned long, unsigned long, unsigned long,
 	    struct trapframe *);
