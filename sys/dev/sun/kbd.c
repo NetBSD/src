@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.16 1997/10/21 15:17:31 gwr Exp $	*/
+/*	$NetBSD: kbd.c,v 1.17 1997/10/28 06:14:17 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -649,7 +649,7 @@ kbd_iocsled(k, data)
 
 static void kbd_input_string __P((struct kbd_softc *, char *));
 static void kbd_input_funckey __P((struct kbd_softc *, int));
-static void kbd_input_keysym __P((struct kbd_softc *, int));
+static int  kbd_input_keysym __P((struct kbd_softc *, int));
 static void kbd_input_raw __P((struct kbd_softc *k, int));
 
 /*
@@ -718,7 +718,9 @@ kbd_code_to_keysym(ks, c)
 	}
 
 	/*
-	 * Post-processing for Num-lock
+	 * Post-processing for Num-lock.  All "function"
+	 * keysyms get indirected through another table.
+	 * (XXX: Only if numlock on.  Want off also!)
 	 */
 	if ((ks->kbd_modbits & (1 << KBMOD_NUMLOCK)) &&
 		(KEYSYM_CLASS(keysym) == KEYSYM_FUNC) )
@@ -760,8 +762,11 @@ kbd_input_funckey(k, keysym)
 /*
  * This is called by kbd_input_raw() or by kb_repeat()
  * to deliver ASCII input.  Called at spltty().
+ *
+ * Return zero on success, else the keysym that we
+ * could not handle (so the caller may complain).
  */
-void
+int
 kbd_input_keysym(k, keysym)
 	struct kbd_softc *k;
 	register int keysym;
@@ -812,10 +817,10 @@ kbd_input_keysym(k, keysym)
 			break;
 		/* fall through */
 	default:
-		log(LOG_WARNING, "%s: unexpected keysym 0x%x\n",
-			k->k_dev.dv_xname, keysym);
-		break;
+		/* We could not handle it. */
+		return (keysym);
 	}
+	return (0);
 }
 
 /*
@@ -829,7 +834,7 @@ kbd_repeat(void *arg)
 	int s = spltty();
 
 	if (k->k_repeating && k->k_repeatsym >= 0) {
-		kbd_input_keysym(k, k->k_repeatsym);
+		(void)kbd_input_keysym(k, k->k_repeatsym);
 		timeout(kbd_repeat, k, k->k_repeat_step);
 	}
 	splx(s);
@@ -907,7 +912,14 @@ kbd_input_raw(k, c)
 		keysym = kbd_code_to_keysym(ks, c);
 
 		/* Pass up to the next layer. */
-		kbd_input_keysym(k, keysym);
+		if (kbd_input_keysym(k, keysym)) {
+			log(LOG_WARNING, "%s: code=0x%x with mod=0x%x"
+				" produced unexpected keysym 0x%x\n",
+				k->k_dev.dv_xname, c,
+				ks->kbd_modbits, keysym);
+			/* No point in auto-repeat here. */
+			return;
+		}
 
 		/* Does this symbol get auto-repeat? */
 		if (KEYSYM_NOREPEAT(keysym))
@@ -988,11 +1000,15 @@ kbd_rxint(cs)
 	if (k->k_magic1_down) {
 		/* The last keycode was "MAGIC1" down. */
 		k->k_magic1_down = 0;
-		if ((c == k->k_magic2) && k->k_isconsole) {
+		if (c == k->k_magic2) {
 			/* Magic "L1-A" sequence; enter debugger. */
-			zs_abort(cs);
-			/* Debugger done.  Fake L1-up to finish it. */
-			c = k->k_magic1 | KBD_UP;
+			if (k->k_isconsole) {
+				zs_abort(cs);
+				/* Debugger done.  Fake L1-up to finish it. */
+				c = k->k_magic1 | KBD_UP;
+			} else {
+				printf("kbd: magic sequence, but not console\n");
+			}
 		}
 	}
 	if (c == k->k_magic1) {
@@ -1204,6 +1220,9 @@ kbd_iopen(unit)
 		ks->kbd_id = KB_SUN2;
 	}
 
+	/* Initialize the table pointers for this type. */
+	kbd_xlate_init(ks);
+
 	/* Earlier than type 4 does not know "layout". */
 	if (ks->kbd_id < KB_SUN4)
 		goto out;
@@ -1413,8 +1432,8 @@ static void
 kbd_update_leds(k)
     struct kbd_softc *k;
 {
-    struct kbd_state *ks = &k->k_state;
-    register char leds;
+	struct kbd_state *ks = &k->k_state;
+	register char leds;
 
 	leds = ks->kbd_leds;
 	leds &= ~(LED_CAPS_LOCK|LED_NUM_LOCK);
