@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.346 2001/08/23 03:31:55 thorpej Exp $
+$NetBSD: pcidevs,v 1.347 2001/08/23 03:41:36 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -723,10 +723,10 @@ product ALTEON ACENIC		0x0001	ACEnic 1000baseSX Gigabit Ethernet
 product ALTEON ACENIC_COPPER	0x0002	ACEnic 1000baseT Gigabit Ethernet
 
 /* AMD products */
-product AMD PCNET_PCI	0x2000	79c970 PCnet-PCI LANCE Ethernet
-product AMD PCNET_HOME	0x2001	79c978 PCnet-PCI Home
-product AMD PCSCSI_PCI	0x2020	53c974 PCscsi-PCI SCSI
-product AMD PCNETS_PCI	0x2040	79C974 PCnet-PCI Ethernet & SCSI
+product AMD PCNET_PCI	0x2000	PCnet-PCI Ethernet
+product AMD PCNET_HOME	0x2001	PCnet-Home HomePNA Ethernet
+product AMD PCSCSI_PCI	0x2020	PCscsi-PCI SCSI
+product AMD PCNETS_PCI	0x2040	PCnet-PCI Ethernet & SCSI
 product AMD SC751_SC	0x7006	AMD751 System Controller
 product AMD SC751_PPB	0x7007	AMD751 PCI-to-PCI Bridge
 product AMD PBC756_ISA	0x7408	AMD756 PCI-to-ISA Bridge
