@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.519 2003/04/03 16:15:22 kent Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.520 2003/04/05 16:43:47 lha Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.518 2003/04/03 16:13:53 kent Exp 
+ *	NetBSD: pcidevs,v 1.519 2003/04/05 16:41:42 lha Exp 
  */
 
 /*
@@ -1448,6 +1448,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ATI Technologies",
 	    "Rage Mobility M1",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGEON_M7_AGP,
+	    0,
+	    "ATI Technologies",
+	    "Radeon Mobility M7 LW (AGP)",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_M9,
