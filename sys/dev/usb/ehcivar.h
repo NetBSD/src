@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.8 2001/11/19 02:57:16 augustss Exp $	*/
+/*	$NetBSD: ehcivar.h,v 1.9 2001/11/20 13:49:23 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -56,6 +56,7 @@ typedef struct ehci_soft_qtd {
 typedef struct ehci_soft_qh {
 	ehci_qh_t qh;
 	struct ehci_soft_qh *next;
+	struct ehci_soft_qtd *sqtd;
 	ehci_physaddr_t physaddr;
 } ehci_soft_qh_t;
 #define EHCI_SQH_SIZE ((sizeof (struct ehci_soft_qh) + EHCI_QH_ALIGN - 1) / EHCI_QH_ALIGN * EHCI_QH_ALIGN)
@@ -85,7 +86,6 @@ typedef struct ehci_softc {
 	usb_dma_t sc_fldma;
 	u_int sc_flsize;
 
-	LIST_HEAD(, ehci_soft_qtd)  sc_hash_qtds[EHCI_HASH_SIZE];
 	ehci_soft_qh_t *sc_freeqhs;
 	ehci_soft_qtd_t *sc_freeqtds;
 
@@ -96,8 +96,7 @@ typedef struct ehci_softc {
 	char sc_isreset;
 
 	u_int32_t sc_eintrs;
-	ehci_soft_qh_t *sc_ctrl_head;
-	ehci_soft_qh_t *sc_bulk_head;
+	ehci_soft_qh_t *sc_async_head;
 
 	SIMPLEQ_HEAD(, usbd_xfer) sc_free_xfers; /* free xfers */
 
