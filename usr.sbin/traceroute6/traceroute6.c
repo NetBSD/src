@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute6.c,v 1.30 2002/10/24 12:54:14 itojun Exp $	*/
+/*	$NetBSD: traceroute6.c,v 1.31 2003/01/21 07:55:17 itojun Exp $	*/
 /*	$KAME: traceroute6.c,v 1.63 2002/10/24 12:53:25 itojun Exp $	*/
 
 /*
@@ -79,7 +79,7 @@ static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: traceroute6.c,v 1.30 2002/10/24 12:54:14 itojun Exp $");
+__RCSID("$NetBSD: traceroute6.c,v 1.31 2003/01/21 07:55:17 itojun Exp $");
 #endif
 #endif
 
@@ -989,8 +989,9 @@ send_probe(seq, hops)
 {
 	int i;
 
+	i = hops;
 	if (setsockopt(sndsock, IPPROTO_IPV6, IPV6_UNICAST_HOPS,
-	    (char *)&hops, sizeof(hops)) < 0) {
+	    (char *)&i, sizeof(i)) < 0) {
 		perror("setsockopt IPV6_UNICAST_HOPS");
 	}
 
