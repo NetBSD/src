@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.4 2002/02/10 13:22:58 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.5 2002/02/13 09:02:12 tron Exp $
 
 PROG=		xdrtest
 RPCSRCS=	testbits.x
 SRCS=		${RPCSRCS:.x=.c} ${RPCSRCS:.x=.h} xdrtest.c
 NOMAN=		# defined
 CPPFLAGS+=	-I.
+CLEANFILES+=	testbits.c testbits.h
 
 regress: ${PROG}
 	./${PROG}
