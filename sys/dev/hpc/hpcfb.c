@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.16 2002/01/12 16:45:14 tsutsui Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.17 2002/01/27 11:08:30 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,13 +43,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.16 2002/01/12 16:45:14 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.17 2002/01/27 11:08:30 takemura Exp $");
 
 #define FBDEBUG
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: hpcfb.c,v 1.16 2002/01/12 16:45:14 tsutsui Exp $";
+    "$NetBSD: hpcfb.c,v 1.17 2002/01/27 11:08:30 takemura Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -625,6 +625,9 @@ static void
 hpcfb_power(int why, void *arg)
 {
 	struct hpcfb_softc *sc = arg;
+
+	if (sc->sc_dc == NULL)
+		return;	/* You have no screen yet. */
 
 	switch (why) {
 	case PWR_STANDBY:
