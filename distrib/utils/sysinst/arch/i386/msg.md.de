@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.5 2004/06/12 19:18:24 dsl Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.6 2004/06/14 21:38:55 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -44,7 +44,7 @@ entfernen.
 
 }
 
-message Keyboard_type {Keyboard type}
+message Keyboard_type {Tastaturschema}
 message kb_default {de}
 
 message dobad144
