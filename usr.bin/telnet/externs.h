@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.19 2000/06/22 06:47:48 thorpej Exp $	*/
+/*	$NetBSD: externs.h,v 1.20 2001/01/04 05:58:41 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -545,7 +545,7 @@ extern char
     *Ibackp,		/* Oldest byte of 3270 data */
     Ibuf[],		/* 3270 buffer */
     *Ifrontp,		/* Where next 3270 byte goes */
-    tline[],
+    tline[200],
     *transcom;		/* Transparent command */
 
 /* tn3270.c */
