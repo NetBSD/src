@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.2 1998/04/07 13:43:17 hannken Exp $ */
+/* $NetBSD: wskbd.c,v 1.3 1998/04/09 13:09:46 hannken Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wskbd.c,v 1.2 1998/04/07 13:43:17 hannken Exp $";
+    "$NetBSD: wskbd.c,v 1.3 1998/04/09 13:09:46 hannken Exp $";
 
 /*
  * Copyright (c) 1992, 1993
@@ -108,13 +108,34 @@ static const char _rcsid[] __attribute__ ((unused)) =
 #include <dev/wscons/wseventvar.h>
 #include <dev/wscons/wscons_callbacks.h>
 
+struct wskbd_internal {
+	int	t_keydesc_len;
+	const struct wscons_keydesc *t_keydesc;
+	int	t_layout;		/* name of current translation map */
+
+	void	(*t_getc) __P((void *, u_int *, int *));
+	void	(*t_pollc) __P((void *, int));
+	void	(*t_set_leds) __P((void *, int));
+
+	int	t_modifiers;
+	int	t_led_state;
+	int	t_composelen;		/* remaining entries in t_composebuf */
+	keysym_t t_composebuf[2];
+
+	void	*t_accesscookie;
+
+	struct wskbd_softc *t_sc;	/* back pointer */
+};
+
 struct wskbd_softc {
 	struct device	sc_dv;
 
-	const struct wskbd_accessops *sc_accessops;
-	void		*sc_accesscookie;
+	struct wskbd_internal *id;
 
-	int		sc_ready;	/* accepting events */
+	int	(*ioctl) __P((void *v, u_long cmd, caddr_t data, int flag,
+			      struct proc *p));
+
+	int	sc_ready;		/* accepting events */
 	struct wseventvar sc_events;	/* event queue state */
 
 	int	sc_isconsole;
@@ -129,15 +150,8 @@ struct wskbd_softc {
 
 	int	sc_translating;		/* xlate to chars for emulation */
 
-	int	sc_keydesc_len;
-	const struct wscons_keydesc *sc_keydesc;
-	int	sc_layout;		/* name of current translation map */
-	int	sc_modifiers;
-	int	sc_led_state;
 	int	sc_maplen;		/* number of entries in sc_map */
 	struct wscons_keymap *sc_map;	/* current translation map */
-	int	sc_composelen;		/* remaining entries in sc_composebuf */
-	keysym_t sc_composebuf[2];
 };
 
 #define MOD_SHIFT_L		(1 << 0)
@@ -160,8 +174,8 @@ struct wskbd_softc {
 #define MOD_ANYCONTROL		(MOD_CONTROL_L | MOD_CONTROL_R)
 #define MOD_ANYMETA		(MOD_META_L | MOD_META_R)
 
-#define MOD_ONESET(sc, mask)	(((sc)->sc_modifiers & (mask)) != 0)
-#define MOD_ALLSET(sc, mask)	(((sc)->sc_modifiers & (mask)) == (mask))
+#define MOD_ONESET(id, mask)	(((id)->t_modifiers & (mask)) != 0)
+#define MOD_ALLSET(id, mask)	(((id)->t_modifiers & (mask)) == (mask))
 
 #ifdef __BROKEN_INDIRECT_CONFIG
 int	wskbd_match __P((struct device *, void *, void *));
@@ -169,10 +183,10 @@ int	wskbd_match __P((struct device *, void *, void *));
 int	wskbd_match __P((struct device *, struct cfdata *, void *));
 #endif
 void	wskbd_attach __P((struct device *, struct device *, void *));
-static inline void update_leds __P((struct wskbd_softc *));
-static inline void update_modifier __P((struct wskbd_softc *, u_int, int, int));
+static inline void update_leds __P((struct wskbd_internal *));
+static inline void update_modifier __P((struct wskbd_internal *, u_int, int, int));
 static void internal_command __P((struct wskbd_softc *, u_int *, keysym_t));
-static char *wskbd_translate __P((struct wskbd_softc *, u_int, int));
+static char *wskbd_translate __P((struct wskbd_internal *, u_int, int));
 static void wskbd_holdscreen __P((struct wskbd_softc *, int));
 
 
@@ -217,8 +231,7 @@ static void wskbd_repeat __P((void *v));
 
 static int wskbd_console_initted;
 static struct wskbd_softc *wskbd_console_device;
-static const struct wskbd_consops *wskbd_console_ops;
-static void *wskbd_console_cookie;
+static struct wskbd_internal wskbd_console_data;
 
 /*
  * Print function (for parent devices).
@@ -287,17 +300,26 @@ wskbd_attach(parent, self, aux)
 		printf(": console keyboard");
 	printf("\n");
 
-	sc->sc_accessops = ap->accessops;
-	sc->sc_accesscookie = ap->accesscookie;
-	sc->sc_layout = ap->layout;
-	sc->sc_keydesc = ap->keydesc;
-	sc->sc_keydesc_len = ap->num_keydescs;
+	if (ap->console) {
+		sc->id = &wskbd_console_data;
+	} else {
+		sc->id = malloc(sizeof(struct wskbd_internal),
+				M_DEVBUF, M_WAITOK);
+		sc->id->t_keydesc_len = ap->num_keydescs;
+		sc->id->t_keydesc = ap->keydesc;
+		sc->id->t_layout = ap->layout;
+		sc->id->t_modifiers = 0;
+	}
+
+	sc->id->t_sc = sc;
+
+	sc->id->t_accesscookie = ap->accesscookie;
 	sc->sc_ready = 0;				/* sanity */
 	sc->sc_repeating = 0;
 	sc->sc_translating = 1;
 
-	if (wskbd_load_keymap(sc->sc_layout,
-			      sc->sc_keydesc, sc->sc_keydesc_len,
+	if (wskbd_load_keymap(sc->id->t_layout,
+			      sc->id->t_keydesc, sc->id->t_keydesc_len,
 			      &sc->sc_map, &sc->sc_maplen) != 0)
 		panic("cannot load keymap");
 
@@ -315,17 +337,26 @@ wskbd_attach(parent, self, aux)
 }
 
 void    
-wskbd_cnattach(consops, cookie)
-	const struct wskbd_consops *consops;
-	void *cookie;
+wskbd_cnattach(consargs)
+	const struct wskbddev_attach_args *consargs;
 {
 
 	KASSERT(!wskbd_console_initted);
 
-	wskbd_console_ops = consops;
-	wskbd_console_cookie = cookie;
+	wskbd_console_data.t_keydesc_len = consargs->num_keydescs;
+	wskbd_console_data.t_keydesc = consargs->keydesc;
+	wskbd_console_data.t_layout = consargs->layout;
+
+	wskbd_console_data.t_getc = consargs->getc;
+	wskbd_console_data.t_pollc = consargs->pollc;
+	wskbd_console_data.t_set_leds = consargs->set_leds;
+
+	wskbd_console_data.t_accesscookie = consargs->accesscookie;
 
 	wsdisplay_set_cons_kbd(wskbd_cngetc, wskbd_cnpollc);
+
+	/* Force update of led state */
+	wskbd_console_data.t_led_state = -1;
 
 	wskbd_console_initted = 1;
 }
@@ -370,7 +401,7 @@ wskbd_input(dev, type, value)
 	 * send upstream.
 	 */
 	if (sc->sc_translating) {
-		cp = wskbd_translate(sc, type, value);
+		cp = wskbd_translate(sc->id, type, value);
 		if (cp != NULL) {
 			sc->sc_repeatstr = cp;
 			sc->sc_repeatstrlen = strlen(cp);
@@ -423,15 +454,14 @@ wskbd_holdscreen(sc, hold)
 
 	if (sc->sc_displaydv != NULL) {
 		wsdisplay_kbdholdscreen(sc->sc_displaydv, hold);
-		new_state = sc->sc_led_state;
+		new_state = sc->id->t_led_state;
 		if (hold)
 			new_state |= WSKBD_LED_SCROLL;
 		else
 			new_state &= ~WSKBD_LED_SCROLL;
-		if (new_state != sc->sc_led_state) {
-			(*sc->sc_accessops->asyn_set_leds)(sc->sc_accesscookie,
-							   new_state);
-			sc->sc_led_state = new_state;
+		if (new_state != sc->id->t_led_state) {
+			(*sc->id->t_set_leds)(sc->id->t_accesscookie, new_state);
+			sc->id->t_led_state = new_state;
 		}
 	}
 }
@@ -578,7 +608,7 @@ wskbd_displayioctl(dev, cmd, data, flag, p)
 	case WSKBDIO_BELL:
 		if ((flag & FWRITE) == 0)
 			return (EACCES);
-		return ((*sc->sc_accessops->ioctl)(sc->sc_accesscookie,
+		return ((*sc->ioctl)(sc->id->t_accesscookie,
 		    WSKBDIO_COMPLEXBELL, (caddr_t)&sc->sc_bell_data, flag, p));
 
 	case WSKBDIO_COMPLEXBELL:
@@ -586,7 +616,7 @@ wskbd_displayioctl(dev, cmd, data, flag, p)
 			return (EACCES);
 		ubdp = (struct wskbd_bell_data *)data;
 		SETBELL(ubdp, ubdp, &sc->sc_bell_data);
-		return ((*sc->sc_accessops->ioctl)(sc->sc_accesscookie,
+		return ((*sc->ioctl)(sc->id->t_accesscookie,
 		    WSKBDIO_COMPLEXBELL, (caddr_t)ubdp, flag, p));
 
 	case WSKBDIO_SETBELL:
@@ -680,17 +710,17 @@ getkeyrepeat:
 		return(error);
 
 	case WSKBDIO_GETENCODING:
-		*((kbd_t *) data) = sc->sc_layout;
+		*((kbd_t *) data) = sc->id->t_layout;
 		return(0);
 
 	case WSKBDIO_SETENCODING:
 		if ((flag & FWRITE) == 0)
 			return (EACCES);
-		error = wskbd_load_keymap(*((kbd_t *)data), sc->sc_keydesc,
-					  sc->sc_keydesc_len, &sc->sc_map,
+		error = wskbd_load_keymap(*((kbd_t *)data), sc->id->t_keydesc,
+					  sc->id->t_keydesc_len, &sc->sc_map,
 					  &sc->sc_maplen);
 		if (error == 0)
-			sc->sc_layout = *((kbd_t *)data);
+			sc->id->t_layout = *((kbd_t *)data);
 		return(error);
 
 	case WSKBDIO_GETSTRING:
@@ -718,8 +748,7 @@ getkeyrepeat:
 	 * -1 if we didn't recognize the request.
 	 */
 /* printf("kbdaccess\n"); */
-	return ((*sc->sc_accessops->ioctl)(sc->sc_accesscookie, cmd,
-	    data, flag, p));
+	return ((*sc->ioctl)(sc->id->t_accesscookie, cmd, data, flag, p));
 }
 
 int
@@ -793,9 +822,9 @@ wskbd_cngetc(dev)
 		return 0;
 
 	do {
-		(*wskbd_console_ops->getc)(wskbd_console_cookie,
-					   &type, &data);
-		cp = wskbd_translate(wskbd_console_device, type, data);
+		(*wskbd_console_data.t_getc)(wskbd_console_data.t_accesscookie,
+					     &type, &data);
+		cp = wskbd_translate(&wskbd_console_data, type, data);
 	} while (cp == NULL || cp[1] != '\0');
 
 	return(cp[0]);
@@ -814,47 +843,46 @@ wskbd_cnpollc(dev, poll)
 	    !wskbd_console_device->sc_translating)
 		return;
 
-	(*wskbd_console_ops->pollc)(wskbd_console_cookie, poll);
+	(*wskbd_console_data.t_pollc)(wskbd_console_data.t_accesscookie, poll);
 }
 
 static inline void
-update_leds(sc)
-	struct wskbd_softc *sc;
+update_leds(id)
+	struct wskbd_internal *id;
 {
 	int new_state;
 
 	new_state = 0;
-	if (sc->sc_modifiers & (MOD_SHIFTLOCK | MOD_CAPSLOCK))
+	if (id->t_modifiers & (MOD_SHIFTLOCK | MOD_CAPSLOCK))
 		new_state |= WSKBD_LED_CAPS;
-	if (sc->sc_modifiers & MOD_NUMLOCK)
+	if (id->t_modifiers & MOD_NUMLOCK)
 		new_state |= WSKBD_LED_NUM;
-	if (sc->sc_modifiers & MOD_COMPOSE)
+	if (id->t_modifiers & MOD_COMPOSE)
 		new_state |= WSKBD_LED_COMPOSE;
-	if (sc->sc_modifiers & MOD_HOLDSCREEN)
+	if (id->t_modifiers & MOD_HOLDSCREEN)
 		new_state |= WSKBD_LED_SCROLL;
 
-	if (new_state != sc->sc_led_state) {
-		(*sc->sc_accessops->asyn_set_leds)(sc->sc_accesscookie,
-						   new_state);
-		sc->sc_led_state = new_state;
+	if (new_state != id->t_led_state) {
+		(*id->t_set_leds)(id->t_accesscookie, new_state);
+		id->t_led_state = new_state;
 	}
 }
 
 static inline void
-update_modifier(sc, type, toggle, mask)
-	struct wskbd_softc *sc;
+update_modifier(id, type, toggle, mask)
+	struct wskbd_internal *id;
 	u_int type;
 	int toggle;
 	int mask;
 {
 	if (toggle) {
 		if (type == WSCONS_EVENT_KEY_DOWN)
-			sc->sc_modifiers ^= mask;
+			id->t_modifiers ^= mask;
 	} else {
 		if (type == WSCONS_EVENT_KEY_DOWN)
-			sc->sc_modifiers |= mask;
+			id->t_modifiers |= mask;
 		else
-			sc->sc_modifiers &= ~mask;
+			id->t_modifiers &= ~mask;
 	}
 }
 
@@ -866,21 +894,21 @@ internal_command(sc, type, ksym)
 {
 	switch (ksym) {
 	case KS_Cmd:
-		update_modifier(sc, *type, 0, MOD_COMMAND);
+		update_modifier(sc->id, *type, 0, MOD_COMMAND);
 		break;
 
 	case KS_Cmd1:
-		update_modifier(sc, *type, 0, MOD_COMMAND1);
+		update_modifier(sc->id, *type, 0, MOD_COMMAND1);
 		break;
 
 	case KS_Cmd2:
-		update_modifier(sc, *type, 0, MOD_COMMAND2);
+		update_modifier(sc->id, *type, 0, MOD_COMMAND2);
 		break;
 	}
 
 	if (*type != WSCONS_EVENT_KEY_DOWN ||
-	    (! MOD_ONESET(sc, MOD_COMMAND) &&
-	     ! MOD_ALLSET(sc, MOD_COMMAND1 | MOD_COMMAND2)))
+	    (! MOD_ONESET(sc->id, MOD_COMMAND) &&
+	     ! MOD_ALLSET(sc->id, MOD_COMMAND1 | MOD_COMMAND2)))
 		return;
 
 	switch (ksym) {
@@ -909,99 +937,108 @@ internal_command(sc, type, ksym)
 }
 
 static char *
-wskbd_translate(sc, type, value)
-	struct wskbd_softc *sc;
+wskbd_translate(id, type, value)
+	struct wskbd_internal *id;
 	u_int type;
 	int value;
 {
+	struct wskbd_softc *sc = id->t_sc;
 	keysym_t ksym, res, *group;
-	struct wscons_keymap *kp;
+	struct wscons_keymap kpbuf, *kp;
 	static char result[2];
 
-	if (value < 0 || value >= sc->sc_maplen) {
+	if (sc != NULL) {
+		if (value < 0 || value >= sc->sc_maplen) {
 #ifdef DEBUG
-		printf("wskbd_translate: keycode %d out of range\n", value);
+			printf("wskbd_translate: keycode %d out of range\n",
+			       value);
 #endif
-		return(NULL);
+			return(NULL);
+		}
+		kp = sc->sc_map + value;
+	} else {
+		kp = &kpbuf;
+		wskbd_get_mapentry(id->t_layout, id->t_keydesc,
+				   id->t_keydesc_len, value, kp);
 	}
 
-	kp = sc->sc_map + value;
-
 	/* if this key has a command, process it first */
-	if (kp->command != KS_voidSymbol)
+	if (sc != NULL && kp->command != KS_voidSymbol)
 	    internal_command(sc, &type, kp->command);
 
 	/* Now update modifiers */
 	switch (kp->group1[0]) {
 	case KS_Shift_L:
-		update_modifier(sc, type, 0, MOD_SHIFT_L);
+		update_modifier(id, type, 0, MOD_SHIFT_L);
 		break;
 
 	case KS_Shift_R:
-		update_modifier(sc, type, 0, MOD_SHIFT_R);
+		update_modifier(id, type, 0, MOD_SHIFT_R);
 		break;
 
 	case KS_Shift_Lock:
-		update_modifier(sc, type, 1, MOD_SHIFTLOCK);
+		update_modifier(id, type, 1, MOD_SHIFTLOCK);
 		break;
 
 	case KS_Caps_Lock:
-		update_modifier(sc, type, 1, MOD_CAPSLOCK);
+		update_modifier(id, type, 1, MOD_CAPSLOCK);
 		break;
 
 	case KS_Control_L:
-		update_modifier(sc, type, 0, MOD_CONTROL_L);
+		update_modifier(id, type, 0, MOD_CONTROL_L);
 		break;
 
 	case KS_Control_R:
-		update_modifier(sc, type, 0, MOD_CONTROL_R);
+		update_modifier(id, type, 0, MOD_CONTROL_R);
 		break;
 
 	case KS_Alt_L:
-		update_modifier(sc, type, 0, MOD_META_L);
+		update_modifier(id, type, 0, MOD_META_L);
 		break;
 
 	case KS_Alt_R:
-		update_modifier(sc, type, 0, MOD_META_R);
+		update_modifier(id, type, 0, MOD_META_R);
 		break;
 
 	case KS_Mode_switch:
-		update_modifier(sc, type, 0, MOD_MODESHIFT);
+		update_modifier(id, type, 0, MOD_MODESHIFT);
 		break;
 
 	case KS_Num_Lock:
-		update_modifier(sc, type, 1, MOD_NUMLOCK);
+		update_modifier(id, type, 1, MOD_NUMLOCK);
 		break;
 
 	case KS_Hold_Screen:
-		update_modifier(sc, type, 1, MOD_HOLDSCREEN);
-		wskbd_holdscreen(sc, sc->sc_modifiers & MOD_HOLDSCREEN);
+		if (sc != NULL) {
+			update_modifier(id, type, 1, MOD_HOLDSCREEN);
+			wskbd_holdscreen(sc, id->t_modifiers & MOD_HOLDSCREEN);
+		}
 		break;
 	}
 
 	/* If this is a key release or we are in command mode, we are done */
-	if (type != WSCONS_EVENT_KEY_DOWN || MOD_ONESET(sc, MOD_COMMAND) ||
-	    MOD_ALLSET(sc, MOD_COMMAND1 | MOD_COMMAND2)) {
-		update_leds(sc);
+	if (type != WSCONS_EVENT_KEY_DOWN || MOD_ONESET(id, MOD_COMMAND) ||
+	    MOD_ALLSET(id, MOD_COMMAND1 | MOD_COMMAND2)) {
+		update_leds(id);
 		return(NULL);
 	}
 
 	/* Get the keysym */
-	if (sc->sc_modifiers & MOD_MODESHIFT)
+	if (id->t_modifiers & MOD_MODESHIFT)
 		group = & kp->group2[0];
 	else
 		group = & kp->group1[0];
 
-	if ((sc->sc_modifiers & MOD_NUMLOCK) != 0 &&
+	if ((id->t_modifiers & MOD_NUMLOCK) != 0 &&
 	    KS_GROUP(group[1]) == KS_GROUP_Keypad) {
-		if (MOD_ONESET(sc, MOD_ANYSHIFT))
+		if (MOD_ONESET(id, MOD_ANYSHIFT))
 			ksym = group[0];
 		else
 			ksym = group[1];
-	} else if (! MOD_ONESET(sc, MOD_ANYSHIFT | MOD_CAPSLOCK)) {
+	} else if (! MOD_ONESET(id, MOD_ANYSHIFT | MOD_CAPSLOCK)) {
 		ksym = group[0];
-	} else if (MOD_ONESET(sc, MOD_CAPSLOCK)) {
-		if (! MOD_ONESET(sc, MOD_SHIFT_L | MOD_SHIFT_R))
+	} else if (MOD_ONESET(id, MOD_CAPSLOCK)) {
+		if (! MOD_ONESET(id, MOD_SHIFT_L | MOD_SHIFT_R))
 			ksym = group[0];
 		else
 			ksym = group[1];
@@ -1010,7 +1047,7 @@ wskbd_translate(sc, type, value)
 		else if (ksym >= KS_agrave && ksym <= KS_thorn &&
 			 ksym != KS_division)
 			ksym += KS_Agrave - KS_agrave;
-	} else if (MOD_ONESET(sc, MOD_ANYSHIFT)) {
+	} else if (MOD_ONESET(id, MOD_ANYSHIFT)) {
 		ksym = group[1];
 	} else {
 		ksym = group[0];
@@ -1028,41 +1065,41 @@ wskbd_translate(sc, type, value)
 
 	case KS_GROUP_Mod:
 		if (ksym == KS_Multi_key) {
-			update_modifier(sc, 1, 0, MOD_COMPOSE);
-			sc->sc_composelen = 2;
+			update_modifier(id, 1, 0, MOD_COMPOSE);
+			id->t_composelen = 2;
 		}
 		break;
 
 	case KS_GROUP_Dead:
-		if (sc->sc_composelen == 0) {
-			update_modifier(sc, 1, 0, MOD_COMPOSE);
-			sc->sc_composelen = 1;
-			sc->sc_composebuf[0] = ksym;
+		if (id->t_composelen == 0) {
+			update_modifier(id, 1, 0, MOD_COMPOSE);
+			id->t_composelen = 1;
+			id->t_composebuf[0] = ksym;
 		} else
 			res = ksym;
 		break;
 	}
 
 	if (res == KS_voidSymbol) {
-		update_leds(sc);
+		update_leds(id);
 		return(NULL);
 	}
 
-	if (sc->sc_composelen > 0) {
-		sc->sc_composebuf[2 - sc->sc_composelen] = res;
-		if (--sc->sc_composelen == 0) {
-			res = wskbd_compose_value(sc->sc_composebuf);
-			update_modifier(sc, 0, 0, MOD_COMPOSE);
+	if (id->t_composelen > 0) {
+		id->t_composebuf[2 - id->t_composelen] = res;
+		if (--id->t_composelen == 0) {
+			res = wskbd_compose_value(id->t_composebuf);
+			update_modifier(id, 0, 0, MOD_COMPOSE);
 		} else {
 			return(NULL);
 		}
 	}
 
-	update_leds(sc);
+	update_leds(id);
 
 	/* We are done, return the string */
 	if (KS_GROUP(res) == KS_GROUP_Ascii) {
-		if (MOD_ONESET(sc, MOD_ANYCONTROL)) {
+		if (MOD_ONESET(id, MOD_ANYCONTROL)) {
 			if ((res >= KS_at && res <= KS_z) || res == KS_space)
 				res = res & 0x1f;
 			else if (res == KS_2)
@@ -1072,7 +1109,7 @@ wskbd_translate(sc, type, value)
 			else if (res == KS_8)
 				res = KS_Delete;
 		}
-		if (MOD_ONESET(sc, MOD_ANYMETA))
+		if (MOD_ONESET(id, MOD_ANYMETA))
 			res |= 0x80;
 	}
 

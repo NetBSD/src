@@ -1,4 +1,4 @@
-/* $NetBSD: wskbdvar.h,v 1.2 1998/04/07 13:43:17 hannken Exp $ */
+/* $NetBSD: wskbdvar.h,v 1.3 1998/04/09 13:09:47 hannken Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -35,38 +35,27 @@
  */
 
 /*
- * Keyboard access functions (must be provided by all keyboards).
- *
- * There is a "void *" cookie provided by the keyboard driver associated
- * with these functions, which is passed to them when they are invoked.
- */
-struct wskbd_accessops {
-	void	(*asyn_set_leds) __P((void *, int));
-	int	(*ioctl) __P((void *v, u_long cmd, caddr_t data, int flag,
-		    struct proc *p));
-};
-
-/*
- * Keyboard console functions (must be provided by console input keyboards).
- *
- * There is a "void *" cookie provided by the keyboard driver associated
- * with these functions, which is passed to them when they are invoked.
- */
-struct wskbd_consops {
-	void	(*getc) __P((void *, u_int *, int *));
-	void	(*pollc) __P((void *, int));
-};
-
-/*
  * Attachment information provided by wskbddev devices when attaching
- * wskbd units.
+ * wskbd units or console input keyboards.
+ *
+ * There is a "void *" cookie provided by the keyboard driver associated
+ * with these functions, which is passed to them when they are invoked.
  */
 struct wskbddev_attach_args {
 	int	console;				/* is it console? */
 	int	layout;					/* initial layout */
 	int	num_keydescs;				/* number of maps */
 	const struct wscons_keydesc *keydesc;		/* array of maps */
-	const struct wskbd_accessops *accessops;	/* access ops */
+
+							/* console only */
+	void	(*getc) __P((void *, u_int *, int *));
+	void	(*pollc) __P((void *, int));
+
+							/* wskbd_attach only */
+	void	(*set_leds) __P((void *, int));
+	int	(*ioctl) __P((void *v, u_long cmd, caddr_t data, int flag,
+		    struct proc *p));
+
 	void	*accesscookie;				/* access cookie */
 };
 
@@ -76,8 +65,7 @@ struct wskbddev_attach_args {
 /*
  * Autoconfiguration helper functions.
  */
-void	wskbd_cnattach __P((const struct wskbd_consops *consops,
-			    void *conscookie));
+void	wskbd_cnattach __P((const struct wskbddev_attach_args *));
 int	wskbddevprint __P((void *, const char *));
 
 /*
