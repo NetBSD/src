@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_m68k.c,v 1.14 1998/01/17 15:14:03 veego Exp $	*/
+/*	$NetBSD: kvm_m68k.c,v 1.15 2001/05/21 14:56:29 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -74,6 +74,7 @@ struct name_ops {
  * Match specific kcore types first, falling into a default.
  */
 static struct name_ops optbl[] = {
+	{ "sun2",	&_kvm_ops_sun2 },
 	{ "sun3",	&_kvm_ops_sun3 },
 	{ "sun3x",	&_kvm_ops_sun3x },
 	{ NULL,		&_kvm_ops_cmn },
