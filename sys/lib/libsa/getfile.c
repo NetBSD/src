@@ -1,4 +1,4 @@
-/*	$NetBSD: getfile.c,v 1.5 1996/10/13 02:27:30 christos Exp $	*/
+/*	$NetBSD: getfile.c,v 1.6 1996/10/14 04:49:21 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,7 +36,7 @@
  */
 #include "stand.h"
 
-#define CTRL(x) (a&037)
+#define CTRL(x) (x&037)
 
 int
 getfile(prompt, mode)
