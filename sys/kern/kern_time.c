@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.64 2003/02/03 23:39:41 nathanw Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.65 2003/02/04 15:46:39 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.64 2003/02/03 23:39:41 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.65 2003/02/04 15:46:39 jdolecek Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -524,7 +524,8 @@ sys_timer_create(struct lwp *l, void *v, register_t *retval)
 	clockid_t id;
 	struct sigevent *evp;
 	struct ptimer *pt;
-	int timerid, error;
+	timer_t timerid;
+	int error;
 
 	id = SCARG(uap, clock_id);
 	if (id < CLOCK_REALTIME ||
@@ -599,7 +600,7 @@ sys_timer_delete(struct lwp *l, void *v, register_t *retval)
 		syscallarg(timer_t) timerid;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	int timerid;
+	timer_t timerid;
 	struct ptimer *pt, *ptn;
 	int s;
 
