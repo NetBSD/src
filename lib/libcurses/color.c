@@ -1,4 +1,4 @@
-/*	$NetBSD: color.c,v 1.20 2002/10/22 11:37:34 blymn Exp $	*/
+/*	$NetBSD: color.c,v 1.21 2002/11/25 09:11:18 jdc Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: color.c,v 1.20 2002/10/22 11:37:34 blymn Exp $");
+__RCSID("$NetBSD: color.c,v 1.21 2002/11/25 09:11:18 jdc Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -284,7 +284,7 @@ init_pair(short pair, short fore, short back)
 	__CTRACE("init_pair: %d, %d, %d\n", pair, fore, back);
 #endif
 
-	if (pair < 0 || pair > COLOR_PAIRS)
+	if (pair < 0 || pair >= COLOR_PAIRS)
 		return (ERR);
 	if (fore < -1 || fore >= COLORS)
 		return (ERR);
