@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.c,v 1.10 2004/07/22 14:52:07 mycroft Exp $	*/
+/*	$NetBSD: ieee80211_proto.c,v 1.11 2004/07/23 06:44:55 mycroft Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_proto.c,v 1.8 2004/04/02 20:22:25 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.10 2004/07/22 14:52:07 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.11 2004/07/23 06:44:55 mycroft Exp $");
 #endif
 
 /*
@@ -345,7 +345,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int mgt
 	int linkstate = LINK_STATE_DOWN;
 
 	ostate = ic->ic_state;
-	IEEE80211_DPRINTF(("%s: %s -> %s\n", __func__,
+	IEEE80211_DPRINTF(ic, IEEE80211_MSG_STATE, ("%s: %s -> %s\n", __func__,
 		ieee80211_state_name[ostate], ieee80211_state_name[nstate]));
 	ic->ic_state = nstate;			/* state transition */
 	ni = ic->ic_bss;			/* NB: no reference held */
@@ -467,8 +467,8 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int mgt
 	case IEEE80211_S_AUTH:
 		switch (ostate) {
 		case IEEE80211_S_INIT:
-			IEEE80211_DPRINTF(("%s: invalid transition\n",
-				__func__));
+			IEEE80211_DPRINTF(ic, IEEE80211_MSG_ANY,
+				("%s: invalid transition\n", __func__));
 			break;
 		case IEEE80211_S_SCAN:
 			IEEE80211_SEND_MGMT(ic, ni,
@@ -508,8 +508,8 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int mgt
 		case IEEE80211_S_INIT:
 		case IEEE80211_S_SCAN:
 		case IEEE80211_S_ASSOC:
-			IEEE80211_DPRINTF(("%s: invalid transition\n",
-				__func__));
+			IEEE80211_DPRINTF(ic, IEEE80211_MSG_ANY,
+				("%s: invalid transition\n", __func__));
 			break;
 		case IEEE80211_S_AUTH:
 			IEEE80211_SEND_MGMT(ic, ni,
@@ -527,8 +527,8 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int mgt
 		case IEEE80211_S_INIT:
 		case IEEE80211_S_AUTH:
 		case IEEE80211_S_RUN:
-			IEEE80211_DPRINTF(("%s: invalid transition\n",
-				__func__));
+			IEEE80211_DPRINTF(ic, IEEE80211_MSG_ANY,
+				("%s: invalid transition\n", __func__));
 			break;
 		case IEEE80211_S_SCAN:		/* adhoc/hostap mode */
 		case IEEE80211_S_ASSOC:		/* infra mode */
