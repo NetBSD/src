@@ -1,4 +1,4 @@
-.\" $NetBSD: umass.4,v 1.2 2000/04/02 23:48:14 augustss Exp $
+.\" $NetBSD: umass.4,v 1.3 2000/04/03 01:14:18 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,15 +42,15 @@
 .Nd USB mass storage support
 .Sh SYNOPSIS
 .Cd "umass*     at uhub?"
-.Cd "atapibus*  at umass?"
-.Cd "scsibus*   at umass?"
+.Cd "atapibus*  at umass? channel ?"
+.Cd "scsibus*   at umass? channel ?"
 .Pp
 .Sh DESCRIPTION
 The
 .Nm
 driver provides support for USB mass storage class devices.
 .Sh HARDWARE
-Devices know to work with this driver includes:
+Devices known to work with this driver includes:
 .Pp
 .Bl -tag -width -offset indent -compact
 .It Tn IOmega Zip 100
