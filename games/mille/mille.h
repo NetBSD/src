@@ -1,4 +1,4 @@
-/*	$NetBSD: mille.h,v 1.10 1999/09/08 21:17:50 jsm Exp $	*/
+/*	$NetBSD: mille.h,v 1.11 1999/09/30 18:01:32 jsm Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -109,6 +109,14 @@
  * safety descriptions
  */
 
+# undef		S_UNKNOWN
+# undef		S_IN_HAND
+# undef		S_PLAYED
+# undef		S_GAS_SAFE
+# undef		S_SPARE_SAFE
+# undef		S_DRIVE_SAFE
+# undef		S_RIGHT_WAY
+# undef		S_CONV
 # define	S_UNKNOWN	0	/* location of safety unknown	*/
 # define	S_IN_HAND	1	/* safety in player's hand	*/
 # define	S_PLAYED	2	/* safety has been played	*/
@@ -199,7 +207,7 @@ typedef struct {
 # define	nextplay()	(Play = other(Play))
 # define	nextwin(x)	(1 - x)
 # define	opposite(x)	(Opposite[x])
-# define	issafety(x)	(x >= C_GAS_SAFE)
+# define	is_safety(x)	(x >= C_GAS_SAFE)
 
 /*
  * externals
@@ -243,7 +251,7 @@ void	getmove __P((void));
 int	getyn __P((int));
 int	haspicked __P((const PLAY *));
 void	init __P((void));
-int	isrepair __P((CARD));
+int	is_repair __P((CARD));
 int	main __P((int, char **));
 void	newboard __P((void));
 void	newscore __P((void));
