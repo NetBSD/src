@@ -23,7 +23,7 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  *
- *	$Id: db_aout.c,v 1.6 1993/08/02 17:53:11 mycroft Exp $
+ *	$Id: db_aout.c,v 1.7 1993/08/29 12:49:13 brezak Exp $
  */
 
 #include "types.h"
@@ -59,10 +59,6 @@
 #define	db_get_aout_symtab(symtab, sp, ep) \
 	(sp = (struct nlist *)((symtab) + 1), \
 	 ep = (struct nlist *)((char *)sp + *(symtab)))
-
-#ifndef SYMTAB_SPACE
-#define SYMTAB_SPACE 63000
-#endif
 
 #ifdef	SYMTAB_SPACE
 int db_symtabsize = SYMTAB_SPACE;
@@ -101,12 +97,11 @@ X_db_sym_init(symtab, esymtab, name)
 	(((vm_offset_t)(x) + sizeof(vm_size_t) - 1) & ~(sizeof(vm_size_t) - 1))
 
 	if (round_to_size(estrtab) != round_to_size(esymtab)) {
-	{
 	    db_printf("[ %s symbol table not valid ]\n", name);
 	    return;
-	}
+        }
 #undef	round_to_size
-
+        
 #endif
 
 	for (sp = sym_start; sp < sym_end; sp++) {
@@ -124,7 +119,7 @@ X_db_sym_init(symtab, esymtab, name)
 
 	if (db_add_symbol_table(sym_start, sym_end, name, (char *)symtab) !=  -1) {
 #ifndef	SYMTAB_SPACE
-                db_printf("[ preserving %#x bytes of %s symbol table ]\n",
+                db_printf("[ preserving %d bytes of %s symbol table ]\n",
                           esymtab - (char *)symtab, name);
 #endif
         }
