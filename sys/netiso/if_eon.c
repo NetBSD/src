@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.31 2001/01/17 04:05:45 itojun Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.32 2001/01/17 15:13:37 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -402,7 +402,7 @@ einval:
 		goto flush;
 	}
 	if ((el->el_flags & RTF_UP) == 0) {
-		eonrtrequest(RTM_CHANGE, rt, (struct sockaddr *) 0);
+		eonrtrequest(RTM_CHANGE, rt, (struct rt_addrinfo *) 0);
 		if ((el->el_flags & RTF_UP) == 0) {
 			error = EHOSTUNREACH;
 			goto flush;
