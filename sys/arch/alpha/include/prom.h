@@ -1,4 +1,4 @@
-/* $NetBSD: prom.h,v 1.9 1998/09/24 21:18:13 thorpej Exp $ */
+/* $NetBSD: prom.h,v 1.10 1998/10/06 21:10:46 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -55,6 +55,7 @@ void	putchar __P((int));
 void	prom_halt __P((int)) __attribute__((__noreturn__));
 int	prom_getenv __P((int, char *, int));
 
+void	hwrpb_primary_init __P((void));
 void	hwrpb_restart_setup __P((void));
 #endif
 
