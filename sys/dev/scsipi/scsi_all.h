@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_all.h,v 1.14 1998/02/13 08:28:28 enami Exp $	*/
+/*	$NetBSD: scsi_all.h,v 1.15 2000/10/05 11:23:05 ad Exp $	*/
 
 /*
  * SCSI-specific insterface description.
@@ -168,8 +168,11 @@ struct scsi_mode_header_big {
 /*
  * Status Byte
  */
-#define	SCSI_OK		0x00
-#define	SCSI_CHECK	0x02
-#define	SCSI_BUSY	0x08
-#define	SCSI_INTERM	0x10
-#define	SCSI_QUEUE_FULL	0x28
+#define	SCSI_OK			0x00
+#define	SCSI_CHECK		0x02
+#define	SCSI_BUSY		0x08
+#define	SCSI_INTERM		0x10
+#define	SCSI_RESV_CONFLICT	0x18
+#define	SCSI_TERMINATED		0x22
+#define	SCSI_QUEUE_FULL		0x28
+#define	SCSI_ACA_ACTIVE		0x30
