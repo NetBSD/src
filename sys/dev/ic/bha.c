@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.31 1999/09/30 23:12:28 thorpej Exp $	*/
+/*	$NetBSD: bha.c,v 1.32 1999/10/01 18:17:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -98,7 +98,6 @@ void	bha_done __P((struct bha_softc *, struct bha_ccb *));
 int	bha_poll __P((struct bha_softc *, struct scsipi_xfer *, int));
 void	bha_timeout __P((void *arg));
 
-int	bha_info __P((struct bha_softc *));
 int	bha_init __P((struct bha_softc *));
 
 int	bha_create_mailbox __P((struct bha_softc *));
