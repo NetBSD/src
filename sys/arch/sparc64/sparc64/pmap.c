@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.34 1999/05/09 19:24:20 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.35 1999/05/23 11:41:39 mrg Exp $	*/
 /* #define NO_VCACHE */ /* Don't forget the locked TLB in dostart */
 #define HWREF
 /* #define BOOT_DEBUG */
@@ -930,8 +930,8 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 					 1 /* valid */);
 #endif
 		newp = NULL;
-		while(pseg_set(pmap_kernel(), va, tte.data.data, newp)
-		      != NULL) {
+		while (pseg_set(pmap_kernel(), va, tte.data.data, newp)
+		    != NULL) {
 			pmap_get_page(&newp);
 			pmap_zero_page(newp);
 #ifdef DEBUG
