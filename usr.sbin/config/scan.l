@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.28 2000/10/02 19:48:35 cgd Exp $	*/
+/*	$NetBSD: scan.l,v 1.29 2001/12/17 15:39:43 atatat Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -67,6 +67,7 @@ struct incl {
 	const char *in_fname;	/* previous file name */
 	int	in_lineno;	/* previous line number */
 	int	in_ateof;	/* token to insert at EOF */
+	int	in_interesting;	/* previous value for "interesting" */
 };
 static struct incl *incl;
 static int endinclude(void);
@@ -182,6 +183,8 @@ with		return WITH;
 
 %%
 
+int interesting = 1;
+
 /*
  * Open the "main" file (conffile).
  */
@@ -204,7 +207,7 @@ firstfile(const char *fname)
  * If ateof == 0 then nothing is inserted.
  */
 int
-include(const char *fname, int ateof, int conditional)
+include(const char *fname, int ateof, int conditional, int direct)
 {
 	FILE *fp;
 	struct incl *in;
@@ -234,6 +237,10 @@ include(const char *fname, int ateof, int conditional)
 	in->in_fname = yyfile;
 	in->in_lineno = yyline;
 	in->in_ateof = ateof;
+	in->in_interesting = interesting;
+	interesting = direct & interesting;
+	if (interesting)
+		logconfig_include(fp, fname);
 	incl = in;
 	yy_switch_to_buffer(yy_create_buffer(fp, YY_BUF_SIZE));
 	yyfile = intern(s);
@@ -261,6 +268,7 @@ endinclude(void)
 	yyfile = in->in_fname;
 	yyline = in->in_lineno;
 	ateof  = in->in_ateof;
+	interesting = in->in_interesting;
 	free(in);
 
 	return (ateof);
