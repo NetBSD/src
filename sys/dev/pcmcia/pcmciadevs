@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.158 2002/01/17 09:56:43 joda Exp $
+$NetBSD: pcmciadevs,v 1.159 2002/01/28 09:25:33 aymeric Exp $
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
 /*-
@@ -83,6 +83,7 @@ vendor NOKIA			0x023d	Nokia Communications
 vendor SAMSUNG			0x0250	Samsung
 vendor SYMBOL			0x026c	Symbol
 vendor BUFFALO			0x026f	BUFFALO (Melco Corporation)
+vendor LINKSYS2			0x0274  The Linksys Group
 vendor IODATA2			0x028a	I-O DATA
 vendor BREEZECOM		0x0a02	BreezeCOM
 vendor NEWMEDIA2		0x10cd	NewMedia
@@ -90,6 +91,7 @@ vendor LASAT			0x3401	Lasat Communications A/S
 vendor LEXARMEDIA		0x4e01	Lexar Media
 vendor ARCHOS			0x5241	Archos
 vendor DUAL			0x890f	Dual
+vendor EDIMAX			0x890f	Edimax Technology Inc.
 vendor COMPEX			0x8a01	Compex Corporation
 vendor MELCO			0x8a01	Melco Corporation
 vendor ZONET			0x8a01	Zonet Technology Inc.
@@ -101,9 +103,7 @@ vendor ALLIEDTELESIS		0xc00f	Allied Telesis K.K.
 vendor HAGIWARASYSCOM		0xc012	Hagiwara SYS-COM
 vendor RATOC			0xc015  RATOC System Inc.
 vendor EMTAC			0xc250	EMTAC Technology Corporation
-vendor LINKSYS2			0x0274  The Linksys Group
 vendor ELSA			0xd601  Elsa 
-vendor EDIMAX			0x890f	Edimax Technology Inc.
 
 /*
  * List of known products.  Grouped by vendor, sorted by number within the
