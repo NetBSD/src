@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_tcp.c,v 1.4 1995/02/25 03:01:41 cgd Exp $	*/
+/*	$NetBSD: clnt_tcp.c,v 1.5 1996/12/17 03:55:20 mrg Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)clnt_tcp.c 1.37 87/10/05 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)clnt_tcp.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: clnt_tcp.c,v 1.4 1995/02/25 03:01:41 cgd Exp $";
+static char *rcsid = "$NetBSD: clnt_tcp.c,v 1.5 1996/12/17 03:55:20 mrg Exp $";
 #endif
  
 /*
@@ -53,6 +53,9 @@ static char *rcsid = "$NetBSD: clnt_tcp.c,v 1.4 1995/02/25 03:01:41 cgd Exp $";
  *
  * Now go hang yourself.
  */
+
+#include <sys/types.h>
+#include <sys/poll.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -400,17 +403,16 @@ readtcp(ct, buf, len)
 	caddr_t buf;
 	register int len;
 {
-	fd_set mask;
-	fd_set readfds;
+	struct pollfd fd;
+	int milliseconds = (ct->ct_wait.tv_sec * 1000) +
+	    (ct->ct_wait.tv_usec / 1000);
 
 	if (len == 0)
 		return (0);
-	FD_ZERO(&mask);
-	FD_SET(ct->ct_sock, &mask);
+	fd.fd = ct->ct_sock;
+	fd.events = fd.revents = POLLIN;
 	while (TRUE) {
-		readfds = mask;
-		switch (select(ct->ct_sock+1, &readfds, (int*)NULL, (int*)NULL,
-			       &(ct->ct_wait))) {
+		switch (poll(&fd, 1, milliseconds)) {
 		case 0:
 			ct->ct_error.re_status = RPC_TIMEDOUT;
 			return (-1);

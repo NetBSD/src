@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_udp.c,v 1.4 1995/02/25 03:01:42 cgd Exp $	*/
+/*	$NetBSD: clnt_udp.c,v 1.5 1996/12/17 03:55:27 mrg Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)clnt_udp.c 1.39 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)clnt_udp.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: clnt_udp.c,v 1.4 1995/02/25 03:01:42 cgd Exp $";
+static char *rcsid = "$NetBSD: clnt_udp.c,v 1.5 1996/12/17 03:55:27 mrg Exp $";
 #endif
 
 /*
@@ -40,6 +40,9 @@ static char *rcsid = "$NetBSD: clnt_udp.c,v 1.4 1995/02/25 03:01:42 cgd Exp $";
  *
  * Copyright (C) 1984, Sun Microsystems, Inc.
  */
+
+#include <sys/types.h>
+#include <sys/poll.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -222,8 +225,9 @@ clntudp_call(cl, proc, xargs, argsp, xresults, resultsp, utimeout)
 	register int outlen;
 	register int inlen;
 	int fromlen;
-	fd_set readfds;
-	fd_set mask;
+	struct pollfd fd;
+	int milliseconds = (cu->cu_wait.tv_sec * 1000) +
+	    (cu->cu_wait.tv_usec / 1000);
 	struct sockaddr_in from;
 	struct rpc_msg reply_msg;
 	XDR reply_xdrs;
@@ -276,13 +280,10 @@ send_again:
 	reply_msg.acpted_rply.ar_verf = _null_auth;
 	reply_msg.acpted_rply.ar_results.where = resultsp;
 	reply_msg.acpted_rply.ar_results.proc = xresults;
-	FD_ZERO(&mask);
-	FD_SET(cu->cu_sock, &mask);
+	fd.fd = cu->cu_sock;
+	fd.events = fd.revents = POLLIN;
 	for (;;) {
-		readfds = mask;
-		switch (select(cu->cu_sock+1, &readfds, (int *)NULL, 
-			       (int *)NULL, &(cu->cu_wait))) {
-
+		switch (poll(&fd, 1, milliseconds)) {
 		case 0:
 			time_waited.tv_sec += cu->cu_wait.tv_sec;
 			time_waited.tv_usec += cu->cu_wait.tv_usec;
