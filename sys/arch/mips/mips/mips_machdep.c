@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.161 2003/06/09 07:46:20 simonb Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.162 2003/06/11 15:27:57 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -119,7 +119,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.161 2003/06/09 07:46:20 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.162 2003/06/11 15:27:57 simonb Exp $");
 
 #include "opt_cputype.h"
 
@@ -1532,7 +1532,6 @@ savefpregs(l)
 	 */
 	__asm __volatile ("mtc0 %0, $" ___STRING(MIPS_COP_0_STATUS)
 	    :: "r"(status));
-	return;
 #endif
 }
 
@@ -1611,7 +1610,6 @@ loadfpregs(l)
 		".set reorder					\n\t"
 		".set at"
 		:: "r"(fp[32] &~ MIPS_FPU_EXCEPTION_BITS), "r"(status));
-	return;
 #endif
 }
 
