@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386.newconf,v 1.45 1995/04/07 22:25:41 fvdl Exp $
+#	$NetBSD: files.i386.newconf,v 1.46 1995/04/10 18:50:55 mycroft Exp $
 #
 # new style config file for i386 architecture
 #
@@ -127,9 +127,12 @@ device	fdc at isa {drive = -1}
 device	fd at fdc: disk, dma
 file	arch/i386/isa/fd.c		fdc needs-flag
 major	{fd = 2}
-device	mcd at isa: disk, dma
+device	mcd at isa: disk
 file	dev/isa/mcd.c			mcd needs-flag
 major	{mcd = 7}
+device	scd at isa: disk
+file	dev/isa/t/scd.c			scd needs-flag
+major	{scd = 15}
 device	wdc at isa {drive = -1}
 device	wd at wdc: disk, dma
 file	dev/isa/wd.c			wdc needs-flag
