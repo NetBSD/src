@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.45 1996/03/17 02:38:20 christos Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.46 1996/03/24 23:58:10 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -123,7 +123,7 @@ nfs_statfs(mp, sbp, p)
 	caddr_t bpos, dpos, cp2;
 	struct nfsmount *nmp = VFSTONFS(mp);
 	int error = 0, v3 = (nmp->nm_flag & NFSMNT_NFSV3), retattr;
-	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
+	struct mbuf *mreq, *mrep = NULL, *md, *mb, *mb2;
 	struct ucred *cred;
 	struct nfsnode *np;
 	u_quad_t tquad;
@@ -145,8 +145,12 @@ nfs_statfs(mp, sbp, p)
 	nfsm_request(vp, NFSPROC_FSSTAT, p, cred);
 	if (v3)
 		nfsm_postop_attr(vp, retattr);
-	if (!error)
-		nfsm_dissect(sfp, struct nfs_statfs *, NFSX_STATFS(v3));
+	if (error) {
+		if (mrep != NULL)
+			m_free(mrep);
+		goto nfsmout;
+	}
+	nfsm_dissect(sfp, struct nfs_statfs *, NFSX_STATFS(v3));
 #ifdef COMPAT_09
 	sbp->f_type = 2;
 #else
