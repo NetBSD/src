@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.127 1998/12/10 15:09:19 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.128 1999/02/28 14:12:54 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -151,7 +151,7 @@ sys_mount(p, v, retval)
 	 * A lookup in VFS_MOUNT might result in an attempt to
 	 * lock this vnode again, so make the lock resursive.
 	 */
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY | LK_CANRECURSE);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY | LK_SETRECURSE);
 	if (SCARG(uap, flags) & MNT_UPDATE) {
 		if ((vp->v_flag & VROOT) == 0) {
 			vput(vp);
@@ -285,8 +285,6 @@ sys_mount(p, v, retval)
 	(void)vfs_busy(mp, LK_NOWAIT, 0);
 	mp->mnt_op = vfs;
 	vfs->vfs_refcount++;
-	vp->v_mountedhere = mp;
-	mp->mnt_vnodecovered = vp;
 	mp->mnt_stat.f_owner = p->p_ucred->cr_uid;
 update:
 	/*
@@ -322,6 +320,8 @@ update:
 	 */
 	cache_purge(vp);
 	if (!error) {
+		vp->v_mountedhere = mp;
+		mp->mnt_vnodecovered = vp;
 		simple_lock(&mountlist_slock);
 		CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 		simple_unlock(&mountlist_slock);
@@ -332,7 +332,7 @@ update:
 		if ((error = VFS_START(mp, 0, p)))
 			vrele(vp);
 	} else {
-		mp->mnt_vnodecovered->v_mountedhere = (struct mount *)0;
+		vp->v_mountedhere = (struct mount *)0;
 		vfs->vfs_refcount--;
 		vfs_unbusy(mp);
 		free((caddr_t)mp, M_MOUNT);
