@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.96 1998/12/09 23:57:35 thorpej Exp $
+$NetBSD: pcidevs,v 1.97 1998/12/18 21:08:19 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1142,6 +1142,9 @@ product WD 90C		0xC24A	90C
 /* Winbond Electronics products */
 product WINBOND W83769F	0x0001	W83769F
 product WINBOND W89C940F 0x0940	W89C940F
+
+/* Yamaha products */
+product YAMAHA YMF724E_V 0x0004	724 Audio
 
 /* Zeinet products */
 product ZEINET 1221	0x0001	1221
