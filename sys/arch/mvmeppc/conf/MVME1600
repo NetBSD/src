@@ -1,9 +1,9 @@
-# $NetBSD: MVME1600,v 1.4 2002/04/12 08:11:11 gmcgarry Exp $
+# $NetBSD: MVME1600,v 1.5 2002/04/16 11:49:55 wiz Exp $
 #
 
 include 	"arch/mvmeppc/conf/std.mvmeppc"
 
-#ident		"MVME1600-$Revision: 1.4 $"
+#ident		"MVME1600-$Revision: 1.5 $"
 
 maxusers	8
 
@@ -144,12 +144,10 @@ isa*	at pcib?			# ISA on PCI-ISA bridge
 #pckbc0		at isa?			# pc keyboard controller
 #pckbd*		at pckbc?		# PC keyboard
 #pms*		at pckbc?		# PS/2 mouse for wsmouse
-#pmsi*		at pckbc?		# PS/2 "Intelli"mouse for wsmouse
 #vga*		at pci?
 #wsdisplay*	at vga? console ?
 #wskbd*		at pckbd? console ?
 #wsmouse*	at pms? mux 0
-#wsmouse*	at pmsi? mux 0
 
 
 # Serial Devices
