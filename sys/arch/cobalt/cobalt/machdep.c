@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35 2001/09/10 21:19:22 chris Exp $	*/
+/*	$NetBSD: machdep.c,v 1.36 2001/11/23 23:48:07 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,6 +26,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_kgdb.h"
 #include "opt_execfmt.h"
 
 #include <sys/param.h>
@@ -61,20 +62,18 @@
 #include <machine/nvram.h>
 #include <machine/leds.h>
 
+#include <dev/cons.h>
+
+#ifdef KGDB
+#include <sys/kgdb.h>
+#endif
+
 #ifdef DDB
 #include <machine/db_machdep.h>
-#include <ddb/db_access.h>
-#include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
-#ifndef DB_ELFSIZE
-#error Must define DB_ELFSIZE!
-#endif
 #define ELFSIZE		DB_ELFSIZE
 #include <sys/exec_elf.h>
 #endif
-
-#include <dev/cons.h>
-
 
 /* For sysctl. */
 char machine[] = MACHINE;
@@ -176,9 +175,14 @@ mach_init(memsize)
 	decode_bootstring();
 
 #ifdef DDB
+	ddb_init(0, NULL, NULL);
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
+#ifdef KGDB
+        if (boothowto & RB_KDB)
+                kgdb_connect(0);
+#endif    
 
 	/*
 	 * Load the rest of the available pages into the VM system.
