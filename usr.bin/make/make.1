@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.42 2000/06/01 02:29:21 sjg Exp $
+.\"	$NetBSD: make.1,v 1.42.2.1 2001/04/26 08:27:24 he Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -460,7 +460,7 @@ Alternate path to the current directory.
 normally sets
 .Ql Va .CURDIR
 to the canonical path given by
-.Xr getcwd 2 .
+.Xr getcwd 3 .
 However, if the environment variable
 .Ql Ev PWD
 is set and gives a path to the current directory, then
@@ -627,17 +627,17 @@ is the substring of
 to be replaced in
 .Ar new_string
 .It Cm @ Ar temp Cm @ Xo
-.No Ar string Cm @ 
+.No Ar string Cm @
 .Xc
 This is the loop expansion mechanism from the OSF Development
-Environment (ODE) make.  Unlike 
-.Cm \&.for 
+Environment (ODE) make.  Unlike
+.Cm \&.for
 loops expansion occurs at the time of
 reference.  Assign
 .Ar temp
 to each word in the variable and evaluate
 .Ar string .
-The ODE convention is that 
+The ODE convention is that
 .Ar temp
 should start and end with a period. For example.
 .Dl ${LINKS:@.LINK.@${LN} ${TARGET} ${.LINK.}@}
@@ -665,16 +665,16 @@ is the value.
 If the variable is non-empty it is run as a command and the output
 becomes the new value.
 .It Cm \&:= Ar str
-The variable is assigned the value 
+The variable is assigned the value
 .Ar str
-after substitution.  This modifier and its variations are useful in 
-obscure situations such as wanting to apply modifiers to 
+after substitution.  This modifier and its variations are useful in
+obscure situations such as wanting to apply modifiers to
 .Cm \&.for
-loop iteration variables which won't work due to the way 
+loop iteration variables which won't work due to the way
 .Cm \&.for
 loops are implemented.  These assignment modifiers always expand to
 nothing, so if appearing in a rule line by themselves should be
-preceded with something to keep 
+preceded with something to keep
 .Nm
 happy.  As in:
 .Bd -literal
@@ -689,9 +689,9 @@ The double
 .Cm \&:
 helps avoid false matches with the
 .At V
-style 
+style
 .Cm \&=
-modifier and since substitution always occurs the 
+modifier and since substitution always occurs the
 .Cm \&:=
 form is vaguely appropriate.
 .It Cm \&:?= Ar str
@@ -699,11 +699,11 @@ As for
 .Cm \&:=
 but only if the variable does not already have a value.
 .It Cm \&:+= Ar str
-Append 
+Append
 .Ar str
 to the variable.
 .It Cm \&:!= Ar cmd
-Assign the output of 
+Assign the output of
 .Ar cmd
 to the variable.
 .El
@@ -925,7 +925,7 @@ The syntax of a for loop is:
 .Bl -tag -width Ds
 .It Xo
 .Ic \&.for
-.Ar variable 
+.Ar variable
 .Op Ar variable ...
 .Ic in
 .Ar expression
@@ -939,7 +939,7 @@ The syntax of a for loop is:
 .El
 After the for
 .Ic expression
-is evaluated, it is split into words. On each iteration of the loop, 
+is evaluated, it is split into words. On each iteration of the loop,
 one word is taken and assigned to each
 .Ic variable ,
 in order, and these
@@ -962,7 +962,7 @@ Ignore any errors from the commands associated with this target, exactly
 as if they all were preceded by a dash
 .Pq Ql \- .
 .It Ic .MADE
-Mark all sources of this target as being up-to-date. 
+Mark all sources of this target as being up-to-date.
 .It Ic .MAKE
 Execute the commands associated with this target even if the
 .Fl n
@@ -1132,17 +1132,17 @@ If
 .Ev MAKEOBJDIRPREFIX
 is set, then
 .Nm
-will 
+will
 .Xr chdir 2
 to ${MAKEOBJDIRPREFIX}${.CURDIR} if it exists.
 Otherwise if
 .Ev MAKEOBJDIR
 and the named directory exists
 .Nm
-will 
+will
 .Xr chdir 2
 to it.
-These actions are taken before any makefiles are read which is why they 
+These actions are taken before any makefiles are read which is why they
 need to be set in the environment.
 .Sh FILES
 .Bl -tag -width /usr/share/mk -compact
