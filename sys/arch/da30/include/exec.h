@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993 Paul Mackerras.
+ * Copyright (c) 1993 Christopher G. Demetriou
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -11,7 +11,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software withough specific prior written permission
+ *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -24,13 +24,28 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: exec.h,v 1.1 1994/02/22 23:51:03 paulus Exp $
+ *	$Id: exec.h,v 1.2 1994/06/18 12:10:29 paulus Exp $
  */
 
 #ifndef _DA30_EXEC_H_
 
 #ifdef	KERNEL
+
+/*
+ * the following, if defined, prepares a set of vmspace commands for
+ * a given exectable package defined by epp.
+ * The standard executable formats are taken care of automatically;
+ * machine-specific ones can be defined using this function.
+ */
 int cpu_exec_makecmds __P((struct proc *p, struct exec_package *epp));
+
+/*
+ * the following function/macro checks to see if a given machine
+ * type (a_mid) field is valid for this architecture
+ * a non-zero return value indicates that the machine type is correct.
+ */
+#define cpu_exec_checkmid(mid) ((mid == MID_M68K) || (mid == 0)))
+
 #endif	/* KERNEL */
 
 #define __LDPGSZ	8192

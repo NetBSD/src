@@ -24,7 +24,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: sd.c,v 1.1 1994/02/22 23:50:39 paulus Exp $
+ *	$Id: sd.c,v 1.2 1994/06/18 12:10:18 paulus Exp $
  */
 /*
  * Preliminary version of a SCSI-disk driver.
@@ -376,11 +376,11 @@ sdustart(struct target *tp)
     /* Link into host adaptor's queue of requests */
     tp->base_ptr = tp->ptr;
     tp->base_count = tp->count;
-    tp->uq.b_forw = NULL;
+    tp->uq.b_actf = NULL;
     if( hp->first == NULL )
 	hp->first = tp;
     else
-	hp->last->uq.b_forw = (struct buf *) tp;
+	hp->last->uq.b_actf = (struct buf *) tp;
     hp->last = tp;
     tp->active = 1;
 }
@@ -712,7 +712,7 @@ sbic_intr(hp)
 	/* Unit operation is complete */
 	hp->active = hp->connected = 0;
 	if( (tp = hp->first) != NULL ){
-	    hp->first = (struct target *) tp->uq.b_forw;
+	    hp->first = (struct target *) tp->uq.b_actf;
 	    tp->status = status;
 	    sdudone(tp, err);
 	}

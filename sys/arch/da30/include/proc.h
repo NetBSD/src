@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1991 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,18 +30,16 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)proc.h	7.1 (Berkeley) 5/15/91
- *	$Id: proc.h,v 1.1 1994/02/22 23:51:17 paulus Exp $
+ *	from: @(#)proc.h	8.1 (Berkeley) 6/10/93
+ *	$Id: proc.h,v 1.2 1994/06/18 12:10:34 paulus Exp $
  */
 
 /*
- * Machine-dependent part of the proc structure for hp300.
+ * Machine-dependent part of the proc structure for da30.
  */
 struct mdproc {
+	int	*md_regs;		/* registers on current frame */
 	int	md_flags;		/* machine-dependent flags */
-#ifdef notyet
-	int	*p_regs;		/* registers on current frame */
-#endif
 };
 
 /* md_flags */

@@ -24,7 +24,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: gsp.c,v 1.1 1994/02/22 23:50:12 paulus Exp $
+ *	$Id: gsp.c,v 1.2 1994/06/18 12:10:14 paulus Exp $
  */
 
 #include "gsp.h"
@@ -309,7 +309,7 @@ gspstart(tp)
 
     /* some characters remain; start a timeout to push them out later */
     tp->t_state |= TS_TIMEOUT;
-    timeout((timeout_t) ttrstrt, (caddr_t) tp, 1);
+    timeout(ttrstrt, (void *) tp, 1);
 
 out:
     splx(s);
