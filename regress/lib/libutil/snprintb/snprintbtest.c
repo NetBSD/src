@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintbtest.c,v 1.1 2002/09/20 21:13:30 christos Exp $	*/
+/*	$NetBSD: snprintbtest.c,v 1.2 2002/09/21 07:33:25 petrov Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,6 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <string.h>
 #include <util.h>
 #include <err.h>
 
