@@ -1,6 +1,8 @@
+/*	$NetBSD: showmount.c,v 1.3 1994/12/21 08:48:10 jtc Exp $	*/
+
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Rick Macklem at The University of Guelph.
@@ -35,14 +37,16 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1989 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1989, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif not lint
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)showmount.c	6.5 (Berkeley) 3/1/91";*/
-static char rcsid[] = "$Id: showmount.c,v 1.2 1993/08/01 18:08:30 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)showmount.c	8.1 (Berkeley) 6/6/93";
+#endif
+static char rcsid[] = "$NetBSD: showmount.c,v 1.3 1994/12/21 08:48:10 jtc Exp $";
 #endif not lint
 
 #include <sys/types.h>
