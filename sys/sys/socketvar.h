@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.69 2004/03/17 09:58:15 yamt Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.69.2.1 2004/05/30 07:02:37 tron Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -284,6 +284,8 @@ void	sbappend(struct sockbuf *, struct mbuf *);
 void	sbappendstream(struct sockbuf *, struct mbuf *);
 int	sbappendaddr(struct sockbuf *, struct sockaddr *, struct mbuf *,
 	    struct mbuf *);
+int	sbappendaddrchain(struct sockbuf *, const struct sockaddr *,
+	     struct mbuf *, int);
 int	sbappendcontrol(struct sockbuf *, struct mbuf *, struct mbuf *);
 void	sbappendrecord(struct sockbuf *, struct mbuf *);
 void	sbcheck(struct sockbuf *);
@@ -351,6 +353,32 @@ void	sblastmbufchk(struct sockbuf *, const char *);
 vaddr_t	sokvaalloc(vsize_t, struct socket *);
 void	sokvafree(vaddr_t, vsize_t);
 void	soloanfree(struct mbuf *, caddr_t, size_t, void *);
+
+/*
+ * Values for socket-buffer-append priority argument to sbappendaddrchain().
+ * The following flags are reserved for future implementation:
+ *
+ *  SB_PRIO_NONE:  honour normal socket-buffer limits.
+ *
+ *  SB_PRIO_ONESHOT_OVERFLOW:  if the socket has any space,
+ *	deliver the entire chain. Intended for large requests
+ *      that should be delivered in their entirety, or not at all.
+ *
+ * SB_PRIO_OVERDRAFT:  allow a small (2*MLEN) overflow, over and
+ *	aboce normal socket limits. Intended messages indicating
+ *      buffer overflow in earlier normal/lower-priority messages .
+ *
+ * SB_PRIO_BESTEFFORT: Ignore  limits entirely.  Intended only for
+ * 	kernel-generated messages to specially-marked scokets which
+ *	require "reliable" delivery, nd where the source socket/protocol
+ *	message generator enforce some hard limit (but possibly well
+ *	above kern.sbmax). It is entirely up to the in-kernel source to
+ *	avoid complete mbuf exhaustion or DoS scenarios.
+ */
+#define SB_PRIO_NONE 	 	0
+#define SB_PRIO_ONESHOT_OVERFLOW 1
+#define SB_PRIO_OVERDRAFT	2
+#define SB_PRIO_BESTEFFORT	3
 
 #endif /* _KERNEL */
 
