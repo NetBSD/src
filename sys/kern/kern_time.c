@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.54.2.9 2002/02/04 23:51:00 nathanw Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.54.2.10 2002/02/19 23:25:10 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.54.2.9 2002/02/04 23:51:00 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.54.2.10 2002/02/19 23:25:10 nathanw Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -540,7 +540,15 @@ sys_timer_create(struct lwp *l, void *v, register_t *retval)
 		pt->pt_ev.sigev_signo = SIGALRM;
 		pt->pt_ev.sigev_value.sival_int = timerid;
 	}
-		
+	pt->pt_info.si_signo = pt->pt_ev.sigev_signo;
+	pt->pt_info.si_errno = 0;
+	pt->pt_info.si_code = 0;
+	pt->pt_info.si_pid = p->p_pid;
+	pt->pt_info.si_uid = p->p_cred->p_ruid;
+	pt->pt_info.si_addr = NULL;
+	pt->pt_info.si_status = 0;
+	pt->pt_info.si_value = pt->pt_ev.sigev_value;
+
 	callout_init(&pt->pt_ch);
 	pt->pt_type = CLOCK_REALTIME;
 	pt->pt_proc = p;
@@ -711,8 +719,8 @@ realtimerupcall(struct lwp *l, void *arg)
 	struct ptimer *pt;
 
 	pt = (struct ptimer *)arg;
-	sa_upcall(l, SA_UPCALL_SIGEV, NULL, l, sizeof(struct sigevent), 
-	    &pt->pt_ev);
+	sa_upcall(l, SA_UPCALL_SIGEV, NULL, l, sizeof(siginfo_t), 
+	    &pt->pt_info);
 	
 	/* The upcall should only be generated once. */
 	l->l_proc->p_userret = NULL;
@@ -763,8 +771,8 @@ realtimerexpire(void *arg)
 				sd = sadata_upcall_alloc(0);
 				cpu_setfunc(l2, sa_switchcall, NULL);
 				ret = sa_upcall0(l2, SA_UPCALL_SIGEV,
-				    NULL, NULL, sizeof(struct sigevent), 
-				    &pt->pt_ev, sd);
+				    NULL, NULL, sizeof(siginfo_t), 
+				    &pt->pt_info, sd);
 				if (ret == 0) {
 					p->p_nrlwps++;
 					l2->l_priority = l2->l_usrpri;
