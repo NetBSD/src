@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.33 1994/05/07 06:23:12 mycroft Exp $
+ *	$Id: machdep.c,v 1.34 1994/05/17 10:34:41 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -190,8 +190,8 @@ cpu_startup()
 #endif
 	/* avail_end was pre-decremented in pmap_bootstrap to compensate */
 	for (i = 0; i < btoc(sizeof (struct msgbuf)); i++)
-		pmap_enter(pmap_kernel(), msgbufp, avail_end + i * NBPG,
-			   VM_PROT_ALL, TRUE);
+		pmap_enter(kernel_pmap, (vm_offset_t)msgbufp,
+		    avail_end + i * NBPG, VM_PROT_ALL, TRUE);
 	msgbufmapped = 1;
 
 	/*
@@ -501,14 +501,13 @@ identifycpu()
 	}
 	switch (ectype) {
 	case EC_VIRT:
-		strcat(cpu_model, " virtual-address cache)",
-		       machineid == HP_320 ? 16 : 32);
+		strcat(cpu_model, " virtual-address cache");
 		break;
 	case EC_PHYS:
-		strcat(cpu_model, " physical-address cache)",
-		       machineid == HP_370 ? 64 : 32);
+		strcat(cpu_model, " physical-address cache");
 		break;
 	}
+	strcat(cpu_model, ")");
 	printf("%s\n", cpu_model);
 	/*
 	 * Now that we have told the user what they have,
@@ -1457,7 +1456,8 @@ findparerror()
 	looking = 1;
 	ecacheoff();
 	for (pg = btoc(lowram); pg < btoc(lowram)+physmem; pg++) {
-		pmap_enter(pmap_kernel(), vmmap, ctob(pg), VM_PROT_READ, TRUE);
+		pmap_enter(kernel_pmap, (vm_offset_t)vmmap, ctob(pg),
+		    VM_PROT_READ, TRUE);
 		for (o = 0; o < NBPG; o += sizeof(int))
 			i = *(int *)(&vmmap[o]);
 	}
@@ -1468,7 +1468,7 @@ findparerror()
 	found = 0;
 done:
 	looking = 0;
-	pmap_remove(pmap_kernel(), vmmap, &vmmap[NBPG]);
+	pmap_remove(kernel_pmap, (vm_offset_t)vmmap, (vm_offset_t)&vmmap[NBPG]);
 	ecacheon();
 	splx(s);
 	return(found);
