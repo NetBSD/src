@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.145.4.2 1999/06/21 01:23:59 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.145.4.3 1999/08/02 22:19:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -226,7 +226,10 @@ main()
 	/*
 	 * Create process 0 (the swapper).
 	 */
+	s = proclist_lock_write();
 	LIST_INSERT_HEAD(&allproc, p, p_list);
+	proclist_unlock_write(s);
+
 	p->p_pgrp = &pgrp0;
 	LIST_INSERT_HEAD(PGRPHASH(0), &pgrp0, pg_hash);
 	LIST_INIT(&pgrp0.pg_members);
@@ -410,11 +413,11 @@ main()
 	cpu_set_kpc(initproc, start_init, initproc);
 
 	/* Create process 2, the pageout daemon kernel thread. */
-	if (kthread_create(start_pagedaemon, NULL, NULL, "pagedaemon"))
+	if (kthread_create1(start_pagedaemon, NULL, NULL, "pagedaemon"))
 		panic("fork pagedaemon");
 
 	/* Create process 3, the process reaper kernel thread. */
-	if (kthread_create(start_reaper, NULL, NULL, "reaper"))
+	if (kthread_create1(start_reaper, NULL, NULL, "reaper"))
 		panic("fork reaper");
 
 	/* Create process 4, the aiodone daemon kernel thread. */

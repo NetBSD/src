@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.87.4.1 1999/06/21 01:24:02 thorpej Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.87.4.2 1999/08/02 22:19:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -627,10 +627,11 @@ killpg1(cp, signum, pgid, all)
 	struct pgrp *pgrp;
 	int nfound = 0;
 	
-	if (all)	
+	if (all) {
 		/* 
 		 * broadcast 
 		 */
+		proclist_lock_read();
 		for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
 			if (p->p_pid <= 1 || p->p_flag & P_SYSTEM || 
 			    p == cp || !CANSIGNAL(cp, pc, p, signum))
@@ -639,7 +640,8 @@ killpg1(cp, signum, pgid, all)
 			if (signum)
 				psignal(p, signum);
 		}
-	else {
+		proclist_unlock_read();
+	} else {
 		if (pgid == 0)		
 			/* 
 			 * zero pgid means send to my process group.
@@ -655,7 +657,7 @@ killpg1(cp, signum, pgid, all)
 			    !CANSIGNAL(cp, pc, p, signum))
 				continue;
 			nfound++;
-			if (signum && p->p_stat != SZOMB)
+			if (signum && P_ZOMBIE(p) == 0)
 				psignal(p, signum);
 		}
 	}
@@ -920,7 +922,7 @@ psignal(p, signum)
 
 	default:
 		/*
-		 * SRUN, SIDL, SZOMB do nothing with the signal,
+		 * SRUN, SIDL, SDEAD, SZOMB do nothing with the signal,
 		 * other than kicking ourselves if we are running.
 		 * It will either never be noticed, or noticed very soon.
 		 */

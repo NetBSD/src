@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.54.4.1 1999/06/21 01:24:01 thorpej Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.54.4.2 1999/08/02 22:19:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -172,8 +172,9 @@ fork1(p1, flags, exitsig, stack, stacksize, retval, rnewprocp)
 	newproc = pool_get(&proc_pool, PR_WAITOK);
 
 	/*
-	 * BEGIN PID ALLOCATION.  (Lock PID allocation variables eventually).
+	 * BEGIN PID ALLOCATION.
 	 */
+	s = proclist_lock_write();
 
 	/*
 	 * Find an unused process ID.  We remember a range of unused IDs
@@ -244,15 +245,18 @@ again:
 	 * Put the proc on allproc before unlocking PID allocation
 	 * so that waiters won't grab it as soon as we unlock.
 	 */
-	LIST_INSERT_HEAD(&allproc, p2, p_list);
-
-	/*
-	 * END PID ALLOCATION.  (Unlock PID allocation variables).
-	 */
 
 	p2->p_stat = SIDL;			/* protect against others */
 	p2->p_forw = p2->p_back = NULL;		/* shouldn't be necessary */
+
+	LIST_INSERT_HEAD(&allproc, p2, p_list);
+
 	LIST_INSERT_HEAD(PIDHASH(p2->p_pid), p2, p_hash);
+
+	/*
+	 * END PID ALLOCATION.
+	 */
+	proclist_unlock_write(s);
 
 	/*
 	 * Make a proc table entry for the new process.

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.100.4.3 1999/07/31 18:37:55 chs Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.100.4.4 1999/08/02 22:19:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -201,10 +201,11 @@ vfs_busy(mp, flags, interlkp)
 {
 	int lkflags;
 
-	if (mp->mnt_flag & MNT_UNMOUNT) {
+	while (mp->mnt_flag & MNT_UNMOUNT) {
+		int gone;
+		
 		if (flags & LK_NOWAIT)
 			return (ENOENT);
-		mp->mnt_flag |= MNT_MWAIT;
 		if (interlkp)
 			simple_unlock(interlkp);
 		/*
@@ -212,11 +213,21 @@ vfs_busy(mp, flags, interlkp)
 		 * lock granted when unmounting, the only place that a
 		 * wakeup needs to be done is at the release of the
 		 * exclusive lock at the end of dounmount.
+		 *
+		 * XXX MP: add spinlock protecting mnt_wcnt here once you
+		 * can atomically unlock-and-sleep.
 		 */
+		mp->mnt_wcnt++;
 		sleep((caddr_t)mp, PVFS);
+		mp->mnt_wcnt--;
+		gone = mp->mnt_flag & MNT_GONE;
+		
+		if (mp->mnt_wcnt == 0)
+			wakeup(&mp->mnt_wcnt);
 		if (interlkp)
 			simple_lock(interlkp);
-		return (ENOENT);
+		if (gone)
+			return (ENOENT);
 	}
 	lkflags = LK_SHARED;
 	if (interlkp)
@@ -399,9 +410,24 @@ getnewvnode(tag, mp, vops, vpp)
 	struct uvm_object *uobj;
 	struct proc *p = curproc;	/* XXX */
 	struct vnode *vp;
+	int error;
 #ifdef DIAGNOSTIC
 	int s;
 #endif
+	if (mp) {
+		/*
+		 * Mark filesystem busy while we're creating a vnode.
+		 * If unmount is in progress, this will wait; if the
+		 * unmount succeeds (only if umount -f), this will
+		 * return an error.  If the unmount fails, we'll keep
+		 * going afterwards.
+		 * (This puts the per-mount vnode list logically under
+		 * the protection of the vfs_busy lock).
+		 */
+		error = vfs_busy(mp, 0, 0);
+		if (error)
+			return error;
+	}
 
 	simple_lock(&vnode_free_list_slock);
 	if ((vnode_free_list.tqh_first == NULL &&
@@ -414,8 +440,15 @@ getnewvnode(tag, mp, vops, vpp)
 	} else {
 		for (vp = vnode_free_list.tqh_first;
 				vp != NULLVP; vp = vp->v_freelist.tqe_next) {
-			if (simple_lock_try(&vp->v_interlock))
-				break;
+			if (simple_lock_try(&vp->v_interlock)) {
+				if ((vp->v_flag & VLAYER) == 0) {
+					break;
+				}
+				if (VOP_ISLOCKED(vp) == 0)
+					break;
+				else
+					simple_unlock(&vp->v_interlock);
+			}
 		}
 		/*
 		 * Unless this is a bad time of the month, at most
@@ -424,6 +457,7 @@ getnewvnode(tag, mp, vops, vpp)
 		 */
 		if (vp == NULLVP) {
 			simple_unlock(&vnode_free_list_slock);
+			if (mp) vfs_unbusy(mp);
 			tablefull("vnode");
 			*vpp = 0;
 			return (ENFILE);
@@ -458,6 +492,8 @@ getnewvnode(tag, mp, vops, vpp)
 		vp->v_socket = 0;
 	}
 	vp->v_type = VNON;
+	vp->v_vnlock = &vp->v_lock;
+	lockinit(vp->v_vnlock, PVFS, "vnlock", 0, 0);
 	cache_purge(vp);
 	vp->v_tag = tag;
 	vp->v_op = vops;
@@ -477,6 +513,8 @@ getnewvnode(tag, mp, vops, vpp)
 
 	vp->v_uvm.u_size = VSIZENOTSET;
 #endif
+
+	if (mp) vfs_unbusy(mp);
 	return (0);
 }
 
@@ -489,6 +527,13 @@ insmntque(vp, mp)
 	register struct mount *mp;
 {
 
+#ifdef DIAGNOSTIC
+	if ((mp != NULL) &&
+	    (mp->mnt_flag & MNT_UNMOUNT)) {
+		panic("insmntque into dying filesystem");
+	}
+#endif
+	
 	simple_lock(&mntvnode_slock);
 	/*
 	 * Delete from old mount point vnode list, if on one.
@@ -859,6 +904,8 @@ loop:
 	vclean(vp, 0, p);
 	vp->v_op = nvp->v_op;
 	vp->v_tag = nvp->v_tag;
+	vp->v_vnlock = &vp->v_lock;
+	lockinit(vp->v_vnlock, PVFS, "vnlock", 0, 0);
 	nvp->v_type = VNON;
 	insmntque(vp, mp);
 	return (vp);
@@ -1203,6 +1250,12 @@ vclean(vp, flags, p)
 			 * Insert at tail of LRU list.
 			 */
 			simple_lock(&vnode_free_list_slock);
+#ifdef DIAGNOSTIC
+			if (vp->v_vnlock) {
+				if ((vp->v_vnlock->lk_flags & LK_DRAINED) == 0)
+					vprint("vclean: lock not drained", vp);
+			}
+#endif
 			TAILQ_INSERT_TAIL(&vnode_free_list, vp, v_freelist);
 			simple_unlock(&vnode_free_list_slock);
 		}
@@ -1210,12 +1263,6 @@ vclean(vp, flags, p)
 	}
 
 	cache_purge(vp);
-	if (vp->v_vnlock) {
-		if ((vp->v_vnlock->lk_flags & LK_DRAINED) == 0)
-			vprint("vclean: lock not drained", vp);
-		FREE(vp->v_vnlock, M_VNODE);
-		vp->v_vnlock = NULL;
-	}
 
 	/*
 	 * Done with purge, notify sleepers of the grim news.
