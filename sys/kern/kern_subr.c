@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.110 2004/04/21 18:40:38 itojun Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.111 2004/04/21 20:31:50 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.110 2004/04/21 18:40:38 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.111 2004/04/21 20:31:50 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -207,24 +207,19 @@ uiomove(buf, n, uio)
 
 /*
  * Wrapper for uiomove() that validates the arguments against a known-good
- * kernel buffer.  Currently, uiomove accepts a signed (n) argument, which
- * is almost definitely a bad thing, so we catch that here as well.  We
- * return a runtime failure, but it might be desirable to generate a runtime
- * assertion failure instead.
+ * kernel buffer.
  */
 int
-uiomove_frombuf(void *buf, int buflen, struct uio *uio)
+uiomove_frombuf(void *buf, size_t buflen, struct uio *uio)
 {
-	unsigned int offset, n;
+	size_t offset;
 
 	if (uio->uio_offset < 0 || uio->uio_resid < 0 ||
 	    (offset = uio->uio_offset) != uio->uio_offset)
 		return (EINVAL);
-	if (buflen <= 0 || offset >= buflen)
+	if (offset >= buflen)
 		return (0);
-	if ((n = buflen - offset) > INT_MAX)
-		return (EINVAL);
-	return (uiomove((char *)buf + offset, n, uio));
+	return (uiomove((char *)buf + offset, buflen - offset, uio));
 }
 
 /*
