@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.18 2002/02/03 01:21:48 manu Exp $
+	$NetBSD: syscalls.master,v 1.19 2002/02/03 17:39:54 manu Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -231,10 +231,13 @@
 122	UNIMPL		exportfs
 123	UNIMPL		setregid
 124	UNIMPL		setreuid
-125	UNIMPL		getitimer
-126	UNIMPL		setitimer
-127	UNIMPL		adjtime
-128	UNIMPL		gettimeofday
+125	NOARGS		{ int sys_getitimer(u_int which, \
+			    struct itimerval *itv); }
+126	NOARGS		{ int sys_setitimer(u_int which, \
+			    struct itimerval *itv, struct itimerval *oitv); }
+127	NOARGS		{ int sys_adjtime(struct timeval *delta, \
+			    struct timeval *olddelta); }
+128	STD		{ int svr4_sys_gettimeofday(struct timeval *tp); }
 129	UNIMPL		sproc
 130	STD		{ ptrdiff_t irix_sys_prctl(unsigned int option, \
 			    void *arg1); }
