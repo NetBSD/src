@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.49 1999/09/18 11:25:50 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.50 1999/10/12 11:21:25 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -312,11 +312,10 @@ ohci_activate(self, act)
 }
 
 int
-ohci_detach(self, flags)
-	device_ptr_t self;
+ohci_detach(sc, flags)
+	struct ohci_softc *sc;
 	int flags;
 {
-	struct ohci_softc *sc = (struct ohci_softc *)self;
 	int rv = 0;
 
 	if (sc->sc_child != NULL)
