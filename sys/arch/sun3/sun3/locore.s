@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.30 1995/06/02 16:46:18 gwr Exp $	*/
+/*	$NetBSD: locore.s,v 1.31 1995/06/13 22:16:38 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -1364,22 +1364,16 @@ Lm68881rdone:
 	frestore a0@			| restore state
 	rts
 
-| These two routines depend on the variable "cpuspeed"
-| which should be set to the CPU clock rate in MHz.
-| XXX - Currently this is set in sun3_startup.c based on the
-| CPU model but this should be determined at run time...
-	.data
-	.even
-	.globl	_cpuspeed
-_cpuspeed:
-	.long	20	| assume 20 MHz (Sun3/60)
-
-	.text
 | delay(int usecs)
 | Delay for "usec" microseconds.  Minimum delay is about 5 uS.
-	.even
-.globl	_delay
-_delay:	|
+|
+| This routine depends on the variable "cpuspeed"
+| which should be set based on the CPU clock rate.
+| XXX - Currently this is set in sun3_startup.c based on the
+| CPU model but this should be determined at run time...
+|
+	.globl	_delay
+_delay:
 	| d0 = (cpuspeed * usecs)
 	movel	_cpuspeed,d0
 	mulsl	sp@(4),d0
@@ -1391,26 +1385,6 @@ Ldelay:
 	subql	#8,d0
 	jgt	Ldelay
 	rts
-
-	.text
-| delay2us()
-| Delay for at least 2.2 uS. (for the ZS driver).
-| This actually takes about 2.4 uS.  Just right.
-| XXX - Need to make this work for any cpuspeed.
-	.even
-.globl _delay2us	
-_delay2us:
-	movel	_cpuspeed,d0
-	moveq	#16,d1
-	subl	d1,d0	| d0=cpuspeed-16
-	jle	Lrts
-	subql	#4,d0	| d0=cpuspeed-20
-	jle	Lrts
-	subql	#5,d0	| d0=cpuspeed-25
-	jle	Lrts
-	subql	#5,d0	| d0=cpuspeed-30
-	nop ; nop
-Lrts:	rts
 
 
 | Define some addresses, mostly so DDB can print useful info.
