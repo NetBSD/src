@@ -1,4 +1,4 @@
-/*	$NetBSD: hit.c,v 1.5 1998/11/10 13:01:31 hubertf Exp $	*/
+/*	$NetBSD: hit.c,v 1.6 2002/07/07 09:35:07 tron Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)hit.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: hit.c,v 1.5 1998/11/10 13:01:31 hubertf Exp $");
+__RCSID("$NetBSD: hit.c,v 1.6 2002/07/07 09:35:07 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -213,17 +213,17 @@ get_w_damage(obj)
 	const object *obj;
 {
 	char new_damage[12];
-	int to_hit, damage;
+	int tmp_to_hit, tmp_damage;
 	int i = 0;
 
 	if ((!obj) || (obj->what_is != WEAPON)) {
 		return(-1);
 	}
-	to_hit = get_number(obj->damage) + obj->hit_enchant;
+	tmp_to_hit = get_number(obj->damage) + obj->hit_enchant;
 	while (obj->damage[i++] != 'd') ;
-	damage = get_number(obj->damage + i) + obj->d_enchant;
+	tmp_damage = get_number(obj->damage + i) + obj->d_enchant;
 
-	sprintf(new_damage, "%dd%d", to_hit, damage);
+	sprintf(new_damage, "%dd%d", tmp_to_hit, tmp_damage);
 
 	return(get_damage(new_damage, 1));
 }
