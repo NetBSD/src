@@ -1095,7 +1095,7 @@ sh_elf_relax_delete_bytes (abfd, sec, addr, count)
 
 		  val = bfd_get_32 (abfd, contents + nraddr);
 		  val += sym.st_value;
-		  if (val >= addr && val < toaddr)
+		  if (val > addr && val < toaddr)
 		    bfd_put_32 (abfd, val - count, contents + nraddr);
 		}
 	    }
@@ -1318,7 +1318,7 @@ sh_elf_relax_delete_bytes (abfd, sec, addr, count)
 
 	      val = bfd_get_32 (abfd, ocontents + irelscan->r_offset);
 	      val += sym.st_value;
-	      if (val >= addr && val < toaddr)
+	      if (val > addr && val < toaddr)
 		bfd_put_32 (abfd, val - count,
 			    ocontents + irelscan->r_offset);
 	    }
