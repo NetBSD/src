@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.8 2001/03/20 05:51:35 matt Exp $ */
+/*	$NetBSD: devopen.c,v 1.9 2001/05/01 13:08:09 ragge Exp $ */
 /*
  * Copyright (c) 1997 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -170,6 +170,11 @@ devopen(f, fname, file)
 		else
 			nexaddr = BI_BASE(adapt, ctlr);
 		break;
+	case VAX_BTYP_610:
+		nexaddr = 0; /* No map regs */
+		csrbase = 0x20000000;
+		break;
+
 	default:
 		nexaddr = 0; /* No map regs */
 		csrbase = 0x20000000;
