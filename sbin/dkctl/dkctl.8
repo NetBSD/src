@@ -1,4 +1,4 @@
-.\"	$NetBSD: dkctl.8,v 1.9 2003/07/13 09:53:10 lukem Exp $
+.\"	$NetBSD: dkctl.8,v 1.10 2004/08/30 09:38:28 drochner Exp $
 .\"
 .\" Copyright 2002 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -106,6 +106,9 @@ is specified.)
 .Ar flush | list | retry
 .Pp
 Used for managing the kernel's bad sector list for wd* devices.
+The software bad sector list is only maintained if the option
+.Dq WD_SOFTBADSECT
+was specified on kernel configuration.
 .Bl -tag -width indent
 .It flush
 Clears the in kernel list of bad sectors.
