@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.29 1998/03/07 01:11:39 thorpej Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.30 1998/03/07 01:26:04 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.29 1998/03/07 01:11:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.30 1998/03/07 01:26:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -339,7 +339,7 @@ cpu_swapout(p)
 
 /*
  * Move pages from one kernel virtual address to another.
- * Both addresses are assumed to reside in the Sysmap,
+ * Both addresses are assumed to have valid page table pages
  * and size must be a multiple of CLSIZE.
  */
 void
