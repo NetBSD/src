@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.21 1999/01/13 01:51:37 wrstuden Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.22 1999/01/15 22:04:44 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -139,7 +139,6 @@ nullfs_mount(mp, path, data, ndp, p)
 	error = null_node_create(mp, lowerrootvp, &vp, 1);
 	/*
 	 * Make sure the node alias worked
-	 *
 	 */
 	if (error) {
 		vrele(lowerrootvp);
