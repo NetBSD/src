@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.64 2002/12/06 02:17:30 jmc Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.65 2002/12/09 07:26:02 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.64 2002/12/06 02:17:30 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.65 2002/12/09 07:26:02 jmc Exp $");
 
 #define FWOHCI_WAIT_DEBUG 1
 
@@ -3711,7 +3711,15 @@ fwohci_write(struct ieee1394_abuf *ab)
 	u_int32_t high, lo;
 	int rv;
 
-	if (ab->ab_length > IEEE1394_MAX_REC(sc->sc1394_max_receive)) {
+	if (ab->ab_tcode == IEEE1394_TCODE_WRITE_REQ_BLOCK) {
+		if (ab->ab_length > IEEE1394_MAX_REC(sc->sc1394_max_receive)) {
+			DPRINTF(("Packet too large: %d\n", ab->ab_length));
+			return E2BIG;
+		}
+	}
+
+	if (ab->ab_length > 
+	    IEEE1394_MAX_ASYNCH_FOR_SPEED(sc->sc1394_link_speed)) {
 		DPRINTF(("Packet too large: %d\n", ab->ab_length));
 		return E2BIG;
 	}
