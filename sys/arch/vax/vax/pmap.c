@@ -1,4 +1,4 @@
-/*      $NetBSD: pmap.c,v 1.14 1995/06/16 15:36:47 ragge Exp $     */
+/*      $NetBSD: pmap.c,v 1.15 1995/07/05 08:36:37 ragge Exp $     */
 #define DEBUG
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -152,7 +152,12 @@ pmap_bootstrap()
 
 	blkclr(Sysmap,(uint)vmmap-(uint)Sysmap);
 	pmap_map(0x80000000,0,2*NBPG,VM_PROT_READ|VM_PROT_WRITE);
+#ifdef DDB
+	pmap_map(0x80000400,2*NBPG,(vm_offset_t)(&etext),
+	    VM_PROT_READ|VM_PROT_WRITE);
+#else
 	pmap_map(0x80000400,2*NBPG,(vm_offset_t)(&etext),VM_PROT_EXECUTE);
+#endif
 	pmap_map((vm_offset_t)(&etext),(vm_offset_t)&etext,
 		(vm_offset_t)Sysmap,VM_PROT_READ|VM_PROT_WRITE);
 	pmap_map((vm_offset_t)Sysmap,(vm_offset_t)Sysmap,istack,
