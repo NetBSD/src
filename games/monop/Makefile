@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.8 (Berkeley) 9/2/92
-#	$Id: Makefile,v 1.7 1993/08/10 02:44:47 mycroft Exp $
+#	$Id: Makefile,v 1.8 1993/08/10 02:46:49 mycroft Exp $
 
 PROG=	monop
 SRCS=	monop.c cards.c execute.c getinp.c houses.c jail.c misc.c morg.c \
@@ -9,8 +9,6 @@ DPADD+=	${LIBCOMPAT}
 LDADD+=	-lcompat
 HIDEGAME=hidegame
 CLEANFILES+=initdeck cards.pck
-
-all: ${PROG} ${MAN6}
 
 monop: cards.pck
 
