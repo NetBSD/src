@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_input.c,v 1.15.2.6 2001/04/06 00:27:12 he Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.15.2.7 2003/09/09 10:01:36 msaitoh Exp $	*/
 /*	$KAME: ah_input.c,v 1.34 2000/10/01 12:37:18 itojun Exp $	*/
 
 /*
@@ -518,9 +518,9 @@ ah4_input(m, va_alist)
 				goto fail;
 			}
 			m_adj(n, stripsiz);
-			m_cat(m, n);
 			/* m_cat does not update m_pkthdr.len */
 			m->m_pkthdr.len += n->m_pkthdr.len;
+			m_cat(m, n);
 		}
 #endif
 
@@ -946,9 +946,9 @@ ah6_input(mp, offp, proto)
 				goto fail;
 			}
 			m_adj(n, stripsiz);
-			m_cat(m, n);
 			/* m_cat does not update m_pkthdr.len */
 			m->m_pkthdr.len += n->m_pkthdr.len;
+			m_cat(m, n);
 		}
 #endif
 		ip6 = mtod(m, struct ip6_hdr *);
