@@ -1,4 +1,4 @@
-.\"	$NetBSD: pwd.1,v 1.12 1997/09/14 08:51:38 lukem Exp $
+.\"	$NetBSD: pwd.1,v 1.13 1998/11/03 21:38:19 wsanchez Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@
 .\"
 .\"     @(#)pwd.1	8.2 (Berkeley) 4/28/95
 .\"
-.Dd April 28, 1995
+.Dd November 2, 1998
 .Dt PWD 1
 .Os BSD 4
 .Sh NAME
@@ -44,6 +44,7 @@
 .Nd return working directory name
 .Sh SYNOPSIS
 .Nm
+.Op Fl LP
 .Sh DESCRIPTION
 .Nm
 writes the absolute pathname of the current working directory to
@@ -52,6 +53,16 @@ the standard output.
 The
 .Nm
 utility exits 0 on success, and >0 if an error occurs.
+.Pp
+The following options are available:
+.Bl -tag -width indent
+.It Fl L
+Print the logical path to the current working directory, as defined
+by the shell in the evironment variable PWD.
+.It Fl P
+Print the physical path to the current working directory, with symbolic
+links in the path resolved. This is the default.
+.El
 .Sh STANDARDS
 The
 .Nm
