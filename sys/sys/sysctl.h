@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.90 2003/02/10 00:35:15 atatat Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.91 2003/02/27 01:39:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -522,15 +522,17 @@ struct kinfo_lwp {
 #define	HW_MODEL	 2		/* string: specific machine model */
 #define	HW_NCPU		 3		/* int: number of cpus */
 #define	HW_BYTEORDER	 4		/* int: machine byte order */
-#define	HW_PHYSMEM	 5		/* int: total memory */
-#define	HW_USERMEM	 6		/* int: non-kernel memory */
+#define	HW_PHYSMEM	 5		/* int: total memory (bytes) */
+#define	HW_USERMEM	 6		/* int: non-kernel memory (bytes) */
 #define	HW_PAGESIZE	 7		/* int: software page size */
 #define	HW_DISKNAMES	 8		/* string: disk drive names */
 #define	HW_DISKSTATS	 9		/* struct: diskstats[] */
 #define	HW_MACHINE_ARCH	10		/* string: machine architecture */
 #define	HW_ALIGNBYTES	11		/* int: ALIGNBYTES for the kernel */
 #define	HW_CNMAGIC	12		/* string: console magic sequence(s) */
-#define	HW_MAXID	13		/* number of valid hw ids */
+#define	HW_PHYSPAGES	13		/* quad: total memory (pages) */
+#define	HW_USERPAGES	14		/* quad: non-kernel memory (pages) */
+#define	HW_MAXID	15		/* number of valid hw ids */
 
 #define	CTL_HW_NAMES { \
 	{ 0, 0 }, \
@@ -546,6 +548,8 @@ struct kinfo_lwp {
 	{ "machine_arch", CTLTYPE_STRING }, \
 	{ "alignbytes", CTLTYPE_INT }, \
 	{ "cnmagic", CTLTYPE_STRING }, \
+	{ "physpages", CTLTYPE_QUAD }, \
+	{ "userpages", CTLTYPE_QUAD }, \
 }
 
 /*
