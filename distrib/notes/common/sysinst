@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.32.2.8 2002/07/09 08:09:52 lukem Exp $
+.\"	$NetBSD: sysinst,v 1.32.2.9 2002/07/09 08:51:14 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1164,7 +1164,7 @@ You don't need to remember this name.
 .Em Preparing your hard disk
 .Pp
 .Em "You are now at the point of no return".
-.if r_atari \{\
+.ie r_atari \{\
 Apart from the changes you made with
 .Ic ahdilabel
 nothing has been modified on your disk yet.
@@ -1174,7 +1174,7 @@ the partitions now assigned to
 .Nx
 will be actually written to.
 .\}
-.if !r_atari \{\ \" Why does .el not work???
+.el {\
 Nothing has been
 written to your disk yet, but if you confirm that you want to
 install
