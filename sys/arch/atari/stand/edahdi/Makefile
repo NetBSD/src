@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1996/05/16 19:51:26 leo Exp $
+#	$NetBSD: Makefile,v 1.1.1.1 1996/05/16 19:53:00 leo Exp $
 
 PROG=	edahdi
 DPADD=	${LIBTERMCAP}
