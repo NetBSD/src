@@ -1,4 +1,4 @@
-/* $NetBSD: mpbiosvar.h,v 1.1.2.3 2000/02/29 13:17:20 sommerfeld Exp $ */
+/* $NetBSD: mpbiosvar.h,v 1.1.2.4 2000/08/21 02:25:17 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@ struct mp_intr_map
 extern int mp_verbose;
 extern struct mp_bus *mp_busses;
 extern struct mp_intr_map *mp_intrs;
-extern int mp_isa_bus;
+extern int mp_isa_bus, mp_eisa_bus;
 
 void mpbios_scan __P((struct device *));
 int mpbios_probe __P((struct device *));

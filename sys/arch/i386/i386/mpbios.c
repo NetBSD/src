@@ -95,7 +95,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: mpbios.c,v 1.1.2.6 2000/08/18 03:33:46 sommerfeld Exp $
+ *	$Id: mpbios.c,v 1.1.2.7 2000/08/21 02:25:15 sommerfeld Exp $
  */
 
 /*
@@ -458,6 +458,7 @@ extern struct ioapic_softc *ioapics[]; /* XXX */
 
 struct mp_intr_map *lapic_ints[2]; /* XXX */
 int mp_isa_bus = -1;		/* XXX */
+int mp_eisa_bus = -1;		/* XXX */
 
 static struct mp_bus extint_bus = {
 	"ExtINT",
@@ -919,6 +920,11 @@ mpbios_bus(ent, self)
 
 		mp_busses[entry->bus_id].mb_data =
 		    inb(ELCR0) | (inb(ELCR1) << 8);
+
+		if (mp_eisa_bus != -1)
+			printf("oops: multiple isa busses?\n");
+		else
+			mp_eisa_bus = entry->bus_id;
 		
 	} else if (memcmp(entry->bus_type, "ISA   ", 6) == 0) {
 		mp_busses[entry->bus_id].mb_name = "isa";

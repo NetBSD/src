@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.c,v 1.10.22.2 2000/06/25 19:36:58 sommerfeld Exp $	*/
+/*	$NetBSD: eisa_machdep.c,v 1.10.22.3 2000/08/21 02:25:16 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,6 +71,8 @@
  * Machine-specific functions for EISA autoconfiguration.
  */
 
+#include "ioapic.h"
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
@@ -86,6 +88,11 @@
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 #include <dev/eisa/eisavar.h>
+
+#if NIOAPIC > 0
+#include <machine/i82093var.h>
+#include <machine/mpbiosvar.h>
+#endif
 
 /*
  * EISA doesn't have any special needs; just use the generic versions
@@ -157,20 +164,31 @@ eisa_intr_map(ec, irq, ihp)
 
 #if NIOAPIC > 0
 	if (mp_busses != NULL) {
-		/*
-		 * Assumes 1:1 mapping between PCI bus numbers and
-		 * the numbers given by the MP bios.
-		 * XXX Is this a valid assumption?
-		 */
-		
-		for (mip = mp_busses[bus].mb_intrs; mip != NULL; mip=mip->next) {
-			if (mip->bus_pin == irq) {
-				*ihp = mip->ioapic_ih | irq;
-				return 0;
+		int bus = mp_eisa_bus;
+
+		if (bus != -1) {
+			for (mip = mp_busses[bus].mb_intrs; mip != NULL;
+			     mip=mip->next) {
+				if (mip->bus_pin == irq) {
+					*ihp = mip->ioapic_ih | irq;
+					return 0;
+				}
 			}
 		}
-		if (mip == NULL)
-			printf("eisa_intr_map: no MP mapping found\n");
+
+		bus = mp_isa_bus;
+		
+		if (bus != -1) {
+			for (mip = mp_busses[bus].mb_intrs; mip != NULL;
+			     mip=mip->next) {
+				if (mip->bus_pin == irq) {
+					*ihp = mip->ioapic_ih | irq;
+					return 0;
+				}
+			}
+		}
+
+		printf("eisa_intr_map: no MP mapping found\n");
 	}
 #endif
 	
