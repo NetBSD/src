@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.38 2003/03/02 18:54:50 jdolecek Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.39 2003/03/17 00:06:24 martin Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993, 1995
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.38 2003/03/02 18:54:50 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.39 2003/03/17 00:06:24 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,7 +208,7 @@ fifo_open(void *v)
 	if (ap->a_mode & FREAD) {
 		if (ap->a_mode & O_NONBLOCK) {
 		} else {
-			while (fip->fi_writers == 0) {
+			while (!soreadable(fip->fi_readsock) && fip->fi_writers == 0) {
 				VOP_UNLOCK(vp, 0);
 				error = tsleep((caddr_t)&fip->fi_readers,
 				    PCATCH | PSOCK, "fifor", 0);
