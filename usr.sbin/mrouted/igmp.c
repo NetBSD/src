@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.6 1997/10/17 10:38:10 lukem Exp $	*/
+/*	$NetBSD: igmp.c,v 1.7 2002/07/14 16:30:42 wiz Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -28,15 +28,15 @@ u_int32_t	dvmrp_genid;		     /* IGMP generation id          */
  * Local function definitions.
  */
 /* u_char promoted to u_int */
-static char *	packet_kind __P((u_int type, u_int code));
-static int	igmp_log_level __P((u_int type, u_int code));
+static char *	packet_kind(u_int type, u_int code);
+static int	igmp_log_level(u_int type, u_int code);
 
 /*
  * Open and initialize the igmp socket, and fill in the non-changing
  * IP header fields in the output packet buffer.
  */
 void
-init_igmp()
+init_igmp(void)
 {
     struct ip *ip;
 
@@ -74,8 +74,7 @@ init_igmp()
 #define PIM_GRAFT_ACK    7
 
 static char *
-packet_kind(type, code)
-     u_int type, code;
+packet_kind(u_int type, u_int code)
 {
     switch (type) {
 	case IGMP_HOST_MEMBERSHIP_QUERY:	return "membership query  ";
@@ -120,10 +119,9 @@ packet_kind(type, code)
  * packet buffer.
  */
 void
-accept_igmp(recvlen)
-    int recvlen;
+accept_igmp(int recvlen)
 {
-    register u_int32_t src, dst, group;
+    u_int32_t src, dst, group;
     struct ip *ip;
     struct igmp *igmp;
     int ipdatalen, iphdrlen, igmpdatalen;
@@ -277,8 +275,7 @@ accept_igmp(recvlen)
  * reachability and someone is trying to, i.e., mrinfo me periodically.
  */
 static int
-igmp_log_level(type, code)
-    u_int type, code;
+igmp_log_level(u_int type, u_int code)
 {
     switch (type) {
 	case IGMP_MTRACE_REPLY:
@@ -300,11 +297,8 @@ igmp_log_level(type, code)
  * the message from the interface with IP address 'src' to destination 'dst'.
  */
 void
-send_igmp(src, dst, type, code, group, datalen)
-    u_int32_t src, dst;
-    int type, code;
-    u_int32_t group;
-    int datalen;
+send_igmp(u_int32_t src, u_int32_t dst, int type, int code, u_int32_t group,
+	  int datalen)
 {
     struct sockaddr_in sdst;
     struct ip *ip;

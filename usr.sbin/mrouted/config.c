@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.6 1995/12/10 10:06:58 mycroft Exp $	*/
+/*	$NetBSD: config.c,v 1.7 2002/07/14 16:30:42 wiz Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -18,13 +18,13 @@
  * and install them in the uvifs array.
  */
 void
-config_vifs_from_kernel()
+config_vifs_from_kernel(void)
 {
     struct ifreq ifbuf[32];
     struct ifreq *ifrp, *ifend;
     struct ifconf ifc;
-    register struct uvif *v;
-    register vifi_t vifi;
+    struct uvif *v;
+    vifi_t vifi;
     int n;
     u_int32_t addr, mask, subnet;
     short flags;
