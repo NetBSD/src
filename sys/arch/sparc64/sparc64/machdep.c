@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.86 2000/08/01 16:49:47 eeh Exp $ */
+/*	$NetBSD: machdep.c,v 1.87 2000/09/11 22:34:02 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1546,6 +1546,7 @@ sparc_bus_map(t, iospace, addr, size, flags, vaddr, hp)
 	vaddr_t v;
 	u_int64_t pa;
 	paddr_t	pm_flags = 0;
+	vm_prot_t pm_prot = VM_PROT_READ;
 static	vaddr_t iobase = IODEV_BASE;
 
 	t->type = iospace;
@@ -1596,7 +1597,7 @@ static	vaddr_t iobase = IODEV_BASE;
 	*hp = (bus_space_handle_t)(v | ((u_long)addr & PGOFSET));
 
 	pa = addr & ~PAGE_MASK; /* = trunc_page(addr); Will drop high bits */
-
+	if (!(flags&BUS_SPACE_MAP_READONLY)) pm_prot |= VM_PROT_WRITE;
 
 	DPRINTF(BSDB_MAP, ("\nsparc_bus_map: type %x flags %x "
 		"addr %016llx size %016llx virt %llx paddr %016llx\n",
@@ -1606,9 +1607,8 @@ static	vaddr_t iobase = IODEV_BASE;
 	do {
 		DPRINTF(BSDB_MAP, ("sparc_bus_map: phys %llx virt %p hp %llx\n", 
 			(u_int64_t)pa, (char *)v, (u_int64_t)*hp));
-		pmap_enter(pmap_kernel(), v, pa | pm_flags,
-				(flags&BUS_SPACE_MAP_READONLY) ? VM_PROT_READ
-				: VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
+		pmap_enter(pmap_kernel(), v, pa | pm_flags, pm_prot,
+			pm_prot|PMAP_WIRED);
 		v += PAGE_SIZE;
 		pa += PAGE_SIZE;
 	} while ((size -= PAGE_SIZE) > 0);
