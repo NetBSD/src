@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.54 2003/08/12 05:06:56 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.55 2003/08/12 18:34:50 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.54 2003/08/12 05:06:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.55 2003/08/12 18:34:50 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
@@ -140,6 +140,7 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	 * There happens to be a callframe, too.
 	 */
 	cf = (struct callframe *)stktop2;
+	cf->sp = (register_t)(stktop2 + CALLFRAMELEN);
 	cf->lr = (register_t)fork_trampoline;
 
 	/*
@@ -147,6 +148,7 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	 */
 	stktop2 -= CALLFRAMELEN;
 	cf = (struct callframe *)stktop2;
+	cf->sp = (register_t)(stktop2 + CALLFRAMELEN);
 	cf->r31 = (register_t)func;
 	cf->r30 = (register_t)arg;
 
@@ -161,7 +163,6 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	sf->user_sr = pmap_kernel()->pm_sr[USER_SR]; /* again, just in case */
 #endif
 	pcb->pcb_sp = (register_t)stktop2;
-	pcb->pcb_spl = 0;
 	pcb->pcb_kmapsr = 0;
 	pcb->pcb_umapsr = 0;
 }
@@ -194,7 +195,6 @@ cpu_setfunc(l, func, arg)
 	sf->user_sr = pmap_kernel()->pm_sr[USER_SR]; /* again, just in case */
 #endif
 	pcb->pcb_sp = (register_t)sf;
-	pcb->pcb_spl = 0;
 	pcb->pcb_kmapsr = 0;
 	pcb->pcb_umapsr = 0;
 }
