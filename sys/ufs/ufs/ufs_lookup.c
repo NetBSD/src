@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.7 1996/02/09 22:36:06 christos Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.8 1996/10/10 17:21:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -616,7 +616,7 @@ ufs_dirbad(ip, offset, how)
 	struct mount *mp;
 
 	mp = ITOV(ip)->v_mount;
-	(void)printf("%s: bad dir ino %d at offset %d: %s\n",
+	kprintf("%s: bad dir ino %d at offset %d: %s\n",
 	    mp->mnt_stat.f_mntonname, ip->i_number, offset, how);
 	if ((mp->mnt_stat.f_flags & MNT_RDONLY) == 0)
 		panic("bad dir");
@@ -651,7 +651,7 @@ ufs_dirbadentry(dp, ep, entryoffsetinblock)
 	    ep->d_reclen > DIRBLKSIZ - (entryoffsetinblock & (DIRBLKSIZ - 1)) ||
 	    ep->d_reclen < DIRSIZ(FSFMT(dp), ep) || namlen > MAXNAMLEN) {
 		/*return (1); */
-		printf("First bad\n");
+		kprintf("First bad\n");
 		goto bad;
 	}
 	if (ep->d_ino == 0)
@@ -659,7 +659,7 @@ ufs_dirbadentry(dp, ep, entryoffsetinblock)
 	for (i = 0; i < namlen; i++)
 		if (ep->d_name[i] == '\0') {
 			/*return (1); */
-			printf("Second bad\n");
+			kprintf("Second bad\n");
 			goto bad;
 	}
 	if (ep->d_name[i])
@@ -1054,7 +1054,7 @@ ufs_checkpath(source, target, cred)
 
 out:
 	if (error == ENOTDIR)
-		printf("checkpath: .. not a directory\n");
+		kprintf("checkpath: .. not a directory\n");
 	if (vp != NULL)
 		vput(vp);
 	return (error);
