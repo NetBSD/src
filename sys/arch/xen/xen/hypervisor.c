@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.8.2.4 2005/01/31 17:21:16 bouyer Exp $ */
+/* $NetBSD: hypervisor.c,v 1.8.2.5 2005/02/16 14:01:47 bouyer Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.8.2.4 2005/01/31 17:21:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.8.2.5 2005/02/16 14:01:47 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,6 +262,9 @@ hypervisor_attach(parent, self, aux)
 
 		xenkernfs_init();
 		xenprivcmd_init();
+		xen_shm_init();
+		xbdback_init();
+		xennetback_init();
 	}
 #endif
 #if NXENNET > 0
