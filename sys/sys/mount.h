@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.71 1998/12/01 23:16:23 kenh Exp $	*/
+/*	$NetBSD: mount.h,v 1.72 1999/02/26 23:44:48 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -291,13 +291,14 @@ struct vfsops {
 	int	(*vfs_vget)	__P((struct mount *mp, ino_t ino,
 				    struct vnode **vpp));
 	int	(*vfs_fhtovp)	__P((struct mount *mp, struct fid *fhp,
-				    struct mbuf *nam, struct vnode **vpp,
-				    int *exflagsp, struct ucred **credanonp));
+				    struct vnode **vpp));
 	int	(*vfs_vptofh)	__P((struct vnode *vp, struct fid *fhp));
 	void	(*vfs_init)	__P((void));
 	int	(*vfs_sysctl)	__P((int *, u_int, void *, size_t *, void *,
 				    size_t, struct proc *));
 	int	(*vfs_mountroot) __P((void));
+	int	(*vfs_checkexp) __P((struct mount *mp, struct mbuf *nam,
+				    int *extflagsp, struct ucred **credanonp));
 	struct vnodeopv_desc **vfs_opv_descs;
 	int	vfs_refcount;
 	LIST_ENTRY(vfsops) vfs_list;
@@ -312,8 +313,9 @@ struct vfsops {
 #define VFS_STATFS(MP, SBP, P)	  (*(MP)->mnt_op->vfs_statfs)(MP, SBP, P)
 #define VFS_SYNC(MP, WAIT, C, P)  (*(MP)->mnt_op->vfs_sync)(MP, WAIT, C, P)
 #define VFS_VGET(MP, INO, VPP)	  (*(MP)->mnt_op->vfs_vget)(MP, INO, VPP)
-#define VFS_FHTOVP(MP, FIDP, NAM, VPP, EXFLG, CRED) \
-	(*(MP)->mnt_op->vfs_fhtovp)(MP, FIDP, NAM, VPP, EXFLG, CRED)
+#define VFS_FHTOVP(MP, FIDP, VPP) (*(MP)->mnt_op->vfs_fhtovp)(MP, FIDP, VPP)
+#define VFS_CHKEXP(MP, NAM, EXFLG, CRED) \
+	(*(MP)->mnt_op->vfs_checkexp)(MP, NAM, EXFLG, CRED)
 #define	VFS_VPTOFH(VP, FIDP)	  (*(VP)->v_mount->mnt_op->vfs_vptofh)(VP, FIDP)
 #endif /* _KERNEL */
 

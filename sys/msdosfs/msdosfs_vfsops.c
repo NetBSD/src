@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.59 1998/08/18 06:31:04 thorpej Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.60 1999/02/26 23:44:46 wrstuden Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -86,8 +86,9 @@ int msdosfs_quotactl __P((struct mount *, int, uid_t, caddr_t, struct proc *));
 int msdosfs_statfs __P((struct mount *, struct statfs *, struct proc *));
 int msdosfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
 int msdosfs_vget __P((struct mount *, ino_t, struct vnode **));
-int msdosfs_fhtovp __P((struct mount *, struct fid *, struct mbuf *,
-    struct vnode **, int *, struct ucred **));
+int msdosfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
+int msdosfs_checkexp __P((struct mount *, struct mbuf *, int *,
+    struct ucred **));
 int msdosfs_vptofh __P((struct vnode *, struct fid *));
 int msdosfs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 			struct proc *));
@@ -121,6 +122,7 @@ struct vfsops msdosfs_vfsops = {
 	msdosfs_init,
 	msdosfs_sysctl,
 	msdosfs_mountroot,
+	msdosfs_checkexp,
 	msdosfs_vnodeopv_descs,
 };
 
@@ -913,29 +915,38 @@ loop:
 }
 
 int
-msdosfs_fhtovp(mp, fhp, nam, vpp, exflagsp, credanonp)
+msdosfs_fhtovp(mp, fhp, vpp)
 	struct mount *mp;
 	struct fid *fhp;
-	struct mbuf *nam;
 	struct vnode **vpp;
-	int *exflagsp;
-	struct ucred **credanonp;
 {
 	struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
 	struct defid *defhp = (struct defid *) fhp;
 	struct denode *dep;
-	struct netcred *np;
 	int error;
 
-	np = vfs_export_lookup(mp, &pmp->pm_export, nam);
-	if (np == NULL)
-		return (EACCES);
 	error = deget(pmp, defhp->defid_dirclust, defhp->defid_dirofs, &dep);
 	if (error) {
 		*vpp = NULLVP;
 		return (error);
 	}
 	*vpp = DETOV(dep);
+	return (0);
+}
+
+int
+msdosfs_checkexp(mp, nam, exflagsp, credanonp)
+	struct mount *mp;
+	struct mbuf *nam;
+	int *exflagsp;
+	struct ucred **credanonp;
+{
+	struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
+	struct netcred *np;
+
+	np = vfs_export_lookup(mp, &pmp->pm_export, nam);
+	if (np == NULL)
+		return (EACCES);
 	*exflagsp = np->netc_exflags;
 	*credanonp = &np->netc_anon;
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.47 1999/02/10 13:14:09 bouyer Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.48 1999/02/26 23:44:49 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -104,6 +104,7 @@ struct vfsops ffs_vfsops = {
 	ffs_init,
 	ffs_sysctl,
 	ffs_mountroot,
+	ufs_check_export,
 	ffs_vnodeopv_descs,
 };
 
@@ -974,13 +975,10 @@ ffs_vget(mp, ino, vpp)
  *   those rights via. exflagsp and credanonp
  */
 int
-ffs_fhtovp(mp, fhp, nam, vpp, exflagsp, credanonp)
+ffs_fhtovp(mp, fhp, vpp)
 	register struct mount *mp;
 	struct fid *fhp;
-	struct mbuf *nam;
 	struct vnode **vpp;
-	int *exflagsp;
-	struct ucred **credanonp;
 {
 	register struct ufid *ufhp;
 	struct fs *fs;
@@ -990,7 +988,7 @@ ffs_fhtovp(mp, fhp, nam, vpp, exflagsp, credanonp)
 	if (ufhp->ufid_ino < ROOTINO ||
 	    ufhp->ufid_ino >= fs->fs_ncg * fs->fs_ipg)
 		return (ESTALE);
-	return (ufs_check_export(mp, ufhp, nam, vpp, exflagsp, credanonp));
+	return (ufs_fhtovp(mp, ufhp, vpp));
 }
 
 /*
