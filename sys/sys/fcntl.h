@@ -1,4 +1,4 @@
-/*	$NetBSD: fcntl.h,v 1.20 2001/12/07 07:09:30 jdolecek Exp $	*/
+/*	$NetBSD: fcntl.h,v 1.21 2002/11/14 04:03:35 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993
@@ -110,7 +110,7 @@
 #endif
 
 /* defined by POSIX 1003.1; BSD default, but required to be bitwise distinct */
-#define	O_NOCTTY	0x008000	/* don't assign controlling terminal */
+#define	O_NOCTTY	0x00008000	/* don't assign controlling terminal */
 
 #ifdef _KERNEL
 /* convert from open() flags to/from fflags; convert O_RD/WR to FREAD/FWRITE */
