@@ -1,0 +1,105 @@
+/*	$NetBSD: msg.md.en,v 1.1.1.1 2002/04/12 21:15:52 leo Exp $	*/
+
+/*
+ * Copyright 1997 Piermont Information Systems Inc.
+ * All rights reserved.
+ *
+ * Written by Philip A. Nelson for Piermont Information Systems Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed for the NetBSD Project by
+ *      Piermont Information Systems Inc.
+ * 4. The name of Piermont Information Systems Inc. may not be used to endorse
+ *    or promote products derived from this software without specific prior
+ *    written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY PIERMONT INFORMATION SYSTEMS INC. ``AS IS''
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE 
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
+ * THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
+
+/* MD Message catalog -- english, atari version */
+
+message md_hello
+{If you booted from a floppy, you may now remove the disk.
+
+}
+
+message dobootblks
+{Installing boot blocks on %s....
+}
+
+message askfsroot
+{I will be asking for partition sizes and on some, mount points.
+
+First the root partition.  You have %d %s left on your disk.
+Root partition size? }
+
+message askfsswap
+{
+Next the swap partition.  You have %d %s left on your disk.
+Swap partition size? }
+
+message askfsusr
+{
+Next the /usr partition.  You have %d %s left on your disk.
+/usr partition size? }
+
+message otherparts
+{You still have some space remaining unallocated on your disk.  Please
+give sizes and mount points for the following partitions.
+
+}
+
+message askfspart
+{The next partition is /dev/%s%c.  You have %d %s left on your disk.
+Partition size? }
+
+message infoahdilabel
+{You now have to prepare your root disk for the installation of NetBSD. This
+is further referred to as 'labeling' a disk.
+
+First you get the chance to edit or create an AHDI compatible partitioning on
+the installation disk. Note that NetBSD can do without AHDI partitions,
+check the documentation.
+If you want to use an AHDI compatible partitioning, you have to assign some
+partitions to NetBSD before NetBSD is able to use the disk. Change the 'id'
+of all partitions you want to use for NetBSD filesystems to 'NBD'. Change
+the 'id' of the partition you wish to use for swap to 'SWP'.
+
+Do you want AHDI compatible partitioning? }
+
+message md_layout
+{NetBSD uses a BSD disklabel to carve up the NetBSD portion of the disk
+into multiple BSD partitions.  You must now set up your BSD disklabel.
+You have several choices.  They are summarized below. 
+-- Standard: the BSD disklabel partitions are computed by this program. 
+-- Standard with X: twice the swap space, space for X binaries. 
+-- Custom: you specify the sizes of all the BSD disklabel partitions. 
+-- Use existing: use current partitions. You must assign mount points. 
+
+Note: If you wish the NetBSD label and an AHDI compatible label to co-exist
+on the same disk, you must use the existing layout!
+
+The NetBSD part of your disk is %.2f Megabytes. 
+Standard requires at least %.2f Megabytes. 
+Standard with X requires at least %.2f Megabytes.
+}
