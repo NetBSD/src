@@ -1,4 +1,4 @@
-/*	$NetBSD: vrkiu.c,v 1.19 2000/03/31 13:01:17 jun Exp $	*/
+/*	$NetBSD: vrkiu.c,v 1.20 2000/05/04 02:24:13 shin Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi All rights reserved.
@@ -212,8 +212,8 @@ static char tripad_keytrans[] = {
 /*18*/  48,  49,  34,  35,  20,  21,   5,   6,	/* b n g h t y 4 5 */
 /*20*/  50,  51,  36,  37,  22,  23,   7,   8,	/* m , j k u i 6 7 */
 /*28*/ 105,  58,  38,  24,  25,   9,  10,  11,	/* Fn caps l o p 8 9 0 */
-/*30*/  26,  27,  75,  52,  53,  39,  12,  13,	/* [ ] la , / ; \- = */
-/*38*/  54,  77,  72,  80,  39,  28,  43,  14,  /* rsh ra ua da ; ent \ del */
+/*30*/  26,  27,  75,  52,  53,  39,  12,  13,	/* [ ] la . / ; - = */
+/*38*/  54,  77,  72,  80,  40,  28,  43,  14,  /* rsh ra ua da ' ent \ del */
 /*40*/ IGN, IGN, IGN, IGN, IGN, IGN, IGN, IGN,	/* - - - - - - - - */
 /*48*/ IGN, IGN, IGN, IGN, IGN, IGN, IGN, IGN,	/* - - - - - - - - */
 /*50*/ IGN, IGN, IGN, IGN, IGN, IGN, IGN, IGN,	/* - - - - - - - - */
@@ -222,10 +222,10 @@ static char tripad_keytrans[] = {
 
 /* NEC Mobile Gear MCCS series */
 static char mccs_keytrans[] = {
-/*00*/  58,  28, 102,  25,  52,  21,  48,  44,  /* caps cr rar p . y b z */
-/*08*/  56,  27, 103,  24,  51,  20,  47,  30,  /* alt [ dar o , t v a */
-/*10*/  41,  26, 101,  23,  50,  19,  46,  17,  /* zen @ lar i m r c w */
-/*18*/  29,  39, 100,  22,  49,  18,  45,  16,  /* lctrl ; uar u n e x q */
+/*00*/  58,  28,  77,  25,  52,  21,  48,  44,  /* caps cr rar p . y b z */
+/*08*/  56,  27,  80,  24,  51,  20,  47,  30,  /* alt [ dar o , t v a */
+/*10*/  41,  26,  75,  23,  50,  19,  46,  17,  /* zen @ lar i m r c w */
+/*18*/  29,  39,  72,  22,  49,  18,  45,  16,  /* lctrl ; uar u n e x q */
 /*20*/  42,  14, 115,  11,  38,   7,  34,  15,  /* lshft bs \ 0 l 6 g tab */
 /*28*/ 123, 125,  53,  10,  37,   6,  33,   3,  /* nconv | / 9 k 5 f 2 */
 /*30*/ 121,  13,  43,   9,  36,   5,  32,   2,  /* conv = ] 8 j 4 d 1 */
