@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.19 1999/01/08 11:18:38 augustss Exp $
+$NetBSD: usbdevs,v 1.20 1999/01/25 01:02:59 augustss Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -58,6 +58,7 @@ vendor CONNECTIX	0x0478	Connectix
 vendor ACER		0x04a5	Acer Peripherals
 vendor CYPRESS		0x04b4	Cypress Semiconductor
 vendor 3COM		0x04c1	3Com
+vendor KONICA		0x04c8	Konica Corporation
 vendor SHUTTLE		0x04e6	Shuttle Technology
 vendor JAZZ		0x04fa	Jazz
 vendor ATEN		0x0557	ATen
@@ -70,6 +71,7 @@ vendor EIZONANAO	0x05e7	EIZO Nanao
 vendor CHIC		0x05fe	Chic Technology
 vendor ADS		0x06e1	ADS Technologies
 vendor PLX		0x10b5	PLX
+vendor ENTREGA		0x1645	Entrega
 vendor INSIDEOUT	0x1608	Inside Out Networks
 vendor INTEL		0x8086	Intel
 
@@ -123,6 +125,9 @@ product CYPRESS MOUSE		0x0001	mouse
 /* 3Com products */
 product 3COM USR56K		0x3021	U.S.Robotics 56000 Voice USB Modem
 
+/* Konica Corporation Products */
+product KONICA CAMERA		0x0720	Digital Color Camera
+
 /* Shuttle Technology products */
 product SHUTTLE EUSB		0x0001	E-USB Bridge
 
@@ -154,6 +159,10 @@ product CHIC MOUSE1		0x0001	mouse
 
 /* ADS products */
 product ADS ENET		0x0008	Ethernet adapter
+
+/* Entrega products */
+product ENTREGA CENTRONICS	0x0006	Centronics connector
+product ENTREGA SERIAL		0x8001	DB25 Serial connector
 
 /* PLX products */
 product PLX TESTBOARD		0x9060	test board
