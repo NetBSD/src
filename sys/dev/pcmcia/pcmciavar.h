@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciavar.h,v 1.8 1998/12/24 04:51:59 marc Exp $	*/
+/*	$NetBSD: pcmciavar.h,v 1.9 1998/12/29 09:00:28 marc Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -181,6 +181,7 @@ struct pcmcia_softc {
 struct pcmcia_cis_quirk {
 	int32_t manufacturer;
 	int32_t product;
+	char *cis1_info[4];
 	struct pcmcia_function *pf;
 	struct pcmcia_config_entry *cfe;
 };
