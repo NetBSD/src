@@ -1,4 +1,4 @@
-.\" $NetBSD: wscons.4,v 1.17 2001/09/11 23:18:56 wiz Exp $
+.\" $NetBSD: wscons.4,v 1.18 2001/11/29 23:14:39 ross Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -81,13 +81,13 @@ behaviour of existing terminal drivers (see below)
 .El
 .Ss Terminal emulations
 .Nm
-does not define an own set of terminal control sequences and special keyboard
+does not define its own set of terminal control sequences and special keyboard
 codes in terms of
 .Xr termcap 5 .
 Instead a
 .Dq terminal emulation
-is assigned to each virtual screen when the screen is created (see
-.Xr wsconscfg 8 ) .
+is assigned to each virtual screen when the screen is created. (See
+.Xr wsconscfg 8 . )
 Different terminal emulations can be active at the same time on one display.
 The following choices are available:
 .Bl -tag -width xxxxxx
@@ -105,7 +105,7 @@ console emulation is available if
 was specified at kernel build time. It supports the control sequences of
 .Tn SUN
 machine consoles and delivers its keyboard codes for function and
-keypad keys (as far as present on the actually used keyboard).
+keypad keys in use.
 This emulation is sufficient for full-screen applications.
 .It vt100
 is available with the kernel compile option
@@ -168,8 +168,8 @@ emulator.
 .Pp
 The
 .Va WSEMUL_DEFAULT
-kernel option allows to select one of the described terminal options
-as default choice. The default gets into effect in kernel startup, i.e.
+kernel option is used to select one of the described terminal options
+as the default choice. The default takes effect at kernel startup, i.e.
 for the operating system console or additional screens allocated
 through the
 .Va WSDISPLAY_DEFAULTSCREENS
@@ -179,7 +179,7 @@ or if no emulation type was passed to the
 .Xr wsconscfg 8
 utility.
 .Ss Compatibility options
-these options allow to run X servers or other programs using low-level
+these options allow X servers and other programs using low-level
 console driver functions which were written specifically for other
 console drivers to run on
 .Nx
@@ -205,7 +205,7 @@ driver to make X servers work. Useful with
 binary emulation.
 .El
 .Pp
-Linux/i386 X servers do usually run if the first two options are
+Linux/i386 X servers usually run successfully if the first two options are
 enabled together with the
 .Nx
 Linux binary emulation.
@@ -248,11 +248,12 @@ terminal emulation.
 The virtual screen switching protocol enabled by
 .Dq WSDISPLAY_COMPAT_USL
 uses a somewhat complex handshake protocol to pass control to user programs
-as X servers controlling a virtual screen. To avoid a non-responsive
-application to lock the whole console system a screen switch will be rolled
-back if the user application does not respond to a screen switch request
-within some time. This option allows to set this timeout (in seconds),
-the default value is 5 seconds.
+such as X servers controlling a virtual screen. In order
+to prevent a non-responsive
+application from locking the whole console system,
+a screen switch will be rolled
+back after a 5 second timeout if the application does not respond.
+This option can be used to specify in seconds a different timeout value.
 .El
 .Sh SEE ALSO
 .Xr wsdisplay 4 ,
