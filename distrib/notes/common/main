@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.120 2001/05/09 00:19:15 ross Exp $
+.\"	$NetBSD: main,v 1.121 2001/05/20 23:24:35 jhawk Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -186,7 +186,7 @@ Deletion of swap devices using
 Easier hot-pluggability of keyboards and mice using a new wscons
 device\(emwsmux.
 .It
-Improved PCMCIA and Cardbus support, including support for detaching
+Improved PCMCIA and CardBus support, including support for detaching
 of devices and cards, resulting in better support for notebooks and
 PDA devices.
 .It
@@ -204,7 +204,7 @@ IPv4/v6 dual-stack user applications and supporting libraries.
 Due to this, the shlib major version for
 .Xr pcap 3
 is incremented and you may need to recompile userland tools.
-The KAME IPv6 part includes results from the unified-ipv6 effort.
+The KAME IPv6 part includes results from the unified-IPv6 effort.
 .bullet)
 .
 .Ss2 File system
@@ -363,8 +363,6 @@ system, including standard desktops like KDE and GNOME as well as latest
 Tcl/Tk and perl and many of the components of the Java Enterprise platform.
 The package framework itself now has full wildcard dependency support.
 .bullet)
-.Pp
-As has been noted, there have also been innumerable bug fixes.
 .Pp
 Kernel interfaces have continued to be refined, and more subsystems
 and device drivers are shared among the different ports. You can look
