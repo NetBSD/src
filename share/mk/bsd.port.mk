@@ -1,7 +1,7 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
 #
-#	$NetBSD: bsd.port.mk,v 1.27 1997/12/27 03:24:10 hubertf Exp $
+#	$NetBSD: bsd.port.mk,v 1.28 1997/12/29 20:10:24 hubertf Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -667,6 +667,7 @@ MASTER_SITE_OVERRIDE=  ${MASTER_SITE_BACKUP}
 
 # Where to put distfiles that don't have any other master site
 MASTER_SITE_LOCAL?= \
+	ftp://ftp.netbsd.org/pub/NetBSD/packages/distfiles/LOCAL_PORTS/ \
 	ftp://ftp.freebsd.org/pub/FreeBSD/distfiles/LOCAL_PORTS/
 
 # I guess we're in the master distribution business! :)  As we gain mirror
