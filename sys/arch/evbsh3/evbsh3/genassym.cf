@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.8 2000/08/11 14:51:08 msaitoh Exp $
+#	$NetBSD: genassym.cf,v 1.9 2000/09/04 05:50:45 msaitoh Exp $
 
 #
 # Copyright (c) 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -51,6 +51,7 @@ include <sys/mbuf.h>
 
 include <uvm/uvm_extern.h>
 
+include <sh3/mmureg.h>
 include <machine/trap.h>
 include <machine/pmap.h>
 include <machine/vmparam.h>
@@ -100,5 +101,10 @@ define	SC_EFLAGS		offsetof(struct sigcontext, sc_ssr)
 define	IOM_RAM_BEGIN		IOM_RAM_BEGIN
 define	IOM_RAM_SIZE		IOM_RAM_SIZE
 define	IOM_ROM_BEGIN		IOM_ROM_BEGIN
+
+# XXX SH4 only
+ifdef MMUCR_VALIDBITS
+define	MMUCR_VALIDBITS		MMUCR_VALIDBITS
+endif
 
 define	LED_ADDR		LED_ADDR
