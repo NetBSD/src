@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.8 1999/05/09 19:15:08 eeh Exp $	*/
+/*	$NetBSD: boot.c,v 1.9 1999/10/11 01:57:47 eeh Exp $	*/
 #define DEBUG
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -82,7 +82,7 @@ char *kernels[] = {
 	NULL
 };
 
-char *kernelname = kernels;
+char *kernelname;
 char bootdev[128];
 char bootfile[128];
 int boothowto;
@@ -175,7 +175,7 @@ chain(pentry, args, ssym, esym)
 	int l, machine_tag;
 	long newargs[3];
 
-	entry = (void*)pentry;
+	entry = (void*)(long)pentry;
 
 	freeall();
 	/*
@@ -535,6 +535,9 @@ main()
 	char *cp;
 	int i, fd;
 	
+	/* Initialize kernelname */
+	kernelname = kernels[0];
+
 	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
 	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
 

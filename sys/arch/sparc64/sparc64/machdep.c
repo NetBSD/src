@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.50 1999/09/17 20:07:17 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.51 1999/10/11 01:57:46 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -215,9 +215,9 @@ cpu_startup()
 	 * and then give everything true virtual addresses.
 	 */
 	sz = (long)allocsys(NULL, mdallocsys);
-
+printf("cpu_startup: allocsys %ld, rounded %ld\n", sz, round_page(sz));
 	if ((v = (caddr_t)uvm_km_alloc(kernel_map, round_page(sz))) == 0)
-		panic("startup: no room for tables");
+		panic("startup: no room for %lx bytes of tables", sz);
 	if (allocsys(v, mdallocsys) - v != sz)
 		panic("startup: table size inconsistency");
 
@@ -311,7 +311,7 @@ mdallocsys(v)
 	caddr_t v;
 {
 
-#if 1	/* XXX this is from allocsys().  we have a copy as we use nbuf */
+#if 0	/* XXX this is from allocsys().  we have a copy as we use nbuf */
 	if (nbuf == 0) {
 		nbuf = bufpages;
 		if (nbuf < 16)
@@ -325,13 +325,11 @@ mdallocsys(v)
  */
 
 #ifdef __arch64__
-#define rwindow		rwindow64
 #define STACK_OFFSET	BIAS
 #define CPOUTREG(l,v)	copyout(&(v), (l), sizeof(v))
 #undef CCFSZ
 #define CCFSZ	CC64FSZ
 #else
-#define rwindow		rwindow32
 #define STACK_OFFSET	0
 #define CPOUTREG(l,v)	copyout(&(v), (l), sizeof(v))
 #endif
@@ -420,12 +418,27 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	size_t newlen;
 	struct proc *p;
 {
+	int chosen;
+	char bootargs[256];
+	char *cp = NULL;
 
 	/* all sysctl names are this level are terminal */
 	if (namelen != 1)
 		return (ENOTDIR);	/* overloaded */
 
 	switch (name[0]) {
+	case CPU_BOOTED_KERNEL:
+		if (((chosen = OF_finddevice("/chosen")) != -1) &&
+		    (OF_getprop(chosen, "bootargs", bootargs, sizeof bootargs) < 0)) {
+			for (cp = bootargs; 
+			     *cp && *cp != ' ' && *cp != '\t' && *cp != '\n';
+			     cp++);
+			*cp = 0;
+			cp = bootargs;
+		}
+		if (cp == NULL || cp[0] == '\0')
+			return (ENOENT);
+		return (sysctl_rdstring(oldp, oldlenp, newp, cp));
 	default:
 		return (EOPNOTSUPP);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.2 1999/03/25 17:49:44 mrg Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.3 1999/10/11 01:57:46 eeh Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -43,9 +43,6 @@
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
-
-void netbsd32_sendsig __P((sig_t, int, int, u_long));
-void netbsd32_setregs __P((struct proc *, struct exec_package *, u_long));
 
 /*
  * Set up registers on exec.
@@ -119,8 +116,9 @@ extern int sigdebug;
 void
 netbsd32_sendsig(catcher, sig, mask, code)
 	sig_t catcher;
-	int sig, mask;
-	u_long code;
+	int sig;
+	sigset_t *mask;
+	u_int32_t code;
 {
 	register struct proc *p = curproc;
 	register struct sigacts *psp = p->p_sigacts;
@@ -193,12 +191,12 @@ netbsd32_sendsig(catcher, sig, mask, code)
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK))
 	    printf("sendsig: saving sf to %p, setting stack pointer %p to %p\n",
-		   fp, &(((union rwindow *)newsp)->v8.rw_in[6]), oldsp);
+		   fp, &(((struct rwindow32 *)newsp)->rw_in[6]), oldsp);
 #endif
 	kwin = (struct rwindow32 *)(((caddr_t)tf)-CCFSZ);
 	if (rwindow_save(p) || 
 	    copyout((caddr_t)&sf, (caddr_t)fp, sizeof sf) || 
-	    suword(&(((union rwindow *)newsp)->v8.rw_in[6]), (u_long)oldsp)) {
+	    suword(&(((struct rwindow32 *)newsp)->rw_in[6]), (u_long)oldsp)) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -244,12 +242,12 @@ netbsd32_sendsig(catcher, sig, mask, code)
 
 #undef DEBUG
 int
-compat_netbsd32_sigreturn(p, v, retval)
+netbsd32_sigreturn(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_sigreturn_args /* {
+	struct netbsd32_sigreturn_args /* {
 		syscallarg(struct netbsd32_sigcontext *) sigcntxp;
 	} */ *uap = v;
 	struct netbsd32_sigcontext *scp;
@@ -326,4 +324,99 @@ compat_netbsd32_sigreturn(p, v, retval)
 	native_sigset13_to_sigset(&scp->sc_mask, &mask);
 	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
 	return (EJUSTRETURN);
+}
+
+/* Unfortunately we need to convert v9 trapframe to v8 regs */
+int
+netbsd32_process_read_regs(p, regs)
+	struct proc *p;
+	struct reg *regs;
+{
+	struct reg32* regp = (struct reg32*)regs;
+	struct trapframe* tf = p->p_md.md_tf;
+	int i;
+
+	/* 
+	 * Um, we should only do this conversion for 32-bit emulation
+	 * or when running 32-bit mode.  We really need to pass in a
+	 * 32-bit emulation flag!
+	 */
+
+	regp->r_psr = TSTATECCR_TO_PSR(tf->tf_tstate);
+	regp->r_pc = tf->tf_pc;
+	regp->r_npc = tf->tf_npc;
+	regp->r_y = tf->tf_y;
+	for (i = 0; i < 8; i++) {
+		regp->r_global[i] = tf->tf_global[i];
+		regp->r_out[i] = tf->tf_out[i];
+	}
+	/* We should also write out the ins and locals.  See signal stuff */
+	return (0);
+}
+
+int
+netbsd32_process_write_regs(p, regs)
+	struct proc *p;
+	struct reg *regs;
+{
+	struct reg32* regp = (struct reg32*)regs;
+	struct trapframe* tf = p->p_md.md_tf;
+	int i;
+
+	tf->tf_pc = regp->r_pc;
+	tf->tf_npc = regp->r_npc;
+	tf->tf_y = regp->r_pc;
+	for (i = 0; i < 8; i++) {
+		tf->tf_global[i] = regp->r_global[i];
+		tf->tf_out[i] = regp->r_out[i];
+	}
+	/* We should also read in the ins and locals.  See signal stuff */
+	tf->tf_tstate = (int64_t)(tf->tf_tstate & ~TSTATE_CCR) | PSRCC_TO_TSTATE(regp->r_psr);
+	return (0);
+}
+
+int
+netbsd32_process_read_fpregs(p, regs)
+struct proc	*p;
+struct fpreg	*regs;
+{
+	extern struct fpstate	initfpstate;
+	struct fpstate		*statep = &initfpstate;
+	struct fpreg32		*regp = (struct fpreg32 *)regs;
+	int i;
+
+	/* NOTE: struct fpreg == struct fpstate */
+	if (p->p_md.md_fpstate)
+		statep = p->p_md.md_fpstate;
+	for (i=0; i<32; i++)
+		regp->fr_regs[i] = statep->fs_regs[i];
+	regp->fr_fsr = statep->fs_fsr;
+	regp->fr_qsize = statep->fs_qsize;
+	for (i=0; i<statep->fs_qsize; i++)
+		regp->fr_queue[i] = statep->fs_queue[i];
+
+	return 0;
+}
+
+int
+netbsd32_process_write_fpregs(p, regs)
+struct proc	*p;
+struct fpreg	*regs;
+{
+	extern struct fpstate	initfpstate;
+	struct fpstate		*statep = &initfpstate;
+	struct fpreg32		*regp = (struct fpreg32 *)regs;
+	int i;
+
+	/* NOTE: struct fpreg == struct fpstate */
+	if (p->p_md.md_fpstate)
+		statep = p->p_md.md_fpstate;
+	for (i=0; i<32; i++)
+		statep->fs_regs[i] = regp->fr_regs[i];
+	statep->fs_fsr = regp->fr_fsr;
+	statep->fs_qsize = regp->fr_qsize;
+	for (i=0; i<regp->fr_qsize; i++)
+		statep->fs_queue[i] = regp->fr_queue[i];
+
+	return 0;
 }

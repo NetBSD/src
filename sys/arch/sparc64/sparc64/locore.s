@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.45 1999/10/05 03:40:50 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.46 1999/10/11 01:57:45 eeh Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -5813,11 +5813,11 @@ _C_LABEL(sigcode):
 	mov	%l7, %g7
 
 #ifdef _LP64
-	restore	%g0, netbsd32_SYS_compat_netbsd32_sigreturn, %g1	! get registers back & set syscall #
+	restore	%g0, netbsd32_SYS_netbsd32_sigreturn, %g1	! get registers back & set syscall #
 	add	%sp, 64 + 16, %o0	! compute scp
 	t	ST_SYSCALL		! sigreturn(scp)
 	! sigreturn does not return unless it fails
-	mov	netbsd32_SYS_compat_netbsd32_exit, %g1		! exit(errno)
+	mov	netbsd32_SYS_netbsd32_exit, %g1		! exit(errno)
 	t	ST_SYSCALL
 _C_LABEL(netbsd32_esigcode):
 #else
