@@ -129,6 +129,8 @@ void *pcic_chip_intr_establish __P((pcmcia_chipset_handle_t,
 				    int (*)(void *), void *));
 void pcic_chip_intr_disestablish __P((pcmcia_chipset_handle_t, void *));
 
+void pcic_chip_socket_enable __P((pcmcia_chipset_handle_t));
+void pcic_chip_socket_disable __P((pcmcia_chipset_handle_t));
 
 void pcic_attach_card(struct pcic_handle *);
 void pcic_detach_card(struct pcic_handle *);
@@ -146,6 +148,9 @@ static struct pcmcia_chip_functions pcic_functions = {
 
     pcic_chip_intr_establish,
     pcic_chip_intr_disestablish,
+
+    pcic_chip_socket_enable,
+    pcic_chip_socket_disable,
 };
 
 struct cfdriver pcic_cd = {
@@ -1304,4 +1309,16 @@ void pcic_chip_intr_disestablish(pch, ih)
     pcic_write(h, PCIC_INTR, reg);
 
     isa_intr_disestablish(h->sc->ic, ih);
+}
+
+void
+pcic_chip_socket_enable(pch)
+     pcmcia_chipset_handle_t pch;
+{
+}
+
+void
+pcic_chip_socket_disable(pch)
+     pcmcia_chipset_handle_t pch;
+{
 }
