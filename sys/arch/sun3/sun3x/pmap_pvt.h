@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_pvt.h,v 1.10 2003/06/23 11:01:49 martin Exp $	*/
+/*	$NetBSD: pmap_pvt.h,v 1.11 2003/09/26 21:41:16 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@ struct a_tmgr_struct {
 	u_char          at_wcnt;   /* no. of wired entries in this table */
 	u_char          at_ecnt;   /* no. of valid entries in this table */
 	u_int16_t	at_dum1;   /* structure padding                  */
-    	TAILQ_ENTRY(a_tmgr_struct) at_link;  /* list linker              */
+	TAILQ_ENTRY(a_tmgr_struct) at_link;  /* list linker              */
 };
 
 /* A level B table manager contains a pointer to an MMU table of
