@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ttys,v 1.11.8.1 1999/03/05 08:26:55 scottr Exp $
+#	$NetBSD: ttys,v 1.11.8.2 1999/12/14 00:42:57 scottr Exp $
 #	from: @(#)ttys	5.1 (Berkeley) 4/17/89
 #
 # name	getty				type	status		comments
@@ -9,8 +9,7 @@
 console	"/usr/libexec/getty Pc"		vt220	off secure
 
 # Define the console that we actually run getty on.
-ttye0	"/usr/libexec/getty Pc"		vt220	on secure
-ttyE0	"/usr/libexec/getty std.9600"	vt100	off secure
+ttyE0	"/usr/libexec/getty Pc"		vt220	on secure
 
 # Hardwired lines are marked off, by default, so getty(8)
 # is quiet when they don't exist.
