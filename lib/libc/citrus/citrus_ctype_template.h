@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype_template.h,v 1.31 2004/09/26 00:51:39 yamt Exp $	*/
+/*	$NetBSD: citrus_ctype_template.h,v 1.32 2005/03/05 17:31:03 tnozaki Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -245,7 +245,7 @@ _FUNCNAME(mbsrtowcs_priv)(_ENCODING_INFO * __restrict ei,
 	if (pwcs == NULL)
 		n = 1; /* arbitrary >0 value */
 
-	cnt = 0;
+	err = cnt = 0;
 	s0 = *s; /* to keep *s unchanged for now, use copy instead. */
 	mbcurmax = _ENCODING_MB_CUR_MAX(ei);
 	while (n > 0) {
