@@ -1,9 +1,7 @@
-#	$NetBSD: Makefile,v 1.9 2002/05/07 14:08:30 isaki Exp $
+#	$NetBSD: Makefile,v 1.10 2002/05/13 01:04:18 lukem Exp $
 
-SUBDIR=		ramdisk.sysinst instkernel.sysinst bootfloppy.sysinst
-SUBDIR+=	bootfloppy.generic inst
-
-.PHONY: release
+SUBDIR=		bootfloppy.generic ramdisk .WAIT instkernel .WAIT
+SUBDIR+=	bootfloppy.sysinst
 
 TARGETS+=	release
 
