@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.438 2004/09/10 06:52:53 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.439 2004/09/11 13:13:16 he Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6139,7 +6139,7 @@ xfree/xc/programs/Xserver/hw/xfree86/input/mouse/mouse.c 1.3
 	wholesale. It does not make sense at all since we multiplex multiple
 	mice into one wsmouse device and this logic would need to distinguish
 	the pre-multiplexed devices.
-	Fixes PR xsrc/26188.
+	Fixes PR#26188.
 	[martin, ticket #710]
 
 sys/arch/sparc64/sparc64/locore.s		1.198
@@ -7154,3 +7154,130 @@ sys/dev/ic/ac97.c				1.59
 	Patch provided by Joachim Thiemann in PR kern/26457
 	[kent, ticket #823]
 
+sys/lib/libkern/arc4random.c			1.12
+
+	Fix bug introduced earlier: actually generate four bytes of
+	random value, rather than always leaving a byte zero.
+	[dan, ticket #824]
+
+sbin/disklabel/disklabel.c			1.132-1.133
+
+	Fix an off-by-one error in calculating how many partitions
+	are allowed, and also fix which value we use to compare the
+	maximum number of partitions against.
+	[abs, ticket #825]
+
+distrib/notes/common/contents			1.106
+
+	Fix cut-and-paste error.
+	[jdc, ticket #827]
+
+distrib/notes/common/contents			1.107
+
+	Add two missing curly braces, to fix atari release notes.
+	[jdc, ticket #828]
+
+distrib/notes/common/netboot			1.24
+
+	Replace .ie with empty .el or without .el with .if.  Add
+	some comments, and reduce if'd stuff in once case.
+	[jdc, ticket #829]
+
+sys/uvm/uvm_anon.c				1.30-1.31
+sys/uvm/uvm_page.c				1.99
+
+	Correct page accounting for anon pages: decrement
+	uvmexp.anonpages when orphaning an A->K loaned page, and
+	null out anon.u.an_page as the anon no longer owns the page
+	in that case.  Add a few related assertions.  Also correct
+	a comment.
+	[yamt, ticket #830]
+
+sys/kern/uipc_mbuf.c				1.84-1.85
+sys/sys/mbuf.h					1.96
+share/man/man9/mbuf.9				1.29
+share/man/man9/Makefile				1.164
+distrib/sets/lists/comp/mi			1.725
+
+	Add an assertion to detect write to a read-only mbuf.
+	Add m_copyback_cow and m_makewritable.
+	[yamt, ticket #831]
+
+xfree/xc/extras/fontconfig/src/fccfg.c		1.2
+
+	Fall back to ``/var/tmp'' if we cannot find the user's
+	home directory.  Fixes PR#25185.
+	[tron, ticket #832]
+
+sys/netinet/ip_fil_netbsd.c			1.15-1.16
+
+	Ensure that mbufs are writable, as IPF assumes so.
+	Fixes PR#26773 and PR#26850.
+	Ensure that the whole packet is writable when IPF wants to
+	modify application data.
+	[yamt, ticket #833]
+
+include/netdb.h					1.43-1.45
+lib/libc/net/gethnamaddr.c			1.63 via patch
+lib/libc/net/gethostbyname.3			1.25-1.26
+lib/libc/net/Makefile.inc			1.64
+lib/libc/net/sethostent.c			1.13-1.14
+lib/libc/include/namespace.h			1.92
+distrib/sets/lists/comp/mi			1.723
+
+	Restore gethostent() as a supported interface.  Yes, it
+	may be obsolete, but it is specified by IEEE Std 1003.1,
+	2004 Edition (POSIX) and the X/Open standards (Issue 66
+	and XNS 5.2).
+	[ginsbach, ticket #834]
+
+sys/netinet6/raw_ip6.c				1.66-1.68
+
+	Ensure that the mbuf is writable before writing a checksum
+	into it.
+	[yamt, ticket #836]
+
+sys/dev/scsipi/atapi_base.c			1.21-22 via patch
+sys/dev/scsipi/atapiconf.h			1.18 via patch
+sys/dev/scsipi/cd.c				1.203-1.205 via patch
+sys/dev/scsipi/cdvar.h				1.21 via patch
+sys/dev/scsipi/ch.c				1.62 via patch
+sys/dev/scsipi/if_se.c				1.47 via patch
+sys/dev/scsipi/scsi_base.c			1.80-1.81 via patch
+sys/dev/scsipi/scsiconf.h			1.52 via patch
+sys/dev/scsipi/scsipi_base.c			1.110-1.112 via patch
+sys/dev/scsipi/scsipi_ioctl.c			1.48 via patch
+sys/dev/scsipi/scsipiconf.c			1.24 via patch
+sys/dev/scsipi/scsipiconf.h			1.87 via patch
+sys/dev/scsipi/sd.c				1.221-1.223 via patch
+sys/dev/scsipi/sdvar.h				1.22 via patch
+sys/dev/scsipi/ses.c				1.24 via patch
+sys/dev/scsipi/ss.c				1.53 via patch
+sys/dev/scsipi/ss_mustek.c			1.20-1.21 via patch
+sys/dev/scsipi/ss_scanjet.c			1.31-1.32 via patch
+sys/dev/scsipi/ssvar.h				1.12 via patch
+sys/dev/scsipi/st.c				1.165-1.166 via patch
+sys/dev/scsipi/st_scsi.c			1.12 via patch
+sys/dev/scsipi/stvar.h				1.9 via patch
+
+	Improve handling of memory shortage, to fix problems like:
+	  sd3(mpt0:0:1:0): unable to allocate scsipi_xfer
+	  sd3: not queued, error 12
+	The theory is that other consumers of pool memory is causing
+	this memory shortage in certain somewhat hard to reproduce
+	situations.
+	This is done by giving scsipi_command an extra argument to
+	optionally pass a preallocated scsipi_xfer, and allocating a
+	scsipi_xfer before dequeueing a buffer in the various *start()
+	functions.  If the allocation of a scsipi_xfer fails, schedule
+	a callout for delayed invocation of the start function.  Also
+	reserve one page for scsipi_xfer structs, to ensure that we will
+	eventually have some available once pending commands complete.
+	Should fix PR#25670.
+	[bouyer, ticket #837]
+
+sys/dev/ic/ncr53c9x.c				1.112
+
+	Reserve one element for the ncr53c9x_ecb pool to ensure that
+	we will not deadlock against other pool users.
+	[bouyer, ticket #838]
