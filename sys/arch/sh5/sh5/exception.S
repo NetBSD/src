@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.1 2002/07/05 13:32:04 scw Exp $	*/
+/*	$NetBSD: exception.S,v 1.2 2002/07/12 15:42:28 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -43,9 +43,6 @@
  *
  * ##########
  */
-
-	.section .text..SHmedia32,"ax"
-	.align 3
 
 /*
  * SH5 Exception Handling 101
@@ -437,6 +434,7 @@
 
 /*========================= Start of Vector Table ============================*/
 
+	_TEXT_SECTION		/* XXX: from <sh5/asm.h> */
 	.balign 0x100
 
 GLOBAL(sh5_vector_table)

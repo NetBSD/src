@@ -1,4 +1,4 @@
-/*	$NetBSD: stb1_locore.S,v 1.1 2002/07/05 13:32:07 scw Exp $	*/
+/*	$NetBSD: stb1_locore.S,v 1.2 2002/07/12 15:42:29 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -43,6 +43,9 @@
  *
  * ##########
  */
+
+	_TEXT_SECTION
+	_ALIGN_TEXT
 
 /******************************************************************************
  *
@@ -140,7 +143,7 @@ Lsh5_stb1_init:
  *
  * If found, invalidate the TLB entry.
  */
-ENTRY(_sh5_stb1_tlbinv)
+ENTRY_NOPROFILE(_sh5_stb1_tlbinv)
 	getcon	sr, r5
 	LDC32(SH5_CONREG_SR_BL, r4)
 	ori	r2, SH5_PTEH_V, r2	/* Only check valid entries */
@@ -200,7 +203,7 @@ ENTRY(_sh5_stb1_tlbinv)
  * Must also flush/invalidate the instruction/data cache before removing
  * the mapping.
  */
-ENTRY(_sh5_stb1_tlbinv_cookie)
+ENTRY_NOPROFILE(_sh5_stb1_tlbinv_cookie)
 	ptabs/l	r18, tr0		/* Get return address to tr0 */
 	beq/l	r3, r63, tr0		/* Just return if pteh isn't in TLB */
 
@@ -301,7 +304,7 @@ ENTRY(_sh5_stb1_tlbinv_cookie)
  * Invalidate all instruction and data TLB entries (except [DI]TLB#0,
  * which maps the kernel in KSEG0).
  */
-ENTRY(_sh5_stb1_tlbinv_all)
+ENTRY_NOPROFILE(_sh5_stb1_tlbinv_all)
 	pta/u	1f, tr0			/* Pre-load branches */
 	ptabs/u	r18, tr1		/* Get return address to tr1 */
 	LDC32(0x00800000 + (16 * 63), r0)	/* DTLB Top */
@@ -328,7 +331,7 @@ ENTRY(_sh5_stb1_tlbinv_all)
  * the TLB. The cookie need not be returned if the ASID field of PTEH is
  * zero.
  *
- * NOT callable by C code.
+ * NOT callable by C code (despite the use of ENTRY_NOPROFILE()).
  *
  * This subroutine will be called from within the generic TLB miss
  * handler. As such, it is executing on the TLB miss stack with all
@@ -424,7 +427,7 @@ ENTRY_NOPROFILE(_sh5_stb1_tlbload)
  *
  * void _sh5_stb1_cache_purge(vaddr_t start, vsize_t len)
  */
-ENTRY(_sh5_stb1_cache_purge)
+ENTRY_NOPROFILE(_sh5_stb1_cache_purge)
 	pta/l	1f, tr0
 	ptabs/l	r18, tr1
 1:	ocbp	r2, 0
@@ -438,7 +441,7 @@ ENTRY(_sh5_stb1_cache_purge)
  *
  * void _sh5_stb1_cache_invalidate(vaddr_t start, vsize_t len)
  */
-ENTRY(_sh5_stb1_cache_invalidate)
+ENTRY_NOPROFILE(_sh5_stb1_cache_invalidate)
 	pta/l	1f, tr0
 	ptabs/l	r18, tr0
 1:	ocbi	r2, 0
