@@ -1,4 +1,4 @@
-/* $NetBSD: apecs_pci.c,v 1.18 2000/06/29 08:58:45 mrg Exp $ */
+/* $NetBSD: apecs_pci.c,v 1.19 2002/05/15 16:57:42 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: apecs_pci.c,v 1.18 2000/06/29 08:58:45 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apecs_pci.c,v 1.19 2002/05/15 16:57:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +122,7 @@ apecs_conf_read(cpv, tag, offset)
 	old_haxr2 = 0;				/* XXX gcc -Wuninitialized */
 
 	/* secondary if bus # != 0 */
-	alpha_pci_decompose_tag(&acp->ac_pc, tag, &secondary, 0, 0);
+	pci_decompose_tag(&acp->ac_pc, tag, &secondary, 0, 0);
 	if (secondary) {
 		s = splhigh();
 		old_haxr2 = REGVAL(EPIC_HAXR2);
@@ -171,7 +171,7 @@ apecs_conf_write(cpv, tag, offset, data)
 	old_haxr2 = 0;				/* XXX gcc -Wuninitialized */
 
 	/* secondary if bus # != 0 */
-	alpha_pci_decompose_tag(&acp->ac_pc, tag, &secondary, 0, 0);
+	pci_decompose_tag(&acp->ac_pc, tag, &secondary, 0, 0);
 	if (secondary) {
 		s = splhigh();
 		old_haxr2 = REGVAL(EPIC_HAXR2);

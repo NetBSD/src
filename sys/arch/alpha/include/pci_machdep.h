@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.7 2001/06/08 04:48:56 simonb Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.8 2002/05/15 16:57:41 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -83,6 +83,8 @@ struct alpha_pci_chipset {
     (*(c)->pc_bus_maxdevs)((c)->pc_conf_v, (b))
 #define	pci_make_tag(c, b, d, f)					\
     (*(c)->pc_make_tag)((c)->pc_conf_v, (b), (d), (f))
+#define	pci_decompose_tag(c, t, bp, dp, fp)				\
+    (*(c)->pc_decompose_tag)((c)->pc_conf_v, (t), (bp), (dp), (fp))
 #define	pci_conf_read(c, t, r)						\
     (*(c)->pc_conf_read)((c)->pc_conf_v, (t), (r))
 #define	pci_conf_write(c, t, r, v)					\
@@ -104,8 +106,6 @@ struct alpha_pci_chipset {
  */
 void	pci_display_console(bus_space_tag_t, bus_space_tag_t,
 	    pci_chipset_tag_t, int, int, int);
-#define	alpha_pci_decompose_tag(c, t, bp, dp, fp)			\
-    (*(c)->pc_decompose_tag)((c)->pc_conf_v, (t), (bp), (dp), (fp))
 #define	alpha_pciide_compat_intr_establish(c, d, p, ch, f, a)		\
     ((c)->pc_pciide_compat_intr_establish == NULL ? NULL :		\
      (*(c)->pc_pciide_compat_intr_establish)((c)->pc_conf_v, (d), (p),	\

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_6600.c,v 1.8 2001/07/27 00:25:20 thorpej Exp $ */
+/* $NetBSD: pci_6600.c,v 1.9 2002/05/15 16:57:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.8 2001/07/27 00:25:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.9 2002/05/15 16:57:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,7 +158,7 @@ dec_6600_intr_map(pa, ihp)
 		return 1;
 	}
 
-	alpha_pci_decompose_tag(pc, bustag, &bus, &device, &function);
+	pci_decompose_tag(pc, bustag, &bus, &device, &function);
 
 	/*
 	 * The console places the interrupt mapping in the "line" value.
@@ -335,7 +335,7 @@ dec_6600_pciide_compat_intr_establish(v, dev, pa, chan, func, arg)
 	void *cookie = NULL;
 	int bus, irq;
 
-	alpha_pci_decompose_tag(pc, pa->pa_tag, &bus, NULL, NULL);
+	pci_decompose_tag(pc, pa->pa_tag, &bus, NULL, NULL);
 
 	/*
 	 * If this isn't PCI bus #0 on the TSP that holds the PCI-ISA

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn300.c,v 1.23 2001/07/27 00:25:20 thorpej Exp $ */
+/* $NetBSD: pci_kn300.c,v 1.24 2002/05/15 16:57:42 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.23 2001/07/27 00:25:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.24 2002/05/15 16:57:42 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -146,7 +146,7 @@ dec_kn300_intr_map(pa, ihp)
 		return 1;
 	}
 
-	alpha_pci_decompose_tag(pc, bustag, NULL, &device, NULL);
+	pci_decompose_tag(pc, bustag, NULL, &device, NULL);
 
 	/*
 	 * On MID 5 device 1 is the internal NCR 53c810.

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ade.c,v 1.13 2002/05/02 16:22:43 thorpej Exp $	*/
+/*	$NetBSD: if_ade.c,v 1.14 2002/05/15 16:57:41 thorpej Exp $	*/
 
 /*
  * NOTE: this version of if_de was modified for bounce buffers prior
@@ -5030,7 +5030,7 @@ tulip_pci_attach(
 #define	PCI_CONF_READ(r)	pci_conf_read(pa->pa_pc, pa->pa_tag, (r))
 #define	PCI_GETBUSDEVINFO(sc)	do { \
 	int busno, devno, funcno; \
-	alpha_pci_decompose_tag(pa->pa_pc, pa->pa_tag, &busno, &devno, &funcno); \
+	pci_decompose_tag(pa->pa_pc, pa->pa_tag, &busno, &devno, &funcno); \
 	(sc)->tulip_pci_busno = busno; \
 	(sc)->tulip_pci_devno = devno; \
     } while (0)

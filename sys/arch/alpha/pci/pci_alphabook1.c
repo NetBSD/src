@@ -1,4 +1,4 @@
-/* $NetBSD: pci_alphabook1.c,v 1.7 2001/07/27 00:25:20 thorpej Exp $ */
+/* $NetBSD: pci_alphabook1.c,v 1.8 2002/05/15 16:57:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_alphabook1.c,v 1.7 2001/07/27 00:25:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_alphabook1.c,v 1.8 2002/05/15 16:57:42 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -156,7 +156,7 @@ dec_alphabook1_intr_map(pa, ihp)
 		return 1;
 	}
 
-	alpha_pci_decompose_tag(pc, bustag, NULL, &device, NULL);
+	pci_decompose_tag(pc, bustag, NULL, &device, NULL);
 
 	/*
 	 * There is only one interrupting PCI device on the AlphaBook: an
