@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.16 1997/06/26 19:11:42 drochner Exp $	*/
+/*	$NetBSD: net.c,v 1.17 1997/07/07 15:52:51 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -49,6 +49,7 @@
 #endif
 
 #include <net/if.h>
+#include <net/if_ether.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -57,7 +58,6 @@
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
 
-#include "if_ether.h"
 #include "stand.h"
 #include "net.h"
 
