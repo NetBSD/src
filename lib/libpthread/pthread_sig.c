@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.1.2.13 2002/08/02 22:19:48 nathanw Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.1.2.14 2002/10/02 20:16:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+/* We're interposing a specific version of the signal interface. */
+#define	__LIBC12_SOURCE__
 
 #include <assert.h>
 #include <errno.h>
@@ -84,7 +87,7 @@ void
 pthread__signal_init(void)
 {
 	SDPRINTF(("(signal_init) setting process sigmask\n"));
-	sigprocmask(0, NULL, &pt_process_sigmask);
+	__sigprocmask14(0, NULL, &pt_process_sigmask);
 }
 
 int
@@ -107,15 +110,11 @@ pthread_kill(pthread_t thread, int sig)
  */
 
 int
-sigaction(int sig, const struct sigaction *act, struct sigaction *oact)
+__sigaction14(int sig, const struct sigaction *act, struct sigaction *oact)
 {
 	pthread_t self;
 	struct sigaction realact;
 	
-	int __sigaction_sigtramp __P((int, const struct sigaction *,
-	    struct sigaction *, void *, int));
-	extern int __sigtramp_sigcontext_1[];
-
 	self = pthread__self();
 	if (act != NULL) {
 		/* Save the information for our internal dispatch. */
@@ -131,16 +130,15 @@ sigaction(int sig, const struct sigaction *act, struct sigaction *oact)
 		 * stream of signals to exhaust the supply of upcalls.
 		 */
 		realact = *act;
-		sigemptyset(&realact.sa_mask);
+		__sigemptyset14(&realact.sa_mask);
 		act = &realact;
 	}
 
-	return __sigaction_sigtramp(sig, act, oact,
-	    __sigtramp_sigcontext_1, 1);
+	return (__libc_sigaction14(sig, act, oact));
 }
 
 int
-sigsuspend(const sigset_t *sigmask)
+__sigsuspend14(const sigset_t *sigmask)
 {
 	pthread_t self;
 	sigset_t oldmask;
@@ -269,29 +267,29 @@ pthread_sigmask(int how, const sigset_t *set, sigset_t *oset)
 		SDPRINTF(("(pt_sigmask %p) Process mask was changed to %08x\n",
 		    self, pt_process_sigmask.__bits[0]));
 		/* See if there are any signals to take */
-		sigemptyset(&takelist);
+		__sigemptyset14(&takelist);
 		while ((i = firstsig(&self->pt_siglist)) != 0) {
-			if (!sigismember(&self->pt_sigmask, i)) {
-				sigaddset(&takelist, i);
-				sigdelset(&self->pt_siglist, i);
+			if (!__sigismember14(&self->pt_sigmask, i)) {
+				__sigaddset14(&takelist, i);
+				__sigdelset14(&self->pt_siglist, i);
 			}
 		}
 		while ((i = firstsig(&pt_process_siglist)) != 0) {
-			if (!sigismember(&self->pt_sigmask, i)) {
-				sigaddset(&takelist, i);
-				sigdelset(&pt_process_siglist, i);
+			if (!__sigismember14(&self->pt_sigmask, i)) {
+				__sigaddset14(&takelist, i);
+				__sigdelset14(&pt_process_siglist, i);
 			}
 		}
 
 		procmaskset = 0;
 		while ((i = firstsig(&takelist)) != 0) {
-			if (!sigismember(&self->pt_sigmask, i)) {
+			if (!__sigismember14(&self->pt_sigmask, i)) {
 				/* Take the signal */
 				act = &pt_sigacts[i];
 				oldmask = self->pt_sigmask;
 				__sigplusset(&self->pt_sigmask,
 				    &act->sa_mask);
-				sigaddset(&self->pt_sigmask, i);
+				__sigaddset14(&self->pt_sigmask, i);
 				pthread_spinunlock(self, &pt_process_siglock);
 				pthread_spinunlock(self, &self->pt_siglock);
 				SDPRINTF(("(pt_sigmask %p) taking unblocked signal %d\n", self, i));
@@ -301,7 +299,7 @@ pthread_sigmask(int how, const sigset_t *set, sigset_t *oset)
 				handler(i, 0, &xxxsc);
 				pthread_spinlock(self, &self->pt_siglock);
 				pthread_spinlock(self, &pt_process_siglock);
-				sigdelset(&takelist, i);
+				__sigdelset14(&takelist, i);
 				/* Reset masks */
 				self->pt_sigmask = oldmask;
 				tmp = pt_process_sigmask;
@@ -309,7 +307,7 @@ pthread_sigmask(int how, const sigset_t *set, sigset_t *oset)
 				if (!__sigsetequal(&tmp, &pt_process_sigmask)){
 					pt_process_sigmask = tmp;
 					SDPRINTF(("(pt_sigmask %p) setting proc sigmask to %08x\n", pt_process_sigmask.__bits[0]));
-					sigprocmask(SIG_SETMASK, 
+					__sigprocmask14(SIG_SETMASK, 
 					    &pt_process_sigmask, NULL);
 					procmaskset = 1;
 				}
@@ -317,7 +315,7 @@ pthread_sigmask(int how, const sigset_t *set, sigset_t *oset)
 		}
 		if (!procmaskset) {
 			SDPRINTF(("(pt_sigmask %p) setting proc sigmask to %08x\n", self, pt_process_sigmask.__bits[0]));
-			sigprocmask(SIG_SETMASK, &pt_process_sigmask, NULL);
+			__sigprocmask14(SIG_SETMASK, &pt_process_sigmask, NULL);
 		}
 	} 
 	pthread_spinunlock(self, &pt_process_siglock);
@@ -375,7 +373,7 @@ pthread__signal(pthread_t t, int sig, int code)
 			SDPRINTF((
 				"(pt_signal %p) target %p: state %d, mask %08x\n", 
 				self, target, target->pt_state, target->pt_sigmask.__bits[0]));
-			if (!sigismember(&target->pt_sigmask, sig)) {
+			if (!__sigismember14(&target->pt_sigmask, sig)) {
 				if (target->pt_state != PT_STATE_BLOCKED_SYS) {
 					good = target;
 					/* Leave target locked */
@@ -404,11 +402,11 @@ pthread__signal(pthread_t t, int sig, int code)
 			 * for later unblocking.  
 			 */
 			pthread_spinlock(self, &pt_process_siglock);
-			sigaddset(&pt_process_sigmask, sig);
+			__sigaddset14(&pt_process_sigmask, sig);
 			SDPRINTF(("(pt_signal %p) lazily setting proc sigmask to "
 			    "%08x\n", self, pt_process_sigmask.__bits[0]));
-			sigprocmask(SIG_SETMASK, &pt_process_sigmask, NULL);
-			sigaddset(&pt_process_siglist, sig);
+			__sigprocmask14(SIG_SETMASK, &pt_process_sigmask, NULL);
+			__sigaddset14(&pt_process_siglist, sig);
 			pthread_spinunlock(self, &pt_process_siglock);
 			return;
 		}
@@ -429,16 +427,16 @@ pthread__signal(pthread_t t, int sig, int code)
 	pthread_spinlock(self, &pt_process_siglock);
 	SDPRINTF(("(pt_signal %p) setting proc sigmask to "
 	    "%08x\n", self, pt_process_sigmask.__bits[0]));
-	sigprocmask(SIG_SETMASK, &pt_process_sigmask, NULL);
+	__sigprocmask14(SIG_SETMASK, &pt_process_sigmask, NULL);
 	pthread_spinunlock(self, &pt_process_siglock);
 
-	if (t && sigismember(&target->pt_sigmask, sig)) {
+	if (t && __sigismember14(&target->pt_sigmask, sig)) {
 		/* Record the signal for later delivery. */
-		sigaddset(&target->pt_siglist, sig);
+		__sigaddset14(&target->pt_siglist, sig);
 		pthread_spinunlock(self, &target->pt_siglock);
 		return;
 	}
-	
+
 	/*
 	 * Ensure the victim is not running.
 	 * In a MP world, it could be on another processor somewhere.
@@ -453,7 +451,7 @@ pthread__signal(pthread_t t, int sig, int code)
 	 */
 	oldmask = target->pt_sigmask;
 	__sigplusset(&target->pt_sigmask, &pt_sigacts[sig].sa_mask);
-	sigaddset(&target->pt_sigmask, sig);
+	__sigaddset14(&target->pt_sigmask, sig);
 	pthread_spinunlock(self, &target->pt_siglock);
 
 	/*
