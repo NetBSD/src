@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1987 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1987, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)bcmp.c	5.6 (Berkeley) 2/24/91";
+static char sccsid[] = "@(#)bcmp.c	8.1 (Berkeley) 6/4/93";
 #endif /* LIBC_SCCS and not lint */
 
 #include <string.h>
@@ -40,6 +40,7 @@ static char sccsid[] = "@(#)bcmp.c	5.6 (Berkeley) 2/24/91";
 /*
  * bcmp -- vax cmpc3 instruction
  */
+int
 bcmp(b1, b2, length)
 	const void *b1, *b2;
 	register size_t length;

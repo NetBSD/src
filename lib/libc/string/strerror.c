@@ -1,5 +1,5 @@
-/*-
- * Copyright (c) 1990, 1993
+/*
+ * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,23 +32,36 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)ffs.c	8.1 (Berkeley) 6/4/93";
+static char sccsid[] = "@(#)strerror.c	8.1 (Berkeley) 6/4/93";
 #endif /* LIBC_SCCS and not lint */
 
 #include <string.h>
 
-/*
- * ffs -- vax ffs instruction
- */
-int
-ffs(mask)
-	register int mask;
+char *
+strerror(num)
+	int num;
 {
-	register int bit;
+	extern int sys_nerr;
+	extern char *sys_errlist[];
+#define	UPREFIX	"Unknown error: "
+	static char ebuf[40] = UPREFIX;		/* 64-bit number + slop */
+	register unsigned int errnum;
+	register char *p, *t;
+	char tmp[40];
 
-	if (mask == 0)
-		return(0);
-	for (bit = 1; !(mask & 1); bit++)
-		mask >>= 1;
-	return(bit);
+	errnum = num;				/* convert to unsigned */
+	if (errnum < sys_nerr)
+		return(sys_errlist[errnum]);
+
+	/* Do this by hand, so we don't include stdio(3). */
+	t = tmp;
+	do {
+		*t++ = "0123456789"[errnum % 10];
+	} while (errnum /= 10);
+	for (p = ebuf + sizeof(UPREFIX) - 1;;) {
+		*p++ = *--t;
+		if (t <= tmp)
+			break;
+	}
+	return(ebuf);
 }

@@ -1,9 +1,9 @@
-.\" Copyright (c) 1990, 1991, 1993
+.\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
-.\" Chris Torek and the American National Standards Committee X3,
-.\" on Information Processing Systems.
+.\" the American National Standards Committee X3, on Information
+.\" Processing Systems.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -33,47 +33,92 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)strspn.3	8.1 (Berkeley) 6/4/93
+.\"     @(#)strerror.3	8.1 (Berkeley) 6/9/93
 .\"
-.Dd June 4, 1993
-.Dt STRSPN 3
-.Os
+.Dd June 9, 1993
+.Dt STRERROR 3
+.Os BSD 4
 .Sh NAME
-.Nm strspn
-.Nd span a string
+.Nm perror ,
+.Nm strerror ,
+.Nm sys_errlist ,
+.Nm sys_nerr
+.Nd system error messages
 .Sh SYNOPSIS
+.Fd #include <stdio.h>
+.Ft void
+.Fn perror "const char *string"
+.Vt extern char *sys_errlist[];
+.Vt extern int sys_nerr;
 .Fd #include <string.h>
-.Ft size_t
-.Fn strspn "const char *s" "const char *charset"
+.Ft char *
+.Fn strerror "int errnum"
 .Sh DESCRIPTION
 The
-.Fn strcspn
-function
-spans the initial part of the null-terminated string
-.Fa s
-as long as the characters from
-.Fa s
-occur in string
-.Fa charset .
-.Sh RETURN VALUES
+.Fn strerror
+and
+.Fn perror
+functions look up the error message string corresponding to an
+error number.
+.Pp
 The
-.Fn strspn
-function
-returns the number of characters spanned.
+.Fn strerror
+function accepts an error number argument
+.Fa errnum
+and
+returns a pointer to the corresponding
+message string.
+.Pp
+The
+.Fn perror
+function finds the error message corresponding to the current
+value of the global variable
+.Va errno
+.Pq Xr intro 2
+and writes it, followed by a newline, to the
+standard error file descriptor.
+If the argument
+.Fa string
+is
+.Pf non- Dv NULL ,
+it is prepended to the message
+string and separated from it by
+a colon and space
+.Pq Ql \&:\ \& .
+If
+.Fa string
+is
+.Dv NULL ,
+only the error message string is printed.
+.Pp
+If
+.Fa errnum
+is not a recognized error number,
+the error message string will contain
+.Dq Li "Unknown error:\0
+followed by the error number in decimal.
+.Pp
+The message strings can be accessed directly using the external
+array
+.Fa sys_errlist .
+The external value
+.Fa sys_nerr
+contains a count of the messages in
+.Fa sys_errlist .
+The use of these variables is deprecated;
+.Fn strerror
+should be used instead.
 .Sh SEE ALSO
-.Xr index 3 ,
-.Xr memchr 3 ,
-.Xr rindex 3 ,
-.Xr strchr 3 ,
-.Xr strcspn 3 ,
-.Xr strpbrk 3 ,
-.Xr strrchr 3 ,
-.Xr strsep 3 ,
-.Xr strstr 3 ,
-.Xr strtok 3
-.Sh STANDARDS
+.Xr intro 2 ,
+.Xr psignal 3
+.Sh HISTORY
 The
-.Fn strspn
-function
-conforms to
-.St -ansiC .
+.Fn strerror
+and
+.Fn perror
+functions first appeared in 4.4BSD.
+.Sh BUGS
+For unknown error numbers, the
+.Fn strerror
+function will return its result in a static buffer which
+may be overwritten by subsequent calls.
