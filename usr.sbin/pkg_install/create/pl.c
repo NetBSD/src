@@ -1,11 +1,11 @@
-/*	$NetBSD: pl.c,v 1.13 1999/05/30 16:08:25 tron Exp $	*/
+/*	$NetBSD: pl.c,v 1.14 1999/07/10 20:17:21 christos Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pl.c,v 1.11 1997/10/08 07:46:35 charnier Exp";
 #else
-__RCSID("$NetBSD: pl.c,v 1.13 1999/05/30 16:08:25 tron Exp $");
+__RCSID("$NetBSD: pl.c,v 1.14 1999/07/10 20:17:21 christos Exp $");
 #endif
 #endif
 
@@ -69,7 +69,7 @@ CheckSymlink(char *name, char *prefix, size_t prefixcc)
 static int
 dircmp(const void *vp1, const void *vp2)
 {
-	return strcmp(vp2, vp1);
+	return strcmp((const char *)vp2, (const char *)vp1);
 }
 
 /* re-order the PLIST_DIR_RM entries into reverse alphabetic order */
