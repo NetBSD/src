@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ttydev.h	7.8 (Berkeley) 5/9/91
- *	$Id: ttydev.h,v 1.3 1993/05/20 16:23:34 cgd Exp $
+ *	$Id: ttydev.h,v 1.4 1993/06/05 22:37:56 cgd Exp $
  */
 
 #ifndef _SYS_TTYDEV_H_
@@ -56,6 +56,8 @@
 #define B9600	13
 #define EXTA	14
 #define EXTB	15
+#define B57600	16
+#define B115200	17
 #endif /* USE_OLD_TTY */
 
 #endif /* !_SYS_TTYDEV_H_ */
