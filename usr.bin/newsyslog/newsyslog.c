@@ -1,4 +1,4 @@
-/*	$NetBSD: newsyslog.c,v 1.43.2.1 2002/06/26 23:32:53 lukem Exp $	*/
+/*	$NetBSD: newsyslog.c,v 1.43.2.2 2002/06/27 03:27:46 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newsyslog.c,v 1.43.2.1 2002/06/26 23:32:53 lukem Exp $");
+__RCSID("$NetBSD: newsyslog.c,v 1.43.2.2 2002/06/27 03:27:46 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -432,6 +432,11 @@ log_examine(struct conf_entry *log, int force)
 			return;
 		} else if (errno != 0)
 			err(EXIT_FAILURE, "%s", log->logfile);
+	}
+
+	if (!S_ISREG(sb.st_mode)) {
+		PRHDRINFO(("not a regular file --> skip log\n"));
+		return;
 	}
 
 	/* Size of the log file in kB. */
