@@ -34,6 +34,7 @@
 #include <number.h>
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 #include <ctype.h>/* Prototypes needed for external utility routines. */
 
 #define bc_rt_warn rt_warn
