@@ -1,4 +1,4 @@
-/*	$NetBSD: machine.h,v 1.4 2000/05/29 11:52:36 simonb Exp $	*/
+/*	$NetBSD: machine.h,v 1.5 2001/05/22 15:38:22 christos Exp $	*/
 
 /*
  *  This file defines the interface between top and the machine-dependent
@@ -23,12 +23,18 @@ struct statics
  * the system_info struct is filled in by a machine dependent routine.
  */
 
+#ifdef p_active     /* uw7 define macro p_active */
+#define P_ACTIVE p_pactive
+#else
+#define P_ACTIVE p_active
+#endif
+
 struct system_info
 {
     int    last_pid;
     double load_avg[NUM_AVERAGES];
     int    p_total;
-    int    p_active;     /* number of procs considered "active" */
+    int    P_ACTIVE;     /* number of procs considered "active" */
     int    *procstates;
     int    *cpustates;
     int    *memory;
