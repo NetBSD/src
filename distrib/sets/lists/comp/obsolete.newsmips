@@ -1,2 +1,5 @@
-# $NetBSD: obsolete.newsmips,v 1.1 1999/11/09 22:00:45 kleink Exp $
+# $NetBSD: obsolete.newsmips,v 1.2 2002/04/19 18:30:58 tsutsui Exp $
 /usr/include/newsmips/elf.h
+/usr/include/newsmips/framebuf.h
+/usr/include/newsmips/keyboard.h
+/usr/include/newsmips/mouse.h
