@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcsh,v 1.9 2001/03/15 17:30:55 uch Exp $
+#	$NetBSD: files.hpcsh,v 1.10 2001/03/20 16:05:42 uch Exp $
 #
 maxpartitions 8
 
@@ -12,7 +12,7 @@ file	arch/hpcsh/hpcsh/bus_space.c
 file	arch/hpcsh/hpcsh/procfs_machdep.c	procfs
 file	arch/hpcsh/hpcsh/debug.c
 
-define mainbus { }
+device mainbus { [id = -1] }
 
 #
 # H/PC Platform common files.
@@ -44,8 +44,6 @@ major	{md = 6}
 #
 # System bus types
 #
-
-device	mainbus:  mainbus
 attach	mainbus at root
 file	arch/hpcsh/hpcsh/mainbus.c		mainbus
 
