@@ -1,4 +1,4 @@
-#	$NetBSD: termcap.src,v 1.78 2003/03/20 11:19:51 jdolecek Exp $
+#	$NetBSD: termcap.src,v 1.79 2003/03/24 14:16:40 taca Exp $
 #
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
@@ -1867,7 +1867,7 @@ xterm-bold|xterm terminal emulator (X11R6 Window System) standout w/bold:\
 # (kterm: this had extension capabilities ":KJ:TY=ascii:" -- esr)
 kterm|kterm kanji terminal emulator (X window system):\
 	:es:hs:ds=\E[?H:fs=\E[?F:ts=\E[?E\E[?%i%dT:\
-	:tc=xterm-xf86-v33:
+	:tc=xterm:
 # See the note on ICH/ICH1 VERSUS RMIR/SMIR near the end of file
 xterm-nic|xterm with ich/ich1 suppressed for non-curses programs:\
 	:IC@:ei=:ic@:im=:\
