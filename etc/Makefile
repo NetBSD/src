@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.199 2001/12/12 00:07:46 tv Exp $
+#	$NetBSD: Makefile,v 1.200 2002/01/27 01:44:02 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -57,7 +57,7 @@ MKISOFS_FLAGS+= -J -l \
 
 # MD Makefile.inc may append MD targets to BIN[123].  Make sure all
 # are empty, to preserve the old semantics of setting them below with "=".
-BIN1=	
+BIN1=
 BIN2=
 BIN3=
 
@@ -113,7 +113,7 @@ BIN3+=	hosts.equiv
 NAMEDB=	127 root.cache named.conf localhost loopback.v6
 PCS=	pcs750.bin
 
-.if make(release) || make(snapshot) || make(distribution)
+.if make(release) || make(snapshot) || make(distribution)		# {
 # find out endianness of target and set proper flag for pwd_mkdb so that
 # it creates database in same endianness
 .if exists(${DESTDIR}/usr/include/sys/endian.h)
@@ -131,31 +131,37 @@ TARGET_ENDIANNESS= -B
 .else
 TARGET_ENDIANNESS=
 .endif
-.endif
+.endif	# release || snapshot || distribution				# }
 
 .include <bsd.kernobj.mk>
 
 obj:
 	mkdir -p ${KERNOBJDIR}
 
-.if !defined(DESTDIR) || ${DESTDIR} == ""
+.if !defined(DESTDIR) || ${DESTDIR} == ""				# {
 __warndestdir: .USE
 	@echo setenv DESTDIR before doing that!
 	@false
-distribution distrib-dirs release snapshot snap_pre snap_md_pre \
-iso-image: __warndestdir
+distribution install-etc-files distrib-dirs \
+    release snapshot iso-image iso_image_mi iso-image_md_pre iso-image_md_post \
+    snap_pre snap_md_pre: __warndestdir
 .if !target(snap_md_post)
 snap_md_post: __warndestdir
 .endif
-.else
+.if !target(snap_kern)
+snap_kern: __warndestdir
+.endif
+
+.else	# DESTDIR != ""							# } {
+
 distribution: distrib-dirs
 .if !defined(DISTRIBUTION_DONE)
 .if !defined(INSTALL_DONE)
 	(cd ..; ${MAKE} _DISTRIB= includes)
 	(cd ..; ${MAKE} _DISTRIB= install)
-.endif
+.endif	# !INSTALL_DONE
 	${MAKE} install-etc-files
-.endif
+.endif	# !DISTRIBUTION_DONE
 
 install-etc-files:
 	${INSTALL} ${INSTPRIV} -c -o ${BINOWN} -g ${BINGRP} -m 644 ${BIN1} \
@@ -179,7 +185,7 @@ install-etc-files:
 		| sed -e 's|^/|./|g' -e 's|//|/|g' >>${METALOG}
 	echo "${DESTDIR}/etc/spwd.db type=file mode=0600 uname=root gname=wheel" \
 		| sed -e 's|^/|./|g' -e 's|//|/|g' >>${METALOG}
-.endif
+.endif	# UNPRIVED
 	${INSTALL} ${INSTPRIV} -c -o ${BINOWN} -g ${BINGRP} -m 555 \
 	     MAKEDEV.local etc.${MACHINE}/MAKEDEV ${DESTDIR}/dev
 	${INSTALL} ${INSTPRIV} -c -o root -g wheel -m 600 minfree \
@@ -278,7 +284,7 @@ install-etc-files:
 .if (${MKCRYPTO} != "no")
 	(cd ../usr.bin/ssh; ${MAKE} distribution)
 .endif
-.ifndef NO_SENDMAIL
+.if !defined(NO_SENDMAIL)
 	(cd ../gnu/usr.sbin/sendmail/cf/cf; ${MAKE} distribution)
 .endif
 
@@ -289,15 +295,21 @@ distrib-dirs:
 	${INSTALL} ${INSTPRIV} -l s -o root -g wheel -m 755 \
 		usr/src/sys ${DESTDIR}/sys
 
-.if !defined(RELEASEDIR)
+.if !defined(RELEASEDIR)						# {
 __warnreleasedir: .USE
 	@echo setenv RELEASEDIR before doing that!
 	@false
-release snapshot snap_pre snap_md_pre iso-image: __warnreleasedir
+release snapshot iso-image iso_image_mi iso-image_md_pre iso-image_md_post \
+    snap_pre snap_md_pre: __warnreleasedir
 .if !target(snap_md_post)
 snap_md_post: __warnreleasedir
 .endif
-.else
+.if !target(snap_kern)
+snap_kern: __warnreleasedir
+.endif
+
+.else	# RELEASEDIR							# } {
+
 release snapshot: distribution snap_pre snap_md_pre snap_kern snap_md_post
 	(cd ../distrib/sets; ${MAKE} sets)
 	sh ../distrib/sets/makesums -t ${RELEASEDIR}/binary/kernel '*.gz'
@@ -373,7 +385,7 @@ snap_kern:
 	cd ${KERNCONFDIR} && ${CONFIG} \
 		-b ${KERNOBJDIR}/${configfile:C/.*\///} -s ${KERNSRCDIR} ${configfile}
 .ifndef UPDATE
-	cd ${KERNOBJDIR}/${configfile:C/.*\///} && ${MAKE} distclean 
+	cd ${KERNOBJDIR}/${configfile:C/.*\///} && ${MAKE} distclean
 .endif
 	cd ${KERNOBJDIR}/${configfile:C/.*\///} && ${MAKE} depend && ${MAKE} ${_J}
 .endfor # build kernels
@@ -411,7 +423,7 @@ snap_kern:
 .endif # KERNELS_DONE
 .endif # no target(snap_kern)
 
-.endif # RELEASEDIR check
+.endif # RELEASEDIR							# }
 
 snap_md_pre:
 # nothing here -- look in the machine-dependent Makefile.inc
@@ -419,6 +431,6 @@ snap_md_pre:
 snap_md_post:
 # nothing here -- look in the machine-dependent Makefile.inc
 
-.endif	# DESTDIR check
+.endif	# DESTDIR							# }
 
 .include <bsd.prog.mk>
