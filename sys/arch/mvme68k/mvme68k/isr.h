@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.h,v 1.3 1997/10/09 08:40:06 jtc Exp $	*/
+/*	$NetBSD: isr.h,v 1.4 2000/07/15 19:17:19 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -90,3 +90,4 @@ void	isrlink_vectored __P((int (*)(void *), void *, int, int));
 void	isrunlink_vectored __P((int));
 void	isrdispatch_autovec __P((int));
 void	isrdispatch_vectored __P((int, int, void *));
+void	netintr __P((void));
