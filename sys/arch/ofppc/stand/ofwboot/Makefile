@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.14 2002/09/21 01:18:40 chs Exp $
+#	$NetBSD: Makefile,v 1.15 2003/10/08 01:38:49 simonb Exp $
 
 S=	${.CURDIR}/../../../..
 
 PROG=		ofwboot
 SRCS=		Locore.c alloc.c boot.c ofdev.c net.c netif_of.c vers.c
-CFLAGS+=	-msoft-float -Wno-main
+CFLAGS+=	-msoft-float -Wno-main -ffreestanding
 #CPPFLAGS+=	-DDEBUG -DNETIF_DEBUG
 CPPFLAGS+=	-D_STANDALONE -DSUPPORT_DHCP -I${.CURDIR}
 DBG=		-Os -mmultiple
@@ -18,6 +18,12 @@ SRCS+=		byteorder.c
 NOMAN=		# defined
 STRIPFLAG=
 BINMODE=	444
+
+# XXX SHOULD NOT NEED TO DEFINE THESE!
+LIBCRT0=
+LIBC=
+LIBCRTBEGIN=
+LIBCRTEND=
 
 NEWVERSWHAT=	"OpenFirmware Boot"
 
