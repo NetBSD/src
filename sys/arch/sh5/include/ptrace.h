@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.1 2002/07/05 13:32:01 scw Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.2 2003/01/20 20:07:52 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -40,5 +40,7 @@
 
 #define	PT_GETREGS	(PT_FIRSTMACH + 1)
 #define	PT_SETREGS	(PT_FIRSTMACH + 2)
+#define	PT_GETFPREGS	(PT_FIRSTMACH + 3)
+#define	PT_SETFPREGS	(PT_FIRSTMACH + 4)
 
 #endif /* _SH5_PTRACE_H */
