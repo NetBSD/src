@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.455 2002/07/26 10:14:00 onoe Exp $
+$NetBSD: pcidevs,v 1.456 2002/07/29 20:08:25 augustss Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1270,6 +1270,7 @@ product HIFN 7951	0x0012	7951
 
 /* HiNT products */
 product HINT HB1	0x0021	HB1 PCI-PCI Bridge
+product HINT HB4	0x0022	HB4 PCI-PCI Bridge
 
 /* IBM products */
 product IBM MCABRIDGE 	0x0002	MCA Bridge
@@ -1749,6 +1750,7 @@ product PEAK PCAN	0x0001	PCAN	CAN controller
 
 /* PLX Technology products */
 product PLX 9060ES	0x906e	9060ES PCI bus controller
+product PLX 9656	0x9656	9656 I/O Accelerator
 
 /* Powerhouse Systems products */
 product	POWERHOUSE POWERTOP	0x6037	PowerTop PowerPC system controller
