@@ -26,6 +26,7 @@ POPDIVERT
 ####################################
 
 VERSIONID(`Id: phquery.m4,v 8.17 2001/11/12 23:11:34 ca Exp')
+VERSIONID(`$NetBSD: phquery.m4,v 1.4 2003/06/01 14:06:48 atatat Exp $')
 
 Mph,		P=PH_MAILER_PATH, F=_MODMF_(CONCAT(`nrDFM', PH_MAILER_FLAGS), `PH'), S=EnvFromL, R=EnvToL/HdrToL,
 		T=DNS/RFC822/X-Unix,_PH_QGRP

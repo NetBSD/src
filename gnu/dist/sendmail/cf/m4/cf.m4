@@ -27,3 +27,4 @@ divert(0)dnl
 ifdef(`OSTYPE', `dnl',
 `include(_CF_DIR_`'m4/cfhead.m4)dnl
 VERSIONID(`Id: cf.m4,v 8.32 1999/02/07 07:26:14 gshapiro Exp')')
+VERSIONID(`$NetBSD: cf.m4,v 1.3 2003/06/01 14:06:48 atatat Exp $')')

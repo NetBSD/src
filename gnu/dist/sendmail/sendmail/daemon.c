@@ -1,3 +1,9 @@
+/* $NetBSD: daemon.c,v 1.12 2003/06/01 14:07:05 atatat Exp $ */
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: daemon.c,v 1.12 2003/06/01 14:07:05 atatat Exp $");
+#endif
+
 /*
  * Copyright (c) 1998-2003 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
@@ -2487,7 +2493,6 @@ gothostent:
 		}
 #endif /* SO_RCVBUF */
 
-
 		if (tTd(16, 1))
 			sm_dprintf("makeconnection: fd=%d\n", s);
 
@@ -2604,9 +2609,6 @@ gothostent:
 			(void) sleep(DialDelay);
 			continue;
 		}
-
-		/* couldn't connect.... figure out why */
-		(void) close(s);
 
 		if (LogLevel > 13)
 			sm_syslog(LOG_INFO, e->e_id,

@@ -1,3 +1,9 @@
+/* $NetBSD: mailstats.c,v 1.8 2003/06/01 14:07:02 atatat Exp $ */
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: mailstats.c,v 1.8 2003/06/01 14:07:02 atatat Exp $");
+#endif
+
 /*
  * Copyright (c) 1998-2002 Sendmail, Inc. and its suppliers.
  *	All rights reserved.

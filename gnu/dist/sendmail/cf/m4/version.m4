@@ -11,8 +11,9 @@ divert(-1)
 # the sendmail distribution.
 #
 #
-VERSIONID(`Id: version.m4,v 8.92.2.14 2003/01/15 17:55:43 ca Exp')
+VERSIONID(`Id: version.m4,v 8.92.2.15 2003/03/19 21:19:52 ca Exp')
+VERSIONID(`$NetBSD: version.m4,v 1.12 2003/06/01 14:06:48 atatat Exp $')
 #
 divert(0)
 # Configuration version number
-DZ8.12.8`'ifdef(`confCF_VERSION', `/confCF_VERSION')
+DZ8.12.9`'ifdef(`confCF_VERSION', `/confCF_VERSION')

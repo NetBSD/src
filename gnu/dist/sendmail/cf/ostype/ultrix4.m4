@@ -14,5 +14,6 @@ divert(-1)
 
 divert(0)
 VERSIONID(`Id: ultrix4.m4,v 8.11 1999/02/07 07:26:24 gshapiro Exp')
+VERSIONID(`$NetBSD: ultrix4.m4,v 1.3 2003/06/01 14:06:51 atatat Exp $')
 
 define(`confEBINDIR', `/usr/lib')dnl

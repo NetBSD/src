@@ -1,3 +1,4 @@
+/* $NetBSD: mailstats.h,v 1.4 2003/06/01 14:06:58 atatat Exp $ */
 /*
  * Copyright (c) 1998, 1999 Sendmail, Inc. and its suppliers.
  *	All rights reserved.

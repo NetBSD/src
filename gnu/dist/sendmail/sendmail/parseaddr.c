@@ -1,3 +1,9 @@
+/* $NetBSD: parseaddr.c,v 1.12 2003/06/01 14:07:07 atatat Exp $ */
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: parseaddr.c,v 1.12 2003/06/01 14:07:07 atatat Exp $");
+#endif
+
 /*
  * Copyright (c) 1998-2003 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
@@ -13,7 +19,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)Id: parseaddr.c,v 8.359.2.4 2003/01/18 00:41:48 gshapiro Exp")
+SM_RCSID("@(#)Id: parseaddr.c,v 8.359.2.6 2003/03/27 02:39:53 ca Exp")
 
 static void	allocaddr __P((ADDRESS *, int, char *, ENVELOPE *));
 static int	callsubr __P((char**, int, ENVELOPE *));

@@ -9,5 +9,6 @@
 #
 #
 #	Id: Build,v 8.6 2000/04/10 06:32:53 gshapiro Exp
+#	$NetBSD: Build,v 1.5 2003/06/01 14:07:04 atatat Exp $
 
 exec sh ../devtools/bin/Build $*
