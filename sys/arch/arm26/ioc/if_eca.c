@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eca.c,v 1.6 2001/09/22 14:42:51 bjh21 Exp $	*/
+/*	$NetBSD: if_eca.c,v 1.7 2001/09/22 15:29:20 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eca.c,v 1.6 2001/09/22 14:42:51 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eca.c,v 1.7 2001/09/22 15:29:20 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -64,6 +64,8 @@ static void eca_tx_downgrade(void);
 static void eca_txdone(void *);
 
 static int eca_init_rxbuf(struct eca_softc *sc, int flags);
+static void eca_init_rx_soft(struct eca_softc *sc);
+static void eca_init_rx_hard(struct eca_softc *sc);
 static void eca_init_rx(struct eca_softc *sc);
 
 static void eca_rx_downgrade(void);
@@ -223,7 +225,6 @@ eca_txframe(struct ifnet *ifp, struct mbuf *m)
 	sc->sc_cr2 |= MC6854_CR2_RTS | MC6854_CR2_F_M_IDLE;
 	bus_space_write_1(iot, ioh, MC6854_CR2, sc->sc_cr2);
 	sc->sc_fiqstate.efs_fiqhandler = eca_fiqhandler_tx;
-	fiq_installhandler(eca_fiqhandler, eca_efiqhandler - eca_fiqhandler);
 	sc->sc_transmitting = 1;
 	sc->sc_txmbuf = m;
 	fr.r8_fiq = (register_t)sc->sc_ioh.a1;
@@ -274,7 +275,8 @@ eca_tx_downgrade(void)
 		    sc->sc_cr2 | MC6854_CR2_CLR_TX_ST);
 	}
 	sc->sc_txmbuf = NULL;
-	eca_init_rx(sc);
+	/* eca_init_rx_soft() should have been called already. */
+	eca_init_rx_hard(sc);
 	softintr_schedule(sc->sc_tx_soft);
 }
 
@@ -333,37 +335,58 @@ eca_init_rxbuf(struct eca_softc *sc, int flags)
 }
 
 /*
+ * Set up the software state necessary for reception, but don't
+ * actually start receoption.  Pushing the state into the hardware is
+ * left to eca_init_rx_hard() the Tx FIQ handler.
+ */
+void
+eca_init_rx_soft(struct eca_softc *sc)
+{
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	struct fiq_regs *fr = &sc->sc_fiqstate.efs_rx_fiqregs;
+
+	memset(fr, 0, sizeof(*fr));
+	fr->r8_fiq = (register_t)sc->sc_ioh.a1;
+	fr->r9_fiq = (register_t)sc->sc_rcvmbuf->m_data;
+	fr->r10_fiq = (register_t)ECO_ADDR_LEN;
+	fr->r11_fiq = (register_t)&sc->sc_fiqstate;
+	sc->sc_fiqstate.efs_rx_curmbuf = sc->sc_rcvmbuf;
+	sc->sc_fiqstate.efs_rx_flags = 0;
+	sc->sc_fiqstate.efs_rx_myaddr = LLADDR(ifp->if_sadl)[0];
+}
+
+/*
+ * Copy state set up by eca_init_rx_soft into the hardware, and reset
+ * the FIQ handler as appropriate.
+ */
+void
+eca_init_rx_hard(struct eca_softc *sc)
+{
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+	struct fiq_regs *fr = &sc->sc_fiqstate.efs_rx_fiqregs;
+
+	eca_init_rx_soft(sc);
+	sc->sc_fiqstate.efs_fiqhandler = eca_fiqhandler_rx;
+	sc->sc_transmitting = 0;
+	sc->sc_cr1 = MC6854_CR1_RIE;
+	bus_space_write_1(iot, ioh, MC6854_CR1, sc->sc_cr1);
+	fiq_setregs(fr);
+	fiq_downgrade_handler = eca_rx_downgrade;
+	eca_fiqowner = sc;
+	ioc_fiq_setmask(IOC_FIQ_BIT(FIQ_EFIQ));
+}
+
+/*
  * Set up the chip and FIQ handler for reception.  Assumes the Rx buffer is
  * set up already by eca_init_rxbuf().
  */
 void
 eca_init_rx(struct eca_softc *sc)
 {
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
-	struct fiq_regs fr;
-	int sr2;
 
-	sr2 = bus_space_read_1(iot, ioh, MC6854_SR2);
-	sc->sc_fiqstate.efs_fiqhandler = eca_fiqhandler_rx;
-	fiq_installhandler(eca_fiqhandler, eca_efiqhandler - eca_fiqhandler);
-	sc->sc_transmitting = 0;
-	sc->sc_cr1 = MC6854_CR1_RIE;
-	bus_space_write_1(iot, ioh, MC6854_CR1, sc->sc_cr1);
-	memset(&fr, 0, sizeof(fr));
-	fr.r8_fiq = (register_t)sc->sc_ioh.a1;
-	fr.r9_fiq = (register_t)sc->sc_rcvmbuf->m_data;
-	fr.r10_fiq = (register_t)ECO_ADDR_LEN;
-	fr.r11_fiq = (register_t)&sc->sc_fiqstate;
-	sc->sc_fiqstate.efs_rx_curmbuf = sc->sc_rcvmbuf;
-	sc->sc_fiqstate.efs_rx_flags = 0;
-	sc->sc_fiqstate.efs_rx_myaddr = LLADDR(ifp->if_sadl)[0];
-	fiq_setregs(&fr);
-	fiq_downgrade_handler = eca_rx_downgrade;
-	eca_fiqowner = sc;
-	sr2 = bus_space_read_1(iot, ioh, MC6854_SR2);
-	ioc_fiq_setmask(IOC_FIQ_BIT(FIQ_EFIQ));
+	eca_init_rx_soft(sc);
+	eca_init_rx_hard(sc);
 }
 
 static void
@@ -485,6 +508,7 @@ eca_gotframe(void *arg)
 
 	if (reply) {
 		KASSERT(sc->sc_fiqstate.efs_rx_flags & ERXF_FLAGFILL);
+		eca_init_rx_soft(sc);
 		eca_txframe(ifp, reply);
 	} else {
 		KASSERT(!sc->sc_transmitting);
