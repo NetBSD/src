@@ -30,9 +30,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     @(#)doc-common	8.1 (Berkeley) 6/8/93
-.\"	$NetBSD: doc-common,v 1.13 1997/07/02 02:55:42 phil Exp $
+.\"	$NetBSD: doc-common,v 1.14 1997/11/17 01:37:56 mycroft Exp $
 .\"
-.\"     %beginstrip%
+.\" This version has had comments stripped; an unstripped version is available.
 .nr %A 1
 .nr %J 1
 .nr %N 1
@@ -106,7 +106,6 @@
 .ds hV \&\ \&
 .ds iV \& \&
 .ds tV \&\\t\&
-.\" Punctuation values (3 = closing punctuation, 4 = opening)
 .nr z. 3
 .nr z, 3
 .nr z: 3
@@ -115,11 +114,9 @@
 .nr z) 3
 .nr z[ 4
 .nr z] 3
-.\" Matching pairs
 .ds z( z)
 .ds z[ z]
 .ds z< z>
-.\" This is disgusting, troff not parse ``if'' stmt properly
 .nr z0 0
 .nr z1 0
 .nr z2 0
@@ -131,7 +128,6 @@
 .nr z8 0
 .nr z9 0
 .nr z# 0
-.\" Header assembly macros
 .de Dt
 .ds dT UNTITLED
 .ds vT LOCAL
@@ -139,7 +135,6 @@
 .if !"\\$1"" .ds dT \\$1
 .if !"\\$2"" \{\
 .	ds cH \\$2
-.\" .	if "\\$3"" \{\
 .		if \\$2>=1 .if \\$2<=9 \{\
 .			ds vT NetBSD Reference Manual
 .			if \\$2>1 .if \\$2<6 .ds vT NetBSD Programmer's Manual
@@ -150,7 +145,6 @@
 .		if "\\$2"unass"  .ds vT DRAFT
 .		if "\\$2"draft"  .ds vT DRAFT
 .		if "\\$2"paper"  .ds vT UNTITLED
-.\" .	\}
 .\}
 .if !"\\$3"" \{\
 .	if "\\$3"USD"   .ds vT NetBSD User's Supplementary Documents
@@ -161,9 +155,6 @@
 .	if "\\$3"PRM"   .ds vT NetBSD Programmers's Manual
 .	if "\\$3"KM"    .ds vT NetBSD Kernel Manual
 .	if "\\$3"IND"   .ds vT NetBSD Manual Master Index
-.\" .	if "\\$3"CON"   .ds vT NetBSD Contributed Software Manual
-.\" .	if "\\$3"IMP"	.ds vT NetBSD Implementation Notes
-.\" .	if "\\$3"HOW"	.ds vT NetBSD How Pocket Manual
 .	if "\\$3"LOCAL" .ds vT NetBSD Local Manual
 .	if "\\$3"alpha"   .as vT \ (ALPHA Architecture)
 .	if "\\$3"amiga"   .as vT \ (AMIGA Architecture)
@@ -185,11 +176,6 @@
 .	if "\\*(vT"LOCAL" .ds vT \\$3
 .\}
 ..
-.\" NS Os macro - Operating System (behaviour changes after first call)
-.\" .	ds vT \f(CODRAFT\fP\ \ \-\-\ \ \\*(vT\ \ \-\-\ \ \f(CODRAFT
-.\" .	ds dD \f(CODRAFT\fP\ \ \-\-\ \ \\*(dD\ \ \-\-\ \ \f(CODRAFT
-.\" .ds vT \s+4\f(CODRAFT\fP\s-4\ \ \-\-\ \ \\*(vT\ \ \-\-\ \ \s+4\f(CODRAFT\s-4
-.\" .ds dD \s+4\f(CODRAFT\fP\s-4\ \ \-\-\ \ \\*(dD\ \ \-\-\ \ \s+4\f(CODRAFT\s-4
 .de Os
 .ds oS Null
 .if "\\$1"" \{\
@@ -262,7 +248,8 @@
 .		if "\\n(mo"10" .ds dD October
 .		if "\\n(mo"11" .ds dD November
 .		if "\\n(mo"12" .ds dD December
-.		as dD \&\ \\n(dy, 19\\n(yr
+.		nr *year \\n(yr+1900
+.		as dD \&\ \\n(dy, \\n[*year]
 .	\}
 .\}
 .el \{\
