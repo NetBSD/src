@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.30.4.2 2000/08/16 17:07:52 tron Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.30.4.3 2001/08/16 17:48:00 tv Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -397,15 +397,33 @@ oss_ioctl_audio(p, uap, retval)
 			goto out;
 		break;
 	case OSS_SNDCTL_DSP_GETOSPACE:
+		error = ioctlf(fp, AUDIO_GETINFO, (caddr_t)&tmpinfo, p);
+		if (error)
+			goto out;
+		setblocksize(fp, &tmpinfo, p);
+		bufinfo.fragsize = tmpinfo.blocksize;
+		bufinfo.fragments = tmpinfo.hiwat -
+		    (tmpinfo.play.seek + tmpinfo.blocksize - 1) /
+		    tmpinfo.blocksize;
+		bufinfo.fragstotal = tmpinfo.hiwat;
+		bufinfo.bytes =
+		    tmpinfo.hiwat * tmpinfo.blocksize - tmpinfo.play.seek;
+		error = copyout(&bufinfo, SCARG(uap, data), sizeof bufinfo);
+		if (error)
+			goto out;
+		break;
 	case OSS_SNDCTL_DSP_GETISPACE:
 		error = ioctlf(fp, AUDIO_GETINFO, (caddr_t)&tmpinfo, p);
 		if (error)
 			goto out;
 		setblocksize(fp, &tmpinfo, p);
 		bufinfo.fragsize = tmpinfo.blocksize;
-		bufinfo.fragments = /* XXX */
-		bufinfo.fragstotal = tmpinfo.play.buffer_size / bufinfo.fragsize;
-		bufinfo.bytes = tmpinfo.play.buffer_size;
+		bufinfo.fragments = tmpinfo.hiwat -
+		    (tmpinfo.record.seek + tmpinfo.blocksize - 1) /
+		    tmpinfo.blocksize;
+                bufinfo.fragstotal = tmpinfo.hiwat;
+		bufinfo.bytes =
+		    tmpinfo.hiwat * tmpinfo.blocksize - tmpinfo.record.seek;
 		DPRINTF(("oss_sys_ioctl: SNDCTL_DSP_GETxSPACE = %d %d %d %d\n",
 			 bufinfo.fragsize, bufinfo.fragments, 
 			 bufinfo.fragstotal, bufinfo.bytes));
