@@ -1,4 +1,4 @@
-/*	$NetBSD: makewhatis.c,v 1.18 2002/01/11 18:33:03 christos Exp $	*/
+/*	$NetBSD: makewhatis.c,v 1.19 2002/01/21 12:21:31 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: makewhatis.c,v 1.18 2002/01/11 18:33:03 christos Exp $");
+__RCSID("$NetBSD: makewhatis.c,v 1.19 2002/01/21 12:21:31 tron Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -444,16 +444,26 @@ manpreprocess(char *line)
 			from++;
 
 		if ((sect = findwhitespace(from)) != NULL) {
-			size_t	 length;
+			size_t	length;
+			char	*trail;
 
 			*sect++ = '\0';
+			if ((trail = findwhitespace(sect)) != NULL)
+				*trail++ = '\0';
 			length = strlen(from);
 			(void) memmove(line, from, length);
 			line[length++] = '(';
 			to = &line[length];
 			length = strlen(sect);
 			(void) memmove(to, sect, length);
-			(void) strcpy(&to[length], ")");
+			if (trail == NULL) {
+				(void) strcpy(&to[length], ")");
+			} else {
+				to += length;
+				*to++ = ')';
+				length = strlen(trail);
+				(void) memmove(to, trail, length + 1);
+			}
 		}
 	}
 
