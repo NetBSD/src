@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.254 2004/06/10 00:29:59 lukem Exp $
+#	$NetBSD: bsd.lib.mk,v 1.255 2004/07/29 03:14:04 thorpej Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -339,6 +339,8 @@ _LIBS=
 
 OBJS+=${SRCS:N*.h:N*.sh:R:S/$/.o/g}
 
+STOBJS+=${OBJS}
+
 .if ${MKPRIVATELIB} != "no"
 # No installation is required
 libinstall::
@@ -380,7 +382,7 @@ _LIBS+=llib-l${LIB}.ln
 ALLOBJS=
 .if (${MKPIC} == "no" || (defined(LDSTATIC) && ${LDSTATIC} != "") \
 	|| ${MKLINKLIB} != "no") && ${MKSTATICLIB} != "no"
-ALLOBJS+=${OBJS}
+ALLOBJS+=${STOBJS}
 .endif
 ALLOBJS+=${POBJS} ${SOBJS}
 .if ${MKLINT} != "no" && ${MKLINKLIB} != "no" && !empty(LOBJS)
@@ -419,9 +421,9 @@ __archivesymlinkpic: .USE
 DPSRCS+=	${_YLSRCS}
 CLEANFILES+=	${_YLSRCS}
 
-${OBJS} ${POBJS} ${SOBJS} ${LOBJS}: ${DPSRCS}
+${STOBJS} ${POBJS} ${SOBJS} ${LOBJS}: ${DPSRCS}
 
-lib${LIB}.a:: ${OBJS} __archivebuild
+lib${LIB}.a:: ${STOBJS} __archivebuild
 
 lib${LIB}_p.a:: ${POBJS} __archivebuild
 
@@ -478,10 +480,10 @@ llib-l${LIB}.ln: ${LOBJS}
 
 cleanlib: .PHONY
 	rm -f a.out [Ee]rrs mklog core *.core ${CLEANFILES}
-	rm -f lib${LIB}.a ${OBJS}
+	rm -f lib${LIB}.a ${STOBJS}
 	rm -f lib${LIB}_p.a ${POBJS}
 	rm -f lib${LIB}_pic.a lib${LIB}.so.* lib${LIB}.so ${SOBJS}
-	rm -f ${OBJS:=.tmp} ${POBJS:=.tmp} ${SOBJS:=.tmp}
+	rm -f ${STOBJS:=.tmp} ${POBJS:=.tmp} ${SOBJS:=.tmp}
 	rm -f llib-l${LIB}.ln ${LOBJS}
 
 
