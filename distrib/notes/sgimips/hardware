@@ -1,13 +1,13 @@
-.\"	$NetBSD: hardware,v 1.1.2.3 2002/07/15 17:00:38 thorpej Exp $
+.\"	$NetBSD: hardware,v 1.1.2.4 2002/07/22 05:25:11 lukem Exp $
 .
 .Nx*M
-is aimed to run on MIPS-based computers manufactured by SGI.
+is aimed to run on MIPS-based computers manufactured by 
+.Tn SGI.
 .Ss2 Supported machines
 .(bullet -offset indent
-.Tn SGI
 IP22 R4000/R4400/R4600 \- Challenge M, Challenge S, Indigo 2 and Indy
 .It
-IP22 R5000 \- Indy
+IP22 R5000 \- Challenge S, Indy
 .bullet)
 .
 .Ss2 Unsupported machines
