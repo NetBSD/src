@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.4 1999/08/14 11:40:31 simonb Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.5 1999/08/25 21:05:21 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -610,7 +610,7 @@ wsmuxdoioctl(dv, cmd, data, flag, p)
 		return (EACCES);
 
 	/* Return 0 if any of the ioctl() succeeds, otherwise the last error */
-	error = 0;
+	error = -1;
 	ok = 0;
 	for (m = LIST_FIRST(&sc->sc_reals); m; m = LIST_NEXT(m, next)) {
 		DPRINTF(("wsmuxdoioctl: m=%p *m->sc_muxp=%p sc=%p\n",
