@@ -1,4 +1,4 @@
-/*	$NetBSD: event_var.h,v 1.3.2.1 2001/09/12 17:45:21 thorpej Exp $	*/
+/*	$NetBSD: event_var.h,v 1.3.2.2 2002/06/17 20:44:21 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,6 +80,7 @@ void	ev_init __P((struct evvar *));
 void	ev_fini __P((struct evvar *));
 int	ev_read __P((struct evvar *, struct uio *, int));
 int	ev_poll __P((struct evvar *, int, struct proc *));
+int	ev_kqfilter __P((struct evvar *, struct knote *));
 
 /*
  * Hook for 32-bit compatibility on a 64-bit kernel.
