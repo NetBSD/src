@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_exec.c,v 1.2 2001/05/07 09:55:14 manu Exp $	 */
+/*	$NetBSD: svr4_32_exec.c,v 1.3 2001/06/16 21:44:32 manu Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@ const struct emul emul_svr4_32 = {
 	"svr4_32",
 	"/emul/svr4_32",
 #ifndef __HAVE_MINIMAL_EMUL
-	EMUL_NO_BSD_ASYNCIO_PIPE | EMUL_NO_SIGIO_ON_READ,
+	0,
 	native_to_svr4_errno,
 	SVR4_32_SYS_syscall,
 	SVR4_32_SYS_MAXSYSCALL,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.45 2001/05/07 09:55:13 manu Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.46 2001/06/16 21:44:28 manu Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -70,7 +70,7 @@ const struct emul emul_ibcs2 = {
 	"ibcs2",
 	"/emul/ibcs2",
 #ifndef __HAVE_MINIMAL_EMUL
-	EMUL_NO_BSD_ASYNCIO_PIPE | EMUL_NO_SIGIO_ON_READ,
+	0,
 	native_to_ibcs2_errno,
 	IBCS2_SYS_syscall,
 	IBCS2_SYS_MAXSYSCALL,

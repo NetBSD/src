@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.131 2001/05/30 12:07:05 mrg Exp $	*/
+/*	$NetBSD: proc.h,v 1.132 2001/06/16 21:44:27 manu Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -123,16 +123,6 @@ struct emul {
  * Emulation miscelaneous flags
  */
 #define	EMUL_HAS_SYS___syscall	0x001	/* Has SYS___syscall */
-/* 
- * No BSD style async I/O pipes. Aync I/O request through
- * fcntl() for pipes will be ignored.  
- */
-#define EMUL_NO_BSD_ASYNCIO_PIPE	0x002 
-/* 
- * No SIGIO fired on read() calls when async I/O is enabled
- * This is not implemented yet
- */
-#define EMUL_NO_SIGIO_ON_READ	0x004 
 
 /*
  * Description of a process.
