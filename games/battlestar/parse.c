@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.10 2000/09/24 09:46:28 jsm Exp $	*/
+/*	$NetBSD: parse.c,v 1.11 2000/09/24 14:11:09 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,15 +38,21 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: parse.c,v 1.10 2000/09/24 09:46:28 jsm Exp $");
+__RCSID("$NetBSD: parse.c,v 1.11 2000/09/24 14:11:09 jsm Exp $");
 #endif
 #endif				/* not lint */
 
 #include "extern.h"
 
+#define HASHSIZE	256
+#define HASHMUL		81
+#define HASHMASK	(HASHSIZE - 1)
+
 static int hash __P((const char *));
 static void install __P((struct wlist *));
 static struct wlist *lookup __P((const char *));
+
+static struct wlist *hashtab[HASHSIZE];
 
 void
 wordinit()
