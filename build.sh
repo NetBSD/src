@@ -1,5 +1,5 @@
 #! /bin/sh
-#  $NetBSD: build.sh,v 1.36 2001/12/17 13:16:10 wiz Exp $
+#  $NetBSD: build.sh,v 1.37 2001/12/19 20:59:07 tv Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -67,10 +67,11 @@ EOF
 
 # Emulate "mkdir -p" for systems that have an Old "mkdir".
 mkdirp () {
+	_d=
+	case "$1" in /*) _d=/;; esac
+
 	oifs=$IFS
 	IFS=/; set -- $@; IFS=$oifs
-	_d=
-	if [ -z "$1" ]; then _d=/; shift; fi
 
 	for _f in "$@"; do
 		if [ -n "$_f" ]; then
@@ -343,7 +344,7 @@ fi
 eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.36 2001/12/17 13:16:10 wiz Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.37 2001/12/19 20:59:07 tv Exp $
 #
 
 EOF
