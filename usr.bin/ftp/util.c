@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.46.2.2 1999/06/25 01:15:42 cgd Exp $	*/
+/*	$NetBSD: util.c,v 1.46.2.3 2000/02/12 16:53:41 he Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.46.2.2 1999/06/25 01:15:42 cgd Exp $");
+__RCSID("$NetBSD: util.c,v 1.46.2.3 2000/02/12 16:53:41 he Exp $");
 #endif /* not lint */
 
 /*
@@ -604,9 +604,46 @@ remotemodtime(file, noisy)
 		verbose = -1;
 	if (command("MDTM %s", file) == COMPLETE) {
 		struct tm timebuf;
+		char *timestr, *frac;
 		int yy, mo, day, hour, min, sec;
-		sscanf(reply_string, "%*s %04d%02d%02d%02d%02d%02d", &yy, &mo,
-			&day, &hour, &min, &sec);
+
+		/*
+		 * time-val = 14DIGIT [ "." 1*DIGIT ]
+		 *		YYYYMMDDHHMMSS[.sss]
+		 * mdtm-response = "213" SP time-val CRLF / error-response
+		 */
+		timestr = reply_string + 4;
+
+					/*
+					 * parse fraction.
+					 * XXX: ignored for now
+					 */
+		frac = strchr(timestr, '\r');
+		if (frac != NULL)
+			*frac = '\0';
+		frac = strchr(timestr, '.');
+		if (frac != NULL)
+			*frac++ = '\0';
+		if (strlen(timestr) == 15 && strncmp(timestr, "191", 3) == 0) {
+			/*
+			 * XXX:	Workaround for lame ftpd's that return
+			 *	`19100' instead of `2000'
+			 */
+			fprintf(ttyout,
+	    "Y2K warning! Incorrect time-val `%s' received from server.\n",
+			    timestr);
+			timestr++;
+			timestr[0] = '2';
+			timestr[1] = '0';
+			fprintf(ttyout, "Converted to `%s'\n", timestr);
+		}
+		if (strlen(timestr) != 14 ||
+		    sscanf(timestr, "%04d%02d%02d%02d%02d%02d",
+			&yy, &mo, &day, &hour, &min, &sec) != 6) {
+ bad_parse_time:
+			fprintf(ttyout, "Can't parse time `%s'.\n", timestr);
+			goto cleanup_parse_time;
+		}
 		memset(&timebuf, 0, sizeof(timebuf));
 		timebuf.tm_sec = sec;
 		timebuf.tm_min = min;
@@ -616,13 +653,18 @@ remotemodtime(file, noisy)
 		timebuf.tm_year = yy - TM_YEAR_BASE;
 		timebuf.tm_isdst = -1;
 		rtime = mkgmtime(&timebuf);
-		if (rtime == -1 && (noisy || debug != 0))
-			fprintf(ttyout, "Can't convert %s to a time.\n",
-			    reply_string);
+		if (rtime == -1) {
+			if (noisy || debug != 0)
+				goto bad_parse_time;
+			else
+				goto cleanup_parse_time;
+		} else if (debug)
+			fprintf(ttyout, "parsed date as: %s", ctime(&rtime));
 	} else if (noisy && debug == 0) {
 		fputs(reply_string, ttyout);
 		putc('\n', ttyout);
 	}
+cleanup_parse_time:
 	verbose = overbose;
 	if (rtime == -1)
 		code = ocode;
