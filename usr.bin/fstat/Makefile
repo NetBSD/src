@@ -1,7 +1,7 @@
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	fstat
-CFLAGS+=-I/sys
+CFLAGS+=-I${DESTDIR}/sys
 DPADD=	${LIBKVM}
 LDADD=	-lkvm
 BINGRP=	kmem
