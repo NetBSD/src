@@ -1,9 +1,9 @@
-/* $NetBSD: subr_autoconf.c,v 1.53 2000/06/04 19:15:19 cgd Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.54 2000/06/13 22:36:17 cgd Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
  * All rights reserved.
- *
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -14,11 +14,12 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Christopher G. Demetriou
- *      for the NetBSD Project.
+ *          This product includes software developed for the
+ *          NetBSD Project.  See http://www.netbsd.org/ for
+ *          information about NetBSD.
  * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
- *
+ *    derived from this software without specific prior written permission.
+ * 
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -29,6 +30,8 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * 
+ * --(license Id: LICENSE.proto,v 1.1 2000/06/13 21:40:26 cgd Exp )--
  */
 
 /*
@@ -79,7 +82,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.53 2000/06/04 19:15:19 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.54 2000/06/13 22:36:17 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
