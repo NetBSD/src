@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.21 2001/11/24 20:18:55 yamt Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.22 2001/11/26 11:14:50 yamt Exp $	*/
 
 /*
  * Copyright 1997
@@ -186,7 +186,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.21 2001/11/24 20:18:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.22 2001/11/26 11:14:50 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -249,7 +249,7 @@ void	cs_get_default_media __P((struct cs_softc *));
 int	cs_get_params __P((struct cs_softc *));
 int	cs_get_enaddr __P((struct cs_softc *));
 int	cs_reset_chip __P((struct cs_softc *));
-int	cs_init __P((struct cs_softc *));
+int	cs_init __P((struct ifnet *));
 void	cs_reset __P((void *));
 int	cs_ioctl __P((struct ifnet *, u_long, caddr_t));
 void	cs_initChip __P((struct cs_softc *));
@@ -269,6 +269,11 @@ void	cs_print_rx_errors __P((struct cs_softc *, u_int16_t));
 
 int	cs_mediachange __P((struct ifnet *));
 void	cs_mediastatus __P((struct ifnet *, struct ifmediareq *));
+
+static int cs_enable __P((struct cs_softc *));
+static void cs_disable __P((struct cs_softc *));
+static void cs_stop __P((struct ifnet *, int));
+static void cs_power __P((int, void *));
 
 /*
  * GLOBAL DECLARATIONS
@@ -377,7 +382,9 @@ cs_attach(sc, enaddr, media, nmedia, defmedia)
 	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_softc = sc;
 	ifp->if_start = cs_start_output;
+	ifp->if_init = cs_init;
 	ifp->if_ioctl = cs_ioctl;
+	ifp->if_stop = cs_stop;
 	ifp->if_watchdog = NULL;	/* no watchdog at this stage */
 	ifp->if_flags = IFF_SIMPLEX | IFF_NOTRAILERS |
 	    IFF_BROADCAST | IFF_MULTICAST;
@@ -511,6 +518,11 @@ cs_attach(sc, enaddr, media, nmedia, defmedia)
 		return 1;
 	}
 
+	sc->sc_powerhook = powerhook_establish(cs_power, sc);
+	if (sc->sc_powerhook == 0)
+		printf("%s: warning: powerhook_establish failed\n",
+			sc->sc_dev.dv_xname);
+
 	return 0;
 }
 
@@ -519,6 +531,11 @@ cs_detach(sc)
 	struct cs_softc *sc;
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+
+	if (sc->sc_powerhook) {
+		powerhook_disestablish(sc->sc_powerhook);
+		sc->sc_powerhook = 0;
+	}
 
 	if (sc->sc_cfgflags & CFGFLG_ATTACHED) {
 #if NRND > 0
@@ -1027,16 +1044,24 @@ cs_initChip(sc)
 }
 
 int 
-cs_init(sc)
-	struct cs_softc *sc;
+cs_init(ifp)
+	struct ifnet *ifp;
 {
 	int intState;
 	int error = CS_OK;
+	struct cs_softc *sc = ifp->if_softc;
+
+	if (cs_enable(sc))
+		goto out;
+
+	cs_stop(ifp, 0);
 
 	intState = splnet();
 
+#if 0
 	/* Mark the interface as down */
 	sc->sc_ethercom.ec_if.if_flags &= ~(IFF_UP | IFF_RUNNING);
+#endif
 
 #ifdef CS_DEBUG
 	/* Enable debugging */
@@ -1048,8 +1073,8 @@ cs_init(sc)
 		/* Initialize the chip */
 		cs_initChip(sc);
 
-		/* Mark the interface as up and running */
-		sc->sc_ethercom.ec_if.if_flags |= (IFF_UP | IFF_RUNNING);
+		/* Mark the interface as running */
+		sc->sc_ethercom.ec_if.if_flags |= IFF_RUNNING;
 		sc->sc_ethercom.ec_if.if_flags &= ~IFF_OACTIVE;
 		sc->sc_ethercom.ec_if.if_timer = 0;
 
@@ -1060,7 +1085,10 @@ cs_init(sc)
 	}
 
 	splx(intState);
-	return error;
+out:
+	if (error == CS_OK)
+		return 0;
+	return EIO;
 }
 
 void 
@@ -1209,7 +1237,6 @@ cs_ioctl(ifp, cmd, data)
 	caddr_t data;
 {
 	struct cs_softc *sc = ifp->if_softc;
-	struct ifaddr *ifa = (struct ifaddr *) data;
 	struct ifreq *ifr = (struct ifreq *) data;
 	int state;
 	int result;
@@ -1219,70 +1246,23 @@ cs_ioctl(ifp, cmd, data)
 	result = 0;		/* only set if something goes wrong */
 
 	switch (cmd) {
-	case SIOCSIFADDR:
-		ifp->if_flags |= IFF_UP;
-
-		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
-		case AF_INET:
-			cs_init(sc);
-			arp_ifinit(ifp, ifa);
-			break;
-#endif
-		default:
-			cs_init(sc);
-			break;
-		}
-		break;
-
-	case SIOCSIFFLAGS:
-		if ((ifp->if_flags & IFF_UP) == 0 &&
-		    (ifp->if_flags & IFF_RUNNING) != 0) {
-			/*
-			 * If interface is marked down and it is running,
-			 * then stop it.
-			 */
-			cs_reset_chip(sc);
-			ifp->if_flags &= ~IFF_RUNNING;
-		} else if ((ifp->if_flags & IFF_UP) != 0 &&
-			   (ifp->if_flags & IFF_RUNNING) == 0) {
-			/*
-			 * If interface is marked up and it is stopped,
-			 * start it.
-			 */
-			cs_init(sc);
-		} else {
-			/*
-			 * Reset the interface to pick up any changes in
-			 * any other flags that affect hardware registers.
-			 */
-			cs_init(sc);
-		}
-		break;
-
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		result = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_ethercom) :
-		    ether_delmulti(ifr, &sc->sc_ethercom);
-
-		if (result == ENETRESET) {
-			/*
-	                 * Multicast list has changed; set the hardware filter
-	                 * accordingly.
-	                 */
-			cs_init(sc);
-			result = 0;
-		}
-		break;
-
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
 		result = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
 		break;
 
 	default:
-		result = EINVAL;
+		result = ether_ioctl(ifp, cmd, data);
+		if (result == ENETRESET) {
+			if (CS_IS_ENABLED(sc)) {
+				/*
+				 * Multicast list has changed.  Set the
+				 * hardware filter accordingly.
+				 */
+				cs_set_ladr_filt(sc, &sc->sc_ethercom);
+			}
+			result = 0;
+		}
 		break;
 	}
 
@@ -1300,7 +1280,7 @@ cs_mediachange(ifp)
 	 * Current media is already set up.  Just reset the interface
 	 * to let the new value take hold.
 	 */
-	cs_init((struct cs_softc *)ifp->if_softc);
+	cs_init(ifp);
 	return (0);
 }
 
@@ -1804,7 +1784,7 @@ cs_process_rx_dma(sc)
 				isa_dmaabort(sc->sc_ic, sc->sc_drq);
 
 				/* now reset the chip and reinitialise */
-				cs_init(sc);
+				cs_init(&sc->sc_ethercom.ec_if);
 				return;
 			}
 			/* Check the status of the received packet. */
@@ -1830,7 +1810,7 @@ cs_process_rx_dma(sc)
 					 * now reset the chip and
 					 * reinitialise
 					 */
-					cs_init(sc);
+					cs_init(&sc->sc_ethercom.ec_if);
 					return;
 				}
 				/*
@@ -1852,7 +1832,7 @@ cs_process_rx_dma(sc)
 					 * now reset the chip and
 					 * reinitialise
 					 */
-					cs_init(sc);
+					cs_init(&sc->sc_ethercom.ec_if);
 					return;
 				}
 				m->m_pkthdr.rcvif = ifp;
@@ -2307,4 +2287,102 @@ cs_copy_tx_frame(sc, m0)
 			CS_WRITE_PORT(sc, PORT_RXTX_DATA, dbuf);
 		}
 	}
+}
+
+static int
+cs_enable(sc)
+	struct cs_softc *sc;
+{
+	if (!CS_IS_ENABLED(sc) && sc->sc_enable) {
+		int error;
+
+		error = (*sc->sc_enable)(sc);
+		if (error)
+			return error;
+
+		sc->sc_cfgflags |= CFGFLG_ENABLED;
+	}
+
+	return 0;
+}
+
+static void
+cs_disable(sc)
+	struct cs_softc *sc;
+{
+	if (CS_IS_ENABLED(sc) && sc->sc_disable) {
+		(*sc->sc_disable)(sc);
+
+		sc->sc_cfgflags &= ~CFGFLG_ENABLED;
+	}
+}
+
+static void
+cs_stop(ifp, disable)
+	struct ifnet *ifp;
+	int disable;
+{
+	struct cs_softc *sc = ifp->if_softc;
+
+	CS_WRITE_PACKET_PAGE(sc, PKTPG_RX_CFG, 0);
+	CS_WRITE_PACKET_PAGE(sc, PKTPG_TX_CFG, 0);
+	CS_WRITE_PACKET_PAGE(sc, PKTPG_BUF_CFG, 0);
+	CS_WRITE_PACKET_PAGE(sc, PKTPG_BUS_CTL, 0);
+
+	if (disable) {
+		cs_disable(sc);
+	}
+
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+}
+
+int
+cs_activate(self, act)
+	struct device *self;
+	enum devact act;
+{
+	struct cs_softc *sc = (void *)self;
+	int s, error = 0;
+
+	s = splnet();
+	switch (act) {
+	case DVACT_ACTIVATE:
+		error = EOPNOTSUPP;
+		break;
+
+	case DVACT_DEACTIVATE:
+		if_deactivate(&sc->sc_ethercom.ec_if);
+		break;
+	}
+	splx(s);
+
+	return error;
+}
+
+static void
+cs_power(why, arg)
+	int why;
+	void *arg;
+{
+	struct cs_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	int s;
+
+	s = splnet();
+	switch (why) {
+	case PWR_STANDBY:
+	case PWR_SUSPEND:
+		cs_stop(ifp, 1);
+		break;
+	case PWR_RESUME:
+		if (ifp->if_flags & IFF_UP) {
+			cs_init(ifp);
+		}
+		break;
+	case PWR_SOFTSUSPEND:
+	case PWR_SOFTSTANDBY:
+	case PWR_SOFTRESUME:
+		break;
+	}
+	splx(s);
 }

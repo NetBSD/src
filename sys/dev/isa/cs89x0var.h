@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0var.h,v 1.10 2001/11/24 20:18:55 yamt Exp $	*/
+/*	$NetBSD: cs89x0var.h,v 1.11 2001/11/26 11:14:50 yamt Exp $	*/
 
 /*
  * Copyright 1997
@@ -109,6 +109,11 @@ struct cs_softc {
 #if NRND > 0
 	rndsource_element_t rnd_source; /* random source */
 #endif
+
+	/* power management */
+	int (*sc_enable) __P((struct cs_softc *));
+	void (*sc_disable) __P((struct cs_softc *));
+	void *sc_powerhook;
 };
 
 
@@ -121,6 +126,7 @@ struct cs_softc {
 #define CFGFLG_DMA_MODE	    0x0020
 #define CFGFLG_ATTACHED     0x0040 /* XXX should not be here? */
 #define CFGFLG_CARDBUS_HACK 0x0080
+#define CFGFLG_ENABLED      0x0100 /* XXX should not be here? */
 #define CFGFLG_NOT_EEPROM   0x8000
 
 
@@ -233,5 +239,8 @@ int	cs_verify_eeprom __P((bus_space_tag_t, bus_space_handle_t));
 int	cs_read_eeprom __P((bus_space_tag_t, bus_space_handle_t, int,
 	    u_int16_t *));
 int	cs_intr __P((void *));
+int cs_activate __P((struct device *, enum devact));
+
+#define CS_IS_ENABLED(sc)	((sc)->sc_cfgflags & CFGFLG_ENABLED)
 
 #endif /* _DEV_ISA_CS89X0VAR_H_ */
