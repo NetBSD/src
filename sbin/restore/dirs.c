@@ -1,4 +1,4 @@
-/*	$NetBSD: dirs.c,v 1.40 2003/11/05 22:27:16 fvdl Exp $	*/
+/*	$NetBSD: dirs.c,v 1.41 2004/10/22 22:38:38 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)dirs.c	8.7 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: dirs.c,v 1.40 2003/11/05 22:27:16 fvdl Exp $");
+__RCSID("$NetBSD: dirs.c,v 1.41 2004/10/22 22:38:38 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -649,7 +649,12 @@ setdirmodes(flags)
 				(void) utimes(cp, node.mtimep);
 				(void) chown(cp, node.uid, node.gid);
 				(void) chmod(cp, node.mode);
-				(void) chflags(cp, node.flags);
+				if (Mtreefile) {
+					writemtree(cp, "dir",
+					    node.uid, node.gid, node.mode,
+					    node.flags);
+				} else 
+					(void) chflags(cp, node.flags);
 			}
 			ep->e_flags &= ~NEW;
 		}

@@ -1,4 +1,4 @@
-.\"	$NetBSD: restore.8,v 1.43 2004/07/27 14:20:11 wiz Exp $
+.\"	$NetBSD: restore.8,v 1.44 2004/10/22 22:38:38 bouyer Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,6 +43,7 @@
 .Op Fl b Ar bsize
 .Op Fl D Ar algorithm
 .Op Fl f Ar file
+.Op Fl M Ar mfile
 .Op Fl s Ar fileno
 .Nm
 .Fl R
@@ -50,6 +51,7 @@
 .Op Fl b Ar bsize
 .Op Fl D Ar algorithm
 .Op Fl f Ar file
+.Op Fl M Ar mfile
 .Op Fl s Ar fileno
 .Nm
 .Fl r
@@ -57,6 +59,7 @@
 .Op Fl b Ar bsize
 .Op Fl D Ar algorithm
 .Op Fl f Ar file
+.Op Fl M Ar mfile
 .Op Fl s Ar fileno
 .Nm
 .Fl t
@@ -71,6 +74,7 @@
 .Op Fl b Ar bsize
 .Op Fl D Ar algorithm
 .Op Fl f Ar file
+.Op Fl M Ar mfile
 .Op Fl s Ar fileno
 .Op Ar
 .Pp
@@ -341,6 +345,15 @@ Extract by inode numbers rather than by file name.
 This is useful if only a few files are being extracted,
 and one wants to avoid regenerating the complete pathname
 to the file.
+.It Fl M Ar mfile
+Do not set the file flags on restore, instead append a
+.Xr mtree 8
+specification to 
+.Ar mfile
+which can be used later to restore file flags:
+.Bd -literal -offset indent
+sort mfile | mtree -e -i -u
+.Ed
 .It Fl s Ar fileno
 Read from the specified
 .Ar fileno

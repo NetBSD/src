@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.50 2004/07/27 02:17:06 enami Exp $	*/
+/*	$NetBSD: tape.c,v 1.51 2004/10/22 22:38:38 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.9 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.50 2004/07/27 02:17:06 enami Exp $");
+__RCSID("$NetBSD: tape.c,v 1.51 2004/10/22 22:38:38 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: tape.c,v 1.50 2004/07/27 02:17:06 enami Exp $");
 #include <ufs/ufs/dinode.h>
 #include <protocols/dumprestore.h>
 
+#include <err.h>
 #include <errno.h>
 #include <paths.h>
 #include <setjmp.h>
@@ -588,6 +589,21 @@ printdumpinfo()
 		spcl.c_level, spcl.c_filesys, 
 		*spcl.c_host? spcl.c_host: "[unknown]", spcl.c_dev);
 	fprintf(stderr, "Label: %s\n", spcl.c_label);
+
+	if (Mtreefile) {
+		ttime = spcl.c_date;
+		fprintf(Mtreefile, "#Dump   date: %s", ctime(&ttime));
+		ttime = spcl.c_ddate;
+		fprintf(Mtreefile, "#Dumped from: %s",
+		    (spcl.c_ddate == 0) ? "the epoch\n" : ctime(&ttime));
+		fprintf(Mtreefile, "#Level %d dump of %s on %s:%s\n",
+			spcl.c_level, spcl.c_filesys, 
+			*spcl.c_host? spcl.c_host: "[unknown]", spcl.c_dev);
+		fprintf(Mtreefile, "#Label: %s\n", spcl.c_label);
+		fprintf(Mtreefile, "/set uname=root gname=wheel\n");
+		if (ferror(Mtreefile))
+			err(1, "error writing to mtree file");
+	}
 }
 
 int
@@ -662,7 +678,11 @@ extractfile(name)
 			(void) lutimes(name, mtimep);
 			(void) lchown(name, uid, gid);
 			(void) lchmod(name, mode);
-			(void) lchflags(name, flags);
+			if (Mtreefile) {
+				writemtree(name, "link",
+				    uid, gid, mode, flags);
+			} else 
+				(void) lchflags(name, flags);
 			return (GOOD);
 		}
 		return (FAIL);
@@ -689,7 +709,13 @@ extractfile(name)
 		(void) utimes(name, mtimep);
 		(void) chown(name, uid, gid);
 		(void) chmod(name, mode);
-		(void) chflags(name, flags);
+		if (Mtreefile) {
+			writemtree(name,
+			    ((mode & (S_IFBLK | IFCHR)) == IFBLK) ?
+			    "block" : "char",
+			    uid, gid, mode, flags);
+		} else 
+			(void) chflags(name, flags);
 		return (GOOD);
 
 	case IFIFO:
@@ -712,7 +738,11 @@ extractfile(name)
 		(void) utimes(name, mtimep);
 		(void) chown(name, uid, gid);
 		(void) chmod(name, mode);
-		(void) chflags(name, flags);
+		if (Mtreefile) {
+			writemtree(name, "fifo",
+			    uid, gid, mode, flags);
+		} else 
+			(void) chflags(name, flags);
 		return (GOOD);
 
 	case IFREG:
@@ -744,7 +774,11 @@ extractfile(name)
 		(void) futimes(ofile, mtimep);
 		(void) fchown(ofile, uid, gid);
 		(void) fchmod(ofile, mode);
-		(void) fchflags(ofile, flags);
+		if (Mtreefile) {
+			writemtree(name, "file",
+			    uid, gid, mode, flags);
+		} else 
+			(void) fchflags(ofile, flags);
 		(void) close(ofile);
 		return (GOOD);
 	}

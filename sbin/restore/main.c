@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.26 2004/07/27 14:20:11 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.27 2004/10/22 22:38:38 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.26 2004/07/27 14:20:11 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.27 2004/10/22 22:38:38 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,6 +77,8 @@ size_t	pagesize;
 FILE	*terminal;
 char	*tmpdir;
 
+FILE *Mtreefile = NULL;
+
 int	main __P((int, char *[]));
 static	void obsolete __P((int *, char **[]));
 static	void usage __P((void));
@@ -100,7 +102,7 @@ main(argc, argv)
 	if ((tmpdir = getenv("TMPDIR")) == NULL)
 		tmpdir = _PATH_TMP;
 	obsolete(&argc, &argv);
-	while ((ch = getopt(argc, argv, "b:cD:df:himNRrs:tuvxy")) != -1)
+	while ((ch = getopt(argc, argv, "b:cD:df:himM:NRrs:tuvxy")) != -1)
 		switch (ch) {
 		case 'b':
 			/* Change default tape blocksize. */
@@ -145,6 +147,11 @@ main(argc, argv)
 			break;
 		case 'N':
 			Nflag = 1;
+			break;
+		case 'M':
+			Mtreefile = fopen(optarg, "a");
+			if (Mtreefile == NULL)
+				err(1, "can't open %s", optarg);
 			break;
 		case 's':
 			/* Dumpnum (skip to) for multifile dump tapes. */
@@ -300,19 +307,19 @@ usage()
 
 	(void)fprintf(stderr,
 	    "usage: %s -i [-cdhmvyN] [-b bsize] [-D algorithm] "
-	    "[-f file] [-s fileno]\n", progname);
+	    "[-f file] [-s fileno] [-M mtreefile]\n", progname);
 	(void)fprintf(stderr,
 	    "       %s -R [-cdvyN] [-b bsize] [-D algorithm] [-f file] "
-	    "[-s fileno]\n", progname);
+	    "[-s fileno] [-M mtreefile]\n", progname);
 	(void)fprintf(stderr,
 	    "       %s -r [-cdvyN] [-b bsize] [-D algorithm] [-f file] "
-	    "[-s fileno]\n", progname);
+	    "[-s fileno] [-M mtreefile]\n", progname);
 	(void)fprintf(stderr,
 	    "       %s -t [-cdhvy] [-b bsize] [-D algorithm] [-f file]\n"
 	    "           [-s fileno] [file ...]\n", progname);
 	(void)fprintf(stderr,
 	    "       %s -x [-cdhmvyN] [-b bsize] [-D algorithm] [-f file]\n"
-	    "           [-s fileno] [file ...]\n", progname);
+	    "           [-s fileno] [-M mtreefile] [file ...]\n", progname);
 	exit(1);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.17 2003/08/07 10:04:38 agc Exp $	*/
+/*	$NetBSD: utilities.c,v 1.18 2004/10/22 22:38:38 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.17 2003/08/07 10:04:38 agc Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.18 2004/10/22 22:38:38 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -44,6 +44,7 @@ __RCSID("$NetBSD: utilities.c,v 1.17 2003/08/07 10:04:38 agc Exp $");
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
 
+#include <err.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -422,4 +423,49 @@ panic(const char *fmt, ...)
 			abort();
 		exit(1);
 	}
+}
+
+void
+writemtree(const char *name, const char *type,
+    const uid_t uid, const gid_t gid, const mode_t mode, const u_long flags)
+{
+	char *sep = "";
+	if ((name[0] != '.') || (name[1] != '/' && name[1] != '\0'))
+		fprintf(Mtreefile, "./");
+	fprintf(Mtreefile, "%s type=%s uid=%d gid=%d mode=%#4.4o",
+	    name, type, uid, gid,
+	    mode & (S_IRWXU | S_IRWXG | S_IRWXO | S_ISUID | S_ISGID | S_ISTXT));
+	if (flags != 0)
+		fprintf(Mtreefile, " flags=");
+	if (flags & UF_NODUMP) {
+		fprintf(Mtreefile, "nodump");
+		sep=",";
+	}
+	if (flags & UF_IMMUTABLE) {
+		fprintf(Mtreefile, "%suchg", sep);
+		sep=",";
+	}
+	if (flags & UF_APPEND) {
+		fprintf(Mtreefile, "%suappnd", sep);
+		sep=",";
+	}
+	if (flags & UF_OPAQUE) {
+		fprintf(Mtreefile, "%sopaque", sep);
+		sep=",";
+	}
+	if (flags & SF_ARCHIVED) {
+		fprintf(Mtreefile, "%sarch", sep);
+		sep=",";
+	}
+	if (flags & SF_IMMUTABLE) {
+		fprintf(Mtreefile, "%sschg", sep);
+		sep=",";
+	}
+	if (flags & SF_APPEND) {
+		fprintf(Mtreefile, "%ssappnd", sep);
+		sep=",";
+	}
+	fprintf(Mtreefile, "\n");
+	if (ferror(Mtreefile))
+		err(1, "error writing to mtree file");
 }
