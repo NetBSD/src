@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.9 2000/05/05 13:25:34 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.10 2000/05/06 16:21:43 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -257,3 +257,11 @@ lib/libc/arch/i386/sys/sigsuspend.S		1.12
 usr.bin/at/at.c					1.14
 
   Correct wrong variable being tested in env parsing loop.
+
+usr.sbin/bind/lib/Makefile			1.9 via patch
+dist/bind/include/port_ipv6.h			patch (new)
+
+  Use a static version of port_ipv6.h instead of generating it.
+  The use of the probe script had at least two problems: it probed
+  the host headers (could be fixed in another way), and it could
+  be problematical in a cross-compile environment.
