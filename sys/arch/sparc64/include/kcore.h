@@ -1,4 +1,4 @@
-/*	$NetBSD: kcore.h,v 1.3 1998/08/13 02:10:44 eeh Exp $	*/
+/*	$NetBSD: kcore.h,v 1.4 2000/08/01 00:40:26 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,23 +40,28 @@
  * The layout of a kernel core on the dump device is as follows:
  *	a `struct kcore_seg' of type CORE_CPU
  *	a `struct cpu_kcore_hdr'
- *	an array of `cpu_kcore_hdr.nmemseg' phys_ram_seg_t's
- *	an array of `cpu_kcore_hdr.nsegmap' segmap structures
- *	an array of `cpu_kcore_hdr.npmegs' PTEs (zero of these on sun4ms).
  */
 
 typedef struct cpu_kcore_hdr {
-	int	cputype;		/* CPU type associated with this dump */
-	u_long	kernbase;		/* copy of KERNBASE goes here */
-	int	nmemseg;		/* # of physical memory segments */
-	u_long	memsegoffset;		/* start of memseg array (relative */
+	int		cputype;	/* CPU type associated with this dump */
+
+	int		nmemseg;	/* # of physical memory segments */
+	uint64_t	memsegoffset;	/* start of memseg array (relative */
 					/*  to the start of this header) */
-	int	nsegmap;		/* # of segmaps following */
-	u_long	segmapoffset;		/* start of segmap array (relative */
+
+	int		nsegmap;	/* # of kernel segs */
+	uint64_t	segmapoffset;	/* start of segmap array (relative */
 					/*  to the start of this header) */
-	int	npmeg;			/* # of PMEGs; [sun4/sun4c] only */
-	u_long	pmegoffset;		/* start of pmeg array (relative */
-					/*  to the start of this header) */
-/* SPARC64 stuff */
-	paddr_t	kphys;			/* Physical address of 4MB locked TLB */
+
+	uint64_t	kernbase;	/* copy of KERNBASE goes here */
+	uint64_t	cpubase;	/* Pointer to cpu_info structure */
+
+	uint64_t	ktextbase;	/* Virtual start of text segment */
+	uint64_t	ktextp;		/* Physical address of 4MB locked TLB */
+	uint64_t	ktextsz;	/* Size of locked kernel text segment. */
+
+	uint64_t	kdatabase;	/* Virtual start of data segment */
+	uint64_t	kdatap;		/* Physical address of 4MB locked TLB */
+	uint64_t	kdatasz;	/* Size of locked kernel data segment. */
+
 } cpu_kcore_hdr_t;
