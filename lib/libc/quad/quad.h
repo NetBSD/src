@@ -1,4 +1,4 @@
-/*	$NetBSD: quad.h,v 1.8 2000/05/05 00:20:58 thorpej Exp $	*/
+/*	$NetBSD: quad.h,v 1.9 2000/12/10 03:54:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -114,12 +114,11 @@ typedef u_quad_t	qshift_t;
 #endif
 
 __BEGIN_DECLS
-int __cmpdi2 __P((quad_t, quad_t));
 quad_t __adddi3 __P((quad_t, quad_t));
 quad_t __anddi3 __P((quad_t, quad_t));
 quad_t __ashldi3 __P((quad_t, qshift_t));
 quad_t __ashrdi3 __P((quad_t, qshift_t));
-int __cmpdi2 __P((quad_t, quad_t ));
+int __cmpdi2 __P((quad_t, quad_t));
 quad_t __divdi3 __P((quad_t, quad_t));
 quad_t __fixdfdi __P((double));
 quad_t __fixsfdi __P((float));
