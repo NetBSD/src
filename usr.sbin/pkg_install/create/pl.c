@@ -1,11 +1,11 @@
-/*	$NetBSD: pl.c,v 1.29 2003/10/04 00:50:34 wiz Exp $	*/
+/*	$NetBSD: pl.c,v 1.30 2004/01/15 09:33:39 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pl.c,v 1.11 1997/10/08 07:46:35 charnier Exp";
 #else
-__RCSID("$NetBSD: pl.c,v 1.29 2003/10/04 00:50:34 wiz Exp $");
+__RCSID("$NetBSD: pl.c,v 1.30 2004/01/15 09:33:39 agc Exp $");
 #endif
 #endif
 
@@ -113,11 +113,13 @@ check_list(char *home, package_t *pkg, const char *PkgName)
 	struct stat st;
 	plist_t *tmp;
 	plist_t *p;
-	char    name[FILENAME_MAX];
 	char    buf[ChecksumHeaderLen + LegibleChecksumLen];
+	char    target[FILENAME_MAX + SymlinkHeaderLen];
+	char    name[FILENAME_MAX];
 	char   *cwd = home;
 	char   *srcdir = NULL;
 	int     dirc;
+	int	cc;
 
 	/* Open Package Database for writing */
 	if (update_pkgdb && !pkgdb_open(ReadWrite)) {
@@ -193,6 +195,24 @@ check_list(char *home, package_t *pkg, const char *PkgName)
 				if (RelativeLinks) {
 					CheckSymlink(name, cwd, strlen(cwd));
 				}
+				(void) strlcpy(target, SYMLINK_HEADER,
+				    sizeof(target));
+				if ((cc = readlink(name, &target[SymlinkHeaderLen],
+					  sizeof(target) - SymlinkHeaderLen)) < 0) {
+					warnx("can't readlink `%s'", name);
+					continue;
+				}
+				target[SymlinkHeaderLen + cc] = 0x0;
+				tmp = new_plist_entry();
+				tmp->name = strdup(target);
+				tmp->type = PLIST_COMMENT;
+				tmp->next = p->next;
+				tmp->prev = p;
+				if (p == pkg->tail) {
+					pkg->tail = tmp;
+				}
+				p->next = tmp;
+				p = tmp;
 				break;
 			case S_IFCHR:
 				warnx("Warning - char special device `%s' in PLIST", name);

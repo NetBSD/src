@@ -1,8 +1,8 @@
-/*	$NetBSD: main.c,v 1.42 2003/09/19 17:44:53 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.43 2004/01/15 09:33:38 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.42 2003/09/19 17:44:53 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.43 2004/01/15 09:33:38 agc Exp $");
 #endif
 
 /*
@@ -112,26 +112,41 @@ check1pkg(const char *pkgdir)
 			
 			(void) snprintf(file, sizeof(file), "%s/%s", dirp, p->name);
 
-			if (!(isfile(file) || islinktodir(file)))
-				warnx("%s: File %s is in %s but not on filesystem!", PkgName, file, CONTENTS_FNAME);
-			else {
-				if (p->next &&
-				    p->next->type == PLIST_COMMENT &&
-				    strncmp(p->next->name, CHECKSUM_HEADER, ChecksumHeaderLen) == 0) {	/* || PLIST_MD5 - HF */
-					if ((md5file = MD5File(file, NULL)) != NULL) {
-						/* Mismatch? */
+			if (isfile(file) || islinktodir(file)) {
+				if (p->next && p->next->type == PLIST_COMMENT) {
+					if (strncmp(p->next->name, CHECKSUM_HEADER, ChecksumHeaderLen) == 0) {
+						if ((md5file = MD5File(file, NULL)) != NULL) {
+							/* Mismatch? */
 #ifdef PKGDB_DEBUG
-						printf("%s: md5 should=<%s>, is=<%s>\n",
-						    file, p->next->name + ChecksumHeaderLen, md5file);
+							printf("%s: md5 should=<%s>, is=<%s>\n",
+							    file, p->next->name + ChecksumHeaderLen, md5file);
 #endif
-						if (strcmp(md5file, p->next->name + ChecksumHeaderLen) != 0)
-							printf("%s fails MD5 checksum\n", file);
+							if (strcmp(md5file, p->next->name + ChecksumHeaderLen) != 0)
+								printf("%s fails MD5 checksum\n", file);
 
-						free(md5file);
+							free(md5file);
+						}
+					} else if (strncmp(p->next->name, SYMLINK_HEADER, SymlinkHeaderLen) == 0) {
+						char	buf[FILENAME_MAX + SymlinkHeaderLen];
+						int	cc;
+
+						(void) strlcpy(buf, SYMLINK_HEADER, sizeof(buf));
+						if ((cc = readlink(file, &buf[SymlinkHeaderLen],
+							  sizeof(buf) - SymlinkHeaderLen)) < 0) {
+							warnx("can't readlink `%s'", file);
+						} else {
+							buf[SymlinkHeaderLen + cc] = 0x0;
+							if (strcmp(buf, p->next->name) != 0) {
+								printf("symlink (%s) is not same as recorded value, %s: %s\n",
+								    file, buf, p->next->name);
+							}
+						}
 					}
 				}
 				
 				filecnt++;
+			} else {
+				warnx("%s: File %s is in %s but not on filesystem!", PkgName, file, CONTENTS_FNAME);
 			}
 			break;
 		case PLIST_CWD:
