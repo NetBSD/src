@@ -1,4 +1,4 @@
-.\"	$NetBSD: malloc.9,v 1.3 1996/11/11 00:05:11 lukem Exp $
+.\"	$NetBSD: malloc.9,v 1.4 1997/08/02 23:29:15 kleink Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -245,7 +245,7 @@ Miscfs vnode private part.
 .It Dv M_ADOSFSMNT
 Adosfs mount structures.
 .It Dv M_ADOSFSNODE
-ADosfs vnode private part.
+Adosfs vnode private part.
 .It Dv M_ANODE
 Adosfs anode structures and tables.
 .It Dv M_IPQ
@@ -254,6 +254,16 @@ IP packet queue entry.
 Andrew File System.
 .It Dv M_ADOSFSBITMAP
 Adosfs bitmap.
+.It Dv M_NFSSRVDESC
+NFS server descriptor.
+.It Dv M_DIROFF
+NFS directory cookies.
+.It Dv M_NFSBIGFH
+NFS big filehandle.
+.It Dv M_EXT2FSNODE 
+EXT2FS vnode private part.
+.It Dv M_VMSWAP
+VM swap structures.
 .It Dv M_TEMP
 Misc temporary data buffers.
 .El
