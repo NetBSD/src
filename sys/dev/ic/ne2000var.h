@@ -1,7 +1,7 @@
-/*	$NetBSD: ne2000var.h,v 1.2 1997/10/14 22:54:12 thorpej Exp $	*/
+/*	$NetBSD: ne2000var.h,v 1.3 1998/10/28 00:13:47 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -53,7 +53,8 @@ struct ne2000_softc {
 #define	NE2000_TYPE_NE1000	1
 #define	NE2000_TYPE_NE2000	2
 
-void	ne2000_attach __P((struct ne2000_softc *, u_int8_t *));
+void	ne2000_attach __P((struct ne2000_softc *, u_int8_t *,
+	    int *, int, int));
 int	ne2000_detect __P((bus_space_tag_t, bus_space_handle_t,
 	    bus_space_tag_t, bus_space_handle_t));
 
