@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2000/07/06 01:21:46 christos Exp $
+#	$NetBSD: Makefile,v 1.11 2000/07/23 22:17:14 mycroft Exp $
 
 PROG=	lint1
 SRCS=	cgram.y scan.l mem1.c mem.c err.c main1.c decl.c tree.c func.c \
@@ -17,7 +17,7 @@ scan.c: cgram.h
 lint.7:	${PROG}
 	sh ${.CURDIR}/makeman ${.OBJDIR}/${PROG} -m > ${.TARGET}
 
-all: lint.7
+realall: lint.7
 
 CLEANFILES+=${MAN}
 
