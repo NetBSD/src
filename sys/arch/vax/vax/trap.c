@@ -1,4 +1,4 @@
-/*      $NetBSD: trap.c,v 1.24 1996/11/06 20:19:55 cgd Exp $     */
+/*      $NetBSD: trap.c,v 1.25 1997/06/12 16:23:22 ragge Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -95,7 +95,7 @@ userret(p, pc, psl)
                  */
                 s=splstatclock();
                 setrunqueue(curproc);
-                cpu_switch(0);
+                mi_switch();
                 splx(s);
                 while ((sig = CURSIG(curproc)) != 0)
                         postsig(sig);
