@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.3 1998/04/07 13:43:17 hannken Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.4 1998/04/07 16:06:33 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsdisplay.c,v 1.3 1998/04/07 13:43:17 hannken Exp $";
+    "$NetBSD: wsdisplay.c,v 1.4 1998/04/07 16:06:33 drochner Exp $";
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -99,20 +99,12 @@ struct wsdisplay_softc {
 extern struct cfdriver wsdisplay_cd;
 
 /* Autoconfiguration definitions. */
-#ifdef __BROKEN_INDIRECT_CONFIG
-static int wsdisplay_emul_match __P((struct device *, void *, void *));
-#else
 static int wsdisplay_emul_match __P((struct device *, struct cfdata *,
 	    void *));
-#endif
 static void wsdisplay_emul_attach __P((struct device *, struct device *,
 	    void *));
-#ifdef __BROKEN_INDIRECT_CONFIG
-static int wsdisplay_noemul_match __P((struct device *, void *, void *));
-#else
 static int wsdisplay_noemul_match __P((struct device *, struct cfdata *,
 	    void *));
-#endif
 static void wsdisplay_noemul_attach __P((struct device *, struct device *,
 	    void *));
 
@@ -142,6 +134,7 @@ static int wsdisplayparam __P((struct tty *, struct termios *));
 
 #define	WSDISPLAYUNIT(dev)	(minor(dev) >> 8)
 #define	WSDISPLAYSCREEN(dev)	(minor(dev) & 0xff)
+#define WSDISPLAYMINOR(unit, screen)	(((unit) << 8) | (screen))
 #define	WSDISPLAYBURST		(OBUFSIZ - 1)
 
 #define	WSSCREEN_HAS_EMULATOR(scr)	((scr)->scr_dconf->emulops != NULL)
@@ -235,22 +228,11 @@ struct wsscreen *wsscreen_attach(sc, console, emul, type, cookie, ccol, crow)
  * Autoconfiguration functions.
  */
 int
-#ifdef __BROKEN_INDIRECT_CONFIG
-wsdisplay_emul_match(parent, matchv, aux)
-#else
 wsdisplay_emul_match(parent, match, aux)
-#endif
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *matchv;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
-#ifdef __BROKEN_INDIRECT_CONFIG
-	struct cfdata *match = matchv;
-#endif
 	struct wsemuldisplaydev_attach_args *ap = aux;
 
 	if (match->wsemuldisplaydevcf_console !=
@@ -289,7 +271,7 @@ wsdisplay_emul_attach(parent, self, aux)
 			if (cdevsw[maj].d_open == wsdisplayopen)
 				break;
 
-		cn_tab->cn_dev = makedev(maj, self->dv_unit);
+		cn_tab->cn_dev = makedev(maj, WSDISPLAYMINOR(self->dv_unit, 0));
 	}
 }
 
@@ -315,11 +297,7 @@ wsemuldisplaydevprint(aux, pnp)
 int
 wsdisplay_noemul_match(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 #if 0 /* -Wunused */
