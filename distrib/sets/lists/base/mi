@@ -1018,10 +1018,12 @@
 ./usr/share/zoneinfo/America/Anchorage
 ./usr/share/zoneinfo/America/Anguilla
 ./usr/share/zoneinfo/America/Antigua
+./usr/share/zoneinfo/America/Araguaina
 ./usr/share/zoneinfo/America/Aruba
 ./usr/share/zoneinfo/America/Asuncion
 ./usr/share/zoneinfo/America/Atka
 ./usr/share/zoneinfo/America/Barbados
+./usr/share/zoneinfo/America/Belem
 ./usr/share/zoneinfo/America/Belize
 ./usr/share/zoneinfo/America/Bogota
 ./usr/share/zoneinfo/America/Boise
@@ -1099,6 +1101,7 @@
 ./usr/share/zoneinfo/America/Port_of_Spain
 ./usr/share/zoneinfo/America/Porto_Acre
 ./usr/share/zoneinfo/America/Puerto_Rico
+./usr/share/zoneinfo/America/Porto_Velho
 ./usr/share/zoneinfo/America/Rainy_River
 ./usr/share/zoneinfo/America/Rankin_Inlet
 ./usr/share/zoneinfo/America/Regina
@@ -1161,7 +1164,6 @@
 ./usr/share/zoneinfo/Asia/Harbin
 ./usr/share/zoneinfo/Asia/Hong_Kong
 ./usr/share/zoneinfo/Asia/Irkutsk
-./usr/share/zoneinfo/Asia/Ishigaki
 ./usr/share/zoneinfo/Asia/Istanbul
 ./usr/share/zoneinfo/Asia/Jakarta
 ./usr/share/zoneinfo/Asia/Jayapura
