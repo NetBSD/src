@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.33 2002/02/02 12:25:35 lukem Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.34 2002/03/31 07:48:15 lukem Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.33 2002/02/02 12:25:35 lukem Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.34 2002/03/31 07:48:15 lukem Exp $");
 #endif
 
 #if HAVE_CONFIG_H
@@ -622,7 +622,7 @@ void fillin_program_objs(prog_t *p, char *dirpath)
     (void)snprintf(line, sizeof(line),
 	"cd %s && %s CRUNCHEDPROG=1 -f %s %s crunchgen_objs 2>&1", dirpath,
 	makebin, tempfname, makeflags);
-    if((f = popen(line, "r+")) == NULL) {
+    if((f = popen(line, "r")) == NULL) {
 	perror("submake pipe");
 	goterror = 1;
 	unlink(tempfname);
