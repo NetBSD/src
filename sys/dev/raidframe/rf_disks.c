@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.17 2000/02/24 01:22:32 oster Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.18 2000/02/24 02:55:05 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1030,7 +1030,7 @@ rf_add_hot_spare(raidPtr, sparePtr)
 				 raidPtr->Queues[0][0].qPtr, /* XXX */
 				 raidPtr->sectorsPerDisk,
 				 raidPtr->Disks[0][raidPtr->numCol + spare_number].dev,
-				 raidPtr->Queues[0][0].maxOutstanding, /* XXX */
+				 raidPtr->maxOutstanding,
 				 &raidPtr->shutdownList,
 				 raidPtr->cleanupList);
 				 
