@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.77 1998/03/01 20:45:26 augustss Exp $
+#	$NetBSD: INSTALL,v 1.78 1998/03/22 18:18:46 drochner Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -397,7 +397,7 @@ nsphy*	at mii? dev ?			# NS and compatible PHYs
 #audio*	at wss?
 
 # The spkr driver provides a simple tone interface to the built in speaker.
-#spkr0	at pckbd? port 0x61		# PC speaker
+#spkr0	at pc? port 0x61		# PC speaker
 
 
 # Mice
@@ -407,7 +407,7 @@ nsphy*	at mii? dev ?			# NS and compatible PHYs
 #lms1	at isa? port 0x238 irq 5
 #mms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
 #mms1	at isa? port 0x238 irq 5
-#pms0	at pckbd? irq 12		# PS/2 auxiliary port mouse
+#pms0	at pc? irq 12		# PS/2 auxiliary port mouse
 
 
 # Joysticks
