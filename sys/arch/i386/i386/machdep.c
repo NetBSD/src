@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.82 1994/01/20 21:22:06 ws Exp $
+ *	$Id: machdep.c,v 1.83 1994/01/20 23:08:13 mycroft Exp $
  */
 
 #include <stddef.h>
@@ -442,7 +442,7 @@ sendsig(catcher, sig, mask, code)
 	frame.sf_sc.sc_es = tf->tf_es;
 	frame.sf_sc.sc_ss = tf->tf_ss;
 
-	if (copyout(&frame,fp,sizeof(frame)) < 0) {
+	if (copyout(&frame, fp, sizeof(frame)) < 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -597,7 +597,7 @@ boot(arghowto)
 		 */
 		if (panicstr == 0)
 			vnode_pager_umount(NULL);
-		sync((struct proc *)0,(void *)0,(int *)0);
+		sync((struct proc *)0, (void *)0, (int *)0);
 		/*
 		 * Unmount filesystems
 		 */
@@ -1074,7 +1074,7 @@ init386(first_avail)
 
 	x = (int) &IDTVEC(syscall);
 	gdp->gd_looffset = x++;
-	gdp->gd_selector = GSEL(GCODE_SEL,SEL_KPL);
+	gdp->gd_selector = GSEL(GCODE_SEL, SEL_KPL);
 	gdp->gd_stkcpy = 1;	/* leaves room for eflags like a trap */
 	gdp->gd_type = SDT_SYS386CGT;
 	gdp->gd_dpl = SEL_UPL;
