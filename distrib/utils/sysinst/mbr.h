@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.h,v 1.4.2.3 1999/05/02 21:44:32 perry Exp $	*/
+/*	$NetBSD: mbr.h,v 1.4.2.4 1999/06/24 23:00:04 cgd Exp $	*/
 
 /*
  * Copyright 1997, 1988 Piermont Information Systems Inc.
@@ -16,7 +16,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software develooped for the NetBSD Project by
+ *      This product includes software developed for the NetBSD Project by
  *      Piermont Information Systems Inc.
  * 4. The name of Piermont Information Systems Inc. may not be used to endorse
  *    or promote products derived from this software without specific prior
