@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_file.c,v 1.2 2003/01/22 17:48:02 christos Exp $ */
+/*	$NetBSD: compat_file.c,v 1.3 2003/02/10 17:30:08 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_file.c,v 1.2 2003/01/22 17:48:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_file.c,v 1.3 2003/02/10 17:30:08 christos Exp $");
 
 #include "opt_compat_darwin.h"
 
@@ -573,7 +573,7 @@ bsd_sys_statfs(l, v, retval)
 	return sys_statfs(l, uap, retval);
 }
 
-#ifdef NFS
+#if defined(NFS) || defined(NFSSERVER)
 int
 bsd_sys_getfh(l, v, retval)
 	struct lwp *l;
@@ -590,7 +590,7 @@ bsd_sys_getfh(l, v, retval)
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, fname));
 	return sys_getfh(l, uap, retval);
 }
-#endif /* NFS */
+#endif /* NFS || NFSSERVER */
 
 int
 bsd_compat_12_sys_stat(l, v, retval)
