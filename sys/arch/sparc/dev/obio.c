@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.23 1996/04/05 21:50:05 chuck Exp $	*/
+/*	$NetBSD: obio.c,v 1.24 1996/05/18 12:22:49 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -324,10 +324,11 @@ busattach(parent, child, args, bustype)
 	oca.ca_ra.ra_paddr = (void *)cf->cf_loc[0];
 	oca.ca_ra.ra_len = 0;
 	oca.ca_ra.ra_nreg = 1;
-	tmp = NULL;
 	if (oca.ca_ra.ra_paddr)
-		tmp = bus_tmp(oca.ca_ra.ra_paddr,
+		tmp = (caddr_t)bus_tmp(oca.ca_ra.ra_paddr,
 		    bustype);
+	else
+		tmp = NULL;
 	oca.ca_ra.ra_vaddr = tmp;
 	oca.ca_ra.ra_intr[0].int_pri = cf->cf_loc[1];
 	if (bustype == BUS_VME16 || bustype == BUS_VME32)
