@@ -1,7 +1,7 @@
 BUILDING(8)             NetBSD System Manager's Manual             BUILDING(8)
 
 NAME
-     BUILDING - Procedure for building NetBSD from source code.
+     BUILDING -- Procedure for building NetBSD from source code.
 
 STATUS
      This document is a work-in-progress.  As such, the information described
@@ -255,11 +255,11 @@ CONFIGURATION
 
      MKUNPRIVED  Can be set to ``yes'' or ``no''.  Indicates whether an
                  unprivileged install will occur.  The user, group, permis-
-                 sions, and file flags, will not be set on the installed item;
-                 instead the information will be appended to a file called
-                 METALOG in DESTDIR.  The contents of METALOG is used during
-                 the generation of the distribution tar files to ensure that
-                 the appropriate file ownership is stored.
+                 sions, and file flags, will not be set on the installed
+                 items; instead the information will be appended to a file
+                 called METALOG in DESTDIR.  The contents of METALOG are used
+                 during the generation of the distribution tar files to ensure
+                 that the appropriate file ownership is stored.
 
                  Default: ``no''
 
@@ -375,11 +375,11 @@ CONFIGURATION
 
 BUILDING
    "make" command line options
-     This is only a summary of options available to make(1); only the options
-     used most frequently with NetBSD builds are listed here.
+     This is not a summary of all the options available to make(1); only the
+     options used most frequently with NetBSD builds are listed here.
 
      -j njob    Run up to njob make(1) subjobs in parallel.  Makefiles should
-                use .WAIT or have explicit dependancies as necessary to
+                use .WAIT or have explicit dependencies as necessary to
                 enforce build ordering.  If you see build failures with -j,
                 please save complete build logs so the failures can be ana-
                 lyzed.
@@ -460,7 +460,7 @@ BUILDING
 
      installworld  Install the distribution from DESTDIR to INSTALLWORLDDIR
                    (which defaults to the root directory).  Ensures that
-                   INSTALLWORLDDIR is the not root directory if cross compil-
+                   INSTALLWORLDDIR is not the root directory if cross compil-
                    ing.
 
                    Note: It is highly recommended that you upgrade your kernel
