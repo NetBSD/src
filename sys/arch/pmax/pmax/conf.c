@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.13 1995/04/12 00:01:01 mellon Exp $	*/
+/*	$NetBSD: conf.c,v 1.14 1995/04/21 01:21:06 mellon Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,12 +85,6 @@ struct bdevsw	bdevsw[] =
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
-#define	cdev_pm_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) nullop, \
-	(dev_type_write((*))) nullop, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, (dev_type_reset((*))) nullop, 0, \
-	dev_init(c,n,select), dev_init(c,n,mmap), 0 }
-
 cdev_decl(cn);
 cdev_decl(ctty);
 #define	mmread	mmrw
@@ -98,36 +92,30 @@ cdev_decl(ctty);
 dev_type_read(mmrw);
 cdev_decl(mm);
 #include "pty.h"
-#define	pts_tty		pt_tty
-#define	ptsioctl	ptyioctl
+#define ptstty ptytty
+#define ptsioctl ptyioctl
 cdev_decl(pts);
-#define	ptc_tty		pt_tty
-#define	ptcioctl	ptyioctl
+#define ptctty ptytty
+#define ptcioctl ptyioctl
 cdev_decl(ptc);
 cdev_decl(log);
 cdev_decl(fd);
-#include "pm.h"
-cdev_decl(pm);
 #include "tz.h"
 cdev_decl(tz);
 cdev_decl(vnd);
 #include "bpfilter.h"
 cdev_decl(bpf);
-#include "cfb.h"
-cdev_decl(cfb);
-#include "xcfb.h"
-cdev_decl(xcfb);
 #include "dtop.h"
 cdev_decl(dtop);
 #include "dc.h"
 cdev_decl(dc);
-#include "rcons.h"
-cdev_decl(rcons);
 #include "scc.h"
 cdev_decl(scc);
-#include "mfb.h"
-cdev_decl(mfb);
 cdev_decl(rz);
+#include "rcons.h"
+cdev_decl(rcons);
+#include "fb.h"
+cdev_decl(fb);
 
 struct cdevsw	cdevsw[] =
 {
@@ -139,17 +127,17 @@ struct cdevsw	cdevsw[] =
         cdev_ptc_init(NPTY,ptc),        /* 5: pseudo-tty master */
 	cdev_log_init(1,log),		/* 6: /dev/klog */
 	cdev_fd_init(1,fd),		/* 7: file descriptor pseudo-dev */
-	cdev_pm_init(NPM,pm),		/* 8: frame buffer */
+	cdev_notdef(),			/* 8: 2100/3100 frame buffer */
 	cdev_notdef(),			/* 9: old slot for SCSI disk */
 	cdev_tape_init(NTZ,tz),		/* 10: SCSI tape */
 	cdev_disk_init(NVND,vnd),	/* 11: vnode disk driver */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 12: Berkeley packet filter */
-	cdev_pm_init(NCFB,cfb),		/* 13: color frame buffer */
-	cdev_pm_init(NXCFB,xcfb),	/* 14: maxine color frame buffer */
+	cdev_notdef(),			/* 13: color frame buffer */
+	cdev_notdef(),			/* 14: maxine color frame buffer */
 	cdev_tty_init(NDTOP,dtop),	/* 15: desktop bus interface */
 	cdev_tty_init(NDC,dc),		/* 16: dc7085 serial interface */
 	cdev_tty_init(NSCC,scc),	/* 17: scc 82530 serial interface */
-	cdev_pm_init(NMFB,mfb),		/* 18: mono frame buffer */
+	cdev_notdef(),			/* 18: mono frame buffer */
         cdev_notdef(),		        /* 19: mt */
 	cdev_tty_init(NPTY,pts),	/* 20: pty slave  */
         cdev_ptc_init(NPTY,ptc),        /* 21: pty master */
@@ -219,6 +207,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),		/* 83: fd */
 	cdev_notdef(),		/* 84: DTi */
 	cdev_tty_init(NRCONS,rcons),	/* 85: raster console pseudo-device */
+	cdev_fb_init(NFB,fb),	/* 86: frame buffer pseudo-device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -351,6 +340,8 @@ static int chrtoblktbl[] =  {
 	/* 82 */	NODEV,
 	/* 83 */	NODEV,
 	/* 84 */	NODEV,
+	/* 85 */	NODEV,
+	/* 86 */	NODEV,
 };
 
 /*
