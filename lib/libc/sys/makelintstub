@@ -1,7 +1,7 @@
 #!/bin/sh -
-#	$NetBSD: makelintstub,v 1.1 1996/12/22 11:38:34 cgd Exp $
+#	$NetBSD: makelintstub,v 1.2 1997/11/05 05:46:18 thorpej Exp $
 #
-# Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
+# Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -29,118 +29,187 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-if [ $# -lt 1 ] || [ $# -gt 2 ]; then
-	echo "usage: $0 syscallname [funcname]"
+usage()
+{
+
+	echo "usage: $0 [-n|-p] [-o filename] object ..."
 	exit 1
-fi
+}
 
-syscallname="$1"
-if [ $# -eq 1 ]; then
-	funcname="$syscallname"
-else
-	funcname="$2"
-fi
+header()
+{
 
-arglist="`printf '#include <sys/syscall.h>' | cpp -C | \
-    grep '^/\* syscall: "'"$syscallname"'" ' | \
-    sed -e 's,^/\* syscall: ,,;s, \*/$,,'`"
+	cat <<- __EOF__
+	/*
+	 * THIS IS AN AUTOMATICALLY GENERATED FILE.  DO NOT EDIT.
+	 */
 
-eval set -f -- "$arglist"
+	#include <sys/param.h>
+	#include <sys/time.h>
+	#include <sys/mount.h>
+	#include <sys/stat.h>
+	#include <ufs/lfs/lfs.h>
+	#include <sys/resource.h>
+	#include <sys/poll.h>
+	#include <sys/uio.h>
+	#include <sys/ipc.h>
+	#include <sys/msg.h>
+	#include <sys/sem.h>
+	#include <sys/shm.h>
+	#include <sys/timex.h>
+	#include <sys/socket.h>
+	#ifdef __STDC__
+	#include <stdarg.h>
+	#else
+	#include <varargs.h>
+	#endif
 
-if [ $# -lt 4 ]; then
-	echo syscall $syscallname not found! 1>&2
-	exit 1
-fi
+	__EOF__
+}
 
-syscallname=$1
-shift 2			# kill name and "ret:"
-returntype=$1
-shift 2			# kill return type and "args:"
+syscall_stub()
+{
 
-cat << __EOF__
-#include <sys/param.h>
-#include <sys/time.h>
-#include <sys/mount.h>
-#include <sys/stat.h>
-#include <ufs/lfs/lfs.h>
-#include <sys/resource.h>
-#include <sys/poll.h>
-#include <sys/uio.h>
-#include <sys/ipc.h>
-#include <sys/msg.h>
-#include <sys/sem.h>
-#include <sys/shm.h>
-#include <sys/timex.h>
-#include <sys/socket.h>
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
+	syscallhdr="$1"
+	syscallname="$2"
+	funcname="$3"
 
-/*ARGSUSED*/
-$returntype
-__EOF__
+	arglist="`printf '#include "'"$syscallhdr"'"' | cpp -C | \
+    	grep '^/\* syscall: "'"$syscallname"'" ' | \
+    	sed -e 's,^/\* syscall: ,,;s, \*/$,,'`"
 
-if [ "`eval echo -n \\$$#`" = "..." ]; then
-	varargs=YES
-	nargs=$(($# - 1))
-else
-	varargs=NO
-	nargs=$#
-fi
-nargswithva=$#
+	eval set -f -- "$arglist"
 
-# do ANSI C function header
-echo	"#ifdef __STDC__"
-
-echo -n	"$funcname("
-i=1
-while [ $i -le $nargs ]; do
-	eval echo -n \""\$$i"\"
-	echo -n	" arg$i"
-	if [ $i -lt $nargswithva ]; then
-		echo -n	", "
+	if [ $# -lt 4 ]; then
+		echo syscall $syscallname not found! 1>&2
+		exit 1
 	fi
-	i=$(($i + 1))
-done
-if [ $varargs = YES ]; then
-	echo -n "..."
-fi
-echo	")"
 
-# do K&R C function header
-echo	"#else"
+	syscallname=$1
+	shift 2			# kill name and "ret:"
+	returntype=$1
+	shift 2			# kill return type and "args:"
 
-echo -n	"$funcname("
-i=1
-while [ $i -le $nargs ]; do
-	echo -n	"arg$i"
-	if [ $i -lt $nargswithva ]; then
-		echo -n	", "
+	cat <<- __EOF__
+	/*ARGSUSED*/
+	$returntype
+	__EOF__
+
+	if [ "`eval echo -n \\$$#`" = "..." ]; then
+		varargs=YES
+		nargs=$(($# - 1))
+	else
+		varargs=NO
+		nargs=$#
 	fi
-	i=$(($i + 1))
-done
-if [ $varargs = YES ]; then
-	echo -n "va_alist"
+	nargswithva=$#
+
+	# do ANSI C function header
+	if [ $varargs = YES ]; then
+		echo	"#ifdef __STDC__"
+
+		echo -n	"$funcname("
+		i=1
+		while [ $i -le $nargs ]; do
+			eval echo -n \""\$$i"\"
+			echo -n	" arg$i"
+			if [ $i -lt $nargswithva ]; then
+				echo -n	", "
+			fi
+			i=$(($i + 1))
+		done
+		if [ $varargs = YES ]; then
+			echo -n "..."
+		fi
+		echo	")"
+
+		# do K&R C function header
+		echo	"#else"
+	fi
+
+	echo -n	"$funcname("
+	i=1
+	while [ $i -le $nargs ]; do
+		echo -n	"arg$i"
+		if [ $i -lt $nargswithva ]; then
+			echo -n	", "
+		fi
+		i=$(($i + 1))
+	done
+	if [ $varargs = YES ]; then
+		echo -n "va_alist"
+	fi
+	echo	")"
+	i=1
+	while [ $i -le $nargs ]; do
+		eval echo -n \""        \$$i"\"
+		echo	" arg$i;"
+		i=$(($i + 1))
+	done
+	if [ $varargs = YES ]; then
+		echo	"        va_dcl"
+	fi
+
+	# do function body
+	if [ $varargs = YES ]; then
+		echo	"#endif"
+	fi
+	echo	"{"
+	if [ "$returntype" != "void" ]; then
+		echo "        return (($returntype)0);"
+	fi
+	echo	"}"
+}
+
+trailer()
+{
+
+	cat <<- __EOF__
+	/* END */
+	__EOF__
+}
+
+set -- `getopt no:ps: $*`
+
+pflag=NO
+nflag=NO
+oarg=""
+syscallhdr=/usr/include/sys/syscall.h
+
+if test $? -ne 0; then
+	usage
 fi
-echo	")"
-i=1
-while [ $i -le $nargs ]; do
-	eval echo -n \""        \$$i"\"
-	echo	" arg$i;"
-	i=$(($i + 1))
+for i; do
+	case "$i" in
+	-n)	nflag=YES; shift;;
+	-o)	oarg=$2; shift; shift;;
+	-p)	pflag=YES; shift;;
+	-s)	syscallhdr=$2; shift; shift;;
+	--)	shift; break;;
+	esac
 done
-if [ $varargs = YES ]; then
-	echo	"        va_dcl"
+
+if [ $pflag = YES ] && [ $nflag = YES ]; then
+	echo "$0: -n flag and -p flag may not be used together"
+	echo ""
+	usage
 fi
 
-# do function body
-echo	"#endif"
-echo	"{"
-if [ "$returntype" != "void" ]; then
-	echo "        return (($returntype)0);"
+if [ "X$oarg" != "X" ]; then
+	exec > $oarg
 fi
-echo	"}"
+
+header
+for syscall; do
+	fnname=`echo $syscall | sed -e 's,\.o$,,'`
+	if [ $pflag = YES ]; then
+		scname=`echo $fnname | sed -e 's,^_,,'`
+	else
+		scname=$fnname
+	fi
+	syscall_stub $syscallhdr $scname $fnname
+	echo ""
+done
+trailer
 
 exit 0
