@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.59 2000/03/26 09:16:01 tsubai Exp $
+#	$NetBSD: GENERIC,v 1.60 2000/04/03 00:03:30 augustss Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include		"arch/macppc/conf/std.macppc"
 
-#ident 		"GENERIC-$Revision: 1.59 $"
+#ident 		"GENERIC-$Revision: 1.60 $"
 
 maxusers	32
 
@@ -254,6 +254,7 @@ ucom*	at umodem?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
+atapibus* at umass? channel ?
 scsibus* at umass? channel ?
 
 # USB audio
