@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.83 1998/08/26 14:18:26 dante Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.84 1998/08/26 20:00:38 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.76 1998/08/07 06:58:57 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.78 1998/08/26 19:59:16 drochner Exp 
  */
 
 /*
@@ -1735,7 +1735,13 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_85C503,
 	    0,
 	    "Silicon Integrated System",
-	    "85C503",
+	    "85C503 or 5597/5598 ISA bridge",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5597_VGA,
+	    0,
+	    "Silicon Integrated System",
+	    "5597/5598 integrated VGA",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_85C501,
@@ -1754,6 +1760,24 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Silicon Integrated System",
 	    "85C601",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5597_IDE,
+	    0,
+	    "Silicon Integrated System",
+	    "5597/5598 IDE controller",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5597_HB,
+	    0,
+	    "Silicon Integrated System",
+	    "5597/5598 host bridge",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5597_USB,
+	    0,
+	    "Silicon Integrated System",
+	    "5597/5598 USB host controller",
 	},
 	{
 	    PCI_VENDOR_SMC, PCI_PRODUCT_SMC_37C665,

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.84 1998/08/26 14:18:26 dante Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.85 1998/08/26 20:00:37 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.76 1998/08/07 06:58:57 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.78 1998/08/26 19:59:16 drochner Exp 
  */
 
 /*
@@ -961,10 +961,14 @@
 #define	PCI_PRODUCT_SIS_86C201	0x0001		/* 86C201 */
 #define	PCI_PRODUCT_SIS_86C202	0x0002		/* 86C202 */
 #define	PCI_PRODUCT_SIS_86C205	0x0005		/* 86C205 */
-#define	PCI_PRODUCT_SIS_85C503	0x0008		/* 85C503 */
+#define	PCI_PRODUCT_SIS_85C503	0x0008		/* 85C503 or 5597/5598 ISA bridge */
+#define	PCI_PRODUCT_SIS_5597_VGA	0x0200		/* 5597/5598 integrated VGA */
 #define	PCI_PRODUCT_SIS_85C501	0x0406		/* 85C501 */
 #define	PCI_PRODUCT_SIS_85C496	0x0496		/* 85C496 */
 #define	PCI_PRODUCT_SIS_85C601	0x0601		/* 85C601 */
+#define	PCI_PRODUCT_SIS_5597_IDE	0x5513		/* 5597/5598 IDE controller */
+#define	PCI_PRODUCT_SIS_5597_HB	0x5597		/* 5597/5598 host bridge */
+#define	PCI_PRODUCT_SIS_5597_USB	0x7001		/* 5597/5598 USB host controller */
 
 /* SMC products */
 #define	PCI_PRODUCT_SMC_37C665	0x1000		/* FDC 37C665 */
