@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.49 2001/11/10 10:59:10 lukem Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.50 2001/11/29 21:23:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.49 2001/11/10 10:59:10 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.50 2001/11/29 21:23:13 christos Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -285,7 +285,7 @@ sys_nfssvc(p, v, retval)
 					m_freem(nuidp->nu_nam);
 			        }
 				nuidp->nu_flag = 0;
-				nuidp->nu_cr = nsd->nsd_cr;
+				crcvt(&nuidp->nu_cr, &nsd->nsd_cr);
 				if (nuidp->nu_cr.cr_ngroups > NGROUPS)
 				    nuidp->nu_cr.cr_ngroups = NGROUPS;
 				nuidp->nu_cr.cr_ref = 1;
