@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.40 2003/11/24 16:51:33 manu Exp $ */
+/*	$NetBSD: mach_task.c,v 1.41 2003/11/24 17:20:58 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.40 2003/11/24 16:51:33 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.41 2003/11/24 17:20:58 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -342,12 +342,13 @@ mach_task_threads(args)
 		free(mnp, M_TEMP);
 		return mach_msg_error(args, error);
 	}
-	free(mnp, M_TEMP);
 
 #ifdef KTRACE
 	if (KTRPOINT(l->l_proc, KTR_MOOL) && error == 0)
 		ktrmool(l->l_proc, mnp, size, (void *)va);
 #endif
+	free(mnp, M_TEMP);
+
 	rep->rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
 	    MACH_MSGH_BITS_COMPLEX;
