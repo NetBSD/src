@@ -31,6 +31,10 @@
  *
  * from: Id: nb_name.c,v 1.2 2001/08/22 03:31:36 bp Exp 
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: nb_name.c,v 1.5 2003/04/04 08:05:34 jdolecek Exp $");
+
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/endian.h>

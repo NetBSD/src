@@ -31,6 +31,10 @@
  *
  * from: Id: rcfile.c,v 1.5 2001/04/16 12:46:46 bp Exp 
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: rcfile.c,v 1.4 2003/04/04 08:05:36 jdolecek Exp $");
+
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <ctype.h>

@@ -33,6 +33,10 @@
  *
  * This is very simple implementation of RAP protocol.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: rap.c,v 1.3 2003/04/04 08:05:36 jdolecek Exp $");
+
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/stat.h>
