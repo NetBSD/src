@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha.c,v 1.5 2002/04/12 06:50:41 lukem Exp $	*/
+/*	$NetBSD: alpha.c,v 1.6 2002/04/19 07:08:54 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: alpha.c,v 1.5 2002/04/12 06:50:41 lukem Exp $");
+__RCSID("$NetBSD: alpha.c,v 1.6 2002/04/19 07:08:54 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -118,11 +118,8 @@ __RCSID("$NetBSD: alpha.c,v 1.5 2002/04/12 06:50:41 lukem Exp $");
 
 #define	SUN_DKMAGIC	55998		/* XXX: from <dev/sun/disklabel.h> */
 
-int		alpha_parseopt(ib_params *, const char *);
-int		alpha_setboot(ib_params *);
-int		alpha_clearboot(ib_params *);
 static void	resum(ib_params *, struct alpha_boot_block * const bb,
-			u_int16_t *bb16);
+			uint16_t *bb16);
 static void	sun_bootstrap(ib_params *, struct alpha_boot_block * const);
 static void	check_sparc(const struct alpha_boot_block * const,
 			    const char *);
@@ -144,7 +141,7 @@ int
 alpha_clearboot(ib_params *params)
 {
 	struct alpha_boot_block	bb;
-	u_int64_t		cksum;
+	uint64_t		cksum;
 	ssize_t			rv;
 
 	assert(params != NULL);
@@ -219,7 +216,7 @@ alpha_setboot(ib_params *params)
 {
 	struct stat		bootstrapsb;
 	struct alpha_boot_block	bb;
-	u_int64_t		startblock;
+	uint64_t		startblock;
 	int			retval;
 	char			*bootstrapbuf;
 	size_t			bootstrapsize;
@@ -365,13 +362,13 @@ alpha_setboot(ib_params *params)
 /*
  * The Sun and alpha checksums overlay, and the Sun magic number also
  * overlays the alpha checksum. If you think you are smart: stop here
- * and do exercise one: figure out how to salt unimportant u_int16_t
+ * and do exercise one: figure out how to salt unimportant uint16_t
  * words in mid-sector so that the alpha and sparc checksums match,
  * and so the Sun magic number is embedded in the alpha checksum.
  *
- * The last u_int64_t in the sector is the alpha arithmetic checksum.
- * The last u_int16_t in the sector is the sun xor checksum.
- * The penultimate u_int16_t in the sector is the sun magic number.
+ * The last uint64_t in the sector is the alpha arithmetic checksum.
+ * The last uint16_t in the sector is the sun xor checksum.
+ * The penultimate uint16_t in the sector is the sun magic number.
  *
  *	A:   511     510     509     508     507     506     505     504
  *	S:   510     511     508     509     506     507     504     505
@@ -386,9 +383,9 @@ alpha_setboot(ib_params *params)
  */
 
 static void
-resum(ib_params *params, struct alpha_boot_block * const bb, u_int16_t *bb16)
+resum(ib_params *params, struct alpha_boot_block * const bb, uint16_t *bb16)
 {
-	static u_int64_t lastsum;
+	static uint64_t lastsum;
 
 	if (bb16 != NULL)
 		memcpy(bb, bb16, sizeof(*bb));
@@ -405,7 +402,7 @@ sun_bootstrap(ib_params *params, struct alpha_boot_block * const bb)
 {
 #	define BB_ADJUST_OFFSET 64
 	static char our_int16s[] = "\2\3\6\7\12";
-	u_int16_t i, j, chkdelta, sunsum, bb16[256];
+	uint16_t i, j, chkdelta, sunsum, bb16[256];
 
 	/*
 	 * Theory: the alpha checksum is adjusted so bits 47:32 add up
@@ -442,7 +439,7 @@ sun_bootstrap(ib_params *params, struct alpha_boot_block * const bb)
 	bb16[BB_ADJUST_OFFSET + 3] = chkdelta >> 1;
 	bb16[BB_ADJUST_OFFSET + 7] = chkdelta >> 1;
 	/*
-	 * By placing half the correction in two different u_int64_t words at
+	 * By placing half the correction in two different uint64_t words at
 	 * positions 63:48, the sparc sum will not change but the alpha sum
 	 * will have the full correction, but only if the target adjustment
 	 * was even. If it was odd, reverse propagate the carry one place.
@@ -466,7 +463,7 @@ sun_bootstrap(ib_params *params, struct alpha_boot_block * const bb)
 static void
 check_sparc(const struct alpha_boot_block * const bb, const char *when)
 {
-	u_int16_t bb16[256];
+	uint16_t bb16[256];
 	const char * const wmsg =
 	    "%s sparc %s 0x%04x invalid, expected 0x%04x";
 
