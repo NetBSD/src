@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.c,v 1.39 2003/05/11 08:23:23 jdolecek Exp $	*/
+/*	$NetBSD: db_sym.c,v 1.40 2003/05/16 15:02:08 itojun Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.39 2003/05/11 08:23:23 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.40 2003/05/16 15:02:08 itojun Exp $");
 
 #include "opt_ddbparam.h"
 
@@ -282,7 +282,7 @@ unsigned long	db_lastsym = (unsigned long)end;
 unsigned int	db_maxoff = 0x10000000;
 
 void
-db_symstr(char *buf, db_expr_t off, db_strategy_t strategy)
+db_symstr(char *buf, size_t buflen, db_expr_t off, db_strategy_t strategy)
 {
 	char  *name;
 	const char *mod;
@@ -303,9 +303,9 @@ db_symstr(char *buf, db_expr_t off, db_strategy_t strategy)
 			if (name != NULL &&
 			    ((unsigned int) d < db_maxoff) &&
 			    value != 0) {
-				strcpy(buf, name);
+				strlcpy(buf, name, buflen);
 				if (d) {
-					strcat(buf, "+");
+					strlcat(buf, "+", buflen);
 					db_format_radix(buf+strlen(buf),
 					    24, d, TRUE);
 				}
@@ -320,7 +320,7 @@ db_symstr(char *buf, db_expr_t off, db_strategy_t strategy)
 				return;
 			}
 		}
-		strcpy(buf, db_num_to_str(off));
+		strlcpy(buf, db_num_to_str(off), buflen);
 		return;
 	}
 #endif
@@ -329,7 +329,7 @@ db_symstr(char *buf, db_expr_t off, db_strategy_t strategy)
 		if (((off - val) < db_maxoff) && val) {
 			sprintf(buf, "%s:%s", mod, name);
 			if (off - val) {
-				strcat(buf, "+");
+				strlcat(buf, "+", buflen);
 				db_format_radix(buf+strlen(buf),
 				    24, off - val, TRUE);
 			}
@@ -342,7 +342,7 @@ db_symstr(char *buf, db_expr_t off, db_strategy_t strategy)
 			return;
 		}
 	}
-	strcpy(buf, db_num_to_str(off));
+	strlcpy(buf, db_num_to_str(off), buflen);
 }
 
 void
