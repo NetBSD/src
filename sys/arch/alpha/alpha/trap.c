@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.82 2003/09/18 05:26:41 skd Exp $ */
+/* $NetBSD: trap.c,v 1.83 2003/09/18 22:36:32 cl Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.82 2003/09/18 05:26:41 skd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.83 2003/09/18 22:36:32 cl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -400,9 +400,14 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 				break;
 			}
 	
-			if (user)
+			if (user) {
 				KERNEL_PROC_LOCK(l);
-			else {
+				if (l->l_flag & L_SA) {
+					KDASSERT(l->l_proc != NULL && l->l_proc->p_sa != NULL);
+					l->l_proc->p_sa->sa_vp_faultaddr = (vaddr_t)a0;
+					l->l_flag |= L_SA_PAGEFAULT;
+				}
+			} else {
 				struct cpu_info *ci = curcpu();
 
 				if (l == NULL) {
@@ -484,9 +489,10 @@ do_fault:
 					rv = EFAULT;
 			}
 			if (rv == 0) {
-				if (user)
+				if (user) {
+					l->l_flag &= ~L_SA_PAGEFAULT;
 					KERNEL_PROC_UNLOCK(l);
-				else
+				} else
 					KERNEL_UNLOCK();
 				goto out;
 			}
@@ -514,6 +520,7 @@ do_fault:
 				i = SIGKILL;
 			} else
 				i = SIGSEGV;
+			l->l_flag &= ~L_SA_PAGEFAULT;
 			KERNEL_PROC_UNLOCK(l);
 			break;
 		    }
