@@ -1,4 +1,4 @@
-/*	$NetBSD: comsat.c,v 1.14 1998/07/06 06:47:38 mrg Exp $	*/
+/*	$NetBSD: comsat.c,v 1.15 2000/08/22 16:42:37 mjl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: comsat.c,v 1.14 1998/07/06 06:47:38 mrg Exp $");
+__RCSID("$NetBSD: comsat.c,v 1.15 2000/08/22 16:42:37 mjl Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,7 +91,7 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	struct sockaddr_in from;
+	struct sockaddr_storage from;
 	int cc, ch;
 	int fromlen;
 	char msgbuf[100];
@@ -245,7 +245,7 @@ notify(utp, offset)
 	(void)tcgetattr(fileno(tp), &ttybuf);
 	cr = (ttybuf.c_oflag & ONLCR) && (ttybuf.c_oflag & OPOST) ?
 	    "\n" : "\n\r";
-	(void)strncpy(name, utp->ut_name, sizeof(utp->ut_name));
+	(void)strncpy(name, utp->ut_name, sizeof(name));
 	name[sizeof(name) - 1] = '\0';
 
 	/* Set uid/gid/groups to users in case mail drop is on nfs */
