@@ -1,4 +1,4 @@
-/*	$NetBSD: strings.c,v 1.5 1994/12/10 11:54:32 jtc Exp $	*/
+/*	$NetBSD: strings.c,v 1.6 1994/12/10 12:06:56 jtc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)strings.c	8.2 (Berkeley) 1/28/94";
 #endif
-static char rcsid[] = "$NetBSD: strings.c,v 1.5 1994/12/10 11:54:32 jtc Exp $";
+static char rcsid[] = "$NetBSD: strings.c,v 1.6 1994/12/10 12:06:56 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -58,12 +58,9 @@ static char rcsid[] = "$NetBSD: strings.c,v 1.5 1994/12/10 11:54:32 jtc Exp $";
 #include <locale.h>
 #include <unistd.h>
 
-enum offset_radix {			/* radix used for string offset */
-	OFFSET_NONE,
-	OFFSET_OCT,
-	OFFSET_DEC,
-	OFFSET_HEX
-} ;
+#define FORMAT_DEC "%07ld "
+#define FORMAT_OCT "%07lo "
+#define FORMAT_HEX "%07lx "
 
 #define DEF_LEN		4		/* default minimum string length */
 #define ISSTR(ch)	(isascii(ch) && (isprint(ch) || ch == '\t'))
@@ -89,9 +86,9 @@ main(argc, argv)
 	EXEC *head;
 	int exitcode, minlen;
 	short asdata, fflg;
-	enum offset_radix oflg;
 	u_char *bfr;
 	char *file, *p;
+	char *offset_format;
 
 	setlocale(LC_ALL, "");
 
@@ -100,7 +97,7 @@ main(argc, argv)
 	 * longer documented in the man page or usage string.
 	 */
 	asdata = exitcode = fflg = 0;
-	oflg = OFFSET_NONE;
+	offset_format = NULL;
 	minlen = -1;
 	while ((ch = getopt(argc, argv, "-0123456789an:oft:")) != -1)
 		switch((char)ch) {
@@ -129,18 +126,18 @@ main(argc, argv)
 			minlen = atoi(optarg);
 			break;
 		case 'o':
-			oflg = OFFSET_OCT;
+			offset_format = FORMAT_OCT;
 			break;
 		case 't':
 			switch (*optarg) {
 			case 'o':
-				oflg = OFFSET_OCT;
+			        offset_format = FORMAT_OCT;
 				break;
 			case 'd':
-				oflg = OFFSET_DEC;
+				offset_format = FORMAT_DEC;
 				break;
 			case 'x':
-				oflg = OFFSET_HEX;
+				offset_format = FORMAT_HEX;
 				break;
 			default:
 				usage();
@@ -208,17 +205,10 @@ start:
 
 				if (fflg)
 					printf("%s:", file);
-				switch (oflg) {
-				case OFFSET_OCT:
-					printf("%07lo ", foff - minlen);
-					break;
-				case OFFSET_DEC:
-					printf("%07ld ", foff - minlen);
-					break;
-				case OFFSET_HEX:
-					printf("%07lx ", foff - minlen);
-					break;
-				}
+
+				if (offset_format) 
+					printf(offset_format, foff - minlen);
+
 				printf("%s", bfr);
 
 				while ((ch = getch()) != EOF && ISSTR(ch))
