@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.7 1999/07/09 22:57:27 thorpej Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.8 1999/07/17 07:07:09 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -95,6 +95,7 @@
 #ifdef __NetBSD__
 extern struct ifnet loif[NLOOP];
 #endif
+#include "faith.h"
 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
@@ -907,15 +908,20 @@ in6_pcbrtentry(in6p)
 }
 
 struct in6pcb *
-in6_pcblookup_connect(head, faddr6, fport_arg, laddr6, lport_arg)
+in6_pcblookup_connect(head, faddr6, fport_arg, laddr6, lport_arg, faith)
 	struct in6pcb *head;
 	struct in6_addr *faddr6, *laddr6;
 	u_int fport_arg, lport_arg;
+	int faith;
 {
 	struct in6pcb *in6p;
 	u_short	fport = fport_arg, lport = lport_arg;
 
 	for (in6p = head->in6p_next; in6p != head; in6p = in6p->in6p_next) {
+#if defined(NFAITH) && NFAITH > 0
+		if (faith && (in6p->in6p_flags & IN6P_FAITH) == 0)
+			continue;
+#endif
 		/* find exact match on both source and dest */
 		if (in6p->in6p_fport != fport)
 			continue;
@@ -935,10 +941,11 @@ in6_pcblookup_connect(head, faddr6, fport_arg, laddr6, lport_arg)
 }
 
 struct in6pcb *
-in6_pcblookup_bind(head, laddr6, lport_arg)
+in6_pcblookup_bind(head, laddr6, lport_arg, faith)
 	struct in6pcb *head;
 	struct in6_addr *laddr6;
 	u_int lport_arg;
+	int faith;
 {
 	struct in6pcb *in6p, *match;
 	u_short	lport = lport_arg;
@@ -949,6 +956,10 @@ in6_pcblookup_bind(head, laddr6, lport_arg)
 	 	 * find destination match.  exact match is preferred
 		 * against wildcard match.
 		 */
+#if defined(NFAITH) && NFAITH > 0
+		if (faith && (in6p->in6p_flags & IN6P_FAITH) == 0)
+			continue;
+#endif
 		if (in6p->in6p_fport != 0)
 			continue;
 		if (in6p->in6p_lport != lport)
