@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.72 2000/08/03 03:41:18 thorpej Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.73 2000/08/09 21:08:11 tv Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -42,6 +42,10 @@
 /*
  * procfs vnode interface
  */
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_compat_linux.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,6 +99,9 @@ struct proc_target {
 	{ DT_REG, N("notepg"),	Pnotepg,	NULL },
 	{ DT_REG, N("map"),	Pmap,		procfs_validmap },
 	{ DT_REG, N("cmdline"), Pcmdline,	NULL },
+#ifdef COMPAT_LINUX
+	{ DT_REG, N("exe"),	Pfile,		procfs_validfile },
+#endif
 #undef N
 };
 static int nproc_targets = sizeof(proc_targets) / sizeof(proc_targets[0]);
