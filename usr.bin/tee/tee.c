@@ -1,4 +1,4 @@
-/*	$NetBSD: tee.c,v 1.5 1994/12/09 01:43:39 jtc Exp $	*/
+/*	$NetBSD: tee.c,v 1.6 1997/10/20 00:37:11 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1988, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)tee.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: tee.c,v 1.5 1994/12/09 01:43:39 jtc Exp $";
+__RCSID("$NetBSD: tee.c,v 1.6 1997/10/20 00:37:11 lukem Exp $");
 #endif
 
 #include <sys/types.h>
@@ -65,16 +65,17 @@ typedef struct _list {
 } LIST;
 LIST *head;
 
-void add __P((int, char *));
+void	add __P((int, char *));
+int	main __P((int, char **));
 
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register LIST *p;
-	register int n, fd, rval, wval;
-	register char *bp;
+	LIST *p;
+	int n, fd, rval, wval;
+	char *bp;
 	int append, ch, exitval;
 	char *buf;
 #define	BSIZE (8 * 1024)
@@ -99,7 +100,7 @@ main(argc, argv)
 	argc -= optind;
 
 	if ((buf = malloc((size_t)BSIZE)) == NULL)
-		err(1, NULL);
+		err(1, "malloc");
 
 	add(STDOUT_FILENO, "stdout");
 
@@ -147,7 +148,7 @@ add(fd, name)
 	LIST *p;
 
 	if ((p = malloc((size_t)sizeof(LIST))) == NULL)
-		err(1, NULL);
+		err(1, "malloc");
 	p->fd = fd;
 	p->name = name;
 	p->next = head;

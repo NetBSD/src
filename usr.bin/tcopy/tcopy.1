@@ -1,4 +1,4 @@
-.\"	$NetBSD: tcopy.1,v 1.4 1997/04/15 07:23:07 lukem Exp $
+.\"	$NetBSD: tcopy.1,v 1.5 1997/10/20 00:35:14 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,16 +40,16 @@
 .Nm tcopy
 .Nd copy and/or verify mag tapes
 .Sh SYNOPSIS
-.Nm tcopy
+.Nm
 .Op Fl cvx
 .Op Fl s Ar maxblk
 .Oo Ar src Op Ar dest
 .Oc
 .Sh DESCRIPTION
-.Nm Tcopy
+.Nm
 is designed to copy magnetic tapes.  The only assumption made
 about the tape is that there are two tape marks at the end.
-.Nm Tcopy
+.Nm
 with only a source tape
 .Pf ( Ar /dev/rst0
 by default) specified will print

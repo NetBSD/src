@@ -1,4 +1,4 @@
-/*	$NetBSD: tcopy.c,v 1.5 1997/04/15 07:23:08 lukem Exp $	*/
+/*	$NetBSD: tcopy.c,v 1.6 1997/10/20 00:35:14 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1987, 1993, 1995
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1985, 1987, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1985, 1987, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)tcopy.c	8.3 (Berkeley) 1/23/95";
 #endif
-static char rcsid[] = "$NetBSD: tcopy.c,v 1.5 1997/04/15 07:23:08 lukem Exp $";
+__RCSID("$NetBSD: tcopy.c,v 1.6 1997/10/20 00:35:14 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -72,6 +72,7 @@ FILE	*msg = stdout;
 
 void	*getspace __P((int));
 void	 intr __P((int));
+int	 main __P((int, char **));
 void	 usage __P((void));
 void	 verify __P((int, int, char *));
 void	 writeop __P((int, int));
@@ -87,8 +88,10 @@ main(argc, argv)
 	sig_t oldsig;
 	char *buff, *inf;
 
+	outp = 0;
+	inf = NULL;
 	guesslen = 1;
-	while ((ch = getopt(argc, argv, "cs:vx")) != EOF)
+	while ((ch = getopt(argc, argv, "cs:vx")) != -1)
 		switch((char)ch) {
 		case 'c':
 			op = COPYVERIFY;
@@ -277,7 +280,7 @@ r2:		if (inn != outn) {
 				return;
 			}
 		} else {
-			if (bcmp(inb, outb, inn)) {
+			if (memcmp(inb, outb, inn)) {
 				fprintf(msg,
 				    "%s: tapes have different data.\n",
 					"tcopy");
