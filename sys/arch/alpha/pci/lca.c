@@ -1,4 +1,4 @@
-/* $NetBSD: lca.c,v 1.24 1997/09/02 13:25:36 thorpej Exp $ */
+/* $NetBSD: lca.c,v 1.25 1997/09/02 20:08:02 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -27,11 +27,11 @@
  * rights to redistribute these changes.
  */
 
-include "opt_dec_axppci_33.h"
+#include "opt_dec_axppci_33.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.24 1997/09/02 13:25:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lca.c,v 1.25 1997/09/02 20:08:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
