@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.5.2.10 2002/09/22 08:37:32 jdolecek Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.5.2.11 2002/09/29 09:59:14 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.5.2.10 2002/09/22 08:37:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.5.2.11 2002/09/29 09:59:14 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1893,7 +1893,7 @@ pipe_kqfilter(struct file *fp, struct knote *kn)
 	default:
 		return (1);
 	}
-	kn->kn_hook = (caddr_t)cpipe;
+	kn->kn_hook = cpipe;
 
 	PIPE_LOCK(cpipe);
 	SLIST_INSERT_HEAD(&cpipe->pipe_sel.si_note, kn, kn_selnext);

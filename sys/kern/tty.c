@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.128.2.11 2002/09/24 09:12:04 jdolecek Exp $	*/
+/*	$NetBSD: tty.c,v 1.128.2.12 2002/09/29 09:59:15 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.128.2.11 2002/09/24 09:12:04 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.128.2.12 2002/09/29 09:59:15 jdolecek Exp $");
 
 #include "opt_uconsole.h"
 
@@ -1068,7 +1068,7 @@ filt_ttyrdetach(struct knote *kn)
 	struct tty	*tp;
 	int		s;
 
-	tp = (void *) kn->kn_hook;
+	tp = kn->kn_hook;
 	s = spltty();
 	SLIST_REMOVE(&tp->t_rsel.si_klist, kn, knote, kn_selnext);
 	splx(s);
@@ -1079,7 +1079,7 @@ filt_ttyread(struct knote *kn, long hint)
 {
 	struct tty	*tp;
 
-	tp = (void *) kn->kn_hook;
+	tp = kn->kn_hook;
 	kn->kn_data = ttnread(tp);
 	return (kn->kn_data > 0);
 }
@@ -1090,7 +1090,7 @@ filt_ttywdetach(struct knote *kn)
 	struct tty	*tp;
 	int		s;
 
-	tp = (void *) kn->kn_hook;
+	tp = kn->kn_hook;
 	s = spltty();
 	SLIST_REMOVE(&tp->t_wsel.si_klist, kn, knote, kn_selnext);
 	splx(s);
@@ -1101,7 +1101,7 @@ filt_ttywrite(struct knote *kn, long hint)
 {
 	struct tty	*tp;
 
-	tp = (void *) kn->kn_hook;
+	tp = kn->kn_hook;
 	kn->kn_data = tp->t_outq.c_cn - tp->t_outq.c_cc;
 	return (tp->t_outq.c_cc <= tp->t_lowat && CONNECTED(tp));
 }
@@ -1132,7 +1132,7 @@ ttykqfilter(dev_t dev, struct knote *kn)
 		return (1);
 	}
 
-	kn->kn_hook = (void *) tp;
+	kn->kn_hook = tp;
 
 	s = spltty();
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
