@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.s,v 1.1.2.2 2002/03/18 01:05:11 thorpej Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.1.2.3 2002/03/22 00:24:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@
  */
 
 #include "opt_cputype.h"
+#include "opt_lockdebug.h"
 
 #include <machine/asm.h>
 #include <machine/cputypes.h>
@@ -60,6 +61,10 @@ NENTRY(mutex_enter)
 	lock
 	cmpxchgl %ecx, (%edx)			/* compare-and-swap */
 	jnz	_C_LABEL(mutex_vector_enter)	/* failed; hard case */
+#if defined(MUTEX_DEBUG)
+	movl	(%esp), %eax
+	movl	%eax, MTX_DBG_LOCKED(%edx)
+#endif
 	ret
 #if defined(I386_CPU)
 9:	movl	_C_LABEL(curproc), %ecx		/* current thread */
@@ -72,6 +77,10 @@ NENTRY(mutex_enter)
 	movl	%ecx, (%edx)			/* acquire lock */
 	sti					/* ints on */
 	/* END CRITICAL SECTION */
+#if defined(MUTEX_DEBUG)
+	movl	(%esp), %eax
+	movl	%eax, MTX_DBG_LOCKED(%edx)
+#endif
 	ret
 
 2:	sti					/* ints on */
@@ -89,6 +98,10 @@ NENTRY(mutex_tryenter)
 	lock
 	cmpxchgl %ecx, (%edx)			/* compare-and-swap */
 	jnz	_C_LABEL(mutex_vector_tryenter)	/* failed; hard case */
+#if defined(MUTEX_DEBUG)
+	movl	(%esp), %eax
+	movl	%eax, MTX_DBG_LOCKED(%edx)
+#endif
 	movl	$1, %eax			/* succeeded; return true */
 	ret
 #if defined(I386_CPU)
@@ -102,6 +115,11 @@ NENTRY(mutex_tryenter)
 	movl	%ecx, (%edx)			/* acquire lock */
 	sti					/* ints on */
 	/* END CRITICAL SECTION */
+#if defined(MUTEX_DEBUG)
+	movl	(%esp), %eax
+	movl	%eax, MTX_DBG_LOCKED(%edx)
+#endif
+	movl	$1, %eax
 	ret
 
 2:	sti					/* ints on */
@@ -131,6 +149,9 @@ NENTRY(mutex_tryenter)
  * manipulate the lock.
  */
 NENTRY(mutex_exit)
+#if defined(MUTEX_DEBUG)
+	jmp	_C_LABEL(mutex_vector_exit)
+#else
 	movl	_C_LABEL(curproc), %ecx		/* current thread */
 	movl	4(%esp), %edx			/* lock address */
 
@@ -145,6 +166,7 @@ NENTRY(mutex_exit)
 
 2:	sti					/* ints on */
 	jmp	_C_LABEL(mutex_vector_exit)
+#endif /* MUTEX_DEBUG */
 
 NENTRY(_mutex_set_waiters)
 #if defined(I386_CPU)
