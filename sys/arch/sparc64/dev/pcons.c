@@ -1,4 +1,4 @@
-/*	$NetBSD: pcons.c,v 1.4 2000/11/02 00:21:03 eeh Exp $	*/
+/*	$NetBSD: pcons.c,v 1.5 2000/11/08 23:40:31 eeh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo E. Horvath
@@ -68,8 +68,10 @@ struct cfattach pcons_ca = {
 };
 
 extern struct cfdriver pcons_cd;
+static struct cnm_state pcons_cnm_state;
 
 static int pconsprobe __P((void));
+extern struct consdev *cn_tab;
 
 static int
 pconsmatch(parent, match, aux)
@@ -78,7 +80,6 @@ pconsmatch(parent, match, aux)
 	void *aux;
 {
 	struct mainbus_attach_args *ma = aux;
-	extern struct consdev *cn_tab;
 	extern int  prom_cngetc __P((dev_t));
 
 	/* Only attach if no other console has attached. */
@@ -98,6 +99,8 @@ pconsattach(parent, self, aux)
 	if (!pconsprobe())
 		return;
 
+	cn_init_magic(&pcons_cnm_state);
+	cn_set_magic("+++++");
 	callout_init(&sc->sc_poll_ch);
 }
 
@@ -125,6 +128,7 @@ pconsopen(dev, flag, mode, p)
 	tp->t_oproc = pconsstart;
 	tp->t_param = pconsparam;
 	tp->t_dev = dev;
+	cn_tab->cn_dev = dev;
 	if (!(tp->t_state & TS_ISOPEN)) {
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
@@ -273,25 +277,9 @@ pcons_poll(aux)
 	struct pconssoftc *sc = aux;
 	struct tty *tp = sc->of_tty;
 	char ch;
-#ifdef DDB
-static int nplus = 0;
-#endif
-
 	
 	while (OF_read(stdin, &ch, 1) > 0) {
-#ifdef DDB
-		if (ch == '+') {
-			if (nplus++ > 3) {
-				extern int db_active;
-
-				if (!db_active)
-					Debugger();
-				else
-					/* Debugger is probably hozed */
-					callrom();
-			}
-		} else nplus = 0;
-#endif
+		cn_check_magic(tp->t_dev, ch, pcons_cnm_state);
 		if (tp && (tp->t_state & TS_ISOPEN))
 			(*tp->t_linesw->l_rint)(ch, tp);
 	}
