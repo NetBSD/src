@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.2 1998/04/09 04:45:08 mhitch Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.3 1999/01/18 06:49:57 castor Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -35,9 +35,9 @@ LEAF(rtld_start)
 
 	.cpload t9
 	addu	sp, sp, -12		# adjust stack pointer
-	.cprestore 0			# 0(sp) for gp
-					# 4(sp) for atexit
-					# 8(sp) for obj_main
+	.cprestore 0			# -> 0(sp) for gp
+					# -> 4(sp) for atexit
+					# -> 8(sp) for obj_main
 	move	s0,a0			# save stack pointer from a0
 	addu	a0, sp, 4		# _rtld argument
 	move	s1,a3			# save ps_strings pointer
