@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.13 1999/08/02 01:01:55 sommerfeld Exp $	*/
+/*	$NetBSD: read.c,v 1.14 1999/08/08 01:25:05 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.13 1999/08/02 01:01:55 sommerfeld Exp $");
+__RCSID("$NetBSD: read.c,v 1.14 1999/08/08 01:25:05 sommerfeld Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -350,10 +350,12 @@ el_gets(el, nread)
 
 	while (read_char(el, cp) == 1) {
 		cp++;
-		if (cp == el->el_line.limit || cp[-1] == '\r' || cp[-1] == '\n') {
+		if (cp == el->el_line.limit) {
 			--cp;
 			break;
 		}
+		if (cp[-1] == '\r' || cp[-1] == '\n')
+			break;
 	}
 	el->el_line.cursor = el->el_line.lastchar = cp;
 	*cp = '\0';
@@ -389,10 +391,13 @@ el_gets(el, nread)
 
 	while (read_char(el, cp) == 1) {
 		cp++;
-		if ((cp == el->el_line.limit) || (cp[-1] == '\r') || (cp[-1] == '\n')) {
+		if (cp == el->el_line.limit) {
 			--cp;
 			break;
 		}
+		if (cp[-1] == '\r' || cp[-1] == '\n')
+			break;
+		
 	}
 	el->el_line.cursor = el->el_line.lastchar = cp;
 	*cp = '\0';
