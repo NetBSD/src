@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.57 2004/08/08 03:52:19 kent Exp $ */
+/*      $NetBSD: ac97.c,v 1.58 2004/08/08 10:41:57 kent Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.57 2004/08/08 03:52:19 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.58 2004/08/08 10:41:57 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -508,8 +508,10 @@ static const struct ac97_codecid {
 	  0xffffffff,			"ICEnsemble ICE1232A",	},
 	{ AC97_CODEC_ID('I', 'C', 'E', 0x51),
 	  0xffffffff,			"VIA Technologies VT1616", ac97_vt1616_init },
+	{ AC97_CODEC_ID('I', 'C', 'E', 0x52),
+	  0xffffffff,			"VIA Technologies VT1616i", ac97_vt1616_init },
 	{ AC97_CODEC_ID('I', 'C', 'E', 0),
-	  AC97_VENDOR_ID_MASK,		"ICEnsemble unknown",	},
+	  AC97_VENDOR_ID_MASK,		"ICEnsemble/VIA unknown",	},
 
 	{ AC97_CODEC_ID('N', 'S', 'C', 0),
 	  0xffffffff,			"National Semiconductor LM454[03568]", },
