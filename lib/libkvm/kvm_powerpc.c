@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_powerpc.c,v 1.3 1997/09/19 04:00:23 thorpej Exp $	*/
+/*	$NetBSD: kvm_powerpc.c,v 1.4 1998/02/03 06:50:07 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -42,6 +42,7 @@
 #include <db.h>
 #include <limits.h>
 #include <kvm.h>
+#include <stdlib.h>
 
 #include "kvm_private.h"
 
