@@ -1,4 +1,4 @@
-/*      $NetBSD: trap.h,v 1.5 1995/05/03 19:53:48 ragge Exp $     */
+/*      $NetBSD: trap.h,v 1.6 1995/05/07 16:43:35 ragge Exp $     */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -42,6 +42,8 @@
  * Trap type values
  * also known in trap.c for name strings
  */
+#ifndef _VAX_TRAP_H_
+#define _VAX_TRAP_H_
 
 #define	T_RESADFLT	0	/* reserved addressing */
 #define	T_PRIVINFLT	1	/* privileged instruction */
@@ -103,3 +105,5 @@ struct	trapframe {
         u_int   psl;    /* User psl */
 };
 #endif /* ASSEMBLER */
+
+#endif _VAX_TRAP_H_
