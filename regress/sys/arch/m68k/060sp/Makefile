@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2000/02/16 12:45:17 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.6 2000/04/14 20:24:40 is Exp $
 
 MKMAN=no
 PROG=dotest
@@ -12,7 +12,7 @@ CLEANFILES+=itest.S ftest.S
 
 .sa.S: ; sh ${SPDIR}/asm2gas ${.IMPSRC} >${.TARGET}
 
-.PATH: ${SPDIR}
+.PATH: ${SPDIR}/dist
 
 realdepend dotestsubs.o: itest.S ftest.S
 
