@@ -1,4 +1,4 @@
-/* $NetBSD: rtwphyio.c,v 1.1 2004/09/26 02:29:15 dyoung Exp $ */
+/* $NetBSD: rtwphyio.c,v 1.2 2004/12/13 00:48:02 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtwphyio.c,v 1.1 2004/09/26 02:29:15 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtwphyio.c,v 1.2 2004/12/13 00:48:02 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,6 +179,13 @@ rtw_rf_macbangbits(struct rtw_regs *regs, u_int32_t reg)
 	RTW_WRITE(regs, RTW_PHYCFG, RTW_PHYCFG_MAC_POLL | reg);
 
 	RTW_WBR(regs, RTW_PHYCFG, RTW_PHYCFG);
+
+	if (rtw_flush_rfio)
+		RTW_READ(regs, RTW_PHYADDR);
+
+	if (rtw_rfio_delay > 0)
+		DELAY(rtw_rfio_delay);
+
 	for (i = rtw_macbangbits_timeout; --i >= 0; delay(1)) {
 		if ((RTW_READ(regs, RTW_PHYCFG) & RTW_PHYCFG_MAC_POLL) == 0) {
 			RTW_DPRINTF2(("%s: finished in %dus\n", __func__,
