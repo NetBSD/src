@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.104 2003/06/17 05:36:46 msaitoh Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.105 2003/06/25 08:46:12 itojun Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -2089,3 +2089,8 @@ sys/netinet6/ip6_mroute.c		1.47
 
 	Don't try to forward multicast packet to mif that went away.
 	[itojun, ticket #47]
+
+usr.bin/mkdep/mkdep.c			1.16
+
+	catch SIGPIPE too, so that we do not leave temporary files behind.
+	[msaitoh, ticket #49]
