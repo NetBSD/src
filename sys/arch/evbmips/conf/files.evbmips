@@ -1,0 +1,24 @@
+#	$NetBSD: files.evbmips,v 1.1 2002/03/07 14:43:57 simonb Exp $
+
+# maxpartitions must be the first item in files.${ARCH}
+maxpartitions 16
+
+maxusers 8 16 64
+
+# Platform support option headers.
+defflag		ALGOR_P4032	# Algorithmics P-4032
+defflag		ALGOR_P5064	# Algorithmics P-5064
+defflag		ALGOR_P6032	# Algorithmics P-6032
+defflag		ALCHEMY_PB1000	# Alchemy Semi Pb1000
+defflag		MIPS_MALTA	# MIPS Malta mips32/64 eval board
+
+# Various items that a buggy proms might not provide us.
+defparam	MEMSIZE
+defparam	ETHADDR
+
+
+file	arch/evbmips/evbmips/procfs_machdep.c	procfs
+file	dev/clock_subr.c
+
+# Console glue.
+file	dev/cons.c
