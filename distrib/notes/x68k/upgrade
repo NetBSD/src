@@ -1,4 +1,4 @@
-.\" $NetBSD: upgrade,v 1.7 1999/01/13 07:30:10 ross Exp $	
+.\" $NetBSD: upgrade,v 1.8 1999/04/03 14:20:57 minoura Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -39,7 +39,13 @@ to advance to a later version by recompiling from source due primarily
 to interdependencies in the various components.
 .Pp
 To do the upgrade, you must have the bootable install floppy
-.Pa boot.fs .
+.Pa boot.fs ,
+or,
+.Pa loadbsd.x
+utility and
+.Pa netbsd.INSTALL
+file which can be found in
+.Pa installation/misc in your Human68k disk.
 You must also have at least the
 .Sy base No and Sy kern
 binary distribution sets available, so that you can upgrade with it,
@@ -65,7 +71,9 @@ process.
 To upgrade your system, follow the following instructions:
 .Bl -enum
 .It
-Boot your machine using of the boot.fs floppy.
+Boot your machine using of the boot.fs floppy, or boot with
+.Pa loadbsd.x
+utility.
 .Pp
 While booting, you will probably see several warnings.  You
 should be warned that no swap space is present, and that
