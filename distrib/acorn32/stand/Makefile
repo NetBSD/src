@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2004/06/08 22:12:13 gavan Exp $
+#	$NetBSD: Makefile,v 1.16 2004/06/09 16:10:40 abs Exp $
 #
 
 .include <bsd.own.mk>
@@ -17,14 +17,18 @@ BOOTLOADER=	${DESTDIR}/usr/mdec/boot32,ffa
 all: ${ARCHIVE}
 
 release: check_RELEASEDIR .WAIT ${ARCHIVE}
+	${RELEASE_INSTALL} splug.bas ${RELEASEDIR}/${MACHINE}/installation/misc
+	${RELEASE_INSTALL} ${DISTRIBDIR}/notes/acorn32/prep.RISCOS \
+		    ${RELEASEDIR}/${MACHINE}/
 	${RELEASE_INSTALL} ${ARCHIVE} \
 	    ${RELEASEDIR}/${MACHINE}/installation/misc/
 
 ${ARCHIVE}: tmp/BtNetBSD
-	export TOOL_SPARKCRC=${TOOL_SPARKCRC}; \
-	cd tmp/BtNetBSD && ${.CURDIR}/../mksparkive.sh * > ${.OBJDIR}/${ARCHIVE}
+	export TOOL_SPARKCRC=${TOOL_SPARKCRC}; cd tmp/BtNetBSD && \
+	${HOST_SH} ${.CURDIR}/../mksparkive.sh * > ${.OBJDIR}/${ARCHIVE}
 
 UUDECODE_FILES=unixfs_res Sprite banner pling.Sprites pling.Sprites22 MemFix
+UUDECODE_FILES+=splug.bas
 
 UUDECODE_FILES_RENAME_unixfs_res=tmp/BtNetBSD/!BtNetBSD/native/unixfs_res,ffa
 UUDECODE_FILES_RENAME_Sprite=tmp/BtNetBSD/!BtNetBSD/src/Banner/Sprite,ff9
