@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.17 2002/07/29 14:26:21 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.18 2002/12/02 13:18:13 lukem Exp $
 #
 #	etc.sparc64/Makefile.inc -- sparc64-specific etc Makefile targets
 #
@@ -26,48 +26,22 @@ SPARC32=COPTS=-m32 LD="ld -m elf32_sparc" AS="as -32" \
 	SHLIB_LDSTARTFILE=${DESTDIR}${LIBDIR}/crtbeginS.o \
 	SHLIB_LDENDFILE=${DESTDIR}${LIBDIR}/crtendS.o
 
-snap_md_pre:
-.ifndef UPDATE
-	# clean up the distrib area
-	cd $(TOP)/distrib && ${MAKE} clean 
-.endif
-
 .if ${MACHINE_ARCH} == "sparc64" && ${MACHINE} == "sparc64" && \
 	${MK32BITLIBS} == "yes"
 
-	# build 32 bit csu
+	# build 32 bit programs
+.for _s64dir in lib/csu lib gnu/lib libexec/ld_elf.so
 .if ${MKOBJDIRS} != "no"
-	(cd ${.CURDIR}/../lib/csu && \
+	(cd ${NETBSDSRCDIR}/${_s64dir} && \
 	    ${SPARC32_ENV} ${MAKE} ${SPARC32} ${_M} obj)
 .endif
-	(cd ${.CURDIR}/../lib/csu && \
-	    ${SPARC32_ENV} ${MAKE} ${SPARC32} ${_M} ${_J} MKSHARE=no dependall && \
-	    ${SPARC32_ENV} ${MAKE} ${SPARC32} ${_M} MKSHARE=no install)
-	# build 32 bit libraries
-.if ${MKOBJDIRS} != "no"
-	(cd ${.CURDIR}/../lib && \
-	    ${SPARC32_ENV} ${MAKE} ${SPARC32} ${_M} obj)
+.ifndef UPDATE
+	(cd ${NETBSDSRCDIR}/${_s64dir} && ${MAKE} cleandir
 .endif
-	(cd ${.CURDIR}/../lib && \
-	    ${SPARC32_ENV} ${MAKE} ${SPARC32} ${_M} ${_J} MKSHARE=no dependall && \
-	    ${SPARC32_ENV} ${MAKE} ${SPARC32} ${_M} MKSHARE=no install)
-	# build 32 bit gnu libraries
-.if ${MKOBJDIRS} != "no"
-	(cd ${.CURDIR}/../gnu/lib && \
-	    ${SPARC32_ENV} ${MAKE} ${SPARC32} ${_M} obj)
-.endif
-	(cd ${.CURDIR}/../gnu/lib && \
-	    ${SPARC32_ENV} ${MAKE} ${SPARC32} ${_M} ${_J} MKSHARE=no dependall && \
-	    ${SPARC32_ENV} ${MAKE} ${SPARC32} ${_M} MKSHARE=no install)
-	# build 32 bit ld.elf_so
-.if ${MKOBJDIRS} != "no"
-	(cd ${.CURDIR}/../libexec/ld.elf_so && \
-	    ${SPARC32_ENV} ${MAKE} ${SPARC32} ${_M} obj)
-.endif
-	(cd ${.CURDIR}/../libexec/ld.elf_so && \
-	    ${SPARC32_ENV} ${MAKE} ${SPARC32} ${_M} ${_J} MKSHARE=no dependall && \
-	    ${SPARC32_ENV} ${MAKE} ${SPARC32} ${_M} MKSHARE=no install)
-.endif
+	(cd ${NETBSDSRCDIR}/${_s64dir} && \
+	    ${SPARC32_ENV} ${MAKE} ${SPARC32} ${_M} ${_J} MKSHARE=no dependall \
+	    && ${SPARC32_ENV} ${MAKE} ${SPARC32} ${_M} MKSHARE=no install)
+.endfor
 
 #
 # Install miniroot images and auxiliary scripts to the release tree
@@ -79,14 +53,6 @@ snap_md_post:
 	(cd $(XSRCDIR); $(MAKE) release)
 .endif
 .endif
-
-	# make boot/miniroot images
-	(cd $(TOP)/distrib; ${MAKE})
-
-	# transfer images to release hierarchy
-.for dir in notes sparc64/xminiroot sparc64/instfs sparc64/bootfs
-	(cd $(TOP)/distrib/$(dir); ${MAKE} release)
-.endfor
 
 	# install boot image and installation scripts in netboot directory
 .for f in ofwboot.net

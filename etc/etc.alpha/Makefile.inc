@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 2002/10/10 16:58:06 jdolecek Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2002/12/02 13:18:05 lukem Exp $
 
 KERNEL_SETS=		GENERIC GENERIC.MP
 
@@ -11,10 +11,4 @@ INSTALLATION_DIRS+=	installation/floppy	\
 			installation/misc
 
 snap_md_post:
-.ifndef UPDATE
-	cd ${.CURDIR}/../distrib && ${MAKE} cleandir
-.endif
-	cd ${.CURDIR}/../distrib && ${MAKE} depend && ${MAKE}
-	cd ${.CURDIR}/../distrib/alpha && ${MAKE} release
-	cd ${.CURDIR}/../distrib/notes && ${MAKE} release
-	cd ${.CURDIR}/../sys/arch/alpha/stand/netboot && ${MAKE} release
+	cd ${KERNSRCDIR}/arch/alpha/stand/netboot && ${MAKE} release

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.35 2002/10/10 16:58:06 jdolecek Exp $
+#	$NetBSD: Makefile.inc,v 1.36 2002/12/02 13:18:08 lukem Exp $
 #
 #	etc.i386/Makefile.inc -- i386-specific etc Makefile targets
 #
@@ -15,17 +15,10 @@ INSTALLATION_DIRS+=	installation/misc	\
 # mkisofs arguments to generate bootable iso image
 MKISOFS_FLAGS+=	-b installation/floppy/boot-big.fs
 
-# Tar up extra kernel sets.
-# Build the boot floppies and install them
+# i386 specific distrib stuff
 snap_md_post:
-.ifndef UPDATE
-	cd ${.CURDIR}/../distrib && ${MAKE} cleandir
-.endif
-	cd ${.CURDIR}/../distrib && ${MAKE} depend && ${MAKE}
-	cd ${.CURDIR}/../distrib/i386 && ${MAKE} release
-	cd ${.CURDIR}/../distrib/notes && ${MAKE} release
-	cd ${.CURDIR}/../sys/arch/i386/stand/dosboot && ${MAKE} release
-	cd ${.CURDIR}/../sys/arch/i386/stand/misc && ${MAKE} release
+	cd ${KERNSRCDIR}/arch/i386/stand/dosboot && ${MAKE} release
+	cd ${KERNSRCDIR}/arch/i386/stand/misc && ${MAKE} release
 	${MAKESUMS} -t ${RELEASEDIR}/installation/floppy '*.fs'
 	${MAKESUMS} -t ${RELEASEDIR}/installation/misc '*.*'
 

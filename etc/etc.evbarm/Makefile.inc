@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9 2002/05/02 15:09:43 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.10 2002/12/02 13:18:07 lukem Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -10,11 +10,3 @@ BUILD_KERNELS+=		TEAMASA_NPWR_INSTALL
 
 INSTALLATION_DIRS+=	binary/gzimg		\
 			installation/instkernel
-
-snap_md_post:
-.ifndef UPDATE
-	cd ${.CURDIR}/../distrib && ${MAKE} cleandir
-.endif
-	cd ${.CURDIR}/../distrib && ${MAKE} depend && ${MAKE}
-	cd ${.CURDIR}/../distrib/evbarm && ${MAKE} release
-	cd ${.CURDIR}/../distrib/notes && ${MAKE} release

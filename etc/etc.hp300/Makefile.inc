@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.16 2002/05/02 15:09:43 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.17 2002/12/02 13:18:07 lukem Exp $
 #
 #	etc.hp300/Makefile.inc -- hp300-specific etc Makefile targets
 #
@@ -10,16 +10,10 @@ BUILD_KERNELS=		INSTALL RAMDISK
 INSTALLATION_DIRS+=	installation/miniroot	\
 			installation/misc
 
-# Build the boot media and install notes and install them
 snap_md_post:
 .ifndef UPDATE
-	cd ${.CURDIR}/../distrib && ${MAKE} cleandir
-	cd ${.CURDIR}/../sys/arch/hp300/stand && ${MAKE} cleandir
+	cd ${KERNSRCDIR}/arch/hp300/stand && ${MAKE} cleandir
 .endif
-	cd ${.CURDIR}/../distrib && ${MAKE} depend && ${MAKE}
-	cd ${.CURDIR}/../distrib/notes && ${MAKE} release
-	cd ${.CURDIR}/../distrib/${MACHINE} && ${MAKE} release
-	cd ${.CURDIR}/../distrib/miniroot && ${MAKE} release
-	cd ${.CURDIR}/../sys/arch/hp300/stand && \
-	  ${MAKE} depend && ${MAKE} && ${MAKE} release
+	cd ${KERNSRCDIR}/arch/hp300/stand && \
+	    ${MAKE} depend && ${MAKE} && ${MAKE} release
 	${MAKESUMS} -t ${RELEASEDIR}/installation/misc 'SYS*'
