@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.51 2003/05/22 05:47:12 thorpej Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.52 2003/06/12 02:41:32 uwe Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -100,7 +100,7 @@ bs_protos(generic);
  * on where the ROM appears when you turn the MMU off.
  */
 static void netwinder_reset(void);
-u_int cpu_reset_address = (u_int) netwinder_reset;
+u_int cpu_reset_address;
 
 u_int dc21285_fclk = 63750000;
 
@@ -292,14 +292,25 @@ cpu_reboot(howto, bootstr)
 	/*NOTREACHED*/
 }
 
+/*
+ * NB: this function runs with MMU disabled!
+ */
 static void
 netwinder_reset(void)
 {
-	ISA_PUTBYTE(0x370, 0x07); 	/* Select Logical Dev 7 (GPIO) */
-	ISA_PUTBYTE(0x371, 0x07);
-	ISA_PUTBYTE(0x370, 0xe6);	/* Select GP16 Control Reg */
-	ISA_PUTBYTE(0x371, 0x00);	/* Make GP16 an output */
-	ISA_PUTBYTE(0x338, 0xc4);	/* Set GP17/GP16 & GP12 */
+	register u_int base = DC21285_PCI_IO_BASE;
+
+#define PUTBYTE(reg, val) \
+	*((volatile u_int8_t *)(base + (reg))) = (val)
+
+	PUTBYTE(0x338, 0x84);	/* Red led(GP17), fan on(GP12) */
+	PUTBYTE(0x370, 0x87);	/* Enter the extended function mode */
+	PUTBYTE(0x370, 0x87);	/* (need to write the magic twice) */
+	PUTBYTE(0x370, 0x07); 	/* Select Logical Device Number reg */
+	PUTBYTE(0x371, 0x07);	/* Select Logical Device 7 (GPIO) */
+	PUTBYTE(0x370, 0xe6);	/* Select GP16 Control Reg */
+	PUTBYTE(0x371, 0x00);	/* Make GP16 an output */
+	PUTBYTE(0x338, 0xc4);	/* RESET(GP16), red led, fan on */
 }
 
 /*
@@ -373,6 +384,13 @@ initarm(void *arg)
 	u_int l1pagetable;
 	extern char _end[];
 	pv_addr_t kernel_l1pt;
+
+	/*
+	 * Turn the led off, then turn it yellow.
+	 * 0x80 - red; 0x04 - fan; 0x02 - green.
+	 */
+	ISA_PUTBYTE(0x338, 0x04);
+	ISA_PUTBYTE(0x338, 0x86);
 
 	/*
 	 * Set up a diagnostic console so we can see what's going
@@ -798,6 +816,9 @@ initarm(void *arg)
 	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va, KERNEL_VM_BASE,
 	    KERNEL_VM_BASE + KERNEL_VM_SIZE);
 
+	/* Now that pmap is inited, we can set cpu_reset_address */
+	cpu_reset_address = (u_int)vtophys((vaddr_t)netwinder_reset);
+
 	/* Setup the IRQ system */
 	printf("irq ");
 	footbridge_intr_init();
@@ -828,6 +849,9 @@ initarm(void *arg)
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
+
+	/* Turn the led green */
+	ISA_PUTBYTE(0x338, 0x06);
 
 	/* We return the new stack pointer address */
 	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);
