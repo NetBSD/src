@@ -1,4 +1,4 @@
-/*	$NetBSD: mkdir.c,v 1.16 1997/01/09 16:39:08 tls Exp $	*/
+/*	$NetBSD: mkdir.c,v 1.17 1997/07/20 18:55:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1992, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)mkdir.c	8.2 (Berkeley) 1/25/94";
 #else
-static char rcsid[] = "$NetBSD: mkdir.c,v 1.16 1997/01/09 16:39:08 tls Exp $";
+__RCSID("$NetBSD: mkdir.c,v 1.17 1997/07/20 18:55:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,6 +60,7 @@ static char rcsid[] = "$NetBSD: mkdir.c,v 1.16 1997/01/09 16:39:08 tls Exp $";
 
 int	mkpath __P((char *, mode_t, mode_t));
 void	usage __P((void));
+int	main __P((int, char *[]));
 
 int
 main(argc, argv)
