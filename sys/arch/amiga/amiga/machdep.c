@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.61 1996/04/21 21:07:06 veego Exp $	*/
+/*	$NetBSD: machdep.c,v 1.62 1996/04/23 22:46:39 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -217,7 +217,7 @@ cpu_startup()
 #endif
 	vm_offset_t minaddr, maxaddr;
 	vm_size_t size = 0;
-#ifdef MACHINE_NONCONTIG
+#if defined(MACHINE_NONCONTIG) && defined(DEBUG)
 	extern struct {
 		vm_offset_t start;
 		vm_offset_t end;
