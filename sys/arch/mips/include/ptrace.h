@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.8 1997/10/19 21:49:50 jonathan Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.9 1997/10/20 07:29:23 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,7 +43,7 @@
 #ifndef _MIPS_PTRACE_H_
 #define _MIPS_PTRACE_H_
 
-#define	PT_STEP		(PT_FIRSTMACH + 0)
+/*#define	PT_STEP		(PT_FIRSTMACH + 0)*/
 #define	PT_GETREGS	(PT_FIRSTMACH + 1)
 #define	PT_SETREGS	(PT_FIRSTMACH + 2)
 
