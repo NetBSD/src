@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: ldd.c,v 1.9 1994/08/13 08:42:44 pk Exp $
+ *	$Id: ldd.c,v 1.10 1995/10/08 23:39:59 pk Exp $
  */
 
 #include <sys/types.h>
@@ -43,6 +43,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+char	*fmt1, *fmt2;
 
 void
 usage()
@@ -61,8 +63,16 @@ char	*argv[];
 	int		rval;
 	int		c;
 
-	while ((c = getopt(argc, argv, "")) != EOF) {
+	while ((c = getopt(argc, argv, "f:")) != EOF) {
 		switch (c) {
+		case 'f':
+			if (fmt1) {
+				if (fmt2)
+					errx(1, "Too many formats");
+				fmt2 = optarg;
+			} else
+				fmt1 = optarg;
+			break;
 		default:
 			usage();
 			/*NOTREACHED*/
@@ -78,6 +88,10 @@ char	*argv[];
 
 	/* ld.so magic */
 	setenv("LD_TRACE_LOADED_OBJECTS", "", 1);
+	if (fmt1)
+		setenv("LD_TRACE_LOADED_OBJECTS_FMT1", fmt1, 1);
+	if (fmt2)
+		setenv("LD_TRACE_LOADED_OBJECTS_FMT2", fmt2, 1);
 
 	rval = 0;
 	while (argc--) {
@@ -106,7 +120,10 @@ char	*argv[];
 		}
 		(void)close(fd);
 
-		printf("%s:\n", *argv);
+		setenv("LD_TRACE_LOADED_OBJECTS_PROGNAME", *argv, 1);
+		if (fmt1 == NULL && fmt2 == NULL)
+			/* Default formats */
+			printf("%s:\n", *argv);
 		fflush(stdout);
 
 		switch (fork()) {
