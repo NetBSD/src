@@ -1,4 +1,4 @@
-/*	$NetBSD: reader.c,v 1.7 1998/10/10 20:45:59 itohy Exp $	*/
+/*	$NetBSD: reader.c,v 1.8 1998/12/19 20:03:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)reader.c	5.7 (Berkeley) 1/20/91";
 #else
-__RCSID("$NetBSD: reader.c,v 1.7 1998/10/10 20:45:59 itohy Exp $");
+__RCSID("$NetBSD: reader.c,v 1.8 1998/12/19 20:03:49 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -826,10 +826,10 @@ char *name;
 	    strcmp(name, "$end") == 0)
 	return (1);
 
-    if (name[0] == '$' && name[1] == '$' && isdigit(name[2]))
+    if (name[0] == '$' && name[1] == '$' && isdigit((unsigned char)name[2]))
     {
 	s = name + 3;
-	while (isdigit(*s)) ++s;
+	while (isdigit((unsigned char)*s)) ++s;
 	if (*s == NUL) return (1);
     }
 
@@ -1358,7 +1358,7 @@ loop:
 		FREE(d_line);
 		goto loop;
 	    }
-	    else if (c == '-' && isdigit(cptr[1]))
+	    else if (c == '-' && isdigit((unsigned char)cptr[1]))
 	    {
 		++cptr;
 		i = -get_number() - n;
@@ -1382,7 +1382,7 @@ loop:
 	    cptr += 2;
 	    goto loop;
 	}
-	else if (isdigit(cptr[1]))
+	else if (isdigit((unsigned char)cptr[1]))
 	{
 	    ++cptr;
 	    i = get_number();
