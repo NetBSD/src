@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_two.c,v 1.8 2000/08/23 08:13:14 scw Exp $ */
+/*	$NetBSD: vme_two.c,v 1.9 2000/09/06 19:51:44 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -115,7 +115,8 @@ vmetwo_match(parent, cf, aux)
 	if (vmetwo_sc)
 		return (0);
 
-	if (machineid != MVME_167 && machineid != MVME_177)
+	if (machineid != MVME_167 && machineid != MVME_177 &&
+	    machineid != MVME_162)
 		return (0);
 
 	return (1);
@@ -273,8 +274,13 @@ vmetwo_attach(parent, self, aux)
 		    &sc->sc_slave[i + VME2_SLAVE_PROG_START + 2]);
 	}
 
-	/* Let the NMI handler deal with level 7 ABORT switch interrupts */
-	vmetwo_intr_establish(sc, 7, VME2_VEC_ABORT, 0, nmihand, NULL);
+	if (machineid != MVME_162) {
+		/*
+		 * Let the NMI handler deal with level 7 ABORT switch
+		 * interrupts
+		 */
+		vmetwo_intr_establish(sc, 7, VME2_VEC_ABORT, 1, nmihand, NULL);
+	}
 
 	/* Attach to the mvme68k common VMEbus front-end */
 	sc->sc_mvmebus.sc_dmat = ma->ma_dmat;

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_pcctwo.c,v 1.3 2000/03/18 22:33:02 scw Exp $ */
+/*	$NetBSD: clock_pcctwo.c,v 1.4 2000/09/06 19:51:43 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,8 +37,9 @@
  */
 
 /*
- * Glue for the Peripheral Channel Controller Two (PCCChip2) timers
- * and the Mostek clock chip found on the MVME-1[67]7 series of boards.
+ * Glue for the Peripheral Channel Controller Two (PCCChip2) timers,
+ * the Memory Controller ASIC (MCchip, and the Mostek clock chip found
+ * on the MVME-1[67]7 and MVME-162 series of boards.
  */
 
 #include <sys/param.h>
@@ -128,13 +129,14 @@ clock_pcctwo_attach(parent, self, aux)
 	/* Ensure our interrupts get disabled at shutdown time. */
 	(void) shutdownhook_establish(clock_pcctwo_shutdown, NULL);
 
+	sc->sc_clock_lvl = (pa->pa_ipl & PCCTWO_ICR_LEVEL_MASK) |
+	    PCCTWO_ICR_ICLR | PCCTWO_ICR_IEN;
+
 	/* Attach the interrupt handlers. */
 	pcctwointr_establish(PCCTWOV_TIMER1, clock_pcctwo_profintr,
 	    pa->pa_ipl, NULL);
 	pcctwointr_establish(PCCTWOV_TIMER2, clock_pcctwo_statintr,
 	    pa->pa_ipl, NULL);
-	sc->sc_clock_lvl = (pa->pa_ipl & PCCTWO_ICR_LEVEL_MASK) |
-	    PCCTWO_ICR_ICLR | PCCTWO_ICR_IEN;
 }
 
 void
