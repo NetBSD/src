@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.21 2003/05/16 15:34:25 itojun Exp $	*/
+/*	$NetBSD: ld.c,v 1.22 2003/05/17 16:11:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.21 2003/05/16 15:34:25 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.22 2003/05/17 16:11:52 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -273,8 +273,11 @@ ldopen(dev_t dev, int flags, int fmt, struct proc *p)
 	part = DISKPART(dev);
 	ldlock(sc);
 
-	if (sc->sc_dk.dk_openmask == 0)
-		ldgetdisklabel(sc);
+	if (sc->sc_dk.dk_openmask == 0) {
+		/* Load the partition info if not already loaded. */
+		if ((sc->sc_flags & LDF_VLABEL) == 0)
+			ldgetdisklabel(sc);
+	}
 
 	/* Check that the partition exists. */
 	if (part != RAW_PART && (part >= sc->sc_dk.dk_label->d_npartitions ||
@@ -322,10 +325,13 @@ ldclose(dev_t dev, int flags, int fmt, struct proc *p)
 	sc->sc_dk.dk_openmask =
 	    sc->sc_dk.dk_copenmask | sc->sc_dk.dk_bopenmask;
 
-	if (sc->sc_dk.dk_openmask == 0 && sc->sc_flush != NULL)
-		if ((*sc->sc_flush)(sc) != 0)
+	if (sc->sc_dk.dk_openmask == 0) {
+		if (sc->sc_flush != NULL && (*sc->sc_flush)(sc) != 0)
 			printf("%s: unable to flush cache\n",
 			    sc->sc_dv.dv_xname);
+		if ((sc->sc_flags & LDF_KLABEL) == 0)
+			sc->sc_flags &= ~LDF_VLABEL;
+	}
 
 	ldunlock(sc);
 	return (0);
@@ -419,6 +425,15 @@ ldioctl(dev_t dev, u_long cmd, caddr_t addr, int32_t flag, struct proc *p)
 
 		sc->sc_flags &= ~LDF_LABELLING;
 		ldunlock(sc);
+		break;
+
+	case DIOCKLABEL:
+		if ((flag & FWRITE) == 0)
+			return (EBADF);
+		if (*(int *)addr)
+			sc->sc_flags |= LDF_KLABEL;
+		else
+			sc->sc_flags &= ~LDF_KLABEL;
 		break;
 
 	case DIOCWLABEL:
@@ -615,6 +630,9 @@ ldgetdisklabel(struct ld_softc *sc)
 	    ldstrategy, sc->sc_dk.dk_label, sc->sc_dk.dk_cpulabel);
 	if (errstring != NULL)
 		printf("%s: %s\n", sc->sc_dv.dv_xname, errstring);
+
+	/* In-core label now valid. */
+	sc->sc_flags |= LDF_VLABEL;
 }
 
 /*
