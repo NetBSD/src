@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.18.2.3 2001/05/01 10:28:45 he Exp $	*/
+/*	$NetBSD: netdb.h,v 1.18.2.4 2002/09/04 00:34:49 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -204,19 +204,6 @@ struct addrinfo {
 #define	AI_NUMERICHOST	0x00000004 /* prevent name resolution */
 /* valid flags for addrinfo */
 #define	AI_MASK		(AI_PASSIVE | AI_CANONNAME | AI_NUMERICHOST)
-#endif
-
-#if !defined(_XOPEN_SOURCE) || (_XOPEN_SOURCE - 0) >= 500
-#define	AI_ALL		0x00000100 /* IPv6 and IPv4-mapped (with AI_V4MAPPED) */
-#endif
-#if !defined(_XOPEN_SOURCE)
-#define	AI_V4MAPPED_CFG	0x00000200 /* accept IPv4-mapped if kernel supports */
-#endif
-#if !defined(_XOPEN_SOURCE) || (_XOPEN_SOURCE - 0) >= 500
-#define	AI_ADDRCONFIG	0x00000400 /* only if any address is assigned */
-#define	AI_V4MAPPED	0x00000800 /* accept IPv4-mapped IPv6 address */
-/* special recommended flags for getipnodebyname */
-#define	AI_DEFAULT	(AI_V4MAPPED_CFG | AI_ADDRCONFIG)
 #endif
 
 #if !defined(_XOPEN_SOURCE)
