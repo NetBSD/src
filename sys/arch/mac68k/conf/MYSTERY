@@ -1,4 +1,4 @@
-#	$NetBSD: MYSTERY,v 1.14 1997/05/08 04:09:27 scottr Exp $
+#	$NetBSD: MYSTERY,v 1.15 1997/07/23 06:42:40 scottr Exp $
 #
 # MYSTERY
 
@@ -50,10 +50,9 @@ options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 #options 	EON
 #options 	PPP_BSDCOMP
 #options 	PPP_DEFLATE
-options 	NETATALK
+#options 	NETATALK
 options 	COMPAT_42
 options 	COMPAT_43
-options 	MAPMEM
 options 	SYSVSHM,SYSVSEM,SYSVMSG
 
 # Mac-specific options
@@ -66,26 +65,21 @@ options 	COMPAT_11
 options 	COMPAT_12
 options 	ZS_CONSOLE_ABORT
 options 	DISABLE_EXT_CACHE # Don't use IIci external cache
-#options 	MRG_ADB		# Use ROM-based ADB driver
+options 	MRG_ADB		# Use ROM-based ADB driver
 
 config		netbsd	root on ? type ?
 
 asc0		at obio?			# ASC/EASC audio
-intvid0		at obio?			# Internal video hardware
 
 nubus0		at mainbus?
+
 ae*		at nubus?			# 8390-based Ethernet NIC
 macvid*		at nubus?			# NuBus video card
 
-# Attach grf semantics to all video hardware as it is found
-grf*		at intvid?
 grf*		at macvid?
 
-# Attach ite semantics to the appropriate grf device
 ite0		at grf?
 
-#ncrscsi0	at obio?			# SCSI NCR 5380
-esp0		at obio?			# SCSI NCR 53C96
 sbc0		at obio? flags 0x5		# MI SCSI NCR 5380
 
 scsibus*	at scsi?
