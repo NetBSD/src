@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.20 2002/05/07 14:47:45 lukem Exp $
+#	$NetBSD: list,v 1.21 2002/05/29 03:46:23 lukem Exp $
 
 SRCDIRS	bin sbin usr.bin/less usr.bin usr.sbin gnu/usr.bin
 
@@ -89,8 +89,8 @@ COPY	${CURDIR}/dot.profile			.profile
 COPY	${CURDIR}/dot.hdprofile			tmp/.hdprofile
 
 # old-style installation tools
-COPY	${CURDIR}/install.sh			install	755
-COPY	${CURDIR}/upgrade.sh			upgrade	755
+COPY	${CURDIR}/install.sh			install		555
+COPY	${CURDIR}/upgrade.sh			upgrade		555
 
 # and the install notes
 COPY	${INSTALLNOTES}				INSTALL.more
