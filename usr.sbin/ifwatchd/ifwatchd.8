@@ -1,4 +1,4 @@
-.\" $NetBSD: ifwatchd.8,v 1.14 2003/03/05 09:03:49 martin Exp $
+.\" $NetBSD: ifwatchd.8,v 1.15 2003/04/16 09:06:55 wiz Exp $
 .\"
 .\" Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,7 +57,7 @@ can take care of running any necessary scripts (like
 or
 .Xr isdnd 8 ) ,
 but sometimes the interfaces run completely autonomously (like
-.Xr pppoe 8 ) .
+.Xr pppoe 4 ) .
 .Pp
 .Nm
 provides a generic way to watch this type of changes.  It works by monitoring
@@ -75,14 +75,14 @@ is run.
 The following options are available:
 .Bl -tag -width indent
 .It Fl A Ar arrival-script
-Specify the command to invoke on arrival of new interfaces (like pcmcia cards).
+Specify the command to invoke on arrival of new interfaces (like PCMCIA cards).
 .It Fl d Ar down-script
 Specify the command to invoke on
 .Dq interface down
 events (or: deletion of an address from an interface).
 .It Fl D Ar departure-script
 Specify the command to invoke when an interface departs (for example
-a pcmcia card is removed.)
+a PCMCIA card is removed.)
 .It Fl h
 Show the synopsis.
 .It Fl i
@@ -166,9 +166,9 @@ For point to point interfaces, this is the remote address of the interface.
 For other interfaces it is the broadcast address.
 .El
 .Sh SEE ALSO
+.Xr pppoe 4 ,
 .Xr route 4 ,
 .Xr ifconfig.if 5 ,
-.Xr pppoe 8 ,
 .Xr rc.d 8 ,
 .Xr route 8
 .Sh HISTORY
