@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.23 2000/06/16 06:32:19 jdc Exp $	*/
+/*	$NetBSD: tty.c,v 1.24 2000/12/19 21:34:24 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.6 (Berkeley) 1/10/95";
 #else
-__RCSID("$NetBSD: tty.c,v 1.23 2000/06/16 06:32:19 jdc Exp $");
+__RCSID("$NetBSD: tty.c,v 1.24 2000/12/19 21:34:24 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -96,9 +96,8 @@ gettmode(void)
 	__baset = __orig_termios;
 	__baset.c_oflag &= ~OXTABS;
 	
-	GT = 0;			/* historical. was used before we wired OXTABS
-				 * off */
-	NONL = (__baset.c_oflag & ONLCR) == 0;
+	__GT = 0;	/* historical. was used before we wired OXTABS off */
+	__NONL = (__baset.c_oflag & ONLCR) == 0;
 
 	/*
 	 * XXX
@@ -393,10 +392,10 @@ __startwin(void)
 	}
 	(void) setvbuf(stdout, stdbuf, _IOFBF, len);
 
-	tputs(TI, 0, __cputchar);
-	tputs(VS, 0, __cputchar);
+	tputs(__tc_ti, 0, __cputchar);
+	tputs(__tc_vs, 0, __cputchar);
 	if (curscr->flags & __KEYPAD)
-		tputs(KS, 0, __cputchar);
+		tputs(__tc_ks, 0, __cputchar);
 	__endwin = 0;
 }
 
