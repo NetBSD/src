@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.119 1999/04/12 23:18:17 jonathan Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.120 1999/05/06 14:29:21 mrg Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.113 1999/03/25 03:28:17 explorer Exp 
+ *	NetBSD: pcidevs,v 1.115 1999/05/06 06:17:39 mrg Exp 
  */
 
 /*
@@ -506,6 +506,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ATI Technologies",
 	    "Mach64 VT",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_B,
+	    0,
+	    "ATI Technologies",
+	    "Mach64 B",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GT,
@@ -1634,6 +1640,24 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Olicom",
 	    "Olicom OC-2326 10/100-TX Ethernet",
+	},
+	{
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_EBUS,
+	    0,
+	    "Sun Microsystems",
+	    "SPARC Ebus",
+	},
+	{
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_HMENETWORK,
+	    0,
+	    "Sun Microsystems",
+	    "SUNW,hme compatible Ethernet",
+	},
+	{
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_SIMBA,
+	    0,
+	    "Sun Microsystems",
+	    "Simba PCI bus",
 	},
 	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_810,
