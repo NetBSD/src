@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.17 1997/07/13 19:29:17 hpeyerl Exp $
+#	$NetBSD: MAKEDEV,v 1.18 1997/07/22 23:13:05 phil Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -110,9 +110,11 @@ std)
 fd)
 	rm -f fd/*
 	mkdir fd > /dev/null 2>&1
-	(cd fd && eval `echo "" | awk ' BEGIN { \
-		for (i = 0; i < 64; i++) \
-			printf("mknod %d c 10 %d;", i, i)}'`)
+	n=0
+	while [ $n -lt 64 ]; do
+		mknod fd/$n c 10 $n
+		n=$(($n + 1))
+	done
 	chown -R bin.bin fd
 	chmod 555 fd
 	chmod 666 fd/*
