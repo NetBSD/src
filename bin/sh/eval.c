@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.42 1998/02/05 08:34:49 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.43 1998/07/28 05:31:27 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.42 1998/02/05 08:34:49 christos Exp $");
+__RCSID("$NetBSD: eval.c,v 1.43 1998/07/28 05:31:27 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -833,8 +833,10 @@ cmddone:
 #ifndef SMALL
 			   || cmdentry.u.index == HISTCMD
 #endif
-			   || cmdentry.u.index == EXECCMD)
+			   || cmdentry.u.index == EXECCMD) {
 				exraise(e);
+				/* NOTREACHED */
+			}
 			FORCEINTON;
 		}
 		if (cmdentry.u.index != EXECCMD)

@@ -1,4 +1,4 @@
-/*	$NetBSD: utils.c,v 1.13 1998/07/28 03:47:14 mycroft Exp $	*/
+/*	$NetBSD: utils.c,v 1.14 1998/07/28 05:31:23 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: utils.c,v 1.13 1998/07/28 03:47:14 mycroft Exp $");
+__RCSID("$NetBSD: utils.c,v 1.14 1998/07/28 05:31:23 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -300,4 +300,5 @@ usage()
 	    "usage: cp [-R [-H | -L | -P]] [-fip] src target",
 	    "       cp [-R [-H | -L | -P]] [-fip] src1 ... srcN directory");
 	exit(1);
+	/* NOTREACHED */
 }

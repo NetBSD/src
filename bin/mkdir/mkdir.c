@@ -1,4 +1,4 @@
-/*	$NetBSD: mkdir.c,v 1.18 1997/11/05 21:17:35 cgd Exp $	*/
+/*	$NetBSD: mkdir.c,v 1.19 1998/07/28 05:31:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mkdir.c	8.2 (Berkeley) 1/25/94";
 #else
-__RCSID("$NetBSD: mkdir.c,v 1.18 1997/11/05 21:17:35 cgd Exp $");
+__RCSID("$NetBSD: mkdir.c,v 1.19 1998/07/28 05:31:25 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -173,4 +173,5 @@ usage()
 
 	(void)fprintf(stderr, "usage: mkdir [-p] [-m mode] dirname ...\n");
 	exit(1);
+	/* NOTREACHED */
 }
