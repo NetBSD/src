@@ -1,4 +1,4 @@
-/* $NetBSD: lk201.c,v 1.6.8.1 1998/02/07 09:56:57 mellon Exp $ */
+/* $NetBSD: lk201.c,v 1.6.8.2 1998/11/24 06:04:18 cgd Exp $ */
 
 /*
  * The LK201 keycode mapping routine is here, along with initialization
@@ -366,6 +366,10 @@ MouseInit(mdev, putc, getc)
 	 */
 	(*putc)(mdev, MOUSE_SELF_TEST);
 	id_byte1 = (*getc)(mdev);
+	if (id_byte1 == MOUSE_SELF_TEST) {
+		printf("MouseInit: mouse loopback connector.\n");
+		return;
+	}
 	if (id_byte1 < 0) {
 		printf("MouseInit: Timeout on 1st byte of self-test report\n");
 		return;
