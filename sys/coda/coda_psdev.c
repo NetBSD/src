@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.16.2.1 2001/08/03 04:12:40 lukem Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.16.2.2 2001/09/08 19:01:26 thorpej Exp $	*/
 
 /*
  * 
@@ -478,6 +478,62 @@ vc_nb_poll(dev, events, p)
     return(0);
 }
 
+static void
+filt_vc_nb_detach(struct knote *kn)
+{
+	struct vcomm *vcp = (void *) kn->kn_data;
+
+	SLIST_REMOVE(&vcp->vc_selproc.si_klist, kn, knote, kn_selnext);
+}
+
+static int
+filt_vc_nb_read(struct knote *kn, long hint)
+{
+	struct vcomm *vcp = (void *) kn->kn_data; 
+	struct vmsg *vmp;
+
+	if (EMPTY(vcp->vc_requests))
+		return (0);
+
+	vmp = (struct vmsg *)GETNEXT(vcp->vc_requests);
+
+	kn->kn_data = vmp->vm_inSize;
+	return (1);
+}
+
+static const struct filterops vc_nb_read_filtops =
+	{ 1, NULL, filt_vc_nb_detach, filt_vc_nb_read };
+
+int
+vc_nb_kqfilter(dev_t dev, struct knote *kn)
+{
+	struct vcomm *vcp;
+	struct klist *klist;
+
+	ENTRY;
+    
+	if (minor(dev) >= NVCODA || minor(dev) < 0)
+		return(ENXIO);
+    
+	vcp = &coda_mnttbl[minor(dev)].mi_vcomm;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &vcp->vc_selproc.si_klist;
+		kn->kn_fop = &vc_nb_read_filtops;
+		break;
+
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = (void *) vcp;
+
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+
+	return (0);
+}
+
 /*
  * Statistics
  */
@@ -536,7 +592,7 @@ coda_call(mntinfo, inSize, outSize, buffer)
 
 	/* Append msg to request queue and poke Venus. */
 	INSQUE(vmp->vm_chain, vcp->vc_requests);
-	selwakeup(&(vcp->vc_selproc));
+	selnotify(&(vcp->vc_selproc), 0);
 
 	/* We can be interrupted while we wait for Venus to process
 	 * our request.  If the interrupt occurs before Venus has read
@@ -659,7 +715,7 @@ coda_call(mntinfo, inSize, outSize, buffer)
 		
 		/* insert at head of queue! */
 		INSQUE(svmp->vm_chain, vcp->vc_requests);
-		selwakeup(&(vcp->vc_selproc));
+		selnotify(&(vcp->vc_selproc), 0);
 	    }
 	}
 
