@@ -1,4 +1,4 @@
-/*	$NetBSD: readelf.c,v 1.11 2002/03/30 16:21:28 bjh21 Exp $	*/
+/*	$NetBSD: readelf.c,v 1.12 2002/04/09 15:10:17 bjh21 Exp $	*/
 
 #include "file.h"
 
@@ -20,7 +20,7 @@
 #if 0
 FILE_RCSID("@(#)Id: readelf.c,v 1.17 2000/08/05 19:00:12 christos Exp ")
 #else
-__RCSID("$NetBSD: readelf.c,v 1.11 2002/03/30 16:21:28 bjh21 Exp $");
+__RCSID("$NetBSD: readelf.c,v 1.12 2002/04/09 15:10:17 bjh21 Exp $");
 #endif
 #endif
 
@@ -271,6 +271,38 @@ dophn_exec(class, swap, fd, off, num, size)
 					 * Version number is stuck at 199905,
 					 * and hence is basically content-free.
 					 */
+				}
+
+				if (nh_namesz == 8 &&
+				    strcmp(&nbuf[nameoffset], "FreeBSD") == 0 &&
+				    nh_type == NT_FREEBSD_VERSION &&
+				    nh_descsz == 4) {
+					uint32_t desc = getu32(swap,
+					    *(uint32_t *)&nbuf[offset]);
+					printf(", for FreeBSD");
+					/*
+					 * Contents is __FreeBSD_version,
+					 * whose relation to OS versions is
+					 * defined by a huge table in the
+					 * Porters' Handbook.  Happily, the
+					 * first three digits are the version
+					 * number, at least in versions of
+					 * FreeBSD that use this note.
+					 */
+
+					printf(" %d.%d", desc / 100000,
+					    desc / 10000 % 10);
+					if (desc / 1000 % 10 > 0)
+						printf(".%d",
+						    desc / 1000 % 10);
+				}
+
+				if (nh_namesz == 8 &&
+				    strcmp(&nbuf[nameoffset], "OpenBSD") == 0 &&
+				    nh_type == NT_OPENBSD_VERSION &&
+				    nh_descsz == 4) {
+					printf(", for OpenBSD");
+					/* Content of note is always 0 */
 				}
 			}
 			break;
