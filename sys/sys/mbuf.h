@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.78 2003/03/19 00:23:26 thorpej Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.79 2003/03/22 02:21:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -133,8 +133,8 @@ struct m_hdr {
 	caddr_t	mh_data;		/* location of data */
 	struct	mowner *mh_owner;	/* mbuf owner */
 	int	mh_len;			/* amount of data in this mbuf */
+	int	mh_flags;		/* flags; see below */
 	short	mh_type;		/* type of data in this mbuf */
-	short	mh_flags;		/* flags; see below */
 };
 
 /*
@@ -219,7 +219,6 @@ struct mbuf {
 #define	M_EXT		0x0001	/* has associated external storage */
 #define	M_PKTHDR	0x0002	/* start of record */
 #define	M_EOR		0x0004	/* end of record */
-#define	M_CLUSTER	0x0008	/* external storage is a cluster */
 
 /* mbuf pkthdr flags, also in m_flags */
 #define M_AUTHIPHDR	0x0010	/* data origin authentication for IP header */
@@ -235,8 +234,18 @@ struct mbuf {
 #define	M_LINK1		0x2000	/* link layer specific flag */
 #define	M_LINK2		0x4000	/* link layer specific flag */
 
+/* additional flags for M_EXT mbufs */
+#define	M_EXT_FLAGS	0xff000000
+#define	M_EXT_CLUSTER	0x01000000	/* ext is a cluster */
+
+/* for source-level compatibility */
+#define	M_CLUSTER	M_EXT_CLUSTER
+
 /* flags copied when copying m_pkthdr */
 #define	M_COPYFLAGS	(M_PKTHDR|M_EOR|M_BCAST|M_MCAST|M_CANFASTFWD|M_ANYCAST6|M_LINK0|M_LINK1|M_LINK2|M_AUTHIPHDR|M_DECRYPTED|M_LOOP|M_AUTHIPDGM)
+
+/* flag copied when shallow-copying external storage */
+#define	M_EXTCOPYFLAGS	(M_EXT|M_EXT_FLAGS)
 
 /* mbuf types */
 #define	MT_FREE		0	/* should be on free list */
@@ -409,7 +418,7 @@ do {									\
 
 #define	_MCLADDREFERENCE(o, n)						\
 do {									\
-	(n)->m_flags |= ((o)->m_flags & (M_EXT|M_CLUSTER));		\
+	(n)->m_flags |= ((o)->m_flags & M_EXTCOPYFLAGS);		\
 	(n)->m_ext.ext_nextref = (o)->m_ext.ext_nextref;		\
 	(n)->m_ext.ext_prevref = (o);					\
 	(o)->m_ext.ext_nextref = (n);					\
@@ -451,7 +460,8 @@ do {									\
 	);								\
 	if ((m)->m_ext.ext_buf != NULL) {				\
 		(m)->m_data = (m)->m_ext.ext_buf;			\
-		(m)->m_flags |= M_EXT|M_CLUSTER;			\
+		(m)->m_flags = ((m)->m_flags & ~M_EXTCOPYFLAGS) |	\
+				M_EXT|M_CLUSTER;			\
 		(m)->m_ext.ext_size = MCLBYTES;				\
 		(m)->m_ext.ext_free = NULL;				\
 		(m)->m_ext.ext_arg = NULL;				\
@@ -465,8 +475,7 @@ do {									\
 	    (caddr_t)malloc((size), mbtypes[(m)->m_type], (how));	\
 	if ((m)->m_ext.ext_buf != NULL) {				\
 		(m)->m_data = (m)->m_ext.ext_buf;			\
-		(m)->m_flags |= M_EXT;					\
-		(m)->m_flags &= ~M_CLUSTER;				\
+		(m)->m_flags = ((m)->m_flags & ~M_EXTCOPYFLAGS) | M_EXT;\
 		(m)->m_ext.ext_size = (size);				\
 		(m)->m_ext.ext_free = NULL;				\
 		(m)->m_ext.ext_arg = NULL;				\
@@ -479,8 +488,7 @@ do {									\
 #define	MEXTADD(m, buf, size, type, free, arg)				\
 do {									\
 	(m)->m_data = (m)->m_ext.ext_buf = (caddr_t)(buf);		\
-	(m)->m_flags |= M_EXT;						\
-	(m)->m_flags &= ~M_CLUSTER;					\
+	(m)->m_flags = ((m)->m_flags & ~M_EXTCOPYFLAGS) | M_EXT;	\
 	(m)->m_ext.ext_size = (size);					\
 	(m)->m_ext.ext_free = (free);					\
 	(m)->m_ext.ext_arg = (arg);					\
@@ -512,7 +520,7 @@ do {									\
 		splx(_ms_);						\
 		free((m)->m_ext.ext_buf, (m)->m_ext.ext_type);		\
 	}								\
-	(m)->m_flags &= ~(M_CLUSTER|M_EXT);				\
+	(m)->m_flags &= ~M_EXTCOPYFLAGS;				\
 	(m)->m_ext.ext_size = 0;	/* why ??? */			\
 } while (/* CONSTCOND */ 0)
 
