@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.200 2002/04/10 15:05:45 lukem Exp $
+#	$NetBSD: bsd.lib.mk,v 1.201 2002/04/26 15:02:02 lukem Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -19,10 +19,10 @@ SHLIB_TEENY != . ${SHLIB_VERSION_FILE} ; echo $$teeny
 
 # Check for higher installed library versions.
 .if !defined(NOCHECKVER) && !defined(NOCHECKVER_${LIB}) && \
-	exists(${_SRC_TOP_}/lib/checkver)
+	exists(${NETBSDSRCDIR}/lib/checkver)
 checkver:
 	@(cd ${.CURDIR} && \
-		sh ${_SRC_TOP_}/lib/checkver -v ${SHLIB_VERSION_FILE} \
+		sh ${NETBSDSRCDIR}/lib/checkver -v ${SHLIB_VERSION_FILE} \
 		    -d ${DESTDIR}${_LIBSODIR} ${LIB})
 .endif
 .endif
