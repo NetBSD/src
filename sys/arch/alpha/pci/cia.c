@@ -1,4 +1,4 @@
-/* $NetBSD: cia.c,v 1.33 1998/05/11 23:56:16 thorpej Exp $ */
+/* $NetBSD: cia.c,v 1.34 1998/05/12 19:07:21 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.33 1998/05/11 23:56:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.34 1998/05/12 19:07:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,9 +116,7 @@ cia_init(ccp, mallocsafe)
 	 * If revision is > 2 non-masked, assume Pyxis.  (XXX iffy?)
 	 */
 	if (ccp->cc_rev > 2)
-		ccp->cc_ispyxis = 1;
-	else
-		ccp->cc_ispyxis = 0;
+		ccp->cc_flags |= CCF_ISPYXIS;
 
 	ccp->cc_rev &= REV_MASK;
 
@@ -161,7 +159,7 @@ ciaattach(parent, self, aux)
 	 * If we're a Pyxis, print the revision number, otherwise
 	 * the revision number indicates ALCOR or ALCOR2.
 	 */
-	if (ccp->cc_ispyxis)
+	if (ccp->cc_flags & CCF_ISPYXIS)
 		printf(": DECchip 21174 Core Logic chipset, revision %d\n",
 		    ccp->cc_rev);
 	else
