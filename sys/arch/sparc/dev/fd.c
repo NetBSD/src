@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.40 1996/11/13 06:13:42 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.41 1996/11/27 21:14:33 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -828,7 +828,8 @@ fdcresult(fdc)
 				return -1;
 			}
 			fdc->sc_status[n++] = *fdc->sc_reg_fifo;
-		}
+		} else
+			delay(10);
 	}
 	log(LOG_ERR, "fdcresult: timeout\n");
 	return (fdc->sc_nstat = -1);
@@ -841,7 +842,8 @@ out_fdc(fdc, x)
 {
 	int i = 100000;
 
-	while (((*fdc->sc_reg_msr & (NE7_DIO|NE7_RQM)) != NE7_RQM) && i-- > 0);
+	while (((*fdc->sc_reg_msr & (NE7_DIO|NE7_RQM)) != NE7_RQM) && i-- > 0)
+		delay(1);
 	if (i <= 0)
 		return -1;
 
