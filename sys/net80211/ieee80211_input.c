@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.26 2004/07/23 08:05:00 mycroft Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.27 2004/07/23 08:25:25 mycroft Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.20 2004/04/02 23:35:24 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.26 2004/07/23 08:05:00 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.27 2004/07/23 08:25:25 mycroft Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -649,6 +649,38 @@ ieee80211_setup_rates(struct ieee80211com *ic, struct ieee80211_node *ni,
 	}								\
 } while (0)
 
+#ifdef IEEE80211_DEBUG
+static void
+ieee80211_ssid_mismatch(struct ieee80211com *ic, const char *tag,
+	u_int8_t mac[IEEE80211_ADDR_LEN], u_int8_t *ssid)
+{
+	printf("[%s] %s req ssid mismatch: ", ether_sprintf(mac), tag);
+	ieee80211_print_essid(ssid + 2, ssid[1]);
+	printf("\n");
+}
+
+#define IEEE80211_VERIFY_SSID(_ni, _ssid, _packet_type) do {		\
+	if ((_ssid)[1] != 0 &&						\
+	    ((_ssid)[1] != (_ni)->ni_esslen ||				\
+	    memcmp((_ssid) + 2, (_ni)->ni_essid, (_ssid)[1]) != 0)) {   \
+		if (ieee80211_msg_input(ic))				\
+			ieee80211_ssid_mismatch(ic, _packet_type,       \
+				wh->i_addr2, _ssid);			\
+		ic->ic_stats.is_rx_ssidmismatch++;			\
+		return;							\
+	}								\
+} while (0)
+#else /* !IEEE80211_DEBUG */
+#define IEEE80211_VERIFY_SSID(_ni, _ssid, _packet_type) do {		\
+	if ((_ssid)[1] != 0 &&						\
+	    ((_ssid)[1] != (_ni)->ni_esslen ||				\
+	    memcmp((_ssid) + 2, (_ni)->ni_essid, (_ssid)[1]) != 0)) {   \
+		ic->ic_stats.is_rx_ssidmismatch++;			\
+		return;							\
+	}								\
+} while (0)
+#endif /* !IEEE80211_DEBUG */
+
 static void
 ieee80211_auth_open(struct ieee80211com *ic, struct ieee80211_frame *wh,
     struct ieee80211_node *ni, int rssi, u_int32_t rstamp, u_int16_t seq,
@@ -1175,19 +1207,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		}
 		IEEE80211_VERIFY_ELEMENT(rates, IEEE80211_RATE_MAXSIZE);
 		IEEE80211_VERIFY_ELEMENT(ssid, IEEE80211_NWID_LEN);
-		if (ssid[1] != 0 &&
-		    (ssid[1] != ic->ic_bss->ni_esslen ||
-		    memcmp(ssid + 2, ic->ic_bss->ni_essid, ic->ic_bss->ni_esslen) != 0)) {
-#ifdef IEEE80211_DEBUG
-			if (ieee80211_debug) {
-				printf("%s: ssid mismatch ", __func__);
-				ieee80211_print_essid(ssid + 2, ssid[1]);
-				printf(" from %s\n", ether_sprintf(wh->i_addr2));
-			}
-#endif
-			ic->ic_stats.is_rx_ssidmismatch++;
-			return;
-		}
+		IEEE80211_VERIFY_SSID(ic->ic_bss, ssid, "probe");
 
 		if (ni == ic->ic_bss) {
 			ni = ieee80211_dup_bss(ic, wh->i_addr2);
@@ -1304,23 +1324,14 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		}
 		IEEE80211_VERIFY_ELEMENT(rates, IEEE80211_RATE_MAXSIZE);
 		IEEE80211_VERIFY_ELEMENT(ssid, IEEE80211_NWID_LEN);
-		if (ssid[1] != ic->ic_bss->ni_esslen ||
-		    memcmp(ssid + 2, ic->ic_bss->ni_essid, ssid[1]) != 0) {
-#ifdef IEEE80211_DEBUG
-			if (ieee80211_debug) {
-				printf("%s: ssid mismatch ", __func__);
-				ieee80211_print_essid(ssid + 2, ssid[1]);
-				printf(" from %s\n", ether_sprintf(wh->i_addr2));
-			}
-#endif
-			ic->ic_stats.is_rx_ssidmismatch++;
-			return;
-		}
+		IEEE80211_VERIFY_SSID(ic->ic_bss, ssid,
+			reassoc ? "reassoc" : "assoc");
+
 		if (ni == ic->ic_bss) {
 			IEEE80211_DPRINTF(ic, IEEE80211_MSG_ANY,
-				("%s: deny %sassoc from %s, not authenticated\n",
-				__func__, reassoc ? "re" : "",
-				ether_sprintf(wh->i_addr2)));
+			    ("%s: deny %sassoc from %s, not authenticated\n",
+			    __func__, reassoc ? "re" : "",
+			    ether_sprintf(wh->i_addr2)));
 			ni = ieee80211_dup_bss(ic, wh->i_addr2);
 			if (ni != NULL) {
 				IEEE80211_SEND_MGMT(ic, ni,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.14 2004/07/23 06:44:55 mycroft Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.15 2004/07/23 08:25:25 mycroft Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.10 2004/04/02 23:25:39 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.14 2004/07/23 06:44:55 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.15 2004/07/23 08:25:25 mycroft Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -88,6 +88,24 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.14 2004/07/23 06:44:55 mycrof
 #else
 #include <net/if_ether.h>
 #endif
+#endif
+
+#ifdef IEEE80211_DEBUG
+/*
+ * Decide if an outbound management frame should be
+ * printed when debugging is enabled.  This filters some
+ * of the less interesting frames that come frequently
+ * (e.g. beacons).
+ */
+static __inline int
+doprint(struct ieee80211com *ic, int subtype)
+{
+	switch (subtype) {
+	case IEEE80211_FC0_SUBTYPE_PROBE_RESP:
+		return (ic->ic_opmode == IEEE80211_M_IBSS);
+	}
+	return 1;
+}
 #endif
 
 /*
@@ -145,23 +163,18 @@ ieee80211_mgmt_output(struct ifnet *ifp, struct ieee80211_node *ni,
 			__func__, ether_sprintf(wh->i_addr1)));
 		wh->i_fc[1] |= IEEE80211_FC1_WEP;
 	}
-
-	if (ifp->if_flags & IFF_DEBUG) {
-		/* avoid to print too many frames */
-		if (ic->ic_opmode == IEEE80211_M_IBSS ||
 #ifdef IEEE80211_DEBUG
-		    ieee80211_debug > 1 ||
-#endif
-		    (type & IEEE80211_FC0_SUBTYPE_MASK) !=
-		    IEEE80211_FC0_SUBTYPE_PROBE_RESP)
-			if_printf(ifp, "sending %s to %s on channel %u\n",
-			    ieee80211_mgt_subtype_name[
-			    (type & IEEE80211_FC0_SUBTYPE_MASK)
-			    >> IEEE80211_FC0_SUBTYPE_SHIFT],
-			    ether_sprintf(ni->ni_macaddr),
-			    ieee80211_chan2ieee(ic, ni->ni_chan));
+	/* avoid printing too many frames */
+	if ((ieee80211_msg_debug(ic) && doprint(ic, type)) ||
+	    ieee80211_msg_dumppkts(ic)) {
+		if_printf(ifp, "sending %s to %s on channel %u\n",
+		    ieee80211_mgt_subtype_name[
+		    (type & IEEE80211_FC0_SUBTYPE_MASK)
+		    >> IEEE80211_FC0_SUBTYPE_SHIFT],
+		    ether_sprintf(ni->ni_macaddr),
+		    ieee80211_chan2ieee(ic, ni->ni_chan));
 	}
-
+#endif
 	IF_ENQUEUE(&ic->ic_mgtq, m);
 	ifp->if_timer = 1;
 	(*ifp->if_start)(ifp);
@@ -500,9 +513,9 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 		break;
 
 	case IEEE80211_FC0_SUBTYPE_DEAUTH:
-		if (ifp->if_flags & IFF_DEBUG)
-			if_printf(ifp, "station %s deauthenticate (reason %d)\n",
-			    ether_sprintf(ni->ni_macaddr), arg);
+		IEEE80211_DPRINTF(ic, IEEE80211_MSG_AUTH,
+			("send station %s deauthenticate (reason %d)\n",
+			ether_sprintf(ni->ni_macaddr), arg));
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
 		if (m == NULL)
 			senderr(ENOMEM, is_tx_nombuf);
@@ -612,9 +625,9 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 		break;
 
 	case IEEE80211_FC0_SUBTYPE_DISASSOC:
-		if (ifp->if_flags & IFF_DEBUG)
-			if_printf(ifp, "station %s disassociate (reason %d)\n",
-			    ether_sprintf(ni->ni_macaddr), arg);
+		IEEE80211_DPRINTF(ic, IEEE80211_MSG_ASSOC,
+			("send station %s disassociate (reason %d)\n",
+			ether_sprintf(ni->ni_macaddr), arg));
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
 		if (m == NULL)
 			senderr(ENOMEM, is_tx_nombuf);
