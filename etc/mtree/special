@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.47 2001/10/12 05:18:24 lukem Exp $
+#	$NetBSD: special,v 1.48 2001/10/15 02:56:42 lukem Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -27,6 +27,7 @@
 ./etc/bootparams		type=file mode=0644 optional
 ./etc/bootptab			type=file mode=0644 optional
 ./etc/ccd.conf			type=file mode=0644 optional
+./etc/changelist		type=file mode=0644
 ./etc/crontab			type=file mode=0644 optional
 ./etc/csh.cshrc			type=file mode=0644
 ./etc/csh.login			type=file mode=0644
