@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.44 1999/09/17 20:07:15 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.45 1999/10/05 03:40:50 eeh Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -437,7 +437,7 @@ _C_LABEL(msgbuf) = KERNBASE
 #define TRACEFLT	TRACEME
 #endif
 #define	VTRAP(type, label) \
-	set KERNBASE+0x28, %g1; rdpr %tt, %g2; b label; stx %g2, [%g1]; NOTREACHED; TA8
+	sethi KERNBASE,%g1; rdpr %tt,%g2; or %g1,0x28,%g1; b label; stx %g2,[%g1]; NOTREACHED; TA8
 #endif
 #else
 #ifdef TRAPTRACE
