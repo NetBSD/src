@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype_template.h,v 1.1 2002/03/17 22:14:19 tshiozak Exp $	*/
+/*	$NetBSD: citrus_ctype_template.h,v 1.2 2002/03/18 08:09:28 yamt Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -476,7 +476,7 @@ _FUNCNAME(ctype_mbsrtowcs)(void * __restrict cl, wchar_t * __restrict pwcs,
 	_DIAGASSERT(cl != NULL);
 
 	_RESTART_BEGIN(mbsrtowcs, _TO_CEI(cl), pspriv, psenc);
-	err = _FUNCNAME(mbsrtowcs_priv)(cl, NULL, s, n, psenc, nresult);
+	err = _FUNCNAME(mbsrtowcs_priv)(cl, pwcs, s, n, psenc, nresult);
 	_RESTART_END(mbsrtowcs, _TO_CEI(cl), pspriv, psenc);
 
 	return (err);
