@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.1 2003/04/26 18:39:29 fvdl Exp $	*/
+/*	$NetBSD: locore.S,v 1.2 2003/04/26 19:34:45 fvdl Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -124,6 +124,7 @@
 #include "assym.h"
 #include "lapic.h"
 #include "ioapic.h"
+#include "ksyms.h"
 
 #include <sys/errno.h>
 #include <sys/syscall.h>
@@ -412,7 +413,7 @@ start:	movw	$0x1234,0x472			# warm boot
 
 	/* Find end of kernel image. */
 	movl	$RELOC(end),%edi
-#if defined(DDB) && !defined(SYMTAB_SPACE)
+#if (NKSYMS || defined(DDB) || defined(LKM)) && !defined(SYMTAB_SPACE)
 	/* Save the symbols (if loaded). */
 	movl	RELOC(esym),%eax
 	testl	%eax,%eax
