@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.22 2000/12/20 09:35:40 sato Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.23 2000/12/21 03:30:36 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -46,7 +46,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: hpcfb.c,v 1.22 2000/12/20 09:35:40 sato Exp $";
+    "$Id: hpcfb.c,v 1.23 2000/12/21 03:30:36 sato Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,8 +100,8 @@ int	hpcfb_debug = 0;
 /*
  * currently experimental
 #define HPCFB_JUMP
-*/
 #define HPCFB_MULTI
+*/
 
 struct hpcfb_vchar {
 	u_int c;
@@ -211,6 +211,7 @@ void    hpcfb_redraw __P((void *c, int row, int nrows, int all));
 void    hpcfb_copyrows __P((void *c, int srcrow, int dstrow, int nrows));
 void    hpcfb_eraserows __P((void *c, int row, int nrows, long attr));
 int     hpcfb_alloc_attr __P((void *c, int fg, int bg, int flags, long *attr));
+void    hpcfb_cursor_raw __P((void *c, int on, int row, int col));
 
 #ifdef HPCFB_JUMP
 void	hpcfb_scroll_update __P((void *));
@@ -705,11 +706,11 @@ hpcfb_refresh_screen(sc)
 	x = dc->dc_curx;
 	y = dc->dc_cury;
 	if (0 <= x && 0 <= y)
-		hpcfb_cursor(dc, 0,  y, x); /* disable cursor */
+		hpcfb_cursor_raw(dc, 0,  y, x); /* disable cursor */
 	/* redraw all text */
 	hpcfb_redraw(dc, 0, dc->dc_rows, 1);
 	if (0 <= x && 0 <= y)
-		hpcfb_cursor(dc, 1,  y, x); /* enable cursor */
+		hpcfb_cursor_raw(dc, 1,  y, x); /* enable cursor */
 }
 
 static int
@@ -820,7 +821,7 @@ hpcfb_show_screen(v, cookie, waitok, cb, cbarg)
 	}
 
 	if (odc->dc_curx >= 0 && odc->dc_cury >= 0)
-		hpcfb_cursor(odc, 0,  odc->dc_cury, odc->dc_curx); /* disable cursor */
+		hpcfb_cursor_raw(odc, 0,  odc->dc_cury, odc->dc_curx); /* disable cursor */
 	/* switch screen image from old to new */
 	dc->dc_rinfo.ri_bits = odc->dc_rinfo.ri_bits;
 
@@ -834,10 +835,10 @@ hpcfb_show_screen(v, cookie, waitok, cb, cbarg)
 
 	/* redraw screen image */
 	if (dc->dc_curx >= 0 && dc->dc_cury >= 0)
-		hpcfb_cursor(dc, 0,  dc->dc_cury, dc->dc_curx); /* disable cursor */
+		hpcfb_cursor_raw(dc, 0,  dc->dc_cury, dc->dc_curx); /* disable cursor */
 	hpcfb_redraw(dc, 0, dc->dc_rows, 1);
 	if (dc->dc_curx >= 0 && dc->dc_cury >= 0)
-		hpcfb_cursor(dc, 1,  dc->dc_cury, dc->dc_curx); /* re enable cursor */
+		hpcfb_cursor_raw(dc, 1,  dc->dc_cury, dc->dc_curx); /* re enable cursor */
 #else /* HPCFB_MULTI */
 	hpcfb_refresh_screen(sc);
 #endif /* !HPCFB_MULTI */
@@ -867,10 +868,6 @@ hpcfb_cursor(cookie, on, row, col)
 	int on, row, col;
 {
 	struct hpcfb_devconfig *dc = (struct hpcfb_devconfig *)cookie;
-	struct hpcfb_softc *sc = dc->dc_sc;
-	struct rasops_info *ri = &dc->dc_rinfo;
-	int curwidth, curheight;
-	int xoff, yoff;
 
 	if (on) {
 		dc->dc_curx = col;
@@ -879,6 +876,20 @@ hpcfb_cursor(cookie, on, row, col)
 		dc->dc_curx = -1;
 		dc->dc_cury = -1;
 	}
+
+	hpcfb_cursor_raw(cookie, on, row, col);
+}
+
+void
+hpcfb_cursor_raw(cookie, on, row, col)
+	void *cookie;
+	int on, row, col;
+{
+	struct hpcfb_devconfig *dc = (struct hpcfb_devconfig *)cookie;
+	struct hpcfb_softc *sc = dc->dc_sc;
+	struct rasops_info *ri = &dc->dc_rinfo;
+	int curwidth, curheight;
+	int xoff, yoff;
 
 #ifdef HPCFB_JUMP
 	if (dc->dc_state&HPCFB_DC_SCROLLPENDING) {
