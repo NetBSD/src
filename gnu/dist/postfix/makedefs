@@ -191,10 +191,6 @@ case "$SYSTEM.$RELEASE" in
 		    echo "See the RELEASE_NOTES file for more information." 1>&2
 		    exit 1
 		fi
-		if [ -f /usr/include/pcre/pcre.h ]
-		then
-		    CCARGS="$CCARGS -DHAS_PCRE -I/usr/include/pcre"
-		fi
 		# GDBM locks the DBM .pag file after open. This breaks postmap.
 		# if [ -f /usr/include/gdbm-ndbm.h ]
 		# then
@@ -206,11 +202,15 @@ case "$SYSTEM.$RELEASE" in
 		#     GDBM_LIBS=gdbm
 		# fi
 		SYSLIBS="-ldb"
-		for name in nsl resolv pcre $GDBM_LIBS
+		for name in nsl resolv $GDBM_LIBS
 		do
-		    test -e /usr/lib/lib$name.a -o -e /usr/lib/lib$name.so \
-			-o -e /lib/lib$name.a -o -e /lib/lib$name.so \
-			    && SYSLIBS="$SYSLIBS -l$name"
+		    for lib in /usr/lib64 /lib64 /usr/lib /lib
+		    do
+			test -e $lib/lib$name.a -o -e $lib/lib$name.so && {
+			    SYSLIBS="$SYSLIBS -l$name"
+			    break
+			}
+		    done
 		done
 		;;
      IRIX*.5.*)	SYSTYPE=IRIX5
@@ -286,6 +286,20 @@ Rhapsody.5*|Darwin.*)
 		fi
 		;;
 	   *)	echo "Unknown system type: $SYSTEM $RELEASE" 1>&2; exit 1;;
+esac
+
+#
+# PCRE 3.x has a pcre-config utility so we don't have to guess.
+#
+case "$CCARGS" in
+*-DHAS_PCRE*)	;;
+ *-DNO_PCRE*)	;;
+           *)	pcre_cflags=`(pcre-config --cflags) 2>/dev/null` &&
+		    pcre_libs=`(pcre-config --libs) 2>/dev/null` && {
+			CCARGS="$CCARGS -DHAS_PCRE $pcre_cflags"
+			AUXLIBS="$AUXLIBS $pcre_libs"
+		}
+		;;
 esac
 
 # Defaults that can be overruled (make makefiles CC=cc OPT=-O6 DEBUG=)

@@ -1,11 +1,10 @@
-#	$NetBSD: sample-regexp-header.cf,v 1.2 2002/12/24 21:37:45 perry Exp $
+#	$NetBSD: sample-regexp-header.cf,v 1.3 2003/03/08 19:43:58 perry Exp $
 #
 # Sample regexp message header filter lookup "table". See regexp_table(5)
 # for a description of the syntax.
 #
 # Message headers are filtered one at a time. This filter understands
-# multi-line mail headers. However, the message header filter has no
-# knowledge of MIME headers that are embedded in the message body.
+# multi-line mail headers, including MIME headers in the message body.
 #
 # The general format of a table entry is PATTERN RESULT. 
 #
@@ -46,7 +45,8 @@
 #       After the message is queued, send the entire message through
 #       a content filter. This requires different cleanup servers
 #       before and after the filter, with header/body checks turned
-#       off in the second cleanup server.
+#       off in the second cleanup server. This overrides the main.cf
+#	content filter setting.
 
 /^Subject: Make Money Fast/	REJECT
 /^To: friend@public.com/	REJECT

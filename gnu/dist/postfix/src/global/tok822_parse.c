@@ -77,6 +77,11 @@
 /*	Append a line break after each comma token, instead of appending
 /*	whitespace.  It is up to the caller to concatenate short lines to
 /*	produce longer ones.
+/* .IP TOK822_STR_TRNC
+/*	Truncate non-address information to 250 characters per address, to
+/*	protect Sendmail systems that are vulnerable to the problem in CERT
+/*	advisory CA-2003-07.
+/*	This flag has effect with tok822_externalize() only.
 /* .PP
 /*	The macro TOK_822_NONE expresses that none of the above features
 /*	should be activated.
@@ -85,9 +90,9 @@
 /*	TOK822_STR_TERM flags. This is useful for most token to string
 /*	conversions.
 /*
-/*	The macro TOK822_STR_HEAD combines the TOK822_STR_TERM and
-/*	TOK822_STR_LINE flags. This is useful for the special case of
-/*	token to mail header conversion.
+/*	The macro TOK822_STR_HEAD combines the TOK822_STR_TERM,
+/*	TOK822_STR_LINE and TOK822_STR_TRNC flags. This is useful for
+/*	the special case of token to mail header conversion.
 /*
 /*	tok822_internalize() converts a token list to string form,
 /*	without quoting. White space is inserted where appropriate.
@@ -235,25 +240,97 @@ VSTRING *tok822_internalize(VSTRING *vp, TOK822 *tree, int flags)
     return (vp);
 }
 
+/* strip_address - strip non-address text from address expression */
+
+static void strip_address(VSTRING *vp, int start, TOK822 *addr)
+{
+    VSTRING *tmp;
+
+    /*
+     * Emit plain <address>. Discard any comments or phrases.
+     */
+    msg_warn("stripping too many comments from address: %.100s...",
+	     vstring_str(vp) + start);
+    vstring_truncate(vp, start);
+    VSTRING_ADDCH(vp, '<');
+    if (addr) {
+	tmp = vstring_alloc(100);
+	tok822_internalize(tmp, addr, TOK822_STR_TERM);
+	quote_822_local_flags(vp, vstring_str(tmp),
+			      QUOTE_FLAG_8BITCLEAN | QUOTE_FLAG_APPEND);
+	vstring_free(tmp);
+    }
+    VSTRING_ADDCH(vp, '>');
+}
+
+
 /* tok822_externalize - token tree to string, external form */
 
 VSTRING *tok822_externalize(VSTRING *vp, TOK822 *tree, int flags)
 {
     VSTRING *tmp;
     TOK822 *tp;
+    int     start;
+    TOK822 *addr;
+    int     addr_len;
+
+    /*
+     * Guard against a Sendmail buffer overflow (CERT advisory CA-2003-07).
+     * The problem was that Sendmail could store too much non-address text
+     * (comments, phrases, etc.) into a static 256-byte buffer.
+     * 
+     * When the buffer fills up, fixed Sendmail versions remove comments etc.
+     * and reduce the information to just <$g>, which expands to <address>.
+     * No change is made when an address expression (text separated by
+     * commas) contains no address. This fix reportedly also protects
+     * Sendmail systems that are still vulnerable to this problem.
+     * 
+     * Postfix takes the same approach, grudgingly. To avoid unnecessary damage,
+     * Postfix removes comments etc. only when the amount of non-address text
+     * in an address expression (text separated by commas) exceeds 250 bytes.
+     * 
+     * With Sendmail, the address part of an address expression is the
+     * right-most <> instance in that expression. If an address expression
+     * contains no <>, then Postfix guarantees that it contains at most one
+     * non-comment string; that string is the address part of the address
+     * expression, so there is no ambiguity.
+     * 
+     * Finally, we note that stress testing shows that other code in Sendmail
+     * 8.12.8 bluntly truncates ``text <address>'' to 256 bytes even when
+     * this means chopping the <address> somewhere in the middle. This is a
+     * loss of control that we're not entirely comfortable with. However,
+     * unbalanced quotes and dangling backslash do not seem to influence the
+     * way that Sendmail parses headers, so this is not an urgent problem.
+     */
+#define MAX_NONADDR_LENGTH 250
+
+#define RESET_NONADDR_LENGTH { \
+	start = VSTRING_LEN(vp); \
+	addr = 0; \
+	addr_len = 0; \
+    }
+
+#define ENFORCE_NONADDR_LENGTH do { \
+	if (addr && VSTRING_LEN(vp) - addr_len > start + MAX_NONADDR_LENGTH) \
+	    strip_address(vp, start, addr->head); \
+    } while(0)
 
     if (flags & TOK822_STR_WIPE)
 	VSTRING_RESET(vp);
 
+    if (flags & TOK822_STR_TRNC)
+	RESET_NONADDR_LENGTH;
+
     for (tp = tree; tp; tp = tp->next) {
 	switch (tp->type) {
 	case ',':
+	    if (flags & TOK822_STR_TRNC)
+		ENFORCE_NONADDR_LENGTH;
 	    VSTRING_ADDCH(vp, tp->type);
-	    if (flags & TOK822_STR_LINE) {
-		VSTRING_ADDCH(vp, '\n');
-		continue;
-	    }
-	    break;
+	    VSTRING_ADDCH(vp, (flags & TOK822_STR_LINE) ? '\n' : ' ');
+	    if (flags & TOK822_STR_TRNC)
+		RESET_NONADDR_LENGTH;
+	    continue;
 
 	    /*
 	     * XXX In order to correctly externalize an address, it is not
@@ -263,10 +340,13 @@ VSTRING *tok822_externalize(VSTRING *vp, TOK822 *tree, int flags)
 	     * the issue of atoms in the domain part that would need quoting.
 	     */
 	case TOK822_ADDR:
+	    addr = tp;
 	    tmp = vstring_alloc(100);
 	    tok822_internalize(tmp, tp->head, TOK822_STR_TERM);
+	    addr_len = VSTRING_LEN(vp);
 	    quote_822_local_flags(vp, vstring_str(tmp),
 				  QUOTE_FLAG_8BITCLEAN | QUOTE_FLAG_APPEND);
+	    addr_len = VSTRING_LEN(vp) - addr_len;
 	    vstring_free(tmp);
 	    break;
 	case TOK822_ATOM:
@@ -286,6 +366,13 @@ VSTRING *tok822_externalize(VSTRING *vp, TOK822 *tree, int flags)
 	case TOK822_STARTGRP:
 	    VSTRING_ADDCH(vp, ':');
 	    break;
+	case '<':
+	    if (tp->next && tp->next->type == '>') {
+		addr = tp;
+		addr_len = 0;
+	    }
+	    VSTRING_ADDCH(vp, '<');
+	    break;
 	default:
 	    if (tp->type >= TOK822_MINTOK)
 		msg_panic("tok822_externalize: unknown operator %d", tp->type);
@@ -294,6 +381,9 @@ VSTRING *tok822_externalize(VSTRING *vp, TOK822 *tree, int flags)
 	if (tok822_append_space(tp))
 	    VSTRING_ADDCH(vp, ' ');
     }
+    if (flags & TOK822_STR_TRNC)
+	ENFORCE_NONADDR_LENGTH;
+
     if (flags & TOK822_STR_TERM)
 	VSTRING_TERMINATE(vp);
     return (vp);
@@ -616,11 +706,14 @@ int     main(int unused_argc, char **unused_argv)
 
 	vstream_printf("Internalized:\n%s\n\n",
 		vstring_str(tok822_internalize(vp, list, TOK822_STR_DEFL)));
+	vstream_fflush(VSTREAM_OUT);
 	vstream_printf("Externalized, no newlines inserted:\n%s\n\n",
-		vstring_str(tok822_externalize(vp, list, TOK822_STR_DEFL)));
+		       vstring_str(tok822_externalize(vp, list,
+				       TOK822_STR_DEFL | TOK822_STR_TRNC)));
+	vstream_fflush(VSTREAM_OUT);
 	vstream_printf("Externalized, newlines inserted:\n%s\n\n",
 		       vstring_str(tok822_externalize(vp, list,
-				       TOK822_STR_DEFL | TOK822_STR_LINE)));
+		     TOK822_STR_DEFL | TOK822_STR_LINE | TOK822_STR_TRNC)));
 	vstream_fflush(VSTREAM_OUT);
 	tok822_free_tree(list);
     }

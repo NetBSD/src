@@ -1,4 +1,4 @@
-#	$NetBSD: main.cf,v 1.5 2002/12/24 20:26:59 perry Exp $
+#	$NetBSD: main.cf,v 1.6 2003/03/08 19:43:57 perry Exp $
 #
 # Global Postfix configuration file. This file lists only a subset
 # of all 250+ parameters. See the sample-xxx.cf files for a full list.
@@ -174,21 +174,29 @@ mail_owner = postfix
 #
 # - You define $mydestination domain recipients in files other than
 #   /etc/passwd, /etc/aliases, or the $virtual_alias_maps files.
-#   For example, you define $mydestination domain recipients in
+#   For example, you define $mydestination domain recipients in    
 #   the $virtual_mailbox_maps files.
 #
-# - You redefined the local delivery agent in master.cf.
+# - You redefine the local delivery agent in master.cf.
 #
-# - You redefined the "local_transport" setting in main.cf.
+# - You redefine the "local_transport" setting in main.cf.
 #
 # - You use the "luser_relay", "mailbox_transport", or "fallback_transport"
 #   feature of the Postfix local delivery agent (see sample-local.cf).
 #
+# Details are described in the LOCAL_RECIPIENT_README file.
+#
 # Beware: if the Postfix SMTP server runs chrooted, you probably have
-# to copy the passwd (not shadow) database into the jail, and perhaps
-# other files. This is system dependent.
+# to access the passwd file via the proxymap service, in order to
+# overcome chroot restrictions. The alternative, having a copy of
+# the system passwd file in the chroot jail is just not practical.
+#
+# The right-hand side of the lookup tables is conveniently ignored.
+# In the left-hand side, specify a bare username, an @domain.tld
+# wild-card, or specify a user@domain.tld address.
 # 
 #local_recipient_maps = unix:passwd.byname $alias_maps
+#local_recipient_maps = proxy:unix:passwd.byname $alias_maps
 #local_recipient_maps =
 
 # The unknown_local_recipient_reject_code specifies the SMTP server
@@ -305,6 +313,10 @@ unknown_local_recipient_reject_code = 450
 #
 # If this parameter is defined, then the SMTP server will reject
 # mail for unknown relay users. This feature is off by default.
+#
+# The right-hand side of the lookup tables is conveniently ignored.
+# In the left-hand side, specify an @domain.tld wild-card, or specify
+# a user@domain.tld address.
 # 
 #relay_recipient_maps = hash:/etc/postfix/relay_recipients
 

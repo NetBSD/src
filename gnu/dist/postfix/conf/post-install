@@ -426,7 +426,6 @@ test -n "$create" && {
 	if [ -n "$create" -a "$type" = "d" -a -n "$create_flag" -a ! -d "$path" ]
 	then
 	    mkdir $path || exit 1
-	    $CHATTR $path >/dev/null 2>/dev/null
 	    set_permission=1
 	# Update all owner/group/mode settings.
 	elif [ -n "$set_perms" ]
@@ -534,6 +533,15 @@ EOF
 	echo See the RELEASE_NOTES and LOCAL_RECIPIENT_README files for details.
 	$POSTCONF -e "$unknown_local = 450" || exit 1
     fi
+
+    # Add missing proxymap service to master.cf.
+
+    grep '^proxymap.*proxymap' $config_directory/master.cf >/dev/null || {
+	echo Editing $config_directory/master.cf, adding missing entry for proxymap service
+	cat >>$config_directory/master.cf <<EOF || exit 1
+proxymap  unix        -       -       n       -       -       proxymap
+EOF
+    }
 
 }
 

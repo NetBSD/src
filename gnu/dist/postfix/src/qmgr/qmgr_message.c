@@ -518,22 +518,6 @@ static void qmgr_message_resolve(QMGR_MESSAGE *message)
     for (recipient = list.info; recipient < list.info + list.len; recipient++) {
 
 	/*
-	 * This may be a bit late in the game, but it is the most convenient
-	 * place to scrutinize the destination address syntax. We have a
-	 * complete queue file, so bouncing is easy. That luxury is not
-	 * available to the cleanup service. The main issue is that we want
-	 * to have this test in one place, instead of having to do this in
-	 * every front-ent program.
-	 */
-	if ((at = strrchr(recipient->address, '@')) != 0
-	    && (at + 1)[strspn(at + 1, "[]0123456789.")] != 0
-	    && valid_hostname(at + 1, DONT_GRIPE) == 0) {
-	    qmgr_bounce_recipient(message, recipient,
-				  "bad host/domain syntax: \"%s\"", at + 1);
-	    continue;
-	}
-
-	/*
 	 * Resolve the destination to (transport, nexthop, address). The
 	 * result address may differ from the one specified by the sender.
 	 */
@@ -616,9 +600,12 @@ static void qmgr_message_resolve(QMGR_MESSAGE *message)
 	 * on the recipient delimiter if one is defined, but doing a proper
 	 * job requires knowledge of local aliases. Yuck! I don't want to
 	 * duplicate delivery-agent specific knowledge in the queue manager.
+	 * 
 	 * XXX The nexthop field is overloaded to serve as destination and as
 	 * queue name. Should have separate fields for queue name and for
-	 * destination.
+	 * destination, so that we don't have to make a special case for the
+	 * error delivery agent (where nexthop is arbitrary text). See also:
+	 * qmgr_deliver.c.
 	 */
 	at = strrchr(STR(reply.recipient), '@');
 	len = (at ? (at - STR(reply.recipient)) : strlen(STR(reply.recipient)));
@@ -633,7 +620,8 @@ static void qmgr_message_resolve(QMGR_MESSAGE *message)
 		transport = qmgr_transport_create(STR(reply.transport));
 	    queue = 0;
 	}
-	if (transport->recipient_limit == 1) {
+	if (strcmp(transport->name, MAIL_SERVICE_ERROR) != 0
+	    && transport->recipient_limit == 1) {
 	    VSTRING_SPACE(reply.nexthop, len + 2);
 	    memmove(STR(reply.nexthop) + len + 1, STR(reply.nexthop),
 		    LEN(reply.nexthop) + 1);
