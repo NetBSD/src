@@ -97,6 +97,12 @@ openpam_dispatch(pam_handle_t *pamh,
 		RETURNC(PAM_SYSTEM_ERR);
 	}
 
+#ifdef __NetBSD__
+	/* Require chains to exist, so that we don't fail open */
+	if (chain == NULL)
+		RETURNC(PAM_SYSTEM_ERR);
+#endif
+
 	/* execute */
 	for (err = fail = 0; chain != NULL; chain = chain->next) {
 		if (chain->module->func[primitive] == NULL) {
