@@ -1,4 +1,4 @@
-#	$NetBSD: DUMMY,v 1.25 2005/02/18 21:05:53 dsl Exp $
+#	$NetBSD: DUMMY,v 1.26 2005/02/22 14:39:52 chs Exp $
 #
 # DUMMY: Matthias Pfaller's second pc532
 #
@@ -61,7 +61,7 @@ options 	INET			# IP + ICMP + TCP + UDP
 
 # pc532 specific options
 options 	CONSOLE_SPEED=B9600	# default console baud rate
-options 	SCNDEF_CFLAG="CREAD+CS8+HUPCL"
+options 	SCNDEF_CFLAG="CREAD|CS8|HUPCL"
 options 	NS381			# FPU installed
 options 	NO_INLINE_SPLX
 
