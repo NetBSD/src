@@ -1,4 +1,4 @@
-/*	$NetBSD: platid.h,v 1.6 2001/09/24 14:29:31 takemura Exp $	*/
+/*	$NetBSD: platid.h,v 1.1 2002/02/01 18:16:04 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
