@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80321_start.S,v 1.3 2002/04/26 18:01:21 thorpej Exp $	*/
+/*	$NetBSD: iq80321_start.S,v 1.4 2002/10/14 22:32:54 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -50,7 +50,7 @@ _C_LABEL(iq80321_start):
 	 * Note that we may not currently be running VA==PA, which means
 	 * we'll need to leap to the next insn after disabing the MMU.
 	 */
-	add	r8, pc, #(Lunmapped - . - 8)
+	adr	r8, Lunmapped
 	bic	r8, r8, #0xff000000	/* clear upper 8 bits */
 	orr	r8, r8, #0xa0000000	/* OR in physical base address */
 
@@ -84,7 +84,7 @@ Lunmapped:
 	/*
 	 * Step 1: Map the entire address space VA==PA.
 	 */
-	add	r0, pc, #(Ltable - . - 8)
+	adr	r0, Ltable
 	ldr	r0, [r0]			/* r0 = &l1table */
 
 	mov	r3, #(L1_S_AP(AP_KRW))
@@ -100,7 +100,7 @@ Lunmapped:
 	/*
 	 * Step 2: Map VA 0xc0000000->0xc3ffffff to PA 0xa0000000->0xa3ffffff.
 	 */
-	add	r0, pc, #(Ltable - . - 8)	/* r0 = &l1table */
+	adr	r0, Ltable			/* r0 = &l1table */
 	ldr	r0, [r0]
 
 	mov	r3, #(L1_S_AP(AP_KRW))
@@ -115,7 +115,7 @@ Lunmapped:
 	bgt	1b
 
 	/* OK!  Page table is set up.  Give it to the CPU. */
-	add	r0, pc, #(Ltable - . - 8)
+	adr	r0, Ltable
 	ldr	r0, [r0]
 	mcr	p15, 0, r0, c2, c0, 0
 
@@ -127,8 +127,7 @@ Lunmapped:
 	mcr	p15, 0, r0, c3, c0, 0
 
 	/* Get ready to jump to the "real" kernel entry point... */
-	add	r0, pc, #(Lstart - . - 8)
-	ldr	r0, [r0]
+	ldr	r0, Lstart
 
 	/* OK, let's enable the MMU. */
 	mrc	p15, 0, r2, c1, c0, 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_irq.S,v 1.2 2001/10/29 14:23:35 rearnsha Exp $
+/*	$NetBSD: ifpga_irq.S,v 1.3 2002/10/14 22:32:53 bjh21 Exp $
 
 /*
  * Copyright (c) 1998 Mark Brinicombe.
@@ -251,7 +251,7 @@ irqloop:
 	
 	teq	r6, #0x00000000		/* Do we have a handler */
 	moveq	r0, r8			/* IRQ requests as arg 0 */
-	addeq	lr, pc, #nextirq - . - 8   /* return address */
+	adreq	lr, nextirq		/* return address */
 	bic	r11, r11, r10		/* clear the IRQ bit */
 	beq	_C_LABEL(stray_irqhandler) /* call special handler */
 	
@@ -275,9 +275,9 @@ irqloop:
 
 irqchainloop:
 	ldr	r0, [r6, #(IH_ARG)]	/* Get argument pointer */
-	add	lr, pc, #nextinchain - . - 8	/* return address */
 	teq	r0, #0x00000000		/* If arg is zero pass stack frame */
 	addeq	r0, sp, #8		/* ... stack frame [XXX needs care] */
+	mov	lr, pc			/* return address */
 	ldr	pc, [r6, #(IH_FUNC)]	/* Call handler */
 
 nextinchain:
