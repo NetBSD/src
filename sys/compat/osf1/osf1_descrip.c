@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_descrip.c,v 1.6 2000/06/28 15:39:33 mrg Exp $ */
+/* $NetBSD: osf1_descrip.c,v 1.7 2001/04/04 19:52:18 ross Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -264,6 +264,52 @@ osf1_sys_fstat(p, v, retval)
 		/*NOTREACHED*/
 	}
 	osf1_cvt_stat_from_native(&ub, &oub);
+	if (error == 0)
+		error = copyout((caddr_t)&oub, (caddr_t)SCARG(uap, sb),
+		    sizeof (oub));
+
+	FILE_UNUSE(fp, p);
+	return (error);
+}
+
+/*
+ * Return status information about a file descriptor.
+ */
+int
+osf1_sys_fstat2(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct osf1_sys_fstat2_args *uap = v;
+	struct filedesc *fdp = p->p_fd;
+	struct file *fp;
+	struct stat ub;
+	struct osf1_stat2 oub;
+	int error;
+
+	if ((unsigned)SCARG(uap, fd) >= fdp->fd_nfiles ||
+	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL ||
+	    (fp->f_iflags & FIF_WANTCLOSE) != 0)
+		return (EBADF);
+
+	FILE_USE(fp);
+
+	switch (fp->f_type) {
+
+	case DTYPE_VNODE:
+		error = vn_stat((struct vnode *)fp->f_data, &ub, p);
+		break;
+
+	case DTYPE_SOCKET:
+		error = soo_stat((struct socket *)fp->f_data, &ub);
+		break;
+
+	default:
+		panic("ofstat");
+		/*NOTREACHED*/
+	}
+	osf1_cvt_stat2_from_native(&ub, &oub);
 	if (error == 0)
 		error = copyout((caddr_t)&oub, (caddr_t)SCARG(uap, sb),
 		    sizeof (oub));
