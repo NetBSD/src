@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.102 1999/12/21 13:00:18 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.103 2000/01/25 07:13:45 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.102 1999/12/21 13:00:18 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.103 2000/01/25 07:13:45 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -376,7 +376,7 @@ cleanup_parse_url:
 			    thost, desc, origurl);
 			goto cleanup_parse_url;
 		}
-		len = ep - cp;		/* change `[xxx]' -> `xxx' */
+		len = ep - cp;		/* change `[xyz]' -> `xyz' */
 		memmove(thost, thost + 1, len);
 		thost[len] = '\0';
 		if (! isipv6addr(thost)) {
@@ -1182,6 +1182,15 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 				goto cleanup_fetch_url;
 			}
 			chunksize = strtol(xferbuf, &ep, 16);
+
+				/*
+				 * XXX:	Work around bug in Apache 1.3.9, which
+				 *	incorrectly puts a trailing space after
+				 *	the chunksize.
+				 */
+			if (*ep == ' ')
+				ep++;
+
 			if (strcmp(ep, "\r\n") != 0) {
 				warnx("Unexpected data following chunksize");
 				goto cleanup_fetch_url;
