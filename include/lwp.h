@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.1.2.1 2001/03/05 23:33:26 nathanw Exp $	*/
+/*	$NetBSD: lwp.h,v 1.1.2.2 2002/02/03 20:15:26 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -50,6 +50,7 @@ int	_lwp_exit(void);
 int	_lwp_wait(lwpid_t, lwpid_t *);
 int	_lwp_suspend(lwpid_t);
 int	_lwp_continue(lwpid_t);
+int	_lwp_wakeup(lwpid_t);
 void	_lwp_makecontext(ucontext_t *, void (*)(void *), void *, void *, 
 	caddr_t, size_t);
 __END_DECLS
