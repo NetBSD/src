@@ -38,7 +38,7 @@
  *
  *	from: Utah Hdr: mem.c 1.13 89/10/08
  *	from: @(#)mem.c 7.2 (Berkeley) 5/9/91
- *	$Id: mem.c,v 1.20 1994/05/23 03:02:39 cgd Exp $
+ *	$Id: mem.c,v 1.21 1994/05/24 02:37:59 cgd Exp $
  */
 
 /*
@@ -123,8 +123,8 @@ mmrw(dev, uio, flags)
 				TRUE);
 			o = (int)uio->uio_offset & PGOFSET;
 			c = (u_int)(NBPG - ((int)iov->iov_base & PGOFSET));
-			c = MIN(c, (u_int)(NBPG - o));
-			c = MIN(c, (u_int)iov->iov_len);
+			c = min(c, (u_int)(NBPG - o));
+			c = min(c, (u_int)iov->iov_len);
 			error = uiomove((caddr_t)&vmmap[o], (int)c, uio);
 			pmap_remove(kernel_pmap, (vm_offset_t)vmmap,
 			    (vm_offset_t)&vmmap[NBPG]);
@@ -158,7 +158,7 @@ mmrw(dev, uio, flags)
 				    malloc(CLBYTES, M_TEMP, M_WAITOK);
 				bzero(zbuf, CLBYTES);
 			}
-			c = MIN(iov->iov_len, CLBYTES);
+			c = min(iov->iov_len, CLBYTES);
 			error = uiomove(zbuf, (int)c, uio);
 			continue;
 

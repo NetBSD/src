@@ -1,5 +1,5 @@
 /*
- *	$Id: isofs_vnops.c,v 1.17 1994/04/25 03:49:32 cgd Exp $
+ *	$Id: isofs_vnops.c,v 1.18 1994/05/24 02:38:39 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -196,7 +196,7 @@ isofs_read(vp, uio, ioflag, cred)
 	do {
 		lbn = iso_lblkno(imp, uio->uio_offset);
 		on = iso_blkoff(imp, uio->uio_offset);
-		n = MIN((unsigned)(imp->logical_block_size - on), uio->uio_resid);
+		n = min((unsigned)(imp->logical_block_size - on), uio->uio_resid);
 		diff = ip->i_size - uio->uio_offset;
 		if (diff <= 0)
 			return (0);
@@ -211,7 +211,7 @@ isofs_read(vp, uio, ioflag, cred)
 		else
 			error = bread(ITOV(ip), lbn, size, NOCRED, &bp);
 		vp->v_lastr = lbn;
-		n = MIN(n, size - bp->b_resid);
+		n = min(n, size - bp->b_resid);
 		if (error) {
 			brelse(bp);
 			return (error);

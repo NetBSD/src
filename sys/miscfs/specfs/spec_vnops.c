@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)spec_vnops.c	7.37 (Berkeley) 5/30/91
- *	$Id: spec_vnops.c,v 1.13 1994/04/21 07:48:55 cgd Exp $
+ *	$Id: spec_vnops.c,v 1.14 1994/05/24 02:36:33 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -213,14 +213,14 @@ spec_read(vp, uio, ioflag, cred)
 		do {
 			bn = (uio->uio_offset / DEV_BSIZE) &~ (bscale - 1);
 			on = uio->uio_offset % bsize;
-			n = MIN((unsigned)(bsize - on), uio->uio_resid);
+			n = min((unsigned)(bsize - on), uio->uio_resid);
 			if (vp->v_lastr + bscale == bn)
 				error = breada(vp, bn, (int)bsize, bn + bscale,
 					(int)bsize, NOCRED, &bp);
 			else
 				error = bread(vp, bn, (int)bsize, NOCRED, &bp);
 			vp->v_lastr = bn;
-			n = MIN(n, bsize - bp->b_resid);
+			n = min(n, bsize - bp->b_resid);
 			if (error) {
 				brelse(bp);
 				return (error);
@@ -300,12 +300,12 @@ spec_write(vp, uio, ioflag, cred)
 		do {
 			bn = (uio->uio_offset / DEV_BSIZE) &~ blkmask;
 			on = uio->uio_offset % bsize;
-			n = MIN((unsigned)(bsize - on), uio->uio_resid);
+			n = min((unsigned)(bsize - on), uio->uio_resid);
 			if (n == bsize)
 				bp = getblk(vp, bn, bsize, 0, 0);
 			else
 				error = bread(vp, bn, bsize, NOCRED, &bp);
-			n = MIN(n, bsize - bp->b_resid);
+			n = min(n, bsize - bp->b_resid);
 			if (error) {
 				brelse(bp);
 				return (error);
