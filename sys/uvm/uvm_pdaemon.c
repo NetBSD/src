@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.40 2001/11/06 06:28:22 simonb Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.41 2001/11/06 08:07:52 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -553,6 +553,12 @@ uvmpd_scan_inactive(pglst)
 					anon->u.an_page = NULL;
 				}
 				simple_unlock(slock);
+
+				/* this page is now only in swap. */
+				simple_lock(&uvm.swap_data_lock);
+				KASSERT(uvmexp.swpgonly < uvmexp.swpginuse);
+				uvmexp.swpgonly++;
+				simple_unlock(&uvm.swap_data_lock);
 				continue;
 			}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.46 2001/09/15 20:36:45 chs Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.47 2001/11/06 08:07:49 chs Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -454,6 +454,7 @@ uao_free(aobj)
 	 */
 
 	simple_lock(&uvm.swap_data_lock);
+	KASSERT(uvmexp.swpgonly >= swpgonlydelta);
 	uvmexp.swpgonly -= swpgonlydelta;
 	simple_unlock(&uvm.swap_data_lock);
 }
@@ -963,9 +964,9 @@ uao_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 				    NULL, UVM_PGA_ZERO);
 				if (ptmp) {
 					/* new page */
-					ptmp->flags &= ~(PG_BUSY|PG_FAKE);
+					ptmp->flags &= ~(PG_FAKE);
 					ptmp->pqflags |= PQ_AOBJ;
-					UVM_PAGE_OWN(ptmp, NULL);
+					goto gotpage;
 				}
 			}
 
@@ -989,6 +990,7 @@ uao_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 			/* caller must un-busy this page */
 			ptmp->flags |= PG_BUSY;
 			UVM_PAGE_OWN(ptmp, "uao_get1");
+gotpage:
 			pps[lcv] = ptmp;
 			gotpages++;
 		}
@@ -1214,7 +1216,6 @@ uao_dropswap(uobj, pageidx)
 		uvm_swap_free(slot, 1);
 	}
 }
-
 
 /*
  * page in every page in every aobj that is paged-out to a range of swslots.

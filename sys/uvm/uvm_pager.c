@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.52 2001/11/06 06:28:22 simonb Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.53 2001/11/06 08:07:51 chs Exp $	*/
 
 /*
  *
@@ -314,9 +314,9 @@ uvm_aio_aiodone(bp)
 	}
 	uvm_pagermapout((vaddr_t)bp->b_data, npages);
 
-	swap = (pgs[0]->pqflags & PQ_SWAPBACKED) != 0;
 	swslot = 0;
 	slock = NULL;
+	swap = (pgs[0]->pqflags & PQ_SWAPBACKED) != 0;
 	pageout = (pgs[0]->flags & PG_PAGEOUT) != 0;
 	if (!swap) {
 		uobj = pgs[0]->uobject;
@@ -364,7 +364,6 @@ uvm_aio_aiodone(bp)
 
 		if (error) {
 			if (!write) {
-				KASSERT(!swap);
 				pg->flags |= PG_RELEASED;
 				continue;
 			} else if (error == ENOMEM) {
@@ -380,6 +379,8 @@ uvm_aio_aiodone(bp)
 		/*
 		 * if the page is PG_FAKE, this must have been a read to
 		 * initialize the page.  clear PG_FAKE and activate the page.
+		 * we must also clear the pmap "modified" flag since it may
+		 * still be set from the page's previous identity.
 		 */
 
 		if (pg->flags & PG_FAKE) {
@@ -390,14 +391,11 @@ uvm_aio_aiodone(bp)
 		}
 
 		/*
-		 * for async reads, this may be the first time the page
-		 * is unlocked after being created, so we need to be sure
-		 * the page is on a paging queue.
+		 * do accounting for pagedaemon i/o and arrange to free
+		 * the pages instead of just unbusying them.
 		 */
 
-		if (!write) {
-			uvm_pageactivate(pg);
-		} else if (pg->flags & PG_PAGEOUT) {
+		if (pg->flags & PG_PAGEOUT) {
 			pg->flags &= ~PG_PAGEOUT;
 			uvmexp.paging--;
 			pg->flags |= PG_RELEASED;
@@ -418,7 +416,14 @@ uvm_aio_aiodone(bp)
 		uvm_unlock_pageq();
 		simple_unlock(slock);
 	} else {
-		KASSERT(write && pageout);
+		KASSERT(write);
+		KASSERT(pageout);
+
+		/* these pages are now only in swap. */
+		simple_lock(&uvm.swap_data_lock);
+		KASSERT(uvmexp.swpgonly + npages <= uvmexp.swpginuse);
+		uvmexp.swpgonly += npages;
+		simple_unlock(&uvm.swap_data_lock);
 		if (error) {
 			uvm_swap_markbad(swslot, npages);
 		}
