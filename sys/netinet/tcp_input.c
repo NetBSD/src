@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.27.8.16 1997/06/28 07:54:25 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.27.8.17 1997/06/29 01:32:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -330,7 +330,6 @@ tcp_input(m, va_alist)
 	struct socket *so = NULL;
 	int todrop, acked, ourfinisacked, needoutput = 0;
 	short ostate = 0;
-	struct in_addr laddr;
 	int iss = 0;
 	u_long tiwin;
 	struct tcp_opt_info opti;
@@ -634,79 +633,11 @@ after_listen:
 	}
 
 	switch (tp->t_state) {
-
-	/*
-	 * If the state is LISTEN then ignore segment if it contains an RST.
-	 * If the segment contains an ACK then it is bad and send a RST.
-	 * If it does not contain a SYN then it is not interesting; drop it.
-	 * Don't bother responding if the destination was a broadcast.
-	 * Otherwise initialize tp->rcv_nxt, and tp->irs, select an initial
-	 * tp->iss, and send a segment:
-	 *     <SEQ=ISS><ACK=RCV_NXT><CTL=SYN,ACK>
-	 * Also initialize tp->snd_nxt to tp->iss+1 and tp->snd_una to tp->iss.
-	 * Fill in remote peer address fields if not previously specified.
-	 * Enter SYN_RECEIVED state, and process any other fields of this
-	 * segment in this state.
-	 */
-	case TCPS_LISTEN: {
-		struct mbuf *am;
-		register struct sockaddr_in *sin;
-
-		if (tiflags & TH_RST)
-			goto drop;
-		if (tiflags & TH_ACK)
-			goto dropwithreset;
-		if ((tiflags & TH_SYN) == 0)
-			goto drop;
-		/*
-		 * RFC1122 4.2.3.10, p. 104: discard bcast/mcast SYN
-		 * in_broadcast() should never return true on a received
-		 * packet with M_BCAST not set.
-		 */
-		if (m->m_flags & (M_BCAST|M_MCAST) ||
-		    IN_MULTICAST(ti->ti_dst.s_addr))
-			goto drop;
-		am = m_get(M_DONTWAIT, MT_SONAME);	/* XXX */
-		if (am == NULL)
-			goto drop;
-		am->m_len = sizeof (struct sockaddr_in);
-		sin = mtod(am, struct sockaddr_in *);
-		sin->sin_family = AF_INET;
-		sin->sin_len = sizeof(*sin);
-		sin->sin_addr = ti->ti_src;
-		sin->sin_port = ti->ti_sport;
-		bzero((caddr_t)sin->sin_zero, sizeof(sin->sin_zero));
-		laddr = inp->inp_laddr;
-		if (in_nullhost(laddr))
-			inp->inp_laddr = ti->ti_dst;
-		if (in_pcbconnect(inp, am)) {
-			inp->inp_laddr = laddr;
-			(void) m_free(am);
-			goto drop;
-		}
-		(void) m_free(am);
-		tp->t_template = tcp_template(tp);
-		if (tp->t_template == 0) {
-			tp = tcp_drop(tp, ENOBUFS);
-			goto drop;
-		}
-		if (optp)
-			tcp_dooptions(tp, optp, optlen, ti, &opti);
-		if (iss)
-			tp->iss = iss;
-		else
-			tp->iss = tcp_iss;
-		tcp_iss += TCP_ISSINCR/2;
-		tp->irs = ti->ti_seq;
-		tcp_sendseqinit(tp);
-		tcp_rcvseqinit(tp);
-		tp->t_flags |= TF_ACKNOW;
-		tp->t_state = TCPS_SYN_RECEIVED;
-		tp->t_timer[TCPT_KEEP] = TCPTV_KEEP_INIT;
-		tcpstat.tcps_accepts++;
-		tcp_mss(tp, opti.maxseg);
-		goto trimthenstep6;
-		}
+#ifdef DIAGNOSTIC
+	case TCPS_LISTEN:
+		panic("tcp_input: TCPS_LISTEN");
+		/* NOTREACHED */
+#endif
 
 	/*
 	 * If the state is SYN_SENT:
@@ -764,7 +695,6 @@ after_listen:
 		} else
 			tp->t_state = TCPS_SYN_RECEIVED;
 
-trimthenstep6:
 		/*
 		 * Advance ti->ti_seq to correspond to first data byte.
 		 * If data, trim to stay within window,
@@ -1827,8 +1757,10 @@ syn_cache_insert(sc, prevp, headp)
 	 */
 	if (scp->sch_first == NULL)
 		*prevp = &scp->sch_first;
-	else
+	else {
 		*prevp = &scp->sch_last->sc_next;
+		tcpstat.tcps_sc_collisions++;
+	}
 	**prevp = sc;
 	scp->sch_last = sc;
 
@@ -1964,6 +1896,8 @@ syn_cache_get(so, m)
 	register struct inpcb *inp;
 	register struct tcpcb *tp = 0;
 	register struct tcpiphdr *ti;
+	struct sockaddr_in *sin;
+	struct mbuf *am;
 	long win;
 	int s;
 
@@ -2011,16 +1945,31 @@ syn_cache_get(so, m)
 	inp = sotoinpcb(so);
 	inp->inp_laddr = sc->sc_dst;
 	inp->inp_lport = sc->sc_dport;
-	inp->inp_faddr = sc->sc_src;
-	inp->inp_fport = sc->sc_sport;
 	in_pcbstate(inp, INP_BOUND);
 #if BSD>=43
 	inp->inp_options = ip_srcroute();
 #endif
 
-	tp = intotcpcb(inp);
-	tp->t_state = TCPS_SYN_RECEIVED;
+	am = m_get(M_DONTWAIT, MT_SONAME);	/* XXX */
+	if (am == NULL) {
+		soabort(so);
+		goto done;
+	}
+	am->m_len = sizeof(struct sockaddr_in);
+	sin = mtod(am, struct sockaddr_in *);
+	sin->sin_family = AF_INET;
+	sin->sin_len = sizeof(*sin);
+	sin->sin_addr = sc->sc_src;
+	sin->sin_port = sc->sc_sport;
+	bzero((caddr_t)sin->sin_zero, sizeof(sin->sin_zero));
+	if (in_pcbconnect(inp, am)) {
+		(void) m_free(am);
+		soabort(so);
+		goto done;
+	}
+	(void) m_free(am);
 
+	tp = intotcpcb(inp);
 	if (sc->sc_request_r_scale != 15) {
 		tp->requested_s_scale = sc->sc_requested_s_scale;
 		tp->request_r_scale = sc->sc_request_r_scale;
@@ -2033,18 +1982,21 @@ syn_cache_get(so, m)
 
 	tp->t_template = tcp_template(tp);
 	if (tp->t_template == 0) {
-		tp = tcp_drop(tp, ENOBUFS);
+		tp = tcp_drop(tp, ENOBUFS);	/* destroys socket */
 		so = (struct socket *)(-1);
 		m_freem(m);
 		tcpstat.tcps_sc_aborted++;
 		goto done;
 	}
+
 	tp->iss = sc->sc_iss;
 	tp->irs = sc->sc_irs;
 	tcp_sendseqinit(tp);
 	tcp_rcvseqinit(tp);
+	tp->t_state = TCPS_SYN_RECEIVED;
 	tp->t_timer[TCPT_KEEP] = TCPTV_KEEP_INIT;
 	tcpstat.tcps_accepts++;
+
 	tcp_mss(tp, sc->sc_peermaxseg);
 	tp->snd_wl1 = sc->sc_irs;
 	tp->rcv_up = sc->sc_irs + 1;
@@ -2128,8 +2080,9 @@ syn_cache_unreach(ip, th)
 
 /*
  * Given a LISTEN socket and an inbound SYN request, add
- * this to the syn cache, and send back a SYN,ACK to the
- * source.
+ * this to the syn cache, and send back a segment:
+ *	<SEQ=ISS><ACK=RCV_NXT><CTL=SYN,ACK>
+ * to the source.
  */
 
 int
@@ -2149,6 +2102,11 @@ syn_cache_add(so, m, optp, optlen, oi)
 
 	ti = mtod(m, struct tcpiphdr *);
 
+	/*
+	 * RFC1122 4.2.3.10, p. 104: discard bcast/mcast SYN
+	 * in_broadcast() should never return true on a received
+	 * packet with M_BCAST not set.
+	 */
 	if (m->m_flags & (M_BCAST|M_MCAST) ||
 	    IN_MULTICAST(ti->ti_src.s_addr) ||
 	    IN_MULTICAST(ti->ti_dst.s_addr))
@@ -2192,7 +2150,7 @@ syn_cache_add(so, m, optp, optlen, oi)
 	sc->sc_dport = ti->ti_dport;
 	sc->sc_irs = ti->ti_seq;
 	sc->sc_iss = tcp_iss;
-	tcp_iss += TCP_ISSINCR/4;
+	tcp_iss += TCP_ISSINCR/2;
 	sc->sc_peermaxseg = oi->maxseg;
 	sc->sc_tstmp = (tb.t_flags & TF_RCVD_TSTMP) ? 1 : 0;
 	if ((tb.t_flags & (TF_RCVD_SCALE|TF_REQ_SCALE)) ==
