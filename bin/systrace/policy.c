@@ -1,4 +1,4 @@
-/*	$NetBSD: policy.c,v 1.10 2002/12/04 03:19:05 provos Exp $	*/
+/*	$NetBSD: policy.c,v 1.11 2003/03/26 17:00:57 atatat Exp $	*/
 /*	$OpenBSD: policy.c,v 1.15 2002/08/07 00:34:17 vincent Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: policy.c,v 1.10 2002/12/04 03:19:05 provos Exp $");
+__RCSID("$NetBSD: policy.c,v 1.11 2003/03/26 17:00:57 atatat Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -134,7 +134,7 @@ systrace_setupdir(char *path)
 		if (!(sb.st_mode & S_IFDIR))
 			errx(1, "Not a directory: \"%s\"", policydir);
 	} else if (mkdir(policydir, 0700) == -1)
-		err(1, "mdkdir(%s)", policydir);
+		err(1, "mkdir(%s)", policydir);
 }
 
 int
