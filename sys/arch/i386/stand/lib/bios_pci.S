@@ -1,4 +1,4 @@
-/*	$NetBSD: bios_pci.S,v 1.2 1997/06/13 13:32:09 drochner Exp $	*/
+/*	$NetBSD: bios_pci.S,v 1.3 1997/08/18 22:44:01 hannken Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -70,7 +70,7 @@ ENTRY(pcibios_present)
 ok1:
 	data32
 	movl	$0,%ebx
-	mov	%eax, %ebx		# !!! at run time, it's mov %ax,%bx
+	mov	%eax, %ebx		# !!! at run time, it is mov %ax,%bx
 err1:
 	data32
 	call	_C_LABEL(real_to_prot) # back to protected mode
