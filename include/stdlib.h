@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.20 1994/10/26 00:56:29 cgd Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.21 1994/12/16 06:22:56 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -156,6 +156,7 @@ int	 sradixsort __P((const unsigned char **, int, const unsigned char *,
 
 char	*initstate __P((unsigned, char *, int));
 long	 random __P((void));
+char	 realpath __P((const char *, char *));
 char	*setstate __P((char *));
 void	 srandom __P((unsigned));
 
