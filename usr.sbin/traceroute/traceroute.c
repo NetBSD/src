@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.49 2002/08/01 08:41:32 itojun Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.50 2002/08/01 09:02:18 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: traceroute.c,v 1.49 2002/08/01 08:41:32 itojun Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.50 2002/08/01 09:02:18 itojun Exp $");
 #endif
 #endif
 
@@ -383,19 +383,19 @@ int	setpolicy(int so, char *policy);
 int
 main(int argc, char **argv)
 {
-	register int op, code, n;
-	register char *cp;
-	register u_char *outp;
-	register u_int32_t *ap;
-	register struct sockaddr_in *from = &wherefrom;
-	register struct sockaddr_in *to = (struct sockaddr_in *)&whereto;
-	register struct hostinfo *hi;
+	int op, code, n;
+	char *cp;
+	u_char *outp;
+	u_int32_t *ap;
+	struct sockaddr_in *from = &wherefrom;
+	struct sockaddr_in *to = (struct sockaddr_in *)&whereto;
+	struct hostinfo *hi;
 	int on = 1;
-	register int ttl, probe, i;
-	register int seq = 0;
+	int ttl, probe, i;
+	int seq = 0;
 	int tos = 0, settos = 0, ttl_flag = 0;
-	register int lsrr = 0;
-	register u_int16_t off = 0;
+	int lsrr = 0;
+	u_int16_t off = 0;
 	struct ifaddrlist *al, *al2;
 	char errbuf[132];
 	int mib[4] = { CTL_NET, PF_INET, IPPROTO_IP, IPCTL_DEFTTL };
@@ -593,7 +593,7 @@ main(int argc, char **argv)
 	outp = (u_char *)(outip + 1);
 #ifdef HAVE_RAW_OPTIONS
 	if (lsrr > 0) {
-		register u_char *optlist;
+		u_char *optlist;
 
 		optlist = outp;
 		outp += optlen;
@@ -907,10 +907,10 @@ main(int argc, char **argv)
 again:
 		printed_ttl = 0;
 		for (probe = 0; probe < nprobes; ++probe) {
-			register int cc;
+			int cc;
 			struct timeval t1, t2;
 			struct timezone tz;
-			register struct ip *ip;
+			struct ip *ip;
 			(void)gettimeofday(&t1, &tz);
 			send_probe(++seq, ttl, &t1);
 			while ((cc = wait_for_reply(s, from, &t1)) != 0) {
@@ -1023,14 +1023,13 @@ again:
 }
 
 int
-wait_for_reply(register int sock, register struct sockaddr_in *fromp,
-    register struct timeval *tp)
+wait_for_reply(int sock, struct sockaddr_in *fromp, struct timeval *tp)
 {
 	fd_set *fdsp;
 	size_t nfds;
 	struct timeval now, wait;
 	struct timezone tz;
-	register int cc = 0;
+	int cc = 0;
 	int fromlen = sizeof(*fromp);
 	int retval;
 
@@ -1090,10 +1089,10 @@ dump_packet()
 }
 
 void
-send_probe(register int seq, int ttl, register struct timeval *tp)
+send_probe(int seq, int ttl, struct timeval *tp)
 {
-	register int cc;
-	register struct udpiphdr * ui;
+	int cc;
+	struct udpiphdr * ui;
 	int oldmtu = packlen;
 
 again:
@@ -1167,8 +1166,8 @@ again:
 
 	/* XXX undocumented debugging hack */
 	if (verbose > 1) {
-		register const u_int16_t *sp;
-		register int nshorts, i;
+		const u_int16_t *sp;
+		int nshorts, i;
 
 		sp = (u_int16_t *)outip;
 		nshorts = (u_int)packlen / sizeof(u_int16_t);
@@ -1246,7 +1245,7 @@ again:
 double
 deltaT(struct timeval *t1p, struct timeval *t2p)
 {
-	register double dt;
+	double dt;
 
 	dt = (double)(t2p->tv_sec - t1p->tv_sec) * 1000.0 +
 	     (double)(t2p->tv_usec - t1p->tv_usec) / 1000.0;
@@ -1257,7 +1256,7 @@ deltaT(struct timeval *t1p, struct timeval *t2p)
  * Convert an ICMP "type" field to a printable string.
  */
 char *
-pr_type(register u_char t)
+pr_type(u_char t)
 {
 	static char *ttab[] = {
 	"Echo Reply",	"ICMP 1",	"ICMP 2",	"Dest Unreachable",
@@ -1274,14 +1273,13 @@ pr_type(register u_char t)
 }
 
 int
-packet_ok(register u_char *buf, int cc, register struct sockaddr_in *from,
-    register int seq)
+packet_ok(u_char *buf, int cc, struct sockaddr_in *from, int seq)
 {
-	register struct icmp *icp;
-	register u_char type, code;
-	register int hlen;
+	struct icmp *icp;
+	u_char type, code;
+	int hlen;
 #ifndef ARCHAIC
-	register struct ip *ip;
+	struct ip *ip;
 
 	ip = (struct ip *) buf;
 	hlen = ip->ip_hl << 2;
@@ -1300,9 +1298,9 @@ packet_ok(register u_char *buf, int cc, register struct sockaddr_in *from,
 	code = icp->icmp_code;
 	if ((type == ICMP_TIMXCEED && code == ICMP_TIMXCEED_INTRANS) ||
 	    type == ICMP_UNREACH || type == ICMP_ECHOREPLY) {
-		register struct ip *hip;
-		register struct udphdr *up;
-		register struct icmp *hicmp;
+		struct ip *hip;
+		struct udphdr *up;
+		struct icmp *hicmp;
 
 		hip = &icp->icmp_ip;
 		hlen = hip->ip_hl << 2;
@@ -1335,7 +1333,7 @@ packet_ok(register u_char *buf, int cc, register struct sockaddr_in *from,
 	}
 #ifndef ARCHAIC
 	if (verbose) {
-		register int i;
+		int i;
 		u_int32_t *lp = (u_int32_t *)&icp->icmp_ip;
 
 		Printf("\n%d bytes from %s to ", cc, inet_ntoa(from->sin_addr));
@@ -1363,10 +1361,10 @@ void resize_packet(void)
 }
 
 void
-print(register u_char *buf, register int cc, register struct sockaddr_in *from)
+print(u_char *buf, int cc, struct sockaddr_in *from)
 {
-	register struct ip *ip;
-	register int hlen;
+	struct ip *ip;
+	int hlen;
 
 	ip = (struct ip *) buf;
 	hlen = ip->ip_hl << 2;
@@ -1396,12 +1394,12 @@ in_cksum(u_int16_t *addr, int len)
  * Checksum routine for Internet Protocol family headers (C Version)
  */
 u_int16_t
-in_cksum2(u_int16_t seed, register u_int16_t *addr, register int len)
+in_cksum2(u_int16_t seed, u_int16_t *addr, int len)
 {
-	register int nleft = len;
-	register u_int16_t *w = addr;
-	register u_int16_t answer;
-	register int32_t sum = seed;
+	int nleft = len;
+	u_int16_t *w = addr;
+	u_int16_t answer;
+	int32_t sum = seed;
 
 	/*
 	 *  Our algorithm is simple, using a 32 bit accumulator (sum),
@@ -1432,7 +1430,7 @@ in_cksum2(u_int16_t seed, register u_int16_t *addr, register int len)
  * Out is assumed to be >= in.
  */
 void
-tvsub(register struct timeval *out, register struct timeval *in)
+tvsub(struct timeval *out, struct timeval *in)
 {
 
 	if ((out->tv_usec -= in->tv_usec) < 0)   {
@@ -1450,8 +1448,8 @@ tvsub(register struct timeval *out, register struct timeval *in)
 char *
 inetname(struct in_addr in)
 {
-	register char *cp;
-	register struct hostent *hp;
+	char *cp;
+	struct hostent *hp;
 	static int first = 1;
 	static char domain[MAXHOSTNAMELEN + 1], line[MAXHOSTNAMELEN + 1];
 
@@ -1481,13 +1479,13 @@ inetname(struct in_addr in)
 }
 
 struct hostinfo *
-gethostinfo(register char *hostname)
+gethostinfo(char *hostname)
 {
-	register int n;
-	register struct hostent *hp;
-	register struct hostinfo *hi;
-	register char **p;
-	register u_int32_t *ap;
+	int n;
+	struct hostent *hp;
+	struct hostinfo *hi;
+	char **p;
+	u_int32_t *ap;
 	struct in_addr addr;
 
 	hi = calloc(1, sizeof(*hi));
@@ -1532,7 +1530,7 @@ gethostinfo(register char *hostname)
 }
 
 void
-freehostinfo(register struct hostinfo *hi)
+freehostinfo(struct hostinfo *hi)
 {
 	if (hi->name != NULL) {
 		free(hi->name);
@@ -1543,9 +1541,9 @@ freehostinfo(register struct hostinfo *hi)
 }
 
 void
-getaddr(register u_int32_t *ap, register char *hostname)
+getaddr(u_int32_t *ap, char *hostname)
 {
-	register struct hostinfo *hi;
+	struct hostinfo *hi;
 
 	hi = gethostinfo(hostname);
 	*ap = hi->addrs[0];
@@ -1553,7 +1551,7 @@ getaddr(register u_int32_t *ap, register char *hostname)
 }
 
 void
-setsin(register struct sockaddr_in *sin, register u_int32_t addr)
+setsin(struct sockaddr_in *sin, u_int32_t addr)
 {
 
 	memset(sin, 0, sizeof(*sin));
@@ -1566,11 +1564,10 @@ setsin(register struct sockaddr_in *sin, register u_int32_t addr)
 
 /* String to value with optional min and max. Handles decimal and hex. */
 int
-str2val(register const char *str, register const char *what,
-    register int mi, register int ma)
+str2val(const char *str, const char *what, int mi, int ma)
 {
-	register const char *cp;
-	register int val;
+	const char *cp;
+	int val;
 	char *ep;
 
 	if (str[0] == '0' && (str[1] == 'x' || str[1] == 'X')) {
