@@ -1,4 +1,4 @@
-#	$Id: AMIGA,v 1.7 1994/04/12 15:44:28 chopps Exp $
+#	$Id: AMIGA,v 1.8 1994/04/15 02:33:04 chopps Exp $
 
 machine		"amiga"
 #cpu		"M68020"
@@ -14,6 +14,7 @@ maxusers	16
 maxfdescs	2048
 
 # Standard options
+options		"COMPAT_09"
 #options	QUOTA
 options		SWAPPAGER,VNODEPAGER,DEVPAGER,BANKEDDEVPAGER
 options		INET
