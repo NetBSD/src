@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.14 1998/11/28 22:44:22 eeh Exp $
+#	$NetBSD: Makefile.inc,v 1.15 1999/01/11 10:59:25 christos Exp $
 
 .if !defined(GCC_MAKEFILE_INC)
 GCC_MAKEFILE_INC=1
@@ -10,6 +10,7 @@ GCC_MAKEFILE_INC=1
     (${MACHINE_ARCH} == "sparc") || (${MACHINE_ARCH} == "sparc64")
 USE_EGCS_HAIFA=1
 .endif
+#NOMAN=1
 
 # gcc has files with a "rs6000" prefix for powerpc
 GNU_ARCH.powerpc=rs6000
@@ -26,6 +27,11 @@ CPPFLAGS+=	-I${.CURDIR}/../arch \
 		-I${DIST} \
 		-I${DIST}/config \
 		-DIN_GCC -DNETBSD_NATIVE
+
+.if (${OBJECT_FMT} == "ELF") && (${MACHINE_ARCH} == "i386")
+CPPFLAGS+=-DDEFAULT_ELF
+.endif
+
 HOST_CPPFLAGS=	${CPPFLAGS}
 
 LDADD+=		-lgnumalloc
