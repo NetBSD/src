@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv.c,v 1.2 1996/10/02 18:21:03 ws Exp $	*/
+/*	$NetBSD: ypserv.c,v 1.3 1997/03/05 07:19:52 mikel Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -279,6 +279,12 @@ main(argc, argv)
 	if (xflag)
 		exit(1);
 
+#ifndef RPC_SVC_FG
+	if (daemon(0, 0))
+		err(1, "can't detach");
+	openlog("ypserv", LOG_PID, LOG_DAEMON);
+#endif
+
 	{
 		FILE *pidfile = fopen(YPSERV_PID_PATH, "w");
 
@@ -289,11 +295,6 @@ main(argc, argv)
 			err(1, "can't write PID file");
 	}
 
-#ifndef RPC_SVC_FG
-	if (daemon(0, 0))
-		err(1, "can't detatch");
-		openlog("ypserv", LOG_PID, LOG_DAEMON);
-#endif
 	sock = RPC_ANYSOCK;
 	(void) pmap_unset(YPPROG, YPVERS);
 
