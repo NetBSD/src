@@ -1,4 +1,4 @@
-/*	$NetBSD: utmp_update.c,v 1.5 2002/12/18 15:20:47 christos Exp $	 */
+/*	$NetBSD: utmp_update.c,v 1.6 2003/02/26 18:16:50 christos Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: utmp_update.c,v 1.5 2002/12/18 15:20:47 christos Exp $");
+__RCSID("$NetBSD: utmp_update.c,v 1.6 2003/02/26 18:16:50 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -64,11 +64,12 @@ main(int argc, char *argv[])
 	struct passwd *pwd;
 	struct stat st;
 	int fd;
-	uid_t euid;
+	uid_t euid, ruid;
 	char tty[MAXPATHLEN];
 
 	euid = geteuid();
-	if (seteuid(getuid()) == -1)
+	ruid = getuid();
+	if (seteuid(ruid) == -1)
 		err(1, "seteuid");
 
 	if (argc != 2) {
@@ -96,27 +97,44 @@ main(int argc, char *argv[])
 		errx(1, "Invalid utmpx type %d", (int)utx->ut_type);
 	}
 
-	if ((pwd = getpwuid(getuid())) == NULL)
-		errx(1, "User %lu does not exist in password database",
-		    (long)getuid());
+	if (ruid != 0) {
+		if ((pwd = getpwuid(ruid)) == NULL)
+			errx(1, "User %lu does not exist in password database",
+			    (long)ruid);
 
-	if (strcmp(pwd->pw_name, utx->ut_name) != 0)
-		errx(1, "Current user `%s' does not match `%s' in utmpx entry",
-		    pwd->pw_name, utx->ut_name);
+		if (strcmp(pwd->pw_name, utx->ut_name) != 0)
+			errx(1, "Current user `%s' does not match "
+			    "`%s' in utmpx entry", pwd->pw_name, utx->ut_name);
+	}
 
 	(void)snprintf(tty, sizeof(tty), "%s%s", _PATH_DEV, utx->ut_line);
 	fd = open(tty, O_RDONLY, 0);
-	if (fd == -1)
-		err(1, "Cannot open `%s'", tty);
-	if (fstat(fd, &st) == -1)
-		err(1, "Cannot stat `%s'", tty);
-	if (st.st_uid != getuid())
-		errx(1, "%s: Is not owned by you", tty);
-	if (!isatty(fd))
-		errx(1, "%s: Not a tty device", tty);
-	(void)close(fd);
-	if (access(tty, W_OK|R_OK) == -1)
-		err(1, "%s", tty);
+	if (fd != -1) {
+		if (fstat(fd, &st) == -1)
+			err(1, "Cannot stat `%s'", tty);
+		if (ruid != 0 && st.st_uid != ruid)
+			errx(1, "%s: Is not owned by you", tty);
+		if (!isatty(fd))
+			errx(1, "%s: Not a tty device", tty);
+		(void)close(fd);
+		if (access(tty, W_OK|R_OK) == -1)
+			err(1, "%s", tty);
+	} else {
+		struct utmpx utold, *utoldp;
+		/*
+		 * A daemon like ftpd that does not use a tty line? 
+		 * We only allow it to kill its own existing entries 
+		 */
+		if (utx->ut_type != DEAD_PROCESS)
+			err(1, "Cannot open `%s'", tty);
+
+		(void)memcpy(utold.ut_line, utx->ut_line, sizeof(utx->ut_line));
+		if ((utoldp = getutxline(&utold)) == NULL)
+			err(1, "Cannot find existing entry for `%s'",
+			    utx->ut_line);
+		if (utoldp->ut_pid != getppid())
+			err(1, "Cannot modify entry for `%s'", tty);
+	}
 
 	(void)seteuid(euid);
 	if (pututxline(utx) == NULL)
