@@ -1,11 +1,10 @@
-# $NetBSD: GENERIC,v 1.17 2002/11/23 02:35:39 cgd Exp $
+# $NetBSD: GENERIC,v 1.18 2002/12/09 22:54:16 simonb Exp $
 
-include 	"arch/sbmips/conf/std.sbmips.eb"	# big-endian mode
-#include 	"arch/sbmips/conf/std.sbmips.el"	# little-endian mode
+include 	"arch/sbmips/conf/std.sbmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.17 $"
+#ident 		"GENERIC-$Revision: 1.18 $"
 
 #options 	LOCKDEBUG	# XXX XXX XXX XXX
 options 	DEBUG		# extra kernel debugging support
