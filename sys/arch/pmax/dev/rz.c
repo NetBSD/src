@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.58 2000/03/23 06:43:01 thorpej Exp $	*/
+/*	$NetBSD: rz.c,v 1.59 2000/03/30 14:45:05 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.58 2000/03/23 06:43:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.59 2000/03/30 14:45:05 simonb Exp $");
 
 /*
  * SCSI CCS (Command Command Set) disk driver.
@@ -98,9 +98,9 @@ struct disk_parms;
 static void	rzdone __P((int unit, int error, int resid, int status));
 static void	rzgetdefaultlabel __P((struct rz_softc *, struct disklabel *lp));
 static void	rzgetinfo __P((dev_t dev));
-static void	rzlblkstrat __P((register struct buf *bp, register int bsize));
+static void	rzlblkstrat __P((struct buf *bp, int bsize));
 static int	rzprobe __P((void /*struct pmax_scsi_device*/ *sd));
-static int	rzready __P((register struct rz_softc *sc));
+static int	rzready __P((struct rz_softc *sc));
 static void	rzstart __P((int unit));
 
 
