@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.46 1998/01/14 01:15:24 enami Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.47 1998/02/16 22:05:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -161,7 +161,8 @@ emitcfdrivers(fp)
 			    d->d_name) < 0)
 			return (1);
 		if (fprintf(fp, "\tNULL, \"%s\", %s\n",
-			    d->d_name, d->d_class) < 0)
+			    d->d_name, d->d_classattr != NULL ?
+			    d->d_classattr->a_devclass : "DV_DULL") < 0)
 			return (1);
 		if (fprintf(fp, "};\n\n") < 0)
 			return (1);

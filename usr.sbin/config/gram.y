@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.20 1998/01/12 07:37:41 thorpej Exp $	*/
+/*	$NetBSD: gram.y,v 1.21 1998/02/16 22:05:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -97,9 +97,9 @@ static	void	check_maxpart __P((void));
 	int	val;
 }
 
-%token	AND AT ATTACH BUILD CLASS COMPILE_WITH CONFIG DEFINE DEFOPT DEVICE
-%token	DUMPS ENDFILE XFILE XOBJECT FILE_SYSTEM FLAGS INCLUDE XMACHINE
-%token	MAJOR MAKEOPTIONS
+%token	AND AT ATTACH BUILD COMPILE_WITH CONFIG DEFINE DEFOPT DEVICE
+%token	DEVCLASS DUMPS ENDFILE XFILE XOBJECT FILE_SYSTEM FLAGS INCLUDE
+%token	XMACHINE MAJOR MAKEOPTIONS
 %token	MAXUSERS MAXPARTITIONS MINOR ON OPTIONS PSEUDO_DEVICE ROOT SOURCE
 %token	TYPE WITH NEEDS_COUNT NEEDS_FLAG
 %token	<val> NUMBER
@@ -113,7 +113,6 @@ static	void	check_maxpart __P((void));
 %type	<val>	fflgs fflag oflgs oflag
 %type	<str>	rule
 %type	<attr>	attr
-%type	<str>	devclass
 %type	<devb>	devbase
 %type	<deva>	devattach_opt
 %type	<list>	atlist interface_opt
@@ -233,15 +232,16 @@ one_def:
 	file |
 	object |
 	include |
-	DEFINE WORD interface_opt	{ (void)defattr($2, $3); } |
+	DEVCLASS WORD			{ (void)defattr($2, NULL, 1); } |
+	DEFINE WORD interface_opt	{ (void)defattr($2, $3, 0); } |
 	DEFOPT optfile_opt defopts	{ defoption($2, $3); } |
-	DEVICE devbase CLASS devclass interface_opt attrs_opt
-					{ defdev($2, $4, $5, $6, 0); } |
+	DEVICE devbase interface_opt attrs_opt
+					{ defdev($2, $3, $4, 0); } |
 	ATTACH devbase AT atlist devattach_opt attrs_opt
 					{ defdevattach($5, $2, $4, $6); } |
 	MAXPARTITIONS NUMBER		{ maxpartitions = $2; } |
 	MAXUSERS NUMBER NUMBER NUMBER	{ setdefmaxusers($2, $3, $4); } |
-	PSEUDO_DEVICE devbase attrs_opt { defdev($2, NULL, NULL, $3, 1); } |
+	PSEUDO_DEVICE devbase attrs_opt { defdev($2, NULL, $3, 1); } |
 	MAJOR '{' majorlist '}';
 
 atlist:
@@ -261,9 +261,6 @@ defopt:
 
 devbase:
 	WORD				{ $$ = getdevbase($1); };
-
-devclass:
-	WORD				{ $$ = $1; };
 
 devattach_opt:
 	WITH WORD			{ $$ = getdevattach($2); } |
