@@ -27,7 +27,7 @@
  *	i4b daemon - logging routines
  *	-----------------------------
  *
- *	$Id: log.c,v 1.3 2001/01/11 02:44:03 lukem Exp $ 
+ *	$Id: log.c,v 1.4 2002/12/06 15:00:15 thorpej Exp $ 
  *
  * $FreeBSD$
  *
@@ -110,7 +110,7 @@ init_log(void)
 
 		if((p = malloc(strlen(buf) + 1)) == NULL)
 		{
-			log(LL_DBG, "init_log: malloc failed: %s", strerror(errno));
+			logit(LL_DBG, "init_log: malloc failed: %s", strerror(errno));
 			do_exit(1);
 		}
 
@@ -141,7 +141,7 @@ finish_log(void)
  *	place entry into logfile
  *---------------------------------------------------------------------------*/
 void
-log(int what, const char *fmt, ...)
+logit(int what, const char *fmt, ...)
 {
 	char buffer[LOGBUFLEN];
 	register char *dp;
