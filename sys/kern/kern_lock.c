@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.81 2004/08/03 12:08:51 yamt Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.82 2004/08/04 01:16:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.81 2004/08/03 12:08:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.82 2004/08/04 01:16:06 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -776,7 +776,8 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 		/*
 		 * Try to acquire the want_exclusive flag.
 		 */
-		error = acquire(&lkp, &s, extflags, 0, LK_WANT_EXCL);
+		error = acquire(&lkp, &s, extflags, 0,
+		    LK_HAVE_EXCL | LK_WANT_EXCL);
 		if (error)
 			break;
 		lkp->lk_flags |= LK_WANT_EXCL;
@@ -993,7 +994,7 @@ spinlock_acquire_count(__volatile struct lock *lkp, int count)
 	 * Wait for shared locks and upgrades to finish.
 	 */
 	error = acquire(&lkp, &s, LK_SPIN, 0,
-	    LK_SHARE_NONZERO | LK_WANT_UPGRADE);
+	    LK_HAVE_EXCL | LK_SHARE_NONZERO | LK_WANT_UPGRADE);
 	lkp->lk_flags &= ~LK_WANT_EXCL;
 	lkp->lk_flags |= LK_HAVE_EXCL;
 	SETHOLDER(lkp, LK_NOPROC, 0, cpu_id);
