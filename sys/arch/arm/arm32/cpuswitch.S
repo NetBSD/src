@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.3.2.12 2002/08/06 17:45:38 thorpej Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.3.2.13 2002/08/06 19:22:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -452,27 +452,27 @@ switch_resume:
 	 */
 	mov	r4, #0x00000001
 
+	/* Remember the old lwp in r0 */
+	mov	r0, r1
+
 	/*
 	 * If the old lwp on entry to cpu_switch was zero then the
 	 * process that called it was exiting. This means that we do
 	 * not need to save the current context. Instead we can jump
 	 * straight to restoring the context for the new process.
 	 */
-	teq	r1, #0x00000000
+	teq	r0, #0x00000000
 	beq	switch_exited
 
-	/* rem: r1 = old lwp */
+	/* rem: r0 = old lwp */
 	/* rem: r4 = return value */
 	/* rem: r6 = new process */
 	/* rem: interrupts are enabled */
 
 	/* Stage two : Save old context */
 
-	/* Remember the old lwp in r0 */
-	mov	r0, r1
-
 	/* Get the user structure for the old lwp. */
-	ldr	r1, [r1, #(L_ADDR)]
+	ldr	r1, [r0, #(L_ADDR)]
 
 	/* Save all the registers in the old lwp's pcb */
 	add	r7, r1, #(PCB_R8)
@@ -499,27 +499,37 @@ switch_resume:
 
 	/* What else needs to be saved  Only FPA stuff when that is supported */
 
+	/* r1 now free! */
+
 	/* Third phase : restore saved context */
 
-switch_exited:
-	/* Don't allow user space access beween the purge and the switch */
+	/* rem: r0 = old lwp */
+	/* rem: r4 = return value */
+	/* rem: r6 = new lwp */
+	/* rem: interrupts are enabled */
+
+	/*
+	 * Don't allow user space access between the purge and the switch.
+	 */
 	ldr	r3, Lblock_userspace_access
-	ldr	r2, [r3]
-	orr	r0, r2, #1
-	str	r0, [r3]
+	mov	r1, #0x00000001
+	mov	r2, #0x00000000
+	str	r1, [r3]
 
 	stmfd	sp!, {r0-r3}
-	ldr	r0, Lcpufuncs
+	ldr	r1, Lcpufuncs
 	add	lr, pc, #Lcs_cache_purged - . - 8
-	ldr	pc, [r0, #CF_IDCACHE_WBINV_ALL]
+	ldr	pc, [r1, #CF_IDCACHE_WBINV_ALL]
 
 Lcs_cache_purged:
 	ldmfd	sp!, {r0-r3}
 
+Lcs_cache_purge_skipped:
 	/* At this point we need to kill IRQ's again. */
 	IRQdisable
 
-	/* Interrupts are disabled so we can allow user space accesses again
+	/*
+	 * Interrupts are disabled so we can allow user space accesses again
 	 * as none will occur until interrupts are re-enabled after the
 	 * switch.
 	 */
@@ -577,6 +587,17 @@ switch_return:
 	 * cpu_switch() was called and return.
 	 */
 	ldmfd	sp!, {r4-r7, pc}
+
+switch_exited:
+	/*
+	 * We skip the cache purge because switch_exit()/switch_lwp_exit()
+	 * already did it.  Load up registers the way Lcs_cache_purge_skipped
+	 * expects.  Userpsace access already blocked by switch_exit()/
+	 * switch_lwp_exit().
+	 */
+	ldr	r3, Lblock_userspace_access
+	mov	r2, #0x00000000
+	b	Lcs_cache_purge_skipped
 
 /*
  * cpu_preempt(struct lwp *current, struct lwp *next)
@@ -706,6 +727,13 @@ ENTRY(switch_exit)
 /*	ldr	r0, Lcurpcb
 	str	r2, [r0]*/
 
+	/*
+	 * Don't allow user space access between the purge and the switch.
+	 */
+	ldr	r0, Lblock_userspace_access
+	mov	r2, #0x00000001
+	str	r2, [r0]
+
 	/* Switch to lwp0 context */
 
 	stmfd	sp!, {r0-r3}
@@ -777,6 +805,13 @@ ENTRY(switch_lwp_exit)
 
 /*	ldr	r0, Lcurpcb
 	str	r2, [r0]*/
+
+	/*
+	 * Don't allow user space access between the purge and the switch.
+	 */
+	ldr	r0, Lblock_userspace_access
+	mov	r2, #0x00000001
+	str	r2, [r0]
 
 	/* Switch to lwp0 context */
 
