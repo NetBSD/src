@@ -1,4 +1,4 @@
-/* $NetBSD: iic.c,v 1.5 1996/10/13 03:06:19 christos Exp $ */
+/* $NetBSD: iic.c,v 1.6 1996/10/15 19:37:06 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -248,7 +248,7 @@ iicmatch(parent, match, aux)
 
 	switch (id) {
 	case RPC600_IOMD_ID:
-	case RC7500_IOC_ID:
+	case ARM7500_IOC_ID:
 		return(1);
 		break;
 	default:
