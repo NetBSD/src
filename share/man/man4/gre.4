@@ -1,4 +1,4 @@
-.\" $NetBSD: gre.4,v 1.17 2001/11/24 14:27:03 darrenr Exp $
+.\" $NetBSD: gre.4,v 1.18 2001/11/29 23:06:14 ross Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -45,10 +45,11 @@
 .Sh DESCRIPTION
 The
 .Nm gre
-network interface is a pseudo device that allows to encapsulate datagrams
+network interface pseudo device encapsulates datagrams
 into IP. These encapsulated datagrams are routed to a destination host,
 where they are decapsulated and further routed to their final destination.
-The so called ``tunnel'' appears to the inner datagrams like one hop.
+.No The Dq tunnel
+appears to the inner datagrams as one hop.
 .Pp
 .Nm
 interfaces are dynamically created and destroyed with the
