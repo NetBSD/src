@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.9 2003/02/26 22:02:48 thorpej Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.10 2003/04/18 21:32:32 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -340,7 +340,7 @@ void	pthread__sigcontext_to_ucontext(const struct pthread__sigcontext *,
 #define pthread__self() (pthread__id(pthread__sp()))
 
 #define pthread__assert(e)	       					\
-	((e) ? __static_cast(void,0) : 					\
+	(__predict_true((e)) ? __static_cast(void,0) :			\
 	       pthread__assertfunc(__FILE__, __LINE__, __func__, #e))
 
 
