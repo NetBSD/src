@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.149 1999/08/12 09:43:19 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.150 1999/08/16 21:36:39 mcr Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -740,6 +740,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Applied Micro Circuits",
 	    "Myrinet LANai Interface",
+	},
+	{
+	    PCI_VENDOR_AMCIRCUITS, PCI_PRODUCT_AMCIRCUITS_S5920,
+	    0,
+	    "Applied Micro Circuits",
+	    "S5920 PCI Target",
 	},
 	{
 	    PCI_VENDOR_ATRONICS, PCI_PRODUCT_ATRONICS_IDE_2015PL,
@@ -2576,6 +2582,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Standard Microsystems",
 	    "83C175 (\"EPIC/100\") Fast Ethernet",
+	},
+	{
+	    PCI_VENDOR_SOLIDUM, PCI_PRODUCT_SOLIDUM_AMD971,
+	    0,
+	    "Solidum Systems Corp. www.solidum.com/pcisig.html",
+	    "SNP8023: AMD 971",
+	},
+	{
+	    PCI_VENDOR_SOLIDUM, PCI_PRODUCT_SOLIDUM_CLASS802,
+	    0,
+	    "Solidum Systems Corp. www.solidum.com/pcisig.html",
+	    "SNP8023: Classifier Engine",
 	},
 	{
 	    PCI_VENDOR_SURECOM, PCI_PRODUCT_SURECOM_NE34,
@@ -6043,6 +6061,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_DELTA, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Delta Electronics",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_SOLIDUM, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Solidum Systems Corp. www.solidum.com/pcisig.html",
 	    NULL,
 	},
 	{
