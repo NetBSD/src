@@ -61,7 +61,7 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  * 
- *	$Id: ufs.c,v 1.2 1994/06/20 07:50:20 glass Exp $
+ *	$Id: ufs.c,v 1.3 1994/06/20 08:39:01 pk Exp $
  */
 
 /*
@@ -115,7 +115,7 @@ read_inode(inumber, f)
 	 */
 	buf = alloc(fs->fs_bsize);
 	rc = (f->f_dev->dv_strategy)(f->f_devdata, F_READ,
-		fsbtodb(fs, itod(fs, inumber)), fs->fs_bsize, buf, &rsize);
+		fsbtodb(fs, ino_to_fsba(fs, inumber)), fs->fs_bsize, buf, &rsize);
 	if (rc)
 		goto out;
 	if (rsize != fs->fs_bsize) {
@@ -127,7 +127,7 @@ read_inode(inumber, f)
 		register struct dinode *dp;
 
 		dp = (struct dinode *)buf;
-		fp->f_di = dp[itoo(fs, inumber)];
+		fp->f_di = dp[ino_to_fsbo(fs, inumber)];
 	}
 
 	/*
