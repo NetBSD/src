@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_run.c,v 1.15 2000/06/02 23:11:16 fvdl Exp $	*/
+/*	$NetBSD: svc_run.c,v 1.16 2000/06/04 04:35:14 thorpej Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_run.c 1.1 87/10/13 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_run.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_run.c,v 1.15 2000/06/02 23:11:16 fvdl Exp $");
+__RCSID("$NetBSD: svc_run.c,v 1.16 2000/06/04 04:35:14 thorpej Exp $");
 #endif
 #endif
 
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: svc_run.c,v 1.15 2000/06/02 23:11:16 fvdl Exp $");
 #include <err.h>
 #include <errno.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 
 #include <rpc/rpc.h>

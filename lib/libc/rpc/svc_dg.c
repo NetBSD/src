@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_dg.c,v 1.1 2000/06/02 23:11:16 fvdl Exp $	*/
+/*	$NetBSD: svc_dg.c,v 1.2 2000/06/04 04:35:13 thorpej Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -51,6 +51,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #ifdef RPC_CACHE_DEBUG
 #include <netconfig.h>
 #include <netdir.h>

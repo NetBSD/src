@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_soc.c,v 1.3 2000/06/03 14:30:11 fvdl Exp $	*/
+/*	$NetBSD: rpc_soc.c,v 1.4 2000/06/04 04:35:13 thorpej Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -67,6 +67,7 @@ static char sccsid[] = "@(#)rpc_soc.c 1.41 89/05/02 Copyr 1988 Sun Micro";
 #include <errno.h>
 #include <syslog.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "rpc_com.h"
