@@ -1,4 +1,4 @@
-/*	$NetBSD: wdogctl.c,v 1.7 2001/02/20 23:25:29 cgd Exp $	*/
+/*	$NetBSD: wdogctl.c,v 1.8 2003/06/23 11:53:45 agc Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -32,6 +32,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: wdogctl.c,v 1.8 2003/06/23 11:53:45 agc Exp $");
+#endif
+
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
