@@ -1,8 +1,8 @@
-/*	$NetBSD: main.c,v 1.3.2.4 2000/02/22 22:50:03 he Exp $	*/
+/*	$NetBSD: main.c,v 1.3.2.5 2000/07/31 18:18:32 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.3.2.4 2000/02/22 22:50:03 he Exp $");
+__RCSID("$NetBSD: main.c,v 1.3.2.5 2000/07/31 18:18:32 he Exp $");
 #endif
 
 /*
@@ -53,6 +53,7 @@ void    usage(void);
 extern const char *__progname;	/* from crt0.o */
 
 int     filecnt;
+int     pkgcnt;
 
 /*
  * Assumes CWD is in /var/db/pkg/<pkg>!
@@ -144,6 +145,8 @@ check1pkg(const char *pkgdir)
 	}
 	free_plist(&Plist);
 	fclose(f);
+
+	pkgcnt++;
 }
 
 static void 
@@ -155,8 +158,8 @@ rebuild(void)
 	plist_t *p;
 	char   *PkgName, dir[FILENAME_MAX], *dirp = NULL;
 	char   *PkgDBDir = NULL, file[FILENAME_MAX];
-	int     pkgcnt = 0;
 
+	pkgcnt = 0;
 	filecnt = 0;
 
 	if (unlink(_pkgdb_getPKGDB_FILE()) != 0 && errno != ENOENT)
@@ -275,8 +278,8 @@ checkall(void)
 {
 	DIR    *dp;
 	struct dirent *de;
-	int     pkgcnt = 0;
 
+	pkgcnt = 0;
 	filecnt = 0;
 
 	setbuf(stdout, NULL);
@@ -329,6 +332,14 @@ checkpattern_fn(const char *pkg, char *data)
 	return 0;
 }
 
+static int
+lspattern_fn(const char *pkg, char *data)
+{
+	printf("%s/%s\n", data, pkg);
+	
+	return 0;
+}
+
 int 
 main(int argc, char *argv[])
 {
@@ -338,6 +349,7 @@ main(int argc, char *argv[])
 	if (strcasecmp(argv[1], "rebuild") == 0) {
 
 		rebuild();
+		printf("Done.\n");
 
 	} else if (strcasecmp(argv[1], "check") == 0) {
 
@@ -346,7 +358,6 @@ main(int argc, char *argv[])
 
 		if (*argv != NULL) {
 			/* args specified */
-			int     pkgcnt = 0;
 			int     rc;
 
 			filecnt = 0;
@@ -363,16 +374,27 @@ main(int argc, char *argv[])
 						errx(1, "No matching pkg for %s.", *argv);
 				} else {
 					rc = chdir(*argv);
-					if (rc == -1)
-						err(1, "Cannot chdir to %s/%s", _pkgdb_getPKGDB_DIR(), *argv);
+					if (rc == -1) {
+						/* found nothing - try 'pkg-[0-9]*' */
+						char try[FILENAME_MAX];
+					
+						snprintf(try, sizeof(try), "%s-[0-9]*", *argv);
+						if (findmatchingname(_pkgdb_getPKGDB_DIR(), try,
+								     checkpattern_fn, NULL) <= 0) {
 
-					check1pkg(*argv);
-					printf(".");
+							errx(1, "cannot find package %s", *argv);
+						} else {
+							/* nothing to do - all the work is/was
+							 * done in checkpattern_fn() */
+						}
+					} else {
+						check1pkg(*argv);
+						printf(".");
 
-					chdir("..");
+						chdir("..");
+					}
 				}
 
-				pkgcnt++;
 				argv++;
 			}
 
@@ -383,6 +405,84 @@ main(int argc, char *argv[])
 		} else {
 			checkall();
 		}
+		printf("Done.\n");
+
+	} else if (strcasecmp(argv[1], "lsall") == 0) {
+		int saved_wd;
+
+		argv++;		/* argv[0] */
+		argv++;		/* "check" */
+
+		/* preserve cwd */
+		saved_wd=open(".", O_RDONLY);
+		if (saved_wd == -1)
+			err(1, "Cannot save working dir");
+
+		while (*argv != NULL) {
+			/* args specified */
+			int     rc;
+			char *basep, *dir;
+			char *cwd;
+			char base[FILENAME_MAX];
+
+			dir = dirname_of(*argv);
+			basep = basename_of(*argv);
+			snprintf(base, sizeof(base), "%s.tgz", basep);
+
+			fchdir(saved_wd);
+			rc = chdir(dir);
+			if (rc == -1)
+				err(1, "Cannot chdir to %s", _pkgdb_getPKGDB_DIR());
+
+			cwd = getwd(NULL);
+			if (findmatchingname(cwd, base, lspattern_fn, cwd) == -1)
+				errx(1, "Error in findmatchingname(\"%s\", \"%s\", ...)",
+				     cwd, base);
+			free(cwd);
+			
+			argv++;
+		}
+
+		close(saved_wd);
+
+	} else if (strcasecmp(argv[1], "lsbest") == 0) {
+		int saved_wd;
+
+		argv++;		/* argv[0] */
+		argv++;		/* "check" */
+
+		/* preserve cwd */
+		saved_wd=open(".", O_RDONLY);
+		if (saved_wd == -1)
+			err(1, "Cannot save working dir");
+
+		while (*argv != NULL) {
+			/* args specified */
+			int     rc;
+			char *basep, *dir;
+			char *cwd;
+			char base[FILENAME_MAX];
+			char *p;
+
+			dir = dirname_of(*argv);
+			basep = basename_of(*argv);
+			snprintf(base, sizeof(base), "%s.tgz", basep);
+
+			fchdir(saved_wd);
+			rc = chdir(dir);
+			if (rc == -1)
+				err(1, "Cannot chdir to %s", _pkgdb_getPKGDB_DIR());
+
+			cwd = getwd(NULL);
+			p = findbestmatchingname(cwd, base);
+			if (p)
+				printf("%s/%s\n", cwd, p);
+			free(cwd);
+			
+			argv++;
+		}
+
+		close(saved_wd);
 
 	} else if (strcasecmp(argv[1], "list") == 0 ||
 	    strcasecmp(argv[1], "dump") == 0) {
@@ -449,8 +549,6 @@ main(int argc, char *argv[])
 	else {
 		usage();
 	}
-
-	printf("Done.\n");
 
 	return 0;
 }
