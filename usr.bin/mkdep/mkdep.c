@@ -1,4 +1,4 @@
-/*	$NetBSD: mkdep.c,v 1.3 1999/03/31 11:26:45 kleink Exp $	*/
+/*	$NetBSD: mkdep.c,v 1.4 1999/07/21 15:20:55 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: mkdep.c,v 1.3 1999/03/31 11:26:45 kleink Exp $");
+__RCSID("$NetBSD: mkdep.c,v 1.4 1999/07/21 15:20:55 kleink Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -120,6 +120,7 @@ main(argc, argv)
 	int 	aflag, pflag, index, tmpfd, status;
 	pid_t	cpid, pid;
 	char   *filename, *CC, *pathname, tmpfilename[MAXPATHLEN], **args;
+	const char *tmpdir;
 	/* LINTED local definition of tmpfile */
 	FILE   *tmpfile, *dependfile;
 	char	buffer[32768];
@@ -166,7 +167,10 @@ main(argc, argv)
 	args[1] = "-M";
 	(void)memcpy(&args[2], argv, (argc + 1) * sizeof(char *));
 
-	(void)strcpy(tmpfilename, _PATH_TMP "mkdepXXXXXX");
+	if ((tmpdir = getenv("TMPDIR")) == NULL)
+		tmpdir = _PATH_TMP;
+	(void)snprintf(tmpfilename, sizeof (tmpfilename), "%s/%s", tmpdir,
+	    "mkdepXXXXXX");
 	if ((tmpfd = mkstemp (tmpfilename)) < 0) {
 		warn("unable to create temporary file %s", tmpfilename);
 		return EXIT_FAILURE;
