@@ -1,4 +1,4 @@
-/*	$NetBSD: md5c.c,v 1.3 1998/09/12 08:31:23 ragge Exp $	*/
+/*	$NetBSD: md5c.c,v 1.4 1999/02/04 05:36:36 explorer Exp $	*/
 
 /*
  * This file is derived from the RSA Data Security, Inc. MD5 Message-Digest
@@ -29,7 +29,12 @@
  * documentation and/or software.
  */
 
+#if !defined(_KERNEL)
+#include "namespace.h"
+#include <sys/types.h>
+#else
 #include <sys/param.h>
+#endif
 
 #if defined(_KERNEL) || defined(_STANDALONE)
 #include <sys/systm.h>
@@ -74,6 +79,12 @@ typedef u_int32_t UINT4;
 #define S43 15
 #define S44 21
 
+#if !defined(_KERNEL) && defined(__weak_alias)
+__weak_alias(MD5Init,_MD5Init);
+__weak_alias(MD5Update,_MD5Update);
+__weak_alias(MD5Final,_MD5Final);
+#endif
+
 static void MD5Transform __P((UINT4 [4], const unsigned char [64]));
 
 static void Encode __P((unsigned char *, UINT4 *, unsigned int));
@@ -116,7 +127,7 @@ Decode (output, input, len)
 		    (((UINT4)input[j+2]) << 16) | (((UINT4)input[j+3]) << 24);
 }
 
-static unsigned char PADDING[64] = {
+static const unsigned char PADDING[64] = {
 	0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
@@ -191,10 +202,10 @@ MD5Update(context, input, inputLen)
 	const unsigned char *input;	/* input block */
 	unsigned int inputLen;		/* length of input block */
 {
-	unsigned int i, index, partLen;
+	unsigned int i, idx, partLen;
 
 	/* Compute number of bytes mod 64 */
-	index = (unsigned int)((context->count[0] >> 3) & 0x3F);
+	idx = (unsigned int)((context->count[0] >> 3) & 0x3F);
 
 	/* Update number of bits */
 	if ((context->count[0] += ((UINT4)inputLen << 3))
@@ -202,23 +213,23 @@ MD5Update(context, input, inputLen)
 		context->count[1]++;
 	context->count[1] += ((UINT4)inputLen >> 29);
 
-	partLen = 64 - index;
+	partLen = 64 - idx;
 
 	/* Transform as many times as possible. */
 	if (inputLen >= partLen) {
-		memcpy((POINTER)&context->buffer[index],
+		memcpy((POINTER)&context->buffer[idx],
 		    (POINTER)input, partLen);
 		MD5Transform(context->state, context->buffer);
 
 		for (i = partLen; i + 63 < inputLen; i += 64)
 			MD5Transform(context->state, &input[i]);
 
-		index = 0;
+		idx = 0;
 	} else
 		i = 0;
 
 	/* Buffer remaining input */
-	memcpy((POINTER)&context->buffer[index], (POINTER)&input[i],
+	memcpy((POINTER)&context->buffer[idx], (POINTER)&input[i],
 	    inputLen - i);
 }
 
@@ -232,14 +243,14 @@ MD5Final(digest, context)
 	MD5_CTX *context;		/* context */
 {
 	unsigned char bits[8];
-	unsigned int index, padLen;
+	unsigned int idx, padLen;
 
 	/* Save number of bits */
 	Encode(bits, context->count, 8);
 
 	/* Pad out to 56 mod 64. */
-	index = (unsigned int)((context->count[0] >> 3) & 0x3f);
-	padLen = (index < 56) ? (56 - index) : (120 - index);
+	idx = (unsigned int)((context->count[0] >> 3) & 0x3f);
+	padLen = (idx < 56) ? (56 - idx) : (120 - idx);
 	MD5Update (context, PADDING, padLen);
 
 	/* Append length (before padding) */
