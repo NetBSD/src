@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.15 2001/09/13 23:56:01 chris Exp $	*/
+/*	$NetBSD: pmap.h,v 1.16 2001/11/03 00:01:23 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -200,6 +200,10 @@ boolean_t	pmap_pageidlezero __P((paddr_t));
 #define pmap_pde(m, v) (&((m)->pm_pdir[((vaddr_t)(v) >> PDSHIFT)&4095]))
 #define pmap_pte_pa(pte)	(*(pte) & PG_FRAME)
 #define pmap_pde_v(pde)		(*(pde) != 0)
+#define pmap_pde_section(pde)	((*(pde) & L1_MASK) == L1_SECTION)
+#define pmap_pde_page(pde)	((*(pde) & L1_MASK) == L1_PAGE)
+#define pmap_pde_fpage(pde)	((*(pde) & L1_MASK) == L1_FPAGE)
+
 #define pmap_pte_v(pte)		(*(pte) != 0)
 
 /* Size of the kernel part of the L1 page table */
