@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv.c,v 1.22 1997/06/15 21:09:10 veego Exp $	*/
+/*	$NetBSD: grf_cv.c,v 1.23 1997/07/29 17:44:20 veego Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -83,9 +83,9 @@ int	cv_toggle __P((struct grf_softc *));
 int	cv_mondefok __P((struct grfvideo_mode *));
 int	cv_load_mon __P((struct grf_softc *, struct grfcvtext_mode *));
 void	cv_inittextmode __P((struct grf_softc *));
-static	inline void cv_write_port __P((unsigned short, volatile caddr_t));
-static	inline void cvscreen __P((int, volatile caddr_t));
-static	inline void gfx_on_off __P((int, volatile caddr_t));
+static	__inline void cv_write_port __P((unsigned short, volatile caddr_t));
+static	__inline void cvscreen __P((int, volatile caddr_t));
+static	__inline void gfx_on_off __P((int, volatile caddr_t));
 
 #ifndef CV_NO_HARDWARE_CURSOR
 int	cv_getspritepos __P((struct grf_softc *, struct grf_position *));
@@ -140,8 +140,8 @@ extern unsigned char S3FONT[];
  * (Internally, we still have to use hvalues/8!)
  */
 struct grfcvtext_mode cvconsole_mode = {
-	{255, "", 25000000, 640, 480, 4, 640/8, 784/8, 680/8, 768/8, 800/8,
-	 481, 521, 491, 493, 525},
+	{255, "", 25000000, 640, 480, 4, 640/8, 680/8, 768/8, 800/8,
+	 481, 491, 493, 525, 0},
 	8, S3FONTY, 80, 480 / S3FONTY, S3FONT, 32, 255
 };
 
@@ -261,7 +261,7 @@ struct cfdriver grfcv_cd = {
 };
 static struct cfdata *cfdata;
 
-#define CV_INT_NUM 2	/* CV interrupt Level */
+#define CV_INT_NUM 6	/* CV interrupt Level: #2 or #6 */
 #define CV_ULCURSOR 1	/* Underlined Cursor in textmode */
 
 #ifndef CV_NO_HARDWARE_CURSOR
@@ -303,15 +303,17 @@ cvintr(arg)
 	if (test & 0x80) { /* VR int pending */
 		/* Save old CR index */
 		cridx = vgar (ba, CRT_ADDRESS);
+
 #if 0
 		test = RCrt(ba, CRT_ID_END_VER_RETR);
 		/* Clear int (bit 4) */
-		test &= 0xef;
+		test &= ~0x10;
 		WCrt(ba, CRT_ID_END_VER_RETR, test);
 #else
 		vgaw(ba, CRT_ADDRESS, CRT_ID_END_VER_RETR);
 		asm volatile("bclr #4,%0@(0x3d5);nop" : : "a" (ba));
 #endif
+
 #ifndef CV_NO_HARDWARE_CURSOR
 		/* update the hardware cursor, if necessary */
 		if (curs_update_flag) {
@@ -331,11 +333,14 @@ cvintr(arg)
 		asm volatile("bset #4,%0@(0x3d5);nop" : : "a" (ba));
 #endif
 		cv_setspritepos (gp, NULL);
+
+		/* Restore the old CR index */
 		vgaw(ba, CRT_ADDRESS, cridx);
+		asm volatile("nop");
 #endif  /* !CV_NO_HARDWARE_CURSOR */
-		return 1;
+		return (1);
 	}
-	return 0;
+	return (0);
 }
 
 /*
@@ -580,10 +585,16 @@ cv_boardinit(gp)
 	WCrt(ba, CRT_ID_REGISTER_LOCK_1, 0x48);	/* unlock S3 VGA regs */
 	WCrt(ba, CRT_ID_REGISTER_LOCK_2, 0xA5);	/* unlock syscontrol */
 
+	/*
+	 * The default board interrupt is #6.
+	 * Set the roxxler register to use interrupt #2, not #6.
+	 */
+#if CV_INT_NUM == 2
+	cv_write_port(0x8080, ba - 0x02000000);
+#endif
+
 	/* Enable board interrupts */
 	cv_write_port(0x8008, ba - 0x02000000);
-	/* Use interrupt #2, not #6! */
-	cv_write_port(0x8080, ba - 0x02000000);
 
 	test = RCrt(ba, CRT_ID_SYSTEM_CONFIG);
 	test = test | 0x01;	/* enable enhaced register access */
@@ -597,8 +608,8 @@ cv_boardinit(gp)
 	 */
 	vgaw(ba, ECR_ADV_FUNC_CNTL, 0x31);
 
-	/* enable cpu acess, color mode, high 64k page */
-	vgaw(ba, GREG_MISC_OUTPUT_W, 0x23);
+	/* enable color mode (bit0), cpu acess (bit1), high 64k page (bit5) */
+	vgaw(ba, GREG_MISC_OUTPUT_W, 0xe3);
 
 	/* Cpu base addr */
 	WCrt(ba, CRT_ID_EXT_SYS_CNTL_4, 0x00);
@@ -845,7 +856,6 @@ cv_getvmode(gp, vm)
 	/* adjust internal values to pixel values */
 
 	vm->hblank_start *= 8;
-	vm->hblank_stop *= 8;
 	vm->hsync_start *= 8;
 	vm->hsync_stop *= 8;
 	vm->htotal *= 8;
@@ -1008,7 +1018,6 @@ cv_setmonitor(gp, gv)
 	if (gv->mode_num == 255) {
 		bcopy(gv, &cvconsole_mode.gv, sizeof(struct grfvideo_mode));
 		cvconsole_mode.gv.hblank_start /= 8;
-		cvconsole_mode.gv.hblank_stop /= 8;
 		cvconsole_mode.gv.hsync_start /= 8;
 		cvconsole_mode.gv.hsync_stop /= 8;
 		cvconsole_mode.gv.htotal /= 8;
@@ -1029,7 +1038,7 @@ cv_setmonitor(gp, gv)
 	 */
 	if (gp->g_flags & GF_GRFON)
 		if (md == monitor_current) {
-			printf("grf_cv: Changing the used mode not allowed!\n");
+			printf("grfcv: Changing the used mode not allowed!\n");
 			return (EINVAL);
 		}
 
@@ -1038,7 +1047,6 @@ cv_setmonitor(gp, gv)
 	/* adjust pixel oriented values to internal rep. */
 
 	md->hblank_start /= 8;
-	md->hblank_stop /= 8;
 	md->hsync_start /= 8;
 	md->hsync_stop /= 8;
 	md->htotal /= 8;
@@ -1184,13 +1192,13 @@ cv_mondefok(gv)
 #endif
 		break;
 	   default:
-		printf("grf_cv: Illegal depth in mode %d\n",
+		printf("grfcv: Illegal depth in mode %d\n",
 			(int) gv->mode_num);
 		return (0);
 	}
 
 	if (gv->pixel_clock > maxpix) {
-		printf("grf_cv: Pixelclock too high in mode %d\n",
+		printf("grfcv: Pixelclock too high in mode %d\n",
 			(int) gv->mode_num);
 		return (0);
 	}
@@ -1203,6 +1211,11 @@ cv_mondefok(gv)
 			printf ("grfcv: Too many rows for console\n");
 			return (0);
 		}
+	}
+
+	if (gv->disp_flags & GRF_FLAGS_SYNC_ON_GREEN) {
+		printf("grfcv: sync-on-green is not supported\n");
+		return (0);
 	}
 
 	return (1);
@@ -1220,12 +1233,13 @@ cv_load_mon(gp, md)
 	unsigned short mnr;
 	unsigned short HT, HDE, HBS, HBE, HSS, HSE, VDE, VBS, VBE, VSS,
 		VSE, VT;
-	char LACE, DBLSCAN, TEXT, CONSOLE;
-	int uplim, lowlim;
 	int cr50, sr15, sr18, clock_mode, test;
 	int m, n;	/* For calc'ing display FIFO */
 	int tfillm, temptym;	/* FIFO fill and empty mclk's */
-	int hmul;	/* Multiplier for hor. Values */
+	int hmul, vmul;	/* Multiplier for hor./vert. Values */
+	unsigned char hvsync_pulse;
+	char TEXT, CONSOLE;
+
 	/* identity */
 	gv = &md->gv;
 
@@ -1233,10 +1247,10 @@ cv_load_mon(gp, md)
 	CONSOLE = (gv->mode_num == 255);
 
 	if (!cv_mondefok(gv)) {
-		printf("grfcv: The monitor definition is illegal.\n");
-		printf("grfcv: See the manpage of grfconfig for more informations\n");
+		printf("grfcv: Monitor definition not ok\n");
 		return (0);
 	}
+
 	ba = gp->g_regkva;
 	fb = gp->g_fbkva;
 
@@ -1269,24 +1283,24 @@ cv_load_mon(gp, md)
 
 	/* get display mode parameters */
 	switch (gv->depth) {
-		case 15:
-		case 16:
-			hmul = 2;
-			break;
-		default:
-			hmul = 1;
-			break;
+	    case 15:
+	    case 16:
+		hmul = 2;
+		break;
+	    default:
+		hmul = 1;
+		break;
 	}
 
 	HBS = gv->hblank_start * hmul;
-	HBE = gv->hblank_stop * hmul;
 	HSS = gv->hsync_start * hmul;
 	HSE = gv->hsync_stop * hmul;
-	HT  = gv->htotal*hmul - 5;
+	HBE = gv->htotal * hmul - 6;
+	HT  = gv->htotal * hmul - 5;
 	VBS = gv->vblank_start - 1;
 	VSS = gv->vsync_start;
 	VSE = gv->vsync_stop;
-	VBE = gv->vblank_stop;
+	VBE = gv->vtotal - 3;
 	VT  = gv->vtotal - 2;
 
 	/* Disable enhanced Mode for text display */
@@ -1299,17 +1313,41 @@ cv_load_mon(gp, md)
 		HDE = (gv->disp_width + 3) * hmul / 8 - 1; /*HBS;*/
 	VDE = gv->disp_height - 1;
 
-	/* figure out whether lace or dblscan is needed */
-
-	uplim = gv->disp_height + (gv->disp_height / 4);
-	lowlim = gv->disp_height - (gv->disp_height / 4);
-	LACE = (((VT * 2) > lowlim) && ((VT * 2) < uplim)) ? 1 : 0;
-	DBLSCAN = (((VT / 2) > lowlim) && ((VT / 2) < uplim)) ? 1 : 0;
-
 	/* adjustments */
 
-	if (LACE)
-		VDE /= 2;
+	vmul = 2;
+	if (gv->disp_flags & GRF_FLAGS_LACE)
+		vmul = 1;
+	if (gv->disp_flags & GRF_FLAGS_DBLSCAN) /* XXX */
+		vmul = 4;
+
+	VDE = VDE * vmul / 2;
+	VBS = VBS * vmul / 2;
+	VSS = VSS * vmul / 2;
+	VSE = VSE * vmul / 2;
+	VBE = VBE * vmul / 2;
+	VT  = VT * vmul / 2;
+
+	/* Horizontal/Vertical Sync Pulse */
+	/*
+	 * GREG_MISC_OUTPUT_W Register:
+	 * bit	description (0/1)
+	 *  0	Monochrome/Color emulation
+	 *  1	Disable/Enable access of the display memory from the CPU
+	 *  5	Select the low/high 64K page of memory
+	 *  6	Select a positive/negative horizontal retrace sync pulse
+	 *  7	Select a positive/negative vertical retrace sync pulse
+	 */
+	hvsync_pulse = vgar(ba, GREG_MISC_OUTPUT_R);
+	if (gv->disp_flags & GRF_FLAGS_PHSYNC)
+		hvsync_pulse &= ~0x40;
+	else
+		hvsync_pulse |= 0x40;
+	if (gv->disp_flags & GRF_FLAGS_PVSYNC)
+		hvsync_pulse &= ~0x80;
+	else
+		hvsync_pulse |= 0x80;
+	vgaw(ba, GREG_MISC_OUTPUT_W, hvsync_pulse);
 
 	/* GFX hardware cursor off */
 	WCrt(ba, CRT_ID_HWGC_MODE, 0x00);
@@ -1367,7 +1405,7 @@ cv_load_mon(gp, md)
 
 	WCrt(ba, CRT_ID_MAX_SCAN_LINE,
 	    0x40 |  /* TEXT ? 0x00 ??? */
-	    (DBLSCAN ? 0x80 : 0x00) |
+	    ((gv->disp_flags & GRF_FLAGS_DBLSCAN) ? 0x80 : 0x00) |
 	    ((VBS & 0x200) ? 0x20 : 0x00) |
 	    (TEXT ? ((md->fy - 1) & 0x1f) : 0x00));
 
@@ -1400,7 +1438,8 @@ cv_load_mon(gp, md)
 
 	WCrt(ba, CRT_ID_LINE_COMPARE, 0xff);
 	WCrt(ba, CRT_ID_LACE_RETR_START, HT / 2);
-	WCrt(ba, CRT_ID_LACE_CONTROL, (LACE ? 0x20 : 0x00));
+	WCrt(ba, CRT_ID_LACE_CONTROL,
+	    ((gv->disp_flags & GRF_FLAGS_LACE) ? 0x20 : 0x00));
 
 	WGfx(ba, GCT_ID_GRAPHICS_MODE,
 	    ((TEXT || (gv->depth == 1)) ? 0x00 : 0x40));
@@ -1416,9 +1455,9 @@ cv_load_mon(gp, md)
 	WCrt(ba, CRT_ID_BACKWAD_COMP_2, (test | 0x20));
 
 	sr15 = RSeq(ba, SEQ_ID_CLKSYN_CNTL_2);
-	sr15 &= 0xef;
+	sr15 &= ~0x10;
 	sr18 = RSeq(ba, SEQ_ID_RAMDAC_CNTL);
-	sr18 &= 0x7f;
+	sr18 &= ~0x80;
 	clock_mode = 0x00;
 	cr50 = 0x00;
 
@@ -1653,7 +1692,7 @@ cv_inittextmode(gp)
 }
 
 
-static inline void
+static __inline void
 cv_write_port(bits, BoardAddr)
 	unsigned short bits;
 	volatile caddr_t BoardAddr;
@@ -1680,7 +1719,7 @@ cv_write_port(bits, BoardAddr)
  *  1 = Amiga Signal,
  * ba = boardaddr
  */
-static inline void
+static __inline void
 cvscreen(toggle, ba)
 	int toggle;
 	volatile caddr_t ba;
@@ -1695,7 +1734,7 @@ cvscreen(toggle, ba)
 
 /* 0 = on, 1= off */
 /* ba= registerbase */
-static inline void
+static __inline void
 gfx_on_off(toggle, ba)
 	int toggle;
 	volatile caddr_t ba;
@@ -1706,7 +1745,7 @@ gfx_on_off(toggle, ba)
 	toggle = toggle << 5;
 
 	r = RSeq(ba, SEQ_ID_CLOCKING_MODE);
-	r &= 0xdf;	/* set Bit 5 to 0 */
+	r &= ~0x20;	/* set Bit 5 to 0 */
 
 	WSeq(ba, SEQ_ID_CLOCKING_MODE, r | toggle);
 }
@@ -1784,28 +1823,10 @@ cv_setspritepos(gp, pos)
 	return(0);
 }
 
-#if 0
-static inline short
-M2I(short val) {
-	asm volatile (" rorw #8,%0   ;                               \
-			swap %0      ;                               \
-			rorw #8,%0   ; " : "=d" (val) : "0" (val));
-	return (val);
-}
-#else
-static inline short
+static __inline short
 M2I(short val) {
 	return ( ((val & 0xff00) >> 8) | ((val & 0xff) << 8));
 }
-#endif
-
-
-#define M2INS(val)                                                   \
-	asm volatile (" rorw #8,%0   ;                               \
-			swap %0      ;                               \
-			rorw #8,%0   ;                               \
-			swap %0      ; " : "=d" (val) : "0" (val));
-
 
 int
 cv_getspriteinfo(gp, info)
@@ -1873,18 +1894,22 @@ cv_setup_hwc(gp)
 	/* reset colour stack */
 #if 0
 	test = RCrt(ba, CRT_ID_HWGC_MODE);
+	asm volatile("nop");
 #else
 	/* do it in assembler, the above does't seem to work */
 	asm volatile ("moveb #0x45, %1@(0x3d4); \
 		moveb %1@(0x3d5),%0" : "=r" (test) : "a" (ba));
 #endif
+
 	WCrt (ba, CRT_ID_HWGC_FG_STACK, 0);
 
 	hwc = ba + CRT_ADDRESS_W;
 	*hwc = 0;
 	*hwc = 0;
+
 #if 0
 	test = RCrt(ba, CRT_ID_HWGC_MODE);
+	asm volatile("nop");
 #else
 	/* do it in assembler, the above does't seem to work */
 	asm volatile ("moveb #0x45, %1@(0x3d4); \
@@ -2128,6 +2153,7 @@ cv_setspriteinfo (gp, info)
 
 		/* reset colour stack */
 		test = RCrt(ba, CRT_ID_HWGC_MODE);
+		asm volatile("nop");
 		switch (depth) {
 		    case 8:
 		    case 15:
