@@ -1,4 +1,4 @@
-/*	$NetBSD: todclock.c,v 1.2 2002/02/05 14:36:35 reinoud Exp $	*/
+/*	$NetBSD: todclock.c,v 1.3 2002/02/18 12:03:38 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -45,8 +45,10 @@
 
 /* Include header files */
 
-#include <sys/types.h>
 #include <sys/param.h>
+
+__RCSID("$NetBSD: todclock.c,v 1.3 2002/02/18 12:03:38 bjh21 Exp $");
+
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/time.h>
@@ -78,6 +80,7 @@ static void todclockattach __P((struct device *parent, struct device *self,
 				void *aux));
 static int  todclockmatch  __P((struct device *parent, struct cfdata *cf,
 				void *aux));
+static __inline int yeartoday __P((int));
 
 /*
  * We need to remember our softc for functions like inittodr()
@@ -196,11 +199,7 @@ resettodr()
 
 	/* We need a todclock device and should always have one */
 	if (!todclock_sc)
-#ifdef NC
 		return;
-#else
-		panic("resettodr: No todclock device attached\n");
-#endif /* NC */
 
 	/* Abort early if there is not actually an RTC write routine */
 	if (todclock_sc->sc_rtc_write == NULL)
@@ -272,18 +271,12 @@ inittodr(base)
 	 * RTC is we can.
 	 */
 
-	/* We expect a todclock device */
-#ifndef NC
-	if (!todclock_sc)
-		panic("inittodr: No todclock device attached\n");
-#endif /* NC */
-
 	/* Use the suggested time as a fall back */
 	time.tv_sec = base;
 	time.tv_usec = 0;
 
 	/* Can we read an RTC ? */
-	if (todclock_sc->sc_rtc_read) {
+	if (todclock_sc != NULL && todclock_sc->sc_rtc_read) {
 		s = splclock();
 		if (todclock_sc->sc_rtc_read(todclock_sc->sc_rtc_arg, &rtc) == 0) {
 			(void)splx(s);
