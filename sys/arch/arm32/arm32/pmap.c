@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.27 1998/07/08 00:18:16 mark Exp $	*/
+/*	$NetBSD: pmap.c,v 1.28 1998/07/08 04:48:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -77,6 +77,7 @@
 #endif
 
 #include <machine/bootconfig.h>
+#include <machine/bus.h>
 #include <machine/pmap.h>
 #include <machine/pcb.h>
 #include <machine/param.h>
@@ -185,6 +186,66 @@ pmap_debug(level)
 }
 #endif	/* PMAP_DEBUG */
 
+#include "isadma.h"
+
+#if NISADMA > 0
+/*
+ * Used to protect memory for ISA DMA bounce buffers.  If, when loading
+ * pages into the system, memory intersects with any of these ranges,
+ * the intersecting memory will be loaded into a lower-priority free list.
+ */
+bus_dma_segment_t *pmap_isa_dma_ranges;
+int pmap_isa_dma_nranges;
+
+boolean_t pmap_isa_dma_range_intersect __P((vm_offset_t, vm_size_t,
+	    vm_offset_t *, vm_size_t *));
+
+/*
+ * Check if a memory range intersects with an ISA DMA range, and
+ * return the page-rounded intersection if it does.  The intersection
+ * will be placed on a lower-priority free list.
+ */
+boolean_t
+pmap_isa_dma_range_intersect(pa, size, pap, sizep)
+	vm_offset_t pa;
+	vm_size_t size;
+	vm_offset_t *pap;
+	vm_size_t *sizep;
+{
+	bus_dma_segment_t *ds;
+	int i;
+
+	if (pmap_isa_dma_ranges == NULL)
+		return (FALSE);
+
+	for (i = 0, ds = pmap_isa_dma_ranges;
+	     i < pmap_isa_dma_nranges; i++, ds++) {
+		if (ds->ds_addr <= pa && pa < (ds->ds_addr + ds->ds_len)) {
+			/*
+			 * Beginning of region intersects with this range.
+			 */
+			*pap = trunc_page(pa);
+			*sizep = round_page(min(pa + size,
+			    ds->ds_addr + ds->ds_len) - pa);
+			return (TRUE);
+		}
+		if (pa < ds->ds_addr && ds->ds_addr < (pa + size)) {
+			/*
+			 * End of region intersects with this range.
+			 */
+			*pap = trunc_page(ds->ds_addr);
+			*sizep = round_page(min((pa + size) - ds->ds_addr,
+			    ds->ds_len));
+			return (TRUE);
+		}
+	}
+
+	/*
+	 * No intersection found.
+	 */
+	return (FALSE);
+}
+#endif /* NISADMA > 0 */
 
 /*
  * Functions for manipluation pv_entry structures. These are used to keep a
@@ -589,6 +650,10 @@ pmap_bootstrap(kernel_l1pt, kernel_ptpt)
 	{
 		int loop;
 		vm_offset_t start, end;
+#if defined(UVM) && NISADMA > 0
+		vm_offset_t istart;
+		vm_size_t isize;
+#endif
 
 		loop = 0;
 		while (loop < bootconfig.dramblocks) {
@@ -598,14 +663,68 @@ pmap_bootstrap(kernel_l1pt, kernel_ptpt)
 				start = physical_freestart;
 			if (end > physical_freeend)
 				end = physical_freeend;
-/*			printf("%d: %lx -> %lx\n", loop, start, end-1);*/
+#if 0
+			printf("%d: %lx -> %lx\n", loop, start, end-1);
+#endif
 #if defined(UVM)
+#if NISADMA > 0
+			if (pmap_isa_dma_range_intersect(start, end - start,
+			    &istart, &isize)) {
+				/*
+				 * Place the pages that intersect with the
+				 * ISA DMA range onto the ISA DMA free list.
+				 */
+#if 0
+				printf("    ISADMA 0x%lx -> 0x%lx\n",
+				    istart, istart + isize - 1);
+#endif
+				uvm_page_physload(atop(istart),
+				    atop(istart + isize), atop(istart),
+				    atop(istart + isize),
+				    VM_FREELIST_ISADMA);
+				
+				/*
+				 * Load the pieces that come before
+				 * the intersection into the default
+				 * free list.
+				 */
+				if (start < istart) {
+#if 0
+					printf("    BEFORE 0x%lx -> 0x%lx\n",
+					    start, istart - 1);
+#endif
+					uvm_page_physload(atop(start),
+					    atop(istart), atop(start),
+					    atop(istart), VM_FREELIST_DEFAULT);
+				}
+
+				/*
+				 * Load the pieces that come after
+				 * the intersection into the default
+				 * free list.
+				 */
+				if ((istart + isize) < end) {
+#if 0
+					printf("     AFTER 0x%lx -> 0x%lx\n",
+					    (istart + isize), end - 1);
+#endif
+					uvm_page_physload(atop(istart + isize),
+					    atop(end), atop(istart + isize),
+					    atop(end), VM_FREELIST_DEFAULT);
+				}
+			} else {
+				uvm_page_physload(atop(start), atop(end),
+				    atop(start), atop(end),
+				    VM_FREELIST_DEFAULT);
+			}
+#else
 			uvm_page_physload(atop(start), atop(end),
-					  atop(start), atop(end));
+			    atop(start), atop(end), VM_FREELIST_DEFAULT);
+#endif /* NISADMA > 0 */
 #else
 			vm_page_physload(atop(start), atop(end),
 			    atop(start), atop(end));
-#endif
+#endif /* UVM */
 			++loop;
 		}
 	}
