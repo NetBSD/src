@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.8 1998/02/22 13:33:48 christos Exp $	*/
+/*	$NetBSD: common.h,v 1.9 1999/02/09 05:15:45 sommerfe Exp $	*/
 
 #define DEBUGGING
 
@@ -110,6 +110,8 @@ EXT bool out_of_mem INIT(FALSE);	/* ran out of memory in plan a */
 EXT int filec INIT(0);			/* how many file arguments? */
 EXT char *filearg[MAXFILEC];
 EXT bool ok_to_create_file INIT(FALSE);
+EXT bool filename_is_dev_null INIT(FALSE);
+EXT bool old_file_is_dev_null INIT(FALSE);
 EXT char *bestguess INIT(Nullch);	/* guess at correct filename */
 
 EXT char *outname INIT(Nullch);
