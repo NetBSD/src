@@ -1,4 +1,4 @@
-/*	$NetBSD: ip.h,v 1.10 1996/09/06 05:07:43 mrg Exp $	*/
+/*	$NetBSD: ip.h,v 1.11 1996/09/12 22:56:03 explorer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -160,6 +160,8 @@ struct	ip_timestamp {
 #define	IPOPT_SECUR_SECRET	0xd788
 #define	IPOPT_SECUR_TOPSECRET	0x6bc5
 
+#ifdef _KERNEL
+
 /* we need this for the packet filter structure */
 #include <sys/queue.h>
 struct ifnet;
@@ -181,7 +183,6 @@ struct packet_filter_hook {
 #define PFIL_WAITOK	0x00000008
 #define PFIL_ALL	(PFIL_IN|PFIL_OUT|PFIL_BAD)
 
-#ifdef _KERNEL
 struct packet_filter_hook *pfil_hook_get __P((int));
 void	pfil_add_hook __P((int (*func) __P((void *, int,
 	    struct ifnet *, int, struct mbuf **)), int));
