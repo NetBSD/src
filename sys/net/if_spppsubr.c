@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.38 2002/01/06 20:14:29 martin Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.39 2002/01/07 10:49:02 martin Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.38 2002/01/06 20:14:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.39 2002/01/07 10:49:02 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -84,7 +84,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.38 2002/01/06 20:14:29 martin Exp 
 #include <net/if_sppp.h>
 #include <net/if_spppvar.h>
 
-#define MAXALIVECNT     3               /* max. alive packets */
+#define MAXALIVECNT     		3	/* max. alive packets */
+#define DEFAULT_MAX_AUTH_FAILURES	5	/* max. auth. failures */
 
 /*
  * Interface flags that can be set in an ifconfig command.
@@ -927,6 +928,8 @@ sppp_attach(struct ifnet *ifp)
 	sp->pp_idle_timeout = 0;
 	memset(&sp->pp_seq[0], 0, sizeof(sp->pp_seq));
 	memset(&sp->pp_rseq[0], 0, sizeof(sp->pp_rseq));
+	sp->pp_auth_failures = 0;
+	sp->pp_max_auth_fail = DEFAULT_MAX_AUTH_FAILURES;
 	sp->pp_phase = SPPP_PHASE_DEAD;
 	sp->pp_up = lcp.Up;
 	sp->pp_down = lcp.Down;
@@ -1134,6 +1137,7 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SPPPSETAUTHCFG:
 	case SPPPSETLCPCFG:
 	case SPPPSETIDLETO:
+	case SPPPSETAUTHFAILURE:
 	{
 		struct proc *p = curproc;		/* XXX */
 
@@ -1145,6 +1149,7 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SPPPGETLCPCFG:
 	case SPPPGETSTATUS:
 	case SPPPGETIDLETO:
+	case SPPPGETAUTHFAILURES:
 		rv = sppp_params(sp, cmd, data);
 		break;
 
@@ -2555,6 +2560,13 @@ sppp_lcp_tls(struct sppp *sp)
 {
 	STDDCL;
 
+	if (sp->pp_max_auth_fail != 0 && sp->pp_auth_failures >= sp->pp_max_auth_fail) {
+	    printf("%s: authentication failed %d times, not retrying again\n",
+		sp->pp_if.if_xname, sp->pp_auth_failures);
+	    if_down(&sp->pp_if);
+	    return;
+	}
+
 	sp->pp_phase = SPPP_PHASE_ESTABLISH;
 
 	if(debug)
@@ -3716,6 +3728,7 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 	case CHAP_CHALLENGE:
 		if (sp->myauth.secret == NULL || sp->myauth.name == NULL) {
 		    /* can't do anything usefull */
+		    sp->pp_auth_failures++;
 		    printf(SPP_FMT "chap input without my name and my secret being set\n",
 		    	SPP_ARGS(ifp));
 		    break;
@@ -3778,6 +3791,7 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 			addlog("\n");
 		}
 		x = splnet();
+		sp->pp_auth_failures = 0;
 		sp->pp_flags &= ~PP_NEEDAUTH;
 		if (sp->myauth.proto == PPP_CHAP &&
 		    (sp->lcp.opts & (1 << LCP_OPT_AUTH_PROTO)) &&
@@ -3795,6 +3809,9 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 		break;
 
 	case CHAP_FAILURE:
+		x = splnet();
+		sp->pp_auth_failures++;
+		splx(x);
 		if (debug) {
 			log(LOG_INFO, SPP_FMT "chap failure",
 			    SPP_ARGS(ifp));
@@ -3892,12 +3909,16 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 		    memcmp(digest, value, value_len) != 0) {
 chap_failure:
 			/* action scn, tld */
+			x = splnet();
+			sp->pp_auth_failures++;
+			splx(x);
 			sppp_auth_send(&chap, sp, CHAP_FAILURE, h->ident,
 				       sizeof(FAILMSG) - 1, (u_char *)FAILMSG,
 				       0);
 			chap.tld(sp);
 			break;
 		}
+		sp->pp_auth_failures = 0;
 		/* action sca, perhaps tlu */
 		if (sp->state[IDX_CHAP] == STATE_REQ_SENT ||
 		    sp->state[IDX_CHAP] == STATE_OPENED)
@@ -4034,6 +4055,7 @@ sppp_chap_tlu(struct sppp *sp)
 	}
 
 	x = splnet();
+	sp->pp_auth_failures = 0;
 	/* indicate to LCP that we need to be closed down */
 	sp->lcp.protos |= (1 << IDX_CHAP);
 
@@ -4180,6 +4202,7 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 		if (memcmp(name, sp->hisauth.name, name_len) != 0 ||
 		    memcmp(passwd, sp->hisauth.secret, passwd_len) != 0) {
 			/* action scn, tld */
+			sp->pp_auth_failures++;
 			mlen = sizeof(FAILMSG) - 1;
 			sppp_auth_send(&pap, sp, PAP_NAK, h->ident,
 				       sizeof mlen, (const char *)&mlen,
@@ -4217,6 +4240,7 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 			addlog("\n");
 		}
 		x = splnet();
+		sp->pp_auth_failures = 0;
 		sp->pp_flags &= ~PP_NEEDAUTH;
 		if (sp->myauth.proto == PPP_PAP &&
 		    (sp->lcp.opts & (1 << LCP_OPT_AUTH_PROTO)) &&
@@ -4235,6 +4259,7 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 
 	case PAP_NAK:
 		callout_stop(&sp->pap_my_to_ch);
+		sp->pp_auth_failures++;
 		if (debug) {
 			log(LOG_INFO, SPP_FMT "pap failure",
 			    SPP_ARGS(ifp));
@@ -4371,6 +4396,7 @@ sppp_pap_tlu(struct sppp *sp)
 		    SPP_ARGS(ifp), pap.name);
 
 	x = splnet();
+	sp->pp_auth_failures = 0;
 	/* indicate to LCP that we need to be closed down */
 	sp->lcp.protos |= (1 << IDX_PAP);
 
@@ -4957,6 +4983,7 @@ sppp_params(struct sppp *sp, int cmd, void *data)
 		sp->hisauth.flags = cfg->hisauthflags;
 		if (cfg->hisauth)
 		    sp->hisauth.proto = cfg->hisauth == SPPP_AUTHPROTO_PAP ? PPP_PAP : PPP_CHAP;
+		sp->pp_auth_failures = 0;
 	    }
 	    break;
 	case SPPPGETLCPCFG:
@@ -4987,6 +5014,20 @@ sppp_params(struct sppp *sp, int cmd, void *data)
 	    {
 	    	struct spppidletimeout * to = (struct spppidletimeout*)data;
 	    	sp->pp_idle_timeout = to->idle_seconds;
+	    }
+	    break;
+	case SPPPSETAUTHFAILURE:
+	    {
+	    	struct spppauthfailuresettings * afsettings = (struct spppauthfailuresettings*)data;
+	    	sp->pp_max_auth_fail = afsettings->max_failures;
+	    	sp->pp_auth_failures = 0;
+	    }
+	    break;
+	case SPPPGETAUTHFAILURES:
+	    {
+	    	struct spppauthfailurestats * stats = (struct spppauthfailurestats*)data;
+	    	stats->auth_failures = sp->pp_auth_failures;
+	    	stats->max_failures = sp->pp_max_auth_fail;
 	    }
 	    break;
 	default:
