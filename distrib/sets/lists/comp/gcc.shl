@@ -1,0 +1,15 @@
+#	$NetBSD: gcc.shl,v 1.1 2003/08/10 08:44:42 mrg Exp $
+./usr/lib/libbfd.so.5				comp-c-shlib
+./usr/lib/libbfd.so.5.0				comp-c-shlib
+./usr/lib/libg2c.so				comp-fortran-lib
+./usr/lib/libg2c.so.2				comp-fortran-shlib
+./usr/lib/libg2c.so.2.0				comp-fortran-shlib
+./usr/lib/libg2c_pic.a				comp-fortran-lib
+./usr/lib/libgcc_pic.a				comp-c-piclib
+./usr/lib/libobjc.so				comp-objc-lib
+./usr/lib/libobjc_pic.a				comp-objc-piclib
+./usr/lib/libopcodes.so.0			comp-c-shlib
+./usr/lib/libopcodes.so.0.0			comp-c-shlib
+./usr/lib/libsupc++.a				comp-cxx-lib
+./usr/lib/libstdc++.so				comp-cxx-lib
+./usr/lib/libstdc++_pic.a			comp-cxx-piclib
