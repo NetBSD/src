@@ -1684,41 +1684,6 @@ xterm-xf86-v32|xterm terminal emulator (X Window System):\
 	:ti=\E7\E[?47h:ue=\E[24m:up=\E[A:us=\E[4m:\
 	:vb=\E[?5h\E[?5l:ve=\E[?25h:vi=\E[?25l:vs=\E[?25h:
 
-# This is the stock xterm entry supplied with XFree86 3.3
-# The name has been changed and some aliases have been removed.
-xterm-xf86-v33|xterm terminal emulator (X Window System):\
-	:is=\E7\E[r\E[m\E[?7h\E[?1;3;4;6l\E[4l\E8\E>:\
-	:rs=\E7\E[r\E[m\E[?7h\E[?1;3;4;6l\E[4l\E8\E>:\
-	:AL=\E[%dL:DL=\E[%dM:DC=\E[%dP:DO=\E[%dB:UP=\E[%dA:\
-	:LE=\E[%dD:RI=\E[%dC:\
-	:al=\E[L:am:\
-	:bl=^G:\
-	:cd=\E[J:ce=\E[K:cl=\E[H\E[2J:cm=\E[%i%d;%dH:co#80:\
-	:cs=\E[%i%d;%dr:ct=\E[3g:\
-	:dc=\E[P:dl=\E[M:\
-	:ho=\E[H:\
-	:im=\E[4h:ei=\E[4l:mi:\
-	:ks=\E[?1h\E=:ke=\E[?1l\E>:\
-	:k1=\EOP:k2=\EOQ:k3=\EOR:k4=\EOS:\
-	:k5=\E[15~:k6=\E[17~:k7=\E[18~:k8=\E[19~:k9=\E[20~:\
-	:k;=\E[21~:F1=\E[23~:F2=\E[24~:\
-	:kn#12:\
-	:@7=\EOF:kh=\EOH:\
-	:@0=\E[1~:kI=\E[2~:kD=\E[3~:\
-	:*6=\E[4~:kP=\E[5~:kN=\E[6~:\
-	:km:\
-	:kb=^H:ku=\EOA:kd=\EOB:kr=\EOC:kl=\EOD:\
-	:li#24:md=\E[1m:me=\E[m:mr=\E[7m:ms:nd=\E[C:\
-	:eA=\E)0:as=^N:ae=^O:\
-	:ml=\El:mu=\Em:\
-	:sc=\E7:rc=\E8:sf=\n:so=\E[7m:se=\E[27m:sr=\EM:\
-	:st=\EH:\
-	:ti=\E7\E[?47h:te=\E[2J\E[?47l\E8:\
-	:vi=\E[?25l:ve=\E[?25h:\
-	:up=\E[A:us=\E[4m:ue=\E[24m:xn:\
-	:ut:Co#8:op=\E[100m:AB=\E[4%dm:AF=\E[3%dm:\
-	:pa#64:Sf=\E[3%dm:Sb=\E[4%dm:
-
 # This is xterm for ncurses. It mainly adds mappings for more high-half
 # characters.  Note that these will only work for fixed-width fonts.
 #xterm|vs100|xterms|xterm terminal emulator (X Window System):\
@@ -1727,7 +1692,7 @@ xterm-xf86-v33|xterm terminal emulator (X Window System):\
 #	:tc=xterm-xf86-v32:
 
 xterm|vs100|xterms|xterm terminal emulator (X Window System):\
-	:tc=xterm-xf86-v33:
+	:tc=xterm-r5:
 
 # These entries allow access to the X titlebar and icon name as a status line. 
 # Note that twm (and possibly window managers descended from it such as tvtwm, 
