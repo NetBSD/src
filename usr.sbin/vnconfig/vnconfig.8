@@ -1,4 +1,4 @@
-.\"	$NetBSD: vnconfig.8,v 1.16 2000/09/30 17:58:19 bjh21 Exp $
+.\"	$NetBSD: vnconfig.8,v 1.17 2000/10/02 15:11:43 bjh21 Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -143,10 +143,9 @@ If configuring the device, look up
 .Ar typename
 in
 .Pa /etc/disktab
-and use the geometry specified in the entry.  This option is mutually
-exclusive of the
+and use the geometry specified in the entry.  This option and the
 .Ar geomspec
-argument.
+argument are mutually exclusive.
 .It Fl u
 Unconfigures the device.
 .It Fl v
