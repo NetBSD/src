@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.25.2.1.2.3 1999/07/02 22:43:23 thorpej Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.25.2.1.2.4 1999/07/11 05:52:10 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -87,6 +87,7 @@
 #include <sys/signalvar.h>
 
 #include <vm/vm.h>
+#include <uvm/uvm.h>
 
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/genfs/genfs.h>
@@ -248,6 +249,8 @@ struct vnodeopv_entry_desc lfs_fifoop_entries[] = {
 	{ &vop_truncate_desc, fifo_truncate },		/* truncate */
 	{ &vop_update_desc, lfs_update },		/* update */
 	{ &vop_bwrite_desc, lfs_bwrite },		/* bwrite */
+	{ &vop_getpages_desc, lfs_getpages },		/* getpages */
+	{ &vop_putpages_desc, lfs_putpages },		/* putpages */
 	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };
 struct vnodeopv_desc lfs_fifoop_opv_desc =
