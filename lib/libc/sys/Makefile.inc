@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.136 2003/02/13 14:29:04 jdolecek Exp $
+#	$NetBSD: Makefile.inc,v 1.137 2003/02/15 21:11:49 jdolecek Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -21,6 +21,9 @@ _LSRC=	Lint_Ovfork.c Lint___clone.c Lint___vfork14.c Lint_brk.c Lint_clone.c \
 LSRCS+=	${_LSRC}
 DPSRCS+=${_LSRC:MLintSys*.c}
 .endif
+
+# glue to offer userland wrappers for some syscalls
+SRCS+=	sigtimedwait.c sigwait.c sigwaitinfo.c
 
 # glue to provide compatibility between GCC 1.X and 2.X and for compat
 # with old syscall interfaces.
@@ -65,7 +68,8 @@ ASM=	access.S acct.S bind.S chdir.S chflags.S \
 	setsid.S setsockopt.S setuid.S \
 	__shmctl13.S shmdt.S shmget.S shutdown.S \
 	__sigaltstack14.S __sigpending14.S __sigprocmask14.S \
-	__sigaction_sigtramp.S socket.S socketpair.S __stat13.S statfs.S \
+	__sigaction_sigtramp.S __sigtimedwait.S \
+	socket.S socketpair.S __stat13.S statfs.S \
 	swapctl.S symlink.S umask.S undelete.S unlink.S \
 	unmount.S utimes.S utrace.S vadvise.S \
 	__sysctl.S \
@@ -143,7 +147,8 @@ MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \
 	semget.2 semop.2 send.2 setgroups.2 setpgid.2 setregid.2 \
 	setreuid.2 setsid.2 setuid.2 shmat.2 shmctl.2 shmget.2 \
 	shutdown.2 sigaction.2 sigaltstack.2 sigpending.2 \
-	sigprocmask.2 sigreturn.2 sigstack.2 sigsuspend.2 socket.2 \
+	sigprocmask.2 sigreturn.2 sigstack.2 sigsuspend.2 sigtimedwait.2 \
+	socket.2 \
 	socketpair.2 stat.2 statfs.2 swapctl.2 swapon.3 symlink.2 \
 	sync.2 sysarch.2 syscall.2 truncate.2 umask.2 undelete.2 \
 	unlink.2 utimes.2 utrace.2 vfork.2 wait.2 write.2
@@ -188,6 +193,8 @@ MLINKS+=send.2 sendmsg.2 send.2 sendto.2
 MLINKS+=setpgid.2 setpgrp.2
 MLINKS+=setuid.2 setegid.2 setuid.2 seteuid.2 setuid.2 setgid.2
 MLINKS+=shmat.2 shmdt.2
+MLINKS+=sigtimedwait.2 sigwaitinfo.2
+MLINKS+=sigtimedwait.2 sigwait.2
 MLINKS+=stat.2 fstat.2 stat.2 lstat.2
 MLINKS+=statfs.2 fstatfs.2
 MLINKS+=syscall.2 __syscall.2
