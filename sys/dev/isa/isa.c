@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.34 1994/02/16 17:59:21 mycroft Exp $
+ *	$Id: isa.c,v 1.35 1994/02/22 23:36:11 mycroft Exp $
  */
 
 /*
@@ -119,6 +119,7 @@ isa_configure()
 	printf("biomask %x ttymask %x netmask %x\n",
 	       biomask, ttymask, netmask);
 
+	clockmask |= astmask;
 	biomask |= astmask;
 	ttymask |= astmask;
 	netmask |= astmask;
