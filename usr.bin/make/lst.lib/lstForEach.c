@@ -36,7 +36,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)lstForEach.c	5.3 (Berkeley) 6/1/90"; */
-static char *rcsid = "$Id: lstForEach.c,v 1.3 1994/03/05 00:35:44 cgd Exp $";
+static char *rcsid = "$Id: lstForEach.c,v 1.4 1994/06/06 22:46:03 jtc Exp $";
 #endif /* not lint */
 
 /*-
@@ -65,7 +65,7 @@ static char *rcsid = "$Id: lstForEach.c,v 1.3 1994/03/05 00:35:44 cgd Exp $";
 void
 Lst_ForEach (l, proc, d)
     Lst	    	  	l;
-    register int	(*proc)();
+    register int	(*proc) __P((ClientData, ClientData));
     register ClientData	d;
 {
     Lst_ForEachFrom(l, Lst_First(l), proc, d);

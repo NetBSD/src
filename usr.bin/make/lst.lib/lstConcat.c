@@ -36,7 +36,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)lstConcat.c	5.3 (Berkeley) 6/1/90"; */
-static char *rcsid = "$Id: lstConcat.c,v 1.3 1994/03/05 00:35:35 cgd Exp $";
+static char *rcsid = "$Id: lstConcat.c,v 1.4 1994/06/06 22:45:57 jtc Exp $";
 #endif /* not lint */
 
 /*-
@@ -103,6 +103,8 @@ Lst_Concat (l1, l2, flags)
 	    list2->firstPtr->prevPtr = list1->lastPtr;
 	    if (list1->lastPtr != NilListNode) {
  		list1->lastPtr->nextPtr = list2->firstPtr;
+	    } else {
+		list1->firstPtr = list2->firstPtr;
 	    }
 	    list1->lastPtr = list2->lastPtr;
 	}

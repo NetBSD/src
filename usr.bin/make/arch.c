@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)arch.c	5.7 (Berkeley) 12/28/90";*/
-static char rcsid[] = "$Id: arch.c,v 1.6 1994/03/18 11:32:09 pk Exp $";
+static char rcsid[] = "$Id: arch.c,v 1.7 1994/06/06 22:45:17 jtc Exp $";
 #endif /* not lint */
 
 /*-
@@ -85,6 +85,8 @@ static char rcsid[] = "$Id: arch.c,v 1.6 1994/03/18 11:32:09 pk Exp $";
  *	    	  	    	is out-of-date.
  *
  *	Arch_Init 	    	Initialize this module.
+ *
+ *	Arch_End 	    	Cleanup this module.
  */
 
 #include    <sys/types.h>
@@ -109,9 +111,44 @@ typedef struct Arch {
 			       * by <name, struct ar_hdr *> key/value pairs */
 } Arch;
 
-static int ArchFindArchive __P((Arch *, char *));
+static int ArchFindArchive __P((ClientData, ClientData));
+static void ArchFree __P((ClientData));
 static struct ar_hdr *ArchStatMember __P((char *, char *, Boolean));
 static FILE *ArchFindMember __P((char *, char *, struct ar_hdr *, char *));
+
+/*-
+ *-----------------------------------------------------------------------
+ * ArchFree --
+ *	Free memory used by an archive
+ *
+ * Results:
+ *	None.
+ *
+ * Side Effects:
+ *	None.
+ *
+ *-----------------------------------------------------------------------
+ */
+static void
+ArchFree(ap)
+    ClientData ap;
+{
+    Arch *a = (Arch *) ap;
+    Hash_Search	  search;
+    Hash_Entry	  *entry;
+    
+    /* Free memory from hash entries */ 
+    for (entry = Hash_EnumFirst(&a->members, &search);
+	 entry != (Hash_Entry *)NULL;
+	 entry = Hash_EnumNext(&search))
+	free((Address) Hash_GetValue (entry));
+
+    free(a->name);
+    Hash_DeleteTable(&a->members);
+    free((Address) a);
+}
+	
+
 
 /*-
  *-----------------------------------------------------------------------
@@ -378,10 +415,10 @@ Arch_ParseArchive (linePtr, nodeLst, ctxt)
  */
 static int
 ArchFindArchive (ar, archName)
-    Arch	  *ar;	      	  /* Current list element */
-    char	  *archName;  	  /* Name we want */
+    ClientData	  ar;	      	  /* Current list element */
+    ClientData	  archName;  	  /* Name we want */
 {
-    return (strcmp (archName, ar->name));
+    return (strcmp ((char *) archName, ((Arch *) ar)->name));
 }
 
 /*-
@@ -547,8 +584,7 @@ ArchStatMember (archive, member, hash)
 	    }
 #endif
 
-	    he = Hash_CreateEntry (&ar->members, strdup (memName),
-				   (Boolean *)NULL);
+	    he = Hash_CreateEntry (&ar->members, memName, (Boolean *)NULL);
 	    Hash_SetValue (he, (ClientData)emalloc (sizeof (struct ar_hdr)));
 	    memcpy ((Address)Hash_GetValue (he), (Address)&arh,
 		sizeof (struct ar_hdr));
@@ -560,7 +596,10 @@ ArchStatMember (archive, member, hash)
 	 * 'size' field of the header and round it up during the seek.
 	 */
 	arh.ar_size[sizeof(arh.ar_size)-1] = '\0';
+	size = (int) strtol(arh.ar_size, NULL, 10);
+#if 0
 	(void) sscanf (arh.ar_size, "%10d", &size);
+#endif
 	fseek (arch, (size + 1) & ~1, 1);
     }
 
@@ -715,7 +754,10 @@ skip:
 	     * header and round it up during the seek.
 	     */
 	    arhPtr->ar_size[sizeof(arhPtr->ar_size)-1] = '\0';
+	    size = (int) strtol(arhPtr->ar_size, NULL, 10);
+#if 0
 	    (void)sscanf (arhPtr->ar_size, "%10d", &size);
+#endif
 	    fseek (arch, (size + 1) & ~1, 1);
 	}
     }
@@ -749,10 +791,15 @@ Arch_Touch (gn)
 {
     FILE *	  arch;	  /* Stream open to archive, positioned properly */
     struct ar_hdr arh;	  /* Current header describing member */
+    char *p1, *p2;
 
-    arch = ArchFindMember(Var_Value (ARCHIVE, gn),
-			  Var_Value (TARGET, gn),
+    arch = ArchFindMember(Var_Value (ARCHIVE, gn, &p1),
+			  Var_Value (TARGET, gn, &p2),
 			  &arh, "r+");
+    if (p1)
+	free(p1);
+    if (p2)
+	free(p2);
     sprintf(arh.ar_date, "%-12ld", (long) now);
 
     if (arch != (FILE *) NULL) {
@@ -817,12 +864,21 @@ Arch_MTime (gn)
 {
     struct ar_hdr *arhPtr;    /* Header of desired member */
     int		  modTime;    /* Modification time as an integer */
+    char *p1, *p2;
 
-    arhPtr = ArchStatMember (Var_Value (ARCHIVE, gn),
-			     Var_Value (TARGET, gn),
+    arhPtr = ArchStatMember (Var_Value (ARCHIVE, gn, &p1),
+			     Var_Value (TARGET, gn, &p2),
 			     TRUE);
+    if (p1)
+	free(p1);
+    if (p2)
+	free(p2);
+
     if (arhPtr != (struct ar_hdr *) NULL) {
+	modTime = (int) strtol(arhPtr->ar_date, NULL, 10);
+#if 0
 	(void)sscanf (arhPtr->ar_date, "%12d", &modTime);
+#endif
     } else {
 	modTime = 0;
     }
@@ -981,7 +1037,10 @@ Arch_LibOODate (gn)
 	arhPtr = ArchStatMember (gn->path, RANLIBMAG, FALSE);
 
 	if (arhPtr != (struct ar_hdr *)NULL) {
+	    modTimeTOC = (int) strtol(arhPtr->ar_date, NULL, 10);
+#if 0
 	    (void)sscanf (arhPtr->ar_date, "%12d", &modTimeTOC);
+#endif
 
 	    if (DEBUG(ARCH) || DEBUG(MAKE)) {
 		printf("%s modified %s...", RANLIBMAG, Targ_FmtTime(modTimeTOC));
@@ -1017,4 +1076,25 @@ void
 Arch_Init ()
 {
     archives = Lst_Init (FALSE);
+}
+
+
+
+/*-
+ *-----------------------------------------------------------------------
+ * Arch_End --
+ *	Cleanup things for this module.
+ *
+ * Results:
+ *	None.
+ *
+ * Side Effects:
+ *	The 'archives' list is freed
+ *
+ *-----------------------------------------------------------------------
+ */
+void
+Arch_End ()
+{
+    Lst_Destroy(archives, ArchFree);
 }

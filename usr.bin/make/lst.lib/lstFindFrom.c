@@ -36,7 +36,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)lstFindFrom.c	5.3 (Berkeley) 6/1/90"; */
-static char *rcsid = "$Id: lstFindFrom.c,v 1.3 1994/03/05 00:35:42 cgd Exp $";
+static char *rcsid = "$Id: lstFindFrom.c,v 1.4 1994/06/06 22:46:02 jtc Exp $";
 #endif /* not lint */
 
 /*-
@@ -66,7 +66,7 @@ Lst_FindFrom (l, ln, d, cProc)
     Lst		      	l;
     register LstNode    ln;
     register ClientData d;
-    register int	(*cProc)();
+    register int	(*cProc) __P((ClientData, ClientData));
 {
     register ListNode	tln;
     Boolean		found = FALSE;

@@ -36,7 +36,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)lstFind.c	5.3 (Berkeley) 6/1/90"; */
-static char *rcsid = "$Id: lstFind.c,v 1.3 1994/03/05 00:35:41 cgd Exp $";
+static char *rcsid = "$Id: lstFind.c,v 1.4 1994/06/06 22:46:01 jtc Exp $";
 #endif /* not lint */
 
 /*-
@@ -64,7 +64,7 @@ LstNode
 Lst_Find (l, d, cProc)
     Lst		l;
     ClientData	d;
-    int		(*cProc)();
+    int		(*cProc) __P((ClientData, ClientData));
 {
     return (Lst_FindFrom (l, Lst_First(l), d, cProc));
 }

@@ -38,7 +38,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)var.c	5.7 (Berkeley) 6/1/90"; */
-static char *rcsid = "$Id: var.c,v 1.5 1994/03/05 00:35:17 cgd Exp $";
+static char *rcsid = "$Id: var.c,v 1.6 1994/06/06 22:45:49 jtc Exp $";
 #endif /* not lint */
 
 /*-
@@ -120,6 +120,8 @@ static char	varNoError[] = "";
 GNode          *VAR_GLOBAL;   /* variables from the makefile */
 GNode          *VAR_CMD;      /* variables defined on the command-line */
 
+static Lst	allVars;      /* List of all variables */
+
 #define FIND_CMD	0x1   /* look in VAR_CMD when searching */
 #define FIND_GLOBAL	0x2   /* look in VAR_GLOBAL as well */
 #define FIND_ENV  	0x4   /* look in the environment also */
@@ -149,19 +151,22 @@ typedef struct {
 #define VAR_NO_SUB	8   /* Substitution is non-global and already done */
 } VarPattern;
 
-static int VarCmp __P((Var *, char *));
+static int VarCmp __P((ClientData, ClientData));
 static Var *VarFind __P((char *, GNode *, int));
 static void VarAdd __P((char *, char *, GNode *));
-static Boolean VarHead __P((char *, Boolean, Buffer));
-static Boolean VarTail __P((char *, Boolean, Buffer));
-static Boolean VarSuffix __P((char *, Boolean, Buffer));
-static Boolean VarRoot __P((char *, Boolean, Buffer));
-static Boolean VarMatch __P((char *, Boolean, Buffer, char *));
-static Boolean VarSYSVMatch __P((char *, Boolean, Buffer, VarPattern *));
-static Boolean VarNoMatch __P((char *, Boolean, Buffer, char *));
-static Boolean VarSubstitute __P((char *, Boolean, Buffer, VarPattern *));
-static char *VarModify __P((char *, Boolean (*modProc )(), ClientData));
-static int VarPrintVar __P((Var *));
+static void VarDelete __P((ClientData));
+static Boolean VarHead __P((char *, Boolean, Buffer, ClientData));
+static Boolean VarTail __P((char *, Boolean, Buffer, ClientData));
+static Boolean VarSuffix __P((char *, Boolean, Buffer, ClientData));
+static Boolean VarRoot __P((char *, Boolean, Buffer, ClientData));
+static Boolean VarMatch __P((char *, Boolean, Buffer, ClientData));
+static Boolean VarSYSVMatch __P((char *, Boolean, Buffer, ClientData));
+static Boolean VarNoMatch __P((char *, Boolean, Buffer, ClientData));
+static Boolean VarSubstitute __P((char *, Boolean, Buffer, ClientData));
+static char *VarModify __P((char *, Boolean (*)(char *, Boolean, Buffer,
+						ClientData),
+			    ClientData));
+static int VarPrintVar __P((ClientData, ClientData));
 
 /*-
  *-----------------------------------------------------------------------
@@ -178,10 +183,10 @@ static int VarPrintVar __P((Var *));
  */
 static int
 VarCmp (v, name)
-    Var            *v;		/* VAR structure to compare */
-    char           *name;	/* name to look for */
+    ClientData     v;		/* VAR structure to compare */
+    ClientData     name;	/* name to look for */
 {
-    return (strcmp (name, v->name));
+    return (strcmp ((char *) name, ((Var *) v)->name));
 }
 
 /*-
@@ -218,7 +223,7 @@ VarFind (name, ctxt, flags)
 	 * and substitute the short version in for 'name' if it matches one of
 	 * them.
 	 */
-	if (*name == '.' && isupper(name[1]))
+	if (*name == '.' && isupper((unsigned char) name[1]))
 		switch (name[1]) {
 		case 'A':
 			if (!strcmp(name, ".ALLSRC"))
@@ -336,10 +341,36 @@ VarAdd (name, val, ctxt)
     v->flags = 0;
 
     (void) Lst_AtFront (ctxt->context, (ClientData)v);
+    (void) Lst_AtEnd (allVars, (ClientData) v);
     if (DEBUG(VAR)) {
 	printf("%s:%s = %s\n", ctxt->name, name, val);
     }
 }
+
+
+/*-
+ *-----------------------------------------------------------------------
+ * VarDelete  --
+ *	Delete a variable and all the space associated with it.
+ *
+ * Results:
+ *	None
+ *
+ * Side Effects:
+ *	None
+ *-----------------------------------------------------------------------
+ */
+static void
+VarDelete(vp)
+    ClientData vp;
+{
+    Var *v = (Var *) vp;
+    free(v->name);
+    Buf_Destroy(v->val, TRUE);
+    free((Address) v);
+}
+
+
 
 /*-
  *-----------------------------------------------------------------------
@@ -370,9 +401,9 @@ Var_Delete(name, ctxt)
 
 	v = (Var *)Lst_Datum(ln);
 	Lst_Remove(ctxt->context, ln);
-	Buf_Destroy(v->val, TRUE);
-	free(v->name);
-	free((char *)v);
+	ln = Lst_Member(allVars, v);
+	Lst_Remove(allVars, ln);
+	VarDelete((ClientData) v);
     }
 }
 
@@ -530,15 +561,23 @@ Var_Exists(name, ctxt)
  *-----------------------------------------------------------------------
  */
 char *
-Var_Value (name, ctxt)
+Var_Value (name, ctxt, frp)
     char           *name;	/* name to find */
     GNode          *ctxt;	/* context in which to search for it */
+    char	   **frp;
 {
     Var            *v;
 
     v = VarFind (name, ctxt, FIND_ENV | FIND_GLOBAL | FIND_CMD);
+    *frp = NULL;
     if (v != (Var *) NIL) {
-	return ((char *)Buf_GetAll(v->val, (int *)NULL));
+	char *p = ((char *)Buf_GetAll(v->val, (int *)NULL));
+	if (v->flags & VAR_FROM_ENV) {
+	    Buf_Destroy(v->val, FALSE);
+	    free((Address) v);
+	    *frp = p;
+	}
+	return p;
     } else {
 	return ((char *) NULL);
     }
@@ -560,11 +599,12 @@ Var_Value (name, ctxt)
  *-----------------------------------------------------------------------
  */
 static Boolean
-VarHead (word, addSpace, buf)
+VarHead (word, addSpace, buf, dummy)
     char    	  *word;    	/* Word to trim */
     Boolean 	  addSpace; 	/* True if need to add a space to the buffer
 				 * before sticking in the head */
     Buffer  	  buf;	    	/* Buffer in which to store it */
+    ClientData	  dummy;
 {
     register char *slash;
 
@@ -586,8 +626,8 @@ VarHead (word, addSpace, buf)
 	} else {
 	    Buf_AddByte(buf, (Byte)'.');
 	}
-	return(TRUE);
     }
+    return(dummy ? TRUE : TRUE);
 }
 
 /*-
@@ -606,11 +646,12 @@ VarHead (word, addSpace, buf)
  *-----------------------------------------------------------------------
  */
 static Boolean
-VarTail (word, addSpace, buf)
+VarTail (word, addSpace, buf, dummy)
     char    	  *word;    	/* Word to trim */
     Boolean 	  addSpace; 	/* TRUE if need to stick a space in the
 				 * buffer before adding the tail */
     Buffer  	  buf;	    	/* Buffer in which to store it */
+    ClientData	  dummy;
 {
     register char *slash;
 
@@ -626,7 +667,7 @@ VarTail (word, addSpace, buf)
     } else {
 	Buf_AddBytes (buf, strlen(word), (Byte *)word);
     }
-    return (TRUE);
+    return (dummy ? TRUE : TRUE);
 }
 
 /*-
@@ -644,11 +685,12 @@ VarTail (word, addSpace, buf)
  *-----------------------------------------------------------------------
  */
 static Boolean
-VarSuffix (word, addSpace, buf)
+VarSuffix (word, addSpace, buf, dummy)
     char    	  *word;    	/* Word to trim */
     Boolean 	  addSpace; 	/* TRUE if need to add a space before placing
 				 * the suffix in the buffer */
     Buffer  	  buf;	    	/* Buffer in which to store it */
+    ClientData	  dummy;
 {
     register char *dot;
 
@@ -660,10 +702,9 @@ VarSuffix (word, addSpace, buf)
 	*dot++ = '\0';
 	Buf_AddBytes (buf, strlen (dot), (Byte *)dot);
 	dot[-1] = '.';
-	return (TRUE);
-    } else {
-	return (addSpace);
+	addSpace = TRUE;
     }
+    return (dummy ? addSpace : addSpace);
 }
 
 /*-
@@ -682,11 +723,12 @@ VarSuffix (word, addSpace, buf)
  *-----------------------------------------------------------------------
  */
 static Boolean
-VarRoot (word, addSpace, buf)
+VarRoot (word, addSpace, buf, dummy)
     char    	  *word;    	/* Word to trim */
     Boolean 	  addSpace; 	/* TRUE if need to add a space to the buffer
 				 * before placing the root in it */
     Buffer  	  buf;	    	/* Buffer in which to store it */
+    ClientData	  dummy;
 {
     register char *dot;
 
@@ -702,7 +744,7 @@ VarRoot (word, addSpace, buf)
     } else {
 	Buf_AddBytes (buf, strlen(word), (Byte *)word);
     }
-    return (TRUE);
+    return (dummy ? TRUE : TRUE);
 }
 
 /*-
@@ -727,9 +769,9 @@ VarMatch (word, addSpace, buf, pattern)
 				 * buffer before adding the word, if it
 				 * matches */
     Buffer  	  buf;	    	/* Buffer in which to store it */
-    char    	  *pattern; 	/* Pattern the word must match */
+    ClientData    pattern; 	/* Pattern the word must match */
 {
-    if (Str_Match(word, pattern)) {
+    if (Str_Match(word, (char *) pattern)) {
 	if (addSpace) {
 	    Buf_AddByte(buf, (Byte)' ');
 	}
@@ -758,16 +800,17 @@ VarMatch (word, addSpace, buf, pattern)
  *-----------------------------------------------------------------------
  */
 static Boolean
-VarSYSVMatch (word, addSpace, buf, pat)
+VarSYSVMatch (word, addSpace, buf, patp)
     char    	  *word;    	/* Word to examine */
     Boolean 	  addSpace; 	/* TRUE if need to add a space to the
 				 * buffer before adding the word, if it
 				 * matches */
     Buffer  	  buf;	    	/* Buffer in which to store it */
-    VarPattern 	  *pat; 	/* Pattern the word must match */
+    ClientData 	  patp; 	/* Pattern the word must match */
 {
     int len;
     char *ptr;
+    VarPattern 	  *pat = (VarPattern *) patp;
 
     if (addSpace)
 	Buf_AddByte(buf, (Byte)' ');
@@ -805,9 +848,9 @@ VarNoMatch (word, addSpace, buf, pattern)
 				 * buffer before adding the word, if it
 				 * matches */
     Buffer  	  buf;	    	/* Buffer in which to store it */
-    char    	  *pattern; 	/* Pattern the word must match */
+    ClientData    pattern; 	/* Pattern the word must match */
 {
-    if (!Str_Match(word, pattern)) {
+    if (!Str_Match(word, (char *) pattern)) {
 	if (addSpace) {
 	    Buf_AddByte(buf, (Byte)' ');
 	}
@@ -833,15 +876,16 @@ VarNoMatch (word, addSpace, buf, pattern)
  *-----------------------------------------------------------------------
  */
 static Boolean
-VarSubstitute (word, addSpace, buf, pattern)
+VarSubstitute (word, addSpace, buf, patternp)
     char    	  	*word;	    /* Word to modify */
     Boolean 	  	addSpace;   /* True if space should be added before
 				     * other characters */
     Buffer  	  	buf;	    /* Buffer for result */
-    register VarPattern	*pattern;   /* Pattern for substitution */
+    ClientData	        patternp;   /* Pattern for substitution */
 {
     register int  	wordLen;    /* Length of word */
     register char 	*cp;	    /* General pointer */
+    VarPattern	*pattern = (VarPattern *) patternp;
 
     wordLen = strlen(word);
     if ((pattern->flags & VAR_NO_SUB) == 0) {
@@ -1011,7 +1055,8 @@ VarSubstitute (word, addSpace, buf, pattern)
 static char *
 VarModify (str, modProc, datum)
     char    	  *str;	    	    /* String whose words should be trimmed */
-    Boolean    	  (*modProc)();     /* Function to use to modify them */
+				    /* Function to use to modify them */
+    Boolean    	  (*modProc) __P((char *, Boolean, Buffer, ClientData));
     ClientData	  datum;    	    /* Datum to pass it */
 {
     Buffer  	  buf;	    	    /* Buffer for the new string */
@@ -1254,7 +1299,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 			break;
 		}
 	    } else if (((tstr-str) > 4) && (str[2] == '.') &&
-		       isupper(str[3]) &&
+		       isupper((unsigned char) str[3]) &&
 		       ((ctxt == VAR_CMD) || (ctxt == VAR_GLOBAL)))
 	    {
 		int	len;
@@ -1722,6 +1767,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 	    free(str);
 	}
 	*freePtr = FALSE;
+	Buf_Destroy(v->val, TRUE);
 	free((Address)v);
 	if (dynamic) {
 	    str = emalloc(*lengthPtr + 1);
@@ -1961,16 +2007,27 @@ Var_Init ()
 {
     VAR_GLOBAL = Targ_NewGN ("Global");
     VAR_CMD = Targ_NewGN ("Command");
+    allVars = Lst_Init(FALSE);
 
 }
 
+
+void
+Var_End ()
+{
+    Lst_Destroy(allVars, VarDelete);
+}
+	
+
 /****************** PRINT DEBUGGING INFO *****************/
 static int
-VarPrintVar (v)
-    Var            *v;
+VarPrintVar (vp, dummy)
+    ClientData vp;
+    ClientData dummy;
 {
+    Var    *v = (Var *) vp;
     printf ("%-16s = %s\n", v->name, (char *) Buf_GetAll(v->val, (int *)NULL));
-    return (0);
+    return (dummy ? 0 : 0);
 }
 
 /*-
@@ -1983,5 +2040,5 @@ void
 Var_Dump (ctxt)
     GNode          *ctxt;
 {
-    Lst_ForEach (ctxt->context, VarPrintVar);
+    Lst_ForEach (ctxt->context, VarPrintVar, (ClientData) 0);
 }

@@ -36,7 +36,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)lstDupl.c	5.3 (Berkeley) 6/1/90"; */
-static char *rcsid = "$Id: lstDupl.c,v 1.3 1994/03/05 00:35:39 cgd Exp $";
+static char *rcsid = "$Id: lstDupl.c,v 1.4 1994/06/06 22:46:00 jtc Exp $";
 #endif /* not lint */
 
 /*-
@@ -63,7 +63,8 @@ static char *rcsid = "$Id: lstDupl.c,v 1.3 1994/03/05 00:35:39 cgd Exp $";
 Lst
 Lst_Duplicate (l, copyProc)
     Lst     	  l;	    	 /* the list to duplicate */
-    ClientData	  (*copyProc)(); /* A function to duplicate each ClientData */
+    /* A function to duplicate each ClientData */
+    ClientData	  (*copyProc) __P((ClientData));
 {
     register Lst 	nl;
     register ListNode  	ln;

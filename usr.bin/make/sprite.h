@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sprite.h	5.3 (Berkeley) 6/1/90
- *	$Id: sprite.h,v 1.3 1994/03/05 00:35:07 cgd Exp $
+ *	$Id: sprite.h,v 1.4 1994/06/06 22:45:41 jtc Exp $
  */
 
 /*
@@ -104,12 +104,9 @@ typedef char *Address;
  * ClientData is an uninterpreted word.  It is defined as an int so that
  * kdbx will not interpret client data as a string.  Unlike an "Address",
  * client data will generally not be used in arithmetic.
+ * But we don't have kdbx anymore so we define it as void (christos)
  */
 
-typedef int *ClientData;
+typedef void *ClientData;
 
-#ifdef notdef
-#include "status.h"
-#endif
-
-#endif _SPRITE
+#endif /* _SPRITE */
