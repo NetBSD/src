@@ -1,2 +1,2 @@
-#! /bin/sh
-/usr/bin/uname -p
+#!/bin/sh
+exec /usr/bin/uname -p
