@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.212 1998/08/25 03:59:01 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.213 1998/08/27 07:31:34 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -2114,10 +2114,12 @@ struct {
 	{ MACH_MACIICI,		(caddr_t)0x0,		320 * 1024 },
 	{ MACH_MACIISI,		(caddr_t)0x0,		320 * 1024 },
 	{ MACH_MACCCLASSIC,	(caddr_t)0x50f40000,	512 * 1024 },
+	{ MACH_MACLCII,		(caddr_t)0x50f40000,	512 * 1024 }, /*??*/
 	{ MACH_MACPB165C,	(caddr_t)0xfc040000,	512 * 1024 },
 	{ MACH_MACPB180C,	(caddr_t)0xfc040000,	512 * 1024 },
 	{ MACH_MACPB190,	(caddr_t)0x60000000,	512 * 1024 },
 	{ MACH_MACPB500,	(caddr_t)0x60000000,	512 * 1024 },
+	{ MACH_MACLCIII,	(caddr_t)0x60b00000,	768 * 1024 },
 	{ MACH_MACLC520,	(caddr_t)0x60000000,	1 * 1024 * 1024 },
 	{ MACH_MACLC475,	(caddr_t)0xf9000000,	1 * 1024 * 1024 },
 	{ MACH_MACLC475_33,	(caddr_t)0xf9000000,	1 * 1024 * 1024 },
