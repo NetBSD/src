@@ -1,4 +1,8 @@
-#	$NetBSD: Makefile,v 1.25 1998/09/13 22:23:02 tv Exp $
+#	$NetBSD: Makefile,v 1.26 1998/10/14 15:05:30 tv Exp $
+
+HAVE_GCC28!= ${CXX} --version | egrep "^(2\.8|egcs)" ; echo
+
+.if empty(HAVE_GCC28)
 
 SUBDIR= libstdc++
 
@@ -40,3 +44,8 @@ other-includes:
 
 .include <bsd.inc.mk>
 .include <bsd.subdir.mk>
+
+.else
+.include <bsd.own.mk>
+${TARGETS}:
+.endif
