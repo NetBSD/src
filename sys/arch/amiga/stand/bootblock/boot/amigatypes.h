@@ -1,4 +1,4 @@
-/* $NetBSD: amigatypes.h,v 1.3 1999/02/16 23:34:11 is Exp $ */
+/* $NetBSD: amigatypes.h,v 1.4 2001/03/11 20:09:07 mhitch Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -82,6 +82,6 @@ struct ExecBase {
 	u_int8_t Dmy4[568-326];	/* 326 */
 	u_int32_t EClockFreq;	/* 330 */
 	u_int8_t Dmy5[632-334];
-};
+} __attribute__((packed));
 
 #endif /* _AMIGA_TYPES_H */
