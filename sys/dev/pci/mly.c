@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.2 2001/07/30 23:29:08 ad Exp $	*/
+/*	$NetBSD: mly.c,v 1.3 2001/07/30 23:46:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -563,25 +563,16 @@ mly_attach(struct device *parent, struct device *self, void *aux)
 static void
 mly_scan_channel(struct mly_softc *mly, int bus)
 {
-	int startbus, endbus, s, target;
+	int s, target;
 
-	if (bus == -1) {
-		startbus = 0;
-		endbus = mly->mly_nchans - 1;
-	} else {
-		startbus = bus;
-		endbus = bus;
-	}
-
-	for (bus = startbus; bus <= endbus; bus++)
-		for (target = 0; target < MLY_MAX_TARGETS; target++) {
-			s = splbio();
-			if (!mly_scan_btl(mly, bus, target)) {
-				tsleep(&mly->mly_btl[bus][target], PRIBIO,
-				    "mlyscan", 0);
-			}
-			splx(s);
+	for (target = 0; target < MLY_MAX_TARGETS; target++) {
+		s = splbio();
+		if (!mly_scan_btl(mly, bus, target)) {
+			tsleep(&mly->mly_btl[bus][target], PRIBIO, "mlyscan",
+			    0);
 		}
+		splx(s);
+	}
 }
 
 /*
@@ -691,16 +682,15 @@ mly_scan_btl(struct mly_softc *mly, int bus, int target)
 	/*
 	 * Dispatch the command.
 	 */
-	if ((rv = mly_ccb_map(mly, mc)) != 0)
-		goto bad;
+	if ((rv = mly_ccb_map(mly, mc)) != 0) {
+		free(mc->mc_data, M_DEVBUF);
+		mly_ccb_free(mly, mc);
+		return(rv);
+	}
+
 	mly->mly_btl[bus][target].mb_flags |= MLY_BTL_SCANNING;
 	mly_ccb_enqueue(mly, mc);
 	return (0);
-
- bad:
-	free(mc->mc_data, M_DEVBUF);
-	mly_ccb_free(mly, mc);
-	return(rv);
 }
 
 /*
@@ -735,7 +725,6 @@ mly_complete_rescan(struct mly_softc *mly, struct mly_ccb *mc)
 		target = MLY_PHYADDR_TARGET(tmp);
 	}
 
-	/* XXX Validate bus/target? */
 	btlp = &mly->mly_btl[bus][target];
 
 	/* The default result is 'no device'. */
@@ -752,7 +741,7 @@ mly_complete_rescan(struct mly_softc *mly, struct mly_ccb *mc)
 
 		if (MLY_LOGDEV_BUS(mly, tmp) != bus ||
 		    MLY_LOGDEV_TARGET(mly, tmp) != target) {
-#ifdef MLYDEBUG_OBNOXIOUS
+#ifdef MLYDEBUG
 			printf("%s: WARNING: BTL rescan (logical) for %d:%d "
 			    "returned data for %d:%d instead\n", 
 			   mly->mly_dv.dv_xname, bus, target,
@@ -769,7 +758,7 @@ mly_complete_rescan(struct mly_softc *mly, struct mly_ccb *mc)
 		pdi = (struct mly_ioctl_getphysdevinfovalid *)mc->mc_data;
 
 		if (pdi->channel != bus || pdi->target != target) {
-#ifdef MLYDEBUG_OBNOXIOUS
+#ifdef MLYDEBUG
 			printf("%s: WARNING: BTL rescan (physical) for %d:%d "
 			    " returned data for %d:%d instead\n", 
 			   mly->mly_dv.dv_xname,
@@ -852,7 +841,7 @@ mly_get_eventstatus(struct mly_softc *mly)
 }
 
 /*
- * Enable the memory mailbox mode.
+ * Enable memory mailbox mode.
  */
 static int
 mly_enable_mmbox(struct mly_softc *mly)
@@ -912,10 +901,9 @@ mly_flush(struct mly_softc *mly)
 /*
  * Perform an ioctl command.
  *
- * If (data) is not NULL, the command requires data transfer.  If (*data) is
- * NULL the command requires data transfer from the controller, and we will
- * allocate a buffer for it.  If (*data) is not NULL, the command requires
- * data transfer to the controller.
+ * If (data) is not NULL, the command requires data transfer to the
+ * controller.  If (*data) is NULL the command requires data transfer from
+ * the controller, and we will allocate a buffer for it.
  */
 static int
 mly_ioctl(struct mly_softc *mly, struct mly_cmd_ioctl *ioctl, void **data,
@@ -1199,6 +1187,8 @@ mly_process_event(struct mly_softc *mly, struct mly_event *me)
 	 	 */
 		bus = MLY_LOGDEV_BUS(mly, me->lun);
 		target = MLY_LOGDEV_TARGET(mly, me->lun);
+		printf("%s: logical device %d %s\n", mly->mly_dv.dv_xname,
+		    me->lun, tp);
 		if (action == 'r')
 			mly->mly_btl[bus][target].mb_flags |= MLY_BTL_RESCAN;
 		break;
@@ -1608,12 +1598,12 @@ mly_ccb_free(struct mly_softc *mly, struct mly_ccb *mc)
 	mc->mc_flags = 0;
 	mc->mc_complete = NULL;
 	mc->mc_private = NULL;
+	mc->mc_packet->generic.command_control = 0;
 
 	/*
 	 * By default, we set up to overwrite the command packet with sense
 	 * information.
 	 */
-	mc->mc_packet->generic.command_control = 0;
 	mc->mc_packet->generic.sense_buffer_address =
 	    htole64(mc->mc_packetphys);
 	mc->mc_packet->generic.maximum_sense_size =
@@ -1893,6 +1883,7 @@ mly_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		 */
 		ss->command_control |= MLY_CMDCTL_DISABLE_DISCONNECT;
 #endif
+
 		if ((xs->xs_control & XS_CTL_DATA_OUT) != 0)
 			mc->mc_flags |= MLY_CCB_DATAOUT;
 		else if ((xs->xs_control & XS_CTL_DATA_IN) != 0)
