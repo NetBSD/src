@@ -1,4 +1,4 @@
-.\"	$NetBSD: regex.3,v 1.8 1998/02/06 05:41:14 perry Exp $
+.\"	$NetBSD: regex.3,v 1.9 1998/08/29 08:32:34 lukem Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994 Henry Spencer.
 .\" Copyright (c) 1992, 1993, 1994
@@ -89,7 +89,7 @@ a type
 .Fa regoff_t ,
 and a number of constants with names starting with ``REG_''.
 .Pp
-.Fn Regcomp
+.Fn regcomp
 compiles the regular expression contained in the
 .Fa pattern
 string,
@@ -99,7 +99,7 @@ and places the results in the
 .Fa regex_t
 structure pointed to by
 .Fa preg .
-.Fa Cflags
+.Fa cflags
 is the bitwise OR of zero or more of the following flags:
 .Bl -tag -width XXXREG_EXTENDED
 .It Dv REG_EXTENDED
@@ -174,7 +174,7 @@ If
 fails, it returns a non-zero error code;
 see DIAGNOSTICS.
 .Pp
-.Fn Regexec
+.Fn regexec
 matches the compiled RE pointed to by
 .Fa preg
 against the
@@ -344,7 +344,7 @@ the value of
 will not be changed by a successful
 .Fn regexec .
 .Pp
-.Fn Regerror
+.Fn regerror
 maps a non-zero
 .Fa errcode
 from either
@@ -365,11 +365,11 @@ it should have been the result from the most recent
 .Fn regcomp
 using that
 .Fa regex_t . (
-.Fn Regerror
+.Fn regerror
 may be able to supply a more detailed message using information
 from the
 .Fa regex_t . )
-.Fn Regerror
+.Fn regerror
 places the NUL-terminated message into the buffer pointed to by
 .Fa errbuf ,
 limiting the length (including the NUL) to at most
@@ -419,7 +419,7 @@ and should be used with caution in software intended to be portable to
 other systems.
 Be warned also that they are considered experimental and changes are possible.
 .Pp
-.Fn Regfree
+.Fn regfree
 frees any dynamically-allocated storage associated with the compiled RE
 pointed to by
 .Fa preg .
@@ -555,14 +555,14 @@ and only the collating elements etc. of that locale are available.
 The back-reference code is subtle and doubts linger about its correctness
 in complex cases.
 .Pp
-.Fn Regexec
+.Fn regexec
 performance is poor.
 This will improve with later releases.
-.Fa Nmatch
+.Fa nmatch
 exceeding 0 is expensive;
 .Fa nmatch
 exceeding 1 is worse.
-.Fa Regexec
+.Fa regexec
 is largely insensitive to RE complexity
 .Em except
 that back references are massively expensive.
@@ -570,7 +570,7 @@ RE length does matter; in particular, there is a strong speed bonus
 for keeping RE length under about 30 characters,
 with most special characters counting roughly double.
 .Pp
-.Fn Regcomp
+.Fn regcomp
 implements bounded repetitions by macro expansion,
 which is costly in time and space if counts are large
 or bounded repetitions are nested.

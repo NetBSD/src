@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)creat.2	8.1 (Berkeley) 6/2/93
-.\"	$NetBSD: creat.3,v 1.11 1998/02/05 18:45:28 perry Exp $
+.\"	$NetBSD: creat.3,v 1.12 1998/08/29 08:32:32 lukem Exp $
 .\"
 .Dd June 2, 1993
 .Dt CREAT 3
@@ -50,7 +50,7 @@ This interface is made obsolete by:
 .Ef
 .Xr open 2 .
 .Pp
-.Fn Creat
+.Fn creat
 is the same as:
 .Bd -literal -offset indent
 open(path, O_CREAT | O_TRUNC | O_WRONLY, mode);

@@ -1,4 +1,4 @@
-.\"	$NetBSD: sigaction.2,v 1.18 1998/07/11 06:39:22 mrg Exp $
+.\"	$NetBSD: sigaction.2,v 1.19 1998/08/29 08:32:41 lukem Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -121,7 +121,7 @@ the signal to be delivered, and
 the signal mask associated with the handler to be invoked,
 .Em sa_mask .
 .Pp
-.Fn Sigaction
+.Fn sigaction
 assigns an action for a specific signal.
 If
 .Fa act
@@ -305,10 +305,10 @@ Here
 .Fa sig
 is the signal number, into which the hardware faults and traps are
 mapped.
-.Fa Code
+.Fa code
 is a parameter that is either a constant
 or the code provided by the hardware.
-.Fa Scp
+.Fa scp
 is a pointer to the
 .Fa sigcontext
 structure (defined in
@@ -327,7 +327,7 @@ interface with the
 .Fa siginfo
 interface.
 .Sh ERRORS
-.Fn Sigaction
+.Fn sigaction
 will fail and no new signal handler will be installed if one
 of the following occurs:
 .Bl -tag -width Er
@@ -339,7 +339,7 @@ or
 points to memory that is not a valid part of the process
 address space.
 .It Bq Er EINVAL
-.Fa Sig
+.Fa sig
 is not a valid signal number.
 .It Bq Er EINVAL
 An attempt is made to ignore or supply a handler for

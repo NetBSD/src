@@ -1,4 +1,4 @@
-.\"	$NetBSD: rename.2,v 1.8 1998/05/24 19:09:23 kleink Exp $
+.\"	$NetBSD: rename.2,v 1.9 1998/08/29 08:32:41 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,7 +44,7 @@
 .Ft int
 .Fn rename "const char *from" "const char *to"
 .Sh DESCRIPTION
-.Fn Rename
+.Fn rename
 causes the link named
 .Fa from
 to be renamed as
@@ -59,7 +59,7 @@ and
 must be of the same type (that is, both directories or both
 non-directories), and must reside on the same file system.
 .Pp
-.Fn Rename
+.Fn rename
 guarantees that an instance of
 .Fa to
 will always exist, even if the system should crash in
@@ -111,7 +111,7 @@ returns -1 and the global variable
 .Va errno
 indicates the reason for the failure.
 .Sh ERRORS
-.Fn Rename
+.Fn rename
 will fail and neither of the argument files will be
 affected if:
 .Bl -tag -width Er
@@ -190,7 +190,7 @@ system.
 .Em Path
 points outside the process's allocated address space.
 .It Bq Er EINVAL
-.Fa From
+.Fa from
 is a parent directory of
 .Fa to ,
 or an attempt is made to rename
@@ -198,7 +198,7 @@ or an attempt is made to rename
 or
 .Ql \&.. .
 .It Bq Er ENOTEMPTY
-.Fa To
+.Fa to
 is a directory and is not empty.
 .El
 .Sh SEE ALSO

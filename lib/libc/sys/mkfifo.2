@@ -1,4 +1,4 @@
-.\"	$NetBSD: mkfifo.2,v 1.9 1997/07/14 23:20:07 kleink Exp $
+.\"	$NetBSD: mkfifo.2,v 1.10 1998/08/29 08:32:39 lukem Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -45,7 +45,7 @@
 .Ft int
 .Fn mkfifo "const char *path" "mode_t mode"
 .Sh DESCRIPTION
-.Fn Mkfifo
+.Fn mkfifo
 creates a new fifo file with name
 .Fa path .
 The access permissions are
@@ -63,7 +63,7 @@ A 0 return value indicates success.  A -1 return value
 indicates an error, and an error code is stored in
 .Va errno .
 .Sh ERRORS
-.Fn Mkfifo
+.Fn mkfifo
 will fail and no fifo will be created if:
 .Bl -tag -width Er
 .It Bq Er EOPNOTSUPP
@@ -110,7 +110,7 @@ An
 .Tn I/O
 error occurred while reading from or writing to the file system.
 .It Bq Er EFAULT
-.Fa Path
+.Fa path
 points outside the process's allocated address space.
 .El
 .Sh SEE ALSO

@@ -1,4 +1,4 @@
-.\"	$NetBSD: mmap.2,v 1.15 1998/06/03 22:03:44 kleink Exp $
+.\"	$NetBSD: mmap.2,v 1.16 1998/08/29 08:32:39 lukem Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -177,7 +177,7 @@ No successful return from
 will return the value
 .Dv MAP_FAILED .
 .Sh ERRORS
-.Fn Mmap
+.Fn mmap
 will fail if:
 .Bl -tag -width Er
 .It Bq Er EACCES
@@ -200,7 +200,7 @@ parameters and
 .Fa fd
 was not open for writing.
 .It Bq Er EBADF
-.Fa Fd
+.Fa fd
 is not a valid open file descriptor.
 .It Bq Er EINVAL
 .\"One of
@@ -218,10 +218,10 @@ valid address range for a process.
 .Dv MAP_ANON was specified and
 .Fa fd
 was not \-1.
-.Fa Len
+.Fa len
 was less than zero.
 .It Bq Er ENODEV
-.Fa Fd
+.Fa fd
 did not reference a regular or character special file.
 .It Bq Er ENOMEM
 .Dv MAP_FIXED

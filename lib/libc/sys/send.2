@@ -1,4 +1,4 @@
-.\"	$NetBSD: send.2,v 1.10 1998/08/04 19:48:34 kleink Exp $
+.\"	$NetBSD: send.2,v 1.11 1998/08/29 08:32:41 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -51,12 +51,12 @@
 .Ft ssize_t
 .Fn sendmsg "int s" "const struct msghdr *msg" "int flags"
 .Sh DESCRIPTION
-.Fn Send ,
+.Fn send ,
 .Fn sendto ,
 and
 .Fn sendmsg
 are used to transmit a message to another socket.
-.Fn Send
+.Fn send
 may be used only when the socket is in a 
 .Em connected
 state, while 
@@ -123,7 +123,7 @@ structure.
 The call returns the number of characters sent, or -1
 if an error occurred.
 .Sh ERRORS
-.Fn Send ,
+.Fn send ,
 .Fn sendto ,
 and
 .Fn sendmsg
@@ -160,7 +160,7 @@ The total length of the I/O is more than can be expressed by the ssize_t
 return value.
 .El
 .Pp
-.Fn Sendmsg
+.Fn sendmsg
 will also fail if:
 .Bl -tag -width Er
 .It Bq Er EMSGSIZE

@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)lgamma.3	6.6 (Berkeley) 12/3/92
-.\"	$NetBSD: lgamma.3,v 1.12 1998/02/05 18:52:10 perry Exp $
+.\"	$NetBSD: lgamma.3,v 1.13 1998/08/29 08:32:44 lukem Exp $
 .\"
 .Dd December 3, 1992
 .Dt LGAMMA 3
@@ -51,7 +51,7 @@
 .Ft float
 .Fn lgammaf "float x"
 .Sh DESCRIPTION
-.Fn Lgamma x
+.Fn lgamma x
 .if t \{\
 returns ln\||\(*G(x)| where
 .Bd -unfilled -offset indent
@@ -81,7 +81,7 @@ Only after
 has returned can signgam be correct.
 .Pp
 .Sh RETURN VALUES
-.Fn Lgamma
+.Fn lgamma
 returns appropriate values unless an argument is out of range.
 Overflow will occur for sufficiently large positive values, and
 non-positive integers.
