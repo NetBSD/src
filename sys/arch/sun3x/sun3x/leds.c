@@ -1,4 +1,4 @@
-/*	$NetBSD: leds.c,v 1.1 1997/04/25 15:15:47 gwr Exp $	*/
+/*	$NetBSD: leds.c,v 1.2 1997/05/11 06:16:26 jeremy Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ static struct led_patterns ledpat = {
 	}
 };
 
-static char *diagreg;
+static volatile u_int8_t *diagreg;
 
 /*
  * This is called early during startup to find the
@@ -81,7 +81,7 @@ leds_init()
 {
 
 	diagreg = obio_find_mapping(OBIO_DIAGREG, 1);
-	*diagreg = 0;	/* active low (all on) */
+	*diagreg = 0xff;	/* all on */
 }
 
 /*
