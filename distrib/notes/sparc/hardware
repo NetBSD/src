@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.23 2002/09/15 21:55:41 mbw Exp $
+.\"	$NetBSD: hardware,v 1.24 2003/07/18 06:33:45 tron Exp $
 .
 .Ss2 Supported machines
 .(bullet -offset indent
@@ -371,10 +371,6 @@ Bi-directional parallel port.  On-board and Sbus card
 .bullet)
 .Ss2 Unsupported devices
 .(bullet -offset indent
-Use of more than one processor in sun4m machines (it boots, but only uses
-one processor).
-There is currently a work in progress to resolve this
-.It
 DBRIe-based audio and ISDN.
 On-board some sun4m machines (such as SS10,
 SS20, SPARC LX, and Tadpole SPARCbook)
