@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: kafs.h,v 1.1.1.1 2000/06/16 18:46:05 thorpej Exp $ */
+/* $Id: kafs.h,v 1.1.1.2 2000/12/29 01:43:53 assar Exp $ */
 
 #ifndef __KAFS_H
 #define __KAFS_H

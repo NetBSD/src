@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: telnet_locl.h,v 1.1.1.1 2000/06/16 18:46:32 thorpej Exp $ */
+/* $Id: telnet_locl.h,v 1.1.1.2 2000/12/29 01:42:40 assar Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>

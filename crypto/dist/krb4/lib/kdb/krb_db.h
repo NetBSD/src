@@ -1,5 +1,5 @@
 /*
- * $Id: krb_db.h,v 1.1.1.1 2000/06/16 18:45:51 thorpej Exp $ 
+ * $Id: krb_db.h,v 1.1.1.2 2000/12/29 01:43:11 assar Exp $ 
  *
  * Copyright 1987, 1988 by the Massachusetts Institute of Technology. 
  *

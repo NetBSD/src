@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pathnames.h	5.2 (Berkeley) 4/9/90
- *	$Id: pathnames.h,v 1.1.1.1 2000/06/16 18:46:16 thorpej Exp $
+ *	$Id: pathnames.h,v 1.1.1.2 2000/12/29 01:42:21 assar Exp $
  */
 
 /******* First fix default path, we stick to _PATH_DEFPATH everywhere */
