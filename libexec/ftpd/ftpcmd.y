@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.34 1999/07/11 20:03:41 itojun Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.35 1999/07/11 20:09:23 itojun Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1993, 1994
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.34 1999/07/11 20:03:41 itojun Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.35 1999/07/11 20:09:23 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -245,6 +245,11 @@ cmd
 
 	| LPRT check_login SP host_long_port4 CRLF
 		{
+			/* reject invalid host_long_port4 */
+			if (data_dest.su_family != AF_INET) {
+				reply(500, "Illegal LPRT command rejected");
+				return (NULL);
+			}
 			/* be paranoid, if told so */
 			if (curclass.checkportcmd &&
 			    ((ntohs(data_dest.su_port) < IPPORT_RESERVED) ||
@@ -268,6 +273,11 @@ cmd
 
 	| LPRT check_login SP host_long_port6 CRLF
 		{
+			/* reject invalid host_long_port6 */
+			if (data_dest.su_family != AF_INET6) {
+				reply(500, "Illegal LPRT command rejected");
+				return (NULL);
+			}
 			/* be paranoid, if told so */
 			if (curclass.checkportcmd &&
 			    ((ntohs(data_dest.su_port) < IPPORT_RESERVED) ||
@@ -929,6 +939,10 @@ host_long_port4
 			p[0] = $15; p[1] = $17;
 			a = (char *)&data_dest.su_sin.sin_addr;
 			a[0] =  $5;  a[1] =  $7;  a[2] =  $9;  a[3] = $11;
+
+			/* reject invalid LPRT command */
+			if ($1 != 4 || $3 != 4 || $13 != 2)
+				memset(&data_dest, 0, sizeof(data_dest));
 		}
 	;
 
@@ -952,6 +966,10 @@ host_long_port6
 			 a[4] = $13;  a[5] = $15;  a[6] = $17;  a[7] = $19;
 			 a[8] = $21;  a[9] = $23; a[10] = $25; a[11] = $27;
 			a[12] = $29; a[13] = $31; a[14] = $33; a[15] = $35;
+
+			/* reject invalid LPRT command */
+			if ($1 != 6 || $3 != 16 || $37 != 2)
+				memset(&data_dest, 0, sizeof(data_dest));
 		}
 	;
 
