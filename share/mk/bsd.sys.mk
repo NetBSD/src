@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.13 1997/10/28 12:40:18 lukem Exp $
+#	$NetBSD: bsd.sys.mk,v 1.14 1997/10/30 07:25:35 lukem Exp $
 #
 # Overrides used for NetBSD source tree builds.
 
@@ -35,9 +35,6 @@ NM?=		nm
 
 .m.o:
 	${COMPILE.m} ${.IMPSRC}
-
-.m.ln:
-	${LINT} ${LINTFLAGS} ${CFLAGS:M-[IDU]*} -i ${.IMPSRC}
 
 
 .if defined(PARALLEL)
