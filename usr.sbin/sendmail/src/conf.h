@@ -81,4 +81,4 @@
 	 * searched, we can't use ANY; it would cause fully-qualified names
 	 * to match as names in a local domain.
 	 */
-/* # define NO_WILDCARD_MX	1 */
+# define NO_WILDCARD_MX	1

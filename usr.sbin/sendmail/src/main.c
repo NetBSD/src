@@ -125,7 +125,7 @@ main(argc, argv, envp)
 	char *from;
 	typedef int (*fnptr)();
 	STAB *st;
-	register int i;
+	register int i,nfd;
 	bool readconfig = TRUE;
 	bool queuemode = FALSE;		/* process queue requests */
 	bool nothaw;
@@ -164,7 +164,9 @@ main(argc, argv, envp)
 	i = open("/dev/null", O_RDWR);
 	while (i >= 0 && i < 2)
 		i = dup(i);
-	for (i = getdtablesize(); i > 2; --i)
+	nfd = getdtablesize();
+	nfd = min(nfd, 256);
+	for (i = nfd; i > 2; --i)
 		(void) close(i);
 	errno = 0;
 
