@@ -1,4 +1,4 @@
-/*      $NetBSD: sushi.c,v 1.9 2001/02/20 23:57:50 cgd Exp $       */
+/*      $NetBSD: sushi.c,v 1.10 2002/07/25 12:39:26 jdolecek Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -177,16 +177,11 @@ parse_config(void)
 		searchpaths = (char **)malloc(sizeof(char *) * 6);
 		if (searchpaths == NULL)
 			bailout("malloc: %s", strerror(errno));
-		for (i = 0; i < 4; i++) {
-			searchpaths[i] = (char *)malloc(sizeof(char) *
-			    PATH_MAX);
-			if (searchpaths[i] == NULL)
-				bailout("malloc: %s", strerror(errno));
-		}
 		searchpaths[0] = "/usr/share/sushi";
 		searchpaths[1] = "/usr/pkg/share/sushi";
 		searchpaths[2] = "/usr/X11R6/share/sushi";
 		searchpaths[3] = "/etc/sushi";
+		i = 4;
 	} else {
 		searchpaths = (char **)malloc(sizeof(char *));
 		if (searchpaths == NULL)
