@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_null.c,v 1.5 1997/09/16 12:31:02 lukem Exp $	*/
+/*	$NetBSD: mount_null.c,v 1.6 1999/06/25 19:28:37 perseant Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_null.c	8.6 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_null.c,v 1.5 1997/09/16 12:31:02 lukem Exp $");
+__RCSID("$NetBSD: mount_null.c,v 1.6 1999/06/25 19:28:37 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -106,7 +106,7 @@ main(argc, argv)
 	args.target = target;
 
 	if (mount(MOUNT_NULL, argv[1], mntflags, &args))
-		err(1, "%s", "");
+		err(1, "%s on %s", target, argv[1]);
 	exit(0);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_lfs.c,v 1.7 1998/03/01 02:20:41 fvdl Exp $	*/
+/*	$NetBSD: mount_lfs.c,v 1.8 1999/06/25 19:28:36 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_lfs.c	8.4 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_lfs.c,v 1.7 1998/03/01 02:20:41 fvdl Exp $");
+__RCSID("$NetBSD: mount_lfs.c,v 1.8 1999/06/25 19:28:36 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: mount_lfs.c,v 1.7 1998/03/01 02:20:41 fvdl Exp $");
 #include <ufs/ufs/ufsmount.h>
 
 #include <err.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -81,6 +82,7 @@ main(argc, argv)
 	struct ufs_args args;
 	int ch, mntflags, noclean;
 	char *fs_name, *options;
+	const char *errcause;
 
 	options = NULL;
 	mntflags = noclean = 0;
@@ -108,7 +110,7 @@ main(argc, argv)
 	if (argc != 2)
 		usage();
 
-        args.fspec = argv[0];	/* the name of the device file */
+	args.fspec = argv[0];	/* the name of the device file */
 	fs_name = argv[1];	/* the mount point */
 
 #define DEFAULT_ROOTUID	-2
@@ -118,8 +120,24 @@ main(argc, argv)
 	else
 		args.export.ex_flags = 0;
 
-	if (mount(MOUNT_LFS, fs_name, mntflags, &args))
-		err(1, "%s", "");
+	if (mount(MOUNT_LFS, fs_name, mntflags, &args)) {
+		switch (errno) {
+		case EMFILE:
+			errcause = "mount table full";
+			break;
+		case EINVAL:
+			if (mntflags & MNT_UPDATE)
+				errcause =
+			    "specified device does not match mounted device";
+			else
+				errcause = "incorrect super block";
+			break;
+		default:
+			errcause = strerror(errno);
+			break;
+		}
+		errx(1, "%s on %s: %s", args.fspec, fs_name, errcause);
+	}
 
 	if (!noclean)
 		invoke_cleaner(fs_name);

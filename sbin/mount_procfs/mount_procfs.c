@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_procfs.c,v 1.9 1997/09/16 12:32:04 lukem Exp $	*/
+/*	$NetBSD: mount_procfs.c,v 1.10 1999/06/25 19:28:37 perseant Exp $	*/
 
 /*
  * Copyright (c) 1990, 1992, 1993 Jan-Simon Pendry
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_procfs.c	8.4 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_procfs.c,v 1.9 1997/09/16 12:32:04 lukem Exp $");
+__RCSID("$NetBSD: mount_procfs.c,v 1.10 1999/06/25 19:28:37 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,7 +94,7 @@ main(argc, argv)
 		usage();
 
 	if (mount(MOUNT_PROCFS, argv[1], mntflags, NULL))
-		err(1, "%s", "");
+		err(1, "procfs on %s", argv[1]);
 	exit(0);
 }
 

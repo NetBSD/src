@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_filecore.c,v 1.1 1998/08/14 03:38:51 mark Exp $	*/
+/*	$NetBSD: mount_filecore.c,v 1.2 1999/06/25 19:28:36 perseant Exp $	*/
 
 /*
  * Copyright (c) 1998 Andrew McMurry
@@ -138,7 +138,7 @@ main(argc, argv)
 	args.flags = opts;
 
 	if (mount(MOUNT_FILECORE, dir, mntflags, &args) < 0)
-		err(1, "%s", "");
+		err(1, "%s on %s", dev, dir);
 	exit(0);
 }
 
