@@ -1,4 +1,4 @@
-.\" $NetBSD: mixerctl.1,v 1.17 2003/10/23 22:17:58 cube Exp $
+.\" $NetBSD: mixerctl.1,v 1.18 2004/01/03 18:43:02 augustss Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -94,7 +94,7 @@ attempts to set the specified variables to the given values.
 The
 .Fl d
 flag can be used to give an alternative mixer device, the default is
-.Pa /dev/mixer0 .
+.Pa /dev/mixer .
 .Pp
 The
 .Fl n
@@ -144,8 +144,8 @@ indicated number of steps.
 the mixer device to use.
 .El
 .Sh FILES
-.Bl -tag -width /dev/mixer0
-.It Pa /dev/mixer0
+.Bl -tag -width /dev/mixer
+.It Pa /dev/mixer
 mixer audio device
 .El
 .Sh EXAMPLES
