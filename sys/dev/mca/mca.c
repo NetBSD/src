@@ -1,7 +1,7 @@
-/*	$NetBSD: mca.c,v 1.3 2001/03/23 20:04:28 jdolecek Exp $	*/
+/*	$NetBSD: mca.c,v 1.4 2001/03/31 09:50:14 jdolecek Exp $	*/
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
  * Copyright (c) 1996-1999 Scott D. Telford.
  * All rights reserved.
  *
