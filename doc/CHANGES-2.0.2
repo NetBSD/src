@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.2,v 1.1.2.6 2005/03/16 15:11:03 he Exp $
+#	$NetBSD: CHANGES-2.0.2,v 1.1.2.7 2005/03/16 15:20:30 tron Exp $
 
 A complete list of changes from the NetBSD 2.0.1 release to the NetBSD 2.0.2
 release.
@@ -98,4 +98,11 @@ sys/kern/vfs_lookup.c				1.57
 	Adjust error case handling. If the VOP_LOOKUP() call unlocked the
 	parent directory node, remember that.
 	[wrstuden, ticket #1298]
+
+sys/arch/xen/i386/locore.S			1.10
+
+	Sync with i386/locore.S 1.33:
+	Check the passed in address as well as determining the maximum length
+	using VM_MAXUSER_ADDRESS in copyinstr and copyoutstr.
+	[bouyer, ticket #1321]
 
