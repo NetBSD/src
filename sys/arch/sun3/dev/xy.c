@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.18 1998/01/12 20:32:28 thorpej Exp $	*/
+/*	$NetBSD: xy.c,v 1.18.2.1 1998/01/26 21:17:38 gwr Exp $	*/
 
 /*
  *
@@ -36,7 +36,7 @@
  * x y . c   x y l o g i c s   4 5 0 / 4 5 1   s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $NetBSD: xy.c,v 1.18 1998/01/12 20:32:28 thorpej Exp $
+ * id: &Id: xy.c,v 1.1 1995/09/25 20:35:14 chuck Exp &
  * started: 14-Sep-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -325,8 +325,9 @@ xycattach(parent, self, aux)
 
 	xyc->xyc = (struct xyc *)
 		bus_mapin(ca->ca_bustype, ca->ca_paddr, sizeof(struct xyc));
-	xyc->ipl = ca->ca_intpri;
-	xyc->vector = ca->ca_intvec;
+	xyc->bustype = ca->ca_bustype;
+	xyc->ipl     = ca->ca_intpri;
+	xyc->vector  = ca->ca_intvec;
 	xyc->no_ols = 0; /* XXX should be from config */
 
 	for (lcv = 0; lcv < XYC_MAXDEV; lcv++)
@@ -354,7 +355,7 @@ xycattach(parent, self, aux)
 	bzero(tmp, pbsz);
 	xyc->iopbase = tmp;
 	xyc->dvmaiopb = (struct xy_iopb *)
-		dvma_kvtopa(xyc->iopbase, BUS_VME16);
+		dvma_kvtopa(xyc->iopbase, xyc->bustype);
 	xyc->reqs = (struct xy_iorq *)
 	    malloc(XYC_MAXIOPB * sizeof(struct xy_iorq), M_DEVBUF, M_NOWAIT);
 	if (xyc->reqs == NULL)
@@ -1132,7 +1133,7 @@ xyc_rqtopb(iorq, iopb, cmd, subfun)
 		iopb->dataa = 0;
 		iopb->datar = 0;
 	} else {
-		dp = dvma_kvtopa(iorq->dbuf, BUS_VME16);
+		dp = dvma_kvtopa(iorq->dbuf, iorq->xyc->bustype);
 		iopb->dataa = (dp & 0xffff);
 		iopb->datar = ((dp & 0xff0000) >> 16);
 	}
@@ -1370,7 +1371,7 @@ xyc_submit_iorq(xycsc, iorq, type)
 			return(XY_ERR_AOK);
 		panic("xyc_submit_iorq: xyc_chain failed!\n");
 	}
-	iopbaddr = dvma_kvtopa(iopb, BUS_VME16);
+	iopbaddr = dvma_kvtopa(iopb, xycsc->bustype);
 
 	XYC_GO(xycsc->xyc, iopbaddr);
 
@@ -1401,10 +1402,8 @@ xyc_submit_iorq(xycsc, iorq, type)
 
 struct xy_iopb *
 xyc_chain(xycsc, iorq)
-
-struct xyc_softc *xycsc;
-struct xy_iorq *iorq;
-
+	struct xyc_softc *xycsc;
+	struct xy_iorq *iorq;
 {
 	int togo, chain, hand;
 	struct xy_iopb *iopb, *prev_iopb;
@@ -1453,7 +1452,7 @@ struct xy_iorq *iorq;
 			prev_iopb = xycsc->xy_chain[chain-1]->iopb;
 			prev_iopb->chen = 1;
 			prev_iopb->nxtiopb = 0xffff &
-			  dvma_kvtopa(iopb, BUS_VME16);
+			  dvma_kvtopa(iopb, xycsc->bustype);
 		} else {            /* head of chain */
 			iorq = xycsc->xy_chain[chain];
 		}
@@ -1546,7 +1545,7 @@ xyc_xyreset(xycsc, xysc)
 	xycsc->ciopb->ien = 0;
 	xycsc->ciopb->com = XYCMD_RST;
 	xycsc->ciopb->unit = xysc->xy_drive;
-	addr = dvma_kvtopa(xycsc->ciopb, BUS_VME16);
+	addr = dvma_kvtopa(xycsc->ciopb, xycsc->bustype);
 
 	XYC_GO(xycsc->xyc, addr);
 
@@ -1780,7 +1779,7 @@ xyc_remove_iorq(xycsc)
 					(iorq->blockno / iorq->xy->nhead) %
 						iorq->xy->nhead;
 				iopb->sect = iorq->blockno % XYFM_BPS;
-				addr = dvma_kvtopa(iorq->dbuf, BUS_VME16);
+				addr = dvma_kvtopa(iorq->dbuf, xycsc->bustype);
 				iopb->dataa = (addr & 0xffff);
 				iopb->datar = ((addr & 0xff0000) >> 16);
 				/* will resubit at end */

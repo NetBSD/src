@@ -1,4 +1,4 @@
-/* $NetBSD: xyvar.h,v 1.3 1997/10/17 03:48:02 gwr Exp $ */
+/* $NetBSD: xyvar.h,v 1.3.4.1 1998/01/26 21:17:37 gwr Exp $ */
 
 /*
  *
@@ -143,9 +143,11 @@ struct xyc_softc {
 
   struct xyc *xyc;                 /* vaddr of vme registers */
 
-  struct xy_softc *sc_drives[XYC_MAXDEV];   /* drives on this controller */
+  int bustype;                     /* from attach args */
   int ipl;                         /* interrupt level */
   int vector;                      /* interrupt vector */
+
+  struct xy_softc *sc_drives[XYC_MAXDEV];   /* drives on this controller */
 
   struct xy_iorq *reqs;            /* i/o requests */
   struct xy_iopb *iopbase;         /* iopb base addr (maps iopb->iorq) */
