@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.7 2004/04/24 19:18:01 cl Exp $
+#	$NetBSD: files.xen,v 1.8 2004/04/24 20:05:49 cl Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -192,12 +192,24 @@ include	"compat/ossaudio/files.ossaudio"
 
 # Xen devices
 
+# Network driver
 device	xennet: arp, ether, ifnet
 attach	xennet at hypervisor
 file	arch/xen/xen/if_xennet.c	xennet needs-flag
 
+# Block device driver and wd/sd/cd identities
 device	xbd: disk
 attach	xbd at hypervisor
-file	arch/xen/xen/xbd.c		xbd needs-flag
+file	arch/xen/xen/xbd.c		xbd | wd | sd | cd needs-flag
+
+device	wd: disk
+attach	wd at hypervisor
+
+device	sd: disk
+attach	sd at hypervisor
+
+device	cd: disk
+attach	cd at hypervisor
+
 
 include "arch/xen/conf/majors.i386"

@@ -1,4 +1,4 @@
-# $NetBSD: XEN,v 1.4 2004/04/24 18:24:14 cl Exp $
+# $NetBSD: XEN,v 1.5 2004/04/24 20:05:49 cl Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -108,7 +108,7 @@ options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM,NFS_BOOT_BOOTSTATIC
 #options 	NFS_BOOTSTATIC_SERVER="\"server:/path/to/root\""
 
 config		netbsd	root on ? type ?
-#config		netbsd	root on xbd0a type ffs
+#config		netbsd	root on wd0a type ffs
 #config		netbsd	root on xennet0 type nfs
 
 mainbus0 at root
@@ -123,6 +123,9 @@ xencons*	at hypervisor?		# Xen virtual console
 xennet* 	at hypervisor?		# Xen virtual network interface
 
 xbd*		at hypervisor?		# Xen virtual block device
+wd*		at hypervisor?		# Xen vbd (wd identity)
+sd*		at hypervisor?		# Xen vbd (sd identity)
+cd*		at hypervisor?		# Xen vbd (cd identity)
 
 
 include	"arch/xen/conf/GENERIC.local"
