@@ -1,4 +1,4 @@
-/*	$NetBSD: mesh.c,v 1.12 2001/07/22 11:29:46 wiz Exp $	*/
+/*	$NetBSD: mesh.c,v 1.13 2001/11/04 12:03:41 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000	Tsubai Masanari.
@@ -665,10 +665,6 @@ mesh_status(sc, scb)
 	sc->sc_nextstate = MESH_MSGIN;
 }
 
-#define IS1BYTEMSG(m) (((m) != 1 && (m) < 0x20) || (m) & 0x80)
-#define IS2BYTEMSG(m) (((m) & 0xf0) == 0x20)
-#define ISEXTMSG(m) ((m) == 1)
-
 void
 mesh_msgin(sc, scb)
 	struct mesh_softc *sc;
@@ -686,11 +682,11 @@ mesh_msgin(sc, scb)
 
 	sc->sc_imsg[sc->sc_imsglen++] = mesh_read_reg(sc, MESH_FIFO);
 
-	if (sc->sc_imsglen == 1 && IS1BYTEMSG(sc->sc_imsg[0]))
+	if (sc->sc_imsglen == 1 && MSG_IS1BYTE(sc->sc_imsg[0]))
 		goto gotit;
-	if (sc->sc_imsglen == 2 && IS2BYTEMSG(sc->sc_imsg[0]))
+	if (sc->sc_imsglen == 2 && MSG_IS2BYTE(sc->sc_imsg[0]))
 		goto gotit;
-	if (sc->sc_imsglen >= 3 && ISEXTMSG(sc->sc_imsg[0]) &&
+	if (sc->sc_imsglen >= 3 && MSG_ISEXTENDED(sc->sc_imsg[0]) &&
 	    sc->sc_imsglen == sc->sc_imsg[1] + 2)
 		goto gotit;
 

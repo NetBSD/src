@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.84 2001/07/26 15:51:04 tsutsui Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.85 2001/11/04 12:05:42 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1490,23 +1490,15 @@ abort:
 	return (1);
 }
 
-
-/*
- * XXX this might be common thing(check with scsipi)
- */
-#define IS1BYTEMSG(m) (((m) != 1 && (m) < 0x20) || (m) & 0x80)
-#define IS2BYTEMSG(m) (((m) & 0xf0) == 0x20)
-#define ISEXTMSG(m) ((m) == 1)
-
 static inline int
 __verify_msg_format(u_char *p, int len)
 {
 
-	if (len == 1 && IS1BYTEMSG(p[0]))
+	if (len == 1 && MSG_IS1BYTE(p[0]))
 		return 1;
-	if (len == 2 && IS2BYTEMSG(p[0]))
+	if (len == 2 && MSG_IS2BYTE(p[0]))
 		return 1;
-	if (len >= 3 && ISEXTMSG(p[0]) &&
+	if (len >= 3 && MSG_ISEXTENDED(p[0]) &&
 	    len == p[1] + 2)
 		return 1;
 
