@@ -1,8 +1,9 @@
-/*	$NetBSD: hpc.c,v 1.2 2001/08/19 03:16:21 wdk Exp $	*/
+/*	$NetBSD: hpc.c,v 1.3 2001/11/18 08:16:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
  * Copyright (c) 2001 Rafal K. Boni
+ * Copyright (c) 2001 Jason R. Thorpe
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -49,6 +50,48 @@
 
 #include "locators.h"
 
+const struct hpc_device {
+	const char *hd_name;
+	bus_addr_t hd_devoff;
+	bus_addr_t hd_dmaoff;
+	int hd_irq;
+	int hd_sysmask;
+#define	HPCDEV_IP22		(1U << 0)	/* Indigo2 */
+#define	HPCDEV_IP24		(1U << 1)	/* Indy */
+} hpc_devices[] = {
+	{ "zsc",
+	  /* XXX Magic numbers */
+	  HPC_PBUS_CH6_DEVREGS + 0x30,	0,
+	  29,
+	  HPCDEV_IP22 | HPCDEV_IP24 },
+
+	{ "sq",
+	  HPC_ENET_DEVREGS, HPC_ENET_REGS,
+	  3,
+	  HPCDEV_IP22 | HPCDEV_IP24 },
+
+	{ "wdsc",
+	  HPC_SCSI0_DEVREGS, HPC_SCSI0_REGS,
+	  1,	/* XXX 1 = IRQ_LOCAL0 + 1 */
+	  HPCDEV_IP22 | HPCDEV_IP24 },
+
+	{ "wdsc",
+	  HPC_SCSI1_DEVREGS, HPC_SCSI1_REGS,
+	  2,	/* XXX 2 = IRQ_LOCAL0 + 2 */
+	  HPCDEV_IP22 },
+
+	{ "dsclock",
+	  HPC_PBUS_BBRAM, 0,
+	  -1,
+	  HPCDEV_IP22 | HPCDEV_IP24 },
+
+	{ NULL,
+	  0, 0,
+	  0,
+	  0
+	}
+};
+
 struct hpc_softc {
 	struct device 		sc_dev;
 
@@ -64,22 +107,20 @@ extern int mach_boardrev;	/* machine board revision, in case it matters */
 
 extern struct sgimips_bus_dma_tag sgimips_default_bus_dma_tag;
 
-static int	hpc_match(struct device *, struct cfdata *, void *);
-static void	hpc_attach(struct device *, struct device *, void *);
-static int	hpc_print(void *, const char *);
-static int	hpc_search(struct device *, struct cfdata *, void *);
+int	hpc_match(struct device *, struct cfdata *, void *);
+void	hpc_attach(struct device *, struct device *, void *);
+int	hpc_print(void *, const char *);
 
-static int	hpc_power_intr(void *);
+int	hpc_submatch(struct device *, struct cfdata *, void *);
+
+int	hpc_power_intr(void *);
 
 struct cfattach hpc_ca = {
         sizeof(struct hpc_softc), hpc_match, hpc_attach 
 };
 
-static int
-hpc_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;                                      
+int
+hpc_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct gio_attach_args* ga = aux;
 
@@ -90,26 +131,49 @@ hpc_match(parent, match, aux)
         return 1;
 }
 
-static void
-hpc_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+void
+hpc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct hpc_softc *sc = (struct hpc_softc *)self;
 	struct gio_attach_args* ga = aux;
 	struct hpc_attach_args ha;
+	const struct hpc_device *hd;
+	int sysmask, hpctype;
 
-	/*
-	 * XXX
-	 */
-	printf("\n");
+	switch (mach_type) {
+	case MACH_SGI_IP22:
+		hpctype = 3;
+		if (mach_subtype == MACH_SGI_IP22_FULLHOUSE)
+			sysmask = HPCDEV_IP22;
+		else
+			sysmask = HPCDEV_IP24;
+		break;
+
+	default:
+		panic("hpc_attach: can't handle HPC on an IP%d\n",
+		    mach_type);
+	};
+
+	printf(": SGI HPC%d\n", hpctype);
 
 	sc->sc_ct = 1;
 	sc->sc_ch = ga->ga_ioh;
 
 	sc->sc_base = ga->ga_addr;
-	config_search(hpc_search, self, &ha);
+
+	for (hd = hpc_devices; hd->hd_name != NULL; hd++) {
+		ha.ha_name = hd->hd_name;
+		ha.ha_devoff = hd->hd_devoff;
+		ha.ha_dmaoff = hd->hd_dmaoff;
+		ha.ha_irq = hd->hd_irq;
+
+		/* XXX This is disgusting. */
+		ha.ha_st = 1;
+		ha.ha_sh = MIPS_PHYS_TO_KSEG1(sc->sc_base);
+		ha.ha_dmat = &sgimips_default_bus_dma_tag;
+
+		(void) config_found_sm(self, &ha, hpc_print, hpc_submatch);
+	}
 
 	/* 
 	 * XXXrkb: only true for first HPC, but didn't know where else to
@@ -119,48 +183,33 @@ hpc_attach(parent, self, aux)
 	cpu_intr_establish(9, IPL_NONE, hpc_power_intr, sc);
 }
 
-static int
-hpc_print(aux, name)
-	void *aux;
-	const char *name;
+int
+hpc_submatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct hpc_attach_args *ha = aux;
 
-	if (name != 0)
-		return QUIET;
+	if (cf->cf_loc[HPCCF_OFFSET] != HPCCF_OFFSET_DEFAULT &&
+	    cf->cf_loc[HPCCF_OFFSET] != ha->ha_devoff)
+		return (0);
 
-	if (ha->ha_offset != HPCCF_OFFSET_DEFAULT)
-		printf(" offset 0x%lx", ha->ha_offset);
-
-	return UNCONF;
+	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
 }
 
-static int
-hpc_search(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf; 
-	void *aux;
-{ 
-	struct hpc_attach_args *haa = aux;
-	struct hpc_softc *sc = (struct hpc_softc *)parent;
+int
+hpc_print(void *aux, const char *pnp)
+{
+	struct hpc_attach_args *ha = aux;
 
-	do {
-		haa->ha_name = cf->cf_driver->cd_name;
-		haa->ha_offset = cf->cf_loc[HPCCF_OFFSET];
+	if (pnp)
+		printf("%s at %s", ha->ha_name, pnp);
 
-		haa->ha_iot = 1;	/* XXX */
-		haa->ha_ioh = MIPS_PHYS_TO_KSEG1(sc->sc_base);
-		haa->ha_dmat = &sgimips_default_bus_dma_tag;
+	printf(" offset 0x%lx", ha->ha_devoff);
 
-		if ((*cf->cf_attach->ca_match)(parent, cf, haa) > 0)
-			config_attach(parent, cf, haa, hpc_print);
-	} while (cf->cf_fstate == FSTATE_STAR);
-
-	return 0;
+	return (UNCONF);
 }
 
-static int
-hpc_power_intr(void * arg)
+int
+hpc_power_intr(void *arg)
 {
 	u_int32_t pwr_reg;
 
@@ -170,8 +219,7 @@ hpc_power_intr(void * arg)
 	printf("hpc_power_intr: panel reg = %08x\n", pwr_reg);
 
 	if (pwr_reg & 2)
-	    cpu_reboot(RB_HALT, NULL);
+		cpu_reboot(RB_HALT, NULL);
 
 	return 1;
 }
-
