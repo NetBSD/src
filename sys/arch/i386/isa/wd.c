@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.84 1994/06/16 01:08:31 mycroft Exp $
+ *	$Id: wd.c,v 1.84.2.1 1994/07/22 01:26:12 cgd Exp $
  */
 
 #define	INSTRUMENT	/* instrumentation stuff by Brad Parker */
@@ -341,9 +341,11 @@ wdstrategy(bp)
 	int s;
     
 	/* Valid unit, controller, and request?  */
-	if (lunit >= wdcd.cd_ndevs || bp->b_blkno < 0 ||
-	    howmany(bp->b_bcount, DEV_BSIZE) >= (1 << NBBY) ||
-	    (wd = wdcd.cd_devs[lunit]) == 0) {
+	if (lunit >= wdcd.cd_ndevs ||
+	    (wd = wdcd.cd_devs[lunit]) == 0 ||
+	    bp->b_blkno < 0 ||
+	    (bp->b_bcount % DEV_BSIZE) != 0 ||
+	    (bp->b_bcount / DEV_BSIZE) >= (1 << NBBY)) {
 		bp->b_error = EINVAL;
 		bp->b_flags |= B_ERROR;
 		goto done;
