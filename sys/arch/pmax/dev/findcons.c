@@ -1,4 +1,4 @@
-/*	$NetBSD: findcons.c,v 1.18 1999/11/15 09:54:41 nisimura Exp $	*/
+/*	$NetBSD: findcons.c,v 1.19 1999/11/16 06:00:12 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: findcons.c,v 1.18 1999/11/15 09:54:41 nisimura Exp $$");
+__KERNEL_RCSID(0, "$NetBSD: findcons.c,v 1.19 1999/11/16 06:00:12 nisimura Exp $$");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,12 +65,11 @@ struct consdev cd;
 #include "mfb.h"
 #include "xcfb.h"
 #include "sfb.h"
-#include "dc_ds.h"
-#include "dc_ioasic.h"
+#include "dc.h"
 #include "dtop.h"
 #include "scc.h"
 #include "tc.h"
-#include  "rasterconsole.h"
+#include "rasterconsole.h"
 
 #include <dev/tc/tcvar.h>		/* find TC fraembuffer device. */
 
@@ -91,15 +90,14 @@ struct consdev cd;
 #include <pmax/dev/rconsvar.h>
 
 /* pmax serial interface */
-#if (NDC_DS > 0) || (NDC_IOASIC > 0)
+#if NDC > 0
 #include <machine/dc7085cons.h>
 #include <pmax/dev/dc_cons.h>
 #include <pmax/dev/dc_ds_cons.h>
-#include <pmax/dev/dc_ioasic_cons.h>
 #endif
 
 /* MAXINE desktop bus keyboard */
- #if NDTOP > 0
+#if NDTOP > 0
 #include <pmax/dev/dtopvar.h>
 #endif
 
@@ -137,7 +135,6 @@ struct consdev cd;
  * malloc are up.
  */
 integrate int	dc_ds_kbd	__P((int prom_slot));
-integrate int	dc_ioasic_kbd	__P((int prom_slot));
 integrate int	scc_kbd		__P((int prom_slot));
 integrate int	dtop_kbd	__P((int prom_slot));
 
@@ -146,7 +143,6 @@ integrate int	xcfb_screen	__P((int prom_slot));
 extern int	tcfb_cnattach	__P((int prom_slot));
 
 integrate int	dc_ds_serial	__P((int prom_slot));
-integrate int	dc_ioasic_serial __P((int prom_slot));
 integrate int	scc_serial	__P((int prom_slot));
 
 int	find_kbd	__P((int prom_slot));
@@ -164,25 +160,13 @@ dc_ds_kbd(kbd_slot)
 	int kbd_slot;
 {
 
-#if NDC_DS > 0 && NWS > 0
+#if NDC > 0 && NWS > 0
 	if (systype == DS_PMAX) {
 		cd.cn_getc = LKgetc;
 		lk_divert(dcGetc, makedev(DCDEV, DCKBD_PORT));
 		return 1;
 	}
-#endif
-	return 0;
-}
-
-/*
- *  Keyboard supported and present  on 5000/200?
- */
-int
-dc_ioasic_kbd(kbd_slot)
-	int kbd_slot;
-{
-#if NDC_IOASIC > 0 && NWS > 0
-	if (kbd_slot == 7) {
+	else if (systype == DS_3MAX && kbd_slot == 7) {
 		cd.cn_dev = makedev(DCDEV, DCKBD_PORT);
 		cd.cn_getc = LKgetc;
 		lk_divert(dcGetc, makedev(DCDEV, DCKBD_PORT));
@@ -191,8 +175,6 @@ dc_ioasic_kbd(kbd_slot)
 #endif
 	return 0;
 }
-
-
 
 /*
  *  Keyboard configured and physically presnt on 3min, 3maxplus?
@@ -242,14 +224,12 @@ find_kbd(kbd)
 {
 	switch(systype) {
 	case DS_PMAX:
+	case DS_3MAX:
 		return (dc_ds_kbd(kbd));
 		break;
 
-	case DS_3MAX:
-		return (dc_ioasic_kbd(kbd));
-		break;
-
-	case DS_3MIN: case DS_3MAXPLUS:
+	case DS_3MIN:
+	case DS_3MAXPLUS:
 		/* keyboard on scc? */
 		return (scc_kbd(kbd));
 		break;
@@ -359,7 +339,7 @@ int
 dc_ds_serial(comslot)
 	int comslot;
 {
-#if NDC_DS
+#if NDC > 0
 	if (comslot == 4)
 		cd.cn_dev = makedev(DCDEV, DCCOMM_PORT);
 	else
@@ -371,20 +351,6 @@ dc_ds_serial(comslot)
 #endif
 	return 0;
 }
-
-
-int
-dc_ioasic_serial(comslot)
-	int comslot;
-{
-#if NDC_IOASIC
-	cd.cn_dev = makedev(DCDEV, DCPRINTER_PORT);
-	return dc_ioasic_consinit(cd.cn_dev);
-#else
-	return 0;
-#endif
-}
-
 
 int
 scc_serial(comslot)
@@ -437,16 +403,13 @@ find_serial(comslot)
 {
 	switch(systype) {
 	case DS_PMAX:
+	case DS_3MAX:
 		return (dc_ds_serial(comslot));
 		break;
 
 	case DS_MIPSMATE:
 		/* console fixed on line 0 */
 		return (dc_ds_serial(0));
-		break;
-
-	case DS_3MAX:
-		return (dc_ioasic_serial(comslot));
 		break;
 
 	case DS_MAXINE: /* XXX only one serial port */
