@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.25 2002/07/05 13:50:47 joda Exp $ */
+/*      $NetBSD: ac97.c,v 1.26 2002/10/04 19:22:40 joda Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.25 2002/07/05 13:50:47 joda Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.26 2002/10/04 19:22:40 joda Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -290,11 +290,18 @@ static const struct ac97_codecid {
 	u_int32_t id;
 	const char *name;
 } ac97codecid[] = {
+	{ AC97_CODEC_ID('A', 'D', 'S', 3),	"Analog Devices AD1819B" },
 	{ AC97_CODEC_ID('A', 'D', 'S', 64),	"Analog Devices AD1881" },
 	{ AC97_CODEC_ID('A', 'D', 'S', 72),	"Analog Devices AD1881A" },
 	{ AC97_CODEC_ID('A', 'D', 'S', 96),	"Analog Devices AD1885" },
+	{ AC97_CODEC_ID('A', 'D', 'S', 99),	"Analog Devices AD1886A" },
 	{ AC97_CODEC_ID('A', 'K', 'M', 0),	"Asahi Kasei AK4540"	},
 	{ AC97_CODEC_ID('A', 'K', 'M', 2),	"Asahi Kasei AK4543"	},
+	{ AC97_CODEC_ID('A', 'L', 'G', 16),	"Advance Logic ALC200"	},
+	{ AC97_CODEC_ID('A', 'L', 'G', 32),	"Advance Logic ALC650"	},
+	{ AC97_CODEC_ID('A', 'L', 'G', 48),	"Advance Logic ALC101"	},
+	{ AC97_CODEC_ID('A', 'L', 'G', 64),	"Advance Logic ALC202"	},
+	{ AC97_CODEC_ID('A', 'L', 'G', 80),	"Advance Logic ALC250"	},
 	{ AC97_CODEC_ID('C', 'R', 'Y', 0),	"Crystal CS4297"	},
 	{ AC97_CODEC_ID('C', 'R', 'Y', 3),	"Crystal CS4297"	},
 	{ AC97_CODEC_ID('C', 'R', 'Y', 19),	"Crystal CS4297A"	},
