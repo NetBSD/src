@@ -1,4 +1,4 @@
-/*	$NetBSD: shm.h,v 1.21 1998/01/03 02:51:32 thorpej Exp $	*/
+/*	$NetBSD: shm.h,v 1.22 1998/05/07 16:57:58 kleink Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -38,15 +38,13 @@
 #ifndef _SYS_SHM_H_
 #define _SYS_SHM_H_
 
+#include <sys/featuretest.h>
+
 #include <sys/ipc.h>
 
 #define	SHM_RDONLY	010000	/* Attach read-only (else read-write) */
 #define	SHM_RND		020000	/* Round attach address to SHMLBA */
-#define	SHMLBA		CLBYTES	/* Segment low boundry address multiple */
-
-/* Some systems (e.g. HP-UX) take these as the second (cmd) arg to shmctl(). */
-#define	SHM_LOCK	3	/* Lock segment in memory. */
-#define	SHM_UNLOCK	4	/* Unlock a segment locked by SHM_LOCK. */
+#define	SHMLBA		CLBYTES	/* Segment low boundry address multiple XXX */
 
 struct shmid_ds {
 	struct ipc_perm	shm_perm;	/* operation permission structure */
@@ -61,6 +59,12 @@ struct shmid_ds {
 };
 
 #ifdef _KERNEL
+/*
+ * Some systems (e.g. HP-UX) take these as the second (cmd) arg to shmctl().
+ * XXX Currently not implemented.
+ */
+#define	SHM_LOCK	3	/* Lock segment in memory. */
+#define	SHM_UNLOCK	4	/* Unlock a segment locked by SHM_LOCK. */
 
 /*
  * System 5 style catch-all structure for shared memory constants that
@@ -87,10 +91,10 @@ void shmexit __P((struct vmspace *));
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-void *shmat __P((int, void *, int));
+void *shmat __P((int, const void *, int));
 int shmctl __P((int, int, struct shmid_ds *));
-int shmdt __P((void *));
-int shmget __P((key_t, int, int));
+int shmdt __P((const void *));
+int shmget __P((key_t, size_t, int));
 __END_DECLS
 
 #endif /* !_KERNEL */
