@@ -1,4 +1,4 @@
-.\"     $NetBSD: newbtconf.8,v 1.11 2002/12/16 10:32:16 wiz Exp $
+.\"     $NetBSD: newbtconf.8,v 1.12 2003/01/06 00:31:49 seb Exp $
 .\"
 .\" Copyright (c) 1999 Darren Reed.  All rights reserved.
 .\"
@@ -38,6 +38,8 @@
 .Op Ar orig-conf-name
 .Nm ""
 .Li init
+.Nm ""
+.Li revert
 .Sh DESCRIPTION
 .Bl -tag -width indent
 .Nm
@@ -196,6 +198,21 @@ need the network) or screenblank/wscons (if applicable).
 Other actions such as deleting any NFS mounts from
 .Pa /etc/etc.nonet/fstab
 would also need to be undertaken.
+.Ss Reverting multiple boot configurations
+Multiple boot configurations can be deactivated by running
+.Nm
+with an argument of
+.Sq revert .
+All the symlinks mentioned above are then removed and the files they point to
+are copied to their default place. This effectively make the currently selected
+configuration the only one active. The symbolic links 
+.Pa /etc/etc.current
+and
+.Pa /etc/etc.default
+are also removed so upon rebooting no configuration selection menu is 
+displayed. Note that the previously created configurations (in 
+.Pa /etc/etc.\*[Lt]name\*[Gt] )
+are not removed.
 .El
 .Sh FILES
 .Bl -tag -width /etc/mrouted.current -compact
