@@ -1,7 +1,7 @@
 #
 # GENERIC AMIGA
 #
-#	$Id: GENERIC,v 1.9 1994/05/16 04:50:03 chopps Exp $
+#	$Id: GENERIC,v 1.10 1994/05/21 10:06:31 chopps Exp $
 #
 # This configuration file contains all possible options
 #
@@ -10,7 +10,7 @@ include "std.amiga"
 
 maxusers	8
 
-options		TIMEZONE=300, DST=1, MAXFDESCS=2048
+options		TIMEZONE=300, DST=1
 
 grfcc0		at mainbus0
 grfrt0		at ztwobus0
