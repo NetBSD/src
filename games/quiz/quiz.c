@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)quiz.c	5.1 (Berkeley) 11/10/91";*/
-static char rcsid[] = "$Id: quiz.c,v 1.5 1994/01/04 05:23:56 cgd Exp $";
+static char rcsid[] = "$Id: quiz.c,v 1.6 1994/04/08 08:33:13 pk Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -52,6 +52,7 @@ static char rcsid[] = "$Id: quiz.c,v 1.5 1994/01/04 05:23:56 cgd Exp $";
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <err.h>
 #include "quiz.h"
 #include "pathnames.h"
 
@@ -61,7 +62,6 @@ static u_int qsize;
 
 char	*appdstr __P((char *, char *));
 void	 downcase __P((char *));
-void	 err __P((const char *, ...));
 void	 get_cats __P((char *, char *));
 void	 get_file __P((char *));
 char	*next_cat __P((char *));
@@ -120,7 +120,7 @@ get_file(file)
 	char *lp;
 
 	if ((fp = fopen(file, "r")) == NULL)
-		err("%s: %s", file, strerror(errno));
+		err(1, "%s", file);
 
 	/*
 	 * XXX
@@ -130,15 +130,16 @@ get_file(file)
 	qp = &qlist;
 	qsize = 0;
 	while ((lp = fgetln(fp, &len)) != NULL) {
-		if (qp->q_text && qp->q_text[strlen(qp->q_text) - 1] == '\\')
+		if (qp->q_text && qp->q_text[strlen(qp->q_text) - 1] == '\\') {
+			lp[len - 1] = '\0';
 			qp->q_text = appdstr(qp->q_text, lp);
-		else {
+		} else {
 			if ((qp->q_next = malloc(sizeof(QE))) == NULL)
-				err("%s", strerror(errno));
+				err(1, NULL);
 			qp = qp->q_next;
 			lp[len - 1] = '\0';
 			if ((qp->q_text = strdup(lp)) == NULL)
-				err("%s", strerror(errno));
+				err(1, NULL);
 			qp->q_asked = qp->q_answered = FALSE;
 			qp->q_next = NULL;
 			++qsize;
@@ -155,12 +156,12 @@ show_index()
 	FILE *pf;
 
 	if ((pf = popen(_PATH_PAGER, "w")) == NULL)
-		err("%s: %s", _PATH_PAGER, strerror(errno));
+		err(1, "%s", _PATH_PAGER);
 	(void)fprintf(pf, "Subjects:\n\n");
 	for (qp = qlist.q_next; qp; qp = qp->q_next) {
 		for (s = next_cat(qp->q_text); s; s = next_cat(s)) {
 			if (!rxp_compile(s))
-				err("%s", rxperr);
+				errx(1, "%s", rxperr);
 			if (p = rxp_expand())
 				(void)fprintf(pf, "%s ", p);
 		}
@@ -188,7 +189,7 @@ get_cats(cat1, cat2)
 		catone = cattwo = i = 0;
 		while (s) {
 			if (!rxp_compile(s))
-				err("%s", rxperr);
+				errx(1, "%s", rxperr);
 			i++;
 			if (rxp_match(cat1))
 				catone = i;
@@ -198,12 +199,12 @@ get_cats(cat1, cat2)
 		}
 		if (catone && cattwo && catone != cattwo) {
 			if (!rxp_compile(qp->q_text))
-				err("%s", rxperr);
+				errx(1, "%s", rxperr);
 			get_file(rxp_expand());
 			return;
 		}
 	}
-	err("invalid categories");
+	errx(1, "invalid categories");
 }
 
 void
@@ -242,7 +243,7 @@ quiz()
 		for (i = 0; i < catone - 1; i++)
 			s = next_cat(s);
 		if (!rxp_compile(s))
-			err("%s", rxperr);
+			errx(1, "%s", rxperr);
 		t = rxp_expand();
 		if (!t || *t == '\0') {
 			qp->q_answered = TRUE;
@@ -253,7 +254,7 @@ quiz()
 		for (i = 0; i < cattwo - 1; i++)
 			s = next_cat(s);
 		if (!rxp_compile(s))
-			err("%s", rxperr);
+			errx(1, "%s", rxperr);
 		t = rxp_expand();
 		if (!t || *t == '\0') {
 			qp->q_answered = TRUE;
@@ -313,8 +314,9 @@ appdstr(s, tp)
 	char *m;
 
 	if ((m = malloc(strlen(s) + strlen(tp) + 1)) == NULL)
-		err("%s", strerror(errno));
+		err(1, NULL);
 	for (mp = m, sp = s; *mp++ = *sp++;);
+	--mp;
 
 	if (*(mp - 1) == '\\')
 		--mp;
@@ -350,33 +352,5 @@ void
 usage()
 {
 	(void)fprintf(stderr, "quiz [-t] [-i file] category1 category2\n");
-	exit(1);
-}
-
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
-void
-#if __STDC__
-err(const char *fmt, ...)
-#else
-err(fmt, va_alist)
-	char *fmt;
-        va_dcl
-#endif
-{
-	va_list ap;
-#if __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
-	(void)fprintf(stderr, "quiz: ");
-	(void)vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	(void)fprintf(stderr, "\n");
 	exit(1);
 }
