@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)setup.c	8.2 (Berkeley) 2/21/94";*/
-static char *rcsid = "$Id: setup.c,v 1.15 1994/12/05 20:16:06 cgd Exp $";
+static char *rcsid = "$Id: setup.c,v 1.16 1994/12/18 15:55:43 cgd Exp $";
 #endif /* not lint */
 
 #define DKTYPENAMES
@@ -222,9 +222,9 @@ setup(dev)
 		sblock.fs_nrpos = 8;
 		sblock.fs_postbloff =
 		    (char *)(&sblock.fs_opostbl[0][0]) -
-		    (char *)(&sblock.fs_unused_1);
+		    (char *)(&sblock.fs_firstfield);
 		sblock.fs_rotbloff = &sblock.fs_space[0] -
-		    (u_char *)(&sblock.fs_unused_1);
+		    (u_char *)(&sblock.fs_firstfield);
 		sblock.fs_cgsize =
 			fragroundup(&sblock, CGSIZE(&sblock));
 		sbdirty();
@@ -346,8 +346,8 @@ readsb(listerr)
 	getblk(&asblk, cgsblock(&sblock, sblock.fs_ncg - 1), sblock.fs_sbsize);
 	if (asblk.b_errs)
 		return (0);
+	altsblock.fs_firstfield = sblock.fs_firstfield;
 	altsblock.fs_unused_1 = sblock.fs_unused_1;
-	altsblock.fs_unused_2 = sblock.fs_unused_2;
 	altsblock.fs_time = sblock.fs_time;
 	altsblock.fs_cstotal = sblock.fs_cstotal;
 	altsblock.fs_cgrotor = sblock.fs_cgrotor;
