@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.24 1997/03/27 20:38:20 thorpej Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.25 1997/12/10 00:47:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1991, 1993
@@ -293,7 +293,7 @@ route_output(m, va_alist)
 			   flags may also be different; ifp may be specified
 			   by ll sockaddr when protocol address is ambiguous */
 			if (ifpaddr && (ifa = ifa_ifwithnet(ifpaddr)) &&
-			    (ifp = ifa->ifa_ifp))
+			    (ifp = ifa->ifa_ifp) && (ifaaddr || gate))
 				ifa = ifaof_ifpforaddr(ifaaddr ? ifaaddr : gate,
 				    ifp);
 			else if ((ifaaddr && (ifa = ifa_ifwithaddr(ifaaddr))) ||
