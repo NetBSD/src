@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.48 2000/11/20 19:35:30 scw Exp $        */
+/*	$NetBSD: pmap.c,v 1.49 2000/12/05 16:07:39 scw Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1386,6 +1386,7 @@ pmap_kenter_pa(va, pa, prot)
 
 	*pte = npte;
 	TBIS (va);
+	pmap->pm_stats.resident_count++;
 }
 
 void
