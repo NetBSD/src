@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.5 2003/10/08 00:28:41 thorpej Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.6 2003/10/27 14:11:46 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.5 2003/10/08 00:28:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.6 2003/10/27 14:11:46 junyoung Exp $");
 
 #include "opt_vm86.h"
 #include "opt_compat_netbsd.h"
@@ -100,7 +100,7 @@ compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 	tf = l->l_md.md_regs;
 #ifdef VM86
 	if (context.sc_eflags & PSL_VM) {
-		void syscall_vm86 __P((struct trapframe *));
+		void syscall_vm86(struct trapframe *);
 
 		tf->tf_vm86_gs = context.sc_gs;
 		tf->tf_vm86_fs = context.sc_fs;

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.192 2003/10/25 19:38:18 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.193 2003/10/27 14:11:47 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.192 2003/10/25 19:38:18 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.193 2003/10/27 14:11:47 junyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -126,10 +126,10 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.192 2003/10/25 19:38:18 mycroft Exp $");
 
 #include "npx.h"
 
-void trap __P((struct trapframe *));
-void trap_tss __P((struct i386tss *, int, int));
+void trap(struct trapframe *);
+void trap_tss(struct i386tss *, int, int);
 #if defined(I386_CPU)
-int trapwrite __P((unsigned));
+int trapwrite(unsigned);
 #endif
 
 #ifdef KVM86

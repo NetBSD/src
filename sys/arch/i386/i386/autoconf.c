@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.73 2003/10/08 04:25:44 lukem Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.74 2003/10/27 14:11:46 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.73 2003/10/08 04:25:44 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.74 2003/10/27 14:11:46 junyoung Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_multiprocessor.h"
@@ -82,10 +82,10 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.73 2003/10/08 04:25:44 lukem Exp $");
 #include <machine/i82489var.h>
 #endif
 
-static int match_harddisk __P((struct device *, struct btinfo_bootdisk *));
-static void matchbiosdisks __P((void));
-static void findroot __P((void));
-static int is_valid_disk __P((struct device *));
+static int match_harddisk(struct device *, struct btinfo_bootdisk *);
+static void matchbiosdisks(void);
+static void findroot(void);
+static int is_valid_disk(struct device *);
 
 extern struct disklist *i386_alldisks;
 extern int i386_ndisks;

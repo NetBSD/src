@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_syscall.c,v 1.22 2003/08/20 21:48:36 fvdl Exp $	*/
+/*	$NetBSD: ibcs2_syscall.c,v 1.23 2003/10/27 14:11:46 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_syscall.c,v 1.22 2003/08/20 21:48:36 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_syscall.c,v 1.23 2003/10/27 14:11:46 junyoung Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -71,8 +71,8 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_syscall.c,v 1.22 2003/08/20 21:48:36 fvdl Exp 
 #include <compat/ibcs2/ibcs2_syscall.h>
 #include <machine/ibcs2_machdep.h>
 
-void ibcs2_syscall_plain __P((struct trapframe *));
-void ibcs2_syscall_fancy __P((struct trapframe *));
+void ibcs2_syscall_plain(struct trapframe *);
+void ibcs2_syscall_fancy(struct trapframe *);
 extern struct sysent ibcs2_sysent[];
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_syscall.c,v 1.21 2003/08/20 21:48:42 fvdl Exp $	*/
+/*	$NetBSD: svr4_syscall.c,v 1.22 2003/10/27 14:11:47 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_syscall.c,v 1.21 2003/08/20 21:48:42 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_syscall.c,v 1.22 2003/10/27 14:11:47 junyoung Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -70,8 +70,8 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_syscall.c,v 1.21 2003/08/20 21:48:42 fvdl Exp $
 #include <compat/svr4/svr4_syscall.h>
 #include <machine/svr4_machdep.h>
 
-void svr4_syscall_plain __P((struct trapframe *));
-void svr4_syscall_fancy __P((struct trapframe *));
+void svr4_syscall_plain(struct trapframe *);
+void svr4_syscall_fancy(struct trapframe *);
 extern struct sysent svr4_sysent[];
 
 void
