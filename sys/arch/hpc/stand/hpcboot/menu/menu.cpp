@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: menu.cpp,v 1.3 2001/05/17 01:50:36 enami Exp $	*/
+/* -*-C++-*-	$NetBSD: menu.cpp,v 1.4 2001/05/21 15:55:04 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -125,7 +125,10 @@ MainTabWindow::init(HWND w)
 	Edit_SetText(_edit_md_root, pref.rootfs_file);
 	EnableWindow(_edit_md_root, fs == IDC_MAIN_ROOT_MD ? TRUE : FALSE);
 
-	// kernel boot options.
+	// layout checkbox and editbox.
+	layout();
+
+	// set default kernel boot options.
 	_set_check(IDC_MAIN_OPTION_A, pref.boot_ask_for_name);
 	_set_check(IDC_MAIN_OPTION_D, pref.boot_debugger);
 	_set_check(IDC_MAIN_OPTION_S, pref.boot_single_user);
@@ -144,6 +147,40 @@ MainTabWindow::init(HWND w)
 	_combobox_serial_speed = GetDlgItem(_window, IDC_MAIN_OPTION_H_SPEED);
 	SendDlgItemMessage(w, IDC_MAIN_OPTION_H_SPEED, CB_SETCURSEL, sel, 0);
 	EnableWindow(_combobox_serial_speed, pref.boot_serial);
+}
+
+void
+MainTabWindow::layout()
+{
+	// inquire display size.
+	HDC hdc = GetDC(0);
+	int width = GetDeviceCaps(hdc, HORZRES);
+	int height = GetDeviceCaps(hdc, VERTRES);
+	ReleaseDC(0, hdc);
+
+	// set origin
+	int x, y;
+	if (width <= 320) {
+		x = 5, y = 125;
+	} else if (height <= 240) {
+		x = 250, y = 5;
+	} else {
+		x = 5, y = 125;		
+	}
+
+	HWND h;
+	h = GetDlgItem(_window, IDC_MAIN_OPTION_V);
+	SetWindowPos(h, HWND_TOP, x, y, 120, 10, TRUE);
+	h = GetDlgItem(_window, IDC_MAIN_OPTION_S);
+	SetWindowPos(h, HWND_TOP, x, y + 20, 120, 10, TRUE);
+	h = GetDlgItem(_window, IDC_MAIN_OPTION_A);
+	SetWindowPos(h, HWND_TOP, x, y + 40, 120, 10, TRUE);
+	h = GetDlgItem(_window, IDC_MAIN_OPTION_D);
+	SetWindowPos(h, HWND_TOP, x, y + 60, 120, 10, TRUE);
+	h = GetDlgItem(_window, IDC_MAIN_OPTION_H);
+	SetWindowPos(h, HWND_TOP, x, y + 80, 120, 10, TRUE);
+	h = GetDlgItem(_window, IDC_MAIN_OPTION_H_SPEED);
+	SetWindowPos(h, HWND_TOP, x + 100, y + 80, 120, 10, TRUE);
 }
 
 void
