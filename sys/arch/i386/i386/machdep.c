@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.47.2.8 1993/10/15 03:29:10 mycroft Exp $
+ *	$Id: machdep.c,v 1.47.2.9 1993/10/18 09:11:27 mycroft Exp $
  */
 
 #include "npx.h"
@@ -1230,18 +1230,6 @@ physcopyseg(frm, to)
 	*(int *)CMAP2 = PG_V | PG_KW | ctob(to);
 	tlbflush();
 	bcopy(CADDR1, CADDR2, NBPG);
-}
-
-void
-aston()
-{
-	schednetisr(NETISR_AST);
-}
-
-void
-setsoftclock()
-{
-	schednetisr(NETISR_SCLK);
 }
 
 /*
