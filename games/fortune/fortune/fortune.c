@@ -1,4 +1,4 @@
-/*	$NetBSD: fortune.c,v 1.33 2001/12/20 20:10:35 soren Exp $	*/
+/*	$NetBSD: fortune.c,v 1.34 2002/03/12 15:20:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fortune.c,v 1.33 2001/12/20 20:10:35 soren Exp $");
+__RCSID("$NetBSD: fortune.c,v 1.34 2002/03/12 15:20:14 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -587,11 +587,11 @@ over:
 	{
 		if (parent == NULL)
 			warnx("`%s' not a fortune file or directory", path);
-		free((char *) fp);
 		if (was_malloc)
 			free(tpath);
 		do_free(fp->datfile);
 		do_free(fp->posfile);
+		free(fp);
 		do_free(offensive);
 		return FALSE;
 	}
