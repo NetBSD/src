@@ -1,4 +1,4 @@
-/*	$NetBSD: ioa.h,v 1.8 2001/05/16 05:36:57 matt Exp $	*/
+/*	$NetBSD: ioa.h,v 1.9 2003/01/19 22:29:22 ragge Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -60,8 +60,7 @@
 
 #include "opt_cputype.h"
 #if VAX8600 || VAXANY
-#define	MAXNIOA		4
-#define	NIOA8600	2
+#define	NIOA8600	2	/* Number of SBI possible on a VAX86x0 */
 #define IOASIZE		0x2000000
 #define IOAMAPSIZ 	512		/* Map one page to get at SBIA regs */
 #define	IOA8600(i)	((caddr_t)(0x20080000+IOASIZE*i))
@@ -88,7 +87,7 @@ struct	sbia_regs
 	int sbi_maint;
 	int sbi_unjam;
 	int sbi_qclr;
-	int sbi_unused[12];
+	int sbi_unused1[12];
 	int sbi_iv10;
 	int sbi_iv11;
 	int sbi_iv12;
@@ -104,13 +103,7 @@ struct	sbia_regs
 	int sbi_iv1c;
 	int sbi_iv1d;
 	int sbi_iv1e;
-};
-struct	ioa {
-	union ioacsr {
-		long	ioa_csr;
-		u_char	ioa_type;
-	} ioacsr;
-	long	ioa_pad[IOAMAPSIZ / sizeof (long) - 1];
+	int sbi_unused2[17];
 };
 
 #define IOA_TYPMSK 0xf0

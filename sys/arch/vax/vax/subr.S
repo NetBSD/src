@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.S,v 1.5 2003/01/18 07:10:35 thorpej Exp $	   */
+/*	$NetBSD: subr.S,v 1.6 2003/01/19 22:29:24 ragge Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -228,7 +228,8 @@ _C_LABEL(cmn_idsptch):
 	beql	1f		# no ptr, skip increment
 	incl	EV_COUNT(%r1)	# increment low longword
 	adwc	$0,EV_COUNT+4(%r1) # add any carry to hi longword
-1:	pushl	4(%r0)		# push argument
+1:	incl	_C_LABEL(uvmexp)+UVME_INTRS	# increment uvmexp.intrs
+	pushl	4(%r0)		# push argument
 	calls	$1,*(%r0)	# call interrupt routine
 	popr	$0x3f		# pop registers
 	rei			# return from interrut

@@ -1,4 +1,4 @@
-/*	$NetBSD: crl.c,v 1.13 2002/10/23 09:12:36 jdolecek Exp $	*/
+/*	$NetBSD: crl.c,v 1.14 2003/01/19 22:29:23 ragge Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -79,14 +79,13 @@ const struct cdevsw crl_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
-struct	ivec_dsp crl_intr;
+struct evcnt crl_ev = EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "crl", "intr");
 
 void
 crlattach()
 {
-	crl_intr = idsptch;
-	crl_intr.hoppaddr = crlintr;
-	scb->scb_csrint = &crl_intr;
+	evcnt_attach_static(&crl_ev);
+	scb_vecalloc(0xF0, crlintr, NULL, SCB_ISTACK, &crl_ev);
 }	
 
 /*ARGSUSED*/

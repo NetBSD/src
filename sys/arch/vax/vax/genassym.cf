@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.25 2003/01/18 07:10:34 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.26 2003/01/19 22:29:23 ragge Exp $
 #
 # Copyright (c) 1997 Ludd, University of Lule}, Sweden.
 # All rights reserved.
@@ -75,6 +75,9 @@ define	BADADDR		offsetof(struct cpu_dep, cpu_badaddr)
 define	KERNBASE	KERNBASE
 
 define	UVM_PAGE_IDLE_ZERO	offsetof(struct uvm, page_idle_zero)
+
+define	UVME_INTRS	offsetof(struct uvmexp, intrs)
+define	UVME_SOFTS	offsetof(struct uvmexp, softs)
 
 define	CI_CURLWP	offsetof(struct cpu_info, ci_curlwp)
 define	CI_WANT_RESCHED	offsetof(struct cpu_info, ci_want_resched)
