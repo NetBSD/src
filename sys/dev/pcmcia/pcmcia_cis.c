@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.35 2004/08/10 19:20:20 mycroft Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.36 2004/09/17 18:42:41 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.35 2004/08/10 19:20:20 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.36 2004/09/17 18:42:41 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1140,6 +1140,10 @@ pcmcia_parse_cis_tuple(tuple, arg)
 					}
 					for (i = 0; i < cfe->num_iospace; i++) {
 						switch (reg & PCMCIA_TPCE_IO_RANGE_ADDRSIZE_MASK) {
+						case PCMCIA_TPCE_IO_RANGE_ADDRSIZE_NONE:
+							cfe->iospace[i].start =
+							    0;
+							break;
 						case PCMCIA_TPCE_IO_RANGE_ADDRSIZE_ONE:
 							cfe->iospace[i].start =
 								pcmcia_tuple_read_1(tuple, idx);
@@ -1158,6 +1162,10 @@ pcmcia_parse_cis_tuple(tuple, arg)
 						}
 						switch (reg &
 							PCMCIA_TPCE_IO_RANGE_LENGTHSIZE_MASK) {
+						case PCMCIA_TPCE_IO_RANGE_LENGTHSIZE_NONE:
+							cfe->iospace[i].length =
+							    0;
+							break;
 						case PCMCIA_TPCE_IO_RANGE_LENGTHSIZE_ONE:
 							cfe->iospace[i].length =
 								pcmcia_tuple_read_1(tuple, idx);
