@@ -141,6 +141,9 @@
    entries in an ELF object file under SVR4.  These macros also output
    the starting labels for the relevant functions/objects.  */
 
+/* XXX.  This is WRONG for alpha.  Needs to be verified on other ELF ports. */
+#ifndef NETBSD_ELF
+
 /* Write the extra assembler code needed to declare a function properly.
    Some svr4 assemblers need to also have something extra said about the
    function's return value.  We allow for that here.  */
@@ -221,6 +224,8 @@ do {									 \
 	putc ('\n', FILE);						\
       }									\
   } while (0)
+
+#endif
 
 /* ELF ports */
 
