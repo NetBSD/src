@@ -1,4 +1,4 @@
-/*	$NetBSD: strptime.c,v 1.1 1997/04/23 01:18:06 mrg Exp $	*/
+/*	$NetBSD: strptime.c,v 1.2 1997/05/06 13:06:48 kleink Exp $	*/
 
 /*
  * Copyright (c) 1994 Powerdog Industries.  All rights reserved.
@@ -38,7 +38,7 @@ static char copyright[] =
 "@(#) Copyright (c) 1994 Powerdog Industries.  All rights reserved.";
 static char sccsid[] = "@(#)strptime.c  0.1 (Powerdog) 94/03/27";
 #else
-static char rcsid[] = "$NetBSD: strptime.c,v 1.1 1997/04/23 01:18:06 mrg Exp $";
+static char rcsid[] = "$NetBSD: strptime.c,v 1.2 1997/05/06 13:06:48 kleink Exp $";
 #endif
 #endif /* not lint */
 
@@ -48,276 +48,276 @@ static char rcsid[] = "$NetBSD: strptime.c,v 1.1 1997/04/23 01:18:06 mrg Exp $";
 #include <ctype.h>
 #include <string.h>
 
-char    *
-strptime(const char *buf, const char *fmt, struct tm *tm)
+char *
+strptime(buf, fmt, tm)
+	const char *buf, *fmt;
+	struct tm *tm;
 {
 	const char *ptr;
-        char    c;
-	int     i, len;
+        char c;
+	int i, len;
 
-        ptr = fmt;
-        while (*ptr != 0) {
-                if (*buf == 0)
-                        break;
+	ptr = fmt;
+	while (*ptr != 0) {
+		if (*buf == 0)
+			break;
 
-                c = *ptr++;
+		c = *ptr++;
 
-                if (c != '%') {
-                        if (isspace(c))
-                                while (*buf != 0 && isspace(*buf))
-                                        buf++;
-                        else if (c != *buf++)
-                                return 0;
-                        continue;
-                }
+		if (c != '%') {
+			if (isspace(c))
+				while (*buf != 0 && isspace(*buf))
+					buf++;
+			else if (c != *buf++)
+				return (NULL);
+			continue;
+		}
 
-                c = *ptr++;
-                switch (c) {
-                case 0:
-                case '%':
-                        if (*buf++ != '%')
-                                return 0;
-                        break;
+		c = *ptr++;
+		switch (c) {
+		case 0:
+		case '%':
+			if (*buf++ != '%')
+				return (NULL);
+			break;
 
-                case 'c':
-                        buf = strptime(buf, _CurrentTimeLocale->d_t_fmt, tm);
-                        if (buf == 0)
-                                return 0;
-                        break;
+		case 'c':
+			buf = strptime(buf, _CurrentTimeLocale->d_t_fmt, tm);
+			if (buf == 0)
+				return (NULL);
+			break;
 
-                case 'D':
-                        buf = strptime(buf, "%m/%d/%y", tm);
-                        if (buf == 0)
-                                return 0;
-                        break;
+		case 'D':
+			buf = strptime(buf, "%m/%d/%y", tm);
+			if (buf == 0)
+				return (NULL);
+			break;
 
-                case 'R':
-                        buf = strptime(buf, "%H:%M", tm);
-                        if (buf == 0)
-                                return 0;
-                        break;
+		case 'R':
+			buf = strptime(buf, "%H:%M", tm);
+			if (buf == 0)
+				return (NULL);
+			break;
 
-                case 'r':
-                        buf = strptime(buf, _CurrentTimeLocale->t_fmt_ampm,tm);
-                        if (buf == 0)
-                                return 0;
-                        break;
+		case 'r':
+			buf = strptime(buf, _CurrentTimeLocale->t_fmt_ampm,tm);
+			if (buf == 0)
+				return (NULL);
+			break;
 
-                case 'T':
-                        buf = strptime(buf, "%H:%M:%S", tm);
-                        if (buf == 0)
-                                return 0;
-                        break;
+		case 'T':
+			buf = strptime(buf, "%H:%M:%S", tm);
+			if (buf == 0)
+				return (NULL);
+			break;
 
-                case 'X':
-                        buf = strptime(buf, _CurrentTimeLocale->t_fmt, tm);
-                        if (buf == 0)
-                                return 0;
-                        break;
+		case 'X':
+			buf = strptime(buf, _CurrentTimeLocale->t_fmt, tm);
+			if (buf == 0)
+				return (NULL);
+			break;
 
-                case 'x':
-                        buf = strptime(buf, _CurrentTimeLocale->d_fmt, tm);
-                        if (buf == 0)
-                                return 0;
-                        break;
+		case 'x':
+			buf = strptime(buf, _CurrentTimeLocale->d_fmt, tm);
+			if (buf == 0)
+				return (NULL);
+			break;
 
-                case 'j':
-                        if (!isdigit(*buf))
-                                return 0;
+		case 'j':
+			if (!isdigit(*buf))
+				return (NULL);
 
-                        for (i = 0; *buf != 0 && isdigit(*buf); buf++) {
-                                i *= 10;
-                                i += *buf - '0';
-                        }
-                        if (i > 366)
-                                return 0;
+			for (i = 0; *buf != 0 && isdigit(*buf); buf++) {
+				i *= 10;
+				i += *buf - '0';
+			}
+			if (i > 366)
+				return (NULL);
 
-                        tm->tm_yday = i;
-                        break;
+			tm->tm_yday = i;
+			break;
 
-                case 'M':
-                case 'S':
-                        if (*buf == 0 || isspace(*buf))
-                                break;
+		case 'M':
+		case 'S':
+			if (*buf == 0 || isspace(*buf))
+				break;
 
-                        if (!isdigit(*buf))
-                                return 0;
+			if (!isdigit(*buf))
+				return (NULL);
 
-                        for (i = 0; *buf != 0 && isdigit(*buf); buf++) {
-                                i *= 10;
-                                i += *buf - '0';
-                        }
-                        if (i > 59)
-                                return 0;
+			for (i = 0; *buf != 0 && isdigit(*buf); buf++) {
+				i *= 10;
+				i += *buf - '0';
+			}
+			if (i > 59)
+				return (NULL);
 
-                        if (c == 'M')
-                                tm->tm_min = i;
-                        else
-                                tm->tm_sec = i;
+			if (c == 'M')
+				tm->tm_min = i;
+			else
+				tm->tm_sec = i;
 
-                        if (*buf != 0 && isspace(*buf))
-                                while (*ptr != 0 && !isspace(*ptr))
-                                        ptr++;
-                        break;
+			if (*buf != 0 && isspace(*buf))
+				while (*ptr != 0 && !isspace(*ptr))
+					ptr++;
+			break;
 
-                case 'H':
-                case 'I':
-                case 'k':
-                case 'l':
-                        if (!isdigit(*buf))
-                                return 0;
+		case 'H':
+		case 'I':
+		case 'k':
+		case 'l':
+			if (!isdigit(*buf))
+				return (NULL);
 
-                        for (i = 0; *buf != 0 && isdigit(*buf); buf++) {
-                                i *= 10;
-                                i += *buf - '0';
-                        }
-                        if (c == 'H' || c == 'k') {
-                                if (i > 23)
-                                        return 0;
-                        } else if (i > 11)
-                                return 0;
+			for (i = 0; *buf != 0 && isdigit(*buf); buf++) {
+				i *= 10;
+				i += *buf - '0';
+			}
+			if (c == 'H' || c == 'k') {
+				if (i > 23)
+					return (NULL);
+			} else if (i > 11)
+				return (NULL);
 
-                        tm->tm_hour = i;
+			tm->tm_hour = i;
 
-                        if (*buf != 0 && isspace(*buf))
-                                while (*ptr != 0 && !isspace(*ptr))
-                                        ptr++;
-                        break;
+			if (*buf != 0 && isspace(*buf))
+			while (*ptr != 0 && !isspace(*ptr))
+				ptr++;
+			break;
 
-                case 'p':
-                        len = strlen(_CurrentTimeLocale->am_pm[0]);
-                        if (strncasecmp(buf, _CurrentTimeLocale->am_pm[0],
-					len) == 0) {
-                                if (tm->tm_hour > 12)
-                                        return 0;
-                                if (tm->tm_hour == 12)
-                                        tm->tm_hour = 0;
-                                buf += len;
-                                break;
-                        }
+		case 'p':
+			len = strlen(_CurrentTimeLocale->am_pm[0]);
+			if (strncasecmp(buf, _CurrentTimeLocale->am_pm[0],
+			                len) == 0) {
+				if (tm->tm_hour > 12)
+					return (NULL);
+				if (tm->tm_hour == 12)
+					tm->tm_hour = 0;
+				buf += len;
+				break;
+			}
 
-                        len = strlen(_CurrentTimeLocale->am_pm[1]);
-                        if (strncasecmp(buf, _CurrentTimeLocale->am_pm[1],
-					len) == 0) {
-                                if (tm->tm_hour > 12)
-                                        return 0;
-                                if (tm->tm_hour != 12)
-                                        tm->tm_hour += 12;
-                                buf += len;
-                                break;
-                        }
+			len = strlen(_CurrentTimeLocale->am_pm[1]);
+			if (strncasecmp(buf, _CurrentTimeLocale->am_pm[1],
+			                len) == 0) {
+				if (tm->tm_hour > 12)
+					return (NULL);
+				if (tm->tm_hour != 12)
+					tm->tm_hour += 12;
+				buf += len;
+				break;
+			}
 
-                        return 0;
+                        return (NULL);
 
-                case 'A':
-                case 'a':
-                        for (i = 0; i < 7; i++) {
-                                len = strlen(_CurrentTimeLocale->day[i]);
-                                if (strncasecmp(buf,
-						_CurrentTimeLocale->day[i],
-						len) == 0)
+		case 'A':
+		case 'a':
+			for (i = 0; i < 7; i++) {
+				len = strlen(_CurrentTimeLocale->day[i]);
+				if (strncasecmp(buf,
+				                _CurrentTimeLocale->day[i],
+				                len) == 0)
 					break;
 
-                                len = strlen(_CurrentTimeLocale->abday[i]);
-                                if (strncasecmp(buf,
-						_CurrentTimeLocale->abday[i],
-						len) == 0)
+				len = strlen(_CurrentTimeLocale->abday[i]);
+				if (strncasecmp(buf,
+				                _CurrentTimeLocale->abday[i],
+				                len) == 0)
 					break;
-                        }
-                        if (i == 7)
-                                return 0;
+			}
+			if (i == 7)
+				return (NULL);
 
-                        tm->tm_wday = i;
-                        buf += len;
-                        break;
+			tm->tm_wday = i;
+			buf += len;
+			break;
 
-                case 'd':
-                case 'e':
-                        if (!isdigit(*buf))
-                                return 0;
+		case 'd':
+		case 'e':
+			if (!isdigit(*buf))
+				return (NULL);
 
-                        for (i = 0; *buf != 0 && isdigit(*buf); buf++) {
-                                i *= 10;
-                                i += *buf - '0';
-                        }
-                        if (i > 31)
-                                return 0;
+			for (i = 0; *buf != 0 && isdigit(*buf); buf++) {
+				i *= 10;
+				i += *buf - '0';
+			}
+			if (i > 31)
+				return (NULL);
 
-                        tm->tm_mday = i;
+			tm->tm_mday = i;
 
-                        if (*buf != 0 && isspace(*buf))
-                                while (*ptr != 0 && !isspace(*ptr))
-                                        ptr++;
-                        break;
+			if (*buf != 0 && isspace(*buf))
+				while (*ptr != 0 && !isspace(*ptr))
+					ptr++;
+			break;
 
-                case 'B':
-                case 'b':
-                case 'h':
-                        for (i = 0; i < 12; i++) {
+		case 'B':
+		case 'b':
+		case 'h':
+			for (i = 0; i < 12; i++) {
 				len = strlen(_CurrentTimeLocale->mon[i]);
-                                if (strncasecmp(buf,
-						_CurrentTimeLocale->mon[i],
-                                                len) == 0)
-                                        break;
+				if (strncasecmp(buf,
+				                _CurrentTimeLocale->mon[i],
+				                len) == 0)
+					break;
 
 				len = strlen(_CurrentTimeLocale->abmon[i]);
-                                if (strncasecmp(buf,
-						_CurrentTimeLocale->abmon[i],
-                                                len) == 0)
-                                        break;
-                        }
-                        if (i == 12)
-                                return 0;
+				if (strncasecmp(buf,
+				                _CurrentTimeLocale->abmon[i],
+				                len) == 0)
+					break;
+			}
+			if (i == 12)
+				return (NULL);
 
-                        tm->tm_mon = i;
-                        buf += len;
-                        break;
+			tm->tm_mon = i;
+			buf += len;
+			break;
 
-                case 'm':
-                        if (!isdigit(*buf))
-                                return 0;
+		case 'm':
+			if (!isdigit(*buf))
+				return (NULL);
 
-                        for (i = 0; *buf != 0 && isdigit(*buf); buf++) {
-                                i *= 10;
-                                i += *buf - '0';
-                        }
-                        if (i < 1 || i > 12)
-                                return 0;
+			for (i = 0; *buf != 0 && isdigit(*buf); buf++) {
+				i *= 10;
+				i += *buf - '0';
+			}
+			if (i < 1 || i > 12)
+				return (NULL);
 
-                        tm->tm_mon = i - 1;
+			tm->tm_mon = i - 1;
 
-                        if (*buf != 0 && isspace(*buf))
-                                while (*ptr != 0 && !isspace(*ptr))
-                                        ptr++;
-                        break;
+			if (*buf != 0 && isspace(*buf))
+				while (*ptr != 0 && !isspace(*ptr))
+					ptr++;
+			break;
 
-                case 'Y':
-                case 'y':
-                        if (*buf == 0 || isspace(*buf))
-                                break;
+		case 'Y':
+		case 'y':
+			if (*buf == 0 || isspace(*buf))
+				break;
 
-                        if (!isdigit(*buf))
-                                return 0;
+			if (!isdigit(*buf))
+				return (NULL);
 
-                        for (i = 0; *buf != 0 && isdigit(*buf); buf++) {
-                                i *= 10;
-                                i += *buf - '0';
-                        }
-                        if (c == 'Y')
-                                i -= 1900;
-                        if (i < 0)
-                                return 0;
+			for (i = 0; *buf != 0 && isdigit(*buf); buf++) {
+				i *= 10;
+				i += *buf - '0';
+			}
+			if (c == 'Y')
+				i -= 1900;
+			if (i < 0)
+				return (NULL);
 
-                        tm->tm_year = i;
+			tm->tm_year = i;
 
-                        if (*buf != 0 && isspace(*buf))
-                                while (*ptr != 0 && !isspace(*ptr))
-                                        ptr++;
-                        break;
-                }
-        }
+			if (*buf != 0 && isspace(*buf))
+				while (*ptr != 0 && !isspace(*ptr))
+					ptr++;
+			break;
+		}
+	}
 
-        return (char *) buf;
+	return ((char *)buf);
 }
-
-
