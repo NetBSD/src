@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.h,v 1.1 2000/05/09 21:56:00 bjh21 Exp $ */
+/* $NetBSD: machdep.h,v 1.2 2001/06/14 22:56:56 thorpej Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -57,7 +57,6 @@ extern void int_on	__P((void));
 extern void int_off	__P((void));
 extern void cpu_loswitch(struct switchframe **, struct switchframe *);
 extern void proc_trampoline(void); /* not quite true */
-extern void child_return(void *);
 
 /* pmap.c */
 extern register_t update_memc	__P((register_t, register_t));

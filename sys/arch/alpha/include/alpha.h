@@ -1,4 +1,4 @@
-/* $NetBSD: alpha.h,v 1.16 2001/05/14 19:56:23 ross Exp $ */
+/* $NetBSD: alpha.h,v 1.17 2001/06/14 22:56:55 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -88,7 +88,6 @@ int	alpha_pa_access(u_long);
 void	ast(struct trapframe *);
 int	badaddr(void *, size_t);
 int	badaddr_read(void *, size_t, void *);
-void	child_return(void *);
 u_int64_t console_restart(struct trapframe *);
 void	do_sir(void);
 void	dumpconf(void);

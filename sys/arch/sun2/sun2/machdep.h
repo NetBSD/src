@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.2 2001/05/14 15:36:42 fredette Exp $	*/
+/*	$NetBSD: machdep.h,v 1.3 2001/06/14 22:56:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -70,8 +70,6 @@ extern int fputype;
 extern label_t *nofault;
 
 extern vm_offset_t vmmap;	/* XXX - See mem.c */
-
-void	child_return __P((void *));
 
 void	clock_init  __P((void));
 void	cninit __P((void));

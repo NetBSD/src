@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.71 2001/05/30 12:28:44 mrg Exp $	*/
+/*	$NetBSD: cpu.h,v 1.72 2001/06/14 22:56:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -236,9 +236,6 @@ int	isa_nmi __P((void));
 /* vm86.c */
 void	vm86_gpfault __P((struct proc *, int));
 #endif /* VM86 */
-
-/* trap.c */
-void	child_return __P((void *));
 
 /* consinit.c */
 void kgdb_port_init __P((void));

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.51 2001/06/11 01:50:54 wiz Exp $	*/
+/*	$NetBSD: cpu.h,v 1.52 2001/06/14 22:56:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -208,7 +208,6 @@ struct user;
 extern struct proc *fpcurproc;
 
 /* trap.c */
-void	child_return __P((void *));
 void	netintr __P((void));
 int	kdbpeek __P((vaddr_t));
 

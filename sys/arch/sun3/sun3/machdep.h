@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.25 2001/02/22 07:11:12 chs Exp $	*/
+/*	$NetBSD: machdep.h,v 1.26 2001/06/14 22:56:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -72,8 +72,6 @@ extern vm_offset_t vmmap;	/* XXX - See mem.c */
 void	DCIA __P((void));
 void	DCIU __P((void));
 void	ICIA __P((void));
-
-void	child_return __P((void *));
 
 void	clock_init  __P((void));
 void	cninit __P((void));

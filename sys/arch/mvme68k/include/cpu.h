@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.22 2001/05/30 12:28:47 mrg Exp $	*/
+/*	$NetBSD: cpu.h,v 1.23 2001/06/14 22:56:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -197,7 +197,6 @@ void	*iomap __P((u_long, size_t));
 void	iounmap __P((void *, size_t));
 paddr_t	kvtop __P((caddr_t));
 void	loadustp __P((paddr_t));
-void	child_return __P((void *));
 
 /* Prototypes from sys_machdep.c: */
 int	cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
