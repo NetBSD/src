@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.28 2000/04/28 19:25:55 soren Exp $	*/
+/*	$NetBSD: pmap.h,v 1.29 2000/09/21 17:46:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -146,7 +146,7 @@ void	pmap_prefer __P((vaddr_t, vaddr_t *));
 /*
  * Do idle page zero'ing uncached to avoid polluting the cache.
  */
-void	pmap_zero_page_uncached __P((paddr_t));
+boolean_t pmap_zero_page_uncached __P((paddr_t));
 #define PMAP_PAGEIDLEZERO(pa)	pmap_zero_page_uncached((pa))
 
 /*

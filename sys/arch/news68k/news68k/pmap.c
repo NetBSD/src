@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.6 2000/09/15 17:15:06 tsutsui Exp $	*/
+/*	$NetBSD: pmap.c,v 1.7 2000/09/21 17:46:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1825,7 +1825,8 @@ pmap_zero_page(phys)
  * pmap_zero_page_uncached:
  *
  *	Same as above, except uncached.  Used in uvm_pageidolezero,
- *	through PMAP_PAGEIDLEZERO macro.
+ *	through PMAP_PAGEIDLEZERO macro.  Returns TRUE if the page
+ *	was zero'd, FALSE if we aborted.
  */
 void
 pmap_zero_page_uncached(phys)
@@ -1856,6 +1857,8 @@ pmap_zero_page_uncached(phys)
 #endif
 
 	splx(s);
+
+	return (TRUE);
 }
 
 /*
