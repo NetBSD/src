@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.64 1996/10/10 23:55:15 christos Exp $	*/
+/*	$NetBSD: locore.s,v 1.65 1996/10/12 17:34:52 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -2321,7 +2321,11 @@ Ldelay:				| longword aligned again.
 	.data
 	.space	NBPG
 tmpstk:
-	.globl	_mmutype,_protorp
+	.globl	_mmutype,_fputype,_protorp
+_mmutype:
+	.long	0
+_fputype:
+	.long	0
 _protorp:
 	.long	0x80000002,0	| prototype root pointer
 	.globl	_cold
