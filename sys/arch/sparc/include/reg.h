@@ -42,7 +42,7 @@
  *	@(#)reg.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: reg.h,v 1.8 92/11/26 02:04:44 torek Exp 
- * $Id: reg.h,v 1.2 1994/02/01 06:01:27 deraadt Exp $
+ * $Id: reg.h,v 1.3 1994/02/11 16:51:35 pk Exp $
  */
 
 #ifndef _MACHINE_REG_H_
@@ -77,9 +77,17 @@ struct rwindow {
 	int	rw_in[8];		/* %i0..%i7 */
 };
 
+/*
+ * Clone trapframe for now; this seems to be the more useful
+ * than the old struct reg above.
+ */
 struct reg {
-	int	rw_local[8];		/* %l0..%l7 */
-	int	rw_in[8];		/* %i0..%i7 */
+	int	r_psr;		/* psr */
+	int	r_pc;		/* return pc */
+	int	r_npc;		/* return npc */
+	int	r_y;		/* %y register */
+	int	r_global[8];	/* global registers in trap's caller */
+	int	r_out[8];	/* output registers in trap's caller */
 };
 
 #include <machine/fsr.h>
@@ -104,6 +112,16 @@ struct fpstate {
 	int	fs_fsr;			/* %fsr */
 	int	fs_qsize;		/* actual queue depth */
 	struct	fp_qentry fs_queue[FP_QSIZE];	/* queue contents */
+};
+
+/*
+ * Clone fpstate into an fpreg structure to satisfy <kern/sys_process.c>
+ */
+struct fpreg {
+	u_int	fr_regs[32];		/* our view is 32 32-bit registers */
+	int	fr_fsr;			/* %fsr */
+	int	fr_qsize;		/* actual queue depth */
+	struct	fp_qentry fr_queue[FP_QSIZE];	/* queue contents */
 };
 
 #endif /* _MACHINE_REG_H_ */
