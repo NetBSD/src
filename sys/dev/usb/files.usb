@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.25 2001/01/11 06:00:31 augustss Exp $
+#	$NetBSD: files.usb,v 1.26 2001/01/23 01:24:10 ichiro Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -128,6 +128,10 @@ device	uftdi: ucombus
 attach	uftdi at uhub
 file	dev/usb/uftdi.c			uftdi
 
+# Prolific PL2303 serial driver
+device	uplcom: ucombus
+attach	uplcom at uhub
+file	dev/usb/uplcom.c		uplcom
 
 # Scanners
 # Generic scanner support
