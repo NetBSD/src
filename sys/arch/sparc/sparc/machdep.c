@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.243 2003/12/30 14:29:30 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.244 2004/01/01 15:02:32 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.243 2003/12/30 14:29:30 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.244 2004/01/01 15:02:32 pk Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -609,14 +609,15 @@ void sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	int sig;
 	size_t ucsz;
 
+	sig = ksi->ksi_signo;
+
 #ifdef COMPAT_16
-	if (p->p_sigacts->sa_sigdesc[ksi->ksi_signo].sd_vers < 2) {
+	if (ps->sa_sigdesc[sig].sd_vers < 2) {
 		sendsig_sigcontext(ksi, mask);
 		return;
 	}
 #endif /* COMPAT_16 */
 
-	sig = ksi->ksi_signo;
 	tf = l->l_md.md_tf;
 	oldsp = tf->tf_out[6];
 
@@ -646,9 +647,9 @@ void sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	/*
 	 * Build the signal context to be used by sigreturn.
 	 */
-	uc.uc_flags = _UC_SIGMASK /*|
+	uc.uc_flags = _UC_SIGMASK |
 		((p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK)
-			? _UC_SETSTACK : _UC_CLRSTACK)*/;
+			? _UC_SETSTACK : _UC_CLRSTACK);
 	uc.uc_sigmask = *mask;
 	uc.uc_link = NULL;
 	memset(&uc.uc_stack, 0, sizeof(uc.uc_stack));
@@ -991,6 +992,11 @@ cpu_setmcontext(l, mcp, flags)
 		}
 	}
 #endif
+
+	if (flags & _UC_SETSTACK)  
+		l->l_proc->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+	if (flags & _UC_CLRSTACK)
+		l->l_proc->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK; 
 
 	return (0);
 }
