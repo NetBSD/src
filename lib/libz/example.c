@@ -1,8 +1,8 @@
-/* $NetBSD: example.c,v 1.5 1998/11/01 20:33:25 tron Exp $ */
+/* $NetBSD: example.c,v 1.6 1999/07/02 15:51:38 simonb Exp $ */
 
 /* example.c -- usage example of the zlib compression library
  * Copyright (C) 1995-1998 Jean-loup Gailly.
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
 /* @(#) Id */
@@ -40,7 +40,7 @@ uLong dictId; /* Adler32 value of the dictionary */
 
 void test_compress      OF((Byte *compr, uLong comprLen,
 		            Byte *uncompr, uLong uncomprLen));
-void test_gzio          OF((const char *out, const char *in, 
+void test_gzio          OF((const char *out, const char *in,
 		            Byte *uncompr, int uncomprLen));
 void test_deflate       OF((Byte *compr, uLong comprLen));
 void test_inflate       OF((Byte *compr, uLong comprLen,

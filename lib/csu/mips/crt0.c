@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.14 1999/03/20 00:13:51 thorpej Exp $	*/
+/*	$NetBSD: crt0.c,v 1.15 1999/07/02 15:53:55 simonb Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -73,7 +73,7 @@ __start(sp, cleanup, obj, ps_strings)
 	 * Layout of stuff on the stack:
 	 *
 	 *	[ high ]
-	 *	char	kenvstr[1];	// size varies 
+	 *	char	kenvstr[1];	// size varies
 	 *	char	kargstr[1];	// size varies
 	 *	char	*argv[1];	// varies on argc
 	 *	int	argc;
@@ -102,7 +102,7 @@ __start(sp, cleanup, obj, ps_strings)
 		 * frame size.  If you change the code or compiler,
 		 * you _will_ lose!
 		 */
- 
+
 #ifndef DYNAMIC
 		/* XXX 56 is compiler and stackframe dependent */
 		__asm __volatile("	addiu	%0,$29,56" : "=r" (ksp));
@@ -158,7 +158,7 @@ __start(sp, cleanup, obj, ps_strings)
  *  is the entrypoint. (Only needed for old toolchains).
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.14 1999/03/20 00:13:51 thorpej Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.15 1999/07/02 15:53:55 simonb Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"

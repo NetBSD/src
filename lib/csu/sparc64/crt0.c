@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.7 1999/03/20 00:13:51 thorpej Exp $	*/
+/*	$NetBSD: crt0.c,v 1.8 1999/07/02 15:53:56 simonb Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -109,7 +109,7 @@ ___start(sp, cleanup, obj, ps_strings)
  * NOTE: Leave the RCS ID _after_ _start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.7 1999/03/20 00:13:51 thorpej Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.8 1999/07/02 15:53:56 simonb Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /* XXX XXX XXX THIS SHOULD GO AWAY XXX XXX XXX
@@ -128,7 +128,7 @@ asm (" .weak _fini; _fini = __fini");
 #endif
 
 void
-__init() 
+__init()
 {
 }
 
