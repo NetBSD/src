@@ -50,7 +50,7 @@
  * Significant limitations and lack of compatiblity with POSIX are
  * present with this version, to make its basic operation more clear.
  *
- *	$Id: kern_execve.c,v 1.11 1993/05/20 02:54:21 cgd Exp $
+ *	$Id: kern_execve.c,v 1.12 1993/05/30 18:52:39 cgd Exp $
  */
 
 #include "param.h"
@@ -508,8 +508,7 @@ dont_bother:
 	}
 
 	/* setup initial register state */
-	p->p_regs[SP] = (unsigned) (argbuf - 1);
-	setregs(p, exdata.ex_hdr.a_entry);
+	setregs(p, exdata.ex_hdr.a_entry, (unsigned) (argbuf - 1));
 
 	ndp->ni_vp->v_flag |= VTEXT;            /* mark vnode pure text */
 
