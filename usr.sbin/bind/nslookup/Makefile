@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1999/07/12 08:31:49 tron Exp $
+#	$NetBSD: Makefile,v 1.4 1999/11/19 04:20:14 mrg Exp $
 
 .PATH:	${.CURDIR}/../man
 
@@ -10,8 +10,13 @@ CPPFLAGS+= ${INCLUDE}
 DPADD=	${LIBL}
 LDADD=	-ll ${LIBRARY}
 MAN=	${PROG}.8
+
+.include <bsd.own.mk>
+
+.if ${MKSHARE} != "no"
 FILES=	${PROG}.help
 FILESDIR=/usr/share/misc
+.endif
 
 .include "../../Makefile.inc"
 .include <bsd.prog.mk>
