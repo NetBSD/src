@@ -1,4 +1,4 @@
-.\"     $NetBSD: cpu_startup.9,v 1.1 2002/05/25 02:16:37 gmcgarry Exp $
+.\"     $NetBSD: cpu_startup.9,v 1.2 2002/05/25 11:08:21 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -49,14 +49,14 @@
 is invoked early during system bootstrap, after the copyright banner
 has been displayed on the console and immediately after
 .Xr uvm 9
-has been initialised.
+has been initialized.
 .Fn cpu_startup
 performs the following tasks:
 .Bl -bullet
 .It
 allocate memory and buffers for kernel tables
 .It
-initialise the CPU
+initialize the CPU
 .El
 .Sh SEE ALSO
 .Xr autoconf 9 ,
