@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2004/12/12 08:18:47 christos Exp $
+# $NetBSD: Makefile,v 1.3 2004/12/29 04:16:17 christos Exp $
 # Copyright 1998 Juniper Networks, Inc.
 # All rights reserved.
 # Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -42,7 +42,7 @@ SRCS=	pam_unix.c
 MAN=	pam_unix.8
 
 DPADD= ${LIBUTIL} ${LIBCRYPT}
-LDADD= -lutil -lcrypt
+LDADD= -Wl,-L${LIBUTILDIR}:${LIBCRYPTDIR} -lutil -lcrypt
 
 .if (${USE_YP} != "no")
 CPPFLAGS+= -DYP
