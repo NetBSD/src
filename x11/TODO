@@ -1,28 +1,13 @@
-$NetBSD: TODO,v 1.3 2003/09/13 20:15:55 lukem Exp $
+$NetBSD: TODO,v 1.4 2003/09/14 07:58:17 lukem Exp $
 
-shared vs static libX11
-
-
-i386-isms in GL (et al)
-
+finish Xserver
 
 clean up XTODO issues
-
 
 move all host tools to tools/?  these are:
 	./lib/Xt/makestrs
 	./lib/lbxutil/mkg3states
 	./lib/OSmesa/gen_matypes
-
-convert lib/* from
-	LIB=foo
-	.PATH: ${...}/${LIB}
-to
-	LIB=foo
-	DIST= ${...}/${LIB}
-	.PATH: ${DIST}
-?
-
 
 consider symlinking various dirs in lib/X11 -> /etc/X11, and only
 install the files on "distribution" ?
