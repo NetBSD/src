@@ -1,15 +1,16 @@
-#	$NetBSD: airport,v 1.11.10.1 2000/10/17 21:18:46 tv Exp $
+#	$NetBSD: airport,v 1.11.10.2 2000/10/18 04:15:42 tv Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 # 
 # Some of this information from the Airport Search Engine at
 # http://www.uni-karlsruhe.de/~un9v/atm/ase.html, more are
 # available at http://www.cowtown.net/users/rcr/aaa/ccmain.htm
+# and http://www.mapping.com/airportcodes.html.
 #
 # Airport Code : Airport
 AAR:Tirstrup, Aarhus, Denmark
 ABE:Allentown-Bethlehem-Easton International, Pennsylvania, USA
 ABQ:Albuquerque International, New Mexico, USA
-ADL:Adelaide, Australia
+ADL:Adelaide, South Australia, Australia
 AGC:Pittsburgh/Allegheny County, Pennsylvania, USA
 AGP:Malaga, Spain
 AIY:Atlantic City International, New Jersey, USA
@@ -40,7 +41,7 @@ BIS:Bismarck Municipal, North Dakota, USA
 BKK:Bangkok, Thailand
 BKL:Cleveland Lakefront, Ohio, USA
 BNA:Nashville Metro, Tennessee, USA
-BNE:Brisbane Intl., Australia
+BNE:Brisbane, Queensland, Australia
 BOI:Boise Air Terminal/Gowen Field, Idaho, USA
 BOS:Boston Logan International, Massachusetts, USA
 BPT:Beaumont, Texas, USA
@@ -51,10 +52,10 @@ BUF:Buffalo International, New York, USA
 BUH:All Airports around Bucharest, Romania
 BUR:Burbank/Glendale/Pasadena, California, USA
 BWI:Baltimore-Washington International, Maryland, USA
-BWU:Bankstown, Australia
+BWU:Bankstown, New South Wales, Australia
 CAE:Columbia Metropolitan, South Carolina, USA
 CAK:Akron/Canton Regional, Ohio, USA
-CBR:Canberra, Australia
+CBR:Canberra, Australian Capital Territory, Australia
 CDG:Charles de Gaulle, Paris, France
 CGD:Changde, China
 CGN:Koeln/Bonn, Cologne, Germany
@@ -66,7 +67,7 @@ CID:Cedar Rapids/Iowa City, Iowa, USA
 CLE:Cleveland-Hopkins International, Ohio, USA
 CLT:Charlotte/Douglas International, North Carolina, USA
 CMH:Columbus International, Ohio, USA
-CNS:Cairns, Australia
+CNS:Cairns, Queensland, Australia
 COS:Peterson, Colorado Springs, USA
 CPH:Copenhagen, Denmark
 CPR:Casper/Natrone County International, Wyoming, USA
@@ -84,7 +85,7 @@ DEN:Denver International, Colorado, USA
 DET:Detroit City, Michigan, USA
 DFW:Dallas-Ft. Worth International, Texas, USA
 DMR:Dhamar, Yemen
-DRW:Darwin, Australia
+DRW:Darwin, Northern Territory, Australia
 DSM:Des Moines International, Iowa, USA
 DTT:All Airports around Detroit, Michigan, USA
 DTW:Detroit Metropolitan/Wayne County, Michigan, USA
@@ -107,7 +108,7 @@ FWA:Ft. Wayne Allen County, Indiana, USA
 GCM:Grand Cayman, KY
 GDL:Guadalajara, Mex
 GEG:Spokane International, Washington, USA
-GEX:Geelong, Australia
+GEX:Geelong, Victoria, Australia
 GIG:Rio De Janeiro, Brazil
 GLA:Glasgow, Scotland
 GND:Grenada, GD
@@ -163,13 +164,13 @@ MAD:Madrid, Spain
 MAN:Manchester, UK
 MBJ:Montego Bay, Jamaica
 MBS:Saginaw Tri-City, Michigan, USA
-MBW:Moorabbin, Australia
+MBW:Moorabbin, Victoria, Australia
 MCI:Kansas City International, Missouri, USA
 MCO:Orlando International, Florida, USA
 MDT:Harrisburg International, Pennsylvania, USA
 MDW:Chicago Midway, Illinois, USA
-MEB:Essendon, Melbourne, Australia
-MEL:Tulamarine, Melbourne, Australia
+MEB:Essendon, Melbourne, Victoria, Australia
+MEL:Tulamarine, Melbourne, Victoria, Australia
 MEM:Memphis International, Tennessee, USA
 MEX:Mexico City, Mexico
 MFW:All Airports around Miami, Ft. Lauderdale and West Palm Beach, Florida, USA
@@ -211,7 +212,7 @@ PAP:Port-au-Prince, Haiti
 PAR:All Airports around Paris, France
 PBI:Palm Beach International, Florida, USA
 PDX:Portland International, Oregon, USA
-PER:Perth, Australia
+PER:Perth, Western Australia, Australia
 PHF:Newport News Patrick Henry International, Virginia, USA
 PHL:Philadelphia International, Pennsylvania, USA
 PHX:Phoenix Sky Harbor International, Arizona, USA
@@ -261,14 +262,14 @@ STO:All Airports around Stockholm, Sweden
 SUX:Sioux City International, Iowa, USA
 SVD:Saint Vincent, VC
 SXM:Saint Maarten, NL AN
-SYD:Sydney, Australia
+SYD:Sydney, New South Wales, Australia
 SYR:Syracuse Hancock International, New York, USA
 TAB:Tobago
 TLV:Tel Aviv, Israel
 TOL:Toledo Express, Ohio, USA
 TPA:Tampa International, Florida, USA
 TPE:Taipei, Taiwan
-TSV:Townsville, Australia
+TSV:Townsville, Queensland, Australia
 TUL:Tulsa International, Oklahoma, USA
 TUS:Tucson International, Arizona, USA
 TXL:Berlin, Germany
