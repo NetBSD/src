@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.7 1995/07/06 13:30:24 briggs Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.8 1995/07/08 04:25:22 briggs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -105,7 +105,7 @@ pmap_bootstrap(nextpa, firstpa)
 	vm_offset_t nextpa;
 	register vm_offset_t firstpa;
 {
-	vm_offset_t kstpa, kptpa, vidpa, iiopa, eiopa, rompa;
+	vm_offset_t kstpa, kptpa, vidpa, iiopa, nbpa, rompa;
 	vm_offset_t kptmpa, lkptpa, p0upa;
 	u_int nptpages, kstsize;
 	caddr_t oldROMBase;
@@ -122,14 +122,20 @@ pmap_bootstrap(nextpa, firstpa)
 	 *	kptpa		statically allocated
 	 *			kernel PT pages		Sysptsize+ pages
 	 *
+	 *	vidpa		internal video space for some machines
+	 *			PT pages		VIDMAPSIZE pages
+	 *
+	 *	nbpa 		NuBus IO space
+	 *			PT pages		NBMAPSIZE pages
+	 *
+	 *	rompa 		ROM space
+	 *			PT pages		ROMMAPSIZE pages
+	 *
 	 *	iiopa		internal IO space
 	 *			PT pages		IIOMAPSIZE pages
 	 *
-	 *	eiopa		external IO space
-	 *			PT pages		EIOMAPSIZE pages
-	 *
 	 * [ Sysptsize is the number of pages of PT, IIOMAPSIZE and
-	 *   EIOMAPSIZE are the number of PTEs, hence we need to round
+	 *   NBMAPSIZE are the number of PTEs, hence we need to round
 	 *   the total to a page boundary with IO maps at the end. ]
 	 *
 	 *	kptmpa		kernel PT map		1 page
@@ -138,8 +144,6 @@ pmap_bootstrap(nextpa, firstpa)
 	 *
 	 *	p0upa		proc 0 u-area		UPAGES pages
 	 *
-	 * The KVA corresponding to any of these PAs is:
-	 *	(PA - firstpa + KERNBASE).
 	 */
 	if (mmutype == MMU_68040)
 		kstsize = MAXKL2SIZE / (NPTEPG/SG4_LEV2SIZE);
@@ -153,8 +157,8 @@ pmap_bootstrap(nextpa, firstpa)
 		 + NPTEPG - 1) / NPTEPG;
 	nextpa += nptpages * NBPG;
 	vidpa = nextpa - VIDMAPSIZE * sizeof(pt_entry_t);
-	eiopa = vidpa  - NBMAPSIZE  * sizeof(pt_entry_t);
-	rompa = eiopa  - ROMMAPSIZE * sizeof(pt_entry_t);
+	nbpa  = vidpa  - NBMAPSIZE  * sizeof(pt_entry_t);
+	rompa = nbpa   - ROMMAPSIZE * sizeof(pt_entry_t);
 	iiopa = rompa  - IIOMAPSIZE * sizeof(pt_entry_t);
 	kptmpa = nextpa;
 	nextpa += NBPG;
@@ -356,19 +360,46 @@ pmap_bootstrap(nextpa, firstpa)
 	}
 
 	pte = PA2VA(rompa, u_int *);
-	epte = PA2VA(eiopa, u_int *);
+	epte = PA2VA(nbpa, u_int *);
 	protopte = ((u_int) ROMBase) | PG_RO | PG_V;
 	while (pte < epte) {
 		*pte++ = protopte;
 		protopte += NBPG;
 	}
 
-	pte = PA2VA(eiopa, u_int *);
-	epte = pte + NBMAPSIZE;
-	protopte = NBBASE | PG_RW | PG_V | PG_CI;
-	while (pte < epte) {
-		*pte++ = protopte;
-		protopte += NBPG;
+	if (nbnumranges) {
+		int	len;
+		u_long	offset;
+
+		for (i = 0; i < nbnumranges; i++) {
+			pte = (PA2VA(nbpa, u_int *))
+				+ mac68k_btop(nblog[i] - NBBASE);
+			protopte = (nbphys[i]&PG_FRAME) | PG_RW | PG_V | PG_CI;
+			if (nblen[i] < 0) {
+				len = mac68k_btop(-nblen[i]);
+				offset = 0;
+				while (len--) {
+					*pte++ = protopte + offset;
+					/* Wrap around every 32k: */
+					offset = (offset + NBPG) & 0x7fff;
+				}
+			} else {
+				len = mac68k_btop(nblen[i]);
+				while (len--) {
+					*pte++ = protopte;
+					protopte += NBPG;
+				}
+			}
+			if (pte > Sysmap) printf("Ack!  Over Sysmap!\n");
+		}
+	} else {
+		pte = PA2VA(nbpa, u_int *);
+		epte = pte + NBMAPSIZE;
+		protopte = NBBASE | PG_RW | PG_V | PG_CI;
+		while (pte < epte) {
+			*pte++ = protopte;
+			protopte += NBPG;
+		}
 	}
 
 	if (mac68k_vidlog) {
@@ -420,31 +451,6 @@ pmap_bootstrap(nextpa, firstpa)
 	if (mac68k_vidlog)
 		mac68k_vidlog = (u_int32_t)
 				mac68k_ptob(nptpages*NPTEPG - VIDMAPSIZE);
-{
-	int		len;
-	u_long	offset;
-
-	for (i = 0; i < nbnumranges; i++) {
-		pte = (PA2VA(eiopa, u_int *)) + mac68k_btop(nblog[i] - NBBASE);
-		protopte = (nbphys[i] & PG_FRAME) | PG_RW | PG_V | PG_CI;
-		if (nblen[i] < 0) {
-			len = mac68k_btop(-nblen[i]);
-			offset = 0;
-			while (len--) {
-				*pte++ = protopte + offset;
-				/* Wrap around every 32k: */
-				offset = (offset + NBPG) & 0x7fff;
-			}
-		} else {
-			len = mac68k_btop(nblen[i]);
-			while (len--) {
-				*pte++ = protopte;
-				protopte += NBPG;
-			}
-		}
-		if (pte > Sysmap) printf("Ack!  Over Sysmap!\n");
-	}
-}
 
 	/*
 	 * Setup u-area for process 0.
