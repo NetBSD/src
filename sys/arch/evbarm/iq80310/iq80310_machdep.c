@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_machdep.c,v 1.23 2002/02/20 20:41:17 thorpej Exp $	*/
+/*	$NetBSD: iq80310_machdep.c,v 1.24 2002/02/20 20:47:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -582,7 +582,7 @@ initarm(void *arg)
 #endif
 
 	/*
-	 * Now we start consturction of the L1 page table
+	 * Now we start construction of the L1 page table
 	 * We start by mapping the L2 page tables into the L1.
 	 * This means that we can replace L1 mappings later on if necessary
 	 */
