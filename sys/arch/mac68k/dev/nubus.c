@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.c,v 1.37 1997/05/11 19:11:36 scottr Exp $	*/
+/*	$NetBSD: nubus.c,v 1.38 1997/05/13 13:22:56 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Allen Briggs.  All rights reserved.
@@ -340,7 +340,7 @@ nubus_probe_slot(bst, bsh, slot, fmt)
 
 	/*
 	 * The idea behind this glorious work of art is to probe for only
-	 * valid bytelanes values at appropriate locations (see DC&D p. XXX
+	 * valid bytelanes values at appropriate locations (see DC&D p. 159
 	 * for a list).  Note the pattern:  the first 8 values are at offset
 	 * 0xffffff in the slot's space; the next 4 values at 0xfffffe; the
 	 * next 2 values at 0xfffffd; and the last one at 0xfffffc.
