@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.54 2000/02/27 20:01:05 mycroft Exp $	*/
+/*	$NetBSD: i82365.c,v 1.55 2000/02/27 21:06:55 augustss Exp $	*/
 
 #define	PCICDEBUG
 
@@ -199,7 +199,7 @@ pcic_attach(sc)
 			h->vendor = (h+1)->vendor = pcic_vendor(h);
 
 		reg = pcic_read(h, PCIC_IDENT);
-		printf("ident reg 0x%02x\n", reg);
+		DPRINTF(("ident reg 0x%02x\n", reg));
 		if (pcic_ident_ok(reg))
 			h->flags = PCIC_FLAG_SOCKETP;
 		else
