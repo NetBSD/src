@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_cardbus.c,v 1.6 2000/02/09 22:15:59 joda Exp $	*/
+/*	$NetBSD: if_fxp_cardbus.c,v 1.7 2000/02/12 04:05:50 enami Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ struct fxp_cardbus_softc {
 
 struct cfattach fxp_cardbus_ca = {
     sizeof(struct fxp_cardbus_softc), fxp_cardbus_match, fxp_cardbus_attach, 
-    fxp_cardbus_detach
+        fxp_cardbus_detach, fxp_activate
 };
 
 #ifdef CBB_DEBUG
