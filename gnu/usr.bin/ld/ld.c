@@ -1,3 +1,4 @@
+/*	BSDI $Id: ld.c,v 1.2 1993/04/16 13:33:05 mycroft Exp $	*/
 /*-
  * This code is derived from software copyrighted by the Free Software
  * Foundation.
@@ -72,15 +73,12 @@ char *progname;
 /* Define this to specify the default executable format.  */
 
 #ifndef DEFAULT_MAGIC
-#define DEFAULT_MAGIC ZMAGIC
+#define DEFAULT_MAGIC QMAGIC
 #endif
 
 #ifdef hp300
 #define	INITIALIZE_HEADER	outheader.a_mid = MID_HP300
 #endif
-
-/* create screwball format for 386BSD to save space on floppies -wfj */
-int screwballmode;
 
 /*
  * Ok.  Following are the relocation information macros.  If your
@@ -895,7 +893,7 @@ main (argc, argv)
     text_size = 0;
   entry_offset = text_size;
 
-  if (!T_flag_specified && !relocatable_output && !screwballmode)
+  if (!T_flag_specified && !relocatable_output)
     text_start = TEXT_START (outheader);
 
   /* The text-start address is normally this far past a page boundary.  */
@@ -1074,11 +1072,7 @@ decode_command (argc, argv)
 
   /* Now check some option settings for consistency.  */
 
-#ifdef NMAGIC
-  if ((magic == ZMAGIC || magic == NMAGIC)
-#else
-  if ((magic == ZMAGIC)
-#endif
+  if ((magic != OMAGIC)
       && (text_start - text_start_alignment) & (page_size - 1))
     fatal ("-T argument not multiple of page size, with sharable output", 0);
 
@@ -1171,13 +1165,6 @@ decode_option (swt, arg)
       force_executable = 1;
       return;
     }
-  if (! strcmp (swt + 1, "screwballmode"))
-    {
-      screwballmode = 1;
-      magic = OMAGIC;
-      text_start = sizeof(struct exec);
-      return;
-    }
 
   if (swt[2] != 0)
     arg = &swt[2];
@@ -1208,7 +1195,6 @@ decode_option (swt, arg)
       if (arg != NULL && strcmp (arg, "g++") == 0)
 	demangler = cplus_demangle;
       return;
-      magic = OMAGIC;
 
     case 'L':
       n_search_dirs++;
@@ -1223,10 +1209,6 @@ decode_option (swt, arg)
 
     case 'N':
       magic = OMAGIC;
-#ifdef notnow
-text_start = sizeof(struct exec); /* XXX */
-screwballmode=1;
-#endif
       return;
 
 #ifdef NMAGIC
@@ -1238,6 +1220,12 @@ screwballmode=1;
     case 'o':
       output_filename = arg;
       return;
+
+#ifdef QMAGIC
+    case 'q':
+      magic = QMAGIC;
+      return;
+#endif
 
     case 'r':
       relocatable_output = 1;
@@ -1582,7 +1570,6 @@ read_entry_strings (desc, entry)
   if (entry->string_size != read (desc, entry->strings, entry->string_size))
     fatal_with_file ("premature end of file in strings of ", entry);
 
-#if 0
   /* While we are here, see if the file has a symbol segment at the end.
      For a separate file, just try reading some more.
      For a library member, compare current pos against total size.  */
@@ -1599,7 +1586,6 @@ read_entry_strings (desc, entry)
       if (buffer != sizeof buffer)
 	fatal_with_file ("premature end of file in GDB symbol segment of ", entry);
     }
-#endif
   /* Don't try to do anything with symsegs.  */
   return;
 #if 0
@@ -1763,6 +1749,7 @@ enter_global_ref (nlist_p, name, entry)
   register int type = nlist_p->n_type;
   int oldref = sp->referenced;
   int olddef = sp->defined;
+  int com = sp->defined && sp->max_common_size;
 
   nlist_p->n_un.n_name = (char *) sp->refs;
   sp->refs = nlist_p;
@@ -1783,22 +1770,21 @@ enter_global_ref (nlist_p, name, entry)
 	  common_defined_global_count++;
 	  sp->max_common_size = nlist_p->n_value;
 	}
-      else if (olddef && sp->max_common_size && type != (N_UNDF | N_EXT))
+      else if (com && type != (N_UNDF | N_EXT))
 	{
 	  /* It used to be common and we're defining it as
 	     something else.  */
 	  common_defined_global_count--;
 	  sp->max_common_size = 0;
 	}
-      else if (olddef && sp->max_common_size && type == (N_UNDF | N_EXT)
+      else if (com && type == (N_UNDF | N_EXT)
 	  && sp->max_common_size < nlist_p->n_value)
 	/* It used to be common and this is a new common entry to
 	   which we need to pay attention.  */
 	sp->max_common_size = nlist_p->n_value;
 
       /* Are we defining it as a set element?  */
-      if (SET_ELEMENT_P (type)
-	  && (!olddef || (olddef && sp->max_common_size)))
+      if (SET_ELEMENT_P (type) && (!olddef || com))
 	set_vector_count++;
       /* As an indirection?  */
       else if (type == (N_INDR | N_EXT))
@@ -1847,8 +1833,7 @@ enter_global_ref (nlist_p, name, entry)
       }
 #endif
 
-  if (sp == end_symbol && entry->just_syms_flag && !T_flag_specified
-	&& !screwballmode)
+  if (sp == end_symbol && entry->just_syms_flag && !T_flag_specified)
     text_start = nlist_p->n_value;
 
   if (sp->trace)
@@ -1906,24 +1891,9 @@ enter_global_ref (nlist_p, name, entry)
 		   (nlist_p + 1)->n_un.n_strx + entry->strings);
 	  break;
 
-#ifdef sequent
-	case N_SHUNDF:
-	  reftype = "shared undf";
-	  break;
-
-/* These conflict with cases above.
-	case N_SHDATA:
-	  reftype = "shared data";
-	  break;
-
-	case N_SHBSS:
-	  reftype = "shared BSS";
-	  break;
-*/
 	default:
 	  reftype = "I don't know this type";
 	  break;
-#endif
 	}
 
       fprintf (stderr, "symbol %s %s in ", sp->name, reftype);
@@ -2126,8 +2096,13 @@ symdef_library (desc, entry, member_length)
 	    /* If we find a symbol that appears to be needed, think carefully
 	       about the archive member that the symbol is in.  */
 
-	    if (sp && ((sp->referenced && !sp->defined)
-		       || (sp->defined && sp->max_common_size)))
+	    /*
+	     * Per Mike Karels' recommendation, we no longer load library
+	     * files if the only reference(s) that would be satisfied are
+	     * 'common' references.  This prevents some problems with name
+	     * pollution (e.g. a global common 'utime' linked to a function).
+	     */
+	    if (sp && sp->referenced && !sp->defined)
 	      {
 		int junk;
 		register int j;
@@ -2299,8 +2274,11 @@ subfile_wanted_p (entry)
 
 	  if (!sp) continue;
 
-	  if ((sp->referenced && !sp->defined)
-	      || (sp->defined && sp->max_common_size && (type & N_TEXT) == 0))
+	  /*
+	   * We don't load a file if it merely satisfies a common reference
+	   * (see explanation above in symdef_library()).
+	   */
+	  if (sp->referenced && !sp->defined)
 	    {
 	      /* This is a symbol we are looking for.  It is either
 	         not yet defined or defined as a common.  */
@@ -2363,7 +2341,11 @@ digest_symbols ()
   /* If necessary, pad text section to full page in the file.
      Include the padding in the text segment size.  */
 
+#ifdef QMAGIC
+  if (magic == QMAGIC || magic == ZMAGIC)
+#else
   if (magic == ZMAGIC)
+#endif
     {
       int text_end = text_size + N_TXTOFF (outheader);
       text_pad = ((text_end + page_size - 1) & (- page_size)) - text_end;
@@ -2376,9 +2358,6 @@ digest_symbols ()
 #endif
 
   outheader.a_text = text_size;
-#ifdef sequent
-  outheader.a_text += N_ADDRADJ (outheader);
-#endif
 
   /* Make the data segment address start in memory on a suitable boundary.  */
 
@@ -2542,7 +2521,11 @@ digest_symbols ()
   if (specified_data_size && specified_data_size > data_size)
     data_pad = specified_data_size - data_size;
 
+#ifdef QMAGIC
+  if (magic == ZMAGIC || magic == QMAGIC)
+#else
   if (magic == ZMAGIC)
+#endif
     data_pad = ((data_pad + data_size + page_size - 1) & (- page_size))
                - data_size;
 
@@ -3252,22 +3235,10 @@ write_header ()
 {
   N_SET_MAGIC (outheader, magic);
   outheader.a_text = text_size;
-#ifdef sequent
-  outheader.a_text += N_ADDRADJ (outheader);
-  if (entry_symbol == 0)
-    entry_symbol = getsym("start");
-#endif
   outheader.a_data = data_size;
   outheader.a_bss = bss_size;
   outheader.a_entry = (entry_symbol ? entry_symbol->value
 		       : text_start + entry_offset);
-if (screwballmode)  {
-  N_SET_MAGIC (outheader, ZMAGIC);
-  outheader.a_text = 0;
-  outheader.a_data = text_size + data_size;
-  outheader.a_entry = (entry_symbol ? entry_symbol->value
-		       : sizeof(struct exec));
-}
 #ifdef COFF_ENCAPSULATE
   if (need_coff_header)
     {
@@ -3371,8 +3342,6 @@ if (screwballmode)  {
     mywrite (&coffheader, sizeof coffheader, 1, outdesc);
 #endif
   mywrite (&outheader, sizeof (struct exec), 1, outdesc);
-if (screwballmode)
-  N_SET_MAGIC (outheader, OMAGIC);
 
   /* Output whatever padding is required in the executable file
      between the header and the start of the text.  */
@@ -4403,15 +4372,6 @@ symtab_init ()
     dynamic_symbol->defined = N_ABS | N_EXT;
     dynamic_symbol->referenced = 1;
     dynamic_symbol->value = 0;
-  }
-#endif
-
-#ifdef sequent
-  {
-    symbol *_387_flt_symbol = getsym ("_387_flt");
-    _387_flt_symbol->defined = N_ABS | N_EXT;
-    _387_flt_symbol->referenced = 1;
-    _387_flt_symbol->value = 0;
   }
 #endif
 
