@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.1 1997/10/14 06:48:36 sakamoto Exp $	*/
+/*	$NetBSD: psl.h,v 1.1.2.1 1997/11/28 19:44:25 mellon Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -70,5 +70,7 @@
 #define	PSL_USERSET	(PSL_EE | PSL_PR | PSL_ME | PSL_IR | PSL_DR | PSL_RI)
 
 #define	PSL_USERSTATIC	(PSL_USERSET | PSL_IP | 0x87c0008c)
+
+#include <machine/intr.h>
 
 #endif	/* _MACHINE_PSL_H_ */
