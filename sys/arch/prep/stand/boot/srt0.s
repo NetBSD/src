@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.s,v 1.1 2000/02/29 15:21:51 nonaka Exp $	*/
+/*	$NetBSD: srt0.s,v 1.2 2004/01/05 15:31:03 nonaka Exp $	*/
 
 /*
  * Copyright (C) 1996-1999 Cort Dougan (cort@fsmlasb.com).
@@ -68,17 +68,14 @@ start:
 	mflr	3
 	subi	3,3,4		/* we get the nip, not the ip of the branch */
 	mr	8,3
-	cmp	0,3,4
-	bne	1f
+	cmpw	3,4
+	bne	relocate
 	b	start_ldr
-1:
+
 /* 
  * no matter where we're loaded, move ourselves to -Ttext address
  */
 relocate:
-	mflr	3		/* Compute code bias */
-	subi	3,3,4
-	mr	8,3
 	lis	4,_start@h
 	ori	4,4,_start@l
 	lis	5,end@h
@@ -98,18 +95,6 @@ relocate:
 	mtlr	3		/* Easiest way to do an absolute jump */
 	blr
 start_ldr:
-/* Clear all of BSS */
-	lis	3,edata@h
-	ori	3,3,edata@l
-	lis	4,end@h
-	ori	4,4,end@l
-	subi	3,3,4
-	subi	4,4,4
-	li	0,0
-3:
-	stwu	0,4(3)
-	cmp	0,3,4
-	bne	3b
 	mr	9,1		/* Save old stack pointer */
 	lis	1,.stack@h
 	ori	1,1,.stack@l
