@@ -19,30 +19,30 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mms.c,v 1.6 1993/08/02 17:52:35 mycroft Exp $
+ *	$Id: mms.c,v 1.7 1993/12/20 09:06:28 mycroft Exp $
  */
 
 #include "mms.h"
-
 #if NMMS > 0
 
-#include "param.h"
-#include "kernel.h"
-#include "systm.h"
-#include "buf.h"
-#include "malloc.h"
-#include "ioctl.h"
-#include "tty.h"
-#include "file.h"
+#include <sys/param.h>
+#include <sys/kernel.h>
+#include <sys/systm.h>
+#include <sys/buf.h>
+#include <sys/malloc.h>
+#include <sys/ioctl.h>
+#include <sys/tty.h>
+#include <sys/file.h>
 #ifdef NetBSD
-#include "select.h"
+#include <sys/select.h>
 #endif
-#include "proc.h"
-#include "vnode.h"
+#include <sys/proc.h>
+#include <sys/vnode.h>
 
-#include "i386/include/mouse.h"
-#include "i386/include/pio.h"		/* Julian's fast IO macros */
-#include "i386/isa/isa_device.h"
+#include <machine/mouse.h>
+#include <machine/pio.h>
+
+#include <i386/isa/isa_device.h>
 
 #define ADDR	0	/* Offset for register select */
 #define DATA	1	/* Offset for InPort data */

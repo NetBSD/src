@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wt.c	7.1 (Berkeley) 5/9/91
- *	$Id: wt.c,v 1.5 1993/07/28 02:21:40 cgd Exp $
+ *	$Id: wt.c,v 1.6 1993/12/20 09:06:57 mycroft Exp $
  */
 
 /*
@@ -64,25 +64,6 @@
 
 #include "wt.h"
 #if NWT > 0
-/* 
- * (Mach) HISTORY
- * Revision 2.2.1.3  90/01/08  13:29:38  rvb
- * 	Add Intel copyright.
- * 	[90/01/08            rvb]
- * 
- * Revision 2.2.1.2  89/12/21  18:00:09  rvb
- * 	Change WTPRI to make the streamer tape read/write
- * 	interruptible. 		[lin]
- * 
- * Revision 2.2.1.1  89/11/10  09:49:49  rvb
- * 	ORC likes their streamer port at 0x288.
- * 	[89/11/08            rvb]
- * 
- * Revision 2.2  89/09/25  12:33:02  rvb
- * 	Driver was provided by Intel 9/18/89.
- * 	[89/09/23            rvb]
- * 
- */
 
 /*
  *
@@ -91,15 +72,15 @@
  *	Support Bell Tech QIC-02 and WANGTEK QIC-36 or QIC-02
  */
 
-/*#include <sys/errno.h>
-#include <sys/signal.h>
-#include <sys/types.h>*/
-#include "sys/param.h"
-#include "sys/buf.h"
-#include "sys/file.h"
-#include "sys/proc.h"
-#include "sys/user.h"
-#include "i386/isa/wtreg.h"
+#include <sys/param.h>
+#include <sys/buf.h>
+#include <sys/file.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+
+#include <machine/pio.h>
+
+#include <i386/isa/wtreg.h>
 
 #ifdef	ORC
 unsigned wtport = 0x288;	/* base I/O port of controller	*/
@@ -1135,8 +1116,8 @@ wtdump()
 {
 }
 
-#include "i386/isa/isa_device.h"
-#include "i386/isa/icu.h"
+#include <i386/isa/isa_device.h>
+#include <i386/isa/icu.h>
 
 int	wtprobe(), wtattach();
 struct	isa_driver wtdriver = {

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_we.c	7.3 (Berkeley) 5/21/91
- *	$Id: if_we.c,v 1.11 1993/08/03 05:06:26 mycroft Exp $
+ *	$Id: if_we.c,v 1.12 1993/12/20 09:06:12 mycroft Exp $
  */
 
 #include "we.h"
@@ -48,45 +48,44 @@
  * The Western Digital card is one of many AT/MCA ethernet interfaces
  * based on the National DS8390 Network Interface chip set.
  */
-#include "param.h"
-#include "mbuf.h"
-#include "socket.h"
-#include "ioctl.h"
-#include "errno.h"
-#include "syslog.h"
-#include "select.h"
+#include <sys/param.h>
+#include <sys/mbuf.h>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <sys/errno.h>
+#include <sys/syslog.h>
+#include <sys/select.h>
 
-#include "net/if.h"
-#include "net/if_types.h"
-#include "net/if_dl.h"
-#include "net/netisr.h"
+#include <net/if.h>
+#include <net/if_types.h>
+#include <net/if_dl.h>
+#include <net/netisr.h>
 
 #ifdef INET
-#include "netinet/in.h"
-#include "netinet/in_systm.h"
-#include "netinet/in_var.h"
-#include "netinet/ip.h"
-#include "netinet/if_ether.h"
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/in_var.h>
+#include <netinet/ip.h>
+#include <netinet/if_ether.h>
 #endif
 
 #ifdef NS
-#include "netns/ns.h"
-#include "netns/ns_if.h"
+#include <netns/ns.h>
+#include <netns/ns_if.h>
 #endif
 
 #include "bpfilter.h"
 #if NBPFILTER > 0
-#include "net/bpf.h"
-#include "net/bpfdesc.h"
+#include <net/bpf.h>
+#include <net/bpfdesc.h>
 #endif
 
-#include "i386/isa/isa.h"
-#include "i386/isa/if_wereg.h"
-#include "i386/isa/isa_device.h"
-#include "i386/isa/icu.h"
-#if 0
-#include "i386/include/pio.h"
-#endif
+#include <machine/pio.h>
+
+#include <i386/isa/isa.h>
+#include <i386/isa/if_wereg.h>
+#include <i386/isa/isa_device.h>
+#include <i386/isa/icu.h>
 
 static inline char *we_ring_copy();
  

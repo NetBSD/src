@@ -45,7 +45,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: lpt_isa.c,v 1.8 1993/09/28 21:26:59 cgd Exp $
+ *	$Id: lpt_isa.c,v 1.9 1993/12/20 09:06:23 mycroft Exp $
  */
 
 /*
@@ -58,19 +58,21 @@
 #include "lpt.h"
 #if NLPT > 0
 
-#include "param.h"
-#include "systm.h"
-#include "proc.h"
-#include "user.h"
-#include "buf.h"
-#include "kernel.h"
-#include "ioctl.h"
-#include "tty.h"
-#include "uio.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <sys/buf.h>
+#include <sys/kernel.h>
+#include <sys/ioctl.h>
+#include <sys/tty.h>
+#include <sys/uio.h>
 
-#include "i386/isa/isa.h"
-#include "i386/isa/isa_device.h"
-#include "i386/isa/lptreg.h"
+#include <machine/pio.h>
+
+#include <i386/isa/isa.h>
+#include <i386/isa/isa_device.h>
+#include <i386/isa/lptreg.h>
 
 #define	LPINITRDY	4	/* wait up to 4 seconds for a ready */
 #define	LPTOUTTIME	4	/* wait up to 4 seconds for a ready */

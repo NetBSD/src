@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: if_ec.c,v 1.11 1993/12/10 10:57:40 cgd Exp $
+ *	$Id: if_ec.c,v 1.12 1993/12/20 09:05:46 mycroft Exp $
  */
 
 /*
@@ -54,27 +54,33 @@
  *   good rendition of a 3c503, I also scavenged a lot of ideas from
  *   there.
  */
-#include "param.h"
-#include "mbuf.h"
-#include "socket.h"
-#include "ioctl.h"
-#include "errno.h"
-#include "syslog.h"
-#include "net/if.h"
-#include "net/netisr.h"
+#include <sys/param.h>
+#include <sys/mbuf.h>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <sys/errno.h>
+#include <sys/syslog.h>
+
+#include <net/if.h>
+#include <net/netisr.h>
+
 #ifdef INET
-#include "netinet/in.h"
-#include "netinet/in_systm.h"
-#include "netinet/in_var.h"
-#include "netinet/ip.h"
-#include "netinet/if_ether.h"
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/in_var.h>
+#include <netinet/ip.h>
+#include <netinet/if_ether.h>
 #endif
+
 #ifdef NS
-#include "netns/ns.h"
-#include "netns/ns_if.h"
+#include <netns/ns.h>
+#include <netns/ns_if.h>
 #endif
-#include "i386/isa/isa_device.h"
-#include "i386/isa/if_ec.h"
+
+#include <machine/pio.h>
+
+#include <i386/isa/isa_device.h>
+#include <i386/isa/if_ec.h>
 
 #include "ec.h"
 

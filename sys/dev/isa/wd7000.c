@@ -16,25 +16,28 @@
  * scatter gather is done by the board, then look at one of the Adaptec
  * drivers to finish off the job..
  *
- *	$Id: wd7000.c,v 1.7 1993/06/10 04:50:42 deraadt Exp $
+ *	$Id: wd7000.c,v 1.8 1993/12/20 09:06:55 mycroft Exp $
  */
 #include "wds.h"
 #if NWDS > 0
 
-#include "sys/types.h"
-#include "sys/param.h"
-#include "sys/systm.h"
-#include "sys/errno.h"
-#include "sys/ioctl.h"
-#include "sys/buf.h"
-#include "sys/proc.h"
-#include "sys/user.h"
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/errno.h>
+#include <sys/ioctl.h>
+#include <sys/buf.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <sys/dkbad.h>
+#include <sys/disklabel.h>
 
-#include "i386/isa/isa_device.h"
-#include "sys/dkbad.h"
-#include "sys/disklabel.h"
-#include "scsi/scsi_all.h"
-#include "scsi/scsiconf.h"
+#include <scsi/scsi_all.h>
+#include <scsi/scsiconf.h>
+
+#include <machine/pio.h>
+
+#include <i386/isa/isa_device.h>
 
 extern int delaycount;  /* from clock setup code */
 

@@ -12,7 +12,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: aha1542.c,v 1.14 1993/08/23 05:01:56 cgd Exp $
+ *	$Id: aha1542.c,v 1.15 1993/12/20 09:05:17 mycroft Exp $
  */
 
 /*
@@ -44,20 +44,24 @@
 
 #include "aha.h"
 
-#include "sys/types.h"
-#include "sys/param.h"
-#include "sys/systm.h"
-#include "sys/errno.h"
-#include "sys/ioctl.h"
-#include "sys/buf.h"
-#include "machine/stdarg.h"
-#include "sys/proc.h"
-#include "sys/user.h"
-#include "sys/dkbad.h"
-#include "sys/disklabel.h"
-#include "i386/isa/isa_device.h"
-#include "scsi/scsi_all.h"
-#include "scsi/scsiconf.h"
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/errno.h>
+#include <sys/ioctl.h>
+#include <sys/buf.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <sys/dkbad.h>
+#include <sys/disklabel.h>
+
+#include <machine/stdarg.h>
+#include <machine/pio.h>
+
+#include <scsi/scsi_all.h>
+#include <scsi/scsiconf.h>
+
+#include <i386/isa/isa_device.h>
 
 
 #ifdef	DDB

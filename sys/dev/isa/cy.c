@@ -27,7 +27,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: cy.c,v 1.2 1993/10/29 08:58:34 andrew Exp $
+ *	$Id: cy.c,v 1.3 1993/12/20 09:05:35 mycroft Exp $
  */
 
 /*
@@ -59,23 +59,25 @@
 #include "cy.h"
 #if NCY > 0
 
-#include "param.h"
-#include "systm.h"
-#include "kernel.h"
-#include "malloc.h"
-#include "ioctl.h"
-#include "tty.h"
-#include "proc.h"
-#include "user.h"
-#include "conf.h"
-#include "file.h"
-#include "uio.h"
-#include "kernel.h"
-#include "syslog.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/malloc.h>
+#include <sys/ioctl.h>
+#include <sys/tty.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <sys/conf.h>
+#include <sys/file.h>
+#include <sys/uio.h>
+#include <sys/kernel.h>
+#include <sys/syslog.h>
 
-#include "i386/include/cpufunc.h"
-#include "i386/isa/isa_device.h"
-#include "i386/isa/ic/cd1400.h"
+#include <machine/pio.h>
+#include <machine/cpufunc.h>
+
+#include <i386/isa/isa_device.h>
+#include <i386/isa/ic/cd1400.h>
 
 #define RxFifoThreshold	3	/* 3 characters (out of 12) in the receive
 				 * FIFO before an interrupt is generated

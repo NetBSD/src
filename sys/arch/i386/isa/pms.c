@@ -19,30 +19,30 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: pms.c,v 1.8 1993/11/02 23:59:34 mycroft Exp $
+ *	$Id: pms.c,v 1.9 1993/12/20 09:06:39 mycroft Exp $
  */
 
 #include "pms.h"
-
 #if NPMS > 0
 
-#include "param.h"
-#include "kernel.h"
-#include "systm.h"
-#include "buf.h"
-#include "malloc.h"
-#include "ioctl.h"
-#include "tty.h"
-#include "file.h"
+#include <sys/param.h>
+#include <sys/kernel.h>
+#include <sys/systm.h>
+#include <sys/buf.h>
+#include <sys/malloc.h>
+#include <sys/ioctl.h>
+#include <sys/tty.h>
+#include <sys/file.h>
 #ifdef NetBSD
-#include "select.h"
+#include <sys/select.h>
 #endif
-#include "proc.h"
-#include "vnode.h"
+#include <sys/proc.h>
+#include <sys/vnode.h>
 
-#include "i386/include/mouse.h"
-#include "i386/include/pio.h"		/* Julian's fast IO macros */
-#include "i386/isa/isa_device.h"
+#include <machine/mouse.h>
+#include <machine/pio.h>
+
+#include <i386/isa/isa_device.h>
 
 #define DATA	0       /* Offset for data port, read-write */
 #define CNTRL	4       /* Offset for control port, write-only */

@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: if_hp.c,v 1.10 1993/09/06 18:30:39 mycroft Exp $
+ *	$Id: if_hp.c,v 1.11 1993/12/20 09:05:58 mycroft Exp $
  */
 
 /*
@@ -53,44 +53,45 @@
 #include "hp.h"
 #if NHP > 0
 
-#include "param.h"
-#include "systm.h"
-#include "mbuf.h"
-#include "buf.h"
-#include "protosw.h"
-#include "socket.h"
-#include "ioctl.h"
-#include "errno.h"
-#include "syslog.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/mbuf.h>
+#include <sys/buf.h>
+#include <sys/protosw.h>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <sys/errno.h>
+#include <sys/syslog.h>
 
-#include "net/if.h"
-#include "net/netisr.h"
-#include "net/route.h"
+#include <net/if.h>
+#include <net/netisr.h>
+#include <net/route.h>
 
 #ifdef INET
-#include "netinet/in.h"
-#include "netinet/in_systm.h"
-#include "netinet/in_var.h"
-#include "netinet/ip.h"
-#include "netinet/if_ether.h"
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/in_var.h>
+#include <netinet/ip.h>
+#include <netinet/if_ether.h>
 #endif
 
 #ifdef NS
-#include "netns/ns.h"
-#include "netns/ns_if.h"
+#include <netns/ns.h>
+#include <netns/ns_if.h>
 #endif
 
 #include "bpfilter.h"
 #if NBPFILTER > 0
-#include "sys/select.h"
-#include "net/bpf.h"
-#include "net/bpfdesc.h"
+#include <sys/select.h>
+#include <net/bpf.h>
+#include <net/bpfdesc.h>
 #endif
 
-#include "machine/cpufunc.h"
-#include "i386/isa/isa_device.h"
-#include "i386/isa/if_nereg.h"
-#include "i386/isa/icu.h"
+#include <machine/pio.h>
+
+#include <i386/isa/isa_device.h>
+#include <i386/isa/if_nereg.h>
+#include <i386/isa/icu.h>
 
 int hpprobe (), hpattach (), hpintr ();
 int hpstart (), hpinit (), ether_output (), hpioctl ();

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)clock.c	7.2 (Berkeley) 5/12/91
- *	$Id: clock.c,v 1.14 1993/09/21 13:09:10 brezak Exp $
+ *	$Id: clock.c,v 1.15 1993/12/20 09:05:30 mycroft Exp $
  */
 /* 
  * Mach Operating System
@@ -86,16 +86,19 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 /*
  * Primitive clock interrupt routines.
  */
-#include "param.h"
-#include "systm.h"
-#include "time.h"
-#include "kernel.h"
-#include "machine/segments.h"
-#include "i386/isa/icu.h"
-#include "i386/isa/isa.h"
-#include "i386/isa/clock.h"
-#include "i386/isa/rtc.h"
-#include "i386/isa/timerreg.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/time.h>
+#include <sys/kernel.h>
+
+#include <machine/segments.h>
+#include <machine/pio.h>
+
+#include <i386/isa/icu.h>
+#include <i386/isa/isa.h>
+#include <i386/isa/clock.h>
+#include <i386/isa/rtc.h>
+#include <i386/isa/timerreg.h>
 
 void spinwait __P((int));
 

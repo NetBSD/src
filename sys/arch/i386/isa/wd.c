@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.28 1993/12/16 20:22:56 mycroft Exp $
+ *	$Id: wd.c,v 1.29 1993/12/20 09:06:50 mycroft Exp $
  */
 
 /* Note: This code heavily modified by tih@barsoom.nhh.no; use at own risk! */
@@ -52,27 +52,31 @@
 #include "wd.h"
 #if	NWDC > 0
 
-#include "param.h"
-#include "dkbad.h"
-#include "systm.h"
-#include "conf.h"
-#include "file.h"
-#include "stat.h"
-#include "ioctl.h"
-#include "disklabel.h"
-#include "buf.h"
-#include "uio.h"
-#include "malloc.h"
-#include "machine/cpu.h"
+#include <sys/param.h>
+#include <sys/dkbad.h>
+#include <sys/systm.h>
+#include <sys/conf.h>
+#include <sys/file.h>
+#include <sys/stat.h>
+#include <sys/ioctl.h>
+#include <sys/disklabel.h>
+#include <sys/buf.h>
+#include <sys/uio.h>
+#include <sys/malloc.h>
+#include <sys/syslog.h>
 #ifdef INSTRUMENT
-#include "sys/dkstat.h"
+#include <sys/dkstat.h>
 #endif
-#include "i386/isa/isa.h"
-#include "i386/isa/isa_device.h"
-#include "i386/isa/icu.h"
-#include "i386/isa/wdreg.h"
-#include "syslog.h"
-#include "vm/vm.h"
+
+#include <vm/vm.h>
+
+#include <machine/cpu.h>
+#include <machine/pio.h>
+
+#include <i386/isa/isa.h>
+#include <i386/isa/isa_device.h>
+#include <i386/isa/icu.h>
+#include <i386/isa/wdreg.h>
 
 #ifndef WDCNDELAY
 #define WDCNDELAY	400000	/* delay = 25us; so 10s for a controller state change */

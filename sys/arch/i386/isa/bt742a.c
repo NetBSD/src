@@ -12,78 +12,16 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: bt742a.c,v 1.9 1993/12/07 12:51:58 deraadt Exp $
- */
-
-/*
- * HISTORY
- * $Log: bt742a.c,v $
- * Revision 1.9  1993/12/07 12:51:58  deraadt
- * __386BSD__ -> __NetBSD__
- *
- * Revision 1.8  1993/07/17  11:00:09  deraadt
- * scsi_switch had wrong entries for these controllers...
- *
- * Revision 1.7  1993/06/09  22:36:49  deraadt
- * minor silliness related to two or more controllers
- *
- * Revision 1.6  1993/05/22  08:01:05  cgd
- * add rcsids to everything and clean up headers
- *
- * Revision 1.5  1993/05/04  08:32:44  deraadt
- * support for making dev->id_alive be set, this is for iostat to
- * find disk devices. wee bit of a kludge. sub-device attach()
- * routines must now return 1 for successful attach(), 0 otherwise.
- * Other bsd's do this too..
- *
- * Revision 1.4  1993/04/15  07:57:54  deraadt
- * ioconf changes, see previous cvs's that dumped core
- *
- * Revision 1.3  1993/04/12  08:17:28  deraadt
- * new scsi subsystem.
- * changes also in config/mkioconf.c & sys/scsi/*
- *
- * Revision 1.2  1993/04/10  12:05:14  glass
- * fixed to be compliant, subservient, and to take advantage of the newly
- * hacked config(8)
- *
- * Revision 1.1  1993/03/21  18:10:06  cgd
- * after 0.2.2 "stable" patches applied
- * 
- * Revision 1.7  1992/08/24  22:40:16  jason
- * BIG_DMA ifdef for 512 dma segments instead of 128 segments
- *
- * Revision 1.6  1992/08/24  21:01:58  jason
- * many changes and bugfixes for osf1
- *
- * Revision 1.5  1992/07/31  01:22:03  julian
- * support improved scsi.h layout
- *
- * Revision 1.4  1992/07/25  03:11:26  julian
- * check each request fro sane flags.
- *
- * Revision 1.3  1992/07/24  00:52:45  julian
- * improved timeout handling.
- * added support for two arguments to the sd_done (or equiv) call so that
- * they can pre-queue several arguments.
- * slightly clean up error handling
- *
- * Revision 1.2  1992/07/17  22:03:54  julian
- * upgraded the timeout code.
- * added support for UIO-based i/o (as used for pmem operations)
- *
- * Revision 1.1  1992/05/27  00:51:12  balsup
- * machkern/cor merge
- * 
+ *	$Id: bt742a.c,v 1.10 1993/12/20 09:05:27 mycroft Exp $
  */
 
 /*
  * bt742a BT-1542A SCSI driver
  */
 
-#include <sys/types.h>
-#include <bt.h>
+#include "bt.h"
 
+#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
@@ -114,9 +52,12 @@
 #define dev_unit id_unit
 #define dev_addr id_iobase
 
-#include <i386/isa/isa_device.h>
+#include <machine/pio.h>
+
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
+
+#include <i386/isa/isa_device.h>
 #endif	__NetBSD__
 
 
