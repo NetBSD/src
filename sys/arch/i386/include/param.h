@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.41 2000/06/30 17:55:14 itojun Exp $	*/
+/*	$NetBSD: param.h,v 1.42 2000/08/13 22:45:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -68,7 +68,8 @@
  *
  */
 #define ALIGNBYTES		(sizeof(int) - 1)
-#define ALIGN(p)		(((u_int)(p) + ALIGNBYTES) &~ ALIGNBYTES)
+#define ALIGN(p)		(((u_int)(u_long)(p) + ALIGNBYTES) &~ \
+    ALIGNBYTES)
 #define ALIGNED_POINTER(p,t)	1
 
 #define	PGSHIFT		12		/* LOG2(NBPG) */
