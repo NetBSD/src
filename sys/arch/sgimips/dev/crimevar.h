@@ -1,4 +1,4 @@
-/*	$NetBSD: crimevar.h,v 1.3 2004/01/18 00:54:55 sekiya Exp $	*/
+/*	$NetBSD: crimevar.h,v 1.4 2004/09/06 07:24:06 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2003 Christopher SEKIYA
@@ -39,3 +39,4 @@ struct crime_softc {
 };
 
 void crime_intr_mask(unsigned int);
+void crime_intr_unmask(unsigned int);
