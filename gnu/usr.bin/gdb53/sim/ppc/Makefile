@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2004/07/29 14:36:38 chs Exp $
+#	$NetBSD: Makefile,v 1.5 2004/08/05 14:52:22 chs Exp $
 
 MKPRIVATELIB=	yes
 
@@ -203,6 +203,7 @@ DPSRCS+= ${DEFINES_H}
 # misc. dependancies.
 filter_host.c: ${DIST}/sim/ppc/filter_filename.c
 	cp ${.ALLSRC} ${.TARGET}
+filter_host.lo: ppc-config.h
 
 ppc-config.h: ${DIST}/sim/ppc/std-config.h
 	cp ${.ALLSRC} ${.TARGET}
