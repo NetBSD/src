@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";*/
-static char rcsid[] = "$Id: main.c,v 1.12 1994/09/05 09:09:43 pk Exp $";
+static char rcsid[] = "$Id: main.c,v 1.13 1994/09/18 00:14:39 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -523,7 +523,7 @@ putf(cp)
 			break;
 
 		case 'd': {
-			static char fmt[] = "%l:% %P on %A, %d %B %Y";
+			static char fmt[] = "%l:% %p on %A, %d %B %Y";
 
 			fmt[4] = 'M';		/* I *hate* SCCS... */
 			(void)time(&t);
