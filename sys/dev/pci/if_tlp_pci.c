@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.1 1999/09/01 00:32:42 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.2 1999/09/03 00:24:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -320,7 +320,7 @@ tlp_pci_attach(parent, self, aux)
 				    sc->sc_dev.dv_xname);
 				return;
 			}
-			rombuf[i] = (val & PNIC_MIIROM_DATA);
+			rombuf[i] = bswap16(val & PNIC_MIIROM_DATA);
 		}
 		break;
 
