@@ -32,7 +32,7 @@ static char sccsid[] = "@(#)ld.c	6.10 (Berkeley) 5/22/91";
    Set, indirect, and warning symbol features added by Randy Smith. */
 
 /*
- *	$Id: ld.c,v 1.39 1994/12/23 20:32:51 pk Exp $
+ *	$Id: ld.c,v 1.40 1995/01/29 14:47:06 pk Exp $
  */
    
 /* Define how to initialize system-dependent header fields.  */
@@ -2521,12 +2521,19 @@ write_header()
 	int	flags;
 
 	if (link_mode & SHAREABLE)
+		/* Output is shared object */
 		flags = EX_DYNAMIC | EX_PIC;
-	else if (pic_code_seen)
+	else if (relocatable_output && pic_code_seen)
+		/* Output is relocatable and contains PIC code */
 		flags = EX_PIC;
 	else if (rrs_section_type == RRS_FULL)
+		/* Output is a dynamic executable */
 		flags = EX_DYNAMIC;
 	else
+		/*
+		 * Output is a static executable
+		 * or a non-PIC relocatable object
+		 */
 		flags = 0;
 
 	if (oldmagic && (flags & EX_DPMASK))
