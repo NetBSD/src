@@ -1,4 +1,4 @@
-/*	$NetBSD: rmp_var.h,v 1.4 1995/09/12 07:13:10 thorpej Exp $	*/
+/*	$NetBSD: rmp_var.h,v 1.5 1995/09/12 20:07:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -98,12 +98,12 @@
  *  limited to 255 bytes due to the preceding 1-byte length field.
  */
 
-#define	RMPBOOTSIZE(s)	(sizeof(struct hp_hdr) + sizeof(struct hp_llc) + \
+#define	RMPBOOTSIZE(s)	htons(sizeof(struct hp_hdr) + sizeof(struct hp_llc) + \
 			 sizeof(struct rmp_boot_repl) + s - sizeof(restofpkt))
-#define	RMPREADSIZE(s)	(sizeof(struct hp_hdr) + sizeof(struct hp_llc) + \
+#define	RMPREADSIZE(s)	htons(sizeof(struct hp_hdr) + sizeof(struct hp_llc) + \
 			 sizeof(struct rmp_read_repl) + s - sizeof(restofpkt) \
 			 - sizeof(u_char))
-#define	RMPDONESIZE	(sizeof(struct hp_hdr) + sizeof(struct hp_llc) + \
+#define	RMPDONESIZE	htons(sizeof(struct hp_hdr) + sizeof(struct hp_llc) + \
 			 sizeof(struct rmp_boot_done))
 #define	RMPBOOTDATA	255
 #define	RMPREADDATA	(RMPDATALEN - \
@@ -144,8 +144,13 @@ typedef	u_int		u_word;
 
 #else
 
-#define	_WORD_HIGHPART	0
-#define	_WORD_LOWPART	1
+#if BYTE_ORDER == BIG_ENDIAN
+# define	_WORD_HIGHPART	0
+# define	_WORD_LOWPART	1
+#else
+# define	_WORD_HIGHPART	1
+# define	_WORD_LOWPART	0
+#endif
 
 typedef	struct _uword { u_short val[2]; }	u_word;
 
