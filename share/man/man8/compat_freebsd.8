@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_freebsd.8,v 1.1 1996/08/09 18:03:23 explorer Exp $
+.\"	$NetBSD: compat_freebsd.8,v 1.2 1997/02/27 08:05:36 mikel Exp $
 .\"	from: compat_linux.8,v 1.1 1995/03/05 23:30:36 fvdl Exp
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -34,7 +34,7 @@
 .Dt COMPAT_FREEBSD 8
 .Os BSD 4
 .Sh NAME
-.Nm COMPAT_FREEBSD
+.Nm compat_freebsd
 .Nd setup procedure for running FreeBSD binaries
 .Sh DESCRIPTION
 NetBSD supports running FreeBSD binaries. Most binaries should work,
@@ -42,9 +42,9 @@ except programs that use FreeBSD-specific features. These include
 i386-specific calls, such as syscons utilities, and audio devices. 
 The FreeBSD compatibility feature is active for kernels compiled 
 with the
-.Nm COMPAT_FREEBSD
+.Dv COMPAT_FREEBSD
 option enabled.
-
+.Pp
 A lot of programs are dynamically linked. This means, that you will
 also need the FreeBSD shared libraries that the program depends on, and
 the runtime linker. Also, you will need to create a "shadow root"
@@ -219,13 +219,13 @@ recent version.
 .El
 
 .Ss Finding the necessary files.
-.Nm Note:
-the information below is valid as of the \time this
-document was written (Jun, 1995), but certain details
+.Em Note:
+the information below is valid as of the time this
+document was written (June, 1995), but certain details
 such as names of ftp sites, directories and distribution names
 may have changed by the time you read this.
 .Pp
-FreeBSD distribution is
+The FreeBSD distribution is
 available on a lot of ftp sites. Sometimes the files are unpacked,
 and you can get the individual files you need, but mostly they
 are stored in distribution sets, usually consisting of subdirectories
