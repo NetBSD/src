@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.16 1996/12/05 06:48:47 mikel Exp $	*/
+/*	$NetBSD: wss.c,v 1.17 1997/03/13 02:20:14 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -141,7 +141,6 @@ struct audio_hw_if wss_hw_if = {
 	wss_set_in_port,
 	wss_get_in_port,
 	ad1848_commit_settings,
-	ad1848_get_silence,
 	NULL,
 	NULL,
 	ad1848_dma_output,

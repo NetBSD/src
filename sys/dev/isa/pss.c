@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.17 1996/10/13 01:37:58 christos Exp $	*/
+/*	$NetBSD: pss.c,v 1.18 1997/03/13 02:20:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -227,7 +227,6 @@ struct audio_hw_if pss_audio_if = {
 	pss_set_in_port,
 	pss_get_in_port,
 	ad1848_commit_settings,
-	ad1848_get_silence,
 	NULL,
 	NULL,
 	ad1848_dma_output,
