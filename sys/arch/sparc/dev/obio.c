@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.41 1998/03/23 17:21:52 pk Exp $	*/
+/*	$NetBSD: obio.c,v 1.42 1998/03/29 22:05:05 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -77,22 +77,20 @@ union obio_softc {
 static	int obiomatch  __P((struct device *, struct cfdata *, void *));
 static	void obioattach __P((struct device *, struct device *, void *));
 
-#if defined(SUN4)
-static	int obioprint  __P((void *, const char *));
-static	int obiosearch   __P((struct device *, struct cfdata *, void *));
-static	int obio_bus_mmap __P((void *, bus_type_t, bus_addr_t, int));
-static	int obio_find_rom_map __P((bus_addr_t, bus_type_t, int,
-				   bus_space_handle_t *));
-#endif
-
 struct cfattach obio_ca = {
 	sizeof(union obio_softc), obiomatch, obioattach
 };
 
 #if defined(SUN4)
+static	int obioprint  __P((void *, const char *));
+static	int obiosearch   __P((struct device *, struct cfdata *, void *));
+static	int obio_bus_mmap __P((void *, bus_type_t, bus_addr_t, int));
+static	int _obio_bus_map __P((void *, bus_type_t, bus_addr_t, bus_size_t,
+			       int, vm_offset_t, bus_space_handle_t *));
+
 static struct sparc_bus_space_tag obio_space_tag = {
 	NULL,				/* cookie */
-	NULL,				/* bus_space_map */ 
+	_obio_bus_map,			/* bus_space_map */ 
 	NULL,				/* bus_space_unmap */
 	NULL,				/* bus_space_subregion */
 	NULL,				/* bus_space_barrier */ 
@@ -121,23 +119,6 @@ obiomatch(parent, cf, aux)
 	return (strcmp(cf->cf_driver->cd_name, ma->ma_name) == 0);
 }
 
-#if defined(SUN4)
-int
-obioprint(args, busname)
-	void *args;
-	const char *busname;
-{
-	union obio_attach_args *uoba = args;
-	struct obio4_attach_args *oba = &uoba->uoba_oba4;
-
-	printf(" addr %p", oba->oba_paddr);
-	if (oba->oba_pri != -1)
-		printf(" level %d", oba->oba_pri);
-
-	return (UNCONF);
-}
-#endif
-
 void
 obioattach(parent, self, aux)
 	struct device *parent, *self;
@@ -156,9 +137,18 @@ obioattach(parent, self, aux)
 
 	if (CPU_ISSUN4) {
 #if defined(SUN4)
-		/* Propagate interrupt establish function */
+		struct obio4_softc *sc = &((union obio_softc *)self)->sc_obio;
+
+		sc->sc_bustag = ma->ma_bustag;
+		sc->sc_dmatag = ma->ma_dmatag;
+
+		obio_space_tag.cookie = sc;
+
+		/* Propagate assorted parent functions */
 		obio_space_tag.sparc_intr_establish =
 			ma->ma_bustag->sparc_intr_establish;
+		obio_space_tag.sparc_bus_unmap =
+			ma->ma_bustag->sparc_bus_unmap;
 
 		(void)config_search(obiosearch, self, aux);
 #endif
@@ -193,61 +183,42 @@ obioattach(parent, self, aux)
 	}
 }
 
-
-int
-obio_bus_probe(tag, addr, offset, size, callback, arg)
-	bus_space_tag_t tag;
-	void	*addr;
-	int	offset;
-	size_t	size;
-	int	(*callback) __P((void *, void *));
-	void	*arg;
-{
 #if defined(SUN4)
-	bus_addr_t paddr = (long)addr + offset;
-	bus_space_handle_t bh;
-	caddr_t tmp;
-	int result;
+int
+obioprint(args, busname)
+	void *args;
+	const char *busname;
+{
+	union obio_attach_args *uoba = args;
+	struct obio4_attach_args *oba = &uoba->uoba_oba4;
 
-	if (sparc_bus_map(0, PMAP_OBIO, paddr, size, 0, TMPMAP_VA, &bh) != 0)
-		return (0);
+	printf(" addr 0x%lx", (long)oba->oba_paddr);
+	if (oba->oba_pri != -1)
+		printf(" level %d", oba->oba_pri);
 
-	tmp = (caddr_t)bh;
-	result = probeget(tmp + offset, size) != -1;
-	if (result && callback != NULL)
-		result = (*callback)(tmp, arg);
-	pmap_remove(pmap_kernel(), TMPMAP_VA, TMPMAP_VA+NBPG);
-	return (result);
-#else
-	return (ENXIO);
-#endif /*SUN4*/
+	return (UNCONF);
 }
 
 int
-obio_bus_map(tag, addr, offset, size, flags, vaddr, hp)
-	bus_space_tag_t tag;
-	void	*addr;
-	int	offset;
-	size_t	size;
+_obio_bus_map(cookie, btype, paddr, size, flags, vaddr, hp)
+	void	*cookie;
+	bus_type_t btype;
+	bus_addr_t paddr;
+	bus_size_t size;
 	int	flags;
-	void	*vaddr;
+	vm_offset_t vaddr;
 	bus_space_handle_t *hp;
 {
-#if defined(SUN4)
-	bus_addr_t paddr = (long)addr + offset;
+	struct obio4_softc *sc = cookie;
 
 	if ((flags & OBIO_BUS_MAP_USE_ROM) != 0 &&
 	     obio_find_rom_map(paddr, PMAP_OBIO, size, hp) == 0)
 		return (0);
 
-	return (sparc_bus_map(0, PMAP_OBIO, paddr, size, flags,
-			      (vm_offset_t)vaddr, hp));
-#else
-	return (ENXIO);
-#endif /*SUN4*/
+	return (bus_space_map2(sc->sc_bustag, PMAP_OBIO, paddr,
+				size, flags, vaddr, hp));
 }
 
-#if defined(SUN4)
 int
 obio_bus_mmap(cookie, btype, paddr, flags)
 	void *cookie;
@@ -255,8 +226,9 @@ obio_bus_mmap(cookie, btype, paddr, flags)
 	bus_addr_t paddr;
 	int flags;
 {
+	struct obio4_softc *sc = cookie;
 
-	return (sparc_bus_mmap(0, PMAP_OBIO, paddr, flags));
+	return (bus_space_mmap(sc->sc_bustag, PMAP_OBIO, paddr, flags));
 }
 
 int
@@ -293,7 +265,7 @@ obiosearch(parent, cf, aux)
 	uoba.uoba_isobio4 = 1;
 	oba->oba_bustag = &obio_space_tag;
 	oba->oba_dmatag = ma->ma_dmatag;
-	oba->oba_paddr = (void *)cf->cf_loc[0];
+	oba->oba_paddr = cf->cf_loc[0];
 	oba->oba_pri = cf->cf_loc[1];
 
 	bp = ma->ma_bp;
@@ -327,7 +299,7 @@ obio_find_rom_map(pa, iospace, len, hp)
 	int	pgtype;
 	u_long	va, pte;
 
-	if (len <= NBPG)
+	if (len > NBPG)
 		return (EINVAL);
 
 	pf = pa >> PGSHIFT;
