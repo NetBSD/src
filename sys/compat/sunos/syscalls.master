@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.23 1994/11/25 23:59:31 deraadt Exp $
+	$NetBSD: syscalls.master,v 1.24 1994/12/06 00:17:06 deraadt Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -240,21 +240,21 @@
 			    caddr_t data); }
 168	STD		{ int sunos_ustat(int dev, struct sunos_ustat *buf); }
 #ifdef SYSVSEM
-169	NOARGS		{ int semsys(int which, int a2, int a3, int a4, \
+169	NOARGS		{ int compat_10_semsys(int which, int a2, int a3, int a4, \
 			    int a5); }
 #else
-169	UNIMPL		1.0 semsys
+169	UNIMPL		nosys
 #endif
 #ifdef SYSVMSG
-170	NOARGS		{ int msgsys(int which, int a2, int a3, int a4, \
+170	NOARGS		{ int compat_10_msgsys(int which, int a2, int a3, int a4, \
 			    int a5, int a6); }
 #else
-170	UNIMPL		1.0 msgsys
+170	UNIMPL		nosys
 #endif
 #ifdef SYSVSHM
-171	NOARGS		{ int shmsys(int which, int a2, int a3, int a4); }
+171	NOARGS		{ int compat_10_shmsys(int which, int a2, int a3, int a4); }
 #else
-171	UNIMPL		1.0 shmsys
+171	UNIMPL		nosys
 #endif
 172	STD		{ int sunos_auditsys(char *record); }
 173	UNIMPL		rfssys
