@@ -1,4 +1,4 @@
-/*	$NetBSD: romcalls.S,v 1.2 1999/12/17 07:33:20 tsubai Exp $	*/
+/*	$NetBSD: romcalls.S,v 1.3 2002/04/13 02:43:44 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -34,8 +34,8 @@
 	.align	2
 	.set	noreorder
 
-	.globl	halt
-halt:
+	.globl	rom_halt
+rom_halt:
 	addu	sp, sp, -16
 	li	a0, 8		# RB_HALT
 	sw	a0, 0(sp)

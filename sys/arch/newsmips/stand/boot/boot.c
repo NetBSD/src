@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.6 2002/01/16 16:10:32 tsutsui Exp $	*/
+/*	$NetBSD: boot.c,v 1.7 2002/04/13 02:43:44 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -207,15 +207,13 @@ putchar(x)
 		rom_write(1, &c, 1);
 }
 
-void halt __P((void));
-
 void
 _rtt()
 {
 	if (apbus)
 		apcall_exit(8);
 	else
-		halt();
+		rom_halt();
 
 	for (;;);
 }
