@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.113 1999/02/01 00:34:25 mrg Exp $
+#	$NetBSD: rc,v 1.114 1999/02/06 23:22:31 frueauf Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -318,7 +318,7 @@ if [ -n "$securelevel" ]; then
 	echo -n 'setting securelevel: '
 	sysctl -w kern.securelevel=$securelevel
 else
-	securelevel=`sysctl kern.securelevel | awk { print $3 }`
+	securelevel=`sysctl kern.securelevel | awk '{ print $3 }'`
 	if [ x"$securelevel" = x0 ]; then
 		echo -n 'setting securelevel: '
 		sysctl -w kern.securelevel=1
