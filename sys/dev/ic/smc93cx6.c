@@ -1,4 +1,4 @@
-/*	$NetBSD: smc93cx6.c,v 1.9 2001/11/13 13:14:45 lukem Exp $	*/
+/*	$NetBSD: smc93cx6.c,v 1.10 2003/05/02 19:12:19 dyoung Exp $	*/
 
 /*
  * Interface for the 93C66/56/46/26/06 serial eeprom parts.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc93cx6.c,v 1.9 2001/11/13 13:14:45 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc93cx6.c,v 1.10 2003/05/02 19:12:19 dyoung Exp $");
 
 #ifndef __NetBSD__
 #include "opt_aic7xxx.h"
@@ -85,16 +85,20 @@ static struct seeprom_cmd {
  	unsigned char bits[3];
 } seeprom_read = {3, {1, 1, 0}};
 
-/*
- * Wait for the SEERDY to go high; about 800 ns.
- */
-#define CLOCK_PULSE(sd, rdy)	{					\
+#define CLOCK_PULSE(sd, rdy)	do {					\
+	/*								\
+	 * Wait for the SEERDY to go high; about 800 ns.		\
+	 */								\
 	int cpi = 1000;							\
+	if (rdy == 0) {							\
+		DELAY(4); /* more than long enough */			\
+		break;							\
+	}								\
 	while ((SEEPROM_STATUS_INB(sd) & rdy) == 0 && cpi-- > 0) {	\
 		;  /* Do nothing */					\
 	}								\
 	(void)SEEPROM_INB(sd);	/* Clear clock */			\
-}
+} while (0)
 
 /*
  * Read the serial EEPROM and returns 1 if successful and 0 if
@@ -110,7 +114,7 @@ read_seeprom(sd, buf, start_addr, count)
 	int i = 0;
 	u_int k = 0;
 	u_int16_t v;
-	u_int8_t temp;
+	u_int32_t temp;
 
 	/*
 	 * Read the requested registers of the seeprom.  The loop
