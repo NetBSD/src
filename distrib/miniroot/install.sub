@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.6 1996/05/27 12:39:04 leo Exp $
+#	$NetBSD: install.sub,v 1.7 1996/05/30 06:57:14 leo Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -39,9 +39,20 @@
 #	NetBSD installation/upgrade script - common subroutines.
 
 ROOTDISK=""				# filled in below
+VERSION=				# filled in automatically (see list)
+export VERSION
 
 ALLSETS="base comp etc games man misc text"	# default install sets
 UPGRSETS="base comp games man misc text"	# default upgrade sets
+
+# decide upon an editor
+if [ X$EDITOR = X ]; then
+	if [ -x /usr/bin/vi ]; then
+		EDITOR=vi
+	else
+		EDITOR=ed
+	fi
+fi
 
 getresp() {
 	read resp
@@ -129,6 +140,21 @@ basename () {
 	IFS="$_oifs"
 	while [ "$#" -gt 10 ]; do shift 10; done
 	eval echo \$$#
+}
+
+dir_has_sets() {
+	# return true when the directory $1 contains a set for $2...$n
+	local _dir
+	local _file
+
+	_dir=$1; shift
+	for _file in $*
+	do
+		if [ -f $_dir/${_file}.tar.gz ]; then
+			return 0
+		fi
+	done
+	return 1
 }
 
 twiddle() {
@@ -991,7 +1017,7 @@ Make sure The sets are either on a local device (i.e. tape, CD-ROM) or on a
 network server.
 
 __install_sets_1
-if [ -f /mnt/$RELDIR/$1.tar.gz ]; then
+if dir_has_sets "/mnt/$RELDIR" $* ; then
 	echo -n "Are you sure to install sets from $RELDIR ? [y] "
 	getresp "y"
 	case "$resp" in
@@ -1084,6 +1110,7 @@ munge_fstab()
 	local _fstab_shadow
 	local _dev
 	local _mp
+	local _fstype
 	local _rest
 
 	# Now that the 'real' fstab is configured, we munge it into a 'shadow'
@@ -1091,7 +1118,17 @@ munge_fstab()
 	# filesystems relative to /mnt.  Mount all filesystems.
 	_fstab=$1
 	_fstab_shadow=$2
-	( while read _dev _mp _rest; do
+	( while read _dev _mp _fstype _rest; do
+		# Skip comment lines
+		case "$_dev" in
+			\#*)	continue;;
+			*)	;;
+		esac
+		# and some filesystem types (like there are swap,kernfs,...)
+		case "$_fstype" in
+			ffs|ufs|nfs)	;;
+			*)	continue;;
+		esac
 		if [ "$_mp" = "/" ]; then
 			echo $_dev /mnt $_rest
 		else
