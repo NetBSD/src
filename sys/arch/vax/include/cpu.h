@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.25 1997/11/02 14:07:07 ragge Exp $      */
+/*      $NetBSD: cpu.h,v 1.26 1998/04/13 12:12:59 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -117,6 +117,8 @@ void	configure __P((void));
 void	dumpconf __P((void));
 void	dumpsys __P((void));
 void	swapconf __P((void));
+void	disk_printtype __P((int, int));
+void	disk_reallymapin __P((struct buf *, struct pte *, int, int));
 #ifdef DDB
 int	kdbrint __P((int));
 #endif
