@@ -1,4 +1,4 @@
-/*	$NetBSD: supextern.h,v 1.7 1998/07/26 15:52:46 mycroft Exp $	*/
+/*	$NetBSD: supextern.h,v 1.8 1998/07/27 01:07:01 mycroft Exp $	*/
 
 struct stat;
 
@@ -63,7 +63,7 @@ int runio __P((char *const[], const char *, const char *, const char *));
 int runiofd __P((char *const[], const int, const int, const int));
 
 /* salloc.c */
-char *salloc __P((char *));
+char *salloc __P((const char *));
 
 /* scan.c */
 int getrelease __P((char *));

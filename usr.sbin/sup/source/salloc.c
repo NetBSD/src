@@ -1,4 +1,4 @@
-/*	$NetBSD: salloc.c,v 1.3 1997/06/17 18:56:32 christos Exp $	*/
+/*	$NetBSD: salloc.c,v 1.4 1998/07/27 01:07:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -40,7 +40,7 @@
 
 
 char *salloc(p)
-char *p;
+const char *p;
 {
 	register char *q;
 	register int l;
