@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.6 2002/03/28 15:34:20 uch Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.7 2002/04/22 18:57:43 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,8 @@
  */
 
 #include "assym.h"
-	
+#include "opt_cputype.h"
+
 #include <sh3/param.h>
 #include <sh3/asm.h>
 #include <sh3/locore.h>
