@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_cc.c,v 1.18 1999/03/24 22:24:43 is Exp $	*/
+/*	$NetBSD: grfabs_cc.c,v 1.19 1999/03/25 21:55:17 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -34,6 +34,8 @@
  *  abstract interface for custom chips to the amiga abstract graphics driver.
  *
  */
+
+#include "opt_amigaccgrf.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
