@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.15 2001/02/10 02:19:57 itojun Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.16 2001/02/10 03:06:39 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.39 2001/02/10 02:13:13 itojun Exp $	*/
 
 /*
@@ -1316,6 +1316,7 @@ ip6_mdq(m, ifp, rt)
 				case MRT6_INIT:
 					im = mtod(mm, struct mrt6msg *);
 					im->im6_msgtype = MRT6MSG_WRONGMIF;
+					im->im6_mbz = 0;
 					break;
 				default:
 					m_freem(mm);
