@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.31 1997/03/19 05:34:47 mycroft Exp $	*/
+/*	$NetBSD: print.c,v 1.32 1997/03/19 05:45:27 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$NetBSD: print.c,v 1.31 1997/03/19 05:34:47 mycroft Exp $";
+static char rcsid[] = "$NetBSD: print.c,v 1.32 1997/03/19 05:45:27 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -79,6 +79,9 @@ extern kvm_t *kd;
 extern int needenv, needcomm, commandonly;
 
 static char *cmdpart __P((char *));
+
+#define	min(a,b)	((a) <= (b) ? (a) : (b))
+#define	max(a,b)	((a) >= (b) ? (a) : (b))
 
 static char *
 cmdpart(arg0)
@@ -180,12 +183,16 @@ logname(k, ve)
 	VARENT *ve;
 {
 	VAR *v;
+	int n;
 
 	v = ve->var;
 #ifndef NEWVM
 	(void)printf("%-*s", v->width, KI_PROC(k)->p_logname);
 #else
-	(void)printf("%-*.*s", v->width, v->width, KI_EPROC(k)->e_login);
+	n = min(v->width, MAXLOGNAME);
+	(void)printf("%-*.*s", n, n, KI_EPROC(k)->e_login);
+	if (v->width > n)
+		(void)printf("%*s", v->width - n, "");
 #endif
 }
 
@@ -446,15 +453,18 @@ wchan(k, ve)
 	VARENT *ve;
 {
 	VAR *v;
+	int n;
 
 	v = ve->var;
 	if (KI_PROC(k)->p_wchan) {
-		if (KI_PROC(k)->p_wmesg)
-			(void)printf("%-*.*s", v->width, v->width, 
-				      KI_EPROC(k)->e_wmesg);
-		else
+		if (KI_PROC(k)->p_wmesg) {
+			n = min(v->width, WMESGLEN);
+			(void)printf("%-*.*s", n, n, KI_EPROC(k)->e_wmesg);
+			if (v->width > n)
+				(void)printf("%*s", v->width - n, "");
+		} else
 			(void)printf("%-*lx", v->width,
-			    (long)KI_PROC(k)->p_wchan &~ KERNBASE);
+			    (long)KI_PROC(k)->p_wchan - KERNBASE);
 	} else
 		(void)printf("%-*s", v->width, "-");
 }
