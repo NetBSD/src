@@ -1,4 +1,4 @@
-#	$NetBSD: rc.subr,v 1.5 1998/02/28 22:56:11 lukem Exp $
+#	$NetBSD: rc.subr,v 1.6 1999/03/24 18:59:47 mellon Exp $
 # functions used by various rc scripts
 
 #
@@ -25,4 +25,25 @@ checkyesno() {
 		return 1
 		;;
 	esac
+}
+
+#
+# mount_critical_filesystems
+#	Go through the list of critical filesystems, checking each one
+#	to see if it is mounted, and if it is not, mounting it.
+#
+mount_critical_filesystems() {
+	for fs in /usr /var $critical_filesystems; do
+		mount | (
+			ismounted=no
+			while read what _on on _type type; do
+				if [ $on = $fs ]; then
+					ismounted=yes
+				fi
+			done
+			if [ $ismounted = no ]; then 
+				mount $fs >/dev/null 2>&1
+			fi
+		)  
+	done
 }
