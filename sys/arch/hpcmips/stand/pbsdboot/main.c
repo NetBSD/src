@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.50 2001/01/21 14:31:37 takemura Exp $	*/
+/*	$NetBSD: main.c,v 1.51 2001/02/25 12:58:38 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 Shin Takemura.
@@ -59,7 +59,7 @@
  */
 TCHAR *version_string = 
 	TEXT("PocketBSD boot loader\r\n")
-	TEXT("Version 1.17.0 2001.01.07\r\n")
+	TEXT("Version 1.17.1 2001.02.25\r\n")
 #if ( _WIN32_WCE < 200 )
 	TEXT("Compiled for WinCE 1.01\r\n")
 #else
@@ -418,7 +418,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	WNDCLASS     wc;
 	HDC hdc;
 	int i, idx,width,height;
-	
+
 #if ( 200 <= _WIN32_WCE )
 	OSVERSIONINFO	osverinfo;
 

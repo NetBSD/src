@@ -1,4 +1,4 @@
-/*	$NetBSD: palette.c,v 1.2 2000/03/20 10:47:35 takemura Exp $	*/
+/*	$NetBSD: palette.c,v 1.3 2001/02/25 12:58:38 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -37,7 +37,7 @@
  */
 #include <pbsdboot.h>
 
-#include <arch/hpcmips/dev/hpccmapvar.h>
+#include <dev/hpc/hpccmapvar.h>
 
 /*
  * If Windows have no color palette, we have nothing to do here.
@@ -46,11 +46,13 @@
 #define HAVE_COLOR_PALETTE
 #endif
 
+#ifndef ASSERT
 #define ASSERT(a) \
 	if (!(a)) { \
 		msg_printf(MSG_ERROR, TEXT("assertion failure"), \
 			TEXT(#a)); \
 	}
+#endif /* !ASSERT */
 
 #ifdef HAVE_COLOR_PALETTE
 enum palette_status palette_succeeded = PAL_ERROR;
