@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kernfs_vnops.c	8.6 (Berkeley) 2/10/94
- *	$Id: kernfs_vnops.c,v 1.23 1994/06/08 11:33:21 mycroft Exp $
+ *	$Id: kernfs_vnops.c,v 1.24 1994/06/15 03:30:44 mycroft Exp $
  */
 
 /*
@@ -245,11 +245,12 @@ kernfs_lookup(ap)
 
 	if (kt->kt_tag == KTT_DEVICE) {
 		dev_t *dp = kt->kt_data;
+	loop:
 		if (*dp == NODEV || !vfinddev(*dp, kt->kt_vtype, &fvp))
-			return (ENXIO);
+			return (ENOENT);
 		*vpp = fvp;
-		VREF(fvp);
-		VOP_LOCK(fvp);
+		if (vget(fvp, 1))
+			goto loop;
 		return (0);
 	}
 
