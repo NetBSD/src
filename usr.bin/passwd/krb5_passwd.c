@@ -1,4 +1,4 @@
-/* $NetBSD: krb5_passwd.c,v 1.11 2003/07/24 14:17:47 itojun Exp $ */
+/* $NetBSD: krb5_passwd.c,v 1.12 2004/10/05 14:12:56 lha Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -163,14 +163,17 @@ krb5_chpw(const char *username)
     if(UI_UTIL_read_pw_string(pwbuf, sizeof(pwbuf), "New password: ", 1) != 0)
         return 1;
 
-    ret = krb5_change_password (context, &cred, pwbuf,
-                                &result_code,
-                                &result_code_string,
-                                &result_string);
+    ret = krb5_set_password (context, &cred, pwbuf, NULL,
+			     &result_code,
+			     &result_code_string,
+			     &result_string);
     if (ret)
-        krb5_err (context, 1, ret, "krb5_change_password");
+        krb5_err (context, 1, ret, "krb5_set_password");
 
-    printf ("%.*s\n", (int)result_string.length, (char *)result_string.data);
+    printf ("%s%s%.*s\n", krb5_passwd_result_to_string(context, result_code),
+	    result_string.length > 0 ? " : " : "",
+	    (int)result_string.length,
+	    result_string.length > 0 ? (char *)result_string.data : "");
 
     krb5_data_free (&result_code_string);
     krb5_data_free (&result_string);
