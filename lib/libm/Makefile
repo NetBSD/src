@@ -1,5 +1,5 @@
 #  @(#)Makefile 5.1beta 93/09/24 
-#  $Id: Makefile,v 1.16 1994/03/01 17:14:34 jtc Exp $
+#  $Id: Makefile,v 1.17 1994/03/08 17:20:51 jtc Exp $
 # 
 #  ====================================================
 #  Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -44,8 +44,15 @@
 .if (${MACHINE_ARCH} == "i386")
 # Uncomment the following lines if you have a i387 (or i486 or Pentium)
 #.PATH:	${.CURDIR}/arch/i387
+#ARCH_SRCS = e_acos.S e_asin.S e_atan2.S e_exp.S e_fmod.S e_log.S e_log10.S \
+#	    e_remainder.S e_scalb.S e_sqrt.S s_atan.S s_ceil.S s_copysign.S \
+#	    s_cos.S s_finite.S s_floor.S s_ilogb.S s_log1p.S s_logb.S \
+#	    s_rint.S s_scalbn.S s_sin.S s_tan.S
 .elif (${MACHINE_ARCH} == "m68k")
-#.PATH:	${.CURDIR}/arch/mc68881
+.PATH:	${.CURDIR}/arch/mc68881
+ARCH_SRCS = e_acos.S e_asin.S e_atanh.S e_cosh.S e_exp.S e_log.S e_log10.S \
+	    e_sinh.S s_atan.S s_copysign.S s_cos.S s_expm1.S s_finite.S \
+	    s_log1p.S s_logb.S s_scalbn.S s_sin.S s_sqrt.S s_tan.S s_tanh.S
 .endif
 
 .PATH:	${.CURDIR}/man
@@ -55,27 +62,36 @@
 CFLAGS+= -D_MULTI_LIBM -D_POSIX_MODE
 
 LIB=	m
-OBJS = 	k_standard.o k_rem_pio2.o k_cos.o k_sin.o k_tan.o \
-	e_acos.o e_acosh.o e_asin.o e_atan2.o e_atanh.o e_cosh.o e_exp.o \
-	e_fmod.o e_gamma.o e_gamma_r.o e_hypot.o e_j0.o e_j1.o e_jn.o \
-	e_lgamma.o e_lgamma_r.o e_log.o e_log10.o e_pow.o e_rem_pio2.o \
-	e_remainder.o e_scalb.o e_sinh.o e_sqrt.o \
-	w_acos.o w_acosh.o w_asin.o w_atan2.o \
-	w_atanh.o w_cosh.o w_exp.o w_fmod.o \
-	w_gamma.o w_gamma_r.o w_hypot.o w_j0.o \
-	w_j1.o w_jn.o w_lgamma.o w_lgamma_r.o \
-	w_log.o w_log10.o w_pow.o w_remainder.o \
-	w_scalb.o w_sinh.o w_sqrt.o \
-	w_cabs.o w_drem.o \
-	s_asinh.o s_atan.o s_cbrt.o s_ceil.o s_copysign.o \
-	s_cos.o s_erf.o s_expm1.o s_finite.o s_floor.o \
-	s_ilogb.o s_lib_version.o \
-	s_log1p.o s_logb.o s_matherr.o s_nextafter.o \
-	s_rint.o s_scalbn.o s_signgam.o s_significand.o s_sin.o \
-	s_tan.o s_tanh.o
+COMMON_SRCS = k_standard.c k_rem_pio2.c k_cos.c k_sin.c k_tan.c \
+	e_acos.c e_acosh.c e_asin.c e_atan2.c e_atanh.c e_cosh.c e_exp.c \
+	e_fmod.c e_gamma.c e_gamma_r.c e_hypot.c e_j0.c e_j1.c e_jn.c \
+	e_lgamma.c e_lgamma_r.c e_log.c e_log10.c e_pow.c e_rem_pio2.c \
+	e_remainder.c e_scalb.c e_sinh.c e_sqrt.c \
+	w_acos.c w_acosh.c w_asin.c w_atan2.c \
+	w_atanh.c w_cosh.c w_exp.c w_fmod.c \
+	w_gamma.c w_gamma_r.c w_hypot.c w_j0.c \
+	w_j1.c w_jn.c w_lgamma.c w_lgamma_r.c \
+	w_log.c w_log10.c w_pow.c w_remainder.c \
+	w_scalb.c w_sinh.c w_sqrt.c \
+	w_cabs.c w_drem.c \
+	s_asinh.c s_atan.c s_cbrt.c s_ceil.c s_copysign.c \
+	s_cos.c s_erf.c s_expm1.c s_finite.c s_floor.c \
+	s_ilogb.c s_lib_version.c \
+	s_log1p.c s_logb.c s_matherr.c s_nextafter.c \
+	s_rint.c s_scalbn.c s_signgam.c s_significand.c s_sin.c \
+	s_tan.c s_tanh.c
 
 # NetBSD's C library supplies these functions:
-#OBJS+=	s_fabs.o s_frexp.o s_isnan.o s_ldexp.o s_modf.o
+#COMMON_SRCS+=	s_fabs.c s_frexp.c s_isnan.c s_ldexp.c s_modf.c
+
+
+SRCS=${COMMON_SRCS}
+
+# Substitute common sources with any arch specific sources 
+.for i in ${ARCH_SRCS}
+    SRCS:=${SRCS:S/${i:S/.S/.c/}/$i/}
+.endfor
+
 
 MAN3+=	acos.0 acosh.0 asin.0 asinh.0 atan.0 atan2.0 atanh.0 ceil.0 \
 	cos.0 cosh.0 erf.0 exp.0 fabs.0 floor.0 fmod.0 hypot.0 ieee.0 \
