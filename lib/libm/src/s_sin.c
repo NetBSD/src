@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_sin.c,v 1.3 1994/02/18 02:26:59 jtc Exp $";
+static char rcsid[] = "$Id: s_sin.c,v 1.4 1994/08/10 20:33:09 jtc Exp $";
 #endif
 
 /* sin(x)
@@ -45,13 +45,8 @@ static char rcsid[] = "$Id: s_sin.c,v 1.3 1994/02/18 02:26:59 jtc Exp $";
  *	TRIG(x) returns trig(x) nearly rounded 
  */
 
-#include <math.h>
-
-#ifdef __STDC__
-static const double one=1.0;
-#else
-static double one=1.0;
-#endif
+#include "math.h"
+#include "math_private.h"
 
 #ifdef __STDC__
 	double sin(double x)
@@ -64,7 +59,7 @@ static double one=1.0;
 	int n, ix;
 
     /* High word of x. */
-	ix = *( (((*(int*)&one)>>29)^1) + (int*)&x);
+	GET_HIGH_WORD(ix,x);
 
     /* |x| ~< pi/4 */
 	ix &= 0x7fffffff;

@@ -11,20 +11,15 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_fabs.c,v 1.3 1994/02/18 02:26:27 jtc Exp $";
+static char rcsid[] = "$Id: s_fabs.c,v 1.4 1994/08/10 20:32:17 jtc Exp $";
 #endif
 
 /*
  * fabs(x) returns the absolute value of x.
  */
 
-#include <math.h>
-
-#ifdef __STDC__
-static const double one = 1.0;
-#else
-static double one = 1.0;
-#endif
+#include "math.h"
+#include "math_private.h"
 
 #ifdef __STDC__
 	double fabs(double x)
@@ -33,6 +28,8 @@ static double one = 1.0;
 	double x;
 #endif
 {
-	*((((*(int*)&one)>>29)^1)+(int*)&x) &= 0x7fffffff;
+	unsigned int high;
+	GET_HIGH_WORD(high,x);
+	SET_HIGH_WORD(x,high&0x7fffffff);
         return x;
 }

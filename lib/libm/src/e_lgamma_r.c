@@ -1,4 +1,4 @@
-/* @(#)e_lgamma_r.c 5.1 93/09/24 */
+/* @(#)er_lgamma.c 5.1 93/09/24 */
 /*
  * ====================================================
  * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_lgamma_r.c,v 1.4 1994/03/03 17:04:17 jtc Exp $";
+static char rcsid[] = "$Id: e_lgamma_r.c,v 1.5 1994/08/10 20:31:07 jtc Exp $";
 #endif
 
 /* __ieee754_lgamma_r(x, signgamp)
@@ -81,14 +81,8 @@ static char rcsid[] = "$Id: e_lgamma_r.c,v 1.4 1994/03/03 17:04:17 jtc Exp $";
  *	
  */
 
-#include <math.h>
-#include <machine/endian.h>
-
-#if BYTE_ORDER == LITTLE_ENDIAN
-#define n0	1
-#else
-#define n0	0
-#endif
+#include "math.h"
+#include "math_private.h"
 
 #ifdef __STDC__
 static const double 
@@ -162,7 +156,11 @@ w4  = -5.95187557450339963135e-04, /* 0xBF4380CB, 0x8C0FE741 */
 w5  =  8.36339918996282139126e-04, /* 0x3F4B67BA, 0x4CDAD5D1 */
 w6  = -1.63092934096575273989e-03; /* 0xBF5AB89D, 0x0B9E43E4 */
 
+#ifdef __STDC__
+static const double zero=  0.00000000000000000000e+00;
+#else
 static double zero=  0.00000000000000000000e+00;
+#endif
 
 #ifdef __STDC__
 	static double sin_pi(double x)
@@ -174,7 +172,8 @@ static double zero=  0.00000000000000000000e+00;
 	double y,z;
 	int n,ix;
 
-	ix = 0x7fffffff&(*(n0+(int*)&x));
+	GET_HIGH_WORD(ix,x);
+	ix &= 0x7fffffff;
 
 	if(ix<0x3fd00000) return __kernel_sin(pi*x,zero,0);
 	y = -x;		/* x is assume negative */
@@ -193,7 +192,8 @@ static double zero=  0.00000000000000000000e+00;
                 y = zero; n = 0;                 /* y must be even */
             } else {
                 if(ix<0x43300000) z = y+two52;	/* exact */
-                n   = (*(1+(int*)&z))&1;        /* lower word of z */
+		GET_LOW_WORD(n,z);
+		n &= 1;
                 y  = n;
                 n<<= 2;
             }
@@ -222,8 +222,7 @@ static double zero=  0.00000000000000000000e+00;
 	double t,y,z,nadj,p,p1,p2,p3,q,r,w;
 	int i,hx,lx,ix;
 
-	hx = *(n0+(int*)&x);
-	lx = *(1-n0+(int*)&x);
+	EXTRACT_WORDS(hx,lx,x);
 
     /* purge off +-inf, NaN, +-0, and negative arguments */
 	*signgamp = 1;

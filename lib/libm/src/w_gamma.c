@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: w_gamma.c,v 1.3 1994/02/18 02:27:27 jtc Exp $";
+static char rcsid[] = "$Id: w_gamma.c,v 1.4 1994/08/10 20:34:09 jtc Exp $";
 #endif
 
 /* double gamma(double x)
@@ -20,7 +20,8 @@ static char rcsid[] = "$Id: w_gamma.c,v 1.3 1994/02/18 02:27:27 jtc Exp $";
  * Method: call gamma_r
  */
 
-#include <math.h>
+#include "math.h"
+#include "math_private.h"
 
 extern int signgam;
 

@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_copysign.c,v 1.4 1994/03/03 17:04:30 jtc Exp $";
+static char rcsid[] = "$Id: s_copysign.c,v 1.5 1994/08/10 20:32:06 jtc Exp $";
 #endif
 
 /*
@@ -20,14 +20,8 @@ static char rcsid[] = "$Id: s_copysign.c,v 1.4 1994/03/03 17:04:30 jtc Exp $";
  * with the sign bit of y.
  */
 
-#include <math.h>
-#include <machine/endian.h>
-
-#if BYTE_ORDER == LITTLE_ENDIAN
-#define n0	1
-#else
-#define n0	0
-#endif
+#include "math.h"
+#include "math_private.h"
 
 #ifdef __STDC__
 	double copysign(double x, double y)
@@ -36,7 +30,9 @@ static char rcsid[] = "$Id: s_copysign.c,v 1.4 1994/03/03 17:04:30 jtc Exp $";
 	double x,y;
 #endif
 {
-	*(n0+(unsigned*)&x) =
-	(*(n0+(unsigned*)&x)&0x7fffffff)|(*(n0+(unsigned*)&y)&0x80000000);
+	unsigned int hx,hy;
+	GET_HIGH_WORD(hx,x);
+	GET_HIGH_WORD(hy,y);
+	SET_HIGH_WORD(x,(hx&0x7fffffff)|(hy&0x80000000));
         return x;
 }

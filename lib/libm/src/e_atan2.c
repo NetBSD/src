@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_atan2.c,v 1.4 1994/03/03 17:04:07 jtc Exp $";
+static char rcsid[] = "$Id: e_atan2.c,v 1.5 1994/08/10 20:30:35 jtc Exp $";
 #endif
 
 /* __ieee754_atan2(y,x)
@@ -41,14 +41,8 @@ static char rcsid[] = "$Id: e_atan2.c,v 1.4 1994/03/03 17:04:07 jtc Exp $";
  * to produce the hexadecimal values shown.
  */
 
-#include <math.h>
-#include <machine/endian.h>
-
-#if BYTE_ORDER == LITTLE_ENDIAN
-#define n0	1
-#else
-#define n0	0
-#endif
+#include "math.h"
+#include "math_private.h"
 
 #ifdef __STDC__
 static const double 
@@ -73,10 +67,10 @@ pi_lo   = 1.2246467991473531772E-16; /* 0x3CA1A626, 0x33145C07 */
 	int k,m,hx,hy,ix,iy;
 	unsigned lx,ly;
 
-	hx = *(n0+(int*)&x); ix = hx&0x7fffffff;
-	lx = *(1-n0+(int*)&x);
-	hy = *(n0+(int*)&y); iy = hy&0x7fffffff;
-	ly = *(1-n0+(int*)&y);
+	EXTRACT_WORDS(hx,lx,x);
+	ix = hx&0x7fffffff;
+	EXTRACT_WORDS(hy,ly,y);
+	iy = hy&0x7fffffff;
 	if(((ix|((lx|-lx)>>31))>0x7ff00000)||
 	   ((iy|((ly|-ly)>>31))>0x7ff00000))	/* x or y is NaN */
 	   return x+y;
@@ -123,7 +117,11 @@ pi_lo   = 1.2246467991473531772E-16; /* 0x3CA1A626, 0x33145C07 */
 	else z=atan(fabs(y/x));		/* safe to do y/x */
 	switch (m) {
 	    case 0: return       z  ;	/* atan(+,+) */
-	    case 1: *(n0+(int*)&z) ^= 0x80000000;
+	    case 1: {
+	    	      unsigned int zh;
+		      GET_HIGH_WORD(zh,z);
+		      SET_HIGH_WORD(z,zh ^ 0x80000000);
+		    }
 		    return       z  ;	/* atan(-,+) */
 	    case 2: return  pi-(z-pi_lo);/* atan(+,-) */
 	    default: /* case 3 */

@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_erf.c,v 1.4 1994/03/03 17:04:31 jtc Exp $";
+static char rcsid[] = "$Id: s_erf.c,v 1.5 1994/08/10 20:32:11 jtc Exp $";
 #endif
 
 /* double erf(double x)
@@ -109,14 +109,8 @@ static char rcsid[] = "$Id: s_erf.c,v 1.4 1994/03/03 17:04:31 jtc Exp $";
  */
 
 
-#include <math.h>
-#include <machine/endian.h>
-
-#if BYTE_ORDER == LITTLE_ENDIAN
-#define n0	1
-#else
-#define n0	0
-#endif
+#include "math.h"
+#include "math_private.h"
 
 #ifdef __STDC__
 static const double
@@ -206,7 +200,7 @@ sb7  = -2.24409524465858183362e+01; /* 0xC03670E2, 0x42712D62 */
 {
 	int hx,ix,i;
 	double R,S,P,Q,s,y,z,r;
-	hx = *(n0+(int*)&x);
+	GET_HIGH_WORD(hx,x);
 	ix = hx&0x7fffffff;
 	if(ix>=0x7ff00000) {		/* erf(nan)=nan */
 	    i = ((unsigned)hx>>31)<<1;
@@ -248,7 +242,7 @@ sb7  = -2.24409524465858183362e+01; /* 0xC03670E2, 0x42712D62 */
 				sb5+s*(sb6+s*sb7))))));
 	}
 	z  = x;  
-	*(1-n0+(int*)&z) = 0;
+	SET_LOW_WORD(z,0);
 	r  =  __ieee754_exp(-z*z-0.5625)*__ieee754_exp((z-x)*(z+x)+R/S);
 	if(hx>=0) return one-r/x; else return  r/x-one;
 }
@@ -262,7 +256,7 @@ sb7  = -2.24409524465858183362e+01; /* 0xC03670E2, 0x42712D62 */
 {
 	int hx,ix;
 	double R,S,P,Q,s,y,z,r;
-	hx = *(n0+(int*)&x);
+	GET_HIGH_WORD(hx,x);
 	ix = hx&0x7fffffff;
 	if(ix>=0x7ff00000) {			/* erfc(nan)=nan */
 						/* erfc(+-inf)=0,2 */
@@ -310,7 +304,7 @@ sb7  = -2.24409524465858183362e+01; /* 0xC03670E2, 0x42712D62 */
 				sb5+s*(sb6+s*sb7))))));
 	    }
 	    z  = x;
-	    *(1-n0+(int*)&z)  = 0;
+	    SET_LOW_WORD(z,0);
 	    r  =  __ieee754_exp(-z*z-0.5625)*
 			__ieee754_exp((z-x)*(z+x)+R/S);
 	    if(hx>0) return r/x; else return two-r/x;

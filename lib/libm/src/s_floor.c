@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_floor.c,v 1.4 1994/03/03 17:04:35 jtc Exp $";
+static char rcsid[] = "$Id: s_floor.c,v 1.5 1994/08/10 20:32:25 jtc Exp $";
 #endif
 
 /*
@@ -23,14 +23,8 @@ static char rcsid[] = "$Id: s_floor.c,v 1.4 1994/03/03 17:04:35 jtc Exp $";
  *	Inexact flag raised if x not equal to floor(x).
  */
 
-#include <math.h>
-#include <machine/endian.h>
-
-#if BYTE_ORDER == LITTLE_ENDIAN
-#define n0	1
-#else
-#define n0	0
-#endif
+#include "math.h"
+#include "math_private.h"
 
 #ifdef __STDC__
 static const double huge = 1.0e300;
@@ -47,8 +41,7 @@ static double huge = 1.0e300;
 {
 	int i0,i1,j0;
 	unsigned i,j;
-	i0 =  *(n0+(int*)&x);
-	i1 =  *(1-n0+(int*)&x);
+	EXTRACT_WORDS(i0,i1,x);
 	j0 = ((i0>>20)&0x7ff)-0x3ff;
 	if(j0<20) {
 	    if(j0<0) { 	/* raise inexact if x != 0 */
@@ -83,7 +76,6 @@ static double huge = 1.0e300;
 		i1 &= (~i);
 	    }
 	}
-	*(n0+(int*)&x) = i0;
-	*(1-n0+(int*)&x) = i1;
+	INSERT_WORDS(x,i0,i1);
 	return x;
 }

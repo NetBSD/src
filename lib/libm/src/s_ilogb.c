@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_ilogb.c,v 1.4 1994/03/03 17:04:38 jtc Exp $";
+static char rcsid[] = "$Id: s_ilogb.c,v 1.5 1994/08/10 20:32:31 jtc Exp $";
 #endif
 
 /* ilogb(double x)
@@ -20,14 +20,8 @@ static char rcsid[] = "$Id: s_ilogb.c,v 1.4 1994/03/03 17:04:38 jtc Exp $";
  * ilogb(inf/NaN) = 0x7fffffff (no signal is raised)
  */
 
-#include <math.h>
-#include <machine/endian.h>
-
-#if BYTE_ORDER == LITTLE_ENDIAN
-#define n0	1
-#else
-#define n0	0
-#endif
+#include "math.h"
+#include "math_private.h"
 
 #ifdef __STDC__
 	int ilogb(double x)
@@ -38,9 +32,9 @@ static char rcsid[] = "$Id: s_ilogb.c,v 1.4 1994/03/03 17:04:38 jtc Exp $";
 {
 	int hx,lx,ix;
 
-	hx  = (*(n0+(unsigned*)&x))&0x7fffffff;	/* high word of x */
+	EXTRACT_WORDS(hx,lx,x);
+	hx &= 0x7fffffff;
 	if(hx<0x00100000) {
-	    lx = *(1-n0+(int*)&x);
 	    if((hx|lx)==0) 
 		return 0x80000001;	/* ilogb(0) = 0x80000001 */
 	    else			/* subnormal x */

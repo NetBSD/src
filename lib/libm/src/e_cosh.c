@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_cosh.c,v 1.3 1994/02/18 02:24:59 jtc Exp $";
+static char rcsid[] = "$Id: e_cosh.c,v 1.4 1994/08/10 20:30:41 jtc Exp $";
 #endif
 
 /* __ieee754_cosh(x)
@@ -35,7 +35,8 @@ static char rcsid[] = "$Id: e_cosh.c,v 1.3 1994/02/18 02:24:59 jtc Exp $";
  *	only cosh(0)=1 is exact for finite x.
  */
 
-#include <math.h>
+#include "math.h"
+#include "math_private.h"
 
 #ifdef __STDC__
 static const double one = 1.0, half=0.5, huge = 1.0e300;
@@ -55,7 +56,7 @@ static double one = 1.0, half=0.5, huge = 1.0e300;
 	unsigned lx;
 
     /* High word of |x|. */
-	ix = *( (((*(int*)&one)>>29)^1) + (int*)&x);
+	GET_HIGH_WORD(ix,x);
 	ix &= 0x7fffffff;
 
     /* x is INF or NaN */
@@ -79,7 +80,7 @@ static double one = 1.0, half=0.5, huge = 1.0e300;
 	if (ix < 0x40862E42)  return half*__ieee754_exp(fabs(x));
 
     /* |x| in [log(maxdouble), overflowthresold] */
-	lx = *( (((*(unsigned*)&one)>>29)) + (unsigned*)&x);
+	GET_LOW_WORD(lx,x);
 	if (ix<0x408633CE || 
 	      (ix==0x408633ce)&&(lx<=(unsigned)0x8fb9f87d)) {
 	    w = __ieee754_exp(half*fabs(x));

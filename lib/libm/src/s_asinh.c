@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_asinh.c,v 1.4 1994/03/03 17:04:26 jtc Exp $";
+static char rcsid[] = "$Id: s_asinh.c,v 1.5 1994/08/10 20:31:53 jtc Exp $";
 #endif
 
 /* asinh(x)
@@ -25,14 +25,8 @@ static char rcsid[] = "$Id: s_asinh.c,v 1.4 1994/03/03 17:04:26 jtc Exp $";
  *		 := sign(x)*log1p(|x| + x^2/(1 + sqrt(1+x^2)))  
  */
 
-#include <math.h>
-#include <machine/endian.h>
-
-#if BYTE_ORDER == LITTLE_ENDIAN
-#define n0	1
-#else
-#define n0	0
-#endif
+#include "math.h"
+#include "math_private.h"
 
 #ifdef __STDC__
 static const double 
@@ -52,7 +46,7 @@ huge=  1.00000000000000000000e+300;
 {	
 	double t,w;
 	int hx,ix;
-	hx = *(n0+(int*)&x);
+	GET_HIGH_WORD(hx,x);
 	ix = hx&0x7fffffff;
 	if(ix>=0x7ff00000) return x+x;	/* x is inf or NaN */
 	if(ix< 0x3e300000) {	/* |x|<2**-28 */

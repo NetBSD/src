@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_jn.c,v 1.4 1994/03/03 17:04:16 jtc Exp $";
+static char rcsid[] = "$Id: e_jn.c,v 1.5 1994/08/10 20:31:03 jtc Exp $";
 #endif
 
 /*
@@ -40,14 +40,8 @@ static char rcsid[] = "$Id: e_jn.c,v 1.4 1994/03/03 17:04:16 jtc Exp $";
  *	
  */
 
-#include <math.h>
-#include <machine/endian.h>
-
-#if BYTE_ORDER == LITTLE_ENDIAN
-#define n0	1
-#else
-#define n0	0
-#endif
+#include "math.h"
+#include "math_private.h"
 
 #ifdef __STDC__
 static const double
@@ -58,7 +52,11 @@ invsqrtpi=  5.64189583547756279280e-01, /* 0x3FE20DD7, 0x50429B6D */
 two   =  2.00000000000000000000e+00, /* 0x40000000, 0x00000000 */
 one   =  1.00000000000000000000e+00; /* 0x3FF00000, 0x00000000 */
 
+#ifdef __STDC__
+static const double zero  =  0.00000000000000000000e+00;
+#else
 static double zero  =  0.00000000000000000000e+00;
+#endif
 
 #ifdef __STDC__
 	double __ieee754_jn(int n, double x)
@@ -74,9 +72,8 @@ static double zero  =  0.00000000000000000000e+00;
     /* J(-n,x) = (-1)^n * J(n, x), J(n, -x) = (-1)^n * J(n, x)
      * Thus, J(-n,x) = J(n,-x)
      */
-	hx = *(n0+(int*)&x);
+	EXTRACT_WORDS(hx,lx,x);
 	ix = 0x7fffffff&hx;
-	lx = *(1-n0+(int*)&x);
     /* if J(n,NaN) is NaN */
 	if((ix|((unsigned)(lx|-lx))>>31)>0x7ff00000) return x+x;
 	if(n<0){		
@@ -232,9 +229,8 @@ static double zero  =  0.00000000000000000000e+00;
 	int sign;
 	double a, b, temp;
 
-	hx = *(n0+(int*)&x);
+	EXTRACT_WORDS(hx,lx,x);
 	ix = 0x7fffffff&hx;
-	lx = *(1-n0+(int*)&x);
     /* if Y(n,NaN) is NaN */
 	if((ix|((unsigned)(lx|-lx))>>31)>0x7ff00000) return x+x;
 	if((ix|lx)==0) return -one/zero;
@@ -269,12 +265,15 @@ static double zero  =  0.00000000000000000000e+00;
 		}
 		b = invsqrtpi*temp/sqrt(x);
 	} else {
+	    unsigned int high;
 	    a = __ieee754_y0(x);
 	    b = __ieee754_y1(x);
 	/* quit if b is -inf */
-	    for(i=1;i<n&&(*(n0+(int*)&b)!=0xfff00000);i++){ 
+	    GET_HIGH_WORD(high,b);
+	    for(i=1;i<n&&high!=0xfff00000;i++){ 
 		temp = b;
 		b = ((double)(i+i)/x)*b - a;
+		GET_HIGH_WORD(high,b);
 		a = temp;
 	    }
 	}

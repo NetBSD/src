@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_sqrt.c,v 1.4 1994/03/03 17:04:21 jtc Exp $";
+static char rcsid[] = "$Id: e_sqrt.c,v 1.5 1994/08/10 20:31:31 jtc Exp $";
 #endif
 
 /* __ieee754_sqrt(x)
@@ -84,14 +84,8 @@ static char rcsid[] = "$Id: e_sqrt.c,v 1.4 1994/03/03 17:04:21 jtc Exp $";
  *---------------
  */
 
-#include <math.h>
-#include <machine/endian.h>
-
-#if BYTE_ORDER == LITTLE_ENDIAN
-#define n0	1
-#else
-#define n0	0
-#endif
+#include "math.h"
+#include "math_private.h"
 
 #ifdef __STDC__
 static	const double	one	= 1.0, tiny=1.0e-300;
@@ -111,8 +105,7 @@ static	double	one	= 1.0, tiny=1.0e-300;
 	unsigned r,t1,s1,ix1,q1;
 	int ix0,s0,q,m,t,i;
 
-	ix0 = *(n0+(int*)&x);			/* high word of x */
-	ix1 = *((1-n0)+(int*)&x);		/* low word of x */
+	EXTRACT_WORDS(ix0,ix1,x);
 
     /* take care of Inf and NaN */
 	if((ix0&0x7ff00000)==0x7ff00000) {			
@@ -197,8 +190,7 @@ static	double	one	= 1.0, tiny=1.0e-300;
 	ix1 =  q1>>1;
 	if ((q&1)==1) ix1 |= sign;
 	ix0 += (m <<20);
-	*(n0+(int*)&z) = ix0;
-	*((1-n0)+(int*)&z) = ix1;
+	INSERT_WORDS(z,ix0,ix1);
 	return z;
 }
 

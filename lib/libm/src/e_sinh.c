@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_sinh.c,v 1.3 1994/02/18 02:25:49 jtc Exp $";
+static char rcsid[] = "$Id: e_sinh.c,v 1.4 1994/08/10 20:31:29 jtc Exp $";
 #endif
 
 /* __ieee754_sinh(x)
@@ -32,7 +32,8 @@ static char rcsid[] = "$Id: e_sinh.c,v 1.3 1994/02/18 02:25:49 jtc Exp $";
  *	only sinh(0)=0 is exact for finite x.
  */
 
-#include <math.h>
+#include "math.h"
+#include "math_private.h"
 
 #ifdef __STDC__
 static const double one = 1.0, shuge = 1.0e307;
@@ -52,7 +53,7 @@ static double one = 1.0, shuge = 1.0e307;
 	unsigned lx;
 
     /* High word of |x|. */
-	jx = *( (((*(int*)&one)>>29)^1) + (int*)&x);
+	GET_HIGH_WORD(jx,x);
 	ix = jx&0x7fffffff;
 
     /* x is INF or NaN */
@@ -73,7 +74,7 @@ static double one = 1.0, shuge = 1.0e307;
 	if (ix < 0x40862E42)  return h*__ieee754_exp(fabs(x));
 
     /* |x| in [log(maxdouble), overflowthresold] */
-	lx = *( (((*(unsigned*)&one)>>29)) + (unsigned*)&x);
+	GET_LOW_WORD(lx,x);
 	if (ix<0x408633CE || (ix==0x408633ce)&&(lx<=(unsigned)0x8fb9f87d)) {
 	    w = __ieee754_exp(0.5*fabs(x));
 	    t = h*w;

@@ -11,14 +11,15 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: w_acos.c,v 1.3 1994/02/18 02:27:07 jtc Exp $";
+static char rcsid[] = "$Id: w_acos.c,v 1.4 1994/08/10 20:33:18 jtc Exp $";
 #endif
 
 /*
  * wrap_acos(x)
  */
 
-#include <math.h>
+#include "math.h"
+#include "math_private.h"
 
 
 #ifdef __STDC__

@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: k_rem_pio2.c,v 1.3 1994/02/18 02:25:58 jtc Exp $";
+static char rcsid[] = "$Id: k_rem_pio2.c,v 1.4 1994/08/10 20:31:38 jtc Exp $";
 #endif
 
 /*
@@ -130,7 +130,8 @@ static char rcsid[] = "$Id: k_rem_pio2.c,v 1.3 1994/02/18 02:25:58 jtc Exp $";
  * to produce the hexadecimal values shown.
  */
 
-#include <math.h>
+#include "math.h"
+#include "math_private.h"
 
 #ifdef __STDC__
 static const int init_jk[] = {2,3,4,6}; /* initial value for jk */

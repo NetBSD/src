@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: w_scalb.c,v 1.3 1994/02/18 02:28:05 jtc Exp $";
+static char rcsid[] = "$Id: w_scalb.c,v 1.4 1994/08/10 20:35:37 jtc Exp $";
 #endif
 
 /*
@@ -20,7 +20,8 @@ static char rcsid[] = "$Id: w_scalb.c,v 1.3 1994/02/18 02:28:05 jtc Exp $";
  * should use scalbn() instead.
  */
 
-#include <math.h>
+#include "math.h"
+#include "math_private.h"
 
 #include <errno.h>
 

@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: e_lgamma.c,v 1.3 1994/02/18 02:25:27 jtc Exp $";
+static char rcsid[] = "$Id: e_lgamma.c,v 1.4 1994/08/10 20:31:05 jtc Exp $";
 #endif
 
 /* __ieee754_lgamma(x)
@@ -20,7 +20,8 @@ static char rcsid[] = "$Id: e_lgamma.c,v 1.3 1994/02/18 02:25:27 jtc Exp $";
  * Method: call __ieee754_lgamma_r
  */
 
-#include <math.h>
+#include "math.h"
+#include "math_private.h"
 
 extern int signgam;
 
