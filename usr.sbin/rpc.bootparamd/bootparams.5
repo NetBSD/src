@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: bootparams.5,v 1.2 1994/10/03 19:26:13 gwr Exp $
+.\"	$Id: bootparams.5,v 1.3 1996/06/18 17:30:16 briggs Exp $
 .\"
 .Dd October 2, 1994
 .Dt BOOTPARAMS 5
@@ -57,13 +57,13 @@ and may be continued onto multiple lines with a backslash.
 .Pp
 For example:
 .Bd -literal -offset indent
-dummy	root=/export/dummy/root \\
-	swap=/export/dummy/swap \\
-	dump=/export/dummy/swap
+dummy	root=server:/export/dummy/root \\
+	swap=server:/export/dummy/swap \\
+	dump=server:/export/dummy/swap
 .Ed
 .Pp
 When the client named "dummy" requests the pathname for
-its logical "root" it will be given the pathname
+its logical "root" it will be given the server "server" and pathname
 .Dq Pa "/export/dummy/root"
 as the response to its
 .Tn RPC
