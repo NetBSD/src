@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.64 2000/12/23 01:37:57 wiz Exp $ */
+/* $NetBSD: isp.c,v 1.65 2000/12/28 08:26:12 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -214,7 +214,7 @@ isp_reset(isp)
 			 */
 			ISP_WRITE(isp, HCCR, HCCR_CMD_RELEASE);
 			mbs.param[0] = MBOX_ABOUT_FIRMWARE;
-			isp_mboxcmd(isp, &mbs, MBLOGNONE);
+			isp_mboxcmd(isp, &mbs, MBOX_COMMAND_ERROR);
 			/*
 			 * This *shouldn't* fail.....
 			 */
@@ -757,10 +757,12 @@ isp_init(isp)
 	if (IS_DUALBUS(isp)) {
 		isp_setdfltparm(isp, 1);
 	}
-	if (IS_FC(isp)) {
-		isp_fibre_init(isp);
-	} else {
-		isp_scsi_init(isp);
+	if ((isp->isp_confopts & ISP_CFG_NOINIT) == 0) {
+		if (IS_FC(isp)) {
+			isp_fibre_init(isp);
+		} else {
+			isp_scsi_init(isp);
+		}
 	}
 }
 
@@ -2559,7 +2561,7 @@ isp_intr(arg)
 			int obits, i = 0;
 			if ((obits = isp->isp_mboxbsy) != 0) {
 				isp->isp_mboxtmp[i++] = mbox;
-				for (i = 1; i < 8; i++) {
+				for (i = 1; i < MAX_MAILBOX; i++) {
 					if ((obits & (1 << i)) == 0) {
 						continue;
 					}
@@ -4333,6 +4335,8 @@ isp_setdfltparm(isp, channel)
 			    (u_int32_t) (fcp->isp_portwwn >> 32),
 			    (u_int32_t) (fcp->isp_portwwn & 0xffffffff));
 		}
+		fcp->isp_nodewwn = ISP_NODEWWN(isp);
+		fcp->isp_portwwn = ISP_PORTWWN(isp);
 		return;
 	}
 
