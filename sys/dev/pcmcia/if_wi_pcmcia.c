@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.19.2.1 2002/05/31 16:20:38 tv Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.19.2.2 2002/06/10 16:26:11 tv Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.19.2.1 2002/05/31 16:20:38 tv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.19.2.2 2002/06/10 16:26:11 tv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -256,6 +256,11 @@ static const struct wi_pcmcia_product {
 	  PCMCIA_PRODUCT_BAY_EMOBILITY_11B,
 	  PCMCIA_CIS_BAY_EMOBILITY_11B,
 	  PCMCIA_STR_BAY_EMOBILITY_11B },
+
+	{ PCMCIA_VENDOR_ACTIONTEC,
+	  PCMCIA_PRODUCT_ACTIONTEC_PRISM,
+	  PCMCIA_CIS_ACTIONTEC_PRISM,
+	  PCMCIA_STR_ACTIONTEC_PRISM },
 
 	{ 0,
 	  0,
