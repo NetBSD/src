@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930_sparc.c,v 1.37 1998/03/30 14:23:40 pk Exp $	*/
+/*	$NetBSD: am7930_sparc.c,v 1.38 1998/05/07 21:13:23 kleink Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -557,7 +557,7 @@ amd7930_start_output(addr, p, cc, intr, arg)
 	sc->sc_pintr = intr;
 	sc->sc_parg = arg;
 	sc->sc_au.au_pdata = p;
-	sc->sc_au.au_pend = p + cc - 1;
+	sc->sc_au.au_pend = (u_char *)p + cc - 1;
 	return(0);
 }
 
@@ -589,7 +589,7 @@ amd7930_start_input(addr, p, cc, intr, arg)
 	sc->sc_rintr = intr;
 	sc->sc_rarg = arg;
 	sc->sc_au.au_rdata = p;
-	sc->sc_au.au_rend = p + cc -1;
+	sc->sc_au.au_rend = (u_char *)p + cc -1;
 	return(0);
 }
 
