@@ -181,6 +181,9 @@ struct option long_options[] =
   {"force-local", 0, &f_force_local, 1},
   {"atime-preserve", 0, &f_atime_preserve, 1},
 
+  {"norecurse", 0, &f_norecurse, 1},
+  {"unlink", 0, &f_unlink, 1},
+
   {0, 0, 0, 0}
 };
 
@@ -757,6 +760,8 @@ Other options:\n\
 			filter the archive through PROG (which must accept -d)\n\
 --block-compress	block the output of compression program for tapes\n\
 -[0-7][lmh]		specify drive and density\n\
+--norecurse		don't recurse into subdirectories when creating\n\
+--unlink		unlink files before creating them\n\
 ", stdout);
 }
 
