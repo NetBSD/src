@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: exec_aout.c,v 1.1.2.4 1993/10/16 03:11:56 mycroft Exp $
+ *	$Id: exec_aout.c,v 1.1.2.5 1993/10/17 04:29:26 deraadt Exp $
  */
 
 #include "param.h"
@@ -220,7 +220,7 @@ exec_aout_prep_nmagic(p, epp)
 	ccmdp = ccmdp->ev_next;
 
 	/* set up command for bss segment */
-	baddr = roundup(epp->ep_daddr + execp->a_data, __LDPGSZ);
+	baddr = roundup(epp->ep_daddr + execp->a_data, NBPG);
 	bsize = epp->ep_daddr + epp->ep_dsize - baddr;
 	if (bsize > 0) {
 		ccmdp->ev_next = new_vmcmd(vmcmd_map_zero, bsize, baddr,
@@ -260,7 +260,7 @@ exec_aout_prep_omagic(p, epp)
 	ccmdp = epp->ep_vcp;
 
 	/* set up command for bss segment */
-	baddr = roundup(epp->ep_daddr + execp->a_data, __LDPGSZ);
+	baddr = roundup(epp->ep_daddr + execp->a_data, NBPG);
 	bsize = epp->ep_daddr + epp->ep_dsize - baddr;
 	if (bsize > 0) {
 		ccmdp->ev_next = new_vmcmd(vmcmd_map_zero, bsize, baddr,
