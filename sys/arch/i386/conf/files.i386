@@ -1,11 +1,4 @@
-#
-# PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
-# --------------------         -----   ----------------------
-# CURRENT PATCH LEVEL:         1       00097
-# --------------------         -----   ----------------------
-#
-# 17 Feb 93	Julian Elischer		Added files for scsi
-# 10 Mar 93	Rodney W. Grimes	Added files for lpt and lpa
+# $Id: files.i386,v 1.10 1993/05/07 08:26:13 cgd Exp $
 #
 i386/i386/autoconf.c	standard
 i386/i386/cons.c	standard
@@ -32,7 +25,7 @@ i386/isa/dcfclk.c	optional dcfclk device-driver requires isa
 i386/isa/fd.c		optional fd device-driver requires isa
 i386/isa/if_ec.c	optional ec device-driver requires ether isa
 i386/isa/if_is.c	optional is device-driver requires ether isa 
-i386/isa/if_ix.c	optional is device-driver requires ether isa
+i386/isa/if_ix.c	optional ix device-driver requires ether isa
 i386/isa/if_ne.c	optional ne device-driver requires ether isa
 i386/isa/if_we.c	optional we device-driver requires ether isa
 i386/isa/if_hp.c	optional hp device-driver requires ether isa
