@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciadevs.h,v 1.69 2000/01/25 01:17:40 sommerfeld Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.70 2000/01/25 06:53:26 jlam Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -314,7 +314,7 @@
 #define	PCMCIA_PRODUCT_AIRONET_PC4500	0x0005
 #define	PCMCIA_STR_AIRONET_PC4500	"Aironet PC4500 Wireless LAN Adapter"
 #define	PCMCIA_CIS_AIRONET_PC4800	{ NULL, NULL, NULL, NULL }
-#define	PCMCIA_PRODUCT_AIRONET_PC4800	0x0005
+#define	PCMCIA_PRODUCT_AIRONET_PC4800	0x0007
 #define	PCMCIA_STR_AIRONET_PC4800	"Aironet PC4800 Wireless LAN Adapter"
 
 /* Bay Networks */
