@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.24 2003/11/21 18:07:29 matt Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.25 2004/07/09 22:00:46 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -151,7 +151,7 @@ GLOBAL(powersave)
  * No lwps are runnable, so loop waiting for one.
  * Separate label here for accounting purposes.
  * When we get here, interrupts are off (MSR[EE]=0), sched_lock is held,
- * spl is IPL_SCHED.
+ * spl is IPL_SCHED, and %r31 is a scratch register.
  */
 ASENTRY(Idle)
 	lis	%r8,_C_LABEL(sched_whichqs)@ha
@@ -164,9 +164,9 @@ ASENTRY(Idle)
 	bl	_C_LABEL(sched_unlock_idle)
 #endif
 
-	li	%r3,0			/* drop SPL to 0 */
+	li	%r3,0			/* go IPL_SCHED to IPL_NONE */
 	bl	_C_LABEL(lcsplx)
-	/* r3 now contain previous SPL; DO NOT OVERWRITE */
+	mr	%r31,%r3		/* save returned IPL mask */
 
 #if defined(PPC_IBM4XX)
 	wrteei	1			/* reenable ints again */
@@ -177,6 +177,10 @@ ASENTRY(Idle)
 	isync
 #endif
 
+/*
+ * At this point, other routines can be called (such as uvm_pageidlezero).
+ */
+
 #if defined(PPC_OEA)
 /* Check if we can use power saving mode */
 	lis	%r8,_C_LABEL(powersave)@ha
@@ -185,6 +189,7 @@ ASENTRY(Idle)
 	ble	1f
 
 	sync
+	mfmsr	%r4
 	oris	%r4,%r4,PSL_POW@h	/* enter power saving mode */
 	mtmsr	%r4
 	isync
@@ -195,13 +200,14 @@ ASENTRY(Idle)
 	wrteei	0			/* disable interrupts while
 					   manipulating runque */
 #else /* PPC_OEA */
+	mfmsr	%r4
 	andi.	%r4,%r4,~PSL_EE@l	/* disable interrupts while
 					   manipulating runque */
 	mtmsr	%r4
 #endif
 
-	/* r3 already contain previous SPL */
-	bl	_C_LABEL(lcsplx)	/* raise spl back to sched */
+	mr	%r3,%r31		/* get back IPL mask */
+	bl	_C_LABEL(lcsplx)	/* raise spl back to IPL_SCHED */
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	bl	_C_LABEL(sched_lock_idle)
