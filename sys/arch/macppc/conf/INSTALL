@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.47 2001/06/10 15:41:13 tsubai Exp $
+#	$NetBSD: INSTALL,v 1.48 2001/08/03 12:56:55 tsubai Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -85,6 +85,7 @@ options 	TLP_MATCH_21041
 options 	TLP_MATCH_21140
 options 	TLP_MATCH_21142
 
+bmtphy*	at mii? phy ?			# Broadcom BCM5201/BCM5202 PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs
 icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
 inphy*	at mii? phy ?			# Intel 82555 PHYs
