@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.3.2.7 2002/11/11 22:03:04 nathanw Exp $	*/
+/*	$NetBSD: syscall.c,v 1.3.2.8 2002/12/03 22:15:22 gmcgarry Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -65,13 +65,14 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.3.2.7 2002/11/11 22:03:04 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.3.2.8 2002/12/03 22:15:22 gmcgarry Exp $");
 
 void
 child_return(void *arg)
 {
-	struct proc * const p = arg;
-	struct trapframe * const tf = trapframe(p);
+	struct lwp * const l = arg;
+	struct proc * const p = l->l_proc;
+	struct trapframe * const tf = trapframe(l);
 
 	KERNEL_PROC_UNLOCK(p);
 
@@ -80,7 +81,7 @@ child_return(void *arg)
 	tf->cr &= ~0x10000000;
 	tf->srr1 &= ~(PSL_FP|PSL_VEC);	/* Disable FP & AltiVec, as we can't
 					   be them. */
-	p->p_addr->u_pcb.pcb_fpcpu = NULL;
+	l->l_addr->u_pcb.pcb_fpcpu = NULL;
 #ifdef	KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
 		KERNEL_PROC_LOCK(p);
@@ -89,7 +90,7 @@ child_return(void *arg)
 	}
 #endif
 	/* Profiling?							XXX */
-	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
+	curcpu()->ci_schedstate.spc_curpriority = l->l_priority;
 }
 #endif
 
