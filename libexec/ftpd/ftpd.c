@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.19 1997/04/06 07:53:11 cjs Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.20 1997/04/27 03:21:41 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: ftpd.c,v 1.19 1997/04/06 07:53:11 cjs Exp $";
+static char rcsid[] = "$NetBSD: ftpd.c,v 1.20 1997/04/27 03:21:41 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -855,7 +855,7 @@ store(name, mode, unique)
 			 * because we are changing from reading to
 			 * writing.
 			 */
-			if (fseek(fout, 0L, L_INCR) < 0) {
+			if (fseek(fout, 0L, SEEK_CUR) < 0) {
 				perror_reply(550, name);
 				goto done;
 			}
@@ -1330,7 +1330,7 @@ yyerror(s)
 {
 	char *cp;
 
-	if (cp = strchr(cbuf,'\n'))
+	if ((cp = strchr(cbuf,'\n')) != NULL)
 		*cp = '\0';
 	reply(500, "'%s': command not understood.", cbuf);
 }
@@ -1645,7 +1645,7 @@ send_file_list(whichf)
 		transflag = 0;
 		goto out;
 	}
-	while (dirname = *dirlist++) {
+	while ((dirname = *dirlist++) != NULL) {
 		if (stat(dirname, &st) < 0) {
 			/*
 			 * If user typed "ls -l", etc, and the client

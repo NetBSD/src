@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.8,v 1.10 1997/04/06 07:53:10 cjs Exp $
+.\"	$NetBSD: ftpd.8,v 1.11 1997/04/27 03:21:40 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,12 +41,12 @@
 .Nd
 Internet File Transfer Protocol server
 .Sh SYNOPSIS
-.Nm ftpd
+.Nm
 .Op Fl dl
 .Op Fl T Ar maxtimeout
 .Op Fl t Ar timeout
 .Sh DESCRIPTION
-.Nm Ftpd
+.Nm
 is the
 Internet File Transfer Protocol
 server process.  The server uses the
@@ -189,7 +189,7 @@ STAT
 command is received during a data transfer, preceded by a Telnet IP
 and Synch, transfer status will be returned.
 .Pp
-.Nm Ftpd
+.Nm
 interprets file names according to the
 .Dq globbing
 conventions used by
@@ -197,7 +197,7 @@ conventions used by
 This allows users to utilize the metacharacters
 .Dq Li \&*?[]{}~ .
 .Pp
-.Nm Ftpd
+.Nm
 authenticates users according to five rules. 
 .Pp
 .Bl -enum -offset indent
@@ -250,7 +250,7 @@ the user should be used as the password).
 .El
 .Pp
 In the last case, 
-.Nm ftpd
+.Nm
 takes special measures to restrict the client's access privileges.
 The server disables the MKD, XMKD, RMD, XRMD, DELE, SITE UMASK, and
 SITE CHMOD commands, sets the umask to 0707, and performs a 
@@ -279,10 +279,14 @@ This program should be mode 111.
 Make this directory owned by
 .Dq root
 and unwritable by anyone (mode 555).
-The files pwd.db (see
+The files
+.Pa pwd.db
+(see
 .Xr passwd 5 )
 and
-.Xr group 5
+.Pa group
+(see
+.Xr group 5 )
 must be present for the 
 .Xr ls
 command to be able to produce owner names rather than numbers.
