@@ -1,8 +1,4 @@
-#	$NetBSD: Makefile.cfb,v 1.5 2003/09/30 06:41:29 lukem Exp $
-
-XMODULEDIR=	${X11ROOTDIR}/lib/modules
-
-.include "../Makefile.serverlib"
+#	$NetBSD: Makefile.cfb,v 1.6 2003/12/21 03:07:01 rtr Exp $
 
 .include <bsd.own.mk>
 
