@@ -1,11 +1,11 @@
-/*	$NetBSD: str.c,v 1.14.2.4 1999/12/20 15:14:29 he Exp $	*/
+/*	$NetBSD: str.c,v 1.14.2.5 2000/01/31 21:00:05 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
 #else
-__RCSID("$NetBSD: str.c,v 1.14.2.4 1999/12/20 15:14:29 he Exp $");
+__RCSID("$NetBSD: str.c,v 1.14.2.5 2000/01/31 21:00:05 he Exp $");
 #endif
 #endif
 
@@ -277,10 +277,6 @@ findmatchingname(const char *dir, const char *pattern, matchfn match, char *data
 			continue;
 
 		(void) snprintf(tmp, sizeof(tmp), "%s/%s", dir, dp->d_name);
-#if 0 /* This code breaks a LOT ... */
-		if (isfile(tmp))/* pkgdb, ... */
-			continue;
-#endif
 		
 		if (pmatch(pattern, dp->d_name)) {
 			if (match) {
@@ -306,8 +302,9 @@ ispkgpattern(const char *pkg)
 
 /*
  * Auxiliary function called by findbestmatchingname() if pkg > data
+ * Also called for FTP matching
  */
-static int
+int
 findbestmatchingname_fn(const char *pkg, char *data)
 {
 	char   *s1, *s2;
