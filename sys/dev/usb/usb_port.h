@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_port.h,v 1.26 2000/03/29 18:24:53 augustss Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.27 2000/03/30 00:18:18 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -198,7 +198,10 @@ __CONCAT(dname,_detach)(self, flags) \
 #define mii_attach(x1,x2,x3,x4,x5,x6) mii_phy_probe(x1,x2,x3)
 #define Ether_ifattach(ifp, eaddr) ether_ifattach(ifp)
 #define if_deactivate(x)
-#define IF_INPUT(ifp, m) ether_input((ifp), mtod((m), struct ether_header *), (m))
+#define IF_INPUT(ifp, m) do {						\
+	m_adj(m, sizeof(struct ether_header));				\
+	ether_input((ifp), mtod((m), struct ether_header *), (m));	\
+} while (0)
 
 #define	usbpoll			usbselect
 #define	uhidpoll		uhidselect
@@ -216,6 +219,8 @@ __CONCAT(dname,_detach)(self, flags) \
 
 #define realloc usb_realloc
 void *usb_realloc __P((void *, u_int, int, int));
+
+extern int cold;
 
 typedef struct device *device_ptr_t;
 #define USBBASEDEVICE struct device
