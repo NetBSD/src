@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.3 2001/06/13 06:01:50 simonb Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.4 2002/07/29 09:14:37 itojun Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -237,16 +237,19 @@ in4_cksum(struct mbuf *m, uint8_t nxt, int off, int len)
 {
 	uint16_t *w;
 	u_int sum = 0;
-	struct ipovly ipov;
+	union {
+		struct ipovly ipov;
+		u_int16_t w[10];
+	} u;
 
 	if (nxt != 0) {
 		/* pseudo header */
-		memset(&ipov, 0, sizeof(ipov));
-		ipov.ih_len = htons(len);
-		ipov.ih_pr = nxt; 
-		ipov.ih_src = mtod(m, struct ip *)->ip_src; 
-		ipov.ih_dst = mtod(m, struct ip *)->ip_dst;
-		w = (uint16_t *)&ipov;
+		memset(&u.ipov, 0, sizeof(u.ipov));
+		u.ipov.ih_len = htons(len);
+		u.ipov.ih_pr = nxt; 
+		u.ipov.ih_src = mtod(m, struct ip *)->ip_src; 
+		u.ipov.ih_dst = mtod(m, struct ip *)->ip_dst;
+		w = u.w;
 		/* assumes sizeof(ipov) == 20 */
 		sum += w[0]; sum += w[1]; sum += w[2]; sum += w[3]; sum += w[4];
 		sum += w[5]; sum += w[6]; sum += w[7]; sum += w[8]; sum += w[9];
