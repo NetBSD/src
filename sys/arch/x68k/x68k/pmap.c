@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.67 2001/09/10 21:19:30 chris Exp $	*/
+/*	$NetBSD: pmap.c,v 1.68 2001/10/17 06:28:16 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -2485,11 +2485,12 @@ pmap_changebit(pa, set, mask)
 	struct pv_entry *pv;
 	pt_entry_t *pte, npte;
 	vaddr_t va;
+	char *attrp;
 	int s;
 #if defined(M68K_MMU_HP) || defined(M68040) || defined(M68060)
 	boolean_t firstpage = TRUE;
 #endif
-	boolean_t r = FALSE;
+	boolean_t r;
 
 	PMAP_DPRINTF(PDB_BITS,
 	    ("pmap_changebit(%lx, %x, %x)\n", pa, set, mask));
@@ -2501,7 +2502,9 @@ pmap_changebit(pa, set, mask)
 	 * Clear saved attributes (modify, reference)
 	 */
 
-	*pa_to_attribute(pa) &= mask;
+	attrp = pa_to_attribute(pa);
+	r = *attrp & ~mask;
+	*attrp &= mask;
 
 	/*
 	 * Loop over all current mappings setting/clearing as appropos
