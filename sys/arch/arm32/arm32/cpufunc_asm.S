@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm.S,v 1.6 1998/06/09 01:02:14 mark Exp $	*/
+/*	$NetBSD: cpufunc_asm.S,v 1.7 1998/07/08 00:13:41 mark Exp $	*/
 
 /*
  * arm8 support code Copyright (c) 1997 ARM Limited
@@ -256,12 +256,10 @@ ENTRY(arm8_tlb_flushID_SE)
 
 #ifdef CPU_SA110
 ENTRY(sa110_tlb_flushID)
-	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */ /* XXX */
 	mcr	15, 0, r0, c8, c7, 0		/* flush I+D tlb */
 	mov	pc, lr
 
 ENTRY(sa110_tlb_flushID_SE)
-	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */ /* XXX */
 	mcr	15, 0, r0, c8, c6, 1		/* flush D tlb single entry */
 	mcr	15, 0, r0, c8, c5, 0		/* flush I tlb */
 	mov	pc, lr
@@ -271,7 +269,6 @@ ENTRY(sa110_tlb_flushI)
 	mov	pc, lr
 
 ENTRY(sa110_tlb_flushD)
-	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */ /* XXX */
 	mcr	15, 0, r0, c8, c6, 0		/* flush D tlb */
 	mov	pc, lr
 
@@ -500,7 +497,6 @@ Lsa110_cache_cleanD_loop:
 	subs	r1, r1, #32
 	bne	Lsa110_cache_cleanD_loop
 
-	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
 	msr	cpsr_all , r3
 
 	mov	pc, lr	
@@ -519,7 +515,6 @@ Lsa110_cache_purgeID_loop:
 	subs	r1, r1, #32
 	bne	Lsa110_cache_purgeID_loop
 
-	mcr	15, 0, r0, c7, c10, 4	/* drain write buffer */
 	mcr	15, 0, r0, c7, c5, 0	/* flush I cache (D flushed above) */
 	msr	cpsr_all , r3
 	mov	pc, lr	
@@ -538,21 +533,17 @@ Lsa110_cache_purgeD_loop:
 	subs	r1, r1, #32
 	bne	Lsa110_cache_purgeD_loop
 
-	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
-/*	mcr	15, 0, r0, c7, c6, 0*/		/* flush D cache */
 	msr	cpsr_all , r3
 	mov	pc, lr	
 
 ENTRY(sa110_cache_purgeID_E)
 	mcr	15, 0, r0, c7, c10, 1		/* clean dcache entry */
-	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */	
 	mcr	15, 0, r0, c7, c5, 0		/* flush I cache */
 	mcr	15, 0, r0, c7, c6, 1		/* flush D cache single entry */
 	mov	pc, lr
 
 ENTRY(sa110_cache_purgeD_E)
 	mcr	15, 0, r0, c7, c10, 1		/* clean dcache entry */
-	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */	
 	mcr	15, 0, r0, c7, c6, 1		/* flush D cache single entry */
 	mov	pc, lr
 #endif	/* CPU_SA110 */
@@ -572,10 +563,6 @@ ENTRY(sa110_drain_writebuf)
  */
 
 #ifdef CPU_SA110
-/*
- * These functions need to be written. Until then act on the whole cache
- */
-
 ENTRY(sa110_cache_syncI)
 	mrs	r3, cpsr_all
 	orr	r0, r3, #(I32_bit | F32_bit)
@@ -590,7 +577,6 @@ Lsa110_cache_syncI_loop:
 	subs	r1, r1, #32
 	bne	Lsa110_cache_syncI_loop
 
-	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
 	mcr	15, 0, r0, c7, c5, 0		/* flush I cache */
 	msr	cpsr_all , r3
 	mov	pc, lr	
@@ -610,8 +596,6 @@ sa110_cache_cleanD_rng_loop:
 	subs	r1, r1, #32
 	bpl	sa110_cache_cleanD_rng_loop
 
-	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
-
 	mov	pc, lr
 
 ENTRY(sa110_cache_purgeID_rng)
@@ -629,7 +613,6 @@ sa110_cache_purgeID_rng_loop:
 	subs	r1, r1, #32
 	bpl	sa110_cache_purgeID_rng_loop
 
-	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
 	mcr	15, 0, r0, c7, c5, 0		/* flush I cache */
 
 	mov	pc, lr
@@ -649,8 +632,6 @@ sa110_cache_purgeD_rng_loop:
 	subs	r1, r1, #32
 	bpl	sa110_cache_purgeD_rng_loop
 
-	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
-
 	mov	pc, lr
 
 ENTRY(sa110_cache_syncI_rng)
@@ -667,7 +648,6 @@ sa110_cache_syncI_rng_loop:
 	subs	r1, r1, #32
 	bpl	sa110_cache_syncI_rng_loop
 
-	mcr	15, 0, r0, c7, c10, 4		/* drain write buffer */
 	mcr	15, 0, r0, c7, c5, 0		/* flush I cache */
 
 	mov	pc, lr
@@ -688,21 +668,21 @@ ENTRY(arm67_context_switch)
 	/* Switch the memory to the new process */
 
 	/* For good measure we will flush the IDC as well */
-        mcr     15, 0, r0, c7, c0, 0		/* flush cache */
+	mcr     15, 0, r0, c7, c0, 0		/* flush cache */
 
 	/* Write the TTB */
-        mcr     15, 0, r0, c2, c0, 0
+	mcr     15, 0, r0, c2, c0, 0
 
 	/* If we have updated the TTB we must flush the TLB */
-        mcr     15, 0, r0, c5, c0, 0
+	mcr     15, 0, r0, c5, c0, 0
 
 	/* For good measure we will flush the IDC as well */
-        mcr     15, 0, r0, c7, c0, 0
+/*	mcr     15, 0, r0, c7, c0, 0*/
 
 	/* Make sure that pipeline is emptied */
-        mov     r0, r0
-        mov     r0, r0
-        mov     pc, r14
+	mov     r0, r0
+	mov     r0, r0
+	mov     pc, r14
 #endif
 
 #ifdef CPU_ARM8
@@ -713,18 +693,18 @@ ENTRY(arm8_context_switch)
 	mcr	15, 0, r0, c7, c7, 0		/* flush i+d cache */
 
 	/* Write the TTB */
-        mcr     15, 0, r0, c2, c0, 0
+	mcr     15, 0, r0, c2, c0, 0
 
 	/* If we have updated the TTB we must flush the TLB */
-        mcr     15, 0, r0, c8, c7, 0		/* flush the i+d tlb */
+	mcr     15, 0, r0, c8, c7, 0		/* flush the i+d tlb */
 
 	/* For good measure we will flush the IDC as well */	
-        mcr     15, 0, r0, c7, c7, 0		/* flush the i+d cache */
+/*	mcr     15, 0, r0, c7, c7, 0*/		/* flush the i+d cache */
 
 	/* Make sure that pipeline is emptied */
-        mov     r0, r0
-        mov     r0, r0
-        mov     pc, r14
+	mov     r0, r0
+	mov     r0, r0
+	mov     pc, r14
 #endif	/* CPU_ARM8 */
 
 #ifdef CPU_SA110
@@ -737,23 +717,16 @@ ENTRY(sa110_context_switch)
 	 * and the instruction cache will contain only kernel code
 	 */
 
-	/* For good measure we will flush the IDC as well */
-/*	mcr	15, 0, r0, c7, c10, 4*/		/* drain write buffer */
-/*	mcr	15, 0, r0, c7, c7, 0*/		/* flush i+d cache */
-
 	/* Write the TTB */
-        mcr     15, 0, r0, c2, c0, 0
+	mcr     15, 0, r0, c2, c0, 0
 
 	/* If we have updated the TTB we must flush the TLB */
-        mcr     15, 0, r0, c8, c7, 0		/* flush the i+d tlb */
-
-	/* For good measure we will flush the IDC as well */	
-/*        mcr     15, 0, r0, c7, c7, 0*/		/* flush the i+d cache */
+	mcr     15, 0, r0, c8, c7, 0		/* flush the i+d tlb */
 
 	/* Make sure that pipeline is emptied */
-        mov     r0, r0
-        mov     r0, r0
-        mov     pc, r14
+	mov     r0, r0
+	mov     r0, r0
+	mov     pc, r14
 #endif
 
 /*
