@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ns_main.c	4.55 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: ns_main.c,v 1.3 1994/12/30 05:02:08 mycroft Exp $";
+static char rcsid[] = "$Id: ns_main.c,v 1.4 1995/01/15 07:26:58 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -153,6 +153,7 @@ struct	sockaddr_in from_addr;		/* Source addr of last packet */
 int	from_len;			/* Source addr size of last packet */
 time_t	boottime, resettime;		/* Used by ns_stats */
 static	fd_set	mask;			/* select mask of open descriptors */
+static	int nfds;			/* number of fds for select */
 static	int vs;				/* listening TCP socket */
 
 char		**Argv = NULL;		/* pointer to argument vector */
@@ -176,7 +177,6 @@ main(argc, argv, envp)
 	register struct qstream *sp;
 	register struct qdatagram *dqp;
 	struct qstream *nextsp;
-	int nfds;
 	int on = 1;
 	int rfd, size;
 	u_long lasttime, maxctime;
@@ -297,11 +297,6 @@ main(argc, argv, envp)
 		exit(1);
 	}
 	(void) listen(vs, 5);
-
-	/*
-	 * A start.  Will increase as appropriate later.
-	 */
-	nfds = vs + 1;
 
 	/*
 	 * Get list of local addresses and set up datagram sockets.
@@ -428,8 +423,13 @@ main(argc, argv, envp)
 	prime_cache();
 	FD_ZERO(&mask);
 	FD_SET(vs, &mask);
-	for (dqp = datagramq; dqp != QDATAGRAM_NULL; dqp = dqp->dq_next)
+	if (vs >= nfds)
+		nfds = vs + 1;
+	for (dqp = datagramq; dqp != QDATAGRAM_NULL; dqp = dqp->dq_next) {
 		FD_SET(dqp->dq_dfd, &mask);
+		if (dqp->dq_dfd >= nfds)
+			nfds = dqp->dq_dfd + 1;
+	}
 	for (;;) {
 #ifdef DEBUG
 		if (ddt && debug == 0) {
@@ -585,8 +585,6 @@ main(argc, argv, envp)
 				(void) close(rfd);
 				continue;
 			}
-			if (rfd >= nfds)
-				nfds = rfd + 1;
 			sp->s_rfd = rfd;	/* stream file descriptor */
 			sp->s_size = -1;	/* amount of data to receive */
 			gettime(&tt);
@@ -595,6 +593,8 @@ main(argc, argv, envp)
 			sp->s_bufp = (char *)&sp->s_tempsize;
 			FD_SET(rfd, &mask);
 			FD_SET(rfd, &tmpmask);
+			if (rfd >= nfds)
+				nfds = rfd + 1;
 #ifdef DEBUG
 			if (debug) {
 				fprintf(ddt,
