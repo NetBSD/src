@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.23 2003/01/18 10:06:31 thorpej Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.24 2003/02/16 20:24:47 provos Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.23 2003/01/18 10:06:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.24 2003/02/16 20:24:47 provos Exp $");
 
 #include "opt_systrace.h"
 
@@ -1059,9 +1059,10 @@ systrace_processready(struct str_process *strp)
 	if (!ISSET(strp->flags, STR_PROC_WAITANSWER))
 		return (EBUSY);
 
+	/* XXX - ignore until systrace knows about lwps. :-(
 	if (strp->proc->p_stat != LSSLEEP)
 		return (EBUSY);
-
+	*/
 	return (0);
 }
 
