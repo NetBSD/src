@@ -1,4 +1,4 @@
-/*	$NetBSD: cia.c,v 1.12 1996/10/23 04:12:24 cgd Exp $	*/
+/*	$NetBSD: cia.c,v 1.13 1996/11/11 21:08:12 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -46,6 +46,9 @@
 #include <alpha/pci/ciavar.h>
 #if defined(DEC_KN20AA)
 #include <alpha/pci/pci_kn20aa.h>
+#endif
+#if defined(DEC_EB164)
+#include <alpha/pci/pci_eb164.h>
 #endif
 
 int	ciamatch __P((struct device *, void *, void *));
@@ -140,6 +143,16 @@ ciaattach(parent, self, aux)
 #endif
 		break;
 #endif
+
+#if defined(DEC_EB164)
+	case ST_EB164:
+		pci_eb164_pickintr(ccp);
+#ifdef EVCNT_COUNTERS
+		evcnt_attach(self, "intr", &eb164_intr_evcnt);
+#endif
+		break;
+#endif
+
 	default:
 		panic("ciaattach: shouldn't be here, really...");
 	}
