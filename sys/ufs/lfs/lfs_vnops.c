@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.90 2003/02/25 23:12:07 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.91 2003/03/01 11:20:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.90 2003/02/25 23:12:07 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.91 2003/03/01 11:20:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.90 2003/02/25 23:12:07 perseant Exp 
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_extern.h>
 
-extern int lfs_writer_daemon;
+extern pid_t lfs_writer_daemon;
 extern int lfs_subsys_pages;
 
 /* Global vfs data structures for lfs. */
