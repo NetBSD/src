@@ -1,4 +1,4 @@
-/*	$NetBSD: llc.h,v 1.1.1.2 2002/05/31 09:27:59 itojun Exp $	*/
+/*	$NetBSD: llc.h,v 1.1.1.3 2004/09/27 17:06:49 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1997
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) Header: /tcpdump/master/tcpdump/llc.h,v 1.14 2002/04/07 09:50:30 guy Exp (LBL)
+ * @(#) Header: /tcpdump/master/tcpdump/llc.h,v 1.16 2002/12/11 07:13:54 guy Exp (LBL)
  */
 
 /*

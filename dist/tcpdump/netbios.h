@@ -1,9 +1,9 @@
-/*	$NetBSD: netbios.h,v 1.1.1.1 2001/06/25 19:26:32 itojun Exp $	*/
+/*	$NetBSD: netbios.h,v 1.1.1.2 2004/09/27 17:06:51 dyoung Exp $	*/
 
 /*
  * NETBIOS protocol formats
  *
- * @(#) Header: /tcpdump/master/tcpdump/netbios.h,v 1.1.1.1 1999/10/07 23:47:10 mcr Exp
+ * @(#) Header: /tcpdump/master/tcpdump/netbios.h,v 1.3 2002/12/11 07:13:55 guy Exp
  */
 
 struct p8022Hdr {
