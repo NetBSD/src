@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.27 2000/11/24 05:02:23 chs Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.28 2000/11/24 07:25:51 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,6 +34,8 @@
  *
  *	@(#)vfs_cache.c	8.3 (Berkeley) 8/22/94
  */
+
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -463,3 +465,28 @@ cache_purgevfs(mp)
 	}
 }
 
+#ifdef DDB
+void
+namecache_print(struct vnode *vp, void (*pr)(const char *, ...))
+{
+	struct vnode *dvp = NULL;
+	struct namecache *ncp;
+
+	TAILQ_FOREACH(ncp, &nclruhead, nc_lru) {
+		if (ncp->nc_vp == vp && ncp->nc_vpid == vp->v_id) {
+			(*pr)("name %.*s\n", ncp->nc_nlen, ncp->nc_name);
+			dvp = ncp->nc_dvp;
+		}
+	}
+	if (dvp == NULL) {
+		(*pr)("name not found\n");
+		return;
+	}
+	vp = dvp;
+	TAILQ_FOREACH(ncp, &nclruhead, nc_lru) {
+		if (ncp->nc_vp == vp && ncp->nc_vpid == vp->v_id) {
+			(*pr)("parent %.*s\n", ncp->nc_nlen, ncp->nc_name);
+		}
+	}
+}
+#endif
