@@ -30,7 +30,7 @@
  */
 
 /*
- * $Id: aic6360.c,v 1.3 1994/04/29 23:15:57 cgd Exp $
+ * $Id: aic6360.c,v 1.4 1994/05/03 08:20:43 mycroft Exp $
  *
  * Acknowledgements: Many of the algorithms used in this driver are
  * inspired by the work of Julian Elischer (julian@tfs.com) and
@@ -1417,7 +1417,7 @@ aic_msgin(aic)
 		switch (aic->imess[0]) {
 		case MSG_CMDCOMPLETE:
 			if (!acb) {
-				aic_sched_msgout(MSG_ABORT);
+				aic_sched_msgout(SEND_ABORT);
 				printf("aic: CMDCOMPLETE but no command?\n");
 				break;
 			}
@@ -1449,7 +1449,7 @@ aic_msgin(aic)
 			break;	/* Hah, that was easy! */
 		case MSG_DISCONNECT:
 			if (!acb) {
-				aic_sched_msgout(MSG_ABORT);
+				aic_sched_msgout(SEND_ABORT);
 				printf("aic: nothing to DISCONNECT\n");
 				break;
 			}
@@ -1461,7 +1461,7 @@ aic_msgin(aic)
 			break;
 		case MSG_SAVEDATAPOINTER:
 			if (!acb) {
-				aic_sched_msgout(MSG_ABORT);
+				aic_sched_msgout(SEND_ABORT);
 				printf("aic: no DATAPOINTERs to save\n");
 				break;
 			}
@@ -1470,7 +1470,7 @@ aic_msgin(aic)
 			break;
 		case MSG_RESTOREPOINTERS:
 			if (!acb) {
-				aic_sched_msgout(MSG_ABORT);
+				aic_sched_msgout(SEND_ABORT);
 				printf("aic: no DATAPOINTERs to restore\n");
 				break;
 			}
@@ -1498,22 +1498,15 @@ aic_msgin(aic)
 				}
 				break;
 			default: /* Extended messages we don't handle */
-				aic_sched_msgout(MSG_MESSAGE_REJECT);
+				aic_sched_msgout(SEND_REJECT);
 				break;
 			}
 			break;
 		default:
-			aic_sched_msgout(MSG_MESSAGE_REJECT);
+			aic_sched_msgout(SEND_REJECT);
 			break;
 		}
-		/* Don't forget to acknowledge the byte */
-		outb(SXFRCTL0, CHEN|SPIOEN);
-		inb(SCSIDAT);
-		outb(SXFRCTL0, CHEN);
-		outb(SIMODE1, ENSCSIRST|ENBUSFREE|ENSCSIPERR|ENREQINIT);
-		return;
-	}
-	else if (aic->state == AIC_RESELECTED) {
+	} else if (aic->state == AIC_RESELECTED) {
 		struct scsi_link *sc;
 		struct acb *acb;
 		u_char selid, lunit;
@@ -1560,21 +1553,15 @@ aic_msgin(aic)
 			    selid);
 			aic_sched_msgout(SEND_DEV_RESET);
 		}
-		/* Must not forget to ACK the last message byte ... */
-		outb(SXFRCTL0, CHEN|SPIOEN);
-		inb(SCSIDAT);
-		outb(SXFRCTL0, CHEN);
-		outb(SIMODE1, ENSCSIRST|ENBUSFREE|ENSCSIPERR|ENREQINIT);
-		return;
 	} else { /* Neither AIC_HASNEXUS nor AIC_RESELECTED! */
 		printf("aic: unexpected message in; will send DEV_RESET\n");
 		aic_sched_msgout(SEND_DEV_RESET);
-		outb(SXFRCTL0, CHEN|SPIOEN);
-		inb(SCSIDAT);
-		outb(SXFRCTL0, CHEN);
-		outb(SIMODE1, ENSCSIRST|ENBUSFREE|ENSCSIPERR|ENREQINIT);
-		return;
 	}
+	/* Must not forget to ACK the last message byte ... */
+	outb(SXFRCTL0, CHEN|SPIOEN);
+	inb(SCSIDAT);
+	outb(SXFRCTL0, CHEN);
+	outb(SIMODE1, ENSCSIRST|ENBUSFREE|ENSCSIPERR|ENREQINIT);
 }
 
 
@@ -1648,8 +1635,7 @@ aic_msgout(aic)
 			break;
 		}
 		aic->omp = aic->omess;
-	}
-	else if (aic->omp == &aic->omess[aic->omlen]) {
+	} else if (aic->omp == &aic->omess[aic->omlen]) {
 		/* Have sent the message at least once, this is a retransmit.  
 		 */
 		AIC_MISC(("retransmitting "));
