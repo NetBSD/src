@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.2 1998/07/30 14:11:44 augustss Exp $	*/
+/*	$NetBSD: ess.c,v 1.3 1998/07/30 22:17:34 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -1681,7 +1681,9 @@ ess_query_devinfo(addr, dip)
 	void *addr;
 	mixer_devinfo_t *dip;
 {
+#ifdef AUDIO_DEBUG
 	struct ess_softc *sc = addr;
+#endif
 
 	DPRINTF(("ess_query_devinfo: model=%d index=%d\n", 
 		 sc->sc_model, dip->index));
