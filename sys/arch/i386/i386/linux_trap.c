@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_trap.c,v 1.9 2003/10/08 00:28:41 thorpej Exp $	*/
+/*	$NetBSD: linux_trap.c,v 1.10 2004/08/13 21:45:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_trap.c,v 1.9 2003/10/08 00:28:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_trap.c,v 1.10 2004/08/13 21:45:03 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_trap.c,v 1.9 2003/10/08 00:28:41 thorpej Exp $
 #define LINUX_T_SIMD_COPROC_ERROR	19	/* XXX */
 
 /* Note 255 is bogus */
-static int trapno_to_x86_vec[] = {
+static const int trapno_to_x86_vec[] = {
  	LINUX_T_INVALID_OP,		/*  0 T_PRIVINFLT */
  	LINUX_T_INT3,			/*  1 T_BPTFLT */
  	LINUX_T_COPROC_ERROR,		/*  2 T_ARITHTRAP */
@@ -110,7 +110,7 @@ static int trapno_to_x86_vec[] = {
 };
 
 /* For the nmi and reserved below linux does not post a signal. */
-static int linux_x86_vec_to_sig[] = {
+static const int linux_x86_vec_to_sig[] = {
 	SIGFPE,				/*  0 LINUX_T_DIVIDE */
 	SIGTRAP,			/*  1 LINUX_T_DEBUG */
 /*nmi*/	SIGSEGV,			/*  2 LINUX_T_NMI */
