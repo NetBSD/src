@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 1999/09/25 13:06:36 enami Exp $
+#	$NetBSD: Makefile,v 1.14 2001/01/14 06:35:57 christos Exp $
 
 PROG=	doexec
 MKMAN=	no
@@ -35,10 +35,6 @@ regress:	test-empty test-nonexist \
 		test-nonexistshell test-devnullscript test-badinterplen \
 		test-goodscript test-scriptarg test-scriptarg-nospace \
 		test-goodaout test-truncaout
-
-empty:	${TD}/empty
-	cp ${TD}/empty ${.OBJDIR}/empty
-	chmod +x ${.OBJDIR}/empty
 
 test-empty:	${PROG} empty
 	${RP} ${.OBJDIR}/empty | diff - ${OD}/empty
