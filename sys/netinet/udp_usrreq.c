@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.128 2004/12/19 06:42:24 christos Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.129 2004/12/21 05:51:32 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.128 2004/12/19 06:42:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.129 2004/12/21 05:51:32 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -151,12 +151,14 @@ static void udp4_sendup (struct mbuf *, int, struct sockaddr *,
 	struct socket *);
 static int udp4_realinput (struct sockaddr_in *, struct sockaddr_in *,
 	struct mbuf *, int);
+static int udp4_input_checksum(struct mbuf *, const struct udphdr *, int, int);
 #endif
 #ifdef INET6
 static void udp6_sendup (struct mbuf *, int, struct sockaddr *,
 	struct socket *);
 static int udp6_realinput (int, struct sockaddr_in6 *,
 	struct sockaddr_in6 *, struct mbuf *, int);
+static int udp6_input_checksum(struct mbuf *, const struct udphdr *, int, int);
 #endif
 #ifdef INET
 static	void udp_notify (struct inpcb *, int);
@@ -209,7 +211,102 @@ udp_init(void)
 	MOWNER_ATTACH(&udp_mowner);
 }
 
+/*
+ * Checksum extended UDP header and data.
+ */
+
+int
+udp_input_checksum(int af, struct mbuf *m, const struct udphdr *uh,
+    int iphlen, int len)
+{
+
+	switch (af) {
 #ifdef INET
+	case AF_INET:
+		return udp4_input_checksum(m, uh, iphlen, len);
+#endif
+#ifdef INET6
+	case AF_INET6:
+		return udp6_input_checksum(m, uh, iphlen, len);
+#endif
+	}
+#ifdef DIAGNOSTIC
+	panic("udp_input_checksum: unknown af %d", af);
+#endif
+	/* NOTREACHED */
+	return -1;
+}
+
+#ifdef INET
+
+/*
+ * Checksum extended UDP header and data.
+ */
+
+static int
+udp4_input_checksum(struct mbuf *m, const struct udphdr *uh,
+    int iphlen, int len)
+{
+
+	/*
+	 * XXX it's better to record and check if this mbuf is
+	 * already checked.
+	 */
+
+	if (uh->uh_sum == 0)
+		return 0;
+
+	switch (m->m_pkthdr.csum_flags &
+	    ((m->m_pkthdr.rcvif->if_csum_flags_rx & M_CSUM_UDPv4) |
+	    M_CSUM_TCP_UDP_BAD | M_CSUM_DATA)) {
+	case M_CSUM_UDPv4|M_CSUM_TCP_UDP_BAD:
+		UDP_CSUM_COUNTER_INCR(&udp_hwcsum_bad);
+		goto badcsum;
+
+	case M_CSUM_UDPv4|M_CSUM_DATA: {
+		u_int32_t hw_csum = m->m_pkthdr.csum_data;
+
+		UDP_CSUM_COUNTER_INCR(&udp_hwcsum_data);
+		if (m->m_pkthdr.csum_flags & M_CSUM_NO_PSEUDOHDR) {
+			const struct ip *ip =
+			    mtod(m, const struct ip *);
+
+			hw_csum = in_cksum_phdr(ip->ip_src.s_addr,
+			    ip->ip_dst.s_addr,
+			    htons(hw_csum + len + IPPROTO_UDP));
+		}
+		if ((hw_csum ^ 0xffff) != 0)
+			goto badcsum;
+		break;
+	}
+
+	case M_CSUM_UDPv4:
+		/* Checksum was okay. */
+		UDP_CSUM_COUNTER_INCR(&udp_hwcsum_ok);
+		break;
+
+	default:
+		/*
+		 * Need to compute it ourselves.  Maybe skip checksum
+		 * on loopback interfaces.
+		 */
+		if (__predict_true(!(m->m_pkthdr.rcvif->if_flags &
+				     IFF_LOOPBACK) ||
+				   udp_do_loopback_cksum)) {
+			UDP_CSUM_COUNTER_INCR(&udp_swcsum);
+			if (in4_cksum(m, IPPROTO_UDP, iphlen, len) != 0)
+				goto badcsum;
+		}
+		break;
+	}
+
+	return 0;
+
+badcsum:
+	udpstat.udps_badsum++;
+	return -1;
+}
+
 void
 udp_input(struct mbuf *m, ...)
 {
@@ -262,46 +359,8 @@ udp_input(struct mbuf *m, ...)
 	/*
 	 * Checksum extended UDP header and data.
 	 */
-	if (uh->uh_sum) {
-		switch (m->m_pkthdr.csum_flags &
-		    ((m->m_pkthdr.rcvif->if_csum_flags_rx & M_CSUM_UDPv4) |
-		    M_CSUM_TCP_UDP_BAD | M_CSUM_DATA)) {
-		case M_CSUM_UDPv4|M_CSUM_TCP_UDP_BAD:
-			UDP_CSUM_COUNTER_INCR(&udp_hwcsum_bad);
-			goto badcsum;
-
-		case M_CSUM_UDPv4|M_CSUM_DATA: {
-			u_int32_t hw_csum = m->m_pkthdr.csum_data;
-			UDP_CSUM_COUNTER_INCR(&udp_hwcsum_data);
-			if (m->m_pkthdr.csum_flags & M_CSUM_NO_PSEUDOHDR)
-				hw_csum = in_cksum_phdr(ip->ip_src.s_addr,
-				    ip->ip_dst.s_addr,
-				    htons(hw_csum + len + IPPROTO_UDP));
-			if ((hw_csum ^ 0xffff) != 0)
-				goto badcsum;
-			break;
-		}
-
-		case M_CSUM_UDPv4:
-			/* Checksum was okay. */
-			UDP_CSUM_COUNTER_INCR(&udp_hwcsum_ok);
-			break;
-
-		default:
-			/*
-			 * Need to compute it ourselves.  Maybe skip checksum
-			 * on loopback interfaces.
-			 */
-			if (__predict_true(!(m->m_pkthdr.rcvif->if_flags &
-					     IFF_LOOPBACK) ||
-					   udp_do_loopback_cksum)) {
-				UDP_CSUM_COUNTER_INCR(&udp_swcsum);
-				if (in4_cksum(m, IPPROTO_UDP, iphlen, len) != 0)
-					goto badcsum;
-			}
-			break;
-		}
-	}
+	if (udp4_input_checksum(m, uh, iphlen, len))
+		goto badcsum;
 
 	/* construct source and dst sockaddrs. */
 	bzero(&src, sizeof(src));
@@ -367,11 +426,32 @@ bad:
 
 badcsum:
 	m_freem(m);
-	udpstat.udps_badsum++;
 }
 #endif
 
 #ifdef INET6
+static int
+udp6_input_checksum(struct mbuf *m, const struct udphdr *uh, int off, int len)
+{
+
+	if (__predict_false((m->m_flags & M_LOOP) && !udp_do_loopback_cksum)) {
+		goto good;
+	}
+	if (uh->uh_sum == 0) {
+		udp6stat.udp6s_nosum++;
+		goto bad;
+	}
+	if (in6_cksum(m, IPPROTO_UDP, off, len) != 0) {
+		udp6stat.udp6s_badsum++;
+		goto bad;
+	}
+
+good:
+	return 0;
+bad:
+	return -1;
+}
+
 int
 udp6_input(struct mbuf **mp, int *offp, int proto)
 {
@@ -430,17 +510,8 @@ udp6_input(struct mbuf **mp, int *offp, int proto)
 	 * Checksum extended UDP header and data.  Maybe skip checksum
 	 * on loopback interfaces.
 	 */
-	if (__predict_true((m->m_flags & M_LOOP) == 0 ||
-	    udp_do_loopback_cksum)) {
-		if (uh->uh_sum == 0) {
-			udp6stat.udp6s_nosum++;
-			goto bad;
-		}
-		if (in6_cksum(m, IPPROTO_UDP, off, ulen) != 0) {
-			udp6stat.udp6s_badsum++;
-			goto bad;
-		}
-	}
+	if (udp6_input_checksum(m, uh, off, ulen))
+		goto bad;
 
 	/*
 	 * Construct source and dst sockaddrs.
