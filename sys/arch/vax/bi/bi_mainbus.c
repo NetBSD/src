@@ -1,4 +1,4 @@
-/*	$NetBSD: bi_mainbus.c,v 1.3 2000/06/04 02:19:24 matt Exp $	   */
+/*	$NetBSD: bi_mainbus.c,v 1.4 2000/07/26 11:53:30 ragge Exp $	   */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -41,6 +41,7 @@
 #include <machine/cpu.h>
 
 #include <dev/bi/bivar.h>
+#include <dev/bi/bireg.h>
 
 static	int bi_mainbus_match __P((struct device *, struct cfdata *, void *));
 static	void bi_mainbus_attach __P((struct device *, struct device *, void *));
@@ -68,17 +69,11 @@ bi_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Fill in bus specific data.
 	 */
-	sc->sc_addr = (bus_addr_t)0x20000000; /* XXX */
+	sc->sc_addr = (bus_addr_t)BI_BASE(0, 0);
 	sc->sc_iot = &vax_mem_bus_space; /* No special I/O handling */
 	sc->sc_dmat = &vax_bus_dma_tag;	/* No special DMA handling either */
-	sc->sc_intcpu = 1 << mastercpu;
+	sc->sc_intcpu = 1 << mfpr(PR_BINID);
+	sc->sc_lastiv = 256; /* Lowest available vector address */
 
 	bi_attach(sc);
-}
-
-void
-bi_intr_establish(void *icookie, int vec, void (*func)(void *), void *arg,
-	struct evcnt *ev)
-{
-	scb_vecalloc(vec, func, arg, SCB_ISTACK, ev);
 }
