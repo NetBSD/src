@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.5 2002/11/14 21:17:30 christos Exp $ */
+/*	$NetBSD: mach_port.c,v 1.6 2002/11/19 19:54:07 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.5 2002/11/14 21:17:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.6 2002/11/19 19:54:07 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -138,6 +138,34 @@ mach_port_allocate(p, msgh)
 		return error;
 
 	DPRINTF(("mach_sys_port_allocate();\n"));
+
+	bzero(&rep, sizeof(rep));
+
+	rep.rep_msgh.msgh_bits =
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	rep.rep_msgh.msgh_size = sizeof(rep) - sizeof(rep.rep_trailer);
+	rep.rep_msgh.msgh_local_port = req.req_msgh.msgh_local_port;
+	rep.rep_msgh.msgh_id = req.req_msgh.msgh_id + 100;
+	rep.rep_trailer.msgh_trailer_size = 8;
+
+	if ((error = copyout(&rep, msgh, sizeof(rep))) != 0)
+		return error;
+	return 0;
+}
+
+int 
+mach_port_insert_right(p, msgh)
+	struct proc *p;
+	mach_msg_header_t *msgh;
+{
+	mach_port_allocate_request_t req;
+	mach_port_allocate_reply_t rep;
+	int error;
+
+	if ((error = copyin(msgh, &req, sizeof(req))) != 0)
+		return error;
+
+	DPRINTF(("mach_sys_port_insert_right();\n"));
 
 	bzero(&rep, sizeof(rep));
 
