@@ -65,7 +65,7 @@
  */
 /* 
  *	from: @(#)pmap.c	7.5 (Berkeley) 5/10/91
- *	$Id: pmap.c,v 1.8 1994/04/21 23:30:45 briggs Exp $
+ *	$Id: pmap.c,v 1.9 1994/04/22 12:11:21 briggs Exp $
  */
 
 /*
@@ -255,7 +255,6 @@ boolean_t	pmap_initialized = FALSE;	/* Has pmap_init completed? */
 int		pmap_aliasmask;	/* seperation at which VA aliasing ok */
 char		*pmap_attributes;	/* reference and modify bits */
 static int	pmap_ishift;	/* segment table index shift */
-extern int	cpu040;
 
 boolean_t	pmap_testbit();
 void		pmap_enter_ptpage();

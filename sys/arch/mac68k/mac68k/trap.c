@@ -38,7 +38,7 @@
  * from: Utah $Hdr: trap.c 1.32 91/04/06$
  *
  *	@(#)trap.c	7.15 (Berkeley) 8/2/91
- *	$Id: trap.c,v 1.10 1994/04/21 23:32:43 briggs Exp $
+ *	$Id: trap.c,v 1.11 1994/04/22 12:11:24 briggs Exp $
  */
 
 #include <sys/param.h>
@@ -113,7 +113,6 @@ int mmudebug = 0;
 #endif
 
 extern struct pcb *curpcb;
-extern int	  cpu040;
 
 static void
 userret(p, pc, oticks)
@@ -577,7 +576,7 @@ trap(type, code, v, frame)
 		if (ssir & SIR_SERIAL) {
 			siroff(SIR_SERIAL);
 			cnt.v_soft++;
-			serintr();
+			sersir();
 		}
 		if (ssir & SIR_NET) {
 			siroff(SIR_NET);
