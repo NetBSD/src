@@ -1,7 +1,7 @@
-/*	$NetBSD: irix_fcntl.c,v 1.5 2002/04/20 16:20:12 manu Exp $ */
+/*	$NetBSD: irix_fcntl.c,v 1.6 2002/04/20 20:38:21 manu Exp $ */
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,13 +37,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.5 2002/04/20 16:20:12 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.6 2002/04/20 20:38:21 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
+#include <sys/vnode.h>
+#include <sys/file.h>
+#include <sys/filedesc.h>
 #include <sys/systm.h>
 #include <sys/fcntl.h>
 #include <sys/syscallargs.h>
@@ -59,6 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.5 2002/04/20 16:20:12 manu Exp $");
 #include <compat/svr4/svr4_lwp.h>
 #include <compat/svr4/svr4_fcntl.h>
 #include <compat/svr4/svr4_syscallargs.h>
+
+static int fd_truncate __P((struct proc *, int, int, off_t, register_t *));
 
 int
 irix_sys_lseek64(p, v, retval)
@@ -109,16 +114,33 @@ irix_sys_fcntl(p, v, retval)
 	} */ *uap = v;
 	struct svr4_sys_fcntl_args cup;
 	int cmd;
+	int error;
 
 	cmd = SCARG(uap, cmd);
 	switch (cmd) {
-	case SVR4_F_ALLOCSP:
-		cmd = SVR4_F_FREESP;
-		break;
+	case SVR4_F_FREESP:
+	case SVR4_F_ALLOCSP: {
+		struct svr4_flock fl;
 
-	case IRIX_F_ALLOCSP64:
-		cmd = SVR4_F_FREESP64;
+		if ((error = copyin(SCARG(uap, arg), &fl, sizeof(fl))) != 0)
+			return error;
+
+		return fd_truncate(p, SCARG(uap, fd), 
+		    fl.l_whence, fl.l_start, retval);
 		break;
+	}
+
+	case SVR4_F_FREESP64:
+	case IRIX_F_ALLOCSP64: {
+		struct svr4_flock64 fl;
+
+		if ((error = copyin(SCARG(uap, arg), &fl, sizeof(fl))) != 0)
+			return error;
+
+		return fd_truncate(p, SCARG(uap, fd), 
+		    fl.l_whence, fl.l_start, retval);
+		break;
+	}
 
 	case IRIX_F_SETBSDLKW:
 		cmd = SVR4_F_SETLKW;
@@ -136,7 +158,6 @@ irix_sys_fcntl(p, v, retval)
 	case SVR4_F_SETLK:
 	case SVR4_F_SETLKW:
 	case SVR4_F_CHKFL:
-	case SVR4_F_FREESP:
 	case SVR4_F_GETLK:
 	case SVR4_F_RSETLK:
 	case SVR4_F_RGETLK:
@@ -146,7 +167,6 @@ irix_sys_fcntl(p, v, retval)
 	case SVR4_F_GETLK64:
 	case SVR4_F_SETLK64:
 	case SVR4_F_SETLKW64:
-	case SVR4_F_FREESP64:
 		break;
 
 	case IRIX_F_CHKLK:
@@ -187,3 +207,48 @@ irix_sys_fcntl(p, v, retval)
 	return svr4_sys_fcntl(p, &cup, retval);
 }
 	
+static int
+fd_truncate(p, fd, whence, start, retval)
+	struct proc *p;
+	int fd;
+	int whence;
+	off_t start;
+	register_t *retval;
+{	
+	struct filedesc *fdp = p->p_fd;
+	struct file *fp;
+	struct vnode *vp;
+	struct vattr vattr;
+	struct sys_ftruncate_args ft;
+	int error;
+
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
+		return EBADF;
+
+	vp = (struct vnode *)fp->f_data;
+	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO)
+		return ESPIPE;
+
+	switch (whence) {
+	case SEEK_CUR:
+		SCARG(&ft, length) = fp->f_offset + start;
+		break;
+
+	case SEEK_END:
+		if ((error = VOP_GETATTR(vp, &vattr, p->p_ucred, p)) != 0)
+			return error;
+		SCARG(&ft, length) = vattr.va_size + start;
+		break;
+
+	case SEEK_SET:
+		SCARG(&ft, length) = start;
+		break;
+
+	default:
+		return EINVAL;
+		break;
+	}
+
+	SCARG(&ft, fd) = fd;
+	return sys_ftruncate(p, &ft, retval);
+}
