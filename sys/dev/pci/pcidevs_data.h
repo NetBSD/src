@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.309 2001/03/04 21:28:07 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.310 2001/03/05 01:32:54 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.304 2001/03/02 17:32:01 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.306 2001/03/05 01:29:26 matt Exp 
  */
 
 /*
@@ -5720,6 +5720,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Winbond Electronics",
 	    "W83769F",
+	},
+	{
+	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W83C553F_0,
+	    0,
+	    "Winbond Electronics",
+	    "W83C553F PCI-ISA Bridge",
+	},
+	{
+	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W83C553F_1,
+	    0,
+	    "Winbond Electronics",
+	    "W83C553F IDE Controller",
 	},
 	{
 	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W89C840F,
