@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.15 1995/09/17 21:11:13 pk Exp $
+# 	$NetBSD: GENERIC,v 1.16 1995/09/25 20:20:27 chuck Exp $
 
 machine		sparc
 options		"SUN4", "SUN4C"
@@ -111,6 +111,10 @@ xdc1	at vmel0 addr 0xffffee90 level 3 vect 0x45
 xdc2	at vmel0 addr 0xffffeea0 level 3 vect 0x46
 xdc3	at vmel0 addr 0xffffeeb0 level 3 vect 0x47
 xd*	at xdc? drive ?
+
+xyc0	at vmes0 addr 0xffffee40 level 3 vect 0x48
+xyc1	at vmes0 addr 0xffffee48 level 3 vect 0x49
+xy*	at xyc? drive ?
 
 si0	at vmes0 addr 0xff200000 level 2 vect 0x40
 sw0	at obio0 addr 0x0a000000 level 2
