@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.5 2002/11/11 01:13:07 thorpej Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.6 2005/02/09 12:09:08 kleink Exp $	*/
 /*	$OpenBSD: arc4random.c,v 1.6 2001/06/05 05:05:38 pvalchev Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ struct arc4_stream {
 	u_int8_t s[256];
 };
 
-int     rs_initialized;
+static int rs_initialized;
 static struct arc4_stream rs;
 
 static inline void arc4_init(struct arc4_stream *);
