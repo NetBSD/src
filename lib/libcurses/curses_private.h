@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.20 2002/01/02 10:38:27 blymn Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.20.2.1 2003/06/16 13:14:20 grant Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -219,6 +219,7 @@ struct __screen {
 	int echoit;
 	int pfast;
 	int rawmode;
+	int nl;
 	int noqch;
 	int clearok;
 	int useraw;
