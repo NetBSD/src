@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.406 2000/09/29 14:16:23 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.407 2000/10/28 02:29:35 enami Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -1779,7 +1779,7 @@ init386(first_avail)
 	 * to us by the boot program.
 	 */
 	bim = lookup_bootinfo(BTINFO_MEMMAP);
-	if (bim != NULL) {
+	if (bim != NULL && bim->num > 0) {
 #if 0
 		printf("BIOS MEMORY MAP (%d ENTRIES):\n", bim->num);
 #endif
