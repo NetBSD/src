@@ -1,4 +1,4 @@
-# $NetBSD: md.alpha,v 1.30 2001/01/30 03:18:04 jwise Exp $
+# $NetBSD: md.alpha,v 1.31 2001/02/17 11:40:58 ragge Exp $
 ./usr/include/alpha	comp-c-include
 ./usr/include/alpha/_G_config.h	comp-c-include
 ./usr/include/alpha/alpha_cpu.h	comp-c-include
@@ -60,3 +60,4 @@
 ./usr/lib/libalpha_p.a		comp-c-proflib
 ./usr/lib/libalpha_pic.a	comp-c-piclib
 ./usr/libdata/lint/llib-lalpha.ln		comp-c-lintlib
+./usr/include/ieeefp.h		comp-c-include

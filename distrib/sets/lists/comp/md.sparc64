@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.7 2000/08/19 13:33:40 mrg Exp $
+# $NetBSD: md.sparc64,v 1.8 2001/02/17 11:40:59 ragge Exp $
 ./usr/include/sparc64/_G_config.h	comp-c-include
 ./usr/include/sparc64/ansi.h	comp-c-include
 ./usr/include/sparc64/aout_machdep.h	comp-c-include
@@ -57,3 +57,4 @@
 ./usr/include/sparc64/vmparam.h	comp-c-include
 ./usr/include/sparc64/vuid_event.h	comp-c-include
 ./usr/include/sparc64/z8530var.h	comp-c-include
+./usr/include/ieeefp.h		comp-c-include
