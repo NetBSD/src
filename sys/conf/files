@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.112 1997/02/02 21:16:25 thorpej Exp $
+#	$NetBSD: files,v 1.113 1997/02/07 17:37:27 mycroft Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -48,6 +48,10 @@ file	ipkdb/ipkdb_ppp.c		ipkdbppp needs-flag
 # Adaptec 2[789]4X, 394X, aic7770 and aic78[5678]0 SCSI controllers
 device	ahc: scsi
 file	dev/ic/aic7xxx.c	ahc
+
+# Adaptec AHA-154x and AHA-164x controllers
+device	aha: scsi
+file	dev/ic/aha.c		aha
 
 # BusLogic MultiMaster and MultiMaster Ultra SCSI controllers
 device	bha: scsi

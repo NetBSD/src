@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.25 1997/01/16 21:03:30 christos Exp $
+#	$NetBSD: files.isa,v 1.26 1997/02/07 17:37:34 mycroft Exp $
 #
 # Config.new file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -63,9 +63,9 @@ file	dev/isa/lpt.c			lpt needs-flag
 #
 
 # Adaptec AHA-154x family
-device	aha: scsi
+# device declaration in sys/conf/files
 attach	aha at isa with aha_isa: isadma
-file	dev/isa/aha.c			aha
+file	dev/isa/aha_isa.c		aha_isa
 
 # Adaptec AIC-6[32]60 ICs
 device	aic: scsi, isadma
