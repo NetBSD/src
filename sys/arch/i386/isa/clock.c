@@ -60,6 +60,7 @@
 #include "i386/isa/icu.h"
 #include "i386/isa/isa.h"
 #include "i386/isa/rtc.h"
+#include "i386/isa/timerreg.h"
 
 #define DAYST 119
 #define DAYEN 303
@@ -71,7 +72,7 @@ startrtclock() {
 	findcpuspeed();		/* use the clock (while it's free)
 					to find the cpu speed */
 	/* initialize 8253 clock */
-	outb (IO_TIMER1+3, 0x36);
+	outb(TIMER_MODE, TIMER_SEL0|TIMER_RATEGEN|TIMER_16BIT);
 	outb (IO_TIMER1, XTALSPEED/hz);
 	outb (IO_TIMER1, (XTALSPEED/hz)/256);
 

@@ -41,6 +41,7 @@ CFLAGS=	-O ${COPTS}
 
 NORMAL_C= ${CC} -c ${CFLAGS} ${PROF} $<
 NORMAL_C_C= ${CC} -c ${CFLAGS} ${PROF} ${PARAM} $<
+NORMAL_S= ${CPP} -I. -DLOCORE ${COPTS} $< | ${AS} ${ASFLAGS} -o $*.o
 DRIVER_C= ${CC} -c ${CFLAGS} ${PROF} $<
 DRIVER_C_C= ${CC} -c ${CFLAGS} ${PROF} ${PARAM} $<
 SYSTEM_OBJS=locore.o ${OBJS} param.o ioconf.o conf.o
