@@ -35,6 +35,12 @@
  */
 #define OPENSSL_HAS_20031107_FIX
 
+/* The following macro indicates that this version of OpenSSL
+ * contains the security-related diffs between 0.9.6l and 0.9.6m
+ * that were pulled up to the netbsd-1-6 branch on 2004-04-01.
+ */
+#define OPENSSL_HAS_20040401_FIX
+
 /* The macros below are to be used for shared library (.so, .dll, ...)
  * versioning.  That kind of versioning works a bit differently between
  * operating systems.  The most usual scheme is to set a major and a minor
