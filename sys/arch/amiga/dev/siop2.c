@@ -1,4 +1,4 @@
-/*	$NetBSD: siop2.c,v 1.11 1999/04/01 17:27:22 mhitch Exp $	*/
+/*	$NetBSD: siop2.c,v 1.12 1999/06/07 21:30:57 is Exp $	*/
 
 /*
  * Copyright (c) 1994,1998 Michael L. Hitch
@@ -645,6 +645,23 @@ siopngreset(sc)
 	splx (s);
 
 	delay (siopng_reset_delay * 1000);
+
+	/*
+	 * is lower half unterminated?
+	 */
+	if ((rp->siop_sbdl & 0x00ff) == 0x00ff) {
+		printf(" no SCSI termination, host adapter deactivated.\n");
+		sc->sc_link.scsipi_scsi.max_target = -1;	/* XXX */
+		sc->sc_flags &= ~(SIOP_ALIVE|SIOP_INTDEFER|SIOP_INTSOFF);
+		/* disable SCSI and DMA interrupts */
+		sc->sc_sien = 0;
+		sc->sc_dien = 0;
+		rp->siop_sien = sc->sc_sien;
+		rp->siop_dien = sc->sc_dien;
+
+		return;
+	}
+
 	/*
 	 * Check if upper half of SCSI bus is unterminated, and disallow
 	 * disconnections if it appears to be unterminated.
