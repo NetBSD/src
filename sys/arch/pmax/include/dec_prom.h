@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_prom.h,v 1.14 1999/03/01 04:01:50 simonb Exp $	*/
+/*	$NetBSD: dec_prom.h,v 1.15 2000/01/09 15:34:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,8 +53,8 @@
  *	v 9.3 90/02/20 14:34:07 shirriff Exp  SPRITE (Berkeley)
  */
 
-#ifndef _DEC_PROM
-#define _DEC_PROM
+#ifndef _PMAX_DEC_PROM_H_
+#define _PMAX_DEC_PROM_H_
 
 /*
  * This file was created based on information from the document
@@ -337,4 +337,4 @@ typedef struct {
 
 #define DEC_REX_MAGIC		0x30464354	/* REX Magic number */
 
-#endif /* _DEC_PROM */
+#endif	/* !_PMAX_DEC_PROM_H_ */

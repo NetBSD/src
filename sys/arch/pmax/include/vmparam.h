@@ -1,7 +1,7 @@
-/*	$NetBSD: vmparam.h,v 1.10 2000/01/09 14:28:54 ad Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.11 2000/01/09 15:34:44 ad Exp $	*/
 
 #ifndef _PMAX_VMPARAM_H_
-#define _PMAX_VMPARAM_H_	1
+#define _PMAX_VMPARAM_H_
 
 #include <mips/vmparam.h>
 

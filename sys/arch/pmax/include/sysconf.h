@@ -1,4 +1,4 @@
-/* $NetBSD: sysconf.h,v 1.5 1999/11/25 01:40:23 simonb Exp $ */
+/*	$NetBSD: sysconf.h,v 1.6 2000/01/09 15:34:44 ad Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -29,6 +29,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
  * Additional reworking by Matthew Jacob for NASA/Ames Research Center.
  * Copyright (c) 1997
@@ -43,7 +44,6 @@
 
 #ifndef	_PMAX_SYSCONF_H_
 #define	_PMAX_SYSCONF_H_
-
 
 #ifdef _KERNEL
 /*
@@ -92,6 +92,6 @@ int	memsize_bitmap __P((caddr_t));
 void	platform_not_configured __P((void));
 void	platform_not_supported __P((void));
 
-
 #endif /* _KERNEL */
-#endif /* !_PMAX_SYSCONF_H_ */
+
+#endif	/* !_PMAX_SYSCONF_H_ */
