@@ -38,7 +38,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
 	/*.asciz "from: @(#)rindex.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: rindex.S,v 1.2 1993/12/08 21:01:58 mycroft Exp $"
+	.asciz "$Id: rindex.S,v 1.3 1995/02/08 18:33:20 mycroft Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 #include "DEFS.h"
@@ -48,15 +48,15 @@ ENTRY(strrchr)
 #else
 ENTRY(rindex)
 #endif
-	movl	sp@(4),a0	/* string */
-	movb	sp@(11),d0	/* char to look for */
-	subl	a1,a1		/* clear rindex pointer */
+	movl	sp@(4),a0		| string
+	movb	sp@(11),d0		| char to look for
+	subl	a1,a1			| clear rindex pointer
 rixloop:
-	cmpb	a0@,d0		/* found our char? */
-	jne	rixnope		/* no, check for null */
-	movl	a0,a1		/* yes, remember location */
+	cmpb	a0@,d0			| found our char?
+	bne	rixnope			| no, check for null
+	movl	a0,a1			| yes, remember location
 rixnope:
-	tstb	a0@+		/* null? */
-	jne	rixloop		/* no, keep going */
-	movl	a1,d0		/* return value */
+	tstb	a0@+			| null?
+	bne	rixloop			| no, keep going
+	movl	a1,d0			| return value
 	rts
