@@ -1,4 +1,4 @@
-/*	$NetBSD: rcp.c,v 1.14 1997/06/07 07:11:34 jeremy Exp $	*/
+/*	$NetBSD: rcp.c,v 1.15 1997/07/20 20:47:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1990, 1992, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1992, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: rcp.c,v 1.14 1997/06/07 07:11:34 jeremy Exp $";
+__RCSID("$NetBSD: rcp.c,v 1.15 1997/07/20 20:47:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -112,6 +112,7 @@ void	 source __P((int, char *[]));
 void	 tolocal __P((int, char *[]));
 void	 toremote __P((char *, int, char *[]));
 void	 usage __P((void));
+int	 main __P((int, char *[]));
 
 int
 main(argc, argv)
@@ -228,7 +229,7 @@ main(argc, argv)
 
 	(void)signal(SIGPIPE, lostconn);
 
-	if (targ = colon(argv[argc - 1]))	/* Dest is remote host. */
+	if ((targ = colon(argv[argc - 1])) != NULL)/* Dest is remote host. */
 		toremote(targ, argc, argv);
 	else {
 		tolocal(argc, argv);		/* Dest is local host. */
@@ -250,7 +251,7 @@ toremote(targ, argc, argv)
 	if (*targ == 0)
 		targ = ".";
 
-	if (thost = strchr(argv[argc - 1], '@')) {
+	if ((thost = strchr(argv[argc - 1], '@')) != NULL) {
 		/* user@host */
 		*thost++ = 0;
 		tuser = argv[argc - 1];
@@ -274,7 +275,7 @@ toremote(targ, argc, argv)
 			    strlen(src) + (tuser ? strlen(tuser) : 0) +
 			    strlen(thost) + strlen(targ) + CMDNEEDS + 20;
 			if (!(bp = malloc(len)))
-				err(1, NULL);
+				err(1, "%s", "");
 			if (host) {
 				*host++ = 0;
 				suser = argv[i];
@@ -299,11 +300,11 @@ toremote(targ, argc, argv)
 			if (rem == -1) {
 				len = strlen(targ) + CMDNEEDS + 20;
 				if (!(bp = malloc(len)))
-					err(1, NULL);
+					err(1, "%s", "");
 				(void)snprintf(bp, len, "%s -t %s", cmd, targ);
 				host = thost;
 				if ((name = strdup(pwd->pw_name)) == NULL)
-					err(1, NULL);
+					err(1, "%s", "");
 #ifdef KERBEROS
 				if (use_kerberos)
 					rem = kerberos(&host, bp, name,
@@ -338,7 +339,7 @@ tolocal(argc, argv)
 			len = strlen(_PATH_CP) + strlen(argv[i]) +
 			    strlen(argv[argc - 1]) + 20;
 			if (!(bp = malloc(len)))
-				err(1, NULL);
+				err(1, "%s", "");
 			(void)snprintf(bp, len, "exec %s%s%s %s %s", _PATH_CP,
 			    iamrecursive ? " -r" : "", pflag ? " -p" : "",
 			    argv[i], argv[argc - 1]);
@@ -363,7 +364,7 @@ tolocal(argc, argv)
 		}
 		len = strlen(src) + CMDNEEDS + 20;
 		if ((bp = malloc(len)) == NULL)
-			err(1, NULL);
+			err(1, "%s", "");
 		(void)snprintf(bp, len, "%s -f %s", cmd, src);
 		rem = 
 #ifdef KERBEROS
@@ -503,7 +504,7 @@ rsource(name, statp)
 		closedir(dirp);
 		return;
 	}
-	while (dp = readdir(dirp)) {
+	while ((dp = readdir(dirp)) != NULL) {
 		if (dp->d_ino == 0)
 			continue;
 		if (!strcmp(dp->d_name, ".") || !strcmp(dp->d_name, ".."))
@@ -533,7 +534,8 @@ sink(argc, argv)
 	BUF *bp;
 	off_t i, j;
 	int amt, count, exists, first, mask, mode, ofd, omode;
-	int setimes, size, targisdir, wrerrno;
+	int setimes, size, targisdir;
+	int wrerrno = 0;	/* pacify gcc */
 	char ch, *cp, *np, *targ, *why, *vect[1], buf[BUFSIZ];
 
 #define	atime	tv[0]
