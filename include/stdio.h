@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.41 2000/12/29 15:22:48 kleink Exp $	*/
+/*	$NetBSD: stdio.h,v 1.41.2.1 2001/11/16 02:56:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -292,11 +292,9 @@ __END_DECLS
      !defined(_XOPEN_SOURCE)) || (_POSIX_C_SOURCE - 0) >= 199506L || \
     (_XOPEN_SOURCE - 0) >= 500 || defined(_REENTRANT)
 __BEGIN_DECLS
-#if 0 /* not yet */
 void	flockfile __P((FILE *));
 int	ftrylockfile __P((FILE *));
 void	funlockfile __P((FILE *));
-#endif /* 0 */
 int	getc_unlocked __P((FILE *));
 int	getchar_unlocked __P((void));
 int	putc_unlocked __P((int, FILE *));
