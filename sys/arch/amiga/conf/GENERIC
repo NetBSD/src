@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.155 2001/01/21 20:38:20 is Exp $
+#	$NetBSD: GENERIC,v 1.156 2001/02/02 21:52:13 is Exp $
 
 #
 #if 0
@@ -16,7 +16,7 @@
 
 include "arch/amiga/conf/std.amiga"
 
-#ident 		"GENERIC-$Revision: 1.155 $"
+#ident 		"GENERIC-$Revision: 1.156 $"
 
 #ifdef INSTALL_CONFIGURATION
 makeoptions	COPTS="-Os"
@@ -238,6 +238,15 @@ options 	GRF_SUPER72	# AGA Super-72
 #options 	RH_HARDWARECURSOR
 
 #ifdef AMIGA_CONFIGURATION
+# wscons aware interface to amiga custom chips. Text-only console.
+# If you enable it enable also wskbd. 
+# 
+#amidisplaycc0	at mainbus0		# wscons interface to custom chips
+#wsdisplay0	at amidisplaycc0 console ?
+#options	WSEMUL_VT100
+#endif
+
+#ifdef AMIGA_CONFIGURATION
 grfcc0		at mainbus0		# custom chips
 grfrt0		at zbus0		# retina II
 #endif
@@ -294,6 +303,16 @@ lpt*		at hyper? port ?	# Hypercom3+/4+ parallel port
 #iobl*		at zbus?		# zbus IOBlix
 #com*		at iobl? port ?		# IOBlix serial ports
 #lpt*		at iobl? port ?		# IOBlix parallel ports
+
+
+#
+# Keyboard device. Optionally can attach a wskbd.
+# wskbd works together with a wsdisplay so enable them both if you will.
+# Don't enable wskbd if you use ite.
+#
+# XXX in std.amiga: kbd0 at mainbus0
+#wskbd0		at kbd0 console ?
+
 
 #ifdef AMIGA_CONFIGURATION
 #
