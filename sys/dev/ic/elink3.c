@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.96 2001/07/20 05:44:48 thorpej Exp $	*/
+/*	$NetBSD: elink3.c,v 1.97 2001/07/27 02:33:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -460,6 +460,12 @@ epconfig(sc, chipset, enaddr)
 	    ep_media_status);
 
 	/*
+	 * All CORKSCREW chips have MII.
+	 */
+	if (sc->ep_chipset == ELINK_CHIPSET_CORKSCREW)
+		sc->ep_flags |= ELINK_FLAGS_MII;
+
+	/*
 	 * Now, determine which media we have.
 	 */
 	switch (sc->ep_chipset) {
@@ -470,6 +476,7 @@ epconfig(sc, chipset, enaddr)
 		}
 		/* FALLTHROUGH */
 
+	case ELINK_CHIPSET_CORKSCREW:
 	case ELINK_CHIPSET_BOOMERANG:
 		/*
 		 * If the device has MII, probe it.  We won't be using
