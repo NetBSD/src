@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.3 1998/11/15 00:01:24 hubertf Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.4 1998/12/03 15:14:40 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1580,6 +1580,21 @@ int rf_DispatchKernelIO(queue, req)
 
 	bp = req->bp;
 
+	/* 
+	   XXX when there is a physical disk failure, someone is passing 
+	   us a buffer that contains old stuff!!  Attempt to deal with
+	   this problem without taking a performance hit...
+	   (not sure where the real bug is.  It's buried in RAIDframe
+	   somewhere) :-(  GO )
+	 */
+
+	if (bp->b_flags & B_ERROR) {
+		bp->b_flags &= ~B_ERROR;
+	}
+	if (bp->b_error!=0) {
+		bp->b_error = 0;
+	}
+
 	raidbp = RAIDGETBUF(rs);
 
 	raidbp->rf_flags = 0; /* XXX not really used anywhere... */
@@ -1713,8 +1728,31 @@ static void KernelWakeupFunc(vbp)
 
   unit = queue->raidPtr->raidid; /* *Much* simpler :-> */
 
+
+  /* XXX Ok, let's get aggressive... If B_ERROR is set, let's go ballistic, 
+     and mark the component as hosed... */
+#if 1
+  if (bp->b_flags&B_ERROR) {
+	  /* Mark the disk as dead */
+	  /* but only mark it once... */
+	  if (queue->raidPtr->Disks[queue->row][queue->col].status == 
+	      rf_ds_optimal) {
+		  printf("raid%d: IO Error.  Marking %s as failed.\n", 
+			 unit, queue->raidPtr->Disks[queue->row][queue->col].devname );
+		  queue->raidPtr->Disks[queue->row][queue->col].status = 
+			  rf_ds_failed;
+		  queue->raidPtr->status[queue->row] = rf_rs_degraded;
+		  queue->raidPtr->numFailures++;
+	  } else {  /* Disk is already dead... */
+		  /*  printf("Disk already marked as dead!\n"); */
+	  }
+	  
+  }
+#endif
+
   rs = &raid_softc[unit];
   RAIDPUTBUF(rs,raidbp);
+
 
   if (bp->b_resid==0) {
 	  db1_printf(("Disk is no longer busy for this buffer... %d %ld %ld\n",
