@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.22 1999/09/13 23:03:05 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.23 1999/09/13 23:08:44 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -349,3 +349,7 @@ distrib/utils/sysinst/arch/mac68k/md.c		1.12
 
   Insert a leading slash in device name used in md_pre_disklabel(),
   fixing PR#8384.  (briggs)
+
+sys/arch/arm32/podulebus/if_ie.c		(patch)
+
+  Fix Berkeley Packet Filter support, fixing PR#8343.  (tron)
