@@ -1,4 +1,4 @@
-/*	$NetBSD: asic.c,v 1.36 1999/04/26 09:36:05 nisimura Exp $	*/
+/*	$NetBSD: asic.c,v 1.37 1999/09/03 07:12:45 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <dev/tc/tcvar.h>
@@ -37,22 +36,12 @@
 #include <machine/bus.h>			/* wbflush() */
 #include <machine/autoconf.h>
 
-#ifdef alpha
-#include <machine/rpb.h>
-#include <alpha/tc/tc.h>
-#include <alpha/tc/asic.h>
-#endif
-
-#ifdef pmax
 #include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/asic.h>
 #include <pmax/pmax/kmin.h>
 #include <pmax/pmax/maxine.h>
 #include <pmax/pmax/kn03.h>
 #include <pmax/pmax/turbochannel.h>	/* interrupt enable declaration */
-
-#include <pmax/pmax/kmin.h>
-#include <pmax/pmax/nameglue.h>
 
 /*
  * Which system models were configured?
@@ -101,7 +90,6 @@ struct ioasic_dev kn02_ioasic_devs[] = {
 };
 const int kn02_ioasic_ndevs  =  ARRAY_SIZEOF(kn02_ioasic_devs);
 #endif /* DEC_3MAX */
-#endif /* pmax */
 
 
 /* Definition of the driver for autoconfig. */
@@ -116,9 +104,7 @@ struct cfattach ioasic_ca = {
 	sizeof(struct ioasic_softc), ioasicmatch, ioasicattach
 };
 
-#ifdef	pmax
 struct ioasic_dev *ioasic_devs;
-#endif	/*pmax*/
 
 
 int
@@ -200,24 +186,7 @@ ioasicattach(parent, self, aux)
 
 	ioasic_base = sc->sc_base;			/* XXX XXX XXX */
 
-#ifdef pmax
 	printf("\n");
-#else	/* Alpha AXP: select ASIC speed  */
-#ifdef DEC_3000_300
-	if (systype == ST_DEC_3000_300) {
-		*(volatile u_int *)IOASIC_REG_CSR(sc->sc_base) |=
-		    IOASIC_CSR_FASTMODE;
-		MB();
-		printf(": slow mode\n");
-	} else
-#endif /*DEC_3000_300*/
-		printf(": fast mode\n");
-
-	/* Decstations use hand-craft code to enable asic interrupts */
-	BUS_INTR_ESTABLISH(ta, asic_intr, sc);
-
-#endif 	/* Alpha AXP: select ASIC speed  */
-
 
 	/*
 	 * Try to configure each ioctl asic baseboard device.
@@ -225,24 +194,22 @@ ioasicattach(parent, self, aux)
         ioasic_attach_devs(sc, ioasic_devs, ndevs);
 }
 
-
 void
 ioasic_intr_establish(dev, cookie, level, handler, val)
-    struct device *dev;
-    void *cookie;
-    tc_intrlevel_t level;
-    intr_handler_t handler;
-    void *val;
+	struct device *dev;
+	void *cookie;
+	tc_intrlevel_t level;
+	intr_handler_t handler;
+	void *val;
 {
 
 	(*tc_enable_interrupt)((int)cookie, handler, val, 1);
 }
 
-
-/* XXX */
 char *
 ioasic_lance_ether_address()
 {
+
 	return (u_char *)IOASIC_SYS_ETHER_ADDRESS(ioasic_base);
 }
 
