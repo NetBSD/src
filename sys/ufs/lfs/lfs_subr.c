@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.34 2003/02/23 00:22:34 perseant Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.35 2003/03/04 19:15:26 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.34 2003/02/23 00:22:34 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.35 2003/03/04 19:15:26 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -383,7 +383,6 @@ lfs_unmark_dirop(struct lfs *fs)
 	}
 }
 
-#ifndef LFS_NO_AUTO_SEGCLEAN
 static void
 lfs_auto_segclean(struct lfs *fs)
 {
@@ -413,7 +412,6 @@ lfs_auto_segclean(struct lfs *fs)
 			fs->lfs_suflags[fs->lfs_activesb][i];
 	}
 }
-#endif /* LFS_AUTO_SEGCLEAN */
 
 /*
  * lfs_segunlock --
@@ -507,9 +505,8 @@ lfs_segunlock(struct lfs *fs)
 			if (sync)
 				lfs_writesuper(fs, fs->lfs_sboffs[fs->lfs_activesb]);
 			lfs_writesuper(fs, fs->lfs_sboffs[1 - fs->lfs_activesb]);
-#ifndef LFS_NO_AUTO_SEGCLEAN
-			lfs_auto_segclean(fs);
-#endif
+			if (!(fs->lfs_ivnode->v_mount->mnt_flag & MNT_UNMOUNT))
+				lfs_auto_segclean(fs);
 			fs->lfs_activesb = 1 - fs->lfs_activesb;
 			--fs->lfs_seglock;
 			fs->lfs_lockpid = 0;
