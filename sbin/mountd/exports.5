@@ -1,4 +1,4 @@
-.\"	$NetBSD: exports.5,v 1.10 1997/03/23 20:58:14 fvdl Exp $
+.\"	$NetBSD: exports.5,v 1.11 1997/03/30 20:53:31 fvdl Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -78,7 +78,12 @@ flag;
 this form allows the host(s) to mount at any point within the filesystem,
 including regular files if the
 .Fl r
-option is used on mountd.
+option is used on mountd. Note that the
+.Fl alldirs
+option should not be used as a security measure to make clients mount
+only those subdirectories that they should have access to. A client
+can still access the whole filesystem via individual RPCs if it
+wanted to, even if just one subdirectory has been mounted.
 The pathnames must not have any symbolic links in them and should not have
 any "." or ".." components.
 Mount points for a filesystem may appear on multiple lines each with
@@ -160,11 +165,18 @@ is a synonym for
 in an effort to be backward compatible with older export file formats.
 .Pp
 The
-.Fl noresport
-option specifies that requests for the filesystem do not have to come
-from reserved ports. Normally clients are required to use reserved
-ports for operations. This includes mount/unmount as well as individual
-NFS requests.
+.Fl noresvport
+option specifies that NFS RPC calls for the filesystem do not have to come
+from reserved ports. Normally, clients are required to use reserved
+ports for operations. Using this option decreases the security of your
+system.
+.Pp
+The
+.Fl noresvmnt
+option specifies that mount RPC requests for the filesystem do not have
+to come from reserved ports. Normally, clients are required to use reserved
+ports for mount requests. Using this option decreases the security of
+your system.
 .Pp
 The third component of a line specifies the host set to which the line applies.
 The set may be specified in three ways.
