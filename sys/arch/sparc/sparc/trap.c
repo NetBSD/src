@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.24 1994/11/20 20:54:43 deraadt Exp $ */
+/*	$NetBSD: trap.c,v 1.25 1994/12/06 00:27:46 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -528,7 +528,7 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 	register struct proc *p;
 	register struct vmspace *vm;
 	register vm_offset_t va;
-	register int i, rv, sig = SIGBUS;
+	register int i, rv;
 	vm_prot_t ftype;
 	int onfault, mmucode;
 	u_quad_t sticks;
@@ -626,10 +626,8 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 		/*
 		 * Pagein failed.  If doing copyin/out, return to onfault
 		 * address.  Any other page fault in kernel, die; if user
-		 * fault, deliver SIGBUS or SIGSEGV.
+		 * fault, deliver SIGSEGV.
 		 */
-		if (rv != KERN_PROTECTION_FAILURE)
-			sig = SIGSEGV;
 fault:
 		if (psr & PSR_PS) {
 kfault:
@@ -646,7 +644,7 @@ kfault:
 			tf->tf_npc = onfault + 4;
 			return;
 		}
-		trapsignal(p, sig, (u_int)v);
+		trapsignal(p, SIGSEGV, (u_int)v);
 	}
 out:
 	if ((psr & PSR_PS) == 0) {
