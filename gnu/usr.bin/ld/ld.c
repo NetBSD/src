@@ -32,7 +32,7 @@ static char sccsid[] = "@(#)ld.c	6.10 (Berkeley) 5/22/91";
    Set, indirect, and warning symbol features added by Randy Smith. */
 
 /*
- *	$Id: ld.c,v 1.36 1994/10/30 14:18:42 pk Exp $
+ *	$Id: ld.c,v 1.37 1994/11/30 18:24:56 pk Exp $
  */
    
 /* Define how to initialize system-dependent header fields.  */
@@ -1802,6 +1802,7 @@ digest_pass1()
 					 * of this set vector.
 					 */
 					bzero(&reloc, sizeof(reloc));
+					RELOC_INIT_SEGMENT_RELOC(&reloc);
 					RELOC_ADDRESS(&reloc) =
 						setv_fill_count * sizeof(long);
 					alloc_rrs_segment_reloc(NULL, &reloc);
@@ -2285,6 +2286,7 @@ digest_pass2()
 					struct relocation_info reloc;
 
 					bzero(&reloc, sizeof(reloc));
+					RELOC_INIT_SEGMENT_RELOC(&reloc);
 					RELOC_ADDRESS(&reloc) =
 						(1 + i + length_word_index) *
 								sizeof(long)
