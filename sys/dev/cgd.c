@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.23 2005/03/31 11:28:53 yamt Exp $ */
+/* $NetBSD: cgd.c,v 1.24 2005/03/31 16:46:13 explorer Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.23 2005/03/31 11:28:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.24 2005/03/31 16:46:13 explorer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -587,7 +587,6 @@ bail:
 static int
 cgd_ioctl_clr(struct cgd_softc *cs, void *data, struct proc *p)
 {
-	struct	buf *bp;
 	int	s;
 
 	/* Kill off any queued buffers. */
