@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.57 2000/06/30 16:44:33 itojun Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.58 2000/07/28 02:39:45 itojun Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -1071,7 +1071,7 @@ out:
 		if (error == ENOBUFS) {
 			if (tp->t_inpcb)
 				tcp_quench(tp->t_inpcb, 0);
-#if 0 /*XXX def INET6*/
+#ifdef INET6
 			else if (tp->t_in6pcb)
 				tcp6_quench(tp->t_in6pcb, 0);
 #endif
