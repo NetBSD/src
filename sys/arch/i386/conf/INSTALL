@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.32 1997/01/31 01:50:50 thorpej Exp $
+#	$NetBSD: INSTALL,v 1.33 1997/03/13 04:15:26 cgd Exp $
 #
 #	INSTALL -- an installation kernel config.
 #                     adapters.    This kernel should be GENERICOTHER with lines
@@ -165,6 +165,8 @@ scsibus* at uha?
 wds0	at isa? port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
 wds1	at isa? port 0x358 irq 11 drq 5
 scsibus* at wds?
+isp*	at pci? dev ? function ?	# Qlogic ISP 10x0 SCSI controllers
+scsibus* at isp?
 
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 st*	at scsibus? target ? lun ?	# SCSI tape drives
