@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcboot.cpp,v 1.1 2001/02/09 18:34:41 uch Exp $	*/
+/*	$NetBSD: hpcboot.cpp,v 1.2 2001/03/22 18:21:02 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -171,6 +171,7 @@ hpcboot(void *arg, struct HpcMenuInterface::HpcMenuPreferences &pref)
 		goto failed;
 	}
 	menu.progress();
+	f._file->close();
 
 	// load file system image to memory
 	if (f.args.loadmfs) {
@@ -200,6 +201,7 @@ hpcboot(void *arg, struct HpcMenuInterface::HpcMenuPreferences &pref)
  failed:
 	if (error_message == 0)
 		error_message = TEXT("can't jump to kernel.\n");
+	f._file->close();
 	MessageBox(menu._root->_window, error_message,
 		   TEXT("BOOT FAILED"), 0);
 }
