@@ -34,7 +34,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strtok.3	8.2 (Berkeley) 2/3/94
-.\"	$NetBSD: strtok.3,v 1.10 1999/03/22 19:44:59 garbled Exp $
+.\"	$NetBSD: strtok.3,v 1.11 2000/07/20 14:06:23 kleink Exp $
 .\"
 .Dd February 3, 1994
 .Dt STRTOK 3
@@ -51,11 +51,6 @@
 .Ft char *
 .Fn strtok_r "char *str" "const char *sep" "char **lasts"
 .Sh DESCRIPTION
-.Bf -symbolic
-This interface is obsoleted by
-.Xr strsep 3 .
-.Ef
-.Pp
 The
 .Fn strtok
 function
@@ -82,6 +77,21 @@ after replacing the separator character itself with a
 .Dv NUL
 character.
 When no more tokens remain, a null pointer is returned.
+.Pp
+The
+.Fn strtok_r
+function implements the functionality of
+.Fn strtok
+but is passed an additional argument,
+.Fa lasts ,
+which points to a user-provided pointer which is used by
+.Fn strtok_r
+to store state which needs to be kept between calls to scan the same string;
+unlike
+.Fn strtok ,
+it is not necessary to delineate tokenizing to a single string at a time
+when using
+.Fn strtok_r .
 .Sh SEE ALSO
 .Xr index 3 ,
 .Xr memchr 3 ,
