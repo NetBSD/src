@@ -1,136 +1,159 @@
-	$NetBSD: install,v 1.17 1998/11/24 02:49:13 simonb Exp $	
-
-Reminder:
-	Always back up files before installing or upgrading.
-	If installing from source,  always install and boot a new kernel
-	before installing a new userland!
-
-
-If at all possible, you should consult the ``Installation Guide''
-document on the NetBSD/pmax web page, at http://www.netbsd.org/Ports/pmax.
+.\"	$NetBSD: install,v 1.18 1999/01/13 07:30:08 ross Exp $	
+.\"
+.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"        This product includes software developed by the NetBSD
+.\"        Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.
+.(tag Reminder:
+Always back up files before installing or upgrading.
+If installing from source, always install and boot a new kernel
+before installing a new userland!
+.tag)
+.Pp
+If at all possible, you should consult the
+.Em Installation Guide
+document on the NetBSD/pmax web page, at
+.Lk http://www.netbsd.org/Ports/pmax
 It has not been possible to reproduce the pmax installation Web page
-in fixed-font hardcopy format for the _VER release.  You must either visit
+in fixed-font hardcopy format for the \*V release. You must either visit
 the URL above, or request a rendered version (e.g., PostScript).
-
-Please check the NetBSD/pmax _VER installation instructions at
-
-    http://www.netbsd.org/Ports/pmax/pmax-install.html
-
+.Pp
+Please check the NetBSD/pmax \*V installation instructions at
+.Lk http://www.netbsd.org/Ports/pmax/pmax-install.html
 now, and return to this document when you used those instructions to
 install a diskimage, and used sysinst to label a disk and extract the
 NetBSD/pmax _VER installation tar sets.
-
-
-Install via a NetBSD CDROM.
----------------------------
-
+.
+.Ss2 Install\ via\ a\ NetBSD\ CDROM
+.
 You can obtain the disk image or diskless boot tar file from the
-NetBSD _VER CDROM.
-
-
+.Nx \*V
+.Tn CDROM .
+.Pp
 To mount the CDROM from a NetBSD/pmax host, type
-
-	mount -r -t cd9660 /dev/rzXc /mnt
-
+.D1 Ic mount\ -r\ -t\ cd9660\ /dev/rz Ns Ar X Ns Ic c\ /mnt
 and from an Ultrix host
-
-	mount -r -t cdfs -o nodefperm,noversion /dev/rzXc /mnt
-
-where X is the SCSI id of the CDROM.
-
-
-** NOTE:  Ultrix does not have Rock Ridge extensions so leave out
+.D1 Ic mount\ -r\ -t\ cdfs\ -o\ nodefperm,noversion\ /dev/rz Ns Ar X Ns Ic c\ /mnt
+.No where Ar X
+is the SCSI id of the CDROM.
+.(Note
+Ultrix does not have Rock Ridge extensions so leave out
 everything between the first and last . in the paths on the CD.
-For example, the path NetBSD-1.3.2 would show up as NetBSD-1.2.
-
-
+For example, the path
+.Pa NetBSD-1.3.2
+would show up as
+.Pa NetBSD-1.2 .
+.Note)
+.Pp
 The diskimage file can be found on the CDROM at the following
 location (relative to the mount point of the CD)
-
-	NetBSD-_VER/pmax/installation/diskimage/diskimage.gz
-
+.Dl NetBSD-\*V/pmax/installation/diskimage/diskimage.gz
 and the diskless boot tar file can be found at
-
-	NetBSD-_VER/pmax/installation/netboot/diskimage.tgz
-
-Once you have located these files, continue on to either the "Install
-via diskless boot", "Install via diskimage" or "Installing from Ultrix"
+.Dl NetBSD-\*V/pmax/installation/netboot/diskimage.tgz
+Once you have located these files, continue on to either
+.Sx Install via diskless boot ,
+.Sx Install via diskimage
+or
+.Sx Installing from Ultrix
 section later in the INSTALL notes.
-
-
-
-Install via diskless boot.
---------------------------
-
+.
+.Ss2 Install\ via\ diskless\ boot
+.
 The preferred path is to upgrade or install by diskless-booting a
-minimal system via NFS, and using that to upgrade or install.  The
-file
-	installation/netboot/diskimage.tar.gz
-
-contains a suitable set of files. (it is a tar copy of the contents of
-a root filesystem diskimage) .  You will need to find an NFS server,
+minimal system via NFS, and using that to upgrade or install.  The file
+.Dl installation/netboot/diskimage.tar.gz
+contains a suitable set of files. (It is a tar copy of the contents of
+a root filesystem diskimage.) You will need to find an NFS server,
 unpack the tarfile, and setup BOOTP/dhcp service for your pmax.
 Complete instructions are in the installation notes or the pmax web
 page.
-
+.Pp
 Since the system install utility, sysinst, requires a read/write root,
 netbooting is only feasible if your NFS server exports the diskless
 root read-write.  If this is not possible, you should install via
 diskimage.
-
-
-
-Install via diskimage.
-----------------------
-
-If netbooting with a _writable_ NFS root is not possible, the
+.
+.Ss2 Install via diskimage
+.
+If netbooting with a
+.Em writable
+.Tn NFS
+root is not possible, the
 recommended installation is to unpack and copy a diskimage onto the
-raw partition of a disk.  The diskimage file is in
-
-installation/diskimage/diskimage.gz
-
-is shipped compressed and is around 8020 kBytes; it uncompresses to
+raw partition of a disk. The diskimage file is in
+.Dl installation/diskimage/diskimage.gz
+It is shipped compressed and is around 8020 kBytes, uncompressing to
 exactly 32Mbytes.
-
+.Pp
 To install the diskimage onto disk rzX on a NetBSD/pmax system, do:
-	disklabel -W /dev/rrzXc
-	gunzip -c diskimage.gz | dd of=/dev/rrzXc bs=10240
-
-When installing on a disk with not NetBSD or Ultrix label, you may get a
+.D1 Ic disklabel -W /dev/rrzXc
+.D1 Ic gunzip -c diskimage.gz\ |\ dd of=/dev/rrzXc bs=10240
+.Pp
+When installing on a disk with no NetBSD or Ultrix label, you may get a
 message like:
-	rzX: WARNING: trying Ultrix label, no disk label
+.Dl rzX: WARNING: trying Ultrix label, no disk label
 or when installing on an old Ultrix disk, you may get a message like:
-	rzX: WARNING: using ULTRIX partition information
+.Dl rzX: WARNING: using ULTRIX partition information
 when issuing the "disklabel -W /dev/rrzXc" command.  This can safely be
 ignored.
-
+.Pp
 Most other NetBSD ports are similar, but use rsdXc instead of rrzXc.
-
+.Pp
 On NetBSD/i386, the `raw disk partition' is the 'd' parttion, so do:
-	disklabel -W /dev/rsdXd
-	gunzip -c diskimage.gz | dd of=/dev/rsdXd bs=10240
-
-On NetBSD, be sure to use disklabel -W to enable writing to the label
+.D1 Ic disklabel -W /dev/rsdXd
+.D1 Ic gunzip -c diskimage.gz\ |\ dd of=/dev/rsdXd bs=10240
+.Pp
+On NetBSD, be sure to use
+.Ic disklabel -W
+to enable writing to the label
 area of the disk. If you forget this and/or use the `block' device,
 the dd command will silently fail.
-
+.Pp
 On MS-DOS, use an unzip utlility, then use rawrite.
-
-Then boot using, e.g,
-	>> boot -f rz(0,X,0)netbsd		# 3100
-	>> boot 5/rzX/netbsd 			# 5000/200
-	>> boot 3/rzX/netbsd			# other machines
-
-	(NOTE: replace the X with the unit number of your disk:
-         boot 3/rz2/netbsd to boot drive 2 on a 5000/xxx.)
-
+.Pp
+Then, boot using, e.g,
+.Bd -literal -offset indent
+\*>\*> boot -f rz(0,X,0)netbsd		# 3100
+\*>\*> boot 5/rzX/netbsd 			# 5000/200
+\*>\*> boot 3/rzX/netbsd			# other machines
+.Ed
+.(Note
+replace the X with the unit number of your disk:
+boot 3/rz2/netbsd to boot drive 2 on a 5000/xxx.
+.Note)
+.Pp
 then continue from ``Once you've booted the diskimage''.
-
-
-
-Installing from Ultrix
-----------------------
-
+.
+.Ss2 Installing from Ultrix
+.
 The Ultrix bootloader can boot ECOFF-format NetBSD kernels.
 So the technique of dd'ing a disk image into swap, copying
 a kernel to the root, and then booting via the "n" argument
@@ -138,57 +161,48 @@ should work with Ultrix too.  Since Ultrix cannot mount
 4.4BSD format FFS filesystems, just dd the diskimage into
 your swap partition, copy a netbsd.ecoff kernel from the FTP site,
 and proceed from step #5 of the `Upgrade via diskimage' above.
-
+.Pp
 You should do this from single-user mode, to ensure that swapping is
 not enabled when you copy the diskimage into the swap partition.
-
-On Ultrix, use the "chpt -q /dev/rz?c" command to be sure your swap
+.Pp
+On Ultrix, use the 
+.Ic chpt -q /dev/rz?c
+command to be sure your swap
 partition (typically "b") is big enough to hold the diskimage (32Mbytes
 or more).
-
+.Pp
 Again, be sure to specify the partition where you dd'ed the NetBSD
 diskimage as your root device in step #7!
-
-
-Details of dd'ing a disk image into the swap partition are covered in
-the "QUICK.INSTALL" file, which should be in the same directory where
+.Pp
+Details of dd'ing a disk image into the swap partition are covered in the
+.Pa QUICK.INSTALL
+file, which should be in the same directory where
 these install notes are located.
-
-
-
-Once you've booted the diskimage
---------------------------------
-
+.
+.Ss2 Once you've booted the diskimage
+.
 Once you'e booted a diskimage and pointed the kernel at the approriate
 devices to use for root, and dump, NetBSD kernel will prompt you for
 a single-user shell
-
-	Enter pathname of shell or RETURN for sh: 
-
+.Dl Enter pathname of shell or RETURN for sh: 
 At this point, press the RETURN key.  When you get a standalone root
 prompt, set your terminal type
-
-	TERM=pmax; export TERM;
-
+.D1 Ic TERM=pmax; export TERM;
 for a framebuffer console, or
-
-	TERM=vt100; export TERM
-
+.D1 Ic TERM=vt100; export TERM
+.Pp
 if using a serial console with a vt100-compatible terminal.
-
+Pp
 Next, you need to ensure that the root filesystem is writable so that
 sysinst can create temporary files, temporary disklabels, etc.
 If you booted via NFS, the diskless root should already be writable.
 If you booted from disk, type
-
-	mount /dev/rzXY /
-
+.D1 Ic mount /dev/rzXY /
 where X is the disk unit you booted from, and Y is either a or b,
 (e.g., use /dev/rz2a for drive 2 with diskimage in the 'a' partition,
 and rz2b for diskimage in swap.)
-
-
-CD-ROM INSTALLATION NOTE:  If you are installing from a CD-ROM, sysinst
+.Em CD-ROM installation note:
+If you are installing from a CD-ROM, sysinst
 will offer you a default choice of "cd0" for the CD-ROM device.  Unlike
 other NetBSD ports, NetBSD/pmax currently uses the same device driver
 for both hard disks and CD-ROMs.  You will need to specify "rzX" (where
@@ -196,39 +210,32 @@ X is the SCSI id of the CD-ROM) as the CD-ROM device.  Also note that
 sysinst doesn't expect a partition - just the base device.  If you still
 have problems, you can try issuing the following command before starting
 sysinst
-
-	mount -r -t cd9660 /dev/rzXc /mnt2
-
+.Dl Ic mount -r -t cd9660 /dev/rzXc /mnt2
 where X is the SCSI id of the CD-ROM.  You can then ignore any errors
 trying to mount the CD-ROM from within sysinst.
-
-
+.Pp
 Then, start sysinst
-
-	sysinst
-
+.D1 Ic sysinst
 Then, choose 'install' or 'upgrade'.
-
+.Pp
 When you've finished the install/upgrade, be sure to edit /etc/rc.conf
 and set "rc_configured" to YES when you are done.  If you're doing an
 upgrade, merge your old etc from /etc.old into /etc.
-
+.Pp
 You're then ready to reboot!
-
-
-
-Post-intallation notes:
-----------------------
-Some of the files in the NetBSD _VER distribution might need to be
+.
+.Ss2 Post-Installation Notes
+.
+Some of the files in the NetBSD \*V distribution might need to be
 tailored for your site.  In particular, the /etc/sendmail.cf file will
 almost definitely need to be adjusted, and other files in /etc will
 probably need to be modified.  If you are unfamiliar with UN*X-like
 system administration, it's recommended that you buy a book that
 discusses it.
-
-NetBSD/pmax 1.3 uses an X11R5 X server. These servers cannot read the
+.Pp
+NetBSD/pmax \*V uses an X11R5 X server. These servers cannot read the
 compressed fonts which are shipped with standard X11R6 configurations.
-
+.Pp
 If you installed X11 and want to run a local Xserver, you must take
 post-installation steps to make the X11R5 server work that are
 standard for X11R6.3. The distribution file /usr/X11R6/bin/README.pmax

@@ -1,17 +1,21 @@
-	$NetBSD: hardware,v 1.2 1998/01/09 18:45:55 perry Exp $	
+.\"	$NetBSD: hardware,v 1.3 1999/01/13 07:30:03 ross Exp $	
 
-NetBSD/arm32 _VER runs on several systems with ARM6 or above processors,
-with or without FPU coprocessor.  The minimal configuration is said to
+NetBSD/arm32 \*V runs on several systems with
+.Tn ARM6
+or above processors,
+with or without FPU coprocessor. The minimal configuration is said to
 require 8M of RAM and 50M of disk space, though we do not know of anyone
-running with a system quite this minimal today.  To install the entire
+running with a system quite this minimal today. To install the entire
 system requires much more disk space (the unpacked binary distribution,
 without sources, requires at least 65M without counting space needed for
 swap space, etc), and to run X or compile the system, more RAM is
 recommended. (8M of RAM will actually allow you to run X and/or compile,
-but it won't be speedy.  Note that until you have around 16M of RAM,
+but it won't be speedy. Note that until you have around 16M of RAM,
 getting more RAM is more important than getting a faster CPU.)
-
-Supported devices include (but is not limit to):
+.Pp
+Supported devices include (but is not limited to):
+.Pp
+.Bd -literal -offset indent
 	RiscPC/A7000(+) floppy controller.
 	IDE controllers:
 		Acorn motherboard IDE.
@@ -75,18 +79,26 @@ Supported devices include (but is not limit to):
 		A7000 keyboard.
 		RiscPC realtime clock.
 		VLSI RC7500 motherboard devices.
-
+.Ed
+.Pp
 Drivers for hardware marked with "[*]" are NOT present in installation
 kernels. 
-
+.Pp
 Support for some devices is limited to particular kernels. eg there is no
 SA110 support in A7000 kernels.
-
+.Pp
 Hardware the we do NOT currently support, but get many questions
 about:
-	Acorn/Aleph1 PC cards.
-	Any SCSI card using a PowerROM.
-	Podule based serial ports.
-	Castle SCSI/Ethernet cards.
-
-Drivers are planned for some of the above.
+.Pp
+.Bl -bullet -compact
+.It
+Acorn/Aleph1 PC cards.
+.It
+Any SCSI card using a PowerROM.
+.It
+Podule based serial ports.
+.It
+Castle SCSI/Ethernet cards.
+.El
+.Pp
+Drivers are planned for some of the above devices.

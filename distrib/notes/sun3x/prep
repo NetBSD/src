@@ -1,38 +1,49 @@
-	$NetBSD: prep,v 1.2 1998/01/09 18:47:45 perry Exp $	
-
+.\"	$NetBSD: prep,v 1.3 1999/01/13 07:30:09 ross Exp $	
+.
 Sun3x machines usually need little or no preparation before installing
-NetBSD, other than the usual, well advised precaution of BACKING UP
+.Nx ,
+other than the usual, well advised precaution of BACKING UP
 ALL DATA on any attached storage devices.
-
+.Pp
 You will need to know the SCSI target ID of the drive on which you
-will install NetBSD.  Note that SunOS/sun3x uses confusing names for
+will install
+.Nx .
+.(Note
+SunOS/sun3x uses confusing names for
 the SCSI devcies: target 1 is sd2, target 2 is sd4, etc.
-
+.Note)
+.Pp
 It might be a good time to run the diagnostics on your Sun3x.
 The diagnostic switch forces all diagnostic information to be printed
 to the ttya serial port, so it is a good idea to first attach a terminal
 to it before proceeding.
-
- for 3/460/470/480 machines
-
-   Set the "Diag/Norm" switch to the Diagnostic position and power on the
-   machine.
-
- for 3/80 machines
-
-   Power on the unit and enter the command 'q 70b 12' and reboot.
-   When you wish to return to normal boot mode, use 'q 70b 6'.
-
+.Bl -tag -width indent -offset indent
+.It Em "for 3/460/470/480 machines
+Set the 
+.Li Diag/Norm
+switch to the
+.Li Diagnostic
+position and power on the
+machine.
+.It Em "for 3/80 machines
+Power on the unit and enter the command
+.Ic q 70b 12
+and reboot. When you wish to return to normal boot mode, use
+.Ic q 70b 6 .
+.El
+.Pp
 The Sun3x ROM monitor can be configured to use any number of different
-devices as the system console.  NetBSD will use these settings as
-well, so it is important to insure that they are correct.  The
+devices as the system console.
+.Nx
+will use these settings as
+well, so it is important to insure that they are correct. The
 device used can be changed by editing the contents of the EEPROM
-variable located at address 0x1F.  To do so, use the command
-"q 1f".  You will be prompted for a new value, which you can pick from
+variable located at address 0x1F. To do so, use the command
+.Ic q 1f .
+You will be prompted for a new value, which you can pick from
 below, or you can keep the current one by entering a period or blank
 line.
-
-	00: default graphics display
-	10: tty a (9600-N-8-1)
-	11: tty b (1200-N-8-1)
-	20: Color option board on P4
+.Dl 00: No "default graphics display
+.Dl 10: No "tty a (9600-N-8-1)
+.Dl 11: No "tty b (1200-N-8-1)
+.Dl 20: No "Color option board on P4

@@ -1,11 +1,10 @@
-	$NetBSD: whatis,v 1.2 1998/01/09 18:46:02 perry Exp $	
-
-NetBSD/arm32 _VER is the first official binary release of NetBSD for the
+.\"	$NetBSD: whatis,v 1.3 1999/01/13 07:30:03 ross Exp $	
+NetBSD/arm32 \*V is the first official binary release of NetBSD for the
 arm32 platform, although binary release have been available in the past
 under a different name (RiscBSD).
-
-The _VER release brings with it two major enhancements; full shared
+.Pp
+The \*V release brings with it two major enhancements; full shared
 library support, and soft-float library support.
-
+.Pp
 Because of this some of your existing binaries will require
 recompilation. But the up side is that they should run faster.

@@ -1,22 +1,22 @@
-	$NetBSD: legal,v 1.3 1998/01/09 18:45:35 perry Exp $	
-
-        This product includes software developed by Charles Hannum.
-
-        This product includes software developed by Charles Hannum, by
-        the University of Vermont and State Agricultural College and
-        Garrett A. Wollman, by William F. Jolitz, and by the
-        University of California, Berkeley, Lawrence Berkeley
-        Laboratory, and its contributors.
-
-        This product includes software developed by the University of
-        Vermont and State Agricultural College and Garrett A. Wollman.
-
-        This product includes software developed by Dean Huxley.
-
-        This product includes software developed by Herb Peyerl.
-
+.\"	$NetBSD: legal,v 1.4 1999/01/13 07:30:02 ross Exp $	
+.Pp
+This product includes software developed by Charles Hannum.
+.Pp
+This product includes software developed by Charles Hannum, by
+the University of Vermont and State Agricultural College and
+Garrett A. Wollman, by William F. Jolitz, and by the
+University of California, Berkeley, Lawrence Berkeley
+Laboratory, and its contributors.
+.Pp
+This product includes software developed by the University of
+Vermont and State Agricultural College and Garrett A. Wollman.
+.Pp
+This product includes software developed by Dean Huxley.
+.Pp
+This product includes software developed by Herb Peyerl.
+.Pp
 In the following statement, "This software" refers to the parallel
 port driver:
-
-        This software is a component of "386BSD" developed by 
-        William F. Jolitz, TeleMuse.
+.Pp
+This software is a component of "386BSD" developed by 
+William F. Jolitz, TeleMuse.

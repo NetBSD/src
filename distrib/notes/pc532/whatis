@@ -1,10 +1,12 @@
-	$NetBSD: whatis,v 1.4 1998/01/09 18:47:07 perry Exp $	
-
+.\"	$NetBSD: whatis,v 1.5 1999/01/13 07:30:08 ross Exp $	
+.
 For the pc532 port, there are a few known problems.  They include:
-
-  a) ppp reports a lot of input errors on some machines.
-
-  b) Some tape drives do not work very well.  Some have hung the system.
-
-  c) The serial drivers do not have all the desired features.  (ttyflags
-	is the most glaring.)
+.Bl -enum
+.It
+ppp reports a lot of input errors on some machines.
+.It
+Some tape drives do not work very well.  Some have hung the system.
+.It
+The serial drivers do not have all the desired features.  (ttyflags
+is the most glaring omission.)
+.El
