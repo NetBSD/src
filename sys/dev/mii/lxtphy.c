@@ -1,4 +1,4 @@
-/*	$NetBSD: lxtphy.c,v 1.32 2002/10/02 16:34:18 thorpej Exp $	*/
+/*	$NetBSD: lxtphy.c,v 1.33 2003/04/29 01:49:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lxtphy.c,v 1.32 2002/10/02 16:34:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lxtphy.c,v 1.33 2003/04/29 01:49:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,7 +142,8 @@ lxtphyattach(struct device *parent, struct device *self, void *aux)
 	const struct mii_phydesc *mpd;
 
 	mpd = mii_phy_match(ma, lxtphys);
-	printf(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
+	aprint_naive(": Media interface\n");
+	aprint_normal(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
@@ -158,24 +159,24 @@ lxtphyattach(struct device *parent, struct device *self, void *aux)
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
-	printf("%s: ", sc->mii_dev.dv_xname);
+	aprint_normal("%s: ", sc->mii_dev.dv_xname);
 
 	if (sc->mii_flags & MIIF_HAVEFIBER) {
 #define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_FX, 0, sc->mii_inst),
 		    MII_MEDIA_100_TX);
-		printf("100baseFX, ");
+		aprint_normal("100baseFX, ");
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_FX, IFM_FDX, sc->mii_inst),
 		    MII_MEDIA_100_TX_FDX);
-		printf("100baseFX-FDX, ");
+		aprint_normal("100baseFX-FDX, ");
 #undef ADD
 	}
 
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
-		printf("no media present");
+		aprint_error("no media present");
 	else
 		mii_phy_add_media(sc);
-	printf("\n");
+	aprint_normal("\n");
 }
 
 int
