@@ -1,4 +1,4 @@
-/*	$NetBSD: route6d.c,v 1.22 2001/01/12 17:48:37 itojun Exp $	*/
+/*	$NetBSD: route6d.c,v 1.23 2001/02/07 13:24:42 pk Exp $	*/
 /*	$KAME: route6d.c,v 1.41 2001/01/12 17:48:02 itojun Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.22 2001/01/12 17:48:37 itojun Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.23 2001/02/07 13:24:42 pk Exp $");
 #endif
 
 #include <stdio.h>
@@ -3302,6 +3302,7 @@ setindex2ifc(index, ifcp)
 			fatal("realloc");
 			/*NOTREACHED*/
 		}
+		memset(p + n, 0, sizeof(*index2ifc) * (nindex2ifc - n));
 		index2ifc = p;
 	}
 	index2ifc[index] = ifcp;
