@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.16 1997/09/05 21:27:00 phil Exp $	*/
+/*	$NetBSD: fdisk.c,v 1.17 1997/09/11 22:53:00 phil Exp $	*/
 
 /*
  * Mach Operating System
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.16 1997/09/05 21:27:00 phil Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.17 1997/09/11 22:53:00 phil Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -321,7 +321,7 @@ main(argc, argv)
 
 	intuit_translated_geometry();
 
-	if (!sh_flag)
+	if (!sh_flag && !f_flag)
 		printf("******* Working on device %s *******\n", disk);
 
 
@@ -331,7 +331,7 @@ main(argc, argv)
 	if (i_flag)
 		init_sector0(dos_sectors > 63 ? 63 : dos_sectors);
 
-	if (!sh_flag)
+	if (!sh_flag && !f_flag)
 		printf("Warning: BIOS sector numbering starts with sector 1\n");
 
 	/* Do the update stuff! */
