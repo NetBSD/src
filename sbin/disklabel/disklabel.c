@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.28 1995/04/29 22:42:07 mycroft Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.29 1995/06/26 23:17:26 jtc Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,13 +47,11 @@ static char copyright[] =
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 static char sccsid[] = "@(#)disklabel.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$NetBSD: disklabel.c,v 1.28 1995/04/29 22:42:07 mycroft Exp $";
+static char rcsid[] = "$NetBSD: disklabel.c,v 1.29 1995/06/26 23:17:26 jtc Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
-#include <sys/signal.h>
-#include <sys/errno.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -65,7 +63,9 @@ static char rcsid[] = "$NetBSD: disklabel.c,v 1.28 1995/04/29 22:42:07 mycroft E
 
 #include <ctype.h>
 #include <err.h>
+#include <errno.h>
 #include <unistd.h>
+#include <signal.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
