@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.137 2003/08/07 16:26:38 agc Exp $	*/
+/*	$NetBSD: locore.s,v 1.138 2004/03/04 19:53:44 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990 The Regents of the University of California.
@@ -738,7 +738,6 @@ ENTRY_NOPROFILE(lev7intr)
  * (profiling, scheduling) and software interrupts (network, softclock).
  * We check for ASTs first, just like the VAX.  To avoid excess overhead
  * the T_ASTFLT handling code will also check for software interrupts so we
- * do not have to do it here.
  * do not have to do it here.  After identifing that we need an AST we
  * drop the IPL to allow device interrupts.
  *
@@ -1094,20 +1093,6 @@ Lnoflush:
 	moveml	%sp@+,%d0-%d7/%a0-%a6	| load most registers (all but SSP)
 	addql	#8,%sp			| pop SSP and stack adjust count
   	rte
-
-/*
- * proc_trampoline call function in register a2 with a3 as an arg
- * and then rei.
- */
-ENTRY_NOPROFILE(proc_trampoline)
-	movl	%a3,%sp@-		| push function arg
-	jbsr	%a2@			| call function
-	addql	#4,%sp			| pop arg
-	movl	%sp@(FR_SP),%a0		| usp to a0
-	movl	%a0,%usp		| setup user stack pointer
-	moveml	%sp@+,%d0-%d7/%a0-%a6	| restore all but sp
-	addql	#8,%sp			| pop sp and stack adjust
-	jra	_ASM_LABEL(rei)		| all done
 
 /*
  * Use common m68k sigcode.
