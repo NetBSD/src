@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.95 2003/02/26 06:31:16 matt Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.96 2003/03/01 04:40:28 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -590,7 +590,8 @@ struct	tcpstat {
 #endif
 #define	TCPCTL_RSTPPSLIMIT	24	/* RST pps limit */
 #define	TCPCTL_DELACK_TICKS	25	/* # ticks to delay ACK */
-#define	TCPCTL_MAXID		26
+#define	TCPCTL_INIT_WIN_LOCAL	26	/* initial window for local nets */
+#define	TCPCTL_MAXID		27
 
 #define	TCPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -619,6 +620,7 @@ struct	tcpstat {
 	{ 0, 0 }, \
 	{ "rstppslimit", CTLTYPE_INT }, \
 	{ "delack_ticks", CTLTYPE_INT }, \
+	{ "init_win_local", CTLTYPE_INT }, \
 }
 
 #ifdef _KERNEL
@@ -635,6 +637,7 @@ extern	int tcp_do_timestamps;	/* RFC1323 timestamps enabled/disabled? */
 extern	int tcp_do_newreno;	/* Use the New Reno algorithms */
 extern	int tcp_mssdflt;	/* default seg size */
 extern	int tcp_init_win;	/* initial window */
+extern	int tcp_init_win_local;	/* initial window for local nets */
 extern	int tcp_mss_ifmtu;	/* take MSS from interface, not in_maxmtu */
 extern	int tcp_compat_42;	/* work around ancient broken TCP peers */
 extern	int tcp_cwm;		/* enable Congestion Window Monitoring */
@@ -683,6 +686,7 @@ extern	struct mowner tcp_mowner;
 	{ 0 },					\
 	{ 1, 0, &tcp_rst_ppslim },		\
 	{ 1, 0, &tcp_delack_ticks },		\
+	{ 1, 0, &tcp_init_win_local },		\
 }
 
 #ifdef __NO_STRICT_ALIGNMENT
