@@ -1,0 +1,38 @@
+#!/bin/sh
+#
+# $NetBSD: lkm2,v 1.1.1.1 2000/03/10 11:53:25 lukem Exp $
+#
+
+# PROVIDE: beforemountlkm
+# REQUIRE: syslogd
+
+. /etc/rc.subr
+. /etc/rc.conf
+
+name="lkm2"
+start_precmd="checkyesno lkm"
+start_cmd="lkm2_start"
+stop_precmd="$start_precmd"
+stop_cmd="lkm2_stop"
+
+#		load kernel modules specified in /etc/lkm.conf
+#
+lkm2_start()
+{
+	if [ -r /etc/rc.lkm ]; then
+		lkmstage=BEFOREMOUNT
+		set start ; . /etc/rc.lkm
+	else
+		warn "/etc/rc.lkm not found; LKMs not loaded."
+	fi
+}
+
+lkm2_stop()
+{
+	if [ -r /etc/rc.lkm ]; then
+		lkmstage=BEFOREMOUNT
+		set stop ; . /etc/rc.lkm
+	fi
+}
+
+run_rc_command "$1"

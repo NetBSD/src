@@ -1,0 +1,12 @@
+#!/bin/sh
+#
+# $NetBSD: daemon,v 1.1.1.1 2000/03/10 11:53:25 lukem Exp $
+#
+
+# PROVIDE: daemon
+# REQUIRE: named sysctl cleartmp ldconfig accounting amd virecover ypbind
+# REQUIRE: ipnat ipmon savecore pwcheck quota databases network dmesg
+# REQUIRE: aftermountlkm nfslocking
+
+#	This is a dummy dependancy, to ensure that daemons are run
+#	_after_ the above are.

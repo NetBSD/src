@@ -1,0 +1,16 @@
+#!/bin/sh
+#
+# $NetBSD: nfsiod,v 1.1.1.1 2000/03/10 11:53:24 lukem Exp $
+#
+
+# PROVIDE: nfsiod
+# REQUIRE: beforemountlkm network portmap
+
+. /etc/rc.subr
+. /etc/rc.conf
+
+name="nfsiod"
+rcvar="nfs_client"
+command="/usr/sbin/${name}"
+
+run_rc_command "$1"
