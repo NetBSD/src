@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.25 1999/10/15 06:07:27 haya Exp $	*/
+/*	$NetBSD: i82365.c,v 1.26 2000/01/01 21:57:45 sommerfeld Exp $	*/
 
 #define	PCICDEBUG
 
@@ -91,6 +91,7 @@ void	pcic_create_event_thread __P((void *));
 void	pcic_event_thread __P((void *));
 
 void	pcic_queue_event __P((struct pcic_handle *, int));
+void	pcic_power __P((int, void *));
 
 static void	pcic_wait_ready __P((struct pcic_handle *));
 
@@ -341,6 +342,33 @@ pcic_attach_sockets(sc)
 }
 
 void
+pcic_power (why, arg)
+	int why;
+	void *arg;
+{
+	struct pcic_handle *h = (struct pcic_handle *)arg;
+	struct pcic_softc *sc = (struct pcic_softc *)(h->ph_parent);
+
+	if (h->flags & PCIC_FLAG_SOCKETP) {
+		if ((why == PWR_RESUME) &&
+		    (pcic_read(h, PCIC_CSC_INTR) == 0)) {
+#ifdef PCICDEBUG
+			char bitbuf[64];
+#endif
+			pcic_write(h, PCIC_CSC_INTR,
+			    (sc->irq << PCIC_CSC_INTR_IRQ_SHIFT) |
+			    PCIC_CSC_INTR_CD_ENABLE);
+			DPRINTF(("%s: CSC_INTR was zero; reset to %s\n",
+			    sc->dev.dv_xname,
+			    bitmask_snprintf(pcic_read(h, PCIC_CSC_INTR),
+				PCIC_CSC_INTR_FORMAT,
+				bitbuf, sizeof(bitbuf))));
+		}
+	}
+}
+
+
+void
 pcic_attach_socket(h)
 	struct pcic_handle *h;
 {
@@ -514,6 +542,14 @@ pcic_init_socket(h)
 	pcic_write(h, PCIC_INTR, 0);
 	pcic_read(h, PCIC_CSC);
 
+	/*
+	 * Set up a powerhook to ensure it continues to interrupt on
+	 * card detect even after suspend.
+	 * (this works around a bug seen in suspend-to-disk on the
+	 * Sony VAIO Z505; on resume, the CSC_INTR state is not preserved).
+	 */
+	powerhook_establish(pcic_power, h);
+	
 	/* unsleep the cirrus controller */
 
 	if ((h->vendor == PCIC_VENDOR_CIRRUS_PD6710) ||
