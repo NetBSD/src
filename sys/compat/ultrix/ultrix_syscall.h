@@ -1,3 +1,5 @@
+/*	$NetBSD: ultrix_syscall.h,v 1.26 1998/01/09 06:27:32 thorpej Exp $	*/
+
 /*
  * System call numbers.
  *

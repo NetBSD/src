@@ -1,3 +1,5 @@
+/*	$NetBSD: svr4_syscalls.c,v 1.39 1998/01/09 06:26:51 thorpej Exp $	*/
+
 /*
  * System call names.
  *

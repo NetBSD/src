@@ -1,3 +1,5 @@
+/*	$NetBSD: osf1_syscall.h,v 1.11 1998/01/09 06:24:53 thorpej Exp $	*/
+
 /*
  * System call numbers.
  *

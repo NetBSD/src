@@ -1,3 +1,5 @@
+/*	$NetBSD: hpux_syscalls.c,v 1.20 1998/01/09 06:19:04 thorpej Exp $	*/
+
 /*
  * System call names.
  *

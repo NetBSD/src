@@ -1,3 +1,5 @@
+/*	$NetBSD: ibcs2_syscallargs.h,v 1.12 1998/01/09 06:21:29 thorpej Exp $	*/
+
 /*
  * System call argument lists.
  *
