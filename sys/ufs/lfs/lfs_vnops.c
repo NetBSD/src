@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.119 2003/10/14 14:02:56 dbj Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.120 2003/10/18 15:52:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.119 2003/10/14 14:02:56 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.120 2003/10/18 15:52:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1740,6 +1740,7 @@ lfs_putpages(void *v)
 	 */
 	if (ap->a_flags & PGO_LOCKED) {
 		sp = fs->lfs_sp;
+		KASSERT(sp->vp == NULL);
 		sp->vp = vp;
 
 		/*
@@ -1768,7 +1769,7 @@ lfs_putpages(void *v)
 			(void) lfs_writeseg(fs, sp);
  
 			/* Reinitialize brand new FIP and add us to it */
-			sp->vp = vp;
+			KASSERT(sp->vp == vp);
 			sp->fip->fi_version = ip->i_gen;
 			sp->fip->fi_ino = ip->i_number;
 			/* Add us to the new segment summary. */
@@ -1784,6 +1785,8 @@ lfs_putpages(void *v)
 			goto again;
 		}
 		lfs_updatemeta(sp);
+		KASSERT(sp->vp == vp);
+		sp->vp = NULL;
 		return error;
 	}
 
@@ -1812,6 +1815,7 @@ lfs_putpages(void *v)
  
 	sp->sum_bytes_left -= sizeof(struct finfo) - sizeof(int32_t);
 	++((SEGSUM *)(sp->segsum))->ss_nfinfo;
+	KASSERT(sp->vp == NULL);
 	sp->vp = vp;
  
 	if (vp->v_flag & VDIROP)
@@ -1851,7 +1855,7 @@ lfs_putpages(void *v)
 		 * Reinitialize brand new FIP and add us to it.
 		 * (This should duplicate the fixup in lfs_gatherpages().)
 		 */
-		sp->vp = vp;
+		KASSERT(sp->vp == vp);
 		sp->fip->fi_version = ip->i_gen;
 		sp->fip->fi_ino = ip->i_number;
 		/* Add us to the new segment summary. */
@@ -1866,6 +1870,9 @@ lfs_putpages(void *v)
 		goto again2;
 	}
 
+	KASSERT(sp->vp == vp);
+	sp->vp = NULL; /* XXX lfs_gather below will set this */
+
 	/* Write indirect blocks as well */
 	lfs_gather(fs, fs->lfs_sp, vp, lfs_match_indir);
 	lfs_gather(fs, fs->lfs_sp, vp, lfs_match_dindir);
@@ -1875,8 +1882,12 @@ lfs_putpages(void *v)
 	 * Blocks are now gathered into a segment waiting to be written.
 	 * All that's left to do is update metadata, and write them.
 	 */
-	lfs_updatemeta(fs->lfs_sp);
-	fs->lfs_sp->vp = NULL;
+	KASSERT(sp->vp == NULL);
+	sp->vp = vp;
+	lfs_updatemeta(sp);
+	KASSERT(sp->vp == vp);
+	sp->vp = NULL;
+
 	/*
 	 * Clean up FIP, since we're done writing this file.
 	 * This should duplicate cleanup at the end of lfs_writefile().
