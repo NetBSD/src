@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.89.2.7 2001/11/14 19:16:35 nathanw Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.89.2.8 2001/11/17 00:40:29 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.89.2.7 2001/11/14 19:16:35 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.89.2.8 2001/11/17 00:40:29 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_sysv.h"
@@ -133,6 +133,8 @@ int debug_exit = 0;
 #else
 #define DPRINTF(x)
 #endif
+
+static void lwp_exit_hook(struct lwp *, void *);
 
 /*
  * exit --
@@ -193,6 +195,9 @@ exit1(struct lwp *l, int rv)
 	 * wake up the parent early to avoid deadlock.
 	 */
 	p->p_flag |= P_WEXIT;
+	p->p_userret = lwp_exit_hook;
+	p->p_userret_arg = NULL;
+
 	if (p->p_flag & P_PPWAIT) {
 		p->p_flag &= ~P_PPWAIT;
 		wakeup((caddr_t)p->p_pptr);
@@ -200,7 +205,7 @@ exit1(struct lwp *l, int rv)
 	sigfillset(&p->p_sigctx.ps_sigignore);
 	sigemptyset(&p->p_sigctx.ps_siglist);
 	p->p_sigctx.ps_sigcheck = 0;
-	callout_stop(&p->p_realit_ch);
+	timers_free(p);
 
 	/* XXX SMP 
 	 * This would be the right place to IPI any LWPs running on 
@@ -416,6 +421,14 @@ exit1(struct lwp *l, int rv)
 	 */
 
 	cpu_exit(l, 1);
+}
+
+/* Wrapper function for use in p_userret */
+static void
+lwp_exit_hook(struct lwp *l, void *arg)
+{
+
+	lwp_exit(l);
 }
 
 /*
