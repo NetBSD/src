@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_map.c,v 1.24 1996/10/10 17:16:22 christos Exp $	*/
+/*	$NetBSD: vm_map.c,v 1.25 1996/10/12 21:50:10 christos Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -1686,7 +1686,7 @@ vm_map_copy_entry(src_map, dst_map, src_entry, dst_entry)
 
 	if (dst_entry->object.vm_object != NULL &&
 	    (dst_entry->object.vm_object->flags & OBJ_INTERNAL) == 0)
-		kprintf("vm_map_copy_entry: copying over permanent data!\n");
+		printf("vm_map_copy_entry: copying over permanent data!\n");
 
 	/*
 	 *	If our destination map was wired down,
@@ -2237,7 +2237,7 @@ vmspace_fork(vm1)
 						old_entry->offset,
 						FALSE, FALSE);
 				if (check != KERN_SUCCESS)
-					kprintf("vm_map_fork: copy in share_map region failed\n");
+					printf("vm_map_fork: copy in share_map region failed\n");
 			}
 			else {
 				vm_map_copy_entry(old_map, new_map, old_entry,
@@ -2581,7 +2581,7 @@ vm_map_print(map, full)
 	register vm_map_t	map;
 	boolean_t		full;
 {
-        _vm_map_print(map, full, kprintf);
+        _vm_map_print(map, full, printf);
 }
 
 void
