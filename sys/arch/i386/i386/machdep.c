@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.280 1998/02/04 00:34:19 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.281 1998/02/04 01:57:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -2416,10 +2416,10 @@ _bus_dmamap_unload(t, map)
  * by bus-specific DMA map synchronization functions.
  */
 void
-_bus_dmamap_sync(t, map, op)
+_bus_dmamap_sync(t, map, ops)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
-	bus_dmasync_op_t op;
+	int ops;
 {
 
 	/* Nothing to do here. */
