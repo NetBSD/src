@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.1 1999/01/31 21:15:31 christos Exp $	*/
+/*	$NetBSD: crt0.c,v 1.2 1999/02/01 12:19:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Christos Zoulas
@@ -102,9 +102,9 @@ __start:
 	mov	0, %fp
 	ld	[%sp + 64], %o0		! get argc
 	add	%sp, 68, %o1		! get argv
-	sll	%l0, 2,	%o2		!
-	add	%l2, 4,	%o2		! envp = argv + (argc << 2) + 4
-	add	%l1, %o2, %o2		!
+	sll	%o0, 2,	%o2		!
+	add	%o2, 4,	%o2		! envp = argv + (argc << 2) + 4
+	add	%o1, %o2, %o2		!
 	andn	%sp, 7,	%sp		! align
 	sub	%sp, 24, %sp		! expand to standard stack frame size
 	mov	%g3, %o3
@@ -154,7 +154,7 @@ ___start(argc, argv, envp, cleanup, obj, ps_strings)
  * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.1 1999/01/31 21:15:31 christos Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.2 1999/02/01 12:19:36 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 static char *
