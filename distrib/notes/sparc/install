@@ -7,10 +7,10 @@ be booted off your local disk's swap partition. Alternatively, if your
 Sparcstation is hooked up in a network you can find a server and arrange
 for a diskless setup which is a convenient way to install on a machine
 whose disk does not currently hold a usable operating system (see the
-section `Installing using a diskless setup' below).
+section `Installing NetBSD by using a diskless setup' below).
 
 
-Installing using the NetBSD miniroot.
+Installing NetBSD by using the NetBSD miniroot.
 
 The miniroot is a self-contained NetBSD filesystem holding all utilities
 necessary to install NetBSD on a local disk. It is distributed as a plain
@@ -62,7 +62,8 @@ miniroot image to be booted. After the initial probe messages you'll be
 asked to start the install or upgrade procedure. Proceed to the section
 `Running the installation scripts' below.
 
-Installing using a diskless setup.
+
+Installing NetBSD by using a diskless setup.
 
 First, you must setup a diskless client configuration on a server. If
 you are using a NetBSD system as the boot-server, have a look at the
@@ -80,28 +81,15 @@ address 130.115.144.11, will make an TFTP request for `8273900B.SUN4C'.
 Normally, this file is a symbolic link to an appropriate second-stage
 boot program, which should be located in a place where the TFTP daemon
 can find it (remember, many TFTP daemons run in a chroot'ed environment).
-You can find the boot program in `/usr/mdec/boot' in the NetBSD/sparc
-distribution. Unfortunately, it is necessary to install this file
-differently for sun4 and sun4c clients: the sun4 version needs to have its
-`a.out' header stripped off (otherwise the machine will crash), while the
-sun4c version must retain it (otherwise the PROM will complain).
+You can find the boot program in `/usr/mdec/boot.net' in the NetBSD/sparc
+distribution.
 
-Here's an example to illustrate this whole mess:
+[ Note that the only difference between `/usr/mdec/boot.net' and
+  `/usr/mdec/boot' is in the a.out header, which has been magically
+  transformed in a way that makes it usable on all versions of
+  Sparc PROMs.
+]
 
-    server# cd /<client-root-dir>/usr/mdec
-    if client is a sun4:
-	server# set SKIP=1
-	server# set KARCH=SUN4
-    else
-	server# set SKIP=0
-	server# set KARCH=SUN4C
-    server# dd if=boot of=/tftpboot/boot.sparc.netbsd.$KARCH skip=$SKIP bs=32
-    server# cd /tftpboot
-    server# ln -s boot.sparc.netbsd.$KARCH 8273900B.$KARCH
-
-Note: some versions of Openboot ROMs (sun4c/sun4m) seem to require that the
-boot program size is nicely rounded. Therefore it may be necessary to
-strip(8) off the symbol table.
 
 After the boot program has been loaded into memory and given control by
 the PROM, it starts locating the machine's remote root directory through
