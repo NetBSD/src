@@ -1,6 +1,8 @@
-#	$NetBSD: files.opencrypto,v 1.5 2003/07/30 18:28:58 jonathan Exp $
+#	$NetBSD: files.opencrypto,v 1.6 2003/08/24 19:21:13 thorpej Exp $
 #
 #
+
+defpseudo opencrypto: des
 
 file	opencrypto/criov.c		opencrypto
 file	opencrypto/cryptodev.c		opencrypto
