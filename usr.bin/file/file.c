@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.19 2000/11/23 23:21:15 pooka Exp $	*/
+/*	$NetBSD: file.c,v 1.20 2001/03/17 11:21:51 pooka Exp $	*/
 
 /*
  * file - find type of a file or files - main program.
@@ -59,9 +59,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)Id: file.c,v 1.55 2000/08/05 19:00:12 christos Exp ")
+FILE_RCSID("@(#)Id: file.c,v 1.56 2001/03/11 20:29:16 christos Exp ")
 #else
-__RCSID("$NetBSD: file.c,v 1.19 2000/11/23 23:21:15 pooka Exp $");
+__RCSID("$NetBSD: file.c,v 1.20 2001/03/17 11:21:51 pooka Exp $");
 #endif
 #endif	/* lint */
 
@@ -103,6 +103,7 @@ int lineno;		/* line number in the magic file	*/
 
 
 static void	unwrap		__P((char *fn));
+static void	usage		__P((void));
 #if 0
 static int	byteconv4	__P((int, int, int));
 static short	byteconv2	__P((int, int, int));
@@ -119,7 +120,7 @@ main(argc, argv)
 	char *argv[];
 {
 	int c;
-	int check = 0, didsomefiles = 0, errflg = 0, ret = 0, app = 0;
+	int action = 0, didsomefiles = 0, errflg = 0, ret = 0, app = 0;
 	char *mime;
 
 #ifdef LC_CTYPE
@@ -134,21 +135,24 @@ main(argc, argv)
 	if (!(magicfile = getenv("MAGIC")))
 		magicfile = default_magicfile;
 
-	while ((c = getopt(argc, argv, "bcdf:ikm:nsvzL")) != -1)
+	while ((c = getopt(argc, argv, "bcdf:ikm:nsvzCL")) != EOF)
 		switch (c) {
 		case 'b':
 			++bflag;
 			break;
 		case 'c':
-			++check;
+			action = CHECK;
+			break;
+		case 'C':
+			action = COMPILE;
 			break;
 		case 'd':
 			++debug;
 			break;
 		case 'f':
 			if (!app) {
-				ret = apprentice(magicfile, check);
-				if (check)
+				ret = apprentice(magicfile, action);
+				if (action)
 					exit(ret);
 				app = 1;
 			}
@@ -196,21 +200,19 @@ main(argc, argv)
 		}
 
 	if (errflg) {
-		(void) fprintf(stderr, USAGE, progname);
-		exit(2);
+		usage();
 	}
 
 	if (!app) {
-		ret = apprentice(magicfile, check);
-		if (check)
+		ret = apprentice(magicfile, action);
+		if (action)
 			exit(ret);
 		app = 1;
 	}
 
 	if (optind == argc) {
 		if (!didsomefiles) {
-			(void)fprintf(stderr, USAGE, progname);
-			exit(2);
+			usage();
 		}
 	}
 	else {
@@ -456,4 +458,14 @@ tryit(buf, nb, zflag)
 	/* abandon hope, all ye who remain here */
 	ckfputs("data", stdout);
 		return '\0';
+}
+
+static void
+usage()
+{
+	(void)fprintf(stderr, USAGE, progname);
+#ifdef QUICK
+	(void)fprintf(stderr, "Usage: %s -C [-m magic]\n", progname);
+#endif
+	exit(1);
 }
