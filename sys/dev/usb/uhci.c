@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.103 2000/03/28 09:47:10 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.104 2000/03/28 10:53:59 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -1936,7 +1936,7 @@ outside:
 	} else {
 		err = upipe->pipe.methods->start(xfer);
 		if (err != USBD_IN_PROGRESS) {
-			printf("usbd_start_next: error=%d\n", err);
+			printf("uhci_abort_xfer: start next error=%d\n", err);
 			upipe->pipe.running = 0;
 			/* XXX do what? */
 		}
