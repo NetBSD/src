@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.3 2000/05/26 21:20:15 thorpej Exp $	*/
+/*	$NetBSD: Locore.c,v 1.4 2000/06/29 07:44:04 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
 #include <sys/user.h>
 #include <sys/sched.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.7 2000/06/26 14:20:57 mrg Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.8 2000/06/29 07:44:05 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -92,8 +92,6 @@
 #ifdef KGDB
 #include <sys/kgdb.h>
 #endif
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 
