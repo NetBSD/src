@@ -1,4 +1,4 @@
-/*	$NetBSD: asm_sbus.h,v 1.4 1997/03/13 04:07:46 cgd Exp $	*/
+/*	$NetBSD: asm_sbus.h,v 1.5 1997/08/16 00:30:43 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1997 by Matthew Jacob 
@@ -10,7 +10,8 @@
  *	[from Qlogic]
  */
 
-#define	ISP_CODE_ORG	0x1000
+#define	ISP_CODE_ORG		0x1000
+#define	ISP_CODE_VERSION	1*1024+24
 static const u_int16_t ISP_RISC_CODE[] = {
 	0x0078, 0x1030, 0x0000, 0x231f, 0x0000, 0x12ff, 0x2043, 0x4f50,
 	0x5952, 0x4947, 0x4854, 0x2031, 0x3939, 0x312c, 0x3139, 0x3932,
