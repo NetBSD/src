@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.26 1996/07/10 20:15:48 jtc Exp $
+#	$NetBSD: Makefile.inc,v 1.27 1996/11/17 04:37:14 mikel Exp $
 #	@(#)Makefile.inc	8.2 (Berkeley) 9/5/93
 
 # net sources
@@ -19,7 +19,7 @@ SRCS+=	gethostnamadr.c getnetbyaddr.c getnetbyname.c getnetent.c \
 .include "${.CURDIR}/arch/${MACHINE_ARCH}/net/Makefile.inc"
 
 MAN+=	byteorder.3 gethostbyname.3 getnetent.3 getprotoent.3 getservent.3 \
-	inet.3 linkaddr.3 ns.3 rcmd.3 resolver.3 ethers.3
+	inet.3 iso_addr.3 linkaddr.3 ns.3 rcmd.3 resolver.3 ethers.3
 
 MLINKS+=byteorder.3 htonl.3 byteorder.3 htons.3 byteorder.3 ntohl.3 \
 	byteorder.3 ntohs.3
