@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.15 1999/03/26 21:58:39 mycroft Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.15.2.1 1999/10/26 20:22:53 he Exp $	*/
 
 /*
  *
@@ -415,6 +415,7 @@ udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
 	int lcv, retval, mdpgno;
 	dev_t device;
 	int (*mapfn) __P((dev_t, int, int));
+	vm_prot_t mapprot;
 	UVMHIST_FUNC("udv_fault"); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist,"  flags=%d", flags,0,0,0);
 
@@ -473,11 +474,12 @@ udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
 			break;
 		}
 		paddr = pmap_phys_address(mdpgno);
+		mapprot = ufi->entry->protection;
 		UVMHIST_LOG(maphist,
 		    "  MAPPING: device: pm=0x%x, va=0x%x, pa=0x%x, at=%d",
-		    ufi->orig_map->pmap, curr_va, (int)paddr, access_type);
-		pmap_enter(ufi->orig_map->pmap, curr_va, paddr, access_type, 0,
-		    access_type);
+		    ufi->orig_map->pmap, curr_va, (int)paddr, mapprot);
+		pmap_enter(ufi->orig_map->pmap, curr_va, paddr, mapprot, 0,
+		    mapprot);
 
 	}
 
