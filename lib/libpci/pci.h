@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.1 2001/09/13 22:52:20 thorpej Exp $	*/
+/*	$NetBSD: pci.h,v 1.2 2004/04/24 09:56:36 kleink Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -54,7 +54,7 @@ int	pcidev_conf_write(int, u_int, pcireg_t);
 
 /* pci_subr.c */
 char	*pci_findvendor(pcireg_t);
-void	pci_devinfo(pcireg_t, pcireg_t, int, char *);
+void	pci_devinfo(pcireg_t, pcireg_t, int, char *, size_t);
 void	pci_conf_print(int, u_int, u_int, u_int);
 
 #endif /* _PCI_H_ */
