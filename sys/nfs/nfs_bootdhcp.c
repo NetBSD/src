@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.14 2000/03/29 03:43:34 simonb Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.15 2000/05/28 07:01:09 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -144,7 +144,8 @@ struct bootp {
  * Perhaps (struct arphdr)->ar_hrd = ARPHRD_ETHER?
  * The interface has ->if_type but not the ARP fmt.
  */
-#define HTYPE_ETHERNET		  1
+#define HTYPE_ETHERNET		1
+#define HTYPE_IEEE802		6
 
 /*
  * Vendor magic cookie (v_magic) for RFC1048
@@ -461,6 +462,9 @@ bootpc_call(nd, procp)
 	/* Record our H/W (Ethernet) address. */
 	{	struct sockaddr_dl *sdl = ifp->if_sadl;
 		switch (sdl->sdl_type) {
+		    case IFT_ISO88025:
+			hafmt = HTYPE_IEEE802;
+			break;
 		    case IFT_ETHER:
 		    case IFT_FDDI:
 			hafmt = HTYPE_ETHERNET;
