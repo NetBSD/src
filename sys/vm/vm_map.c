@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_map.c,v 1.29 1997/10/16 23:29:26 christos Exp $	*/
+/*	$NetBSD: vm_map.c,v 1.29.2.1 1998/11/29 06:20:01 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -1450,11 +1450,9 @@ vm_map_clean(map, start, end, syncio, invalidate)
 			vm_object_lock(object);
 		}
 		/*
-		 * Flush pages if writing is allowed.
 		 * XXX should we continue on an error?
 		 */
-		if ((current->protection & VM_PROT_WRITE) &&
-		    !vm_object_page_clean(object, offset, offset+size,
+		if (!vm_object_page_clean(object, offset, offset+size,
 					  syncio, FALSE)) {
 			vm_object_unlock(object);
 			vm_map_unlock_read(map);
