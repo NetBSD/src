@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1990, 1993
+ * Copyright (c) 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -35,8 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/* from: static char sccsid[] = "@(#)bt_utils.c	8.2 (Berkeley) 9/7/93"; */
-static char *rcsid = "$Id: bt_utils.c,v 1.4 1993/09/09 02:41:32 cgd Exp $";
+static char sccsid[] = "@(#)bt_utils.c	8.5 (Berkeley) 6/20/94";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -84,7 +83,10 @@ __bt_ret(t, e, key, data)
 	} else if (ISSET(t, B_DB_LOCK)) {
 		/* Use +1 in case the first record retrieved is 0 length. */
 		if (bl->dsize + 1 > t->bt_dbufsz) {
-			if ((p = realloc(t->bt_dbuf, bl->dsize + 1)) == NULL)
+			p = (void *)(t->bt_dbuf == NULL ?
+			    malloc(bl->dsize + 1) :
+			    realloc(t->bt_dbuf, bl->dsize + 1));
+			if (p == NULL)
 				return (RET_ERROR);
 			t->bt_dbuf = p;
 			t->bt_dbufsz = bl->dsize + 1;
@@ -107,7 +109,9 @@ __bt_ret(t, e, key, data)
 		key->data = t->bt_kbuf;
 	} else if (ISSET(t, B_DB_LOCK)) {
 		if (bl->ksize > t->bt_kbufsz) {
-			if ((p = realloc(t->bt_kbuf, bl->ksize)) == NULL)
+			p = (void *)(t->bt_kbuf == NULL ?
+			    malloc(bl->ksize) : realloc(t->bt_kbuf, bl->ksize));
+			if (p == NULL)
 				return (RET_ERROR);
 			t->bt_kbuf = p;
 			t->bt_kbufsz = bl->ksize;
@@ -202,14 +206,20 @@ int
 __bt_defcmp(a, b)
 	const DBT *a, *b;
 {
+	register size_t len;
 	register u_char *p1, *p2;
-	register int diff, len;
 
+	/*
+	 * XXX
+	 * If a size_t doesn't fit in an int, this routine can lose.
+	 * What we need is a integral type which is guaranteed to be
+	 * larger than a size_t, and there is no such thing.
+	 */
 	len = MIN(a->size, b->size);
 	for (p1 = a->data, p2 = b->data; len--; ++p1, ++p2)
-		if (diff = *p1 - *p2)
-			return (diff);
-	return (a->size - b->size);
+		if (*p1 != *p2)
+			return ((int)*p1 - (int)*p2);
+	return ((int)a->size - (int)b->size);
 }
 
 /*
@@ -222,13 +232,12 @@ __bt_defcmp(a, b)
  * Returns:
  *	Number of bytes needed to distinguish b from a.
  */
-int
+size_t
 __bt_defpfx(a, b)
 	const DBT *a, *b;
 {
 	register u_char *p1, *p2;
-	register int len;
-	int cnt;
+	register size_t cnt, len;
 
 	cnt = 1;
 	len = MIN(a->size, b->size);

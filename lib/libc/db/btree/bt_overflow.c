@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1990, 1993
+ * Copyright (c) 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -35,8 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)bt_overflow.c	8.1 (Berkeley) 6/4/93";*/
-static char *rcsid = "$Id: bt_overflow.c,v 1.3 1993/08/26 00:43:23 jtc Exp $";
+static char sccsid[] = "@(#)bt_overflow.c	8.4 (Berkeley) 6/20/94";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -70,7 +69,7 @@ static char *rcsid = "$Id: bt_overflow.c,v 1.3 1993/08/26 00:43:23 jtc Exp $";
  *
  * Parameters:
  *	t:	tree
- *	p:	pointer to { pgno_t, size_t }
+ *	p:	pointer to { pgno_t, u_int32_t }
  *	buf:	storage address
  *	bufsz:	storage size
  *
@@ -87,10 +86,11 @@ __ovfl_get(t, p, ssz, buf, bufsz)
 {
 	PAGE *h;
 	pgno_t pg;
-	size_t nb, plen, sz;
+	size_t nb, plen;
+	u_int32_t sz;
 
 	memmove(&pg, p, sizeof(pgno_t));
-	memmove(&sz, (char *)p + sizeof(pgno_t), sizeof(size_t));
+	memmove(&sz, (char *)p + sizeof(pgno_t), sizeof(u_int32_t));
 	*ssz = sz;
 
 #ifdef DEBUG
@@ -99,7 +99,8 @@ __ovfl_get(t, p, ssz, buf, bufsz)
 #endif
 	/* Make the buffer bigger as necessary. */
 	if (*bufsz < sz) {
-		if ((*buf = realloc(*buf, sz)) == NULL)
+		*buf = (char *)(*buf == NULL ? malloc(sz) : realloc(*buf, sz));
+		if (*buf == NULL)
 			return (RET_ERROR);
 		*bufsz = sz;
 	}
@@ -143,7 +144,8 @@ __ovfl_put(t, dbt, pg)
 	PAGE *h, *last;
 	void *p;
 	pgno_t npg;
-	size_t nb, plen, sz;
+	size_t nb, plen;
+	u_int32_t sz;
 
 	/*
 	 * Allocate pages and copy the key/data record into them.  Store the
@@ -182,7 +184,7 @@ __ovfl_put(t, dbt, pg)
  *
  * Parameters:
  *	t:	tree
- *	p:	pointer to { pgno_t, size_t }
+ *	p:	pointer to { pgno_t, u_int32_t }
  *
  * Returns:
  *	RET_ERROR, RET_SUCCESS
@@ -194,10 +196,11 @@ __ovfl_delete(t, p)
 {
 	PAGE *h;
 	pgno_t pg;
-	size_t plen, sz;
+	size_t plen;
+	u_int32_t sz;
 
 	memmove(&pg, p, sizeof(pgno_t));
-	memmove(&sz, (char *)p + sizeof(pgno_t), sizeof(size_t));
+	memmove(&sz, (char *)p + sizeof(pgno_t), sizeof(u_int32_t));
 
 #ifdef DEBUG
 	if (pg == P_INVALID || sz == 0)

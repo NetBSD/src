@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1990, 1993
+ * Copyright (c) 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -35,8 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/* from: static char sccsid[] = "@(#)bt_open.c	8.3 (Berkeley) 9/16/93"; */
-static char *rcsid = "$Id: bt_open.c,v 1.5 1993/09/17 01:06:23 cgd Exp $";
+static char sccsid[] = "@(#)bt_open.c	8.7 (Berkeley) 6/16/94";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -59,7 +58,6 @@ static char *rcsid = "$Id: bt_open.c,v 1.5 1993/09/17 01:06:23 cgd Exp $";
 #include <string.h>
 #include <unistd.h>
 
-#define	__DBINTERFACE_PRIVATE
 #include <db.h>
 #include "btree.h"
 
@@ -89,13 +87,14 @@ __bt_open(fname, flags, mode, openinfo, dflags)
 	int flags, mode, dflags;
 	const BTREEINFO *openinfo;
 {
+	struct stat sb;
 	BTMETA m;
 	BTREE *t;
 	BTREEINFO b;
 	DB *dbp;
 	pgno_t ncache;
-	struct stat sb;
-	int machine_lorder, nr;
+	ssize_t nr;
+	int machine_lorder;
 
 	t = NULL;
 
@@ -155,7 +154,7 @@ __bt_open(fname, flags, mode, openinfo, dflags)
 		goto einval;
 
 	/* Allocate and initialize DB and BTREE structures. */
-	if ((t = malloc(sizeof(BTREE))) == NULL)
+	if ((t = (BTREE *)malloc(sizeof(BTREE))) == NULL)
 		goto err;
 	memset(t, 0, sizeof(BTREE));
 	t->bt_bcursor.pgno = P_INVALID;
@@ -166,7 +165,7 @@ __bt_open(fname, flags, mode, openinfo, dflags)
 	t->bt_pfx = b.prefix;
 	t->bt_rfd = -1;
 
-	if ((t->bt_dbp = dbp = malloc(sizeof(DB))) == NULL)
+	if ((t->bt_dbp = dbp = (DB *)malloc(sizeof(DB))) == NULL)
 		goto err;
 	t->bt_flags = 0;
 	if (t->bt_lorder != machine_lorder)
@@ -215,8 +214,7 @@ __bt_open(fname, flags, mode, openinfo, dflags)
 	if (fstat(t->bt_fd, &sb))
 		goto err;
 	if (sb.st_size) {
-		nr = read(t->bt_fd, &m, sizeof(BTMETA));
-		if (nr < 0)
+		if ((nr = read(t->bt_fd, &m, sizeof(BTMETA))) < 0)
 			goto err;
 		if (nr != sizeof(BTMETA))
 			goto eftype;
@@ -233,12 +231,12 @@ __bt_open(fname, flags, mode, openinfo, dflags)
 			CLR(t, B_NEEDSWAP);
 		else {
 			SET(t, B_NEEDSWAP);
-			BLSWAP(m.m_magic);
-			BLSWAP(m.m_version);
-			BLSWAP(m.m_psize);
-			BLSWAP(m.m_free);
-			BLSWAP(m.m_nrecs);
-			BLSWAP(m.m_flags);
+			M_32_SWAP(m.m_magic);
+			M_32_SWAP(m.m_version);
+			M_32_SWAP(m.m_psize);
+			M_32_SWAP(m.m_free);
+			M_32_SWAP(m.m_nrecs);
+			M_32_SWAP(m.m_flags);
 		}
 		if (m.m_magic != BTREEMAGIC || m.m_version != BTREEVERSION)
 			goto eftype;
@@ -358,8 +356,9 @@ nroot(t)
 		mpool_put(t->bt_mp, meta, 0);
 		return (RET_SUCCESS);
 	}
-	if (errno != EINVAL)
+	if (errno != EINVAL)		/* It's OK to not exist. */
 		return (RET_ERROR);
+	errno = 0;
 
 	if ((meta = mpool_new(t->bt_mp, &npg)) == NULL)
 		return (RET_ERROR);
@@ -403,7 +402,7 @@ tmp()
 static int
 byteorder()
 {
-	u_long x;			/* XXX: 32-bit assumption. */
+	u_int32_t x;
 	u_char *p;
 
 	x = 0x01020304;

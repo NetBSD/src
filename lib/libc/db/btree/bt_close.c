@@ -35,8 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/* from: static char sccsid[] = "from: @(#)bt_close.c	8.2 (Berkeley) 9/7/93"; */
-static char *rcsid = "$Id: bt_close.c,v 1.4 1993/09/09 02:41:20 cgd Exp $";
+static char sccsid[] = "@(#)bt_close.c	8.3 (Berkeley) 2/21/94";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -148,7 +147,7 @@ __bt_sync(dbp, flags)
 	 * contents.
 	 */
 	if (ISSET(t, B_DELCRSR)) {
-		if ((p = malloc(t->bt_psize)) == NULL)
+		if ((p = (void *)malloc(t->bt_psize)) == NULL)
 			return (RET_ERROR);
 		if ((h = mpool_get(t->bt_mp, t->bt_bcursor.pgno, 0)) == NULL)
 			return (RET_ERROR);

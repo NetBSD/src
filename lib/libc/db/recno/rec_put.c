@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1990, 1993
+ * Copyright (c) 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,8 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/* from: static char sccsid[] = "@(#)rec_put.c	8.2 (Berkeley) 9/7/93"; */
-static char *rcsid = "$Id: rec_put.c,v 1.5 1994/02/21 08:39:53 cgd Exp $";
+static char sccsid[] = "@(#)rec_put.c	8.4 (Berkeley) 5/31/94";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -120,9 +119,9 @@ einval:		errno = EINVAL;
 		    t->bt_irec(t, nrec) == RET_ERROR)
 			return (RET_ERROR);
 		if (nrec > t->bt_nrecs + 1) {
-			if (ISSET(t,R_FIXLEN)) {
-				tdata.data = malloc(t->bt_reclen);
-				if (tdata.data == NULL)
+			if (ISSET(t, R_FIXLEN)) {
+				if ((tdata.data =
+				    (void *)malloc(t->bt_reclen)) == NULL)
 					return (RET_ERROR);
 				tdata.size = t->bt_reclen;
 				memset(tdata.data, t->bt_bval, tdata.size);
@@ -134,7 +133,7 @@ einval:		errno = EINVAL;
 				if (__rec_iput(t,
 				    t->bt_nrecs, &tdata, 0) != RET_SUCCESS)
 					return (RET_ERROR);
-			if (ISSET(t,R_FIXLEN))
+			if (ISSET(t, R_FIXLEN))
 				free(tdata.data);
 		}
 	}
@@ -172,7 +171,7 @@ __rec_iput(t, nrec, data, flags)
 	PAGE *h;
 	indx_t index, nxtindex;
 	pgno_t pg;
-	size_t nbytes;
+	u_int32_t nbytes;
 	int dflags, status;
 	char *dest, db[NOVFLSIZE];
 
@@ -188,7 +187,7 @@ __rec_iput(t, nrec, data, flags)
 		tdata.data = db;
 		tdata.size = NOVFLSIZE;
 		*(pgno_t *)db = pg;
-		*(size_t *)(db + sizeof(pgno_t)) = data->size;
+		*(u_int32_t *)(db + sizeof(pgno_t)) = data->size;
 		dflags = P_BIGDATA;
 		data = &tdata;
 	} else

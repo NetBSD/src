@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1991, 1993
+ * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -33,8 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)btree.h	8.4 (Berkeley) 12/18/93
- *	$Id: btree.h,v 1.6 1994/01/24 03:59:47 cgd Exp $
+ *	@(#)btree.h	8.6 (Berkeley) 5/31/94
  */
 
 #include <mpool.h>
@@ -56,7 +55,7 @@
  * There are five page layouts in the btree: btree internal pages (BINTERNAL),
  * btree leaf pages (BLEAF), recno internal pages (RINTERNAL), recno leaf pages
  * (RLEAF) and overflow pages.  All five page types have a page header (PAGE).
- * This implementation requires that longs within structures are NOT padded.
+ * This implementation requires that values within structures NOT be padded.
  * (ANSI C permits random padding.)  If your compiler pads randomly you'll have
  * to do some work to get this package to run.
  */
@@ -71,18 +70,17 @@ typedef struct _page {
 #define	P_RINTERNAL	0x08		/* recno internal page */
 #define	P_RLEAF		0x10		/* leaf page */
 #define P_TYPE		0x1f		/* type mask */
-
 #define	P_PRESERVE	0x20		/* never delete this chain of pages */
-	u_long	flags;
+	u_int32_t flags;
 
 	indx_t	lower;			/* lower bound of free space on page */
 	indx_t	upper;			/* upper bound of free space on page */
-	indx_t	linp[1];		/* long-aligned VARIABLE LENGTH DATA */
+	indx_t	linp[1];		/* indx_t-aligned VAR. LENGTH DATA */
 } PAGE;
 
 /* First and next index. */
 #define	BTDATAOFF	(sizeof(pgno_t) + sizeof(pgno_t) + sizeof(pgno_t) + \
-			    sizeof(u_long) + sizeof(indx_t) + sizeof(indx_t))
+			    sizeof(u_int32_t) + sizeof(indx_t) + sizeof(indx_t))
 #define	NEXTINDEX(p)	(((p)->lower - BTDATAOFF) / sizeof(indx_t))
 
 /*
@@ -97,11 +95,13 @@ typedef struct _page {
  * chain with size bytes of item.  Overflow pages are simply bytes without any
  * external structure.
  *
- * The size and page number fields in the items are long aligned so they can be
- * manipulated without copying.
+ * The page number and size fields in the items are pgno_t-aligned so they can
+ * be manipulated without copying.  (This presumes that 32 bit items can be
+ * manipulated on this system.)
  */
-#define	LALIGN(n)	(((n) + sizeof(u_long) - 1) & ~(sizeof(u_long) - 1))
-#define	NOVFLSIZE	(sizeof(pgno_t) + sizeof(size_t))
+#define	LALIGN(n) \
+	(((n) + sizeof(pgno_t) - 1) & ~(sizeof(pgno_t) - 1))
+#define	NOVFLSIZE	(sizeof(pgno_t) + sizeof(u_int32_t))
 
 /*
  * For the btree internal pages, the item is a key.  BINTERNALs are {key, pgno}
@@ -113,7 +113,7 @@ typedef struct _page {
  * some minor modifications of the above rule.
  */
 typedef struct _binternal {
-	size_t	ksize;			/* key size */
+	u_int32_t ksize;		/* key size */
 	pgno_t	pgno;			/* page number stored on */
 #define	P_BIGDATA	0x01		/* overflow data */
 #define	P_BIGKEY	0x02		/* overflow key */
@@ -127,16 +127,16 @@ typedef struct _binternal {
 
 /* Get the number of bytes in the entry. */
 #define NBINTERNAL(len) \
-	LALIGN(sizeof(size_t) + sizeof(pgno_t) + sizeof(u_char) + (len))
+	LALIGN(sizeof(u_int32_t) + sizeof(pgno_t) + sizeof(u_char) + (len))
 
 /* Copy a BINTERNAL entry to the page. */
-#define	WR_BINTERNAL(p, size, pgno, flags) { \
-	*(size_t *)p = size; \
-	p += sizeof(size_t); \
-	*(pgno_t *)p = pgno; \
-	p += sizeof(pgno_t); \
-	*(u_char *)p = flags; \
-	p += sizeof(u_char); \
+#define	WR_BINTERNAL(p, size, pgno, flags) {				\
+	*(u_int32_t *)p = size;						\
+	p += sizeof(u_int32_t);						\
+	*(pgno_t *)p = pgno;						\
+	p += sizeof(pgno_t);						\
+	*(u_char *)p = flags;						\
+	p += sizeof(u_char);						\
 }
 
 /*
@@ -165,8 +165,8 @@ typedef struct _rinternal {
 
 /* For the btree leaf pages, the item is a key and data pair. */
 typedef struct _bleaf {
-	size_t	ksize;			/* size of key */
-	size_t	dsize;			/* size of data */
+	u_int32_t	ksize;		/* size of key */
+	u_int32_t	dsize;		/* size of data */
 	u_char	flags;			/* P_BIGDATA, P_BIGKEY */
 	char	bytes[1];		/* data */
 } BLEAF;
@@ -180,25 +180,25 @@ typedef struct _bleaf {
 
 /* Get the number of bytes in the user's key/data pair. */
 #define NBLEAFDBT(ksize, dsize) \
-	LALIGN(sizeof(size_t) + sizeof(size_t) + sizeof(u_char) + \
+	LALIGN(sizeof(u_int32_t) + sizeof(u_int32_t) + sizeof(u_char) + \
 	    (ksize) + (dsize))
 
 /* Copy a BLEAF entry to the page. */
-#define	WR_BLEAF(p, key, data, flags) { \
-	*(size_t *)p = key->size; \
-	p += sizeof(size_t); \
-	*(size_t *)p = data->size; \
-	p += sizeof(size_t); \
-	*(u_char *)p = flags; \
-	p += sizeof(u_char); \
-	memmove(p, key->data, key->size); \
-	p += key->size; \
-	memmove(p, data->data, data->size); \
+#define	WR_BLEAF(p, key, data, flags) {					\
+	*(u_int32_t *)p = key->size;					\
+	p += sizeof(u_int32_t);						\
+	*(u_int32_t *)p = data->size;					\
+	p += sizeof(u_int32_t);						\
+	*(u_char *)p = flags;						\
+	p += sizeof(u_char);						\
+	memmove(p, key->data, key->size);				\
+	p += key->size;							\
+	memmove(p, data->data, data->size);				\
 }
 
 /* For the recno leaf pages, the item is a data entry. */
 typedef struct _rleaf {
-	size_t	dsize;			/* size of data */
+	u_int32_t	dsize;		/* size of data */
 	u_char	flags;			/* P_BIGDATA */
 	char	bytes[1];
 } RLEAF;
@@ -212,15 +212,15 @@ typedef struct _rleaf {
 
 /* Get the number of bytes from the user's data. */
 #define	NRLEAFDBT(dsize) \
-	LALIGN(sizeof(size_t) + sizeof(u_char) + (dsize))
+	LALIGN(sizeof(u_int32_t) + sizeof(u_char) + (dsize))
 
 /* Copy a RLEAF entry to the page. */
-#define	WR_RLEAF(p, data, flags) { \
-	*(size_t *)p = data->size; \
-	p += sizeof(size_t); \
-	*(u_char *)p = flags; \
-	p += sizeof(u_char); \
-	memmove(p, data->data, data->size); \
+#define	WR_RLEAF(p, data, flags) {					\
+	*(u_int32_t *)p = data->size;					\
+	p += sizeof(u_int32_t);						\
+	*(u_char *)p = flags;						\
+	p += sizeof(u_char);						\
+	memmove(p, data->data, data->size);				\
 }
 
 /*
@@ -255,14 +255,14 @@ typedef struct _epg {
  * put or delete call modify the metadata.
  */
 typedef struct _btmeta {
-	u_long	m_magic;		/* magic number */
-	u_long	m_version;		/* version */
-	u_long	m_psize;		/* page size */
-	u_long	m_free;			/* page number of first free page */
-	u_long	m_nrecs;		/* R: number of records */
+	u_int32_t	m_magic;	/* magic number */
+	u_int32_t	m_version;	/* version */
+	u_int32_t	m_psize;	/* page size */
+	u_int32_t	m_free;		/* page number of first free page */
+	u_int32_t	m_nrecs;	/* R: number of records */
 #define	SAVEMETA	(B_NODUPS | R_RECNO)
-	u_long	m_flags;		/* bt_flags & SAVEMETA */
-	u_long	m_unused;		/* unused */
+	u_int32_t	m_flags;	/* bt_flags & SAVEMETA */
+	u_int32_t	m_unused;	/* unused */
 } BTMETA;
 
 /* The in-memory btree/recno data structure. */
@@ -291,7 +291,7 @@ typedef struct _btree {
 	int	bt_fd;			/* tree file descriptor */
 
 	pgno_t	bt_free;		/* next free page */
-	u_long	bt_psize;		/* page size */
+	u_int32_t bt_psize;		/* page size */
 	indx_t	bt_ovflsize;		/* cut-off for key/data overflow */
 	int	bt_lorder;		/* byte order */
 					/* sorted order */
@@ -301,7 +301,7 @@ typedef struct _btree {
 					/* B: key comparison function */
 	int	(*bt_cmp) __P((const DBT *, const DBT *));
 					/* B: prefix comparison function */
-	int	(*bt_pfx) __P((const DBT *, const DBT *));
+	size_t	(*bt_pfx) __P((const DBT *, const DBT *));
 					/* R: recno input function */
 	int	(*bt_irec) __P((struct _btree *, recno_t));
 
@@ -343,7 +343,7 @@ typedef struct _btree {
 #define	B_DB_SHMEM	0x20000		/* DB_SHMEM specified. */
 #define	B_DB_TXN	0x40000		/* DB_TXN specified. */
 
-	u_long		bt_flags;	/* btree state */
+	u_int32_t	bt_flags;	/* btree state */
 } BTREE;
 
 #define	SET(t, f)	((t)->bt_flags |= (f))

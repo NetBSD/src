@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1990, 1993
+ * Copyright (c) 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -35,8 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)bt_stack.c	8.1 (Berkeley) 6/4/93";*/
-static char *rcsid = "$Id: bt_stack.c,v 1.3 1993/08/26 00:43:31 jtc Exp $";
+static char sccsid[] = "@(#)bt_stack.c	8.4 (Berkeley) 6/20/94";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -75,12 +74,16 @@ int
 __bt_push(t, pgno, index)
 	BTREE *t;
 	pgno_t pgno;
-	int index;
+	indx_t index;
 {
+	size_t sz;
+
 	if (t->bt_sp == t->bt_maxstack) {
 		t->bt_maxstack += 50;
-		if ((t->bt_stack = realloc(t->bt_stack,
-		    t->bt_maxstack * sizeof(EPGNO))) == NULL) {
+		sz = t->bt_maxstack * sizeof(EPGNO);
+		t->bt_stack = (EPGNO *)(t->bt_stack == NULL ?
+		    malloc(sz) : realloc(t->bt_stack, sz));
+		if (t->bt_stack == NULL) {
 			t->bt_maxstack -= 50;
 			return (RET_ERROR);
 		}
