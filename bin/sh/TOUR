@@ -1,4 +1,5 @@
-#	@(#)TOUR	8.1 (Berkeley) 5/31/93
+#	from: @(#)TOUR	8.1 (Berkeley) 5/31/93
+#	$Id: TOUR,v 1.5 1994/06/11 16:11:37 mycroft Exp $
 
 NOTE -- This is the original TOUR paper distributed with ash and
 does not represent the current state of the shell.  It is provided anyway

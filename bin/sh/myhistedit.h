@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)myhistedit.h	8.1 (Berkeley) 5/31/93
+ *	from: @(#)myhistedit.h	8.1 (Berkeley) 5/31/93
+ *	$Id: myhistedit.h,v 1.2 1994/06/11 16:12:17 mycroft Exp $
  */
 
 #include <histedit.h>
