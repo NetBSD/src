@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbr.8,v 1.4 2000/11/07 05:40:17 lukem Exp $
+.\"	$NetBSD: mbr.8,v 1.5 2001/11/16 11:36:09 wiz Exp $
 .Dd April 13, 1999
 .Dt MBR 8 i386
 .Os
@@ -17,7 +17,8 @@ that is marked active, and boot from it. Booting from a partition simply
 means loading the first sector in that partition, and executing the
 code in it, as is done for the MBR itself.
 .Pp
-NetBSD supplies its two versions of the bootcode in an MBR:
+.Nx
+supplies its two versions of the bootcode in an MBR:
 .Bl -tag -width Er
 .It Sy Normal boot code
 This version has the same functionality as that supplied by DOS/Windows and
@@ -42,12 +43,10 @@ press a key, selecting a menu item. Must be in the range 0-3600.
 .It default
 The default partition or disk to boot from, should the timeout
 expire.
-
 .It active
 Activate/deactivate the bootselector. When deactivated, the
 bootcode will pick the first active partition, as usual.
 .El
-
 .Pp
 When active, the bootselector will let the user select the partition
 or drive to boot from via the keyboard. Keys F1 through F4 will
@@ -63,8 +62,7 @@ be booted in the end.
 The Enter key will cause the bootcode to find the active partition,
 and boot from it. If no key is pressed, the (configurable) default
 selection is picked.
-
-.Sh DIAGNOSTIC
+.Sh DIAGNOSTICS
 The following error numbers may be printed in case of an error condition,
 (after which the user must restart the system):
 .Bl -tag -width Er
@@ -78,7 +76,6 @@ partition or drive selected.
 No operating system. The bootsector was loaded successfully, but
 it was not valid (i.e. the magic number check failed).
 .El
-
 .Sh SEE ALSO
 .Xr fdisk 8
 .Sh BUGS
