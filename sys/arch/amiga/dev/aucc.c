@@ -1,3 +1,4 @@
+/*	$NetBSD: aucc.c,v 1.4 1997/06/20 21:45:11 is Exp $	*/
 #undef AUDIO_DEBUG
 /*
  * Copyright (c) 1997 Stephan Thesing
@@ -157,7 +158,6 @@ unsigned char ulaw_to_lin[] = {
 int	aucc_open __P((dev_t, int));
 void	aucc_close __P((void *));
 int	aucc_set_out_sr __P((void *, u_long));
-u_long	aucc_get_out_sr __P((void *));
 int	aucc_query_encoding __P((void *, struct audio_encoding *));
 int	aucc_set_encoding __P((void *, u_int));
 int	aucc_get_encoding __P((void *));
@@ -171,7 +171,6 @@ int	aucc_get_out_port __P((void *));
 int	aucc_set_in_port __P((void *, int));
 int	aucc_get_in_port __P((void *));
 int	aucc_commit_settings __P((void *));
-u_int	aucc_get_silence __P((int));
 int	aucc_start_output __P((void *, void *, int, void (*)(void *),
 				  void *));
 int	aucc_start_input __P((void *, void *, int, void (*)(void *),
@@ -371,14 +370,6 @@ aucc_set_out_sr(addr, sr)
 	return(0);	
 }
 
-u_long
-aucc_get_out_sr(addr)
-	void *addr;
-{
-	/* hmmm, rate is always rate of channel 0 */
-	return ((struct aucc_softc *)addr)->sc_channel[0].nd_freq;
-}
-
 int
 aucc_query_encoding(addr, fp)
 	void *addr;
@@ -418,6 +409,9 @@ aucc_set_params(addr, mode, p, q)
 	int mode;
 	struct  audio_params *p, *q;
 {
+	if (mode == AUMODE_RECORD)
+		return 0 /*ENXIO*/;
+
 	switch (p->encoding) {
 	case AUDIO_ENCODING_ULAW:
 	case AUDIO_ENCODING_LINEAR:
@@ -532,24 +526,6 @@ aucc_commit_settings(addr)
 
 	return(0);
 }
-
-u_int
-aucc_get_silence(enc)
-	int enc;
-{
-	switch (enc) {
-	case AUDIO_ENCODING_ULAW:
-		return 0x7f;
-		break;
-	case AUDIO_ENCODING_LINEAR:
-		return 0;
-		break;
-	default:
-		return 0;
-		break;
-	}
-}
-
 
 static int masks[4] = {1,3,7,15}; /* masks for n first channels */
 static int masks2[4] = {1,2,4,8};
