@@ -43,7 +43,7 @@ static char copyright[] =
 #ifndef lint
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 /* from static char sccsid[] = "@(#)disklabel.c	8.2 (Berkeley) 1/7/94"; */
-static char rcsid[] = "$Id: disklabel.c,v 1.16 1994/09/22 22:03:57 mycroft Exp $";
+static char rcsid[] = "$Id: disklabel.c,v 1.17 1994/09/23 14:26:58 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -363,7 +363,7 @@ makelabel(type, name, lp)
 #endif
 #endif
 	/* d_packname is union d_boot[01], so zero */
-	bzero(lp->d_packname, sizeof(lp->d_packname));
+	memset(lp->d_packname, 0, sizeof(lp->d_packname));
 	if (name)
 		(void)strncpy(lp->d_packname, name, sizeof(lp->d_packname));
 }
@@ -519,7 +519,7 @@ readmbr(f)
 	if (read(f, mbr, sizeof(mbr)) < sizeof(mbr))
 		err(4, "can't read master boot record");
 		
-	bcopy(mbr + DOSPARTOFF, dos_partitions, sizeof(dos_partitions));
+	memcpy(dos_partitions, mbr + DOSPARTOFF, sizeof(dos_partitions));
 
 	/*
 	 * Don't (yet) know disk geometry (BIOS), use
@@ -619,7 +619,7 @@ makebootarea(boot, dp, f)
 	}
 	lp = (struct disklabel *)
 		(boot + (LABELSECTOR * dp->d_secsize) + LABELOFFSET);
-	bzero((char *)lp, sizeof *lp);
+	memset(lp, 0, sizeof *lp);
 #if NUMBOOT > 0
 	/*
 	 * If we are not installing a boot program but we are installing a
@@ -630,7 +630,7 @@ makebootarea(boot, dp, f)
 		if (rflag) {
 			if (read(f, boot, BBSIZE) < BBSIZE)
 				err(4, "%s", specname);
-			bzero((char *)lp, sizeof *lp);
+			memset(lp, 0, sizeof *lp);
 		}
 		return (lp);
 	}
@@ -640,7 +640,7 @@ makebootarea(boot, dp, f)
 	 */
 	if (!xxboot || !bootxx) {
 		dkbasename = np;
-		if ((p = rindex(dkname, '/')) == NULL)
+		if ((p = strrchr(dkname, '/')) == NULL)
 			p = dkname;
 		else
 			p++;
@@ -842,7 +842,7 @@ edit(lp, f)
 			warn("%s", tmpfil);
 			break;
 		}
-		bzero((char *)&label, sizeof(label));
+		memset(&label, 0, sizeof(label));
 		if (getasciilabel(fd, &label)) {
 			*lp = label;
 			if (writelabel(f, bootarea, lp) == 0) {
@@ -941,12 +941,12 @@ getasciilabel(f, lp)
 	lp->d_sbsize = SBSIZE;				/* XXX */
 	while (fgets(line, sizeof(line) - 1, f)) {
 		lineno++;
-		if (cp = index(line,'\n'))
+		if (cp = strchr(line,'\n'))
 			*cp = '\0';
 		cp = skip(line);
 		if (cp == NULL)
 			continue;
-		tp = index(cp, ':');
+		tp = strchr(cp, ':');
 		if (tp == NULL) {
 			warnx("line %d: syntax error", lineno);
 			errors++;

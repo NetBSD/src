@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)pass1.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: pass1.c,v 1.9 1994/06/29 11:01:35 ws Exp $";
+static char *rcsid = "$Id: pass1.c,v 1.10 1994/09/23 14:27:14 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -72,7 +72,7 @@ pass1()
 	/*
 	 * Find all allocated blocks.
 	 */
-	bzero((char *)&idesc, sizeof(struct inodesc));
+	memset(&idesc, 0, sizeof(struct inodesc));
 	idesc.id_type = ADDR;
 	idesc.id_func = pass1check;
 	inumber = 0;
@@ -160,8 +160,7 @@ checkinode(inumber, idesc)
 					inumber, symbuf, (long)dp->di_size);
 			}
 			dp = ginode(inumber);
-			bcopy(symbuf, (caddr_t)dp->di_shortlink,
-			    (long)dp->di_size);
+			memcpy(dp->di_shortlink, symbuf, (long)dp->di_size);
 			dp->di_blocks = 0;
 			inodirty();
 		}

@@ -36,7 +36,7 @@
  *
  *	from: Id: pt_tcp.c,v 1.1 1992/05/25 21:43:09 jsp Exp
  *	from: @(#)pt_tcp.c	8.3 (Berkeley) 3/27/94
- *	$Id: pt_tcp.c,v 1.5 1994/06/08 19:24:56 mycroft Exp $
+ *	$Id: pt_tcp.c,v 1.6 1994/09/23 14:27:34 mycroft Exp $
  */
 
 #include <stdio.h>
@@ -127,7 +127,7 @@ int *fdp;
 			return (EINVAL);
 	}
 
-	bzero(&sain, sizeof(sain));
+	memset(&sain, 0, sizeof(sain));
 	sain.sin_len = sizeof(sain);
 	sain.sin_family = AF_INET;
 	sain.sin_port = s_port;

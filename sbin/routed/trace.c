@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)trace.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: trace.c,v 1.5 1994/05/13 08:04:58 mycroft Exp $";
+static char *rcsid = "$Id: trace.c,v 1.6 1994/09/23 14:28:11 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -211,7 +211,7 @@ trace(ifd, who, p, len, m)
 			len = 0;
 	}
 	if (len > 0)
-		bcopy(p, t->ift_packet, len);
+		memcpy(t->ift_packet, p, len);
 	t->ift_size = len;
 	t->ift_metric = m;
 }

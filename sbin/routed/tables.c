@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tables.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: tables.c,v 1.7 1994/05/13 08:04:54 mycroft Exp $";
+static char *rcsid = "$Id: tables.c,v 1.8 1994/09/23 14:28:10 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -386,7 +386,7 @@ rtioctl(action, ort)
 	} w;
 #define rtm w.w_rtm
 
-	bzero((char *)&w, sizeof(w));
+	memset(&w, 0, sizeof(w));
 	rtm.rtm_msglen = sizeof(w);
 	rtm.rtm_version = RTM_VERSION;
 	rtm.rtm_type = (action == ADD ? RTM_ADD :
@@ -395,8 +395,8 @@ rtioctl(action, ort)
 	rtm.rtm_flags = ort->rtu_flags;
 	rtm.rtm_seq = ++seqno;
 	rtm.rtm_addrs = RTA_DST|RTA_GATEWAY;
-	bcopy((char *)&ort->rtu_dst, (char *)&w.w_dst, sizeof(w.w_dst));
-	bcopy((char *)&ort->rtu_router, (char *)&w.w_gate, sizeof(w.w_gate));
+	memcpy(&w.w_dst, &ort->rtu_dst, sizeof(w.w_dst));
+	memcpy(&w.w_gate, &ort->rtu_router, sizeof(w.w_gate));
 	w.w_dst.sin_family = AF_INET;
 	w.w_dst.sin_len = sizeof(w.w_dst);
 	w.w_gate.sa_family = AF_INET;

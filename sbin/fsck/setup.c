@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)setup.c	8.2 (Berkeley) 2/21/94";*/
-static char *rcsid = "$Id: setup.c,v 1.11 1994/06/29 11:01:37 ws Exp $";
+static char *rcsid = "$Id: setup.c,v 1.12 1994/09/23 14:27:21 mycroft Exp $";
 #endif /* not lint */
 
 #define DKTYPENAMES
@@ -224,8 +224,7 @@ setup(dev)
 		dirty(&asblk);
 	}
 	if (asblk.b_dirty && !bflag) {
-		bcopy((char *)&sblock, (char *)&altsblock,
-			(size_t)sblock.fs_sbsize);
+		memcpy(&altsblock, &sblock, (size_t)sblock.fs_sbsize);
 		flush(fswritefd, &asblk);
 	}
 	/*
@@ -353,11 +352,11 @@ readsb(listerr)
 	altsblock.fs_optim = sblock.fs_optim;
 	altsblock.fs_rotdelay = sblock.fs_rotdelay;
 	altsblock.fs_maxbpg = sblock.fs_maxbpg;
-	bcopy((char *)sblock.fs_csp, (char *)altsblock.fs_csp,
+	memcpy(altsblock.fs_csp, sblock.fs_csp,
 		sizeof sblock.fs_csp);
-	bcopy((char *)sblock.fs_fsmnt, (char *)altsblock.fs_fsmnt,
+	memcpy(altsblock.fs_fsmnt, sblock.fs_fsmnt,
 		sizeof sblock.fs_fsmnt);
-	bcopy((char *)sblock.fs_sparecon, (char *)altsblock.fs_sparecon,
+	memcpy(altsblock.fs_sparecon, sblock.fs_sparecon,
 		sizeof sblock.fs_sparecon);
 	/*
 	 * The following should not have to be copied.
@@ -407,7 +406,7 @@ calcsb(dev, devfd, fs)
 	register char *cp;
 	int i;
 
-	cp = index(dev, '\0') - 1;
+	cp = strchr(dev, '\0') - 1;
 	if (cp == (char *)-1 || (*cp < 'a' || *cp > 'h') && !isdigit(*cp)) {
 		pfatal("%s: CANNOT FIGURE OUT FILE SYSTEM PARTITION\n", dev);
 		return (0);
@@ -423,7 +422,7 @@ calcsb(dev, devfd, fs)
 			fstypenames[pp->p_fstype] : "unknown");
 		return (0);
 	}
-	bzero((char *)fs, sizeof(struct fs));
+	memset(fs, 0, sizeof(struct fs));
 	fs->fs_fsize = pp->p_fsize;
 	fs->fs_frag = pp->p_frag;
 	fs->fs_cpg = pp->p_cpg;

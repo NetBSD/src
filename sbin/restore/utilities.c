@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)utilities.c	8.2 (Berkeley) 3/25/94";*/
-static char *rcsid = "$Id: utilities.c,v 1.5 1994/06/08 19:33:47 mycroft Exp $";
+static char *rcsid = "$Id: utilities.c,v 1.6 1994/09/23 14:27:59 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -62,7 +62,7 @@ pathcheck(name)
 	struct entry *ep;
 	char *start;
 
-	start = index(name, '/');
+	start = strchr(name, '/');
 	if (start == 0)
 		return;
 	for (cp = start; *cp != '\0'; cp++) {

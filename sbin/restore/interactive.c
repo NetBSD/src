@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)interactive.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: interactive.c,v 1.4 1994/06/08 19:33:35 mycroft Exp $";
+static char *rcsid = "$Id: interactive.c,v 1.5 1994/09/23 14:27:54 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -707,7 +707,7 @@ glob_readdir(dirp)
 		return (NULL);
 	adirent.d_fileno = dp->d_ino;
 	adirent.d_namlen = dp->d_namlen;
-	bcopy(dp->d_name, adirent.d_name, dp->d_namlen + 1);
+	memcpy(adirent.d_name, dp->d_name, dp->d_namlen + 1);
 	return (&adirent);
 }
 

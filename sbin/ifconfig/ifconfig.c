@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ifconfig.c	8.2 (Berkeley) 2/16/94";*/
-static char *rcsid = "$Id: ifconfig.c,v 1.13 1994/09/23 01:38:52 mycroft Exp $";
+static char *rcsid = "$Id: ifconfig.c,v 1.14 1994/09/23 14:27:24 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -371,9 +371,9 @@ notealias(addr, param)
 	char *addr;
 {
 	if (setaddr && doalias == 0 && param < 0)
-		bcopy((caddr_t)rqtosa(af_addreq),
-		      (caddr_t)rqtosa(af_ridreq),
-		      rqtosa(af_addreq)->sa_len);
+		memcpy(rqtosa(af_ridreq),
+		       rqtosa(af_addreq),
+		       rqtosa(af_addreq)->sa_len);
 	doalias = param;
 	if (param < 0) {
 		clearaddr = 1;
@@ -470,13 +470,13 @@ in_status(force)
 			return;
 		err(1, "socket");
 	}
-	bzero((caddr_t)&ifr, sizeof(ifr));
+	memset(&ifr, 0, sizeof(ifr));
 	strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	if (ioctl(s, SIOCGIFADDR, (caddr_t)&ifr) < 0) {
 		if (errno == EADDRNOTAVAIL || errno == EAFNOSUPPORT) {
 			if (!force)
 				return;
-			bzero((char *)&ifr.ifr_addr, sizeof(ifr.ifr_addr));
+			memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
 		} else
 			warn("SIOCGIFADDR");
 	}
@@ -487,14 +487,14 @@ in_status(force)
 	if (ioctl(s, SIOCGIFNETMASK, (caddr_t)&ifr) < 0) {
 		if (errno != EADDRNOTAVAIL)
 			warn("SIOCGIFNETMASK");
-		bzero((char *)&ifr.ifr_addr, sizeof(ifr.ifr_addr));
+		memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
 	} else
 		netmask.sin_addr =
 		    ((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr;
 	if (flags & IFF_POINTOPOINT) {
 		if (ioctl(s, SIOCGIFDSTADDR, (caddr_t)&ifr) < 0) {
 			if (errno == EADDRNOTAVAIL)
-			    bzero((char *)&ifr.ifr_addr, sizeof(ifr.ifr_addr));
+			    memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
 			else
 			    warn("SIOCGIFDSTADDR");
 		}
@@ -506,7 +506,7 @@ in_status(force)
 	if (flags & IFF_BROADCAST) {
 		if (ioctl(s, SIOCGIFBRDADDR, (caddr_t)&ifr) < 0) {
 			if (errno == EADDRNOTAVAIL)
-			    bzero((char *)&ifr.ifr_addr, sizeof(ifr.ifr_addr));
+			    memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
 			else
 			    warn("SIOCGIFBRDADDR");
 		}
@@ -529,13 +529,13 @@ xns_status(force)
 			return;
 		err(1, "socket");
 	}
-	bzero((caddr_t)&ifr, sizeof(ifr));
+	memset(&ifr, 0, sizeof(ifr));
 	strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	if (ioctl(s, SIOCGIFADDR, (caddr_t)&ifr) < 0) {
 		if (errno == EADDRNOTAVAIL || errno == EAFNOSUPPORT) {
 			if (!force)
 				return;
-			bzero((char *)&ifr.ifr_addr, sizeof(ifr.ifr_addr));
+			memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
 		} else
 			warn("SIOCGIFADDR");
 	}
@@ -545,7 +545,7 @@ xns_status(force)
 	if (flags & IFF_POINTOPOINT) { /* by W. Nesheim@Cornell */
 		if (ioctl(s, SIOCGIFDSTADDR, (caddr_t)&ifr) < 0) {
 			if (errno == EADDRNOTAVAIL)
-			    bzero((char *)&ifr.ifr_addr, sizeof(ifr.ifr_addr));
+			    memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
 			else
 			    warn("SIOCGIFDSTADDR");
 		}
@@ -568,13 +568,13 @@ iso_status(force)
 			return;
 		err(1, "socket");
 	}
-	bzero((caddr_t)&ifr, sizeof(ifr));
+	memset(&ifr, 0, sizeof(ifr));
 	strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	if (ioctl(s, SIOCGIFADDR_ISO, (caddr_t)&ifr) < 0) {
 		if (errno == EADDRNOTAVAIL || errno == EAFNOSUPPORT) {
 			if (!force)
 				return;
-			bzero((char *)&ifr.ifr_Addr, sizeof(ifr.ifr_Addr));
+			memset(&ifr.ifr_Addr, 0, sizeof(ifr.ifr_Addr));
 		} else
 			warn("SIOCGIFADDR_ISO");
 	}
@@ -583,7 +583,7 @@ iso_status(force)
 	printf("\tiso %s ", iso_ntoa(&siso->siso_addr));
 	if (ioctl(s, SIOCGIFNETMASK_ISO, (caddr_t)&ifr) < 0) {
 		if (errno == EADDRNOTAVAIL)
-			bzero((char *)&ifr.ifr_Addr, sizeof(ifr.ifr_Addr));
+			memset(&ifr.ifr_Addr, 0, sizeof(ifr.ifr_Addr));
 		else
 			warn("SIOCGIFNETMASK_ISO");
 	} else {
@@ -592,7 +592,7 @@ iso_status(force)
 	if (flags & IFF_POINTOPOINT) {
 		if (ioctl(s, SIOCGIFDSTADDR_ISO, (caddr_t)&ifr) < 0) {
 			if (errno == EADDRNOTAVAIL)
-			    bzero((char *)&ifr.ifr_Addr, sizeof(ifr.ifr_Addr));
+			    memset(&ifr.ifr_Addr, 0, sizeof(ifr.ifr_Addr));
 			else
 			    warn("SIOCGIFDSTADDR_ISO");
 		}
@@ -625,7 +625,7 @@ in_getaddr(s, which)
 	if ((val = inet_addr(s)) != -1)
 		sin->sin_addr.s_addr = val;
 	else if (hp = gethostbyname(s))
-		bcopy(hp->h_addr, (char *)&sin->sin_addr, hp->h_length);
+		memcpy(&sin->sin_addr, hp->h_addr, hp->h_length);
 	else if (np = getnetbyname(s))
 		sin->sin_addr = inet_makeaddr(np->n_net, INADDR_ANY);
 	else

@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)nfsd.c	8.7 (Berkeley) 2/22/94";*/
-static char *rcsid = "$Id: nfsd.c,v 1.11 1994/06/08 19:31:49 mycroft Exp $";
+static char *rcsid = "$Id: nfsd.c,v 1.12 1994/09/23 14:27:46 mycroft Exp $";
 #endif not lint
 
 #include <sys/param.h>
@@ -408,7 +408,7 @@ main(argc, argv, envp)
 		*cp = (NFS_PORT & 0xff);
 		isoaddr.siso_len = sizeof(isoaddr);
 		if (bind(tp4sock,
-		    (struct sockaddr *)&isoaddr, sizeof (isoaddr)) < 0) {
+		    (struct sockaddr *)&isoaddr, sizeof(isoaddr)) < 0) {
 			syslog(LOG_ERR, "can't bind tp4 addr");
 			exit(1);
 		}
