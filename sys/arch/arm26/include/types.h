@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.4 2001/01/23 22:07:58 bjh21 Exp $ */
+/* $NetBSD: types.h,v 1.5 2001/01/24 00:03:21 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,7 +41,6 @@
 #include <sys/cdefs.h>
 #include <machine/int_types.h>
 
-#define __BROKEN_CONFIG_UNIT_USAGE
 #define	__HAVE_GENERIC_SOFT_INTERRUPTS
 
 /* NB: This should probably be if defined(_KERNEL) */
