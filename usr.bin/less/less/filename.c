@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1984-2000  Mark Nudelman
+ * Copyright (C) 1984-2002  Mark Nudelman
  *
  * You may distribute under the terms of either the GNU General Public
  * License or the Less License, as specified in the README file.
@@ -50,6 +50,7 @@
 
 extern int force_open;
 extern int secure;
+extern int use_lessopen;
 extern IFILE curr_ifile;
 extern IFILE old_ifile;
 #if SPACES_IN_FILENAMES
@@ -799,7 +800,7 @@ open_altfile(filename, pf, pfd)
 	int returnfd = 0;
 #endif
 	
-	if (secure)
+	if (!use_lessopen || secure)
 		return (NULL);
 	ch_ungetchar(-1);
 	if ((lessopen = lgetenv("LESSOPEN")) == NULL)
@@ -957,12 +958,12 @@ bad_file(filename)
 	filename = shell_unquote(filename);
 	if (is_dir(filename))
 	{
-		static char is_dir[] = " is a directory";
+		static char is_a_dir[] = " is a directory";
 
-		m = (char *) ecalloc(strlen(filename) + sizeof(is_dir), 
+		m = (char *) ecalloc(strlen(filename) + sizeof(is_a_dir), 
 			sizeof(char));
 		strcpy(m, filename);
-		strcat(m, is_dir);
+		strcat(m, is_a_dir);
 	} else
 	{
 #if HAVE_STAT
