@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.42 2003/01/04 23:43:04 wiz Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.43 2003/01/18 08:36:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.42 2003/01/04 23:43:04 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.43 2003/01/18 08:36:15 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_execfmt.h"
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.42 2003/01/04 23:43:04 wiz Exp $")
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/disklabel.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <miscfs/specfs/specdev.h>
@@ -402,8 +403,8 @@ stio2stios(t, ts)
 }
 
 int
-sunos_sys_ioctl(p, v, retval)
-	struct proc *p;
+sunos_sys_ioctl(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -412,6 +413,7 @@ sunos_sys_ioctl(p, v, retval)
 		u_long	com;
 		caddr_t	data;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
 	int (*ctl) __P((struct file *, u_long, caddr_t, struct proc *));
@@ -893,7 +895,7 @@ sunos_sys_ioctl(p, v, retval)
 	    }
 
 	}
-	return (sys_ioctl(p, uap, retval));
+	return (sys_ioctl(l, uap, retval));
 }
 
 /* SunOS fcntl(2) cmds not implemented */
@@ -995,12 +997,13 @@ static struct {
 };
 
 int
-sunos_sys_fcntl(p, v, retval)
-	struct proc *p;
+sunos_sys_fcntl(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct sunos_sys_fcntl_args *uap = v;
+	struct proc *p = l->l_proc;
 	long flg;
 	int n, ret;
 
@@ -1044,7 +1047,7 @@ sunos_sys_fcntl(p, v, retval)
 			if (error)
 				return error;
 
-			error = sys_fcntl(p, &fa, retval);
+			error = sys_fcntl(l, &fa, retval);
 			if (error || SCARG(&fa, cmd) != F_GETLK)
 				return error;
 
@@ -1067,7 +1070,7 @@ sunos_sys_fcntl(p, v, retval)
 		break;
 	}
 
-	ret = sys_fcntl(p, uap, retval);
+	ret = sys_fcntl(l, uap, retval);
 
 	switch (SCARG(uap, cmd)) {
 	case F_GETFL:
