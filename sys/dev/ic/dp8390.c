@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.29 2000/02/02 10:50:56 enami Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.30 2000/02/02 11:41:56 itojun Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -1308,8 +1308,9 @@ dp8390_activate(self, act)
 }
 
 int
-dp8390_detach(sc)
+dp8390_detach(sc, flags)
 	struct dp8390_softc *sc;
+	int flags;
 {
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 
