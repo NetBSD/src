@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.22 2002/12/05 01:17:16 fvdl Exp $	*/
+/*	$NetBSD: label.c,v 1.23 2002/12/23 10:29:57 jdolecek Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.22 2002/12/05 01:17:16 fvdl Exp $");
+__RCSID("$NetBSD: label.c,v 1.23 2002/12/23 10:29:57 jdolecek Exp $");
 #endif
 
 #include <sys/types.h>
@@ -336,7 +336,7 @@ getpartoff(msg_no, defpartstart)
 
 	maxpartc = 'a' + getmaxpartitions() - 1;
 	while (1) {
-		msg_table_add(MSG_label_offset_special, maxpartc);
+		msg_table_add(MSG_label_offset_special, maxpartc, maxpartc);
 		snprintf (isize, 20, "%d", (defpartstart)/sizemult);
 		msg_prompt_add(msg_no, (defpartstart > 0) ? isize : NULL,
 		    isize, 20);

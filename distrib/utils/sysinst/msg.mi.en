@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.92 2002/08/12 02:22:52 grant Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.93 2002/12/23 10:29:57 jdolecek Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -860,7 +860,7 @@ message label_offset_special
 {
 Special values that can be entered for the offset value:
     -1:   start at the beginning of the NetBSD part of the disk
-   a-%c:   start at the end of partition X
+   a-%c:   start at the end of previous partition (a, b, ..., %c)
 
 }
 
