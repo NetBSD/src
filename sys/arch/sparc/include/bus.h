@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.8 1998/03/28 19:45:29 pk Exp $	*/
+/*	$NetBSD: bus.h,v 1.9 1998/03/29 22:00:33 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -141,7 +141,6 @@ typedef struct sparc_bus_space_tag	*bus_space_tag_t;
  */
 int sparc_bus_map __P(( void *, bus_type_t, bus_addr_t, bus_size_t,
 			int, vm_offset_t, bus_space_handle_t *));
-int sparc_bus_mmap __P((void *, bus_type_t, bus_addr_t, int));
 
 int bus_space_probe __P((
 		bus_space_tag_t,
