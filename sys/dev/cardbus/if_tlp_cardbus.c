@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.28 2001/07/17 13:55:51 mrg Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.29 2001/07/18 10:39:28 onoe Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -268,6 +268,8 @@ tlp_cardbus_attach(parent, self, aux)
 		}
 		break;
 
+	default:
+		/* Nothing. -- to make gcc happy */
 	}
 
 	printf(": %s Ethernet, pass %d.%d\n",
@@ -567,6 +569,9 @@ tlp_cardbus_setup(csc)
 			cardbus_conf_write(cc, cf, csc->sc_tag, TULIP_PCI_CFDA,
 			    reg & ~(CFDA_SLEEP|CFDA_SNOOZE));
 		break;
+
+	default:
+		/* Nothing. -- to make gcc happy */
 	}
 
 	if (cardbus_get_capability(cc, cf, csc->sc_tag,
