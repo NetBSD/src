@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.219 1999/02/20 10:00:37 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.220 1999/02/27 03:26:09 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -209,6 +209,11 @@ int	nbuf = 0;
 int	bufpages = BUFPAGES;
 #else
 int	bufpages = 0;
+#endif
+#ifdef BUFCACHE
+int	bufchache = BUFCACHE;
+#else
+int	bufcache = 0;
 #endif
 
 caddr_t	msgbufaddr;
@@ -453,17 +458,33 @@ again:
 	valloc(msqids, struct msqid_ds, msginfo.msgmni);
 #endif
 	/*
-	 * Determine how many buffers to allocate.
-	 * Use 10% of memory for the first 2 Meg, 5% of the remaining
-	 * memory. Insure a minimum of 16 buffers.
-	 * We allocate 3/4 as many swap buffer headers as file i/o buffers.
+	 * Determine the number of pages to use for the buffer cache
+	 * (minimum 16).  Allocate 3/4 as many swap buffer headers as
+	 * file I/O buffers.
 	 */
 	if (bufpages == 0) {
-		if (physmem < btoc(2 * 1024 * 1024))
-			bufpages = physmem / (10 * CLSIZE);
-		else
-			bufpages = (btoc(2 * 1024 * 1024) + physmem) /
-			    (20 * CLSIZE);
+		if (bufcache == 0) {	/* use old algorithm */
+			/*
+			 * Determine how many buffers to allocate. We use 10%
+			 * of the first 2MB of memory, and 5% of the rest.
+			 */
+			if (physmem < btoc(2 * 1024 * 1024))
+				bufpages = physmem / (10 * CLSIZE);
+			else
+				bufpages = (btoc(2 * 1024 * 1024) + physmem) /
+				    (20 * CLSIZE);
+		} else {
+			/*
+			 * Set size of buffer cache to physmem/bufcache * 100
+			 * (i.e., bufcache % of physmem).
+			 */
+			if (bufcache < 5 || bufcache > 95) {
+				printf("warning: unable to set bufcache "
+				    "to %d%% of RAM, using 10%%", bufcache);
+				bufcache = 10;
+			}
+			bufpages = physmem / (CLSIZE * 100) * bufcache;
+		}
 	}
 
 	if (nbuf == 0) {
