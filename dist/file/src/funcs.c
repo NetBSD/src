@@ -1,4 +1,4 @@
-/*	$NetBSD: funcs.c,v 1.1.1.4 2003/10/27 16:14:22 pooka Exp $	*/
+/*	$NetBSD: funcs.c,v 1.1.1.5 2004/03/23 08:31:43 pooka Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -28,13 +28,20 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-#include "magic.h"
 #include "file.h"
+#include "magic.h"
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 
+#ifndef	lint
+#if 0
+FILE_RCSID("@(#)Id: funcs.c,v 1.11 2003/11/11 20:01:46 christos Exp")
+#else
+__RCSID("$NetBSD: funcs.c,v 1.1.1.5 2004/03/23 08:31:43 pooka Exp $");
+#endif
+#endif	/* lint */
 /*
  * Like printf, only we print to a buffer and advance it.
  */

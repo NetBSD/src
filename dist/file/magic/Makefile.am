@@ -43,6 +43,7 @@ Magdir/blender \
 Magdir/blit \
 Magdir/bout \
 Magdir/bsdi \
+Magdir/cad \
 Magdir/c-lang \
 Magdir/c64 \
 Magdir/cddb \
@@ -58,6 +59,7 @@ Magdir/compress \
 Magdir/console \
 Magdir/convex \
 Magdir/ctags \
+Magdir/dact \
 Magdir/database \
 Magdir/diamond \
 Magdir/diff \
@@ -77,6 +79,7 @@ Magdir/frame \
 Magdir/freebsd \
 Magdir/fsav \
 Magdir/games \
+Magdir/geos \
 Magdir/gcc \
 Magdir/gimp \
 Magdir/gnu \
@@ -140,6 +143,7 @@ Magdir/pdp \
 Magdir/perl \
 Magdir/pgp \
 Magdir/pkgadd \
+Magdir/plan9 \
 Magdir/plus5 \
 Magdir/printer \
 Magdir/project \
