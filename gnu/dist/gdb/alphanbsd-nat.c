@@ -236,40 +236,6 @@ store_inferior_registers (regno)
 	ptrace(PT_SETREGS, inferior_pid, (PTRACE_ARG3_TYPE)&reg, 0);
 	ptrace(PT_SETFPREGS, inferior_pid, (PTRACE_ARG3_TYPE)&fpreg, 0);
 }
-
-void 
-child_resume (pid, step, signal)
-	int pid;
-	int step;
-	enum target_signal signal;
-{    
-
-  errno = 0;
-
-  if (pid == -1)
-    /* Resume all threads.  */
-    /* I think this only gets used in the non-threaded case, where "resume
-       all threads" and "resume inferior_pid" are the same.  */
-    pid = inferior_pid;
-
-  /* An address of (PTRACE_ARG3_TYPE)1 tells ptrace to continue from where
-     it was.  (If GDB wanted it to start some other way, we have already
-     written a new PC value to the child.)
-
-     If this system does not support PT_STEP, a higher level function will
-     have called single_step() to transmute the step request into a
-     continue request (by setting breakpoints on all possible successor
-     instructions), so we don't have to worry about that here.  */
-
-  if (step)
-	abort();
-  else
-    ptrace (PT_CONTINUE, pid, (PTRACE_ARG3_TYPE) 1,
-	    target_signal_to_host (signal));
-
-  if (errno)
-    perror_with_name ("ptrace");
-}
 
 
 /*
