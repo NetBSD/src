@@ -19,7 +19,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: pms.c,v 1.7 1993/08/02 17:52:35 mycroft Exp $
+ *	$Id: pms.c,v 1.8 1993/11/02 23:59:34 mycroft Exp $
  */
 
 #include "pms.h"
@@ -49,17 +49,22 @@
 #define STATUS	4	/* Offset for status port, read-only */
 
 /* status bits */
-#define	PMS_OUTPUT_ACK	0x02	/* output acknowledge */
+#define	PMS_OBUF_FULL	0x21
+#define	PMS_IBUF_FULL	0x02
 
 /* controller commands */
-#define	PMS_ENABLE	0xa7	/* enable auxiliary port */
-#define	PMS_DISABLE	0xa8	/* disable auxiliary port */
 #define	PMS_INT_ENABLE	0x47	/* enable controller interrupts */
 #define	PMS_INT_DISABLE	0x65	/* disable controller interrupts */
+#define	PMS_AUX_DISABLE	0xa7	/* enable auxiliary port */
+#define	PMS_AUX_ENABLE	0xa8	/* disable auxiliary port */
+#define	PMS_MAGIC_1	0xa9	/* XXX */
+#define	PMS_MAGIC_2	0xaa	/* XXX */
 
 /* mouse commands */
+#define	PMS_SET_SCALE11	0xe6	/* set scaling 1:1 */
+#define	PMS_SET_SCALE21 0xe7	/* set scaling 2:1 */
 #define	PMS_SET_RES	0xe8	/* set resolution */
-#define	PMS_SET_SCALE	0xe9	/* set scaling factor */
+#define	PMS_GET_SCALE	0xe9	/* get scaling factor */
 #define	PMS_SET_STREAM	0xea	/* set streaming mode */
 #define	PMS_SET_SAMPLE	0xf3	/* set sampling rate */
 #define	PMS_DEV_ENABLE	0xf4	/* mouse on */
@@ -86,11 +91,7 @@ struct ringbuf {
 
 static struct pms_softc {	/* Driver status information */
 	struct ringbuf inq;	/* Input queue */
-#ifdef NetBSD
 	struct selinfo rsel;
-#else
-	pid_t	rsel;		/* Process selecting for Input */
-#endif
 	unsigned char state;	/* Mouse driver state */
 	unsigned char status;	/* Mouse button status */
 	unsigned char button;	/* Previous mouse button status bits */
@@ -102,24 +103,50 @@ static struct pms_softc {	/* Driver status information */
 
 struct isa_driver pmsdriver = { pmsprobe, pmsattach, "pms" };
 
+static inline void pms_flush(int ioport)
+{
+	u_char c;
+	while (c = inb(ioport+STATUS) & 0x03)
+		if ((c & PMS_OBUF_FULL) == PMS_OBUF_FULL)
+			(void) inb(ioport+DATA);
+}
+
+static inline void pms_dev_cmd(int ioport, u_char value)
+{
+	pms_flush(ioport);
+	outb(ioport+CNTRL, 0xd4);
+	pms_flush(ioport);
+	outb(ioport+DATA, value);
+}
+
+static inline void pms_aux_cmd(int ioport, u_char value)
+{
+	pms_flush(ioport);
+	outb(ioport+CNTRL, value);
+}
+
+static inline void pms_pit_cmd(int ioport, u_char value)
+{
+	pms_flush(ioport);
+	outb(ioport+CNTRL, 0x60);
+	pms_flush(ioport);
+	outb(ioport+DATA, value);
+}
+
 int pmsprobe(struct isa_device *dvp)
 {
-	/* XXX: Needs a real probe routine. */
+	int unit = dvp->id_unit;
+	int ioport = dvp->id_iobase;
+	u_char c;
 
-	return (1);
-}
-
-static inline void pms_write(int ioport, u_char value)
-{
-	outb(ioport+CNTRL, 0xd4);
-	outb(ioport+DATA, value);
-	while (!(inb(ioport+STATUS) & PMS_OUTPUT_ACK));
-}
-
-static inline void pms_command(int ioport, u_char value)
-{
-	outb(ioport+CNTRL, 0x60);
-	outb(ioport+DATA, value);
+	pms_dev_cmd(ioport, PMS_RESET);
+	pms_aux_cmd(ioport, PMS_MAGIC_1);
+	pms_aux_cmd(ioport, PMS_MAGIC_2);
+	c = inb(ioport+DATA);
+	pms_pit_cmd(ioport, PMS_INT_DISABLE);
+	if (c & 0x04)
+		return 0;
+	return 1;
 }
 
 int pmsattach(struct isa_device *dvp)
@@ -129,31 +156,25 @@ int pmsattach(struct isa_device *dvp)
 	struct pms_softc *sc = &pms_softc[unit];
 
 	/* Save I/O base address */
-
 	pmsaddr[unit] = ioport;
 
-	/* Disable mouse interrupts */
+	/* Disable mouse interrupts and initialize */
+	pms_pit_cmd(ioport, PMS_INT_DISABLE);
+	pms_aux_cmd(ioport, PMS_AUX_ENABLE);
+	pms_dev_cmd(ioport, PMS_DEV_ENABLE);
+	pms_dev_cmd(ioport, PMS_SET_RES);
+	pms_dev_cmd(ioport, 3);		/* 8 counts/mm */
+	pms_dev_cmd(ioport, PMS_SET_SCALE21);
+	pms_dev_cmd(ioport, PMS_SET_SAMPLE);
+	pms_dev_cmd(ioport, 100);	/* 100 samples/sec */
+	pms_dev_cmd(ioport, PMS_SET_STREAM);
+	pms_dev_cmd(ioport, PMS_DEV_DISABLE);
+	pms_aux_cmd(ioport, PMS_AUX_DISABLE);
 
-	pms_command(ioport, PMS_DISABLE);
-#if 0
-	pms_command(ioport, PMS_INT_DISABLE);
-#endif
-	pms_write(ioport, PMS_DEV_DISABLE);
-
-	pms_write(ioport, PMS_SET_RES);
-	pms_write(ioport, 0x03);	/* 8 counts/mm */
-	pms_write(ioport, PMS_SET_SCALE);
-	pms_write(ioport, 0x02);	/* 2:1 */
-	pms_write(ioport, PMS_SET_SAMPLE);
-	pms_write(ioport, 0x64);	/* 100 samples/sec */
-	pms_write(ioport, PMS_SET_STREAM);
-
-	/* Setup initial state */
-
+	/* Setup initial driver state */
 	sc->state = 0;
 
 	/* Done */
-
 	return(0);
 }
 
@@ -164,53 +185,37 @@ int pmsopen(dev_t dev, int flag, int fmt, struct proc *p)
 	int ioport;
 
 	/* Validate unit number */
-
 	if (unit >= NPMS)
 		return(ENXIO);
 
 	/* Get device data */
-
 	sc = &pms_softc[unit];
 	ioport = pmsaddr[unit];
 
 	/* If device does not exist */
-
 	if (ioport == 0)
 		return(ENXIO);
 
 	/* Disallow multiple opens */
-
 	if (sc->state & OPEN)
 		return(EBUSY);
 
 	/* Initialize state */
-
 	sc->state |= OPEN;
-#ifdef NetBSD
-	sc->rsel.si_pid = 0;
-	sc->rsel.si_coll = 0;
-#else
-	sc->rsel = 0;
-#endif
 	sc->status = 0;
 	sc->button = 0;
 	sc->x = 0;
 	sc->y = 0;
 
 	/* Allocate and initialize a ring buffer */
-
 	sc->inq.count = sc->inq.first = sc->inq.last = 0;
 
 	/* Enable Bus Mouse interrupts */
-
-	pms_write(ioport, PMS_DEV_ENABLE);
-#if 0
-	pms_command(ioport, PMS_INT_ENABLE);
-#endif
-	pms_command(ioport, PMS_ENABLE);
+	pms_aux_cmd(ioport, PMS_AUX_ENABLE);
+	pms_pit_cmd(ioport, PMS_INT_ENABLE);
+	pms_dev_cmd(ioport, PMS_DEV_ENABLE);
 
 	/* Successful open */
-
 	return(0);
 }
 
@@ -220,25 +225,19 @@ int pmsclose(dev_t dev, int flag, int fmt, struct proc *p)
 	struct pms_softc *sc;
 
 	/* Get unit and associated info */
-
 	unit = PMSUNIT(dev);
 	sc = &pms_softc[unit];
 	ioport = pmsaddr[unit];
 
 	/* Disable further mouse interrupts */
-
-	pms_command(ioport, PMS_DISABLE);
-#if 0
-	pms_command(ioport, PMS_INT_DISABLE);
-#endif
-	pms_write(ioport, PMS_DEV_DISABLE);
+	pms_dev_cmd(ioport, PMS_DEV_DISABLE);
+	pms_pit_cmd(ioport, PMS_INT_DISABLE);
+	pms_aux_cmd(ioport, PMS_AUX_DISABLE);
 
 	/* Complete the close */
-
 	sc->state &= ~OPEN;
 
 	/* close is almost always successful */
-
 	return(0);
 }
 
@@ -252,11 +251,9 @@ int pmsread(dev_t dev, struct uio *uio, int flag)
 	unsigned char buffer[100];
 
 	/* Get device information */
-
 	sc = &pms_softc[PMSUNIT(dev)];
 
 	/* Block until mouse activity occured */
-
 	s = spltty();
 	while (sc->inq.count == 0) {
 		if (minor(dev) & 0x1) {
@@ -272,14 +269,12 @@ int pmsread(dev_t dev, struct uio *uio, int flag)
 	}
 
 	/* Transfer as many chunks as possible */
-
 	while (sc->inq.count > 0 && uio->uio_resid > 0) {
 		length = min(sc->inq.count, uio->uio_resid);
 		if (length > sizeof(buffer))
 			length = sizeof(buffer);
 
 		/* Remove a small chunk from input queue */
-
 		if (sc->inq.first + length >= MSBSZ) {
 			bcopy(&sc->inq.queue[sc->inq.first], 
 		 	      buffer, MSBSZ - sc->inq.first);
@@ -293,7 +288,6 @@ int pmsread(dev_t dev, struct uio *uio, int flag)
 		sc->inq.count -= length;
 
 		/* Copy data to user process */
-
 		error = uiomove(buffer, length, uio);
 		if (error)
 			break;
@@ -302,7 +296,6 @@ int pmsread(dev_t dev, struct uio *uio, int flag)
 	sc->x = sc->y = 0;
 
 	/* Allow interrupts again */
-
 	splx(s);
 	return(error);
 }
@@ -314,27 +307,22 @@ int pmsioctl(dev_t dev, caddr_t addr, int cmd, int flag, struct proc *p)
 	int s, error;
 
 	/* Get device information */
-
 	sc = &pms_softc[PMSUNIT(dev)];
 
 	/* Perform IOCTL command */
-
 	switch (cmd) {
 
 	case MOUSEIOCREAD:
 
 		/* Don't modify info while calculating */
-
 		s = spltty();
 
 		/* Build mouse status octet */
-
 		info.status = sc->status;
 		if (sc->x || sc->y)
 			info.status |= MOVEMENT;
 
 		/* Encode X and Y motion as good as we can */
-
 		if (sc->x > 127)
 			info.xmotion = 127;
 		else if (sc->x < -128)
@@ -350,13 +338,11 @@ int pmsioctl(dev_t dev, caddr_t addr, int cmd, int flag, struct proc *p)
 			info.ymotion = sc->y;
 
 		/* Reset historical information */
-
 		sc->x = 0;
 		sc->y = 0;
 		sc->status &= ~BUTCHNGMASK;
 
 		/* Allow interrupts and copy result buffer */
-
 		splx(s);
 		error = copyout(&info, addr, sizeof(struct mouseinfo));
 		break;
@@ -367,7 +353,6 @@ int pmsioctl(dev_t dev, caddr_t addr, int cmd, int flag, struct proc *p)
 		}
 
 	/* Return error code */
-
 	return(error);
 }
 
@@ -386,33 +371,40 @@ void pmsintr(unit)
 		buttons = inb(ioport + DATA);
 		if (!(buttons & 0xc0))
 			++state;
-		buttons = ~(((buttons&1) << 2) | (buttons&2));
 		break;
 
 	case 1:
-		dx = inb(ioport + DATA) << 2;
-		dx >>= 2;
+		dx = inb(ioport + DATA);
 		++state;
 		break;
 
 	case 2:
-		dy = inb(ioport + DATA) << 2;
-		dy >>= 2;
+		dy = inb(ioport + DATA);
 		state = 0;
 
-		dy = -dy;
+		if (buttons & 0x10)
+			dx -= 256;
+		if (buttons & 0x20)
+			dy -= 256;
+
+		if (dx == -128)
+			dx = -127;
+		if (dy == -128)
+			dy = 127;
+		else
+			dy = -dy;
+
+		buttons = ~(((buttons&1) << 2) | (buttons&3));
 
 		changed = buttons ^ sc->button;
 		sc->button = buttons;
 		sc->status = buttons | (sc->status & ~BUTSTATMASK) | (changed << 3);
 
 		/* Update accumulated movements */
-
 		sc->x += dx;
 		sc->y += dy;
 
 		/* If device in use and a change occurred... */
-
 		if (sc->state & OPEN && (dx || dy || changed)) {
 			sc->inq.queue[sc->inq.last++] = 0x40 |
 							(buttons ^ BUTSTATMASK);
@@ -427,14 +419,7 @@ void pmsintr(unit)
 				sc->state &= ~ASLP;
 				wakeup((caddr_t)sc);
 			}
-#ifdef NetBSD
 			selwakeup(&sc->rsel);
-#else
-			if (sc->rsel) {
-				selwakeup(sc->rsel, 0);
-				sc->rsel = 0;
-			}
-#endif
 		}
 
 		break;
@@ -447,21 +432,15 @@ int pmsselect(dev_t dev, int rw, struct proc *p)
 	struct pms_softc *sc = &pms_softc[PMSUNIT(dev)];
 
 	/* Silly to select for output */
-
 	if (rw == FWRITE)
 		return(0);
 
 	/* Return true if a mouse event available */
-
 	s = spltty();
 	if (sc->inq.count)
 		ret = 1;
 	else {
-#ifdef NetBSD
 		selrecord(p, &sc->rsel);
-#else
-		sc->rsel = p->p_pid;
-#endif
 		ret = 0;
 	}
 	splx(s);
