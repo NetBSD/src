@@ -66,7 +66,7 @@ $ EPIPE
 $ EDOM
 33 Èíselnı argument mimo definièní obor
 $ ERANGE
-34 Èíselnı vısledek je pøíli¹ velkı
+34 Vısledek pøíli¹ velkı nebo pøíli¹ malı
 $ EAGAIN, EWOULDBLOCK
 35 Prostøedek je doèasnì nedostupnı
 $ EINPROGRESS
