@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.149 2003/01/03 15:49:11 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.150 2003/01/03 16:27:23 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -640,8 +640,7 @@ extern void cpu_hatch __P((void));	/* in locore.s */
 }
 
 /*
- * Call a function on every CPU.  One must hold xpmsg_lock around
- * this function.
+ * Call a function on every CPU.
  */
 void
 xcall(func, arg0, arg1, arg2, arg3, cpuset)
@@ -679,6 +678,7 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 
 		if ((cpuset & (1 << cpi->ci_cpuid)) == 0)
 			continue;
+
 		simple_lock(&cpi->msg.lock);
 		cpi->msg.tag = XPMSG_FUNC;
 		cpi->flags &= ~CPUFLG_GOTMSG;
@@ -734,6 +734,7 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 			continue;
 		if ((cpuset & (1 << cpi->ci_cpuid)) == 0)
 			continue;
+
 		simple_unlock(&cpi->msg.lock);
 		if ((cpi->flags & CPUFLG_GOTMSG) == 0)
 			printf(" cpu%d", cpi->ci_cpuid);
