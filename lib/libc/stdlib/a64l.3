@@ -1,4 +1,4 @@
-.\" $NetBSD: a64l.3,v 1.6 2002/02/07 07:00:27 ross Exp $
+.\" $NetBSD: a64l.3,v 1.7 2002/10/01 17:29:22 wiz Exp $
 .\"
 .\" Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -128,8 +128,9 @@ Multithreading Extension.
 .Sh BUGS
 The
 .Fn l64a
-function is not reentrant.  The value returned by it points into a
-static buffer area; subsequent calls to
+function is not reentrant.
+The value returned by it points into a static buffer area;
+subsequent calls to
 .Fn la64a
 may overwrite this buffer.
 In multi-threaded applications,
