@@ -1,7 +1,7 @@
-/*	$NetBSD: inttypes.h,v 1.2 1998/09/13 14:46:24 christos Exp $	*/
+/*	$NetBSD: inttypes.h,v 1.3 2000/06/27 05:51:55 kleink Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -43,7 +43,7 @@
 #ifndef _SYS_INTTYPES_H_
 #define _SYS_INTTYPES_H_
 
-#include <machine/ansi.h>
+#include <machine/int_types.h>
 #include <machine/types.h>
 
 /*
@@ -56,14 +56,14 @@ typedef	u_int16_t		uint16_t;
 typedef	u_int32_t		uint32_t;
 typedef	u_int64_t		uint64_t;
 
-#ifdef	_BSD_INTPTR_T_
-typedef	_BSD_INTPTR_T_		intptr_t;
-#undef	_BSD_INTPTR_T_
+#ifndef	intptr_t
+typedef	__intptr_t		intptr_t;
+#define	intptr_t		intptr_t
 #endif
 
-#ifdef	_BSD_UINTPTR_T_
-typedef	_BSD_UINTPTR_T_		uintptr_t;
-#undef	_BSD_UINTPTR_T_
+#ifndef	uintptr_t
+typedef	__uintptr_t		uintptr_t;
+#define	uintptr_t		uintptr_t
 #endif
 
 #endif /* !defined(_SYS_INTTYPES_H_) */
