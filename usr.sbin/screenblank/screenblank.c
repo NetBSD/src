@@ -1,4 +1,4 @@
-/*	$NetBSD: screenblank.c,v 1.13 2001/10/28 01:32:46 christos Exp $	*/
+/*	$NetBSD: screenblank.c,v 1.14 2001/11/01 19:06:08 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1998 \
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: screenblank.c,v 1.13 2001/10/28 01:32:46 christos Exp $");
+__RCSID("$NetBSD: screenblank.c,v 1.14 2001/11/01 19:06:08 augustss Exp $");
 #endif
 
 #include <sys/types.h>
@@ -267,11 +267,11 @@ static void
 add_dev(const char *path, int isfb)
 {
 	struct dev_stat *dsp;
-	int fd;
+	struct stat sb;
 
 	/* Make sure we can open the device. */
-	if ((fd = open(path, O_RDWR, 0666)) == -1) {
-		warn("Can't open `%s'", path);
+	if (stat(path, &sb) == -1) {
+		warn("Can't stat `%s'", path);
 		return;
 	}
 
@@ -282,14 +282,17 @@ add_dev(const char *path, int isfb)
 	 * Sun-style fbio ioctls.  If so, switch to fbio mode.
 	 */
 	if (isfb && setvideo != FBIOSVIDEO) {
-		int onoff;
+		int onoff, fd;
 
+		if ((fd = open(path, O_RDWR, 0666)) == -1) {
+			warn("Can't open `%s'", path);
+			return;
+		}
 		if ((ioctl(fd, FBIOGVIDEO, &onoff)) == 0)
 			setvideo = FBIOSVIDEO;
+		(void)close(fd);
 	}
 #endif
-
-	(void)close(fd);
 
 	/* Create the entry... */
 	dsp = malloc(sizeof(struct dev_stat));
