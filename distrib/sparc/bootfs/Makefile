@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2000/10/31 20:59:00 pk Exp $
+#	$NetBSD: Makefile,v 1.27 2001/02/19 06:25:39 jmc Exp $
 #
 # boot.fs is the image for disk 1 of the two-set floppy based installation
 # method.
@@ -60,7 +60,7 @@ all:	netbsd.ram netbsd.ram.aout
 	@echo ""
 	@echo "installing new bootblocks"
 	-rm -f ${MOUNT_POINT}/boot
-	${MDEC}/binstall -m ${MDEC} -v ffs ${MOUNT_POINT}
+	${MDEC}/binstall -m ${MDEC} -f ${IMAGE} -v ffs ${MOUNT_POINT}
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND_CDEV}
 
