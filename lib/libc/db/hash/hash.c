@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.19 2005/01/19 00:23:44 mycroft Exp $	*/
+/*	$NetBSD: hash.c,v 1.20 2005/03/06 03:42:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)hash.c	8.9 (Berkeley) 6/16/94";
 #else
-__RCSID("$NetBSD: hash.c,v 1.19 2005/01/19 00:23:44 mycroft Exp $");
+__RCSID("$NetBSD: hash.c,v 1.20 2005/03/06 03:42:14 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -309,7 +309,7 @@ init_hash(hashp, file, info)
 	if (file != NULL) {
 		if (stat(file, &statbuf))
 			return (NULL);
-		hashp->BSIZE = MIN(statbuf.st_blksize, MAX_BSIZE - 1);
+		hashp->BSIZE = MIN(statbuf.st_blksize, MAX_BSIZE);
 		hashp->BSHIFT = __log2((u_int32_t)hashp->BSIZE);
 	}
 
@@ -318,7 +318,7 @@ init_hash(hashp, file, info)
 			/* Round pagesize up to power of 2 */
 			hashp->BSHIFT = __log2(info->bsize);
 			hashp->BSIZE = 1 << hashp->BSHIFT;
-			if (hashp->BSIZE >= MAX_BSIZE) {
+			if (hashp->BSIZE > MAX_BSIZE) {
 				errno = EINVAL;
 				return (NULL);
 			}
