@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.127 1998/04/01 15:23:36 tv Exp $
+#	$NetBSD: bsd.lib.mk,v 1.128 1998/04/01 16:58:33 tv Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -208,7 +208,7 @@ __archiveinstall: .USE
 	chmod ${LIBMODE} ${.TARGET}
 
 DPSRCS+=	${SRCS:M*.l:.l=.c} ${SRCS:M*.y:.y=.c}
-CLEANFILES+=	${DPSRCS} ${SRCS:M*.y:.y=.h}
+CLEANFILES+=	${DPSRCS}
 
 OBJS+=		${SRCS:N*.h:N*.sh:R:S/$/.o/g}
 lib${LIB}.a:: ${OBJS} __archivebuild
