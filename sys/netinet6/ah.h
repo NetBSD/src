@@ -1,4 +1,4 @@
-/*	$NetBSD: ah.h,v 1.3 1999/07/03 21:30:17 thorpej Exp $	*/
+/*	$NetBSD: ah.h,v 1.4 1999/07/09 23:41:17 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -35,6 +35,10 @@
 
 #ifndef _NETINET6_AH_H_
 #define _NETINET6_AH_H_
+
+#if defined(_KERNEL) && !defined(_LKM)             
+#include "opt_inet.h"
+#endif                                             
 
 #include <netkey/keydb.h>		/* for struct secas */
 
