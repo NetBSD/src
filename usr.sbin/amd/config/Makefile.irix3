@@ -1,6 +1,5 @@
-#	@(#)Makefile.irix3	8.1 (Berkeley) 6/6/93
-#
-# $Id: Makefile.irix3,v 1.2 1994/06/13 19:48:24 mycroft Exp $
+#	from: @(#)Makefile.irix3	8.1 (Berkeley) 6/6/93
+#	$Id: Makefile.irix3,v 1.3 1994/06/13 20:48:38 mycroft Exp $
 #
 # Extra Makefile definitions for IRIX
 #

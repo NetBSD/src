@@ -35,10 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)misc_rpc.c	8.1 (Berkeley) 6/6/93
- *
- * $Id: misc_rpc.c,v 1.2 1994/06/13 19:47:44 mycroft Exp $
- *
+ *	from: @(#)misc_rpc.c	8.1 (Berkeley) 6/6/93
+ *	$Id: misc_rpc.c,v 1.3 1994/06/13 20:47:36 mycroft Exp $
  */
 
 /*

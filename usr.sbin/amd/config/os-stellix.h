@@ -35,12 +35,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)os-stellix.h	8.1 (Berkeley) 6/6/93
+ *	from: @(#)os-stellix.h	8.1 (Berkeley) 6/6/93
+ *	$Id: os-stellix.h,v 1.3 1994/06/13 20:49:40 mycroft Exp $
  *
  * Amd (automounter) definitions for Stellix.
  * From Stephen C. Pope <scp@acl.lanl.gov>
- *
- * $Id: os-stellix.h,v 1.2 1994/06/13 19:49:09 mycroft Exp $
  */
 
 #define RPC_3

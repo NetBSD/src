@@ -36,9 +36,8 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	@(#)newvers.sh	8.1 (Berkeley) 6/6/93
-#
-# $Id: newvers.sh,v 1.2 1994/06/13 19:48:44 mycroft Exp $
+#	from: @(#)newvers.sh	8.1 (Berkeley) 6/6/93
+#	$Id: newvers.sh,v 1.3 1994/06/13 20:49:14 mycroft Exp $
 #
 PATH=/usr/ucb:/bin:/usr/bin:$PATH
 if [ $# -ne 3 ]; then echo "Usage: newvers program arch os" >&2; exit 1; fi

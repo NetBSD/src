@@ -35,10 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)misc-aix3.h	8.1 (Berkeley) 6/6/93
- *
- * $Id: misc-aix3.h,v 1.2 1994/06/13 19:48:30 mycroft Exp $
- *
+ *	from: @(#)misc-aix3.h	8.1 (Berkeley) 6/6/93
+ *	$Id: misc-aix3.h,v 1.3 1994/06/13 20:48:45 mycroft Exp $
  */
 
 struct ufs_args {

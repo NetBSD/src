@@ -35,9 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)os-next.h	8.1 (Berkeley) 6/6/93
- *
- * $Id: os-next.h,v 1.2 1994/06/13 19:49:03 mycroft Exp $
+ *	from: @(#)os-next.h	8.1 (Berkeley) 6/6/93
+ *	$Id: os-next.h,v 1.3 1994/06/13 20:49:34 mycroft Exp $
  *
  * NeXT OS definitions for Amd (automounter)
  * By Bill Trost, Reed College

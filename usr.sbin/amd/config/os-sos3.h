@@ -35,9 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)os-sos3.h	8.1 (Berkeley) 6/6/93
- *
- * $Id: os-sos3.h,v 1.2 1994/06/13 19:49:06 mycroft Exp $
+ *	from: @(#)os-sos3.h	8.1 (Berkeley) 6/6/93
+ *	$Id: os-sos3.h,v 1.3 1994/06/13 20:49:38 mycroft Exp $
  *
  * SunOS 3.2 definitions for Amd (automounter)
  */

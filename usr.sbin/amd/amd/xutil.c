@@ -35,10 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)xutil.c	8.1 (Berkeley) 6/6/93
- *
- * $Id: xutil.c,v 1.3 1994/06/13 19:48:09 mycroft Exp $
- *
+ *	from: @(#)xutil.c	8.1 (Berkeley) 6/6/93
+ *	$Id: xutil.c,v 1.4 1994/06/13 20:48:13 mycroft Exp $
  */
 
 #include "config.h"
