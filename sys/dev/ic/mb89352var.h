@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352var.h,v 1.1 1999/02/13 17:33:15 minoura Exp $	*/
+/*	$NetBSD: mb89352var.h,v 1.2 2000/01/07 08:12:15 nisimura Exp $	*/
 /*	NecBSD: mb89352var.h,v 1.4 1998/03/14 07:31:22 kmatsuda Exp 	*/
 
 /*-
@@ -107,7 +107,7 @@ struct spc_tinfo {
 	u_char  period;		/* Period suggestion */
 	u_char  offset;		/* Offset suggestion */
 	u_char	width;		/* Width suggestion */
-} tinfo_t;
+};
 
 struct spc_softc {
 	struct device sc_dev;
