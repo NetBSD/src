@@ -1,4 +1,4 @@
-.\" $Id: kdc.8,v 1.6 2001/06/19 22:39:55 assar Exp $
+.\" $Id: kdc.8,v 1.6.2.1 2003/03/21 09:22:02 tron Exp $
 .\"
 .Dd July 27, 1997
 .Dt KDC 8
@@ -20,6 +20,7 @@
 .Fl -v4-realm= Ns Ar string
 .Xc
 .Oc
+.Op Fl -kerberos4-cross-realm
 .Op Fl K | Fl -no-kaserver
 .Op Fl r Ar realm
 .Op Fl -v4-realm= Ns Ar realm
@@ -57,6 +58,12 @@ flexible way of handling this.
 .Xc
 Gives an upper limit on the size of the requests that the kdc is
 willing to handle.
+.It Xo
+.Fl -kerberos4-cross-realm
+.Xc
+respond to kerberos 4 requests from foreign realms.
+This is a known security hole and should not be enabled unless you
+understand the consequences and are willing to live with them.
 .It Xo
 .Fl H Ns ,
 .Fl -enable-http
