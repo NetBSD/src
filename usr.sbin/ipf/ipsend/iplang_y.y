@@ -1,14 +1,14 @@
-/*	$NetBSD: iplang_y.y,v 1.2 1997/09/21 18:02:08 veego Exp $	*/
+/*	$NetBSD: iplang_y.y,v 1.3 1997/10/30 16:10:32 mrg Exp $	*/
 
 %{
 /*
- * (C)opyright 1997 by Darren Reed.
+ * Copyright (C) 1997 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
- * Id: iplang_y.y,v 2.0.2.9 1997/09/13 07:14:24 darrenr Exp 
+ * Id: iplang_y.y,v 2.0.2.18 1997/10/29 12:49:21 darrenr Exp 
  */
  
 #include <stdio.h>
@@ -31,18 +31,22 @@
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
+#ifndef	linux
 #include <netinet/ip_var.h>
+#endif
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 #include <net/if.h>
+#ifndef	linux
 #include <netinet/if_ether.h>
+#endif
 #include <netdb.h>
 #include <arpa/nameser.h>
 #include <arpa/inet.h>
 #include <resolv.h>
 #include <ctype.h>
 #include "ipsend.h"
-#include <netinet/ip_fil.h>
+#include <netinet/ip_compat.h>
 #include "ipf.h"
 #include "iplang.h"
 
@@ -55,8 +59,12 @@ extern	int	yylineno;
 extern	char	yytext[];
 extern	FILE	*yyin;
 int	yylex	__P((void));
-/*#define	YYDEBUG 1*/
-int	yydebug = 0;
+#define	YYDEBUG 1
+#if !defined(ultrix) && !defined(hpux)
+int	yydebug = 1;
+#else
+extern	int	yydebug;
+#endif
 
 iface_t *iflist = NULL, **iftail = &iflist;
 iface_t *cifp = NULL;
@@ -163,11 +171,10 @@ int	yyparse __P((void));
 	int	num;
 }
 %token	<num> IL_NUMBER
-%type	<num> number digits
-%token	<string> IL_TOKEN
-%type	<string> token
+%type	<num> number digits optnumber
+%token	<str> IL_TOKEN
+%type	<str> token optoken
 %token	IL_HEXDIGIT IL_COLON IL_DOT IL_EOF IL_COMMENT
-%token	IL_LBRACE IL_RBRACE IL_SEMICOLON
 %token	IL_INTERFACE IL_IFNAME IL_MTU IL_EADDR
 %token	IL_IPV4 IL_V4PROTO IL_V4SRC IL_V4DST IL_V4OFF IL_V4V IL_V4HL IL_V4TTL
 %token	IL_V4TOS IL_V4SUM IL_V4LEN IL_V4OPT IL_V4ID
@@ -218,7 +225,7 @@ line:	iface
 	| ipline
 	;
 
-iface:  ifhdr IL_LBRACE ifaceopts IL_RBRACE	{ check_interface(); }
+iface:  ifhdr '{' ifaceopts '}' ';'	{ check_interface(); }
 	;
 
 ifhdr:	IL_INTERFACE			{ new_interface(); }
@@ -236,8 +243,8 @@ ifaceopt:
 	| IL_EADDR token		{ set_ifeaddr(&yylval.str); }
 	;
 
-send:   sendhdr IL_LBRACE sendbody IL_RBRACE	{ packet_done(); }
-	| sendhdr IL_SEMICOLON			{ packet_done(); }
+send:   sendhdr '{' sendbody '}' ';'	{ packet_done(); }
+	| sendhdr ';'			{ packet_done(); }
 	;
 
 sendhdr:
@@ -254,7 +261,7 @@ sendopt:
 	| IL_VIA token			{ set_sendvia(&yylval.str); }
 	;
 
-arp:    arphdr IL_LBRACE arpbody IL_RBRACE
+arp:    arphdr '{' arpbody '}' ';'
 	;
 
 arphdr:	IL_ARP				{ new_arp(); }
@@ -273,71 +280,71 @@ defrouter:
 	IL_DEFROUTER token		{ set_defaultrouter(&yylval.str); }
 	;
 
-ipline:	ipv4 gotbody
-	;
-
-ipv4:	IL_IPV4				{ new_packet(); }
-
-gotbody:	IL_LBRACE ipv4body IL_RBRACE	{ end_ipv4(); }
-	;
-
-ipv4body:
-	ipv4type IL_SEMICOLON
-	| ipv4type IL_SEMICOLON ipv4body
+bodyline:
+	ipline
 	| tcp tcpline
 	| udp udpline
 	| icmp icmpline
 	| data dataline
 	;
 
+ipline:	ipv4 '{' ipv4body '}' ';'	{ end_ipv4(); }
+	;
+
+ipv4:	IL_IPV4				{ new_packet(); }
+
+ipv4body:
+	ipv4type
+	| ipv4type ipv4body
+	| bodyline
+	;
+
 ipv4type:
-	| IL_V4PROTO IL_TOKEN		{ set_ipv4proto(&yylval.str); }
-	| IL_V4SRC IL_TOKEN		{ set_ipv4src(&yylval.str); }
-	| IL_V4DST IL_TOKEN		{ set_ipv4dst(&yylval.str); }
-	| IL_V4OFF IL_TOKEN		{ set_ipv4off(&yylval.str); }
-	| IL_V4V IL_TOKEN		{ set_ipv4v(&yylval.str); }
-	| IL_V4HL IL_TOKEN		{ set_ipv4hl(&yylval.str); }
-	| IL_V4ID IL_TOKEN		{ set_ipv4id(&yylval.str); }
-	| IL_V4TTL IL_TOKEN		{ set_ipv4ttl(&yylval.str); }
-	| IL_V4TOS IL_TOKEN		{ set_ipv4tos(&yylval.str); }
-	| IL_V4SUM IL_TOKEN		{ set_ipv4sum(&yylval.str); }
-	| IL_V4LEN IL_TOKEN		{ set_ipv4len(&yylval.str); }
-	| ipv4opt IL_LBRACE ipv4optlist IL_RBRACE	{ end_ipopt(); }
-	| ipline
+	IL_V4PROTO token		{ set_ipv4proto(&yylval.str); }
+	| IL_V4SRC token		{ set_ipv4src(&yylval.str); }
+	| IL_V4DST token		{ set_ipv4dst(&yylval.str); }
+	| IL_V4OFF token		{ set_ipv4off(&yylval.str); }
+	| IL_V4V token			{ set_ipv4v(&yylval.str); }
+	| IL_V4HL token			{ set_ipv4hl(&yylval.str); }
+	| IL_V4ID token			{ set_ipv4id(&yylval.str); }
+	| IL_V4TTL token		{ set_ipv4ttl(&yylval.str); }
+	| IL_V4TOS token		{ set_ipv4tos(&yylval.str); }
+	| IL_V4SUM token		{ set_ipv4sum(&yylval.str); }
+	| IL_V4LEN token		{ set_ipv4len(&yylval.str); }
+	| ipv4opt '{' ipv4optlist '}' ';'	{ end_ipopt(); }
 	;
 
 tcp:	IL_TCP				{ new_tcpheader(); }
 	;
 
 tcpline:
-	IL_LBRACE tcpheader IL_RBRACE	{ end_tcp(); }
+	'{' tcpheader '}' ';'		{ end_tcp(); }
 	;
 
 tcpheader:
-	tcpbody  IL_SEMICOLON
-	| tcpbody IL_SEMICOLON tcpheader
+	tcpbody tcpheader
+	| bodyline
 	;
 
 tcpbody:
-	| IL_SPORT IL_TOKEN		{ set_tcpsport(&yylval.str); }
-	| IL_DPORT IL_TOKEN		{ set_tcpdport(&yylval.str); }
-	| IL_TCPSEQ IL_TOKEN		{ set_tcpseq(&yylval.str); }
-	| IL_TCPACK IL_TOKEN		{ set_tcpack(&yylval.str); }
-	| IL_TCPOFF IL_TOKEN		{ set_tcpoff(&yylval.str); }
-	| IL_TCPURP IL_TOKEN		{ set_tcpurp(&yylval.str); }
-	| IL_TCPWIN IL_TOKEN		{ set_tcpwin(&yylval.str); }
-	| IL_TCPSUM IL_TOKEN		{ set_tcpsum(&yylval.str); }
-	| IL_TCPFL IL_TOKEN		{ set_tcpflags(&yylval.str); }
-	| IL_TCPOPT IL_LBRACE tcpopts IL_RBRACE	{ end_tcpopt(); }
-	| data dataline
+	IL_SPORT token			{ set_tcpsport(&yylval.str); }
+	| IL_DPORT token		{ set_tcpdport(&yylval.str); }
+	| IL_TCPSEQ token		{ set_tcpseq(&yylval.str); }
+	| IL_TCPACK token		{ set_tcpack(&yylval.str); }
+	| IL_TCPOFF token		{ set_tcpoff(&yylval.str); }
+	| IL_TCPURP token		{ set_tcpurp(&yylval.str); }
+	| IL_TCPWIN token		{ set_tcpwin(&yylval.str); }
+	| IL_TCPSUM token		{ set_tcpsum(&yylval.str); }
+	| IL_TCPFL token		{ set_tcpflags(&yylval.str); }
+	| IL_TCPOPT '{' tcpopts '}' ';'	{ end_tcpopt(); }
 	;
 
 tcpopts:
 	| tcpopt tcpopts
 	;
 
-tcpopt:	IL_TCPO_NOP IL_SEMICOLON	{ set_tcpopt(IL_TCPO_NOP, NULL); }
-	| IL_TCPO_EOL IL_SEMICOLON	{ set_tcpopt(IL_TCPO_EOL, NULL); }
+tcpopt:	IL_TCPO_NOP ';'			{ set_tcpopt(IL_TCPO_NOP, NULL); }
+	| IL_TCPO_EOL ';'		{ set_tcpopt(IL_TCPO_EOL, NULL); }
 	| IL_TCPO_MSS optoken		{ set_tcpopt(IL_TCPO_MSS,&yylval.str);}
 	| IL_TCPO_WSCALE optoken	{ set_tcpopt(IL_TCPO_MSS,&yylval.str);}
 	| IL_TCPO_TS optoken		{ set_tcpopt(IL_TCPO_TS, &yylval.str);}
@@ -346,65 +353,69 @@ tcpopt:	IL_TCPO_NOP IL_SEMICOLON	{ set_tcpopt(IL_TCPO_NOP, NULL); }
 udp:	IL_UDP				{ new_udpheader(); }
 	;
 
-udpline:	IL_LBRACE udpheader IL_RBRACE		{ end_udp(); }
+udpline:
+	'{' udpheader '}' ';'		{ end_udp(); }
 	;
 
 
 udpheader:
-	udpbody IL_SEMICOLON
-	| udpbody IL_SEMICOLON udpheader
+	udpbody
+	| udpbody udpheader
+	| bodyline
 	;
 
 udpbody:
-	| IL_SPORT IL_TOKEN		{ set_tcpsport(&yylval.str); }
-	| IL_DPORT IL_TOKEN		{ set_tcpdport(&yylval.str); }
-	| IL_UDPLEN IL_TOKEN		{ set_udplen(&yylval.str); }
-	| IL_UDPSUM IL_TOKEN		{ set_udpsum(&yylval.str); }
-	| data dataline
+	IL_SPORT token			{ set_tcpsport(&yylval.str); }
+	| IL_DPORT token		{ set_tcpdport(&yylval.str); }
+	| IL_UDPLEN token		{ set_udplen(&yylval.str); }
+	| IL_UDPSUM token		{ set_udpsum(&yylval.str); }
 	;
 
 icmp:	IL_ICMP				{ new_icmpheader(); }
 	;
 
 icmpline:
-	IL_LBRACE icmpbody IL_RBRACE	{ end_icmp(); }
+	'{' icmpbody '}' ';'		{ end_icmp(); }
 	;
 
 icmpbody:
-	icmptype icmpcode
-	| icmptype
-	| data dataline
+	icmpheader
+	| icmpheader bodyline
+	;
+
+icmpheader:
+	IL_ICMPTYPE icmptype
+	| IL_ICMPTYPE icmptype icmpcode
 	;
 
 icmpcode:
 	IL_ICMPCODE token		{ set_icmpcodetok(&yylval.str); }
 	;
 
-
 icmptype:
-	IL_ICMP_ECHOREPLY		{ set_icmptype(ICMP_ECHOREPLY); }
-	| IL_ICMP_ECHOREPLY IL_LBRACE icmpechoopts IL_RBRACE
+	IL_ICMP_ECHOREPLY ';'		{ set_icmptype(ICMP_ECHOREPLY); }
+	| IL_ICMP_ECHOREPLY '{' icmpechoopts '}' ';'
 	| unreach
-	| IL_ICMP_SOURCEQUENCH		{ set_icmptype(ICMP_SOURCEQUENCH); }
+	| IL_ICMP_SOURCEQUENCH ';'	{ set_icmptype(ICMP_SOURCEQUENCH); }
 	| redirect
-	| IL_ICMP_ROUTERADVERT		{ set_icmptype(ICMP_ROUTERADVERT); }
-	| IL_ICMP_ROUTERSOLICIT		{ set_icmptype(ICMP_ROUTERSOLICIT); }
-	| IL_ICMP_ECHO			{ set_icmptype(ICMP_ECHO); }
-	| IL_ICMP_ECHO IL_LBRACE icmpechoopts IL_RBRACE
-	| IL_ICMP_TIMXCEED		{ set_icmptype(ICMP_TIMXCEED); }
-	| IL_ICMP_TIMXCEED IL_LBRACE exceed IL_RBRACE
-	| IL_ICMP_TSTAMP		{ set_icmptype(ICMP_TSTAMP); }
-	| IL_ICMP_TSTAMPREPLY		{ set_icmptype(ICMP_TSTAMPREPLY); }
-	| IL_ICMP_TSTAMPREPLY IL_LBRACE icmptsopts IL_RBRACE
-	| IL_ICMP_IREQ			{ set_icmptype(ICMP_IREQ); }
-	| IL_ICMP_IREQREPLY		{ set_icmptype(ICMP_IREQREPLY); }
-	| IL_ICMP_IREQREPLY IL_LBRACE data dataline IL_RBRACE
-	| IL_ICMP_MASKREQ		{ set_icmptype(ICMP_MASKREQ); }
-	| IL_ICMP_MASKREPLY		{ set_icmptype(ICMP_MASKREPLY); }
-	| IL_ICMP_MASKREPLY IL_LBRACE token IL_RBRACE
-	| IL_ICMP_PARAMPROB		{ set_icmptype(ICMP_PARAMPROB); }
-	| IL_ICMP_PARAMPROB IL_LBRACE paramprob IL_RBRACE
-	| token				{ set_icmptypetok(&yylval.str); }
+	| IL_ICMP_ROUTERADVERT ';'	{ set_icmptype(ICMP_ROUTERADVERT); }
+	| IL_ICMP_ROUTERSOLICIT ';'	{ set_icmptype(ICMP_ROUTERSOLICIT); }
+	| IL_ICMP_ECHO ';'		{ set_icmptype(ICMP_ECHO); }
+	| IL_ICMP_ECHO '{' icmpechoopts '}' ';'
+	| IL_ICMP_TIMXCEED ';'		{ set_icmptype(ICMP_TIMXCEED); }
+	| IL_ICMP_TIMXCEED '{' exceed '}' ';'
+	| IL_ICMP_TSTAMP ';'		{ set_icmptype(ICMP_TSTAMP); }
+	| IL_ICMP_TSTAMPREPLY ';'	{ set_icmptype(ICMP_TSTAMPREPLY); }
+	| IL_ICMP_TSTAMPREPLY '{' icmptsopts '}' ';'
+	| IL_ICMP_IREQ ';'		{ set_icmptype(ICMP_IREQ); }
+	| IL_ICMP_IREQREPLY ';'		{ set_icmptype(ICMP_IREQREPLY); }
+	| IL_ICMP_IREQREPLY '{' data dataline '}' ';'
+	| IL_ICMP_MASKREQ ';'		{ set_icmptype(ICMP_MASKREQ); }
+	| IL_ICMP_MASKREPLY ';'		{ set_icmptype(ICMP_MASKREPLY); }
+	| IL_ICMP_MASKREPLY '{' token '}' ';'
+	| IL_ICMP_PARAMPROB ';'		{ set_icmptype(ICMP_PARAMPROB); }
+	| IL_ICMP_PARAMPROB '{' paramprob '}' ';'
+	| IL_TOKEN ';'			{ set_icmptypetok(&yylval.str); }
 	;
 
 icmpechoopts:
@@ -412,22 +423,22 @@ icmpechoopts:
 	;
 
 icmpecho:
-	IL_ICMP_SEQ number 			{ set_icmpseq(yylval.num); }
-	| IL_ICMP_ID number			{ set_icmpid(yylval.num); }
+	IL_ICMP_SEQ number 		{ set_icmpseq(yylval.num); }
+	| IL_ICMP_ID number		{ set_icmpid(yylval.num); }
 	;
 
 icmptsopts:
-	| icmptsopts icmpts
+	| icmptsopts icmpts ';'
 	;
 
-icmpts: IL_ICMP_OTIME number 			{ set_icmpotime(yylval.num); }
-	| IL_ICMP_RTIME number 			{ set_icmprtime(yylval.num); }
-	| IL_ICMP_TTIME number 			{ set_icmpttime(yylval.num); }
+icmpts: IL_ICMP_OTIME number 		{ set_icmpotime(yylval.num); }
+	| IL_ICMP_RTIME number 		{ set_icmprtime(yylval.num); }
+	| IL_ICMP_TTIME number 		{ set_icmpttime(yylval.num); }
 	;
 
 unreach:
 	IL_ICMP_UNREACH
-	| IL_ICMP_UNREACH IL_LBRACE unreachopts IL_RBRACE
+	| IL_ICMP_UNREACH '{' unreachopts '}' ';'
 	;
 
 unreachopts:
@@ -435,7 +446,7 @@ unreachopts:
 	| IL_ICMP_UNREACH_HOST line
 	| IL_ICMP_UNREACH_PROTOCOL line
 	| IL_ICMP_UNREACH_PORT line
-	| IL_ICMP_UNREACH_NEEDFRAG number	{ set_icmpmtu(yylval.num); }
+	| IL_ICMP_UNREACH_NEEDFRAG number ';'	{ set_icmpmtu(yylval.num); }
 	| IL_ICMP_UNREACH_SRCFAIL line
 	| IL_ICMP_UNREACH_NET_UNKNOWN line
 	| IL_ICMP_UNREACH_HOST_UNKNOWN line
@@ -451,7 +462,7 @@ unreachopts:
 
 redirect:
 	IL_ICMP_REDIRECT
-	| IL_ICMP_REDIRECT IL_LBRACE redirectopts IL_RBRACE
+	| IL_ICMP_REDIRECT '{' redirectopts '}' ';'
 	;
 
 redirectopts:
@@ -471,10 +482,10 @@ paramprob:
 	| IL_ICMP_PARAMPROB_OPTABSENT paraprobarg
 
 paraprobarg:
-	IL_LBRACE number IL_RBRACE		{ set_icmppprob(yylval.num); }
+	'{' number '}' ';'		{ set_icmppprob(yylval.num); }
 	;
 
-ipv4opt:	IL_V4OPT			{ new_ipv4opt(); }
+ipv4opt:	IL_V4OPT		{ new_ipv4opt(); }
 	;
 
 ipv4optlist:
@@ -482,67 +493,67 @@ ipv4optlist:
 	;
 
 ipv4opts:
-	IL_IPO_NOP IL_SEMICOLON		{ add_ipopt(IL_IPO_NOP, NULL); }
+	IL_IPO_NOP ';'			{ add_ipopt(IL_IPO_NOP, NULL); }
 	| IL_IPO_RR optnumber		{ add_ipopt(IL_IPO_RR, &yylval.num); }
-	| IL_IPO_ZSU IL_SEMICOLON	{ add_ipopt(IL_IPO_ZSU, NULL); }
-	| IL_IPO_MTUP IL_SEMICOLON	{ add_ipopt(IL_IPO_MTUP, NULL); }
-	| IL_IPO_MTUR IL_SEMICOLON	{ add_ipopt(IL_IPO_MTUR, NULL); }
-	| IL_IPO_ENCODE IL_SEMICOLON	{ add_ipopt(IL_IPO_ENCODE, NULL); }
-	| IL_IPO_TS IL_SEMICOLON	{ add_ipopt(IL_IPO_TS, NULL); }
-	| IL_IPO_TR IL_SEMICOLON	{ add_ipopt(IL_IPO_TR, NULL); }
-	| IL_IPO_SEC IL_SEMICOLON	{ add_ipopt(IL_IPO_SEC, NULL); }
+	| IL_IPO_ZSU ';'		{ add_ipopt(IL_IPO_ZSU, NULL); }
+	| IL_IPO_MTUP ';'		{ add_ipopt(IL_IPO_MTUP, NULL); }
+	| IL_IPO_MTUR ';'		{ add_ipopt(IL_IPO_MTUR, NULL); }
+	| IL_IPO_ENCODE ';'		{ add_ipopt(IL_IPO_ENCODE, NULL); }
+	| IL_IPO_TS ';'			{ add_ipopt(IL_IPO_TS, NULL); }
+	| IL_IPO_TR ';'			{ add_ipopt(IL_IPO_TR, NULL); }
+	| IL_IPO_SEC ';'		{ add_ipopt(IL_IPO_SEC, NULL); }
 	| IL_IPO_SECCLASS secclass	{ add_ipopt(IL_IPO_SECCLASS, sclass); }
 	| IL_IPO_LSRR token		{ add_ipopt(IL_IPO_LSRR,&yylval.str); }
-	| IL_IPO_ESEC IL_SEMICOLON	{ add_ipopt(IL_IPO_ESEC, NULL); }
-	| IL_IPO_CIPSO IL_SEMICOLON	{ add_ipopt(IL_IPO_CIPSO, NULL); }
+	| IL_IPO_ESEC ';'		{ add_ipopt(IL_IPO_ESEC, NULL); }
+	| IL_IPO_CIPSO ';'		{ add_ipopt(IL_IPO_CIPSO, NULL); }
 	| IL_IPO_SATID optnumber	{ add_ipopt(IL_IPO_SATID,&yylval.num);}
 	| IL_IPO_SSRR token		{ add_ipopt(IL_IPO_SSRR,&yylval.str); }
-	| IL_IPO_ADDEXT IL_SEMICOLON	{ add_ipopt(IL_IPO_ADDEXT, NULL); }
-	| IL_IPO_VISA IL_SEMICOLON	{ add_ipopt(IL_IPO_VISA, NULL); }
-	| IL_IPO_IMITD IL_SEMICOLON	{ add_ipopt(IL_IPO_IMITD, NULL); }
-	| IL_IPO_EIP IL_SEMICOLON	{ add_ipopt(IL_IPO_EIP, NULL); }
-	| IL_IPO_FINN IL_SEMICOLON	{ add_ipopt(IL_IPO_FINN, NULL); }
+	| IL_IPO_ADDEXT ';'		{ add_ipopt(IL_IPO_ADDEXT, NULL); }
+	| IL_IPO_VISA ';'		{ add_ipopt(IL_IPO_VISA, NULL); }
+	| IL_IPO_IMITD ';'		{ add_ipopt(IL_IPO_IMITD, NULL); }
+	| IL_IPO_EIP ';'		{ add_ipopt(IL_IPO_EIP, NULL); }
+	| IL_IPO_FINN ';'		{ add_ipopt(IL_IPO_FINN, NULL); }
 	;
 
 secclass:
-	IL_IPS_RESERV4				{ set_secclass(&yylval.str); }
-	| IL_IPS_TOPSECRET			{ set_secclass(&yylval.str); }
-	| IL_IPS_SECRET				{ set_secclass(&yylval.str); }
-	| IL_IPS_RESERV3			{ set_secclass(&yylval.str); }
-	| IL_IPS_CONFID				{ set_secclass(&yylval.str); }
-	| IL_IPS_UNCLASS			{ set_secclass(&yylval.str); }
-	| IL_IPS_RESERV2			{ set_secclass(&yylval.str); }
-	| IL_IPS_RESERV1			{ set_secclass(&yylval.str); }
+	IL_IPS_RESERV4 ';'		{ set_secclass(&yylval.str); }
+	| IL_IPS_TOPSECRET ';'		{ set_secclass(&yylval.str); }
+	| IL_IPS_SECRET ';'		{ set_secclass(&yylval.str); }
+	| IL_IPS_RESERV3 ';'		{ set_secclass(&yylval.str); }
+	| IL_IPS_CONFID ';'		{ set_secclass(&yylval.str); }
+	| IL_IPS_UNCLASS ';'		{ set_secclass(&yylval.str); }
+	| IL_IPS_RESERV2 ';'		{ set_secclass(&yylval.str); }
+	| IL_IPS_RESERV1 ';'		{ set_secclass(&yylval.str); }
 	;
 
-data:	IL_DATA					{ new_data(); }
+data:	IL_DATA				{ new_data(); }
 	;
 
 dataline:
-	IL_LBRACE databody IL_RBRACE		{ end_data(); }
+	'{' databody '}' ';'		{ end_data(); }
 	;
 
-databody: dataopts IL_SEMICOLON
-	| dataopts IL_SEMICOLON databody
+databody: dataopts
+	| dataopts databody
 	;
 
 dataopts:
-	IL_DLEN IL_TOKEN			{ set_datalen(&yylval.str); }
-	| IL_DVALUE IL_TOKEN 			{ set_data(&yylval.str); }
-	| IL_DFILE IL_TOKEN 			{ set_datafile(&yylval.str); }
+	IL_DLEN token			{ set_datalen(&yylval.str); }
+	| IL_DVALUE token 		{ set_data(&yylval.str); }
+	| IL_DFILE token 		{ set_datafile(&yylval.str); }
 	;
 
-token: IL_TOKEN IL_SEMICOLON
+token: IL_TOKEN ';'
 	;
 
-optoken: IL_SEMICOLON
+optoken: ';'				{ $$ = ""; }
 	| token
 	;
 
-number: digits IL_SEMICOLON
+number: digits ';'
 	;
 
-optnumber: IL_SEMICOLON
+optnumber: ';'				{ $$ = 0; }
 	| number
 	;
 
@@ -621,17 +632,21 @@ struct ether_addr *buf;
 {
 	struct ether_addr *e;
 
+#if !defined(hpux) && !defined(linux)
 	e = ether_aton(arg);
 	if (!e)
 		fprintf(stderr, "Invalid ethernet address: %s\n", arg);
 	else
-#ifdef	__FreeBSD__
+# ifdef	__FreeBSD__
 		bcopy(e->octet, buf->octet, sizeof(e->octet));
-#else
+# else
 		bcopy(e->ether_addr_octet, buf->ether_addr_octet,
 		      sizeof(e->ether_addr_octet));
-#endif
+# endif
 	return e;
+#else
+	return NULL;
+#endif
 }
 
 
@@ -725,7 +740,7 @@ char **arg;
 void set_data(arg)
 char **arg;
 {
-	u_char *s = *arg, *t = canip->ah_data, c;
+	u_char *s = (u_char *)*arg, *t = (u_char *)canip->ah_data, c;
 	int len = 0, todo = 0, quote = 0, val = 0;
 
 	while ((c = *s++)) {
@@ -1760,19 +1775,12 @@ void end_data()
 }
 
 
-void	yyerror(msg)
-char	*msg;
-{
-	fprintf(stderr, "%s error at \"%s\", line %d\n", msg, yytext,
-		lineNum + 1);
-	exit(1);
-}
-
-
 void iplang(fp)
 FILE *fp;
 {
 	yyin = fp;
+
+	yydebug = (opts & OPT_DEBUG) ? 1 : 0;
 
 	while (!feof(fp))
 		yyparse();

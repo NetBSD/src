@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsend.c,v 1.4 1997/09/21 18:02:10 veego Exp $	*/
+/*	$NetBSD: ipsend.c,v 1.5 1997/10/30 16:10:34 mrg Exp $	*/
 
 /*
  * ipsend.c (C) 1995-1997 Darren Reed
@@ -12,8 +12,9 @@
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  */
-#if !defined(lint) && defined(LIBC_SCCS)
-static	char	sccsid[] = "@(#)ipsend.c	1.5 12/10/95 (C)1995 Darren Reed";
+#if !defined(lint)
+static const char sccsid[] = "@(#)ipsend.c	1.5 12/10/95 (C)1995 Darren Reed";
+static const char rcsid[] = "@(#)Id: ipsend.c,v 2.0.2.19 1997/10/12 09:48:38 darrenr Exp ";
 #endif
 #include <stdio.h>
 #include <stdlib.h>
@@ -55,7 +56,11 @@ char	default_device[] = "ln0";
 #   ifdef	__bsdi__
 char	default_device[] = "ef0";
 #   else
+#    ifdef	__sgi
+char	default_device[] = "ec0";
+#    else
 char	default_device[] = "lan0";
+#    endif
 #   endif
 #  endif
 # endif
@@ -72,7 +77,8 @@ char	*prog;
 {
 	fprintf(stderr, "Usage: %s [options] dest [flags]\n\
 \toptions:\n\
-\t\t-d device\tSend out on this device\n\
+\t\t-d\tdebug mode\n\
+\t\t-i device\tSend out on this device\n\
 \t\t-f fragflags\tcan set IP_MF or IP_DF\n\
 \t\t-g gateway\tIP gateway to use if non-local dest.\n\
 \t\t-I code,type[,gw[,dst[,src]]]\tSet ICMP protocol\n\
@@ -85,15 +91,17 @@ char	*prog;
 \t\t-v\tverbose mode\n\
 \t\t-w <window>\tSet the TCP window size\n\
 ", prog);
-	fprintf(stderr, "Usage: %s [-v] -L <filename>\n\
+	fprintf(stderr, "Usage: %s [-dv] -L <filename>\n\
 \toptions:\n\
+\t\t-d\tdebug mode\n\
 \t\t-L filename\tUse IP language for sending packets\n\
+\t\t-v\tverbose mode\n\
 ", prog);
 	exit(1);
 }
 
 
-void do_icmp(ip, args)
+static void do_icmp(ip, args)
 ip_t *ip;
 char *args;
 {
@@ -183,7 +191,7 @@ char	**argv;
 	ip->ip_len = sizeof(*ip);
 	ip->ip_hl = sizeof(*ip) >> 2;
 
-	while ((c = getopt(argc, argv, "IL:P:TUd:f:g:m:o:s:t:vw:")) != -1)
+	while ((c = getopt(argc, argv, "I:L:P:TUdf:i:g:m:o:s:t:vw:")) != -1)
 		switch (c)
 		{
 		case 'I' :
@@ -252,8 +260,7 @@ char	**argv;
 			ip->ip_len += sizeof(udphdr_t);
 			break;
 		case 'd' :
-			nonl++;
-			dev = optarg;
+			opts |= OPT_DEBUG;
 			break;
 		case 'f' :
 			nonl++;
@@ -262,6 +269,10 @@ char	**argv;
 		case 'g' :
 			nonl++;
 			gateway = optarg;
+			break;
+		case 'i' :
+			nonl++;
+			dev = optarg;
 			break;
 		case 'm' :
 			nonl++;
