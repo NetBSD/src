@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.17 1999/03/25 00:41:47 mrg Exp $ */
+/*	$NetBSD: db_interface.c,v 1.17.2.1 1999/04/07 08:12:49 pk Exp $ */
 
 /*
  * Mach Operating System
@@ -11,7 +11,7 @@
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
  *
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS ``AS IS''
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
  *
@@ -336,8 +336,11 @@ db_dump_dtlb(addr, have_addr, count, modif)
 			db_printf("%2d:%016.16qx %016.16qx\n", i++, *p++, *p++);
 #endif
 		}
-	} else
+	} else {
+#ifdef DEBUG
 		print_dtlb();
+#endif
+	}
 }
 
 void

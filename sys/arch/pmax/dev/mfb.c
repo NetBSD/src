@@ -1,4 +1,4 @@
-/*	$NetBSD: mfb.c,v 1.34 1998/04/19 10:22:45 jonathan Exp $	*/
+/*	$NetBSD: mfb.c,v 1.34.10.1 1999/04/07 08:12:45 pk Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
  * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS 
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS ``AS IS''
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
  * 
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.34 1998/04/19 10:22:45 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.34.10.1 1999/04/07 08:12:45 pk Exp $");
 
 #include "fb.h"
 #include "mfb.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_access.c,v 1.11 1997/09/13 18:44:55 pk Exp $	*/
+/*	$NetBSD: db_access.c,v 1.11.10.1 1999/04/07 08:12:49 pk Exp $	*/
 
 /* 
  * Mach Operating System
@@ -11,7 +11,7 @@
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
  * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS 
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS ``AS IS''
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
  * 
