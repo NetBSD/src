@@ -1,4 +1,4 @@
-/*	$NetBSD: dumprmt.c,v 1.26 2001/11/01 08:03:03 lukem Exp $	*/
+/*	$NetBSD: dumprmt.c,v 1.27 2001/12/14 14:43:33 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dumprmt.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dumprmt.c,v 1.26 2001/11/01 08:03:03 lukem Exp $");
+__RCSID("$NetBSD: dumprmt.c,v 1.27 2001/12/14 14:43:33 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,14 +84,13 @@ static	int rmtape;
 static	char *rmtpeer;
 
 static	int	okname(char *);
-static	int	rmtcall(char *, char *);
+static	int	rmtcall(char *, char *, int);
 static	void	rmtconnaborted(int);
 static	int	rmtgetb(void);
 static	void	rmtgetconn(void);
 static	void	rmtgets(char *, int);
-	int	rmtioctl(int, int);
 	int	rmtread(char *, int);
-static	int	rmtreply(char *);
+static	int	rmtreply(char *, int);
 	int	rmtseek(int, int);
 
 extern	int ntrec;		/* blocking factor on tape */
@@ -184,13 +183,13 @@ okname(char *cp0)
 }
 
 int
-rmtopen(char *tapedevice, int mode)
+rmtopen(char *tapedevice, int mode, int verbose)
 {
 	char buf[256];
 
 	(void)snprintf(buf, sizeof buf, "O%s\n%d\n", tapedevice, mode);
 	rmtstate = TS_OPEN;
-	return (rmtcall(tapedevice, buf));
+	return (rmtcall(tapedevice, buf, verbose));
 }
 
 void
@@ -199,7 +198,7 @@ rmtclose(void)
 
 	if (rmtstate != TS_OPEN)
 		return;
-	rmtcall("close", "C\n");
+	rmtcall("close", "C\n", 1);
 	rmtstate = TS_CLOSED;
 }
 
@@ -210,7 +209,7 @@ rmtread(char *buf, int count)
 	int n, i, cc;
 
 	(void)snprintf(line, sizeof line, "R%d\n", count);
-	n = rmtcall("read", line);
+	n = rmtcall("read", line, 1);
 	if (n < 0) {
 		errno = n;
 		return (-1);
@@ -232,7 +231,7 @@ rmtwrite(char *buf, int count)
 	(void)snprintf(line, sizeof line, "W%d\n", count);
 	write(rmtape, line, strlen(line));
 	write(rmtape, buf, count);
-	return (rmtreply("write"));
+	return (rmtreply("write", 1));
 }
 
 #if 0		/* XXX unused? */
@@ -256,7 +255,7 @@ int
 rmtwrite2(void)
 {
 
-	return (rmtreply("write"));
+	return (rmtreply("write", 1));
 }
 #endif
 
@@ -266,7 +265,7 @@ rmtseek(int offset, int pos)
 	char line[80];
 
 	(void)snprintf(line, sizeof line, "L%d\n%d\n", offset, pos);
-	return (rmtcall("seek", line));
+	return (rmtcall("seek", line, 1));
 }
 
 
@@ -280,7 +279,7 @@ rmtstatus(void)
 
 	if (rmtstate != TS_OPEN)
 		return (NULL);
-	rmtcall("status", "S\n");
+	rmtcall("status", "S\n", 1);
 	for (i = 0, cp = (char *)&mts; i < sizeof(mts); i++)
 		*cp++ = rmtgetb();
 	return (&mts);
@@ -295,20 +294,20 @@ rmtioctl(int cmd, int count)
 	if (count < 0)
 		return (-1);
 	(void)snprintf(buf, sizeof buf, "I%d\n%d\n", cmd, count);
-	return (rmtcall("ioctl", buf));
+	return (rmtcall("ioctl", buf, 1));
 }
 
 static int
-rmtcall(char *cmd, char *buf)
+rmtcall(char *cmd, char *buf, int verbose)
 {
 
 	if (write(rmtape, buf, strlen(buf)) != strlen(buf))
 		rmtconnaborted(0);
-	return (rmtreply(cmd));
+	return (rmtreply(cmd, verbose));
 }
 
 static int
-rmtreply(char *cmd)
+rmtreply(char *cmd, int verbose)
 {
 	char *cp;
 	char code[30], emsg[BUFSIZ];
@@ -316,7 +315,8 @@ rmtreply(char *cmd)
 	rmtgets(code, sizeof (code));
 	if (*code == 'E' || *code == 'F') {
 		rmtgets(emsg, sizeof (emsg));
-		msg("%s: %s", cmd, emsg);
+		if (verbose)
+			msg("%s: %s", cmd, emsg);
 		if (*code == 'F') {
 			rmtstate = TS_CLOSED;
 			return (-1);
