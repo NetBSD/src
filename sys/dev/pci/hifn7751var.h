@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751var.h,v 1.1 2000/10/12 02:59:59 itojun Exp $	*/
+/*	$NetBSD: hifn7751var.h,v 1.2 2003/05/13 22:43:20 wiz Exp $	*/
 /*	$OpenBSD: hifn7751var.h,v 1.18 2000/06/02 22:36:45 deraadt Exp $	*/
 
 /*
@@ -74,7 +74,7 @@
  *
  *	HIFN_CRYPT_3DES or HIFN_CRYPT_DES
  *
- *  To use authentication is used, a single MAC algorithm must be included:
+ *  To use authentication, a single MAC algorithm must be included:
  *
  *	HIFN_MAC_MD5 or HIFN_MAC_SHA1
  *

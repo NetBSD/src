@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751reg.h,v 1.2 2003/01/06 12:14:30 wiz Exp $	*/
+/*	$NetBSD: hifn7751reg.h,v 1.3 2003/05/13 22:43:20 wiz Exp $	*/
 /*	$OpenBSD: hifn7751reg.h,v 1.15 2000/09/21 13:34:58 jason Exp $	*/
 
 /*
@@ -101,7 +101,7 @@ typedef void (*hifn_callback_t)(hifn_command_t *);
  */
 struct hifn_dma {
 	/*
-	 *  Descriptor rings.  We add +1 to the size to accomidate the
+	 *  Descriptor rings.  We add +1 to the size to accommodate the
 	 *  jump descriptor.
 	 */
 	struct hifn_desc	cmdr[HIFN_D_CMD_RSIZE+1];
