@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.14 1995/06/10 20:55:16 mycroft Exp $
+#	$NetBSD: Makefile,v 1.15 1997/01/09 20:18:32 tls Exp $
 
 PROG=	crontab
 SRCS=	crontab.c misc.c entry.c env.c

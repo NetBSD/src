@@ -1,3 +1,5 @@
+/*	$NetBSD: general.h,v 1.5 1997/01/09 20:22:21 tls Exp $	*/
+
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -31,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)general.h	4.2 (Berkeley) 4/26/91
- *	$Id: general.h,v 1.4 1996/02/16 03:08:39 cgd Exp $
+ *	$NetBSD: general.h,v 1.5 1997/01/09 20:22:21 tls Exp $
  */
 
 /*

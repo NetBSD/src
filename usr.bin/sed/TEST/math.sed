@@ -1,6 +1,6 @@
 #
 #	from: @(#)math.sed	8.1 (Berkeley) 6/6/93
-#	$Id: math.sed,v 1.2 1994/02/03 23:45:03 cgd Exp $
+#	$NetBSD: math.sed,v 1.3 1997/01/09 20:21:36 tls Exp $
 #
 # Addition and multiplication in sed.
 # ++ for a limited time only do (expr) too!!!

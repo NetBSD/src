@@ -1,3 +1,5 @@
+/*	$NetBSD: modstat.c,v 1.8 1997/01/09 20:20:46 tls Exp $	*/
+
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
  * All rights reserved.
@@ -29,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: modstat.c,v 1.7 1996/12/11 00:30:20 mrg Exp $
+ *	$NetBSD: modstat.c,v 1.8 1997/01/09 20:20:46 tls Exp $
  */
 
 #include <stdio.h>

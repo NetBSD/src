@@ -1,6 +1,8 @@
+/*	$NetBSD: file.h,v 1.9 1997/01/09 20:18:53 tls Exp $	*/
+
 /*
  * file.h - definitions for file(1) program
- * @(#)$Id: file.h,v 1.8 1996/10/05 20:20:27 christos Exp $
+ * @(#)$NetBSD: file.h,v 1.9 1997/01/09 20:18:53 tls Exp $
  *
  * Copyright (c) Ian F. Darwin, 1987.
  * Written by Ian F. Darwin.

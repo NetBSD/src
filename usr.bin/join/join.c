@@ -1,4 +1,4 @@
-/*	$NetBSD: join.c,v 1.8 1997/01/09 13:29:58 tls Exp $	*/
+/*	$NetBSD: join.c,v 1.9 1997/01/09 20:20:24 tls Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -45,7 +45,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)join.c	8.6 (Berkeley) 5/4/95";*/
-static char rcsid[] = "$Id: join.c,v 1.8 1997/01/09 13:29:58 tls Exp $";
+static char rcsid[] = "$NetBSD: join.c,v 1.9 1997/01/09 20:20:24 tls Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>

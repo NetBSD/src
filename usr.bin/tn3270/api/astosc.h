@@ -1,3 +1,5 @@
+/*	$NetBSD: astosc.h,v 1.3 1997/01/09 20:21:50 tls Exp $	*/
+
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -31,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)astosc.h	4.2 (Berkeley) 4/26/91
- *	$Id: astosc.h,v 1.2 1993/08/01 18:06:12 mycroft Exp $
+ *	$NetBSD: astosc.h,v 1.3 1997/01/09 20:21:50 tls Exp $
  */
 
 /*

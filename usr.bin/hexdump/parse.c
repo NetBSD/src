@@ -1,3 +1,5 @@
+/*	$NetBSD: parse.c,v 1.4 1997/01/09 20:19:59 tls Exp $	*/
+
 /*
  * Copyright (c) 1989 The Regents of the University of California.
  * All rights reserved.
@@ -33,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)parse.c	5.6 (Berkeley) 3/9/91";*/
-static char rcsid[] = "$Id: parse.c,v 1.3 1994/05/20 15:57:26 pk Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.4 1997/01/09 20:19:59 tls Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>

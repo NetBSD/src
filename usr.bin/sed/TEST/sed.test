@@ -1,4 +1,5 @@
 #!/bin/sh -
+#	$NetBSD: sed.test,v 1.3 1997/01/09 20:21:37 tls Exp $
 #
 # Copyright (c) 1992 Diomidis Spinellis.
 # Copyright (c) 1992, 1993
@@ -33,7 +34,7 @@
 # SUCH DAMAGE.
 #
 #	from: @(#)sed.test	8.1 (Berkeley) 6/6/93
-#	$Id: sed.test,v 1.2 1994/02/03 23:45:04 cgd Exp $
+#	$NetBSD: sed.test,v 1.3 1997/01/09 20:21:37 tls Exp $
 #
 
 # sed Regression Tests

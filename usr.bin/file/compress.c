@@ -1,10 +1,12 @@
+/*	$NetBSD: compress.c,v 1.5 1997/01/09 20:18:51 tls Exp $	*/
+
 /*
  * compress routines:
  *	zmagic() - returns 0 if not recognized, uncompresses and prints
  *		   information if recognized
  *	uncompress(method, old, n, newch) - uncompress old into new, 
  *					    using method, return sizeof new
- * $Id: compress.c,v 1.4 1995/05/21 00:13:28 christos Exp $
+ * $NetBSD: compress.c,v 1.5 1997/01/09 20:18:51 tls Exp $
  */
 #include <stdio.h>
 #include <stdlib.h>

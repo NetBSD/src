@@ -1,3 +1,5 @@
+/*	$NetBSD: dohits.h,v 1.3 1997/01/09 20:23:07 tls Exp $	*/
+
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -31,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)dohits.h	4.2 (Berkeley) 4/26/91
- *	$Id: dohits.h,v 1.2 1993/08/01 18:04:55 mycroft Exp $
+ *	$NetBSD: dohits.h,v 1.3 1997/01/09 20:23:07 tls Exp $
  */
 
 #define	numberof(x)	(sizeof x/sizeof x[0])

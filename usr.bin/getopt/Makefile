@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.3 1994/12/22 12:29:51 cgd Exp $
+#	$NetBSD: Makefile,v 1.4 1997/01/09 20:19:45 tls Exp $
 
 PROG = getopt
 

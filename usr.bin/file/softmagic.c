@@ -1,3 +1,5 @@
+/*	$NetBSD: softmagic.c,v 1.12 1997/01/09 20:19:01 tls Exp $	*/
+
 /*
  * softmagic - interpret variable magic from /etc/magic
  *
@@ -35,7 +37,7 @@
 
 #ifndef	lint
 static char *moduleid = 
-	"@(#)$Id: softmagic.c,v 1.11 1996/10/06 18:27:25 cgd Exp $";
+	"@(#)$NetBSD: softmagic.c,v 1.12 1997/01/09 20:19:01 tls Exp $";
 #endif	/* lint */
 
 static int match	__P((unsigned char *, int));
