@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.21 1998/07/15 19:53:57 mjacob Exp $ */
+/* $NetBSD: isp_pci.c,v 1.22 1998/07/18 21:02:42 mjacob Exp $ */
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -151,6 +151,7 @@ isp_pci_attach(parent, self, aux)
 	pci_intr_handle_t ih;
 	const char *intrstr;
 	int ioh_valid, memh_valid, i;
+	ISP_LOCKVAL_DECL;
 
 	ioh_valid = (pci_mapreg_map(pa, IO_MAP_REG,
 	    PCI_MAPREG_TYPE_IO, 0,
@@ -242,18 +243,23 @@ isp_pci_attach(parent, self, aux)
 
 	if (oneshot) {
 		oneshot = 0;
-		printf("***Qlogic ISP Driver, NetBSD (pci) Version\n***%s\n",
-			ISP_VERSION_STRING);
+		printf("***Qlogic ISP Driver, NetBSD (pci) Platform Version "
+		    "%d.%d Core Version %d.%d\n",
+		    ISP_PLATFORM_VERSION_MAJOR, ISP_PLATFORM_VERSION_MINOR,
+		    ISP_CORE_VERSION_MAJOR, ISP_CORE_VERSION_MINOR);
 	}
 
+	ISP_LOCK(isp);
 	isp_reset(isp);
 	if (isp->isp_state != ISP_RESETSTATE) {
+		ISP_UNLOCK(isp);
 		free(isp->isp_param, M_DEVBUF);
 		return;
 	}
 	isp_init(isp);
 	if (isp->isp_state != ISP_INITSTATE) {
 		isp_uninit(isp);
+		ISP_UNLOCK(isp);
 		free(isp->isp_param, M_DEVBUF);
 		return;
 	}
@@ -262,6 +268,7 @@ isp_pci_attach(parent, self, aux)
 			 pa->pa_intrline, &ih)) {
 		printf("%s: couldn't map interrupt\n", isp->isp_name);
 		isp_uninit(isp);
+		ISP_UNLOCK(isp);
 		free(isp->isp_param, M_DEVBUF);
 		return;
 	}
@@ -275,6 +282,7 @@ isp_pci_attach(parent, self, aux)
 		printf("%s: couldn't establish interrupt at %s\n",
 			isp->isp_name, intrstr);
 		isp_uninit(isp);
+		ISP_UNLOCK(isp);
 		free(isp->isp_param, M_DEVBUF);
 		return;
 	}
@@ -290,6 +298,7 @@ isp_pci_attach(parent, self, aux)
 			printf("%s: can't create dma maps\n",
 			    isp->isp_name);
 			isp_uninit(isp);
+			ISP_UNLOCK(isp);
 			return;
 		}
 	}
@@ -300,8 +309,8 @@ isp_pci_attach(parent, self, aux)
 	if (isp->isp_state != ISP_RUNSTATE) {
 		isp_uninit(isp);
 		free(isp->isp_param, M_DEVBUF);
-		return;
 	}
+	ISP_UNLOCK(isp);
 }
 
 #define  PCI_BIU_REGS_OFF		BIU_REGS_OFF
