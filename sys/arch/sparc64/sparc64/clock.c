@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.23 2000/07/06 14:13:05 eeh Exp $ */
+/*	$NetBSD: clock.c,v 1.24 2000/07/17 18:32:25 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -471,6 +471,7 @@ cpu_initclocks()
 	/* Set a 1s clock */
 	if (intrdebug) {
 		hz = 1;
+		tick = 1000000 / hz;
 		printf("intrdebug set: 1Hz clock\n");
 	}
 #endif
