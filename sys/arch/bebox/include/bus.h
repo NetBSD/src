@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.12 1998/06/03 06:40:45 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.13 1998/06/03 06:47:41 thorpej Exp $	*/
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 /*-
@@ -967,8 +967,6 @@ typedef struct bebox_bus_dma_segment	bus_dma_segment_t;
  */
 
 struct bebox_bus_dma_tag {
-	void	*_cookie;		/* cookie used in the guts */
-
 	/*
 	 * The `bounce threshold' is checked while we are loading
 	 * the DMA map.  If the physical address of the segment
