@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.211 2003/09/08 23:43:05 mycroft Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.212 2003/09/09 02:37:55 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.211 2003/09/08 23:43:05 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.212 2003/09/09 02:37:55 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -503,8 +503,6 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_CDROM, T_REMOV,
 	 "YAMAHA", "CRW8424S",           ""},     PQUIRK_NOLUNS},
 	{{T_CDROM, T_REMOV,
-	 "VMware", "Virtual",            "1.0"},  PQUIRK_NODOORLOCK},
-	{{T_CDROM, T_REMOV,
 	 "NEC     ", "CD-ROM DRIVE:222", ""},	  PQUIRK_NOLUNS|PQUIRK_NOSYNC},
 
 	{{T_DIRECT, T_FIXED,
@@ -632,8 +630,7 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "IOMEGA", "ZIP 100",		 "J.03"},
 				PQUIRK_NOMODESENSE|PQUIRK_NOLUNS},
 	{{T_DIRECT, T_REMOV,
-	 "INSITE", "I325VM",             ""},
-				PQUIRK_NOLUNS|PQUIRK_NODOORLOCK},
+	 "INSITE", "I325VM",             ""},     PQUIRK_NOLUNS},
 
 	/* XXX: QIC-36 tape behind Emulex adapter.  Very broken. */
 	{{T_SEQUENTIAL, T_REMOV,
