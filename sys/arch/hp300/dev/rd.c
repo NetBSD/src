@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.43 2000/05/27 04:52:28 thorpej Exp $	*/
+/*	$NetBSD: rd.c,v 1.43.4.1 2000/10/18 00:10:42 tv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -82,6 +82,9 @@
  * CS80/SS80 disk driver
  */
 
+#include "opt_useleds.h"
+#include "rnd.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
@@ -94,12 +97,14 @@
 #include <sys/proc.h>
 #include <sys/stat.h>
 
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
+
 #include <hp300/dev/hpibvar.h>
 
 #include <hp300/dev/rdreg.h>
 #include <hp300/dev/rdvar.h>
-
-#include "opt_useleds.h"
 
 #ifdef USELEDS
 #include <hp300/hp300/leds.h>
@@ -349,6 +354,13 @@ rdattach(parent, self, aux)
 	/* always report errors */
 	if (rddebug & RDB_ERROR)
 		rderrthresh = 0;
+#endif
+#if NRND > 0
+	/*
+	 * attach the device into the random source list
+	 */
+	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+			  RND_TYPE_DISK, 0);
 #endif
 }
 
@@ -934,6 +946,9 @@ rdintr(arg)
 	}
 	if (rdfinish(rs, bp))
 		rdustart(rs);
+#if NRND > 0
+	rnd_add_uint32(&rs->rnd_source, bp->b_blkno);
+#endif
 }
 
 int
