@@ -1,4 +1,4 @@
-.\"	$NetBSD: crontab.1,v 1.4 1999/04/09 02:47:03 cjs Exp $
+.\"	$NetBSD: crontab.1,v 1.5 2000/11/28 14:06:13 sommerfeld Exp $
 .\"
 .\"/* Copyright 1988,1990,1993 by Paul Vixie
 .\" * All rights reserved
@@ -49,7 +49,7 @@ depending on site-dependent configuration parameters, only the super user
 will be allowed to use this command, or all users will be able to use this
 command.
 .PP
-The default maximum size for a crontab is 32768 bytes, but this may be
+The default maximum size for a crontab is 256 kilobytes, but this may be
 changed for all users on the system by putting the desired maximum size
 (in bytes) in the
 .I maxtabsize
