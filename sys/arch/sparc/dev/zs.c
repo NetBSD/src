@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.79.2.1 2000/07/19 02:53:14 mrg Exp $	*/
+/*	$NetBSD: zs.c,v 1.79.2.2 2000/10/19 13:34:55 he Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -337,6 +337,13 @@ zs_attach_obio(parent, self, aux)
 		zsc->zsc_bustag = oba->oba_bustag;
 		zsc->zsc_dmatag = oba->oba_dmatag;
 		/* Find prom unit by physical address */
+		if (cpuinfo.cpu_type == CPUTYP_4_100)
+			/*
+			 * On the sun4/100, the top-most 4 bits are zero
+			 * on obio addresses; force them to 1's for the
+			 * sake of the comparison here.
+			 */
+			paddr |= 0xf0000000;
 		zsc->zsc_promunit =
 			(paddr == 0xf1000000) ? 0 :
 			(paddr == 0xf0000000) ? 1 :
