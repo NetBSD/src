@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.15 2002/03/29 15:07:52 ross Exp $	*/
+/*	$NetBSD: edit.c,v 1.16 2003/03/29 21:41:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: edit.c,v 1.15 2002/03/29 15:07:52 ross Exp $");
+__RCSID("$NetBSD: edit.c,v 1.16 2003/03/29 21:41:04 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -210,7 +210,7 @@ run_editor(FILE *fp, off_t size, int editortype, int readonlyflag)
 	if ((editcmd =
 	         value(editortype == 'e' ? "EDITOR" : "VISUAL")) == NULL)
 		editcmd = editortype == 'e' ? _PATH_EX : _PATH_VI;
-	if (run_command(editcmd, 0, -1, -1, tempname, NULL, NULL) < 0) {
+	if (run_command(editcmd, 0, -1, -1, tempname, NULL) < 0) {
 		(void)unlink(tempname);
 		goto out;
 	}
