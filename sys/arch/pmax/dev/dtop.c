@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.20 1996/10/13 13:13:55 jonathan Exp $	*/
+/*	$NetBSD: dtop.c,v 1.21 1997/05/25 02:37:55 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -160,7 +160,8 @@ struct dtop_softc {
 	short		bad_pkts;
 
 	struct dtop_ds {
-		int		(*handler)();
+		int	(*handler)
+			__P((dtop_device_t, dtop_message_t, int, int));
 		dtop_device	status;
 	} device[(DTOP_ADDR_DEFAULT - DTOP_ADDR_FIRST) >> 1];
 
@@ -188,9 +189,12 @@ void dtopKBDPutc	__P((dev_t, int));
 int  dtopKBDGetc	__P((dev_t));
 
 
-void	(*dtopDivertXInput)();	/* X windows keyboard input routine */
-void	(*dtopMouseEvent)();	/* X windows mouse motion event routine */
-void	(*dtopMouseButtons)();	/* X windows mouse buttons event routine */
+					/* X11 keyboard input upcall  */
+void	(*dtopDivertXInput) __P((int));
+					/* X11 mouse motion event upcall */
+void	(*dtopMouseEvent) __P((MouseReport *mrp));
+					/* X11 mouse buttons event upcall */
+void (*dtopMouseButtons) __P((MouseReport *mrp));
 
 
 /*
