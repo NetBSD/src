@@ -1,4 +1,4 @@
-/*	$NetBSD: biostramp.S,v 1.1 1996/09/08 15:36:53 jtk Exp $	*/
+/*	$NetBSD: biostramp.S,v 1.2 1996/09/09 11:31:41 jtk Exp $	*/
 /*-
  * Copyright (c) 1996 John T. Kohl.  All rights reserved.
  *
@@ -68,6 +68,8 @@
 #define	ENTRY(name)	.globl _ ## name; ALIGN_TEXT; _ ## name:
 
 #include "assym.h"
+#include "apm.h"
+#if NAPM > 0
 #include <machine/param.h>
 #include <machine/specialreg.h>
 #include <machine/segments.h>
@@ -336,3 +338,4 @@ x32:
 IDT_bios:			# BIOS IDT descriptor (real-mode)
 	.word 1023
 	.long 0
+#endif
