@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.43 1995/09/23 08:14:36 chopps Exp $	*/
+/*	$NetBSD: locore.s,v 1.44 1995/09/23 13:42:03 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1766,7 +1766,7 @@ Lcmploop:
 Lcmpdone:
 	rts
 
-NTRY(memcpy)
+ENTRY(memcpy)
 	movl	sp@(12),d0		| get count
 	jeq	Lcpyexit		| if zero, return
 	movl	sp@(8), a0		| src address
