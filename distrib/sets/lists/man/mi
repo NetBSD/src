@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.671 2004/03/27 01:47:39 uwe Exp $
+# $NetBSD: mi,v 1.672 2004/03/28 10:26:11 martti Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1702,6 +1702,7 @@
 ./usr/share/man/cat8/ipfstat.0			man-ipf-catman		.cat
 ./usr/share/man/cat8/ipmon.0			man-ipf-catman		.cat
 ./usr/share/man/cat8/ipnat.0			man-ipf-catman		.cat
+./usr/share/man/cat8/ippool.0			man-ipf-catman		.cat
 ./usr/share/man/cat8/ipppctl.0			man-isdn-catman		.cat
 ./usr/share/man/cat8/irda.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/irdaattach.0		man-sysutil-catman	.cat
@@ -3769,6 +3770,7 @@
 ./usr/share/man/man8/ipfstat.8			man-ipf-man		.man
 ./usr/share/man/man8/ipmon.8			man-ipf-man		.man
 ./usr/share/man/man8/ipnat.8			man-ipf-man		.man
+./usr/share/man/man8/ippool.8			man-ipf-man		.man
 ./usr/share/man/man8/ipppctl.8			man-isdn-man		.man
 ./usr/share/man/man8/irda.8			man-sysutil-man		.man
 ./usr/share/man/man8/irdaattach.8		man-sysutil-man		.man
