@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.1 1996/09/30 16:34:53 ws Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.2 1999/05/03 10:02:19 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,8 +30,46 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 #include <sys/param.h>
 #include <sys/proc.h>
+#include <sys/systm.h>
+
+#include <machine/reg.h>
+
+int
+process_read_regs(p, regs)
+	struct proc *p;
+	struct reg *regs;
+{
+	struct trapframe *tf = trapframe(p);
+
+	bcopy(tf->fixreg, regs->fixreg, sizeof(regs->fixreg));
+	regs->lr = tf->lr;
+	regs->cr = tf->cr;
+	regs->xer = tf->xer;
+	regs->ctr = tf->ctr;
+	regs->pc = tf->srr0;
+
+	return 0;
+}
+
+int
+process_write_regs(p, regs)
+	struct proc *p;
+	struct reg *regs;
+{
+	struct trapframe *tf = trapframe(p);
+
+	bcopy(regs->fixreg, tf->fixreg, sizeof(regs->fixreg));
+	tf->lr = regs->lr;
+	tf->cr = regs->cr;
+	tf->xer = regs->xer;
+	tf->ctr = regs->ctr;
+	tf->srr0 = regs->pc;
+
+	return 0;
+}
 
 /*
  * Set the process's program counter.
