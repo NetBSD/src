@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.35 2001/02/02 21:52:11 is Exp $	*/
+/*	$NetBSD: kbd.c,v 1.36 2002/01/13 22:47:43 jandberg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -70,6 +70,26 @@
  * to wscons when initializing.
  */
 
+/*
+ * Now with wscons this driver exhibits some weird behaviour.
+ * It may act both as a driver of its own and the md part of the
+ * wskbd driver. Therefore it can be accessed through /dev/kbd
+ * and /dev/wskbd0 both.
+ *
+ * The data from they keyboard may end up in at least four different
+ * places:
+ * - If this driver has been opened (/dev/kbd) and the 
+ *   direct mode (TIOCDIRECT) has been set, data goes to 
+ *   the process who opened the device. Data will transmit itself
+ *   as described by the firm_event structure.
+ * - If wskbd support is compiled in and a wskbd driver has been
+ *   attached then the data is sent to it. Wskbd in turn may
+ *   - Send the data in the wscons_event form to a process that
+ *     has opened /dev/wskbd0
+ *   - Feed the data to a virtual terminal.
+ * - If an ite is present the data may be fed to it.
+ */
+
 #include "wskbd.h"
 
 #if NWSKBD>0
@@ -102,7 +122,7 @@ static struct wskbd_consops kbd_consops = {
 };
 
 /*
- * Pointer to keymap. It is defined in wskbdmap_amiga.c.
+ * Pointer to keymaps. They are defined in wskbdmap_amiga.c.
  */
 static struct wskbd_mapdata kbd_mapdata = {
 	amigakbd_keydesctab,
@@ -768,12 +788,11 @@ kbd_ioctl(c, cmd, data, flag, p)
 		*(int*)data = 0;
 		return 0;
 	case WSKBDIO_GTYPE:
-		/* XXX well is it, dont think so */ 
-		*(u_int*)data = WSKBD_TYPE_PC_AT; 
+		*(u_int*)data = WSKBD_TYPE_AMIGA; 
 		return 0;
 	}
 
-	/* We are supposed to return -1 to wscons if we didnt understand */
+	/* We are supposed to return -1 to wscons if we didn't understand */
 	return (-1);
 }
 
