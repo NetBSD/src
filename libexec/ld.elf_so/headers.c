@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.1 1996/12/16 20:37:58 cgd Exp $	*/
+/*	$NetBSD: headers.c,v 1.1.2.1 1998/05/08 17:39:12 mycroft Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -200,6 +200,26 @@ _rtld_digest_dynamic(
 	    dynp->d_un.d_ptr = (Elf_Addr) &_rtld_debug;
 #endif
 	    break;
+
+#if defined(__mips__)
+	case DT_MIPS_LOCAL_GOTNO:
+	    obj->local_gotno = dynp->d_un.d_val;
+	    break;
+
+	case DT_MIPS_SYMTABNO:
+	    obj->symtabno = dynp->d_un.d_val;
+	    break;
+
+	case DT_MIPS_GOTSYM:
+	    obj->gotsym = dynp->d_un.d_val;
+	    break;
+
+	case DT_MIPS_RLD_MAP:
+#ifdef RTLD_LOADER
+	    *((Elf_Addr *)(dynp->d_un.d_ptr)) = (Elf_Addr) &_rtld_debug;
+#endif
+	    break;
+#endif
 	}
     }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.3 1997/02/14 22:30:25 cgd Exp $	*/
+/*	$NetBSD: rtld.h,v 1.3.2.1 1998/05/08 17:39:12 mycroft Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -122,6 +122,11 @@ typedef struct Struct_Obj_Entry {
     const Elf_Sym *symtab;	/* Symbol table */
     const char *strtab;		/* String table */
     unsigned long strsize;	/* Size in bytes of string table */
+#if defined(__mips__)
+    Elf_Word local_gotno;	/* Number of local GOT entries */
+    Elf_Word symtabno;		/* Number of dynamic symbols */
+    Elf_Word gotsym;		/* First dynamic symbol in GOT */
+#endif
 
     const Elf_Word *buckets;	/* Hash table buckets array */
     unsigned long nbuckets;	/* Number of buckets */
@@ -207,5 +212,11 @@ extern const Elf_Sym *_rtld_find_symdef(const Obj_Entry *, Elf_Word,
 
 /* map_object.c */
 extern Obj_Entry *_rtld_map_object(const char *, int);
+
+#if defined(__mips__)
+/* mips_reloc.c */
+extern void _rtld_relocate_mips_got(Obj_Entry *);
+extern caddr_t _rtld_bind_mips (Elf_Word, Elf_Addr, Elf_Addr, Elf_Addr);
+#endif
 
 #endif /* } */
