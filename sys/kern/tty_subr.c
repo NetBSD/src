@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_subr.c,v 1.19 2000/03/30 09:27:13 augustss Exp $	*/
+/*	$NetBSD: tty_subr.c,v 1.20 2000/08/02 20:53:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -85,15 +85,15 @@ clalloc(clp, size, quot)
 	int quot;
 {
 
-	MALLOC(clp->c_cs, u_char *, size, M_TTYS, M_WAITOK);
+	clp->c_cs = malloc(size, M_TTYS, M_WAITOK);
 	if (!clp->c_cs)
 		return (-1);
 	memset(clp->c_cs, 0, size);
 
 	if(quot) {
-		MALLOC(clp->c_cq, u_char *, QMEM(size), M_TTYS, M_WAITOK);
+		clp->c_cq = malloc(QMEM(size), M_TTYS, M_WAITOK);
 		if (!clp->c_cq) {
-			FREE(clp->c_cs, M_TTYS);
+			free(clp->c_cs, M_TTYS);
 			return (-1);
 		}
 		memset(clp->c_cs, 0, QMEM(size));
@@ -112,9 +112,9 @@ clfree(clp)
 	struct clist *clp;
 {
 	if(clp->c_cs)
-		FREE(clp->c_cs, M_TTYS);
+		free(clp->c_cs, M_TTYS);
 	if(clp->c_cq)
-		FREE(clp->c_cq, M_TTYS);
+		free(clp->c_cq, M_TTYS);
 	clp->c_cs = clp->c_cq = (u_char *)0;
 }
 
