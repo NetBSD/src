@@ -1,4 +1,4 @@
-# 	$NetBSD: DEJIKO,v 1.3 2000/11/15 14:29:40 tsubai Exp $
+# 	$NetBSD: DEJIKO,v 1.4 2000/11/27 08:55:42 soren Exp $
 #
 #	Dejiko's sekai-seifuku NEWS5000 nyo.
 
@@ -10,7 +10,6 @@ options 	news5000
 options 	MIPS3			# R4x00 support
 options 	MIPS3_L2CACHE_PRESENT
 options 	CPU_SINGLE		# no I/O processor
-options 	BUFPAGES=4096
 
 # Debugging options
 options 	DDB			# kernel dynamic debugger

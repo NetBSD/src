@@ -1,7 +1,7 @@
 #
 # NEWS3400 config file
 #
-# 	$NetBSD: WAPIKO,v 1.12 2000/11/13 16:48:41 tsubai Exp $
+# 	$NetBSD: WAPIKO,v 1.13 2000/11/27 08:55:42 soren Exp $
 #
 include		"arch/newsmips/conf/std.newsmips"
 
@@ -12,7 +12,6 @@ makeoptions	COPTS="-O2 -pipe"
 options 	news3400
 options 	MIPS1			# R2000/R3000 support
 options 	CPU_SINGLE
-options 	BUFPAGES=2048
 
 # Standard system options
 options 	KTRACE			# system call tracing support
