@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.6 2003/01/28 21:04:37 jdolecek Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.7 2003/01/30 01:12:42 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -89,6 +89,9 @@ static pthread_spin_t pt_sigsuspended_lock;
 static pthread_cond_t pt_sigsuspended_cond = PTHREAD_COND_INITIALIZER;
 
 
+static void pthread__kill(pthread_t, pthread_t, int, int);
+static void pthread__kill_self(pthread_t, int, int);
+
 static void 
 pthread__signal_tramp(int, int, void (*)(int, int, struct sigcontext *),
     ucontext_t *, sigset_t *);
@@ -103,17 +106,44 @@ pthread__signal_init(void)
 }
 
 int
-/*ARGSUSED*/
 pthread_kill(pthread_t thread, int sig)
 {
+	pthread_t self;
+	void (*handler)(int);
 
-	/* We only let the thread handle this signal if the action for
+	self = pthread__self();
+
+	SDPRINTF(("(pthread_kill %p) kill %p sig %d\n", self, thread, sig));
+
+	if ((sig < 0) || (sig >= _NSIG))
+		return EINVAL;
+	if (pthread__find(self, thread) != 0)
+		return ESRCH;
+
+	/*
+	 * We only let the thread handle this signal if the action for
 	 * the signal is an explicit handler. Otherwise we feed it to
 	 * the kernel so that it can affect the whole process.
 	 */
+	pthread_spinlock(self, &pt_sigacts_lock);
+	handler = pt_sigacts[sig].sa_handler;
+	pthread_spinunlock(self, &pt_sigacts_lock);
 
-	/* XXX implement me */
-	return -1;
+	if (handler == SIG_IGN) {
+		SDPRINTF(("(pthread_kill %p) do nothing\n", self, thread, sig));
+		/* Do nothing */
+	} else if ((sig == SIGKILL) || (sig == SIGSTOP) ||
+	    (handler == SIG_DFL)) {
+		/* Let the kernel do the work */
+		SDPRINTF(("(pthread_kill %p) kernel kill\n", self, thread, sig));
+		kill(getpid(), sig);
+	} else {
+		pthread_spinlock(self, &thread->pt_siglock);
+		pthread__kill(self, thread, sig, 0);
+		pthread_spinunlock(self, &thread->pt_siglock);
+	}
+
+	return 0;
 }
 
 
@@ -125,16 +155,19 @@ pthread_kill(pthread_t thread, int sig)
 int
 __sigaction14(int sig, const struct sigaction *act, struct sigaction *oact)
 {
-	pthread_t self;
 	struct sigaction realact;
-	
+	sigset_t oldmask;
+	pthread_t self;
+	int retval;
+
+	if ((sig <= 0) || (sig >= _NSIG))
+		return EINVAL;
+
 	self = pthread__self();
 	if (act != NULL) {
-		if (sig <= 0 || sig >= _NSIG)
-			return (EINVAL);
-
 		/* Save the information for our internal dispatch. */
 		pthread_spinlock(self, &pt_sigacts_lock);
+		oldmask = pt_sigacts[sig].sa_mask;
 		pt_sigacts[sig] = *act;
 		pthread_spinunlock(self, &pt_sigacts_lock);
 		/*
@@ -150,7 +183,11 @@ __sigaction14(int sig, const struct sigaction *act, struct sigaction *oact)
 		act = &realact;
 	}
 
-	return (__libc_sigaction14(sig, act, oact));
+	retval = __libc_sigaction14(sig, act, oact);
+	if (oact && (retval == 0))
+		oact->sa_mask = oldmask;
+
+	return retval;
 }
 
 int
@@ -204,17 +241,17 @@ firstsig(const sigset_t *ss)
 	sig = ffs((int)ss->__bits[0]);
 	if (sig != 0)
 		return (sig);
-#if NSIG > 33
+#if _NSIG > 33
 	sig = ffs((int)ss->__bits[1]);
 	if (sig != 0)
 		return (sig + 32);
 #endif
-#if NSIG > 65
+#if _NSIG > 65
 	sig = ffs((int)ss->__bits[2]);
 	if (sig != 0)
 		return (sig + 64);
 #endif
-#if NSIG > 97
+#if _NSIG > 97
 	sig = ffs((int)ss->__bits[3]);
 	if (sig != 0)
 		return (sig + 96);
@@ -225,127 +262,75 @@ firstsig(const sigset_t *ss)
 int
 pthread_sigmask(int how, const sigset_t *set, sigset_t *oset)
 {
+	sigset_t tmp, takelist;
 	pthread_t self;
-	sigset_t tmp;
-	int i, retval, unblocked, procmaskset;
-	void (*handler)(int, int, struct sigcontext *);
-	struct sigaction *act;
-	struct sigcontext xxxsc;
-	sigset_t oldmask, takelist;
+	int i;
 
 	self = pthread__self();
-
-	retval = 0;
-	unblocked = 0;
-	if (set != NULL) {
-		pthread_spinlock(self, &self->pt_siglock);
-		if (how == SIG_BLOCK) {
-			__sigplusset(set, &self->pt_sigmask);
-			/*
-			 * Blocking of signals that are now
-			 * blocked by all threads will be done
-			 * lazily, at signal delivery time.
-			 */
-		} else if (how == SIG_UNBLOCK) {
-			pthread_spinlock(self, &pt_process_siglock);
-			__sigminusset(set, &self->pt_sigmask);
-			/*
-			 * Unblock any signals that were blocked
-			 * process-wide before this.
-			 */
-			tmp = pt_process_sigmask;
-			__sigminusset(set, &tmp);
-			if (!__sigsetequal(&tmp, &pt_process_sigmask))
-				pt_process_sigmask = tmp;
-			unblocked = 1;
-		} else if (how == SIG_SETMASK) {
-			pthread_spinlock(self, &pt_process_siglock);
-			self->pt_sigmask = *set;
-			SDPRINTF(("(pt_sigmask %p) (set) set thread mask to "
-			    "%08x\n", self, self->pt_sigmask.__bits[0]));
-			/*
-			 * Unblock any signals that were blocked
-			 * process-wide before this.
-			 */
-			tmp = pt_process_sigmask;
-			__sigandset(set, &tmp);
-			if (!__sigsetequal(&tmp, &pt_process_sigmask))
-				pt_process_sigmask = tmp;
-			unblocked = 1; /* Well, maybe */
-		} else 
-			retval = EINVAL;
-	}
-
-	if (unblocked) {
-		SDPRINTF(("(pt_sigmask %p) Process mask was changed to %08x\n",
-		    self, pt_process_sigmask.__bits[0]));
-		/* See if there are any signals to take */
-		__sigemptyset14(&takelist);
-		while ((i = firstsig(&self->pt_siglist)) != 0) {
-			if (!__sigismember14(&self->pt_sigmask, i)) {
-				__sigaddset14(&takelist, i);
-				__sigdelset14(&self->pt_siglist, i);
-			}
-		}
-		while ((i = firstsig(&pt_process_siglist)) != 0) {
-			if (!__sigismember14(&self->pt_sigmask, i)) {
-				__sigaddset14(&takelist, i);
-				__sigdelset14(&pt_process_siglist, i);
-			}
-		}
-
-		procmaskset = 0;
-		while ((i = firstsig(&takelist)) != 0) {
-			if (!__sigismember14(&self->pt_sigmask, i)) {
-				/* Take the signal */
-				act = &pt_sigacts[i];
-				oldmask = self->pt_sigmask;
-				__sigplusset(&self->pt_sigmask,
-				    &act->sa_mask);
-				__sigaddset14(&self->pt_sigmask, i);
-				pthread_spinunlock(self, &pt_process_siglock);
-				pthread_spinunlock(self, &self->pt_siglock);
-				SDPRINTF(("(pt_sigmask %p) taking unblocked signal %d\n", self, i));
-				handler =
-				    (void (*)(int, int, struct sigcontext *))
-				    act->sa_handler;
-				handler(i, 0, &xxxsc);
-				pthread_spinlock(self, &self->pt_siglock);
-				pthread_spinlock(self, &pt_process_siglock);
-				__sigdelset14(&takelist, i);
-				/* Reset masks */
-				self->pt_sigmask = oldmask;
-				tmp = pt_process_sigmask;
-				__sigandset(&oldmask, &tmp);
-				if (!__sigsetequal(&tmp, &pt_process_sigmask)){
-					pt_process_sigmask = tmp;
-					SDPRINTF(("(pt_sigmask %p) setting proc sigmask to %08x\n", pt_process_sigmask.__bits[0]));
-					__sigprocmask14(SIG_SETMASK, 
-					    &pt_process_sigmask, NULL);
-					procmaskset = 1;
-				}
-			}
-		}
-		if (!procmaskset) {
-			SDPRINTF(("(pt_sigmask %p) setting proc sigmask to %08x\n", self, pt_process_sigmask.__bits[0]));
-			__sigprocmask14(SIG_SETMASK, &pt_process_sigmask, NULL);
-		}
-	} 
-	if (set != NULL) {
-		if ((how == SIG_UNBLOCK) || (how == SIG_SETMASK))
-			pthread_spinunlock(self, &pt_process_siglock);
-		pthread_spinunlock(self, &self->pt_siglock);
-	}
-
 	/*
 	 * While other threads may read a process's sigmask,
 	 * they won't write it, so we don't need to lock our reads of it.
 	 */
-	if (oset != NULL) {
+	if (oset != NULL)
 		*oset = self->pt_sigmask;
+	
+	if (set == NULL)
+		return 0;
+
+	pthread_spinlock(self, &self->pt_siglock);
+	if (how == SIG_BLOCK) {
+		__sigplusset(set, &self->pt_sigmask);
+		/*
+		 * Blocking of signals that are now
+		 * blocked by all threads will be done
+		 * lazily, at signal delivery time.
+		 */
+		pthread_spinunlock(self, &self->pt_siglock);
+		return 0;
+	} else if (how == SIG_UNBLOCK)
+		__sigminusset(set, &self->pt_sigmask);
+	else if (how == SIG_SETMASK)
+		self->pt_sigmask = *set;
+	else {
+		pthread_spinunlock(self, &self->pt_siglock);
+		return EINVAL;
 	}
 
-	return retval;
+	/* See if there are any signals to take */
+	__sigemptyset14(&takelist);
+	while ((i = firstsig(&self->pt_siglist)) != 0) {
+		if (!__sigismember14(&self->pt_sigmask, i)) {
+			__sigaddset14(&takelist, i);
+			__sigdelset14(&self->pt_siglist, i);
+		}
+	}
+	pthread_spinlock(self, &pt_process_siglock);
+	while ((i = firstsig(&pt_process_siglist)) != 0) {
+		if (!__sigismember14(&self->pt_sigmask, i)) {
+			__sigaddset14(&takelist, i);
+			__sigdelset14(&pt_process_siglist, i);
+		}
+	}
+	/* Unblock any signals that were blocked process-wide before this. */
+	tmp = pt_process_sigmask;
+	__sigandset(&self->pt_sigmask, &tmp);
+	if (!__sigsetequal(&tmp, &pt_process_sigmask)) {
+		pt_process_sigmask = tmp;
+		__sigprocmask14(SIG_SETMASK, &pt_process_sigmask, NULL);
+	}
+	pthread_spinunlock(self, &pt_process_siglock);
+
+	while ((i = firstsig(&takelist)) != 0) {
+		/* Take the signal */	
+		SDPRINTF(("(pt_sigmask %p) taking unblocked signal %d\n",
+		    self, i));
+		pthread__kill_self(self, i, 0);
+		__sigdelset14(&takelist, i);
+	}
+
+	pthread_spinunlock(self, &self->pt_siglock);
+
+	return 0;
 }
 
 
@@ -438,10 +423,58 @@ pthread__signal(pthread_t self, pthread_t t, int sig, int code)
 	__sigprocmask14(SIG_SETMASK, &pt_process_sigmask, NULL);
 	pthread_spinunlock(self, &pt_process_siglock);
 
-	if (t && __sigismember14(&target->pt_sigmask, sig)) {
+	pthread__kill(self, target, sig, code);
+	pthread_spinunlock(self, &target->pt_siglock);
+}
+
+/* 
+ * Call the signal handler in the context of this thread. Not quite as
+ * suicidal as it sounds.
+ * Must be called with target's siglock held.
+ */
+static void
+pthread__kill_self(pthread_t self, int sig, int code)
+{
+	struct sigcontext xxxsc;
+	sigset_t oldmask;
+	struct sigaction act;
+	void (*handler)(int, int, struct sigcontext *);
+
+	pthread_spinlock(self, &pt_sigacts_lock);
+	act = pt_sigacts[sig];
+	pthread_spinunlock(self, &pt_sigacts_lock);
+
+	SDPRINTF(("(pthread__kill_self %p) sig %d code %d\n", self, sig, code));
+
+	oldmask = self->pt_sigmask;
+	__sigplusset(&self->pt_sigmask, &act.sa_mask);
+	if ((act.sa_flags & SA_NODEFER) == 0)
+		__sigaddset14(&self->pt_sigmask, sig);
+
+	handler = (void (*)(int, int, struct sigcontext *)) act.sa_handler;
+
+	pthread_spinunlock(self, &self->pt_siglock);
+	handler(sig, code, &xxxsc);
+	pthread_spinlock(self, &self->pt_siglock);
+
+	self->pt_sigmask = oldmask;
+}
+
+/* Must be called with target's siglock held */
+static void
+pthread__kill(pthread_t self, pthread_t target, int sig, int code)
+{
+
+	SDPRINTF(("(pthread__kill %p) target %p sig %d code %d\n", self, target, sig, code));
+
+	if (__sigismember14(&target->pt_sigmask, sig)) {
 		/* Record the signal for later delivery. */
 		__sigaddset14(&target->pt_siglist, sig);
-		pthread_spinunlock(self, &target->pt_siglock);
+		return;
+	}
+
+	if (self == target) {
+		pthread__kill_self(self, sig, code);
 		return;
 	}
 
@@ -479,7 +512,6 @@ pthread__signal(pthread_t self, pthread_t t, int sig, int code)
 		__sigaddset14(&target->pt_sigblocked, sig);
 		__sigaddset14(&target->pt_sigmask, sig);
 		target->pt_flags |= PT_FLAG_SIGDEFERRED;
-		pthread_spinunlock(self, &target->pt_siglock);
 		pthread_spinunlock(self, &target->pt_statelock);
 		_lwp_wakeup(target->pt_blockedlwp);
 		return;
@@ -498,15 +530,19 @@ pthread__deliver_signal(pthread_t self, pthread_t target, int sig, int code)
 {
 	sigset_t oldmask, *maskp;
 	ucontext_t *uc;
+	struct sigaction act;
 
+	pthread_spinlock(self, &pt_sigacts_lock);
+	act = pt_sigacts[sig];
+	pthread_spinunlock(self, &pt_sigacts_lock);
+	
 	/*
 	 * Prevent anyone else from considering this thread for handling
 	 * more instances of this signal.
 	 */
 	oldmask = target->pt_sigmask;
-	__sigplusset(&target->pt_sigmask, &pt_sigacts[sig].sa_mask);
+	__sigplusset(&target->pt_sigmask, &act.sa_mask);
 	__sigaddset14(&target->pt_sigmask, sig);
-	pthread_spinunlock(self, &target->pt_siglock);
 
 	/*
 	 * We'd like to just pass oldmask to the
@@ -537,7 +573,7 @@ pthread__deliver_signal(pthread_t self, pthread_t target, int sig, int code)
 	SDPRINTF(("(makecontext %p): target %p: sig: %d %d uc: %p oldmask: %08x\n",
 	    self, target, sig, code, target->pt_uc, maskp->__bits[0]));
 	makecontext(uc, pthread__signal_tramp, 5,
-	    sig, code, pt_sigacts[sig].sa_handler, target->pt_uc, maskp);
+	    sig, code, act.sa_handler, target->pt_uc, maskp);
 	target->pt_uc = uc;
 }
 
