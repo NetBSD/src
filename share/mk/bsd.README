@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.141 2003/10/18 15:33:59 lukem Exp $
+#	$NetBSD: bsd.README,v 1.142 2004/01/02 16:12:36 lukem Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -58,16 +58,21 @@ The profiled libraries are no longer built in a different directory than
 the regular libraries.  A new suffix, ".po", is used to denote a profiled
 object, and ".so" denotes a shared (position-independent) object.
 
-There are various make variables used during the build.  Basic rule for
-the variable naming scheme is as follows:
+There are various make variables used during the build.
+
+Many variables support a (case sensitive) value of "no" or "yes",
+and are tested with  ${VAR} == "no"  and  ${VAR} != "no" .
+
+
+The basic rule for the variable naming scheme is as follows:
 
 MKxxx		Can be set to "no" to disable functionality, or
 		"yes" to enable it.
 		Usually defaults to "yes", although some variables
 		default to "no".
 		Due to make(1) implementation issues, if a temporary
-		command-line override of a mk.conf or <bsd.own.mk> setting
-		is required whilst still honouring a particular
+		command-line override of a mk.conf or <bsd.own.mk>
+		setting is required whilst still honouring a particular
 		Makefile's setting of MKxxx, use
 			env MKxxx=value make
 		instead of
@@ -106,7 +111,7 @@ MKCATPAGES	If "no", don't build or install the catman pages.
 		Default: yes
 
 MKCRYPTO	If "no", no cryptography support will be built into the system,
-		and also acts as MKKERBEROS=no MKKERBEROS4=no.
+		and also acts as "MKKERBEROS=no MKKERBEROS4=no".
 		Default: yes
 
 MKCRYPTO_IDEA	If not "no", IDEA support will be built into libcrypto_idea.a.
@@ -137,10 +142,10 @@ MKHESIOD	If "no", disables building of Hesiod infrastructure
 		(libraries and support programs).
 		Default: yes
 
-MKHOSTOBJ	If "yes", for programs intended to be run on the compile host,
-		the name, release, and architecture of the host operating
-		system will be suffixed to the name of the object directory
-		created by "make obj".
+MKHOSTOBJ	If not "no", for programs intended to be run on the compile
+		host, the name, release, and architecture of the host
+		operating system will be suffixed to the name of the object
+		directory created by "make obj".
 		Default: no
 
 MKHTML		If "no", don't build or install the html man pages.
@@ -176,7 +181,7 @@ MKLINT		If "no", don't build or install the lint libraries.
 		Default: yes
 
 MKMAN		If "no", don't build or install the man or catman pages,
-		and also acts as "MKCATPAGES=no MKHTML=no"
+		and also acts as "MKCATPAGES=no MKHTML=no".
 		Default: yes
 
 MKMANZ		If not "no", compress manual pages at installation time.
@@ -187,7 +192,7 @@ MKNLS		If "no", don't build or install the NLS files and locale
 		Default: yes
 
 MKOBJ		If "no", don't enable the rule which creates objdirs,
-		and also acts as "MKOBJDIRS=no"
+		and also acts as "MKOBJDIRS=no".
 		Default: yes
 
 MKOBJDIRS	If "no", don't create objdirs during a "make build".
@@ -245,27 +250,27 @@ MKYP		If "no", disables building of YP (NIS)
 
 USE_HESIOD	If "no", disables building Hesiod support into
 		various system utilities/libraries that support it.
-		If MKHESIOD is "no", USE_HESIOD will also be
+		If ${MKHESIOD} is "no", USE_HESIOD will also be
 		forced to "no".
 
 USE_KERBEROS4	If "no", disables building Kerberos v4
 		support into various system utilities/libraries that
-		support it.  If MKKERBEROS4 is "no", USE_KERBEROS4
+		support it.  If ${MKKERBEROS4} is "no", USE_KERBEROS4
 		will also be forced to "no".
 
 USE_KERBEROS	If "no", disables building Kerberos v4 or v5)
 		support into various system utilities/libraries that
-		support it.  If MKKERBEROS is "no", USE_KERBEROS
+		support it.  If ${MKKERBEROS} is "no", USE_KERBEROS
 		will also be forced to "no".
 
 USE_SKEY	If "no", disables building S/key authentication
 		support into various system utilities/libraries that
-		support it.  If MKSKEY is "no", USE_SKEY will
+		support it.  If ${MKSKEY} is "no", USE_SKEY will
 		also be forced to "no".
 
 USE_YP		If "no", disables building YP (NIS) support into
 		various system utilities/libraries that support it.
-		If MKYP is "no", USE_YP will also be forced to "no".
+		If ${MKYP} is "no", USE_YP will also be forced to "no".
 
 COPTS.lib<lib>
 LDADD.lib<lib>
@@ -389,6 +394,30 @@ make configuration file to modify the behaviour of the system build
 process (default values are in brackets along with comments, if set by
 <bsd.own.mk>):
 
+USETOOLS	Indicates whether the tools specified by ${TOOLDIR} should
+		be used as part of a build in progress.
+		Supported values:
+
+		yes	Use the tools from TOOLDIR.
+			Must be set to this if cross-compiling.
+
+		no	Do not use the tools from TOOLDIR, but refuse to
+			build native compilation tool components that are
+			version-specific for that tool.
+
+		never	Do not use the tools from TOOLDIR, even when
+			building native tool components.  This is similar to
+			the traditional NetBSD build method, but does not
+			verify that the compilation tools in use are
+			up-to-date enough in order to build the tree
+			successfully.  This may cause build or runtime
+			problems when building the whole NetBSD source tree.
+
+		Default: "yes" if building all or part of a whole NetBSD
+		source tree (detected automatically); "no" otherwise
+		(to preserve traditional semantics of the <bsd.*.mk>
+		make(1) include files).
+
 OBJECT_FMT	Object file format.  [set to "ELF" on architectures that
 		use ELF -- currently if ${MACHINE_ARCH} is "alpha",
 		"mipsel", "mipseb", "powerpc", "sparc", "sparc64",
@@ -396,15 +425,14 @@ OBJECT_FMT	Object file format.  [set to "ELF" on architectures that
 		other architectures].
 
 TOOLCHAIN_MISSING
-		If "yes", this indicates that the platform being built
+		If not "no", this indicates that the platform being built
 		does not have a working in-tree toolchain.  If the
-		MACHINE_ARCH in question falls into this category, the
-		variable is conditionally assigned the value "yes".
+		${MACHINE_ARCH} in question falls into this category,
+		TOOLCHAIN_MISSING is conditionally assigned the value "yes". 
 		Otherwise, the variable is unconditionally assigned the
 		value "no".
-
-		If TOOLCHAIN_MISSING is "yes", the variables MKBFD, MKGCC,
-		and MKGDB are unconditionally assigned the value "no".
+		If not "no", ${MKBFD}, ${MKGCC}, and ${MKGDB} are
+		unconditionally assigned the value "no".
 
 EXTERNAL_TOOLCHAIN
 		This variable is not directly set by <bsd.own.mk>, but
@@ -413,14 +441,14 @@ EXTERNAL_TOOLCHAIN
 		either in the user's environment or in the user's mk.conf
 		file.  If defined, this variable indicates the root of
 		an external toolchain which will be used to build the
-		tree.  For example, if a platform is a TOOLCHAIN_MISSING
+		tree.  For example, if a platform is a ${TOOLCHAIN_MISSING}
 		platform, EXTERNAL_TOOLCHAIN can be used to re-enable the
 		cross-compile framework.
 
-		If EXTERNAL_TOOLCHAIN is defined, the variable MKGCC is
-		unconditionally assigned the value "no", since the external
-		version of the compiler may not be able to build the library
-		components of the in-tree compiler.
+		If EXTERNAL_TOOLCHAIN is defined, ${MKGCC} is unconditionally
+		assigned the value "no", since the external version of the
+		compiler may not be able to build the library components of
+		the in-tree compiler.
 
 		NOTE: This variable is not yet used in as many places as
 		it should be.  Expect the exact semantics of this variable
@@ -589,9 +617,9 @@ LIB		The name of the library to build.
 LIBDIR		Target directory for libraries.
 
 SHLIBINSTALLDIR	Target directory for shared libraries if ${USE_SHLIBDIR}
-		is "yes".
+		is not "no".
 
-USE_SHLIBDIR	If "yes", use ${SHLIBINSTALLDIR} instead of ${LIBDIR}
+USE_SHLIBDIR	If not "no", use ${SHLIBINSTALLDIR} instead of ${LIBDIR}
 		as the path to install shared libraries to.
 		USE_SHLIBDIR must be defined before <bsd.own.mk> is included.
 		Default: no
@@ -976,15 +1004,15 @@ included before <bsd.shlib.mk>.
 <bsd.own.mk> sets the following variables, if they are not already defined
 (defaults are in brackets):
 
-SHLIBINSTALLDIR	If ${USE_SHLIBDIR} is "yes", use ${SHLIBINSTALLDIR} instead of
-		${LIBDIR} as the base path for shared library installation.
-		[/lib]
+SHLIBINSTALLDIR	If ${USE_SHLIBDIR} is not "no", use ${SHLIBINSTALLDIR}
+		instead of ${LIBDIR} as the base path for shared library
+		installation.  [/lib]
 
 SHLIBDIR	The path to USE_SHLIBDIR shared libraries to use when building
 		a program.  [/lib for programs in /bin and /sbin, /usr/lib
 		for all others.]
 
-_LIBSODIR	Set to ${SHLIBINSTALLDIR} if ${USE_SHLIBDIR} is "yes",
+_LIBSODIR	Set to ${SHLIBINSTALLDIR} if ${USE_SHLIBDIR} is not "no",
 		otherwise set to ${LIBDIR}
 
 SHLINKINSTALLDIR Base path for shared linker.  [/libexec]
@@ -999,10 +1027,9 @@ SHLINKDIR	Path to use for shared linker when building a program.
 The include file <bsd.subdir.mk> contains the default targets for building
 subdirectories.  It has the same eight targets as <bsd.prog.mk>: all,
 clean, cleandir, depend, includes, install, lint, and tags.  For all of
-the directories listed in the variable SUBDIR, the specified directory
-will be visited and the target made.  There is also a default target which
-allows the command "make subdir" where subdir is any directory listed in
-the variable SUBDIR.
+the directories listed in ${SUBDIR}, the specified directory will be
+visited and the target made.  There is also a default target which allows
+the command "make subdir" where subdir is any directory listed in ${SUBDIR}.
 
 As a special case, the use of a token .WAIT as an entry in SUBDIR acts
 as a synchronization barrier when multiple make jobs are run; subdirs
@@ -1018,7 +1045,7 @@ The include file <bsd.sys.mk> is used by <bsd.prog.mk> and
 the NetBSD source tree.
 
 The following variables control how various files are compiled/built.
-(Note that these may be overridden in <bsd.own.mk> if USETOOLS=yes):
+(Note that these may be overridden in <bsd.own.mk> if USETOOLS == "yes"):
 
 AR		Create, modify, and extract from archives.  [ar]
 
@@ -1099,7 +1126,7 @@ YPREFIX		If defined, add "-p ${YPREFIX}" to YFLAGS.
 
 The following variables are defined to commands to perform the
 appropriate operation, with the default in [brackets].
-(Note that these are overridden in <bsd.own.mk> if USETOOLS=yes):
+(Note that these are overridden in <bsd.own.mk> if USETOOLS == "yes"):
 
 TOOL_ASN1_COMPILE	ASN1 compiler.  [asn1_compile]
 

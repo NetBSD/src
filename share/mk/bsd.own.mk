@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.405 2003/12/11 00:28:08 matt Exp $
+#	$NetBSD: bsd.own.mk,v 1.406 2004/01/02 16:12:36 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -40,14 +40,14 @@ HAVE_GCC3?=	yes
 .endif
 
 # Do we want to use tools/toolchain or not?
-.if ${HAVE_GCC3} == "yes"
+.if ${HAVE_GCC3} != "no"
 USE_TOOLS_TOOLCHAIN=no
 .endif
 USE_TOOLS_TOOLCHAIN?=yes
 
 CPPFLAG_ISYSTEM=	-isystem
 # GCC2 did not have -isystem-cxx
-.if ${USE_TOOLS_TOOLCHAIN} == "yes"
+.if ${USE_TOOLS_TOOLCHAIN} != "no"
 CPPFLAG_ISYSTEMXX=	-isystem
 .else
 CPPFLAG_ISYSTEMXX=	-isystem-cxx
@@ -92,7 +92,7 @@ _SRC_TOP_OBJ_!=		cd ${_SRC_TOP_} && ${PRINTOBJDIR}
 
 
 .if (${_SRC_TOP_} != "") && \
-    (${TOOLCHAIN_MISSING} != "yes" || defined(EXTERNAL_TOOLCHAIN))
+    (${TOOLCHAIN_MISSING} == "no" || defined(EXTERNAL_TOOLCHAIN))
 USETOOLS?=	yes
 .endif
 USETOOLS?=	no
@@ -104,7 +104,7 @@ USETOOLS?=	no
 	@echo "Must set MACHINE_ARCH to one of ${MACHINE_ARCH}eb or ${MACHINE_ARCH}el"
 	@false
 .elif defined(REQUIRETOOLS) && \
-      (${TOOLCHAIN_MISSING} != "yes" || defined(EXTERNAL_TOOLCHAIN)) && \
+      (${TOOLCHAIN_MISSING} == "no" || defined(EXTERNAL_TOOLCHAIN)) && \
       ${USETOOLS} == "no"
 .BEGIN:
 	@echo "USETOOLS=no, but this component requires a version-specific host toolchain"
@@ -359,7 +359,7 @@ OBJECT_FMT=	ELF
 #
 # If this platform's toolchain is missing, we obviously cannot build it.
 #
-.if ${TOOLCHAIN_MISSING} == "yes"
+.if ${TOOLCHAIN_MISSING} != "no"
 MKBFD:= no
 MKGDB:= no
 MKGCC:= no
@@ -377,7 +377,7 @@ MKGCC:= no
 #
 # GCC can produce PIC code for sh3 only starting with gcc3.
 #
-.if ${MACHINE_CPU} == "sh3" && ${HAVE_GCC3} != "yes"
+.if ${MACHINE_CPU} == "sh3" && ${HAVE_GCC3} == "no"
 NOPIC=		# defined
 .endif
 
@@ -478,7 +478,7 @@ TARGETS+=	all clean cleandir depend dependall includes \
 		beforeinstall afterinstall realinstall realdepend realall \
 		html installhtml cleanhtml subdir-all subdir-install subdir-depend
 
-.if ${NEED_OWN_INSTALL_TARGET} == "yes"
+.if ${NEED_OWN_INSTALL_TARGET} != "no"
 .if !target(install)
 install:	.NOTMAIN beforeinstall subdir-install realinstall afterinstall
 beforeinstall:	.NOTMAIN
@@ -618,7 +618,7 @@ SYSPKGTAG?=	${SYSPKG:D-T ${SYSPKG}_pkg}
 SYSPKGDOCTAG?=	${SYSPKG:D-T ${SYSPKG}-doc_pkg}
 STRIPFLAG?=	-s
 
-.if ${NEED_OWN_INSTALL_TARGET} == "yes"
+.if ${NEED_OWN_INSTALL_TARGET} != "no"
 INSTALL_DIR?=		${INSTALL} ${INSTPRIV} -d
 INSTALL_FILE?=		${INSTALL} ${INSTPRIV} ${COPY} ${PRESERVE} ${RENAME}
 INSTALL_LINK?=		${INSTALL} ${INSTPRIV} ${HRDLINK} ${RENAME}
