@@ -1,3 +1,5 @@
+#	$NetBSD: sa-TODO,v 1.1.2.28 2002/12/16 18:14:24 perry Exp $
+
 Things to do for scheduler activations/LWP code.
 
 Bugs:
