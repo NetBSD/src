@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.70 2003/04/28 15:57:24 scw Exp $	*/
+/*	$NetBSD: pmap.h,v 1.71 2003/05/03 03:49:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -298,11 +298,7 @@ int	pmap_modified_emulation(struct pmap *, vaddr_t);
 /*
  * New pmap
  */
-#ifdef ARM32_NEW_VM_LAYOUT
-void	pmap_bootstrap(pd_entry_t *, vaddr_t);
-#else
-void	pmap_bootstrap(pd_entry_t *);
-#endif
+void	pmap_bootstrap(pd_entry_t *, vaddr_t, vaddr_t);
 
 int	pmap_fault_fixup(pmap_t, vaddr_t, vm_prot_t, int);
 boolean_t pmap_get_pde_pte(pmap_t, vaddr_t, pd_entry_t **, pt_entry_t **);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_new.c,v 1.8 2003/05/02 21:54:38 thorpej Exp $	*/
+/*	$NetBSD: pmap_new.c,v 1.9 2003/05/03 03:49:03 thorpej Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -210,7 +210,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_new.c,v 1.8 2003/05/02 21:54:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_new.c,v 1.9 2003/05/03 03:49:03 thorpej Exp $");
 
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
@@ -3792,11 +3792,7 @@ pmap_init_l1(struct l1_ttable *l1, pd_entry_t *l1pt)
  */
 #define	PMAP_STATIC_L2_SIZE 16
 void
-#ifndef ARM32_NEW_VM_LAYOUT
-pmap_bootstrap(pd_entry_t *kernel_l1pt)
-#else
-pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t avail)
-#endif
+pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t vstart, vaddr_t vend)
 {
 	static struct l1_ttable static_l1;
 	static struct l2_dtable static_l2[PMAP_STATIC_L2_SIZE];
@@ -3914,17 +3910,11 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t avail)
 	 * now we allocate the "special" VAs which are used for tmp mappings
 	 * by the pmap (and other modules).  we allocate the VAs by advancing
 	 * virtual_avail (note that there are no pages mapped at these VAs).
-	 */
-#ifndef ARM32_NEW_VM_LAYOUT
-	virtual_avail = KERNEL_VM_BASE;
-	virtual_end = KERNEL_VM_BASE + KERNEL_VM_SIZE;
-#else
-	/*
+	 *
 	 * Managed KVM space start from wherever initarm() tells us.
 	 */
-	virtual_avail = avail;
-	virtual_end = avail + KERNEL_VM_SIZE;
-#endif
+	virtual_avail = vstart;
+	virtual_end = vend;
 
 	pmap_alloc_specials(&virtual_avail, 1, &csrcp, &csrc_pte);
 	pmap_set_pt_cache_mode(kernel_l1pt, (vaddr_t)csrc_pte);
