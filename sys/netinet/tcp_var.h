@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.19.8.4 1997/06/28 04:24:18 thorpej Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.19.8.5 1997/06/29 01:34:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -260,10 +260,11 @@ struct	tcpstat {
 	u_long	tcps_sc_overflowed;	/* # dropped due to overflow */
 	u_long	tcps_sc_reset;		/* # dropped due to RST */
 	u_long	tcps_sc_unreach;	/* # dropped due to ICMP unreach */
-	u_long	tcps_sc_bucketoverflow;/* # dropped due to bucket overflow */
+	u_long	tcps_sc_bucketoverflow;	/* # dropped due to bucket overflow */
 	u_long	tcps_sc_aborted;	/* # of entries aborted (no mem) */
 	u_long	tcps_sc_dupesyn;	/* # of duplicate SYNs received */
 	u_long	tcps_sc_dropped;	/* # of SYNs dropped (no route/mem) */
+	u_long	tcps_sc_collisions;	/* # of hash collisions */
 };
 
 /*
