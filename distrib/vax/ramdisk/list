@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.7 2000/05/24 23:20:47 matt Exp $
+#	$NetBSD: list,v 1.8 2000/06/07 19:38:00 matt Exp $
 
 # Do this first in case spwd.db and pwd.db fill disk
 COPY	${CURDIR}/../../../etc/master.passwd	etc/master.passwd
@@ -82,8 +82,9 @@ LINK	usr/mdec/xxboot			usr/mdec/sdboot
 
 # various files that we need in /etc for the install
 COPY	${CURDIR}/../../../etc/group		etc/group
+COPY	${CURDIR}/../../../etc/netconfig	etc/netconfig
 COPY	${CURDIR}/../../../etc/protocols	etc/protocols
-COPY	${CURDIR}/../../../etc/services	etc/services
+COPY	${CURDIR}/../../../etc/services		etc/services
 
 # and the common installation tools
 # COPY	dot.commonutils			.commonutils
