@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.4 1998/09/07 23:59:07 eeh Exp $ */
+/*	$NetBSD: db_disasm.c,v 1.5 1999/02/28 00:23:58 eeh Exp $ */
 
 /*
  * Copyright (c) 1994 David S. Miller, davem@nadzieja.rutgers.edu
@@ -788,6 +788,39 @@ struct sparc_insn sparc_i[] = {
 	{(FORMAT3(2, OP3_X(3,5), 0) | RCOND34(6)), "fmovrgz", "14e"},
 	{(FORMAT3(2, OP3_X(3,5), 0) | RCOND34(7)), "fmovrgez", "14e"},
 #endif
+	/* FP logical insns -- UltraSPARC extens */
+	{(FORMAT3F(2, OP3_X(3,6), OPF_X(6,0))), "fzero", "e"},
+	{(FORMAT3F(2, OP3_X(3,6), OPF_X(6,1))), "fzeros", "e"},
+	{(FORMAT3F(2, OP3_X(3,6), OPF_X(7,14))), "fone", "e"},
+	{(FORMAT3F(2, OP3_X(3,6), OPF_X(7,15))), "fones", "e"},
+	{(FORMAT3F(2, OP3_X(3,6), OPF_X(7,4))), "fsrc1", "3e"},
+	{(FORMAT3F(2, OP3_X(3,6), OPF_X(7,5))), "fsrc1s", "3e"},
+	{(FORMAT3F(2, OP3_X(3,6), OPF_X(7,8))), "fsrc2", "4e"},
+	{(FORMAT3F(2, OP3_X(3,6), OPF_X(7,9))), "fsrc2s", "4e"},
+	{(FORMAT3F(2, OP3_X(3,6), OPF_X(6,10))), "fnot1", "3e"},
+	{(FORMAT3F(2, OP3_X(3,6), OPF_X(6,11))), "fnot1s", "3e"},
+	{(FORMAT3F(2, OP3_X(3,6), OPF_X(6,6))), "fnot2", "4e"},
+	{(FORMAT3F(2, OP3_X(3,6), OPF_X(6,7))), "fnot2s", "4e"},
+	{(FORMAT3F(2, OP3_X(3,6), OPF_X(7,12))), "for", "34e"},
+	{(FORMAT3F(2, OP3_X(3,6), OPF_X(7,13))), "fors", "34e"},
+	{(FORMAT3F(2, OP3_X(3,6), OPF_X(6,2))), "fnor", "34e"},
+	{(FORMAT3F(2, OP3_X(3,6), OPF_X(6,3))), "fnors", "34e"},
+	{(FORMAT3F(2, OP3_X(3,6), OPF_X(7,0))), "fand", "34e"},
+	{(FORMAT3F(2, OP3_X(3,6), OPF_X(7,1))), "fands", "34e"},
+	{(FORMAT3F(2, OP3_X(3,6), OPF_X(6,14))), "fnand", "34e"},
+	{(FORMAT3F(2, OP3_X(3,6), OPF_X(6,15))), "fnands", "34e"},
+	{(FORMAT3F(2, OP3_X(3,6), OPF_X(6,12))), "fxor", "34e"},
+	{(FORMAT3F(2, OP3_X(3,6), OPF_X(6,13))), "fxors", "34e"},
+	{(FORMAT3F(2, OP3_X(3,6), OPF_X(7,2))), "fxnor", "34e"},
+	{(FORMAT3F(2, OP3_X(3,6), OPF_X(7,3))), "fxnors", "34e"},
+	{(FORMAT3F(2, OP3_X(3,6), OPF_X(7,10))), "fornot1", "34e"},
+	{(FORMAT3F(2, OP3_X(3,6), OPF_X(7,11))), "fornot1s", "34e"},
+	{(FORMAT3F(2, OP3_X(3,6), OPF_X(7,6))), "fornot2", "34e"},
+	{(FORMAT3F(2, OP3_X(3,6), OPF_X(7,7))), "fornot2s", "34e"},
+	{(FORMAT3F(2, OP3_X(3,6), OPF_X(6,8))), "fandnot1", "34e"},
+	{(FORMAT3F(2, OP3_X(3,6), OPF_X(6,9))), "fandnot1s", "34e"},
+	{(FORMAT3F(2, OP3_X(3,6), OPF_X(6,4))), "fandnot2", "34e"},
+	{(FORMAT3F(2, OP3_X(3,6), OPF_X(6,5))), "fandnot2s", "34e"},
 
 	/* grrrr.... */
 	{0, 0, 0}
