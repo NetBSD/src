@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.79 1998/12/15 19:36:55 itohy Exp $
+#	$NetBSD: files.amiga,v 1.80 1999/03/07 22:16:19 is Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -292,6 +292,15 @@ attach	afsc at zbus
 device	aftsc: scsi, siop
 attach	aftsc at mainbus
 file	arch/amiga/dev/afsc.c		afsc | aftsc needs-flag
+
+# ncr 57c720/770 controllers
+define	siopng
+file	arch/amiga/dev/siop2.c		siopng
+
+# CyberStorm MKIII scsi
+device	cbiiisc: scsi, siopng
+attach	cbiiisc at zbus
+file	arch/amiga/dev/cbiiisc.c	cbiiisc needs-flag
 
 # Emulex ESP216 & FAS216 controllers
 
