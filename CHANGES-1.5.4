@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.60 2002/09/30 03:45:23 itojun Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.61 2002/09/30 14:10:30 itojun Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1554,3 +1554,7 @@ sys/uvm/uvm_swap.c				1.68
 
   Call cpu_dumpconf() after dumpdev change, so that the global
   dumpsize/dumplo get updated.
+
+sys/dev/pci/if_fxp_pci.c			1.26
+
+  Don't go into D3 state if revision <= 82558_B0.  Fixes PR#18011.
