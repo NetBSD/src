@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.18.2.1 2004/05/11 14:30:50 tron Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.18.2.2 2004/06/14 02:36:09 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.18.2.1 2004/05/11 14:30:50 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.18.2.2 2004/06/14 02:36:09 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,7 +246,7 @@ linux_sys_ftruncate64(p, v, retval)
 {
  
 	struct linux_sys_ftruncate64_args /* {
-		syscallarg(int) fd;
+		syscallarg(unsigned int) fd;
 		syscallarg(off_t) length;
 	} */ *uap = v;
 	struct sys_ftruncate_args ta;
