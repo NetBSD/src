@@ -1,4 +1,4 @@
-/*	$NetBSD: fils.c,v 1.3 1997/01/14 06:45:01 cgd Exp $	*/
+/*	$NetBSD: fils.c,v 1.4 1997/01/29 01:49:25 mark Exp $	*/
 /*
  * (C)opyright 1993-1996 by Darren Reed.
  *
@@ -84,7 +84,8 @@ char *argv[];
 	friostat_t fio;
 	ips_stat_t ipsst;
 	ipfrstat_t ifrst;
-	char	c, *name = NULL, *device = IPL_NAME;
+	char	*name = NULL, *device = IPL_NAME;
+	int	c;
 	int	fd;
 
 	if (openkmem() == -1)

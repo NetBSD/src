@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmon.c,v 1.1.1.1 1997/01/05 13:09:04 mrg Exp $	*/
+/*	$NetBSD: ipmon.c,v 1.2 1997/01/29 01:49:27 mark Exp $	*/
 
 /*
  * (C)opyright 1993-1996 by Darren Reed.
@@ -46,7 +46,7 @@
 #define IPL_NAME _PATH_IPL
 
 #if !defined(lint) && defined(LIBC_SCCS)
-static	char	rcsid[] = "$Id: ipmon.c,v 1.1.1.1 1997/01/05 13:09:04 mrg Exp $";
+static	char	rcsid[] = "$Id: ipmon.c,v 1.2 1997/01/29 01:49:27 mark Exp $";
 #endif
 
 #include <netinet/ip_fil.h>
@@ -494,7 +494,8 @@ char *argv[];
 {
 	FILE	*log = NULL;
 	int	fd = -1, flushed = 0, doread, n;
-	char	buf[512], c, *iplfile = IPL_NAME;
+	char	buf[512], *iplfile = IPL_NAME;
+	int	c;
 	extern	int	optind;
 	extern	char	*optarg;
 
