@@ -1,10 +1,10 @@
 #
 #	from: @(#)ttys	5.1 (Berkeley) 4/17/89
-#	$NetBSD: ttys,v 1.1 2003/04/26 19:08:18 fvdl Exp $
+#	$NetBSD: ttys,v 1.2 2003/10/03 14:54:20 dsl Exp $
 #
 # name	getty				type	status		comments
 #
-console	"/usr/libexec/getty Pc"		vt100	on secure
+constty	"/usr/libexec/getty Pc"		vt100	on secure
 ttyE0	"/usr/libexec/getty Pc"		vt220	off secure
 ttyE1	"/usr/libexec/getty Pc"		vt220	off secure
 ttyE2	"/usr/libexec/getty Pc"		vt220	off secure
