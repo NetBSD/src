@@ -1,38 +1,33 @@
 /*-
- * Copyright (c) 1993, John Brezak
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ *  Copyright (c) 1993 John Brezak
+ *  All rights reserved.
+ * 
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions
+ *  are met:
+ *  1. Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *  2. Redistributions in binary form must reproduce the above copyright
+ *     notice, this list of conditions and the following disclaimer in the
+ *     documentation and/or other materials provided with the distribution.
+ *  3. The name of the author may not be used to endorse or promote products
+ *     derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR `AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: rusers.c,v 1.5 1993/11/10 04:19:03 deraadt Exp $";
+static char rcsid[] = "$Id: rusers.c,v 1.6 1993/11/21 19:01:02 brezak Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -43,7 +38,15 @@ static char rcsid[] = "$Id: rusers.c,v 1.5 1993/11/10 04:19:03 deraadt Exp $";
 #include <strings.h>
 #include <rpc/rpc.h>
 #include <arpa/inet.h>
-#include <rpcsvc/rnusers.h>
+#include <utmp.h>
+#include <stdlib.h>
+
+/*
+ * For now we only try version 2 of the protocol. The current
+ * version is 3 (rusers.h), but only Solairis and NetBSD seem
+ * to support it currently.
+ */
+#include <rpcsvc/rnusers.h>	/* Old version */
 
 #define MAX_INT 0x7fffffff
 #define HOST_WIDTH 20
@@ -59,8 +62,7 @@ struct host_list {
 } *hosts;
 
 int
-search_host(addr)
-	struct in_addr addr;
+search_host(struct in_addr addr)
 {
 	struct host_list *hp;
 	
@@ -75,8 +77,7 @@ search_host(addr)
 }
 
 void
-remember_host(addr)
-	struct in_addr addr;
+remember_host(struct in_addr addr)
 {
 	struct host_list *hp;
 
@@ -89,21 +90,20 @@ remember_host(addr)
 	hosts = hp;
 }
 
-rusers_reply(replyp, raddrp)
-	char *replyp;
-	struct sockaddr_in *raddrp;
+int
+rusers_reply(char *replyp, struct sockaddr_in *raddrp)
 {
 	int x, idle;
 	char date[32], idle_time[64], remote[64];
 	struct hostent *hp;
-	utmpidlearr *up = (utmpidlearr *)replyp;
+	struct utmpidlearr *up = (struct utmpidlearr *)replyp;
 	char *host;
 	int days, hours, minutes, seconds;
 	
 	if (search_host(raddrp->sin_addr))
 		return(0);
 
-	if (!allopt && !up->utmpidlearr_len)
+	if (!allopt && !up->uia_cnt)
 		return(0);
 	
 	hp = gethostbyaddr((char *)&raddrp->sin_addr.s_addr,
@@ -116,12 +116,12 @@ rusers_reply(replyp, raddrp)
 	if (!longopt)
 		printf("%-*.*s ", HOST_WIDTH, HOST_WIDTH, host);
 	
-	for (x = 0; x < up->utmpidlearr_len; x++) {
+	for (x = 0; x < up->uia_cnt; x++) {
 		strncpy(date,
-			&(ctime((time_t *)&(up->utmpidlearr_val[x].ui_utmp.ut_time))[4]),
+			&(ctime((time_t *)&(up->uia_arr[x]->ui_utmp.ut_time))[4]),
 			sizeof(date)-1);
 
-		idle = up->utmpidlearr_val[x].ui_idle;
+		idle = up->uia_arr[x]->ui_idle;
 		sprintf(idle_time, "   :%02d", idle);
 		if (idle == MAX_INT)
 			strcpy(idle_time, "??");
@@ -146,24 +146,24 @@ rusers_reply(replyp, raddrp)
 					days, hours, minutes, seconds);
 		}
 
-		strncpy(remote, up->utmpidlearr_val[x].ui_utmp.ut_host,
+		strncpy(remote, up->uia_arr[x]->ui_utmp.ut_host,
 		    sizeof(remote)-1);
 		if (strlen(remote) != 0)
 			sprintf(remote, "(%.16s)",
-			    up->utmpidlearr_val[x].ui_utmp.ut_host);
+			    up->uia_arr[x]->ui_utmp.ut_host);
 
 		if (longopt)
 			printf("%-8.8s %-*.*s:%-*.*s %-12.12s %8s %.18s\n",
-			    up->utmpidlearr_val[x].ui_utmp.ut_name,
+			    up->uia_arr[x]->ui_utmp.ut_name,
 			    HOST_WIDTH, HOST_WIDTH, host,
 			    LINE_WIDTH, LINE_WIDTH,
-			    up->utmpidlearr_val[x].ui_utmp.ut_line,
+			    up->uia_arr[x]->ui_utmp.ut_line,
 			    date,
 			    idle_time,
 			    remote);
 		else
 			printf("%s ",
-			    up->utmpidlearr_val[x].ui_utmp.ut_name);
+			    up->uia_arr[x]->ui_utmp.ut_name);
 	}
 	if (!longopt)
 		putchar('\n');
@@ -172,10 +172,10 @@ rusers_reply(replyp, raddrp)
 	return(0);
 }
 
-onehost(host)
-	char *host;
+void
+onehost(char *host)
 {
-	utmpidlearr up;
+	struct utmpidlearr up;
 	CLIENT *rusers_clnt;
 	struct sockaddr_in addr;
 	struct hostent *hp;
@@ -203,9 +203,10 @@ onehost(host)
 	rusers_reply((char *)&up, &addr);
 }
 
-allhosts()
+void
+allhosts(void)
 {
-	utmpidlearr up;
+	struct utmpidlearr up;
 	enum clnt_stat clnt_stat;
 
 	bzero((char *)&up, sizeof(up));
@@ -218,15 +219,13 @@ allhosts()
 	}
 }
 
-usage()
+void usage(void)
 {
 	fprintf(stderr, "Usage: %s [-la] [hosts ...]\n", argv0);
 	exit(1);
 }
 
-main(argc, argv)
-	int argc;
-	char *argv[];
+void main(int argc, char *argv[])
 {
 	int ch;
 	extern int optind;
