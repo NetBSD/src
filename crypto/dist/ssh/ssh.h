@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh.h,v 1.5 2001/04/10 08:08:03 itojun Exp $	*/
+/*	$NetBSD: ssh.h,v 1.6 2001/06/23 19:37:42 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -11,7 +11,7 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* RCSID("$OpenBSD: ssh.h,v 1.62 2001/01/23 10:45:10 markus Exp $"); */
+/* RCSID("$OpenBSD: ssh.h,v 1.63 2001/05/24 18:57:53 stevesk Exp $"); */
 
 #ifndef SSH_H
 #define SSH_H
@@ -82,5 +82,8 @@
 
 /* Name of Kerberos service for SSH to use. */
 #define KRB4_SERVICE_NAME		"rcmd"
+
+/* Used to identify ``EscapeChar none'' */
+#define SSH_ESCAPECHAR_NONE		-2
 
 #endif				/* SSH_H */

@@ -1,5 +1,5 @@
-/*	$NetBSD: misc.h,v 1.4 2001/05/15 15:26:08 itojun Exp $	*/
-/*	$OpenBSD: misc.h,v 1.7 2001/05/11 14:59:56 markus Exp $	*/
+/*	$NetBSD: misc.h,v 1.5 2001/06/23 19:37:39 itojun Exp $	*/
+/*	$OpenBSD: misc.h,v 1.8 2001/05/19 19:43:57 stevesk Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -34,6 +34,30 @@ int a2port(const char *s);
 /* code from scp.c/rcp.c */
 char *cleanhostname(char *host);
 char *colon(char *cp);
+
+/*
+ * Convert a time string into seconds; format is
+ * a sequence of:
+ *	time[qualifier]
+ *
+ * Valid time qualifiers are:
+ *	<none>	seconds
+ *	s|S	seconds
+ *	m|M	minutes
+ *	h|H	hours
+ *	d|D	days
+ *	w|W	weeks
+ *
+ * Examples:
+ *	90m	90 minutes
+ *	1h30m	90 minutes
+ *	2d	2 days
+ *	1w	1 week
+ *
+ * Return -1 if time string is invalid.
+ */
+
+long convtime(const char *s);
 
 /* function to assist building execv() arguments */
 typedef struct arglist arglist;

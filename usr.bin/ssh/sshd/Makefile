@@ -1,16 +1,17 @@
-#	$NetBSD: Makefile,v 1.8 2001/06/15 12:51:59 wiz Exp $
+#	$NetBSD: Makefile,v 1.9 2001/06/23 19:37:43 itojun Exp $
 
 .include <bsd.own.mk>
 
 PROG=	sshd
-MAN=	sshd.8 primes.5
+MAN=	sshd.8 moduli.5
 
 BINDIR=	/usr/sbin
 
 SRCS=	sshd.c auth-rhosts.c auth-passwd.c auth-rsa.c auth-rh-rsa.c \
 	sshpty.c sshlogin.c servconf.c serverloop.c \
 	auth.c auth1.c auth2.c auth-options.c session.c \
-	auth-chall.c auth2-chall.c groupaccess.c
+	auth-chall.c auth2-chall.c groupaccess.c \
+	auth-skey.c auth-bsdauth.c
 
 .if (${MKKERBEROS} != "no")
 CPPFLAGS+=-DKRB5 -DAFS -I${DESTDIR}/usr/include/krb5

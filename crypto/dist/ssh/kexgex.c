@@ -1,4 +1,4 @@
-/*	$NetBSD: kexgex.c,v 1.3 2001/05/15 14:50:51 itojun Exp $	*/
+/*	$NetBSD: kexgex.c,v 1.4 2001/06/23 19:37:39 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: kexgex.c,v 1.5 2001/04/05 10:42:50 markus Exp $");
+RCSID("$OpenBSD: kexgex.c,v 1.8 2001/06/23 15:12:19 itojun Exp $");
 
 #include <openssl/bn.h>
 
@@ -40,13 +40,7 @@ RCSID("$OpenBSD: kexgex.c,v 1.5 2001/04/05 10:42:50 markus Exp $");
 #include "ssh2.h"
 #include "compat.h"
 
-/* prototype */
-u_char *kexgex_hash(char *, char *, char *, int, char *, int, char *, int,
-    int, int, int, BIGNUM *, BIGNUM *, BIGNUM *, BIGNUM *, BIGNUM *);
-void kexgex_client(Kex *);
-void kexgex_server(Kex *);
-
-u_char *
+static u_char *
 kexgex_hash(
     char *client_version_string,
     char *server_version_string,
@@ -64,8 +58,8 @@ kexgex_hash(
 	EVP_MD_CTX md;
 
 	buffer_init(&b);
-	buffer_put_string(&b, client_version_string, strlen(client_version_string));
-	buffer_put_string(&b, server_version_string, strlen(server_version_string));
+	buffer_put_cstring(&b, client_version_string);
+	buffer_put_cstring(&b, server_version_string);
 
 	/* kexinit messages: fake header: len+SSH2_MSG_KEXINIT */
 	buffer_put_int(&b, ckexinitlen+1);
@@ -106,7 +100,7 @@ kexgex_hash(
 
 /* client */
 
-void
+static void
 kexgex_client(Kex *kex)
 {
 	BIGNUM *dh_server_pub = NULL, *shared_secret = NULL;
@@ -184,9 +178,10 @@ kexgex_client(Kex *kex)
 	if (server_host_key == NULL)
 		fatal("cannot decode server_host_key_blob");
 
-	if (kex->check_host_key == NULL)
-		fatal("cannot check server_host_key");
-	kex->check_host_key(server_host_key);
+	if (kex->verify_host_key == NULL)
+		fatal("cannot verify server_host_key");
+	if (kex->verify_host_key(server_host_key) == -1)
+		fatal("server_host_key verification failed");
 
 	/* DH paramter f, server public DH key */
 	dh_server_pub = BN_new();
@@ -259,7 +254,7 @@ kexgex_client(Kex *kex)
 
 /* server */
 
-void
+static void
 kexgex_server(Kex *kex)
 {
 	BIGNUM *shared_secret = NULL, *dh_client_pub = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: readpass.c,v 1.5 2001/05/15 15:26:08 itojun Exp $	*/
+/*	$NetBSD: readpass.c,v 1.6 2001/06/23 19:37:40 itojun Exp $	*/
 /*
  * Copyright (c) 1988, 1993
  *      The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: readpass.c,v 1.17 2001/05/06 17:52:07 mouring Exp $");
+RCSID("$OpenBSD: readpass.c,v 1.18 2001/06/23 15:12:19 itojun Exp $");
 
 #include "xmalloc.h"
 #include "cli.h"
@@ -43,9 +43,7 @@ RCSID("$OpenBSD: readpass.c,v 1.17 2001/05/06 17:52:07 mouring Exp $");
 #include "atomicio.h"
 #include "ssh.h"
 
-char *ssh_askpass(char *, const char *);
-
-char *
+static char *
 ssh_askpass(char *askpass, const char *msg)
 {
 	pid_t pid;

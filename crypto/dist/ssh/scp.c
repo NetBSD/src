@@ -1,4 +1,4 @@
-/*	$NetBSD: scp.c,v 1.13 2001/05/15 15:26:09 itojun Exp $	*/
+/*	$NetBSD: scp.c,v 1.14 2001/06/23 19:37:40 itojun Exp $	*/
 /*
  * scp - secure remote copy.  This is basically patched BSD rcp which
  * uses ssh to do the data transfer (instead of using rcmd).
@@ -76,7 +76,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: scp.c,v 1.70 2001/05/08 19:45:24 mouring Exp $");
+RCSID("$OpenBSD: scp.c,v 1.76 2001/06/23 15:12:19 itojun Exp $");
 
 #include "xmalloc.h"
 #include "atomicio.h"
@@ -117,11 +117,6 @@ int showprogress = 1;
 
 /* This is the program to execute for the secured connection. ("ssh" or -S) */
 char *ssh_program = _PATH_SSH_PROGRAM;
-
-/* prototypes */
-void alarmtimer(int);
-void updateprogressmeter(int);
-int foregroundproc(void);
 
 /*
  * This function executes the given command as the specified user on the
@@ -256,6 +251,7 @@ main(argc, argv)
 			ssh_program = xstrdup(optarg);
 			break;
 		case 'v':
+			addargs(&args, "-v");
 			verbose_mode = 1;
 			break;
 		case 'q':
@@ -641,7 +637,7 @@ sink(argc, argv)
 
 #define	atime	tv[0]
 #define	mtime	tv[1]
-#define	SCREWUP(str)	{ why = str; goto screwup; }
+#define	SCREWUP(str)	do { why = str; goto screwup; } while (0)
 
 	setimes = targisdir = 0;
 	mask = umask(0);
@@ -784,7 +780,7 @@ sink(argc, argv)
 		}
 		omode = mode;
 		mode |= S_IWRITE;
-		if ((ofd = open(np, O_WRONLY | O_CREAT | O_TRUNC, mode)) < 0) {
+		if ((ofd = open(np, O_WRONLY|O_CREAT, mode)) < 0) {
 bad:			run_err("%s: %s", np, strerror(errno));
 			continue;
 		}
@@ -839,12 +835,10 @@ bad:			run_err("%s: %s", np, strerror(errno));
 			wrerr = YES;
 			wrerrno = j >= 0 ? EIO : errno;
 		}
-#if 0
 		if (ftruncate(ofd, size)) {
 			run_err("%s: truncate: %s", np, strerror(errno));
 			wrerr = DISPLAYED;
 		}
-#endif
 		if (pflag) {
 			if (exists || omode != mode)
 				if (fchmod(ofd, omode))
@@ -932,22 +926,24 @@ run_err(const char *fmt,...)
 {
 	static FILE *fp;
 	va_list ap;
-	va_start(ap, fmt);
 
 	++errs;
 	if (fp == NULL && !(fp = fdopen(remout, "w")))
 		return;
 	(void) fprintf(fp, "%c", 0x01);
 	(void) fprintf(fp, "scp: ");
+	va_start(ap, fmt);
 	(void) vfprintf(fp, fmt, ap);
+	va_end(ap);
 	(void) fprintf(fp, "\n");
 	(void) fflush(fp);
 
 	if (!iamremote) {
+		va_start(ap, fmt);
 		vfprintf(stderr, fmt, ap);
+		va_end(ap);
 		fprintf(stderr, "\n");
 	}
-	va_end(ap);
 }
 
 void
@@ -974,7 +970,7 @@ okname(cp0)
 
 	cp = cp0;
 	do {
-		c = *cp;
+		c = (int)*cp;
 		if (c & 0200)
 			goto bad;
 		if (!isalpha(c) && !isdigit(c) &&
@@ -1019,12 +1015,15 @@ lostconn(signo)
 	int signo;
 {
 	if (!iamremote)
-		fprintf(stderr, "lost connection\n");
-	exit(1);
+		write(STDERR_FILENO, "lost connection\n", 16);
+	if (signo)
+		_exit(1);
+	else
+		exit(1);
 }
 
 
-void
+static void
 alarmtimer(int wait)
 {
 	struct itimerval itv;
@@ -1035,7 +1034,7 @@ alarmtimer(int wait)
 	setitimer(ITIMER_REAL, &itv, NULL);
 }
 
-void
+static void
 updateprogressmeter(int ignore)
 {
 	int save_errno = errno;
@@ -1044,7 +1043,7 @@ updateprogressmeter(int ignore)
 	errno = save_errno;
 }
 
-int
+static int
 foregroundproc(void)
 {
 	static pid_t pgrp = -1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kexdh.c,v 1.3 2001/05/15 14:50:51 itojun Exp $	*/
+/*	$NetBSD: kexdh.c,v 1.4 2001/06/23 19:37:39 itojun Exp $	*/
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: kexdh.c,v 1.3 2001/04/04 09:48:34 markus Exp $");
+RCSID("$OpenBSD: kexdh.c,v 1.6 2001/06/23 15:12:18 itojun Exp $");
 
 #include <openssl/crypto.h>
 #include <openssl/bn.h>
@@ -39,13 +39,7 @@ RCSID("$OpenBSD: kexdh.c,v 1.3 2001/04/04 09:48:34 markus Exp $");
 #include "dh.h"
 #include "ssh2.h"
 
-/* prototype */
-u_char *kex_dh_hash(char *, char *, char *, int, char *, int, char *, int,
-    BIGNUM *, BIGNUM *, BIGNUM *);
-void kexdh_client(Kex *);
-void kexdh_server(Kex *);
-
-u_char *
+static u_char *
 kex_dh_hash(
     char *client_version_string,
     char *server_version_string,
@@ -62,8 +56,8 @@ kex_dh_hash(
 	EVP_MD_CTX md;
 
 	buffer_init(&b);
-	buffer_put_string(&b, client_version_string, strlen(client_version_string));
-	buffer_put_string(&b, server_version_string, strlen(server_version_string));
+	buffer_put_cstring(&b, client_version_string);
+	buffer_put_cstring(&b, server_version_string);
 
 	/* kexinit messages: fake header: len+SSH2_MSG_KEXINIT */
 	buffer_put_int(&b, ckexinitlen+1);
@@ -95,7 +89,7 @@ kex_dh_hash(
 
 /* client */
 
-void
+static void
 kexdh_client(Kex *kex)
 {
 	BIGNUM *dh_server_pub = NULL, *shared_secret = NULL;
@@ -130,9 +124,10 @@ kexdh_client(Kex *kex)
 	if (server_host_key == NULL)
 		fatal("cannot decode server_host_key_blob");
 
-	if (kex->check_host_key == NULL)
-		fatal("cannot check server_host_key");
-	kex->check_host_key(server_host_key);
+	if (kex->verify_host_key == NULL)
+		fatal("cannot verify server_host_key");
+	if (kex->verify_host_key(server_host_key) == -1)
+		fatal("server_host_key verification failed");
 
 	/* DH paramter f, server public DH key */
 	dh_server_pub = BN_new();
@@ -199,7 +194,7 @@ kexdh_client(Kex *kex)
 
 /* server */
 
-void
+static void
 kexdh_server(Kex *kex)
 {
 	BIGNUM *shared_secret = NULL, *dh_client_pub = NULL;

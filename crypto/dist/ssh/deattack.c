@@ -1,5 +1,5 @@
-/*	$NetBSD: deattack.c,v 1.7 2001/05/15 14:50:50 itojun Exp $	*/
-/*	$OpenBSD: deattack.c,v 1.13 2001/03/01 02:45:10 deraadt Exp $	*/
+/*	$NetBSD: deattack.c,v 1.8 2001/06/23 19:37:39 itojun Exp $	*/
+/*	$OpenBSD: deattack.c,v 1.14 2001/06/23 15:12:18 itojun Exp $	*/
 
 /*
  * Cryptographic attack detector for ssh - source code
@@ -48,11 +48,7 @@
 
 #define CMP(a, b)	(memcmp(a, b, SSH_BLOCKSIZE))
 
-/* prototype */
-void crc_update(u_int32_t *, u_int32_t);
-int check_crc(u_char *, u_char *, u_int32_t, u_char *);
-
-void
+static void
 crc_update(u_int32_t *a, u_int32_t b)
 {
 	b ^= *a;
@@ -60,7 +56,7 @@ crc_update(u_int32_t *a, u_int32_t b)
 }
 
 /* detect if a block is used in a particular pattern */
-int
+static int
 check_crc(u_char *S, u_char *buf, u_int32_t len,
 	  u_char *IV)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect.c,v 1.11 2001/05/15 15:26:10 itojun Exp $	*/
+/*	$NetBSD: sshconnect.c,v 1.12 2001/06/23 19:37:42 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect.c,v 1.105 2001/04/30 11:18:52 markus Exp $");
+RCSID("$OpenBSD: sshconnect.c,v 1.109 2001/06/23 15:12:21 itojun Exp $");
 
 #include <openssl/bn.h>
 
@@ -46,16 +46,10 @@ extern char *__progname;
 /* AF_UNSPEC or AF_INET or AF_INET6 */
 extern int IPv4or6;
 
-/* prototypes */
-int ssh_proxy_connect(const char *, u_short, struct passwd *, const char *);
-int ssh_create_socket(struct passwd *, int, int);
-void ssh_exchange_identification(void);
-int read_yes_or_no(const char *, int);
-
 /*
  * Connect to the given ssh server using a proxy command.
  */
-int
+static int
 ssh_proxy_connect(const char *host, u_short port, struct passwd *pw,
 		  const char *proxy_command)
 {
@@ -155,7 +149,7 @@ ssh_proxy_connect(const char *host, u_short port, struct passwd *pw,
 /*
  * Creates a (possibly privileged) socket for use as the ssh connection.
  */
-int
+static int
 ssh_create_socket(struct passwd *pw, int privileged, int family)
 {
 	int sock, gaierr;
@@ -352,7 +346,7 @@ ssh_connect(const char *host, struct sockaddr_storage * hostaddr,
  * Waits for the server identification string, and sends our own
  * identification string.
  */
-void
+static void
 ssh_exchange_identification(void)
 {
 	char buf[256], remote_version[256];	/* must be same size! */
@@ -437,8 +431,6 @@ ssh_exchange_identification(void)
 		fatal("Protocol major versions differ: %d vs. %d",
 		    (options.protocol & SSH_PROTO_2) ? PROTOCOL_MAJOR_2 : PROTOCOL_MAJOR_1,
 		    remote_major);
-	if (compat20)
-		packet_set_ssh2_format();
 	/* Send our own protocol version identification. */
 	snprintf(buf, sizeof buf, "SSH-%d.%d-%.100s\n",
 	    compat20 ? PROTOCOL_MAJOR_2 : PROTOCOL_MAJOR_1,
@@ -453,7 +445,7 @@ ssh_exchange_identification(void)
 }
 
 /* defaults to 'no' */
-int
+static int
 read_yes_or_no(const char *prompt, int defval)
 {
 	char buf[1024];
@@ -476,7 +468,10 @@ read_yes_or_no(const char *prompt, int defval)
 	while (1) {
 		fprintf(stderr, "%s", prompt);
 		if (fgets(buf, sizeof(buf), f) == NULL) {
-			/* Print a newline (the prompt probably didn\'t have one). */
+			/*
+			 * Print a newline (the prompt probably didn\'t have
+			 * one).
+			 */
 			fprintf(stderr, "\n");
 			strlcpy(buf, "no", sizeof buf);
 		}
@@ -502,12 +497,13 @@ read_yes_or_no(const char *prompt, int defval)
 }
 
 /*
- * check whether the supplied host key is valid, return only if ok.
+ * check whether the supplied host key is valid, return -1 if the key
+ * is not valid. the user_hostfile will not be updated if 'readonly' is true.
  */
 
-void
+static int
 check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key,
-	const char *user_hostfile, const char *system_hostfile)
+    int readonly, const char *user_hostfile, const char *system_hostfile)
 {
 	Key *file_key;
 	char *type = key_type(host_key);
@@ -531,10 +527,12 @@ check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key,
 	/**  hostaddr == 0! */
 	switch (hostaddr->sa_family) {
 	case AF_INET:
-		local = (ntohl(((struct sockaddr_in *)hostaddr)->sin_addr.s_addr) >> 24) == IN_LOOPBACKNET;
+		local = (ntohl(((struct sockaddr_in *)hostaddr)->
+		   sin_addr.s_addr) >> 24) == IN_LOOPBACKNET;
 		break;
 	case AF_INET6:
-		local = IN6_IS_ADDR_LOOPBACK(&(((struct sockaddr_in6 *)hostaddr)->sin6_addr));
+		local = IN6_IS_ADDR_LOOPBACK(
+		    &(((struct sockaddr_in6 *)hostaddr)->sin6_addr));
 		break;
 	default:
 		local = 0;
@@ -543,7 +541,7 @@ check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key,
 	if (local && options.host_key_alias == NULL) {
 		debug("Forcing accepting of host key for "
 		    "loopback/localhost.");
-		return;
+		return 0;
 	}
 
 	/*
@@ -587,10 +585,12 @@ check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key,
 	 * hosts or in the systemwide list.
 	 */
 	host_file = user_hostfile;
-	host_status = check_host_in_hostfile(host_file, host, host_key, file_key, &host_line);
+	host_status = check_host_in_hostfile(host_file, host, host_key,
+	     file_key, &host_line);
 	if (host_status == HOST_NEW) {
 		host_file = system_hostfile;
-		host_status = check_host_in_hostfile(host_file, host, host_key, file_key, &host_line);
+		host_status = check_host_in_hostfile(host_file, host, host_key,
+		    file_key, &host_line);
 	}
 	/*
 	 * Also perform check for the ip address, skip the check if we are
@@ -600,10 +600,12 @@ check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key,
 		Key *ip_key = key_new(host_key->type);
 
 		ip_file = user_hostfile;
-		ip_status = check_host_in_hostfile(ip_file, ip, host_key, ip_key, &ip_line);
+		ip_status = check_host_in_hostfile(ip_file, ip, host_key,
+		    ip_key, &ip_line);
 		if (ip_status == HOST_NEW) {
 			ip_file = system_hostfile;
-			ip_status = check_host_in_hostfile(ip_file, ip, host_key, ip_key, &ip_line);
+			ip_status = check_host_in_hostfile(ip_file, ip,
+			    host_key, ip_key, &ip_line);
 		}
 		if (host_status == HOST_CHANGED &&
 		    (ip_status != HOST_CHANGED || !key_equal(ip_key, file_key)))
@@ -622,32 +624,49 @@ check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key,
 		    host, type);
 		debug("Found key in %s:%d", host_file, host_line);
 		if (options.check_host_ip && ip_status == HOST_NEW) {
-			if (!add_host_to_hostfile(user_hostfile, ip, host_key))
-				log("Failed to add the %s host key for IP address '%.128s' to the list of known hosts (%.30s).",
-				    type, ip, user_hostfile);
-			else
-				log("Warning: Permanently added the %s host key for IP address '%.128s' to the list of known hosts.",
+			if (readonly)
+				log("%s host key for IP address "
+				    "'%.128s' not in list of known hosts.",
 				    type, ip);
+			else if (!add_host_to_hostfile(user_hostfile, ip,
+			     host_key))
+				log("Failed to add the %s host key for IP "
+				    "address '%.128s' to the list of known "
+				    "hosts (%.30s).", type, ip, user_hostfile);
+			else
+				log("Warning: Permanently added the %s host "
+				    "key for IP address '%.128s' to the list "
+				    "of known hosts.", type, ip);
 		}
 		break;
 	case HOST_NEW:
+		if (readonly)
+			goto fail;
 		/* The host is new. */
 		if (options.strict_host_key_checking == 1) {
-			/* User has requested strict host key checking.  We will not add the host key
-			   automatically.  The only alternative left is to abort. */
-			fatal("No %s host key is known for %.200s and you have requested strict checking.", type, host);
+			/*
+			 * User has requested strict host key checking.  We
+			 * will not add the host key automatically.  The only
+			 * alternative left is to abort.
+			 */
+			error("No %s host key is known for %.200s and you "
+			    "have requested strict checking.", type, host);
+			goto fail;
 		} else if (options.strict_host_key_checking == 2) {
 			/* The default */
 			char prompt[1024];
 			fp = key_fingerprint(host_key, SSH_FP_MD5, SSH_FP_HEX);
 			snprintf(prompt, sizeof(prompt),
-			    "The authenticity of host '%.200s (%s)' can't be established.\n"
+			    "The authenticity of host '%.200s (%s)' can't be "
+			    "established.\n"
 			    "%s key fingerprint is %s.\n"
-			    "Are you sure you want to continue connecting (yes/no)? ",
-			    host, ip, type, fp);
+			    "Are you sure you want to continue connecting "
+			    "(yes/no)? ", host, ip, type, fp);
 			xfree(fp);
-			if (!read_yes_or_no(prompt, -1))
-				fatal("Aborted by user!");
+			if (!read_yes_or_no(prompt, -1)) {
+				log("Aborted by user!");
+				goto fail;
+			}
 		}
 		if (options.check_host_ip && ip_status == HOST_NEW) {
 			snprintf(hostline, sizeof(hostline), "%s,%s", host, ip);
@@ -655,13 +674,16 @@ check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key,
 		} else
 			hostp = host;
 
-		/* If not in strict mode, add the key automatically to the local known_hosts file. */
+		/*
+		 * If not in strict mode, add the key automatically to the
+		 * local known_hosts file.
+		 */
 		if (!add_host_to_hostfile(user_hostfile, hostp, host_key))
-			log("Failed to add the host to the list of known hosts (%.500s).",
-			    user_hostfile);
+			log("Failed to add the host to the list of known "
+			    "hosts (%.500s).", user_hostfile);
 		else
-			log("Warning: Permanently added '%.200s' (%s) to the list of known hosts.",
-			    hostp, type);
+			log("Warning: Permanently added '%.200s' (%s) to the "
+			    "list of known hosts.", hostp, type);
 		break;
 	case HOST_CHANGED:
 		if (options.check_host_ip && host_ip_differ) {
@@ -703,8 +725,11 @@ check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key,
 		 * If strict host key checking is in use, the user will have
 		 * to edit the key manually and we can only abort.
 		 */
-		if (options.strict_host_key_checking)
-			fatal("%s host key for %.200s has changed and you have requested strict checking.", type, host);
+		if (options.strict_host_key_checking) {
+			error("%s host key for %.200s has changed and you have "
+			    "requested strict checking.", type, host);
+			goto fail;
+		}
 
 		/*
 		 * If strict host key checking has not been requested, allow
@@ -712,20 +737,26 @@ check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key,
 		 * agent forwarding.
 		 */
 		if (options.password_authentication) {
-			error("Password authentication is disabled to avoid trojan horses.");
+			error("Password authentication is disabled to avoid "
+			    "man-in-the-middle attacks.");
 			options.password_authentication = 0;
 		}
 		if (options.forward_agent) {
-			error("Agent forwarding is disabled to avoid trojan horses.");
+			error("Agent forwarding is disabled to avoid "
+			    "man-in-the-middle attacks.");
 			options.forward_agent = 0;
 		}
 		if (options.forward_x11) {
-			error("X11 forwarding is disabled to avoid trojan horses.");
+			error("X11 forwarding is disabled to avoid "
+			    "man-in-the-middle attacks.");
 			options.forward_x11 = 0;
 		}
-		if (options.num_local_forwards > 0 || options.num_remote_forwards > 0) {
-			error("Port forwarding is disabled to avoid trojan horses.");
-			options.num_local_forwards = options.num_remote_forwards = 0;
+		if (options.num_local_forwards > 0 ||
+		    options.num_remote_forwards > 0) {
+			error("Port forwarding is disabled to avoid "
+			    "man-in-the-middle attacks.");
+			options.num_local_forwards =
+			     options.num_remote_forwards = 0;
 		}
 		/*
 		 * XXX Should permit the user to change to use the new id.
@@ -746,15 +777,39 @@ check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key,
 			log("Matching host key in %s:%d", host_file, host_line);
 		log("Offending key for IP in %s:%d", ip_file, ip_line);
 		if (options.strict_host_key_checking == 1) {
-			fatal("Exiting, you have requested strict checking.");
+			error("Exiting, you have requested strict checking.");
+			goto fail;
 		} else if (options.strict_host_key_checking == 2) {
-			if (!read_yes_or_no("Are you sure you want " \
-			    "to continue connecting (yes/no)? ", -1))
-				fatal("Aborted by user!");
+			if (!read_yes_or_no("Are you sure you want " 
+			    "to continue connecting (yes/no)? ", -1)) {
+				log("Aborted by user!");
+				goto fail;
+			}
 		}
 	}
 
 	xfree(ip);
+	return 0;
+
+fail:
+	xfree(ip);
+	return -1;
+}
+
+int
+verify_host_key(char *host, struct sockaddr *hostaddr, Key *host_key)
+{
+	struct stat st;
+
+	/* return ok if the key can be found in an old keyfile */
+	if (stat(options.system_hostfile2, &st) == 0 ||
+	    stat(options.user_hostfile2, &st) == 0) {
+		if (check_host_key(host, hostaddr, host_key, /*readonly*/ 1,
+		    options.user_hostfile2, options.system_hostfile2) == 0)
+			return 0;
+	}
+	return check_host_key(host, hostaddr, host_key, /*readonly*/ 0,
+	    options.user_hostfile, options.system_hostfile);
 }
 
 /*
@@ -804,7 +859,7 @@ ssh_put_password(char *password)
 	char *padded;
 
 	if (datafellows & SSH_BUG_PASSWORDPAD) {
-		packet_put_string(password, strlen(password));
+		packet_put_cstring(password);
 		return;
 	}
 	size = roundup(strlen(password) + 1, 32);

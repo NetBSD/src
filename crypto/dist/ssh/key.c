@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.6 2001/05/15 15:26:08 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.7 2001/06/23 19:37:39 itojun Exp $	*/
 /*
  * read_bignum():
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -33,7 +33,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-RCSID("$OpenBSD: key.c,v 1.25 2001/04/17 10:53:24 markus Exp $");
+RCSID("$OpenBSD: key.c,v 1.27 2001/06/23 15:12:19 itojun Exp $");
 
 #include <openssl/evp.h>
 
@@ -46,15 +46,6 @@ RCSID("$OpenBSD: key.c,v 1.25 2001/04/17 10:53:24 markus Exp $");
 #include "buffer.h"
 #include "bufaux.h"
 #include "log.h"
-
-/* prototype */
-u_char *key_fingerprint_raw(Key *, enum fp_type, size_t *);
-char *key_fingerprint_hex(u_char*, size_t);
-char *key_fingerprint_bubblebabble(u_char*, size_t);
-int read_bignum(char **, BIGNUM *);
-int write_bignum(FILE *, BIGNUM *);
-RSA *rsa_generate_private_key(u_int);
-DSA *dsa_generate_private_key(u_int);
 
 Key *
 key_new(int type)
@@ -163,7 +154,7 @@ key_equal(Key *a, Key *b)
 	return 0;
 }
 
-u_char*
+static u_char*
 key_fingerprint_raw(Key *k, enum fp_type dgst_type, size_t *dgst_raw_length)
 {
 	EVP_MD *md = NULL;
@@ -220,7 +211,7 @@ key_fingerprint_raw(Key *k, enum fp_type dgst_type, size_t *dgst_raw_length)
 	return retval;
 }
 
-char*
+static char*
 key_fingerprint_hex(u_char* dgst_raw, size_t dgst_raw_len)
 {
 	char *retval;
@@ -237,7 +228,7 @@ key_fingerprint_hex(u_char* dgst_raw, size_t dgst_raw_len)
 	return retval;
 }
 
-char*
+static char*
 key_fingerprint_bubblebabble(u_char* dgst_raw, size_t dgst_raw_len)
 {
 	char vowels[] = { 'a', 'e', 'i', 'o', 'u', 'y' };
@@ -318,7 +309,7 @@ key_fingerprint(Key *k, enum fp_type dgst_type, enum fp_rep dgst_rep)
  * last processed (and maybe modified) character.  Note that this may modify
  * the buffer containing the number.
  */
-int
+static int
 read_bignum(char **cpp, BIGNUM * value)
 {
 	char *cp = *cpp;
@@ -354,7 +345,7 @@ read_bignum(char **cpp, BIGNUM * value)
 	*cpp = cp;
 	return 1;
 }
-int
+static int
 write_bignum(FILE *f, BIGNUM *num)
 {
 	char *buf = BN_bn2dec(num);
@@ -554,7 +545,7 @@ key_size(Key *k){
 	return 0;
 }
 
-RSA *
+static RSA *
 rsa_generate_private_key(u_int bits)
 {
 	RSA *private;
@@ -564,7 +555,7 @@ rsa_generate_private_key(u_int bits)
 	return private;
 }
 
-DSA*
+static DSA*
 dsa_generate_private_key(u_int bits)
 {
 	DSA *private = DSA_generate_parameters(bits, NULL, 0, NULL, NULL, NULL, NULL);
@@ -778,6 +769,9 @@ key_verify(
     u_char *signature, int signaturelen,
     u_char *data, int datalen)
 {
+	if (signaturelen == 0)
+		return -1;
+
 	switch(key->type){
 	case KEY_DSA:
 		return ssh_dss_verify(key, signature, signaturelen, data, datalen);

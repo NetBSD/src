@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp.c,v 1.7 2001/05/15 15:26:09 itojun Exp $	*/
+/*	$NetBSD: sftp.c,v 1.8 2001/06/23 19:37:41 itojun Exp $	*/
 /*
  * Copyright (c) 2001 Damien Miller.  All rights reserved.
  *
@@ -25,7 +25,7 @@
 
 #include "includes.h"
 
-RCSID("$OpenBSD: sftp.c,v 1.17 2001/05/08 19:45:25 mouring Exp $");
+RCSID("$OpenBSD: sftp.c,v 1.18 2001/06/23 15:12:20 itojun Exp $");
 
 /* XXX: commandline mode */
 /* XXX: short-form remote directory listings (like 'ls -C') */
@@ -44,12 +44,7 @@ RCSID("$OpenBSD: sftp.c,v 1.17 2001/05/08 19:45:25 mouring Exp $");
 char *ssh_program = _PATH_SSH_PROGRAM;
 FILE* infile;
 
-/* prototype */
-void connect_to_server(char **, int *, int *, pid_t *);
-char **make_ssh_args(char *);
-void usage(void);
-
-void
+static void
 connect_to_server(char **args, int *in, int *out, pid_t *sshpid)
 {
 	int c_in, c_out;
@@ -90,7 +85,7 @@ connect_to_server(char **args, int *in, int *out, pid_t *sshpid)
 	close(c_out);
 }
 
-void
+static void
 usage(void)
 {
 	fprintf(stderr, "usage: sftp [-1vC] [-b batchfile] [-osshopt=value] [user@]host[:file [file]]\n");

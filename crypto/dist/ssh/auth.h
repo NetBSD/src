@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.h,v 1.5 2001/05/15 15:26:07 itojun Exp $	*/
+/*	$NetBSD: auth.h,v 1.6 2001/06/23 19:37:38 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -22,11 +22,13 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $OpenBSD: auth.h,v 1.15 2001/04/12 19:15:24 markus Exp $
+ * $OpenBSD: auth.h,v 1.18 2001/06/23 00:20:58 markus Exp $
  */
 #ifndef AUTH_H
 #define AUTH_H
 
+#include "key.h"
+#include "hostfile.h"
 #include <openssl/rsa.h>
 
 #ifdef HAVE_LOGIN_CAP
@@ -37,6 +39,8 @@
 #endif
 
 typedef struct Authctxt Authctxt;
+typedef struct KbdintDevice KbdintDevice;
+
 struct Authctxt {
 	int success;
 	int postponed;
@@ -47,9 +51,28 @@ struct Authctxt {
 	char *service;
 	struct passwd *pw;
 	char *style;
+	void *kbdintctxt;
 #ifdef BSD_AUTH
 	auth_session_t *as;
 #endif
+};
+
+/*
+ * Keyboard interactive device:
+ * init_ctx	returns: non NULL upon success 
+ * query	returns: 0 - success, otherwise failure 
+ * respond	returns: 0 - success, 1 - need further interaction,
+ *		otherwise - failure
+ */
+struct KbdintDevice
+{
+	const char *name;
+	void*	(*init_ctx)	__P((Authctxt*));
+	int	(*query)	__P((void *ctx, char **name, char **infotxt,
+				u_int *numprompts, char ***prompts,
+				u_int **echo_on));
+	int	(*respond)	__P((void *ctx, u_int numresp, char **responses));
+	void	(*free_ctx)	__P((void *ctx));
 };
 
 /*
@@ -150,10 +173,24 @@ int	auth2_challenge(Authctxt *authctxt, char *devs);
 
 int	allowed_user(struct passwd * pw);
 
-char	*get_challenge(Authctxt *authctxt, char *devs);
-int	verify_response(Authctxt *authctxt, char *response);
+char	*get_challenge(Authctxt *authctxt);
+int	verify_response(Authctxt *authctxt, const char *response);
 
 struct passwd * auth_get_user(void);
+
+/* expand a filename - return buffer is allocated by xmalloc */
+char	*expand_filename(const char *template, struct passwd *pw);
+char	*authorized_keys_file(struct passwd *pw);
+char	*authorized_keys_file2(struct passwd *pw);
+
+/* check a file and the path to it */
+int
+secure_filename(FILE *f, const char *file, uid_t u, char *err, size_t errlen);
+
+/* helper for hostbased auth */
+HostStatus
+check_key_in_hostfiles(struct passwd *pw, Key *key, const char *host,
+    const char *sysfile, const char *userfile);
 
 #define AUTH_FAIL_MAX 6
 #define AUTH_FAIL_LOG (AUTH_FAIL_MAX/2)

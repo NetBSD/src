@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd.c,v 1.11 2001/05/15 15:26:10 itojun Exp $	*/
+/*	$NetBSD: sshd.c,v 1.12 2001/06/23 19:37:42 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -41,7 +41,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.195 2001/04/15 16:58:03 markus Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.200 2001/06/23 15:12:21 itojun Exp $");
 
 #include <openssl/dh.h>
 #include <openssl/bn.h>
@@ -163,8 +163,9 @@ struct {
  */
 int key_do_regen = 0;
 
-/* This is set to true when SIGHUP is received. */
+/* This is set to true when a signal is received. */
 int received_sighup = 0;
+int received_sigterm = 0;
 
 /* session identifier, used by RSA-auth */
 u_char session_id[16];
@@ -177,31 +178,15 @@ int session_id2_len = 0;
 u_int utmp_len = MAXHOSTNAMELEN;
 
 /* Prototypes for various functions defined later in this file. */
-void close_listen_socks(void);
-void sighup_handler(int);
-void sighup_restart(void);
-void sighterm_handler(int);
-void sigterm_handler(int);
-void main_sigchld_handler(int);
-void grace_alarm_handler(int);
-void generate_ephemeral_server_key(void);
-void key_regeneration_alarm(int);
-void sshd_exchange_identification(int, int);
 void destroy_sensitive_data(void);
-char *list_hostkey_types(void);
-Key *get_hostkey_by_type(int);
-int drop_connection(int);
 
-void do_ssh1_kex(void);
-void do_ssh2_kex(void);
-
-void ssh_dh1_server(Kex *, Buffer *_kexinit, Buffer *);
-void ssh_dhgex_server(Kex *, Buffer *_kexinit, Buffer *);
+static void do_ssh1_kex(void);
+static void do_ssh2_kex(void);
 
 /*
  * Close all listening sockets
  */
-void
+static void
 close_listen_socks(void)
 {
 	int i;
@@ -215,7 +200,7 @@ close_listen_socks(void)
  * the effect is to reread the configuration file (and to regenerate
  * the server key).
  */
-void
+static void
 sighup_handler(int sig)
 {
 	received_sighup = 1;
@@ -226,7 +211,7 @@ sighup_handler(int sig)
  * Called from the main program after receiving SIGHUP.
  * Restarts the server.
  */
-void
+static void
 sighup_restart(void)
 {
 	log("Received SIGHUP; restarting.");
@@ -238,23 +223,18 @@ sighup_restart(void)
 
 /*
  * Generic signal handler for terminating signals in the master daemon.
- * These close the listen socket; not closing it seems to cause "Address
- * already in use" problems on some machines, which is inconvenient.
  */
-void
+static void
 sigterm_handler(int sig)
 {
-	log("Received signal %d; terminating.", sig);
-	close_listen_socks();
-	unlink(options.pid_file);
-	exit(255);
+	received_sigterm = sig;
 }
 
 /*
  * SIGCHLD handler.  This is called whenever a child dies.  This will then
- * reap any zombies left by exited c.
+ * reap any zombies left by exited children.
  */
-void
+static void
 main_sigchld_handler(int sig)
 {
 	int save_errno = errno;
@@ -270,9 +250,11 @@ main_sigchld_handler(int sig)
 /*
  * Signal handler for the alarm after the login grace period has expired.
  */
-void
+static void
 grace_alarm_handler(int sig)
 {
+	/* XXX no idea how fix this signal handler */
+
 	/* Close the connection. */
 	packet_close();
 
@@ -287,7 +269,7 @@ grace_alarm_handler(int sig)
  * Thus there should be no concurrency control/asynchronous execution
  * problems.
  */
-void
+static void
 generate_ephemeral_server_key(void)
 {
 	u_int32_t rand = 0;
@@ -310,7 +292,7 @@ generate_ephemeral_server_key(void)
 	arc4random_stir();
 }
 
-void
+static void
 key_regeneration_alarm(int sig)
 {
 	int save_errno = errno;
@@ -319,7 +301,7 @@ key_regeneration_alarm(int sig)
 	key_do_regen = 1;
 }
 
-void
+static void
 sshd_exchange_identification(int sock_in, int sock_out)
 {
 	int i, mismatch;
@@ -446,8 +428,6 @@ sshd_exchange_identification(int sock_in, int sock_out)
 		    server_version_string, client_version_string);
 		fatal_cleanup();
 	}
-	if (compat20)
-		packet_set_ssh2_format();
 }
 
 
@@ -471,7 +451,7 @@ destroy_sensitive_data(void)
 	memset(sensitive_data.ssh1_cookie, 0, SSH_SESSION_KEY_LENGTH);
 }
 
-char *
+static char *
 list_hostkey_types(void)
 {
 	static char buf[1024];
@@ -496,7 +476,7 @@ list_hostkey_types(void)
 	return buf;
 }
 
-Key *
+static Key *
 get_hostkey_by_type(int type)
 {
 	int i;
@@ -514,7 +494,7 @@ get_hostkey_by_type(int type)
  * of (max_startups_rate/100). the probability increases linearly until
  * all connections are dropped for startups > max_startups
  */
-int
+static int
 drop_connection(int startups)
 {
 	double p, r;
@@ -628,10 +608,16 @@ main(int ac, char **av)
 			}
 			break;
 		case 'g':
-			options.login_grace_time = atoi(optarg);
+			if ((options.login_grace_time = convtime(optarg)) == -1) {
+				fprintf(stderr, "Invalid login grace time.\n");
+				exit(1);
+			}
 			break;
 		case 'k':
-			options.key_regeneration_time = atoi(optarg);
+			if ((options.key_regeneration_time = convtime(optarg)) == -1) {
+				fprintf(stderr, "Invalid key regeneration interval.\n");
+				exit(1);
+			}
 			break;
 		case 'h':
 			if (options.num_host_key_files >= MAX_HOSTKEYS) {
@@ -938,6 +924,13 @@ main(int ac, char **av)
 			ret = select(maxfd+1, fdset, NULL, NULL, NULL);
 			if (ret < 0 && errno != EINTR)
 				error("select: %.100s", strerror(errno));
+			if (received_sigterm) {
+				log("Received signal %d; terminating.",
+				    received_sigterm);
+				close_listen_socks();
+				unlink(options.pid_file);
+				exit(255);
+			}
 			if (key_used && key_do_regen) {
 				generate_ephemeral_server_key();
 				key_used = 0;
@@ -1191,7 +1184,7 @@ main(int ac, char **av)
 /*
  * SSH1 key exchange
  */
-void
+static void
 do_ssh1_kex(void)
 {
 	int i, len;
@@ -1266,7 +1259,7 @@ do_ssh1_kex(void)
 	if (options.afs_token_passing)
 		auth_mask |= 1 << SSH_PASS_AFS_TOKEN;
 #endif
-	if (options.challenge_reponse_authentication == 1)
+	if (options.challenge_response_authentication == 1)
 		auth_mask |= 1 << SSH_AUTH_TIS;
 	if (options.password_authentication)
 		auth_mask |= 1 << SSH_AUTH_PASSWORD;
@@ -1416,7 +1409,7 @@ do_ssh1_kex(void)
 /*
  * SSH2 key exchange: diffie-hellman-group1-sha1
  */
-void
+static void
 do_ssh2_kex(void)
 {
 	Kex *kex;
