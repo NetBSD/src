@@ -1,4 +1,4 @@
-/*	$NetBSD: script.c,v 1.7 1998/12/19 21:53:56 christos Exp $	*/
+/*	$NetBSD: script.c,v 1.8 2002/06/21 18:46:31 atatat Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)script.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: script.c,v 1.7 1998/12/19 21:53:56 christos Exp $");
+__RCSID("$NetBSD: script.c,v 1.8 2002/06/21 18:46:31 atatat Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: script.c,v 1.7 1998/12/19 21:53:56 christos Exp $");
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
+#include <sys/uio.h>
 
 #include <err.h>
 #include <errno.h>
@@ -66,10 +67,18 @@ __RCSID("$NetBSD: script.c,v 1.7 1998/12/19 21:53:56 christos Exp $");
 #include <unistd.h>
 #include <util.h>
 
+struct stamp {
+	uint64_t scr_len;	/* amount of data */
+	uint64_t scr_sec;	/* time it arrived in seconds... */
+	uint32_t scr_usec;	/* ...and microseconds */
+	uint32_t scr_direction;	/* 'i', 'o', etc (also indicates endianness) */
+};
+
 FILE	*fscript;
 int	master, slave;
 int	child, subchild;
 int	outcc;
+int	usesleep, rawout;
 char	*fname;
 
 struct	termios tt;
@@ -81,6 +90,8 @@ void	fail __P((void));
 void	finish __P((int));
 int	main __P((int, char **));
 void	scriptflush __P((int));
+void	record __P((FILE *, char *, size_t, int));
+void	playback __P((FILE *));
 
 int
 main(argc, argv)
@@ -90,18 +101,30 @@ main(argc, argv)
 	int cc;
 	struct termios rtt;
 	struct winsize win;
-	int aflg, ch;
+	int aflg, pflg, ch;
 	char ibuf[BUFSIZ];
 
 	aflg = 0;
-	while ((ch = getopt(argc, argv, "a")) != -1)
+	pflg = 0;
+	usesleep = 1;
+	rawout = 0;
+	while ((ch = getopt(argc, argv, "adpr")) != -1)
 		switch(ch) {
 		case 'a':
 			aflg = 1;
 			break;
+		case 'd':
+			usesleep = 0;
+			break;
+		case 'p':
+			pflg = 1;
+			break;
+		case 'r':
+			rawout = 1;
+			break;
 		case '?':
 		default:
-			(void)fprintf(stderr, "usage: script [-a] [file]\n");
+			(void)fprintf(stderr, "usage: script [-apr] [file]\n");
 			exit(1);
 		}
 	argc -= optind;
@@ -112,8 +135,11 @@ main(argc, argv)
 	else
 		fname = "typescript";
 
-	if ((fscript = fopen(fname, aflg ? "a" : "w")) == NULL)
+	if ((fscript = fopen(fname, pflg ? "r" : aflg ? "a" : "w")) == NULL)
 		err(1, "fopen %s", fname);
+
+	if (pflg)
+		playback(fscript);
 
 	(void)tcgetattr(STDIN_FILENO, &tt);
 	(void)ioctl(STDIN_FILENO, TIOCGWINSZ, &win);
@@ -144,9 +170,13 @@ main(argc, argv)
 			doshell();
 	}
 
-	(void)fclose(fscript);
-	while ((cc = read(STDIN_FILENO, ibuf, BUFSIZ)) > 0)
+	if (!rawout)
+		(void)fclose(fscript);
+	while ((cc = read(STDIN_FILENO, ibuf, BUFSIZ)) > 0) {
+		if (rawout)
+			record(fscript, ibuf, cc, 'i');
 		(void)write(master, ibuf, cc);
+	}
 	done();
 	/* NOTREACHED */
 	return (0);
@@ -177,7 +207,10 @@ dooutput()
 
 	(void)close(STDIN_FILENO);
 	tvec = time(NULL);
-	(void)fprintf(fscript, "Script started on %s", ctime(&tvec));
+	if (rawout)
+		record(fscript, NULL, 0, 's');
+	else
+		(void)fprintf(fscript, "Script started on %s", ctime(&tvec));
 
 	(void)signal(SIGALRM, scriptflush);
 	value.it_interval.tv_sec = SECSPERMIN / 2;
@@ -189,7 +222,10 @@ dooutput()
 		if (cc <= 0)
 			break;
 		(void)write(1, obuf, cc);
-		(void)fwrite(obuf, 1, cc, fscript);
+		if (rawout)
+			record(fscript, obuf, cc, 'o');
+		else
+			(void)fwrite(obuf, 1, cc, fscript);
 		outcc += cc;
 	}
 	done();
@@ -237,12 +273,99 @@ done()
 
 	if (subchild) {
 		tvec = time(NULL);
-		(void)fprintf(fscript,"\nScript done on %s", ctime(&tvec));
+		if (rawout)
+			record(fscript, NULL, 0, 'e');
+		else
+			(void)fprintf(fscript,"\nScript done on %s",
+			    ctime(&tvec));
 		(void)fclose(fscript);
 		(void)close(master);
 	} else {
 		(void)tcsetattr(STDIN_FILENO, TCSAFLUSH, &tt);
 		(void)printf("Script done, output file is %s\n", fname);
 	}
+	exit(0);
+}
+
+void
+record(fscript, buf, cc, direction)
+	FILE *fscript;
+	char *buf;
+	size_t cc;
+	int direction;
+{
+	struct iovec iov[2];
+	struct stamp stamp;
+	struct timeval tv;
+
+	(void)gettimeofday(&tv, NULL);
+	stamp.scr_len = cc;
+	stamp.scr_sec = tv.tv_sec;
+	stamp.scr_usec = tv.tv_usec;
+	stamp.scr_direction = direction;
+	iov[0].iov_len = sizeof(stamp);
+	iov[0].iov_base = &stamp;
+	iov[1].iov_len = cc;
+	iov[1].iov_base = buf;
+	if (writev(fileno(fscript), &iov[0], 2) == -1)
+		err(1, "writev");
+}
+
+#define swapstamp(stamp) do { \
+	if (stamp.scr_direction > 0xff) { \
+		stamp.scr_len = bswap64(stamp.scr_len); \
+		stamp.scr_sec = bswap64(stamp.scr_sec); \
+		stamp.scr_usec = bswap32(stamp.scr_usec); \
+		stamp.scr_direction = bswap32(stamp.scr_direction); \
+	} \
+} while (0/*CONSTCOND*/)
+
+void
+playback(fscript)
+	FILE *fscript;
+{
+	struct timespec tsi, tso;
+	struct stamp stamp;
+	char buf[BUFSIZ];
+	size_t l;
+	time_t clock;
+
+	do {
+		if (fread(&stamp, sizeof(stamp), 1, fscript) != 1)
+			err(1, "reading playback header");
+
+		swapstamp(stamp);
+		l = fread(buf, 1, stamp.scr_len, fscript);
+		clock = stamp.scr_sec;
+		tso.tv_sec = stamp.scr_sec;
+		tso.tv_nsec = stamp.scr_usec * 1000;
+
+		switch (stamp.scr_direction) {
+		case 's':
+			(void)printf("Script started on %s", ctime(&clock));
+			tsi = tso;
+			break;
+		case 'e':
+			(void)printf("\nScript done on %s", ctime(&clock));
+			break;
+		case 'i':
+			/* throw input away */
+			break;
+		case 'o':
+			tsi.tv_sec = tso.tv_sec - tsi.tv_sec;
+			tsi.tv_nsec = tso.tv_nsec - tsi.tv_nsec;
+			if (tsi.tv_nsec < 0) {
+				tsi.tv_sec -= 1;
+				tsi.tv_nsec += 1000000000;
+			}
+			if (usesleep)
+				(void)nanosleep(&tsi, NULL);
+			tsi = tso;
+			(void)write(STDOUT_FILENO, buf, l);
+			break;
+		}
+	} while (stamp.scr_direction != 'e');
+
+	(void)fclose(fscript);
 	exit(0);
 }
