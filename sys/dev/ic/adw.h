@@ -1,4 +1,4 @@
-/*      $NetBSD: adw.h,v 1.6 2000/04/30 18:52:15 dante Exp $        */
+/*      $NetBSD: adw.h,v 1.7 2000/05/08 17:21:34 dante Exp $        */
 
 /*
  * Generic driver definitions and exported functions for the Advanced
@@ -48,11 +48,12 @@ typedef void (* ADW_ASYNC_CALLBACK) (ADW_SOFTC *, u_int8_t);
 
 
 /*
+ * ADW_CARRIER must be exactly 16 BYTES
  * Every adw_carrier structure _MUST_ always be aligned on a 16 bytes boundary
  */
 struct adw_carrier {
 /* ---------- the microcode wants the field below ---------- */
-	u_int32_t	unused;	  /* Carrier Virtual Address -UNUSED- */
+	u_int32_t	carr_id;  /* Carrier ID */
 	u_int32_t	carr_pa;  /* Carrier Physical Address */
 	u_int32_t	areq_vpa; /* ADW_SCSI_REQ_Q Physical Address */
 	/*
@@ -63,18 +64,9 @@ struct adw_carrier {
 	 */
 	u_int32_t	next_vpa;
 /* ----------                                     ---------- */
-	struct adw_carrier	*nexthash;	/* Carrier Virtual Address */
-
-	int			id;
-	/*
-	 * This DMA map maps the buffer involved in the carrier transfer.
-	 */
-//	bus_dmamap_t	dmamap_xfer;
 };
 
 typedef struct adw_carrier ADW_CARRIER;
-
-#define ADW_CARRIER_SIZE	((((int)((sizeof(ADW_CARRIER)-1)/16))+1)*16)
 
 
 /*
@@ -110,8 +102,6 @@ struct adw_ccb {
 	ADW_SCSI_REQ_Q		scsiq;
 	ADW_SG_BLOCK		sg_block[ADW_NUM_SG_BLOCK];
 
-	ADW_CARRIER		*carr_list;	/* carriers involved */
-
 	struct scsipi_sense_data scsi_sense;
 
 	TAILQ_ENTRY(adw_ccb)	chain;
@@ -136,20 +126,28 @@ typedef struct adw_ccb ADW_CCB;
 #define CCB_ABORTED	0x04
 
 
-#define ADW_MAX_CARRIER	20	/* Max. number of host commands (253) */
-#define ADW_MAX_CCB	16	/* Max. number commands per device (63) */
+#define ADW_MAX_CARRIER	253	/* Max. number of host commands (253) */
+#define ADW_MAX_CCB	63	/* Max. number commands per device (63) */
 
 struct adw_control {
 	ADW_CCB		ccbs[ADW_MAX_CCB];	/* all our control blocks */
 	ADW_CARRIER	*carriers;		/* all our carriers */
-	bus_dmamap_t	dmamap_xfer;
 };
 
 /*
- * Offset of a carrier from the beginning of the carriers DMA mapping.
+ * Bus Address of a Carrier.
+ * ba = base_ba + v_address - base_va
  */
-#define	ADW_CARRIER_ADDR(sc, x)	((sc)->sc_dmamap_carrier->dm_segs[0].ds_addr + \
+#define	ADW_CARRIER_BADDR(sc,x)	((sc)->sc_dmamap_carrier->dm_segs[0].ds_addr + \
 			(((u_long)x) - ((u_long)(sc)->sc_control->carriers)))
+/*
+ * Virtual Address of a Carrier.
+ * va = base_va + bus_address - base_ba
+ */
+#define	ADW_CARRIER_VADDR(sc,x)	((ADW_CARRIER *) \
+			(((u_int8_t *)(sc)->sc_control->carriers) + \
+			((u_long)x) - \
+			(sc)->sc_dmamap_carrier->dm_segs[0].ds_addr))
 /*
  * Offset of a CCB from the beginning of the control DMA mapping.
  */

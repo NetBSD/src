@@ -1,4 +1,4 @@
-/* $NetBSD: adwlib.c,v 1.10 2000/04/30 18:52:15 dante Exp $        */
+/* $NetBSD: adwlib.c,v 1.11 2000/05/08 17:21:34 dante Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -135,7 +135,7 @@ Default_3550_EEPROM_Config = {
 	0,			/* serial_number_word2 */
 	0,			/* serial_number_word3 */
 	0,			/* check_sum */
-	{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, /* oem_name[16] */
+	{ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 }, /* oem_name[16] */
 	0,			/* dvc_err_code */
 	0,			/* adv_err_code */
 	0,			/* adv_err_addr */
@@ -1023,8 +1023,8 @@ ADW_SOFTC      *sc;
 	}
 
 	/*
-	 * For ASC-38C0800, set FIFO_THRESH_80B [6:4] bits and START_CTL_TH [3:2]
-	 * bits for the default FIFO threshold.
+	 * For ASC-38C0800, set FIFO_THRESH_80B [6:4] bits and
+	 * START_CTL_TH [3:2] bits for the default FIFO threshold.
 	 *
 	 * Note: ASC-38C0800 FIFO threshold has been changed to 256 bytes.
 	 *
@@ -1752,8 +1752,8 @@ ADW_SOFTC      *sc;
 	 * COMMA register to the same value otherwise the RISC will
 	 * prematurely detect a command is available.
 	 */
-    ADW_WRITE_DWORD_LRAM(iot, ioh, ASC_MC_ICQ, sc->icq_sp->carr_pa);
-    ADW_WRITE_DWORD_REGISTER(iot, ioh, IOPDW_COMMA, sc->icq_sp->carr_pa);
+	ADW_WRITE_DWORD_LRAM(iot, ioh, ASC_MC_ICQ, sc->icq_sp->carr_pa);
+	ADW_WRITE_DWORD_REGISTER(iot, ioh, IOPDW_COMMA, sc->icq_sp->carr_pa);
 
 	/*
 	 * Set-up the RISC->Host Initiator Response Queue (IRQ).
@@ -2817,7 +2817,6 @@ ADW_SCSI_REQ_Q	*scsiq;
 	 */
 	
 	ccb = adw_ccb_phys_kv(sc, scsiq->ccb_ptr);
-//	ccb->carr_list = sc->icq_sp;
 
 	/*
 	 * Allocate a carrier ensuring at least one carrier always
@@ -2869,25 +2868,15 @@ ADW_SCSI_REQ_Q	*scsiq;
 	 * Set the host adapter stopper pointer to point to the new carrier.
 	 */
 	sc->icq_sp = new_carrp;
-/*
-	bus_dmamap_load(sc->sc_dmat, sc->sc_control->dmamap_xfer,
-			sc->sc_control->carriers,
-			ADW_CARRIER_SIZE * ADW_MAX_CARRIER,
-			NULL, BUS_DMA_NOWAIT);
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_control->dmamap_xfer, 0,
-			sc->sc_control->dmamap_xfer->dm_mapsize,
-			BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-*/
+
 	if (sc->chip_type == ADV_CHIP_ASC3550 ||
-	    sc->chip_type == ADV_CHIP_ASC38C0800)
-	{
+	    sc->chip_type == ADV_CHIP_ASC38C0800) {
 		/*
 		 * Tickle the RISC to tell it to read its Command Queue Head
 		 * pointer.
 		 */
 		ADW_WRITE_BYTE_REGISTER(iot, ioh, IOPB_TICKLE, ADV_TICKLE_A);
-		if (sc->chip_type == ADV_CHIP_ASC3550)
-		{
+		if (sc->chip_type == ADV_CHIP_ASC3550) {
 			/*
 			 * Clear the tickle value. In the ASC-3550 the RISC flag
 			 * command 'clr_tickle_a' does not work unless the host
@@ -2950,8 +2939,7 @@ ADW_SOFTC	*sc;
 	 * the SCSI Bus Reset signal.
 	 */
 	status = AdvSendIdleCmd(sc, (u_int16_t) IDLE_CMD_SCSI_RESET_START, 0L);
-	if (status != ADW_TRUE)
-	{
+	if (status != ADW_TRUE) {
 		return status;
 	}
 
@@ -2968,8 +2956,7 @@ ADW_SOFTC	*sc;
 	 * the SCSI Bus Reset signal and purges any pending requests.
 	 */
 	status = AdvSendIdleCmd(sc, (u_int16_t) IDLE_CMD_SCSI_RESET_END, 0L);
-	if (status != ADW_TRUE)
-	{
+	if (status != ADW_TRUE) {
 		return status;
 	}
 
@@ -3007,8 +2994,7 @@ ADW_SOFTC	*sc;
 		ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_PPR_ABLE, ppr_able);
 	}
 	ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_TAGQNG_ABLE, tagqng_able);
-	for (tid = 0; tid <= ADW_MAX_TID; tid++)
-	{
+	for (tid = 0; tid <= ADW_MAX_TID; tid++) {
 		ADW_READ_BYTE_LRAM(iot, ioh, ASC_MC_NUMBER_OF_MAX_CMD + tid,
 			max_cmd[tid]);
 	}
@@ -3105,20 +3091,19 @@ ADW_SOFTC	*sc;
 	u_int32_t	irq_next_pa;
 	ADW_SCSI_REQ_Q	*scsiq;
 	ADW_CCB		*ccb;
+	int		s;
 
+
+	s = splbio();
 
 	/* Reading the register clears the interrupt. */
 	int_stat = ADW_READ_BYTE_REGISTER(iot, ioh, IOPB_INTR_STATUS_REG);
 
 	if ((int_stat & (ADW_INTR_STATUS_INTRA | ADW_INTR_STATUS_INTRB |
 	     ADW_INTR_STATUS_INTRC)) == 0) {
+		splx(s);
 		return ADW_FALSE;
 	}
-
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_control->dmamap_xfer, 0,
-		sc->sc_control->dmamap_xfer->dm_mapsize,
-		BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-	bus_dmamap_unload(sc->sc_dmat, sc->sc_control->dmamap_xfer);
 
 	/*
 	 * Notify the driver of an asynchronous microcode condition by
@@ -3225,6 +3210,8 @@ ADW_SOFTC	*sc;
 		 * requests...
 		 */
 	}
+
+	splx(s);
 
 	return ADW_TRUE;
 }

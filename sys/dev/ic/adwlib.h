@@ -1,4 +1,4 @@
-/*      $NetBSD: adwlib.h,v 1.8 2000/04/30 18:52:15 dante Exp $        */
+/*      $NetBSD: adwlib.h,v 1.9 2000/05/08 17:21:34 dante Exp $        */
 
 /*
  * Definitions for low level routines and data structures
@@ -62,6 +62,13 @@
 
 #define ADW_LIB_VERSION_MAJOR	5
 #define ADW_LIB_VERSION_MINOR	8
+
+
+/* If the result wraps when calculating tenths, return 0. */
+#define ADW_TENTHS(num, den) \
+	(((10 * ((num)/(den))) > (((num) * 10)/(den))) ? \
+	0 : ((((num) * 10)/(den)) - (10 * ((num)/(den)))))
+
 
 /*
  * Define Adv Reset Hold Time grater than 25 uSec.
@@ -987,10 +994,6 @@ typedef struct adw_sg_block {
 #define	CCB_HASH_SHIFT	9
 #define CCB_HASH(x)	((((x)) >> CCB_HASH_SHIFT) & (CCB_HASH_SIZE - 1))
 
-#define	CARRIER_HASH_SIZE	32	/* hash table size for phystokv */
-#define	CARRIER_HASH_SHIFT	9
-#define CARRIER_HASH(x)	((((x)) >> CARRIER_HASH_SHIFT) & (CARRIER_HASH_SIZE - 1))
-
 typedef int (* ADW_CALLBACK) (int);
 
 typedef struct adw_softc {
@@ -1006,9 +1009,9 @@ typedef struct adw_softc {
 
 	struct adw_control	*sc_control; /* control structures */
 
-	struct adw_carrier	*sc_carrhash[CARRIER_HASH_SIZE];
 	struct adw_ccb		*sc_ccbhash[CCB_HASH_SIZE];
 	TAILQ_HEAD(, adw_ccb)	sc_free_ccb, sc_waiting_ccb;
+	TAILQ_HEAD(adw_pending_ccb, adw_ccb)	sc_pending_ccb;
 	struct scsipi_link	sc_link;     /* prototype for devs */
 	struct scsipi_adapter	sc_adapter;
 
@@ -1086,8 +1089,6 @@ typedef struct adw_scsi_req_q {
 	 */
 	struct scsipi_sense_data *vsense_addr;	/* Sense buffer virtual address. */
 	u_char		*vdata_addr;	/* Data buffer virtual address. */
-	u_int8_t	orig_sense_len;	/* Original length of sense buffer. */
-	u_int8_t	pads[3];	/* padding bytes (align to long) */
 } ADW_SCSI_REQ_Q;
 
 /*
