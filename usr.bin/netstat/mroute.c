@@ -5,10 +5,12 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: mroute.c,v 1.1 1994/01/11 19:42:55 brezak Exp $";
+static char rcsid[] = "$Id: mroute.c,v 1.2 1994/03/28 10:29:52 cgd Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
+#include <nlist.h>
+#include <kvm.h>
 #include <sys/param.h>
 #include <sys/mbuf.h>
 #include <netinet/in.h>
@@ -59,7 +61,7 @@ mroutepr(mrpaddr, mrtaddr, vifaddr)
 		return;
 	}
 
-	kvm_read(mrpaddr, (char *)&mrtproto, sizeof(mrtproto));
+	kvm_read((void *)(long)mrpaddr, (char *)&mrtproto, sizeof(mrtproto));
 	switch (mrtproto) {
 	    case 0:
 		printf("no multicast routing compiled into this system\n");
@@ -85,7 +87,7 @@ mroutepr(mrpaddr, mrtaddr, vifaddr)
 	saved_nflag = nflag;
 	nflag = 1;
 
-	kvm_read(vifaddr, (char *)viftable, sizeof(viftable));
+	kvm_read((void *)(long)vifaddr, (char *)viftable, sizeof(viftable));
 	banner_printed = 0;
 	for (vifi = 0, v = viftable; vifi < MAXVIFS; ++vifi, ++v) {
 		struct in_addr v_lcl_grps[1024];
@@ -119,7 +121,7 @@ mroutepr(mrpaddr, mrtaddr, vifaddr)
 	}
 	if (!banner_printed) printf("\nVirtual Interface Table is empty\n");
 
-	kvm_read(mrtaddr, (char *)mrttable, sizeof(mrttable));
+	kvm_read((void *)(long)mrtaddr, (char *)mrttable, sizeof(mrttable));
 	banner_printed = 0;
 	for (i = 0; i < MRTHASHSIZ; ++i) {
 	    for (mp = mrttable[i]; mp != NULL;
@@ -176,7 +178,7 @@ mrt_stats(mrpaddr, mstaddr)
 		return;
 	}
 
-	kvm_read(mrpaddr, (char *)&mrtproto, sizeof(mrtproto));
+	kvm_read((void *)(long)mrpaddr, (char *)&mrtproto, sizeof(mrtproto));
 	switch (mrtproto) {
 	    case 0:
 		printf("no multicast routing compiled into this system\n");
@@ -195,7 +197,7 @@ mrt_stats(mrpaddr, mstaddr)
 		return;
 	}
 
-	kvm_read(mstaddr, (char *)&mrtstat, sizeof(mrtstat));
+	kvm_read((void *)(long)mstaddr, (char *)&mrtstat, sizeof(mrtstat));
 	printf("multicast routing:\n");
 	printf(" %10u multicast route lookup%s\n",
 	  mrtstat.mrts_mrt_lookups, plural(mrtstat.mrts_mrt_lookups));

@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)unix.c	5.11 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: unix.c,v 1.7 1994/01/11 23:27:10 mycroft Exp $";
+static char rcsid[] = "$Id: unix.c,v 1.8 1994/03/28 10:30:03 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -53,6 +53,8 @@ struct uio;
 #include <sys/time.h>
 #include <sys/proc.h>
 #include <sys/file.h>
+#include <nlist.h>
+#include <kvm.h>
 struct file *file, *fileNFILE;
 int nfiles;
 
@@ -72,12 +74,12 @@ unixpr(fileheadaddr, nfilesaddr, unixsw)
 		printf("filehead or nfiles not in namelist.\n");
 		return;
 	}
-	if (kvm_read(nfilesaddr, (char *)&nfiles, sizeof (nfiles)) !=
-						sizeof (nfiles)) {
+	if (kvm_read((void *)(long)nfilesaddr, (char *)&nfiles,
+	    sizeof (nfiles)) != sizeof (nfiles)) {
 		printf("nfiles: bad read.\n");
 		return;
 	}
-	if (kvm_read(fileheadaddr, (char *)&filep, sizeof (filep))
+	if (kvm_read((void *)(long)fileheadaddr, (char *)&filep, sizeof (filep))
 						!= sizeof (filep)) {
 		printf("File table address, bad read.\n");
 		return;
@@ -91,7 +93,7 @@ unixpr(fileheadaddr, nfilesaddr, unixsw)
 		filep != NULL && i-- > 0;
 		filep = lfp->f_filef, lfp++) 
 	{
-		if(kvm_read((off_t)filep, (char *)lfp, sizeof (struct file))
+		if(kvm_read(filep, (char *)lfp, sizeof (struct file))
 						!= sizeof(struct file)) {
 			printf("File table read error.\n");
 			return;
@@ -101,7 +103,7 @@ unixpr(fileheadaddr, nfilesaddr, unixsw)
 	for (fp = file; fp < fileNFILE; fp++) {
 		if (fp->f_count == 0 || fp->f_type != DTYPE_SOCKET)
 			continue;
-		if (kvm_read((off_t)fp->f_data, (char *)so, sizeof (*so))
+		if (kvm_read(fp->f_data, (char *)so, sizeof (*so))
 					!= sizeof (*so))
 			continue;
 		/* kludge */
@@ -124,12 +126,12 @@ unixdomainpr(so, soaddr)
 	struct sockaddr_un *sa;
 	static int first = 1;
 
-	if (kvm_read((off_t)so->so_pcb, (char *)unp, sizeof (*unp))
+	if (kvm_read(so->so_pcb, (char *)unp, sizeof (*unp))
 				!= sizeof (*unp))
 		return;
 	if (unp->unp_addr) {
 		m = &mbuf;
-		if (kvm_read((off_t)unp->unp_addr, (char *)m, sizeof (*m))
+		if (kvm_read(unp->unp_addr, (char *)m, sizeof (*m))
 				!= sizeof (*m))
 			m = (struct mbuf *)0;
 		sa = (struct sockaddr_un *)(m->m_dat);
