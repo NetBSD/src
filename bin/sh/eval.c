@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.53 2000/05/13 21:11:45 elric Exp $	*/
+/*	$NetBSD: eval.c,v 1.54 2000/05/15 03:42:48 elric Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.53 2000/05/13 21:11:45 elric Exp $");
+__RCSID("$NetBSD: eval.c,v 1.54 2000/05/15 03:42:48 elric Exp $");
 #endif
 #endif /* not lint */
 
@@ -802,7 +802,9 @@ normal_fork:
 		}
 #endif
 		if (flags & EV_BACKCMD) {
-			FORCEINTON;
+			if (!vforked) {
+				FORCEINTON;
+			}
 			close(pip[0]);
 			if (pip[1] != 1) {
 				close(1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.34 2000/05/13 20:59:41 elric Exp $	*/
+/*	$NetBSD: jobs.c,v 1.35 2000/05/15 03:42:48 elric Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.34 2000/05/13 20:59:41 elric Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.35 2000/05/15 03:42:48 elric Exp $");
 #endif
 #endif /* not lint */
 
@@ -645,7 +645,9 @@ forkchild(jp, n, mode, vforked)
 				freejob(p);
 	}
 	closescript(vforked);
-	INTON;
+	if (!vforked) {
+		INTON;
+	}
 	clear_traps(vforked);
 #if JOBS
 	if (!vforked)
