@@ -30,7 +30,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)svc_run.c 1.1 87/10/13 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)svc_run.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$Id: svc_run.c,v 1.1 1993/10/07 07:30:18 cgd Exp $";
+static char *rcsid = "$Id: svc_run.c,v 1.2 1994/08/20 00:55:33 deraadt Exp $";
 #endif
 
 /*
@@ -43,20 +43,12 @@ static char *rcsid = "$Id: svc_run.c,v 1.1 1993/10/07 07:30:18 cgd Exp $";
 void
 svc_run()
 {
-#ifdef FD_SETSIZE
 	fd_set readfds;
-#else
-      int readfds;
-#endif /* def FD_SETSIZE */
 	extern int errno;
 
 	for (;;) {
-#ifdef FD_SETSIZE
 		readfds = svc_fdset;
-#else
-		readfds = svc_fds;
-#endif /* def FD_SETSIZE */
-		switch (select(_rpc_dtablesize(), &readfds, (int *)0, (int *)0,
+		switch (select(svc_maxfd, &readfds, (int *)0, (int *)0,
 			       (struct timeval *)0)) {
 		case -1:
 			if (errno == EINTR) {
