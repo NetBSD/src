@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.33.2.1 1997/11/08 06:31:29 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.33.2.2 1997/11/21 06:22:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -420,18 +420,24 @@ findpcb:
 		}
 		if (so->so_options & SO_ACCEPTCONN) {
   			if ((tiflags & (TH_RST|TH_ACK|TH_SYN)) != TH_SYN) {
-				if (tiflags & TH_RST)
+				if (tiflags & TH_RST) {
 					syn_cache_reset(ti);
-				else if (tiflags & TH_ACK) {
+				} else if ((tiflags & (TH_ACK|TH_SYN)) ==
+				    (TH_ACK|TH_SYN)) {
+					/*
+					 * Received a SYN,ACK.  This should
+					 * never happen while we are in
+					 * LISTEN.  Send an RST.
+					 */
+					goto badsyn;
+				} else if (tiflags & TH_ACK) {
 					so = syn_cache_get(so, m);
 					if (so == NULL) {
 						/*
 						 * We don't have a SYN for
 						 * this ACK; send an RST.
 						 */
-						tcpstat.tcps_badsyn++;
-						tp = NULL;
-						goto dropwithreset;
+						goto badsyn;
 					} else if (so ==
 					    (struct socket *)(-1)) {
 						/*
@@ -458,8 +464,20 @@ findpcb:
   				}
   			} else {
 				/*
-				 * Received a SYN; create compressed
-				 * TCP state for it.
+				 * Received a SYN.
+				 */
+				if (in_hosteq(ti->ti_src, ti->ti_dst) &&
+				    ti->ti_sport == ti->ti_dport) {
+					/*
+					 * LISTEN socket received a SYN
+					 * from itself?  This can't possibly
+					 * be valid; send an RST.
+					 */
+					goto badsyn;
+				}
+				/*
+				 * SYN looks ok; create compressed TCP
+				 * state for it.
 				 */
 				if (so->so_qlen <= so->so_qlimit &&
 				    syn_cache_add(so, m, optp, optlen, &opti))
@@ -1300,6 +1318,14 @@ dodata:							/* XXX */
 	if (needoutput || (tp->t_flags & TF_ACKNOW))
 		(void) tcp_output(tp);
 	return;
+
+badsyn:
+	/*
+	 * Received a bad SYN.  Increment counters and dropwithreset.
+	 */
+	tcpstat.tcps_badsyn++;
+	tp = NULL;
+	goto dropwithreset;
 
 dropafterack:
 	/*
