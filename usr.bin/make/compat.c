@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.18 1997/03/28 22:31:22 christos Exp $	*/
+/*	$NetBSD: compat.c,v 1.19 1997/05/06 23:51:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$NetBSD: compat.c,v 1.18 1997/03/28 22:31:22 christos Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.19 1997/05/06 23:51:29 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -113,7 +113,7 @@ CompatInterrupt (signo)
 	char 	  *file = Var_Value (TARGET, curTarg, &p1);
 
 	if (!noExecute && eunlink(file) != -1) {
-	    printf ("*** %s removed\n", file);
+	    Error("*** %s removed\n", file);
 	}
 	if (p1)
 	    free(p1);
@@ -231,7 +231,7 @@ CompatRunCommand (cmdp, gnp)
      * Print the command before echoing if we're not supposed to be quiet for
      * this one. We also print the command if -n given.
      */
-    if (!silent || noExecute) {
+    if (!silent || (noExecute && !(gn->type & OP_MAKE))) {
 	printf ("%s\n", cmd);
 	fflush(stdout);
     }
@@ -240,7 +240,7 @@ CompatRunCommand (cmdp, gnp)
      * If we're not supposed to execute any commands, this is as far as
      * we go...
      */
-    if (noExecute) {
+    if (noExecute && !(gn->type & OP_MAKE)) {
 	return (0);
     }
 
@@ -515,7 +515,8 @@ CompatMake (gnp, pgnp)
 	     * ok.
 	     * -- ardeb 1/12/88
 	     */
-	    if (noExecute || Dir_MTime(gn) == 0) {
+	    if ((noExecute && !(gn->type & OP_MAKE)) ||
+		(gn->type & OP_SAVE_CMDS) || Dir_MTime(gn) == 0) {
 		gn->mtime = now;
 	    }
 	    if (gn->cmtime > gn->mtime)
