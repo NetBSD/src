@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.38 2001/08/14 06:51:37 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.39 2001/10/15 13:25:34 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.38 2001/08/14 06:51:37 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.39 2001/10/15 13:25:34 blymn Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,6 +81,7 @@ __RCSID("$NetBSD: main.c,v 1.38 2001/08/14 06:51:37 lukem Exp $");
 #include "pathnames.h"
 
 gid_t	egid;			/* Retain tty privs for notification */
+int     timestamp;              /* print message timestamps */
 int	notify;			/* notify operator flag */
 int	blockswritten;		/* number of blocks written on current tape */
 int	tapeno;			/* current tape number */
@@ -92,6 +93,8 @@ long	blocksperfile;		/* output blocks per file */
 char	*host;			/* remote host (if any) */
 int	readcache = -1;		/* read cache size (in readblksize blks) */
 int	readblksize = 32 * 1024; /* read block size */
+char    default_time_string[] = "%T %Z"; /* default timestamp string */
+char    *time_string = default_time_string; /* timestamp string */
 
 int	main(int, char *[]);
 static long numarg(char *, long, long);
@@ -115,10 +118,14 @@ main(int argc, char *argv[])
 	char *mountpoint;
 	int just_estimate = 0;
 	char labelstr[LBLSIZE];
-
+	char *new_time_format;
+	
 	spcl.c_date = 0;
 	(void)time((time_t *)&spcl.c_date);
-
+	tzset(); /* set up timezone for strftime */
+	if ((new_time_format = getenv("TIMEFORMAT")) != NULL)
+		time_string = new_time_format;
+	
 	/* Save setgid bit for use later */
 	egid = getegid();
 	setegid(getgid());
@@ -132,13 +139,14 @@ main(int argc, char *argv[])
 	if (TP_BSIZE / DEV_BSIZE == 0 || TP_BSIZE % DEV_BSIZE != 0)
 		quit("TP_BSIZE must be a multiple of DEV_BSIZE\n");
 	level = '0';
-
+	timestamp = 0;
+	
 	if (argc < 2)
 		usage();
 
 	obsolete(&argc, &argv);
 	while ((ch = getopt(argc, argv,
-	    "0123456789B:b:cd:eFf:h:k:L:nr:s:ST:uWw")) != -1)
+	    "0123456789B:b:cd:eFf:h:k:L:nr:s:StT:uWw")) != -1)
 		switch (ch) {
 		/* dump level */
 		case '0': case '1': case '2': case '3': case '4':
@@ -215,6 +223,10 @@ main(int argc, char *argv[])
 
 		case 'S':		/* exit after estimating # of tapes */
 			just_estimate = 1;
+			break;
+
+		case 't':
+			timestamp = 1;
 			break;
 
 		case 'T':		/* time of last dump */
@@ -595,7 +607,7 @@ usage(void)
 {
 
 	(void)fprintf(stderr, "%s\n%s\n%s\n%s\n",
-"usage: dump [-0123456789ceFnu] [-B records] [-b blocksize] [-d density]",
+"usage: dump [-0123456789ceFntu] [-B records] [-b blocksize] [-d density]",
 "            [-f file] [-h level] [-k read block size] [-L label]",
 "            [-r read cache size] [-s feet] [-T date] file system",
 "       dump [-W | -w]");
