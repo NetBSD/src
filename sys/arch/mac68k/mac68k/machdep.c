@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.34 1995/02/01 13:48:45 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35 1995/02/15 23:55:53 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1030,6 +1030,8 @@ boot(howto)
 		doboot();
 		/*NOTREACHED*/
 	}
+	printf("            The system is down.\n");
+	printf("You may reboot or turn the machine off, now.\n");
 	for (;;) ; /* Foil the compiler... */
 	/*NOTREACHED*/
 }
@@ -2172,7 +2174,7 @@ struct cpu_model_info cpu_models[] = {
 { MACH_MACPB100,      "PowerBook", " 100 ",   MACH_CLASSPB,	&romvecs[1] },
 	/* PB 100 has no MMU! */
 { MACH_MACPB140,      "PowerBook", " 140 ",   MACH_CLASSPB,	&romvecs[1] },
-{ MACH_MACPB145,      "PowerBook", " 145 ",   MACH_CLASSPB,	&romvecs[1] },
+{ MACH_MACPB145,      "PowerBook", " 145 ",   MACH_CLASSPB,	&romvecs[5] },
 { MACH_MACPB160,      "PowerBook", " 160 ",   MACH_CLASSPB,	&romvecs[5] },
 { MACH_MACPB165,      "PowerBook", " 165 ",   MACH_CLASSPB,	&romvecs[5] },
 { MACH_MACPB165C,     "PowerBook", " 165c ",  MACH_CLASSPB,	&romvecs[5] },

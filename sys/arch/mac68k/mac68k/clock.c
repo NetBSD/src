@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.12 1994/12/03 23:34:47 briggs Exp $	*/
+/*	$NetBSD: clock.c,v 1.13 1995/02/15 23:55:51 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -302,9 +302,11 @@ u_long pramt_2_ugmt(u_long t)
 }
 
 	/* time booter left MacOS */
-u_long macos_boottime;
+u_long	macos_boottime;
 	/* BIAS in minutes from GMT */
-long macos_gmtbias;
+long	macos_gmtbias;
+
+int	mac68k_trust_pram=1;
 
 /*
  * Set global GMT time register, using a file system time base for comparison
@@ -315,7 +317,14 @@ void inittodr(time_t base)
    u_long timbuf;
    u_long pramtime;
 
-   timbuf = macos_boottime;
+   timbuf = pramt_2_ugmt(pram_readtime());
+   if ((timbuf-macos_boottime) > 10*60) {
+	printf("Pram time does not appear to have been read correctly.\n");
+	printf("Pram: 0x%x, macos_boottime: 0x%x.\n",
+			timbuf, macos_boottime);
+   	timbuf = macos_boottime;
+	mac68k_trust_pram = 0;
+   }
 
 	/* GMT bias is passwd in from Booter */
 	/* To get GMT, *subtract* GMTBIAS from *our* time */
@@ -351,8 +360,12 @@ void inittodr(time_t base)
  */
 void resettodr(void)
 {
-	printf("resettodr: netbsd/mac does not yet support setting "
-		"internal clock.\n");
+	if (0 && mac68k_trust_pram) {
+		pram_settime(ugmt_2_pramt(time.tv_sec));
+	} else {
+		printf("NetBSD/mac68k does not trust itself to try and write "
+			"to the pram on this system.\n");
+	}
 }
 
 /*
