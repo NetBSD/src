@@ -806,7 +806,7 @@ const char *name, *mode;
 	char tbuf[BUFSIZ], *cp;
 	int i;
 #if defined(NGROUPS_MAX) && NGROUPS_MAX > 0
-#if defined(atarist) || defined(__svr4__) || defined(__osf__)
+#if defined(atarist) || defined(__svr4__) || defined(__osf__) || defined(__NetBSD__)
 	gid_t groupset[NGROUPS_MAX];
 #else
 	int groupset[NGROUPS_MAX];
