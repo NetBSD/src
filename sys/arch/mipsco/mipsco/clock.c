@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.4 2003/08/07 16:28:36 agc Exp $	*/
+/*	$NetBSD: clock.c,v 1.5 2004/07/05 07:28:45 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.4 2003/08/07 16:28:36 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.5 2004/07/05 07:28:45 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -91,11 +91,6 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.4 2003/08/07 16:28:36 agc Exp $");
 #include <machine/autoconf.h>
 #include <machine/mainboard.h>
 #include <machine/sysconf.h>
-
-void setstatclockrate __P((int));
-void cpu_initclocks __P((void));
-void inittodr __P((time_t));
-void resettodr __P((void));
 
 #define MINYEAR 1998 /* "today" */
 

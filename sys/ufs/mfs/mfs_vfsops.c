@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.60 2004/05/25 14:55:46 hannken Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.61 2004/07/05 07:28:46 pk Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.60 2004/05/25 14:55:46 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.61 2004/07/05 07:28:46 pk Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -217,7 +217,6 @@ mfs_mountroot()
 	(void) copystr(mp->mnt_stat.f_mntonname, fs->fs_fsmnt, MNAMELEN - 1, 0);
 	(void)ffs_statvfs(mp, &mp->mnt_stat, p);
 	vfs_unbusy(mp);
-	inittodr((time_t)0);
 	return (0);
 }
 

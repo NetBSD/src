@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.153 2004/05/30 20:45:44 yamt Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.154 2004/07/05 07:28:46 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.153 2004/05/30 20:45:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.154 2004/07/05 07:28:46 pk Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -330,7 +330,7 @@ lfs_mountroot()
 	simple_unlock(&mountlist_slock);
 	(void)lfs_statvfs(mp, &mp->mnt_stat, p);
 	vfs_unbusy(mp);
-	inittodr(VFSTOUFS(mp)->um_lfs->lfs_tstamp);
+	setrootfstime((time_t)(VFSTOUFS(mp)->um_lfs->lfs_tstamp));
 	return (0);
 }
 
