@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.17 2003/12/24 22:42:11 manu Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.18 2004/01/03 20:10:01 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.17 2003/12/24 22:42:11 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.18 2004/01/03 20:10:01 jdolecek Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -383,8 +383,8 @@ lwp_wait1(struct lwp *l, lwpid_t lid, lwpid_t *departed, int flags)
 	struct proc *p = l->l_proc;
 	struct lwp *l2, *l3;
 	int nfound, error, s, wpri;
-	static char waitstr1[] = "lwpwait";
-	static char waitstr2[] = "lwpwait2";
+	static const char waitstr1[] = "lwpwait";
+	static const char waitstr2[] = "lwpwait2";
 
 	DPRINTF(("lwp_wait1: %d.%d waiting for %d.\n",
 	    p->p_pid, l->l_lid, lid));
