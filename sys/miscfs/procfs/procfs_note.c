@@ -34,9 +34,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Id: procfs_note.c,v 3.2 1993/12/15 09:40:17 jsp Exp
  *	from: @(#)procfs_note.c	8.2 (Berkeley) 1/21/94
- *	$Id: procfs_note.c,v 1.6 1994/06/08 11:33:37 mycroft Exp $
+ *	$Id: procfs_note.c,v 1.7 1994/06/15 22:59:08 mycroft Exp $
  */
 
 #include <sys/param.h>
