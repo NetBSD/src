@@ -1,6 +1,8 @@
+/*	$NetBSD: mesg.c,v 1.4 1994/12/23 07:16:32 jtc Exp $	*/
+
 /*
- * Copyright (c) 1987 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1987, 1993
+ *	The Regents of the University of California.  All rights reserved.
  * (c) UNIX System Laboratories, Inc.
  * All or some portions of this file are derived from material licensed
  * to the University of California by American Telephone and Telegraph
@@ -37,74 +39,71 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1987 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1987, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)mesg.c	4.7 (Berkeley) 3/1/91";*/
-static char rcsid[] = "$Id: mesg.c,v 1.3 1994/05/17 04:15:59 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)mesg.c	8.2 (Berkeley) 1/21/94";
+#endif
+static char rcsid[] = "$NetBSD: mesg.c,v 1.4 1994/12/23 07:16:32 jtc Exp $";
 #endif /* not lint */
-
-/*
- * mesg -- set current tty to accept or
- *	forbid write permission.
- *
- *	mesg [y] [n]
- *		y allow messages
- *		n forbid messages
- */
 
 #include <sys/types.h>
 #include <sys/stat.h>
+
+#include <err.h>
+#include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
-static char *tty;
-
+int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
-	struct stat sbuf;
-	char *ttyname();
+	struct stat sb;
+	char *tty;
+	int ch;
 
-	if (!(tty = ttyname(2))) {
-		fputs("mesg: not a device in /dev.\n", stderr);
-		exit(-1);
-	}
-	if (stat(tty, &sbuf) < 0) {
-		perror("mesg");
-		exit(-1);
-	}
-	if (argc < 2) {
-		if (sbuf.st_mode & 020) {
-			fputs("is y\n", stderr);
+	while ((ch = getopt(argc, argv, "")) != EOF)
+		switch (ch) {
+		case '?':
+		default:
+			goto usage;
+		}
+	argc -= optind;
+	argv += optind;
+
+	if ((tty = ttyname(STDERR_FILENO)) == NULL)
+		err(1, "ttyname");
+	if (stat(tty, &sb) < 0)
+		err(1, "%s", tty);
+
+	if (*argv == NULL) {
+		if (sb.st_mode & S_IWGRP) {
+			(void)fprintf(stderr, "is y\n");
 			exit(0);
 		}
-		fputs("is n\n", stderr);
+		(void)fprintf(stderr, "is n\n");
 		exit(1);
 	}
-#define	OTHER_WRITE	020
-	switch(*argv[1]) {
+
+	switch (*argv[0]) {
 	case 'y':
-		newmode(sbuf.st_mode | OTHER_WRITE);
+		if (chmod(tty, sb.st_mode | S_IWGRP) < 0)
+			err(1, "%s", tty);
 		exit(0);
 	case 'n':
-		newmode(sbuf.st_mode &~ OTHER_WRITE);
+		if (chmod(tty, sb.st_mode & ~S_IWGRP) < 0)
+			err(1, "%s", tty);
 		exit(1);
-	default:
-		fputs("usage: mesg [y] [n]\n", stderr);
-		exit(-1);
 	}
-	/*NOTREACHED*/
-}
 
-newmode(m)
-	u_short m;
-{
-	if (chmod(tty, m) < 0) {
-		perror("mesg");
-		exit(-1);
-	}
+usage:	(void)fprintf(stderr, "usage: mesg [y | n]\n");
+	exit(2);
 }

@@ -1,6 +1,8 @@
+/*	$NetBSD: mkfifo.c,v 1.7 1994/12/23 07:16:56 jtc Exp $	*/
+
 /*
- * Copyright (c) 1990 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,14 +34,16 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1990 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1990, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)mkfifo.c	5.3 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: mkfifo.c,v 1.6 1993/12/31 19:35:37 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)mkfifo.c	8.2 (Berkeley) 1/5/94";
+#endif
+static char rcsid[] = "$NetBSD: mkfifo.c,v 1.7 1994/12/23 07:16:56 jtc Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -57,7 +61,7 @@ static void usage();
 int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
 	int ch, exitval;
 	void * set;
@@ -86,8 +90,9 @@ main(argc, argv)
 		default:
 			usage();
 		}
-
-	if (!*(argv += optind))
+	argc -= optind;
+	argv += optind;
+	if (argv[0] == NULL)
 		usage();
 
 	for (exitval = 0; *argv; ++argv) {
@@ -99,7 +104,7 @@ main(argc, argv)
 	exit(exitval);
 }
 
-static void
+void
 usage()
 {
 	(void)fprintf(stderr, "usage: mkfifo [-m mode] fifoname ...\n");
