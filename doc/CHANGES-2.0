@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.73 2004/04/11 02:55:32 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.74 2004/04/11 02:58:25 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -753,3 +753,16 @@ sys/arch/hp300/stand/common/clock.c		1.5
 
 	Fix yet another y2k+1 bug.
 	[tsutsui, ticket #115]
+
+sys/arch/hp300/dev/com_frodo.c			1.2
+sys/arch/hp300/dev/frodoreg.h			1.2
+sys/arch/hp300/dev/frodo.c			1.17
+
+	Adjust fd_name in struct frodo_device frodo_subdevs[]
+	since MD apci(4) has been switched to MI com(4).     
+	Adjust FRODO_BASE macro since com_frodo uses bus_space_map(9)
+	which takes offset from intiobase instead of KVA.
+	It turns out that not only HP425e but other HP4xx models also require
+	COM_HW_NOIEN for APCI com(4) ports.
+
+	[tsutsui, ticket #116]
