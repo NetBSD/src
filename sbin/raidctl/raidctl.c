@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.31 2002/11/16 17:22:36 oster Exp $   */
+/*      $NetBSD: raidctl.c,v 1.32 2003/04/15 07:36:14 itojun Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -125,12 +125,12 @@ main(argc,argv)
 		switch(ch) {
 		case 'a':
 			action = RAIDFRAME_ADD_HOT_SPARE;
-			strncpy(component, optarg, PATH_MAX);
+			strlcpy(component, optarg, sizeof(component));
 			num_options++;
 			break;
 		case 'A':
 			action = RAIDFRAME_SET_AUTOCONFIG;
-			strncpy(autoconf, optarg, 10);
+			strlcpy(autoconf, optarg, sizeof(autoconf));
 			num_options++;
 			break;
 		case 'B':
@@ -139,31 +139,33 @@ main(argc,argv)
 			break;
 		case 'c':
 			action = RAIDFRAME_CONFIGURE;
-			strncpy(config_filename,optarg,PATH_MAX);
+			strlcpy(config_filename, optarg,
+			    sizeof(config_filename));
 			force = 0;
 			num_options++;
 			break;
 		case 'C':
-			strncpy(config_filename,optarg,PATH_MAX);
+			strlcpy(config_filename, optarg,
+			    sizeof(config_filename));
 			action = RAIDFRAME_CONFIGURE;
 			force = 1;
 			num_options++;
 			break;
 		case 'f':
 			action = RAIDFRAME_FAIL_DISK;
-			strncpy(component, optarg, PATH_MAX);
+			strlcpy(component, optarg, sizeof(component));
 			do_recon = 0;
 			num_options++;
 			break;
 		case 'F':
 			action = RAIDFRAME_FAIL_DISK;
-			strncpy(component, optarg, PATH_MAX);
+			strlcpy(component, optarg, sizeof(component));
 			do_recon = 1;
 			num_options++;
 			break;
 		case 'g':
 			action = RAIDFRAME_GET_COMPONENT_LABEL;
-			strncpy(component, optarg, PATH_MAX);
+			strlcpy(component, optarg, sizeof(component));
 			openmode = O_RDONLY;
 			num_options++;
 			break;
@@ -184,16 +186,16 @@ main(argc,argv)
 			break;
 		case 'l': 
 			action = RAIDFRAME_SET_COMPONENT_LABEL;
-			strncpy(component, optarg, PATH_MAX);
+			strlcpy(component, optarg, sizeof(component));
 			num_options++;
 			break;
 		case 'r':
 			action = RAIDFRAME_REMOVE_HOT_SPARE;
-			strncpy(component, optarg, PATH_MAX);
+			strlcpy(component, optarg, sizeof(component));
 			num_options++;
 			break;
 		case 'R':
-			strncpy(component,optarg,PATH_MAX);
+			strlcpy(component, optarg, sizeof(component));
 			action = RAIDFRAME_REBUILD_IN_PLACE;
 			num_options++;
 			break;
@@ -236,7 +238,7 @@ main(argc,argv)
 	if ((num_options > 1) || (argc == NULL)) 
 		usage();
 
-	strncpy(name,argv[0],PATH_MAX);
+	strlcpy(name, argv[0], sizeof(name));
 	fd = opendisk(name, openmode, dev_name, sizeof(dev_name), 1);
 	if (fd == -1) {
 		fprintf(stderr, "%s: unable to open device file: %s\n",
