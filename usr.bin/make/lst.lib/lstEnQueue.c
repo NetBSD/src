@@ -1,4 +1,4 @@
-/*	$NetBSD: lstEnQueue.c,v 1.7 1997/09/28 03:31:22 lukem Exp $	*/
+/*	$NetBSD: lstEnQueue.c,v 1.8 2002/06/15 18:24:59 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,14 +37,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: lstEnQueue.c,v 1.7 1997/09/28 03:31:22 lukem Exp $";
+static char rcsid[] = "$NetBSD: lstEnQueue.c,v 1.8 2002/06/15 18:24:59 wiz Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstEnQueue.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lstEnQueue.c,v 1.7 1997/09/28 03:31:22 lukem Exp $");
+__RCSID("$NetBSD: lstEnQueue.c,v 1.8 2002/06/15 18:24:59 wiz Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -71,9 +71,7 @@ __RCSID("$NetBSD: lstEnQueue.c,v 1.7 1997/09/28 03:31:22 lukem Exp $");
  *-----------------------------------------------------------------------
  */
 ReturnStatus
-Lst_EnQueue (l, d)
-    Lst	    	  l;
-    ClientData	  d;
+Lst_EnQueue(Lst l, ClientData d)
 {
     if (LstValid (l) == FALSE) {
 	return (FAILURE);

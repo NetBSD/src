@@ -1,4 +1,4 @@
-/*	$NetBSD: lstOpen.c,v 1.7 1997/09/28 03:31:32 lukem Exp $	*/
+/*	$NetBSD: lstOpen.c,v 1.8 2002/06/15 18:25:00 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,14 +37,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: lstOpen.c,v 1.7 1997/09/28 03:31:32 lukem Exp $";
+static char rcsid[] = "$NetBSD: lstOpen.c,v 1.8 2002/06/15 18:25:00 wiz Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstOpen.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lstOpen.c,v 1.7 1997/09/28 03:31:32 lukem Exp $");
+__RCSID("$NetBSD: lstOpen.c,v 1.8 2002/06/15 18:25:00 wiz Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -77,8 +77,7 @@ __RCSID("$NetBSD: lstOpen.c,v 1.7 1997/09/28 03:31:32 lukem Exp $");
  *-----------------------------------------------------------------------
  */
 ReturnStatus
-Lst_Open (l)
-	register Lst	l;
+Lst_Open(Lst l)
 {
 	if (LstValid (l) == FALSE) {
 		return (FAILURE);

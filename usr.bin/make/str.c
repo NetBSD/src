@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.17 1998/11/06 23:31:09 christos Exp $	*/
+/*	$NetBSD: str.c,v 1.18 2002/06/15 18:24:57 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: str.c,v 1.17 1998/11/06 23:31:09 christos Exp $";
+static char rcsid[] = "$NetBSD: str.c,v 1.18 2002/06/15 18:24:57 wiz Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char     sccsid[] = "@(#)str.c	5.8 (Berkeley) 6/1/90";
 #else
-__RCSID("$NetBSD: str.c,v 1.17 1998/11/06 23:31:09 christos Exp $");
+__RCSID("$NetBSD: str.c,v 1.18 2002/06/15 18:24:57 wiz Exp $");
 #endif
 #endif				/* not lint */
 #endif
@@ -62,12 +62,10 @@ __RCSID("$NetBSD: str.c,v 1.17 1998/11/06 23:31:09 christos Exp $");
  *	the resulting string in allocated space.
  */
 char *
-str_concat(s1, s2, flags)
-	char *s1, *s2;
-	int flags;
+str_concat(char *s1, char *s2, int flags)
 {
-	register int len1, len2;
-	register char *result;
+	int len1, len2;
+	char *result;
 
 	/* get the length of both strings */
 	len1 = strlen(s1);
@@ -110,14 +108,10 @@ str_concat(s1, s2, flags)
  *	the first word is always the value of the .MAKE variable.
  */
 char **
-brk_string(str, store_argc, expand, buffer)
-	register char *str;
-	int *store_argc;
-	Boolean expand;
-	char **buffer;
+brk_string(char *str, int *store_argc, Boolean expand, char **buffer)
 {
-	register int argc, ch;
-	register char inquote, *p, *start, *t;
+	int argc, ch;
+	char inquote, *p, *start, *t;
 	int len;
 	int argmax = 50, curlen = 0;
     	char **argv = (char **)emalloc((argmax + 1) * sizeof(char *));
@@ -233,6 +227,10 @@ done:	argv[argc] = (char *)NULL;
 /*
  * Str_FindSubstring -- See if a string contains a particular substring.
  *
+ * Input:
+ *	string		String to search.
+ *	substring	Substring to find in string.
+ *
  * Results: If string contains substring, the return value is the location of
  * the first matching instance of substring in string.  If string doesn't
  * contain substring, the return value is NULL.  Matching is done on an exact
@@ -241,11 +239,9 @@ done:	argv[argc] = (char *)NULL;
  * Side effects: None.
  */
 char *
-Str_FindSubstring(string, substring)
-	register char *string;		/* String to search. */
-	char *substring;		/* Substring to find in string */
+Str_FindSubstring(char *string, char *substring)
 {
-	register char *a, *b;
+	char *a, *b;
 
 	/*
 	 * First scan quickly through the two strings looking for a single-
@@ -280,9 +276,7 @@ Str_FindSubstring(string, substring)
  * Side effects: None.
  */
 int
-Str_Match(string, pattern)
-	register char *string;		/* String */
-	register char *pattern;		/* Pattern */
+Str_Match(char *string, char *pattern)
 {
 	char c2;
 
@@ -375,6 +369,11 @@ thisCharOK:	++pattern;
  * Str_SYSVMatch --
  *	Check word against pattern for a match (% is wild),
  *
+ * Input:
+ *	word		Word to examine
+ *	pattern		Pattern to examine against
+ *	len		Number of characters to substitute
+ *
  * Results:
  *	Returns the beginning position of a match or null. The number
  *	of characters matched is returned in len.
@@ -385,10 +384,7 @@ thisCharOK:	++pattern;
  *-----------------------------------------------------------------------
  */
 char *
-Str_SYSVMatch(word, pattern, len)
-    char	*word;		/* Word to examine */
-    char	*pattern;	/* Pattern to examine against */
-    int		*len;		/* Number of characters to substitute */
+Str_SYSVMatch(char *word, char *pattern, int *len)
 {
     char *p = pattern;
     char *w = word;
@@ -445,11 +441,7 @@ Str_SYSVMatch(word, pattern, len)
  *-----------------------------------------------------------------------
  */
 void
-Str_SYSVSubst(buf, pat, src, len)
-    Buffer buf;
-    char *pat;
-    char *src;
-    int   len;
+Str_SYSVSubst(Buffer buf, char *pat, char *src, int len)
 {
     char *m;
 

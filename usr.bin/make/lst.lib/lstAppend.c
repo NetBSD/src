@@ -1,4 +1,4 @@
-/*	$NetBSD: lstAppend.c,v 1.7 1997/09/28 03:31:16 lukem Exp $	*/
+/*	$NetBSD: lstAppend.c,v 1.8 2002/06/15 18:24:59 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -37,14 +37,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: lstAppend.c,v 1.7 1997/09/28 03:31:16 lukem Exp $";
+static char rcsid[] = "$NetBSD: lstAppend.c,v 1.8 2002/06/15 18:24:59 wiz Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstAppend.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lstAppend.c,v 1.7 1997/09/28 03:31:16 lukem Exp $");
+__RCSID("$NetBSD: lstAppend.c,v 1.8 2002/06/15 18:24:59 wiz Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -61,6 +61,11 @@ __RCSID("$NetBSD: lstAppend.c,v 1.7 1997/09/28 03:31:16 lukem Exp $");
  * Lst_Append --
  *	Create a new node and add it to the given list after the given node.
  *
+ * Input:
+ *	l		affected list
+ *	ln		node after which to append the datum
+ *	d		said datum
+ *
  * Results:
  *	SUCCESS if all went well.
  *
@@ -73,14 +78,11 @@ __RCSID("$NetBSD: lstAppend.c,v 1.7 1997/09/28 03:31:16 lukem Exp $");
  *-----------------------------------------------------------------------
  */
 ReturnStatus
-Lst_Append (l, ln, d)
-    Lst	  	l;	/* affected list */
-    LstNode	ln;	/* node after which to append the datum */
-    ClientData	d;	/* said datum */
+Lst_Append(Lst l, LstNode ln, ClientData d)
 {
-    register List 	list;
-    register ListNode	lNode;
-    register ListNode	nLNode;
+    List 	list;
+    ListNode	lNode;
+    ListNode	nLNode;
 
     if (LstValid (l) && (ln == NILLNODE && LstIsEmpty (l))) {
 	goto ok;

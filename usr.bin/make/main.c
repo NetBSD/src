@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.84 2002/04/27 15:14:30 bjh21 Exp $	*/
+/*	$NetBSD: main.c,v 1.85 2002/06/15 18:24:57 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,7 +39,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.84 2002/04/27 15:14:30 bjh21 Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.85 2002/06/15 18:24:57 wiz Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.84 2002/04/27 15:14:30 bjh21 Exp $");
+__RCSID("$NetBSD: main.c,v 1.85 2002/06/15 18:24:57 wiz Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -93,16 +93,14 @@ __RCSID("$NetBSD: main.c,v 1.84 2002/04/27 15:14:30 bjh21 Exp $");
 #include <sys/utsname.h>
 #endif
 #include <sys/wait.h>
+
 #include <errno.h>
 #include <fcntl.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
+
 #include "make.h"
 #include "hash.h"
 #include "dir.h"
@@ -145,10 +143,10 @@ Boolean			parseWarnFatal;	/* -W flag */
 Boolean			jobServer; 	/* -J flag */
 static Boolean		jobsRunning;	/* TRUE if the jobs might be running */
 static const char *	tracefile;
-static char *		Check_Cwd_av __P((int, char **, int));
-static void		MainParseArgs __P((int, char **));
-static int		ReadMakefile __P((ClientData, ClientData));
-static void		usage __P((void));
+static char *		Check_Cwd_av(int, char **, int);
+static void		MainParseArgs(int, char **);
+static int		ReadMakefile(ClientData, ClientData);
+static void		usage(void);
 
 static char curdir[MAXPATHLEN + 1];	/* startup directory */
 static char objdir[MAXPATHLEN + 1];	/* where we chdir'ed to */
@@ -173,9 +171,7 @@ extern Lst parseIncPath;
  *	given
  */
 static void
-MainParseArgs(argc, argv)
-	int argc;
-	char **argv;
+MainParseArgs(int argc, char **argv)
 {
 	char *p;
 	int c;
@@ -416,6 +412,9 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
  *	MainParseArgs function.
  *	The line should have all its leading whitespace removed.
  *
+ * Input:
+ *	line		Line to fracture
+ *
  * Results:
  *	None
  *
@@ -423,8 +422,7 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
  *	Only those that come from the various arguments.
  */
 void
-Main_ParseArgLine(line)
-	char *line;			/* Line to fracture */
+Main_ParseArgLine(char *line)
 {
 	char **argv;			/* Manufactured argument vector */
 	int argc;			/* Number of arguments in argv */
@@ -454,8 +452,7 @@ Main_ParseArgLine(line)
 }
 
 Boolean
-Main_SetObjdir(path)
-	const char *path;
+Main_SetObjdir(const char *path)
 {
 	struct stat sb;
 	char *p = NULL;
@@ -511,9 +508,7 @@ Main_SetObjdir(path)
  *	The program exits when done. Targets are created. etc. etc. etc.
  */
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	Lst targs;	/* target nodes to create -- passed to Make_Init */
 	Boolean outOfDate = TRUE; 	/* FALSE if all targets up to date */
@@ -928,7 +923,7 @@ main(argc, argv)
 	Lst_Destroy(targs, NOFREE);
 	Lst_Destroy(variables, NOFREE);
 	Lst_Destroy(makefiles, NOFREE);
-	Lst_Destroy(create, (void (*) __P((ClientData))) free);
+	Lst_Destroy(create, (void (*)(ClientData))) free;
 #endif
 
 	/* print the graph now it's been processed if the user requested it */
@@ -963,8 +958,7 @@ main(argc, argv)
  *	lots
  */
 static Boolean
-ReadMakefile(p, q)
-	ClientData p, q;
+ReadMakefile(ClientData p, ClientData q)
 {
 	char *fname = p;		/* makefile to read */
 	FILE *stream;
@@ -1040,10 +1034,7 @@ found:
 static int  Check_Cwd_Off = 0;
 
 static char *
-Check_Cwd_av(ac, av, copy)
-     int ac;
-     char **av;
-     int copy;
+Check_Cwd_av(int ac, char **av, int copy)
 {
     static char *make[4];
     static char *cur_dir = NULL;
@@ -1149,8 +1140,7 @@ Check_Cwd_av(ac, av, copy)
 }
 
 char *
-Check_Cwd_Cmd(cmd)
-     char *cmd;
+Check_Cwd_Cmd(char *cmd)
 {
     char *cp, *bp, **av;
     int ac;
@@ -1178,8 +1168,7 @@ Check_Cwd_Cmd(cmd)
 }
 
 void
-Check_Cwd(argv)
-    char **argv;
+Check_Cwd(char **argv)
 {
     char *cp;
     int ac;
@@ -1212,9 +1201,7 @@ Check_Cwd(argv)
  *	The string must be freed by the caller.
  */
 char *
-Cmd_Exec(cmd, err)
-    char *cmd;
-    char **err;
+Cmd_Exec(char *cmd, char **err)
 {
     char	*args[4];   	/* Args for invoking the shell */
     int 	fds[2];	    	/* Pipe streams */
@@ -1347,22 +1334,11 @@ bad:
  */
 /* VARARGS */
 void
-#ifdef __STDC__
 Error(char *fmt, ...)
-#else
-Error(va_alist)
-	va_dcl
-#endif
 {
 	va_list ap;
-#ifdef __STDC__
-	va_start(ap, fmt);
-#else
-	char *fmt;
 
-	va_start(ap);
-	fmt = va_arg(ap, char *);
-#endif
+	va_start(ap, fmt);
 	fprintf(stderr, "%s: ", progname);
 	(void)vfprintf(stderr, fmt, ap);
 	va_end(ap);
@@ -1383,22 +1359,11 @@ Error(va_alist)
  */
 /* VARARGS */
 void
-#ifdef __STDC__
 Fatal(char *fmt, ...)
-#else
-Fatal(va_alist)
-	va_dcl
-#endif
 {
 	va_list ap;
-#ifdef __STDC__
-	va_start(ap, fmt);
-#else
-	char *fmt;
 
-	va_start(ap);
-	fmt = va_arg(ap, char *);
-#endif
+	va_start(ap, fmt);
 	if (jobsRunning)
 		Job_Wait();
 	Job_TokenFlush();
@@ -1429,23 +1394,11 @@ Fatal(va_alist)
  */
 /* VARARGS */
 void
-#ifdef __STDC__
 Punt(char *fmt, ...)
-#else
-Punt(va_alist)
-	va_dcl
-#endif
 {
 	va_list ap;
-#ifdef __STDC__
+
 	va_start(ap, fmt);
-#else
-	char *fmt;
-
-	va_start(ap);
-	fmt = va_arg(ap, char *);
-#endif
-
 	(void)fprintf(stderr, "%s: ", progname);
 	(void)vfprintf(stderr, fmt, ap);
 	va_end(ap);
@@ -1468,7 +1421,7 @@ Punt(va_alist)
  *	A big one...
  */
 void
-DieHorribly()
+DieHorribly(void)
 {
 	if (jobsRunning)
 		Job_AbortAll();
@@ -1490,8 +1443,8 @@ DieHorribly()
  *	The program exits
  */
 void
-Finish(errors)
-	int errors;	/* number of errors encountered in Make_Make */
+Finish(int errors)
+	           	/* number of errors encountered in Make_Make */
 {
 	Fatal("%d error%s", errors, errors == 1 ? "" : "s");
 }
@@ -1501,8 +1454,7 @@ Finish(errors)
  *	malloc, but die on error.
  */
 void *
-emalloc(len)
-	size_t len;
+emalloc(size_t len)
 {
 	void *p;
 
@@ -1516,8 +1468,7 @@ emalloc(len)
  *	strdup, but die on error.
  */
 char *
-estrdup(str)
-	const char *str;
+estrdup(const char *str)
 {
 	char *p;
 
@@ -1531,9 +1482,7 @@ estrdup(str)
  *	realloc, but die on error.
  */
 void *
-erealloc(ptr, size)
-	void *ptr;
-	size_t size;
+erealloc(void *ptr, size_t size)
 {
 	if ((ptr = realloc(ptr, size)) == NULL)
 		enomem();
@@ -1545,7 +1494,7 @@ erealloc(ptr, size)
  *	die when out of memory.
  */
 void
-enomem()
+enomem(void)
 {
 	(void)fprintf(stderr, "%s: %s.\n", progname, strerror(errno));
 	exit(2);
@@ -1556,8 +1505,7 @@ enomem()
  *	Remove a file carefully, avoiding directories.
  */
 int
-eunlink(file)
-	const char *file;
+eunlink(const char *file)
 {
 	struct stat st;
 
@@ -1576,9 +1524,7 @@ eunlink(file)
  *	Print why exec failed, avoiding stdio.
  */
 void
-execError(af, av)
-	const char *af;
-	const char *av;
+execError(const char *af, const char *av)
 {
 #ifdef USE_IOVEC
 	int i = 0;
@@ -1610,7 +1556,7 @@ execError(af, av)
  *	exit with usage message
  */
 static void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr,
 "Usage: %s [-Beiknqrst] [-D variable] [-d flags] [-f makefile ]\n\
@@ -1621,9 +1567,7 @@ usage()
 
 
 int
-PrintAddr(a, b)
-    ClientData a;
-    ClientData b;
+PrintAddr(ClientData a, ClientData b)
 {
     printf("%lx ", (unsigned long) a);
     return b ? 0 : 0;
@@ -1632,8 +1576,7 @@ PrintAddr(a, b)
 
 
 void
-PrintOnError(s)
-    char *s;
+PrintOnError(char *s)
 {
     char tmp[64];
 	
@@ -1649,8 +1592,7 @@ PrintOnError(s)
 }
 
 void
-Main_ExportMAKEFLAGS(first)
-     Boolean first;
+Main_ExportMAKEFLAGS(Boolean first)
 {
     static int once = 1;
     char tmp[64];
