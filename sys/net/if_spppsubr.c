@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.39 2002/01/07 10:49:02 martin Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.40 2002/01/14 07:39:14 martin Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.39 2002/01/07 10:49:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.40 2002/01/14 07:39:14 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -2018,6 +2018,9 @@ static void
 sppp_lcp_up(struct sppp *sp)
 {
 	STDDCL;
+
+	/* Initialize activity timestamp: opening a connection is an activity */
+	sp->pp_last_activity = time.tv_sec;
 
 	/*
 	 * If this interface is passive or dial-on-demand, and we are
@@ -4561,7 +4564,8 @@ sppp_keepalive(void *dummy)
 		struct ifnet *ifp = &sp->pp_if;
 
 		/* check idle timeout */
-		if ((sp->pp_idle_timeout != 0) && (ifp->if_flags & IFF_RUNNING)) {
+		if ((sp->pp_idle_timeout != 0) && (ifp->if_flags & IFF_RUNNING)
+		    && (sp->pp_phase == SPPP_PHASE_NETWORK)) {
 		    /* idle timeout is enabled for this interface */
 		    if ((now-sp->pp_last_activity) >= sp->pp_idle_timeout) {
 		    	if (ifp->if_flags & IFF_DEBUG)
