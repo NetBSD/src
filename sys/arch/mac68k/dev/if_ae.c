@@ -19,7 +19,7 @@
  */
 
 /*
- * $Id: if_ae.c,v 1.12 1994/03/20 03:03:26 lkestel Exp $
+ * $Id: if_ae.c,v 1.13 1994/06/26 13:01:24 briggs Exp $
  */
  
 #include "ae.h"
@@ -716,7 +716,7 @@ outloop:
 	}
 if (len & 1) len++;
 
-	sc->txb_next_len = MAX(len, ETHER_MIN_LEN);
+	sc->txb_next_len = max(len, ETHER_MIN_LEN);
 
 	if (sc->txb_cnt > 1)
 		/*
