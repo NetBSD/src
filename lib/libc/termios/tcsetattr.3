@@ -1,4 +1,4 @@
-.\"	$NetBSD: tcsetattr.3,v 1.5 1998/02/05 18:51:06 perry Exp $
+.\"	$NetBSD: tcsetattr.3,v 1.6 2001/09/16 01:35:41 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -185,7 +185,7 @@ The
 .Nm cfmakeraw
 function sets the flags stored in the termios structure to a state disabling
 all input and output processing, giving a
-.Dq raw I/O path.
+.Dq raw I/O path .
 It should be noted that there is no function to reverse this effect.
 This is because there are a variety of processing options that could be
 re-enabled and the correct method is for an application to snapshot the
