@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.24 1999/08/27 19:23:19 is Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.25 1999/08/27 19:38:29 is Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -514,7 +514,8 @@ arc_isphds(type)
 	u_int8_t type;
 {
 	return ((type != ARCTYPE_IP_OLD && 
-		 type != ARCTYPE_ARP_OLD));
+		 type != ARCTYPE_ARP_OLD) &&
+		 (type != ARCTYPE_DIAGNOSE));
 }
 
 /*
