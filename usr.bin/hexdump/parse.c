@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.11 2001/02/07 18:32:07 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.12 2001/12/07 13:37:39 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: parse.c,v 1.11 2001/02/07 18:32:07 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.12 2001/12/07 13:37:39 bjh21 Exp $");
 #endif
 #endif /* not lint */
 
@@ -306,6 +306,9 @@ isint:				cs[2] = '\0';
 					break;
 				case 2:
 					pr->bcnt = 2;
+					break;
+				case 8:
+					pr->bcnt = 8;
 					break;
 				default:
 					p1[1] = '\0';
