@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.487 2002/04/22 21:05:22 ad Exp $
+# $NetBSD: GENERIC,v 1.488 2002/04/25 00:54:54 kleink Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.487 $"
+#ident 		"GENERIC-$Revision: 1.488 $"
 
 maxusers	32		# estimated number of users
 
@@ -1003,6 +1003,7 @@ joy*	at isapnp?			# Game ports (usually on audio cards)
 
 # PCI joysticks
 joy*	at pci?				# Game ports (usually on audio cards)
+joy*	at eso?				# ESS Solo-1 on-board joystick
 
 # ISA joysticks. Probe is a little strange; add only if you have one.
 #joy0	at isa? port 0x201
