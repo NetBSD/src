@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_fixup.c,v 1.7 2000/07/18 11:22:36 soda Exp $	*/
+/*	$NetBSD: pci_intr_fixup.c,v 1.8 2000/07/18 11:37:56 soda Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -97,6 +97,10 @@ struct pciintr_link_map {
 
 pciintr_icu_tag_t pciintr_icu_tag;
 pciintr_icu_handle_t pciintr_icu_handle;
+
+#ifdef PCIBIOS_IRQS_HINT
+int pcibios_irqs_hint = PCIBIOS_IRQS_HINT;
+#endif
 
 struct pciintr_link_map *pciintr_link_lookup __P((int));
 struct pciintr_link_map *pciintr_link_alloc __P((struct pcibios_intr_routing *,
@@ -435,7 +439,7 @@ pciintr_link_fixup()
 		if (l->irq != I386_PCI_INTERRUPT_LINE_NO_CONNECTION)
 			continue;
 		if (pciintr_bitmap_find_lowest_irq(
-		    l->bitmap & PCIBIOS_IRQS_HINT, &l->irq)) {
+		    l->bitmap & pcibios_irqs_hint, &l->irq)) {
 			l->fixup_stage = 3;
 #ifdef PCIINTR_DEBUG
 			printf("pciintr_link_fixup (stage 3): "
