@@ -1,6 +1,7 @@
-/*	$NetBSD: in_cksum.c,v 1.14 2003/08/07 16:29:44 agc Exp $ */
+/*	$NetBSD: in_cksum.c,v 1.15 2003/10/13 14:22:20 agc Exp $ */
 
 /*
+ * Copyright (c) 1995 Matthew R. Green.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -38,7 +39,6 @@
 
 /*
  * Copyright (c) 1995 Zubin Dittia.
- * Copyright (c) 1995 Matthew R. Green.
  * Copyright (c) 1994, 1998 Charles M. Hannum.
  *
  * All advertising materials mentioning features or use of this software
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.14 2003/08/07 16:29:44 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.15 2003/10/13 14:22:20 agc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
