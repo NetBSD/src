@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.108 2004/01/10 14:39:50 yamt Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.109 2004/01/10 14:43:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.108 2004/01/10 14:39:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.109 2004/01/10 14:43:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1010,6 +1010,7 @@ geteblk(int size)
 	simple_unlock(&bqueue_slock);
 	simple_unlock(&bp->b_interlock);
 	splx(s);
+	BIO_SETPRIO(bp, BPRIO_DEFAULT);
 	allocbuf(bp, size, 0);
 	return (bp);
 }
