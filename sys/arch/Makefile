@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.16 2002/02/04 00:24:14 thorpej Exp $
+#	$NetBSD: Makefile,v 1.17 2002/02/04 08:35:27 thorpej Exp $
 
 # For now, we install the machine and arch includes, and symlink 'machine'
 # to the location of the machine includes (usually).
 #
 # Eventually, we should install everything.
+
+.include <bsd.own.mk>
 
 SUBDIR=	${MACHINE}
 ARCHSUBDIR= ${MACHINE_CPU}
