@@ -1,4 +1,4 @@
-#	$NetBSD: rand.inc,v 1.1.1.1.2.2 2000/07/17 06:00:00 mrg Exp $
+#	$NetBSD: rand.inc,v 1.1.1.1.2.3 2002/08/29 16:39:30 he Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -9,6 +9,4 @@
 
 CPPFLAGS+=	-I${OPENSSLSRC}/crypto/rand
 
-SRCS+=md_rand.c randfile.c rand_lib.c rand_err.c rand_egd.c
-
-
+SRCS+=md_rand.c randfile.c rand_lib.c rand_err.c rand_egd.c rand_win.c

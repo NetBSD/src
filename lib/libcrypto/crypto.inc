@@ -1,4 +1,4 @@
-#	$NetBSD: crypto.inc,v 1.1.1.1.2.2 2000/07/17 05:59:58 mrg Exp $
+#	$NetBSD: crypto.inc,v 1.1.1.1.2.3 2002/08/29 16:39:28 he Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -9,6 +9,4 @@
 
 CPPFLAGS+=	-I${OPENSSLSRC}/crypto
 
-SRCS+= cryptlib.c mem.c mem_dbg.c cversion.c ex_data.c tmdiff.c cpt_err.c ebcdic.c
-
-
+SRCS+= cryptlib.c mem.c mem_dbg.c cversion.c ex_data.c tmdiff.c cpt_err.c ebcdic.c uid.c
