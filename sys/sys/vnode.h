@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.50 1998/06/05 19:47:00 kleink Exp $	*/
+/*	$NetBSD: vnode.h,v 1.51 1998/06/30 05:33:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -472,12 +472,14 @@ int 	vn_open __P((struct nameidata *ndp, int fmode, int cmode));
 int 	vn_rdwr __P((enum uio_rw rw, struct vnode *vp, caddr_t base,
 	    int len, off_t offset, enum uio_seg segflg, int ioflg,
 	    struct ucred *cred, int *aresid, struct proc *p));
-int	vn_read __P((struct file *fp, struct uio *uio, struct ucred *cred));
+int	vn_read __P((struct file *fp, off_t *offset, struct uio *uio,
+	    struct ucred *cred, int flags));
 int	vn_readdir __P((struct file *fp, char *buf, int segflg, u_int count,
 	    int *done, struct proc *p, off_t **cookies, int *ncookies));
 int	vn_poll __P((struct file *fp, int events, struct proc *p));
 int	vn_stat __P((struct vnode *vp, struct stat *sb, struct proc *p));
-int	vn_write __P((struct file *fp, struct uio *uio, struct ucred *cred));
+int	vn_write __P((struct file *fp, off_t *offset, struct uio *uio,
+	    struct ucred *cred, int flags));
 int	vn_writechk __P((struct vnode *vp));
 struct vnode *
 	checkalias __P((struct vnode *vp, dev_t nvp_rdev, struct mount *mp));
