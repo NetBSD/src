@@ -1,4 +1,4 @@
-/*	$NetBSD: route6.c,v 1.4 1999/12/13 15:17:24 itojun Exp $	*/
+/*	$NetBSD: route6.c,v 1.5 2000/01/31 10:33:23 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -141,8 +141,23 @@ ip6_rthdr0(m, ip6, rh0)
 	rh0->ip6r0_segleft--;
 	nextaddr = rh0->ip6r0_addr + index;
 
+	/*
+	 * reject invalid addresses.  be proactive about malicious use of
+	 * IPv4 mapped/compat address.
+	 * XXX need more checks?
+	 */
 	if (IN6_IS_ADDR_MULTICAST(nextaddr) ||
-	    IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst)) {
+	    IN6_IS_ADDR_UNSPECIFIED(nextaddr) ||
+	    IN6_IS_ADDR_V4MAPPED(nextaddr) ||
+	    IN6_IS_ADDR_V4COMPAT(nextaddr)) {
+		ip6stat.ip6s_badoptions++;
+		m_freem(m);
+		return(-1);
+	}
+	if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst) ||
+	    IN6_IS_ADDR_UNSPECIFIED(&ip6->ip6_dst) ||
+	    IN6_IS_ADDR_V4MAPPED(&ip6->ip6_dst) ||
+	    IN6_IS_ADDR_V4COMPAT(nextaddr)) {
 		ip6stat.ip6s_badoptions++;
 		m_freem(m);
 		return(-1);
