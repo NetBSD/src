@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.8 1994/12/28 19:44:27 mycroft Exp $	*/
+/*	$NetBSD: ncr.c,v 1.9 1995/01/04 09:02:32 mycroft Exp $	*/
 
 /**************************************************************************
 **
@@ -1173,50 +1173,50 @@ struct script {
 */
 
 #ifdef KERNEL
-static	void	ncr_alloc_ccb	(ncb_p np, struct scsi_xfer * xp);
-static	void	ncr_complete	(ncb_p np, ccb_p cp);
-static	int	ncr_delta	(struct timeval * from, struct timeval * to);
-static	void	ncr_exception	(ncb_p np);
-static	void	ncr_free_ccb	(ncb_p np, ccb_p cp, int flags);
-static	void	ncr_getclock	(ncb_p np);
-static	ccb_p	ncr_get_ccb	(ncb_p np, u_long flags, u_long t,u_long l);
+void	ncr_alloc_ccb	(ncb_p np, struct scsi_xfer * xp);
+void	ncr_complete	(ncb_p np, ccb_p cp);
+int	ncr_delta	(struct timeval * from, struct timeval * to);
+void	ncr_exception	(ncb_p np);
+void	ncr_free_ccb	(ncb_p np, ccb_p cp, int flags);
+void	ncr_getclock	(ncb_p np);
+ccb_p	ncr_get_ccb	(ncb_p np, u_long flags, u_long t,u_long l);
 #ifndef __NetBSD__
-static  U_INT32 ncr_info	(int unit);
+U_INT32 ncr_info	(int unit);
 #endif /* !__NetBSD__ */
-static	void	ncr_init	(ncb_p np, char * msg, u_long code);
-static	void	ncr_int_ma	(ncb_p np);
-static	void	ncr_int_sir	(ncb_p np);
-static  void    ncr_int_sto     (ncb_p np);
+void	ncr_init	(ncb_p np, char * msg, u_long code);
+void	ncr_int_ma	(ncb_p np);
+void	ncr_int_sir	(ncb_p np);
+void    ncr_int_sto     (ncb_p np);
 #ifndef NEW_SCSICONF
-static	u_long	ncr_lookup	(char* id);
+u_long	ncr_lookup	(char* id);
 #endif
-static	void	ncr_min_phys	(struct buf *bp);
-static	void	ncr_negotiate	(struct ncb* np, struct tcb* tp);
-static	void	ncr_openings	(ncb_p np, lcb_p lp, struct scsi_xfer * xp);
-static	void	ncb_profile	(ncb_p np, ccb_p cp);
-static	void	ncr_script_copy_and_bind
+void	ncr_min_phys	(struct buf *bp);
+void	ncr_negotiate	(struct ncb* np, struct tcb* tp);
+void	ncr_openings	(ncb_p np, lcb_p lp, struct scsi_xfer * xp);
+void	ncb_profile	(ncb_p np, ccb_p cp);
+void	ncr_script_copy_and_bind
 				(struct script * script, ncb_p np);
-static  void    ncr_script_fill (struct script * scr);
-static	int	ncr_scatter	(struct dsb* phys,u_long vaddr,u_long datalen);
-static	void	ncr_setmaxtags	(tcb_p tp, u_long usrtags);
-static	void	ncr_setsync	(ncb_p np, ccb_p cp, u_char sxfer);
-static	void	ncr_settags     (tcb_p tp, lcb_p lp);
-static	void	ncr_setwide	(ncb_p np, ccb_p cp, u_char wide);
-static	int	ncr_show_msg	(u_char * msg);
-static	int	ncr_snooptest	(ncb_p np);
-static	INT32	ncr_start       (struct scsi_xfer *xp);
-static	void	ncr_timeout	(ncb_p np);
-static	void	ncr_usercmd	(ncb_p np);
-static  void    ncr_wakeup      (ncb_p np, u_long code);
+void    ncr_script_fill (struct script * scr);
+int	ncr_scatter	(struct dsb* phys,u_long vaddr,u_long datalen);
+void	ncr_setmaxtags	(tcb_p tp, u_long usrtags);
+void	ncr_setsync	(ncb_p np, ccb_p cp, u_char sxfer);
+void	ncr_settags     (tcb_p tp, lcb_p lp);
+void	ncr_setwide	(ncb_p np, ccb_p cp, u_char wide);
+int	ncr_show_msg	(u_char * msg);
+int	ncr_snooptest	(ncb_p np);
+INT32	ncr_start       (struct scsi_xfer *xp);
+void	ncr_timeout	(ncb_p np);
+void	ncr_usercmd	(ncb_p np);
+void    ncr_wakeup      (ncb_p np, u_long code);
 
 #ifdef __NetBSD__
-static	int	ncr_probe	(struct device *, void *, void *);
-static	void	ncr_attach	(struct device *, struct device *, void *);
-static	int	ncr_intr	(ncb_p np);
+int	ncr_probe	(struct device *, void *, void *);
+void	ncr_attach	(struct device *, struct device *, void *);
+int	ncr_intr	(ncb_p np);
 #else
-static  int     ncr_probe       (pcici_t config_id);
-static	int	ncr_attach	(pcici_t config_id);
-static  int	ncr_intr        (int dev);
+int     ncr_probe       (pcici_t config_id);
+int	ncr_attach	(pcici_t config_id);
+int	ncr_intr        (int dev);
 #endif
 
 /*==========================================================
@@ -1315,7 +1315,7 @@ static	u_long	getirr (void)
 
 
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.8 1994/12/28 19:44:27 mycroft Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.9 1995/01/04 09:02:32 mycroft Exp $\n";
 
 u_long	ncr_version = NCR_VERSION
 	+ (u_long) sizeof (struct ncb)
@@ -1419,7 +1419,7 @@ struct scsi_switch ncr_switch =
 
 #else /* !__NetBSD__ */
 
-static char *ncr_name (ncb_p np)
+char *ncr_name (ncb_p np)
 {
 	static char name[10];
 	int idx;
@@ -3049,7 +3049,7 @@ void ncr_script_fill (struct script * scr)
 **==========================================================
 */
 
-static void ncr_script_copy_and_bind (struct script *script, ncb_p np)
+void ncr_script_copy_and_bind (struct script *script, ncb_p np)
 {
 	ncrcmd  opcode, new, old;
 	ncrcmd	*src, *dst, *start, *end;
@@ -3224,7 +3224,7 @@ ncr_probe(parent, match, aux)
 
 #else /* !__NetBSD__ */
 
-static	int ncr_probe(pcici_t config_id)
+int ncr_probe(pcici_t config_id)
 {
 	if (ncr_units >= NNCR) return (-1);
 	return (ncr_units);
@@ -3298,7 +3298,7 @@ ncr_attach(parent, self, aux)
 
 #else /* !__NetBSD__ */
 
-static	int ncr_attach (pcici_t config_id)
+int ncr_attach (pcici_t config_id)
 {
 	int retval;
 	ncb_p np = ncrp[ncr_units];
@@ -3424,7 +3424,7 @@ static	int ncr_attach (pcici_t config_id)
 		ncr_name (np));
 	DELAY (1000000);
 #endif
-	printf ("%s scanning for targets 0..%d ($Revision: 1.8 $)\n",
+	printf ("%s scanning for targets 0..%d ($Revision: 1.9 $)\n",
 		ncr_name (np), MAX_TARGET-1);
 
 	/*
@@ -3490,7 +3490,7 @@ ncr_intr(np)
 
 #else /* !__NetBSD__ */
 
-static int ncr_intr (int dev)
+int ncr_intr (int dev)
 {
 	ncb_p np;
 	int n=0;
@@ -3538,7 +3538,7 @@ static int ncr_intr (int dev)
 **==========================================================
 */
 
-static INT32 ncr_start (struct scsi_xfer * xp)
+INT32 ncr_start (struct scsi_xfer * xp)
 {
 #ifndef ANCIENT
 #ifdef __NetBSD__
@@ -4510,7 +4510,7 @@ void ncr_init (ncb_p np, char * msg, u_long code)
 **==========================================================
 */
 
-static void ncr_negotiate (struct ncb* np, struct tcb* tp)
+void ncr_negotiate (struct ncb* np, struct tcb* tp)
 {
 	/*
 	**	minsync unit is 4ns !
@@ -4564,7 +4564,7 @@ static void ncr_negotiate (struct ncb* np, struct tcb* tp)
 **==========================================================
 */
 
-static void ncr_setsync (ncb_p np, ccb_p cp, u_char sxfer)
+void ncr_setsync (ncb_p np, ccb_p cp, u_char sxfer)
 {
 	struct scsi_xfer *xp;
 	tcb_p tp;
@@ -4622,7 +4622,7 @@ static void ncr_setsync (ncb_p np, ccb_p cp, u_char sxfer)
 **==========================================================
 */
 
-static void ncr_setwide (ncb_p np, ccb_p cp, u_char wide)
+void ncr_setwide (ncb_p np, ccb_p cp, u_char wide)
 {
 	struct scsi_xfer *xp;
 	u_short target = INB (nc_ctest0)&7;
@@ -4674,7 +4674,7 @@ static void ncr_setwide (ncb_p np, ccb_p cp, u_char wide)
 **==========================================================
 */
 
-static void ncr_setmaxtags (tcb_p tp, u_long usrtags)
+void ncr_setmaxtags (tcb_p tp, u_long usrtags)
 {
 	int l;
 	tp->usrtags = usrtags;
@@ -4687,7 +4687,7 @@ static void ncr_setmaxtags (tcb_p tp, u_long usrtags)
 	};
 }
 
-static void ncr_settags (tcb_p tp, lcb_p lp)
+void ncr_settags (tcb_p tp, lcb_p lp)
 {
 	u_char reqtags, tmp;
 	
@@ -4731,7 +4731,7 @@ static void ncr_settags (tcb_p tp, lcb_p lp)
 **----------------------------------------------------
 */
 
-static void ncr_usercmd (ncb_p np)
+void ncr_usercmd (ncb_p np)
 {
 	u_char t;
 	tcb_p tp;
@@ -4806,7 +4806,7 @@ static void ncr_usercmd (ncb_p np)
 **----------------------------------------------------------
 */
 
-static void ncr_timeout (ncb_p np)
+void ncr_timeout (ncb_p np)
 {
 	u_long	thistime = time.tv_sec;
 	u_long	step  = np->ticks;
@@ -5298,7 +5298,7 @@ void ncr_int_sto (ncb_p np)
 **----------------------------------------------------------
 */
 
-static void ncr_int_ma (ncb_p np)
+void ncr_int_ma (ncb_p np)
 {
 	u_long	dbc;
 	u_long	rest;
@@ -5461,7 +5461,7 @@ static void ncr_int_ma (ncb_p np)
 **==========================================================
 */
 
-static int ncr_show_msg (u_char * msg)
+int ncr_show_msg (u_char * msg)
 {
 	u_char i;
 	printf ("%x",*msg);
@@ -6081,7 +6081,7 @@ out:
 **==========================================================
 */
 
-static	ccb_p ncr_get_ccb
+ccb_p ncr_get_ccb
 	(ncb_p np, u_long flags, u_long target, u_long lun)
 {
 	lcb_p lp;
@@ -6156,7 +6156,7 @@ void ncr_free_ccb (ncb_p np, ccb_p cp, int flags)
 **==========================================================
 */
 
-static	void ncr_alloc_ccb (ncb_p np, struct scsi_xfer * xp)
+void ncr_alloc_ccb (ncb_p np, struct scsi_xfer * xp)
 {
 	tcb_p tp;
 	lcb_p lp;
@@ -6308,7 +6308,7 @@ static	void ncr_alloc_ccb (ncb_p np, struct scsi_xfer * xp)
 **==========================================================
 */
 
-static void ncr_openings (ncb_p np, lcb_p lp, struct scsi_xfer * xp)
+void ncr_openings (ncb_p np, lcb_p lp, struct scsi_xfer * xp)
 {
 #ifndef	ANCIENT
 	/*
@@ -6371,7 +6371,7 @@ static void ncr_openings (ncb_p np, lcb_p lp, struct scsi_xfer * xp)
 **----------------------------------------------------------
 */
 
-static	int	ncr_scatter
+int	ncr_scatter
 	(struct dsb* phys, vm_offset_t vaddr, vm_size_t datalen)
 {
 	u_long	paddr, pnext;
@@ -6479,7 +6479,7 @@ static	int	ncr_scatter
 **==========================================================
 */
 
-static int ncr_snooptest (struct ncb* np)
+int ncr_snooptest (struct ncb* np)
 {
 	u_long	ncr_rd, ncr_wr, ncr_bk, host_rd, host_wr, pc, err=0;
 	/*
@@ -6546,7 +6546,7 @@ static int ncr_snooptest (struct ncb* np)
 **	Compute the difference in milliseconds.
 **/
 
-static	int ncr_delta (struct timeval * from, struct timeval * to)
+int ncr_delta (struct timeval * from, struct timeval * to)
 {
 	if (!from->tv_sec) return (-1);
 	if (!to  ->tv_sec) return (-2);
@@ -6555,7 +6555,7 @@ static	int ncr_delta (struct timeval * from, struct timeval * to)
 }
 
 #define PROFILE  cp->phys.header.stamp
-static	void ncb_profile (ncb_p np, ccb_p cp)
+void ncb_profile (ncb_p np, ccb_p cp)
 {
 	int co, da, st, en, di, se, post,work,disc;
 	u_long diff;
@@ -6623,7 +6623,7 @@ static	void ncb_profile (ncb_p np, ccb_p cp)
 #endif /* NCR_CLOCK */
 
 
-static void ncr_getclock (ncb_p np)
+void ncr_getclock (ncb_p np)
 {
 	u_char	tbl[5] = {6,2,3,4,6};
 	u_char	f;
