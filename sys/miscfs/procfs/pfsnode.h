@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: pfsnode.h,v 1.4 1993/08/25 09:28:39 pk Exp $
+ *	$Id: pfsnode.h,v 1.5 1993/08/26 19:01:00 pk Exp $
  */
 
 /*
@@ -37,9 +37,12 @@
 struct pfsnode {
 	struct	pfsnode	*pfs_next;	/* next on list */
 	struct	vnode	*pfs_vnode;	/* vnode associated with this pfsnode */
-	pid_t	pfs_pid;
-	int	pfs_flags;
-	long	pfs_spare[4];
+	pid_t	pfs_pid;		/* associated process */
+	u_short	pfs_mode;		/* mode bits for stat() */
+	uid_t	pfs_uid;		/* process' owner */
+	gid_t	pfs_gid;		/* process' group */
+	u_long	pfs_vflags;		/* chflags() flags */
+	u_long	pfs_flags;		/* open flags */
 };
 
 struct pfsnode	*pfshead;
@@ -107,11 +110,11 @@ int	pfs_getattr __P((
 		struct vattr *vap,
 		struct ucred *cred,
 		struct proc *p));
-#define pfs_setattr ((int (*) __P(( \
-		struct vnode *vp, \
-		struct vattr *vap, \
-		struct ucred *cred, \
-		struct proc *p))) pfs_badop)
+int	pfs_setattr __P((
+		struct vnode *vp,
+		struct vattr *vap,
+		struct ucred *cred,
+		struct proc *p));
 #define	pfs_read ((int (*)  __P(( \
 		struct vnode *vp, \
 		struct uio *uio, \

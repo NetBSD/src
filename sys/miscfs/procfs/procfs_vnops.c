@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: procfs_vnops.c,v 1.4 1993/08/25 09:28:47 pk Exp $
+ *	$Id: procfs_vnops.c,v 1.5 1993/08/26 19:01:02 pk Exp $
  */
 
 /*
@@ -257,12 +257,10 @@ pfs_inactive(vp, p)
 {
 	struct pfsnode	*pfsp = VTOPFS(vp);
 
-#if 0
-	if ((pfsp->pfs_pid?pfind(pfsp->pfs_pid):&proc0) && vp->v_usecount == 0)
+	if ((pfsp->pfs_pid?pfind(pfsp->pfs_pid):&proc0) == NULL
+			&& vp->v_usecount == 0)
 		vgone(vp);
-#endif
-	if (vp->v_usecount == 0)
-		vgone(vp);
+
 	return 0;
 }
 
@@ -292,6 +290,13 @@ void
 pfs_print(vp)
 	struct vnode *vp;
 {
+	struct pfsnode	*pfsp = VTOPFS(vp);
+
+	printf("tag VT_PROCFS, pid %d, uid %d, gid %d, mode %x, flags %x\n",
+		pfsp->pfs_pid,
+		pfsp->pfs_uid, pfsp->pfs_gid,
+		pfsp->pfs_mode, pfsp->pfs_flags);
+
 	return;
 }
 
@@ -375,15 +380,16 @@ pfs_getattr (vp, vap, cred, p)
 
 	VATTR_NULL(vap);
 	vap->va_type = vp->v_type;
+	vap->va_mode = pfsp->pfs_mode;
+	vap->va_flags = pfsp->pfs_vflags;
 
 	if (vp->v_flag & VROOT) {
-		vap->va_mode = 0755;
 		vap->va_nlink = 2;
 		vap->va_size =
 			roundup((2+nprocs)*sizeof(struct pfsdent), DIRBLKSIZ);
 		vap->va_size_rsv = 0;
-		vap->va_uid = 0;
-		vap->va_gid = 0;
+		vap->va_uid = pfsp->pfs_uid;
+		vap->va_gid = pfsp->pfs_gid;
 		vap->va_atime = vap->va_mtime = vap->va_ctime = time; /*XXX*/
 		return 0;
 	}
@@ -392,7 +398,6 @@ pfs_getattr (vp, vap, cred, p)
 	if (!procp)
 		return ESRCH;
 
-	vap->va_mode = 0700;
 	vap->va_nlink = 1;
 	vap->va_size = ctob(	procp->p_vmspace->vm_tsize +
 				procp->p_vmspace->vm_dsize +
@@ -413,6 +418,84 @@ pfs_getattr (vp, vap, cred, p)
 	return 0;
 }
 
+/*
+ * Set some attributes for a process file
+ */
+int
+pfs_setattr (vp, vap, cred, p)
+	struct vnode *vp;
+	struct vattr *vap;
+	struct ucred *cred;
+	struct proc *p;
+{
+	struct pfsnode *pfsp = VTOPFS(vp);
+	struct proc *procp;
+	int error = 0;
+
+	procp = pfsp->pfs_pid?pfind(pfsp->pfs_pid):&proc0;
+		if (!procp)
+			return ESRCH;
+
+	/*
+	 * Check for unsetable attributes.
+	 */
+	if ((vap->va_type != VNON) || (vap->va_nlink != (short)VNOVAL) ||
+	    (vap->va_fsid != (long)VNOVAL) ||
+	    (vap->va_fileid != (long)VNOVAL) ||
+	    (vap->va_blocksize != (long)VNOVAL) ||
+	    (vap->va_rdev != (dev_t)VNOVAL) ||
+	    ((int)vap->va_bytes != (u_long)VNOVAL) ||
+	    ((int)vap->va_bytes_rsv != (u_long)VNOVAL) ||
+	    ((int)vap->va_size != (u_long)VNOVAL) ||
+	    ((int)vap->va_size_rsv != (u_long)VNOVAL) ||
+	    (vap->va_gen != (long)VNOVAL) ||
+	    ((int)vap->va_atime.tv_sec != (u_long)VNOVAL) ||
+	    ((int)vap->va_mtime.tv_sec != (u_long)VNOVAL) ||
+	    ((int)vap->va_ctime.tv_sec != (u_long)VNOVAL) ||
+	    ((	(vap->va_uid != (uid_t)VNOVAL) ||
+		(vap->va_gid != (gid_t)VNOVAL)) && !(vp->v_flag & VROOT)) ) {
+		return (EINVAL);
+	}
+
+	/* set mode bits, only rwx bits are modified */
+	if (vap->va_mode != (u_short)VNOVAL) {
+		if (cred->cr_uid != pfsp->pfs_uid &&
+			(error = suser(cred, &p->p_acflag)))
+				return (error);
+		pfsp->pfs_mode = vap->va_mode & 0777;
+	}
+
+	/* For now, only allow to change ownership of "/proc" itself */
+	if ((vp->v_flag & VROOT) && vap->va_uid != (uid_t)VNOVAL) {
+		if ((error = suser(cred, &p->p_acflag)))
+			return (error);
+		pfsp->pfs_uid = vap->va_uid;
+	}
+
+	if ((vp->v_flag & VROOT) && vap->va_gid != (gid_t)VNOVAL) {
+		if ((cred->cr_uid != pfsp->pfs_uid ||
+			!groupmember(vap->va_gid, cred)) &&
+				(error = suser(cred, &p->p_acflag)))
+			return error;
+
+		pfsp->pfs_gid = vap->va_gid;
+	}
+
+	/* chflags() */
+	if (vap->va_flags != (u_long)VNOVAL) {
+		if (cred->cr_uid != pfsp->pfs_uid &&
+			(error = suser(cred, &p->p_acflag)))
+				return (error);
+		if (cred->cr_uid == 0) {
+			pfsp->pfs_vflags = vap->va_flags;
+		} else {
+			pfsp->pfs_vflags &= 0xffff0000;
+			pfsp->pfs_vflags |= (vap->va_flags & 0xffff);
+		}
+	}
+	return 0;
+}
+
 int
 pfs_access (vp, mode, cred, p)
 	struct vnode *vp;
@@ -430,7 +513,7 @@ pfs_access (vp, mode, cred, p)
 	 * If you're the super-user,
 	 * you always get access.
 	 */
-	if (cred->cr_uid == 0)
+	if (cred->cr_uid == (uid_t)0)
 		return (0);
 	vap = &vattr;
 	if (error = pfs_getattr(vp, vap, cred, p))
@@ -504,6 +587,7 @@ pfs_lookup(vp, ndp, p)
 	if ((procp = pid?pfind(pid):&proc0) == NULL)
 		return ENOENT;
 
+	/* Search pfs node list first */
 	for (pfsp = pfshead; pfsp != NULL; pfsp = pfsp->pfs_next) {
 		if (pfsp->pfs_pid == pid)
 			break;
@@ -517,10 +601,16 @@ pfs_lookup(vp, ndp, p)
 
 		nvp->v_type = VPROC;
 		pfsp = VTOPFS(nvp);
+		pfsp->pfs_next = NULL;
 		pfsp->pfs_pid = pid;
 		pfsp->pfs_vnode = nvp;
 		pfsp->pfs_flags = 0;
-		pfsp->pfs_next = NULL;
+		pfsp->pfs_vflags = 0;
+		pfsp->pfs_uid = procp->p_ucred->cr_uid;
+		pfsp->pfs_gid = procp->p_ucred->cr_gid;
+		pfsp->pfs_mode = 0700;	/* Initial access bits */
+
+		/* Append to pfs node list */
 		for (pp = &pfshead; *pp; pp = &(*pp)->pfs_next);
 		*pp = pfsp;
 
