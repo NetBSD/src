@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.80 2003/12/20 19:01:30 fvdl Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.81 2004/03/21 13:26:44 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.80 2003/12/20 19:01:30 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.81 2004/03/21 13:26:44 mrg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -580,7 +580,7 @@ netbsd32_lchflags(l, v, retval)
 	register_t *retval;
 {
 	struct netbsd32_lchflags_args /* {
-		syscallarg(int) fd;
+		syscallarg(const char *) path;
 		syscallarg(netbsd32_u_long) flags;
 	} */ *uap = v;
 	struct sys_lchflags_args ua;
