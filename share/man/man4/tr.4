@@ -1,4 +1,4 @@
-.\"	$NetBSD: tr.4,v 1.1 1999/04/29 16:40:38 bad Exp $
+.\"	$NetBSD: tr.4,v 1.2 1999/04/29 21:47:09 bad Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -47,9 +47,29 @@
 .Sh DESCRIPTION
 The
 .Nm
-device driver supports TROPIC based shared-memory Token-Ring cards
-such as the IBM shared memory (non-busmaster) ISA cards and fully
-compatibles, and the 3COM 3C619 and 3C319 cards.
+device driver supports TROPIC I based shared-memory Token-Ring cards.
+Supported cards include the  following IBM and 3COM models:
+.pP
+.Bl -tag -width xxxx -offset indent
+.It IBM
+Token-Ring Network PC Adapter
+.It IBM
+Token-Ring Network PC Adapter II
+.It IBM
+Token-Ring Network Adapter/A
+.It IBM
+Token-Ring Network 16/4 Adapter
+.It IBM
+Token-Ring Network 16/4 Adapter/A
+.It IBM
+16/4 ISA Adapter
+.It IBM
+Auto 16/4 Token-Ring ISA Adapter
+.It 3COM
+3C619 TokenLink
+.It 3COM
+3C319 TokenLink Velocity
+.El
 .Sh "SOURCE ROUTING"
 Setting IFF_LINK0 enables Token-Ring source routing.  Setting
 IFF_LINK1 uses all-routes broadcasts otherwise single-route broadcasts
