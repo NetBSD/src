@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.24.2.18 1998/10/05 08:17:34 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.24.2.19 1998/10/12 14:33:37 bouyer Exp $ */
 
 
 /*
@@ -783,7 +783,8 @@ wdc_probe_caps(drvp)
 				if ((params.atap_udmamode_supp & (1 << i))
 				    == 0)
 					continue;
-				if (wdc->cap & WDC_CAPABILITY_MODE)
+				if ((wdc->cap & WDC_CAPABILITY_MODE) &&
+				    (wdc->cap & WDC_CAPABILITY_UDMA))
 					if (ata_set_mode(drvp, 0x40 | i,
 					    AT_POLL) != CMD_OK)
 						continue;

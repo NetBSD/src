@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.1.2.12 1998/10/05 08:17:35 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.1.2.13 1998/10/12 14:33:39 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -95,8 +95,7 @@ int   wdc_atapi_send_cmd __P((struct scsipi_xfer *sc_xfer));
 static struct scsipi_adapter wdc_switch  = {
 	wdc_atapi_send_cmd,
 	wdc_atapi_minphys,
-	0,
-	0
+	NULL,                   /* scsipi_ioctl */
 };
 
 void
