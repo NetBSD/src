@@ -1,8 +1,8 @@
 #	from: @(#)Makefile	5.8 (Berkeley) 7/28/90
-#	$Id: Makefile,v 1.5 1994/07/02 06:45:48 deraadt Exp $
+#	$Id: Makefile,v 1.6 1994/10/28 16:49:48 deraadt Exp $
 
 PROG=	ypbind
-NOMAN=
+MAN8=	ypbind.0
 CFLAGS+=-DDAEMON -DHEURISTIC
 
 .include <bsd.prog.mk>
