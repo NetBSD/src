@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.101 2003/09/22 04:47:45 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.102 2003/10/13 08:55:59 itojun Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.101 2003/09/22 04:47:45 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.102 2003/10/13 08:55:59 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2376,8 +2376,10 @@ key_setspddump(errorp)
 			}
 			if (!m)
 				m = n;
-			else
+			else {
+				m->m_pkthdr.len += n->m_pkthdr.len;
 				m_cat(m, n);
+			}
 		}
 	}
 
