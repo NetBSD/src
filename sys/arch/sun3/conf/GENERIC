@@ -1,11 +1,11 @@
-# $NetBSD: GENERIC,v 1.68 2000/06/14 22:02:38 veego Exp $
+# $NetBSD: GENERIC,v 1.69 2000/06/22 20:27:57 fvdl Exp $
 
 # GENERIC Sun3 (3/50, 3/60, 3/110, 3/160, 3/260, 3/E)
 # Supports root on: ie0, le0, sd*, ...
 
 include "arch/sun3/conf/std.sun3"
 
-#ident 		"GENERIC-$Revision: 1.68 $"
+#ident 		"GENERIC-$Revision: 1.69 $"
 
 # Machines to be supported by this kernel
 options 	FPU_EMULATE
@@ -67,7 +67,7 @@ file-system	MFS		# memory-based filesystem
 options 	NFSSERVER	# nfs server support
 options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-#options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP         # FFS soft updates support.
 
 # Networking options
 options 	INET		# IP prototol stack support

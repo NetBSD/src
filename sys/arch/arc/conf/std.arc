@@ -1,11 +1,7 @@
-#	$NetBSD: std.arc,v 1.9 2000/01/25 16:07:13 enami Exp $
+#	$NetBSD: std.arc,v 1.10 2000/06/22 20:27:50 fvdl Exp $
 # standard arc info
 
 machine arc mips
-
-prefix ../gnu/sys
-cinclude "conf/files.softdep"
-prefix
 
 mainbus0 at root
 cpu* at mainbus0
