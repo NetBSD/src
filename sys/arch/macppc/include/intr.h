@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.20 2003/09/03 21:33:32 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.21 2004/03/24 19:42:04 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,6 +65,9 @@
 #define	IST_LEVEL	3	/* level-triggered */
 
 #ifndef _LOCORE
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+#include <powerpc/softintr.h>
+#endif
 
 /*
  * Interrupt handler chains.  intr_establish() inserts a handler into
@@ -133,14 +136,6 @@ extern int imask[];
 #define	setsoftclock()	softintr(SIR_CLOCK)
 #define	setsoftnet()	softintr(SIR_NET)
 #define	setsoftserial()	softintr(SIR_SERIAL)
-
-extern long intrcnt[];
-
-#define CNT_IRQ0	0
-#define CNT_CLOCK	64
-#define CNT_SOFTCLOCK	65
-#define CNT_SOFTNET	66
-#define CNT_SOFTSERIAL	67
 
 #ifdef MULTIPROCESSOR
 #define MACPPC_IPI_HALT		0x0001
