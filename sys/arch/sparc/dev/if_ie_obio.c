@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.7 1998/08/21 14:07:37 pk Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.8 1998/08/23 10:04:56 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -99,9 +99,6 @@
 #include <net/if_ether.h>
 
 #include <vm/vm.h>
-#ifdef UVM
-#include <uvm/uvm.h>
-#endif
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
@@ -132,8 +129,6 @@ struct ieob {
 static void ie_obreset __P((struct ie_softc *, int));
 static void ie_obattend __P((struct ie_softc *));
 static void ie_obrun __P((struct ie_softc *));
-
-vm_map_t ie_map; /* XXX - needs change */
 
 int ie_obio_match __P((struct device *, struct cfdata *, void *));
 void ie_obio_attach __P((struct device *, struct device *, void *));
@@ -279,6 +274,8 @@ ie_obio_attach(parent, self, aux)
 	struct obio4_attach_args *oba = &uoba->uoba_oba4;
 	struct ie_softc *sc = (void *) self;
 	bus_space_handle_t bh;
+	bus_dma_segment_t seg;
+	int rseg;
 	struct bootpath *bp;
 	volatile struct ieob *ieo;
 	paddr_t pa;
@@ -286,7 +283,7 @@ ie_obio_attach(parent, self, aux)
 	u_int8_t myaddr[ETHER_ADDR_LEN];
 extern	void myetheraddr(u_char *);	/* should be elsewhere */
 
-	sc->bt = 0;
+	sc->bt = oba->oba_bustag;
 
 	sc->hwreset = ie_obreset;
 	sc->chan_attn = ie_obattend;
@@ -310,36 +307,29 @@ extern	void myetheraddr(u_char *);	/* should be elsewhere */
 	ieo = (volatile struct ieob *)bh;
 
 	/*
-	 * the rest of the IE_OBIO case needs to be cleaned up
-	 * XXX-should provide bus support for 24-bit devices..
+	 * Allocate control & buffer memory.
 	 */
+	if (bus_dmamem_alloc(oba->oba_dmatag, sc->sc_msize, 64*1024, 0,
+			     &seg, 1, &rseg,
+			     BUS_DMA_NOWAIT | BUS_DMA_24BIT) != 0) {
+		printf("%s @ obio: DMA memory allocation error\n",
+			self->dv_xname);
+		return;
+	}
+	if (bus_dmamem_map(oba->oba_dmatag, &seg, rseg, sc->sc_msize,
+			   (caddr_t *)&sc->sc_maddr,
+			   BUS_DMA_NOWAIT|BUS_DMA_COHERENT) != 0) {
+		printf("%s @ obio: DMA memory map error\n", self->dv_xname);
+		bus_dmamem_free(oba->oba_dmatag, &seg, rseg);
+		return;
+	}
 
-#ifdef UVM
-	ie_map = uvm_map_create(pmap_kernel(), (vaddr_t)IEOB_ADBASE,
-		(vaddr_t)IEOB_ADBASE + sc->sc_msize, TRUE);
-#else
-	ie_map = vm_map_create(pmap_kernel(), (vaddr_t)IEOB_ADBASE,
-		(vaddr_t)IEOB_ADBASE + sc->sc_msize, 1);
-#endif
-	if (ie_map == NULL)
-		panic("ie_map");
-
-#ifdef UVM
-	sc->sc_maddr = (caddr_t) uvm_km_alloc(ie_map, sc->sc_msize);
-#else
-	sc->sc_maddr = (caddr_t) kmem_alloc(ie_map, sc->sc_msize);
-#endif
-	if (sc->sc_maddr == NULL)
-		panic("ie kmem_alloc");
-
+	wzero(sc->sc_maddr, sc->sc_msize);
 	sc->bh = (bus_space_handle_t)(sc->sc_maddr);
 
-	kvm_uncache(sc->sc_maddr, sc->sc_msize >> PGSHIFT);
-	if (((u_long)sc->sc_maddr & ~(NBPG-1)) != (u_long)sc->sc_maddr)
-		panic("unaligned dvmamalloc breaks");
-
+#if 0
 	sc->sc_iobase = (caddr_t)IEOB_ADBASE; /* 24 bit base addr */
-	wzero(sc->sc_maddr, sc->sc_msize);
+#endif
 
 	/*
 	 * The i82586's 24-bit address space maps to the last 16MB of
@@ -367,6 +357,7 @@ extern	void myetheraddr(u_char *);	/* should be elsewhere */
 	 *
 	 */
 
+	/* Double map the SCP */
 	pa = pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_maddr);
 	if (pa == 0)
 		panic("ie pmap_extract");
@@ -375,18 +366,19 @@ extern	void myetheraddr(u_char *);	/* should be elsewhere */
 		   pa | PMAP_NC /*| PMAP_IOC*/,
 		   VM_PROT_READ | VM_PROT_WRITE, 1);
 
-	/* Map iscp at location zero */
+	/* Map iscp at location 0 (relative to `maddr') */
 	sc->iscp = 0;
 
 	/* scb follows iscp */
 	sc->scb = IE_ISCP_SZ;
 
-	sc->scp = IEOB_ADBASE + IE_SCP_ADDR;
+	/* scp is at the fixed location IE_SCP_ADDR (relative to IEOB_ADBASE) */
+	sc->scp = IE_SCP_ADDR + IEOB_ADBASE - (u_long)sc->sc_maddr;
 
-	ie_obio_write16(sc, IE_ISCP_SCB((u_long)sc->iscp), sc->scb);
-	ie_obio_write24(sc, IE_ISCP_BASE((u_long)sc->iscp), IEOB_ADBASE);
-	ie_obio_write24(sc, IE_SCP_ISCP((u_long)sc->scp),
-			    (u_long)sc->iscp - (u_long)IEOB_ADBASE);
+	ie_obio_write16(sc, IE_ISCP_SCB(sc->iscp), sc->scb);
+	ie_obio_write24(sc, IE_ISCP_BASE(sc->iscp), (u_long)sc->sc_maddr);
+	ie_obio_write24(sc, IE_SCP_ISCP(sc->scp),
+			(u_long)sc->sc_maddr - (u_long)IEOB_ADBASE + sc->iscp);
 
 
 	/*
