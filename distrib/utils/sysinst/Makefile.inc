@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8.4.1 2000/08/11 19:46:31 jdolecek Exp $
+#	$NetBSD: Makefile.inc,v 1.8.4.2 2001/07/29 19:24:08 he Exp $
 #
 # Makefile for install
 
@@ -10,10 +10,12 @@ LDADD=-lcurses -ltermcap -lutil
 LDSTATIC?=-static
 
 .if exists(${.CURDIR}/../../../../sys/conf/osrelease.sh)
+VERDEP=${.CURDIR}/../../../../sys/conf/osrelease.sh
 VER != sh ${.CURDIR}/../../../../sys/conf/osrelease.sh
 .endif
 
 .if exists(${.CURDIR}/../../../../../sys/conf/osrelease.sh)
+VERDEP=${.CURDIR}/../../../../../sys/conf/osrelease.sh
 VER != sh ${.CURDIR}/../../../../../sys/conf/osrelease.sh
 .endif
 
@@ -32,7 +34,7 @@ MKMAN=no
 
 WARNS=1
 
-CLEANFILES= menu_defs.c menu_defs.h menus.def msg_defs.c msg_defs.h msg.def
+CLEANFILES= menu_defs.c menu_defs.h menus.def msg_defs.c msg_defs.h msg.def msgtouch
 
 SYSINSTLANG?=en
 
@@ -49,10 +51,14 @@ menu_defs.c menu_defs.h: menus.def
 msg_defs.c msg_defs.h: msg.def
 	${MSGC} msg.def
 
-msg.def: msg.mi.${SYSINSTLANG} msg.md.${SYSINSTLANG}
+# Needed to get proper dependency checks on osrelease
+msgtouch: ${VERDEP}
+	touch ${.TARGET}
+
+msg.def: msg.mi.${SYSINSTLANG} msg.md.${SYSINSTLANG} msgtouch
 	sed "s/@@VERSION@@/${VER}/" ${.ALLSRC} > ${.TARGET}
 
-menus.def: menus.mi.${SYSINSTLANG} menus.md.${SYSINSTLANG}
+menus.def: menus.mi.${SYSINSTLANG} menus.md.${SYSINSTLANG} msgtouch
 	sed "s/@@VERSION@@/${VER}/" ${.ALLSRC} > ${.TARGET}
 
 menu_defs.c: msg_defs.h
