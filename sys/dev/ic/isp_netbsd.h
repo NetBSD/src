@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.29 2000/08/14 07:10:09 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.30 2000/10/16 05:18:15 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -210,9 +210,9 @@ struct isposinfo {
 #define	DEFAULT_IID(x)		7
 #define	DEFAULT_LOOPID(x)	108
 #define	DEFAULT_NODEWWN(isp)	(isp)->isp_osinfo.un._wwn
-#define	DEFAULT_PORTWWN(isp)	\
-	isp_port_from_node_wwn((isp), DEFAULT_NODEWWN(isp))
-#define	PORT_FROM_NODE_WWN	isp_port_from_node_wwn
+#define	DEFAULT_PORTWWN(isp)	(isp)->isp_osinfo.un._wwn
+#define	ISP_NODEWWN(isp)	FCPARAM(isp)->isp_nodewwn
+#define	ISP_PORTWWN(isp)	FCPARAM(isp)->isp_portwwn
 
 #define	ISP_UNSWIZZLE_AND_COPY_PDBP(isp, dest, src)	\
 	if((void *)src != (void *)dest) bcopy(src, dest, sizeof (isp_pdb_t))
@@ -263,8 +263,6 @@ void isp_uninit __P((struct ispsoftc *));
 static inline void isp_lock __P((struct ispsoftc *));
 static inline void isp_unlock __P((struct ispsoftc *));
 static inline char *strncat __P((char *, const char *, size_t));
-static inline u_int64_t
-isp_port_from_node_wwn __P((struct ispsoftc *, u_int64_t));
 static inline u_int64_t
 isp_microtime_sub __P((struct timeval *, struct timeval *));
 static void isp_wait_complete __P((struct ispsoftc *));
@@ -322,7 +320,7 @@ static inline void
 isp_unlock(isp)
 	struct ispsoftc *isp;
 {
-	if (isp->isp_osinfo.islocked <= 1) {
+	if (isp->isp_osinfo.islocked-- <= 1) {
 		isp->isp_osinfo.islocked = 0;
 		splx(isp->isp_osinfo.splsaved);
 	}
@@ -401,17 +399,6 @@ isp_wait_complete(isp)
 			isp_prt(isp, ISP_LOGWARN, "Mailbox Cmd (intr) Timeout");
 		}
 	}
-}
-
-static inline u_int64_t
-isp_port_from_node_wwn(struct ispsoftc *isp, u_int64_t node_wwn)
-{
-	u_int64_t rv = node_wwn;
-	if ((node_wwn >> 60) == 2) {
-		rv = node_wwn | 
-		    (((u_int64_t)(isp->isp_unit+1)) << 48);
-	}
-	return (rv);
 }
 
 /*
