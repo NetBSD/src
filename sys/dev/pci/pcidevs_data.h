@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.444 2002/06/22 08:09:08 cjs Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.445 2002/06/22 14:34:49 fvdl Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.442 2002/06/22 07:59:09 cjs Exp 
+ *	NetBSD: pcidevs,v 1.443 2002/06/22 14:33:54 fvdl Exp 
  */
 
 /*
@@ -866,6 +866,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Alteon",
 	    "ACEnic BCM5701 10/100/1000 Ethernet",
+	},
+	{
+	    PCI_VENDOR_ALTIMA, PCI_PRODUCT_ALTIMA_AC1000,
+	    0,
+	    "Altima",
+	    "AC1000 Gigabit Ethernet",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCNET_PCI,
@@ -6070,10 +6076,10 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "SK-NET GE",
 	},
 	{
-	    PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_ALTIMA,
+	    PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SK_9DX1,
 	    0,
 	    "Schneider & Koch",
-	    "SK-NET Altima Gigabit Ethernet",
+	    "SK-NET SK-9DX1 Gigabit Ethernet",
 	},
 	{
 	    PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SK_9D21,
@@ -10651,6 +10657,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_GLOBALSUN, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Global Sun Tech",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_ALTIMA, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Altima",
 	    NULL,
 	},
 	{
