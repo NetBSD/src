@@ -3097,6 +3097,18 @@ convert_regs ()
 	    subst_stack_regs (insn, &regstack);
 
 	} while (insn != block_end[block]);
+      
+      /* For all further actions, INSN needs to be the last insn in
+         this basic block.  If subst_stack_regs inserted additional
+         instructions after INSN, it is no longer the last one at
+         this point.  */
+      next = PREV_INSN (next);
+
+      /* If subst_stack_regs inserted something after a JUMP_INSN, that
+         is almost certainly a bug.  */
+      if (GET_CODE (insn) == JUMP_INSN && insn != next)
+	abort ();
+      insn = next;
 
       /* Something failed if the stack life doesn't match.  */
 
