@@ -1,4 +1,4 @@
-/*    $NetBSD: nfs_boot.c,v 1.11 1994/09/26 16:42:33 gwr Exp $ */
+/*    $NetBSD: nfs_boot.c,v 1.12 1994/10/29 06:38:11 cgd Exp $ */
 
 /*
  * Copyright (c) 1994 Adam Glass, Gordon Ross
@@ -380,10 +380,10 @@ bp_whoami(bpsin, my_ip, gw_ip)
 	 * Build request message for PMAPPROC_CALLIT.
 	 */
 	call = mtod(m, struct whoami_call *);
-	call->call_prog = BOOTPARAM_PROG;
-	call->call_vers = BOOTPARAM_VERS;
-	call->call_proc = BOOTPARAM_WHOAMI;
-	call->call_arglen = sizeof(struct bp_inaddr);
+	call->call_prog = htonl(BOOTPARAM_PROG);
+	call->call_vers = htonl(BOOTPARAM_VERS);
+	call->call_proc = htonl(BOOTPARAM_WHOAMI);
+	call->call_arglen = htonl(sizeof(struct bp_inaddr));
 
 	/* client IP address */
 	call->call_ia.atype = htonl(1);
@@ -412,14 +412,14 @@ bp_whoami(bpsin, my_ip, gw_ip)
 	if (msg_len < sizeof(*lp))
 		goto bad;
 	msg_len -= sizeof(*lp);
-	bpsin->sin_port = (short) *lp++;
+	bpsin->sin_port = htons((short)ntohl(*lp++));
 	sin = mtod(from, struct sockaddr_in *);
 	bpsin->sin_addr.s_addr = sin->sin_addr.s_addr;
 
 	/* length of encapsulated results */
-	if (msg_len < (*lp + sizeof(*lp)))
+	if (msg_len < (ntohl(*lp) + sizeof(*lp)))
 		goto bad;
-	msg_len = *lp++;
+	msg_len = ntohl(*lp++);
 	p = (char*)lp;
 
 	/* client name */
