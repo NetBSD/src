@@ -1,11 +1,13 @@
-#       $NetBSD: Makefile,v 1.16 1997/03/11 06:15:05 mikel Exp $
+#       $NetBSD: Makefile,v 1.17 1997/03/16 19:43:17 is Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
-MAN=	access.9 boot.9 copy.9 ctxsw.9 disk.9 disklabel.9 doshutdownhooks.9 \
+MAN=	access.9 arp.9 boot.9 copy.9 ctxsw.9 \
+	disk.9 disklabel.9 doshutdownhooks.9 \
 	extent.9 fetch.9 inittodr.9 malloc.9 panic.9 pfil.9 physio.9 \
 	psignal.9 resettodr.9 shutdownhook_establish.9 sleep.9 spl.9 \
 	store.9 time.9 timeout.9 vslock.9
+MLINKS+=arp.9 arp_ifinit.9
 MLINKS+=access.9 kernacc.9 access.9 useracc.9
 MLINKS+=copy.9 copyin.9 copy.9 copyout.9 copy.9 copystr.9 \
 	copy.9 copyinstr.9 copy.9 copyoutstr.9
