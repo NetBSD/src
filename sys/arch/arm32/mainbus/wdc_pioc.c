@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pioc.c,v 1.10 1998/12/28 09:40:28 mark Exp $	*/
+/*	$NetBSD: wdc_pioc.c,v 1.11 1998/12/31 09:37:12 mark Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe.
@@ -153,7 +153,7 @@ wdc_pioc_attach(parent, self, aux)
 	sc->sc_wdcdev.PIO_cap = 0;
 	sc->wdc_chanptr = &sc->wdc_channel;
 	sc->sc_wdcdev.channels = &sc->wdc_chanptr;
-	sc->wdc_channel.wdc = &sc->sc_wdcdev
+	sc->wdc_channel.wdc = &sc->sc_wdcdev;
 	sc->sc_wdcdev.nchannels = 1;
 	sc->wdc_channel.channel = 0;
 	sc->wdc_channel.ch_queue = malloc(sizeof(struct channel_queue),
