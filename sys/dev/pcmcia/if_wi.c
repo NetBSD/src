@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.29 2000/07/31 03:25:11 enami Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.30 2000/08/18 04:11:48 jhawk Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -522,9 +522,9 @@ static void wi_rxeof(sc)
 		m->m_pkthdr.len = m->m_len =
 		    rx_frame.wi_dat_len + WI_SNAPHDR_LEN;
 
-		bcopy((char *)&rx_frame.wi_addr1,
+		bcopy((char *)&rx_frame.wi_dst_addr,
 		    (char *)&eh->ether_dhost, ETHER_ADDR_LEN);
-		bcopy((char *)&rx_frame.wi_addr2,
+		bcopy((char *)&rx_frame.wi_src_addr,
 		    (char *)&eh->ether_shost, ETHER_ADDR_LEN);
 		bcopy((char *)&rx_frame.wi_type,
 		    (char *)&eh->ether_type, sizeof(u_int16_t));
@@ -1661,7 +1661,7 @@ static void wi_start(ifp)
 
 #if NBPFILTER > 0
 	/*
-	 * If there's a BPF listner, bounce a copy of
+	 * If there's a BPF listener, bounce a copy of
 	 * this frame to him.
 	 */
 	if (ifp->if_bpf)
