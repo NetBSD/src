@@ -1,9 +1,14 @@
-#	$NetBSD: Makefile,v 1.10 2002/09/13 20:16:40 mycroft Exp $
+#	$NetBSD: Makefile,v 1.11 2002/09/19 11:29:54 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
+
+.include <bsd.own.mk>
+
+MDIST=	${NETBSDSRCDIR}/usr.bin/man
 
 PROG=	apropos
 SRCS=	apropos.c manconf.c
-.PATH:	${.CURDIR}/../man
-CPPFLAGS+=-I${.CURDIR}/..
+
+.PATH:	${MDIST}
+CPPFLAGS+=-I${MDIST}
 
 .include <bsd.prog.mk>
