@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.36 2000/01/22 15:09:00 drochner Exp $ */
+/* $NetBSD: wskbd.c,v 1.37 2000/03/06 21:37:16 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.36 2000/01/22 15:09:00 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.37 2000/03/06 21:37:16 thorpej Exp $");
 
 /*
  * Copyright (c) 1992, 1993
@@ -434,7 +434,7 @@ wskbd_cnattach(consops, conscookie, mapdata)
 	wskbd_console_data.t_consaccesscookie = conscookie;
 
 #if NWSDISPLAY > 0
-	wsdisplay_set_cons_kbd(wskbd_cngetc, wskbd_cnpollc);
+	wsdisplay_set_cons_kbd(wskbd_cngetc, wskbd_cnpollc, wskbd_cnbell);
 #endif
 
 	wskbd_console_initted = 1;
@@ -1212,6 +1212,21 @@ wskbd_cnpollc(dev, poll)
 
 	(*wskbd_console_data.t_consops->pollc)
 	    (wskbd_console_data.t_consaccesscookie, poll);
+}
+
+void
+wskbd_cnbell(dev, pitch, period, volume)
+	dev_t dev;
+	u_int pitch, period, volume;
+{
+
+	if (!wskbd_console_initted)
+		return;
+
+	if (wskbd_console_data.t_consops->bell != NULL)
+		(*wskbd_console_data.t_consops->bell)
+		    (wskbd_console_data.t_consaccesscookie, pitch, period,
+			volume);
 }
 
 static inline void
