@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.121 1999/12/02 01:09:11 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.122 1999/12/02 23:40:27 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.121 1999/12/02 01:09:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.122 1999/12/02 23:40:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1432,6 +1432,7 @@ pmap_page_protect(pg, prot)
 	struct vm_page *pg;
 	vm_prot_t prot;
 {
+	pmap_t pmap;
 	struct pv_head *pvh;
 	pv_entry_t pv, nextpv;
 	boolean_t needisync = FALSE;
@@ -1477,14 +1478,16 @@ pmap_page_protect(pg, prot)
 	simple_lock(&pvh->pvh_slock);
 	for (pv = LIST_FIRST(&pvh->pvh_list); pv != NULL; pv = nextpv) {
 		nextpv = LIST_NEXT(pv, pv_list);
-		PMAP_LOCK(pv->pv_pmap);
+		pmap = pv->pv_pmap;
+
+		PMAP_LOCK(pmap);
 #ifdef DEBUG
 		if (pmap_pte_v(pmap_l2pte(pv->pv_pmap, pv->pv_va, NULL)) == 0 ||
 		    pmap_pte_pa(pv->pv_pte) != pa)
 			panic("pmap_page_protect: bad mapping");
 #endif
 		if (pmap_pte_w(pv->pv_pte) == 0)
-			needisync |= pmap_remove_mapping(pv->pv_pmap,
+			needisync |= pmap_remove_mapping(pmap,
 			    pv->pv_va, pv->pv_pte, FALSE, cpu_id, NULL);
 #ifdef DEBUG
 		else {
@@ -1496,7 +1499,7 @@ pmap_page_protect(pg, prot)
 			}
 		}
 #endif
-		PMAP_UNLOCK(pv->pv_pmap);
+		PMAP_UNLOCK(pmap);
 	}
 
 	if (needisync)
