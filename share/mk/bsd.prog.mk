@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.140 2001/11/14 21:49:53 tv Exp $
+#	$NetBSD: bsd.prog.mk,v 1.141 2001/11/14 23:06:27 tv Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -102,7 +102,7 @@ CLEANFILES+=strings
 .if defined(PROG)
 SRCS?=		${PROG}.c
 
-DPSRCS+=	${SRCS:M*.[ly]:C/..$/.c/}
+DPSRCS+=	${SRCS:M*.[ly]:C/\..$/.c/}
 CLEANFILES+=	${DPSRCS} ${YHEADER:D${SRCS:M*.y:.y=.h}}
 
 .if !empty(SRCS:N*.h:N*.sh:N*.fth)
@@ -111,7 +111,7 @@ LOBJS+=		${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
 .endif
 
 .if defined(OBJS) && !empty(OBJS)
-.NOPATH: ${OBJS} ${PROG} ${SRCS:M*.[ly]:C/..$/.c/} ${YHEADER:D${SRCS:M*.y:.y=.h}}
+.NOPATH: ${OBJS} ${PROG} ${SRCS:M*.[ly]:C/\..$/.c/} ${YHEADER:D${SRCS:M*.y:.y=.h}}
 
 .if defined(DESTDIR)
 

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.190 2001/11/14 21:49:53 tv Exp $
+#	$NetBSD: bsd.lib.mk,v 1.191 2001/11/14 23:06:26 tv Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -334,7 +334,7 @@ ALLOBJS=${POBJS} ${SOBJS}
 ALLOBJS+=${LOBJS}
 .endif
 
-.NOPATH: ${ALLOBJS} ${_LIBS} ${SRCS:M*.[ly]:C/..$/.c/} ${YHEADER:D${SRCS:M*.y:.y=.h}}
+.NOPATH: ${ALLOBJS} ${_LIBS} ${SRCS:M*.[ly]:C/\..$/.c/} ${YHEADER:D${SRCS:M*.y:.y=.h}}
 
 realall: ${SRCS} ${ALLOBJS:O} ${_LIBS}
 
@@ -348,7 +348,7 @@ __archiveinstall: .USE
 	${RANLIB} -t ${.TARGET}
 	chmod ${LIBMODE} ${.TARGET}
 
-DPSRCS+=	${SRCS:M*.[ly]:C/..$/.c/}
+DPSRCS+=	${SRCS:M*.[ly]:C/\..$/.c/}
 CLEANFILES+=	${DPSRCS} ${YHEADER:D${SRCS:M*.y:.y=.h}}
 
 lib${LIB}.a:: ${OBJS} __archivebuild
