@@ -1,4 +1,4 @@
-#	$NetBSD: PICA,v 1.15 2000/01/23 21:01:53 soda Exp $
+#	$NetBSD: PICA,v 1.16 2000/01/26 12:48:44 soda Exp $
 #
 #	Generic configuration file for MIPS R4400 PICA system
 #
@@ -16,9 +16,9 @@ options 	KTRACE			# system call tracing support
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC		# extra kernel debugging checks
 options 	DEBUG			# extra kernel debugging support
-#options	 KGDB			# support for kernel gdb
-#options 	"KGDBRATE=19200"	# kernel gdb port rate (default 9600)
-#options 	"KGDBDEV=15*256+0"	# device for kernel gdb
+#options 	KGDB			# support for kernel gdb
+#options 	KGDBRATE=19200		# kernel gdb port rate (default 9600)
+#options 	KGDBDEV="15*256+0"	# device for kernel gdb
 
 # System V options
 options 	SYSVMSG		# System V-like message queues
@@ -44,7 +44,7 @@ file-system 	FDESC		# user file descriptor filesystem
 
 options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-#options 	SOFTDEP         # FFS soft updates support.
+#options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 
 # Pull in config fragments for kernel crypto.  This is required for
@@ -83,12 +83,10 @@ options 	COMPAT_14
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 
 # Special options
-#options 	MACHINE_NONCONTIG # Support noncontigous memory.
 options 	NKMEMCLUSTERS=1024	# 4K pages in kernel malloc pool
 
+# Kernel root file system and dump configuration.
 options 	NFS_BOOT_BOOTP,NFS_BOOT_BOOTPARAM
-
-# Specify storage configuration
 config		netbsd root on ? type ?
 
 #

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arc,v 1.31 2000/01/24 20:36:10 tron Exp $
+#	$NetBSD: Makefile.arc,v 1.32 2000/01/26 12:48:44 soda Exp $
 #	$OpenBSD: Makefile.arc,v 1.8 1997/05/21 10:06:49 pefo Exp $
 
 # Makefile for NetBSD
@@ -105,7 +105,7 @@ NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 SYSTEM_OBJ=	locore.o fp.o locore_machdep.o \
 		 param.o ioconf.o ${OBJS} ${LIBCOMPAT} ${LIBKERN}
 .if !empty(IDENT:M-DMIPS3)
-SYSTEM_OBJ+=    locore_mips3.o
+SYSTEM_OBJ+=	locore_mips3.o
 .endif
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	@rm -f $@

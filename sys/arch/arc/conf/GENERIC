@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.24 2000/01/24 08:04:11 soda Exp $
+#	$NetBSD: GENERIC,v 1.25 2000/01/26 12:48:44 soda Exp $
 #	$OpenBSD: GENERIC,v 1.17 1997/05/18 13:45:23 pefo Exp $
 #
 #	Generic configuration file for MIPS R4x00 ARC Systems
@@ -6,7 +6,7 @@
 
 include		"arch/arc/conf/std.arc"
 
-#ident		"GENERIC-$Revision: 1.24 $"
+#ident		"GENERIC-$Revision: 1.25 $"
 
 maxusers	32
 
@@ -46,7 +46,7 @@ file-system 	FDESC		# user file descriptor filesystem
 
 options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-#options 	SOFTDEP         # FFS soft updates support.
+#options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 
 #options 	SCSIVERBOSE	# Verbose SCSI errors
@@ -90,16 +90,13 @@ options 	COMPAT_14
 #options 	COMPAT_ULTRIX	# Ultrix binary compatibility (no go yet)
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 
-options 	"NKMEMCLUSTERS=1024"	# 4K pages in kernel malloc pool
+options 	NKMEMCLUSTERS=1024	# 4K pages in kernel malloc pool
 #options 	KGDB			# support for kernel gdb
-#options 	"KGDBRATE=19200"	# kernel gdb port rate (default 9600)
-#options 	"KGDBDEV=15*256+0"	# device for kernel gdb
+#options 	KGDBRATE=19200		# kernel gdb port rate (default 9600)
+#options 	KGDBDEV="15*256+0"	# device for kernel gdb
 
-# Special options
-options 	MACHINE_NONCONTIG # Support noncontigous memory.
-
+# Kernel root file system and dump configuration.
 options 	NFS_BOOT_BOOTP,NFS_BOOT_BOOTPARAM
-
 config		netbsd root on ? type ?
 
 #
@@ -135,7 +132,7 @@ isa*		at isabr?
 
 aclock0		at isa? port 0x70 irq 0
 
-pc0    		at isa? port 0x60 irq 1         # generic PC console device
+pc0		at isa? port 0x60 irq 1		# generic PC console device
 com0		at isa? port 0x3f8 irq 4
 com1		at isa? port 0x2f8 irq 3
 com2		at isa? port 0x3e8 irq 4
@@ -185,7 +182,7 @@ lpt0		at isa? port 0x378 irq 7
 # XXX - should fix conflict with files.isa
 #ec0	at isa? port 0x250 iomem 0xd8000 irq 9	# 3Com 3c503 Ethernet
 # XXX - should fix conflict with files.isa
-#ep0		at isa? port ? irq ?           # 3C509 ethernet cards
+#ep0		at isa? port ? irq ?		# 3C509 ethernet cards
 # XXX - should fix conflict with files.isa
 #ne0	at isa? port 0x280 irq 9		# NE[12]000 ethernet cards
 #ne1	at isa? port 0x300 irq 10
