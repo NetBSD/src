@@ -565,6 +565,7 @@ int pcvt_kbd_wptr = 0;
 int pcvt_kbd_rptr = 0;
 short pcvt_kbd_count= 0;
 static u_char pcvt_timeout_scheduled = 0;
+static struct callout pcvt_timeout_ch = CALLOUT_INITIALIZER;
 
 static	void	pcvt_timeout (void *arg)
 {
@@ -665,7 +666,8 @@ pcintr(void *arg)
 		{
 			s = spltty();
 			pcvt_timeout_scheduled = 1;	/* flag active */
-			timeout((TIMEOUT_FUNC_T)pcvt_timeout, (caddr_t) 0, 1); /* fire off */
+			callout_reset(&pcvt_timeout_ch, 1,
+			    (TIMEOUT_FUNC_T)pcvt_timeout, NULL); /* fire off */
 			splx(s);
 		}
 	}
@@ -731,7 +733,7 @@ pcstart(register struct tty *tp)
 	tp->t_state &= ~TS_BUSY;
 
 	tp->t_state |= TS_TIMEOUT;
-	timeout(ttrstrt, tp, 1);
+	callout_reset(&tp->t_rstrt_ch, 1, ttrstrt, tp);
 
 	if (tp->t_outq.c_cc <= tp->t_lowat)
 	{
