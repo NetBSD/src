@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.43 2004/05/22 20:58:04 oster Exp $
+.\"     $NetBSD: raidctl.8,v 1.44 2004/05/24 00:08:04 wiz Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -60,7 +60,7 @@
 .\" any improvements or extensions that they make and grant Carnegie the
 .\" rights to redistribute these changes.
 .\"
-.Dd May 16, 2004
+.Dd May 24, 2004
 .Dt RAIDCTL 8
 .Os
 .Sh NAME
@@ -699,8 +699,9 @@ Under certain circumstances (e.g., the additional component has not
 arrived, or data is being migrated off of a disk destined to become a
 component) it may be desirable to configure a RAID 1 set with only
 a single component.
-This can be achieved by using the word "absent" to indicate that a
-particular component is not present.
+This can be achieved by using the word
+.Dq absent
+to indicate that a particular component is not present.
 In the following:
 .Bd -literal -offset indent
 START array
