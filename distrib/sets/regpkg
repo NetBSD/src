@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-# $NetBSD: regpkg,v 1.5 2004/01/16 10:05:10 dyoung Exp $
+# $NetBSD: regpkg,v 1.6 2004/07/23 15:11:26 erh Exp $
 #
 # Copyright (c) 2003 Alistair G. Crooks.  All rights reserved.
 #
@@ -35,6 +35,8 @@
 
 # Usage: regpkg set pkgname
 
+rundir=${0%/*}
+
 SYSPKGROOT=${PKG_DBDIR:-/var/db/pkg}
 case "${SYSPKG_DBDIR}" in
 "")	;;
@@ -66,11 +68,11 @@ case $verbose in
 esac
 
 # create the skeleton PLIST from the pkgset description
-./makeplist $pkgset $pkg > $PLIST
+$rundir/makeplist $pkgset $pkg > $PLIST
 
 # create the pkg tiny version
 case "${SYSPKG_DATES}" in
-"")	tinyvers=`awk '$1 ~ '/$pkg/' { print $2 }' versions`
+"")	tinyvers=`awk '$1 ~ '/$pkg/' { print $2 }' $rundir/versions`
 	case "$tinyvers" in
 	"")	tinyvers=0
 		;;
@@ -147,11 +149,11 @@ fi
 mkdir -p ${SYSPKGDIR}
 
 # add the dependencies
-awk '$1 ~ '/$pkg/' { print $2 }' deps | sort | \
+awk '$1 ~ '/$pkg/' { print $2 }' $rundir/deps | sort | \
     awk '{ print "@pkgdep " $1 "-[0-9]*" }' >> $PLIST
 
 # create the comment
-comment=`awk '$1 ~ '/$pkg/' { print substr($0, length($1) + 2) }' comments`
+comment=`awk '$1 ~ '/$pkg/' { print substr($0, length($1) + 2) }' $rundir/comments`
 case "$comment" in
 "")	echo "***WARNING ***: no comment for \"$pkg\"" 2>&1
 	comment="System package for $pkg"
@@ -160,7 +162,7 @@ esac
 echo "$comment" > ${SYSPKGDIR}/+COMMENT
 
 # create the description
-descr=`awk '$1 ~ '/$pkg/' { print substr($0, length($1) + 2) }' descrs`
+descr=`awk '$1 ~ '/$pkg/' { print substr($0, length($1) + 2) }' $rundir/descrs`
 case "$descr" in
 "")	echo "***WARNING ***: no description for \"$pkg\"" 2>&1
 	descr="System package for $pkg"
@@ -189,7 +191,7 @@ fi
 
 # test for attributes
 args=""
-attrs=`awk '$1 ~ '/$pkg/' { print substr($0, length($1) + 2) }' attrs`
+attrs=`awk '$1 ~ '/$pkg/' { print substr($0, length($1) + 2) }' $rundir/attrs`
 for a in "$attrs"; do
 	case "$attrs" in
 	"")		;;
