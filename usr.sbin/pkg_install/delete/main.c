@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.11.2.3 1999/12/20 15:40:56 he Exp $	*/
+/*	$NetBSD: main.c,v 1.11.2.4 2000/07/31 18:18:44 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.11 1997/10/08 07:46:48 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.11.2.3 1999/12/20 15:40:56 he Exp $");
+__RCSID("$NetBSD: main.c,v 1.11.2.4 2000/07/31 18:18:44 he Exp $");
 #endif
 #endif
 
@@ -58,9 +58,13 @@ int
 find_fn(const char *pkg, char *data)
 {
 	lpkg_t *lpp;
+	char fn[FILENAME_MAX];
 
-	lpp = alloc_lpkg(pkg);
-	TAILQ_INSERT_TAIL(&pkgs, lpp, lp_link);
+	snprintf(fn, sizeof(fn), "%s/%s", _pkgdb_getPKGDB_DIR(), pkg);
+	if (!isfile(fn)) {	/* might as well use sanity_check() */
+		lpp = alloc_lpkg(pkg);
+		TAILQ_INSERT_TAIL(&pkgs, lpp, lp_link);
+	}
 
 	return 0;
 }
