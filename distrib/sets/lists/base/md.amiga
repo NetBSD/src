@@ -1,5 +1,6 @@
 ./dev/mouse
 ./sbin/binpatch
+./sbin/ldconfig
 ./usr/lib/libamu.so.0.0
 ./usr/lib/libbfd.so.0.0
 ./usr/lib/libc.so.12.24
