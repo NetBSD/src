@@ -27,17 +27,18 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: index.S,v 1.2 1993/10/21 01:40:31 jtc Exp $
+ *	$Id: index.S,v 1.3 1993/12/08 22:10:14 jtc Exp $
  */
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: index.S,v 1.2 1993/10/21 01:40:31 jtc Exp $"
+	.asciz "$Id: index.S,v 1.3 1993/12/08 22:10:14 jtc Exp $"
 #endif
 
 #include "DEFS.h"
 
 /*
+ * strchr(s, c)
  * index(s, c)
  *	return a pointer to the first occurance of the character c in
  *	string s, or NULL if c does not occur in the string.
@@ -51,7 +52,11 @@
  *	J.T. Conklin (jtc@wimsey.com), Winning Strategies, Inc.
  */
 
+#ifdef STRCHR
+ENTRY(strchr)
+#else
 ENTRY(index)
+#endif
 	pushl	%ebx
 	movl	8(%esp),%eax
 	movb	12(%esp),%cl
