@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.21 1999/10/19 09:51:17 nisimura Exp $ */
+/* $NetBSD: sfb.c,v 1.22 1999/10/22 07:42:05 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.21 1999/10/19 09:51:17 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.22 1999/10/22 07:42:05 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1087,9 +1087,15 @@ sfb_copycols(id, row, srccol, dstcol, ncols)
 	width = w + align;
 	align = (long)dp & SFBALIGNMASK;
 	dp -= align;
+	shift = align - shift; 
+#if 1
+	if (shift < 0) {
+		align += 8;
+		dp -= 8;
+	}
+#endif
 	lmask = SFBCOPYALL1 << align;
 	rmask = SFBCOPYALL1 >> (-(w + align) & SFBCOPYBITMASK);
-	shift = align - shift; 
 	sfb = rap->data;
 
 	SFBMODE(sfb, MODE_COPY);
@@ -1204,11 +1210,10 @@ sfb_erasecols(id, row, startcol, ncols, attr)
 	lmask = SFBSTIPPLEALL1 << align;
 	rmask = SFBSTIPPLEALL1 >> (-width & SFBSTIPPLEBITMASK);
 	sfb = rap->data;
-	attr = (attr != 0) ^ (rc->rc_bits & RC_INVERT);
 
 	SFBMODE(sfb, MODE_TRANSPARENTSTIPPLE);
 	SFBPLANEMASK(sfb, ~0);
-	SFBFG(sfb, (attr == 0) ? 0 : 0x01010101);
+	SFBFG(sfb, 0);				/* fill with bg color */
 	if (width <= SFBSTIPPLEBITS) {
 		lmask = lmask & rmask;
 		while (height > 0) {
@@ -1337,11 +1342,10 @@ sfb_eraserows(id, startrow, nrows, attr)
 	lmask = SFBSTIPPLEALL1 << align;
 	rmask = SFBSTIPPLEALL1 >> (-width & SFBSTIPPLEBITMASK);
 	sfb = rap->data;
-	attr = (attr != 0) ^ (rc->rc_bits & RC_INVERT);
 
 	SFBMODE(sfb, MODE_TRANSPARENTSTIPPLE);
 	SFBPLANEMASK(sfb, ~0);
-	SFBFG(sfb, (attr == 0) ? 0 : 0x01010101);
+	SFBFG(sfb, 0);				/* fill with bg color */
 	if (width <= SFBSTIPPLEBITS) {
 		/* never happens */;
 	}
