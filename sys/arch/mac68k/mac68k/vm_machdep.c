@@ -39,7 +39,7 @@
  * from: Utah $Hdr: vm_machdep.c 1.21 91/04/06$
  *
  *	from: @(#)vm_machdep.c	7.10 (Berkeley) 5/7/91
- *	$Id: vm_machdep.c,v 1.7 1994/05/06 17:39:55 briggs Exp $
+ *	$Id: vm_machdep.c,v 1.8 1994/06/26 13:03:42 briggs Exp $
  */
 
 #include <sys/param.h>
@@ -48,6 +48,7 @@
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/user.h>
+#include <sys/vnode.h>
 
 #include <machine/cpu.h>
 
@@ -114,9 +115,9 @@ cpu_fork(p1, p2)
  * cpu_exit is called as the last action during exit.
  * We release the address space and machine-dependent resources,
  * including the memory for the user structure and kernel stack.
- * Once finished, we call swtch_exit, which switches to a temporary
+ * Once finished, we call switch_exit, which switches to a temporary
  * pcb and stack and never returns.  We block memory allocation
- * until swtch_exit has made things safe again.
+ * until switch_exit has made things safe again.
  */
 
 volatile void
@@ -131,9 +132,24 @@ cpu_exit(p)
 	(void) splimp();
 	kmem_free(kernel_map, (vm_offset_t)p->p_addr, ctob(UPAGES));
 
-	swtch_exit();
+	switch_exit();
 	for(;;); /* Get rid of a compile warning */
 	/* NOTREACHED */
+}
+
+/*
+ * Dump the machine specific header information at the start of a core dump.
+ * (Copied from i386/vm_machdep.c, 23May1994)
+ */     
+cpu_coredump(p, vp, cred)
+	struct proc *p;
+	struct vnode *vp;
+	struct ucred *cred;
+{
+
+	return (vn_rdwr(UIO_WRITE, vp, (caddr_t) p->p_addr, ctob(UPAGES),
+	    (off_t)0, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, (int *)NULL,
+	    p));
 }
 
 /*
