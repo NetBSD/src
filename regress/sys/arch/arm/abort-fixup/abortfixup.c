@@ -1,4 +1,4 @@
-/* $NetBSD: abortfixup.c,v 1.3 2002/03/17 12:25:11 bjh21 Exp $ */
+/* $NetBSD: abortfixup.c,v 1.4 2002/03/17 12:32:28 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/types.h>
 
-__RCSID("$NetBSD: abortfixup.c,v 1.3 2002/03/17 12:25:11 bjh21 Exp $");
+__RCSID("$NetBSD: abortfixup.c,v 1.4 2002/03/17 12:32:28 bjh21 Exp $");
 
 #include <signal.h>
 #include <stdio.h>
@@ -71,7 +71,7 @@ main(void)
 	 */
 
 	__asm __volatile ("
-		mvn r0, #0
+		mov r0, #0
 		mov r1, r0
 		str r1, [r0], r1, ror #10
 	");
