@@ -1,4 +1,4 @@
-/*	$NetBSD: chat.c,v 1.18.8.2 2000/09/30 06:21:40 simonb Exp $	*/
+/*	$NetBSD: chat.c,v 1.18.8.3 2001/05/26 21:22:47 he Exp $	*/
 
 /*
  *	Chat -- a program for automatic session establishment (i.e. dial
@@ -93,7 +93,7 @@
 #if 0
 static const char rcsid[] = "Id: chat.c,v 1.26 1999/12/23 01:39:54 paulus Exp ";
 #else
-__RCSID("$NetBSD: chat.c,v 1.18.8.2 2000/09/30 06:21:40 simonb Exp $");
+__RCSID("$NetBSD: chat.c,v 1.18.8.3 2001/05/26 21:22:47 he Exp $");
 #endif
 #endif
 
@@ -273,7 +273,7 @@ main(argc, argv)
     program_name = *argv;
     tzset();
 
-    while ((option = getopt(argc, argv, ":evVf:t:r:sST:U:")) != -1) {
+    while ((option = getopt(argc, argv, ":EevVf:t:r:sST:U:")) != -1) {
 	switch (option) {
 	case 'e':
 	    ++echo;
