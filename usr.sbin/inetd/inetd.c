@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
+/*	$NetBSD: inetd.c,v 1.12 1996/11/26 17:23:37 mrg Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
  * All rights reserved.
@@ -40,7 +40,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$Id: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $";
+static char rcsid[] = "$Id: inetd.c,v 1.12 1996/11/26 17:23:37 mrg Exp $";
 #endif /* not lint */
 
 /*
@@ -144,6 +144,12 @@ static char rcsid[] = "$Id: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $";
 #endif
 #include "pathnames.h"
 
+#ifdef LIBWRAP
+# include <tcpd.h>
+int allow_severity = LOG_INFO;
+int deny_severity = LOG_WARNING;
+#endif
+
 #define	TOOMANY		40		/* don't start more than TOOMANY */
 #define	CNT_INTVL	60		/* servers in CNT_INTVL sec. */
 #define	RETRYTIME	(60*10)		/* retry after bind or server fail */
@@ -155,7 +161,10 @@ extern	int errno;
 void	config(), reapchild(), retry(), goaway();
 char	*index();
 
-int	debug = 0;
+int	debug;
+#ifdef LIBWRAP
+int	lflag;
+#endif
 int	nsock, maxsock;
 fd_set	allsock;
 int	options;
@@ -276,6 +285,10 @@ main(argc, argv, envp)
 	struct sigvec sv;
 	int ch, pid, dofork;
 	char buf[50];
+#ifdef LIBWRAP
+	struct request_info req;
+	char *service;
+#endif
 
 	Argv = argv;
 	if (envp == 0 || *envp == 0)
@@ -287,12 +300,23 @@ main(argc, argv, envp)
 	progname = strrchr(argv[0], '/');
 	progname = progname ? progname + 1 : argv[0];
 
-	while ((ch = getopt(argc, argv, "d")) != EOF)
+	while ((ch = getopt(argc, argv,
+#ifdef LIBWRAP
+					"dl"
+#else
+					"d"
+#endif
+					   )) != EOF)
 		switch(ch) {
 		case 'd':
 			debug = 1;
 			options |= SO_DEBUG;
 			break;
+#ifdef LIBWRAP
+		case 'l':
+			lflag = 1;
+			break;
+#endif
 		case '?':
 		default:
 			fprintf(stderr, "usage: %s [-d] [conf]", progname);
@@ -368,6 +392,7 @@ main(argc, argv, envp)
 		if (debug)
 			fprintf(stderr, "someone wants %s\n", sep->se_service);
 		if (!sep->se_wait && sep->se_socktype == SOCK_STREAM) {
+			/* XXX here do the libwrap check-before-accept */
 			ctrl = accept(sep->se_fd, (struct sockaddr *)0,
 			    (int *)0);
 			if (debug)
@@ -379,6 +404,35 @@ main(argc, argv, envp)
 					sep->se_service);
 				continue;
 			}
+#ifdef LIBWRAP
+	request_init(&req, RQ_DAEMON, sep->se_argv[0], RQ_FILE, ctrl, NULL);
+	fromhost(&req);
+	if (!hosts_access(&req)) {
+		sp = getservbyport(ntohs(sep->se_ctrladdr_in.sin_port), "tcp");
+		if (sp == NULL) {
+			(void)snprintf(buf, sizeof buf, "%d",
+			    ntohs(sep->se_ctrladdr_in.sin_port));
+			service = buf;
+		} else
+			service = sp->s_name;
+		syslog(LOG_WARNING, "refused connection from %.500s, service %s",
+		    eval_client(&req), service);
+		shutdown(ctrl, 2);
+		close(ctrl);
+		continue;
+	}
+	if (lflag) {
+		sp = getservbyport(ntohs(sep->se_ctrladdr_in.sin_port), "tcp");
+		if (sp == NULL) {
+			(void)snprintf(buf, sizeof buf, "%d",
+			    ntohs(sep->se_ctrladdr_in.sin_port));
+			service = buf;
+		} else
+			service = sp->s_name;
+		syslog(LOG_INFO, "connection from %.500s, service %s",
+		    eval_client(&req), service);
+	}
+#endif /* LIBWRAP */
 		} else
 			ctrl = sep->se_fd;
 		(void) sigblock(SIGBLOCK);
@@ -1115,9 +1169,10 @@ inetd_setproctitle(a, s)
 	cp = Argv[0];
 	size = sizeof(sin);
 	if (getpeername(s, (struct sockaddr *)&sin, &size) == 0)
-		(void) sprintf(buf, "-%s [%s]", a, inet_ntoa(sin.sin_addr)); 
+		(void)snprintf(buf, sizeof buf, "-%s [%s]", a,
+		    inet_ntoa(sin.sin_addr)); 
 	else
-		(void) sprintf(buf, "-%s", a); 
+		(void)snprintf(buf, sizeof buf, "-%s", a); 
 	strncpy(cp, buf, LastArg - cp);
 	cp += strlen(cp);
 	while (cp < LastArg)
@@ -1362,11 +1417,12 @@ daytime_stream(s, sep)		/* Return human-readable time of day */
 {
 	char buffer[256];
 	time_t time(), clock;
+	int len;
 
 	clock = time((time_t *) 0);
 
-	(void) sprintf(buffer, "%.24s\r\n", ctime(&clock));
-	(void) write(s, buffer, strlen(buffer));
+	len = snprintf(buffer, sizeof buffer, "%.24s\r\n", ctime(&clock));
+	(void) write(s, buffer, len);
 }
 
 /* ARGSUSED */
@@ -1384,8 +1440,8 @@ daytime_dg(s, sep)		/* Return human-readable time of day */
 	size = sizeof(sa);
 	if (recvfrom(s, buffer, sizeof(buffer), 0, &sa, &size) < 0)
 		return;
-	(void) sprintf(buffer, "%.24s\r\n", ctime(&clock));
-	(void) sendto(s, buffer, strlen(buffer), 0, &sa, sizeof(sa));
+	size = snprintf(buffer, sizeof buffer, "%.24s\r\n", ctime(&clock));
+	(void) sendto(s, buffer, size, 0, &sa, sizeof(sa));
 }
 
 /*
@@ -1558,11 +1614,13 @@ int	ctrl;
 	}
 
 	/* Query the RFC 931 server. Would 13-byte writes ever be broken up? */
-	sprintf(buf, "%u,%u\r\n", ntohs(there->sin_port), ntohs(here.sin_port));
+	(void)snprintf(buf, sizeof buf, "%u,%u\r\n", ntohs(there->sin_port),
+	    ntohs(here.sin_port));
 
 
 	for (len = 0, cp = buf; len < strlen(buf); ) {
 		int	n;
+
 		if ((n = write(s, cp, strlen(buf) - len)) == -1) {
 			close(s);
 			alarm(0);
