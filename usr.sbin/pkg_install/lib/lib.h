@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.43.2.8 2003/08/26 22:32:13 jlam Exp $ */
+/* $NetBSD: lib.h,v 1.43.2.9 2003/08/30 12:09:15 jlam Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -90,8 +90,7 @@
 #endif
 
 /*
- * Where we put logging information by default, if PKG_REGISTRY and
- * PKG_DBDIR are both unset.
+ * Where we put logging information by default if PKG_DBDIR is unset.
  */
 #ifndef DEF_LOG_DIR
 #define DEF_LOG_DIR		"/var/db/pkg"
@@ -99,7 +98,6 @@
 
 /* just in case we change the environment variable name */
 #define PKG_DBDIR		"PKG_DBDIR"
-#define PKG_REGISTRY		"PKG_REGISTRY"
 
 /* The names of our "special" files */
 #define CONTENTS_FNAME		"+CONTENTS"
