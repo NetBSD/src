@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.116 1999/12/15 07:10:32 perseant Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.117 2000/02/16 11:57:45 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -123,6 +123,8 @@ int	vttoif_tab[9] = {
 
 int doforce = 1;		/* 1 => permit forcible unmounting */
 int prtactive = 0;		/* 1 => print out reclaim of active vnodes */
+
+extern int dovfsusermount;	/* 1 => permit any user to mount filesystems */
 
 /*
  * Insq/Remq for the vnode usage lists.
@@ -1753,6 +1755,8 @@ vfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 
 	/* The rest are generic vfs sysctls. */
 	switch (name[1]) {
+	case VFS_USERMOUNT:
+		return sysctl_int(oldp, oldlenp, newp, newlen, &dovfsusermount);
 #if defined(COMPAT_09) || defined(COMPAT_43) || defined(COMPAT_44)
 	case VFS_MAXTYPENUM:
 		/*
