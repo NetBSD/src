@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.48 1995/12/05 23:01:39 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.49 1995/12/11 01:27:28 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -1078,7 +1078,7 @@ ctx_alloc(pm)
 	register struct pmap *pm;
 {
 	register union ctxinfo *c;
-	register int cnum, i;
+	register int s, cnum, i, doflush;
 	register struct regmap *rp;
 	register int gap_start, gap_end;
 	register unsigned long va;
@@ -1092,10 +1092,11 @@ ctx_alloc(pm)
 	gap_start = pm->pm_gap_start;
 	gap_end = pm->pm_gap_end;
 
+	s = splpmap();
 	if ((c = ctx_freelist) != NULL) {
 		ctx_freelist = c->c_nextfree;
 		cnum = c - ctxinfo;
-		setcontext(cnum);
+		doflush = 0;
 	} else {
 		if ((ctx_kick += ctx_kickdir) >= ncontext) {
 			ctx_kick = ncontext - 1;
@@ -1113,17 +1114,20 @@ ctx_alloc(pm)
 			    cnum, c->c_pmap);
 #endif
 		c->c_pmap->pm_ctx = NULL;
-		setcontext(cnum);
-		if (vactype != VAC_NONE)
-			cache_flush_context();
+		doflush = (vactype != VAC_NONE);
 		if (gap_start < c->c_pmap->pm_gap_start)
 			gap_start = c->c_pmap->pm_gap_start;
 		if (gap_end > c->c_pmap->pm_gap_end)
 			gap_end = c->c_pmap->pm_gap_end;
 	}
+
+	setcontext(cnum);
 	c->c_pmap = pm;
 	pm->pm_ctx = c;
 	pm->pm_ctxnum = cnum;
+	splx(s);
+	if (doflush)
+		cache_flush_context();
 
 	/*
 	 * Write pmap's region (3-level MMU) or segment table into the MMU.
@@ -1407,7 +1411,7 @@ pv_unlink(pv, pm, va)
 			pv->pv_next = npv->pv_next;
 			pv->pv_pmap = npv->pv_pmap;
 			pv->pv_va = npv->pv_va;
-			free((caddr_t)npv, M_VMPVENT);
+			free(npv, M_VMPVENT);
 		} else
 			pv->pv_pmap = NULL;
 	} else {
@@ -1421,7 +1425,7 @@ pv_unlink(pv, pm, va)
 				break;
 		}
 		prev->pv_next = npv->pv_next;
-		free((caddr_t)npv, M_VMPVENT);
+		free(npv, M_VMPVENT);
 	}
 	if (pv->pv_flags & PV_NC) {
 		/*
@@ -2065,7 +2069,7 @@ pmap_destroy(pm)
 	simple_unlock(&pm->pm_lock);
 	if (count == 0) {
 		pmap_release(pm);
-		free((caddr_t)pm, M_VMPMAP);
+		free(pm, M_VMPMAP);
 	}
 }
 
@@ -2123,7 +2127,7 @@ pmap_release(pm)
 }
 #endif
 	if (pm->pm_regstore)
-		free((caddr_t)pm->pm_regstore, M_VMPMAP);
+		free(pm->pm_regstore, M_VMPMAP);
 }
 
 /*
@@ -2381,10 +2385,10 @@ pmap_rmu(pm, va, endva, vr, vs)
 			*pte = 0;
 		}
 		if ((sp->sg_npte = nleft) == 0) {
-			free((caddr_t)pte0, M_VMPMAP);
+			free(pte0, M_VMPMAP);
 			sp->sg_pte = NULL;
 			if (--rp->rg_nsegmap == 0) {
-				free((caddr_t)rp->rg_segmap, M_VMPMAP);
+				free(rp->rg_segmap, M_VMPMAP);
 				rp->rg_segmap = NULL;
 #ifdef MMU_3L
 				if (mmu_3l && rp->rg_smeg != reginval) {
@@ -2471,12 +2475,12 @@ if (pm->pm_ctx == NULL) {
 			setsegmap(vs << SGSHIFT, seginval);
 		}
 #endif
-		free((caddr_t)pte0, M_VMPMAP);
+		free(pte0, M_VMPMAP);
 		sp->sg_pte = NULL;
 		me_free(pm, pmeg);
 
 		if (--rp->rg_nsegmap == 0) {
-			free((caddr_t)rp->rg_segmap, M_VMPMAP);
+			free(rp->rg_segmap, M_VMPMAP);
 			rp->rg_segmap = NULL;
 			GAP_WIDEN(pm,vr);
 
@@ -2566,10 +2570,10 @@ pmap_page_protect(pa, prot)
 			if (nleft) {
 				sp->sg_pte[VA_VPG(va)] = 0;
 			} else {
-				free((caddr_t)sp->sg_pte, M_VMPMAP);
+				free(sp->sg_pte, M_VMPMAP);
 				sp->sg_pte = NULL;
 				if (--rp->rg_nsegmap == 0) {
-					free((caddr_t)rp->rg_segmap, M_VMPMAP);
+					free(rp->rg_segmap, M_VMPMAP);
 					rp->rg_segmap = NULL;
 					GAP_WIDEN(pm,vr);
 #ifdef MMU_3L
@@ -2645,7 +2649,7 @@ pmap_page_protect(pa, prot)
 					setsegmap(vs << SGSHIFT, seginval);
 				}
 #endif
-				free((caddr_t)sp->sg_pte, M_VMPMAP);
+				free(sp->sg_pte, M_VMPMAP);
 				sp->sg_pte = NULL;
 				me_free(pm, sp->sg_pmeg);
 
@@ -2657,7 +2661,7 @@ pmap_page_protect(pa, prot)
 						region_free(pm, rp->rg_smeg);
 					}
 #endif
-					free((caddr_t)rp->rg_segmap, M_VMPMAP);
+					free(rp->rg_segmap, M_VMPMAP);
 					rp->rg_segmap = NULL;
 					GAP_WIDEN(pm,vr);
 				}
@@ -2666,7 +2670,7 @@ pmap_page_protect(pa, prot)
 	nextpv:
 		npv = pv->pv_next;
 		if (pv != pv0)
-			free((caddr_t)pv, M_VMPVENT);
+			free(pv, M_VMPVENT);
 		if ((pv = npv) == NULL)
 			break;
 	}
@@ -3126,7 +3130,7 @@ rretry:
 		sp = (struct segmap *)malloc((u_long)size, M_VMPMAP, M_WAITOK);
 		if (rp->rg_segmap != NULL) {
 printf("pmap_enter: segment filled during sleep\n");	/* can this happen? */
-			free((caddr_t)sp, M_VMPMAP);
+			free(sp, M_VMPMAP);
 			goto rretry;
 		}
 		bzero((caddr_t)sp, size);
@@ -3146,7 +3150,7 @@ sretry:
 		pte = (int *)malloc((u_long)size, M_VMPMAP, M_WAITOK);
 		if (sp->sg_pte != NULL) {
 printf("pmap_enter: pte filled during sleep\n");	/* can this happen? */
-			free((caddr_t)pte, M_VMPMAP);
+			free(pte, M_VMPMAP);
 			goto sretry;
 		}
 #ifdef DEBUG
