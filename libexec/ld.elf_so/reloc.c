@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.27 2000/07/13 23:14:17 eeh Exp $	 */
+/*	$NetBSD: reloc.c,v 1.28 2000/07/14 22:00:33 matt Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -325,7 +325,7 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 		}
 		rdbg(dodebug, ("COPY (avoid in main)"));
 		break;
-#endif /* __i386__ || __alpha__ */
+#endif /* __i386__ || __alpha__ || __m68k__ */
 
 #if defined(__mips__)
 	case R_TYPE(REL32):
@@ -415,21 +415,6 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 		break;
 #endif /* __powerpc__ */
 
-#if defined(__vax__)
-	case R_TYPE(REL32):
-		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
-		    &defobj, false);
-		if (def == NULL)
-			return -1;
-
-		*where += (Elf_Addr)(defobj->relocbase + def->st_value
-			+ rela->r_addend);
-		rdbg(dodebug, ("32 %s in %s --> %p in %s",
-		    defobj->strtab + def->st_name, obj->path,
-		    (void *)*where, defobj->path));
-		break;
-#endif /* __vax__ */
-
 	default:
 		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
 		    &defobj, true);
@@ -440,7 +425,7 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 		    (void *)rela->r_offset, (void *)rela->r_addend,
 		    (void *)*where,
 		    def ? defobj->strtab + def->st_name : "??"));
-		_rtld_error("%s: Unsupported relocation type %d"
+		_rtld_error("%s: Unsupported relocation type %d "
 		    "in non-PLT relocations\n",
 		    obj->path, ELF_R_TYPE(rela->r_info));
 		return -1;
@@ -522,6 +507,7 @@ _rtld_bind(obj, reloff)
 		rel = (const Elf_Rel *)((caddr_t) obj->pltrel + reloff);
 		ourrela.r_info = rel->r_info;
 		ourrela.r_offset = rel->r_offset;
+		ourrela.r_addend = 0;
 		rela = &ourrela;
 	} else {
 		rela = (const Elf_RelA *)((caddr_t) obj->pltrela + reloff);
@@ -738,11 +724,12 @@ _rtld_relocate_objects(first, bind_now, dodebug)
 			obj->pltgot[2] = NOP;
 
 			obj->pltgot[3] = (Elf_Addr) obj;
-#endif
-#endif
+#endif /* __arch64__ */
+#endif /* __sparc__ */
 #if defined(__vax__)
-			obj->pltgot[0] = (Elf_Addr) & _rtld_bind_start;
-			obj->pltgot[1] = (Elf_Addr) obj;
+			obj->pltgot[1] = (Elf_Addr) obj->pltgot;
+			obj->pltgot[2] = (Elf_Addr) & _rtld_bind_start;
+			obj->pltgot[3] = (Elf_Addr) obj;
 #endif
 		}
 	}
