@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.48 2004/11/13 15:00:48 kent Exp $	*/
+/*	$NetBSD: auvia.c,v 1.49 2004/11/16 17:15:01 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.48 2004/11/13 15:00:48 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.49 2004/11/16 17:15:01 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -326,7 +326,7 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 		default:
 			break;
 		}
-		if (r >= VIA_REV_8235)
+		if (r >= VIA_REV_8237)
 			revnum = "7";
 		else if (r >= VIA_REV_8235) /* 2 rec, 4 pb, 1 multi-pb, spdif */
 			revnum = "5";
