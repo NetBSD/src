@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.26 2001/02/21 00:17:09 itojun Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.27 2001/04/13 23:30:13 thorpej Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -452,7 +452,7 @@ gif_input(m, af, gifp)
 		return;
 	}
 
-	s = splimp();
+	s = splnet();
 	if (IF_QFULL(ifq)) {
 		IF_DROP(ifq);	/* update statistics */
 		m_freem(m);

@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_hfsc.c,v 1.2 2000/12/14 08:49:50 thorpej Exp $	*/
+/*	$NetBSD: altq_hfsc.c,v 1.3 2001/04/13 23:29:56 thorpej Exp $	*/
 /*	$KAME: altq_hfsc.c,v 1.8 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -378,7 +378,7 @@ hfsc_class_create(hif, sc, parent, qlimit, flags)
 	cl->cl_hif = hif;
 	cl->cl_parent = parent;
 
-	s = splimp();
+	s = splnet();
 	hif->hif_classes++;
 	if (flags & HFCF_DEFAULTCLASS)
 		hif->hif_defaultclass = cl;
@@ -430,7 +430,7 @@ hfsc_class_destroy(cl)
 	if (is_a_parent_class(cl))
 		return (EBUSY);
 
-	s = splimp();
+	s = splnet();
 
 	/* delete filters referencing to this class */
 	acc_discard_filters(&cl->cl_hif->hif_classifier, cl, 0);
@@ -486,7 +486,7 @@ hfsc_class_modify(cl, rsc, fsc)
 	struct internal_sc *tmp;
 	int s;
 
-	s = splimp();
+	s = splnet();
 	if (!qempty(cl->cl_q))
 		hfsc_purgeq(cl);
 

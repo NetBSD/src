@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.6 2001/03/30 23:23:37 wdk Exp $	*/
+/*	$NetBSD: intr.h,v 1.7 2001/04/13 23:30:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -127,7 +127,6 @@ extern struct mipsco_intrhand *softnet_intrhand;
 #define splbio()	_splraise(MIPS_INT_MASK_SPL1)
 #define splnet()	_splraise(MIPS_INT_MASK_SPL0)
 #define spltty()	_splraise(MIPS_INT_MASK_SPL0)
-#define splimp()	_splraise(MIPS_INT_MASK_SPL2)
 #define splvm()		_splraise(MIPS_INT_MASK_SPL2)
 #define splclock()	_splraise(MIPS_INT_MASK_SPL2)
 #define splstatclock()	_splraise(MIPS_INT_MASK_SPL2)

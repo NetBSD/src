@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.36 2001/03/31 00:35:23 enami Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.37 2001/04/13 23:30:17 thorpej Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -903,7 +903,7 @@ stripstart(tp)
 	softintr_schedule(sc->sc_si);
 #else
     {
-	int s = splimp();
+	int s = splhigh();
 	schednetisr(NETISR_STRIP);
 	splx(s);
     }
@@ -1045,7 +1045,7 @@ stripinput(c, tp)
 	softintr_schedule(sc->sc_si);
 #else
     {
-	int s = splimp();
+	int s = splhigh();
 	schednetisr(NETISR_STRIP);
 	splx(s);
     }
@@ -1302,7 +1302,7 @@ stripintr(void *arg)
 		sc->sc_if.if_ipackets++;
 		sc->sc_if.if_lastchange = time;
 
-		s = splimp();
+		s = splnet();
 		if (IF_QFULL(&ipintrq)) {
 			IF_DROP(&ipintrq);
 			sc->sc_if.if_ierrors++;

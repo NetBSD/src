@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.34 2001/01/17 00:30:50 thorpej Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.35 2001/04/13 23:30:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -298,7 +298,7 @@ arc_output(ifp, m0, dst, rt0)
 			ah->arc_flag = rsflag;
 			ah->arc_seqid = ac->ac_seqid;
 
-			s = splimp();
+			s = splnet();
 			/*
 			 * Queue message on interface, and start output if 
 			 * interface not yet active.
@@ -358,7 +358,7 @@ arc_output(ifp, m0, dst, rt0)
 		ah->arc_dhost = adst;
 		ah->arc_shost = myself;
 	}
-	s = splimp();
+	s = splnet();
 	/*
 	 * Queue message on interface, and start output if interface
 	 * not yet active.
@@ -630,7 +630,7 @@ arc_input(ifp, m)
 		return;
 	}
 
-	s = splimp();
+	s = splnet();
 	if (IF_QFULL(inq)) {
 		IF_DROP(inq);
 		m_freem(m);

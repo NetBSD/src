@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.37 2001/02/20 07:58:17 itojun Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.38 2001/04/13 23:30:14 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -290,7 +290,7 @@ looutput(ifp, m, dst, rt)
 			return (ENOBUFS);
 		*(mtod(m, uint32_t *)) = dst->sa_family;
 
-		s = splimp();
+		s = splnet();
 		IFQ_ENQUEUE(&ifp->if_snd, m, &pktattr, error);
 		(*ifp->if_start)(ifp);
 		splx(s);
@@ -343,7 +343,7 @@ looutput(ifp, m, dst, rt)
 		m_freem(m);
 		return (EAFNOSUPPORT);
 	}
-	s = splimp();
+	s = splnet();
 	if (IF_QFULL(ifq)) {
 		IF_DROP(ifq);
 		m_freem(m);
@@ -419,7 +419,7 @@ lostart(struct ifnet *ifp)
 			return;
 		}
 
-		s = splimp();
+		s = splnet();
 		if (IF_QFULL(ifq)) {
 			IF_DROP(ifq);
 			splx(s);

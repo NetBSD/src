@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.16 2001/02/28 14:08:35 wiz Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.17 2001/04/13 23:30:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997-1999
@@ -459,7 +459,7 @@ send:
 
 	mflags = m->m_flags;
 	len = m->m_pkthdr.len;
-	s = splimp();
+	s = splnet();
 	/*
 	 * Queue message on interface, and start output if interface
 	 * not yet active.
@@ -676,7 +676,7 @@ token_input(ifp, m)
 		return;
 	}
 
-	s = splimp();
+	s = splnet();
 	if (IF_QFULL(inq)) {
 		IF_DROP(inq);
 		m_freem(m);
