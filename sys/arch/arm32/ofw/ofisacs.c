@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisacs.c,v 1.6 1998/07/21 00:08:57 thorpej Exp $	*/
+/*	$NetBSD: ofisacs.c,v 1.7 1998/07/21 01:04:09 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -53,7 +53,7 @@
 #include <net/if_ether.h>
 
 #include <dev/isa/cs89x0reg.h>
-#include <arm32/isa/if_csvar.h>
+#include <dev/isa/cs89x0var.h>
 
 
 int ofisacsprobe __P((struct device *, struct cfdata *, void *));
