@@ -1,4 +1,4 @@
-#	$NetBSD: files.cats,v 1.17 2002/02/10 10:37:52 tsutsui Exp $
+#	$NetBSD: files.cats,v 1.18 2002/02/10 10:41:34 tsutsui Exp $
 #
 # CATS-specific configuration info
 #
@@ -42,7 +42,7 @@ file	arch/arm32/isa/isadma_machdep.c		isadma
 file	arch/arm32/isa/joy_timer.c		joy
 
 # Memory disk driver
-file	arch/arm32/dev/md_hooks.c				md & memory_disk_hooks
+file	dev/md_root.c				md & memory_disk_hooks
 major	{md = 18}
 
 # RAIDframe
