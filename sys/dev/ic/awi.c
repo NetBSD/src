@@ -1,4 +1,4 @@
-/* $NetBSD: awi.c,v 1.3 1999/11/05 05:13:36 sommerfeld Exp $ */
+/* $NetBSD: awi.c,v 1.4 1999/11/06 16:43:53 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1205,12 +1205,16 @@ awi_dump_rxchain (sc, what, descr)
 		} else {
 			MGETHDR(top, M_DONTWAIT, MT_DATA);
 			if (top != 0) {
+				if (len >= MINCLSIZE)
+					MCLGET(top, M_DONTWAIT);
+				
 				m = top;
 				m->m_pkthdr.rcvif = ifp;
 				m->m_pkthdr.len = 0;
 				m->m_len = 0;
 				
-				mleft = MHLEN;
+				mleft = (m->m_flags & M_EXT) ?
+				    MCLBYTES : MHLEN;
 				mptr = mtod(m, u_int8_t *);
 			}
 			for(;;) {
@@ -1652,9 +1656,7 @@ awi_ioctl(ifp, cmd, data)
 {
 	struct awi_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
-#if 0
 	struct ifreq *ifr = (struct ifreq *)data;
-#endif
 	int s, error = 0;
 	
 	s = splnet();
@@ -1704,6 +1706,17 @@ awi_ioctl(ifp, cmd, data)
 			awi_set_mc(sc);
 		}
 		break;
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		error = (cmd == SIOCADDMULTI) ?
+		    ether_addmulti(ifr, &sc->sc_ec) :
+		    ether_delmulti(ifr, &sc->sc_ec);
+		if (error == ENETRESET) {
+			error = 0;
+			awi_set_mc(sc);
+		}
+		break;
+
 	default:
 		error = EINVAL;
 		break;
@@ -1761,8 +1774,9 @@ awi_drop_input (ifp, m0)
 	m_freem(m0);
 }
 
-int awi_attach (sc)
+int awi_attach (sc, macaddr)
 	struct awi_softc *sc;
+	u_int8_t *macaddr;
 {
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	u_int8_t version[AWI_BANNER_LEN];
@@ -1771,6 +1785,11 @@ int awi_attach (sc)
 
 	awi_read_bytes (sc, AWI_BANNER, version, AWI_BANNER_LEN);
 	printf("%s: firmware %s\n", sc->sc_dev.dv_xname, version);
+
+	memcpy(sc->sc_my_addr, macaddr, ETHER_ADDR_LEN);
+	printf("%s: 802.11 address %s\n", sc->sc_dev.dv_xname,
+	    ether_sprintf(sc->sc_my_addr));
+	
 	
 	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
@@ -1785,11 +1804,8 @@ int awi_attach (sc)
 	sc->sc_mgtq.ifq_maxlen = 5;
 	
 	if_attach(ifp);
-	/* Defer ether_ifattach, bpfattach until we get enaddr. */
-	ifp->if_output = awi_drop_output;
-#if __NetBSD_Version__ > 104010000
-	ifp->if_input = awi_drop_input;
-#endif
+	ether_ifattach(ifp, sc->sc_my_addr);
+	ifp->if_hdrlen = 32;	/* 802.11 headers are bigger.. */
 
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
@@ -2037,42 +2053,6 @@ void awi_init_read_bufptrs_done (sc, status)
 	printf("rx offset: %x\n", sc->sc_rxbase);
 	printf("rx size: %x\n", sc->sc_rxlen);
 #endif
-
-	awi_cmd_get_myaddr (sc);
-}
-
-void awi_cmd_get_myaddr (sc)
-	struct awi_softc *sc;
-{
-	sc->sc_completion = awi_cmd_get_myaddr_done;
-	
-	awi_cmd_get_mib (sc, AWI_MIB_MAC_ADDR, 0, ETHER_ADDR_LEN);
-}
-
-void awi_cmd_get_myaddr_done (sc, status)
-	struct awi_softc *sc;
-	u_int8_t status;
-{
-	struct ifnet *ifp = sc->sc_ifp;
-	u_int8_t newaddr[ETHER_ADDR_LEN];
-	
-	if (status != AWI_STAT_OK) {
-		printf("%s: nop failed (card unhappy?)\n",
-		    sc->sc_dev.dv_xname);
-		awi_reset(sc);
-		return;
-	}
-
-	awi_read_bytes (sc, AWI_CMD_PARAMS + AWI_CA_MIB_DATA,
-	    newaddr, sizeof(newaddr));
-
-	if (memcmp (newaddr, sc->sc_my_addr, sizeof(newaddr)) != 0) {
-		printf("%s: 802.11 address %s\n", sc->sc_dev.dv_xname,
-		    ether_sprintf(newaddr));
-		memcpy(sc->sc_my_addr, newaddr, sizeof(newaddr));
-	}
-	ether_ifattach(ifp, sc->sc_my_addr);
-	ifp->if_hdrlen = 32;
 	
 	sc->sc_state = AWI_ST_MIB_SET;
 	awi_cmd_set_notap(sc);

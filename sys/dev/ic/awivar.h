@@ -1,4 +1,4 @@
-/* $NetBSD: awivar.h,v 1.2 1999/11/05 05:13:36 sommerfeld Exp $ */
+/* $NetBSD: awivar.h,v 1.3 1999/11/06 16:43:54 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -136,7 +136,7 @@ struct awi_softc
 };
 
 extern int awi_activate __P((struct device *, enum devact));
-extern int awi_attach __P((struct awi_softc *));
+extern int awi_attach __P((struct awi_softc *, u_int8_t *macaddr));
 
 #define awi_read_1(sc, off) ((sc)->sc_chip.sc_ops->read_1)(&sc->sc_chip, off)
 #define awi_read_2(sc, off) ((sc)->sc_chip.sc_ops->read_2)(&sc->sc_chip, off)
