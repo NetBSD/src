@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.39 2003/02/25 20:35:35 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.40 2003/02/25 21:25:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.39 2003/02/25 20:35:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.40 2003/02/25 21:25:40 thorpej Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -1480,13 +1480,15 @@ fdformat(dev, finfo, p)
 	struct ne7_fd_formb *finfo;
 	struct proc *p;
 {
-	int rv = 0;
+	int rv = 0, s;
 	struct fd_softc *fd = device_lookup(&fd_cd, FDUNIT(dev));
 	struct fd_type *type = fd->sc_type;
 	struct buf *bp;
 
 	/* set up a buffer header for fdstrategy() */
+	s = splbio();
 	bp = (struct buf *)pool_get(&bufpool, PR_NOWAIT);
+	splx(s);
 	if (bp == NULL)
 		return ENOBUFS;
 
@@ -1516,7 +1518,9 @@ fdformat(dev, finfo, p)
 
 	/* ...and wait for it to complete */
 	rv = biowait(bp);
+	s = splbio();
 	pool_put(&bufpool, bp);
+	splx(s);
 	return rv;
 }
 
