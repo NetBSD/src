@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.6 1996/08/22 21:03:00 thorpej Exp $
+#	$NetBSD: DISKLESS,v 1.7 1996/08/25 01:22:19 thorpej Exp $
 #
 # Diskless HP 9000/300-series workstation.
 #
@@ -52,6 +52,8 @@ options		NMBCLUSTERS="512"	# Just a little extra
 options		FPSP		# floating point interface for 68040
 options		USELEDS		# make the lights twinkle
 #options	PANICBUTTON	# two fast <reset>s on HIL dump kernel
+options		UK_KEYBOARD	# include United Kingdom HIL keymap
+options		SE_KEYBOARD	# include Swedish HIL keymap
 
 #
 # HP-UX binary compatibility.
