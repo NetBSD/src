@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.49 1995/08/06 19:48:58 mycroft Exp $	*/
+/*	$NetBSD: npx.c,v 1.50 1995/10/05 23:06:15 mycroft Exp $	*/
 
 #if 0
 #define iprintf(x)	printf x
@@ -86,9 +86,9 @@
 #define	fldcw(addr)		__asm("fldcw %0" : : "m" (*addr))
 #define	fnclex()		__asm("fnclex")
 #define	fninit()		__asm("fninit")
-#define	fnsave(addr)		__asm("fnsave %0" : "=m" (*addr) : "0" (*addr))
-#define	fnstcw(addr)		__asm("fnstcw %0" : "=m" (*addr) : "0" (*addr))
-#define	fnstsw(addr)		__asm("fnstsw %0" : "=m" (*addr) : "0" (*addr))
+#define	fnsave(addr)		__asm("fnsave %0" : "=m" (*addr))
+#define	fnstcw(addr)		__asm("fnstcw %0" : "=m" (*addr))
+#define	fnstsw(addr)		__asm("fnstsw %0" : "=m" (*addr))
 #define	fp_divide_by_0()	__asm("fldz; fld1; fdiv %st,%st(1); fwait")
 #define	frstor(addr)		__asm("frstor %0" : : "m" (*addr))
 #define	fwait()			__asm("fwait")
