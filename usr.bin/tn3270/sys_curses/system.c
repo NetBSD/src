@@ -1,4 +1,4 @@
-/*	$NetBSD: system.c,v 1.6 1997/12/31 06:12:20 thorpej Exp $	*/
+/*	$NetBSD: system.c,v 1.7 1998/03/04 13:16:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,9 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-/*static char sccsid[] = "from: @(#)system.c	4.5 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$NetBSD: system.c,v 1.6 1997/12/31 06:12:20 thorpej Exp $";
+#if 0
+static char sccsid[] = "@(#)system.c	4.5 (Berkeley) 4/26/91";
+#else
+__RCSID("$NetBSD: system.c,v 1.7 1998/03/04 13:16:09 christos Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -51,11 +55,29 @@ static char rcsid[] = "$NetBSD: system.c,v 1.6 1997/12/31 06:12:20 thorpej Exp $
 #define	IREAD	00400
 #define	IWRITE	00200
 
-#include <sys/file.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <sys/wait.h>
+#ifdef __STDC__
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <string.h>
+#else
+#include <sys/file.h>
+extern char *crypt();
+#if	(!defined(sun)) || defined(BSD) && (BSD >= 43)
+extern uid_t geteuid();
+#endif	/* (!defined(sun)) || defined(BSD) && (BSD >= 43) */
+extern long random();
+#if	!defined(BSD4_4)
+extern char *mktemp();
+#endif	/* !defined(BSD4_4) */
+extern char *strcpy();
+extern char *getenv();
+#endif
+
 
 #include <errno.h>
 extern int errno;
@@ -69,6 +91,8 @@ extern int errno;
 #include "../general/general.h"
 #include "../ctlr/api.h"
 #include "../api/api_exch.h"
+#include "sys_curses.h"
+#include "externs.h"
 
 #include "../general/globals.h"
 
@@ -112,6 +136,14 @@ static union REGS inputRegs;
 static struct SREGS inputSregs;
 
 extern int apitrace;
+
+static void kill_connection __P((void));
+static int nextstore __P((void));
+static int doreject __P((char *));
+static int doassociate __P((void));
+static int getstorage __P((long, int, int));
+static int doconnect __P((void));
+static void child_died __P((int));
 
 static void
 kill_connection()
@@ -191,7 +223,6 @@ doassociate()
 	promptbuf[100],
 	buffer[200];
     struct storage_descriptor sd;
-    extern char *crypt();
 
     if (api_exch_intype(EXCH_TYPE_STORE_DESC, sizeof sd, (char *)&sd) == -1) {
 	return -1;
@@ -207,10 +238,6 @@ doassociate()
     buffer[sd.length] = 0;
 
     if (strcmp(buffer, key) != 0) {
-#if	(!defined(sun)) || defined(BSD) && (BSD >= 43)
-	extern uid_t geteuid();
-#endif	/* (!defined(sun)) || defined(BSD) && (BSD >= 43) */
-
 	if ((pwent = getpwuid((int)geteuid())) == 0) {
 	    return -1;
 	}
@@ -290,7 +317,7 @@ freestorage()
 	fprintf(stderr, "Internal error - attempt to free accessed storage.\n");
 	fprintf(stderr, "(Encountered in file %s at line %d.)\n",
 			__FILE__, __LINE__);
-	quit();
+	quit(0, NULL);
     }
     if (storage_must_send == 0) {
 	return;
@@ -330,7 +357,7 @@ int
 		"Internal error - attempt to get while storage accessed.\n");
 	fprintf(stderr, "(Encountered in file %s at line %d.)\n",
 			__FILE__, __LINE__);
-	quit();
+	quit(0, NULL);
     }
     storage_must_send = 0;
     if (api_exch_outcommand(EXCH_CMD_GIMME) == -1) {
@@ -376,7 +403,7 @@ int
     if (length > sizeof storage) {
 	fprintf(stderr, "Internal API error - movetous() length too long.\n");
 	fprintf(stderr, "(detected in file %s, line %d)\n", __FILE__, __LINE__);
-	quit();
+	quit(0, NULL);
     } else if (length == 0) {
 	return;
     }
@@ -403,7 +430,7 @@ int
     if (length > sizeof storage) {
 	fprintf(stderr, "Internal API error - movetothem() length too long.\n");
 	fprintf(stderr, "(detected in file %s, line %d)\n", __FILE__, __LINE__);
-	quit();
+	quit(0, NULL);
     } else if (length == 0) {
 	return;
     }
@@ -430,7 +457,7 @@ int
 	fprintf(stderr, "Internal error - storage accessed twice\n");
 	fprintf(stderr, "(Encountered in file %s, line %d.)\n",
 				__FILE__, __LINE__);
-	quit();
+	quit(0, NULL);
     } else if (length != 0) {
 	freestorage();
 	getstorage((long)location, length, copyin);
@@ -451,7 +478,7 @@ int	copyout;
 	fprintf(stderr, "Internal error - unnecessary unaccess_api call.\n");
 	fprintf(stderr, "(Encountered in file %s, line %d.)\n",
 			__FILE__, __LINE__);
-	quit();
+	quit(0, NULL);
     }
     storage_accessed = 0;
     storage_must_send = copyout;	/* if needs to go back */
@@ -473,7 +500,7 @@ doconnect()
 	FD_SET(serversock, &fdset);
 	if ((i = select(serversock+1, &fdset,
 		    (fd_set *)0, (fd_set *)0, (struct timeval *)0)) < 0) {
-	    if (errno = EINTR) {
+	    if (errno == EINTR) {
 		continue;
 	    } else {
 		perror("in select waiting for API connection");
@@ -490,7 +517,6 @@ doconnect()
     }
     /* If the process has already exited, we may need to close */
     if ((shell_active == 0) && (sock != -1)) {
-	extern void setcommandmode();
 
 	(void) close(sock);
 	sock = -1;
@@ -590,15 +616,14 @@ shell_continue()
 
 static void
 child_died(code)
+    int code;
 {
     union wait status;
-    register int pid;
+    int pid;
 
     while ((pid = wait3((int *)&status, WNOHANG, (struct rusage *)0)) > 0) {
 	if (pid == shell_pid) {
 	    char inputbuffer[100];
-	    extern void setconnmode();
-	    extern void ConnectScreen();
 
 	    shell_active = 0;
 	    if (sock != -1) {
@@ -608,7 +633,7 @@ child_died(code)
 	    printf("[Hit return to continue]");
 	    fflush(stdout);
 	    (void) fgets(inputbuffer, sizeof(inputbuffer), stdin);
-	    setconnmode();
+	    setconnmode(0);
 	    ConnectScreen();	/* Turn screen on (if need be) */
 	    (void) close(serversock);
 	    (void) unlink(keyname);
@@ -637,11 +662,6 @@ char	*argv[];
     int fd;
     struct timeval tv;
     long ikey;
-    extern long random();
-#if	!defined(BSD4_4)
-    extern char *mktemp();
-#endif	/* !defined(BSD4_4) */
-    extern char *strcpy();
 
     /* First, create verification file. */
 #if	defined(BSD4_4)
@@ -733,9 +753,9 @@ char	*argv[];
     }
     *whereAPI = sockNAME;
 
-    child_died();			/* Start up signal handler */
+    child_died(0);			/* Start up signal handler */
     shell_active = 1;			/* We are running down below */
-    if (shell_pid = vfork()) {
+    if ((shell_pid = vfork()) != 0) {
 	if (shell_pid == -1) {
 	    perror("vfork");
 	    (void) close(serversock);
@@ -743,14 +763,13 @@ char	*argv[];
 	    state = UNCONNECTED;
 	}
     } else {				/* New process */
-	register int i;
+	int i;
 
 	for (i = 3; i < 30; i++) {
 	    (void) close(i);
 	}
 	if (argc == 1) {		/* Just get a shell */
 	    char *cmdname;
-	    extern char *getenv();
 
 	    cmdname = getenv("SHELL");
 	    execlp(cmdname, cmdname, 0);

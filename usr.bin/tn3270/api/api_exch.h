@@ -1,4 +1,4 @@
-/*	$NetBSD: api_exch.h,v 1.3 1997/01/09 20:21:45 tls Exp $	*/
+/*	$NetBSD: api_exch.h,v 1.4 1998/03/04 13:16:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)api_exch.h	4.2 (Berkeley) 4/26/91
- *	$NetBSD: api_exch.h,v 1.3 1997/01/09 20:21:45 tls Exp $
  */
 
 /*
@@ -162,3 +161,11 @@ struct storage_descriptor {
     long	location;	/* In network byte order */
     short	length;		/* In network byte order */
 };
+
+int api_exch_nextcommand __P((void));
+int api_exch_incommand __P((int));
+int api_exch_outcommand __P((int));
+int api_exch_outtype __P((int, int , char *));
+int api_exch_intype __P((int, int , char *));
+int api_exch_flush __P((void));
+int api_exch_init __P((int, char *));

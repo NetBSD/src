@@ -1,4 +1,4 @@
-/*	$NetBSD: termin.c,v 1.3 1997/01/09 20:22:01 tls Exp $	*/
+/*	$NetBSD: termin.c,v 1.4 1998/03/04 13:16:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,9 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-/*static char sccsid[] = "from: @(#)termin.c	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$NetBSD: termin.c,v 1.3 1997/01/09 20:22:01 tls Exp $";
+#if 0
+static char sccsid[] = "@(#)termin.c	4.2 (Berkeley) 4/26/91";
+#else
+__RCSID("$NetBSD: termin.c,v 1.4 1998/03/04 13:16:06 christos Exp $");
+#endif
 #endif /* not lint */
 
 /* this takes characters from the keyboard, and produces 3270 keystroke
@@ -47,11 +51,13 @@ static char rcsid[] = "$NetBSD: termin.c,v 1.3 1997/01/09 20:22:01 tls Exp $";
 
 #include "../general/general.h"
 #include "../ctlr/function.h"
-#include "../ctlr/externs.h"
 #include "../ctlr/declare.h"
+#include "../sys_curses/telextrn.h"
 
 #include "../api/astosc.h"
 #include "state.h"
+#include "externs.h"
+#include "map3270.h"
 
 #include "../general/globals.h"
 
@@ -82,6 +88,10 @@ static state
 #define FullChar	((ourPTail+5) >= ourBuffer+sizeof ourBuffer)
 #define EmptyChar	(ourPTail == ourPHead)
 
+
+static void AddChar __P((int));
+static void FlushChar __P((void));
+
 
 /*
  * init_keyboard()
@@ -105,14 +115,13 @@ init_keyboard()
 void
 InitMapping()
 {
-    extern state *InitControl();
-    register struct astosc *ptr;
+    struct astosc *ptr;
 
     if (!headOfControl) {
 	/* need to initialize */
 	headOfControl = InitControl((char *)0, 0, ascii_to_index);
 	if (!headOfControl) {		/* should not occur */
-	    quit();
+	    quit(0, NULL);
 	}
 	for (ptr = &astosc[0]; ptr <= &astosc[highestof(astosc)]; ptr++) {
 	    if (ptr->function == FCN_SPACE) {
@@ -164,7 +173,7 @@ TerminalIn()
 {
     /* send data from us to next link in stream */
     int work = 0;
-    register struct astosc *ptr;
+    struct astosc *ptr;
 
     while (!EmptyChar) {			/* send up the link */
 	if (*ourPHead == ' ') {
@@ -189,12 +198,12 @@ TerminalIn()
 
 int
 DataFromTerminal(buffer, count)
-register char	*buffer;		/* the data read in */
-register int	count;			/* how many bytes in this buffer */
+char	*buffer;		/* the data read in */
+int	count;			/* how many bytes in this buffer */
 {
-    register state *regControlPointer;
-    register char c;
-    register int result;
+    state *regControlPointer;
+    char c;
+    int result;
     int origCount;
     extern int bellwinup;
     static state *controlPointer;
@@ -220,8 +229,6 @@ register int	count;			/* how many bytes in this buffer */
     }
 
     if (bellwinup) {
-	void BellOff();
-
 	BellOff();
     }
 
@@ -259,8 +266,6 @@ register int	count;			/* how many bytes in this buffer */
 			if (astosc[result].function == FCN_SYNCH) {
 			    WaitingForSynch = 0;
 			} else {
-			    void RingBell();
-
 			    RingBell("Need to type synch character");
 			}
 		    }

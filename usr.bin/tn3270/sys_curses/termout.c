@@ -1,4 +1,4 @@
-/*	$NetBSD: termout.c,v 1.7 1997/01/09 20:22:33 tls Exp $	*/
+/*	$NetBSD: termout.c,v 1.8 1998/03/04 13:16:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,14 +33,27 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-/*static char sccsid[] = "from: @(#)termout.c	4.3 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$NetBSD: termout.c,v 1.7 1997/01/09 20:22:33 tls Exp $";
+#if 0
+static char sccsid[] = "@(#)termout.c	4.3 (Berkeley) 4/26/91";
+#else
+__RCSID("$NetBSD: termout.c,v 1.8 1998/03/04 13:16:09 christos Exp $");
+#endif
 #endif /* not lint */
 
 #if defined(unix)
 #include <signal.h>
 #include <termios.h>
+#ifdef __STDC__
+#include <unistd.h>
+#include <stdlib.h>
+#ifdef __NetBSD__
+#include <termcap.h>
+#else
+extern char *tgetstr();
+#endif
+#endif
 #endif
 #include <stdio.h>
 #include <stdlib.h>
@@ -62,15 +75,20 @@ static char rcsid[] = "$NetBSD: termout.c,v 1.7 1997/01/09 20:22:33 tls Exp $";
 #include "../api/disp_asc.h"
 
 #include "../ctlr/hostctlr.h"
-#include "../ctlr/externs.h"
 #include "../ctlr/declare.h"
 #include "../ctlr/oia.h"
 #include "../ctlr/screen.h"
 #include "../ctlr/scrnctlr.h"
 
+#include "../ascii/state.h"
+#include "../ascii/map3270.h"
+
 #include "../general/globals.h"
 
 #include "telextrn.h"
+#include "externs.h"
+
+extern int TransparentClock, OutputClock;
 
 #define CorrectTerminalCursor() ((TransparentClock == OutputClock)? \
 		CursorAddress:UnLocked? CursorAddress: HighestScreen())
@@ -103,8 +121,18 @@ static int tcflag = -1;			/* transparent mode command flag */
 static int savefd[2];			/* for storing fds during transcom */
 extern int	tin, tout;		/* file descriptors */
 
-static void aborttc();
+static void aborttc __P((int));
 #endif	/* defined(unix) */
+
+static void OurExitString __P((char *, int));
+static void DoARefresh __P((void));
+static void GoAway __P((char *, int));
+static int WhereTermAttrByte __P((int));
+static void SlowScreen __P((void));
+static void FastScreen __P((void));
+#if 0
+static void ScreenOIA __P((OIA *));
+#endif
 
 
 /*
@@ -165,9 +193,9 @@ int	where;		/* cursor address */
 
 static int
 WhereTermAttrByte(p)
-register int	p;
+int	p;
 {
-    register int i;
+    int i;
 
     i = p;
 
@@ -206,10 +234,10 @@ static void
 #endif	/* defined(NOT43) */
 SlowScreen()
 {
-    register int is, shouldbe, isattr, shouldattr;
-    register int pointer;
-    register int fieldattr, termattr;
-    register int columnsleft;
+    int is, shouldbe, isattr, shouldattr;
+    int pointer;
+    int fieldattr, termattr;
+    int columnsleft;
 
 #define	NORMAL		0		
 #define	HIGHLIGHT	1		/* Mask bits */
@@ -503,7 +531,7 @@ FastScreen()
  * In particular, we separate out the two cases from the beginning.
  */
     if ((Highest != HighestScreen()) || (Lowest != LowestScreen())) {
-	register int columnsleft;
+	int columnsleft;
 
 	move(ScreenLine(Lowest), ScreenLineOffset(Lowest));
 	p = &Host[Lowest];
@@ -545,7 +573,7 @@ FastScreen()
     } else {		/* Going from Lowest to Highest */
 	unsigned char tmpbuf[MAXNUMBERCOLUMNS+1];
 	ScreenImage *End = &Host[ScreenSize]-1-SaveCorner;
-	register unsigned char *tmp = tmpbuf, *tmpend = tmpbuf+NumberColumns;
+	unsigned char *tmp = tmpbuf, *tmpend = tmpbuf+NumberColumns;
 
 	*tmpend = 0;		/* terminate from the beginning */
 	move(0,0);
@@ -619,14 +647,16 @@ int
 #else	/* defined(NOT43) */
 void
 #endif	/* defined(NOT43) */
-	(*TryToSend)() = FastScreen;
+	(*TryToSend) __P((void)) = FastScreen;
 
+#if 0
 /*ARGSUSED*/
-void
+static void
 ScreenOIA(oia)
 OIA *oia;
 {
 }
+#endif
 
 
 /* InitTerminal - called to initialize the screen, etc. */
@@ -638,14 +668,12 @@ InitTerminal()
     struct termios term;
     speed_t speed;
 #endif
-    extern void InitMapping();
     
     InitMapping();		/* Go do mapping file (MAP3270) first */
     if (!screenInitd) { 	/* not initialized */
 #if	defined(unix)
 	char KSEbuffer[2050];
 	char *lotsofspace = KSEbuffer;
-	extern char *tgetstr();
 #endif	/* defined(unix) */
 
 	if (initscr() == ERR) {	/* Initialize curses to get line size */
@@ -699,7 +727,7 @@ InitTerminal()
 	}
 #endif
 	DoARefresh();
-	setconnmode();
+	setconnmode(0);
 	if (VB && *VB) {
 	    bellSequence = VB;		/* use visual bell */
 	}
@@ -722,7 +750,7 @@ int doNewLine;
 	DoARefresh();
 	setcommandmode();
 	endwin();
-	setconnmode();
+	setconnmode(0);
 #if	defined(unix)
 	if (myKE) {
 	    StringToTerminal(myKE);
@@ -769,8 +797,6 @@ ConnectScreen()
 void
 LocalClearScreen()
 {
-    extern void Clear3270();
-
     outputPurge();		/* flush all data to terminal */
     clear();			/* clear in curses */
     ClearArray(Terminal);
@@ -867,7 +893,7 @@ TransStop()
        (void) close(tout);
        tin = savefd[0];
        tout = savefd[1];
-       setconnmode();
+       setconnmode(0);
        tcflag = -1;
        (void) signal(SIGCHLD, SIG_DFL);
     }
@@ -926,7 +952,7 @@ int		control;	/* To see if we are done */
 	     tin = inpipefd[0];
 	     tout = outpipefd[1];
 	     (void) signal(SIGCHLD, aborttc);
-	     setconnmode();
+	     setconnmode(0);
 	     tcflag = 1;
 	     break;
        }
@@ -939,8 +965,6 @@ int		control;	/* To see if we are done */
     if (control && (kind == 0)) {		/* Send in AID byte */
 	SendToIBM();
     } else {
-	extern void TransInput();
-
 	TransInput(1, kind);			/* Go get some data */
     }
 }
@@ -948,14 +972,15 @@ int		control;	/* To see if we are done */
 
 #if	defined(unix)
 static void
-aborttc()
+aborttc(n)
+	int n;
 {
 	setcommandmode();
 	(void) close(tin);
 	(void) close(tout);
 	tin = savefd[0];
 	tout = savefd[1];
-	setconnmode();
+	setconnmode(0);
 	tcflag = 0;
 }
 #endif	/* defined(unix) */

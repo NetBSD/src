@@ -1,4 +1,4 @@
-/*	$NetBSD: dohits.h,v 1.3 1997/01/09 20:23:07 tls Exp $	*/
+/*	$NetBSD: dohits.h,v 1.4 1998/03/04 13:16:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)dohits.h	4.2 (Berkeley) 4/26/91
- *	$NetBSD: dohits.h,v 1.3 1997/01/09 20:23:07 tls Exp $
  */
 
 #define	numberof(x)	(sizeof x/sizeof x[0])
@@ -56,4 +55,5 @@ struct thing {
 extern struct Hits Hits[256];		/* one for each of 0x00-0xff */
 extern struct thing *table[100];
 
-extern unsigned int dohash();
+void dohits __P((char *, char *));
+unsigned int dohash __P((unsigned int, char *));

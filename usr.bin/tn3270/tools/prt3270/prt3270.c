@@ -1,4 +1,4 @@
-/*	$NetBSD: prt3270.c,v 1.3 1997/01/09 20:22:44 tls Exp $	*/
+/*	$NetBSD: prt3270.c,v 1.4 1998/03/04 13:16:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,15 +33,19 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-char copyright[] =
+__COPYRIGHT(
 "@(#) Copyright (c) 1988 The Regents of the University of California.\n\
- All rights reserved.\n";
+ All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)prt3270.c	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$NetBSD: prt3270.c,v 1.3 1997/01/09 20:22:44 tls Exp $";
+#if 0
+static char sccsid[] = "@(#)prt3270.c	4.2 (Berkeley) 4/26/91";
+#else
+__RCSID("$NetBSD: prt3270.c,v 1.4 1998/03/04 13:16:15 christos Exp $");
+#endif
 #endif /* not lint */
 
 #if defined(unix)
@@ -49,6 +53,7 @@ static char rcsid[] = "$NetBSD: prt3270.c,v 1.3 1997/01/09 20:22:44 tls Exp $";
 #include <stdio.h>
 #include <ctype.h>
 
+#define DEFINING_INSTANCES
 #include "../general/general.h"
 
 #include "../api/asc_ebc.h"
@@ -58,7 +63,7 @@ static char rcsid[] = "$NetBSD: prt3270.c,v 1.3 1997/01/09 20:22:44 tls Exp $";
 #include "../api/astosc.h"
 #include "../general/globals.h"
 
-#include "../ctlr/kbd.out"
+#include "kbd.out"
 
 
 int NumberColumns = 80;
@@ -74,10 +79,28 @@ unsigned char printBuffer[200], *print = printBuffer;
 #define	ColsLeft()	(79-column)	/* A little room for error */
 
 
+/* prt3270.c */
+void putSpace __P((void));
+void Column1 __P((void));
+void Indent __P((void));
+void Undent __P((void));
+void putChar __P((int));
+void putstr __P((char *));
+void put2hex __P((int));
+void putdecimal __P((int));
+void puthex __P((int));
+void putEChar __P((int));
+void PrintAid __P((int));
+void PrintAddr __P((int));
+int DataFromNetwork __P((unsigned char *, int, int));
+int DataToNetwork __P((unsigned char *, int, int));
+int GetXValue __P((int));
+void termblock __P((int, int , int));
+int main __P((int, char *[]));
+
 void
 putSpace()
 {
-    extern void Column1();
     unsigned char *ourPrint = print;
 
     print = printBuffer;		/* For mutual calls */
@@ -252,13 +275,13 @@ int	i;
 /* returns the number of characters consumed */
 int
 DataFromNetwork(buffer, count, control)
-register unsigned char	*buffer;		/* what the data is */
-register int	count;				/* and how much there is */
-int	control;				/* this buffer ended block? */
+unsigned char	*buffer;		/* what the data is */
+int	count;				/* and how much there is */
+int	control;			/* this buffer ended block? */
 {
     int origCount;
-    register int c;
-    register int i;
+    int c;
+    int i;
     static int Command;
     static int Wcc;
     static int	LastWasTerminated = 1;	/* was "control" = 1 last time? */
@@ -514,6 +537,7 @@ int control;
 	}
 	return origCount-count;
     }
+    return 0;
 }
 
 int
@@ -522,7 +546,7 @@ int	c;
 {
     if (!isascii(c)) {
 	fflush(stdout);
-	fprintf(stderr, "Non-hex digit 0x%x.\n");
+	fprintf(stderr, "Non-hex digit 0x%x.\n", c);
 	fflush(stderr);
 	return 0;
     } else {
@@ -577,7 +601,10 @@ int old,
     }
 }
 
-main()
+int
+main(argc, argv)
+    int argc;
+    char *argv[];
 {
     int location;
     char new;

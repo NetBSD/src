@@ -1,4 +1,4 @@
-/*	$NetBSD: scrnctlr.h,v 1.3 1997/01/09 20:22:18 tls Exp $	*/
+/*	$NetBSD: scrnctlr.h,v 1.4 1998/03/04 13:16:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)scrnctlr.h	4.2 (Berkeley) 4/26/91
- *	$NetBSD: scrnctlr.h,v 1.3 1997/01/09 20:22:18 tls Exp $
  */
 
 /*

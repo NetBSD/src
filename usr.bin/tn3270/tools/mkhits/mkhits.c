@@ -1,4 +1,4 @@
-/*	$NetBSD: mkhits.c,v 1.3 1997/01/09 20:23:08 tls Exp $	*/
+/*	$NetBSD: mkhits.c,v 1.4 1998/03/04 13:16:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,15 +33,19 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-char copyright[] =
+__COPYRIGHT(
 "@(#) Copyright (c) 1988 The Regents of the University of California.\n\
- All rights reserved.\n";
+ All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)mkhits.c	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$NetBSD: mkhits.c,v 1.3 1997/01/09 20:23:08 tls Exp $";
+#if 0
+static char sccsid[] = "@(#)mkhits.c	4.2 (Berkeley) 4/26/91";
+#else
+__RCSID("$NetBSD: mkhits.c,v 1.4 1998/03/04 13:16:14 christos Exp $");
+#endif
 #endif /* not lint */
 
 /*
@@ -73,6 +77,7 @@ static char rcsid[] = "$NetBSD: mkhits.c,v 1.3 1997/01/09 20:23:08 tls Exp $";
 
 #include "dohits.h"
 
+int main __P((int, char *[]));
 
 int
 main(argc, argv)

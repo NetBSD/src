@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.h,v 1.3 1997/01/09 20:22:17 tls Exp $	*/
+/*	$NetBSD: screen.h,v 1.4 1998/03/04 13:16:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)screen.h	4.3 (Berkeley) 4/26/91
- *	$NetBSD: screen.h,v 1.3 1997/01/09 20:22:17 tls Exp $
  */
 
 #define	INCLUDED_SCREEN
@@ -130,9 +129,6 @@
 		(IsHighlightedAttr(FieldAttributes(p)) && !IsStartField(p))
 
 typedef unsigned char ScreenImage;
-
-extern int
-	FieldFind();
 
 extern char
 	CIABuffer[];

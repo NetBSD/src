@@ -1,4 +1,4 @@
-/*	$NetBSD: state.h,v 1.3 1997/01/09 20:22:00 tls Exp $	*/
+/*	$NetBSD: state.h,v 1.4 1998/03/04 13:16:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)state.h	4.2 (Berkeley) 4/26/91
- *	$NetBSD: state.h,v 1.3 1997/01/09 20:22:00 tls Exp $
  */
 
 #define	INCLUDED_STATE
@@ -51,3 +50,10 @@ struct State {
     state	*next;		/* next entry in this same state */
     state	*address;	/* if goto, where is next state */
 };
+
+/* termin.c */
+void init_keyboard __P((void));
+void InitMapping __P((void));
+void TransInput __P((int, int));
+int TerminalIn __P((void));
+int DataFromTerminal __P((char *, int));
