@@ -864,8 +864,7 @@ vt_designate(struct video_state *svsp)
 #endif			
 				break;
 				
-			case 'Q': /* French Canadien */
-#ifdef HAVECSE_FRENCHCANADA
+			case 'Q': /* French CC Supplemental Gf HAVECSE_FRENCHCANADA
 				ctp = cse_frenchcanada;
 #endif			
 				break;
