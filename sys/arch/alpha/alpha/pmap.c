@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.142 2000/08/15 05:21:20 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.143 2000/08/26 03:27:45 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -126,6 +126,8 @@
  * Bugs/misfeatures:
  *
  *	- Some things could be optimized.
+ *
+ *	- pmap_growkernel() should be implemented.
  */
 
 /*
@@ -154,7 +156,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.142 2000/08/15 05:21:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.143 2000/08/26 03:27:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -440,12 +442,23 @@ struct pmap_tlb_shootdown_q {
 	struct simplelock pq_slock;	/* spin lock on queue */
 } pmap_tlb_shootdown_q[ALPHA_MAXPROCS];
 
+#define	PJSQ_LOCK(pq, s)						\
+do {									\
+	s = splimp();							\
+	simple_lock(&(pq)->pq_slock);					\
+} while (0)
+
+#define	PJSQ_UNLOCK(pq, s)						\
+do {									\
+	simple_unlock(&(pq)->pq_slock);					\
+	splx(s);							\
+} while (0)
+
 /* If we have more pending jobs than this, we just nail the whole TLB. */
 #define	PMAP_TLB_SHOOTDOWN_MAXJOBS	6
 
 struct pool pmap_tlb_shootdown_job_pool;
 
-void	pmap_tlb_shootdown_q_drain(struct pmap_tlb_shootdown_q *);
 struct pmap_tlb_shootdown_job *pmap_tlb_shootdown_job_get
 	    (struct pmap_tlb_shootdown_q *);
 void	pmap_tlb_shootdown_job_put(struct pmap_tlb_shootdown_q *,
@@ -1598,11 +1611,9 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 							PMAP_INVALIDATE_TLB(
 							   pmap, sva, hadasm,
 							   isactive, cpu_id);
-#if defined(MULTIPROCESSOR) && 0
-							pmap_tlb_shootdown(
+							PMAP_TLB_SHOOTDOWN(
 							   pmap, sva,
 							   hadasm ? PG_ASM : 0);
-#endif
 						}
 					}
 				}
@@ -1926,9 +1937,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	 */
 	if (tflush) {
 		PMAP_INVALIDATE_TLB(pmap, va, hadasm, isactive, cpu_id);
-#if defined(MULTIPROCESSOR) && 0
-		pmap_tlb_shootdown(pmap, va, hadasm ? PG_ASM : 0);
-#endif
+		PMAP_TLB_SHOOTDOWN(pmap, va, hadasm ? PG_ASM : 0);
 	}
 	if (setisync)
 		PMAP_SET_NEEDISYNC(pmap);
@@ -2000,9 +2009,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	 * caches.
 	 */
 	PMAP_INVALIDATE_TLB(pmap, va, TRUE, TRUE, cpu_id);
-#if defined(MULTIPROCESSOR) && 0
-	pmap_tlb_shootdown(pmap, va, PG_ASM);
-#endif
+	PMAP_TLB_SHOOTDOWN(pmap, va, PG_ASM);
+
 	if (needisync)
 		PMAP_SYNC_ISTREAM_KERNEL();
 }
@@ -2075,9 +2083,8 @@ pmap_kremove(vaddr_t va, vsize_t size)
 			alpha_mb();		/* XXX alpha_wmb()? */
 #endif
 			PMAP_INVALIDATE_TLB(pmap, va, TRUE, TRUE, cpu_id);
-#if defined(MULTIPROCESSOR) && 0
-			pmap_tlb_shootdown(pmap, va, PG_ASM);
-#endif
+			PMAP_TLB_SHOOTDOWN(pmap, va, PG_ASM);
+
 			/* Update stats. */
 			PMAP_STAT_DECR(pmap->pm_stats.resident_count, 1);
 			PMAP_STAT_DECR(pmap->pm_stats.wired_count, 1);
@@ -2686,9 +2693,7 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte,
 	PMAP_SET_PTE(pte, PG_NV);
 
 	PMAP_INVALIDATE_TLB(pmap, va, hadasm, isactive, cpu_id);
-#if defined(MULTIPROCESSOR) && 0
-	pmap_tlb_shootdown(pmap, va, hadasm ? PG_ASM : 0);
-#endif
+	PMAP_TLB_SHOOTDOWN(pmap, va, hadasm ? PG_ASM : 0);
 
 	/*
 	 * If we're removing a user mapping, check to see if we
@@ -2798,10 +2803,8 @@ pmap_changebit(paddr_t pa, u_long set, u_long mask, long cpu_id)
 				PMAP_SYNC_ISTREAM_USER(pv->pv_pmap);
 			PMAP_INVALIDATE_TLB(pv->pv_pmap, va, hadasm, isactive,
 			    cpu_id);
-#if defined(MULTIPROCESSOR) && 0
-			pmap_tlb_shootdown(pv->pv_pmap, va,
+			PMAP_TLB_SHOOTDOWN(pv->pv_pmap, va,
 			    hadasm ? PG_ASM : 0);
-#endif
 		}
 		PMAP_UNLOCK(pv->pv_pmap);
 	}
@@ -3728,10 +3731,8 @@ pmap_l3pt_delref(pmap_t pmap, vaddr_t va, pt_entry_t *l3pte, long cpu_id,
 		PMAP_INVALIDATE_TLB(pmap,
 		    (vaddr_t)(&VPT[VPT_INDEX(va)]), FALSE,
 		    PMAP_ISACTIVE(pmap, cpu_id), cpu_id);
-#if defined(MULTIPROCESSOR) && 0
-		pmap_tlb_shootdown(pmap,
+		PMAP_TLB_SHOOTDOWN(pmap,
 		    (vaddr_t)(&VPT[VPT_INDEX(va)]), 0);
-#endif
 
 		/*
 		 * We've freed a level 3 table, so delete the reference
@@ -3960,13 +3961,14 @@ pmap_tlb_shootdown(pmap_t pmap, vaddr_t va, pt_entry_t pte)
 	struct pmap_tlb_shootdown_job *pj;
 	int s;
 
-	s = splimp();
-
 	for (i = 0; i < hwrpb->rpb_pcs_cnt; i++) {
-		if (i == cpu_id || cpu_info[i].ci_softc == NULL)
+		if (i == cpu_id || (cpus_running & (1UL << i)) == 0)
 			continue;
+
 		pq = &pmap_tlb_shootdown_q[i];
-		simple_lock(&pq->pq_slock);
+
+		PSJQ_LOCK(pq, s);
+
 		pj = pmap_tlb_shootdown_job_get(pq);
 		pq->pq_pte |= pte;
 		if (pj == NULL) {
@@ -3978,26 +3980,19 @@ pmap_tlb_shootdown(pmap_t pmap, vaddr_t va, pt_entry_t pte)
 				ipinum = ALPHA_IPI_TBIA;
 			else
 				ipinum = ALPHA_IPI_TBIAP;
-			if (pq->pq_pte & PG_EXEC)
-				ipinum |= ALPHA_IPI_IMB;
 			alpha_send_ipi(i, ipinum);
-
-			/*
-			 * Since we've nailed the whole thing, drain the
-			 * job entries pending for that processor.
-			 */
-			pmap_tlb_shootdown_q_drain(pq);
 		} else {
 			pj->pj_pmap = pmap;
 			pj->pj_va = va;
 			pj->pj_pte = pte;
 			TAILQ_INSERT_TAIL(&pq->pq_head, pj, pj_list);
-			alpha_send_ipi(i, ALPHA_IPI_SHOOTDOWN);
+			ipinum = ALPHA_IPI_SHOOTDOWN;
 		}
-		simple_unlock(&pq->pq_slock);
-	}
 
-	splx(s);
+		alpha_send_ipi(i, ipinum);
+
+		PSJQ_UNLOCK(pq, s);
+	}
 }
 
 /*
@@ -4014,9 +4009,7 @@ pmap_do_tlb_shootdown(void)
 	struct pmap_tlb_shootdown_job *pj;
 	int s;
 
-	s = splimp();
-
-	simple_lock(&pq->pq_slock);
+	PSJQ_LOCK(pq, s);
 
 	while ((pj = TAILQ_FIRST(&pq->pq_head)) != NULL) {
 		TAILQ_REMOVE(&pq->pq_head, pj, pj_list);
@@ -4025,14 +4018,9 @@ pmap_do_tlb_shootdown(void)
 		    cpu_id);
 		pmap_tlb_shootdown_job_put(pq, pj);
 	}
-
-	if (pq->pq_pte & PG_EXEC)
-		alpha_pal_imb();
 	pq->pq_pte = 0;
 
-	simple_unlock(&pq->pq_slock);
-
-	splx(s);
+	PSJQ_UNLOCK(pq, s);
 }
 
 /*
@@ -4041,19 +4029,28 @@ pmap_do_tlb_shootdown(void)
  *	Drain a processor's TLB shootdown queue.  We do not perform
  *	the shootdown operations.  This is merely a convenience
  *	function.
- *
- *	Note: We expect the queue to be locked.
  */
 void
-pmap_tlb_shootdown_q_drain(struct pmap_tlb_shootdown_q *pq)
+pmap_tlb_shootdown_q_drain(u_long cpu_id, boolean_t all)
 {
-	struct pmap_tlb_shootdown_job *pj;
+	struct pmap_tlb_shootdown_q *pq = &pmap_tlb_shootdown_q[cpu_id];
+	struct pmap_tlb_shootdown_job *pj, *npj;
+	pt_entry_t npte = 0;
+	int s;
 
-	while ((pj = TAILQ_FIRST(&pq->pq_head)) != NULL) {
-		TAILQ_REMOVE(&pq->pq_head, pj, pj_list);
-		pmap_tlb_shootdown_job_put(pq, pj);
+	PJSQ_LOCK(pq, s);
+
+	for (pj = TAILQ_FIRST(&pq->pq_head); pj != NULL; pj = npj) {
+		npj = TAILQ_NEXT(pj, pj_list);
+		if (all || (pj->pj_pte & PG_ASM) == 0) {
+			TAILQ_REMOVE(&pq->pq_head, pj, pj_list);
+			pmap_tlb_shootdown_job_put(pq, pj);
+		} else
+			npte |= pj->pj_pte;
 	}
-	pq->pq_pte = 0;
+	pq->pq_pte = npte;
+
+	PJSQ_UNLOCK(pq, s);
 }
 
 /*
@@ -4069,7 +4066,7 @@ pmap_tlb_shootdown_job_get(struct pmap_tlb_shootdown_q *pq)
 {
 	struct pmap_tlb_shootdown_job *pj;
 
-	if (pq->pq_count == PMAP_TLB_SHOOTDOWN_MAXJOBS)
+	if (pq->pq_count >= PMAP_TLB_SHOOTDOWN_MAXJOBS)
 		return (NULL);
 	pj = pool_get(&pmap_tlb_shootdown_job_pool, PR_NOWAIT);
 	if (pj != NULL)
