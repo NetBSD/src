@@ -1188,17 +1188,9 @@ distrib/notes/pmax/QUICK.INSTALL		1.1-1.2 (new)
 
 distrib/notes/pmax/install			patch
 
-  Fix various typos.  Mention that Ultrix doesn't have Rock Ridge
-  extenstions so some paths on a CD-ROM will be truncated/mangled.
-  (PR#6296)  Warn that messages about "using ULTRIX label information"
-  may appear when disklabeling old Ultrix disks.  (PR#6300)  Reference
-  the section on dd'ing a disk image into the swap partition of an Ultrix
-  disk in the "QUICK.INSTALL" notes.  (PR#6299)  Mention that it may be
-  necessary to hand-mount a CD on /mnt2 before starting sysinst.
-  (Partial fix for PR#6307)  Specifically mention that NetBSD/pmax uses
-  rzX devices for CD-ROMs and not cdX like other NetBSD ports, and redo
-  the special CD-ROM installation instructions.  Describe the process of
-  updating the RTC.  (simonb)
+  Fix various typos.  Provide documentation fixes for PRs #6296, #6300
+  and #6300, and a partial fix for PR #6307.  Describe CD-ROM device
+  names on the pmax and the process of updating the RTC.  (simonb)
 
 etc/netstart					1.53
 
@@ -1216,3 +1208,22 @@ distrib/utils/sysinst/menus.mi.fr		1.10
 distrib/utils/sysinst/msg.mi.fr			1.11
 
   Fix a few line overflows.  (bouyer)
+
+sys/netinet/fil.c				1.25
+
+  Use NetBSD's in_cksum() to implement fr_tcpsum().  (mrg)
+
+sys/netinet/ip_fil.c				1.32
+
+  Use MGETHDR instead of MGET when getting mbuf for fragments.  (mrg)
+
+distrib/notes/INSTALL				patch
+
+  Mention that the current 1.3.X release is a security and bug fix
+  release to NetBSD 1.3.  The current notes imply that it is a new
+  major release in its own right.  (simonb)
+
+sys/vm/vm_map.c					1.41
+
+  Patch to avoid data corrpution (modifications being thrown away)
+  when mmap() and msync() are being used correctly.  (cgd)
