@@ -1,4 +1,4 @@
-.\"	$NetBSD: ls.1,v 1.44 2003/09/14 21:56:25 wiz Exp $
+.\"	$NetBSD: ls.1,v 1.45 2003/09/22 02:43:19 jschauma Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@
 .Nd list directory contents
 .Sh SYNOPSIS
 .Nm
-.Op Fl AabCcdFfgikLlmnopqRrSsTtuWx1
+.Op Fl AaBbCcdFfgikLlmnopqRrSsTtuWwx1
 .Op Ar
 .Sh DESCRIPTION
 For each operand that names a
@@ -77,8 +77,13 @@ Always set for the super-user.
 Include directory entries whose names begin with a
 dot
 .Pq Sq \&. .
+.It Fl B
+Force printing of non-printable characters in file names as \\xxx, where xxx
+is the numeric value of the character in octal.
 .It Fl b
-Print octal escapes for nongraphic characters.
+As
+.Fl B ,
+but use C escape codes whenever possible.
 .It Fl C
 Force multi-column output; this is the default when output is to a terminal.
 .It Fl c
@@ -184,6 +189,9 @@ of the file for sorting
 .Pq Fl t
 or printing
 .Pq Fl l .
+.It Fl w
+Force raw printing of non-printable characters.
+This is the default when output is not to a terminal.
 .It Fl W
 Display whiteouts when scanning directories.
 .It Fl x
@@ -194,6 +202,15 @@ Multi-column output sorted across the page rather than down the page.
 Force output to be one entry per line.
 This is the default when output is not to a terminal.
 .El
+.Pp
+The
+.Fl B ,
+.Fl b ,
+.Fl w
+and
+.Fl q
+options all override each other; the last one specified determines
+the format used for non-printable characters.
 .Pp
 The
 .Fl 1 ,
