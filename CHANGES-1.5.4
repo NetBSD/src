@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.28 2002/09/04 04:14:36 itojun Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.29 2002/09/04 04:18:43 itojun Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1402,3 +1402,7 @@ sys/dev/scsipi/scsiconf.c			1.186 via patch
 
 lib/libc/stdlib/calloc.c			1.10-1.12
   allow calloc(0, x) and calloc(x, 0).  sync w/openbsd
+
+lib/libipsec/policy_parse.y			1.8
+lib/libipsec/policy_token.l			1.7
+  plug memory leak.  from ebisawa@iij, sync w/kame
