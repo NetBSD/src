@@ -37,7 +37,8 @@
 ./usr/sbin/bad144
 ./usr/sbin/ispcvt
 ./usr/sbin/zzz
-./usr/share/pcvt/keycap.pcvt
+./usr/share/pcvt
+./usr/share/pcvt/fonts
 ./usr/share/pcvt/fonts/vt220h.808
 ./usr/share/pcvt/fonts/vt220h.810
 ./usr/share/pcvt/fonts/vt220h.814
@@ -46,3 +47,4 @@
 ./usr/share/pcvt/fonts/vt220l.810
 ./usr/share/pcvt/fonts/vt220l.814
 ./usr/share/pcvt/fonts/vt220l.816
+./usr/share/pcvt/keycap.pcvt
