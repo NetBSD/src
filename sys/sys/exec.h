@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.83 2002/03/20 00:26:33 christos Exp $	*/
+/*	$NetBSD: exec.h,v 1.84 2002/03/20 18:00:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -61,30 +61,10 @@ struct ps_strings {
 };
 
 /*
- * Address of ps_strings structure.  We only use this as a default in user
- * space; normal access is done through __ps_strings.
- *
- * XXXX PS_STRINGS is deprecated since it can move around for different
- * processes or emulations.
- * In the kernel use p->p_psstr.
- * In userland you should use what's passed in to crt0.s or system calls.
- *
- */
-#define	PS_STRINGS \
-	((struct ps_strings *)(USRSTACK - sizeof(struct ps_strings)))
-
-/*
- * Below the PS_STRINGS and sigtramp, we may require a gap on the stack
+ * Below the ps_strings and sigtramp, we may require a gap on the stack
  * (used to copyin/copyout various emulation data structures).
  */
 #define	STACKGAPLEN	512	/* plenty enough for now */
-/*
- * XXXX The following are deprecated.  Use p->p_psstr instead of PS_STRINGS.
- */
-#define	STACKGAPBASE_UNALIGNED	\
-	((caddr_t)PS_STRINGS - szsigcode - STACKGAPLEN)
-#define	STACKGAPBASE		\
-	((caddr_t)(((unsigned long) STACKGAPBASE_UNALIGNED) & ~ALIGNBYTES))
 
 /*
  * the following structures allow execve() to put together processes
