@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.103 2000/07/30 04:42:37 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.104 2000/07/30 06:10:44 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.103 2000/07/30 04:42:37 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.104 2000/07/30 06:10:44 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -129,7 +129,7 @@ __RCSID("$NetBSD: ftp.c,v 1.103 2000/07/30 04:42:37 lukem Exp $");
 #include <time.h>
 #include <unistd.h>
 #include <stdarg.h>
-#ifndef __USE_SELECT
+#ifndef USE_SELECT
 #include <poll.h>
 #endif
 
@@ -144,56 +144,37 @@ char	pasv[BUFSIZ];	/* passive port for proxy data connection */
 
 static int empty(FILE *, FILE *, int);
 
-union sockunion {
-	struct sockinet {
-#ifdef BSD4_4
-		u_char si_len;
-		u_char si_family;
-#else
-		u_short si_family;
-#endif
-		u_short si_port;
-#ifndef BSD4_4
-		u_char  si_pad[
+struct sockinet {
+	union sockunion {
+		struct sockaddr_in  su_sin;
 #ifdef INET6
-				sizeof(struct sockaddr_in6)
-#else
-				sizeof(struct sockaddr_in)
+		struct sockaddr_in6 su_sin6;
 #endif
-				- sizeof(u_int)];
-		u_char	si_len;
-#endif
-	} su_si;
-	struct sockaddr_in  su_sin;
-#ifdef INET6
-	struct sockaddr_in6 su_sin6;
+	} si_su;
+#ifndef HAVE_SIN_LEN
+	int	si_len;
 #endif
 };
 
-#define	su_len		su_si.si_len
-#define	su_family	su_si.si_family
-#define	su_port		su_si.si_port
+#ifndef HAVE_SIN_LEN
+# define su_len		si_len
+#else
+# define su_len		si_su.su_sin.sin_len
+#endif
+#define su_family	si_su.su_sin.sin_family
+#define su_port		si_su.su_sin.sin_port
 
-union sockunion myctladdr, hisctladdr, data_addr;
+struct sockinet myctladdr, hisctladdr, data_addr;
 
 char *
 hookup(char *host, char *port)
 {
 	int s = -1, len, error;
-#if defined(NI_NUMERICHOST) && defined(INET6)
 	struct addrinfo hints, *res, *res0;
 	char hbuf[MAXHOSTNAMELEN];
-#else
-	struct hostent *hp = NULL;
-	char **ptr, *ep;
-	struct sockaddr_in sin;
-	long nport;
-#endif
 	static char hostnamebuf[MAXHOSTNAMELEN];
 	char *cause = "unknown";
-	int family;
 	
-#if defined(NI_NUMERICHOST) && defined(INET6)
 	memset((char *)&hisctladdr, 0, sizeof (hisctladdr));
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_flags = AI_CANONNAME;
@@ -276,84 +257,14 @@ hookup(char *host, char *port)
 		freeaddrinfo(res0);
 		return 0;
 	}
-	memcpy(&hisctladdr, res->ai_addr, res->ai_addrlen);
-	len = res->ai_addrlen;
+	memcpy(&hisctladdr.si_su, res->ai_addr, res->ai_addrlen);
+	hisctladdr.su_len = res->ai_addrlen;
+	len = hisctladdr.su_len;
 	freeaddrinfo(res0);
 	res0 = res = NULL;
-	family = hisctladdr.su_family;
-#else
-	memset(&sin, 0, sizeof(sin));
-	sin.sin_family = AF_INET;
-	if ((hp = gethostbyname(host)) == NULL) {
-		warnx("%s: %s", host, hstrerror(h_errno));
-		code = -1;
-		return 0;
-	}
 
-	nport = strtol(port, &ep, 10);
-	if (*ep != '\0' && ep == port) {
-		struct servent	*svp;
-
-		svp = getservbyname(port, "tcp");
-		if (svp == NULL) {
-			warnx("hookup: unknown port `%s'", port);
-			sin.sin_port = htons(FTP_PORT);
-		} else
-			sin.sin_port = svp->s_port;
-	} else if (nport < 1 || nport > MAX_IN_PORT_T || *ep != '\0') {
-		warnx("hookup: invalid port `%s'", port);
-		sin.sin_port = htons(FTP_PORT);
-	} else
-		sin.sin_port = htons(nport);
-
-	(void)strlcpy(hostnamebuf, hp->h_name, sizeof(hostnamebuf));
-	hostname = hostnamebuf;
-
-	if (hp->h_length > sizeof(sin.sin_addr))
-		hp->h_length = sizeof(sin.sin_addr);
-
-	for (ptr = hp->h_addr_list; *ptr; ptr++) {
-		memcpy(&sin.sin_addr, *ptr, (size_t)hp->h_length);
-		if (hp->h_addr_list[1])
-			fprintf(ttyout, "Trying %s...\n",
-			    inet_ntoa(sin.sin_addr));
-		s = socket(AF_INET, SOCK_STREAM, 0);
-		if (s < 0) {
-			cause = "socket";
-			continue;
-		}
-		while ((error = xconnect(s, (struct sockaddr *)&sin,
-		    sizeof(sin))) < 0 && errno == EINTR) {
-			;
-		}
-		if (error) {
-			/* this "if" clause is to prevent print warning twice */
-			if (hp->h_addr_list[1]) {
-				warn("connect to address %s",
-				    inet_ntoa(sin.sin_addr));
-			}
-			cause = "connect";
-			close(s);
-			s = -1;
-			continue;
-		}
-
-		/* finally we got one */
-		break;
-	}
-	if (s < 0) {
-		warn("%s", cause);
-		code = -1;
-		return 0;
-	}
-	memcpy(&hisctladdr, &sin, sizeof(sin));
-	len = sizeof(sin);
-	if (hisctladdr.su_len == 0)
-		hisctladdr.su_len = len;
-	family = AF_INET;
-#endif
-
-	if (getsockname(s, (struct sockaddr *)&myctladdr, &len) < 0) {
+	memset((char *)&myctladdr, 0, sizeof (myctladdr));
+	if (getsockname(s, (struct sockaddr *)&myctladdr.si_su, &len) < 0) {
 		warn("getsockname");
 		code = -1;
 		goto bad;
@@ -362,7 +273,7 @@ hookup(char *host, char *port)
 		myctladdr.su_len = len;
 
 #ifdef IPTOS_LOWDELAY
-	if (family == AF_INET) {
+	if (hisctladdr.su_family == AF_INET) {
 		int tos = IPTOS_LOWDELAY;
 		if (setsockopt(s, IPPROTO_IP, IP_TOS, (char *)&tos,
 			       sizeof(int)) < 0)
@@ -631,7 +542,7 @@ empty(FILE *cin, FILE *din, int sec)
 	int nr;
 	int nfd = 0;
 
-#ifdef __USE_SELECT
+#ifdef USE_SELECT
 	struct timeval t;
 	fd_set rmask;
 
@@ -1398,8 +1309,8 @@ initconn(void)
 
 #ifdef INET6
 	if (myctladdr.su_family == AF_INET6 && debug &&
-	    (IN6_IS_ADDR_LINKLOCAL(&myctladdr.su_sin6.sin6_addr) ||
-	     IN6_IS_ADDR_SITELOCAL(&myctladdr.su_sin6.sin6_addr))) {
+	    (IN6_IS_ADDR_LINKLOCAL(&myctladdr.si_su.su_sin6.sin6_addr) ||
+	     IN6_IS_ADDR_SITELOCAL(&myctladdr.si_su.su_sin6.sin6_addr))) {
 		warnx("use of scoped address can be troublesome");
 	}
 #endif
@@ -1519,8 +1430,8 @@ initconn(void)
 			memset(&data_addr, 0, sizeof(data_addr));
 			data_addr.su_family = AF_INET;
 			data_addr.su_len = sizeof(struct sockaddr_in);
-			data_addr.su_sin.sin_addr.s_addr =
-				htonl(pack4(addr, 0));
+			data_addr.si_su.su_sin.sin_addr.s_addr =
+			    htonl(pack4(addr, 0));
 			data_addr.su_port = htons(pack2(port, 0));
 		} else if (strcmp(pasvcmd, "LPSV") == 0) {
 			if (code / 10 == 22 && code != 228) {
@@ -1553,8 +1464,8 @@ initconn(void)
 				memset(&data_addr, 0, sizeof(data_addr));
 				data_addr.su_family = AF_INET;
 				data_addr.su_len = sizeof(struct sockaddr_in);
-				data_addr.su_sin.sin_addr.s_addr =
-					htonl(pack4(addr, 0));
+				data_addr.si_su.su_sin.sin_addr.s_addr =
+				    htonl(pack4(addr, 0));
 				data_addr.su_port = htons(pack2(port, 0));
 				break;
 #ifdef INET6
@@ -1588,7 +1499,7 @@ initconn(void)
 			    {
 				int i;
 				for (i = 0; i < sizeof(struct in6_addr); i++) {
-					data_addr.su_sin6.sin6_addr.s6_addr[i] =
+					data_addr.si_su.su_sin6.sin6_addr.s6_addr[i] =
 					    UC(addr[i]);
 				}
 			    }
@@ -1626,7 +1537,7 @@ initconn(void)
 		} else
 			goto bad;
 
-		while (xconnect(data, (struct sockaddr *)&data_addr,
+		while (xconnect(data, (struct sockaddr *)&data_addr.si_su,
 			    data_addr.su_len) < 0) {
 			if (errno == EINTR)
 				continue;
@@ -1672,7 +1583,8 @@ initconn(void)
 			warn("setsockopt (reuse address)");
 			goto bad;
 		}
-	if (bind(data, (struct sockaddr *)&data_addr, data_addr.su_len) < 0) {
+	if (bind(data, (struct sockaddr *)&data_addr.si_su,
+	    data_addr.su_len) < 0) {
 		warn("bind");
 		goto bad;
 	}
@@ -1680,8 +1592,8 @@ initconn(void)
 	    setsockopt(data, SOL_SOCKET, SO_DEBUG, (char *)&on,
 			sizeof(on)) < 0)
 		warn("setsockopt (ignored)");
-	len = sizeof(data_addr);
-	if (getsockname(data, (struct sockaddr *)&data_addr, &len) < 0) {
+	len = sizeof(data_addr.si_su);		/* XXXLUKEM */
+	if (getsockname(data, (struct sockaddr *)&data_addr.si_su, &len) < 0) {
 		warn("getsockname");
 		goto bad;
 	}
@@ -1704,7 +1616,7 @@ initconn(void)
 #ifdef INET6
 		case AF_INET6:
 			af = (data_addr.su_family == AF_INET) ? 1 : 2;
-			if (getnameinfo((struct sockaddr *)&data_addr,
+			if (getnameinfo((struct sockaddr *)&data_addr.si_su,
 					data_addr.su_len, hname, sizeof(hname),
 					NULL, 0, NI_NUMERICHOST)) {
 				result = ERROR;
@@ -1732,7 +1644,7 @@ initconn(void)
 
 		switch (data_addr.su_family) {
 		case AF_INET:
-			a = (char *)&data_addr.su_sin.sin_addr;
+			a = (char *)&data_addr.si_su.su_sin.sin_addr;
 			p = (char *)&data_addr.su_port;
 			result = command("PORT %d,%d,%d,%d,%d,%d",
 				 UC(a[0]), UC(a[1]), UC(a[2]), UC(a[3]),
@@ -1740,7 +1652,7 @@ initconn(void)
 			break;
 #ifdef INET6
 		case AF_INET6:
-			a = (char *)&data_addr.su_sin6.sin6_addr;
+			a = (char *)&data_addr.si_su.su_sin6.sin6_addr;
 			p = (char *)&data_addr.su_port;
 			result = command(
 	"LPRT %d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d",
@@ -1787,7 +1699,7 @@ initconn(void)
 FILE *
 dataconn(const char *lmode)
 {
-	union sockunion from;
+	struct sockinet from;
 	int s, fromlen = myctladdr.su_len;
 
 	if (passivemode)
@@ -1830,8 +1742,8 @@ pswitch(int flag)
 	static struct comvars {
 		int connect;
 		char name[MAXHOSTNAMELEN];
-		union sockunion mctl;
-		union sockunion hctl;
+		struct sockinet mctl;
+		struct sockinet hctl;
 		FILE *in;
 		FILE *out;
 		int tpe;
@@ -2207,7 +2119,7 @@ ai_unmapped(struct addrinfo *ai)
 	sin.sin_port = sin6->sin6_port;
 
 	ai->ai_family = AF_INET;
-#ifdef BSD4_4
+#ifdef HAVE_SIN_LEN
 	sin.sin_len = len;
 #endif
 	memcpy(ai->ai_addr, &sin, len);
