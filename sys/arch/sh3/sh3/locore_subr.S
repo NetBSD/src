@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.7 2002/03/24 18:04:41 uch Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.8 2002/04/22 18:57:43 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,7 +35,8 @@
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-	
+#include "opt_cputype.h"
+
 #include "assym.h"	
 
 #include <sys/syscall.h>	/* SYS___sigreturn14, SYS_exit */	

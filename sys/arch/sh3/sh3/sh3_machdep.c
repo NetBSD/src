@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.36 2002/03/24 18:04:41 uch Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.37 2002/04/22 18:57:43 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -133,9 +133,12 @@ vaddr_t ram_start = IOM_RAM_BEGIN;
 /* exception handler holder (sh3/sh3/exception_vector.S) */
 extern char sh_vector_generic[], sh_vector_generic_end[];
 extern char sh_vector_interrupt[], sh_vector_interrupt_end[];
+#ifdef SH3
 extern char sh3_vector_tlbmiss[], sh3_vector_tlbmiss_end[];
+#endif
+#ifdef SH4
 extern char sh4_vector_tlbmiss[], sh4_vector_tlbmiss_end[];
-
+#endif
 /*
  * These variables are needed by /sbin/savecore
  */
@@ -169,13 +172,16 @@ sh_cpu_init(int arch, int product)
 	/* Exception vector. */
 	memcpy(VBR + 0x100, sh_vector_generic,
 	    sh_vector_generic_end - sh_vector_generic);
+#ifdef SH3
 	if (CPU_IS_SH3)
 		memcpy(VBR + 0x400, sh3_vector_tlbmiss,
 		    sh3_vector_tlbmiss_end - sh3_vector_tlbmiss);
+#endif
+#ifdef SH4
 	if (CPU_IS_SH4)
 		memcpy(VBR + 0x400, sh4_vector_tlbmiss,
 		    sh4_vector_tlbmiss_end - sh4_vector_tlbmiss);
-
+#endif
 	memcpy(VBR + 0x600, sh_vector_interrupt,
 	    sh_vector_interrupt_end - sh_vector_interrupt);
 
@@ -300,8 +306,15 @@ sh_startup()
 	printf("general exception handler:\t%d byte\n",
 	       sh_vector_generic_end - sh_vector_generic);
 	printf("TLB miss exception handler:\t%d byte\n",
-	       CPU_IS_SH3 ? sh3_vector_tlbmiss_end - sh3_vector_tlbmiss :
-	       sh4_vector_tlbmiss_end - sh4_vector_tlbmiss);
+#if defined(SH3) && defined(SH4)
+	    CPU_IS_SH3 ? sh3_vector_tlbmiss_end - sh3_vector_tlbmiss :
+	    sh4_vector_tlbmiss_end - sh4_vector_tlbmiss
+#elif defined(SH3)
+	    sh3_vector_tlbmiss_end - sh3_vector_tlbmiss
+#elif defined(SH4)
+	    sh4_vector_tlbmiss_end - sh4_vector_tlbmiss
+#endif
+	    );
 	printf("interrupt exception handler:\t%d byte\n",
 	       sh_vector_interrupt_end - sh_vector_interrupt);
 #endif /* DEBUG */

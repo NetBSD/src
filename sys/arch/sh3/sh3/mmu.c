@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu.c,v 1.5 2002/03/17 14:03:34 uch Exp $	*/
+/*	$NetBSD: mmu.c,v 1.6 2002/04/22 18:57:43 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -72,6 +72,7 @@ sh_mmu_init()
 	 * Assing function hook. but if only defined SH3 or SH4, it is called
 	 * directly. see sh3/mmu.h
 	 */
+#ifdef SH3
 	if (CPU_IS_SH3) {
 		__sh_mmu_start = sh3_mmu_start;
 		__sh_tlb_invalidate_addr = sh3_tlb_invalidate_addr;
@@ -83,7 +84,8 @@ sh_mmu_init()
 		__sh_mmu_ttb_write = sh3_mmu_ttb_write;
 		__sh_mmu_pd_area = __sh3_mmu_pd_area;
 	}
-
+#endif /* SH3 */
+#ifdef SH4
 	if (CPU_IS_SH4) {
 		__sh_mmu_start = sh4_mmu_start;
 		__sh_tlb_invalidate_addr = sh4_tlb_invalidate_addr;
@@ -95,7 +97,7 @@ sh_mmu_init()
 		__sh_mmu_ttb_write = sh4_mmu_ttb_write;
 		__sh_mmu_pd_area = __sh4_mmu_pd_area;
 	}
-
+#endif /* SH4 */
 }
 
 void

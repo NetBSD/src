@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.3 2002/03/10 07:46:51 uch Exp $	*/
+/*	$NetBSD: cache.c,v 1.4 2002/04/22 18:57:43 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -81,10 +81,14 @@ sh_cache_init()
 #ifdef CACHE_DEBUG
 	return;
 #endif
+#ifdef SH3
 	if (CPU_IS_SH3)
 		sh3_cache_config();		
-	else
+#endif
+#ifdef SH4
+	if (CPU_IS_SH4)
 		sh4_cache_config();		
+#endif
 }
 
 void
