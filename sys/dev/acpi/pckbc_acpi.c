@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_acpi.c,v 1.8 2003/11/03 17:24:22 mycroft Exp $	*/
+/*	$NetBSD: pckbc_acpi.c,v 1.9 2003/11/03 18:07:10 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.8 2003/11/03 17:24:22 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.9 2003/11/03 18:07:10 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,7 +156,7 @@ pckbc_acpi_attach(struct device *parent,
 	/* parse resources */
 	rv = acpi_resource_parse(&sc->sc_dv, aa->aa_node, &res,
 	    &acpi_resource_parse_ops_default);
-	if (rv != AE_OK)
+	if (ACPI_FAILURE(rv))
 		return;
 
 	/* find our IRQ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.34 2003/11/03 17:24:22 mycroft Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.35 2003/11/03 18:07:10 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.34 2003/11/03 17:24:22 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.35 2003/11/03 18:07:10 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -270,7 +270,7 @@ acpibat_attach(struct device *parent, struct device *self, void *aux)
 	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
 				      ACPI_DEVICE_NOTIFY,
 				      acpibat_notify_handler, sc);
-	if (rv != AE_OK) {
+	if (ACPI_FAILURE(rv)) {
 		printf("%s: unable to register DEVICE NOTIFY handler: %s\n",
 		       sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		return;
@@ -280,7 +280,7 @@ acpibat_attach(struct device *parent, struct device *self, void *aux)
 	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
 				      ACPI_SYSTEM_NOTIFY,
 				      acpibat_notify_handler, sc);
-	if (rv != AE_OK) {
+	if (ACPI_FAILURE(rv)) {
 		printf("%s: unable to register SYSTEM NOTIFY handler: %s\n",
 		       sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		return;
@@ -355,7 +355,7 @@ acpibat_battery_present(struct acpibat_softc *sc)
 	ACPI_STATUS rv;
 
 	rv = acpi_eval_integer(sc->sc_node->ad_handle, "_STA", &val);
-	if (rv != AE_OK) {
+	if (ACPI_FAILURE(rv)) {
 		printf("%s: failed to evaluate _STA: %s\n",
 		       sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		return (-1);
@@ -391,7 +391,7 @@ acpibat_get_info(struct acpibat_softc *sc)
 	int capunit, rateunit, s;
 
 	rv = acpi_eval_struct(sc->sc_node->ad_handle, "_BIF", &buf);
-	if (rv != AE_OK) {
+	if (ACPI_FAILURE(rv)) {
 		printf("%s: failed to evaluate _BIF: %s\n",
 		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		return (rv);
@@ -481,7 +481,7 @@ acpibat_get_status(struct acpibat_softc *sc)
 	ACPI_BUFFER buf;
 
 	rv = acpi_eval_struct(sc->sc_node->ad_handle, "_BST", &buf);
-	if (rv != AE_OK) {
+	if (ACPI_FAILURE(rv)) {
 		printf("%s: failed to evaluate _BST: %s\n",
 		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		return (rv);
@@ -677,7 +677,7 @@ acpibat_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 		ABAT_UNLOCK(sc, s);
 		rv = AcpiOsQueueForExecution(OSD_PRIORITY_LO,
 					     acpibat_update, sc);
-		if (rv != AE_OK)
+		if (ACPI_FAILURE(rv))
 			printf("%s: unable to queue status check: %s\n",
 			       sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		break;
@@ -688,7 +688,7 @@ acpibat_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 		ABAT_UNLOCK(sc, s);
 		rv = AcpiOsQueueForExecution(OSD_PRIORITY_LO,
 					     acpibat_update, sc);
-		if (rv != AE_OK)
+		if (ACPI_FAILURE(rv))
 			printf("%s: unable to queue status check: %s\n",
 			       sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		break;
