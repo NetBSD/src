@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.46 2000/05/31 05:02:32 thorpej Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.47 2000/08/01 04:57:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -54,14 +54,14 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
-int	ktrace_common __P((struct proc *, int, int, int, struct file *));
-void	ktrinitheader __P((struct ktr_header *, struct proc *, int));
-int	ktrops __P((struct proc *, struct proc *, int, int, struct file *));
-int	ktrsetchildren __P((struct proc *, struct proc *, int, int,
-    struct file *));
-int	ktrwrite __P((struct proc *, struct ktr_header *));
-int	ktrcanset __P((struct proc *, struct proc *));
-int	ktrsamefile __P((struct file *, struct file *));
+int	ktrace_common(struct proc *, int, int, int, struct file *);
+void	ktrinitheader(struct ktr_header *, struct proc *, int);
+int	ktrops(struct proc *, struct proc *, int, int, struct file *);
+int	ktrsetchildren(struct proc *, struct proc *, int, int,
+	    struct file *);
+int	ktrwrite(struct proc *, struct ktr_header *);
+int	ktrcanset(struct proc *, struct proc *);
+int	ktrsamefile(struct file *, struct file *);
 
 /*
  * "deep" compare of two files for the purposes of clearing a trace.
@@ -70,8 +70,7 @@ int	ktrsamefile __P((struct file *, struct file *));
  */
 
 int
-ktrsamefile (f1, f2)
-	struct file *f1, *f2;
+ktrsamefile(struct file *f1, struct file *f2)
 {
 	return ((f1 == f2) ||
 	    ((f1 != NULL) && (f2 != NULL) &&
@@ -80,8 +79,7 @@ ktrsamefile (f1, f2)
 }
 
 void
-ktrderef(p)
-	struct proc *p;
+ktrderef(struct proc *p)
 {
 	struct file *fp = p->p_tracep;
 	p->p_traceflag = 0;
@@ -94,8 +92,7 @@ ktrderef(p)
 }
 
 void
-ktradref(p)
-	struct proc *p;
+ktradref(struct proc *p)
 {
 	struct file *fp = p->p_tracep;
 
@@ -103,10 +100,7 @@ ktradref(p)
 }
 
 void
-ktrinitheader(kth, p, type)
-	struct ktr_header *kth;
-	struct proc *p;
-	int type;
+ktrinitheader(struct ktr_header *kth, struct proc *p, int type)
 {
 
 	memset(kth, 0, sizeof(*kth));
@@ -117,11 +111,7 @@ ktrinitheader(kth, p, type)
 }
 
 void
-ktrsyscall(p, code, argsize, args)
-	struct proc *p;
-	register_t code;
-	size_t argsize;
-	register_t args[];
+ktrsyscall(struct proc *p, register_t code, size_t argsize, register_t args[])
 {
 	struct ktr_header kth;
 	struct ktr_syscall *ktp;
@@ -145,11 +135,7 @@ ktrsyscall(p, code, argsize, args)
 }
 
 void
-ktrsysret(p, code, error, retval)
-	struct proc *p;
-	register_t code;
-	int error;
-	register_t retval;
+ktrsysret(struct proc *p, register_t code, int error, register_t retval)
 {
 	struct ktr_header kth;
 	struct ktr_sysret ktp;
@@ -169,9 +155,7 @@ ktrsysret(p, code, error, retval)
 }
 
 void
-ktrnamei(p, path)
-	struct proc *p;
-	char *path;
+ktrnamei(struct proc *p, char *path)
 {
 	struct ktr_header kth;
 
@@ -185,8 +169,7 @@ ktrnamei(p, path)
 }
 
 void
-ktremul(p)
-	struct proc *p;
+ktremul(struct proc *p)
 {
 	struct ktr_header kth;
 	char *emul = p->p_emul->e_name;
@@ -201,12 +184,8 @@ ktremul(p)
 }
 
 void
-ktrgenio(p, fd, rw, iov, len, error)
-	struct proc *p;
-	int fd;
-	enum uio_rw rw;
-	struct iovec *iov;
-	int len, error;
+ktrgenio(struct proc *p, int fd, enum uio_rw rw, struct iovec *iov,
+    int len, int error)
 {
 	struct ktr_header kth;
 	struct ktr_genio *ktp;
@@ -262,12 +241,7 @@ ktrgenio(p, fd, rw, iov, len, error)
 }
 
 void
-ktrpsig(p, sig, action, mask, code)
-	struct proc *p;
-	int sig;
-	sig_t action;
-	sigset_t *mask;
-	int code;
+ktrpsig(struct proc *p, int sig, sig_t action, sigset_t *mask, int code)
 {
 	struct ktr_header kth;
 	struct ktr_psig	kp;
@@ -286,9 +260,7 @@ ktrpsig(p, sig, action, mask, code)
 }
 
 void
-ktrcsw(p, out, user)
-	struct proc *p;
-	int out, user;
+ktrcsw(struct proc *p, int out, int user)
 {
 	struct ktr_header kth;
 	struct ktr_csw kc;
@@ -307,10 +279,7 @@ ktrcsw(p, out, user)
 /* Interface and common routines */
 
 int
-ktrace_common (curp, ops, facs, pid, fp)
-	struct proc *curp;
-	int ops, facs, pid;
-	struct file *fp;
+ktrace_common(struct proc *curp, int ops, int facs, int pid, struct file *fp)
 {
 	int ret = 0;
 	int error = 0;
@@ -403,10 +372,7 @@ done:
  */
 /* ARGSUSED */
 int
-sys_fktrace(curp, v, retval)
-	struct proc *curp;
-	void *v;
-	register_t *retval;
+sys_fktrace(struct proc *curp, void *v, register_t *retval)
 {
 	struct sys_fktrace_args /* {
 		syscallarg(int) fd;
@@ -431,10 +397,7 @@ sys_fktrace(curp, v, retval)
  */
 /* ARGSUSED */
 int
-sys_ktrace(curp, v, retval)
-	struct proc *curp;
-	void *v;
-	register_t *retval;
+sys_ktrace(struct proc *curp, void *v, register_t *retval)
 {
 	struct sys_ktrace_args /* {
 		syscallarg(const char *) fname;
@@ -502,10 +465,7 @@ done:
 }
 
 int
-ktrops(curp, p, ops, facs, fp)
-	struct proc *p, *curp;
-	int ops, facs;
-	struct file *fp;
+ktrops(struct proc *curp, struct proc *p, int ops, int facs, struct file *fp)
 {
 
 	if (!ktrcanset(curp, p))
@@ -541,10 +501,8 @@ ktrops(curp, p, ops, facs, fp)
 }
 
 int
-ktrsetchildren(curp, top, ops, facs, fp)
-	struct proc *curp, *top;
-	int ops, facs;
-	struct file *fp;
+ktrsetchildren(struct proc *curp, struct proc *top, int ops, int facs,
+    struct file *fp)
 {
 	struct proc *p;
 	int ret = 0;
@@ -573,9 +531,7 @@ ktrsetchildren(curp, top, ops, facs, fp)
 }
 
 int
-ktrwrite(p, kth)
-	struct proc *p;
-	struct ktr_header *kth;
+ktrwrite(struct proc *p, struct ktr_header *kth)
 {
 	struct uio auio;
 	struct iovec aiov[2];
@@ -643,8 +599,7 @@ ktrwrite(p, kth)
  * TODO: check groups.  use caller effective gid.
  */
 int
-ktrcanset(callp, targetp)
-	struct proc *callp, *targetp;
+ktrcanset(struct proc *callp, struct proc *targetp)
 {
 	struct pcred *caller = callp->p_cred;
 	struct pcred *target = targetp->p_cred;
@@ -659,5 +614,4 @@ ktrcanset(callp, targetp)
 
 	return (0);
 }
-
-#endif
+#endif /* KTRACE */

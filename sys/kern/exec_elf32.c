@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.53 2000/07/13 02:35:25 matt Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.54 2000/08/01 04:57:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -115,16 +115,16 @@
 #include <compat/freebsd/freebsd_exec.h>
 #endif
 
-int	ELFNAME(check_header) __P((Elf_Ehdr *, int));
-int	ELFNAME(load_file) __P((struct proc *, struct exec_package *, char *,
-	    struct exec_vmcmd_set *, u_long *, struct elf_args *, Elf_Addr *));
-void	ELFNAME(load_psection) __P((struct exec_vmcmd_set *, struct vnode *,
-	    const Elf_Phdr *, Elf_Addr *, u_long *, int *, int));
+int	ELFNAME(check_header)(Elf_Ehdr *, int);
+int	ELFNAME(load_file)(struct proc *, struct exec_package *, char *,
+	    struct exec_vmcmd_set *, u_long *, struct elf_args *, Elf_Addr *);
+void	ELFNAME(load_psection)(struct exec_vmcmd_set *, struct vnode *,
+	    const Elf_Phdr *, Elf_Addr *, u_long *, int *, int);
 
-int ELFNAME2(netbsd,signature) __P((struct proc *, struct exec_package *,
-    Elf_Ehdr *));
-static int ELFNAME2(netbsd,probe) __P((struct proc *, struct exec_package *,
-    Elf_Ehdr *, char *, Elf_Addr *));
+int ELFNAME2(netbsd,signature)(struct proc *, struct exec_package *,
+    Elf_Ehdr *);
+static int ELFNAME2(netbsd,probe)(struct proc *, struct exec_package *,
+    Elf_Ehdr *, char *, Elf_Addr *);
 
 extern char sigcode[], esigcode[];
 #ifdef SYSCALL_DEBUG
@@ -150,8 +150,8 @@ struct emul ELFNAMEEND(emul_netbsd) = {
 	esigcode,
 };
 
-int (*ELFNAME(probe_funcs)[]) __P((struct proc *, struct exec_package *,
-    Elf_Ehdr *, char *, Elf_Addr *)) = {
+int (*ELFNAME(probe_funcs)[])(struct proc *, struct exec_package *,
+    Elf_Ehdr *, char *, Elf_Addr *) = {
 #if defined(COMPAT_NETBSD32) && (ELFSIZE == 32)
 	    /* This one should go first so it matches instead of netbsd */
 	ELFNAME2(netbsd32,probe),
@@ -180,11 +180,8 @@ int (*ELFNAME(probe_funcs)[]) __P((struct proc *, struct exec_package *,
  * extra information in case of dynamic binding.
  */
 void *
-ELFNAME(copyargs)(pack, arginfo, stack, argp)
-	struct exec_package *pack;
-	struct ps_strings *arginfo;
-	void *stack;
-	void *argp;
+ELFNAME(copyargs)(struct exec_package *pack, struct ps_strings *arginfo,
+    void *stack, void *argp)
 {
 	size_t len;
 	AuxInfo ai[ELF_AUX_ENTRIES], *a;
@@ -252,9 +249,7 @@ ELFNAME(copyargs)(pack, arginfo, stack, argp)
  * Check header for validity; return 0 of ok ENOEXEC if error
  */
 int
-ELFNAME(check_header)(eh, type)
-	Elf_Ehdr *eh;
-	int type;
+ELFNAME(check_header)(Elf_Ehdr *eh, int type)
 {
 
 	if (memcmp(eh->e_ident, ELFMAG, SELFMAG) != 0 ||
@@ -281,14 +276,8 @@ ELFNAME(check_header)(eh, type)
  * Load a psection at the appropriate address
  */
 void
-ELFNAME(load_psection)(vcset, vp, ph, addr, size, prot, flags)
-	struct exec_vmcmd_set *vcset;
-	struct vnode *vp;
-	const Elf_Phdr *ph;
-	Elf_Addr *addr;
-	u_long *size;
-	int *prot;
-	int flags;
+ELFNAME(load_psection)(struct exec_vmcmd_set *vcset, struct vnode *vp,
+    const Elf_Phdr *ph, Elf_Addr *addr, u_long *size, int *prot, int flags)
 {
 	u_long uaddr, msize, psize, rm, rf;
 	long diff, offset;
@@ -356,12 +345,8 @@ ELFNAME(load_psection)(vcset, vp, ph, addr, size, prot, flags)
  *	Read from vnode into buffer at offset.
  */
 int
-ELFNAME(read_from)(p, vp, off, buf, size)
-	struct vnode *vp;
-	u_long off;
-	struct proc *p;
-	caddr_t buf;
-	int size;
+ELFNAME(read_from)(struct proc *p, struct vnode *vp, u_long off,
+    caddr_t buf, int size)
 {
 	int error;
 	size_t resid;
@@ -385,14 +370,9 @@ ELFNAME(read_from)(p, vp, off, buf, size)
  * so it might be used externally.
  */
 int
-ELFNAME(load_file)(p, epp, path, vcset, entry, ap, last)
-	struct proc *p;
-	struct exec_package *epp;
-	char *path;
-	struct exec_vmcmd_set *vcset;
-	u_long *entry;
-	struct elf_args	*ap;
-	Elf_Addr *last;
+ELFNAME(load_file)(struct proc *p, struct exec_package *epp, char *path,
+    struct exec_vmcmd_set *vcset, u_long *entry, struct elf_args *ap,
+    Elf_Addr *last)
 {
 	int error, i;
 	struct nameidata nd;
@@ -534,9 +514,7 @@ bad:
  * text, data, bss, and stack segments.
  */
 int
-ELFNAME2(exec,makecmds)(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 {
 	Elf_Ehdr *eh = epp->ep_hdr;
 	Elf_Phdr *ph, *pp;
@@ -748,10 +726,8 @@ bad:
 }
 
 int
-ELFNAME2(netbsd,signature)(p, epp, eh)
-	struct proc *p;
-	struct exec_package *epp;
-	Elf_Ehdr *eh;
+ELFNAME2(netbsd,signature)(struct proc *p, struct exec_package *epp,
+    Elf_Ehdr *eh)
 {
 	Elf_Phdr *hph, *ph;
 	Elf_Nhdr *np = NULL;
@@ -807,12 +783,8 @@ out1:
 }
 
 static int
-ELFNAME2(netbsd,probe)(p, epp, eh, itp, pos)
-	struct proc *p;
-	struct exec_package *epp;
-	Elf_Ehdr *eh;
-	char *itp;
-	Elf_Addr *pos;
+ELFNAME2(netbsd,probe)(struct proc *p, struct exec_package *epp,
+    Elf_Ehdr *eh, char *itp, Elf_Addr *pos)
 {
 	int error;
 
