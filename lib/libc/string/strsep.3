@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strsep.3	8.1 (Berkeley) 6/9/93
-.\"	$NetBSD: strsep.3,v 1.11 2002/08/11 09:36:15 yamt Exp $
+.\"	$NetBSD: strsep.3,v 1.12 2002/08/20 16:22:44 wiz Exp $
 .\"
 .Dd August 11, 2002
 .Dt STRSEP 3
@@ -65,7 +65,9 @@ The original value of
 .Fa *stringp
 is returned.
 .Pp
-An ``empty'' field, i.e. one caused by two adjacent delimiter characters,
+An
+.Dq empty
+field, i.e. one caused by two adjacent delimiter characters,
 can be detected by comparing the location referenced by the pointer returned
 by
 .Fn strsep
