@@ -31,9 +31,9 @@
 ./usr/lkm/procfs.o
 ./usr/lkm/umapfs.o
 ./usr/mdec/fdboot
+./usr/mdec/installboot
 ./usr/mdec/xxboot
 ./usr/sbin/grfconfig
-./usr/sbin/installboot
 ./usr/sbin/iteconfig
 ./usr/sbin/loadkmap
 ./usr/sbin/screenblank
