@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_all.c,v 1.3 1996/05/20 15:17:31 cgd Exp $	 */
+/*	$NetBSD: yp_all.c,v 1.3.2.1 1996/05/26 06:13:42 jtc Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: yp_all.c,v 1.3 1996/05/20 15:17:31 cgd Exp $";
+static char rcsid[] = "$NetBSD: yp_all.c,v 1.3.2.1 1996/05/26 06:13:42 jtc Exp $";
 #endif
 
 #include <string.h>
@@ -41,8 +41,6 @@ static char rcsid[] = "$NetBSD: yp_all.c,v 1.3 1996/05/20 15:17:31 cgd Exp $";
 #include <rpcsvc/ypclnt.h>
 
 extern struct timeval _yplib_timeout;
-extern int (*ypresp_allfn) __P((u_long, char *, int, char *, int, void *));
-extern void *ypresp_data;
 
 int
 yp_all(indomain, inmap, incallback)
@@ -53,8 +51,8 @@ yp_all(indomain, inmap, incallback)
 	struct ypreq_nokey yprnk;
 	struct dom_binding *ysd;
 	struct sockaddr_in clnt_sin;
+	enum clnt_stat  status;
 	CLIENT         *clnt;
-	u_long          status;
 	int             clnt_sock;
 
 	if (indomain == NULL || *indomain == '\0'
@@ -79,18 +77,16 @@ yp_all(indomain, inmap, incallback)
 	}
 	yprnk.domain = indomain;
 	yprnk.map = inmap;
-	ypresp_allfn = incallback->foreach;
-	ypresp_data = (void *) incallback->data;
 
-	(void) clnt_call(clnt, YPPROC_ALL,
-		  xdr_ypreq_nokey, &yprnk, xdr_ypresp_all_seq, &status,
-		  _yplib_timeout);
+	status = clnt_call(clnt, YPPROC_ALL, xdr_ypreq_nokey, &yprnk,
+	    xdr_ypall, (char *)incallback, _yplib_timeout);
 	clnt_destroy(clnt);
+
 	/* not really needed... */
-	xdr_free(xdr_ypresp_all_seq, (char *) &status);
 	_yp_unbind(ysd);
 
-	if (status != YP_FALSE)
-		return ypprot_err(status);
+	if (status != RPC_SUCCESS)
+		return YPERR_RPC;
+
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.20 1996/03/30 22:49:08 cgd Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.20.4.1 1996/05/26 06:20:09 jtc Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -33,7 +33,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$NetBSD: ypbind.c,v 1.20 1996/03/30 22:49:08 cgd Exp $";
+static char rcsid[] = "$NetBSD: ypbind.c,v 1.20.4.1 1996/05/26 06:20:09 jtc Exp $";
 #endif
 
 #include <sys/param.h>
@@ -80,10 +80,6 @@ struct _dom_binding {
 	int dom_alive;
 	int dom_xid;
 };
-
-extern bool_t xdr_domainname(), xdr_ypbind_resp();
-extern bool_t xdr_ypreq_key(), xdr_ypresp_val();
-extern bool_t xdr_ypbind_setdom();
 
 char *domainname;
 
@@ -246,7 +242,7 @@ ypbindprog_2(rqstp, transp)
 		break;
 
 	case YPBINDPROC_DOMAIN:
-		xdr_argument = xdr_domainname;
+		xdr_argument = xdr_ypdomain_wrap_string;
 		xdr_result = xdr_ypbind_resp;
 		local = (char *(*)()) ypbindproc_domain_2;
 		break;
@@ -487,7 +483,7 @@ ping(ypdb)
 		AUTH_DESTROY(rpcua);
 		return st;
 	}
-	if (!xdr_domainname(&xdr, dom)) {
+	if (xdr_ypdomain_wrap_string(&xdr, &dom)) {
 		st = RPC_CANTENCODEARGS;
 		AUTH_DESTROY(rpcua);
 		return st;
@@ -526,8 +522,8 @@ broadcast(ypdb)
 	AUTH *rpcua;
 	XDR xdr;
 
-	rmtca.xdr_args = xdr_domainname;
-	rmtca.args_ptr = dom;
+	rmtca.xdr_args = xdr_ypdomain_wrap_string;
+	rmtca.args_ptr = (char *)&dom;
 
 	memset(&xdr, 0, sizeof xdr);
 	memset(&msg, 0, sizeof msg);
