@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.5 2000/05/31 14:28:26 nonaka Exp $
+#	$NetBSD: files.prep,v 1.6 2000/06/08 13:16:23 nonaka Exp $
 #
 # prep-specific configuration info
 #
@@ -128,13 +128,12 @@ file	arch/prep/isa/joy_isa.c		joy_isa
 # network devices MII bus
 include	"dev/mii/files.mii"
 
-#
+# USB drivers
+include "dev/usb/files.usb"
+
 # Linux binary compatibility (COMPAT_LINUX)
-#
 #include "compat/linux/files.linux"
 #include "compat/linux/arch/powerpc/files.linux_powerpc"
 
-#
 # OSS audio driver compatibility
-#
-#include "compat/ossaudio/files.ossaudio"
+include "compat/ossaudio/files.ossaudio"
