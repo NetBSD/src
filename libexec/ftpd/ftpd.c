@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.70 1999/09/30 18:12:34 tron Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.71 1999/12/07 05:30:54 lukem Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.70 1999/09/30 18:12:34 tron Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.71 1999/12/07 05:30:54 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -887,38 +887,38 @@ bad:
 }
 
 void
-retrieve(cmd, name)
-	const char *cmd, *name;
+retrieve(argv, name)
+	char *argv[];
+	const char *name;
 {
 	FILE *fin = NULL, *dout;
 	struct stat st;
 	int (*closefunc) __P((FILE *)) = NULL;
 	int log, sendrv, closerv, stderrfd, isconversion, isdata, isls;
 	struct timeval start, finish, td, *tdp;
-	char tline[BUFSIZ];
 	const char *dispname;
 
 	sendrv = closerv = stderrfd = -1;
 	isconversion = isdata = isls = log = 0;
 	tdp = NULL;
 	dispname = name;
-	if (cmd == NULL) {
+	if (argv == NULL) {
 		log = 1;
 		isdata = 1;
 		fin = fopen(name, "r");
 		closefunc = fclose;
 		if (fin == NULL)
-			cmd = do_conversion(name);
-		if (cmd != NULL) {
+			argv = do_conversion(name);
+		if (argv != NULL) {
 			isconversion++;
-			syslog(LOG_INFO, "get command: '%s'", cmd);
+			syslog(LOG_INFO, "get command: '%s' on '%s'",
+			    argv[0], name);
 		}
 	}
-	if (cmd != NULL) {
+	if (argv != NULL) {
 		char temp[MAXPATHLEN + 1];
 
-		if (strncmp(cmd, INTERNAL_LS, sizeof(INTERNAL_LS) - 1) == 0 &&
-		    strchr(" \t\n", cmd[sizeof(INTERNAL_LS) - 1]) != NULL) {
+		if (strcmp(argv[0], INTERNAL_LS) == 0) {
 			isls = 1;
 			stderrfd = -1;
 		} else {
@@ -927,9 +927,8 @@ retrieve(cmd, name)
 			if (stderrfd != -1)
 				(void)unlink(temp);
 		}
-		(void)snprintf(tline, sizeof(tline), cmd, name);
-		dispname = tline;
-		fin = ftpd_popen(tline, "r", stderrfd);
+		dispname = argv[0];
+		fin = ftpd_popen(argv, "r", stderrfd);
 		closefunc = ftpd_pclose;
 		st.st_size = -1;
 		st.st_blksize = BUFSIZ;
@@ -941,12 +940,10 @@ retrieve(cmd, name)
 				logcmd("get", -1, name, NULL, NULL,
 				    strerror(errno));
 		}
-		if (stderrfd != -1)
-			(void)close(stderrfd);
-		return;
+		goto cleanupretrieve;
 	}
 	byte_count = -1;
-	if (cmd == NULL
+	if (argv == NULL
 	    && (fstat(fileno(fin), &st) < 0 || !S_ISREG(st.st_mode))) {
 		reply(550, "%s: not a plain file.", dispname);
 		goto done;
@@ -989,16 +986,16 @@ done:
 		FILE *err;
 		struct stat sb;
 
-		if (!isls && cmd != NULL && closerv != 0) {
+		if (!isls && argv != NULL && closerv != 0) {
 			lreply(226,
 			    "Command returned an exit status of %d",
 			    closerv);
 			if (isconversion)
 				syslog(LOG_INFO,
-				    "get command: '%s' returned %d",
-				    cmd, closerv);
+				    "retrieve command: '%s' returned %d",
+				    argv[0], closerv);
 		}
-		if (!isls && cmd != NULL && stderrfd != -1 &&
+		if (!isls && argv != NULL && stderrfd != -1 &&
 		    (fstat(stderrfd, &sb) == 0) && sb.st_size > 0 &&
 		    ((err = fdopen(stderrfd, "r")) != NULL)) {
 			char *cp, line[LINE_MAX];
@@ -1016,8 +1013,11 @@ done:
 		}
 		reply(226, "Transfer complete.");
 	}
+ cleanupretrieve:
 	if (stderrfd != -1)
 		(void)close(stderrfd);
+	if (isconversion)
+		free(argv);
 }
 
 void
@@ -1472,10 +1472,10 @@ statfilecmd(filename)
 {
 	FILE *fin;
 	int c;
-	char line[LINE_MAX];
+	char *argv[] = { INTERNAL_LS, "-lgA", "", NULL };
 
-	(void)snprintf(line, sizeof(line), "/bin/ls -lgA %s", filename);
-	fin = ftpd_popen(line, "r", STDOUT_FILENO);
+	argv[2] = (char *)filename;
+	fin = ftpd_popen(argv, "r", STDOUT_FILENO);
 	lreply(211, "status of %s:", filename);
 	while ((c = getc(fin)) != EOF) {
 		if (c == '\n') {
@@ -2254,9 +2254,13 @@ send_file_list(whichf)
 			 * If user typed "ls -l", etc, and the client
 			 * used NLST, do what the user meant.
 			 */
+			/* XXX: nuke this support? */
 			if (dirname[0] == '-' && *dirlist == NULL &&
 			    transflag == 0) {
-				retrieve("/bin/ls %s", dirname);
+				char *argv[] = { INTERNAL_LS, "", NULL };
+
+				argv[1] = dirname;
+				retrieve(argv, dirname);
 				goto out;
 			}
 			perror_reply(550, whichf);
@@ -2307,6 +2311,7 @@ send_file_list(whichf)
 			 * We have to do a stat to ensure it's
 			 * not a directory or special file.
 			 */
+			/* XXX: follow RFC959 and filter out non files ? */
 			if (simple || (stat(nbuf, &st) == 0 &&
 			    S_ISREG(st.st_mode))) {
 				char *p;
