@@ -1,4 +1,4 @@
-/*	$NetBSD: mapper.c,v 1.11 2002/08/09 02:17:26 itojun Exp $	*/
+/*	$NetBSD: mapper.c,v 1.12 2002/09/19 03:31:19 mycroft Exp $	*/
 
 /* Mapper for connections between MRouteD multicast routers.
  * Written by Pavel Curtis <Pavel@PARC.Xerox.Com>
@@ -37,6 +37,7 @@
 #include <string.h>
 #include <netdb.h>
 #include <sys/time.h>
+#include <sys/poll.h>
 #include "defs.h"
 #include <arpa/inet.h>
 #include <stdarg.h>
@@ -807,6 +808,7 @@ u_int32_t host_addr(char *name)
 int main(int argc, char **argv)
 {
     int flood = FALSE, graph = FALSE;
+    struct pollfd set[1];
     
     setlinebuf(stderr);
 
@@ -900,24 +902,16 @@ int main(int argc, char **argv)
     }
 
     /* Main receive loop */
+    set[0].fd = igmp_socket;
+    set[0].events = POLLIN;
     for(;;) {
-	fd_set		fds;
-	struct timeval 	tv;
 	int 		count, recvlen, dummy = 0;
 
-	FD_ZERO(&fds);
-	if (igmp_socket >= FD_SETSIZE)
-	    log(LOG_ERR, 0, "descriptor too big");
-	FD_SET(igmp_socket, &fds);
-
-	tv.tv_sec = timeout;
-	tv.tv_usec = 0;
-
-	count = select(igmp_socket + 1, &fds, 0, 0, &tv);
+	count = poll(set, 1, timeout * 1000);
 
 	if (count < 0) {
 	    if (errno != EINTR)
-		perror("select");
+		perror("poll");
 	    continue;
 	} else if (count == 0) {
 	    log(LOG_DEBUG, 0, "Timed out receiving neighbor lists");
