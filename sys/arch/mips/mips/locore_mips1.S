@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.44 2000/09/18 18:17:32 uch Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.45 2000/09/26 17:47:40 uch Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1216,7 +1216,7 @@ END(mips1_wbflush)
  *	The differences between R3900 and R3000.
  *	1. Cache system 
  *		Physical-index physical-tag	
- *		line-size 4words (fixed)
+ *		fixed line-size
  *		refil-size 4/8/16/32 words (set in config register)
  *		TX3912 
  *		       Write-through
@@ -1318,6 +1318,7 @@ END(mips1_FlushDCache)
 #ifdef TX392X	
 LEAF(mips1_FlushICache)
 	beq	a1, zero, 4f
+	addu	a1, a1, a0			# compute ending address
 	lw	t3, mips_L1ICacheSize	
 	mfc0	t0, MIPS_COP_0_STATUS		# Save SR
 	nop
@@ -1332,7 +1333,6 @@ LEAF(mips1_FlushICache)
 	j	1f				# stop streaming
 	nop
 1:	
-	addu	a1, a1, a0			# compute ending address
 	.set	push
 	.set	mips3
 3:
@@ -1355,6 +1355,7 @@ END(mips1_FlushICache)
 /* R3900 don't have HitInvalidate for I-cache. so use IndexInvalidate */
 LEAF(mips1_FlushICache)
 	beq	a1, zero, 5f
+	nop
 	lw	t3, mips_L1ICacheSize	
 	mfc0	t0, MIPS_COP_0_STATUS		# Save SR
 	nop
@@ -1369,7 +1370,6 @@ LEAF(mips1_FlushICache)
 	j	1f	# stop streaming
 	nop
 1:
-
 	blt	a1, t3, 3f
 	addu	a1, a1, a0			# compute ending address 
 	
@@ -1378,10 +1378,10 @@ LEAF(mips1_FlushICache)
 	.set	push
 	.set	mips3
 2:
-	addu	a1, -1
+	addiu	a1, -1
 	cache	R3900_C_IINV_I, 0(a0)
 	bne	a1, zero, 2b
-	addu	a0, a0, R3900_C_LSIZE_I
+	addiu	a0, a0, R3900_C_LSIZE_I
 	.set	pop
 	j	5f
 	nop
@@ -1439,7 +1439,7 @@ LEAF(mips1_FlushCache)
 3:	
 	cache R3920_C_IINV_I, 0(t0)		# invalidate both way of index
 	bne	t0, t1, 3b
-	addu	t0, t0, R3920_C_LSIZE_I
+	addiu	t0, t0, R3920_C_LSIZE_I
 
 	# Invalidate D-cache
 	li	t0, MIPS_KSEG0_START
@@ -1467,7 +1467,6 @@ END(mips1_FlushCache)
 LEAF(mips1_FlushCache)
 	lw	t1, mips_L1ICacheSize
 	lw	t2, mips_L1DCacheSize
-	srl	t2, 1				# 2-way	D-cache	
 	nop
 	mfc0	t7, MIPS_COP_0_STATUS		# Save SR
 	nop
@@ -1490,7 +1489,7 @@ LEAF(mips1_FlushCache)
 3:	
 	cache R3900_C_IINV_I, 0(t0)
 	bne	t0, t1, 3b
-	addu	t0, t0, R3900_C_LSIZE_I
+	addiu	t0, t0, R3900_C_LSIZE_I
 	.set pop
 	
 	# Invalidate D-cache
@@ -1499,7 +1498,7 @@ LEAF(mips1_FlushCache)
 4:
 	lw	t2, 0(t0)
 	bne	t1, t0, 4b
-	addu	t0, t0, R3900_C_LSIZE_D
+	addiu	t0, t0, R3900_C_LSIZE_D
 
 	# Enable I-cache
 	nop
