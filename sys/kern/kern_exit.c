@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.31 1995/09/19 21:44:59 thorpej Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.32 1995/09/27 20:26:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -79,7 +79,7 @@ int
 exit(p, v, retval)
 	struct proc *p;
 	void *v;
-	int *retval;
+	register_t *retval;
 {
 	struct exit_args /* {
 		syscallarg(int) rval;
