@@ -59,7 +59,7 @@ or more modestly:
    MAP_COPY could probably be fixed but I don't think it is worth it.  If
    you want true copy semantics, use read().
 
-8. Try harder to collapse objects.
+8. Try harder to collapse objects. [ DONE - vm_object_collapse() ]
    Can wind up with a lot of wasted swap space in needlessly long shadow
    chains.  The problem is that you cannot collapse an object's backing
    object if the first object has a pager.  Since all our pagers have
@@ -77,7 +77,8 @@ or more modestly:
    MADV_DONTNEED: clean and free the range.  Is this identical to msync
     with MS_INVALIDATE?
 
-10. Machine dependent hook for virtual memory allocation.
+10. Machine dependent hook for virtual memory allocation. [ DONE -
+    PMAP_PREFER() ]
    When the system gets to chose where something is placed in an address
    space, it should call a pmap routine to choose a desired location.
    This is useful for virtually-indexed cache machine where there are magic
@@ -87,7 +88,8 @@ or more modestly:
    Mostly interface (how to configure a swap file) and policy (what objects
    are backed in which files) needed.
 
-12. Keep page/buffer caches coherent.
+12. Keep page/buffer caches coherent. [ A LITTLE BETTER - we now do a
+    vnode_pager_sync() in sys_sync() ]
    Assuming #0 is not done.  Right now, very little is done.  The VM does
    track file size changes (vnode_pager_setsize) so that mapped accesses
    to truncated files give the correct response (SIGBUS).  It also purges
