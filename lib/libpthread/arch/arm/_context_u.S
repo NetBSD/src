@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.1.2.7 2001/11/22 21:33:20 bjh21 Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.1.2.8 2001/11/27 21:16:09 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -78,7 +78,8 @@
 	 */								\
 	mov	r2, #(_UC_USER | _UC_CPU)			;	\
 	str	r2, [reg, #(UC_FLAGS)]				;	\
-	mov	r2, #(PSR_USR32_MODE)				;	\
+	mov	r2, #0						;	\
+	mrs	r2, cpsr	/* No-op on 26-bit systems. */	;	\
 	str	r2, [reg, #(_REG_CPSR)]				;	\
 	str	lr, [reg, #(_REG_PC)]				;	\
 	add	reg, reg, #(_REG_R4)				;	\
