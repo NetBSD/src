@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.53 1999/11/12 00:34:58 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.54 1999/11/16 12:04:29 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1255,3 +1255,20 @@ usb_disconnect_port(up, parent)
 	usb_free_device(dev);
 }
 
+#ifdef __OpenBSD__
+void *usb_realloc(p, size, pool, flags)
+	void *p;
+	u_int size;
+	int pool;
+	int flags;
+{
+	void *q;
+
+	q = malloc(size, pool, flags);
+	if (q == NULL)
+		return (NULL);
+	bcopy(p, q, size);
+	free(p, pool);
+	return (q);
+}
+#endif
