@@ -1,4 +1,4 @@
-/*	$NetBSD: trpt.c,v 1.11 2001/07/09 07:54:59 itojun Exp $	*/
+/*	$NetBSD: trpt.c,v 1.12 2001/09/11 15:45:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)trpt.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: trpt.c,v 1.11 2001/07/09 07:54:59 itojun Exp $");
+__RCSID("$NetBSD: trpt.c,v 1.12 2001/09/11 15:45:01 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -512,9 +512,10 @@ skipact:
 		register int i;
 
 		for (i = 0; i < TCPT_NTIMERS; i++) {
-			if (tp->t_timer[i] == 0)
+			if ((tp->t_timer[i].c_flags & CALLOUT_ACTIVE) == 0)
 				continue;
-			printf("%s%s=%d", cp, tcptimers[i], tp->t_timer[i]);
+			printf("%s%s=%llu", cp, tcptimers[i],
+			    (unsigned long long) tp->t_timer[i].c_time);
 			if (i == TCPT_REXMT)
 				printf(" (t_rxtshft=%d)", tp->t_rxtshift);
 			cp = ", ";
