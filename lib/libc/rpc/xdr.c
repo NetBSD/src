@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr.c,v 1.14 1998/02/13 05:52:40 lukem Exp $	*/
+/*	$NetBSD: xdr.c,v 1.15 1998/03/30 01:15:21 mrg Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr.c 1.35 87/08/12";
 static char *sccsid = "@(#)xdr.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr.c,v 1.14 1998/02/13 05:52:40 lukem Exp $");
+__RCSID("$NetBSD: xdr.c,v 1.15 1998/03/30 01:15:21 mrg Exp $");
 #endif
 #endif
 
@@ -511,7 +511,7 @@ xdr_opaque(xdrs, cp, cnt)
 	u_int cnt;
 {
 	u_int rndup;
-	static crud[BYTES_PER_XDR_UNIT];
+	static int crud[BYTES_PER_XDR_UNIT];
 
 	/*
 	 * if no data we are done
