@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.53 2001/06/27 12:57:47 zuntum Exp $
+.\"	$NetBSD: packages.7,v 1.54 2001/08/14 06:00:15 agc Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -79,6 +79,11 @@ architectures, then
 can be NFS-mounted while
 .Pa ${WRKOBJDIR}
 is local to every arch.
+(It should be noted that
+.Pa ${PKGSRCDIR}
+should not be set by the user - it is an internal definition
+which refers to the root of the pkgsrc tree. It is possible
+to have many pkgsrc tree instances.)
 .It PKG_DEVELOPER
 Run some sanity checks that package developers want:
 .Bl -bullet
