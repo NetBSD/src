@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.36 2003/12/20 19:53:54 lha Exp $	*/
+/*	$NetBSD: atavar.h,v 1.37 2003/12/30 16:28:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -32,8 +32,31 @@
 #ifndef _DEV_ATA_ATAVAR_H_
 #define	_DEV_ATA_ATAVAR_H_
 
-/* High-level functions and structures used by both ATA and ATAPI devices */
+#include <sys/lock.h>
+#include <sys/queue.h>
 
+/* ATA bus instance state information. */
+struct atabus_softc {
+	struct device sc_dev;
+	struct channel_softc *sc_chan;	/* XXXwdc */
+};
+
+/*
+ * A queue of atabus instances, used to ensure the same bus probe order
+ * for a given hardware configuration at each boot.
+ */
+struct atabus_initq {
+	TAILQ_ENTRY(atabus_initq) atabus_initq;
+	struct atabus_softc *atabus_sc;
+};
+
+#ifdef _KERNEL
+TAILQ_HEAD(atabus_initq_head, atabus_initq);
+extern struct atabus_initq_head atabus_initq_head;
+extern struct simplelock atabus_interlock;
+#endif /* _KERNEL */
+
+/* High-level functions and structures used by both ATA and ATAPI devices */
 struct ataparams;
 
 /* Datas common to drives and controller drivers */
@@ -292,6 +315,8 @@ struct ata_smart_selftestlog {
 } __attribute__((packed));
 
 #ifdef _KERNEL
+int	atabusprint(void *aux, const char *);
+int	ataprint(void *aux, const char *);
 
 int	wdc_downgrade_mode(struct ata_drive_datas *, int);
 
@@ -304,7 +329,6 @@ int	ata_set_mode(struct ata_drive_datas *, u_int8_t, u_int8_t);
 #define CMD_AGAIN 2
 
 void	ata_dmaerr(struct ata_drive_datas *, int);
+#endif /* _KERNEL */
 
 #endif /* _DEV_ATA_ATAVAR_H_ */
-
-#endif /* _KERNEL */

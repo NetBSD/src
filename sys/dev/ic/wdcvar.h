@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.46 2003/12/15 00:27:13 thorpej Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.47 2003/12/30 16:28:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -95,11 +95,6 @@ struct channel_softc { /* Per channel data */
 	struct channel_queue *ch_queue;
 	/* the channel kenrel thread */
 	struct proc *thread;
-};
-
-struct atabus_softc { /* the atabus softc */
-	struct device sc_dev;
-	struct channel_softc *sc_chan;
 };
 
 struct wdc_softc { /* Per controller state */
@@ -251,3 +246,7 @@ void	wdc_probe_caps __P((struct ata_drive_datas*));
 #define WDC_RESET_WAIT 31000
 
 void wdc_atapibus_attach __P((struct atabus_softc *));
+
+/* XXX */
+struct atabus_softc;
+void	atabusconfig(struct atabus_softc *);
