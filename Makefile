@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.191 2002/12/02 08:23:41 lukem Exp $
+#	$NetBSD: Makefile,v 1.192 2002/12/02 08:27:03 lukem Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -173,6 +173,7 @@ distribution:
 .if defined(DESTDIR) && ${DESTDIR} != "" && ${DESTDIR} != "/"
 	(cd ${.CURDIR}/distrib/sets && ${MAKE} checkflist)
 .endif
+	@echo   "make ${.TARGET} started at:  ${START_TIME}"
 	@printf "make ${.TARGET} finished at: " && date
 
 # Build a release or snapshot (implies "make build").  Note that
@@ -182,6 +183,7 @@ distribution:
 release snapshot:
 	(cd ${.CURDIR} && ${MAKE} NOPOSTINSTALL=1 build)
 	(cd ${.CURDIR}/etc && ${MAKE} INSTALL_DONE=1 release)
+	@echo   "make ${.TARGET} started at:  ${START_TIME}"
 	@printf "make ${.TARGET} finished at: " && date
 
 # Special components of the "make build" process.
