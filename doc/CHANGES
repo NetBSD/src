@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.218 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.219 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -517,3 +517,5 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		MD device major lists. [dolecek 20031024] 
 	build.sh: Add '-N noisyness', to control how "noisy" the build is.
 		[lukem 20031025]
+	amiga: Add polish wscons keymaps. From Pawel Chwalowski in PR 22961. 
+		[jandberg 20031025]
