@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.7 1999/05/06 12:04:50 hwr Exp $
+.\"	$NetBSD: uvm.9,v 1.8 2000/03/26 20:57:58 kleink Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" XXX this manual sets nS to 1 or 0 in the description, to obtain
 .\" synopsis-like function prototypes.  any better way?
 .\"
-.Dd April 10, 1998
+.Dd March 26, 2000
 .Dt UVM 9
 .Os
 .Sh NAME
@@ -118,7 +118,7 @@ initialises the swap sub-system.
 .Pp
 .nr nS 1
 .Ft int
-.Fn uvm_map "vm_map_t map" "vaddr_t *startp" "vsize_t size" "struct uvm_object *uobj" "vaddr_t uoffset" "uvm_flag_t flags"
+.Fn uvm_map "vm_map_t map" "vaddr_t *startp" "vsize_t size" "struct uvm_object *uobj" "voff_t uoffset" "uvm_flag_t flags"
 .Ft int
 .Fn uvm_map_pageable "vm_map_t map" "vaddr_t start" "vaddr_t end" "boolean_t new_pageable"
 .Ft boolean_t
@@ -550,9 +550,9 @@ memory shortage.
 .Pp
 .nr nS 1
 .Ft struct vm_page *
-.Fn uvm_pagealloc "struct uvm_object *uobj" "vaddr_t off" "struct vm_anon *anon"
+.Fn uvm_pagealloc "struct uvm_object *uobj" "voff_t off" "struct vm_anon *anon"
 .Ft void
-.Fn uvm_pagerealloc "struct vm_page *pg" "struct uvm_object *newobj" "vaddr_t newoff"
+.Fn uvm_pagerealloc "struct vm_page *pg" "struct uvm_object *newobj" "voff_t newoff"
 .Ft void
 .Fn uvm_pagefree "struct vm_page *pg"
 .Ft int
@@ -683,7 +683,6 @@ on the map before unlocking the map.
 .Fn uvm_scheduler
 .Ft void
 .Fn uvm_swapin "struct proc *p"
-.Ft void
 
 .Pp
 .Fn uvm_pageout
