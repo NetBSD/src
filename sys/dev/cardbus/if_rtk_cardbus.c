@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_cardbus.c,v 1.13 2002/12/23 02:19:22 tsutsui Exp $	*/
+/*	$NetBSD: if_rtk_cardbus.c,v 1.14 2003/02/01 07:50:38 ichiro Exp $	*/
 
 /*
  * Copyright (c) 2000 Masanori Kanaoka
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.13 2002/12/23 02:19:22 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.14 2003/02/01 07:50:38 ichiro Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -116,6 +116,9 @@ static const struct rtk_type rtk_cardbus_devs[] = {
 		"Corega FEther CB-TXD 10/100BaseTX", RTK_8139 },
 	{ CARDBUS_VENDOR_PLANEX, CARDBUS_PRODUCT_PLANEX_FNW_3603_TX,
 		"Planex FNW-3603 10/100BaseTX", RTK_8139 },
+	{ CARDBUS_VENDOR_ABOCOM, CARDBUS_PRODUCT_ABOCOM_FE2000VX,
+		"AboCom FE2000VX 10/100BaseTX", RTK_8139 },
+
 	{ 0, 0, NULL, 0 }
 };
 
