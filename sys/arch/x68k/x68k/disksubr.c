@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.5 1997/10/12 12:15:15 oki Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.6 1997/10/12 18:23:18 oki Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -40,8 +40,17 @@
 #include <sys/buf.h>
 #include <sys/disklabel.h>
 #include <sys/syslog.h>
+#include <sys/disk.h>
 
 #define	b_cylin	b_resid
+
+/* was this the boot device ? */
+void
+dk_establish(dk, dev)
+	struct disk *dk;
+	struct device *dev;
+{
+}
 
 /*
  * Attempt to read a disk label from a device
