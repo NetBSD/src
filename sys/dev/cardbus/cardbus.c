@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.33 2001/05/09 12:06:25 augustss Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.34 2001/05/09 18:16:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -441,6 +441,8 @@ cardbus_attach_card(struct cardbus_softc *sc)
 		}
 	}
 
+	bhlc = cardbus_conf_read(cc, cf, tag, CARDBUS_BHLC_REG);
+	DPRINTF(("%s bhlc 0x%08x -> ", sc->sc_dev.dv_xname, bhlc));
 	nfunction = CARDBUS_HDRTYPE_MULTIFN(bhlc) ? 8 : 1;
 
 	for (function = 0; function < nfunction; function++) {
