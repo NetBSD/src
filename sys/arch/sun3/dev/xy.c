@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.13 1997/02/28 21:23:07 gwr Exp $	*/
+/*	$NetBSD: xy.c,v 1.14 1997/06/18 20:47:42 pk Exp $	*/
 
 /*
  *
@@ -36,7 +36,7 @@
  * x y . c   x y l o g i c s   4 5 0 / 4 5 1   s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $NetBSD: xy.c,v 1.13 1997/02/28 21:23:07 gwr Exp $
+ * id: $NetBSD: xy.c,v 1.14 1997/06/18 20:47:42 pk Exp $
  * started: 14-Sep-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -932,30 +932,33 @@ xywrite(dev, uio)
  * xysize: return size of a partition for a dump
  */
 
-int 
+int
 xysize(dev)
 	dev_t   dev;
 
 {
 	struct xy_softc *xysc;
-	int     unit, part, size;
+	int     unit, part, size, omask;
 
-	/* valid unit?  try an open */
+	/* valid unit? */
+	unit = DISKUNIT(dev);
+	if (unit >= xy_cd.cd_ndevs || (xysc = xy_cd.cd_devs[unit]) == NULL)
+		return (-1);
 
-	if (xyopen(dev, 0, S_IFBLK) != 0)
+	part = DISKPART(dev);
+	omask = xysc->sc_dk.dk_openmask & (1 << part);
+
+	if (omask == 0 && xyopen(dev, 0, S_IFBLK) != 0)
 		return (-1);
 
 	/* do it */
-
-	xysc = xy_cd.cd_devs[DISKUNIT(dev)];
-	part = DISKPART(dev);
 	if (xysc->sc_dk.dk_label->d_partitions[part].p_fstype != FS_SWAP)
 		size = -1;	/* only give valid size for swap partitions */
 	else
 		size = xysc->sc_dk.dk_label->d_partitions[part].p_size;
-	if (xyclose(dev, 0, S_IFBLK) != 0)
-		return -1;
-	return size;
+	if (omask == 0 && xyclose(dev, 0, S_IFBLK) != 0)
+		return (-1);
+	return (size);
 }
 
 /*
