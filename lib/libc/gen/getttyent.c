@@ -1,4 +1,4 @@
-/*	$NetBSD: getttyent.c,v 1.18 2000/07/07 08:03:37 itohy Exp $	*/
+/*	$NetBSD: getttyent.c,v 1.19 2003/04/20 03:03:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getttyent.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getttyent.c,v 1.18 2000/07/07 08:03:37 itohy Exp $");
+__RCSID("$NetBSD: getttyent.c,v 1.19 2003/04/20 03:03:18 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,6 +49,9 @@ __RCSID("$NetBSD: getttyent.c,v 1.18 2000/07/07 08:03:37 itohy Exp $");
 #include <stdio.h>
 #include <string.h>
 #include <ttyent.h>
+#include <errno.h>
+#include <err.h>
+#include <stdlib.h>
 
 #ifdef __weak_alias
 __weak_alias(endttyent,_endttyent)
@@ -59,6 +62,7 @@ __weak_alias(setttyent,_setttyent)
 
 static char zapchar;
 static FILE *tf;
+static size_t lineno = 0;
 static char *skip __P((char *));
 static char *value __P((char *));
 
@@ -84,24 +88,26 @@ getttyent()
 	static struct ttyent tty;
 	int c;
 	char *p;
-#define	MAXLINELENGTH	200
-	static char line[MAXLINELENGTH];
+	size_t len;
+	static char *line = NULL;
 
 	if (!tf && !setttyent())
 		return (NULL);
+	if (line)
+		free(line);
 	for (;;) {
-		if (!fgets(p = line, sizeof(line), tf))
-			return (NULL);
-		/* skip lines that are too big */
-		if (!strchr(p, '\n')) {
-			while ((c = getc(tf)) != '\n' && c != EOF)
-				;
-			continue;
+		errno = 0;
+		line = fparseln(tf, &len, &lineno, NULL, FPARSELN_UNESCALL);
+		if (line == NULL) {
+			if (errno != 0)
+				warn("gettyent");
+			return NULL;
 		}
-		while (isspace((unsigned char) *p))
-			++p;
+		for (p = line; *p && isspace((unsigned char) *p); p++)
+			continue;
 		if (*p && *p != '#')
 			break;
+		free(line);
 	}
 
 	zapchar = 0;
@@ -119,7 +125,7 @@ getttyent()
 	tty.ty_status = 0;
 	tty.ty_window = NULL;
 
-#define	scmp(e)	!strncmp(p, e, sizeof(e) - 1) && isspace((unsigned char) p[sizeof(e) - 1])
+#define	scmp(e)	!strncmp(p, e, sizeof(e) - 1) && (isspace((unsigned char) p[sizeof(e) - 1]) || p[sizeof(e) - 1] == '\0')
 #define	vcmp(e)	!strncmp(p, e, sizeof(e) - 1) && p[sizeof(e) - 1] == '='
 	for (; *p; p = skip(p)) {
 		if (scmp(_TTYS_OFF))
@@ -143,7 +149,8 @@ getttyent()
 		else if (vcmp(_TTYS_CLASS))
 			tty.ty_class = value(p);
 		else
-			break;
+			warnx("gettyent: %s, %lu: unknown option `%s'",
+			    _PATH_TTYS, (unsigned long)lineno, p);
 	}
 
 	if (zapchar == '#' || *p == '#')
@@ -212,7 +219,7 @@ value(p)
 int
 setttyent()
 {
-
+	lineno = 0;
 	if (tf) {
 		rewind(tf);
 		return (1);
