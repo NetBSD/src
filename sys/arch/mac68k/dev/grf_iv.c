@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_iv.c,v 1.21 1997/06/10 19:01:35 veego Exp $	*/
+/*	$NetBSD: grf_iv.c,v 1.22 1997/07/26 18:13:30 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -49,15 +49,15 @@
 #include <machine/grfioctl.h>
 #include <machine/viareg.h>
 
-#include "nubus.h"
-#include "obiovar.h"
-#include "grfvar.h"
+#include <mac68k/dev/nubus.h>
+#include <mac68k/dev/obiovar.h>
+#include <mac68k/dev/grfvar.h>
 
 extern u_int32_t	mac68k_vidlog;
 extern u_int32_t	mac68k_vidphys;
 extern long		videorowbytes;
 extern long		videobitdepth;
-extern unsigned long	videosize;
+extern u_long		videosize;
 
 static int	grfiv_mode __P((struct grf_softc *gp, int cmd, void *arg));
 static caddr_t	grfiv_phys __P((struct grf_softc *gp, vm_offset_t addr));
@@ -80,16 +80,15 @@ grfiv_match(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct obio_attach_args *oa = (struct obio_attach_args *) aux;
-	bus_space_handle_t	bsh;
-	int			found, sense;
+	struct obio_attach_args *oa = (struct obio_attach_args *)aux;
+	bus_space_handle_t bsh;
+	int found, sense;
 
 	found = 1;
 
         switch (current_mac_model->class) {
 	case MACH_CLASSQ:
 	case MACH_CLASSQ2:
-
 		/*
 		 * Assume DAFB for all of these, unless we can't
 		 * access the memory.
@@ -124,7 +123,6 @@ grfiv_match(parent, cf, aux)
 		bus_space_write_4(oa->oa_tag, bsh, 0x114, 0);
 
 		bus_space_unmap(oa->oa_tag, bsh, 0x1000);
-
 		break;
 
 	default:
@@ -132,7 +130,6 @@ nodafb:
 		if (mac68k_vidlog == 0) {
 			found = 0;
 		}
-
 		break;
 	}
 
@@ -146,11 +143,11 @@ grfiv_attach(parent, self, aux)
 	struct device *parent, *self;
 	void   *aux;
 {
-	struct obio_attach_args *oa = (struct obio_attach_args *) aux;
-	struct grfbus_softc	*sc;
-	struct grfmode		*gm;
+	struct obio_attach_args *oa = (struct obio_attach_args *)aux;
+	struct grfbus_softc *sc;
+	struct grfmode *gm;
 
-	sc = (struct grfbus_softc *) self;
+	sc = (struct grfbus_softc *)self;
 
 	sc->card_id = 0;
 
@@ -179,7 +176,7 @@ grfiv_attach(parent, self, aux)
 	gm->hres = 80;		/* XXX Hack */
 	gm->vres = 80;		/* XXX Hack */
 	gm->fbsize = gm->rowbytes * gm->height;
-	gm->fbbase = (caddr_t) m68k_trunc_page(mac68k_vidlog);
+	gm->fbbase = (caddr_t)m68k_trunc_page(mac68k_vidlog);
 	gm->fboff = mac68k_vidlog & PGOFSET;
 
 	/* Perform common video attachment. */
@@ -215,5 +212,5 @@ grfiv_phys(gp, addr)
 	 * If we're using IIsi or similar, this will be 0.
 	 * If we're using IIvx or similar, this will be correct.
 	 */
-	return (caddr_t) mac68k_vidphys;
+	return (caddr_t)mac68k_vidphys;
 }
