@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.7 2001/03/22 04:11:46 tsubai Exp $	*/
+/*	$NetBSD: pcb.h,v 1.8 2001/04/30 15:30:39 martin Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -36,6 +36,10 @@
 #include <powerpc/reg.h>
 
 typedef int faultbuf[23];
+struct fpu {
+	double fpr[32];
+	double fpscr;	/* FPSCR stored as double for easier access */
+};
 
 struct pcb {
 	struct pmap *pcb_pm;	/* pmap of our vmspace */
@@ -45,10 +49,7 @@ struct pcb {
 	faultbuf *pcb_onfault;	/* For use during copyin/copyout */
 	int pcb_flags;
 #define	PCB_FPU		1	/* Process had FPU initialized */
-	struct fpu {
-		double fpr[32];
-		double fpscr;	/* FPSCR stored as double for easier access */
-	} pcb_fpu;		/* Floating point processor */
+	struct fpu pcb_fpu;	/* Floating point processor */
 	struct cpu_info *pcb_fpcpu; /* CPU with our FP state */
 	struct vreg *pcb_vr;
 };
