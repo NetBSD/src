@@ -1,7 +1,7 @@
-/*	$NetBSD: print-wb.c,v 1.2 1995/03/06 19:11:37 mycroft Exp $	*/
+/*	$NetBSD: print-wb.c,v 1.3 1997/10/03 19:55:52 christos Exp $	*/
 
 /*
- * Copyright (c) 1993, 1994
+ * Copyright (c) 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,9 +21,14 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] =
-    "@(#) Header: print-wb.c,v 1.14 94/06/14 20:18:50 leres Exp (LBL)";
+#if 0
+static const char rcsid[] =
+    "@(#) Header: print-wb.c,v 1.24 96/12/31 21:27:44 leres Exp  (LBL)";
+#else
+__RCSID("$NetBSD: print-wb.c,v 1.3 1997/10/03 19:55:52 christos Exp $");
+#endif
 #endif
 
 #include <sys/types.h>
@@ -51,7 +56,7 @@ static char rcsid[] =
 #define DOP_ALIGN 4
 #define DOP_ROUNDUP(x)	((((int)(x)) + (DOP_ALIGN - 1)) & ~(DOP_ALIGN - 1))
 #define DOP_NEXT(d)\
-	((struct dophdr*)((u_char *)(d) + \
+	((struct dophdr *)((u_char *)(d) + \
 			  DOP_ROUNDUP(ntohs((d)->dh_len) + sizeof(*(d)))))
 
 /*
@@ -59,8 +64,8 @@ static char rcsid[] =
  * The transport level header.
  */
 struct pkt_hdr {
-	u_int32 ph_src;		/* site id of source */
-	u_int32 ph_ts;		/* time stamp (for skew computation) */
+	u_int32_t ph_src;		/* site id of source */
+	u_int32_t ph_ts;		/* time stamp (for skew computation) */
 	u_short ph_version;	/* version number */
 	u_char ph_type;		/* message type */
 	u_char ph_flags;	/* message flags */
@@ -80,12 +85,12 @@ struct pkt_hdr {
 #define PF_VIS		0x02	/* only visible ops wanted */
 
 struct PageID {
-	u_int32 p_sid;		/* session id of initiator */
-	u_int32 p_uid;		/* page number */
+	u_int32_t p_sid;		/* session id of initiator */
+	u_int32_t p_uid;		/* page number */
 };
 
 struct dophdr {
-	u_int32  dh_ts;		/* sender's timestamp */
+	u_int32_t  dh_ts;		/* sender's timestamp */
 	u_short	dh_len;		/* body length */
 	u_char	dh_flags;
 	u_char	dh_type;	/* body type */
@@ -115,8 +120,8 @@ struct dophdr {
  */
 struct pkt_dop {
 	struct PageID pd_page;	/* page that operations apply to */
-	u_int32	pd_sseq;	/* start sequence number */
-	u_int32	pd_eseq;	/* end sequence number */
+	u_int32_t	pd_sseq;	/* start sequence number */
+	u_int32_t	pd_eseq;	/* end sequence number */
 	/* drawing ops follow */
 };
 
@@ -124,28 +129,28 @@ struct pkt_dop {
  * A repair request.
  */
 struct pkt_rreq {
-        u_int32 pr_id;           /* source id of drawops to be repaired */
+        u_int32_t pr_id;           /* source id of drawops to be repaired */
         struct PageID pr_page;           /* page of drawops */
-        u_int32 pr_sseq;         /* start seqno */
-        u_int32 pr_eseq;         /* end seqno*/
+        u_int32_t pr_sseq;         /* start seqno */
+        u_int32_t pr_eseq;         /* end seqno */
 };
 
 /*
  * A repair reply.
  */
 struct pkt_rrep {
-	u_int32 pr_id;	/* original site id of ops  */
+	u_int32_t pr_id;	/* original site id of ops  */
 	struct pkt_dop pr_dop;
 	/* drawing ops follow */
 };
 
 struct id_off {
-        u_int32 id;
-        u_int32 off;
+        u_int32_t id;
+        u_int32_t off;
 };
 
 struct pgstate {
-	u_int32 slot;
+	u_int32_t slot;
 	struct PageID page;
 	u_short nid;
 	u_short rsvd;
@@ -156,7 +161,7 @@ struct pgstate {
  * An announcement packet.
  */
 struct pkt_id {
-	u_int32 pi_mslot;
+	u_int32_t pi_mslot;
         struct PageID    pi_mpage;        /* current page */
 	struct pgstate pi_ps;
         /* seqptr's */
@@ -165,17 +170,17 @@ struct pkt_id {
 
 struct pkt_preq {
         struct PageID  pp_page;
-        u_int32  pp_low;
-        u_int32  pp_high;
+        u_int32_t  pp_low;
+        u_int32_t  pp_high;
 };
 
 struct pkt_prep {
-        u_int32  pp_n;           /* size of pageid array */
+        u_int32_t  pp_n;           /* size of pageid array */
         /* pgstate's follow */
 };
 
 static int
-wb_id(const struct pkt_id *id, int len)
+wb_id(const struct pkt_id *id, u_int len)
 {
 	int i;
 	const char *cp;
@@ -183,111 +188,103 @@ wb_id(const struct pkt_id *id, int len)
 	char c;
 	int nid;
 
-	len -= sizeof(*id);
-	if (len < 0) {
-		printf(" truncated-wb-id!");
-		return (0);
-	}
-	if ((u_char *)(id + 1) > snapend)
+	printf(" wb-id:");
+	if (len < sizeof(*id) || (u_char *)(id + 1) > snapend)
 		return (-1);
+	len -= sizeof(*id);
+
+	printf(" %u/%s:%u (max %u/%s:%u) ",
+	       (u_int32_t)ntohl(id->pi_ps.slot),
+	       ipaddr_string(&id->pi_ps.page.p_sid),
+	       (u_int32_t)ntohl(id->pi_ps.page.p_uid),
+	       (u_int32_t)ntohl(id->pi_mslot),
+	       ipaddr_string(&id->pi_mpage.p_sid),
+	       (u_int32_t)ntohl(id->pi_mpage.p_uid));
+
 	nid = ntohs(id->pi_ps.nid);
 	len -= sizeof(*io) * nid;
-	if (len < 0) {
-		printf(" truncated-wb-id!");
-		return (0);
-	}
 	io = (struct id_off *)(id + 1);
 	cp = (char *)(io + nid);
-	if ((u_char *)cp + len > snapend)
-		return (-1);
-
-	printf(" wb-id: %d/%s:%d (max %d/%s:%d) ",
-	       ntohl(id->pi_ps.slot),
-	       ipaddr_string(&id->pi_ps.page.p_sid),
-	       ntohl(id->pi_ps.page.p_uid),
-	       ntohl(id->pi_mslot),
-	       ipaddr_string(&id->pi_mpage.p_sid),
-	       ntohl(id->pi_mpage.p_uid));
-
-	if (cp[len - 1] != '\0')
-		printf("(unterm!) ");
-
-	fn_print((u_char *)cp, (u_char *)cp + len);
+	if ((u_char *)cp + len <= snapend) {
+		putchar('"');
+		(void)fn_print((u_char *)cp, (u_char *)cp + len);
+		putchar('"');
+	}
 
 	c = '<';
-	for (i = 0; i < nid; ++io, ++i) {
-		printf("%c%s:%d", c, ipaddr_string(&io->id), ntohl(io->off));
+	for (i = 0; i < nid && (u_char *)io < snapend; ++io, ++i) {
+		printf("%c%s:%u",
+		    c, ipaddr_string(&io->id), (u_int32_t)ntohl(io->off));
 		c = ',';
 	}
-	printf(">");
-	return (0);
+	if (i >= nid) {
+		printf(">");
+		return (0);
+	}
+	return (-1);
 }
 
 static int
-wb_rreq(const struct pkt_rreq *rreq, int len)
+wb_rreq(const struct pkt_rreq *rreq, u_int len)
 {
-	if (len < sizeof(*rreq)) {
-		printf(" truncated-wb-rreq!");
-		return (0);
-	}
-	if ((u_char *)(rreq + 1) > snapend)
+	printf(" wb-rreq:");
+	if (len < sizeof(*rreq) || (u_char *)(rreq + 1) > snapend)
 		return (-1);
 
-	printf(" wb-rreq: please repair %s %s:%ld<%ld:%ld>",
+	printf(" please repair %s %s:%u<%u:%u>",
 	       ipaddr_string(&rreq->pr_id),
-	       ipaddr_string(&rreq->pr_page.p_sid), ntohl(rreq->pr_page.p_uid),
-	       ntohl(rreq->pr_sseq), ntohl(rreq->pr_eseq));
+	       ipaddr_string(&rreq->pr_page.p_sid),
+	       (u_int32_t)ntohl(rreq->pr_page.p_uid),
+	       (u_int32_t)ntohl(rreq->pr_sseq),
+	       (u_int32_t)ntohl(rreq->pr_eseq));
 	return (0);
 }
 
 static int
-wb_preq(const struct pkt_preq *preq, int len)
+wb_preq(const struct pkt_preq *preq, u_int len)
 {
-	if (len < sizeof(*preq)) {
-		printf(" truncated-wb-preq!");
-		return (0);
-	}
-	if ((u_char *)(preq + 1) > snapend)
+	printf(" wb-preq:");
+	if (len < sizeof(*preq) || (u_char *)(preq + 1) > snapend)
 		return (-1);
 
-	printf(" wb-preq: need %d/%s:%ld",
-	       ntohl(preq->pp_low),
+	printf(" need %u/%s:%u",
+	       (u_int32_t)ntohl(preq->pp_low),
 	       ipaddr_string(&preq->pp_page.p_sid),
-	       ntohl(preq->pp_page.p_uid));
+	       (u_int32_t)ntohl(preq->pp_page.p_uid));
 	return (0);
 }
 
 static int
-wb_prep(const struct pkt_prep *prep, int len)
+wb_prep(const struct pkt_prep *prep, u_int len)
 {
 	int n;
-	const struct pgstate* ps;
-	const u_char* ep = snapend;
+	const struct pgstate *ps;
+	const u_char *ep = snapend;
 
-	if (len < sizeof(*prep)) {
-		printf(" truncated-wb-prep!");
-		return (0);
-	}
 	printf(" wb-prep:");
+	if (len < sizeof(*prep)) {
+		return (-1);
+	}
 	n = ntohl(prep->pp_n);
-	ps = (const struct pgstate*)(prep + 1);
-	while (--n >= 0 && (u_char*)ps < ep) {
+	ps = (const struct pgstate *)(prep + 1);
+	while (--n >= 0 && (u_char *)ps < ep) {
 		const struct id_off *io, *ie;
 		char c = '<';
 
-		printf(" %lu/%s:%lu", ntohl(ps->slot),
-			ipaddr_string(&ps->page.p_sid),
-			ntohl(ps->page.p_uid));
-		io = (struct id_off*)(ps + 1);
-		for (ie = io + ps->nid; io < ie && (u_char*)io < ep; ++io) {
-			printf("%c%s:%lu", c, ipaddr_string(&io->id),
-				ntohl(io->off));
+		printf(" %u/%s:%u",
+		    (u_int32_t)ntohl(ps->slot),
+		    ipaddr_string(&ps->page.p_sid),
+		    (u_int32_t)ntohl(ps->page.p_uid));
+		io = (struct id_off *)(ps + 1);
+		for (ie = io + ps->nid; io < ie && (u_char *)io < ep; ++io) {
+			printf("%c%s:%u", c, ipaddr_string(&io->id),
+			    (u_int32_t)ntohl(io->off));
 			c = ',';
 		}
 		printf(">");
-		ps = (struct pgstate*)io;
+		ps = (struct pgstate *)io;
 	}
-	return ((u_char*)ps <= ep? 0 : -1);
+	return ((u_char *)ps <= ep? 0 : -1);
 }
 
 
@@ -311,7 +308,7 @@ char *dopstr[] = {
 };
 
 static int
-wb_dops(const struct dophdr *dh, u_int32 ss, u_int32 es)
+wb_dops(const struct dophdr *dh, u_int32_t ss, u_int32_t es)
 {
 	printf(" <");
 	for ( ; ss <= es; ++ss) {
@@ -333,7 +330,7 @@ wb_dops(const struct dophdr *dh, u_int32 ss, u_int32 es)
 			}
 		}
 		dh = DOP_NEXT(dh);
-		if ((u_char*)dh >= snapend) {
+		if ((u_char *)dh > snapend) {
 			printf("[|wb]");
 			break;
 		}
@@ -343,101 +340,99 @@ wb_dops(const struct dophdr *dh, u_int32 ss, u_int32 es)
 }
 
 static int
-wb_rrep(const struct pkt_rrep *rrep, int len)
+wb_rrep(const struct pkt_rrep *rrep, u_int len)
 {
 	const struct pkt_dop *dop = &rrep->pr_dop;
 
-	len -= sizeof(*rrep);
-	if (len < 0) {
-		printf(" truncated-wb-rrep!");
-		return (0);
-	}
-	if ((u_char *)(rrep + 1) > snapend)
+	printf(" wb-rrep:");
+	if (len < sizeof(*rrep) || (u_char *)(rrep + 1) > snapend)
 		return (-1);
+	len -= sizeof(*rrep);
 
-	printf(" wb-rrep: for %s %s:%d<%ld:%ld>",
-	       ipaddr_string(&rrep->pr_id),
-	       ipaddr_string(&dop->pd_page.p_sid), ntohl(dop->pd_page.p_uid),
-	       ntohl(dop->pd_sseq), ntohl(dop->pd_eseq));
+	printf(" for %s %s:%u<%u:%u>",
+	    ipaddr_string(&rrep->pr_id),
+	    ipaddr_string(&dop->pd_page.p_sid),
+	    (u_int32_t)ntohl(dop->pd_page.p_uid),
+	    (u_int32_t)ntohl(dop->pd_sseq),
+	    (u_int32_t)ntohl(dop->pd_eseq));
 
-	return (wb_dops((const struct dophdr*)(dop + 1),
-			ntohl(dop->pd_sseq), ntohl(dop->pd_eseq)));
+	if (vflag)
+		return (wb_dops((const struct dophdr *)(dop + 1),
+		    ntohl(dop->pd_sseq), ntohl(dop->pd_eseq)));
+	return (0);
 }
 
 static int
-wb_drawop(const struct pkt_dop *dop, int len)
+wb_drawop(const struct pkt_dop *dop, u_int len)
 {
-	len -= sizeof(*dop);
-	if (len < 0) {
-		printf(" truncated-wb-dop!");
-		return (0);
-	}
-	if ((u_char *)(dop + 1) > snapend)
+	printf(" wb-dop:");
+	if (len < sizeof(*dop) || (u_char *)(dop + 1) > snapend)
 		return (-1);
+	len -= sizeof(*dop);
 
-	printf(" wb-dop: %s:%d<%ld:%ld>",
-	       ipaddr_string(&dop->pd_page.p_sid), ntohl(dop->pd_page.p_uid),
-	       ntohl(dop->pd_sseq), ntohl(dop->pd_eseq));
+	printf(" %s:%u<%u:%u>",
+	    ipaddr_string(&dop->pd_page.p_sid),
+	    (u_int32_t)ntohl(dop->pd_page.p_uid),
+	    (u_int32_t)ntohl(dop->pd_sseq),
+	    (u_int32_t)ntohl(dop->pd_eseq));
 
-	return (wb_dops((const struct dophdr*)(dop + 1),
-			ntohl(dop->pd_sseq), ntohl(dop->pd_eseq)));
+	if (vflag)
+		return (wb_dops((const struct dophdr *)(dop + 1),
+				ntohl(dop->pd_sseq), ntohl(dop->pd_eseq)));
+	return (0);
 }
 
 /*
  * Print whiteboard multicast packets.
  */
 void
-wb_print(register const void *hdr, register int len)
+wb_print(register const void *hdr, register u_int len)
 {
-	register const struct pkt_hdr* ph;
+	register const struct pkt_hdr *ph;
 
-	ph = (const struct pkt_hdr*)hdr;
-	len -= sizeof(*ph);
-	if (len < 0) {
-		printf(" truncated-wb!");
-		return;
-	}
-	if ((u_char *)(ph + 1) > snapend) {
- trunc:
+	ph = (const struct pkt_hdr *)hdr;
+	if (len < sizeof(*ph) || (u_char *)(ph + 1) > snapend) {
 		printf("[|wb]");
 		return;
 	}
+	len -= sizeof(*ph);
+
 	if (ph->ph_flags)
 		printf("*");
 	switch (ph->ph_type) {
 
 	case PT_KILL:
 		printf(" wb-kill");
-		break;
+		return;
 
 	case PT_ID:
-		if (wb_id((struct pkt_id *)(ph + 1), len) < 0)
-			goto trunc;
+		if (wb_id((struct pkt_id *)(ph + 1), len) >= 0)
+			return;
 		break;
 
 	case PT_RREQ:
-		if (wb_rreq((struct pkt_rreq *)(ph + 1), len) < 0)
-			goto trunc;
+		if (wb_rreq((struct pkt_rreq *)(ph + 1), len) >= 0)
+			return;
 		break;
 
 	case PT_RREP:
-		if (wb_rrep((struct pkt_rrep *)(ph + 1), len) < 0)
-			goto trunc;
+		if (wb_rrep((struct pkt_rrep *)(ph + 1), len) >= 0)
+			return;
 		break;
 
 	case PT_DRAWOP:
-		if (wb_drawop((struct pkt_dop *)(ph + 1), len) < 0)
-			goto trunc;
+		if (wb_drawop((struct pkt_dop *)(ph + 1), len) >= 0)
+			return;
 		break;
 
 	case PT_PREQ:
-		if (wb_preq((struct pkt_preq *)(ph + 1), len) < 0)
-			goto trunc;
+		if (wb_preq((struct pkt_preq *)(ph + 1), len) >= 0)
+			return;
 		break;
 
 	case PT_PREP:
-		if (wb_prep((struct pkt_prep *)(ph + 1), len) < 0)
-			goto trunc;
+		if (wb_prep((struct pkt_prep *)(ph + 1), len) >= 0)
+			return;
 		break;
 
 	default:
