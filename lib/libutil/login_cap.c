@@ -1,4 +1,4 @@
-/* $NetBSD: login_cap.c,v 1.1 2000/01/12 05:02:10 mjl Exp $ */
+/* $NetBSD: login_cap.c,v 1.2 2000/01/13 06:48:14 mjl Exp $ */
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -135,7 +135,7 @@ login_getcapstr(lc, cap, def, e)
 
 	errno = 0;
 
-    	if (!lc->lc_cap)
+	if (!lc || !lc->lc_cap)
 		return (def);
 
 	switch (status = cgetstr(lc->lc_cap, cap, &res)) {
@@ -167,7 +167,7 @@ login_getcaptime(lc, cap, def, e)
 	quad_t q, r;
 
 	errno = 0;
-    	if (!lc->lc_cap)
+	if (!lc || !lc->lc_cap)
 		return (def);
 
 	switch (status = cgetstr(lc->lc_cap, cap, &res)) {
@@ -247,7 +247,7 @@ login_getcapnum(lc, cap, def, e)
 	quad_t q;
 
 	errno = 0;
-    	if (!lc->lc_cap)
+	if (!lc || !lc->lc_cap)
 		return (def);
 
 	switch (status = cgetstr(lc->lc_cap, cap, &res)) {
@@ -296,7 +296,7 @@ login_getcapsize(lc, cap, def, e)
 
 	errno = 0;
 
-    	if (!lc->lc_cap)
+	if (!lc || !lc->lc_cap)
 		return (def);
 
 	switch (status = cgetstr(lc->lc_cap, cap, &res)) {
@@ -334,7 +334,7 @@ login_getcapbool(lc, cap, def)
 	char *cap;
 	u_int def;
 {
-    	if (!lc->lc_cap)
+	if (!lc || !lc->lc_cap)
 		return (def);
 
 	return (cgetcap(lc->lc_cap, cap, ':') != NULL);
