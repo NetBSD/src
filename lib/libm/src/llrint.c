@@ -1,4 +1,9 @@
-/* $NetBSD: llrint.c,v 1.1 2004/06/30 15:08:30 drochner Exp $ */
+/* $NetBSD: llrint.c,v 1.2 2004/10/13 15:18:32 drochner Exp $ */
+
+/*
+ * Written by Matthias Drochner <drochner@NetBSD.org>.
+ * Public domain.
+ */
 
 #define LRINTNAME llrint
 #define RESTYPE long long int
