@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_ofisa.c,v 1.11 2002/10/02 16:34:31 thorpej Exp $	*/
+/*	$NetBSD: wdc_ofisa.c,v 1.12 2003/03/22 20:01:05 matt Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_ofisa.c,v 1.11 2002/10/02 16:34:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_ofisa.c,v 1.12 2003/03/22 20:01:05 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -59,8 +59,9 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_ofisa.c,v 1.11 2002/10/02 16:34:31 thorpej Exp $
 
 struct wdc_ofisa_softc {
 	struct wdc_softc sc_wdcdev;
-	struct	channel_softc *wdc_chanptr;	
-	struct  channel_softc wdc_channel;
+	struct channel_softc *wdc_chanlist[1];	
+	struct channel_softc wdc_channel;
+	struct channel_queue wdc_chqueue;
 	void	*sc_ih;
 };
 
@@ -147,18 +148,12 @@ wdc_ofisa_attach(parent, self, aux)
 
 	printf("\n");
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16;
-	sc->wdc_chanptr = &sc->wdc_channel;
-	sc->sc_wdcdev.channels = &sc->wdc_chanptr;
+	sc->wdc_chanlist[0] = &sc->wdc_channel;
+	sc->sc_wdcdev.channels = sc->wdc_chanlist;
 	sc->sc_wdcdev.nchannels = 1;
 	sc->wdc_channel.channel = 0;
 	sc->wdc_channel.wdc = &sc->sc_wdcdev;
-	sc->wdc_channel.ch_queue = malloc(sizeof(struct channel_queue),
-	    M_DEVBUF, M_NOWAIT);
-	if (sc->wdc_channel.ch_queue == NULL) {
-	    printf("%s: can't allocate memory for command queue",
-		sc->sc_wdcdev.sc_dev.dv_xname);
-	    return;
-	}
+	sc->wdc_channel.ch_queue = &sc->wdc_chqueue;
 	wdcattach(&sc->wdc_channel);
 	wdc_print_modes(&sc->wdc_channel);
 
