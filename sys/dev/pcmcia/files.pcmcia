@@ -1,4 +1,4 @@
-#	$NetBSD: files.pcmcia,v 1.24 2000/03/19 21:54:02 mycroft Exp $
+#	$NetBSD: files.pcmcia,v 1.25 2000/06/05 23:14:22 gmcgarry Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
 # Included by ports that need it.
@@ -98,6 +98,6 @@ file	dev/pcmcia/if_awi_pcmcia.c		awi_pcmcia
 file	dev/ic/awi.c				awi
 file	dev/ic/am79c930.c			awi
 
-device	xe: arp, ether, ifnet, mii
-attach	xe at pcmcia with xe_pcmcia
-file	dev/pcmcia/if_xe.c			xe_pcmcia
+device	xi: arp, ether, ifnet, mii
+attach	xi at pcmcia with xi_pcmcia
+file	dev/pcmcia/if_xi.c			xi_pcmcia
