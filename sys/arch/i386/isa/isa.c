@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.28.2.4 1993/10/06 12:09:12 mycroft Exp $
+ *	$Id: isa.c,v 1.28.2.5 1993/10/09 08:49:17 mycroft Exp $
  */
 
 /*
@@ -133,17 +133,8 @@ isaattach(parent, self, aux)
 	/* Iterate ``isasubmatch'' over all devices configured here. */
 	(void)config_search(isasubmatch, self, (void *)NULL);
 
-	/* and the problem is... if netmask == 0, then the loopback
-	 * code can do some really ugly things.
-	 * workaround for this: if netmask == 0, set it to 0x8000, which
-	 * is the value used by splsoftclock.  this is nasty, but it
-	 * should work until this interrupt system goes away. -- cgd
-	 */
-	if (netmask == 0)
-		netmask = 0x8000;	/* same as for softclock.  XXXX */
-
-	printf("biomask %x ttymask %x netmask %x impmask %x\n",
-	       biomask, ttymask, netmask, impmask);
+	printf("biomask %x ttymask %x netmask %x impmask %x astmask %s\n",
+	       biomask, ttymask, netmask, impmask, astmask);
 	splnone();
 }
 
