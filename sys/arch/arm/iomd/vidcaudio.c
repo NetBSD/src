@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.19 2003/12/29 16:25:30 bjh21 Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.20 2003/12/29 16:36:48 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.19 2003/12/29 16:25:30 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.20 2003/12/29 16:36:48 bjh21 Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>   /* autoconfig functions */
@@ -346,7 +346,7 @@ vidcaudio_start_output(void *addr, void *p, int cc, void (*intr)(void *),
 	/* I can only DMA inside 1 page */
 
 #ifdef DEBUG
-	printf("vidcaudio_start_output (%d) %08x %08x\n", cc, intr, arg);
+	printf("vidcaudio_start_output (%d) %p %p\n", cc, intr, arg);
 #endif
 
 	if (ROUND(p) != ROUND(p+cc)) {
