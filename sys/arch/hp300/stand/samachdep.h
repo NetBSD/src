@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)samachdep.h	7.2 (Berkeley) 5/7/91
+ *	from: @(#)samachdep.h	7.2 (Berkeley) 5/7/91
+ *	$Id: samachdep.h,v 1.2 1993/05/22 07:59:19 cgd Exp $
  */
 
 #define	NHPIB		4

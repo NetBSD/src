@@ -37,7 +37,8 @@
  *
  * from: Utah $Hdr: grf_tcreg.h 1.10 91/03/25$
  *
- *	@(#)grf_tcreg.h	7.3 (Berkeley) 5/7/91
+ *	from: @(#)grf_tcreg.h	7.3 (Berkeley) 5/7/91
+ *	$Id: grf_tcreg.h,v 1.2 1993/05/22 07:56:12 cgd Exp $
  */
 
 #define tccm_waitbusy(regaddr) \

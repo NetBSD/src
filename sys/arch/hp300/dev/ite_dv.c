@@ -37,7 +37,8 @@
  *
  * from: Utah $Hdr: ite_dv.c 1.7 91/01/21$
  *
- *	@(#)ite_dv.c	7.5 (Berkeley) 5/7/91
+ *	from: @(#)ite_dv.c	7.5 (Berkeley) 5/7/91
+ *	$Id: ite_dv.c,v 1.2 1993/05/22 07:56:26 cgd Exp $
  */
 
 #include "ite.h"

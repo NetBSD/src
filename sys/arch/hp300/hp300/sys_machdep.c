@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)sys_machdep.c	7.7 (Berkeley) 5/7/91
+ *	from: @(#)sys_machdep.c	7.7 (Berkeley) 5/7/91
+ *	$Id: sys_machdep.c,v 1.2 1993/05/22 07:57:46 cgd Exp $
  */
 
 #include "sys/param.h"

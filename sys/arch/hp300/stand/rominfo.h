@@ -37,7 +37,8 @@
  *
  * from: Utah $Hdr: rominfo.h 1.2 88/05/24$
  *
- *	@(#)rominfo.h	7.1 (Berkeley) 5/8/90
+ *	from: @(#)rominfo.h	7.1 (Berkeley) 5/8/90
+ *	$Id: rominfo.h,v 1.2 1993/05/22 07:59:18 cgd Exp $
  */
 
 #define ROMADDR	0xFFFFF000

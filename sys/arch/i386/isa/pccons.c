@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id*
+ *	$Id: pccons.c,v 1.17 1993/05/22 08:01:34 cgd Exp $
  */
 
 /*

@@ -34,7 +34,10 @@
  * SUCH DAMAGE.
  *
  * A lot of this was derived from if_wereg.h and 3c503.asm.
+ *
+ *	$Id: if_ec.h,v 1.4 1993/05/22 08:01:17 cgd Exp $
  */
+
 /*
  * receive ring discriptor
  *

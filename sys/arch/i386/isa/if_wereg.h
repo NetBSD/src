@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)if_wereg.h	7.1 (Berkeley) 5/9/91
+ *	from: @(#)if_wereg.h	7.1 (Berkeley) 5/9/91
+ *	$Id: if_wereg.h,v 1.5 1993/05/22 08:01:25 cgd Exp $
  */
 
 /*

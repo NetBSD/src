@@ -37,7 +37,8 @@
  *
  * from: Utah $Hdr: hpux_syscalls.c 1.1 90/07/09$
  *
- *	@(#)hpux_syscalls.c	7.2 (Berkeley) 12/5/90
+ *	from: @(#)hpux_syscalls.c	7.2 (Berkeley) 12/5/90
+ *	$Id: hpux_syscalls.c,v 1.2 1993/05/22 07:58:08 cgd Exp $
  */
 
 #ifdef HPUXCOMPAT

@@ -35,7 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)dcm.c	7.3 (Berkeley) 5/7/91
+ *	from: @(#)dcm.c	7.3 (Berkeley) 5/7/91
+ *	$Id: dcm.c,v 1.2 1993/05/22 07:58:52 cgd Exp $
  */
 
 #ifdef DCMCONSOLE

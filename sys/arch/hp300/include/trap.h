@@ -37,7 +37,8 @@
  *
  * from: Utah $Hdr: trap.h 1.1 90/07/09$
  *
- *	@(#)trap.h	7.5 (Berkeley) 5/9/91
+ *	from: @(#)trap.h	7.5 (Berkeley) 5/9/91
+ *	$Id: trap.h,v 1.2 1993/05/22 07:58:35 cgd Exp $
  */
 
 /*

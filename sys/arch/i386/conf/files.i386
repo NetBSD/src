@@ -1,4 +1,4 @@
-# $Id: files.i386,v 1.14 1993/05/21 12:03:00 cgd Exp $
+#	$Id: files.i386,v 1.15 1993/05/22 07:59:35 cgd Exp $
 #
 arch/i386/i386/autoconf.c	standard
 arch/i386/i386/cons.c		standard

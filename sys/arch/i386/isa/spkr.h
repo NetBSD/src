@@ -4,6 +4,8 @@
  * v1.1 by Eric S. Raymond (esr@snark.thyrsus.com) Feb 1990
  *      modified for 386bsd by Andrew A. Chernov <ache@astral.msk.su>
  *      386bsd only clean version, all SYSV stuff removed
+ *
+ *	$Id: spkr.h,v 1.2 1993/05/22 08:01:38 cgd Exp $
  */
 
 #ifndef _SPKR_H_

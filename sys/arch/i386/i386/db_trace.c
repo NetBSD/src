@@ -22,11 +22,16 @@
  * 
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
+ *
+ *	$Id: db_trace.c,v 1.2 1993/05/22 07:59:46 cgd Exp $
  */
 /*
  * HISTORY
  * $Log: db_trace.c,v $
- * Revision 1.1.1.1  1993/03/21 09:45:37  cgd
+ * Revision 1.2  1993/05/22 07:59:46  cgd
+ * add rcsids to everything and clean up headers
+ *
+ * Revision 1.1.1.1  1993/03/21  09:45:53  cgd
  * initial import of 386bsd-0.1 sources
  *
  * Revision 1.1  1992/03/25  21:42:05  pace

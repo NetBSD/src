@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)nhpibreg.h	7.1 (Berkeley) 5/8/90
+ *	from: @(#)nhpibreg.h	7.1 (Berkeley) 5/8/90
+ *	$Id: nhpibreg.h,v 1.2 1993/05/22 07:56:40 cgd Exp $
  */
 
 #define	vu_char	volatile u_char

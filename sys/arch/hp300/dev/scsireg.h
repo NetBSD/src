@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)scsireg.h	7.3 (Berkeley) 2/5/91
+ *	from: @(#)scsireg.h	7.3 (Berkeley) 2/5/91
+ *	$Id: scsireg.h,v 1.2 1993/05/22 07:56:50 cgd Exp $
  */
 
 /*

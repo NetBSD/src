@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)comreg.h	7.2 (Berkeley) 5/9/91
+ *	from: @(#)comreg.h	7.2 (Berkeley) 5/9/91
+ *	$Id: comreg.h,v 1.2 1993/05/22 08:01:09 cgd Exp $
  */
 
 

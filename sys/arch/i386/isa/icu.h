@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)icu.h	5.6 (Berkeley) 5/9/91
+ *	from: @(#)icu.h	5.6 (Berkeley) 5/9/91
+ *	$Id: icu.h,v 1.2 1993/05/22 08:01:13 cgd Exp $
  */
 
 /*

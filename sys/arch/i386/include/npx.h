@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)npx.h	5.3 (Berkeley) 1/18/91
+ *	from: @(#)npx.h	5.3 (Berkeley) 1/18/91
+ *	$Id: npx.h,v 1.3 1993/05/22 08:00:23 cgd Exp $
  */
 
 /*

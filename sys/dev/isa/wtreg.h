@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)wtreg.h	7.1 (Berkeley) 5/9/91
+ *	from: @(#)wtreg.h	7.1 (Berkeley) 5/9/91
+ *	$Id: wtreg.h,v 1.2 1993/05/22 08:01:50 cgd Exp $
  */
 
 /*
@@ -64,7 +65,10 @@
 /* 
  * HISTORY
  * $Log: wtreg.h,v $
- * Revision 1.1.1.1  1993/03/21 09:45:37  cgd
+ * Revision 1.2  1993/05/22 08:01:50  cgd
+ * add rcsids to everything and clean up headers
+ *
+ * Revision 1.1.1.1  1993/03/21  09:46:00  cgd
  * initial import of 386bsd-0.1 sources
  *
  * Revision 2.2.1.1  90/01/08  13:29:25  rvb

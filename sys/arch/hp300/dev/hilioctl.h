@@ -37,7 +37,8 @@
  *
  * from: Utah $Hdr: hilioctl.h 1.1 90/07/09$
  *
- *	@(#)hilioctl.h	7.2 (Berkeley) 11/4/90
+ *	from: @(#)hilioctl.h	7.2 (Berkeley) 11/4/90
+ *	$Id: hilioctl.h,v 1.2 1993/05/22 07:56:18 cgd Exp $
  */
 
 struct _hilbell {

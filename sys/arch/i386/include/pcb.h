@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)pcb.h	5.10 (Berkeley) 5/12/91
+ *	from: @(#)pcb.h	5.10 (Berkeley) 5/12/91
+ *	$Id: pcb.h,v 1.3 1993/05/22 08:00:26 cgd Exp $
  */
 
 /*

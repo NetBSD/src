@@ -5,6 +5,8 @@
  *      modified for 386bsd by Andrew A. Chernov <ache@astral.msk.su>
  *      386bsd only clean version, all SYSV stuff removed
  *      use hz value from param.c
+ *
+ *	$Id: spkr.c,v 1.2 1993/05/22 08:01:37 cgd Exp $
  */
 
 #include "speaker.h"

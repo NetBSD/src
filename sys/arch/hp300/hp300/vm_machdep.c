@@ -37,7 +37,8 @@
  *
  * from: Utah $Hdr: vm_machdep.c 1.21 91/04/06$
  *
- *	@(#)vm_machdep.c	7.10 (Berkeley) 5/7/91
+ *	from: @(#)vm_machdep.c	7.10 (Berkeley) 5/7/91
+ *	$Id: vm_machdep.c,v 1.2 1993/05/22 07:57:51 cgd Exp $
  */
 
 #include "param.h"

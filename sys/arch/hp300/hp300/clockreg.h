@@ -37,7 +37,8 @@
  *
  * from: Utah $Hdr: clockreg.h 1.14 91/01/18$
  *
- *	@(#)clockreg.h	7.3 (Berkeley) 5/7/91
+ *	from: @(#)clockreg.h	7.3 (Berkeley) 5/7/91
+ *	$Id: clockreg.h,v 1.2 1993/05/22 07:57:15 cgd Exp $
  */
 
 /*

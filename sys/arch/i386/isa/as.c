@@ -7,7 +7,10 @@
  * implied warranties for MERCHANTABILITY or FITNESS FOR A 
  * PARTICULAR PURPOSE.
  *
- *
+ *	$Id: as.c,v 1.3 1993/05/22 08:01:02 cgd Exp $
+ */
+
+/*
  * This is a very early version - use with care.
  *
  * Here is the config info:
@@ -52,15 +55,6 @@
  * Please send patches and names other perpherials that work to
  * pace@blitz.com.  If you have trouble that you can't fix, please
  * wait for the next release before contacting me.
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00088
- * --------------------         -----   ----------------------
- *
- * 23 Oct 92	Joerg Lohse		changed ccb opcode for compatibility
- *					with Adaptec AHA-1542A
- * 27 Feb 93	James da Silva		Tapedrive fixes. 
  */
 
 #include "as.h"

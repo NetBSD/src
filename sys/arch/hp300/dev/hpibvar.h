@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)hpibvar.h	7.3 (Berkeley) 5/7/91
+ *	from: @(#)hpibvar.h	7.3 (Berkeley) 5/7/91
+ *	$Id: hpibvar.h,v 1.2 1993/05/22 07:56:22 cgd Exp $
  */
 
 #define	HPIB_IPL(x)	((((x) >> 4) & 0x3) + 3)

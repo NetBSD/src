@@ -45,6 +45,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ *	$Id: breadxx.c,v 1.2 1993/05/22 08:02:11 cgd Exp $
  */
 
 /*

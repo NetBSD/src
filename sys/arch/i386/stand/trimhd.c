@@ -46,8 +46,9 @@
  * SUCH DAMAGE.
  *
  * Trim off the start of a file.
+ *
+ *	$Id: trimhd.c,v 1.2 1993/05/22 08:02:24 cgd Exp $
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/stand/Attic/trimhd.c,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $";
 
 main(argc, argv) char *argv[]; {
 	int val, rv, buf;

@@ -33,20 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)clock.c	7.2 (Berkeley) 5/12/91
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         3       00082
- * --------------------         -----   ----------------------
- *
- * 14 Aug 92	Arne Henrik Juul	Added code in the kernel to
- *					allow for DST in the BIOS.
- * 17 Jan 93	Bruce Evans		Fixed leap year and second
- *					calculations
- * 01 Feb 93	Julian Elischer		Added code to for the cpu
- *					speed independent spinwait()
- *					function, (used by scsi and others)
+ *	from: @(#)clock.c	7.2 (Berkeley) 5/12/91
+ *	$Id: clock.c,v 1.6 1993/05/22 08:01:07 cgd Exp $
  */
 
 /*

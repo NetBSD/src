@@ -1,4 +1,5 @@
-#	@(#)Makefile	7.3 (Berkeley) 6/9/91
+#	from: @(#)Makefile	7.3 (Berkeley) 6/9/91
+#	$Id: Makefile,v 1.2 1993/05/22 07:59:30 cgd Exp $
 
 # Makefile for i386 tags file
 

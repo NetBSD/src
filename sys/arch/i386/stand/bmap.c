@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	derived from: @(#)ufs_bmap.c	7.13 (Berkeley) 5/8/91
+ *	from: @(#)ufs_bmap.c	7.13 (Berkeley) 5/8/91
+ *	$Id: bmap.c,v 1.2 1993/05/22 08:02:08 cgd Exp $
  */
 
 #include "param.h"

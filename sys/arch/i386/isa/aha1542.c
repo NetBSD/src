@@ -11,12 +11,17 @@
  * TFS supplies this software to be publicly redistributed
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
+ *
+ *	$Id: aha1542.c,v 1.9 1993/05/22 08:00:56 cgd Exp $
  */
 
 /*
  * HISTORY
  * $Log: aha1542.c,v $
- * Revision 1.8  1993/05/04 08:32:40  deraadt
+ * Revision 1.9  1993/05/22 08:00:56  cgd
+ * add rcsids to everything and clean up headers
+ *
+ * Revision 1.8  1993/05/04  08:32:40  deraadt
  * support for making dev->id_alive be set, this is for iostat to
  * find disk devices. wee bit of a kludge. sub-device attach()
  * routines must now return 1 for successful attach(), 0 otherwise.

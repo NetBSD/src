@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)proc.h	7.1 (Berkeley) 5/15/91
+ *	from: @(#)proc.h	7.1 (Berkeley) 5/15/91
+ *	$Id: proc.h,v 1.2 1993/05/22 08:00:31 cgd Exp $
  */
 
 /*

@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)genassym.c	7.8 (Berkeley) 5/7/91
+ *	from: @(#)genassym.c	7.8 (Berkeley) 5/7/91
+ *	$Id: genassym.c,v 1.2 1993/05/22 07:57:23 cgd Exp $
  */
 
 #define KERNEL

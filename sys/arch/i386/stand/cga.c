@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)cga.c	5.3 (Berkeley) 4/28/91
+ *	from: @(#)cga.c	5.3 (Berkeley) 4/28/91
+ *	$Id: cga.c,v 1.2 1993/05/22 08:02:12 cgd Exp $
  */
 
 #include "param.h"

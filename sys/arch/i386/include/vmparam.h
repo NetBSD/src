@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vmparam.h	5.9 (Berkeley) 5/12/91
+ *	from: @(#)vmparam.h	5.9 (Berkeley) 5/12/91
+ *	$Id: vmparam.h,v 1.2 1993/05/22 08:00:46 cgd Exp $
  */
 
 
