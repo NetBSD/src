@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.15 1996/12/05 01:06:44 cgd Exp $	*/
+/*	$NetBSD: ss.c,v 1.16 1997/08/27 11:27:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -44,12 +44,13 @@
 #include <sys/conf.h>
 #include <sys/scanio.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsi_scanner.h>
-#include <scsi/scsiconf.h>
-#include <scsi/ssvar.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsi_scanner.h>
+#include <dev/scsipi/scsiconf.h>
+#include <dev/scsipi/ssvar.h>
 
-#include <scsi/ss_mustek.h>
+#include <dev/scsipi/ss_mustek.h>
 
 #define SSMODE(z)	( minor(z)       & 0x03)
 #define SSUNIT(z)	((minor(z) >> 4)       )
@@ -82,14 +83,14 @@ void    ssstrategy __P((struct buf *));
 void    ssstart __P((void *));
 void	ssminphys __P((struct buf *));
 
-struct scsi_device ss_switch = {
+struct scsipi_device ss_switch = {
 	NULL,
 	ssstart,
 	NULL,
 	NULL,
 };
 
-struct scsi_inquiry_pattern ss_patterns[] = {
+struct scsipi_inquiry_pattern ss_patterns[] = {
 	{T_SCANNER, T_FIXED,
 	 "",         "",                 ""},
 	{T_SCANNER, T_REMOV,
@@ -112,10 +113,10 @@ ssmatch(parent, match, aux)
 #endif
 	void *aux;
 {
-	struct scsibus_attach_args *sa = aux;
+	struct scsipibus_attach_args *sa = aux;
 	int priority;
 
-	(void)scsi_inqmatch(sa->sa_inqbuf,
+	(void)scsipi_inqmatch(&sa->sa_inqbuf,
 	    (caddr_t)ss_patterns, sizeof(ss_patterns)/sizeof(ss_patterns[0]),
 	    sizeof(ss_patterns[0]), &priority);
 	return (priority);
@@ -133,8 +134,8 @@ ssattach(parent, self, aux)
 	void *aux;
 {
 	struct ss_softc *ss = (void *)self;
-	struct scsibus_attach_args *sa = aux;
-	struct scsi_link *sc_link = sa->sa_sc_link;
+	struct scsipibus_attach_args *sa = aux;
+	struct scsipi_link *sc_link = sa->sa_sc_link;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("ssattach: "));
 
@@ -151,9 +152,9 @@ ssattach(parent, self, aux)
 	 * and install functions for special handling
 	 */
 	SC_DEBUG(sc_link, SDEV_DB2, ("ssattach:\n"));
-	if (!bcmp(sa->sa_inqbuf->vendor, "MUSTEK", 6))
+	if (!bcmp(sa->sa_inqbuf.vendor, "MUSTEK", 6))
 		mustek_attach(ss, sa);
-	if (!bcmp(sa->sa_inqbuf->vendor, "HP      ", 8))
+	if (!bcmp(sa->sa_inqbuf.vendor, "HP      ", 8))
 		scanjet_attach(ss, sa);
 	if (ss->special == NULL) {
 		/* XXX add code to restart a SCSI2 scanner, if any */
@@ -181,7 +182,7 @@ ssopen(dev, flag, mode, p)
 	u_int ssmode;
 	int error = 0;
 	struct ss_softc *ss;
-	struct scsi_link *sc_link;
+	struct scsipi_link *sc_link;
 
 	unit = SSUNIT(dev);
 	if (unit >= ss_cd.cd_ndevs)
@@ -208,7 +209,7 @@ ssopen(dev, flag, mode, p)
 	 * consider paper to be a changeable media
 	 *
 	 */
-	error = scsi_test_unit_ready(sc_link,
+	error = scsipi_test_unit_ready(sc_link,
 	    SCSI_IGNORE_MEDIA_CHANGE | SCSI_IGNORE_ILLEGAL_REQUEST |
 	    (ssmode == MODE_CONTROL ? SCSI_IGNORE_NOT_READY : 0));
 	if (error)
@@ -277,7 +278,7 @@ ssminphys(bp)
 {
 	register struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(bp->b_dev)];
 
-	(ss->sc_link->adapter->scsi_minphys)(bp);
+	(ss->sc_link->adapter->scsipi_minphys)(bp);
 
 	/*
 	 * trim the transfer further for special devices this is
@@ -376,7 +377,7 @@ done:
  * ssstart looks to see if there is a buf waiting for the device
  * and that the device is not already busy. If both are true,
  * It dequeues the buf and creates a scsi command to perform the
- * transfer required. The transfer request will call scsi_done
+ * transfer required. The transfer request will call scsipi_done
  * on completion, which will in turn call this routine again
  * so that the next queued transfer is performed.
  * The bufs are queued by the strategy routine (ssstrategy)
@@ -391,7 +392,7 @@ ssstart(v)
 	void *v;
 {
 	struct ss_softc *ss = v;
-	struct scsi_link *sc_link = ss->sc_link;
+	struct scsipi_link *sc_link = ss->sc_link;
 	register struct buf *bp, *dp;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("ssstart "));
@@ -488,7 +489,7 @@ ssioctl(dev, cmd, addr, flag, p)
 	default:
 		if (SSMODE(dev) != MODE_CONTROL)
 			return (ENOTTY);
-		return (scsi_do_ioctl(ss->sc_link, dev, cmd, addr, flag, p));
+		return (scsipi_do_ioctl(ss->sc_link, dev, cmd, addr, flag, p));
 	}
 	return (error);
 }

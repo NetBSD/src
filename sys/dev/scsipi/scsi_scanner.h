@@ -54,7 +54,7 @@ struct scsi_rw_scanner {
 	u_int8_t control;
 };
 
-struct scsi_start_stop {
+struct scsipi_start_stop {
 	u_int8_t opcode;
 	u_int8_t byte2;
 	u_int8_t unused[2];

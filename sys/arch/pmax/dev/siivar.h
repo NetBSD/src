@@ -1,4 +1,4 @@
-/*	$NetBSD: siivar.h,v 1.1 1996/10/13 03:02:41 jonathan Exp $	*/
+/*	$NetBSD: siivar.h,v 1.2 1997/08/27 11:24:14 bouyer Exp $	*/
 
 #ifndef _SIIVAR_H
 #define _SIIVAR_H
@@ -39,7 +39,7 @@ struct siisoftc {
 	ScsiCmd	*sc_cmd[SII_NCMD];	/* active command indexed by ID */
 	State	sc_st[SII_NCMD];	/* state info for each active command */
 #ifdef NEW_SCSI
-	struct scsi_link sc_link;		/* scsi lint struct */
+	struct scsipi_link sc_link;		/* scsipi lint struct */
 #endif
 };
 

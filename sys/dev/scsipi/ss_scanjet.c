@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_scanjet.c,v 1.11 1997/01/18 02:18:47 cgd Exp $	*/
+/*	$NetBSD: ss_scanjet.c,v 1.12 1997/08/27 11:27:10 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -47,10 +47,11 @@
 #include <sys/conf.h>		/* for cdevsw */
 #include <sys/scanio.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsi_scanner.h>
-#include <scsi/scsiconf.h>
-#include <scsi/ssvar.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsi_scanner.h>
+#include <dev/scsipi/scsiconf.h>
+#include <dev/scsipi/ssvar.h>
 
 #define SCANJET_RETRIES 4
 
@@ -88,10 +89,10 @@ struct ss_special scanjet_special = {
 void
 scanjet_attach(ss, sa)
 	struct ss_softc *ss;
-	struct scsibus_attach_args *sa;
+	struct scsipibus_attach_args *sa;
 {
 #ifdef SCSIDEBUG
-	struct scsi_link *sc_link = sa->sa_sc_link;
+	struct scsipi_link *sc_link = sa->sa_sc_link;
 #endif
 	int error;
 
@@ -102,15 +103,15 @@ scanjet_attach(ss, sa)
 
 	/* first, check the model (which determines nothing yet) */
 
-	if (!bcmp(sa->sa_inqbuf->product, "C1750A", 6)) {
+	if (!bcmp(sa->sa_inqbuf.product, "C1750A", 6)) {
 		ss->sio.scan_scanner_type = HP_SCANJET_IIC;
 		printf("HP ScanJet IIc");
 	}
-	if (!bcmp(sa->sa_inqbuf->product, "C2500A", 6)) {
+	if (!bcmp(sa->sa_inqbuf.product, "C2500A", 6)) {
 		ss->sio.scan_scanner_type = HP_SCANJET_IIC;
 		printf("HP ScanJet IIcx");
 	}
-	if (!bcmp(sa->sa_inqbuf->product, "C1130A", 6)) {
+	if (!bcmp(sa->sa_inqbuf.product, "C1130A", 6)) {
 		ss->sio.scan_scanner_type = HP_SCANJET_IIC;
 		printf("HP ScanJet 4p");
 	}
@@ -262,7 +263,7 @@ scanjet_read(ss, bp)
 	struct buf *bp;
 {
 	struct scsi_rw_scanner cmd;
-	struct scsi_link *sc_link = ss->sc_link;
+	struct scsipi_link *sc_link = ss->sc_link;
 
 	/*
 	 *  Fill out the scsi command
@@ -279,7 +280,7 @@ scanjet_read(ss, bp)
 	/*
 	 * go ask the adapter to do all this for us
 	 */
-	if (scsi_scsi_cmd(sc_link, (struct scsi_generic *) &cmd, sizeof(cmd),
+	if (sc_link->scsipi_cmd(sc_link, (struct scsipi_generic *) &cmd, sizeof(cmd),
 	    (u_char *) bp->b_data, bp->b_bcount, SCANJET_RETRIES, 100000, bp,
 	    SCSI_NOSLEEP | SCSI_DATA_IN) != SUCCESSFULLY_QUEUED)
 		printf("%s: not queued\n", ss->sc_dev.dv_xname);
@@ -308,7 +309,7 @@ scanjet_ctl_write(ss, buf, size, flags)
 	bzero(&cmd, sizeof(cmd));
 	cmd.opcode = WRITE;
 	_lto3b(size, cmd.len);
-	return (scsi_scsi_cmd(ss->sc_link, (struct scsi_generic *) &cmd,
+	return (ss->sc_link->scsipi_cmd(ss->sc_link, (struct scsipi_generic *) &cmd,
 	    sizeof(cmd), (u_char *) buf, size, 0, 100000, NULL,
 	    flags | SCSI_DATA_OUT));
 }
@@ -329,7 +330,7 @@ scanjet_ctl_read(ss, buf, size, flags)
 	bzero(&cmd, sizeof(cmd));
 	cmd.opcode = READ;
 	_lto3b(size, cmd.len);
-	return (scsi_scsi_cmd(ss->sc_link, (struct scsi_generic *) &cmd,
+	return (ss->sc_link->scsipi_cmd(ss->sc_link, (struct scsipi_generic *) &cmd,
 	    sizeof(cmd), (u_char *) buf, size, 0, 100000, NULL,
 	    flags | SCSI_DATA_IN));
 }

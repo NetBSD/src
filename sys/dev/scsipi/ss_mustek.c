@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_mustek.c,v 1.6 1996/10/12 23:23:21 christos Exp $	*/
+/*	$NetBSD: ss_mustek.c,v 1.7 1997/08/27 11:27:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Joachim Koenig-Baltes.  All rights reserved.
@@ -60,11 +60,12 @@
 #include <sys/conf.h>		/* for cdevsw */
 #include <sys/scanio.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsi_scanner.h>
-#include <scsi/scsiconf.h>
-#include <scsi/ssvar.h>
-#include <scsi/ss_mustek.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsi_scanner.h>
+#include <dev/scsipi/scsiconf.h>
+#include <dev/scsipi/ssvar.h>
+#include <dev/scsipi/ss_mustek.h>
 
 #define MUSTEK_RETRIES 4
 
@@ -99,10 +100,10 @@ struct ss_special mustek_special = {
 void
 mustek_attach(ss, sa)
 	struct ss_softc *ss;
-	struct scsibus_attach_args *sa;
+	struct scsipibus_attach_args *sa;
 {
 #ifdef SCSIDEBUG
-	struct scsi_link *sc_link = sa->sa_sc_link;
+	struct scsipi_link *sc_link = sa->sa_sc_link;
 #endif
 
 	SC_DEBUG(sc_link, SDEV_DB1, ("mustek_attach: start\n"));
@@ -111,11 +112,11 @@ mustek_attach(ss, sa)
 	printf("\n%s: ", ss->sc_dev.dv_xname);
 
 	/* first, check the model which determines resolutions */
-	if (!bcmp(sa->sa_inqbuf->product, "MFS-06000CX", 11)) {
+	if (!bcmp(sa->sa_inqbuf.product, "MFS-06000CX", 11)) {
 		ss->sio.scan_scanner_type = MUSTEK_06000CX;
 		printf("Mustek 6000CX Flatbed 3-pass color scanner, 3 - 600 dpi\n");
 	}
-	if (!bcmp(sa->sa_inqbuf->product, "MFS-12000CX", 11)) {
+	if (!bcmp(sa->sa_inqbuf.product, "MFS-12000CX", 11)) {
 		ss->sio.scan_scanner_type = MUSTEK_12000CX;
 		printf("Mustek 12000CX Flatbed 3-pass color scanner, 6 - 1200 dpi\n");
 	}
@@ -257,7 +258,7 @@ mustek_minphys(ss, bp)
 	struct buf *bp;
 {
 #ifdef SCSIDEBUG
-	struct scsi_link *sc_link = ss->sc_link;
+	struct scsipi_link *sc_link = ss->sc_link;
 #endif
 
 	SC_DEBUG(sc_link, SDEV_DB1, ("mustek_minphys: before: %ld\n",
@@ -282,7 +283,7 @@ mustek_trigger_scanner(ss)
 	struct mustek_set_window_cmd window_cmd;
 	struct mustek_set_window_data window_data;
 	struct mustek_start_scan_cmd start_scan_cmd;
-	struct scsi_link *sc_link = ss->sc_link;
+	struct scsipi_link *sc_link = ss->sc_link;
 	int pixel_tlx, pixel_tly, pixel_brx, pixel_bry, paperlength;
 	int error;
 
@@ -325,7 +326,7 @@ mustek_trigger_scanner(ss)
 
 	/* send the set window command to the scanner */
 	SC_DEBUG(sc_link, SDEV_DB1, ("mustek_set_parms: set_window\n"));
-	error = scsi_scsi_cmd(sc_link, (struct scsi_generic *) &window_cmd,
+	error = sc_link->scsipi_cmd(sc_link, (struct scsipi_generic *) &window_cmd,
 	    sizeof(window_cmd), (u_char *) &window_data, sizeof(window_data),
 	    MUSTEK_RETRIES, 5000, NULL, SCSI_DATA_OUT);
 	if (error)
@@ -364,7 +365,7 @@ mustek_trigger_scanner(ss)
 
 	SC_DEBUG(sc_link, SDEV_DB1, ("mustek_trigger_scanner: mode_select\n"));
 	/* send the command to the scanner */
-	error = scsi_scsi_cmd(sc_link, (struct scsi_generic *) &mode_cmd,
+	error = sc_link->scsipi_cmd(sc_link, (struct scsipi_generic *) &mode_cmd,
 	    sizeof(mode_cmd), (u_char *) &mode_data, sizeof(mode_data),
 	    MUSTEK_RETRIES, 5000, NULL, SCSI_DATA_OUT);
 	if (error)
@@ -401,7 +402,7 @@ mustek_trigger_scanner(ss)
 
 	/* send the command to the scanner */
 	SC_DEBUG(sc_link, SDEV_DB1, ("mustek_trigger_scanner: start_scan\n"));
-	error = scsi_scsi_cmd(sc_link, (struct scsi_generic *) &start_scan_cmd,
+	error = sc_link->scsipi_cmd(sc_link, (struct scsipi_generic *) &start_scan_cmd,
 	    sizeof(start_scan_cmd), NULL, 0,
 	    MUSTEK_RETRIES, 5000, NULL, 0);
 	if (error)
@@ -429,7 +430,7 @@ mustek_rewind_scanner(ss)
 	struct ss_softc *ss;
 {
 	struct mustek_start_scan_cmd cmd;
-	struct scsi_link *sc_link = ss->sc_link;
+	struct scsipi_link *sc_link = ss->sc_link;
 	int error;
 
 	if (ss->sio.scan_window_size != 0) {
@@ -444,7 +445,7 @@ mustek_rewind_scanner(ss)
 		/* send the command to the scanner */
 		SC_DEBUG(sc_link, SDEV_DB1,
 		    ("mustek_rewind_scanner: stop_scan\n"));
-		error = scsi_scsi_cmd(sc_link, (struct scsi_generic *) &cmd,
+		error = sc_link->scsipi_cmd(sc_link, (struct scsipi_generic *) &cmd,
 		    sizeof(cmd), NULL, 0, MUSTEK_RETRIES, 5000, NULL, 0);
 		if (error)
 			return (error);
@@ -464,7 +465,7 @@ mustek_read(ss, bp)
 	struct buf *bp;
 {
 	struct mustek_read_cmd cmd;
-	struct scsi_link *sc_link = ss->sc_link;
+	struct scsipi_link *sc_link = ss->sc_link;
 	u_long lines_to_read;
 
 	SC_DEBUG(sc_link, SDEV_DB1, ("mustek_read: start\n"));
@@ -482,7 +483,7 @@ mustek_read(ss, bp)
 	/*
 	 * go ask the adapter to do all this for us
 	 */
-	if (scsi_scsi_cmd(sc_link, (struct scsi_generic *) &cmd, sizeof(cmd),
+	if (sc_link->scsipi_cmd(sc_link, (struct scsipi_generic *) &cmd, sizeof(cmd),
 	    (u_char *) bp->b_data, bp->b_bcount, MUSTEK_RETRIES, 10000, bp,
 	    SCSI_NOSLEEP | SCSI_DATA_IN) != SUCCESSFULLY_QUEUED)
 		printf("%s: not queued\n", ss->sc_dev.dv_xname);
@@ -508,7 +509,7 @@ mustek_get_status(ss, timeout, update)
 {
 	struct mustek_get_status_cmd cmd;
 	struct mustek_get_status_data data;
-	struct scsi_link *sc_link = ss->sc_link;
+	struct scsipi_link *sc_link = ss->sc_link;
 	int error, lines, bytes_per_line;
 
 	bzero(&cmd, sizeof(cmd));
@@ -517,7 +518,7 @@ mustek_get_status(ss, timeout, update)
 
 	while (1) {
 		SC_DEBUG(sc_link, SDEV_DB1, ("mustek_get_status: stat_cmd\n"));
-		error = scsi_scsi_cmd(sc_link, (struct scsi_generic *) &cmd,
+		error = sc_link->scsipi_cmd(sc_link, (struct scsipi_generic *) &cmd,
 		    sizeof(cmd), (u_char *) &data, sizeof(data), MUSTEK_RETRIES,
 		    5000, NULL, SCSI_DATA_IN);
 		if (error)

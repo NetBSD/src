@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.24 1997/04/26 22:24:46 augustss Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.25 1997/08/27 11:26:57 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -46,9 +46,13 @@
 #include <sys/device.h>
 #include <sys/fcntl.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipiconf.h>
+#include <dev/scsipi/scsiconf.h>
 #include <sys/scsiio.h>
+#include "scsibus.h"
+#include "atapibus.h"
 
 struct scsi_ioctl {
 	LIST_ENTRY(scsi_ioctl) si_list;
@@ -56,7 +60,7 @@ struct scsi_ioctl {
 	struct uio si_uio;
 	struct iovec si_iov;
 	scsireq_t si_screq;
-	struct scsi_link *si_sc_link;
+	struct scsipi_link *si_sc_link;
 };
 
 LIST_HEAD(, scsi_ioctl) si_head;
@@ -110,29 +114,29 @@ si_find(bp)
 /*
  * We let the user interpret his own sense in the generic scsi world.
  * This routine is called at interrupt time if the SCSI_USER bit was set
- * in the flags passed to scsi_scsi_cmd(). No other completion processing
+ * in the flags passed to scsi_scsipi_cmd(). No other completion processing
  * takes place, even if we are running over another device driver.
  * The lower level routines that call us here, will free the xs and restart
  * the device's queue if such exists.
  */
 void
-scsi_user_done(xs)
-	struct scsi_xfer *xs;
+scsipi_user_done(xs)
+	struct scsipi_xfer *xs;
 {
 	struct buf *bp;
 	struct scsi_ioctl *si;
 	scsireq_t *screq;
-	struct scsi_link *sc_link;
+	struct scsipi_link *sc_link;
 
 	bp = xs->bp;
 	if (!bp) {	/* ALL user requests must have a buf */
-		sc_print_addr(xs->sc_link);
+		xs->sc_link->sc_print_addr(xs->sc_link);
 		printf("User command with no buf\n");
 		return;
 	}
 	si = si_find(bp);
 	if (!si) {
-		sc_print_addr(xs->sc_link);
+		xs->sc_link->sc_print_addr(xs->sc_link);
 		printf("User command with no ioctl\n");
 		return;
 	}
@@ -150,12 +154,12 @@ scsi_user_done(xs)
 		break;
 	case XS_SENSE:
 		SC_DEBUG(sc_link, SDEV_DB3, ("have sense\n"));
-		screq->senselen_used = min(sizeof(xs->sense), SENSEBUFLEN);
-		bcopy(&xs->sense, screq->sense, screq->senselen);
+		screq->senselen_used = min(sizeof(xs->sense.scsi_sense), SENSEBUFLEN);
+		bcopy(&xs->sense.scsi_sense, screq->sense, screq->senselen);
 		screq->retsts = SCCMD_SENSE;
 		break;
 	case XS_DRIVER_STUFFUP:
-		sc_print_addr(sc_link);
+		sc_link->sc_print_addr(sc_link);
 		printf("host adapter code inconsistency\n");
 		screq->retsts = SCCMD_UNKNOWN;
 		break;
@@ -168,7 +172,7 @@ scsi_user_done(xs)
 		screq->retsts = SCCMD_BUSY;
 		break;
 	default:
-		sc_print_addr(sc_link);
+		sc_link->sc_print_addr(sc_link);
 		printf("unknown error category from host adapter code\n");
 		screq->retsts = SCCMD_UNKNOWN;
 		break;
@@ -178,11 +182,11 @@ scsi_user_done(xs)
 
 
 /* Pseudo strategy function
- * Called by scsi_do_ioctl() via physio/physstrat if there is to
+ * Called by scsipi_do_ioctl() via physio/physstrat if there is to
  * be data transfered, and directly if there is no data transfer.
  * 
  * Should I reorganize this so it returns to physio instead
- * of sleeping in scsiio_scsi_cmd?  Is there any advantage, other
+ * of sleeping in scsiio_scsipi_cmd?  Is there any advantage, other
  * than avoiding the probable duplicate wakeup in iodone? [PD]
  *
  * No, seems ok to me... [JRE]
@@ -198,7 +202,7 @@ scsistrategy(bp)
 {
 	struct scsi_ioctl *si;
 	scsireq_t *screq;
-	struct scsi_link *sc_link;
+	struct scsipi_link *sc_link;
 	int error;
 	int flags = 0;
 	int s;
@@ -217,7 +221,7 @@ scsistrategy(bp)
 	 * We're in trouble if physio tried to break up the transfer.
 	 */
 	if (bp->b_bcount != screq->datalen) {
-		sc_print_addr(sc_link);
+		sc_link->sc_print_addr(sc_link);
 		printf("physio split the request.. cannot proceed\n");
 		error = EIO;
 		goto bad;
@@ -228,8 +232,8 @@ scsistrategy(bp)
 		goto bad;
 	}
 
-	if (screq->cmdlen > sizeof(struct scsi_generic)) {
-		sc_print_addr(sc_link);
+	if (screq->cmdlen > sizeof(struct scsipi_generic)) {
+		sc_link->sc_print_addr(sc_link);
 		printf("cmdlen too big\n");
 		error = EFAULT;
 		goto bad;
@@ -244,12 +248,12 @@ scsistrategy(bp)
 	if (screq->flags & SCCMD_ESCAPE)
 		flags |= SCSI_ESCAPE;
 
-	error = scsi_scsi_cmd(sc_link, (struct scsi_generic *)screq->cmd,
+	error = sc_link->scsipi_cmd(sc_link, (struct scsipi_generic *)screq->cmd,
 	    screq->cmdlen, (u_char *)bp->b_data, screq->datalen,
 	    0, /* user must do the retries *//* ignored */
 	    screq->timeout, bp, flags | SCSI_USER | SCSI_NOSLEEP);
 
-	/* because there is a bp, scsi_scsi_cmd will return immediatly */
+	/* because there is a bp, scsi_scsipi_cmd will return immediatly */
 	if (error)
 		goto bad;
 
@@ -276,8 +280,8 @@ bad:
  * in the context of the calling process
  */
 int
-scsi_do_ioctl(sc_link, dev, cmd, addr, flag, p)
-	struct scsi_link *sc_link;
+scsipi_do_ioctl(sc_link, dev, cmd, addr, flag, p)
+	struct scsipi_link *sc_link;
 	dev_t dev;
 	u_long cmd;
 	caddr_t addr;
@@ -286,7 +290,7 @@ scsi_do_ioctl(sc_link, dev, cmd, addr, flag, p)
 {
 	int error;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("scsi_do_ioctl(0x%lx)\n", cmd));
+	SC_DEBUG(sc_link, SDEV_DB2, ("scsipi_do_ioctl(0x%lx)\n", cmd));
 
 	/* Check for the safe-ness of this request. */
 	switch (cmd) {
@@ -325,7 +329,7 @@ scsi_do_ioctl(sc_link, dev, cmd, addr, flag, p)
 			si->si_uio.uio_procp = p;
 			error = physio(scsistrategy, &si->si_bp, dev,
 			    (screq->flags & SCCMD_READ) ? B_READ : B_WRITE,
-			    sc_link->adapter->scsi_minphys, &si->si_uio);
+			    sc_link->adapter->scsipi_minphys, &si->si_uio);
 		} else {
 			/* if no data, no need to translate it.. */
 			si->si_bp.b_flags = 0;
@@ -355,27 +359,41 @@ scsi_do_ioctl(sc_link, dev, cmd, addr, flag, p)
 			sc_link->flags |= SDEV_DB4;
 		return 0;
 	}
+#if NSCSIBUS > 0
 	case SCIOCREPROBE: {
 		struct scsi_addr *sca = (struct scsi_addr *)addr;
-
-		return scsi_probe_busses(sca->scbus, sca->target, sca->lun);
+		if (sca->type != TYPE_SCSI) {
+			return ENODEV;
+		}
+		return scsi_probe_busses(sca->addr.scsi.scbus, sca->addr.scsi.target,
+			sca->addr.scsi.lun);
 	}
+#endif
 	case SCIOCRECONFIG:
 	case SCIOCDECONFIG:
 		return EINVAL;
 	case SCIOCIDENTIFY: {
 		struct scsi_addr *sca = (struct scsi_addr *)addr;
-
-		sca->scbus = sc_link->scsibus;
-		sca->target = sc_link->target;
-		sca->lun = sc_link->lun;
-		return 0;
+		if (sc_link->type == BUS_SCSI) {
+			sca->type = TYPE_SCSI;
+			sca->addr.scsi.scbus = sc_link->scsipi_scsi.scsibus;
+			sca->addr.scsi.target = sc_link->scsipi_scsi.target;
+			sca->addr.scsi.lun = sc_link->scsipi_scsi.lun;
+			return 0;
+		}
+		if (sc_link->type == BUS_ATAPI) {
+			sca->type = TYPE_ATAPI;
+			sca->addr.atapi.atbus = sc_link->scsipi_atapi.atapibus;
+			sca->addr.atapi.drive = sc_link->scsipi_atapi.drive;
+			return 0;
+		}
+		return ENXIO;
 	}
 	default:
 		return ENOTTY;
 	}
 
 #ifdef DIAGNOSTIC
-	panic("scsi_do_ioctl: impossible");
+	panic("scsipi_do_ioctl: impossible");
 #endif
 }

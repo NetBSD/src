@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.26 1997/02/21 22:06:52 thorpej Exp $	*/
+/*	$NetBSD: ch.c,v 1.27 1997/08/27 11:26:26 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe <thorpej@and.com>
@@ -49,16 +49,17 @@
 #include <sys/conf.h>
 #include <sys/fcntl.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsi_changer.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsi_changer.h>
+#include <dev/scsipi/scsiconf.h>
 
 #define CHRETRIES	2
 #define CHUNIT(x)	(minor((x)))
 
 struct ch_softc {
 	struct device	sc_dev;		/* generic device info */
-	struct scsi_link *sc_link;	/* link in the SCSI bus */
+	struct scsipi_link *sc_link;	/* link in the SCSI bus */
 
 	int		sc_picker;	/* current picker */
 
@@ -108,13 +109,13 @@ struct cfdriver ch_cd = {
 	NULL, "ch", DV_DULL
 };
 
-struct scsi_inquiry_pattern ch_patterns[] = {
+struct scsipi_inquiry_pattern ch_patterns[] = {
 	{T_CHANGER, T_REMOV,
 	 "",		"",		""},
 };
 
 /* SCSI glue */
-struct scsi_device ch_switch = {
+struct scsipi_device ch_switch = {
 	NULL, NULL, NULL, NULL
 };
 
@@ -124,13 +125,13 @@ int	ch_position __P((struct ch_softc *, struct changer_position *));
 int	ch_usergetelemstatus __P((struct ch_softc *, int, u_int8_t *));
 int	ch_getelemstatus __P((struct ch_softc *, int, int, caddr_t, size_t));
 int	ch_get_params __P((struct ch_softc *, int));
-void	ch_get_quirks __P((struct ch_softc *, struct scsi_inquiry_data *));
+void	ch_get_quirks __P((struct ch_softc *, struct scsipi_inquiry_pattern *));
 
 /*
  * SCSI changer quirks.
  */
 struct chquirk {
-	struct	scsi_inquiry_pattern cq_match; /* device id pattern */
+	struct	scsipi_inquiry_pattern cq_match; /* device id pattern */
 	int	cq_settledelay;	/* settle delay, in seconds */
 };
 
@@ -150,10 +151,10 @@ chmatch(parent, match, aux)
 #endif
 	void *aux;
 {
-	struct scsibus_attach_args *sa = aux;
+	struct scsipibus_attach_args *sa = aux;
 	int priority;
 
-	(void)scsi_inqmatch(sa->sa_inqbuf,
+	(void)scsipi_inqmatch(&sa->sa_inqbuf,
 	    (caddr_t)ch_patterns, sizeof(ch_patterns)/sizeof(ch_patterns[0]),
 	    sizeof(ch_patterns[0]), &priority);
 
@@ -166,8 +167,8 @@ chattach(parent, self, aux)
 	void *aux;
 {
 	struct ch_softc *sc = (struct ch_softc *)self;
-	struct scsibus_attach_args *sa = aux;
-	struct scsi_link *link = sa->sa_sc_link;
+	struct scsipibus_attach_args *sa = aux;
+	struct scsipi_link *link = sa->sa_sc_link;
 
 	/* Glue into the SCSI bus */
 	sc->sc_link = link;
@@ -180,7 +181,7 @@ chattach(parent, self, aux)
 	/*
 	 * Find out our device's quirks.
 	 */
-	ch_get_quirks(sc, sa->sa_inqbuf);
+	ch_get_quirks(sc, &sa->sa_inqbuf);
 
 	/*
 	 * Some changers require a long time to settle out, to do
@@ -250,7 +251,7 @@ chopen(dev, flags, fmt, p)
 	 * since this might occur if e.g. a tape isn't actually
 	 * loaded in the drive.
 	 */
-	error = scsi_test_unit_ready(sc->sc_link,
+	error = scsipi_test_unit_ready(sc->sc_link,
 	    SCSI_IGNORE_NOT_READY|SCSI_IGNORE_MEDIA_CHANGE);
 	if (error)
 		goto bad;
@@ -351,7 +352,7 @@ chioctl(dev, cmd, data, flags, p)
 	/* Implement prevent/allow? */
 
 	default:
-		error = scsi_do_ioctl(sc->sc_link, dev, cmd, data, flags, p);
+		error = scsipi_do_ioctl(sc->sc_link, dev, cmd, data, flags, p);
 		break;
 	}
 
@@ -401,7 +402,7 @@ ch_move(sc, cm)
 	/*
 	 * Send command to changer.
 	 */
-	return (scsi_scsi_cmd(sc->sc_link, (struct scsi_generic *)&cmd,
+	return (sc->sc_link->scsipi_cmd(sc->sc_link, (struct scsipi_generic *)&cmd,
 	    sizeof(cmd), NULL, 0, CHRETRIES, 100000, NULL, 0));
 }
 
@@ -457,7 +458,7 @@ ch_exchange(sc, ce)
 	/*
 	 * Send command to changer.
 	 */
-	return (scsi_scsi_cmd(sc->sc_link, (struct scsi_generic *)&cmd,
+	return (sc->sc_link->scsipi_cmd(sc->sc_link, (struct scsipi_generic *)&cmd,
 	    sizeof(cmd), NULL, 0, CHRETRIES, 100000, NULL, 0));
 }
 
@@ -495,7 +496,7 @@ ch_position(sc, cp)
 	/*
 	 * Send command to changer.
 	 */
-	return (scsi_scsi_cmd(sc->sc_link, (struct scsi_generic *)&cmd,
+	return (sc->sc_link->scsipi_cmd(sc->sc_link, (struct scsipi_generic *)&cmd,
 	    sizeof(cmd), NULL, 0, CHRETRIES, 100000, NULL, 0));
 }
 
@@ -607,7 +608,7 @@ ch_getelemstatus(sc, first, count, data, datalen)
 	/*
 	 * Send command to changer.
 	 */
-	return (scsi_scsi_cmd(sc->sc_link, (struct scsi_generic *)&cmd,
+	return (sc->sc_link->scsipi_cmd(sc->sc_link, (struct scsipi_generic *)&cmd,
 	    sizeof(cmd), (u_char *)data, datalen, CHRETRIES, 100000, NULL, 0));
 }
 
@@ -638,11 +639,11 @@ ch_get_params(sc, scsiflags)
 	 */
 	bzero(&cmd, sizeof(cmd));
 	bzero(&sense_data, sizeof(sense_data));
-	cmd.opcode = MODE_SENSE;
+	cmd.opcode = SCSI_MODE_SENSE;
 	cmd.byte2 |= 0x08;	/* disable block descriptors */
 	cmd.page = 0x1d;
 	cmd.length = (sizeof(sense_data) & 0xff);
-	error = scsi_scsi_cmd(sc->sc_link, (struct scsi_generic *)&cmd,
+	error = sc->sc_link->scsipi_cmd(sc->sc_link, (struct scsipi_generic *)&cmd,
 	    sizeof(cmd), (u_char *)&sense_data, sizeof(sense_data), CHRETRIES,
 	    6000, NULL, scsiflags | SCSI_DATA_IN);
 	if (error) {
@@ -667,11 +668,11 @@ ch_get_params(sc, scsiflags)
 	 */
 	bzero(&cmd, sizeof(cmd));
 	bzero(&sense_data, sizeof(sense_data));
-	cmd.opcode = MODE_SENSE;
+	cmd.opcode = SCSI_MODE_SENSE;
 	cmd.byte2 |= 0x08;	/* disable block descriptors */
 	cmd.page = 0x1f;
 	cmd.length = (sizeof(sense_data) & 0xff);
-	error = scsi_scsi_cmd(sc->sc_link, (struct scsi_generic *)&cmd,
+	error = sc->sc_link->scsipi_cmd(sc->sc_link, (struct scsipi_generic *)&cmd,
 	    sizeof(cmd), (u_char *)&sense_data, sizeof(sense_data), CHRETRIES,
 	    6000, NULL, scsiflags | SCSI_DATA_IN);
 	if (error) {
@@ -696,14 +697,14 @@ ch_get_params(sc, scsiflags)
 void
 ch_get_quirks(sc, inqbuf)
 	struct ch_softc *sc;
-	struct scsi_inquiry_data *inqbuf;
+	struct scsipi_inquiry_pattern *inqbuf;
 {
 	struct chquirk *match;
 	int priority;
 
 	sc->sc_settledelay = 0;
 
-	match = (struct chquirk *)scsi_inqmatch(inqbuf,
+	match = (struct chquirk *)scsipi_inqmatch(inqbuf,
 	    (caddr_t)chquirks,
 	    sizeof(chquirks) / sizeof(chquirks[0]),
 	    sizeof(chquirks[0]), &priority);

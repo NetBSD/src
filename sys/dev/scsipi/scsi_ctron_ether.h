@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_ctron_ether.h,v 1.3 1997/04/04 19:02:44 matthias Exp $	*/
+/*	$NetBSD: scsi_ctron_ether.h,v 1.4 1997/08/27 11:26:38 bouyer Exp $	*/
 
 /*
  * SCSI interface description

@@ -1,7 +1,7 @@
-/*	$NetBSD: scsi_disk.h,v 1.10 1996/07/05 16:19:05 christos Exp $	*/
+/*	$NetBSD: scsi_disk.h,v 1.11 1997/08/27 11:26:41 bouyer Exp $	*/
 
 /*
- * SCSI interface description
+ * SCSI-specific interface description
  */
 
 /*
@@ -56,6 +56,12 @@
 #ifndef	_SCSI_SCSI_DISK_H
 #define _SCSI_SCSI_DISK_H 1
 
+/*
+ * XXX for now this isn't in the ATAPI specs, but if there are on day
+ * ATAPI hard disks, it is likely that they implement this command (or a
+ * command like this ?
+ */
+#define	SCSI_REASSIGN_BLOCKS		0x07
 struct scsi_reassign_blocks {
 	u_int8_t opcode;
 	u_int8_t byte2;
@@ -63,6 +69,8 @@ struct scsi_reassign_blocks {
 	u_int8_t control;
 };
 
+#define	SCSI_READ_COMMAND		0x08
+#define SCSI_WRITE_COMMAND		0x0a
 struct scsi_rw {
 	u_int8_t opcode;
 	u_int8_t addr[3];
@@ -71,57 +79,7 @@ struct scsi_rw {
 	u_int8_t control;
 };
 
-struct scsi_rw_big {
-	u_int8_t opcode;
-	u_int8_t byte2;
-#define	SRWB_RELADDR	0x01
-	u_int8_t addr[4];
-	u_int8_t reserved;
-	u_int8_t length[2];
-	u_int8_t control;
-};
-
-struct scsi_read_capacity {
-	u_int8_t opcode;
-	u_int8_t byte2;
-	u_int8_t addr[4];
-	u_int8_t unused[3];
-	u_int8_t control;
-};
-
-struct scsi_start_stop {
-	u_int8_t opcode;
-	u_int8_t byte2;
-	u_int8_t unused[2];
-	u_int8_t how;
-#define	SSS_STOP		0x00
-#define	SSS_START		0x01
-#define	SSS_LOEJ		0x02
-	u_int8_t control;
-};
-
-
-
-/*
- * Opcodes
- */
-
-#define	REASSIGN_BLOCKS		0x07
-#define	READ_COMMAND		0x08
-#define WRITE_COMMAND		0x0a
-#define MODE_SELECT		0x15
-#define MODE_SENSE		0x1a
-#define START_STOP		0x1b
-#define PREVENT_ALLOW		0x1e
-#define	READ_CAPACITY		0x25
-#define	READ_BIG		0x28
-#define WRITE_BIG		0x2a
-
-
-struct scsi_read_cap_data {
-	u_int8_t addr[4];
-	u_int8_t length[4];
-};
+/* DATAs definitions for the above commands */
 
 struct scsi_reassign_blocks_data {
 	u_int8_t reserved[2];
@@ -131,7 +89,7 @@ struct scsi_reassign_blocks_data {
 	} defect_descriptor[1];
 };
 
-union disk_pages {
+union scsi_disk_pages {
 #define	DISK_PGCODE	0x3F	/* only 6 bits valid */
 	struct page_disk_format {
 		u_int8_t pg_code;	/* page code (should be 3) */

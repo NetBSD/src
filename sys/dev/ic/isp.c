@@ -1,4 +1,4 @@
-/*	$NetBSD: isp.c,v 1.11 1997/08/16 00:56:52 mjacob Exp $	*/
+/*	$NetBSD: isp.c,v 1.12 1997/08/27 11:24:54 bouyer Exp $	*/
 
 /*
  * Machine Independent (well, as best as possible)
@@ -53,12 +53,13 @@
 #include <sys/user.h>
 
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 
-#include <scsi/scsi_message.h>
-#include <scsi/scsi_debug.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_message.h>
+#include <dev/scsipi/scsipi_debug.h>
+#include <dev/scsipi/scsiconf.h>
 
 #include <vm/vm.h>
 #include <vm/vm_param.h>
@@ -75,22 +76,22 @@ struct cfdriver isp_cd = {
 };
 
 static void	ispminphys __P((struct buf *));
-static int32_t	ispscsicmd __P((struct scsi_xfer *xs));
+static int32_t	ispscsicmd __P((struct scsipi_xfer *xs));
 static void	isp_mboxcmd __P((struct ispsoftc *, mbreg_t *));
 
-static struct scsi_adapter isp_switch = {
+static struct scsipi_adapter isp_switch = {
 	ispscsicmd, ispminphys, 0, 0
 };
 
-static struct scsi_device isp_dev = { NULL, NULL, NULL, NULL };
+static struct scsipi_device isp_dev = { NULL, NULL, NULL, NULL };
 
 #define	IDPRINTF(lev, x)	if (isp->isp_dblev >= lev) printf x
 
-static int isp_poll __P((struct ispsoftc *, struct scsi_xfer *, int));	
+static int isp_poll __P((struct ispsoftc *, struct scsipi_xfer *, int));	
 static int isp_parse_status
-__P((struct ispsoftc *, ispstatusreq_t *, struct scsi_xfer *));
+__P((struct ispsoftc *, ispstatusreq_t *, struct scsipi_xfer *));
 static void isp_lostcmd
-__P((struct ispsoftc *, struct scsi_xfer *, ispreq_t *));
+__P((struct ispsoftc *, struct scsipi_xfer *, ispreq_t *));
 static void isp_fibre_init __P((struct ispsoftc *));
 static void isp_fw_state __P((struct ispsoftc *));
 static void isp_dumpregs __P((struct ispsoftc *, const char *));
@@ -715,7 +716,7 @@ isp_attach(isp)
 	 * And complete initialization
 	 */
 	isp->isp_state = ISP_RUNSTATE;
-	isp->isp_link.channel = SCSI_CHANNEL_ONLY_ONE;
+	isp->isp_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	isp->isp_link.adapter_softc = isp;
 	isp->isp_link.device = &isp_dev;
 	isp->isp_link.adapter = &isp_switch;
@@ -725,7 +726,7 @@ isp_attach(isp)
 		mbreg_t mbs;
 		int s;
 
-		isp->isp_link.max_target = MAX_FC_TARG-1;
+		isp->isp_link.scsipi_scsi.max_target = MAX_FC_TARG-1;
 #if	0
 		isp->isp_link.openings = RQUEST_QUEUE_LEN(isp)/(MAX_FC_TARG-1);
 #else
@@ -744,15 +745,16 @@ isp_attach(isp)
 			printf("%s: Loop ID 0x%x\n", isp->isp_name,
 				fcp->isp_loopid);
 		}
-		isp->isp_link.adapter_target = 0xff;
+		isp->isp_link.scsipi_scsi.adapter_target = 0xff;
 	} else {
 		isp->isp_link.openings = RQUEST_QUEUE_LEN(isp)/(MAX_TARGETS-1);
-		isp->isp_link.max_target = MAX_TARGETS-1;
-		isp->isp_link.adapter_target =
+		isp->isp_link.scsipi_scsi.max_target = MAX_TARGETS-1;
+		isp->isp_link.scsipi_scsi.adapter_target =
 			((sdparam *)isp->isp_param)->isp_initiator_id;
 	}
 	if (isp->isp_link.openings < 2)
 		isp->isp_link.openings = 2;
+	isp->isp_link.type = BUS_SCSI;
 	config_found((void *)isp, &isp->isp_link, scsiprint);
 }
 
@@ -793,7 +795,7 @@ ispminphys(bp)
  */
 static int32_t
 ispscsicmd(xs)
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 {
 	struct ispsoftc *isp;
 	u_int8_t iptr, optr;
@@ -907,15 +909,15 @@ if (isp->isp_type & ISP_HA_FC)
 			reqp->req_flags = REQFLAG_OTAG;
 		}
 	}
-	reqp->req_lun_trn = xs->sc_link->lun;
-	reqp->req_target = xs->sc_link->target;
+	reqp->req_lun_trn = xs->sc_link->scsipi_scsi.lun;
+	reqp->req_target = xs->sc_link->scsipi_scsi.target;
 	if (isp->isp_type & ISP_HA_SCSI) {
 		reqp->req_cdblen = xs->cmdlen;
 	}
 	bcopy((void *)xs->cmd, reqp->req_cdb, xs->cmdlen);
 
 	IDPRINTF(5, ("%s(%d.%d): START%d cmd 0x%x datalen %d\n", isp->isp_name,
-		xs->sc_link->target, xs->sc_link->lun,
+		xs->sc_link->scsipi_scsi.target, xs->sc_link->scsipi_scsi.lun,
 		reqp->req_header.rqs_seqno, *(u_char *) xs->cmd, xs->datalen));
 
 	reqp->req_time = xs->timeout / 1000;
@@ -969,7 +971,7 @@ if (isp->isp_type & ISP_HA_FC)
 int
 isp_poll(isp, xs, mswait)
 	struct ispsoftc *isp;
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 	int mswait;
 {
 
@@ -990,7 +992,7 @@ int
 isp_intr(arg)
 	void *arg;
 {
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 	struct ispsoftc *isp = arg;
 	u_int16_t iptr, optr, isr;
 
@@ -1078,7 +1080,7 @@ isp_intr(arg)
 			ISP_WRITE(isp, INMAILBOX5, optr);
 			continue;
 		}
-		xs = (struct scsi_xfer *) isp->isp_xflist[sp->req_handle - 1];
+		xs = (struct scsipi_xfer *) isp->isp_xflist[sp->req_handle - 1];
 		if (xs == NULL) {
 			printf("%s: NULL xs in xflist\n", isp->isp_name);
 			ISP_WRITE(isp, INMAILBOX5, optr);
@@ -1094,15 +1096,15 @@ isp_intr(arg)
 		xs->status = sp->req_scsi_status & 0xff;
 		if (isp->isp_type & ISP_HA_SCSI) {
 			if (sp->req_state_flags & RQSF_GOT_SENSE) {
-				bcopy(sp->req_sense_data, &xs->sense,
-					sizeof (xs->sense));
+				bcopy(sp->req_sense_data, &xs->sense.scsi_sense,
+					sizeof (xs->sense.scsi_sense));
 				xs->error = XS_SENSE;
 			}
 		} else {
 			if (xs->status == SCSI_CHECK) {
 				xs->error = XS_SENSE;
-				bcopy(sp->req_sense_data, &xs->sense,
-					sizeof (xs->sense));
+				bcopy(sp->req_sense_data, &xs->sense.scsi_sense,
+					sizeof (xs->sense.scsi_sense));
 				sp->req_state_flags |= RQSF_GOT_SENSE;
 			}
 		}
@@ -1132,11 +1134,11 @@ isp_intr(arg)
 		}
 		if (isp->isp_dblev >= 5) {
 			printf("%s(%d.%d): FINISH%d cmd 0x%x resid %d STS %x",
-			       isp->isp_name, xs->sc_link->target,
-			       xs->sc_link->lun, sp->req_header.rqs_seqno,
+			       isp->isp_name, xs->sc_link->scsipi_scsi.target,
+			       xs->sc_link->scsipi_scsi.lun, sp->req_header.rqs_seqno,
 			       *(u_char *) xs->cmd, xs->resid, xs->status);
 			if (sp->req_state_flags & RQSF_GOT_SENSE) {
-				printf(" Skey: %x", xs->sense.flags);
+				printf(" Skey: %x", xs->sense.scsi_sense.flags);
 				if (xs->error != XS_SENSE) {
 					printf(" BUT NOT SET");
 				}
@@ -1144,7 +1146,7 @@ isp_intr(arg)
 			printf(" xs->error %d\n", xs->error);
 		}
 		ISP_WRITE(isp, INMAILBOX5, optr);
-		scsi_done(xs);
+		scsipi_done(xs);
 	}
 	isp->isp_residx = optr;
 	return (1);
@@ -1158,7 +1160,7 @@ static int
 isp_parse_status(isp, sp, xs)
 	struct ispsoftc *isp;
 	ispstatusreq_t *sp;
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 {
 	switch (sp->req_completion_status) {
 	case RQCS_COMPLETE:
@@ -1207,17 +1209,17 @@ isp_parse_status(isp, sp, xs)
 
 	case RQCS_PORT_LOGGED_OUT:
 		printf("%s: port logout for target %d\n",
-			isp->isp_name, xs->sc_link->target);
+			isp->isp_name, xs->sc_link->scsipi_scsi.target);
 		break;
 
 	case RQCS_PORT_CHANGED:
 		printf("%s: port changed for target %d\n",
-			isp->isp_name, xs->sc_link->target);
+			isp->isp_name, xs->sc_link->scsipi_scsi.target);
 		break;
 
 	case RQCS_PORT_BUSY:
 		printf("%s: port busy for target %d\n",
-			isp->isp_name, xs->sc_link->target);
+			isp->isp_name, xs->sc_link->scsipi_scsi.target);
 		return (XS_BUSY);
 
 	default:
@@ -1560,7 +1562,7 @@ command_known:
 }
 
 static void
-isp_lostcmd(struct ispsoftc *isp, struct scsi_xfer *xs, ispreq_t *req)
+isp_lostcmd(struct ispsoftc *isp, struct scsipi_xfer *xs, ispreq_t *req)
 {
 	mbreg_t mbs;
 
@@ -1578,15 +1580,16 @@ isp_lostcmd(struct ispsoftc *isp, struct scsi_xfer *xs, ispreq_t *req)
 		return;
 
 	mbs.param[0] = MBOX_GET_DEV_QUEUE_STATUS;
-	mbs.param[1] = xs->sc_link->target << 8 | xs->sc_link->lun;
+	mbs.param[1] =
+		xs->sc_link->scsipi_scsi.target << 8 | xs->sc_link->scsipi_scsi.lun;
 	isp_mboxcmd(isp, &mbs);
 	if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
 		isp_dumpregs(isp, "couldn't GET DEVICE QUEUE STATUS");
 		return;
 	}
 	printf("%s: lost command for target %d lun %d, %d active of %d, "
-		"Queue State: %x\n", isp->isp_name, xs->sc_link->target,
-		xs->sc_link->lun, mbs.param[2], mbs.param[3], mbs.param[1]);
+		"Queue State: %x\n", isp->isp_name, xs->sc_link->scsipi_scsi.target,
+		xs->sc_link->scsipi_scsi.lun, mbs.param[2], mbs.param[3], mbs.param[1]);
 
 	isp_dumpregs(isp, "lost command");
 	/*
@@ -1594,14 +1597,16 @@ isp_lostcmd(struct ispsoftc *isp, struct scsi_xfer *xs, ispreq_t *req)
 	 */
 #if	0
 	mbs.param[0] = MBOX_STOP_QUEUE;
-	mbs.param[1] = xs->sc_link->target << 8 | xs->sc_link->lun;
+	mbs.param[1] =
+		xs->sc_link->scsipi_scsi.target << 8 | xs->sc_link->scsipi_scsi.lun;
 	isp_mboxcmd(isp, &mbs);
 	if (mbs.param[0] != MBOX_COMMAND_COMPLETE) { 
 		isp_dumpregs(isp, "couldn't stop device queue");
 		return;
 	}
 	printf("%s: tgt %d lun %d, state %x\n", isp->isp_name,
-		xs->sc_link->target, xs->sc_link->lun, mbs.param[2] & 0xff);
+		xs->sc_link->scsipi_scsi.target, xs->sc_link->scsipi_scsi.lun,
+		mbs.param[2] & 0xff);
 
 	/*
 	 * If Queue Aborted, need to do a SendMarker
@@ -1614,14 +1619,16 @@ isp_lostcmd(struct ispsoftc *isp, struct scsi_xfer *xs, ispreq_t *req)
 	isp->isp_sendmarker = 1;
 
 	mbs.param[0] = MBOX_ABORT;
-	mbs.param[1] = (xs->sc_link->target << 8) | xs->sc_link->lun;
+	mbs.param[1] =
+		(xs->sc_link->scsipi_scsi.target << 8) | xs->sc_link->scsipi_scsi.lun;
 	mbs.param[2] = (req->req_handle - 1) >> 16;
 	mbs.param[3] = (req->req_handle - 1) & 0xffff;
 	isp_mboxcmd(isp, &mbs);
 	if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
 		printf("%s: couldn't abort command\n", isp->isp_name );
 		mbs.param[0] = MBOX_ABORT_DEVICE;
-		mbs.param[1] = (xs->sc_link->target << 8) | xs->sc_link->lun;
+		mbs.param[1] = (xs->sc_link->scsipi_scsi.target << 8) |
+			xs->sc_link->scsipi_scsi.lun;
 		isp_mboxcmd(isp, &mbs);
 		if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
 			printf("%s: couldn't abort device\n", isp->isp_name );
@@ -1636,7 +1643,8 @@ isp_lostcmd(struct ispsoftc *isp, struct scsi_xfer *xs, ispreq_t *req)
 		}
 	}
 	mbs.param[0] = MBOX_START_QUEUE;
-	mbs.param[1] = xs->sc_link->target << 8 | xs->sc_link->lun;
+	mbs.param[1] =
+		xs->sc_link->scsipi_scsi.target << 8 | xs->sc_link->scsipi_scsi.lun;
 	isp_mboxcmd(isp, &mbs);
 	if (mbs.param[0] != MBOX_COMMAND_COMPLETE) { 
 		isp_dumpregs(isp, "couldn't start device queue");
@@ -1808,11 +1816,11 @@ isp_setdparm(struct ispsoftc *isp)
 static void
 isp_phoenix(struct ispsoftc *isp)
 {
-	struct scsi_xfer *tlist[MAXISPREQUEST], *xs;
+	struct scsipi_xfer *tlist[MAXISPREQUEST], *xs;
 	int i;
 
 	for (i = 0; i < RQUEST_QUEUE_LEN(isp); i++) {
-		tlist[i] = (struct scsi_xfer *) isp->isp_xflist[i];
+		tlist[i] = (struct scsipi_xfer *) isp->isp_xflist[i];
 	}
 	isp_reset(isp);
 	isp_init(isp);
@@ -1825,7 +1833,7 @@ isp_phoenix(struct ispsoftc *isp)
 		xs->resid = xs->datalen;
 		xs->error = XS_DRIVER_STUFFUP;
 		xs->flags |= ITSDONE;
-		scsi_done(xs);
+		scsipi_done(xs);
 	}
 }
 
@@ -1834,14 +1842,14 @@ isp_watch(void *arg)
 {
 	int s, i;
 	struct ispsoftc *isp = arg;
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 
 	/*
 	 * Look for completely dead commands (but not polled ones)
 	 */
 	s = splbio();
 	for (i = 0; i < RQUEST_QUEUE_LEN(isp); i++) {
-		if ((xs = (struct scsi_xfer *) isp->isp_xflist[i]) == NULL) {
+		if ((xs = (struct scsipi_xfer *) isp->isp_xflist[i]) == NULL) {
 			continue;
 		}
 		if (xs->flags & SCSI_POLL)

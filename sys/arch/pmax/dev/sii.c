@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.27 1997/07/21 05:39:24 jonathan Exp $	*/
+/*	$NetBSD: sii.c,v 1.28 1997/08/27 11:24:12 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -55,8 +55,9 @@
 #include <sys/device.h>
 
 #ifdef notyet
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 #endif
 
 #include <machine/autoconf.h>
@@ -95,7 +96,7 @@ int siiintr __P((void *sc));
 
 #ifdef USE_NEW_SCSI
 /* Glue to the machine-independent scsi */
-struct scsi_adapter asc_switch = {
+struct scsipi_adapter asc_switch = {
 	NULL, /* XXX - asc_scsi_cmd */
 #if 0
 /*XXX*/	minphys,		/* no max transfer size; DMA engine deals */
@@ -106,7 +107,7 @@ struct scsi_adapter asc_switch = {
 	NULL,
 };
 
-struct scsi_device sii_dev = {
+struct scsipi_device sii_dev = {
 /*XXX*/	NULL,			/* Use default error handler */
 /*XXX*/	NULL,			/* have a queue, served by this */
 /*XXX*/	NULL,			/* have no async handler */

@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.42 1997/08/22 11:45:06 augustss Exp $
+#	$NetBSD: files.sparc,v 1.43 1997/08/27 11:25:59 bouyer Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -75,7 +75,7 @@ file	arch/sparc/dev/sbus.c			sbus
 #
 # Machine-independent SCSI drivers
 #
-include "../../../scsi/files.scsi"
+include "../../../dev/scsipi/files.scsipi"
 
 major { sd = 7 }
 major { vnd = 8 }

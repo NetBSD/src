@@ -1,4 +1,4 @@
-/*	$NetBSD: si_vme.c,v 1.11 1997/07/29 06:43:54 fair Exp $	*/
+/*	$NetBSD: si_vme.c,v 1.12 1997/08/27 11:24:27 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -90,9 +90,10 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsi_debug.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsipi_debug.h>
+#include <dev/scsipi/scsiconf.h>
 
 #include <machine/autoconf.h>
 #include <machine/dvma.h>

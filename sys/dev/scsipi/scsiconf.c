@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.87 1997/08/17 16:25:11 mjacob Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.88 1997/08/27 11:26:45 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -52,8 +52,10 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
+#include "locators.h"
 
 #if 0
 #if NCALS > 0
@@ -76,7 +78,7 @@
 void scsi_probedev __P((struct scsibus_softc *, int, int));
 int scsi_probe_bus __P((int bus, int target, int lun));
 
-struct scsi_device probe_switch = {
+struct scsipi_device probe_switch = {
 	NULL,
 	NULL,
 	NULL,
@@ -105,20 +107,21 @@ struct cfdriver scsibus_cd = {
 
 int scsibusprint __P((void *, const char *));
 
+
 int
 scsiprint(aux, pnp)
 	void *aux;
 	const char *pnp;
 {
-	struct scsi_link *l = aux;
+	struct scsipi_link *l = aux;
 
 	/* only "scsibus"es can attach to "scsi"s; easy. */
 	if (pnp)
 		printf("scsibus at %s", pnp);
 
 	/* don't print channel if the controller says there can be only one. */
-	if (l->channel != SCSI_CHANNEL_ONLY_ONE)
-		printf(" channel %d", l->channel);
+	if (l->scsipi_scsi.channel != SCSI_CHANNEL_ONLY_ONE)
+		printf(" channel %d", l->scsipi_scsi.channel);
 
 	return (UNCONF);
 }
@@ -140,17 +143,18 @@ scsibusmatch(parent, cf, aux)
 #ifdef __BROKEN_INDIRECT_CONFIG
 	struct cfdata *cf = match;
 #endif
-	struct scsi_link *l = aux;
+	struct scsipi_link *l = aux;
 	int channel;
 
 	/*
 	 * Allow single-channel controllers to specify their channel
 	 * in a special way, so that it's not printed.
 	 */
-	channel = (l->channel != SCSI_CHANNEL_ONLY_ONE) ? l->channel : 0;
+	channel = (l->scsipi_scsi.channel != SCSI_CHANNEL_ONLY_ONE) ?
+		l->scsipi_scsi.channel : 0;
 
-	if (cf->scsicf_channel != channel &&
-	    cf->scsicf_channel != SCSI_CHANNEL_UNKNOWN)
+	if (cf->cf_loc[SCSICF_CHANNEL] != channel &&
+		cf->cf_loc[SCSICF_CHANNEL] != SCSICF_CHANNEL_DEFAULT)
 		return (0);
 
 	return (1);
@@ -162,29 +166,33 @@ scsibusmatch(parent, cf, aux)
  */
 void
 scsibusattach(parent, self, aux)
-        struct device *parent, *self;
-        void *aux;
+	struct device *parent, *self;
+	void *aux;
 {
 	struct scsibus_softc *sb = (struct scsibus_softc *)self;
-	struct scsi_link *sc_link_proto = aux;
+	struct scsipi_link *sc_link_proto = aux;
 	size_t nbytes;
 	int i;
 
-	sc_link_proto->scsibus = sb->sc_dev.dv_unit;
+	sc_link_proto->scsipi_scsi.scsibus = sb->sc_dev.dv_unit;
+	sc_link_proto->scsipi_cmd = scsi_scsipi_cmd;
+	sc_link_proto->scsipi_interpret_sense = scsi_interpret_sense;
+	sc_link_proto->sc_print_addr = scsi_print_addr;
+
 	sb->adapter_link = sc_link_proto;
-	sb->sc_maxtarget = sc_link_proto->max_target;
+	sb->sc_maxtarget = sc_link_proto->scsipi_scsi.max_target;
 	printf(": %d targets\n", sb->sc_maxtarget + 1);
 
-	nbytes = sb->sc_maxtarget * sizeof(struct scsi_link **);
-	sb->sc_link = (struct scsi_link ***)malloc(nbytes, M_DEVBUF,
+	nbytes = sb->sc_maxtarget * sizeof(struct scsipi_link **);
+	sb->sc_link = (struct scsipi_link ***)malloc(nbytes, M_DEVBUF,
 	   M_NOWAIT);
 	if (sb->sc_link == NULL)
 		panic("scsibusattach: can't allocate target links");
 
-	nbytes = 8 * sizeof(struct scsi_link *);
+	nbytes = 8 * sizeof(struct scsipi_link *);
 	for (i = 0; i <= sb->sc_maxtarget; i++) {
-		sb->sc_link[i] = (struct scsi_link **)malloc(nbytes,
-		    M_DEVBUF, M_NOWAIT);
+		sb->sc_link[i] = (struct scsipi_link **)malloc(nbytes,
+			M_DEVBUF, M_NOWAIT);
 		if (sb->sc_link[i] == NULL)
 			panic("scsibusattach: can't allocate lun links");
 		bzero(sb->sc_link[i], nbytes);
@@ -219,12 +227,14 @@ scsibussubmatch(parent, cf, aux)
 #ifdef __BROKEN_INDIRECT_CONFIG
 	struct cfdata *cf = match;
 #endif
-	struct scsibus_attach_args *sa = aux;
-	struct scsi_link *sc_link = sa->sa_sc_link;
+	struct scsipibus_attach_args *sa = aux;
+	struct scsipi_link *sc_link = sa->sa_sc_link;
 
-	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != sc_link->target)
+	if (cf->cf_loc[SCSIBUSCF_TARGET] != SCSIBUSCF_TARGET_DEFAULT &&
+		cf->cf_loc[SCSIBUSCF_TARGET] != sc_link->scsipi_scsi.target)
 		return 0;
-	if (cf->cf_loc[1] != -1 && cf->cf_loc[1] != sc_link->lun)
+	if (cf->cf_loc[SCSIBUSCF_LUN] != SCSIBUSCF_LUN_DEFAULT &&
+		cf->cf_loc[SCSIBUSCF_LUN] != sc_link->scsipi_scsi.lun)
 		return 0;
 	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
 }
@@ -267,7 +277,7 @@ scsi_probe_bus(bus, target, lun)
 	if (!scsi)
 		return ENXIO;
 
-	scsi_addr = scsi->adapter_link->adapter_target;
+	scsi_addr = scsi->adapter_link->scsipi_scsi.adapter_target;
 
 	if (target == -1) {
 		maxtarget = scsi->sc_maxtarget;
@@ -303,43 +313,75 @@ scsi_probe_bus(bus, target, lun)
 	return 0;
 }
 
-void
-scsi_strvis(dst, src, len)
-	u_char *dst, *src;
-	int len;
+/*
+ * Print out autoconfiguration information for a subdevice.
+ *
+ * This is a slight abuse of 'standard' autoconfiguration semantics,
+ * because 'print' functions don't normally print the colon and
+ * device information.  However, in this case that's better than
+ * either printing redundant information before the attach message,
+ * or having the device driver call a special function to print out
+ * the standard device information.
+ */
+int
+scsibusprint(aux, pnp)
+	void *aux;
+	const char *pnp;
 {
+	struct scsipibus_attach_args *sa = aux;
+	struct scsipi_inquiry_pattern *inqbuf;
+	u_int8_t type;
+	char *dtype, *qtype;
+	char vendor[33], product[65], revision[17];
+	int target, lun;
 
-	/* Trim leading and trailing blanks and NULs. */
-	while (len > 0 && (src[0] == ' ' || src[0] == '\0'))
-		++src, --len;
-	while (len > 0 && (src[len-1] == ' ' || src[len-1] == '\0'))
-		--len;
+	if (pnp != NULL)
+		printf("%s", pnp);
 
-	while (len > 0) {
-		if (*src < 0x20 || *src >= 0x80) {
-			/* non-printable characters */
-			*dst++ = '\\';
-			*dst++ = ((*src & 0300) >> 6) + '0';
-			*dst++ = ((*src & 0070) >> 3) + '0';
-			*dst++ = ((*src & 0007) >> 0) + '0';
-		} else if (*src == '\\') {
-			/* quote characters */
-			*dst++ = '\\';
-			*dst++ = '\\';
-		} else {
-			/* normal characters */
-			*dst++ = *src;
-		}
-		++src, --len;
+	inqbuf = &sa->sa_inqbuf;
+
+	target = sa->sa_sc_link->scsipi_scsi.target;
+	lun = sa->sa_sc_link->scsipi_scsi.lun;
+
+	type = inqbuf->type & SID_TYPE;
+
+	/*
+	 * Figure out basic device type and qualifier.
+	 */
+	dtype = 0;
+	switch (inqbuf->type & SID_QUAL) {
+	case SID_QUAL_LU_OK:
+		qtype = "";
+		break;
+
+	case SID_QUAL_LU_OFFLINE:
+		qtype = " offline";
+		break;
+
+	case SID_QUAL_RSVD:
+	case SID_QUAL_BAD_LU:
+		panic("scsibusprint: impossible qualifier");
+
+	default:
+		qtype = "";
+		dtype = "vendor-unique";
+		break;
+	}
+	if (dtype == 0) {
+		dtype = scsipi_dtype(type);
 	}
 
-	*dst++ = 0;
-}
+	scsipi_strvis(vendor, inqbuf->vendor, 8);
+	scsipi_strvis(product, inqbuf->product, 16);
+	scsipi_strvis(revision, inqbuf->revision, 4);
 
-struct scsi_quirk_inquiry_pattern {
-	struct scsi_inquiry_pattern pattern;
-	u_int8_t quirks;
-};
+	printf(" targ %d lun %d: <%s, %s, %s> SCSI%d %d/%s %s%s",
+		target, lun, vendor, product, revision,
+		sa->scsipi_info.scsi_version & SID_ANSII, type, dtype,
+		inqbuf->removable ? "removable" : "fixed", qtype);
+
+	return (UNCONF);
+}
 
 struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_CDROM, T_REMOV,
@@ -357,7 +399,7 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_CDROM, T_REMOV,
 	 "MATSHITA", "CD-ROM CR-5XX   ", "1.0b"}, SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
-	 "MEDAVIS ", "RENO CD-ROMX2A  ", ""},	  SDEV_NOLUNS},
+	 "MEDAVIS ", "RENO CD-ROMX2A  ", ""},     SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
 	 "MEDIAVIS", "CDR-H93MV       ", "1.3"},  SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
@@ -404,7 +446,7 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_DIRECT, T_FIXED,
 	 "IBM",	  "0664",		 ""},	  SDEV_AUTOSAVE},
 	{{T_DIRECT, T_FIXED,
-	 "IBM     ", "KZ-C",		 ""},	  SDEV_AUTOSAVE},
+	 "IBM     ", "KZ-C",         ""},     SDEV_AUTOSAVE},
 	/* Broken IBM disk */
 	{{T_DIRECT, T_FIXED,
 	 ""	   , "DFRSS2F",		 ""},	  SDEV_AUTOSAVE},
@@ -501,114 +543,6 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 };
 
 /*
- * Print out autoconfiguration information for a subdevice.
- *
- * This is a slight abuse of 'standard' autoconfiguration semantics,
- * because 'print' functions don't normally print the colon and
- * device information.  However, in this case that's better than
- * either printing redundant information before the attach message,
- * or having the device driver call a special function to print out
- * the standard device information.
- */
-int
-scsibusprint(aux, pnp)
-	void *aux;
-	const char *pnp;
-{
-	struct scsibus_attach_args *sa = aux;
-	struct scsi_inquiry_data *inqbuf;
-	u_int8_t type;
-	boolean removable;
-	char *dtype, *qtype;
-	char vendor[33], product[65], revision[17];
-	int target, lun;
-
-	if (pnp != NULL)
-		printf("%s", pnp);
-
-	inqbuf = sa->sa_inqbuf;
-
-        target = sa->sa_sc_link->target;
-        lun = sa->sa_sc_link->lun;
-
-        type = inqbuf->device & SID_TYPE;
-        removable = inqbuf->dev_qual2 & SID_REMOVABLE ? 1 : 0;
-
-	/*
-	 * Figure out basic device type and qualifier.
-	 */
-	dtype = 0;
-	switch (inqbuf->device & SID_QUAL) {
-	case SID_QUAL_LU_OK:
-		qtype = "";
-		break;
-
-	case SID_QUAL_LU_OFFLINE:
-		qtype = " offline";
-		break;
-
-	case SID_QUAL_RSVD:
-	case SID_QUAL_BAD_LU:
-		panic("scsibusprint: impossible qualifier");
-
-	default:
-		qtype = "";
-		dtype = "vendor-unique";
-		break;
-	}
-	if (dtype == 0) {
-		switch (type) {
-		case T_DIRECT:
-			dtype = "direct";
-			break;
-		case T_SEQUENTIAL:
-			dtype = "sequential";
-			break;
-		case T_PRINTER:
-			dtype = "printer";
-			break;
-		case T_PROCESSOR:
-			dtype = "processor";
-			break;
-		case T_CDROM:
-			dtype = "cdrom";
-			break;
-		case T_WORM:
-			dtype = "worm";
-			break;
-		case T_SCANNER:
-			dtype = "scanner";
-			break;
-		case T_OPTICAL:
-			dtype = "optical";
-			break;
-		case T_CHANGER:
-			dtype = "changer";
-			break;
-		case T_COMM:
-			dtype = "communication";
-			break;
-		case T_NODEVICE:
-			panic("scsibusprint: impossible device type");
-		default:
-			dtype = "unknown";
-			break;
-		}
-	}
-
-        scsi_strvis(vendor, inqbuf->vendor, 8);
-        scsi_strvis(product, inqbuf->product, 16);
-        scsi_strvis(revision, inqbuf->revision, 4);
-
-        printf(" targ %d lun %d: <%s, %s, %s> SCSI%d %d/%s %s%s",
-            target, lun, vendor, product, revision,
-            inqbuf->version & SID_ANSII, type, dtype,
-            removable ? "removable" : "fixed", qtype);
-
-	return (UNCONF);
-}
-
-/*
  * given a target and lu, ask the device what
  * it is, and find the correct driver table
  * entry.
@@ -618,11 +552,11 @@ scsi_probedev(scsi, target, lun)
 	struct scsibus_softc *scsi;
 	int target, lun;
 {
-	struct scsi_link *sc_link;
-	static struct scsi_inquiry_data inqbuf;
+	struct scsipi_link *sc_link;
+	static struct scsipi_inquiry_data inqbuf;
 	struct scsi_quirk_inquiry_pattern *finger;
 	int checkdtype, priority;
-	struct scsibus_attach_args sa;
+	struct scsipibus_attach_args sa;
 	struct cfdata *cf;
 
 	/* Skip this slot if it is already attached. */
@@ -631,20 +565,20 @@ scsi_probedev(scsi, target, lun)
 
 	sc_link = malloc(sizeof(*sc_link), M_DEVBUF, M_NOWAIT);
 	*sc_link = *scsi->adapter_link;
-	sc_link->target = target;
-	sc_link->lun = lun;
+	sc_link->scsipi_scsi.target = target;
+	sc_link->scsipi_scsi.lun = lun;
 	sc_link->device = &probe_switch;
 
 	/*
 	 * Ask the device what it is
 	 */
-#ifdef SCSIDEBUG
+#if defined(SCSIDEBUG) && DEBUGTYPE == BUS_SCSI
 	if (target == DEBUGTARGET && lun == DEBUGLUN)
 		sc_link->flags |= DEBUGLEVEL;
 #endif /* SCSIDEBUG */
 
-	(void) scsi_test_unit_ready(sc_link,
-	    SCSI_AUTOCONF | SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY | SCSI_IGNORE_MEDIA_CHANGE);
+	(void) scsipi_test_unit_ready(sc_link,
+		SCSI_AUTOCONF | SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY | SCSI_IGNORE_MEDIA_CHANGE);
 
 #ifdef SCSI_2_DEF
 	/* some devices need to be told to go to SCSI2 */
@@ -654,7 +588,7 @@ scsi_probedev(scsi, target, lun)
 
 	/* Now go ask the device all about itself. */
 	bzero(&inqbuf, sizeof(inqbuf));
-	if (scsi_inquire(sc_link, &inqbuf, SCSI_AUTOCONF) != 0)
+	if (scsipi_inquire(sc_link, &inqbuf, SCSI_AUTOCONF) != 0)
 		goto bad;
 
 	{
@@ -665,16 +599,25 @@ scsi_probedev(scsi, target, lun)
 			inqbuf.unused[len++] = ' ';
 	}
 
-	finger = (struct scsi_quirk_inquiry_pattern *)scsi_inqmatch(&inqbuf,
-	    (caddr_t)scsi_quirk_patterns, 
-	    sizeof(scsi_quirk_patterns)/sizeof(scsi_quirk_patterns[0]),
-	    sizeof(scsi_quirk_patterns[0]), &priority);
+	sa.sa_sc_link = sc_link;
+	sa.sa_inqbuf.type = inqbuf.device;
+	sa.sa_inqbuf.removable = inqbuf.dev_qual2 & SID_REMOVABLE ?
+		T_REMOV : T_FIXED;
+	sa.sa_inqbuf.vendor = inqbuf.vendor;
+	sa.sa_inqbuf.product = inqbuf.product;
+	sa.sa_inqbuf.revision = inqbuf.revision;
+	sa.scsipi_info.scsi_version = inqbuf.version;
+
+	finger = (struct scsi_quirk_inquiry_pattern *)scsipi_inqmatch(&sa.sa_inqbuf,
+		(caddr_t)scsi_quirk_patterns, 
+		sizeof(scsi_quirk_patterns)/sizeof(scsi_quirk_patterns[0]),
+		sizeof(scsi_quirk_patterns[0]), &priority);
 	if (priority != 0)
 		sc_link->quirks |= finger->quirks;
 	if ((inqbuf.version & SID_ANSII) == 0 &&
-	    (sc_link->quirks & SDEV_FORCELUNS) == 0)
+		(sc_link->quirks & SDEV_FORCELUNS) == 0)
 		sc_link->quirks |= SDEV_NOLUNS;
-	sc_link->scsi_version = inqbuf.version;
+	sc_link->scsipi_scsi.scsi_version = inqbuf.version;
 
 	if ((sc_link->quirks & SDEV_NOLUNS) == 0)
 		scsi->moreluns |= (1 << target);
@@ -723,9 +666,6 @@ scsi_probedev(scsi, target, lun)
 		}
 	}
 
-	sa.sa_sc_link = sc_link;
-	sa.sa_inqbuf = &inqbuf;
-
 	if ((cf = config_search(scsibussubmatch, (struct device *)scsi, &sa)) != 0) {
 		scsi->sc_link[target][lun] = sc_link;
 		config_attach((struct device *)scsi, cf, &sa, scsibusprint);
@@ -740,59 +680,4 @@ scsi_probedev(scsi, target, lun)
 bad:
 	free(sc_link, M_DEVBUF);
 	return;
-}
-
-/*
- * Return a priority based on how much of the inquiry data matches
- * the patterns for the particular driver.
- */
-caddr_t
-scsi_inqmatch(inqbuf, base, nmatches, matchsize, bestpriority)
-	struct scsi_inquiry_data *inqbuf;
-	caddr_t base;
-	int nmatches, matchsize;
-	int *bestpriority;
-{
-	u_int8_t type;
-	boolean removable;
-	caddr_t bestmatch;
-
-	/* Include the qualifier to catch vendor-unique types. */
-	type = inqbuf->device;
-	removable = inqbuf->dev_qual2 & SID_REMOVABLE ? T_REMOV : T_FIXED;
-
-	for (*bestpriority = 0, bestmatch = 0; nmatches--; base += matchsize) {
-		struct scsi_inquiry_pattern *match = (void *)base;
-		int priority, len;
-
-		if (type != match->type)
-			continue;
-		if (removable != match->removable)
-			continue;
-		priority = 2;
-		len = strlen(match->vendor);
-		if (bcmp(inqbuf->vendor, match->vendor, len))
-			continue;
-		priority += len;
-		len = strlen(match->product);
-		if (bcmp(inqbuf->product, match->product, len))
-			continue;
-		priority += len;
-		len = strlen(match->revision);
-		if (bcmp(inqbuf->revision, match->revision, len))
-			continue;
-		priority += len;
-
-#if SCSIDEBUG
-		printf("scsi_inqmatch: %d/%d/%d <%s, %s, %s>\n",
-		    priority, match->type, match->removable,
-		    match->vendor, match->product, match->revision);
-#endif
-		if (priority > *bestpriority) {
-			*bestpriority = priority;
-			bestmatch = base;
-		}
-	}
-
-	return (bestmatch);
 }

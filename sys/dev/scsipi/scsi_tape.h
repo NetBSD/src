@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_tape.h,v 1.9 1996/05/24 02:04:47 thorpej Exp $	*/
+/*	$NetBSD: scsi_tape.h,v 1.10 1997/08/27 11:26:44 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.

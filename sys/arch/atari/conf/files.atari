@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.42 1997/08/27 06:52:46 leo Exp $
+#	$NetBSD: files.atari,v 1.43 1997/08/27 11:25:47 bouyer Exp $
 
 maxpartitions 16
 
@@ -149,7 +149,7 @@ include "dev/isa/files.isa"
 major   {sd = 4}
 major   {st = 5}
 major   {cd = 6}
-include "scsi/files.scsi"
+include "dev/scsipi/files.scsipi"
 
 # ncr 5380 controller
 device	ncrscsi: scsi

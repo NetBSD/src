@@ -78,9 +78,10 @@
 #include <machine/intr.h>
 #include <machine/pio.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsi_message.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsi_message.h>
+#include <dev/scsipi/scsiconf.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
@@ -172,7 +173,7 @@ struct sea_scb {
         u_char *data;			/* position in data buffer so far */
 	int datalen;			/* bytes remaining to transfer */
 	TAILQ_ENTRY(sea_scb) chain;
-	struct scsi_xfer *xs;		/* the scsi_xfer for this cmd */
+	struct scsipi_xfer *xs;		/* the scsipi_xfer for this cmd */
 	int flags;			/* status of the instruction */
 #define	SCB_FREE	0
 #define	SCB_ACTIVE	1
@@ -195,7 +196,7 @@ struct sea_softc {
 	caddr_t	maddr_cr_sr;		/* Address of control and status reg */
 	caddr_t	maddr_dr;		/* Address of data register */
 
-	struct scsi_link sc_link;	/* prototype for subdevs */
+	struct scsipi_link sc_link;	/* prototype for subdevs */
 	TAILQ_HEAD(, sea_scb) free_list, ready_list, nexus_list;
 	struct sea_scb *nexus;		/* currently connected command */
 	int numscbs;			/* number of scsi control blocks */
@@ -271,14 +272,14 @@ static const char *bases[] = {
 #endif
 
 int seaintr __P((void *));
-int sea_scsi_cmd __P((struct scsi_xfer *));
+int sea_scsi_cmd __P((struct scsipi_xfer *));
 void sea_timeout __P((void *));
 void sea_done __P((struct sea_softc *, struct sea_scb *));
 struct sea_scb *sea_get_scb __P((struct sea_softc *, int));
 void sea_free_scb __P((struct sea_softc *, struct sea_scb *, int));
 static void sea_main __P((void));
 static void sea_information_transfer __P((struct sea_softc *));
-int sea_poll __P((struct sea_softc *, struct scsi_xfer *, int));
+int sea_poll __P((struct sea_softc *, struct scsipi_xfer *, int));
 void sea_init __P((struct sea_softc *));
 void sea_send_scb __P((struct sea_softc *sea, struct sea_scb *scb));
 void sea_reselect __P((struct sea_softc *sea));
@@ -287,7 +288,7 @@ int sea_transfer_pio __P((struct sea_softc *sea, u_char *phase,
     int *count, u_char **data));
 int sea_abort __P((struct sea_softc *, struct sea_scb *scb));
 
-struct scsi_adapter sea_switch = {
+struct scsipi_adapter sea_switch = {
 	sea_scsi_cmd,
 	minphys,	/* no special minphys(), since driver uses PIO */
 	0,
@@ -295,7 +296,7 @@ struct scsi_adapter sea_switch = {
 };
 
 /* the below structure is so we have a default dev struct for our link struct */
-struct scsi_device sea_dev = {
+struct scsipi_device sea_dev = {
 	NULL,		/* use default error handler */
 	NULL,		/* have a queue, served by this */
 	NULL,		/* have no async handler */
@@ -421,14 +422,16 @@ seaattach(parent, self, aux)
 	sea_init(sea);
 
 	/*
-	 * fill in the prototype scsi_link.
+	 * fill in the prototype scsipi_link.
 	 */
-	sea->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
+	sea->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	sea->sc_link.adapter_softc = sea;
-	sea->sc_link.adapter_target = sea->our_id;
+	sea->sc_link.scsipi_scsi.adapter_target = sea->our_id;
 	sea->sc_link.adapter = &sea_switch;
 	sea->sc_link.device = &sea_dev;
 	sea->sc_link.openings = 1;
+	sea->sc_link.scsipi_scsi.max_target = 7;
+	sea->sc_link.type = BUS_SCSI;
   
 	printf("\n");
 
@@ -528,9 +531,9 @@ sea_init(sea)
  */
 int
 sea_scsi_cmd(xs)
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 {
-	struct scsi_link *sc_link = xs->sc_link;
+	struct scsipi_link *sc_link = xs->sc_link;
 	struct sea_softc *sea = sc_link->adapter_softc;
 	struct sea_scb *scb;
 	int flags;
@@ -695,8 +698,8 @@ loop:
 			 */
 			for (scb = sea->ready_list.tqh_first; scb;
 			    scb = scb->chain.tqe_next) {
-				if (!(sea->busy[scb->xs->sc_link->target] &
-				    (1 << scb->xs->sc_link->lun))) {
+				if (!(sea->busy[scb->xs->sc_link->scsipi_scsi.target] &
+				    (1 << scb->xs->sc_link->scsipi_scsi.lun))) {
 					TAILQ_REMOVE(&sea->ready_list, scb,
 					    chain);
 	    
@@ -791,12 +794,12 @@ sea_timeout(arg)
 	void *arg;
 {
 	struct sea_scb *scb = arg;
-	struct scsi_xfer *xs = scb->xs;
-	struct scsi_link *sc_link = xs->sc_link;
+	struct scsipi_xfer *xs = scb->xs;
+	struct scsipi_link *sc_link = xs->sc_link;
 	struct sea_softc *sea = sc_link->adapter_softc;
 	int s;
 
-	sc_print_addr(sc_link);
+	scsi_print_addr(sc_link);
 	printf("timed out");
 
 	s = splbio();
@@ -889,8 +892,8 @@ sea_reselect(sea)
 		 */
 		for (scb = sea->nexus_list.tqh_first; scb;
 		    scb = scb->chain.tqe_next)
-			if (target_mask == (1 << scb->xs->sc_link->target) &&
-			    lun == scb->xs->sc_link->lun) {
+			if (target_mask == (1 << scb->xs->sc_link->scsipi_scsi.target) &&
+			    lun == scb->xs->sc_link->scsipi_scsi.lun) {
 				TAILQ_REMOVE(&sea->nexus_list, scb,
 				    chain);
 				break;
@@ -1040,7 +1043,8 @@ sea_select(sea, scb)
 	}
 
 	delay(2);
-	DATA = (u_char)((1 << scb->xs->sc_link->target) | sea->our_id_mask);
+	DATA = (u_char)((1 << scb->xs->sc_link->scsipi_scsi.target) |
+		sea->our_id_mask);
 	CONTROL =
 #ifdef SEA_NOMSGS
 	    (BASE_CMD & ~CMD_INTR) | CMD_DRVR_ENABLE | CMD_SEL;
@@ -1082,7 +1086,7 @@ sea_select(sea, scb)
 		 * (THIS IS NOT AN ERROR!)
 		 */
 	} else {
-		msg[0] = MSG_IDENTIFY(scb->xs->sc_link->lun, 1);
+		msg[0] = MSG_IDENTIFY(scb->xs->sc_link->scsipi_scsi.lun, 1);
 		len = 1;
 		data = msg;
 		phase = PH_MSGOUT;
@@ -1094,7 +1098,8 @@ sea_select(sea, scb)
 		    sea->sc_dev.dv_xname);
   
 	sea->nexus = scb;
-	sea->busy[scb->xs->sc_link->target] |= 1 << scb->xs->sc_link->lun;
+	sea->busy[scb->xs->sc_link->scsipi_scsi.target] |=
+						1 << scb->xs->sc_link->scsipi_scsi.lun;
 	/* This assignment should depend on possibility to send a message to target. */
 	CONTROL = BASE_CMD | CMD_DRVR_ENABLE;
 	/* XXX Reset pointer in command? */
@@ -1170,7 +1175,7 @@ sea_done(sea, scb)
 	struct sea_softc *sea;
 	struct sea_scb *scb;
 {
-	struct scsi_xfer *xs = scb->xs;
+	struct scsipi_xfer *xs = scb->xs;
 
 	untimeout(sea_timeout, scb);
 
@@ -1187,7 +1192,7 @@ sea_done(sea, scb)
 	}
 	xs->flags |= ITSDONE;
 	sea_free_scb(sea, scb, xs->flags);
-	scsi_done(xs);
+	scsipi_done(xs);
 }
 
 /*
@@ -1196,7 +1201,7 @@ sea_done(sea, scb)
 int
 sea_poll(sea, xs, count)
 	struct sea_softc *sea;
-	struct scsi_xfer *xs;
+	struct scsipi_xfer *xs;
 	int count;
 {
 	int s;
@@ -1355,8 +1360,8 @@ sea_information_transfer(sea)
 				s = splbio();
 				sea->nexus = NULL;
 				splx(s);
-				sea->busy[scb->xs->sc_link->target] &= 
-				    ~(1 << scb->xs->sc_link->lun);
+				sea->busy[scb->xs->sc_link->scsipi_scsi.target] &= 
+				    ~(1 << scb->xs->sc_link->scsipi_scsi.lun);
 				CONTROL = BASE_CMD;
 				sea_done(sea, scb);
 				return;
@@ -1397,8 +1402,8 @@ sea_information_transfer(sea)
 				printf("%s: sent message abort to target\n",
 				    sea->sc_dev.dv_xname);
 				s = splbio();
-				sea->busy[scb->xs->sc_link->target] &= 
-				    ~(1 << scb->xs->sc_link->lun);
+				sea->busy[scb->xs->sc_link->scsipi_scsi.target] &= 
+				    ~(1 << scb->xs->sc_link->scsipi_scsi.lun);
 				sea->nexus = NULL;
 				scb->flags = SCB_ABORTED;
 				splx(s); 
