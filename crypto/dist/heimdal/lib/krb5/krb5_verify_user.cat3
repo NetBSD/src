@@ -1,0 +1,69 @@
+
+KRB5_VERIFY_USER(3)        UNIX Programmer's Manual        KRB5_VERIFY_USER(3)
+
+NNAAMMEE
+     kkrrbb55__vveerriiffyy__uusseerr, kkrrbb55__vveerriiffyy__uusseerr__llrreeaallmm - Heimdal password verifying
+     functions
+
+SSYYNNOOPPSSIISS
+     ##iinncclluuddee <<kkrrbb55..hh>>
+
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__vveerriiffyy__uusseerr(_k_r_b_5___c_o_n_t_e_x_t _c_o_n_t_e_x_t, _k_r_b_5___p_r_i_n_c_i_p_a_l _p_r_i_n_c_i_p_a_l,
+             _k_r_b_5___c_c_a_c_h_e _c_c_a_c_h_e, _c_o_n_s_t _c_h_a_r _*_p_a_s_s_w_o_r_d, _k_r_b_5___b_o_o_l_e_a_n _s_e_c_u_r_e,
+             _c_o_n_s_t _c_h_a_r _*_s_e_r_v_i_c_e)
+
+     _k_r_b_5___e_r_r_o_r___c_o_d_e
+     kkrrbb55__vveerriiffyy__uusseerr__llrreeaallmm(_k_r_b_5___c_o_n_t_e_x_t _c_o_n_t_e_x_t, _k_r_b_5___p_r_i_n_c_i_p_a_l _p_r_i_n_c_i_p_a_l,
+             _k_r_b_5___c_c_a_c_h_e _c_c_a_c_h_e, _c_o_n_s_t _c_h_a_r _*_p_a_s_s_w_o_r_d, _k_r_b_5___b_o_o_l_e_a_n _s_e_c_u_r_e,
+             _c_o_n_s_t _c_h_a_r _*_s_e_r_v_i_c_e)
+
+DDEESSCCRRIIPPTTIIOONN
+     The kkrrbb55__vveerriiffyy__uusseerr function verifies the password supplied by a user.
+     The principal whose password will be verified is specified in _p_r_i_n_c_i_p_a_l.
+     New tickets will be obtained as a side-effect and stored in _c_c_a_c_h_e (if
+     NULL, the default ccache is used).  If the password is not supplied in
+     _p_a_s_s_w_o_r_d (and is given as NULL) the user will be prompted for it.  If
+     _s_e_c_u_r_e the ticket will be verified against the locally stored service key
+     _s_e_r_v_i_c_e (by default `host' if given as NULL ).
+
+     The kkrrbb55__vveerriiffyy__uusseerr__llrreeaallmm function does the same, except that it ig-
+     nores the realm in _p_r_i_n_c_i_p_a_l and tries all the local realms (see
+     krb5.conf(5).)
+
+EEXXAAMMPPLLEE
+     Here is a example program that verifies a password. it uses the
+     `host/`hostname`' service principal in _k_r_b_5_._k_e_y_t_a_b.
+
+     #include <krb5.h>
+
+     int
+     main(int argc, char **argv)
+     {
+         char *user;
+         krb5_error_code error;
+         krb5_principal princ;
+         krb5_context context;
+
+         if (argc != 2)
+             errx(1, "usage: verify_passwd <principal-name>");
+
+         user = argv[1];
+
+         if (krb5_init_context(&context) < 0)
+             errx(1, "krb5_init_context");
+
+         if ((error = krb5_parse_name(context, user, &princ)) != 0)
+             krb5_err(context, 1, error, "krb5_parse_name");
+
+         error = krb5_verify_user(context, princ, NULL, NULL, TRUE, NULL);
+         if (error)
+             krb5_err(context, 1, error, "krb5_verify_user");
+
+         return 0;
+     }
+
+SSEEEE AALLSSOO
+     krb5_kt_default(3),  krb5_init_context(3),  krb5_err(3),  krb5.conf(5)
+
+ HEIMDAL                         June 27, 2001                               2

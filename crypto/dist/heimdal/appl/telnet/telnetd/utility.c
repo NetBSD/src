@@ -34,7 +34,7 @@
 #define PRINTOPTIONS
 #include "telnetd.h"
 
-RCSID("$Id: utility.c,v 1.1.1.4 2001/06/19 22:07:43 assar Exp $");
+RCSID("$Id: utility.c,v 1.1.1.5 2001/09/17 12:24:39 assar Exp $");
 
 /*
  * utility functions performing io related tasks
@@ -54,8 +54,6 @@ RCSID("$Id: utility.c,v 1.1.1.4 2001/06/19 22:07:43 assar Exp $");
 int
 ttloop(void)
 {
-    void netflush(void);
-    
     DIAG(TD_REPORT, {
 	output_data("td: ttloop\r\n");
     });
@@ -238,6 +236,8 @@ netclear(void)
 	neturg = 0;
 }  /* end of netclear */
 
+extern int not42;
+
 /*
  *  netflush
  *		Send as much data as possible to the network,
@@ -247,7 +247,6 @@ void
 netflush(void)
 {
     int n;
-    extern int not42;
 
     if ((n = nfrontp - nbackp) > 0) {
 	DIAG(TD_REPORT,

@@ -33,15 +33,12 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$Id: init.c,v 1.1.1.3 2001/02/11 13:51:39 assar Exp $");
+RCSID("$Id: init.c,v 1.1.1.4 2001/09/17 12:25:00 assar Exp $");
 
-void
+krb5_error_code
 gssapi_krb5_init (void)
 {
-    krb5_error_code ret;
-
-    if(gssapi_krb5_context == NULL) {
-	ret = krb5_init_context (&gssapi_krb5_context);
-	/* and what do we do when that failed? */
-    }
+    if(gssapi_krb5_context == NULL)
+	return krb5_init_context (&gssapi_krb5_context);
+    return 0;
 }

@@ -38,7 +38,7 @@ static char *copyright[] = {
 };
 
 #include "telnet_locl.h"
-RCSID("$Id: main.c,v 1.1.1.3 2001/02/11 13:51:14 assar Exp $");
+RCSID("$Id: main.c,v 1.1.1.4 2001/09/17 12:24:38 assar Exp $");
 
 /* These values need to be the same as defined in libtelnet/kerberos5.c */
 /* Either define them in both places, or put in some common header file. */
@@ -134,6 +134,11 @@ krb5_init(void)
 }
 #endif
 
+#if defined(AUTHENTICATION) && defined(KRB4)
+extern char *dest_realm, dst_realm_buf[];
+extern int dst_realm_sz;
+#endif
+
 int
 main(int argc, char **argv)
 {
@@ -180,7 +185,7 @@ main(int argc, char **argv)
 		    /* sometimes we don't want a mangled display */
 		    char *p;
 		    if((p = getenv("DISPLAY")))
-			env_define("DISPLAY", (unsigned char*)p);
+			env_define((unsigned char*)"DISPLAY", (unsigned char*)p);
 		    break;
 		}
 		case 'E':
@@ -264,8 +269,6 @@ main(int argc, char **argv)
 		case 'k':
 #if defined(AUTHENTICATION) && defined(KRB4)
 		    {
-			extern char *dest_realm, dst_realm_buf[];
-			extern int dst_realm_sz;
 			dest_realm = dst_realm_buf;
 			strlcpy(dest_realm, optarg, dst_realm_sz);
 		    }
