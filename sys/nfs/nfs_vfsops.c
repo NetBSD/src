@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.61 1997/07/17 23:54:31 fvdl Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.62 1997/07/18 17:31:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -688,7 +688,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp)
 		 */
 		mp->mnt_maxsymlinklen = 1;
 
-	if (argp->flags & NFSMNT_NFSV3)
+	if ((argp->flags & NFSMNT_NFSV3) == 0)
 		/*
 		 * V2 can only handle 32 bit filesizes. For v3, nfs_fsinfo
 		 * will fill this in.
