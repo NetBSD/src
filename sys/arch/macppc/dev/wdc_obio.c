@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.18 2002/01/07 22:11:19 dbj Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.19 2002/01/09 05:23:07 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -235,24 +235,24 @@ struct ide_timings {
 	int active;	/* minimum command active time [ns] */
 };
 static struct ide_timings pio_timing[5] = {
-	{ 600, 165 },    /* Mode 0 */
-	{ 383, 125 },    /*      1 */
-	{ 240, 100 },    /*      2 */
-	{ 180,  80 },    /*      3 */
-	{ 120,  70 }     /*      4 */
+	{ 600, 180 },    /* Mode 0 */
+	{ 390, 150 },    /*      1 */
+	{ 240, 105 },    /*      2 */
+	{ 180,  90 },    /*      3 */
+	{ 120,  75 }     /*      4 */
 };
 static struct ide_timings dma_timing[3] = {
-	{ 480, 215 },	/* Mode 0 */
-	{ 150,  80 },	/* Mode 1 */
-	{ 120,  70 },	/* Mode 2 */
+	{ 480, 240 },	/* Mode 0 */
+	{ 165,  90 },	/* Mode 1 */
+	{ 120,  75 }	/* Mode 2 */
 };
 
 static struct ide_timings udma_timing[5] = {
-	{114,   0},	/* Mode 0 */
-	{ 75,   0},	/* Mode 1 */
-	{ 55,   0},	/* Mode 2 */
-	{ 45, 100},	/* Mode 3 */
-	{ 25, 100}	/* Mode 4 */
+	{120, 180},	/* Mode 0 */
+	{ 90, 150},	/* Mode 1 */
+	{ 60, 120},	/* Mode 2 */
+	{ 45, 90},	/* Mode 3 */
+	{ 30, 90}	/* Mode 4 */
 };
 
 #define TIME_TO_TICK(time) howmany((time), 30)
