@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp_machdep.c,v 1.2 1998/08/13 02:10:38 eeh Exp $	*/
+/*	$NetBSD: isapnp_machdep.c,v 1.3 1998/09/05 15:28:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -6,7 +6,7 @@
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center.
+ * NASA Ames Research Center and by Christos Zoulas.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -39,7 +39,6 @@
 
 /*
  * Copyright (c) 1997 Thomas Gerner.  All rights reserved.
- * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
