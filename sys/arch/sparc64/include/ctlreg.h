@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.18 2000/06/19 23:30:34 eeh Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.19 2000/06/20 18:06:12 eeh Exp $ */
 
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
@@ -556,7 +556,7 @@
 /* load unsigned int from alternate address space */
 #ifdef DCACHE_BUG
 #define	lda(loc, asi) ({ \
-	register int _lda_v; \
+	register unsigned int _lda_v; \
 	if (PHYS_ASI(asi)) { \
 		__asm __volatile("wr %2,%%g0,%%asi; " \
 " andn %1,0x1f,%0; stxa %%g0,[%0] %3; membar #Sync; " \
@@ -585,7 +585,7 @@
 })
 #else
 #define	lda(loc, asi) ({ \
-	register int _lda_v; \
+	register unsigned int _lda_v; \
 	__asm __volatile("wr %2,%%g0,%%asi; lda [%1]%%asi,%0" : "=r" (_lda_v) : \
 	    "r" ((unsigned long)(loc)), "r" (asi)); \
 	_lda_v; \
@@ -602,7 +602,7 @@
 /* load unsigned int from alternate address space */
 #ifdef DCACHE_BUG
 #define	lda(loc, asi) ({ \
-	register int _lda_v, _loc_hi, _pstate; \
+	register unsigned int _lda_v, _loc_hi, _pstate; \
 	_loc_hi = (((u_int64_t)loc)>>32); \
 	if (PHYS_ASI(asi)) { \
 		__asm __volatile("wr %4,%%g0,%%asi; rdpr %%pstate,%1;" \
@@ -639,7 +639,7 @@
 })
 #else
 #define	lda(loc, asi) ({ \
-	register int _lda_v, _loc_hi, _pstate; \
+	register unsigned int _lda_v, _loc_hi, _pstate; \
 	_loc_hi = (((u_int64_t)loc)>>32); \
 	__asm __volatile("wr %4,%%g0,%%asi; sllx %3,32,%0; rdpr %%pstate,%1;" \
 " wrpr %1,8,%%pstate; or %0,%2,%0; lda [%0]%%asi,%0; wrpr %1,0,%%pstate" : \
