@@ -34,12 +34,14 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.7 1993/05/27 16:44:25 cgd Exp $
+ *	$Id: trap.c,v 1.8 1993/06/18 02:03:45 brezak Exp $
  */
 
 /*
  * 386 Trap and System call handleing
  */
+
+#include "npx.h"
 
 #include "machine/cpu.h"
 #include "machine/psl.h"
@@ -166,7 +168,7 @@ copyfault:
 		goto out;
 
 	case T_DNA|T_USER:
-#ifdef NPX
+#if NNPX > 0
 		/* if a transparent fault (due to context switch "late") */
 		if (npxdna()) return;
 #endif
