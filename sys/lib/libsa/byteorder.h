@@ -1,4 +1,4 @@
-/*	$NetBSD: byteorder.h,v 1.2 2001/10/31 20:19:52 thorpej Exp $	*/
+/*	$NetBSD: byteorder.h,v 1.3 2001/10/31 20:22:22 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -53,6 +53,11 @@ uint32_t	sa_htobe32(uint32_t);
 uint32_t	sa_htole32(uint32_t);
 uint32_t	sa_be32toh(uint32_t);
 uint32_t	sa_le32toh(uint32_t);
+
+uint64_t	sa_htobe64(uint64_t);
+uint64_t	sa_htole64(uint64_t);
+uint64_t	sa_be64toh(uint64_t);
+uint64_t	sa_le64toh(uint64_t);
 
 /* Order of the words in a big-endian 64-bit word. */
 #define	BE64_HI	0
