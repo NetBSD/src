@@ -1,4 +1,4 @@
-# $Id: README,v 1.4 1994/08/12 03:55:54 deraadt Exp $
+# $Id: README,v 1.5 1994/08/26 04:40:08 deraadt Exp $
 
 Initial test versions of a NetBSD/sparc binaries install are available
 at
@@ -63,10 +63,10 @@ Until there are better instructions written, here's a rough idea:
     (Now you may cut the head off the chicken and spray the blood over
     your walls and ceiling. :-)
 
-    If you have done anything weird with partitions, take this moment
-    to ensure that /mnt/etc/fstab is correct for your disk layout.
+5.  copy /mnt/etc/fstab.sd to /mnt/etc/fstab and edit to match your
+    disk layout.
 
-5.  the install script copies the kernel called "netbsd.scsi3" to
+6.  the install script copies the kernel called "netbsd.scsi3" to
     /mnt/netbsd. Two sample kernels are supplied: "netbsd" and
     "netbsd.scsi3".
 
@@ -86,7 +86,7 @@ Until there are better instructions written, here's a rough idea:
     of scsi-id's 0, 1, or 2, this kernel will NOT work for you. If you
     know what you are doing, you could use this kernel.
 
-6.  your ROM may need some setup. make sure you boot from `new command mode'.
+7.  your ROM may need some setup. make sure you boot from `new command mode'.
     If your machine comes up and gives you a `>' prompt instead of `ok', type:
         >n
         ok setenv sunmon-compat? false
@@ -98,13 +98,13 @@ Until there are better instructions written, here's a rough idea:
     problem as above.
 	ok setenv security-mode none
 
-7.  if needed, swap your scsi id's. now try a reboot. initially I'd
+8.  if needed, swap your scsi id's. now try a reboot. initially I'd
     suggest you boot "-bs", then try multiuser after that. if you boot
     single-user the netbsd incantation for making root read-write
     is "mount -u /dev/sd0a /". alternatively, the command reboot is
     found in /sbin.
 
-8.  to boot from netbsd by default, tell something like this to your
+9.  to boot from netbsd by default, tell something like this to your
     ROM.
 	>n
 	ok setenv boot-from sd(0,0,0)netbsd
