@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkioconf.c	5.18 (Berkeley) 5/10/91";*/
-static char rcsid[] = "$Id: mkioconf.c,v 1.30 1994/04/05 23:07:07 chopps Exp $";
+static char rcsid[] = "$Id: mkioconf.c,v 1.31 1994/04/07 06:53:01 mycroft Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -694,20 +694,17 @@ i386_ioconf()
       mp = dp->d_conn;
       if (mp == 0 || mp == TO_NEXUS)
 	continue;
-      fprintf(fp, "extern struct cfdriver %7scd;",
+      fprintf(fp, "extern struct cfdriver %7scd;\n",
 	      dp->d_name);
       if (dp->d_irq == 2) {
 	fprintf(stderr, "remapped irq 2 to irq 9, please update your config file\n");
 	dp->d_irq = 9;
       }
-      if (dp->d_irq != -1 && dp->d_irq != -2)
-	fprintf(fp, " extern %s();", shandler(dp));
-      fprintf(fp, "\n");
     }
 
     fprintf(fp, "\nstruct isa_device isa_devtab[] = {\n");
     fprintf(fp, "\
-/*    driver    iobase    irq drq      maddr   msiz   intr unit   flags phys parent      mask */\n");
+/*    driver    iobase    irq drq      maddr   msiz unit   flags phys parent */\n");
     for (dp = dtab; dp != 0; dp = dp->d_next) {
       mp = dp->d_conn;
       if (mp == 0 || mp == TO_NEXUS)
@@ -723,19 +720,15 @@ i386_ioconf()
         fprintf(fp, " %8s,", dp->d_port);
       else
         fprintf(fp, "   0x%04x,", dp->d_portn);
-      fprintf(fp, " %5s, %2d, C 0x%05x, %5d, %5s,  %2d, 0x%04x, %3d,",
+      fprintf(fp, " %5s, %2d, C 0x%05x, %5d,  %2d, 0x%04x, %3d",
 	      sirq(dp->d_irq), dp->d_drq, dp->d_maddr, dp->d_msize,
-	      shandler(dp), dp->d_unit, dp->d_flags,
+	      dp->d_unit, dp->d_flags,
 	      eq(mp->d_name, "isa") ? 0 :
 	      dp->d_drive == UNKNOWN ? dp->d_slave : dp->d_drive);
       if (eq(mp->d_name, "isa"))
-        fprintf(fp, "  NULL,");
+        fprintf(fp, ",  NULL");
       else
-        fprintf(fp, " D[%2d],", mp->d_seq);
-      if (eq(dp->d_mask, "null"))
-	fprintf(fp, "     NULL");
-      else
-	fprintf(fp, " &%3smask", dp->d_mask);
+        fprintf(fp, ", D[%2d]", mp->d_seq);
       fprintf(fp, " },\n");
     }
     fprintf(fp, "0\n};\n");
