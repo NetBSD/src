@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.20 2003/09/26 12:02:56 simonb Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.21 2003/10/05 19:44:58 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.20 2003/09/26 12:02:56 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.21 2003/10/05 19:44:58 matt Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/proc.h>
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.20 2003/09/26 12:02:56 simonb Exp 
 #include <sys/ras.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
+#include <sys/ucontext.h>
 
 #include <arm/armreg.h>
 
@@ -73,6 +74,9 @@ process_frame(struct lwp *l)
 	return l->l_addr->u_pcb.pcb_tf;
 }
 
+void *getframe(struct lwp *l, int sig, int *onstack);
+
+
 /*
  * Send an interrupt to process.
  *
@@ -82,32 +86,29 @@ process_frame(struct lwp *l)
  * resets the signal mask, the stack, and the
  * frame pointer, it returns to the user specified pc.
  */
+#if defined(COMPAT_16) || defined(COMPAT_13)
 void
-sendsig(int sig, const sigset_t *mask, u_long code)
+sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct sigacts *ps = p->p_sigacts;
 	struct trapframe *tf;
-	struct sigframe *fp, frame;
+	struct sigframe_sigcontext *fp, frame;
 	int onstack;
+	int sig = ksi->ksi_signo;
+	u_long code = ksi->ksi_trap;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
 	tf = process_frame(l);
 
-	/* Do we need to jump onto the signal stack? */
-	onstack =
-	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
+	fp = getframe(l, sig, &onstack);
 
-	/* Allocate space for the signal handler context. */
-	if (onstack)
-		fp = (struct sigframe *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
-						p->p_sigctx.ps_sigstk.ss_size);
-	else
-		fp = (struct sigframe *)tf->tf_usr_sp;
+	/* make room on the stack */
 	fp--;
-	(u_int)fp = STACKALIGN(fp);
+
+	/* make the stack aligned */
+	fp = (void *)STACKALIGN(fp);
 
 	/* Save register context. */
 	frame.sf_sc.sc_r0     = tf->tf_r0;
@@ -192,7 +193,119 @@ sendsig(int sig, const sigset_t *mask, u_long code)
 	if (onstack)
 		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 }
+#endif
 
+void *
+getframe(struct lwp *l, int sig, int *onstack)
+{
+	struct proc *p = l->l_proc;
+	struct sigctx *ctx = &p->p_sigctx;
+	struct trapframe *tf = process_frame(l);
+
+	/* Do we need to jump onto the signal stack? */
+	*onstack = (ctx->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0
+	    && (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
+	if (*onstack)
+		return (char *)ctx->ps_sigstk.ss_sp + ctx->ps_sigstk.ss_size;
+	return (void *)tf->tf_usr_sp;
+}
+
+
+/*
+ * Send an interrupt to process.
+ *
+ * Stack is set up to allow sigcode stored
+ * in u. to call routine, followed by kcall
+ * to sigreturn routine below.  After sigreturn
+ * resets the signal mask, the stack, and the
+ * frame pointer, it returns to the user specified pc.
+ */
+static void
+sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
+{
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
+	struct sigacts *ps = p->p_sigacts;
+	struct trapframe *tf;
+	struct sigframe_siginfo *fp, frame;
+	int onstack;
+	int sig = ksi->ksi_signo;
+	sig_t catcher = SIGACTION(p, sig).sa_handler;
+
+	/* get the current frame */
+	tf = process_frame(l);
+
+	fp = getframe(l, sig, &onstack);
+	
+	/* make room on the stack */
+	fp--;
+	
+	/* make the stack aligned */
+	(u_int)fp = STACKALIGN(fp);
+
+	/* Build stack frame for signal trampoline. */
+	switch (ps->sa_sigdesc[sig].sd_vers) {
+	case 0:		/* handled by sendsig_sigcontext */
+	case 1:		/* handled by sendsig_sigcontext */
+	default:	/* unknown version */
+		printf("nsendsig: bad version %d\n",
+		    ps->sa_sigdesc[sig].sd_vers);
+		sigexit(l, SIGILL);
+	case 2:
+		break;
+	}
+
+	/* populate the siginfo frame */
+	frame.sf_si._info = *ksi;
+	frame.sf_uc.uc_flags = _UC_SIGMASK;
+	frame.sf_uc.uc_sigmask = *mask;
+	frame.sf_uc.uc_link = NULL;
+	frame.sf_uc.uc_flags |= (p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK)
+	    ? _UC_SETSTACK : _UC_CLRSTACK;
+	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
+	cpu_getmcontext(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
+
+	if (copyout(&frame, fp, sizeof(frame)) != 0) {
+		/*
+		 * Process has trashed its stack; give it an illegal
+		 * instruction to halt it in its tracks.
+		 */
+		sigexit(l, SIGILL);
+		/* NOTREACHED */
+	}
+
+	/*
+	 * Build context to run handler in.  We invoke the handler
+	 * directly, only returning via the trampoline.  Note the
+	 * trampoline version numbers are coordinated with machine-
+	 * dependent code in libc.
+	 */
+	
+	tf->tf_r0 = sig;
+	tf->tf_r1 = (int)&fp->sf_si;
+	tf->tf_r2 = (int)&fp->sf_uc;
+
+	/* the trampoline uses r5 as the uc address */
+	tf->tf_r5 = (int)&fp->sf_uc;
+	tf->tf_pc = (int)catcher;
+	tf->tf_usr_sp = (int)fp;
+	tf->tf_usr_lr = (int)ps->sa_sigdesc[sig].sd_tramp;
+
+	/* Remember that we're now on the signal stack. */
+	if (onstack)
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+}
+
+void
+sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
+{
+#ifdef COMPAT_16
+	if (curproc->p_sigacts->sa_sigdesc[ksi->ksi_signo].sd_vers < 2)
+		sendsig_sigcontext(ksi, mask);
+	else
+#endif
+		sendsig_siginfo(ksi, mask);
+}
 
 /*
  * System call to cleanup state after a signal
@@ -204,16 +317,24 @@ sendsig(int sig, const sigset_t *mask, u_long code)
  * psr to gain improper privileges or to cause
  * a machine fault.
  */
+
+#ifdef COMPAT_16
 int
-sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
+compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 {
-	struct sys___sigreturn14_args /* {
+	struct compat_16_sys___sigreturn14_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	struct sigcontext *scp, context;
 	struct trapframe *tf;
 
+	/*
+	 * we do a rather scary test in userland
+	 */
+	if (v == NULL)
+		return (EFAULT);
+	
 	/*
 	 * The trampoline code hands us the context.
 	 * It is unsafe to keep track of it ourselves, in the event that a
@@ -269,6 +390,7 @@ sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 
 	return (EJUSTRETURN);
 }
+#endif
 
 void
 cpu_getmcontext(l, mcp, flags)
@@ -359,6 +481,10 @@ cpu_setmcontext(l, mcp, flags)
 		arm_fpe_setcontext(p, (struct fpreg *)(void *)&mcp->__fpregs);
 	}
 #endif
+	if (flags & _UC_SETSTACK)
+		l->l_proc->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+	if (flags & _UC_CLRSTACK)
+		l->l_proc->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	return (0);
 }
