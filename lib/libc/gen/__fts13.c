@@ -1,4 +1,4 @@
-/*	$NetBSD: __fts13.c,v 1.43 2004/06/20 22:20:14 jmc Exp $	*/
+/*	$NetBSD: __fts13.c,v 1.44 2005/01/19 00:59:48 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: __fts13.c,v 1.43 2004/06/20 22:20:14 jmc Exp $");
+__RCSID("$NetBSD: __fts13.c,v 1.44 2005/01/19 00:59:48 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -223,8 +223,14 @@ fts_open(argv, options, compar)
 	 * and ".." are all fairly nasty problems.  Note, if we can't get the
 	 * descriptor we run anyway, just more slowly.
 	 */
-	if (!ISSET(FTS_NOCHDIR) && (sp->fts_rfd = open(".", O_RDONLY, 0)) < 0)
-		SET(FTS_NOCHDIR);
+	if (!ISSET(FTS_NOCHDIR)) {
+		if ((sp->fts_rfd = open(".", O_RDONLY, 0)) == -1)
+			SET(FTS_NOCHDIR);
+		else if (fcntl(sp->fts_rfd, F_SETFD, FD_CLOEXEC) == -1) {
+			close(sp->fts_rfd);
+			SET(FTS_NOCHDIR);
+		}
+	}
 
 	return (sp);
 
@@ -279,6 +285,8 @@ fts_close(sp)
 	 * list which has a valid parent pointer.
 	 */
 	if (sp->fts_cur) {
+		if (ISSET(FTS_SYMFOLLOW))
+			(void)close(sp->fts_cur->fts_symfd);
 		for (p = sp->fts_cur; p->fts_level >= FTS_ROOTLEVEL;) {
 			freep = p;
 			p = p->fts_link ? p->fts_link : p->fts_parent;
@@ -359,9 +367,13 @@ fts_read(sp)
 	    (p->fts_info == FTS_SL || p->fts_info == FTS_SLNONE)) {
 		p->fts_info = fts_stat(sp, p, 1);
 		if (p->fts_info == FTS_D && !ISSET(FTS_NOCHDIR)) {
-			if ((p->fts_symfd = open(".", O_RDONLY, 0)) < 0) {
+			if ((p->fts_symfd = open(".", O_RDONLY, 0)) == -1) {
 				p->fts_errno = errno;
 				p->fts_info = FTS_ERR;
+			} else if (fcntl(p->fts_symfd, F_SETFD, FD_CLOEXEC) == -1) {
+				p->fts_errno = errno;
+				p->fts_info = FTS_ERR;
+				close(p->fts_symfd);
 			} else
 				p->fts_flags |= FTS_SYMFOLLOW;
 		}
@@ -449,9 +461,13 @@ next:	tmp = p;
 			p->fts_info = fts_stat(sp, p, 1);
 			if (p->fts_info == FTS_D && !ISSET(FTS_NOCHDIR)) {
 				if ((p->fts_symfd =
-				    open(".", O_RDONLY, 0)) < 0) {
+				    open(".", O_RDONLY, 0)) == -1) {
 					p->fts_errno = errno;
 					p->fts_info = FTS_ERR;
+				} else if (fcntl(p->fts_symfd, F_SETFD, FD_CLOEXEC) == -1) {
+					p->fts_errno = errno;
+					p->fts_info = FTS_ERR;
+					close(p->fts_symfd);
 				} else
 					p->fts_flags |= FTS_SYMFOLLOW;
 			}
@@ -596,7 +612,7 @@ fts_children(sp, instr)
 	    ISSET(FTS_NOCHDIR))
 		return (sp->fts_child = fts_build(sp, instr));
 
-	if ((fd = open(".", O_RDONLY, 0)) < 0)
+	if ((fd = open(".", O_RDONLY, 0)) == -1)
 		return (sp->fts_child = NULL);
 	sp->fts_child = fts_build(sp, instr);
 	if (fchdir(fd)) {
@@ -1185,7 +1201,7 @@ fts_safe_changedir(sp, p, fd, path)
 	if (ISSET(FTS_NOCHDIR))
 		return 0;
 
-	if (fd < 0 && (fd = open(path, O_RDONLY)) == -1)
+	if (oldfd < 0 && (fd = open(path, O_RDONLY)) == -1)
 		return -1;
 
 	if (fstat(fd, &sb) == -1)
