@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.21.2.4 2001/07/10 01:46:11 perseant Exp $	*/
+/*	$NetBSD: lfs.c,v 1.21.2.5 2001/07/13 05:14:22 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: lfs.c,v 1.21.2.4 2001/07/10 01:46:11 perseant Exp $");
+__RCSID("$NetBSD: lfs.c,v 1.21.2.5 2001/07/13 05:14:22 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -663,7 +663,10 @@ make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
 
 	/* Now, write the segment */
 
-	printf("Creating a version %d LFS\n", lfsp->lfs_version);
+	printf("Creating a version %d LFS", lfsp->lfs_version);
+	if (lfsp->lfs_version > 1)
+		printf(" with roll-forward ident 0x%x", lfsp->lfs_ident);
+	printf("\n");
 	fssize = (double)lfsp->lfs_nseg;
 	fssize *= (double)ssize;
 	fssize /= 1048576.0;
