@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.19 2001/04/05 23:54:59 thorpej Exp $
+# $NetBSD: Makefile,v 1.20 2001/05/21 11:09:09 enami Exp $
 
 .include <bsd.own.mk>
 
@@ -9,9 +9,9 @@ FILES=	DAEMON LOGIN NETWORK SERVERS accounting altqd amd apmd bootparams \
 	mountcritremote mountd mrouted named network newsyslog nfsd \
 	nfslocking ntpd ntpdate rpcbind poffd postfix ppp pwcheck racoon \
 	quota raidframe rarpd rbootd root route6d routed rtadvd rtsold rwho \
-	savecore screenblank sendmail securelevel sshd swap1 swap2 sysdb \
-	sysctl syslogd timed ttys virecover wscons xdm xfs ypbind \
-	yppasswdd ypserv
+	savecore screenblank sendmail securelevel sshd sunndd \
+	swap1 swap2 sysdb sysctl syslogd \
+	timed ttys virecover wscons xdm xfs ypbind yppasswdd ypserv
 FILESDIR=	/etc/rc.d
 FILESMODE=	${BINMODE}
 
