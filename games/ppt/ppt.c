@@ -1,4 +1,4 @@
-/*	$NetBSD: ppt.c,v 1.11 2002/11/26 03:49:53 kim Exp $	*/
+/*	$NetBSD: ppt.c,v 1.12 2002/11/26 21:34:07 kim Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ppt.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: ppt.c,v 1.11 2002/11/26 03:49:53 kim Exp $");
+__RCSID("$NetBSD: ppt.c,v 1.12 2002/11/26 21:34:07 kim Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,12 +79,14 @@ main(argc, argv)
 	/* Revoke setgid privileges */
 	setgid(getgid());
 
+	dflag = 0;
 	while ((c = getopt(argc, argv, "dh")) != -1)
 		switch(c) {
 		case 'd':
 			dflag = 1;
 			break;
-		case '?': case 'h':
+		case 'h':
+		case '?':
 		default:
 			usage();
 		}
