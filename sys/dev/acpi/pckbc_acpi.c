@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_acpi.c,v 1.10 2003/11/03 19:04:56 mycroft Exp $	*/
+/*	$NetBSD: pckbc_acpi.c,v 1.11 2003/11/03 19:11:41 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.10 2003/11/03 19:04:56 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.11 2003/11/03 19:11:41 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,8 +97,12 @@ void	pckbc_acpi_intr_establish(struct pckbc_softc *, pckbc_slot_t);
  * Supported Device IDs
  */
 
-static const char * const pckbc_acpi_ids[] = {
-	"PNP03??",	/* Standard PC KBD/MS port */
+static const char * const pckbc_acpi_ids_kbd[] = {
+	"PNP03??",	/* Standard PC KBD port */
+	NULL
+};
+
+static const char * const pckbc_acpi_ids_ms[] = {
 	"PNP0F03",
 	"PNP0F0E",
 	"PNP0F12",
@@ -116,11 +120,18 @@ int
 pckbc_acpi_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
+	int rv;
 
 	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
 		return (0);
 
-	return (acpi_match_hid(aa->aa_node->ad_devinfo, pckbc_acpi_ids));
+	rv = acpi_match_hid(aa->aa_node->ad_devinfo, pckbc_acpi_ids_kbd);
+	if (rv)
+		return (rv);
+	rv = acpi_match_hid(aa->aa_node->ad_devinfo, pckbc_acpi_ids_ms);
+	if (rv)
+		return (rv);
+	return (0);
 }
 
 void
@@ -133,7 +144,6 @@ pckbc_acpi_attach(struct device *parent,
 	struct pckbc_internal *t;
 	struct acpi_attach_args *aa = aux;
 	bus_space_handle_t ioh_d, ioh_c;
-	const char *idstr = aa->aa_node->ad_devinfo->HardwareId.Value;
 	pckbc_slot_t peer;
 	struct acpi_resources res;
 	struct acpi_io *io0, *io1;
@@ -142,11 +152,10 @@ pckbc_acpi_attach(struct device *parent,
 
 	psc->sc_ic = aa->aa_ic;
 
-	if (strncmp(idstr, "PNP03", 5) == 0) {
+	if (acpi_match_hid(aa->aa_node->ad_devinfo, pckbc_acpi_ids_kbd)) {
 		psc->sc_slot = PCKBC_KBD_SLOT;
 		peer = PCKBC_AUX_SLOT;
-	} else if (strncmp(idstr, "PNP0F", 5) == 0 ||
-			strcmp(idstr, "IBM3780") == 0) {
+	} else if (acpi_match_hid(aa->aa_node->ad_devinfo, pckbc_acpi_ids_ms)) {
 		psc->sc_slot = PCKBC_AUX_SLOT;
 		peer = PCKBC_KBD_SLOT;
 	} else {
