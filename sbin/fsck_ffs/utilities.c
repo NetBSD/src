@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.28 2001/01/09 09:08:35 enami Exp $	*/
+/*	$NetBSD: utilities.c,v 1.29 2001/01/09 09:25:32 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.6 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.28 2001/01/09 09:08:35 enami Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.29 2001/01/09 09:25:32 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -240,18 +240,19 @@ flush(fd, bp)
 		 * u_int32_t's
 		 */
 		if (needswap) {
-			u_int32_t *cd = (u_int32_t *)sblock->fs_csp[j];
 			int k;
+			u_int32_t *cd = (u_int32_t *)sblock->fs_csp[j];
+
 			for (k = 0; k < size / sizeof(u_int32_t); k++)
 				cd[k] = bswap32(cd[k]);
 		}
 		bwrite(fswritefd, (char *)sblock->fs_csp[j],
 		    fsbtodb(sblock, sblock->fs_csaddr + j * sblock->fs_frag),
-		    sblock->fs_cssize - i < sblock->fs_bsize ?
-		    sblock->fs_cssize - i : sblock->fs_bsize);
+		    size);
 		if (needswap) {
-			u_int32_t *cd = (u_int32_t *)sblock->fs_csp[j];
 			int k;
+			u_int32_t *cd = (u_int32_t *)sblock->fs_csp[j];
+
 			for (k = 0; k < size / sizeof(u_int32_t); k++)
 				cd[k] = bswap32(cd[k]);
 		}
