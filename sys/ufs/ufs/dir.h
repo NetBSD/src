@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.h,v 1.10 1998/03/18 15:57:28 bouyer Exp $	*/
+/*	$NetBSD: dir.h,v 1.11 2001/11/16 16:09:17 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -112,17 +112,19 @@ struct	direct {
  * without the d_name field, plus enough space for the name with a terminating
  * null byte (dp->d_namlen+1), rounded up to a 4 byte boundary.
  */
+#define	DIRECTSIZ(namlen) \
+	((sizeof(struct direct) - (MAXNAMLEN+1)) + (((namlen)+1 + 3) &~ 3))
+
 #if (BYTE_ORDER == LITTLE_ENDIAN)
-#define DIRSIZ(oldfmt, dp, needswap) \
-    (((oldfmt) && !(needswap)) ? \
-    ((sizeof(struct direct) - (MAXNAMLEN+1)) + (((dp)->d_type+1 + 3) &~ 3)) : \
-    ((sizeof(struct direct) - (MAXNAMLEN+1)) + (((dp)->d_namlen+1 + 3) &~ 3)))
+#define DIRSIZ(oldfmt, dp, needswap)	\
+    (((oldfmt) && !(needswap)) ?	\
+    DIRECTSIZ((dp)->d_type) : DIRECTSIZ((dp)->d_namlen))
 #else
-#define DIRSIZ(oldfmt, dp, needswap)  \
-	(((oldfmt) && (needswap)) ? \
-	((sizeof(struct direct) - (MAXNAMLEN+1)) + (((dp)->d_type+1 + 3) &~ 3)) : \
-    ((sizeof(struct direct) - (MAXNAMLEN+1)) + (((dp)->d_namlen+1 + 3) &~ 3)))
+#define DIRSIZ(oldfmt, dp, needswap)	\
+    (((oldfmt) && (needswap)) ?		\
+    DIRECTSIZ((dp)->d_type) : DIRECTSIZ((dp)->d_namlen))
 #endif
+
 #define OLDDIRFMT	1
 #define NEWDIRFMT	0
 
