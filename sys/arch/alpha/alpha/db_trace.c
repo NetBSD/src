@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.8 2000/11/22 04:28:13 enami Exp $ */
+/* $NetBSD: db_trace.c,v 1.9 2000/12/13 03:16:36 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.8 2000/11/22 04:28:13 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.9 2000/12/13 03:16:36 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,27 +173,8 @@ sym_is_trapsymbol(vaddr_t v)
 static void
 decode_syscall(int number, struct proc *p, void (*pr)(const char *, ...))
 {
-	db_sym_t sym;
-	db_expr_t diff;
-	char *symname;
-	const char *ename;
-	int (*f) __P((struct proc *, void *, register_t *));
 
-	(*pr)(" (%d", number); /* ) */
-	if (!p)
-		goto out;
-	if (0 <= number && number < p->p_emul->e_nsysent) {
-		ename = p->p_emul->e_name;
-		f = p->p_emul->e_sysent[number].sy_call;
-		sym = db_search_symbol((db_addr_t)f, DB_STGY_ANY, &diff);
-		if (sym == DB_SYM_NULL || diff != 0)
-			goto out;
-		db_symbol_values(sym, &symname, NULL);
-		(*pr)(", %s.%s", ename, symname);
-	}
-out:
-	(*pr)(")");
-	return;
+	(*pr)(" (%d)", number);
 }
 
 void
