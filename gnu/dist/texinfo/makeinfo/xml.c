@@ -1,7 +1,7 @@
-/*	$NetBSD: xml.c,v 1.1.1.1 2003/01/17 14:54:36 wiz Exp $	*/
+/*	$NetBSD: xml.c,v 1.1.1.2 2003/02/13 08:50:56 wiz Exp $	*/
 
 /* xml.c -- xml output.
-   Id: xml.c,v 1.15 2002/11/13 12:35:35 karl Exp
+   Id: xml.c,v 1.18 2002/12/17 16:34:22 karl Exp
 
    Copyright (C) 2001, 2002 Free Software Foundation, Inc.
 
@@ -105,17 +105,17 @@ element texinfoml_element_list [] = {
   { "sp",                  0, 0 },
   { "center",              1, 0 },
   { "dircategory",         0, 0 },
-  { "quotation",           1, 0 },
-  { "example",             1, 0 },
-  { "smallexample",        1, 0 },
-  { "lisp",                1, 0 },
-  { "smalllisp",           1, 0 },
+  { "quotation",           0, 0 },
+  { "example",             0, 0 },
+  { "smallexample",        0, 0 },
+  { "lisp",                0, 0 },
+  { "smalllisp",           0, 0 },
   { "cartouche",           1, 0 },
   { "copying",             1, 0 },
-  { "format",              1, 0 },
-  { "smallformat",         1, 0 },
-  { "display",             1, 0 },
-  { "smalldisplay",        1, 0 },
+  { "format",              0, 0 },
+  { "smallformat",         0, 0 },
+  { "display",             0, 0 },
+  { "smalldisplay",        0, 0 },
   { "footnote",            0, 1 },
 
   { "itemize",             0, 0 },
@@ -407,7 +407,7 @@ xml_id (id)
   strcpy (tem, id);
   while (*p)
     {
-      if (strchr ("~ &/+^;?()%<>\"", *p))
+      if (strchr ("~ &/+^;?()%<>\"'$¿", *p))
         *p = '-';
       p++;
     }
@@ -708,7 +708,8 @@ xml_insert_entity (char *entity_name)
     return;
 
   if (!xml_in_para && !xml_no_para && !only_macro_expansion
-      && xml_element_list[xml_current_element ()].contains_para)
+      && xml_element_list[xml_current_element ()].contains_para
+      && !in_fixed_width_font)
     {
       insert_string ("<para>");
       xml_in_para = 1;
@@ -1109,28 +1110,28 @@ xml_begin_enumerate (enum_arg)
       {
         if (enum_arg[0] == '1')
           xml_insert_element_with_attribute (ENUMERATE, START,
-                                             "numeration=\"Arabic\"", NULL);
+                                             "numeration=\"arabic\"", NULL);
         else
           xml_insert_element_with_attribute (ENUMERATE, START,
-                                             "continuation=\"Continues\" numeration=\"Arabic\"", NULL);
+                                             "continuation=\"continues\" numeration=\"arabic\"", NULL);
       }
       else if (isupper (*enum_arg))
         {
         if (enum_arg[0] == 'A')
           xml_insert_element_with_attribute (ENUMERATE, START,
-                                             "numeration=\"Upperalpha\"", NULL);
+                                             "numeration=\"upperalpha\"", NULL);
         else
           xml_insert_element_with_attribute (ENUMERATE, START,
-                                             "continuation=\"Continues\" numeration=\"Upperalpha\"", NULL);
+                                             "continuation=\"continues\" numeration=\"upperalpha\"", NULL);
       }
       else
         {
           if (enum_arg[0] == 'a')
           xml_insert_element_with_attribute (ENUMERATE, START,
-                                             "numeration=\"Loweralpha\"", NULL);
+                                             "numeration=\"loweralpha\"", NULL);
         else
           xml_insert_element_with_attribute (ENUMERATE, START,
-                                             "continuation=\"Continues\" numeration=\"Loweralpha\"", NULL);
+                                             "continuation=\"continues\" numeration=\"loweralpha\"", NULL);
         }
     }
   xml_table_level ++;

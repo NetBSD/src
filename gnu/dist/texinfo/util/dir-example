@@ -6,7 +6,7 @@ This particular dir file is merely made available for your hacking
 If you have dir entries for Texinfo manuals you'd like to be added here,
   please send them to karl@gnu.org.
 
-Id: dir-example,v 1.6 2002/11/07 22:04:20 karl Exp
+Id: dir-example,v 1.14 2003/02/05 00:54:07 karl Exp
 
 File: dir,	Node: Top,	This is the top of the INFO tree.
 
@@ -23,8 +23,6 @@ Not all of the topics shown below may be available on this system.
 * Menu:
 
 GNU Packages
-* Make: (make).            Remake files automatically.
-* accounting: (psacct).         GNU process accounting suite.
 * Bash: (bash).                 Bourne-Again SHell.
 * Coreutils: (coreutils).	Core (file, text, shell) utilities.
 * Cpio: (cpio).                 Copy-in-copy-out archiver.
@@ -42,6 +40,7 @@ GNU Packages
 * Gzip: (gzip).                 General (de)compression.
 * Identifier DB: (id-utils).    Identifier database utilities.
 * Ispell: (ispell).             Interactive spelling corrector.
+* Make: (make).                 Remake files automatically.
 * M4: (m4).                     Macro processor.
 * Ptx: (ptx).                   Permuted index generator.
 * Shar utilities: (sharutils).  Shell archiver, uudecode/uuencode.
@@ -54,11 +53,12 @@ GNU Packages
 * Wget: (wget).                 URL download.
 
 Text creation and manipulation
+* grep: (grep).                 Print lines matching a pattern.
 * sed: (sed).                   Stream EDitor.
 
 Texinfo documentation system
-* Info: (info).                 Documentation browsing system.
 * Texinfo: (texinfo).           The GNU documentation format.
+* Info: (info).                 Documentation browsing system.
 * info standalone: (info-stnd).                 Standalone Info reader.
 * infokey: (info-stnd)Invoking infokey.         Compile Info customizations.
 * install-info: (texinfo)Invoking install-info. Updating info/dir entries.
@@ -76,54 +76,73 @@ Printing Tools
 * psmandup: (a2ps) psmandup.       Printing Duplex on Simplex Printers
 * psset: (a2ps) psset.             Inserting calls to setpagedevice
 
-GNU programming tools
+Software development
 * As: (as).                     Assembler.
 * Autoconf: (autoconf).         Create source code configuration scripts
+* automake: (automake).		Making Makefile.in's
 * Binutils: (binutils).         ar/copy/objdump/nm/size/strip/ranlib.
+* bison: (bison).               GNU parser generator (Yacc replacement).
 * CVS: (cvs).                   Concurrent versions system for source control.
+* Configure: (configure).       Cygnus configure.
 * Cpp: (cpp).		        The GNU C preprocessor.
 * Cpplib: (cppinternals).       Cpplib internals.
 * DejaGnu: (dejagnu).           Testing framework.
-* automake: (automake).		Making Makefile.in's
-* bison: (bison).	GNU parser generator (yacc replacement).
+* Gdb: (gdb).                   The GNU debugger.
 * egcs: (egcs).                 Experimental GNU C compiler.
 * Flex: (flex).                 A fast scanner generator.
 * g77: (g77).                   GNU Fortran 77 compiler.
+* Gasp: (gasp).                 GNU Assembler preprocessor.
 * gcc: (gcc).                   The GNU Compiler Collection.
 * gccint: (gccint).             Internals of the GNU Compiler Collection.
-* GDB: (gdb).                   Source-level debugger for C and C++.
-* Gasp: (gasp).                 GNU Assembler preprocessor.
+* Gnats: (gnats).               Cygnus bug tracking system.
 * Gperf: (gperf).               Perfect hash function generator.
 * Gprof: (gprof).               Profiler.
 * Guile Reference: (guile).     The Guile reference manual.
+* help2man: (help2man).         Automatic manual page generation from --help.
 * Indent: (indent).             Prettyprinter for programs.
 * Ld: (ld).                     Linker.
 * Libtool: (libtool).           Generic library support script.
-* R FAQ: (R-FAQ).               The R statistical language FAQ.
+* Remsync: (remsync).           Remote synchronization of directory trees.
+* Send PR: (send-pr).           Cygnus bug reporting for Gnats.
+* Source config: (cfg-paper).   Some theory on configuring source packages.
+* Standards: (standards).       GNU coding standards.
 
-GNU Emacs
+Emacs
 * Elisp: (elisp).               GNU Emacs Lisp reference manual.
 * Intro Elisp: (emacs-lisp-intro). Introduction to Elisp programming.
 
 * AUC TeX: (auctex).            Editing (La)TeX files.
-* Calc: (calc).                 Calculator and more.
-* CC mode: (ccmode).            Editing C, C++, Objective C, and Java.
-* Common Lisp: (cl).            Partial Common Lisp support for Emacs Lisp.
-* Dired-x: (dired-x).           Extra directory editor features.
-* Edebug: (edebug).             Source-level debugger for Emacs Lisp.
-* Ediff: (ediff).               Comprehensive visual interface to diff & patch.
-* EDB: (edb).                   Database for Emacs.
-* Forms: (forms).               Fill-in-the-form data entry.
-* Gmhist: (gmhist).             Generic minibuffer history.
-* GNUS: (gnus).                 Netnews reading and posting.
-* Mailcrypt: (mailcrypt).       Use PGP in Emacs.
-* MH-E: (mh-e).                 Emacs interface to the MH mail system.
-* PCL-CVS: (pcl-cvs).           Emacs front end to CVS.
-* Supercite: (sc).              Supercite for including other people's words.
-* VIP: (vip).                   vi emulation.
-* VIPER: (viper).               The new VI-emulation mode in Emacs-19.29.
-* VM: (vm).                     Mail reader.
-* W3: (w3).                     WWW browser.
+* Ada mode: (ada-mode). The GNU Emacs mode for editing Ada.
+* Autotype: (autotype). Convenient features for text that you enter frequently
+                          in Emacs.
+* CC Mode: (ccmode).   Emacs mode for editing C, C++, Objective-C,
+                          Java, Pike, and IDL code.
+* CL: (cl).		Partial Common Lisp support for Emacs Lisp.
+* Dired-X: (dired-x).   Dired Extra Features.
+* Ebrowse: (ebrowse).   A C++ class browser for Emacs.
+* Ediff: (ediff).       A visual interface for comparing and merging programs.
+* Emacs FAQ: (efaq).	Frequently Asked Questions about Emacs.
+* Emacs MIME: (emacs-mime).   The MIME de/composition library.
+* Eshell: (eshell).     A command shell implemented in Emacs Lisp.
+* EUDC: (eudc).   A client for directory servers (LDAP, PH)
+* Forms: (forms).	Emacs package for editing data bases
+			  by filling in forms.
+* Gnus: (gnus).         The newsreader Gnus.
+* IDLWAVE: (idlwave).	Major mode and shell for IDL and WAVE/CL files.
+* Message: (message).   Mail and news composition mode that goes with Gnus.
+* MH-E: (mh-e).		Emacs interface to the MH mail system.
+* PCL-CVS: (pcl-cvs).	Emacs front-end to CVS.
+* RefTeX: (reftex).	Emacs support for LaTeX cross-references and citations.
+* SC: (sc).		Supercite lets you cite parts of messages you're
+			  replying to, in flexible ways.
+* Speedbar: (speedbar).        File/Tag summarizing utility.
+* VIP: (vip).		An older VI-emulation for Emacs.
+* VIPER: (viper).       The newest Emacs VI-emulation mode.
+                          (also, A VI Plan for Emacs Rescue
+                           or the VI PERil.)
+* Widget: (widget).      Documenting the "widget" package used by the
+                           Emacs Custom facility.
+* WoMan: (woman).       Browse UN*X Manual Pages `Wo (without) Man'.
 
 GNU Gettext Utilities
 * Gettext: (gettext).                           GNU gettext utilities.
@@ -132,40 +151,28 @@ GNU Gettext Utilities
 * msgmerge: (gettext)msgmerge Invocation.       Update two PO files into one.
 * xgettext: (gettext)xgettext Invocation.       Extract strings into a PO file.
 
-GNU programming support
-* Configure: (configure).       Cygnus configure.
-* Gnats: (gnats).               Cygnus bug tracking system.
-* Remsync: (remsync).           Remote synchronization of directory trees.
-* Send PR: (send-pr).           Cygnus bug reporting for Gnats.
-* help2man: (help2man).      Automatic manual page generation.
-
-GNU libraries
+Software libraries
 * Annotate: (annotate).         High-level GDB to GUI's.
-* BFD: (bfd).                   Binary file descriptors for object file IO.
+* Bfd: (bfd).                   The Binary File Descriptor library.
 * CVS protocol: (cvsclient).    CVS client/server protocol specification.
+* Gdb-Internals: (gdbint).	The GNU debugger's internals.
 * GDB library: (libgdb).        Application programming interface to GDB.
 * GDBM: (gdbm).                 Hashed databases.
 * GDK: (gdk).                   General drawing kit.
 * GTK: (gtk).                   GIMP toolkit.
 * History: (history).           Recall previous lines of input.
 * Iostream: (iostream).         C++ input/output.
+* Ld internals: (ldint).        GNU linker internals.
 * Libc: (libc).                 C library.
 * Libg++: (libg++).             C++ classes.
-* Mmalloc: (mmalloc).           Memory-mapped malloc.
+* Mmalloc: (mmalloc).		The GNU mapped-malloc package.
+* Stabs: (stabs).               The "stabs" debugging information format.
 * Readline: (readline).         General command-line interface.
 * Regex: (regex).               Regular expressions.
 * Termcap: (termcap).           All about /etc/termcap.
 
-GNU programming documentation
-* GDB internals: (gdbint).      Debugger internals.
-* Ld internals: (ldint).        GNU linker internals.
-* Maintaining: (maintain).      Maintaining GNU software.
-* Source config: (cfg-paper).   Some theory on configuring source packages.
-* Stabs: (stabs).               Symbol table debugging information format.
-
 GNU organization
 * Maintain: (maintain).		GNU maintainer guidelines.
-* Standards: (standards).       GNU coding standards.
 * Tasks: (tasks).               GNU task list.
 
 GNU music project
@@ -196,6 +203,9 @@ DOS
 * GNUish: (gnuish).             GNU utilities for DOS.
 * Mtools: (mtools).             Access DOS disks from Unix.
 
+Science
+* R FAQ: (R-FAQ).               The R statistical language FAQ.
+
 Other things
 * Amd: (am-utils).              Filesystem automounter.
 * CMUCL: (cmu-user).            CMU Common Lisp.
@@ -219,7 +229,7 @@ Individual utilities
                                 How to create configuration scripts
 * autoheader: (autoconf)autoheader Invocation.
                                 How to create configuration templates
-* autom4te: (autoconf)Invoking autom4te.
+* autom4te: (autoconf)autom4te Invocation.
                                 The Autoconf executables backbone
 * autoreconf: (autoconf)autoreconf Invocation.
                                 Remaking multiple `configure' scripts
@@ -261,6 +271,7 @@ Individual utilities
 * dvitype: (web2c)DVItype invocation.           DVI to human-readable text.
 * echo: (sh-utils)echo invocation.              Print a line of text.
 * edit-pr: (gnats)Invoking edit-pr.             Changing bugs.
+* egrep: (grep)Invoking.                        grep -E.
 * eid: (id-utils)eid invocation.                Invoking an editor on matches.
 * emacsclient: (emacs)Emacs Server.             Connecting to a running Emacs.
 * emacsserver: (emacs)Emacs Server.             Connecting to a running Emacs.
@@ -270,6 +281,7 @@ Individual utilities
 * expr: (sh-utils)expr invocation.              Evaluate expressions.
 * factor: (sh-utils)factor invocation.          Print prime factors
 * false: (sh-utils)false invocation.            Do nothing, unsuccessfully.
+* fgrep: (fgrep)Invoking.                       grep -F.
 * fid: (id-utils)fid invocation.                Listing a file's identifiers.
 * file-pr: (gnats)file-pr.                      Processing incoming traffic.
 * find: (find)Invoking find.                    Finding and acting on files.
@@ -287,8 +299,7 @@ Individual utilities
 * hostname: (sh-utils)hostname invocation.      Print or set system name.
 * id: (sh-utils)id invocation.                  Print real/effective uid/gid.
 * idx: (id-utils)idx invocation.                Testing mkid scanners.
-* ifnames: (autoconf)ifnames Invocation.
-                                Listing the conditionals in source code
+* ifnames: (autoconf)ifnames Invocation.        Listing conditionals in source.
 * iid: (id-utils)iid invocation.                Interactive complex queries.
 * inimf: (web2c)inimf invocation.               Initial Metafont.
 * inimp: (web2c)inimp invocation.               Initial MetaPost.
@@ -370,8 +381,7 @@ Individual utilities
 * tcal: (gcal)Invoking tcal.                    Run Gcal with tomorrow's date.
 * tee: (sh-utils)tee invocation.                Redirect to multiple files.
 * test: (sh-utils)test invocation.              File/string tests.
-* testsuite: (autoconf)testsuite Invocation.
-                                Running an Autotest test suite
+* testsuite: (autoconf)testsuite Invocation.    Running an Autotest test suite.
 * tex: (web2c)tex invocation.                   Typesetting.
 * tftopl: (web2c)TFtoPL invocation.             TFM -> property list.
 * touch: (fileutils)touch invocation.           Change file timestamps.

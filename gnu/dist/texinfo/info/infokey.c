@@ -1,9 +1,9 @@
-/*	$NetBSD: infokey.c,v 1.1.1.1 2003/01/17 14:54:34 wiz Exp $	*/
+/*	$NetBSD: infokey.c,v 1.1.1.2 2003/02/13 08:50:54 wiz Exp $	*/
 
 /* infokey.c -- compile ~/.infokey to ~/.info.
-   Id: infokey.c,v 1.2 2002/10/14 21:24:51 karl Exp
+   Id: infokey.c,v 1.3 2003/01/19 18:46:27 karl Exp
 
-   Copyright (C) 1999, 2001, 2002 Free Software Foundation, Inc.
+   Copyright (C) 1999, 2001, 2002, 2003 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -142,7 +142,7 @@ main (argc, argv)
 There is NO warranty.  You may redistribute this software\n\
 under the terms of the GNU General Public License.\n\
 For more information about these matters, see the files named COPYING.\n"),
-	      "1999");
+	      "2003");
       xexit (0);
     }
 

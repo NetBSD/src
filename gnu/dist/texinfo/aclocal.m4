@@ -1,4 +1,4 @@
-# generated automatically by aclocal 1.7.1 -*- Autoconf -*-
+# generated automatically by aclocal 1.7.2 -*- Autoconf -*-
 
 # Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2002
 # Free Software Foundation, Inc.
@@ -276,7 +276,7 @@ AC_DEFUN([AM_AUTOMAKE_VERSION],[am__api_version="1.7"])
 # Call AM_AUTOMAKE_VERSION so it can be traced.
 # This function is AC_REQUIREd by AC_INIT_AUTOMAKE.
 AC_DEFUN([AM_SET_CURRENT_AUTOMAKE_VERSION],
-	 [AM_AUTOMAKE_VERSION([1.7.1])])
+	 [AM_AUTOMAKE_VERSION([1.7.2])])
 
 # Helper functions for option handling.                    -*- Autoconf -*-
 
@@ -926,593 +926,7 @@ AC_DEFUN([AC_ISC_POSIX],
   ]
 )
 
-#serial 26
-
-dnl These are the prerequisite macros for files in the lib/
-dnl directories of the fileutils, sh-utils, and textutils packages.
-
-AC_DEFUN([jm_PREREQ],
-[
-  jm_PREREQ_ADDEXT
-  jm_PREREQ_C_STACK
-  jm_PREREQ_CANON_HOST
-  jm_PREREQ_DIRNAME
-  jm_PREREQ_ERROR
-  jm_PREREQ_EXCLUDE
-  jm_PREREQ_GETPAGESIZE
-  jm_PREREQ_HARD_LOCALE
-  jm_PREREQ_HASH
-  jm_PREREQ_HUMAN
-  jm_PREREQ_MBSWIDTH
-  jm_PREREQ_MEMCHR
-  jm_PREREQ_PHYSMEM
-  jm_PREREQ_POSIXVER
-  jm_PREREQ_QUOTEARG
-  jm_PREREQ_READUTMP
-  jm_PREREQ_REGEX
-  jm_PREREQ_STAT
-  jm_PREREQ_STRNLEN
-  jm_PREREQ_TEMPNAME # called by mkstemp
-  jm_PREREQ_XGETCWD
-  jm_PREREQ_XREADLINK
-])
-
-AC_DEFUN([jm_PREREQ_ADDEXT],
-[
-  dnl For addext.c.
-  AC_SYS_LONG_FILE_NAMES
-  AC_CHECK_FUNCS(pathconf)
-  AC_CHECK_HEADERS(limits.h string.h unistd.h)
-])
-
-AC_DEFUN([jm_PREREQ_CANON_HOST],
-[
-  dnl Add any libraries as early as possible.
-  dnl In particular, inet_ntoa needs -lnsl at least on Solaris5.5.1,
-  dnl so we have to add -lnsl to LIBS before checking for that function.
-  AC_SEARCH_LIBS(gethostbyname, [inet nsl])
-
-  dnl These come from -lnsl on Solaris5.5.1.
-  AC_CHECK_FUNCS(gethostbyname gethostbyaddr inet_ntoa)
-
-  AC_CHECK_FUNCS(gethostbyname gethostbyaddr inet_ntoa)
-  AC_CHECK_HEADERS(unistd.h string.h netdb.h sys/socket.h \
-                   netinet/in.h arpa/inet.h)
-])
-
-AC_DEFUN([jm_PREREQ_DIRNAME],
-[
-  AC_HEADER_STDC
-  AC_CHECK_HEADERS(string.h)
-])
-
-AC_DEFUN([jm_PREREQ_EXCLUDE],
-[
-  AC_FUNC_FNMATCH_GNU
-  AC_HEADER_STDBOOL
-])
-
-AC_DEFUN([jm_PREREQ_GETPAGESIZE],
-[
-  AC_CHECK_FUNCS(getpagesize)
-  AC_CHECK_HEADERS(OS.h unistd.h)
-])
-
-AC_DEFUN([jm_PREREQ_HARD_LOCALE],
-[
-  AC_CHECK_HEADERS(locale.h stdlib.h string.h)
-  AC_CHECK_FUNCS(setlocale)
-  AM_C_PROTOTYPES
-])
-
-AC_DEFUN([jm_PREREQ_HASH],
-[
-  AC_CHECK_HEADERS(stdlib.h)
-  AC_HEADER_STDBOOL
-  AC_REQUIRE([jm_CHECK_DECLS])
-])
-
-# If you use human.c, you need the following files:
-# inttypes.m4 ulonglong.m4
-AC_DEFUN([jm_PREREQ_HUMAN],
-[
-  AC_CHECK_HEADERS(limits.h stdlib.h string.h)
-  AC_CHECK_DECLS([getenv])
-  AC_REQUIRE([jm_AC_TYPE_UINTMAX_T])
-])
-
-AC_DEFUN([jm_PREREQ_MEMCHR],
-[
-  AC_CHECK_HEADERS(limits.h stdlib.h bp-sym.h)
-])
-
-AC_DEFUN([jm_PREREQ_PHYSMEM],
-[
-  AC_CHECK_HEADERS(sys/pstat.h unistd.h)
-  AC_CHECK_FUNCS(pstat_getstatic pstat_getdynamic)
-])
-
-AC_DEFUN([jm_PREREQ_POSIXVER],
-[
-  AC_CHECK_HEADERS(unistd.h)
-  AC_CHECK_DECLS([getenv])
-])
-
-AC_DEFUN([jm_PREREQ_QUOTEARG],
-[
-  AC_CHECK_FUNCS(isascii iswprint)
-  jm_FUNC_MBRTOWC
-  AC_CHECK_HEADERS(limits.h stddef.h stdlib.h string.h wchar.h wctype.h)
-  AC_HEADER_STDC
-  AC_C_BACKSLASH_A
-  AC_TYPE_MBSTATE_T
-  AM_C_PROTOTYPES
-])
-
-AC_DEFUN([jm_PREREQ_READUTMP],
-[
-  AC_HEADER_STDC
-  AC_CHECK_HEADERS(string.h utmp.h utmpx.h sys/param.h)
-  AC_CHECK_FUNCS(utmpname)
-  AC_CHECK_FUNCS(utmpxname)
-  AM_C_PROTOTYPES
-
-  if test $ac_cv_header_utmp_h = yes || test $ac_cv_header_utmpx_h = yes; then
-    utmp_includes="\
-$ac_includes_default
-#ifdef HAVE_UTMPX_H
-# include <utmpx.h>
-#endif
-#ifdef HAVE_UTMP_H
-# include <utmp.h>
-#endif
-"
-    AC_CHECK_MEMBERS([struct utmpx.ut_user],,,[$utmp_includes])
-    AC_CHECK_MEMBERS([struct utmp.ut_user],,,[$utmp_includes])
-    AC_CHECK_MEMBERS([struct utmpx.ut_name],,,[$utmp_includes])
-    AC_CHECK_MEMBERS([struct utmp.ut_name],,,[$utmp_includes])
-    AC_CHECK_MEMBERS([struct utmpx.ut_type],,,[$utmp_includes])
-    AC_CHECK_MEMBERS([struct utmp.ut_type],,,[$utmp_includes])
-    AC_CHECK_MEMBERS([struct utmpx.ut_pid],,,[$utmp_includes])
-    AC_CHECK_MEMBERS([struct utmp.ut_pid],,,[$utmp_includes])
-    AC_CHECK_MEMBERS([struct utmpx.ut_id],,,[$utmp_includes])
-    AC_CHECK_MEMBERS([struct utmp.ut_id],,,[$utmp_includes])
-    AC_CHECK_MEMBERS([struct utmpx.ut_exit],,,[$utmp_includes])
-    AC_CHECK_MEMBERS([struct utmp.ut_exit],,,[$utmp_includes])
-    AC_LIBOBJ(readutmp)
-  fi
-])
-
-AC_DEFUN([jm_PREREQ_REGEX],
-[
-  dnl FIXME: Maybe provide a btowc replacement someday: solaris-2.5.1 lacks it.
-  dnl FIXME: Check for wctype and iswctype, and and add -lw if necessary
-  dnl to get them.
-  AC_CHECK_FUNCS(bzero bcopy isascii btowc)
-  AC_CHECK_HEADERS(alloca.h libintl.h wctype.h wchar.h)
-  AC_HEADER_STDC
-  AC_FUNC_ALLOCA
-])
-
-AC_DEFUN([jm_PREREQ_STAT],
-[
-  AC_CHECK_HEADERS(sys/sysmacros.h sys/statvfs.h sys/vfs.h inttypes.h)
-  AC_CHECK_HEADERS(sys/param.h sys/mount.h)
-  AC_CHECK_FUNCS(statvfs)
-  jm_AC_TYPE_LONG_LONG
-
-  statxfs_includes="\
-$ac_includes_default
-#if HAVE_SYS_STATVFS_H
-# include <sys/statvfs.h>
-#endif
-#if HAVE_SYS_VFS_H
-# include <sys/vfs.h>
-#endif
-#if ( ! HAVE_SYS_STATVFS_H && ! HAVE_SYS_VFS_H && HAVE_SYS_MOUNT_H && HAVE_SYS_PARAM_H )
-/* NetBSD 1.5.2 needs these, for the declaration of struct statfs. */
-# include <sys/param.h>
-# include <sys/mount.h>
-#endif
-"
-  AC_CHECK_MEMBERS([struct statfs.f_basetype],,,[$statxfs_includes])
-  AC_CHECK_MEMBERS([struct statvfs.f_basetype],,,[$statxfs_includes])
-  AC_CHECK_MEMBERS([struct statfs.f_fstypename],,,[$statxfs_includes])
-  AC_CHECK_MEMBERS([struct statfs.f_type],,,[$statxfs_includes])
-  AC_CHECK_MEMBERS([struct statvfs.f_type],,,[$statxfs_includes])
-  AC_CHECK_MEMBERS([struct statfs.f_fsid.__val],,,[$statxfs_includes])
-  AC_CHECK_MEMBERS([struct statvfs.f_fsid.__val],,,[$statxfs_includes])
-  AC_CHECK_MEMBERS([struct statfs.f_namemax],,,[$statxfs_includes])
-  AC_CHECK_MEMBERS([struct statvfs.f_namemax],,,[$statxfs_includes])
-  AC_CHECK_MEMBERS([struct statfs.f_namelen],,,[$statxfs_includes])
-  AC_CHECK_MEMBERS([struct statvfs.f_namelen],,,[$statxfs_includes])
-])
-
-AC_DEFUN([jm_PREREQ_STRNLEN],
-[
-  AC_FUNC_STRNLEN
-  AC_HEADER_STDC
-  AC_CHECK_HEADERS(memory.h)
-  AC_CHECK_DECLS([memchr])
-
-  # This is necessary because automake-1.6.1 doens't understand
-  # that the above use of AC_FUNC_STRNLEN means we may have to use
-  # lib/strnlen.c.
-  test $ac_cv_func_strnlen_working = yes \
-    && AC_LIBOBJ(strnlen)
-])
-
-AC_DEFUN([jm_PREREQ_TEMPNAME],
-[
-  AC_HEADER_STDC
-  AC_HEADER_STAT
-  AC_CHECK_HEADERS(fcntl.h sys/time.h stdint.h unistd.h)
-  AC_CHECK_FUNCS(__secure_getenv gettimeofday)
-  AC_CHECK_DECLS([getenv])
-])
-
-AC_DEFUN([jm_PREREQ_XGETCWD],
-[
-  AC_C_PROTOTYPES
-  AC_CHECK_HEADERS(limits.h stdlib.h sys/param.h unistd.h)
-  AC_CHECK_FUNCS(getcwd)
-  AC_FUNC_GETCWD_NULL
-])
-
-AC_DEFUN([jm_PREREQ_XREADLINK],
-[
-  AC_C_PROTOTYPES
-  AC_CHECK_HEADERS(limits.h stdlib.h sys/types.h unistd.h)
-])
-
-
-# Copyright 1996, 1997, 1998, 2000, 2001, 2002  Free Software Foundation, Inc.
-
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2, or (at your option)
-# any later version.
-
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-# 02111-1307, USA.
-
-# serial 2
-
-AC_DEFUN([AM_C_PROTOTYPES],
-[AC_REQUIRE([AM_PROG_CC_STDC])
-AC_REQUIRE([AC_PROG_CPP])
-AC_MSG_CHECKING([for function prototypes])
-if test "$am_cv_prog_cc_stdc" != no; then
-  AC_MSG_RESULT(yes)
-  AC_DEFINE(PROTOTYPES,1,[Define if compiler has function prototypes])
-  U= ANSI2KNR=
-else
-  AC_MSG_RESULT(no)
-  U=_ ANSI2KNR=./ansi2knr
-fi
-# Ensure some checks needed by ansi2knr itself.
-AC_HEADER_STDC
-AC_CHECK_HEADERS(string.h)
-AC_SUBST(U)dnl
-AC_SUBST(ANSI2KNR)dnl
-])
-
-AU_DEFUN([fp_C_PROTOTYPES], [AM_C_PROTOTYPES])
-
-
-# Copyright 1996, 1997, 1999, 2000, 2001, 2002  Free Software Foundation, Inc.
-
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2, or (at your option)
-# any later version.
-
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-# 02111-1307, USA.
-
-# serial 2
-
-# @defmac AC_PROG_CC_STDC
-# @maindex PROG_CC_STDC
-# @ovindex CC
-# If the C compiler in not in ANSI C mode by default, try to add an option
-# to output variable @code{CC} to make it so.  This macro tries various
-# options that select ANSI C on some system or another.  It considers the
-# compiler to be in ANSI C mode if it handles function prototypes correctly.
-#
-# If you use this macro, you should check after calling it whether the C
-# compiler has been set to accept ANSI C; if not, the shell variable
-# @code{am_cv_prog_cc_stdc} is set to @samp{no}.  If you wrote your source
-# code in ANSI C, you can make an un-ANSIfied copy of it by using the
-# program @code{ansi2knr}, which comes with Ghostscript.
-# @end defmac
-
-AC_DEFUN([AM_PROG_CC_STDC],
-[AC_REQUIRE([AC_PROG_CC])
-AC_BEFORE([$0], [AC_C_INLINE])
-AC_BEFORE([$0], [AC_C_CONST])
-dnl Force this before AC_PROG_CPP.  Some cpp's, eg on HPUX, require
-dnl a magic option to avoid problems with ANSI preprocessor commands
-dnl like #elif.
-dnl FIXME: can't do this because then AC_AIX won't work due to a
-dnl circular dependency.
-dnl AC_BEFORE([$0], [AC_PROG_CPP])
-AC_MSG_CHECKING([for ${CC-cc} option to accept ANSI C])
-AC_CACHE_VAL(am_cv_prog_cc_stdc,
-[am_cv_prog_cc_stdc=no
-ac_save_CC="$CC"
-# Don't try gcc -ansi; that turns off useful extensions and
-# breaks some systems' header files.
-# AIX			-qlanglvl=ansi
-# Ultrix and OSF/1	-std1
-# HP-UX 10.20 and later	-Ae
-# HP-UX older versions	-Aa -D_HPUX_SOURCE
-# SVR4			-Xc -D__EXTENSIONS__
-for ac_arg in "" -qlanglvl=ansi -std1 -Ae "-Aa -D_HPUX_SOURCE" "-Xc -D__EXTENSIONS__"
-do
-  CC="$ac_save_CC $ac_arg"
-  AC_TRY_COMPILE(
-[#include <stdarg.h>
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-/* Most of the following tests are stolen from RCS 5.7's src/conf.sh.  */
-struct buf { int x; };
-FILE * (*rcsopen) (struct buf *, struct stat *, int);
-static char *e (p, i)
-     char **p;
-     int i;
-{
-  return p[i];
-}
-static char *f (char * (*g) (char **, int), char **p, ...)
-{
-  char *s;
-  va_list v;
-  va_start (v,p);
-  s = g (p, va_arg (v,int));
-  va_end (v);
-  return s;
-}
-int test (int i, double x);
-struct s1 {int (*f) (int a);};
-struct s2 {int (*f) (double a);};
-int pairnames (int, char **, FILE *(*)(struct buf *, struct stat *, int), int, int);
-int argc;
-char **argv;
-], [
-return f (e, argv, 0) != argv[0]  ||  f (e, argv, 1) != argv[1];
-],
-[am_cv_prog_cc_stdc="$ac_arg"; break])
-done
-CC="$ac_save_CC"
-])
-if test -z "$am_cv_prog_cc_stdc"; then
-  AC_MSG_RESULT([none needed])
-else
-  AC_MSG_RESULT([$am_cv_prog_cc_stdc])
-fi
-case "x$am_cv_prog_cc_stdc" in
-  x|xno) ;;
-  *) CC="$CC $am_cv_prog_cc_stdc" ;;
-esac
-])
-
-AU_DEFUN([fp_PROG_CC_STDC], [AM_PROG_CC_STDC])
-
-#serial 18
-
-dnl This is just a wrapper function to encapsulate this kludge.
-dnl Putting it in a separate file like this helps share it between
-dnl different packages.
-AC_DEFUN([jm_CHECK_DECLS],
-[
-  AC_REQUIRE([_jm_DECL_HEADERS])
-  AC_REQUIRE([AC_HEADER_TIME])
-  headers='
-#include <stdio.h>
-#if HAVE_STRING_H
-# if !STDC_HEADERS && HAVE_MEMORY_H
-#  include <memory.h>
-# endif
-# include <string.h>
-#else
-# if HAVE_STRINGS_H
-#  include <strings.h>
-# endif
-#endif
-#if HAVE_STDLIB_H
-# include <stdlib.h>
-#endif
-#if HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-
-#include <sys/types.h>
-#if TIME_WITH_SYS_TIME
-# include <sys/time.h>
-# include <time.h>
-#else
-# if HAVE_SYS_TIME_H
-#  include <sys/time.h>
-# else
-#  include <time.h>
-# endif
-#endif
-
-#if HAVE_UTMP_H
-# include <utmp.h>
-#endif
-
-#if HAVE_GRP_H
-# include <grp.h>
-#endif
-
-#if HAVE_PWD_H
-# include <pwd.h>
-#endif
-'
-
-  AC_CHECK_DECLS([
-    free,
-    getenv,
-    geteuid,
-    getgrgid,
-    getlogin,
-    getpwuid,
-    getuid,
-    getutent,
-    lseek,
-    malloc,
-    memchr,
-    memrchr,
-    nanosleep,
-    realloc,
-    stpcpy,
-    strndup,
-    strnlen,
-    strstr,
-    strtoul,
-    strtoull,
-    ttyname], , , $headers)
-])
-
-dnl FIXME: when autoconf has support for it.
-dnl This is a little helper so we can require these header checks.
-AC_DEFUN([_jm_DECL_HEADERS],
-[
-  AC_REQUIRE([AC_HEADER_STDC])
-  AC_CHECK_HEADERS(grp.h memory.h pwd.h string.h strings.h stdlib.h \
-                   unistd.h sys/time.h utmp.h utmpx.h)
-])
-
-# uintmax_t.m4 serial 6 (gettext-0.11)
-dnl Copyright (C) 1997-2002 Free Software Foundation, Inc.
-dnl This file is free software, distributed under the terms of the GNU
-dnl General Public License.  As a special exception to the GNU General
-dnl Public License, this file may be distributed as part of a program
-dnl that contains a configuration script generated by Autoconf, under
-dnl the same distribution terms as the rest of that program.
-
-dnl From Paul Eggert.
-
-AC_PREREQ(2.13)
-
-# Define uintmax_t to `unsigned long' or `unsigned long long'
-# if <inttypes.h> does not exist.
-
-AC_DEFUN([jm_AC_TYPE_UINTMAX_T],
-[
-  AC_REQUIRE([jm_AC_HEADER_INTTYPES_H])
-  AC_REQUIRE([jm_AC_HEADER_STDINT_H])
-  if test $jm_ac_cv_header_inttypes_h = no && test $jm_ac_cv_header_stdint_h = no; then
-    AC_REQUIRE([jm_AC_TYPE_UNSIGNED_LONG_LONG])
-    test $ac_cv_type_unsigned_long_long = yes \
-      && ac_type='unsigned long long' \
-      || ac_type='unsigned long'
-    AC_DEFINE_UNQUOTED(uintmax_t, $ac_type,
-  [Define to unsigned long or unsigned long long
-   if <inttypes.h> and <stdint.h> don't define.])
-  fi
-])
-
-# inttypes_h.m4 serial 4 (gettext-0.11.4)
-dnl Copyright (C) 1997-2002 Free Software Foundation, Inc.
-dnl This file is free software, distributed under the terms of the GNU
-dnl General Public License.  As a special exception to the GNU General
-dnl Public License, this file may be distributed as part of a program
-dnl that contains a configuration script generated by Autoconf, under
-dnl the same distribution terms as the rest of that program.
-
-dnl From Paul Eggert.
-
-# Define HAVE_INTTYPES_H_WITH_UINTMAX if <inttypes.h> exists,
-# doesn't clash with <sys/types.h>, and declares uintmax_t.
-
-AC_DEFUN([jm_AC_HEADER_INTTYPES_H],
-[
-  AC_CACHE_CHECK([for inttypes.h], jm_ac_cv_header_inttypes_h,
-  [AC_TRY_COMPILE(
-    [#include <sys/types.h>
-#include <inttypes.h>],
-    [uintmax_t i = (uintmax_t) -1;],
-    jm_ac_cv_header_inttypes_h=yes,
-    jm_ac_cv_header_inttypes_h=no)])
-  if test $jm_ac_cv_header_inttypes_h = yes; then
-    AC_DEFINE_UNQUOTED(HAVE_INTTYPES_H_WITH_UINTMAX, 1,
-[Define if <inttypes.h> exists, doesn't clash with <sys/types.h>,
-   and declares uintmax_t. ])
-  fi
-])
-
-# stdint_h.m4 serial 2 (gettext-0.11.4)
-dnl Copyright (C) 1997-2002 Free Software Foundation, Inc.
-dnl This file is free software, distributed under the terms of the GNU
-dnl General Public License.  As a special exception to the GNU General
-dnl Public License, this file may be distributed as part of a program
-dnl that contains a configuration script generated by Autoconf, under
-dnl the same distribution terms as the rest of that program.
-
-dnl From Paul Eggert.
-
-# Define HAVE_STDINT_H_WITH_UINTMAX if <stdint.h> exists,
-# doesn't clash with <sys/types.h>, and declares uintmax_t.
-
-AC_DEFUN([jm_AC_HEADER_STDINT_H],
-[
-  AC_CACHE_CHECK([for stdint.h], jm_ac_cv_header_stdint_h,
-  [AC_TRY_COMPILE(
-    [#include <sys/types.h>
-#include <stdint.h>],
-    [uintmax_t i = (uintmax_t) -1;],
-    jm_ac_cv_header_stdint_h=yes,
-    jm_ac_cv_header_stdint_h=no)])
-  if test $jm_ac_cv_header_stdint_h = yes; then
-    AC_DEFINE_UNQUOTED(HAVE_STDINT_H_WITH_UINTMAX, 1,
-[Define if <stdint.h> exists, doesn't clash with <sys/types.h>,
-   and declares uintmax_t. ])
-  fi
-])
-
-# ulonglong.m4 serial 2 (fileutils-4.0.32, gettext-0.10.40)
-dnl Copyright (C) 1999-2002 Free Software Foundation, Inc.
-dnl This file is free software, distributed under the terms of the GNU
-dnl General Public License.  As a special exception to the GNU General
-dnl Public License, this file may be distributed as part of a program
-dnl that contains a configuration script generated by Autoconf, under
-dnl the same distribution terms as the rest of that program.
-
-dnl From Paul Eggert.
-
-AC_DEFUN([jm_AC_TYPE_UNSIGNED_LONG_LONG],
-[
-  AC_CACHE_CHECK([for unsigned long long], ac_cv_type_unsigned_long_long,
-  [AC_TRY_LINK([unsigned long long ull = 1; int i = 63;],
-    [unsigned long long ullmax = (unsigned long long) -1;
-     return ull << i | ull >> i | ullmax / ull | ullmax % ull;],
-    ac_cv_type_unsigned_long_long=yes,
-    ac_cv_type_unsigned_long_long=no)])
-  if test $ac_cv_type_unsigned_long_long = yes; then
-    AC_DEFINE(HAVE_UNSIGNED_LONG_LONG, 1,
-      [Define if you have the unsigned long long type.])
-  fi
-])
-
-#serial 1
+#serial 2
 
 # On some systems (e.g., HPUX-10.20, SunOS4.1.4, solaris2.5.1), mkstemp has the
 # silly limit that it can create no more than 26 files from a given template.
@@ -1556,6 +970,224 @@ AC_DEFUN([UTILS_FUNC_MKSTEMP],
     AC_LIBOBJ(tempname)
     AC_DEFINE(mkstemp, rpl_mkstemp,
       [Define to rpl_mkstemp if the replacement function should be used.])
+    gl_PREREQ_MKSTEMP
+    jm_PREREQ_TEMPNAME
+  fi
+])
+
+# Prerequisites of lib/mkstemp.c.
+AC_DEFUN([gl_PREREQ_MKSTEMP],
+[
+])
+
+# Prerequisites of lib/tempname.c.
+AC_DEFUN([jm_PREREQ_TEMPNAME],
+[
+  AC_REQUIRE([AC_HEADER_STDC])
+  AC_REQUIRE([AC_HEADER_STAT])
+  AC_CHECK_HEADERS_ONCE(fcntl.h sys/time.h unistd.h)
+  AC_CHECK_HEADERS(stdint.h)
+  AC_CHECK_FUNCS(__secure_getenv gettimeofday)
+  AC_CHECK_DECLS_ONCE(getenv)
+  AC_REQUIRE([jm_AC_TYPE_UINTMAX_T])
+])
+
+# onceonly_2_57.m4 serial 1
+dnl Copyright (C) 2002 Free Software Foundation, Inc.
+dnl This file is free software, distributed under the terms of the GNU
+dnl General Public License.  As a special exception to the GNU General
+dnl Public License, this file may be distributed as part of a program
+dnl that contains a configuration script generated by Autoconf, under
+dnl the same distribution terms as the rest of that program.
+
+dnl This file defines some "once only" variants of standard autoconf macros.
+dnl   AC_CHECK_HEADERS_ONCE         like  AC_CHECK_HEADERS
+dnl   AC_CHECK_FUNCS_ONCE           like  AC_CHECK_FUNCS
+dnl   AC_CHECK_DECLS_ONCE           like  AC_CHECK_DECLS
+dnl   AC_REQUIRE([AC_HEADER_STDC])  like  AC_HEADER_STDC
+dnl The advantage is that the check for each of the headers/functions/decls
+dnl will be put only once into the 'configure' file. It keeps the size of
+dnl the 'configure' file down, and avoids redundant output when 'configure'
+dnl is run.
+dnl The drawback is that the checks cannot be conditionalized. If you write
+dnl   if some_condition; then gl_CHECK_HEADERS(stdlib.h); fi
+dnl inside an AC_DEFUNed function, the gl_CHECK_HEADERS macro call expands to
+dnl empty, and the check will be inserted before the body of the AC_DEFUNed
+dnl function.
+
+dnl This is like onceonly.m4, except that it uses diversions to named sections
+dnl DEFAULTS and INIT_PREPARE in order to check all requested headers at once,
+dnl thus reducing the size of 'configure'. Works with autoconf-2.57. The
+dnl size reduction is ca. 9%.
+
+# AC_CHECK_HEADERS_ONCE(HEADER1 HEADER2 ...) is a once-only variant of
+# AC_CHECK_HEADERS(HEADER1 HEADER2 ...).
+AC_DEFUN([AC_CHECK_HEADERS_ONCE], [
+  :
+  AC_FOREACH([gl_HEADER_NAME], [$1], [
+    AC_DEFUN([gl_CHECK_HEADER_]translit(gl_HEADER_NAME,[./-], [___]), [
+      m4_divert_text([INIT_PREPARE],
+        [gl_header_list="$gl_header_list gl_HEADER_NAME"])
+      gl_HEADERS_EXPANSION
+      AH_TEMPLATE(AS_TR_CPP(HAVE_[]gl_HEADER_NAME),
+        [Define to 1 if you have the <]gl_HEADER_NAME[> header file.])
+    ])
+    AC_REQUIRE([gl_CHECK_HEADER_]translit(gl_HEADER_NAME,[./-], [___]))
+  ])
+])
+m4_define([gl_HEADERS_EXPANSION], [
+  m4_divert_text([DEFAULTS], [gl_header_list=])
+  AC_CHECK_HEADERS([$gl_header_list])
+  m4_define([gl_HEADERS_EXPANSION], [])
+])
+
+# AC_CHECK_FUNCS_ONCE(FUNC1 FUNC2 ...) is a once-only variant of
+# AC_CHECK_FUNCS(FUNC1 FUNC2 ...).
+AC_DEFUN([AC_CHECK_FUNCS_ONCE], [
+  :
+  AC_FOREACH([gl_FUNC_NAME], [$1], [
+    AC_DEFUN([gl_CHECK_FUNC_]gl_FUNC_NAME, [
+      m4_divert_text([INIT_PREPARE],
+        [gl_func_list="$gl_func_list gl_FUNC_NAME"])
+      gl_FUNCS_EXPANSION
+      AH_TEMPLATE(AS_TR_CPP(HAVE_[]gl_FUNC_NAME),
+        [Define to 1 if you have the `]gl_FUNC_NAME[' function.])
+    ])
+    AC_REQUIRE([gl_CHECK_FUNC_]gl_FUNC_NAME)
+  ])
+])
+m4_define([gl_FUNCS_EXPANSION], [
+  m4_divert_text([DEFAULTS], [gl_func_list=])
+  AC_CHECK_FUNCS([$gl_func_list])
+  m4_define([gl_FUNCS_EXPANSION], [])
+])
+
+# AC_CHECK_DECLS_ONCE(DECL1 DECL2 ...) is a once-only variant of
+# AC_CHECK_DECLS(DECL1, DECL2, ...).
+AC_DEFUN([AC_CHECK_DECLS_ONCE], [
+  :
+  AC_FOREACH([gl_DECL_NAME], [$1], [
+    AC_DEFUN([gl_CHECK_DECL_]gl_DECL_NAME, [
+      AC_CHECK_DECLS(gl_DECL_NAME)
+    ])
+    AC_REQUIRE([gl_CHECK_DECL_]gl_DECL_NAME)
+  ])
+])
+
+# uintmax_t.m4 serial 7 (gettext-0.11.6)
+dnl Copyright (C) 1997-2002 Free Software Foundation, Inc.
+dnl This file is free software, distributed under the terms of the GNU
+dnl General Public License.  As a special exception to the GNU General
+dnl Public License, this file may be distributed as part of a program
+dnl that contains a configuration script generated by Autoconf, under
+dnl the same distribution terms as the rest of that program.
+
+dnl From Paul Eggert.
+
+AC_PREREQ(2.13)
+
+# Define uintmax_t to 'unsigned long' or 'unsigned long long'
+# if it is not already defined in <stdint.h> or <inttypes.h>.
+
+AC_DEFUN([jm_AC_TYPE_UINTMAX_T],
+[
+  AC_REQUIRE([jm_AC_HEADER_INTTYPES_H])
+  AC_REQUIRE([jm_AC_HEADER_STDINT_H])
+  if test $jm_ac_cv_header_inttypes_h = no && test $jm_ac_cv_header_stdint_h = no; then
+    AC_REQUIRE([jm_AC_TYPE_UNSIGNED_LONG_LONG])
+    test $ac_cv_type_unsigned_long_long = yes \
+      && ac_type='unsigned long long' \
+      || ac_type='unsigned long'
+    AC_DEFINE_UNQUOTED(uintmax_t, $ac_type,
+      [Define to unsigned long or unsigned long long
+       if <stdint.h> and <inttypes.h> don't define.])
+  else
+    AC_DEFINE(HAVE_UINTMAX_T, 1,
+      [Define if you have the 'uintmax_t' type in <stdint.h> or <inttypes.h>.])
+  fi
+])
+
+# inttypes_h.m4 serial 5 (gettext-0.11.6)
+dnl Copyright (C) 1997-2002 Free Software Foundation, Inc.
+dnl This file is free software, distributed under the terms of the GNU
+dnl General Public License.  As a special exception to the GNU General
+dnl Public License, this file may be distributed as part of a program
+dnl that contains a configuration script generated by Autoconf, under
+dnl the same distribution terms as the rest of that program.
+
+dnl From Paul Eggert.
+
+# Define HAVE_INTTYPES_H_WITH_UINTMAX if <inttypes.h> exists,
+# doesn't clash with <sys/types.h>, and declares uintmax_t.
+
+AC_DEFUN([jm_AC_HEADER_INTTYPES_H],
+[
+  AC_CACHE_CHECK([for inttypes.h], jm_ac_cv_header_inttypes_h,
+  [AC_TRY_COMPILE(
+    [#include <sys/types.h>
+#include <inttypes.h>],
+    [uintmax_t i = (uintmax_t) -1;],
+    jm_ac_cv_header_inttypes_h=yes,
+    jm_ac_cv_header_inttypes_h=no)])
+  if test $jm_ac_cv_header_inttypes_h = yes; then
+    AC_DEFINE_UNQUOTED(HAVE_INTTYPES_H_WITH_UINTMAX, 1,
+      [Define if <inttypes.h> exists, doesn't clash with <sys/types.h>,
+       and declares uintmax_t. ])
+  fi
+])
+
+# stdint_h.m4 serial 3 (gettext-0.11.6)
+dnl Copyright (C) 1997-2002 Free Software Foundation, Inc.
+dnl This file is free software, distributed under the terms of the GNU
+dnl General Public License.  As a special exception to the GNU General
+dnl Public License, this file may be distributed as part of a program
+dnl that contains a configuration script generated by Autoconf, under
+dnl the same distribution terms as the rest of that program.
+
+dnl From Paul Eggert.
+
+# Define HAVE_STDINT_H_WITH_UINTMAX if <stdint.h> exists,
+# doesn't clash with <sys/types.h>, and declares uintmax_t.
+
+AC_DEFUN([jm_AC_HEADER_STDINT_H],
+[
+  AC_CACHE_CHECK([for stdint.h], jm_ac_cv_header_stdint_h,
+  [AC_TRY_COMPILE(
+    [#include <sys/types.h>
+#include <stdint.h>],
+    [uintmax_t i = (uintmax_t) -1;],
+    jm_ac_cv_header_stdint_h=yes,
+    jm_ac_cv_header_stdint_h=no)])
+  if test $jm_ac_cv_header_stdint_h = yes; then
+    AC_DEFINE_UNQUOTED(HAVE_STDINT_H_WITH_UINTMAX, 1,
+      [Define if <stdint.h> exists, doesn't clash with <sys/types.h>,
+       and declares uintmax_t. ])
+  fi
+])
+
+# ulonglong.m4 serial 3
+dnl Copyright (C) 1999-2003 Free Software Foundation, Inc.
+dnl This file is free software, distributed under the terms of the GNU
+dnl General Public License.  As a special exception to the GNU General
+dnl Public License, this file may be distributed as part of a program
+dnl that contains a configuration script generated by Autoconf, under
+dnl the same distribution terms as the rest of that program.
+
+dnl From Paul Eggert.
+
+# Define HAVE_UNSIGNED_LONG_LONG if 'unsigned long long' works.
+
+AC_DEFUN([jm_AC_TYPE_UNSIGNED_LONG_LONG],
+[
+  AC_CACHE_CHECK([for unsigned long long], ac_cv_type_unsigned_long_long,
+  [AC_TRY_LINK([unsigned long long ull = 1ULL; int i = 63;],
+    [unsigned long long ullmax = (unsigned long long) -1;
+     return ull << i | ull >> i | ullmax / ull | ullmax % ull;],
+    ac_cv_type_unsigned_long_long=yes,
+    ac_cv_type_unsigned_long_long=no)])
+  if test $ac_cv_type_unsigned_long_long = yes; then
+    AC_DEFINE(HAVE_UNSIGNED_LONG_LONG, 1,
+      [Define if you have the 'unsigned long long' type.])
   fi
 ])
 

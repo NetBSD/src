@@ -1,9 +1,10 @@
-/*	$NetBSD: insertion.c,v 1.1.1.2 2003/01/17 14:54:35 wiz Exp $	*/
+/*	$NetBSD: insertion.c,v 1.1.1.3 2003/02/13 08:50:55 wiz Exp $	*/
 
 /* insertion.c -- insertions for Texinfo.
-   Id: insertion.c,v 1.12 2002/11/11 12:37:34 feloy Exp
+   Id: insertion.c,v 1.14 2003/01/02 23:46:29 karl Exp
 
-   Copyright (C) 1998, 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
+   Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003 Free Software
+   Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -903,6 +904,7 @@ end_insertion (type)
       current_indent -= default_indentation_increment;
       if (html)
         add_word ("</dl>\n");
+      close_insertion_paragraph ();
       break;
 
     case itemize:
@@ -1060,6 +1062,10 @@ cm_insert_copying ()
          full expansion on copying_text when we saved it.  */
       insert_string (copying_text);
       insert ('\n');
+      
+      /* Update output_position so that the node positions in the tag
+         tables will take account of the copying text.  */
+      flush_output ();
     }
 }
 

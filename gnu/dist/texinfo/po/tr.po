@@ -1,4 +1,4 @@
-# texinfo-4.2e Türkçe Çevirisi
+# texinfo-4.3c Türkçe Çevirisi
 # Copyright (C) 2002 Free Software Foundation, Inc.
 # Eyüp Hakan Duran <hakan_duran@hotmail.com>, 2002.
 # This file is distributed under the same license as the texinfo package.
@@ -6,9 +6,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: texinfo-4.2e\n"
-"POT-Creation-Date: 2002-11-13 04:36-0800\n"
-"PO-Revision-Date: 2002-11-12 17:07GMT\n"
+"Project-Id-Version: texinfo-4.3c\n"
+"POT-Creation-Date: 2003-01-24 13:32-0800\n"
+"PO-Revision-Date: 2003-01-27 10:05GMT\n"
 "Last-Translator: Eyüp Hakan Duran <hakan_duran@hotmail.com>\n"
 "Language-Team: Turkish <gnu-tr-u12a@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -231,8 +231,8 @@ msgstr ""
 msgid "Try --help for more information.\n"
 msgstr "Daha fazla bilgi için --help seçeneðini kullanýn.\n"
 
-#: info/info.c:279 info/infokey.c:139 makeinfo/makeinfo.c:696
-#: util/install-info.c:1250 util/texindex.c:346
+#: info/info.c:279 info/infokey.c:139 makeinfo/makeinfo.c:698
+#: util/install-info.c:1252 util/texindex.c:346
 #, c-format
 msgid ""
 "Copyright (C) %s Free Software Foundation, Inc.\n"
@@ -949,22 +949,22 @@ msgstr ""
 "  --help                bu yardýmý gösterir ve çýkar\n"
 "  --version             sürüm bilgisini gösterir ve çýkar.\n"
 
-#: info/infomap.c:1398
+#: info/infomap.c:1512
 #, c-format
 msgid "Ignoring invalid infokey file `%s' - too small"
 msgstr "Geçersiz infokey dosyasý `%s' yoksayýlýyor - çok küçük"
 
-#: info/infomap.c:1401
+#: info/infomap.c:1515
 #, c-format
 msgid "Ignoring invalid infokey file `%s' - too big"
 msgstr "Geçersiz infokey dosyasý `%s' yoksayýlýyor - çok büyük"
 
-#: info/infomap.c:1414
+#: info/infomap.c:1528
 #, c-format
 msgid "Error reading infokey file `%s' - short read"
 msgstr "infokey dosyasý `%s' okumada hata - çok kýsa"
 
-#: info/infomap.c:1432
+#: info/infomap.c:1546
 #, c-format
 msgid ""
 "Invalid infokey file `%s' (bad magic numbers) -- run infokey to update it"
@@ -972,12 +972,12 @@ msgstr ""
 "Geçersiz infokey dosyasý `%s' (hatalý sihirli numaralar) -- güncellemek için "
 "infokey yürütün"
 
-#: info/infomap.c:1438
+#: info/infomap.c:1552
 #, c-format
 msgid "Your infokey file `%s' is out of date -- run infokey to update it"
 msgstr "infokey dosyanýz `%s' eskimiþ -- güncellemek için infokey yürütün"
 
-#: info/infomap.c:1451
+#: info/infomap.c:1565
 #, c-format
 msgid ""
 "Invalid infokey file `%s' (bad section length) -- run infokey to update it"
@@ -985,7 +985,7 @@ msgstr ""
 "Geçersiz infokey dosyasý `%s' (hatalý bölüm uzunluðu) -- güncellemek için "
 "infokey yürütün"
 
-#: info/infomap.c:1471
+#: info/infomap.c:1585
 #, c-format
 msgid ""
 "Invalid infokey file `%s' (bad section code) -- run infokey to update it"
@@ -993,11 +993,11 @@ msgstr ""
 "Geçersiz infokey dosyasý `%s' (hatalý bölüm kodu) -- güncellemek için "
 "infokey yürütün"
 
-#: info/infomap.c:1609
+#: info/infomap.c:1723
 msgid "Bad data in infokey file -- some key bindings ignored"
 msgstr "Infokey dosyasýnda hatalý veri -- bazý tuþ baðlantýlarý yoksayýldý"
 
-#: info/infomap.c:1660
+#: info/infomap.c:1774
 msgid "Bad data in infokey file -- some var settings ignored"
 msgstr "Infokey dosyasýnda hatalý veri -- bazý deðiþken ayarlarý yoksayýldý"
 
@@ -1104,7 +1104,7 @@ msgstr "Satýr sonuna gider"
 msgid "Move to the start of the line"
 msgstr "Satýr baþýna gider"
 
-#: info/session.c:885 makeinfo/node.c:1364
+#: info/session.c:885 makeinfo/node.c:1365
 msgid "Next"
 msgstr "Sonraki"
 
@@ -1524,65 +1524,65 @@ msgstr "I-arama: "
 msgid "Failing "
 msgstr "Baþarýlamýyor "
 
-#: info/session.c:4340
+#: info/session.c:4346
 msgid "Move to the previous cross reference"
 msgstr "Önceki çapraz baþvuruya gider"
 
-#: info/session.c:4349
+#: info/session.c:4355
 msgid "Move to the next cross reference"
 msgstr "Sonraki çapraz baþvuruya gider"
 
-#: info/session.c:4359
+#: info/session.c:4365
 msgid "Select reference or menu item appearing on this line"
 msgstr "Bu satýrdaki referans ya da menü öðesini seçer"
 
-#: info/session.c:4381
+#: info/session.c:4387
 msgid "Cancel current operation"
 msgstr "Mevcut iþlemi iptal eder"
 
-#: info/session.c:4388
+#: info/session.c:4394
 msgid "Quit"
 msgstr "Çýk"
 
-#: info/session.c:4397
+#: info/session.c:4403
 msgid "Move the cursor to a specific line of the window"
 msgstr "Ýmleci pencerenin belirli bir satýrýna taþýr"
 
-#: info/session.c:4429
+#: info/session.c:4435
 msgid "Redraw the display"
 msgstr "Görüntüyü yeniden çizer"
 
-#: info/session.c:4466
+#: info/session.c:4472
 msgid "Quit using Info"
 msgstr "Info'dan çýkar"
 
-#: info/session.c:4479
+#: info/session.c:4485
 msgid "Run command bound to this key's lowercase variant"
 msgstr "Bu tuþun küçük harfine atanmýþ komutu yürütür"
 
-#: info/session.c:4491
+#: info/session.c:4497
 #, c-format
 msgid "Unknown command (%s)."
 msgstr "Bilinmeyen komut (%s)."
 
-#: info/session.c:4494
+#: info/session.c:4500
 msgid "\"\" is invalid"
 msgstr "\"\" geçersiz"
 
-#: info/session.c:4495
+#: info/session.c:4501
 #, c-format
 msgid "\"%s\" is invalid"
 msgstr "\"%s\" geçersiz"
 
-#: info/session.c:4713
+#: info/session.c:4719
 msgid "Add this digit to the current numeric argument"
 msgstr "Mevcut sayýsal argümana bu sayýyý ekle"
 
-#: info/session.c:4722
+#: info/session.c:4728
 msgid "Start (or multiply by 4) the current numeric argument"
 msgstr "Mevcut sayýsal argümaný baþlat (ya da 4'le çarp)"
 
-#: info/session.c:4737
+#: info/session.c:4743
 msgid "Internally used by \\[universal-argument]"
 msgstr "Dahili olarak \\[universal argument] tarafýndan kullanýlýyor"
 
@@ -1680,152 +1680,152 @@ msgstr "-%s%s-Info: (%s)%s, %d satýr --%s--"
 msgid " Subfile: %s"
 msgstr " Altdosya: %s"
 
-#: lib/getopt.c:692 lib/getopt.c:704
+#: lib/getopt.c:688 lib/getopt.c:700
 #, c-format
 msgid "%s: option `%s' is ambiguous\n"
 msgstr "%s: `%s' seçeneði belirsiz\n"
 
-#: lib/getopt.c:737 lib/getopt.c:741
+#: lib/getopt.c:733 lib/getopt.c:737
 #, c-format
 msgid "%s: option `--%s' doesn't allow an argument\n"
 msgstr "%s: `--%s' seçeneði argümansýz kullanýlýr\n"
 
-#: lib/getopt.c:750 lib/getopt.c:755
+#: lib/getopt.c:746 lib/getopt.c:751
 #, c-format
 msgid "%s: option `%c%s' doesn't allow an argument\n"
 msgstr "%s: `%c%s' seçeneði argümansýz kullanýlýr\n"
 
-#: lib/getopt.c:791 lib/getopt.c:804 lib/getopt.c:1093 lib/getopt.c:1106
+#: lib/getopt.c:787 lib/getopt.c:800 lib/getopt.c:1089 lib/getopt.c:1102
 #, c-format
 msgid "%s: option `%s' requires an argument\n"
 msgstr "%s: `%s' seçeneði bir argümanla kullanýlýr\n"
 
-#: lib/getopt.c:842 lib/getopt.c:845
+#: lib/getopt.c:838 lib/getopt.c:841
 #, c-format
 msgid "%s: unrecognized option `--%s'\n"
 msgstr "%s: `--%s' seçeneði bilinmiyor\n"
 
-#: lib/getopt.c:853 lib/getopt.c:856
+#: lib/getopt.c:849 lib/getopt.c:852
 #, c-format
 msgid "%s: unrecognized option `%c%s'\n"
 msgstr "%s: `%c%s' seçeneði bilinmiyor\n"
 
-#: lib/getopt.c:903 lib/getopt.c:906
+#: lib/getopt.c:899 lib/getopt.c:902
 #, c-format
 msgid "%s: illegal option -- %c\n"
 msgstr "%s: kuraldýþý seçenek -- %c\n"
 
-#: lib/getopt.c:912 lib/getopt.c:915
+#: lib/getopt.c:908 lib/getopt.c:911
 #, c-format
 msgid "%s: invalid option -- %c\n"
 msgstr "%s: geçersiz seçenek -- %c\n"
 
-#: lib/getopt.c:962 lib/getopt.c:973 lib/getopt.c:1159 lib/getopt.c:1172
+#: lib/getopt.c:958 lib/getopt.c:969 lib/getopt.c:1155 lib/getopt.c:1168
 #, c-format
 msgid "%s: option requires an argument -- %c\n"
 msgstr "%s: seçenek bir argümanla kullanýlýr -- %c\n"
 
-#: lib/getopt.c:1025 lib/getopt.c:1036
+#: lib/getopt.c:1021 lib/getopt.c:1032
 #, c-format
 msgid "%s: option `-W %s' is ambiguous\n"
 msgstr "%s: `-W %s' seçeneði belirsiz\n"
 
-#: lib/getopt.c:1060 lib/getopt.c:1072
+#: lib/getopt.c:1056 lib/getopt.c:1068
 #, c-format
 msgid "%s: option `-W %s' doesn't allow an argument\n"
 msgstr "%s: `-W %s' seçeneði argümansýz kullanýlýr\n"
 
-#: makeinfo/cmds.c:522
+#: makeinfo/cmds.c:523
 msgid "January"
 msgstr "Ocak"
 
-#: makeinfo/cmds.c:522
+#: makeinfo/cmds.c:523
 msgid "February"
 msgstr "Þubat"
 
-#: makeinfo/cmds.c:522
+#: makeinfo/cmds.c:523
 msgid "March"
 msgstr "Mart"
 
-#: makeinfo/cmds.c:522
+#: makeinfo/cmds.c:523
 msgid "April"
 msgstr "Nisan"
 
-#: makeinfo/cmds.c:522
+#: makeinfo/cmds.c:523
 msgid "May"
 msgstr "Mayýs"
 
-#: makeinfo/cmds.c:523
+#: makeinfo/cmds.c:524
 msgid "June"
 msgstr "Haziran"
 
-#: makeinfo/cmds.c:523
+#: makeinfo/cmds.c:524
 msgid "July"
 msgstr "Temmuz"
 
-#: makeinfo/cmds.c:523
+#: makeinfo/cmds.c:524
 msgid "August"
 msgstr "Aðustos"
 
-#: makeinfo/cmds.c:523
+#: makeinfo/cmds.c:524
 msgid "September"
 msgstr "Eylül"
 
-#: makeinfo/cmds.c:523
+#: makeinfo/cmds.c:524
 msgid "October"
 msgstr "Ekim"
 
-#: makeinfo/cmds.c:524
+#: makeinfo/cmds.c:525
 msgid "November"
 msgstr "Kasým"
 
-#: makeinfo/cmds.c:524
+#: makeinfo/cmds.c:525
 msgid "December"
 msgstr "Aralýk"
 
-#: makeinfo/cmds.c:666
+#: makeinfo/cmds.c:667
 #, c-format
 msgid "unlikely character %c in @var"
 msgstr "@var içinde düþük olasýlýklý karakter %c"
 
-#: makeinfo/cmds.c:709
+#: makeinfo/cmds.c:710
 msgid "@sc argument all uppercase, thus no effect"
 msgstr "@sc argümaný tamamen büyükharf(le yazýlmýþ), etkisiz"
 
-#: makeinfo/cmds.c:767
+#: makeinfo/cmds.c:768
 #, c-format
 msgid "`{' expected, but saw `%c'"
 msgstr "`{' beklenirdi, `%c' görüldü"
 
-#: makeinfo/cmds.c:797
+#: makeinfo/cmds.c:808
 msgid "end of file inside verb block"
 msgstr "fiil bloðu içinde dosya sonu"
 
-#: makeinfo/cmds.c:805
+#: makeinfo/cmds.c:816
 #, c-format
 msgid "`}' expected, but saw `%c'"
 msgstr "`}' beklenirdi, `%c' görüldü"
 
-#: makeinfo/cmds.c:970
+#: makeinfo/cmds.c:984
 #, c-format
 msgid "%c%s is obsolete"
 msgstr "%c%s kullanýmdan kalkmýþ"
 
-#: makeinfo/cmds.c:1049
+#: makeinfo/cmds.c:1063
 #, c-format
 msgid "@sp requires a positive numeric argument, not `%s'"
 msgstr "@sp pozitif bir sayýsal argüman gerektirir, `%s' deðil"
 
-#: makeinfo/cmds.c:1384 makeinfo/cmds.c:1410 makeinfo/footnote.c:81
+#: makeinfo/cmds.c:1400 makeinfo/cmds.c:1426 makeinfo/footnote.c:81
 #, c-format
 msgid "Bad argument to %c%s"
 msgstr "%c%s'ye hatalý argüman"
 
-#: makeinfo/cmds.c:1394 makeinfo/makeinfo.c:4156
+#: makeinfo/cmds.c:1410 makeinfo/makeinfo.c:4171
 msgid "asis"
 msgstr "asis"
 
-#: makeinfo/cmds.c:1396 makeinfo/makeinfo.c:4158
+#: makeinfo/cmds.c:1412 makeinfo/makeinfo.c:4173
 msgid "none"
 msgstr "yok"
 
@@ -1950,84 +1950,84 @@ msgstr "`%s' indeks girdisi tüm düðümlerin dýþýnda"
 msgid "(outside of any node)"
 msgstr "(tüm düðümlerin dýþýnda)"
 
-#: makeinfo/insertion.c:200
+#: makeinfo/insertion.c:201
 msgid "Broken-Type in insertion_type_pname"
 msgstr "insertion_type_pname içinde Kýrýk-Tip"
 
-#: makeinfo/insertion.c:275
+#: makeinfo/insertion.c:276
 msgid "Enumeration stack overflow"
 msgstr "Numaralandýrma yýðýn taþmasý"
 
-#: makeinfo/insertion.c:307
+#: makeinfo/insertion.c:308
 #, c-format
 msgid "lettering overflow, restarting at %c"
 msgstr "harflendirme taþmasý, %c'den yeniden baþlanýyor"
 
-#: makeinfo/insertion.c:580
+#: makeinfo/insertion.c:581
 #, c-format
 msgid "%s requires an argument: the formatter for %citem"
 msgstr "%s bir argüman gerektirir: %c öðesi için biçimlendirici"
 
-#: makeinfo/insertion.c:740
+#: makeinfo/insertion.c:741
 #, c-format
 msgid "`@end' expected `%s', but saw `%s'"
 msgstr "`@end'  `%1$s' beklerdi, `%2$s' gördü"
 
-#: makeinfo/insertion.c:986
+#: makeinfo/insertion.c:988
 #, c-format
 msgid "No matching `%cend %s'"
 msgstr "Eþleþen `%cend %s' yok"
 
-#: makeinfo/insertion.c:1147
+#: makeinfo/insertion.c:1153
 #, c-format
 msgid "%s requires letter or digit"
 msgstr "%s harf ya da rakam gerektirir"
 
-#: makeinfo/insertion.c:1227
+#: makeinfo/insertion.c:1233
 msgid "end of file inside verbatim block"
 msgstr "verbatim bloðu içinde dosya sonu"
 
-#: makeinfo/insertion.c:1406
+#: makeinfo/insertion.c:1412
 msgid "@menu seen before first @node, creating `Top' node"
 msgstr "önce Üst"
 
-#: makeinfo/insertion.c:1407
+#: makeinfo/insertion.c:1413
 msgid ""
 "perhaps your @top node should be wrapped in @ifnottex rather than @ifinfo?"
 msgstr ""
 "belki de sizin @top düðümünüz, @ifinfo'dan ziyade @ifnottex içine "
 "sarýlmalýdýr?"
 
-#: makeinfo/insertion.c:1419
+#: makeinfo/insertion.c:1425
 msgid "@detailmenu seen before first node, creating `Top' node"
 msgstr "@detailmenu ilk düðümden önce görüldü, `En Üst' düðüm oluþturuluyor"
 
-#: makeinfo/insertion.c:1434
+#: makeinfo/insertion.c:1440
 #, c-format
 msgid "Unmatched `%c%s'"
 msgstr "Eþleþmeyen `%c%s'"
 
-#: makeinfo/insertion.c:1441
+#: makeinfo/insertion.c:1447
 #, c-format
 msgid "`%c%s' needs something after it"
 msgstr "`%c%s' sonrasýnda birþeyler gereklidir"
 
-#: makeinfo/insertion.c:1447
+#: makeinfo/insertion.c:1453
 #, c-format
 msgid "Bad argument to `%s', `%s', using `%s'"
 msgstr "`%1$s''e hatalý argüman, `%2$s', `%3$s' kullanýlýyor"
 
-#: makeinfo/insertion.c:1543
+#: makeinfo/insertion.c:1549
 #, c-format
 msgid "@%s not meaningful inside `@%s' block"
 msgstr "`@%s' bloðu içinde @%s anlamlý deðil"
 
-#: makeinfo/insertion.c:1552
+#: makeinfo/insertion.c:1558
 #, c-format
 msgid "@itemx not meaningful inside `%s' block"
 msgstr "`%s' bloðunun içinde @itemx anlamlý deðil"
 
-#: makeinfo/insertion.c:1736
+#: makeinfo/insertion.c:1742
 #, c-format
 msgid "%c%s found outside of an insertion block"
 msgstr "%c%s, bir ekleme bloðunun dýþýnda bulundu"
@@ -2111,7 +2111,7 @@ msgstr "%s:%d: uyarý: "
 msgid "Too many errors!  Gave up.\n"
 msgstr "Çok sayýda hata!  Vazgeçildi.\n"
 
-#: makeinfo/makeinfo.c:353 makeinfo/makeinfo.c:2036
+#: makeinfo/makeinfo.c:353 makeinfo/makeinfo.c:2051
 #, c-format
 msgid "Misplaced %c"
 msgstr "Yanlýþ yerleþtirilmiþ %c"
@@ -2321,76 +2321,76 @@ msgstr ""
 "  makeinfo --no-split foo.texi          ne büyüklükte olursa olsun tek Info "
 "dosyasý yazar\n"
 
-#: makeinfo/makeinfo.c:577 makeinfo/makeinfo.c:600 makeinfo/makeinfo.c:662
-#: makeinfo/makeinfo.c:683
+#: makeinfo/makeinfo.c:579 makeinfo/makeinfo.c:602 makeinfo/makeinfo.c:664
+#: makeinfo/makeinfo.c:685
 #, c-format
 msgid "%s: %s arg must be numeric, not `%s'.\n"
 msgstr "%1$s: %2$s arg sayýsal olmalýdýr, `%3$s' deðil.\n"
 
-#: makeinfo/makeinfo.c:590
+#: makeinfo/makeinfo.c:592
 #, c-format
 msgid "Couldn't open macro expansion output `%s'"
 msgstr "Makro geniþleme çýktýsý açýlamadý `%s'"
 
-#: makeinfo/makeinfo.c:593
+#: makeinfo/makeinfo.c:595
 msgid "Cannot specify more than one macro expansion output"
 msgstr "Birden fazla makro geniþleme çýktýsý belirtilemez"
 
-#: makeinfo/makeinfo.c:631
+#: makeinfo/makeinfo.c:633
 #, c-format
 msgid "%s: --paragraph-indent arg must be numeric/`none'/`asis', not `%s'.\n"
 msgstr ""
 "%1$s: --paragraph-indent arg. sayýsal/`none'/`asis' olmalýdýr, `%2$s' "
 "deðil.\n"
 
-#: makeinfo/makeinfo.c:672
+#: makeinfo/makeinfo.c:674
 #, c-format
 msgid "%s: --footnote-style arg must be `separate' or `end', not `%s'.\n"
 msgstr ""
 "%1$s: --footnote-style arg. `separate' ya da `end' olmalýdýr, `%2$s' deðil.\n"
 
-#: makeinfo/makeinfo.c:731
+#: makeinfo/makeinfo.c:733
 #, c-format
 msgid "%s: missing file argument.\n"
 msgstr "%s: dosya argümaný eksik.\n"
 
-#: makeinfo/makeinfo.c:906
+#: makeinfo/makeinfo.c:921
 #, c-format
 msgid "Expected `%s'"
 msgstr "`%s' gerekir"
 
-#: makeinfo/makeinfo.c:1373
+#: makeinfo/makeinfo.c:1388
 msgid "File exists, but is not a directory"
 msgstr "Dosya mevcut, ancak bir dizin deðil"
 
-#: makeinfo/makeinfo.c:1374
+#: makeinfo/makeinfo.c:1389
 #, c-format
 msgid "Can't create directory `%s': %s"
 msgstr "`%1$s' dizini oluþturulamýyor: %2$s"
 
-#: makeinfo/makeinfo.c:1422
+#: makeinfo/makeinfo.c:1437
 #, c-format
 msgid "No `%s' found in `%s'"
 msgstr "`%2$s' içinde `%1$s' yok"
 
-#: makeinfo/makeinfo.c:1504
+#: makeinfo/makeinfo.c:1519
 #, c-format
 msgid "%s: Skipping macro expansion to stdout as Info output is going there.\n"
 msgstr ""
 "%s: Makro geniþlemesini, Info çýktýsý da oraya gittiðinden, stdout'a "
 "atlatýyor.\n"
 
-#: makeinfo/makeinfo.c:1534
+#: makeinfo/makeinfo.c:1549
 #, c-format
 msgid "Making %s file `%s' from `%s'.\n"
 msgstr "`%3$s''den %1$s dosya `%2$s' yapýlýyor.\n"
 
-#: makeinfo/makeinfo.c:1569
+#: makeinfo/makeinfo.c:1584
 #, c-format
 msgid "This is %s, produced by makeinfo version %s from %s.\n"
 msgstr "Bu %1$s, makeinfo sürümü %2$s tarafýndan, %3$s'den üretilmiþtir.\n"
 
-#: makeinfo/makeinfo.c:1591
+#: makeinfo/makeinfo.c:1606
 #, c-format
 msgid ""
 "%s: Removing macro output file `%s' due to errors; use --force to preserve.\n"
@@ -2398,97 +2398,97 @@ msgstr ""
 "%1$s: Makro çýktý dosyasý `%2$s' hatalardan dolayý siliniyor; korumak için --"
 "force kullanýnýz.\n"
 
-#: makeinfo/makeinfo.c:1635
+#: makeinfo/makeinfo.c:1650
 #, c-format
 msgid "%s: Removing output file `%s' due to errors; use --force to preserve.\n"
 msgstr ""
 "%1$s: Çýktý dosyasý `%2$s' hatalardan dolayý siliniyor; korumak için --force "
 "kullanýnýz.\n"
 
-#: makeinfo/makeinfo.c:1863
+#: makeinfo/makeinfo.c:1878
 #, c-format
 msgid "Unknown command `%s'"
 msgstr "Bilinmeyen komut `%s'"
 
-#: makeinfo/makeinfo.c:1885
+#: makeinfo/makeinfo.c:1900
 #, c-format
 msgid "Use braces to give a command as an argument to @%s"
 msgstr "@%s'e argüman olarak bir komut vermek için {} kullanýn"
 
-#: makeinfo/makeinfo.c:2078
+#: makeinfo/makeinfo.c:2093
 #, c-format
 msgid "%c%s expected `{...}'"
 msgstr "%c%s `{...}' bekledi"
 
-#: makeinfo/makeinfo.c:2108
+#: makeinfo/makeinfo.c:2123
 msgid "Unmatched }"
 msgstr "Eþleþmemiþ }"
 
-#: makeinfo/makeinfo.c:2158
+#: makeinfo/makeinfo.c:2173
 msgid "NO_NAME!"
 msgstr "ÝSÝMSÝZ!"
 
-#: makeinfo/makeinfo.c:2179
+#: makeinfo/makeinfo.c:2194
 #, c-format
 msgid "%c%s missing close brace"
 msgstr "%c%s eksik kapama }"
 
-#: makeinfo/makeinfo.c:2976
+#: makeinfo/makeinfo.c:2991
 msgid "First argument to cross-reference may not be empty"
 msgstr "Çapraz baþvuru kurulacak ilk argüman boþ olmayabilir"
 
-#: makeinfo/makeinfo.c:3036 makeinfo/makeinfo.c:3254 makeinfo/xml.c:1421
+#: makeinfo/makeinfo.c:3051 makeinfo/makeinfo.c:3269 makeinfo/xml.c:1422
 msgid "see "
 msgstr "bkz "
 
-#: makeinfo/makeinfo.c:3036
+#: makeinfo/makeinfo.c:3051
 msgid "See "
 msgstr "Bkz "
 
-#: makeinfo/makeinfo.c:3182
+#: makeinfo/makeinfo.c:3197
 #, c-format
 msgid "`.' or `,' must follow cross reference, not %c"
 msgstr "`.' ya da `,' çapraz baþvuruyu izlemelidir, %c'yi deðil"
 
-#: makeinfo/makeinfo.c:3230
+#: makeinfo/makeinfo.c:3245
 msgid "First argument to @inforef may not be empty"
 msgstr "@inforef'e ilk argüman boþ olmayabilir"
 
-#: makeinfo/makeinfo.c:3439
+#: makeinfo/makeinfo.c:3454
 #, c-format
 msgid "@image file `%s' (for HTML) not readable: %s"
 msgstr "@image dosyasý `%1$s' (HTML için) okunamýyor: %2$s"
 
-#: makeinfo/makeinfo.c:3452
+#: makeinfo/makeinfo.c:3467
 #, c-format
 msgid "No `%s.png' or `.jpg', and no extension supplied"
 msgstr "`%s.png' ya da `.jpg' yok, ve hiç uzantý verilmedi"
 
-#: makeinfo/makeinfo.c:3502
+#: makeinfo/makeinfo.c:3517
 #, c-format
 msgid "@image file `%s' (for text) unreadable: %s"
 msgstr "@image dosyasý `%1$s' (metin için) okunamýyor: %2$s"
 
-#: makeinfo/makeinfo.c:3509
+#: makeinfo/makeinfo.c:3524
 msgid "@image missing filename argument"
 msgstr "@image eksik dosyaadý argümaný"
 
-#: makeinfo/makeinfo.c:3706
+#: makeinfo/makeinfo.c:3721
 #, c-format
 msgid "{No value for `%s'}"
 msgstr "(`%s' için deðer yok)"
 
-#: makeinfo/makeinfo.c:3760
+#: makeinfo/makeinfo.c:3775
 #, c-format
 msgid "%c%s requires a name"
 msgstr "%c%s bir isim gerektirir"
 
-#: makeinfo/makeinfo.c:3866
+#: makeinfo/makeinfo.c:3881
 #, c-format
 msgid "Reached eof before matching @end %s"
 msgstr "Eþleþen @end %s'den önce dosya sonuna ulaþýldý"
 
-#: makeinfo/makeinfo.c:4097
+#: makeinfo/makeinfo.c:4112
 #, c-format
 msgid "`%.40s...' is too long for expansion; not expanded"
 msgstr "`%.40s...' geniþleme için çok uzun; geniþletilmedi"
@@ -2525,128 +2525,130 @@ msgstr "**Son satýrdan çok-sütunlu çýktý:\n"
 msgid "* column #%d: output = %s\n"
 msgstr "* sütun #%d: çýktý = %s\n"
 
-#: makeinfo/node.c:276
+#: makeinfo/node.c:277
 #, c-format
 msgid "Node `%s' previously defined at line %d"
 msgstr "Düðüm `%s' daha önce satýr %d'de tanýmlandý"
 
-#: makeinfo/node.c:599
+#: makeinfo/node.c:600
 #, c-format
 msgid "Formatting node %s...\n"
 msgstr "Düðüm %s biçimleniyor...\n"
 
-#: makeinfo/node.c:660
+#: makeinfo/node.c:661
 #, c-format
-msgid "Node `%s' requires a sectioning command (e.g. %c%s)"
+msgid "Node `%s' requires a sectioning command (e.g., %c%s)"
 msgstr "Düðüm `%s' bir bölümleme komutu gerektirir (ör: %c%s)"
 
-#: makeinfo/node.c:820
+#: makeinfo/node.c:821
 #, c-format
 msgid "No node name specified for `%c%s' command"
 msgstr "`%c%s' komutu için bir düðüm adý belirtilmedi"
 
-#: makeinfo/node.c:861 makeinfo/node.c:1082
+#: makeinfo/node.c:862 makeinfo/node.c:1083
 #, c-format
 msgid "Anchor `%s' and node `%s' map to the same file name"
 msgstr "Çýpa `%1$s' ve düðüm `%2$s' ayný dosya adýna yönlendiriyor"
 
-#: makeinfo/node.c:864
+#: makeinfo/node.c:865
 msgid "This @anchor command ignored; references to it will not work"
 msgstr "Bu @anchor komutu yoksayýldý; buraya yönelik baþvurular çalýþmayacak"
 
-#: makeinfo/node.c:866 makeinfo/node.c:1085
+#: makeinfo/node.c:867 makeinfo/node.c:1086
 msgid "Rename this anchor or use the `--no-split' option"
 msgstr "Bu çýpayý yeniden adlandýrýn ya da `--no-split' seçeneðini kullanýn"
 
-#: makeinfo/node.c:896
+#: makeinfo/node.c:897
 #, c-format
 msgid "Unexpected string at end of split-HTML file `%s'"
 msgstr "Bölünmüþ-HTML dosyasýnýn sonunda beklenmeyen dizge `%s'"
 
-#: makeinfo/node.c:926
+#: makeinfo/node.c:927
 msgid "Node:"
 msgstr "Düðüm:"
 
-#: makeinfo/node.c:936
+#: makeinfo/node.c:937
 msgid "Next:"
 msgstr "Sonraki:"
 
-#: makeinfo/node.c:946
+#: makeinfo/node.c:947
 msgid "Previous:"
 msgstr "Önceki:"
 
-#: makeinfo/node.c:956
+#: makeinfo/node.c:957
 msgid "Up:"
 msgstr "Yukarý:"
 
-#: makeinfo/node.c:1079
+#: makeinfo/node.c:1080
 #, c-format
 msgid "Anchors `%s' and `%s' map to the same file name"
 msgstr "`%1$s' ve `%2$s' çýpalarý ayný dosya adýna yönlendiriyor"
 
-#: makeinfo/node.c:1084
+#: makeinfo/node.c:1085
 msgid "@anchor command ignored; references to it will not work"
 msgstr "@anchor komutu yoksayýldý; buraya yönelik baþvurular çalýþmayacak"
 
-#: makeinfo/node.c:1284
+#: makeinfo/node.c:1285
 #, c-format
-msgid "%s reference to nonexistent node `%s'"
-msgstr "%1$s baþvuru mevcut olmayan düðüme `%2$s'"
+msgid "%s reference to nonexistent node `%s' (perhaps incorrect sectioning?)"
+msgstr "%1$s baþvuru mevcut olmayan düðüme `%2$s' (muhtemel yanlýþ bölümleme?)"
 
-#: makeinfo/node.c:1301
+#: makeinfo/node.c:1302
 msgid "Menu"
 msgstr "Menü"
 
-#: makeinfo/node.c:1303
+#: makeinfo/node.c:1304
 msgid "Cross"
 msgstr "Çapraz"
 
-#: makeinfo/node.c:1387
+#: makeinfo/node.c:1388
 #, c-format
-msgid "Next field of node `%s' not pointed to"
-msgstr "Düðüm `%s''in sonraki alaný þuraya iþaret etmiyor"
+msgid "Next field of node `%s' not pointed to (perhaps incorrect sectioning?)"
+msgstr ""
+"Düðüm `%s''in sonraki alaný þuraya iþaret etmiyor (muhtemel yanlýþ "
+"bölümleme?)"
 
-#: makeinfo/node.c:1390
+#: makeinfo/node.c:1391
 #, c-format
 msgid "This node (%s) has the bad Prev"
 msgstr "Bu düðüm (%s) hatalý Önceki'ne sahip"
 
-#: makeinfo/node.c:1402
+#: makeinfo/node.c:1403
 msgid "Prev"
 msgstr "Önceki"
 
-#: makeinfo/node.c:1445
+#: makeinfo/node.c:1446
 #, c-format
 msgid "Prev field of node `%s' not pointed to"
 msgstr "Düðüm `%s''in önceki alaný þuraya iþaret etmiyor"
 
-#: makeinfo/node.c:1449
+#: makeinfo/node.c:1450
 #, c-format
 msgid "This node (%s) has the bad Next"
 msgstr "Bu düðüm (%s) hatalý Sonraki'ne sahip"
 
-#: makeinfo/node.c:1461
+#: makeinfo/node.c:1462
 #, c-format
-msgid "`%s' has no Up field"
-msgstr "`%s''in Yukarý alaný yok"
+msgid "`%s' has no Up field (perhaps incorrect sectioning?)"
+msgstr "`%s''in Yukarý alaný yok (muhtemel yanlýþ bölümleme?)"
 
-#: makeinfo/node.c:1464
+#: makeinfo/node.c:1465
 msgid "Up"
 msgstr "Yukarý"
 
-#: makeinfo/node.c:1530
+#: makeinfo/node.c:1531
 #, c-format
 msgid "Node `%s' lacks menu item for `%s' despite being its Up target"
 msgstr ""
 "Düðüm `%1$s', Yukarý hedefi olmasýna karþýn, `%2$s' için eksik menü öðesi "
 "içeriyor"
 
-#: makeinfo/node.c:1559
+#: makeinfo/node.c:1560
 #, c-format
 msgid "node `%s' has been referenced %d times"
 msgstr "düðüm `%s''e %d kez baþvuruldu"
 
-#: makeinfo/node.c:1573
+#: makeinfo/node.c:1574
 #, c-format
 msgid "unreferenced node `%s'"
 msgstr "baþvurulmamýþ düðüm `%s'"
@@ -2694,7 +2696,7 @@ msgstr "Kýsa Ýçerik"
 msgid "%s: TOC should be here, but it was not found"
 msgstr "%s: Ýçindekiler burada olmalýydý, ama bulunamadý"
 
-#: makeinfo/xml.c:1189
+#: makeinfo/xml.c:1190
 #, c-format
 msgid "@image file `%s' unreadable: %s"
 msgstr "@image dosyasý `%1$s' okunamýyor: %2$s"
@@ -2806,7 +2808,7 @@ msgid ""
 "  In Emacs, you can click mouse button 2 on a menu item or cross reference\n"
 "  to select it.\n"
 "\n"
-"* Menu:\n"
+"%s\n"
 msgstr ""
 "Bu, .../info/dir dosyasý olup, (dir)Üst adý verilen, Info\n"
 "hiyerarþisinin en üst düðümünü içerir.\n"
@@ -2823,60 +2825,60 @@ msgstr ""
 "  Emacs'ta, bir menü öðesi ya da çapraz baþvuru üzerinde sað fare tuþunu\n"
 "  týklayarak seçim yapabilirsiniz.\n"
 "\n"
-"* Menü:\n"
+"%s\n"
 
-#: util/install-info.c:474
+#: util/install-info.c:476
 #, c-format
 msgid "%s: could not read (%s) and could not create (%s)\n"
 msgstr "%1$s: (%2$s) okunamýyor ve (%3$s) oluþturulamýyor\n"
 
-#: util/install-info.c:565
+#: util/install-info.c:567
 #, c-format
 msgid "%s: empty file"
 msgstr "%s: boþ dosya"
 
-#: util/install-info.c:892 util/install-info.c:932
+#: util/install-info.c:894 util/install-info.c:934
 msgid "START-INFO-DIR-ENTRY without matching END-INFO-DIR-ENTRY"
 msgstr "Eþleþen END-INFO-DIR-ENTRY'siz START-INFO-DIR-ENTRY"
 
-#: util/install-info.c:927
+#: util/install-info.c:929
 msgid "END-INFO-DIR-ENTRY without matching START-INFO-DIR-ENTRY"
 msgstr "Eþleþen START-INFO-DIR-ENTRY'siz END-INFO-DIR-ENTRY"
 
-#: util/install-info.c:1176 util/install-info.c:1186
+#: util/install-info.c:1178 util/install-info.c:1188
 #, c-format
 msgid "%s: Specify the Info directory only once.\n"
 msgstr "%s: Info dizinini yalnýzca bir kez belirtin.\n"
 
-#: util/install-info.c:1221
+#: util/install-info.c:1223
 #, c-format
 msgid "%s: Specify the Info file only once.\n"
 msgstr "%s: Info dosyasýný yalnýzca bir kez belirtin.\n"
 
-#: util/install-info.c:1270
+#: util/install-info.c:1272
 #, c-format
 msgid "excess command line argument `%s'"
 msgstr "fazladan komut satýrý argümaný `%s'"
 
-#: util/install-info.c:1274
+#: util/install-info.c:1276
 msgid "No input file specified; try --help for more information."
 msgstr "Girdi dosyasý belirtilmemiþ; daha fazla bilgi için --help deneyin."
 
-#: util/install-info.c:1277
+#: util/install-info.c:1279
 msgid "No dir file specified; try --help for more information."
 msgstr "dizin dosyasý belirtilmemiþ; daha fazla bilgi için --help deneyin."
 
-#: util/install-info.c:1299
+#: util/install-info.c:1301
 #, c-format
 msgid "no info dir entry in `%s'"
 msgstr "`%s' içinde info dizin girdisi yok"
 
-#: util/install-info.c:1414
+#: util/install-info.c:1416
 #, c-format
 msgid "menu item `%s' already exists, for file `%s'"
 msgstr "`%2$s' dosyasý için menü öðesi `%1$s' zaten mevcut"
 
-#: util/install-info.c:1437
+#: util/install-info.c:1439
 #, c-format
 msgid "no entries found for `%s'; nothing deleted"
 msgstr "`%s' için girdi bulunamadý; hiçbir þey silinmedi"
