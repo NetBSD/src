@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.127 1998/07/05 08:49:35 jonathan Exp $	*/
+/*	$NetBSD: pccons.c,v 1.128 1998/07/27 23:54:12 perry Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -100,7 +100,7 @@
 /*
  * Non-US keyboards definition
  */
-#if defined(FRENCH_KBD) || defined(GERMAN_KBD) || defined(NORVEGIAN_KBD) || defined(FINNISH_KBD)
+#if defined(FRENCH_KBD) || defined(GERMAN_KBD) || defined(NORWEGIAN_KBD) || defined(FINNISH_KBD)
 # define NONUS_KBD
 # define DISPLAY_ISO8859
 # define NUMERIC_SLASH_FIX
@@ -2044,7 +2044,7 @@ static Scan_def	scan_codes[] = {
 
 #endif /* GERMAN_KBD */
 
-#ifdef NORVEGIAN_KBD
+#ifdef NORWEGIAN_KBD
 static Scan_def	scan_codes[] = {
 	{ NONE,	"",	"",	"",	"" },	/* 0 unused */
 	{ ASCII,	"\033",	"\033",	"\033", "\033" }, /* 1 ESCape */
