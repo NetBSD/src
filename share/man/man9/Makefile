@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.88 2001/07/28 15:35:10 chs Exp $
+#       $NetBSD: Makefile,v 1.89 2001/09/04 03:02:19 wiz Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -31,7 +31,7 @@ MLINKS+=autoconf.9 config_search.9 \
 	autoconf.9 config_defer.9 \
 	autoconf.9 config_interrupts.9 \
 	autoconf.9 config_pending_incr.9 \
-	autoconf.9 config_pending_decr.9 
+	autoconf.9 config_pending_decr.9
 MLINKS+=bus_space.9 bus_space_alloc.9 bus_space.9 bus_space_barrier.9 \
 	bus_space.9 bus_space_copy_region_1.9 \
 	bus_space.9 bus_space_copy_region_2.9 \
@@ -127,7 +127,7 @@ MLINKS+=ioasic.9 ioasic_intr_establish.9 \
 	ioasic.9 ioasic_intr_disestablish.9 \
 	ioasic.9 ioasic_intr_evcnt.9 \
 	ioasic.9 ioasic_attach_devs.9 \
-	ioasic.9 ioasic_submatch.9 
+	ioasic.9 ioasic_submatch.9
 MLINKS+=isa.9 isa_intr_alloc.9 \
 	isa.9 isa_intr_establish.9 \
 	isa.9 isa_intr_disestablish.9 \
@@ -163,7 +163,7 @@ MLINKS+=lock.9 simple_lock_init.9 lock.9 simple_lock.9 \
 	lock.9 simple_lock_freecheck.9 lock.9 simple_lock_dump.9  \
 	lock.9 lockinit.9 lock.9 lockmgr.9 \
 	lock.9 lockstatus.9 lock.9 lockmgr_printinfo.9 \
-	lock.9 spinlockinit.9 lock.9 spinlockmgr.9 
+	lock.9 spinlockinit.9 lock.9 spinlockmgr.9
 MLINKS+=malloc.9 free.9
 MLINKS+=mbuf.9 m_get.9 mbuf.9 m_getclr.9 mbuf.9 m_gethdr.9 mbuf.9 m_devget.9 \
 	mbuf.9 m_copym.9 mbuf.9 m_copypacket.9 mbuf.9 m_copydata.9 \
