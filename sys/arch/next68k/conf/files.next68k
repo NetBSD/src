@@ -1,4 +1,4 @@
-# $NetBSD: files.next68k,v 1.8 1999/03/24 23:15:51 dbj Exp $
+# $NetBSD: files.next68k,v 1.9 1999/03/26 04:42:59 dbj Exp $
 
 # next68k-specific configuration info
 
@@ -74,6 +74,7 @@ device  nextkbd: wskbddev
 attach  nextkbd at intio
 file    arch/next68k/dev/nextkbd.c      nextkbd needs-flag
 file	arch/next68k/dev/wskbdmap_next.c		nextkbd
+file    arch/next68k/dev/nextcons.c
 
 device	esp: scsi, ncr53c9x, disk
 attach	esp at intio

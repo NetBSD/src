@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.5 1999/01/02 13:23:31 dbj Exp $	*/
+/*	$NetBSD: conf.c,v 1.6 1999/03/26 04:43:00 dbj Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -292,9 +292,17 @@ chrtoblk(dev)
 #define zscnpollc	nullcnpollc
 cons_decl(zs);
 
+#include "nextkbd.h"
+#include "nextdisplay.h"
+
+cons_decl(next);
+
 struct	consdev constab[] = {
 #if NZSTTY > 0
 	cons_init(zs),
+#endif
+#if (NNEXTKBD > 0) && (NNEXTDISPLAY > 0)
+	cons_init(next),
 #endif
 	{ 0 },
 };
