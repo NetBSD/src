@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2004/04/02 08:54:04 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2004/04/03 17:45:19 groo Exp $
 
 MISC_FILES=	rawrite.c
 UUDECODE_FILES=	pfdisk.doc pfdisk.exe pfdisktc.zip \
@@ -10,7 +10,6 @@ UUDECODE_FILES=	pfdisk.doc pfdisk.exe pfdisktc.zip \
 
 release: check_RELEASEDIR .WAIT ${MISC_FILES} ${UUDECODE_FILES}
 	${_MKMSG_INSTALL} ${MISC_FILES}
-	cd ${.CURDIR} && \
 	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${MISC_FILES} \
 	    ${RELEASEDIR}/${MACHINE}/installation/misc
 	${_MKMSG_INSTALL} ${UUDECODE_FILES}
