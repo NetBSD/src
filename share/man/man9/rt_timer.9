@@ -1,4 +1,4 @@
-.\"	$NetBSD: rt_timer.9,v 1.6 2001/09/04 02:51:16 wiz Exp $
+.\"	$NetBSD: rt_timer.9,v 1.7 2001/09/04 03:01:50 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -116,8 +116,8 @@ subsystem.  This is used when a route is deleted to ensure that no
 dangling references remain.
 .El
 .Sh SEE ALSO
-.Xr arp 9 ,
-.Xr netstat 1
+.Xr netstat 1 ,
+.Xr arp 9
 .Sh AUTHORS
 This interface is roughly based on (but, alas, not compatible with) one
 designed by David Borman of BSDI.  This implementation is by Kevin Lahey
@@ -128,7 +128,7 @@ The
 interface is implemented in
 .Pa sys/net/route.h
 and
-.Pa sys/net/route.c.
+.Pa sys/net/route.c .
 .Sh HISTORY
 The
 .Nm
