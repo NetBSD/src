@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.85.2.10 1999/11/20 08:40:02 scottr Exp $
+#	$NetBSD: GENERIC,v 1.85.2.11 1999/11/21 21:23:26 scottr Exp $
 #
 # GENERIC
 
@@ -106,6 +106,7 @@ options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	SCSIVERBOSE	# human readable SCSI error messages
 
 # wscons options
+options         RCONS_16BPP		# support for 16-bit console
 #options 	WSEMUL_SUN		# sun terminal emulation
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
 options 	WSDISPLAY_COMPAT_ITE	# ite compatibility
