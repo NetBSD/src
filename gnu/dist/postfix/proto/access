@@ -57,7 +57,7 @@
 # ACTIONS
 # .ad
 # .fi
-# .IP "[\fB45\fR]\fIXX text\fR"
+# .IP "[\fB45\fR]\fINN text\fR"
 #	Reject the address etc. that matches the pattern, and respond with
 #	the numerical code and text.
 # .IP \fBREJECT\fR
@@ -66,7 +66,7 @@
 # .IP \fBOK\fR
 #	Accept the address etc. that matches the pattern.
 # .IP \fIrestriction...\fR
-#	Apply the named UCE restriction (\fBpermit\fR, \fRreject\fR,
+#	Apply the named UCE restriction(s) (\fBpermit\fR, \fRreject\fR,
 #	\fBreject_unauth_destination\fR, and so on).
 # REGULAR EXPRESSION TABLES
 # .ad

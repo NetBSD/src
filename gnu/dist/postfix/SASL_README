@@ -111,7 +111,16 @@ In order to allow mail relaying by authenticated clients:
 	    permit_mynetworks permit_sasl_authenticated ...
 
 In /usr/local/lib/sasl/smtpd.conf you need to specify how the server
-should validate client passwords. For example:
+should validate client passwords. 
+
+In order to authenticate against the UNIX password database, try:
+
+    /usr/local/lib/sasl/smtpd.conf:
+	pwcheck_method: pwcheck
+
+The pwcheck daemon is contained in the cyrus-sasl source tarball.
+
+In order to authenticate against SASL's own password database:
 
     /usr/local/lib/sasl/smtpd.conf:
 	pwcheck_method:  sasldb
@@ -129,20 +138,11 @@ IMPORTANT: To get sasldb running, make sure that you set the SASL domain
 
 EXAMPLE: saslpasswd -c -u `postconf -h myhostname` exampleuser
 
-Instead of the SASL-specific password file you can configure the
-Postfix SMTP server to validate client passwords against the UNIX
-shadow password file:
+To run software chrooted with SASL support is an interesting
+exercise.  It probably is not worth the trouble.
 
-    /usr/local/lib/sasl/smtpd.conf:
-	pwcheck_method:  shadow
-
-However this requires that Postfix has read access to the UNIX shadow
-password file, which is normally readable only by root.  Shadow
-password support has been found to work for Solaris 2.7 and RedHat
-6.1 but not with FreeBSD 3.4.
-
-To run software chrooted with SASL support is an interesting exercise.
-This is one of the many problems with the present SASL support.
+Testing SASL authentication in the Postfix SMTP server
+======================================================
 
 To test the whole mess, connect to the SMTP server, and you should
 be able to have a conversation like this:
