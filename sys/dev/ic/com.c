@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.135 1998/02/09 10:22:45 thorpej Exp $	*/
+/*	$NetBSD: com.c,v 1.136 1998/02/19 09:23:38 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -672,6 +672,8 @@ comopen(dev, flag, mode, p)
 		ttychars(tp);
 		ttsetwater(tp);
 
+		s2 = splserial();
+
 		/*
 		 * Turn on DTR.  We must always do this, even if carrier is not
 		 * present, because otherwise we'd have to use TIOCSDTR
@@ -680,8 +682,6 @@ comopen(dev, flag, mode, p)
 		 * unless explicitly requested to deassert it.
 		 */
 		com_modem(sc, 1);
-
-		s2 = splserial();
 
 		/* Clear the input ring, and unblock. */
 		sc->sc_rbput = sc->sc_rbget = sc->sc_rbuf;
@@ -712,9 +712,15 @@ comopen(dev, flag, mode, p)
 				 * else has the device open, then hang up.
 				 */
 				if (!ISSET(tp->t_state, TS_ISOPEN)) {
+					s2 = splserial();
+
+					/* Hang up. */
 					com_modem(sc, 0);
+
 					CLR(tp->t_state, TS_WOPEN);
 					ttwakeup(tp);
+
+					splx(s2);
 				}
 				break;
 			}
@@ -750,8 +756,6 @@ comclose(dev, flag, mode, p)
 	SET(sc->sc_rx_flags, RX_IBUF_BLOCKED);
 	com_hwiflow(sc);
 
-	splx(s);
-
 	/* Clear any break condition set with TIOCSBRK. */
 	com_break(sc, 0);
 
@@ -763,8 +767,6 @@ comclose(dev, flag, mode, p)
 		com_modem(sc, 0);
 		(void) tsleep(sc, TTIPRI, ttclos, hz);
 	}
-
-	s = splserial();
 
 	/* Turn off interrupts. */
 #ifdef DDB
@@ -845,6 +847,7 @@ comioctl(dev, cmd, data, flag, p)
 	struct com_softc *sc = com_cd.cd_devs[COMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 	int error;
+	int s;
 
 	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
@@ -853,6 +856,8 @@ comioctl(dev, cmd, data, flag, p)
 	error = ttioctl(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
+
+	s = splserial();
 
 	switch (cmd) {
 	case TIOCSBRK:
@@ -878,7 +883,7 @@ comioctl(dev, cmd, data, flag, p)
 	case TIOCSFLAGS:
 		error = suser(p->p_ucred, &p->p_acflag); 
 		if (error)
-			return (error); 
+			break;
 		sc->sc_swflags = *(int *)data;
 		break;
 
@@ -920,15 +925,18 @@ comioctl(dev, cmd, data, flag, p)
 		break;
 	}
 	default:
-		return (ENOTTY);
+		error = ENOTTY;
+		break;
 	}
+
+	splx(s);
 
 #ifdef COM_DEBUG
 	if (com_debug)
 		comstatus(sc, "comioctl ");
 #endif
 
-	return (0);
+	return (error);
 }
 
 integrate void
@@ -958,9 +966,7 @@ com_break(sc, onoff)
 	struct com_softc *sc;
 	int onoff;
 {
-	int s;
 
-	s = splserial();
 	if (onoff)
 		SET(sc->sc_lcr, LCR_SBREAK);
 	else
@@ -974,7 +980,6 @@ com_break(sc, onoff)
 		} else
 			com_loadchannelregs(sc);
 	}
-	splx(s);
 }
 
 void
@@ -982,9 +987,7 @@ com_modem(sc, onoff)
 	struct com_softc *sc;
 	int onoff;
 {
-	int s;
 
-	s = splserial();
 	if (onoff)
 		SET(sc->sc_mcr, sc->sc_mcr_dtr);
 	else
@@ -998,7 +1001,6 @@ com_modem(sc, onoff)
 		} else
 			com_loadchannelregs(sc);
 	}
-	splx(s);
 }
 
 static u_char
@@ -1177,6 +1179,7 @@ comparam(tp, t)
 
 	splx(s);
 
+skip:
 	/*
 	 * Update the tty layer's idea of the carrier bit, in case we changed
 	 * CLOCAL or MDMBUF.  We don't hang up here; we only do that by
