@@ -1,4 +1,4 @@
-/* $NetBSD: apecs.c,v 1.29 1998/01/17 03:39:51 thorpej Exp $ */
+/* $NetBSD: apecs.c,v 1.30 1998/04/29 00:24:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.29 1998/01/17 03:39:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.30 1998/04/29 00:24:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,9 @@ __KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.29 1998/01/17 03:39:51 thorpej Exp $");
 #include <alpha/pci/apecsvar.h>
 #ifdef DEC_2100_A50
 #include <alpha/pci/pci_2100_a50.h>
+#endif
+#ifdef DEC_EB64PLUS
+#include <alpha/pci/pci_eb64plus.h>
 #endif
 
 int	apecsmatch __P((struct device *, struct cfdata *, void *));
@@ -156,6 +159,12 @@ apecsattach(parent, self, aux)
 #ifdef DEC_2100_A50
 	case ST_DEC_2100_A50:
 		pci_2100_a50_pickintr(acp);
+		break;
+#endif
+
+#ifdef DEC_EB64PLUS
+	case ST_EB64P:
+		pci_eb64plus_pickintr(acp);
 		break;
 #endif
 
