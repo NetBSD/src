@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.25 2003/11/10 08:55:41 wiz Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.25.4.1 2005/01/24 21:40:05 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.25 2003/11/10 08:55:41 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.25.4.1 2005/01/24 21:40:05 he Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1092,8 +1092,9 @@ cnw_ioctl(ifp, cmd, data)
 		error = (cmd == SIOCADDMULTI) ?
 		    ether_addmulti(ifr, &sc->sc_ethercom) :
 		    ether_delmulti(ifr, &sc->sc_ethercom);
-		if (error == ENETRESET || error == 0) {
-			cnw_init(sc);
+		if (error == ENETRESET) {
+			if (ifp->if_flags & IFF_RUNNING)
+				cnw_init(sc);
 			error = 0;
 		}
 		break;
