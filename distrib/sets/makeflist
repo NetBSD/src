@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makeflist,v 1.32 2001/05/12 22:38:05 chs Exp $
+# $NetBSD: makeflist,v 1.33 2001/08/19 13:15:18 mrg Exp $
 #
 # Print out the files in some or all lists.
 # Usage: makeflist [-b] [-x] [-a arch] [-m machine] [-s setsdir] [setname ...]
@@ -69,6 +69,12 @@ else
 	fi
 fi
 
+# Turn off lintlibs for some ports.
+lintlibs=
+if [ "$machine" = "sparc64" -o "$arch" = "sh3" -o "$arch" = "m68000" ]; then
+	lintlibs=no
+fi
+
 for setname in $lists; do
 	cat $setd/lists/$setname/mi
 	if [ "$machine" != "$cpu" -a -f $setd/lists/$setname/ad.${arch} ]; then
@@ -83,6 +89,11 @@ for setname in $lists; do
 		fi
 		if [ -f $setd/lists/$setname/shl.${shlib} ]; then
 			cat $setd/lists/$setname/shl.${shlib}
+		fi
+	fi
+	if [ "$lintlibs" != no ]; then
+		if [ -f $setd/lists/$setname/lint.mi ]; then
+			cat $setd/lists/$setname/lint.mi
 		fi
 	fi
 done | egrep -v '^#' | awk -- '{print $1}' | sort -u
