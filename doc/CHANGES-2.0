@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.421 2004/08/30 09:58:49 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.422 2004/08/30 10:15:33 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6958,4 +6958,27 @@ sys/dev/pci/pcidevs_data.h			regen
 
 	Add Workbit NinjaSCSI-32 PCI/CardBus SCSI driver njs(4).
 	[itohy, ticket #800]
+
+lib/libpthread/pthread.c			1.36
+
+	Don't leak dead threads under certain conditions.
+	[yamt, ticket #801]
+
+etc/hosts					1.7
+etc/postinstall					1.81
+
+	Add a dotted alias for localhost so that sendmail doesn't pause on
+	startup if a system's hostname is not set. PR 26550.
+	[chs, ticket #802]
+
+sys/nfs/nfs_socket.c				1.110 via patch
+sys/nfs/nfsnode.h				1.48
+
+	nfs_request: a workaround for servers doing "maproot".
+	For i/o requests which are expected not to fail due to permission
+	to mimic unix file open semantics (READ, WRITE, COMMIT),
+	try two credentials.  namely, the file owner's one and open time one.
+	Remember which credential worked in per-file basis and try it first
+	next time to minimize number of retries. Fixes PR/23716 and PR/24987.
+	[yamt, ticket #803]
 
