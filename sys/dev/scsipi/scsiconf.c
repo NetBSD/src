@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.124 1999/07/26 22:43:13 explorer Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.125 1999/09/09 20:06:52 hwr Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -546,6 +546,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "WANGTEK ", "5099ES SCSI",      ""},     SDEV_NOLUNS},
 	{{T_SEQUENTIAL, T_REMOV,
 	 "WANGTEK ", "5150ES SCSI",      ""},     SDEV_NOLUNS},
+	{{T_SEQUENTIAL, T_REMOV,
+	 "WANGTEK ", "SCSI-36",		 ""},     SDEV_NOLUNS},
 	{{T_SEQUENTIAL, T_REMOV,
 	 "WangDAT ", "Model 1300      ", "02.4"}, SDEV_NOSYNC|SDEV_NOWIDE},
 	{{T_SEQUENTIAL, T_REMOV,
