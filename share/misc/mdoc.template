@@ -1,7 +1,11 @@
+.\"	$NetBSD: mdoc.template,v 1.2 1997/03/25 07:20:01 mikel Exp $
+.\"
+.\" Copyright notice
+.\"
 .\" The following requests are required for all man pages.
 .Dd DATE
+.Dt DOCUMENT_TITLE SECTION [MACHINE]
 .Os
-.Dt DOCUMENT_TITLE
 .Sh NAME
 .Sh SYNOPSIS
 .Sh DESCRIPTION
@@ -18,6 +22,8 @@
 .\" The next request is for sections 2 and 3 error and signal handling only.
 .\" .Sh ERRORS
 .\" .Sh SEE ALSO
+.\" Cross-references should be ordered by section (low to high), then in
+.\"     alphabetical order.
 .\" .Sh STANDARDS
 .\" .Sh HISTORY
 .\" .Sh AUTHORS
