@@ -1,4 +1,4 @@
-/*	$NetBSD: instr.h,v 1.2 2003/08/07 16:29:18 agc Exp $ */
+/*	$NetBSD: instr.h,v 1.3 2003/10/27 04:32:02 simonb Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -383,7 +383,6 @@ union instr {
 #define	FTYPE_INT	0	/* data = 32-bit signed integer */
 #define	FTYPE_SNG	1	/* data = 32-bit float */
 #define	FTYPE_DBL	2	/* data = 64-bit double */
-#define	FTYPE_EXT	3	/* data = 128-bit extended (quad-prec) */
 
 /*
  * FPCSR rounding modes.
