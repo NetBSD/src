@@ -41,13 +41,16 @@ static char sccsid[] = "@(#)getpagesize.c	8.1 (Berkeley) 6/4/93";
 int
 getpagesize()
 {
+static	int pagsz;
 	int mib[2], value;
 	size_t size;
 
+	if (pagsz != 0)
+		return pagsz;
 	mib[0] = CTL_HW;
 	mib[1] = HW_PAGESIZE;
 	size = sizeof value;
 	if (sysctl(mib, 2, &value, &size, NULL, 0) == -1)
 		return (-1);
-	return (value);
+	return (pagsz = value);
 }
