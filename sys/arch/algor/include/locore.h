@@ -1,8 +1,3 @@
-/*	$NetBSD: locore.h,v 1.1 2001/05/28 16:22:19 thorpej Exp $	*/
-
-#ifndef _ALGOR_LOCORE_H_
-#define _ALGOR_LOCORE_H_
+/* $NetBSD: locore.h,v 1.2 2002/06/05 06:18:34 simonb Exp $ */
 
 #include <mips/locore.h>
-
-#endif	/* !_ALGOR_LOCORE_H_ */
