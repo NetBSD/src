@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.60 2000/09/28 07:15:28 enami Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.61 2000/10/01 23:32:45 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -514,15 +514,27 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 
 	ifp->if_lastchange = time;
 	ifp->if_ibytes += m->m_pkthdr.len;
-	if (eh->ether_dhost[0] & 1) {
-		if (bcmp((caddr_t)etherbroadcastaddr, (caddr_t)eh->ether_dhost,
-		    sizeof(etherbroadcastaddr)) == 0)
+	if (ETHER_IS_MULTICAST(eh->ether_dhost)) {
+		if (memcmp(etherbroadcastaddr,
+		    eh->ether_dhost, ETHER_ADDR_LEN) == 0)
 			m->m_flags |= M_BCAST;
 		else
 			m->m_flags |= M_MCAST;
 	}
 	if (m->m_flags & (M_BCAST|M_MCAST))
 		ifp->if_imcasts++;
+
+	/*
+	 * If we're in promiscuous mode, and we are holding a
+	 * unicast packet that isn't for us, drop it.
+	 */
+	if ((ifp->if_flags & IFF_PROMISC) != 0 &&
+	    (m->m_flags & (M_BCAST|M_MCAST)) == 0 &&
+	    memcmp(LLADDR(ifp->if_sadl), eh->ether_dhost,
+		   ETHER_ADDR_LEN) != 0) {
+		m_freem(m);
+		return;
+	}
 
 	etype = ntohs(eh->ether_type);
 

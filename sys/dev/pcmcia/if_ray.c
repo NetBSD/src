@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.21 2000/07/05 02:35:54 onoe Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.22 2000/10/01 23:32:44 thorpej Exp $	*/
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -840,7 +840,11 @@ ray_init(sc)
 	sc->sc_if.if_flags |= IFF_RUNNING | IFF_OACTIVE;
 
 	/* set this now so it gets set in the download */
-	sc->sc_promisc = !!(sc->sc_if.if_flags & (IFF_PROMISC|IFF_ALLMULTI));
+	if (sc->sc_if.if_flags & IFF_ALLMULTI)
+		sc->sc_if.if_flags |= IFF_PROMISC;
+	else if (sc->sc_if.if_pcount == 0)
+		sc->sc_if.if_flags &= ~IFF_PROMISC;
+	sc->sc_promisc = !!(sc->sc_if.if_flags & IFF_PROMISC);
 
 	/* call after we mark ourselves running */
 	ray_download_params(sc);
@@ -2785,7 +2789,11 @@ ray_update_promisc(sc)
 	ray_cmd_cancel(sc, SCP_UPD_PROMISC);
 
 	/* do the issue check before equality check */
-	promisc = !!(sc->sc_if.if_flags & (IFF_PROMISC | IFF_ALLMULTI));
+	if (sc->sc_if.if_flags & IFF_ALLMULTI)
+		sc->sc_if.if_flags |= IFF_PROMISC;
+	else if (sc->sc_if.if_pcount == 0)
+		sc->sc_if.if_flags &= ~IFF_PROMISC;
+	promisc = !!(sc->sc_if.if_flags & IFF_PROMISC);
 	if ((sc->sc_if.if_flags & IFF_RUNNING) == 0)
 		return;
 	else if (ray_cmd_is_running(sc, SCP_UPDATESUBCMD)) {

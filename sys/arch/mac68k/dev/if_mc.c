@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.16 2000/06/29 08:15:11 mrg Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.17 2000/10/01 23:32:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -627,9 +627,6 @@ mace_read(sc, pkt, len)
 	int len;
 {
 	struct ifnet *ifp = &sc->sc_if;
-#if NBPFILTER > 0
-	struct ether_header *eh = (struct ether_header *)pkt;
-#endif
 	struct mbuf *m;
 
 	if (len <= sizeof(struct ether_header) ||
@@ -648,13 +645,8 @@ mace_read(sc, pkt, len)
 	 * If so, hand off the raw packet to enet, then discard things
 	 * not destined for us (but be sure to keep broadcast/multicast).
 	 */
-	if (ifp->if_bpf) {
+	if (ifp->if_bpf)
 		bpf_tap(ifp->if_bpf, pkt, len);
-		if ((ifp->if_flags & IFF_PROMISC) != 0 &&
-		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    ETHER_CMP(eh->ether_dhost, sc->sc_enaddr))
-			return;
-	}
 #endif
 	m = mace_get(sc, pkt, len);
 	if (m == NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.29 2000/06/01 14:28:58 augustss Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.30 2000/10/01 23:32:45 thorpej Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -966,21 +966,8 @@ kue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	 * a broadcast packet, multicast packet, matches our ethernet
 	 * address or the interface is in promiscuous mode.
 	 */
-	if (ifp->if_bpf) {
-#if defined(__NetBSD__)
-		struct ether_header *eh = mtod(m, struct ether_header *);
+	if (ifp->if_bpf)
 		BPF_MTAP(ifp, m);
-		if ((ifp->if_flags & IFF_PROMISC) &&
-		    memcmp(eh->ether_dhost, LLADDR(ifp->if_sadl),
-			   ETHER_ADDR_LEN) &&
-		    !(eh->ether_dhost[0] & 1)) {
-			m_freem(m);
-			goto done1;
-		}
-#else
-		BPF_MTAP(ifp, m);
-#endif
-	}
 #endif
 
 	DPRINTFN(10,("%s: %s: deliver %d\n", USBDEVNAME(sc->kue_dev),

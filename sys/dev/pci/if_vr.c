@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.37 2000/09/13 16:40:15 tron Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.38 2000/10/01 23:32:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -593,7 +593,6 @@ static void
 vr_rxeof(sc)
 	struct vr_softc *sc;
 {
-	struct ether_header *eh;
 	struct mbuf *m;
 	struct ifnet *ifp;
 	struct vr_desc *d;
@@ -751,7 +750,6 @@ vr_rxeof(sc)
 #endif /* __NO_STRICT_ALIGNMENT */
 
 		ifp->if_ipackets++;
-		eh = mtod(m, struct ether_header *);
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = total_len;
 #if NBPFILTER > 0
@@ -761,16 +759,8 @@ vr_rxeof(sc)
 		 * a broadcast packet, multicast packet, matches our ethernet
 		 * address or the interface is in promiscuous mode.
 		 */
-		if (ifp->if_bpf) {
+		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
-			if ((ifp->if_flags & IFF_PROMISC) != 0 &&
-			    ETHER_IS_MULTICAST(eh->ether_dhost) == 0 &&
-			    memcmp(eh->ether_dhost, LLADDR(ifp->if_sadl),
-				   ETHER_ADDR_LEN) != 0) {
-				m_freem(m);
-				continue;
-			}
-		}
 #endif
 		/* Pass it on. */
 		(*ifp->if_input)(ifp, m);

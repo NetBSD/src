@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.36 2000/09/28 06:29:41 enami Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.37 2000/10/01 23:32:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -571,15 +571,8 @@ static void wi_rxeof(sc)
 
 #if NBPFILTER > 0
 	/* Handle BPF listeners. */
-	if (ifp->if_bpf) {
+	if (ifp->if_bpf)
 		bpf_mtap(ifp->if_bpf, m);
-		if (ifp->if_flags & IFF_PROMISC &&
-		    (bcmp(eh->ether_dhost, sc->sc_macaddr,
-		    ETHER_ADDR_LEN) && (eh->ether_dhost[0] & 1) == 0)) {
-			m_freem(m);
-			return;
-		}
-	}
 #endif
 
 	/* Receive packet. */

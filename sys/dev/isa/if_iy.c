@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.42 2000/08/09 01:56:33 tv Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.43 2000/10/01 23:32:43 thorpej Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -977,7 +977,6 @@ iyget(sc, iot, ioh, rxlen)
 	int rxlen;
 {
 	struct mbuf *m, *top, **mp;
-	struct ether_header *eh;
 	struct ifnet *ifp;
 	int len;
 
@@ -1030,21 +1029,10 @@ iyget(sc, iot, ioh, rxlen)
 	}
 	/* XXX receive the top here */	
 	++ifp->if_ipackets;
-	
-	eh = mtod(top, struct ether_header *);
 
 #if NBPFILTER > 0
-	if (ifp->if_bpf) {
+	if (ifp->if_bpf)
 		bpf_mtap(ifp->if_bpf, top);
-		if ((ifp->if_flags & IFF_PROMISC) &&
-		    (eh->ether_dhost[0] & 1) == 0 &&
-		    bcmp(eh->ether_dhost,
-		    	LLADDR(ifp->if_sadl), sizeof(eh->ether_dhost)) != 0) {
-
-			m_freem(top);
-			return;
-		}
-	}
 #endif
 	(*ifp->if_input)(ifp, top);
 	return;

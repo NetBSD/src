@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.13 2000/07/05 18:47:51 itojun Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.14 2000/10/01 23:32:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -875,7 +875,6 @@ cnw_recv(sc)
 	int rser;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *m;
-	struct ether_header *eh;
 
 	for (;;) {
 		WAIT_WOC(sc);
@@ -901,19 +900,6 @@ cnw_recv(sc)
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
 #endif
-
-		/*
-		 * Check that the packet is for us or {multi,broad}cast. Maybe
-		 * there's a fool-poof hardware check for this, but I don't
-		 * really know...
-		 */
-		eh = mtod(m, struct ether_header *);
-		if ((eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    bcmp(LLADDR(sc->sc_ethercom.ec_if.if_sadl),
-		    eh->ether_dhost, sizeof(eh->ether_dhost)) != 0) {
-			m_freem(m);
-			continue;
-		}
 
 		/* Pass the packet up. */
 		(*ifp->if_input)(ifp, m);

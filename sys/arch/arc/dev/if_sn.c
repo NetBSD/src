@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.20 2000/06/29 08:34:11 mrg Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.21 2000/10/01 23:32:40 thorpej Exp $	*/
 /*	$OpenBSD: if_sn.c,v 1.12 1999/05/13 15:44:48 jason Exp $	*/
 
 /*
@@ -1215,19 +1215,8 @@ sonic_read(sc, rxp)
 	 * If so, hand off the raw packet to enet, then discard things
 	 * not destined for us (but be sure to keep broadcast/multicast).
 	 */
-	if (ifp->if_bpf) {
+	if (ifp->if_bpf)
 		bpf_tap(sc->sc_if.if_bpf, pkt, len);
-		/*
-		 * Note that the interface cannot be in promiscuous mode if
-		 * there are no BPF listeners.  And if we are in promiscuous
-		 * mode, we have to check if this packet is really ours.
-		 */
-		if ((ifp->if_flags & IFF_PROMISC) != 0 &&
-		    (et->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    bcmp(et->ether_dhost, (void *)LLADDR(ifp->if_sadl),
-			    sizeof(et->ether_dhost)) != 0)
-			return(1); /* XXX - count this ? */
-	}
 #endif
 	m = sonic_get(sc, pkt, len);
 	if (m == NULL)

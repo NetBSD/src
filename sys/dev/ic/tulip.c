@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.71 2000/08/03 03:07:30 castor Exp $	*/
+/*	$NetBSD: tulip.c,v 1.72 2000/10/01 23:32:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1422,18 +1422,18 @@ tlp_rxintr(sc)
 #endif /* NPBFILTER > 0 */
 
 		/*
-		 * This test is outside the NBPFILTER block because
-		 * on the 21140 we have to use Hash-Only mode due to
-		 * a bug in the filter logic.
+		 * We sometimes have to run the 21140 in Hash-Only
+		 * mode.  If we're in that mode, and not in promiscuous
+		 * mode, and we have a unicast packet that isn't for
+		 * us, then drop it.
 		 */
-		if ((ifp->if_flags & IFF_PROMISC) != 0 ||
-		    sc->sc_filtmode == TDCTL_Tx_FT_HASHONLY) {
-			if (memcmp(LLADDR(ifp->if_sadl), eh->ether_dhost,
-				 ETHER_ADDR_LEN) != 0 &&
-			    ETHER_IS_MULTICAST(eh->ether_dhost) == 0) {
-				m_freem(m);
-				continue;
-			}
+		if (sc->sc_filtmode == TDCTL_Tx_FT_HASHONLY &&
+		    (ifp->if_flags & IFF_PROMISC) == 0 &&
+		    ETHER_IS_MULTICAST(eh->ether_dhost) == 0 &&
+		    memcmp(LLADDR(ifp->if_sadl), eh->ether_dhost,
+			   ETHER_ADDR_LEN) != 0) {
+			m_freem(m);
+			continue;
 		}
 
 		/* Pass it on. */

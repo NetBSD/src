@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.27 2000/05/11 20:55:03 bjh21 Exp $	*/
+/*	$NetBSD: i82586.c,v 1.28 2000/10/01 23:32:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -353,106 +353,19 @@ check_eh(sc, eh, to_bpf)
 	int *to_bpf;
 {
 	struct ifnet *ifp;
-	int i;
 
 	ifp = &sc->sc_ethercom.ec_if;
 
-	switch(sc->promisc) {
-	case IFF_ALLMULTI:
-		/*
-		 * Receiving all multicasts, but no unicasts except those
-		 * destined for us.
-		 */
 #if NBPFILTER > 0
-		/* BPF gets this packet if anybody cares */
-		*to_bpf = (ifp->if_bpf != 0);
-#endif
-		if (eh->ether_dhost[0] & 1)
-			return (1);
-		if (ether_equal(eh->ether_dhost, LLADDR(ifp->if_sadl)))
-			return (1);
-		return (0);
-
-	case IFF_PROMISC:
-		/*
-		 * Receiving all packets.  These need to be passed on to BPF.
-		 */
-#if NBPFILTER > 0
-		*to_bpf = (ifp->if_bpf != 0);
-#endif
-		/*
-		 * If for us, accept and hand up to BPF.
-		 */
-		if (ether_equal(eh->ether_dhost, LLADDR(ifp->if_sadl)))
-			return (1);
-
-		/*
-		 * If it's the broadcast address, accept and hand up to BPF.
-		 */
-		if (ether_equal(eh->ether_dhost, etherbroadcastaddr))
-			return (1);
-
-		/*
-		 * If it's one of our multicast groups, accept it
-		 * and pass it up.
-		 */
-		for (i = 0; i < sc->mcast_count; i++) {
-			if (ether_equal(eh->ether_dhost,
-					(u_char *)&sc->mcast_addrs[i])) {
-#if NBPFILTER > 0
-				if (*to_bpf)
-					*to_bpf = 1;
-#endif
-				return (1);
-			}
-		}
-
-#if NBPFILTER > 0
-		/* Not for us; BPF wants to see it but we don't. */
-		if (*to_bpf)
-			*to_bpf = 2;
+	*to_bpf = (ifp->if_bpf != 0);
+#else
+	*to_bpf = 0;
 #endif
 
-		return (1);
-
-	case IFF_ALLMULTI | IFF_PROMISC:
-		/*
-		 * Acting as a multicast router, and BPF running at the same
-		 * time.  Whew!  (Hope this is a fast machine...)
-		 */
-#if NBPFILTER > 0
-		*to_bpf = (ifp->if_bpf != 0);
-#endif
-		/* We want to see multicasts. */
-		if (eh->ether_dhost[0] & 1)
-			return (1);
-
-		/* We want to see our own packets */
-		if (ether_equal(eh->ether_dhost, LLADDR(ifp->if_sadl)))
-			return (1);
-
-		/* Anything else goes to BPF but nothing else. */
-#if NBPFILTER > 0
-		if (*to_bpf)
-			*to_bpf = 2;
-#endif
-		return (1);
-
-	default:
-		/*
-		 * Only accept unicast packets destined for us, or multicasts
-		 * for groups that we belong to.  For now, we assume that the
-		 * '586 will only return packets that we asked it for.  This
-		 * isn't strictly true (it uses hashing for the multicast
-		 * filter), but it will do in this case, and we want to get
-		 * out of here as quickly as possible.
-		 */
-#if NBPFILTER > 0
-		*to_bpf = (ifp->if_bpf != 0);
-#endif
-		return (1);
-	}
-	return (0);
+	/*
+	 * This is all handled at a higher level now.
+	 */
+	return (1);
 }
 
 static int

@@ -1,4 +1,4 @@
-/*      $NetBSD: if_qe.c,v 1.42 2000/06/05 00:09:18 matt Exp $ */
+/*      $NetBSD: if_qe.c,v 1.43 2000/10/01 23:32:44 thorpej Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -606,27 +606,9 @@ qeintr(arg)
 				sc->sc_nextrx = 0;
 			eh = mtod(m, struct ether_header *);
 #if NBPFILTER > 0
-			if (ifp->if_bpf) {
+			if (ifp->if_bpf)
 				bpf_mtap(ifp->if_bpf, m);
-				if ((ifp->if_flags & IFF_PROMISC) != 0 &&
-				    bcmp(LLADDR(ifp->if_sadl), eh->ether_dhost,
-				    ETHER_ADDR_LEN) != 0 &&
-				    ((eh->ether_dhost[0] & 1) == 0)) {
-					m_freem(m);
-					continue;
-				}
-			}
 #endif
-			/*
-			 * ALLMULTI means PROMISC in this driver.
-			 */
-			if ((ifp->if_flags & IFF_ALLMULTI) &&
-			    ((eh->ether_dhost[0] & 1) == 0) &&
-			    bcmp(LLADDR(ifp->if_sadl), eh->ether_dhost,
-			    ETHER_ADDR_LEN)) {
-				m_freem(m);
-				continue;
-			}
 			(*ifp->if_input)(ifp, m);
 		}
 
@@ -860,7 +842,11 @@ qe_setup(sc)
 	 * Until someone tells me, fall back to PROMISC when more than
 	 * 12 ethernet addresses.
 	 */
-	if (ifp->if_flags & (IFF_PROMISC|IFF_ALLMULTI))
+	if (ifp->if_flags & IFF_ALLMULTI)
+		ifp->if_flags |= IFF_PROMISC;
+	else if (ifp->if_pcount == 0)
+		ifp->if_flags &= ~IFF_PROMISC;
+	if (ifp->if_flags & IFF_PROMISC)
 		qc->qc_xmit[idx].qe_buf_len = -65;
 
 	qc->qc_xmit[idx].qe_addr_lo = LOWORD(sc->sc_pqedata->qc_setup);

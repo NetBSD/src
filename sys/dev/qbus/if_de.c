@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.5 2000/06/08 19:58:49 ragge Exp $	*/
+/*	$NetBSD: if_de.c,v 1.6 2000/10/01 23:32:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -550,18 +550,8 @@ derecv(struct de_softc *sc)
 		}
 		m = sc->sc_rxmbuf[sc->sc_rindex];
 #if NBPFILTER > 0
-		if (ifp->if_bpf) {
-			struct ether_header *eh;
-
-			eh = mtod(m, struct ether_header *);
+		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
-			if ((ifp->if_flags & IFF_PROMISC) != 0 &&
-			    bcmp(LLADDR(ifp->if_sadl), eh->ether_dhost,
-			    ETHER_ADDR_LEN) != 0 &&
-			    (ETHER_IS_MULTICAST(eh->ether_dhost)==0)) {
-				goto next;
-			}
-		}
 #endif
 
 		if (de_add_rxbuf(sc, sc->sc_rindex) == 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.18 1999/05/18 23:52:52 thorpej Exp $	*/
+/*	$NetBSD: if_qn.c,v 1.19 2000/10/01 23:32:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -562,7 +562,6 @@ qn_get_packet(sc, len)
 {
 	register u_short volatile *nic_fifo_ptr = sc->nic_fifo;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	struct ether_header *eh;
 	struct mbuf *m, *dst, *head = NULL;
 	register u_short len1;
 	u_short amount;
@@ -582,8 +581,6 @@ qn_get_packet(sc, len)
 	m->m_pkthdr.len = len;
 	m->m_len = 0;
 	head = m;
-
-	eh = mtod(head, struct ether_header *);
 
 	word_copy_from_card(nic_fifo_ptr,
 	    mtod(head, u_short *),
@@ -623,23 +620,8 @@ qn_get_packet(sc, len)
 	}
 
 #if NBPFILTER > 0
-	if (sc->sc_bpf) {
+	if (sc->sc_bpf)
 		bpf_mtap(sc->sc_bpf, head);
-
-		/*
-		 * The interface cannot be in promiscuous mode if there are
-		 * no BPF listeners. And in prom. mode we have to check
-		 * if the packet is really ours...
-		 */
-		if ((ifp->if_flags & IFF_PROMISC) &&
-		    (eh->ether_dhost[0] & 1) == 0 && /* not bcast or mcast */
-		    bcmp(eh->ether_dhost,
-        	        LLADDR(ifp->if_sadl),
-		        ETHER_ADDR_LEN) != 0) {
-			m_freem(head);
-			return;
-		}
-	}
 #endif
 
 	(*ifp->if_input)(ifp, head);

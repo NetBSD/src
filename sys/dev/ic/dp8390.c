@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.37 2000/05/29 17:37:12 jhawk Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.38 2000/10/01 23:32:41 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -984,7 +984,6 @@ dp8390_read(sc, buf, len)
 {
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	struct mbuf *m;
-	struct ether_header *eh;
 
 	/* Pull packet off interface. */
 	m = dp8390_get(sc, buf, len);
@@ -995,30 +994,13 @@ dp8390_read(sc, buf, len)
 
 	ifp->if_ipackets++;
 
-	/* We assume that the header fits entirely in one mbuf. */
-	eh = mtod(m, struct ether_header *);
-
 #if NBPFILTER > 0
 	/*
 	 * Check if there's a BPF listener on this interface.
 	 * If so, hand off the raw packet to bpf.
 	 */
-	if (ifp->if_bpf) {
+	if (ifp->if_bpf)
 		bpf_mtap(ifp->if_bpf, m);
-
-		/*
-		 * Note that the interface cannot be in promiscuous mode if
-		 * there are no BPF listeners.  And if we are in promiscuous
-		 * mode, we have to check if this packet is really ours.
-		 */
-		if ((ifp->if_flags & IFF_PROMISC) &&
-		    (eh->ether_dhost[0] & 1) == 0 &&	/* !mcast and !bcast */
-		    bcmp(eh->ether_dhost, LLADDR(ifp->if_sadl),
-		    sizeof(eh->ether_dhost)) != 0) {
-			m_freem(m);
-			return;
-		}
-	}
 #endif
 
 	(*ifp->if_input)(ifp, m);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.15 2000/09/20 05:44:48 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.16 2000/10/01 23:32:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 Network Computer, Inc.
@@ -1174,7 +1174,6 @@ sip_rxintr(sc)
 	struct sip_softc *sc;
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	struct ether_header *eh;
 	struct sip_rxsoft *rxs;
 	struct mbuf *m;
 	u_int32_t cmdsts;
@@ -1314,7 +1313,6 @@ sip_rxintr(sc)
 #endif /* __NO_STRICT_ALIGNMENT */
 
 		ifp->if_ipackets++;
-		eh = mtod(m, struct ether_header *);
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = len;
 
@@ -1323,14 +1321,8 @@ sip_rxintr(sc)
 		 * Pass this up to any BPF listeners, but only
 		 * pass if up the stack if it's for us.
 		 */
-		if (ifp->if_bpf) {
+		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
-			if ((ifp->if_flags & IFF_PROMISC) != 0 &&
-			    (cmdsts & CMDSTS_Rx_DEST) == CMDSTS_Rx_DEST_REJ) {
-				m_freem(m);
-				continue;
-			}
-		}
 #endif /* NBPFILTER > 0 */
 
 		/* Pass it on. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.41 2000/08/09 02:05:06 tv Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.42 2000/10/01 23:32:42 thorpej Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -1331,7 +1331,6 @@ mb86960_get_packet(sc, len)
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
-	struct ether_header *eh;
 	struct mbuf *m;
 
 	/* Allocate a header mbuf. */
@@ -1370,7 +1369,6 @@ mb86960_get_packet(sc, len)
 	 * header mbuf.
 	 */
 	m->m_data += EOFF;
-	eh = mtod(m, struct ether_header *);
 
 	/* Set the length of this packet. */
 	m->m_len = len;
@@ -1384,22 +1382,8 @@ mb86960_get_packet(sc, len)
 	 * Check if there's a BPF listener on this interface.  If so, hand off
 	 * the raw packet to bpf.
 	 */
-	if (ifp->if_bpf) {
+	if (ifp->if_bpf)
 		bpf_mtap(ifp->if_bpf, m);
-
-		/*
-		 * Note that the interface cannot be in promiscuous mode if
-		 * there are no BPF listeners.  And if we are in promiscuous
-		 * mode, we have to check if this packet is really ours.
-		 */
-		if ((ifp->if_flags & IFF_PROMISC) != 0 &&
-		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-	  	    bcmp(eh->ether_dhost, sc->sc_enaddr,
-			sizeof(eh->ether_dhost)) != 0) {
-			m_freem(m);
-			return (1);
-		}
-	}
 #endif
 
 	(*ifp->if_input)(ifp, m);

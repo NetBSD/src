@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.13 2000/09/25 01:07:25 enami Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.14 2000/10/01 23:32:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -984,7 +984,6 @@ rtk_power(why, arg)
 STATIC void rtk_rxeof(sc)
 	struct rtk_softc	*sc;
 {
-        struct ether_header	*eh;
         struct mbuf		*m;
         struct ifnet		*ifp;
 	int			total_len = 0;
@@ -1124,7 +1123,6 @@ STATIC void rtk_rxeof(sc)
 		if (m == NULL)
 			continue;
 
-		eh = mtod(m, struct ether_header *);
 		ifp->if_ipackets++;
 
 #if NBPFILTER > 0
@@ -1134,16 +1132,8 @@ STATIC void rtk_rxeof(sc)
 		 * a broadcast packet, multicast packet, matches our ethernet
 		 * address or the interface is in promiscuous mode.
 		 */
-		if (ifp->if_bpf) {
+		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
-			if ((ifp->if_flags & IFF_PROMISC) != 0 &&
-				ETHER_IS_MULTICAST(eh->ether_dhost) == 0 &&
-				memcmp(eh->ether_dhost, LLADDR(ifp->if_sadl),
-						ETHER_ADDR_LEN) != 0) {
-				m_freem(m);
-				continue;
-			}
-		}
 #endif
 		/* pass it on. */
 		(*ifp->if_input)(ifp, m);

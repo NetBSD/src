@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.30 2000/06/09 08:54:22 enami Exp $	*/
+/*	$NetBSD: if_se.c,v 1.31 2000/10/01 23:32:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -652,7 +652,6 @@ se_read(sc, data, datalen)
 	int datalen;
 {
 	struct mbuf *m;
-	struct ether_header *eh;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int n;
 
@@ -695,30 +694,13 @@ se_read(sc, data, datalen)
 		}
 		ifp->if_ipackets++;
 
-		/* We assume that the header fit entirely in one mbuf. */
-		eh = mtod(m, struct ether_header *);
-
 #if NBPFILTER > 0
 		/*
 		 * Check if there's a BPF listener on this interface.
 		 * If so, hand off the raw packet to BPF.
 		 */
-		if (ifp->if_bpf) {
+		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
-
-			/* Note that the interface cannot be in
-			 * promiscuous mode if there are no BPF
-			 * listeners.  And if we are in promiscuous
-			 * mode, we have to check if this packet is
-			 * really ours.
-			 */
-			if ((ifp->if_flags & IFF_PROMISC) != 0 &&
-			    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-			    ETHER_CMP(eh->ether_dhost, LLADDR(ifp->if_sadl))) {
-				m_freem(m);
-				goto next_packet;
-			}
-		}
 #endif
 
 		/* Pass the packet up. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.32 2000/05/26 00:14:41 tsutsui Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.33 2000/10/01 23:32:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -628,7 +628,6 @@ epic_intr(arg)
 {
 	struct epic_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	struct ether_header *eh;
 	struct epic_rxdesc *rxd;
 	struct epic_txdesc *txd;
 	struct epic_descsoft *ds;
@@ -747,26 +746,16 @@ epic_intr(arg)
 
 			m->m_pkthdr.rcvif = ifp;
 			m->m_pkthdr.len = m->m_len = len;
-			eh = mtod(m, struct ether_header *);
 
 #if NBPFILTER > 0
 			/*
 			 * Pass this up to any BPF listeners, but only
 			 * pass it up the stack if its for us.
 			 */
-			if (ifp->if_bpf) {
+			if (ifp->if_bpf)
 				bpf_mtap(ifp->if_bpf, m);
-				if ((ifp->if_flags & IFF_PROMISC) != 0 &&
-				    memcmp(LLADDR(ifp->if_sadl),
-				           eh->ether_dhost,
-				           ETHER_ADDR_LEN) != 0 &&
-				    ETHER_IS_MULTICAST(eh->ether_dhost) == 0) {
-					m_freem(m);
-					continue;
-				}
-			}
-#endif /* NPBFILTER > 0 */
-			
+#endif
+
 			/* Pass it on. */
 			(*ifp->if_input)(ifp, m);
 			ifp->if_ipackets++;

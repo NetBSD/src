@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.14 2000/06/28 16:27:52 mrg Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.15 2000/10/01 23:32:43 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -1563,39 +1563,16 @@ cs_ether_input(sc, m)
 	struct mbuf *m;
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	struct ether_header *eh;
 
 	ifp->if_ipackets++;
-
-	/*
-	 * the first thing in the mbuf is the ethernet header. we need to
-	 * pass this header to the upper layers as a structure, so cast the
-	 * start of the mbuf, and adjust the mbuf to point to the end of the
-	 * ethernet header, ie the ethernet packet data.
-	 */
-	eh = mtod(m, struct ether_header *);
 
 #if NBPFILTER > 0
 	/*
 	 * Check if there's a BPF listener on this interface.
 	 * If so, hand off the raw packet to BPF.
 	 */
-	if (ifp->if_bpf) {
+	if (ifp->if_bpf)
 		bpf_mtap(ifp->if_bpf, m);
-
-		/*
-		 * Note that the interface cannot be in promiscuous mode if
-		 * there are no BPF listeners.  And if we are in promiscuous
-		 * mode, we have to check if this packet is really ours.
-		 */
-		if ((ifp->if_flags & IFF_PROMISC) &&
-		    (eh->ether_dhost[0] & 1) == 0 &&	/* !mcast and !bcast */
-		    bcmp(eh->ether_dhost, sc->sc_enaddr,
-			 sizeof(eh->ether_dhost)) != 0) {
-			m_freem(m);
-			return;
-		}
-	}
 #endif
 
 	/* Pass the packet up. */

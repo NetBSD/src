@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.5 2000/06/05 00:09:17 matt Exp $ */
+/*	$NetBSD: if_ni.c,v 1.6 2000/10/01 23:32:41 thorpej Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -590,7 +590,6 @@ nistart(ifp)
 void
 niintr(void *arg)
 {
-	struct ether_header *eh;
 	struct ni_softc *sc = arg;
 	struct ni_dg *data;
 	struct ni_msg *msg;
@@ -633,18 +632,8 @@ niintr(void *arg)
 				break; /* Out of mbufs */
 
 #if NBPFILTER > 0
-			eh = mtod(m, struct ether_header *);
-			if (ifp->if_bpf) {
+			if (ifp->if_bpf)
 				bpf_mtap(ifp->if_bpf, m);
-				if ((ifp->if_flags & IFF_PROMISC) != 0
-				    && bcmp(LLADDR(ifp->if_sadl),
-				    eh->ether_dhost,
-				    ETHER_ADDR_LEN) != 0 &&
-				    ((eh->ether_dhost[0] & 1) == 0)) {
-					m_freem(m);
-					continue;
-				}
-			}
 #endif
 			(*ifp->if_input)(ifp, m);
 			break;

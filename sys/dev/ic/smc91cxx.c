@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.29 2000/08/06 00:19:04 briggs Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.30 2000/10/01 23:32:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -1053,15 +1053,6 @@ smc91cxx_read(sc)
 	if (ifp->if_bpf)
 		bpf_mtap(ifp->if_bpf, m);
 #endif
-
-	/*
-	 * If this is unicast and not for me, drop it.
-	 */
-	if ((eh->ether_dhost[0] & 1) == 0 &&	/* !mcast and !bcast */
-	    ether_cmp(eh->ether_dhost, LLADDR(ifp->if_sadl)) != 0) {
-		m_freem(m);
-		goto out;
-	}
 
 	m->m_pkthdr.len = m->m_len = packetlen;
 	(*ifp->if_input)(ifp, m);
