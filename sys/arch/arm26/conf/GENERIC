@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.12 2000/10/04 03:35:55 itojun Exp $
+# $NetBSD: GENERIC,v 1.13 2000/10/14 23:46:40 bjh21 Exp $
 
 # GENERIC arm26 configuration -- everything I've implemented so far
 
@@ -146,7 +146,7 @@ com0		at upc0			# Serial port
 lpt0		at upc0			# Parallel port
 wdc0		at upc0			# IDE controller
 
-#wd*		at wdc? drive ?		# IDE hard discs
+wd*		at wdc? drive ?		# IDE hard discs
 #atapibus*	at wdc?			# ATAPI devices
 #cd*     	at atapibus? drive ?	# ATAPI CD-ROM drives
 #sd*     	at atapibus? drive ? 	# ATAPI disk drives
