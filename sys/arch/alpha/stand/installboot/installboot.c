@@ -1,4 +1,4 @@
-/* $NetBSD: installboot.c,v 1.5 1998/09/05 13:40:35 pk Exp $ */
+/* $NetBSD: installboot.c,v 1.6 1998/09/22 05:03:36 ross Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
 
 #include "stand/common/bbinfo.h"
 
-int	verbose, nowrite, hflag, cd9660;
+int	verbose, nowrite, hflag, cd9660, conblockmode, conblockstart;
 char	*boot, *proto, *dev;
 
 struct bbinfoloc *bbinfolocp;
@@ -97,9 +97,11 @@ struct bbinfo *bbinfop;
 int	max_block_count;
 
 
+void		setup_contig_blks(u_long, u_long, int, int, char *);
 char		*loadprotoblocks __P((char *, long *));
 int		loadblocknums_ffs __P((char *, int, unsigned long));
 int		loadblocknums_cd9660 __P((char *, int, unsigned long));
+int		loadblocknums_passthru __P((char *, int, unsigned long));
 static void	devread __P((int, void *, daddr_t, size_t, char *));
 static void	usage __P((void));
 int 		main __P((int, char *[]));
@@ -129,8 +131,13 @@ main(argc, argv)
 	unsigned long partoffset;
 	int (*loadblocknums_func) __P((char *, int, unsigned long));
 
-	while ((c = getopt(argc, argv, "nv")) != -1) {
+	while ((c = getopt(argc, argv, "nvb:")) != -1) {
 		switch (c) {
+		case 'b':
+			/* generic override, supply starting block # */
+			conblockmode = 1;
+			conblockstart = atoi(optarg);
+			break;
 		case 'n':
 			/* Do not actually write the bootblock to disk */
 			nowrite = 1;
@@ -221,7 +228,9 @@ main(argc, argv)
 	sync();
 	sleep(2);
 
-	if (cd9660)
+	if (conblockmode)
+		loadblocknums_func = loadblocknums_passthru;
+	else if (cd9660)
 		loadblocknums_func = loadblocknums_cd9660;
 	else
 		loadblocknums_func = loadblocknums_ffs;
@@ -562,8 +571,6 @@ loadblocknums_cd9660(boot, devfd, partoffset)
 {
 	u_long blkno, size;
 	char *fname;
-	int i, ndb;
-	int32_t cksum;
 
 	fname = strrchr(boot, '/');
 	if (fname != NULL)
@@ -574,25 +581,53 @@ loadblocknums_cd9660(boot, devfd, partoffset)
 	if (cd9660_lookup(fname, devfd, &blkno, &size))
 		errx(1, "unable to find file `%s' in file system", fname);
 
-	if (verbose)
-		printf("%s: block number %ld, size %ld\n", dev, blkno, size);
+	setup_contig_blks(blkno, size, ISO_DEFAULT_BLOCK_SIZE,
+		ISO_DEFAULT_BLOCK_SIZE, fname);
+	return 0;
+}
 
-	ndb = howmany(size, ISO_DEFAULT_BLOCK_SIZE);
+int
+loadblocknums_passthru(boot, devfd, partoffset)
+	char	*boot;
+	int	devfd;
+	unsigned long partoffset;
+{
+	struct stat sb;
+
+	if (stat(boot, &sb))
+		err(1, "stat: %s", boot);
+	setup_contig_blks(conblockstart, sb.st_size, 512, 16*1024, boot);
+	return 0;
+}
+
+void
+setup_contig_blks(blkno, size, diskblksize, tableblksize, fname)
+	u_long blkno, size;
+	int diskblksize, tableblksize;
+	char *fname;
+{
+	int i, ndb;
+	int32_t cksum;
+
+	ndb = howmany(size, tableblksize);
+	if (verbose)
+		printf("%s: block number %ld, size %ld table blocks: %d/%d\n",
+			dev, blkno, size, ndb, max_block_count);
 	if (ndb > max_block_count)
 		errx(1, "%s: Too many blocks", fname);
 
 	if (verbose)
 		printf("%s: block numbers:", dev);
 	for (i = 0; i < ndb; i++) {
-		bbinfop->blocks[i] = (blkno + i) *
-		    (ISO_DEFAULT_BLOCK_SIZE / DEV_BSIZE);
+		bbinfop->blocks[i] = blkno * (diskblksize / DEV_BSIZE)
+				   +   i   * (tableblksize / DEV_BSIZE);
 		if (verbose)
 			printf(" %d", bbinfop->blocks[i]);
 	}
 	if (verbose)
 		printf("\n");
 
-	bbinfop->bsize = ISO_DEFAULT_BLOCK_SIZE;
+	bbinfop->bsize = tableblksize;
 	bbinfop->nblocks = ndb;
 
 	cksum = 0;
@@ -600,6 +635,4 @@ loadblocknums_cd9660(boot, devfd, partoffset)
 	    (sizeof(*bbinfop) / sizeof(bbinfop->blocks[0])) - 1; i++)
 		cksum += ((int32_t *)bbinfop)[i];
 	bbinfop->cksum = -cksum;
-
-	return 0;
 }
