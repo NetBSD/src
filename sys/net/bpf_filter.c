@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.11 1995/04/22 13:26:39 cgd Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.12 1996/02/13 22:00:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993
@@ -82,6 +82,9 @@
 	} \
 }
 
+static int m_xword __P((struct mbuf *, int, int *));
+static int m_xhalf __P((struct mbuf *, int, int *));
+
 static int
 m_xword(m, k, err)
 	register struct mbuf *m;
@@ -158,7 +161,7 @@ bpf_filter(pc, p, wirelen, buflen)
 	u_int wirelen;
 	register u_int buflen;
 {
-	register u_int32_t A, X;
+	register u_int32_t A = 0, X = 0;
 	register int k;
 	int32_t mem[BPF_MEMWORDS];
 
@@ -167,10 +170,6 @@ bpf_filter(pc, p, wirelen, buflen)
 		 * No filter means accept all.
 		 */
 		return (u_int)-1;
-#ifdef lint
-	A = 0;
-	X = 0;
-#endif
 	--pc;
 	while (1) {
 		++pc;
