@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.448 2002/06/26 09:42:44 cjs Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.449 2002/06/26 10:09:16 cjs Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.444 2002/06/26 09:33:50 cjs Exp 
+ *	NetBSD: pcidevs,v 1.445 2002/06/26 10:03:58 cjs Exp 
  */
 
 /*
@@ -772,6 +772,7 @@
 
 /* Altima products */
 #define	PCI_PRODUCT_ALTIMA_AC1000	0x03e8		/* AC1000 Gigabit Ethernet */
+#define	PCI_PRODUCT_ALTIMA_AC9100	0x03ea		/* AC9100 Gigabit Ethernet */
 
 /* AMD products */
 #define	PCI_PRODUCT_AMD_PCNET_PCI	0x2000		/* PCnet-PCI Ethernet */

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.446 2002/06/26 09:42:45 cjs Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.447 2002/06/26 10:09:17 cjs Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.444 2002/06/26 09:33:50 cjs Exp 
+ *	NetBSD: pcidevs,v 1.445 2002/06/26 10:03:58 cjs Exp 
  */
 
 /*
@@ -872,6 +872,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Altima",
 	    "AC1000 Gigabit Ethernet",
+	},
+	{
+	    PCI_VENDOR_ALTIMA, PCI_PRODUCT_ALTIMA_AC9100,
+	    0,
+	    "Altima",
+	    "AC9100 Gigabit Ethernet",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCNET_PCI,
