@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.5 2003/06/29 22:31:10 fvdl Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.6 2003/08/02 11:41:21 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.5 2003/06/29 22:31:10 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.6 2003/08/02 11:41:21 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -263,7 +263,8 @@ msdosfs_access(v)
 		mode = S_IRWXU|S_IRWXG|S_IRWXO;
 	else
 		mode = S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
-	return (vaccess(ap->a_vp->v_type, mode & pmp->pm_mask,
+	return (vaccess(ap->a_vp->v_type,
+	    mode & (vp->v_type == VDIR ? pmp->pm_dirmask : pmp->pm_mask),
 	    pmp->pm_uid, pmp->pm_gid, ap->a_mode, ap->a_cred));
 }
 
@@ -308,7 +309,8 @@ msdosfs_getattr(v)
 		mode = S_IRWXU|S_IRWXG|S_IRWXO;
 	else
 		mode = S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
-	vap->va_mode = mode & pmp->pm_mask;
+	vap->va_mode =
+	    mode & (ap->a_vp->v_type == VDIR ? pmp->pm_dirmask : pmp->pm_mask);
 	vap->va_uid = pmp->pm_uid;
 	vap->va_gid = pmp->pm_gid;
 	vap->va_nlink = 1;
