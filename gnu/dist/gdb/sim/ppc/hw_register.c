@@ -128,4 +128,4 @@ const device_descriptor hw_register_device_descriptor[] = {
   { NULL },
 };
 
-#endif _HW_REGISTER_C_
+#endif /* _HW_REGISTER_C_ */
