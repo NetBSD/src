@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.112 2002/04/02 09:47:34 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.113 2002/04/04 16:40:15 ragge Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -888,7 +888,7 @@ pmap_destroy(pmap_t pmap)
   
 	if (count == 0) {
 #ifdef DEBUG
-		if (pmap->pm_share && pmap->pm_share->ps_next)
+		if (pmap->pm_share)
 			panic("pmap_destroy used pmap");
 #endif
 		pmap_release(pmap);
@@ -1107,10 +1107,8 @@ pmap_enter(pmap, v, p, prot, flags)
 			RECURSEEND;
 			if ((oldpte & PG_SREF) == 0)
 				rmpage(pmap, &patch[i]);
-#ifdef DEBUG
 			else
 				panic("pmap_enter on PG_SREF page");
-#endif
 			RECURSESTART;
 		} else if (pmap != pmap_kernel())
 				pmap->pm_pref[idx]++; /* New mapping */
@@ -1619,6 +1617,7 @@ pmap_activate(struct proc *p)
 		mtpr(pmap->pm_p0lr|AST_PCB, PR_P0LR);
 		mtpr(pmap->pm_p1br, PR_P1BR);
 		mtpr(pmap->pm_p1lr, PR_P1LR);
+		mtpr(0, PR_TBIA);
 	}
 }
 
