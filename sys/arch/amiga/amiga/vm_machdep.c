@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.20 1995/05/12 00:18:09 chopps Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.21 1995/05/13 05:57:31 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -68,32 +68,30 @@
 cpu_fork(p1, p2)
 	register struct proc *p1, *p2;
 {
-	register struct user *up = p2->p_addr;
-	u_long *p2stack, *p1stack;
-	int offset;
-	extern void call_finish_child(void);
+	register struct pcb *pcb = &p2->p_addr->u_pcb;
+	register struct trapframe *tf;
+	register struct switchframe *sf;
+	extern void proc_trampoline(), child_return();
 
-	/* copy over the machdep part of struct proc, so we don't lose
-	   any emulator-properties of processes. */
-	bcopy (&p1->p_md, &p2->p_md, sizeof (struct mdproc));
+	p2->p_md.md_flags = p1->p_md.md_flags;
+
+	/* Copy pcb from proc p1 to p2. */
+	*pcb = p1->p_addr->u_pcb;
+
+	PMAP_ACTIVATE(&p2->p_vmspace->vm_pmap, pcb, 0);
 
 	/*
-	 * Copy the pcb and create a stack that returns to the
-	 * call_finish_child in locore.s.  call_finish_child()
-	 * simply invokes finish_child() which does the equivelent
-	 * of the tail end of syscall() processing.
+	 * Copy the trap frame, and arrange for the child to return directly
+	 * through return_to_user().
 	 */
-	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
-	p1stack = (u_long *)
-	    ((caddr_t)p1->p_addr + (ctob(UPAGES) - sizeof(struct stdframe)));
-	p2stack = (u_long *)
-	    ((caddr_t)p2->p_addr + (ctob(UPAGES) - sizeof(struct stdframe)));
-	bcopy(p1stack, p2stack, sizeof(struct stdframe));	/* copy frame */
-	p2->p_md.md_regs = (int *)p2stack;		/* frame pointer */
-	*--p2stack = (u_long)call_finish_child;		/* resume pc */
-	p2->p_addr->u_pcb.pcb_regs[11] =(u_long)p2stack;	/* set ksp */
-
-	PMAP_ACTIVATE(&p2->p_vmspace->vm_pmap, &up->u_pcb, 0);
+	tf = (struct trapframe *)((u_int)p2->p_addr + USPACE) - 1;
+	p2->p_md.md_regs = (int *)tf;
+	*tf = *(struct trapframe *)p1->p_md.md_regs;
+	sf = (struct switchframe *)tf - 1;
+	sf->sf_pc = (u_int)proc_trampoline;
+	pcb->pcb_regs[6] = (int)child_return;	/* A2 */
+	pcb->pcb_regs[7] = (int)p2;		/* A3 */
+	pcb->pcb_regs[11] = (int)sf;		/* SSP */
 
 	return (0);
 }
@@ -114,14 +112,14 @@ cpu_set_kpc(p, pc)
 	u_int32_t pc;
 {
 	struct pcb *pcbp;
-	u_long *stack;
-	extern void proc_trampoline(void);
+	struct switchframe *sf;
+	extern void proc_trampoline(), child_return();
 
 	pcbp = &p->p_addr->u_pcb;
-	stack = (u_long *)pcbp->pcb_regs[11];	/* get current stack pointer */
-	pcbp->pcb_regs[6] = pc;			/* function in a2 */
-	pcbp->pcb_regs[7] = (int)p;		/* arg in a3 */
-	*stack = (u_long)proc_trampoline;	/* resume at tramp code */
+	sf = (struct switchframe *)pcbp->pcb_regs[11];
+	sf->sf_pc = (u_int)proc_trampoline;
+	pcbp->pcb_regs[6] = pc;			/* A2 */
+	pcbp->pcb_regs[7] = (int)p;		/* A3 */
 }
 
 /*
