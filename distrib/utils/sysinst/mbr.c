@@ -1,9 +1,7 @@
-/*	$NetBSD: mbr.c,v 1.11.2.3 1999/05/02 21:43:45 perry Exp $ */
+/*	$NetBSD: mbr.c,v 1.11.2.4 1999/06/24 23:04:10 cgd Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
- * All rights reserved.
- * * Copyright 1997 Piermont Information Systems Inc.
  * All rights reserved.
  *
  * Written by Philip A. Nelson for Piermont Information Systems Inc.
@@ -18,7 +16,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software develooped for the NetBSD Project by
+ *      This product includes software developed for the NetBSD Project by
  *      Piermont Information Systems Inc.
  * 4. The name of Piermont Information Systems Inc. may not be used to endorse
  *    or promote products derived from this software without specific prior
