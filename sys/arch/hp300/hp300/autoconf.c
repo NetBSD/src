@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.20 1996/05/18 01:39:57 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.21 1996/08/18 17:01:53 hpeyerl Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -510,10 +510,6 @@ find_busslaves(hc, startslave, endslave)
 				if (hd->hp_flags)
 					printf(" flags 0x%x", hd->hp_flags);
 				hd->hp_alive = 1;
-				if (hd->hp_dk && dkn < DK_NDRIVE)
-					hd->hp_dk = dkn++;
-				else
-					hd->hp_dk = -1;
 				rescan = 1;
 
 				/*
