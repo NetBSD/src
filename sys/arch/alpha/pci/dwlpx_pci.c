@@ -1,4 +1,4 @@
-/*	$NetBSD: dwlpx_pci.c,v 1.4 1997/03/15 03:15:20 cgd Exp $	*/
+/* $NetBSD: dwlpx_pci.c,v 1.5 1997/04/07 02:01:18 cgd Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -29,6 +29,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <machine/options.h>		/* Pull in config options headers */
 
 #include <sys/param.h>
 #include <sys/systm.h>
