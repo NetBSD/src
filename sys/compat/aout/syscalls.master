@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.6 1999/09/16 18:18:28 christos Exp $
+	$NetBSD: syscalls.master,v 1.7 2000/01/08 17:02:46 tron Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -509,8 +509,8 @@
 240	NOARGS		{ int sys_nanosleep(const struct timespec *rqtp, \
 			    struct timespec *rmtp); }
 241	NOARGS		{ int sys_fdatasync(int fd); }
-242	UNIMPL
-243	UNIMPL
+242	NOARGS		{ int sys_mlockall(int flags); }
+243	NOARGS		{ int sys_munlockall(void); }
 244	UNIMPL
 245	UNIMPL
 246	UNIMPL
