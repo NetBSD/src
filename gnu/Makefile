@@ -1,5 +1,5 @@
-# $Header: /cvsroot/src/gnu/Attic/Makefile,v 1.1 1993/04/29 12:42:53 cgd Exp $
+# $Header: /cvsroot/src/gnu/Attic/Makefile,v 1.2 1993/05/04 07:11:19 glass Exp $
 
-SUBDIR+= bin lib libexec usr.bin games
+SUBDIR+= lib libexec usr.bin games
 
 .include <bsd.subdir.mk>
