@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.28 1998/12/16 12:48:45 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.29 1998/12/16 13:21:26 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -434,8 +434,6 @@ pciide_attach(parent, self, aux)
 	struct pciide_softc *sc = (struct pciide_softc *)self;
 	struct pciide_channel *cp;
 	pcireg_t class, interface, csr;
-	pci_intr_handle_t intrhandle;
-	const char *intrstr;
 	char devinfo[256];
 	int i;
 
@@ -478,36 +476,6 @@ pciide_attach(parent, self, aux)
 
 	class = pci_conf_read(pc, tag, PCI_CLASS_REG);
 	interface = PCI_INTERFACE(class);
-
-	/*
-	 * Set up PCI interrupt only if at last one channel is in native mode.
-	 * At last one device (CMD PCI0640) has a default value of 14, which
-	 * will be mapped even if both channels are in compat-only mode.
-	 */
-	if (interface & (PCIIDE_INTERFACE_PCI(0) | PCIIDE_INTERFACE_PCI(1))) {
-		if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-		    pa->pa_intrline, &intrhandle) != 0) {
-			printf("%s: couldn't map native-PCI interrupt\n",
-			    sc->sc_wdcdev.sc_dev.dv_xname);
-		} else {
-			intrstr = pci_intr_string(pa->pa_pc, intrhandle);
-			sc->sc_pci_ih = pci_intr_establish(pa->pa_pc,
-			    intrhandle, IPL_BIO, pciide_pci_intr, sc);
-			if (sc->sc_pci_ih != NULL) {
-				printf("%s: using %s for native-PCI "
-				    "interrupt\n",
-				    sc->sc_wdcdev.sc_dev.dv_xname,
-				    intrstr ? intrstr : "unknown interrupt");
-			} else {
-				printf("%s: couldn't establish native-PCI "
-				    "interrupt",
-				    sc->sc_wdcdev.sc_dev.dv_xname);
-				if (intrstr != NULL)
-					printf(" at %s", intrstr); 
-				printf("\n");
-			}
-		}
-	}
 
 	/*
 	 * Map DMA registers, if DMA is supported.
@@ -653,14 +621,35 @@ pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep)
 {
 	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
 	struct channel_softc *wdc_cp = &cp->wdc_channel;
+	const char *intrstr;
+	pci_intr_handle_t intrhandle;
 
 	cp->compat = 0;
 
-	if ((cp->ih = sc->sc_pci_ih) == NULL) {
-		printf("%s: no native-PCI interrupt for use by %s channel\n",
-		    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
-		return 0;
+	if (sc->sc_pci_ih == NULL) {
+		if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
+		    pa->pa_intrline, &intrhandle) != 0) {
+			printf("%s: couldn't map native-PCI interrupt\n",
+			    sc->sc_wdcdev.sc_dev.dv_xname);
+			return 0;
+		}	
+		intrstr = pci_intr_string(pa->pa_pc, intrhandle);
+		sc->sc_pci_ih = pci_intr_establish(pa->pa_pc,
+		    intrhandle, IPL_BIO, pciide_pci_intr, sc);
+		if (sc->sc_pci_ih != NULL) {
+			printf("%s: using %s for native-PCI interrupt\n",
+			    sc->sc_wdcdev.sc_dev.dv_xname,
+			    intrstr ? intrstr : "unknown interrupt");
+		} else {
+			printf("%s: couldn't establish native-PCI interrupt",
+			    sc->sc_wdcdev.sc_dev.dv_xname);
+			if (intrstr != NULL)
+				printf(" at %s", intrstr);
+			printf("\n");
+			return 0;
+		}
 	}
+	cp->ih = sc->sc_pci_ih;
 	if (pci_mapreg_map(pa, PCIIDE_REG_CMD_BASE(wdc_cp->channel),
 	    PCI_MAPREG_TYPE_IO, 0,
 	    &wdc_cp->cmd_iot, &wdc_cp->cmd_ioh, NULL, cmdsizep) != 0) {
