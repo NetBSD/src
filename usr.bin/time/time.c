@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.11 1999/06/05 19:19:19 kleink Exp $	*/
+/*	$NetBSD: time.c,v 1.12 2002/07/16 15:41:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)time.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: time.c,v 1.11 1999/06/05 19:19:19 kleink Exp $");
+__RCSID("$NetBSD: time.c,v 1.12 2002/07/16 15:41:57 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -51,20 +51,21 @@ __RCSID("$NetBSD: time.c,v 1.11 1999/06/05 19:19:19 kleink Exp $");
 #include <sys/resource.h>
 #include <sys/wait.h>
 #include <errno.h>
+#include <err.h>
 #include <locale.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
-
-int		main __P((int, char **));
-static void	usage __P((void));
+int		main(int, char **);
+static void	usage(void);
+static void	prl(long, const char *);
+static void	prtv(const char *, const char *, const struct timeval *,
+    const char *);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	int pid;
 	int ch, status;
@@ -103,24 +104,23 @@ main(argc, argv)
 	gettimeofday(&before, (struct timezone *)NULL);
 	switch(pid = vfork()) {
 	case -1:			/* error */
-		perror("vfork");
-		exit(EXIT_FAILURE);
+		err(EXIT_FAILURE, "Vfork failed");
 		/* NOTREACHED */
 	case 0:				/* child */
 		/* LINTED will return only on failure */
 		execvp(*argv, argv);
-		perror(*argv);
-		_exit((errno == ENOENT) ? 127 : 126);
+		err((errno == ENOENT) ? 127 : 126, "Can't exec `%s'", *argv);
 		/* NOTREACHED */
 	}
 
 	/* parent */
 	(void)signal(SIGINT, SIG_IGN);
 	(void)signal(SIGQUIT, SIG_IGN);
-	while (wait3(&status, 0, &ru) != pid);
-	gettimeofday(&after, (struct timezone *)NULL);
+	if ((pid = wait4(pid, &status, 0, &ru)) == -1)
+		err(EXIT_FAILURE, "wait4 %d failed", pid);
+	(void)gettimeofday(&after, (struct timezone *)NULL);
 	if (!WIFEXITED(status))
-		fprintf(stderr, "Command terminated abnormally.\n");
+		warnx("Command terminated abnormally.");
 	timersub(&after, &before, &after);
 
 	if ((lconv = localeconv()) == NULL ||
@@ -128,67 +128,59 @@ main(argc, argv)
 		decpt = ".";
 
 	if (portableflag) {
-		fprintf (stderr, "real %9ld%s%02ld\n", 
-			(long)after.tv_sec, decpt, (long)after.tv_usec/10000);
-		fprintf (stderr, "user %9ld%s%02ld\n",
-			(long)ru.ru_utime.tv_sec, decpt, (long)ru.ru_utime.tv_usec/10000);
-		fprintf (stderr, "sys  %9ld%s%02ld\n",
-			(long)ru.ru_stime.tv_sec, decpt, (long)ru.ru_stime.tv_usec/10000);
+		prtv("real ", decpt, &after, "\n");
+		prtv("user ", decpt, &ru.ru_utime, "\n");
+		prtv("sys  ", decpt, &ru.ru_stime, "\n");
 	} else {
-
-		fprintf(stderr, "%9ld%s%02ld real ", 
-			(long)after.tv_sec, decpt, (long)after.tv_usec/10000);
-		fprintf(stderr, "%9ld%s%02ld user ",
-			(long)ru.ru_utime.tv_sec, decpt, (long)ru.ru_utime.tv_usec/10000);
-		fprintf(stderr, "%9ld%s%02ld sys\n",
-			(long)ru.ru_stime.tv_sec, decpt, (long)ru.ru_stime.tv_usec/10000);
+		prtv("", decpt, &after, " real ");
+		prtv("", decpt, &ru.ru_utime, " user ");
+		prtv("", decpt, &ru.ru_stime, " sys\n");
 	}
 
 	if (lflag) {
 		int hz = (int)sysconf(_SC_CLK_TCK);
-		long ticks;
+		unsigned long long ticks;
+#define SCALE(x) (long)(ticks ? x / ticks : 0)
 
 		ticks = hz * (ru.ru_utime.tv_sec + ru.ru_stime.tv_sec) +
 		     hz * (ru.ru_utime.tv_usec + ru.ru_stime.tv_usec) / 1000000;
-
-		fprintf(stderr, "%10ld  %s\n",
-			ru.ru_maxrss, "maximum resident set size");
-		fprintf(stderr, "%10ld  %s\n", ticks ? ru.ru_ixrss / ticks : 0,
-			"average shared memory size");
-		fprintf(stderr, "%10ld  %s\n", ticks ? ru.ru_idrss / ticks : 0,
-			"average unshared data size");
-		fprintf(stderr, "%10ld  %s\n", ticks ? ru.ru_isrss / ticks : 0,
-			"average unshared stack size");
-		fprintf(stderr, "%10ld  %s\n",
-			ru.ru_minflt, "page reclaims");
-		fprintf(stderr, "%10ld  %s\n",
-			ru.ru_majflt, "page faults");
-		fprintf(stderr, "%10ld  %s\n",
-			ru.ru_nswap, "swaps");
-		fprintf(stderr, "%10ld  %s\n",
-			ru.ru_inblock, "block input operations");
-		fprintf(stderr, "%10ld  %s\n",
-			ru.ru_oublock, "block output operations");
-		fprintf(stderr, "%10ld  %s\n",
-			ru.ru_msgsnd, "messages sent");
-		fprintf(stderr, "%10ld  %s\n",
-			ru.ru_msgrcv, "messages received");
-		fprintf(stderr, "%10ld  %s\n",
-			ru.ru_nsignals, "signals received");
-		fprintf(stderr, "%10ld  %s\n",
-			ru.ru_nvcsw, "voluntary context switches");
-		fprintf(stderr, "%10ld  %s\n",
-			ru.ru_nivcsw, "involuntary context switches");
+		prl(ru.ru_maxrss, "maximum resident set size");
+		prl(SCALE(ru.ru_ixrss), "average shared memory size");
+		prl(SCALE(ru.ru_idrss), "average unshared data size");
+		prl(SCALE(ru.ru_isrss), "average unshared stack size");
+		prl(ru.ru_minflt, "page reclaims");
+		prl(ru.ru_majflt, "page faults");
+		prl(ru.ru_nswap, "swaps");
+		prl(ru.ru_inblock, "block input operations");
+		prl(ru.ru_oublock, "block output operations");
+		prl(ru.ru_msgsnd, "messages sent");
+		prl(ru.ru_msgrcv, "messages received");
+		prl(ru.ru_nsignals, "signals received");
+		prl(ru.ru_nvcsw, "voluntary context switches");
+		prl(ru.ru_nivcsw, "involuntary context switches");
 	}
 
-	exit(WIFEXITED(status) ? WEXITSTATUS(status) : EXIT_FAILURE);
-	/* NOTREACHED */
+	return (WIFEXITED(status) ? WEXITSTATUS(status) : EXIT_FAILURE);
 }
 
 static void
 usage()
 {
-
-	fprintf(stderr, "usage: time [-lp] utility [argument ...]\n");
+	(void)fprintf(stderr, "Usage: %s [-lp] utility [argument ...]\n",
+	    getprogname());
 	exit(EXIT_FAILURE);
+}
+
+static void
+prl(long val, const char *expn)
+{
+    (void)fprintf(stderr, "%10ld  %s\n", val, expn);
+}
+
+static void
+prtv(const char *pre, const char *decpt, const struct timeval *tv,
+    const char *post)
+{
+    (void)fprintf(stderr, "%s%9ld%s%02ld%s", pre, (long)tv->tv_sec, decpt,
+	(long)tv->tv_usec / 10000, post);
 }
