@@ -1,4 +1,4 @@
-.\"	$NetBSD: editline.3,v 1.28 2002/08/18 07:23:21 yamt Exp $
+.\"	$NetBSD: editline.3,v 1.29 2002/10/01 19:06:45 wiz Exp $
 .\"
 .\" Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -382,8 +382,8 @@ name ``EL_BUILTIN_GETCFN''.
 .It Dv EL_CLIENTDATA , Fa "void *data"
 Register
 .Fa data
-to be associated with this EditLine structure. It can be retrieved with
-the corresponding
+to be associated with this EditLine structure.
+It can be retrieved with the corresponding
 .Fn el_get
 call.
 .El
@@ -585,7 +585,8 @@ Save the history list to
 .Fn history
 returns 0 if the operation
 .Fa op
-succeeds. Otherwise, -1 is returned and
+succeeds.
+Otherwise, -1 is returned and
 .Fa ev
 is updated to contain more details about the error.
 .El

@@ -1,4 +1,4 @@
-.\"	$NetBSD: appen.C,v 1.5 1999/07/02 16:11:14 simonb Exp $
+.\"	$NetBSD: appen.C,v 1.6 2002/10/01 19:06:39 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -46,7 +46,8 @@
 Here we present a few examples
 of how to use the package.
 They attempt to be representative,
-though not comprehensive.  Further examples can be found in the games section
+though not comprehensive.
+Further examples can be found in the games section
 of the source tree and in various utilities that use the screen such as
 .i systat(1) .
 .sh 2 "Screen Updating"
@@ -63,8 +64,8 @@ of what the relevant portions do.
 .sh 3 "Simple Character Output"
 .pp
 This program demonstrates how to set up a window and output characters to it.
-Also, it demonstrates how one might control the output to the window.  If
-you run this program, you will get a demonstration of the character output
+Also, it demonstrates how one might control the output to the window.
+If you run this program, you will get a demonstration of the character output
 chracteristics discussed in the above Character Output section.
 .(l I
 .so t2.gr
@@ -72,9 +73,9 @@ chracteristics discussed in the above Character Output section.
 .sh 3 "A Small Screen Manipulator"
 .pp
 The next example follows the lines of the previous one but extends then to
-demonstrate the various othe uses of the package.  Make sure you understand
-how this program works as it encompasses most of anything you will
-need to do with the package.
+demonstrate the various othe uses of the package.
+Make sure you understand how this program works as it encompasses most of
+anything you will need to do with the package.
 .(l I
 .so t3.gr
 .)l
