@@ -1,4 +1,4 @@
-/*	$NetBSD: mln_ipl.c,v 1.23 2000/05/03 11:12:04 veego Exp $	*/
+/*	$NetBSD: mln_ipl.c,v 1.24 2001/02/05 10:42:42 chs Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -57,11 +57,6 @@
 #if !defined(VOP_LEASE) && defined(LEASE_CHECK)
 #define	VOP_LEASE	LEASE_CHECK
 #endif
-
-#ifndef	MIN
-#define	MIN(a,b)	(((a)<(b))?(a):(b))
-#endif
-
 
 #if NetBSD >= 199706
 int	if_ipl_lkmentry __P((struct lkm_table *, int, int));
