@@ -15,7 +15,7 @@
  *
  *	%W% (Berkeley) %G%
  *
- * from: $Header: /cvsroot/src/sys/sys/device.h,v 1.1 1993/08/13 13:20:07 glass Exp $ (LBL)
+ * from: $Header: /cvsroot/src/sys/sys/device.h,v 1.1.2.1 1993/11/29 06:09:18 mycroft Exp $ (LBL)
  */
 
 /*
@@ -113,3 +113,5 @@ int config_found __P((struct device *, void *, cfprint_t));
 int config_rootfound __P((char *, void *));
 void config_attach __P((struct device *, struct cfdata *, void *, cfprint_t));
 void evcnt_attach __P((struct device *, const char *, struct evcnt *));
+struct dkdevice;
+void dk_establish __P((struct dkdevice *, struct device *));
