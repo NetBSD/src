@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.56 1997/02/28 08:56:05 scottr Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.57 1997/03/04 15:12:04 scottr Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -93,14 +93,13 @@ ae_size_card_memory(bst, bsh, ofs)
 	int i1, i2, i3, i4;
 
 	/*
-	 * very simple size memory, assuming it's installed in 8k
 	 * banks; also assume it will generally mirror in upper banks
 	 * if not installed.
 	 */
-	i1 = (8192 * 0) / 2;
-	i2 = (8192 * 1) / 2;
-	i3 = (8192 * 2) / 2;
-	i4 = (8192 * 3) / 2;
+	i1 = (8192 * 0);
+	i2 = (8192 * 1);
+	i3 = (8192 * 2);
+	i4 = (8192 * 3);
 
 	bus_space_write_2(bst, bsh, ofs + i1, 0x1111);
 	bus_space_write_2(bst, bsh, ofs + i2, 0x2222);
