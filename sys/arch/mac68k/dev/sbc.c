@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.38.4.1 1999/05/16 22:38:09 scottr Exp $	*/
+/*	$NetBSD: sbc.c,v 1.38.4.2 1999/11/02 06:46:13 scottr Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -183,7 +183,6 @@ sbc_irq_intr(p)
 	struct ncr5380_softc *ncr_sc = p;
 	struct sbc_softc *sc = (struct sbc_softc *)ncr_sc;
 	int claimed = 0;
-	extern int cold;
 
 	/* How we ever arrive here without IRQ set is a mystery... */
 	if (*ncr_sc->sci_csr & SCI_CSR_INT) {
@@ -687,7 +686,7 @@ found:
 	dh->dh_len = xlen;
 
 	/* Copy the 'write' flag for convenience. */
-	if (xs->flags & SCSI_DATA_OUT)
+	if (xs->xs_control & XS_CTL_DATA_OUT)
 		dh->dh_flags |= SBC_DH_OUT;
 
 	sr->sr_dma_hand = dh;
