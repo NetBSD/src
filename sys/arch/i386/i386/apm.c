@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.23 1997/07/10 03:07:29 cgd Exp $ */
+/*	$NetBSD: apm.c,v 1.24 1997/07/10 04:15:39 cgd Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -102,7 +102,6 @@ struct apm_softc {
 	int	event_count;
 	int	event_ptr;
 	struct	apm_event_info event_list[APM_NEVENTS];
-	int	apm_enabled;
 };
 #define	SCFLAG_OREAD	0x0000001
 #define	SCFLAG_OWRITE	0x0000002
@@ -1008,7 +1007,6 @@ apmattach(parent, self, aux)
 		   being disabled when other calls are made.  sigh. */
 		if (apminfo.apm_detail & APM_BIOS_PM_DISABLED)
 			apm_powmgt_enable(1);
-		apmsc->apm_enabled = 1;
 		/*
 		 * Engage cooperative power mgt (we get to do it)
 		 * on all devices (v1.1).
@@ -1053,7 +1051,7 @@ apmopen(dev, flag, mode, p)
 	if (!sc)
 		return ENXIO;
 
-	if (!sc->apm_enabled)
+	if (!apminited)
 		return ENXIO;
 	
 	switch (ctl) {
