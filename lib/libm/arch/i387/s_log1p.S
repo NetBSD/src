@@ -35,10 +35,10 @@
 
 #include <machine/asm.h>
 
-RCSID("$Id: s_log1p.S,v 1.2 1994/03/12 01:30:42 jtc Exp $")
+RCSID("$Id: s_log1p.S,v 1.3 1994/08/18 20:42:35 jtc Exp $")
 
 ENTRY(log1p)
 	fldln2
-	fldl 4(%ebp)
+	fldl 4(%esp)
 	fyl2xp1
 	ret
