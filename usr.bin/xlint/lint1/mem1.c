@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.9 2003/01/20 05:30:13 simonb Exp $	*/
+/*	$NetBSD: mem1.c,v 1.10 2003/10/21 23:58:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,11 +33,10 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem1.c,v 1.9 2003/01/20 05:30:13 simonb Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.10 2003/10/21 23:58:53 christos Exp $");
 #endif
 
 #include <sys/types.h>
-#include <sys/mman.h>
 #include <sys/param.h>
 #include <stdlib.h>
 #include <string.h>
@@ -165,19 +164,10 @@ static	mbl_t	*xnewblk(void);
 static mbl_t *
 xnewblk(void)
 {
-	mbl_t	*mb;
-	int	prot, flags;
-
-	mb = xmalloc(sizeof (mbl_t));
+	mbl_t	*mb = xmalloc(sizeof (mbl_t));
 
 	/* use mmap instead of malloc to avoid malloc's size overhead */
-
-	prot = PROT_READ | PROT_WRITE;
-	flags = MAP_ANON | MAP_PRIVATE;
-	mb->blk = mmap(NULL, mblklen, prot, flags, -1, (off_t)0);
-	if (mb->blk == (void *)-1)
-		err(1, "can't map memory");
-
+	mb->blk = xmapalloc(mblklen);
 	mb->size = mblklen;
 
 	return (mb);

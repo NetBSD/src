@@ -1,4 +1,4 @@
-/*	$NetBSD: mem2.c,v 1.7 2002/01/31 19:36:55 tv Exp $	*/
+/*	$NetBSD: mem2.c,v 1.8 2003/10/21 23:58:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,12 +33,11 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem2.c,v 1.7 2002/01/31 19:36:55 tv Exp $");
+__RCSID("$NetBSD: mem2.c,v 1.8 2003/10/21 23:58:53 christos Exp $");
 #endif
 
 #include <sys/param.h>
 #include <sys/types.h>
-#include <sys/mman.h>
 #include <unistd.h>
 #include <string.h>
 
@@ -73,17 +72,12 @@ void *
 xalloc(size_t sz)
 {
 	void	*ptr;
-	int	prot, flags;
 
 	/* Align to at least 8 bytes. */
 	sz = (sz + 7) & ~7L;
 	if (nxtfree + sz > mblklen) {
 		/* use mmap() instead of malloc() to avoid malloc overhead. */
-		prot = PROT_READ | PROT_WRITE;
-		flags = MAP_ANON | MAP_PRIVATE;
-		mbuf = mmap(NULL, mblklen, prot, flags, -1, (off_t)0);
-		if (mbuf == (void *)-1)
-			err(1, "can't map memory");
+		mbuf = xmapalloc(mblklen);
 		(void)memset(mbuf, 0, mblklen);
 		nxtfree = 0;
 	}
