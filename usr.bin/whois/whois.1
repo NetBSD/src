@@ -1,4 +1,4 @@
-.\"	$NetBSD: whois.1,v 1.11 1999/09/03 13:51:28 itojun Exp $
+.\"	$NetBSD: whois.1,v 1.12 1999/10/05 11:56:15 matthias Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -49,12 +49,12 @@
 .Op Fl T Ns Ar \ types
 .Op Fl L | m | M
 .Ar identifier
-.Nm whois
+.Nm ""
 .Fl t Ar type
-.Nm whois
+.Nm ""
 .Fl v Ar type
 .Sh DESCRIPTION
-.B whois
+.Nm
 searches for an object in the RIPE Network Management database.
 The key can be either a name (such as "Karrenberg"),a nic-handle
 (such as "DK58"),
@@ -71,140 +71,96 @@ lookup (ie length 32).
 By default, the server will return the first less specific network
 number, which can be an exact match if available in the database.
 .Sh OPTIONS
-.TP 8
-.B \-a
+.Bl -tag -width indent
+.It Fl a
 This causes the server to include information from
 non-RIPE whois databases in the reply. Currently these are the public
 parts of the US NIC and NSFnet databases. Please note that the RIPE
 NCC does not maintain these databases. The information is included for
 for your convenience only.
-.TP 8
-.B \-F
+.It Fl F
 fast output. Force the whois server to not reformat the output. This
 can save time for large objects. The output of the RIPE whois server
 will be in two letter short form. This option implies -r.
-.TP 8
-.B \-h host
+.It Fl h Ar host
 Select alternate host to direct the query
-.TP 8
-.B \-p port
+.It Fl p Ar port
 Connect to port 'port'
-.TP 8
-.B \-L
+.It Fl L
 lookup all less specific networks. Has effect only when looking up IP
 network numbers.
-.TP 8
-.B \-m
+.It Fl m
 lookup first level more specific networks. Has effect only when
 looking up IP network numbers.
-.TP 8
-.B \-M
+.It Fl M
 lookup all more specific networks. Has effect only when looking up IP
 network numbers.
-.TP 8
-.B \-r
+.It Fl r
 non-recursive lookup. This will cause the server to not lookup
 referenced objects.
-.TP 8
-.B \-R
+.It Fl R
 suppress referrals. Forces local copy of a domain object to be shown
 even if it contains referral.
-.TP 8
-.B \-i attributes
+.It Fl i Ar attributes
 attributes is a comma separated list of attributes.
 the whois server will return all objects that match the search keys
 in one of these attributes.
-.TP 8
-.B \-s sources
+.It Fl s Ar sources
 sources is a comma separated list of database sources. 
 The whois server will only search the databases that match the
 specified sources.
-.TP 8
-.B \-S
+.It Fl S
 requests the server to leave out "syntactic sugar" that may normally
 be inserted in some database objects.
-.TP 8
-.B \-t type
+.It Fl t Ar type
 requests the server to send a template for an object with type "type".
-.TP 8
-.B \-v type
+.It Fl v Ar type
 requests the server to send a verbose template for an object with type "type".
-.TP 8
-.B \-T types
+.It Fl T Ar types
 types is a comma separated list of object types.
 requests the server to only send back objects that match one of the "types".
 By default, whois connect to whois server both IPv6 and IPv4. If you want
 to connect IPv4 only, you use
-.B \-4
+.It Fl 4
 option, and if you want to connect IPv6 only, you use
-.B \-6
+.It Fl 6
 option.
-.TP 8
+.El
 .Lp
 .Sh EXAMPLES
-.IP
-.B example% whois karrenberg
-.IP
+.Bd -literal -offset indent
+$ whois karrenberg
 person:  Daniel Karrenberg
-.br
 address: RIPE Network Coordination Centre
-.br
 address: Kruislaan 409
-.br
 address: NL-1098 SJ Amsterdam
-.br
 address: Netherlands
-.br
 phone:   +31 20 5925065
-.br
 fax-no:  +31 20 5925155
-.br
 e-mail:  dfk@ripe.net
-.br
 nic-hdl: DK58
-.br
 changed: dfk@ripe.net 920407
-.br
 changed: ripe-dbm@ripe.net 920407
-.br
 source:  RIPE
-.IP
-.B example% whois -h whois.ripe.net -r 192.87.45.0/24
-.IP
+$ whois -h whois.ripe.net -r 192.87.45.0/24
 inetnum:     192.87.45.0
-.br
 netname:     RIPE-NCC
-.br
 descr:       RIPE Network Coordination Centre
-.br
 descr:       Amsterdam, Netherlands
-.br
 country:     NL
-.br
 admin-c:     Daniel Karrenberg
-.br
 tech-c:      Marten Terpstra
-.br
 connect:     RIPE NSF WCW
-.br
 aut-sys:     AS3333
-.br
 ias-int:     192.87.45.80  AS1104
-.br
 ias-int:     192.87.45.6   AS2122
-.br
 ias-int:     192.87.45.254 AS2600
-.br
 rev-srv:     ns.ripe.net
-.br
 rev-srv:     ns.eu.net
-.br
 notify:      ops@ripe.net
-.br
 changed:     tony@ripe.net 940110
-.br
 source:      RIPE
-.Lp
+.Ed
 .Sh RIPE VERSION	
 This is the RIPE version of the whois client program.
 For questions refer
