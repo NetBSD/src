@@ -1,4 +1,5 @@
-#	@(#)Makefile	5.13 (Berkeley) 3/1/91
+#	from: @(#)Makefile	5.13 (Berkeley) 3/1/91
+#	$Id: Makefile,v 1.2 1993/07/30 23:50:42 mycroft Exp $
 
 PROG=	talk
 DPADD=	${LIBCURSES} ${LIBTERMCAP}
