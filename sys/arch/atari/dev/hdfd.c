@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.43 2004/03/25 10:17:19 leo Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.44 2004/10/28 07:07:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.43 2004/03/25 10:17:19 leo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.44 2004/10/28 07:07:36 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -105,6 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.43 2004/03/25 10:17:19 leo Exp $");
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/malloc.h>
 #include <sys/uio.h>
 #include <sys/syslog.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: edc_mca.c,v 1.25 2004/09/01 20:57:58 drochner Exp $	*/
+/*	$NetBSD: edc_mca.c,v 1.26 2004/10/28 07:07:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,12 +50,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.25 2004/09/01 20:57:58 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.26 2004/10/28 07:07:40 yamt Exp $");
 
 #include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/malloc.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.61 2004/05/08 08:38:36 minoura Exp $	*/
+/*	$NetBSD: fd.c,v 1.62 2004/10/28 07:07:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.61 2004/05/08 08:38:36 minoura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.62 2004/10/28 07:07:39 yamt Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -90,6 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.61 2004/05/08 08:38:36 minoura Exp $");
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/uio.h>
 #include <sys/syslog.h>
 #include <sys/queue.h>

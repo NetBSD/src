@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.32 2004/10/26 22:46:13 thorpej Exp $	*/
+/*	$NetBSD: ld.c,v 1.33 2004/10/28 07:07:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.32 2004/10/26 22:46:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.33 2004/10/28 07:07:39 yamt Exp $");
 
 #include "rnd.h"
 
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.32 2004/10/26 22:46:13 thorpej Exp $");
 #include <sys/queue.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/endian.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>

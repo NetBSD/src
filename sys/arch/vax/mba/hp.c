@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.36 2003/12/29 16:23:58 pk Exp $ */
+/*	$NetBSD: hp.c,v 1.37 2004/10/28 07:07:38 yamt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hp.c,v 1.36 2003/12/29 16:23:58 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hp.c,v 1.37 2004/10/28 07:07:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: hp.c,v 1.36 2003/12/29 16:23:58 pk Exp $");
 #include <sys/disk.h>
 #include <sys/dkio.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/stat.h>
 #include <sys/ioccom.h>
 #include <sys/fcntl.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq_fcfs.c,v 1.1 2004/10/14 05:12:28 yamt Exp $	*/
+/*	$NetBSD: bufq_fcfs.c,v 1.2 2004/10/28 07:07:46 yamt Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.61 2004/09/25 03:30:44 thorpej Exp 	*/
 
 /*-
@@ -75,11 +75,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bufq_fcfs.c,v 1.1 2004/10/14 05:12:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bufq_fcfs.c,v 1.2 2004/10/28 07:07:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/malloc.h>
 
 /*

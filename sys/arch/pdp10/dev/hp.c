@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.1 2003/08/19 10:51:57 ragge Exp $ */
+/*	$NetBSD: hp.c,v 1.2 2004/10/28 07:07:38 yamt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -47,6 +47,7 @@
 #include <sys/disk.h>
 #include <sys/dkio.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/stat.h>
 #include <sys/ioccom.h>
 #include <sys/fcntl.h>

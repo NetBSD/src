@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.181 2004/10/15 06:41:35 thorpej Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.182 2004/10/28 07:07:44 yamt Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.181 2004/10/15 06:41:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.182 2004/10/28 07:07:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -165,6 +165,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.181 2004/10/15 06:41:35 thorpej
 #include <sys/conf.h>
 #include <sys/lock.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/user.h>
 #include <sys/reboot.h>
 

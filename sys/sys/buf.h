@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.76 2004/10/14 05:12:28 yamt Exp $	*/
+/*	$NetBSD: buf.h,v 1.77 2004/10/28 07:07:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -91,45 +91,6 @@ struct vnode;
  */   
 LIST_HEAD(workhead, worklist);
 
-/*
- * Device driver buffer queue.
- */
-struct bufq_state {
-	void (*bq_put)(struct bufq_state *, struct buf *);
-	struct buf *(*bq_get)(struct bufq_state *, int);
-	void *bq_private;
-	int bq_flags;			/* Flags from bufq_alloc() */
-};
-
-/*
- * Flags for bufq_alloc.
- */
-#define BUFQ_SORT_RAWBLOCK	0x0001	/* Sort by b_rawblkno */
-#define BUFQ_SORT_CYLINDER	0x0002	/* Sort by b_cylinder, b_rawblkno */
-
-#define BUFQ_FCFS		0x0010	/* First-come first-serve */
-#define BUFQ_DISKSORT		0x0020	/* Min seek sort */
-#define BUFQ_READ_PRIO		0x0030	/* Min seek and read priority */
-#define BUFQ_PRIOCSCAN		0x0040	/* Per-priority CSCAN */
-
-#define BUFQ_SORT_MASK		0x000f
-#define BUFQ_METHOD_MASK	0x00f0
-
-#ifdef _KERNEL
-
-extern int bufq_disk_default_strat;
-#define	BUFQ_DISK_DEFAULT_STRAT()	bufq_disk_default_strat
-void	bufq_alloc(struct bufq_state *, int);
-void	bufq_free(struct bufq_state *);
-
-#define BUFQ_PUT(bufq, bp) \
-	(*(bufq)->bq_put)((bufq), (bp))	/* Put buffer in queue */
-#define BUFQ_GET(bufq) \
-	(*(bufq)->bq_get)((bufq), 1)	/* Get and remove buffer from queue */
-#define BUFQ_PEEK(bufq) \
-	(*(bufq)->bq_get)((bufq), 0)	/* Get buffer from queue */
-
-#endif /* _KERNEL */
 
 /*
  * These are currently used only by the soft dependency code, hence
@@ -330,35 +291,6 @@ int	buf_setvalimit(vsize_t);
 #ifdef DDB
 void	vfs_buf_print(struct buf *, int, void (*)(const char *, ...));
 #endif
-
-void	bufq_fcfs_init(struct bufq_state *);
-void	bufq_disksort_init(struct bufq_state *);
-void	bufq_readprio_init(struct bufq_state *);
-void	bufq_priocscan_init(struct bufq_state *);
-
-static __inline int buf_inorder(const struct buf *, const struct buf *, int)
-    __unused;
-
-#include <sys/null.h> /* for NULL */
-
-/*
- * Check if two buf's are in ascending order.
- */
-static __inline int
-buf_inorder(const struct buf *bp, const struct buf *bq, int sortby)
-{
-
-	if (bp == NULL || bq == NULL)
-		return (bq == NULL);
-
-	if (sortby == BUFQ_SORT_CYLINDER) {
-		if (bp->b_cylinder != bq->b_cylinder)
-			return bp->b_cylinder < bq->b_cylinder;
-		else
-			return bp->b_rawblkno < bq->b_rawblkno;
-	} else
-		return bp->b_rawblkno < bq->b_rawblkno;
-}
 
 __END_DECLS
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.210 2004/09/26 09:00:37 dogcow Exp $	*/
+/*	$NetBSD: cd.c,v 1.211 2004/10/28 07:07:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.210 2004/09/26 09:00:37 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.211 2004/10/28 07:07:45 yamt Exp $");
 
 #include "rnd.h"
 
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.210 2004/09/26 09:00:37 dogcow Exp $");
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
 #include <sys/errno.h>

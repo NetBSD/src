@@ -1,4 +1,4 @@
-/*	$NetBSD: st_scsi.c,v 1.15 2004/09/18 00:21:03 mycroft Exp $ */
+/*	$NetBSD: st_scsi.c,v 1.16 2004/10/28 07:07:46 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st_scsi.c,v 1.15 2004/09/18 00:21:03 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st_scsi.c,v 1.16 2004/10/28 07:07:46 yamt Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: st_scsi.c,v 1.15 2004/09/18 00:21:03 mycroft Exp $")
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/conf.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>

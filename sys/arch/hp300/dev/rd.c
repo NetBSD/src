@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.64 2004/08/28 17:45:24 thorpej Exp $	*/
+/*	$NetBSD: rd.c,v 1.65 2004/10/28 07:07:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.64 2004/08/28 17:45:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.65 2004/10/28 07:07:36 yamt Exp $");
 
 #include "opt_useleds.h"
 #include "rnd.h"
@@ -125,6 +125,7 @@ __KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.64 2004/08/28 17:45:24 thorpej Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/disk.h>

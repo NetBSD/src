@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.228 2004/09/26 09:00:37 dogcow Exp $	*/
+/*	$NetBSD: sd.c,v 1.229 2004/10/28 07:07:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.228 2004/09/26 09:00:37 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.229 2004/10/28 07:07:45 yamt Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -67,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.228 2004/09/26 09:00:37 dogcow Exp $");
 #include <sys/ioctl.h>
 #include <sys/scsiio.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
 #include <sys/errno.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.17 2003/08/07 16:26:50 agc Exp $	*/
+/*	$NetBSD: fd.c,v 1.18 2004/10/28 07:07:36 yamt Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.17 2003/08/07 16:26:50 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.18 2004/10/28 07:07:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.17 2003/08/07 16:26:50 agc Exp $");
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/uio.h>
 #include <sys/syslog.h>
 #include <sys/queue.h>
