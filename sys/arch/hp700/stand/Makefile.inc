@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2002/06/06 19:48:11 fredette Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2002/11/28 06:01:00 chs Exp $
 
 BINDIR=			/usr/mdec
 
@@ -8,14 +8,18 @@ S?=		${.CURDIR}/../../../..
 
 .if !(defined(PROG) && ${PROG} == "mkboot")
 
-.BEGIN: machine hp700
-.NOPATH: machine hp700
-realall realdepend: machine hp700
+.BEGIN: machine hp700 hppa
+.NOPATH: machine hp700 hppa
+realall realdepend: machine hp700 hppa
 
 machine hp700 :
 	-rm -f $@
 	ln -s ${S}/arch/hp700/include $@
 
-CLEANFILES+=machine hp700
+hppa :
+	-rm -f $@
+	ln -s ${S}/arch/hppa/include $@
+
+CLEANFILES+=machine hp700 hppa
 
 .endif
