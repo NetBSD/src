@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.45 2000/03/04 21:37:23 mycroft Exp $ */
+/*	$NetBSD: apm.c,v 1.46 2000/03/15 09:30:11 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -1328,7 +1328,7 @@ apm_thread(arg)
 		APM_LOCK(apmsc);
 		apm_periodic_check(apmsc);
 		APM_UNLOCK(apmsc);
-		(void) tsleep(apmsc, PWAIT, "apmev", hz);
+		(void) tsleep(apmsc, PWAIT, "apmev",  (8 * hz) / 7);
 	}
 }
 
