@@ -1,8 +1,8 @@
-/*	$NetBSD: file.h,v 1.1.1.8 2001/07/22 22:31:50 pooka Exp $	*/
+/*	$NetBSD: file.h,v 1.1.1.9 2002/05/18 06:45:44 pooka Exp $	*/
 
 /*
  * file.h - definitions for file(1) program
- * @(#)Id: file.h,v 1.37 2001/07/22 21:04:15 christos Exp 
+ * @(#)Id: file.h,v 1.39 2002/05/16 18:45:56 christos Exp 
  *
  * Copyright (c) Ian F. Darwin, 1987.
  * Written by Ian F. Darwin.
@@ -81,6 +81,7 @@ struct magic {
 #define				LDATE	14
 #define				BELDATE	15
 #define				LELDATE	16
+#define				REGEX	17
 	uint8 in_op;		/* operator for indirection */
 	uint8 mask_op;		/* operator for mask */
 #define				OPAND	1
@@ -99,6 +100,7 @@ struct magic {
 		unsigned short h;
 		uint32 l;
 		char s[MAXstring];
+		char *buf;
 		unsigned char hs[2];	/* 2 bytes of a fixed-endian "short" */
 		unsigned char hl[4];	/* 4 bytes of a fixed-endian "long" */
 	} value;		/* either number or string */
@@ -148,11 +150,13 @@ extern void  mdump		__P((struct magic *));
 extern void  process		__P((const char *, int));
 extern void  showstr		__P((FILE *, const char *, int));
 extern int   softmagic		__P((unsigned char *, int));
-extern int   tryit		__P((unsigned char *, int, int));
-extern int   zmagic		__P((unsigned char *, int));
+extern int   tryit		__P((const char *, unsigned char *, int, int));
+extern int   zmagic		__P((const char *, unsigned char *, int));
 extern void  ckfprintf		__P((FILE *, const char *, ...));
 extern uint32 signextend	__P((struct magic *, unsigned int32));
 extern void tryelf		__P((int, unsigned char *, int));
+extern int pipe2file		__P((int, void *, size_t));
+
 
 extern char *progname;		/* the program name 			*/
 extern const char *magicfile;	/* name of the magic file		*/
@@ -166,8 +170,10 @@ extern int lflag;		/* follow symbolic links?		*/
 extern int sflag;		/* read/analyze block special files?	*/
 extern int iflag;		/* Output types as mime-types		*/
 
+#ifdef NEED_GETOPT
 extern int optind;		/* From getopt(3)			*/
 extern char *optarg;
+#endif
 
 #ifndef HAVE_STRERROR
 extern int sys_nerr;
