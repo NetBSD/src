@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.46 1998/11/23 23:02:11 kenh Exp $ */
+/*	$NetBSD: wdc.c,v 1.47 1998/11/29 17:34:49 bouyer Exp $ */
 
 
 /*
@@ -420,6 +420,7 @@ wdcstart(chp)
 	struct channel_softc *chp;
 {
 	struct wdc_xfer *xfer;
+	struct wdc_softc *wdc = chp->wdc;
 
 #ifdef WDC_DIAGNOSTIC
 	int spl1, spl2;
@@ -437,6 +438,10 @@ wdcstart(chp)
 	/* is there a xfer ? */
 	if ((xfer = chp->ch_queue->sc_xfer.tqh_first) == NULL)
 		return;
+
+	/* adjust chp, in case we have a shared queue */
+	chp = wdc->channels[xfer->channel];
+
 	if ((chp->ch_flags & WDCF_ACTIVE) != 0 ) {
 		return; /* channel aleady active */
 	}
