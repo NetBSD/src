@@ -1,4 +1,4 @@
-/*	$NetBSD: dm.c,v 1.7 1997/10/10 12:49:49 lukem Exp $	*/
+/*	$NetBSD: dm.c,v 1.7.2.1 1997/11/19 21:06:50 mellon Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dm.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dm.c,v 1.7 1997/10/10 12:49:49 lukem Exp $");
+__RCSID("$NetBSD: dm.c,v 1.7.2.1 1997/11/19 21:06:50 mellon Exp $");
 #endif
 #endif /* not lint */
 
@@ -122,7 +122,6 @@ play(args)
 	pbuf[sizeof(pbuf) - 1] = '\0';
 	if (priority > 0)	/* < 0 requires root */
 		(void)setpriority(PRIO_PROCESS, 0, priority);
-	setgid(getgid());	/* we run setgid kmem; lose it */
 	execv(pbuf, args);
 	err(1, "%s", pbuf);
 }
