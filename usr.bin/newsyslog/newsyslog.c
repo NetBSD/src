@@ -1,4 +1,4 @@
-/*	$NetBSD: newsyslog.c,v 1.25 2000/07/07 15:42:35 ad Exp $	*/
+/*	$NetBSD: newsyslog.c,v 1.26 2000/07/09 12:14:01 aymeric Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newsyslog.c,v 1.25 2000/07/07 15:42:35 ad Exp $");
+__RCSID("$NetBSD: newsyslog.c,v 1.26 2000/07/09 12:14:01 aymeric Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -232,7 +232,7 @@ parse(struct conf_entry *log, FILE *fd, size_t *_lineno)
 	}
 	log->mode = (mode_t)i;
 
-	if (sscanf(*ap++, "%d", &log->numhist) != 0) {
+	if (sscanf(*ap++, "%d", &log->numhist) != 1) {
 		warnx("config line %d: bad log count", lineno);
 		return (-1);
 	}
