@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.11 2000/12/19 21:34:25 jdc Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.12 2000/12/22 17:07:13 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -105,7 +105,6 @@ extern int	 My_term;		/* Use Def_term regardless. */
 extern const char	*Def_term;	/* Default terminal type. */
 
 /* Termcap capabilities. */
-extern char	__tc_pc;
 extern char	__tc_am, __tc_bs, __tc_cc, __tc_da, __tc_eo,
 		__tc_hc, __tc_hl, __tc_in, __tc_mi, __tc_ms,
 		__tc_nc, __tc_ns, __tc_os, __tc_ul, __tc_ut,

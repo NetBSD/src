@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.c,v 1.17 2000/12/19 21:34:25 jdc Exp $	*/
+/*	$NetBSD: curses.c,v 1.18 2000/12/22 17:07:12 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)curses.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: curses.c,v 1.17 2000/12/19 21:34:25 jdc Exp $");
+__RCSID("$NetBSD: curses.c,v 1.18 2000/12/22 17:07:12 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -53,7 +53,7 @@ int	__noqch = 0;			/*
 					 * insert/delete line capabilities
 					 * for quick change on refresh.
 					 */
-char	__tc_pc;
+char	PC;
 char	__tc_am, __tc_bs, __tc_cc, __tc_da, __tc_eo,
 	__tc_hc, __tc_hl, __tc_in, __tc_mi, __tc_ms,
 	__tc_nc, __tc_ns, __tc_os, __tc_ul, __tc_ut,
