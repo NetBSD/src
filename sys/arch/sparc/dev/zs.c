@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.64 1999/02/14 12:44:31 pk Exp $	*/
+/*	$NetBSD: zs.c,v 1.65 1999/02/16 07:22:17 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -896,15 +896,23 @@ consinit()
 	struct consdev *cn;
 	int channel, zs_unit, zstty_unit;
 	int inSource, outSink;
+	int node, fd;
+	char buffer[128];
+	char *devtype;
+	char *cp;
+	extern int fbnode;
 
-	if (prom_version() > 2) {
+	switch (prom_version()) {
+	case PROM_OLDMON:
+	case PROM_OBP_V0:
+		/* The stdio handles identify the device type */
+		inSource = prom_stdin();
+		outSink  = prom_stdout();
+		break;
+	case PROM_OBP_V2:
+	case PROM_OBP_V3:
+	case PROM_OPENFIRM:
 		/* We need to probe the PROM device tree */
-		register int node,fd;
-		char buffer[128];
-		char *devtype;
-		register char *cp;
-		extern int fbnode;
-
 		inSource = outSink = -1;
 
 		node = findroot();
@@ -997,10 +1005,7 @@ setup_output:
 				? PROMDEV_TTYA + (cp[1] - 'a')
 				: -1;
 		}
-	} else {
-		/* Otherwise the stdio handles identify the device type */
-		inSource = prom_stdin();
-		outSink  = prom_stdout();
+		break;
 	}
 
 setup_console:
@@ -1012,7 +1017,7 @@ setup_console:
 
 	switch (inSource) {
 	default:
-		printf("cninit: invalid inSource=%d\n", inSource);
+		printf("cninit: invalid inSource=0x%x\n", inSource);
 		prom_abort();
 		inSource = PROMDEV_KBD;
 		/* fall through */
