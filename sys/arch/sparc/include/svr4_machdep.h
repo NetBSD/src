@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.h,v 1.2 1996/03/14 19:49:18 christos Exp $	 */
+/*	$NetBSD: svr4_machdep.h,v 1.3 1996/03/26 19:04:48 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -78,7 +78,10 @@ typedef struct {
 typedef svr4_greg_t svr4_gregset_t[SVR4_SPARC_MAXREG];
 
 typedef struct {
-	u_int		 fpu_regs[32];
+	union {
+		u_int	 fp_ri[32];
+		double	 fp_rd[16];
+	} fpu_regs;
 	void		*fp_q;
 	unsigned	 fp_fsr;
 	u_char		 fp_nqel;
