@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.39 2000/01/26 06:17:59 thorpej Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.40 2000/02/03 06:25:09 thorpej Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -1001,6 +1001,9 @@ ahc_intr(arg)
 	struct	scb *scb;
 	struct	scsipi_xfer *xs;
 	struct	ahc_data *ahc = (struct ahc_data *)arg;
+
+	if ((ahc->flags & AHC_INIT) == 0)
+		return (0);
 
 	intstat = AHC_INB(ahc, INTSTAT);
 	/*
