@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.19 1999/03/24 01:07:59 thorpej Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.20 1999/04/24 22:09:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -813,8 +813,10 @@ vr_rxeof(sc)
 		}
 		if (total_len > (MHLEN - 2)) {
 			MCLGET(m, M_DONTWAIT);
-			if ((m->m_flags & M_EXT) == 0)
+			if ((m->m_flags & M_EXT) == 0) {
+				m_freem(m);
 				goto dropit;
+			}
 		}
 		m->m_data += 2;
 
