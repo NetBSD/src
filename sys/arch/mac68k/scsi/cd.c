@@ -14,7 +14,7 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  *
- *      $Id: cd.c,v 1.6 1994/02/22 00:57:23 briggs Exp $
+ *      $Id: cd.c,v 1.7 1994/06/26 13:26:05 briggs Exp $
  */
 
 #include <sys/types.h>
@@ -583,7 +583,7 @@ cdioctl(dev, cmd, addr, flag)
 					       args->data_format, args->track,
 					       &data, len))
 			return error;
-		len = MIN(len, ((data.header.data_len[0] << 8) + data.header.data_len[1] +
+		len = min(len, ((data.header.data_len[0] << 8) + data.header.data_len[1] +
 			sizeof(struct cd_sub_channel_header)));
 		return copyout(&data, args->data, len);
 	}
@@ -608,7 +608,7 @@ cdioctl(dev, cmd, addr, flag)
 		if (error = cd_read_toc(cd, te->address_format,
 					te->starting_track, data, len))
 			return error;
-		len = MIN(len, ((((th->len & 0xff) << 8) + ((th->len >> 8))) +
+		len = min(len, ((((th->len & 0xff) << 8) + ((th->len >> 8))) +
 			sizeof(*th)));
 		return copyout(th, te->data, len);
 	}
