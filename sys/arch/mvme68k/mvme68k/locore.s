@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.67 2000/11/21 13:54:15 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.68 2000/11/21 22:08:04 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -604,9 +604,6 @@ Lenab1:
 	movl	#USRSTACK-4,a2
 	movl	a2,usp			| init user SP
 	movl	a1,_C_LABEL(curpcb)	| proc0 is running
-
-	jbsr	_C_LABEL(mvme68k_init)	| additional pre-main initialization
-
 	tstl	_C_LABEL(fputype)	| Have an FPU?
 	jeq	Lenab2			| No, skip.
 	clrl	a1@(PCB_FPCTX)		| ensure null FP context
@@ -629,6 +626,7 @@ Lenab3:
  * main() nevers returns; we exit to user mode from a forked process
  * later on.
  */
+	jbsr	_C_LABEL(mvme68k_init)	| additional pre-main initialization
 	movw	#PSL_LOWIPL,sr		| lower SPL
 	clrw	sp@-			| vector offset/frame type
 	clrl	sp@-			| PC - filled in by "execve"
