@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_var.h,v 1.4 1996/05/22 13:56:24 mycroft Exp $	*/
+/*	$NetBSD: ns_var.h,v 1.5 1996/10/10 23:22:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Christos Zoulas.  All rights reserved.
@@ -73,13 +73,11 @@ void ns_watch_output __P((struct mbuf *, struct ifnet *));
 /* ns_ip.c */
 struct ifnet_en *nsipattach __P((void));
 int nsipioctl __P((struct ifnet *, u_long, caddr_t));
-int idpip_input __P((struct mbuf *, struct ifnet *));
-int nsipoutput __P((struct ifnet_en *, struct mbuf *, struct sockaddr *));
+void idpip_input __P((struct mbuf *, ...));
 void nsipstart __P((struct ifnet *));
 int nsip_route __P((struct mbuf *));
 int nsip_free __P((struct ifnet *));
 void *nsip_ctlinput __P((int, struct sockaddr *, void *));
-int nsip_rtchange __P((struct in_addr *));
 
 /* ns_output.c */
 int ns_output __P((struct mbuf *, ...));
