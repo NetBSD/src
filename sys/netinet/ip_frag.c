@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_frag.c,v 1.35 2004/03/28 09:00:57 martti Exp $	*/
+/*	$NetBSD: ip_frag.c,v 1.36 2004/03/28 12:12:28 martin Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -103,7 +103,7 @@ extern struct timeout fr_slowtimer_ch;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_frag.c,v 1.35 2004/03/28 09:00:57 martti Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_frag.c,v 1.36 2004/03/28 12:12:28 martin Exp $");
 #else
 static const char sccsid[] = "@(#)ip_frag.c	1.11 3/24/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_frag.c,v 2.77 2004/01/27 00:24:54 darrenr Exp";
@@ -398,7 +398,7 @@ u_32_t ipid;
 	WRITE_ENTER(&ipf_ipidfrag);
 	fra = ipfr_newfrag(fin, 0, ipfr_ipidtab);
 	if (fra != NULL) {
-		fra->ipfr_data = (void *)ipid;
+		fra->ipfr_data = (void *)(intptr_t)ipid;
 		*ipfr_ipidtail = fra;
 		fra->ipfr_prev = ipfr_ipidtail;
 		ipfr_ipidtail = &fra->ipfr_next;
@@ -583,7 +583,7 @@ fr_info_t *fin;
 	READ_ENTER(&ipf_ipidfrag);
 	ipf = fr_fraglookup(fin, ipfr_ipidtab);
 	if (ipf != NULL)
-		id = (u_32_t)ipf->ipfr_data;
+		id = (u_32_t)(intptr_t)ipf->ipfr_data;
 	else
 		id = 0xffffffff;
 	RWLOCK_EXIT(&ipf_ipidfrag);
