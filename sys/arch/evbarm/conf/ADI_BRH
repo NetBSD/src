@@ -1,4 +1,4 @@
-#	$NetBSD: ADI_BRH,v 1.2 2003/04/08 20:48:03 thorpej Exp $
+#	$NetBSD: ADI_BRH,v 1.3 2003/04/16 23:34:30 thorpej Exp $
 #
 #	ADI_BRH -- ADI Engineering "Big Red Head" i80200 Evaluation Board
 #
@@ -172,6 +172,7 @@ ahc*		at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
 isp*		at pci? dev ? function ?	# Qlogic ISP SCSI
 siop*		at pci? dev ? function ?	# Symbios/LSI 53c8xx SCSI
 esiop*		at pci? dev ? function ?	# Symbios/LSI 53c8xx SCSI
+mpt*		at pci? dev ? function ?	# LSI Fusion SCSI/FC
 
 scsibus*	at scsi?
 
