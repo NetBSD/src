@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.7 2002/01/14 19:24:39 pooka Exp $ */
+/* $NetBSD: esa.c,v 1.8 2002/01/23 11:27:59 pooka Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Jared D. McNeill <jmcneill@invisible.yi.org>
@@ -1018,6 +1018,8 @@ esa_detach(struct device *self, int flags)
 		pci_intr_disestablish(sc->sc_pct, sc->sc_ih);
 	if (sc->sc_ios)
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
+
+	free(sc->savemem, M_DEVBUF);
 
 	return (0);
 }
