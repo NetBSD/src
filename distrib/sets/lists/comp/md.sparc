@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc,v 1.37 1999/12/23 10:23:00 kleink Exp $
+# $NetBSD: md.sparc,v 1.38 2000/01/14 13:40:32 pk Exp $
 ./usr/include/sparc
 ./usr/include/sparc/_G_config.h
 ./usr/include/sparc/ansi.h
@@ -7,14 +7,11 @@
 ./usr/include/sparc/asm.h
 ./usr/include/sparc/autoconf.h
 ./usr/include/sparc/bootinfo.h
-./usr/include/sparc/bsd_openprom.h
 ./usr/include/sparc/bswap.h
-./usr/include/sparc/bus.h
 ./usr/include/sparc/cdefs.h
 ./usr/include/sparc/cgtworeg.h
 ./usr/include/sparc/conf.h
 ./usr/include/sparc/cpu.h
-./usr/include/sparc/ctlreg.h
 ./usr/include/sparc/disklabel.h
 ./usr/include/sparc/eeprom.h
 ./usr/include/sparc/elf_machdep.h
@@ -26,12 +23,10 @@
 ./usr/include/sparc/idprom.h
 ./usr/include/sparc/ieee.h
 ./usr/include/sparc/ieeefp.h
-./usr/include/sparc/instr.h
 ./usr/include/sparc/kbd.h
 ./usr/include/sparc/kbio.h
 ./usr/include/sparc/kcore.h
 ./usr/include/sparc/limits.h
-./usr/include/sparc/loadfile_machdep.h
 ./usr/include/sparc/math.h
 ./usr/include/sparc/oldmon.h
 ./usr/include/sparc/openpromio.h
@@ -45,11 +40,10 @@
 ./usr/include/sparc/ptrace.h
 ./usr/include/sparc/reg.h
 ./usr/include/sparc/reloc.h
-./usr/include/sparc/remote-sl.h
 ./usr/include/sparc/setjmp.h
 ./usr/include/sparc/signal.h
 ./usr/include/sparc/stdarg.h
-./usr/include/sparc/svr4_machdep.h
+./usr/include/sparc/tctrl.h
 ./usr/include/sparc/trap.h
 ./usr/include/sparc/types.h
 ./usr/include/sparc/varargs.h
