@@ -1,4 +1,4 @@
-.\"$NetBSD: hardware,v 1.8 2001/04/16 20:42:43 mbw Exp $
+.\"$NetBSD: hardware,v 1.9 2001/05/12 07:32:17 mbw Exp $
 .
 Currently,
 .Nx*M
@@ -8,8 +8,14 @@ to boot.
 Open Firmware is a command environment using the FORTH language which the
 .Nx
 kernel uses to gether information about your system, and to control some
-of your devices.
-This means that PowerMacs and clones that lack Open Firmware cannot boot
+of your devices.  It is part of the boot ROMs in most 
+.Tn PowerPC Ns No -based Tn Macintosh
+systems.  Until late 1996, 
+.Tn Apple 
+never intended to use Open Firmware for anything other than internal debugging and hardware support.  It was not
+intended to be used to boot an operating system.  This is why earlier machines
+have so much trouble with Open Firmware.
+This also means that PowerMacs and clones that lack Open Firmware cannot boot
 .Nx
 on the \*M platform. Most machines introduced by Apple and the clone-makers
 after August 17, 1995 have Open Firmware and are supported.
@@ -97,13 +103,25 @@ models with ATI Rage Pro: Desktop, Mini Tower, and All-in-One)
 .It Em "Open Firmware 3"
 .Pp
 .(bullet -compact
+Apple original iBook and iBook SE
+.It
 Apple iMac; Bondi Blue (Rev A and Rev B, 233 MHz),
 5 Flavors (Rev C and Rev D, 266 MHz and 333 MHz), and Slot Loading
 .It
-Apple PowerBook (G3 Series (bronze keyboard))
+Apple PowerBook (G3 Series (bronze keyboard) and G3 (FireWire))
 .It
-Apple PowerMacintosh (G3 (Blue and White), G4 (PCI), G4 (AGP), and G4 Cube)
+Apple PowerBook G4 (Titanium)
+.It
+Apple PowerMacintosh G3 (Blue and White)
+.It
+Apple PowerMacintosh (G4 (PCI), G4 (AGP), G4 (Gigabit Ethernet), G4
+(Digital Audio), and G4 Cube)
 .bullet)
+.(Note
+There have been some reports that PowerBook G4 (Titanium) models that have
+BootROM version 4.1.8 do not boot
+.Nx No .
+.Note)
 .tag)
 .
 .Ss2 Unsupported models
@@ -178,6 +196,9 @@ VIA Technologies VT86C926
 .It
 RealTek 8139
 .Pq Em rtk
+.It
+Netgear FA-311
+.Pq Em sip
 .It
 Lite-On PNIC
 .Pq Em tlp
@@ -267,7 +288,28 @@ UMAX C600 and Apus 3000
 .Pp
 .It
 PCI frame buffers which have Open Firmware support
-(ATI, IMS, and Matrox have several models which work)
+(ATI, IMS, Matrox, and NVIDIA have several models which work)
+.bullet)
+.It
+Audio
+.(bullet -compact
+On-board audio on most models
+.Pq Em awacs
+.(Note
+This driver has only recently been introduced and is considered
+.Dq untested
+meaning that it may cause your system to crash and/or is lacking some
+features you may expect
+.Note)
+.Pp
+.It
+USB audio devices
+.Pq Em uaudio
+.Pp
+.It
+PCI audio cards, although only the Ensoniq AudioPCI 
+.Pq Em eap
+has been thoroughly tested
 .bullet)
 .It
 Serial ports
@@ -334,8 +376,6 @@ Some Adaptec SCSI controllers have bootable Open Firmware ROMs.
 .
 .Ss2 Unsupported devices
 .(bullet -offset indent
-On-board audio
-.It
 Floppy disk
 .(Note
 Though
