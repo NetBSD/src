@@ -1,4 +1,4 @@
-/*	$NetBSD: fseek.c,v 1.9 1997/07/13 20:15:05 christos Exp $	*/
+/*	$NetBSD: fseek.c,v 1.10 1997/10/19 18:07:27 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fseek.c	8.3 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: fseek.c,v 1.9 1997/07/13 20:15:05 christos Exp $");
+__RCSID("$NetBSD: fseek.c,v 1.10 1997/10/19 18:07:27 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -141,7 +141,7 @@ fseek(fp, offset, whence)
 	if ((fp->_flags & __SOPT) == 0) {
 		if (seekfn != __sseek ||
 		    fp->_file < 0 || fstat(fp->_file, &st) ||
-		    (st.st_mode & S_IFMT) != S_IFREG) {
+		    !S_ISREG(st.st_mode)) {
 			fp->_flags |= __SNPT;
 			goto dumb;
 		}
