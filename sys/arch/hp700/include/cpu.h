@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.7 2003/08/31 01:26:33 chs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.8 2003/11/08 12:06:20 tsutsui Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.20 2001/01/29 00:01:58 mickey Exp $	*/
 
@@ -136,7 +136,9 @@ extern const struct hppa_cpu_info *hppa_cpu_info;
 #ifndef _LOCORE
 #ifdef _KERNEL
 
+#if !defined(_LKM) && defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
+#endif
 
 /*
  * External definitions unique to PA-RISC cpu support.
