@@ -207,7 +207,7 @@ init_io()
   freelist = 0;
   for (i = 0; i < RECV_INIT; i++)
     {
-      initial_bufs[i].next = freelist;
+      initial_bufs[i].next = (struct recvbuf *) freelist;
       freelist = &initial_bufs[i];
     }
 
@@ -1124,7 +1124,7 @@ getrecvbufs()
   if (debug > 4)
     printf("getrecvbufs returning %ld buffers\n", full_recvbufs);
 #endif
-  rb = beginlist;
+  rb = (struct recvbuf *) beginlist;
   fulllist = 0;
   full_recvbufs = 0;
 
@@ -1145,7 +1145,7 @@ getrecvbufs()
 	    emalloc(RECV_INC*sizeof(struct recvbuf));
 	  for (i = 0; i < RECV_INC; i++)
 	    {
-	      buf->next = freelist;
+	      buf->next = (struct recvbuf *) freelist;
 	      freelist = buf;
 	      buf++;
 	    }
@@ -1172,7 +1172,7 @@ freerecvbuf(rb)
      struct recvbuf *rb;
 {
   BLOCKIO();
-  rb->next = freelist;
+  rb->next = (struct recvbuf *) freelist;
   freelist = rb;
   free_recvbufs++;
   UNBLOCKIO();
@@ -1396,7 +1396,7 @@ input_handler(cts)
 #endif
 			}
 
-		      rb = freelist;
+		      rb = (struct recvbuf *) freelist;
 		      freelist = rb->next;
 		      free_recvbufs--;
 
@@ -1415,7 +1415,7 @@ input_handler(cts)
 		      if (rb->recv_length == -1)
 			{
 			  msyslog(LOG_ERR, "clock read fd %d: %m", fd);
-			  rb->next = freelist;
+			  rb->next = (struct recvbuf *) freelist;
 			  freelist = rb;
 			  free_recvbufs++;
 #if 1
@@ -1533,7 +1533,7 @@ input_handler(cts)
 			    }
 			}
 
-		      rb = freelist;
+		      rb = (struct recvbuf *) freelist;
 
 		      fromlen = sizeof(struct sockaddr_in);
 		      rb->recv_length = recvfrom(fd,
