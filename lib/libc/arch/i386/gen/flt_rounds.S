@@ -19,6 +19,13 @@ ENTRY(__flt_rounds)
 	movl (%esp),%eax
 	shrl $10,%eax
 	andl $3,%eax
+#ifdef PIC
+	PIC_PROLOGUE
+	leal PIC_GOTOFF(_map),%ecx
+	PIC_EPILOGUE
+	movb (%ecx,%eax,1),%al
+#else
 	movb _map(,%eax,1),%al
+#endif
 	addl $4,%esp
 	ret
