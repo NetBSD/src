@@ -1,8 +1,7 @@
-#	$Id: Makefile,v 1.2 1993/10/11 10:52:31 cgd Exp $
+#	$Id: Makefile,v 1.3 1993/10/14 01:51:11 cgd Exp $
 
 #DEBUG_FLAGS = -DDEBUGFSM -DDEBUGLCP -DDEBUGIPCP -DDEBUGUPAP -DDEBUGCHAP \
 #	-DDEBUGMAIN
-CFLAGS+=-DNO_DRAND48
 
 PROG=	pppd
 SRCS=	main.c magic.c fsm.c lcp.c ipcp.c upap.c logwtmp.c chap.c md5.c
