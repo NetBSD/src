@@ -9,7 +9,7 @@
 
 CFLAGS+=-I$(.CURDIR)/../g++-include -+
 GXX=		g++
-GXXFLAGS=	-O -felide-constructors
+GXXFLAGS=	${CFLAGS} -felide-constructors
 LDXX=		/usr/libexec/ld++
 
 .cc.o:
