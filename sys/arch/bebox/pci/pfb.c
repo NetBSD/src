@@ -1,4 +1,4 @@
-/*	$NetBSD: pfb.c,v 1.2 1998/11/24 06:34:10 sakamoto Exp $	*/
+/*	$NetBSD: pfb.c,v 1.3 1999/01/11 21:54:23 drochner Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -95,7 +95,6 @@ static int pfb_alloc_screen __P((void *, const struct wsscreen_descr *,
 				void **, int *, int *, long *));
 static void pfb_free_screen __P((void *, void *));
 static void pfb_show_screen __P((void *, void *));
-static int pfb_load_font __P((void *, void *, int, int, int, void *));
 
 struct wsdisplay_accessops pfb_accessops = {
 	pfb_ioctl,
@@ -103,7 +102,7 @@ struct wsdisplay_accessops pfb_accessops = {
 	pfb_alloc_screen,
 	pfb_free_screen,
 	pfb_show_screen,
-	pfb_load_font
+	0 /* load_font */
 };
 
 static void pfb_common_init __P((int addr, struct pfb_devconfig *));
@@ -277,16 +276,6 @@ pfb_show_screen(v, cookie)
 	void *v;
 	void *cookie;
 {
-}
-
-static int
-pfb_load_font(v, cookie, first, num, stride, data)
-	void *v;
-	void *cookie;
-	int first, num, stride;
-	void *data;
-{
-	return EINVAL;
 }
 
 int
