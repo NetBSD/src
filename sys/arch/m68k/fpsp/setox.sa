@@ -506,7 +506,7 @@ EXPMAIN:
 	FMOVE.X		fp0,fp1
 	FMUL.S		#:42B8AA3B,fp0	...64/log2 * X
 	fmovem.x	fp2/fp3,-(a7)		...save fp2
-	MOVE.L		#0,ADJFLAG(a6)
+	CLR.L		ADJFLAG(a6)
 	FMOVE.L		fp0,d0		...N = int( X * 64/log2 )
 	LEA		EXPTBL,a1
 	FMOVE.L		d0,fp0		...convert to floating-format
@@ -541,7 +541,7 @@ EXPCONT1:
 	FMUL.X		fp1,fp1	 	...fp1 IS S = R*R
 
 	FMOVE.S		#:3AB60B70,fp2	...fp2 IS A5
-*	MOVE.W		#0,2(a1)	...load 2^(J/64) in cache
+*	CLR.W		2(a1)		...load 2^(J/64) in cache
 
 	FMUL.X		fp1,fp2	 	...fp2 IS S*A5
 	FMOVE.X		fp1,fp3
@@ -634,7 +634,7 @@ EXP2BIG:
 	FMOVE.L		d1,FPCR
 	MOVE.L		(a0),d0
 	bclr.b		#sign_bit,(a0)		...setox always returns positive
-	CMPI.L		#0,d0
+	TST.L		d0
 	BLT		t_unfl
 	BRA		t_ovfl
 
@@ -708,7 +708,7 @@ EM1MAIN:
 	FMUL.X		fp1,fp1		...fp1 IS S = R*R
 
 	FMOVE.S		#:3950097B,fp2	...fp2 IS a6
-*	MOVE.W		#0,2(a1)	...load 2^(J/64) in cache
+*	CLR.W		2(a1)		...load 2^(J/64) in cache
 
 	FMUL.X		fp1,fp2		...fp2 IS S*A6
 	FMOVE.X		fp1,fp3
@@ -875,7 +875,7 @@ EM1POLY:
 EM1BIG:
 *--Step 10	|X| > 70 log2
 	MOVE.L		(a0),d0
-	CMPI.L		#0,d0
+	TST.L		d0
 	BGT.W		EXPC1
 *--Step 10.2
 	FMOVE.S		#:BF800000,fp0	...fp0 is -1

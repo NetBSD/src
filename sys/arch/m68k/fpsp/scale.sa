@@ -332,9 +332,9 @@ dst_loop:
 	blt.b		dst_norm	;exit loop if so
 	tst.l		d0		;otherwise, test shift count
 	beq.b		dst_fin		;if zero, shifting is done
-	subi.l		#1,d0		;dec src
-	lsl.l		#1,d3
-	roxl.l		#1,d2
+	subq.l		#1,d0		;dec src
+	add.l		d3,d3
+	addx.l		d2,d2
 	bra.b		dst_loop
 *
 * Destination became normalized.  Simply add the remaining 
@@ -344,7 +344,7 @@ dst_norm:
 	add.w		d0,d1		;dst is normalized; add src
 	tst.b		L_SCR1(a6)
 	beq.b		dnrm_pos
-	or.l		#$8000,d1
+	or.w		#$8000,d1
 dnrm_pos:
 	movem.w		d1,FPTEMP_EX(a6)
 	movem.l		d2,FPTEMP_HI(a6)
@@ -362,7 +362,7 @@ dst_fin:
 	tst.b		L_SCR1(a6)	;check for sign
 	beq.b		dst_exit
 	or.l		#neg_mask,USER_FPSR(a6) ;set N
-	or.l		#$8000,d1
+	or.w		#$8000,d1
 dst_exit:
 	movem.w		d1,ETEMP_EX(a6)
 	movem.l		d2,ETEMP_HI(a6)
@@ -379,7 +379,7 @@ dst_exit:
 src_out:
 	tst.b		L_SCR1(a6)
 	beq.b		scro_pos
-	or.l		#$8000,d1
+	or.w		#$8000,d1
 scro_pos:
 	move.l		FPTEMP_HI(a6),ETEMP_HI(a6)
 	move.l		FPTEMP_LO(a6),ETEMP_LO(a6)

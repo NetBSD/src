@@ -86,7 +86,7 @@ gen_except:
 	cmpi.b	#UNIMP_41_SIZE-4,1(a7)	;test for rev unimp frame
 	beq.b	unimp_x			;go handle unimp frame
 	cmpi.b	#BUSY_SIZE-4,1(a7)	;if size <> $60, fmt error
-	bne	fpsp_fmt_error
+	bne.l	fpsp_fmt_error
 	lea.l	BUSY_SIZE+LOCAL_SIZE(a7),a1 ;init a1 so fpsp.h
 *					;equates will work
 * Fix up the new busy frame with entries from the unimp frame
@@ -129,7 +129,7 @@ unimp_x:
 	bra.b	unimp_con
 test_rev:
 	cmpi.b	#UNIMP_41_SIZE-4,1(a7)	;test for rev unimp frame
-	bne	fpsp_fmt_error		;if not $28 or $30
+	bne.l	fpsp_fmt_error		;if not $28 or $30
 	lea.l	UNIMP_41_SIZE+LOCAL_SIZE(a7),a1
 	
 unimp_con:
@@ -307,7 +307,7 @@ ofuf_con:
 	bra.b	ofuf_fin
 try_41:
 	cmpi.b	#VER_41,(a7)		;test for rev unimp frame
-	bne	fpsp_fmt_error		;if neither, exit with error
+	bne.l	fpsp_fmt_error		;if neither, exit with error
 	moveq.l	#11,d0			;need to zero 12 lwords
 
 ofuf_fin:
@@ -408,7 +408,7 @@ finish_up:
 	bne.b	g_trace
 	btst.b	#6,(a7)		;test T0 in SR
 	bne.b	g_trace
-	bra	fpsp_done
+	bra.l	fpsp_done
 *
 * Change integer stack to look like trace stack
 * The address of the instruction that caused the
@@ -425,18 +425,18 @@ g_trace:
 	bftst	EXC_VEC-4(sp){0:4}
 	bne	g_easy
 
-	sub.w	#4,sp		make room
+	subq.l	#4,sp		make room
 	move.l	4(sp),(sp)
 	move.l	8(sp),4(sp)
-	sub.w	#BUSY_SIZE,sp
+	sub.l	#BUSY_SIZE,sp
 	fsave	(sp)
-	fmove	fpiar,BUSY_SIZE+EXC_EA-4(sp)
+	fmove.l	fpiar,BUSY_SIZE+EXC_EA-4(sp)
 	frestore (sp)
-	add.w	#BUSY_SIZE,sp
+	add.l	#BUSY_SIZE,sp
 
 g_easy:
 	move.w	#TRACE_VEC,EXC_VEC-4(a7)
-	bra	real_trace
+	bra.l	real_trace
 *
 *  This is a work-around for hardware bug 1384.
 *

@@ -232,7 +232,7 @@ TANMAIN:
 
 TANCONT:
 
-	CMPI.L		#0,D0
+	TST.L		D0
 	BLT.W		NODD
 
 	FMOVE.X		FP0,FP1
@@ -375,7 +375,7 @@ LOOP:
 	BLE.B		LASTLOOP
 CONTLOOP:
 	SUBI.L		#27,D0	 ...D0 IS L := K-27
-	MOVE.L		#0,ENDFLAG(a6)
+	CLR.L		ENDFLAG(a6)
 	BRA.B		WORK
 LASTLOOP:
 	CLR.L		D0		...D0 IS L := 0
@@ -455,7 +455,7 @@ WORK:
 *--|r| <= half ulp of R.
 	FAdd.X		FP1,FP0			...FP0 is R := A+a
 *--No need to calculate r if this is the last loop
-	CMPI.L		#0,D0
+	TST.L		D0
 	BGT.W		RESTORE
 
 *--Need to calculate r
