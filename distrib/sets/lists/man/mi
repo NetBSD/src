@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.158 1999/09/02 20:50:30 tron Exp $
+# $NetBSD: mi,v 1.159 1999/09/05 00:16:27 soren Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -399,6 +399,7 @@
 ./usr/share/man/cat4/inet.0
 ./usr/share/man/cat4/inet6.0
 ./usr/share/man/cat4/inphy.0
+./usr/share/man/cat4/iophy.0
 ./usr/share/man/cat4/ip.0
 ./usr/share/man/cat4/ipf.0
 ./usr/share/man/cat4/ipfilter.0
@@ -475,6 +476,7 @@
 ./usr/share/man/cat4/tl.0
 ./usr/share/man/cat4/tlphy.0
 ./usr/share/man/cat4/tp.0
+./usr/share/man/cat4/tqphy.0
 ./usr/share/man/cat4/tr.0
 ./usr/share/man/cat4/tty.0
 ./usr/share/man/cat4/tun.0
@@ -1542,6 +1544,7 @@
 ./usr/share/man/man4/inet.4
 ./usr/share/man/man4/inet6.4
 ./usr/share/man/man4/inphy.4
+./usr/share/man/man4/iophy.4
 ./usr/share/man/man4/ip.4
 ./usr/share/man/man4/ipf.4
 ./usr/share/man/man4/ipfilter.4
@@ -1618,6 +1621,7 @@
 ./usr/share/man/man4/tl.4
 ./usr/share/man/man4/tlphy.4
 ./usr/share/man/man4/tp.4
+./usr/share/man/man4/tqphy.4
 ./usr/share/man/man4/tr.4
 ./usr/share/man/man4/tty.4
 ./usr/share/man/man4/tun.4
