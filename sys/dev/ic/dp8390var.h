@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390var.h,v 1.14 2000/02/02 13:06:17 itojun Exp $	*/
+/*	$NetBSD: dp8390var.h,v 1.15 2000/02/09 14:42:34 enami Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -62,7 +62,6 @@ struct dp8390_softc {
 	u_int8_t sc_enaddr[6];	/* storage for MAC address */
 
 	int	sc_enabled;	/* boolean; power enabled on interface */
-	int	sc_configured;	/* boolean; 1 if dp8390_config was succesful */
 
 #if NRND > 0
 	rndsource_element_t rnd_source; /* random source */
