@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.7 1999/04/29 02:50:25 ad Exp $ */
+/* 	$NetBSD: px.c,v 1.8 1999/05/06 01:50:56 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.7 1999/04/29 02:50:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.8 1999/05/06 01:50:56 thorpej Exp $");
 
 /*
  * px.c: driver for the DEC TURBOchannel 2D and 3D accelerated framebuffers
@@ -264,10 +264,10 @@ px_match(parent, match, aux)
 	int i;
 
 	for (i = 0; i < NUM_PX_TYPES; i++)
-		if (!strncmp(px_types[i], ta->ta_modname, TC_ROM_LLEN))
-			break;
+		if (strncmp(px_types[i], ta->ta_modname, TC_ROM_LLEN) == 0)
+			return (1);
 
-	return (px_types[i] != NULL);
+	return (0);
 }
 
 
