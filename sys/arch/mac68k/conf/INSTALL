@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.17 2002/04/27 19:29:08 shiba Exp $
+#	$NetBSD: INSTALL,v 1.18 2002/04/28 06:19:45 wormey Exp $
 #
 # INSTALL
 
@@ -150,7 +150,7 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 st*	at scsibus? target ? lun ?	# SCSI tape drives
 
 # IDE controller and devices
-wdc*	at obio? 0x1000
+wdc*	at obio? flags 0x1000
 wd*	at wdc? channel ? drive ?
 
 
