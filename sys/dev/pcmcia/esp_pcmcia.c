@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_pcmcia.c,v 1.3 2000/03/20 03:49:23 tsutsui Exp $	*/
+/*	$NetBSD: esp_pcmcia.c,v 1.4 2000/03/20 06:01:11 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -426,11 +426,11 @@ esp_pcmcia_dma_intr(sc)
 	espintr = (u_int) sc->sc_espintr;
 	do {
 		if (esc->sc_datain) {
-			if (espphase == DATA_IN_PHASE) {
-				*p++ = NCR_READ_REG(sc, NCR_FIFO);
-				cnt--;
+			*p++ = NCR_READ_REG(sc, NCR_FIFO);
+			cnt--;
+			if (espphase == DATA_IN_PHASE)
 				NCR_WRITE_REG(sc, NCR_CMD, NCRCMD_TRANS);
-			} else
+			else
 				esc->sc_active = 0;
 	 	} else {
 			if (espphase == DATA_OUT_PHASE ||
