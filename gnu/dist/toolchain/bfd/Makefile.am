@@ -115,6 +115,7 @@ ALL_MACHINES_CFILES = \
 BFD32_BACKENDS = \
 	aout-adobe.lo \
 	aout-arm.lo \
+	aout-arm32.lo \
 	aout-ns32k.lo \
 	aout-sparcle.lo \
 	aout-tic30.lo \
@@ -245,6 +246,7 @@ BFD32_BACKENDS = \
 BFD32_BACKENDS_CFILES = \
 	aout-adobe.c \
 	aout-arm.c \
+	aout-arm32.c \
 	aout-ns32k.c \
 	aout-sparcle.c \
 	aout-tic30.c \

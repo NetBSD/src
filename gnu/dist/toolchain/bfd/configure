@@ -4493,7 +4493,7 @@ if test "${target}" = "${host}"; then
 	COREFILE=trad-core.lo
 	TRAD_HEADER='"hosts/mipsmach3.h"'
 	;;
-  mips-*-netbsd* | mips*-*-openbsd*)
+  mips*-*-netbsd* | mips*-*-openbsd*)
 	COREFILE=netbsd-core.lo
 	;;
   mips-dec-*)
@@ -4571,6 +4571,9 @@ if test "${target}" = "${host}"; then
   tahoe-*-*)
 	COREFILE=trad-core.lo
 	TRAD_HEADER='"hosts/tahoe.h"'
+	;;
+  vax-*-netbsd*)
+	COREFILE=netbsd-core.lo
 	;;
   vax-*-ultrix2*)
 	COREFILE=trad-core.lo
@@ -5200,6 +5203,7 @@ do
     tic30_aout_vec)		tb="$tb aout-tic30.lo" ;;
     tic30_coff_vec)		tb="$tb coff-tic30.lo" ;;
     tic80coff_vec)		tb="$tb coff-tic80.lo cofflink.lo" ;;
+    vaxcoff_vec)		tb="$tb coff-vax.lo" ;;
     versados_vec)		tb="$tb versados.lo" ;;
     vms_alpha_vec)		tb="$tb vms.lo vms-hdr.lo vms-gsd.lo vms-tir.lo vms-misc.lo"
  				target64=true ;;

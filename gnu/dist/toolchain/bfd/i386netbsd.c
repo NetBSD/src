@@ -18,6 +18,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 #define	BYTES_IN_WORD	4
+#define ARCH_SIZE 	32
 #undef TARGET_IS_BIG_ENDIAN_P
 
 #define	TARGET_PAGE_SIZE	4096
@@ -27,7 +28,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 #define	DEFAULT_MID 	M_386_NETBSD
 
 #define MY(OP) CAT(i386netbsd_,OP)
+#define NAME(x,y) CAT3(x,_i386netbsd_,y)
+
 /* This needs to start with a.out so GDB knows it is an a.out variant.  */
 #define TARGETNAME "a.out-i386-netbsd"
 
-#include "netbsd.h"
+#include "aoutnbsd.h"
