@@ -1,4 +1,4 @@
-/*	$KAME: ipsec_doi.h,v 1.34 2001/08/16 06:20:35 itojun Exp $	*/
+/*	$KAME: ipsec_doi.h,v 1.35 2003/06/27 07:32:38 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -198,7 +198,7 @@ extern const char *ipsecdoi_id2str __P((const vchar_t *));
 
 extern vchar_t *ipsecdoi_setph1proposal __P((struct isakmpsa *));
 extern int ipsecdoi_setph2proposal __P((struct ph2handle *));
-extern int ipsecdoi_transportmode __P((struct ph2handle *));
+extern int ipsecdoi_transportmode __P((struct saprop *));
 extern int ipsecdoi_get_defaultlifetime __P((void));
 extern int ipsecdoi_checkalgtypes __P((int, int, int, int));
 extern int ipproto2doi __P((int));

@@ -1,4 +1,4 @@
-/*	$KAME: oakley.h,v 1.28 2001/12/12 18:23:42 sakane Exp $	*/
+/*	$KAME: oakley.h,v 1.29 2003/06/27 12:02:41 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -46,9 +46,11 @@
 #define   OAKLEY_ATTR_HASH_ALG_MD5		1
 #define   OAKLEY_ATTR_HASH_ALG_SHA		2
 #define   OAKLEY_ATTR_HASH_ALG_TIGER		3
+#if defined(WITH_SHA2)
 #define   OAKLEY_ATTR_HASH_ALG_SHA2_256		4
 #define   OAKLEY_ATTR_HASH_ALG_SHA2_384		5
 #define   OAKLEY_ATTR_HASH_ALG_SHA2_512		6
+#endif
 					/*	65001 - 65535 Private Use */
 #define OAKLEY_ATTR_AUTH_METHOD		3 /* B */
 #define   OAKLEY_ATTR_AUTH_METHOD_PSKEY		1

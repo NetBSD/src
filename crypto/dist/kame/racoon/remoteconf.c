@@ -1,4 +1,4 @@
-/*	$KAME: remoteconf.c,v 1.29 2001/12/07 08:39:39 sakane Exp $	*/
+/*	$KAME: remoteconf.c,v 1.30 2003/06/27 07:32:39 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -162,7 +162,7 @@ newrmconf()
 	new->getcert_method = ISAKMP_GETCERT_PAYLOAD;
 	new->send_cert = TRUE;
 	new->send_cr = TRUE;
-	new->support_mip6 = FALSE;
+	new->support_proxy = FALSE;
 	new->gen_policy = FALSE;
 	new->retry_counter = lcconf->retry_counter;
 	new->retry_interval = lcconf->retry_interval;

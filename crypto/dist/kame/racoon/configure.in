@@ -322,6 +322,7 @@ main()
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_UNSPEC;
     hints.ai_flags = passive ? AI_PASSIVE : 0;
+    hints.ai_protocol = IPPROTO_TCP;
     hints.ai_socktype = SOCK_STREAM;
     if ((gaierr = getaddrinfo(NULL, "54321", &hints, &aitop)) != 0) {
       (void)gai_strerror(gaierr);
@@ -656,11 +657,20 @@ AC_CHECK_HEADER(openssl/rijndael.h, [], [
 ])
 
 dnl checking sha2
-AC_SUBST(CRYPTOBJS)
-AC_CHECK_HEADER(openssl/sha2.h, [], [
+AC_MSG_CHECKING(sha2 support)
+AC_EGREP_CPP(yes, [#include <openssl/opensslv.h>
+#if OPENSSL_VERSION_NUMBER >= 0x0090602fL
+yes
+#endif],
+[AC_MSG_RESULT(no)
+        echo "WARNING: sha2 does not work."],
+[AC_MSG_RESULT(yes)
+ AC_SUBST(CRYPTOBJS)
+ AC_DEFINE(WITH_SHA2)
+ AC_CHECK_HEADER(openssl/sha2.h, [], [
 	CPPFLAGS="$CPPFLAGS -I./missing"
-	CRYPTOBJS="$CRYPTOBJS sha2.o"
-])
+	CRYPTOBJS="$CRYPTOBJS sha2.o"])]
+)
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
