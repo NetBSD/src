@@ -1,4 +1,4 @@
-/*	$NetBSD: rarpd.c,v 1.11 1996/02/01 21:57:00 mycroft Exp $	*/
+/*	$NetBSD: rarpd.c,v 1.12 1996/03/21 18:28:23 jtc Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -27,7 +27,7 @@ char    copyright[] =
 #endif				/* not lint */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: rarpd.c,v 1.11 1996/02/01 21:57:00 mycroft Exp $";
+static char rcsid[] = "$NetBSD: rarpd.c,v 1.12 1996/03/21 18:28:23 jtc Exp $";
 #endif
 
 
@@ -101,7 +101,7 @@ int     aflag = 0;		/* listen on "all" interfaces  */
 int     dflag = 0;		/* print debugging messages */
 int     fflag = 0;		/* don't fork */
 
-void
+int
 main(argc, argv)
 	int     argc;
 	char  **argv;
