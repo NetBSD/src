@@ -1,4 +1,4 @@
-/*	$NetBSD: net.h,v 1.7 1995/09/18 21:19:32 pk Exp $	*/
+/*	$NetBSD: net.h,v 1.8 1995/09/23 03:31:51 gwr Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass 
@@ -78,6 +78,7 @@ extern	char domainname[FNAME_SIZE];
 extern	int domainnamelen;
 extern	char ifname[IFNAME_SIZE];
 
+/* All of these are in network order. */
 extern	struct in_addr myip;
 extern	struct in_addr rootip;
 extern	struct in_addr swapip;
