@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.139 2004/03/24 15:34:54 atatat Exp $	*/
+/*	$NetBSD: if.c,v 1.139.2.1 2004/05/28 07:24:37 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.139 2004/03/24 15:34:54 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.139.2.1 2004/05/28 07:24:37 tron Exp $");
 
 #include "opt_inet.h"
 
@@ -1724,30 +1724,35 @@ sysctl_net_ifq_setup(struct sysctllog **clog,
 		       CTL_NET, pf, ipn, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "ifq", NULL,
+		       CTLTYPE_NODE, "ifq",
+		       SYSCTL_DESCR("Protocol input queue controls"),
 		       NULL, 0, NULL, 0,
 		       CTL_NET, pf, ipn, qid, CTL_EOL);
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_INT, "len", NULL,
+		       CTLTYPE_INT, "len",
+		       SYSCTL_DESCR("Current input queue length"),
 		       NULL, 0, &ifq->ifq_len, 0,
 		       CTL_NET, pf, ipn, qid, IFQCTL_LEN, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "maxlen", NULL,
+		       CTLTYPE_INT, "maxlen",
+		       SYSCTL_DESCR("Maximum allowed input queue length"),
 		       NULL, 0, &ifq->ifq_maxlen, 0,
 		       CTL_NET, pf, ipn, qid, IFQCTL_MAXLEN, CTL_EOL);
 #ifdef notyet
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_INT, "peak", NULL,
+		       CTLTYPE_INT, "peak",
+		       SYSCTL_DESCR("Highest input queue length"),
 		       NULL, 0, &ifq->ifq_peak, 0,
 		       CTL_NET, pf, ipn, qid, IFQCTL_PEAK, CTL_EOL);
 #endif
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_INT, "drops", NULL,
+		       CTLTYPE_INT, "drops",
+		       SYSCTL_DESCR("Packets dropped due to full input queue"),
 		       NULL, 0, &ifq->ifq_drops, 0,
 		       CTL_NET, pf, ipn, qid, IFQCTL_DROPS, CTL_EOL);
 }
