@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_cd.h,v 1.13 2001/05/14 20:35:28 bouyer Exp $	*/
+/*	$NetBSD: scsi_cd.h,v 1.14 2001/09/02 19:35:20 thorpej Exp $	*/
 
 /*
  * Written by Julian Elischer (julian@tfs.com)
@@ -35,9 +35,7 @@ struct scsi_play_track {
 };
 
 /* sense pages */
-#define SCSI_CD_PAGE_CODE    0x3F
 #define SCSI_AUDIO_PAGE  0x0e
-#define SCSI_CD_PAGE_PS  0x80
 
 #define	SCSI_CD_WRITE_PARAMS_PAGE	0x05
 #define	SCSI_CD_WRITE_PARAMS_PAGE_LEN	0x32
