@@ -1,4 +1,4 @@
-.\" $NetBSD: doc2html,v 1.24 2001/07/02 00:03:31 lukem Exp $
+.\" $NetBSD: doc2html,v 1.25 2001/07/03 22:05:11 lukem Exp $
 .\"
 .\" Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1176,6 +1176,11 @@ AT&T UNIX\\$*
 .			ds std-tmp1 X/Open Networking Services Issue 5
 .			as std-tmp1 " \"exactly one space
 .			as std-tmp1 (``\\*(tNXNS5\\*(aa'')
+.	       \}
+.	       if "\\$1"-xns5.2d2.0" \{\
+.			ds std-tmp1 X/Open Networking Services Issue 5.2 Draft 2.0
+.			as std-tmp1 " \"exactly one space
+.			as std-tmp1 (``\\*(tNXNS5.2D2.0\\*(aa'')
 .	       \}
 .	       if "\\$1"-xcurses4.2" \{\
 .			ds std-tmp1 X/Open Curses Issue 4 Version 2
