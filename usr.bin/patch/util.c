@@ -1,5 +1,5 @@
 #ifndef lint
-static char rcsid[] = "$Id: util.c,v 1.2 1993/08/02 17:55:23 mycroft Exp $";
+static char rcsid[] = "$Id: util.c,v 1.3 1993/12/07 10:36:16 mycroft Exp $";
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -9,19 +9,6 @@ static char rcsid[] = "$Id: util.c,v 1.2 1993/08/02 17:55:23 mycroft Exp $";
 #include "backupfile.h"
 
 void my_exit();
-
-static char *
-private_strerror (errnum)
-     int errnum;
-{
-  extern char *sys_errlist[];
-  extern int sys_nerr;
-
-  if (errnum > 0 && errnum <= sys_nerr)
-    return sys_errlist[errnum];
-  return "Unknown system error";
-}
-#define strerror private_strerror
 
 /* Rename a file, copying it if necessary. */
 

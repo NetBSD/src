@@ -34,7 +34,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)command.c	5.22 (Berkeley) 6/21/92"; */
-static char *rcsid = "$Id: command.c,v 1.2 1993/11/09 05:08:13 cgd Exp $";
+static char *rcsid = "$Id: command.c,v 1.3 1993/12/07 10:30:52 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -151,11 +151,13 @@ cmd_char(c)
 	return(0);
 }
 
+off_t position();
+
 prompt()
 {
 	extern int linenums, short_file;
 	extern char *current_name, *firstsearch, *next_name;
-	off_t len, pos, ch_length(), position(), forw_line();
+	off_t len, pos, ch_length(), forw_line();
 	char pbuf[40];
 
 	/*
