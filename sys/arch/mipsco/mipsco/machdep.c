@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.15 2001/01/22 13:57:01 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.16 2001/02/21 09:10:42 wdk Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15 2001/01/22 13:57:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16 2001/02/21 09:10:42 wdk Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -856,4 +856,7 @@ consinit()
 	cn_tab = &consdev_zs;
 
 	(*cn_tab->cn_init)(cn_tab);
+#ifdef KGDB
+	zs_kgdb_init();		/* XXX */
+#endif
 }
