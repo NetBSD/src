@@ -246,10 +246,6 @@ typedef enum bfd_format {
 /* This flag indicates that the BFD contents are actually cached in
    memory.  If this is set, iostream points to a bfd_in_memory struct.  */
 #define BFD_IN_MEMORY 0x800
-
-/* This tells the BFD that certain structures (such as ar(1) headers) need
-   not be aligned to word or other boundaries in output files. */
-#define BFD_DATA_MISALIGN 0x8000
 
 /* symbols and relocation */
 
