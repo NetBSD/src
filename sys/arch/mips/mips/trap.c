@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.143 2000/07/02 04:40:40 cgd Exp $	*/
+/*	$NetBSD: trap.c,v 1.144 2000/07/20 18:14:48 jeffs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.143 2000/07/02 04:40:40 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.144 2000/07/20 18:14:48 jeffs Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -84,6 +84,10 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.143 2000/07/02 04:40:40 cgd Exp $");
 #ifdef DDB
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
+#endif
+
+#ifdef KGDB
+#include <sys/kgdb.h>
 #endif
 
 int astpending;
@@ -367,9 +371,29 @@ trap(status, cause, vaddr, opc, frame)
 		else
 			printf("curproc == NULL ");
 		printf("ksp=0x%x\n", (int)&status);
-#ifdef DDB
+#if defined(DDB)
 		kdb_trap(type, (mips_reg_t *) frame);
 		/* XXX force halt XXX */
+#elif defined(KGDB)
+		{
+			struct frame *f = (struct frame *)&ddb_regs;
+			extern mips_reg_t kgdb_cause, kgdb_vaddr;
+			kgdb_cause = cause;
+			kgdb_vaddr = vaddr;
+
+			/*
+			 * init global ddb_regs, used in db_interface.c routines
+			 * shared between ddb and gdb. Send ddb_regs to gdb so
+			 * that db_machdep.h macros will work with it, and
+			 * allow gdb to alter the PC.
+			 */
+			db_set_ddb_regs(type, (mips_reg_t *) frame);
+			PC_BREAK_ADVANCE(f);
+			if (kgdb_trap(type, &ddb_regs)) {
+				((mips_reg_t *)frame)[21] = f->f_regs[PC];
+				return;
+			}
+		}
 #else
 		panic("trap");
 #endif
@@ -556,9 +580,32 @@ trap(status, cause, vaddr, opc, frame)
 		break; /* SIGNAL */
 
 	case T_BREAK:
-#ifdef DDB
+#if defined(DDB)
 		kdb_trap(type, (mips_reg_t *) frame);
 		return;	/* KERN */
+#elif defined(KGDB)
+		{
+			struct frame *f = (struct frame *)&ddb_regs;
+			extern mips_reg_t kgdb_cause, kgdb_vaddr;
+			kgdb_cause = cause;
+			kgdb_vaddr = vaddr;
+
+			/*
+			 * init global ddb_regs, used in db_interface.c routines
+			 * shared between ddb and gdb. Send ddb_regs to gdb so
+			 * that db_machdep.h macros will work with it, and
+			 * allow gdb to alter the PC.
+			 */
+			db_set_ddb_regs(type, (mips_reg_t *) frame);
+			PC_BREAK_ADVANCE(f);
+			if (!kgdb_trap(type, &ddb_regs))
+				printf("kgdb: ignored %s\n",
+				       trap_type[TRAPTYPE(cause)]);
+			else
+				((mips_reg_t *)frame)[21] = f->f_regs[PC];
+
+			return;
+		}
 #else
 		goto dopanic;
 #endif
@@ -572,9 +619,6 @@ trap(status, cause, vaddr, opc, frame)
 
 		/* read break instruction */
 		instr = fuiword((void *)va);
-#ifdef DEBUG
-/*XXX*/		printf("break insn  0x%x\n", instr);
-#endif
 
 		if (p->p_md.md_ss_addr != va || instr != MIPS_BREAK_SSTEP) {
 			sig = SIGTRAP;
@@ -863,11 +907,8 @@ mips_singlestep(p)
 
 #ifndef DDB_TRACE
 
-#if defined(DEBUG) || defined(DDB)
+#if defined(DEBUG) || defined(DDB) || defined(KGDB) || defined(geo)
 mips_reg_t kdbrpeek __P((vaddr_t));
-extern void stacktrace __P((void)); /*XXX*/
-extern void logstacktrace __P((void)); /*XXX*/
-
 
 int
 kdbpeek(addr)

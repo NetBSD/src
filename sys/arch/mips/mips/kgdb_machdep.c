@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.2 2000/07/17 07:06:13 jeffs Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.3 2000/07/20 18:14:46 jeffs Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -102,8 +102,31 @@
 #include <machine/db_machdep.h>
 #include <ddb/db_access.h>
 
+/*
+ * Is kva a valid address to access?  This is used by KGDB.
+ */
+static int
+kvacc(vaddr_t kva)
+{
+	pt_entry_t *pte;
 
-extern int kvacc __P((vaddr_t));
+	if (kva < MIPS_KSEG0_START)
+		return 0;
+
+	if (kva < MIPS_KSEG2_START)
+		return 1;
+	
+	if (kva >= VM_MAX_KERNEL_ADDRESS)
+		return 0;
+
+	pte = kvtopte(kva);
+	if ((pte - Sysmap) > Sysmapsize)
+		return 0;
+	if (!mips_pg_v(pte->pt_entry))
+		return 0;
+
+	return 1;
+}
 
 /*
  * Determine if the memory at va..(va+len) is valid.
