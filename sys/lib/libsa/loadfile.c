@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile.c,v 1.6 1999/11/13 21:17:56 thorpej Exp $ */
+/* $NetBSD: loadfile.c,v 1.7 1999/12/29 11:08:02 hannken Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -293,8 +293,8 @@ elf_exec(fd, elf, marks, flags)
 		    (phdr.p_flags & (PF_W|PF_X)) == 0)
 			continue;
 
-#define IS_TEXT(p)	(p.p_type & PF_X)
-#define IS_DATA(p)	(p.p_type & PF_W)
+#define IS_TEXT(p)	(p.p_flags & PF_X)
+#define IS_DATA(p)	(p.p_flags & PF_W)
 #define IS_BSS(p)	(p.p_filesz < p.p_memsz)
 		/*
 		 * XXX: Assume first address is lowest
