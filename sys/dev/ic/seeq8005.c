@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.28 2001/07/07 05:35:41 thorpej Exp $ */
+/* $NetBSD: seeq8005.c,v 1.29 2001/07/07 15:57:52 thorpej Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -63,7 +63,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-__RCSID("$NetBSD: seeq8005.c,v 1.28 2001/07/07 05:35:41 thorpej Exp $");
+__RCSID("$NetBSD: seeq8005.c,v 1.29 2001/07/07 15:57:52 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/endian.h>
@@ -243,7 +243,7 @@ seeq8005_attach(struct seeq8005_softc *sc, const u_int8_t *myaddr, int *media,
 
 	/* Initialise ifnet structure. */
 
-	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_softc = sc;
 	ifp->if_start = ea_start;
 	ifp->if_ioctl = ea_ioctl;

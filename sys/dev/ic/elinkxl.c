@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.52 2001/07/07 05:35:39 thorpej Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.53 2001/07/07 15:57:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -415,7 +415,7 @@ ex_config(sc)
 	} else
 		ex_probemedia(sc);
 
-	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_softc = sc;
 	ifp->if_start = ex_start;
 	ifp->if_ioctl = ex_ioctl;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.32 2001/06/12 22:32:50 thorpej Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.33 2001/07/07 15:57:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -712,7 +712,7 @@ rtk_attach(sc)
 
 	ifp = &sc->ethercom.ec_if;
 	ifp->if_softc = sc;
-	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = rtk_ioctl;
 	ifp->if_start = rtk_start;

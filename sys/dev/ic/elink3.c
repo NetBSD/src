@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.93 2001/05/16 20:30:52 jdolecek Exp $	*/
+/*	$NetBSD: elink3.c,v 1.94 2001/07/07 15:57:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -413,7 +413,7 @@ epconfig(sc, chipset, enaddr)
 	bus_space_write_2(iot, ioh, ELINK_COMMAND,
 	    SET_TX_AVAIL_THRESH | (1600 >> sc->ep_pktlenshift));
 
-	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_softc = sc;
 	ifp->if_start = epstart;
 	ifp->if_ioctl = epioctl;
