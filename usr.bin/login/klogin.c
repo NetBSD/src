@@ -1,4 +1,4 @@
-/*	$NetBSD: klogin.c,v 1.15 2000/05/30 06:56:17 aidan Exp $	*/
+/*	$NetBSD: klogin.c,v 1.16 2000/08/02 05:58:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)klogin.c	8.3 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: klogin.c,v 1.15 2000/05/30 06:56:17 aidan Exp $");
+__RCSID("$NetBSD: klogin.c,v 1.16 2000/08/02 05:58:35 thorpej Exp $");
 #endif /* not lint */
 
 #ifdef KERBEROS
@@ -63,6 +63,7 @@ __RCSID("$NetBSD: klogin.c,v 1.15 2000/05/30 06:56:17 aidan Exp $");
 #define	VERIFY_SERVICE	"rcmd"
 
 int notickets;
+int krb_configured;
 char *krbtkfile_env;
 char *tty;
 extern int has_ccache;
@@ -90,6 +91,8 @@ klogin(pw, instance, localhost, password)
 	unsigned long faddr;
 	char realm[REALM_SZ], savehost[MAXHOSTNAMELEN];
 
+	krb_configured = 1;
+
 	/*
 	 * Root logins don't use Kerberos.
 	 * If we have a realm, try getting a ticket-granting ticket
@@ -99,8 +102,10 @@ klogin(pw, instance, localhost, password)
 	 * without issuing any tickets.
 	 */
 	if (strcmp(pw->pw_name, "root") == 0 ||
-	    krb_get_lrealm(realm, 0) != KSUCCESS)
+	    krb_get_lrealm(realm, 0) != KSUCCESS) {
+		krb_configured = 0;
 		return (1);
+	}
 
 	/*
 	 * get TGT for local realm
