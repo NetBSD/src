@@ -1,8 +1,8 @@
-/*      $NetBSD: yyyin_cksum.c,v 1.3 1994/11/25 19:09:53 ragge Exp $ */
+/*	$NetBSD: yyyin_cksum.c,v 1.4 1996/01/06 16:50:55 ragge Exp $	*/
 
 /*
- * Copyright (c) 1982, 1986 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,183 +32,118 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)in_cksum.c	7.6 (Berkeley) 12/16/90
+ *	@(#)in_cksum.c	8.1 (Berkeley) 6/10/93
  */
 
-#include "sys/param.h"
-#include "sys/mbuf.h"
+#include <sys/param.h>
+#include <sys/mbuf.h>
 
 /*
- * Checksum routine for Internet Protocol family headers (VAX Version).
+ * Checksum routine for Internet Protocol family headers.
  *
  * This routine is very heavily used in the network
  * code and should be modified for each CPU to be as fast as possible.
+ *
+ * This implementation is VAX version.
  */
 
+#define REDUCE		{sum = (sum & 0xffff) + (sum >> 16);}
+#define ADDCARRY	{if (sum > 0xffff) sum -= 0xffff;}
+#define ADVANCE(n)	{w += n; mlen -= n;}
+#define SWAP		{sum <<= 8;}		/* depends on recent REDUCE */
+
+#define Asm     __asm __volatile
+#define ADDL    Asm("addl2 (%2)+,%0" : "=r" (sum) : "0" (sum), "r" (w))
+#define ADWC    Asm("adwc  (%2)+,%0" : "=r" (sum) : "0" (sum), "r" (w))
+#define ADDC    Asm("adwc     $0,%0" : "=r" (sum) : "0" (sum))
+#define UNSWAP  Asm("rotl  $8,%0,%0" : "=r" (sum) : "0" (sum))
+#define ADDBYTE	{sum += *w; SWAP; byte_swapped ^= 1;}
+#define ADDWORD	{sum += *(u_short *)w;}
+
+int
 in_cksum(m, len)
 	register struct mbuf *m;
 	register int len;
 {
-	register u_short *w;		/* on vax, known to be r9 */
-	register int sum = 0;		/* on vax, known to be r8 */
+	register u_char *w;
+	register u_int sum = 0;
 	register int mlen = 0;
+	int byte_swapped = 0;
 
-printf("in_cksum: m %x, len %d\n",m,len);
-	for (;;) {
-		/*
-		 * Each trip around loop adds in
-		 * word from one mbuf segment.
-		 */
-		w = mtod(m, u_short *);
-		if (mlen == -1) {
-			/*
-			 * There is a byte left from the last segment;
-			 * add it into the checksum.  Don't have to worry
-			 * about a carry-out here because we make sure
-			 * that high part of (32 bit) sum is small below.
-			 */
-			sum += *(u_char *)w << 8;
-			w = (u_short *)((char *)w + 1);
-			mlen = m->m_len - 1;
-			len--;
-		} else
-			mlen = m->m_len;
-		m = m->m_next;
+	for (;m && len; m = m->m_next) {
+		if ((mlen = m->m_len) == 0)
+			continue;
+		w = mtod(m, u_char *);
 		if (len < mlen)
 			mlen = len;
 		len -= mlen;
+		if (mlen < 16)
+			goto short_mbuf;
 		/*
-		 * Force to long boundary so we do longword aligned
-		 * memory operations.  It is too hard to do byte
-		 * adjustment, do only word adjustment.
+		 * Ensure that we're aligned on a word boundary here so
+		 * that we can do 32 bit operations below.
 		 */
-		if (((int)w&0x2) && mlen >= 2) {
-			sum += *w++;
-			mlen -= 2;
+		if ((3 & (long)w) != 0) {
+			REDUCE;
+			if ((1 & (long)w) != 0) {
+				ADDBYTE;
+				ADVANCE(1);
+			}
+			if ((2 & (long)w) != 0) {
+				ADDWORD;
+				ADVANCE(2);
+			}
 		}
 		/*
 		 * Do as much of the checksum as possible 32 bits at at time.
 		 * In fact, this loop is unrolled to make overhead from
 		 * branches &c small.
-		 *
-		 * We can do a 16 bit ones complement sum 32 bits at a time
-		 * because the 32 bit register is acting as two 16 bit
-		 * registers for adding, with carries from the low added
-		 * into the high (by normal carry-chaining) and carries
-		 * from the high carried into the low on the next word
-		 * by use of the adwc instruction.  This lets us run
-		 * this loop at almost memory speed.
-		 *
-		 * Here there is the danger of high order carry out, and
-		 * we carefully use adwc.
 		 */
 		while ((mlen -= 32) >= 0) {
-#undef ADD
-#ifdef unneeded		 /* The loop construct clears carry for us... */
-			asm("bicpsr $1");		/* clears carry */
-#endif
-#define	ADD(reg,to)	{asm __volatile ("adwc (%0)+,%1"::"g" (reg),"g" (to));}
-#define	ADDEND(reg)	{asm __volatile ("adwc $0, %0"::"g" (reg));}
-			ADD(w,sum);ADD(w,sum);ADD(w,sum);ADD(w,sum);
-			ADD(w,sum);ADD(w,sum);ADD(w,sum);ADD(w,sum);
-			ADDEND(sum);
-
-#if 0 /* Old construction */
-#define ADD		asm("adwc (r9)+,r8;");
-			ADD; ADD; ADD; ADD; ADD; ADD; ADD; ADD;
-			asm("adwc $0,r8");
-#endif
-
+			/*
+			 * Add with carry 16 words and fold in the last carry
+			 * by adding a 0 with carry.
+			 */
+			ADDL;	ADWC;	ADWC;	ADWC;
+			ADWC;	ADWC;	ADWC;	ADWC;
+			ADDC;
 		}
 		mlen += 32;
-		while ((mlen -= 8) >= 0) {
-#ifdef unneeded		 /* The loop construct clears carry for us... */
-			asm("bicpsr $1");		/* clears carry */
-#endif
-			ADD(w,sum); ADD(w,sum);
-			ADDEND(sum);
+		if (mlen >= 16) {
+			ADDL;	ADWC;	ADWC;	ADWC;
+			ADDC;
+			mlen -= 16;
 		}
-		mlen += 8;
-		/*
-		 * Now eliminate the possibility of carry-out's by
-		 * folding back to a 16 bit number (adding high and
-		 * low parts together.)  Then mop up trailing words
-		 * and maybe an odd byte.
-		 */
-		{ 
-			asm __volatile ("
-			pushl	r0
-			ashl	$-16,%0,r0
-			addw2	r0,%0
-			adwc	$0,%0
-			movzwl	%0,%0
-			movl	(sp)+,r0
-			"::"g" (sum));
+	short_mbuf:
+		if (mlen >= 8) {
+			ADDL;	ADWC;
+			ADDC;
+			mlen -= 8;
 		}
-
-#if 0
-		{ asm("ashl $-16,r8,r0; addw2 r0,r8");
-		  asm("adwc $0,r8; movzwl r8,r8"); }
-#endif
-
-		while ((mlen -= 2) >= 0) {
-			asm __volatile ("
-			pushl   r0
-			movzwl	(%0)+,r0
-			addl2	r0,%1
-			movl    (sp)+,r0
-			"::"g" (w),"g" (sum));
-
-/*			asm("movzwl (r9)+,r0; addl2 r0,r8"); */
+		if (mlen >= 4) {
+			ADDL;
+			ADDC;
+			mlen -= 4;
 		}
-		if (mlen == -1) {
-			sum += *(u_char *)w;
-		}
-		if (len == 0)
-			break;
-		/*
-		 * Locate the next block with some data.
-		 * If there is a word split across a boundary we
-		 * will wrap to the top with mlen == -1 and
-		 * then add it in shifted appropriately.
-		 */
-		for (;;) {
-			if (m == 0) {
-				printf("cksum: out of data\n");
-				goto done;
+		if (mlen > 0) {
+			REDUCE;
+			if (mlen >= 2) {
+				ADDWORD;
+				ADVANCE(2);
 			}
-			if (m->m_len)
-				break;
-			m = m->m_next;
+			if (mlen >= 1) {
+				ADDBYTE;
+			}
 		}
 	}
-done:
-	/*
-	 * Add together high and low parts of sum
-	 * and carry to get cksum.
-	 * Have to be careful to not drop the last
-	 * carry here.
-	 */
-	{
-		asm __volatile ("
-		pushl	r0
-		ashl	$-16,%0,r0
-		addw2	r0,%0
-		adwc	$0,%0
-		mcoml	%0,%0
-		movzwl	%0,%0
-		movl	(sp)+,r0
-		"::"g" (sum));
+
+	if (len)
+		printf("cksum: out of data\n");
+	if (byte_swapped) {
+		UNSWAP;
 	}
-
-#if 0
-	{ asm("ashl $-16,r8,r0; addw2 r0,r8; adwc $0,r8");
-	  asm("mcoml r8,r8; movzwl r8,r8"); }
-#endif
-	return (sum);
+	REDUCE;
+	ADDCARRY;
+	return (sum ^ 0xffff);
 }
-
-
-
-
 
