@@ -1,3 +1,5 @@
+/*	$NetBSD: ctags.test,v 1.2 1995/03/26 20:14:14 glass Exp $	*/
+
 int	bar = (1 + 5);
 
 FOO("here is a #define test: ) {");
