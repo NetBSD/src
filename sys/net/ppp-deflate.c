@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp-deflate.c,v 1.6 1998/05/02 14:34:25 christos Exp $	*/
+/*	$NetBSD: ppp-deflate.c,v 1.6.24.1 2002/03/20 23:32:56 he Exp $	*/
 /*	Id: ppp-deflate.c,v 1.5 1997/03/04 03:33:28 paulus Exp 	*/
 
 /*
@@ -542,7 +542,7 @@ z_decompress(arg, mi, mop)
     state->strm.next_out = wptr + 3;
     state->strm.avail_out = 1;
     decode_proto = 1;
-    olen = PPP_HDRLEN;
+    olen = 0;
 
     /*
      * Call inflate, supplying more input or output as needed.
