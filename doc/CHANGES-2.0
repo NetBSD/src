@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.373 2004/08/11 19:44:58 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.374 2004/08/11 19:46:45 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6339,3 +6339,13 @@ sys/dev/ata/ata_wdc.c				1.58
 	controllers with a shared queue, because we now can have C_POLL set 
 	during concurent channels probes
 	[bouyer, ticket #733]
+
+sys/dev/pci/pciide_common.c			1.13
+sys/dev/pci/hptide.c				1.10
+sys/dev/pci/cypide.c				1.8
+
+	Don't map the interrupt in pciide_mapregs_compat().
+	In default_chip_map() we'll do further checks to see if the channel 
+	should really be enabled, and in case it's not we would keep the 
+	interrupt mapped.  PR#26502
+	[bouyer, ticket #734]
