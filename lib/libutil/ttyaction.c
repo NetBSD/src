@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyaction.c,v 1.13 1999/09/20 04:48:10 lukem Exp $	*/
+/*	$NetBSD: ttyaction.c,v 1.14 2000/07/05 11:46:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,6 +41,11 @@
  * See fnmatch() for matching the tty name.
  */
 
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: ttyaction.c,v 1.14 2000/07/05 11:46:42 ad Exp $");
+#endif /* LIBC_SCCS and not lint */
+
 #include <sys/types.h>
 #include <sys/wait.h>
 
@@ -65,10 +70,7 @@ static char *actfile = _PATH_TTYACTION;
 static char *pathenv = __CONCAT("PATH=",_PATH_STDPATH);
 
 int
-ttyaction(tty, act, user)
-	const char *tty;
-	const char *act;
-	const char *user;
+ttyaction(const char *tty, const char *act, const char *user)
 {
 	FILE *fp;
 	char *p1, *p2;
