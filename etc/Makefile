@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.11 (Berkeley) 5/21/91
-#	$Id: Makefile,v 1.45 1994/06/15 04:28:06 cgd Exp $
+#	$Id: Makefile,v 1.46 1994/06/16 18:59:14 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -20,7 +20,7 @@ BIN1=	aliases bootptab changelist csh.cshrc csh.login csh.logout daily \
 	phones printcap protocols rc rc.local remote rpc security services \
 	shells syslog.conf weekly etc.${MACHINE}/ttys etc.${MACHINE}/disktab
 
-# -rw-rw-rw-
+# -rw-rw-r--
 BIN2=	motd
 
 MTREE=	BSD.root.dist BSD.usr.dist BSD.var.dist
@@ -39,7 +39,7 @@ distribution distrib-dirs snapshot:
 distribution: distrib-dirs
 	(cd ..; ${MAKE} install)
 	install -c -o ${BINOWN} -g ${BINGRP} -m 644 ${BIN1} ${DESTDIR}/etc
-	install -c -o ${BINOWN} -g ${BINGRP} -m 666 ${BIN2} ${DESTDIR}/etc
+	install -c -o ${BINOWN} -g ${BINGRP} -m 664 ${BIN2} ${DESTDIR}/etc
 	install -c -o root -g wheel -m 600 crontab ${DESTDIR}/var/cron/tabs/root
 	install -c -o root -g wheel -m 600 master.passwd ${DESTDIR}/etc
 	chroot ${DESTDIR}/ pwd_mkdb -p /etc/master.passwd
