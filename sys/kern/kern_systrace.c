@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.40 2004/05/26 16:28:05 christos Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.41 2004/11/28 07:44:05 thorpej Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.40 2004/05/26 16:28:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.41 2004/11/28 07:44:05 thorpej Exp $");
 
 #include "opt_systrace.h"
 
@@ -438,7 +438,7 @@ int
 systracef_fcntl(struct file *fp, u_int cmd, void *data, struct proc *p)
 {
 
-	if (cmd == FNONBLOCK || cmd == FASYNC)
+	if (cmd == F_SETFL)
 		return 0;
 
 	return (EOPNOTSUPP);
