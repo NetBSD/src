@@ -1,4 +1,4 @@
-/*	$NetBSD: beep.c,v 1.6 2002/03/10 15:47:44 bjh21 Exp $	*/
+/*	$NetBSD: beep.c,v 1.7 2002/04/04 16:56:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -42,7 +42,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: beep.c,v 1.6 2002/03/10 15:47:44 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beep.c,v 1.7 2002/04/04 16:56:36 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -147,10 +147,10 @@ beepattach(parent, self, aux)
 		panic("beep: Cannot allocate page aligned buffer\n");
 	sc->sc_buffer1 = sc->sc_buffer0;
 
-	(void) pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_buffer0 & PG_FRAME,
+	(void) pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_buffer0,
 	    (paddr_t *)&sc->sc_sound_cur0);
 	sc->sc_sound_end0 = (sc->sc_sound_cur0 + NBPG - 16) | 0x00000000;
-	(void) pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_buffer1 & PG_FRAME,
+	(void) pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_buffer1,
 	    (paddr_t *)&sc->sc_sound_cur1);
 	sc->sc_sound_end1 = (sc->sc_sound_cur1 + NBPG - 16) | 0x00000000;
 
