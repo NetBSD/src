@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlvar.h,v 1.10 2003/11/10 08:51:52 wiz Exp $	*/
+/*	$NetBSD: if_tlvar.h,v 1.11 2005/01/23 10:53:19 dan Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -34,6 +34,12 @@
  * ThunderLAN Programmer's Guide (TI Literature Number SPWU013A)
  * available from www.ti.com
  */
+
+#include "rnd.h"
+
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
 
 #include <dev/i2c/i2cvar.h>
 
@@ -82,6 +88,9 @@ struct tl_softc {
 	int oerr_exesscoll;
 	int oerr_carrloss;
 	int oerr_mcopy;
+#endif
+#if NRND > 0
+	rndsource_element_t rnd_source;
 #endif
 };
 #define tl_if            tl_ec.ec_if

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.66 2004/10/30 18:09:22 thorpej Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.67 2005/01/23 10:53:19 dan Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.66 2004/10/30 18:09:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.67 2005/01/23 10:53:19 dan Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -72,6 +72,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.66 2004/10/30 18:09:22 thorpej Exp $");
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
+#endif
+
+#include "rnd.h"
+#if NRND > 0
+#include <sys/rnd.h>
 #endif
 
 #ifdef INET
@@ -482,6 +487,11 @@ tl_pci_attach(parent, self, aux)
 	IFQ_SET_READY(&ifp->if_snd);
 	if_attach(ifp);
 	ether_ifattach(&(sc)->tl_if, (sc)->tl_enaddr);
+
+#if NRND > 0
+	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+	    RND_TYPE_NET, 0);
+#endif
 }
 
 static void
@@ -1224,6 +1234,10 @@ tl_intr(v)
 		/* Ack the interrupt and enable interrupts */
 		TL_HR_WRITE(sc, TL_HOST_CMD, ack | int_type | HOST_CMD_ACK |
 		    HOST_CMD_IntOn);
+#if NRND > 0
+		if (RND_ENABLED(&sc->rnd_source))
+			rnd_add_uint32(&sc->rnd_source, int_reg);
+#endif
 		return 1;
 	}
 	/* ack = 0 ; interrupt was perhaps not our. Just enable interrupts */
