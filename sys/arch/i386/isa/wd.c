@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.72 1994/03/12 22:32:48 mycroft Exp $
+ *	$Id: wd.c,v 1.73 1994/03/12 22:36:40 mycroft Exp $
  */
 
 #define	INSTRUMENT	/* instrumentation stuff by Brad Parker */
@@ -1547,8 +1547,8 @@ wdcwait(wdc, mask)
 		wdc->sc_error = inb(iobase+wd_error);
 #ifdef WDCNDELAY_DEBUG
 	if (timeout > WDCNDELAY_DEBUG)
-		printf("%s: busy-wait took %dus\n", wdc->sc_dev.dv_xname,
-		    WDCDELAY * timeout);
+		printf("%s: ignore this: busy-wait took %dus\n",
+		    wdc->sc_dev.dv_xname, WDCDELAY * timeout);
 #endif
 	return status & WDCS_ERR;
 }
