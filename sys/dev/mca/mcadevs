@@ -1,4 +1,4 @@
-$NetBSD: mcadevs,v 1.6 2001/03/23 20:04:28 jdolecek Exp $
+$NetBSD: mcadevs,v 1.7 2001/03/24 09:48:11 jdolecek Exp $
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -163,7 +163,10 @@ product 0x63B3 "CH GameCard III-Automatic/MCA Adapter"			[5]
 product 0x63CA "HP 27246 Ethernet Adapter"				[1]
 product 0x6406 "AT&T GIS 8-Port Serial Controller/MC"			[8]
 product 0x6407 "Stargate Adapter"					[6]
-product 0x6410 "ATI AT1720T"						[4]
+product 0x6410 AT1720T "ATI AT1720T"					[4]
+product 0x6413 AT1720BT "ATI AT1720BT"					[10]
+product 0x6416 AT1720AT "ATI AT1720AT"					[10]
+product 0x6419 AT1720FT "ATI AT1720FT"					[10]
 product 0x64B6 "Thomas-Conrad ARC-CARD/MC"				[6]
 product 0x64B7 "Thomas-Conrad TCNS/MC"					[7]
 product 0x651B "Racore Token-Ring Adapter"				[6]
