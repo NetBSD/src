@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.77 2003/05/18 20:56:54 martin Exp $
+#	$NetBSD: files.sparc64,v 1.78 2003/05/23 06:57:58 petrov Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -124,8 +124,6 @@ file	dev/ic/z8530sc.c			zs
 device sab {channel = -1}
 attach sab at ebus
 file	arch/sparc64/dev/sab.c			sab | sabtty needs-flag
-#file	arch/sparc64/dev/sab_ebus.c		sab
-#file	dev/ic/sab82532.c			sab
 
 # "com" attachments for the kbd/mouse of the U5/U10/...
 attach com at ebus with com_ebus
@@ -138,7 +136,6 @@ file dev/ic/z8530tty.c			zstty needs-flag
 
 device sabtty {}: tty
 attach sabtty at sab
-# file arch/sparc64/dev/sabtty.c	sabtty needs-flag
 
 file arch/sparc64/dev/kd.c 		kbd
 
@@ -161,6 +158,12 @@ include "dev/scsipi/files.scsipi"
 device cgfourteen
 attach cgfourteen at sbus
 file	arch/sparc64/dev/cgfourteen.c	cgfourteen needs-flag
+
+device ffb: wsemuldisplaydev, rasops8, rasops16, rasops24, rasops32, fb
+file	arch/sparc64/dev/ffb.c			ffb
+
+attach ffb at mainbus with ffb_mainbus
+file	arch/sparc64/dev/ffb_mainbus.c		ffb_mainbus
 
 #
 # Generic Sun stuff
