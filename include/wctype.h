@@ -1,4 +1,4 @@
-/*	$NetBSD: wctype.h,v 1.4 2001/01/20 17:40:09 itojun Exp $	*/
+/*	$NetBSD: wctype.h,v 1.5 2003/03/02 22:18:11 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -39,6 +39,16 @@ typedef	_BSD_WINT_T_    wint_t;
 #undef	_BSD_WINT_T_
 #endif
 
+#ifdef	_BSD_WCTRANS_T_
+typedef	_BSD_WCTRANS_T_	wctrans_t;
+#undef	_BSD_WCTRANS_T_
+#endif
+
+#ifdef	_BSD_WCTYPE_T_
+typedef	_BSD_WCTYPE_T_	wctype_t;
+#undef	_BSD_WCTYPE_T_
+#endif
+
 #ifndef WEOF
 #define	WEOF	((wint_t)-1)
 #endif
@@ -56,8 +66,12 @@ int	iswpunct __P((wint_t));
 int	iswspace __P((wint_t));
 int	iswupper __P((wint_t));
 int	iswxdigit __P((wint_t));
+int	iswctype __P((wint_t, wctype_t));
+wint_t	towctrans __P((wint_t, wctrans_t));
 wint_t	towlower __P((wint_t));
 wint_t	towupper __P((wint_t));
+wctrans_t wctrans __P((const char *));
+wctype_t wctype __P((const char *));
 __END_DECLS
 
 #endif		/* _WCTYPE_H_ */
