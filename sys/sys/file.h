@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.7 1994/06/29 06:44:10 cgd Exp $	*/
+/*	$NetBSD: file.h,v 1.8 1994/08/30 03:07:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -39,6 +39,8 @@
 #include <sys/unistd.h>
 
 #ifdef KERNEL
+#include <sys/queue.h>
+
 struct proc;
 struct uio;
 
@@ -47,8 +49,7 @@ struct uio;
  * One entry for each open kernel vnode and socket.
  */
 struct file {
-	struct	file *f_filef;	/* list of active files */
-	struct	file **f_fileb;	/* list of active files */
+	LIST_ENTRY(file) f_list;	/* list of active files */
 	short	f_flag;		/* see fcntl.h */
 #define	DTYPE_VNODE	1	/* file */
 #define	DTYPE_SOCKET	2	/* communications endpoint */
@@ -71,8 +72,9 @@ struct file {
 	caddr_t	f_data;		/* vnode or socket */
 };
 
-extern struct file *filehead;	/* head of list of open files */
-extern int maxfiles;		/* kernel limit on number of open files */
-extern int nfiles;		/* actual number of open files */
+LIST_HEAD(filelist, file);
+extern struct filelist filehead;	/* head of list of open files */
+extern int maxfiles;			/* kernel limit on number of open files */
+extern int nfiles;			/* actual number of open files */
 
 #endif /* KERNEL */
