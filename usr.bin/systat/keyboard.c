@@ -1,4 +1,4 @@
-/*	$NetBSD: keyboard.c,v 1.4 1997/07/21 07:05:02 mrg Exp $	*/
+/*	$NetBSD: keyboard.c,v 1.5 1998/07/12 05:59:00 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,12 +38,16 @@
 #if 0
 static char sccsid[] = "@(#)keyboard.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: keyboard.c,v 1.4 1997/07/21 07:05:02 mrg Exp $");
+__RCSID("$NetBSD: keyboard.c,v 1.5 1998/07/12 05:59:00 mrg Exp $");
 #endif /* not lint */
 
+#include <sys/types.h>
+
 #include <ctype.h>
+#include <curses.h>
 #include <signal.h>
 #include <termios.h>
+#include <stdlib.h>
 
 #include "systat.h"
 #include "extern.h"
@@ -51,11 +55,19 @@ __RCSID("$NetBSD: keyboard.c,v 1.4 1997/07/21 07:05:02 mrg Exp $");
 int
 keyboard()
 {
-	char ch, line[80];
+	char ch, *line;
+	int linesz;
 	sigset_t set;
 
 	sigemptyset(&set);
 	sigaddset(&set, SIGALRM);
+
+	linesz = COLS - 2;		/* XXX does not get updated on SIGWINCH */
+	line = malloc(linesz);
+	if (line == NULL) {
+		error("malloc");
+		exit(1);
+	}
 
 	for (;;) {
 		col = 0;
@@ -103,18 +115,21 @@ keyboard()
 				goto doerase;
 			}
 			if (ch == killchar() && col > 0) {
-				col = 0;
 				if (line[0] == ':')
-					col++;
+					col = 1;
+				else
+					col = 0;
 		doerase:
 				move(CMDLINE, col);
 				clrtoeol();
 				continue;
 			}
 			if (isprint(ch) || ch == ' ') {
-				line[col] = ch;
-				mvaddch(CMDLINE, col, ch);
-				col++;
+				if (col < linesz) {
+					line[col] = ch;
+					mvaddch(CMDLINE, col, ch);
+					col++;
+				}
 			}
 		} while (col == 0 || (ch != '\r' && ch != '\n'));
 		line[col] = '\0';
