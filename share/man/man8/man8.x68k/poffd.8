@@ -1,4 +1,4 @@
-.\"	$NetBSD: poffd.8,v 1.6 2001/09/10 23:32:30 wiz Exp $
+.\"	$NetBSD: poffd.8,v 1.7 2001/12/26 02:22:56 wiz Exp $
 .\"
 .\" Copyright (c) 1995 MINOURA Makoto.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .Dt POFFD 8 x68k
 .Sh NAME
 .Nm poffd
-.Nd "X68k shutdown deamon"
+.Nd x68k shutdown daemon
 .Sh SYNOPSIS
 .Nm
 .Op Ar shutdown-program
@@ -44,41 +44,43 @@ When the switch is turned off,
 .Nm
 executes
 .Ar shutdown-program
-.Po
-using
-.Pa /bin/sh -c
-.Pc .
-
+(using
+.Pa /bin/sh -c ) .
+.Pp
 If the system is started by x68k's RTC timer,
 .Ar shutdown-program
 is executed when the system's shut down time (predefined using
-other utility, SX-Window Control Pannel and
+other utility, SX-Window Control Panel and
 .Xr rtcalarm 8
 for example) arrives.
-
+.Pp
 The argument
 .Ar shutdown-program
 may contain the character `%'. It is substituted with a number
 which indicates the way how the system was started:
-.Bl -item -compact -offset indent
-.It
-0: Front power switch
-.It
-1: External (I/O slot) power signal
-.It
-2: RTC alarm
+.Bl -tag -width xxx -compact -offset indent
+.It 0
+Front power switch
+.It 1
+External (I/O slot) power signal
+.It 2
+RTC alarm
 .El
+.Pp
 This is useful when choosing the shutdown message.
-
+.Pp
 If the argument
 .Ar shutdown-program
-is omitted, `/sbin/shutdown -r +1' is executed instead.
+is omitted,
+.Sq Ic /sbin/shutdown -r +1
+is executed instead.
 .Sh SEE ALSO
 .Xr pow 4 ,
 .Xr rtcalarm 8 ,
 .Xr shutdown 8
 .Sh AUTHORS
 .Nm
-was written by MINOURA Makoto <minoura@flab.fujitsu.co.jp>.
+was written by
+.An MINOURA Makoto Aq minoura@flab.fujitsu.co.jp .
 .Sh SPECIAL THANKS
 Liam Hahne Minn <hahne@sail.t.u-tokyo.ac.jp>.
