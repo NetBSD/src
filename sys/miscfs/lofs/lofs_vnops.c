@@ -37,7 +37,7 @@
  * From:
  *	Id: lofs_vnops.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: lofs_vnops.c,v 1.2 1994/02/14 19:02:54 cgd Exp $
+ *	$Id: lofs_vnops.c,v 1.3 1994/02/25 01:05:32 cgd Exp $
  */
 
 /*
@@ -115,8 +115,7 @@ lofs_lookup(dvp, ndp, p)
 	 */
 	error = VOP_LOOKUP(targetdvp, ndp, p);
 	if (error) {
-		if (flag == CREATE || flag == RENAME ||
-		    error != ENOENT || *ndp->ni_next != 0) {
+		if (flag == CREATE || flag == RENAME || error != ENOENT) {
 		    	vrele(targetdvp);
 		} else {
 			vrele(ndp->ni_dvp);
