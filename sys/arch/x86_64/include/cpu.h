@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.8 2003/03/18 22:31:00 fvdl Exp $	*/
+/*	$NetBSD: cpu.h,v 1.9 2003/04/25 21:54:30 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -53,6 +53,7 @@
 #include <machine/segments.h>
 #include <machine/tss.h>
 #include <machine/intrdefs.h>
+#include <x86/cacheinfo.h>
 
 #include <sys/device.h>
 #include <sys/lock.h>
@@ -104,6 +105,8 @@ struct cpu_info {
 	int		ci_want_resched;
 	int		ci_astpending;
 	struct trapframe *ci_ddb_regs;
+
+	struct x86_cache_info ci_cinfo[CAI_COUNT];
 
 	struct timeval 	ci_cc_time;
 	int64_t		ci_cc_cc;

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.2 2003/04/01 15:08:29 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.3 2003/04/25 21:54:31 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -192,13 +192,36 @@ cpu_match(parent, match, aux)
 static void
 cpu_vm_init(struct cpu_info *ci)
 {
+	int ncolors = 2, i;
+
+	for (i = CAI_ICACHE; i <= CAI_L2CACHE; i++) {
+		struct x86_cache_info *cai;
+		int tcolors;
+
+		cai = &ci->ci_cinfo[i];
+
+		tcolors = atop(cai->cai_totalsize);
+		switch(cai->cai_associativity) {
+		case 0xff:
+			tcolors = 1; /* fully associative */
+			break;
+		case 0:
+		case 1:
+			break;
+		default:
+			tcolors /= cai->cai_associativity;
+		}
+		ncolors = max(ncolors, tcolors);
+	}
+
 	/*
-	 * XXX extract cache info.
+	 * Knowing the size of the largest cache on this CPU, re-color
+	 * our pages.
 	 */
-	if (uvmexp.ncolors > 2)
+	if (ncolors <= uvmexp.ncolors)
 		return;
-	printf("%s: %d page colors\n", ci->ci_dev->dv_xname, 2);
-	uvm_page_recolor(2);
+	printf("%s: %d page colors\n", ci->ci_dev->dv_xname, ncolors);
+	uvm_page_recolor(ncolors);
 }
 
 
