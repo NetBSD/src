@@ -1,4 +1,4 @@
-# $NetBSD: md.alpha,v 1.24 2001/01/25 08:29:19 jwise Exp $
+# $NetBSD: md.alpha,v 1.25 2001/01/27 23:48:33 jdolecek Exp $
 ./usr/bin/fdformat		base-util-bin
 ./usr/lib/libalpha.so.0		base-sys-shlib
 ./usr/lib/libalpha.so.0.0	base-sys-shlib
@@ -7,6 +7,7 @@
 ./usr/lkm/coda.o		base-coda-lkm
 ./usr/lkm/ext2fs.o		base-ext2fs-lkm
 ./usr/lkm/fdesc.o		base-miscfs-lkm
+./usr/lkm/filecorefs.o		base-filecorefs-lkm
 ./usr/lkm/if_ipl.o		base-ipf-lkm
 ./usr/lkm/lfs.o			base-sys-lkm
 ./usr/lkm/kernfs.o		base-sys-lkm
