@@ -4,8 +4,62 @@
 ======================================================================
 
   For the latest news about less, see the "less" Web page:
-      http://members.aol.com/marknudel/less 
-  You can also download the latest version of less there.
+      http://www.fog.net/markn/less
+  You can also download the latest version of less from there.
+
+  The email address for questions about less 
+  has been changed to markn@fog.net.
+
+======================================================================
+
+
+	Major changes between "less" versions 330 and 332
+
+* Filenames from the command line are entered into the command history,
+  so UPARROW/DOWNARROW can be used to retrieve them from the :e command.
+
+* Now works correctly on Windows when using a scrolling terminal
+  window (buffer larger than display window).
+
+* On Windows, now restores the console screen on exit.  
+  Use -X to get the old behavior.
+
+* Fixed bug on Windows when CAPS-LOCK or NUM-LOCK is pressed.
+
+* Fixed bug on Windows when piping output of an interactive program.
+
+* Fixed bug in tags file processing when tags file has DOS-style
+  line terminators (CR/LF).
+
+* Fixed compilation problem on OS/2.
+
+======================================================================
+
+
+	Major changes between "less" versions 321 and 330
+
+* Now supports filenames containing spaces (in double quotes).
+  New option -" can be used to change the quoting characters.
+
+* In filename completion, a slash is appended to a directory name.
+  If the environment variable LESSSEPARATOR is set, the value of
+  that variable, rather than a slash, is appended.
+
+* LeftArrow and RightArrow are same as ESC-[ and ESC-].
+
+* Added commands ESC-( and ESC-), same as ESC-[ and ESC-].
+
+* A "quit" command defined in a lesskey file may now have an "extra" 
+  string, which is used to return an exit code from less when it quits.
+
+* New environment variables LESSMETACHARS and LESSMETAESCAPE provide
+  more control over how less interfaces to the shell.
+
+* Ported to Microsoft Visual C compiler for Windows.
+
+* Ported to DJGPP compiler for MS-DOS.
+
+* Bug fixes.
 
 ======================================================================
 
