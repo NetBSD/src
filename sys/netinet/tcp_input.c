@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.117 2000/07/28 04:06:53 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.118 2000/10/17 02:57:02 thorpej Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -3336,7 +3336,6 @@ syn_cache_respond(sc, m)
 	struct mbuf *m;
 {
 	struct route *ro;
-	struct rtentry *rt;
 	u_int8_t *optp;
 	int optlen, error;
 	u_int16_t tlen;
@@ -3508,42 +3507,11 @@ syn_cache_respond(sc, m)
 #endif
 	}
 
-	/*
-	 * If we're doing Path MTU discovery, we need to set DF unless
-	 * the route's MTU is locked.  If we don't yet know the route,
-	 * look it up now.  We will copy this reference to the inpcb
-	 * when we finish creating the connection.
-	 */
-	if ((rt = ro->ro_rt) == NULL || (rt->rt_flags & RTF_UP) == 0) {
-		if (ro->ro_rt != NULL) {
-			RTFREE(ro->ro_rt);
-			ro->ro_rt = NULL;
-		}
-		bcopy(&sc->sc_src, &ro->ro_dst, sc->sc_src.sa.sa_len); 
-		rtalloc(ro);
-		if ((rt = ro->ro_rt) == NULL) {
-			m_freem(m);
-			switch (sc->sc_src.sa.sa_family) {
-			case AF_INET:
-				ipstat.ips_noroute++;
-				break;
-#ifdef INET6
-			case AF_INET6:
-				ip6stat.ip6s_noroute++;
-				break;
-#endif
-			}
-			return (EHOSTUNREACH);
-		}
-	}
-
 	switch (sc->sc_src.sa.sa_family) {
 	case AF_INET:
-		if (ip_mtudisc != 0 && (rt->rt_rmx.rmx_locks & RTV_MTU) == 0)
-			ip->ip_off |= IP_DF;
-
-		/* ...and send it off! */
-		error = ip_output(m, sc->sc_ipopts, ro, 0, NULL);
+		error = ip_output(m, sc->sc_ipopts, ro,
+		    (ip_mtudisc ? IP_MTUDISC : 0),
+		    NULL);
 		break;
 #ifdef INET6
 	case AF_INET6:

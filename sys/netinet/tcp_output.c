@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.58 2000/07/28 02:39:45 itojun Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.59 2000/10/17 02:57:02 thorpej Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -300,7 +300,6 @@ tcp_output(tp)
 {
 	struct socket *so;
 	struct route *ro;
-	struct rtentry *rt;
 	long len, win;
 	int off, flags, error;
 	struct mbuf *m;
@@ -964,65 +963,6 @@ send:
 #endif
 	}
 
-	/*
-	 * If we're doing Path MTU discovery, we need to set DF unless
-	 * the route's MTU is locked.  If we lack a route, we need to
-	 * look it up now.
-	 *
-	 * ip_output() could do this for us, but it's convenient to just
-	 * do it here unconditionally.
-	 */
-	if ((rt = ro->ro_rt) == NULL || (rt->rt_flags & RTF_UP) == 0) {
-		if (ro->ro_rt != NULL) {
-			RTFREE(ro->ro_rt);
-			ro->ro_rt = NULL;
-		}
-		switch (af) {
-		case AF_INET:
-		    {
-			struct sockaddr_in *dst;
-			dst = satosin(&ro->ro_dst);
-			dst->sin_family = AF_INET;
-			dst->sin_len = sizeof(*dst);
-			if (tp->t_inpcb)
-				dst->sin_addr = tp->t_inpcb->inp_faddr;
-#ifdef INET6
-			else if (tp->t_in6pcb) {
-				bcopy(&tp->t_in6pcb->in6p_faddr.s6_addr32[3],
-					&dst->sin_addr, sizeof(dst->sin_addr));
-			}
-#endif
-			break;
-		    }
-#ifdef INET6
-		case AF_INET6:
-		    {
-			struct sockaddr_in6 *dst;
-			dst = satosin6(&ro->ro_dst);
-			dst->sin6_family = AF_INET6;
-			dst->sin6_len = sizeof(*dst);
-			dst->sin6_addr = tp->t_in6pcb->in6p_faddr;
-			break;
-		    }
-#endif
-		}
-		rtalloc(ro);
-		if ((rt = ro->ro_rt) == NULL) {
-			m_freem(m);
-			switch (af) {
-			case AF_INET:
-				ipstat.ips_noroute++;
-				break;
-#ifdef INET6
-			case AF_INET6:
-				ip6stat.ip6s_noroute++;
-				break;
-#endif
-			}
-			error = EHOSTUNREACH;
-			goto out;
-		}
-	}
 #ifdef IPSEC
 	ipsec_setsocket(m, so);
 #endif /*IPSEC*/
@@ -1032,20 +972,14 @@ send:
 	    {
 		struct mbuf *opts;
 
-		if (ip_mtudisc != 0 && (rt->rt_rmx.rmx_locks & RTV_MTU) == 0)
-			ip->ip_off |= IP_DF;
-
-#if BSD >= 43
 		if (tp->t_inpcb)
 			opts = tp->t_inpcb->inp_options;
 		else
 			opts = NULL;
 		error = ip_output(m, opts, ro,
-			so->so_options & SO_DONTROUTE, 0);
-#else
-		opts = NULL;
-		error = ip_output(m, opts, ro, so->so_options & SO_DONTROUTE);
-#endif
+			(ip_mtudisc ? IP_MTUDISC : 0) |
+			(so->so_options & SO_DONTROUTE),
+			0);
 		break;
 	    }
 #ifdef INET6
