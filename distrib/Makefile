@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2002/05/09 11:26:50 lukem Exp $
+#	$NetBSD: Makefile,v 1.9.2.1 2002/07/24 06:53:57 lukem Exp $
 
 SUBDIR=	notes
 
@@ -9,5 +9,7 @@ SUBDIR+= miniroot .WAIT
 .if exists(${MACHINE}/Makefile)
 SUBDIR+= ${MACHINE}
 .endif
+
+TARGETS+=release
 
 .include <bsd.subdir.mk>
