@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.22 1998/01/18 14:23:37 lukem Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.23 1998/01/18 22:09:41 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -51,6 +51,7 @@
 
 #define HASHBYTES	1024
 #define FTPBUFLEN	MAXPATHLEN + 200
+#define MAX_IN_PORT_T	0xffffU
 
 #define STALLTIME	5	/* # of seconds of no xfer before "stalling" */
 
