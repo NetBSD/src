@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8.2.2 2001/07/13 02:10:35 nathanw Exp $
+#	$NetBSD: Makefile,v 1.8.2.3 2001/07/13 21:53:40 nathanw Exp $
 #
 
 .if exists(${.CURDIR}/arch/${MACHINE_ARCH})
@@ -26,8 +26,11 @@ assym.h: genassym.sh ${ARCHDIR}/genassym.cf
 
 LIB=	pthread
 SRCS=	pthread.c pthread_lock.c pthread_mutex.c pthread_run.c
-SRCS+=	pthread_sa.c pthread_sig.c pthread_stack.c pthread_switch.S
+SRCS+=	pthread_sa.c pthread_sig.c pthread_stack.c
 SRCS+=	sched.c
+# Architecture-dependent files
+SRCS+=	pthread_switch.S _context_u.S
+
 
 INCS=	pthread.h pthread_types.h pthread_queue.h sched.h
 INCSDIR=/usr/include

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11.2.1 2001/03/05 23:34:36 nathanw Exp $
+#	$NetBSD: Makefile.inc,v 1.11.2.2 2001/07/13 21:53:39 nathanw Exp $
 
 # objects built from assembler sources (need lint stubs)
 SRCS+=	alloca.S byte_swap_2.S byte_swap_4.S fabs.S modf.S \
@@ -10,7 +10,6 @@ SRCS+=	_setjmp.S
 SRCS+=	sigsetjmp.S __sigsetjmp14.S
 
 SRCS+=	resumecontext.S swapcontext.S
-SRCS+=	_context_u.S
 
 # objects built from C sources
 SRCS+=	bswap64.c frexp.c infinity.c isinf.c isnan.c ldexp.c nanf.c _lwp.c
