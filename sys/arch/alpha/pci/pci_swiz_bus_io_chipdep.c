@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_swiz_bus_io_chipdep.c,v 1.9 1996/10/23 04:12:31 cgd Exp $	*/
+/*	$NetBSD: pci_swiz_bus_io_chipdep.c,v 1.10 1996/11/25 03:37:23 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -35,6 +35,8 @@
  *	CHIP		name of the 'chip' it's being compiled for.
  *	CHIP_IO_BASE	Sparse I/O space base to use.
  */
+
+#include <sys/extent.h>
 
 #define	__C(A,B)	__CONCAT(A,B)
 #define	__S(S)		__STRING(S)
@@ -118,6 +120,9 @@ void		__C(CHIP,_io_write_region_8) __P((void *, bus_space_handle_t,
 void		__C(CHIP,_io_barrier) __P((void *, bus_space_handle_t,
 		    bus_size_t, bus_size_t, int));
 
+static long
+    __C(CHIP,_io_ex_storage)[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
+
 static struct alpha_bus_space __C(CHIP,_io_space) = {
 	/* cookie */
 	NULL,
@@ -181,13 +186,43 @@ static struct alpha_bus_space __C(CHIP,_io_space) = {
 };
 
 bus_space_tag_t
-__C(CHIP,_bus_io_init)(iov)
-	void *iov;
+__C(CHIP,_bus_io_init)(v)
+	void *v;
 {
-        bus_space_tag_t h = &__C(CHIP,_io_space);;
+        bus_space_tag_t t = &__C(CHIP,_io_space);
+	struct extent *ex;
 
-	h->abs_cookie = iov;
-	return (h);
+	t->abs_cookie = v;
+
+	/* XXX WE WANT EXTENT_NOCOALESCE, BUT WE CAN'T USE IT. XXX */
+	ex = extent_create(__S(__C(CHIP,_bus_io)), 0x0UL, 0xffffffffUL,
+	    M_DEVBUF, (caddr_t)__C(CHIP,_io_ex_storage),
+	    sizeof(__C(CHIP,_io_ex_storage)), EX_NOWAIT);
+	extent_alloc_region(ex, 0, 0xffffffffUL, EX_NOWAIT);
+
+#ifdef CHIP_IO_W1_BUS_START
+#ifdef EXTENT_DEBUG
+	printf("io: freeing from 0x%lx to 0x%lx\n", CHIP_IO_W1_BUS_START(v),
+	    CHIP_IO_W1_BUS_END(v));
+#endif
+	extent_free(ex, CHIP_IO_W1_BUS_START(v),
+	    CHIP_IO_W1_BUS_END(v) - CHIP_IO_W1_BUS_START(v) + 1, EX_NOWAIT);
+#endif
+#ifdef CHIP_IO_W2_BUS_START
+#ifdef EXTENT_DEBUG
+	printf("io: freeing from 0x%lx to 0x%lx\n", CHIP_IO_W2_BUS_START(v),
+	    CHIP_IO_W2_BUS_END(v));
+#endif
+	extent_free(ex, CHIP_IO_W2_BUS_START(v),
+	    CHIP_IO_W2_BUS_END(v) - CHIP_IO_W2_BUS_START(v) + 1, EX_NOWAIT);
+#endif
+
+#ifdef EXTENT_DEBUG
+	extent_print(ex);
+#endif
+	CHIP_IO_EXTENT(v) = ex;
+
+	return (t);
 }
 
 int
@@ -198,38 +233,51 @@ __C(CHIP,_io_map)(v, ioaddr, iosize, cacheable, iohp)
 	int cacheable;
 	bus_space_handle_t *iohp;
 {
+	int error;
 
-#ifdef CHIP_IO_W1_START
-	if (ioaddr >= CHIP_IO_W1_START(v) &&
-	    ioaddr <= CHIP_IO_W1_END(v)) {
-		*iohp = (ALPHA_PHYS_TO_K0SEG(CHIP_IO_W1_BASE(v)) >> 5) +
-		    (ioaddr & CHIP_IO_W1_MASK(v));
+#ifdef EXTENT_DEBUG
+	printf("io: allocating 0x%lx to 0x%lx\n", ioaddr, ioaddr + iosize - 1);
+#endif
+        error = extent_alloc_region(CHIP_IO_EXTENT(v), ioaddr, iosize,
+            EX_NOWAIT | (CHIP_EX_MALLOC_SAFE(v) ? EX_MALLOCOK : 0));
+	if (error) {
+#ifdef EXTENT_DEBUG
+		printf("io: allocation failed (%d)\n", error);
+		extent_print(CHIP_IO_EXTENT(v));
+#endif
+		return (error);
+	}
+
+#ifdef CHIP_IO_W1_BUS_START
+	if (ioaddr >= CHIP_IO_W1_BUS_START(v) &&
+	    ioaddr <= CHIP_IO_W1_BUS_END(v)) {
+		*iohp = (ALPHA_PHYS_TO_K0SEG(CHIP_IO_W1_SYS_START(v)) >> 5) +
+		    (ioaddr - CHIP_IO_W1_BUS_START(v));
 	} else
 #endif
-#ifdef CHIP_IO_W2_START
-	if (ioaddr >= CHIP_IO_W2_START(v) &&
-	    ioaddr <= CHIP_IO_W2_END(v)) {
-		*iohp = (ALPHA_PHYS_TO_K0SEG(CHIP_IO_W2_BASE(v)) >> 5) +
-		    (ioaddr & CHIP_IO_W2_MASK(v));
+#ifdef CHIP_IO_W2_BUS_START
+	if (ioaddr >= CHIP_IO_W2_BUS_START(v) &&
+	    ioaddr <= CHIP_IO_W2_BUS_END(v)) {
+		*iohp = (ALPHA_PHYS_TO_K0SEG(CHIP_IO_W2_SYS_START(v)) >> 5) +
+		    (ioaddr - CHIP_IO_W2_BUS_START(v));
 	} else
 #endif
 	{
 		printf("\n");
-#ifdef CHIP_IO_W1_START
+#ifdef CHIP_IO_W1_BUS_START
 		printf("%s: window[1]=0x%lx-0x%lx\n",
-		    __S(__C(CHIP,_io_map)), CHIP_IO_W1_START(v),
-		    CHIP_IO_W1_END(v)-1);
+		    __S(__C(CHIP,_io_map)), CHIP_IO_W1_BUS_START(v),
+		    CHIP_IO_W1_BUS_END(v));
 #endif
-#ifdef CHIP_IO_W2_START
+#ifdef CHIP_IO_W2_BUS_START
 		printf("%s: window[2]=0x%lx-0x%lx\n",
-		    __S(__C(CHIP,_io_map)), CHIP_IO_W2_START(v),
-		    CHIP_IO_W2_END(v)-1);
+		    __S(__C(CHIP,_io_map)), CHIP_IO_W2_BUS_START(v),
+		    CHIP_IO_W2_BUS_END(v));
 #endif
-		panic("%s: don't know how to map %lx non-cacheable",
+		panic("%s: don't know how to map %lx",
 		    __S(__C(CHIP,_io_map)), ioaddr);
 	}
 
-	/* XXX XXX XXX XXX XXX XXX */
 	return (0);
 }
 
@@ -239,9 +287,58 @@ __C(CHIP,_io_unmap)(v, ioh, iosize)
 	bus_space_handle_t ioh;
 	bus_size_t iosize;
 {
+	bus_addr_t ioaddr;
+	int error;
 
-	/* XXX nothing to do. */
-	/* XXX XXX XXX XXX XXX XXX */
+#ifdef EXTENT_DEBUG
+	printf("io: freeing handle 0x%lx for 0x%lx\n", ioh, iosize);
+#endif
+
+	ioh = ALPHA_K0SEG_TO_PHYS(ioh << 5) >> 5;
+
+#ifdef CHIP_IO_W1_BUS_START
+	if ((ioh << 5) >= CHIP_IO_W1_SYS_START(v) &&
+	    (ioh << 5) <= CHIP_IO_W1_SYS_END(v)) {
+		ioaddr = CHIP_IO_W1_BUS_START(v) +
+		    (ioh - (CHIP_IO_W1_SYS_START(v) >> 5));
+	} else
+#endif
+#ifdef CHIP_IO_W2_BUS_START
+	if ((ioh << 5) >= CHIP_IO_W2_SYS_START(v) &&
+	    (ioh << 5) <= CHIP_IO_W2_SYS_END(v)) {
+		ioaddr = CHIP_IO_W2_BUS_START(v) +
+		    (ioh - (CHIP_IO_W2_SYS_START(v) >> 5));
+	} else
+#endif
+	{
+		printf("\n");
+#ifdef CHIP_IO_W1_BUS_START
+		printf("%s: sys window[1]=0x%lx-0x%lx\n",
+		    __S(__C(CHIP,_io_map)), CHIP_IO_W1_SYS_START(v),
+		    CHIP_IO_W1_SYS_END(v));
+#endif
+#ifdef CHIP_IO_W2_BUS_START
+		printf("%s: sys window[2]=0x%lx-0x%lx\n",
+		    __S(__C(CHIP,_io_map)), CHIP_IO_W2_SYS_START(v),
+		    CHIP_IO_W2_SYS_END(v));
+#endif
+		panic("%s: don't know how to unmap %lx",
+		    __S(__C(CHIP,_io_unmap)), (ioh << 5));
+	}
+
+#ifdef EXTENT_DEBUG
+	printf("io: freeing 0x%lx to 0x%lx\n", ioaddr, ioaddr + iosize - 1);
+#endif
+        error = extent_free(CHIP_IO_EXTENT(v), ioaddr, iosize,
+            EX_NOWAIT | (CHIP_EX_MALLOC_SAFE(v) ? EX_MALLOCOK : 0));
+	if (error) {
+		printf("%s: WARNING: could not unmap 0x%lx-0x%lx (error %d)\n",
+		   __S(__C(CHIP,_io_unmap)), ioaddr, ioaddr + iosize - 1,
+		   error);
+#ifdef EXTENT_DEBUG
+		extent_print(CHIP_IO_EXTENT(v));
+#endif
+	}	
 }
 
 int
