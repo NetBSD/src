@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.8 1996/02/09 18:25:29 christos Exp $	*/
+/*	$NetBSD: sem.h,v 1.9 1998/05/07 16:50:21 kleink Exp $	*/
 
 /*
  * SVID compatible sem.h file
@@ -9,39 +9,39 @@
 #ifndef _SYS_SEM_H_
 #define _SYS_SEM_H_
 
+#include <sys/featuretest.h>
+
 #include <sys/ipc.h>
 
 struct sem {
-	u_short	semval;		/* semaphore value */
-	pid_t	sempid;		/* pid of last operation */
-	u_short	semncnt;	/* # awaiting semval > cval */
-	u_short	semzcnt;	/* # awaiting semval = 0 */
+	unsigned short	semval;		/* semaphore value */
+	pid_t		sempid;		/* pid of last operation */
+	unsigned short	semncnt;	/* # awaiting semval > cval */
+	unsigned short	semzcnt;	/* # awaiting semval = 0 */
 };
 
 struct semid_ds {
-	struct	ipc_perm sem_perm;	/* operation permission struct */
-	struct	sem *sem_base;	/* pointer to first semaphore in set */
-	u_short	sem_nsems;	/* number of sems in set */
-	time_t	sem_otime;	/* last operation time */
-	long	sem_pad1;	/* SVABI/386 says I need this here */
-	time_t	sem_ctime;	/* last change time */
-    				/* Times measured in secs since */
-    				/* 00:00:00 GMT, Jan. 1, 1970 */
-	long	sem_pad2;	/* SVABI/386 says I need this here */
-	long	sem_pad3[4];	/* SVABI/386 says I need this here */
+	struct ipc_perm	sem_perm;	/* operation permission struct */
+	struct sem	*sem_base;	/* pointer to first semaphore in set */
+	unsigned short	sem_nsems;	/* number of sems in set */
+	time_t		sem_otime;	/* last operation time */
+	long		sem_pad1;	/* SVABI/386 says I need this here */
+	time_t		sem_ctime;	/* last change time */
+    					/* Times measured in secs since */
+    					/* 00:00:00 GMT, Jan. 1, 1970 */
+	long		sem_pad2;	/* SVABI/386 says I need this here */
+	long		sem_pad3[4];	/* SVABI/386 says I need this here */
 };
 
 /*
  * semop's sops parameter structure
  */
 struct sembuf {
-	u_short	sem_num;	/* semaphore # */
-	short	sem_op;		/* semaphore operation */
-	short	sem_flg;	/* operation flags */
+	unsigned short	sem_num;	/* semaphore # */
+	short		sem_op;		/* semaphore operation */
+	short		sem_flg;	/* operation flags */
 };
-#define SEM_UNDO	010000
-
-#define MAX_SOPS	5	/* maximum # of sembuf's per semop call */
+#define SEM_UNDO	010000		/* undo changes on process exit */
 
 /*
  * semctl's arg parameter structure
@@ -69,6 +69,8 @@ union semun {
  */
 #define SEMVMX	32767		/* semaphore maximum value */
 #define SEMAEM	16384		/* adjust on exit max value */
+
+#define MAX_SOPS	5	/* maximum # of sembuf's per semop call */
 
 /*
  * Permissions
@@ -169,8 +171,10 @@ __BEGIN_DECLS
 int semctl __P((int, int, int, union semun));
 int __semctl __P((int, int, int, union semun *));
 int semget __P((key_t, int, int));
-int semop __P((int, struct sembuf *, u_int));
+int semop __P((int, struct sembuf *, size_t));
+#if !defined(_XOPEN_SOURCE)
 int semconfig __P((int));
+#endif
 __END_DECLS
 #else
 void seminit __P((void));
