@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.12.6.1 2001/11/21 08:52:41 wdk Exp $
+#	$NetBSD: Makefile.inc,v 1.12.6.2 2001/11/28 10:38:22 wdk Exp $
 
 SRCS+=	fabs.S frexp.c infinity.c isinf.c isnan.c ldexp.S modf.S nanf.c
 SRCS+=	flt_rounds.c fpgetmask.c fpgetround.c fpgetsticky.c fpsetmask.c \
@@ -9,7 +9,7 @@ SRCS+=	_setjmp.S
 SRCS+=	sigsetjmp.S __sigsetjmp14.S
 SRCS+=	byte_swap_2.S byte_swap_4.S bswap64.c
 
-SRCS+=	makecontext.c resumecontext.c swapcontext.S
+SRCS+=	makecontext.c resumecontext.c _resumecontext.S swapcontext.S _lwp.c
 
 # mips abi builtin extensions (used by GCC for lexical-closure trampoline)
 SRCS+=	cacheflush.c
