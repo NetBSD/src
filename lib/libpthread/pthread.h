@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.13 2003/07/18 15:58:43 lukem Exp $	*/
+/*	$NetBSD: pthread.h,v 1.14 2003/07/18 22:01:47 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -61,13 +61,23 @@ int	pthread_setrrtimer_np(int);
 
 int	pthread_attr_init(pthread_attr_t *);
 int	pthread_attr_destroy(pthread_attr_t *);
+int	pthread_attr_get_np(pthread_t, pthread_attr_t *);
+int	pthread_attr_getguardsize(const pthread_attr_t *, size_t *);
+int	pthread_attr_setguardsize(pthread_attr_t *, size_t);
+int	pthread_attr_getinheritsched(const pthread_attr_t *, int *);
+int	pthread_attr_setinheritsched(pthread_attr_t *, int);
 int	pthread_attr_getschedparam(const pthread_attr_t *,
     struct sched_param *);
 int	pthread_attr_setschedparam(pthread_attr_t *,
     const struct sched_param *);
+int	pthread_attr_getscope(const pthread_attr_t *, int *);
+int	pthread_attr_setscope(pthread_attr_t *, int);
 int	pthread_attr_getstack(const pthread_attr_t *, void **, size_t *);
+int	pthread_attr_setstack(pthread_attr_t *, void *, size_t);
 int	pthread_attr_getstacksize(const pthread_attr_t *, size_t *);
+int	pthread_attr_setstacksize(pthread_attr_t *, size_t);
 int	pthread_attr_getstackaddr(const pthread_attr_t *, void **);
+int	pthread_attr_setstackaddr(pthread_attr_t *, void *);
 int	pthread_attr_getdetachstate(const pthread_attr_t *, int *);
 int	pthread_attr_setdetachstate(pthread_attr_t *, int);
 int	pthread_attr_getname_np(const pthread_attr_t *, char *,
@@ -159,6 +169,12 @@ __END_DECLS
 #define	PTHREAD_CREATE_JOINABLE	0
 #define	PTHREAD_CREATE_DETACHED	1
 
+#define PTHREAD_INHERIT_SCHED	0
+#define PTHREAD_EXPLICIT_SCHED	1
+
+#define PTHREAD_SCOPE_PROCESS	0
+#define PTHREAD_SCOPE_SYSTEM	1
+
 #define PTHREAD_PROCESS_PRIVATE	0
 #define PTHREAD_PROCESS_SHARED	1
 
@@ -177,11 +193,6 @@ __END_DECLS
  * NULL."
  */
 #define PTHREAD_CANCELED	((void *) 1)
-
-#define PTHREAD_DESTRUCTOR_ITERATIONS	4	/* Min. required */
-#define PTHREAD_KEYS_MAX	256
-#define PTHREAD_STACK_MIN	4096 /* XXX Pulled out of my butt */
-#define PTHREAD_THREADS_MAX	64		/* Min. required */
 
 /*
  * Maximum length of a thread's name, including the terminating NUL.
