@@ -1,4 +1,4 @@
-/*	$NetBSD: progressbar.h,v 1.1 2003/01/21 16:08:08 jhawk Exp $	*/
+/*	$NetBSD: progressbar.h,v 1.2 2003/02/12 15:18:28 grant Exp $	*/
 
 /*-
  * Copyright (c) 1996-2002 The NetBSD Foundation, Inc.
@@ -135,13 +135,13 @@ GLOBAL	char   *direction;	/* direction transfer is occurring */
 GLOBAL	sigjmp_buf toplevel;	/* non-local goto stuff for cmd scanner */
 #endif	/* !STANDALONE_PROGRESS */
 
+int	foregroundproc(void);
 void	alarmtimer(int);
 void	progressmeter(int);
 sigfunc	xsignal(int, sigfunc);
 sigfunc	xsignal_restart(int, sigfunc, int);
 
 #ifndef STANDALONE_PROGRESS
-int	foregroundproc(void);
 void	psummary(int);
 void	ptransfer(int);
 #endif	/* !STANDALONE_PROGRESS */
