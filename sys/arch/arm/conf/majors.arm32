@@ -1,4 +1,4 @@
-#	$NetBSD: majors.arm32,v 1.10 2003/09/30 00:35:31 thorpej Exp $
+#	$NetBSD: majors.arm32,v 1.11 2003/10/05 08:04:24 jdolecek Exp $
 #
 # Device majors for arm32
 #
@@ -101,3 +101,7 @@ device-major	sscom		char 104		sscom
 device-major	ksyms		char 105		ksyms
 device-major	pf		char 106		pf
 device-major	crypto		char 107		opencrypto
+
+# Majors up to 191 are reserved for machine-dependant drivers.
+# New machine-independant driver majors are assigned in 
+# sys/dev/majors.
