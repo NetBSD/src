@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.35 2003/01/01 00:10:24 thorpej Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.36 2003/10/22 07:46:48 briggs Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.35 2003/01/01 00:10:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.36 2003/10/22 07:46:48 briggs Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -567,9 +567,9 @@ pcmcia_function_disable(pf)
 
 	if ((pf->pf_flags & PFF_ENABLED) == 0) {
 		/*
-		 * Don't do anything if we're already disabled.
+		 * Don't do anything but decrement if we're already disabled.
 		 */
-		return;
+		goto out;
 	}
 
 	/*
@@ -593,6 +593,7 @@ pcmcia_function_disable(pf)
 		pcmcia_mem_free(pf, &pf->pf_pcmh);
 	}
 
+out:
 	/*
 	 * Decrement the reference count, and power down the socket, if
 	 * necessary.
