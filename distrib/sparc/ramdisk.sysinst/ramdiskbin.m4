@@ -1,4 +1,4 @@
-#	$NetBSD: ramdiskbin.m4,v 1.2 1999/10/18 20:22:10 pk Exp $
+#	$NetBSD: ramdiskbin.m4,v 1.3 2000/02/07 11:09:59 pk Exp $
 #
 # ramdiskbin.conf - unified binary for the install ramdisk
 #
@@ -11,7 +11,7 @@ progs ln ls mkdir mknod
 progs mount mount_cd9660 mount_ext2fs mount_ffs mount_msdos
 progs mount_nfs mount_kernfs mt mv newfs ping pwd reboot restore rm
 progs route sed sh shutdown slattach stty swapctl sync test
-progs tip umount update
+progs tip umount
 progs sysinst pax
 ifelse(MACHINE,i386,progs bad144 fdisk mbrlabel)
 ifelse(MACHINE,sparc,progs sysctl getopt)
