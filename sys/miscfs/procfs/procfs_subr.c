@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.13 1994/06/29 06:34:57 cgd Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.14 1996/02/09 22:40:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -50,6 +50,8 @@
 
 static struct pfsnode *pfshead;
 static int pfsvplock;
+
+int procfs_rw __P((struct vop_read_args *));
 
 /*
  * allocate a pfsnode/vnode pair.  the vnode is
@@ -113,7 +115,7 @@ loop:
 	}
 	pfsvplock |= PROCFS_LOCKED;
 
-	if (error = getnewvnode(VT_PROCFS, mp, procfs_vnodeop_p, vpp))
+	if ((error = getnewvnode(VT_PROCFS, mp, procfs_vnodeop_p, vpp)) != 0)
 		goto out;
 	vp = *vpp;
 
@@ -281,7 +283,7 @@ vfs_getuserstr(uio, buf, buflenp)
 		return (EMSGSIZE);
 	xlen = uio->uio_resid;
 
-	if (error = uiomove(buf, xlen, uio))
+	if ((error = uiomove(buf, xlen, uio)) != 0)
 		return (error);
 
 	/* allow multiple writes without seeks */
