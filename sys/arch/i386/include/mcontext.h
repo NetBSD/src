@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.2 2003/01/17 23:10:28 thorpej Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.3 2003/08/25 09:20:25 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -104,7 +104,16 @@ typedef struct {
 #define _UC_UCONTEXT_ALIGN	(~0xf)
 
 #ifdef _KERNEL
+#include "opt_vm86.h"
+#ifdef VM86
+/*#include <machine/psl.h>*/
+#define PSL_VM 0x00020000
+#define _UC_MACHINE_SP(uc) ((uc)->uc_mcontext.__gregs[_REG_UESP] + \
+	((uc)->uc_mcontext.__gregs[_REG_EFL] & PSL_VM ? \
+	 ((uc)->uc_mcontext.__gregs[_REG_SS] << 4) : 0))
+#else
 #define _UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_UESP])
+#endif
 #endif
 
 #endif	/* !_I386_MCONTEXT_H_ */
