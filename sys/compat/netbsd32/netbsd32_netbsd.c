@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.42 2000/12/01 21:48:24 jdolecek Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.43 2000/12/03 14:48:29 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -5443,7 +5443,17 @@ netbsd32_fktrace(p, v, retval)
 		syscallarg(int) facs;
 		syscallarg(int) pid;
 	} */ *uap = v;
+#if 0
 	struct sys_fktrace_args ua;
+#else
+	/* XXXX */
+	struct sys_fktrace_noconst_args {
+		syscallarg(int) fd;
+		syscallarg(int) ops;
+		syscallarg(int) facs;
+		syscallarg(int) pid;
+	} ua;
+#endif
 
 	NETBSD32TOX_UAP(fd, int);
 	NETBSD32TO64_UAP(ops);
