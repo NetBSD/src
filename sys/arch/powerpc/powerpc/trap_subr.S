@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.56 2004/06/09 23:24:51 kleink Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.57 2005/03/04 22:40:32 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -854,7 +854,9 @@ k_trap:
 trapagain:
 /* Now we can recover interrupts again: */
 	mfmsr	%r7
-	ori	%r7,%r7,(PSL_EE|PSL_ME|PSL_RI)@l
+	ldreg	%r6, (FRAME_SRR1+(2*SZREG))(%r1)
+	andi.	%r6,%r6,(PSL_EE|PSL_ME|PSL_RI)@l
+	or	%r7,%r7,%r6
 	mtmsr	%r7
 	isync
 /* Call C trap code: */
