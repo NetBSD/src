@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: vector.s,v 1.14 1994/04/07 06:51:15 mycroft Exp $
+ *	$Id: vector.s,v 1.15 1994/04/07 17:34:23 mycroft Exp $
  */
 
 #include <i386/isa/icu.h>
@@ -158,9 +158,9 @@ IDTVEC(fast/**/irq_num)							;\
 	movl	%ax,%es							;\
 	/* have to do this here because %eax is lost on call */		;\
 	movl	_intrhand + (irq_num) * 4,%eax				;\
-	incl	8(%eax)							;\
-	pushl	4(%eax)							;\
-	call	(%eax)							;\
+	incl	IH_COUNT(%eax)						;\
+	pushl	IH_ARG(%eax)						;\
+	call	IH_FUN(%eax)						;\
 	enable_icus(irq_num)						;\
 	addl	$4,%esp							;\
 	incl	_cnt+V_INTR		/* statistical info */		;\
@@ -223,16 +223,16 @@ _Xresume/**/irq_num/**/:						;\
 	testl	%ebx,%ebx						;\
 	jz	_Xstray/**/irq_num	/* no handlears; we're stray */	;\
 	xorl	%esi,%esi		/* nobody claimed it yet */	;\
-7:	movl	4(%ebx),%eax		/* get handler arg */		;\
+7:	movl	IH_ARG(%ebx),%eax	/* get handler arg */		;\
 	testl	%eax,%eax						;\
 	jnz	4f							;\
 	movl	%esp,%eax		/* 0 means frame pointer */	;\
 4:	pushl	%eax							;\
-	call	(%ebx)			/* call it */			;\
+	call	IH_FUN(%ebx)		/* call it */			;\
 	addl	$4,%esp			/* toss the arg */		;\
 	orl	%eax,%esi		/* maybe he claimed it */	;\
-	incl	8(%ebx)			/* count the intrs */		;\
-	movl	12(%ebx),%ebx		/* next handler in chain */	;\
+	incl	IH_COUNT(%ebx)		/* count the intrs */		;\
+	movl	IH_NEXT(%ebx),%ebx	/* next handler in chain */	;\
 	testl	%ebx,%ebx						;\
 	jnz	7b							;\
 	testl	%esi,%esi		/* no more handlers */		;\

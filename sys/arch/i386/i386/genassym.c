@@ -42,9 +42,16 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/resourcevar.h>
+#include <sys/device.h>
+
 #include <machine/trap.h>
 #include <machine/pmap.h>
 #include <machine/vmparam.h>
+
+#include "isa.h"
+#if NISA > 0
+#include <i386/isa/isavar.h>
+#endif
 
 main()
 {
@@ -54,6 +61,9 @@ main()
 	struct trapframe *tf = 0;
 	struct sigframe *sigf = 0;
 	struct uprof *uprof = 0;
+#if NISA > 0
+	struct intrhand *ih = 0;
+#endif
 
 #define	def(N,V)	printf("#define\t%s %d\n", N, V)
 
@@ -67,6 +77,10 @@ main()
 	def("APTDPTDI", APTDPTDI);
 
 	def("VM_MAXUSER_ADDRESS", VM_MAXUSER_ADDRESS);
+
+	def("UPAGES", UPAGES);
+	def("PGSHIFT", PGSHIFT);
+	def("PDSHIFT", PDSHIFT);
 
 	def("P_ADDR", &p->p_addr);
 	def("P_LINK", &p->p_link);
@@ -101,9 +115,12 @@ main()
 	def("PR_OFF", &uprof->pr_off);
 	def("PR_SCALE", &uprof->pr_scale);
 
-	def("UPAGES", UPAGES);
-	def("PGSHIFT", PGSHIFT);
-	def("PDSHIFT", PDSHIFT);
+#if NISA > 0
+	def("IH_FUN", &ih->ih_fun);
+	def("IH_ARG", &ih->ih_arg);
+	def("IH_COUNT", &ih->ih_count);
+	def("IH_NEXT", &ih->ih_next);
+#endif
 
 	exit(0);
 }
