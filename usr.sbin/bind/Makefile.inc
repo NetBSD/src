@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.16 2004/05/18 00:10:39 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.17 2004/05/23 02:49:26 lukem Exp $
 
 .if !defined(BIND9_MAKEFILE_INC)
 BIND9_MAKEFILE_INC=yes
@@ -52,10 +52,7 @@ LDADD+= -lpthread
 DPADD+= ${LIBPTHREAD}
 .endif
 .else
-MKPIC=no
-MKPROFILE=no
-MKLINT=no
-MKLINKLIB=no
+MKPRIVATELIB=yes
 CPPFLAGS+= -DLIBINTERFACE=${LIBINTERFACE} \
 	-DLIBREVISION=${LIBREVISION} -DLIBAGE=${LIBAGE}
 .endif
