@@ -1,4 +1,4 @@
-/*	$NetBSD: kdb.c,v 1.23 2000/06/28 17:09:41 mrg Exp $ */
+/*	$NetBSD: kdb.c,v 1.24 2001/06/04 21:31:28 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -47,6 +47,7 @@
 #include <sys/user.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
+#include <sys/sched.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -236,7 +237,8 @@ kdbgo(usc, mxi)
 	 * On other systems, do something else... 
 	 */
 	err = bus_dmamap_load(sc->sc_dmat, mxi->mxi_dmam, bp->b_data,
-	    bp->b_bcount, bp->b_proc, BUS_DMA_NOWAIT);
+	    bp->b_bcount, (bp->b_flags & B_PHYS ? bp->b_proc : 0),
+	    BUS_DMA_NOWAIT);
 
 	if (err) /* Shouldn't happen */
 		panic("kdbgo: bus_dmamap_load: error %d", err);
@@ -304,7 +306,9 @@ kdbintr(void *arg)
 		kdbsaerror(&sc->sc_dev, 1);
 		return;
 	}
+	KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 	mscp_intr(sc->sc_softc);
+	KERNEL_UNLOCK();
 }
 
 #ifdef notyet
