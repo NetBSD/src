@@ -105,11 +105,6 @@ int	want_resched;		/* resched() was called */
 
 
 
-/*
- * The rest of this should probably be moved to ../hp300/hp300cpu.h,
- * although some of it could probably be put into generic 68k headers.
- */
-
 /* values for machineid */
 
 #define CPU_ARCH_MASK  0xf0

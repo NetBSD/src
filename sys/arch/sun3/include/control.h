@@ -17,7 +17,7 @@
 
 
 #define NBSEG    0x20000
-#define NPMEG       0x100
+#define NPMEG    0x100
 
 #define VAC_CACHE_TAGS    0x80000000
 #define VAC_CACHE_DATA    0x90000000
@@ -39,6 +39,7 @@
 
 #include <sys/types.h>
 
+#ifdef KERNEL
 void control_copy_byte __P((char *, char *, int ));
 
 unsigned char get_control_byte __P((char *));
@@ -57,3 +58,7 @@ void set_pte __P((vm_offset_t, vm_offset_t));
      
 unsigned char get_segmap __P((vm_offset_t));
 void set_segmap __P((vm_offset_t va, unsigned char));
+
+void set_temp_seg_addr __P((vm_offset_t va));
+
+#endif
