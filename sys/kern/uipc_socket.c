@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.73 2002/11/26 18:44:35 christos Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.74 2002/11/27 03:36:04 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.73 2002/11/26 18:44:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.74 2002/11/27 03:36:04 itojun Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -1346,6 +1346,8 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 				goto bad;
 			}
 			val = tv->tv_sec * hz + tv->tv_usec / tick;
+			if (val == 0 && tv->tv_usec != 0)
+				val = 1;
 
 			switch (optname) {
 
