@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.78 1998/10/25 18:41:56 christos Exp $
+#	$NetBSD: files.isa,v 1.79 1998/10/31 01:44:16 thorpej Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -222,7 +222,7 @@ attach  lc at isa with lc_isa
 file    dev/isa/if_lc_isa.c		lc
 
 # Novell NE1000, NE2000, and clones
-attach	ne at isa with ne_isa
+attach	ne at isa with ne_isa: rtl80x9
 file	dev/isa/if_ne_isa.c		ne_isa
 
 # SMC91Cxx Ethernet Controllers 
