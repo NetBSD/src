@@ -1,3 +1,8 @@
+/*	$NetBSD: hil_gpib.c,v 1.2 2003/07/14 15:40:04 lukem Exp $	*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hil_gpib.c,v 1.2 2003/07/14 15:40:04 lukem Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
