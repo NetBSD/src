@@ -37,7 +37,7 @@
  * From:
  *	Id: kernfs_vfsops.c,v 4.1 1994/01/02 14:42:00 jsp Exp
  *
- *	$Id: kernfs_vfsops.c,v 1.12 1994/04/14 04:05:56 cgd Exp $
+ *	$Id: kernfs_vfsops.c,v 1.13 1994/04/21 07:48:43 cgd Exp $
  */
 
 /*
@@ -274,8 +274,8 @@ kernfs_statfs(mp, sbp, p)
 	sbp->f_type = 0;
 #endif
 	sbp->f_flags = 0;
-	sbp->f_fsize = DEV_BSIZE;
 	sbp->f_bsize = DEV_BSIZE;
+	sbp->f_iosize = DEV_BSIZE;
 	sbp->f_blocks = 2;		/* 1K to keep df happy */
 	sbp->f_bfree = 0;
 	sbp->f_bavail = 0;

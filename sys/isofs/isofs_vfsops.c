@@ -1,5 +1,5 @@
 /*
- *	$Id: isofs_vfsops.c,v 1.11 1994/04/14 04:05:14 cgd Exp $
+ *	$Id: isofs_vfsops.c,v 1.12 1994/04/21 07:47:31 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -63,7 +63,7 @@ isofs_mountroot()
 	mp->mnt_op = (struct vfsops *)&isofs_vfsops;
 	mp->mnt_flag = MNT_RDONLY;
 	mp->mnt_exroot = 0;
-	mp->mnt_mounth = NULLVP;
+	LIST_INIT(&mp->mnt_vnodelist);
 	args.flags = ISOFSMNT_ROOT;
 	error = iso_mountfs(rootvp, mp, p, &args);
 	if (error) {
@@ -76,8 +76,7 @@ isofs_mountroot()
 		return error;
 	}
 	rootfs = mp;
-	mp->mnt_next = mp;
-	mp->mnt_prev = mp;
+	TAILQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	mp->mnt_vnodecovered = NULLVP;
 	imp = VFSTOISOFS(mp);
 	bzero(imp->im_fsmnt, sizeof(imp->im_fsmnt));
@@ -442,8 +441,8 @@ isofs_statfs(mp, sbp, p)
 #else
 	sbp->f_type = 0;
 #endif
-	sbp->f_fsize = isomp->logical_block_size;
-	sbp->f_bsize = sbp->f_fsize;
+	sbp->f_bsize = isomp->logical_block_size;
+	sbp->f_iosize = sbp->f_bsize;
 	sbp->f_blocks = isomp->volume_space_size;
 	sbp->f_bfree = 0; /* total free blocks */
 	sbp->f_bavail = 0; /* blocks free for non superuser */

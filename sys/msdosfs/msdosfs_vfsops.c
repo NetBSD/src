@@ -13,7 +13,7 @@
  * 
  * October 1992
  * 
- *	$Id: msdosfs_vfsops.c,v 1.11 1994/04/20 17:10:59 cgd Exp $
+ *	$Id: msdosfs_vfsops.c,v 1.12 1994/04/21 07:48:59 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -559,8 +559,8 @@ msdosfs_statfs(mp, sbp, p)
 #else
 	sbp->f_type = 0;
 #endif
-	sbp->f_fsize = pmp->pm_bpcluster;
 	sbp->f_bsize = pmp->pm_bpcluster;
+	sbp->f_iosize = pmp->pm_bpcluster;
 	sbp->f_blocks = pmp->pm_nmbrofclusters;
 	sbp->f_bfree = pmp->pm_freeclustercount;
 	sbp->f_bavail = pmp->pm_freeclustercount;
@@ -611,17 +611,20 @@ msdosfs_sync(mp, waitfor)
 	 * unwritten file blocks.
 	 */
 loop:
-	for (vp = mp->mnt_mounth; vp; vp = vp->v_mountf) {
+	for (vp = mp->mnt_vnodelist.lh_first; vp;
+	    vp = vp->v_mntvnodes.le_next) {
 		if (vp->v_mount != mp)	/* not ours anymore	 */
 			goto loop;
 		if (VOP_ISLOCKED(vp))	/* file is busy		 */
 			continue;
 		dep = VTODE(vp);
-		if ((dep->de_flag & DEUPD) == 0 && vp->v_dirtyblkhd == NULL)
+		if ((dep->de_flag & DEUPD) == 0 &&
+		    vp->v_dirtyblkhd.lh_first == NULL)
 			continue;
 		if (vget(vp))	/* not there anymore?	 */
 			goto loop;
-		if (vp->v_dirtyblkhd)	/* flush dirty file blocks */
+		/* flush dirty file blocks */
+		if (vp->v_dirtyblkhd.lh_first != NULL)
 			vflushbuf(vp, 0);
 		if ((dep->de_flag & DEUPD) &&
 		    (error = deupdat(dep, &time, 0)))

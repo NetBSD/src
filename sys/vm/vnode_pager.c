@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vnode_pager.c	8.1 (Berkeley) 6/11/93
- *	$Id: vnode_pager.c,v 1.7 1994/04/15 07:05:04 cgd Exp $
+ *	$Id: vnode_pager.c,v 1.8 1994/04/21 07:49:36 cgd Exp $
  */
 
 /*
@@ -292,7 +292,7 @@ vnode_pager_haspage(pager, offset)
 		       (struct vnode **)0, &bn, NULL);
 #else /* notyet */
 	err = VOP_BMAP(vnp->vnp_vp,
-		       offset / vnp->vnp_vp->v_mount->mnt_stat.f_bsize,
+		       offset / vnp->vnp_vp->v_mount->mnt_stat.f_iosize,
 		       (struct vnode **)0, &bn);
 #endif /* notyet */
 	if (err) {

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_swap.c	7.18 (Berkeley) 5/6/91
- *	$Id: vm_swap.c,v 1.16 1994/02/06 10:16:50 mycroft Exp $
+ *	$Id: vm_swap.c,v 1.17 1994/04/21 07:49:35 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -66,6 +66,7 @@ swapinit()
 {
 	register int i;
 	register struct buf *sp = swbuf;
+	register struct proc *p = &proc0;	/* XXX */
 	struct swdevt *swp;
 	int error;
 
@@ -100,9 +101,14 @@ swapinit()
 	 * Now set up swap buffer headers.
 	 */
 	bswlist.b_actf = sp;
-	for (i = 0; i < nswbuf - 1; i++, sp++)
+	for (i = 0; i < nswbuf - 1; i++, sp++) {
 		sp->b_actf = sp + 1;
+		sp->b_rcred = sp->b_wcred = p->p_ucred;
+		sp->b_vnbufs.le_next = NOLIST;
+	}
 	sp->b_actf = NULL;
+	sp->b_rcred = sp->b_wcred = p->p_ucred;
+	sp->b_vnbufs.le_next = NOLIST;
 }
 
 void

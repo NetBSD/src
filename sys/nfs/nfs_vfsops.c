@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_vfsops.c	7.31 (Berkeley) 5/6/91
- *	$Id: nfs_vfsops.c,v 1.15 1994/04/18 06:18:22 glass Exp $
+ *	$Id: nfs_vfsops.c,v 1.16 1994/04/21 07:49:11 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -125,8 +125,8 @@ nfs_statfs(mp, sbp, p)
 	sbp->f_type = 0;
 #endif
 	sbp->f_flags = nmp->nm_flag;
-	sbp->f_bsize = fxdr_unsigned(long, sfp->sf_tsize);
-	sbp->f_fsize = fxdr_unsigned(long, sfp->sf_bsize);
+	sbp->f_iosize = fxdr_unsigned(long, sfp->sf_tsize);
+	sbp->f_bsize = fxdr_unsigned(long, sfp->sf_bsize);
 	sbp->f_blocks = fxdr_unsigned(long, sfp->sf_blocks);
 	sbp->f_bfree = fxdr_unsigned(long, sfp->sf_bfree);
 	sbp->f_bavail = fxdr_unsigned(long, sfp->sf_bavail);
@@ -253,7 +253,7 @@ nfs_mountroot()
 		mp->mnt_op = &nfs_vfsops;
 		mp->mnt_flag = 0;
 		mp->mnt_exroot = 0;
-		mp->mnt_mounth = NULLVP;
+		LIST_INIT(&mp->mnt_vnodelist);
 	
 		/*
 		 * Set up the diskless nfs_args for the swap mount point
@@ -296,7 +296,7 @@ nfs_mountroot()
 	mp->mnt_op = &nfs_vfsops;
 	mp->mnt_flag = MNT_RDONLY;
 	mp->mnt_exroot = 0;
-	mp->mnt_mounth = NULLVP;
+	LIST_INIT(&mp->mnt_vnodelist);
 
 	/*
 	 * Set up the root fs args and call mountnfs() to do the rest.
@@ -314,8 +314,7 @@ nfs_mountroot()
 	if (vfs_lock(mp))
 		panic("nfs root2");
 	rootfs = mp;
-	mp->mnt_next = mp;
-	mp->mnt_prev = mp;
+	TAILQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	mp->mnt_vnodecovered = NULLVP;
 	vfs_unlock(mp);
 	rootvp = vp;

@@ -31,11 +31,12 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mount.h	7.22 (Berkeley) 6/3/91
- *	$Id: mount.h,v 1.26 1994/04/14 04:06:39 cgd Exp $
+ *	$Id: mount.h,v 1.27 1994/04/21 07:49:23 cgd Exp $
  */
 
 #ifndef _SYS_MOUNT_H_
 #define _SYS_MOUNT_H_
+#include <sys/queue.h>
 
 typedef quad fsid_t;			/* file system id type */
 
@@ -61,8 +62,8 @@ struct fid {
 struct statfs {
 	short	f_type;			/* type of filesystem (unused; zero) */
 	short	f_flags;		/* copy of mount flags */
-	long	f_fsize;		/* fundamental file system block size */
-	long	f_bsize;		/* optimal transfer block size */
+	long	f_bsize;		/* fundamental file system block size */
+	long	f_iosize;		/* optimal transfer block size */
 	long	f_blocks;		/* total data blocks in file system */
 	long	f_bfree;		/* free blocks in fs */
 	long	f_bavail;		/* free blocks avail to non-superuser */
@@ -99,12 +100,13 @@ struct statfs {
  * operations and an instance record.
  * The file systems are put on a doubly linked list.
  */
+LIST_HEAD(vnodelst, vnode);
+
 struct mount {
-	struct mount	*mnt_next;		/* next in mount list */
-	struct mount	*mnt_prev;		/* prev in mount list */
+	TAILQ_ENTRY(mount) mnt_list;		/* mount list */
 	struct vfsops	*mnt_op;		/* operations on fs */
 	struct vnode	*mnt_vnodecovered;	/* vnode we mounted on */
-	struct vnode	*mnt_mounth;		/* list of vnodes this mount */
+	struct vnodelst	mnt_vnodelist;		/* list of vnodes this mount */
 	int		mnt_flag;		/* flags */
 	uid_t		mnt_exroot;		/* exported mapping for uid 0 */
 	struct statfs	mnt_stat;		/* cache of filesystem stats */
@@ -309,6 +311,7 @@ int	vfs_lock __P((struct mount *mp));   /* lock a vfs */
 void	vfs_unlock __P((struct mount *mp)); /* unlock a vfs */
 struct	mount *getvfs __P((fsid_t *fsid));  /* return vfs given fsid */
 struct	mount *rootfs;			    /* ptr to root mount structure */
+extern TAILQ_HEAD(mntlist, mount) mountlist;	/* mounted filesystem list */
 extern struct vfsops *vfssw[];		    /* mount filesystem type table */
 extern int nvfssw;			    /* number of vfssw entries */
 

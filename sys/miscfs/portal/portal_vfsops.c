@@ -37,7 +37,7 @@
  * From:
  *	Id: portal_vfsops.c,v 1.6 1993/09/22 17:57:30 jsp Exp
  *
- *	$Id: portal_vfsops.c,v 1.2 1994/04/14 04:06:04 cgd Exp $
+ *	$Id: portal_vfsops.c,v 1.3 1994/04/21 07:48:48 cgd Exp $
  */
 
 /*
@@ -290,8 +290,8 @@ portal_statfs(mp, sbp, p)
 	sbp->f_type = 0;
 #endif
 	sbp->f_flags = 0;
-	sbp->f_fsize = DEV_BSIZE;
 	sbp->f_bsize = DEV_BSIZE;
+	sbp->f_iosize = DEV_BSIZE;
 	sbp->f_blocks = 2;		/* 1K to keep df happy */
 	sbp->f_bfree = 0;
 	sbp->f_bavail = 0;

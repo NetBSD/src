@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_vnops.c	7.60 (Berkeley) 5/24/91
- *	$Id: nfs_vnops.c,v 1.27 1994/04/14 10:27:46 pk Exp $
+ *	$Id: nfs_vnops.c,v 1.28 1994/04/21 07:49:12 cgd Exp $
  */
 
 /*
@@ -1550,7 +1550,7 @@ nfs_bmap(vp, bn, vpp, bnp)
 	if (vpp != NULL)
 		*vpp = vp;
 	if (bnp != NULL)
-		*bnp = bn * btodb(vp->v_mount->mnt_stat.f_bsize);
+		*bnp = bn * btodb(vp->v_mount->mnt_stat.f_iosize);
 	return (0);
 }
 

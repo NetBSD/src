@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_object.c	7.4 (Berkeley) 5/7/91
- *	$Id: vm_object.c,v 1.20 1994/04/20 21:46:15 cgd Exp $
+ *	$Id: vm_object.c,v 1.21 1994/04/21 07:49:33 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -506,7 +506,8 @@ vm_object_deactivate_pages(object)
 	for (p = object->memq.tqh_first; p != NULL; p = next) {
 		next = p->listq.tqe_next;
 		vm_page_lock_queues();
-		vm_page_deactivate(p);
+		if (!(p->flags & PG_BUSY))
+			vm_page_deactivate(p);
 		vm_page_unlock_queues();
 	}
 }
