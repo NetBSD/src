@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,21 +32,26 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)ls.c	5.6 (Berkeley) 3/9/91";*/
-static char rcsid[] = "$Id: ls.c,v 1.2 1993/08/01 18:16:13 mycroft Exp $";
+/*static char sccsid[] = "from: @(#)ls.c	8.1 (Berkeley) 6/6/93";*/
+static char rcsid[] = "$Id: ls.c,v 1.3 1993/12/30 21:15:26 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
-#include <time.h>
-#include <tzfile.h>
+
+#include <err.h>
 #include <errno.h>
-#include <utmp.h>
-#include <unistd.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
+#include <tzfile.h>
+#include <unistd.h>
+#include <utmp.h>
 
 /* Derived from the print routines in the ls(1) source code. */
+
+static void printlink __P((char *));
+static void printtime __P((time_t));
 
 void
 printlong(name, accpath, sb)
@@ -56,7 +61,7 @@ printlong(name, accpath, sb)
 {
 	char modep[15], *user_from_uid(), *group_from_gid();
 
-	(void)printf("%6lu %4ld ", sb->st_ino, sb->st_blocks);
+	(void)printf("%6lu %4qd ", sb->st_ino, sb->st_blocks);
 	(void)strmode(sb->st_mode, modep);
 	(void)printf("%s %3u %-*s %-*s ", modep, sb->st_nlink, UT_NAMESIZE,
 	    user_from_uid(sb->st_uid, 0), UT_NAMESIZE,
@@ -66,7 +71,7 @@ printlong(name, accpath, sb)
 		(void)printf("%3d, %3d ", major(sb->st_rdev),
 		    minor(sb->st_rdev));
 	else
-		(void)printf("%8ld ", sb->st_size);
+		(void)printf("%8qd ", sb->st_size);
 	printtime(sb->st_mtime);
 	(void)printf("%s", name);
 	if (S_ISLNK(sb->st_mode))
@@ -74,6 +79,7 @@ printlong(name, accpath, sb)
 	(void)putchar('\n');
 }
 
+static void
 printtime(ftime)
 	time_t ftime;
 {
@@ -97,6 +103,7 @@ printtime(ftime)
 	(void)putchar(' ');
 }
 
+static void
 printlink(name)
 	char *name;
 {
@@ -104,8 +111,7 @@ printlink(name)
 	char path[MAXPATHLEN + 1];
 
 	if ((lnklen = readlink(name, path, MAXPATHLEN)) == -1) {
-		(void)fprintf(stderr,
-		    "\nfind: %s: %s\n", name, strerror(errno));
+		warn("%s", name);
 		return;
 	}
 	path[lnklen] = '\0';
