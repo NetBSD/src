@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.77.2.3 2000/12/14 23:37:09 he Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.77.2.4 2001/04/06 00:02:45 he Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1595,8 +1595,9 @@ nfs_loadattrcache(vpp, fp, vaper)
 				 */
 				nvp->v_data = vp->v_data;
 				vp->v_data = NULL;
+				VOP_UNLOCK(vp, 0);
 				vp->v_op = spec_vnodeop_p;
-				vput(vp);
+				vrele(vp);
 				vgone(vp);
 				/*
 				 * XXX When nfs starts locking, we need to
