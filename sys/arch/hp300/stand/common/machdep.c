@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1 1997/02/04 03:52:39 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.2 1997/04/27 21:13:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -58,6 +58,8 @@ getmachineid()
 		cp = "318/319/330"; break;
 	case HP_340:
 		cp = "340"; break;
+	case HP_345:
+		cp = "345"; break;
 	case HP_350:
 		cp = "350"; break;
 	case HP_360:
@@ -65,9 +67,13 @@ getmachineid()
 	case HP_370:
 		cp = "370"; break;
 	case HP_375:
-		cp = "345/375/400"; break;
+		cp = "375"; break;
 	case HP_380:
-		cp = "380/425"; break;
+		cp = "380"; break;
+	case HP_400:
+		cp = "400"; break;
+	case HP_425:
+		cp = "425"; break;
 	case HP_433:
 		cp = "433"; break;
 	default:
