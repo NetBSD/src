@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.42 1995/04/21 09:15:32 mycroft Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.43 1995/05/01 04:48:39 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -59,6 +59,7 @@
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
+#include <machine/specialreg.h>
 
 #include "npx.h"
 #if NNPX > 0
@@ -77,7 +78,7 @@ extern struct proc *npxproc;
 cpu_fork(p1, p2)
 	register struct proc *p1, *p2;
 {
-	register struct user *up = p2->p_addr;
+	register struct pcb *pcb = &p2->p_addr->u_pcb;
 	int addr, i;
 	extern char kstack[];
 
@@ -85,23 +86,25 @@ cpu_fork(p1, p2)
 	/*
 	 * If npxproc != p1, then the npx h/w state is irrelevant and the
 	 * state had better already be in the pcb.  This is true for forks
-	 * but not for dumps (the old book-keeping with FP flags in the pcb
-	 * always lost for dumps because the dump pcb has 0 flags).
+	 * but not for dumps.
 	 *
 	 * If npxproc == p1, then we have to save the npx h/w state to
 	 * p1's pcb so that we can copy it.
 	 */
-	if (p1 == npxproc)
-		npxsave(&p1->p_addr->u_pcb.pcb_savefpu);
+	if (npxproc == p1)
+		npxsave();
 #endif
 
 	/* Copy the pcb. */
-	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
+	*pcb = p1->p_addr->u_pcb;
 	p2->p_md.md_regs = p1->p_md.md_regs;
 	p2->p_md.ibcs_sigflags = p1->p_md.ibcs_sigflags;
 
-	if (up->u_pcb.pcb_ldt) {
-		struct pcb *pcb = &up->u_pcb;
+	/* Fix up the TSS, etc. */
+	pcb->pcb_cr0 |= CR0_TS;
+
+#ifdef USER_LDT
+	if (pcb->pcb_ldt) {
 		size_t len;
 		union descriptor *new_ldt;
 
@@ -113,6 +116,7 @@ cpu_fork(p1, p2)
 		gdt_segs[GUSERLDT_SEL].ssd_limit = len - 1;
 		ssdtosd(gdt_segs + GUSERLDT_SEL, &pcb->pcb_ldt_desc);
 	}
+#endif
 
 	/*
 	 * Wire top of address space of child to it's kstack.
@@ -127,7 +131,7 @@ cpu_fork(p1, p2)
 		        (vm_offset_t)p2->p_addr + i * NBPG),
 		    VM_PROT_READ | VM_PROT_WRITE, TRUE);
 
-	pmap_activate(&p2->p_vmspace->vm_pmap, &up->u_pcb);
+	pmap_activate(&p2->p_vmspace->vm_pmap, pcb);
 
 	/*
 	 * Copy the stack.
@@ -137,7 +141,7 @@ cpu_fork(p1, p2)
 	 * process; savectx() returns 0.  Thus we can look for a non-zero
 	 * return value to indicate that we're in the child.
 	 */
-	return (savectx(up, 1) != 0);
+	return (savectx(p2->p_addr, 1) != 0);
 }
 
 /*
@@ -154,6 +158,10 @@ cpu_exit(p)
 {
 	extern int _default_ldt, currentldt;
 	struct vmspace *vm;
+
+	/* If we were using the FPU, forget about it. */
+	if (npxproc == p)
+		npxproc = 0;
 
 #ifdef USER_LDT
 	if (p->p_addr->u_pcb.pcb_ldt) {
@@ -194,13 +202,13 @@ cpu_coredump(p, vp, cred, chdr)
 	chdr->c_seghdrsize = ALIGN(sizeof(cseg));
 	chdr->c_cpusize = sizeof(cpustate);
 
-	cpustate.regs = *(struct trapframe *)p->p_md.md_regs;
 #if NNPX > 0
-	if (p == npxproc)
-		npxsave(&cpustate.fpstate); /* ??? */
-	else
+	if (npxproc != 0)
+		npxsave();
 #endif
-		bzero((caddr_t)&cpustate.fpstate, sizeof(cpustate.fpstate));
+
+	cpustate.regs = *(struct trapframe *)p->p_md.md_regs;
+	cpustate.fpstate = p->p_addr->u_pcb.pcb_savefpu;
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_I386, CORE_CPU);
 	cseg.c_addr = 0;

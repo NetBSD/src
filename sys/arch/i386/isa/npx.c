@@ -1,7 +1,13 @@
-/*	$NetBSD: npx.c,v 1.35 1995/04/17 12:07:21 cgd Exp $	*/
+/*	$NetBSD: npx.c,v 1.36 1995/05/01 04:47:43 mycroft Exp $	*/
+
+#if 0
+#define iprintf(x)	printf x
+#else
+#define	iprintf(x)
+#endif
 
 /*-
- * Copyright (c) 1994, 1995 Charles Hannum.
+ * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1990 William Jolitz.
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
@@ -59,6 +65,22 @@
 
 /*
  * 387 and 287 Numeric Coprocessor Extension (NPX) Driver.
+ *
+ * We do lazy initialization and switching using the TS and EM bits in cr0.
+ * DNA exceptions are handled like this:
+ *
+ * 1) If someone else has used the NPX, save its state into that process's PCB.
+ * 2) If the EM bit is set, then
+ *    a) if no NPX is present, return and go to the emulator.
+ *    b) if a NPX is present, turn off the EM bit and initialize the NPX.
+ * 3) If the EM bit is not set, reload the process's previous NPX state.
+ *
+ * The actual ordering is slightly different for performance reasons.
+ *
+ * When a process is created or exec()s, its saved cr0 image has both the EM
+ * and TS bits sets.  The EM bit is turned off when it first gets a DNA and the
+ * NPX is initialized.  The TS bit is turned off when the NPX is used, and
+ * turned on again later when the process's NPX state is saved.
  */
 
 #define	fldcw(addr)		__asm("fldcw %0" : : "m" (*addr))
@@ -75,20 +97,16 @@
 				  ef;})
 #define	write_eflags(x)		({register u_long ef = (x); \
 				  __asm("pushl %0; popfl" : : "r" (ef));})
-#define	start_emulating()	({register u_short msw; \
-				  __asm("smsw %0" : "=r" (msw)); \
-				  msw |= CR0_TS; \
-				  __asm("lmsw %0" : : "r" (msw));})
-#define	stop_emulating()	__asm("clts")
+#define	clts()			__asm("clts")
+#define	stts()			lcr0(rcr0() | CR0_TS)
 
-extern	struct gate_descriptor idt[];
-
-int	npxdna		__P((void));
-void	npxexit		__P((void));
-void	npxinit		__P((void));
-int	npxintr		__P((void *));
-void	npxsave		__P((struct save87 *addr));
-int	npxprobe1	__P((struct isa_attach_args *));
+int npxdna __P((void));
+void npxexit __P((void));
+void npxinit __P((void));
+int npxintr __P((void *));
+static int npxprobe1 __P((struct isa_attach_args *));
+void npxsave __P((void));
+static void npxsave1 __P((void));
 
 struct npx_softc {
 	struct device sc_dev;
@@ -102,14 +120,14 @@ struct cfdriver npxcd = {
 	NULL, "npx", npxprobe, npxattach, DV_DULL, sizeof(struct npx_softc)
 };
 
-struct proc	*npxproc;
-
 enum npx_type {
 	NPX_NONE = 0,
 	NPX_INTERRUPT,
 	NPX_EXCEPTION,
 	NPX_BROKEN,
 };
+
+struct proc	*npxproc;
 
 static	enum npx_type		npx_type;
 static	int			npx_nointr;
@@ -121,7 +139,7 @@ static	volatile u_int		npx_traps_while_probing;
  * interrupts.  We'll still need a special exception 16 handler.  The busy
  * latch stuff in probintr() can be moved to npxprobe().
  */
-void probeintr(void);
+void probeintr __P((void));
 asm ("
 	.text
 _probeintr:
@@ -137,7 +155,7 @@ _probeintr:
 	iret
 ");
 
-void probetrap(void);
+void probetrap __P((void));
 asm ("
 	.text
 _probetrap:
@@ -147,87 +165,7 @@ _probetrap:
 	iret
 ");
 
-/*
- * Probe routine.  Initialize cr0 to give correct behaviour for [f]wait
- * whether the device exists or not (XXX should be elsewhere).  Set flags
- * to tell npxattach() what to do.  Modify device struct if npx doesn't
- * need to use interrupts.  Return 1 if device exists.
- */
-int
-npxprobe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
-{
-	struct	isa_attach_args *ia = aux;
-	int	irq;
-	int	result;
-	u_long	save_eflags;
-	unsigned save_imen;
-	struct	gate_descriptor save_idt_npxintr;
-	struct	gate_descriptor save_idt_npxtrap;
-
-	/*
-	 * This routine is now just a wrapper for npxprobe1(), to install
-	 * special npx interrupt and trap handlers, to enable npx interrupts
-	 * and to disable other interrupts.  Someday isa_configure() will
-	 * install suitable handlers and run with interrupts enabled so we
-	 * won't need to do so much here.
-	 */
-	irq = NRSVIDT + ia->ia_irq;
-	save_eflags = read_eflags();
-	disable_intr();
-	save_imen = imen;
-	save_idt_npxintr = idt[irq];
-	save_idt_npxtrap = idt[16];
-	setgate(&idt[irq], probeintr, 0, SDT_SYS386IGT, SEL_KPL);
-	setgate(&idt[16], probetrap, 0, SDT_SYS386TGT, SEL_KPL);
-	imen = ~((1 << IRQ_SLAVE) | (1 << ia->ia_irq));
-	SET_ICUS();
-
-	/*
-	 * Partially reset the coprocessor, if any.  Some BIOS's don't reset
-	 * it after a warm boot.
-	 */
-	outb(0xf1, 0);		/* full reset on some systems, NOP on others */
-	delay(1000);
-	outb(0xf0, 0);		/* clear BUSY# latch */
-
-	/*
-	 * Prepare to trap all ESC (i.e., NPX) instructions and all WAIT
-	 * instructions.  We must set the CR0_MP bit and use the CR0_TS
-	 * bit to control the trap, because setting the CR0_EM bit does
-	 * not cause WAIT instructions to trap.  It's important to trap
-	 * WAIT instructions - otherwise the "wait" variants of no-wait
-	 * control instructions would degenerate to the "no-wait" variants
-	 * after FP context switches but work correctly otherwise.  It's
-	 * particularly important to trap WAITs when there is no NPX -
-	 * otherwise the "wait" variants would always degenerate.
-	 *
-	 * Try setting CR0_NE to get correct error reporting on 486DX's.
-	 * Setting it should fail or do nothing on lesser processors.
-	 */
-	lcr0(rcr0() | CR0_MP | CR0_NE);
-
-	/*
-	 * But don't trap while we're probing.
-	 */
-	stop_emulating();
-
-	enable_intr();
-	result = npxprobe1(ia);
-	disable_intr();
-
-	start_emulating();
-
-	imen = save_imen;
-	SET_ICUS();
-	idt[irq] = save_idt_npxintr;
-	idt[16] = save_idt_npxtrap;
-	write_eflags(save_eflags);
-	return (result);
-}
-
-int
+static inline int
 npxprobe1(ia)
 	struct isa_attach_args *ia;
 {
@@ -294,6 +232,69 @@ npxprobe1(ia)
 	return 0;
 }
 
+/*
+ * Probe routine.  Initialize cr0 to give correct behaviour for [f]wait
+ * whether the device exists or not (XXX should be elsewhere).  Set flags
+ * to tell npxattach() what to do.  Modify device struct if npx doesn't
+ * need to use interrupts.  Return 1 if device exists.
+ */
+int
+npxprobe(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
+{
+	struct	isa_attach_args *ia = aux;
+	int	irq;
+	int	result;
+	u_long	save_eflags;
+	unsigned save_imen;
+	struct	gate_descriptor save_idt_npxintr;
+	struct	gate_descriptor save_idt_npxtrap;
+
+	/*
+	 * This routine is now just a wrapper for npxprobe1(), to install
+	 * special npx interrupt and trap handlers, to enable npx interrupts
+	 * and to disable other interrupts.  Someday isa_configure() will
+	 * install suitable handlers and run with interrupts enabled so we
+	 * won't need to do so much here.
+	 */
+	irq = NRSVIDT + ia->ia_irq;
+	save_eflags = read_eflags();
+	disable_intr();
+	save_idt_npxintr = idt[irq];
+	save_idt_npxtrap = idt[16];
+	setgate(&idt[irq], probeintr, 0, SDT_SYS386IGT, SEL_KPL);
+	setgate(&idt[16], probetrap, 0, SDT_SYS386TGT, SEL_KPL);
+	save_imen = imen;
+	imen = ~((1 << IRQ_SLAVE) | (1 << ia->ia_irq));
+	SET_ICUS();
+
+	/*
+	 * Partially reset the coprocessor, if any.  Some BIOS's don't reset
+	 * it after a warm boot.
+	 */
+	outb(0xf1, 0);		/* full reset on some systems, NOP on others */
+	delay(1000);
+	outb(0xf0, 0);		/* clear BUSY# latch */
+
+	/*
+	 * We set CR0 in locore to trap all ESC and WAIT instructions.
+	 * We have to turn off the CR0_EM bit temporarily while probing.
+	 */
+	lcr0(rcr0() & ~(CR0_EM|CR0_TS));
+	enable_intr();
+	result = npxprobe1(ia);
+	disable_intr();
+	lcr0(rcr0() | (CR0_EM|CR0_TS));
+
+	imen = save_imen;
+	SET_ICUS();
+	idt[irq] = save_idt_npxintr;
+	idt[16] = save_idt_npxtrap;
+	write_eflags(save_eflags);
+	return (result);
+}
+
 int npx586bug1 __P((int, int));
 asm ("
 	.text
@@ -336,13 +337,11 @@ npxattach(parent, self, aux)
 		return;
 	}
 
-	stop_emulating();
+	lcr0(rcr0() & ~(CR0_EM|CR0_TS));
 	fninit();
 	if (npx586bug1(4195835, 3145727) != 0)
 		printf("WARNING: Pentium FDIV bug detected!\n");
-	start_emulating();
-
-	npxinit();
+	lcr0(rcr0() | (CR0_EM|CR0_TS));
 }
 
 /*
@@ -370,6 +369,7 @@ npxintr(arg)
 	int code;
 
 	cnt.v_trap++;
+	iprintf(("Intr"));
 
 	if (p == 0 || npx_type == NPX_NONE) {
 		/* XXX no %p in stand/printf.c.  Cast to quiet gcc -Wall. */
@@ -463,49 +463,6 @@ npxintr(arg)
 }
 
 /*
- * Implement device not available (DNA) exception
- *
- * If the we were the last process to use the FPU, we can simply return.
- * Otherwise, we save the previous state, if necessary, and restore our last
- * saved state.
- */
-int
-npxdna()
-{
-
-	if (npx_type == NPX_NONE)
-		return (0);
-
-#ifdef DIAGNOSTIC
-	if (cpl != 0 || npx_nointr != 0)
-		panic("npxdna");
-#endif
-	stop_emulating();
-	if (npxproc != 0) {
-		if (npxproc == curproc)
-			return (1);
-		npx_nointr = 1;
-		fnsave(&npxproc->p_addr->u_pcb.pcb_savefpu);
-		fwait();
-		npx_nointr = 0;
-	}
-	/*
-	 * The following frstor may cause an IRQ13 when the state being
-	 * restored has a pending error.  The error will appear to have been
-	 * triggered by the current (npx) user instruction even when that
-	 * instruction is a no-wait instruction that should not trigger an
-	 * error (e.g., fnclex).  On at least one 486 system all of the
-	 * no-wait instructions are broken the same as frstor, so our
-	 * treatment does not amplify the breakage.  On at least one
-	 * 386/Cyrix 387 system, fnclex works correctly while frstor and
-	 * fnsave are broken, so our treatment breaks fnclex if it is the
-	 * first FPU instruction after a context switch.
-	 */
-	frstor(&(npxproc = curproc)->p_addr->u_pcb.pcb_savefpu);
-	return (1);
-}
-
-/*
  * Wrapper for fnsave instruction to handle h/w bugs.  If there is an error
  * pending, then fnsave generates a bogus IRQ13 on some systems.  Force any
  * IRQ13 to be handled immediately, and then ignore it.
@@ -520,22 +477,87 @@ npxdna()
  * called when forking, so this algorithm at worst forces us to trap once per
  * fork(), and at best saves us a reload once per fork().
  */
+static inline void
+npxsave1()
+{
+	register struct pcb *pcb;
+
+	clts();
+	npx_nointr = 1;
+	pcb = &npxproc->p_addr->u_pcb;
+	fnsave(&pcb->pcb_savefpu);
+	pcb->pcb_cr0 |= CR0_TS;
+	fwait();
+	npx_nointr = 0;
+}
+
+/*
+ * Implement device not available (DNA) exception
+ *
+ * If the we were the last process to use the FPU, we can simply return.
+ * Otherwise, we save the previous state, if necessary, and restore our last
+ * saved state.
+ */
+int
+npxdna()
+{
+	register struct pcb *pcb = &curproc->p_addr->u_pcb;
+
+	if ((pcb->pcb_cr0 & CR0_EM) != 0) {
+		if (npx_type != NPX_NONE) {
+			iprintf(("Init"));
+			lcr0(pcb->pcb_cr0 &= ~CR0_EM);
+			npxinit();
+			return (1);
+		}
+		iprintf(("Emul"));
+		return (0);
+	}
+
+#ifdef DIAGNOSTIC
+	if (cpl != 0 || npx_nointr != 0)
+		panic("npxdna: masked");
+#endif
+	if (npxproc != 0) {
+#ifdef DIAGNOSTIC
+		if (npxproc == curproc)
+			panic("npxdna: same process");
+#endif
+		iprintf(("Save"));
+		npxsave1();
+	} else
+		clts();
+	/*
+	 * The following frstor may cause an IRQ13 when the state being
+	 * restored has a pending error.  The error will appear to have been
+	 * triggered by the current (npx) user instruction even when that
+	 * instruction is a no-wait instruction that should not trigger an
+	 * error (e.g., fnclex).  On at least one 486 system all of the
+	 * no-wait instructions are broken the same as frstor, so our
+	 * treatment does not amplify the breakage.  On at least one
+	 * 386/Cyrix 387 system, fnclex works correctly while frstor and
+	 * fnsave are broken, so our treatment breaks fnclex if it is the
+	 * first FPU instruction after a context switch.
+	 */
+	pcb->pcb_cr0 &= ~CR0_TS;
+	npxproc = curproc;
+	frstor(&pcb->pcb_savefpu);
+	return (1);
+}
+
 void
-npxsave(addr)
-	struct save87 *addr;
+npxsave()
 {
 
 #ifdef DIAGNOSTIC
 	if (cpl != 0 || npx_nointr != 0)
-		panic("npxsave");
+		panic("npxsave: masked");
 #endif
-	stop_emulating();
-	npx_nointr = 1;
-	fnsave(addr);
-	fwait();
-	npx_nointr = 0;
+	iprintf(("Fork"));
+	npxsave1();
+	if (npxproc == curproc)
+		stts();
 	npxproc = 0;
-	start_emulating();
 }
 
 /*
@@ -548,27 +570,24 @@ npxsave(addr)
 void
 npxinit()
 {
+	register struct pcb *pcb = &curproc->p_addr->u_pcb;
 	static u_short control = __INITIAL_NPXCW__;
 #ifdef DIAGNOSTIC
 	extern int cold;
-#endif
 
-	if (npx_type == NPX_NONE)
-		return;
-
-#ifdef DIAGNOSTIC
 	if (cpl != 0 && !cold || npx_nointr != 0)
-		panic("npxinit");
+		panic("npxinit: masked");
 #endif
-	stop_emulating();
-	npx_nointr = 1;
 	if (npxproc != 0 && npxproc != curproc)
-		fnsave(&npxproc->p_addr->u_pcb.pcb_savefpu);
-	else
+		npxsave1();
+	else {
+		clts();
+		npx_nointr = 1;
 		fninit();
-	fwait();
-	npx_nointr = 0;
+		fwait();
+		npx_nointr = 0;
+	}
+	pcb->pcb_cr0 &= ~CR0_TS;
 	npxproc = curproc;
 	fldcw(&control);
-	fwait();
 }

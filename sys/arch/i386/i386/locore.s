@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.124 1995/04/22 20:26:32 christos Exp $	*/
+/*	$NetBSD: locore.s,v 1.125 1995/05/01 04:48:31 mycroft Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -515,7 +515,7 @@ try586:	/* Use the `cpuid' instruction. */
 	movl	%eax,%cr3		# load ptd addr into mmu
 	movl	%cr0,%eax		# get control word
 					# enable paging & NPX emulation
-	orl	$(CR0_PE|CR0_PG|CR0_TS|CR0_MP),%eax
+	orl	$(CR0_PE|CR0_PG|CR0_NE|CR0_TS|CR0_EM|CR0_MP),%eax
 	movl	%eax,%cr0		# and let's page NOW!
 
 	pushl	$begin			# jump to high mem
@@ -1661,18 +1661,6 @@ sw1:	bsfl	%ecx,%ebx		# find a full q
 	 *   %edi - new process
 	 */
 
-#if NNPX > 0
-	/* Have we used fp, and need a save? */
-	cmpl	%esi,_npxproc
-	jne	1f
-
-	/* Just turn off FPU for now; npxdna() will save the state later. */
-	smsw	%cx
-	orb	$CR0_TS,%cl
-	lmsw	%cx
-1:
-#endif
-
 	movl	P_ADDR(%esi),%esi
 
 	movl	%esp,PCB_ESP(%esi)
@@ -1726,6 +1714,10 @@ switch_exited:
 	movl	PCB_GS(%esi),%ecx
 	movl	%cx,%gs
 
+	/* Restore cr0 (including FPU state). */
+	movl	PCB_CR0(%esi),%ecx
+	movl	%ecx,%cr0
+
 	/* Record new pcb. */
 	movl	%esi,_curpcb
 
@@ -1758,19 +1750,6 @@ ENTRY(switch_exit)
 	/* In case we fault... */
 	movl	$0,_curproc
 
-#if NNPX > 0
-	/* Have we used fp, and need a save? */
-	cmpl	%edi,_npxproc
-	jne	1f
-
-	/* Just turn off FPU and forget npxproc. */
-	smsw	%cx
-	orb	$CR0_TS,%cl
-	lmsw	%cx
-	movl	$0,_npxproc
-1:
-#endif
-
 	/* Restore proc0's context. */
 	cli
 	movl	P_ADDR(%ebx),%esi
@@ -1787,6 +1766,10 @@ ENTRY(switch_exit)
 	xorl	%ecx,%ecx		# always null in proc0
 	movl	%cx,%fs
 	movl	%cx,%gs
+
+	/* Restore cr0 (including FPU state). */
+	movl	PCB_CR0(%esi),%ecx
+	movl	%ecx,%cr0
 
 	/* Record new pcb. */
 	movl	%esi,_curpcb
