@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.3 2002/09/01 09:00:35 scw Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.4 2002/09/01 09:18:52 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1128,6 +1128,8 @@ db_disasm(db_addr_t loc, boolean_t dummy)
 
 	if (oper3[0])
 		db_printf("%s%s", comma, oper3);
+
+	db_printf("\n");
 
 	return (loc + sizeof(opcode_t));
 }
