@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,38 +32,42 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1990 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1990, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)kvm_mkdb.c	5.11 (Berkeley) 4/27/91";
+static char sccsid[] = "@(#)kvm_mkdb.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
-#include <fcntl.h>
+
 #include <db.h>
+#include <err.h>
 #include <errno.h>
-#include <stdio.h>
-#include <string.h>
+#include <fcntl.h>
 #include <paths.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-char *tmp;
-#define basename(cp)	((tmp=rindex((cp), '/')) ? tmp+1 : (cp))
+#include "extern.h"
 
+static void usage __P((void));
+
+int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
-	extern int optind;
 	DB *db;
 	int ch;
-	char *nlistpath, *nlistname, dbtemp[MAXPATHLEN], dbname[MAXPATHLEN];
+	char *p, *nlistpath, *nlistname, dbtemp[MAXPATHLEN], dbname[MAXPATHLEN];
 
 	while ((ch = getopt(argc, argv, "")) != EOF)
-		switch((char)ch) {
+		switch (ch) {
 		case '?':
 		default:
 			usage();
@@ -71,42 +75,35 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	nlistpath = argc > 1 ? argv[0] : _PATH_UNIX;
+	if (argc > 1)
+		usage();
+
+	/* If the existing db file matches the currently running kernel, exit */
+	if (testdb())
+		exit(0);
+
+#define	basename(cp)	((p = rindex((cp), '/')) != NULL ? p + 1 : (cp))
+	nlistpath = argc > 0 ? argv[0] : _PATH_UNIX;
 	nlistname = basename(nlistpath);
 
-	(void)sprintf(dbtemp, "%s/kvm_%s.tmp", _PATH_VARRUN, nlistname);
-	(void)sprintf(dbname, "%s/kvm_%s.db", _PATH_VARRUN, nlistname);
+	(void)snprintf(dbtemp, sizeof(dbtemp), "%skvm_%s.tmp",
+	    _PATH_VARDB, nlistname);
+	(void)snprintf(dbname, sizeof(dbname), "%skvm_%s.db",
+	    _PATH_VARDB, nlistname);
 	(void)umask(0);
-	db = hash_open(dbtemp, O_CREAT|O_WRONLY|O_EXCL,
-	    S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH, NULL);
-	if (!db) {
-		(void)fprintf(stderr,
-		    "kvm_mkdb: %s: %s\n", dbtemp, strerror(errno));
-		exit(1);
-	}
+	db = dbopen(dbtemp, O_CREAT | O_EXLOCK | O_TRUNC | O_RDWR,
+	    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, DB_HASH, NULL);
+	if (db == NULL)
+		err(1, "%s", dbtemp);
 	create_knlist(nlistpath, db);
-	(void)(db->close)(db);
-	if (rename(dbtemp, dbname)) {
-		(void)fprintf(stderr, "kvm_mkdb: %s to %s: %s.\n",
-		    dbtemp, dbname, strerror(errno));
-		exit(1);
-	}
+	if (db->close(db))
+		err(1, "%s", dbtemp);
+	if (rename(dbtemp, dbname))
+		err(1, "rename %s to %s", dbtemp, dbname);
 	exit(0);
 }
 
-error(n)
-	char *n;
-{
-	int sverr;
-
-	sverr = errno;
-	(void)fprintf(stderr, "kvm_mkdb: ");
-	if (n)
-		(void)fprintf(stderr, "%s: ", n);
-	(void)fprintf(stderr, "%s\n", strerror(sverr));
-	exit(1);
-}
-
+void
 usage()
 {
 	(void)fprintf(stderr, "usage: kvm_mkdb [file]\n");

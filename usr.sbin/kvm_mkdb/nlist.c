@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,27 +32,36 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)nlist.c	5.4 (Berkeley) 4/27/91";
+static char sccsid[] = "@(#)nlist.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
 
 #include <sys/param.h>
-#include <fcntl.h>
-#include <limits.h>
+
 #include <a.out.h>
 #include <db.h>
+#include <err.h>
 #include <errno.h>
-#include <unistd.h>
+#include <fcntl.h>
 #include <kvm.h>
+#include <limits.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#include "extern.h"
 
 typedef struct nlist NLIST;
 #define	_strx	n_un.n_strx
 #define	_name	n_un.n_name
 
+#define	badfmt(str)	errx(1, "%s: %s: %s", kfile, str, strerror(EFTYPE))
+
+static void badread __P((int, char *));
+
 static char *kfile;
 
+void
 create_knlist(name, db)
 	char *name;
 	DB *db;
@@ -67,12 +76,12 @@ create_knlist(name, db)
 
 	kfile = name;
 	if ((fd = open(name, O_RDONLY, 0)) < 0)
-		error(name);
+		err(1, "%s", name);
 
 	/* Read in exec structure. */
-	nr = read(fd, (char *)&ebuf, sizeof(struct exec));
+	nr = read(fd, &ebuf, sizeof(struct exec));
 	if (nr != sizeof(struct exec))
-		badfmt(nr, "no exec header");
+		badfmt("no exec header");
 
 	/* Check magic number and symbol count. */
 	if (N_BADMAG(ebuf))
@@ -91,16 +100,16 @@ create_knlist(name, db)
 
 	/* Read in the string table. */
 	strsize -= sizeof(strsize);
-	if (!(strtab = (char *)malloc(strsize)))
-		error(name);
+	if (!(strtab = malloc(strsize)))
+		err(1, NULL);
 	if ((nr = read(fd, strtab, strsize)) != strsize)
 		badread(nr, "corrupted symbol table");
 
 	/* Seek to symbol table. */
 	if (!(fp = fdopen(fd, "r")))
-		error(name);
+		err(1, "%s", name);
 	if (fseek(fp, N_SYMOFF(ebuf), SEEK_SET) == -1)
-		error(name);
+		err(1, "%s", name);
 	
 	data.data = (u_char *)&nbuf;
 	data.size = sizeof(NLIST);
@@ -111,42 +120,34 @@ create_knlist(name, db)
 		if (fread((char *)&nbuf, sizeof (NLIST), 1, fp) != 1) {
 			if (feof(fp))
 				badfmt("corrupted symbol table");
-			error(name);
+			err(1, "%s", name);
 		}
 		if (!nbuf._strx || nbuf.n_type&N_STAB)
 			continue;
 
 		key.data = (u_char *)strtab + nbuf._strx - sizeof(long);
 		key.size = strlen((char *)key.data);
-		if ((db->put)(db, &key, &data, 0))
-			error("put");
+		if (db->put(db, &key, &data, 0))
+			err(1, "record enter");
 
-		if (!strncmp((char *)key.data, VRS_SYM, sizeof(VRS_SYM) - 1)) {
-			off_t cur_off, rel_off, vers_off;
-
-			/* Offset relative to start of text image in VM. */
-#ifdef hp300
-			rel_off = nbuf.n_value;
-#endif
-#ifdef tahoe
-			/*
-			 * On tahoe, first 0x800 is reserved for communication
-			 * with the console processor.
-			 */
-			rel_off = ((nbuf.n_value & ~KERNBASE) - 0x800);
-#endif
-#ifdef vax
-			rel_off = nbuf.n_value & ~KERNBASE;
+		if (strcmp((char *)key.data, VRS_SYM) == 0) {
+			long cur_off, voff;
+#ifndef KERNTEXTOFF
+#define KERNTEXTOFF KERNBASE
 #endif
 			/*
-			 * When loaded, data is rounded to next page cluster
-			 * after text, but not in file.
+			 * Calculate offset relative to a normal (non-kernel)
+			 * a.out.  KERNTEXTOFF is where the kernel is really
+			 * loaded; N_TXTADDR is where a normal file is loaded.
+			 * From there, locate file offset in text or data.
 			 */
-			rel_off -= CLBYTES - (ebuf.a_text % CLBYTES);
-			vers_off = N_TXTOFF(ebuf) + rel_off;
-
+			voff = nbuf.n_value - KERNTEXTOFF + N_TXTADDR(ebuf);
+			if ((nbuf.n_type & N_TYPE) == N_TEXT)
+				voff += N_TXTOFF(ebuf) - N_TXTADDR(ebuf);
+			else
+				voff += N_DATOFF(ebuf) - N_DATADDR(ebuf);
 			cur_off = ftell(fp);
-			if (fseek(fp, vers_off, SEEK_SET) == -1)
+			if (fseek(fp, voff, SEEK_SET) == -1)
 				badfmt("corrupted string table");
 
 			/*
@@ -161,8 +162,8 @@ create_knlist(name, db)
 			key.size = sizeof(VRS_KEY) - 1;
 			data.data = (u_char *)buf;
 			data.size = strlen(buf);
-			if ((db->put)(db, &key, &data, 0))
-				error("put");
+			if (db->put(db, &key, &data, 0))
+				err(1, "record enter");
 
 			/* Restore to original values. */
 			data.data = (u_char *)&nbuf;
@@ -174,19 +175,12 @@ create_knlist(name, db)
 	(void)fclose(fp);
 }
 
+static void
 badread(nr, p)
 	int nr;
 	char *p;
 {
 	if (nr < 0)
-		error(kfile);
+		err(1, "%s", kfile);
 	badfmt(p);
-}
-
-badfmt(p)
-	char *p;
-{
-	(void)fprintf(stderr,
-	    "symorder: %s: %s: %s\n", kfile, p, strerror(EFTYPE));
-	exit(1);
 }
