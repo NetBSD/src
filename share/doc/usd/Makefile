@@ -13,12 +13,7 @@
 
 BINDIR=	/usr/share/doc/usd
 FILES=	00.contents Makefile Title
-.ifnmake install
 SUBDIR=	04.csh 18.msdiffs 19.memacros 20.meref
-.else
-TOP=	../../..
-SUBDIR=	04.csh 18.msdiffs 19.memacros 20.meref
-.endif
 
 Title.ps: ${FILES}
 	groff Title > ${.TARGET}
