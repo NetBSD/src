@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.1 1996/04/12 01:57:42 cgd Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.2 1996/04/12 05:39:02 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -27,4 +27,27 @@
  * rights to redistribute these changes.
  */
 
-typedef	void *isa_chipset_tag_t;
+/*
+ * Types provided to machine-independent ISA code.
+ */
+typedef struct alpha_isa_chipset *isa_chipset_tag_t;
+
+struct alpha_isa_chipset {
+	void	*ic_v;
+
+	void	(*ic_attach_hook) __P((struct device *, struct device *,
+		    struct isabus_attach_args *));
+	void	*(*ic_intr_establish) __P((void *, int, int, int,
+		    int (*)(void *), void *));
+	void	(*ic_intr_disestablish) __P((void *, void *));
+};
+
+/*
+ * Functions provided to machine-independent ISA code.
+ */
+#define	isa_attach_hook(p, s, a)					\
+    (*(a)->iba_ic->ic_attach_hook)((p), (s), (a))
+#define	isa_intr_establish(c, i, t, l, f, a)				\
+    (*(c)->ic_intr_establish)((c)->ic_v, (i), (t), (l), (f), (a))
+#define	isa_intr_disestablish(c, h)					\
+    (*(c)->ic_intr_disestablish)((c)->ic_v, (h))
