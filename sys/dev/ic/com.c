@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.39 1994/10/30 21:43:28 cgd Exp $	*/
+/*	$NetBSD: com.c,v 1.40 1994/11/03 23:26:03 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -84,8 +84,8 @@ struct com_softc {
 /* XXXX should be in com_softc, but not ready for that yet */
 struct	tty *com_tty[NCOM];
 
-int comprobe();
-void comattach();
+int comprobe __P((struct device *, void *, void *));
+void comattach __P((struct device *, struct device *, void *));
 int comopen __P((dev_t, int, int, struct proc *));
 int comclose __P((dev_t, int, int, struct proc *));
 void comdiag __P((void *));
@@ -160,11 +160,11 @@ comprobe1(iobase)
 }
 
 int
-comprobe(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+comprobe(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
 {
-	struct com_softc *sc = (void *)self;
+	struct com_softc *sc = match;
 	struct isa_attach_args *ia = aux;
 	u_short iobase = ia->ia_iobase;
 
