@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.21 2001/03/06 19:00:59 jmc Exp $
+$NetBSD: UPDATING,v 1.22 2001/03/06 19:03:31 jmc Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -10,14 +10,20 @@ Recent changes:
 
 20010226:
 
-	Added named group to /etc/group. Need to hand add this in or builds
+	Added named user/group to system. Need to hand add this in or builds
 	will break as mtree aborts early.
 
 	To work around add by hand:
 
 	named:*:14:
 
-	to /etc/group before make build.
+	to /etc/group and add:
+
+	named:*:14:14::0:0:Named pseudo-user:/var/named:/sbin/nologin
+
+	to master.passwd (use vipw for instance if doing by hand).
+
+	Now a make build should progress.
 
 20010219:
 	get/setprogname() added. Any hostprog's that may use this will need
