@@ -35,7 +35,7 @@
  *	Fritz!Card PCI specific routines for isic driver
  *	------------------------------------------------
  *
- *	$Id: i4b_avm_fritz_pci.c,v 1.4 2001/01/19 12:44:44 martin Exp $
+ *	$Id: isic_pci_avm_fritz_pci.c,v 1.1 2001/02/18 09:37:20 martin Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
@@ -95,7 +95,7 @@
 
 #ifndef __FreeBSD__
 
-#include <dev/pci/pci_isic.h>
+#include <dev/pci/isic_pci.h>
 
 /* PCI config map to use (only one in this driver) */
 #define FRITZPCI_PORT0_IO_MAPOFF	PCI_MAPREG_START+4
@@ -751,7 +751,7 @@ isic_attach_avma1pp(int unit, u_int iobase1, u_int iobase2)
 	printf("isic_attach_avma1pp: v %#x\n", v);
 #endif
 
-   /* from here to the end would normally be done in isic_pciattach */
+   /* from here to the end would normally be done in isic_pci_isdn_attach */
 
 	 printf("isic%d: ISAC %s (IOM-%c)\n", unit,
   		"2085 Version A1/A2 or 2086/2186 Version 1.1",

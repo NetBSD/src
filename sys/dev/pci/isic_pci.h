@@ -33,7 +33,7 @@
  *	pci_isic.h - pci bus frontend for i4b_isic driver
  *	-------------------------------------------------
  *
- *	$Id: pci_isic.h,v 1.1.1.1 2001/01/05 12:50:20 martin Exp $ 
+ *	$Id: isic_pci.h,v 1.1 2001/02/18 09:37:20 martin Exp $ 
  *
  *      last edit-date: [Wed Mar 10 07:22:08 1999]
  *
