@@ -1,15 +1,14 @@
-#	$NetBSD: Makefile,v 1.5 1995/08/29 21:55:39 phil Exp $
+#	$NetBSD: Makefile,v 1.6 1995/09/26 20:16:36 phil Exp $
 
 #	@(#)Makefile	8.1 (Berkeley) 6/10/93
 
 DESTDIR=
 STANDDIR=${DESTDIR}/stand
-
-# load at 0x200000 + 79 * 18 * 1024
+# load at 0x400000 - 18 * 1024 - 0x10000
 # that way the boot code will be at the correct
 # address if the floppy image is started from memory
 # NOTE: alloc() function takes memory after _end
-RELOC=	363800
+RELOC=	3E6800
 
 CONS= -DSCNCONSOLE
 DEFS= -DSTANDALONE ${CONS}
@@ -18,23 +17,22 @@ CFLAGS=	-O ${INCPATH} ${DEFS} -fwritable-strings
 SRCS=   cons.c devopen.c scn.c scsi_low.c scsi_hi.c \
 	conf.c prf.c tgets.c machdep.c sd.c rd.c filesystem.c
 
-.if exists(obj)
-S=../../../..
-.else
-S=../../..
-.endif
+S=	${.CURDIR}/../../..
+SAREL=
+KERNREL=
 
 .PATH: ${S}/arch/${MACHINE_ARCH}/${MACHINE_ARCH}
 .PATH: ${S}/stand ${S}/lib/libsa
 
 INCPATH=-I${.CURDIR} -I${.CURDIR}/../.. -I${S} -I${S}/lib/libsa
 
-### find out what to use for libkern
-.include "$S/lib/libkern/Makefile.inc"
+### find out what to use for libs
+.include "../../../lib/libkern/Makefile.inc"
 LIBKERN=	${KERNLIB}
 
-.include "$S/lib/libsa/Makefile.inc"
-LIBSA=	${SA_LIB}
+NO_NET=
+.include "../../../lib/libsa/Makefile.inc"
+LIBSA=	${SALIB}
 
 LIBS=	${LIBSA} ${.OBJDIR}/libdrive.a \
 	${LIBKERN} ${LIBSA} ${LIBKERN}
@@ -81,12 +79,6 @@ $(SC): /usr/lib/libc.a
 
 # utilities
 
-cleandir:
-	rm -f *.o errs make.out
-	rm -f a.out boot zboot.o cat ls testboot
-	rm -f *.core
-	rm -f libdrive.a 
-
 install: ${ALL}
 	cp ${ALL} ${DESTDIR}/usr/mdec
 
@@ -95,3 +87,10 @@ install: ${ALL}
 .include <bsd.subdir.mk>
 
 FRC:
+
+# clean ...
+
+clean::
+	rm -f ${ALL} ${.OBJDIR}/libdrive.a ${OBJS} boot.o srt0.o inflate.o
+
+cleandir: clean

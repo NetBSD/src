@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.4 1995/08/25 07:49:06 phil Exp $  */
+/*	$NetBSD: intr.c,v 1.5 1995/09/26 20:16:26 phil Exp $  */
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -29,7 +29,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: intr.c,v 1.4 1995/08/25 07:49:06 phil Exp $
+ *	$Id: intr.c,v 1.5 1995/09/26 20:16:26 phil Exp $
  */
 
 #define DEFINE_SPLX
@@ -42,7 +42,7 @@
 #define INTS	32
 struct iv ivt[INTS];
 static int next_sir = 16;
-unsigned int imask[5] = {0xffffffff};
+unsigned int imask[NIPL] = {0xffffffff};
 unsigned int Cur_pl = 0xffffffff, idisabled, sirpending, astpending;
 
 static void softnet();
@@ -67,13 +67,14 @@ intr_init()
 	intr_establish(SOFTINT, softclock, NULL, "softclock", IPL_CLOCK, 0);
 	intr_establish(SOFTINT, softnet,   NULL, "softnet",   IPL_NET,   0);
 
-	imask[IPL_BIO]   |= SIR_CLOCKMASK;
-	imask[IPL_NET]   |= SIR_NETMASK;
-	imask[IPL_CLOCK] |= SIR_CLOCKMASK;
+	for (i = 1; i < NIPL; i++)
+		imask[i] |= SIR_ALLMASK;
 }
 
 /*
  * Handle pending software interrupts.
+ * This function has to be entered with interrupts disabled and
+ * it will return with interrupts disabled.
  */
 void
 check_sir()
@@ -81,10 +82,6 @@ check_sir()
 	register unsigned int cirpending, mask;
 	register struct iv *iv;
 
-	di();
-	/* Mask off SIR 0, so we are no longer at spl0.
-	   This will prevent recursive calls to check_sir */
-	Cur_pl |= 0x10000;
 	while (cirpending = sirpending) {
 		sirpending = 0;
 		ei();
@@ -98,9 +95,6 @@ check_sir()
 		}
 		di();
 	}
-	/* Reenable SIR 0 and return to spl0 */
-	Cur_pl &= ~0x10000;
-	ei();
 	return;
 }
 
@@ -155,9 +149,13 @@ intr_establish(int intr, void (*vector)(), void *arg, char *use,
 #include "ppp.h"
 #if NSL > 0 || NPPP > 0
 	/* In the presence of SLIP or PPP, splimp > spltty. */
-	imask[IPL_NET] |= imask[IPL_TTY];
+	imask[IPL_IMP] |= imask[IPL_TTY];
 #endif
-	imask[IPL_NET] |= imask[IPL_BIO];
+	/*
+	 * There are network and disk drivers that use free() at interrupt
+	 * time, so imp > (net | bio).
+	 */
+	imask[IPL_IMP] |= imask[IPL_NET] | imask[IPL_BIO];
 	imask[IPL_ZERO] &= ~(1 << intr);
 	return(intr);
 }
@@ -209,6 +207,7 @@ badhard(struct intrframe *frame)
 	if (bad_count < 5)
    		printf("Unknown hardware interrupt: vec=%d pc=0x%08x psr=0x%04x cpl=0x%08x\n",
 		      frame->if_vec, frame->if_pc, frame->if_psr, frame->if_pl);
+
 	if (bad_count == 5)
 		printf("Too many unknown hardware interrupts, quitting reporting them.\n");
 	ei();

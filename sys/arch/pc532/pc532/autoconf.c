@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.14 1995/08/25 07:49:04 phil Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.15 1995/09/26 20:16:23 phil Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -71,6 +71,8 @@ extern int cold;	/* cold start flag initialized in locore.s */
 configure()
 {
 	extern int safepri;
+	int i;
+	static char *ipl_names[] = IPL_NAMES;
 
 	/* Start the clocks. */
 	startrtclock();
@@ -79,9 +81,9 @@ configure()
 	if (config_rootfound("membus", "membus") == 0)
 		panic ("No mem bus found!");
 
-	printf("zero = %x, bio = %x, net = %x, tty = %x, clock = %x\n",
-		imask[IPL_ZERO], imask[IPL_BIO], imask[IPL_NET],
-		imask[IPL_TTY], imask[IPL_CLOCK]);
+	for (i = 0; i < NIPL; i++)
+		printf("%s%s=%x", i?", ":"", ipl_names[i], imask[i]);
+	printf("\n");
 
 	safepri = imask[IPL_ZERO];
 	spl0();
