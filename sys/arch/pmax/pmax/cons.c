@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.6 1995/01/23 18:39:30 mellon Exp $	*/
+/*	$NetBSD: cons.c,v 1.7 1995/02/01 04:43:52 mellon Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -167,7 +167,7 @@ cngetc()
 
 	/* check to be sure device has been initialized */
 	if (cn_tab.cn_dev == NODEV || cn_tab.cn_disabled)
-		return ((*callv->getchar)());
+		return ((*callv->_getchar)());
 	return ((*cn_tab.cn_getc)(cn_tab.cn_dev));
 }
 
@@ -181,7 +181,7 @@ cnputc(c)
 
 	if (cn_tab.cn_dev == NODEV || cn_tab.cn_disabled) {
 		s = splhigh();
-		(*callv->printf)("%c", c);
+		(*callv->_printf)("%c", c);
 		splx(s);
 	} else if (c) {
 		if (c == '\n')

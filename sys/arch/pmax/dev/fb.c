@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.5 1994/10/26 21:09:01 cgd Exp $	*/
+/*	$NetBSD: fb.c,v 1.6 1995/02/01 04:44:51 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -736,7 +736,7 @@ fbPutc(dev, c)
 		recurse = 0;
 	} else {
 		s = splhigh();
-		(*callv->printf)("%c", c);
+		(*callv->_printf)("%c", c);
 		splx(s);
 	}
 }
