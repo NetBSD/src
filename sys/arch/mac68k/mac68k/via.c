@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.67 1998/10/22 04:36:51 scottr Exp $	*/
+/*	$NetBSD: via.c,v 1.68 1999/01/06 05:54:39 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -463,19 +463,6 @@ via_shutdown()
 		via2_reg(vBufB) &= ~0x04; /* Shut down */
 	} else if (VIA2 == RBVOFF)
 		via2_reg(rBufB) &= ~0x04;
-}
-
-int
-rbv_vidstatus()
-{
-/*
-	int montype;
-
-	montype = via2_reg(rMonitor) & RBVMonitorMask;
-	if(montype == RBVMonIDNone)
-		montype = RBVMonIDOff;
-*/
-	return(0);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: viareg.h,v 1.8 1998/04/25 21:27:40 scottr Exp $	*/
+/*	$NetBSD: viareg.h,v 1.9 1999/01/06 05:54:38 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -175,15 +175,14 @@ extern int VIA2;
 #define rSlotInt	0x12	/* Slot interrupt */
 
 	/* RBV monitor type flags and masks */
-#define RBVDepthMask	0x07	/* depth in bits */
+#define RBVDepthMask	0x07	/* Depth in bits */
 #define RBVMonitorMask	0x38	/* Type numbers */
-#define RBVOff		0x40	/* monitor turn off */
-#define RBVMonIDNone	0x38	/* What RBV actually has for no video */
-#define RBVMonIDOff	0x0	/* What rbv_vidstatus() returns for no video */
+#define RBVOff		0x40	/* Monitor turned off */
+#define RBVMonIDNone	0x38	/* No monitor connected */
 #define RBVMonID15BWP	0x08	/* BW portrait */
 #define RBVMonIDRGB	0x10	/* color monitor */
 #define RBVMonIDRGB15	0x28	/* 15 inch RGB */
-#define RBVMonIDBW	0x30	/* No internal video */
+#define RBVMonIDBW	0x30	/* No internal video (?) */
 
 #define via_reg(v, r) (*(Via1Base+(v)*0x2000+(r)))
 #define via2_reg(r) (*(Via2Base+(r)))
@@ -191,7 +190,6 @@ extern int VIA2;
 #define vDirA_ADBState	0x30
 
 void	via_init __P((void));
-int	rbv_vidstatus __P((void));
 void	via_shutdown __P((void));
 void	via_set_modem __P((int));
 int	add_nubus_intr   __P((int, void (*) __P((void *)), void *));
