@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2002/08/27 14:46:16 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 2002/09/18 14:00:35 lukem Exp $
 
 NOMAN=	   # defined
 
@@ -10,7 +10,7 @@ PROG=       bzip2recover
 LDSTATIC?= -static
 .endif
 
-DIST=	   ${.CURDIR}/../../dist/bzip2
+DIST=	   ${NETBSDSRCDIR}/dist/bzip2
 .PATH:	   ${DIST}
 
 .include <bsd.prog.mk>

@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.7 2002/08/27 14:46:16 lukem Exp $
+#	$NetBSD: Makefile,v 1.8 2002/09/18 14:00:34 lukem Exp $
 
 .include <bsd.own.mk>		# for MKDYNAMICROOT definition
 
 PROG=	   bzip2
-LDDIR!=	   cd ${.CURDIR}/../../lib/libbz2 && ${PRINTOBJDIR}
+LDDIR!=	   cd ${NETBSDSRCDIR}/lib/libbz2 && ${PRINTOBJDIR}
 LDADD+=	   -L${LDDIR} -lbz2
 DPADD+=	   ${LIBBZ2}
 
@@ -11,7 +11,7 @@ DPADD+=	   ${LIBBZ2}
 LDSTATIC?= -static
 .endif
 
-DIST=	   ${.CURDIR}/../../dist/bzip2
+DIST=	   ${NETBSDSRCDIR}/dist/bzip2
 .PATH:	   ${DIST}
 
 MLINKS+=   bzip2.1 bunzip2.1\

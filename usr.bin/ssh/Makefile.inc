@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.5 2001/02/07 17:05:36 itojun Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2002/09/18 14:00:41 lukem Exp $
 
-SSHDIST?= ${.CURDIR}/../../../crypto/dist/ssh
+.include <bsd.own.mk>
+
+SSHDIST?= ${NETBSDSRCDIR}/crypto/dist/ssh
 
 CPPFLAGS+=-I${SSHDIST} -DHAVE_LOGIN_CAP
 .PATH: ${SSHDIST}
