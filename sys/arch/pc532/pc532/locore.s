@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.45 1997/03/01 09:49:48 matthias Exp $	*/
+/*	$NetBSD: locore.s,v 1.46 1997/04/01 16:32:38 matthias Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -29,8 +29,6 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	locore.s
  */
 
 /*
@@ -42,9 +40,6 @@
  *
  */
 
-/*
- * Tell include files that we don't want any C stuff.
- */
 #include "assym.h"
 
 #include <sys/errno.h>
