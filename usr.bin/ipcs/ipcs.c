@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcs.c,v 1.23 2000/06/03 03:58:45 simonb Exp $	*/
+/*	$NetBSD: ipcs.c,v 1.24 2000/06/03 04:12:48 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -216,6 +216,9 @@ main(int argc, char *argv[])
 		default:
 			usage();
 		}
+
+	if (argc - optind > 0)
+		usage();
 
 	if (namelist == NULL && core == NULL) {
 		if (display & (MSGINFO | MSGTOTAL))
@@ -858,7 +861,7 @@ usage(void)
 {
 
 	fprintf(stderr,
-	    "usage: %s [-abcmopqst] [-C corefile] [-N namelist]\n",
+	    "usage: %s [-abcmopqstMQST] [-C corefile] [-N namelist]\n",
 	    __progname);
 	exit(1);
 }
