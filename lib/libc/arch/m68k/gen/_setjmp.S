@@ -1,4 +1,4 @@
-/*	$NetBSD: _setjmp.S,v 1.4 1998/07/01 06:44:14 thorpej Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.5 1999/10/18 03:24:29 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #if 0
 	RCSID("from: @(#)_setjmp.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: _setjmp.S,v 1.4 1998/07/01 06:44:14 thorpej Exp $")
+	RCSID("$NetBSD: _setjmp.S,v 1.5 1999/10/18 03:24:29 itohy Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -88,5 +88,5 @@ ok:
 	rts
 
 botch:
-	jbsr	_C_LABEL(longjmperror)
+	jbsr	PIC_PLT(_C_LABEL(longjmperror))
 	stop	#0
