@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.25 1999/03/04 06:46:43 chs Exp $ */
+/* $NetBSD: clock.c,v 1.25.2.1 1999/10/10 23:21:30 cgd Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.25 1999/03/04 06:46:43 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.25.2.1 1999/10/10 23:21:30 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.25 1999/03/04 06:46:43 chs Exp $");
 #include <dev/dec/clockvar.h>
 
 #include "opt_clock_compat_osf1.h"
+#include "opt_ntp.h"
 
 #define MINYEAR 1998 /* "today" */
 #ifdef CLOCK_COMPAT_OSF1
@@ -73,6 +74,10 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.25 1999/03/04 06:46:43 chs Exp $");
 #define UNIX_YEAR_OFFSET 52 /* 41=>1993, 12=>2064 */
 #else
 #define UNIX_YEAR_OFFSET 0
+#endif
+
+#ifdef NTP
+extern long time_precision;	/* kern_clock.c; clock resolution in microseconds. */
 #endif
 
 struct device *clockdev;
@@ -131,6 +136,13 @@ cpu_initclocks()
 		tickfix >>= (ftp - 1);
 		tickfixinterval = hz >> (ftp - 1);
         }
+#ifdef NTP
+	/*
+	 * Since we don't have a "real" microtime, our actual
+	 * precision is limited to the hardclock interrupt rate.
+	 */
+	time_precision = tick;
+#endif
 
 	/*
 	 * Establish the clock interrupt; it's a special case.
