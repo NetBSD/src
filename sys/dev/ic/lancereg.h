@@ -1,4 +1,4 @@
-/*	$NetBSD: lancereg.h,v 1.8 2001/09/18 18:15:52 wiz Exp $	*/
+/*	$NetBSD: lancereg.h,v 1.9 2002/09/03 17:57:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -604,8 +604,8 @@
 #define	PARTID_Am79c960		0x0003
 #define	PARTID_Am79c961		0x2260
 #define	PARTID_Am79c961A	0x2261
-#define	PARTID_Am79c965		0x2430
-#define	PARTID_Am79c970		0x0242
+#define	PARTID_Am79c965		0x2430	/* yes, these... */
+#define	PARTID_Am79c970		0x2430	/* ...are the same */
 #define	PARTID_Am79c970A	0x2621
 #define	PARTID_Am79c971		0x2623
 #define	PARTID_Am79c972		0x2624
