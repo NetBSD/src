@@ -1,15 +1,8 @@
-#	$NetBSD: Makefile,v 1.6 2000/12/13 11:18:39 enami Exp $
+#	$NetBSD: Makefile,v 1.7 2001/06/06 21:38:01 mrg Exp $
 
 .include "../Makefile.inc"
-
-.PATH:	$S/compat/svr4 $S/arch/${MACHINE_ARCH}/${MACHINE_ARCH}
-
-CPPFLAGS+= -DCOMPAT_SVR4 -DSYSVSEM -DSYSVMSG -DSYSVSHM -DSVR4_COMPAT_SOLARIS2
-AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE \
-		-I. -I${S}
-
-MKMAN=	no
-KMOD=	compat_svr4
+USE_32=
+.include "../svr4/Makefile.common"
 
 # common source files
 SRCS+=	lkminit_emul.c
@@ -21,6 +14,14 @@ SRCS+=	svr4_machdep.c
 
 .if ${MACHINE} == "i386"
 SRCS+=	svr4_sigcode.s svr4_syscall.c
+.endif
+
+.if ${MACHINE} == "sparc64"
+.if ${MACHINE_ARCH} == "sparc64"
+SRCS+=	svr4_sigcode64.s
+.else
+SRCS+=	svr4_32_sigcode.s
+.endif
 .endif
 
 .include <bsd.kmod.mk>
