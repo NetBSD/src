@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.16 2001/02/02 07:08:17 mrg Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.17 2001/02/04 06:35:07 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -169,6 +169,11 @@ struct	netbsd32_rusage {
 typedef u_int32_t netbsd32_orlimitp_t;
 
 typedef u_int32_t netbsd32_rlimitp_t;
+
+struct netbsd32_loadavg {
+	fixpt_t	ldavg[3];
+	netbsd32_long	fscale;
+};
 
 /* from <sys/ipc.h> */
 typedef u_int32_t netbsd32_ipc_permp_t;
