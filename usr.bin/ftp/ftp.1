@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.66 2000/05/31 10:25:15 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.67 2000/05/31 14:23:58 lukem Exp $
 .\"
 .\" Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -68,7 +68,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd May 28, 2000
+.Dd June 1, 2000
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -116,6 +116,15 @@ Internet file transfer program
 .Ek
 .Bk -words
 .Op http://[\fIuser\fR[:\fIpassword\fR]@]\fIhost\fR[:\fIport\fR]/\fIpath\fR
+.Ek
+.Op Ar \&.\&.\&.
+.Nm ""
+.Fl u Ar url
+.\".Ar ftp://[\fIuser\fR[:\fIpassword\fR]@]\fIhost\fR[:\fIport\fR]/\fIpath\fR[/[file]]
+.\"|
+.\".Ar [\fIuser\fR@]\fIhost\fR:[\fIpath\fR][/[\fIfile\fR]]
+.Bk -words
+file
 .Ek
 .Op Ar \&.\&.\&.
 .Sh DESCRIPTION
@@ -238,6 +247,15 @@ bytes/second.
 Refer to
 .Ic rate
 for more information.
+.It Fl u Ar url file Op \&.\&.\&.
+Upload files on the command line to
+.Ar url
+where
+.Ar url
+is one of the ftp URL types as supported by auto-fetch
+(with an optional target filename for single file uploads), and
+.Ar file
+is one or more local files to be uploaded.
 .It Fl v
 Enable
 .Ic verbose
