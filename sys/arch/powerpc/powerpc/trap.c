@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.17 1999/03/18 04:56:03 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.18 1999/03/22 08:44:37 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -127,32 +127,34 @@ trap(frame)
 		goto brain_damage;
 	case EXC_DSI|EXC_USER:
 		{
-			int ftype;
+			int ftype, rv;
 			
 			if (frame->dsisr & DSISR_STORE)
 				ftype = VM_PROT_READ | VM_PROT_WRITE;
 			else
 				ftype = VM_PROT_READ;
 #if defined(UVM)
-			if (uvm_fault(&p->p_vmspace->vm_map,
-				     trunc_page(frame->dar), 0, ftype)
+			if ((rv = uvm_fault(&p->p_vmspace->vm_map,
+					    trunc_page(frame->dar), 0, ftype))
 			    == KERN_SUCCESS)
 				break;
 #else
-			if (vm_fault(&p->p_vmspace->vm_map,
-				     trunc_page(frame->dar), ftype, FALSE)
+			if ((rv = vm_fault(&p->p_vmspace->vm_map,
+					   trunc_page(frame->dar), ftype,
+					   FALSE))
 			    == KERN_SUCCESS)
 				break;
 #endif
-		}
-		if (rv == KERN_RESOURCE_SHORTAGE) {
-			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
-			       p->p_pid, p->p_comm,
-			       p->p_cred && p->p_ucred ?
-			       p->p_ucred->cr_uid : -1);
-			trapsignal(p, SIGKILL, EXC_DSI);
-		} else {
-			trapsignal(p, SIGSEGV, EXC_DSI);
+			if (rv == KERN_RESOURCE_SHORTAGE) {
+				printf("UVM: pid %d (%s), uid %d killed: "
+				       "out of swap\n",
+				       p->p_pid, p->p_comm,
+				       p->p_cred && p->p_ucred ?
+				       p->p_ucred->cr_uid : -1);
+				trapsignal(p, SIGKILL, EXC_DSI);
+			} else {
+				trapsignal(p, SIGSEGV, EXC_DSI);
+			}
 		}
 		break;
 	case EXC_ISI|EXC_USER:
