@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.27 2000/03/13 23:52:37 soren Exp $	*/
+/*	$NetBSD: if_se.c,v 1.28 2000/03/23 07:01:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -68,6 +68,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/syslog.h>
 #include <sys/kernel.h>
 #include <sys/file.h>
@@ -184,6 +185,10 @@ struct se_softc {
 	struct device sc_dev;
 	struct ethercom sc_ethercom;	/* Ethernet common part */
 	struct scsipi_link *sc_link;	/* contains our targ, lun, etc. */
+
+	struct callout sc_ifstart_ch;
+	struct callout sc_recv_ch;
+
 	char *sc_tbuf;
 	char *sc_rbuf;
 	int protos;
@@ -309,6 +314,9 @@ seattach(parent, self, aux)
 
 	printf("\n");
 	SC_DEBUG(sc_link, SDEV_DB2, ("seattach: "));
+
+	callout_init(&sc->sc_ifstart_ch);
+	callout_init(&sc->sc_recv_ch);
 
 	/*
 	 * Store information needed to contact our base driver
@@ -505,7 +513,8 @@ sedone(xs)
 	if(IS_SEND(cmd)) {
 		if (xs->error == XS_BUSY) {
 			printf("se: busy, retry txmit\n");
-			timeout(se_delayed_ifstart, ifp, hz);
+			callout_reset(&sc->sc_ifstart_ch, hz,
+			    se_delayed_ifstart, ifp);
 		} else {
 			ifp->if_flags &= ~IFF_OACTIVE;
 			/* the generic scsipi_done will call
@@ -518,7 +527,8 @@ sedone(xs)
 		/* scsipi_free_xs will call start. Harmless. */
 		if (error) {
 			/* Reschedule after a delay */
-			timeout(se_recv, (void *)sc, se_poll);
+			callout_reset(&sc->sc_recv_ch, se_poll,
+			    se_recv, (void *)sc);
 		} else {
 			int n, ntimeo;
 			n = se_read(sc, xs->data, xs->datalen - xs->resid);
@@ -543,7 +553,8 @@ sedone(xs)
 				 * after the next send.  */
 				sc->sc_flags |= SE_NEED_RECV;
 			else {
-				timeout(se_recv, (void *)sc, ntimeo);
+				callout_reset(&sc->sc_recv_ch, ntimeo,
+				    se_recv, (void *)sc);
   			}
 		}
 	}
@@ -569,7 +580,7 @@ se_recv(v)
 	    sc->sc_rbuf, RBUF_LEN, SERETRIES, SETIMEOUT, NULL,
 	    XS_CTL_NOSLEEP|XS_CTL_ASYNC|XS_CTL_DATA_IN);
 	if (error)
-		timeout(se_recv, (void *)sc, se_poll);
+		callout_reset(&sc->sc_recv_ch, se_poll, se_recv, (void *)sc);
 }
 
 /*
@@ -974,7 +985,7 @@ se_stop(sc)
 {
 
 	/* Don't schedule any reads */
-	untimeout(se_recv, sc);
+	callout_stop(&sc->sc_recv_ch);
 
 	/* How can we abort any scsi cmds in progress? */
 }

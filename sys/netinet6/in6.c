@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.26 2000/03/21 11:23:32 itojun Exp $	*/
+/*	$NetBSD: in6.c,v 1.27 2000/03/23 07:03:29 thorpej Exp $	*/
 /*	$KAME: in6.c,v 1.63 2000/03/21 05:18:38 itojun Exp $	*/
 
 /*
@@ -461,6 +461,8 @@ in6_control(so, cmd, data, ifp, p)
 			if (ia == NULL)
 				return (ENOBUFS);
 			bzero((caddr_t)ia, sizeof(*ia));
+			callout_init(&ia->ia6_dad_ch);
+
 			/* Initialize the address and masks */
 			ia->ia_ifa.ifa_addr = (struct sockaddr *)&ia->ia_addr;
 			ia->ia_addr.sin6_family = AF_INET6;

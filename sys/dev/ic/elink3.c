@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.77 2000/03/06 21:02:00 thorpej Exp $	*/
+/*	$NetBSD: elink3.c,v 1.78 2000/03/23 07:01:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,6 +75,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
@@ -357,6 +358,9 @@ epconfig(sc, chipset, enaddr)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	u_int16_t i;
 	u_int8_t myla[6];
+
+	callout_init(&sc->sc_mii_callout);
+	callout_init(&sc->sc_mbuf_callout);
 
 	sc->ep_chipset = chipset;
 
@@ -736,7 +740,7 @@ ep_tick(arg)
 	mii_tick(&sc->sc_mii);
 	splx(s);
 
-	timeout(ep_tick, sc, hz);
+	callout_reset(&sc->sc_mii_callout, hz, ep_tick, sc);
 }
 
 /*
@@ -853,7 +857,7 @@ epinit(sc)
 
 	if (sc->ep_flags & ELINK_FLAGS_MII) {
 		/* Start the one second clock. */
-		timeout(ep_tick, sc, hz);
+		callout_reset(&sc->sc_mii_callout, hz, ep_tick, sc);
 	}
 
 	/* Attempt to start output, if any. */
@@ -1622,7 +1626,7 @@ epget(sc, totlen)
 	} else {
 		/* If the queue is no longer full, refill. */
 		if (sc->last_mb == sc->next_mb)
-			timeout(epmbuffill, sc, 1);
+			callout_reset(&sc->sc_mbuf_callout, 1, epmbuffill, sc);
 		/* Convert one of our saved mbuf's. */
 		sc->next_mb = (sc->next_mb + 1) % MAX_MBS;
 		m->m_data = m->m_pktdat;
@@ -1895,7 +1899,7 @@ epstop(sc)
 
 	if (sc->ep_flags & ELINK_FLAGS_MII) {
 		/* Stop the one second clock. */
-		untimeout(ep_tick, sc);
+		callout_stop(&sc->sc_mbuf_callout);
 
 		/* Down the MII. */
 		mii_down(&sc->sc_mii);
@@ -2060,7 +2064,7 @@ epmbuffill(v)
 	sc->last_mb = i;
 	/* If the queue was not filled, try again. */
 	if (sc->last_mb != sc->next_mb)
-		timeout(epmbuffill, sc, 1);
+		callout_reset(&sc->sc_mbuf_callout, 1, epmbuffill, sc);
 	splx(s);
 }
 
@@ -2078,7 +2082,7 @@ epmbufempty(sc)
 		}
 	}
 	sc->last_mb = sc->next_mb = 0;
-	untimeout(epmbuffill, sc);
+	callout_stop(&sc->sc_mbuf_callout);
 	splx(s);
 }
 
@@ -2156,8 +2160,8 @@ ep_detach(self, flags)
 
 	epdisable(sc);
 
-	untimeout(ep_tick, sc);
-	untimeout(epmbuffill, sc);
+	callout_stop(&sc->sc_mii_callout);
+	callout_stop(&sc->sc_mbuf_callout);
 
 	if (sc->ep_flags & ELINK_FLAGS_MII) {
 		/* Detach all PHYs */

@@ -1,4 +1,4 @@
-/* $NetBSD: adw.c,v 1.14 2000/02/12 19:19:42 thorpej Exp $	 */
+/* $NetBSD: adw.c,v 1.15 2000/03/23 07:01:28 thorpej Exp $	 */
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -40,6 +40,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
@@ -501,7 +502,8 @@ adw_queue_ccb(sc, ccb, retry)
 		TAILQ_REMOVE(&sc->sc_waiting_ccb, ccb, chain);
 
 		if ((ccb->xs->xs_control & XS_CTL_POLL) == 0)
-			timeout(adw_timeout, ccb, (ccb->timeout * hz) / 1000);
+			callout_reset(&ccb->xs->xs_callout,
+			    (ccb->timeout * hz) / 1000, adw_timeout, ccb);
 	}
 
 	return(errcode);
@@ -1074,7 +1076,7 @@ adw_isr_callback(sc, scsiq)
 
 	ccb = adw_ccb_phys_kv(sc, scsiq->ccb_ptr);
 
-	untimeout(adw_timeout, ccb);
+	callout_stop(&ccb->xs->xs_callout);
 
 /*	if(ccb->flags & CCB_ABORTING) {
 		printf("Retrying request\n");

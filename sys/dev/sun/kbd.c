@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.24 2000/03/22 16:08:51 pk Exp $	*/
+/*	$NetBSD: kbd.c,v 1.25 2000/03/23 07:01:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -139,7 +139,7 @@ kbdopen(dev, flags, mode, p)
 
 	if (k->k_repeating) {
 		k->k_repeating = 0;
-		untimeout(kbd_repeat, k);
+		callout_stop(&k->k_repeat_ch);
 	}
 
 	return (0);
@@ -658,7 +658,8 @@ kbd_repeat(arg)
 
 	if (k->k_repeating && k->k_repeatsym >= 0) {
 		(void)kbd_input_keysym(k, k->k_repeatsym);
-		timeout(kbd_repeat, k, k->k_repeat_step);
+		callout_reset(&k->k_repeat_ch, k->k_repeat_step,
+		    kbd_repeat, k);
 	}
 	splx(s);
 }
@@ -728,7 +729,7 @@ kbd_input_raw(k, c)
 		/* Any input stops auto-repeat (i.e. key release). */
 		if (k->k_repeating) {
 			k->k_repeating = 0;
-			untimeout(kbd_repeat, k);
+			callout_stop(&k->k_repeat_ch);
 		}
 
 		/* Translate this code to a keysym */
@@ -751,7 +752,8 @@ kbd_input_raw(k, c)
 		/* Setup for auto-repeat after initial delay. */
 		k->k_repeating = 1;
 		k->k_repeatsym = keysym;
-		timeout(kbd_repeat, k, k->k_repeat_start);
+		callout_reset(&k->k_reset_ch, k->k_repeat_start,
+		    kbd_repeat, k);
 		return;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sppp.h,v 1.4 1999/04/04 06:57:03 explorer Exp $	*/
+/*	$NetBSD: if_sppp.h,v 1.5 2000/03/23 07:03:25 thorpej Exp $	*/
 
 /*
  * Defines for synchronous PPP/Cisco link level subroutines.
@@ -25,6 +25,8 @@
 
 #ifndef _NET_IF_HDLC_H_
 #define _NET_IF_HDLC_H_ 1
+
+#include <sys/callout.h>
 
 #define IDX_LCP 0		/* idx into state table */
 
@@ -97,6 +99,10 @@ struct sppp {
 	u_char  confid[IDX_COUNT];	/* id of last configuration request */
 	int	rst_counter[IDX_COUNT];	/* restart counter */
 	int	fail_counter[IDX_COUNT]; /* negotiation failure counter */
+#if defined(__NetBSD__)
+	struct	callout ch[IDX_COUNT];	/* per-proto and if callouts */
+	struct	callout pap_my_to_ch;	/* PAP needs one more... */
+#endif
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
 	struct callout_handle ch[IDX_COUNT]; /* per-proto and if callouts */
 	struct callout_handle pap_my_to_ch; /* PAP needs one more... */

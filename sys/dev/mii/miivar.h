@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.17 2000/03/06 20:56:57 thorpej Exp $	*/
+/*	$NetBSD: miivar.h,v 1.18 2000/03/23 07:01:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@
 #define	_DEV_MII_MIIVAR_H_
 
 #include <sys/queue.h>
+#include <sys/callout.h>
 
 /*
  * Media Independent Interface datat structure defintions.
@@ -129,6 +130,9 @@ struct mii_softc {
 	int mii_flags;			/* misc. flags; see below */
 	int mii_capabilities;		/* capabilities from BMSR */
 	int mii_ticks;			/* MII_TICK counter */
+
+	struct callout mii_nway_ch;	/* NWAY callout */
+
 	int mii_media_active;		/* last active media */
 	int mii_media_status;		/* last active status */
 };

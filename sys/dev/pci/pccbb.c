@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.36 2000/03/22 09:35:07 haya Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.37 2000/03/23 07:01:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -945,9 +945,10 @@ pccbbintr(arg)
 		     */
 		    (sc->sc_flags & CBB_CARDEXIST) == 0) {
 			if (sc->sc_flags & CBB_INSERTING) {
-				untimeout(pci113x_insert, sc);
+				callout_stop(&sc->sc_insert_ch);
 			}
-			timeout(pci113x_insert, sc, hz / 10);
+			callout_reset(&sc->sc_insert_ch, hz / 10,
+			    pci113x_insert, sc);
 			sc->sc_flags |= CBB_INSERTING;
 		}
 	}
@@ -1008,7 +1009,8 @@ pci113x_insert(arg)
 			/* who are you? */
 		}
 	} else {
-		timeout(pci113x_insert, sc, hz / 10);
+		callout_reset(&sc->sc_insert_ch, hz / 10,
+		    pci113x_insert, sc);
 	}
 }
 
@@ -1220,6 +1222,7 @@ struct cb_poll_str {
 	int level;
 	pccard_chipset_tag_t ct;
 	int count;
+	struct callout poll_ch;
 };
 
 static struct cb_poll_str cb_poll[10];
@@ -1237,7 +1240,7 @@ cb_pcmcia_poll(arg)
 	int s;
 	u_int32_t spsr;		       /* socket present-state reg */
 
-	timeout(cb_pcmcia_poll, arg, hz / 10);
+	callout_reset(&poll->poll_ch, hz / 10, cb_pcmcia_poll, poll);
 	switch (poll->level) {
 	case IPL_NET:
 		s = splnet();
@@ -2624,6 +2627,7 @@ struct pccbb_poll_str {
 	struct pcic_handle *ph;
 	int count;
 	int num;
+	struct callout poll_ch;
 };
 
 static struct pccbb_poll_str pccbb_poll[10];
@@ -2641,7 +2645,7 @@ pccbb_pcmcia_poll(arg)
 	int s;
 	u_int32_t spsr;		       /* socket present-state reg */
 
-	timeout(pccbb_pcmcia_poll, arg, hz * 2);
+	callout_reset(&poll->poll_ch, hz * 2, pccbb_pcmcia_poll, arg);
 	switch (poll->level) {
 	case IPL_NET:
 		s = splnet();

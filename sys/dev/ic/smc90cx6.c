@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.33 1999/09/25 20:43:43 is Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.34 2000/03/23 07:01:32 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -219,6 +219,7 @@ bah_attach_subr(sc)
 		(void (*) __P((void *)))bah_start, ifp);
 #endif
 
+	callout_init(&sc->sc_recon_ch);
 }
 
 /*
@@ -805,7 +806,7 @@ bahintr(arg)
 			 * double time if necessary.
 			 */
 	
-			untimeout(bah_reconwatch, (void *)sc);
+			callout_stop(&sc->sc_recon_ch);
 			newsec = time.tv_sec;
 			if ((newsec - sc->sc_recontime <= 2) && 
 			    (++sc->sc_reconcount == ARC_EXCESSIVE_RECONS)) {
@@ -814,7 +815,8 @@ bahintr(arg)
 				    "cable problem?\n", sc->sc_dev.dv_xname);
 			}
 			sc->sc_recontime = newsec;
-			timeout(bah_reconwatch, (void *)sc, 15*hz);
+			callout_reset(&sc->sc_recon_ch, 15 * hz,
+			    bah_reconwatch, (void *)sc);
 		}
 
 		if (maskedisr & BAH_RI) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.33 2000/03/06 21:02:02 thorpej Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.34 2000/03/23 07:01:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -107,6 +107,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
 #include <sys/malloc.h>
@@ -213,6 +214,8 @@ struct vr_softc {
 	struct ethercom		vr_ec;		/* Ethernet common info */
 	u_int8_t 		vr_enaddr[ETHER_ADDR_LEN];
 	struct mii_data		vr_mii;		/* MII/media info */
+
+	struct callout		vr_tick_ch;	/* tick callout */
 
 	bus_dmamap_t		vr_cddmamap;	/* control data DMA map */
 #define	vr_cddma	vr_cddmamap->dm_segs[0].ds_addr
@@ -1185,7 +1188,7 @@ vr_init(sc)
 	ifp->if_flags &= ~IFF_OACTIVE;
 
 	/* Start one second timer. */
-	timeout(vr_tick, sc, hz);
+	callout_reset(&sc->vr_tick_ch, hz, vr_tick, sc);
 
 	/* Attempt to start output on the interface. */
 	vr_start(ifp);
@@ -1350,7 +1353,7 @@ vr_tick(arg)
 	mii_tick(&sc->vr_mii);
 	splx(s);
 
-	timeout(vr_tick, sc, hz);
+	callout_reset(&sc->vr_tick_ch, hz, vr_tick, sc);
 }
 
 /*
@@ -1387,7 +1390,7 @@ vr_stop(sc, drain)
 	int i;
 
 	/* Cancel one second timer. */
-	untimeout(vr_tick, sc);
+	callout_stop(&sc->vr_tick_ch);
 
 	/* Down the MII. */
 	mii_down(&sc->vr_mii);
@@ -1498,6 +1501,8 @@ vr_attach(parent, self, aux)
 
 #define	PCI_CONF_WRITE(r, v)	pci_conf_write(pa->pa_pc, pa->pa_tag, (r), (v))
 #define	PCI_CONF_READ(r)	pci_conf_read(pa->pa_pc, pa->pa_tag, (r))
+
+	callout_init(&sc->vr_tick_ch);
 
 	vrt = vr_lookup(pa);
 	if (vrt == NULL) {

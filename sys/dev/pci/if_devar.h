@@ -1,4 +1,4 @@
-/*	$NetBSD: if_devar.h,v 1.33 2000/01/15 18:39:32 matt Exp $	*/
+/*	$NetBSD: if_devar.h,v 1.34 2000/03/23 07:01:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -493,6 +493,8 @@ struct _tulip_softc_t {
     struct device tulip_dev;		/* base device */
     void *tulip_ih;			/* intrrupt vectoring */
     void *tulip_ats;			/* shutdown hook */
+    struct callout tulip_to_ch;		/* tulip_timeout_callback() */
+    struct callout tulip_fto_ch;	/* tulip_fasttimeout_callback() */
     bus_space_tag_t tulip_bustag;
     bus_space_handle_t tulip_bushandle;	/* CSR region handle */
     pci_chipset_tag_t tulip_pc;

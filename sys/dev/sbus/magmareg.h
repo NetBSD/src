@@ -1,4 +1,4 @@
-/*	$NetBSD: magmareg.h,v 1.2 1998/06/07 21:14:17 pk Exp $	*/
+/*	$NetBSD: magmareg.h,v 1.3 2000/03/23 07:01:43 thorpej Exp $	*/
 /* magmareg.h
  *
  *  Copyright (c) 1998 Iain Hibbert
@@ -164,6 +164,9 @@ struct mtty_softc {
 struct mbpp_port {
 	struct cd1400 *mp_cd1400;	/* for LC2+1Sp card */
 	struct cd1190 *mp_cd1190;	/* all the others   */
+
+	struct callout mp_timeout_ch;
+	struct callout mp_start_ch;
 
 	int	mp_flags;
 

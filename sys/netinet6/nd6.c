@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.19 2000/02/28 12:08:24 itojun Exp $	*/
+/*	$NetBSD: nd6.c,v 1.20 2000/03/23 07:03:30 thorpej Exp $	*/
 /*	$KAME: nd6.c,v 1.41 2000/02/24 16:34:50 itojun Exp $	*/
 
 /*
@@ -40,6 +40,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
@@ -103,6 +104,9 @@ static struct sockaddr_in6 all1_sa;
 
 static void nd6_slowtimo __P((void *));
 
+struct callout nd6_slowtimo_ch;
+struct callout nd6_timer_ch;
+
 void
 nd6_init()
 {
@@ -125,7 +129,8 @@ nd6_init()
 	nd6_init_done = 1;
 
 	/* start timer */
-	timeout(nd6_slowtimo, (caddr_t)0, ND6_SLOWTIMER_INTERVAL * hz);
+	callout_reset(&nd6_slowtimo_ch, ND6_SLOWTIMER_INTERVAL * hz,
+	    nd6_slowtimo, NULL);
 }
 
 void
@@ -372,7 +377,8 @@ nd6_timer(ignored_arg)
 	long time_second = time.tv_sec;
 	
 	s = splsoftnet();
-	timeout(nd6_timer, (caddr_t)0, nd6_prune * hz);
+	callout_reset(&nd6_timer_ch, nd6_prune * hz,
+	    nd6_timer, NULL);
 
 	ln = llinfo_nd6.ln_next;
 	/* XXX BSD/OS separates this code -- itojun */
@@ -1667,7 +1673,8 @@ nd6_slowtimo(ignored_arg)
 	register int i;
 	register struct nd_ifinfo *nd6if;
 
-	timeout(nd6_slowtimo, (caddr_t)0, ND6_SLOWTIMER_INTERVAL * hz);
+	callout_reset(&nd6_slowtimo_ch, ND6_SLOWTIMER_INTERVAL * hz,
+	    nd6_slowtimo, NULL);
 	for (i = 1; i < if_index + 1; i++) {
 		nd6if = &nd_ifinfo[i];
 		if (nd6if->basereachable && /* already initialized */

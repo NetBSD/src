@@ -1,4 +1,4 @@
-/*	$NetBSD: if_auereg.h,v 1.6 2000/03/01 19:00:51 augustss Exp $	*/
+/*	$NetBSD: if_auereg.h,v 1.7 2000/03/23 07:01:45 thorpej Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -239,6 +239,7 @@ struct aue_softc {
 #elif defined(__NetBSD__)
 	struct ethercom		aue_ec;
 	struct mii_data		aue_mii;
+	struct callout		aue_stat_ch;
 #if NRND > 0
 	rndsource_element_t	rnd_source;
 #endif

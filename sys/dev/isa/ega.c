@@ -1,4 +1,4 @@
-/* $NetBSD: ega.c,v 1.3 2000/01/25 02:44:04 ad Exp $ */
+/* $NetBSD: ega.c,v 1.4 2000/03/23 07:01:34 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -34,6 +34,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -87,6 +88,8 @@ struct ega_config {
 	struct egascreen *wantedscreen;
 	void (*switchcb) __P((void *, int, int));
 	void *switchcbarg;
+
+	struct callout switch_callout;
 };
 
 struct ega_softc {
@@ -434,6 +437,7 @@ ega_init(vc, iot, memt, mono)
 	LIST_INIT(&vc->screens);
 	vc->active = NULL;
 	vc->currenttype = vh->vh_mono ? &ega_stdscreen_mono : &ega_stdscreen;
+	callout_init(&vc->switch_callout);
 
 	vc->vc_fonts[0] = &ega_builtinfont;
 	for (i = 1; i < 4; i++)
@@ -683,7 +687,8 @@ ega_show_screen(v, cookie, waitok, cb, cbarg)
 	vc->switchcb = cb;
 	vc->switchcbarg = cbarg;
 	if (cb) {
-		timeout((void(*)(void *))ega_doswitch, vc, 0);
+		callout_reset(&vc->switch_callout, 0,
+		    (void(*)(void *))ega_doswitch);
 		return (EAGAIN);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ymvar.h,v 1.5 1999/12/27 03:21:56 itohy Exp $	*/
+/*	$NetBSD: ymvar.h,v 1.6 2000/03/23 07:01:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -70,6 +70,8 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/callout.h>
 
 /*
  *  Original code from OpenBSD.
@@ -154,6 +156,8 @@ struct ym_softc {
 	bus_space_handle_t sc_controlioh;
 	bus_space_handle_t sc_opl_ioh;
 	bus_space_handle_t sc_sb_ioh;	/* only used to disable it */
+
+	struct callout sc_powerdown_ch;
 
 	int  master_mute, mic_mute;
 	struct ad1848_volume master_gain;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.89 2000/02/23 08:31:25 fair Exp $	*/
+/*	$NetBSD: if_de.c,v 1.90 2000/03/23 07:01:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -45,6 +45,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
@@ -224,7 +225,8 @@ tulip_timeout(
     if (sc->tulip_flags & TULIP_TIMEOUTPENDING)
 	return;
     sc->tulip_flags |= TULIP_TIMEOUTPENDING;
-    timeout(tulip_timeout_callback, sc, (hz + TULIP_HZ / 2) / TULIP_HZ);
+    callout_reset(&sc->tulip_to_ch, (hz + TULIP_HZ / 2) / TULIP_HZ,
+	tulip_timeout_callback, sc);
 }
 
 #if defined(TULIP_NEED_FASTTIMEOUT)
@@ -247,7 +249,7 @@ tulip_fasttimeout(
     if (sc->tulip_flags & TULIP_FASTTIMEOUTPENDING)
 	return;
     sc->tulip_flags |= TULIP_FASTTIMEOUTPENDING;
-    timeout(tulip_fasttimeout_callback, sc, 1);
+    callout_reset(&sc->tulip_fto_ch, 1, tulip_fasttimeout_callback, sc);
 }
 #endif
 
@@ -5792,6 +5794,9 @@ tulip_pci_attach(
 #endif /* __bsdi__ */
 
 #if defined(__NetBSD__)
+    callout_init(&sc->tulip_to_ch);
+    callout_init(&sc->tulip_fto_ch);
+
     csr_base = 0;
     {
 	bus_space_tag_t iot, memt;
