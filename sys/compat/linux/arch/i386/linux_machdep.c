@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.30 1996/10/11 00:26:40 christos Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.31 1996/10/12 02:20:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -41,6 +41,7 @@
 #include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
+#include <sys/exec.h>
 #include <sys/file.h>
 #include <sys/callout.h>
 #include <sys/malloc.h>
