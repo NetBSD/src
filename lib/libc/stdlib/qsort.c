@@ -1,4 +1,4 @@
-/*	$NetBSD: qsort.c,v 1.6 1996/12/19 07:56:33 cgd Exp $	*/
+/*	$NetBSD: qsort.c,v 1.7 1997/06/19 07:41:33 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -35,9 +35,9 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char sccsid[] = "from: @(#)qsort.c	8.1 (Berkeley) 6/4/93";
+static char sccsid[] = "@(#)qsort.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$NetBSD: qsort.c,v 1.6 1996/12/19 07:56:33 cgd Exp $";
+static char *rcsid = "$NetBSD: qsort.c,v 1.7 1997/06/19 07:41:33 mikel Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -71,7 +71,7 @@ swapfunc(a, b, n, swaptype)
 	char *a, *b;
 	int n, swaptype;
 {
-	if(swaptype <= 1) 
+	if (swaptype <= 1) 
 		swapcode(long, a, b, n)
 	else
 		swapcode(char, a, b, n)
@@ -109,16 +109,16 @@ qsort(a, n, es, cmp)
 loop:	SWAPINIT(a, es);
 	swap_cnt = 0;
 	if (n < 7) {
-		for (pm = a + es; pm < (char *) a + n * es; pm += es)
+		for (pm = (char *) a + es; pm < (char *) a + n * es; pm += es)
 			for (pl = pm; pl > (char *) a && cmp(pl - es, pl) > 0;
 			     pl -= es)
 				swap(pl, pl - es);
 		return;
 	}
-	pm = a + (n / 2) * es;
+	pm = (char *) a + (n / 2) * es;
 	if (n > 7) {
-		pl = a;
-		pn = a + (n - 1) * es;
+		pl = (char *) a;
+		pn = (char *) a + (n - 1) * es;
 		if (n > 40) {
 			d = (n / 8) * es;
 			pl = med3(pl, pl + d, pl + 2 * d, cmp);
@@ -128,9 +128,9 @@ loop:	SWAPINIT(a, es);
 		pm = med3(pl, pm, pn, cmp);
 	}
 	swap(a, pm);
-	pa = pb = a + es;
+	pa = pb = (char *) a + es;
 
-	pc = pd = a + (n - 1) * es;
+	pc = pd = (char *) a + (n - 1) * es;
 	for (;;) {
 		while (pb <= pc && (r = cmp(pb, a)) <= 0) {
 			if (r == 0) {
@@ -156,15 +156,15 @@ loop:	SWAPINIT(a, es);
 		pc -= es;
 	}
 	if (swap_cnt == 0) {  /* Switch to insertion sort */
-		for (pm = a + es; pm < (char *) a + n * es; pm += es)
+		for (pm = (char *) a + es; pm < (char *) a + n * es; pm += es)
 			for (pl = pm; pl > (char *) a && cmp(pl - es, pl) > 0; 
 			     pl -= es)
 				swap(pl, pl - es);
 		return;
 	}
 
-	pn = a + n * es;
-	r = min(pa - (char *)a, pb - pa);
+	pn = (char *) a + n * es;
+	r = min(pa - (char *) a, pb - pa);
 	vecswap(a, pb - r, r);
 	r = min(pd - pc, pn - pd - es);
 	vecswap(pb, pn - r, r);
