@@ -29,7 +29,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.37 2005/02/26 21:40:45 perry Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.38 2005/02/26 22:06:38 perry Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -163,7 +163,7 @@ echo "$0: Creating $out_h" 1>&2
 exec > $out_h
 
 # Begin stuff
-echo -n "$warning" | sed -e 's/\$//g;s/@/\$/g'
+echo -n "$warning" | sed -e 's/\$//g;s/@/\$/g;s/ $//'
 echo ""
 echo -n "$copyright"
 echo ''
@@ -288,7 +288,7 @@ echo "$0: Creating $out_c" 1>&2
 exec > $out_c
 
 # Begin stuff
-echo -n "$warning" | sed -e 's/\$//g;s/@/\$/g'
+echo -n "$warning" | sed -e 's/\$//g;s/@/\$/g;s/ $//'
 echo ""
 echo -n "$copyright"
 echo "
