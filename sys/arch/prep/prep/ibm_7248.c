@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm_7248.c,v 1.6 2002/05/30 16:10:07 nonaka Exp $	*/
+/*	$NetBSD: ibm_7248.c,v 1.7 2003/07/15 02:54:52 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ibm_7248.c,v 1.7 2003/07/15 02:54:52 lukem Exp $");
 
 #include <sys/param.h>
 

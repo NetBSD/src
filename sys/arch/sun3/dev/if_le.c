@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.45 2002/10/02 16:02:26 thorpej Exp $	*/
+/*	$NetBSD: if_le.c,v 1.46 2003/07/15 03:36:15 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.46 2003/07/15 03:36:15 lukem Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.8 2003/06/16 20:01:03 thorpej Exp $	*/
+/*	$NetBSD: extintr.c,v 1.9 2003/07/15 02:54:42 lukem Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -75,6 +75,9 @@
  *
  *	@(#)isa.c	7.2 (Berkeley) 5/12/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.9 2003/07/15 02:54:42 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>

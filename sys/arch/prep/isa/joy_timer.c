@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_timer.c,v 1.2 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: joy_timer.c,v 1.3 2003/07/15 02:54:51 lukem Exp $	*/
 
 /*
  * XXX This _really_ should be rewritten such that it doesn't
@@ -35,6 +35,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: joy_timer.c,v 1.3 2003/07/15 02:54:51 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

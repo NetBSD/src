@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.4 2002/09/27 15:36:28 provos Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.5 2003/07/15 02:59:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
  * Implementation of bus_space mapping for the news68k.
  * Just taken from hp300.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.5 2003/07/15 02:59:27 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

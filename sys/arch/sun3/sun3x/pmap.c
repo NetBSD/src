@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.82 2003/06/23 11:01:47 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.83 2003/07/15 03:36:20 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -110,6 +110,9 @@
  * alias and a 22 entry cache.  So sadly (or happily), the first paragraph
  * of the previous note does not apply to the sun3x pmap.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.83 2003/07/15 03:36:20 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_isa.c,v 1.8 2002/10/02 15:52:29 thorpej Exp $	*/
+/*	$NetBSD: mcclock_isa.c,v 1.9 2003/07/15 02:54:51 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -26,6 +26,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.9 2003/07/15 02:54:51 lukem Exp $");
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 

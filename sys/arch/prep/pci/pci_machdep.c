@@ -38,6 +38,9 @@
  * up a few function pointers to access the correct method directly.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.18 2003/07/15 02:54:51 lukem Exp $");
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>

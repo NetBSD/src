@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.4 2002/02/12 15:26:49 uch Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.5 2003/07/15 03:35:56 lukem Exp $	*/
 
 /*
  * Mach Operating System
@@ -32,6 +32,9 @@
  * Routines to read and write memory on behalf of the debugger, used
  * by DDB and KGDB.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.5 2003/07/15 03:35:56 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

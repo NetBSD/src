@@ -1,4 +1,4 @@
-/*	$NetBSD: copystr.c,v 1.3 2000/06/08 06:47:17 kleink Exp $	*/
+/*	$NetBSD: copystr.c,v 1.4 2003/07/15 02:54:47 lukem Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -30,6 +30,10 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: copystr.c,v 1.4 2003/07/15 02:54:47 lukem Exp $");
+
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/systm.h>

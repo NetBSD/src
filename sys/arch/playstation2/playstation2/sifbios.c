@@ -1,4 +1,4 @@
-/*	$NetBSD: sifbios.c,v 1.2 2001/10/19 05:47:41 shin Exp $	*/
+/*	$NetBSD: sifbios.c,v 1.3 2003/07/15 02:54:38 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * PlayStation 2 SIF BIOS Version 2.0 interface.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sifbios.c,v 1.3 2003/07/15 02:54:38 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

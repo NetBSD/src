@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.60 2003/01/01 02:26:13 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.61 2003/07/15 03:36:16 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,6 +43,9 @@
  * determined (from possibilities mentioned in ioconf.c), and
  * the drivers are initialized.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.61 2003/07/15 03:36:16 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

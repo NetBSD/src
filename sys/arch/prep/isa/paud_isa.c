@@ -1,4 +1,4 @@
-/*	$NetBSD: paud_isa.c,v 1.5 2002/10/02 15:52:29 thorpej Exp $	*/
+/*	$NetBSD: paud_isa.c,v 1.6 2003/07/15 02:54:51 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: paud_isa.c,v 1.6 2003/07/15 02:54:51 lukem Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0

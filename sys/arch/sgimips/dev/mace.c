@@ -1,4 +1,4 @@
-/*	$NetBSD: mace.c,v 1.11 2003/01/06 06:19:40 rafal Exp $	*/
+/*	$NetBSD: mace.c,v 1.12 2003/07/15 03:35:52 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,6 +35,9 @@
 /*
  * O2 MACE
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.12 2003/07/15 03:35:52 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.33 2003/05/10 21:10:38 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.34 2003/07/15 03:36:00 lukem Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -101,6 +101,9 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.34 2003/07/15 03:36:00 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kernel_ipt.h"

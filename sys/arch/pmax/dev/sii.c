@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.47 2003/06/18 08:58:39 drochner Exp $	*/
+/*	$NetBSD: sii.c,v 1.48 2003/07/15 02:54:39 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,6 +40,9 @@
  * from: Header: /sprite/src/kernel/dev/ds3100.md/RCS/devSII.c,
  *	v 9.2 89/09/14 13:37:41 jhh Exp $ SPRITE (DECWRL)";
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sii.c,v 1.48 2003/07/15 02:54:39 lukem Exp $");
 
 #include "sii.h"
 /*

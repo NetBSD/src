@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee_subnormal.c,v 1.1 1996/04/04 06:36:30 phil Exp $	*/
+/*	$NetBSD: ieee_subnormal.c,v 1.2 2003/07/15 02:54:33 lukem Exp $	*/
 
 /* 
  * IEEE floating point support for NS32081 and NS32381 fpus.
@@ -28,7 +28,12 @@
  *	First release.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ieee_subnormal.c,v 1.2 2003/07/15 02:54:33 lukem Exp $");
+
 #include "ieee_internal.h"
+
 #include <machine/psl.h>
 
 /* Return bit pos numbered from lsb 0 to 31. Returns 31 if no bit is set */

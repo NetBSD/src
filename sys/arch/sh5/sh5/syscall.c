@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.10 2003/06/29 22:28:53 fvdl Exp $	*/
+/*	$NetBSD: syscall.c,v 1.11 2003/07/15 03:36:01 lukem Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -128,6 +128,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.11 2003/07/15 03:36:01 lukem Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.15 2003/06/16 20:01:04 thorpej Exp $	*/
+/*	$NetBSD: extintr.c,v 1.16 2003/07/15 02:54:52 lukem Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.12 1999/06/15 02:40:05 rahnds Exp $	*/
 
 /*-
@@ -86,6 +86,9 @@ LOSS OF USE, DATA OR PROFITS, WHETHER IN ACTION OF CONTRACT,
 NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.16 2003/07/15 02:54:52 lukem Exp $");
 
 #include "opt_openpic.h"
 

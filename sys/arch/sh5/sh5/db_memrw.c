@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.1 2002/08/26 10:16:44 scw Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.2 2003/07/15 03:36:00 lukem Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -70,6 +70,9 @@
  * specific size, then the read/write functions have to
  * make sure to do the correct sized pointer access.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.2 2003/07/15 03:36:00 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.13 2003/03/24 14:21:27 scw Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.14 2003/07/15 03:36:00 lukem Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.14 2003/07/15 03:36:00 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

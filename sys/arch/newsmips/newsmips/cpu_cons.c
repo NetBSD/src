@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_cons.c,v 1.7 2003/04/19 12:33:35 tsutsui Exp $	*/
+/*	$NetBSD: cpu_cons.c,v 1.8 2003/07/15 02:59:31 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,6 +39,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cpu_cons.c,v 1.8 2003/07/15 02:59:31 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

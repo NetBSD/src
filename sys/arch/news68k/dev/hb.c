@@ -1,4 +1,4 @@
-/*	$NetBSD: hb.c,v 1.11 2003/01/01 01:54:44 thorpej Exp $	*/
+/*	$NetBSD: hb.c,v 1.12 2003/07/15 02:59:26 lukem Exp $	*/
 
 /*-
  * Copyright (C) 1999 Izumi Tsutsui.  All rights reserved.
@@ -25,6 +25,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hb.c,v 1.12 2003/07/15 02:59:26 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

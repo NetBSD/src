@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.7 2001/07/05 08:38:25 toshii Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.8 2003/07/15 02:54:34 lukem Exp $	*/
 
 /* 
  * Mach Operating System
@@ -42,6 +42,9 @@
  * Not yet complete!
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.8 2003/07/15 02:54:34 lukem Exp $");
 
 #define STATIC static
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.76 2003/06/18 08:58:41 drochner Exp $ */
+/*	$NetBSD: autoconf.c,v 1.77 2003/07/15 03:36:07 lukem Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -46,6 +46,9 @@
  *
  *	@(#)autoconf.c	8.4 (Berkeley) 10/1/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.77 2003/07/15 03:36:07 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"

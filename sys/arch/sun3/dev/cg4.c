@@ -1,4 +1,4 @@
-/*	$NetBSD: cg4.c,v 1.29 2002/10/23 09:12:25 jdolecek Exp $	*/
+/*	$NetBSD: cg4.c,v 1.30 2003/07/15 03:36:14 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,6 +57,9 @@
  * Make this driver handle video interrupts.
  * Defer colormap updates to vertical retrace interrupts.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cg4.c,v 1.30 2003/07/15 03:36:14 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

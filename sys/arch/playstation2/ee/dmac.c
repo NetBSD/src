@@ -1,4 +1,4 @@
-/*	$NetBSD: dmac.c,v 1.2 2001/11/14 18:15:31 thorpej Exp $	*/
+/*	$NetBSD: dmac.c,v 1.3 2003/07/15 02:54:36 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dmac.c,v 1.3 2003/07/15 02:54:36 lukem Exp $");
 
 #include "debug_playstation2.h"
 

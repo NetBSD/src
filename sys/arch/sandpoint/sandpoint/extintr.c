@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.5 2003/06/16 20:01:04 thorpej Exp $	*/
+/*	$NetBSD: extintr.c,v 1.6 2003/07/15 03:35:50 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -39,6 +39,9 @@
  *
  *	@(#)isa.c	7.2 (Berkeley) 5/12/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.6 2003/07/15 03:35:50 lukem Exp $");
 
 #include "opt_openpic.h"
 

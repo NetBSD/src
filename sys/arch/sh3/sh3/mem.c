@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.15 2003/06/14 16:08:09 tsutsui Exp $	*/
+/*	$NetBSD: mem.c,v 1.16 2003/07/15 03:35:57 lukem Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,6 +45,9 @@
 /*
  * Memory special file
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.16 2003/07/15 03:35:57 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

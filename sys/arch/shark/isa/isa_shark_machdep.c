@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_shark_machdep.c,v 1.3 2002/10/05 17:01:49 chs Exp $	*/
+/*	$NetBSD: isa_shark_machdep.c,v 1.4 2003/07/15 03:36:01 lukem Exp $	*/
 
 /*
  * Copyright 1997
@@ -32,6 +32,9 @@
  *    negligence, tort, under statute, in equity, at law or otherwise,
  *    even if advised of the possibility of such damage.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: isa_shark_machdep.c,v 1.4 2003/07/15 03:36:01 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

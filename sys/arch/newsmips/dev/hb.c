@@ -1,4 +1,7 @@
-/*	$NetBSD: hb.c,v 1.12 2003/05/10 09:46:25 tsutsui Exp $	*/
+/*	$NetBSD: hb.c,v 1.13 2003/07/15 02:59:29 lukem Exp $	*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hb.c,v 1.13 2003/07/15 02:59:29 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

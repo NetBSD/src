@@ -1,3 +1,8 @@
+/*	$NetBSD: pci_machdep.c,v 1.4 2003/07/15 02:59:25 lukem Exp $	*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.4 2003/07/15 02:59:25 lukem Exp $");
+
 #include <sys/param.h>
 #include <sys/device.h>
 #include <dev/pci/pcireg.h>

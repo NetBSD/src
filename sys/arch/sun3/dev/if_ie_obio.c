@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.18 2002/10/02 16:02:25 thorpej Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.19 2003/07/15 03:36:15 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,6 +39,10 @@
 /*
  * Machine-dependent glue for the Intel Ethernet (ie) driver.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ie_obio.c,v 1.19 2003/07/15 03:36:15 lukem Exp $");
+
 #include "opt_inet.h"
 
 #include <sys/param.h>

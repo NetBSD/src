@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_ofisa_machdep.c,v 1.2 2003/06/23 11:01:38 martin Exp $	*/
+/*	$NetBSD: lpt_ofisa_machdep.c,v 1.3 2003/07/15 03:36:02 lukem Exp $	*/
 
 /*
  * Copyright 1998
@@ -32,6 +32,9 @@
  *    negligence, tort, under statute, in equity, at law or otherwise,
  *    even if advised of the possibility of such damage.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lpt_ofisa_machdep.c,v 1.3 2003/07/15 03:36:02 lukem Exp $");
 
 #include "opt_compat_old_ofw.h"
 

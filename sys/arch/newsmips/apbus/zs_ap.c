@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_ap.c,v 1.15 2003/05/25 14:02:47 tsutsui Exp $	*/
+/*	$NetBSD: zs_ap.c,v 1.16 2003/07/15 02:59:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,6 +43,9 @@
  * Plain tty/async lines use the zs_async slave.
  * Sun keyboard/mouse uses the zs_kbd/zs_ms slaves.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: zs_ap.c,v 1.16 2003/07/15 02:59:29 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

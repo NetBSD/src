@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.9 2003/06/14 17:01:14 thorpej Exp $	*/
+/*	$NetBSD: console.c,v 1.10 2003/07/15 03:35:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -26,6 +26,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.10 2003/07/15 03:35:54 lukem Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_machtypes.h"

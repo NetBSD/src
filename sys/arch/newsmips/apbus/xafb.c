@@ -1,4 +1,4 @@
-/*	$NetBSD: xafb.c,v 1.5 2002/10/02 04:27:51 thorpej Exp $	*/
+/*	$NetBSD: xafb.c,v 1.6 2003/07/15 02:59:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,6 +27,9 @@
  */
 
 /* "xa" frame buffer driver.  Currently supports 1280x1024x8 only. */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: xafb.c,v 1.6 2003/07/15 02:59:29 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>

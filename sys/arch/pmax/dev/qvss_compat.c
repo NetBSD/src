@@ -1,4 +1,4 @@
-/*	$NetBSD: qvss_compat.c,v 1.32 2003/02/20 22:16:06 atatat Exp $	*/
+/*	$NetBSD: qvss_compat.c,v 1.33 2003/07/15 02:54:39 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -62,6 +62,9 @@
  * The LK201 keycode mapping routine is also here along with initialization
  * functions for the keyboard and mouse.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: qvss_compat.c,v 1.33 2003/07/15 02:54:39 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

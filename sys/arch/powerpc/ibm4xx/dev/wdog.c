@@ -1,4 +1,4 @@
-/* $NetBSD: wdog.c,v 1.6 2002/10/02 15:52:28 thorpej Exp $ */
+/* $NetBSD: wdog.c,v 1.7 2003/07/15 02:54:44 lukem Exp $ */
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -38,6 +38,9 @@
 /*
  * Watchdog timer support for the IBM 405GP processor.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wdog.c,v 1.7 2003/07/15 02:54:44 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

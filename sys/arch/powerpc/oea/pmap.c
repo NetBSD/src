@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.10 2003/05/10 21:10:37 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.11 2003/07/15 02:54:46 lukem Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -65,6 +65,9 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.11 2003/07/15 02:54:46 lukem Exp $");
 
 #include "opt_altivec.h"
 #include "opt_pmap.h"

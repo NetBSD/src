@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mace.c,v 1.8 2003/01/06 06:19:40 rafal Exp $	*/
+/*	$NetBSD: com_mace.c,v 1.9 2003/07/15 03:35:51 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -31,6 +31,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: com_mace.c,v 1.9 2003/07/15 03:35:51 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.36 2003/06/18 08:58:42 drochner Exp $	*/
+/*	$NetBSD: fd.c,v 1.37 2003/07/15 03:36:14 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -39,6 +39,10 @@
  *
  *	@(#)fd.c	7.4 (Berkeley) 5/25/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.37 2003/07/15 03:36:14 lukem Exp $");
+
 #include "opt_ddb.h"
 
 #include <sys/param.h>

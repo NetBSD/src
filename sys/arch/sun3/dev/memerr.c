@@ -1,4 +1,4 @@
-/*	$NetBSD: memerr.c,v 1.14 2002/10/02 16:02:26 thorpej Exp $ */
+/*	$NetBSD: memerr.c,v 1.15 2003/07/15 03:36:15 lukem Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,6 +43,9 @@
  *
  *	@(#)memreg.c	8.1 (Berkeley) 6/11/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: memerr.c,v 1.15 2003/07/15 03:36:15 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

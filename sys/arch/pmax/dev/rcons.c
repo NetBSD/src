@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.58 2003/06/29 22:28:46 fvdl Exp $	*/
+/*	$NetBSD: rcons.c,v 1.59 2003/07/15 02:54:39 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -36,6 +36,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rcons.c,v 1.59 2003/07/15 02:54:39 lukem Exp $");
 
 #include "rasterconsole.h"
 #if NRASTERCONSOLE > 0

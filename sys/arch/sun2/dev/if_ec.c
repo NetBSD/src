@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.7 2003/01/20 15:03:03 bouyer Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.8 2003/07/15 03:36:11 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * 3Com 3C400 device driver
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.8 2003/07/15 03:36:11 lukem Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"

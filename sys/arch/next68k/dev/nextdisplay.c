@@ -1,4 +1,4 @@
-/* $NetBSD: nextdisplay.c,v 1.12 2002/10/02 04:22:53 thorpej Exp $ */
+/* $NetBSD: nextdisplay.c,v 1.13 2003/07/15 02:59:32 lukem Exp $ */
 
 /*
  * Copyright (c) 1998 Matt DeBergalis
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nextdisplay.c,v 1.13 2003/07/15 02:59:32 lukem Exp $");
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: prep_pciconf_direct.c,v 1.2 2003/03/18 16:40:23 matt Exp $	*/
+/*	$NetBSD: prep_pciconf_direct.c,v 1.3 2003/07/15 02:54:51 lukem Exp $	*/
 
 /*
  * Copyright (c) 2002 Klaus J. Klein.  All rights reserved.
@@ -37,6 +37,9 @@
  * This version is specific to the direct-mapped configuration space access
  * such as implemented on the IBM 27-82650 PCI Bridge/Memory Controller.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: prep_pciconf_direct.c,v 1.3 2003/07/15 02:54:51 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

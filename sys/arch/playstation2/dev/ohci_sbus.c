@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_sbus.c,v 1.3 2002/10/02 04:17:21 thorpej Exp $	*/
+/*	$NetBSD: ohci_sbus.c,v 1.4 2003/07/15 02:54:36 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ohci_sbus.c,v 1.4 2003/07/15 02:54:36 lukem Exp $");
 
 #include <sys/param.h>
 

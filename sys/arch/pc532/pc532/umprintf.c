@@ -1,4 +1,4 @@
-/*	$NetBSD: umprintf.c,v 1.5 2001/09/24 13:22:33 wiz Exp $	*/
+/*	$NetBSD: umprintf.c,v 1.6 2003/07/15 02:54:36 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991 The Regents of the University of California.
@@ -35,6 +35,9 @@
  *      hacked out from ..
  *	@(#)subr_prf.c	7.30 (Berkeley) 6/29/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: umprintf.c,v 1.6 2003/07/15 02:54:36 lukem Exp $");
 
 #include <machine/stdarg.h>
 static char *ksprintn __P((u_long num, int base, int *len));

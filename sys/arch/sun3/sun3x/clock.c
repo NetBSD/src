@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.23 2002/10/02 16:02:30 thorpej Exp $	*/
+/*	$NetBSD: clock.c,v 1.24 2003/07/15 03:36:20 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -59,6 +59,9 @@
  * Note that the probing algorithm described above requires
  * that we probe the intersil before we probe the mostek!
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.24 2003/07/15 03:36:20 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

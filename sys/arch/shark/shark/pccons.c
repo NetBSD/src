@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.15 2003/02/05 00:02:36 perry Exp $       */
+/*      $NetBSD: pccons.c,v 1.16 2003/07/15 03:36:03 lukem Exp $       */
 
 /*
  * Copyright 1997
@@ -100,6 +100,10 @@
 **
 **--
 */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.16 2003/07/15 03:36:03 lukem Exp $");
+
 #include "opt_ddb.h"
 #include "opt_xserver.h"
 

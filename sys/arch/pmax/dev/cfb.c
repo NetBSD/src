@@ -1,4 +1,4 @@
-/*	$NetBSD: cfb.c,v 1.42 2002/10/02 04:15:06 thorpej Exp $	*/
+/*	$NetBSD: cfb.c,v 1.43 2003/07/15 02:54:38 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -79,6 +79,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.43 2003/07/15 02:54:38 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

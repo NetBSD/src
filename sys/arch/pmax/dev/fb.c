@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.37 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: fb.c,v 1.38 2003/07/15 02:54:38 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -60,6 +60,9 @@
  * including a generic ioctl routine. The pmax_fb structure is passed into the
  * routines and has device specifics stored in it.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.38 2003/07/15 02:54:38 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

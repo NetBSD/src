@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.26 2003/04/01 15:28:41 thorpej Exp $	*/
+/*	$NetBSD: dvma.c,v 1.27 2003/07/15 03:36:20 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -74,6 +74,9 @@
  * address that its device should issue to access the buffer.  (There will be
  * routines that assist the driver in doing so.)
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.27 2003/07/15 03:36:20 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

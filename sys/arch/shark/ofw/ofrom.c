@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrom.c,v 1.10 2003/04/02 04:27:20 thorpej Exp $	*/
+/*	$NetBSD: ofrom.c,v 1.11 2003/07/15 03:36:02 lukem Exp $	*/
 
 /*
  * Copyright 1998
@@ -36,6 +36,9 @@
 /*
  * XXX open for writing (for user programs to mmap, and write contents)
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ofrom.c,v 1.11 2003/07/15 03:36:02 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.11 2003/05/10 23:12:38 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.12 2003/07/15 03:35:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Christopher Sekiya
@@ -33,6 +33,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.12 2003/07/15 03:35:54 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

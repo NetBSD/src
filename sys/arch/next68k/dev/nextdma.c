@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdma.c,v 1.34 2002/10/02 04:22:53 thorpej Exp $	*/
+/*	$NetBSD: nextdma.c,v 1.35 2003/07/15 02:59:32 lukem Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -28,6 +28,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nextdma.c,v 1.35 2003/07/15 02:59:32 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

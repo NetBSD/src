@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.53 2003/05/03 18:11:04 wiz Exp $	*/
+/*	$NetBSD: si.c,v 1.54 2003/07/15 03:36:15 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -75,6 +75,9 @@
  *
  * The autoconfiguration boilerplate came from Adam Glass.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.54 2003/07/15 03:36:15 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

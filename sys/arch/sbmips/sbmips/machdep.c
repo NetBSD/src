@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.20 2003/07/06 12:14:50 simonb Exp $ */
+/* $NetBSD: machdep.c,v 1.21 2003/07/15 03:35:51 lukem Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -56,6 +56,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21 2003/07/15 03:35:51 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"

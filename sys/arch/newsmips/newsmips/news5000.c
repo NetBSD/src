@@ -1,4 +1,4 @@
-/*	$NetBSD: news5000.c,v 1.10 2003/05/10 10:20:00 tsutsui Exp $	*/
+/*	$NetBSD: news5000.c,v 1.11 2003/07/15 02:59:31 lukem Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -25,6 +25,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: news5000.c,v 1.11 2003/07/15 02:59:31 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

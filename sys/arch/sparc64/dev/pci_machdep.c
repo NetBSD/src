@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.37 2003/05/05 07:51:26 martin Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.38 2003/07/15 03:36:05 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -31,6 +31,9 @@
 /*
  * functions expected by the MI PCI code.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.38 2003/07/15 03:36:05 lukem Exp $");
 
 #ifdef DEBUG
 #define SPDB_CONF	0x01

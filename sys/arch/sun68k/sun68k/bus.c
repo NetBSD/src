@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.9 2003/05/03 18:11:05 wiz Exp $	*/
+/*	$NetBSD: bus.c,v 1.10 2003/07/15 03:36:21 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette.
@@ -124,6 +124,9 @@
  *
  *	@(#)machdep.c	8.6 (Berkeley) 1/14/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.10 2003/07/15 03:36:21 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_c.c,v 1.1 2003/05/08 12:37:37 christos Exp $	*/
+/*	$NetBSD: locore_c.c,v 1.2 2003/07/15 03:35:57 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -77,6 +77,9 @@
  *
  *	@(#)Locore.c
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.2 2003/07/15 03:35:57 lukem Exp $");
 
 #include "opt_lockdebug.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.7 2002/12/20 16:54:15 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.8 2003/07/15 02:59:27 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -53,6 +53,9 @@
 /*
  * autoconf.c for news68k - from newsmips
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8 2003/07/15 02:59:27 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

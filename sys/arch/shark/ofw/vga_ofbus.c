@@ -1,4 +1,4 @@
-/* $NetBSD: vga_ofbus.c,v 1.4 2002/10/02 15:52:39 thorpej Exp $ */
+/* $NetBSD: vga_ofbus.c,v 1.5 2003/07/15 03:36:02 lukem Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -26,6 +26,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vga_ofbus.c,v 1.5 2003/07/15 03:36:02 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.91 2003/06/29 22:29:02 fvdl Exp $ */
+/*	$NetBSD: trap.c,v 1.92 2003/07/15 03:36:10 lukem Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -48,6 +48,9 @@
  *
  *	@(#)trap.c	8.4 (Berkeley) 9/23/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.92 2003/07/15 03:36:10 lukem Exp $");
 
 #define NEW_FPSTATE
 

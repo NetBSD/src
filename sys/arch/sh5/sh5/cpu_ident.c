@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_ident.c,v 1.1 2003/03/13 13:44:18 scw Exp $	*/
+/*	$NetBSD: cpu_ident.c,v 1.2 2003/07/15 03:35:59 lukem Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cpu_ident.c,v 1.2 2003/07/15 03:35:59 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

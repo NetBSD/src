@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcdma.c,v 1.6 2003/04/02 04:27:19 thorpej Exp $	*/
+/*	$NetBSD: hpcdma.c,v 1.7 2003/07/15 03:35:53 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Wayne Knowles
@@ -42,6 +42,9 @@
  * Note: We use SCSI0 offsets, etc. here.  Since the layout of SCSI0
  * and SCSI1 are the same, this is no problem.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hpcdma.c,v 1.7 2003/07/15 03:35:53 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: in4_cksum.c,v 1.2 2002/01/21 18:50:36 eeh Exp $ */
+/*	$NetBSD: in4_cksum.c,v 1.3 2003/07/15 03:36:09 lukem Exp $ */
 
 /*
  * Copyright (c) 2001 Eduardo Horvath.
@@ -43,6 +43,9 @@
  *
  *	@(#)in_cksum.c	8.1 (Berkeley) 6/11/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: in4_cksum.c,v 1.3 2003/07/15 03:36:09 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

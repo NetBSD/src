@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.10 2003/04/01 15:47:49 thorpej Exp $	*/
+/*	$NetBSD: promlib.c,v 1.11 2003/07/15 03:36:13 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.11 2003/07/15 03:36:13 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

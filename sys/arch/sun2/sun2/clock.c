@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.5 2002/10/02 16:02:23 thorpej Exp $	*/
+/*	$NetBSD: clock.c,v 1.6 2003/07/15 03:36:12 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -49,6 +49,9 @@
  * Written by Matthew Fredette, based on the sun3 clock.c by 
  * Adam Glass and Gordon Ross.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.6 2003/07/15 03:36:12 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

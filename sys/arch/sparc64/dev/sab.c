@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.13 2003/06/29 22:29:00 fvdl Exp $	*/
+/*	$NetBSD: sab.c,v 1.14 2003/07/15 03:36:07 lukem Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -40,6 +40,9 @@
 /*
  * SAB82532 Dual UART driver
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.14 2003/07/15 03:36:07 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

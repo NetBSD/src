@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.6 2003/01/18 06:33:44 thorpej Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.7 2003/07/15 03:38:02 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997
@@ -63,6 +63,9 @@
  * process_set_pc(proc)
  *	Set the process's program counter.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.7 2003/07/15 03:38:02 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

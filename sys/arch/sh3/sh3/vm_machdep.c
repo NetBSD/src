@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.36 2003/04/02 02:56:42 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.37 2003/07/15 03:35:58 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -45,6 +45,9 @@
 /*
  *	Utah $Hdr: vm_machdep.c 1.16.1.1 89/06/23$
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.37 2003/07/15 03:35:58 lukem Exp $");
 
 #include "opt_kstack_debug.h"
 

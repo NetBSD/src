@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.10 2003/04/13 04:07:34 tsutsui Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.11 2003/07/15 03:35:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -25,6 +25,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.11 2003/07/15 03:35:56 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

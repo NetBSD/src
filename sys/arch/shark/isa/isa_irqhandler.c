@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_irqhandler.c,v 1.5 2003/06/16 20:01:05 thorpej Exp $	*/
+/*	$NetBSD: isa_irqhandler.c,v 1.6 2003/07/15 03:36:01 lukem Exp $	*/
 
 /*
  * Copyright 1997
@@ -73,6 +73,9 @@
  *
  * Created      : 30/09/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: isa_irqhandler.c,v 1.6 2003/07/15 03:36:01 lukem Exp $");
 
 #include "opt_irqstats.h"
 

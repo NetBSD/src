@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.15 2003/06/13 04:29:39 simonb Exp $	*/
+/*	$NetBSD: cpu.c,v 1.16 2003/07/15 02:54:43 lukem Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.16 2003/07/15 02:54:43 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.4 2003/02/02 10:24:40 wiz Exp $	*/
+/*	$NetBSD: clock.c,v 1.5 2003/07/15 03:36:01 lukem Exp $	*/
 
 /*
  * Copyright 1997
@@ -121,6 +121,10 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 /*
  * Primitive clock interrupt routines.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.5 2003/07/15 03:36:01 lukem Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>

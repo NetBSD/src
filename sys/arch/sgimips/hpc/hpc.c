@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.12 2002/11/09 18:54:27 thorpej Exp $	*/
+/*	$NetBSD: hpc.c,v 1.13 2003/07/15 03:35:53 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,6 +33,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.13 2003/07/15 03:35:53 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: suword.c,v 1.2 2000/06/09 14:05:49 kleink Exp $	*/
+/*	$NetBSD: suword.c,v 1.3 2003/07/15 02:54:49 lukem Exp $	*/
 
 /*-
  * Copyright (C) 1993 Wolfgang Solfrank.
@@ -30,6 +30,9 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: suword.c,v 1.3 2003/07/15 02:54:49 lukem Exp $");
 
 #include <sys/systm.h>
 

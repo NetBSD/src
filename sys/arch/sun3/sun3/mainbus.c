@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.11 2002/10/02 16:02:29 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.12 2003/07/15 03:36:18 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.12 2003/07/15 03:36:18 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

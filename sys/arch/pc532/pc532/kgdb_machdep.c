@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.9 2003/04/02 02:24:15 thorpej Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.10 2003/07/15 02:54:34 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthias Pfaller.
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.10 2003/07/15 02:54:34 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

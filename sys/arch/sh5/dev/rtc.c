@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.6 2002/10/02 15:52:36 thorpej Exp $	*/
+/*	$NetBSD: rtc.c,v 1.7 2003/07/15 03:35:58 lukem Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,6 +38,9 @@
 /*
  * SH-5 Real Time Clock/Calendar Device
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.7 2003/07/15 03:35:58 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sh5_pci.c,v 1.9 2003/05/03 18:10:58 wiz Exp $	*/
+/*	$NetBSD: sh5_pci.c,v 1.10 2003/07/15 03:35:59 lukem Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,6 +38,10 @@
 /*
  * SH-5 Host-PCI Bridge Controller
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sh5_pci.c,v 1.10 2003/07/15 03:35:59 lukem Exp $");
+
 #include "opt_pci.h"
 
 #include <sys/param.h>

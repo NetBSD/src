@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.2 2000/01/10 03:24:36 simonb Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.3 2003/07/15 02:54:40 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
 /*
  * Implementation of bus_space mapping for the DECstation.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.3 2003/07/15 02:54:40 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

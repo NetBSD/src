@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_mace.c,v 1.5 2002/10/02 15:52:33 thorpej Exp $	*/
+/*	$NetBSD: pckbc_mace.c,v 1.6 2003/07/15 03:35:52 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -31,6 +31,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pckbc_mace.c,v 1.6 2003/07/15 03:35:52 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

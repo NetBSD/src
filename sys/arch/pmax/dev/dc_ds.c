@@ -1,4 +1,4 @@
-/*	$NetBSD: dc_ds.c,v 1.18 2002/10/02 04:15:06 thorpej Exp $	*/
+/*	$NetBSD: dc_ds.c,v 1.19 2003/07/15 02:54:38 lukem Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -14,6 +14,9 @@
  *
  * this driver contributed by Jonathan Stone
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dc_ds.c,v 1.19 2003/07/15 02:54:38 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.108 2003/06/23 11:01:47 martin Exp $	*/
+/*	$NetBSD: trap.c,v 1.109 2003/07/15 03:36:19 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -42,6 +42,9 @@
  *	from: Utah Hdr: trap.c 1.37 92/12/20
  *	from: @(#)trap.c	8.5 (Berkeley) 1/4/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.109 2003/07/15 03:36:19 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"

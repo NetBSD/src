@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_subr.c,v 1.10 2001/09/05 13:21:09 tsutsui Exp $	*/
+/*	$NetBSD: bus_subr.c,v 1.11 2003/07/15 03:36:16 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
  * bus_xxx support functions, Sun3-specific part.
  * The common stuff is in autoconf.c
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bus_subr.c,v 1.11 2003/07/15 03:36:16 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

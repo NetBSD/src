@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.59 2003/06/23 11:01:43 martin Exp $ */
+/*	$NetBSD: clock.c,v 1.60 2003/07/15 03:36:08 lukem Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,6 +53,9 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/11/93
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.60 2003/07/15 03:36:08 lukem Exp $");
 
 #include "opt_multiprocessor.h"
 

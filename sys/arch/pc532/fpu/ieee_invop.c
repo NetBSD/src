@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee_invop.c,v 1.5 1997/04/01 16:35:22 matthias Exp $	*/
+/*	$NetBSD: ieee_invop.c,v 1.6 2003/07/15 02:54:33 lukem Exp $	*/
 
 /* 
  * IEEE floating point support for NS32081 and NS32381 fpus.
@@ -43,7 +43,12 @@
  *	First release.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ieee_invop.c,v 1.6 2003/07/15 02:54:33 lukem Exp $");
+
 #include "ieee_internal.h"
+
 #include <machine/psl.h>
 #if defined(__NetBSD__) && defined(_KERNEL)
 #include <machine/limits.h>

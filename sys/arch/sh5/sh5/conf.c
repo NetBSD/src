@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.5 2002/10/26 13:50:44 jdolecek Exp $	*/
+/*	$NetBSD: conf.c,v 1.6 2003/07/15 03:35:59 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -28,6 +28,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.6 2003/07/15 03:35:59 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>

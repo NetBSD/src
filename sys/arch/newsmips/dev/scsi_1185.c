@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_1185.c,v 1.11 2003/04/19 14:56:06 tsutsui Exp $	*/
+/*	$NetBSD: scsi_1185.c,v 1.12 2003/07/15 02:59:30 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,6 +55,9 @@
  *				tuzukete access suru-baai,
  *				kanarazu wait wo ireru-beshi !
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: scsi_1185.c,v 1.12 2003/07/15 02:59:30 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

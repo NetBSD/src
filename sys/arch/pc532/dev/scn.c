@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.60 2003/06/24 04:57:59 thorpej Exp $ */
+/*	$NetBSD: scn.c,v 1.61 2003/07/15 02:54:32 lukem Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Philip L. Budne.
@@ -45,6 +45,9 @@
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.61 2003/07/15 02:54:32 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"

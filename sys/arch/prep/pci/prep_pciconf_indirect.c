@@ -1,4 +1,4 @@
-/*	$NetBSD: prep_pciconf_indirect.c,v 1.3 2003/04/05 08:47:29 tsutsui Exp $	*/
+/*	$NetBSD: prep_pciconf_indirect.c,v 1.4 2003/07/15 02:54:51 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -37,6 +37,9 @@
  * We try to detect the appropriate mechanism for this machine and set
  * up a few function pointers to access the correct method directly.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: prep_pciconf_indirect.c,v 1.4 2003/07/15 02:54:51 lukem Exp $");
 
 #include "opt_openpic.h"
 

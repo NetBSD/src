@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb_mainbus.c,v 1.1 2003/05/23 06:51:16 petrov Exp $	*/
+/*	$NetBSD: ffb_mainbus.c,v 1.2 2003/07/15 03:36:05 lukem Exp $	*/
 /*	$OpenBSD: creator_mainbus.c,v 1.4 2002/07/26 16:39:04 jason Exp $	*/
 
 /*
@@ -32,6 +32,9 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ffb_mainbus.c,v 1.2 2003/07/15 03:36:05 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

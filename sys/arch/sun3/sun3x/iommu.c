@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.12 2002/10/02 16:02:30 thorpej Exp $	*/
+/*	$NetBSD: iommu.c,v 1.13 2003/07/15 03:36:20 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Set-up functions for the Sun3x DVMA I/O Mapper.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.13 2003/07/15 03:36:20 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

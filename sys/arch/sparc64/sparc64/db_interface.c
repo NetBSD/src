@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.69 2003/05/18 22:11:31 martin Exp $ */
+/*	$NetBSD: db_interface.c,v 1.70 2003/07/15 03:36:08 lukem Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -32,6 +32,10 @@
 /*
  * Interface to new debugger.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.70 2003/07/15 03:36:08 lukem Exp $");
+
 #include "opt_ddb.h"
 
 #include <sys/param.h>

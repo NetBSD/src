@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.29 2003/04/01 16:34:59 thorpej Exp $ */
+/*	$NetBSD: cpu.c,v 1.30 2003/07/15 03:36:08 lukem Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -50,6 +50,9 @@
  *	@(#)cpu.c	8.5 (Berkeley) 11/23/93
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.30 2003/07/15 03:36:08 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

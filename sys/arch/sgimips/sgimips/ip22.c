@@ -1,4 +1,4 @@
-/*	$NetBSD: ip22.c,v 1.14 2002/11/09 19:21:12 thorpej Exp $	*/
+/*	$NetBSD: ip22.c,v 1.15 2003/07/15 03:35:55 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Rafal K. Boni
@@ -26,6 +26,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ip22.c,v 1.15 2003/07/15 03:35:55 lukem Exp $");
 
 #include "opt_cputype.h"
 #include "opt_machtypes.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: gsfb.c,v 1.6 2002/10/02 04:17:22 thorpej Exp $	*/
+/*	$NetBSD: gsfb.c,v 1.7 2003/07/15 02:54:37 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: gsfb.c,v 1.7 2003/07/15 02:54:37 lukem Exp $");
 
 #include "debug_playstation2.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.60 2003/05/17 01:38:39 nakayama Exp $ */
+/*	$NetBSD: sbus.c,v 1.61 2003/07/15 03:36:07 lukem Exp $ */
 
 /*
  * Copyright (c) 1999-2002 Eduardo Horvath
@@ -32,6 +32,10 @@
 /*
  * Sbus stuff.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.61 2003/07/15 03:36:07 lukem Exp $");
+
 #include "opt_ddb.h"
 
 #include <sys/param.h>

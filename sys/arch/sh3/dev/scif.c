@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.33 2002/10/23 09:11:56 jdolecek Exp $ */
+/*	$NetBSD: scif.c,v 1.34 2003/07/15 03:35:55 lukem Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -102,6 +102,9 @@
  *
  * This code is derived from both z8530tty.c and com.c
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.34 2003/07/15 03:35:55 lukem Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_scif.h"

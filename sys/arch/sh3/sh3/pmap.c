@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.47 2003/06/14 16:27:36 tsutsui Exp $	*/
+/*	$NetBSD: pmap.c,v 1.48 2003/07/15 03:35:57 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.48 2003/07/15 03:35:57 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

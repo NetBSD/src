@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.14 2003/01/01 01:58:45 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.15 2003/07/15 02:54:35 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthias Pfaller.
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.15 2003/07/15 02:54:35 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

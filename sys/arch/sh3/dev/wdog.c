@@ -1,4 +1,4 @@
-/* $NetBSD: wdog.c,v 1.12 2002/10/23 09:11:57 jdolecek Exp $ */
+/* $NetBSD: wdog.c,v 1.13 2003/07/15 03:35:55 lukem Exp $ */
 
 /*-
  * Copyright (C) 2000 SAITOH Masanobu.  All rights reserved.
@@ -25,6 +25,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wdog.c,v 1.13 2003/07/15 03:35:55 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>

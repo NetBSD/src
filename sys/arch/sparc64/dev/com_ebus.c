@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ebus.c,v 1.19 2003/06/14 17:01:15 thorpej Exp $	*/
+/*	$NetBSD: com_ebus.c,v 1.20 2003/07/15 03:36:04 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -31,6 +31,9 @@
 /*
  * NS Super I/O PC87332VLJ "com" to ebus attachment
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: com_ebus.c,v 1.20 2003/07/15 03:36:04 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.9 2003/03/14 05:37:51 matt Exp $	*/
+/*	$NetBSD: fpu.c,v 1.10 2003/07/15 02:54:47 lukem Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -30,6 +30,9 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.10 2003/07/15 02:54:47 lukem Exp $");
 
 #include "opt_multiprocessor.h"
 

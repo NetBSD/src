@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.10 2003/01/28 22:19:27 wiz Exp $	*/
+/*	$NetBSD: scr.c,v 1.11 2003/07/15 03:36:04 lukem Exp $	*/
 
 /*
  * Copyright 1997
@@ -100,6 +100,9 @@
 **  INCLUDE FILES
 **
 */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.11 2003/07/15 03:36:04 lukem Exp $");
 
 #include "opt_ddb.h"
 

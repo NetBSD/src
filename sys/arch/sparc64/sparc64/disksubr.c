@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.17 2003/05/10 23:12:40 thorpej Exp $ */
+/*	$NetBSD: disksubr.c,v 1.18 2003/07/15 03:36:08 lukem Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -30,6 +30,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.18 2003/07/15 03:36:08 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

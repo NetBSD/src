@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.17 2002/09/27 15:36:32 provos Exp $ */
+/*	$NetBSD: isr.c,v 1.18 2003/07/15 02:59:33 lukem Exp $ */
 
 /*
  * This file was taken from mvme68k/mvme68k/isr.c
@@ -46,6 +46,9 @@
 /*
  * Link and dispatch interrupts.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.18 2003/07/15 02:59:33 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

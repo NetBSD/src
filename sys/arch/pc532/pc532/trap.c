@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.53 2003/06/24 02:48:59 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.54 2003/07/15 02:54:35 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller. All rights reserved.
@@ -43,6 +43,9 @@
 /*
  * 532 Trap and System call handling
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.54 2003/07/15 02:54:35 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"

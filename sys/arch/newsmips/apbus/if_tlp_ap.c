@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_ap.c,v 1.5 2003/05/03 18:10:53 wiz Exp $	*/
+/*	$NetBSD: if_tlp_ap.c,v 1.6 2003/07/15 02:59:28 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_ap.c,v 1.6 2003/07/15 02:59:28 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

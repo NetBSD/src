@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.13 2003/01/03 09:09:22 rafal Exp $	*/
+/*	$NetBSD: cpu.c,v 1.14 2003/07/15 03:35:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -32,6 +32,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.14 2003/07/15 03:35:54 lukem Exp $");
 
 #include "opt_machtypes.h"
 

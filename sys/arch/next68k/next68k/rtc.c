@@ -1,4 +1,4 @@
-/*      $NetBSD: rtc.c,v 1.7 2002/09/27 15:36:32 provos Exp $        */
+/*      $NetBSD: rtc.c,v 1.8 2003/07/15 02:59:33 lukem Exp $        */
 /*
  * Copyright (c) 1998 Darrin Jewell
  * Copyright (c) 1997 Rolf Grossmann 
@@ -37,6 +37,9 @@
 /* Now using this in the kernel.  This should be turned into a device
  * Darrin B Jewell <jewell@mit.edu>  Tue Jan 27 20:59:25 1998
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.8 2003/07/15 02:59:33 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/cdefs.h>          /* for __P */

@@ -1,4 +1,4 @@
-/*	$NetBSD: leds.c,v 1.6 2001/09/05 13:21:09 tsutsui Exp $	*/
+/*	$NetBSD: leds.c,v 1.7 2003/07/15 03:36:18 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -43,6 +43,9 @@
  * All other Sun3 machines have an 8-position LED
  * array in which some pattern is animated.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: leds.c,v 1.7 2003/07/15 03:36:18 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

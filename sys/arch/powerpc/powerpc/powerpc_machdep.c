@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.20 2003/06/29 22:28:49 fvdl Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.21 2003/07/15 02:54:48 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,6 +30,9 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.21 2003/07/15 02:54:48 lukem Exp $");
 
 #include "opt_altivec.h"
 

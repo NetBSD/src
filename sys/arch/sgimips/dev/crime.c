@@ -1,4 +1,4 @@
-/*	$NetBSD: crime.c,v 1.11 2003/01/10 20:39:22 rafal Exp $	*/
+/*	$NetBSD: crime.c,v 1.12 2003/07/15 03:35:51 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,6 +35,9 @@
 /*
  * O2 CRIME
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.12 2003/07/15 03:35:51 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

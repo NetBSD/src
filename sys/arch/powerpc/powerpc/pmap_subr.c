@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_subr.c,v 1.9 2003/04/02 02:47:19 thorpej Exp $	*/
+/*	$NetBSD: pmap_subr.c,v 1.10 2003/07/15 02:54:48 lukem Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pmap_subr.c,v 1.10 2003/07/15 02:54:48 lukem Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_altivec.h"

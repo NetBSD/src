@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.27 2003/06/16 20:01:03 thorpej Exp $	*/
+/*	$NetBSD: intr.c,v 1.28 2003/07/15 02:54:34 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.28 2003/07/15 02:54:34 lukem Exp $");
 
 #define DEFINE_SPLX
 #include <sys/param.h>

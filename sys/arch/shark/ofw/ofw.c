@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.31 2003/06/16 20:01:05 thorpej Exp $	*/
+/*	$NetBSD: ofw.c,v 1.32 2003/07/15 03:36:02 lukem Exp $	*/
 
 /*
  * Copyright 1997
@@ -39,6 +39,9 @@
  *  Parts of this could be moved to an MI file in time. -JJK
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.32 2003/07/15 03:36:02 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

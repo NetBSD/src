@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.22 2003/04/02 02:56:40 thorpej Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.23 2003/07/15 03:35:56 lukem Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -26,6 +26,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.23 2003/07/15 03:35:56 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
