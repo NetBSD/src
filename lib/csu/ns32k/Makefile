@@ -1,20 +1,25 @@
 #	from: @(#)Makefile	5.6 (Berkeley) 5/22/91
-#	$Id: Makefile,v 1.6 1995/06/03 13:16:14 pk Exp $
+#	$Id: Makefile,v 1.7 1995/06/05 01:57:24 pk Exp $
 
-CFLAGS+=	-DLIBC_SCCS -DDYNAMIC
+CFLAGS+=	-DLIBC_SCCS
 CFLAGS+=	-I${.CURDIR}/..
-OBJS=		crt0.o gcrt0.o
+OBJS=		crt0.o gcrt0.o scrt0.o
 CLEANFILES+=	core a.out
 
 all: ${OBJS}
 
 crt0.o: crt0.c
-	${COMPILE.c} -DCRT0 ${.ALLSRC}
+	${COMPILE.c} -DCRT0 -DDYNAMIC ${.ALLSRC}
 	${LD} -x -r ${.TARGET}
 	mv a.out ${.TARGET}
 
 gcrt0.o: crt0.c
 	${COMPILE.c} -DMCRT0 ${.ALLSRC} -o ${.TARGET}
+	${LD} -x -r ${.TARGET}
+	mv a.out ${.TARGET}
+
+scrt0.o: crt0.c
+	${COMPILE.c} -DSCRT0 ${.ALLSRC} -o ${.TARGET}
 	${LD} -x -r ${.TARGET}
 	mv a.out ${.TARGET}
 
