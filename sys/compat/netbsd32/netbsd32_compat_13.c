@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_13.c,v 1.6 2000/03/30 11:27:18 augustss Exp $	*/
+/*	$NetBSD: netbsd32_compat_13.c,v 1.7 2000/07/09 13:39:31 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -33,6 +33,7 @@
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/signal.h>
+#include <sys/signalvar.h>
 #include <sys/syscallargs.h>
 
 #include <compat/netbsd32/netbsd32.h>
