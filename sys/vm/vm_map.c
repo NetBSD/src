@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_map.c,v 1.27 1997/05/16 21:39:53 gwr Exp $	*/
+/*	$NetBSD: vm_map.c,v 1.28 1997/07/06 12:38:27 fvdl Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -277,7 +277,7 @@ vm_map_init(map, min, max, pageable)
 	map->first_free = &map->header;
 	map->hint = &map->header;
 	map->timestamp = 0;
-	lock_init(&map->lock, TRUE);
+	lockinit(&map->lock, PVM, "thrd_sleep", 0, 0);
 	simple_lock_init(&map->ref_lock);
 	simple_lock_init(&map->hint_lock);
 }
@@ -1205,7 +1205,7 @@ vm_map_pageable(map, start, end, new_pageable)
 		 *	If a region becomes completely unwired,
 		 *	unwire its physical pages and mappings.
 		 */
-		lock_set_recursive(&map->lock);
+		vm_map_set_recursive(&map->lock);
 
 		entry = start_entry;
 		while ((entry != &map->header) && (entry->start < end)) {
@@ -1217,7 +1217,7 @@ vm_map_pageable(map, start, end, new_pageable)
 
 		    entry = entry->next;
 		}
-		lock_clear_recursive(&map->lock);
+		vm_map_clear_recursive(&map->lock);
 	}
 
 	else {
@@ -1326,8 +1326,8 @@ vm_map_pageable(map, start, end, new_pageable)
 		    vm_map_unlock(map);		/* trust me ... */
 		}
 		else {
-		    lock_set_recursive(&map->lock);
-		    lock_write_to_read(&map->lock);
+		    vm_map_set_recursive(&map->lock);
+		    lockmgr(&map->lock, LK_DOWNGRADE, (void *)0, curproc);
 		}
 
 		rv = 0;
@@ -1358,7 +1358,7 @@ vm_map_pageable(map, start, end, new_pageable)
 		    vm_map_lock(map);
 		}
 		else {
-		    lock_clear_recursive(&map->lock);
+		    vm_map_clear_recursive(&map->lock);
 		}
 		if (rv) {
 		    vm_map_unlock(map);
@@ -2014,7 +2014,7 @@ vm_map_copy(dst_map, src_map,
 			else {
 			 	new_src_map = src_map;
 				new_src_start = src_entry->start;
-				lock_set_recursive(&src_map->lock);
+				vm_map_set_recursive(&src_map->lock);
 			}
 
 			if (dst_entry->is_a_map) {
@@ -2052,7 +2052,7 @@ vm_map_copy(dst_map, src_map,
 			else {
 			 	new_dst_map = dst_map;
 				new_dst_start = dst_entry->start;
-				lock_set_recursive(&dst_map->lock);
+				vm_map_set_recursive(&dst_map->lock);
 			}
 
 			/*
@@ -2064,9 +2064,9 @@ vm_map_copy(dst_map, src_map,
 				FALSE, FALSE);
 
 			if (dst_map == new_dst_map)
-				lock_clear_recursive(&dst_map->lock);
+				vm_map_clear_recursive(&dst_map->lock);
 			if (src_map == new_src_map)
-				lock_clear_recursive(&src_map->lock);
+				vm_map_clear_recursive(&src_map->lock);
 		}
 
 		/*
@@ -2435,7 +2435,8 @@ vm_map_lookup(var_map, vaddr, fault_type, out_entry,
 			 *	share map to the new object.
 			 */
 
-			if (lock_read_to_write(&share_map->lock)) {
+			if (lockmgr(&share_map->lock, LK_EXCLUPGRADE,
+				    (void *)0, curproc)) {
 				if (share_map != map)
 					vm_map_unlock_read(map);
 				goto RetryLookup;
@@ -2447,8 +2448,8 @@ vm_map_lookup(var_map, vaddr, fault_type, out_entry,
 				(vm_size_t) (entry->end - entry->start));
 				
 			entry->needs_copy = FALSE;
-			
-			lock_write_to_read(&share_map->lock);
+			lockmgr(&share_map->lock, LK_DOWNGRADE,
+				(void *)0, curproc);
 		}
 		else {
 			/*
@@ -2465,7 +2466,8 @@ vm_map_lookup(var_map, vaddr, fault_type, out_entry,
 	 */
 	if (entry->object.vm_object == NULL) {
 
-		if (lock_read_to_write(&share_map->lock)) {
+		if (lockmgr(&share_map->lock, LK_EXCLUPGRADE,
+			    (void *)0, curproc)) {
 			if (share_map != map)
 				vm_map_unlock_read(map);
 			goto RetryLookup;
@@ -2474,7 +2476,8 @@ vm_map_lookup(var_map, vaddr, fault_type, out_entry,
 		entry->object.vm_object = vm_object_allocate(
 					(vm_size_t)(entry->end - entry->start));
 		entry->offset = 0;
-		lock_write_to_read(&share_map->lock);
+		lockmgr(&share_map->lock, LK_DOWNGRADE,
+			(void *)0, curproc);
 	}
 
 	/*
