@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.16 2001/04/08 14:11:48 hubertf Exp $
+# $NetBSD: Makefile.inc,v 1.17 2002/06/10 09:14:26 yamt Exp $
 # Original from FreeBSD, no rcs id.
 
 .include <bsd.own.mk>
@@ -20,6 +20,7 @@ OPSYS="unknown"
 CHMOD?= /bin/chmod
 CHOWN?= /usr/sbin/chown
 CHGRP?= /usr/bin/chgrp
+WARNS=2
 .elif ${OPSYS} == "SunOS"
 LOCALBASE?= /usr/local
 TAR_CMD?= tar

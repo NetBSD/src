@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.31 2002/06/09 13:23:45 yamt Exp $	*/
+/*	$NetBSD: perform.c,v 1.32 2002/06/10 09:14:27 yamt Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.38 1997/10/13 15:03:51 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.31 2002/06/09 13:23:45 yamt Exp $");
+__RCSID("$NetBSD: perform.c,v 1.32 2002/06/10 09:14:27 yamt Exp $");
 #endif
 #endif
 
@@ -37,7 +37,7 @@ __RCSID("$NetBSD: perform.c,v 1.31 2002/06/09 13:23:45 yamt Exp $");
 #include <sys/wait.h>
 #include <unistd.h>
 
-static char *home;
+static char *Home;
 
 static void
 make_dist(char *home, char *pkg, char *suffix, package_t *plist)
@@ -196,7 +196,7 @@ cleanup(int sig)
 		alreadyCleaning = 1;
 		if (sig)
 			printf("Signal %d received, cleaning up.\n", sig);
-		leave_playpen(home);
+		leave_playpen(Home);
 		if (sig)
 			exit(1);
 	}
@@ -308,18 +308,18 @@ pkg_perform(lpkg_head_t *pkgs)
          * hack.  It's not a real create in progress.
          */
 	if (PlistOnly) {
-		check_list(home, &plist, basename_of(pkg));
+		check_list(Home, &plist, basename_of(pkg));
 		write_plist(&plist, stdout, realprefix);
 		exit(0);
 	}
 
 	/* Make a directory to stomp around in */
-	home = make_playpen(PlayPen, PlayPenSize, 0);
+	Home = make_playpen(PlayPen, PlayPenSize, 0);
 	signal(SIGINT, cleanup);
 	signal(SIGHUP, cleanup);
 
 	/* Make first "real contents" pass over it */
-	check_list(home, &plist, basename_of(pkg));
+	check_list(Home, &plist, basename_of(pkg));
 	(void) umask(022);	/* make sure gen'ed directories, files
 				 * don't have group or other write bits. */
 
@@ -333,49 +333,49 @@ pkg_perform(lpkg_head_t *pkgs)
 	add_plist(&plist, PLIST_FILE, DESC_FNAME);
 
 	if (Install) {
-		copy_file(home, Install, INSTALL_FNAME);
+		copy_file(Home, Install, INSTALL_FNAME);
 		add_plist(&plist, PLIST_IGNORE, NULL);
 		add_plist(&plist, PLIST_FILE, INSTALL_FNAME);
 	}
 	if (DeInstall) {
-		copy_file(home, DeInstall, DEINSTALL_FNAME);
+		copy_file(Home, DeInstall, DEINSTALL_FNAME);
 		add_plist(&plist, PLIST_IGNORE, NULL);
 		add_plist(&plist, PLIST_FILE, DEINSTALL_FNAME);
 	}
 	if (Require) {
-		copy_file(home, Require, REQUIRE_FNAME);
+		copy_file(Home, Require, REQUIRE_FNAME);
 		add_plist(&plist, PLIST_IGNORE, NULL);
 		add_plist(&plist, PLIST_FILE, REQUIRE_FNAME);
 	}
 	if (Display) {
-		copy_file(home, Display, DISPLAY_FNAME);
+		copy_file(Home, Display, DISPLAY_FNAME);
 		add_plist(&plist, PLIST_IGNORE, NULL);
 		add_plist(&plist, PLIST_FILE, DISPLAY_FNAME);
 		add_plist(&plist, PLIST_DISPLAY, DISPLAY_FNAME);
 	}
 	if (Mtree) {
-		copy_file(home, Mtree, MTREE_FNAME);
+		copy_file(Home, Mtree, MTREE_FNAME);
 		add_plist(&plist, PLIST_IGNORE, NULL);
 		add_plist(&plist, PLIST_FILE, MTREE_FNAME);
 		add_plist(&plist, PLIST_MTREE, MTREE_FNAME);
 	}
 	if (BuildVersion) {
-		copy_file(home, BuildVersion, BUILD_VERSION_FNAME);
+		copy_file(Home, BuildVersion, BUILD_VERSION_FNAME);
 		add_plist(&plist, PLIST_IGNORE, NULL);
 		add_plist(&plist, PLIST_FILE, BUILD_VERSION_FNAME);
 	}
 	if (BuildInfo) {
-		copy_file(home, BuildInfo, BUILD_INFO_FNAME);
+		copy_file(Home, BuildInfo, BUILD_INFO_FNAME);
 		add_plist(&plist, PLIST_IGNORE, NULL);
 		add_plist(&plist, PLIST_FILE, BUILD_INFO_FNAME);
 	}
 	if (SizePkg) {
-		copy_file(home, SizePkg, SIZE_PKG_FNAME);
+		copy_file(Home, SizePkg, SIZE_PKG_FNAME);
 		add_plist(&plist, PLIST_IGNORE, NULL);
 		add_plist(&plist, PLIST_FILE, SIZE_PKG_FNAME);
 	}
 	if (SizeAll) {
-		copy_file(home, SizeAll, SIZE_ALL_FNAME);
+		copy_file(Home, SizeAll, SIZE_ALL_FNAME);
 		add_plist(&plist, PLIST_IGNORE, NULL);
 		add_plist(&plist, PLIST_FILE, SIZE_ALL_FNAME);
 	}
@@ -393,13 +393,13 @@ pkg_perform(lpkg_head_t *pkgs)
 	}
 
 	/* And stick it into a tar ball */
-	make_dist(home, pkg, suffix, &plist);
+	make_dist(Home, pkg, suffix, &plist);
 
 	/* Cleanup */
 	free(Comment);
 	free(Desc);
 	free_plist(&plist);
-	leave_playpen(home);
+	leave_playpen(Home);
 	
 	return TRUE;		/* Success */
 }
