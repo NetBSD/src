@@ -1,4 +1,4 @@
-/*	$NetBSD: pppoectl.c,v 1.15 2004/02/13 18:02:05 wiz Exp $	*/
+/*	$NetBSD: pppoectl.c,v 1.16 2004/09/01 19:38:09 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Joerg Wunsch
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: pppoectl.c,v 1.15 2004/02/13 18:02:05 wiz Exp $");
+__RCSID("$NetBSD: pppoectl.c,v 1.16 2004/09/01 19:38:09 jdolecek Exp $");
 #endif
 
 
@@ -546,7 +546,7 @@ print_vals(const char *ifname, int phase, struct spppauthcfg *sp, int lcp_timeou
 	printf("\tmax-auth-failure = %d\n", max_auth_failures);
 
 	printf("\tmax-noreceive = %ld seconds\n", (long)max_noreceive_time);
-	printf("\tmax-alive-missed = %u unanwsered echo requests\n", maxalive_cnt);
+	printf("\tmax-alive-missed = %u unanswered echo requests\n", maxalive_cnt);
 
 #ifndef __NetBSD__
 	printf("\tenable_vj: %s\n",
