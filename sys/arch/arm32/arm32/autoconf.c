@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.35 2000/06/03 16:48:59 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.36 2000/06/06 20:17:34 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -60,6 +60,7 @@
 #ifdef SHARK
 #include <arm32/shark/sequoia.h>
 extern void	ofrootfound __P((void));
+extern void	ofw_device_register __P((struct device *, void *aux));
 extern void	startrtclock __P((void));
 #endif
 
@@ -217,4 +218,12 @@ cpu_configure()
 	(void)spl0();
 }
 
+void
+device_register(struct device *dev, void *aux)
+{
+#if defined(OFWGENCFG) || defined(SHARK)
+	/* Temporary for SHARK! */
+	ofw_device_register(dev, aux);
+#endif
+}
 /* End of autoconf.c */
