@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.42 1999/03/24 05:50:51 mrg Exp $ */
+/* $NetBSD: trap.c,v 1.42.2.1 1999/04/30 21:04:57 perry Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.42 1999/03/24 05:50:51 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.42.2.1 1999/04/30 21:04:57 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -430,7 +430,8 @@ trap(a0, a1, a2, entry, framep)
 			 * we need to reflect that as an access error.
 			 */
 			if (map != kernel_map &&
-			    (caddr_t)va >= vm->vm_maxsaddr) {
+			    (caddr_t)va >= vm->vm_maxsaddr &&
+			    va < USRSTACK) {
 				if (rv == KERN_SUCCESS) {
 					unsigned nss;
 	
