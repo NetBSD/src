@@ -1,4 +1,4 @@
-/* $Id: platid_mask.h,v 1.4 1999/11/21 07:58:50 takemura Exp $ */
+/* $Id: platid_mask.h,v 1.5 1999/11/21 12:49:08 shin Exp $ */
 
 /*-
  * Copyright (c) 1999
@@ -352,4 +352,20 @@ extern platid_t platid_mask_MACH_VICTOR_INTERLINK_MP;
 extern platid_t platid_mask_MACH_VICTOR_INTERLINK_MPC101;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define VICTOR_INTERLINK_MPC101 ((int)&platid_mask_MACH_VICTOR_INTERLINK_MPC101)
+#endif
+extern platid_t platid_mask_MACH_IBM;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define IBM ((int)&platid_mask_MACH_IBM)
+#endif
+extern platid_t platid_mask_MACH_IBM_WORKPAD;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define IBM_WORKPAD ((int)&platid_mask_MACH_IBM_WORKPAD)
+#endif
+extern platid_t platid_mask_MACH_IBM_WORKPAD_Z50;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define IBM_WORKPAD_Z50 ((int)&platid_mask_MACH_IBM_WORKPAD_Z50)
+#endif
+extern platid_t platid_mask_MACH_IBM_WORKPAD_2601_1AU;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define IBM_WORKPAD_2601_1AU ((int)&platid_mask_MACH_IBM_WORKPAD_2601_1AU)
 #endif
