@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.94 2004/10/01 16:30:53 yamt Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.95 2004/10/26 06:58:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.94 2004/10/01 16:30:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.95 2004/10/26 06:58:05 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -588,7 +588,7 @@ ktrpsig(struct proc *p, int sig, sig_t action, const sigset_t *mask,
 		kbuf->kp.code = KSI_TRAPCODE(ksi);
 		(void)memset(&kbuf->si, 0, sizeof(kbuf->si));
 		kbuf->si._info = ksi->ksi_info;
-		kth->ktr_len = sizeof(kbuf);
+		kth->ktr_len = sizeof(*kbuf);
 	} else {
 		kbuf->kp.code = 0;
 		kth->ktr_len = sizeof(struct ktr_psig);
