@@ -48,6 +48,7 @@ extern void alpha_find_call PARAMS ((Sym *, bfd_vma, bfd_vma));
 extern void vax_find_call   PARAMS ((Sym *, bfd_vma, bfd_vma));
 extern void tahoe_find_call PARAMS ((Sym *, bfd_vma, bfd_vma));
 extern void sparc_find_call PARAMS ((Sym *, bfd_vma, bfd_vma));
+extern void mips_find_call PARAMS ((Sym *, bfd_vma, bfd_vma));
 
 static void
 DEFUN (read_function_mappings, (filename), const char *filename)
@@ -258,9 +259,15 @@ DEFUN (find_call, (parent, p_lowpc, p_highpc),
       sparc_find_call (parent, p_lowpc, p_highpc);
       break;
 
+    case bfd_arch_mips:
+      mips_find_call (parent, p_lowpc, p_highpc);
+      break;
+
+#ifndef __NetBSD__
     case bfd_arch_tahoe:
       tahoe_find_call (parent, p_lowpc, p_highpc);
       break;
+#endif
 
     default:
       fprintf (stderr, _("%s: -c not supported on architecture %s\n"),
