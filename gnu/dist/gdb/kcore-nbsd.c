@@ -29,16 +29,17 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  * and direct the inferior stuff to our libkvm implementation.
  */
 
-#include "defs.h"
-#include "gdb_string.h"
-#include <errno.h>
-#include <signal.h>
-#include <fcntl.h>
-#include <kvm.h>
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/proc.h>
 #include <sys/user.h>
+#include <errno.h>
+#include <signal.h>
+#include <fcntl.h>
+#include <kvm.h>
+
+#include "defs.h"
+#include "gdb_string.h"
 #include "frame.h"  /* required by inferior.h */
 #include "inferior.h"
 #include "symtab.h"
