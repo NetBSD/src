@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.15 1994/12/17 18:45:11 mycroft Exp $	*/
+/*	$NetBSD: sb.c,v 1.16 1995/01/03 01:31:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -211,7 +211,7 @@ sbattach(parent, self, aux)
 	sc->sc_ih.ih_fun = sbintr;
 	sc->sc_ih.ih_arg = sc;
 	sc->sc_ih.ih_level = IPL_BIO;
-	intr_establish(ia->ia_irq, &sc->sc_ih);
+	intr_establish(ia->ia_irq, IST_EDGE, &sc->sc_ih);
 
 #ifdef NEWCONFIG
 	/*

@@ -433,7 +433,7 @@ seaattach(parent, self, aux)
 	sea->sc_ih.ih_fun = seaintr;
 	sea->sc_ih.ih_arg = sea;
 	sea->sc_ih.ih_level = IPL_BIO;
-	intr_establish(ia->ia_irq, &sea->sc_ih);
+	intr_establish(ia->ia_irq, IST_EDGE, &sea->sc_ih);
 
 	/*
 	 * ask the adapter what subunits are present

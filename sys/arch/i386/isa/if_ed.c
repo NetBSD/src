@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.65 1995/01/02 20:32:55 mycroft Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.66 1995/01/03 01:30:32 mycroft Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -1091,7 +1091,7 @@ edattach(parent, self, aux)
 	sc->sc_ih.ih_fun = edintr;
 	sc->sc_ih.ih_arg = sc;
 	sc->sc_ih.ih_level = IPL_NET;
-	intr_establish(ia->ia_irq, &sc->sc_ih);
+	intr_establish(ia->ia_irq, IST_EDGE, &sc->sc_ih);
 }
  
 /*

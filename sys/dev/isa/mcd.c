@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.25 1994/12/14 15:23:27 mycroft Exp $	*/
+/*	$NetBSD: mcd.c,v 1.26 1995/01/03 01:31:45 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -204,7 +204,7 @@ mcdattach(parent, self, aux)
 	sc->sc_ih.ih_fun = mcdintr;
 	sc->sc_ih.ih_arg = sc;
 	sc->sc_ih.ih_level = IPL_BIO;
-	intr_establish(ia->ia_irq, &sc->sc_ih);
+	intr_establish(ia->ia_irq, IST_EDGE, &sc->sc_ih);
 }
 
 int

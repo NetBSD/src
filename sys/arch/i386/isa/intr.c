@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.26 1994/11/18 22:22:40 mycroft Exp $	*/
+/*	$NetBSD: intr.c,v 1.27 1995/01/03 01:30:47 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -136,7 +136,7 @@ isa_strayintr(irq)
 }
 
 int fastvec;
-int intrmask[ICU_LEN], intrlevel[ICU_LEN];
+int intrtype[ICU_LEN], intrmask[ICU_LEN], intrlevel[ICU_LEN];
 struct intrhand *intrhand[ICU_LEN];
 
 /*
@@ -211,20 +211,37 @@ fakeintr(arg)
  * Set up an interrupt handler to start being called.
  */
 void
-intr_establish(irq, ih)
-	int irq;
+intr_establish(irq, type, ih)
+	int irq, type;
 	struct intrhand *ih;
 {
 	int mask;
 	struct intrhand **p, *q;
 	static struct intrhand fakehand = {fakeintr};
+	static char *typename[] = {NULL, "pulsed", "edge-triggered",
+	    "level-triggered"};
 
 	mask = 1 << irq;
 
-	if (irq < 0 || irq > ICU_LEN)
+	if (irq < 0 || irq > ICU_LEN || type == IST_NONE)
 		panic("intr_establish: bogus irq");
 	if (fastvec & mask)
 		panic("intr_establish: irq is already fast vector");
+
+	switch (intrtype[irq]) {
+	case IST_NONE:
+		intrtype[irq] = type;
+		break;
+	case IST_EDGE:
+	case IST_LEVEL:
+		if (type == intrtype[irq])
+			break;
+	case IST_PULSE:
+		if (type != IST_NONE)
+			panic("intr_establish: can't share %s with %s",
+			    typename[intrtype[irq]], typename[type]);
+		break;
+	}
 
 	/*
 	 * Figure out where to put the handler.
@@ -282,4 +299,7 @@ intr_disestablish(irq, ih)
 		panic("intr_disestablish: handler not registered");
 
 	intr_calculatemasks();
+
+	if (intrhand[irq] == NULL)
+		intrtype[irq] = IST_NONE;
 }

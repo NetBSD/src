@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.19 1994/12/10 05:55:26 mycroft Exp $	*/
+/*	$NetBSD: if_el.c,v 1.20 1995/01/03 01:30:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -210,7 +210,7 @@ elattach(parent, self, aux)
 	sc->sc_ih.ih_fun = elintr;
 	sc->sc_ih.ih_arg = sc;
 	sc->sc_ih.ih_level = IPL_NET;
-	intr_establish(ia->ia_irq, &sc->sc_ih);
+	intr_establish(ia->ia_irq, IST_EDGE, &sc->sc_ih);
 
 	dprintf(("elattach() finished.\n"));
 }

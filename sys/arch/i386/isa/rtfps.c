@@ -1,4 +1,4 @@
-/*	$NetBSD: rtfps.c,v 1.8 1995/01/02 22:27:47 mycroft Exp $	*/
+/*	$NetBSD: rtfps.c,v 1.9 1995/01/03 01:30:59 mycroft Exp $	*/
 
 /*
  * Multi-port serial card interrupt demuxing support.
@@ -125,7 +125,7 @@ rtfpsattach(parent, self, aux)
 	sc->sc_ih.ih_fun = rtfpsintr;
 	sc->sc_ih.ih_arg = sc;
 	sc->sc_ih.ih_level = IPL_TTY;
-	intr_establish(ia->ia_irq, &sc->sc_ih);
+	intr_establish(ia->ia_irq, IST_EDGE, &sc->sc_ih);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: bt742a.c,v 1.36 1994/12/28 19:43:49 mycroft Exp $	*/
+/*	$NetBSD: bt742a.c,v 1.37 1995/01/03 01:30:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -611,7 +611,7 @@ btattach(parent, self, aux)
 	bt->sc_ih.ih_fun = btintr;
 	bt->sc_ih.ih_arg = bt;
 	bt->sc_ih.ih_level = IPL_BIO;
-	intr_establish(ia->ia_irq, &bt->sc_ih);
+	intr_establish(ia->ia_irq, IST_EDGE, &bt->sc_ih);
 
 	/*
 	 * ask the adapter what subunits are present

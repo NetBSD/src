@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.17 1994/11/18 22:03:35 mycroft Exp $	*/
+/*	$NetBSD: pms.c,v 1.18 1995/01/03 01:30:58 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 Charles Hannum.
@@ -197,7 +197,7 @@ pmsattach(parent, self, aux)
 	sc->sc_ih.ih_fun = pmsintr;
 	sc->sc_ih.ih_arg = sc;
 	sc->sc_ih.ih_level = IPL_NONE;
-	intr_establish(ia->ia_irq, &sc->sc_ih);
+	intr_establish(ia->ia_irq, IST_EDGE, &sc->sc_ih);
 }
 
 int

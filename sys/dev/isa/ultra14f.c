@@ -1,4 +1,4 @@
-/*	$NetBSD: ultra14f.c,v 1.44 1994/12/28 19:43:55 mycroft Exp $	*/
+/*	$NetBSD: ultra14f.c,v 1.45 1995/01/03 01:31:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -611,7 +611,7 @@ uhaattach(parent, self, aux)
 	uha->sc_ih.ih_fun = uha->intr;
 	uha->sc_ih.ih_arg = uha;
 	uha->sc_ih.ih_level = IPL_BIO;
-	intr_establish(ia->ia_irq, &uha->sc_ih);
+	intr_establish(ia->ia_irq, IST_EDGE, &uha->sc_ih);
 
 	/*
 	 * ask the adapter what subunits are present

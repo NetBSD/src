@@ -1,4 +1,4 @@
-/*	$NetBSD: mms.c,v 1.16 1994/11/18 22:03:32 mycroft Exp $	*/
+/*	$NetBSD: mms.c,v 1.17 1995/01/03 01:30:51 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -112,7 +112,7 @@ mmsattach(parent, self, aux)
 	sc->sc_ih.ih_fun = mmsintr;
 	sc->sc_ih.ih_arg = sc;
 	sc->sc_ih.ih_level = IPL_NONE;
-	intr_establish(ia->ia_irq, &sc->sc_ih);
+	intr_establish(ia->ia_irq, IST_PULSE, &sc->sc_ih);
 }
 
 int
