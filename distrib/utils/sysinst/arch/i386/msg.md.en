@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.15 1999/06/20 06:42:06 cgd Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.16 1999/07/04 08:01:40 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -67,8 +67,20 @@ disklabel: %d cylinders, %d heads, %d sectors
 real geom: %d cylinders, %d heads, %d sectors
 }
 
-message part_head
-{No   Start(%s)   Size(%s)   End(%s)  Kind\n}
+/* the %s's will expand into three character strings */
+message part_header
+{   Start(%3s) Size(%3s)  End(%3s)   Kind
+   ---------- ---------- ---------- ----
+}
+
+message part_row_start_unused
+{%-1d:                                 }
+
+message part_row_start_used
+{%-1d: %-10d %-10d %-10d}
+
+message part_row_end
+{ %s\n}
 
 message setbiosgeom
 {You will be prompted for the geometry.  Please enter the values you
@@ -190,12 +202,28 @@ limit. You can either: }
 message onebiosmatch
 {This disk matches the following BIOS disk:
 
-BIOS #  cylinders  heads  sectors\n}
+}
+
+message onebiosmatch_header
+{BIOS # cylinders  heads   sectors
+------ ---------- ------- -------
+}
+
+message onebiosmatch_row
+{%-6x %-10d %-7d %d\n}
 
 message biosmultmatch
 {This disk matches the following BIOS disks:
 
-   BIOS #  cylinders  heads  sectors\n}
+}
+
+message biosmultmatch_header
+{   BIOS # cylinders  heads   sectors
+   ------ ---------- ------- -------
+}
+
+message biosmultmatch_row
+{%-1d: %-6x %-10d %-7d %d\n}
 
 message pickdisk
 {Choose disk: }
@@ -250,5 +278,10 @@ message bootselitemname
 message bootseltimeoutval
 {Timeout value in seconds (0-3600)}
 
-message bootselheader
-{Number      Type                                 Menu entry\n}
+message bootsel_header
+{Number Type                             Menu entry
+------ -------------------------------- ----------
+}
+
+message bootsel_row
+{%-6d %-32s %s\n}

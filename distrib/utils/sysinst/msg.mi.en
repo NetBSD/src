@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.49 1999/06/23 22:55:14 cgd Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.50 1999/07/04 08:01:39 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -215,13 +215,25 @@ partition size has been truncated to %d %s.
 
 message fspart
 {We now have your BSD-disklabel partitions as (Size and Offset in %s):
+
 }
 
-message fspart_head
-{id:      Size    Offset       End FStype Bsize Fsize Mount point
----      ----    ------       --- ------ ----- ----- -----------
+message fspart_header
+{   Size      Offset    End       FStype Bsize Fsize Mount point
+   --------- --------- --------- ------ ----- ----- -----------
 }
 
+message fspart_row_start
+{%c: %-9d %-9d %-9d %-6s }
+
+message fspart_row_end_bsd
+{%-5d %-5d %s\n}
+
+message fspart_row_end_msdos
+{            %s\n}
+
+message fspart_row_end_other
+{\n}
 
 message edfspart
 {You should set the file system (FS) kind first.  Then set the other values.

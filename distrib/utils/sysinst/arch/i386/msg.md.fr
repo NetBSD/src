@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.10 1999/06/20 06:08:20 cgd Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.11 1999/07/04 08:01:40 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -68,8 +68,20 @@ disklabel:   %d cylindres, %d têtes, %d secteurs
 géom réelle: %d cylindres, %d têtes, %d secteurs
 }
 
-message part_head
-{Part Début(%s)  Taille(%s)      Fin(%s) Type\n}
+/* the %s's will expand into three character strings */
+message part_header
+{   Début(%3s) Taille(%3s) Fin(%3s)   Type
+   ---------- ----------- ---------- ----
+}
+
+message part_row_start_unused
+{%-1d:                                  }
+
+message part_row_start_used
+{%-1d: %-10d %-11d %-10d}
+
+message part_row_end
+{ %s\n}
 
 message setbiosgeom
 {On va vous demander la géométrie. SVP entrer les valeur que vous désirez.
@@ -193,12 +205,28 @@ en dessous de cette limite. Vous pouvez: }
 message onebiosmatch
 {Ce disque correspond au disque du BIOS suivant:
 
-BIOS #  cylinders  heads  sectors\n}
+}
+
+message onebiosmatch_header
+{BIOS # cylinders  heads   sectors
+------ ---------- ------- -------
+}
+
+message onebiosmatch_row
+{%-6x %-10d %-7d %-10d\n}
 
 message biosmultmatch
 {Ce disque correspond aux disques du BIOS suivants:
 
-  BIOS #  cylinders  heads  sectors\n}
+}
+
+message biosmultmatch_header
+{   BIOS # cylinders  heads   sectors
+   ------ ---------- ------- -------
+}
+
+message biosmultmatch_row
+{%-1d: %-6x %-10d %-7d %d\n}
 
 message pickdisk
 {Choisissez un disque: }
@@ -253,5 +281,10 @@ message bootselitemname
 message bootseltimeoutval
 {Temps d'attente en secondes (0-3600)}
 
-message bootselheader
-{Numéro      Type                                 Nom\n}
+message bootsel_header
+{Numéro Type                             Nom
+------ -------------------------------- ---
+}
+
+message bootsel_row
+{%-6d %-32s %s\n}
