@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: s_ilogb.c,v 1.6 1994/08/18 23:06:52 jtc Exp $";
+static char rcsid[] = "$Id: s_ilogb.c,v 1.7 1994/08/26 13:37:40 mycroft Exp $";
 #endif
 
 /* ilogb(double x)
@@ -32,9 +32,10 @@ static char rcsid[] = "$Id: s_ilogb.c,v 1.6 1994/08/18 23:06:52 jtc Exp $";
 {
 	int32_t hx,lx,ix;
 
-	EXTRACT_WORDS(hx,lx,x);
+	GET_HIGH_WORD(hx,x);
 	hx &= 0x7fffffff;
 	if(hx<0x00100000) {
+	    GET_LOW_WORD(lx,x);
 	    if((hx|lx)==0) 
 		return 0x80000001;	/* ilogb(0) = 0x80000001 */
 	    else			/* subnormal x */
