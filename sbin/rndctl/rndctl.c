@@ -1,4 +1,4 @@
-/*	$NetBSD: rndctl.c,v 1.6 2000/06/20 02:40:10 sommerfeld Exp $	*/
+/*	$NetBSD: rndctl.c,v 1.7 2000/08/25 16:47:17 joda Exp $	*/
 
 /*-
  * Copyright (c) 1997 Michael Graff.
@@ -249,6 +249,7 @@ main(int argc, char **argv)
 	cmd = 0;
 	lflag = 0;
 	mflag = 0;
+	sflag = 0;
 	type = 0xff;
 
 	while ((ch = getopt(argc, argv, "CEcelt:d:s")) != -1)
