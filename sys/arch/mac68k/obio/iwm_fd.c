@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.26 2004/09/13 15:17:44 drochner Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.27 2004/09/22 10:08:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.26 2004/09/13 15:17:44 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.27 2004/09/22 10:08:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1026,13 +1026,13 @@ fdstrategy(bp)
 	if (TRACE_STRAT) {
 		printf("iwm: fdstrategy()...\n");
 		printf("     struct buf is at %p\n", bp);
-		printf("     Allocated buffer size (b_bufsize): 0x0%lx\n",
+		printf("     Allocated buffer size (b_bufsize): 0x0%x\n",
 		    bp->b_bufsize);
 		printf("     Base address of buffer (b_data): %p\n",
 		    bp->b_data);
-		printf("     Bytes to be transferred (b_bcount): 0x0%lx\n",
+		printf("     Bytes to be transferred (b_bcount): 0x0%x\n",
 		    bp->b_bcount);
-		printf("     Remaining I/O (b_resid): 0x0%lx\n",
+		printf("     Remaining I/O (b_resid): 0x0%x\n",
 		    bp->b_resid);
 	}
 	/* Check for valid fd unit, controller and io request */
@@ -1052,7 +1052,7 @@ fdstrategy(bp)
 		    || (bp->b_bcount % sectSize) != 0) {
 			if (TRACE_STRAT)
 				printf(" Illegal transfer size: "
-				    "block %lld, %ld bytes\n",
+				    "block %lld, %d bytes\n",
 				    (long long) bp->b_blkno, bp->b_bcount);
 			err = EINVAL;
 		}
@@ -1105,7 +1105,7 @@ fdstrategy(bp)
 		if (TRACE_STRAT) {
 			printf(" This job starts at b_blkno %lld; ",
 			    (long long) bp->b_blkno);
-			printf("it gets sorted for cylinder # %ld.\n",
+			printf("it gets sorted for cylinder # %d.\n",
 			    bp->b_cylinder);
 		}
 		spl = splbio();
@@ -1130,9 +1130,9 @@ fdstrategy(bp)
 	/* Comment on results */
 	if (TRACE_STRAT) {
 		printf("iwm: fdstrategy() done.\n");
-		printf("     We have b_resid = %ld bytes left, " \
+		printf("     We have b_resid = %d bytes left, " \
 		    "b_error is %d;\n", bp->b_resid, bp->b_error);
-		printf("     b_flags are 0x0%lx.\n", bp->b_flags);
+		printf("     b_flags are 0x0%x.\n", bp->b_flags);
 	}
 }
 
