@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mountd.c	5.14 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: mountd.c,v 1.10 1994/01/06 13:52:00 deraadt Exp $";
+static char rcsid[] = "$Id: mountd.c,v 1.11 1994/01/06 22:48:51 ws Exp $";
 #endif not lint
 
 #include <sys/param.h>
@@ -454,6 +454,7 @@ get_exportlist()
 	register struct grouplist *grp;
 	register struct exportlist *ep, *ep2;
 	struct statfs stfsbuf;
+	nfsv2fh_t nfh;
 	struct export_args args;
 	struct stat sb;
 	FILE *inf;
@@ -669,6 +670,11 @@ get_exportlist()
 			ep->ex_exflags = fep->ex_exflags;
 			ep->ex_alldirflg = 0;
 		}
+		if (getfh(ep->ex_dirp, (fhandle_t *)&nfh) < 0) {
+			syslog(LOG_WARNING, "Can't export %s", ep->ex_dirp);
+			free_exp(ep);
+			goto nextline;
+		}
 		ep->ex_dev = sb.st_dev;
 		ep->ex_next = exphead.ex_next;
 		ep->ex_prev = &exphead;
@@ -760,8 +766,7 @@ void get_mountlist()
 	char str[STRSIZ];
 	FILE *mlfile;
 
-	if (((mlfile = fopen(_PATH_RMOUNTLIST, "r")) == NULL) &&
-	    ((mlfile = fopen(_PATH_RMOUNTLIST, "w")) == NULL)) {
+	if ((mlfile = fopen(_PATH_RMOUNTLIST, "r")) == NULL) {
 		syslog(LOG_WARNING, "Can't open %s", _PATH_RMOUNTLIST);
 		return;
 	}
