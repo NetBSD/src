@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.25 2000/10/03 19:52:39 sommerfeld Exp $	*/
+/*	$NetBSD: passwd.c,v 1.26 2000/10/04 08:40:49 itojun Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: passwd.c,v 1.25 2000/10/03 19:52:39 sommerfeld Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.26 2000/10/04 08:40:49 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -322,8 +322,12 @@ void
 pw_error(const char *name, int err, int eval)
 {
 
-	if (err)
-		warn("%s", name);
+	if (err) {
+		if (name)
+			warn("%s", name);
+		else
+			warn(NULL);
+	}
 
 	warnx("%s: unchanged", _PATH_MASTERPASSWD);
 	pw_abort();
