@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.28 2003/11/13 13:40:39 manu Exp $ */
+/*	$NetBSD: mach_message.c,v 1.29 2003/11/15 22:55:35 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.28 2003/11/13 13:40:39 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.29 2003/11/15 22:55:35 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -208,16 +208,6 @@ mach_sys_msg_overwrite_trap(l, v, retval)
 				goto out1;
 			}
 
-#ifdef KTRACE
-			/*
-			 * It is convenient to record in kernel trace 
-			 * the name of the server that has been used,
-			 * it makes traces easier to read. The user
-			 * facility does not produce a perfect result,
-			 * but at least we have the information.
-			 */
-			ktruser(p, srv->srv_name, NULL, 0, 0);
-#endif
 			/*
 			 * Sanity check message length. We do not want the
 			 * server to: 
