@@ -1,6 +1,4 @@
-# $NetBSD: md.macppc,v 1.1 2002/07/23 21:00:11 briggs Exp $
-./usr/X11R6/bin/Xnest
-./usr/X11R6/bin/Xvfb
+# $NetBSD: md.macppc,v 1.2 2002/08/31 16:22:22 mycroft Exp $
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/pcitweak
 ./usr/X11R6/bin/xf86cfg
@@ -24,9 +22,6 @@
 ./usr/X11R6/lib/X11/etc/Xinstall.sh
 ./usr/X11R6/lib/libxf86config.a
 ./usr/X11R6/man/cat1/xf86cfg.0
-./usr/X11R6/man/cat1/XFree86.0
-./usr/X11R6/man/cat1/Xnest.0
-./usr/X11R6/man/cat1/Xvfb.0
 ./usr/X11R6/man/cat4
 ./usr/X11R6/man/cat4/chips.0
 ./usr/X11R6/man/cat4/cirrus.0
@@ -42,6 +37,7 @@
 ./usr/X11R6/man/cat4/microtouch.0
 ./usr/X11R6/man/cat4/mouse.0
 ./usr/X11R6/man/cat4/mutouch.0
+./usr/X11R6/man/cat4/nv.0
 ./usr/X11R6/man/cat4/penmount.0
 ./usr/X11R6/man/cat4/r128.0
 ./usr/X11R6/man/cat4/s3virge.0
