@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_usrreq.c,v 1.7 1994/06/29 06:37:41 cgd Exp $	*/
+/*	$NetBSD: pk_usrreq.c,v 1.8 1995/03/08 02:14:03 cgd Exp $	*/
 
 /*
  * Copyright (c) University of British Columbia, 1984
@@ -84,7 +84,7 @@ struct mbuf *control;
 	register int error = 0;
 
 	if (req == PRU_CONTROL)
-		return (pk_control (so, (int)m, (caddr_t)nam,
+		return (pk_control (so, (long)m, (caddr_t)nam,
 			(struct ifnet *)control));
 	if (control && control -> m_len) {
 		error = EINVAL;
@@ -322,7 +322,7 @@ struct sockaddr_x25 pk_sockmask = {
 /*ARGSUSED*/
 pk_control (so, cmd, data, ifp)
 struct socket *so;
-int cmd;
+u_long cmd;
 caddr_t data;
 register struct ifnet *ifp;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_var.h,v 1.2 1994/06/29 06:37:27 cgd Exp $	*/
+/*	$NetBSD: llc_var.h,v 1.3 1995/03/08 02:13:59 cgd Exp $	*/
 
 /* 
  * Copyright (C) Dirk Husemann, Computer Science Department IV, 
@@ -654,7 +654,7 @@ int llc_resend __P((struct llc_linkcb *, int, int));
 int llc_rawsend __P((struct llc_linkcb *, struct mbuf *, struct llc *, int, int,
 		    int, int));
 int cons_rtrequest __P((int, struct rtentry *, struct sockaddr *));
-int x25_llcglue __P((int, struct sockaddr *));
+long x25_llcglue __P((int, struct sockaddr *));
 
 #endif
 
