@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.152 2002/01/25 13:27:48 dsainty Exp $
+.\"	$NetBSD: main,v 1.153 2002/01/30 23:25:57 gavan Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1532,6 +1532,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Enami Tsugutomo Ta Mt enami@netbsd.org
 .It Ta Bernd Ernesti Ta Mt veego@netbsd.org
 .It Ta Erik Fair Ta Mt fair@netbsd.org
+.It Ta Gavan Fantom Ta Mt gavan@netbsd.org
 .It Ta Hubert Feyrer Ta Mt hubertf@netbsd.org
 .It Ta Jason R. Fink Ta Mt jrf@netbsd.org
 .It Ta Thorsten Frueauf Ta Mt frueauf@netbsd.org
