@@ -1,4 +1,4 @@
-/*	$NetBSD: setlocale.c,v 1.22 2000/12/20 11:44:36 itojun Exp $	*/
+/*	$NetBSD: setlocale.c,v 1.23 2000/12/20 11:48:58 itojun Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setlocale.c	8.1 (Berkeley) 7/4/93";
 #else
-__RCSID("$NetBSD: setlocale.c,v 1.22 2000/12/20 11:44:36 itojun Exp $");
+__RCSID("$NetBSD: setlocale.c,v 1.23 2000/12/20 11:48:58 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -128,8 +128,8 @@ __setlocale_mb_len_max_32(category, locale)
 	 * Default to the current locale for everything.
 	 */
 	for (i = 1; i < _LC_LAST; ++i)
-		(void)strncpy(new_categories[i], current_categories[i],
-		    sizeof(new_categories[i]) - 1);
+		(void)strlcpy(new_categories[i], current_categories[i],
+		    sizeof(new_categories[i]));
 
 	/*
 	 * Now go fill up new_categories from the locale argument
@@ -146,31 +146,34 @@ __setlocale_mb_len_max_32(category, locale)
 		if (!env || !*env || strchr(env, '/'))
 			env = "C";
 
-		(void)strncpy(new_categories[category], env, 31);
-		new_categories[category][31] = 0;
+		(void)strlcpy(new_categories[category], env,
+		    sizeof(new_categories[category]));
 		if (!category) {
 			for (i = 1; i < _LC_LAST; ++i) {
 				if (!(env = getenv(categories[i])) || !*env)
 					env = new_categories[0];
-				(void)strncpy(new_categories[i], env, 31);
-				new_categories[i][31] = 0;
+				(void)strlcpy(new_categories[i], env,
+				    sizeof(new_categories[i]));
 			}
 		}
 	} else if (category) {
-		(void)strncpy(new_categories[category], locale, 31);
-		new_categories[category][31] = 0;
+		(void)strlcpy(new_categories[category], locale,
+		    sizeof(new_categories[category]));
 	} else {
 		if ((r = strchr(locale, '/')) == 0) {
 			for (i = 1; i < _LC_LAST; ++i) {
-				(void)strncpy(new_categories[i], locale, 31);
-				new_categories[i][31] = 0;
+				(void)strlcpy(new_categories[i], locale,
+				    sizeof(new_categories[i]));
 			}
 		} else {
-			for (i = 1; r[1] == '/'; ++r);
+			for (i = 1; r[1] == '/'; ++r)
+				;
 			if (!r[1])
 				return (NULL);	/* Hmm, just slashes... */
 			do {
-				len = r - locale > 31 ? 31 : r - locale;
+				len = r - locale > sizeof(new_categories[i]) - 1
+					? sizeof(new_categories[i]) - 1
+					: r - locale;
 				(void)strncpy(new_categories[i++], locale, len);
 				new_categories[i++][len] = 0;
 				locale = r;
@@ -179,9 +182,9 @@ __setlocale_mb_len_max_32(category, locale)
 				while (*++r && *r != '/');
 			} while (*locale);
 			while (i < _LC_LAST)
-				(void)strncpy(new_categories[i],
-				    new_categories[i-1],
-				    sizeof(new_categories[i]) - 1);
+				(void)strlcpy(new_categories[i],
+				    new_categories[i - 1],
+				    sizeof(new_categories[i]));
 		}
 	}
 
@@ -210,8 +213,8 @@ currentlocale()
 {
 	int i;
 
-	(void)strncpy(current_locale_string, current_categories[1],
-	    sizeof(current_locale_string) - 1);
+	(void)strlcpy(current_locale_string, current_categories[1],
+	    sizeof(current_locale_string));
 
 	for (i = 2; i < _LC_LAST; ++i)
 		if (strcmp(current_categories[1], current_categories[i])) {
@@ -256,9 +259,9 @@ loadlocale(category)
 			}
 		}
 
-		(void)strncpy(current_categories[category],
+		(void)strlcpy(current_categories[category],
 		    new_categories[category],
-		    sizeof(current_categories[category]) - 1);
+		    sizeof(current_categories[category]));
 		return current_categories[category];
 	}
 
@@ -271,9 +274,9 @@ loadlocale(category)
 	switch (category) {
 	case LC_CTYPE:
 		if (__loadctype(name)) {
-			(void)strncpy(current_categories[category],
+			(void)strlcpy(current_categories[category],
 			    new_categories[category],
-			    sizeof(current_categories[category]) - 1);
+			    sizeof(current_categories[category]));
 			return current_categories[category];
 		}
 		return NULL;
