@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.177 2003/10/05 11:58:16 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.178 2003/10/05 12:16:57 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -2275,4 +2275,14 @@ sys/dev/pci/if_bcereg.h				1.1-1.3 (new file)
 	laptops) written by Cliff Wright <cliff@snipe444.org> and tested by
 	yours truly.
 	[mrg, ticket #1486]
+
+sys/netinet6/ipsec.c				1.87
+
+	No need to clear mbuf flags here; sync w/kame
+	[itojun, ticket #1508]
+
+sys/kern/kern_xxx.c				1.50
+
+	Make this compile with __HAVE_MINIMAL_EMUL.
+	[junyoung, ticket #1510]
 
