@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.47 2001/06/16 12:00:04 jdolecek Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.48 2001/07/02 20:55:16 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.47 2001/06/16 12:00:04 jdolecek Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.48 2001/07/02 20:55:16 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,6 +99,8 @@ __RCSID("$NetBSD: sysctl.c,v 1.47 2001/06/16 12:00:04 jdolecek Exp $");
 #include <netinet6/ipsec.h>
 #include <netkey/key_var.h>
 #endif /* IPSEC */
+
+#include <sys/pipe.h>
 
 #include <err.h>
 #include <ctype.h>
