@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.547 2003/07/06 14:59:54 tron Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.548 2003/07/06 17:08:43 simonb Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.546 2003/07/06 14:59:29 tron Exp 
+ *	NetBSD: pcidevs,v 1.547 2003/07/06 17:07:38 simonb Exp 
  */
 
 /*
@@ -1583,9 +1583,13 @@
 #define	PCI_PRODUCT_INTEL_E7500_HI_B2	0x2544		/* E7500 MCH HI_B vppb 2 */
 #define	PCI_PRODUCT_INTEL_E7500_HI_C1	0x2545		/* E7500 MCH HI_C vppb 1 */
 #define	PCI_PRODUCT_INTEL_E7500_HI_C2	0x2546		/* E7500 MCH HI_C vppb 2 */
-#define	PCI_PRODUCT_INTEL_E7500_HI_D1	0x2547		/* E7500 MCH HI_C vppb 1 */
-#define	PCI_PRODUCT_INTEL_E7500_HI_D2	0x2548		/* E7500 MCH HI_C vppb 2 */
-#define	PCI_PRODUCT_INTEL_E7505_HB	0x2550		/* E7505 MCH */
+#define	PCI_PRODUCT_INTEL_E7500_HI_D1	0x2547		/* E7500 MCH HI_D vppb 1 */
+#define	PCI_PRODUCT_INTEL_E7500_HI_D2	0x2548		/* E7500 MCH HI_D vppb 2 */
+#define	PCI_PRODUCT_INTEL_E7505_HB	0x2550		/* E7505 MCH Host */
+#define	PCI_PRODUCT_INTEL_E7505_RAS	0x2551		/* E7505 MCH RAS Controller */
+#define	PCI_PRODUCT_INTEL_E7505_AGP	0x2552		/* E7505 MCH Host-to-AGP Bridge */
+#define	PCI_PRODUCT_INTEL_E7505_HI_B1	0x2553		/* E7505 MCH HI_B PCI-to-PCI */
+#define	PCI_PRODUCT_INTEL_E7505_HI_B2	0x2554		/* E7505 MCH HI_B PCI-to-PCI Error Reporting */
 #define	PCI_PRODUCT_INTEL_82845G_DRAM	0x2560		/* 82845G/GL DRAM Controller / Host-Hub I/F Bridge */
 #define	PCI_PRODUCT_INTEL_82845G_AGP	0x2561		/* 82845G/GL Host-to-AGP Bridge */
 #define	PCI_PRODUCT_INTEL_82845G_IGD	0x2562		/* 82845G/GL Integrated Graphics Device */
