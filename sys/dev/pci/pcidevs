@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.417 2002/04/16 10:08:34 drochner Exp $
+$NetBSD: pcidevs,v 1.418 2002/04/18 17:40:56 tshiozak Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -567,6 +567,7 @@ vendor GUILLEMOT	0x5046	Guillemot
 vendor S3		0x5333	S3
 vendor NETPOWER2	0x5700	NetPower (2nd PCI Vendor ID)
 vendor C4T		0x6374	c't Magazin
+vendor KURUSUGAWA	0x6809	Kurusugawa Electronics, Inc.
 vendor QUANCM		0x8008	Quancm Electronic GmbH
 vendor INTEL		0x8086	Intel
 vendor TRIGEM2		0x8800	Trigem Computer (2nd PCI Vendor ID)
