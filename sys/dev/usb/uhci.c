@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.67 1999/11/18 23:32:28 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.68 1999/11/23 20:36:10 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -188,6 +188,7 @@ static void		uhci_add_bulk __P((uhci_softc_t *, uhci_soft_qh_t *));
 static void		uhci_remove_ctrl __P((uhci_softc_t *,uhci_soft_qh_t *));
 static void		uhci_remove_bulk __P((uhci_softc_t *,uhci_soft_qh_t *));
 static int		uhci_str __P((usb_string_descriptor_t *, int, char *));
+
 static usbd_status	uhci_setup_isoc __P((usbd_pipe_handle pipe));
 static void		uhci_device_isoc_enter __P((usbd_xfer_handle));
 
@@ -1974,6 +1975,7 @@ uhci_device_isoc_enter(xfer)
 
 	if (xfer->status == USBD_IN_PROGRESS) {
 		/* This request has already been entered into the frame list */
+		/* XXX */
 	}
 
 #ifdef DIAGNOSTIC
