@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_piix_reg.h,v 1.1.2.2 1998/06/10 11:29:26 bouyer Exp $	*/
+/*	$NetBSD: pciide_piix_reg.h,v 1.1.2.3 1998/06/10 13:14:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -105,5 +105,5 @@
 static int8_t piix_isp_pio[] = {0x00, 0x00, 0x01, 0x02, 0x02};
 static int8_t piix_rtc_pio[] = {0x00, 0x00, 0x00, 0x01, 0x03};
 static int8_t piix_isp_dma[] = {0x00, 0x02, 0x02};
-static int8_t piix_rtc_dma[] = {0x00, 0x10, 0x03};
+static int8_t piix_rtc_dma[] = {0x00, 0x02, 0x03};
 static int8_t piix4_sct_udma[] = {0x00, 0x01, 0x02};
