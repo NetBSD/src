@@ -1,4 +1,4 @@
-/*	$NetBSD: resolv.h,v 1.3.4.1 2000/08/26 00:56:49 mrg Exp $	*/
+/*	$NetBSD: resolv.h,v 1.3.4.2 2000/11/13 16:45:59 tv Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1989
@@ -76,79 +76,6 @@
  */
 
 #define	__RES	19991006
-
-/* XXX NetBSD: avoid conflicting with the libc (bind4) resolver */
-#define __h_errno_set		bind___h_errno_set
-#define _res			bind__res
-#define _res_opcodes		bind__res_opcodes
-#define res_send_setrhook	bind_res_send_setrhook	
-#define res_send_setqhook	bind_res_send_setqhook
-#define _getlong		bind__getlong
-#define _getshort		bind__getshort
-#define inet_addr		bind_inet_addr
-#define __res_state		bind___res_state
-#define __fp_nquery		bind___fp_nquery
-#define __fp_query		bind___fp_query
-#define __hostalias		bind___hostalias
-#define __p_query		bind___p_query
-#define __res_close		bind___res_close
-#define __res_init		bind___res_init
-#define __res_isourserver	bind___res_isourserver
-#define __res_mkquery		bind___res_mkquery
-#define __res_query		bind___res_query
-#define __res_querydomain	bind___res_querydomain
-#define __res_search		bind___res_search
-#define __res_send		bind___res_send
-#define __res_sendsigned	bind___res_sendsigned
-#define __p_key_syms		bind___p_key_syms
-#define __p_cert_syms		bind___p_cert_syms
-#define __p_class_syms		bind___p_class_syms
-#define __p_type_syms		bind___p_type_syms
-#define __p_rcode_syms		bind___p_rcode_syms
-#define __b64_ntop		bind___b64_ntop
-#define __b64_pton		bind___b64_pton
-#define __dn_comp		bind___dn_comp
-#define __dn_count_labels	bind___dn_count_labels
-#define __dn_expand		bind___dn_expand
-#define __dn_skipname		bind___dn_skipname
-#define __fp_resstat		bind___fp_resstat
-#define __loc_aton		bind___loc_aton
-#define __loc_ntoa		bind___loc_ntoa
-#define __p_cdname		bind___p_cdname
-#define __p_cdnname		bind___p_cdnname
-#define __p_class		bind___p_class
-#define __p_fqname		bind___p_fqname
-#define __p_fqnname		bind___p_fqnname
-#define __p_option		bind___p_option
-#define __p_secstodate		bind___p_secstodate
-#define __p_section		bind___p_section
-#define __p_time		bind___p_time
-#define __p_type		bind___p_type
-#define __p_rcode		bind___p_rcode
-#define __putlong		bind___putlong
-#define __putshort		bind___putshort
-#define __res_dnok		bind___res_dnok
-#define __res_findzonecut	bind___res_findzonecut
-#define __res_hnok		bind___res_hnok
-#define __res_hostalias		bind___res_hostalias
-#define __res_mailok		bind___res_mailok
-#define __res_nameinquery	bind___res_nameinquery
-#define __res_nclose		bind___res_nclose
-#define __res_ninit		bind___res_ninit
-#define __res_nmkquery		bind___res_nmkquery
-#define __res_npquery		bind___res_npquery
-#define __res_nquery		bind___res_nquery
-#define __res_nquerydomain	bind___res_nquerydomain
-#define __res_nsearch		bind___res_nsearch
-#define __res_nsend		bind___res_nsend
-#define __res_nsendsigned	bind___res_nsendsigned
-#define __res_nisourserver	bind___res_nisourserver
-#define __res_ownok		bind___res_ownok
-#define __res_queriesmatch	bind___res_queriesmatch
-#define __res_randomid		bind___res_randomid
-#define __sym_ntop		bind___sym_ntop
-#define __sym_ntos		bind___sym_ntos
-#define __sym_ston		bind___sym_ston
 
 /*
  * This used to be defined in res_query.c, now it's in herror.c.
