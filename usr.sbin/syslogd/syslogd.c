@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.29 1999/11/27 14:51:49 mrg Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.30 1999/12/02 16:17:30 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -140,7 +140,7 @@ struct filed {
 		char	f_uname[MAXUNAMES][UT_NAMESIZE+1];
 		struct {
 			char	f_hname[MAXHOSTNAMELEN+1];
-			struct sockaddr_in	f_addr;
+			struct	addrinfo *f_addr;
 		} f_forw;		/* forwarding address */
 		char	f_fname[MAXPATHLEN];
 	} f_un;
@@ -186,7 +186,7 @@ int	Debug;			/* debug flag */
 char	LocalHostName[MAXHOSTNAMELEN+1];	/* our hostname */
 char	*LocalDomain;		/* our local domain name */
 int	InetInuse = 0;		/* non-zero if INET sockets are being used */
-int	finet;			/* Internet datagram socket */
+int	finet, finet6;		/* Internet datagram socket */
 int	LogPort;		/* port number for INET connections */
 int	Initialized = 0;	/* set when we have initialized ourselves */
 int	MarkInterval = 20 * 60;	/* interval between marks in seconds */
@@ -195,12 +195,13 @@ int	SecureMode = 0;		/* when true, speak only unix domain socks */
 char	**LogPaths;		/* array of pathnames to read messages from */
 
 void	cfline __P((char *, struct filed *));
-char   *cvthname __P((struct sockaddr_in *));
+char   *cvthname __P((struct sockaddr_storage *));
 int	decode __P((const char *, CODE *));
 void	die __P((int));
 void	domark __P((int));
 void	fprintlog __P((struct filed *, int, char *));
 int	getmsgbufsize __P((void));
+int	socksetup __P((int));
 void	init __P((int));
 void	logerror __P((char *));
 void	logmsg __P((int, char *, char *, int));
@@ -219,10 +220,10 @@ main(argc, argv)
 	char *argv[];
 {
 	int ch, *funix, i, j, fklog, len, linesize;
-	int nfinetix, nfklogix, nfunixbaseix, nfds;
+	int nfinetix, nfinet6ix, nfklogix, nfunixbaseix, nfds;
 	int funixsize = 0, funixmaxsize = 0;
 	struct sockaddr_un sunx, fromunix;
-	struct sockaddr_in sin, frominet;
+	struct sockaddr_storage frominet;
 	char *p, *line, **pp;
 	struct pollfd *readfds;
 
@@ -318,32 +319,28 @@ main(argc, argv)
 		dprintf("listening on unix dgram socket %s\n", *pp);
 	}
 
-	if (!SecureMode)
-		finet = socket(AF_INET, SOCK_DGRAM, 0);
-	else
+	if (!SecureMode) {
+		finet = socksetup(AF_INET);
+#ifdef INET6
+		finet6 = socksetup(AF_INET6);
+#else
+		finet6 = -1;
+#endif
+	}
+	else {
 		finet = -1;
+		finet6 = -1;
+	}
 
 	if (finet >= 0) {
-		struct servent *sp;
-
-		sp = getservbyname("syslog", "udp");
-		if (sp == NULL) {
-			errno = 0;
-			logerror("syslog/udp: unknown service");
-			die(0);
-		}
-		memset(&sin, 0, sizeof(sin));
-		sin.sin_family = AF_INET;
-		sin.sin_port = LogPort = sp->s_port;
-		if (bind(finet, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
-			logerror("bind");
-			if (!Debug)
-				die(0);
-		} else {
-			InetInuse = 1;
-		}
 		dprintf("listening on inet socket\n");
+		InetInuse = 1;
 	}
+	if (finet6 >= 0) {
+		dprintf("listening on inet6 socket\n");
+		InetInuse = 1;
+	}
+
 	if ((fklog = open(_PATH_KLOG, O_RDONLY, 0)) < 0) {
 		dprintf("can't open %s (%d)\n", _PATH_KLOG, errno);
 	} else {
@@ -376,6 +373,11 @@ main(argc, argv)
 		nfinetix = nfds++;
 		readfds[nfinetix].fd = finet;
 		readfds[nfinetix].events = POLLIN | POLLPRI;
+	}
+	if (finet6 >= 0) {
+		nfinet6ix = nfds++;
+		readfds[nfinet6ix].fd = finet6;
+		readfds[nfinet6ix].events = POLLIN | POLLPRI;
 	}
 	nfunixbaseix = nfds;
 	for (j = 0, pp = LogPaths; *pp; pp++) {
@@ -440,6 +442,18 @@ main(argc, argv)
 				printline(cvthname(&frominet), line);
 			} else if (i < 0 && errno != EINTR)
 				logerror("recvfrom inet");
+		}
+		if (finet6 >= 0 &&
+		    (readfds[nfinet6ix].revents & (POLLIN | POLLPRI))) {
+			dprintf("inet6 socket active\n");
+			len = sizeof(frominet);
+			i = recvfrom(finet6, line, MAXLINE, 0,
+			    (struct sockaddr *)&frominet, &len);
+			if (i > 0) {
+				line[i] = '\0';
+				printline(cvthname(&frominet), line);
+			} else if (i < 0 && errno != EINTR)
+				logerror("recvfrom inet6");
 		}
 	}
 }
@@ -721,7 +735,8 @@ fprintlog(f, flags, msg)
 {
 	struct iovec iov[6];
 	struct iovec *v;
-	int l;
+	struct addrinfo *r;
+	int l, lsent;
 	char line[MAXLINE + 1], repbuf[80], greetings[200];
 
 	v = iov;
@@ -785,14 +800,21 @@ fprintlog(f, flags, msg)
 		}
 		if (l > MAXLINE)
 			l = MAXLINE;
-		if ((finet >= 0) &&
-		     (sendto(finet, line, l, 0,
-			     (struct sockaddr *)&f->f_un.f_forw.f_addr,
-			     sizeof(f->f_un.f_forw.f_addr)) != l)) {
-			int e = errno;
-			f->f_type = F_UNUSED;
-			errno = e;
-			logerror("sendto");
+		if (finet >= 0 || finet6 >= 0) {
+			for (r = f->f_un.f_forw.f_addr; r; r = r->ai_next) {
+				if (r->ai_family == AF_INET) 
+					lsent = sendto(finet, line, l, 0, r->ai_addr, r->ai_addrlen);
+#ifdef INET6
+				if (r->ai_family == AF_INET6) 
+					lsent = sendto(finet6, line, l, 0, r->ai_addr, r->ai_addrlen);
+#endif
+				if (lsent == l) 
+					break;
+			}
+			if (lsent != l) {
+				f->f_type = F_UNUSED;
+				logerror("sendto");
+			}
 		}
 		break;
 
@@ -920,27 +942,36 @@ reapchild(signo)
  */
 char *
 cvthname(f)
-	struct sockaddr_in *f;
+	struct sockaddr_storage *f;
 {
-	struct hostent *hp;
+	int error;
 	char *p;
+#ifdef KAME_SCOPEID
+	const int niflag = NI_DGRAM | NI_WITHSCOPEID;
+#else
+	const int niflag = NI_DGRAM;
+#endif
+	static char host[NI_MAXHOST], ip[NI_MAXHOST];
 
-	dprintf("cvthname(%s)\n", inet_ntoa(f->sin_addr));
+	error = getnameinfo((struct sockaddr*)f, ((struct sockaddr*)f)->sa_len,
+			ip, NI_MAXHOST, NULL, 0, NI_NUMERICHOST|niflag);
 
-	if (f->sin_family != AF_INET) {
-		dprintf("Malformed from address\n");
+	dprintf("cvthname(%s)\n", ip);
+
+	if (error) {
+		dprintf("Malformed from address %s\n", gai_strerror(error));
 		return ("???");
 	}
-	hp = gethostbyaddr((char *)&f->sin_addr,
-	    sizeof(struct in_addr), f->sin_family);
-	if (hp == 0) {
-		dprintf("Host name for your address (%s) unknown\n",
-			inet_ntoa(f->sin_addr));
-		return (inet_ntoa(f->sin_addr));
+
+	error = getnameinfo((struct sockaddr*)f, ((struct sockaddr*)f)->sa_len,
+			host, NI_MAXHOST, NULL, 0, niflag);
+	if (error) {
+		dprintf("Host name for your address (%s) unknown\n", ip);
+		return (ip);
 	}
-	if ((p = strchr(hp->h_name, '.')) && strcmp(p + 1, LocalDomain) == 0)
+	if ((p = strchr(host, '.')) && strcmp(p + 1, LocalDomain) == 0)
 		*p = '\0';
-	return (hp->h_name);
+	return (host);
 }
 
 void
@@ -1125,10 +1156,10 @@ cfline(line, f)
 	char *line;
 	struct filed *f;
 {
-	struct hostent *hp;
-	int i, pri;
-	char *bp, *p, *q;
-	char buf[MAXLINE], ebuf[100];
+	struct addrinfo hints, *res;
+	int    error, i, pri;
+	char   *bp, *p, *q;
+	char   buf[MAXLINE], ebuf[100];
 
 	dprintf("cfline(%s)\n", line);
 
@@ -1204,18 +1235,16 @@ cfline(line, f)
 		if (!InetInuse)
 			break;
 		(void)strcpy(f->f_un.f_forw.f_hname, ++p);
-		hp = gethostbyname(p);
-		if (hp == NULL) {
-			extern int h_errno;
-
-			logerror((char *)hstrerror(h_errno));
+		memset(&hints, 0, sizeof(hints));
+		hints.ai_family = AF_UNSPEC;
+		hints.ai_socktype = SOCK_DGRAM;
+		hints.ai_protocol = 0;
+		error = getaddrinfo(f->f_un.f_forw.f_hname, "syslog", &hints, &res);
+		if (error) {
+			logerror(gai_strerror(error));
 			break;
 		}
-		memset(&f->f_un.f_forw.f_addr, 0,
-			 sizeof(f->f_un.f_forw.f_addr));
-		f->f_un.f_forw.f_addr.sin_family = AF_INET;
-		f->f_un.f_forw.f_addr.sin_port = LogPort;
-		memmove(&f->f_un.f_forw.f_addr.sin_addr, hp->h_addr, hp->h_length);
+		f->f_un.f_forw.f_addr = res;
 		f->f_type = F_FORW;
 		break;
 
@@ -1302,4 +1331,41 @@ getmsgbufsize()
 		return (0);
 	}
 	return (msgbufsize);
+}
+
+int
+socksetup(af)
+	int af;
+{
+	struct addrinfo hints, *res;
+	int error, sock;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_flags = AI_PASSIVE;
+	hints.ai_family = af;
+	hints.ai_socktype = SOCK_DGRAM;
+	error = getaddrinfo(NULL, "syslog", &hints, &res);
+	if (error) {
+		logerror(gai_strerror(error));
+		errno = 0;
+		die(0);
+	}
+	if (res->ai_next) 
+		logerror("resolved to multiple addr");
+	else {
+		sock = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+		if (sock >= 0) {
+			if (bind(sock, res->ai_addr, res->ai_addrlen) < 0) {
+				close (sock);
+				sock = -1;
+				logerror("bind");
+				if (!Debug) 
+					die(0);
+			}
+       		}
+	}
+	if (res)
+		freeaddrinfo(res);
+
+	return(sock);
 }
