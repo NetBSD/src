@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC,v 1.123 2001/09/01 23:08:45 atatat Exp $
+# 	$NetBSD: GENERIC,v 1.124 2001/11/20 08:43:34 lukem Exp $
 
 include "arch/sparc/conf/std.sparc"
 
-#ident 		"GENERIC-$Revision: 1.123 $"
+#ident 		"GENERIC-$Revision: 1.124 $"
 
 maxusers	32
 
@@ -77,14 +77,15 @@ options 	NFS_BOOT_BOOTPARAM
 #options 	DDB_ONPANIC=1		# see also sysctl(8): `ddb.onpanic'
 
 ## You may also use gdb, on another computer connected to this machine over
-## a serial port.  Both KGDBDEV and KGDBRATE should be specified; KGDBDEV is
-## a dev_t encoded device number of the serial port to use, where the minor
-## device number encodes the PROM enumeration of the serial ports, i.e.:
-## 0xc00 = ttya, 0xc01 = ttyb, 0xc02 = ttyc, 0xc03 = ttyd.  (Note: ttyc and
-## ttyd are available only on some sun4 models)
-#options 	KGDB		# support for kernel gdb
-#options 	KGDBDEV=0xc01	# kgdb device number (this sample is `ttyb')
-#options 	KGDBRATE=38400	# baud rate
+## a serial port.  Both KGDB_DEV and KGDB_DEVRATE should be specified;
+## KGDB_DEV is a dev_t encoded device number of the serial port to use, where
+## the minor device number encodes the PROM enumeration of the serial ports,
+## i.e.:
+## 0xc00 = ttya, 0xc01 = ttyb, 0xc02 = ttyc, 0xc03 = ttyd.
+## (Note: ttyc and ttyd are available only on some sun4 models)
+#options 	KGDB			# support for kernel gdb
+#options 	KGDB_DEV=0xc01		# kgdb device number (this is `ttyb')
+#options 	KGDB_DEVRATE=38400	# baud rate
 
 
 ## Compile the kernel with debugging symbols (`netbsd.gdb' is the debug file),

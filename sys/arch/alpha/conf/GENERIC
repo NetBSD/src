@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.196 2001/11/04 10:27:15 itohy Exp $
+# $NetBSD: GENERIC,v 1.197 2001/11/20 08:43:20 lukem Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 #
@@ -6,7 +6,7 @@
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"GENERIC-$Revision: 1.196 $"
+#ident 		"GENERIC-$Revision: 1.197 $"
 
 maxusers 32
 
@@ -42,7 +42,7 @@ options 	DDB			# kernel debugger
 #makeoptions	DEBUGLIST="pattern1 pattern2 ..."
 
 #options 	KGDB			# Remote kernel GDB support
-#options 	"KGDB_DEVNAME=\"com\""	# device to use for KGDB
+#options 	KGDB_DEVNAME="\"com\""	# device to use for KGDB
 #options 	KGDB_DEVADDR=0x2f8	# at this address
 #options 	KGDB_DEVRATE=57600	# at this comm. rate
 

@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.145 2001/10/01 10:22:42 simonb Exp $
+# $NetBSD: files.alpha,v 1.146 2001/11/20 08:43:20 lukem Exp $
 #
 # alpha-specific configuration info
 
@@ -541,7 +541,6 @@ file	arch/alpha/alpha/db_disasm.c		ddb
 file	arch/alpha/alpha/db_interface.c		ddb
 file	arch/alpha/alpha/db_trace.c		ddb
 
-defopt	opt_kgdb_machdep.h KGDB_DEVNAME KGDB_DEVADDR KGDB_DEVRATE KGDB_DEVMODE
 file	arch/alpha/alpha/kgdb_machdep.c		kgdb
 
 # Binary compatibility with previous NetBSD releases (COMPAT_XX)
