@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.4 1999/02/15 04:36:35 hubertf Exp $	*/
+/*	$NetBSD: conf.h,v 1.5 2000/11/13 16:48:46 tsubai Exp $	*/
 
 #define mmread mmrw
 #define mmwrite mmrw
@@ -15,8 +15,10 @@ bdev_decl(fd);
 cdev_decl(fd);
 
 cdev_decl(zs);
-cdev_decl(fb);
-cdev_decl(bmcn);
-cdev_decl(ms);
 
 cdev_decl(scsibus);
+
+cdev_decl(wsdisplay);
+cdev_decl(wskbd);
+cdev_decl(wsmouse);
+cdev_decl(wsmux);

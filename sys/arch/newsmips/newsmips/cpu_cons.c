@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_cons.c,v 1.4 2000/10/12 03:08:58 onoe Exp $	*/
+/*	$NetBSD: cpu_cons.c,v 1.5 2000/11/13 16:48:46 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -62,17 +62,15 @@
 #define	SW_AUTOSEL	0x07
 
 struct consdev *cn_tab = NULL;
-extern struct consdev consdev_bm, consdev_zs, consdev_zs_ap;
-extern struct fbdev *consfb;
+extern struct consdev consdev_zs, consdev_zs_ap;
 
 int tty00_is_console = 0;
 
-void bmcons_putc(int);
-
-extern void fbbm_probe(), vt100_open(), setup_fnt(), setup_fnt24();
-extern int vt100_write();
+void fb_cnattach(void);
+void kb_hb_cnattach(void);
 
 #include "fb.h"
+#include "zsc.h"
 
 void
 consinit()
@@ -96,40 +94,21 @@ consinit()
 
 #ifdef news3400
 	if (systype == NEWS3400) {
-		int dipsw = (int)*(volatile u_char *)DIP_SWITCH;
+		volatile int *dipsw = (void *)DIP_SWITCH;
+
 #if NFB > 0
-		if ((dipsw & SW_CONSOLE) != 0) {
-#if defined(news3200) || defined(news3400)	/* KU:XXX */
-			fbbm_probe(dipsw|2);
-#else
-			fbbm_probe(dipsw);
-#endif
-			if (consfb != NULL) {
-				vt100_open();
-				setup_fnt();
-				setup_fnt24();
-				cn_tab = &consdev_bm;
-				(*cn_tab->cn_init)(cn_tab);
-				return;
-			}
+		if (*dipsw & SW_CONSOLE) {
+			fb_cnattach();
+			kb_hb_cnattach();
+			return;
 		}
-#endif /* NFB */
-		dipsw &= ~SW_CONSOLE;
+#endif
+
+#if NZSC > 0
 		tty00_is_console = 1;
 		cn_tab = &consdev_zs;
 		(*cn_tab->cn_init)(cn_tab);
+#endif
 	}
 #endif
 }
-
-#if NFB > 0
-void
-bmcons_putc(c)
-	int c;
-{
-	char cnbuf[1];
-
-	cnbuf[0] = (char)c;
-	vt100_write(0, cnbuf, 1);
-}
-#endif
