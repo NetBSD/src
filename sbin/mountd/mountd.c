@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mountd.c	8.8 (Berkeley) 2/20/94";*/
-static char *rcsid = "$Id: mountd.c,v 1.12.2.1 1994/07/19 17:08:54 cgd Exp $";
+static char *rcsid = "$Id: mountd.c,v 1.12.2.2 1994/08/12 04:07:50 cgd Exp $";
 #endif not lint
 
 #include <sys/param.h>
@@ -203,7 +203,7 @@ struct ucred def_anon = {
 	1,
 	{ (gid_t) -2 }
 };
-int root_only = 1;
+int resvport_only = 1;
 int opt_flags;
 /* Bits for above */
 #define	OP_MAPROOT	0x01
@@ -240,7 +240,7 @@ main(argc, argv)
 	while ((c = getopt(argc, argv, "n")) != EOF)
 		switch (c) {
 		case 'n':
-			root_only = 0;
+			resvport_only = 0;
 			break;
 		default:
 			fprintf(stderr, "Usage: mountd [-n] [export_file]\n");
@@ -304,27 +304,16 @@ mntsrv(rqstp, transp)
 	struct exportlist *ep;
 	struct dirlist *dp;
 	nfsv2fh_t nfh;
-	struct authunix_parms *ucr;
 	struct stat stb;
 	struct statfs fsb;
 	struct hostent *hp;
 	u_long saddr;
+	u_short sport;
 	char rpcpath[RPCMNT_PATHLEN+1], dirpath[MAXPATHLEN];
 	int bad = ENOENT, omask, defset;
-	uid_t uid = -2;
-
-	/* Get authorization */
-	switch (rqstp->rq_cred.oa_flavor) {
-	case AUTH_UNIX:
-		ucr = (struct authunix_parms *)rqstp->rq_clntcred;
-		uid = ucr->aup_uid;
-		break;
-	case AUTH_NULL:
-	default:
-		break;
-	}
 
 	saddr = transp->xp_raddr.sin_addr.s_addr;
+	sport = ntohs(transp->xp_raddr.sin_port);
 	hp = (struct hostent *)NULL;
 	switch (rqstp->rq_proc) {
 	case NULLPROC:
@@ -332,7 +321,7 @@ mntsrv(rqstp, transp)
 			syslog(LOG_ERR, "Can't send reply");
 		return;
 	case RPCMNT_MOUNT:
-		if ((uid != 0 && root_only) || uid == -2) {
+		if (sport >= IPPORT_RESERVED && resvport_only) {
 			svcerr_weakauth(transp);
 			return;
 		}
@@ -342,8 +331,8 @@ mntsrv(rqstp, transp)
 		}
 
 		/*
-		 * Get the real pathname and make sure it is a directory
-		 * that exists.
+		 * Get the real pathname and make sure it is a file or
+		 * directory that exists.
 		 */
 		if (realpath(rpcpath, dirpath) == 0 ||
 		    stat(dirpath, &stb) < 0 ||
@@ -401,7 +390,7 @@ mntsrv(rqstp, transp)
 			syslog(LOG_ERR, "Can't send reply");
 		return;
 	case RPCMNT_UMOUNT:
-		if ((uid != 0 && root_only) || uid == -2) {
+		if (sport >= IPPORT_RESERVED && resvport_only) {
 			svcerr_weakauth(transp);
 			return;
 		}
@@ -417,7 +406,7 @@ mntsrv(rqstp, transp)
 		del_mlist(inet_ntoa(transp->xp_raddr.sin_addr), dirpath);
 		return;
 	case RPCMNT_UMNTALL:
-		if ((uid != 0 && root_only) || uid == -2) {
+		if (sport >= IPPORT_RESERVED && resvport_only) {
 			svcerr_weakauth(transp);
 			return;
 		}
