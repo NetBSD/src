@@ -1,4 +1,4 @@
-/*	$NetBSD: setlocale.c,v 1.37 2002/02/13 07:59:45 yamt Exp $	*/
+/*	$NetBSD: setlocale.c,v 1.38 2002/08/02 07:12:51 tshiozak Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setlocale.c	8.1 (Berkeley) 7/4/93";
 #else
-__RCSID("$NetBSD: setlocale.c,v 1.37 2002/02/13 07:59:45 yamt Exp $");
+__RCSID("$NetBSD: setlocale.c,v 1.38 2002/08/02 07:12:51 tshiozak Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -169,20 +169,24 @@ __setlocale(category, locale)
 			if (!r[1])
 				return (NULL);	/* Hmm, just slashes... */
 			do {
+				if (i == _LC_LAST)
+					return (NULL);	/* too many slashes. */
 				len = r - locale > sizeof(new_categories[i]) - 1
 					? sizeof(new_categories[i]) - 1
 					: r - locale;
-				(void)strncpy(new_categories[i++], locale, len);
-				new_categories[i++][len] = 0;
+				(void)strlcpy(new_categories[i], locale, len+1);
+				i++;
 				locale = r;
 				while (*locale == '/')
 				    ++locale;
 				while (*++r && *r != '/');
 			} while (*locale);
-			while (i < _LC_LAST)
+			while (i < _LC_LAST) {
 				(void)strlcpy(new_categories[i],
 				    new_categories[i - 1],
 				    sizeof(new_categories[i]));
+				i++;
+			}
 		}
 	}
 
