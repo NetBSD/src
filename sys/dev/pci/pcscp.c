@@ -1,4 +1,4 @@
-/*	$NetBSD: pcscp.c,v 1.9 2000/06/02 18:34:05 tsutsui Exp $	*/
+/*	$NetBSD: pcscp.c,v 1.10 2000/06/05 15:08:00 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -108,13 +108,6 @@ void	pcscp_attach __P((struct device *, struct device *, void *));
 
 struct cfattach pcscp_ca = {
 	sizeof(struct pcscp_softc), pcscp_match, pcscp_attach
-};
-
-struct scsipi_device pcscp_dev = {
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
 };
 
 /*
@@ -274,7 +267,7 @@ pcscp_attach(parent, self, aux)
 
 	intrstr = pci_intr_string(pa->pa_pc, ih);
 	esc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, 
-	    (int (*)(void *))ncr53c9x_intr, esc);
+	    ncr53c9x_intr, esc);
 	if (esc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt", sc->sc_dev.dv_xname);
 		if (intrstr != NULL)
@@ -336,10 +329,7 @@ pcscp_attach(parent, self, aux)
 	/* Do the common parts of attachment. */
 	printf("%s", sc->sc_dev.dv_xname);
 
-	sc->sc_adapter.scsipi_cmd = ncr53c9x_scsi_cmd;
-	sc->sc_adapter.scsipi_minphys = minphys;
-
-	ncr53c9x_attach(sc, &pcscp_dev);
+	ncr53c9x_attach(sc, NULL, NULL);
 
 	/* Turn on target selection using the `dma' method */
 	ncr53c9x_dmaselect = 1;
