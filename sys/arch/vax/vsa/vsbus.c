@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.44 2003/07/15 02:15:07 lukem Exp $ */
+/*	$NetBSD: vsbus.c,v 1.45 2004/05/02 08:16:52 ragge Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.44 2003/07/15 02:15:07 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.45 2004/05/02 08:16:52 ragge Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -311,10 +311,16 @@ vsbus_copytoproc(struct proc *p, caddr_t from, caddr_t to, int len)
 		bcopy(from, to, len);
 		return;
 	}
-	if ((long)to & 0x40000000)
-		pte = &p->p_vmspace->vm_map.pmap->pm_p1br[((long)to & ~0x40000000)];
+
+#ifdef DIAGNOSTIC
+	if (p == NULL)
+		panic("vsbus_copytoproc: no proc");
+#endif
+
+	if ((vaddr_t)to & 0x40000000)
+		pte = &p->p_vmspace->vm_map.pmap->pm_p1br[vax_btop((vaddr_t)to & ~0x40000000)];
 	else
-		pte = &p->p_vmspace->vm_map.pmap->pm_p0br[(long)to];
+		pte = &p->p_vmspace->vm_map.pmap->pm_p0br[vax_btop((vaddr_t)to)];
 	if ((vaddr_t)to & PGOFSET) {
 		int cz = round_page((vaddr_t)to) - (vaddr_t)to;
 
@@ -345,10 +351,16 @@ vsbus_copyfromproc(struct proc *p, caddr_t from, caddr_t to, int len)
 		bcopy(from, to, len);
 		return;
 	}
-	if ((long)to & 0x40000000)
-		pte = &p->p_vmspace->vm_map.pmap->pm_p1br[((long)to & ~0x40000000)];
+
+#ifdef DIAGNOSTIC
+	if (p == NULL)
+		panic("vsbus_copyfromproc: no proc");
+#endif
+
+	if ((vaddr_t)from & 0x40000000)
+		pte = &p->p_vmspace->vm_map.pmap->pm_p1br[vax_btop((vaddr_t)from & ~0x40000000)];
 	else
-		pte = &p->p_vmspace->vm_map.pmap->pm_p0br[(long)to];
+		pte = &p->p_vmspace->vm_map.pmap->pm_p0br[vax_btop((vaddr_t)from)];
 	if ((vaddr_t)from & PGOFSET) {
 		int cz = round_page((vaddr_t)from) - (vaddr_t)from;
 
