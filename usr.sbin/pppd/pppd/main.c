@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.26 1997/09/26 20:23:00 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.27 1997/09/29 03:52:37 christos Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -24,7 +24,7 @@
 #if 0
 static char rcsid[] = "Id: main.c,v 1.42 1997/07/14 03:53:25 paulus Exp ";
 #else
-__RCSID("$NetBSD: main.c,v 1.26 1997/09/26 20:23:00 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.27 1997/09/29 03:52:37 christos Exp $");
 #endif
 #endif
 
@@ -586,7 +586,7 @@ main(argc, argv)
 	}
 
 	if (!persist)
-	    break;
+	    die(1);
 
 	if (demand)
 	    demand_discard();
