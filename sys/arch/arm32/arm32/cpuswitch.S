@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.34 2000/05/31 05:06:47 thorpej Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.35 2001/05/23 21:49:57 chris Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -348,27 +348,24 @@ switchmodeok:
 	/*
 	 * We have found an active queue. Currently we do not know which queue
 	 * is active just that one of them is.
-	 * We must check each queue to find the active one.
-	 * r3 contains a bit for each of the 32 queues. A one indicates that
-	 * that the queue has something in it.
 	 */
-
-	/* This ffs() type routine could be optimised */
-	mov	r4, #0x00000000
-
-findqueue:
-	mov	r0, #0x00000001
-	mov	r0, r0, lsl r4
-
-	tst	r3, r0
-	addeq	r4, r4, #0x00000001
-	beq	findqueue
-
-	/*
-	 * Ok we have found the active queue. The above code can never fail as
-	 * we only get to it if r3 != 0
-	 * r4 contains the number of the first queue found with a process in it.
+	/* this is the ffs algorithm devised by d.seal and posted to
+	 * comp.sys.arm on 16 Feb 1994.
 	 */
+ 	rsb	r5, r3, #0
+ 	ands	r0, r3, r5
+	
+	adr	r5, Lcpu_switch_ffs_table
+	
+	orr	r4, r0, r0, lsl #4  /* r0 = X * 0x11 */ 
+	orr	r4, r4, r4, lsl #6  /* r0 = X * 0x451 */
+	rsb	r4, r4, r4, lsl #16 /* r0 = X * 0x0450fbaf */
+	
+	/* used further down, saves SA stall */
+	ldr	r6, Lqs
+              
+	/* now lookup in table indexed on top 6 bits of a0 */
+	ldrb	r4, [ r5, r4, lsr #26 ]
 
 	/* rem: r0 = bit mask of chosen queue (1 << r4) */
 	/* rem: r1 = old proc */
@@ -377,8 +374,7 @@ findqueue:
 	/* rem: interrupts are disabled */
 
 	/* Get the address of the queue (&qs[queue]) */
-	ldr	r5, Lqs
-	add	r5, r5, r4, lsl #3
+	add	r5, r6, r4, lsl #3
 
 	/*
 	 * Get the process from the queue and place the next process in
@@ -700,5 +696,18 @@ trampoline_return:
 	PULLFRAME
 
 	movs	pc, lr			/* Exit */
+
+.type Lffs_table, _ASM_TYPE_OBJECT;
+Lcpu_switch_ffs_table:
+/* same as ffs table but all nums are -1 from that */
+/*               0   1   2   3   4   5   6   7           */
+	.byte	 0,  0,  1, 12,  2,  6,  0, 13  /*  0- 7 */
+	.byte	 3,  0,  7,  0,  0,  0,  0, 14  /*  8-15 */
+	.byte	10,  4,  0,  0,  8,  0,  0, 25  /* 16-23 */
+	.byte	 0,  0,  0,  0,  0, 21, 27, 15  /* 24-31 */
+	.byte	31, 11,  5,  0,  0,  0,  0,  0	/* 32-39 */
+	.byte	 9,  0,  0, 24,  0,  0, 20, 26  /* 40-47 */
+	.byte	30,  0,  0,  0,  0, 23,  0, 19  /* 48-55 */
+	.byte   29,  0, 22, 18, 28, 17, 16,  0  /* 56-63 */
 
 /* End of cpuswitch.S */
