@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_raster.c,v 1.1 2002/10/15 18:14:42 junyoung Exp $	*/
+/*	$NetBSD: vga_raster.c,v 1.2 2002/10/31 11:05:25 junyoung Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Bang Jun-Young
@@ -439,10 +439,7 @@ vga_raster_init_screen(struct vga_config *vc, struct vgascreen *scr,
 		scr->mem = boot_scrmem;
 		scr->active = 1;
 		
-		/* Set up registers for graphics mode. */
-		vga_setup_regs(&vga_console_modes[0], &moderegs);
-		/* Switch to graphics mode. */
-		vga_set_mode(vh, &moderegs);
+		vga_raster_setscreentype(vc, type);
 
 		/* Clear the entire screen. */		
 		vga_gdc_write(vh, mode, 0x02);
@@ -453,7 +450,7 @@ vga_raster_init_screen(struct vga_config *vc, struct vgascreen *scr,
 
 		/* Delay to prevent the boot screen from being too
 		   fast scrolled up. */
-		delay(1200000);
+		delay(1000000);
 	} else {
 		cpos = 0;
 		scr->dispoffset = scr->mindispoffset;
@@ -1374,16 +1371,9 @@ void
 vga_raster_setscreentype(struct vga_config *vc,
     const struct wsscreen_descr *type)
 {
-	int i;
-	struct vga_moderegs moderegs;
 	struct vga_handle *vh = &vc->hdl;
+	struct vga_moderegs moderegs;
 	
-	for (i = 0; i < sizeof(vga_console_modes) /
-	    sizeof(vga_console_modes[0]); i++) {
-		if (memcmp((struct videomode *)type->modecookie,
-		    &vga_console_modes[i], sizeof(struct videomode)) == 0) {
-			vga_setup_regs(&vga_console_modes[i], &moderegs);
-			vga_set_mode(vh, &moderegs);
-		}
-	}
+	vga_setup_regs((struct videomode *)type->modecookie, &moderegs);
+	vga_set_mode(vh, &moderegs);
 }
