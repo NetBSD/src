@@ -1,7 +1,7 @@
-# $Id: files.hp300,v 1.11 1994/05/04 04:04:19 mycroft Exp $
+# $Id: files.hp300,v 1.12 1994/05/23 05:51:38 mycroft Exp $
 #
 arch/hp300/hp300/autoconf.c		standard
-arch/hp300/hp300/clock.c		standard clock needs-count # XXX? split?
+arch/hp300/hp300/clock.c		standard
 arch/hp300/hp300/conf.c			standard
 arch/hp300/hp300/dkbad.c		standard
 arch/hp300/hp300/kgdb_glue.c		optional kgdb compile-with "${NORMAL_C} -fno-defer-pop"
@@ -9,6 +9,7 @@ arch/hp300/hp300/kgdb_stub.c		optional kgdb
 arch/hp300/hp300/machdep.c		standard config-dependent
 arch/hp300/hp300/mem.c			standard
 arch/hp300/hp300/pmap.c			standard
+arch/hp300/hp300/pmap_bootstrap.c	standard
 arch/hp300/hp300/sys_machdep.c		standard
 arch/hp300/hp300/trap.c			standard
 arch/hp300/hp300/vm_machdep.c		standard
