@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.8 1997/05/17 20:14:32 pk Exp $	*/
+/*	$NetBSD: expand.c,v 1.9 1997/10/18 14:34:51 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,9 +37,14 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.1 (Berkeley) 6/9/93";
 #else
-static char *rcsid = "$NetBSD: expand.c,v 1.8 1997/05/17 20:14:32 pk Exp $";
+static char *rcsid = "$NetBSD: expand.c,v 1.9 1997/10/18 14:34:51 mrg Exp $";
 #endif
 #endif /* not lint */
+
+#include <sys/types.h>
+
+#include <errno.h>
+#include <pwd.h>
 
 #include "defs.h"
 
