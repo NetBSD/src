@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_mask.h,v 1.1.1.1 1999/09/16 12:23:23 takemura Exp $	*/
+/* $Id: platid_mask.h,v 1.2 1999/09/25 10:52:51 uch Exp $ */
 
 /*-
  * Copyright (c) 1999
@@ -60,6 +60,34 @@ extern platid_t platid_mask_CPU_MIPS_VR_4111;
 extern platid_t platid_mask_CPU_MIPS_VR_4121;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define GENERIC_MIPS_VR_4121 ((int)&platid_mask_CPU_MIPS_VR_4121)
+#endif
+extern platid_t platid_mask_CPU_MIPS_TX;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define GENERIC_MIPS_TX ((int)&platid_mask_CPU_MIPS_TX)
+#endif
+extern platid_t platid_mask_CPU_MIPS_TX_391X;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define GENERIC_MIPS_TX_391X ((int)&platid_mask_CPU_MIPS_TX_391X)
+#endif
+extern platid_t platid_mask_CPU_MIPS_TX_3910;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define GENERIC_MIPS_TX_3910 ((int)&platid_mask_CPU_MIPS_TX_3910)
+#endif
+extern platid_t platid_mask_CPU_MIPS_TX_3911;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define GENERIC_MIPS_TX_3911 ((int)&platid_mask_CPU_MIPS_TX_3911)
+#endif
+extern platid_t platid_mask_CPU_MIPS_TX_3912;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define GENERIC_MIPS_TX_3912 ((int)&platid_mask_CPU_MIPS_TX_3912)
+#endif
+extern platid_t platid_mask_CPU_MIPS_TX_392X;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define GENERIC_MIPS_TX_392X ((int)&platid_mask_CPU_MIPS_TX_392X)
+#endif
+extern platid_t platid_mask_CPU_MIPS_TX_3922;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define GENERIC_MIPS_TX_3922 ((int)&platid_mask_CPU_MIPS_TX_3922)
 #endif
 extern platid_t platid_mask_MACH_NEC;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
@@ -228,4 +256,68 @@ extern platid_t platid_mask_MACH_FUJITSU_INTERTOP_ITXXX;
 extern platid_t platid_mask_MACH_FUJITSU_INTERTOP_IT300;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define FUJITSU_INTERTOP_IT300 ((int)&platid_mask_MACH_FUJITSU_INTERTOP_IT300)
+#endif
+extern platid_t platid_mask_MACH_PHILIPS;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define PHILIPS ((int)&platid_mask_MACH_PHILIPS)
+#endif
+extern platid_t platid_mask_MACH_PHILIPS_NINO;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define PHILIPS_NINO ((int)&platid_mask_MACH_PHILIPS_NINO)
+#endif
+extern platid_t platid_mask_MACH_PHILIPS_NINO_3XX;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define PHILIPS_NINO_3XX ((int)&platid_mask_MACH_PHILIPS_NINO_3XX)
+#endif
+extern platid_t platid_mask_MACH_PHILIPS_NINO_312;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define PHILIPS_NINO_312 ((int)&platid_mask_MACH_PHILIPS_NINO_312)
+#endif
+extern platid_t platid_mask_MACH_COMPAQ;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define COMPAQ ((int)&platid_mask_MACH_COMPAQ)
+#endif
+extern platid_t platid_mask_MACH_COMPAQ_C;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define COMPAQ_C ((int)&platid_mask_MACH_COMPAQ_C)
+#endif
+extern platid_t platid_mask_MACH_COMPAQ_C_8XX;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define COMPAQ_C_8XX ((int)&platid_mask_MACH_COMPAQ_C_8XX)
+#endif
+extern platid_t platid_mask_MACH_COMPAQ_C_810;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define COMPAQ_C_810 ((int)&platid_mask_MACH_COMPAQ_C_810)
+#endif
+extern platid_t platid_mask_MACH_COMPAQ_C_201X;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define COMPAQ_C_201X ((int)&platid_mask_MACH_COMPAQ_C_201X)
+#endif
+extern platid_t platid_mask_MACH_COMPAQ_C_2010;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define COMPAQ_C_2010 ((int)&platid_mask_MACH_COMPAQ_C_2010)
+#endif
+extern platid_t platid_mask_MACH_COMPAQ_C_2015;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define COMPAQ_C_2015 ((int)&platid_mask_MACH_COMPAQ_C_2015)
+#endif
+extern platid_t platid_mask_MACH_COMPAQ_AERO;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define COMPAQ_AERO ((int)&platid_mask_MACH_COMPAQ_AERO)
+#endif
+extern platid_t platid_mask_MACH_COMPAQ_AERO_21XX;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define COMPAQ_AERO_21XX ((int)&platid_mask_MACH_COMPAQ_AERO_21XX)
+#endif
+extern platid_t platid_mask_MACH_COMPAQ_AERO_2110;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define COMPAQ_AERO_2110 ((int)&platid_mask_MACH_COMPAQ_AERO_2110)
+#endif
+extern platid_t platid_mask_MACH_COMPAQ_AERO_2130;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define COMPAQ_AERO_2130 ((int)&platid_mask_MACH_COMPAQ_AERO_2130)
+#endif
+extern platid_t platid_mask_MACH_COMPAQ_AERO_2140;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define COMPAQ_AERO_2140 ((int)&platid_mask_MACH_COMPAQ_AERO_2140)
 #endif
