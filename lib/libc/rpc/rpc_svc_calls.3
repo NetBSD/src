@@ -2,7 +2,7 @@
 .\" Copyright 1989 AT&T
 .\" @(#)rpc_svc_calls 1.5 89/07/25 SMI;
 .\" Copyright (c) 1988 Sun Microsystems, Inc. - All Rights Reserved.
-.\"	$NetBSD: rpc_svc_calls.3,v 1.9 2003/07/01 10:20:54 wiz Exp $
+.\"	$NetBSD: rpc_svc_calls.3,v 1.10 2004/05/03 15:57:36 lukem Exp $
 .Dd May 3, 1993
 .Dt RPC_SVC_CALLS 3
 .Os
@@ -174,7 +174,7 @@ was done.
 It is assumed to be an array large enough to
 contain the maximal number of descriptors allowed.
 .Pp
-.Fn svc_getreqset
+.It Fn svc_getreqset
 This routine is only of interest if a service implementor
 does not call
 .Fn svc_run ,
