@@ -1,4 +1,4 @@
-/*	$NetBSD: ukbdmap.c,v 1.2 1999/01/10 16:56:36 augustss Exp $	*/
+/*	$NetBSD: ukbdmap.c,v 1.3 1999/02/28 10:05:00 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -151,13 +151,13 @@ static const keysym_t ukbd_keydesc_us[] = {
     KC(228),			KS_Control_R,
     KC(229), 			KS_Shift_R,
     KC(230),			KS_Alt_R,	KS_Multi_key,
-    KC(231),			KS_Meta_L,
+    KC(231),			KS_Meta_R,
 };
 
 static const keysym_t ukbd_keydesc_swapctrlcaps[] = {
 /*  pos      command		normal		shifted */
-    KC(57), 			KS_Caps_Lock,
-    KC(224), KS_Cmd1,		KS_Control_L,
+    KC(57), 			KS_Control_L,
+    KC(224), KS_Cmd1,		KS_Caps_Lock,
 };
 
 #define KBD_MAP(name, base, map) \
