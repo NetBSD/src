@@ -38,7 +38,7 @@
  *
  *	from: Utah Hdr: locore.s 1.58 91/04/22
  *	from: (hp300) @(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: copy.s,v 1.9 1994/01/23 00:19:18 cgd Exp $
+ *	$Id: copy.s,v 1.10 1994/02/28 00:27:26 chopps Exp $
  */
 
 #include <sys/errno.h>
@@ -72,13 +72,13 @@ ENTRY(copyinstr)
 	movl	sp@(8),a0		| a0 = fromaddr
 	movl	sp@(12),a1		| a1 = toaddr
 	SETUP_SFC
-	moveq	#0,d0
+	moveq	#0,d2
 	movw	sp@(16),d2		| d2 = maxlength MSW
 	movl	sp@(16),d0		| d0 = maxlength
 	jlt	Lcisflt1		| negative count, error
 	jeq	Lcisdone		| zero count, all done
-	movw	sp@(14),d0		| d0 = maxlength LSW
-	beq	Lcoloop			| low-order word zero
+	movw	sp@(18),d0		| d0 = maxlength LSW
+	jeq	Lcoloop			| low-order word zero
 	subql	#1,d0			| set up for dbeq
 Lcisloop:
 	movsb	a0@+,d1			| grab a byte
@@ -100,7 +100,7 @@ Lcisret:
 	rts
 Lcoloop:
 	subql	#1, d2
-	beq	Lcisflt2
+	jeq	Lcisflt2
 	movw	#0xffff, d0
 	jra	Lcisloop
 Lcisflt1:
