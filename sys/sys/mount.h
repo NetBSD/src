@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.102 2003/04/28 23:16:28 bjh21 Exp $	*/
+/*	$NetBSD: mount.h,v 1.103 2003/05/16 13:56:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -418,6 +418,7 @@ typedef struct fhandle	fhandle_t;
  */
 struct netcred {
 	struct	radix_node netc_rnodes[2];
+	int	netc_refcnt;
 	int	netc_exflags;
 	struct	ucred netc_anon;
 };
