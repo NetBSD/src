@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.60.2.9 2002/04/23 21:52:51 nathanw Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.60.2.10 2002/04/24 04:21:27 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -379,7 +379,7 @@ struct kinfo_proc2 {
 	ki_sigset_t p_sigignore;	/* SIGSET_T: Signals being ignored. */
 	ki_sigset_t p_sigcatch;		/* SIGSET_T: Signals being caught by user. */
 
-	int8_t	p_stat;			/* CHAR: S* process status. */
+	int8_t	p_stat;			/* CHAR: S* process status (from LWP). */
 	u_int8_t p_priority;		/* U_CHAR: Process priority. */
 	u_int8_t p_usrpri;		/* U_CHAR: User-priority based on p_cpu and p_nice. */
 	u_int8_t p_nice;		/* U_CHAR: Process "nice" value. */
@@ -430,7 +430,7 @@ struct kinfo_proc2 {
 	u_int64_t p_realflag;	       	/* INT: P_* flags (not including LWPs). */
 	u_int64_t p_nlwps;		/* LONG: Number of LWPs */
 	u_int64_t p_nrlwps;		/* LONG: Number of running LWPs */
-
+	u_int64_t p_realstat;		/* LONG: non-LWP process status */
 };
 
 /*
