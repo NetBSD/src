@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.32 2000/05/05 00:19:04 thorpej Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.33 2000/05/08 18:36:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -192,6 +192,36 @@
 #endif /* __GNUC__ */
 #else /* _STANDALONE || _KERNEL */
 #define	__RENAME(x)	no renaming in kernel or standalone environment
+#endif
+
+/*
+ * GNU C version 2.96 adds explicit branch prediction so that
+ * the CPU back-end can hint the processor and also so that
+ * code blocks can be reordered such that the predicted path
+ * sees a more linear flow, thus improving cache behavior, etc.
+ *
+ * The following two macros provide us with a way to utilize this
+ * compiler feature.  Use __predict_true() if you expect the expression
+ * to evaluate to true, and __predict_false() if you expect the
+ * expression to evaluate to false.
+ *
+ * A few notes about usage:
+ *
+ *	* Generally, __predict_false() error condition checks (unless
+ *	  you have some _strong_ reason to do otherwise, in which case
+ *	  document it), and/or __predict_true() `no-error' condition
+ *	  checks, assuming you want to optimize for the no-error case.
+ *
+ *	* Other than that, if you don't know the liklyhood of a test
+ *	  succeeding from empirical or other `hard' evidence, don't
+ *	  make predictions.
+ */
+#if __GNUC_PREREQ__(2, 96)
+#define	__predict_true(exp)	__builtin_expect(((exp) != 0), 1)
+#define	__predict_false(exp)	__builtin_expect(((exp) != 0), 0)
+#else
+#define	__predict_true(exp)	((exp) != 0)
+#define	__predict_false(exp)	((exp) != 0)
 #endif
 
 #endif /* !_SYS_CDEFS_H_ */
