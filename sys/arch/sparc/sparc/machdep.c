@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.92 1997/11/23 16:31:28 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.93 1997/11/26 22:11:53 mjacob Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -1562,6 +1562,8 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	u_long align;
 #if defined(SUN4M)
 	extern int has_iocache;
+#else
+#define	has_iocache	0
 #endif
 	extern u_long dvma_cachealign;
 
