@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.40 2000/05/29 17:37:13 jhawk Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.41 2000/08/09 02:05:06 tv Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -981,8 +981,11 @@ mb86960_rint(sc, rstat)
 	if (rstat & (FE_D1_OVRFLO | FE_D1_CRCERR | FE_D1_ALGERR |
 	    FE_D1_SRTPKT)) {
 #if FE_DEBUG >= 3
-		log(LOG_WARNING, "%s: receive error: %b\n",
-		    sc->sc_dev.dv_xname, rstat, FE_D1_ERRBITS);
+		char sbuf[sizeof(FE_D1_ERRBITS) + 64];
+
+		bitmask_snprintf(rstat, FE_D1_ERRBITS, sbuf, sizeof(sbuf));
+		log(LOG_WARNING, "%s: receive error: %s\n",
+		    sc->sc_dev.dv_xname, sbuf);
 #endif
 		ifp->if_ierrors++;
 	}
