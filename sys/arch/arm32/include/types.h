@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.1 1996/01/31 23:23:17 mark Exp $ */
+/* $NetBSD: types.h,v 1.2 1996/03/06 23:04:04 mark Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -33,11 +33,10 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)types.h	7.5 (Berkeley) 3/9/91
- *	$Id: types.h,v 1.1 1996/01/31 23:23:17 mark Exp $
  */
 
-#ifndef	_MACHTYPES_H_
-#define	_MACHTYPES_H_
+#ifndef	_ARM32_TYPES_H_
+#define	_ARM32_TYPES_H_
 
 #include <sys/cdefs.h>
 
@@ -45,8 +44,8 @@ typedef struct _physadr {
 	int r[1];
 } *physadr;
 
-typedef struct label_t {
-        int val[6];
+typedef struct label_t {	/* Used by setjmp & longjmp */
+        int val[11];
 } label_t;
          
 typedef	unsigned long	vm_offset_t;
@@ -68,4 +67,4 @@ typedef	unsigned long long	u_int64_t;
 
 typedef int32_t                 register_t;
 
-#endif	/* _MACHTYPES_H_ */
+#endif	/* _ARM32_TYPES_H_ */
