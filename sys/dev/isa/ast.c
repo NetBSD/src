@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.33.4.4 1997/10/14 10:23:17 thorpej Exp $	*/
+/*	$NetBSD: ast.c,v 1.33.4.5 1997/10/16 00:31:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -41,9 +41,10 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
+#include <dev/ic/comreg.h>
+#include <dev/ic/comvar.h>
+
 #include <dev/isa/isavar.h>
-#include <dev/isa/comreg.h>
-#include <dev/isa/comvar.h>
 #include <dev/isa/com_multi.h>
 
 #define	NSLAVES	4
