@@ -1,10 +1,10 @@
-# $NetBSD: AMIGA,v 1.9 1999/02/15 19:34:13 is Exp $
+# $NetBSD: AMIGA,v 1.10 1999/03/09 12:22:13 is Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
 #
 # Created from: 
-#$ NetBSD: GENERIC,v 1.114 1999/02/04 19:01:38 is Exp $
+#$ NetBSD: GENERIC,v 1.118 1999/03/09 12:20:41 is Exp $
 
 include "arch/amiga/conf/std.amiga"
 
@@ -14,11 +14,11 @@ options 	RTC_OFFSET=0
 #mainboards to support (in addition to Amiga)
 
 options 	BB060STUPIDROM	# You need this, if you have a non-DraCo
-				# 68060 with an OS ROM up to (at least) 
-				# V40 (OS3.1) and want to boot with the
-				# bootblock.
-				# You don't need this if you have a DraCo,
-				# have no 68060 or NEVER use the bootblock
+				#MC68060 with an OS ROM up to (at least) 
+				#V40 (OS3.1) and want to boot with the
+				#bootblock.
+				#You do not need this if you have a DraCo,
+				#have no 68060 or NEVER use the bootblock
 
 #processors this kernel should support
 
@@ -77,9 +77,9 @@ options 	COMPAT_09	# compatibility with NetBSD 0.9
 options 	COMPAT_10	# compatibility with NetBSD 1.0
 options 	COMPAT_12	# compatibility with NetBSD 1.2
 options 	COMPAT_13	# compatibility with NetBSD 1.3
-options 	COMPAT_SUNOS	# Support to run Sun (1) executables
+options 	COMPAT_SUNOS	# Support to run Sun (m68k) executables
 options 	COMPAT_NOMID	# allow nonvalid machine id executables
-#options 	COMPAT_LINUX	# Support to run Linux/1 executables
+#options 	COMPAT_LINUX	# Support to run Linux/m68k executables
 #options 	EXEC_ELF32	# 32-bit ELF executables (Linux)
 
 #Support for System V IPC facilities.
@@ -95,7 +95,7 @@ options 	LKM		# Loadable kernel modules
 options 	NKMEMCLUSTERS=256	# Size of kernel malloc area
 options 	UCONSOLE	# anyone can redirect a virtual console
 #options 	INSECURE	# allow, among other insecure stuff, LKM 
-				# loading in multi-user mode.
+				#loading in multi-user mode.
 options 	SCSIVERBOSE	# Verbose SCSI errors
 
 options 	NTP		# NTP phase/frequency locked loop
@@ -112,15 +112,14 @@ options 	DIAGNOSTIC	# Extra kernel sanity checks
 
 #Amiga specific options
 
-#options 	LIMITMEM=24	# Don't use more than LIMITMEM MB of the
-				# first bank of RAM. (default: unlimited)
+#options 	LIMITMEM=24	# Do not use more than LIMITMEM MB of the
+				#first bank of RAM. (default: unlimited)
 #options	NKPTADD=4	# set this for 4 additional KPT pages
 #options	NKPTADDSHIFT=24	# set this for 1 additional KPT page
-				# per 16 MB (1<<24 bytes) of RAM
-                                # define and decrease this, or define and
-                                # increase NKPTADD if you get "out of PT pages"
-                                # panics.
-
+				#per 16 MB (1<<24 bytes) of RAM
+                                
+                                #increase NKPTADD if you get "out of PT pages"
+                                #panics.
 #ATTENTION: There is NO WARRANTY AT ALL that the sync will be complete
 #before the 10 secondinterval ends, or that KBDRESET does work at all.
 #options 	KBDRESET	# sync on Ctrl-Amiga-Amiga
@@ -149,7 +148,7 @@ options 	GRF_SUPER72	# AGA Super-72
 #options 	KFONT_8X11	# 8x11 font
 
 #This is how you would tell the kernel the A2410 oscillator frequencies:
-#The used frequencies are the defaults, and don't need option setting
+#The used frequencies are the defaults, decrease this, or define and  do not need option setting
 #options 	ULOWELL_OSC1=36000000
 #options 	ULOWELL_OSC2=66667000
 
@@ -157,7 +156,7 @@ options 	GRF_SUPER72	# AGA Super-72
 #a littel bit.  If you raise this value too much some trash may appear.
 #the commented version is the default.
 #options 	RH_MEMCLK=61000000
-#this option enables the 64 bit sprite which doesn't seems to be work
+#this option enables the 64 bit sprite which does not work
 #for quite a few people.  E.g. The cursor sprite will turn to a block
 #when moved to the top of the screen in X.
 #options 	RH_64BIT_SPRITE
@@ -188,16 +187,16 @@ grf5		at grfcv0
 grf6		at grfet?
 grf7		at grfcv3d0
 
-ite0		at grf0			# terminal emulators for grf's
-ite1		at grf1			# terminal emulators for grf's
+ite0		at grf0			# terminal emulators for grfs
+ite1		at grf1			# terminal emulators for grfs
 
-ite2		at grf2			# terminal emulators for grf's
+ite2		at grf2			# terminal emulators for grfs
 
-ite3		at grf3			# terminal emulators for grf's
-ite4		at grf4			# terminal emulators for grf's
-ite5		at grf5			# terminal emulators for grf's
-ite6		at grf6			# terminal emulators for grf's
-ite7		at grf7			# terminal emulators for grf's
+ite3		at grf3			# terminal emulators for grfs
+ite4		at grf4			# terminal emulators for grfs
+ite5		at grf5			# terminal emulators for grfs
+ite6		at grf6			# terminal emulators for grfs
+ite7		at grf7			# terminal emulators for grfs
 
 msc0		at zbus0		# A2232 MSC multiport serial.
 mfc0		at zbus0		# MultiFaceCard I/O board
@@ -214,7 +213,7 @@ hyper*		at zbus?		# zbus HyperCom3 + HyperCom4
 com*		at hyper? port ?	# Hypercom3/4 serial ports
 #lpt*		at hyper? port ?	# not yet: Hypercom3 parallel port
 
-#Amiga Mainboard devices (sans graphics and keyboard)
+#Amiga Mainboard devices (sans graphics decrease this, or define and  keyboard)
 
 ser0		at mainbus0		# Amiga onboard serial
 par0		at mainbus0		# Amiga onboard parallel
@@ -228,6 +227,7 @@ audio*		at aucc?
 
 #Zorro-II, Zorro-III, DraCo Direct-Bus devices (sans graphics)
 
+#Alas, Melody-Z2 dont configure in the DraCo bus. 
 melody* 	at zbus0		# Melody MPEG audio decoder
 audio*		at melody?
 
@@ -280,6 +280,8 @@ cbsc0		at zbus0		# CyberSCSI I
 scsibus*	at cbsc0
 cbiisc0 	at zbus0		# CyberSCSI II
 scsibus*	at cbiisc0
+cbiiisc0 	at zbus0		# Cyberstorm mk.III/Cyberstorm PPC SCSI
+scsibus*	at cbiiisc0
 empsc0		at zbus0		# Emplant scsi
 scsibus*	at empsc0
 idesc0		at mainbus0		# A4000 & A1200 IDE
@@ -289,7 +291,7 @@ scsibus*	at idesc0
 #will configure to the next available sd unit number
 sd*	at scsibus? target ? lun ?	# scsi disks
 st*	at scsibus? target ? lun ?	# scsi tapes
-cd*	at scsibus? target ? lun ?	# scsi cd's
+cd*	at scsibus? target ? lun ?	# scsi cds
 ss*	at scsibus? target ? lun ?	# scsi scanner
 ch*	at scsibus? target ? lun ?	# scsi autochangers
 uk*	at scsibus? target ? lun ?	# scsi unknown
@@ -310,7 +312,7 @@ pseudo-device	ccd		4	# concatenated disk devices
 #pseudo-device	raid		4	# RAIDframe disk driver
 
 #rnd is EXPERIMENTAL at this point.
-#pseudo-device  rnd                     # /dev/random and in-kernel generator
+#pseudo-device  rnd                     # /dev/random decrease this, or define and  in-kernel generator
 #options        RND_COM                 # use "com" randomness as well (BROKEN)
 
 config	netbsd root on ? type ?
