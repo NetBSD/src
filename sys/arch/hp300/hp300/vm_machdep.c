@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.22 1995/05/12 13:04:33 mycroft Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.23 1995/05/12 18:24:55 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -73,7 +73,7 @@ cpu_fork(p1, p2)
 	register struct pcb *pcb = &p2->p_addr->u_pcb;
 	register struct trapframe *tf;
 	register struct switchframe *sf;
-	extern void return_to_user();
+	extern void proc_trampoline(), child_return();
 
 	p2->p_md.md_flags = p1->p_md.md_flags & ~MDP_HPUXTRACE;
 
@@ -89,12 +89,11 @@ cpu_fork(p1, p2)
 	tf = (struct trapframe *)((u_int)p2->p_addr + USPACE) - 1;
 	p2->p_md.md_regs = (int *)tf;
 	*tf = *(struct trapframe *)p1->p_md.md_regs;
-	tf->tf_regs[D0] = 0;
-	tf->tf_sr &= ~PSL_C;
-	tf->tf_format = FMT0;
 	sf = (struct switchframe *)tf - 1;
-	sf->sf_pc = (u_int)return_to_user;
-	pcb->pcb_regs[11] = (int)sf;	/* saved KSP */
+	sf->sf_pc = (u_int)proc_trampoline;
+	pcb->pcb_regs[6] = (int)child_return;	/* A2 */
+	pcb->pcb_regs[7] = (int)p2;		/* A3 */
+	pcb->pcb_regs[11] = (int)sf;		/* SSP */
 
 	return (0);
 }
@@ -104,13 +103,8 @@ cpu_set_kpc(p, pc)
 	struct proc *p;
 	u_long pc;
 {
-	struct pcb *pcb = &p->p_addr->u_pcb;
-	struct switchframe *sf = (struct switchframe *)pcb->pcb_regs[11];
-	extern void proc_trampoline(), return_to_user();
 
-	pcb->pcb_regs[6] = pc;				/* A2 */
-	pcb->pcb_regs[7] = (u_int)return_to_user;	/* A3 */
-	sf->sf_pc = (u_int)proc_trampoline;
+	p->p_addr->u_pcb.pcb_regs[6] = pc;	/* A2 */
 }
 
 /*
