@@ -1,4 +1,4 @@
-/* $NetBSD: darwin_syscall.h,v 1.10 2002/11/25 22:26:21 manu Exp $ */
+/* $NetBSD: darwin_syscall.h,v 1.11 2002/12/08 00:50:26 manu Exp $ */
 
 /*
  * System call numbers.
@@ -22,38 +22,14 @@
 /* syscall: "write" ret: "ssize_t" args: "int" "const void *" "size_t" */
 #define	DARWIN_SYS_write	4
 
-/* syscall: "open" ret: "int" args: "const char *" "int" "..." */
-#define	DARWIN_SYS_open	5
-
 /* syscall: "close" ret: "int" args: "int" */
 #define	DARWIN_SYS_close	6
 
 /* syscall: "wait4" ret: "int" args: "int" "int *" "int" "struct rusage *" */
 #define	DARWIN_SYS_wait4	7
 
-/* syscall: "ocreat" ret: "int" args: "const char *" "mode_t" */
-#define	DARWIN_SYS_ocreat	8
-
-/* syscall: "link" ret: "int" args: "const char *" "const char *" */
-#define	DARWIN_SYS_link	9
-
-/* syscall: "unlink" ret: "int" args: "const char *" */
-#define	DARWIN_SYS_unlink	10
-
-/* syscall: "chdir" ret: "int" args: "const char *" */
-#define	DARWIN_SYS_chdir	12
-
 /* syscall: "fchdir" ret: "int" args: "int" */
 #define	DARWIN_SYS_fchdir	13
-
-/* syscall: "mknod" ret: "int" args: "const char *" "mode_t" "dev_t" */
-#define	DARWIN_SYS_mknod	14
-
-/* syscall: "chmod" ret: "int" args: "const char *" "mode_t" */
-#define	DARWIN_SYS_chmod	15
-
-/* syscall: "chown" ret: "int" args: "const char *" "uid_t" "gid_t" */
-#define	DARWIN_SYS_chown	16
 
 /* syscall: "break" ret: "int" args: "char *" */
 #define	DARWIN_SYS_break	17
@@ -66,12 +42,6 @@
 
 /* syscall: "getpid" ret: "pid_t" args: */
 #define	DARWIN_SYS_getpid	20
-
-/* syscall: "mount" ret: "int" args: "const char *" "const char *" "int" "void *" */
-#define	DARWIN_SYS_mount	21
-
-/* syscall: "unmount" ret: "int" args: "const char *" "int" */
-#define	DARWIN_SYS_unmount	22
 
 /* syscall: "setuid" ret: "int" args: "uid_t" */
 #define	DARWIN_SYS_setuid	23
@@ -103,12 +73,6 @@
 /* syscall: "getsockname" ret: "int" args: "int" "struct sockaddr *" "unsigned int *" */
 #define	DARWIN_SYS_getsockname	32
 
-/* syscall: "access" ret: "int" args: "const char *" "int" */
-#define	DARWIN_SYS_access	33
-
-/* syscall: "chflags" ret: "int" args: "const char *" "u_long" */
-#define	DARWIN_SYS_chflags	34
-
 /* syscall: "fchflags" ret: "int" args: "int" "u_long" */
 #define	DARWIN_SYS_fchflags	35
 
@@ -118,14 +82,8 @@
 /* syscall: "kill" ret: "int" args: "int" "int" */
 #define	DARWIN_SYS_kill	37
 
-/* syscall: "stat43" ret: "int" args: "const char *" "struct stat43 *" */
-#define	DARWIN_SYS_stat43	38
-
 /* syscall: "getppid" ret: "pid_t" args: */
 #define	DARWIN_SYS_getppid	39
-
-/* syscall: "lstat43" ret: "int" args: "const char *" "struct stat43 *" */
-#define	DARWIN_SYS_lstat43	40
 
 /* syscall: "dup" ret: "int" args: "int" */
 #define	DARWIN_SYS_dup	41
@@ -158,9 +116,6 @@
 /* syscall: "setlogin" ret: "int" args: "const char *" */
 #define	DARWIN_SYS_setlogin	50
 
-/* syscall: "acct" ret: "int" args: "const char *" */
-#define	DARWIN_SYS_acct	51
-
 /* syscall: "sigpending13" ret: "int" args: */
 #define	DARWIN_SYS_sigpending13	52
 
@@ -173,23 +128,8 @@
 /* syscall: "oreboot" ret: "int" args: "int" */
 #define	DARWIN_SYS_oreboot	55
 
-/* syscall: "revoke" ret: "int" args: "const char *" */
-#define	DARWIN_SYS_revoke	56
-
-/* syscall: "symlink" ret: "int" args: "const char *" "const char *" */
-#define	DARWIN_SYS_symlink	57
-
-/* syscall: "readlink" ret: "int" args: "const char *" "char *" "size_t" */
-#define	DARWIN_SYS_readlink	58
-
-/* syscall: "execve" ret: "int" args: "const char *" "char *const *" "char *const *" */
-#define	DARWIN_SYS_execve	59
-
 /* syscall: "umask" ret: "mode_t" args: "mode_t" */
 #define	DARWIN_SYS_umask	60
-
-/* syscall: "chroot" ret: "int" args: "const char *" */
-#define	DARWIN_SYS_chroot	61
 
 /* syscall: "fstat43" ret: "int" args: "int" "struct stat43 *" */
 #define	DARWIN_SYS_fstat43	62
@@ -246,9 +186,6 @@
 
 /* syscall: "owait" ret: "int" args: */
 #define	DARWIN_SYS_owait	84
-
-/* syscall: "oswapon" ret: "int" args: "const char *" */
-#define	DARWIN_SYS_oswapon	85
 
 /* syscall: "getitimer" ret: "int" args: "int" "struct itimerval *" */
 #define	DARWIN_SYS_getitimer	86
@@ -361,20 +298,11 @@
 /* syscall: "setregid" ret: "int" args: "gid_t" "gid_t" */
 #define	DARWIN_SYS_setregid	127
 
-/* syscall: "rename" ret: "int" args: "const char *" "const char *" */
-#define	DARWIN_SYS_rename	128
-
-/* syscall: "otruncate" ret: "int" args: "const char *" "long" */
-#define	DARWIN_SYS_otruncate	129
-
 /* syscall: "oftruncate" ret: "int" args: "int" "long" */
 #define	DARWIN_SYS_oftruncate	130
 
 /* syscall: "flock" ret: "int" args: "int" "int" */
 #define	DARWIN_SYS_flock	131
-
-/* syscall: "mkfifo" ret: "int" args: "const char *" "mode_t" */
-#define	DARWIN_SYS_mkfifo	132
 
 /* syscall: "sendto" ret: "ssize_t" args: "int" "const void *" "size_t" "int" "const struct sockaddr *" "unsigned int" */
 #define	DARWIN_SYS_sendto	133
@@ -384,15 +312,6 @@
 
 /* syscall: "socketpair" ret: "int" args: "int" "int" "int" "int *" */
 #define	DARWIN_SYS_socketpair	135
-
-/* syscall: "mkdir" ret: "int" args: "const char *" "mode_t" */
-#define	DARWIN_SYS_mkdir	136
-
-/* syscall: "rmdir" ret: "int" args: "const char *" */
-#define	DARWIN_SYS_rmdir	137
-
-/* syscall: "utimes" ret: "int" args: "const char *" "const struct timeval *" */
-#define	DARWIN_SYS_utimes	138
 
 /* syscall: "adjtime" ret: "int" args: "const struct timeval *" "struct timeval *" */
 #define	DARWIN_SYS_adjtime	140
@@ -425,14 +344,8 @@
 /* syscall: "ogetdirentries" ret: "int" args: "int" "char *" "u_int" "long *" */
 #define	DARWIN_SYS_ogetdirentries	156
 
-/* syscall: "statfs" ret: "int" args: "const char *" "struct statfs *" */
-#define	DARWIN_SYS_statfs	157
-
 /* syscall: "fstatfs" ret: "int" args: "int" "struct statfs *" */
 #define	DARWIN_SYS_fstatfs	158
-
-/* syscall: "getfh" ret: "int" args: "const char *" "fhandle_t *" */
-#define	DARWIN_SYS_getfh	161
 
 				/* 161 is excluded getfh */
 /* syscall: "ogetdomainname" ret: "int" args: "char *" "int" */
@@ -450,17 +363,8 @@
 /* syscall: "seteuid" ret: "int" args: "uid_t" */
 #define	DARWIN_SYS_seteuid	183
 
-/* syscall: "stat12" ret: "int" args: "const char *" "struct stat12 *" */
-#define	DARWIN_SYS_stat12	188
-
 /* syscall: "fstat" ret: "int" args: "int" "struct stat12 *" */
 #define	DARWIN_SYS_fstat	189
-
-/* syscall: "lstat12" ret: "int" args: "const char *" "struct stat12 *" */
-#define	DARWIN_SYS_lstat12	190
-
-/* syscall: "pathconf" ret: "long" args: "const char *" "int" */
-#define	DARWIN_SYS_pathconf	191
 
 /* syscall: "fpathconf" ret: "long" args: "int" "int" */
 #define	DARWIN_SYS_fpathconf	192
@@ -479,9 +383,6 @@
 
 /* syscall: "lseek" ret: "off_t" args: "int" "int" "off_t" "int" */
 #define	DARWIN_SYS_lseek	199
-
-/* syscall: "truncate" ret: "int" args: "const char *" "int" "off_t" */
-#define	DARWIN_SYS_truncate	200
 
 /* syscall: "ftruncate" ret: "int" args: "int" "int" "off_t" */
 #define	DARWIN_SYS_ftruncate	201
