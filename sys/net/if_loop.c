@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.40 2001/11/12 23:49:40 lukem Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.41 2002/09/26 16:07:03 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.40 2001/11/12 23:49:40 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.41 2002/09/26 16:07:03 darrenr Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -201,9 +201,11 @@ looutput(ifp, m, dst, rt)
 		struct mbuf m0;
 		u_int32_t af = dst->sa_family;
 
+		M_COPY_PKTHDR(&m0, m);
 		m0.m_next = m;
 		m0.m_len = 4;
 		m0.m_data = (char *)&af;
+		m0.m_pkthdr.len += m0.m_len;
 
 		bpf_mtap(ifp->if_bpf, &m0);
 	}
