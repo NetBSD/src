@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_cats_machdep.c,v 1.5 2000/06/29 08:53:01 mrg Exp $	*/
+/*	$NetBSD: isa_cats_machdep.c,v 1.6 2001/03/30 11:21:33 toddpw Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 The NetBSD Foundation, Inc.
@@ -574,7 +574,7 @@ isa_irqdispatch(arg)
 
 void
 isa_fillw(val, addr, len)
-	u_short val;
+	u_int val;
 	void *addr;
 	size_t len;
 {
