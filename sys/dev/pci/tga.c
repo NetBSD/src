@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.35 2001/08/05 18:07:54 jdolecek Exp $ */
+/* $NetBSD: tga.c,v 1.36 2001/09/04 06:59:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -241,12 +241,6 @@ tga_mapaddrs(memt, pc, tag, pcisize, dc)
 	    BUS_SPACE_MAP_PREFETCHABLE | BUS_SPACE_MAP_LINEAR, &dc->dc_memh))
 		panic("tga_mapaddrs: could not map TGA address space");
 	dc->dc_vaddr = (vaddr_t) bus_space_vaddr(memt, dc->dc_memh);
-#ifdef __alpha__
-	dc->dc_paddr = ALPHA_K0SEG_TO_PHYS(dc->dc_vaddr);	/* XXX */
-#endif
-#ifdef arc
-	bus_space_paddr(memt, dc->dc_memh, &dc->dc_paddr);
-#endif
 
 	bus_space_subregion(dc->dc_memt, dc->dc_memh, 
 						TGA_MEM_CREGS, TGA_CREGS_SIZE,
@@ -669,24 +663,13 @@ tga_mmap(v, offset, prot)
 	off_t offset;
 	int prot;
 {
-
-	/* XXX NEW MAPPING CODE... */
-
-#if defined(__alpha__)
 	struct tga_softc *sc = v;
 
 	if (offset >= sc->sc_dc->dc_tgaconf->tgac_cspace_size || offset < 0)
 		return -1;
-	return alpha_btop(sc->sc_dc->dc_paddr + offset);
-#elif defined(__mips__)
-	struct tga_softc *sc = v;
 
-	if (offset >= sc->sc_dc->dc_tgaconf->tgac_cspace_size || offset < 0)
-		return -1;
-	return mips_btop(sc->sc_dc->dc_paddr + offset);
-#else
-	return (-1);
-#endif
+	return (bus_space_mmap(sc->sc_dc->dc_memt, sc->sc_dc->dc_pcipaddr,
+	    offset, prot, BUS_SPACE_MAP_LINEAR));
 }
 
 static int
