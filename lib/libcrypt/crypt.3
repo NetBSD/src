@@ -1,5 +1,7 @@
-.\" Copyright (c) 1989, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\"	$NetBSD: crypt.3,v 1.2 1995/02/19 12:19:00 cgd Exp $
+.\"
+.\" Copyright (c) 1989, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,10 +31,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)crypt.3	6.7 (Berkeley) 5/21/91
-.\"	$Id: crypt.3,v 1.1 1993/10/07 01:36:22 cgd Exp $
+.\"     @(#)crypt.3	8.1.1.1 (Berkeley) 8/18/93
 .\"
-.Dd May 21, 1991
+.Dd August 18, 1993
 .Dt CRYPT 3
 .Os
 .Sh NAME
@@ -101,7 +102,7 @@ are swapped in the
 The
 .Ar key
 is divided into groups of 8 characters (a short final group is null-padded)
-and the low-order 7 bits of each each character (56 bits per group) are
+and the low-order 7 bits of each character (56 bits per group) are
 used to form the DES key as follows: the first group of 56 bits becomes the
 initial DES key.
 For each additional group, the XOR of the group bits and the encryption of
@@ -162,9 +163,8 @@ If the value of
 is 0,
 the argument
 .Fa block
-is encrypted, otherwise it
-is decrypted.
-The encryption or decryption is returned in the original
+is encrypted, otherwise it fails.
+The encryption is returned in the original
 array
 .Fa block
 after using the
@@ -190,9 +190,7 @@ significant bit in each character is ignored and the next 7 bits of each
 character are concatenated to yield a 56-bit key.
 The function
 .Fn des_cipher
-encrypts (or decrypts if
-.Fa count
-is negative) the 64-bits stored in the 8 characters at
+encrypts the 64-bits stored in the 8 characters at
 .Fa in
 using
 .Xr abs 3
