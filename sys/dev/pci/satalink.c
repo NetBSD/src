@@ -1,4 +1,4 @@
-/*	$NetBSD: satalink.c,v 1.6 2003/12/20 06:26:47 thorpej Exp $	*/
+/*	$NetBSD: satalink.c,v 1.7 2003/12/30 17:18:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -266,7 +266,7 @@ CFATTACH_DECL(satalink, sizeof(struct pciide_softc),
 
 static void sii3112_chip_map(struct pciide_softc*, struct pci_attach_args*);
 static void sii3114_chip_map(struct pciide_softc*, struct pci_attach_args*);
-static int  sii3112_drv_probe(struct channel_softc*);
+static void sii3112_drv_probe(struct channel_softc*);
 static void sii3112_setup_channel(struct channel_softc*);
 
 static const struct pciide_product_desc pciide_satalink_products[] =  {
@@ -439,7 +439,6 @@ sii3112_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	sc->sc_wdcdev.set_modes = sii3112_setup_channel;
 
 	/* We can use SControl and SStatus to probe for drives. */
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DRVPROBE;
 	sc->sc_wdcdev.drv_probe = sii3112_drv_probe;
 
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
@@ -680,7 +679,6 @@ sii3114_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	sc->sc_wdcdev.set_modes = sii3112_setup_channel;
 
 	/* We can use SControl and SStatus to probe for drives. */
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DRVPROBE;
 	sc->sc_wdcdev.drv_probe = sii3112_drv_probe;
 
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
@@ -736,13 +734,12 @@ static const char *sata_speed[] = {
 	"<unknown 15>",
 };
 
-static int
+static void
 sii3112_drv_probe(struct channel_softc *chp)
 {
 	struct pciide_channel *cp = (struct pciide_channel *)chp;
 	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
 	uint32_t scontrol, sstatus;
-	int rv = 0;
 	uint8_t scnt, sn, cl, ch;
 
 	/*
@@ -829,15 +826,12 @@ sii3112_drv_probe(struct channel_softc *chp)
 		    sc->sc_wdcdev.sc_dev.dv_xname, chp->channel,
 		    sata_speed[(sstatus & SStatus_SPD_mask) >> 
 			       SStatus_SPD_shift]);
-		rv |= (1 << 0);
 		break;
 
 	default:
 		aprint_error("%s: port %d: unknown SStatus: 0x%08x\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, chp->channel, sstatus);
 	}
-
-	return (rv);
 }
 
 static void
