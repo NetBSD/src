@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 1994 Gordon W. Ross
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -41,8 +42,7 @@
  *
  *	@(#)zsvar.h	8.1 (Berkeley) 6/11/93
  *
- * from: Header: zsvar.h,v 1.7 92/11/26 01:28:04 torek Exp  (LBL)
- * $Id: zsvar.h,v 1.3 1994/05/04 05:30:35 gwr Exp $
+ * $Id: zsvar.h,v 1.4 1994/09/20 16:23:06 gwr Exp $
  */
 
 /*
@@ -138,7 +138,7 @@ struct zs_chanstate {
 
 /*
  * Macros to read and write individual registers (except 0) in a channel.
- * The ZS chip requires a 2.2 uSec. recovery time between accesses.
+ * The ZS chip requires a 1.6 uSec. recovery time between accesses.
  */
 #define	ZS_READ(c, r)		zs_read(c, r)
 #define	ZS_WRITE(c, r, v)	zs_write(c, r, v)
