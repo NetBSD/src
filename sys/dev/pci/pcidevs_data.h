@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.369 2001/10/24 00:19:21 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.370 2001/10/25 11:57:44 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.366 2001/10/24 00:18:49 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.367 2001/10/25 11:57:15 augustss Exp 
  */
 
 /*
@@ -5932,10 +5932,28 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "VT82C686A AC-97 Audio Controller",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8233_AC97,
+	    0,
+	    "VIA Technologies",
+	    "VT8233 AC-97 Audio Controller",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6102,
 	    0,
 	    "VIA Technologies",
 	    "VT6102 (Rhine II) 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8233,
+	    0,
+	    "VIA Technologies",
+	    "VT8233 PCI-ISA Bridge",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8366,
+	    0,
+	    "VIA Technologies",
+	    "VT8366 (Apollo KT266) CPU-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_MC97,
@@ -5978,6 +5996,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "VIA Technologies",
 	    "VT82C598 (Apollo MVP3) PCI-AGP",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8366AGP,
+	    0,
+	    "VIA Technologies",
+	    "VT8366 CPU-AGP",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_60x0,
