@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";*/
-static char rcsid[] = "$NetBSD: syslogd.c,v 1.8 1997/04/26 05:08:29 mrg Exp $";
+static char rcsid[] = "$NetBSD: syslogd.c,v 1.9 1997/04/26 05:12:32 mrg Exp $";
 #endif /* not lint */
 
 /*
@@ -484,7 +484,7 @@ logmsg(pri, msg, from, flags)
 	int fac, msglen, omask, prilev;
 	char *timestamp;
 
-	dprintf("logmsg: pri %o, flags %x, from %s, msg %s\n",
+	dprintf("logmsg: pri 0%o, flags 0x%x, from %s, msg %s\n",
 	    pri, flags, from, msg);
 
 	omask = sigblock(sigmask(SIGHUP)|sigmask(SIGALRM));
