@@ -2467,7 +2467,7 @@ fi
 
 fi
 
-for ac_header in sys/endian.h sys/sysmacros.h sys/syslimits.h \
+for ac_header in sys/sysmacros.h sys/syslimits.h \
 	features.h malloc.h stddef.h
 do
 as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
@@ -2516,7 +2516,7 @@ EOF
 fi
 done
 
-for ac_header in machine/bswap.h sys/cdefs.h sys/featuretest.h \
+for ac_header in machine/bswap.h sys/cdefs.h sys/endian.h sys/featuretest.h \
 	err.h inttypes.h libgen.h paths.h stdint.h util.h
 do
 as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
