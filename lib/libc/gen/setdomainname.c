@@ -1,4 +1,4 @@
-/*	$NetBSD: setdomainname.c,v 1.7 1998/05/06 19:53:41 kleink Exp $	*/
+/*	$NetBSD: setdomainname.c,v 1.8 1998/11/13 12:31:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sethostname.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: setdomainname.c,v 1.7 1998/05/06 19:53:41 kleink Exp $");
+__RCSID("$NetBSD: setdomainname.c,v 1.8 1998/11/13 12:31:51 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,7 +60,7 @@ setdomainname(name, namelen)
 
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_DOMAINNAME;
-	if (sysctl(mib, 2, NULL, NULL, (void *)name, namelen) == -1)
+	if (sysctl(mib, 2, NULL, NULL, name, namelen) == -1)
 		return (-1);
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.c,v 1.18 1998/09/13 16:09:06 kleink Exp $	*/
+/*	$NetBSD: syslog.c,v 1.19 1998/11/13 12:31:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)syslog.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: syslog.c,v 1.18 1998/09/13 16:09:06 kleink Exp $");
+__RCSID("$NetBSD: syslog.c,v 1.19 1998/11/13 12:31:53 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -79,6 +79,12 @@ static int	LogFacility = LOG_USER;	/* default facility code */
 static int	LogMask = 0xff;		/* mask of priorities to be logged */
 extern char	*__progname;		/* Program name, from crt0. */
 
+#ifdef lint
+static const int ZERO = 0;
+#else
+#define ZERO	0
+#endif
+
 /*
  * syslog, vsyslog --
  *	print message on log file; output is intended for syslogd(8).
@@ -110,7 +116,7 @@ vsyslog(pri, fmt, ap)
 	const char *fmt;
 	va_list ap;
 {
-	int cnt;
+	size_t cnt;
 	char ch, *p, *t;
 	time_t now;
 	struct tm tmnow;
@@ -154,13 +160,13 @@ vsyslog(pri, fmt, ap)
 	p = tbuf;  
 	tbuf_left = TBUF_LEN;
 	
-#define	DEC()	\
-	do {					\
-		if (prlen >= tbuf_left)		\
-			prlen = tbuf_left - 1;	\
-		p += prlen;			\
-		tbuf_left -= prlen;		\
-	} while (0)
+#define	DEC()							\
+	do {							\
+		if (prlen >= tbuf_left)				\
+			prlen = tbuf_left - 1;			\
+		p += prlen;					\
+		tbuf_left -= prlen;				\
+	} while (ZERO)
 
 	prlen = snprintf(p, tbuf_left, "<%d>", pri);
 	DEC();

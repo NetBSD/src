@@ -1,4 +1,4 @@
-/*	$NetBSD: scandir.c,v 1.13 1998/08/26 00:38:40 perry Exp $	*/
+/*	$NetBSD: scandir.c,v 1.14 1998/11/13 12:31:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)scandir.c	8.3 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: scandir.c,v 1.13 1998/08/26 00:38:40 perry Exp $");
+__RCSID("$NetBSD: scandir.c,v 1.14 1998/11/13 12:31:51 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -80,9 +80,8 @@ scandir(dirname, namelist, select, dcomp)
 	int (*dcomp) __P((const void *, const void *));
 {
 	struct dirent *d, *p, **names;
-	size_t nitems;
+	size_t nitems, arraysz;
 	struct stat stb;
-	long arraysz;
 	DIR *dirp;
 
 	if ((dirp = opendir(dirname)) == NULL)
@@ -94,8 +93,8 @@ scandir(dirname, namelist, select, dcomp)
 	 * estimate the array size by taking the size of the directory file
 	 * and dividing it by a multiple of the minimum size entry. 
 	 */
-	arraysz = (stb.st_size / 24);
-	names = (struct dirent **)malloc(arraysz * sizeof(struct dirent *));
+	arraysz = (size_t)(stb.st_size / 24);
+	names = malloc(arraysz * sizeof(struct dirent *));
 	if (names == NULL)
 		return(-1);
 
@@ -121,9 +120,9 @@ scandir(dirname, namelist, select, dcomp)
 		if (++nitems >= arraysz) {
 			if (fstat(dirp->dd_fd, &stb) < 0)
 				return(-1);	/* just might have grown */
-			arraysz = stb.st_size / 12;
-			names = (struct dirent **)realloc((char *)names,
-				arraysz * sizeof(struct dirent *));
+			arraysz = (size_t)(stb.st_size / 12);
+			names = realloc(names,
+			    arraysz * sizeof(struct dirent *));
 			if (names == NULL)
 				return(-1);
 		}
@@ -144,6 +143,6 @@ alphasort(d1, d2)
 	const void *d1;
 	const void *d2;
 {
-	return(strcmp((*(struct dirent **)d1)->d_name,
-	    (*(struct dirent **)d2)->d_name));
+	return(strcmp((*(const struct dirent *const *)d1)->d_name,
+	    (*(const struct dirent *const *)d2)->d_name));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pw_scan.c,v 1.7 1998/10/14 21:13:04 kleink Exp $	*/
+/*	$NetBSD: pw_scan.c,v 1.8 1998/11/13 12:31:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pw_scan.c,v 1.7 1998/10/14 21:13:04 kleink Exp $");
+__RCSID("$NetBSD: pw_scan.c,v 1.8 1998/11/13 12:31:50 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #if defined(_LIBC)
@@ -146,7 +146,7 @@ pw_scan(bp, pw, flags)
 				break;	
 		}
 
-	if ((p = strsep(&bp, ":"))) {			/* too many */
+	if ((p = strsep(&bp, ":")) != NULL) {			/* too many */
 fmt:		
 		if (!(inflags & _PASSWORD_NOWARN))
 			warnx("corrupted entry");

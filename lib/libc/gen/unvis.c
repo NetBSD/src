@@ -1,4 +1,4 @@
-/*	$NetBSD: unvis.c,v 1.12 1998/02/03 18:23:57 perry Exp $	*/
+/*	$NetBSD: unvis.c,v 1.13 1998/11/13 12:31:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)unvis.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: unvis.c,v 1.12 1998/02/03 18:23:57 perry Exp $");
+__RCSID("$NetBSD: unvis.c,v 1.13 1998/11/13 12:31:53 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -72,7 +72,7 @@ __weak_alias(__unvis13,___unvis13);
 int
 unvis(cp, c, astate, flag)
 	char *cp;
-	char c;
+	int c;
 	int *astate, flag;
 {
 	return __unvis13(cp, (int)c, astate, flag);
@@ -119,7 +119,7 @@ __unvis13(cp, c, astate, flag)
 			*astate = S_OCTAL2;
 			return (0);
 		case 'M':
-			*cp = 0200;
+			*cp = (char)0200;
 			*astate = S_META;
 			return (0);
 		case '^':

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.6 1997/07/21 14:07:36 jtc Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.7 1998/11/13 12:31:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.2 (Berkeley) 1/4/94";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.6 1997/07/21 14:07:36 jtc Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.7 1998/11/13 12:31:53 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,12 +61,14 @@ __weak_alias(sysctl,_sysctl);
 int
 sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	int *name;
-	u_int namelen;
-	void *oldp, *newp;
+	size_t namelen;
+	void *oldp;
+	const void *newp;
 	size_t *oldlenp, newlen;
 {
 	if (name[0] != CTL_USER)
-		return (__sysctl(name, namelen, oldp, oldlenp, newp, newlen));
+		/* LINTED will fix when sysctl interface gets corrected */
+		return (__sysctl(name, namelen, oldp, oldlenp, (void *)newp, newlen));
 
 	if (newp != NULL) {
 		errno = EPERM;
