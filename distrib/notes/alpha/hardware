@@ -1,3 +1,5 @@
+	$NetBSD: hardware,v 1.1.2.4 1998/05/29 04:12:45 mycroft Exp $	
+
 NetBSD/alpha _VER runs on the following DEC Alpha platforms:
 
      DEC 3000/500-family systems 
@@ -31,7 +33,7 @@ RAM, and you will probably want more than that if you're running X.
 We support add-in devices on the PCI, ISA, EISA and TurboChannel buses.
 Because NetBSD has an extremely machine-independent device driver
 system, many device drivers are the same as used in other ports that
-use the same bus. For example, the de network card driver is shared
+use the same bus. For example, the `de' network card driver is shared
 by the i386 and Alpha ports. Some drivers on inspection appear as if
 they will work on the alpha but have not been tested because that
 hardware was not available to NetBSD testers; these are marked as
@@ -127,7 +129,7 @@ AHA-174x SCSI host adapters (in enhanced mode)
                 ahb0    any     any     any
 
 AHA-2X4X or AIC-7XXX-based SCSI host adapters
-                ahc0    any     any any
+                ahc0    any     any     any
 
 Bus Logic BT445, BT74x, or BT9xx SCSI host adapters
                 bha0    0x330   any     any
