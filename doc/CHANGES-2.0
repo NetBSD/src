@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.118 2004/04/21 20:03:51 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.119 2004/04/22 07:54:48 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1172,3 +1172,36 @@ include/heimdal/version.h			1.15
 
 	heimdal 0.6 to 0.6.1
 	[lha, ticket #157]
+
+distrib/sparc64/xminiroot/Makefile		1.23
+
+	Copy the sysinst message files into the correct objdir at the same time
+	as copying the crunched program binary.
+	Fixes PR sparc64/25265
+	[dsl, ticket #171]
+
+sys/netinet/tcp_subr.c				1.164
+
+	Change the default state of two tunables; bring our TCP a little bit
+	closer to normal behaviour for the current century.
+	New Reno is now on by default (which is really the only reasonable
+	choice, since we don't do SACK); instead of an initial window of 1
+	for non-local nets, we now use Sally Floyd's magic 4K rule.
+	[tls, ticket #172]
+
+sys/sys/sysctl.h				1.122
+
+	Move a type cast (wrt description handling) and do a little lint
+	cleaning.
+	[atatat, ticket #173]
+
+sbin/sysctl/sysctl.c				1.92
+
+	Some lint cleaning, strip leading (and sometimes trailing) whitespace
+	from values to be assigned when processing a file.  Clean up error
+	reporting (print the name of the file and the line number), and tidy
+	some numeric conversions.  Continue after most "errors" when
+	processing a -f argument.
+	Addresses PR bin/25115.
+	[atatat, ticket #174]
+
