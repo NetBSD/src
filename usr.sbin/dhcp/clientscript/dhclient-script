@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: dhclient-script,v 1.4 2002/04/10 10:11:41 enami Exp $
+# $NetBSD: dhclient-script,v 1.5 2002/05/28 15:04:01 christos Exp $
 
 ENTERHOOKS=/etc/dhclient-enter-hooks
 EXITHOOKS=/etc/dhclient-exit-hooks
@@ -8,8 +8,7 @@ RESOLV=/etc/resolv.conf
 SIGNATURE="# Created by dhclient at: "
 
 make_resolv_conf() {
-	if [ \( ! -z "$new_domain_name" \) -a \
-	     \( ! -z "$new_domain_name_servers" \) ]; then
+	if [ ! -z "$new_domain_name_servers" ]; then
 		if [ -f $RESOLV ]
 		then
 			while read line; do
