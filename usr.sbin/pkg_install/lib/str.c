@@ -1,11 +1,11 @@
-/*	$NetBSD: str.c,v 1.4 1997/10/17 14:54:50 lukem Exp $	*/
+/*	$NetBSD: str.c,v 1.5 1997/10/18 11:06:07 lukem Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
 #else
-__RCSID("$NetBSD: str.c,v 1.4 1997/10/17 14:54:50 lukem Exp $");
+__RCSID("$NetBSD: str.c,v 1.5 1997/10/18 11:06:07 lukem Exp $");
 #endif
 #endif
 
@@ -89,7 +89,7 @@ suffix(char *str, char *suff)
     char *idx;
     Boolean ret = FALSE;
 
-    idx = rindex(str, '.');
+    idx = strrchr(str, '.');
     if (idx && !strcmp(idx + 1, suff))
 	ret = TRUE;
     return ret;
@@ -101,7 +101,7 @@ nuke_suffix(char *str)
 {
     char *idx;
 
-    idx = rindex(str, '.');
+    idx = strrchr(str, '.');
     if (idx)
 	*idx = '\0';  /* Yow!  Don't try this on a const! */
 }

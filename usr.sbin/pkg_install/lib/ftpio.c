@@ -1,7 +1,7 @@
-/*	$NetBSD: ftpio.c,v 1.3 1997/10/17 14:54:32 lukem Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.4 1997/10/18 11:05:56 lukem Exp $	*/
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.3 1997/10/17 14:54:32 lukem Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.4 1997/10/18 11:05:56 lukem Exp $");
 #endif
 /*
  * ----------------------------------------------------------------------------
@@ -20,7 +20,7 @@ __RCSID("$NetBSD: ftpio.c,v 1.3 1997/10/17 14:54:32 lukem Exp $");
  * `state' of FTP_t
  *
  * from FreeBSD Id: ftpio.c,v 1.25 1997/02/22 15:06:50 peter Exp
- * $NetBSD: ftpio.c,v 1.3 1997/10/17 14:54:32 lukem Exp $
+ * $NetBSD: ftpio.c,v 1.4 1997/10/18 11:05:56 lukem Exp $
  *
  */
 
@@ -429,7 +429,7 @@ get_url_info(char *url_in, char *host_ret, int *port_ret, char *name_ret)
     /* We like to stomp a lot on the URL string in dissecting it, so copy it first */
     strncpy(url, url_in, BUFSIZ);
     host = url + 6;
-    if ((cp = index(host, ':')) != NULL) {
+    if ((cp = strchr(host, ':')) != NULL) {
 	*(cp++) = '\0';
 	port = strtol(cp, 0, 0);
     }
@@ -438,7 +438,7 @@ get_url_info(char *url_in, char *host_ret, int *port_ret, char *name_ret)
     if (port_ret)
 	*port_ret = port;
     
-    if ((name = index(cp ? cp : host, '/')) != NULL)
+    if ((name = strchr(cp ? cp : host, '/')) != NULL)
 	*(name++) = '\0';
     if (host_ret)
 	strcpy(host_ret, host);
@@ -708,7 +708,7 @@ ftp_login_session(FTP_t ftp, char *host, char *user, char *passwd, int port, int
 	    return FAILURE;
 	}
 	ftp->addrtype = sin.sin_family = he->h_addrtype;
-	bcopy(he->h_addr, (char *)&sin.sin_addr, he->h_length);
+	memmove((char *)&sin.sin_addr, he->h_addr, he->h_length);
     }
 
     sin.sin_port = htons(port);
@@ -788,8 +788,8 @@ ftp_file_op(FTP_t ftp, char *operation, char *file, FILE **fp, char *mode, off_t
 	}
 
 	sin.sin_family = ftp->addrtype;
-	bcopy(addr, (char *)&sin.sin_addr, 4);
-	bcopy(addr + 4, (char *)&sin.sin_port, 2);
+	memmove((char *)&sin.sin_addr, addr, 4);
+	memmove((char *)&sin.sin_port, addr + 4, 2);
 	if (connect(s, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
 	    (void)close(s);
 	    return FAILURE;
