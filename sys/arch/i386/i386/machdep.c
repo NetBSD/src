@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.47.2.4 1993/10/09 09:45:37 mycroft Exp $
+ *	$Id: machdep.c,v 1.47.2.5 1993/10/10 08:45:35 mycroft Exp $
  */
 
 #include "npx.h"
@@ -361,6 +361,9 @@ identifycpu()
 #endif
 #if !defined(I586_CPU)
 	case CPUCLASS_586:
+#endif
+#if !defined(I386_CPU) && !defined(I486_CPU) && !defined(I586_CPU)
+#error No CPU classes configured.
 #endif
 		panic("CPU class not configured");
 	default:
@@ -820,7 +823,7 @@ setregs(p, entry, stack, retval)
 	/* XXX -- do something with retval? */
 
 	p->p_addr->u_pcb.pcb_flags &= 0 /* FM_SYSCTRC */; /* no fp at all */
-	load_cr0(rcr0() | CR0_TS);	/* start emulating */
+	lcr0(rcr0() | CR0_TS);	/* start emulating */
 #if	NNPX > 0
 	npxinit(__INITIAL_NPXCW__);
 #endif
@@ -1014,13 +1017,12 @@ extern	IDTVEC(div), IDTVEC(dbg), IDTVEC(nmi), IDTVEC(bpt), IDTVEC(ofl),
 	IDTVEC(rsvd9), IDTVEC(rsvd10), IDTVEC(rsvd11), IDTVEC(rsvd12),
 	IDTVEC(rsvd13), IDTVEC(rsvd14), IDTVEC(rsvd14), IDTVEC(syscall);
 
-int lcr0(), lcr3(), rcr0(), rcr2();
 int _gsel_tss;
 
 init386(first_avail)
 	vm_offset_t first_avail;
 {
-	extern ssdtosd(), lgdt(), lidt(), lldt(), etext; 
+	extern ssdtosd(), lgdt(), etext; 
 	int x, *pi;
 	unsigned biosbasemem, biosextmem;
 	struct gate_descriptor *gdp;
@@ -1198,7 +1200,7 @@ extern caddr_t		CADDR1, CADDR2;
 clearseg(n) {
 
 	*(int *)CMAP2 = PG_V | PG_KW | ctob(n);
-	load_cr3(rcr3());
+	lcr3(rcr3());
 	bzero(CADDR2,NBPG);
 }
 
@@ -1210,7 +1212,7 @@ void
 copyseg(frm, n) {
 
 	*(int *)CMAP2 = PG_V | PG_KW | ctob(n);
-	load_cr3(rcr3());
+	lcr3(rcr3());
 	bcopy((void *)frm, (void *)CADDR2, NBPG);
 }
 
@@ -1223,7 +1225,7 @@ physcopyseg(frm, to) {
 
 	*(int *)CMAP1 = PG_V | PG_KW | ctob(frm);
 	*(int *)CMAP2 = PG_V | PG_KW | ctob(to);
-	load_cr3(rcr3());
+	lcr3(rcr3());
 	bcopy(CADDR1, CADDR2, NBPG);
 }
 
