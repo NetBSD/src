@@ -1,4 +1,4 @@
-.\"	$NetBSD: donations,v 1.4 1999/04/01 18:44:37 kim Exp $	
+.\"	$NetBSD: donations,v 1.4.2.1 1999/04/29 15:52:25 is Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -31,15 +31,15 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
+
+
 .Bd -unfilled -offset indent
-Avalon Computer Systems
-Bay Area Internet Solutions
+Jason Birnschein
 Jason Brazile
 David Brownlee
 Simon Burge
 Dave Burgess
 Ralph Campbell
-Canada Connect Corporation
 Brian Carlstrom
 James Chacon
 Bill Coldwell
@@ -47,28 +47,42 @@ Charles Conn
 Tom Coulter
 Charles D. Cranor
 Christopher G. Demetriou
-Demon Internet, UK
-Easynet, UK
 Scott Ellis
 Hubert Feyrer
-Free Hardware Foundation
 Greg Gingerich
+Guenther Grau
 Ross Harvey
+Charles M. Hannum
 Michael L. Hitch
-Innovation Development Enterprises of America
+Jordan K. Hubbard
 Scott Kaplan
+Noah M. Keiserman
 Chris Legrow
 Neil J. McRae
 Perry E. Metzger
-MS Macro System GmbH, Germany
-Numerical Aerospace Simulation Facility, NASA Ames Research Center
 Herb Peyerl
-Piermont Information Systems Inc.
 Mike Price
 Thor Lancelot Simon
 Bill Sommerfeld
 Paul Southworth
+Ted Spradley
 Kimmo Suominen
 Jason R. Thorpe
 Steve Wadlow
+.Ed
+
+.Bd -unfilled -offset indent
+Advanced System Products, Inc.
+Avalon Computer Systems
+Bay Area Internet Solutions
+Canada Connect Corporation
+Demon Internet, UK
+Digital Equipment Corporation
+Easynet, UK
+Free Hardware Foundation
+Innovation Development Enterprises of America
+Internet Software Consortium
+MS Macro System GmbH, Germany
+Numerical Aerospace Simulation Facility, NASA Ames Research Center
+Piermont Information Systems Inc.
 .Ed
