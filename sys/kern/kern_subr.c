@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.65 2000/05/10 02:14:41 enami Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.66 2000/05/10 02:16:15 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -232,6 +232,8 @@ hashinit(elements, type, flags, hashmask)
 	for (hashsize = 1; hashsize < elements; hashsize <<= 1)
 		continue;
 	hashtbl = malloc((u_long)hashsize * sizeof(*hashtbl), type, flags);
+	if (hashtbl == NULL)
+		return (NULL);
 	for (i = 0; i < hashsize; i++)
 		LIST_INIT(&hashtbl[i]);
 	*hashmask = hashsize - 1;
