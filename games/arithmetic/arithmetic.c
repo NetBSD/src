@@ -1,4 +1,4 @@
-/*	$NetBSD: arithmetic.c,v 1.12 1998/09/14 09:13:46 hubertf Exp $	*/
+/*	$NetBSD: arithmetic.c,v 1.13 1999/07/17 19:11:30 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)arithmetic.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: arithmetic.c,v 1.12 1998/09/14 09:13:46 hubertf Exp $");
+__RCSID("$NetBSD: arithmetic.c,v 1.13 1999/07/17 19:11:30 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -122,6 +122,9 @@ main(argc, argv)
 	extern int optind;
 	int ch, cnt;
 
+	/* Revoke setgid privileges */
+	setregid(getgid(), getgid());
+
 	while ((ch = getopt(argc, argv, "r:o:")) != -1)
 		switch(ch) {
 		case 'o': {
@@ -162,7 +165,7 @@ main(argc, argv)
 /* Handle interrupt character.  Print score and exit. */
 void
 intr(dummy)
-	int dummy;
+	int dummy __attribute__((__unused__));
 {
 	showstats();
 	exit(0);
