@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.39 2003/10/25 18:36:35 christos Exp $	*/
+/*	$NetBSD: iop.c,v 1.40 2003/10/25 20:26:25 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.39 2003/10/25 18:36:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.40 2003/10/25 20:26:25 mycroft Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -294,8 +294,7 @@ void
 iop_init(struct iop_softc *sc, const char *intrstr)
 {
 	struct iop_msg *im;
-	int rv, j, state, nsegs;
-	int i = 0; /* XXX: gcc */
+	int rv, i, j, state, nsegs;
 	u_int32_t mask;
 	char ident[64];
 
@@ -406,7 +405,7 @@ iop_init(struct iop_softc *sc, const char *intrstr)
 	sc->sc_ims = im;
 	SLIST_INIT(&sc->sc_im_freelist);
 
-	for (i = 0, state++; i < sc->sc_maxib; i++, im++) {
+	for (i = 0; i < sc->sc_maxib; i++, im++) {
 		rv = bus_dmamap_create(sc->sc_dmat, IOP_MAX_XFER,
 		    IOP_MAX_SEGS, IOP_MAX_XFER, 0,
 		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
@@ -414,7 +413,7 @@ iop_init(struct iop_softc *sc, const char *intrstr)
 		if (rv != 0) {
 			printf("%s: couldn't create dmamap (%d)",
 			    sc->sc_dv.dv_xname, rv);
-			goto bail_out;
+			goto bail_out3;
 		}
 
 		im->im_tctx = i;
@@ -425,7 +424,7 @@ iop_init(struct iop_softc *sc, const char *intrstr)
 	if (iop_ofifo_init(sc) != 0) {
 		printf("%s: unable to init oubound FIFO\n",
 		    sc->sc_dv.dv_xname);
-		goto bail_out;
+		goto bail_out3;
 	}
 
 	/*
@@ -456,13 +455,14 @@ iop_init(struct iop_softc *sc, const char *intrstr)
 	lockinit(&sc->sc_conflock, PRIBIO, "iopconf", hz * 30, 0);
 	return;
 
- bail_out:
+ bail_out3:
  	if (state > 3) {
 		for (j = 0; j < i; j++)
 			bus_dmamap_destroy(sc->sc_dmat,
 			    sc->sc_ims[j].im_xfer[0].ix_map);
 		free(sc->sc_ims, M_DEVBUF);
 	}
+ bail_out:
 	if (state > 2)
 		bus_dmamap_unload(sc->sc_dmat, sc->sc_scr_dmamap);
 	if (state > 1)
