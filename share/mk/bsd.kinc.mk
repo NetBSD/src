@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kinc.mk,v 1.26 2003/07/18 08:26:07 lukem Exp $
+#	$NetBSD: bsd.kinc.mk,v 1.27 2003/07/20 15:02:10 lukem Exp $
 
 # Variables:
 #
@@ -68,12 +68,10 @@ incinstall::
 	 while test $$# -ge 2; do \
 		l=$$1; shift; \
 		t=${DESTDIR}$$1; shift; \
-		if [ -h $$t ]; then \
-			cur=`ls -ld $$t | awk '{print $$NF}'` ; \
-			if [ "$$cur" = "$$l" ]; then \
-				continue ; \
-			fi; \
-		fi; \
+		if  ttarg=`${TOOL_STAT} -qf '%Y' $$t` && \
+		    [ "$$l" = "$$ttarg" ]; then \
+			continue ; \
+		fi ; \
 		echo "$$t -> $$l"; \
 		${INSTALL_SYMLINK} ${SYSPKGTAG} $$l $$t; \
 	 done; )
