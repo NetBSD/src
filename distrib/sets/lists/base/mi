@@ -62,6 +62,7 @@
 ./sbin/fsck_ffs
 ./sbin/fsck_msdos
 ./sbin/fsdb
+./sbin/fsirand
 ./sbin/halt
 ./sbin/ifconfig
 ./sbin/init
@@ -88,6 +89,7 @@
 ./sbin/mount_union
 ./sbin/mountd
 ./sbin/newfs
+./sbin/newfs_msdos
 ./sbin/newlfs
 ./sbin/nfsd
 ./sbin/nfsiod
@@ -400,11 +402,14 @@
 ./usr/libexec/ntalkd
 ./usr/libexec/rexecd
 ./usr/libexec/rlogind
+./usr/libexec/rmail
+./usr/sbin/rpc.lockd
 ./usr/libexec/rpc.rquotad
 ./usr/libexec/rpc.rstatd
 ./usr/libexec/rpc.rusersd
 ./usr/libexec/rpc.rwalld
 ./usr/libexec/rpc.sprayd
+./usr/sbin/rpc.statd
 ./usr/libexec/rshd
 ./usr/libexec/telnetd
 ./usr/libexec/tftpd
@@ -695,6 +700,7 @@
 ./usr/share/man/cat8/i386
 ./usr/share/man/cat8/mac68k
 ./usr/share/man/cat8/pc532
+./usr/share/man/cat8/pmax
 ./usr/share/man/cat8/sparc
 ./usr/share/man/cat8/sun3
 ./usr/share/man/cat8/vax
@@ -731,6 +737,7 @@
 ./usr/share/man/man8/i386
 ./usr/share/man/man8/mac68k
 ./usr/share/man/man8/pc532
+./usr/share/man/man8/pmax
 ./usr/share/man/man8/sparc
 ./usr/share/man/man8/sun3
 ./usr/share/man/man8/vax

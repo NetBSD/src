@@ -39,6 +39,7 @@
 ./usr/include/dev/audio_if.h
 ./usr/include/dev/audiovar.h
 ./usr/include/dev/ccdvar.h
+./usr/include/dev/clock_subr.h
 ./usr/include/dev/cons.h
 ./usr/include/dev/eisa
 ./usr/include/dev/eisa/ahbreg.h
@@ -72,12 +73,17 @@
 ./usr/include/dev/ic/i82586reg.h
 ./usr/include/dev/ic/i82595reg.h
 ./usr/include/dev/ic/ics2101reg.h
+./usr/include/dev/ic/ispmbox.h
+./usr/include/dev/ic/ispreg.h
+./usr/include/dev/ic/ispvar.h
 ./usr/include/dev/ic/mb86960reg.h
 ./usr/include/dev/ic/mc146818reg.h
 ./usr/include/dev/ic/midwayreg.h
 ./usr/include/dev/ic/midwayvar.h
 ./usr/include/dev/ic/ncr5380reg.h
 ./usr/include/dev/ic/ncr5380var.h
+./usr/include/dev/ic/ncr53c9xreg.h
+./usr/include/dev/ic/ncr53c9xvar.h
 ./usr/include/dev/ic/nec765reg.h
 ./usr/include/dev/ic/ns16450reg.h
 ./usr/include/dev/ic/ns16550reg.h
@@ -126,6 +132,9 @@
 ./usr/include/dev/md.h
 ./usr/include/dev/microcode/aic7xxx
 ./usr/include/dev/microcode/aic7xxx/aic7xxx_seq.h
+./usr/include/dev/microcode/isp
+./usr/include/dev/microcode/isp/asm_pci.h
+./usr/include/dev/microcode/isp/asm_sbus.h
 ./usr/include/dev/mulaw.h
 ./usr/include/dev/ofw/openfirm.h
 ./usr/include/dev/pci
@@ -548,6 +557,7 @@
 ./usr/include/netinet/if_arp.h
 ./usr/include/netinet/if_atm.h
 ./usr/include/netinet/if_ether.h
+./usr/include/netinet/if_inarp.h
 ./usr/include/netinet/igmp.h
 ./usr/include/netinet/igmp_var.h
 ./usr/include/netinet/in.h
@@ -1642,6 +1652,10 @@
 ./usr/share/man/cat3/sin.0
 ./usr/share/man/cat3/sinh.0
 ./usr/share/man/cat3/sleep.0
+./usr/share/man/cat3/sl_add.0
+./usr/share/man/cat3/sl_find.0
+./usr/share/man/cat3/sl_free.0
+./usr/share/man/cat3/sl_init.0
 ./usr/share/man/cat3/snprintf.0
 ./usr/share/man/cat3/sprintf.0
 ./usr/share/man/cat3/sqrt.0
@@ -1662,6 +1676,7 @@
 ./usr/share/man/cat3/strerror.0
 ./usr/share/man/cat3/strftime.0
 ./usr/share/man/cat3/string.0
+./usr/share/man/cat3/stringlist.0
 ./usr/share/man/cat3/strlen.0
 ./usr/share/man/cat3/strmode.0
 ./usr/share/man/cat3/strncasecmp.0
