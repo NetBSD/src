@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.135 2003/06/15 17:45:21 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.136 2003/06/15 18:18:16 thorpej Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -210,7 +210,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.135 2003/06/15 17:45:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.136 2003/06/15 18:18:16 thorpej Exp $");
 
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
@@ -4499,6 +4499,18 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t va, paddr_t pa, vsize_t size,
 static const struct pmap_devmap *pmap_devmap_table;
 
 /*
+ * Register the devmap table.  This is provided in case early console
+ * initialization needs to register mappings created by bootstrap code
+ * before pmap_devmap_bootstrap() is called.
+ */
+void
+pmap_devmap_register(const struct pmap_devmap *table)
+{
+
+	pmap_devmap_table = table;
+}
+
+/*
  * Map all of the static regions in the devmap table, and remember
  * the devmap table so other parts of the kernel can look up entries
  * later.
@@ -4508,7 +4520,6 @@ pmap_devmap_bootstrap(vaddr_t l1pt, const struct pmap_devmap *table)
 {
 	int i;
 
-	KASSERT(pmap_devmap_table == NULL);
 	pmap_devmap_table = table;
 
 	for (i = 0; pmap_devmap_table[i].pd_size != 0; i++) {
