@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.64 2001/01/17 04:05:42 itojun Exp $	*/
+/*	$NetBSD: if.h,v 1.65 2001/01/17 15:07:07 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -124,6 +124,7 @@ struct rtentry;
 struct socket;
 struct ether_header;
 struct ifnet;
+struct rt_addrinfo;
 
 /*
  * Length of interface external name, including terminating '\0'.
@@ -391,7 +392,6 @@ struct ifaddr_data {
  * are allocated and attached when an address is set, and are linked
  * together so all addresses for an interface can be located.
  */
-struct rt_addrinfo;
 struct ifaddr {
 	struct	sockaddr *ifa_addr;	/* address of interface */
 	struct	sockaddr *ifa_dstaddr;	/* other end of p-to-p link */
