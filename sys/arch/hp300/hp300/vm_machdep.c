@@ -38,7 +38,7 @@
  * from: Utah $Hdr: vm_machdep.c 1.21 91/04/06$
  *
  *	from: @(#)vm_machdep.c	8.6 (Berkeley) 1/12/94
- *	$Id: vm_machdep.c,v 1.13 1994/05/23 09:21:21 mycroft Exp $
+ *	$Id: vm_machdep.c,v 1.13.2.1 1994/08/14 09:34:12 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -74,7 +74,7 @@ cpu_fork(p1, p2)
 	extern char kstack[];
 
 	p2->p_md.md_regs = p1->p_md.md_regs;
-	p2->p_md.md_flags = (p1->p_md.md_flags & ~(MDP_AST|MDP_HPUXTRACE));
+	p2->p_md.md_flags = p1->p_md.md_flags & ~MDP_HPUXTRACE;
 
 	/*
 	 * Copy pcb and stack from proc p1 to p2. 

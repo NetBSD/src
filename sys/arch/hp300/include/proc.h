@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)proc.h	8.1 (Berkeley) 6/10/93
- *	$Id: proc.h,v 1.4 1994/05/23 06:21:45 mycroft Exp $
+ *	$Id: proc.h,v 1.4.2.1 1994/08/14 09:34:22 mycroft Exp $
  */
 
 /*
@@ -43,7 +43,6 @@ struct mdproc {
 };
 
 /* md_flags */
-#define	MDP_AST		0x0001	/* async trap pending */
 #define	MDP_HPUXTRACE	0x0004	/* being traced by HP-UX process */
 #define	MDP_HPUXMMAP	0x0008	/* VA space is multiply mapped */
 #define MDP_CCBDATA	0x0010	/* copyback caching of data (68040) */
