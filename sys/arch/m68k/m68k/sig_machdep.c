@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.1 1997/03/13 19:14:35 gwr Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.2 1997/03/17 19:03:11 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -59,7 +59,7 @@
 #include <machine/cpu.h>
 #include <machine/reg.h>
 
-extern int fpu_type;
+extern int fputype;
 extern short exframesize[];
 void	m68881_save __P((struct fpframe *));
 void	m68881_restore __P((struct fpframe *));
@@ -203,7 +203,7 @@ sendsig(catcher, sig, mask, code)
 #endif
 	}
 
-	if (fpu_type) {
+	if (fputype) {
 		kfp->sf_state.ss_flags |= SS_FPSTATE;
 		m68881_save(&kfp->sf_state.ss_fpstate);
 	}
@@ -362,7 +362,7 @@ sys_sigreturn(p, v, retval)
 	/*
 	 * Finally we restore the original FP context
 	 */
-	if (fpu_type && (flags & SS_FPSTATE))
+	if (fputype && (flags & SS_FPSTATE))
 		m68881_restore(&tstate.ss_fpstate);
 #ifdef DEBUG
 	if ((sigdebug & SDB_FPSTATE) && *(char *)&tstate.ss_fpstate)

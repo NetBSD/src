@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.12 1997/01/27 20:43:55 gwr Exp $	*/
+/*	$NetBSD: fpu.c,v 1.13 1997/03/17 19:03:17 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -79,15 +79,15 @@ initfpu()
 	enab_reg |= SYSTEM_ENAB_FPP;
 	set_control_byte((char *) SYSTEM_ENAB, enab_reg);
 
-	fpu_type = fpu_probe();
-	if ((0 <= fpu_type) && (fpu_type <= 2))
-		descr = fpu_descr[fpu_type];
+	fputype = fpu_probe();
+	if ((0 <= fputype) && (fputype <= 2))
+		descr = fpu_descr[fputype];
 	else
 		descr = "unknown type";
 
 	printf("fpu: %s\n", descr);
 
-	if (fpu_type == 0) {
+	if (fputype == 0) {
 		/* Might as well turn the enable bit back off. */
 		enab_reg = get_control_byte((char *) SYSTEM_ENAB);
 		enab_reg &= ~SYSTEM_ENAB_FPP;
