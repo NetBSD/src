@@ -1,4 +1,4 @@
-/*	$NetBSD: clockreg.h,v 1.1.1.1 1995/07/25 23:11:56 chuck Exp $ */
+/*	$NetBSD: clockreg.h,v 1.2 1996/04/26 19:26:31 chuck Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -68,9 +68,14 @@ struct clockreg {
  */
 #define	YEAR0	68
 
-
 /*
  * interrupt level for clock
  */
 
 #define CLOCK_LEVEL 5
+
+/*
+ * Size of the NVRAM in the Mostek clock.
+ */
+#define MK48T02_SIZE	(2*1024)
+#define MK48T08_SIZE	(8*1024)
