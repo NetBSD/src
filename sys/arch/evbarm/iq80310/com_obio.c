@@ -1,4 +1,4 @@
-/*	$NetBSD: com_obio.c,v 1.7 2002/10/02 05:10:34 thorpej Exp $	*/
+/*	$NetBSD: com_obio.c,v 1.8 2002/10/03 20:14:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,12 +64,9 @@ CFATTACH_DECL(com_obio, sizeof(struct com_obio_softc),
 int
 com_obio_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	struct obio_attach_args *oba = aux;
 
-	if (strcmp(cf->cf_name, oba->oba_name) == 0)
-		return (1);
-
-	return (0);
+	/* We take it on faith that the device is there. */
+	return (1);
 }
 
 void
