@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.64.2.5 2002/10/18 02:33:55 nathanw Exp $ */
+/* $NetBSD: cpu.c,v 1.64.2.6 2002/12/16 17:23:12 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.64.2.5 2002/10/18 02:33:55 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.64.2.6 2002/12/16 17:23:12 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -348,8 +348,8 @@ recognized:
 	/*
 	 * Initialize the idle PCB.
 	 */
-	pcb->pcb_hw.apcb_asn = proc0.p_addr->u_pcb.pcb_hw.apcb_asn;
-	pcb->pcb_hw.apcb_ptbr = proc0.p_addr->u_pcb.pcb_hw.apcb_ptbr;
+	pcb->pcb_hw.apcb_asn = lwp0.l_addr->u_pcb.pcb_hw.apcb_asn;
+	pcb->pcb_hw.apcb_ptbr = lwp0.l_addr->u_pcb.pcb_hw.apcb_ptbr;
 #if 0
 	printf("%s: hwpcb ksp = 0x%lx\n", sc->sc_dev.dv_xname,
 	    pcb->pcb_hw.apcb_ksp);
