@@ -30,15 +30,48 @@
  *	Author: Tatu Ylonen, Jukka Virtanen
  *	Helsinki University of Technology 1992.
  *
- *	$Id: bcopy.s,v 1.2 1994/03/10 21:39:56 phil Exp $
+ *	$Id: bcopy.s,v 1.3 1994/03/22 00:18:28 phil Exp $
  */
 
 #include <machine/asm.h>
 
-/* bcopy(from, to, bcount) */
-
 	.text
+
+/* ovbcopy (from, to, bcount)  -- does overlapping stuff */
+
 ENTRY(bcopy)
+ENTRY(ovbcopy)
+	DFRAME
+	movd	B_ARG0,r1  /* from */
+	movd	B_ARG1,r2  /* to */
+	cmpd	r2, r1
+	bls	common	   /* safe to do standard thing */
+	movd	B_ARG2,r0  /* bcount */
+	addd	r1, r0     /* add to start of from */
+	cmpd	r2, r0
+	bhs	common	   /* safe to do standard thing */
+
+/* Must do a reverse copy  (and assume that the start is on a
+	word boundry . . . so we move the "remaining" bytes first) */
+
+	movd	B_ARG2, r0 /* bcount */
+	addqd	-1, r0
+	addd	r0, r1
+	addd	r0, r2
+	addqd	1, r0
+	andd	3, r0
+	movsb	b	   /* move bytes backwards */
+	addqd	-3, r1	   /* change to double pointer */
+	addqd	-3, r2	   /* ditto */
+	movd	B_ARG2, r0
+	lshd	-2,r0
+	movsd	b	   /* move words backwards */
+	DEMARF
+	ret	0
+
+/* bcopy(from, to, bcount) -- non overlapping */
+
+/* ENTRY(bcopy)  -- same as ovbcopy until furthur notice.... */
 	DFRAME
 	movd	B_ARG0,r1  /* from */
 	movd	B_ARG1,r2  /* to */
@@ -51,40 +84,6 @@ common:	movd	B_ARG2,r0  /* bcount */
 	DEMARF
 	ret	0
 
-/* memcpy(to, from, count) */
-
-ENTRY(memcpy)
-	DFRAME
-	movd	B_ARG0,r2   /* to */
-	movd	B_ARG1,r1   /* from */
-	br common
-
-/* ovbcopy (from, to, bcount)  -- does overlapping stuff */
-
-ENTRY(ovbcopy)
-	DFRAME
-	movd	B_ARG0,r1  /* from */
-	movd	B_ARG1,r2  /* to */
-	cmpd	r2, r1
-	bls	common	   /* safe to do standard thing */
-	movd	B_ARG2,r0  /* bcount */
-	addd	r1, r0     /* add to start of from */
-	cmpd	r2, r0
-	bhi	common	   /* safe to do standard thing */
-
-/* Must do a reverse copy  (and assume that the start is on a
-	word boundry . . . so we move the "remaining" bytes first) */
-
-	movd	B_ARG2,r0  /* bcount */
-	addd	r0, r1
-	addd	r0, r1
-	andd	3,r0
-	movsb	B	   /* move bytes backwards */
-	movd	B_ARG2,r0
-	lshd	-2,r0
-	movsd	B	   /* move words backwards */
-	DEMARF
-	ret	0
 	
 #if 0
 /* bcopy_bytes(from, to, bcount)
