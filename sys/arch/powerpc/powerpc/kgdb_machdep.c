@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.4 2003/01/13 20:29:34 augustss Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.5 2003/01/22 21:44:56 kleink Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@ kgdb_acc(vaddr_t va, size_t len)
 	vaddr_t   last_va;
 	paddr_t   pa;
 	u_int msr;
-	u_int batu;
+	u_int batu, batl;
 
 	/* If translation is off, everything is fair game */
 	asm volatile ("mfmsr %0" : "=r"(msr));
@@ -78,29 +78,52 @@ kgdb_acc(vaddr_t va, size_t len)
 	}
 
 	/* Now check battable registers */
-	asm volatile ("mfdbatu %0,0" : "=r"(batu));
-	if (BAT_VALID_P(batu,msr) &&
-			BAT_VA_MATCH_P(batu,va) &&
-			(batu & BAT_PP) != BAT_PP_NONE) {
-		return 1;
-	}
-	asm volatile ("mfdbatu %0,1" : "=r"(batu));
-	if (BAT_VALID_P(batu,msr) &&
-			BAT_VA_MATCH_P(batu,va) &&
-			(batu & BAT_PP) != BAT_PP_NONE) {
-		return 1;
-	}
-	asm volatile ("mfdbatu %0,2" : "=r"(batu));
-	if (BAT_VALID_P(batu,msr) &&
-			BAT_VA_MATCH_P(batu,va) &&
-			(batu & BAT_PP) != BAT_PP_NONE) {
-		return 1;
-	}
-	asm volatile ("mfdbatu %0,3" : "=r"(batu));
-	if (BAT_VALID_P(batu,msr) &&
-			BAT_VA_MATCH_P(batu,va) &&
-			(batu & BAT_PP) != BAT_PP_NONE) {
-		return 1;
+	if ((mfpvr() >> 16) == MPC601) {
+		asm volatile ("mfibatl %0,0" : "=r"(batl));
+		asm volatile ("mfibatu %0,0" : "=r"(batu));
+		if (BAT601_VALID_P(batl) &&
+				BAT601_VA_MATCH_P(batu,batl,va))
+			return 1;
+		asm volatile ("mfibatl %0,1" : "=r"(batl));
+		asm volatile ("mfibatu %0,1" : "=r"(batu));
+		if (BAT601_VALID_P(batl) &&
+				BAT601_VA_MATCH_P(batu,batl,va))
+			return 1;
+		asm volatile ("mfibatl %0,2" : "=r"(batl));
+		asm volatile ("mfibatu %0,2" : "=r"(batu));
+		if (BAT601_VALID_P(batl) &&
+				BAT601_VA_MATCH_P(batu,batl,va))
+			return 1;
+		asm volatile ("mfibatl %0,3" : "=r"(batl));
+		asm volatile ("mfibatu %0,3" : "=r"(batu));
+		if (BAT601_VALID_P(batl) &&
+				BAT601_VA_MATCH_P(batu,batl,va))
+			return 1;
+	} else {
+		asm volatile ("mfdbatu %0,0" : "=r"(batu));
+		if (BAT_VALID_P(batu,msr) &&
+				BAT_VA_MATCH_P(batu,va) &&
+				(batu & BAT_PP) != BAT_PP_NONE) {
+			return 1;
+		}
+		asm volatile ("mfdbatu %0,1" : "=r"(batu));
+		if (BAT_VALID_P(batu,msr) &&
+				BAT_VA_MATCH_P(batu,va) &&
+				(batu & BAT_PP) != BAT_PP_NONE) {
+			return 1;
+		}
+		asm volatile ("mfdbatu %0,2" : "=r"(batu));
+		if (BAT_VALID_P(batu,msr) &&
+				BAT_VA_MATCH_P(batu,va) &&
+				(batu & BAT_PP) != BAT_PP_NONE) {
+			return 1;
+		}
+		asm volatile ("mfdbatu %0,3" : "=r"(batu));
+		if (BAT_VALID_P(batu,msr) &&
+				BAT_VA_MATCH_P(batu,va) &&
+				(batu & BAT_PP) != BAT_PP_NONE) {
+			return 1;
+		}
 	}
 
 	last_va = va + len;

@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.11 2003/01/19 02:39:47 matt Exp $	*/
+/*	$NetBSD: frame.h,v 1.12 2003/01/22 21:44:54 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -57,6 +57,7 @@ struct trapframe {
 	int dsisr;
 	int exc;
 	uint32_t vrsave;
+	uint32_t mq;
 };
 
 #if defined(_KERNEL) || defined(_LKM)
@@ -73,6 +74,7 @@ struct trapframe32 {
 	int dsisr;
 	int exc;
 	uint32_t vrsave;
+	uint32_t mq;
 };
 #endif
 #endif /* _KERNEL || _LKM */

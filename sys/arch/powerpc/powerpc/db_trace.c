@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.23 2003/01/18 06:23:33 thorpej Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.24 2003/01/22 21:44:56 kleink Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /* 
@@ -84,6 +84,7 @@ const struct db_variable db_regs[] = {
 	{ "ctr", (long *)&ddb_regs.ctr,   FCN_NULL },
 	{ "cr",  (long *)&ddb_regs.cr,    FCN_NULL },
 	{ "xer", (long *)&ddb_regs.xer,   FCN_NULL },
+	{ "mq",  (long *)&ddb_regs.mq,    FCN_NULL },
 #ifdef PPC_IBM4XX
 	{ "dear", (long *)&ddb_regs.dear, FCN_NULL },
 	{ "esr", (long *)&ddb_regs.esr,   FCN_NULL },
@@ -252,6 +253,8 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 #ifdef PPC_MPC6XX
 			if (tf->exc == EXC_DSI)
 				(*pr)(" dsisr=%#x", tf->dsisr);
+			if ((mfpvr() >> 16) == MPC601)
+				(*pr)(" mq=%#x", tf->mq);
 #endif
 #ifdef PPC_IBM4XX
 			if (tf->exc == EXC_DSI)

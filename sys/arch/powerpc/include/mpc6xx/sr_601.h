@@ -1,4 +1,4 @@
-/*	$NetBSD: sr_601.h,v 1.1 2002/02/09 17:44:40 kleink Exp $	*/
+/*	$NetBSD: sr_601.h,v 1.2 2003/01/22 21:44:55 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -58,5 +58,15 @@
 
 #define	SR601_BUID_MEMFORCED	0x07f	/* Translate to memory access, taking
 					   PA[0:3] from the PACKET1 field */
+
+#define	SR601(key, buid, csi, p1)			\
+	(SR601_T |					\
+	 (key) |					\
+	 (buid) << SR601_BUID_SHFT |			\
+	 (csi) << SR601_CSI_SHFT | (p1))
+
+#ifdef _KERNEL
+void mpc601_ioseg_add(paddr_t, register_t);
+#endif
 
 #endif /* !_MPC6XX_SR_601_H_ */

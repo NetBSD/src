@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.30 2003/01/18 06:23:35 thorpej Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.31 2003/01/22 21:44:56 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -84,6 +84,18 @@
 	lis	pmap,_C_LABEL(kernel_pmap_)@ha;	\
 	lwzu	sr,_C_LABEL(kernel_pmap_)+PM_SR@l(pmap); \
 	RESTORE_SRS(pmap,sr)
+
+/*
+ * Save/restore MPC601 MQ register.
+ * Note: mpc6xx_init() relies on this instruction sequence.
+ */
+#define	SAVE_MQ(tf,b)							\
+	mfspr	b,SPR_MQ;						\
+	stw	b,FRAME_MQ+8(tf);
+
+#define	RESTORE_MQ(tf,b)						\
+	lwz	b,FRAME_MQ+8(tf);					\
+	mtspr	SPR_MQ,b;
 
 /*
  * Data used during primary/secondary traps/interrupts
@@ -192,8 +204,8 @@ _C_LABEL(dsisize) = .-_C_LABEL(dsitrap)
  * Considers different BAT format and combined implementation
  * (being addressed as I-BAT).
  */
-	.globl	_C_LABEL(dsitrap601),_C_LABEL(dsi601size)
-_C_LABEL(dsitrap601):
+	.globl	_C_LABEL(dsi601trap),_C_LABEL(dsi601size)
+_C_LABEL(dsi601trap):
 	stmw	28,disisave(0)		/* free r28-r31 */
 	mfcr	29			/* save CR */
 	mfxer	30			/* save XER */
@@ -233,7 +245,7 @@ _C_LABEL(dsitrap601):
 	mflr	28			/* save LR */
 	mtsprg	1,1
 	bla	disitrap
-_C_LABEL(dsi601size) = .-_C_LABEL(dsitrap601)
+_C_LABEL(dsi601size) = .-_C_LABEL(dsi601trap)
 
 /*
  * This one for the external interrupt handler.
@@ -588,6 +600,7 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 	stw	4,FRAME_CTR+8(1);					\
 	stw	5,FRAME_EXC+8(1);					\
 	SAVE_VRSAVE(1,6);						\
+	SAVE_MQ(1,7);							\
 	stw	28,FRAME_DAR+8(1);					\
 	stw	29,FRAME_DSISR+8(1);					\
 	stw	30,FRAME_SRR0+8(1);					\
@@ -601,7 +614,8 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 	lwz	5,FRAME_XER+8(1);					\
 	lwz	6,FRAME_LR+8(1);					\
 	lwz	7,FRAME_CR+8(1);					\
-	RESTORE_VRSAVE(1,8);						\
+	RESTORE_MQ(1,8);							\
+	RESTORE_VRSAVE(1,9);						\
 	stw	2,savearea(0);						\
 	stw	3,savearea+4(0);					\
 	mtctr	4;							\
