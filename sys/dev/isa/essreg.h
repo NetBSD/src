@@ -1,4 +1,4 @@
-/*	$NetBSD: essreg.h,v 1.8 1999/03/02 20:36:51 nathanw Exp $	*/
+/*	$NetBSD: essreg.h,v 1.9 1999/03/16 13:06:35 mycroft Exp $	*/
 /*
  * Copyright 1997
  * Digital Equipment Corporation. All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 /*
-** @(#) $RCSfile: essreg.h,v $ $Revision: 1.8 $ (SHARK) $Date: 1999/03/02 20:36:51 $
+** @(#) $RCSfile: essreg.h,v $ $Revision: 1.9 $ (SHARK) $Date: 1999/03/16 13:06:35 $
 **
 **++
 **
@@ -231,8 +231,9 @@
 
 #define ESS_CLEAR_INTR		0x0E
 
-#define ESS_DSP_READ_STATUS	0x0C
-#define   ESS_DSP_READ_READY	0x40
+#define	ESS_DSP_RW_STATUS	0x0C
+#define	ESS_DSP_WRITE_BUSY	0x80
+#define	ESS_DSP_READ_READY     	0x40
 #define   ESS_DSP_READ_FULL	0x20 /* FIFO full */
 #define   ESS_DSP_READ_EMPTY	0x10 /* FIFO empty */
 #define   ESS_DSP_READ_HALF	0x08 /* FIFO half-empty */
@@ -242,11 +243,6 @@
 #define   ESS_DSP_READ_ANYIRQ	(ESS_DSP_READ_IRQ | \
 				 ESS_DSP_READ_HALF_IRQ | \
 				 ESS_DSP_READ_OFLOW)
-
-#define	ESS_DSP_WRITE_STATUS	0x0C
-#define	ESS_DSP_WRITE_MASK	0x80
-#define ESS_DSP_WRITE_READY     0x00
-
 
 #define	ESS_MIX_REG_SELECT	0x04
 #define	ESS_MIX_REG_DATA	0x05
