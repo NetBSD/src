@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_sun3.c,v 1.8 1997/10/12 11:04:18 briggs Exp $	*/
+/*	$NetBSD: kvm_sun3.c,v 1.8.4.1 2000/10/27 20:39:12 he Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_sparc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_sun3.c,v 1.8 1997/10/12 11:04:18 briggs Exp $");
+__RCSID("$NetBSD: kvm_sun3.c,v 1.8.4.1 2000/10/27 20:39:12 he Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -171,7 +171,7 @@ _kvm_sun3_kvatop(kd, va, pap)
 	pte = pv->pmeg[sme][ptenum];
 
 	if ((pte & (s)->pg_valid) == 0) {
-		_kvm_err(kd, 0, "page not valid (VA=0x%x)", va);
+		_kvm_err(kd, 0, "page not valid (VA=0x%lx)", va);
 		return (0);
 	}
 	pa = _kvm_pg_pa(v, s, pte) + offset;
