@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.342 2004/07/19 09:15:47 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.343 2004/07/19 10:05:31 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -5869,4 +5869,10 @@ sys/arch/mipsco/stand/Makefile.booters		1.10
 
 	Include bsd.own.mk so this builds again.
 	[chs, ticket #677]
+
+usr.bin/gzip/gzip.c				1.52-1.62
+
+	Fix various bugs in "gzip" including PRs 26234, 26233, 26240, 26251,
+	26241 and 26246.
+	[mrg, ticket #678]
 
