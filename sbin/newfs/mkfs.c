@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.55 2001/09/06 02:16:01 lukem Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.56 2001/09/24 08:21:44 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.55 2001/09/06 02:16:01 lukem Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.56 2001/09/24 08:21:44 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1010,7 +1010,7 @@ calcipg(int32_t cylpg, int32_t bpcg, off_t *usedbp)
 		usedb = (sblock.fs_iblkno + ipg / INOPF(&sblock))
 			* NSPF(&sblock) * (off_t)sectorsize;
 		new_ipg = (cylpg * (long long)bpcg - usedb) /
-		    ((long long)density * fssize / (ncg * secpercyl * cylpg));
+		    (long long)density * fssize / (ncg * secpercyl * cylpg);
 		if (new_ipg <= 0)
 			new_ipg = 1;		/* ensure ipg > 0 */
 		new_ipg = roundup(new_ipg, INOPB(&sblock));
