@@ -1,12 +1,13 @@
-#	$NetBSD: Makefile,v 1.4 2002/01/27 01:07:44 minoura Exp $
+#	$NetBSD: Makefile,v 1.5 2002/08/27 08:53:18 lukem Exp $
+
+NOMAN=		# defined
 
 PROG=		installboot
 SRCS=		installboot.c
 BINDIR=		/usr/mdec
 WARNS=		2
-LDSTATIC?=	-static
+LDSTATIC=	-static
 #MANSUBDIR=	/x68k
-NOMAN=		# defined
 
 DISKLABELDIR=	${.CURDIR}/../../../../../sbin/disklabel
 
