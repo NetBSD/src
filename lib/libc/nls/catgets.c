@@ -1,4 +1,4 @@
-/*	$NetBSD: catgets.c,v 1.13 1998/02/08 19:42:59 kleink Exp $	*/
+/*	$NetBSD: catgets.c,v 1.14 1998/11/15 17:42:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -58,35 +58,40 @@ _catgets(catd, set_id, msg_id, s)
 
 	if (catd == (nl_catd) -1) {
 		errno = EBADF;
+		/* LINTED interface problem */
 		return (char *) s;
 	}
 
-	cat_hdr = (struct _nls_cat_hdr *) catd->__data; 
-	set_hdr = (struct _nls_set_hdr *) ((char *) catd->__data
+	cat_hdr = (struct _nls_cat_hdr *)catd->__data; 
+	set_hdr = (struct _nls_set_hdr *)(void *)((char *)catd->__data
 		+ sizeof(struct _nls_cat_hdr));
 
 	/* binary search, see knuth algorithm b */
 	l = 0;
-	u = ntohl(cat_hdr->__nsets) - 1;
+	u = ntohl((u_int32_t)cat_hdr->__nsets) - 1;
 	while (l <= u) {
 		i = (l + u) / 2;
-		r = set_id - ntohl(set_hdr[i].__setno);
+		r = set_id - ntohl((u_int32_t)set_hdr[i].__setno);
 
 		if (r == 0) {
-			msg_hdr = (struct _nls_msg_hdr *) ((char *)catd->__data
-				+ sizeof(struct _nls_cat_hdr)
-				+ ntohl(cat_hdr->__msg_hdr_offset));
+			msg_hdr = (struct _nls_msg_hdr *)
+			    (void *)((char *)catd->__data +
+			    sizeof(struct _nls_cat_hdr) +
+			    ntohl((u_int32_t)cat_hdr->__msg_hdr_offset));
 
-			l = ntohl(set_hdr[i].__index);
-			u = l + ntohl(set_hdr[i].__nmsgs) - 1;
+			l = ntohl((u_int32_t)set_hdr[i].__index);
+			u = l + ntohl((u_int32_t)set_hdr[i].__nmsgs) - 1;
 			while (l <= u) {
 				i = (l + u) / 2;
-				r = msg_id - ntohl(msg_hdr[i].__msgno);
+				r = msg_id -
+				    ntohl((u_int32_t)msg_hdr[i].__msgno);
 				if (r == 0) {
-					return ((char *) catd->__data 
-					    + sizeof(struct _nls_cat_hdr)
-					    + ntohl(cat_hdr->__msg_txt_offset)
-					    + ntohl(msg_hdr[i].__offset));
+					return ((char *) catd->__data +
+					    sizeof(struct _nls_cat_hdr) +
+					    ntohl((u_int32_t)
+					    cat_hdr->__msg_txt_offset) +
+					    ntohl((u_int32_t)
+					    msg_hdr[i].__offset));
 				} else if (r < 0) {
 					u = i - 1;
 				} else {
@@ -107,5 +112,6 @@ _catgets(catd, set_id, msg_id, s)
 notfound:
 	/* not found */
 	errno = ENOMSG;
+	/* LINTED interface problem */
 	return (char *) s;
 }
