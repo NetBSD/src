@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3_startup.c,v 1.30 1995/01/11 20:39:19 gwr Exp $	*/
+/*	$NetBSD: sun3_startup.c,v 1.31 1995/01/18 17:22:42 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -80,22 +80,17 @@ struct msgbuf *msgbufp = NULL;
 extern vm_offset_t tmp_vpages[];
 extern int physmem;
 unsigned char *interrupt_reg;
-unsigned int orig_nmi_vector;
+
 vm_offset_t proc0_user_pa;
 struct user *proc0paddr;	/* proc[0] pcb address (u-area VA) */
 extern struct pcb *curpcb;
 
 /*
- * Switch to our own interrupt vector table, but
- * keep the PROM's NMI handler until clock_init
+ * Switch to our own interrupt vector table.
  */
 static void initialize_vector_table()
 {
-	int nmivec = AUTO_VECTOR_BASE + 7;
-
 	old_vector_table = getvbr();
-	orig_nmi_vector = old_vector_table[nmivec];
-	vector_table[nmivec] = (void (*)()) orig_nmi_vector;
 	setvbr((unsigned int *) vector_table);
 }
 
@@ -809,8 +804,8 @@ void internal_configure()
 	/* now other obio devices */
 	zs_init();
 	eeprom_init();
-	clock_init();
 	isr_init();
+	clock_init();
 }
 
 /*
@@ -834,11 +829,17 @@ sun3_bootstrap()
 	
 	sun3_verify_hardware();
 	
-	initialize_vector_table();	/* point interrupts/exceptions to our table */
-	
 	sun3_vm_init();		/* handle kernel mapping problems, etc */
 
 	pmap_bootstrap();		/* bootstrap pmap module */
 
 	internal_configure();	/* stuff that can't wait for configure() */
+
+	/*
+	 * Point interrupts/exceptions to our table.
+	 * This is done after internal_configure/isr_init finds
+	 * the interrupt register and disables the NMI clock so
+	 * it will not cause "spurrious level 7" complaints.
+	 */
+	initialize_vector_table();
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.15 1995/01/11 20:31:32 gwr Exp $	*/
+/*	$NetBSD: isr.c,v 1.16 1995/01/18 17:22:40 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -71,9 +71,11 @@ void isr_init()
 	interrupt_reg = obio_find_mapping(OBIO_INTERREG, 1);
 	if (!interrupt_reg)
 		mon_panic("interrupt reg VA not found\n");
+	/* Turn off all interrupts until clock_attach */
+	*interrupt_reg = 0;
 }
 
-void isr_add_custom(level, handler)		/* XXX */
+void isr_add_custom(level, handler)
 	int level;
 	void (*handler)();
 {
