@@ -1,4 +1,4 @@
-/*	$NetBSD: timezone.c,v 1.6 1997/01/23 14:01:58 mrg Exp $	*/
+/*	$NetBSD: timezone.c,v 1.7 1997/07/13 19:35:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)timezone.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: timezone.c,v 1.6 1997/01/23 14:01:58 mrg Exp $";
+__RCSID("$NetBSD: timezone.c,v 1.7 1997/07/13 19:35:08 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,8 +48,7 @@ static char rcsid[] = "$NetBSD: timezone.c,v 1.6 1997/01/23 14:01:58 mrg Exp $";
 #include <stdlib.h>
 #include <string.h>
 #include <tzfile.h>
-
-char *_tztab();
+#include "extern.h"
 
 /*
  * timezone --
@@ -68,8 +68,8 @@ timezone(zone, dst)
 	register char	*beg,
 			*end;
 
-	if (beg = getenv("TZNAME")) {		/* set in environment */
-		if (end = strchr(beg, ',')) {	/* "PST,PDT" */
+	if ((beg = getenv("TZNAME")) != NULL) {	/* set in environment */
+		if ((end = strchr(beg, ',')) != NULL) {	/* "PST,PDT" */
 			if (dst)
 				return(++end);
 			*end = '\0';
@@ -88,22 +88,22 @@ static struct zone {
 	char	*stdzone;
 	char	*dlzone;
 } zonetab[] = {
-	-1*60,	"MET",	"MET DST",	/* Middle European */
-	-2*60,	"EET",	"EET DST",	/* Eastern European */
-	4*60,	"AST",	"ADT",		/* Atlantic */
-	5*60,	"EST",	"EDT",		/* Eastern */
-	6*60,	"CST",	"CDT",		/* Central */
-	7*60,	"MST",	"MDT",		/* Mountain */
-	8*60,	"PST",	"PDT",		/* Pacific */
+	{ -1*60,	"MET",	"MET DST" },	/* Middle European */
+	{ -2*60,	"EET",	"EET DST" },	/* Eastern European */
+	{ 4*60,		"AST",	"ADT" },	/* Atlantic */
+	{ 5*60,		"EST",	"EDT" },	/* Eastern */
+	{ 6*60,		"CST",	"CDT" },	/* Central */
+	{ 7*60,		"MST",	"MDT" },	/* Mountain */
+	{ 8*60,		"PST",	"PDT" },	/* Pacific */
 #ifdef notdef
 	/* there's no way to distinguish this from WET */
-	0,	"GMT",	0,		/* Greenwich */
+	{ 0,		"GMT",	0 },		/* Greenwich */
 #endif
-	0*60,	"WET",	"WET DST",	/* Western European */
-	-10*60,	"EST",	"EST",		/* Aust: Eastern */
-     -10*60+30,	"CST",	"CST",		/* Aust: Central */
-	-8*60,	"WST",	0,		/* Aust: Western */
-	-1
+	{ 0*60,		"WET",	"WET DST" },	/* Western European */
+	{ -10*60,	"EST",	"EST" },	/* Aust: Eastern */
+     	{ -10*60+30,	"CST",	"CST" },	/* Aust: Central */
+ 	{ -8*60,	"WST",	0 },		/* Aust: Western */
+	{ -1,		NULL,	NULL }
 };
 
 /*
