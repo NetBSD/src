@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.8 1998/08/08 20:55:36 mycroft Exp $	*/
+/*	$NetBSD: ess.c,v 1.9 1998/08/08 21:37:00 mycroft Exp $	*/
 
 /*
  * Copyright 1997
@@ -958,7 +958,7 @@ ess_drain(addr)
 {
 	extern int hz;		/* XXX */
 
-	tsleep(addr, PWAIT | PCATCH, "essdr", hz/100); /* XXX */
+	tsleep(addr, PWAIT | PCATCH, "essdr", hz/20); /* XXX */
 	return (0);
 }
 
