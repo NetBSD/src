@@ -57,6 +57,7 @@
  */
 
 #include <stdio.h>
+#include <limits.h>
 #include "cryptlib.h"
 #include <openssl/asn1.h>
 #include <openssl/asn1_mac.h>
@@ -124,7 +125,7 @@ int ASN1_get_object(unsigned char **pp, long *plength, int *ptag, int *pclass,
 		(int)(omax+ *pp));
 
 #endif
-	if (*plength > (omax - (*pp - p)))
+	if (*plength > (omax - (p - *pp)))
 		{
 		ASN1err(ASN1_F_ASN1_GET_OBJECT,ASN1_R_TOO_LONG);
 		/* Set this so that even if things are not long enough
@@ -141,7 +142,7 @@ err:
 static int asn1_get_length(unsigned char **pp, int *inf, long *rl, int max)
 	{
 	unsigned char *p= *pp;
-	long ret=0;
+	unsigned long ret=0;
 	int i;
 
 	if (max-- < 1) return(0);
@@ -170,10 +171,10 @@ static int asn1_get_length(unsigned char **pp, int *inf, long *rl, int max)
 		else
 			ret=i;
 		}
-	if (ret < 0)
+	if (ret > LONG_MAX)
 		return 0;
 	*pp=p;
-	*rl=ret;
+	*rl=(long)ret;
 	return(1);
 	}
 
@@ -183,7 +184,7 @@ void ASN1_put_object(unsigned char **pp, int constructed, int length, int tag,
 	     int xclass)
 	{
 	unsigned char *p= *pp;
-	int i;
+	int i, ttag;
 
 	i=(constructed)?V_ASN1_CONSTRUCTED:0;
 	i|=(xclass&V_ASN1_PRIVATE);
@@ -192,12 +193,15 @@ void ASN1_put_object(unsigned char **pp, int constructed, int length, int tag,
 	else
 		{
 		*(p++)=i|V_ASN1_PRIMITIVE_TAG;
-		while (tag > 0x7f)
+		for(i = 0, ttag = tag; ttag > 0; i++) ttag >>=7;
+		ttag = i;
+		while(i-- > 0)
 			{
-			*(p++)=(tag&0x7f)|0x80;
-			tag>>=7;
+			p[i] = tag & 0x7f;
+			if(i != (ttag - 1)) p[i] |= 0x80;
+			tag >>= 7;
 			}
-		*(p++)=(tag&0x7f);
+		p += ttag;
 		}
 	if ((constructed == 2) && (length == 0))
 		*(p++)=0x80; /* der_put_length would output 0 instead */
@@ -300,7 +304,7 @@ int asn1_GetSequence(ASN1_CTX *c, long *length)
 		return(0);
 		}
 	if (c->inf == (1|V_ASN1_CONSTRUCTED))
-		c->slen= *length+ *(c->pp)-c->p;
+		c->slen= *length;
 	c->eos=0;
 	return(1);
 	}
@@ -337,9 +341,9 @@ int ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len)
 		{
 		c=str->data;
 		if (c == NULL)
-			str->data=Malloc(len+1);
+			str->data=OPENSSL_malloc(len+1);
 		else
-			str->data=Realloc(c,len+1);
+			str->data=OPENSSL_realloc(c,len+1);
 
 		if (str->data == NULL)
 			{
@@ -367,7 +371,7 @@ ASN1_STRING *ASN1_STRING_type_new(int type)
 	{
 	ASN1_STRING *ret;
 
-	ret=(ASN1_STRING *)Malloc(sizeof(ASN1_STRING));
+	ret=(ASN1_STRING *)OPENSSL_malloc(sizeof(ASN1_STRING));
 	if (ret == NULL)
 		{
 		ASN1err(ASN1_F_ASN1_STRING_TYPE_NEW,ERR_R_MALLOC_FAILURE);
@@ -383,8 +387,8 @@ ASN1_STRING *ASN1_STRING_type_new(int type)
 void ASN1_STRING_free(ASN1_STRING *a)
 	{
 	if (a == NULL) return;
-	if (a->data != NULL) Free(a->data);
-	Free(a);
+	if (a->data != NULL) OPENSSL_free(a->data);
+	OPENSSL_free(a);
 	}
 
 int ASN1_STRING_cmp(ASN1_STRING *a, ASN1_STRING *b)
