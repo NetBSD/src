@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.209 2003/05/02 09:11:07 gmcgarry Exp $
+.\"	$NetBSD: options.4,v 1.210 2003/05/04 01:56:52 gmcgarry Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1630,6 +1630,14 @@ Size of the buffer cache as a percentage of total available
 .Tn RAM .
 Ignored if BUFPAGES is also specified.
 .It Cd options NBUF=value
+Sets the number of buffer headers available, i.e. the number of
+open files that may have a buffer cache entry.  Each buffer header
+requires MAXBSIZE (machine dependent, but usually 65536) bytes.
+The default value is machine dependent, but is usually equal to the
+value of BUFPAGES.
+If an architecture dependent VM_MAX_KERNEL_BUF constant is defined
+then NBUF may be reduced at run time so that the storage allocated
+for buffer headers doesn't exceed that limit.
 .It Cd options BUFPAGES=value
 These options set the number of pages available for the buffer cache.
 Their default value is a machine dependent value, often calculated as
