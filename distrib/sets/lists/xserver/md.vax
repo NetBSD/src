@@ -1,0 +1,3 @@
+# $NetBSD: md.vax,v 1.3.2.2 1999/09/10 21:54:41 he Exp $
+./usr/X11R6/bin/X
+./usr/X11R6/bin/Xmono
