@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.33 1997/02/23 02:23:07 mrg Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.34 1997/10/15 17:04:14 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -78,6 +78,7 @@ sys_read(p, v, retval)
 		syscallarg(void *) buf;
 		syscallarg(size_t) nbyte;
 	} */ *uap = v;
+	int fd = SCARG(uap, fd);
 	register struct file *fp;
 	register struct filedesc *fdp = p->p_fd;
 	struct uio auio;
@@ -87,8 +88,8 @@ sys_read(p, v, retval)
 	struct iovec ktriov;
 #endif
 
-	if (((u_int)SCARG(uap, fd)) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL ||
+	if ((u_int)fd >= fdp->fd_nfiles ||
+	    (fp = fdp->fd_ofiles[fd]) == NULL ||
 	    (fp->f_flag & FREAD) == 0)
 		return (EBADF);
 	aiov.iov_base = (caddr_t)SCARG(uap, buf);
@@ -117,8 +118,7 @@ sys_read(p, v, retval)
 	cnt -= auio.uio_resid;
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_GENIO) && error == 0)
-		ktrgenio(p->p_tracep, SCARG(uap, fd), UIO_READ, &ktriov,
-		    cnt, error);
+		ktrgenio(p->p_tracep, fd, UIO_READ, &ktriov, cnt, error);
 #endif
 	*retval = cnt;
 	return (error);
@@ -136,8 +136,10 @@ sys_readv(p, v, retval)
 	register struct sys_readv_args /* {
 		syscallarg(int) fd;
 		syscallarg(const struct iovec *) iovp;
-		syscallarg(u_int) iovcnt;
+		syscallarg(int) iovcnt;
 	} */ *uap = v;
+	int fd = SCARG(uap, fd);
+	int iovcnt = SCARG(uap, iovcnt);
 	register struct file *fp;
 	register struct filedesc *fdp = p->p_fd;
 	struct uio auio;
@@ -150,14 +152,14 @@ sys_readv(p, v, retval)
 	struct iovec *ktriov = NULL;
 #endif
 
-	if (((u_int)SCARG(uap, fd)) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL ||
+	if ((u_int)fd >= fdp->fd_nfiles ||
+	    (fp = fdp->fd_ofiles[fd]) == NULL ||
 	    (fp->f_flag & FREAD) == 0)
 		return (EBADF);
 	/* note: can't use iovlen until iovcnt is validated */
-	iovlen = SCARG(uap, iovcnt) * sizeof (struct iovec);
-	if (SCARG(uap, iovcnt) > UIO_SMALLIOV) {
-		if (SCARG(uap, iovcnt) > UIO_MAXIOV)
+	iovlen = iovcnt * sizeof (struct iovec);
+	if ((u_int)iovcnt > UIO_SMALLIOV) {
+		if ((u_int)iovcnt > UIO_MAXIOV)
 			return (EINVAL);
 		MALLOC(iov, struct iovec *, iovlen, M_IOV, M_WAITOK);
 		needfree = iov;
@@ -166,7 +168,7 @@ sys_readv(p, v, retval)
 		needfree = NULL;
 	}
 	auio.uio_iov = iov;
-	auio.uio_iovcnt = SCARG(uap, iovcnt);
+	auio.uio_iovcnt = iovcnt;
 	auio.uio_rw = UIO_READ;
 	auio.uio_segflg = UIO_USERSPACE;
 	auio.uio_procp = p;
@@ -174,7 +176,7 @@ sys_readv(p, v, retval)
 	if (error)
 		goto done;
 	auio.uio_resid = 0;
-	for (i = 0; i < SCARG(uap, iovcnt); i++) {
+	for (i = 0; i < iovcnt; i++) {
 #if 0
 		/* Cannot happen iov_len is unsigned */
 		if (iov->iov_len < 0) {
@@ -206,10 +208,10 @@ sys_readv(p, v, retval)
 			error = 0;
 	cnt -= auio.uio_resid;
 #ifdef KTRACE
-	if (ktriov != NULL) {
-		if (error == 0)
-			ktrgenio(p->p_tracep, SCARG(uap, fd), UIO_READ, ktriov,
-			    cnt, error);
+	if (KTRPOINT(p, KTR_GENIO))
+		if (error == 0) {
+			ktrgenio(p->p_tracep, fd, UIO_READ, ktriov, cnt,
+			    error);
 		FREE(ktriov, M_TEMP);
 	}
 #endif
@@ -234,6 +236,7 @@ sys_write(p, v, retval)
 		syscallarg(const void *) buf;
 		syscallarg(size_t) nbyte;
 	} */ *uap = v;
+	int fd = SCARG(uap, fd);
 	register struct file *fp;
 	register struct filedesc *fdp = p->p_fd;
 	struct uio auio;
@@ -243,8 +246,8 @@ sys_write(p, v, retval)
 	struct iovec ktriov;
 #endif
 
-	if (((u_int)SCARG(uap, fd)) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL ||
+	if ((u_int)fd >= fdp->fd_nfiles ||
+	    (fp = fdp->fd_ofiles[fd]) == NULL ||
 	    (fp->f_flag & FWRITE) == 0)
 		return (EBADF);
 	aiov.iov_base = (char *)SCARG(uap, buf);	/* XXX kills const */
@@ -276,8 +279,7 @@ sys_write(p, v, retval)
 	cnt -= auio.uio_resid;
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_GENIO) && error == 0)
-		ktrgenio(p->p_tracep, SCARG(uap, fd), UIO_WRITE,
-		    &ktriov, cnt, error);
+		ktrgenio(p->p_tracep, fd, UIO_WRITE, &ktriov, cnt, error);
 #endif
 	*retval = cnt;
 	return (error);
@@ -297,6 +299,8 @@ sys_writev(p, v, retval)
 		syscallarg(const struct iovec *) iovp;
 		syscallarg(u_int) iovcnt;
 	} */ *uap = v;
+	int fd = SCARG(uap, fd);
+	int iovcnt = SCARG(uap, iovcnt);
 	register struct file *fp;
 	register struct filedesc *fdp = p->p_fd;
 	struct uio auio;
@@ -309,14 +313,14 @@ sys_writev(p, v, retval)
 	struct iovec *ktriov = NULL;
 #endif
 
-	if (((u_int)SCARG(uap, fd)) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL ||
+	if ((u_int)fd >= fdp->fd_nfiles ||
+	    (fp = fdp->fd_ofiles[fd]) == NULL ||
 	    (fp->f_flag & FWRITE) == 0)
 		return (EBADF);
 	/* note: can't use iovlen until iovcnt is validated */
-	iovlen = SCARG(uap, iovcnt) * sizeof (struct iovec);
-	if (SCARG(uap, iovcnt) > UIO_SMALLIOV) {
-		if (SCARG(uap, iovcnt) > UIO_MAXIOV)
+	iovlen = iovcnt * sizeof (struct iovec);
+	if ((u_int)iovcnt > UIO_SMALLIOV) {
+		if ((u_int)iovcnt > UIO_MAXIOV)
 			return (EINVAL);
 		MALLOC(iov, struct iovec *, iovlen, M_IOV, M_WAITOK);
 		needfree = iov;
@@ -325,7 +329,7 @@ sys_writev(p, v, retval)
 		needfree = NULL;
 	}
 	auio.uio_iov = iov;
-	auio.uio_iovcnt = SCARG(uap, iovcnt);
+	auio.uio_iovcnt = iovcnt;
 	auio.uio_rw = UIO_WRITE;
 	auio.uio_segflg = UIO_USERSPACE;
 	auio.uio_procp = p;
@@ -333,7 +337,7 @@ sys_writev(p, v, retval)
 	if (error)
 		goto done;
 	auio.uio_resid = 0;
-	for (i = 0; i < SCARG(uap, iovcnt); i++) {
+	for (i = 0; i < iovcnt; i++) {
 #if 0
 		/* Cannot happen iov_len is unsigned */
 		if (iov->iov_len < 0) {
@@ -368,10 +372,10 @@ sys_writev(p, v, retval)
 	}
 	cnt -= auio.uio_resid;
 #ifdef KTRACE
-	if (ktriov != NULL) {
-		if (error == 0)
-			ktrgenio(p->p_tracep, SCARG(uap, fd), UIO_WRITE,
-				ktriov, cnt, error);
+	if (KTRPOINT(p, KTR_GENIO))
+		if (error == 0) {
+			ktrgenio(p->p_tracep, fd, UIO_WRITE, ktriov, cnt,
+			    error);
 		FREE(ktriov, M_TEMP);
 	}
 #endif
