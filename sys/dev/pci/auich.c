@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.10 2002/02/14 03:22:36 augustss Exp $	*/
+/*	$NetBSD: auich.c,v 1.11 2002/02/14 12:52:01 augustss Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.10 2002/02/14 03:22:36 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.11 2002/02/14 12:52:01 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -666,10 +666,6 @@ auich_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 		auich_read_codec(sc, AC97_REG_POWER, &val);
 		auich_write_codec(sc, AC97_REG_POWER, val | inout);
 
-		auich_write_codec(sc, AC97_REG_PCM_FRONT_DAC_RATE,
-		    sc->sc_fixed_rate ? sc->sc_fixed_rate : p->sample_rate);
-		auich_read_codec(sc, AC97_REG_PCM_FRONT_DAC_RATE, &rate);
-		p->sample_rate = rate;
 		if (sc->sc_fixed_rate) {
 			p->sample_rate = sc->sc_fixed_rate;
 		} else {
