@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.3 2002/05/02 13:03:32 lukem Exp $	*/
+/*	$NetBSD: ffs.c,v 1.4 2002/05/07 12:22:23 pk Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.3 2002/05/02 13:03:32 lukem Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.4 2002/05/07 12:22:23 pk Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -275,6 +275,8 @@ ffs_findstage2_ino(ib_params *params, void *_ino,
 			*((uint32_t *)_ino) = ino;
 			return (2);
 		}
+		if (de->d_reclen == 0)
+			break;
 		de = (struct direct *)((char *)de + de->d_reclen);
 	}
 
