@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.35 2002/07/11 04:52:50 scottr Exp $
+.\"	$NetBSD: prep,v 1.36 2002/11/18 12:39:51 lukem Exp $
 .
 .Ss2 Prepare yourself
 .
@@ -1372,11 +1372,11 @@ on any unix-like machine.
 .bullet)
 .It
 Copy
-.Pa netbsd.INSTALL.gz No and Pa ofwboot.xcf
+.Pa netbsd-INSTALL.gz No and Pa ofwboot.xcf
 to the floppy.
 .It
 Rename
-.Pa netbsd.INSTALL.gz No to Pa netbsd.gz ,
+.Pa netbsd-INSTALL.gz No to Pa netbsd.gz ,
 since OpenFirmware can't deal with MS-DOS filenames longer than eight
 characters.
 .enum)
@@ -1504,7 +1504,7 @@ Skip forward to
 Place
 .Pa ofwboot.xcf
 and the installation kernel
-.Pa netbsd.GENERIC_MD.gz
+.Pa netbsd-GENERIC_MD.gz
 at the top level of your Macintosh file system.
 That is, drag the two icons onto your hard drive icon (not the desktop).
 Make sure they're both on the same partition.
@@ -1587,7 +1587,7 @@ CD-R image, as described in the section above.
 Place
 .Pa ofwboot.xcf
 and the installation kernel
-.Pa netbsd.GENERIC_MD.gz
+.Pa netbsd-GENERIC_MD.gz
 at the top level of the CD.
 Due to restrictions in the way that Open Firmware deals with ISO
 filenames, you may wish to name your kernel
@@ -1638,7 +1638,7 @@ Click the
 button and drag
 .Pa installation/ofwboot.xcf
 and
-.Pa binary/kernel/netbsd.GENERIC_MD.gz
+.Pa binary/kernel/netbsd-GENERIC_MD.gz
 into the window
 .Pp
 .It
@@ -1680,7 +1680,7 @@ CD-R image, as described two sections above.
 Place
 .Pa ofwboot.xcf
 and the installation kernel
-.Pa netbsd.GENERIC_MD.gz
+.Pa netbsd-GENERIC_MD.gz
 at the top level of the CD.
 Make sure that the bootloader is present on the HFS partition,
 and the kernel is on both the ISO9660 and HFS partitions.
@@ -1754,7 +1754,7 @@ button and select the temporary partition you just created
 Click the
 .Dq ISO...
 button and drag
-.Pa binary/kernel/netbsd.GENERIC_MD.gz
+.Pa binary/kernel/netbsd-GENERIC_MD.gz
 into the window.
 You may also want to drag the
 .Nx \*V
