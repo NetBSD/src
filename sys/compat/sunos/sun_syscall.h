@@ -85,7 +85,7 @@
 #define	SUN_SYS_getitimer	86
 #define	SUN_SYS_ogethostname	87
 #define	SUN_SYS_osethostname	88
-#define	SUN_SYS_getdtablesize	89
+#define	SUN_SYS_ogetdtablesize	89
 #define	SUN_SYS_dup2	90
 #define	SUN_SYS_fcntl	92
 #define	SUN_SYS_select	93
