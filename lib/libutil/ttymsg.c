@@ -1,4 +1,4 @@
-/*	$NetBSD: ttymsg.c,v 1.5 1997/06/29 18:44:10 christos Exp $	*/
+/*	$NetBSD: ttymsg.c,v 1.6 1997/07/01 06:10:53 mikel Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ttymsg.c	8.2 (Berkeley) 11/16/93";
 #else
-__RCSID("$NetBSD: ttymsg.c,v 1.5 1997/06/29 18:44:10 christos Exp $");
+__RCSID("$NetBSD: ttymsg.c,v 1.6 1997/07/01 06:10:53 mikel Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -76,7 +76,7 @@ ttymsg(iov, iovcnt, line, tmout)
 	int forked = 0;
 
 	if (iovcnt > sizeof(localiov) / sizeof(localiov[0]))
-		return ("too many iov's (change code in wall/ttymsg.c)");
+		return ("too many iov's (change code in libutil/ttymsg.c)");
 
 	(void)strncpy(device + sizeof(_PATH_DEV) - 1, line,
 	    sizeof(device) - sizeof(_PATH_DEV));
