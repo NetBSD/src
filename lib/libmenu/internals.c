@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.c,v 1.9 2002/02/04 13:02:05 blymn Exp $	*/
+/*	$NetBSD: internals.c,v 1.10 2002/07/29 13:03:51 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -388,7 +388,7 @@ _menui_draw_item(MENU *menu, int item)
 	      menu->items[item]->row - menu->top_row,
 	      menu->items[item]->col * menu->col_width);
 
-	if ((menu->cur_item == item) || (menu->items[item]->selected == 1))
+	if (menu->cur_item == item)
 		wattrset(menu->scrwin, menu->fore);
 	if ((menu->items[item]->opts & O_SELECTABLE) != O_SELECTABLE)
 		wattron(menu->scrwin, menu->grey);
