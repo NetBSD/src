@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_map.c,v 1.16 2002/09/21 01:12:50 oster Exp $	*/
+/*	$NetBSD: rf_map.c,v 1.17 2002/09/21 01:14:22 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.16 2002/09/21 01:12:50 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.17 2002/09/21 01:14:22 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -445,13 +445,6 @@ rf_AllocASMList(count)
 
 	RF_FREELIST_GET_N(rf_asm_freelist, p, next, (RF_AccessStripeMap_t *), count);
 	return (p);
-}
-
-void 
-rf_FreeAccessStripeMapComponent(p)
-	RF_AccessStripeMap_t *p;
-{
-	RF_FREELIST_FREE(rf_asm_freelist, p, next);
 }
 
 static void 
