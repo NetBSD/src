@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: mount_isofs.8,v 1.1.2.2 1993/07/20 01:02:00 cgd Exp $
+.\"	$Id: mount_isofs.8,v 1.1.2.3 1993/07/20 02:41:24 cgd Exp $
 .\"
 .Dd July 19, 1993
 .Dt MOUNT_MSDOS 8
@@ -65,7 +65,7 @@ then the Rockridge extensions will be ignored.
 mount_isofs /dev/cd0d /cdrom
 mount_isofs \-norrip /dev/cd0d /cdrom
 mount \-t isofs /dev/cd0d /cdrom
-mount \-t isofs \-norrip /dev/cd0d /cdrom
+mount \-t isofs \-o \-norrip /dev/cd0d /cdrom
 .Ed
 .Sh SEE ALSO
 .Xr mount 2 ,
