@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.94 2003/02/25 21:00:32 jrf Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.95 2003/04/05 23:32:52 dsl Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.94 2003/02/25 21:00:32 jrf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.95 2003/04/05 23:32:52 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -814,8 +814,6 @@ procfs_lookup(v)
 		}
 
 		pid = (pid_t)atoi(pname, cnp->cn_namelen);
-		if (pid > PID_MAX)
-			break;
 
 		p = PFIND(pid);
 		if (p == NULL)
