@@ -13,7 +13,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: sd.c,v 1.11 1993/05/21 12:20:30 davidb Exp $
+ *	$Id: sd.c,v 1.12 1993/05/25 07:27:37 deraadt Exp $
  */
 
 #include "sd.h"
@@ -1148,9 +1148,9 @@ sd_interpret_sense(int unit, struct scsi_xfer *xs)
 				printf("sd%d: soft error(corrected) ", unit); 
 				if(sense->valid) {
 			  		printf("block no. %d (decimal)",
-				  		(sense->ext.extended.info[0] <<24),
-				  		(sense->ext.extended.info[1] <<16),
-				  		(sense->ext.extended.info[2] <<8),
+				  		(sense->ext.extended.info[0] <<24) |
+				  		(sense->ext.extended.info[1] <<16) |
+				  		(sense->ext.extended.info[2] <<8) |
 				  		(sense->ext.extended.info[3] ));
 				}
 				printf("\n");
@@ -1165,9 +1165,9 @@ sd_interpret_sense(int unit, struct scsi_xfer *xs)
 				printf("sd%d: medium error ", unit); 
 				if(sense->valid) {
 			  		printf("block no. %d (decimal)",
-				  		(sense->ext.extended.info[0] <<24),
-				  		(sense->ext.extended.info[1] <<16),
-				  		(sense->ext.extended.info[2] <<8),
+				  		(sense->ext.extended.info[0] <<24) |
+				  		(sense->ext.extended.info[1] <<16) |
+				  		(sense->ext.extended.info[2] <<8) |
 				  		(sense->ext.extended.info[3] ));
 				}
 				printf("\n");
@@ -1198,9 +1198,9 @@ sd_interpret_sense(int unit, struct scsi_xfer *xs)
 				printf("sd%d: attempted protection violation ", unit); 
 				if(sense->valid) {
 					printf("block no. %d (decimal)\n",
-				  		(sense->ext.extended.info[0] <<24),
-				  		(sense->ext.extended.info[1] <<16),
-				  		(sense->ext.extended.info[2] <<8),
+				  		(sense->ext.extended.info[0] <<24) |
+				  		(sense->ext.extended.info[1] <<16) |
+				  		(sense->ext.extended.info[2] <<8) |
 				  		(sense->ext.extended.info[3] ));
 				}
 				printf("\n");
@@ -1211,9 +1211,9 @@ sd_interpret_sense(int unit, struct scsi_xfer *xs)
 				printf("sd%d: block wrong state (worm)\n ", unit); 
 				if(sense->valid) {
 			  		printf("block no. %d (decimal)\n",
-				  		(sense->ext.extended.info[0] <<24),
-				  		(sense->ext.extended.info[1] <<16),
-				  		(sense->ext.extended.info[2] <<8),
+				  		(sense->ext.extended.info[0] <<24) |
+				  		(sense->ext.extended.info[1] <<16) |
+				  		(sense->ext.extended.info[2] <<8) |
 				  		(sense->ext.extended.info[3] ));
 				}
 				printf("\n");
@@ -1236,9 +1236,9 @@ sd_interpret_sense(int unit, struct scsi_xfer *xs)
 				printf("sd%d: search returned\n ", unit); 
 				if(sense->valid) {
 			  		printf("block no. %d (decimal)\n",
-				  		(sense->ext.extended.info[0] <<24),
-				  		(sense->ext.extended.info[1] <<16),
-				  		(sense->ext.extended.info[2] <<8),
+				  		(sense->ext.extended.info[0] <<24) |
+				  		(sense->ext.extended.info[1] <<16) |
+				  		(sense->ext.extended.info[2] <<8) |
 				  		(sense->ext.extended.info[3] ));
 				}
 				printf("\n");
@@ -1253,9 +1253,9 @@ sd_interpret_sense(int unit, struct scsi_xfer *xs)
 				printf("sd%d: verify miscompare\n ", unit); 
 				if(sense->valid) {
 			  		printf("block no. %d (decimal)\n",
-				  		(sense->ext.extended.info[0] <<24),
-				  		(sense->ext.extended.info[1] <<16),
-				  		(sense->ext.extended.info[2] <<8),
+				  		(sense->ext.extended.info[0] <<24) |
+				  		(sense->ext.extended.info[1] <<16) |
+				  		(sense->ext.extended.info[2] <<8) |
 				  		(sense->ext.extended.info[3] ));
 				}
 				printf("\n");
@@ -1279,8 +1279,8 @@ sd_interpret_sense(int unit, struct scsi_xfer *xs)
 		if(sense->valid)
 			if(!silent)
 				printf("block no. %d (decimal)\n",
-					(sense->ext.unextended.blockhi <<16),
-					+ (sense->ext.unextended.blockmed <<8),
+					(sense->ext.unextended.blockhi <<16)
+					+ (sense->ext.unextended.blockmed <<8)
 					+ (sense->ext.unextended.blocklow ));
 		return EIO;
 	}
