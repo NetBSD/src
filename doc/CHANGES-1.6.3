@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.90 2004/05/06 04:46:14 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.91 2004/05/06 18:41:01 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -653,3 +653,13 @@ usr.bin/vi/common/line.c			1.7
 	We can't keep a reference to data returned by libdb after a subsequent
 	call to any other libdb function on that DB.
 	[aymeric, ticket #1685]
+
+sys/dev/microcode/isp/asm_2100.h		1.4-1.5
+
+	Revert ISP2100 firmware to Qlogic revision 1.19.16 (the version that 
+	shipped with NetBSD 1.5).  With all newer versions available to us, 
+	we have seen some adapters crash -- and fail to respond to 
+	reset -- under certain heavy load conditions.  This version appears 
+	stable under heavy load with the current driver on multiple systems 
+	on which we can reproduce the failure with newer versions.
+	[tls, ticket #1683]
