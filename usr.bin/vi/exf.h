@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)exf.h	8.20 (Berkeley) 12/28/93
+ *	from: @(#)exf.h	8.20 (Berkeley) 12/28/93
+ *	$Id: exf.h,v 1.2 1994/01/24 06:38:52 cgd Exp $
  */
 					/* Undo direction. */
 /*

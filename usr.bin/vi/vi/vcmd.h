@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vcmd.h	8.23 (Berkeley) 1/8/94
+ *	from: @(#)vcmd.h	8.23 (Berkeley) 1/8/94
+ *	$Id: vcmd.h,v 1.2 1994/01/24 06:42:13 cgd Exp $
  */
 
 typedef struct _vikeys VIKEYS;

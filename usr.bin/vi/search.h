@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)search.h	8.7 (Berkeley) 11/18/93
+ *	from: @(#)search.h	8.7 (Berkeley) 11/18/93
+ *	$Id: search.h,v 1.2 1994/01/24 06:39:13 cgd Exp $
  */
 
 #define	RE_WSTART	"[[:<:]]"	/* Not-in-word search patterns. */

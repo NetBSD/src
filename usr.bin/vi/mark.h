@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)mark.h	8.5 (Berkeley) 12/27/93
+ *	from: @(#)mark.h	8.5 (Berkeley) 12/27/93
+ *	$Id: mark.h,v 1.2 1994/01/24 06:39:01 cgd Exp $
  */
 
 /*

@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)msg.h	8.8 (Berkeley) 11/18/93
+ *	from: @(#)msg.h	8.8 (Berkeley) 11/18/93
+ *	$Id: msg.h,v 1.2 1994/01/24 06:39:03 cgd Exp $
  */
 
 /*

@@ -1,4 +1,5 @@
-#	@(#)README	8.42 (Berkeley) 1/23/94
+#	from: @(#)README	8.42 (Berkeley) 1/23/94
+#	$Id: README,v 1.2 1994/01/24 06:38:44 cgd Exp $
 
 This is the README for version 1.03 of nvi, a freely redistributable
 replacement for the vi and ex text editors.  It can be retrieved via

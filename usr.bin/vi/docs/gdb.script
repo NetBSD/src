@@ -1,4 +1,5 @@
-#	@(#)gdb.script	8.2 (Berkeley) 9/29/93
+#	from: @(#)gdb.script	8.2 (Berkeley) 9/29/93
+#	$Id: gdb.script,v 1.2 1994/01/24 06:39:31 cgd Exp $
 
 # display the SVI screen map
 # usage dmap(sp)

@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)screen.h	8.81 (Berkeley) 12/29/93
+ *	from: @(#)screen.h	8.81 (Berkeley) 12/29/93
+ *	$Id: screen.h,v 1.2 1994/01/24 06:39:11 cgd Exp $
  */
 
 /*

@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)term.h	8.26 (Berkeley) 1/7/94
+ *	from: @(#)term.h	8.26 (Berkeley) 1/7/94
+ *	$Id: term.h,v 1.2 1994/01/24 06:39:18 cgd Exp $
  */
 
 /* Structure to return a character and associated information. */

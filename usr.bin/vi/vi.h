@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vi.h	8.33 (Berkeley) 1/9/94
+ *	from: @(#)vi.h	8.33 (Berkeley) 1/9/94
+ *	$Id: vi.h,v 1.2 1994/01/24 06:39:25 cgd Exp $
  */
 
 /* System includes. */
