@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.21 1998/10/15 05:10:20 thorpej Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.22 1998/10/15 05:11:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -364,6 +364,7 @@ struct scsi_quirk_inquiry_pattern {
 #define	SCSIPI_XFER_ASYNC(xs) \
 	((xs->flags & (SCSI_NOSLEEP | SCSI_POLL)) == SCSI_NOSLEEP)
 
+#ifdef _KERNEL
 void	scsipi_init __P((void));
 caddr_t	scsipi_inqmatch __P((struct scsipi_inquiry_pattern *, caddr_t,
 	    int, int, int *));
@@ -384,6 +385,7 @@ int	scsipi_do_ioctl __P((struct scsipi_link *, dev_t, u_long, caddr_t,
 void	show_scsipi_xs __P((struct scsipi_xfer *));
 void	show_scsipi_cmd __P((struct scsipi_xfer *));
 void	show_mem __P((u_char *, int));
+#endif /* _KERNEL */
 
 static __inline void _lto2b __P((u_int32_t val, u_int8_t *bytes))
 	__attribute__ ((unused));
