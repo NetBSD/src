@@ -1,4 +1,4 @@
-/*	$NetBSD: getcwd.c,v 1.25 2002/04/16 19:08:43 groo Exp $	*/
+/*	$NetBSD: getcwd.c,v 1.25.2.1 2003/08/04 04:25:26 grant Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcwd.c	8.5 (Berkeley) 2/7/95";
 #else
-__RCSID("$NetBSD: getcwd.c,v 1.25 2002/04/16 19:08:43 groo Exp $");
+__RCSID("$NetBSD: getcwd.c,v 1.25.2.1 2003/08/04 04:25:26 grant Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -170,7 +170,8 @@ loop:
 		rootd = 0;
 
 	if (*wbuf) {
-		if (strlen(resolved) + strlen(wbuf) + rootd + 1 > MAXPATHLEN) {
+		if (strlen(resolved) + strlen(wbuf) + (rootd ? 0 : 1) + 1 >
+		    MAXPATHLEN) {
 			errno = ENAMETOOLONG;
 			goto err1;
 		}
