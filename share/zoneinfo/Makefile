@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.9 (Berkeley) 2/28/91
-#	$Id: Makefile,v 1.9 1993/09/17 23:58:57 cgd Exp $
+#	$Id: Makefile,v 1.10 1993/12/28 12:03:24 davidb Exp $
 
 # Change the line below for your time zone (after finding the zone you want in
 # the time zone files, or adding it to a time zone file).
@@ -113,19 +113,21 @@ TDATA=	${YDATA} ${NDATA} ${SDATA}
 DATA=	${YDATA} ${NDATA} ${SDATA} leapseconds
 USNO=	usno1988 usno1989
 
+ZIC=${.OBJDIR}/zic
+
 posix_only: ${TDATA}
 	(cd ${.CURDIR}/datfiles; \
-	    ../obj/zic -d ${TZDIR} -L /dev/null ${TDATA})
+	    ${ZIC} -d ${TZDIR} -L /dev/null ${TDATA})
 
 right_only: leapseconds ${TDATA}
 	(cd ${.CURDIR}/datfiles; \
-	    ../obj/zic -d ${TZDIR} -L leapseconds ${TDATA})
+	    ${ZIC} -d ${TZDIR} -L leapseconds ${TDATA})
 
 other_two: leapseconds ${TDATA}
 	(cd ${.CURDIR}/datfiles; \
-	    ../obj/zic -d ${TZDIR}/posix -L /dev/null ${TDATA})
+	    ${ZIC} -d ${TZDIR}/posix -L /dev/null ${TDATA})
 	(cd ${.CURDIR}/datfiles; \
-	    ../obj/zic -d ${TZDIR}/right -L leapseconds ${TDATA})
+	    ${ZIC} -d ${TZDIR}/right -L leapseconds ${TDATA})
 
 posix_right: posix_only other_two
 
@@ -133,7 +135,7 @@ right_posix: right_only other_two
 
 realinstall: ${DATA} ${REDO}
 	(cd ${.CURDIR}/datfiles; \
-	    ../obj/zic -d ${TZDIR} -p ${POSIXRULES})
+	    ${ZIC} -d ${TZDIR} -p ${POSIXRULES})
 	chown -R ${BINOWN}.${BINGRP} ${TZDIR}
 	chmod -R a-w ${TZDIR}
 
