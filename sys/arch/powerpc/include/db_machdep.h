@@ -1,5 +1,5 @@
 /*	$OpenBSD: db_machdep.h,v 1.2 1997/03/21 00:48:48 niklas Exp $	*/
-/*	$NetBSD: db_machdep.h,v 1.1 1998/01/27 15:13:09 sakamoto Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.2 1998/02/23 03:22:16 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -44,39 +44,7 @@
 typedef	vm_offset_t	db_addr_t;	/* address - unsigned */
 typedef	int		db_expr_t;	/* expression - signed */
 struct powerpc_saved_state {
-	u_int32_t	r0;		/* data registers */
-	u_int32_t	r1;
-	u_int32_t	r2;
-	u_int32_t	r3;
-	u_int32_t	r4;
-	u_int32_t	r5;
-	u_int32_t	r6;
-	u_int32_t	r7;
-	u_int32_t	r8;
-	u_int32_t	r9;
-	u_int32_t	r10;
-	u_int32_t	r11;
-	u_int32_t	r12;
-	u_int32_t	r13;
-	u_int32_t	r14;
-	u_int32_t	r15;
-	u_int32_t	r16;
-	u_int32_t	r17;
-	u_int32_t	r18;
-	u_int32_t	r19;
-	u_int32_t	r20;
-	u_int32_t	r21;
-	u_int32_t	r22;
-	u_int32_t	r23;
-	u_int32_t	r24;
-	u_int32_t	r25;
-	u_int32_t	r26;
-	u_int32_t	r27;
-	u_int32_t	r28;
-	u_int32_t	r29;
-	u_int32_t	r30;
-	u_int32_t	r31;
-	u_int32_t	r32;
+	u_int32_t	r[32];		/* data registers */
 	u_int32_t	iar;
 	u_int32_t	msr;
 };
