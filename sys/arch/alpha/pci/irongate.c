@@ -1,4 +1,4 @@
-/* $NetBSD: irongate.c,v 1.1 2000/06/01 20:30:30 thorpej Exp $ */
+/* $NetBSD: irongate.c,v 1.2 2000/06/26 18:19:26 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: irongate.c,v 1.1 2000/06/01 20:30:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irongate.c,v 1.2 2000/06/26 18:19:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,6 +198,7 @@ irongate_bus_get_window(int type, int window,
 {
 	struct irongate_config *icp = &irongate_configuration;
 	bus_space_tag_t st;
+	int error;
 
 	switch (type) {
 	case ALPHA_BUS_TYPE_PCI_IO:
@@ -212,5 +213,12 @@ irongate_bus_get_window(int type, int window,
 		panic("irongate_bus_get_window");
 	}
 
-	return (alpha_bus_space_get_window(st, window, abst));
+	error = alpha_bus_space_get_window(st, window, abst);
+	if (error)
+		return (error);
+
+	abst->abst_sys_start = IRONGATE_PHYSADDR(abst->abst_sys_start);
+	abst->abst_sys_end = IRONGATE_PHYSADDR(abst->abst_sys_end);
+
+	return (0);
 }
