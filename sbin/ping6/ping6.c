@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.47 2002/09/08 14:31:41 itojun Exp $	*/
+/*	$NetBSD: ping6.c,v 1.48 2002/09/21 18:30:05 mycroft Exp $	*/
 /*	$KAME: ping6.c,v 1.160 2002/09/08 14:28:18 itojun Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.47 2002/09/08 14:31:41 itojun Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.48 2002/09/21 18:30:05 mycroft Exp $");
 #endif
 #endif
 
@@ -133,6 +133,7 @@ __RCSID("$NetBSD: ping6.c,v 1.47 2002/09/08 14:31:41 itojun Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <poll.h>
 
 #ifdef IPSEC
 #include <netinet6/ah.h>
@@ -290,10 +291,9 @@ main(argc, argv)
 {
 	struct itimerval itimer;
 	struct sockaddr_in6 from;
-	struct timeval timeout, *tv;
+	int timeout;
 	struct addrinfo hints;
-	fd_set *fdmaskp;
-	int fdmasks;
+	struct pollfd fdmaskp[1];
 	int cc, i;
 	int ch, hold, packlen, preload, optval, ret_ga;
 	u_char *datap, *packet;
@@ -1043,10 +1043,6 @@ main(argc, argv)
 			retransmit();
 	}
 
-	fdmasks = howmany(s + 1, NFDBITS) * sizeof(fd_mask);
-	if ((fdmaskp = malloc(fdmasks)) == NULL)
-		err(1, "malloc");
-
 	seenalrm = seenint = 0;
 #ifdef SIGINFO
 	seeninfo = 0;
@@ -1079,14 +1075,12 @@ main(argc, argv)
 
 		if (options & F_FLOOD) {
 			(void)pinger();
-			timeout.tv_sec = 0;
-			timeout.tv_usec = 10000;
-			tv = &timeout;
+			timeout = 10;
 		} else
-			tv = NULL;
-		memset(fdmaskp, 0, fdmasks);
-		FD_SET(s, fdmaskp);
-		cc = select(s + 1, fdmaskp, NULL, NULL, tv);
+			timeout = INFTIM;
+		fdmaskp[0].fd = s;
+		fdmaskp[0].events = POLLIN;
+		cc = poll(fdmaskp, 1, timeout);
 		if (cc < 0) {
 			if (errno != EINTR) {
 				warn("select");
