@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.34 2000/03/15 18:39:52 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.35 2000/03/23 22:23:03 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -135,63 +135,62 @@ const struct tulip_pci_product {
 	u_int32_t	tpp_vendor;	/* PCI vendor ID */
 	u_int32_t	tpp_product;	/* PCI product ID */
 	tulip_chip_t	tpp_chip;	/* base Tulip chip type */
-	int		tpp_pmreg;	/* power management register offset */
 } tlp_pci_products[] = {
 #ifdef TLP_MATCH_21040
 	{ PCI_VENDOR_DEC,		PCI_PRODUCT_DEC_21040,
-	  TULIP_CHIP_21040,		0 },
+	  TULIP_CHIP_21040 },
 #endif
 #ifdef TLP_MATCH_21041
 	{ PCI_VENDOR_DEC,		PCI_PRODUCT_DEC_21041,
-	  TULIP_CHIP_21041,		0 },
+	  TULIP_CHIP_21041 },
 #endif
 #ifdef TLP_MATCH_21140
 	{ PCI_VENDOR_DEC,		PCI_PRODUCT_DEC_21140,
-	  TULIP_CHIP_21140,		0 },
+	  TULIP_CHIP_21140 },
 #endif
 #ifdef TLP_MATCH_21142
 	{ PCI_VENDOR_DEC,		PCI_PRODUCT_DEC_21142,
-	  TULIP_CHIP_21142,		0xe0 },
+	  TULIP_CHIP_21142 },
 #endif
 
 	{ PCI_VENDOR_LITEON,		PCI_PRODUCT_LITEON_82C168,
-	  TULIP_CHIP_82C168,		0 },
+	  TULIP_CHIP_82C168 },
 
 	/*
 	 * Note: This is like a MX98725 with Wake-On-LAN and a
 	 * 128-bit multicast hash table.
 	 */
 	{ PCI_VENDOR_LITEON,		PCI_PRODUCT_LITEON_82C115,
-	  TULIP_CHIP_82C115,		0x48 },
+	  TULIP_CHIP_82C115 },
 
 	{ PCI_VENDOR_MACRONIX,		PCI_PRODUCT_MACRONIX_MX98713,
-	  TULIP_CHIP_MX98713,		0 },
+	  TULIP_CHIP_MX98713 },
 	{ PCI_VENDOR_MACRONIX,		PCI_PRODUCT_MACRONIX_MX987x5,
-	  TULIP_CHIP_MX98715,		0x48 },
+	  TULIP_CHIP_MX98715 },
 
 	{ PCI_VENDOR_COMPEX,		PCI_PRODUCT_COMPEX_RL100TX,
-	  TULIP_CHIP_MX98713,		0 },
+	  TULIP_CHIP_MX98713 },
 
 	{ PCI_VENDOR_WINBOND,		PCI_PRODUCT_WINBOND_W89C840F,
-	  TULIP_CHIP_WB89C840F,		0 },
+	  TULIP_CHIP_WB89C840F },
 	{ PCI_VENDOR_COMPEX,		PCI_PRODUCT_COMPEX_RL100ATX,
-	  TULIP_CHIP_WB89C840F,		0 },
+	  TULIP_CHIP_WB89C840F },
 
 #if 0
 	{ PCI_VENDOR_DAVICOM,		PCI_PRODUCT_DAVICOM_DM9102,
-	  TULIP_CHIP_DM9102,		0 },
+	  TULIP_CHIP_DM9102 },
 #endif
 
 	{ PCI_VENDOR_ADMTEK,		PCI_PRODUCT_ADMTEK_AL981,
-	  TULIP_CHIP_AL981,		0xc4 },
+	  TULIP_CHIP_AL981 },
 
 #if 0
 	{ PCI_VENDOR_ASIX,		PCI_PRODUCT_ASIX_AX88140A,
-	  TULIP_CHIP_AX88140,		0 },
+	  TULIP_CHIP_AX88140 },
 #endif
 
 	{ 0,				0,
-	  TULIP_CHIP_INVALID,		0 },
+	  TULIP_CHIP_INVALID },
 };
 
 struct tlp_pci_quirks {
@@ -353,6 +352,7 @@ tlp_pci_attach(parent, self, aux)
 	u_int8_t enaddr[ETHER_ADDR_LEN];
 	u_int32_t val;
 	pcireg_t reg;
+	int pmreg;
 
 	sc->sc_devno = pa->pa_device;
 	psc->sc_pc = pa->pa_pc;
@@ -475,13 +475,8 @@ tlp_pci_attach(parent, self, aux)
 		/* Nothing. */
 	}
 
-	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, 0, 0)) {
-		if (tpp->tpp_pmreg == 0) {
-			printf("%s: don't know location of PMCSR for this "
-			    "chip\n", sc->sc_dev.dv_xname);
-			return;
-		}
-		reg = pci_conf_read(pc, pa->pa_tag, tpp->tpp_pmreg) & 0x3;
+	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
+		reg = pci_conf_read(pc, pa->pa_tag, pmreg + 4) & 0x3;
 		if (reg == 3) {
 			/*
 			 * The card has lost all configuration data in
@@ -494,7 +489,7 @@ tlp_pci_attach(parent, self, aux)
 		if (reg != 0) {
 			printf("%s: waking up from power state D%d\n",
 			    sc->sc_dev.dv_xname, reg);
-			pci_conf_write(pc, pa->pa_tag, tpp->tpp_pmreg, 0);
+			pci_conf_write(pc, pa->pa_tag, pmreg + 4, 0);
 		}
 	}
 
