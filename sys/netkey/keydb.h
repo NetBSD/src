@@ -1,5 +1,5 @@
-/*	$NetBSD: keydb.h,v 1.14 2003/08/22 05:46:39 itojun Exp $	*/
-/*	$KAME: keydb.h,v 1.20 2003/06/30 10:02:15 sakane Exp $	*/
+/*	$NetBSD: keydb.h,v 1.15 2003/08/22 05:48:28 itojun Exp $	*/
+/*	$KAME: keydb.h,v 1.14 2000/08/02 17:58:26 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -149,7 +149,6 @@ struct key_cb {
 struct secpolicy;
 struct secpolicyindex;
 extern struct secpolicy *keydb_newsecpolicy __P((void));
-extern u_int32_t keydb_newspid __P((void));
 extern void keydb_delsecpolicy __P((struct secpolicy *));
 extern int keydb_setsecpolicyindex
 	__P((struct secpolicy *, struct secpolicyindex *));
