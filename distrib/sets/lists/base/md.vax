@@ -1,11 +1,10 @@
-# $NetBSD: md.vax,v 1.18 2002/04/06 18:16:40 bjh21 Exp $
+# $NetBSD: md.vax,v 1.19 2002/05/14 15:08:26 lukem Exp $
 ./boot				base-sys-root
 ./pcs750.bin			base-sys-root
 ./sbin/ldconfig			base-sysutil-root
 ./usr/libexec/ld.so		base-sys-shlib
 ./usr/mdec/boot			base-sysutil-bin
 ./usr/mdec/hpboot		base-sysutil-bin
-./usr/mdec/installboot		base-sysutil-bin
 ./usr/mdec/raboot		base-sysutil-bin
 ./usr/mdec/rdboot		base-sysutil-bin
 ./usr/mdec/sdboot		base-sysutil-bin
