@@ -1,4 +1,4 @@
-	$NetBSD: install,v 1.9 1998/05/15 18:52:54 ross Exp $	
+	$NetBSD: install,v 1.10 1998/06/27 09:15:28 ross Exp $	
 
 0. Introduction
 
@@ -353,14 +353,14 @@
     The sets and kernel are extracted with
 
 	cd /mnt
-        for file in base kern comp etc games man misc text; do
-            tar xpfz /mnt/var/tmp/$file.tgz;
+        for i in base kern comp etc games man misc text; do
+            tar xpfz /mnt/var/tmp/$i.tgz;
 	done
 
     or (but do NOT unpack source/toolchain.tgz from / or /mnt) perhaps:
 
 	cd /mnt
-	for file in /mnt/var/tmp/[a-z]*.tgz; do
+	for i in /mnt/var/tmp/[a-z]*.tgz; do
 	    echo $i
 	    tar xpfz $i
 	done
