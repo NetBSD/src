@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.215 2004/10/26 21:21:59 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.216 2004/10/30 17:17:21 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.215 2004/10/26 21:21:59 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.216 2004/10/30 17:17:21 bouyer Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -292,8 +292,14 @@ wdc_drvprobe(struct ata_channel *chp)
 		if (chp->ch_flags & ATACH_SHUTDOWN)
 			return;
 
-		/* issue an identify, to try to detect ghosts */
-		error = ata_get_params(&chp->ch_drive[i], AT_WAIT, &params);
+		/*
+		 * Issue an identify, to try to detect ghosts.
+		 * Note that we can't use interrupts here, because if there
+		 * is no devices, we will get a command aborted without
+		 * interrupts.
+		 */
+		error = ata_get_params(&chp->ch_drive[i],
+		    AT_WAIT | AT_POLL, &params);
 		if (error != CMD_OK) {
 			tsleep(&params, PRIBIO, "atacnf", mstohz(1000));
 
@@ -302,7 +308,7 @@ wdc_drvprobe(struct ata_channel *chp)
 				return;
 
 			error = ata_get_params(&chp->ch_drive[i],
-			    AT_WAIT, &params);
+			    AT_WAIT | AT_POLL, &params);
 		}
 		if (error == CMD_OK) {
 			/* If IDENTIFY succeeded, this is not an OLD ctrl */
