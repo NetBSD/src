@@ -1,4 +1,4 @@
-.\"	$NetBSD: mlock.2,v 1.7 1999/04/06 04:54:19 cgd Exp $
+.\"	$NetBSD: mlock.2,v 1.8 1999/06/16 23:14:59 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -140,16 +140,6 @@ Some portion of the indicated address range is not locked.
 .Xr setrlimit 2 ,
 .Xr getpagesize 3
 .Sh BUGS
-Unlike The Sun implementation, multiple
-.Nm mlock
-calls on the same address range require the corresponding number of
-.Nm munlock
-calls to actually unlock the pages, i.e.
-.Nm mlock
-nests.
-This should be considered a consequence of the implementation
-and not a feature.
-.Pp
 The per-process resource limit is a limit on the amount of virtual
 memory locked, while the system-wide limit is for the number of locked
 physical pages.
