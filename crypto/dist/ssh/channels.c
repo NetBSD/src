@@ -1,4 +1,4 @@
-/*	$NetBSD: channels.c,v 1.23 2002/06/26 14:08:29 itojun Exp $	*/
+/*	$NetBSD: channels.c,v 1.24 2002/09/17 06:26:18 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -2366,6 +2366,10 @@ x11_create_display_inet(int x11_display_offset, int x11_use_localhost,
 			if (bind(sock, ai->ai_addr, ai->ai_addrlen) < 0) {
 				debug("bind port %d: %.100s", port, strerror(errno));
 				close(sock);
+
+				if (ai->ai_next)
+					continue;
+
 				for (n = 0; n < num_socks; n++) {
 					close(socks[n]);
 				}
