@@ -1,5 +1,5 @@
 REM > BtNetBSD
-REM $NetBSD: BtNetBSD,v 1.6 2001/04/04 17:13:28 reinoud Exp $
+REM $NetBSD: BtNetBSD,v 1.7 2001/04/04 21:11:07 reinoud Exp $
 REM
 REM Copyright (c) 2000, 2001 Reinoud Zandijk
 REM Copyright (c) 1998, 1999, 2000 Ben Harris
@@ -751,7 +751,7 @@ DEF PROCassemble_relocate_code(virtaddress%, physaddress%, entry%, L1pages_phys%
         MOVEQ r14, #0                          ; ifso ... then its a v3
  
         MOV   r1,     #&41000000               ; check for 0x41xxx6xx => ARM6
-        ADD   r1, r1, #&00006000
+        ADD   r1, r1, #&00000600
         AND   r2, r13, r0                      ; mask with discr. mask
         CMP   r2, r1                           ; is it a ARM6 ?
         MOVEQ r14, #0                          ; ifso ... then its a v3
@@ -862,13 +862,13 @@ DEF FNblock_paddr(pagenr%)
 
 
 DEF PROCget_memory_map
-  DIM memoryblock% totalpages%*4*4
+  DIM memoryblock% totalpages%*4*3+4
   PRINT '"Getting actual memory mapping ";
   FOR pg%=0 TO totalpages%-1
     pos% = memoryblock% + 12*pg%
+    pos%!0  = 0
     pos%!4  = (firstpage% + pg%) * nbpp%
     pos%!8  = 0
-    pos%!12 = 0
     REM force paging in this page in RO4
     IF (pg% MOD 5)=0 THEN PROCtwirl
     !(pos%!4) = 0: REM PROCbzero(pos%!4, nbpp%)
@@ -1024,7 +1024,7 @@ ENDPROC
 DEF PROCsort_memory_map(memoryblock%, totalpages%)
   LOCAL memarray%, code%, sort_entry%
  
-  DIM memarray% totalpages%*4
+  DIM memarray% totalpages%*4+4
   DIM code% 100
   P%=code%:[OPT 2
     .sort_entry%
