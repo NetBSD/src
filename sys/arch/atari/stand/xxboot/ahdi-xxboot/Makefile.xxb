@@ -1,0 +1,10 @@
+#	$NetBSD: Makefile.xxb,v 1.1 2003/05/23 21:56:39 leo Exp $
+
+PROG=	xxboot.ahdi
+SRCS=	xxboot.ahdi.s
+NOMAN=	# defined
+LIBCRT0=
+.PATH: ${.CURDIR}/..
+
+.include <../../Makefile.xxboot>
+.include <bsd.prog.mk>

@@ -1,11 +1,10 @@
-#	$NetBSD: Makefile,v 1.6 2001/12/12 01:49:40 tv Exp $
+#	$NetBSD: Makefile,v 1.7 2003/05/23 21:56:39 leo Exp $
 
+BTYPE=	STD
 PROG=	wdb00t.ahdi
 SRCS=	wdb00t.ahdi.s
 NOMAN=	# defined
 LIBCRT0=
-INCL=	-I${.CURDIR} -I${.CURDIR}/..
 
-CPPFLAGS+= ${INCL}
-
+.include <../Makefile.xxboot>
 .include <bsd.prog.mk>
