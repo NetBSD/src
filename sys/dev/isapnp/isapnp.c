@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.28 1998/10/08 19:59:20 thorpej Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.29 1998/10/10 13:43:10 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -263,7 +263,7 @@ isapnp_alloc_drq(ic, i)
 	isa_chipset_tag_t ic;
 	struct isapnp_pin *i;
 {
-#if NISADMA > 1
+#if NISADMA > 0
 	int b;
 
 	if (i->bits == 0) {
@@ -276,7 +276,7 @@ isapnp_alloc_drq(ic, i)
 			i->num = b;
 			return 0;
 		}
-#endif /* NISADMA > 1 */
+#endif /* NISADMA > 0 */
 
 	return EINVAL;
 }
