@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.154 2004/08/14 01:08:05 mycroft Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.155 2004/09/18 16:40:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.154 2004/08/14 01:08:05 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.155 2004/09/18 16:40:11 yamt Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -1119,7 +1119,7 @@ loop:
 #ifdef DEBUG_LFS
 			if (vp == fs->lfs_ivnode &&
 			    (bp->b_flags & (B_BUSY|B_GATHERED)) == B_BUSY)
-				printf("(%" PRId64 ":%lx)",
+				printf("(%" PRId64 ":%x)",
 				    bp->b_lblkno, bp->b_flags);
 #endif
 			continue;
@@ -1947,7 +1947,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 			if (dtosn(fs, dbtofsb(fs, bp->b_blkno +
 					      btodb(bp->b_bcount - 1))) !=
 			    sp->seg_number) {
-				printf("blk size %ld daddr %" PRIx64
+				printf("blk size %d daddr %" PRIx64
 				    " not in seg %d\n",
 				    bp->b_bcount, bp->b_blkno,
 				    sp->seg_number);
