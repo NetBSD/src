@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.107 1997/10/18 19:50:51 thorpej Exp $	*/
+/*	$NetBSD: cd.c,v 1.108 1997/12/02 03:57:54 mikel Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -1000,7 +1000,7 @@ cd_size(cd, flags)
 		size = 400000;	/* ditto */
 	cd->params.disksize = size;
 
-	SC_DEBUG(cd->sc_link, SDEV_DB2, ("cd_sise: %d %ld\n", blksize, size));
+	SC_DEBUG(cd->sc_link, SDEV_DB2, ("cd_size: %d %ld\n", blksize, size));
 	return (size);
 }
 
