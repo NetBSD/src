@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.21 1998/01/16 18:54:10 cgd Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.22 1998/01/28 02:38:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -257,12 +257,12 @@ eoniphdr(hdr, loc, ro, class, zero)
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_EON]) {
 		printf("eonoutput : gen csum (%p, offset %d, datalen %ld)\n",
-		    &mhead, _offsetof(struct eon_hdr, eonh_csum),
+		    &mhead, offsetof(struct eon_hdr, eonh_csum),
 		    (long)sizeof(struct eon_hdr));
 	}
 #endif
 	iso_gen_csum(&mhead,
-	      _offsetof(struct eon_hdr, eonh_csum), sizeof(struct eon_hdr));
+	      offsetof(struct eon_hdr, eonh_csum), sizeof(struct eon_hdr));
 }
 /*
  * FUNCTION:		eonrtrequest

@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_usrreq.c,v 1.13 1996/10/10 22:58:29 christos Exp $	*/
+/*	$NetBSD: pk_usrreq.c,v 1.14 1998/01/28 02:35:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) University of British Columbia, 1984
@@ -336,11 +336,8 @@ pk_start(lcp)
 	return (0);		/* XXX pk_output should return a value */
 }
 
-#ifndef _offsetof
-#define _offsetof(t, m) ((int)((caddr_t)&((t *)0)->m))
-#endif
 struct sockaddr_x25 pk_sockmask = {
-	_offsetof(struct sockaddr_x25, x25_addr[0]),	/* x25_len */
+	offsetof(struct sockaddr_x25, x25_addr[0]),	/* x25_len */
 	0,			/* x25_family */
 	-1,			/* x25_net id */
 };
