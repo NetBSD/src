@@ -1,3 +1,5 @@
+/*	$NetBSD: aic_pcmcia.c,v 1.1.2.9 1997/10/16 09:21:54 enami Exp $	*/
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/select.h>
