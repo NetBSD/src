@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.s,v 1.58 2001/05/27 19:33:20 ragge Exp $	   */
+/*	$NetBSD: subr.s,v 1.59 2001/05/29 21:25:11 ragge Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -317,14 +317,11 @@ idle:
 #elif defined(MULTIPROCESSOR)
 	clrl	_C_LABEL(sched_lock)	# release sched lock
 #endif
-	mtpr	$IPL_NONE,$PR_IPL 	# Enable all types of interrupts
-1:
-#if 0
-	tstl	_C_LABEL(uvm)+UVM_PAGE_IDLE_ZERO
-	beql	2f
-	calls	$0,_C_LABEL(uvm_pageidlezero)
-#endif
-2:	tstl	_C_LABEL(sched_whichqs)	# Anything ready to run?
+	mtpr	$1,$PR_IPL 		# IPL cannot be 0 because we are
+					# running on the interrupt stack
+					# and may get interrupts
+
+1:	tstl	_C_LABEL(sched_whichqs)	# Anything ready to run?
 	beql	1b			# no, run the idle loop again.
 /* Now try the test the long way */
 	mtpr	$IPL_HIGH,$PR_IPL	# block all types of interrupts
@@ -333,9 +330,7 @@ idle:
 #elif defined(MULTIPROCESSOR)
 3:	bbssi	$0,_C_LABEL(sched_lock),3b	# acquire sched lock
 #endif
-	tstl	_C_LABEL(sched_whichqs)	# Anything ready to run?
-	beql	idle			# Yes, goto switch again.
-	brb	Swtch			# nope, continue to idlely loop
+	brb	lp			# check sched_whichqs again
 
 #
 # cpu_switch, cpu_exit and the idle loop implemented in assembler 
@@ -346,7 +341,12 @@ idle:
 JSBENTRY(Swtch)
 	mfpr	$PR_SSP,r1		# Get ptr to this cpu_info struct
 	clrl	CI_CURPROC(r1)		# Stop process accounting
-	ffs	$0,$32,_C_LABEL(sched_whichqs),r3 # Search for bit set
+	svpctx				# Save context if another CPU
+					# get control first (must be on
+					# the interrupt stack when idling)
+
+
+lp:	ffs	$0,$32,_C_LABEL(sched_whichqs),r3 # Search for bit set
 	beql	idle			# no bit set, go to idle loop
 
 	movaq	_C_LABEL(sched_qs)[r3],r1	# get address of queue head
@@ -356,14 +356,8 @@ JSBENTRY(Swtch)
 	bvc	1f			# check if something on queue
 	pushab	noque
 	calls	$1,_C_LABEL(panic)
-#ifdef __ELF__
-	.section	.rodata
 #endif
-noque:	.asciz	"swtch"
-#ifdef __ELF__
-	.text
-#endif
-#endif
+
 1:	bneq	2f			# more processes on queue?
 	bbsc	r3,_C_LABEL(sched_whichqs),2f	# no, clear bit in whichqs
 2:	clrl	P_BACK(r2)		# clear proc backpointer
@@ -375,15 +369,7 @@ noque:	.asciz	"swtch"
 	movb	$SONPROC,P_STAT(r2)	# p->p_stat = SONPROC;
 	movl	r2,CI_CURPROC(r1)	# set new process running
 	clrl	CI_WANT_RESCHED(r1)	# we are now changing process
-	cmpl	r6,r2			# Same process?
-	bneq	1f			# No, continue
-#if defined(LOCKDEBUG)
-	calls	$0,_C_LABEL(sched_unlock_idle)
-#elif defined(MULTIPROCESSOR)
-	clrl	_C_LABEL(sched_lock)	# clear sched lock
-#endif
-	rsb
-1:	movl	P_ADDR(r2),r0		# Get pointer to new pcb.
+	movl	P_ADDR(r2),r0		# Get pointer to new pcb.
 	addl3	r0,$IFTRAP,r1		# Save for copy* functions.
 	mtpr	r1,$PR_ESP		# Use ESP as CPU-specific pointer
 	movl	r1,ESP(r0)		# Must save in PCB also.
@@ -396,11 +382,6 @@ noque:	.asciz	"swtch"
 	extzv	$9,$21,r0,r1		# extract offset
 	ashl	$9,*_C_LABEL(Sysmap)[r1],r3
 
-#
-# Do the actual process switch. pc + psl are already on stack, from
-# the calling routine.
-#
-	svpctx
 	mtpr	r3,$PR_PCBB
 	ldpctx
 #if defined(LOCKDEBUG)
@@ -411,6 +392,7 @@ noque:	.asciz	"swtch"
 	rei
 
 #if defined(MULTIPROCESSOR)
+	.align 2
 	.globl	_C_LABEL(tramp)	# used to kick off multiprocessor systems.
 _C_LABEL(tramp):
 	ldpctx
@@ -613,3 +595,8 @@ ENTRY(blkclr,R6)
 	.globl _C_LABEL(memtest)
 _C_LABEL(memtest):		# memory test in progress
 	.long 0
+
+#ifdef __ELF__
+	.section	.rodata
+#endif
+noque:	.asciz	"swtch"
