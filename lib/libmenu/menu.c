@@ -1,4 +1,4 @@
-/*	$NetBSD: menu.c,v 1.14 2002/08/22 11:30:18 blymn Exp $	*/
+/*	$NetBSD: menu.c,v 1.15 2002/11/27 11:53:11 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -549,7 +549,7 @@ scale_menu(MENU *param_menu, int *rows, int *cols)
 	  /*
 	   * allow for spacing between columns...
 	   */
-	*cols += menu->cols;
+	*cols += (menu->cols - 1);
 	
 	return E_OK;
 }
@@ -731,7 +731,7 @@ pos_menu_cursor(MENU *menu)
 
 	maxmark = max(menu->mark.length, menu->unmark.length);
 	movx = maxmark + (menu->items[menu->cur_item]->col
-		* menu->col_width);
+		* (menu->col_width + 1));
 	
 	if (menu->match_len > 0)
 		movx += menu->match_len - 1;
