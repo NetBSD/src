@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC32,v 1.16 2001/07/08 16:32:24 abs Exp $
+# 	$NetBSD: GENERIC32,v 1.17 2001/07/10 15:42:42 matt Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident 		"GENERIC-$Revision: 1.16 $"
+#ident 		"GENERIC-$Revision: 1.17 $"
 
 maxusers	64
 
@@ -339,6 +339,9 @@ le*		at lebuffer?			# SBus
 ## Happy Meal Ethernet
 hme*		at sbus? slot ? offset ?
 hme*		at pci?	dev ? function ?	# network "hme" compatible
+
+## Davicom 9102 (as used in Netra X1)
+tlp*		at pci? dev ? function ?	# supported by `tulip' driver
 
 # MII/PHY support
 # XXX: only nsphy "tested"
