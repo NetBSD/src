@@ -1,4 +1,4 @@
-/* $NetBSD: sfas.c,v 1.7 1996/10/14 23:29:47 mark Exp $ */
+/* $NetBSD: sfas.c,v 1.8 1996/10/29 23:37:39 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -199,7 +199,7 @@ sfasinitialize(dev)
  * every time we need "bumped" transfer.
  */
 	pte = pmap_pte(kernel_pmap, (vm_offset_t)dev->sc_bump_va);
-	*pte &= ~PT_C;
+	*pte &= ~(PT_C | PT_B);
 	tlb_flush();	/* XXX - should be a purge */
 
 	printf(" dmabuf V0x%08x P0x%08x", (u_int)dev->sc_bump_va, (u_int)dev->sc_bump_pa);
