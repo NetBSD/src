@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.c,v 1.28 2003/12/03 22:25:46 manu Exp $ */
+/*	$NetBSD: mach_thread.c,v 1.29 2003/12/09 11:29:01 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.28 2003/12/03 22:25:46 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.29 2003/12/09 11:29:01 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -173,14 +173,13 @@ mach_thread_policy(args)
 
 	uprintf("Unimplemented mach_thread_policy\n");
 
-	rep->rep_msgh.msgh_bits =
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
-	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
-	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
-	rep->rep_trailer.msgh_trailer_size = 8;
-
 	*msglen = sizeof(*rep);
+	mach_set_header(rep, req, *msglen);
+
+	rep->rep_retval = 0;
+
+	mach_set_trailer(rep, *msglen);
+
 	return 0;
 }
 
@@ -246,15 +245,13 @@ mach_thread_create_running(args)
 		(void)tsleep(&mctc.mctc_child_done, 
 		    PZERO|PCATCH, "mach_thread", 0);
 
-	rep->rep_msgh.msgh_bits =
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
-	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
-	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
-	/* XXX do something for rep->rep_child_act */
-	rep->rep_trailer.msgh_trailer_size = 8;
-
 	*msglen = sizeof(*rep);
+	mach_set_header(rep, req, *msglen);
+
+	/* XXX do something for rep->rep_child_act */
+
+	mach_set_trailer(rep, *msglen);
+
 	return 0;
 }
 
@@ -273,11 +270,10 @@ mach_thread_info(args)
 	if (req->req_count > 12)
 		return mach_msg_error(args, EINVAL);
 
-	rep->rep_msgh.msgh_bits =
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
-	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
-	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_count = req->req_count;
+
+	*msglen = sizeof(*rep) + ((req->req_count - 12) * sizeof(int));
+	mach_set_header(rep, req, *msglen);
 
 	switch (req->req_flavor) {
 	case MACH_THREAD_BASIC_INFO: {
@@ -347,10 +343,7 @@ mach_thread_info(args)
 		break;
 	}
 
-	rep->rep_count = req->req_count;
-	rep->rep_out[rep->rep_count + 1] = 8; /* This is the trailer */
-
-	*msglen = sizeof(*rep) + ((req->req_count - 12) * sizeof(int));
+	mach_set_trailer(rep, *msglen);
 
 	return 0;
 }
@@ -374,15 +367,10 @@ mach_thread_get_state(args)
 	    req->req_flavor, &rep->rep_state, &size)) != 0)
 		return mach_msg_error(args, error);
 
-	rep->rep_msgh.msgh_bits =
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer); 
-	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
-	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	rep->rep_count = size / sizeof(int);
-	rep->rep_state[rep->rep_count + 1] = 8; /* This is the trailer */
-
 	*msglen = sizeof(*rep) + ((req->req_count - 144) * sizeof(int));
+	mach_set_header(rep, req, *msglen);
+	mach_set_trailer(rep, *msglen);
 
 	return 0;
 }
@@ -407,14 +395,12 @@ mach_thread_set_state(args)
 	    req->req_flavor, &req->req_state)) != 0)
 		return mach_msg_error(args, error);
 
-	rep->rep_msgh.msgh_bits =
-	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
-	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer); 
-	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
-	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
-	rep->rep_trailer.msgh_trailer_size = 8;
-
 	*msglen = sizeof(*rep);
+	mach_set_header(rep, req, *msglen);
+
+	rep->rep_retval = 0;
+
+	mach_set_trailer(rep, *msglen);
 
 	return 0;
 }
