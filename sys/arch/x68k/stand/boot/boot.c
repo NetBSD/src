@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.2 2001/09/28 15:11:19 minoura Exp $	*/
+/*	$NetBSD: boot.c,v 1.3 2001/09/29 01:42:26 minoura Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -86,13 +86,13 @@ get_scsi_host_adapter(void)
 static void
 help(void)
 {
-	printf ("Usage:\n");
-	printf ("boot [dev:][file] -[flags]\n");
-	printf (" dev:   sd<ID><PART>, ID=0-7, PART=a-p\n");
-	printf ("        cd<ID>a, ID=0-7\n");
-	printf ("        fd<UNIT>a, UNIT=0-3, format is detected.\n");
-	printf (" file:  netbsd, netbsd.gz, etc.\n");
-	printf (" flags: abdqsv\n");
+	printf("Usage:\n");
+	printf("boot [dev:][file] -[flags]\n");
+	printf(" dev:   sd<ID><PART>, ID=0-7, PART=a-p\n");
+	printf("        cd<ID>a, ID=0-7\n");
+	printf("        fd<UNIT>a, UNIT=0-3, format is detected.\n");
+	printf(" file:  netbsd, netbsd.gz, etc.\n");
+	printf(" flags: abdqsv\n");
 }
 
 static void
@@ -103,17 +103,17 @@ doboot (const char *file, int flags)
 	int dev, unit, part;
 	char *name;
 
-	printf ("Starting %s, flags 0x%x\n", file, flags);
+	printf("Starting %s, flags 0x%x\n", file, flags);
 	marks[MARK_START] = 0x100000;
 	if ((fd = loadfile(file, marks, LOAD_KERNEL)) == -1)
 		return;
 	close(fd);
 
 	if (devparse(file, &dev, &unit, &part, &name) != 0) {
-		printf ("XXX: unknown corruption in /boot.\n");
+		printf("XXX: unknown corruption in /boot.\n");
 	}
 
-	printf ("dev = %x, unit = %d, part = %c, name = %s\n",
+	printf("dev = %x, unit = %d, part = %c, name = %s\n",
 		dev, unit, part + 'a', name);
 
 	if (dev == 0) {		/* SCSI */
@@ -124,34 +124,27 @@ doboot (const char *file, int flags)
 	} else {
 		dev = X68K_MAKEBOOTDEV(X68K_MAJOR_FD, unit & 3, 0);
 	}
-	printf ("boot device = %x\n", dev);
-	printf ("if = %d, unit = %d, id = %d, lun = %d, part = %c\n",
-		B_X68K_SCSI_IF (dev),
-		B_X68K_SCSI_IF_UN (dev),
-		B_X68K_SCSI_ID (dev),
-		B_X68K_SCSI_LUN (dev),
-		B_X68K_SCSI_PART (dev) + 'a');
+	printf("boot device = %x\n", dev);
+	printf("if = %d, unit = %d, id = %d, lun = %d, part = %c\n",
+	       B_X68K_SCSI_IF(dev),
+	       B_X68K_SCSI_IF_UN(dev),
+	       B_X68K_SCSI_ID(dev),
+	       B_X68K_SCSI_LUN(dev),
+	       B_X68K_SCSI_PART(dev) + 'a');
 
 	{
 		short *p = ((short*) marks[MARK_ENTRY]) - 1;
-		printf ("Kernel Version: 0x%x\n", *p);
+		printf("Kernel Version: 0x%x\n", *p);
 		if (*p != 0x4e73 && *p != 0) {
 			/*
 			 * XXX temporary solution; compatibility loader
 			 * must be written.
 			 */
-			printf ("This kernel is too new to be loaded by "
-				"this version of /boot.\n");
+			printf("This kernel is too new to be loaded by "
+			       "this version of /boot.\n");
 			return;
 		}
 	}
-
-	printf("marks[MARK_START]=%x\n", marks[MARK_START]);
-	printf("marks[MARK_ENTRY]=%x\n", marks[MARK_ENTRY]);
-	printf("marks[MARK_NSYM]=%x\n", marks[MARK_NSYM]);
-	printf("marks[MARK_SYM]=%x\n", marks[MARK_SYM]);
-	printf("marks[MARK_END]=%x\n", marks[MARK_END]);
-	printf("marks[MARK_MAX]=%x\n", marks[MARK_MAX]);
 
 	exec_image(marks[MARK_START], 0, marks[MARK_ENTRY]-marks[MARK_START],
 		   marks[MARK_END]-marks[MARK_START], dev, flags);
@@ -167,33 +160,33 @@ boot(char *arg)
 	int flags = 0;
 
 	if (*arg == 0 || *arg == '-') {
-		strcpy (filename, default_kernel);
+		strcpy(filename, default_kernel);
 		if (*arg == '-')
 			if (parseopts(arg, &flags) == 0) {
-				help ();
+				help();
 				return;
 			}
-		doboot (filename, flags);
+		doboot(filename, flags);
 		return;
 	} else {
-		p = gettrailer (arg);
-		if (strchr (arg, ':')) {
-			strcpy (filename, arg);
+		p = gettrailer(arg);
+		if (strchr(arg, ':')) {
+			strcpy(filename, arg);
 			if (arg[strlen(arg) - 1] == ':')
-				strcat (filename, "netbsd");
+				strcat(filename, "netbsd");
 		} else {
-			strcpy (filename, default_kernel);
-			strcpy (strchr (filename, ':') + 1, arg);
+			strcpy(filename, default_kernel);
+			strcpy(strchr(filename, ':') + 1, arg);
 		}
 		if (*p == '-') {
 			if (parseopts(p, &flags) == 0)
 				return;
 		} else if (*p != 0) {
-			help ();
+			help();
 			return;
 		}
 
-		doboot (filename, flags);
+		doboot(filename, flags);
 		return;
 	}
 }
