@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.16 1997/10/10 01:53:17 fvdl Exp $	*/
+/*	$NetBSD: nfs.h,v 1.17 1997/10/19 01:46:15 fvdl Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -328,7 +328,7 @@ TAILQ_HEAD(, nfsreq) nfs_reqq;
 	(&nfsnodehashtbl[(fhsum) & nfsnodehash])
 
 #ifndef NFS_DIRHASHSIZ
-#define NFS_DIRHASHSIZ 32
+#define NFS_DIRHASHSIZ 64
 #endif
 #define NFSDIRHASH(np, off) \
 	(&np->n_dircache[(nfs_dirhash((off)) & nfsdirhashmask)])
@@ -340,11 +340,11 @@ TAILQ_HEAD(, nfsreq) nfs_reqq;
 	*((off_t *)((caddr_t)(dp) + (dp)->d_reclen - sizeof (off_t))) = off
 #define NFS_GETCOOKIE(dp) \
 	(*((off_t *)((caddr_t)(dp) + (dp)->d_reclen - sizeof (off_t))))
-#define NFS_MARKCACHED(dp, val) \
-	*((int *)((caddr_t)(dp) + (dp)->d_reclen - sizeof (off_t) - \
+#define NFS_STASHCOOKIE32(dp, val) \
+	*((u_int32_t *)((caddr_t)(dp) + (dp)->d_reclen - sizeof (off_t) - \
 	    sizeof (int))) = val
-#define NFS_ISCACHED(dp) \
-	(*((int *)((caddr_t)(dp) + (dp)->d_reclen - sizeof (off_t) - \
+#define NFS_GETCOOKIE32(dp) \
+	(*((u_int32_t *)((caddr_t)(dp) + (dp)->d_reclen - sizeof (off_t) - \
 	    sizeof (int))))
 
 /*

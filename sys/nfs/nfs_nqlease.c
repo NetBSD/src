@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.21 1997/10/10 01:53:20 fvdl Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.22 1997/10/19 01:46:27 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1068,7 +1068,7 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, p)
 				if (np->n_flag & (NMODIFIED | NQNFSEVICTED)) {
 					if (np->n_flag & NQNFSEVICTED) {
 						if (vp->v_type == VDIR)
-							nfs_invaldircache(vp);
+							nfs_invaldircache(vp,0);
 						cache_purge(vp);
 						(void) nfs_vinvalbuf(vp,
 						       V_SAVE, cred, p, 0);
