@@ -1,4 +1,4 @@
-/*	$NetBSD: asic.c,v 1.33 1999/03/15 01:25:27 jonathan Exp $	*/
+/*	$NetBSD: asic.c,v 1.34 1999/03/18 06:37:35 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -108,7 +108,6 @@ const int kn02_ioasic_ndevs  =  ARRAY_SIZEOF(kn02_ioasic_devs);
 /* Definition of the driver for autoconfig. */
 int	ioasicmatch __P((struct device *, struct cfdata *, void *));
 void	ioasicattach __P((struct device *, struct device *, void *));
-int     ioasicprint(void *, const char *);
 
 /* Device locators. */
 #include "locators.h"
