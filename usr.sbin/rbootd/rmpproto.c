@@ -1,4 +1,4 @@
-/*	$NetBSD: rmpproto.c,v 1.13 2003/08/07 11:25:41 agc Exp $	*/
+/*	$NetBSD: rmpproto.c,v 1.14 2004/07/06 13:05:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -89,7 +89,7 @@
 #if 0
 static char sccsid[] = "@(#)rmpproto.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rmpproto.c,v 1.13 2003/08/07 11:25:41 agc Exp $");
+__RCSID("$NetBSD: rmpproto.c,v 1.14 2004/07/06 13:05:25 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -625,12 +625,7 @@ SendPacket(rconn)
 	 */
 	memmove((char *)&rconn->rmp.hp_hdr.daddr[0],
 	    (char *)&rconn->rmp.hp_hdr.saddr[0], RMP_ADDRLEN);
-#ifdef __FreeBSD__
-	/* BPF (incorrectly) wants this in host order. */
-	rconn->rmp.hp_hdr.len = rconn->rmplen - sizeof(struct hp_hdr);
-#else
 	rconn->rmp.hp_hdr.len = htons(rconn->rmplen - sizeof(struct hp_hdr));
-#endif
 
 	/*
 	 *  Reverse 802.2/HP Extended Source & Destination Access Pts.
