@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.343 2001/08/18 05:00:21 thorpej Exp $
+$NetBSD: pcidevs,v 1.344 2001/08/20 03:45:55 gehenna Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1445,6 +1445,7 @@ product NEC VRC4173_BCU	0x00a5	VRC4173 Bus Control Unit
 product NEC VRC4173_AC97U 0x00a6 VRC4173 AC97 Unit
 product NEC PD72870	0x00cd	uPD72870 IEEE 1394 OHCI Host Controller
 product NEC PD72871	0x00ce	uPD72871 IEEE 1394 OHCI Host Controller
+product NEC PD720100A	0x00e0	USB Host Controller
 product NEC VA26D	0x803c	NEC Versa Pro LX VA26D
 product NEC VERSALX	0x8058	NEC Versa LX
 
