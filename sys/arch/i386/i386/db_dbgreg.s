@@ -1,4 +1,4 @@
-/*	$NetBSD: db_dbgreg.s,v 1.4 2002/05/14 14:22:33 yamt Exp $	*/
+/*	$NetBSD: db_dbgreg.s,v 1.5 2002/10/23 00:12:27 perry Exp $	*/
 
 /* 
  * Mach Operating System
@@ -26,6 +26,7 @@
  * the rights to redistribute these changes.
  */
 
+/* LINTSTUB: Empty */
 
 #include <i386/include/asm.h>
 #define S_ARG0	 4(%esp)
