@@ -1,4 +1,4 @@
-/*	$NetBSD: mopprobe.c,v 1.2 1997/03/25 03:07:57 thorpej Exp $	*/
+/*	$NetBSD: mopprobe.c,v 1.3 1997/04/16 13:31:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$NetBSD: mopprobe.c,v 1.2 1997/03/25 03:07:57 thorpej Exp $";
+static char rcsid[] = "$NetBSD: mopprobe.c,v 1.3 1997/04/16 13:31:02 christos Exp $";
 #endif
 
 /*
@@ -40,7 +40,7 @@ static char rcsid[] = "$NetBSD: mopprobe.c,v 1.2 1997/03/25 03:07:57 thorpej Exp
  *		mopprobe [ -3 | -4 ] interface
  */
 
-#include "os.h"
+#include "common/os.h"
 #include "common/common.h"
 #include "common/mopdef.h"
 #include "common/device.h"
