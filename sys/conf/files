@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.694 2004/11/10 17:26:16 christos Exp $
+#	$NetBSD: files,v 1.695 2004/11/11 03:32:05 christos Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1112,6 +1112,7 @@ include "miscfs/nullfs/files.nullfs"
 include "miscfs/overlay/files.overlay"
 include "miscfs/portal/files.portal"
 include "miscfs/procfs/files.procfs"
+include "miscfs/ptyfs/files.ptyfs"
 include "miscfs/umapfs/files.umapfs"
 include "fs/union/files.union"
 include "fs/msdosfs/files.msdosfs"
