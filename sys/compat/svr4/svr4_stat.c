@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stat.c,v 1.26 1997/11/16 22:50:58 christos Exp $	 */
+/*	$NetBSD: svr4_stat.c,v 1.27 1998/08/03 14:23:30 kleink Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -761,9 +761,11 @@ svr4_to_bsd_pathconf(name)
 	case SVR4_PC_CHOWN_RESTRICTED:
 		return _PC_CHOWN_RESTRICTED;
 
+	case SVR4_PC_SYNC_IO:
+		return _PC_SYNC_IO;
+
 	case SVR4_PC_ASYNC_IO:
 	case SVR4_PC_PRIO_IO:
-	case SVR4_PC_SYNC_IO:
 		/* Not supported */
 		return 0;
 
