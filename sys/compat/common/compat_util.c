@@ -1,4 +1,4 @@
-/* 	$NetBSD: compat_util.c,v 1.9 1998/10/03 15:48:38 fvdl Exp $	*/
+/* 	$NetBSD: compat_util.c,v 1.10 1999/02/09 20:16:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -68,8 +68,8 @@ emul_find(p, sgp, prefix, path, pbuf, cflag)
 	struct proc	 *p;
 	caddr_t		 *sgp;		/* Pointer to stackgap memory */
 	const char	 *prefix;
-	char		 *path;
-	char		**pbuf;
+	const char	 *path;
+	const char	**pbuf;
 	int		  cflag;
 {
 	struct nameidata	 nd;
@@ -162,7 +162,7 @@ emul_find(p, sgp, prefix, path, pbuf, cflag)
 	else {
 		sz = &ptr[len] - buf;
 		*pbuf = stackgap_alloc(sgp, sz + 1);
-		error = copyout(buf, *pbuf, sz);
+		error = copyout(buf, (void *)*pbuf, sz);
 		free(buf, M_TEMP);
 	}
 
