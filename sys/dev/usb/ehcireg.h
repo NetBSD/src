@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcireg.h,v 1.9 2001/11/18 00:39:46 augustss Exp $	*/
+/*	$NetBSD: ehcireg.h,v 1.10 2001/11/19 02:57:16 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -122,7 +122,7 @@
 #define  EHCI_STS_PCD		0x00000004 /* RWC port change detect */
 #define  EHCI_STS_ERRINT	0x00000002 /* RWC error interrupt */
 #define  EHCI_STS_INT		0x00000001 /* RWC interrupt */
-#define  EHCI_STS_INTRS(x)	((x) & 0x2f)
+#define  EHCI_STS_INTRS(x)	((x) & 0x3f)
 
 #define EHCI_NORMAL_INTRS (EHCI_STS_IAA | EHCI_STS_HSE | EHCI_STS_PCD | EHCI_STS_ERRINT | EHCI_STS_INT)
 
@@ -236,7 +236,7 @@ typedef struct {
 #define EHCI_QH_INACT		0x00000080
 #define EHCI_QH_GET_ENDPT(x)	(((x) >>  8) & 0x0f) /* endpoint no */
 #define EHCI_QH_SET_ENDPT(x)	((x) <<  8)
-#define EHCI_QH_GET_EPS(x)	(((x) >> 12) & 0x03) /* enspoint speed */
+#define EHCI_QH_GET_EPS(x)	(((x) >> 12) & 0x03) /* endpoint speed */
 #define EHCI_QH_SET_EPS(x)	((x) << 12)
 #define  EHCI_QH_SPEED_FULL	0x0
 #define  EHCI_QH_SPEED_LOW	0x1
