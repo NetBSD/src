@@ -120,7 +120,7 @@ Scale     DC.L	$00010000,$80000000,$00000000,$00000000
         xdef        smod
 smod:
 
-   Move.L               #0,Mod_Flag(a6)
+   Clr.L                Mod_Flag(a6)
    BRA.B                Mod_Rem
 
         xdef        srem
@@ -274,7 +274,7 @@ R_LT_Y:
 
    Add.L                D3,D3           ...Q := 2Q
    Add.L                D2,D2           ...lo(R) = 2lo(R)
-   RoXL.L               #1,D1           ...hi(R) = 2hi(R) + carry
+   AddX.L               D1,D1           ...hi(R) = 2hi(R) + carry
    SCS                  D6              ...set Carry if 2(R) overflows
    AddQ.L               #1,A1           ...k := k+1
    SubQ.L               #1,D0           ...j := j - 1
@@ -344,7 +344,7 @@ No_Scale:
    Move.W		D6,Y(a6)
    Move.L		D4,Y_Hi(a6)
    Move.L		D5,Y_Lo(a6)
-   Move.L		#0,Sc_Flag(a6)
+   Clr.L		Sc_Flag(a6)
 
 *
 
@@ -424,7 +424,7 @@ Q_Big:
 
 Set_R_0:
    FMove.S		#:00000000,fp0
-   Move.L		#0,Sc_Flag(a6)
+   Clr.L		Sc_Flag(a6)
    BRA.W                Fix_Sign
 
 Tie_Case:

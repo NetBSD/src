@@ -1321,7 +1321,7 @@ frcfpn:
 	fmovem.x WBTEMP(a6),d0
 	rts
 frc0123:
-	cmpi.b	#0,d0
+	tst.b	d0
 	beq.b	frc0_dst
 	cmpi.b	#1,d0
 	beq.b	frc1_dst 
@@ -1409,7 +1409,7 @@ fminc_con:
 	rts
 
 fp0123:
-	cmpi.b	#0,d0
+	tst.b	d0
 	beq.b	fp0_dst
 	cmpi.b	#1,d0
 	beq.b	fp1_dst 
@@ -1650,7 +1650,7 @@ by_nlrg:
 * -1 in L_SCR1(a6) will cover all contingencies (FMOVE.B/W/L out).
 
 int_dnrm:
-	move.l	#0,L_SCR1(a6)	; initialize result to 0
+	clr.l	L_SCR1(a6)	; initialize result to 0
 	bfextu	FPCR_MODE(a6){2:2},d1	; d1 is the rounding mode
 	cmp.b	#2,d1		
 	bmi.b	int_inx		; if RN or RZ, done
@@ -1939,7 +1939,7 @@ dpspdnrm:
 
 	move.l	a0,a1		;a1 has the operand input
 	move.l	EXC_EA(a6),a0	;a0 has the destination pointer
-	add.w	#4,a7		;pop stack
+	addq.l	#4,a7		;pop stack
 	rts
 *
 * SET_XOP initialized WBTEMP with the value pointed to by a0
@@ -1985,7 +1985,7 @@ p_write:
 	move.l	#$0c,d0 	;get byte count
 	move.l	EXC_EA(a6),a1	;get the destination address
 	bsr 	mem_write	;write the user's destination
-	move.b	#0,CU_SAVEPC(a6) ;set the cu save pc to all 0's
+	clr.b	CU_SAVEPC(a6) ;set the cu save pc to all 0's
 
 *
 * Also note that the dtag must be set to norm here - this is because 

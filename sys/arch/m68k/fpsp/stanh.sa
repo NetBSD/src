@@ -184,7 +184,7 @@ TANHBORS:
 	bra		t_frcinx
 
 TANHSM:
-	MOVE.W		#$0000,XDCARE(a6)
+	CLR.W		XDCARE(a6)
 
 	FMOVE.L		d1,FPCR		;restore users exceptions
 	FMOVE.X		X(a6),FP0		;last inst - possible exception set

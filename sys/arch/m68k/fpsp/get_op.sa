@@ -469,7 +469,7 @@ uns_op3:
 	btst.b	#7,LOCAL_HI(a0)	;if msb = 1
 	bne.b	no_unfl		;then branch
 set_unfl:
-	or.w	#dnrm_tag,L_SCR1(a6) ;set denorm tag
+	or.b	#dnrm_tag,L_SCR1(a6) ;set denorm tag
 	bset.b	#unfl_bit,FPSR_EXCEPT(a6) ;set unfl exception bit
 no_unfl:
 	rts
@@ -685,12 +685,12 @@ is_nrm:
 * For a norm, check if the exp <= $3fff; if so, set etemp_15
 	cmpi.w		#$3fff,d1
 	ble.b		set_bit15
-	move.b		#0,STAG(a6)
+	clr.b		STAG(a6)
 	bra.b		end_is_nrm
 set_bit15:
 	move.b		#$10,STAG(a6)
 end_is_nrm:
-	move.l		#0,d0
+	clr.l		d0
 end_fix:
 	rts
  
