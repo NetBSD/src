@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.61 2003/10/17 00:12:58 mycroft Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.62 2003/10/18 07:41:26 wiz Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.61 2003/10/17 00:12:58 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.62 2003/10/18 07:41:26 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ Static const struct umass_quirk umass_quirks[] = {
 	},
 
 	/*
-	 * There work around genuine device bugs -- returning the wrong info in
+	 * These work around genuine device bugs -- returning the wrong info in
 	 * the CSW block.
 	 */
 	{ { USB_VENDOR_OLYMPUS, USB_PRODUCT_OLYMPUS_C1 },
