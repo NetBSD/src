@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.25 2000/05/26 21:20:12 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.26 2000/05/27 00:40:40 sommerfeld Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -208,8 +208,8 @@ trap(frame)
 #ifdef	KTRACE
 					/* Can't get all the arguments! */
 					if (KTRPOINT(p, KTR_SYSCALL))
-						ktrsyscall(p->p_tracep, code,
-							   argsize, args);
+						ktrsyscall(p, code, argsize,
+						    args);
 #endif
 					goto syscall_bad;
 				}
@@ -217,7 +217,7 @@ trap(frame)
 			}
 #ifdef	KTRACE
 			if (KTRPOINT(p, KTR_SYSCALL))
-				ktrsyscall(p->p_tracep, code, argsize, params);
+				ktrsyscall(p, code, argsize, params);
 #endif
 			rval[0] = 0;
 			rval[1] = frame->fixreg[FIRSTARG + 1];
@@ -247,7 +247,7 @@ syscall_bad:
 			}
 #ifdef	KTRACE
 			if (KTRPOINT(p, KTR_SYSRET))
-				ktrsysret(p->p_tracep, code, error, rval[0]);
+				ktrsysret(p, code, error, rval[0]);
 #endif
 		}
 		break;
@@ -365,7 +365,7 @@ child_return(arg)
 	tf->srr1 &= ~PSL_FP;	/* Disable FPU, as we can't be fpuproc */
 #ifdef	KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p->p_tracep, SYS_fork, 0, 0);
+		ktrsysret(p, SYS_fork, 0, 0);
 #endif
 	/* Profiling?							XXX */
 	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;

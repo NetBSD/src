@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.25 2000/03/30 11:27:18 augustss Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.26 2000/05/27 00:40:44 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -1179,8 +1179,8 @@ recvit32(p, s, mp, iov, namelenp, retsize)
 #ifdef KTRACE
 	if (ktriov != NULL) {
 		if (error == 0)
-			ktrgenio(p->p_tracep, s, UIO_READ,
-				ktriov, len - auio.uio_resid, error);
+			ktrgenio(p, s, UIO_READ, ktriov,
+			    len - auio.uio_resid, error);
 		FREE(ktriov, M_TEMP);
 	}
 #endif
@@ -2031,7 +2031,7 @@ netbsd32_execve(p, v, retval)
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_EMUL))
-		ktremul(p->p_tracep, p, p->p_emul->e_name);
+		ktremul(p);
 #endif
 
 	return (EJUSTRETURN);
@@ -2998,7 +2998,7 @@ dofilereadv32(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_GENIO))
 		if (error == 0) {
-			ktrgenio(p->p_tracep, fd, UIO_READ, ktriov, cnt,
+			ktrgenio(p, fd, UIO_READ, ktriov, cnt,
 			    error);
 		FREE(ktriov, M_TEMP);
 	}
@@ -3113,7 +3113,7 @@ dofilewritev32(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_GENIO))
 		if (error == 0) {
-			ktrgenio(p->p_tracep, fd, UIO_WRITE, ktriov, cnt,
+			ktrgenio(p, fd, UIO_WRITE, ktriov, cnt,
 			    error);
 		FREE(ktriov, M_TEMP);
 	}
