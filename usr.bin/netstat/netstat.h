@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.h,v 1.19 2000/07/06 12:40:19 itojun Exp $	*/
+/*	$NetBSD: netstat.h,v 1.20 2000/08/15 20:24:58 jhawk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,6 +76,7 @@ void	udp_stats __P((u_long, char *));
 void	ip_stats __P((u_long, char *));
 void	icmp_stats __P((u_long, char *));
 void	igmp_stats __P((u_long, char *));
+void	arp_stats __P((u_long, char *));
 #ifdef IPSEC
 void	ipsec_stats __P((u_long, char *));
 #endif

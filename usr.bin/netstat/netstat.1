@@ -1,4 +1,4 @@
-.\"	$NetBSD: netstat.1,v 1.26 1999/12/13 15:22:55 itojun Exp $
+.\"	$NetBSD: netstat.1,v 1.27 2000/08/15 20:24:58 jhawk Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)netstat.1	8.8 (Berkeley) 4/18/94
 .\"
-.Dd April 18, 1994
+.Dd December 13, 1999
 .Dt NETSTAT 1
 .Os
 .Sh NAME
@@ -126,6 +126,9 @@ for
 .Ar inet6 ,
 for
 .Dv AF_INET6 ;
+.Ar arp ,
+for
+.Dv AF_ARP ;
 .Ar ns ,
 for
 .Dv AF_NS ;
