@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.250 2004/02/23 21:12:13 skrll Exp $
+#	$NetBSD: bsd.lib.mk,v 1.251 2004/04/18 13:11:31 lukem Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -199,13 +199,6 @@ FFLAGS+=	${FOPTS}
 	rm -f ${.TARGET}.tmp
 .endif
 
-.c.ln:
-	${_MKTARGET_COMPILE}
-	${LINT} ${LINTFLAGS} \
-	    ${CPPFLAGS:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
-	    ${CPPFLAGS.${.IMPSRC:T}:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
-	    -i ${.IMPSRC}
-
 .cc.o .cpp.o .cxx.o .C.o:
 	${_MKTARGET_COMPILE}
 	${COMPILE.cc} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}.tmp
@@ -300,27 +293,39 @@ FFLAGS+=	${FOPTS}
 	rm -f ${.TARGET}.tmp
 .endif
 
-.S.o .s.o:
+.s.o:
 	${_MKTARGET_COMPILE}
-	${COMPILE.S} \
-	    ${CFLAGS:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
-	    ${AINC} ${.IMPSRC} -o ${.TARGET}.tmp
+	${COMPILE.s} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}.tmp
 	${LD} -x -r ${.TARGET}.tmp -o ${.TARGET}
 	rm -f ${.TARGET}.tmp
 
-.S.po .s.po:
+.S.o:
 	${_MKTARGET_COMPILE}
-	${COMPILE.S} -DGPROF -DPROF \
-	    ${CFLAGS:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
-	    ${AINC} ${.IMPSRC} -o ${.TARGET}.tmp
+	${COMPILE.S} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}.tmp
+	${LD} -x -r ${.TARGET}.tmp -o ${.TARGET}
+	rm -f ${.TARGET}.tmp
+
+.s.po:
+	${_MKTARGET_COMPILE}
+	${COMPILE.s} -DGPROF -DPROF ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}.tmp
 	${LD} -X -r ${.TARGET}.tmp -o ${.TARGET}
 	rm -f ${.TARGET}.tmp
 
-.S.so .s.so:
+.S.po:
 	${_MKTARGET_COMPILE}
-	${COMPILE.S} ${CAPICFLAGS} \
-	    ${CFLAGS:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
-	    ${AINC} ${.IMPSRC} -o ${.TARGET}.tmp
+	${COMPILE.S} -DGPROF -DPROF ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}.tmp
+	${LD} -X -r ${.TARGET}.tmp -o ${.TARGET}
+	rm -f ${.TARGET}.tmp
+
+.s.so:
+	${_MKTARGET_COMPILE}
+	${COMPILE.s} ${CAPICFLAGS} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}.tmp
+	${LD} -x -r ${.TARGET}.tmp -o ${.TARGET}
+	rm -f ${.TARGET}.tmp
+
+.S.so:
+	${_MKTARGET_COMPILE}
+	${COMPILE.S} ${CAPICFLAGS} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}.tmp
 	${LD} -x -r ${.TARGET}.tmp -o ${.TARGET}
 	rm -f ${.TARGET}.tmp
 
