@@ -1,4 +1,4 @@
-.\" $NetBSD: sv.4,v 1.1 1998/12/08 14:15:27 augustss Exp $
+.\" $NetBSD: sv.4,v 1.2 1998/12/10 18:56:55 augustss Exp $
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -40,13 +40,14 @@
 .Sh SYNOPSIS
 .Cd "sv*    at pci? dev ? function ?"
 .Cd "audio* at sv?"
+.Cd "opl*   at sv?"
 .Sh DESCRIPTION
 The
 .Nm
 driver provides support sound cards based on the S3 SonicVibes chip, 
 e.g. the Turtle Beach Daytona card.
 .Sh BUGS
-The FM synth and MIDI port are not supported.
+The waveform synth and MIDI port are not supported.
 .Sh SEE ALSO
 .Xr audio 4 ,
 .Xr pci 4

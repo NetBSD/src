@@ -418,6 +418,7 @@
 ./usr/share/man/cat4/stdin.0
 ./usr/share/man/cat4/stdout.0
 ./usr/share/man/cat4/strip.0
+./usr/share/man/cat4/sv.0
 ./usr/share/man/cat4/sw.0
 ./usr/share/man/cat4/tb.0
 ./usr/share/man/cat4/tcp.0
@@ -1493,6 +1494,7 @@
 ./usr/share/man/man4/stdin.4
 ./usr/share/man/man4/stdout.4
 ./usr/share/man/man4/strip.4
+./usr/share/man/man4/sv.4
 ./usr/share/man/man4/sw.4
 ./usr/share/man/man4/tb.4
 ./usr/share/man/man4/tcp.4
