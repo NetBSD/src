@@ -1,4 +1,4 @@
-.\" $NetBSD: cardbus.4,v 1.2 1999/12/15 22:07:30 abs Exp $
+.\" $NetBSD: cardbus.4,v 1.3 2000/01/13 09:33:16 haya Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,7 +43,7 @@
 .Nd introduction to Cardbus support
 .Sh SYNOPSIS
 .Cd "cbb*      at pci? dev? function ?"
-.Cd "cardslot* at cbb?	"
+.Cd "cardslot* at cbb? flags 0x0000"
 .Cd "cardbus*  at cardslot?"
 .Cd "pcmcia*   at cardslot?"
 .Cd "XX*       at cardbus? dev ? function ?"
@@ -52,6 +52,13 @@
 .Nx
 provides machine-independent bus support and
 drivers for Cardbus devices.
+.Pp
+The flags are used with cardslot definition.  The lowest order bit
+(rightmost bit) of the flags define the pccard attach sequence at the
+boot time.  When the bit is set, a pccard on the slot is probed and
+attached immidiately.  On the other hand, the pccard is probed after
+kernel thread wakes up.  If a pccard is used as a boot device (ex. CF
+card or network card), you should set the bit 1.
 .Sh SUPPORTED DEVICES
 .Nx
 includes the following machine-independent Cardbus
@@ -60,7 +67,7 @@ drivers, sorted by function and driver name:
 .Ss Network interfaces
 .Bl -tag -width speaker -offset indent -compact
 .It ex
-3Com 3C575TX
+3Com 3C575TX and 3C575BTX
 .It fxp
 Intel i8255x
 .El
