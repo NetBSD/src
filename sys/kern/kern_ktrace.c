@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.39 2000/04/19 19:14:17 thorpej Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.40 2000/05/08 20:01:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -241,7 +241,7 @@ ktrgenio(v, fd, rw, iov, len, error)
 
 		kth.ktr_len = cnt + sizeof(struct ktr_genio);
 
-		if (ktrwrite(p, v, &kth) != 0)
+		if (__predict_false(ktrwrite(p, v, &kth) != 0))
 			break;
 
 		iov->iov_base = (caddr_t)iov->iov_base + cnt;
@@ -629,7 +629,7 @@ ktrwrite(p, v, kth)
 		error = VOP_WRITE(vp, &auio, IO_UNIT|IO_APPEND, p->p_ucred);
 		VOP_UNLOCK(vp, 0);
 	}
-	if (error == 0)
+	if (__predict_true(error == 0))
 		return (0);
 	/*
 	 * If error encountered, give up tracing on this vnode.  Don't report
