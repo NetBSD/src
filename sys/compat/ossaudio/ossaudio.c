@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.19 1997/08/11 01:54:52 augustss Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.20 1997/08/24 23:31:23 augustss Exp $	*/
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
@@ -446,7 +446,7 @@ oss_ioctl_audio(p, uap, retval)
 
 /* If the NetBSD mixer device should have more than 32 devices
  * some will not be available to Linux */
-#define NETBSD_MAXDEVS 32
+#define NETBSD_MAXDEVS 64
 struct audiodevinfo {
 	int done;
 	dev_t dev;
