@@ -1,4 +1,4 @@
-/*	$NetBSD: ubavar.h,v 1.16 1996/07/01 21:31:36 ragge Exp $	*/
+/*	$NetBSD: ubavar.h,v 1.17 1996/07/11 19:34:00 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -100,6 +100,7 @@ struct	uba_softc {
 #define	UAMSIZ	100
 	struct	map *uh_map;		/* register free map */
 	struct	ivec_dsp uh_dw780;	/* Interrupt handles for DW780 */
+	int	uh_nr;			/* Unibus sequential number */
 };
 
 /* given a pointer to uba_regs, find DWBUA registers */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_subr.c,v 1.2 1996/07/10 23:36:02 ragge Exp $	*/
+/*	$NetBSD: mscp_subr.c,v 1.3 1996/07/11 19:34:08 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -141,6 +141,8 @@ mscp_attach(parent, self, aux)
 	mi->mi_sa = ma->ma_sa;
 	mi->mi_sw = ma->ma_sw;
 	mi->mi_ivec = ma->ma_ivec;
+	mi->mi_adapnr = ma->ma_adapnr;
+	mi->mi_ctlrnr = ma->ma_ctlrnr;
 	*ma->ma_softc = mi;
 	/*
 	 * Go out to init the bus, so that we can give commands

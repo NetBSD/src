@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.2 1996/07/10 23:36:01 ragge Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.3 1996/07/11 19:34:07 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -923,4 +923,27 @@ rasize(dev)
                         return -1;
 
 	return ra->ra_disk.dk_label->d_partitions[rapart(dev)].p_size;
+}
+
+int
+ra_getdev(adaptor, controller, unit, uname)
+	int adaptor, controller, unit;
+	char **uname;
+{
+	struct mscp_softc *mi;
+	struct ra_softc *ra;
+	int i;
+
+	for (i = 0; i < ra_cd.cd_ndevs; i++) {
+		if ((ra = ra_cd.cd_devs[i]) == 0)
+			continue;
+
+		mi = (void *)ra->ra_dev.dv_parent;
+		if (mi->mi_ctlrnr == controller && mi->mi_adapnr == adaptor &&
+		    ra->ra_hwunit == unit) {
+			*uname = ra->ra_dev.dv_xname;
+			return i;
+		}
+	}
+	return -1;
 }

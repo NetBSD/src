@@ -1,4 +1,4 @@
-/*      $NetBSD: uba.c,v 1.23 1996/07/01 20:17:56 ragge Exp $      */
+/*      $NetBSD: uba.c,v 1.24 1996/07/11 19:33:56 ragge Exp $      */
 
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -584,22 +584,16 @@ ubainit(uhp)
 int
 qbgetpri()
 {
-#ifdef notyet
 	int pri;
-	extern int cvec;
 
-	panic("qbgetpri");
 	for (pri = 0x17; pri > 0x14; ) {
-		if (cvec && cvec != 0x200)	/* interrupted at pri */
+		if (rcvec && rcvec != 0x200)	/* interrupted at pri */
 			break;
 		pri--;
 		splx(pri - 1);
 	}
-	(void) spl0();
+	spl0();
 	return (pri);
-#else
-	return 0x17;
-#endif
 }
 #endif
 
@@ -903,6 +897,11 @@ uba_attach(parent, self, aux)
 	sc->uh_iopage = (void *)min + (sc->uh_memsize * NBPG);
 	sc->uh_iarea = (void *)scb + NBPG + sa->nexinfo * NBPG;
 	sc->uh_resno = 0;
+#if VAX780 || VAX8600 || VAX750
+	if ((cpunumber == VAX_780) || (cpunumber == VAX_8600) || 
+	    (cpunumber == VAX_750))
+		sc->uh_nr = sa->nexnum * (parent->dv_unit + 1);
+#endif
 	/*
 	 * Create interrupt dispatchers for this uba.
 	 */

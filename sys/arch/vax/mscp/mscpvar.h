@@ -1,4 +1,4 @@
-/*	$NetBSD: mscpvar.h,v 1.2 1996/07/10 23:36:05 ragge Exp $	*/
+/*	$NetBSD: mscpvar.h,v 1.3 1996/07/11 19:34:10 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -115,6 +115,8 @@ struct	mscp_attach_args {
 	short	*ma_sa;			/* status & address (read part) */
 	short	*ma_sw;			/* status & address (write part) */
 	short	ma_ivec;		/* Interrupt vector to use */
+	char	ma_ctlrnr;		/* Phys ctlr nr */
+	char	ma_adapnr;		/* Phys adapter nr */
 };
 #define MSCPBUS_DISK	001	/* Bus is used for disk mounts */
 #define MSCPBUS_TAPE	002	/* Bus is used for tape mounts */
@@ -166,6 +168,8 @@ struct mscp_softc {
 	struct	mscp_device *mi_me;	/* Pointer to child's mscp_device */
 	struct	device **mi_dp;		/* array of backpointers */
 	int	mi_driveno;		/* Max physical drive number found */
+	char	mi_ctlrnr;		/* Phys ctlr nr */
+	char	mi_adapnr;		/* Phys adapter nr */
 	struct	mscp *mi_mscp;
 	int	mi_flags;
 	struct	mscp_pack *mi_uda;	/* virtual address */
