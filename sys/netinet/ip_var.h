@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.21 1997/10/14 08:38:01 thorpej Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.22 1997/10/18 21:18:32 kml Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -152,8 +152,9 @@ struct	ipstat {
 
 struct	  ipstat ipstat;
 LIST_HEAD(ipqhead, ipq)	ipq;		/* ip reass. queue */
-u_int16_t ip_id;			/* ip packet ctr, for ids */
-int	  ip_defttl;			/* default IP ttl */
+u_int16_t  ip_id;			/* ip packet ctr, for ids */
+int        ip_defttl;			/* default IP ttl */
+extern int ip_mtudisc;			/* mtu discovery */
 
 struct	 inpcb;
 
