@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.23 2001/04/01 10:40:46 tsubai Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.24 2001/04/25 17:53:15 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -240,13 +240,9 @@ device_register(dev, aux)
 		   DEVICE_IS(dev->dv_parent, "atapibus")) {
 		struct scsipibus_attach_args *sa = aux;
 
-		if (dev->dv_parent->dv_xname[0] == 's') {
-			if (addr != sa->sa_sc_link->scsipi_scsi.target)
-				return;
-		} else {
-			if (addr != sa->sa_sc_link->scsipi_atapi.drive)
-				return;
-		}
+		/* periph_target is target for scsi, drive # for atapi */
+		if (addr != sa->sa_periph->periph_target)
+			return;
 	} else if (DEVICE_IS(dev->dv_parent, "pciide")) {
 		struct ata_atapi_attach *aa = aux;
 

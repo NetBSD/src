@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.18 2000/05/15 08:32:07 bouyer Exp $	*/
+/*	$NetBSD: atavar.h,v 1.19 2001/04/25 17:53:27 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -94,7 +94,7 @@ struct ata_drive_datas {
 /*
  * XXX Small hack alert
  * NOTE:  The first field of struct ata_atapi_attach is shared with 
- * dev/scspi/scsipiconf.h's struct scsipi_link.  This allows
+ * dev/scspi/scsipiconf.h's struct scsipi_channel.  This allows
  * atapibus and scsibus to attach to the same device.
  */
 struct ata_atapi_attach {

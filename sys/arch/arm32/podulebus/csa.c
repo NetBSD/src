@@ -1,4 +1,4 @@
-/*	$NetBSD: csa.c,v 1.10 2001/03/18 16:58:55 bjh21 Exp $	*/
+/*	$NetBSD: csa.c,v 1.11 2001/04/25 17:53:11 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -181,14 +181,14 @@ csa_attach(parent, self, aux)
 	sc->sc_ncr5380.sc_pio_out = ncr5380_pio_out;
 
 	/* Provide an override for the host id */
-	sc->sc_ncr5380.sc_link.scsipi_scsi.adapter_target = 7;
+	sc->sc_ncr5380.sc_channel.chan_id = 7;
 	sprintf(hi_option, "%s.hostid", sc->sc_ncr5380.sc_dev.dv_xname);
 	(void)get_bootconf_option(boot_args, hi_option,
-	    BOOTOPT_TYPE_INT, &sc->sc_ncr5380.sc_link.scsipi_scsi.adapter_target);
-	sc->sc_ncr5380.sc_adapter.scsipi_minphys = minphys;
+	    BOOTOPT_TYPE_INT, &sc->sc_ncr5380.sc_channel.chan_id);
+	sc->sc_ncr5380.sc_adapter.adapt_minphys = minphys;
 
 	printf(": host=%d, using 8 bit PIO",
-	    sc->sc_ncr5380.sc_link.scsipi_scsi.adapter_target);
+	    sc->sc_ncr5380.sc_channel.chan_id);
 
 	sc->sc_irqstatus = (u_char *)pa->pa_podule->slow_base + CSA_INTR_OFFSET;
 	sc->sc_irqmask = CSA_INTR_MASK;

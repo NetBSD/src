@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.33 2001/01/01 18:34:12 augustss Exp $	*/
+/*	$NetBSD: ss.c,v 1.34 2001/04/25 17:53:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -78,10 +78,10 @@ struct cfattach ss_ca = {
 extern struct cfdriver ss_cd;
 
 void    ssstrategy __P((struct buf *));
-void    ssstart __P((void *));
+void    ssstart __P((struct scsipi_periph *));
 void	ssminphys __P((struct buf *));
 
-struct scsipi_device ss_switch = {
+const struct scsipi_periphsw ss_switch = {
 	NULL,
 	ssstart,
 	NULL,
@@ -128,19 +128,18 @@ ssattach(struct device *parent, struct device *self, void *aux)
 {
 	struct ss_softc *ss = (void *)self;
 	struct scsipibus_attach_args *sa = aux;
-	struct scsipi_link *sc_link = sa->sa_sc_link;
+	struct scsipi_periph *periph = sa->sa_periph;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("ssattach: "));
+	SC_DEBUG(periph, SCSIPI_DB2, ("ssattach: "));
 
 	ss->flags |= SSF_AUTOCONF;
 
 	/*
 	 * Store information needed to contact our base driver
 	 */
-	ss->sc_link = sc_link;
-	sc_link->device = &ss_switch;
-	sc_link->device_softc = ss;
-	sc_link->openings = 1;
+	ss->sc_periph = periph;
+	periph->periph_dev = &ss->sc_dev;
+	periph->periph_switch = &ss_switch;
 
 	printf("\n");
 
@@ -148,7 +147,7 @@ ssattach(struct device *parent, struct device *self, void *aux)
 	 * look for non-standard scanners with help of the quirk table
 	 * and install functions for special handling
 	 */
-	SC_DEBUG(sc_link, SDEV_DB2, ("ssattach:\n"));
+	SC_DEBUG(periph, SDEV_DB2, ("ssattach:\n"));
 	if (memcmp(sa->sa_inqbuf.vendor, "MUSTEK", 6) == 0)
 		mustek_attach(ss, sa);
 	if (memcmp(sa->sa_inqbuf.vendor, "HP      ", 8) == 0 &&
@@ -189,7 +188,7 @@ ssdetach(struct device *self, int flags)
 	}
 
 	/* Kill off any pending commands. */
-	scsipi_kill_pending(ss->sc_link);
+	scsipi_kill_pending(ss->sc_periph);
 
 	splx(s);
 
@@ -229,7 +228,8 @@ ssopen(dev_t dev, int flag, int mode, struct proc *p)
 	u_int ssmode;
 	int error;
 	struct ss_softc *ss;
-	struct scsipi_link *sc_link;
+	struct scsipi_periph *periph;
+	struct scsipi_adapter *adapt;
 
 	unit = SSUNIT(dev);
 	if (unit >= ss_cd.cd_ndevs)
@@ -242,17 +242,19 @@ ssopen(dev_t dev, int flag, int mode, struct proc *p)
 		return (ENODEV);
 
 	ssmode = SSMODE(dev);
-	sc_link = ss->sc_link;
 
-	SC_DEBUG(sc_link, SDEV_DB1, ("open: dev=0x%x (unit %d (of %d))\n", dev,
+	periph = ss->sc_periph;
+	adapt = periph->periph_channel->chan_adapter;
+
+	SC_DEBUG(periph, SCSIPI_DB1, ("open: dev=0x%x (unit %d (of %d))\n", dev,
 	    unit, ss_cd.cd_ndevs));
 
-	if (sc_link->flags & SDEV_OPEN) {
+	if (periph->periph_flags & PERIPH_OPEN) {
 		printf("%s: already open\n", ss->sc_dev.dv_xname);
 		return (EBUSY);
 	}
 
-	if ((error = scsipi_adapter_addref(sc_link)) != 0)
+	if ((error = scsipi_adapter_addref(adapt)) != 0)
 		return (error);
 
 	/*
@@ -262,13 +264,13 @@ ssopen(dev_t dev, int flag, int mode, struct proc *p)
 	 * consider paper to be a changeable media
 	 *
 	 */
-	error = scsipi_test_unit_ready(sc_link,
+	error = scsipi_test_unit_ready(periph,
 	    XS_CTL_IGNORE_MEDIA_CHANGE | XS_CTL_IGNORE_ILLEGAL_REQUEST |
 	    (ssmode == MODE_CONTROL ? XS_CTL_IGNORE_NOT_READY : 0));
 	if (error)
 		goto bad;
 
-	sc_link->flags |= SDEV_OPEN;	/* unit attn are now errors */
+	periph->periph_flags |= PERIPH_OPEN;	/* unit attn now errors */
 
 	/*
 	 * If the mode is 3 (e.g. minor = 3,7,11,15)
@@ -278,12 +280,12 @@ ssopen(dev_t dev, int flag, int mode, struct proc *p)
 	if (ssmode == MODE_CONTROL)
 		return (0);
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("open complete\n"));
+	SC_DEBUG(periph, SCSIPI_DB2, ("open complete\n"));
 	return (0);
 
 bad:
-	scsipi_adapter_delref(sc_link);
-	sc_link->flags &= ~SDEV_OPEN;
+	scsipi_adapter_delref(adapt);
+	periph->periph_flags &= ~PERIPH_OPEN;
 	return (error);
 }
 
@@ -295,9 +297,11 @@ int
 ssclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(dev)];
+	struct scsipi_periph *periph = ss->sc_periph;
+	struct scsipi_adapter *adapt = periph->periph_channel->chan_adapter;
 	int error;
 
-	SC_DEBUG(ss->sc_link, SDEV_DB1, ("closing\n"));
+	SC_DEBUG(ss->sc_periph, SCSIPI_DB1, ("closing\n"));
 
 	if (SSMODE(dev) == MODE_REWIND) {
 		if (ss->special && ss->special->rewind_scanner) {
@@ -312,10 +316,10 @@ ssclose(dev_t dev, int flag, int mode, struct proc *p)
 		ss->flags &= ~SSF_TRIGGERED;
 	}
 
-	scsipi_wait_drain(ss->sc_link);
+	scsipi_wait_drain(periph);
 
-	scsipi_adapter_delref(ss->sc_link);
-	ss->sc_link->flags &= ~SDEV_OPEN;
+	scsipi_adapter_delref(adapt);
+	periph->periph_flags &= ~PERIPH_OPEN;
 
 	return (0);
 }
@@ -330,8 +334,9 @@ void
 ssminphys(struct buf *bp)
 {
 	struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(bp->b_dev)];
+	struct scsipi_periph *periph = ss->sc_periph;
 
-	(ss->sc_link->adapter->scsipi_minphys)(bp);
+	(*periph->periph_channel->chan_adapter->adapt_minphys)(bp);
 
 	/*
 	 * trim the transfer further for special devices this is
@@ -383,9 +388,10 @@ ssstrategy(bp)
 	struct buf *bp;
 {
 	struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(bp->b_dev)];
+	struct scsipi_periph *periph = ss->sc_periph;
 	int s;
 
-	SC_DEBUG(ss->sc_link, SDEV_DB1,
+	SC_DEBUG(ss->sc_periph, SCSIPI_DB1,
 	    ("ssstrategy %ld bytes @ blk %d\n", bp->b_bcount, bp->b_blkno));
 
 	/*
@@ -393,7 +399,7 @@ ssstrategy(bp)
 	 */
 	if ((ss->sc_dev.dv_flags & DVF_ACTIVE) == 0) {
 		bp->b_flags |= B_ERROR;
-		if (ss->sc_link->flags & SDEV_OPEN)
+		if (periph->periph_flags & PERIPH_OPEN)
 			bp->b_error = EIO;
 		else
 			bp->b_error = ENODEV;
@@ -430,7 +436,7 @@ ssstrategy(bp)
 	 * not doing anything, otherwise just wait for completion
 	 * (All a bit silly if we're only allowing 1 open but..)
 	 */
-	ssstart(ss);
+	ssstart(ss->sc_periph);
 
 	splx(s);
 	return;
@@ -458,23 +464,22 @@ done:
  * ssstart() is called at splbio
  */
 void
-ssstart(v)
-	void *v;
+ssstart(periph)
+	struct scsipi_periph *periph;
 {
-	struct ss_softc *ss = v;
-	struct scsipi_link *sc_link = ss->sc_link;
+	struct ss_softc *ss = (void *)periph->periph_dev;
 	struct buf *bp;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("ssstart "));
+	SC_DEBUG(periph, SCSIPI_DB2, ("ssstart "));
 	/*
 	 * See if there is a buf to do and we are not already
 	 * doing one
 	 */
-	while (sc_link->active < sc_link->openings) {
+	while (periph->periph_active < periph->periph_openings) {
 		/* if a special awaits, let it proceed first */
-		if (sc_link->flags & SDEV_WAITING) {
-			sc_link->flags &= ~SDEV_WAITING;
-			wakeup((caddr_t)sc_link);
+		if (periph->periph_flags & PERIPH_WAITING) {
+			periph->periph_flags &= ~PERIPH_WAITING;
+			wakeup((caddr_t)periph);
 			return;
 		}
 
@@ -555,7 +560,8 @@ ssioctl(dev, cmd, addr, flag, p)
 		break;
 #endif
 	default:
-		return (scsipi_do_ioctl(ss->sc_link, dev, cmd, addr, flag, p));
+		return (scsipi_do_ioctl(ss->sc_periph, dev, cmd, addr,
+		    flag, p));
 	}
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.54 1999/11/05 19:06:39 scottr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.55 2001/04/25 17:53:14 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -154,7 +154,7 @@ target_to_unit(bus, target, lun)
 	u_long bus, target, lun;
 {
 	struct scsibus_softc	*scsi;
-	struct scsipi_link	*sc_link;
+	struct scsipi_periph	*periph;
 	struct device		*sc_dev;
 extern	struct cfdriver		scsibus_cd;
 
@@ -169,10 +169,10 @@ extern	struct cfdriver		scsibus_cd;
 			if (scsibus_cd.cd_devs[bus]) {
 				scsi = (struct scsibus_softc *)
 						scsibus_cd.cd_devs[bus];
-				if (scsi->sc_link[target][lun]) {
-					sc_link = scsi->sc_link[target][lun];
+				if (scsi->sc_channel->chan_periphs[target][lun]) {
+					periph = scsi->sc_channel->chan_periphs[target][lun];
 					sc_dev = (struct device *)
-							sc_link->device_softc;
+							periph->periph_dev;
 					return sc_dev->dv_unit;
 				}
 			}
@@ -185,9 +185,9 @@ extern	struct cfdriver		scsibus_cd;
 	}
 	if (scsibus_cd.cd_devs[bus]) {
 		scsi = (struct scsibus_softc *) scsibus_cd.cd_devs[bus];
-		if (scsi->sc_link[target][lun]) {
-			sc_link = scsi->sc_link[target][lun];
-			sc_dev = (struct device *) sc_link->device_softc;
+		if (scsi->sc_channel->chan_periphs[target][lun]) {
+			periph = scsi->sc_channel->chan_periphs[target][lun];
+			sc_dev = (struct device *) periph->periph_dev;
 			return sc_dev->dv_unit;
 		}
 	}

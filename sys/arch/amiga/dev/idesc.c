@@ -1,4 +1,4 @@
-/*	$NetBSD: idesc.c,v 1.46 2000/05/25 19:11:45 is Exp $	*/
+/*	$NetBSD: idesc.c,v 1.47 2001/04/25 17:53:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -231,11 +231,6 @@ struct ide_softc {
 	struct ideparams sc_params;
 };
 
-struct	ide_pending {
-	TAILQ_ENTRY(ide_pending) link;
-	struct scsipi_xfer *xs;
-};
-
 /*
  * Per controller structure.
  */
@@ -244,12 +239,10 @@ struct idec_softc
 	struct device sc_dev;
 	struct isr sc_isr;
 
-	struct	scsipi_link sc_link;	/* proto for sub devices */
 	struct	scsipi_adapter sc_adapter;
+	struct	scsipi_channel sc_channel;
 	ide_regmap_p	sc_cregs;	/* driver specific regs */
 	volatile u_char *sc_a1200;	/* A1200 interrupt control */
-	TAILQ_HEAD(,ide_pending) sc_xslist;	/* LIFO */
-	struct	ide_pending sc_xsstore[8][8];	/* one for every unit */
 	struct	scsipi_xfer *sc_xs;	/* transfer from high level code */
 	int	sc_flags;
 #define	IDECF_ALIVE	0x01	/* Controller is alive */
@@ -267,7 +260,7 @@ struct idec_softc
 	struct ide_softc	sc_ide[2];
 };
 
-int ide_scsicmd __P((struct scsipi_xfer *));
+void ide_scsipi_request __P((struct scsipi_xfer *));
 
 void idescattach __P((struct device *, struct device *, void *));
 int idescmatch __P((struct device *, struct cfdata *, void *));
@@ -288,13 +281,6 @@ int  ide_atapi_icmd __P((struct idec_softc *, int, void *, int, void *, int));
 int ide_atapi_start __P((struct idec_softc *));
 int ide_atapi_intr __P((struct idec_softc *));
 void ide_atapi_done __P((struct idec_softc *));
-
-struct scsipi_device idesc_scsidev = {
-	NULL,		/* use default error handler */
-	NULL,		/* do not have a start functio */
-	NULL,		/* have no async handler */
-	NULL,		/* Use default done routine */
-};
 
 struct cfattach idesc_ca = {
 	sizeof(struct idec_softc), idescmatch, idescattach
@@ -372,10 +358,12 @@ idescattach(pdp, dp, auxp)
 	void *auxp;
 {
 	ide_regmap_p rp;
-	struct idec_softc *sc;
+	struct idec_softc *sc (struct idec_softc *)dp;
+	struct scsipi_adapter *adapt = &sc->sc_adapter;
+	struct scsipi_channel *chan = &sc->sc_channel;
+
 	int i;
 
-	sc = (struct idec_softc *)dp;
 	if (is_a4000())
 		sc->sc_cregs = rp = (ide_regmap_p) ztwomap(0xdd2020);
 	else {
@@ -529,19 +517,27 @@ idescattach(pdp, dp, auxp)
 
 	printf ("\n");
 
-	sc->sc_adapter.scsipi_cmd = ide_scsicmd;
-	sc->sc_adapter.scsipi_minphys = minphys;
+	/*
+	 * Fill in the scsipi_adapter.
+	 */
+	memset(adapt, 0, sizeof(*adapt));
+	adapt->adapt_dev = &sc->sc_dev;
+	adapt->adapt_nchannels = 1;
+	adapt->adapt_openings = 1;
+	adapt->adapt_max_periph = 1;
+	adapt->adapt_request = ide_scsipi_request;
+	adapt->adapt_minphys = minphys;
 
-	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
-	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.scsipi_scsi.adapter_target = 7;
-	sc->sc_link.adapter = &sc->sc_adapter;
-	sc->sc_link.device = &idesc_scsidev;
-	sc->sc_link.openings = 1;
-	sc->sc_link.scsipi_scsi.max_target = 7;
-	sc->sc_link.scsipi_scsi.max_lun = 7;
-	sc->sc_link.type = BUS_SCSI;
-	TAILQ_INIT(&sc->sc_xslist);
+	/*
+	 * Fill in the scsipi_channel.
+	 */
+	memset(chan, 0, sizeof(*chan));
+	chan->chan_adapter = adapt;
+	chan->chan_bustype = &scsi_bustype;
+	chan->chan_channel = 0;
+	chan->chan_ntargets = 8;
+	chan->chan_nluns = 8;
+	chan->chan_id = 7;
 
 	sc->sc_isr.isr_intr = idesc_intr;
 	sc->sc_isr.isr_arg = sc;
@@ -551,57 +547,64 @@ idescattach(pdp, dp, auxp)
 	/*
 	 * attach all "scsi" units on us
 	 */
-	config_found(dp, &sc->sc_link, scsiprint);
+	config_found(dp, chan, scsiprint);
 }
 
 /*
  * used by specific ide controller
  *
  */
-int
-ide_scsicmd(xs)
-	struct scsipi_xfer *xs;
+void
+ide_scsipi_request(chan, req, arg)
+	struct scsipi_channel *chan;
+	scsipi_adapter_req_t req;
+	void *arg;
 {
-	struct ide_pending *pendp;
-	struct idec_softc *dev;
-	struct scsipi_link *slp;
+	struct scsipi_xfer *xs;
+	struct scsipi_periph *periph;
+	struct idec_softc *dev = (void *)chan->chan_adapter->adapt_dev;
 	int flags, s;
 
-	slp = xs->sc_link;
-	dev = slp->adapter_softc;
-	flags = xs->xs_control;
+	switch (req) {
+	case ADAPTER_REQ_RUN_XFER:    
+		xs = arg;
+		periph = xs->xs_periph;
+		flags = xs->xs_control;
 
-	if (flags & XS_CTL_DATA_UIO)
-		panic("ide: scsi data uio requested");
+		if (flags & XS_CTL_DATA_UIO)
+			panic("ide: scsi data uio requested");
 	
-	if (dev->sc_xs && flags & XS_CTL_POLL)
-		panic("ide_scsicmd: busy");
+		if (dev->sc_xs && (flags & XS_CTL_POLL))
+			panic("ide_scsipi_request: busy");
 
-	s = splbio();
-	pendp = &dev->sc_xsstore[slp->scsipi_scsi.target][slp->scsipi_scsi.lun];
-	if (pendp->xs) {
+		s = splbio();
+#ifdef DIAGNOSTIC
+		/*
+		 * This should never happen as we track the resources
+		 * in the mid-layer.
+		 */
+		if (dev->sc_xs) {
+			splx(s);
+			panic("ide_scsipi_request: busy");
+		}
+#endif
+
+		dev->sc_xs = xs;
 		splx(s);
-		return(TRY_AGAIN_LATER);
+
+		/*
+		 * nothing is pending do it now.
+		 */
+		ide_donextcmd(dev);
+		return;
+
+	case ADAPTER_REQ_GROW_RESOURCES:
+		return;
+
+	case ADAPTER_REQ_SET_XFER_MODE:
+		return;
 	}
 
-	if (dev->sc_xs) {
-		pendp->xs = xs;
-		TAILQ_INSERT_TAIL(&dev->sc_xslist, pendp, link);
-		splx(s);
-		return(SUCCESSFULLY_QUEUED);
-	}
-	pendp->xs = NULL;
-	dev->sc_xs = xs;
-	splx(s);
-
-	/*
-	 * nothing is pending do it now.
-	 */
-	ide_donextcmd(dev);
-
-	if (flags & XS_CTL_POLL)
-		return(COMPLETE);
-	return(SUCCESSFULLY_QUEUED);
 }
 
 /*
@@ -611,12 +614,10 @@ void
 ide_donextcmd(dev)
 	struct idec_softc *dev;
 {
-	struct scsipi_xfer *xs;
-	struct scsipi_link *slp;
+	struct scsipi_xfer *xs = dev->sc_xs;
+	struct scsipi_periph *periph = xs->xs_periph;
 	int flags, stat;
 
-	xs = dev->sc_xs;
-	slp = xs->sc_link;
 	flags = xs->xs_control;
 
 	if (flags & XS_CTL_RESET)
@@ -624,12 +625,12 @@ ide_donextcmd(dev)
 
 	dev->sc_stat[0] = -1;
 	/* Weed out invalid targets & LUNs here */
-	if (slp->scsipi_scsi.target > 1 || slp->scsipi_scsi.lun != 0) {
+	if (periph->periph_target > 1 || periph->periph_lun != 0) {
 		ide_scsidone(dev, -1);
 		return;
 	}
 	if (flags & XS_CTL_POLL || ide_no_int)
-		stat = ideicmd(dev, slp->scsipi_scsi.target, xs->cmd, xs->cmdlen, 
+		stat = ideicmd(dev, periph->periph_target, xs->cmd, xs->cmdlen, 
 		    xs->data, xs->datalen);
 	else if (idego(dev, xs) == 0)
 		return;
@@ -645,7 +646,6 @@ ide_scsidone(dev, stat)
 	struct idec_softc *dev;
 	int stat;
 {
-	struct ide_pending *pendp;
 	struct scsipi_xfer *xs;
 	int s, donext;
 
@@ -679,28 +679,7 @@ ide_scsidone(dev, stat)
 		}
 	}
 
-	xs->xs_status |= XS_STS_DONE;
-
-	/*
-	 * grab next command before scsipi_done()
-	 * this way no single device can hog scsi resources.
-	 */
-	s = splbio();
-	pendp = dev->sc_xslist.tqh_first;
-	if (pendp == NULL) {
-		donext = 0;
-		dev->sc_xs = NULL;
-	} else {
-		donext = 1;
-		TAILQ_REMOVE(&dev->sc_xslist, pendp, link);
-		dev->sc_xs = pendp->xs;
-		pendp->xs = NULL;
-	}
-	splx(s);
 	scsipi_done(xs);
-
-	if (donext)
-		ide_donextcmd(dev);
 }
 
 int
@@ -709,14 +688,12 @@ idegetsense(dev, xs)
 	struct scsipi_xfer *xs;
 {
 	struct scsipi_sense rqs;
-	struct scsipi_link *slp;
+	struct scsipi_periph periph = xs->xs_periph;
 
 	if (dev->sc_cur->sc_flags & IDEF_ATAPI)
 		return (0);
-	slp = xs->sc_link;
-	
 	rqs.opcode = REQUEST_SENSE;
-	rqs.byte2 = slp->scsipi_scsi.lun << 5;
+	rqs.byte2 = periph->periph_lun << 5;
 #ifdef not_yet
 	rqs.length = xs->req_sense_length ? xs->req_sense_length : 
 	    sizeof(xs->sense.scsi_sense);
@@ -726,7 +703,7 @@ idegetsense(dev, xs)
 	    
 	rqs.unused[0] = rqs.unused[1] = rqs.control = 0;
 	
-	return(ideicmd(dev, slp->scsipi_scsi.target, &rqs, sizeof(rqs),
+	return(ideicmd(dev, periph->periph_target, &rqs, sizeof(rqs),
 		&xs->sense.scsi_sense, rqs.length));
 }
 
@@ -1127,7 +1104,7 @@ idego(dev, xs)
 	struct idec_softc *dev;
 	struct scsipi_xfer *xs;
 {
-	struct ide_softc *ide = &dev->sc_ide[xs->sc_link->scsipi_scsi.target];
+	struct ide_softc *ide = &dev->sc_ide[xs->xs_periph->periph_target];
 	long lba;
 	int nblks;
 
@@ -1154,7 +1131,7 @@ idego(dev, xs)
 	}
 	if (xs->cmd->opcode != SCSI_READ_COMMAND && xs->cmd->opcode != READ_BIG &&
 	    xs->cmd->opcode != SCSI_WRITE_COMMAND && xs->cmd->opcode != WRITE_BIG) {
-		ideicmd (dev, xs->sc_link->scsipi_scsi.target, xs->cmd, xs->cmdlen,
+		ideicmd (dev, xs->xs_periph->periph_target, xs->cmd, xs->cmdlen,
 		    xs->data, xs->datalen);
 		return (1);
 	}
@@ -1620,10 +1597,10 @@ again:
 			xs->sense.atapi_sense = err;
 			ide->sc_flags |= IDEF_SENSE;
 			rqs.opcode = REQUEST_SENSE;
-			rqs.byte2 = xs->sc_link->scsipi_scsi.lun << 5;
+			rqs.byte2 = xs->xs_periph_periph_lun << 5;
 			rqs.length = sizeof(xs->sense.scsi_sense);
 			rqs.unused[0] = rqs.unused[1] = rqs.control = 0;
-			ide_atapi_icmd(dev, xs->sc_link->scsipi_scsi.target,
+			ide_atapi_icmd(dev, xs->xs_periph->periph_target,
 			    &rqs, sizeof(rqs), &xs->sense.scsi_sense,
 			    sizeof(xs->sense.scsi_sense));
 			return(1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.h,v 1.10 2000/02/28 17:44:20 thorpej Exp $	*/
+/*	$NetBSD: scsipi_base.h,v 1.11 2001/04/25 17:53:40 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,22 +36,22 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-struct scsipi_xfer *scsipi_get_xs __P((struct scsipi_link *, int));
-void scsipi_free_xs __P((struct scsipi_xfer *, int));
+struct scsipi_xfer *scsipi_get_xs __P((struct scsipi_periph *, int));
+void	scsipi_put_xs __P((struct scsipi_xfer *));
 
-static __inline struct scsipi_xfer *scsipi_make_xs __P((struct scsipi_link *,
+static __inline struct scsipi_xfer *scsipi_make_xs __P((struct scsipi_periph *,
 	    struct scsipi_generic *, int cmdlen, u_char *data_addr,
 	    int datalen, int retries, int timeout, struct buf *,
-	    int flags)) __attribute__ ((unused));
+	    int flags)) __attribute__ ((__unused__));
 
 /*
  * Make a scsipi_xfer, and return a pointer to it.
  */
 
 static __inline struct scsipi_xfer *
-scsipi_make_xs(sc_link, scsipi_cmd, cmdlen, data_addr, datalen,
+scsipi_make_xs(periph, scsipi_cmd, cmdlen, data_addr, datalen,
     retries, timeout, bp, flags)
-	struct scsipi_link *sc_link;
+	struct scsipi_periph *periph;
 	struct scsipi_generic *scsipi_cmd;
 	int cmdlen;
 	u_char *data_addr;
@@ -63,23 +63,21 @@ scsipi_make_xs(sc_link, scsipi_cmd, cmdlen, data_addr, datalen,
 {
 	struct scsipi_xfer *xs;
 
-	if ((xs = scsipi_get_xs(sc_link, flags)) == NULL)
+	if ((xs = scsipi_get_xs(periph, flags)) == NULL)
 		return (NULL);
 
 	/*
 	 * Fill out the scsipi_xfer structure.  We don't know whose context
 	 * the cmd is in, so copy it.
 	 */
-	xs->sc_link = sc_link;
 	bcopy(scsipi_cmd, &xs->cmdstore, cmdlen);
 	xs->cmd = &xs->cmdstore;
 	xs->cmdlen = cmdlen;
 	xs->data = data_addr;
 	xs->datalen = datalen;
-	xs->retries = retries;
+	xs->xs_retries = retries;
 	xs->timeout = timeout;
 	xs->bp = bp;
-	xs->req_sense_length = 0;	/* XXX field is not really useful */
 
 	return (xs);
 }

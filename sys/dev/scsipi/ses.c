@@ -1,4 +1,4 @@
-/*	$NetBSD: ses.c,v 1.8 2000/08/08 22:55:30 mjacob Exp $ */
+/*	$NetBSD: ses.c,v 1.9 2001/04/25 17:53:41 bouyer Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
  * All rights reserved.
@@ -145,7 +145,7 @@ static void ses_log	__P((struct ses_softc *, const char *, ...))
 
 struct ses_softc {
 	struct device	sc_device;
-	struct scsipi_link *sc_link;
+	struct scsipi_periph *sc_periph;
 	enctyp		ses_type;	/* type of enclosure */
 	encvec		ses_vec;	/* vector to handlers */
 	void *		ses_private;	/* per-type private data */
@@ -169,7 +169,7 @@ struct cfattach ses_ca = {
 };
 extern struct cfdriver ses_cd;
 
-struct scsipi_device ses_switch = {
+const struct scsipi_periphsw ses_switch = {
 	NULL,
 	NULL,
 	NULL,
@@ -217,13 +217,13 @@ ses_attach(parent, self, aux)
 	char *tname;
 	struct ses_softc *softc = (void *)self;
 	struct scsipibus_attach_args *sa = aux;
-	struct scsipi_link *sc_link = sa->sa_sc_link;
+	struct scsipi_periph *periph = sa->sa_periph;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("ssattach: "));
-	softc->sc_link = sa->sa_sc_link;
-	sc_link->device = &ses_switch;
-	sc_link->device_softc = softc;
-	sc_link->openings = 1;
+	SC_DEBUG(periph, SCSIPI_DB2, ("ssattach: "));
+	softc->sc_periph = periph;
+	periph->periph_dev = &softc->sc_device;
+	periph->periph_switch = &ses_switch;
+	periph->periph_openings = 1;
 
 	softc->ses_type = ses_device_type(sa);
 	switch (softc->ses_type) {
@@ -318,7 +318,8 @@ sesopen(dev, flags, fmt, p)
 		error = ENXIO;
 		goto out;
 	}
-	error = scsipi_adapter_addref(softc->sc_link);
+	error = scsipi_adapter_addref(
+	    softc->sc_periph->periph_channel->chan_adapter);
 	if (error != 0)
                 goto out;
 
@@ -353,8 +354,8 @@ sesclose(dev, flags, fmt, p)
 	if (softc == NULL)
 		return (ENXIO);
 
-	scsipi_wait_drain(softc->sc_link);
-	scsipi_adapter_delref(softc->sc_link);
+	scsipi_wait_drain(softc->sc_periph);
+	scsipi_adapter_delref(softc->sc_periph->periph_channel->chan_adapter);
 	softc->ses_flags &= ~SES_FLAG_OPEN;
 	return (0);
 }
@@ -380,7 +381,7 @@ sesioctl(dev, cmd, arg_addr, flag, p)
 	else
 		addr = NULL;
 
-	SC_DEBUG(ssc->sc_link, SDEV_DB2, ("sesioctl 0x%lx ", cmd));
+	SC_DEBUG(ssc->sc_periph, SCSIPI_DB2, ("sesioctl 0x%lx ", cmd));
 
 	/*
 	 * Now check to see whether we're initialized or not.
@@ -482,7 +483,8 @@ sesioctl(dev, cmd, arg_addr, flag, p)
 		break;
 
 	default:
-		error = scsipi_do_ioctl(ssc->sc_link, dev, cmd, addr, flag, p);
+		error = scsipi_do_ioctl(ssc->sc_periph,
+			    dev, cmd, addr, flag, p);
 		break;
 	}
 	return (error);
@@ -513,7 +515,7 @@ ses_runcmd(struct ses_softc *ssc, char *cdb, int cdbl, char *dptr, int *dlenp)
 #ifndef	SCSIDEBUG
 	flg |= XS_CTL_SILENT;
 #endif
-	error = scsipi_command(ssc->sc_link, &sgen, cdbl,
+	error = scsipi_command(ssc->sc_periph, &sgen, cdbl,
 	    (u_char *) dptr, dl, SCSIPIRETRIES, 30000, NULL, flg);
 
 	if (error == 0 && dptr)

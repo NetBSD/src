@@ -1,4 +1,4 @@
-/* $NetBSD: dec_550.c,v 1.11 2001/04/19 18:25:26 thorpej Exp $ */
+/* $NetBSD: dec_550.c,v 1.12 2001/04/25 17:53:05 bouyer Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_550.c,v 1.11 2001/04/19 18:25:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_550.c,v 1.12 2001/04/25 17:53:05 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -243,11 +243,11 @@ dec_550_device_register(dev, aux)
 		if (parent->dv_parent != scsipidev)
 			return;
 
-		if (sa->sa_sc_link->type == BUS_SCSI
-		    && b->unit / 100 != sa->sa_sc_link->scsipi_scsi.target)
-			return;
-		if (sa->sa_sc_link->type == BUS_ATAPI
-		    && b->unit / 100 != sa->sa_sc_link->scsipi_atapi.drive) 
+		if ((sa->sa_periph->periph_channel->chan_bustype->bustype_type
+		     == SCSIPI_BUSTYPE_SCSI ||
+		     sa->sa_periph->periph_channel->chan_bustype->bustype_type
+		     == SCSIPI_BUSTYPE_ATAPI)
+		    && b->unit / 100 != sa->sa_periph->periph_target)
 			return;
 
 		/* XXX LUN! */

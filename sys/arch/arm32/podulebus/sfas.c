@@ -1,4 +1,4 @@
-/*	$NetBSD: sfas.c,v 1.18 2000/06/29 08:53:03 mrg Exp $	*/
+/*	$NetBSD: sfas.c,v 1.19 2001/04/25 17:53:12 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -75,7 +75,8 @@ extern pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
 
 void sfasinitialize __P((struct sfas_softc *));
 void sfas_minphys   __P((struct buf *bp));
-int  sfas_scsicmd   __P((struct scsipi_xfer *xs));
+void sfas_scsi_request __P((struct scsipi_channel *,
+					scsipi_adapter_req_t, void *));
 void sfas_donextcmd __P((struct sfas_softc *dev, struct sfas_pending *pendp));
 void sfas_scsidone  __P((struct sfas_softc *dev, struct scsipi_xfer *xs,
 			 int stat));
@@ -217,47 +218,59 @@ sfasinitialize(dev)
 /*
  * used by specific sfas controller
  */
-int
-sfas_scsicmd(struct scsipi_xfer *xs)
+void
+sfas_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
+								void *arg)
 {
-	struct sfas_softc	*dev;
-	struct scsipi_link	*slp;
+	struct scsipi_xfer *xs;
+	struct sfas_softc	*dev = (void *)chan->chan_adapter->adapt_dev;
+	struct scsipi_periph	*periph;
 	struct sfas_pending	*pendp;
 	int			 flags, s, target;
 
-	slp = xs->sc_link;
-	dev = slp->adapter_softc;
-	flags = xs->xs_control;
-	target = slp->scsipi_scsi.target;
+	switch (req) {
+	case ADAPTER_REQ_RUN_XFER:
+		xs = arg;
+		periph = xs->xs_periph;
+		flags = xs->xs_control;
+		target = periph->periph_target;
 
-	if (flags & XS_CTL_DATA_UIO)
-		panic("sfas: scsi data uio requested");
+		if (flags & XS_CTL_DATA_UIO)
+			panic("sfas: scsi data uio requested");
 
-	if ((flags & XS_CTL_POLL) && (dev->sc_flags & SFAS_ACTIVE))
-		panic("sfas_scsicmd: busy");
+		if ((flags & XS_CTL_POLL) && (dev->sc_flags & SFAS_ACTIVE))
+			panic("sfas_scsicmd: busy");
 
 /* Get hold of a sfas_pending block. */
-	s = splbio();
-	pendp = dev->sc_xs_free.tqh_first;
-	if (pendp == NULL) {
+		s = splbio();
+		pendp = dev->sc_xs_free.tqh_first;
+		if (pendp == NULL) {
+			xs->error = XS_RESOURCE_SHORTAGE;
+			scsipi_done(xs);
+			splx(s);
+			return;
+		}
+		TAILQ_REMOVE(&dev->sc_xs_free, pendp, link);
+		pendp->xs = xs;
 		splx(s);
-		return(TRY_AGAIN_LATER);
-	}
-	TAILQ_REMOVE(&dev->sc_xs_free, pendp, link);
-	pendp->xs = xs;
-	splx(s);
 
 
 /* If the chip if busy OR the unit is busy, we have to wait for out turn. */
-	if ((dev->sc_flags & SFAS_ACTIVE) ||
-	    (dev->sc_nexus[target].flags & SFAS_NF_UNIT_BUSY)) {
-		s = splbio();
-		TAILQ_INSERT_TAIL(&dev->sc_xs_pending, pendp, link);
-		splx(s);
-	} else
-		sfas_donextcmd(dev, pendp);
+		if ((dev->sc_flags & SFAS_ACTIVE) ||
+		    (dev->sc_nexus[target].flags & SFAS_NF_UNIT_BUSY)) {
+			s = splbio();
+			TAILQ_INSERT_TAIL(&dev->sc_xs_pending, pendp, link);
+			splx(s);
+		} else
+			sfas_donextcmd(dev, pendp);
 
-	return((flags & XS_CTL_POLL) ? COMPLETE : SUCCESSFULLY_QUEUED);
+		return;
+
+	case ADAPTER_REQ_GROW_RESOURCES:
+	case ADAPTER_REQ_SET_XFER_MODE:
+		/* XXX Not supported. */
+		return;
+	}
 }
 
 /*
@@ -333,11 +346,6 @@ sfas_scsidone(dev, xs, stat)
 	else {
 		switch(stat) {
 		case SCSI_CHECK:
-		/* If we get here we have valid sense data. Faults during
-		 * sense is handeled elsewhere and will generate a
-		 * XS_DRIVER_STUFFUP. */
-			xs->error = XS_SENSE;
-			break;
 		case SCSI_BUSY:
 			xs->error = XS_BUSY;
 			break;
@@ -351,13 +359,11 @@ sfas_scsidone(dev, xs, stat)
 		}
 	}
 
-	xs->xs_status |= XS_STS_DONE;
-
 /* Steal the next command from the queue so that one unit can't hog the bus. */
 	s = splbio();
 	pendp = dev->sc_xs_pending.tqh_first;
 	while(pendp) {
-		if (!(dev->sc_nexus[pendp->xs->sc_link->scsipi_scsi.target].flags &
+		if (!(dev->sc_nexus[pendp->xs->xs_periph->periph_target].flags &
 		      SFAS_NF_UNIT_BUSY))
 			break;
 		pendp = pendp->link.tqe_next;
@@ -699,8 +705,8 @@ sfas_setup_nexus(dev, nexus, pendp, cbuf, clen, buf, len, mode)
 {
 	char	sync, target, lun;
 
-	target = pendp->xs->sc_link->scsipi_scsi.target;
-	lun    = pendp->xs->sc_link->scsipi_scsi.lun;
+	target = pendp->xs->xs_periph->periph_target;
+	lun    = pendp->xs->xs_periph->periph_lun;
 
 /*
  * Adopt mode to reflect the config flags.
@@ -733,17 +739,8 @@ sfas_setup_nexus(dev, nexus, pendp, cbuf, clen, buf, len, mode)
 	nexus->state	   = SFAS_NS_SELECTED;
 
 /* We must keep these flags. All else must be zero. */
-	nexus->flags	  &= SFAS_NF_UNIT_BUSY	 | SFAS_NF_REQUEST_SENSE
+	nexus->flags	  &= SFAS_NF_UNIT_BUSY
 			   | SFAS_NF_SYNC_TESTED | SFAS_NF_SELECT_ME;
-
-/*
- * If we are requesting sense, reflect that in the flags so that we can handle
- * error in sense data correctly
- */
-	if (nexus->flags & SFAS_NF_REQUEST_SENSE) {
-		nexus->flags &= ~SFAS_NF_REQUEST_SENSE;
-		nexus->flags |=  SFAS_NF_SENSING;
-	}
 
 	if (mode & SFAS_SELECT_I)
 		nexus->flags |= SFAS_NF_IMMEDIATE;
@@ -817,7 +814,7 @@ sfasselect(dev, pendp, cbuf, clen, buf, len, mode)
 	struct nexus	*nexus;
 
 /* Get the nexus struct. */
-	nexus = sfas_arbitate_target(dev, pendp->xs->sc_link->scsipi_scsi.target);
+	nexus = sfas_arbitate_target(dev, pendp->xs->xs_periph->periph_target);
 	if (nexus == NULL)
 		return(0);
 
@@ -825,51 +822,9 @@ sfasselect(dev, pendp, cbuf, clen, buf, len, mode)
 	sfas_setup_nexus(dev, nexus, pendp, cbuf, clen, buf, len, mode);
 
 /* Post it to the interrupt machine. */
-	sfas_select_unit(dev, pendp->xs->sc_link->scsipi_scsi.target);
+	sfas_select_unit(dev, pendp->xs->xs_periph->periph_target);
 
 	return(1);
-}
-
-void
-sfas_request_sense(dev, nexus)
-	struct sfas_softc *dev;
-	struct nexus	 *nexus;
-{
-	struct scsipi_xfer	*xs;
-	struct sfas_pending	 pend;
-	struct scsipi_sense	 rqs;
-	int			 mode;
-
-	xs = nexus->xs;
-
-/* Fake a sfas_pending structure. */
-	pend.xs			= xs;
-
-	rqs.opcode = REQUEST_SENSE;
-	rqs.byte2 = xs->sc_link->scsipi_scsi.lun << 5;
-#ifdef not_yet
-	rqs.length=xs->req_sense_length?
-		xs->req_sense_length:sizeof(xs->sense.scsi_sense);
-#else
-	rqs.length=sizeof(xs->sense.scsi_sense);
-#endif
-
-	rqs.unused[0] = rqs.unused[1] = rqs.control = 0;
-
-/*
- * If we are requesting sense during polled IO, we have to sense with polled
- * IO too.
- */
-	mode = SFAS_SELECT_RS;
-	if (nexus->flags & SFAS_NF_IMMEDIATE)
-		mode = SFAS_SELECT_I;
-
-/* Setup the nexus struct for sensing. */
-	sfas_setup_nexus(dev, nexus, &pend, (char *)&rqs, sizeof(rqs),
-			(char *)&xs->sense.scsi_sense, rqs.length, mode);
-
-/* Post it to the interrupt machine. */
-	sfas_select_unit(dev, xs->sc_link->scsipi_scsi.target);
 }
 
 void
@@ -1047,16 +1002,6 @@ sfas_midaction(dev, rp, nexus)
 			nexus->state = SFAS_NS_FINISHED;
 			break;
 
-		case SFAS_NS_SENSE:
-			/*
-			 * Oops! We have to request sense data from this unit.
-			 * Do so.
-			 */
-			dev->sc_led(dev, 0);
-			nexus->flags |= SFAS_NF_REQUEST_SENSE;
-			sfas_request_sense(dev, nexus);
-			break;
-
 		case SFAS_NS_DONE:
 			/* All done. */
 			nexus->xs->resid = dev->sc_len;
@@ -1122,13 +1067,6 @@ sfas_midaction(dev, rp, nexus)
 				if (sfas_select_unit(dev, i) == 2)
 					break;
 
-		/* Does any unit need sense data? */
-		for(i=0; i<8; i++)
-			if (dev->sc_nexus[i].flags & SFAS_NF_REQUEST_SENSE) {
-				sfas_request_sense(dev, &dev->sc_nexus[i]);
-				break;
-			}
-
 		/* We are done with this nexus! */
 		if (nexus->state == SFAS_NS_FINISHED)
 			sfas_scsidone(dev, nexus->xs, nexus->status);
@@ -1153,8 +1091,7 @@ sfas_midaction(dev, rp, nexus)
 
 		sfas_restore_pointers(dev);
 
-		if (!(nexus->flags & SFAS_NF_SENSING))
-			nexus->status	= 0xFF;
+		nexus->status	= 0xFF;
 		dev->sc_msg_in[0] = 0xFF;
 		dev->sc_msg_in_len= 0;
 
@@ -1226,9 +1163,8 @@ sfas_midaction(dev, rp, nexus)
 		status = *rp->sfas_fifo;
 		msg = *rp->sfas_fifo;
 
-		if (!(nexus->flags & SFAS_NF_SENSING))
-			nexus->status = status;
-		else if (status != 0)
+		nexus->status = status;
+		if (status != 0)
 			nexus->status = -1;
 
 		/*
@@ -1429,11 +1365,7 @@ sfas_postaction(dev, rp, nexus)
 
 			switch(dev->sc_msg_in[0]) {
 			case 0x00:	/* COMMAND COMPLETE */
-				if ((nexus->status == SCSI_CHECK) &&
-				    !(nexus->flags & SFAS_NF_SENSING))
-					nexus->state = SFAS_NS_SENSE;
-				else
-					nexus->state = SFAS_NS_DONE;
+				nexus->state = SFAS_NS_DONE;
 				break;
 			case 0x04:	/* DISCONNECT */
 				nexus->state = SFAS_NS_DISCONNECTING;
@@ -1614,7 +1546,7 @@ sfasicmd(dev, pendp)
 	sfas_regmap_p	 rp;
 	struct nexus	*nexus;
 
-	nexus = &dev->sc_nexus[pendp->xs->sc_link->scsipi_scsi.target];
+	nexus = &dev->sc_nexus[pendp->xs->xs_periph->periph_target];
 	rp = dev->sc_fas;
 
 	if (!sfasselect(dev, pendp, (char *)pendp->xs->cmd, pendp->xs->cmdlen,
