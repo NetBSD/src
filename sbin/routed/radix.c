@@ -1,3 +1,5 @@
+/*	$NetBSD: radix.c,v 1.2 1996/08/10 01:29:39 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1988, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +43,11 @@
 #include <sys/domain.h>
 #include <sys/syslog.h>
 #include <net/radix.h>
+#include <stdio.h>
 #include <stdlib.h>
+
+#include "defs.h"
+
 #define min(a,b) (((a)<(b))?(a):(b))
 #define log(x, msg) syslog(x, msg)
 #define panic(s) {log(LOG_ERR,s); exit(1);}
@@ -272,7 +278,7 @@ on1:
 	do {
 		register struct radix_mask *m;
 		t = t->rn_p;
-		if (m = t->rn_mklist) {
+		if ((m = t->rn_mklist)) {
 			/*
 			 * If non-contiguous masks ever become important
 			 * we can restore the masking and open coding of
@@ -291,7 +297,7 @@ on1:
 					if (x && rn_satsifies_leaf(v, x, off))
 						    return x;
 				}
-			} while (m = m->rm_mklist);
+			} while ((m = m->rm_mklist));
 		}
 	} while (t != top);
 	return 0;
@@ -587,14 +593,14 @@ rn_addroute(v_arg, n_arg, head, treenodes)
 	if (x->rn_b < 0) { 
 	    for (mp = &t->rn_mklist; x; x = x->rn_dupedkey)
 		if (x->rn_mask && (x->rn_b >= b_leaf) && x->rn_mklist == 0) {
-			if (*mp = m = rn_new_radix_mask(x, 0))
+			if ((*mp = m = rn_new_radix_mask(x, 0)))
 				mp = &m->rm_mklist;
 		}
 	} else if (x->rn_mklist) {
 		/*
 		 * Skip over masks whose index is > that of new node
 		 */
-		for (mp = &x->rn_mklist; m = *mp; mp = &m->rm_mklist)
+		for (mp = &x->rn_mklist; (m = *mp); mp = &m->rm_mklist)
 			if (m->rm_b >= b_leaf)
 				break;
 		t->rn_mklist = m; *mp = 0;
@@ -614,7 +620,7 @@ on2:
 	 * Need same criteria as when sorting dupedkeys to avoid
 	 * double loop on deletion.
 	 */
-	for (mp = &x->rn_mklist; m = *mp; mp = &m->rm_mklist) {
+	for (mp = &x->rn_mklist; (m = *mp); mp = &m->rm_mklist) {
 		if (m->rm_b < b_leaf)
 			continue;
 		if (m->rm_b > b_leaf)
@@ -696,7 +702,7 @@ rn_delete(v_arg, netmask_arg, head)
 		x = t;
 		t = t->rn_p;
 	} while (b <= t->rn_b && x != top);
-	for (mp = &x->rn_mklist; m = *mp; mp = &m->rm_mklist)
+	for (mp = &x->rn_mklist; (m = *mp); mp = &m->rm_mklist)
 		if (m == saved_m) {
 			*mp = m->rm_mklist;
 			MKFree(m);
@@ -719,7 +725,7 @@ on1:
 	if (t) t->rn_ybro = tt->rn_ybro;
 #endif
 	t = tt->rn_p;
-	if (dupedkey = saved_tt->rn_dupedkey) {
+	if ((dupedkey = saved_tt->rn_dupedkey)) {
 		if (tt == saved_tt) {
 			x = dupedkey; x->rn_p = t;
 			if (t->rn_l == tt) t->rn_l = x; else t->rn_r = x;
@@ -750,7 +756,7 @@ on1:
 	 */
 	if (t->rn_mklist) {
 		if (x->rn_b >= 0) {
-			for (mp = &x->rn_mklist; m = *mp;)
+			for (mp = &x->rn_mklist; (m = *mp);)
 				mp = &m->rm_mklist;
 			*mp = t->rn_mklist;
 		} else {
@@ -767,11 +773,13 @@ on1:
 				}
 			if (m)
 #ifdef _KERNEL
-				printf("%s %x at %x\n",
-					    "rn_delete: Orphaned Mask", m, x);
+				printf("%s %lx at %lx\n",
+				    "rn_delete: Orphaned Mask",
+				    (unsigned long)m, (unsigned long)x);
 #else
-				syslog(LOG_ERR, "%s %x at %x\n",
-					    "rn_delete: Orphaned Mask", m, x);
+				syslog(LOG_ERR, "%s %lx at %lx\n",
+				    "rn_delete: Orphaned Mask",
+				    (unsigned long)m, (unsigned long)x);
 #endif
 		}
 	}
@@ -822,7 +830,7 @@ rn_walktree(h, f, w)
 			rn = rn->rn_l;
 		next = rn;
 		/* Process leaves */
-		while (rn = base) {
+		while ((rn = base)) {
 			base = rn->rn_dupedkey;
 			if (!(rn->rn_flags & RNF_ROOT) && (error = (*f)(rn, w)))
 				return (error);

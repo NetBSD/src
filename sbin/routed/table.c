@@ -1,3 +1,5 @@
+/*	$NetBSD: table.c,v 1.2 1996/08/10 01:29:59 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1983, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,10 +34,12 @@
  */
 
 #if !defined(lint) && !defined(sgi)
+#if 0
 static char sccsid[] = "@(#)tables.c	8.1 (Berkeley) 6/5/93";
+#else
+static char rcsid[] = "$NetBSD: table.c,v 1.2 1996/08/10 01:29:59 thorpej Exp $";
+#endif
 #endif /* not lint */
-
-#ident "$Revision: 1.1.1.1 $"
 
 #include "defs.h"
 
@@ -1222,10 +1226,12 @@ kern_out(struct ag_info *ag)
 
 /* ARGSUSED */
 static int
-walk_kern(struct radix_node *rn,
-	  struct walkarg *w)
+walk_kern(struct radix_node *rn, void *argp)
 {
 #define RT ((struct rt_entry *)rn)
+#if 0
+	struct walkarg *w = argp;
+#endif
 	char metric, pref;
 	u_int ags = 0;
 
@@ -1771,10 +1777,12 @@ rtbad_sub(struct rt_entry *rt)
  */
 /* ARGSUSED */
 int
-walk_bad(struct radix_node *rn,
-	 struct walkarg *w)
+walk_bad(struct radix_node *rn, void *argp)
 {
 #define RT ((struct rt_entry *)rn)
+#if 0
+	struct walkarg *w = argp;	/* not used */
+#endif
 	struct rt_spare *rts;
 	int i;
 	time_t new_time;
@@ -1825,10 +1833,12 @@ walk_bad(struct radix_node *rn,
  */
 /* ARGSUSED */
 static int
-walk_age(struct radix_node *rn,
-	   struct walkarg *w)
+walk_age(struct radix_node *rn, void *argp)
 {
 #define RT ((struct rt_entry *)rn)
+#if 0
+	struct walkarg *w = argp;	/* not used */
+#endif
 	struct interface *ifp;
 	struct rt_spare *rts;
 	int i;
