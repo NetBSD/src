@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.25 1998/07/04 22:18:17 jonathan Exp $	*/
+/*	$NetBSD: fault.c,v 1.26 1998/07/06 01:52:26 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -68,9 +68,6 @@
 
 #include <arm32/arm32/disassem.h>
 
-#ifndef POSTMORTEM
-#define postmortem(x)
-#endif	/* POSTMORTEM */
 #ifdef PMAP_DEBUG
 extern int pmap_debug_level;
 #endif	/* PMAP_DEBUG */
