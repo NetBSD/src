@@ -1,3 +1,4 @@
+/*	$NetBSD: crt0.c,v 1.7 1995/06/03 13:16:15 pk Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -27,88 +28,19 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: crt0.c,v 1.6 1995/06/02 21:30:56 pk Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "@(#)crt0.c	5.7 (Berkeley) 7/3/91"; */
-static char rcsid[] = "$Id: crt0.c,v 1.6 1995/06/02 21:30:56 pk Exp $";
+static char rcsid[] = "$Id: crt0.c,v 1.7 1995/06/03 13:16:15 pk Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <stdlib.h>
 
-int		_callmain __P((void));
-int		main __P((int, char **, char **));
-static char	*_strrchr __P((char *, char));
+#include "common.h"
+
 extern void	start __P((long)) asm("start");
-
-char			**environ;
-int			errno;
-static char		empty[1];
-char			*__progname = empty;
-extern unsigned char	etext;
-extern unsigned char	eprol asm ("eprol");
-
-#ifdef DYNAMIC
-#include <sys/types.h>
-#include <sys/syscall.h>
-#include <a.out.h>
-#ifndef N_GETMAGIC
-#define N_GETMAGIC(x)	((x).a_magic)
-#endif
-#ifndef N_BSSADDR
-#define N_BSSADDR(x)	(N_DATADDR(x)+(x).a_data)
-#endif
-#include <sys/mman.h>
-#ifdef sun
-#define MAP_COPY	MAP_PRIVATE
-#define MAP_FILE	0
-#define MAP_ANON	0
-#endif
-#include <link.h>
-
-extern struct _dynamic	_DYNAMIC;
-static struct ld_entry	*ld_entry;
-static void		__do_dynamic_link __P((void));
-extern int		__syscall __P((int, ...));
-#ifdef DEBUG
-static char		*_getenv __P((char *));
-static int		_strncmp __P((char *, char *, int));
-#endif
-
-#ifdef sun
-#define LDSO	"/usr/lib/ld.so"
-#endif
-#ifdef BSD
-#define LDSO	"/usr/libexec/ld.so"
-#endif
-
-#endif /* DYNAMIC */
-
-/*
- * We need these system calls, but can't use library stubs
- */
-#define _exit(v)		__syscall(SYS_exit, (v))
-#define open(name, f, m)	__syscall(SYS_open, (name), (f), (m))
-#define close(fd)		__syscall(SYS_close, (fd))
-#define read(fd, s, n)		__syscall(SYS_read, (fd), (s), (n))
-#define write(fd, s, n)		__syscall(SYS_write, (fd), (s), (n))
-#define dup(fd)			__syscall(SYS_dup, (fd))
-#define dup2(fd, fdnew)		__syscall(SYS_dup2, (fd), (fdnew))
-
-#ifdef sun
-#define mmap(addr, len, prot, flags, fd, off)	\
-    __syscall(SYS_mmap, (addr), (len), (prot), _MAP_NEW|(flags), (fd), (off))
-#else
-#define mmap(addr, len, prot, flags, fd, off)	\
-    __syscall(SYS___syscall, (quad_t)SYS_mmap, (addr), (len), (prot), \
-	      (flags), (fd), 0, (off_t)(off))
-#endif
-
-#define _FATAL(str) \
-	write(2, str, sizeof(str)), \
-	_exit(1);
 
 void
 start(param)
@@ -125,11 +57,6 @@ start(param)
 	 */
 	register struct kframe *kfp;
 	register char **argv, *ap;
-	extern void monstartup __P((u_long, u_long));
-	extern void _mcleanup __P((void));
-#ifdef DYNAMIC
-	volatile caddr_t x;
-#endif
 
 	/* just above the saved frame pointer */
 	kfp = (struct kframe *) (&param-1);
@@ -146,12 +73,10 @@ start(param)
 	/* ld(1) convention: if DYNAMIC = 0 then statically linked */
 #ifdef stupid_gcc
 	if (&_DYNAMIC)
-		__do_dynamic_link();
 #else
-	x = (caddr_t)&_DYNAMIC;
-	if (x)
-		__do_dynamic_link();
+	if ( ({volatile caddr_t x = (caddr_t)&_DYNAMIC; x; }) )
 #endif
+		__load_rtld(&_DYNAMIC);
 #endif /* DYNAMIC */
 
 asm("eprol:");
@@ -166,174 +91,6 @@ asm ("__callmain:");		/* Defined for the benefit of debuggers */
 }
 
 #ifdef DYNAMIC
-static void
-__do_dynamic_link ()
-{
-	struct crt_ldso	crt;
-	struct exec	hdr;
-	char		*ldso;
-	int		(*entry) __P((int, struct crt_ldso *));
-
-#ifdef DEBUG
-	/* Provision for alternate ld.so - security risk! */
-	if (!(ldso = _getenv("LDSO")))
-#endif
-		ldso = LDSO;
-
-	crt.crt_ldfd = open(ldso, 0, 0);
-	if (crt.crt_ldfd == -1) {
-		_FATAL("No ld.so\n");
-	}
-
-	/* Read LDSO exec header */
-	if (read(crt.crt_ldfd, &hdr, sizeof hdr) < sizeof hdr) {
-		_FATAL("Failure reading ld.so\n");
-	}
-	if (N_GETMAGIC(hdr) != ZMAGIC && N_GETMAGIC(hdr) != QMAGIC) {
-		_FATAL("Bad magic: ld.so\n");
-	}
-
-	/* We use MAP_ANON */
-	crt.crt_dzfd = -1;
-
-	/* Map in ld.so */
-	crt.crt_ba = mmap(0, hdr.a_text,
-			PROT_READ|PROT_EXEC,
-			MAP_COPY,
-			crt.crt_ldfd, N_TXTOFF(hdr));
-	if (crt.crt_ba == -1) {
-		_FATAL("Cannot map ld.so\n");
-	}
-
-#ifdef BSD
-/* !!!
- * This is gross, ld.so is a ZMAGIC a.out, but has `sizeof(hdr)' for
- * an entry point and not at PAGSIZ as the N_*ADDR macros assume.
- */
-#undef N_DATADDR
-#undef N_BSSADDR
-#define N_DATADDR(x)	((x).a_text)
-#define N_BSSADDR(x)	((x).a_text + (x).a_data)
-#endif
-
-	/* Map in data segment of ld.so writable */
-	if (mmap(crt.crt_ba+N_DATADDR(hdr), hdr.a_data,
-			PROT_READ|PROT_WRITE,
-			MAP_FIXED|MAP_COPY,
-			crt.crt_ldfd, N_DATOFF(hdr)) == -1) {
-		_FATAL("Cannot map ld.so\n");
-	}
-
-	/* Map bss segment of ld.so zero */
-	if (hdr.a_bss && mmap(crt.crt_ba+N_BSSADDR(hdr), hdr.a_bss,
-			PROT_READ|PROT_WRITE,
-			MAP_FIXED|MAP_ANON|MAP_COPY,
-			crt.crt_dzfd, 0) == -1) {
-		_FATAL("Cannot map ld.so\n");
-	}
-
-	crt.crt_dp = &_DYNAMIC;
-	crt.crt_ep = environ;
-	crt.crt_bp = (caddr_t)_callmain;
-	crt.crt_prog = __progname;
-
-	entry = (int (*) __P((int, struct crt_ldso *)))
-		(crt.crt_ba + sizeof hdr);
-	if ((*entry)(CRT_VERSION_BSD_3, &crt) == -1) {
-		_FATAL("ld.so failed\n");
-	}
-
-	ld_entry = _DYNAMIC.d_entry;
-	return;
-}
-
-/*
- * DL stubs
- */
-
-void *
-dlopen(name, mode)
-char	*name;
-int	mode;
-{
-	if (ld_entry == NULL)
-		return NULL;
-
-	return (ld_entry->dlopen)(name, mode);
-}
-
-int
-dlclose(fd)
-void	*fd;
-{
-	if (ld_entry == NULL)
-		return -1;
-
-	return (ld_entry->dlclose)(fd);
-}
-
-void *
-dlsym(fd, name)
-void	*fd;
-char	*name;
-{
-	if (ld_entry == NULL)
-		return NULL;
-
-	return (ld_entry->dlsym)(fd, name);
-}
-
-int
-dlctl(fd, cmd, arg)
-void	*fd, *arg;
-int	cmd;
-{
-	if (ld_entry == NULL)
-		return -1;
-
-	return (ld_entry->dlctl)(fd, cmd, arg);
-}
-
-/*
- * Support routines
- */
-
-#ifdef DEBUG
-static int
-_strncmp(s1, s2, n)
-	register char *s1, *s2;
-	register int n;
-{
-
-	if (n == 0)
-		return (0);
-	do {
-		if (*s1 != *s2++)
-			return (*(unsigned char *)s1 - *(unsigned char *)--s2);
-		if (*s1++ == 0)
-			break;
-	} while (--n != 0);
-	return (0);
-}
-
-static char *
-_getenv(name)
-	register char *name;
-{
-	extern char **environ;
-	register int len;
-	register char **P, *C;
-
-	for (C = name, len = 0; *C && *C != '='; ++C, ++len);
-	for (P = environ; *P; ++P)
-		if (!_strncmp(*P, name, len))
-			if (*(C = *P + len) == '=') {
-				return(++C);
-			}
-	return (char *)0;
-}
-#endif
-
 	asm("	___syscall:");
 	asm("		movd tos,r1");		/* return address */
 	asm("		movd tos,r0");		/* syscall number */
@@ -353,20 +110,7 @@ _getenv(name)
 
 #endif /* DYNAMIC */
 
-static char *
-_strrchr(p, ch)
-register char *p, ch;
-{
-	register char *save;
-
-	for (save = NULL;; ++p) {
-		if (*p == ch)
-			save = (char *)p;
-		if (!*p)
-			return(save);
-	}
-/* NOTREACHED */
-}
+#include "common.c"
 
 #ifdef MCRT0
 asm ("	.text");
