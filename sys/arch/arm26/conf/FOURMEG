@@ -1,4 +1,4 @@
-# $NetBSD: FOURMEG,v 1.4 2000/08/16 23:56:13 bjh21 Exp $
+# $NetBSD: FOURMEG,v 1.5 2000/08/17 13:38:51 bjh21 Exp $
 
 # GENERIC arm26 configuration -- everything I've implemented so far
 
@@ -143,7 +143,13 @@ ea*		at podulebus0 slot ?	# Acorn/Atomwide Ether3
 upc0		at iobus0 base 0x010000	# I/O chip on IOEB machines
 #com0		at upc0			# Serial port
 #lpt0		at upc0			# Parallel port
-wdc*		at upc0			# IDE controller
+wdc0            at upc0                 # IDE controller
+
+#wd*		at wdc? drive ?		# IDE hard discs
+#atapibus*	at wdc?			# ATAPI devices
+#cd*		at atapibus? drive ?	# ATAPI CD-ROM drives
+#sd*		at atapibus? drive ?	# ATAPI disk drives
+#uk*		at atapibus? drive ?	# ATAPI unknown
 
 arcvideo0	at root			# On-board video
 wsdisplay0	at arcvideo0
