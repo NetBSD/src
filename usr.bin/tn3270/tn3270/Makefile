@@ -1,3 +1,5 @@
+# $Header: /cvsroot/src/usr.bin/tn3270/tn3270/Attic/Makefile,v 1.2 1993/04/27 06:47:39 cgd Exp $
+
 .include <../../Makefile.inc>
 
 CFLAGS += -I${.CURDIR} -I.
@@ -14,12 +16,17 @@ SRCS += genbsubs.c globals.c system.c termout.c
 SRCS += commands.c main.c network.c ring.c sys_bsd.c telnet.c terminal.c
 SRCS += tn3270.c utilities.c
 
+# this and the dependency hacks below to make 'depend' target
+# work right...
+
+DEPSRCS += astosc.OUT asc_disp.OUT disp_asc.OUT kbd.OUT
+
 PROG = tn3270
 
 astosc.o: astosc.OUT
 CLEANFILES += astosc.OUT astosc.out
 astosc.OUT: ${.CURDIR}/../ctlr/hostctlr.h ${.CURDIR}/../ctlr/function.h \
-	    ${.CURDIR}/../ctlr/${KBD}
+	    ${.CURDIR}/../ctlr/${KBD} ${.CURDIR}/../tools/mkastosc/obj/mkastosc
 	${.CURDIR}/../tools/mkastosc/obj/mkastosc ${.CURDIR}/../ctlr/hostctlr.h \
 		${.CURDIR}/../ctlr/function.h < ${.CURDIR}/../ctlr/${KBD} \
 		> ${.TARGET}
@@ -27,16 +34,17 @@ astosc.OUT: ${.CURDIR}/../ctlr/hostctlr.h ${.CURDIR}/../ctlr/function.h \
 
 disp_asc.o: asc_disp.OUT disp_asc.OUT
 CLEANFILES += asc_disp.OUT asc_disp.out disp_asc.OUT disp_asc.out
-asc_disp.OUT:
+asc_disp.OUT: ${.CURDIR}/../tools/mkastods/obj/mkastods
 	${.CURDIR}/../tools/mkastods/obj/mkastods > ${.TARGET}
 	ln -s asc_disp.OUT asc_disp.out
-disp_asc.OUT:
+disp_asc.OUT: ${.CURDIR}/../tools/mkdstoas/obj/mkdstoas
 	${.CURDIR}/../tools/mkdstoas/obj/mkdstoas > ${.TARGET}
 	ln -s disp_asc.OUT disp_asc.out
 
 inbound.o: kbd.OUT
 CLEANFILES += kbd.OUT kbd.out
-kbd.OUT: ${.CURDIR}/../ctlr/hostctlr.h ${.CURDIR}/../ctlr/${KBD}
+kbd.OUT: ${.CURDIR}/../ctlr/hostctlr.h ${.CURDIR}/../ctlr/${KBD} \
+	 ${.CURDIR}/../tools/mkhits/obj/mkhits
 	${CC} ${CFLAGS} -E ${.CURDIR}/../ctlr/function.c > TMPfunc.out
 	${.CURDIR}/../tools/mkhits/obj/mkhits ${.CURDIR}/../ctlr/hostctlr.h \
 		TMPfunc.out < ${.CURDIR}/../ctlr/${KBD} > ${.TARGET}
@@ -46,6 +54,20 @@ kbd.OUT: ${.CURDIR}/../ctlr/hostctlr.h ${.CURDIR}/../ctlr/${KBD}
 # asc_disp.out disp_asc.out
 # default.map
 # kbd.out
+
+${.CURDIR}/../tools/mkastosc/obj/mkastosc:
+	cd ${.CURDIR}/../tools/mkastosc; make
+${.CURDIR}/../tools/mkastods/obj/mkastods:
+	cd ${.CURDIR}/../tools/mkastods; make
+${.CURDIR}/../tools/mkdstoas/obj/mkdstoas:
+	cd ${.CURDIR}/../tools/mkdstoas; make
+${.CURDIR}/../tools/mkhits/obj/mkhits:
+	cd ${.CURDIR}/../tools/mkhits; make
+
+
+depend: .depend
+.depend: ${SRCS} ${DEPSRCS}
+	mkdep ${MKDEP} ${CFLAGS:M-[ID]*} ${.ALLSRC:M*.c}
 
 .include <bsd.prog.mk>
 
