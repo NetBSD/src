@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.667 2004/04/21 12:44:13 drochner Exp $
+#	$NetBSD: files,v 1.668 2004/05/01 19:03:59 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -664,9 +664,10 @@ device	ne: ether, ifnet, arp, dp8390nic, mii
 file	dev/ic/ne2000.c			ne | ipkdb_ne
 
 # 8250/16[45]50-based "com" ports
-# XXX In a perfect world, this would be done with attributes
 #
-defflag	opt_com.h		COM16650 COM_HAYESP COM_DEBUG COM_MPLOCK
+defflag	opt_com.h		COM_DEBUG COM_MPLOCK
+# XXX In a perfect world, this would be done with attributes
+defflag	opt_com.h		COM_16650 COM_HAYESP
 device	com { } : tty
 file	dev/ic/com.c			com			needs-flag
 

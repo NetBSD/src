@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.226 2004/05/01 06:12:18 thorpej Exp $	*/
+/*	$NetBSD: com.c,v 1.227 2004/05/01 19:03:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.226 2004/05/01 06:12:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.227 2004/05/01 19:03:59 thorpej Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -85,6 +85,11 @@ __KERNEL_RCSID(0, "$NetBSD: com.c,v 1.226 2004/05/01 06:12:18 thorpej Exp $");
 #include "rnd.h"
 #if NRND > 0 && defined(RND_COM)
 #include <sys/rnd.h>
+#endif
+
+/* The COM16650 option was renamed to COM_16650. */
+#ifdef COM16650
+#error Obsolete COM16650 option; use COM_16650 instead.
 #endif
 
 /*
@@ -419,7 +424,7 @@ com_attach_subr(struct com_softc *sc)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct tty *tp;
-#ifdef COM16650
+#ifdef COM_16650
 	u_int8_t lcr;
 #endif
 #ifdef COM_HAYESP
@@ -483,7 +488,7 @@ com_attach_subr(struct com_softc *sc)
 		    == FIFO_TRIGGER_14) {
 			SET(sc->sc_hwflags, COM_HW_FIFO);
 
-#ifdef COM16650
+#ifdef COM_16650
 			/*
 			 * IIR changes into the EFR if LCR is set to LCR_EERS
 			 * on 16650s. We also know IIR != 0 at this point.
@@ -512,7 +517,7 @@ com_attach_subr(struct com_softc *sc)
 #endif
 				sc->sc_fifolen = 16;
 
-#ifdef COM16650
+#ifdef COM_16650
 			bus_space_write_1(iot, ioh, com_lcr, lcr);
 			if (sc->sc_fifolen == 0)
 				fifo_msg = "st16650, broken fifo";
