@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.255 2004/06/05 04:59:36 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.256 2004/06/05 05:00:30 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -3498,3 +3498,8 @@ sys/dev/pci/twe.c				1.58
 	twe_ccb_map(): Remove the DEBUG panic case of "unknown" S/G list
 	offset.
 	[thorpej, ticket #441]
+
+sys/dev/pci/pciide_common.c			1.12
+
+	Don't try to bus_space_subregion() registers that didn't get mapped.
+	[bouyer, ticket #443]
