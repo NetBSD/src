@@ -1,4 +1,4 @@
-.\"	$NetBSD: le.4,v 1.5 1997/07/07 22:36:04 pk Exp $
+.\"	$NetBSD: le.4,v 1.6 1997/07/11 09:33:18 pk Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -80,22 +80,22 @@ UTP, also known as twisted pair
 .El
 .Pp
 The appropriate connector can be selected by supplying a
-.Fl media
-flag to
+.Cm media
+parameter to
 .Xr ifconfig 8 .
 The supported arguments for
-.Fl media
+.Cm media
 are:
 .Bl -tag -offset indent -width xxxxxxxxxxxxxxxxxx
-.It Dq 10base5/AUI
+.It Sy 10base5/AUI
 to select the AUI connector, or
-.It Dq 10baseT/UTP
+.It Sy 10baseT/UTP
 to select the UTP connector.
 .El
 .Pp
 If a
-.Fl media
-flag is not specified, a default connector is selected for use by examining
+.Cm media
+parameter is not specified, a default connector is selected for use by examining
 all media types for carrier. The first connector on which a carrier is
 detected will be selected.
 Additionally, if carrier is dropped on a port, the driver will switch between
