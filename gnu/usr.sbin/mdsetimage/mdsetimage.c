@@ -1,4 +1,4 @@
-/* $NetBSD: mdsetimage.c,v 1.2 2002/01/03 06:21:47 cgd Exp $ */
+/* $NetBSD: mdsetimage.c,v 1.3 2002/01/21 19:22:53 tv Exp $ */
 /* from: NetBSD: mdsetimage.c,v 1.15 2001/03/21 23:46:48 cgd Exp $ */
 
 /*
@@ -30,6 +30,12 @@
  * <<Id: LICENSE_GC,v 1.1 2001/10/01 23:24:05 cgd Exp>>
  */
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#else
+#define HAVE_ERR_H 1
+#endif
+
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT(
@@ -38,20 +44,24 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: mdsetimage.c,v 1.2 2002/01/03 06:21:47 cgd Exp $");
+__RCSID("$NetBSD: mdsetimage.c,v 1.3 2002/01/21 19:22:53 tv Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 
-#include <err.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+
 #include <bfd.h>
+
+#if HAVE_ERR_H
+#include <err.h>
+#endif
 
 struct symbols {
 	char *name;

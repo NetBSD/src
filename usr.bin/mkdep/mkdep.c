@@ -1,4 +1,4 @@
-/* $NetBSD: mkdep.c,v 1.8 2001/03/22 02:41:02 cgd Exp $ */
+/* $NetBSD: mkdep.c,v 1.9 2002/01/21 19:25:00 tv Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,6 +36,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#else
+#define HAVE_ERR_H 1
+#endif
+
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
@@ -43,20 +49,22 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: mkdep.c,v 1.8 2001/03/22 02:41:02 cgd Exp $");
+__RCSID("$NetBSD: mkdep.c,v 1.9 2002/01/21 19:25:00 tv Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/wait.h>
-
 #include <ctype.h>
-#include <err.h>
 #include <locale.h>
 #include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#if HAVE_ERR_H
+#include <err.h>
+#endif
 
 #define DEFAULT_CC		"cc"
 #define DEFAULT_PATH		_PATH_DEFPATH
