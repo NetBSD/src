@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.60 2004/09/11 18:01:58 bouyer Exp $      */
+/*      $NetBSD: ata.c,v 1.61 2004/10/28 20:11:41 bouyer Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.60 2004/09/11 18:01:58 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.61 2004/10/28 20:11:41 bouyer Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -351,7 +351,7 @@ atabus_thread(void *arg)
 			chp->ch_queue->queue_freeze--;
 			xfer = chp->ch_queue->active_xfer;
 			KASSERT(xfer != NULL);
-			(*xfer->c_start)(chp, xfer);
+			(*xfer->c_start)(xfer->c_chp, xfer);
 		} else if (chp->ch_queue->queue_freeze > 1)
 			panic("ata_thread: queue_freeze");
 		splx(s);
