@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.113 1997/05/29 15:37:11 veego Exp $
+#	$NetBSD: bsd.lib.mk,v 1.114 1997/05/30 01:54:42 cjs Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -181,7 +181,7 @@ CLEANFILES+=	${DPSRCS}
 OBJS+=		${SRCS:N*.h:N*.sh:R:S/$/.o/g}
 lib${LIB}.a:: ${OBJS} __archivebuild
 	@echo building standard ${LIB} library
-.if defined(OBJDIR)
+.if defined(OBJDIR) && !defined(NOINSTALL)
 	@echo install -d ${BUILDDIR}${LIBDIR}
 	@install -d ${BUILDDIR}${LIBDIR}
 	@echo ${BUILDDIR}${LIBDIR}/${.TARGET} '->' `pwd`/${.TARGET};
@@ -192,7 +192,7 @@ lib${LIB}.a:: ${OBJS} __archivebuild
 POBJS+=		${OBJS:.o=.po}
 lib${LIB}_p.a:: ${POBJS} __archivebuild
 	@echo building profiled ${LIB} library
-.if defined(OBJDIR)
+.if defined(OBJDIR) && !defined(NOINSTALL)
 	@echo install -d ${BUILDDIR}${LIBDIR}
 	@install -d ${BUILDDIR}${LIBDIR}
 	@echo ${BUILDDIR}${LIBDIR}/${.TARGET} '->' `pwd`/${.TARGET};
@@ -203,7 +203,7 @@ lib${LIB}_p.a:: ${POBJS} __archivebuild
 SOBJS+=		${OBJS:.o=.so}
 lib${LIB}_pic.a:: ${SOBJS} __archivebuild
 	@echo building shared object ${LIB} library
-.if defined(OBJDIR)
+.if defined(OBJDIR) && !defined(NOINSTALL)
 	@echo install -d ${BUILDDIR}${LIBDIR}
 	@install -d ${BUILDDIR}${LIBDIR}
 	@echo ${BUILDDIR}${LIBDIR}/${.TARGET} '->' `pwd`/${.TARGET};
@@ -224,7 +224,7 @@ lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}_pic.a ${DPADD} \
 	    --whole-archive lib${LIB}_pic.a --no-whole-archive \
 	    -L${BUILDDIR}/usr/lib ${LDADD} ${SHLIB_LDENDFILE}
 .endif
-.if defined(OBJDIR)
+.if defined(OBJDIR) && !defined(NOINSTALL)
 	@echo install -d ${BUILDDIR}${LIBDIR}
 	@install -d ${BUILDDIR}${LIBDIR}
 	@echo ${BUILDDIR}${LIBDIR}/${.TARGET} '->' `pwd`/${.TARGET};
@@ -260,6 +260,12 @@ afterdepend: .depend
 	    sed -e 's/^\([^\.]*\).o[ ]*:/\1.o \1.po \1.so \1.ln:/' \
 	      < .depend > $$TMP; \
 	    mv $$TMP .depend)
+.endif
+
+# Define NOINSTALL if this is a library that is used during the build
+# only, and should not be installed into DESTDIR.
+.if defined(NOINSTALL)
+libinstall::
 .endif
 
 .if !target(libinstall)
