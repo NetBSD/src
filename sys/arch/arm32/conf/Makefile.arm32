@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm32,v 1.20 1996/12/01 06:12:28 jonathan Exp $
+#	$NetBSD: Makefile.arm32,v 1.21 1997/01/13 00:51:42 mark Exp $
 
 # Makefile for NetBSD
 #
@@ -96,7 +96,8 @@ SYSTEM_LD_TAIL+=; \
 		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
 		echo ${STRIP} ${STRIPFLAGS} $@; ${STRIP} ${STRIPFLAGS} $@
 .else
-LINKFLAGS+=	-S
+#LINKFLAGS+=	-S
+LINKFLAGS+=	-x
 .endif
 
 %LOAD
