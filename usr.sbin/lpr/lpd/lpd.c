@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.22.4.2 2001/10/26 18:04:35 jhawk Exp $	*/
+/*	$NetBSD: lpd.c,v 1.22.4.3 2002/09/24 13:44:22 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpd.c,v 1.22.4.2 2001/10/26 18:04:35 jhawk Exp $");
+__RCSID("$NetBSD: lpd.c,v 1.22.4.3 2002/09/24 13:44:22 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -724,6 +724,12 @@ socksetup(af, options)
 				close (*s);
 				continue;
 			}
+		if (r->ai_family == AF_INET6 && setsockopt(*s,
+		    IPPROTO_IPV6, IPV6_BINDV6ONLY, &on, sizeof(on)) < 0) {
+			syslog(LOG_ERR, "setsockopt (IPV6_V6ONLY): %m");
+			close(*s);
+			continue;
+		}
 		if (bind(*s, r->ai_addr, r->ai_addrlen) < 0) {
 			syslog(LOG_DEBUG, "bind(): %m");
 			close (*s);
