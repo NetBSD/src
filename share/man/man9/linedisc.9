@@ -1,4 +1,4 @@
-.\" $NetBSD: linedisc.9,v 1.5 2001/12/26 01:07:45 wiz Exp $
+.\" $NetBSD: linedisc.9,v 1.6 2002/02/13 08:18:44 ross Exp $
 .\"
 .\" Copyright (c) 2000 Christopher G. Demetriou.
 .\" All rights reserved.
@@ -41,7 +41,7 @@
 .Nm ttyldisc_remove
 .Nd extensible line discipline framework
 .Sh SYNOPSIS
-.Fd #include <sys/conf.h>
+.Fd #include \*[Lt]sys/conf.h\*[Gt]
 .Ft int
 .Fn ttyldisc_add "struct linesw *disc" "int no"
 .Ft struct linesw *
@@ -101,4 +101,4 @@ functions were added in
 The
 .Nx
 extensible line discipline framework was created by
-Eduardo Horvath <eeh@NetBSD.ORG>.
+Eduardo Horvath \*[Lt]eeh@NetBSD.ORG\*[Gt].

@@ -1,4 +1,4 @@
-.\"	$NetBSD: fork1.9,v 1.4 2001/06/21 11:59:00 wiz Exp $
+.\"	$NetBSD: fork1.9,v 1.5 2002/02/13 08:18:41 ross Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,8 +42,8 @@
 .Nm fork1
 .Nd create a new process
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <sys/proc.h>
+.Fd #include \*[Lt]sys/types.h\*[Gt]
+.Fd #include \*[Lt]sys/proc.h\*[Gt]
 .Ft int
 .Fn "fork1" "struct proc *p1" "int flags" "register_t *retval" "struct proc **rnewprocp"
 .Sh DESCRIPTION

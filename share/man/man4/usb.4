@@ -1,4 +1,4 @@
-.\" $NetBSD: usb.4,v 1.45 2002/01/03 19:02:54 augustss Exp $
+.\" $NetBSD: usb.4,v 1.46 2002/02/13 08:17:51 ross Exp $
 .\"
 .\" Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,8 +53,8 @@
 .Cd "uhub*   at uhub? port ? configuration ? interface ? vendor ? product ? release ?"
 .Cd "XX*     at uhub? port ? configuration ? interface ? vendor ? product ? release ?"
 .Pp
-.Cd "#include <dev/usb/usb.h>"
-.Cd "#include <dev/usb/usbhid.h>"
+.Cd "#include \*[Lt]dev/usb/usb.h\*[Gt]"
+.Cd "#include \*[Lt]dev/usb/usbhid.h\*[Gt]"
 .Sh INTRODUCTION
 .Nx
 provides machine-independent bus support and drivers for
@@ -261,7 +261,7 @@ Use the following to get access to the
 .Tn USB
 specific structures and defines.
 .Bd -literal
-#include <sys/dev/usb.h>
+#include \*[Lt]sys/dev/usb.h\*[Gt]
 .Ed
 .Pp
 The

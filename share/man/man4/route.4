@@ -1,4 +1,4 @@
-.\"	$NetBSD: route.4,v 1.10 2001/06/11 01:23:24 wiz Exp $
+.\"	$NetBSD: route.4,v 1.11 2002/02/13 08:17:45 ross Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,9 +40,9 @@
 .Nm route
 .Nd kernel packet forwarding database
 .Sh SYNOPSIS
-.Fd #include <sys/socket.h>
-.Fd #include <net/if.h>
-.Fd #include <net/route.h>
+.Fd #include \*[Lt]sys/socket.h\*[Gt]
+.Fd #include \*[Lt]net/if.h\*[Gt]
+.Fd #include \*[Lt]net/route.h\*[Gt]
 .Ft int
 .Fn socket PF_ROUTE SOCK_RAW "int family"
 .Sh DESCRIPTION
@@ -208,7 +208,7 @@ struct rt_msghdr {
     u_char  rtm_version;       /* future binary compatibility */
     u_char  rtm_type;          /* message type */
     u_short rtm_index;         /* index for associated ifp */
-    int     rtm_flags;         /* flags, incl kern & message, e.g. DONE */
+    int     rtm_flags;         /* flags, incl kern \*[Am] message, e.g. DONE */
     int     rtm_addrs;         /* bitmask identifying sockaddrs in msg */
     pid_t   rtm_pid;           /* identify sender */
     int     rtm_seq;           /* for sender to identify action */

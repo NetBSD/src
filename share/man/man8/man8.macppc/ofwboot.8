@@ -1,4 +1,4 @@
-.\"	$NetBSD: ofwboot.8,v 1.2 2001/12/26 01:46:58 wiz Exp $
+.\"	$NetBSD: ofwboot.8,v 1.3 2002/02/13 08:18:29 ross Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -209,7 +209,7 @@ location on the disk, partition
 .Dq zero .
 For example, the following command might be used to boot from a SCSI device
 with ID 2:
-.Ic "0 >boot Ar scsi-int/sd@2:0" .
+.Ic "0 \*[Gt]boot Ar scsi-int/sd@2:0" .
 .It ofwboot.xcf
 .Nm ofwboot.xcf
 is in XCOFF format.  This file is used on all Open Firmware 3 systems, and on
@@ -268,29 +268,29 @@ Boot an Open Firmware 3 system, with
 installed on partition
 .Pa Dq a :
 .Bd -unfilled
-0 > boot hd:,ofwboot.xcf
+0 \*[Gt] boot hd:,ofwboot.xcf
 .Ed
 .It
 Boot into single user mode:
 .Bd -unfilled
-0 > boot hd:,ofwboot.xcf netbsd -s
+0 \*[Gt] boot hd:,ofwboot.xcf netbsd -s
 .Ed
 .It
 Boot from bootable CDROM with Open Firmware 3 or higher:
 .Bd -unfilled
-0 > boot cd:,\eofwboot.xcf netbsd.macppc
+0 \*[Gt] boot cd:,\eofwboot.xcf netbsd.macppc
 .Ed
 .It
 Boot from bootable CDROM (internal SCSI, id=3) of
 .Nx 1.5
 release with Open Firmware versions prior to 3:
 .Bd -unfilled
-0 > boot scsi/sd@3:0,OFWBOOT.XCF NETBSD.MACPPC
+0 \*[Gt] boot scsi/sd@3:0,OFWBOOT.XCF NETBSD.MACPPC
 .Ed
 .It
 Boot from floppy disk:
 .Bd -unfilled
-0 > boot fd:0
+0 \*[Gt] boot fd:0
 .Ed
 .It
 Boot from network, with bootps,
@@ -300,22 +300,22 @@ and
 .Xr nfsd 8
 server available:
 .Bd -unfilled
-0 > boot enet:0
+0 \*[Gt] boot enet:0
 .Ed
 .It
 Boot from network, but use internal root partition of second drive:
 .Bd -unfilled
-0 > boot enet:0 ultra1:0
+0 \*[Gt] boot enet:0 ultra1:0
 .Ed
 .It
 Boot MacOS, looking for the first available bootable disk:
 .Bd -unfilled
-0 > boot hd:,\e\e:tbxi
+0 \*[Gt] boot hd:,\e\e:tbxi
 .Ed
 .It
 Boot MacOS X residing on partition 10:
 .Bd -unfilled
-0 > boot hd:10,\e\e:tbxi
+0 \*[Gt] boot hd:10,\e\e:tbxi
 .Ed
 .El
 .Sh ERRORS
@@ -331,7 +331,7 @@ Can't LOAD from this device
 Open Firmware found the device, but it is not supported by
 .Ic load .
 .Bd -unfilled
-0 > boot yy:0/netbsd
+0 \*[Gt] boot yy:0/netbsd
 RESETing to change Configuration!
 .Ed
 .Ar yy:0
@@ -339,14 +339,14 @@ doesn't exist, so Open Firmware ignores the string and uses the
 default parameters to boot MacOS; the MacOS boot routine then clears
 some of the Open Firmware variables.
 .Bd -unfilled
-0 > boot ata/ata-disk@0:9 specified partition is not bootable
+0 \*[Gt] boot ata/ata-disk@0:9 specified partition is not bootable
  ok
 .Ed
 As it says.
 .Bd -unfilled
-0 > boot ata/ata-disk@0:0
->> NetBSD/macppc OpenFirmware Boot, Revision 1.3
->> (root@nazuha, Fri Jun  8 22:21:55 JST 2001)
+0 \*[Gt] boot ata/ata-disk@0:0
+\*[Gt]\*[Gt] NetBSD/macppc OpenFirmware Boot, Revision 1.3
+\*[Gt]\*[Gt] (root@nazuha, Fri Jun  8 22:21:55 JST 2001)
 no active package3337696/
 .Ed
 and hangs: See the real-base part in the FAQ.
@@ -377,7 +377,7 @@ may resolve this problem (see
 .Xr arp 8 ) .
 .Pp
 .Bd -unfilled
-0 > boot CLAIM failed
+0 \*[Gt] boot CLAIM failed
  ok
 .Ed
 Once boot failed, successive boots may not be possible.

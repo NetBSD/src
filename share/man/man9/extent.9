@@ -1,4 +1,4 @@
-.\" $NetBSD: extent.9,v 1.21 2001/12/26 01:07:45 wiz Exp $
+.\" $NetBSD: extent.9,v 1.22 2002/02/13 08:18:41 ross Exp $
 .\"
 .\" Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -48,8 +48,8 @@
 .Nm extent_print
 .Nd general purpose extent manager
 .Sh SYNOPSIS
-.Fd #include <sys/malloc.h>
-.Fd #include <sys/extent.h>
+.Fd #include \*[Lt]sys/malloc.h\*[Gt]
+.Fd #include \*[Lt]sys/extent.h\*[Gt]
 .Ft struct extent *
 .Fn extent_create "char *name" "u_long start" "u_long end" "int mtype" "caddr_t storage" "size_t storagesize" "int flags"
 .Ft void
@@ -345,7 +345,7 @@ func()
 	 * 128k, and 192k) within the extent.
 	 */
 	error = extent_alloc(foo_ex, 0x2000, 0x1000, 0x10000,
-	    EX_NOWAIT, &region_start);
+	    EX_NOWAIT, \*[Am]region_start);
 	if (error)
 		panic("you lose");
 
@@ -382,7 +382,7 @@ extent manager appeared in
 The
 .Nx
 extent manager was architected and implemented by Jason
-R. Thorpe <thorpej@NetBSD.ORG>.  Matthias Drochner
-<drochner@zelux6.zel.kfa-juelich.de> contributed to the initial
+R. Thorpe \*[Lt]thorpej@NetBSD.ORG\*[Gt].  Matthias Drochner
+\*[Lt]drochner@zelux6.zel.kfa-juelich.de\*[Gt] contributed to the initial
 testing and optimization of the implementation.  Chris Demetriou
-<cgd@NetBSD.ORG> contributed many architectural suggestions.
+\*[Lt]cgd@NetBSD.ORG\*[Gt] contributed many architectural suggestions.

@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbuf.9,v 1.20 2001/12/26 01:07:45 wiz Exp $
+.\"	$NetBSD: mbuf.9,v 1.21 2002/02/13 08:18:45 ross Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -75,7 +75,7 @@
 .Nm MFREE ,
 .Nd "functions and macros for managing memory used by networking code"
 .Sh SYNOPSIS
-.Fd #include <sys/mbuf.h>
+.Fd #include \*[Lt]sys/mbuf.h\*[Gt]
 .Ft struct mbuf *
 .Fn m_get "int nowait" "int type"
 .Ft struct mbuf *
@@ -647,4 +647,4 @@ and Mike Karels at CSRG.
 .br
 Current implementation of external storage by Matt Thomas
 .br
-<matt@3am-software.com> and Jason R. Thorpe <thorpej@NetBSD.ORG>.
+\*[Lt]matt@3am-software.com\*[Gt] and Jason R. Thorpe \*[Lt]thorpej@NetBSD.ORG\*[Gt].

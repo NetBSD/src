@@ -1,4 +1,4 @@
-.\" $NetBSD: ioctl.9,v 1.12 2001/12/07 18:49:30 wiz Exp $
+.\" $NetBSD: ioctl.9,v 1.13 2002/02/13 08:18:42 ross Exp $
 .\"
 .\" Copyright (c) 1999  The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,8 +41,8 @@
 .Nm ioctl
 .Nd "how to implement a new ioctl call to access device drivers"
 .Sh SYNOPSIS
-.Fd #include <sys/ioctl.h>
-.Fd #include <sys/ioccom.h>
+.Fd #include \*[Lt]sys/ioctl.h\*[Gt]
+.Fd #include \*[Lt]sys/ioccom.h\*[Gt]
 .Ft int
 .Fn ioctl "int" "unsigned long" "..."
 .Sh DESCRIPTION
@@ -241,14 +241,14 @@ to it or sizeof(struct foo)
 .El
 .Pp
 In order for the new ioctl to be known to the system it is installed
-in either <sys/ioctl.h> or one of the files that are reached from
-<sys/ioctl.h>.
+in either \*[Lt]sys/ioctl.h\*[Gt] or one of the files that are reached from
+\*[Lt]sys/ioctl.h\*[Gt].
 .Sh EXAMPLES
 .Bd -literal
    #define FOOIOCTL	_IOWR('i',23,int)
 
    int a=3;
-   error =  ioctl(s,FOOICTL, &a);
+   error =  ioctl(s,FOOICTL, \*[Am]a);
 .Ed
 .Pp
 Within the ioctl()-routine of the driver, it can be then accessed like

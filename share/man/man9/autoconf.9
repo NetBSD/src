@@ -1,4 +1,4 @@
-.\"     $NetBSD: autoconf.9,v 1.8 2001/12/13 19:29:32 gmcgarry Exp $
+.\"     $NetBSD: autoconf.9,v 1.9 2002/02/13 08:18:35 ross Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -52,9 +52,9 @@
 .Nm config_pending_decr
 .Nd autoconfiguration framework
 .Sh SYNOPSIS
-.Fd #include <sys/param.h>
-.Fd #include <sys/device.h>
-.Fd #include <sys/error.h>
+.Fd #include \*[Lt]sys/param.h\*[Gt]
+.Fd #include \*[Lt]sys/device.h\*[Gt]
+.Fd #include \*[Lt]sys/error.h\*[Gt]
 .Ft struct cfdata *
 .Fn config_search "cfmatch_t func" "struct device *parent" "void *aux"
 .Ft struct device *

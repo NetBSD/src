@@ -1,4 +1,4 @@
-.\"	$NetBSD: ar.5,v 1.3 2001/09/11 01:01:56 wiz Exp $
+.\"	$NetBSD: ar.5,v 1.4 2002/02/13 08:18:09 ross Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@
 .Nm ar
 .Nd a.out archive (library) file format
 .Sh SYNOPSIS
-.Fd #include <ar.h>
+.Fd #include \*[Lt]ar.h\*[Gt]
 .Sh DESCRIPTION
 The archive command
 .Nm
@@ -54,7 +54,7 @@ A file created with
 begins with the
 .Dq magic
 string
-.Dq Li "!<arch>\en" .
+.Dq Li "!\*[Lt]arch\*[Gt]\en" .
 The rest of the archive is made up of objects, each of which is composed
 of a header for a file, a possible file name, and the file contents.
 The header is portable between machine architectures, and, if the file
@@ -158,7 +158,7 @@ format specified by the
 ABI, with the same headers but different long file name handling.
 .Sh BUGS
 The
-.Tn <ar.h>
+.Tn \*[Lt]ar.h\*[Gt]
 header file, and the
 .Xr ar 5
 manual page, do not currently describe the ELF archive format.
