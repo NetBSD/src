@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990var.h,v 1.16 1997/10/13 00:47:24 explorer Exp $	*/
+/*	$NetBSD: am7990var.h,v 1.17 1997/10/15 05:51:35 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -68,16 +68,16 @@
 
 #include "rnd.h"
 
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
+
 #ifdef DDB
 #define	integrate
 #define hide
 #else
 #define	integrate	static __inline
 #define hide		static
-#endif
-
-#if NRND > 0
-#include <sys/rnd.h>
 #endif
 
 /*
