@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pflog.c,v 1.2 2004/06/22 14:17:07 itojun Exp $	*/
+/*	$NetBSD: if_pflog.c,v 1.3 2004/06/29 04:42:55 itojun Exp $	*/
 /*	$OpenBSD: if_pflog.c,v 1.11 2003/12/31 11:18:25 cedric Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -80,6 +80,9 @@
 struct pflog_softc pflogif[NPFLOG];
 
 void	pflogattach(int);
+#ifdef _LKM
+void	pflogdetach(void);
+#endif
 int	pflogoutput(struct ifnet *, struct mbuf *, struct sockaddr *,
 	    	       struct rtentry *);
 int	pflogioctl(struct ifnet *, u_long, caddr_t);
@@ -120,6 +123,21 @@ pflogattach(int npflog)
 #endif
 	}
 }
+
+#ifdef _LKM
+void
+pflogdetach(void)
+{
+	struct ifnet *ifp;
+	int i;
+
+	for (i = 0; i < NPFLOG; i++) {
+		ifp = &pflogif[i].sc_if;
+		bpfdetach(ifp);
+		if_detach(ifp);
+	}
+}
+#endif
 
 /*
  * Start output on the pflog interface.

@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_if.c,v 1.2 2004/06/22 14:17:07 itojun Exp $	*/
+/*	$NetBSD: pf_if.c,v 1.3 2004/06/29 04:42:55 itojun Exp $	*/
 /*	$OpenBSD: pf_if.c,v 1.11 2004/03/15 11:38:23 cedric Exp $ */
 
 /*
@@ -114,9 +114,6 @@ static void	hook_disestablish(struct hook_desc_head *, void *);
 
 #define HOOK_REMOVE	0x01
 #define HOOK_FREE	0x02
-
-POOL_INIT(pfi_addr_pl, sizeof(struct pfi_dynaddr), 0, 0, 0, "pfiaddrpl",
-    &pool_allocator_nointr);
 #endif
 
 void
@@ -126,16 +123,30 @@ pfi_initialize(void)
 		return;
 
 	TAILQ_INIT(&pfi_statehead);
-#ifdef __OpenBSD__
 	pool_init(&pfi_addr_pl, sizeof(struct pfi_dynaddr), 0, 0, 0,
 	    "pfiaddrpl", &pool_allocator_nointr);
-#endif
 	pfi_buffer_max = 64;
 	pfi_buffer = malloc(pfi_buffer_max * sizeof(*pfi_buffer),
 	    PFI_MTYPE, M_WAITOK);
 	pfi_self = pfi_if_create("self", NULL, PFI_IFLAG_GROUP);
 	pfi_dynamic_drivers();
 }
+
+#ifdef _LKM
+void
+pfi_destroy(void)
+{
+	struct pfi_kif *p;
+
+	while ((p = TAILQ_FIRST(&pfi_statehead)) != NULL) {
+		TAILQ_REMOVE(&pfi_statehead, p, pfik_w_states);
+		free(p, PFI_MTYPE);
+	}
+	pool_destroy(&pfi_addr_pl);
+
+	pfi_self = NULL;
+}
+#endif
 
 void
 pfi_attach_clone(struct if_clone *ifc)
