@@ -1,4 +1,4 @@
-/*	$NetBSD: idesc.c,v 1.42 1999/09/30 22:59:52 thorpej Exp $	*/
+/*	$NetBSD: idesc.c,v 1.43 1999/12/10 05:39:20 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -1139,6 +1139,8 @@ idego(dev, xs)
 	if (ide_debug > 1)
 		printf ("ide_go: %02x\n", xs->cmd->opcode);
 #endif
+	if ((ide->sc_flags & IDEF_ALIVE) == 0)
+		return (dev->sc_stat[0] = -1);
 	if(ide->sc_flags & IDEF_ATAPI) {
 #ifdef DEBUG
 		if (ide_debug)
