@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: parse.c,v 1.6 2003/10/27 20:16:09 mellon Exp $ Copyright (c) 1995-2002 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: parse.c,v 1.7 2003/10/27 21:08:25 mellon Exp $ Copyright (c) 1995-2002 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -3915,6 +3915,9 @@ int parse_expression (expr, cfile, lose, context, plhs, binop)
 	struct expression *rhs = (struct expression *)0, *tmp;
 	struct expression *lhs = (struct expression *)0;
 	enum expr_op next_op;
+	enum expression_context
+		lhs_context = context_any,
+		rhs_context = context_any;
 
 	/* Consume the left hand side we were passed. */
 	if (plhs) {
