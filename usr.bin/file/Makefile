@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.41 2003/03/26 00:05:04 pooka Exp $
+#	$NetBSD: Makefile,v 1.42 2003/04/05 11:33:16 pooka Exp $
 
 .include <bsd.own.mk>
 
@@ -9,6 +9,7 @@ WFORMAT=	1
 MFILESDIR=	/usr/share/misc
 MFILES=		magic magic.mgc ${DIST}/magic/magic.mime magic.mime.mgc
 MAGIC=		${MFILESDIR}/magic
+MKMAGIC?=	${.OBJDIR}/file
 
 .if ${MKSHARE} != "no"
 FILESDIR=	${MFILESDIR}
