@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.19 1999/04/19 21:23:01 kleink Exp $	*/
+/*	$NetBSD: genassym.c,v 1.20 1999/05/06 14:16:09 kleink Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -71,7 +71,7 @@
 #include <vm/vm.h>
 
 #ifdef COMPAT_SVR4
-#include <compat/svr4/svr4_syscalls.h>
+#include <compat/svr4/svr4_syscall.h>
 #include <compat/svr4/svr4_ucontext.h>
 #endif
 
