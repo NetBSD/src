@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.4 2001/06/27 16:03:01 ichiro Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.5 2001/07/01 16:35:37 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,10 +40,6 @@
  * PCMCIA attachment for Lucent & Intersil WaveLAN PCMCIA card
  */
 
-#include "opt_inet.h"
-#include "opt_ns.h"
-#include "bpfilter.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
@@ -54,24 +50,6 @@
 #include <net/if_ether.h>
 #include <net/if_media.h>
 #include <net/if_ieee80211.h>
-
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/in_var.h>
-#include <netinet/ip.h>
-#include <netinet/if_inarp.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
-
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#include <net/bpfdesc.h>
-#endif
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
