@@ -1,6 +1,6 @@
 #!/bin/csh -f
 #
-#	$NetBSD: updatedb.csh,v 1.8 2000/03/06 11:24:55 tron Exp $
+#	$NetBSD: updatedb.csh,v 1.9 2000/03/10 11:51:25 itohy Exp $
 #
 # Copyright (c) 1989, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -51,18 +51,13 @@ set filelist = $TMPDIR/locate.list.$$
 set errs = $TMPDIR/locate.errs.$$
 
 # Make a file list and compute common bigrams.
-# Alphabetize '/' before any other char with 'tr'.
-# If the system is very short of sort space, 'bigram' can be made
-# smarter to accumulate common bigrams directly without sorting
-# ('awk', with its associative memory capacity, can do this in several
-# lines, but is too slow, and runs out of string space on small machines).
+# Entries of each directory shall be sorted (find -s).
 
 # search locally or everything
-# find ${SRCHPATHS} -print | \
-find ${SRCHPATHS} \( ! -fstype local -o -fstype fdesc -o -fstype kernfs \) -a \
-		-prune -o -print | \
-	tr '/' '\001' | \
-	(sort -T "$TMPDIR" -f; echo $status > $errs) | tr '\001' '/' > $filelist
+# find -s ${SRCHPATHS} -print \
+find -s ${SRCHPATHS} \( ! -fstype local -o -fstype fdesc -o -fstype kernfs \) \
+		-a -prune -o -print \
+	> $filelist
 
 $LIBDIR/locate.bigram < $filelist | \
 	(sort -T "$TMPDIR"; echo $status >> $errs) | \
