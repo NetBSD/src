@@ -1,4 +1,4 @@
-/*	$NetBSD: nsdispatch.c,v 1.23 2004/08/02 00:19:34 thorpej Exp $	*/
+/*	$NetBSD: nsdispatch.c,v 1.24 2004/09/08 10:52:56 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nsdispatch.c,v 1.23 2004/08/02 00:19:34 thorpej Exp $");
+__RCSID("$NetBSD: nsdispatch.c,v 1.24 2004/09/08 10:52:56 simonb Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -270,7 +270,9 @@ _nsmodfree(ns_mod *mod)
 static int
 _nsloadmod(const char *source, nss_module_register_fn reg_fn)
 {
+#ifdef __ELF__
 	char	buf[PATH_MAX];
+#endif
 	ns_mod	mod, *new;
 
 	memset(&mod, 0, sizeof(mod));
