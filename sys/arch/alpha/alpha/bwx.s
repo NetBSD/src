@@ -1,4 +1,4 @@
-/* $NetBSD: bwx.s,v 1.2 1997/09/16 23:12:35 thorpej Exp $ */
+/* $NetBSD: bwx.s,v 1.3 1997/11/03 04:22:00 ross Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(3, "$NetBSD: bwx.s,v 1.2 1997/09/16 23:12:35 thorpej Exp $")
+__KERNEL_RCSID(3, "$NetBSD: bwx.s,v 1.3 1997/11/03 04:22:00 ross Exp $")
 
 /*
  * Alpha Byte/Word Extension instructions.  These are functions because
@@ -53,8 +53,8 @@ __KERNEL_RCSID(3, "$NetBSD: bwx.s,v 1.2 1997/09/16 23:12:35 thorpej Exp $")
  * XXX These are .long'd because we pull this into locore.s, which
  * XXX is assembled with only gas(1)'s "base alpha" target.
  */
-
 	.text
+inc1:	.stabs	__FILE__,132,0,0,inc1; .loc	1 __LINE__
 LEAF(alpha_ldbu,1)
 	.long	0x28100000	/* ldbu v0, 0(a0) */
 	RET
