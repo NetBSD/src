@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.45 1999/05/15 16:42:48 tv Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.46 1999/05/15 22:36:34 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -492,25 +492,34 @@ nopages:
 					break;
 				}
 			} while (space > 0 && atomic);
+			
+#ifdef TEST_FOR_PANIC_UIPC_3_RACE_CONDITION
+			{
+				extern struct domain unixdomain;
+				
+				if (so->so_proto->pr_domain == &unixdomain)
+					sleep(&lbolt, PVFS);
+			}
+#endif
+			
+			s = splsoftnet();
+
+			if (so->so_state & SS_CANTSENDMORE)
+				snderr(EPIPE);
 
 			if (dontroute)
 				so->so_options |= SO_DONTROUTE;
 			if (resid > 0)
 				so->so_state |= SS_MORETOCOME;
-
-			s = splsoftnet();			/* XXX */
-			if (so->so_state & SS_CANTSENDMORE)
-				error = EPIPE;
-			else
-				error = (*so->so_proto->pr_usrreq)(so,
-					(flags & MSG_OOB) ? PRU_SENDOOB : PRU_SEND,
-					top, addr, control, p);
-			splx(s);
-
+			error = (*so->so_proto->pr_usrreq)(so,
+			    (flags & MSG_OOB) ? PRU_SENDOOB : PRU_SEND,
+			    top, addr, control, p);
 			if (dontroute)
 				so->so_options &= ~SO_DONTROUTE;
 			if (resid > 0)
 				so->so_state &= ~SS_MORETOCOME;
+			splx(s);
+
 			clen = 0;
 			control = 0;
 			top = 0;
