@@ -1,4 +1,4 @@
-/* $NetBSD: opb.c,v 1.1 2002/08/12 02:06:20 simonb Exp $ */
+/* $NetBSD: opb.c,v 1.2 2002/08/12 07:55:08 simonb Exp $ */
 
 /*
  * Copyright 2001,2002 Wasabi Systems, Inc.
@@ -76,6 +76,7 @@
 #define _GALAXY_BUS_DMA_PRIVATE
 #include <machine/walnut.h>
 
+#include <powerpc/spr.h>
 #include <powerpc/ibm4xx/dev/opbvar.h>
 #include <powerpc/ibm4xx/ibm405gp.h>
 
@@ -83,17 +84,18 @@
  * The devices on the On-chip Peripheral Bus to the 405GP cpu.
  */
 const struct opb_dev {
+	int pvr;
 	const char *name;
 	bus_addr_t addr;
 	int irq;
 } opb_devs [] = {
-	{ "com",	UART0_BASE,	 0 },
-	{ "com",	UART1_BASE,	 1 },
-	{ "emac",	EMAC0_BASE,	 9 }, /* XXX: really irq 9..15 */
-	{ "gpio",	GPIO0_BASE,	-1 },
-	{ "iic",	IIC0_BASE,	 2 },
-	{ "wdog",	-1,        	-1 },
-	{ NULL }
+	{ IBM405GP,	"com",	UART0_BASE,	 0 },
+	{ IBM405GP,	"com",	UART1_BASE,	 1 },
+	{ IBM405GP,	"emac",	EMAC0_BASE,	 9 }, /* XXX: really irq 9..15 */
+	{ IBM405GP,	"gpio",	GPIO0_BASE,	-1 },
+	{ IBM405GP,	"iic",	IIC0_BASE,	 2 },
+	{ IBM405GP,	"wdog",	-1,        	-1 },
+	{ 0,		 NULL }
 };
 
 static int	opb_match(struct device *, struct cfdata *, void *);
@@ -140,11 +142,14 @@ static void
 opb_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct opb_attach_args oaa;
-	int i;
+	int i, pvr;
 
 	printf("\n");
+	pvr = mfpvr() >> 16;
 
 	for (i = 0; opb_devs[i].name != NULL; i++) {
+		if (opb_devs[i].pvr != pvr)
+			continue;
 		oaa.opb_name = opb_devs[i].name;
 		oaa.opb_addr = opb_devs[i].addr;
 		oaa.opb_irq = opb_devs[i].irq;
