@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.43 2001/06/26 19:30:44 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.44 2001/09/19 00:50:52 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.43 2001/06/26 19:30:44 lukem Exp $");
+__RCSID("$NetBSD: conf.c,v 1.44 2001/09/19 00:50:52 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -597,7 +597,7 @@ show_chdir_messages(int code)
 	if (EMPTYSTR(curclass.notify))
 		return;
 
-	gl.gl_offs = 0;
+	memset(&gl, 0, sizeof(gl));
 	if (glob(curclass.notify, GLOB_LIMIT, NULL, &gl) != 0
 	    || gl.gl_matchc == 0) {
 		globfree(&gl);
@@ -801,7 +801,7 @@ strend(const char *s1, char *s2)
 	l1 = strlen(s1);
 	l2 = strlen(s2);
 
-	if (l2 >= l1)
+	if (l2 >= l1 || l1 >= sizeof(buf))
 		return(NULL);
 	
 	strlcpy(buf, s1, sizeof(buf));
