@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.36 1997/03/13 02:45:07 mycroft Exp $	*/
+/*	$NetBSD: audio.c,v 1.37 1997/03/20 03:19:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -608,6 +608,8 @@ audio_open(dev, flags, ifmt, p)
 		audiostartr(sc);
 	    }
 	}
+	/* Play all sample, and don't pad short writes by default */
+	sc->sc_mode |= AUMODE_PLAY_ALL;
 	splx(s);
 	return (0);
 }
@@ -957,6 +959,32 @@ audio_write(dev, uio, ioflag)
 	error = 0;
 
 	while (uio->uio_resid > 0) {
+		if (cb->fill > 0) {
+			if (sc->sc_pbus == 0) {
+				/* playing has stopped, ignore fill */
+				cb->fill = 0;
+			} else {
+				/* Write samples in the silence fill space.
+				 * We don't know where the DMA is
+				 * happening in the buffer, but if we
+				 * are lucky we will fill the buffer before
+				 * playing has reached the point we move to.
+				 * If we are unlucky some sample will
+				 * not be played.
+				 */
+				cc = min(cb->fill, uio->uio_resid);
+				error = uiomove(cb->otp, cc, uio);
+				if (error == 0) {
+					if (hw->sw_encode)
+						hw->sw_encode(sc->hw_hdl,
+						    sc->sc_pencoding, cb->otp,
+						    cc);
+					cb->fill -= cc;
+					cb->otp += cc;
+				}
+				continue;
+			}
+		}
 		if (cb->nblk >= sc->sc_hiwat) {
 			do {
 				DPRINTF(("audio_write: nblk=%d hiwat=%d lowat=%d\n", cb->nblk, sc->sc_hiwat, sc->sc_lowat));
@@ -1028,6 +1056,8 @@ audio_write(dev, uio, ioflag)
 				/* fill with audio silence */
 				tp += cc;
 				cc = blocksize - cc;
+				cb->fill = cc;
+				cb->otp = tp;
 				audio_fill_silence(sc->sc_pencoding, tp, cc);
 				DPRINTF(("audio_write: auzero 0x%x %d 0x%x\n",
 				         tp, cc, *(int *)tp));
@@ -1046,9 +1076,9 @@ audio_write(dev, uio, ioflag)
 			break;
 		}		    
 
-		if (hw->sw_encode) {
-			hw->sw_encode(sc->hw_hdl, sc->sc_pencoding, cb->tp, blocksize);
-		}
+		if (hw->sw_encode)
+			hw->sw_encode(sc->hw_hdl, sc->sc_pencoding, cb->tp,
+			    blocksize);
 
 		/* wrap the ring buffer if at end */
 		s = splaudio();
