@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.26 1997/05/10 18:58:33 jtk Exp $	*/
+/*	$NetBSD: gus.c,v 1.27 1997/05/12 04:11:43 jtk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -2176,6 +2176,7 @@ gus_set_io_params(sc, p)
 
 	sc->sc_encoding = p->encoding;
 	sc->sc_precision = p->precision;
+	sc->sc_channels = p->channels;
 
 	splx(s);
 
