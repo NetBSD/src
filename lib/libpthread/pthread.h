@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.1.2.4 2001/07/25 23:54:10 nathanw Exp $	*/
+/*	$NetBSD: pthread.h,v 1.1.2.5 2001/08/06 20:51:41 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@ int	pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex);
 int	pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 	    const struct timespec *abstime);
 int	pthread_cond_signal(pthread_cond_t *cond);
-int	pthread_cond_broadacst(pthread_cond_t *cond);
+int	pthread_cond_broadcast(pthread_cond_t *cond);
 int	pthread_condattr_init(pthread_condattr_t *attr);
 int	pthread_condattr_destroy(pthread_condattr_t *attr);
 
