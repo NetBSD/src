@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.2 1999/02/15 04:38:06 sakamoto Exp $	*/
+/*	$NetBSD: cpu.c,v 1.3 1999/06/28 01:20:44 sakamoto Exp $	*/
 
 /*
  * This file contains information proprietary to Be Inc.
@@ -34,21 +34,23 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stand.h>
+#include "boot.h"
+
 /*
  * Return the ordinal of the CPU on which the code runs (0/1)
  */
 
-#define CPU1_HRESET 0x20000000 
+#define	CPU1_HRESET	0x20000000
  
 int
 whichCPU()
 {
 	volatile unsigned long *CPU_control = (unsigned long *)0x7FFFF3F0;
-	if (*CPU_control & 0x02000000)
-	{
+
+	if (*CPU_control & 0x02000000) {
 		return (1);
-	} else
-	{
+	} else {
 		return (0);
 	}
 }
@@ -61,6 +63,7 @@ void
 resetCPU1()
 {
 	volatile unsigned long *CPU_control = (unsigned long *)0x7FFFF4F0;
+
 	*CPU_control = CPU1_HRESET;
 }
 
@@ -71,6 +74,7 @@ unsigned long
 cpuState()
 {
 	volatile unsigned long *CPU_control = (unsigned long *)0x7FFFF4F0;
+
 	return (*CPU_control);
 }
 
@@ -79,12 +83,12 @@ cpuState()
  */
 void
 runCPU1(entry)
-	long entry;
+	void *entry;
 {
 	volatile unsigned long *CPU_control = (unsigned long *)0x7FFFF4F0;
 	long *PEF_vector = (long *)0x3000;
 	long *PEF_vector2 = (long *)0x3018;
-	int i;
+
 	PEF_vector[0] = 0;
 	PEF_vector[1] = 0;
 	PEF_vector[2] = 0;
@@ -94,12 +98,12 @@ runCPU1(entry)
 	*CPU_control = 0x80000000 | CPU1_HRESET;
 	/* Give the other CPU a chance to find the zero value */
 	delay(1000);
-	PEF_vector[0] = entry;
-	PEF_vector[1] = entry;
-	PEF_vector[2] = entry;
-	PEF_vector[3] = entry;
-	PEF_vector[0] = entry;
-	PEF_vector2[0] = entry;
+	PEF_vector[0] = (long)entry;
+	PEF_vector[1] = (long)entry;
+	PEF_vector[2] = (long)entry;
+	PEF_vector[3] = (long)entry;
+	PEF_vector[0] = (long)entry;
+	PEF_vector2[0] = (long)entry;
 }
 
 /*
@@ -107,9 +111,11 @@ runCPU1(entry)
  */
 volatile int cpu_ctr = 0;
 
+void
 cpu1()
 {
-	while(1) cpu_ctr++;
+	while (1)
+		cpu_ctr++;
 }
 
 volatile int CPU1_alive = 0;
@@ -122,15 +128,15 @@ start_CPU1()
 	CPU1_alive++;
 	*key = 0;
 	/* Wait for a kernel to load up a vector of where we should jump */
-	while (*key == 0) {
+	while (*key == 0)
 		delay(10);
-	}
-	run(*key);
+
+	run(NULL, NULL, NULL, NULL, (void *)*key);
 }
 
 void
 wait_for(ptr)
-	volatile long *ptr;
+	volatile int *ptr;
 {
 	int i;
 	for (i = 0; i < 10; i++) {
