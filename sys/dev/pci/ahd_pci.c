@@ -1,4 +1,4 @@
-/*	$NetBSD: ahd_pci.c,v 1.5 2003/08/29 02:59:20 thorpej Exp $	*/
+/*	$NetBSD: ahd_pci.c,v 1.6 2003/08/29 04:17:39 thorpej Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -40,16 +40,16 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * Id: //depot/aic7xxx/aic7xxx/aic79xx_pci.c#74 $
+ * Id: //depot/aic7xxx/aic7xxx/aic79xx_pci.c#76 $
  *
- * $FreeBSD: src/sys/dev/aic7xxx/aic79xx_pci.c,v 1.12 2003/06/06 23:48:18 gibbs Exp $
+ * $FreeBSD: src/sys/dev/aic7xxx/aic79xx_pci.c,v 1.14 2003/06/28 04:39:49 gibbs Exp $
  */
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc. - April 2003
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.5 2003/08/29 02:59:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.6 2003/08/29 04:17:39 thorpej Exp $");
 
 #define AHD_PCI_IOADDR	PCI_MAPREG_START	/* I/O Address */
 #define AHD_PCI_MEMADDR	(PCI_MAPREG_START + 4)	/* Mem I/O Address */
@@ -123,6 +123,7 @@ ahd_compose_id(u_int device, u_int vendor, u_int subdevice, u_int subvendor)
 static ahd_device_setup_t ahd_aic7901_setup;
 static ahd_device_setup_t ahd_aic7901A_setup;
 static ahd_device_setup_t ahd_aic7902_setup;
+static ahd_device_setup_t ahd_aic790X_setup;
 
 struct ahd_pci_identity ahd_pci_ident_table [] =
 {
@@ -1002,29 +1003,32 @@ ahd_pci_split_intr(struct ahd_softc *ahd, u_int intstat)
 static int
 ahd_aic7901_setup(struct ahd_softc *ahd, struct pci_attach_args *pa)
 {
-	int error;
 
-	error = ahd_aic7902_setup(ahd, pa);
-	if (error != 0)
-		return (error);
 	ahd->chip = AHD_AIC7901;
-	return (0);
+	ahd->features = AHD_AIC7901_FE;
+	return (ahd_aic790X_setup(ahd, pa));
 }
 
 static int
 ahd_aic7901A_setup(struct ahd_softc *ahd, struct pci_attach_args *pa)
 {
-	int error;
 
-	error = ahd_aic7902_setup(ahd, pa);
-	if (error != 0)
-		return (error);
 	ahd->chip = AHD_AIC7901A;
-	return (0);
+	ahd->features = AHD_AIC7901A_FE;
+	return (ahd_aic790X_setup(ahd, pa));
 }
 
 static int
-ahd_aic7902_setup(struct ahd_softc *ahd, struct pci_attach_args	*pa)
+ahd_aic7902_setup(struct ahd_softc *ahd, struct pci_attach_args *pa)
+{
+
+	ahd->chip = AHD_AIC7902;
+	ahd->features = AHD_AIC7902_FE;
+	return (ahd_aic790X_setup(ahd, pa));
+}
+
+static int
+ahd_aic790X_setup(struct ahd_softc *ahd, struct pci_attach_args	*pa)
 {
 	u_int rev;
 
@@ -1040,8 +1044,6 @@ ahd_aic7902_setup(struct ahd_softc *ahd, struct pci_attach_args	*pa)
 	}
 
 	ahd->channel = (pa->pa_function == 1) ? 'B' : 'A';
-	ahd->chip = AHD_AIC7902;
-	ahd->features = AHD_AIC7902_FE;
 	if (rev < ID_AIC7902_PCI_REV_B0) {
 		/*
 		 * Enable A series workarounds.
@@ -1071,8 +1073,13 @@ ahd_aic7902_setup(struct ahd_softc *ahd, struct pci_attach_args	*pa)
 
 		ahd->features |= AHD_RTI|AHD_NEW_IOCELL_OPTS
 			      |  AHD_NEW_DFCNTRL_OPTS;
-		ahd->bugs |= AHD_LQOOVERRUN_BUG|AHD_ABORT_LQI_BUG
-			  |  AHD_INTCOLLISION_BUG|AHD_EARLY_REQ_BUG;
+		ahd->bugs |= AHD_LQOOVERRUN_BUG|AHD_EARLY_REQ_BUG;
+
+		/*
+		 * Some issues have been resolved in the 7901B.
+		 */
+		if ((ahd->features & AHD_MULTI_FUNC) != 0)
+			ahd->bugs |= AHD_INTCOLLISION_BUG|AHD_ABORT_LQI_BUG;
 
 		/*
 		 * IO Cell paramter setup.
