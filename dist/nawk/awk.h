@@ -61,7 +61,7 @@ extern char	**SUBSEP;
 extern Awkfloat *RSTART;
 extern Awkfloat *RLENGTH;
 
-extern char	*record;	/* points to $0 */
+extern uschar	*record;	/* points to $0 */
 extern int	lineno;		/* line number in awk program */
 extern int	errorflag;	/* 1 if error has occurred */
 extern int	donefld;	/* 1 if record broken into fields */
@@ -70,7 +70,7 @@ extern char	inputFS[];	/* FS at time of input, for field splitting */
 
 extern int	dbg;
 
-extern	char	*patbeg;	/* beginning of pattern matched */
+extern	uschar	*patbeg;	/* beginning of pattern matched */
 extern	int	patlen;		/* length of pattern matched.  set in b.c */
 
 /* Cell:  all information about a variable or constant */
