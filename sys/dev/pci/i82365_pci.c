@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_pci.c,v 1.7 1998/12/20 17:53:28 nathanw Exp $	*/
+/*	$NetBSD: i82365_pci.c,v 1.8 2000/02/01 22:39:53 chopps Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -29,6 +29,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * XXX this driver frontend is *very* i386 dependent and should be relocated
+ */
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +45,7 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/i82365_pcivar.h>
+#include <dev/isa/i82365_isavar.h>
 
 /*
  * PCI constants.
@@ -66,8 +71,9 @@ static struct pcmcia_chip_functions pcic_pci_functions = {
 	pcic_chip_io_map,
 	pcic_chip_io_unmap,
 
-	pcic_pci_machdep_chip_intr_establish,
-	pcic_pci_machdep_chip_intr_disestablish,
+	/* XXX */
+	pcic_isa_chip_intr_establish,
+	pcic_isa_chip_intr_disestablish,
 
 	pcic_chip_socket_enable,
 	pcic_chip_socket_disable,
@@ -97,6 +103,8 @@ pcic_pci_match(parent, match, aux)
 	}
 	return (1);
 }
+
+void pcic_isa_config_interrupts __P((struct device *));
 
 void
 pcic_pci_attach(parent, self, aux)
@@ -171,21 +179,26 @@ pcic_pci_attach(parent, self, aux)
 	 */
 	pcic_write(&sc->handle[0], PCIC_CIRRUS_EXTENDED_INDEX,
 		   PCIC_CIRRUS_EXT_CONTROL_1);
-	if (pcic_read(&sc->handle[0], PCIC_CIRRUS_EXTENDED_DATA) &
-	    PCIC_CIRRUS_EXT_CONTROL_1_PCI_INTR_MASK) {
+	if ((pcic_read(&sc->handle[0], PCIC_CIRRUS_EXTENDED_DATA) &
+	    PCIC_CIRRUS_EXT_CONTROL_1_PCI_INTR_MASK)) {
 		printf("%s: PCI interrupts not supported\n",
 		       sc->dev.dv_xname);
 		return;
 	}
 
 	sc->intr_est = pcic_pci_machdep_intr_est(pc);
+	sc->irq = -1;
 
+#if 0
 	/* Map and establish the interrupt. */
 	sc->ih = pcic_pci_machdep_pcic_intr_establish(sc, pcic_intr);
 	if (sc->ih == NULL) {
 		printf("%s: couldn't map interrupt\n", sc->dev.dv_xname);
 		return;
 	}
+#endif
+
+	printf("\n");
 
 	/*
 	 * Defer configuration of children until ISA has had its chance
@@ -194,6 +207,7 @@ pcic_pci_attach(parent, self, aux)
 	 * and defers the ISA attachment before this one.
 	 */
 	config_defer(self, pcic_pci_callback);
+	config_interrupts(self, pcic_isa_config_interrupts);
 }
 
 static void
