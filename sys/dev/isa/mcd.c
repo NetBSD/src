@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.62 1998/06/23 03:26:19 jonathan Exp $	*/
+/*	$NetBSD: mcd.c,v 1.63 1999/02/08 16:33:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -590,12 +590,14 @@ mcdioctl(dev, cmd, addr, flag, p)
 {
 	struct mcd_softc *sc = mcd_cd.cd_devs[MCDUNIT(dev)];
 	int error;
+	int part;
 	
 	MCD_TRACE("ioctl: cmd=0x%x\n", cmd, 0, 0, 0);
 
 	if ((sc->flags & MCDF_LOADED) == 0)
 		return EIO;
 
+	part = MCDPART(dev);
 	switch (cmd) {
 	case DIOCGDINFO:
 		*(struct disklabel *)addr = *(sc->sc_dk.dk_label);
@@ -604,7 +606,7 @@ mcdioctl(dev, cmd, addr, flag, p)
 	case DIOCGPART:
 		((struct partinfo *)addr)->disklab = sc->sc_dk.dk_label;
 		((struct partinfo *)addr)->part =
-		    &sc->sc_dk.dk_label->d_partitions[MCDPART(dev)];
+		    &sc->sc_dk.dk_label->d_partitions[part];
 		return 0;
 
 	case DIOCWDINFO:
@@ -662,8 +664,25 @@ mcdioctl(dev, cmd, addr, flag, p)
 		return EINVAL;
 	case CDIOCSTOP:
 		return mcd_stop(sc);
-	case CDIOCEJECT: /* FALLTHROUGH */
 	case DIOCEJECT:
+		if (*(int *)addr == 0) {
+			/*
+			 * Don't force eject: check that we are the only
+			 * partition open. If so, unlock it.
+			 */
+			if ((sc->sc_dk.dk_openmask & ~(1 << part)) == 0 &&
+			    sc->sc_dk.dk_bopenmask + sc->sc_dk.dk_copenmask ==
+			    sc->sc_dk.dk_openmask) {
+				error = mcd_setlock(sc, MCD_LK_UNLOCK);
+				if (error)
+					return (error);
+			} else {
+				return (EBUSY);
+			}
+		}
+		/* FALLTHROUGH */
+	case CDIOCEJECT: /* FALLTHROUGH */
+	case ODIOCEJECT:
 		return mcd_eject(sc);
 	case CDIOCALLOW:
 		return mcd_setlock(sc, MCD_LK_UNLOCK);

@@ -1,4 +1,4 @@
-/*	$NetBSD: dkio.h,v 1.2 1997/10/08 21:18:45 thorpej Exp $	*/
+/*	$NetBSD: dkio.h,v 1.3 1999/02/08 16:33:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -56,7 +56,8 @@
 #define DIOCWLABEL	_IOW('d', 109, int)	/* write en/disable label */
 
 #define DIOCSBAD	_IOW('d', 110, struct dkbad)	/* set kernel dkbad */
-#define DIOCEJECT	_IO('d', 112)		/* eject removable disk */
+#define DIOCEJECT	_IOW('d', 112, int)	/* eject removable disk */
+#define ODIOCEJECT	_IO('d', 112)		/* eject removable disk */
 #define DIOCLOCK	_IOW('d', 113, int)	/* lock/unlock pack */
 
 		/* get default label, clear label */
