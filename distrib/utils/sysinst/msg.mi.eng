@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.eng,v 1.7.2.13 1997/12/12 22:27:47 jonathan Exp $	*/
+/*	$NetBSD: msg.mi.eng,v 1.7.2.14 1997/12/26 02:39:47 perry Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -447,6 +447,9 @@ message net_namesrv
 message net_defroute
 {IP of your gateway }
 
+message net_media
+{Network media type }
+
 message netok
 {The following are the values you entered.  Are they OK?
 
@@ -456,6 +459,7 @@ Host IP:       %s
 Netmask:       %s
 Nameserver IP: %s
 Gateway IP:    %s
+Media type:    %s
 }
 
 message netagain

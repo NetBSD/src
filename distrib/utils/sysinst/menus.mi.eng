@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.eng,v 1.7.2.9 1997/12/05 14:12:44 jonathan Exp $	*/
+/*	$NetBSD: menus.mi.eng,v 1.7.2.10 1997/12/26 02:39:45 perry Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -74,7 +74,12 @@ menu utility, title " NetBSD-@@VERSION@@ Utility", exit;
 	option "Run /bin/sh",
 		action (endwin) { system("/bin/sh"); };
 	option "Configure network",
-		action { config_network(); };
+		action {
+			extern int network_up;
+
+			network_up = 0;
+			config_network();
+		};
 /*	option "Partition a disk"; XXX add later.  */
 	option "Halt the system", exit,
 		action (endwin) { run_prog("/sbin/halt"); };

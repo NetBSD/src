@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.7.2.11 1997/12/10 07:46:45 phil Exp $	*/
+/*	$NetBSD: defs.h,v 1.7.2.12 1997/12/26 02:39:44 perry Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -189,6 +189,7 @@ EXTERN char net_ip[STRSIZE] INIT("");
 EXTERN char net_mask[STRSIZE] INIT("");
 EXTERN char net_namesvr[STRSIZE] INIT("");
 EXTERN char net_defroute[STRSIZE] INIT("");
+EXTERN char net_media[STRSIZE] INIT("");
 
 /* Variables for upgrade. */
 #define MAXFS 16
