@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.165 2000/04/29 17:41:11 dmcmahill Exp $
+#	$NetBSD: bsd.lib.mk,v 1.166 2000/05/03 03:44:12 matt Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -221,18 +221,20 @@ CFLAGS+=	${COPTS}
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
+_OBJS+=${SRCS:N*.h:N*.sh:R:S/$/.o/g}
+
 .if ${MKPIC} == "no" || (defined(LDSTATIC) && ${LDSTATIC} != "") \
 	|| ${MKLINKLIB} != "no"
 _LIBS=lib${LIB}.a
+OBJS+=${_OBJS}
 .else
 _LIBS=
 .endif
 
-OBJS+=${SRCS:N*.h:N*.sh:R:S/$/.o/g}
 
 .if ${MKPROFILE} != "no"
 _LIBS+=lib${LIB}_p.a
-POBJS+=${OBJS:.o=.po}
+POBJS+=${_OBJS:.o=.po}
 .endif
 
 .if ${MKPIC} != "no"
@@ -241,7 +243,7 @@ SOLIB=lib${LIB}.a
 .else
 SOLIB=lib${LIB}_pic.a
 _LIBS+=${SOLIB}
-SOBJS+=${OBJS:.o=.so}
+SOBJS+=${_OBJS:.o=.so}
 .endif
 .if defined(SHLIB_MAJOR) && defined(SHLIB_MINOR)
 _LIBS+=lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
