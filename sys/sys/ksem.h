@@ -1,3 +1,5 @@
+/* $NetBSD: ksem.h,v 1.2 2003/01/21 14:11:31 christos Exp $ */
+
 /*
  * Copyright (c) 2002 Alfred Perlstein <alfred@FreeBSD.org>
  * All rights reserved.
@@ -28,20 +30,21 @@
 #ifndef _SYS_KSEM_H_
 #define _SYS_KSEM_H_
 
+#include <sys/cdefs.h>
+
 __BEGIN_DECLS
 
 #ifndef _KERNEL
 
-int _ksem_close(semid_t id);
-int _ksem_destroy(semid_t id);
-int _ksem_getvalue(semid_t id, int *val);
-int _ksem_init(unsigned int value, semid_t *idp);
-int _ksem_open(const char *name, int oflag, mode_t mode,
-    unsigned int value, semid_t *idp);
-int _ksem_post(semid_t id);
-int _ksem_trywait(semid_t id);
-int _ksem_unlink(const char *name);
-int _ksem_wait(semid_t id);
+int _ksem_close(semid_t);
+int _ksem_destroy(semid_t);
+int _ksem_getvalue(semid_t, int *);
+int _ksem_init(unsigned int, semid_t *);
+int _ksem_open(const char *, int, mode_t, unsigned int, semid_t *);
+int _ksem_post(semid_t);
+int _ksem_trywait(semid_t);
+int _ksem_unlink(const char *);
+int _ksem_wait(semid_t);
 
 #else
 
