@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 1997/10/04 09:11:16 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.2 1997/10/10 16:32:15 lukem Exp $
 #
 #  Hunt
 #  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -64,4 +64,4 @@ SYSLIBS=
 DEFS=		$(GAME_PARAM) $(DEFS_BSD44)
 CFLAGS+=	-O2 $(SYSCFLAGS) $(DEFS) -DHUNTD=\"/usr/games/huntd\"
 
-.include "../../Makefile.inc"
+.include "../Makefile.inc"

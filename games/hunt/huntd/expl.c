@@ -1,21 +1,32 @@
+/*	$NetBSD: expl.c,v 1.2 1997/10/10 16:33:18 lukem Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
  *  San Francisco, California
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: expl.c,v 1.2 1997/10/10 16:33:18 lukem Exp $");
+#endif /* not lint */
+
+# include	<stdlib.h>
 # include	"hunt.h"
+
+static	void	remove_wall __P((int, int));
+
 
 /*
  * showexpl:
  *	Show the explosions as they currently are
  */
+void
 showexpl(y, x, type)
-register int	y, x;
-char		type;
+	int	y, x;
+	char	type;
 {
-	register PLAYER	*pp;
-	register EXPL	*ep;
+	PLAYER	*pp;
+	EXPL	*ep;
 
 	if (y < 0 || y >= HEIGHT)
 		return;
@@ -69,13 +80,14 @@ char		type;
  *	Roll the explosions over, so the next one in the list is at the
  *	top
  */
+void
 rollexpl()
 {
-	register EXPL	*ep;
-	register PLAYER	*pp;
-	register int	y, x;
-	register char	c;
-	register EXPL	*nextep;
+	EXPL	*ep;
+	PLAYER	*pp;
+	int	y, x;
+	char	c;
+	EXPL	*nextep;
 
 	for (ep = Expl[EXPLEN - 1]; ep != NULL; ep = nextep) {
 		nextep = ep->e_next;
@@ -114,15 +126,16 @@ static	REGEN	*rem_index = removed;
  *		 if there is no space left over, put the a wall at
  *		 the location currently pointed at.
  */
+static void
 remove_wall(y, x)
-int	y, x;
+	int	y, x;
 {
-	register REGEN	*r;
+	REGEN	*r;
 # if defined(MONITOR) || defined(FLY)
-	register PLAYER	*pp;
+	PLAYER	*pp;
 # endif
 # ifdef	FLY
-	register char	save_char;
+	char	save_char = 0;
 # endif
 
 	r = rem_index;
@@ -201,9 +214,10 @@ found:
  * clearwalls:
  *	Clear out the walls array
  */
+void
 clearwalls()
 {
-	register REGEN	*rp;
+	REGEN	*rp;
 
 	for (rp = removed; rp < &removed[MAXREMOVE]; rp++)
 		rp->r_y = 0;

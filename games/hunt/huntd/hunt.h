@@ -345,8 +345,8 @@ extern char	Buf[BUFSIZ], Maze[HEIGHT][WIDTH2], Orig_maze[HEIGHT][WIDTH2];
 
 extern char	*Sock_name, *Driver;
 
-extern int	errno, Have_inp, Nplayer, Num_fds, Socket, Status;
-extern long	Fds_mask, Sock_mask, Stat_mask;
+extern int	errno, Nplayer, Num_fds, Socket, Status;
+extern fd_set	Fds_mask, Have_inp;
 
 # ifdef INTERNET
 extern u_short	Test_port;
@@ -388,13 +388,66 @@ extern FLAG	no_beep;
  * function types
  */
 
-extern char	*getenv();
-extern void	*malloc(), *realloc();
-
-extern IDENT	*get_ident();
-
-extern int	moveshots();
-
-extern BULLET	*is_bullet(), *create_shot();
-
-extern PLAYER	*play_at();
+void		add_shot __P((int, int, int, char, int, PLAYER *, int, char));
+int		answer __P((void));
+void		bad_con __P((void));
+void		bad_ver __P((void));
+int		broadcast_vec __P((int, struct	sockaddr **));
+void		ce __P((PLAYER *));
+void		cgoto __P((PLAYER *, int, int));
+void		check __P((PLAYER *, int, int));
+void		checkdam __P((PLAYER *, PLAYER *, IDENT *, int, char));
+void		clearwalls __P((void));
+void		clear_eol __P((void));
+void		clear_the_screen __P((void));
+void		clrscr __P((PLAYER *));
+BULLET	       *create_shot __P((int, int, int, char, int, int, PLAYER *,
+		    IDENT *, int, char));
+void		do_connect __P((char *, char, long));
+void		do_message __P((void));
+void		drawmaze __P((PLAYER *));
+void		drawplayer __P((PLAYER *, FLAG));
+void		drawstatus __P((PLAYER *));
+void		execute __P((PLAYER *));
+void		faketalk __P((void));
+void		find_driver __P((FLAG));
+void		fixshots __P((int, int, char));
+IDENT	       *get_ident __P((u_long, u_long, char *, char));
+void		get_local_name __P((char *));
+int		get_remote_name __P((char *));
+BULLET	       *is_bullet __P((int, int));
+void		look __P((PLAYER *));
+void		makemaze __P((void));
+void		message __P((PLAYER *, char *));
+void		mon_execute __P((PLAYER *));
+void		moveshots __P((void));
+void		open_ctl __P((void));
+int		opposite __P((int, char));
+void		otto __P((int, int, char));
+void		outch __P((PLAYER *, int));
+void		outstr __P((PLAYER *, char *, int));
+int		player_sym __P((PLAYER *, int, int));
+PLAYER	       *play_at __P((int, int));
+void		playit __P((void));
+void		put_ch __P((char));
+void		put_str __P((char *));
+int		quit __P((int));
+int		rand_dir __P((void));
+int		rand_num __P((int));
+void		redraw_screen __P((void));
+void		rmnl __P((char *));
+void		rollexpl __P((void));
+void		see __P((PLAYER *, int));
+void		sendcom __P((PLAYER *, int, ...));
+void		showexpl __P((int, int, char));
+void		showstat __P((PLAYER *));
+void		start_driver __P((void));
+void		stmonitor __P((PLAYER *));
+void		stplayer __P((PLAYER *, int));
+char		translate __P((char));
+SIGNAL_TYPE	cleanup __P((int));
+SIGNAL_TYPE	intr __P((int));
+SIGNAL_TYPE	sigalrm __P((int));
+SIGNAL_TYPE	sigemt __P((int));
+SIGNAL_TYPE	sigterm __P((int));
+SIGNAL_TYPE	tstp __P((int));

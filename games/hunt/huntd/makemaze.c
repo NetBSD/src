@@ -1,18 +1,30 @@
+/*	$NetBSD: makemaze.c,v 1.2 1997/10/10 16:33:43 lukem Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
  *  San Francisco, California
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: makemaze.c,v 1.2 1997/10/10 16:33:43 lukem Exp $");
+#endif /* not lint */
+
 # include	"hunt.h"
 
 # define	ISCLEAR(y,x)	(Maze[y][x] == SPACE)
 # define	ODD(n)		((n) & 01)
 
+static	int	candig __P((int, int));
+static	void	dig __P((int, int));
+static	void	dig_maze __P((int, int));
+static	void	remap __P((void));
+
+void
 makemaze()
 {
-	register char	*sp;
-	register int	y, x;
+	char	*sp;
+	int	y, x;
 
 	/*
 	 * fill maze with walls
@@ -43,13 +55,14 @@ int	incr[NDIR][2] = {
 		{0, 1}, {1, 0}, {0, -1}, {-1, 0}
 	};
 
+static void
 dig(y, x)
-int	y, x;
+	int	y, x;
 {
-	register int	*dp;
-	register int	*ip;
-	register int	ny, nx;
-	register int	*endp;
+	int	*dp;
+	int	*ip;
+	int	ny, nx;
+	int	*endp;
 
 	Maze[y][x] = SPACE;			/* Clear this spot */
 	dp = dirs[rand_num(NPERM)];
@@ -67,10 +80,11 @@ int	y, x;
  * candig:
  *	Is it legal to clear this spot?
  */
+static int
 candig(y, x)
-register int	y, x;
+	int	y, x;
 {
-	register int	i;
+	int	i;
 
 	if (ODD(x) && ODD(y))
 		return FALSE;		/* can't touch ODD spots */
@@ -97,17 +111,19 @@ register int	y, x;
 	return TRUE;			/* OK */
 }
 
+void
 dig_maze(x, y)
-int	x, y;
+	int	x, y;
 {
-	register int	tx, ty;
-	register int	i, j;
-	int		order[4];
+	int	tx, ty;
+	int	i, j;
+	int	order[4];
 #define	MNORTH	0x1
 #define	MSOUTH	0x2
 #define	MEAST	0x4
 #define	MWEST	0x8
 
+	tx = ty = 0;
 	Maze[y][x] = SPACE;
 	order[0] = MNORTH;
 	for (i = 1; i < 4; i++) {
@@ -143,11 +159,12 @@ int	x, y;
 	}
 }
 
+void
 remap()
 {
-	register int	y, x;
-	register char	*sp;
-	register int	stat;
+	int	y, x;
+	char	*sp;
+	int	stat;
 
 	for (y = 0; y < HEIGHT; y++)
 		for (x = 0; x < WIDTH; x++) {
