@@ -1,4 +1,4 @@
-/*	$NetBSD: bootparamd.c,v 1.12 1997/07/28 06:03:54 thorpej Exp $	*/
+/*	$NetBSD: bootparamd.c,v 1.13 1997/09/08 02:21:52 mikel Exp $	*/
 
 /*
  * This code is not copyright, and is placed in the public domain.
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootparamd.c,v 1.12 1997/07/28 06:03:54 thorpej Exp $");
+__RCSID("$NetBSD: bootparamd.c,v 1.13 1997/09/08 02:21:52 mikel Exp $");
 #endif
 
 #include <sys/types.h>
@@ -85,7 +85,7 @@ main(argc, argv)
 			}
 			he = gethostbyname(optarg);
 			if (he == 0) {
-				warnx("no such host: %s\n", optarg);
+				warnx("no such host: %s", optarg);
 				usage();
 			}
 			bcopy(he->h_addr, &route_addr.s_addr, he->h_length);
@@ -144,13 +144,13 @@ bootparamproc_whoami_1_svc(whoami, rqstp)
 	long    haddr;
 
 	if (debug)
-		warnx("whoami got question for %d.%d.%d.%d\n",
+		warnx("whoami got question for %d.%d.%d.%d",
 		    255 & whoami->client_address.bp_address_u.ip_addr.net,
 		    255 & whoami->client_address.bp_address_u.ip_addr.host,
 		    255 & whoami->client_address.bp_address_u.ip_addr.lh,
 		    255 & whoami->client_address.bp_address_u.ip_addr.impno);
 	if (dolog)
-		syslog(LOG_NOTICE, "whoami got question for %d.%d.%d.%d\n",
+		syslog(LOG_NOTICE, "whoami got question for %d.%d.%d.%d",
 		    255 & whoami->client_address.bp_address_u.ip_addr.net,
 		    255 & whoami->client_address.bp_address_u.ip_addr.host,
 		    255 & whoami->client_address.bp_address_u.ip_addr.lh,
@@ -167,9 +167,9 @@ bootparamproc_whoami_1_svc(whoami, rqstp)
 	}
 
 	if (debug)
-		warnx("This is host %s\n", askname);
+		warnx("This is host %s", askname);
 	if (dolog)
-		syslog(LOG_NOTICE, "This is host %s\n", askname);
+		syslog(LOG_NOTICE, "This is host %s", askname);
 
 	if (!lookup_bootparam(askname, hostname, NULL, NULL, NULL)) {
 		res.client_name = hostname;
@@ -182,14 +182,14 @@ bootparamproc_whoami_1_svc(whoami, rqstp)
 			    &res.router_address.bp_address_u.ip_addr, 4);
 		}
 		if (debug)
-			warnx("Returning %s   %s    %d.%d.%d.%d\n",
+			warnx("Returning %s   %s    %d.%d.%d.%d",
 			    res.client_name, res.domain_name,
 			    255 & res.router_address.bp_address_u.ip_addr.net,
 			    255 & res.router_address.bp_address_u.ip_addr.host,
 			    255 & res.router_address.bp_address_u.ip_addr.lh,
 			    255 & res.router_address.bp_address_u.ip_addr.impno);
 		if (dolog)
-			syslog(LOG_NOTICE, "Returning %s   %s    %d.%d.%d.%d\n",
+			syslog(LOG_NOTICE, "Returning %s   %s    %d.%d.%d.%d",
 			    res.client_name, res.domain_name,
 			    255 & res.router_address.bp_address_u.ip_addr.net,
 			    255 & res.router_address.bp_address_u.ip_addr.host,
@@ -199,9 +199,9 @@ bootparamproc_whoami_1_svc(whoami, rqstp)
 		return (&res);
 	}
 	if (debug)
-		warnx("whoami failed\n");
+		warnx("whoami failed");
 	if (dolog)
-		syslog(LOG_NOTICE, "whoami failed\n");
+		syslog(LOG_NOTICE, "whoami failed");
 	return (NULL);
 }
 
@@ -216,11 +216,12 @@ bootparamproc_getfile_1_svc(getfile, rqstp)
 	int     err;
 
 	if (debug)
-		warnx("getfile got question for \"%s\" and file \"%s\"\n",
+		warnx("getfile got question for \"%s\" and file \"%s\"",
 		    getfile->client_name, getfile->file_id);
 
 	if (dolog)
-		syslog(LOG_NOTICE, "getfile got question for \"%s\" and file \"%s\"\n",
+		syslog(LOG_NOTICE,
+		    "getfile got question for \"%s\" and file \"%s\"",
 		    getfile->client_name, getfile->file_id);
 
 	he = NULL;
@@ -245,17 +246,17 @@ bootparamproc_getfile_1_svc(getfile, rqstp)
 	} else {
 failed:
 		if (debug)
-			warnx("getfile failed for %s\n",
+			warnx("getfile failed for %s",
 			    getfile->client_name);
 		if (dolog)
 			syslog(LOG_NOTICE,
-			    "getfile failed for %s\n", getfile->client_name);
+			    "getfile failed for %s", getfile->client_name);
 		return (NULL);
 	}
 
 	if (debug)
 		warnx(
-		    "returning server:%s path:%s address: %d.%d.%d.%d\n",
+		    "returning server:%s path:%s address: %d.%d.%d.%d",
 		    res.server_name, res.server_path,
 		    255 & res.server_address.bp_address_u.ip_addr.net,
 		    255 & res.server_address.bp_address_u.ip_addr.host,
@@ -263,7 +264,7 @@ failed:
 		    255 & res.server_address.bp_address_u.ip_addr.impno);
 	if (dolog)
 		syslog(LOG_NOTICE,
-		    "returning server:%s path:%s address: %d.%d.%d.%d\n",
+		    "returning server:%s path:%s address: %d.%d.%d.%d",
 		    res.server_name, res.server_path,
 		    255 & res.server_address.bp_address_u.ip_addr.net,
 		    255 & res.server_address.bp_address_u.ip_addr.host,
