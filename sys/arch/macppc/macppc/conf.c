@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.11 1998/11/13 04:47:06 oster Exp $	*/
+/*	$NetBSD: conf.c,v 1.12 1998/12/10 20:10:03 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -54,8 +54,8 @@ bdev_decl(st);
 bdev_decl(cd);
 #include "md.h"
 bdev_decl(md);
-/*#include "wd.h"*/
-/*bdev_decl(wd);*/
+#include "wd.h"
+bdev_decl(wd);
 
 struct bdevsw bdevsw[] = {
 	bdev_notdef(),			/* 0: Openfirmware disk */
@@ -68,7 +68,7 @@ struct bdevsw bdevsw[] = {
 	bdev_lkm_dummy(),		/* 7 */
 	bdev_lkm_dummy(),		/* 8 */
 	bdev_disk_init(NMD,md),		/* 9: memory disk driver */
-	bdev_notdef(),			/* 10: reserved for IDE disk driver */
+	bdev_disk_init(NWD,wd),		/* 10: IDE disk driver */
 	bdev_lkm_dummy(),		/* 11 */
 	bdev_disk_init(NRAID,raid),	/* 12: RAIDframe disk driver */
 };
@@ -111,7 +111,7 @@ cdev_decl(vnd);
 cdev_decl(ccd);
 #include "aed.h"
 cdev_decl(aed);
-/*cdev_decl(wd);*/
+cdev_decl(wd);
 cdev_decl(ofc);
 cdev_decl(nvram);
 
@@ -156,7 +156,7 @@ struct cdevsw cdevsw[] = {
 	cdev_disk_init(NMD,md),		/* 27: memory disk driver */
 	cdev_mouse_init(NAED,aed),	/* 28: ADB event interface */
 	cdev_lkm_dummy(),		/* 29: */
-	cdev_notdef(),			/* 30: reserved for IDE disk driver */
+	cdev_disk_init(NWD,wd),		/* 30: IDE disk driver */
 	cdev_lkm_init(NLKM,lkm),	/* 31: loadable module driver */
 	cdev_fd_init(1,filedesc),	/* 32: file descriptor pseudo-device */
 	cdev_mm_init(1,nvram),		/* 33: nvram device */
