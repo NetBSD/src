@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.15.4.1 1996/06/18 12:06:51 is Exp $	*/
+/*	$NetBSD: clock.c,v 1.15.4.2 1996/06/21 06:52:43 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -364,9 +364,20 @@ DELAY(mic)
 	short hpos;
 
 #ifdef DRACO
+	volatile u_int8_t *kickaddr;
+	u_int8_t drain;
+
 	if (is_draco()) {
-		while (--mic > 0)
-			n = *draco_intena;
+		/*
+		 * XXX This might not work in future DraCos.
+		 * We need to rethink the DELAY()/delay() stuff.
+		 */
+		kickaddr = (volatile u_int8_t *)(DRCCADDR + NBPG * DRKICKPG);
+		while (--mic >= 0) {
+			drain = *kickaddr;
+			drain = *kickaddr;
+		}
+
 		return;
 	}
 #endif
