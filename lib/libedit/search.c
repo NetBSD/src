@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.15 2003/08/07 16:44:33 agc Exp $	*/
+/*	$NetBSD: search.c,v 1.16 2003/10/16 21:41:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)search.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: search.c,v 1.15 2003/08/07 16:44:33 agc Exp $");
+__RCSID("$NetBSD: search.c,v 1.16 2003/10/16 21:41:26 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -222,8 +222,11 @@ ce_inc_search(EditLine *el, int dir)
 		if (el->el_search.patlen == 0) {	/* first round */
 			pchar = ':';
 #ifdef ANCHOR
+#define	LEN	2
 			el->el_search.patbuf[el->el_search.patlen++] = '.';
 			el->el_search.patbuf[el->el_search.patlen++] = '*';
+#else
+#define	LEN	0
 #endif
 		}
 		done = redo = 0;
@@ -232,7 +235,7 @@ ce_inc_search(EditLine *el, int dir)
 		    *cp; *el->el_line.lastchar++ = *cp++)
 			continue;
 		*el->el_line.lastchar++ = pchar;
-		for (cp = &el->el_search.patbuf[1];
+		for (cp = &el->el_search.patbuf[LEN];
 		    cp < &el->el_search.patbuf[el->el_search.patlen];
 		    *el->el_line.lastchar++ = *cp++)
 			continue;
@@ -245,7 +248,7 @@ ce_inc_search(EditLine *el, int dir)
 		switch (el->el_map.current[(unsigned char) ch]) {
 		case ED_INSERT:
 		case ED_DIGIT:
-			if (el->el_search.patlen > EL_BUFSIZ - 3)
+			if (el->el_search.patlen >= EL_BUFSIZ - LEN)
 				term_beep(el);
 			else {
 				el->el_search.patbuf[el->el_search.patlen++] =
@@ -267,7 +270,7 @@ ce_inc_search(EditLine *el, int dir)
 			break;
 
 		case ED_DELETE_PREV_CHAR:
-			if (el->el_search.patlen > 1)
+			if (el->el_search.patlen > LEN)
 				done++;
 			else
 				term_beep(el);
@@ -282,17 +285,18 @@ ce_inc_search(EditLine *el, int dir)
 
 			case 0027:	/* ^W: Append word */
 			/* No can do if globbing characters in pattern */
-				for (cp = &el->el_search.patbuf[1];; cp++)
-				    if (cp >= &el->el_search.patbuf[el->el_search.patlen]) {
+				for (cp = &el->el_search.patbuf[LEN];; cp++)
+				    if (cp >= &el->el_search.patbuf[
+					el->el_search.patlen]) {
 					el->el_line.cursor +=
-					    el->el_search.patlen - 1;
+					    el->el_search.patlen - LEN - 1;
 					cp = c__next_word(el->el_line.cursor,
 					    el->el_line.lastchar, 1,
 					    ce__isword);
 					while (el->el_line.cursor < cp &&
 					    *el->el_line.cursor != '\n') {
-						if (el->el_search.patlen >
-						    EL_BUFSIZ - 3) {
+						if (el->el_search.patlen >=
+						    EL_BUFSIZ - LEN) {
 							term_beep(el);
 							break;
 						}
@@ -334,13 +338,13 @@ ce_inc_search(EditLine *el, int dir)
 			/* Can't search if unmatched '[' */
 			for (cp = &el->el_search.patbuf[el->el_search.patlen-1],
 			    ch = ']';
-			    cp > el->el_search.patbuf;
+			    cp >= &el->el_search.patbuf[LEN];
 			    cp--)
 				if (*cp == '[' || *cp == ']') {
 					ch = *cp;
 					break;
 				}
-			if (el->el_search.patlen > 1 && ch != '[') {
+			if (el->el_search.patlen > LEN && ch != '[') {
 				if (redo && newdir == dir) {
 					if (pchar == '?') { /* wrap around */
 						el->el_history.eventno =
@@ -371,7 +375,7 @@ ce_inc_search(EditLine *el, int dir)
 				if (el->el_line.cursor < el->el_line.buffer ||
 				    el->el_line.cursor > el->el_line.lastchar ||
 				    (ret = ce_search_line(el,
-				    &el->el_search.patbuf[1],
+				    &el->el_search.patbuf[LEN],
 				    newdir)) == CC_ERROR) {
 					/* avoid c_setpat */
 					el->el_state.lastcmd =
@@ -385,11 +389,12 @@ ce_inc_search(EditLine *el, int dir)
 						    el->el_line.lastchar :
 						    el->el_line.buffer;
 						(void) ce_search_line(el,
-						    &el->el_search.patbuf[1],
+						    &el->el_search.patbuf[LEN],
 						    newdir);
 					}
 				}
-				el->el_search.patbuf[--el->el_search.patlen] =
+				el->el_search.patlen -= LEN;
+				el->el_search.patbuf[el->el_search.patlen] =
 				    '\0';
 				if (ret == CC_ERROR) {
 					term_beep(el);
@@ -448,9 +453,6 @@ cv_search(EditLine *el, int dir)
 #ifdef ANCHOR
 	tmpbuf[0] = '.';
 	tmpbuf[1] = '*';
-#define	LEN	2
-#else
-#define	LEN	0
 #endif
 	tmplen = LEN;
 
