@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.81 1998/07/28 21:51:34 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.82 1998/08/07 06:59:31 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.75 1998/07/28 21:50:30 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.76 1998/08/07 06:58:57 thorpej Exp 
  */
 
 /*
@@ -86,6 +86,30 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "3Com",
 	    "3c905 100Base-T4",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C900BTPO,
+	    0,
+	    "3Com",
+	    "3c900B 10Base-T",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C900BCOMBO,
+	    0,
+	    "3Com",
+	    "3c900B 10Mbps-Combo",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C905BTX,
+	    0,
+	    "3Com",
+	    "3c905B 100Base-TX",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3c905BT4,
+	    0,
+	    "3Com",
+	    "3c905B 100Base-T4",
 	},
 	{
 	    PCI_VENDOR_3DFX, PCI_PRODUCT_3DFX_VOODOO,
