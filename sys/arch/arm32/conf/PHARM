@@ -2,7 +2,7 @@
 #	PHARM -- Mark's development machine in the office
 #
 
-include	"std.arm32"
+include	"arch/arm32/conf/std.arm32"
 
 # estimated number of users
 
@@ -31,7 +31,7 @@ options		ARMFPE		# ARM Ltd FPE
 options		FFS		# UFS
 #options		QUOTA		# UFS quotas
 #options		LFS		# log-structured file system
-#options		MFS		# memory file system
+options		MFS		# memory file system
 
 options		CD9660		# ISO 9660 + Rock Ridge file system
 options		MSDOSFS		# MS-DOS file system
@@ -41,7 +41,7 @@ options		KERNFS		# /kern
 #options		NULLFS		# loopback file system
 #options		PORTAL		# portal filesystem (still experimental)
 options		PROCFS		# /proc
-#options		UMAPFS		# NULLFS + uid and gid remapping
+options		UMAPFS		# NULLFS + uid and gid remapping
 options		UNION		# union file system
 
 # Networking options
@@ -57,19 +57,19 @@ options		INET		# IP + ICMP + TCP + UDP
 
 # Compatibility options
 
-options		COMPAT_43
-options 	COMPAT_12
-options		COMPAT_11
-options		COMPAT_10
-options		COMPAT_09
+options		COMPAT_43	# 4.3BSD compatibility.
+options		COMPAT_12	# NetBSD 1.2 compatibility.
+#options	COMPAT_11	# NetBSD 1.1 compatibility.
+#options	COMPAT_10	# NetBSD 1.0 compatibility.
+#options	COMPAT_09	# NetBSD 0.9 compatibility.
 options         TCP_COMPAT_42   # TCP bug compatibility with 4.2BSD
 
 # Shared memory options
 
-#options	SYSVMSG		# System V-like message queues
-#options	SYSVSEM		# System V-like semaphores
-#options	SYSVSHM		# System V-like memory sharing
-#options	SHMMAXPGS=1024	# 1024 pages is the default
+options		SYSVMSG		# System V-like message queues
+options		SYSVSEM		# System V-like semaphores
+options		SYSVSHM		# System V-like memory sharing
+options		SHMMAXPGS=1024	# 1024 pages is the default
 
 # Device options
 
@@ -99,6 +99,9 @@ mainbus0 at root
 
 # The boot cpu
 cpu0 at mainbus?
+
+# The IOMD
+iomd0 at mainbus?
 
 # The vidc
 vidcvideo0	at mainbus?
@@ -144,14 +147,17 @@ rtc0	at iic? addr 0xa0
 # Podule bus device
 podulebus0	at root
 
-#asc0	at podulebus?			# Acorn SCSI card
-#scsibus* at asc?
+asc0	at podulebus?			# Acorn SCSI card
+scsibus* at asc?
+
+cosc0	at podulebus?			# MCS Connect32 SCSI II card
+scsibus* at cosc?
 
 #csc0	at podulebus?			# Cumana SCSI II card
 #scsibus* at csc?
 
-ptsc0	at podulebus?			# Power-Tec SCSI II card
-scsibus* at ptsc?
+#ptsc0	at podulebus?			# Power-Tec SCSI II card
+#scsibus* at ptsc?
 
 #oak0	at podulebus?			# Oak SCSI I card
 #scsibus* at oak?
@@ -159,8 +165,8 @@ scsibus* at ptsc?
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 st*	at scsibus? target ? lun ?	# SCSI tape drives
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
-ch*	at scsibus? target ? lun ?	# SCSI auto-changers
-uk*	at scsibus? target ? lun ?	# SCSI unknown device
+#ch*	at scsibus? target ? lun ?	# SCSI auto-changers
+#uk*	at scsibus? target ? lun ?	# SCSI unknown device
 
 #kie*	at podulebus? slot ? offset ?
 
