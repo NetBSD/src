@@ -1,4 +1,4 @@
-/* $NetBSD: ioapic.c,v 1.1.2.9 2000/09/23 17:25:33 sommerfeld Exp $ */
+/* $NetBSD: ioapic.c,v 1.1.2.10 2000/09/23 17:27:00 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -310,11 +310,6 @@ ioapic_attach(parent, self, aux)
 struct intrhand *apic_intrhand[256];
 int	apic_intrcount[256];
 
-#if 0
-int apic_intrtype[APIC_ICU_LEN];
-int apic_intrlevel[NIPL];
-int apic_imask[NIPL];
-#endif
 
 /* XXX should check vs. softc max int number */
 #define	LEGAL_IRQ(x)	((x) >= 0 && (x) < APIC_ICU_LEN && (x) != 2)
@@ -597,10 +592,6 @@ apic_intr_establish(irq, type, level, ih_fun, ih_arg)
 
 	if (!ioapic_cold)
 		apic_vectorset(sc, intr, maxlevel);
-
-#if 0
-	apic_calculatemasks();
-#endif
 
 	/*
 	 * Poke the real handler in now.
