@@ -105,9 +105,11 @@ Boston, MA 02111-1307, USA.  */
   %{mips3:-U__mips -D__mips=3 -D__mips64} \
   %{mgp32:-U__mips64} %{mgp64:-D__mips64}"
 
-/* We have atexit(3).  */
-
-#define HAVE_ATEXIT
+/* This defines which switch letters take arguments.  -G is a mips special. */
+#undef SWITCH_TAKES_ARG
+#define SWITCH_TAKES_ARG(CHAR) \
+  (DEFAULT_SWITCH_TAKES_ARG(CHAR) \
+   || (CHAR) == 'R' || (CHAR) == 'G')
 
 /* Trampoline code for closures should call _cacheflush()
     to ensure I-cache consistency after writing trampoline code.  */
