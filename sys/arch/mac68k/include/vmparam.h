@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.6 1994/10/26 08:46:52 cgd Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.7 1995/06/21 03:17:06 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -77,11 +77,7 @@
  */
 
 /*
- * Machine dependent constants for HP300
-   ALICE
-	BG -- Sat May 23 23:45:21 EDT 1992
-	You'd like to think that, wouldn't you?  Well it's NOT an hp300!  
-	 It's a mac68k!  And therefore I am changing it.
+ * Machine dependent constants for mac68k -- mostly derived from hp300.
  */
 
 /*
@@ -91,26 +87,27 @@
  * beginning of the text and from the beginning of the P1 region to the
  * beginning of the stack respectively.
  *
+ * NOTE: HP300 uses HIGHPAGES == (0x100000/NBPG) for HP/UX compatibility.
+ * Do we care?  Obviously not at the moment.
  */
 #define	USRTEXT		8192
 #define	USRSTACK	(-HIGHPAGES*NBPG)	/* Start of user stack */
-						/* -1048576 */
 #define	BTOPUSRSTACK	(0x100000-HIGHPAGES)	/* btop(USRSTACK) */
 #define P1PAGES		0x100000
 #define	LOWPAGES	0
-#define HIGHPAGES	3 		/* UPAGES. */
+#define HIGHPAGES	3			/* UPAGES */
 
 /*
  * Virtual memory related constants, all in bytes
  */
 #ifndef MAXTSIZ
-#define	MAXTSIZ		(6*1024*1024)		/* max text size */
+#define	MAXTSIZ		(8*1024*1024)		/* max text size */
 #endif
 #ifndef DFLDSIZ
-#define	DFLDSIZ		(8*1024*1024)		/* initial data size limit */
+#define	DFLDSIZ		(16*1024*1024)		/* initial data size limit */
 #endif
 #ifndef MAXDSIZ
-#define	MAXDSIZ		(16*1024*1024)		/* max data size */
+#define	MAXDSIZ		(64*1024*1024)		/* max data size */
 #endif
 #ifndef	DFLSSIZ
 #define	DFLSSIZ		(512*1024)		/* initial stack size limit */
@@ -134,7 +131,7 @@
  */
 /* SYSPTSIZE IS SILLY; IT SHOULD BE COMPUTED AT BOOT TIME */
 #define	SYSPTSIZE	(2 * NPTEPG)	/* 8mb */
-#define	USRPTSIZE 	(2 * NPTEPG)	/* 8mb */
+#define	USRPTSIZE 	(1 * NPTEPG)	/* 4mb */
 
 /*
  * PTEs for mapping user space into the kernel for phyio operations.
@@ -226,9 +223,8 @@
  * Strategy of 1/19/85:
  *	lotsfree is 512k bytes, but at most 1/4 of memory
  *	desfree is 200k bytes, but at most 1/8 of memory
- *	minfree is 64k bytes, but at most 1/2 of desfree
+ * Are these still valid in 1995?
  */
-/* ALICE 05/23/92 BG -- I think we had better look these over carefully. */
 #define	LOTSFREE	(512 * 1024)
 #define	LOTSFREEFRACT	4
 #define	DESFREE		(200 * 1024)
@@ -252,11 +248,7 @@
  * Believed threshold (in megabytes) for which interleaved
  * swapping area is desirable.
  */
-/* ALICE 05/23/92 BG -- This should be higher.  How high, I don't know. */
 #define	LOTSOFMEM	2
-
-#define	mapin(pte, v, pfnum, prot) \
-	(*(u_int *)(pte) = ((pfnum) << PGSHIFT) | (prot), TBIS((caddr_t)(v)))
 
 /*
  * Mach derived constants
@@ -264,12 +256,10 @@
 
 /* user/kernel map constants */
 #define VM_MIN_ADDRESS		((vm_offset_t)0)
-#define VM_MAXUSER_ADDRESS	((vm_offset_t)0xFFFFD000)
-	/* Note that this goes as high as USRSTACK.  If USRSTACK goes higher, */
-	/*  this constant really should, too. */
-#define VM_MAX_ADDRESS		((vm_offset_t)0xFFFFD000)
+#define VM_MAXUSER_ADDRESS	((vm_offset_t)(USRSTACK))
+#define VM_MAX_ADDRESS		((vm_offset_t)(0-(UPAGES*NBPG)))
 #define VM_MIN_KERNEL_ADDRESS	((vm_offset_t)0)
-#define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)0xFFFFF000)
+#define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)(0-NBPG))
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
