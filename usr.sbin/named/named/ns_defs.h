@@ -1,6 +1,8 @@
+/*	$NetBSD: ns_defs.h,v 1.3 1997/10/04 15:11:51 mrg Exp $	*/
+
 /*
  *	from ns.h	4.33 (Berkeley) 8/23/90
- *	$Id: ns_defs.h,v 1.2 1997/04/13 10:51:28 mrg Exp $
+ *	from: Id: ns_defs.h,v 8.8 1996/09/22 00:13:10 vixie Exp 
  */
 
 /*

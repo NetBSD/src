@@ -1,7 +1,7 @@
-/*	$NetBSD: db_secure.c,v 1.2 1997/04/13 10:51:21 mrg Exp $	*/
+/*	$NetBSD: db_secure.c,v 1.3 1997/10/04 15:11:46 mrg Exp $	*/
 
 #ifndef LINT
-static char rcsid[] = "from: Id: db_secure.c,v 8.6 1996/05/17 09:10:46 vixie Exp";
+static char rcsid[] = "from: Id: db_secure.c,v 8.7 1997/06/01 20:34:34 vixie Exp ";
 #endif
 
 /* this file was contributed by Gregory Neil Shapiro of WPI in August 1993 */
@@ -31,7 +31,7 @@ build_secure_netlist(zp)
 	struct zoneinfo *zp;
 {
 	struct netinfo *ntp = NULL, **netlistp, **end;
-	char buf[BUFSIZ];
+	char buf[MAXDNAME];
 	struct hashbuf *htp;
 	struct namebuf *snp;
 	struct databuf *dp;

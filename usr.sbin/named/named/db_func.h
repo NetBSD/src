@@ -1,8 +1,8 @@
-/*	$NetBSD: db_func.h,v 1.2 1997/04/13 10:51:10 mrg Exp $	*/
+/*	$NetBSD: db_func.h,v 1.3 1997/10/04 15:11:42 mrg Exp $	*/
 
 /* db_proc.h - prototypes for functions in db_*.c
  *
- * from: Id: db_func.h,v 8.12 1996/09/22 00:13:10 vixie Exp
+ * from: Id: db_func.h,v 8.13 1997/06/01 20:34:34 vixie Exp 
  */
 
 /* ++from db_update.c++ */
@@ -13,6 +13,7 @@ extern int		db_update __P((char name[],
 				       struct hashbuf *htp)),
 			db_cmp __P((struct databuf *,struct databuf *)),
 			findMyZone __P((struct namebuf *np, int class));
+extern void		fixttl __P((struct databuf *dp));
 /* --from db_update.c-- */
 
 /* ++from db_reload.c++ */

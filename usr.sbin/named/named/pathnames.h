@@ -1,6 +1,8 @@
+/*	$NetBSD: pathnames.h,v 1.3 1997/10/04 15:12:17 mrg Exp $	*/
+
 /*
  *	@(#)pathnames.h	5.4 (Berkeley) 6/1/90
- *	$Id: pathnames.h,v 1.2 1997/04/13 10:51:53 mrg Exp $
+ *	from: Id: pathnames.h,v 8.1 1994/12/15 06:24:14 vixie Exp 
  */
 
 /*

@@ -1,6 +1,8 @@
+/*	$NetBSD: ns_func.h,v 1.3 1997/10/04 15:11:55 mrg Exp $	*/
+
 /* ns_func.h - declarations for ns_*.c's externally visible functions
  *
- * $Id: ns_func.h,v 1.2 1997/04/13 10:51:32 mrg Exp $
+ * from: Id: ns_func.h,v 8.13 1996/11/11 06:36:49 vixie Exp 
  */
 
 /* ++from ns_resp.c++ */

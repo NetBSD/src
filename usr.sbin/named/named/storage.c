@@ -1,3 +1,5 @@
+/*	$NetBSD: storage.c,v 1.3 1997/10/04 15:12:18 mrg Exp $	*/
+
 /*
  * ++Copyright++ 1985, 1989
  * -
@@ -86,7 +88,7 @@ extern void panic __P((int, const char *));
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "$Id: storage.c,v 1.2 1997/04/13 10:51:54 mrg Exp $";
+static char RCSid[] = "from: Id: storage.c,v 8.2 1996/08/05 08:31:30 vixie Exp ";
 #endif
 
 #undef malloc
