@@ -1,4 +1,4 @@
-/*	$NetBSD: com3.c,v 1.7 1998/08/24 00:19:25 hubertf Exp $	*/
+/*	$NetBSD: com3.c,v 1.8 2000/09/10 10:51:17 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com3.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com3.c,v 1.7 1998/08/24 00:19:25 hubertf Exp $");
+__RCSID("$NetBSD: com3.c,v 1.8 2000/09/10 10:51:17 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -286,7 +286,7 @@ shoot()
 					clearbit(location[position].objects, TIMER);
 					setbit(location[position].objects, DEADTIME);
 				} else
-					puts("What old timer?");
+					puts("What old-timer?");
 				break;
 			case MAN:
 				if (testbit(location[position].objects, MAN)) {
