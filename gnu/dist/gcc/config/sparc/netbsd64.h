@@ -69,6 +69,19 @@
 %(asm_cpu) \
 "
 
+#undef LINK_SPEC
+#define LINK_SPEC \
+ "-m elf64_sparc \
+  %{assert*} %{R*} \
+  %{shared:-shared} \
+  %{!shared: \
+    -dc -dp \
+    %{!nostdlib:%{!r*:%{!e*:-e __start}}} \
+    %{!static: \
+      %{rdynamic:-export-dynamic} \
+      %{!dynamic-linker:-dynamic-linker /usr/libexec/ld.elf_so}} \
+    %{static:-static}}"
+
 #undef STDC_0_IN_SYSTEM_HEADERS
 
 /* Name the port. */
