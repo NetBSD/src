@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_alloclist.c,v 1.18 2004/02/29 04:03:50 oster Exp $	*/
+/*	$NetBSD: rf_alloclist.c,v 1.19 2004/03/05 02:53:55 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,7 +37,7 @@
  ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_alloclist.c,v 1.18 2004/02/29 04:03:50 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_alloclist.c,v 1.19 2004/03/05 02:53:55 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_alloclist.c,v 1.18 2004/02/29 04:03:50 oster Exp 
 
 static struct pool rf_alloclist_pool;
 #define RF_AL_FREELIST_MAX 256
+#define RF_AL_FREELIST_MIN 64
 
 static void rf_ShutdownAllocList(void *);
 
@@ -68,7 +69,9 @@ rf_ConfigureAllocList(RF_ShutdownList_t **listp)
 	pool_init(&rf_alloclist_pool, sizeof(RF_AllocListElem_t),
 		  0, 0, 0, "rf_alloclist_pl", NULL);
 	pool_sethiwat(&rf_alloclist_pool, RF_AL_FREELIST_MAX);
-	pool_prime(&rf_alloclist_pool, 16);  /* need something.. */
+	pool_prime(&rf_alloclist_pool, RF_AL_FREELIST_MIN);
+	pool_setlowat(&rf_alloclist_pool, RF_AL_FREELIST_MIN);
+	
 
 	rf_ShutdownCreate(listp, rf_ShutdownAllocList, NULL);
 
