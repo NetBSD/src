@@ -1,4 +1,4 @@
-/*	$NetBSD: lpf.c,v 1.9 2000/04/30 15:47:55 thorpej Exp $	*/
+/*	$NetBSD: lpf.c,v 1.10 2002/07/14 15:27:59 wiz Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lpf.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lpf.c,v 1.9 2000/04/30 15:47:55 thorpej Exp $");
+__RCSID("$NetBSD: lpf.c,v 1.10 2002/07/14 15:27:59 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,13 +75,11 @@ char	*acctfile;	/* accounting information file */
 int	crnl;		/* \n -> \r\n */
 int	need_cr;
 
-int main __P((int, char *[]));
-void usage __P((void));
+int main(int, char *[]);
+void usage(void);
 
 int
-main(argc, argv) 
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	FILE *p = stdin, *o = stdout;
 	int i, col;
@@ -231,7 +229,7 @@ main(argc, argv)
 }
 
 void
-usage()
+usage(void)
 {
         fprintf(stderr,
 	  "usage: lpf [-c] [-f] [-h host] [-i indent] [-l length] [-n name] [-w width] [acctfile]\n");

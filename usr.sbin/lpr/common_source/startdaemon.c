@@ -1,4 +1,4 @@
-/*	$NetBSD: startdaemon.c,v 1.11 1999/09/26 10:32:27 mrg Exp $	*/
+/*	$NetBSD: startdaemon.c,v 1.12 2002/07/14 15:27:58 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)startdaemon.c	8.2 (Berkeley) 4/17/94";
 #else
-__RCSID("$NetBSD: startdaemon.c,v 1.11 1999/09/26 10:32:27 mrg Exp $");
+__RCSID("$NetBSD: startdaemon.c,v 1.12 2002/07/14 15:27:58 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,8 +63,7 @@ extern uid_t	uid, euid;
  */
 
 int
-startdaemon(printer)
-	char *printer;
+startdaemon(char *printer)
 {
 	struct sockaddr_un un;
 	int s;
