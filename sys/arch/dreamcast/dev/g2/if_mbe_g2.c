@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mbe_g2.c,v 1.3 2003/02/05 12:03:55 tsutsui Exp $	*/
+/*	$NetBSD: if_mbe_g2.c,v 1.4 2005/02/19 15:37:35 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2002 Christian Groessler
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mbe_g2.c,v 1.3 2003/02/05 12:03:55 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mbe_g2.c,v 1.4 2005/02/19 15:37:35 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_mbe_g2.c,v 1.3 2003/02/05 12:03:55 tsutsui Exp $"
 
 int	mbe_g2_match(struct device *, struct cfdata *, void *);
 void	mbe_g2_attach(struct device *, struct device *, void *);
-static int mbe_g2_detect(bus_space_tag_t, bus_space_handle_t, u_int8_t *);
+static int mbe_g2_detect(bus_space_tag_t, bus_space_handle_t, uint8_t *);
 
 struct mbe_g2_softc {
 	struct	mb86960_softc sc_mb86960;	/* real "mb86960" softc */
@@ -112,13 +112,13 @@ mbe_g2_match(struct device *parent, struct cfdata *cf, void *aux)
 	bus_space_tag_t memt = &dbs;
 	static int lanafound;
 	int rv;
-	u_int8_t myea[ETHER_ADDR_LEN];
+	uint8_t myea[ETHER_ADDR_LEN];
 
 	if (lanafound)
-		return (0);
+		return 0;
 
 	if (strcmp("mbe", cf->cf_name))
-		return (0);
+		return 0;
 
 	memcpy(memt, ga->ga_memt, sizeof(struct dreamcast_bus_space));
 	g2bus_set_bus_mem_sparse(memt);
@@ -127,9 +127,9 @@ mbe_g2_match(struct device *parent, struct cfdata *cf, void *aux)
 	if (bus_space_map(memt, 0x00600400, LANA_NPORTS, 0, &memh)) {
 #ifdef LANA_DEBUG
 		printf("mbe_g2_match: couldn't map iospace 0x%x\n",
-		       0x00600400);
+		    0x00600400);
 #endif
-		return (0);
+		return 0;
 	}
 
 	rv = 0;
@@ -144,7 +144,7 @@ mbe_g2_match(struct device *parent, struct cfdata *cf, void *aux)
 	lanafound = 1;
  out:
 	bus_space_unmap(memt, memh, LANA_NPORTS);
-	return (rv);
+	return rv;
 }
 
 
@@ -152,12 +152,9 @@ mbe_g2_match(struct device *parent, struct cfdata *cf, void *aux)
  * Determine type and ethernet address.
  */
 static int
-mbe_g2_detect(iot, ioh, enaddr)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	u_int8_t *enaddr;
+mbe_g2_detect(bus_space_tag_t iot, bus_space_handle_t ioh, uint8_t *enaddr)
 {
-	u_int8_t eeprom[FE_EEPROM_SIZE];
+	uint8_t eeprom[FE_EEPROM_SIZE];
 
 	/* Read the chip type */
 	if ((bus_space_read_1(iot, ioh, FE_DLCR7) & FE_D7_IDENT) !=
@@ -165,7 +162,7 @@ mbe_g2_detect(iot, ioh, enaddr)
 #ifdef LANA_DEBUG
 		printf("mbe_g2_detect: unknown chip type\n");
 #endif
-		return (0);
+		return 0;
 	}
 
 	memset(eeprom, 0, FE_EEPROM_SIZE);
@@ -184,23 +181,21 @@ mbe_g2_detect(iot, ioh, enaddr)
 #ifdef LANA_DEBUG
 		printf("mbe_g2_detect: invalid ethernet address\n");
 #endif
-		return (0);
+		return 0;
 	}
 
-	return (1);
+	return 1;
 }
 
 void
-mbe_g2_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+mbe_g2_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct g2bus_attach_args *ga = aux;
 	struct mbe_g2_softc *isc = (struct mbe_g2_softc *)self;
 	struct mb86960_softc *sc = &isc->sc_mb86960;
 	bus_space_tag_t memt = &mbe_g2_dbs;
 	bus_space_handle_t memh;
-	u_int8_t myea[ETHER_ADDR_LEN];
+	uint8_t myea[ETHER_ADDR_LEN];
 
 	memcpy(memt, ga->ga_memt, sizeof(struct dreamcast_bus_space));
 	g2bus_set_bus_mem_sparse(memt);
