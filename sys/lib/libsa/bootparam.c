@@ -1,4 +1,4 @@
-/*	$NetBSD: bootparam.c,v 1.13 1999/11/13 21:17:56 thorpej Exp $	*/
+/*	$NetBSD: bootparam.c,v 1.14 2003/03/12 14:51:31 drochner Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -52,7 +52,6 @@
 
 #include "stand.h"
 #include "net.h"
-#include "netif.h"
 #include "rpc.h"
 #include "bootparam.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rarp.c,v 1.20 2000/03/30 12:19:48 augustss Exp $	*/
+/*	$NetBSD: rarp.c,v 1.21 2003/03/12 14:51:31 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -54,7 +54,6 @@
 
 #include "stand.h"
 #include "net.h"
-#include "netif.h"
 
 
 /*

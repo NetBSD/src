@@ -1,4 +1,4 @@
-/*	$NetBSD: bootp.c,v 1.23 2003/02/25 14:42:30 ragge Exp $	*/
+/*	$NetBSD: bootp.c,v 1.24 2003/03/12 14:51:31 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -51,7 +51,6 @@
 
 #include "stand.h"
 #include "net.h"
-#include "netif.h"
 #include "bootp.h"
 
 struct in_addr servip;
