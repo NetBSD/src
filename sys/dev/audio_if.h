@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.26 1998/08/07 00:00:58 augustss Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.27 1998/08/08 23:40:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -158,8 +158,7 @@ extern void	audio_attach_mi __P((struct audio_hw_if *, struct midi_hw_if *, void
 #define ISDEVAUDIOCTL(x)	(AUDIODEV((x)) == AUDIOCTL_DEVICE)
 #define ISDEVMIXER(x)		(AUDIODEV((x)) == MIXER_DEVICE)
 
-#ifndef __i386__
+#if !defined(__i386__) && !defined(__arm32__)
 #define splaudio splbio		/* XXX */
 #define IPL_AUDIO IPL_BIO	/* XXX */
 #endif
-
