@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.81 2003/12/07 12:53:58 simonb Exp $
+#	$NetBSD: sys.mk,v 1.82 2003/12/26 17:27:01 christos Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 
 unix?=		We run NetBSD.
@@ -43,7 +43,7 @@ COMPILE.c?=	${CC} ${CFLAGS} ${CPPFLAGS} -c
 LINK.c?=	${CC} ${CFLAGS} ${CPPFLAGS} ${LDFLAGS}
 
 CXX?=		c++
-CXXFLAGS?=	${CFLAGS}
+CXXFLAGS?=	${CFLAGS:S/-Wno-traditional//}
 COMPILE.cc?=	${CXX} ${CXXFLAGS} ${CPPFLAGS} -c
 LINK.cc?=	${CXX} ${CXXFLAGS} ${CPPFLAGS} ${LDFLAGS}
 
