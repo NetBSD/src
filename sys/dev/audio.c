@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.181 2003/10/02 07:15:20 mycroft Exp $	*/
+/*	$NetBSD: audio.c,v 1.182 2004/01/31 00:07:56 fredb Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.181 2003/10/02 07:15:20 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.182 2004/01/31 00:07:56 fredb Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -167,9 +167,8 @@ static const struct portname otable[] = {
 	{ AudioNline,		AUDIO_LINE_OUT },
 	{ 0 }
 };
-void	au_check_ports(struct audio_softc *, struct au_mixer_ports *,
-			    mixer_devinfo_t *, int, char *, char *,
-			    const struct portname *);
+void	au_setup_ports(struct audio_softc *, struct au_mixer_ports *,
+			mixer_devinfo_t *, const struct portname *);
 int	au_set_gain(struct audio_softc *, struct au_mixer_ports *,
 			 int, int);
 void	au_get_gain(struct audio_softc *, struct au_mixer_ports *,
@@ -181,7 +180,7 @@ int	au_get_lr_value(struct audio_softc *, mixer_ctrl_t *,
 			     int *, int *r);
 int	au_set_lr_value(struct audio_softc *, mixer_ctrl_t *,
 			     int, int);
-int	au_portof(struct audio_softc *, char *);
+int	au_portof(struct audio_softc *, char *, int);
 
 dev_type_open(audioopen);
 dev_type_close(audioclose);
@@ -232,7 +231,7 @@ audioattach(struct device *parent, struct device *self, void *aux)
 	void *hdlp = sa->hdl;
 	int error;
 	mixer_devinfo_t mi;
-	int iclass, oclass, props;
+	int iclass, mclass, oclass, props;
 
 #ifdef DIAGNOSTIC
 	if (hwp == 0 ||
@@ -297,40 +296,72 @@ audioattach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_input_fragment_length = 0;
 
-	iclass = oclass = -1;
+	iclass = mclass = oclass = -1;
 	sc->sc_inports.index = -1;
 	sc->sc_inports.master = -1;
 	sc->sc_inports.nports = 0;
 	sc->sc_inports.isenum = 0;
 	sc->sc_inports.allports = 0;
+	sc->sc_inports.isdual = 0;
+	sc->sc_inports.mixerout = -1;
+	sc->sc_inports.cur_port = -1;
 	sc->sc_outports.index = -1;
 	sc->sc_outports.master = -1;
 	sc->sc_outports.nports = 0;
 	sc->sc_outports.isenum = 0;
 	sc->sc_outports.allports = 0;
+	sc->sc_outports.isdual = 0;
+	sc->sc_outports.mixerout = -1;
+	sc->sc_outports.cur_port = -1;
 	sc->sc_monitor_port = -1;
 	for(mi.index = 0; ; mi.index++) {
 		if (hwp->query_devinfo(hdlp, &mi) != 0)
 			break;
-		if (mi.type == AUDIO_MIXER_CLASS &&
-		    strcmp(mi.label.name, AudioCrecord) == 0)
-			iclass = mi.index;
-		if (mi.type == AUDIO_MIXER_CLASS &&
-		    strcmp(mi.label.name, AudioCmonitor) == 0)
-			oclass = mi.index;
+		if (mi.type == AUDIO_MIXER_CLASS) {
+			if (strcmp(mi.label.name, AudioCrecord) == 0)
+				iclass = mi.mixer_class;
+			if (strcmp(mi.label.name, AudioCmonitor) == 0)
+				mclass = mi.mixer_class;
+			if (strcmp(mi.label.name, AudioCoutputs) == 0)
+				oclass = mi.mixer_class;
+		}
 	}
 	for(mi.index = 0; ; mi.index++) {
 		if (hwp->query_devinfo(hdlp, &mi) != 0)
 			break;
 		if (mi.type == AUDIO_MIXER_CLASS)
 			continue;
-		au_check_ports(sc, &sc->sc_inports,  &mi, iclass,
-			       AudioNsource, AudioNrecord, itable);
-		au_check_ports(sc, &sc->sc_outports, &mi, oclass,
-			       AudioNoutput, AudioNmaster, otable);
-		if (mi.mixer_class == oclass &&
-		    (strcmp(mi.label.name, AudioNmonitor) == 0))
-			sc->sc_monitor_port = mi.index;
+		if (mi.mixer_class == iclass) {
+			if (strcmp(mi.label.name, AudioNmaster) == 0)
+				sc->sc_inports.master = mi.index;
+#if 1	/* Deprecated. Use AudioNmaster. */
+			if (strcmp(mi.label.name, AudioNrecord) == 0)
+				sc->sc_inports.master = mi.index;
+			if (strcmp(mi.label.name, AudioNvolume) == 0)
+				sc->sc_inports.master = mi.index;
+#endif
+			if (strcmp(mi.label.name, AudioNsource) == 0) {
+				if (mi.type == AUDIO_MIXER_ENUM) {
+				    int i;
+				    for(i = 0; i < mi.un.e.num_mem; i++)
+					if (strcmp(mi.un.e.member[i].label.name,
+						    AudioNmixerout) == 0)
+						sc->sc_inports.mixerout =
+						    mi.un.e.member[i].ord;
+				}
+				au_setup_ports(sc, &sc->sc_inports, &mi,
+				    itable);
+			}
+		} else if (mi.mixer_class == mclass) {
+			if (strcmp(mi.label.name, AudioNmonitor) == 0)
+				sc->sc_monitor_port = mi.index;
+		} else if (mi.mixer_class == oclass) {
+			if (strcmp(mi.label.name, AudioNmaster) == 0)
+				sc->sc_outports.master = mi.index;
+			if (strcmp(mi.label.name, AudioNselect) == 0)
+				au_setup_ports(sc, &sc->sc_outports, &mi,
+				    otable);
+		}
 	}
 	DPRINTF(("audio_attach: inputs ports=0x%x, input master=%d, "
 		 "output ports=0x%x, output master=%d\n",
@@ -395,62 +426,55 @@ audiodetach(struct device *self, int flags)
 }
 
 int
-au_portof(struct audio_softc *sc, char *name)
+au_portof(struct audio_softc *sc, char *name, int class)
 {
 	mixer_devinfo_t mi;
 
 	for(mi.index = 0;
 	    sc->hw_if->query_devinfo(sc->hw_hdl, &mi) == 0;
 	    mi.index++)
-		if (strcmp(mi.label.name, name) == 0)
+		if (mi.mixer_class == class && strcmp(mi.label.name, name) == 0)
 			return mi.index;
 	return -1;
 }
 
 void
-au_check_ports(struct audio_softc *sc, struct au_mixer_ports *ports,
-	       mixer_devinfo_t *mi, int cls, char *name, char *mname,
-	       const struct portname *tbl)
+au_setup_ports(struct audio_softc *sc, struct au_mixer_ports *ports,
+	       mixer_devinfo_t *mi, const struct portname *tbl)
 {
 	int i, j;
 
-	if (mi->mixer_class != cls)
-		return;
-	if (strcmp(mi->label.name, mname) == 0) {
-		ports->master = mi->index;
-		return;
-	}
-	if (strcmp(mi->label.name, name) != 0)
-		return;
+	ports->index = mi->index;
 	if (mi->type == AUDIO_MIXER_ENUM) {
-	    ports->index = mi->index;
-	    for(i = 0; tbl[i].name; i++) {
-		for(j = 0; j < mi->un.e.num_mem; j++) {
-		    if (strcmp(mi->un.e.member[j].label.name,
-			       tbl[i].name) == 0) {
-			ports->aumask[ports->nports] = tbl[i].mask;
-			ports->misel [ports->nports] = mi->un.e.member[j].ord;
-			ports->miport[ports->nports++] =
-				au_portof(sc, mi->un.e.member[j].label.name);
-			ports->allports |= tbl[i].mask;
-		    }
-		}
-	    }
-	    ports->isenum = 1;
+		ports->isenum = 1;
+		for(i = 0; tbl[i].name; i++)
+		    for(j = 0; j < mi->un.e.num_mem; j++)
+			if (strcmp(mi->un.e.member[j].label.name,
+							    tbl[i].name) == 0) {
+				ports->allports |= tbl[i].mask;
+				ports->aumask[ports->nports] = tbl[i].mask;
+				ports->misel[ports->nports] =
+				    mi->un.e.member[j].ord;
+				ports->miport[ports->nports] =
+				    au_portof(sc, mi->un.e.member[j].label.name,
+				    mi->mixer_class);
+				if (ports->mixerout != -1 &&
+				    ports->miport[ports->nports++] != -1)
+					ports->isdual = 1;
+			}
 	} else if (mi->type == AUDIO_MIXER_SET) {
-	    ports->index = mi->index;
-	    for(i = 0; tbl[i].name; i++) {
-		for(j = 0; j < mi->un.s.num_mem; j++) {
-		    if (strcmp(mi->un.s.member[j].label.name,
-			       tbl[i].name) == 0) {
-			ports->aumask[ports->nports] = tbl[i].mask;
-			ports->misel [ports->nports] = mi->un.s.member[j].mask;
-			ports->miport[ports->nports++] =
-				au_portof(sc, mi->un.s.member[j].label.name);
-			ports->allports |= tbl[i].mask;
-		    }
-		}
-	    }
+		for(i = 0; tbl[i].name; i++)
+		    for(j = 0; j < mi->un.s.num_mem; j++)
+			if (strcmp(mi->un.s.member[j].label.name,
+							    tbl[i].name) == 0) {
+				ports->allports |= tbl[i].mask;
+				ports->aumask[ports->nports] = tbl[i].mask;
+				ports->misel[ports->nports] =
+				    mi->un.s.member[j].mask;
+				ports->miport[ports->nports++] =
+				    au_portof(sc, mi->un.s.member[j].label.name,
+				    mi->mixer_class);
+			}
 	}
 }
 
@@ -2576,15 +2600,22 @@ au_set_gain(struct audio_softc *sc, struct au_mixer_ports *ports,
 			error = sc->hw_if->get_port(sc->hw_hdl, &ct);
 			if (error)
 				return error;
-			for(i = 0; i < ports->nports; i++) {
-				if (ports->misel[i] == ct.un.ord) {
-					ct.dev = ports->miport[i];
-					if (ct.dev == -1 ||
-					    au_set_lr_value(sc, &ct, l, r))
-						goto usemaster;
-					else
-						break;
-				}
+			if (ports->isdual) {
+				if (ports->cur_port == -1)
+					ct.dev = ports->master;
+				else
+					ct.dev = ports->miport[ports->cur_port];
+				error = au_set_lr_value(sc, &ct, l, r);
+			} else {
+				for(i = 0; i < ports->nports; i++)
+				    if (ports->misel[i] == ct.un.ord) {
+					    ct.dev = ports->miport[i];
+					    if (ct.dev == -1 ||
+						au_set_lr_value(sc, &ct, l, r))
+						    goto usemaster;
+					    else
+						    break;
+				    }
 			}
 		} else {
 			ct.type = AUDIO_MIXER_SET;
@@ -2652,16 +2683,23 @@ au_get_gain(struct audio_softc *sc, struct au_mixer_ports *ports,
 			if (sc->hw_if->get_port(sc->hw_hdl, &ct))
 				goto bad;
 			ct.type = AUDIO_MIXER_VALUE;
-			for(i = 0; i < ports->nports; i++) {
-				if (ports->misel[i] == ct.un.ord) {
-					ct.dev = ports->miport[i];
-					if (ct.dev == -1 ||
-					    au_get_lr_value(sc, &ct,
-							    &lgain, &rgain))
-						goto usemaster;
-					else
-						break;
-				}
+			if (ports->isdual) {
+				if (ports->cur_port == -1)
+					ct.dev = ports->master;
+				else
+					ct.dev = ports->miport[ports->cur_port];
+				au_get_lr_value(sc, &ct, &lgain, &rgain);
+			} else {
+				for(i = 0; i < ports->nports; i++)
+				    if (ports->misel[i] == ct.un.ord) {
+					    ct.dev = ports->miport[i];
+					    if (ct.dev == -1 ||
+						au_get_lr_value(sc, &ct,
+								&lgain, &rgain))
+						    goto usemaster;
+					    else
+						    break;
+				    }
 			}
 		} else {
 			ct.type = AUDIO_MIXER_SET;
@@ -2708,11 +2746,22 @@ int
 au_set_port(struct audio_softc *sc, struct au_mixer_ports *ports, u_int port)
 {
 	mixer_ctrl_t ct;
-	int i, error;
+	int i, error, use_mixerout;
 
-	if (port == 0 && ports->allports == 0)
-		return 0;	/* allow this special case */
-
+	use_mixerout = 1;
+	if (port == 0) {
+		if (ports->allports == 0)
+			return 0;		/* Allow this special case. */
+		else if (ports->isdual) {
+			if (ports->cur_port == -1) {
+				return 0;
+			} else {
+				port = ports->aumask[ports->cur_port];
+				ports->cur_port = -1;
+				use_mixerout = 0;
+			}
+		}
+	}
 	if (ports->index == -1)
 		return EINVAL;
 	ct.dev = ports->index;
@@ -2723,7 +2772,12 @@ au_set_port(struct audio_softc *sc, struct au_mixer_ports *ports, u_int port)
 		error = EINVAL;
 		for(i = 0; i < ports->nports; i++)
 			if (ports->aumask[i] == port) {
-				ct.un.ord = ports->misel[i];
+				if (ports->isdual && use_mixerout) {
+					ct.un.ord = ports->mixerout;
+					ports->cur_port = i;
+				} else {
+					ct.un.ord = ports->misel[i];
+				}
 				error = sc->hw_if->set_port(sc->hw_hdl, &ct);
 				break;
 			}
@@ -2757,9 +2811,16 @@ au_get_port(struct audio_softc *sc, struct au_mixer_ports *ports)
 		return 0;
 	aumask = 0;
 	if (ports->isenum) {
-		for(i = 0; i < ports->nports; i++)
-			if (ct.un.ord == ports->misel[i])
-				aumask = ports->aumask[i];
+		if (ports->isdual && ports->cur_port != -1) {
+			if (ports->mixerout == ct.un.ord)
+				aumask = ports->aumask[ports->cur_port];
+			else
+				ports->cur_port = -1;
+		}
+		if (aumask == 0)
+			for(i = 0; i < ports->nports; i++)
+				if (ports->misel[i] == ct.un.ord)
+					aumask = ports->aumask[i];
 	} else {
 		for(i = 0; i < ports->nports; i++)
 			if (ct.un.mask & ports->misel[i])

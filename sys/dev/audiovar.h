@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.29 2003/10/02 07:15:20 mycroft Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.30 2004/01/31 00:07:56 fredb Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -113,14 +113,18 @@ struct audio_ringbuffer {
 #define AUDIO_N_PORTS 4
 
 struct au_mixer_ports {
-	int	index;
-	int	master;
-	int	nports;
-	u_char	isenum;
-	u_int	allports;
-	u_int	aumask[AUDIO_N_PORTS];
-	u_int	misel [AUDIO_N_PORTS];
-	u_int	miport[AUDIO_N_PORTS];
+	int	index;		/* index of port-selector mixerctl */
+	int	master;		/* index of master mixerctl */
+	int	nports;		/* number of selectable ports */
+	u_char	isenum;		/* selector is enum type */
+	u_int	allports;	/* all aumasks or'd */
+	u_int	aumask[AUDIO_N_PORTS];	/* exposed value of "ports" */
+	u_int	misel [AUDIO_N_PORTS];	/* ord of port, for selector */
+	u_int	miport[AUDIO_N_PORTS];	/* index of port's mixerctl */
+	u_char	isdual;		/* has working mixerout */
+	int	mixerout;	/* ord of mixerout, for dual case */
+	int	cur_port;	/* the port that gain actually controls when
+				   mixerout is selected, for dual case */
 };
 
 #if NAURATECONV > 0
