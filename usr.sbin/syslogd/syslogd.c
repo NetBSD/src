@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.69.2.8 2004/11/15 17:26:03 thorpej Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.69.2.9 2004/11/15 17:34:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.69.2.8 2004/11/15 17:26:03 thorpej Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.69.2.9 2004/11/15 17:34:18 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -850,11 +850,11 @@ logmsg(int pri, char *msg, char *from, int flags)
 		if (f->f_host != NULL) {
 			switch (f->f_host[0]) {
 			case '+':
-				if (strcmp(from, f->f_host + 1) != 0)
+				if (strcasecmp(from, f->f_host + 1) != 0)
 					continue;
 				break;
 			case '-':
-				if (strcmp(from, f->f_host + 1) == 0)
+				if (strcasecmp(from, f->f_host + 1) == 0)
 					continue;
 				break;
 			}
@@ -877,7 +877,7 @@ logmsg(int pri, char *msg, char *from, int flags)
 		if ((flags & MARK) == 0 && msglen == f->f_prevlen &&
 		    !NoRepeat &&
 		    !strcmp(msg, f->f_prevline) &&
-		    !strcmp(from, f->f_prevhost)) {
+		    !strcasecmp(from, f->f_prevhost)) {
 			(void)strncpy(f->f_lasttime, timestamp, 15);
 			f->f_prevcount++;
 			dprintf("Msg repeated %d times, %ld sec of %d\n",
@@ -978,7 +978,7 @@ fprintlog(struct filed *f, int flags, char *msg)
 			 * check for local vs remote messages
 			 * (from FreeBSD PR#bin/7055)
 			 */
-		if (strcmp(f->f_prevhost, LocalHostName)) {
+		if (strcasecmp(f->f_prevhost, LocalHostName)) {
 			l = snprintf(line, sizeof(line) - 1,
 				     "<%d>%.15s [%s]: %s",
 				     f->f_prevpri, (char *) iov[0].iov_base,
@@ -1212,7 +1212,7 @@ cvthname(struct sockaddr_storage *f)
 		dprintf("Host name for your address (%s) unknown\n", ip);
 		return (ip);
 	}
-	if ((p = strchr(host, '.')) && strcmp(p + 1, LocalDomain) == 0)
+	if ((p = strchr(host, '.')) && strcasecmp(p + 1, LocalDomain) == 0)
 		*p = '\0';
 	return (host);
 }
