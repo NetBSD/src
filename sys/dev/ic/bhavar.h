@@ -1,4 +1,4 @@
-/*	$NetBSD: bhavar.h,v 1.21 2001/05/03 20:34:54 ross Exp $	*/
+/*	$NetBSD: bhavar.h,v 1.22 2004/08/24 00:53:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _DEV_IC_BHAVAR_H_
+#define	_DEV_IC_BHAVAR_H_
 
 #include <sys/queue.h>
 
@@ -150,13 +153,15 @@ struct bha_probe_data {
 	int sc_irq, sc_drq;
 };
 
-int	bha_find __P((bus_space_tag_t, bus_space_handle_t));
-int	bha_inquire_config __P((bus_space_tag_t, bus_space_handle_t,
-	    struct bha_probe_data *));
-void	bha_attach __P((struct bha_softc *));
-int	bha_info __P((struct bha_softc *));
-int	bha_intr __P((void *));
+int	bha_find(bus_space_tag_t, bus_space_handle_t);
+int	bha_inquire_config(bus_space_tag_t, bus_space_handle_t,
+	    struct bha_probe_data *);
+void	bha_attach(struct bha_softc *);
+int	bha_info(struct bha_softc *);
+int	bha_intr(void *);
 
-int	bha_disable_isacompat __P((struct bha_softc *));
-int	bha_probe_inquiry __P((bus_space_tag_t, bus_space_handle_t,
-	    struct bha_probe_data *));
+int	bha_disable_isacompat(struct bha_softc *);
+int	bha_probe_inquiry(bus_space_tag_t, bus_space_handle_t,
+	    struct bha_probe_data *);
+
+#endif /* _DEV_IC_BHAVAR_H_ */
