@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.5 1998/01/18 14:50:11 drochner Exp $	*/
+/*	$NetBSD: pccons.c,v 1.6 1998/01/19 01:49:43 sakamoto Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -49,6 +49,7 @@
 #include <sys/user.h>
 #include <sys/select.h>
 #include <sys/tty.h>
+#include <sys/fcntl.h>
 #include <sys/uio.h>
 #include <sys/callout.h>
 #include <sys/systm.h>
@@ -70,6 +71,9 @@
 #include <bebox/isa/isa_machdep.h>
 #include <bebox/isa/kbdreg.h>
 
+#define	ISA_MEM(p)	((void *)(BEBOX_BUS_SPACE_MEM + (u_long)(p)))
+#define	ISA_HOLE_VADDR(p)	ISA_MEM(p)
+
 #define	XFREE86_BUG_COMPAT
 
 #ifndef BEEP_FREQ
@@ -80,6 +84,15 @@
 #endif
 
 #define PCBURST 128
+
+/*
+ * Non-US keyboards definition
+ */
+#if defined(FRENCH_KBD) || defined(GERMAN_KBD) || defined(NORVEGIAN_KBD) || defined(FINNISH_KBD)
+# define NONUS_KBD
+# define DISPLAY_ISO8859
+# define NUMERIC_SLASH_FIX
+#endif
 
 static u_short *Crtat;			/* pointer to backing store */
 static u_short *crtat;			/* pointer to current char */
@@ -94,6 +107,7 @@ static u_short cursor_shape = 0xffff,	/* don't update until set by user */
 #ifdef XSERVER
 int pc_xmode = 0;
 #endif
+int pccons_is_console = 0;
 
 #define	PCUNIT(x)	(minor(x))
 
@@ -117,13 +131,14 @@ struct pc_softc {
 	struct	tty *sc_tty;
 };
 
-void	fillw __P((short, void *, size_t));
+void fillw __P((short, void *, size_t));
 int pcprobe __P((struct device *, void *, void *));
 void pcattach __P((struct device *, struct device *, void *));
 int pcintr __P((void *));
+void pcinit __P((void));
 
 struct cfattach pc_ca = {
-	sizeof(struct pc_softc), (cfmatch_t)pcprobe, pcattach
+	sizeof(struct pc_softc), pcprobe, pcattach
 };
 
 extern struct cfdriver pc_cd;
@@ -146,6 +161,9 @@ extern struct cfdriver pc_cd;
 #define	FUNC		0x0100	/* function key */
 #define	KP		0x0200	/* Keypad keys */
 #define	NONE		0x0400	/* no function */
+#ifdef NONUS_KBD
+#define ALTGR           0x0040  /* Alt graphic */
+#endif
 
 static unsigned int addr_6845 = MONO_BASE;
 
@@ -179,11 +197,13 @@ static int kbc_put8042cmd __P((u_char));
 
 void pccnprobe __P((struct consdev *));
 void pccninit __P((struct consdev *));
-void pccnputc __P((dev_t, char));
+void pccnputc __P((dev_t, int));
 int pccngetc __P((dev_t));
 void pccnpollc __P((dev_t, int));
 
 #define	KBD_DELAY \
+	{ u_char x = isa_inb(0x84); (void) x; } \
+	{ u_char x = isa_inb(0x84); (void) x; } \
 	{ u_char x = isa_inb(0x84); (void) x; } \
 	{ u_char x = isa_inb(0x84); (void) x; } \
 	{ u_char x = isa_inb(0x84); (void) x; } \
@@ -197,9 +217,9 @@ kbd_wait_output()
 	for (i = 100000; i; i--)
 		if ((isa_inb(IO_KBD + KBSTATP) & KBS_IBF) == 0) {
 			KBD_DELAY;
-			return 1;
+			return (1);
 		}
-	return 0;
+	return (0);
 }
 
 static __inline int
@@ -210,9 +230,9 @@ kbd_wait_input()
 	for (i = 100000; i; i--)
 		if ((isa_inb(IO_KBD + KBSTATP) & KBS_DIB) != 0) {
 			KBD_DELAY;
-			return 1;
+			return (1);
 		}
-	return 0;
+	return (0);
 }
 
 static __inline void
@@ -237,10 +257,10 @@ kbc_get8042cmd()
 {
 
 	if (!kbd_wait_output())
-		return -1;
+		return (-1);
 	isa_outb(IO_KBD + KBCMDP, K_RDCMDBYTE);
 	if (!kbd_wait_input())
-		return -1;
+		return (-1);
 	return isa_inb(IO_KBD + KBDATAP);
 }
 #endif
@@ -254,12 +274,12 @@ kbc_put8042cmd(val)
 {
 
 	if (!kbd_wait_output())
-		return 0;
+		return (0);
 	isa_outb(IO_KBD + KBCMDP, K_LDCMDBYTE);
 	if (!kbd_wait_output())
-		return 0;
+		return (0);
 	isa_outb(IO_KBD + KBOUTP, val);
-	return 1;
+	return (1);
 }
 
 /*
@@ -275,7 +295,7 @@ kbd_cmd(val, polling)
 
 	do {
 		if (!kbd_wait_output())
-			return 0;
+			return (0);
 		ack = nak = 0;
 		isa_outb(IO_KBD + KBOUTP, val);
 		if (polling)
@@ -287,7 +307,7 @@ kbd_cmd(val, polling)
 					c = isa_inb(IO_KBD + KBDATAP);
 					if (c == KBR_ACK || c == KBR_ECHO) {
 						ack = 1;
-						return 1;
+						return (1);
 					}
 					if (c == KBR_RESEND) {
 						nak = 1;
@@ -302,14 +322,14 @@ kbd_cmd(val, polling)
 			for (i = 100000; i; i--) {
 				(void) isa_inb(IO_KBD + KBSTATP);
 				if (ack)
-					return 1;
+					return (1);
 				if (nak)
 					break;
 			}
 		if (!nak)
-			return 0;
+			return (0);
 	} while (--retries);
-	return 0;
+	return (0);
 }
 
 void
@@ -426,7 +446,7 @@ pcprobe(parent, match, aux)
 	/* Enable interrupts and keyboard, etc. */
 	if (!kbc_put8042cmd(CMDBYTE)) {
 		printf("pcprobe: command error\n");
-		return 0;
+		return (0);
 	}
 
 #if 1
@@ -494,7 +514,7 @@ lose:
 
 	ia->ia_iosize = 16;
 	ia->ia_msize = 0;
-	return 1;
+	return (1);
 }
 
 void
@@ -504,6 +524,9 @@ pcattach(parent, self, aux)
 {
 	struct pc_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
+
+	if (crtat == 0)
+		pcinit();
 
 	printf(": %s\n", vs.color ? "color" : "mono");
 	do_async_update((void *)1);
@@ -516,8 +539,24 @@ pcattach(parent, self, aux)
 	 * XXX Really should decouple keyboard controller
 	 * from the console code.
 	 */
-	while (config_found(self, ia->ia_ic, NULL) != NULL)	/* XXX */
-		/* will break when no more children */ ;
+	while (config_found(self, ia->ia_ic, NULL) != NULL) {	/* XXX */
+		/* Will break when no more children. */
+		;
+	}
+
+	if (pccons_is_console) {
+		int maj;
+
+		/* Locate the major number. */
+		for (maj = 0; maj < nchrdev; maj++)
+			if (cdevsw[maj].d_open == pcopen)
+				break;
+
+		/* There can be only one, but it can have any unit number. */
+		cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);
+
+		printf("%s: console\n", sc->sc_dev.dv_xname);
+	}
 }
 
 int
@@ -531,10 +570,10 @@ pcopen(dev, flag, mode, p)
 	struct tty *tp;
 
 	if (unit >= pc_cd.cd_ndevs)
-		return ENXIO;
+		return (ENXIO);
 	sc = pc_cd.cd_devs[unit];
 	if (sc == 0)
-		return ENXIO;
+		return (ENXIO);
 
 	if (!sc->sc_tty) {
 		tp = sc->sc_tty = ttymalloc();
@@ -556,7 +595,7 @@ pcopen(dev, flag, mode, p)
 		pcparam(tp, &tp->t_termios);
 		ttsetwater(tp);
 	} else if (tp->t_state&TS_XCLUDE && p->p_ucred->cr_uid != 0)
-		return EBUSY;
+		return (EBUSY);
 	tp->t_state |= TS_CARR_ON;
 
 	return ((*linesw[tp->t_line].l_open)(dev, tp));
@@ -576,7 +615,7 @@ pcclose(dev, flag, mode, p)
 #ifdef notyet /* XXX */
 	ttyfree(tp);
 #endif
-	return(0);
+	return (0);
 }
 
 int
@@ -627,19 +666,19 @@ pcintr(arg)
 	u_char *cp;
 
 	if ((isa_inb(IO_KBD + KBSTATP) & KBS_DIB) == 0)
-		return 0;
+		return (0);
 	if (polling)
-		return 1;
+		return (1);
 	do {
 		cp = sget();
 		if (!tp || (tp->t_state & TS_ISOPEN) == 0)
-			return 1;
+			return (1);
 		if (cp)
 			do
 				(*linesw[tp->t_line].l_rint)(*cp++, tp);
 			while (*cp);
 	} while (isa_inb(IO_KBD + KBSTATP) & KBS_DIB);
-	return 1;
+	return (1);
 }
 
 int
@@ -656,19 +695,21 @@ pcioctl(dev, cmd, data, flag, p)
 
 	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
-		return error;
+		return (error);
 	error = ttioctl(tp, cmd, data, flag, p);
 	if (error >= 0)
-		return error;
+		return (error);
 
 	switch (cmd) {
 #ifdef XSERVER
 	case CONSOLE_X_MODE_ON:
 		pc_xmode_on();
-		return 0;
+		ttyflush(tp, FREAD);
+		return (0);
 	case CONSOLE_X_MODE_OFF:
 		pc_xmode_off();
-		return 0;
+		ttyflush(tp, FREAD);
+		return (0);
 	case CONSOLE_X_BELL:
 		/*
 		 * If set, data is a pointer to a length 2 array of
@@ -680,26 +721,26 @@ pcioctl(dev, cmd, data, flag, p)
 				(((int*)data)[1] * hz) / 1000);
 		else
 			sysbeep(BEEP_FREQ, BEEP_TIME);
-		return 0;
+		return (0);
 #endif /* XSERVER */
 	case CONSOLE_SET_TYPEMATIC_RATE: {
  		u_char	rate;
 
  		if (!data)
-			return EINVAL;
+			return (EINVAL);
 		rate = *((u_char *)data);
 		/*
 		 * Check that it isn't too big (which would cause it to be
 		 * confused with a command).
 		 */
 		if (rate & 0x80)
-			return EINVAL;
+			return (EINVAL);
 		typematic_rate = rate;
 		async_update();
-		return 0;
+		return (0);
  	}
 	default:
-		return ENOTTY;
+		return (ENOTTY);
 	}
 
 #ifdef DIAGNOSTIC
@@ -720,6 +761,9 @@ pcstart(tp)
 		goto out;
 	tp->t_state |= TS_BUSY;
 	splx(s);
+
+	lock_state &= ~SCROLL;
+
 	/*
 	 * We need to do this outside spl since it could be fairly
 	 * expensive and we don't want our serial ports to overflow.
@@ -727,6 +771,7 @@ pcstart(tp)
 	cl = &tp->t_outq;
 	len = q_to_b(cl, buf, PCBURST);
 	sput(buf, len);
+
 	s = spltty();
 	tp->t_state &= ~TS_BUSY;
 	if (cl->c_cc) {
@@ -750,49 +795,38 @@ pcstop(tp, flag)
 	int flag;
 {
 
+	lock_state |= SCROLL;
+	async_update();
 }
 
-void
-pccnprobe(cp)
-	struct consdev *cp;
+int
+pccnattach()
 {
-	int maj;
+	static struct consdev pccons = {
+		NULL, NULL, pccngetc, pccnputc, pccnpollc, NODEV, CN_NORMAL
+	};
 
-	/* locate the major number */
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == pcopen)
-			break;
+	cn_tab = &pccons;
 
-	/* initialize required fields */
-	cp->cn_dev = makedev(maj, 0);
-	cp->cn_pri = CN_INTERNAL;
-}
+	pccons_is_console = 1;
 
-/* ARGSUSED */
-void
-pccninit(cp)
-	struct consdev *cp;
-{
-
-	/*
-	 * For now, don't screw with it.
-	 */
-	crtat = 0;
+	return (0);
 }
 
 /* ARGSUSED */
 void
 pccnputc(dev, c)
 	dev_t dev;
-	char c;
+	int c;
 {
 	u_char oldkernel = kernel;
+	char help = c;
 
 	kernel = 1;
-	if (c == '\n')
+	if (help == '\n')
 		sput("\r\n", 2);
 	else
-		sput(&c, 1);
+		sput(&help, 1);
 	kernel = oldkernel;
 }
 
@@ -805,7 +839,7 @@ pccngetc(dev)
 
 #ifdef XSERVER
 	if (pc_xmode > 0)
-		return 0;
+		return (0);
 #endif
 
 	do {
@@ -815,8 +849,8 @@ pccngetc(dev)
 		cp = sget();
 	} while (!cp);
 	if (*cp == '\r')
-		return '\n';
-	return *cp;
+		return ('\n');
+	return (*cp);
 }
 
 void
@@ -861,7 +895,53 @@ pcparam(tp, t)
 	tp->t_ispeed = t->c_ispeed;
 	tp->t_ospeed = t->c_ospeed;
 	tp->t_cflag = t->c_cflag;
-	return 0;
+	return (0);
+}
+
+void
+pcinit()
+{
+	u_short volatile *cp;
+	u_short was;
+	unsigned cursorat;
+
+	cp = ISA_HOLE_VADDR(CGA_BUF);
+	was = *cp;
+	*cp = (u_short) 0xA55A;
+	if (*cp != 0xA55A) {
+		cp = ISA_HOLE_VADDR(MONO_BUF);
+		addr_6845 = MONO_BASE;
+		vs.color = 0;
+	} else {
+		*cp = was;
+		addr_6845 = CGA_BASE;
+		vs.color = 1;
+	}
+
+	/* Extract cursor location */
+	isa_outb(addr_6845, 14);
+	cursorat = isa_inb(addr_6845+1) << 8;
+	isa_outb(addr_6845, 15);
+	cursorat |= isa_inb(addr_6845+1);
+
+#ifdef FAT_CURSOR
+	cursor_shape = 0x0012;
+#endif
+
+	Crtat = (u_short *)cp;
+	crtat = (u_short *)(cp + cursorat);
+
+	vs.ncol = COL;
+	vs.nrow = ROW;
+	vs.nchr = COL * ROW;
+	vs.at = FG_LIGHTGREY | BG_BLACK;
+
+	if (vs.color == 0)
+		vs.so_at = FG_BLACK | BG_LIGHTGREY;
+	else
+		vs.so_at = FG_YELLOW | BG_BLACK;
+
+	fillw((vs.at << 8) | ' ', crtat, vs.nchr - cursorat);
 }
 
 #define	wrtchar(c, at) do {\
@@ -879,6 +959,28 @@ static char bgansitopc[] = {
 	BG_MAGENTA, BG_CYAN, BG_LIGHTGREY
 };
 
+#ifdef DISPLAY_ISO8859
+static u_char iso2ibm437[] =
+{
+           0,     0,     0,     0,     0,     0,     0,     0,
+           0,     0,     0,     0,     0,     0,     0,     0,
+           0,     0,     0,     0,     0,     0,     0,     0,
+           0,     0,     0,     0,     0,     0,     0,     0,
+        0xff,  0xad,  0x9b,  0x9c,     0,  0x9d,     0,  0x40,
+        0x6f,  0x63,  0x61,  0xae,     0,     0,     0,     0,
+        0xf8,  0xf1,  0xfd,  0x33,     0,  0xe6,     0,  0xfa,
+           0,  0x31,  0x6f,  0xaf,  0xac,  0xab,     0,  0xa8,
+        0x41,  0x41,  0x41,  0x41,  0x8e,  0x8f,  0x92,  0x80,
+        0x45,  0x90,  0x45,  0x45,  0x49,  0x49,  0x49,  0x49,
+        0x81,  0xa5,  0x4f,  0x4f,  0x4f,  0x4f,  0x99,  0x4f,
+        0x4f,  0x55,  0x55,  0x55,  0x9a,  0x59,     0,  0xe1,
+        0x85,  0xa0,  0x83,  0x61,  0x84,  0x86,  0x91,  0x87,
+        0x8a,  0x82,  0x88,  0x89,  0x8d,  0xa1,  0x8c,  0x8b,
+           0,  0xa4,  0x95,  0xa2,  0x93,  0x6f,  0x94,  0x6f,
+        0x6f,  0x97,  0xa3,  0x96,  0x81,  0x98,     0,     0
+};
+#endif
+
 /*
  * `pc3' termcap emulation.
  */
@@ -894,50 +996,8 @@ sput(cp, n)
 		return;
 #endif
 
-	if (crtat == 0) {
-		u_short volatile *cp;
-		u_short was;
-		unsigned cursorat;
-
-#define	ISA_MEM(p)	((void *)(BEBOX_BUS_SPACE_MEM + (u_long)(p)))
-		cp = ISA_MEM(CGA_BUF);
-		was = *cp;
-		*cp = (u_short) 0xA55A;
-		if (*cp != 0xA55A) {
-			cp = ISA_MEM(MONO_BUF);
-			addr_6845 = MONO_BASE;
-			vs.color = 0;
-		} else {
-			*cp = was;
-			addr_6845 = CGA_BASE;
-			vs.color = 1;
-		}
-
-		/* Extract cursor location */
-		isa_outb(addr_6845, 14);
-		cursorat = isa_inb(addr_6845+1) << 8;
-		isa_outb(addr_6845, 15);
-		cursorat |= isa_inb(addr_6845+1);
-
-#ifdef FAT_CURSOR
-		cursor_shape = 0x0012;
-#endif
-
-		Crtat = (u_short *)cp;
-		crtat = (u_short *)(cp + cursorat);
-
-		vs.ncol = COL;
-		vs.nrow = ROW;
-		vs.nchr = COL * ROW;
-		vs.at = FG_LIGHTGREY | BG_BLACK;
-
-		if (vs.color == 0)
-			vs.so_at = FG_BLACK | BG_LIGHTGREY;
-		else
-			vs.so_at = FG_YELLOW | BG_BLACK;
-
-		fillw((vs.at << 8) | ' ', crtat, vs.nchr - cursorat);
-	}
+	if (crtat == 0)
+		pcinit();
 
 	while (n--) {
 		if (!(c = *cp++))
@@ -1000,6 +1060,10 @@ sput(cp, n)
 					 * break to do a scroll check.
 					 */
 					for (;;) {
+#ifdef DISPLAY_ISO8859
+				               if (c & 0x80) 
+						        c = iso2ibm437[c&0x7f];
+#endif
 						if (vs.so)
 							wrtchar(c, vs.so_at);
 						else
@@ -1299,13 +1363,6 @@ sput(cp, n)
 			scroll = 0;
 			/* scroll check */
 			if (crtat >= Crtat + vs.nchr) {
-				if (!kernel) {
-					int s = spltty();
-					if (lock_state & SCROLL)
-						tsleep(&lock_state,
-						    PUSER, "pcputc", 0);
-					splx(s);
-				}
 				bcopy(Crtat + vs.ncol, Crtat,
 				    (vs.nchr - vs.ncol) * CHR);
 				fillw((vs.at << 8) | ' ',
@@ -1319,6 +1376,7 @@ sput(cp, n)
 }
 
 #define	CODE_SIZE	4		/* Use a max of 4 for now... */
+#ifndef NONUS_KBD
 typedef struct {
 	u_short	type;
 	char unshift[CODE_SIZE];
@@ -1341,7 +1399,11 @@ static Scan_def	scan_codes[] = {
 	{ ASCII,"0",		")",		")" },		/* 11 0 */
 	{ ASCII,"-",		"_",		"\037" },	/* 12 - */
 	{ ASCII,"=",		"+",		"+" },		/* 13 = */
+#ifndef PCCONS_REAL_BS
 	{ ASCII,"\177",		"\177",		"\010" },	/* 14 backspace */
+#else
+	{ ASCII,"\010",		"\010",		"\177" },	/* 14 backspace */
+#endif
 	{ ASCII,"\t",		"\177\t",	"\t" },		/* 15 tab */
 	{ ASCII,"q",		"Q",		"\021" },	/* 16 q */
 	{ ASCII,"w",		"W",		"\027" },	/* 17 w */
@@ -1356,7 +1418,11 @@ static Scan_def	scan_codes[] = {
 	{ ASCII,"[",		"{",		"\033" },	/* 26 [ */
 	{ ASCII,"]",		"}",		"\035" },	/* 27 ] */
 	{ ASCII,"\r",		"\r",		"\n" },		/* 28 return */
+#ifdef CAPS_IS_CONTROL
+	{ CAPS,	"",		"",		"" },		/* 29 caps */
+#else
 	{ CTL,	"",		"",		"" },		/* 29 control */
+#endif
 	{ ASCII,"a",		"A",		"\001" },	/* 30 a */
 	{ ASCII,"s",		"S",		"\023" },	/* 31 s */
 	{ ASCII,"d",		"D",		"\004" },	/* 32 d */
@@ -1385,7 +1451,11 @@ static Scan_def	scan_codes[] = {
 	{ KP,	"*",		"*",		"*" },		/* 55 kp * */
 	{ ALT,	"",		"",		"" },		/* 56 alt */
 	{ ASCII," ",		" ",		"\000" },	/* 57 space */
+#ifdef CAPS_IS_CONTROL
+	{ CTL,	"",		"",		"" },		/* 58 control */
+#else
 	{ CAPS,	"",		"",		"" },		/* 58 caps */
+#endif
 	{ FUNC,	"\033[M",	"\033[Y",	"\033[k" },	/* 59 f1 */
 	{ FUNC,	"\033[N",	"\033[Z",	"\033[l" },	/* 60 f2 */
 	{ FUNC,	"\033[O",	"\033[a",	"\033[m" },	/* 61 f3 */
@@ -1457,6 +1527,558 @@ static Scan_def	scan_codes[] = {
 	{ NONE,	"",		"",		"" },		/* 127 */
 };
 
+#else /* NONUS_KBD */
+
+typedef struct {
+	u_short type;
+	char unshift[CODE_SIZE];
+	char shift[CODE_SIZE];
+	char ctl[CODE_SIZE];
+	char altgr[CODE_SIZE];
+} Scan_def;
+
+#ifdef FRENCH_KBD
+
+static Scan_def	scan_codes[] = {
+	{ NONE,		"",	"",	"",	"" },	/* 0 unused */
+	{ ASCII,	"\033",	"\033",	"\033", "\033" }, /* 1 ESCape */
+	{ ASCII,	"&",	"1",	"&",	"" },	/* 2 1 */
+	{ ASCII,	"\351",	"2",	"\211",	"~" },	/* 3 2 */
+	{ ASCII,	"\"",	"3",	"\"",	"#" },	/* 4 3 */
+	{ ASCII,	"'",	"4",	"'",	"{" },	/* 5 4 */
+	{ ASCII,	"(",	"5",	"(",	"[" },	/* 6 5 */
+	{ ASCII,	"-",	"6",	"-",	"|" },	/* 7 6 */
+	{ ASCII,	"\350",	"7",	"\210", "`" },	/* 8 7 */
+	{ ASCII,	"_",	"8",	"\037",	"\\" },	/* 9 8 */
+	{ ASCII,	"\347",	"9",	"\207",	"^" },	/* 10 9 */
+	{ ASCII,	"\340",	"0",	"\340",	"@" },	/* 11 0 */
+	{ ASCII,	")",	"\260",	")",	"]" },	/* 12 - */
+	{ ASCII,	"=",	"+",	"+",	"}" },	/* 13 = */
+	{ ASCII,	"\177",	"\177",	"\010",	"\177" }, /* 14 backspace */
+	{ ASCII,	"\t",	"\177\t", "\t",	"\t" },	/* 15 tab */
+	{ ASCII,	"a",	"A",	"\001",	"a" },	/* 16 q */
+	{ ASCII,	"z",	"Z",	"\032", "z" },	/* 17 w */
+	{ ASCII,	"e",	"E",	"\005", "e" },	/* 18 e */
+	{ ASCII,	"r",	"R",	"\022", "r" },	/* 19 r */
+	{ ASCII,	"t",	"T",	"\024",	"t" },	/* 20 t */
+	{ ASCII,	"y",	"Y",	"\031",	"y" },	/* 21 y */
+	{ ASCII,	"u",	"U",	"\025", "u" },	/* 22 u */
+	{ ASCII,	"i",	"I",	"\011",	"i" },	/* 23 i */
+	{ ASCII,	"o",	"O",	"\017", "o" },	/* 24 o */
+	{ ASCII,	"p",	"P",	"\020",	"p" },	/* 25 p */
+	{ NONE,		"",	"",	"",	"" },	/* 26 [ */
+	{ ASCII,	"$",	"\243",	"$",	"$" },	/* 27 ] */
+	{ ASCII,	"\r",	"\r",	"\n",	"\r" },	/* 28 return */
+	{ CTL,		"",	"",	"",	"" },	/* 29 control */
+	{ ASCII,	"q",	"Q",	"\021",	"q" },	/* 30 a */
+	{ ASCII,	"s",	"S",	"\023",	"s" },	/* 31 s */
+	{ ASCII,	"d",	"D",	"\004",	"d" },	/* 32 d */
+	{ ASCII,	"f",	"F",	"\006",	"f" },	/* 33 f */
+	{ ASCII,	"g",	"G",	"\007",	"g" },	/* 34 g */
+	{ ASCII,	"h",	"H",	"\010",	"h" },	/* 35 h */
+	{ ASCII,	"j",	"J",	"\n",	"j" },	/* 36 j */
+	{ ASCII,	"k",	"K",	"\013",	"k" },	/* 37 k */
+	{ ASCII,	"l",	"L",	"\014",	"l" },	/* 38 l */
+	{ ASCII,	"m",	"M",	"\r",	"m" },	/* 39 ; */
+	{ ASCII,	"\371",	"%",	"\231",	"\371" }, /* 40 ' */
+	{ ASCII,	"\262",	"",	"\262",	"\262" }, /* 41 ` */
+	{ SHIFT,	"",	"",	"",	"" },	/* 42 shift */
+	{ ASCII,	"*",	"\265",	"*",	"*" },	/* 43 \ */
+	{ ASCII,	"w",	"W",	"\027",	"w" },	/* 44 z */
+	{ ASCII,	"x",	"X",	"\030",	"x" },	/* 45 x */
+	{ ASCII,	"c",	"C",	"\003",	"c" },	/* 46 c */
+	{ ASCII,	"v",	"V",	"\026",	"v" },	/* 47 v */
+	{ ASCII,	"b",	"B",	"\002",	"b" },	/* 48 b */
+	{ ASCII,	"n",	"N",	"\016",	"n" },	/* 49 n */
+	{ ASCII,	",",	"?",	",",	"," },	/* 50 m */
+	{ ASCII,	";",	".",	";",	";" },	/* 51 , */
+	{ ASCII,	":",	"/",	"\037",	":" },	/* 52 . */
+	{ ASCII,	"!",	"\266",	"!",	"!" },	/* 53 / */
+	{ SHIFT,	"",	"",	"",	"" },	/* 54 shift */
+	{ KP,		"*",	"*",	"*",	"*" },	/* 55 kp * */
+	{ ALT,		"",	"",	"",	"" },	/* 56 alt */
+	{ ASCII,	" ",	" ",	"\000",	" " },	/* 57 space */
+	{ CAPS,	"",	"",	"",	"" },	/* 58 caps */
+	{ FUNC,	"\033[M",	"\033[Y",	"\033[k",	"" }, /* 59 f1 */
+	{ FUNC,	"\033[N",	"\033[Z",	"\033[l",	"" }, /* 60 f2 */
+	{ FUNC,	"\033[O",	"\033[a",	"\033[m",	"" }, /* 61 f3 */
+	{ FUNC,	"\033[P",	"\033[b",	"\033[n",	"" }, /* 62 f4 */
+	{ FUNC,	"\033[Q",	"\033[c",	"\033[o",	"" }, /* 63 f5 */
+	{ FUNC,	"\033[R",	"\033[d",	"\033[p",	"" }, /* 64 f6 */
+	{ FUNC,	"\033[S",	"\033[e",	"\033[q",	"" }, /* 65 f7 */
+	{ FUNC,	"\033[T",	"\033[f",	"\033[r",	"" }, /* 66 f8 */
+	{ FUNC,	"\033[U",	"\033[g",	"\033[s",	"" }, /* 67 f9 */
+	{ FUNC,	"\033[V",	"\033[h",	"\033[t",	"" }, /* 68 f10 */
+	{ NUM,	"",		"",		"",		"" }, /* 69 num lock */
+	{ SCROLL,	"",		"",		"",		"" }, /* 70 scroll lock */
+	{ KP,	"7",		"\033[H",	"7",	"" },	/* 71 kp 7 */
+	{ KP,	"8",		"\033[A",	"8",	"" },	/* 72 kp 8 */
+	{ KP,	"9",		"\033[I",	"9",	"" },	/* 73 kp 9 */
+	{ KP,	"-",		"-",		"-",	"" },	/* 74 kp - */
+	{ KP,	"4",		"\033[D",	"4",	"" },	/* 75 kp 4 */
+	{ KP,	"5",		"\033[E",	"5",	"" },	/* 76 kp 5 */
+	{ KP,	"6",		"\033[C",	"6",	"" },	/* 77 kp 6 */
+	{ KP,	"+",		"+",		"+",	"" },	/* 78 kp + */
+	{ KP,	"1",		"\033[F",	"1",	"" },	/* 79 kp 1 */
+	{ KP,	"2",		"\033[B",	"2",	"" },	/* 80 kp 2 */
+	{ KP,	"3",		"\033[G",	"3",	"" },	/* 81 kp 3 */
+	{ KP,	"0",		"\033[L",	"0",	"" },	/* 82 kp 0 */
+	{ KP,	".",		"\177",		".",	"" },	/* 83 kp . */
+	{ NONE,	"",		"",		"",	"" },	/* 84 0 */
+	{ NONE,	"100",		"",		"",	"" },	/* 85 0 */
+	{ ASCII,	"<",		">",		"<",	"<" },	/* 86 < > */
+	{ FUNC,	"\033[W",	"\033[i",	"\033[u","" },	/* 87 f11 */
+	{ FUNC,	"\033[X",	"\033[j",	"\033[v","" },	/* 88 f12 */
+	{ NONE,	"102",		"",		"",	"" },	/* 89 0 */
+	{ NONE,	"103",		"",		"",	"" },	/* 90 0 */
+	{ NONE,	"",		"",		"",	"" },	/* 91 0 */
+	{ NONE,	"",		"",		"",	"" },	/* 92 0 */
+	{ NONE,	"",		"",		"",	"" },	/* 93 0 */
+	{ NONE,	"",		"",		"",	"" },	/* 94 0 */
+	{ NONE,	"",		"",		"",	"" },	/* 95 0 */
+	{ NONE,	"",		"",		"",	"" },	/* 96 0 */
+	{ NONE,	"",		"",		"",	"" },	/* 97 0 */
+	{ NONE,	"",		"",		"",	"" },	/* 98 0 */
+	{ NONE,	"",		"",		"",	"" },	/* 99 0 */
+	{ NONE,	"",		"",		"",	"" },	/* 100 */
+	{ NONE,	"",		"",		"",	"" },	/* 101 */
+	{ NONE,	"",		"",		"",	"" },	/* 102 */
+	{ NONE,	"",		"",		"",	"" },	/* 103 */
+	{ NONE,	"",		"",		"",	"" },	/* 104 */
+	{ NONE,	"",		"",		"",	"" },	/* 105 */
+	{ NONE,	"",		"",		"",	"" },	/* 106 */
+	{ NONE,	"",		"",		"",	"" },	/* 107 */
+	{ NONE,	"",		"",		"",	"" },	/* 108 */
+	{ NONE,	"",		"",		"",	"" },	/* 109 */
+	{ NONE,	"",		"",		"",	"" },	/* 110 */
+	{ NONE,	"",		"",		"",	"" },	/* 111 */
+	{ NONE,	"",		"",		"",	"" },	/* 112 */
+	{ NONE,	"",		"",		"",	"" },	/* 113 */
+	{ NONE,	"",		"",		"",	"" },	/* 114 */
+	{ NONE,	"",		"",		"",	"" },	/* 115 */
+	{ NONE,	"",		"",		"",	"" },	/* 116 */
+	{ NONE,	"",		"",		"",	"" },	/* 117 */
+	{ NONE,	"",		"",		"",	"" },	/* 118 */
+	{ NONE,	"",		"",		"",	"" },	/* 119 */
+	{ NONE,	"",		"",		"",	"" },	/* 120 */
+	{ NONE,	"",		"",		"",	"" },	/* 121 */
+	{ NONE,	"",		"",		"",	"" },	/* 122 */
+	{ NONE,	"",		"",		"",	"" },	/* 123 */
+	{ NONE,	"",		"",		"",	"" },	/* 124 */
+	{ NONE,	"",		"",		"",	"" },	/* 125 */
+	{ NONE,	"",		"",		"",	"" },	/* 126 */
+	{ NONE,	"",		"",		"",	"" }	/* 127 */
+};
+
+#endif /* FRENCH_KBD */
+
+#ifdef GERMAN_KBD
+
+static Scan_def	scan_codes[] = {
+	{ NONE,	"",	"",	"",	"" },	/* 0 unused */
+	{ ASCII,	"\033",	"\033",	"\033", "\033"}, /* 1 ESCape */
+	{ ASCII,	"1",	"!",	"!",	"" },	/* 2 1 */
+	{ ASCII,	"2",	"\"",	"\"",	"\xb2" }, /* 3 2 */
+	{ ASCII,	"3",	"\xa7",	"\xa7",	"\xb3" }, /* 4 3 */
+	{ ASCII,	"4",	"$",	"$",	"" },	/* 5 4 */
+	{ ASCII,	"5",	"%",	"%",	"" },	/* 6 5 */
+	{ ASCII,	"6",	"&",	"&",	"" },	/* 7 6 */
+	{ ASCII,	"7",	"/",	"/",	"{" },	/* 8 7 */
+	{ ASCII,	"8",	"(",	"(",	"[" },	/* 9 8 */
+	{ ASCII,	"9",	")",	")",	"]" },	/* 10 9 */
+	{ ASCII,	"0",	"=",	"=",	"}" },	/* 11 0 */
+	{ ASCII,	"\xdf","?",	"?",	"\\" },	/* 12 - */
+	{ ASCII,	"'",	"`",	"`",	"" },	/* 13 = */
+	{ ASCII,	"\177",	"\177",	"\010",	"\177" }, /* 14 backspace */
+	{ ASCII,	"\t",	"\177\t", "\t",	"\t" },	/* 15 tab */
+	{ ASCII,	"q",	"Q",	"\021",	"@" },	/* 16 q */
+	{ ASCII,	"w",	"W",	"\027", "w" },	/* 17 w */
+	{ ASCII,	"e",	"E",	"\005", "e" },	/* 18 e */
+	{ ASCII,	"r",	"R",	"\022", "r" },	/* 19 r */
+	{ ASCII,	"t",	"T",	"\024",	"t" },	/* 20 t */
+	{ ASCII,	"z",	"Z",	"\032",	"z" },	/* 21 y */
+	{ ASCII,	"u",	"U",	"\025", "u" },	/* 22 u */
+	{ ASCII,	"i",	"I",	"\011",	"i" },	/* 23 i */
+	{ ASCII,	"o",	"O",	"\017", "o" },	/* 24 o */
+	{ ASCII,	"p",	"P",	"\020",	"p" },	/* 25 p */
+	{ ASCII,	"\xfc",	"\xdc",	"\xfc",	"\xdc" }, /* 26 [ */
+	{ ASCII,	"+",	"*",	"+",	"~" },	/* 27 ] */
+	{ ASCII,	"\r",	"\r",	"\n",	"\r" },	/* 28 return */
+	{ CTL,	"",	"",	"",	"" },	/* 29 control */
+	{ ASCII,	"a",	"A",	"\001",	"a" },	/* 30 a */
+	{ ASCII,	"s",	"S",	"\023",	"s" },	/* 31 s */
+	{ ASCII,	"d",	"D",	"\004",	"d" },	/* 32 d */
+	{ ASCII,	"f",	"F",	"\006",	"f" },	/* 33 f */
+	{ ASCII,	"g",	"G",	"\007",	"g" },	/* 34 g */
+	{ ASCII,	"h",	"H",	"\010",	"h" },	/* 35 h */
+	{ ASCII,	"j",	"J",	"\n",	"j" },	/* 36 j */
+	{ ASCII,	"k",	"K",	"\013",	"k" },	/* 37 k */
+	{ ASCII,	"l",	"L",	"\014",	"l" },	/* 38 l */
+	{ ASCII,	"\xf6",	"\xd6",	"\xf6",	"\xd6" }, /* 39 ; */
+	{ ASCII,	"\xe4",	"\xc4",	"\xe4",	"\xc4" }, /* 40 ' */
+	{ ASCII,	"\136",	"\370",	"\136",	"\370" }, /* 41 ` */
+	{ SHIFT,	"",	"",	"",	"" },	/* 42 shift */
+	{ ASCII,	"#",	"'",	"#",	"'" },	/* 43 \ */
+	{ ASCII,	"y",	"Y",	"\x19",	"y" },	/* 44 z */
+	{ ASCII,	"x",	"X",	"\030",	"x" },	/* 45 x */
+	{ ASCII,	"c",	"C",	"\003",	"c" },	/* 46 c */
+	{ ASCII,	"v",	"V",	"\026",	"v" },	/* 47 v */
+	{ ASCII,	"b",	"B",	"\002",	"b" },	/* 48 b */
+	{ ASCII,	"n",	"N",	"\016",	"n" },	/* 49 n */
+	{ ASCII,	"m",	"M",	"\r",	"m" },	/* 50 m */
+	{ ASCII,	",",	";",	",",	";" },	/* 51 , */
+	{ ASCII,	".",	":",	".",	":" },	/* 52 . */
+	{ ASCII,	"-",	"_",	"-",	"_" },	/* 53 / */
+	{ SHIFT,	"",	"",	"",	"" },	/* 54 shift */
+	{ KP,	"*",	"*",	"*",	"*" },	/* 55 kp * */
+	{ ALT,	"",	"",	"",	"" },	/* 56 alt */
+	{ ASCII,	" ",	" ",	"\000",	" " },	/* 57 space */
+	{ CAPS,	"",	"",	"",	"" },	/* 58 caps */
+	{ FUNC,	"\033[M",	"\033[Y",	"\033[k",	"" }, /* 59 f1 */
+	{ FUNC,	"\033[N",	"\033[Z",	"\033[l",	"" }, /* 60 f2 */
+	{ FUNC,	"\033[O",	"\033[a",	"\033[m",	"" }, /* 61 f3 */
+	{ FUNC,	"\033[P",	"\033[b",	"\033[n",	"" }, /* 62 f4 */
+	{ FUNC,	"\033[Q",	"\033[c",	"\033[o",	"" }, /* 63 f5 */
+	{ FUNC,	"\033[R",	"\033[d",	"\033[p",	"" }, /* 64 f6 */
+	{ FUNC,	"\033[S",	"\033[e",	"\033[q",	"" }, /* 65 f7 */
+	{ FUNC,	"\033[T",	"\033[f",	"\033[r",	"" }, /* 66 f8 */
+	{ FUNC,	"\033[U",	"\033[g",	"\033[s",	"" }, /* 67 f9 */
+	{ FUNC,	"\033[V",	"\033[h",	"\033[t",	"" }, /* 68 f10 */
+	{ NUM,	"",		"",		"",		"" }, /* 69 num lock */
+	{ SCROLL,	"",		"",		"",		"" }, /* 70 scroll lock */
+	{ KP,	"7",		"\033[H",	"7",	"" },	/* 71 kp 7 */
+	{ KP,	"8",		"\033[A",	"8",	"" },	/* 72 kp 8 */
+	{ KP,	"9",		"\033[I",	"9",	"" },	/* 73 kp 9 */
+	{ KP,	"-",		"-",		"-",	"" },	/* 74 kp - */
+	{ KP,	"4",		"\033[D",	"4",	"" },	/* 75 kp 4 */
+	{ KP,	"5",		"\033[E",	"5",	"" },	/* 76 kp 5 */
+	{ KP,	"6",		"\033[C",	"6",	"" },	/* 77 kp 6 */
+	{ KP,	"+",		"+",		"+",	"" },	/* 78 kp + */
+	{ KP,	"1",		"\033[F",	"1",	"" },	/* 79 kp 1 */
+	{ KP,	"2",		"\033[B",	"2",	"" },	/* 80 kp 2 */
+	{ KP,	"3",		"\033[G",	"3",	"" },	/* 81 kp 3 */
+	{ KP,	"0",		"\033[L",	"0",	"" },	/* 82 kp 0 */
+	{ KP,	",",		"\177",		",",	"" },	/* 83 kp . */
+	{ NONE,	"",		"",		"",	"" },	/* 84 0 */
+	{ NONE,	"100",		"",		"",	"" },	/* 85 0 */
+	{ ASCII,	"<",		">",		"<",	"|" },	/* 86 < > */
+	{ FUNC,	"\033[W",	"\033[i",	"\033[u","" },	/* 87 f11 */
+	{ FUNC,	"\033[X",	"\033[j",	"\033[v","" },	/* 88 f12 */
+	{ NONE,	"102",		"",		"",	"" },	/* 89 0 */
+	{ NONE,	"103",		"",		"",	"" },	/* 90 0 */
+	{ NONE,	"",		"",		"",	"" },	/* 91 0 */
+	{ NONE,	"",		"",		"",	"" },	/* 92 0 */
+	{ NONE,	"",		"",		"",	"" },	/* 93 0 */
+	{ NONE,	"",		"",		"",	"" },	/* 94 0 */
+	{ NONE,	"",		"",		"",	"" },	/* 95 0 */
+	{ NONE,	"",		"",		"",	"" },	/* 96 0 */
+	{ NONE,	"",		"",		"",	"" },	/* 97 0 */
+	{ NONE,	"",		"",		"",	"" },	/* 98 0 */
+	{ NONE,	"",		"",		"",	"" },	/* 99 0 */
+	{ NONE,	"",		"",		"",	"" },	/* 100 */
+	{ NONE,	"",		"",		"",	"" },	/* 101 */
+	{ NONE,	"",		"",		"",	"" },	/* 102 */
+	{ NONE,	"",		"",		"",	"" },	/* 103 */
+	{ NONE,	"",		"",		"",	"" },	/* 104 */
+	{ NONE,	"",		"",		"",	"" },	/* 105 */
+	{ NONE,	"",		"",		"",	"" },	/* 106 */
+	{ NONE,	"",		"",		"",	"" },	/* 107 */
+	{ NONE,	"",		"",		"",	"" },	/* 108 */
+	{ NONE,	"",		"",		"",	"" },	/* 109 */
+	{ NONE,	"",		"",		"",	"" },	/* 110 */
+	{ NONE,	"",		"",		"",	"" },	/* 111 */
+	{ NONE,	"",		"",		"",	"" },	/* 112 */
+	{ NONE,	"",		"",		"",	"" },	/* 113 */
+	{ NONE,	"",		"",		"",	"" },	/* 114 */
+	{ NONE,	"",		"",		"",	"" },	/* 115 */
+	{ NONE,	"",		"",		"",	"" },	/* 116 */
+	{ NONE,	"",		"",		"",	"" },	/* 117 */
+	{ NONE,	"",		"",		"",	"" },	/* 118 */
+	{ NONE,	"",		"",		"",	"" },	/* 119 */
+	{ NONE,	"",		"",		"",	"" },	/* 120 */
+	{ NONE,	"",		"",		"",	"" },	/* 121 */
+	{ NONE,	"",		"",		"",	"" },	/* 122 */
+	{ NONE,	"",		"",		"",	"" },	/* 123 */
+	{ NONE,	"",		"",		"",	"" },	/* 124 */
+	{ NONE,	"",		"",		"",	"" },	/* 125 */
+	{ NONE,	"",		"",		"",	"" },	/* 126 */
+	{ NONE,	"",		"",		"",	"" }	/* 127 */
+};
+
+#endif /* GERMAN_KBD */
+
+#ifdef NORVEGIAN_KBD
+static Scan_def	scan_codes[] = {
+	{ NONE,	"",	"",	"",	"" },	/* 0 unused */
+	{ ASCII,	"\033",	"\033",	"\033", "\033" }, /* 1 ESCape */
+	{ ASCII,	"1",	"!",	"",	"\241" },	/* 2 1 */
+	{ ASCII,	"2",	"\"",	"\000",	"@" },	/* 3 2 */
+	{ ASCII,	"3",	"#",	"",	"\243" },	/* 4 3 */
+	{ ASCII,	"4",	"$",	"",	"$" },	/* 5 4 */
+	{ ASCII,	"5",	"%",	"\034",	"\\" },	/* 6 5 */
+	{ ASCII,	"6",	"&",	"\034",	"|" },	/* 7 6 */
+	{ ASCII,	"7",	"/",	"\033", "{" },	/* 8 7 */
+	{ ASCII,	"8",	"(",	"\033",	"[" },	/* 9 8 */
+	{ ASCII,	"9",	")",	"\035",	"]" },	/* 10 9 */
+	{ ASCII,	"0",	"=",	"\035",	"}" },	/* 11 0 */
+	{ ASCII,	"+",	"?",	"\037",	"\277" },	/* 12 - */
+	{ ASCII,	"\\",	"`",	"\034",	"'" },	/* 13 = */
+	{ ASCII,	"\177",	"\177",	"\010",	"\177" },	/* 14 backspace */
+	{ ASCII,	"\t",	"\177\t", "\t", "\t" },	/* 15 tab */
+	{ ASCII,	"q",	"Q",	"\021",	"q" },	/* 16 q */
+	{ ASCII,	"w",	"W",	"\027", "w" },	/* 17 w */
+	{ ASCII,	"e",	"E",	"\005", "\353" },	/* 18 e */
+	{ ASCII,	"r",	"R",	"\022", "r" },	/* 19 r */
+	{ ASCII,	"t",	"T",	"\024",	"t" },	/* 20 t */
+	{ ASCII,	"y",	"Y",	"\031",	"y" },	/* 21 y */
+	{ ASCII,	"u",	"U",	"\025", "\374" },	/* 22 u */
+	{ ASCII,	"i",	"I",	"\011",	"i" },	/* 23 i */
+	{ ASCII,	"o",	"O",	"\017", "\366" },	/* 24 o */
+	{ ASCII,	"p",	"P",	"\020",	"p" },	/* 25 p */
+	{ ASCII,	"\345",	"\305",	"\334",	"\374" },	/* 26 [ */
+	{ ASCII,	"~",	"^",	"\036",	"" },	/* 27 ] */
+	{ ASCII,	"\r",	"\r",	"\n",	"\r" },	/* 28 return */
+	{ CTL,	"",	"",	"",	"" },	/* 29 control */
+	{ ASCII,	"a",	"A",	"\001",	"\344" },	/* 30 a */
+	{ ASCII,	"s",	"S",	"\023",	"\337" },	/* 31 s */
+	{ ASCII,	"d",	"D",	"\004",	"d" },	/* 32 d */
+	{ ASCII,	"f",	"F",	"\006",	"f" },	/* 33 f */
+	{ ASCII,	"g",	"G",	"\007",	"g" },	/* 34 g */
+	{ ASCII,	"h",	"H",	"\010",	"h" },	/* 35 h */
+	{ ASCII,	"j",	"J",	"\n",	"j" },	/* 36 j */
+	{ ASCII,	"k",	"K",	"\013",	"k" },	/* 37 k */
+	{ ASCII,	"l",	"L",	"\014",	"l" },	/* 38 l */
+	{ ASCII,	"\370",	"\330",	"\326",	"\366" },	/* 39 ; */
+	{ ASCII,	"\346",	"\306",	"\304",	"\344" },	/* 40 ' */
+	{ ASCII,	"|",	"@",	"\034",	"\247" },	/* 41 ` */
+	{ SHIFT,	"",	"",	"",	"" },	/* 42 shift */
+	{ ASCII,	"'",	"*",	"'",	"'" },	/* 43 \ */
+	{ ASCII,	"z",	"Z",	"\032",	"z" },	/* 44 z */
+	{ ASCII,	"x",	"X",	"\030",	"x" },	/* 45 x */
+	{ ASCII,	"c",	"C",	"\003",	"c" },	/* 46 c */
+	{ ASCII,	"v",	"V",	"\026",	"v" },	/* 47 v */
+	{ ASCII,	"b",	"B",	"\002",	"b" },	/* 48 b */
+	{ ASCII,	"n",	"N",	"\016",	"n" },	/* 49 n */
+	{ ASCII,	"m",	"M",	"\015",	"m" },	/* 50 m */
+	{ ASCII,	",",	";",	",",	"," },	/* 51 , */
+	{ ASCII,	".",	":",	".",	"." },	/* 52 . */
+	{ ASCII,	"-",	"_",	"\037",	"-" },	/* 53 / */
+	{ SHIFT,	"",	"",	"",	"" },	/* 54 shift */
+	{ KP,	"*",	"*",	"*",	"*" },	/* 55 kp * */
+	{ ALT,	"",	"",	"",	"" },	/* 56 alt */
+	{ ASCII,	" ",	" ",	"\000",	" " },	/* 57 space */
+	{ CAPS,	"",	"",	"",	"" },	/* 58 caps */
+	{ FUNC,	"\033[M",	"\033[Y",	"\033[k",	"" }, /* 59 f1 */
+	{ FUNC,	"\033[N",	"\033[Z",	"\033[l",	"" }, /* 60 f2 */
+	{ FUNC,	"\033[O",	"\033[a",	"\033[m",	"" }, /* 61 f3 */
+	{ FUNC,	"\033[P",	"\033[b",	"\033[n",	"" }, /* 62 f4 */
+	{ FUNC,	"\033[Q",	"\033[c",	"\033[o",	"" }, /* 63 f5 */
+	{ FUNC,	"\033[R",	"\033[d",	"\033[p",	"" }, /* 64 f6 */
+	{ FUNC,	"\033[S",	"\033[e",	"\033[q",	"" }, /* 65 f7 */
+	{ FUNC,	"\033[T",	"\033[f",	"\033[r",	"" }, /* 66 f8 */
+	{ FUNC,	"\033[U",	"\033[g",	"\033[s",	"" }, /* 67 f9 */
+	{ FUNC,	"\033[V",	"\033[h",	"\033[t",	"" }, /* 68 f10 */
+	{ NUM,	"",		"",		"",		"" }, /* 69 num lock */
+	{ SCROLL,	"",		"",		"",		"" }, /* 70 scroll lock */
+	{ KP,	"7",		"\033[H",	"7",	"" },	/* 71 kp 7 */
+	{ KP,	"8",		"\033[A",	"8",	"" },	/* 72 kp 8 */
+	{ KP,	"9",		"\033[I",	"9",	"" },	/* 73 kp 9 */
+	{ KP,	"-",		"-",		"-",	"" },	/* 74 kp - */
+	{ KP,	"4",		"\033[D",	"4",	"" },	/* 75 kp 4 */
+	{ KP,	"5",		"\033[E",	"5",	"" },	/* 76 kp 5 */
+	{ KP,	"6",		"\033[C",	"6",	"" },	/* 77 kp 6 */
+	{ KP,	"+",		"+",		"+",	"" },	/* 78 kp + */
+	{ KP,	"1",		"\033[F",	"1",	"" },	/* 79 kp 1 */
+	{ KP,	"2",		"\033[B",	"2",	"" },	/* 80 kp 2 */
+	{ KP,	"3",		"\033[G",	"3",	"" },	/* 81 kp 3 */
+	{ KP,	"0",		"\033[L",	"0",	"" },	/* 82 kp 0 */
+	{ KP,	".",		"\177",		".",	"" },	/* 83 kp . */
+	{ NONE,	"",		"",		"",	"" },	/* 84 0 */
+	{ NONE,	"100",		"",		"",	"" },	/* 85 0 */
+	{ ASCII,	"<",		">",		"\273",	"\253" },	/* 86 < > */
+	{ FUNC,	"\033[W",	"\033[i",	"\033[u","" },	/* 87 f11 */
+	{ FUNC,	"\033[X",	"\033[j",	"\033[v","" },	/* 88 f12 */
+	{ NONE,	"102",		"",		"",	"" },	/* 89 0 */
+	{ NONE,	"103",		"",		"",	"" },	/* 90 0 */
+	{ NONE,	"",		"",		"",	"" },	/* 91 0 */
+	{ NONE,	"",		"",		"",	"" },	/* 92 0 */
+	{ NONE,	"",		"",		"",	"" },	/* 93 0 */
+	{ NONE,	"",		"",		"",	"" },	/* 94 0 */
+	{ NONE,	"",		"",		"",	"" },	/* 95 0 */
+	{ NONE,	"",		"",		"",	"" },	/* 96 0 */
+	{ NONE,	"",		"",		"",	"" },	/* 97 0 */
+	{ NONE,	"",		"",		"",	"" },	/* 98 0 */
+	{ NONE,	"",		"",		"",	"" },	/* 99 0 */
+	{ NONE,	"",		"",		"",	"" },	/* 100 */
+	{ NONE,	"",		"",		"",	"" },	/* 101 */
+	{ NONE,	"",		"",		"",	"" },	/* 102 */
+	{ NONE,	"",		"",		"",	"" },	/* 103 */
+	{ NONE,	"",		"",		"",	"" },	/* 104 */
+	{ NONE,	"",		"",		"",	"" },	/* 105 */
+	{ NONE,	"",		"",		"",	"" },	/* 106 */
+	{ NONE,	"",		"",		"",	"" },	/* 107 */
+	{ NONE,	"",		"",		"",	"" },	/* 108 */
+	{ NONE,	"",		"",		"",	"" },	/* 109 */
+	{ NONE,	"",		"",		"",	"" },	/* 110 */
+	{ NONE,	"",		"",		"",	"" },	/* 111 */
+	{ NONE,	"",		"",		"",	"" },	/* 112 */
+	{ NONE,	"",		"",		"",	"" },	/* 113 */
+	{ NONE,	"",		"",		"",	"" },	/* 114 */
+	{ NONE,	"",		"",		"",	"" },	/* 115 */
+	{ NONE,	"",		"",		"",	"" },	/* 116 */
+	{ NONE,	"",		"",		"",	"" },	/* 117 */
+	{ NONE,	"",		"",		"",	"" },	/* 118 */
+	{ NONE,	"",		"",		"",	"" },	/* 119 */
+	{ NONE,	"",		"",		"",	"" },	/* 120 */
+	{ NONE,	"",		"",		"",	"" },	/* 121 */
+	{ NONE,	"",		"",		"",	"" },	/* 122 */
+	{ NONE,	"",		"",		"",	"" },	/* 123 */
+	{ NONE,	"",		"",		"",	"" },	/* 124 */
+	{ NONE,	"",		"",		"",	"" },	/* 125 */
+	{ NONE,	"",		"",		"",	"" },	/* 126 */
+	{ NONE,	"",		"",		"",	"" }	/* 127 */
+};
+#endif
+
+#ifdef FINNISH_KBD
+static Scan_def	scan_codes[] = {
+	{ NONE,	"",	"",	"",	"" },	/* 0 unused */
+	{ ASCII,	"\033",	"\033",	"\033", "\033" },	/* 1 ESCape */
+	{ ASCII,	"1",	"!",	"",	"\241" },	/* 2 1 */
+	{ ASCII,	"2",	"\"",	"\000",	"@" },	/* 3 2 */
+	{ ASCII,	"3",	"#",	"",	"\243" },	/* 4 3 */
+	{ ASCII,	"4",	"$",	"",	"$" },	/* 5 4 */
+	{ ASCII,	"5",	"%",	"\034",	"%" },	/* 6 5 */
+	{ ASCII,	"6",	"&",	"\034",	"&" },	/* 7 6 */
+	{ ASCII,	"7",	"/",	"\033", "{" },	/* 8 7 */
+	{ ASCII,	"8",	"(",	"\033",	"[" },	/* 9 8 */
+	{ ASCII,	"9",	")",	"\035",	"]" },	/* 10 9 */
+	{ ASCII,	"0",	"=",	"\035",	"}" },	/* 11 0 */
+	{ ASCII,	"+",	"?",	"\037",	"\\" },	/* 12 - */
+	{ ASCII,	"'",	"`",	"\034",	"'" },	/* 13 = */
+	{ ASCII,	"\177",	"\177",	"\010",	"\177" },	/* 14 backspace */
+	{ ASCII,	"\t",	"\177\t", "\t", "\t" },	/* 15 tab */
+	{ ASCII,	"q",	"Q",	"\021",	"q" },	/* 16 q */
+	{ ASCII,	"w",	"W",	"\027", "w" },	/* 17 w */
+	{ ASCII,	"e",	"E",	"\005", "\353" },	/* 18 e */
+	{ ASCII,	"r",	"R",	"\022", "r" },	/* 19 r */
+	{ ASCII,	"t",	"T",	"\024",	"t" },	/* 20 t */
+	{ ASCII,	"y",	"Y",	"\031",	"y" },	/* 21 y */
+	{ ASCII,	"u",	"U",	"\025", "\374" },	/* 22 u */
+	{ ASCII,	"i",	"I",	"\011",	"i" },	/* 23 i */
+	{ ASCII,	"o",	"O",	"\017", "\366" },	/* 24 o */
+	{ ASCII,	"p",	"P",	"\020",	"p" },	/* 25 p */
+	{ ASCII,	"\345",	"\305",	"\035",	"}" },	/* 26 [ */
+	{ ASCII,	"~",	"^",	"\036",	"~" },	/* 27 ] */
+	{ ASCII,	"\r",	"\r",	"\n",	"\r" },	/* 28 return */
+	{ CTL,	"",	"",	"",	"" },	/* 29 control */
+	{ ASCII,	"a",	"A",	"\001",	"\344" },	/* 30 a */
+	{ ASCII,	"s",	"S",	"\023",	"\337" },	/* 31 s */
+	{ ASCII,	"d",	"D",	"\004",	"d" },	/* 32 d */
+	{ ASCII,	"f",	"F",	"\006",	"f" },	/* 33 f */
+	{ ASCII,	"g",	"G",	"\007",	"g" },	/* 34 g */
+	{ ASCII,	"h",	"H",	"\010",	"h" },	/* 35 h */
+	{ ASCII,	"j",	"J",	"\n",	"j" },	/* 36 j */
+	{ ASCII,	"k",	"K",	"\013",	"k" },	/* 37 k */
+	{ ASCII,	"l",	"L",	"\014",	"l" },	/* 38 l */
+	{ ASCII,	"\366",	"\326",	"\034",	"|" },	/* 39 ; */
+	{ ASCII,	"\344",	"\304",	"\033",	"{" },	/* 40 ' */
+	{ ASCII,	"\247",	"\275",	"\000",	"@" },	/* 41 ` */
+	{ SHIFT,	"",	"",	"",	"" },	/* 42 shift */
+	{ ASCII,	"'",	"*",	"'",	"'" },	/* 43 \ */
+	{ ASCII,	"z",	"Z",	"\032",	"z" },	/* 44 z */
+	{ ASCII,	"x",	"X",	"\030",	"x" },	/* 45 x */
+	{ ASCII,	"c",	"C",	"\003",	"c" },	/* 46 c */
+	{ ASCII,	"v",	"V",	"\026",	"v" },	/* 47 v */
+	{ ASCII,	"b",	"B",	"\002",	"b" },	/* 48 b */
+	{ ASCII,	"n",	"N",	"\016",	"n" },	/* 49 n */
+	{ ASCII,	"m",	"M",	"\015",	"m" },	/* 50 m */
+	{ ASCII,	",",	";",	",",	"," },	/* 51 , */
+	{ ASCII,	".",	":",	".",	"." },	/* 52 . */
+	{ ASCII,	"-",	"_",	"\037",	"-" },	/* 53 / */
+	{ SHIFT,	"",	"",	"",	"" },	/* 54 shift */
+	{ KP,	"*",	"*",	"*",	"*" },	/* 55 kp * */
+	{ ALT,	"",	"",	"",	"" },	/* 56 alt */
+	{ ASCII,	" ",	" ",	"\000",	" " },	/* 57 space */
+	{ CAPS,	"",	"",	"",	"" },	/* 58 caps */
+	{ FUNC,	"\033[M",	"\033[Y",	"\033[k",	"" },	/* 59 f1 */
+	{ FUNC,	"\033[N",	"\033[Z",	"\033[l",	"" },	/* 60 f2 */
+	{ FUNC,	"\033[O",	"\033[a",	"\033[m",	"" },	/* 61 f3 */
+	{ FUNC,	"\033[P",	"\033[b",	"\033[n",	"" },	/* 62 f4 */
+	{ FUNC,	"\033[Q",	"\033[c",	"\033[o",	"" },	/* 63 f5 */
+	{ FUNC,	"\033[R",	"\033[d",	"\033[p",	"" },	/* 64 f6 */
+	{ FUNC,	"\033[S",	"\033[e",	"\033[q",	"" },	/* 65 f7 */
+	{ FUNC,	"\033[T",	"\033[f",	"\033[r",	"" },	/* 66 f8 */
+	{ FUNC,	"\033[U",	"\033[g",	"\033[s",	"" },	/* 67 f9 */
+	{ FUNC,	"\033[V",	"\033[h",	"\033[t",	"" },	/* 68 f10 */
+	{ NUM,	"",		"",		"",		"" },	/* 69 num lock */
+	{ SCROLL,	"",		"",		"",		"" },  	/* 70 scroll lock */
+	{ KP,	"7",		"\033[H",	"7",	"" },	/* 71 kp 7 */
+	{ KP,	"8",		"\033[A",	"8",	"" },	/* 72 kp 8 */
+	{ KP,	"9",		"\033[I",	"9",	"" },	/* 73 kp 9 */
+	{ KP,	"-",		"-",		"-",	"" },	/* 74 kp - */
+	{ KP,	"4",		"\033[D",	"4",	"" },	/* 75 kp 4 */
+	{ KP,	"5",		"\033[E",	"5",	"" },	/* 76 kp 5 */
+	{ KP,	"6",		"\033[C",	"6",	"" },	/* 77 kp 6 */
+	{ KP,	"+",		"+",		"+",	"" },	/* 78 kp + */
+	{ KP,	"1",		"\033[F",	"1",	"" },	/* 79 kp 1 */
+	{ KP,	"2",		"\033[B",	"2",	"" },	/* 80 kp 2 */
+	{ KP,	"3",		"\033[G",	"3",	"" },	/* 81 kp 3 */
+	{ KP,	"0",		"\033[L",	"0",	"" },	/* 82 kp 0 */
+	{ KP,	".",		"\177",		".",	"" },	/* 83 kp . */
+	{ NONE,	"",		"",		"",	"" },	/* 84 0 */
+	{ NONE,	"100",		"",		"",	"" },	/* 85 0 */
+	{ ASCII,	"<",		">",		"<",	"|" },	/* 86 < > */
+	{ FUNC,	"\033[W",	"\033[i",	"\033[u","" },	/* 87 f11 */
+	{ FUNC,	"\033[X",	"\033[j",	"\033[v","" },	/* 88 f12 */
+	{ NONE,	"102",		"",		"",	"" },	/* 89 0 */
+	{ NONE,	"103",		"",		"",	"" },	/* 90 0 */
+	{ NONE,	"",		"",		"",	"" },	/* 91 0 */
+	{ NONE,	"",		"",		"",	"" },	/* 92 0 */
+	{ NONE,	"",		"",		"",	"" },	/* 93 0 */
+	{ NONE,	"",		"",		"",	"" },	/* 94 0 */
+	{ NONE,	"",		"",		"",	"" },	/* 95 0 */
+	{ NONE,	"",		"",		"",	"" },	/* 96 0 */
+	{ NONE,	"",		"",		"",	"" },	/* 97 0 */
+	{ NONE,	"",		"",		"",	"" },	/* 98 0 */
+	{ NONE,	"",		"",		"",	"" },	/* 99 0 */
+	{ NONE,	"",		"",		"",	"" },	/* 100 */
+	{ NONE,	"",		"",		"",	"" },	/* 101 */
+	{ NONE,	"",		"",		"",	"" },	/* 102 */
+	{ NONE,	"",		"",		"",	"" },	/* 103 */
+	{ NONE,	"",		"",		"",	"" },	/* 104 */
+	{ NONE,	"",		"",		"",	"" },	/* 105 */
+	{ NONE,	"",		"",		"",	"" },	/* 106 */
+	{ NONE,	"",		"",		"",	"" },	/* 107 */
+	{ NONE,	"",		"",		"",	"" },	/* 108 */
+	{ NONE,	"",		"",		"",	"" },	/* 109 */
+	{ NONE,	"",		"",		"",	"" },	/* 110 */
+	{ NONE,	"",		"",		"",	"" },	/* 111 */
+	{ NONE,	"",		"",		"",	"" },	/* 112 */
+	{ NONE,	"",		"",		"",	"" },	/* 113 */
+	{ NONE,	"",		"",		"",	"" },	/* 114 */
+	{ NONE,	"",		"",		"",	"" },	/* 115 */
+	{ NONE,	"",		"",		"",	"" },	/* 116 */
+	{ NONE,	"",		"",		"",	"" },	/* 117 */
+	{ NONE,	"",		"",		"",	"" },	/* 118 */
+	{ NONE,	"",		"",		"",	"" },	/* 119 */
+	{ NONE,	"",		"",		"",	"" },	/* 120 */
+	{ NONE,	"",		"",		"",	"" },	/* 121 */
+	{ NONE,	"",		"",		"",	"" },	/* 122 */
+	{ NONE,	"",		"",		"",	"" },	/* 123 */
+	{ NONE,	"",		"",		"",	"" },	/* 124 */
+	{ NONE,	"",		"",		"",	"" },	/* 125 */
+	{ NONE,	"",		"",		"",	"" },	/* 126 */
+	{ NONE,	"",		"",		"",	"" },	/* 127 */
+};
+#endif 
+
+/*
+ * XXXX Add tables for other keyboards here
+ */
+
+#endif
+
 /*
  * Get characters from the keyboard.  If none are present, return NULL.
  */
@@ -1484,7 +2106,7 @@ top:
 	if (pc_xmode > 0) {
 #if defined(DDB) && defined(XSERVER_DDB)
 		/* F12 enters the debugger while in X mode */
-		if (dt == 88)
+		if ((dt == 88) && pccons_is_console)
 			Debugger();
 #endif
 		capchar[0] = dt;
@@ -1527,12 +2149,10 @@ top:
 				break;
 			shift_state |= SCROLL;
 			lock_state ^= SCROLL;
-			if ((lock_state & SCROLL) == 0)
-				wakeup(&lock_state);
 			async_update();
 			break;
 		}
-		return capchar;
+		return (capchar);
 	}
 #endif /* XSERVER */
 
@@ -1546,7 +2166,8 @@ top:
 	/*
 	 * Check for cntl-alt-esc.
 	 */
-	if ((dt == 1) && (shift_state & (CTL | ALT)) == (CTL | ALT)) {
+	if ((dt == 1) && ((shift_state & (CTL | ALT)) == (CTL | ALT))
+	    && pccons_is_console) {
 		Debugger();
 		dt |= 0x80;	/* discard esc (ddb discarded ctl-alt) */
 	}
@@ -1574,6 +2195,11 @@ top:
 			shift_state &= ~SHIFT;
 			break;
 		case ALT:
+#ifdef NONUS_KBD
+			if (extended) 
+			        shift_state &= ~ALTGR;
+			else
+#endif		     
 			shift_state &= ~ALT;
 			break;
 		case CTL:
@@ -1584,6 +2210,14 @@ top:
 		/*
 		 * make
 		 */
+#ifdef NUMERIC_SLASH_FIX
+		/* fix numeric / on non US keyboard */
+		if (extended && dt == 53) {
+			capchar[0] = '/';
+			extended = 0;
+			return (capchar);
+		}
+#endif
 		switch (scan_codes[dt].type) {
 		/*
 		 * locking keys
@@ -1606,11 +2240,12 @@ top:
 			if (shift_state & SCROLL)
 				break;
 			shift_state |= SCROLL;
-			lock_state ^= SCROLL;
 			if ((lock_state & SCROLL) == 0)
-				wakeup(&lock_state);
-			async_update();
-			break;
+				capchar[0] = 'S' - '@';
+			else
+				capchar[0] = 'Q' - '@';
+			extended = 0;
+			return (capchar);
 		/*
 		 * non-locking keys
 		 */
@@ -1618,12 +2253,24 @@ top:
 			shift_state |= SHIFT;
 			break;
 		case ALT:
+#ifdef NONUS_KBD
+			if (extended)  
+			        shift_state |= ALTGR;
+			else
+#endif
 			shift_state |= ALT;
 			break;
 		case CTL:
 			shift_state |= CTL;
 			break;
 		case ASCII:
+#ifdef NONUS_KBD
+			if (shift_state & ALTGR) {
+			        capchar[0] = scan_codes[dt].altgr[0];
+				if (shift_state & CTL) 
+				        capchar[0] &= 0x1f;
+			} else
+#endif
 			/* control has highest priority */
 			if (shift_state & CTL)
 				capchar[0] = scan_codes[dt].ctl[0];
@@ -1637,7 +2284,7 @@ top:
 			}
 			capchar[0] |= (shift_state & ALT);
 			extended = 0;
-			return capchar;
+			return (capchar);
 		case NONE:
 			break;
 		case FUNC: {
@@ -1649,7 +2296,7 @@ top:
 			else
 				more_chars = scan_codes[dt].unshift;
 			extended = 0;
-			return more_chars;
+			return (more_chars);
 		}
 		case KP: {
 			char *more_chars;
@@ -1659,7 +2306,7 @@ top:
 			else
 				more_chars = scan_codes[dt].unshift;
 			extended = 0;
-			return more_chars;
+			return (more_chars);
 		}
 		}
 	}
@@ -1667,7 +2314,7 @@ top:
 	extended = 0;
 loop:
 	if ((isa_inb(IO_KBD + KBSTATP) & KBS_DIB) == 0)
-		return 0;
+		return (0);
 	goto top;
 }
 
@@ -1679,11 +2326,8 @@ pcmmap(dev, offset, nprot)
 {
 
 	if (offset > 0x20000)
-		return -1;
-#if 0
-	return i386_btop(0xa0000 + offset);
-#endif 0
-	return 0;
+		return (-1);
+	return ((int)ISA_MEM(0xa0000 + offset));
 }
 
 #ifdef XSERVER
