@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.69.2.27 2004/11/18 05:02:49 thorpej Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.69.2.28 2004/11/18 06:21:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.69.2.27 2004/11/18 05:02:49 thorpej Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.69.2.28 2004/11/18 06:21:46 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -404,7 +404,7 @@ getgroup:
 		}
 	}
 
-	if (access (root, F_OK | R_OK)) {
+	if (access(root, F_OK | R_OK)) {
 		logerror("Cannot access `%s'", root);
 		die(NULL);
 	}
@@ -421,36 +421,6 @@ getgroup:
 		logerror("Couldn't allocate line buffer");
 		die(NULL);
 	}
-
-	/*
-	 * Always exit on SIGTERM.  Also exit on SIGINT and SIGQUIT
-	 * if we're debugging.
-	 */
-	(void)signal(SIGTERM, SIG_IGN);
-	(void)signal(SIGINT, SIG_IGN);
-	(void)signal(SIGQUIT, SIG_IGN);
-	ev = allocevchange();
-	EV_SET(ev, SIGTERM, EVFILT_SIGNAL, EV_ADD | EV_ENABLE, 0, 0,
-	    (intptr_t) die);
-	if (Debug) {
-		ev = allocevchange();
-		EV_SET(ev, SIGINT, EVFILT_SIGNAL, EV_ADD | EV_ENABLE, 0, 0,
-		    (intptr_t) die);
-
-		ev = allocevchange();
-		EV_SET(ev, SIGQUIT, EVFILT_SIGNAL, EV_ADD | EV_ENABLE, 0, 0,
-		    (intptr_t) die);
-	}
-
-	ev = allocevchange();
-	EV_SET(ev, SIGCHLD, EVFILT_SIGNAL, EV_ADD | EV_ENABLE, 0, 0,
-	    (intptr_t) reapchild);
-
-	ev = allocevchange();
-	EV_SET(ev, 0, EVFILT_TIMER, EV_ADD | EV_ENABLE, 0,
-	    TIMERINTVL * 1000 /* seconds -> ms */, (intptr_t) domark);
-
-	(void)signal(SIGPIPE, SIG_IGN);	/* We'll catch EPIPE instead. */
 
 #ifndef SUN_LEN
 #define SUN_LEN(unp) (strlen((unp)->sun_path) + 2)
@@ -487,37 +457,6 @@ getgroup:
 		dprintf("Listening on kernel log `%s'\n", _PATH_KLOG);
 	}
 
-	if ((fkq = kqueue()) < 0) {
-		logerror("Cannot create event queue");
-		die(NULL);
-	}
-
-	dprintf("Off & running....\n");
-
-	/* Re-read configuration on SIGHUP. */
-	(void) signal(SIGHUP, SIG_IGN);
-	ev = allocevchange();
-	EV_SET(ev, SIGHUP, EVFILT_SIGNAL, EV_ADD | EV_ENABLE, 0, 0,
-	    (intptr_t) init);
-
-	if (fklog >= 0) {
-		ev = allocevchange();
-		EV_SET(ev, fklog, EVFILT_READ, EV_ADD | EV_ENABLE,
-		    0, 0, (intptr_t) dispatch_read_klog);
-	}
-	if (finet && !SecureMode) {
-		for (j = 0; j < *finet; j++) {
-			ev = allocevchange();
-			EV_SET(ev, finet[j+1], EVFILT_READ, EV_ADD | EV_ENABLE,
-			    0, 0, (intptr_t) dispatch_read_finet);
-		}
-	}
-	for (j = 0, pp = LogPaths; *pp; pp++, j++) {
-		ev = allocevchange();
-		EV_SET(ev, funix[j], EVFILT_READ, EV_ADD | EV_ENABLE,
-		    0, 0, (intptr_t) dispatch_read_funix);
-	}
-
 	/* 
 	 * All files are open, we can drop privileges and chroot
 	 */
@@ -550,6 +489,74 @@ getgroup:
 		/* tuck my process id away, if i'm not in debug mode */
 		pidfile(NULL);
 	}
+
+	/*
+	 * Create the global kernel event descriptor.
+	 *
+	 * NOTE: We MUST do this after daemon(), bacause the kqueue()
+	 * API dictates that kqueue descriptors are not inherited
+	 * across forks (lame!).
+	 */
+	if ((fkq = kqueue()) < 0) {
+		logerror("Cannot create event queue");
+		die(NULL);	/* XXX This error is lost! */
+	}
+
+	/*
+	 * Always exit on SIGTERM.  Also exit on SIGINT and SIGQUIT
+	 * if we're debugging.
+	 */
+	(void)signal(SIGTERM, SIG_IGN);
+	(void)signal(SIGINT, SIG_IGN);
+	(void)signal(SIGQUIT, SIG_IGN);
+	ev = allocevchange();
+	EV_SET(ev, SIGTERM, EVFILT_SIGNAL, EV_ADD | EV_ENABLE, 0, 0,
+	    (intptr_t) die);
+	if (Debug) {
+		ev = allocevchange();
+		EV_SET(ev, SIGINT, EVFILT_SIGNAL, EV_ADD | EV_ENABLE, 0, 0,
+		    (intptr_t) die);
+
+		ev = allocevchange();
+		EV_SET(ev, SIGQUIT, EVFILT_SIGNAL, EV_ADD | EV_ENABLE, 0, 0,
+		    (intptr_t) die);
+	}
+
+	ev = allocevchange();
+	EV_SET(ev, SIGCHLD, EVFILT_SIGNAL, EV_ADD | EV_ENABLE, 0, 0,
+	    (intptr_t) reapchild);
+
+	ev = allocevchange();
+	EV_SET(ev, 0, EVFILT_TIMER, EV_ADD | EV_ENABLE, 0,
+	    TIMERINTVL * 1000 /* seconds -> ms */, (intptr_t) domark);
+
+	(void)signal(SIGPIPE, SIG_IGN);	/* We'll catch EPIPE instead. */
+
+	/* Re-read configuration on SIGHUP. */
+	(void) signal(SIGHUP, SIG_IGN);
+	ev = allocevchange();
+	EV_SET(ev, SIGHUP, EVFILT_SIGNAL, EV_ADD | EV_ENABLE, 0, 0,
+	    (intptr_t) init);
+
+	if (fklog >= 0) {
+		ev = allocevchange();
+		EV_SET(ev, fklog, EVFILT_READ, EV_ADD | EV_ENABLE,
+		    0, 0, (intptr_t) dispatch_read_klog);
+	}
+	if (finet && !SecureMode) {
+		for (j = 0; j < *finet; j++) {
+			ev = allocevchange();
+			EV_SET(ev, finet[j+1], EVFILT_READ, EV_ADD | EV_ENABLE,
+			    0, 0, (intptr_t) dispatch_read_finet);
+		}
+	}
+	for (j = 0, pp = LogPaths; *pp; pp++, j++) {
+		ev = allocevchange();
+		EV_SET(ev, funix[j], EVFILT_READ, EV_ADD | EV_ENABLE,
+		    0, 0, (intptr_t) dispatch_read_funix);
+	}
+
+	dprintf("Off & running....\n");
 
 	for (;;) {
 		void (*handler)(struct kevent *);
