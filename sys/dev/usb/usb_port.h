@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_port.h,v 1.19 2000/01/16 10:38:58 augustss Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.20 2000/01/16 15:36:28 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -60,6 +60,9 @@
 #define UCOM_DEBUG 1
 #define UMODEM_DEBUG 1
 #define UAUDIO_DEBUG 1
+#define AUE_DEBUG 1
+#define CUE_DEBUG 1
+#define KUE_DEBUG 1
 #endif
 
 typedef struct device *device_ptr_t;
@@ -162,6 +165,9 @@ __CONCAT(dname,_detach)(self, flags) \
 #define UCOM_DEBUG 1
 #define UMODEM_DEBUG 1
 #define UAUDIO_DEBUG 1
+#define AUE_DEBUG 1
+#define CUE_DEBUG 1
+#define KUE_DEBUG 1
 #endif
 
 #define	memcpy(d, s, l)		bcopy((s),(d),(l))
