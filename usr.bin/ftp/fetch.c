@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.94 1999/11/09 22:03:49 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.95 1999/11/10 07:34:41 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.94 1999/11/09 22:03:49 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.95 1999/11/10 07:34:41 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -418,7 +418,7 @@ cleanup_parse_url:
 		tport = cp;
 	}
 
-	if (tport != NULL);
+	if (tport != NULL)
 		*port = xstrdup(tport);
 	if (*path == NULL)
 		*path = xstrdup("");
@@ -459,6 +459,7 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 #endif
 	volatile sig_t		oldintr, oldintp;
 	volatile int		s;
+	struct stat		sb;
 	int 			ischunked, isproxy, rval, hcode;
 	size_t			len;
 	static size_t		bufsize;
@@ -467,7 +468,7 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 	char			*auth, *location, *message;
 	char			*user, *pass, *host, *port, *path, *decodedpath;
 	char			*puser, *ppass;
-	off_t			hashbytes;
+	off_t			hashbytes, rangestart, rangeend, entitylen;
 	int			 (*closefunc) __P((FILE *));
 	FILE			*fin, *fout;
 	time_t			mtime;
@@ -545,11 +546,16 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 			fprintf(ttyout, "got savefile as `%s'\n", savefile);
 	}
 
+	restart_point = 0;
 	filesize = -1;
+	rangestart = rangeend = entitylen = -1;
 	mtime = -1;
+	if (restartautofetch) {
+		if (strcmp(savefile, "-") != 0 && *savefile != '|' &&
+		    stat(savefile, &sb) == 0)
+			restart_point = sb.st_size;
+	}
 	if (urltype == FILE_URL_T) {		/* file:// URLs */
-		struct stat sb;
-
 		direction = "copied";
 		fin = fopen(decodedpath, "r");
 		if (fin == NULL) {
@@ -560,8 +566,25 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 			mtime = sb.st_mtime;
 			filesize = sb.st_size;
 		}
-		if (verbose)
-			fprintf(ttyout, "Copying %s\n", decodedpath);
+		if (restart_point) {
+			if (lseek(fileno(fin), restart_point, SEEK_SET) < 0) {
+				warn("Can't lseek to restart `%s'",
+				    decodedpath);
+				goto cleanup_fetch_url;
+			}
+		}
+		if (verbose) {
+			fprintf(ttyout, "Copying %s", decodedpath);
+			if (restart_point)
+#ifndef NO_QUAD
+				fprintf(ttyout, " (restarting at %lld)",
+				    (long long)restart_point);
+#else
+				fprintf(ttyout, " (restarting at %ld)",
+				    (long)restart_point);
+#endif
+			fputs("\n", ttyout);
+		}
 	} else {				/* ftp:// or http:// URLs */
 		char *leading;
 		int hasleading;
@@ -768,6 +791,22 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 			fprintf(fin, "Host: %s:%d\r\n", host, portnum);
 			fprintf(fin, "Accept: */*\r\n");
 			fprintf(fin, "Connection: close\r\n");
+			if (restart_point) {
+				fputs(leading, ttyout);
+#ifndef NO_QUAD
+				fprintf(fin, "Range: bytes=%lld-\r\n",
+				    (long long)restart_point);
+				fprintf(ttyout, "restarting at %lld",
+				    (long long)restart_point);
+#else
+				fprintf(fin, "Range: bytes=%ld-\r\n",
+				    (long)restart_point);
+				fprintf(ttyout, "restarting at %ld",
+				    (long)restart_point);
+#endif
+				leading = ", ";
+				hasleading++;
+			}
 			if (flushcache)
 				fprintf(fin, "Cache-Control: no-cache\r\n");
 		}
@@ -842,18 +881,72 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 			if (strncasecmp(cp, CONTENTLEN,
 					sizeof(CONTENTLEN) - 1) == 0) {
 				cp += sizeof(CONTENTLEN) - 1;
+#ifndef NO_QUAD
+				filesize = strtoq(cp, &ep, 10);
+#else
 				filesize = strtol(cp, &ep, 10);
-				if (filesize < 1 || *ep != '\0')
+#endif
+				if (filesize < 0 || *ep != '\0')
 					goto improper;
 				if (debug)
-					fprintf(ttyout,
 #ifndef NO_QUAD
-					    "parsed length as: %lld\n",
+					fprintf(ttyout, "parsed len as: %lld\n",
 					    (long long)filesize);
 #else
-					    "parsed length as: %ld\n",
+					fprintf(ttyout, "parsed len as: %ld\n",
 					    (long)filesize);
 #endif
+
+#define CONTENTRANGE "Content-Range: bytes "
+			} else if (strncasecmp(cp, CONTENTRANGE,
+					sizeof(CONTENTRANGE) - 1) == 0) {
+				cp += sizeof(CONTENTRANGE) - 1;
+#ifndef NO_QUAD
+				rangestart = strtoq(cp, &ep, 10);
+#else
+				rangestart = strtol(cp, &ep, 10);
+#endif
+				if (rangestart < 0 || *ep != '-')
+					goto improper;
+				cp = ep + 1;
+
+#ifndef NO_QUAD
+				rangeend = strtoq(cp, &ep, 10);
+#else
+				rangeend = strtol(cp, &ep, 10);
+#endif
+				if (rangeend < 0 || *ep != '/' ||
+				    rangeend < rangestart)
+					goto improper;
+				cp = ep + 1;
+
+#ifndef NO_QUAD
+				entitylen = strtoq(cp, &ep, 10);
+#else
+				entitylen = strtol(cp, &ep, 10);
+#endif
+				if (entitylen < 0 || *ep != '\0')
+					goto improper;
+
+				if (debug)
+#ifndef NO_QUAD
+					fprintf(ttyout,
+					    "parsed range as: %lld-%lld/%lld\n",
+					    (long long)rangestart,
+					    (long long)rangeend,
+					    (long long)entitylen);
+#else
+					fprintf(ttyout,
+					    "parsed range as: %ld-%ld/%ld\n",
+					    (long)rangestart,
+					    (long)rangeend,
+					    (long)entitylen);
+#endif
+				if (! restart_point) {
+					warnx(
+				    "Received unexpected Content-Range header");
+					goto cleanup_fetch_url;
+				}
 
 #define	LASTMOD "Last-Modified: "
 			} else if (strncasecmp(cp, LASTMOD,
@@ -936,6 +1029,12 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 
 		switch (hcode) {
 		case 200:
+			break;
+		case 206:
+			if (! restart_point) {
+				warnx("Not expecting partial content header");
+				goto cleanup_fetch_url;
+			}
 			break;
 		case 300:
 		case 301:
@@ -1030,7 +1129,18 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 		}
 		closefunc = pclose;
 	} else {
-		fout = fopen(savefile, "w");
+		if (restart_point){
+			if (entitylen != -1)
+				filesize = entitylen;
+			if (rangestart != -1 && rangestart != restart_point) {
+				warnx(
+				    "Size of `%s' differs from save file `%s'",
+				    url, savefile);
+				goto cleanup_fetch_url;
+			}
+			fout = fopen(savefile, "a");
+		} else
+			fout = fopen(savefile, "w");
 		if (fout == NULL) {
 			warn("Can't open `%s'", savefile);
 			goto cleanup_fetch_url;
