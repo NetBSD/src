@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.14 2000/10/10 11:43:51 itojun Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.15 2000/12/13 22:07:51 thorpej Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -673,8 +673,9 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 {
 	struct sppp *sp = (struct sppp*) ifp;
 	struct ppp_header *h;
-	struct ifqueue *ifq;
-	int s, rv = 0;
+	struct ifqueue *ifq = NULL;		/* XXX */
+	int s, len, rv = 0;
+	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	s = splimp();
 
@@ -696,7 +697,11 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 		s = splimp();
 	}
 
-	ifq = &ifp->if_snd;
+	/*
+	 * If the queueing discipline needs packet classification,
+	 * do it before prepending link headers.
+	 */
+	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family, &pktattr);
 
 #ifdef INET
 	if (dst->sa_family == AF_INET)
@@ -844,14 +849,27 @@ nosupport:
 	 * Queue message on interface, and start output if interface
 	 * not yet active.
 	 */
-	if (IF_QFULL (ifq)) {
-		IF_DROP (&ifp->if_snd);
-		m_freem (m);
+	len = m->m_pkthdr.len;
+	if (ifq != NULL
+#ifdef ALTQ
+	    && ALTQ_IS_ENABLED(&ifp->if_snd) == 0
+#endif
+	    ) {
+		if (IF_QFULL (ifq)) {
+			IF_DROP (&ifp->if_snd);
+			m_freem (m);
+			if (rv == 0)
+				rv = ENOBUFS;
+		}
+		IF_ENQUEUE(ifq, m);
+	} else
+		IFQ_ENQUEUE(&ifp->if_snd, m, &pktattr, rv);
+	if (rv != 0) {
 		++ifp->if_oerrors;
-		splx (s);
-		return (rv? rv: ENOBUFS);
+		splx(s);
+		return (rv);
 	}
-	IF_ENQUEUE (ifq, m);
+
 	if (! (ifp->if_flags & IFF_OACTIVE))
 		(*ifp->if_start) (ifp);
 
@@ -860,7 +878,7 @@ nosupport:
 	 * The packet length includes header, FCS and 1 flag,
 	 * according to RFC 1333.
 	 */
-	ifp->if_obytes += m->m_pkthdr.len + 3;
+	ifp->if_obytes += len + 3;
 	splx (s);
 	return (0);
 }
