@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.10 2003/05/09 13:36:40 tsutsui Exp $	*/
+/*	$NetBSD: if_le.c,v 1.11 2003/05/10 09:46:25 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@ le_attach(parent, self, aux)
 	struct le_softc *lesc = (struct le_softc *)self;
 	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	struct hb_attach_args *ha = aux;
-	int intlevel;
+	int intlevel, intmask;
 	u_char *p;
 
 	intlevel = ha->ha_level;
@@ -169,14 +169,17 @@ le_attach(parent, self, aux)
 	case LANCE_PORT:
 		sc->sc_mem = (void *)LANCE_MEMORY;
 		p = (u_char *)(ETHER_ID+16);
+		intmask = INTST1_LANCE;
 		break;
 	case LANCE_PORT1:
 		sc->sc_mem = (void *)LANCE_MEMORY1;
 		p = (u_char *)(ETHER_ID1+16);
+		intmask = INTST1_SLOT3; /* XXX not tested */
 		break;
 	case LANCE_PORT2:
 		sc->sc_mem = (void *)LANCE_MEMORY2;
 		p = (u_char *)(ETHER_ID2+16);
+		intmask = INTST1_SLOT3; /* XXX not tested */
 		break;
 
 	default:
@@ -214,5 +217,5 @@ le_attach(parent, self, aux)
 	sc->sc_hwinit = NULL;
 
 	am7990_config(&lesc->sc_am7990);
-	hb_intr_establish(intlevel, IPL_NET, am7990_intr, sc);
+	hb_intr_establish(intlevel, intmask, IPL_NET, am7990_intr, sc);
 }

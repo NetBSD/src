@@ -1,4 +1,4 @@
-/*	$NetBSD: hbvar.h,v 1.1 2003/05/09 13:36:40 tsutsui Exp $	*/
+/*	$NetBSD: hbvar.h,v 1.2 2003/05/10 09:46:25 tsutsui Exp $	*/
 
 /*
  * Copyright (C) 2003 Izumi Tsutsui.  All rights reserved.
@@ -42,5 +42,5 @@ struct hb_attach_args {
 
 #define hb_badaddr	news3400_badaddr
 
-void *hb_intr_establish(int, int, int (*)(void *), void *);
-void hb_intr_dispatch(int);
+void *hb_intr_establish(int, int, int, int (*)(void *), void *);
+void hb_intr_dispatch(int, int);
