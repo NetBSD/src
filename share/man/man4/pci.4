@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.43 2001/02/04 17:05:14 ad Exp $
+.\"	$NetBSD: pci.4,v 1.44 2001/03/30 13:57:07 kleink Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -168,6 +168,10 @@ interfaces.
 Intel EtherExpress PRO 10+/100B
 .Tn Ethernet
 interfaces.
+.It hme
+Sun Microelectronics STP2002-STQ
+.Tn Ethernet
+interfaces.
 .It le
 PCNet-PCI
 .Tn Ethernet
@@ -303,6 +307,7 @@ VGA graphics boards.
 .Xr fms 4 ,
 .Xr fpa 4 ,
 .Xr fxp 4 ,
+.Xr hme 4 ,
 .Xr iop 4 ,
 .Xr isp 4 ,
 .Xr le 4 ,
