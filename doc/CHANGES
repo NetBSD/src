@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.101 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.102 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -284,3 +284,7 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	kernel: SMBFS support, ported from FreeBSD.  [jdolecek 20030218]
 	kernel: Top down memory management option added, initially for
 		i386, but others are following.  [atatat 20030220]
+	/etc/daily, daily.conf(5): Suppress empty security reports by default.
+		[jhawk 20030221]
+	/etc/security, security.conf(5): Produce unified diffs by default.
+		[jhawk 20030221]
