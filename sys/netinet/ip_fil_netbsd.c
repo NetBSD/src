@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.10 2004/05/20 13:55:32 christos Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.11 2004/06/16 14:02:39 tron Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -903,8 +903,6 @@ int dst;
 			return -1;
 
 		MCLGET(m, M_DONTWAIT);
-		if (m == NULL)
-			return -1;
 		avail = (m->m_flags & M_EXT) ? MCLBYTES : MHLEN;
 		xtra = MIN(fin->fin_plen,
 			   avail - hlen - sizeof(*icmp) - max_linkhdr);
@@ -930,7 +928,7 @@ int dst;
 	iclen += xtra;
 	m->m_pkthdr.len = iclen;
 	if (avail < 0) {
-		m_freem(m);
+		FREE_MB_T(m);
 		return -1;
 	}
 	m->m_len = iclen;
@@ -1031,8 +1029,14 @@ frdest_t *fdp;
 	}
 #endif
 #ifdef USE_INET6
-	if (fin->fin_v == 6)
-		return ipfr_fastroute6(m0, mpp, fin, fdp);
+	if (fin->fin_v == 6) {
+		error = ipfr_fastroute6(m0, mpp, fin, fdp);
+		if ((error != 0) && (*mpp != NULL)) {
+			FREE_MB_T(*mpp);
+			*mpp = NULL;
+		}
+		return error;
+	}
 #endif
 
 	hlen = fin->fin_hlen;
@@ -1180,6 +1184,7 @@ frdest_t *fdp;
 		MGET(m, M_DONTWAIT, MT_HEADER);
 #endif
 		if (m == 0) {
+			m = m0;
 			error = ENOBUFS;
 			goto bad;
 		}
@@ -1325,11 +1330,13 @@ frdest_t *fdp;
 			dst6 = (struct sockaddr_in6 *)ro->ro_rt->rt_gateway;
 		ro->ro_rt->rt_use++;
 
-		if (m0->m_pkthdr.len <= mtu)
+		if (m0->m_pkthdr.len <= mtu) {
+			*mpp = NULL;
 			error = nd6_output(ifp, fin->fin_ifp, m0,
 						   dst6, ro->ro_rt);
-		else
+		} else {
 			error = EMSGSIZE;
+		}
 	}
 
 bad:
