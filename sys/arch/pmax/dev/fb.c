@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.26 1999/07/25 22:50:28 ad Exp $	*/
+/*	$NetBSD: fb.c,v 1.27 1999/07/28 17:13:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -197,6 +197,8 @@ fbconnect (name, info, console)
 	struct fbinfo *info;
 	int console;
 {
+	char *cstr;
+	
 	/*
 	 * If this is the first frame buffer we've seen, pass it to rcons.
 	 */
@@ -208,11 +210,15 @@ fbconnect (name, info, console)
 #if NRASTERCONSOLE > 0
 		/*XXX*/ cn_in_dev = cn_tab->cn_dev; /*XXX*/ /* FIXME */
 		rcons_connect (info);
+	} else {
+		cstr = (info == &fbdevs[0].fd_info ? " (console)" : "");
+#else
+	} else {
+		cstr = "";
 #endif  /* NRASTERCONSOLE */
-	} else 
 		printf(": %dx%dx%d%s", info->fi_type.fb_width, 
-		    info->fi_type.fb_height, info->fi_type.fb_depth, 
-		    (console ? " (console)" : ""));
+		    info->fi_type.fb_height, info->fi_type.fb_depth, cstr);
+	}
 }
 
 
