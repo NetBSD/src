@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm_7248.c,v 1.2 2002/02/24 13:19:09 kleink Exp $	*/
+/*	$NetBSD: ibm_7248.c,v 1.3 2002/05/02 14:38:41 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@ struct platform platform_ibm_7248 = {
 	platform_generic_match,			/* match */
 	prep_pci_get_chipset_tag_indirect,	/* pci_get_chipset_tag */
 	pci_intr_fixup_ibm_7248,		/* pci_intr_fixup */
-	ext_intr,				/* ext_intr */
+	ext_intr_ivr,				/* ext_intr */
 	cpu_setup_ibm_generic,			/* cpu_setup */
 	reset_ibm_generic,			/* reset */
 };
