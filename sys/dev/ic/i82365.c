@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.46 2000/02/05 20:02:42 nathanw Exp $	*/
+/*	$NetBSD: i82365.c,v 1.47 2000/02/10 09:00:19 chopps Exp $	*/
 
 #define	PCICDEBUG
 
@@ -921,7 +921,8 @@ pcic_chip_do_mem_map(h, win)
 	int reg;
 	int kind = h->mem[win].kind & ~PCMCIA_WIDTH_MEM_MASK;
 	int mem8 =
-	    (h->mem[win].kind & PCMCIA_WIDTH_MEM_MASK) == PCMCIA_WIDTH_MEM8;
+	    (h->mem[win].kind & PCMCIA_WIDTH_MEM_MASK) == PCMCIA_WIDTH_MEM8
+	    || (kind == PCMCIA_MEM_ATTR);
 
 	DPRINTF(("mem8 %d\n", mem8));
 	/* mem8 = 1; */
