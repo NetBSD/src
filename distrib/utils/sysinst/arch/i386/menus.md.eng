@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.eng,v 1.3.2.5 1997/11/25 20:37:41 phil Exp $	*/
+/*	$NetBSD: menus.md.eng,v 1.3.2.6 1997/11/29 21:56:57 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -75,19 +75,23 @@ menu dlgeom, title "  Choose an option";
 			disk->geom[2] = dlsec;
 		};
 
-menu biosgeom, title  "  Choose an option", y=16;
-	display action { msg_display (MSG_biosgeom, diskdev);
-			 disp_cur_geom ();
+menu nobiosgeom, title  "  Choose an option", y=16;
+	display action { msg_display (MSG_nobiosgeom, diskdev);
+			 disp_cur_geom();
 			};
 	option "Abort install",
 		action (endwin)  { exit(1); };
 	option "Enter geometry",
 		action  { msg_clear(); set_fdisk_geom(); },
-		next menu confirmbios;
+		next menu confirmbiosgeom;
 
-menu confirmbios;
+menu confirmbiosgeom, y=16;
 	display action  {
-		msg_display (MSG_badgeom);
+		extern int mbr_present;	/* XXX */
+		msg_clear();
+		if (mbr_present)
+			msg_display_add(MSG_confirmbiosgeom);
+		msg_display_add(MSG_badgeom);
 		disp_cur_geom ();
 	};
 	option "Reenter geometry",
@@ -96,7 +100,7 @@ menu confirmbios;
 		action  {
 			if (check_geom())
 				return TRUE;
-			msg_display (MSG_reentergeom);
+			msg_display(MSG_reentergeom);
 			set_fdisk_geom();
 		};
 

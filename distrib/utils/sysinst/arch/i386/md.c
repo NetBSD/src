@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.4.2.3 1997/11/25 20:37:37 phil Exp $ */
+/*	$NetBSD: md.c,v 1.4.2.4 1997/11/29 21:56:56 fvdl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -44,20 +44,30 @@
 #include "msg_defs.h"
 #include "menu_defs.h"
 
+int mbr_present;
+
 /* prototypes */
 
 int md_get_info()
 {
 	int i, j;
-	get_fdisk_info ();
+
+	get_fdisk_info();
 
 	/* Check fdisk information */
-	if (bsec <= 0 || bcyl <= 0 || bsec <= 0 ||  bcyl > 1024 || bsec > 63) 
-		process_menu (MENU_biosgeom);
+	if (part[0][ID] == 0 && part[1][ID] == 0 && part[2][ID] == 0 &&
+	    part[3][ID] == 0) {
+		mbr_present = 0;
+		process_menu(MENU_nobiosgeom);
+	} else {
+		mbr_present = 1;
+		msg_display(MSG_confirmbiosgeom);
+		process_menu(MENU_confirmbiosgeom);
+	}
 
 	/* Ask about disk type ... */
 	if (strncmp(disk->name, "wd", 2) == 0) {
-		process_menu (MENU_wdtype);
+		process_menu(MENU_wdtype);
 		disktype = "ST506";
 		/* Check against disk geometry. */
 		if (disk->geom[0] != dlcyl || disk->geom[1] != dlhead
@@ -72,13 +82,21 @@ int md_get_info()
 			else
 				process_menu (MENU_scsigeom2);
 	}
-		
 
 	/* Compute the full sizes ... */
 	dlcylsize = dlhead*dlsec;
 	dlsize = dlcyl*dlcylsize;
 	bcylsize = bhead*bsec;
 	bsize = bcyl*bcylsize;
+
+	msg_display(MSG_diagcyl);
+	process_menu(MENU_noyes);
+	if (yesno) {
+		dlcyl--;
+		dlsize -= dlcylsize;
+		if (dlsize < bsize)
+			bcyl = dlsize / bcylsize;
+	}
 
 	/* Ask full/part */
 	msg_display (MSG_fullpart, diskdev);
@@ -296,6 +314,7 @@ void md_make_bsd_partitions (void)
 
 		/* /usr */
 		partsize = fsptsize - (partstart - ptstart);
+		bsdlabel[E][D_FSTYPE] = T_42BSD;
 		bsdlabel[E][D_OFFSET] = partstart;
 		bsdlabel[E][D_SIZE] = partsize;
 		bsdlabel[E][D_BSIZE] = 8192;
