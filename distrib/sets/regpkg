@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-# $NetBSD: regpkg,v 1.1 2003/06/12 20:04:00 agc Exp $
+# $NetBSD: regpkg,v 1.2 2003/06/13 02:32:26 jwise Exp $
 #
 # Copyright (c) 2003 Alistair G. Crooks.  All rights reserved.
 #
@@ -68,35 +68,17 @@ esac
 # create the skeleton PLIST from the pkgset description
 ./makeplist $pkgset $pkg > $PLIST
 
+# create the pkg tiny version
+tinyvers=`awk '$1 ~ '/$pkg/' { print substr($0, length($1) + 2) }' versions`
+case "$tinyvers" in
+"")	echo "***WARNING ***: no version for \"$pkg\"" 2>&1
+	tinyvers="System package for $pkg"
+	;;
+esac
+
 # we need the last mtime of the files which make up the package
-args=`awk '
-	/^@cwd/ { prefix = $2; next }
-	/^@dirrm/ { next }
-	{ printf("%s%s\n", prefix, $0) }' $PLIST`
-t=`env TZ=UTC LOCALE=C ls -lT $args | awk '
-	BEGIN { newest = 0 }
-	{
-		t = $9 "";
-		if ($6 == "Jan") t = t "01";
-		if ($6 == "Feb") t = t "02";
-		if ($6 == "Mar") t = t "03";
-		if ($6 == "Apr") t = t "04";
-		if ($6 == "May") t = t "05";
-		if ($6 == "Jun") t = t "06";
-		if ($6 == "Jul") t = t "07";
-		if ($6 == "Aug") t = t "08";
-		if ($6 == "Sep") t = t "09";
-		if ($6 == "Oct") t = t "10";
-		if ($6 == "Nov") t = t "11";
-		if ($6 == "Dec") t = t "12";
-		if ($7 < 10) t = t "0";
-		t = t $7;
-		#these next two lines add the 24h clock onto the date
-		#gsub(":", "", $8);
-		#t = sprintf("%s.%4.4s", t, $8);
-		if (t > newest) newest = t;
-	}
-	END { print newest }'`
+osvers=`sh ../../sys/conf/osrelease.sh`
+t=$osvers.$tinyvers
 
 # create the directory and minimal contents
 SYSPKGDIR=${SYSPKGROOT}/$pkg-$t
@@ -125,6 +107,14 @@ case "$descr" in
 esac
 echo "$descr" > ${SYSPKGDIR}/+DESC
 printf "\nHomepage:\nhttp://www.NetBSD.org/\n" >> ${SYSPKGDIR}/+DESC
+
+# create the pkg tiny version
+tinyvers=`awk '$1 ~ '/$pkg/' { print substr($0, length($1) + 2) }' versions`
+case "$tinyvers" in
+"")	echo "***WARNING ***: no version for \"$pkg\"" 2>&1
+	tinyvers="System package for $pkg"
+	;;
+esac
 
 # create the build information
 echo "OPSYS=`uname -s`" > ${SYSPKGDIR}/+BUILD_INFO
