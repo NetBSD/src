@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.72 2004/02/03 08:02:41 lukem Exp $
+# $NetBSD: postinstall,v 1.73 2004/03/16 23:03:14 enami Exp $
 #
 # Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -190,6 +190,8 @@ compare_dir()
 		fi
 		if [ "${_op}" = "check" ]; then
 			msg ${_error}
+			[ -n "${DIFF_STYLE}" -a -f "${fd}" ] && \
+			    diff -${DIFF_STYLE} ${DIFF_OPT} ${fd} ${fs}
 			_cmpdir_rv=1
 		elif ! rm -f ${fd} ||
 		     ! cp -f ${fs} ${fd}; then
@@ -898,8 +900,19 @@ Usage: ${PROGNAME} [-s srcdir] [-d destdir] [-m machine] operation [item [...]]
 		help	display this help
 		list	list available items
 		check	perform post-installation checks on items
+		diff [diff options ...]
+			similar to 'check' but also output difference of files
 		fix	apply fixes that 'check' determines need to be applied
 		usage	display this usage
+_USAGE_
+	exit 1
+}
+
+
+diff_usage()
+{
+	cat 1>&2 << _USAGE_
+${PROGNAME}: $*
 _USAGE_
 	exit 1
 }
@@ -950,6 +963,28 @@ main()
 
 	op=$1
 	shift
+
+	case "${op}" in
+	diff)
+		op=check
+		DIFF_STYLE=n			# default style is RCS
+		OPTIND=1
+		while getopts bcenuw ch; do
+			case ${ch} in
+			c|e|n|u)
+				if [ ${DIFF_STYLE} != n -a \
+				    ${DIFF_STYLE} != ${ch} ]; then
+					diff_usage \
+					    conflicting output style: ${ch}
+				fi
+				DIFF_STYLE=${ch};;
+			b|w)
+				DIFF_OPT="${DIFF_OPT} -${ch}";;
+			*)	diff_usage unknown diff option;;
+			esac
+		done
+		shift $((${OPTIND} - 1));;
+	esac
 
 	case "${op}" in
 
