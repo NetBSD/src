@@ -1,4 +1,4 @@
-/*	$NetBSD: mountd.c,v 1.40 1997/08/28 05:49:15 lukem Exp $	*/
+/*	$NetBSD: mountd.c,v 1.41 1997/08/28 08:09:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,18 +41,17 @@
  * XXX The ISO support can't possibly work..
  */
 
-
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-static char rcsid[] = "$NetBSD: mountd.c,v 1.40 1997/08/28 05:49:15 lukem Exp $";
+__RCSID("$NetBSD: mountd.c,v 1.41 1997/08/28 08:09:54 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,6 +80,7 @@ static char rcsid[] = "$NetBSD: mountd.c,v 1.40 1997/08/28 05:49:15 lukem Exp $"
 #include <grp.h>
 #include <netdb.h>
 #include <pwd.h>
+#include <netgroup.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -183,7 +183,7 @@ void	free_exp __P((struct exportlist *));
 void	free_grp __P((struct grouplist *));
 void	free_host __P((struct hostlist *));
 void	get_exportlist __P((void));
-int	get_host __P((char *, struct grouplist *));
+int	get_host __P((const char *, struct grouplist *));
 int	get_num __P((char *));
 struct hostlist *get_ht __P((void));
 int	get_line __P((void));
@@ -193,6 +193,7 @@ void	getexp_err __P((struct exportlist *, struct grouplist *));
 struct grouplist *get_grp __P((void));
 void	hang_dirp __P((struct dirlist *, struct grouplist *,
 				struct exportlist *, int));
+int	main __P((int, char *[]));
 void	mntsrv __P((struct svc_req *, SVCXPRT *));
 void	nextfield __P((char **, char **));
 void	out_of_mem __P((void));
@@ -205,15 +206,6 @@ int	xdr_dir __P((XDR *, char *));
 int	xdr_explist __P((XDR *, caddr_t));
 int	xdr_fhs __P((XDR *, caddr_t));
 int	xdr_mlist __P((XDR *, caddr_t));
-
-/* C library */
-int	getnetgrent();
-void	endnetgrent();
-void	setnetgrent();
-
-#ifdef ISO
-struct iso_addr *iso_addr();
-#endif
 
 struct exportlist *exphead;
 struct mountlist *mlhead;
@@ -257,7 +249,7 @@ main(argc, argv)
 	SVCXPRT *udptransp, *tcptransp;
 	int c;
 
-	while ((c = getopt(argc, argv, "dnr")) != EOF)
+	while ((c = getopt(argc, argv, "dnr")) != -1)
 		switch (c) {
 		case 'd':
 			debug = 1;
@@ -352,6 +344,7 @@ mntsrv(rqstp, transp)
 	saddr = transp->xp_raddr.sin_addr;
 	sport = ntohs(transp->xp_raddr.sin_port);
 	hp = (struct hostent *)NULL;
+	ret = 0;
 	switch (rqstp->rq_proc) {
 	case NULLPROC:
 		if (!svc_sendreply(transp, xdr_void, (caddr_t)NULL))
@@ -668,7 +661,8 @@ get_exportlist()
 	struct statfs fsb, *fsp;
 	struct hostent *hpe;
 	struct ucred anon;
-	char *cp, *endcp, *dirp, *hst, *usr, *dom, savedc;
+	char *cp, *endcp, *dirp, savedc;
+	const char *hst, *usr, *dom;
 	int len, has_host, exflags, got_nondir, dirplen, num, i, netgrp;
 
 	/*
@@ -682,6 +676,8 @@ get_exportlist()
 	}
 	exphead = (struct exportlist *)NULL;
 
+	dirp = NULL;
+	dirplen = 0;
 	grp = grphead;
 	while (grp) {
 		tgrp = grp;
@@ -1272,12 +1268,13 @@ do_opt(cpp, endcpp, ep, grp, has_hostp, exflagsp, cr)
 	while (cpopt && *cpopt) {
 		allflag = 1;
 		usedarg = -2;
-		if (cpoptend = strchr(cpopt, ',')) {
+		savedc2 = '\0';
+		if ((cpoptend = strchr(cpopt, ',')) != NULL) {
 			*cpoptend++ = '\0';
-			if (cpoptarg = strchr(cpopt, '='))
+			if ((cpoptarg = strchr(cpopt, '=')) != NULL)
 				*cpoptarg++ = '\0';
 		} else {
-			if (cpoptarg = strchr(cpopt, '='))
+			if ((cpoptarg = strchr(cpopt, '=')) != NULL)
 				*cpoptarg++ = '\0';
 			else {
 				*cp = savedc;
@@ -1378,7 +1375,7 @@ do_opt(cpp, endcpp, ep, grp, has_hostp, exflagsp, cr)
  */
 int
 get_host(cp, grp)
-	char *cp;
+	const char *cp;
 	struct grouplist *grp;
 {
 	struct hostent *hp, *nhp;
@@ -1400,7 +1397,7 @@ get_host(cp, grp)
 			if ((hp = gethostbyaddr((caddr_t)&saddr, sizeof (saddr),
 				AF_INET)) == NULL) {
 				hp = &t_host;
-				hp->h_name = cp;
+				hp->h_name = (char *)cp;
 				hp->h_addrtype = AF_INET;
 				hp->h_length = sizeof (u_int32_t);
 				hp->h_addr_list = aptr;
@@ -1699,7 +1696,7 @@ get_net(cp, net, maskflg)
 	struct in_addr inetaddr, inetaddr2;
 	char *name;
 
-	if (np = getnetbyname(cp))
+	if ((np = getnetbyname(cp)) != NULL)
 		inetaddr = inet_makeaddr(np->n_net, 0);
 	else if (isdigit(*cp)) {
 		if ((netaddr = inet_network(cp)) == -1)
@@ -1714,7 +1711,7 @@ get_net(cp, net, maskflg)
 		 */
 		if (!maskflg) {
 			setnetent(0);
-			while (np = getnetent()) {
+			while ((np = getnetent()) != NULL) {
 				inetaddr2 = inet_makeaddr(np->n_net, 0);
 				if (inetaddr2.s_addr == inetaddr.s_addr)
 					break;
@@ -1957,7 +1954,7 @@ del_mlist(hostp, dirp, saddr)
 	if (fnd) {
 		if ((mlfile = fopen(_PATH_RMOUNTLIST, "w")) == NULL) {
 			syslog(LOG_ERR,"Can't update %s: %m", _PATH_RMOUNTLIST);
-			return;
+			return ret;
 		}
 		mlp = mlhead;
 		while (mlp) {
