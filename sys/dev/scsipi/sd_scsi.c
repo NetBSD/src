@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_scsi.c,v 1.13 2000/05/30 01:08:25 augustss Exp $	*/
+/*	$NetBSD: sd_scsi.c,v 1.14 2000/05/31 09:15:48 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -255,6 +255,7 @@ sd_scsibus_get_parms(sd, dp, flags)
 	int flags;
 {
 	struct sd_scsibus_mode_sense_data scsipi_sense;
+	struct scsipi_link *link = sd->sc_link;
 	u_long sectors;
 	int page;
 	int error;
@@ -270,7 +271,7 @@ sd_scsibus_get_parms(sd, dp, flags)
 
 	if ((error = sd_scsibus_mode_sense(sd, &scsipi_sense, page = 4,
 	    flags)) == 0) {
-		SC_DEBUG(sd->sc_link, SDEV_DB3,
+		SC_DEBUG(link, SDEV_DB3,
 		    ("%d cyls, %d heads, %d precomp, %d red_write, %d land_zone\n",
 		    _3btol(scsipi_sense.pages.rigid_geometry.ncyl),
 		    scsipi_sense.pages.rigid_geometry.nheads,
@@ -294,7 +295,7 @@ sd_scsibus_get_parms(sd, dp, flags)
 		if (dp->blksize == 0)
 			dp->blksize = 512;
 
-		sectors = scsipi_size(sd->sc_link, flags);
+		sectors = scsipi_size(link, flags);
 		dp->disksize = sectors;
 		sectors /= (dp->heads * dp->cyls);
 		dp->sectors = sectors;	/* XXX dubious on SCSI */
@@ -319,7 +320,7 @@ sd_scsibus_get_parms(sd, dp, flags)
 	}
 
 fake_it:
-	if ((sd->sc_link->quirks & SDEV_NOMODESENSE) == 0) {
+	if ((link->quirks & SDEV_NOMODESENSE) == 0) {
 		if (error == 0)
 			printf("%s: mode sense (%d) returned nonsense",
 			    sd->sc_dev.dv_xname, page);
@@ -328,17 +329,24 @@ fake_it:
 			    sd->sc_dev.dv_xname);
 		printf("; using fictitious geometry\n");
 	}
-	/*
-	 * use adaptec standard fictitious geometry
-	 * this depends on which controller (e.g. 1542C is
-	 * different. but we have to put SOMETHING here..)
-	 */
-	sectors = scsipi_size(sd->sc_link, flags);
-	dp->heads = 64;
-	dp->sectors = 32;
-	dp->cyls = sectors / (64 * 32);
-	dp->blksize = 512;
+
+	sectors = scsipi_size(link, flags);
 	dp->disksize = sectors;
+	dp->blksize = 512;
+
+	/* Try calling driver's method for figuring out geometry. */
+	if (link->adapter->scsipi_getgeom == NULL ||
+	    !(*link->adapter->scsipi_getgeom)(link, dp, sectors)) {
+		/*
+		 * Use adaptec standard fictitious geometry
+		 * this depends on which controller (e.g. 1542C is
+		 * different. but we have to put SOMETHING here..)
+		 */
+		dp->heads = 64;
+		dp->sectors = 32;
+		dp->cyls = sectors / (64 * 32);
+	}
+
 	return (SDGP_RESULT_OK);
 }
 
