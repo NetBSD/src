@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: locon.s,v 1.1 1994/08/02 20:21:59 ragge Exp $
+ *	$Id: locon.s,v 1.2 1994/08/16 23:47:29 ragge Exp $
  */
 
  /* All bugs are subject to removal without further notice */
@@ -63,8 +63,8 @@ _conout:	.word   0x3
 _consinit:	.word 0x0
 		ret	# No init currently needed.
 
-		.globl	_cnputc
-_cnputc:	.word 0x3
+		.globl	_ocnputc
+_ocnputc:	.word 0x3
 		movl    4(ap),r0
 4:              mfpr    $ PR_TXCS,r1
 		bbc     $7,r1,4b
@@ -80,8 +80,8 @@ _cnputc:	.word 0x3
 		.space 512
 temp_stack:
 
-		.globl	_cngetc
-_cngetc:	.word 0x2
+		.globl	_ocngetc
+_ocngetc:	.word 0x2
 6:		mfpr	$ PR_RXCS,r1
 		bbc	$7,r1,6b
 		mfpr	$ PR_RXDB,r0

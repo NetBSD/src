@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)conf.c	7.18 (Berkeley) 5/9/91
- *	$Id: conf.c,v 1.1 1994/08/02 20:21:48 ragge Exp $
+ *	$Id: conf.c,v 1.2 1994/08/16 23:47:25 ragge Exp $
  */
 
 #include "param.h"
@@ -46,8 +46,9 @@ int rawread(), rawwrite(), swstrategy();
 
 #include "hp.h"
 #if NHP > 0
-int	hpopen(),hpclose(),hpstrategy();
+int	hpopen(),hpclose();
 int	hpioctl(),hpdump(),hpsize();
+void	hpstrategy();
 #else
 #define	hpopen		enxio
 #define	hpclose		enxio
@@ -188,7 +189,7 @@ int	idcopen(),idcstrategy(),idcreset(),idcdump(),idcsize();;
 #define	idcsize		0
 #endif
 
-#if defined(VAX750) || defined(VAX730)
+#if 0 /* defined(VAX750) || defined(VAX730) */
 int	tuopen(),tuclose(),tustrategy();
 #else
 #define	tuopen		enxio
@@ -246,9 +247,9 @@ int	npreset(),npioctl();
 
 struct bdevsw	bdevsw[] =
 {
-	{ hpopen,	hpclose,	(int)hpstrategy,	hpioctl,/*0*/
+	{ hpopen,	hpclose,	hpstrategy,	hpioctl,/*0*/
 	  hpdump,	hpsize,		0 },
-	{ htopen,	htclose,	(int)htstrategy,	htioctl,/*1*/
+	{ htopen,	htclose,	htstrategy,	htioctl,/*1*/
 	  htdump,	0,		B_TAPE },
 	{ upopen,	nullop,	upstrategy,	enodev,		/*2*/
 	  updump,	upsize,		0 },
@@ -283,8 +284,39 @@ struct bdevsw	bdevsw[] =
 };
 int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
 
-int	cnopen(),cnclose(),cnread(),cnwrite(),cnioctl();
-struct tty cons;
+/*
+ * Console routines for VAX console. There are always an generic console,
+ * but maybe we should care about RD etc?
+ */
+#include "dev/cons.h"
+
+int	cnopen(),cnclose(),cnread(),cnwrite(),cnioctl(),cnselect();
+int	gencnprobe(), gencninit(), gencngetc(), gencnputc();
+int	gencnopen(), gencnclose(), gencnwrite(), gencnread(), gencnioctl();
+
+extern 	struct tty gencnttyst;
+
+struct	consdev	constab[]={
+
+/* Generic console, should always be present */
+	{ gencnprobe, gencninit, gencngetc, gencnputc },
+
+#ifdef notyet
+/* We may not always use builtin console, sometimes RD */
+	{ rdcnprobe, rdcninit, rdcngetc, rdcnputc },
+#endif
+
+	{ 0 }
+};
+
+
+/*
+        gencnopen,      gencnclose,     gencnwrite,     gencnread,      25
+        gencnioctl,     nullop,         nullop,         gencntty,
+        ttselect,       enodev,         NULL,
+*/
+
+
 
 #include "acc.h"
 #if NACC > 0
@@ -618,167 +650,219 @@ int	ttselect(), seltrue();
 struct cdevsw	cdevsw[] =
 {
 	cnopen,		cnclose,	cnread,		cnwrite,	/*0*/
-	cnioctl,	nullop,	nullop,	&cons,
-	ttselect,	enodev,		NULL,
+	cnioctl,	nullop,		nullop,		NULL,
+	cnselect,	enodev,		NULL,
+
 	dzopen,		dzclose,	dzread,		dzwrite,	/*1*/
 	dzioctl,	dzstop,		dzreset,	dz_tty,
 	ttselect,	enodev,		NULL,
+
 	syopen,		nullop,	syread,		sywrite,	/*2*/
 	syioctl,	nullop,	nullop,	NULL,
 	syselect,	enodev,		NULL,
+
 	nullop,	nullop,	mmrw,		mmrw,		/*3*/
 	enodev,		nullop,	nullop,	NULL,
 	mmselect,	enodev,		NULL,
+
 	hpopen,		hpclose,	rawread,	rawwrite,	/*4*/
 	hpioctl,	enodev,		nullop,	NULL,
 	seltrue,	enodev,		hpstrategy,
+
 	htopen,		htclose,	rawread,	rawwrite,	/*5*/
 	htioctl,	enodev,		nullop,	NULL,
 	seltrue,	enodev,		htstrategy,
+
 	vpopen,		vpclose,	enodev,		vpwrite,	/*6*/
 	vpioctl,	nullop,	vpreset,	NULL,
 	vpselect,	enodev,		NULL,
+
 	nullop,	nullop,	rawread,	rawwrite,	/*7*/
 	enodev,		enodev,		nullop,	NULL,
 	enodev,		enodev,		swstrategy,
+
 	flopen,		flclose,	flrw,		flrw,		/*8*/
 	enodev,		enodev,		nullop,	NULL,
 	seltrue,	enodev,		NULL,
+
 	udaopen,	udaclose,	rawread,	rawwrite,	/*9*/
 	udaioctl,	enodev,		udareset,	NULL,
 	seltrue,	enodev,		udastrategy,
+
 	vaopen,		vaclose,	enodev,		vawrite,	/*10*/
 	vaioctl,	nullop,	vareset,	NULL,
 	vaselect,	enodev,		NULL,
+
 	rkopen,		nullop,	rawread,	rawwrite,	/*11*/
 	enodev,		enodev,		rkreset,	NULL,
 	seltrue,	enodev,		rkstrategy,
+
 	dhopen,		dhclose,	dhread,		dhwrite,	/*12*/
 	dhioctl,	dhstop,		dhreset,	dh11,
 	ttselect,	enodev,		NULL,
+
 	upopen,		nullop,	rawread,	rawwrite,	/*13*/
 	enodev,		enodev,		upreset,	NULL,
 	seltrue,	enodev,		upstrategy,
+
 	tmopen,		tmclose,	rawread,	rawwrite,	/*14*/
 	tmioctl,	enodev,		tmreset,	NULL,
 	seltrue,	enodev,		tmstrategy,
+
 	lpopen,		lpclose,	enodev,		lpwrite,	/*15*/
 	enodev,		enodev,		lpreset,	NULL,
 	seltrue,	enodev,		NULL,
+
 	tsopen,		tsclose,	rawread,	rawwrite,	/*16*/
 	tsioctl,	enodev,		tsreset,	NULL,
 	seltrue,	enodev,		tsstrategy,
+
 	utopen,		utclose,	rawread,	rawwrite,	/*17*/
 	utioctl,	enodev,		utreset,	NULL,
 	seltrue,	enodev,		utstrategy,
+
 	ctopen,		ctclose,	enodev,		ctwrite,	/*18*/
 	enodev,		enodev,		nullop,	NULL,
 	seltrue,	enodev,		NULL,
+
 	mtopen,		mtclose,	rawread,	rawwrite,	/*19*/
 	mtioctl,	enodev,		enodev,		NULL,
 	seltrue,	enodev,		mtstrategy,
+
 	ptsopen,	ptsclose,	ptsread,	ptswrite,	/*20*/
 	ptyioctl,	ptsstop,	nullop,	pt_tty,
 	ttselect,	enodev,		NULL,
+
 	ptcopen,	ptcclose,	ptcread,	ptcwrite,	/*21*/
 	ptyioctl,	nullop,	nullop,	pt_tty,
 	ptcselect,	enodev,		NULL,
+
 	dmfopen,	dmfclose,	dmfread,	dmfwrite,	/*22*/
 	dmfioctl,	dmfstop,	dmfreset,	dmf_tty,
 	ttselect,	enodev,		NULL,
+
 	idcopen,	nullop,	rawread,	rawwrite,	/*23*/
 	enodev,		enodev,		idcreset,	NULL,
 	seltrue,	enodev,		idcstrategy,
+
 	dnopen,		dnclose,	enodev,		dnwrite,	/*24*/
 	enodev,		enodev,		nullop,	NULL,
 	seltrue,	enodev,		NULL,
-/* 25-29 reserved to local sites */
-	enodev,		enodev,		enodev,		enodev,		/*25*/
-	enodev,		nullop,	nullop,	NULL,
-	enodev,		enodev,		NULL,
+
+/* Generic console on VAXen */
+	gencnopen,	gencnclose,	gencnwrite,	gencnread,	/*25*/
+	gencnioctl,	nullop,		nullop,		&gencnttyst,
+	ttselect,	enodev,		NULL,
+
 	lpaopen,	lpaclose,	lparead,	lpawrite,	/*26*/
 	lpaioctl,	enodev,		nullop,	NULL,
 	seltrue,	enodev,		NULL,
+
 	psopen,		psclose,	psread,		pswrite,	/*27*/
 	psioctl,	enodev,		psreset,	NULL,
 	seltrue,	enodev,		NULL,
+
 	enodev,		enodev,		enodev,		enodev,		/*28*/
 	enodev,		nullop,	nullop,	NULL,
 	enodev,		enodev,		NULL,
+
 	adopen,		adclose,	enodev,		enodev,		/*29*/
 	adioctl,	enodev,		adreset,	NULL,
 	seltrue,	enodev,		NULL,
+
 	rxopen,		rxclose,	rxread,		rxwrite,	/*30*/
 	rxioctl,	enodev,		rxreset,	NULL,
 	seltrue,	enodev,		NULL,
+
 	ikopen,		ikclose,	ikread,		ikwrite,	/*31*/
 	ikioctl,	enodev,		ikreset,	NULL,
 	seltrue,	enodev,		NULL,
+
 	rlopen,		enodev,		rawread,	rawwrite,	/*32*/
 	enodev,		enodev,		rlreset,	NULL,
 	seltrue,	enodev,		rlstrategy,
+
 	logopen,	logclose,	logread,	enodev,		/*33*/
 	logioctl,	enodev,		nullop,	NULL,
 	logselect,	enodev,		NULL,
+
 	dhuopen,	dhuclose,	dhuread,	dhuwrite,	/*34*/
 	dhuioctl,	dhustop,	dhureset,	dhu_tty,
 	ttselect,	enodev,		NULL,
+
  	crlopen,	crlclose,	crlrw,		crlrw,		/*35*/
  	enodev,		enodev,		nullop,	NULL,
  	seltrue,	enodev,		NULL,
+
 	vsopen,		vsclose,	enodev,		enodev,		/*36*/
 	vsioctl,	enodev,		vsreset,	NULL,
 	vsselect,	enodev,		NULL,
+
 	dmzopen,	dmzclose,	dmzread,	dmzwrite,	/*37*/
 	dmzioctl,	dmzstop,	dmzreset,	dmz_tty,
 	ttselect,	enodev,		NULL,
+
 	tmscpopen,	tmscpclose,	rawread,	rawwrite,	/*38*/
 	tmscpioctl,	enodev,		tmscpreset,	NULL,
 	seltrue,	enodev,		tmscpstrategy,
+
 	npopen,		npclose,	npread,		npwrite,	/*39*/
 	npioctl,	enodev,		npreset,	NULL,
 	seltrue,	enodev,		NULL,
+
 	qvopen,		qvclose,	qvread,		qvwrite,	/*40*/
 	qvioctl,	qvstop,		qvreset,	NULL,
 	qvselect,	enodev,		NULL,
+
 	qdopen,		qdclose,	qdread,		qdwrite,	/*41*/
 	qdioctl,	qdstop,		qdreset,	NULL,
 	qdselect,	enodev,		NULL,
-/* 42-50 reserved to local sites */
+
 	enodev,		enodev,		enodev,		enodev,		/*42*/
 	enodev,		nullop,	nullop,	NULL,
 	enodev,		enodev,		NULL,
+
 	iiopen,		iiclose,	nullop,	nullop,	/*43*/
 	iiioctl,	nullop,	nullop,	NULL,
 	seltrue,	enodev,		NULL,
+
 	dkopen, 	dkclose,	dkread, 	dkwrite,	/*44*/
 	dkioctl,	nullop,	nullop,	NULL,
 	seltrue,	enodev,		NULL,
+
 	dktopen, 	dktclose,	dktread, 	dktwrite,	/*45*/
 	dktioctl,	dktstop,	nullop,	dkt,
 	ttselect,	enodev,		NULL,
+
 	kmcopen,	kmcclose,	kmcread,	kmcwrite,	/*46*/
 	kmcioctl,	nullop,	kmcdclr,	NULL,
 	seltrue,	enodev,		NULL,
+
 	enodev,		enodev,		enodev,		enodev,		/*47*/
 	enodev,		nullop,	nullop,	NULL,
 	enodev,		enodev,		NULL,
+
 	enodev,		enodev,		enodev,		enodev,		/*48*/
 	enodev,		nullop,	nullop,	NULL,
 	enodev,		enodev,		NULL,
+
 	enodev,		enodev,		enodev,		enodev,		/*49*/
 	enodev,		nullop,	nullop,	NULL,
 	enodev,		enodev,		NULL,
+
 	enodev,		enodev,		enodev,		enodev,		/*50*/
 	enodev,		nullop,	nullop,	NULL,
 	enodev,		enodev,		NULL,
+
 	rx50open,	rx50close,	rx50rw,		rx50rw,		/*51*/
 	enodev,		enodev,		nullop,	0,
 	seltrue,	enodev,		NULL,
+
 /* kdb50 ra */
 	kdbopen,	nullop/*XXX*/,	rawread,	rawwrite,	/*52*/
 	enodev,		enodev,		nullop,	0,
 	seltrue,	enodev,		kdbstrategy,
+
 	fdopen,		enodev,		enodev,		enodev,		/*53*/
 	enodev,		enodev,		enodev,		NULL,
 	enodev,		enodev,		NULL,

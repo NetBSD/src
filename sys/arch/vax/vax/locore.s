@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: locore.s,v 1.1 1994/08/02 20:22:01 ragge Exp $
+ *	$Id: locore.s,v 1.2 1994/08/16 23:47:31 ragge Exp $
  */
 
  /* All bugs are subject to removal without further notice */
@@ -71,9 +71,6 @@ start:		.globl start
 		mtpr	$0,$PR_MAPEN		# Disable memory mapping.
 		mtpr	$0,$PR_SCBB		# Put interrupt vectors
 						# at physical address 0.
-/*
-		pushl	$0x001f0000
-*/
 		pushl	$0x00000000
 		pushl	$to_kmem+0x80000000
 
@@ -83,6 +80,11 @@ start:		.globl start
 						# saves us from writing
 						# relocatable code.
 to_kmem:
+
+		mtpr	$0,$PR_P0LR
+		mtpr    $0,$PR_P0BR
+		mtpr    $0,$PR_P1LR
+		mtpr    $0x80000000,$PR_P1BR
 
 set_text:	movl	$0x0,r0			# Text starts at physical 
 						# address 0.
@@ -178,11 +180,6 @@ memory_test:	movl    $2f,_memtest            # Start memory test.
 
 /*
  *  Initialize virtual memory.
- */
-
-/* XXX		calls   $0,_lovm_init		# Initialize virtual mem */
-
-/*
  *  Set physical/virtual memory limits.
  */
 
@@ -214,9 +211,10 @@ memory_test:	movl    $2f,_memtest            # Start memory test.
  *  If we get here, we're in init. go to usermode!
  */
 
-                pushl	$0x3c00000
-                pushl	$0			# Start at 0 in icode
-                rei
+		mtpr	$0x80000000,$PR_USP	# Set user stack to top.
+		pushl	$0x3c00000
+		pushl	$2			# Start at 2 in icode
+		rei
 
 /*
  *  End of locore startup
@@ -258,20 +256,24 @@ _spl0:		.word 0x0
 		mtpr	$0,$PR_IPL		# Supposed to work...
 		ret
 
-		.globl _physcopyseg
-_physcopyseg:	.word 0x7
+		.globl _physcopypage
+_physcopypage:	.word 0x7
 		movl	4(ap),r0
 		ashl	$-PGSHIFT,r0,r0
-		bisl2	$(PG_V|PG_RW),r0
+		bisl2	$(PG_V|PG_RO),r0
+
+		movl	8(ap),r1
+		ashl    $-PGSHIFT,r1,r1
+		bisl2   $(PG_V|PG_KW),r1
+
 		movl	r0,*(_pte_cmap)
+		movl	r1,*$4+(_pte_cmap)
+
 		movl	v_cmap,r2
-		pushl	r2
-		calls	$1,_TBIS
 		addl3	$0x200,r2,r1
-		addl2	$1,r0
-		movl	r0,*$4+(_pte_cmap)
-		pushl	r1
-		calls	$1,_TBIS
+		mtpr	r1,$PR_TBIS
+		mtpr	r2,$PR_TBIS
+
 		movl	r1,r0
 1:		movl	(r2)+,(r1)+
 		cmpl	r0,r2
@@ -279,23 +281,21 @@ _physcopyseg:	.word 0x7
 		ret
 
 
-/*
-		.globl _clearseg
-_clearseg:	.word 0x3
-		ret		# XXX
+
+		.globl _clearpage
+_clearpage:	.word 0x3
 		movl	4(ap),r0
 		ashl	$-PGSHIFT,r0,r0
-		bisl2	$(PG_V|PG_RW|PG_CI),r0
+		bisl2	$(PG_V|PG_KW),r0
 		movl	r0,*(_pte_cmap)
 		movl	v_cmap,r0
-		pushl	r0
-		calls	$1,_TBIS
+		mtpr	r0,$PR_TBIS
 		addl3	$0x200,r0,r1
 1:		clrl	(r0)+
 		cmpl	r0,r1
 		bneq	1b
 		ret
-*/
+
 
 		.globl _badaddr
 _badaddr:	.word	0xE		# XXX What to save?
@@ -891,12 +891,11 @@ _copyin:.word	0x1c
 	addl2	$NBPG,r4
 	brb	3b
 
-2:	pushl	r2		# Access OK, copy with bcopy.
-	pushl	r1
-	pushl	r0
-	calls	$3,_bcopy
-	clrl	r0
-	ret
+2:      movb    (r0)+,(r1)+       # XXX Should be done in a faster way.
+        decl    r2              
+        bneq    2b
+        clrl    r0
+        ret
 
 1:	movl	$EFAULT,r0	# Didnt work...
 	ret
@@ -922,10 +921,9 @@ _copyout:.word   0x1c
         addl2   $NBPG,r4
         brb     3b
 
-2:      pushl   r2              # Access OK, copy with bcopy.
-        pushl   r1
-        pushl   r0
-        calls   $3,_bcopy
+2:	movb	(r0)+,(r1)+	# XXX Should be done in a faster way.
+	decl	r2
+	bneq	2b
 	clrl	r0
         ret
 
@@ -988,8 +986,12 @@ _loswtch:	.globl	_loswtch
 		.globl _savectx
 _savectx:
 		clrl	r0
+		mfpr	$PR_P0BR,p0br
+		mfpr    $PR_P1BR,p1br
 		svpctx
 		ldpctx
+		mtpr	p0br,$PR_P0BR
+		mtpr    p1br,$PR_P1BR
 		mfpr	$PR_ESP,r0	# Child r0 != 0
 		movl	_ustat,(r0)
 		addl2	_uofset,68(r0)
@@ -1005,7 +1007,7 @@ _icode:		.globl	_icode
 	nop
 	pushl   $0
 
-        movl    $argv,r0
+        movl    $binit,r0
         subl2	$_icode,r0
         pushl   r0
 
@@ -1013,15 +1015,18 @@ _icode:		.globl	_icode
 	subl2	$_icode,r0
 	pushl   r0
 	movl	sp,ap
+	subl2	$4,ap
         chmk	$SYS_execve
 	pushl	r0
 	chmk	$SYS_exit
 
 init:   .asciz  "/sbin/init"
+
+ainit:	.asciz	"init"
 	.long	0
-argv:   .long   init+6-_icode           # argv[0] = "init" ("/sbin/init" + 6)
-        .long   eicode-_icode           # argv[1] follows icode after copyout
-        .long   0
+binit:	.long	ainit-_icode
+	.long   0
+	
 eicode:
 
         .globl  _szicode
@@ -1059,6 +1064,8 @@ msg_ipanic:	.asciz	"(dont) P A N I C.\n\r"
 		.globl _ptab_len
 		.globl _ptab_addr
 
+p0br:		.long	0
+p1br:		.long	0
 
 p_text:		.long 0 ; .globl p_text		/* Start of text 	    */
 l_text:		.long 0	; .globl l_text		/* Size of text 	    */

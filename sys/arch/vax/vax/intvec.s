@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: intvec.s,v 1.1 1994/08/02 20:21:57 ragge Exp $
+ *	$Id: intvec.s,v 1.2 1994/08/16 23:47:28 ragge Exp $
  */
 
  /* All bugs are subject to removal without further notice */
@@ -51,7 +51,7 @@ _V_CUSTOMER:    .long trp_0x14+1	# Customer Reserved Instruction.
 _V_RES_OP:      .long trp_0x18+1	# Reserved Operand/Boot Vector(?)
 _V_RES_ADD_MODE:.long trp_0x1C+1	# Reserved Address Mode.
 
-_V_ACC_CNTL_VIO:.long trp_0x20+1	# Access Control Violation.
+_V_ACC_CNTL_VIO:.long trp_0x20		# Access Control Violation.
 _V_TRANSL_INV:  .long trp_0x24		# Translation Invalid.
 _V_TRACE_PEND:  .long trp_0x28+1	# Trace Pending.
 _V_BREAKPOINT:  .long trp_0x2C+1	# Breakpoint Instruction.
@@ -262,7 +262,8 @@ trp_0x0C:	pushal	msg_trp_0x0C
 		halt
 		rei
 		.align 2
-trp_0x10:
+trp_0x10:.globl	trp_0x10
+		halt
 		pushl	r0
 		pushl	r1
 		movl	8(sp),r1
@@ -301,38 +302,42 @@ trp_0x1C:	pushal	msg_trp_0x1C 	# Reserved address
 		rei
 		.align 2
 
-trp_0x20:	
-		pushl	r0
-		pushl	r1
-		pushl	16(sp)
-		pushl	16(sp)
-		pushal	msg_trp_0x20
-		calls	$1,_printf
-		movq	(sp)+,r1
-		movq	(sp)+,r0
-		addl2	$8,sp
-		halt
-		rei
-		
+trp_0x20:.globl trp_0x20	# Access cntrl viol fault
 
-trp_0x24:	.align 2
+        pushl   r0
+
+        pushr   $0x7fff
+        pushl   76(sp)
+        pushl   76(sp)
+        pushl   76(sp)
+        pushl   76(sp)
+        calls   $4,_access_v
+        popr    $0x7fff
+        movl    (sp)+,r0
+        addl2   $8,sp
+        rei
+
+	.align 2
+trp_0x24:.globl trp_0x24
+#	halt
 	pushl	r0		# We first check for a simulated
-	movl	8(sp),r0	# page reference
-	bicl2	$0x800001ff,r0
-	ashl	$-7,r0,r0
-	addl2	_Sysmap,r0	# Now we have calculated pte addr...
+#	movl	8(sp),r0	# page reference
+#	bicl2	$0x800001ff,r0
+#	ashl	$-7,r0,r0
+#	addl2	_Sysmap,r0	# Now we have calculated pte addr...
 
-	bbsc	$PG_SREF,(r0),1f # Funny instruction :)
+#	bbsc	$0x17,(r0),1f	# PG_SREF is bit 0x17 (simul ref)
 
-	pushl	r1		# A 'real' page fault...
-	pushl	20(sp)
-	pushl	20(sp)
-	pushl	20(sp)
-	pushl	20(sp)
+	pushr	$0x7fff
+	pushl	76(sp)
+	pushl	76(sp)
+	pushl	76(sp)
+	pushl	76(sp)
 	calls	$4,_ingen_v
-	movl	(sp)+,r1
+	popr	$0x7fff
 	movl	(sp)+,r0
-	halt
+	addl2	$8,sp
+#	halt
 	rei
 
 
@@ -381,9 +386,9 @@ trp_0x40:
 	pushl	ap
 	pushl	sp
 	calls	$2,_syscall
-	movl	(sp),r1
-	movl	4(sp),r0
-	addl2	$12,sp
+	movl	(sp)+,r1
+	movl	(sp)+,r0
+	addl2	$4,sp
 	mtpr	$0x1f,$PR_IPL
 #	halt
 	rei
@@ -430,10 +435,9 @@ trp_0x60:	pushl   r0
                 pushl   16(sp)
                 pushl   16(sp)
                 pushal  msg_trp_0x60
-                calls   $1,_printf
-                movq    (sp)+,r1
-                movq    (sp)+,r0
-                addl2   $8,sp
+                calls   $3,_printf
+                movl    (sp)+,r1
+                movl    (sp)+,r0
                 halt
                 rei
 
@@ -483,9 +487,9 @@ trp_0x84:	pushal	msg_trp_0x84
 		halt
 
 		.align 2
-trp_0x88:	pushr	$0x3		# AST trap
+trp_0x88:	pushr	$0x7fff		# AST trap
 		calls	$0,_astint
-		popr	$0x3	
+		popr	$0x7fff	
 		rei
 
 		.align 2
@@ -676,7 +680,7 @@ msg_trp_0x54:	.asciz	"\r\nTrap:	0x54	V_CORR_READ\r\n"
 msg_trp_0x58:	.asciz	"\r\nTrap:	0x58	V_SBI_ALERT\r\n"
 msg_trp_0x5C:	.asciz	"\r\nTrap:	0x5C	V_SBI_FAULT\r\n"
 
-msg_trp_0x60:	.asciz	"\r\nTrap:	0x24	V_MEM_W_TOUT\nTried to access virtual adress: 0x%x\n                  from address: 0x%x\n\n"
+msg_trp_0x60:	.asciz	"\r\nTrap:	0x60	V_MEM_W_TOUT\nTried to access virtual adress: 0x%x\n                  from address: 0x%x\n\n"
 msg_trp_0x64:	.asciz	"\r\nTrap:	0x64	Unused.\r\n"
 msg_trp_0x68:	.asciz	"\r\nTrap:	0x68	Unused.\r\n"
 msg_trp_0x6C:	.asciz	"\r\nTrap:	0x6C	Unused.\r\n"

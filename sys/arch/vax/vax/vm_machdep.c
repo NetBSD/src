@@ -1,3 +1,4 @@
+#define SWDEBUG
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -27,7 +28,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: vm_machdep.c,v 1.1 1994/08/02 20:22:22 ragge Exp $
+ *	$Id: vm_machdep.c,v 1.2 1994/08/16 23:47:39 ragge Exp $
  */
 
  /* All bugs are subject to removal without further notice */
@@ -38,43 +39,34 @@
 #include "vm/vm.h"
 #include "vax/include/vmparam.h"
 #include "vax/include/mtpr.h"
-#include "sys/param.h"
+#include "vax/include/pmap.h"
 #include "vax/include/pte.h"
+#include "sys/param.h"
 #include "sys/proc.h"
 #include "sys/user.h"
 #include "sys/exec.h"
+#include "sys/vnode.h"
 
+extern int startpmapdebug;
 volatile int whichqs;
 
-/*
- *  Clearseg, 'stolen' from locore.s
- */
-
-void 
-clearseg(vm_offset_t physaddr) {
-  /* XXX Noop for now */
-}
-
 pagemove(from, to, size)
-        register caddr_t from, to;
+        caddr_t from, to;
         int size;
 {
-        register struct pte *fpte, *tpte;
+        struct pte *fpte, *tpte;
 
-        if (size % CLBYTES)
-                panic("pagemove");
         fpte = kvtopte(from);
         tpte = kvtopte(to);
         while (size > 0) {
                 *tpte++ = *fpte;
                 *(int *)fpte++ = PG_NV;
-                TBIS(from);
-                TBIS(to);
+                mtpr(from,PR_TBIS);
+                mtpr(to,PR_TBIS);
                 from += NBPG;
                 to += NBPG;
                 size -= NBPG;
         }
-        DCIS();
 }
 
 
@@ -88,6 +80,7 @@ cpu_fork(p1, p2)
 {
 	unsigned int *i,ksp,uorig,uchld;
 	struct pcb *nyproc;
+	struct pte *ptep;
 
 	uorig=(unsigned int)p1->p_addr;
 	nyproc=uchld=(unsigned int)p2->p_addr;
@@ -101,10 +94,11 @@ cpu_fork(p1, p2)
 	ksp=mfpr(PR_KSP);
 #define	UAREA	(NBPG*UPAGES)
 #define	size	(uorig+UAREA-ksp)
-/*
+#ifdef SWDEBUG
 printf("cpu_fork: uorig %x, uchld %x, UAREA %x\n",uorig, uchld, UAREA);
 printf("cpu_fork: ksp: %x, usp: %x, size: %x\n",ksp,(uchld+UAREA-size),size);
-*/
+printf("cpu_fork: pid %d, namn %s\n",p1->p_pid,p1->p_comm);
+#endif
 	bcopy(ksp,(uchld+UAREA-size),size);
 	ustat=(uchld+UAREA-size)-8; /* Kompensera f|r PC + PSL */
 	mtpr(uchld,PR_ESP);
@@ -125,11 +119,13 @@ printf("cpu_fork: ksp: %x, usp: %x, size: %x\n",ksp,(uchld+UAREA-size),size);
  *	2: l{gga r{tt v{rde f|r R0 i nya PCB.
  */
 
-	nyproc->P0BR=mfpr(PR_P0BR);
-	nyproc->P0LR=mfpr(PR_P0LR);
-	nyproc->P1BR=mfpr(PR_P1BR);
-	nyproc->P1LR=mfpr(PR_P1LR);
-
+/* Set up page registers */
+	ptep=p2->p_vmspace->vm_pmap.pm_ptab;
+printf("cpu_fork: ptep: %x\n",ptep);
+        nyproc->P0BR=ptep;
+	nyproc->P0LR=(((MAXTSIZ+MAXDSIZ)>>PG_SHIFT)<<2);
+	nyproc->P1BR=(((int)ptep+VAX_MAX_PT_SIZE)-0x800000);
+	nyproc->P1LR=(0x200000-((MAXSSIZ>>PG_SHIFT)<<2));
 	mtpr(VIRT2PHYS(uchld),PR_PCBB);
 /* printf("cpu_fork: physaddr %x\n",VIRT2PHYS(uchld)); */
         asm("movpsl  -(sp)");
@@ -159,7 +155,9 @@ setrunqueue(struct proc *p){
 	knummer=(p->p_priority>>2);
 	whichqs |= (1<<knummer);
 	a1=(knummer<<1)+(int *)qs;
+#ifdef SWDEBUG
 /*	printf("setrunqueue: qs %x, a1 %x, knummer %x, whichqs %x\n",qs,a1,knummer,whichqs); */
+#endif
 	p->p_forw=a1;
 	p->p_back=a1->p_back;
 	a1->p_back=p;
@@ -177,7 +175,9 @@ swtch(){
 hej:	s=splhigh();
 	/* F|rst: Hitta en k|. */
 	j=whichqs;
-/*	printf("whichqs: %x\n",whichqs); */
+#ifdef SWDEBUG
+/*	printf("swtch: whichqs %x\n",whichqs); */
+#endif
 	for(i=0;j;i++){
 		if(j&1) goto found;
 		j=j>>1;
@@ -199,8 +199,13 @@ found:
 	splhigh();
 	curpcb=VIRT2PHYS(curproc->p_addr);
 	nypcb=VIRT2PHYS(&cp->p_addr->u_pcb);
-
-if(curpcb!=nypcb) printf("swtch: %x, %x\n",curproc->p_addr,&cp->p_addr->u_pcb);
+if(startpmapdebug)
+if(curpcb!=nypcb){
+	printf("swtch: pcb %x, pid %x, namn %s  -> ", curproc->p_addr,
+		curproc->p_pid,curproc->p_comm);
+	printf(" pcb %x, pid %x, namn %s\n", cp->p_addr,
+		cp->p_pid,cp->p_comm);
+}
 
 	want_resched=0;
 	curproc=cp;
@@ -237,20 +242,26 @@ ok:
 }
 
 /* Should check that values is in bounds XXX */
-copyoutstr(from, to, maxlen, lencopied){
+copyoutstr(from, to, maxlen, lencopied)
+char *from, *to;
+int *lencopied;
+{
         int i;
 
-printf("copyoutstr\n");
-asm("halt");
-        for(i=from;i<from+maxlen;i++)
-                if(!(*((char *)to+i)=*((char *)from+i)))
-                        goto ok;
+#ifdef SWDEBUG
+printf("copyoutstr: from %x, to %x, maxlen %x\n",from, to, maxlen);
+#endif
+	for(i=0;i<maxlen;i++){
+		*(to+i)=*(from+i);
+		if(!(*(to+i))) goto ok;
+	}
 
-        return(ENAMETOOLONG);
+	return(ENAMETOOLONG);
 ok:
-	*(int *)lencopied=i;
-        return(0);
+	if(lencopied) *lencopied=i+1;
+	return 0;
 }
+
 
 cpu_wait(){}
 
@@ -264,9 +275,12 @@ struct exec_package *epp;
  * Compatibility with reno programs.
  */
 	ep=epp->ep_hdr;
+#ifdef SWDEBUG
+printf("a.out-compat: midmag %x\n",ep->a_midmag);
+#endif
         switch (ep->a_midmag) {
-        case 0x10b:
-                error = exec_aout_prep_zmagic(p, epp);
+        case 0x10b: /* ZMAGIC in 4.3BSD Reno programs */
+                error = reno_zmagic(p, epp);
                 break;
         case 0x108:
                 error = exec_aout_prep_nmagic(p, epp);
@@ -281,4 +295,52 @@ struct exec_package *epp;
 }
 
 sysarch(){return(EINVAL);}
+
+/*
+ * 4.3BSD Reno programs have an 1K header first in the executable
+ * file, containing a.out header. Otherwise programs are identical.
+ *
+ *      from: exec_aout.c,v 1.9 1994/01/28 23:46:59 jtc Exp $
+ */
+
+int
+reno_zmagic(p, epp)
+        struct proc *p;
+        struct exec_package *epp;
+{
+        struct exec *execp = epp->ep_hdr;
+
+        epp->ep_taddr = USRTEXT;
+        epp->ep_tsize = execp->a_text;
+        epp->ep_daddr = epp->ep_taddr + execp->a_text;
+        epp->ep_dsize = execp->a_data + execp->a_bss;
+        epp->ep_entry = execp->a_entry;
+
+        /*
+         * check if vnode is in open for writing, because we want to
+         * demand-page out of it.  if it is, don't do it, for various
+         * reasons
+         */
+        if ((execp->a_text != 0 || execp->a_data != 0) &&
+            epp->ep_vp->v_writecount != 0) {
+                return ETXTBSY;
+        }
+        epp->ep_vp->v_flag |= VTEXT;
+
+        /* set up command for text segment */
+        NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_text,
+            epp->ep_taddr, epp->ep_vp, 0x400, VM_PROT_READ|VM_PROT_EXECUTE);
+
+        /* set up command for data segment */
+        NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_data,
+            epp->ep_daddr, epp->ep_vp, execp->a_text+0x400,
+            VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+
+        /* set up command for bss segment */
+        NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, execp->a_bss,
+            epp->ep_daddr + execp->a_data, NULLVP, 0,
+            VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+
+        return exec_aout_setup_stack(p, epp);
+}
 

@@ -1,3 +1,4 @@
+#define DEBUG
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -27,35 +28,34 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: pmap.c,v 1.1 1994/08/02 20:22:09 ragge Exp $
+ *	$Id: pmap.c,v 1.2 1994/08/16 23:47:35 ragge Exp $
  *	With ideas from HP300 port/IC
  */
 
  /* All bugs are subject to removal without further notice */
 		
-
-
-#include "vax/include/loconf.h"
 #include "sys/types.h"
+#include "sys/param.h"
 #include "sys/queue.h"
-#include "vax/include/macros.h"
-#include "vax/include/types.h"
+#include "sys/malloc.h"
 #include "vm/vm.h"
 #include "vm/vm_page.h"
-#include "sys/malloc.h"
+#include "vm/vm_kern.h"
 #include "vax/include/pte.h"
-#include "vax/include/param.h"
 #include "vax/include/mtpr.h"
+#include "vax/include/loconf.h"
+#include "vax/include/macros.h"
+
 #include "uba.h"
 
-#define NULL ((void*)(0))
-#define vax_pages_per_page PAGE_SIZE/NBPG
-#define pa_tp_pvh(pa) &pv_table[(pa&0x7fffffff)>>PAGE_SHIFT];
+/**** Machine specific definitions ****/
+#define VAX_PAGES_PER_PAGE PAGE_SIZE/NBPG
 
-#define PMAP_ENTRY(pmap, virt_addr) ((struct pte*) &pmap->pm_ptab[vax_btop(virt_addr & ~0xc0000000)])
 
-/* Calculates the physical address a page table entry points to */
-#define PMAP_TO_PA(pte_ptr)  ((*pte_ptr&PG_FRAME)<<PG_SHIFT)
+#define PxTOP0(x) ((x&0x40000000) ?                          \
+		   (x+MAXTSIZ+MAXDSIZ+MAXSSIZ-0x80000000):   \
+		   (x&0x7fffffff))
+
 
 struct pmap kernel_pmap_store;
 pmap_t kernel_pmap = &kernel_pmap_store;
@@ -64,12 +64,9 @@ static pv_entry_t alloc_pv_entry();
 static void        free_pv_entry();
 
 static int prot_array[]={ PG_NONE, PG_RO,   PG_RW,   PG_RW,
-			    PG_RO,   PG_RO,   PG_RW,   PG_RW };
+			  PG_RO,   PG_RO,   PG_RW,   PG_RW };
     
 
-/*pmap_map(vm_offset_t, vm_offset_t, vm_offset_t, int);*/
-
-static int total_size;
 static vm_offset_t  pv_phys;
 static pv_entry_t   pv_head =NULL;
 static unsigned int pv_count=0;
@@ -86,20 +83,23 @@ extern struct pte* Sysmap;
 extern uint ptab_len;
 extern uint *ptab_addr;
 extern uint pte_cmap;
+extern int  maxproc;
 uint*  UMEMmap;
 uint*  usrpt;
 void*  Numem;
 void*  vavail;
-
+#ifdef DEBUG
 int startpmapdebug=0;
-
+#endif
 struct pte *Sysmap;
 vm_size_t        mem_size;
+vm_map_t	pte_map;
 
+unsigned int pv_table_size;
 vm_offset_t*  phys_mem_table;             /* Table of available physical mem */
 vm_offset_t     avail_start, avail_end;
 vm_offset_t   virtual_avail, virtual_end; /* Available virtual memory        */
-unsigned long phys_mem_blocks;
+static unsigned long phys_mem_blocks;
 
 /******************************************************************************
  *
@@ -111,28 +111,15 @@ unsigned long phys_mem_blocks;
  *
  */
 
-void pmap_bootstrap(vm_offset_t* memtab)  {
+void 
+pmap_bootstrap(vm_offset_t* memtab)  {
   /* Bootstrap pmap module */
 
   vm_offset_t phys_start=memtab[0], phys_end=memtab[1];
-  unsigned int pv_table_size;
+vm_offset_t	pv_already_allocated;
   unsigned int p_prot_table_size;
+vm_offset_t	pv_table_offset;
 
-/*#include "param.h"
-
-#include "proc.h"
-#include "malloc.h"
-#include "user.h"
-
-#include "vm/vm.h"
-#include "vm/vm_kern.h"
-#include "vm/vm_page.h"
-
-#include "uba.h"
-#include "vax/include/cpu.h"
-#include "vax/include/pte.h"
-#include "vax/include/macros.h"
-*/
 #define MISC_PAGES (5+UPAGES)
   /* 2 pages for stack protection + 2 pages for page clearing/copying */
 
@@ -167,6 +154,10 @@ void pmap_bootstrap(vm_offset_t* memtab)  {
   uint  pte_entry=0;
   uint* pte_ptr;
 
+    PAGE_SIZE = NBPG*2;
+
+	cninit(); /* XXX Shouldn't be called from here, 
+		     but we must be able to use console early */
   ptab_addr=
   pte_ptr = (uint*)(vax_round_page((uint)&end+ISTACK_SIZE+MISC_PAGES*NBPG)
 		    &~0x80000000);
@@ -175,22 +166,6 @@ void pmap_bootstrap(vm_offset_t* memtab)  {
     (VM_KERNEL_PT_PAGES*0x80*0x200+0x80000000)-(VM_KERNEL_PT_PAGES*4*0x20);
                /* Top of vmem - size of kernel ptab. */
 
-/*
-  printf("Text loaded: 0x%s%x\n",
-	 PRINT_HEXF((uint)&etext&~(0x80000000)),
-	            (uint)&etext&~(0x80000000));
-
-  printf("Data loaded: 0x%s%x\n",
-	 PRINT_HEXF(((uint)&end-(uint)&etext+NBPG-1)&~(NBPG-1)),
-	            ((uint)&end-(uint)&etext+NBPG-1)&~(NBPG-1));
-
-  printf("Text pages:  0x%s%x\t", PRINT_HEXF(textpages*0x10000), textpages);
-  printf("Data pages:  0x%s%x\n", PRINT_HEXF(datapages*0x10000), datapages);
-  printf("Misc pages:  0x%s%x\t",
-	 PRINT_HEXF((MISC_PAGES+istackpages)*0x10000), MISC_PAGES+istackpages);
-
-  printf("Ptab pages:  0x%s%x\n", PRINT_HEXF(ptabpages*0x10000), ptabpages);
-*/
   MAP_PAGES(2,           PG_V|PG_RW);       /* Map exception vectors as R/W */
   MAP_PAGES(textpages-2, PG_V|PG_RO);       /* Map text pages READ ONLY     */
   MAP_PAGES(datapages,   PG_V|PG_RW);       /* Map data pages READWRITE     */
@@ -205,22 +180,33 @@ void pmap_bootstrap(vm_offset_t* memtab)  {
                                             /* phys mem page to clear it    */
   UMEMmap=(void*)pte_ptr-(void*)ptab_addr+(void*)Sysmap;
   Numem=(void*)(((((uint)pte_ptr-(uint)ptab_addr)>>2)<<9)|0x80000000);
+#ifdef DEBUG
   printf("Numem=%x\n", Numem);
+#endif
   MAP_EMPTY_PAGES(unipages, PG_NONE);
   vavail=(void*)(((((uint)pte_ptr-(uint)ptab_addr)>>2)<<9)|0x80000000);
+#ifdef DEBUG
   printf("vavail=%x\n", vavail);
+#endif
   MAP_EMPTY_PAGES(uptabpages, PG_RW);       /* Map available kernel mem     */
+#ifdef DEBUG
   printf("Entry: %lx\n", pte_entry);
+#endif
   MAP_PAGES(mptabpages,  PG_V|PG_RW);       /* Map kernel page table        */
 
+#ifdef DEBUG
   printf("Virtual memory mapped.\n");
+#endif
 
   ptab_len=((uint)((uint)pte_ptr-(uint)ptab_addr))/sizeof(struct pte);
+
+#ifdef DEBUG
 
   printf("ptab addr: 0x%s%x-0x%s%x=0x%s%x\n",
 	 PRINT_HEXF((uint)ptab_addr), ptab_addr,
 	 PRINT_HEXF((uint)pte_ptr),   pte_ptr,
 	 PRINT_HEXF(ptab_len),        ptab_len);
+#endif
 
 
   mem_size=phys_end-phys_start;
@@ -231,12 +217,14 @@ void pmap_bootstrap(vm_offset_t* memtab)  {
   kernel_pmap->ref_count = 1;
   simple_lock_init(&kernel_pmap->pm_lock);
 
-  phys_mem_blocks=(phys_end-phys_start)>>12; /* XXX 4096 byte pages */
+  phys_mem_blocks=(phys_end-phys_start)/PAGE_SIZE;
 
   avail_start=round_page(phys_avail);
   avail_end  =trunc_page(phys_end);
   virtual_avail= round_page(vavail);
   virtual_end=   trunc_page((vm_offset_t)Sysmap);  
+
+#ifdef DEBUG
 
   printf("%6dkb physical memory (0x%s%x-0x%s%x)\n"
 	 "%6dkb free (0x%s%x-0x%s%x).\n",
@@ -257,22 +245,32 @@ void pmap_bootstrap(vm_offset_t* memtab)  {
 	 PRINT_HEXF(virtual_avail), virtual_avail,
          PRINT_HEXF(virtual_end-1), virtual_end-1 
          );
+#endif
 
-  /* Physical to virtual mapping table */
-  pv_table_size=  phys_mem_blocks*sizeof(struct pv_entry);
+	/* Physical to virtual mapping table */
+	pv_table_size=round_page(phys_mem_blocks*sizeof(struct pv_entry));
 
-  total_size=round_page(pv_table_size);
+#ifdef notyet /* Should not allocate an bigger pv_table than needed */
+	pv_already_allocated=(avail_start/PAGE_SIZE)*sizeof(struct pv_entry);
+	pv_table=virtual_avail-pv_already_allocated;
+#else
+	pv_table=(struct pv_entry *)virtual_avail;
+#endif
 
-  pv_table       = ((void*)virtual_avail);
-  pv_phys        = ((void*)avail_start);
-/*	printf("P: pv_table %x\n",pv_table); */
+	pv_phys        = (int)((void*)avail_start);
 
-  avail_start   += total_size;
-  virtual_avail += total_size;
 
-  printf("pmap structures allocated (size: 0x%x)\n", total_size);
+#ifdef DEBUG
+  printf("pv_table %x, pv_table_size %x, pv_already_allocated %x\n",
+		pv_table, pv_table_size,pv_already_allocated);
+  printf("pv_phys %x, avail_start %x\n",pv_phys, avail_start);
+  printf("virtual_avail %x,phys_mem_blocks %x\n",virtual_avail,phys_mem_blocks);
+  printf("pv structures allocated (size: 0x%x)\n", pv_table_size);
   printf("phys_mem_blocks: 0x%x\n", phys_mem_blocks);
   printf("mem_size=0x%x\n", mem_size);
+#endif
+	avail_start   += pv_table_size;
+	virtual_avail += pv_table_size;
 
 
 }
@@ -286,12 +284,24 @@ void pmap_bootstrap(vm_offset_t* memtab)  {
  *
  */
 
-void pmap_init(vm_offset_t s, vm_offset_t e) {
-/*  printf("pmap_init: pv_table: %x, pv_phys: %x, total_size: %x\n",
-	 pv_table, pv_phys, total_size); */
-  pmap_map(pv_table, pv_phys, pv_phys+total_size, 
-	   VM_PROT_READ|VM_PROT_WRITE);
-  bzero(pv_table, total_size);
+void 
+pmap_init(s, e) 
+	vm_offset_t s,e;
+{
+	vm_offset_t start,end;
+
+	/* map up phys-to-virt one per page */
+	pmap_map(pv_table, pv_phys, pv_phys+pv_table_size, 
+		VM_PROT_READ|VM_PROT_WRITE);
+	bzero(pv_table, pv_table_size);
+
+	/* reserve place on SPT for UPT * maxproc */
+	pte_map=kmem_suballoc(kernel_map, &start, &end, 
+		VAX_MAX_PT_SIZE*maxproc, FALSE); /* Don't allow paging yet */
+#ifdef DEBUG
+if(startpmapdebug) printf("pmap_init: pte_map start %x, end %x, size %x\n",
+		start, end, VAX_MAX_PT_SIZE*maxproc);
+#endif
 }
 
 /******************************************************************************
@@ -310,31 +320,52 @@ void pmap_init(vm_offset_t s, vm_offset_t e) {
  * 
  */
 
-pmap_t pmap_create(vm_size_t phys_size) {
-  pmap_t   pmap;
+pmap_t 
+pmap_create(phys_size)
+	vm_size_t phys_size;
+{
+	pmap_t   pmap;
 
-printf("pmap_create: phys_size %x\n",phys_size);
-  if(phys_size) {
-    return NULL;
-  }
-  
-  /* XXX: is it ok to wait here? */
-  pmap = (pmap_t) malloc(sizeof *pmap,    M_VMPMAP, M_WAITOK);
-  
-  bzero(pmap, sizeof(*pmap));              /* Zero pmap */
+#ifdef DEBUG
+if(startpmapdebug)printf("pmap_create: phys_size %x\n",phys_size);
+#endif
+	if(phys_size){
+#ifdef DEBUG
+if(startpmapdebug)printf("pmap_create: illegal size.\n");
+#endif
+		return NULL;
+	}
 
-  pmap->pm_ptab = (pt_entry_t*)malloc(VAX_MAX_PT_SIZE, M_VMPMAP, M_WAITOK);
-  pmap->ref_count = 1;                      /* Initialize it */
-  simple_lock_init(&pmap->lock);
+/* Malloc place for pmap struct */
+	pmap = (pmap_t) malloc(sizeof *pmap,    M_VMPMAP, M_WAITOK);
+	pmap_pinit(pmap); 
 
-  return (pmap);
+	return (pmap);
 }
 
-void pmap_pinit(pmap_t pmap) {
-  bzero(pmap, sizeof(*pmap));              /* Zero pmap */
+/*
+ * Allocate page tables etc... for an preallocated pmap.
+ */
 
-  pmap->ref_count = 1;                      /* Initialize it */
-  simple_lock_init(&pmap->lock);
+void 
+pmap_pinit(pmap)
+	pmap_t	pmap;
+{
+	int s,i;
+
+	bzero(pmap, sizeof(*pmap));              /* Zero pmap */
+        pmap->ref_count = 1;                      /* Initialize it */
+
+/* Allocate user pte. Note that we must set access to each new page
+ * to user accessible when we fault in new pages, to avoid violation.
+ */
+        pmap->pm_ptab=(struct pte*)kmem_alloc_wait(pte_map, VAX_MAX_PT_SIZE);
+
+#ifdef DEBUG
+if(startpmapdebug)printf("pmap addr: %x, pte %x\n",pmap,pmap->pm_ptab);
+#endif
+
+	simple_lock_init(&pmap->lock);
 }
 
 /*
@@ -344,13 +375,16 @@ void pmap_pinit(pmap_t pmap) {
  */
 void
 pmap_release(pmap)
-        register struct pmap *pmap;
+	struct pmap *pmap;
 {
-if(startpmapdebug) printf("pmap_release: pmap %x\n",pmap);
-  if (pmap->pm_ptab) {
-    free((caddr_t)pmap->pm_ptab, M_VMPMAP);
-    pmap->pm_ptab=NULL;
-  }
+#ifdef DEBUG
+if(startpmapdebug)printf("pmap_release: pmap %x\n",pmap);
+#endif
+	if(pmap->pm_ptab){
+		kmem_free_wakeup(pte_map, (vm_offset_t)pmap->pm_ptab,
+			VAX_MAX_PT_SIZE);
+		pmap->pm_ptab=NULL;
+	}
 }
 
 
@@ -375,289 +409,314 @@ if(startpmapdebug) printf("pmap_release: pmap %x\n",pmap);
 
 void
 pmap_destroy(pmap)
-     pmap_t        pmap;
+	pmap_t pmap;
 {
-  int count;
+	int count;
   
-if(startpmapdebug) printf("pmap_destroy: pmap %x\n",pmap);
-  if (pmap == NULL)
-    return;
+#ifdef DEBUG
+if(startpmapdebug)printf("pmap_destroy: pmap %x\n",pmap);
+#endif
+	if(pmap == NULL) return;
 
-  simple_lock(&pmap->pm_lock);
-  count = --pmap->ref_count;
-  simple_unlock(&pmap->pm_lock);
+	simple_lock(&pmap->pm_lock);
+	count = --pmap->ref_count;
+	simple_unlock(&pmap->pm_lock);
   
-  if (!count) {
-    free((caddr_t)pmap->pm_ptab, M_VMPMAP);
-    pmap_release(pmap);
-    free((caddr_t)pmap, M_VMPMAP);
-  }
+	if (!count) {
+		pmap_release(pmap);
+		free((caddr_t)pmap, M_VMPMAP);
+	}
 }
 
-void pmap_reference(pmap_t pmap) {
-  if (pmap)
-    pmap->ref_count++;
+void 
+pmap_reference(pmap)
+	pmap_t pmap;
+{
+	if(pmap) pmap->ref_count++;
 }
 
-void pmap_enter(map, v, p, prot, wired)
-     register pmap_t map;
+void 
+pmap_enter(pmap, v, p, prot, wired)
+     register pmap_t pmap;
      vm_offset_t     v;
      vm_offset_t     p;
      vm_prot_t       prot;
      boolean_t       wired;
 {
-  int j,i,pte,s, *patch;
-  pv_entry_t pv, tmp;
-/*	printf("F|rst:\n");*/
-  i = (v&0x7fffffff)>>PG_SHIFT;
-  pte=prot_array[prot]|PG_PFNUM(p)|PG_V;
-/*	printf("F|re splimp %x\n",mfpr(PR_IPL));*/
+	int j,i,pte,s, *patch;
+	pv_entry_t pv, tmp;
+
+	i = PxTOP0(v) >> PG_SHIFT;
+	pte=prot_array[prot]|PG_PFNUM(p)|PG_V;
 	s=splimp();
-/*	printf("F|re pvtable\n");*/
-/*    pv=&pv_table[(patch[(p&0x7fffffff)>>PG_SHIFT]&PG_FRAME)];*/
-  pv=&pv_table[(p&0x7fffffff)>>PAGE_SHIFT];
-/*	printf("Efter splimp %x: map %x\n",mfpr(PR_IPL),map);*/
+/*	pv=&pv_table[(p&0x7fffffff)>>PAGE_SHIFT]; */
+	pv=&pv_table[(p>>PAGE_SHIFT)];
 
-if(startpmapdebug) printf("pmap_enter: virt %x, phys %x\n",v,p);
-  if(!map)
-    return;
+#ifdef DEBUG
+if(startpmapdebug) printf("pmap_enter: pmap: %x,virt %x, phys %x\n",pmap,v,p);
+#endif
+	if(!pmap) return;
 
-/*	printf("pmap_enter2: pv %x, map %x\n",pv,map);*/
-  if(!pv->pv_pmap) {
-/*    printf("pv->pv_pmap\n");*/
-    pv->pv_pmap=map;
-    pv->pv_next=NULL;
-    pv->pv_va=v;
-  } else {
-/*    printf("till alloc_pv_entry()\n");*/
-    tmp=alloc_pv_entry();
-    tmp->pv_pmap=map;
-    tmp->pv_next=pv->pv_next;
-    tmp->pv_va=v;
-    pv->pv_next=tmp;
-  }
-/*	printf("F|re wired.\n");*/
-  if(wired)
-    pte|=PG_W;
-/*	printf("Fore for\n");*/
-  for(j=0; j<vax_pages_per_page; j++) {
-    patch=(int*)map->pm_ptab;
-    patch[i++]=pte++;
-/*	printf("pmap_enter, dags f|r TBIS\n");*/
-    TBIS(p);
-    p+=NBPG;
-  }
-/*	printf("Dags f|r splx\n");*/
-  splx(s);
+	if(!pv->pv_pmap) {
+		pv->pv_pmap=pmap;
+		pv->pv_next=NULL;
+		pv->pv_va=v;
+	} else {
+		tmp=alloc_pv_entry();
+		tmp->pv_pmap=pmap;
+		tmp->pv_next=pv->pv_next;
+		tmp->pv_va=v;
+		pv->pv_next=tmp;
+	}
+	if(wired) pte|=PG_W;
+	for(j=0; j<VAX_PAGES_PER_PAGE; j++) {
+		patch=(int*)pmap->pm_ptab;
+		patch[i++]=pte++;
+		TBIS(p);
+		p+=NBPG;
+	}
+
+	splx(s);
 }
 
-vm_offset_t pmap_map(virtuell, pstart, pend, prot)
+vm_offset_t
+pmap_map(virtuell, pstart, pend, prot)
 	vm_offset_t	virtuell, pstart, pend;
 {
 	vm_offset_t count;
 	int *pentry;
 
-/*	printf("pmap_map: virtuell %x, pstart %x, pend %x\n",
-		virtuell, pstart, pend); */
 	(uint)pentry=
 	(((uint)(virtuell&0x7fffffff)>>9)*4)+(uint)Sysmap; /* XXX DEFINE! */
 	for(count=pstart;count<pend;count+=512){ /* XXX DEFINE! */
 		*pentry++ = (count>>9)|prot_array[prot]|PG_V; /* XXX DEFINE! */
 	}
-/*	printf("Done!\n");*/
 	return(virtuell+(count-pstart));
 }
-/*
-vm_offset_t
-pmap_map(vvirt, sstart, end, prot)
-     vm_offset_t     vvirt;
-     vm_offset_t     sstart;
-     vm_offset_t     end;
-     int             prot;
-{
-	vm_offset_t virt,start;
-	virt=vvirt;
-	start=sstart;
-	printf("I pmap-map\n");
-  while (start < end) {
-	printf("Dags att hoppa till pmap_enter\n");
-    pmap_enter(kernel_pmap, virt, start, prot, FALSE);
-	printf("]ter fr}n pmap_enter\n");
-    virt += PAGE_SIZE;
-    start += PAGE_SIZE;
-  }
-  return(virt);
-}
-*/
-vm_offset_t pmap_extract(pmap_t pmap, vm_offset_t va) {
 
-if(startpmapdebug) printf("pmap_extract: pmap %x, va %x\n",pmap, va);
+vm_offset_t 
+pmap_extract(pmap_t pmap, vm_offset_t va) {
+
+#ifdef DEBUG
+if(startpmapdebug)printf("pmap_extract: pmap %x, va %x\n",pmap, va);
+#endif
   return ((*((int*)&(pmap->pm_ptab[(va&0x7fffffff)>>PG_SHIFT]))&PG_FRAME)
 	  <<PG_SHIFT)|va&((1<<PG_SHIFT)-1);
 }
 
+/*
+ * pmap_protect( pmap, vstart, vend, protect)
+ */
+void
+pmap_protect(pmap, start, end, prot)
+     register pmap_t pmap;
+     register vm_offset_t start;
+     vm_offset_t     end;
+     vm_prot_t       prot;
+{
+  int i, pte, *patch,s;
+
+#ifdef DEBUG
+if(startpmapdebug) printf("pmap_protect: pmap %x, start %x, end %x\n",
+	pmap, start, end);
+#endif
+	if(pmap==NULL) return;
+	s=splhigh();
+  pte=prot_array[prot];
+  patch=(int*)pmap->pm_ptab;
+
+  while (start < end) {
+    i = PxTOP0(start)>>PG_SHIFT;
+if(startpmapdebug&&start>0x7ffff000){printf("patch[i] %x, PG_PROT %x\n",patch[i],PG_PROT);}
+    patch[i]&=(~PG_PROT);
+if(startpmapdebug&&start>0x7ffff000)printf("patch[i] %x, pte %x\n",patch[i], pte);
+    patch[i]|=pte;
+if(startpmapdebug&&start>0x7ffff000){printf("patch[i] %x, i %x\n",patch[i], i);}
+    i=*(int *)(0x7fffffdc);
+    TBIS(start);
+    start += NBPG;
+  }
+	splx(s);
+}
+
+/*
+ * pmap_remove(pmap, start, slut) removes all valid mappings between
+ * the two virtual adresses start and slut from pmap pmap.
+ * NOTE: all adresses between start and slut might not be mapped.
+ */
 
 void
-pmap_protect(virt, start, end, prot)
-     vm_offset_t     virt;
-     vm_offset_t     start;
-     vm_offset_t     end;
-     int             prot;
+pmap_remove(pmap, start, slut)
+	pmap_t	pmap;
+	vm_offset_t	start, slut;
 {
-  while (start < end) {
-    pmap_page_protect(kernel_pmap, virt, start, prot, FALSE);
-    virt += PAGE_SIZE;
-    start += PAGE_SIZE;
-  }
-}
+	int *ptestart, *pteslut,i,s;
+	pv_entry_t	o_pv, l_pv;
+	vm_offset_t	countup,pv_plats;
 
+#ifdef DEBUG
+if(startpmapdebug) printf("pmap_remove: pmap=0x %x, start=0x %x, slut=0x %x\n",
+	   pmap, start, slut);
+#endif
 
+	if(!pmap) return;
+	if(!pmap->pm_ptab) return; /* No page table */
 
-void pmap_remove(pmap, start, end)
-                pmap_t          pmap;
-                vm_offset_t     start, end;
-{
-  int i=(start&0x7fffffff)>>PG_SHIFT;
-  int j;
-  int s=splimp();
-  pv_entry_t pv;
-  pv_entry_t pv2;
-  int* patch;
-  unsigned int* pte_ptr;
-  vm_offset_t phys_addr;
+/* First, get pte first address */
+	ptestart=(int *)((PxTOP0(start)>>PG_SHIFT)+pmap->pm_ptab);
+	pteslut=(int *)((PxTOP0(slut)>>PG_SHIFT)+pmap->pm_ptab);
+if(startpmapdebug)
+printf("pmap_remove: ptestart %x, pteslut %x\n",ptestart, pteslut);
+	s=splhigh();
+	for(countup=start;ptestart<pteslut;ptestart+=VAX_PAGES_PER_PAGE,
+			countup+=PAGE_SIZE){
 
-if(startpmapdebug) printf("pmap_remove(pmap=0x%x, start=0x%x, end=0x%x)\n",
-	 pmap, start, end);
+		if(!(*ptestart&(PG_V|PG_SREF)))
+			continue; /* valid phys addr, unlink */
+/*
+		if(*ptestart&0xfffff<pv_table_offset ||
+			*ptestart&PG_FRAME>(avail_end>>PG_SHIFT))
+				panic("pmap_remove: bad mapped addr");
+*/
+		pv_plats=((*ptestart&PG_FRAME)>>PAGE_SHIFT-PG_SHIFT);
 
-  if(!pmap)
-    return;
+		l_pv= &pv_table[pv_plats];
+if(startpmapdebug)printf("l_pv %x\n",l_pv);
+		if(!l_pv->pv_pmap)
+			panic("pmap_remove: no mappings to phys page");
 
-  patch=(int*)pmap->pm_ptab;
-  for( ; start<end; ) {
-    pte_ptr=(unsigned int*)PMAP_ENTRY(pmap, start);
-    if(!(phys_addr=PMAP_TO_PA(pte_ptr))) {
-      goto PLOK;
-    }
-/*    pv=&pv_table[(patch[(phys_addr&0x7fffffff)>>PAGE_SHIFT]&PG_FRAME)<<PG_SHIFT];*/
-    pv=&pv_table[(patch[(phys_addr&0x7fffffff)>>PG_SHIFT]&PG_FRAME)];
-/*    printf("Loop; start=0x%x, pv=0x%x\n", start, pv); */
-    if(pv->pv_pmap==pmap) {
-/*      printf("1\n");*/
-      if(pv->pv_next) {
-	pv->pv_pmap=pv->pv_next->pv_pmap;
-	pv->pv_va=pv->pv_next->pv_va;
-	pv->pv_next=pv->pv_next->pv_next;
-      } else {
-	pv->pv_pmap=NULL;
-      }
-    } else {
-/*      printf("2\n");*/
-      for(; pv->pv_next; pv=pv->pv_next) {
-	if(pv->pv_next->pv_pmap==pmap) {
-	  pv2=pv->pv_next;
-	  pv->pv_pmap=pv2->pv_pmap;
-	  pv->pv_va=pv2->pv_va;
-	  pv->pv_next=pv2->pv_next;
-	  free_pv_entry(pv2);
-	  break;
+		/* Check for first level map, no free'ing */
+		if(l_pv->pv_pmap==pmap){
+			if(l_pv->pv_next){
+				o_pv=l_pv->pv_next;
+				l_pv->pv_next=o_pv->pv_next;
+				l_pv->pv_va=o_pv->pv_va;
+				l_pv->pv_pmap=o_pv->pv_pmap;
+				l_pv->pv_flags=o_pv->pv_flags;
+				free_pv_entry(o_pv);
+			} else {
+				l_pv->pv_pmap=NULL;
+			}
+		} else {
+			o_pv=l_pv;
+			l_pv=l_pv->pv_next;
+			if(!l_pv->pv_next)
+				panic("pmap_remove: page not in table");
+			while(l_pv->pv_pmap!=pmap&&l_pv->pv_next){
+				o_pv=l_pv;
+				l_pv=l_pv->pv_next;
+			}
+			if(!l_pv->pv_pmap)
+				panic("pmap_remove: page not in list");
+
+			o_pv->pv_pmap=l_pv->pv_pmap;
+			free_pv_entry(l_pv);
+		}
+		for(i=0;i<VAX_PAGES_PER_PAGE;i++){
+			*(ptestart+i)=0x20000000;
+			mtpr((countup+NBPG*i),PR_TBIS);
+		}
 	}
-      }
-    }
-  PLOK:
-    for( j=0; j<vax_pages_per_page; j++ ) {
-      patch[i++]=0;
-      TBIS(start);
-      start+=NBPG;
-    }
-  }
-  splx(s);
+	splx(s);
 }
 
-void pmap_copy_page(src, dst)
-     vm_offset_t   src;
-     vm_offset_t   dst;
+
+void 
+pmap_copy_page(src, dst)
+	vm_offset_t   src;
+	vm_offset_t   dst;
 {
-  register int i;
+	int i,s;
 
-  src >>= PG_SHIFT;
-  dst >>= PG_SHIFT;
-  i = 0;
-  do {
-    physcopyseg(src++, dst++);
-  } while (++i != vax_pages_per_page);
+#ifdef DEBUG
+if(startpmapdebug)printf("pmap_copy_page: src %x, dst %x\n",src, dst);
+#endif
+	s=splhigh();
+	for(i=0;i<VAX_PAGES_PER_PAGE;i++)
+		physcopypage(src+i*NBPG, dst+i*NBPG);
+	splx(s);
 }
 
 
-static pv_entry_t 
+pv_entry_t 
 alloc_pv_entry()
 {
-  pv_entry_t temporary;
+	pv_entry_t temporary;
 
-  if(!pv_head) {
-    return(malloc(sizeof(struct pv_entry), M_VMPVENT, M_NOWAIT));
-  } else {
-    temporary=pv_head;
-    pv_head=temporary->pv_next;
-    pv_count--;
-    return temporary;
-  }
+	if(!pv_head) {
+		temporary=(pv_entry_t)malloc(sizeof(struct pv_entry), M_VMPVENT, M_NOWAIT);
+#ifdef DEBUG
+if(startpmapdebug) printf("alloc_pv_entry: %x\n",temporary);
+#endif
+	} else {
+		temporary=pv_head;
+		pv_head=temporary->pv_next;
+		pv_count--;
+	}
+	bzero(temporary, sizeof(struct pv_entry));
+	return temporary;
 }
 
-static void
+void
 free_pv_entry(entry)
-  pv_entry_t entry;
+	pv_entry_t entry;
 {
-  if(pv_count>=50) {         /* XXX Should be a define? */
-    free(entry, M_VMPVENT);
-  } else {
-    entry->pv_next=pv_head;
-    pv_head=entry;
-    pv_count++;
-  }
+	if(pv_count>=50) {         /* XXX Should be a define? */
+		free(entry, M_VMPVENT);
+	} else {
+		entry->pv_next=pv_head;
+		pv_head=entry;
+		pv_count++;
+	}
 }
 
 
 pmap_changebit(pa, bit, setem)
-        register vm_offset_t pa;
-        int bit;
-        boolean_t setem;
+	register vm_offset_t pa;
+	int bit;
+	boolean_t setem;
 {
-  pv_entry_t pv=&pv_table[(pa&0x7fffffff)>>PAGE_SHIFT];
-  int* a;
-  int  i;
+	pv_entry_t pv;
+	int* a;
+	int  i;
 
-  if(!pv->pv_pmap) 
-    return;
-  do {
-    a=(int*)&(pv->pv_pmap->pm_ptab[pv->pv_va>>PG_SHIFT]);
-    for(i=0; i<vax_pages_per_page; i++) {
-      if(setem)
-	a[i]|=bit;
-      else
-	a[i]&=~bit;
-      TBIS(pv->pv_va+NBPG*i);
-    }
-  } while (pv=pv->pv_next);
+if(startpmapdebug)
+printf("pmap_changebit: pa %x, bit %x, setem %x\n",pa, bit, setem);
+	pv=&pv_table[((pa&0x7fffffff)>>PAGE_SHIFT)];
+	if(!pv->pv_pmap) return;
+
+	do {
+		a=(int*)&(pv->pv_pmap->pm_ptab[PxTOP0(pv->pv_va)>>PG_SHIFT]);
+		for(i=0; i<VAX_PAGES_PER_PAGE; i++) {
+			if(setem)
+				a[i]|=bit;
+			else
+				a[i]&=~bit;
+			mtpr((pv->pv_va+NBPG*i), PR_TBIS); /* XXX ?can't work*/
+    		}
+	} while(pv=pv->pv_next);
 }
 
 pmap_testbit(pa, bit)
-        register vm_offset_t pa;
-        int bit;
+	register vm_offset_t pa;
+	int bit;
 {
-  pv_entry_t pv=&pv_table[(pa&0x7fffffff)>>PAGE_SHIFT];
-  int* a;
-  int  i;
+	pv_entry_t pv;
+	int* a;
+	int  i;
 
-  if(!pv->pv_pmap) 
-    return 0;
-  do {
-    a=(int*)&(pv->pv_pmap->pm_ptab[pv->pv_va>>PG_SHIFT]);
-    for(i=0; i<vax_pages_per_page; i++) {
-      if(a[i]&bit)
-	return 1;
-    }
-  } while (pv=pv->pv_next);
-  return 0;
+#ifdef DEBUG
+if(startpmapdebug) printf("pmap_testbit: pa %x, bit %x\n",pa,bit);
+#endif
+
+	pv=&pv_table[((pa&0x7fffffff)>>PAGE_SHIFT)];
+	if(!pv->pv_pmap) return 0;
+
+
+	a=(int*)&(pv->pv_pmap->pm_ptab[PxTOP0(pv->pv_va)>>PG_SHIFT]);
+	if(*a&bit) return 1;
+
+	return 0;
 }
 
 boolean_t
@@ -692,34 +751,44 @@ void pmap_clear_reference(pa)
 void pmap_clear_modify(pa)
      vm_offset_t     pa;
 {
+	int s=splhigh();
   pmap_changebit(pa, PG_M, FALSE);
+	splx(s);
 }
 
 
 
-void pmap_change_wiring(pmap, va, wired)
+void 
+pmap_change_wiring(pmap, va, wired)
         register pmap_t pmap;
         vm_offset_t     va;
         boolean_t       wired;
 {
+#ifdef DEBUG
+if(startpmapdebug) printf("pmap_change_wiring: pmap %x, va %x, wired %x\n",
+	pmap, va, wired);
+#endif
   if(wired)
-    *((int*)&(pmap->pm_ptab[(va&0x7fffffff)>>PG_SHIFT]))|=PG_W;
+    *((int*)&(pmap->pm_ptab[PxTOP0(va)>>PG_SHIFT]))|=PG_W;
   else
-    *((int*)&(pmap->pm_ptab[(va&0x7fffffff)>>PG_SHIFT]))&=~PG_W;
+    *((int*)&(pmap->pm_ptab[PxTOP0(va)>>PG_SHIFT]))&=~PG_W;
 }
 
 
 /*
  *  This routine is only advisory and need not do anything.
  */
-void pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
+void 
+pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
         pmap_t          dst_pmap;
         pmap_t          src_pmap;
         vm_offset_t     dst_addr;
         vm_size_t       len;
         vm_offset_t     src_addr;
 {
-if(startpmapdebug) printf("pmap_copy: \n");
+#ifdef DEBUG
+if(startpmapdebug) printf("pmap_copy: pmap1: %x, pmap2: %x, addr1 %x, addr2 %x, len %x\n",dst_pmap, src_pmap, dst_addr,src_addr,len);
+#endif
 }
 
 /*
@@ -729,31 +798,38 @@ if(startpmapdebug) printf("pmap_copy: \n");
  */
 void
 pmap_page_protect(pa, prot)
-     vm_offset_t     pa;
-     vm_prot_t       prot;
+	vm_offset_t     pa;
+	vm_prot_t       prot;
 {
-  register pv_entry_t pv;
-  int s;
+	pv_entry_t pv;
+	int s;
   
-  switch (prot) {
-  case VM_PROT_ALL:
-    break;
-  case VM_PROT_READ:
-  case VM_PROT_READ|VM_PROT_EXECUTE:
-    pmap_changebit(pa, PG_RO, TRUE);
-    break;
-  default:
-    pv = pa_to_pvh(pa);
-    s = splimp();
-    while (pv->pv_pmap != NULL) {
-      pmap_remove(pv->pv_pmap, pv->pv_va,
-		  pv->pv_va + PAGE_SIZE);
-      pv=pv->pv_next;
-      if(!pv) break;
-    }
-    splx(s);
-    break;
-  }
+#ifdef DEBUG
+if(startpmapdebug) printf("pmap_page_protect: pa %x, prot %x\n",pa, prot);
+#endif
+
+	switch (prot) {
+
+	case VM_PROT_ALL:
+		break;
+	case VM_PROT_READ:
+	case VM_PROT_READ|VM_PROT_EXECUTE:
+		pmap_changebit(pa, PG_RO, TRUE);
+		break;
+
+	default:
+		pv = &pv_table[(pa>>PAGE_SHIFT)];
+
+		s = splimp();
+		while (pv->pv_pmap != NULL) {
+			pmap_remove(pv->pv_pmap, pv->pv_va,
+				pv->pv_va + PAGE_SIZE);
+			pv=pv->pv_next;
+			if(!pv) break;
+		}
+		splx(s);
+		break;
+	}
 }
 
 void pmap_update() {
@@ -767,16 +843,17 @@ void pmap_update() {
  *      at a time.
  */
 pmap_zero_page(phys)
-     register vm_offset_t    phys;
+	vm_offset_t    phys;
 {
-  register int ix;
+	int i,s;
 
-if(startpmapdebug) printf("pmap_zero_page(phys %x, vax_pages_per_page %x\n",phys,vax_pages_per_page);
-  phys >>= PG_SHIFT;
-  ix = 0;
-  do {
-    clearseg(phys++);
-  } while (++ix != vax_pages_per_page);
+#ifdef DEBUG
+if(startpmapdebug){printf("pmap_zero_page(phys %x, VAX_PAGES_PER_PAGE %x\n",phys,VAX_PAGES_PER_PAGE);}
+#endif
+	s=splhigh();
+	for(i=0;i<VAX_PAGES_PER_PAGE;i++)
+		clearpage(phys+NBPG*i);
+	splx(s);
 }
 
 /*
@@ -799,5 +876,7 @@ pmap_pageable(pmap, sva, eva, pageable)
         vm_offset_t     sva, eva;
         boolean_t       pageable;
 {
+#ifdef DEBUG
 if(startpmapdebug) printf("pmap_pageable\n");
+#endif
 }
