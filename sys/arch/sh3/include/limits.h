@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.4 2002/03/17 17:55:25 uch Exp $	*/
+/*	$NetBSD: limits.h,v 1.5 2002/04/28 17:10:35 uch Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -42,7 +42,7 @@
 #define	MB_LEN_MAX	32		/* no multibyte characters */
 
 #define	SCHAR_MAX	0x7f		/* max value for a signed char */
-#define SCHAR_MIN	(-0x7f-1)	/* min value for a signed char */
+#define	SCHAR_MIN	(-0x7f-1)	/* min value for a signed char */
 
 #define	UCHAR_MAX	0xffU		/* max value for an unsigned char */
 #define	CHAR_MAX	0x7f		/* max value for a char */
@@ -50,7 +50,7 @@
 
 #define	USHRT_MAX	0xffffU		/* max value for an unsigned short */
 #define	SHRT_MAX	0x7fff		/* max value for a short */
-#define SHRT_MIN        (-0x7fff-1)     /* min value for a short */
+#define	SHRT_MIN        (-0x7fff-1)     /* min value for a short */
 
 #define	UINT_MAX	0xffffffffU	/* max value for an unsigned int */
 #define	INT_MAX		0x7fffffff	/* max value for an int */
@@ -82,16 +82,16 @@
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) ||		\
     defined(_XOPEN_SOURCE)
-#define LONG_BIT	32
-#define WORD_BIT	32
+#define	LONG_BIT	32
+#define	WORD_BIT	32
 
-#define DBL_DIG		15
-#define DBL_MAX		1.7976931348623157E+308
-#define DBL_MIN		2.2250738585072014E-308
+#define	DBL_DIG		15
+#define	DBL_MAX		1.7976931348623157E+308
+#define	DBL_MIN		2.2250738585072014E-308
 
-#define FLT_DIG		6
-#define FLT_MAX		3.40282347E+38F
-#define FLT_MIN		1.17549435E-38F
+#define	FLT_DIG		6
+#define	FLT_MAX		3.40282347E+38F
+#define	FLT_MIN		1.17549435E-38F
 #endif
 
 #endif /* !_SH3_LIMITS_H_ */

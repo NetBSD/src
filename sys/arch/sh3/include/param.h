@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.9 2002/03/17 14:02:04 uch Exp $	*/
+/*	$NetBSD: param.h,v 1.10 2002/04/28 17:10:35 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -58,9 +58,9 @@
  * (within reasonable limits).
  *
  */
-#define ALIGNBYTES		(sizeof(int) - 1)
-#define ALIGN(p)		(((u_int)(p) + ALIGNBYTES) & ~ALIGNBYTES)
-#define ALIGNED_POINTER(p, t)	((((u_long)(p)) & (sizeof(t) - 1)) == 0)
+#define	ALIGNBYTES		(sizeof(int) - 1)
+#define	ALIGN(p)		(((u_int)(p) + ALIGNBYTES) & ~ALIGNBYTES)
+#define	ALIGNED_POINTER(p, t)	((((u_long)(p)) & (sizeof(t) - 1)) == 0)
 
 #define	PGSHIFT		12		/* LOG2(NBPG) */
 #define	NBPG		(1 << PGSHIFT)	/* bytes/page */
@@ -86,7 +86,7 @@
 #endif
 
 #ifndef MSGBUFSIZE
-#define MSGBUFSIZE	NBPG		/* default message buffer size */
+#define	MSGBUFSIZE	NBPG		/* default message buffer size */
 #endif
 
 /*

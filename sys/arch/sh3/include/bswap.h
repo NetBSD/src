@@ -1,9 +1,9 @@
-/*      $NetBSD: bswap.h,v 1.3 2002/03/17 17:55:24 uch Exp $      */
+/*      $NetBSD: bswap.h,v 1.4 2002/04/28 17:10:33 uch Exp $      */
 
 /* Written by Manuel Bouyer. Public domain */
 
 #ifndef _SH3_BSWAP_H_
-#define _SH3_BSWAP_H_
+#define	_SH3_BSWAP_H_
 
 #include <sys/cdefs.h>
 

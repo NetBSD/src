@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.5 2002/03/24 18:04:39 uch Exp $	*/
+/*	$NetBSD: locore.h,v 1.6 2002/04/28 17:10:35 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,15 +34,15 @@
  */
 
 #if defined(SH3) && defined(SH4)
-#define MOV(x, r)	mov.l _L./**/x, r; mov.l @r, r
+#define	MOV(x, r)	mov.l _L./**/x, r; mov.l @r, r
 #define	REG_SYMBOL(x)	_L./**/x:	.long	_C_LABEL(__sh_/**/x)
-#define	FUNC_SYMBOL(x)	_L./**/x:	.long	_C_LABEL(__sh_/**/x)	
+#define	FUNC_SYMBOL(x)	_L./**/x:	.long	_C_LABEL(__sh_/**/x)
 #elif defined(SH3)
-#define MOV(x, r)	mov.l _L./**/x, r
+#define	MOV(x, r)	mov.l _L./**/x, r
 #define	REG_SYMBOL(x)	_L./**/x:	.long	SH3_/**/x
 #define	FUNC_SYMBOL(x)	_L./**/x:	.long	_C_LABEL(sh3_/**/x)
-#elif defined(SH4)	
-#define MOV(x, r)	mov.l _L./**/x, r
+#elif defined(SH4)
+#define	MOV(x, r)	mov.l _L./**/x, r
 #define	REG_SYMBOL(x)	_L./**/x:	.long	SH4_/**/x
 #define	FUNC_SYMBOL(x)	_L./**/x:	.long	_C_LABEL(sh4_/**/x)
 #endif /* SH3 && SH4 */
@@ -50,9 +50,9 @@
 /*
  * BANK1 r7 contains kernel stack top address.
  * BANK1 r6 conatins current frame pointer. (per process)
- */		 		 	
+ */
 /*
- * __EXCEPTION_ENTRY:		
+ * __EXCEPTION_ENTRY:
  *	+ setup stack pointer
  *	+ save all register to frame. (struct trapframe)
  *	+ setup kernel stack.
@@ -109,11 +109,11 @@
 	stc	r2_bank,r4						;\
 	stc	spc,	r5
 
-/*	
- * __EXCEPTION_RETURN:	 
- *	+ block exception	
- *	+ restore all register from stack. 
- *	+ rte.	
+/*
+ * __EXCEPTION_RETURN:
+ *	+ block exception
+ *	+ restore all register from stack.
+ *	+ rte.
  */
 #define	__EXCEPTION_RETURN						;\
 	mov	#0x10,	r0						;\
@@ -158,10 +158,10 @@
  * Macros to disable and enable exceptions (including interrupts).
  * This modifies SR.BL
  */
-#define __0x10	#0x10
-#define __0x78	#0x78
+#define	__0x10	#0x10
+#define	__0x78	#0x78
 
-#define __EXCEPTION_BLOCK(Rn, Rm)					;\
+#define	__EXCEPTION_BLOCK(Rn, Rm)					;\
 	mov	__0x10,	Rn						;\
 	swap.b	Rn,	Rn						;\
 	swap.w	Rn,	Rn	/* Rn = 0x10000000 */			;\
@@ -169,7 +169,7 @@
 	or	Rn,	Rm						;\
 	ldc	Rm,	sr	/* block exceptions */
 
-#define __EXCEPTION_UNBLOCK(Rn, Rm)					;\
+#define	__EXCEPTION_UNBLOCK(Rn, Rm)					;\
 	mov	__0x10,	Rn						;\
 	swap.b	Rn,	Rn						;\
 	swap.w	Rn,	Rn	/* Rn = 0x10000000 */			;\
@@ -189,7 +189,7 @@
 	or	Rn,	Rm						;\
 	ldc	Rm,	sr	/* mask all interrupt */
 
-#define __INTR_UNMASK(Rn, Rm)						;\
+#define	__INTR_UNMASK(Rn, Rm)						;\
 	mov	__0x78,	Rn						;\
 	shll	Rn		/* Rn = 0x000000f0 */			;\
 	not	Rn,	Rn						;\
