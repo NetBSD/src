@@ -1,4 +1,4 @@
-/*	$NetBSD: osiopvar.h,v 1.2 2001/11/18 14:50:11 tsutsui Exp $	*/
+/*	$NetBSD: osiopvar.h,v 1.3 2002/05/14 02:58:35 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -189,7 +189,7 @@ struct osiop_tinfo {
 	int state;		/* negotiation state */
 	u_int8_t sxfer;		/* value for SXFER reg */
 	u_int8_t sbcl;		/* value for SBCL reg */
-} tinfo_t;
+};
 
 struct osiop_softc {
 	struct device sc_dev;
