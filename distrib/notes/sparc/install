@@ -134,6 +134,12 @@ can change it to load NetBSD instead using the following command:
     ok setenv boot-from sd(0,0,0)netbsd
     ok
 
+Newer versions of the OpenBOOT ROM will require this syntax instead:
+
+    ok setenv boot-file netbsd
+    ok setenv boot-device /sbus/esp/sd@0,0
+
+
 Congratulations, you have successfully installed NetBSD 1.0.  When you
 reboot into NetBSD, you should log in as "root" at the login prompt.
 There is no initial password, but if you're using the machine in a
