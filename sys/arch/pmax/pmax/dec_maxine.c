@@ -1,4 +1,4 @@
-/* $NetBSD: dec_maxine.c,v 1.26 2000/02/03 04:09:03 nisimura Exp $ */
+/* $NetBSD: dec_maxine.c,v 1.27 2000/02/09 08:37:43 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.26 2000/02/03 04:09:03 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.27 2000/02/09 08:37:43 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -281,8 +281,8 @@ dec_maxine_intr_establish(dev, cookie, level, handler, arg)
 		mask = XINE_INTR_DTOP_RX;
 		break;
 	  case XINE_ISDN_SLOT:
-		mask = (XINE_INTR_ISDN | IOASIC_INTR_ISDN_OVRUN |
-			IOASIC_INTR_ISDN_TXLOAD | IOASIC_INTR_ISDN_RXLOAD);
+		mask = (XINE_INTR_ISDN | IOASIC_INTR_ISDN_DS_OVRUN |
+		    IOASIC_INTR_ISDN_DS_TXLOAD | IOASIC_INTR_ISDN_DS_RXLOAD);
 		break;
 	  case XINE_ASIC_SLOT:
 		mask = XINE_INTR_ASIC;
