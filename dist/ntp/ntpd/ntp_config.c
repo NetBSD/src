@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_config.c,v 1.1.1.2 2000/04/22 14:53:14 simonb Exp $	*/
+/*	$NetBSD: ntp_config.c,v 1.2 2000/04/22 15:49:32 simonb Exp $	*/
 
 /*
  * ntp_config.c - read and apply configuration information
@@ -710,7 +710,7 @@ getconfig(
 	int ttl;
 	keyid_t peerkey;
 	char *peerkeystr;
-	keyid_t lpeerkey;
+	u_long lpeerkey;
 	int peerflags;
 	int hmode;
 	struct sockaddr_in peeraddr;
@@ -1464,7 +1464,7 @@ getconfig(
 
 		    case CONFIG_REQUESTKEY:
 			if (ntokens >= 2) {
-				keyid_t rkey;
+				u_long rkey;
 
 				if (!atouint(tokens[1], &rkey)) {
 					msyslog(LOG_ERR,
@@ -1478,7 +1478,7 @@ getconfig(
 #ifdef DEBUG
 					if (debug > 3)
 					    printf(
-						    "set info_auth_key to %08x\n", rkey);
+						    "set info_auth_key to %08lx\n", rkey);
 #endif
 					info_auth_keyid = rkey;
 				}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_intres.c,v 1.1.1.2 2000/04/22 14:53:16 simonb Exp $	*/
+/*	$NetBSD: ntp_intres.c,v 1.2 2000/04/22 15:49:32 simonb Exp $	*/
 
 /*
  * ripped off from ../ntpres/ntpres.c by Greg Troxel 4/2/92
@@ -448,6 +448,7 @@ findhostaddr(
 	)
 {
 	struct hostent *hp;
+	struct in_addr in;
 
 	checkparent();		/* make sure our guy is still running */
 
@@ -475,7 +476,8 @@ findhostaddr(
 			msyslog(LOG_INFO, "findhostaddr: Resolving %x>",
 				entry->ce_peeraddr);
 #endif
-		hp = gethostbyaddr((const char *)entry->ce_peeraddr,
+		in.s_addr = entry->ce_peeraddr;
+		hp = gethostbyaddr((const char *)&in,
 				   sizeof entry->ce_peeraddr,
 				   AF_INET);
 	}
