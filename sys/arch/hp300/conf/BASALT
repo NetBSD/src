@@ -1,4 +1,4 @@
-#	$NetBSD: BASALT,v 1.5 1996/08/22 21:02:49 thorpej Exp $
+#	$NetBSD: BASALT,v 1.6 1996/09/10 22:26:52 thorpej Exp $
 #
 # BASALT - thorpej's hp380
 #
@@ -49,6 +49,7 @@ options		NMBCLUSTERS="1024"	# Crank this up
 options		FPSP		# floating point interface for 68040
 options		USELEDS		# make the lights twinkle
 options		COMPAT_HPUX	# HP-UX binary compatibility
+#options 	"COMPAT_M68K4K"	# compat. with NetBSD/m68k4k binaries
 
 # Debugging options
 options		DDB		# Kernel Dynamic Debugger
