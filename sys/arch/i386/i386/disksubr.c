@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.22 1996/09/30 21:24:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -68,9 +68,9 @@ readdisklabel(dev, strat, lp, osdep)
 	register struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
-	struct dos_partition *dp = osdep->dosparts;
+	struct dos_partition *dp;
 	struct partition *pp;
-	struct dkbad *bdp = &osdep->bad;
+	struct dkbad *bdp;
 	struct buf *bp;
 	struct disklabel *dlp;
 	char *msg = NULL;
@@ -97,7 +97,7 @@ readdisklabel(dev, strat, lp, osdep)
 	/* do dos partitions in the process of getting disklabel? */
 	dospartoff = 0;
 	cyl = LABELSECTOR / lp->d_secpercyl;
-	if (dp) {
+	if (osdep && (dp = osdep->dosparts) != NULL) {
 		/* read master boot record */
 		bp->b_blkno = DOSBBSECTOR;
 		bp->b_bcount = lp->d_secsize;
@@ -178,7 +178,7 @@ readdisklabel(dev, strat, lp, osdep)
 		goto done;
 
 	/* obtain bad sector table if requested and present */
-	if (bdp && (lp->d_flags & D_BADSECT)) {
+	if (osdep && (bdp = &osdep->bad) != NULL && (lp->d_flags & D_BADSECT)) {
 		struct dkbad *db;
 
 		i = 0;
@@ -285,7 +285,7 @@ writedisklabel(dev, strat, lp, osdep)
 	register struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
-	struct dos_partition *dp = osdep->dosparts;
+	struct dos_partition *dp;
 	struct buf *bp;
 	struct disklabel *dlp;
 	int error, dospartoff, cyl, i;
@@ -297,7 +297,7 @@ writedisklabel(dev, strat, lp, osdep)
 	/* do dos partitions in the process of getting disklabel? */
 	dospartoff = 0;
 	cyl = LABELSECTOR / lp->d_secpercyl;
-	if (dp) {
+	if (osdep && (dp = osdep->dosparts) != NULL) {
 		/* read master boot record */
 		bp->b_blkno = DOSBBSECTOR;
 		bp->b_bcount = lp->d_secsize;
