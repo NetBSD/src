@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.23 1995/08/27 06:20:27 phil Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.24 1995/09/24 06:34:47 phil Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: vmstat.c,v 1.23 1995/08/27 06:20:27 phil Exp $";
+static char rcsid[] = "$NetBSD: vmstat.c,v 1.24 1995/09/24 06:34:47 phil Exp $";
 #endif
 #endif /* not lint */
 
@@ -709,7 +709,10 @@ cpustats()
 }
 
 #if defined(pc532)
+/* To get struct iv ...*/
+#define _KERNEL
 #include <machine/psl.h>
+#undef _KERNEL
 void
 dointr()
 {
