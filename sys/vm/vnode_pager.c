@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_pager.c,v 1.32 1997/07/04 20:22:22 drochner Exp $	*/
+/*	$NetBSD: vnode_pager.c,v 1.33 1997/07/06 12:38:30 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -109,7 +109,7 @@ vnode_pager_init()
 #endif
 	TAILQ_INIT(&vnode_pager_list);
 	simple_lock_init(&vnode_pager_list_lock);
-	lock_init(&vnode_pager_sync_lock, TRUE);
+	lockinit(&vnode_pager_sync_lock, PVM, "vnsync", 0, 0);
 }
 
 /*
@@ -483,7 +483,7 @@ vnode_pager_sync(mp)
 	vm_object_t object, next_object;
 	struct object_q object_list;
 
-	lock_write(&vnode_pager_sync_lock);
+	lockmgr(&vnode_pager_sync_lock, LK_EXCLUSIVE, (void *)0, curproc);
 
 	/*
 	 * We do this in two passes:
@@ -530,7 +530,7 @@ vnode_pager_sync(mp)
 		vm_object_deallocate(object);
 	}
 
-	lock_write_done(&vnode_pager_sync_lock);
+	lockmgr(&vnode_pager_sync_lock, LK_RELEASE, (void *)0, curproc);
 }
 
 /*
