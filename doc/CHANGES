@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.250 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.251 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -554,6 +554,8 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		SATA controller.  [thorpej 20031219]
 	random(3): improved, and now generates the same sequences as glibc
 		and others. WARNING: new sequences. PR 22853. [ross 20031219]
+	MAKEDEV(8): use mknod(8) -r for faster operation and to retain
+		permissions on existing devices.  [lukem 20031221]
 	bpm(1): add a text-only menu-based binary package manager
 		[agc 20031221]
 	dreamcast: Add an Xserver for dreamcast, based on work by
