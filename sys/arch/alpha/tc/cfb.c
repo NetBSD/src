@@ -1,4 +1,4 @@
-/* $NetBSD: cfb.c,v 1.12 1997/09/02 13:20:11 thorpej Exp $ */
+/* $NetBSD: cfb.c,v 1.13 1997/09/25 01:32:09 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.12 1997/09/02 13:20:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.13 1997/09/25 01:32:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,6 +80,7 @@ struct wscons_emulfuncs cfb_emulfuncs = {
 	rcons_erasecols,
 	rcons_copyrows,
 	rcons_eraserows,
+	10,				/* skip 10 rows per scroll */
 };
 
 int	cfbioctl __P((void *, u_long, caddr_t, int, struct proc *));
