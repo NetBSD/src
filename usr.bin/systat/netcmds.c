@@ -1,4 +1,4 @@
-/*	$NetBSD: netcmds.c,v 1.2 1995/01/20 08:52:03 jtc Exp $	*/
+/*	$NetBSD: netcmds.c,v 1.3 1995/04/29 05:54:48 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)netcmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: netcmds.c,v 1.2 1995/01/20 08:52:03 jtc Exp $";
+static char rcsid[] = "$NetBSD: netcmds.c,v 1.3 1995/04/29 05:54:48 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -54,6 +54,8 @@ static char rcsid[] = "$NetBSD: netcmds.c,v 1.2 1995/01/20 08:52:03 jtc Exp $";
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
+
+#include <arpa/inet.h>
 
 #include <netdb.h>
 #include <stdlib.h>
@@ -308,6 +310,6 @@ showhosts()
 		hp = gethostbyaddr((char *)&p->addr, sizeof (p->addr), AF_INET);
 		if (!p->onoff)
 			addch('!');
-		printw("%s ", hp ? hp->h_name : (char *)inet_ntoa(p->addr));
+		printw("%s ", hp ? hp->h_name : inet_ntoa(p->addr));
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.3 1995/03/22 15:25:58 mycroft Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.4 1995/04/29 05:54:55 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$NetBSD: vmstat.c,v 1.3 1995/03/22 15:25:58 mycroft Exp $";
+static char rcsid[] = "$NetBSD: vmstat.c,v 1.4 1995/04/29 05:54:55 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -613,7 +613,8 @@ getinfo(s, st)
 	struct Info *s;
 	enum state st;
 {
-	int mib[2], size;
+	int mib[2];
+	size_t size;
 	extern int errno;
 
 	NREAD(X_CPTIME, s->time, sizeof s->time);
