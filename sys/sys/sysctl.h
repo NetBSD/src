@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.26 1998/03/01 02:24:15 fvdl Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.27 1998/03/03 01:40:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -331,7 +331,6 @@ struct kinfo_proc {
 #define	CTL_DEBUG_MAXID		20
 
 #ifdef	_KERNEL
-#ifdef	DEBUG
 /*
  * CTL_DEBUG variables.
  *
@@ -348,6 +347,7 @@ struct ctldebug {
 	char	*debugname;	/* name of debugging variable */
 	int	*debugvar;	/* pointer to debugging variable */
 };
+#ifdef	DEBUG
 extern struct ctldebug debug0, debug1, debug2, debug3, debug4;
 extern struct ctldebug debug5, debug6, debug7, debug8, debug9;
 extern struct ctldebug debug10, debug11, debug12, debug13, debug14;
