@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: autoconf.c,v 1.20 1994/05/29 01:44:26 chopps Exp $
+ *	$Id: autoconf.c,v 1.21 1994/06/03 00:30:27 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,7 +140,6 @@ amiga_config_found(pcfp, pdp, auxp, pfn)
 int
 config_console()
 {	
-	extern struct cfdriver mainbuscd, ztwobuscd;
 	struct cfdata *cf;
 
 	/*
@@ -153,12 +152,13 @@ config_console()
 	 * internal grf.
 	 */
 	amiga_config_found(cf, NULL, "grfcc", NULL);
-#if not_yet
 	/*
-	 * ztwobus knows when its not for real (amiga_realconfig == 0)
+	 * ztwobus and zthreebus know when its not for real and will
+	 * only configure the appropriate hardware
 	 */
 	amiga_config_found(cf, NULL, "ztwobus", NULL);
-#endif
+	if (is_a3000() || is_a4000())
+		amiga_config_found(cf, NULL, "zthreebus", NULL);
 }
 
 /* 
