@@ -1,5 +1,5 @@
-.\"	$NetBSD: setkey.8,v 1.21 2003/07/25 10:09:38 itojun Exp $
-.\"	$KAME: setkey.8,v 1.86 2003/07/25 09:53:01 itojun Exp $
+.\"	$NetBSD: setkey.8,v 1.22 2003/09/07 22:18:58 itojun Exp $
+.\"	$KAME: setkey.8,v 1.87 2003/09/07 22:16:01 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd July 25, 2003
+.Dd September 7, 2003
 .Dt SETKEY 8
 .Os
 .\"
@@ -183,6 +183,15 @@ on the command line achieves the same functionality.
 .Li ;
 .Xc
 Add an SPD entry.
+.\"
+.It Xo
+.Li spdadd tagged
+.Ar tag Ar policy
+.Li ;
+.Xc
+Add an SPD entry based on PF tag.
+.Ar tag
+must be a string surrounded by doublequote.
 .\"
 .It Xo
 .Li spddelete
@@ -642,6 +651,11 @@ spdadd 10.0.11.41/32[21] 10.0.11.33/32[any] any
 .Xr ipsec_set_policy 3 ,
 .Xr racoon 8 ,
 .Xr sysctl 8
+.Rs
+.%T "Changed manual key configuration for IPsec"
+.%O "http://www.kame.net/newsletter/19991007/"
+.%D "October 1999"
+.Re
 .\"
 .Sh HISTORY
 The
@@ -652,3 +666,11 @@ The command was completely re-designed in June 1998.
 .Sh BUGS
 .Nm
 should report and handle syntax errors better.
+.Pp
+For IPsec gateway configuration,
+.Ar src_range
+and
+.Ar dst_range
+with TCP/UDP port number do not work, as the gateway does not reassemble
+packets
+.Pq cannot inspect upper-layer headers .
