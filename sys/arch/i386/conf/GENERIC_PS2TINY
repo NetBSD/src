@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_PS2TINY,v 1.12.4.1 2002/07/14 17:47:52 gehenna Exp $
+#	$NetBSD: GENERIC_PS2TINY,v 1.12.4.2 2002/07/16 08:29:14 gehenna Exp $
 #
 #	GENERIC-style kernel config for IBM PS/2 with MCA bus. It only contains
 #	IBM PS/2 related stuff and has been generally trimmed down somewhat,
@@ -202,8 +202,7 @@ aha*	at mca? slot ?			# Adaptec AHA-1640
 esp*	at mca? slot ?			# NCR 53C90
 
 # SCSI bus support
-scsibus* at aha?
-scsibus* at esp?
+scsibus* at scsi?
 
 # SCSI devices
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
