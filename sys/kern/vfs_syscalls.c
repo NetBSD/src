@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.38 1994/11/17 20:27:17 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.39 1994/11/18 02:48:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -641,7 +641,6 @@ open(p, uap, retval)
 		 * The fp data was changed, so it is a cloning operation
 		 * Cleanup and return
 		 */
-		VOP_UNLOCK(vp);
 		if (flags & FWRITE)
 			vp->v_writecount--;
 		vput(vp);
