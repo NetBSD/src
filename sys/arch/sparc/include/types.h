@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.9 1996/03/14 00:48:30 pk Exp $ */
+/*	$NetBSD: types.h,v 1.10 1996/12/05 00:13:58 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,5 +77,7 @@ typedef	long long		  int64_t;
 typedef	unsigned long long	u_int64_t;
 
 typedef int32_t			register_t;
+
+#define	__BROKEN_INDIRECT_CONFIG
 
 #endif	/* _MACHTYPES_H_ */
