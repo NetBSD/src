@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.c,v 1.4 1997/01/18 00:31:48 cgd Exp $	*/
+/*	$NetBSD: disk.c,v 1.5 1997/04/01 17:23:04 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -104,7 +104,7 @@ diskopen(f, ctlr, unit, part)
 	char *msg, buf[DEV_BSIZE], devname[32];
 	struct disk_softc *sc;
 
-	if (unit >= 8 || part >= 8)
+	if (unit >= 8 || part >= MAXPARTITIONS)
 		return (ENXIO);
 	/* 
 	 * XXX
@@ -141,6 +141,12 @@ diskopen(f, ctlr, unit, part)
 	if (i || cnt != DEV_BSIZE) {
 		printf("disk%d: error reading disk label\n", unit);
 		goto bad;
+	} else if (lp->d_magic != DISKMAGIC) {
+		/* No label at all.  Fake all partitions as whole disk. */
+		for (i = 0; i < MAXPARTITIONS; i++) {
+			lp->d_partitions[part].p_offset = 0;
+			lp->d_partitions[part].p_size = 0x7fffffff;
+		}
 	} else {
 		msg = getdisklabel(buf, lp);
 		if (msg) {
