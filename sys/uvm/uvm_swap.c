@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.41 2000/11/27 08:40:05 chs Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.42 2000/12/23 12:13:05 enami Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -131,6 +131,7 @@ struct swapdev {
 	int			swd_drumoffset;	/* page0 offset in drum */
 	int			swd_drumsize;	/* #pages in drum */
 	struct extent		*swd_ex;	/* extent for this swapdev */
+	char			swd_exname[12];	/* name of extent above */
 	struct vnode		*swd_vp;	/* backing vnode */
 	CIRCLEQ_ENTRY(swapdev)	swd_next;	/* priority circleq */
 
@@ -777,7 +778,6 @@ swap_on(p, sdp)
 	extern int (**nfsv2_vnodeop_p) __P((void *));
 #endif /* NFS */
 	dev_t dev;
-	char *name;
 	UVMHIST_FUNC("swap_on"); UVMHIST_CALLED(pdhist);
 
 	/*
@@ -888,11 +888,11 @@ swap_on(p, sdp)
 	/*
 	 * now we need to allocate an extent to manage this swap device
 	 */
-	name = malloc(12, M_VMSWAP, M_WAITOK);
-	sprintf(name, "swap0x%04x", count++);
+	snprintf(sdp->swd_exname, sizeof(sdp->swd_exname), "swap0x%04x",
+	    count++);
 
 	/* note that extent_create's 3rd arg is inclusive, thus "- 1" */
-	sdp->swd_ex = extent_create(name, 0, npages - 1, M_VMSWAP,
+	sdp->swd_ex = extent_create(sdp->swd_exname, 0, npages - 1, M_VMSWAP,
 				    0, 0, EX_WAITOK);
 	/* allocate the `saved' region from the extent so it won't be used */
 	if (addr) {
@@ -968,7 +968,6 @@ swap_off(p, sdp)
 	struct proc *p;
 	struct swapdev *sdp;
 {
-	void *name;
 	UVMHIST_FUNC("swap_off"); UVMHIST_CALLED(pdhist);
 	UVMHIST_LOG(pdhist, "  dev=%x", sdp->swd_dev,0,0,0);
 
@@ -1029,9 +1028,7 @@ swap_off(p, sdp)
 	 */
 	extent_free(swapmap, sdp->swd_drumoffset, sdp->swd_drumsize,
 		    EX_WAITOK);
-	name = (void *)sdp->swd_ex->ex_name;
 	extent_destroy(sdp->swd_ex);
-	free(name, M_VMSWAP);
 	free(sdp, M_VMSWAP);
 	simple_unlock(&uvm.swap_data_lock);
 	return (0);
