@@ -1,4 +1,4 @@
-/*	$NetBSD: sethostent.c,v 1.8 1997/07/20 13:33:35 mrg Exp $	*/
+/*	$NetBSD: sethostent.c,v 1.9 1998/01/06 05:01:30 perry Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -37,9 +37,9 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)sethostent.c	8.1 (Berkeley) 6/4/93";
-static char rcsid[] = "$Id: sethostent.c,v 8.5 1996/09/28 06:51:07 vixie Exp ";
+static char rcsid[] = "Id: sethostent.c,v 8.5 1996/09/28 06:51:07 vixie Exp ";
 #else
-__RCSID("$NetBSD: sethostent.c,v 1.8 1997/07/20 13:33:35 mrg Exp $");
+__RCSID("$NetBSD: sethostent.c,v 1.9 1998/01/06 05:01:30 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
