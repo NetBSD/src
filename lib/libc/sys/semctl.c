@@ -1,7 +1,8 @@
 /*
- *	$Id: semctl.c,v 1.1 1994/10/20 04:17:06 cgd Exp $
+ *	$Id: semctl.c,v 1.1.2.1 1995/04/18 04:33:42 jtc Exp $
  */     
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/sem.h>
