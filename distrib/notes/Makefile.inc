@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 1999/04/29 19:03:03 ross Exp $
+#	$NetBSD: Makefile.inc,v 1.6 1999/06/30 18:23:02 ross Exp $
 
 # Ross Harvey <ross@netbsd.org>
 
@@ -12,6 +12,8 @@ TARGS=	${TARG}.ps ${TARG}.txt ${TARG}.html ${TARG}.more
 SRCS=	${MAIN} mirrors whatis contents hardware xfer prep install\
 	upgrade donations legal.common legal postinstall ../Makefile.inc\
 	${MERGED_SRCS}
+ICMD=	${INSTALL} ${RENAME} ${PRESERVE} ${COPY}	\
+	-o root -g wheel -m ${NONBINMODE} 
 
 PRESET=	${GFLAGS} -dV=$V -dV_S=${V_S} -dMACHINE=$M -d.CURDIR=${.CURDIR} -r$M=1 
 
@@ -52,6 +54,17 @@ echosrcs! ${SRCS}
 
 echomore!
 	@echo ${.OBJDIR}/${TARG}.more
+
+.ifndef RELEASEDIR
+release:
+	@echo setenv RELEASEDIR first
+	@false
+.else
+release:
+.for i in ${TARGS}
+	${ICMD} ${i} ${RELEASEDIR}/.
+.endfor
+.endif
 
 .PATH: ${.CURDIR}/../common
 
