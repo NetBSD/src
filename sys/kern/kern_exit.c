@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.107 2003/01/18 10:06:26 thorpej Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.108 2003/01/27 20:30:32 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.107 2003/01/18 10:06:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.108 2003/01/27 20:30:32 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -162,7 +162,7 @@ void
 exit1(struct lwp *l, int rv)
 {
 	struct proc	*p, *q, *nq;
-	int		s;
+	int		s, sa;
 
 	p = l->l_proc;
 
@@ -175,9 +175,11 @@ exit1(struct lwp *l, int rv)
 	 * Disable scheduler activation upcalls. 
 	 * We're trying to get out of here. 
 	 */
+	sa = 0;
 	if (l->l_flag & L_SA) {
 		l->l_flag &= ~L_SA;
 		p->p_flag &= ~P_SA;
+		sa = 1;
 	}
 
 #ifdef PGINPROF
@@ -200,7 +202,7 @@ exit1(struct lwp *l, int rv)
 	p->p_sigctx.ps_sigcheck = 0;
 	timers_free(p, TIMERS_ALL);
 
-	if (p->p_nlwps > 1)
+	if (sa || (p->p_nlwps > 1))
 		exit_lwps(l);
 
 #if defined(__HAVE_RAS)
