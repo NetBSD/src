@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.88.4.1 2002/09/01 13:57:49 lukem Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.88.4.2 2003/08/26 06:46:43 tron Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.88.4.1 2002/09/01 13:57:49 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.88.4.2 2003/08/26 06:46:43 tron Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ahc.h"
@@ -4300,7 +4300,7 @@ ahcallocscbs(struct ahc_softc *ahc)
 		next_scb->sg_list_phys = physaddr + sizeof(struct ahc_dma_seg);
 		next_scb->flags = SCB_FREE;
 		error = bus_dmamap_create(ahc->parent_dmat,
-			    AHC_MAXTRANSFER_SIZE, AHC_NSEG, MAXBSIZE, 0,
+			    AHC_MAXTRANSFER_SIZE, AHC_NSEG, MAXPHYS, 0,
 			    BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW|ahc->sc_dmaflags,
 			    &next_scb->dmamap);
 		if (error != 0)
