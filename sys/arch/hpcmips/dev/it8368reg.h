@@ -1,4 +1,4 @@
-/*	$NetBSD: it8368reg.h,v 1.1 1999/11/21 06:48:59 uch Exp $ */
+/*	$NetBSD: it8368reg.h,v 1.2 1999/12/30 16:50:43 uch Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -46,6 +46,9 @@
 #define IT8368_GPIONEGINTSTAT_REG	0x1c
 #define IT8368_MFIONEGINTSTAT_REG	0x1e
 #define IT8368_CTRL_REG			0x20
+
+#define IT8368_GPIO_MAX		12
+#define IT8368_MFIO_MAX		10
 
 #define IT8368_GPIODATAOUT_MASK		0x1fff
 #define IT8368_MFIODATAOUT_MASK		0x07ff
