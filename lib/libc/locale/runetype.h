@@ -1,4 +1,4 @@
-/*	$NetBSD: runetype.h,v 1.5 2001/03/26 19:55:43 tshiozak Exp $	*/
+/*	$NetBSD: runetype.h,v 1.6 2001/10/20 06:01:13 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,36 +41,18 @@
 #ifndef	_RUNETYPE_H_
 #define	_RUNETYPE_H_
 
+#include <inttypes.h>
+#include <wchar.h>
+
 #include <sys/cdefs.h>
-#include <machine/ansi.h>
+#include <sys/types.h>
 
-#include <machine/int_types.h>
-typedef __uint64_t	__runepad_t;
-
-#ifdef	_BSD_SIZE_T_
-typedef	_BSD_SIZE_T_	size_t;
-#undef	_BSD_SIZE_T_
+#ifdef _BSD_RUNE_T_
+typedef        _BSD_RUNE_T_    rune_t;
+#undef _BSD_RUNE_T_
 #endif
 
-#ifdef	_BSD_WCHAR_T_
-typedef	_BSD_WCHAR_T_	wchar_t;
-#undef	_BSD_WCHAR_T_
-#endif
-
-#ifdef	_BSD_WINT_T_
-typedef	_BSD_WINT_T_	wint_t;
-#undef	_BSD_WINT_T_
-#endif
-
-#ifdef	_BSD_MBSTATE_T_
-typedef	_BSD_MBSTATE_T_	mbstate_t;
-#undef	_BSD_MBSTATE_T_
-#endif
-
-#ifdef	_BSD_RUNE_T_
-typedef	_BSD_RUNE_T_	rune_t;
-#undef	_BSD_RUNE_T_
-#endif
+typedef uint64_t	__runepad_t;
 
 extern size_t __mb_len_max_runtime;
 #define __MB_LEN_MAX_RUNTIME	__mb_len_max_runtime
@@ -82,7 +64,7 @@ extern size_t __mb_len_max_runtime;
 /*
  * The lower 8 bits of runetype[] contain the digit value of the rune.
  */
-typedef __uint32_t _RuneType;
+typedef uint32_t _RuneType;
 #define	_CTYPE_A	0x00000100L	/* Alpha */
 #define	_CTYPE_C	0x00000200L	/* Control */
 #define	_CTYPE_D	0x00000400L	/* Digit */
@@ -109,17 +91,17 @@ typedef __uint32_t _RuneType;
  * rune file format.  network endian.
  */
 typedef struct {
-	__int32_t	__min;		/* First rune of the range */
-	__int32_t	__max;		/* Last rune (inclusive) of the range */
-	__int32_t	__map;		/* What first maps to in maps */
-	__uint32_t	__pad1;		/* backward compatibility */
+	int32_t		__min;		/* First rune of the range */
+	int32_t		__max;		/* Last rune (inclusive) of the range */
+	int32_t		__map;		/* What first maps to in maps */
+	uint32_t	__pad1;		/* backward compatibility */
 	__runepad_t	__pad2;		/* backward compatibility */
 } _FileRuneEntry __attribute__((__packed__));
 
 
 typedef struct {
-	__uint32_t	__nranges;	/* Number of ranges stored */
-	__uint32_t	__pad1;		/* backward compatibility */
+	uint32_t	__nranges;	/* Number of ranges stored */
+	uint32_t	__pad1;		/* backward compatibility */
 	__runepad_t	__pad2;		/* backward compatibility */
 } _FileRuneRange __attribute__((__packed__));
 
@@ -130,12 +112,12 @@ typedef struct {
 
 	__runepad_t	__pad1;		/* backward compatibility */
 	__runepad_t	__pad2;		/* backward compatibility */
-	__int32_t	__invalid_rune;
-	__uint32_t	__pad3;		/* backward compatibility */
+	int32_t		__invalid_rune;
+	uint32_t	__pad3;		/* backward compatibility */
 
 	_RuneType	__runetype[_CACHED_RUNES];
-	__int32_t	__maplower[_CACHED_RUNES];
-	__int32_t	__mapupper[_CACHED_RUNES];
+	int32_t		__maplower[_CACHED_RUNES];
+	int32_t		__mapupper[_CACHED_RUNES];
 
 	/*
 	 * The following are to deal with Runes larger than _CACHED_RUNES - 1.
@@ -147,8 +129,8 @@ typedef struct {
 	_FileRuneRange	__mapupper_ext;
 
 	__runepad_t	__pad4;		/* backward compatibility */
-	__int32_t	__variable_len;	/* how long that data is */
-	__uint32_t	__pad5;		/* backward compatibility */
+	int32_t		__variable_len;	/* how long that data is */
+	uint32_t	__pad5;		/* backward compatibility */
 
 	/* variable size data follows */
 } _FileRuneLocale __attribute__((__packed__));
@@ -166,12 +148,14 @@ typedef struct {
 
 
 typedef struct {
-	__uint32_t	__nranges;	/* Number of ranges stored */
+	uint32_t	__nranges;	/* Number of ranges stored */
 	_RuneEntry	*__rune_ranges;
 } _RuneRange;
 
 
 struct _RuneLocale;
+struct _RuneState;
+#if defined(_LIBC) || defined(RUNEMOD_MAJOR)
 typedef struct _RuneState {
 	size_t		__sizestate;
 	void		(*__initstate) __P((struct _RuneLocale *, void *));
@@ -180,7 +164,7 @@ typedef struct _RuneState {
 	void		(*__unpackstate)
 		__P((struct _RuneLocale *, void *, const mbstate_t *));
 } _RuneState;
-
+#endif
 
 typedef size_t (*__rune_mbrtowc_t) __P((struct _RuneLocale *, rune_t *,
 	const char *, size_t, void *));
