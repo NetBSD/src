@@ -1,4 +1,4 @@
-/*	$NetBSD: pwcache.c,v 1.26 2004/04/23 02:58:27 simonb Exp $	*/
+/*	$NetBSD: pwcache.c,v 1.27 2004/05/18 22:14:35 sjg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -66,12 +66,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)cache.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pwcache.c,v 1.26 2004/04/23 02:58:27 simonb Exp $");
+__RCSID("$NetBSD: pwcache.c,v 1.27 2004/05/18 22:14:35 sjg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -240,7 +244,6 @@ grptb_start(void)
 	return (0);
 }
 
-#if !HAVE_USER_FROM_UID
 /*
  * user_from_uid()
  *	caches the name (if any) for the uid. If noname clear, we always
@@ -249,7 +252,6 @@ grptb_start(void)
  * Return
  *	Pointer to stored name (or a empty string)
  */
-
 const char *
 user_from_uid(uid_t uid, int noname)
 {
@@ -319,7 +321,6 @@ user_from_uid(uid_t uid, int noname)
  * Return
  *	Pointer to stored name (or a empty string)
  */
-
 const char *
 group_from_gid(gid_t gid, int noname)
 {
@@ -380,7 +381,6 @@ group_from_gid(gid_t gid, int noname)
 	}
 	return (ptr->name);
 }
-#endif /* HAVE_USER_FROM_UID */
 
 /*
  * uid_from_user()
@@ -388,7 +388,6 @@ group_from_gid(gid_t gid, int noname)
  * Return
  *	the uid (if any) for a user name, or a -1 if no match can be found
  */
-
 int
 uid_from_user(const char *name, uid_t *uid)
 {
@@ -453,7 +452,6 @@ uid_from_user(const char *name, uid_t *uid)
  * Return
  *	the gid (if any) for a group name, or a -1 if no match can be found
  */
-
 int
 gid_from_group(const char *name, gid_t *gid)
 {

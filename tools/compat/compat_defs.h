@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.34 2004/04/24 15:46:24 matt Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.35 2004/05/18 22:14:35 sjg Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -245,6 +245,11 @@ int pwcache_userdb(int (*)(int), void (*)(void),
 int gid_from_group(const char *, gid_t *);
 int pwcache_groupdb(int (*)(int), void (*)(void),
 		struct group * (*)(const char *), struct group * (*)(gid_t));
+# if HAVE_USER_FROM_UID
+/* Make them use our version */
+#  define user_from_uid __nbcompat_user_from_uid
+#  define group_from_gid __nbcompat_group_from_gid
+# endif
 #endif
 
 #if !HAVE_PWRITE
