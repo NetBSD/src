@@ -1,50 +1,50 @@
-# $NetBSD: shl.elf,v 1.34 2001/01/12 03:00:25 enami Exp $
+# $NetBSD: shl.elf,v 1.35 2001/01/24 05:28:22 jwise Exp $
 # Note: libtermcap and libtermlib are hardlinked and share the same version.
-./usr/lib/libamu.so.2
-./usr/lib/libasn1.so.3
-./usr/lib/libbz2.so.0
-./usr/lib/libc.so.12
-./usr/lib/libcdk.so.0
-./usr/lib/libcom_err.so.3
-./usr/lib/libcrypt.so.0
-./usr/lib/libcrypto.so.0
-./usr/lib/libcurses.so.4
-./usr/lib/libdes.so.5
-./usr/lib/libedit.so.2
-./usr/lib/libform.so.1
-./usr/lib/libg2c.so.0
-./usr/lib/libgnumalloc.so.0
-./usr/lib/libgssapi.so.2
-./usr/lib/libhdb.so.6
-./usr/lib/libintl.so.0
-./usr/lib/libipsec.so.2
-./usr/lib/libkadm.so.4
-./usr/lib/libkadm5clnt.so.6
-./usr/lib/libkadm5srv.so.7
-./usr/lib/libkafs.so.4
-./usr/lib/libkdb.so.4
-./usr/lib/libkrb.so.4
-./usr/lib/libkrb5.so.12
-./usr/lib/libkstream.so.1
-./usr/lib/libkvm.so.5
-./usr/lib/libm.so.0
-./usr/lib/libmenu.so.2
-./usr/lib/libobjc.so.0
-./usr/lib/libossaudio.so.0
-./usr/lib/libpcap.so.1
-./usr/lib/libposix.so.0
-./usr/lib/libresolv.so.1
-./usr/lib/libroken.so.9
-./usr/lib/libskey.so.1
-./usr/lib/libsl.so.1
-./usr/lib/libss.so.3
-./usr/lib/libssl.so.1
-./usr/lib/libstdc++.so.2
-./usr/lib/libtelnet.so.3
-./usr/lib/libtermcap.so.0
-./usr/lib/libtermlib.so.0
-./usr/lib/libusb.so.0
-./usr/lib/libutil.so.5
-./usr/lib/libwrap.so.0
-./usr/lib/libz.so.0
-./usr/libexec/ld.elf_so
+./usr/lib/libamu.so.2		base-amd-shlib
+./usr/lib/libasn1.so.3		base-krb5-shlib
+./usr/lib/libbz2.so.0		base-sys-shlib
+./usr/lib/libc.so.12		base-sys-shlib
+./usr/lib/libcdk.so.0		base-sys-shlib
+./usr/lib/libcom_err.so.3	base-krb5-shlib
+./usr/lib/libcrypt.so.0		base-sys-shlib
+./usr/lib/libcrypto.so.0	base-crypto-shlib
+./usr/lib/libcurses.so.4	base-sys-shlib
+./usr/lib/libdes.so.5		base-crypto-shlib
+./usr/lib/libedit.so.2		base-sys-shlib
+./usr/lib/libform.so.1		base-sys-shlib
+./usr/lib/libg2c.so.0		base-sys-shlib
+./usr/lib/libgnumalloc.so.0	base-sys-shlib
+./usr/lib/libgssapi.so.2	base-krb5-shlib
+./usr/lib/libhdb.so.6		base-krb5-shlib
+./usr/lib/libintl.so.0		base-sys-shlib
+./usr/lib/libipsec.so.2		base-net-shlib
+./usr/lib/libkadm.so.4		base-krb4-shlib
+./usr/lib/libkadm5clnt.so.6	base-krb5-shlib
+./usr/lib/libkadm5srv.so.7	base-krb5-shlib
+./usr/lib/libkafs.so.4		base-krb5-shlib
+./usr/lib/libkdb.so.4		base-krb4-shlib
+./usr/lib/libkrb.so.4		base-krb4-shlib
+./usr/lib/libkrb5.so.12		base-krb5-shlib
+./usr/lib/libkstream.so.1	base-krb4-shlib
+./usr/lib/libkvm.so.5		base-sys-shlib
+./usr/lib/libm.so.0		base-sys-shlib
+./usr/lib/libmenu.so.2		base-sys-shlib
+./usr/lib/libobjc.so.0		base-sys-shlib
+./usr/lib/libossaudio.so.0	base-sys-shlib
+./usr/lib/libpcap.so.1		base-net-shlib
+./usr/lib/libposix.so.0		base-sys-shlib
+./usr/lib/libresolv.so.1	base-net-shlib
+./usr/lib/libroken.so.9		base-krb5-shlib
+./usr/lib/libskey.so.1		base-sys-shlib
+./usr/lib/libsl.so.1		base-krb5-shlib
+./usr/lib/libss.so.3		base-krb5-shlib
+./usr/lib/libssl.so.1		base-crypto-shlib
+./usr/lib/libstdc++.so.2	base-sys-shlib
+./usr/lib/libtelnet.so.3	base-krb5-shlib
+./usr/lib/libtermcap.so.0	base-sys-shlib
+./usr/lib/libtermlib.so.0	base-sys-shlib
+./usr/lib/libusb.so.0		base-sys-shlib
+./usr/lib/libutil.so.5		base-sys-shlib
+./usr/lib/libwrap.so.0		base-net-shlib
+./usr/lib/libz.so.0		base-sys-shlib
+./usr/libexec/ld.elf_so		base-sys-shlib
