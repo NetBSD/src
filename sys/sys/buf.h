@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.53 2002/08/30 15:43:42 hannken Exp $	*/
+/*	$NetBSD: buf.h,v 1.54 2002/08/30 19:21:14 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -90,6 +90,8 @@
  */   
 LIST_HEAD(workhead, worklist);
 
+#ifdef _KERNEL
+
 /*
  * Device driver buffer queue.
  */
@@ -99,8 +101,6 @@ struct bufq_state {
 	void *bq_private;
 	int bq_flags;			/* Flags from bufq_alloc() */
 };
-
-#ifdef _KERNEL
 
 /*
  * Flags for bufq_alloc.
