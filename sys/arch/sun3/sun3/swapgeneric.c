@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.13 1995/04/07 03:02:36 gwr Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.14 1995/04/26 23:30:08 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -12,11 +12,11 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Gordon Ross.
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
+ * 4. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Gordon W. Ross
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -45,11 +45,24 @@
 #include <sys/reboot.h>
 
 #include <machine/mon.h>
+  
+/*
+ * This will be called if the config file fails to include:
+ *  	option GENERIC
+ *      option NFSCLIENT
+ *      option FFS
+ */
+static int
+no_mountroot()
+{
+	printf("swapgeneric: configuration error!\n");
+	boot(RB_HALT);
+}
 
 #ifdef	FFS
 extern int ffs_mountroot();
 #else	/* FFS */
-static int ffs_mountroot() { return ENOSYS; }
+#define ffs_mountroot no_mountroot
 #endif	/* FFS */
 
 #ifdef	NFSCLIENT
@@ -57,10 +70,10 @@ extern char	*nfsbootdevname;	/* nfs_boot.c */
 extern int nfs_mountroot(); 	/* nfs_vfsops.c */
 #else	/* NFSCLIENT */
 static char	*nfsbootdevname;
-static int nfs_mountroot() { return ENOSYS; }
+#define nfs_mountroot no_mountroot
 #endif	/* NFSCLIENT */
 
-int (*mountroot)();
+int (*mountroot)() = no_mountroot;
 
 dev_t	rootdev = NODEV;
 dev_t	dumpdev = NODEV;
