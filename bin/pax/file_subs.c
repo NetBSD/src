@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.41.2.7 2004/08/25 02:44:45 jmc Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.41.2.8 2004/11/12 05:02:13 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.41.2.7 2004/08/25 02:44:45 jmc Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.41.2.8 2004/11/12 05:02:13 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -917,6 +917,7 @@ file_write(int fd, char *str, int cnt, int *rem, int *isempt, int sz,
 	int wcnt;
 	char *st = str;
 	char **strp;
+	size_t *lenp;
 
 	/*
 	 * while we have data to process
@@ -978,24 +979,27 @@ file_write(int fd, char *str, int cnt, int *rem, int *isempt, int sz,
 		switch (fd) {
 		case -1:
 			strp = &gnu_name_string;
+			lenp = &gnu_name_length;
 			break;
 		case -2:
 			strp = &gnu_link_string;
+			lenp = &gnu_link_length;
 			break;
 		default:
 			strp = NULL;
+			lenp = NULL;
 			break;
 		}
 		if (strp) {
-			if (*strp)
-				err(1, "WARNING! Major Internal Error! GNU hack Failing!");
-			*strp = malloc(wcnt + 1);
-			if (*strp == NULL) {
+			char *nstr = *strp ? realloc(*strp, *lenp + wcnt + 1) :
+				malloc(wcnt + 1);
+			if (nstr == NULL) {
 				tty_warn(1, "Out of memory");
 				return(-1);
 			}
-			strlcpy(*strp, st, wcnt);
-			break;
+			(void)strlcpy(&nstr[*lenp], st, wcnt + 1);
+			*strp = nstr;
+			*lenp += wcnt;
 		} else if (xwrite(fd, st, wcnt) != wcnt) {
 			syswarn(1, errno, "Failed write to file %s", name);
 			return(-1);
