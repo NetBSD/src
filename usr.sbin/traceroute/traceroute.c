@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.41 2000/10/07 06:53:41 itojun Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.42 2001/01/12 18:53:21 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: traceroute.c,v 1.41 2000/10/07 06:53:41 itojun Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.42 2001/01/12 18:53:21 itojun Exp $");
 #endif
 #endif
 
@@ -1012,7 +1012,7 @@ wait_for_reply(register int sock, register struct sockaddr_in *fromp,
 	int fromlen = sizeof(*fromp);
 	int retval;
 
-	nfds = howmany(sock + 1, NFDBITS);
+	nfds = howmany(sock + 1, NFDBITS) * sizeof(fd_mask);
 	if ((fdsp = malloc(nfds)) == NULL) {
 		Fprintf(stderr, "%s: malloc: %s\n", prog, strerror(errno));
 		exit(1);
