@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.31 2003/10/26 19:17:10 christos Exp $ */
+/*	$NetBSD: cpu.c,v 1.32 2003/11/15 05:24:03 petrov Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.31 2003/10/26 19:17:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.32 2003/11/15 05:24:03 petrov Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -362,3 +362,13 @@ cpu_attach(parent, dev, aux)
 	 */
 	uvm_page_recolor(atop(bigcache));
 }
+
+#if defined(MULTIPROCESSOR)
+/*
+ * Start secondary processors in motion.
+ */
+void
+cpu_boot_secondary_processors()
+{
+}
+#endif /* MULTIPROCESSOR */
