@@ -1,4 +1,4 @@
-/* $NetBSD: bus.h,v 1.14 1997/07/23 07:47:51 cgd Exp $ */
+/* $NetBSD: bus.h,v 1.15 1997/08/13 02:53:03 cgd Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -67,7 +67,9 @@
 #ifndef _ALPHA_BUS_H_
 #define	_ALPHA_BUS_H_
 
+#ifndef	__BUS_SPACE_COMPAT_OLDDEFS
 #define	__BUS_SPACE_COMPAT_OLDDEFS
+#endif
 
 /*
  * Addresses (in bus space).
