@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)os-bsd44.h	8.1 (Berkeley) 6/6/93
- *	$Id: os-bsd44.h,v 1.12 1996/05/23 22:51:02 fvdl Exp $
+ *	$Id: os-bsd44.h,v 1.13 1996/10/13 01:15:03 christos Exp $
  *
  * 4.4 BSD definitions for Amd (automounter)
  */
@@ -122,8 +122,9 @@
 /*
  * Byte ordering
  */
+
 #ifndef BYTE_ORDER
-#include <machine/endian.h>
+#include <sys/types.h>
 #endif /* BYTE_ORDER */
 
 #undef ARCH_ENDIAN
