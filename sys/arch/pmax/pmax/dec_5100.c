@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_5100.c,v 1.2.4.11 1999/06/11 00:59:59 nisimura Exp $ */
+/*	$NetBSD: dec_5100.c,v 1.2.4.12 1999/06/11 11:37:57 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.2.4.11 1999/06/11 00:59:59 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.2.4.12 1999/06/11 11:37:57 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,7 +139,7 @@ dec_5100_bus_reset()
 
 	icsr = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR);
 	icsr |= KN230_CSR_INTR_WMERR;
-	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR);
+	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN230_SYS_ICSR) = icsr;
 	kn230_wbflush();
 }
 
@@ -190,7 +190,6 @@ dec_5100_intr_establish(ioa, cookie, level, func, arg)
 	int (*func) __P((void *));
 {
 	int dev, i;
-	u_int32_t icsr;
 
 	dev = (int)cookie;
 
@@ -333,7 +332,7 @@ _spllower_kn230(lvl)
 	int lvl;
 {
 	oldiplmask[lvl] = kn230imsk;
-	kn230imsk = iplmask[IPL_HIGH] &~ iplmask[lvl]
+	kn230imsk = iplmask[IPL_HIGH] &~ iplmask[lvl];
 	return lvl;
 }
 
