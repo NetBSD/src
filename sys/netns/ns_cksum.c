@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_cksum.c,v 1.9 2003/08/07 16:33:45 agc Exp $	*/
+/*	$NetBSD: ns_cksum.c,v 1.10 2004/04/19 00:10:48 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1992, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ns_cksum.c,v 1.9 2003/08/07 16:33:45 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ns_cksum.c,v 1.10 2004/04/19 00:10:48 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -49,9 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: ns_cksum.c,v 1.9 2003/08/07 16:33:45 agc Exp $");
 #define FOLD(x) {l_util.l = (x); (x) = l_util.s[0] + l_util.s[1]; ADDCARRY(x);}
 
 u_int16_t
-ns_cksum(m, len)
-	struct mbuf *m;
-	int len;
+ns_cksum(struct mbuf *m, int len)
 {
 	u_int16_t *w;
 	int sum = 0;
