@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.31 2003/06/16 21:26:24 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.32 2003/06/16 21:46:12 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -455,3 +455,18 @@ share/misc/na.phone				1.16-1.18 (via patch)
 
 	re-gen with new machinery. Finally up-to-date.
 	[jhawk, #1189]
+
+share/man/man8/man8.sun2/boot.8			1.1-1.4 (new)
+share/man/man8/man8.sun2/Makefile		1.2
+src/distrib/sets/lists/man/mi			1.573
+
+	Added a boot(8) man page for sun2.
+
+	Use more mdoc macros; comment out reference to non-existing crash(8)
+	from SEE ALSO.
+
+	Added a SYNOPSIS section, added content about boot device
+	selection, and added the man page to the set lists.
+
+	New sentence, new line; drop trailing spaces.
+	[fredette, ticket #1278]
