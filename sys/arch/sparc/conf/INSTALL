@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.22 2000/10/02 18:43:37 abs Exp $
+#	$NetBSD: INSTALL,v 1.23 2000/10/20 11:24:48 pk Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -15,7 +15,9 @@ maxusers	32
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MINIROOTSIZE=3960	# size of memory disk, in blocks
+## The miniroot size must be kept in sync manually with the size of
+## the `ramdisk' image (which is built in distrib/sparc/ramdisk).
+options 	MINIROOTSIZE=1360	# size of memory disk, in blocks
 
 pseudo-device	md		1	# memory disk device (ramdisk)
 
@@ -149,7 +151,7 @@ file-system	FFS		# Berkeley Fast Filesystem
 file-system	NFS		# Sun NFS-compatible filesystem client
 #file-system	KERNFS		# kernel data-structure filesystem
 #file-system	NULLFS		# NULL layered filesystem
-#file-system	MFS		# memory-based filesystem
+file-system	MFS		# memory-based filesystem
 #file-system	FDESC		# user file descriptor filesystem
 #file-system	UMAPFS		# uid/gid remapping filesystem
 #file-system	LFS		# Log-based filesystem (still experimental)
