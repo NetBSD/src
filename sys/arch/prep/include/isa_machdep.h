@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.4 2000/11/15 19:31:57 thorpej Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.5 2001/06/15 15:50:05 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,8 +80,8 @@
  * or in spite of using isavar.h, and should be fixed.
  */
 
-#ifndef _PREP_ISA_MACHDEP_H_			/* XXX */
-#define _PREP_ISA_MACHDEP_H_			/* XXX */
+#ifndef _PREP_ISA_MACHDEP_H_
+#define _PREP_ISA_MACHDEP_H_
 
 #include <machine/bus.h>
 #include <dev/isa/isadmavar.h>
@@ -115,6 +115,7 @@ const struct evcnt *isa_intr_evcnt(isa_chipset_tag_t ic, int irq);
 void	*isa_intr_establish(isa_chipset_tag_t ic, int irq, int type,
 	    int level, int (*ih_fun)(void *), void *ih_arg);
 void	isa_intr_disestablish(isa_chipset_tag_t ic, void *handler);
+int	isa_intr_alloc(isa_chipset_tag_t, int, int, int *);
 
 #define	isa_dmainit(ic, bst, dmat, d)					\
 	_isa_dmainit(&(ic)->ic_dmastate, (bst), (dmat), (d))
@@ -167,7 +168,7 @@ void	isa_intr_disestablish(isa_chipset_tag_t ic, void *handler);
 #define	isa_outb(x,y)	outb(PREP_BUS_SPACE_IO + (x), y)
 #define isa_inb(x)	inb(PREP_BUS_SPACE_IO + (x))
 
-extern struct prep_bus_dma_tag isa_bus_dma_tag;
+extern struct powerpc_bus_dma_tag isa_bus_dma_tag;
 
 /*
  * XXX Various seemingly PC-specific constants, some of which may be
@@ -187,4 +188,4 @@ extern struct prep_bus_dma_tag isa_bus_dma_tag;
  */
 void isabeep(int, int);		/* beep with the system speaker */
 
-#endif /* _PREP_ISA_MACHDEP_H_ XXX */
+#endif /* _PREP_ISA_MACHDEP_H_ */
