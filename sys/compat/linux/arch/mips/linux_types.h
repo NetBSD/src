@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_types.h,v 1.3 2001/09/22 21:15:18 manu Exp $ */
+/*	$NetBSD: linux_types.h,v 1.4 2001/10/06 13:32:59 manu Exp $ */
 
 /*-
  * Copyright (c) 1995, 1998, 2001 The NetBSD Foundation, Inc.
@@ -167,7 +167,7 @@ struct linux_stat64 {
 	unsigned long 	lreserved0;
 	linux_time_t	lst_mtime;
 	unsigned long 	lreserved1;
-	linux_time_t	 lst_ctime;
+	linux_time_t	lst_ctime;
 	unsigned long 	lreserved2;
 	unsigned long	lst_blksize;
 	long long 	lst_blocks;
