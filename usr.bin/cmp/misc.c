@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.4 1997/10/18 12:52:17 lukem Exp $	*/
+/*	$NetBSD: misc.c,v 1.5 1997/10/19 14:06:01 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: misc.c,v 1.4 1997/10/18 12:52:17 lukem Exp $");
+__RCSID("$NetBSD: misc.c,v 1.5 1997/10/19 14:06:01 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,6 +66,6 @@ diffmsg(file1, file2, byte, line)
 {
 	if (!sflag)
 		(void)printf("%s %s differ: char %qd, line %qd\n",
-		    file1, file2, byte, line);
+		    file1, file2, (long long)byte, (long long)line);
 	exit(DIFF_EXIT);
 }
