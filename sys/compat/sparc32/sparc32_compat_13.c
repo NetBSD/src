@@ -1,4 +1,4 @@
-/*	$NetBSD: sparc32_compat_13.c,v 1.1 1998/08/26 10:20:35 mrg Exp $	*/
+/*	$NetBSD: sparc32_compat_13.c,v 1.2 1998/08/26 13:38:21 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -63,7 +63,7 @@ compat_13_compat_sparc32_sigaltstack13(p, v, retval)
 	nss13.ss_size = s32nss13->ss_size;
 	nss13.ss_flags = s32nss13->ss_flags;
 
-	rv = compat_13_sigaltstack(p, &ua, retval);
+	rv = compat_13_sys_sigaltstack(p, &ua, retval);
 
 	s32oss13->ss_sp = (sparc32_charp)(u_long)oss13.ss_sp;
 	s32oss13->ss_size = oss13.ss_size;
