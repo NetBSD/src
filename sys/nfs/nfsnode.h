@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.42 2003/08/07 16:33:56 agc Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.43 2003/09/17 09:10:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -121,7 +121,7 @@ struct nfsnode {
 	time_t			n_attrstamp;	/* Attr. cache timestamp */
 	time_t			n_mtime;	/* Prev modify time. */
 	time_t			n_ctime;	/* Prev create time. */
-	time_t			n_nctime;	/* Last neg cache entry (dir) */
+	struct timespec		n_nctime;	/* Last neg cache entry (dir) */
 	time_t			n_expiry;	/* Lease expiry time */
 	daddr_t			n_dblkno;	/* To keep faked dir blkno */
 	unsigned		n_dircachesize;	/* Size of dir cookie cache */
