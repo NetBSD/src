@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.3 2001/07/07 16:38:36 thorpej Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.4 2001/07/07 16:46:34 thorpej Exp $	*/
 /*	$OpenBSD: hifn7751.c,v 1.47 2000/10/11 13:15:41 itojun Exp $	*/
 
 /*
@@ -217,7 +217,7 @@ hifn_attach(parent, self, aux)
 		goto fail_io1;
 	}
 	sc->sc_dma = (struct hifn_dma *)kva;
-	bzero(sc->sc_dma, sizeof(*sc->sc_dma));
+	memset(sc->sc_dma, 0, sizeof(*sc->sc_dma));
 
 	hifn_reset_board(sc);
 
@@ -858,7 +858,7 @@ hifn_write_command(cmd, buf)
 	}
 
 	if ((base_cmd->masks & (HIFN_BASE_CMD_MAC | HIFN_BASE_CMD_CRYPT)) == 0) {
-		bzero(buf_pos, 8);
+		memset(buf_pos, 0, 8);
 		buf_pos += 8;
 	}
 
@@ -1219,7 +1219,7 @@ hifn_freesession(tid)
 	if (session >= sc->sc_maxses)
 		return (EINVAL);
 
-	bzero(&sc->sc_sessions[session], sizeof(sc->sc_sessions[session]));
+	memset(&sc->sc_sessions[session], 0, sizeof(sc->sc_sessions[session]));
 	return (0);
 }
 
@@ -1256,7 +1256,7 @@ hifn_process(crp)
 		err = ENOMEM;
 		goto errout;
 	}
-	bzero(cmd, sizeof(struct hifn_command));
+	memset(cmd, 0, sizeof(struct hifn_command));
 
 	if (crp->crp_flags & CRYPTO_F_IMBUF) {
 		cmd->src_m = (struct mbuf *)crp->crp_buf;
@@ -1363,7 +1363,7 @@ hifn_process(crp)
 			cmd->mac_masks |= HIFN_MAC_CMD_NEW_KEY;
 			memcpy(cmd->mac, maccrd->crd_key,
 			    maccrd->crd_klen >> 3);
-			bzero(cmd->mac + (maccrd->crd_klen >> 3),
+			memset(cmd->mac + (maccrd->crd_klen >> 3), 0,
 			    HIFN_MAC_KEY_LENGTH - (maccrd->crd_klen >> 3));
 		}
 
