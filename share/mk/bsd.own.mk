@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.211 2001/11/12 20:03:44 tv Exp $
+#	$NetBSD: bsd.own.mk,v 1.212 2001/11/12 20:05:15 tv Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -53,7 +53,7 @@ USETOOLS?=	no
 .if empty(MAKEFLAGS:M-V*)
 PRINTOBJDIR=	${MAKE} -V .OBJDIR
 .else
-PRINTOBJDIR=	true # prevent infinite recursion
+PRINTOBJDIR=	echo # prevent infinite recursion
 .endif
 
 # Host platform information; may be overridden
