@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_engine.c,v 1.23 2002/10/04 22:35:08 oster Exp $	*/
+/*	$NetBSD: rf_engine.c,v 1.24 2002/10/04 22:50:26 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -55,7 +55,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.23 2002/10/04 22:35:08 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.24 2002/10/04 22:50:26 oster Exp $");
 
 #include "rf_threadstuff.h"
 
@@ -834,9 +834,7 @@ DAGExecutionThread(RF_ThreadArg_t arg)
 		}
 		while (!raidPtr->shutdown_engine && 
 		       raidPtr->node_queue == NULL) {
-			DO_UNLOCK(raidPtr);
-			tsleep(&(raidPtr->node_queue), PRIBIO, "rfwcond", 0);
-			DO_LOCK(raidPtr);
+			DO_WAIT(raidPtr);
 		}
 	}
 	DO_UNLOCK(raidPtr);
