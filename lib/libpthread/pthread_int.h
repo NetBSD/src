@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.4 2003/01/25 00:43:38 nathanw Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.5 2003/01/31 04:58:57 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -216,6 +216,7 @@ void	pthread__initthread(pthread_t self, pthread_t t);
 void	pthread__block(pthread_t self, pthread_spin_t* queuelock);
 /* Put a thread back on the run queue */
 void	pthread__sched(pthread_t self, pthread_t thread);
+void	pthread__sched_sleepers(pthread_t self, struct pthread_queue_t *threadq);
 void	pthread__sched_idle(pthread_t self, pthread_t thread);
 void	pthread__sched_idle2(pthread_t self);
 
