@@ -1,4 +1,4 @@
-/*	$NetBSD: sacc_obio.c,v 1.2 2003/08/12 08:24:04 bsh Exp $ */
+/*	$NetBSD: sacc_obio.c,v 1.3 2004/02/21 23:25:01 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sacc_obio.c,v 1.2 2003/08/12 08:24:04 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sacc_obio.c,v 1.3 2004/02/21 23:25:01 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,7 +119,7 @@ sacc_obio_attach(parent, self, aux)
 	bus_space_unmap(iot, memctl_ioh, PXA2X0_MEMCTL_SIZE);
 
 	sc->sc_piot = sc->sc_iot = iot;
-	sc->sc_gpioh = NULL;	/* not used */
+	sc->sc_gpioh = 0;	/* not used */
 
 	if (bus_space_map(iot, sa->oba_addr, 0x2000/*size*/, 0, &sc->sc_ioh))
 		goto fail;
