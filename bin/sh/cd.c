@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.22 1997/04/11 23:07:47 christos Exp $	*/
+/*	$NetBSD: cd.c,v 1.23 1997/07/04 20:59:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cd.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: cd.c,v 1.22 1997/04/11 23:07:47 christos Exp $";
+__RCSID("$NetBSD: cd.c,v 1.23 1997/07/04 20:59:40 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -184,7 +185,7 @@ docd(dest, print)
 	}
 	updatepwd(badstat ? NULL : dest);
 	INTON;
-	if (print && iflag)
+	if (print && iflag && curdir)
 		out1fmt("%s\n", curdir);
 	return 0;
 }
@@ -221,8 +222,6 @@ getcomponent() {
  * cd command.  We also call hashcd to let the routines in exec.c know
  * that the current directory has changed.
  */
-
-void hashcd();
 
 STATIC void
 updatepwd(dir)
