@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.c,v 1.45 2003/12/18 01:10:20 grant Exp $ */
+/*	$NetBSD: mach_vm.c,v 1.46 2004/07/18 23:19:52 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_ktrace.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.45 2003/12/18 01:10:20 grant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.46 2004/07/18 23:19:52 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -695,6 +695,7 @@ mach_vm_copy(args)
 	char tmpbuf[PAGE_SIZE];
 	int error;
 	caddr_t src, dst;
+	size_t size;
 
 #ifdef DEBUG_MACH_VM
 	printf("mach_vm_copy: src = 0x%08lx, size = 0x%08lx, addr = 0x%08lx\n",
@@ -707,6 +708,7 @@ mach_vm_copy(args)
 
 	src = (caddr_t)req->req_src;
 	dst = (caddr_t)req->req_addr;
+	size = (size_t)req->req_size;
 
 	/* Is there an easy way of dealing with that efficiently? */
 	do {
@@ -716,10 +718,10 @@ mach_vm_copy(args)
 		if ((error = copyout(tmpbuf, dst, PAGE_SIZE)) != 0)
 			return mach_msg_error(args, error);
 
-		req->req_src += PAGE_SIZE;
-		req->req_addr += PAGE_SIZE;
-		req->req_size -= PAGE_SIZE;
-	} while (req->req_size != 0);
+		src += PAGE_SIZE;
+		dst += PAGE_SIZE;
+		size -= PAGE_SIZE;
+	} while (size > 0);
 	
 	*msglen = sizeof(*rep);
 	mach_set_header(rep, req, *msglen);
