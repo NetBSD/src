@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap3x.h,v 1.9 1998/03/16 16:25:38 gwr Exp $	*/
+/*	$NetBSD: pmap3x.h,v 1.10 1998/06/09 19:58:50 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -52,13 +52,6 @@ struct pmap {
 #ifdef _KERNEL
 extern	struct pmap 	kernel_pmap;
 #define	pmap_kernel()	(&kernel_pmap)
-
-/*
- * The sun3 wants faults to go through the pmap code, but
- * the sun3x just goes directly to the common VM code.
- */
-#define _pmap_fault(map, va, ftype) \
-	vm_fault(map, va, ftype, 0)
 
 /* Common function for pmap_resident_count(), pmap_wired_count() */
 segsz_t pmap_count __P((pmap_t, int));
