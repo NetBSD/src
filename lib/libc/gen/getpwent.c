@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.55 2003/10/13 15:36:33 agc Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.56 2003/11/26 00:48:59 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -59,7 +59,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.55 2003/10/13 15:36:33 agc Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.56 2003/11/26 00:48:59 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -75,6 +75,7 @@ __RCSID("$NetBSD: getpwent.c,v 1.55 2003/10/13 15:36:33 agc Exp $");
 #include <nsswitch.h>
 #include <pwd.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
@@ -86,7 +87,6 @@ __RCSID("$NetBSD: getpwent.c,v 1.55 2003/10/13 15:36:33 agc Exp $");
 #endif
 #ifdef YP
 #include <machine/param.h>
-#include <stdio.h>
 #include <rpc/rpc.h>
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
@@ -307,7 +307,9 @@ static int
 __ypmaptype()
 {
 	static int maptype = -1;
+#ifdef YP
 	int order, r;
+#endif
 
 	if (maptype != -1)
 		return (maptype);
@@ -316,6 +318,7 @@ __ypmaptype()
 	if (geteuid() != 0)
 		return (maptype);
 
+#ifdef YP
 	if (!__ypdomain) {
 		if( _yp_check(&__ypdomain) == 0)
 			return (maptype);
@@ -341,7 +344,7 @@ __ypmaptype()
 			maptype = YPMAP_ADJUNCT;
 		return (maptype);
 	}
-
+#endif /* YP */
 	return (maptype);
 }
 
@@ -354,7 +357,9 @@ __pwparse(pw, s)
 	struct passwd *pw;
 	char *s;
 {
+#ifdef YP
 	static char adjunctpw[YPMAXRECORD + 2];
+#endif
 	int flags, maptype;
 
 	_DIAGASSERT(pw != NULL);
@@ -384,6 +389,7 @@ __pwparse(pw, s)
 		if(__pwproto->pw_shell != (char *)NULL)
 			pw->pw_shell = __pwproto->pw_shell;
 	}
+#ifdef YP
 	if ((maptype == YPMAP_ADJUNCT) &&
 	    (strstr(pw->pw_passwd, "##") != NULL)) {
 		char *data, *bp;
@@ -400,6 +406,7 @@ __pwparse(pw, s)
 				pw->pw_passwd = bp;
 		}
 	}
+#endif /* YP */
 	return 0;
 }
 #endif /* _PASSWD_COMPAT */
