@@ -1,4 +1,4 @@
-/*	$NetBSD: umassbus.c,v 1.7 2001/05/15 15:25:04 lukem Exp $	*/
+/*	$NetBSD: umassbus.c,v 1.8 2001/05/30 20:31:39 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -269,16 +269,19 @@ umass_scsipi_request(struct scsipi_channel *chan,
 		}
 #endif
 
+		cmd = xs->cmd;
+		cmdlen = xs->cmdlen;
+
 		/* XXX should use transform */
 
-		if (xs->cmd->opcode == START_STOP &&
+		if (cmd->opcode == START_STOP &&
 		    (sc->quirks & NO_START_STOP)) {
 			/*printf("%s: START_STOP\n", USBDEVNAME(sc->sc_dev));*/
 			xs->error = XS_NOERROR;
 			goto done;
 		}
 
-		if (xs->cmd->opcode == INQUIRY &&
+		if (cmd->opcode == INQUIRY &&
 		    (sc->quirks & FORCE_SHORT_INQUIRY)) {
 			/*
 			 * some drives wedge when asked for full inquiry
@@ -307,9 +310,6 @@ umass_scsipi_request(struct scsipi_channel *chan,
 			xs->error = XS_DRIVER_STUFFUP;
 			goto done;
 		}
-
-		cmd = xs->cmd;
-		cmdlen = xs->cmdlen;
 
 		if (xs->xs_control & XS_CTL_POLL) {
 			/* Use sync transfer. XXX Broken! */
