@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.yp,v 1.9 1999/11/19 16:55:25 abs Exp $
+#	$NetBSD: Makefile.yp,v 1.9.4.1 2000/10/16 21:32:47 tv Exp $
 #
 # This is the YP Makefile, used to create and push YP maps.
 #
@@ -95,7 +95,7 @@ passwd.time: ${DIR}/master.passwd
 	fi
 
 
-aliases.time: ${DIR}/aliases
+aliases.time: ${DIR}/mail/aliases
 	-@if [ -f ${.ALLSRC} ]; then \
 		${CP} -p ${.ALLSRC} ${DOMAIN}-aliases; \
 		${SENDMAIL} -bi -oA${PWD}/${DOMAIN}-aliases; \
@@ -360,7 +360,7 @@ ypservers: ypservers.time
 ${DIR}/passwd:
 ${DIR}/group:
 ${DIR}/hosts:
-${DIR}/aliases:
+${DIR}/mail/aliases:
 ${AMDDIR}/amd.home:
 ${DIR}/ethers:
 ${DIR}/master.passwd:
