@@ -1,4 +1,4 @@
-/* $NetBSD: mips_mcclock.h,v 1.3 2002/03/05 14:12:30 simonb Exp $ */
+/* $NetBSD: mips_mcclock.h,v 1.4 2005/01/01 09:48:39 simonb Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -40,10 +40,11 @@
  * counting iterations of an loop between successive ticks.
  */
 unsigned mc_cpuspeed(vaddr_t, int);
+int mips_mcclock_loop_with_clock(int);
+int mips_mcclock_loop_without_clock(int);
 
 /*
  * CPU speed in MHz, as estimated by mc_cpuspeed(). Read-only.
  */
 extern int cpu_mhz;
-
 #endif
