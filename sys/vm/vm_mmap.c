@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: vm_mmap.c 1.3 90/01/21
  *	from: @(#)vm_mmap.c	7.5 (Berkeley) 6/28/91
- *	$Id: vm_mmap.c,v 1.24 1994/04/29 04:41:56 cgd Exp $
+ *	$Id: vm_mmap.c,v 1.25 1994/05/04 01:39:05 cgd Exp $
  */
 
 /*
@@ -234,15 +234,6 @@ mmap(p, uap, retval)
 }
 
 #if defined(COMPAT_43) || defined(COMPAT_SUNOS)
-int
-onmmap(p, uap, retval)
-	struct proc *p;
-	register struct mmap_args *uap;
-	int *retval;
-{
-	return (mmap(p, uap, retval));
-}
-
 struct ommap_args {
 	caddr_t	addr;
 	int	len;
