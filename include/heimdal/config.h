@@ -107,7 +107,9 @@
 #define HAVE_DES_CBC_ENCRYPT 1
 
 /* Define if you have the dlopen function.  */
+#if !defined(NO_DLOPEN)
 #define HAVE_DLOPEN 1
+#endif
 
 /* Define if you have the dn_expand function.  */
 #define HAVE_DN_EXPAND 1
