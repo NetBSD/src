@@ -12,8 +12,9 @@
 0	string		\177ELF		ELF
 >4	byte		0		invalid class
 >4	byte		1		32-bit
-# only for MIPS R3000_BE
+# only for MIPS
 >>18	beshort		8
+>>18	beshort		10
 >>>36   belong          &0x20           N32
 >4	byte		2		64-bit
 >5	byte		0		invalid byte order
