@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.10 1997/10/01 02:18:14 enami Exp $	*/
+/*	$NetBSD: main.c,v 1.11 1997/10/17 11:20:03 ws Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.10 1997/10/01 02:18:14 enami Exp $");
+__RCSID("$NetBSD: main.c,v 1.11 1997/10/17 11:20:03 ws Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -96,7 +96,7 @@ main(argc, argv)
 			preen = 1;
 			alwaysyes = alwaysno = 0;
 			break;
-			
+
 		default:
 			usage();
 			break;
@@ -131,7 +131,7 @@ ask(def, fmt, va_alist)
 #endif
 {
 	va_list ap;
-	
+
 	char prompt[256];
 	int c;
 
