@@ -1,11 +1,11 @@
-/*	$NetBSD: str.c,v 1.22 2000/06/18 01:29:30 hubertf Exp $	*/
+/*	$NetBSD: str.c,v 1.23 2000/06/18 01:31:23 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
 #else
-__RCSID("$NetBSD: str.c,v 1.22 2000/06/18 01:29:30 hubertf Exp $");
+__RCSID("$NetBSD: str.c,v 1.23 2000/06/18 01:31:23 hubertf Exp $");
 #endif
 #endif
 
@@ -357,8 +357,6 @@ findbestmatchingname_fn(const char *found, char *best)
 			best_version = best_no_tgz;
 		}
 	}
-
-	found_version, best_version); fflush(stdout);
 
 	if (best == NULL || best[0] == '\0' || deweycmp(found_version, GT, best_version)) {
 		/* found pkg(version) is bigger than current "best"
