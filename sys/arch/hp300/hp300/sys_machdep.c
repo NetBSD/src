@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.10 1995/09/21 22:26:04 thorpej Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.11 1995/09/22 15:27:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -255,12 +255,9 @@ cachectl(req, addr, len)
 }
 
 int
-sysarch(p, uap, retval)
+sysarch(p, v, retval)
 	struct proc *p;
-	struct sysarch_args /* {
-		syscallarg(int) op;
-		syscallarg(char *) parms;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
 	struct sysarch_args /* {
