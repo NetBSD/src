@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.h,v 1.4 2003/09/28 02:40:14 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.h,v 1.5 2003/10/13 04:16:59 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -136,9 +136,8 @@ struct ieee80211chanreq {
 	u_int16_t	i_channel;
 };
 
-#if 0
+#ifndef IEEE80211_CHAN_ANY
 #define	IEEE80211_CHAN_ANY	0xffff
-#define	IEEE80211_CHAN_ANYC	IEEE80211_CHAN_ANY /* XXX make NULL */
 #endif
 
 #define	SIOCS80211CHANNEL	 _IOW('i', 238, struct ieee80211chanreq)
