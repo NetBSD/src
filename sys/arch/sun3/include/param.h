@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.37 1997/02/24 23:22:18 fvdl Exp $	*/
+/*	$NetBSD: param.h,v 1.38 1997/02/26 20:36:13 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -67,7 +67,7 @@
  */
 #define	ALIGNBYTES		3
 #define	ALIGN(p)		(((u_int)(p) + ALIGNBYTES) &~ ALIGNBYTES)
-#define ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
+#define ALIGNED_POINTER(p,t)	((((u_long)(p)) & ALIGNBYTES) == 0)
 
 #define	NBPG		8192		/* bytes/page */
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
