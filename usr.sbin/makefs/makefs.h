@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.h,v 1.8 2002/02/14 05:16:16 lukem Exp $	*/
+/*	$NetBSD: makefs.h,v 1.9 2003/03/29 00:12:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -101,8 +101,10 @@ typedef struct _fsnode {
 	fsinode		*inode;		/* actual inode data */
 	char		*symlink;	/* symlink target */
 	char		*name;		/* file name */
+	int		flags;		/* misc flags */
 } fsnode;
 
+#define	FSNODE_F_HASSPEC	0x01	/* fsnode has a spec entry */
 
 /*
  * fsinfo_t - contains various settings and parameters pertaining to
@@ -178,6 +180,15 @@ void		ffs_makefs(const char *, const char *, fsnode *, fsinfo_t *);
 
 extern	uint		debug;
 extern	struct timespec	start_time;
+
+extern	int		x_flag;
+
+/*
+ * If -x is specified, we want to exclude nodes which do not appear
+ * in the spec file.
+ */
+#define	FSNODE_EXCLUDE_P(fsnode)	\
+	(x_flag != 0 && ((fsnode)->flags & FSNODE_F_HASSPEC) == 0)
 
 #define	DEBUG_TIME			0x00000001
 		/* debug bits 1..3 unused at this time */

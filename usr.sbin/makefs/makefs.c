@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.15 2003/03/10 10:02:58 lukem Exp $	*/
+/*	$NetBSD: makefs.c,v 1.16 2003/03/29 00:12:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: makefs.c,v 1.15 2003/03/10 10:02:58 lukem Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.16 2003/03/29 00:12:12 thorpej Exp $");
 #endif	/* !__lint */
 
 #include <assert.h>
@@ -70,6 +70,7 @@ static fstype_t fstypes[] = {
 uint		debug;
 struct timespec	start_time;
 
+int		x_flag;
 
 static	fstype_t *get_fstype(const char *);
 static	void	usage(void);
@@ -118,7 +119,7 @@ main(int argc, char *argv[])
 	start_time.tv_sec = start.tv_sec;
 	start_time.tv_nsec = start.tv_usec * 1000;
 
-	while ((ch = getopt(argc, argv, "B:b:d:f:F:M:m:N:o:s:S:t:")) != -1) {
+	while ((ch = getopt(argc, argv, "B:b:d:f:F:M:m:N:o:s:S:t:x")) != -1) {
 		switch (ch) {
 
 		case 'B':
@@ -223,6 +224,10 @@ main(int argc, char *argv[])
 				errx(1, "Unknown fs type `%s'.", optarg);
 			break;
 
+		case 'x':
+			x_flag = 1;
+			break;
+
 		case '?':
 		default:
 			usage();
@@ -241,6 +246,10 @@ main(int argc, char *argv[])
 
 	if (argc != 2)
 		usage();
+
+	/* -x must be accompanied by -F */
+	if (x_flag != 0 && specfile == NULL)
+		errx(1, "-x requires -F mtree-specfile.");
 
 				/* walk the tree */
 	TIMER_START(start);
