@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.12 1999/03/17 16:49:00 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.13 1999/03/17 18:38:34 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -93,6 +93,7 @@
  */
 #define BW_CLEAN 1
 #define MIN_FREE_SEGS 4
+#define LFS_MAX_ACTIVE          10
 
 #ifndef LFS_ATIME_IFILE
 # define LFS_ITIMES(ip, acc, mod, cre) FFS_ITIMES((ip),(acc),(mod),(cre))
@@ -238,10 +239,9 @@ struct dlfs {
 	u_char	  dlfs_fsmnt[MNAMELEN];	 /* 232: name mounted on */
 	/* XXX this is 2 bytes only to pad to a quad boundary */
 	u_int16_t dlfs_clean;     /* 322: file system is clean flag */
-#define LFS_MAX_ACTIVE          10
+        int8_t    dlfs_pad[184];  /* 324: round to 512 bytes */
 /* Checksum -- last valid disk field. */
-        u_int32_t dlfs_cksum;     /* 324: checksum for superblock checking */
-        int8_t    dlfs_pad[184];  /* 328: round to 512 bytes */
+        u_int32_t dlfs_cksum;     /* 328: checksum for superblock checking */
 };
 
 /* Maximum number of io's we can have pending at once */
