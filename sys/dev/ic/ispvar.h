@@ -1,4 +1,4 @@
-/* $NetBSD: ispvar.h,v 1.45 2001/05/22 19:32:41 mjacob Exp $ */
+/* $NetBSD: ispvar.h,v 1.46 2001/07/06 16:19:10 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -260,10 +260,10 @@ typedef struct {
 
 typedef struct {
 	u_int32_t		isp_fwoptions	: 16,
-						: 3,
+						: 2,
 				isp_iid_set	: 1,
 				loop_seen_once	: 1,
-				isp_loopstate	: 3,	/* Current Loop State */
+				isp_loopstate	: 4,	/* Current Loop State */
 				isp_fwstate	: 3,	/* ISP F/W state */
 				isp_gotdparms	: 1,
 				isp_topo	: 3,
@@ -294,7 +294,8 @@ typedef struct {
 	struct lportdb {
 		u_int
 					loopid		: 8,
-							: 2,
+							: 1,
+					force_logout	: 1,
 					was_fabric_dev	: 1,
 					fabric_dev	: 1,
 					loggedin	: 1,
@@ -327,9 +328,9 @@ typedef struct {
 #define	LOOP_SCANNING_FABRIC	3
 #define	LOOP_FSCAN_DONE		4
 #define	LOOP_SCANNING_LOOP	5
-#define	LOOP_LSCAN_DONE		4
-#define	LOOP_SYNCING_PDB	6
-#define	LOOP_READY		7
+#define	LOOP_LSCAN_DONE		6
+#define	LOOP_SYNCING_PDB	7
+#define	LOOP_READY		8
 
 #define	TOPO_NL_PORT		0
 #define	TOPO_FL_PORT		1
@@ -456,7 +457,7 @@ typedef struct ispsoftc {
  * anything. Basically, it sends a single byte of data (the first byte,
  * which you can set as part of the INITIALIZE CONTROL BLOCK command) for
  * INQUIRY, and sends back QUEUE FULL status for any other command.
- * 
+ *
  */
 #define	ISP_ROLE_NONE		0x0
 #define	ISP_ROLE_INITIATOR	0x1
@@ -672,7 +673,8 @@ typedef enum {
 	ISPASYNC_TARGET_EVENT,		/* target asynchronous event */
 	ISPASYNC_TARGET_ACTION,		/* other target command action */
 	ISPASYNC_CONF_CHANGE,		/* Platform Configuration Change */
-	ISPASYNC_UNHANDLED_RESPONSE	/* Unhandled Response Entry */
+	ISPASYNC_UNHANDLED_RESPONSE,	/* Unhandled Response Entry */
+	ISPASYNC_FW_CRASH		/* Firmware has crashed */
 } ispasync_t;
 int isp_async(struct ispsoftc *, ispasync_t, void *);
 
@@ -698,7 +700,8 @@ void isp_prt(struct ispsoftc *, int level, const char *, ...);
 #define	ISP_LOGDEBUG0	0x10	/* log simple debug messages */
 #define	ISP_LOGDEBUG1	0x20	/* log intermediate debug messages */
 #define	ISP_LOGDEBUG2	0x40	/* log most debug messages */
-#define	ISP_LOGDEBUG3	0x100	/* log high frequency debug messages */
+#define	ISP_LOGDEBUG3	0x80	/* log high frequency debug messages */
+#define	ISP_LOGDEBUG4	0x100	/* log high frequency debug messages */
 #define	ISP_LOGTDEBUG0	0x200	/* log simple debug messages (target mode) */
 #define	ISP_LOGTDEBUG1	0x400	/* log intermediate debug messages (target) */
 #define	ISP_LOGTDEBUG2	0x800	/* log all debug messages (target) */
