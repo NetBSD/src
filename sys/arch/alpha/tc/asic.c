@@ -1,4 +1,4 @@
-/*	$NetBSD: asic.c,v 1.2 1995/03/08 00:39:02 cgd Exp $	*/
+/*	$NetBSD: asic.c,v 1.3 1995/03/24 14:49:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -124,8 +124,6 @@ asicattach(parent, self, aux)
 	int i;
 	extern int cputype;
 
-	printf("\n");
-
 	sc->sc_base = BUS_CVTADDR(ca);
 	asic_base = sc->sc_base;			/* XXX XXX XXX */
 
@@ -143,8 +141,10 @@ asicattach(parent, self, aux)
 		*(volatile u_int *)ASIC_REG_CSR(sc->sc_base) |=
 		    ASIC_CSR_FASTMODE;
 		MB();
-	}
+		printf(": slow mode\n");
+	} else
 #endif
+		printf(": fast mode\n");
 
         /* Try to configure each CPU-internal device */
         for (i = 0; i < ASIC_MAX_NSLOTS; i++) {
