@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.51 2003/01/10 19:25:12 mrg Exp $ */
+/*	$NetBSD: db_interface.c,v 1.52 2003/01/13 19:44:53 pk Exp $ */
 
 /*
  * Mach Operating System
@@ -336,6 +336,7 @@ kdb_trap(type, tf)
 	*(struct frame *)tf->tf_out[6] = dbregs.db_fr;
 	*tf = dbregs.db_tf;
 	curcpu()->ci_ddb_regs = ddb_regp = 0;
+	ddb_cpuinfo = NULL;
 
 #ifdef MULTIPROCESSOR
 	db_resume_others();
