@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile,v 1.4 2001/02/22 02:33:06 itojun Exp $
+#	$NetBSD: Makefile,v 1.5 2001/02/22 03:11:24 itojun Exp $
 
 .include <bsd.own.mk>
 
-WARNS?=	0
 PROG=	racoon
 SRCS=	main.c session.c isakmp.c handler.c random.c \
 	isakmp_ident.c isakmp_agg.c isakmp_base.c \
