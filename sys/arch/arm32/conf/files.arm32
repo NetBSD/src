@@ -245,6 +245,8 @@ file	arch/arm32/arm32/cpufunc_asm.S
 file	arch/arm32/arm32/setcpsr.S
 file	arch/arm32/arm32/setstack.S
 
+file	dev/clock_subr.c
+
 file	netinet/in_cksum.c			inet
 file	netns/ns_cksum.c			ns
 
