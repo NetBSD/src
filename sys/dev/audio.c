@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.184.2.9 2004/12/26 17:38:25 kent Exp $	*/
+/*	$NetBSD: audio.c,v 1.184.2.10 2004/12/28 14:54:19 kent Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.9 2004/12/26 17:38:25 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.10 2004/12/28 14:54:19 kent Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -193,10 +193,10 @@ typedef struct uio_fetcher {
 } uio_fetcher_t;
 
 static void	uio_fetcher_ctor(uio_fetcher_t *, struct uio *);
-static int	uio_fetcher_fetch_to(stream_fetcher_t *, audio_stream_t *,
-				     int, int *);
-static int	null_fetcher_fetch_to(stream_fetcher_t *, audio_stream_t *,
-				      int, int *);
+static int	uio_fetcher_fetch_to(stream_fetcher_t *,
+				     audio_stream_t *, int);
+static int	null_fetcher_fetch_to(stream_fetcher_t *,
+				      audio_stream_t *, int);
 
 dev_type_open(audioopen);
 dev_type_close(audioclose);
@@ -1450,7 +1450,7 @@ audio_silence_copyout(struct audio_softc *sc, int n, struct uio *uio)
 
 static int
 uio_fetcher_fetch_to(stream_fetcher_t *self, audio_stream_t *p,
-		     int max_written, int *written)
+		     int max_written)
 {
 	uio_fetcher_t *this;
 	int size;
@@ -1477,15 +1477,13 @@ uio_fetcher_fetch_to(stream_fetcher_t *self, audio_stream_t *p,
 			return error;
 		p->inp = p->start + size - stream_space;
 	}
-	*written = size;
 	return 0;
 }
 
 static int
 null_fetcher_fetch_to(stream_fetcher_t *self, audio_stream_t *p,
-		      int max_written, int *written)
+		      int max_written)
 {
-	*written = 0;
 	return 0;
 }
 
@@ -1586,11 +1584,10 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 		 * splaudio() enclosure
 		 */
 		tmp_stream = cb->s;
-		error = last_fetcher->fetch_to(last_fetcher,
-					       &tmp_stream, cc, &cc);
+		error = last_fetcher->fetch_to(last_fetcher, &tmp_stream, cc);
 		s = splaudio();
 		cb->s = tmp_stream;
-		cb->used += cc;
+		cb->used = audio_stream_get_used(&cb->s);
 		einp = cb->s.inp;
 
 		/*
@@ -2331,8 +2328,7 @@ audio_rint(void *v)
 		sc->sc_rfilters[0]->set_fetcher(sc->sc_rfilters[0],
 						&null_fetcher);
 		cc = audio_stream_get_space(last_stream);
-		error = last_fetcher->fetch_to(last_fetcher, last_stream,
-					       cc, &cc);
+		error = last_fetcher->fetch_to(last_fetcher, last_stream, cc);
 		/* XXX what should do for error? */
 		cb->used = audio_stream_get_used(last_stream);
 	}
