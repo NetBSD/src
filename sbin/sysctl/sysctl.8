@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.74 2002/02/08 01:30:47 ross Exp $
+.\"	$NetBSD: sysctl.8,v 1.75 2002/03/24 00:11:00 sommerfeld Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -45,6 +45,7 @@
 .Ar name ...
 .Nm sysctl
 .Op Fl n
+.Op Fl q
 .Fl w
 .Ar name Ns Li = Ns Ar value ...
 .Nm sysctl
@@ -54,7 +55,8 @@
 .Op Fl n
 .Fl A
 .Nm sysctl
-.Op Fl n
+.Op Fl n 
+.Op Fl q
 .Fl f
 .Ar file
 .Sh DESCRIPTION
@@ -109,6 +111,15 @@ The
 .Fl w
 flag is implied by
 .Fl f .
+.Pp
+The 
+.Fl q
+flag may be used with 
+.Fl f
+and
+.Fl w
+to indicate that nothing should be printed for writes unless an error is
+detected.
 .Pp
 The
 .Ql proc
