@@ -1,4 +1,4 @@
-/*	$NetBSD: utmp.c,v 1.2 2002/07/28 20:46:43 christos Exp $	 */
+/*	$NetBSD: utmp.c,v 1.3 2002/07/28 21:46:03 christos Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,15 +38,18 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: utmp.c,v 1.2 2002/07/28 20:46:43 christos Exp $");
+__RCSID("$NetBSD: utmp.c,v 1.3 2002/07/28 21:46:03 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
+#include <sys/types.h>
+#include <sys/param.h>
 #include <stdio.h>
 #include <time.h>
 #include <utmp.h>
 
 static struct utmp utmp;
 static FILE *ut;
+static char utfile[MAXPATHLEN] = _PATH_UTMP;
 
 void
 setutent(void)
@@ -60,7 +63,7 @@ struct utmp *
 getutent(void)
 {
 	if (ut == NULL) {
-		if ((ut = fopen(_PATH_UTMP, "r")) == NULL)
+		if ((ut = fopen(utfile, "r")) == NULL)
 			return NULL;
 	}
 	if (fread(&utmp, sizeof(utmp), 1, ut) == 1)
@@ -75,4 +78,21 @@ endutent(void)
 		(void)fclose(ut);
 		ut = NULL;
 	}
+}
+
+int
+utmpname(const char *fname)
+{
+	size_t len = strlen(fname);
+
+	if (len >= sizeof(utfile))
+		return 0;
+
+	/* must not end in x! */
+	if (fname[len - 1] == 'x')
+		return 0;
+
+	(void)strcpy(utfile, fname);
+	endutent();
+	return 1;
 }
