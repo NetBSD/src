@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiep.c,v 1.3 2002/03/13 04:23:25 uwe Exp $ */
+/*	$NetBSD: msiiep.c,v 1.4 2002/03/28 11:54:17 pk Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -210,7 +210,7 @@ msiiep_attach(parent, self, aux)
 
 	/* timers are PCIC registers */
 	printf("%s: configuring timer:", self->dv_xname);
-	timerattach_msiiep();
+	config_found(self, "timer", NULL);
 
 	/* chipset tag */
 	msiiep_pc_tag.cookie = sc;
