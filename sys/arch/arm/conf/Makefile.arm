@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm,v 1.13 2001/11/25 15:55:54 thorpej Exp $
+#	$NetBSD: Makefile.arm,v 1.14 2001/11/26 23:44:58 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -136,8 +136,9 @@ SYSTEM_LD_TAIL+=; \
 %LOAD
 
 assym.h: $S/kern/genassym.sh ${ARM}/arm32/genassym.cf
-	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
-	    < ${ARM}/arm32/genassym.cf > assym.h.tmp && \
+	cat ${ARM}/arm32/genassym.cf ${GENASSYM_EXTRAS} | \
+	    sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
+	    > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h
 
 param.c: $S/conf/param.c
