@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.16 1998/02/13 21:53:48 kleink Exp $	*/
+/*	$NetBSD: print.c,v 1.17 1998/07/27 16:55:53 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.16 1998/02/13 21:53:48 kleink Exp $");
+__RCSID("$NetBSD: print.c,v 1.17 1998/07/27 16:55:53 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,8 +51,8 @@ __RCSID("$NetBSD: print.c,v 1.16 1998/02/13 21:53:48 kleink Exp $");
 #include "stty.h"
 #include "extern.h"
 
-static void  binit __P((char *));
-static void  bput __P((char *));
+static void  binit __P((const char *));
+static void  bput __P((const char *));
 static char *ccval __P((const struct cchar *, int));
 
 void
@@ -200,8 +200,8 @@ print(tp, wp, ldisc, fmt)
 			if (fmt != BSD && cc[p->sub] == p->def)
 				continue;
 #define	WD	"%-8s"
-			(void)sprintf(buf1 + cnt * 8, WD, p->name);
-			(void)sprintf(buf2 + cnt * 8, WD, ccval(p, cc[p->sub]));
+			(void)snprintf(buf1 + cnt * 8, 9, WD, p->name);
+			(void)snprintf(buf2 + cnt * 8, 9, WD, ccval(p, cc[p->sub]));
 			if (++cnt == LINELENGTH / 8) {
 				cnt = 0;
 				(void)printf("%s\n", buf1);
@@ -209,6 +209,8 @@ print(tp, wp, ldisc, fmt)
 			}
 		}
 		if (cnt) {
+			buf1[cnt * 8] = '\0';
+			buf2[cnt * 8] = '\0';
 			(void)printf("%s\n", buf1);
 			(void)printf("%s\n", buf2);
 		}
@@ -216,11 +218,11 @@ print(tp, wp, ldisc, fmt)
 }
 
 static int col;
-static char *label;
+static const char *label;
 
 static void
 binit(lb)
-	char *lb;
+	const char *lb;
 {
 
 	if (col) {
@@ -232,7 +234,7 @@ binit(lb)
 
 static void
 bput(s)
-	char *s;
+	const char *s;
 {
 
 	if (col == 0) {
