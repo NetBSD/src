@@ -1,4 +1,4 @@
-/*	$NetBSD: _catclose.c,v 1.3 1997/07/17 18:30:09 thorpej Exp $	*/
+/*	$NetBSD: _catclose.c,v 1.3.2.1 1997/11/04 23:54:33 thorpej Exp $	*/
 
 /*
  * Written by J.T. Conklin, 10/05/94
@@ -8,7 +8,7 @@
 #include <sys/cdefs.h>
 
 #ifdef __indr_reference
-__indr_reference(_catclose,catclose);
+__indr_reference(_catclose,catclose)
 #else
 
 #include <nl_types.h>

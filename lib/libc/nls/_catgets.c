@@ -1,4 +1,4 @@
-/*	$NetBSD: _catgets.c,v 1.4 1997/07/17 18:30:11 thorpej Exp $	*/
+/*	$NetBSD: _catgets.c,v 1.4.2.1 1997/11/04 23:54:37 thorpej Exp $	*/
 
 /*
  * Written by J.T. Conklin, 10/05/94
@@ -8,7 +8,7 @@
 #include <sys/cdefs.h>
 
 #ifdef __indr_reference
-__indr_reference(_catgets,catgets);
+__indr_reference(_catgets,catgets)
 #else
 
 #include <nl_types.h>
