@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.97.2.7 2002/06/24 22:05:09 nathanw Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.97.2.8 2002/07/02 21:04:35 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.97.2.7 2002/06/24 22:05:09 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.97.2.8 2002/07/02 21:04:35 nathanw Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"
@@ -242,14 +242,11 @@ cpu_exit(struct lwp *l, int proc)
 	 */
 
 	uvmexp.swtch++;
-		
 	if (proc)
 		switch_exit(l);
 	else
 		switch_lwp_exit(l);
 }
-
-
 
 /*
  * cpu_wait is called from reaper() to let machine-dependent
