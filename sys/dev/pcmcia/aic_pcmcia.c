@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_pcmcia.c,v 1.30 2004/08/10 18:43:49 mycroft Exp $	*/
+/*	$NetBSD: aic_pcmcia.c,v 1.31 2004/08/10 22:49:12 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic_pcmcia.c,v 1.30 2004/08/10 18:43:49 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic_pcmcia.c,v 1.31 2004/08/10 22:49:12 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,8 +59,6 @@ struct aic_pcmcia_softc {
 	void *sc_ih;				/* interrupt handler */
 
 	int sc_state;
-#define AIC_PCMCIA_ATTACH1	1
-#define	AIC_PCMCIA_ATTACH2	2
 #define	AIC_PCMCIA_ATTACHED	3
 };
 
@@ -147,11 +145,10 @@ aic_pcmcia_attach(parent, self, aux)
 
 	/* We can enable and disable the controller. */
 	sc->sc_adapter.adapt_enable = aic_pcmcia_enable;
+	sc->sc_adapter.adapt_refcnt = 1;
 
-	psc->sc_state = AIC_PCMCIA_ATTACH1;
 	aicattach(sc);
-	if (psc->sc_state == AIC_PCMCIA_ATTACH1)
-		aic_pcmcia_enable(self, 0);
+	scsipi_adapter_delref(&sc->sc_adapter);
 	psc->sc_state = AIC_PCMCIA_ATTACHED;
 	return;
 
@@ -190,29 +187,21 @@ aic_pcmcia_enable(self, onoff)
 	int error;
 
 	if (onoff) {
-		/*
-		 * If attach is in progress, we already have the device
-		 * powered up.
-		 */
-		if (sc->sc_state == AIC_PCMCIA_ATTACH1) {
-			sc->sc_state = AIC_PCMCIA_ATTACH2;
-		} else {
-			/* Establish the interrupt handler. */
-			sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_BIO,
-			    aicintr, &sc->sc_aic);
-			if (!sc->sc_ih)
-				return (EIO);
+		/* Establish the interrupt handler. */
+		sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_BIO,
+		    aicintr, &sc->sc_aic);
+		if (!sc->sc_ih)
+			return (EIO);
 
-			error = pcmcia_function_enable(sc->sc_pf);
-			if (error) {
-				pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
-				sc->sc_ih = 0;
-				return (error);
-			}
-
-			/* Initialize only chip.  */
-			aic_init(&sc->sc_aic, 0);
+		error = pcmcia_function_enable(sc->sc_pf);
+		if (error) {
+			pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+			sc->sc_ih = 0;
+			return (error);
 		}
+
+		/* Initialize only chip.  */
+		aic_init(&sc->sc_aic, 0);
 	} else {
 		pcmcia_function_disable(sc->sc_pf);
 		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);

@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_pcmcia.c,v 1.23 2004/08/10 19:12:25 mycroft Exp $	*/
+/*	$NetBSD: esp_pcmcia.c,v 1.24 2004/08/10 22:49:12 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_pcmcia.c,v 1.23 2004/08/10 19:12:25 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_pcmcia.c,v 1.24 2004/08/10 22:49:12 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,8 +79,6 @@ struct esp_pcmcia_softc {
 	bus_space_handle_t sc_ioh;
 
 	int sc_state;
-#define	ESP_PCMCIA_ATTACH1	1
-#define	ESP_PCMCIA_ATTACH2	2
 #define ESP_PCMCIA_ATTACHED	3
 };
 
@@ -192,11 +190,10 @@ esp_pcmcia_attach(parent, self, aux)
 	sc->sc_adapter.adapt_minphys = minphys;
 	sc->sc_adapter.adapt_request = ncr53c9x_scsipi_request;
 	sc->sc_adapter.adapt_enable = esp_pcmcia_enable;
+	sc->sc_adapter.adapt_refcnt = 1;
 
-	esc->sc_state = ESP_PCMCIA_ATTACH1;
 	ncr53c9x_attach(sc);
-	if (esc->sc_state == ESP_PCMCIA_ATTACH1)
-		esp_pcmcia_enable(self, 0);
+	scsipi_adapter_delref(&sc->sc_adapter);
 	esc->sc_state = ESP_PCMCIA_ATTACHED;
 	return;
 
@@ -264,33 +261,25 @@ esp_pcmcia_enable(arg, onoff)
 	int error;
 
 	if (onoff) {
-		/*
-		 * If attach is in progress, we already have the device
-		 * powered up.
-		 */
-		if (sc->sc_state == ESP_PCMCIA_ATTACH1) {
-			sc->sc_state = ESP_PCMCIA_ATTACH2;
-		} else {
 #ifdef ESP_PCMCIA_POLL
-			callout_reset(&sc->sc_poll_ch, 1, esp_pcmcia_poll, sc);
+		callout_reset(&sc->sc_poll_ch, 1, esp_pcmcia_poll, sc);
 #else
-			/* Establish the interrupt handler. */
-			sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_BIO,
-			    ncr53c9x_intr, &sc->sc_ncr53c9x);
-			if (!sc->sc_ih)
-				return (EIO);
+		/* Establish the interrupt handler. */
+		sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_BIO,
+		    ncr53c9x_intr, &sc->sc_ncr53c9x);
+		if (!sc->sc_ih)
+			return (EIO);
 #endif
 
-			error = pcmcia_function_enable(sc->sc_pf);
-			if (error) {
-				pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
-				sc->sc_ih = 0;
-				return (error);
-			}
-
-			/* Initialize only chip.  */
-			ncr53c9x_init(&sc->sc_ncr53c9x, 0);
+		error = pcmcia_function_enable(sc->sc_pf);
+		if (error) {
+			pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+			sc->sc_ih = 0;
+			return (error);
 		}
+
+		/* Initialize only chip.  */
+		ncr53c9x_init(&sc->sc_ncr53c9x, 0);
 	} else {
 		pcmcia_function_disable(sc->sc_pf);
 #ifdef ESP_PCMCIA_POLL

@@ -1,4 +1,4 @@
-/*	$NetBSD: nca_pcmcia.c,v 1.17 2004/08/10 20:47:17 mycroft Exp $	*/
+/*	$NetBSD: nca_pcmcia.c,v 1.18 2004/08/10 22:49:12 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nca_pcmcia.c,v 1.17 2004/08/10 20:47:17 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nca_pcmcia.c,v 1.18 2004/08/10 22:49:12 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,8 +67,6 @@ struct nca_pcmcia_softc {
 	void *sc_ih;				/* interrupt handler */
 
 	int sc_state;
-#define	NCA_PCMCIA_ATTACH1	1
-#define	NCA_PCMCIA_ATTACH2	2
 #define NCA_PCMCIA_ATTACHED	3
 };
 
@@ -192,11 +190,10 @@ nca_pcmcia_attach(parent, self, aux)
 		goto fail;
 
 	sc->sc_adapter.adapt_enable = nca_pcmcia_enable;
+	sc->sc_adapter.adapt_refcnt = 1;
 
-	esc->sc_state = NCA_PCMCIA_ATTACH1;
 	ncr5380_attach(sc);
-	if (esc->sc_state == NCA_PCMCIA_ATTACH1)
-		nca_pcmcia_enable(self, 0);
+	scsipi_adapter_delref(&sc->sc_adapter);
 	esc->sc_state = NCA_PCMCIA_ATTACHED;
 	return;
 
@@ -233,29 +230,21 @@ nca_pcmcia_enable(arg, onoff)
 	int error;
 
 	if (onoff) {
-		/*
-		 * If attach is in progress, we already have the device
-		 * powered up.
-		 */
-		if (sc->sc_state == NCA_PCMCIA_ATTACH1) {
-			sc->sc_state = NCA_PCMCIA_ATTACH2;
-		} else {
-			/* Establish the interrupt handler. */
-			sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_BIO,
-			    ncr5380_intr, &sc->sc_ncr5380);
-			if (!sc->sc_ih)
-				return (EIO);
+		/* Establish the interrupt handler. */
+		sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_BIO,
+		    ncr5380_intr, &sc->sc_ncr5380);
+		if (!sc->sc_ih)
+			return (EIO);
 
-			error = pcmcia_function_enable(sc->sc_pf);
-			if (error) {
-				pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
-				sc->sc_ih = 0;
-				return (error);
-			}
-
-			/* Initialize only chip.  */
-			ncr5380_init(&sc->sc_ncr5380);
+		error = pcmcia_function_enable(sc->sc_pf);
+		if (error) {
+			pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+			sc->sc_ih = 0;
+			return (error);
 		}
+
+		/* Initialize only chip.  */
+		ncr5380_init(&sc->sc_ncr5380);
 	} else {
 		pcmcia_function_disable(sc->sc_pf);
 		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);

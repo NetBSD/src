@@ -1,4 +1,4 @@
-/*	$NetBSD: spc_pcmcia.c,v 1.11 2004/08/10 18:43:50 mycroft Exp $	*/
+/*	$NetBSD: spc_pcmcia.c,v 1.12 2004/08/10 22:49:12 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spc_pcmcia.c,v 1.11 2004/08/10 18:43:50 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spc_pcmcia.c,v 1.12 2004/08/10 22:49:12 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,8 +65,6 @@ struct spc_pcmcia_softc {
 	void *sc_ih;				/* interrupt handler */
 
 	int sc_state;
-#define SPC_PCMCIA_ATTACH1	1
-#define	SPC_PCMCIA_ATTACH2	2
 #define	SPC_PCMCIA_ATTACHED	3
 };
 
@@ -142,14 +140,13 @@ spc_pcmcia_attach(parent, self, aux)
 
 	spc->sc_initiator = 7; /* XXX */
 	spc->sc_adapter.adapt_enable = spc_pcmcia_enable;
+	spc->sc_adapter.adapt_refcnt = 1;
 
 	/*
 	 *  Initialize nca board itself.
 	 */
-	sc->sc_state = SPC_PCMCIA_ATTACH1;
 	spc_attach(spc);
-	if (sc->sc_state == SPC_PCMCIA_ATTACH1)
-		spc_pcmcia_enable(self, 0);
+	scsipi_adapter_delref(&spc->sc_adapter);
 	sc->sc_state = SPC_PCMCIA_ATTACHED;
 	return;
 
@@ -186,29 +183,21 @@ spc_pcmcia_enable(arg, onoff)
 	int error;
 
 	if (onoff) {
-		/*
-		 * If attach is in progress, we already have the device
-		 * powered up.
-		 */
-		if (sc->sc_state == SPC_PCMCIA_ATTACH1) {
-			sc->sc_state = SPC_PCMCIA_ATTACH2;
-		} else {
-			/* Establish the interrupt handler. */
-			sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_BIO,
-			    spc_intr, &sc->sc_spc);
-			if (!sc->sc_ih)
-				return (EIO);
+		/* Establish the interrupt handler. */
+		sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_BIO,
+		    spc_intr, &sc->sc_spc);
+		if (!sc->sc_ih)
+			return (EIO);
 
-			error = pcmcia_function_enable(sc->sc_pf);
-			if (error) {
-				pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
-				sc->sc_ih = 0;
-				return (error);
-			}
-
-			/* Initialize only chip.  */
-			spc_init(&sc->sc_spc, 0);
+		error = pcmcia_function_enable(sc->sc_pf);
+		if (error) {
+			pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+			sc->sc_ih = 0;
+			return (error);
 		}
+
+		/* Initialize only chip.  */
+		spc_init(&sc->sc_spc, 0);
 	} else {
 		pcmcia_function_disable(sc->sc_pf);
 		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
