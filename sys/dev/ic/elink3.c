@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.41 1998/08/12 18:51:53 thorpej Exp $	*/
+/*	$NetBSD: elink3.c,v 1.42 1998/08/15 16:20:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -225,7 +225,34 @@ void	ep_mii_sendbits __P((struct ep_softc *, u_int32_t, int));
 static int epbusyeeprom __P((struct ep_softc *));
 static inline void ep_complete_cmd __P((struct ep_softc *sc, 
 					u_int cmd, u_int arg));
+static __inline int ep_w1_reg __P((struct ep_softc *, int));
 
+/*
+ * Some chips (3c515 [Corkscrew] and 3c574 [RoadRunner]) have
+ * Window 1 registers offset!
+ */
+static __inline int
+ep_w1_reg(sc, reg)
+	struct ep_softc *sc;
+	int reg;
+{
+
+	switch (sc->ep_chipset) {
+	case EP_CHIPSET_CORKSCREW:
+		return (reg + 0x10);
+
+	case EP_CHIPSET_ROADRUNNER:
+		switch (reg) {
+		case EP_W1_FREE_TX:
+		case EP_W1_RUNNER_RDCTL:
+		case EP_W1_RUNNER_WRCTL:
+			return (reg);
+		}
+		return (reg + 0x10);
+	}
+
+	return (reg);
+}
 
 /*
  * Issue a (reset) command, and be sure it has completed.
@@ -380,6 +407,7 @@ epconfig(sc, chipset, enaddr)
 	 */
 	switch (sc->ep_chipset) {
 	case EP_CHIPSET_BOOMERANG:
+	case EP_CHIPSET_ROADRUNNER:
 		/*
 		 * If the device has MII, probe it.  We won't be using
 		 * any `native' media in this case, only PHYs.  If
@@ -672,7 +700,7 @@ epinit(sc)
 
 	GO_WINDOW(1);		/* Window 1 is operating window */
 	for (i = 0; i < 31; i++)
-		bus_space_read_1(iot, ioh, EP_W1_TX_STATUS);
+		bus_space_read_1(iot, ioh, ep_w1_reg(sc, EP_W1_TX_STATUS));
 
 	/* Set threshhold for for Tx-space avaiable interrupt. */
 	bus_space_write_2(iot, ioh, EP_COMMAND,
@@ -935,6 +963,7 @@ epstart(ifp)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct mbuf *m, *m0;
 	int sh, len, pad;
+	bus_addr_t txreg;
 
 	/* Don't transmit if interface is busy or not running */
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
@@ -966,7 +995,8 @@ startagain:
 		goto readcheck;
 	}
 
-	if (bus_space_read_2(iot, ioh, EP_W1_FREE_TX) < len + pad + 4) {
+	if (bus_space_read_2(iot, ioh, ep_w1_reg(sc, EP_W1_FREE_TX)) <
+	    len + pad + 4) {
 		bus_space_write_2(iot, ioh, EP_COMMAND,
 		    SET_TX_AVAIL_THRESH |
 		    ((len + pad + 4) >> sc->ep_pktlenshift));
@@ -996,9 +1026,10 @@ startagain:
 	 */
 	sh = splhigh();
 
-	bus_space_write_2(iot, ioh, EP_W1_TX_PIO_WR_1, len);
-	bus_space_write_2(iot, ioh, EP_W1_TX_PIO_WR_1,
-	    0xffff);	/* Second dword meaningless */
+	txreg = ep_w1_reg(sc, EP_W1_TX_PIO_WR_1);
+
+	bus_space_write_2(iot, ioh, txreg, len);
+	bus_space_write_2(iot, ioh, txreg, 0xffff); /* Second is meaningless */
 	if (EP_IS_BUS_32(sc->bustype)) {
 		for (m = m0; m; ) {
 			if (m->m_len > 3)  {
@@ -1007,23 +1038,20 @@ startagain:
 					u_long count =
 					    4 - (mtod(m, u_long) & 3);
 					bus_space_write_multi_1(iot, ioh,
-					    EP_W1_TX_PIO_WR_1,
-					    mtod(m, u_int8_t *), count);
+					    txreg, mtod(m, u_int8_t *), count);
 					m->m_data =
 					    (void *)(mtod(m, u_long) + count);
 					m->m_len -= count;
 				}
 				bus_space_write_multi_4(iot, ioh,
-				    EP_W1_TX_PIO_WR_1,
-				    mtod(m, u_int32_t *), m->m_len >> 2);
+				    txreg, mtod(m, u_int32_t *), m->m_len >> 2);
 				m->m_data = (void *)(mtod(m, u_long) +
 					(u_long)(m->m_len & ~3));
 				m->m_len -= m->m_len & ~3;
 			}
 			if (m->m_len)  {
 				bus_space_write_multi_1(iot, ioh,
-				    EP_W1_TX_PIO_WR_1,
-				    mtod(m, u_int8_t *), m->m_len);
+				    txreg, mtod(m, u_int8_t *), m->m_len);
 			}
 			MFREE(m, m0);
 			m = m0;
@@ -1033,18 +1061,17 @@ startagain:
 			if (m->m_len > 1)  {
 				if (mtod(m, u_long) & 1)  {
 					bus_space_write_1(iot, ioh,
-					    EP_W1_TX_PIO_WR_1,
-					    *(mtod(m, u_int8_t *)));
+					    txreg, *(mtod(m, u_int8_t *)));
 					m->m_data =
 					    (void *)(mtod(m, u_long) + 1);
 					m->m_len -= 1;
 				}
 				bus_space_write_multi_2(iot, ioh,
-				    EP_W1_TX_PIO_WR_1, mtod(m, u_int16_t *),
+				    txreg, mtod(m, u_int16_t *),
 				    m->m_len >> 1);
 			}
 			if (m->m_len & 1)  {
-				bus_space_write_1(iot, ioh, EP_W1_TX_PIO_WR_1,
+				bus_space_write_1(iot, ioh, txreg,
 				     *(mtod(m, u_int8_t *) + m->m_len - 1));
 			}
 			MFREE(m, m0);
@@ -1052,14 +1079,15 @@ startagain:
 		}
 	}
 	while (pad--)
-		bus_space_write_1(iot, ioh, EP_W1_TX_PIO_WR_1, 0);
+		bus_space_write_1(iot, ioh, txreg, 0);
 
 	splx(sh);
 
 	++ifp->if_opackets;
 
 readcheck:
-	if ((bus_space_read_2(iot, ioh, EP_W1_RX_STATUS) & ERR_INCOMPLETE) == 0) {
+	if ((bus_space_read_2(iot, ioh, ep_w1_reg(sc, EP_W1_RX_STATUS)) &
+	    ERR_INCOMPLETE) == 0) {
 		/* We received a complete packet. */
 		u_int16_t status = bus_space_read_2(iot, ioh, EP_STATUS);
 
@@ -1152,8 +1180,10 @@ eptxstat(sc)
 	 * We need to read+write TX_STATUS until we get a 0 status
 	 * in order to turn off the interrupt flag.
 	 */
-	while ((i = bus_space_read_1(iot, ioh, EP_W1_TX_STATUS)) & TXS_COMPLETE) {
-		bus_space_write_1(iot, ioh, EP_W1_TX_STATUS, 0x0);
+	while ((i = bus_space_read_1(iot, ioh, ep_w1_reg(sc, EP_W1_TX_STATUS)))
+	    & TXS_COMPLETE) {
+		bus_space_write_1(iot, ioh, ep_w1_reg(sc, EP_W1_TX_STATUS),
+		    0x0);
 
 		if (i & TXS_JABBER) {
 			++sc->sc_ethercom.ec_if.if_oerrors;
@@ -1282,7 +1312,7 @@ epread(sc)
 	struct ether_header *eh;
 	int len;
 
-	len = bus_space_read_2(iot, ioh, EP_W1_RX_STATUS);
+	len = bus_space_read_2(iot, ioh, ep_w1_reg(sc, EP_W1_RX_STATUS));
 
 again:
 	if (ifp->if_flags & IFF_DEBUG) {
@@ -1355,7 +1385,7 @@ again:
 
 	/* We assume the header fit entirely in one mbuf. */
 	m_adj(m, sizeof(struct ether_header));
-	ether_input(ifp, eh, m);
+	(*ifp->if_input)(ifp, eh, m);
 
 	/*
 	 * In periods of high traffic we can actually receive enough
@@ -1374,7 +1404,8 @@ again:
 	 * I'll modify epread() so that it can handle RX_EARLY interrupts.
 	 */
 	if (epstatus(sc)) {
-		len = bus_space_read_2(iot, ioh, EP_W1_RX_STATUS);
+		len = bus_space_read_2(iot, ioh,
+		    ep_w1_reg(sc, EP_W1_RX_STATUS));
 		/* Check if we are stuck and reset [see XXX comment] */
 		if (len & ERR_INCOMPLETE) {
 			if (ifp->if_flags & IFF_DEBUG)
@@ -1403,6 +1434,7 @@ epget(sc, totlen)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *top, **mp, *m;
+	bus_addr_t rxreg;
 	int len, remaining;
 	int sh;
 
@@ -1433,6 +1465,8 @@ epget(sc, totlen)
 	 * reading it.  We may still lose packets at other times.
 	 */
 	sh = splhigh();
+
+	rxreg = ep_w1_reg(sc, EP_W1_RX_PIO_RD_1);
 
 	while (totlen > 0) {
 		if (top) {
@@ -1479,42 +1513,38 @@ epget(sc, totlen)
 			if ((remaining > 3) && (offset & 3))  {
 				int count = (4 - (offset & 3));
 				bus_space_read_multi_1(iot, ioh,
-				    EP_W1_RX_PIO_RD_1,
-				    (u_int8_t *) offset, count);
+				    rxreg, (u_int8_t *) offset, count);
 				offset += count;
 				remaining -= count;
 			}
 			if (remaining > 3) {
 				bus_space_read_multi_4(iot, ioh,
-				    EP_W1_RX_PIO_RD_1,
-				    (u_int32_t *) offset, remaining >> 2);
+				    rxreg, (u_int32_t *) offset,
+				    remaining >> 2);
 				offset += remaining & ~3;
 				remaining &= 3;
 			}
 			if (remaining)  {
 				bus_space_read_multi_1(iot, ioh,
-				    EP_W1_RX_PIO_RD_1,
-				    (u_int8_t *) offset, remaining);
+				    rxreg, (u_int8_t *) offset, remaining);
 			}
 		} else {
 			u_long offset = mtod(m, u_long);
 			if ((remaining > 1) && (offset & 1))  {
 				bus_space_read_multi_1(iot, ioh,
-				    EP_W1_RX_PIO_RD_1,
-				    (u_int8_t *) offset, 1);
+				    rxreg, (u_int8_t *) offset, 1);
 				remaining -= 1;
 				offset += 1;
 			}
 			if (remaining > 1) {
 				bus_space_read_multi_2(iot, ioh,
-				    EP_W1_RX_PIO_RD_1,
-				    (u_int16_t *) offset, remaining >> 1);
+				    rxreg, (u_int16_t *) offset,
+				    remaining >> 1);
 				offset += remaining & ~1;
 			}
 			if (remaining & 1)  {
 				bus_space_read_multi_1(iot, ioh,
-				    EP_W1_RX_PIO_RD_1,
-				    (u_int8_t *) offset, remaining & 1);
+				    rxreg, (u_int8_t *) offset, remaining & 1);
 			}
 		}
 		m->m_len = len;
