@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.166 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: cd.c,v 1.167 2002/09/18 01:46:23 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.166 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.167 2002/09/18 01:46:23 chs Exp $");
 
 #include "rnd.h"
 
@@ -206,10 +206,6 @@ cdattach(parent, cd, periph, ops)
   	cd->sc_dk.dk_driver = &cddkdriver;
 	cd->sc_dk.dk_name = cd->sc_dev.dv_xname;
 	disk_attach(&cd->sc_dk);
-
-#ifdef __BROKEN_DK_ESTABLISH
-	dk_establish(&cd->sc_dk, &cd->sc_dev);		/* XXX */
-#endif
 
 	printf("\n");
 
