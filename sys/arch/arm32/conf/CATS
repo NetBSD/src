@@ -283,6 +283,16 @@ isa*	at pcib?			# ISA bus
 # ISA Plug-and-Play bus support
 isapnp0	at isa?
 
+# wscons
+pckbc0	at isa?			# pc keyboard controller
+pckbd*	at pckbc?		# PC keyboard
+# "pms" should not be enabled together with "psm" or "psmi"
+psm*		at pckbc?		# PS/2 mouse for wsmouse
+psmi*		at pckbc?	# PS/2 "Intelli"mouse for wsmouse
+wskbd*		at pckbd? console ?
+wsmouse*	at psm?
+wsmouse*	at psmi?
+
 pcppi0	at isa?
 sysbeep0	at pcppi?
 
