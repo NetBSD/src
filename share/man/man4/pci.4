@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.70 2003/04/16 22:34:01 thorpej Exp $
+.\"	$NetBSD: pci.4,v 1.71 2003/05/04 16:18:32 ad Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -125,6 +125,8 @@ interfaces.
 .Bl -tag -width pcdisplay -offset indent
 .It aac
 The Adaptec AAC family of RAID controllers.
+.It amr
+The AMI and LSI Logic MegaRAID family of RAID controllers.
 .It cac
 Compaq array controllers.
 .It icp
@@ -336,6 +338,7 @@ VGA graphics boards.
 .Xr adw 4 ,
 .Xr agp 4 ,
 .Xr ahc 4 ,
+.Xr amr 4 ,
 .Xr an 4 ,
 .Xr auich 4 ,
 .Xr autri 4 ,
