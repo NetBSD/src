@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.112 2002/04/25 19:32:59 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.113 2002/05/13 06:05:33 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -116,8 +116,6 @@ paddr_t msgbuf_paddr;
 static int chosen;
 struct pmap ofw_pmap;
 int ofkbd_ihandle;
-
-int msgbufmapped = 0;
 
 #ifdef DDB
 void *startsym, *endsym;
