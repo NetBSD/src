@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.77 2004/02/26 02:30:04 itojun Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.78 2004/03/09 06:37:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.77 2004/02/26 02:30:04 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.78 2004/03/09 06:37:59 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -674,8 +674,6 @@ void
 m_cat(struct mbuf *m, struct mbuf *n)
 {
 
-	KASSERT(n == NULL || m->m_type == n->m_type);
-
 	while (m->m_next)
 		m = m->m_next;
 	while (n) {
@@ -684,6 +682,7 @@ m_cat(struct mbuf *m, struct mbuf *n)
 			m->m_next = n;
 			return;
 		}
+		KASSERT(n->m_len == 0 || m->m_type == n->m_type);
 		/* splat the data from one into the other */
 		memcpy(mtod(m, caddr_t) + m->m_len, mtod(n, caddr_t),
 		    (u_int)n->m_len);
