@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.13 2000/10/11 14:46:14 is Exp $	*/
+/*	$NetBSD: inet6.c,v 1.14 2000/10/23 03:46:23 itojun Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -68,7 +68,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.13 2000/10/11 14:46:14 is Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.14 2000/10/23 03:46:23 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -1148,6 +1148,7 @@ icmp6_stats(off, name)
 
 	p(icp6s_reflect, "\t%llu message response%s generated\n");
 	p(icp6s_nd_toomanyopt, "\t%llu message%s with too many ND options\n");
+	p(icp6s_pmtuchg, "\t%llu path MTU change%s\n");
 #undef p
 #undef p_5
 }
