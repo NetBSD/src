@@ -33,9 +33,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)edquota.8	8.2 (Berkeley) 4/27/95
-.\"	$NetBSD: edquota.8,v 1.8 2002/01/19 03:11:34 wiz Exp $
+.\"	$NetBSD: edquota.8,v 1.8.2.1 2003/01/26 09:01:56 jmc Exp $
 .\"
-.Dd April 27, 1995
+.Dd December 4, 2002
 .Dt EDQUOTA 8
 .Os
 .Sh NAME
@@ -44,18 +44,34 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl u
+.Op Fl f Ar filesystem
 .Op Fl p Ar proto-username
 .Ar username ...
 .Nm ""
 .Fl g
+.Op Fl f Ar filesystem
 .Op Fl p Ar proto-groupname
 .Ar groupname ...
 .Nm ""
-.Fl t
 .Op Fl u
+.Op Fl f Ar filesystem
+.Op Fl h Ar block#/inode#
+.Op Fl s Ar block#/inode#
+.Ar username ...
 .Nm ""
-.Fl t
 .Fl g
+.Op Fl f Ar filesystem
+.Op Fl h Ar block#/inode#
+.Op Fl s Ar block#/inode#
+.Ar groupname ...
+.Nm ""
+.Op Fl u
+.Op Fl f Ar filesystem
+.Fl t
+.Nm ""
+.Fl g
+.Op Fl f Ar filesystem
+.Fl t
 .Sh DESCRIPTION
 .Nm
 is a quota editor.
@@ -63,11 +79,17 @@ By default, or if the
 .Fl u
 flag is specified,
 one or more users may be specified on the command line.
-For each user a temporary file is created
-with an ASCII representation of the current
-disk quotas for that user.
+Unless
+.Fl h
+or
+.Fl s
+are used, a temporary file is created for each user with an ASCII
+representation of the current disk quotas for that user.
 The list of filesystems with user quotas is determined from
 .Pa /etc/fstab .
+By default, quota for all quota-enabled filesystems are edited; the
+.Fl f
+option can be used to restrict it to a single filesystem.
 An editor is invoked on the ASCII file.
 The editor invoked is
 .Xr vi 1
@@ -98,8 +120,15 @@ flag is specified,
 .Nm
 will duplicate the quotas of the prototypical user
 specified for each user specified.
-This is the normal mechanism used to
-initialize quotas for groups of users.
+This is the normal mechanism used to initialize quotas for groups of users.
+.Pp
+The
+.Fl h
+and
+.Fl s
+flags can be used to change quota limits (soft and hard, respectively)
+without user interaction, for usage in e.g. batch scripts.
+The arguments are the new block and inode number limit, separated by a slash.
 .Pp
 If the
 .Fl g
@@ -109,8 +138,7 @@ is invoked to edit the quotas of
 one or more groups specified on the command line.
 The
 .Fl p
-flag can be specified in conjunction with
-the
+flag can be specified in conjunction with the
 .Fl g
 flag to specify a prototypical group
 to be duplicated among the listed set of groups.
