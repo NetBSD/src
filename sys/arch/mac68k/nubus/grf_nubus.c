@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_nubus.c,v 1.39 1998/01/12 19:22:06 thorpej Exp $	*/
+/*	$NetBSD: grf_nubus.c,v 1.40 1998/04/24 01:58:44 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -61,8 +61,10 @@ static void	grfmv_intr_cb364 __P((void *vsc, int slot));
 static void	grfmv_intr_cmax __P((void *vsc, int slot));
 static void	grfmv_intr_cti __P((void *vsc, int slot));
 static void	grfmv_intr_radius __P((void *vsc, int slot));
+static void	grfmv_intr_radius24 __P((void *vsc, int slot));
 static void	grfmv_intr_supermacgfx __P((void *vsc, int slot));
 static void	grfmv_intr_lapis __P((void *vsc, int slot));
+static void	grfmv_intr_formac __P((void *vsc, int slot));
 
 static int	grfmv_mode __P((struct grf_softc *gp, int cmd, void *arg));
 static caddr_t	grfmv_phys __P((struct grf_softc *gp));
@@ -266,6 +268,9 @@ bad:
 	case NUBUS_DRHW_RPC8XJ:
 		add_nubus_intr(na->slot, grfmv_intr_radius, sc);
 		break;
+	case NUBUS_DRHW_RPC24XP:
+		add_nubus_intr(na->slot, grfmv_intr_radius24, sc);
+		break;
 	case NUBUS_DRHW_FIILX:
 	case NUBUS_DRHW_FIISXDSP:
 	case NUBUS_DRHW_FUTURASX:
@@ -286,6 +291,9 @@ bad:
 		break;
 	case NUBUS_DRHW_LAPIS:
 		add_nubus_intr(na->slot, grfmv_intr_lapis, sc);
+		break;
+	case NUBUS_DRHW_FORMAC:
+		add_nubus_intr(na->slot, grfmv_intr_formac, sc);
 		break;
 	case NUBUS_DRHW_MICRON:
 		/* What do we know about this one? */
@@ -401,6 +409,25 @@ grfmv_intr_radius(vsc, slot)
 	c = 0x66;
 
 	c |= 0x80;
+	bus_space_write_1(sc->sc_tag, sc->sc_handle, 0xd00403, c);
+	c &= 0x7f;
+	bus_space_write_1(sc->sc_tag, sc->sc_handle, 0xd00403, c);
+}
+
+/*
+ * Routine to clear interrupts for the Radius PrecisionColor 24Xp card.
+ * Is this what the 8xj routine is doing, too?
+ */
+/*ARGSUSED*/
+static void
+grfmv_intr_radius24(vsc, slot)
+	void	*vsc;
+	int	slot;
+{
+	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
+	u_int8_t c;
+
+	c = 0x80 | bus_space_read_1(sc->sc_tag, sc->sc_handle, 0xfffd8);
 	bus_space_write_1(sc->sc_tag, sc->sc_handle, 0xd00403, c);
 	c &= 0x7f;
 	bus_space_write_1(sc->sc_tag, sc->sc_handle, 0xd00403, c);
@@ -617,4 +644,20 @@ grfmv_intr_lapis(vsc, slot)
 
 	bus_space_write_1(sc->sc_tag, sc->sc_handle, 0xff7000, 0x08);
 	bus_space_write_1(sc->sc_tag, sc->sc_handle, 0xff7000, 0x0C);
+}
+
+/*
+ * Routine to clear interrupts for the Formac Color Card II
+ */
+/*ARGSUSED*/
+static void
+grfmv_intr_formac(vsc, slot)
+	void	*vsc;
+	int	slot;
+{
+	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
+	u_int8_t dummy;
+
+	dummy = bus_space_read_1(sc->sc_tag, sc->sc_handle, 0xde80db);
+	dummy = bus_space_read_1(sc->sc_tag, sc->sc_handle, 0xde80d3);
 }
