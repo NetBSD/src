@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.52 1995/03/23 19:46:50 jtc Exp $
+#	$NetBSD: Makefile.i386,v 1.53 1995/04/17 07:30:54 cgd Exp $
 # 	@(#)Makefile.hp300	8.2 (Berkeley) 1/23/94
 #
 # Makefile for NetBSD
@@ -20,15 +20,16 @@
 # -DQUOTA	compile in file system quotas
 #
 
-
 # DEBUG is set to -g by config if debugging is requested (config -g).
 # PROF is set to -pg by config if profiling is requested (config -p).
-AS=	as ${DEBUG}
-CC=	cc ${DEBUG}
-CPP=	cpp
-LD=	ld
-TOUCH=	touch -f -c
-AWK=	awk
+AS?=	as
+AS+=	${DEBUG}
+CC?=	cc
+CC+=	${DEBUG}
+CPP?=	cpp
+LD?=	ld
+TOUCH?=	touch -f -c
+AWK?=	awk
 
 # source tree is located via $S relative to the compilation directory
 S=	../../../..
@@ -48,7 +49,7 @@ LIBKERN=	${KERNLIB_PROF}
 .endif
 
 # compile rules: rules are named ${TYPE}_${SUFFIX}${CONFIG_DEP}
-# where TYPE is NORMAL, DRIVER, or PROFILE}; SUFFIX is the file suffix,
+# where TYPE is NORMAL, DRIVER, or PROFILE; SUFFIX is the file suffix,
 # capitalized (e.g. C for a .c file), and CONFIG_DEP is _C if the file
 # is marked as config-dependent.
 
