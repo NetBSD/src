@@ -2583,6 +2583,13 @@ for machine in $build $host $target; do
 		tmake_file=sparc/t-sparcbare
 		tm_file="sparc/aout.h libgloss.h"
 		;;
+	sparc-*-netbsd*elf*)
+		tm_file=sparc/netbsdelf.h
+		xm_file=sparc/xm-netbsd.h
+		# On NetBSD, the headers are already okay, except for math.h.
+		fixincludes=fixinc.wrap
+		tmake_file=t-netbsd
+		;;
 	sparc-*-netbsd*)
 		tm_file=sparc/netbsd.h
 		xm_file=sparc/xm-netbsd.h
