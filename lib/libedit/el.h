@@ -1,4 +1,4 @@
-/*	$NetBSD: el.h,v 1.12 2002/10/27 21:41:50 christos Exp $	*/
+/*	$NetBSD: el.h,v 1.13 2002/11/15 14:32:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -72,7 +72,7 @@ typedef struct el_line_t {
 	char	*buffer;		/* Input line			*/
 	char	*cursor;		/* Cursor position		*/
 	char	*lastchar;		/* Last character		*/
-	const char	*limit;			/* Max position			*/
+	const char	*limit;		/* Max position			*/
 } el_line_t;
 
 /*
@@ -84,6 +84,8 @@ typedef struct el_state_t {
 	int		argument;	/* Numeric argument		*/
 	int		metanext;	/* Is the next char a meta char */
 	el_action_t	lastcmd;	/* Previous command		*/
+	el_action_t	thiscmd;	/* this command 		*/
+	char		thisch;		/* char that generated it	*/
 } el_state_t;
 
 /*
