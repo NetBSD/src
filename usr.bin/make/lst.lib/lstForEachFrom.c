@@ -35,8 +35,8 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)lstForEachFrom.c	5.3 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: lstForEachFrom.c,v 1.2 1993/08/01 18:12:27 mycroft Exp $";
+/* from: static char sccsid[] = "@(#)lstForEachFrom.c	5.3 (Berkeley) 6/1/90"; */
+static char *rcsid = "$Id: lstForEachFrom.c,v 1.3 1994/03/05 00:35:45 cgd Exp $";
 #endif /* not lint */
 
 /*-
@@ -88,9 +88,9 @@ Lst_ForEachFrom (l, ln, proc, d)
 	
 	next = tln->nextPtr;
 	
-	tln->useCount++;
+	(void) tln->useCount++;
 	result = (*proc) (tln->datum, d);
-	tln->useCount--;
+	(void) tln->useCount--;
 
 	/*
 	 * We're done with the traversal if
