@@ -1,4 +1,4 @@
-/*	$NetBSD: tc5165buf.c,v 1.5 2000/03/23 06:38:02 thorpej Exp $ */
+/*	$NetBSD: tc5165buf.c,v 1.6 2000/09/21 14:17:29 takemura Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, by UCHIYAMA Yasushi
@@ -46,7 +46,7 @@
 #include <hpcmips/tx/txcsbusvar.h>
 
 #include <hpcmips/dev/tc5165bufvar.h>
-#include <hpcmips/dev/skbdvar.h>
+#include <hpcmips/dev/hpckbdvar.h>
 
 #define TC5165_ROW_MAX		16
 #define TC5165_COLUMN_MAX	8
@@ -64,8 +64,8 @@ struct tc5165buf_chip {
 	int			scc_enabled;
 	int			scc_queued;
 	struct callout		scc_soft_ch;
-
-	struct skbd_controller	scc_controller;
+	struct hpckbd_ic_if	scc_if;
+	struct hpckbd_if	*scc_hpckbd;
 };
 
 struct tc5165buf_softc {
@@ -82,8 +82,7 @@ int	tc5165buf_poll __P((void*));
 void	tc5165buf_soft __P((void*));
 void	tc5165buf_ifsetup __P((struct tc5165buf_chip*));
 
-int	tc5165buf_input_establish __P((void*, int (*) __P((void*, int, int)),
-				      void (*) __P((void*)), void*));
+int	tc5165buf_input_establish __P((void*, struct hpckbd_if*));
 
 struct tc5165buf_chip tc5165buf_chip;
 
@@ -108,7 +107,7 @@ tc5165buf_attach(parent, self, aux)
 {
 	struct cs_attach_args *ca = aux;
 	struct tc5165buf_softc *sc = (void*)self;
-	struct skbd_attach_args saa;
+	struct hpckbd_attach_args haa;
 
 	printf(": ");
 	sc->sc_tc = ca->ca_tc;
@@ -147,19 +146,18 @@ tc5165buf_attach(parent, self, aux)
 	/* setup upper interface */
 	tc5165buf_ifsetup(sc->sc_chip);
 	
-	saa.saa_ic = &sc->sc_chip->scc_controller;
+	haa.haa_ic = &sc->sc_chip->scc_if;
 
-	config_found(self, &saa, skbd_print);
+	config_found(self, &haa, hpckbd_print);
 }
 
 void
 tc5165buf_ifsetup(scc)
 	struct tc5165buf_chip *scc;
 {
-	scc->scc_controller.skif_v		= scc;
-
-	scc->scc_controller.skif_establish	= tc5165buf_input_establish;
-	scc->scc_controller.skif_poll		= tc5165buf_poll;
+	scc->scc_if.hii_ctx		= scc;
+	scc->scc_if.hii_establish	= tc5165buf_input_establish;
+	scc->scc_if.hii_poll		= tc5165buf_poll;
 }
 
 int
@@ -172,26 +170,20 @@ tc5165buf_cnattach(addr)
 
 	tc5165buf_ifsetup(scc);
 
-	skbd_cnattach(&scc->scc_controller);
+	hpckbd_cnattach(&scc->scc_if);
 
 	return 0;
 }
 
 int
-tc5165buf_input_establish(ic, inputfunc, inputhookfunc, arg)
+tc5165buf_input_establish(ic, kbdif)
 	void *ic;
-	int (*inputfunc) __P((void*, int, int));
-	void (*inputhookfunc) __P((void*));
-	void *arg;
+	struct hpckbd_if *kbdif;
 {
 	struct tc5165buf_chip *scc = ic;
 
-	/* setup lower interface */
-
-	scc->scc_controller.sk_v = arg;
-
-	scc->scc_controller.sk_input = inputfunc;
-	scc->scc_controller.sk_input_hook = inputhookfunc;
+	/* save hpckbd interface */
+	scc->scc_hpckbd = kbdif;
 	
 	scc->scc_enabled = 1;
 
@@ -237,11 +229,9 @@ tc5165buf_soft(arg)
 	bus_space_handle_t h = scc->scc_csh;
 	u_int16_t mask, rpat, edge;
 	int i, j, type, val;
-	skbd_tag_t controller;
 	int s;
 
-	controller = &scc->scc_controller;
-	skbd_input_hook(controller);
+	hpckbd_input_hook(scc->scc_hpckbd);
 
 	/* clear scanlines */
 	(void)bus_space_read_2(t, h, 0);
@@ -260,7 +250,8 @@ tc5165buf_soft(arg)
 					type = mask & rpat ? 1 : 0;
 					val = j * TC5165_COLUMN_MAX + i;
 					DPRINTF(("%d %d\n", j, i));
-					skbd_input(controller, type, val);
+					hpckbd_input(scc->scc_hpckbd,
+						     type, val);
 				}
 			}
 		}

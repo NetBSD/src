@@ -1,4 +1,4 @@
-/*	$NetBSD: vrkiureg.h,v 1.1.1.1 1999/09/16 12:23:33 takemura Exp $	*/
+/*	$NetBSD: vrkiureg.h,v 1.2 2000/09/21 14:17:36 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi
@@ -45,6 +45,11 @@
 #define	KIUDAT5		0x0a
 #define	KIUSCANREP	0x10
 #define	KIUSCANS	0x12
+#	define	KIUSCANS_SSTAT_MASK	0x0003
+#	define	KIUSCANS_SSTAT_SCANNING	0x0003
+#	define	KIUSCANS_SSTAT_INTERVAL	0x0002
+#	define	KIUSCANS_SSTAT_WAIT	0x0001
+#	define	KIUSCANS_SSTAT_STOP	0x0000
 #define	KIUWKS		0x14
 #define	KIUWKI		0x16
 #define	KIUINT		0x18
