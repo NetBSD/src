@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.55 2001/02/04 20:36:32 ragge Exp $	*/
+/*	$NetBSD: locore.c,v 1.56 2001/03/31 11:50:45 ragge Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -179,6 +179,8 @@ _start(struct rpb *prpb)
 			strcpy(cpu_model, "VAX 4000/100"); break;
 		case VAX_STYP_53:
 			strcpy(cpu_model, "VAX 4000/108 or 105A"); break;
+		case VAX_STYP_55:
+			strcpy(cpu_model, "MicroVAX 3100/m85"); break;
 		default:
 			strcpy(cpu_model,"unknown 1303");
 		}
