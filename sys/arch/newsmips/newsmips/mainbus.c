@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.6 2002/10/02 04:27:52 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.7 2003/05/09 13:36:42 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -76,9 +76,6 @@ mbattach(parent, self, aux)
 	printf("\n");
 
 	nca.ca_name = "cpu";
-	nca.ca_slot = 0;
-	nca.ca_offset = 0;
-	nca.ca_addr = 0;
 	config_found(mb, &nca, mbprint);
 
 	/* XXX */

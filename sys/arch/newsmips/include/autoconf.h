@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.8 2003/03/22 14:26:42 simonb Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.9 2003/05/09 13:36:41 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -33,17 +33,4 @@
 
 struct confargs {
 	const char	*ca_name;		/* Device name. */
-	int	ca_slot;		/* Device slot (table entry). */
-	int	ca_offset;		/* Offset into slot. */
-	int	ca_addr;		/* Device address. */
-	int	ca_slotpri;		/* Device interrupt "priority" */
 };
-
-/* Locator aliases */
-#define cf_addr	cf_loc[0]
-#define cf_level	cf_loc[1]
-
-int news3400_badaddr __P((void *, u_int));
-#define badaddr news3400_badaddr
-
-void *hb_intr_establish __P((int, int, int (*)(void *), void *));
