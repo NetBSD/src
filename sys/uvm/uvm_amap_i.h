@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap_i.h,v 1.19 2002/12/01 22:58:43 matt Exp $	*/
+/*	$NetBSD: uvm_amap_i.h,v 1.20 2002/12/20 18:21:13 atatat Exp $	*/
 
 /*
  *
@@ -209,7 +209,7 @@ amap_ref(amap, offset, len, flags)
 #ifdef UVM_AMAP_PPREF
 	if (amap->am_ppref == NULL && (flags & AMAP_REFALL) == 0 &&
 	    len != amap->am_nslot)
-		amap_pp_establish(amap);
+		amap_pp_establish(amap, offset);
 #endif
 	amap->am_ref++;
 #ifdef UVM_AMAP_PPREF
@@ -268,7 +268,7 @@ amap_unref(amap, offset, len, all)
 		amap->am_flags &= ~AMAP_SHARED;	/* clear shared flag */
 #ifdef UVM_AMAP_PPREF
 	if (amap->am_ppref == NULL && all == 0 && len != amap->am_nslot)
-		amap_pp_establish(amap);
+		amap_pp_establish(amap, offset);
 	if (amap->am_ppref && amap->am_ppref != PPREF_NONE) {
 		if (all)
 			amap_pp_adjref(amap, 0, amap->am_nslot, -1);
