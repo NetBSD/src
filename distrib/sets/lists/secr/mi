@@ -61,13 +61,16 @@
 ./usr/lib/libtelnet_p.a
 ./usr/libdata/lint/llib-lacl.ln
 ./usr/libdata/lint/llib-lcom_err.ln
+./usr/libdata/lint/llib-lcrypt.ln
 ./usr/libdata/lint/llib-ldes.ln
 ./usr/libdata/lint/llib-lkadm.ln
 ./usr/libdata/lint/llib-lkafs.ln
 ./usr/libdata/lint/llib-lkdb.ln
 ./usr/libdata/lint/llib-lkrb.ln
 ./usr/libdata/lint/llib-lkstream.ln
+./usr/libdata/lint/llib-lntp.ln
 ./usr/libdata/lint/llib-lss.ln
+./usr/libdata/lint/llib-ltelnet.ln
 ./usr/libexec/telnetd
 ./usr/sbin/ext_srvtab
 ./usr/sbin/kadmin
