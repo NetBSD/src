@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.14 1995/04/10 09:10:20 mycroft Exp $	*/
+/*	$NetBSD: kbd.c,v 1.15 1995/05/07 15:37:11 chopps Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -263,14 +263,6 @@ kbdintr (mask)
   fe->time = time;
   k->k_events.ev_put = put;
   EV_WAKEUP(&k->k_events);
-}
-
-
-int
-kbdbell()
-{
-  /* nice, mykes provided audio-support! */
-  cc_bell ();
 }
 
 

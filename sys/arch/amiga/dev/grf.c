@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.20 1995/04/23 16:20:49 chopps Exp $	*/
+/*	$NetBSD: grf.c,v 1.21 1995/05/07 15:37:02 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -68,6 +68,8 @@
 #include <amiga/dev/grfioctl.h>
 #include <amiga/dev/grfvar.h>
 #include <amiga/dev/itevar.h>
+
+#include "view.h"
 
 #include "grf.h"
 #if NGRF > 0
@@ -272,6 +274,7 @@ grfioctl(dev, cmd, data, flag, p)
                      Amiga. 15/11/94 ill */
 		return(gp->g_mode(gp, GM_GRFIOCTL, cmd, data));
 	default:
+#if NVIEW > 0
 		/*
 		 * check to see whether it's a command recognized by the
 		 * view code if the unit is 0
@@ -279,6 +282,7 @@ grfioctl(dev, cmd, data, flag, p)
 		 */
 		if (GRFUNIT(dev) == 0)
 			return(viewioctl(dev, cmd, data, flag, p));
+#endif
 		error = EINVAL;
 		break;
 

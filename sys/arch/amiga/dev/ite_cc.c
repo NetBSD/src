@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cc.c,v 1.23 1995/03/02 04:42:39 chopps Exp $	*/
+/*	$NetBSD: ite_cc.c,v 1.24 1995/05/07 15:37:08 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -123,17 +123,6 @@ int ite_default_height = 512;	/* def PAL height */
 int ite_default_height = 400;	/* def NON-PAL/NTSC height (?) */
 #endif
 
-/* audio bell stuff */
-u_int bvolume = 10;
-u_int bpitch = 660;
-u_int bmsec = 75;
-	
-static char *bsamplep;
-static char sample[20] = {
-	0,39,75,103,121,127,121,103,75,39,0,
-	-39,-75,-103,-121,-127,-121,-103,-75,-39
-};
-
 /*
  * called from grf_cc to return console priority
  */
@@ -158,41 +147,6 @@ grfcc_iteinit(gp)
 	gp->g_iteinit = view_init;
 	gp->g_itedeinit = view_deinit;
 }
-
-void
-init_bell()
-{
-	short i;
-
-	if (bsamplep != NULL)
-		return;
-	bsamplep = alloc_chipmem(20);
-	if (bsamplep == NULL)
-		panic("no chipmem for ccbell"); 
-
-	bcopy(sample, bsamplep, 20);
-}
-
-void
-cc_bell()
-{
-	u_int clock;
-	u_int period;
-	u_int count;
-
-	clock = 3579545; 	/* PAL 3546895 */
-
-	/*
-	 * the number of clock ticks per sample byte must be > 124
-	 * ergo bpitch must be < clock / 124*20 
-	 * i.e. ~1443, 1300 to be safe (PAL etc.). also not zero obviously
-	 */
-	period = clock / (bpitch * 20);
-	count = bmsec * bpitch / 1000;
-
-	play_sample(10, PREP_DMA_MEM(bsamplep), period, bvolume, 0x3, count);
-}
-
 
 int 
 ite_newsize(ip, winsz)
@@ -280,8 +234,6 @@ view_init(ip)
 
 	if (cci)
 		return;
-	
-	init_bell();
 
 	ip->font     = kernel_font;
 	ip->font_lo  = kernel_font_lo;
@@ -324,7 +276,6 @@ ite_grf_ioctl (ip, cmd, addr, flag, p)
 {
 	struct winsize ws;
 	struct itewinsize *is;
-	struct itebell *ib;
 	ipriv_t *cci;
 	int error;
 
@@ -363,24 +314,6 @@ ite_grf_ioctl (ip, cmd, addr, flag, p)
 		break;
 	case ITEIOCREMWIN:
 		cc_mode(ip->grf, GM_GRFOFF, NULL, 0, 0);
-		break;
-	case ITEIOCGBELL:
-		ib = (struct itebell *)addr;
-		ib->volume = bvolume;
-		ib->pitch = bpitch;
-		ib->msec = bmsec;
-		break;
-	case ITEIOCSBELL:
-		ib = (struct itebell *)addr;
-		/* bounds check */
-		if (ib->pitch > MAXBPITCH || ib->pitch < MINBPITCH ||
-		    ib->volume > MAXBVOLUME || ib->msec > MAXBTIME)
-			error = EINVAL;
-		else {
-			bvolume = ib->volume;
-			bpitch = ib->pitch;
-			bmsec = ib->msec;
-		}
 		break;
 	case VIOCSCMAP:
 	case VIOCGCMAP:

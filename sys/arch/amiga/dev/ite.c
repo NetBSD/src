@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.28 1995/04/23 18:24:35 chopps Exp $	*/
+/*	$NetBSD: ite.c,v 1.29 1995/05/07 15:37:06 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -58,6 +58,7 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <dev/cons.h>
+#include <amiga/amiga/cc.h>
 #include <amiga/amiga/kdassert.h>
 #include <amiga/amiga/color.h>	/* DEBUG */
 #include <amiga/amiga/device.h>
@@ -67,6 +68,7 @@
 #include <amiga/dev/grfioctl.h>
 #include <amiga/dev/grfvar.h>
 
+#include "grfcc.h"
 
 /*
  * XXX go ask sys/kern/tty.c:ttselect()
@@ -96,6 +98,17 @@ u_char	cons_tabs[MAX_TABS];
 
 struct ite_softc *kbd_ite;
 int kbd_init;
+
+/* audio bell stuff */
+u_int bvolume = 10;
+u_int bpitch = 660;
+u_int bmsec = 75;
+	
+static char *bsamplep;
+static char sample[20] = {
+	0,39,75,103,121,127,121,103,75,39,0,
+	-39,-75,-103,-121,-127,-121,-103,-75,-39
+};
 
 static char *index __P((const char *, char));
 static int inline atoi __P((const char *));
@@ -233,6 +246,41 @@ itecnprobe(cd)
 	}
 }
 
+/* audio bell stuff */
+void
+init_bell()
+{
+	short i;
+
+	if (bsamplep != NULL)
+		return;
+	bsamplep = alloc_chipmem(20);
+	if (bsamplep == NULL)
+		panic("no chipmem for ite_bell"); 
+
+	bcopy(sample, bsamplep, 20);
+}
+
+void
+ite_bell()
+{
+	u_int clock;
+	u_int period;
+	u_int count;
+
+	clock = 3579545; 	/* PAL 3546895 */
+
+	/*
+	 * the number of clock ticks per sample byte must be > 124
+	 * ergo bpitch must be < clock / 124*20 
+	 * i.e. ~1443, 1300 to be safe (PAL etc.). also not zero obviously
+	 */
+	period = clock / (bpitch * 20);
+	count = bmsec * bpitch / 1000;
+
+	play_sample(10, PREP_DMA_MEM(bsamplep), period, bvolume, 0x3, count);
+}
+
 void
 itecninit(cd)
 	struct consdev *cd;
@@ -242,6 +290,8 @@ itecninit(cd)
 	ip = getitesp(cd->cn_dev);
 	iteinit(cd->cn_dev);
 	ip->flags |= ITE_ACTIVE | ITE_ISCONS;
+
+	init_bell();
 }
 
 /*
@@ -463,6 +513,7 @@ iteioctl(dev, cmd, addr, flag, p)
 {
 	struct iterepeat *irp;
 	struct ite_softc *ip;
+	struct itebell *ib;
 	struct tty *tp;
 	int error;
 	
@@ -479,6 +530,24 @@ iteioctl(dev, cmd, addr, flag, p)
 		return (error);
 
 	switch (cmd) {
+	case ITEIOCGBELL:
+		ib = (struct itebell *)addr;
+		ib->volume = bvolume;
+		ib->pitch = bpitch;
+		ib->msec = bmsec;
+		break;
+	case ITEIOCSBELL:
+		ib = (struct itebell *)addr;
+		/* bounds check */
+		if (ib->pitch > MAXBPITCH || ib->pitch < MINBPITCH ||
+		    ib->volume > MAXBVOLUME || ib->msec > MAXBTIME)
+			error = EINVAL;
+		else {
+			bvolume = ib->volume;
+			bpitch = ib->pitch;
+			bmsec = ib->msec;
+		}
+		break;
 	case ITEIOCSKMAP:
 		if (addr == 0)
 			return(EFAULT);
@@ -501,12 +570,14 @@ iteioctl(dev, cmd, addr, flag, p)
 		next_repeat_timeo = irp->next;
 		return(0);
 	}
+#if NGRFCC > 0
 	/* XXX */
 	if (minor(dev) == 0) {
 		error = ite_grf_ioctl(ip, cmd, addr, flag, p);
 		if (error >= 0)
 			return (error);
 	}
+#endif
 	return (ENOTTY);
 }
 
@@ -894,9 +965,15 @@ ite_filter(c, caller)
 			code |= 0x80;
 	} else if ((key.mode & KBD_MODE_KPAD) &&
 	    (kbd_ite && kbd_ite->keypad_appmode)) {
-		static char *in = "0123456789-+.\r()/*";
+		static char in[] = {
+		    0x0f /* 0 */, 0x1d /* 1 */, 0x1e /* 2 */, 0x1f /* 3 */,
+		    0x2d /* 4 */, 0x2e /* 5 */, 0x2f /* 6 */, 0x3d /* 7 */,
+		    0x3e /* 8 */, 0x3f /* 9 */, 0x4a /* - */, 0x5e /* + */,
+		    0x3c /* . */, 0x43 /* e */, 0x5a /* ( */, 0x5b /* ) */,
+		    0x5c /* / */, 0x5d /* * */
+		};
 		static char *out = "pqrstuvwxymlnMPQRS";
-		char *cp = index (in, code);
+		char *cp = index (in, c);
 
 		/* 
 		 * keypad-appmode sends SS3 followed by the above
@@ -1274,7 +1351,6 @@ ite_putstr(s, len, dev)
 			iteputchar(s[i], ip);
 	SUBR_CURSOR(ip, END_CURSOROPT);
 }
-
 
 void
 iteputchar(c, ip)
@@ -2030,7 +2106,7 @@ doesc:
 		break;
 	case BEL:
 		if (kbd_tty && kbd_ite && kbd_ite->tp == kbd_tty)
-			kbdbell();
+			ite_bell();
 		break;
 	case SO:
 		ip->GL = ip->G1;

@@ -106,8 +106,13 @@ unsigned long cl_maxpixelclock = 115000000;
  *   grfconfig to change the mode after boot.
  */ 
 /* Console font */
+#ifdef KFONT_8X11
+#define CIRRUSFONT kernel_font_8x11
+#define CIRRUSFONTY 11
+#else
 #define CIRRUSFONT kernel_font_8x8
 #define CIRRUSFONTY 8
+#endif
 extern unsigned char CIRRUSFONT[];
 
 struct grfcltext_mode clconsole_mode = {
