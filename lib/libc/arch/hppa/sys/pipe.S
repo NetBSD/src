@@ -1,4 +1,4 @@
-/*	$NetBSD: pipe.S,v 1.2 2003/08/07 16:42:06 agc Exp $	*/
+/*	$NetBSD: pipe.S,v 1.3 2003/10/06 05:30:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)pipe.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: pipe.S,v 1.2 2003/08/07 16:42:06 agc Exp $")
+	RCSID("$NetBSD: pipe.S,v 1.3 2003/10/06 05:30:21 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,11 +48,11 @@
 #endif
 
 ENTRY(_pipe,0)
-	stw	arg0, HPPA_FRAME_ARG(0)(sp)
+	stw	%arg0, HPPA_FRAME_ARG(0)(%sp)
 	SYSCALL(pipe)
-	ldw	HPPA_FRAME_ARG(0)(sp), arg0
-	stw	ret0, 0(arg0)
-	stw	ret1, 4(arg0)
-	bv	r0(rp)
-	copy	r0, ret0
+	ldw	HPPA_FRAME_ARG(0)(%sp), %arg0
+	stw	%ret0, 0(%arg0)
+	stw	%ret1, 4(%arg0)
+	bv	%r0(%rp)
+	copy	%r0, %ret0
 EXIT(_pipe)
