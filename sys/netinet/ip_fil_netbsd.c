@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.3.2.7 2004/06/18 10:07:37 grant Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.3.2.8 2004/08/13 03:55:17 jmc Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.2 2004/03/22 12:18:08 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.12 2004/07/06 11:15:50 darrenr Exp";
 #endif
 
 #if defined(KERNEL) || defined(_KERNEL)
@@ -51,7 +51,7 @@ static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.2 2004/03/22 12:18
 #include "netinet/ip_compat.h"
 #ifdef USE_INET6
 # include <netinet/icmp6.h>
-# if (__NetBSD_Version__ > 106009999)
+# if (__NetBSD_Version__ >= 106000000)
 #  include <netinet6/nd6.h>
 # endif
 #endif
@@ -347,8 +347,8 @@ int ipldetach()
 #endif /* NetBSD */
 
 	fr_checkp = fr_savep;
-	(void) frflush(IPL_LOGIPF, FR_INQUE|FR_OUTQUE|FR_INACTIVE);
-	(void) frflush(IPL_LOGIPF, FR_INQUE|FR_OUTQUE);
+	(void) frflush(IPL_LOGIPF, 0, FR_INQUE|FR_OUTQUE|FR_INACTIVE);
+	(void) frflush(IPL_LOGIPF, 0, FR_INQUE|FR_OUTQUE);
 
 	if (fr_control_forwarding & 2)
 		ipforwarding = 0;
@@ -441,7 +441,7 @@ int mode;
 	case FIONREAD :
 #ifdef IPFILTER_LOG
 		BCOPYOUT(&iplused[IPL_LOGIPF], (caddr_t)data,
-			       sizeof(iplused[IPL_LOGIPF]));
+			 sizeof(iplused[IPL_LOGIPF]));
 #endif
 		break;
 	case SIOCFRENB :
@@ -516,21 +516,32 @@ int mode;
 		fr_getstat(&fio);
 		error = fr_outobj(data, &fio, IPFOBJ_IPFSTAT);
 		break;
-	case	SIOCFRZST :
+	case SIOCFRZST :
 		if (!(mode & FWRITE))
 			error = EPERM;
 		else
 			error = fr_zerostats(data);
 		break;
-	case	SIOCIPFFL :
+	case SIOCIPFFL :
 		if (!(mode & FWRITE))
 			error = EPERM;
 		else {
 			BCOPYIN(data, &tmp, sizeof(tmp));
-			tmp = frflush(unit, tmp);
+			tmp = frflush(unit, 4, tmp);
 			BCOPYOUT(&tmp, data, sizeof(tmp));
 		}
 		break;
+#ifdef USE_INET6
+	case SIOCIPFL6 :
+		if (!(mode & FWRITE))
+			error = EPERM;
+		else {
+			BCOPYIN(data, &tmp, sizeof(tmp));
+			tmp = frflush(unit, 6, tmp);
+			BCOPYOUT(&tmp, data, sizeof(tmp));
+		}
+		break;
+#endif
 	case SIOCSTLCK :
 		BCOPYIN(data, &tmp, sizeof(tmp));
 		fr_state_lock = tmp;
@@ -539,7 +550,7 @@ int mode;
 		fr_auth_lock = tmp;
 		break;
 #ifdef IPFILTER_LOG
-	case	SIOCIPFFB :
+	case SIOCIPFFB :
 		if (!(mode & FWRITE))
 			error = EPERM;
 		else
@@ -693,10 +704,6 @@ fr_info_t *fin;
 		return -1;
 #endif
 
-	m = m_gethdr(M_DONTWAIT, MT_HEADER);
-	if (m == NULL)
-		return -1;
-
 	tlen = fin->fin_dlen - (TCP_OFF(tcp) << 2) +
 			((tcp->th_flags & TH_SYN) ? 1 : 0) +
 			((tcp->th_flags & TH_FIN) ? 1 : 0);
@@ -706,6 +713,23 @@ fr_info_t *fin;
 #else
 	hlen = sizeof(ip_t);
 #endif
+#ifdef MGETHDR
+	MGETHDR(m, M_DONTWAIT, MT_HEADER);
+#else
+	MGET(m, M_DONTWAIT, MT_HEADER);
+#endif
+	if (m == NULL)
+		return -1;
+	if (sizeof(*tcp2) + hlen > MHLEN) {
+		MCLGET(m, M_DONTWAIT);
+		if (m == NULL)
+			return -1;
+		if ((m->m_flags & M_EXT) == 0) {
+			FREE_MB_T(m);
+			return -1;
+		}
+	}
+
 	m->m_len = sizeof(*tcp2) + hlen;
 	m->m_data += max_linkhdr;
 	m->m_pkthdr.len = m->m_len;
@@ -758,26 +782,6 @@ fr_info_t *fin;
 	return fr_send_ip(fin, m, &m);
 }
 
-
-/* ------------------------------------------------------------------------ */
-/* Function:    fr_nextipid                                                 */
-/* Returns:     int - 0 == success, -1 == error (packet should be droppped) */
-/* Parameters:  fin(I) - pointer to packet information                      */
-/*                                                                          */
-/* Returns the next IPv4 ID to use for this packet.                         */
-/* ------------------------------------------------------------------------ */
-INLINE u_short fr_nextipid(fin)
-fr_info_t *fin;
-{
-	static u_short ipid = 0;
-	u_short id;
-
-	MUTEX_ENTER(&ipf_rw);
-	id = ipid++;
-	MUTEX_EXIT(&ipf_rw);
-
-	return id;
-}
 
 static int fr_send_ip(fin, m, mpp)
 fr_info_t *fin;
@@ -849,12 +853,19 @@ int dst;
 	if (fr_checkl4sum(fin) == -1)
 		return -1;
 #endif
+#ifdef MGETHDR
+	MGETHDR(m, M_DONTWAIT, MT_HEADER);
+#else
+	MGET(m, M_DONTWAIT, MT_HEADER);
+#endif
+	if (m == NULL)
+		return -1;
+	avail = MHLEN;
+
 
 	xtra = 0;
 	hlen = 0;
 	ohlen = 0;
-	avail = 0;
-	m = NULL;
 	ifp = fin->fin_ifp;
 	if (fin->fin_v == 4) {
 		if ((fin->fin_p == IPPROTO_ICMP) &&
@@ -869,11 +880,6 @@ int dst;
 			default :
 				return 0;
 			}
-
-		avail = MHLEN;
-		m = m_gethdr(M_DONTWAIT, MT_HEADER);
-		if (m == NULL)
-			return -1;
 
 		if (dst == 0) {
 			if (fr_ifpaddr(4, FRI_NORMAL, ifp,
@@ -900,12 +906,17 @@ int dst;
 		if (type == ICMP6_DST_UNREACH)
 			code = icmptoicmp6unreach[code];
 
-		MGETHDR(m, M_DONTWAIT, MT_HEADER);
-		if (m == NULL)
-			return -1;
-
-		MCLGET(m, M_DONTWAIT);
-		avail = (m->m_flags & M_EXT) ? MCLBYTES : MHLEN;
+		if (hlen + sizeof(*icmp) + max_linkhdr +
+		    fin->fin_plen > avail) {
+			MCLGET(m, M_DONTWAIT);
+			if (m == NULL)
+				return -1;
+			if ((m->m_flags & M_EXT) == 0) {
+				FREE_MB_T(m);
+				return -1;
+			}
+			avail = MCLBYTES;
+		}
 		xtra = MIN(fin->fin_plen,
 			   avail - hlen - sizeof(*icmp) - max_linkhdr);
 		if (dst == 0) {
@@ -1007,29 +1018,6 @@ frdest_t *fdp;
 	u_short ip_off;
 	frentry_t *fr;
 
-#ifdef M_WRITABLE
-	/*
-	* HOT FIX/KLUDGE:
-	*
-	* If the mbuf we're about to send is not writable (because of
-	* a cluster reference, for example) we'll need to make a copy
-	* of it since this routine modifies the contents.
-	*
-	* If you have non-crappy network hardware that can transmit data
-	* from the mbuf, rather than making a copy, this is gonna be a
-	* problem.
-	*/
-	if (M_WRITABLE(m) == 0) {
-		if ((m0 = m_dup(m, M_DONTWAIT)) != 0) {
-			m_freem(m);
-			m = m0;
-		} else {
-			error = ENOBUFS;
-			m_freem(m);
-			fr_frouteok[1]++;
-		}
-	}
-#endif
 #ifdef USE_INET6
 	if (fin->fin_v == 6) {
 		error = ipfr_fastroute6(m0, mpp, fin, fdp);
@@ -1077,7 +1065,7 @@ frdest_t *fdp;
 	 */
 	if ((fr != NULL) && (fin->fin_rev != 0)) {
 		if ((ifp != NULL) && (fdp == &fr->fr_tif))
-			return -1;
+			return 0;
 	} else if (fdp != NULL) {
 		if (fdp->fd_ip.s_addr != 0)
 			dst->sin_addr = fdp->fd_ip;
@@ -1234,7 +1222,7 @@ sendorfree:
 			error = (*ifp->if_output)(ifp, m,
 			    (struct sockaddr *)dst, ro->ro_rt);
 		else
-			m_freem(m);
+			FREE_MB_T(m);
 	}
     }	
 done:
@@ -1247,7 +1235,7 @@ done:
 		RTFREE(ro->ro_rt);
 	}
 	*mpp = NULL;
-	return 0;
+	return error;
 bad:
 	if (error == EMSGSIZE) {
 		sifp = fin->fin_ifp;
@@ -1258,7 +1246,7 @@ bad:
 		fin->fin_ifp = sifp;
 		fin->fin_icode = code;
 	}
-	m_freem(m);
+	FREE_MB_T(m);
 	goto done;
 }
 
@@ -1288,7 +1276,7 @@ frdest_t *fdp;
 	dst6 = (struct sockaddr_in6 *)&ro->ro_dst;
 	dst6->sin6_family = AF_INET6;
 	dst6->sin6_len = sizeof(struct sockaddr_in6);
-	dst6->sin6_addr = fin->fin_fi.fi_src.in6;
+	dst6->sin6_addr = fin->fin_fi.fi_dst.in6;
 
 	if (fdp != NULL)
 		ifp = fdp->fd_ifp;
@@ -1319,20 +1307,20 @@ frdest_t *fdp;
 
 	{
 #if (__NetBSD_Version__ >= 106010000)
-		struct in6_addr finaldst = fin->fin_src6;
+		struct in6_addr finaldst = fin->fin_dst6;
 		int frag;
-		/* Determine path MTU. */
-		error = ip6_getpmtu(ro, ro, ifp, &finaldst, &mtu, &frag);
-		if (error)
-			goto bad;
-#else
-		mtu = nd_ifinfo[ifp->if_index].linkmtu;
 #endif
 		if (ro->ro_rt->rt_flags & RTF_GATEWAY)
 			dst6 = (struct sockaddr_in6 *)ro->ro_rt->rt_gateway;
 		ro->ro_rt->rt_use++;
 
-		if (m0->m_pkthdr.len <= mtu) {
+#if (__NetBSD_Version__ <= 106009999)
+		mtu = nd_ifinfo[ifp->if_index].linkmtu;
+#else
+		/* Determine path MTU. */
+		error = ip6_getpmtu(ro, ro, ifp, &finaldst, &mtu, &frag);
+#endif
+		if ((error == 0) && (m0->m_pkthdr.len <= mtu)) {
 			*mpp = NULL;
 			error = nd6_output(ifp, fin->fin_ifp, m0,
 						   dst6, ro->ro_rt);
@@ -1340,7 +1328,6 @@ frdest_t *fdp;
 			error = EMSGSIZE;
 		}
 	}
-
 bad:
 	if (ro->ro_rt != NULL) {
 		RTFREE(ro->ro_rt);
@@ -1486,6 +1473,25 @@ fr_info_t *fin;
 }
 
 
+/* ------------------------------------------------------------------------ */
+/* Function:    fr_nextipid                                                 */
+/* Returns:     int - 0 == success, -1 == error (packet should be droppped) */
+/* Parameters:  fin(I) - pointer to packet information                      */
+/*                                                                          */
+/* Returns the next IPv4 ID to use for this packet.                         */
+/* ------------------------------------------------------------------------ */
+u_short fr_nextipid(fin)
+fr_info_t *fin;
+{
+	static u_short ipid = 0;
+	u_short id;
+
+	MUTEX_ENTER(&ipf_rw);
+	id = ipid++;
+	MUTEX_EXIT(&ipf_rw);
+
+	return id;
+}
 
 
 INLINE void fr_checkv4sum(fin)
@@ -1520,7 +1526,7 @@ fr_info_t *fin;
 	}
 
 	active = ((struct ifnet *)fin->fin_ifp)->if_csum_flags_rx & pflag;
-	active |=  M_CSUM_TCP_UDP_BAD | M_CSUM_DATA;
+	active |= M_CSUM_TCP_UDP_BAD | M_CSUM_DATA;
 	cflags = m->m_pkthdr.csum_flags & active;
 
 	if (pflag != 0) {
@@ -1581,7 +1587,7 @@ fr_info_t *fin;
 	}
 
 	active = ((struct ifnet *)fin->fin_ifp)->if_csum_flags_rx & pflag;
-	active |=  M_CSUM_TCP_UDP_BAD | M_CSUM_DATA;
+	active |= M_CSUM_TCP_UDP_BAD | M_CSUM_DATA;
 	cflags = m->m_pkthdr.csum_flags & active;
 
 	if (pflag != 0) {
@@ -1609,3 +1615,20 @@ fr_info_t *fin;
 # endif
 }
 #endif /* USE_INET6 */
+
+
+size_t mbufchainlen(m0)
+struct mbuf *m0;
+{
+	size_t len;
+
+	if ((m0->m_flags & M_PKTHDR) != 0) {
+		len = m0->m_pkthdr.len;
+	} else {
+		struct mbuf *m;
+
+		for (m = m0, len = 0; m != NULL; m = m->m_next)
+			len += m->m_len;
+	}
+	return len;
+}
