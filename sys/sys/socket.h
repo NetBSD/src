@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.51 2000/03/02 07:41:50 itojun Exp $	*/
+/*	$NetBSD: socket.h,v 1.52 2000/03/28 05:04:45 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -490,8 +490,6 @@ __END_DECLS
 #ifdef COMPAT_OLDSOCK
 #define MSG_COMPAT	0x8000
 #endif
-
-void	pfctlinput __P((int, struct sockaddr *));
 #endif /* !_KERNEL */
 
 #endif /* !_SYS_SOCKET_H_ */
