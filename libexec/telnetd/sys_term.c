@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_term.c,v 1.31 2001/09/02 18:32:35 wiz Exp $	*/
+/*	$NetBSD: sys_term.c,v 1.32 2002/08/20 13:12:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_term.c,v 1.31 2001/09/02 18:32:35 wiz Exp $");
+__RCSID("$NetBSD: sys_term.c,v 1.32 2002/08/20 13:12:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1787,8 +1787,14 @@ cleanup(sig)
 	char *p, c;
 
 	p = line + sizeof("/dev/") - 1;
+#ifdef SUPPORT_UTMP
 	if (logout(p))
 		logwtmp(p, "", "");
+#endif
+#ifdef SUPPORT_UTMPX
+	if (logoutx(p, 0, DEAD_PROCESS))
+		logwtmpx(p, "", "", 0, DEAD_PROCESS);
+#endif
 	(void)chmod(line, 0666);
 	(void)chown(line, 0, 0);
 	c = *p; *p = 'p';
