@@ -1,5 +1,5 @@
 /*
- * $NetBSD: aout2bb.c,v 1.1 1997/01/21 18:26:09 is Exp $
+ * $NetBSD: aout2bb.c,v 1.2 1997/03/24 18:52:46 mycroft Exp $
  *
  * Copyright (c) 1996 Ignatios Souvatzis
  * All rights reserved.
@@ -134,6 +134,7 @@ main(argc, argv)
 	mid = N_GETMID(*eh);
 	switch(mid) {
 	case MID_M68K:
+	case MID_M68K4K:
 		break;
 	default:
 		errx(1, "%s has strange machine id 0x%x (%d)", argv[0], mid,

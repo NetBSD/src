@@ -1,5 +1,5 @@
 /*
- * $NetBSD: main.c,v 1.3 1997/02/01 01:46:26 mhitch Exp $
+ * $NetBSD: main.c,v 1.4 1997/03/24 18:54:26 mycroft Exp $
  *
  *
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -49,6 +49,7 @@
 #include "libstubs.h"
 #include "samachdep.h"
 
+#undef __LDPGSZ
 #define __LDPGSZ 8192
 #define __PGSZ 8192
 
