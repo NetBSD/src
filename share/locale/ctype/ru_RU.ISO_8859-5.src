@@ -1,11 +1,11 @@
-/*	$NetBSD: ru_RU.ISO_8859-5.src,v 1.1 2001/01/22 17:48:20 itojun Exp $	*/
+/*	$NetBSD: ru_RU.ISO_8859-5.src,v 1.2 2001/03/26 19:56:37 tshiozak Exp $	*/
 
 /*
  * LOCALE_CTYPE for Russian part of ISO8859-5 set
  */
 
 ENCODING	"NONE"
-VARIABLE        Russian part of ISO8859-5 character set by nms@ethereal.ru
+VARIABLE        Russian part of CODESET=ISO8859-5
 
 ALPHA		'A' - 'Z' 'a' - 'z' \
 		0xd0 0xd1 0xd2 0xd3 0xd4 0xd5 0xf1 0xd6 \
