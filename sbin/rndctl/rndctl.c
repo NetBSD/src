@@ -1,4 +1,4 @@
-/*	$NetBSD: rndctl.c,v 1.9 2001/09/08 23:20:37 enami Exp $	*/
+/*	$NetBSD: rndctl.c,v 1.10 2001/09/08 23:29:05 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997 Michael Graff.
@@ -86,7 +86,7 @@ find_type(char *name)
 		a++;
 	}
 
-	errx(1, "Error:  Device type %s unknown", name);
+	errx(1, "device name %s unknown", name);
 	return (0);
 }
 
@@ -103,8 +103,8 @@ find_name(u_int32_t type)
 		a++;
 	}
 
-	errx(1, "Error:  Device type %u unknown", type);
-	return (0);
+	warnx("device type %u unknown", type);
+	return ("???");
 }
 
 void
