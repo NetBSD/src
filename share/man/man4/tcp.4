@@ -1,4 +1,4 @@
-.\"	$NetBSD: tcp.4,v 1.15 2004/04/25 02:13:37 jonathan Exp $
+.\"	$NetBSD: tcp.4,v 1.16 2004/04/25 02:48:10 snj Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)tcp.4	8.1 (Berkeley) 6/5/93
 .\"
-.Dd November 23, 2003
+.Dd April 25, 2004
 .Dt TCP 4
 .Os
 .Sh NAME
@@ -103,7 +103,7 @@ network interface through which packets are being transmitted and received.
 Normally this address corresponds to the peer entity's network.
 .Pp
 .Tn TCP
-supports a number of  socket options which can be set with
+supports a number of socket options which can be set with
 .Xr setsockopt 2
 and tested with
 .Xr getsockopt 2 :
@@ -128,7 +128,8 @@ to defeat this algorithm.
 .It Dv TCP_MAXSEG
 By default, a sender\- and receiver-TCP
 will negotiate among themselves to determine the maximum segment size
-to be used for each connection.  The
+to be used for each connection.
+The
 .Dv TCP_MAXSEG
 option allows the user to determine the result of this negotiation,
 and to reduce it if desired.
