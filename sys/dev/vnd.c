@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.56 1998/03/01 02:21:00 fvdl Exp $	*/
+/*	$NetBSD: vnd.c,v 1.57 1998/03/04 15:34:41 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -401,7 +401,7 @@ vndstrategy(bp)
 		 */
 		if (!VOP_ISLOCKED(vnd->sc_vp)) {
 			dolock = 1;
-			vn_lock(vnd->sc_vp, 0);
+			vn_lock(vnd->sc_vp, LK_EXCLUSIVE | LK_RETRY);
 		}
 		error = VOP_BMAP(vnd->sc_vp, bn / bsize, &vp, &nbn, &nra);
 		if (dolock)
