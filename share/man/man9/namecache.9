@@ -1,4 +1,4 @@
-.\"     $NetBSD: namecache.9,v 1.5 2002/08/06 13:01:04 wiz Exp $
+.\"     $NetBSD: namecache.9,v 1.6 2002/10/14 13:37:57 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -69,20 +69,21 @@
 .Sh DESCRIPTION
 The name lookup cache is the mechanism to allow the file system type
 dependent algorithms to quickly resolve a file's vnode from its
-pathname.  The name lookup cache is generally accessed through the
-higher-level
+pathname.
+The name lookup cache is generally accessed through the higher-level
 .Xr namei 9
 interface.
 .Pp
 The name of the file is used to lookup an entry associated with the
-file in the name lookup cache.  If no entry is found, one is created
-for it.  If an entry is found, the information obtained from the cache
-lookup contains information about the file which is useful to the file
-system type dependent functions.
+file in the name lookup cache.
+If no entry is found, one is created for it.
+If an entry is found, the information obtained from the cache lookup
+contains information about the file which is useful to the file system
+type dependent functions.
 .Pp
 The name lookup cache is managed by a least recently used (LRU)
-algorithm so frequently used names will hang around.  The cache itself
-is a hash table called
+algorithm so frequently used names will hang around.
+The cache itself is a hash table called
 .Va nchashtbl ,
 containing
 .Em namecache
@@ -114,14 +115,15 @@ entry can appear on two hash chains in addition to
 .Em ncvhashtbl
 (the name cache directory hash chain), and
 .Em nclruhead
-(the name cache LRU chain).  The hash chains are indexed by a hash
-value obtained from the file's name and the address of its parent
-directory vnode.
+(the name cache LRU chain).
+The hash chains are indexed by a hash value obtained from the file's
+name and the address of its parent directory vnode.
 .Pp
 Functions which access to the name cache pass arguments in the
 partially initialised
 .Em componentname
-structure.  See
+structure.
+See
 .Xr vnodeops 9
 for details on this structure.
 .Sh FUNCTIONS
@@ -139,13 +141,15 @@ points to the name of the entry being sought,
 .Fa cnp-\*[Gt]cn_namelen
 tells the length of the name, and
 .Fa cnp-\*[Gt]cn_hash
-contains a hash of the name.  If the lookup succeeds, the vnode is
-locked, sotred in
+contains a hash of the name.
+If the lookup succeeds, the vnode is locked, stored in
 .Fa vpp
-and a status of zero is returned.  If the locking fails for whatever
-reason, the vnode is unlocked and the error is returned.  If the
-lookup determines that the name does not exist any longer, a status of
-ENOENT is returned.  If the lookup fails, a status of -1 is returned.
+and a status of zero is returned.
+If the locking fails for whatever reason, the vnode is unlocked and the
+error is returned.
+If the lookup determines that the name does not exist any longer, a
+status of ENOENT is returned.
+If the lookup fails, a status of -1 is returned.
 .It Fn cache_revlookup "vp" "dvp" "bpp" "bufp"
 Scan cache looking for name of directory entry pointing at
 .Fa vp
@@ -157,8 +161,8 @@ is non-NULL, also place the name in the buffer which starts at
 .Fa bufp ,
 immediately before
 .Fa bpp ,
-and move bpp backwards to point at the start of it.  Returns 0 on
-success, -1 on cache miss, positive errno on failure.
+and move bpp backwards to point at the start of it.
+Returns 0 on success, -1 on cache miss, positive errno on failure.
 .It Fn cache_enter "dvp" "vp" "cnp"
 Add an entry to the cache.
 .Fn cache_enter
@@ -198,7 +202,8 @@ is only defined if the kernel option DDB is compiled into the kernel.
 This section describes places within the
 .Nx
 source tree where actual code implementing or utilising the name
-lookup cache can be found.  All pathnames are relative to
+lookup cache can be found.
+All pathnames are relative to
 .Pa /usr/src .
 .Pp
 The name lookup cache is implemented within the file
