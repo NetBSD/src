@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.131 2000/04/10 00:48:35 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.132 2000/05/23 05:12:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.131 2000/04/10 00:48:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.132 2000/05/23 05:12:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -737,8 +737,8 @@ do {									\
  *
  *	Increment or decrement a pmap statistic.
  */
-#define	PMAP_STAT_INCR(s, v)	alpha_atomic_add_q((unsigned long *)(&(s)), (v))
-#define	PMAP_STAT_DECR(s, v)	alpha_atomic_sub_q((unsigned long *)(&(s)), (v))
+#define	PMAP_STAT_INCR(s, v)	atomic_add_ulong((unsigned long *)(&(s)), (v))
+#define	PMAP_STAT_DECR(s, v)	atomic_sub_ulong((unsigned long *)(&(s)), (v))
 
 /*
  * pmap_bootstrap:
@@ -980,7 +980,7 @@ pmap_bootstrap(ptaddr, maxasn, ncpuids)
 	/*
 	 * Mark the kernel pmap `active' on this processor.
 	 */
-	alpha_atomic_setbits_q(&pmap_kernel()->pm_cpus,
+	atomic_setbits_ulong(&pmap_kernel()->pm_cpus,
 	    (1UL << cpu_number()));
 }
 
@@ -2275,7 +2275,7 @@ pmap_activate(p)
 	/*
 	 * Mark the pmap in use by this processor.
 	 */
-	alpha_atomic_setbits_q(&pmap->pm_cpus, (1UL << cpu_id));
+	atomic_setbits_ulong(&pmap->pm_cpus, (1UL << cpu_id));
 
 	/*
 	 * Move the pmap to the end of the LRU list.
@@ -2321,7 +2321,7 @@ pmap_deactivate(p)
 	/*
 	 * Mark the pmap no longer in use by this processor.
 	 */
-	alpha_atomic_clearbits_q(&pmap->pm_cpus, (1UL << cpu_number()));
+	atomic_clearbits_ulong(&pmap->pm_cpus, (1UL << cpu_number()));
 }
 
 /*
@@ -3983,7 +3983,7 @@ pmap_asn_alloc(pmap, cpu_id)
 	 * Have a new ASN, so there's no need to sync the I-stream
 	 * on the way back out to userspace.
 	 */
-	alpha_atomic_clearbits_q(&pmap->pm_needisync, (1UL << cpu_id));
+	atomic_clearbits_ulong(&pmap->pm_needisync, (1UL << cpu_id));
 #endif
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.14 2000/02/05 00:07:30 cgd Exp $ */
+/* $NetBSD: types.h,v 1.15 2000/05/23 05:12:56 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -72,5 +72,6 @@ typedef int64_t			register_t;
 
 #define __HAVE_DEVICE_REGISTER
 #define __HAVE_NWSCONS
+#define	__HAVE_ATOMIC_OPERATIONS
 
 #endif	/* _MACHTYPES_H_ */

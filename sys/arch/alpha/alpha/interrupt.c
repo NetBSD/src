@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.43 2000/02/29 21:42:54 thorpej Exp $ */
+/* $NetBSD: interrupt.c,v 1.44 2000/05/23 05:12:53 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.43 2000/02/29 21:42:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.44 2000/05/23 05:12:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,7 @@ interrupt(a0, a1, a2, framep)
 		}
 #endif
 
-		pending_ipis = alpha_atomic_loadlatch_q(&ci->ci_ipis, 0);
+		pending_ipis = atomic_loadlatch_ulong(&ci->ci_ipis, 0);
 		for (bit = 0; bit < ALPHA_NIPIS; bit++)
 			if (pending_ipis & (1UL << bit))
 				(*ipifuncs[bit])();

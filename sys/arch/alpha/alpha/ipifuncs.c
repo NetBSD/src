@@ -1,4 +1,4 @@
-/* $NetBSD: ipifuncs.c,v 1.9 1999/12/02 01:09:11 thorpej Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.10 2000/05/23 05:12:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.9 1999/12/02 01:09:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.10 2000/05/23 05:12:54 thorpej Exp $");
 
 /*
  * Interprocessor interrupt handlers.
@@ -90,7 +90,7 @@ alpha_send_ipi(cpu_id, ipimask)
 		panic("alpha_sched_ipi: bogus cpu_id");
 #endif
 
-	alpha_atomic_setbits_q(&cpu_info[cpu_id].ci_ipis, ipimask);
+	atomic_setbits_ulong(&cpu_info[cpu_id].ci_ipis, ipimask);
 printf("SENDING IPI TO %lu\n", cpu_id);
 	alpha_pal_wripir(cpu_id);
 printf("IPI SENT\n");
@@ -122,7 +122,7 @@ alpha_ipi_halt()
 	(void) splhigh();
 
 	printf("%s: shutting down...\n", cpu_info[cpu_id].ci_dev->dv_xname);
-	alpha_atomic_clearbits_q(&cpus_running, (1UL << cpu_id));
+	atomic_clearbits_ulong(&cpus_running, (1UL << cpu_id));
 
 	pcsp->pcs_flags &= ~(PCS_RC | PCS_HALT_REQ);
 	pcsp->pcs_flags |= PCS_HALT_STAY_HALTED;
@@ -136,7 +136,7 @@ alpha_ipi_tbia()
 	u_long cpu_id = alpha_pal_whami();
 
 	/* If we're doing a TBIA, we don't need to do a TBIAP or a SHOOTDOWN. */
-	alpha_atomic_clearbits_q(&cpu_info[cpu_id].ci_ipis,
+	atomic_clearbits_ulong(&cpu_info[cpu_id].ci_ipis,
 	    ALPHA_IPI_TBIAP|ALPHA_IPI_SHOOTDOWN);
 
 	ALPHA_TBIA();
