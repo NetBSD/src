@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)env.c	5.3 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: env.c,v 1.4 1993/08/27 22:30:23 jtc Exp $";
+static char rcsid[] = "$Id: env.c,v 1.5 1993/11/10 20:06:00 jtc Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -47,6 +47,7 @@ static char rcsid[] = "$Id: env.c,v 1.4 1993/08/27 22:30:23 jtc Exp $";
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
+#include <err.h>
 
 static void usage();
 
@@ -61,7 +62,7 @@ main(argc, argv)
 	char *cleanenv[1];
 	int ch;
 
-	while ((ch = getopt(argc, argv, "-i")) != EOF)
+	while ((ch = getopt(argc, argv, "-i")) != -1)
 		switch((char)ch) {
 		case '-':			/* obsolete */
 		case 'i':
@@ -79,12 +80,10 @@ main(argc, argv)
 	if (*argv) {
 		/* return 127 if the command to be run could not be found; 126
 		   if the command was was found but could not be invoked */
-		int status;
 
 		execvp(*argv, argv);
-		status = (errno == ENOENT) ? 127 : 126;
-		(void)fprintf(stderr, "env: %s: %s\n", *argv, strerror(errno));
-		exit(status);
+		err((errno == ENOENT) ? 127 : 126, "%s", *argv);
+		/* NOTREACHED */
 	}
 
 	for (ep = environ; *ep; ep++)
