@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.173.2.1 2000/06/29 15:05:57 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.173.2.2 2000/07/19 00:25:26 jeffs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.173.2.1 2000/06/29 15:05:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.173.2.2 2000/07/19 00:25:26 jeffs Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -126,7 +126,6 @@ int	safepri = MIPS3_PSL_LOWIPL;	/* XXX */
 struct splvec	splvec;			/* XXX will go XXX */
 
 void	mach_init __P((int, char *[], int, int, u_int, char *)); /* XXX */
-void	cpu_intr  __P((u_int32_t, u_int32_t, u_int32_t, u_int32_t));
 
 /* Motherboard or system-specific initialization vector */
 static void	unimpl_bus_reset __P((void));
