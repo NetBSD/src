@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.3 2001/09/10 21:19:41 chris Exp $	*/
+/*	$NetBSD: bus.c,v 1.4 2001/11/30 17:49:10 fredette Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette.
@@ -230,8 +230,8 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	vaddr_t low, high;
 	struct pglist *mlist;
 	int error;
-extern	vm_offset_t avail_start;
-extern	vm_offset_t avail_end;
+extern	paddr_t avail_start;
+extern	paddr_t avail_end;
 
 	/* Always round the size. */
 	size = m68k_round_page(size);
@@ -520,8 +520,8 @@ static int	sun68k_bus_unmap __P((bus_space_tag_t, bus_space_handle_t,
 static int	sun68k_bus_subregion __P((bus_space_tag_t, bus_space_handle_t,
 					 bus_size_t, bus_size_t,
 					 bus_space_handle_t *));
-static int	sun68k_bus_mmap __P((bus_space_tag_t, bus_type_t,
-				    bus_addr_t, int, bus_space_handle_t *));
+static paddr_t	sun68k_bus_mmap __P((bus_space_tag_t, bus_type_t,
+				    bus_addr_t, off_t, int, int));
 static void	*sun68k_mainbus_intr_establish __P((bus_space_tag_t, int, int,
 						   int, int (*) __P((void *)),
 						   void *));
@@ -699,16 +699,18 @@ sun68k_bus_subregion(tag, handle, offset, size, nhandlep)
 	return (0);
 }
 
-int
-sun68k_bus_mmap(t, iospace, paddr, flags, hp)
+paddr_t
+sun68k_bus_mmap(t, iospace, paddr, offset, prot, flags)
 	bus_space_tag_t t;
 	bus_type_t	iospace;
 	bus_addr_t	paddr;
+	off_t		offset;
+	int		prot;
 	int		flags;
-	bus_space_handle_t *hp;
 {
-	*hp = (bus_space_handle_t)(paddr | iospace | PMAP_NC);
-	return (0);
+	paddr_t npaddr;
+	npaddr = m68k_trunc_page(paddr + offset);
+	return (npaddr | (paddr_t)iospace | PMAP_NC);
 }
 
 /*
