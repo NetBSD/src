@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.41 2000/07/19 10:05:43 enami Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.42 2001/01/05 02:02:58 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.41 2000/07/19 10:05:43 enami Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.42 2001/01/05 02:02:58 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -527,7 +527,7 @@ parse(string, flags)
 			}
 			/* FALLTHROUGH */
 		case CTLTYPE_QUAD:
-			sscanf(newval, "%qd", (long long *)&quadval);
+			sscanf(newval, "%lld", (long long *)&quadval);
 			newval = &quadval;
 			newsize = sizeof quadval;
 			break;
@@ -633,7 +633,7 @@ parse(string, flags)
 if ((lim) == RLIM_INFINITY) \
 	printf("unlimited");\
 else \
-	printf("%qd", (lim)); \
+	printf("%lld", (long long)(lim)); \
 }
 
 		if (newsize == 0) {
@@ -656,12 +656,12 @@ else \
 		if (newsize == 0) {
 			if (!nflag)
 				printf("%s = ", string);
-			printf("%qd\n", (long long)(*(quad_t *)buf));
+			printf("%lld\n", (long long)(*(quad_t *)buf));
 		} else {
 			if (!nflag)
-				printf("%s: %qd -> ", string,
+				printf("%s: %lld -> ", string,
 				    (long long)(*(quad_t *)buf));
-			printf("%qd\n", (long long)(*(quad_t *)newval));
+			printf("%lld\n", (long long)(*(quad_t *)newval));
 		}
 		return;
 
