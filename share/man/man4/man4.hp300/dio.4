@@ -1,4 +1,4 @@
-.\"     $NetBSD: dio.4,v 1.1 2001/09/11 06:30:03 gmcgarry Exp $
+.\"     $NetBSD: dio.4,v 1.2 2002/01/15 01:31:30 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -51,7 +51,6 @@ workstations.
 includes
 .Tn DIO
 drivers, sorted by device type and driver name:
-.Pp
 .Ss Framebuffers
 .Bl -tag -width XXXXXX -offset indent
 .It dvbox
@@ -70,7 +69,6 @@ drivers, sorted by device type and driver name:
 .Tn HP98544
 98550 ``Topcat'' and ``Catseye'' device interface
 .El
-.Pp
 .Ss Serial interfaces
 .Bl -tag -width XXXXXX -offset indent
 .It dca
@@ -80,14 +78,12 @@ serial communications interface
 .Tn HP98642A
 serial communications multiplexer
 .El
-.Pp
 .Ss Network interfaces
 .Bl -tag -width XXXXXX -offset indent
 .It le
 .Tn HP98643
 built-in and add-on Ethernet boards
 .El
-.Pp
 .Ss HP-IB interfaces
 .Bl -tag -width XXXXXXe -offset indent
 .It fhpib
@@ -95,13 +91,11 @@ built-in and add-on Ethernet boards
 .It nhpib
 ``normal'' HP-IB interface
 .El
-.Pp
 .Ss SCSI interfaces
 .Bl -tag -width XXXXXX -offset indent
 .It oscsi
 Old HP300 SCSI driver
 .El
-.Pp
 .Sh SEE ALSO
 .Xr dca 4 ,
 .Xr dcm 4 ,
