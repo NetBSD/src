@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.3 2003/09/26 22:46:01 nathanw Exp $	*/
+/*	$NetBSD: lock.h,v 1.4 2003/10/26 11:15:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -117,5 +117,9 @@ __cpu_simple_unlock(__cpu_simple_lock_t *lockp)
 }
 
 #endif /* !LOCKDEBUG */
+
+#ifdef _KERNEL
+#define	SPINLOCK_SPIN_HOOK	x86_pause()
+#endif
 
 #endif /* _I386_LOCK_H_ */
