@@ -1,4 +1,4 @@
-/*	$NetBSD: rf.c,v 1.3 2003/07/14 15:47:26 lukem Exp $	*/
+/*	$NetBSD: rf.c,v 1.4 2003/08/13 08:08:48 ragge Exp $	*/
 /*
  * Copyright (c) 2002 Jochen Kunz.
  * All rights reserved.
@@ -36,7 +36,7 @@ TODO:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.3 2003/07/14 15:47:26 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.4 2003/08/13 08:08:48 ragge Exp $");
 
 /* autoconfig stuff */
 #include <sys/param.h>
@@ -87,6 +87,11 @@ __KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.3 2003/07/14 15:47:26 lukem Exp $");
 #define	RFS_REC		0x0090		/* Read Error Code */
 #define	RFS_IDLE	0x00a0		/* controller is idle */
 #define	RFS_CMDS	0x00f0		/* command mask */
+#define	RFS_OPEN_A	0x0100		/* partition a open */
+#define	RFS_OPEN_B	0x0200		/* partition b open */
+#define	RFS_OPEN_C	0x0400		/* partition c open */
+#define	RFS_OPEN_MASK	0x0f00		/* mask for open partitions */
+#define RFS_OPEN_SHIFT	8		/* to shift 1 to get RFS_OPEN_A */
 #define	RFS_SETCMD(rf, state)	((rf) = ((rf) & ~RFS_CMDS) | (state))
 
 
@@ -169,7 +174,6 @@ struct rf_softc {
 	struct disk sc_disk;		/* common disk device data */
 	struct bufq_state sc_bufq;	/* queue of pending transfers */
 	int sc_state;			/* state of drive */
-	int sc_open;			/* simultaneous opens */
 	u_int8_t sc_dnum;		/* drive number, 0 or 1 */
 };
 
@@ -201,6 +205,7 @@ struct dkdriver rfdkdriver = {
 
 /* helper functions */
 int rfc_sendcmd(struct rfc_softc *, int, int, int);
+struct rf_softc* get_new_buf( struct rfc_softc *);
 static void rfc_intr(void *);
 
 
@@ -343,7 +348,7 @@ rfc_attach(struct device *parent, struct device *self, void *aux)
 	i = bus_dmamap_create(rfc_sc->sc_dmat, RX2_BYTE_DD, 1, RX2_BYTE_DD, 0,
 	    BUS_DMA_ALLOCNOW, &rfc_sc->sc_dmam);
 	if (i != 0) {
-		printf("rfc_attach: Error creating bus DMA map: %d\n", i);
+		printf("rfc_attach: Error creating bus dma map: %d\n", i);
 		return;
 	}
 
@@ -446,7 +451,6 @@ rf_attach(struct device *parent, struct device *self, void *aux)
 	rfc_sc = (struct rfc_softc *)rf_sc->sc_dev.dv_parent;
 	rf_sc->sc_dnum = rfc_aa->dnum;
 	rf_sc->sc_state = 0;
-	rf_sc->sc_open = 0;
 	rf_sc->sc_disk.dk_name = rf_sc->sc_dev.dv_xname;
 	rf_sc->sc_disk.dk_driver = &rfdkdriver;
 	disk_attach(&rf_sc->sc_disk);
@@ -567,9 +571,11 @@ rfstrategy(struct buf *buf)
 	}
 	rfc_sc = (struct rfc_softc *)rf_sc->sc_dev.dv_parent;
 	/* We are going to operate on a non open dev? PANIC! */
-	if (rf_sc->sc_open == 0)
-		panic("rfstrategy: can not operate on non-open drive %s (1)",
-		    rf_sc->sc_dev.dv_xname);
+	if ((rf_sc->sc_state & 1 << (DISKPART(buf->b_dev) + RFS_OPEN_SHIFT)) 
+	    == 0)
+		panic("rfstrategy: can not operate on non-open drive %s "
+		    "partition %d", rf_sc->sc_dev.dv_xname, 
+		    DISKPART(buf->b_dev));
 	if (buf->b_bcount == 0) {
 		biodone(buf);
 		return;
@@ -595,10 +601,49 @@ rfstrategy(struct buf *buf)
 	} else {
 		buf->b_resid = buf->b_blkno / RX2_SECTORS;
 		BUFQ_PUT(&rf_sc->sc_bufq, buf);
-		rfc_sc->sc_curbuf->b_resid = 0;
+		buf->b_resid = 0;
 	}
 	splx(i);
 	return;
+}
+
+
+
+/*
+ * Look if there is an other buffer in the bufferqueue of this drive
+ * and start to process it if there is one.
+ * If the bufferqueue is empty, look at the bufferqueue of the other drive
+ * that is attached to this controller. 
+ * Start procesing the bufferqueue of the other drive if it isn't empty. 
+ * Return a pointer to the softc structure of the drive that is now 
+ * ready to process a buffer or NULL if there is no buffer in either queues.
+ */
+struct rf_softc*
+get_new_buf( struct rfc_softc *rfc_sc) 
+{
+	struct rf_softc *rf_sc;
+	struct rf_softc *other_drive;
+
+	rf_sc = (struct rf_softc *)rfc_sc->sc_childs[rfc_sc->sc_curchild];
+	rfc_sc->sc_curbuf = BUFQ_GET(&rf_sc->sc_bufq);
+	if (rfc_sc->sc_curbuf != NULL) {
+		rfc_sc->sc_bufidx = rfc_sc->sc_curbuf->b_un.b_addr;
+		rfc_sc->sc_bytesleft = rfc_sc->sc_curbuf->b_bcount;
+	} else {
+		RFS_SETCMD(rf_sc->sc_state, RFS_IDLE);
+		other_drive = (struct rf_softc *)
+		    rfc_sc->sc_childs[ rfc_sc->sc_curchild == 0 ? 1 : 0];
+		if (other_drive != NULL 
+		    && BUFQ_PEEK(&other_drive->sc_bufq) != NULL) {
+			rfc_sc->sc_curchild = rfc_sc->sc_curchild == 0 ? 1 : 0;
+			rf_sc = other_drive;
+			rfc_sc->sc_curbuf = BUFQ_GET(&rf_sc->sc_bufq);
+			rfc_sc->sc_bufidx = rfc_sc->sc_curbuf->b_un.b_addr;
+			rfc_sc->sc_bytesleft = rfc_sc->sc_curbuf->b_bcount;
+		} else
+			return(NULL);
+	}
+	return(rf_sc);
 }
 
 
@@ -608,314 +653,284 @@ rfc_intr(void *intarg)
 {
 	struct rfc_softc *rfc_sc = intarg;
 	struct rf_softc *rf_sc;
-	struct rf_softc *other_drive;
 	int i;
 
 	rf_sc = (struct rf_softc *)rfc_sc->sc_childs[rfc_sc->sc_curchild];
-	/*
-	 * First clean up from previous command...
-	 */
-	switch (rf_sc->sc_state & RFS_CMDS) {
-	case RFS_PROBING:	/* density detect / verify started */
-		disk_unbusy(&rf_sc->sc_disk, 0, 1);
-		if ((bus_space_read_2(rfc_sc->sc_iot, rfc_sc->sc_ioh, RX2CS)
-		    & RX2CS_ERR) == 0) {
-			RFS_SETCMD(rf_sc->sc_state, RFS_IDLE);
-			wakeup(rf_sc);
-		} else {
-			if (rfc_sc->type == 2
-			    && (rf_sc->sc_state & RFS_DENS) == 0
-			    && (rf_sc->sc_state & RFS_AD) != 0) {
-				/* retry at DD */
-				rf_sc->sc_state |= RFS_DENS;
-				disk_busy(&rf_sc->sc_disk);
-				if (rfc_sendcmd(rfc_sc, RX2CS_RSEC | RX2CS_IE
-				    | RX2CS_DD | (rf_sc->sc_dnum == 0
-				    ? 0 : RX2CS_US), 1, 1) < 0) {
-					rfc_sc->sc_curbuf->b_flags |= B_ERROR;
-					RFS_SETCMD(rf_sc->sc_state,
-					    RFS_NOTINIT);
+	do {
+		/*
+		 * First clean up from previous command...
+		 */
+		switch (rf_sc->sc_state & RFS_CMDS) {
+		case RFS_PROBING:	/* density detect / verify started */
+			disk_unbusy(&rf_sc->sc_disk, 0, 1);
+			if ((bus_space_read_2(rfc_sc->sc_iot, rfc_sc->sc_ioh,
+			    RX2CS) & RX2CS_ERR) == 0) {
+				RFS_SETCMD(rf_sc->sc_state, RFS_IDLE);
+				wakeup(rf_sc);
+			} else {
+				if (rfc_sc->type == 2
+				    && (rf_sc->sc_state & RFS_DENS) == 0
+				    && (rf_sc->sc_state & RFS_AD) != 0) {
+					/* retry at DD */
+					rf_sc->sc_state |= RFS_DENS;
+					disk_busy(&rf_sc->sc_disk);
+					if (rfc_sendcmd(rfc_sc, RX2CS_RSEC 
+					    | RX2CS_IE | RX2CS_DD | 
+					    (rf_sc->sc_dnum == 0 ? 0 : 
+					    RX2CS_US), 1, 1) < 0) {
+						disk_unbusy(&rf_sc->sc_disk, 
+						    0, 1);
+						RFS_SETCMD(rf_sc->sc_state,
+						    RFS_NOTINIT);
+						wakeup(rf_sc);
+					}
+				} else {
+					printf("%s: density error.\n",
+					    rf_sc->sc_dev.dv_xname);
+					RFS_SETCMD(rf_sc->sc_state,RFS_NOTINIT);
 					wakeup(rf_sc);
 				}
-			} else {
-				printf("%s: density error.\n",
-				    rf_sc->sc_dev.dv_xname);
+			}
+			return;
+		case RFS_IDLE:	/* controller is idle */
+			if (rfc_sc->sc_curbuf->b_bcount
+			    % ((rf_sc->sc_state & RFS_DENS) == 0
+			    ? RX2_BYTE_SD : RX2_BYTE_DD) != 0) {
+				/*
+				 * can only handle blocks that are a multiple 
+				 * of the physical block size
+				 */
 				rfc_sc->sc_curbuf->b_flags |= B_ERROR;
-				RFS_SETCMD(rf_sc->sc_state, RFS_NOTINIT);
-				wakeup(rf_sc);
 			}
+			RFS_SETCMD(rf_sc->sc_state, (rfc_sc->sc_curbuf->b_flags
+			    & B_READ) != 0 ? RFS_RSEC : RFS_FBUF);
+			break;
+		case RFS_RSEC:	/* Read Sector */
+			disk_unbusy(&rf_sc->sc_disk, 0, 1);
+			/* check for errors */
+			if ((bus_space_read_2(rfc_sc->sc_iot, rfc_sc->sc_ioh, 
+			    RX2CS) & RX2CS_ERR) != 0) {
+				/* should do more verbose error reporting */
+				printf("rfc_intr: Error reading secotr: %x\n", 
+				    bus_space_read_2(rfc_sc->sc_iot,
+				    rfc_sc->sc_ioh, RX2ES) );
+				rfc_sc->sc_curbuf->b_flags |= B_ERROR;
+			}
+			RFS_SETCMD(rf_sc->sc_state, RFS_EBUF);
+			break;
+		case RFS_WSEC:	/* Write Sector */
+			i = (rf_sc->sc_state & RFS_DENS) == 0
+				? RX2_BYTE_SD : RX2_BYTE_DD;
+			disk_unbusy(&rf_sc->sc_disk, i, 0);
+			/* check for errors */
+			if ((bus_space_read_2(rfc_sc->sc_iot, rfc_sc->sc_ioh, 
+			    RX2CS) & RX2CS_ERR) != 0) {
+				/* should do more verbose error reporting */
+				printf("rfc_intr: Error writing secotr: %x\n",
+				    bus_space_read_2(rfc_sc->sc_iot,
+				    rfc_sc->sc_ioh, RX2ES) );
+				rfc_sc->sc_curbuf->b_flags |= B_ERROR;
+				break;
+			}
+			if (rfc_sc->sc_bytesleft > i) {
+				rfc_sc->sc_bytesleft -= i;
+				rfc_sc->sc_bufidx += i;
+			} else {
+				biodone(rfc_sc->sc_curbuf);
+				rf_sc = get_new_buf( rfc_sc);
+				if (rf_sc == NULL)
+					return;
+			}
+			RFS_SETCMD(rf_sc->sc_state,
+			    (rfc_sc->sc_curbuf->b_flags & B_READ) != 0
+			    ? RFS_RSEC : RFS_FBUF);
+			break;
+		case RFS_FBUF:	/* Fill Buffer */
+			disk_unbusy(&rf_sc->sc_disk, 0, 0);
+			bus_dmamap_unload(rfc_sc->sc_dmat, rfc_sc->sc_dmam);
+			/* check for errors */
+			if ((bus_space_read_2(rfc_sc->sc_iot, rfc_sc->sc_ioh, 
+			    RX2CS) & RX2CS_ERR) != 0) {
+				/* should do more verbose error reporting */
+				printf("rfc_intr: Error while DMA: %x\n",
+				    bus_space_read_2(rfc_sc->sc_iot,
+				    rfc_sc->sc_ioh, RX2ES));
+				rfc_sc->sc_curbuf->b_flags |= B_ERROR;
+			}
+			RFS_SETCMD(rf_sc->sc_state, RFS_WSEC);
+			break;
+		case RFS_EBUF:	/* Empty Buffer */
+			i = (rf_sc->sc_state & RFS_DENS) == 0
+			    ? RX2_BYTE_SD : RX2_BYTE_DD;
+			disk_unbusy(&rf_sc->sc_disk, i, 1);
+			bus_dmamap_unload(rfc_sc->sc_dmat, rfc_sc->sc_dmam);
+			/* check for errors */
+			if ((bus_space_read_2(rfc_sc->sc_iot, rfc_sc->sc_ioh, 
+			    RX2CS) & RX2CS_ERR) != 0) {
+				/* should do more verbose error reporting */
+				printf("rfc_intr: Error while DMA: %x\n",
+				    bus_space_read_2(rfc_sc->sc_iot,
+				    rfc_sc->sc_ioh, RX2ES));
+				rfc_sc->sc_curbuf->b_flags |= B_ERROR;
+				break;
+			}
+			if (rfc_sc->sc_bytesleft > i) {
+				rfc_sc->sc_bytesleft -= i;
+				rfc_sc->sc_bufidx += i;
+			} else {
+				biodone(rfc_sc->sc_curbuf);
+				rf_sc = get_new_buf( rfc_sc);
+				if (rf_sc == NULL)
+					return;
+			}
+			RFS_SETCMD(rf_sc->sc_state,
+			    (rfc_sc->sc_curbuf->b_flags & B_READ) != 0
+			    ? RFS_RSEC : RFS_FBUF);
+			break;
+		case RFS_NOTINIT: /* Device is not open */
+		case RFS_SMD:	/* Set Media Density */
+		case RFS_RSTAT:	/* Read Status */
+		case RFS_WDDS:	/* Write Deleted Data Sector */
+		case RFS_REC:	/* Read Error Code */
+		default:
+			panic("Impossible state in rfc_intr(1).\n");	
 		}
-		return;
-	case RFS_IDLE:	/* controller is idle */
-		if (rfc_sc->sc_curbuf->b_bcount
-		    % ((rf_sc->sc_state & RFS_DENS) == 0
-		    ? RX2_BYTE_SD : RX2_BYTE_DD) != 0) {
-			/*
-			 * can only handle blocks that are a multiple of the
-			 * physical block size
+
+		if ((rfc_sc->sc_curbuf->b_flags & B_ERROR) != 0) {
+			/* 
+			 * An error occured while processing this buffer. 
+			 * Finish it and try to get a new buffer to process.
+			 * Return if there are no buffers in the queues.
+			 * This loops until the queues are empty or a new
+			 * action was successfully scheduled.
 			 */
-			rfc_sc->sc_curbuf->b_flags |= B_ERROR;
-			break;
-		}
-		RFS_SETCMD(rf_sc->sc_state, (rfc_sc->sc_curbuf->b_flags
-		    & B_READ) != 0 ? RFS_RSEC : RFS_FBUF);
-		break;
-	case RFS_RSEC:	/* Read Sector */
-		disk_unbusy(&rf_sc->sc_disk, 0, 1);
-		/* check for errors */
-		if ((bus_space_read_2(rfc_sc->sc_iot, rfc_sc->sc_ioh, RX2CS)
-		    & RX2CS_ERR) != 0) {
-			/* should do more verbose error reporting */
-			printf("rfc_intr: Error while reading secotr: %x\n",
-			    bus_space_read_2(rfc_sc->sc_iot,
-			    rfc_sc->sc_ioh, RX2ES) );
-			rfc_sc->sc_curbuf->b_flags |= B_ERROR;
-			break;
-		}
-		RFS_SETCMD(rf_sc->sc_state, RFS_EBUF);
-		break;
-	case RFS_WSEC:	/* Write Sector */
-		i = (rf_sc->sc_state & RFS_DENS) == 0
-			? RX2_BYTE_SD : RX2_BYTE_DD;
-		disk_unbusy(&rf_sc->sc_disk, i, 0);
-		/* check for errors */
-		if ((bus_space_read_2(rfc_sc->sc_iot, rfc_sc->sc_ioh, RX2CS)
-		    & RX2CS_ERR) != 0) {
-			/* should do more verbose error reporting */
-			printf("rfc_intr: Error while writing secotr: %x\n",
-			    bus_space_read_2(rfc_sc->sc_iot,
-			    rfc_sc->sc_ioh, RX2ES) );
-			rfc_sc->sc_curbuf->b_flags |= B_ERROR;
-			break;
-		}
-		if (rfc_sc->sc_bytesleft > i) {
-			rfc_sc->sc_bytesleft -= i;
-			rfc_sc->sc_bufidx += i;
-		} else {
-			biodone(rfc_sc->sc_curbuf);
-			rfc_sc->sc_curbuf = BUFQ_GET(&rf_sc->sc_bufq);
-			if (rfc_sc->sc_curbuf != NULL) {
-				rfc_sc->sc_bufidx =
-				    rfc_sc->sc_curbuf->b_un.b_addr;
-				rfc_sc->sc_bytesleft =
-				    rfc_sc->sc_curbuf->b_bcount;
-			} else {
-				RFS_SETCMD(rf_sc->sc_state, RFS_IDLE);
-				/*
-				 * Switch to the other drive if there where
-				 * buffers queued while we where working on
-				 * the buffer queue of this drive
-				 */
-				other_drive = (struct rf_softc *)
-				    rfc_sc->sc_childs[
-				    rfc_sc->sc_curchild == 0 ? 1 : 0];
-				if (other_drive != NULL && BUFQ_PEEK(
-					&other_drive->sc_bufq) != NULL) {
-					rfc_sc->sc_curchild =
-					    rfc_sc->sc_curchild == 0 ? 1 : 0;
-					rf_sc = other_drive;
-					rfc_sc->sc_curbuf =
-					    BUFQ_GET(&rf_sc->sc_bufq);
-					rfc_sc->sc_bufidx =
-					    rfc_sc->sc_curbuf->b_un.b_addr;
-					rfc_sc->sc_bytesleft =
-					    rfc_sc->sc_curbuf->b_bcount;
-				} else
-					return;
-			}
-		}
-		RFS_SETCMD(rf_sc->sc_state,
-		    (rfc_sc->sc_curbuf->b_flags & B_READ) != 0
-		    ? RFS_RSEC : RFS_FBUF);
-		break;
-	case RFS_FBUF:	/* Fill Buffer */
-		disk_unbusy(&rf_sc->sc_disk, 0, 0);
-		/* check for errors */
-		if ((bus_space_read_2(rfc_sc->sc_iot, rfc_sc->sc_ioh, RX2CS)
-		    & RX2CS_ERR) != 0) {
-			/* should do more verbose error reporting */
-			printf("rfc_intr: Error while DMA: %x\n",
-			    bus_space_read_2(rfc_sc->sc_iot,
-			    rfc_sc->sc_ioh, RX2ES));
-			rfc_sc->sc_curbuf->b_flags |= B_ERROR;
-		}
-		bus_dmamap_unload(rfc_sc->sc_dmat, rfc_sc->sc_dmam);
-		RFS_SETCMD(rf_sc->sc_state, RFS_WSEC);
-		break;
-	case RFS_EBUF:	/* Empty Buffer */
-		i = (rf_sc->sc_state & RFS_DENS) == 0
-		    ? RX2_BYTE_SD : RX2_BYTE_DD;
-		disk_unbusy(&rf_sc->sc_disk, i, 1);
-		/* check for errors */
-		if ((bus_space_read_2(rfc_sc->sc_iot, rfc_sc->sc_ioh, RX2CS)
-			& RX2CS_ERR) != 0) {
-			/* should do more verbose error reporting */
-			printf("rfc_intr: Error while DMA: %x\n",
-			    bus_space_read_2(rfc_sc->sc_iot,
-			    rfc_sc->sc_ioh, RX2ES));
-			rfc_sc->sc_curbuf->b_flags |= B_ERROR;
-		}
-		bus_dmamap_unload(rfc_sc->sc_dmat, rfc_sc->sc_dmam);
-		if (rfc_sc->sc_bytesleft > i) {
-			rfc_sc->sc_bytesleft -= i;
-			rfc_sc->sc_bufidx += i;
-		} else {
-			biodone(rfc_sc->sc_curbuf);
-			rfc_sc->sc_curbuf = BUFQ_GET(&rf_sc->sc_bufq);
-			if (rfc_sc->sc_curbuf != NULL) {
-				rfc_sc->sc_bufidx =
-				    rfc_sc->sc_curbuf->b_un.b_addr;
-				rfc_sc->sc_bytesleft =
-				    rfc_sc->sc_curbuf->b_bcount;
-			} else {
-				RFS_SETCMD(rf_sc->sc_state, RFS_IDLE);
-				/*
-				 * Switch to the other drive if there where
-				 * buffers queued while we where working on
-				 * the buffer queue of this drive
-				 */
-				other_drive = (struct rf_softc *)
-				    rfc_sc->sc_childs[
-				    rfc_sc->sc_curchild == 0 ? 1 : 0];
-				if (other_drive != NULL && BUFQ_PEEK(
-					&other_drive->sc_bufq) != NULL) {
-					rfc_sc->sc_curchild =
-					    rfc_sc->sc_curchild == 0 ? 1 : 0;
-					rf_sc = other_drive;
-					rfc_sc->sc_curbuf =
-					    BUFQ_GET(&rf_sc->sc_bufq);
-					rfc_sc->sc_bufidx =
-					    rfc_sc->sc_curbuf->b_un.b_addr;
-					rfc_sc->sc_bytesleft =
-					    rfc_sc->sc_curbuf->b_bcount;
-				} else
-					return;
-			}
-		}
-		RFS_SETCMD(rf_sc->sc_state,
-		    (rfc_sc->sc_curbuf->b_flags & B_READ) != 0
-		    ? RFS_RSEC : RFS_FBUF);
-		break;
-	case RFS_NOTINIT: /* Controller is idle and density is not detected. */
-	case RFS_SMD:	/* Set Media Density */
-	case RFS_RSTAT:	/* Read Status */
-	case RFS_WDDS:	/* Write Deleted Data Sector */
-	case RFS_REC:	/* Read Error Code */
-	default:
-		panic("Impossible state in rfc_intr(1).\n");	
-	}
-
-	if ((rfc_sc->sc_curbuf->b_flags & B_ERROR) != 0) {
-		rfc_sc->sc_curbuf->b_error = EIO;
-		biodone(rfc_sc->sc_curbuf);
-		rfc_sc->sc_curbuf = NULL;
-		RFS_SETCMD(rf_sc->sc_state, RFS_NOTINIT);
-		return;
-	}
-
-	/*
-	 * ... then initiate next command.
-	 */
-	switch (rf_sc->sc_state & RFS_CMDS) {
-	case RFS_NOTINIT: /* Controller is idle and density is not detected. */
-	case RFS_PROBING: /* density detect / verify started */
-	case RFS_IDLE:	/* controller is idle */
-		panic("Impossible state in rfc_intr(2).\n");	
-		break;
-	case RFS_EBUF:	/* Empty Buffer */
-		i = bus_dmamap_load(rfc_sc->sc_dmat, rfc_sc->sc_dmam,
-		    rfc_sc->sc_bufidx, (rf_sc->sc_state & RFS_DENS) == 0
-		    ? RX2_BYTE_SD : RX2_BYTE_DD, rfc_sc->sc_curbuf->b_proc,
-		    BUS_DMA_NOWAIT);
-		if (i != 0) {
-			printf("rfc_intr: Error while loading bus DMA map: "
-			    "%d\n", i);
-			rfc_sc->sc_curbuf->b_flags |= B_ERROR;
-			break;
-		}
-		disk_busy(&rf_sc->sc_disk);
-		if (rfc_sendcmd(rfc_sc, RX2CS_EBUF | RX2CS_IE
-		    | ((rf_sc->sc_state & RFS_DENS) == 0 ? 0 : RX2CS_DD)
-		    | (rf_sc->sc_dnum == 0 ? 0 : RX2CS_US)
-		    | ((rfc_sc->sc_dmam->dm_segs[0].ds_addr & 0x30000)>>4),
-		    ((rf_sc->sc_state & RFS_DENS) == 0
-		    ? RX2_BYTE_SD : RX2_BYTE_DD) / 2,
-		    rfc_sc->sc_dmam->dm_segs[0].ds_addr & 0xffff) < 0) {
-			rfc_sc->sc_curbuf->b_flags |= B_ERROR;
-			bus_dmamap_unload(rfc_sc->sc_dmat, rfc_sc->sc_dmam);
-		}
-		break;
-	case RFS_FBUF:	/* Fill Buffer */
-		i = bus_dmamap_load(rfc_sc->sc_dmat, rfc_sc->sc_dmam,
-		    rfc_sc->sc_bufidx, (rf_sc->sc_state & RFS_DENS) == 0
-		    ? RX2_BYTE_SD : RX2_BYTE_DD,
-		    rfc_sc->sc_curbuf->b_proc, BUS_DMA_NOWAIT);
-		if (i != 0) {
-			printf("rfc_intr: Error while loading bus DMA map: "
-			    "%d\n", i);
-			rfc_sc->sc_curbuf->b_flags |= B_ERROR;
-			break;
-		}
-		disk_busy(&rf_sc->sc_disk);
-		if (rfc_sendcmd(rfc_sc, RX2CS_FBUF | RX2CS_IE
-		    | ((rf_sc->sc_state & RFS_DENS) == 0 ? 0 : RX2CS_DD)
-		    | (rf_sc->sc_dnum == 0 ? 0 : RX2CS_US)
-		    | ((rfc_sc->sc_dmam->dm_segs[0].ds_addr & 0x30000)>>4),
-		    ((rf_sc->sc_state & RFS_DENS) == 0
-		    ? RX2_BYTE_SD : RX2_BYTE_DD) / 2,
-		    rfc_sc->sc_dmam->dm_segs[0].ds_addr & 0xffff) < 0) {
-			rfc_sc->sc_curbuf->b_flags |= B_ERROR;
-			bus_dmamap_unload(rfc_sc->sc_dmat, rfc_sc->sc_dmam);
-		}
-		break;
-	case RFS_WSEC:	/* Write Sector */
-		i = (rfc_sc->sc_curbuf->b_bcount - rfc_sc->sc_bytesleft
-		    + rfc_sc->sc_curbuf->b_blkno * DEV_BSIZE) /
-		    ((rf_sc->sc_state & RFS_DENS) == 0
-		    ? RX2_BYTE_SD : RX2_BYTE_DD);
-		if (i > RX2_TRACKS * RX2_SECTORS) {
 			rfc_sc->sc_curbuf->b_resid = rfc_sc->sc_bytesleft;
-			rfc_sc->sc_curbuf->b_flags |= B_ERROR;
+			rfc_sc->sc_curbuf->b_error = EIO;
+			biodone(rfc_sc->sc_curbuf);
+			rf_sc = get_new_buf( rfc_sc);
+			if (rf_sc == NULL)
+				return;
+			continue;
 		}
-		disk_busy(&rf_sc->sc_disk);
-		if (rfc_sendcmd(rfc_sc, RX2CS_WSEC | RX2CS_IE
-		    | (rf_sc->sc_dnum == 0 ? 0 : RX2CS_US)
-		    | ((rf_sc->sc_state & RFS_DENS) == 0 ? 0 : RX2CS_DD),
-		    i % RX2_SECTORS + 1, i / RX2_SECTORS) < 0) {
-			rfc_sc->sc_curbuf->b_flags |= B_ERROR;
-		}
-		break;
-	case RFS_RSEC:	/* Read Sector */
-		i = (rfc_sc->sc_curbuf->b_bcount - rfc_sc->sc_bytesleft
-		    + rfc_sc->sc_curbuf->b_blkno * DEV_BSIZE) /
-		    ((rf_sc->sc_state & RFS_DENS) == 0
-		    ? RX2_BYTE_SD : RX2_BYTE_DD);
-		if (i > RX2_TRACKS * RX2_SECTORS) {
-			rfc_sc->sc_curbuf->b_resid = rfc_sc->sc_bytesleft;
-			rfc_sc->sc_curbuf->b_flags |= B_ERROR;
-		}
-		disk_busy(&rf_sc->sc_disk);
-		if (rfc_sendcmd(rfc_sc, RX2CS_RSEC | RX2CS_IE
-		    | (rf_sc->sc_dnum == 0 ? 0 : RX2CS_US)
-		    | ((rf_sc->sc_state & RFS_DENS) == 0 ? 0 : RX2CS_DD),
-		    i % RX2_SECTORS + 1, i / RX2_SECTORS) < 0) {
-			rfc_sc->sc_curbuf->b_flags |= B_ERROR;
-		}
-		break;
-	case RFS_SMD:	/* Set Media Density */
-	case RFS_RSTAT:	/* Read Status */
-	case RFS_WDDS:	/* Write Deleted Data Sector */
-	case RFS_REC:	/* Read Error Code */
-	default:
-		panic("Impossible state in rfc_intr(3).\n");	
-	}
 
-	if ((rfc_sc->sc_curbuf->b_flags & B_ERROR) != 0) {
-		rfc_sc->sc_curbuf->b_error = EIO;
-		biodone(rfc_sc->sc_curbuf);
-		rfc_sc->sc_curbuf = NULL;
-		RFS_SETCMD(rf_sc->sc_state, RFS_NOTINIT);
-	}
+		/*
+		 * ... then initiate next command.
+		 */
+		switch (rf_sc->sc_state & RFS_CMDS) {
+		case RFS_EBUF:	/* Empty Buffer */
+			i = bus_dmamap_load(rfc_sc->sc_dmat, rfc_sc->sc_dmam,
+			    rfc_sc->sc_bufidx, (rf_sc->sc_state & RFS_DENS) == 0
+			    ? RX2_BYTE_SD : RX2_BYTE_DD, 
+			    rfc_sc->sc_curbuf->b_proc, BUS_DMA_NOWAIT);
+			if (i != 0) {
+				printf("rfc_intr: Error loading dmamap: %d\n",
+				i);
+				rfc_sc->sc_curbuf->b_flags |= B_ERROR;
+				break;
+			}
+			disk_busy(&rf_sc->sc_disk);
+			if (rfc_sendcmd(rfc_sc, RX2CS_EBUF | RX2CS_IE
+			    | ((rf_sc->sc_state & RFS_DENS) == 0 ? 0 : RX2CS_DD)
+			    | (rf_sc->sc_dnum == 0 ? 0 : RX2CS_US)
+			    | ((rfc_sc->sc_dmam->dm_segs[0].ds_addr 
+			    & 0x30000) >>4), ((rf_sc->sc_state & RFS_DENS) == 0
+			    ? RX2_BYTE_SD : RX2_BYTE_DD) / 2,
+			    rfc_sc->sc_dmam->dm_segs[0].ds_addr & 0xffff) < 0) {
+				disk_unbusy(&rf_sc->sc_disk, 0, 1);
+				rfc_sc->sc_curbuf->b_flags |= B_ERROR;
+				bus_dmamap_unload(rfc_sc->sc_dmat, 
+				rfc_sc->sc_dmam);
+			}
+			break;
+		case RFS_FBUF:	/* Fill Buffer */
+			i = bus_dmamap_load(rfc_sc->sc_dmat, rfc_sc->sc_dmam,
+			    rfc_sc->sc_bufidx, (rf_sc->sc_state & RFS_DENS) == 0
+			    ? RX2_BYTE_SD : RX2_BYTE_DD,
+			    rfc_sc->sc_curbuf->b_proc, BUS_DMA_NOWAIT);
+			if (i != 0) {
+				printf("rfc_intr: Error loading dmamap: %d\n", 
+				    i);
+				rfc_sc->sc_curbuf->b_flags |= B_ERROR;
+				break;
+			}
+			disk_busy(&rf_sc->sc_disk);
+			if (rfc_sendcmd(rfc_sc, RX2CS_FBUF | RX2CS_IE
+			    | ((rf_sc->sc_state & RFS_DENS) == 0 ? 0 : RX2CS_DD)
+			    | (rf_sc->sc_dnum == 0 ? 0 : RX2CS_US)
+			    | ((rfc_sc->sc_dmam->dm_segs[0].ds_addr 
+			    & 0x30000)>>4), ((rf_sc->sc_state & RFS_DENS) == 0
+			    ? RX2_BYTE_SD : RX2_BYTE_DD) / 2,
+			    rfc_sc->sc_dmam->dm_segs[0].ds_addr & 0xffff) < 0) {
+				disk_unbusy(&rf_sc->sc_disk, 0, 0);
+				rfc_sc->sc_curbuf->b_flags |= B_ERROR;
+				bus_dmamap_unload(rfc_sc->sc_dmat, 
+				    rfc_sc->sc_dmam);
+			}
+			break;
+		case RFS_WSEC:	/* Write Sector */
+			i = (rfc_sc->sc_curbuf->b_bcount - rfc_sc->sc_bytesleft
+			    + rfc_sc->sc_curbuf->b_blkno * DEV_BSIZE) /
+			    ((rf_sc->sc_state & RFS_DENS) == 0
+			    ? RX2_BYTE_SD : RX2_BYTE_DD);
+			if (i > RX2_TRACKS * RX2_SECTORS) {
+				rfc_sc->sc_curbuf->b_flags |= B_ERROR;
+				break;
+			}
+			disk_busy(&rf_sc->sc_disk);
+			if (rfc_sendcmd(rfc_sc, RX2CS_WSEC | RX2CS_IE
+			    | (rf_sc->sc_dnum == 0 ? 0 : RX2CS_US)
+			    | ((rf_sc->sc_state& RFS_DENS) == 0 ? 0 : RX2CS_DD),
+			    i % RX2_SECTORS + 1, i / RX2_SECTORS) < 0) {
+				disk_unbusy(&rf_sc->sc_disk, 0, 0);
+				rfc_sc->sc_curbuf->b_flags |= B_ERROR;
+			}
+			break;
+		case RFS_RSEC:	/* Read Sector */
+			i = (rfc_sc->sc_curbuf->b_bcount - rfc_sc->sc_bytesleft
+			    + rfc_sc->sc_curbuf->b_blkno * DEV_BSIZE) /
+			    ((rf_sc->sc_state & RFS_DENS) == 0
+			    ? RX2_BYTE_SD : RX2_BYTE_DD);
+			if (i > RX2_TRACKS * RX2_SECTORS) {
+				rfc_sc->sc_curbuf->b_flags |= B_ERROR;
+				break;
+			}
+			disk_busy(&rf_sc->sc_disk);
+			if (rfc_sendcmd(rfc_sc, RX2CS_RSEC | RX2CS_IE
+			    | (rf_sc->sc_dnum == 0 ? 0 : RX2CS_US)
+			    | ((rf_sc->sc_state& RFS_DENS) == 0 ? 0 : RX2CS_DD),
+			    i % RX2_SECTORS + 1, i / RX2_SECTORS) < 0) {
+				disk_unbusy(&rf_sc->sc_disk, 0, 1);
+				rfc_sc->sc_curbuf->b_flags |= B_ERROR;
+			}
+			break;
+		case RFS_NOTINIT: /* Device is not open */
+		case RFS_PROBING: /* density detect / verify started */
+		case RFS_IDLE:	/* controller is idle */
+		case RFS_SMD:	/* Set Media Density */
+		case RFS_RSTAT:	/* Read Status */
+		case RFS_WDDS:	/* Write Deleted Data Sector */
+		case RFS_REC:	/* Read Error Code */
+		default:
+			panic("Impossible state in rfc_intr(2).\n");	
+		}
+
+		if ((rfc_sc->sc_curbuf->b_flags & B_ERROR) != 0) {
+			/* 
+			 * An error occured while processing this buffer. 
+			 * Finish it and try to get a new buffer to process.
+			 * Return if there are no buffers in the queues.
+			 * This loops until the queues are empty or a new
+			 * action was successfully scheduled.
+			 */
+			rfc_sc->sc_curbuf->b_resid = rfc_sc->sc_bytesleft;
+			rfc_sc->sc_curbuf->b_error = EIO;
+			biodone(rfc_sc->sc_curbuf);
+			rf_sc = get_new_buf( rfc_sc);
+			if (rf_sc == NULL)
+				return;
+			continue;
+		}
+	} while ( 1 == 0 /* CONSTCOND */ );
 	return;
 }
 
@@ -956,22 +971,29 @@ rfopen(dev_t dev, int oflags, int devtype, struct proc *p)
 	dl = rf_sc->sc_disk.dk_label;
 	switch (DISKPART(dev)) {
 		case 0:			/* Part. a is single density. */
+			/* opening in single and double density is sensless */
+			if ((rf_sc->sc_state & RFS_OPEN_B) != 0 ) 
+				return(ENXIO);
 			rf_sc->sc_state &= ~RFS_DENS;
 			rf_sc->sc_state &= ~RFS_AD;
+			rf_sc->sc_state |= RFS_OPEN_A;
 		break;
 		case 1:			/* Part. b is double density. */
 			/*
-			 * Opening a singe density only drive
-			 * in double density is sensless.
+			 * Opening a singe density only drive in double 
+			 * density or simultaneous opening in single and 
+			 * double density is sensless.
 			 */
-			if (rfc_sc->type == 1) {
+			if (rfc_sc->type == 1 
+			    || (rf_sc->sc_state & RFS_OPEN_A) != 0 ) 
 				return(ENXIO);	
-			}
 			rf_sc->sc_state |= RFS_DENS;
 			rf_sc->sc_state &= ~RFS_AD;
+			rf_sc->sc_state |= RFS_OPEN_B;
 		break;
 		case 2:			/* Part. c is auto density. */
 			rf_sc->sc_state |= RFS_AD;
+			rf_sc->sc_state |= RFS_OPEN_C;
 		break;
 		default:
 			return(ENXIO);
@@ -1021,7 +1043,6 @@ rfopen(dev_t dev, int oflags, int devtype, struct proc *p)
 		/* number of sectors in partition */
 		dl->d_partitions[2].p_size = RX2_SECTORS * RX2_TRACKS / 2;
 	}
-	rf_sc->sc_open++;
 	return(0);
 }
 
@@ -1037,14 +1058,13 @@ rfclose(dev_t dev, int fflag, int devtype, struct proc *p)
 	if (unit >= rf_cd.cd_ndevs || (rf_sc = rf_cd.cd_devs[unit]) == NULL) {
 		return(ENXIO);
 	}
-	if (rf_sc->sc_open == 0) {
-		panic("rfclose: can not close non-open drive %s",
-		    rf_sc->sc_dev.dv_xname);
-	} else {
-		if (--rf_sc->sc_open == 0) {
-			rf_sc->sc_state = 0;
-		}
-	}
+	if ((rf_sc->sc_state & 1 << (DISKPART(dev) + RFS_OPEN_SHIFT)) == 0)
+		panic("rfclose: can not close on non-open drive %s "
+		    "partition %d", rf_sc->sc_dev.dv_xname, DISKPART(dev));
+	else 
+		rf_sc->sc_state &= ~(1 << (DISKPART(dev) + RFS_OPEN_SHIFT));
+	if ((rf_sc->sc_state & RFS_OPEN_MASK) == 0)
+		rf_sc->sc_state = 0;
 	return(0);
 }
 
@@ -1079,10 +1099,9 @@ rfioctl(dev_t dev, u_long cmd, caddr_t data, int fflag, struct proc *p)
 		return(ENXIO);
 	}
 	/* We are going to operate on a non open dev? PANIC! */
-	if (rf_sc->sc_open == 0) {
-		panic("rfstrategy: can not operate on non-open drive %s (2)",
-		    rf_sc->sc_dev.dv_xname);
-	}
+	if ((rf_sc->sc_state & 1 << (DISKPART(dev) + RFS_OPEN_SHIFT)) == 0)
+		panic("rfioctl: can not operate on non-open drive %s "
+		    "partition %d", rf_sc->sc_dev.dv_xname, DISKPART(dev));
 	switch (cmd) {
 	/* get and set disklabel; DIOCGPART used internally */
 	case DIOCGDINFO: /* get */
