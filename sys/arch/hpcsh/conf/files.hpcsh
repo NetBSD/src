@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcsh,v 1.37 2004/05/28 17:52:07 tsarna Exp $
+#	$NetBSD: files.hpcsh,v 1.38 2004/07/03 12:49:21 uch Exp $
 #
 maxpartitions 8
 
@@ -36,6 +36,14 @@ include "dev/hpc/files.hpcfb"
 
 include "arch/hpc/conf/files.debug"
 file	arch/hpcsh/hpcsh/debug.c
+#
+# power management
+#
+include "dev/hpc/apm/files.apm"
+device hpcapm: apmdevif
+attach hpcapm at mainbus
+file	dev/hpc/hpcapm.c		hpcapm
+
 
 #
 # Machine-independent SCSI drivers

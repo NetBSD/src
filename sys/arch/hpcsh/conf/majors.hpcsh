@@ -1,4 +1,4 @@
-#	$NetBSD: majors.hpcsh,v 1.12 2003/12/10 02:04:01 jmc Exp $
+#	$NetBSD: majors.hpcsh,v 1.13 2004/07/03 12:49:21 uch Exp $
 #
 # Device majors for hpcsh
 #
@@ -43,6 +43,7 @@ device-major	cgd		char 36  block 10	cgd
 device-major	ksyms		char 37			ksyms
 device-major	lkm		char 38			lkm
 device-major	wsfont		char 39			wsfont
+device-major	apmdev		char 40			apmdev
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 
