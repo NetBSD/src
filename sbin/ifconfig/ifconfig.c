@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.132 2002/09/23 00:10:28 thorpej Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.133 2002/09/30 05:38:13 onoe Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.132 2002/09/23 00:10:28 thorpej Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.133 2002/09/30 05:38:13 onoe Exp $");
 #endif
 #endif /* not lint */
 
@@ -252,6 +252,7 @@ const struct cmd {
 	{ "bssid",	NEXTARG,	0,		setifbssid },
 	{ "-bssid",	-1,		0,		setifbssid },
 	{ "chan",	NEXTARG,	0,		setifchan },
+	{ "-chan",	-1,		0,		setifchan },
 	{ "nwid",	NEXTARG,	0,		setifnwid },
 	{ "nwkey",	NEXTARG,	0,		setifnwkey },
 	{ "-nwkey",	-1,		0,		setifnwkey },
@@ -1429,10 +1430,14 @@ setifchan(val, d)
 	struct ieee80211_channel channel;
 	int chan;
 
-	chan = atoi(val);
-	if (chan < 0 || chan > 0xffff) {
-		warnx("invalid channel: %s", val);
-		return;
+	if (d != 0)
+		chan = IEEE80211_CHAN_ANY;
+	else {
+		chan = atoi(val);
+		if (chan < 0 || chan > 0xffff) {
+			warnx("invalid channel: %s", val);
+			return;
+		}
 	}
 
 	(void)strncpy(channel.i_name, name, sizeof(channel.i_name));
@@ -1549,6 +1554,7 @@ ieee80211_status()
 	struct ieee80211_bssid bssid;
 	struct ieee80211_channel channel;
 	struct ether_addr ea;
+	static const u_int8_t zero_macaddr[IEEE80211_ADDR_LEN];
 
 	memset(&ifr, 0, sizeof(ifr));
 	ifr.ifr_data = (caddr_t)&nwid;
@@ -1636,9 +1642,17 @@ ieee80211_status()
 	(void)strncpy(channel.i_name, name, sizeof(channel.i_name));
 	if (ioctl(s, SIOCG80211CHANNEL, &channel) == -1)
 		return;
-	memcpy(ea.ether_addr_octet, bssid.i_bssid,
-	    sizeof(ea.ether_addr_octet));
-	printf("\tbssid %s chan %d\n", ether_ntoa(&ea), channel.i_channel);
+	if (memcmp(bssid.i_bssid, zero_macaddr, IEEE80211_ADDR_LEN) == 0) {
+		if (channel.i_channel != (u_int16_t)-1)
+			printf("\tchan %d\n", channel.i_channel);
+	} else {
+		memcpy(ea.ether_addr_octet, bssid.i_bssid,
+		    sizeof(ea.ether_addr_octet));
+		printf("\tbssid %s", ether_ntoa(&ea));
+		if (channel.i_channel != IEEE80211_CHAN_ANY)
+			printf(" chan %d", channel.i_channel);
+		printf("\n");
+	}
 }
 
 void
