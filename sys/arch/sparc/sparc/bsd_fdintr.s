@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_fdintr.s,v 1.13 1998/02/10 14:11:50 mrg Exp $ */
+/*	$NetBSD: bsd_fdintr.s,v 1.14 1999/03/05 10:45:25 pk Exp $ */
 
 /*
  * Copyright (c) 1995 Paul Kranenburg
@@ -36,6 +36,7 @@
 #ifndef FDC_C_HANDLER
 #include "assym.h"
 #include <machine/param.h>
+#include <machine/asm.h>
 #include <machine/psl.h>
 #include <sparc/sparc/intreg.h>
 #include <sparc/sparc/auxreg.h>
@@ -62,8 +63,8 @@
 #define FD_SET_SWINTR	FD_SET_SWINTR_4M
 #else
 #define FD_SET_SWINTR					\
-	sethi	%hi(_cputyp), %l5;			\
-	ld	[%l5 + %lo(_cputyp)], %l5;		\
+	sethi	%hi(_C_LABEL(cputyp)), %l5;		\
+	ld	[%l5 + %lo(_C_LABEL(cputyp))], %l5;	\
 	cmp	%l5, CPU_SUN4M;				\
 	be	8f;					\
 	FD_SET_SWINTR_4C;				\
@@ -108,8 +109,8 @@
 #define FD_DEASSERT_TC		FD_DEASSERT_TC_4M
 #else
 #define FD_ASSERT_TC					\
-	sethi	%hi(_cputyp), %l5;			\
-	ld	[%l5 + %lo(_cputyp)], %l5;		\
+	sethi	%hi(_C_LABEL(cputyp)), %l5;		\
+	ld	[%l5 + %lo(_C_LABEL(cputyp))], %l5;	\
 	cmp	%l5, CPU_SUN4M;				\
 	be	8f;					\
 	 nop;						\
@@ -149,41 +150,40 @@
 
 	.seg	"data"
 	.align	8
-	.global _fdciop
 /* A save haven for three precious registers */
 save_l:
 	.word	0
 	.word	0
 	.word	0
 /* Pointer to a `struct fdcio', set in fd.c */
-_fdciop:
+	.global _C_LABEL(fdciop)
+_C_LABEL(fdciop):
 	.word	0
 
 	.seg	"text"
 	.align	4
-	.global _fdchwintr
 
-_fdchwintr:
+_ENTRY(fdchwintr)
 	set	save_l, %l7
 	std	%l0, [%l7]
 	st	%l2, [%l7 + 8]
 
 	! tally interrupt
 #if defined(UVM)
-	sethi	%hi(_uvmexp+V_INTR), %l7
-	ld	[%l7 + %lo(_uvmexp+V_INTR)], %l6
+	sethi	%hi(_C_LABEL(uvmexp)+V_INTR), %l7
+	ld	[%l7 + %lo(_C_LABEL(uvmexp)+V_INTR)], %l6
 	inc	%l6
-	st	%l6, [%l7 + %lo(_uvmexp+V_INTR)]
+	st	%l6, [%l7 + %lo(_C_LABEL(uvmexp)+V_INTR)]
 #else
-	sethi	%hi(_cnt+V_INTR), %l7
-	ld	[%l7 + %lo(_cnt+V_INTR)], %l6
+	sethi	%hi(_C_LABEL(cnt)+V_INTR), %l7
+	ld	[%l7 + %lo(_C_LABEL(cnt)+V_INTR)], %l6
 	inc	%l6
-	st	%l6, [%l7 + %lo(_cnt+V_INTR)]
+	st	%l6, [%l7 + %lo(_C_LABEL(cnt)+V_INTR)]
 #endif
 
 	! load fdc, if it's NULL there's nothing to do: schedule soft interrupt
-	sethi	%hi(_fdciop), %l7
-	ld	[%l7 + %lo(_fdciop)], R_fdc
+	sethi	%hi(_C_LABEL(fdciop)), %l7
+	ld	[%l7 + %lo(_C_LABEL(fdciop))], R_fdc
 
 	! tally interrupt
 	ld	[R_fdc + FDC_EVCNT], %l6
