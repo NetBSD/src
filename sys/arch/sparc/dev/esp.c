@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.47 1996/05/21 19:09:43 pk Exp $ */
+/*	$NetBSD: esp.c,v 1.48 1996/05/30 22:19:10 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -1108,6 +1108,11 @@ sc_print_addr(ecb->xs->sc_link); printf("MSG_MESSAGE_REJECT>>");
 							      0);
 						ESP_WRITE_REG(sc, ESP_SYNCTP,
 							      0);
+						/* Clamp to our maxima */
+						if (ti->period < sc->sc_minsync)
+							ti->period = sc->sc_minsync;
+						if (ti->offset > 15)
+							ti->offset = 15;
 						esp_sched_msgout(SEND_SDTR);
 					} else {
 						/* we are sync */
