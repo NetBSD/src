@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.28 1998/12/19 22:24:18 christos Exp $	*/
+/*	$NetBSD: su.c,v 1.29 1999/02/20 00:20:59 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.28 1998/12/19 22:24:18 christos Exp $");
+__RCSID("$NetBSD: su.c,v 1.29 1999/02/20 00:20:59 scottr Exp $");
 #endif
 #endif /* not lint */
 
@@ -370,13 +370,14 @@ kerberos(username, user, uid)
 	char lrealm[REALM_SZ], krbtkfile[MAXPATHLEN];
 	char hostname[MAXHOSTNAMELEN + 1], savehost[MAXHOSTNAMELEN + 1];
 
-	if (krb_get_lrealm(lrealm, 1) != KSUCCESS)
+	if (krb_get_lrealm(lrealm, 1) != KSUCCESS ||
+	    strcmp(lrealm, KRB_REALM) == 0)
 		return (1);
 	if (koktologin(username, lrealm, user) && !uid) {
 		warnx("kerberos: not in %s's ACL.", user);
 		return (1);
 	}
-	(void)(void)snprintf(krbtkfile, sizeof krbtkfile, "%s_%s_%d", TKT_ROOT,
+	(void)snprintf(krbtkfile, sizeof krbtkfile, "%s_%s_%d", TKT_ROOT,
 	    user, getuid());
 
 	(void)setenv("KRBTKFILE", krbtkfile, 1);
