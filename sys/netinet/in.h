@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.62 2003/08/07 16:33:09 agc Exp $	*/
+/*	$NetBSD: in.h,v 1.63 2003/11/10 20:50:29 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -380,7 +380,8 @@ struct ip_mreq {
 #define	IPCTL_MAXFRAGPACKETS   18	/* max packets reassembly queue */
 #define	IPCTL_GRE_TTL          19	/* default TTL for gre encap packet */
 #define	IPCTL_CHECKINTERFACE   20	/* drop pkts in from 'wrong' iface */
-#define	IPCTL_MAXID	       21
+#define	IPCTL_IFQ	       21	/* ipintrq node */
+#define	IPCTL_MAXID	       22
 
 #define	IPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -404,6 +405,7 @@ struct ip_mreq {
 	{ "maxfragpackets", CTLTYPE_INT }, \
 	{ "grettl", CTLTYPE_INT }, \
 	{ "checkinterface", CTLTYPE_INT }, \
+	{ "ifq", CTLTYPE_NODE }, \
 }
 #endif /* _NETBSD_SOURCE */
 
