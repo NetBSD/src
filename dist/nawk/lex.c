@@ -38,7 +38,7 @@ int	brackcnt  = 0;
 int	parencnt = 0;
 
 typedef struct Keyword {
-	char	*word;
+	const char *word;
 	int	sub;
 	int	type;
 } Keyword;
@@ -112,7 +112,7 @@ int peek(void)
 
 int gettok(char **pbuf, int *psz)	/* get next input token */
 {
-	int c;
+	int c, retc;
 	char *buf = *pbuf;
 	int sz = *psz;
 	char *bp = buf;
@@ -140,6 +140,7 @@ int gettok(char **pbuf, int *psz)	/* get next input token */
 			}
 		}
 		*bp = 0;
+		retc = 'a';	/* alphanumeric */
 	} else {	/* it's a number */
 		char *rem;
 		/* read input until can't be a number */
@@ -158,11 +159,17 @@ int gettok(char **pbuf, int *psz)	/* get next input token */
 		*bp = 0;
 		strtod(buf, &rem);	/* parse the number */
 		unputstr(rem);		/* put rest back for later */
-		rem[0] = 0;
+		if (rem == buf) {	/* it wasn't a valid number at all */
+			buf[1] = 0;	/* so return one character as token */
+			retc = buf[0];	/* character is its own type */
+		} else {	/* some prefix was a number */
+			rem[0] = 0;	/* so truncate where failure started */
+			retc = '0';	/* number */
+		}
 	}
 	*pbuf = buf;
 	*psz = sz;
-	return buf[0];
+	return retc;
 }
 
 int	word(char *);
@@ -193,7 +200,7 @@ int yylex(void)
 			return 0;
 		if (isalpha(c) || c == '_')
 			return word(buf);
-		if (isdigit(c) || c == '.') {
+		if (isdigit(c)) {
 			yylval.cp = setsymtab(buf, tostring(buf), atof(buf), CON|NUM, symtab);
 			/* should this also have STR set? */
 			RET(NUMBER);
@@ -318,6 +325,9 @@ int yylex(void)
 				}
 				yylval.cp = setsymtab(buf, "", 0.0, STR|NUM, symtab);
 				RET(IVAR);
+			} else if (c == 0) {	/*  */
+				SYNTAX( "unexpected end of input after $" );
+				RET(';');
 			} else {
 				unputstr(buf);
 				RET(INDIRECT);
@@ -373,6 +383,8 @@ int string(void)
 		case 0:
 			SYNTAX( "non-terminated string %.10s...", buf );
 			lineno++;
+			if (c == 0)	/* hopeless */
+				FATAL( "giving up" );
 			break;
 		case '\\':
 			c = input();
@@ -494,7 +506,7 @@ int word(char *w)
 	}
 }
 
-void startreg(void)	/* next call to yyles will return a regular expression */
+void startreg(void)	/* next call to yylex will return a regular expression */
 {
 	reg = 1;
 }
@@ -524,6 +536,8 @@ int regexpr(void)
 		}
 	}
 	*bp = 0;
+	if (c == 0)
+		SYNTAX("non-terminated regular expression %.10s...", buf);
 	yylval.s = tostring(buf);
 	unput('/');
 	RET(REGEXPR);
@@ -569,7 +583,7 @@ void unput(int c)	/* put lexical character back on input */
 		ep = ebuf + sizeof(ebuf) - 1;
 }
 
-void unputstr(char *s)	/* put a string back on input */
+void unputstr(const char *s)	/* put a string back on input */
 {
 	int i;
 
