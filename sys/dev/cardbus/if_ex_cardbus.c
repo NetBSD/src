@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_cardbus.c,v 1.12 2000/03/01 20:50:37 thorpej Exp $	*/
+/*	$NetBSD: if_ex_cardbus.c,v 1.13 2000/03/07 00:32:52 mycroft Exp $	*/
 
 /*
  * CardBus specific routines for 3Com 3C575-family CardBus ethernet adapter
@@ -258,6 +258,7 @@ ex_cardbus_attach(parent, self, aux)
 		sc->intr_ack = ex_cardbus_intr_ack;
 	}
 
+	(ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
 	cardbus_conf_write(cc, cf, ca->ca_tag, CARDBUS_COMMAND_STATUS_REG,
 	    command);
   
