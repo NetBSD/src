@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.97 2000/05/13 23:43:11 perseant Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.97.4.1 2000/07/30 09:53:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -930,6 +930,7 @@ msdosfs_rename(v)
 	struct msdosfsmount *pmp;
 	struct direntry *dotdotp;
 	struct buf *bp;
+	int fdvp_dorele = 0;
 
 	pmp = VFSTOMSDOSFS(fdvp->v_mount);
 
@@ -1098,6 +1099,7 @@ abortit:
 		vrele(tdvp);
 		return 0;
 	}
+	fdvp_dorele = 1;
 	xp = VTODE(fvp);
 	zp = VTODE(fdvp);
 	from_diroffset = zp->de_fndoffset;
@@ -1206,7 +1208,8 @@ bad:
 	vput(tdvp);
 out:
 	ip->de_flag &= ~DE_RENAME;
-	vrele(fdvp);
+	if (fdvp_dorele)
+		vrele(fdvp);
 	vrele(fvp);
 	return (error);
 
