@@ -1,10 +1,11 @@
+/*	$NetBSD: icu.s,v 1.59.6.1 1999/06/28 06:36:48 itojun Exp $	*/
+
 /*-
- * Copyright (c) 1989, 1990 William F. Jolitz.
- * Copyright (c) 1990 The Regents of the University of California.
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
- * This code is derived from software contributed to Berkeley by
- * William Jolitz.
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Charles M. Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -16,368 +17,189 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- *	@(#)icu.s	7.2 (Berkeley) 5/21/91
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * AT/386
- * Vector interrupt control section
- */
+#include "opt_inet.h"
+#include "opt_atalk.h"
+#include "opt_ccitt.h"
+#include "opt_iso.h"
+#include "opt_ns.h"
+#include "opt_vm86.h"
+
+#include <net/netisr.h>
 
 	.data
-	.globl	_imen
-	.globl	_cpl
-_cpl:	.long	0xffff			# current priority level (all off)
-_imen:	.long	0xffff			# interrupt mask enable (all off)
-	.globl	_highmask
-_highmask:	.long	0xffff
-	.globl	_ttymask
-_ttymask:	.long	0
-	.globl	_biomask
-_biomask:	.long	0
-	.globl	_netmask
-_netmask:	.long	0
-	.globl	_isa_intr
-_isa_intr:	.space	16*4
+	.globl	_C_LABEL(imen),_C_LABEL(cpl),_C_LABEL(ipending)
+	.globl	_C_LABEL(astpending),_C_LABEL(netisr)
+_C_LABEL(imen):
+	.long	0xffff		# interrupt mask enable (all off)
 
 	.text
-/*
- * Handle return from interrupt after device handler finishes
- */
-doreti:
-	cli
-	popl	%ebx			# remove intr number
-	NOP
-	popl	%eax			# get previous priority
-	# now interrupt frame is a trap frame!
-	movw	%ax,%cx
-	movw	%ax,_cpl
-	orw	_imen,%ax
-	outb	%al,$ IO_ICU1+1		# re-enable intr?
-	NOP
-	movb	%ah,%al
-	outb	%al,$ IO_ICU2+1
-	NOP
 
-	cmpw	$0x1f,13*4(%esp)	# to user?
-	je	1f			# nope, leave
-	andw	$0xffff,%cx	
-	cmpw	$0,%cx			# returning to zero?
-	je	1f
+#if defined(PROF) || defined(GPROF)
+	.globl	_C_LABEL(splhigh), _C_LABEL(splx)
 
-	pop	%es			# nope, going to non-zero level
-	pop	%ds
-	popa
-	addl	$8,%esp
-	iret
+	ALIGN_TEXT
+_C_LABEL(splhigh):
+	movl	$-1,%eax
+	xchgl	%eax,_C_LABEL(cpl)
+	ret
 
-1:	cmpl	$0,_netisr		# check for softint s/traps
-	jne	1f
-	cmpl	$0,_want_resched
-	jne	1f
-
-	pop	%es			# none, going back to base pri
-	pop	%ds
-	popa
-	addl	$8,%esp
-	iret
+	ALIGN_TEXT
+_C_LABEL(splx):
+	movl	4(%esp),%eax
+	movl	%eax,_C_LABEL(cpl)
+	testl	%eax,%eax
+	jnz	_C_LABEL(Xspllower)
+	ret
+#endif /* PROF || GPROF */
 	
-#include "../net/netisr.h"
+/*
+ * Process pending interrupts.
+ *
+ * Important registers:
+ *   ebx - cpl
+ *   esi - address to resume loop at
+ *   edi - scratch for Xsoftnet
+ */
+IDTVEC(spllower)
+	pushl	%ebx
+	pushl	%esi
+	pushl	%edi
+	movl	_C_LABEL(cpl),%ebx	# save priority
+	movl	$1f,%esi		# address to resume loop at
+1:	movl	%ebx,%eax
+	notl	%eax
+	andl	_C_LABEL(ipending),%eax
+	jz	2f
+	bsfl	%eax,%eax
+	btrl	%eax,_C_LABEL(ipending)
+	jnc	1b
+	jmp	*_C_LABEL(Xrecurse)(,%eax,4)
+2:	popl	%edi
+	popl	%esi
+	popl	%ebx
+	ret
 
+/*
+ * Handle return from interrupt after device handler finishes.
+ *
+ * Important registers:
+ *   ebx - cpl to restore
+ *   esi - address to resume loop at
+ *   edi - scratch for Xsoftnet
+ */
+IDTVEC(doreti)
+	popl	%ebx			# get previous priority
+	movl	%ebx,_C_LABEL(cpl)
+	movl	$1f,%esi		# address to resume loop at
+1:	movl	%ebx,%eax
+	notl	%eax
+	andl	_C_LABEL(ipending),%eax
+	jz	2f
+	bsfl    %eax,%eax               # slow, but not worth optimizing
+	btrl    %eax,_C_LABEL(ipending)
+	jnc     1b			# some intr cleared the in-memory bit
+	jmp	*_C_LABEL(Xresume)(,%eax,4)
+2:	/* Check for ASTs on exit to user mode. */
+	cli
+	cmpb	$0,_C_LABEL(astpending)
+	je	3f
+	testb   $SEL_RPL,TF_CS(%esp)
+#ifdef VM86
+	jnz	4f
+	testl	$PSL_VM,TF_EFLAGS(%esp)
+#endif
+	jz	3f
+4:	movb	$0,_C_LABEL(astpending)
+	sti
+	/* Pushed T_ASTFLT into tf_trapno on entry. */
+	call	_C_LABEL(trap)
+	jmp	2b
+3:	INTRFASTEXIT
+
+
+/*
+ * Soft interrupt handlers
+ */
+
+IDTVEC(softserial)
+	movl	_C_LABEL(imask) + IPL_SOFTSERIAL * 4,%eax
+	movl	%eax,_C_LABEL(cpl)
+#include "com.h"
+#if NCOM > 0
+	call	_C_LABEL(comsoft)
+#endif
+	movl	%ebx,_C_LABEL(cpl)
+	jmp	%esi
+
+#define DONET(s, c) \
+	.globl  c		;\
+	testl	$(1 << s),%edi	;\
+	jz	1f		;\
+	call	c		;\
 1:
 
-#define DONET(s, c)	; \
-	.globl	c ;  \
-	btrl	$ s ,_netisr ;  \
-	jnb	1f ; \
-	call	c ; \
-1:
-
-	call	_splnet
-
-	DONET(NETISR_RAW,_rawintr)
+IDTVEC(softnet)
+	movl	_C_LABEL(imask) + IPL_SOFTNET * 4,%eax
+	movl	%eax,_C_LABEL(cpl)
+	xorl	%edi,%edi
+	xchgl	_C_LABEL(netisr),%edi
 #ifdef INET
-	DONET(NETISR_IP,_ipintr)
+#include "arp.h"
+#if NARP > 0
+	DONET(NETISR_ARP, _C_LABEL(arpintr))
+#endif
+	DONET(NETISR_IP, _C_LABEL(ipintr))
+#endif
+#ifdef INET6
+	DONET(NETISR_IPV6, _ip6intr)
 #endif
 #ifdef IMP
-	DONET(NETISR_IMP,_impintr)
+	DONET(NETISR_IMP, _C_LABEL(impintr))
 #endif
 #ifdef NS
-	DONET(NETISR_NS,_nsintr)
+	DONET(NETISR_NS, _C_LABEL(nsintr))
 #endif
-
-#ifdef notdef
-	NOP
-	popl	%eax
-	movw	%ax,_cpl
-	orw	_imen,%ax
-	outb	%al,$ IO_ICU1+1		# re-enable intr?
-	NOP
-	movb	%ah,%al
-	outb	%al,$ IO_ICU2+1
-	NOP
-#else
-	call	_spl0
+#ifdef ISO
+	DONET(NETISR_ISO, _C_LABEL(clnlintr))
 #endif
-
-	btrl	$ NETISR_SCLK,_netisr
-	jnb	1f
-	# back to an interrupt frame for a moment
-	call	_splsoftclock
-	pushl	$0xff	# dummy intr
-	call	_softclock
-	popl	%eax
-	call	_spl0
-
-	# jmp	2f
-
-1:
-	cmpw	$0x1f,13*4(%esp)	# to user?
-	jne	2f			# nope, leave
-	cmpl	$0,_want_resched
-	je	2f
-	call	_trap
-
-2:	pop	%es
-	pop	%ds
-	popal
-	addl	$8,%esp
-	iret
-
-/*
- * Interrupt priority mechanism
- *
- * Two flavors	-- imlXX masks relative to ISA noemenclature (for PC compat sw)
- *		-- splXX masks with group mechanism for BSD purposes
- */
-
-	.globl	_splhigh
-	.globl	_splclock
-_splhigh:
-_splclock:
-	cli				# disable interrupts
-	NOP
-	movw	$0xffff,%ax		# set new priority level
-	movw	%ax,%dx
-	# orw	_imen,%ax		# mask off those not enabled yet
-	movw	%ax,%cx
-	outb	%al,$ IO_ICU1+1		/* update icu's */
-	NOP
-	movb	%ah,%al
-	outb	%al,$ IO_ICU2+1
-	NOP
-	movzwl	_cpl,%eax		# return old priority
-	movw	%dx,_cpl		# set new priority level
-	sti				# enable interrupts
-	ret
-
-	.globl	_spltty			# block clists
-_spltty:
-	cli				# disable interrupts
-	NOP
-	movw	_cpl,%ax
-	orw	_ttymask,%ax
-	movw	%ax,%dx
-	orw	_imen,%ax		# mask off those not enabled yet
-	movw	%ax,%cx
-	outb	%al,$ IO_ICU1+1		/* update icu's */
-	NOP
-	movb	%ah,%al
-	outb	%al,$ IO_ICU2+1
-	NOP
-	movzwl	_cpl,%eax		# return old priority
-	movw	%dx,_cpl		# set new priority level
-	sti				# enable interrupts
-	ret
-
-	.globl	_splimp
-	.globl	_splnet
-_splimp:
-_splnet:
-	cli				# disable interrupts
-	NOP
-	movw	_cpl,%ax
-	orw	_netmask,%ax
-	movw	%ax,%dx
-	orw	_imen,%ax		# mask off those not enabled yet
-	movw	%ax,%cx
-	outb	%al,$ IO_ICU1+1		/* update icu's */
-	NOP
-	movb	%ah,%al
-	outb	%al,$ IO_ICU2+1
-	NOP
-	movzwl	_cpl,%eax		# return old priority
-	movw	%dx,_cpl		# set new priority level
-	sti				# enable interrupts
-	ret
-
-	.globl	_splbio	
-_splbio:
-	cli				# disable interrupts
-	NOP
-	movw	_cpl,%ax
-	orw	_biomask,%ax
-	movw	%ax,%dx
-	orw	_imen,%ax		# mask off those not enabled yet
-	movw	%ax,%cx
-	outb	%al,$ IO_ICU1+1		/* update icu's */
-	NOP
-	movb	%ah,%al
-	outb	%al,$ IO_ICU2+1
-	NOP
-	movzwl	_cpl,%eax		# return old priority
-	movw	%dx,_cpl		# set new priority level
-	sti				# enable interrupts
-	ret
-
-	.globl	_splsoftclock
-_splsoftclock:
-	cli				# disable interrupts
-	NOP
-	movw	_cpl,%ax
-	orw	$0x8000,%ax		# set new priority level
-	movw	%ax,%dx
-	orw	_imen,%ax		# mask off those not enabled yet
-	movw	%ax,%cx
-	outb	%al,$ IO_ICU1+1		/* update icu's */
-	NOP
-	movb	%ah,%al
-	outb	%al,$ IO_ICU2+1
-	NOP
-	movzwl	_cpl,%eax		# return old priority
-	movw	%dx,_cpl		# set new priority level
-	sti				# enable interrupts
-	ret
-
-	.globl _splnone
-	.globl _spl0
-_splnone:
-_spl0:
-	cli				# disable interrupts
-	NOP
-	pushl	_cpl			# save old priority
-	movw	_cpl,%ax
-	orw	_netmask,%ax		# mask off those network devices
-	movw	%ax,_cpl		# set new priority level
-	orw	_imen,%ax		# mask off those not enabled yet
-	outb	%al,$ IO_ICU1+1		/* update icu's */
-	NOP
-	movb	%ah,%al
-	outb	%al,$ IO_ICU2+1
-	NOP
-	sti				# enable interrupts
-
-	DONET(NETISR_RAW,_rawintr)
-#ifdef INET
-	DONET(NETISR_IP,_ipintr)
+#ifdef CCITT
+	DONET(NETISR_CCITT, _C_LABEL(ccittintr))
 #endif
-	cli				# disable interrupts
-	popl	_cpl			# save old priority
-	NOP
-	movw	$0,%ax			# set new priority level
-	movw	%ax,%dx
-	orw	_imen,%ax		# mask off those not enabled yet
-	movw	%ax,%cx
-	outb	%al,$ IO_ICU1+1		/* update icu's */
-	NOP
-	movb	%ah,%al
-	outb	%al,$ IO_ICU2+1
-	NOP
-	movzwl	_cpl,%eax		# return old priority
-	movw	%dx,_cpl		# set new priority level
-	sti				# enable interrupts
-	ret
+#ifdef NATM
+	DONET(NETISR_NATM, _C_LABEL(natmintr))
+#endif
+#ifdef NETATALK
+	DONET(NETISR_ATALK, _C_LABEL(atintr))
+#endif
+#include "ppp.h"
+#if NPPP > 0
+	DONET(NETISR_PPP, _C_LABEL(pppintr))
+#endif
+	movl	%ebx,_C_LABEL(cpl)
+	jmp	%esi
 
-	.globl _splx
-_splx:
-	cli				# disable interrupts
-	NOP
-	movw	4(%esp),%ax		# new priority level
-	movw	%ax,%dx
-	cmpw	$0,%dx
-	je	_spl0			# going to "zero level" is special
-
-	orw	_imen,%ax		# mask off those not enabled yet
-	movw	%ax,%cx
-	outb	%al,$ IO_ICU1+1		/* update icu's */
-	NOP
-	movb	%ah,%al
-	outb	%al,$ IO_ICU2+1
-	NOP
-	movzwl	_cpl,%eax		# return old priority
-	movw	%dx,_cpl		# set new priority level
-	sti				# enable interrupts
-	ret
-
-	/* hardware interrupt catcher (IDT 32 - 47) */
-	.globl	_isa_strayintr
-
-IDTVEC(intr0)
-	INTRSTRAY(0, _highmask, 0) ; call	_isa_strayintr ; INTREXIT1
-
-IDTVEC(intr1)
-	INTRSTRAY(1, _highmask, 1) ; call	_isa_strayintr ; INTREXIT1
-
-IDTVEC(intr2)
-	INTRSTRAY(2, _highmask, 2) ; call	_isa_strayintr ; INTREXIT1
-
-IDTVEC(intr3)
-	INTRSTRAY(3, _highmask, 3) ; call	_isa_strayintr ; INTREXIT1
-
-IDTVEC(intr4)
-	INTRSTRAY(4, _highmask, 4) ; call	_isa_strayintr ; INTREXIT1
-
-IDTVEC(intr5)
-	INTRSTRAY(5, _highmask, 5) ; call	_isa_strayintr ; INTREXIT1
-
-IDTVEC(intr6)
-	INTRSTRAY(6, _highmask, 6) ; call	_isa_strayintr ; INTREXIT1
-
-IDTVEC(intr7)
-	INTRSTRAY(7, _highmask, 7) ; call	_isa_strayintr ; INTREXIT1
-
-
-IDTVEC(intr8)
-	INTRSTRAY(8, _highmask, 8) ; call	_isa_strayintr ; INTREXIT2
-
-IDTVEC(intr9)
-	INTRSTRAY(9, _highmask, 9) ; call	_isa_strayintr ; INTREXIT2
-
-IDTVEC(intr10)
-	INTRSTRAY(10, _highmask, 10) ; call	_isa_strayintr ; INTREXIT2
-
-IDTVEC(intr11)
-	INTRSTRAY(11, _highmask, 11) ; call	_isa_strayintr ; INTREXIT2
-
-IDTVEC(intr12)
-	INTRSTRAY(12, _highmask, 12) ; call	_isa_strayintr ; INTREXIT2
-
-IDTVEC(intr13)
-	INTRSTRAY(13, _highmask, 13) ; call	_isa_strayintr ; INTREXIT2
-
-IDTVEC(intr14)
-	INTRSTRAY(14, _highmask, 14) ; call	_isa_strayintr ; INTREXIT2
-
-IDTVEC(intr15)
-	INTRSTRAY(15, _highmask, 15) ; call	_isa_strayintr ; INTREXIT2
-
-IDTVEC(intrdefault)
-	INTRSTRAY(255, _highmask, 255) ; call	_isa_strayintr ; INTREXIT2
+IDTVEC(softclock)
+	movl	_C_LABEL(imask) + IPL_SOFTCLOCK * 4,%eax
+	movl	%eax,_C_LABEL(cpl)
+	call	_C_LABEL(softclock)
+	movl	%ebx,_C_LABEL(cpl)
+	jmp	%esi
