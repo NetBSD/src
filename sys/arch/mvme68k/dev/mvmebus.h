@@ -1,4 +1,4 @@
-/*	$NetBSD: mvmebus.h,v 1.3 2000/08/20 21:51:31 scw Exp $	*/
+/*	$NetBSD: mvmebus.h,v 1.4 2000/09/19 19:35:53 scw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@ struct mvmebus_softc {
 	struct mvmebus_range	*sc_masters;
 	int			sc_nslaves;
 	struct mvmebus_range	*sc_slaves;
-	void			(*sc_intr_establish)(void *, int, int, int,
+	void			(*sc_intr_establish)(void *, int, int, int, int,
 				    int (*)(void *), void *);
 	void			(*sc_intr_disestablish)(void *, int, int, int);
 	struct vme_chipset_tag	sc_vct;
