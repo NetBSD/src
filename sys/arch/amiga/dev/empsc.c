@@ -1,4 +1,4 @@
-/*	$NetBSD: empsc.c,v 1.2 1996/03/28 18:56:08 is Exp $	*/
+/*	$NetBSD: empsc.c,v 1.3 1996/03/28 19:23:32 is Exp $	*/
 
 /*
 
@@ -176,4 +176,6 @@ empsc_intr(dev)
 	if ((*dev->sci_csr & SCI_CSR_INT) == 0)
 		return(0);
 	stat = *dev->sci_iack;
+	/* XXXX is: something is missing here, at least a: */
+	return(1);
 }
