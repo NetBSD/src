@@ -1,4 +1,4 @@
-/*	$NetBSD: ibus.c,v 1.1 1999/08/07 10:36:48 ragge Exp $ */
+/*	$NetBSD: ibus.c,v 1.2 1999/08/14 18:42:46 ragge Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -71,6 +71,7 @@ ibus_match(parent, cf, aux)
 	return 0;
 }
 
+#define	MVNIADDR 0x20084400
 #define	SGECADDR 0x20008000
 #define SHACADDR 0x20004200
 
@@ -84,17 +85,20 @@ ibus_attach(parent, self, aux)
 
 	printf("\n");
 	/*
-	 * All MV's have a Qbus.
-	 */
-	bp.type = "uba";
-	config_found(self, &bp, ibus_print);
-
-	/*
 	 * There may be a SGEC. Is badaddr() enough here?
 	 */
 	bp.type = "sgec";
 	va = vax_map_physmem(SGECADDR, 1);
 	if (badaddr((caddr_t)va, 4) == 0)
+		config_found(self, &bp, ibus_print);
+	vax_unmap_physmem(va, 1);
+
+	/*
+	 * There may be a LANCE.
+	 */
+	bp.type = "lance";
+	va = vax_map_physmem(MVNIADDR, 1);
+	if (badaddr((caddr_t)va, 2) == 0)
 		config_found(self, &bp, ibus_print);
 	vax_unmap_physmem(va, 1);
 
@@ -106,4 +110,10 @@ ibus_attach(parent, self, aux)
 	if (badaddr((caddr_t)va + 0x48, 4) == 0)
 		config_found(self, &bp, ibus_print);
 	vax_unmap_physmem(va, 1);
+	/*
+	 * All MV's have a Qbus.
+	 */
+	bp.type = "uba";
+	config_found(self, &bp, ibus_print);
+
 }
