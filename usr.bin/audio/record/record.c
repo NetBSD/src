@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.6 1999/07/13 14:02:34 kleink Exp $	*/
+/*	$NetBSD: record.c,v 1.7 1999/09/23 15:41:31 dmcmahill Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -275,8 +275,8 @@ timeleft(start_tvp, record_tvp)
 	struct timeval now, diff;
 
 	(void)gettimeofday(&now, NULL);
-	timersub(&diff, &now, start_tvp);
-	timersub(&now, record_tvp, &diff);
+	timersub(&now, start_tvp, &diff);
+	timersub(record_tvp, &diff, &now);
 
 	return (now.tv_sec > 0 || (now.tv_sec == 0 && now.tv_usec > 0));
 }
