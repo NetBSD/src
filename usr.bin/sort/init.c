@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.13 2004/02/17 02:31:33 itojun Exp $	*/
+/*	$NetBSD: init.c,v 1.14 2004/02/17 20:17:38 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: init.c,v 1.13 2004/02/17 02:31:33 itojun Exp $");
+__RCSID("$NetBSD: init.c,v 1.14 2004/02/17 20:17:38 jdolecek Exp $");
 __SCCSID("@(#)init.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -283,9 +283,11 @@ fixit(argc, argv)
 			continue;
 
 		if (fplus && (argv[i][0] != '-' || !isdigit(argv[i][1]))) {
-			/* not a -POS argument, skip */
 			fplus = 0;
-			continue;
+			if (argv[i][0] != '+') {
+				/* not a -POS argument, skip */
+				continue;
+			}
 		}
 
 		/* parse spec */
@@ -333,6 +335,7 @@ fixit(argc, argv)
 			for (j=i; j < *argc; j++)
 				argv[j] = argv[j+1];
 			*argc -= 1;
+			i--;
 		}
 	}
 }
