@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)id.c	5.1 (Berkeley) 6/29/91";*/
-static char rcsid[] = "$Id: id.c,v 1.2 1993/08/01 18:14:41 mycroft Exp $";
+static char rcsid[] = "$Id: id.c,v 1.3 1993/12/09 10:28:26 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -269,7 +269,7 @@ user(pw)
 	id = pw->pw_uid;
 	(void)printf("uid=%u(%s)", id, pw->pw_name);
 	(void)printf(" gid=%u", pw->pw_gid);
-	if (gr = getgrgid(id))
+	if (gr = getgrgid(pw->pw_gid))
 		(void)printf("(%s)", gr->gr_name);
 	for (fmt = " groups=%u(%s)", lastid = -1; gr = getgrent();
 	    lastid = id) {
