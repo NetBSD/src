@@ -86,7 +86,7 @@
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
  *	from: @(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.22 1994/07/31 08:19:46 lkestel Exp $
+ *	$Id: locore.s,v 1.23 1994/07/31 19:25:11 briggs Exp $
  */
 
 #include "assym.s"
@@ -834,7 +834,6 @@ abouttouser:
 	.globl	start
 	.globl _gray_bar
 |	.globl _macinit
-	.globl _serial_boot_echo
 	.globl _videoaddr, _videorowbytes
 	.globl _videobitdepth
 	.globl _machineid
@@ -2570,7 +2569,7 @@ _get_pte:
 
 	| enable tt0
 	movl	a1,d0
-	movl	d0,pte_tmp1	| save for later
+	movl	d0,pte_tmp	| save for later
 	andl	#0xff000000,d0	| keep msb
 	orl	#0x00008707,d0	| enable tt for reading and writing
 	movl	d0,longscratch
@@ -2672,7 +2671,7 @@ pte_got_parent:
 	|  second long.  The reason we didn't do this in the first place
 	|  is that the first long might have been the last long of RAM.
 
-	movl	pte_tmp1@,a1	| get address of our original pte
+	movl	pte_tmp@,a1	| get address of our original pte
 	addl	#4,a1		| address of ite second long
 
 	| change tt0 back
