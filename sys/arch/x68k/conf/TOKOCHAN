@@ -1,4 +1,4 @@
-#	$NetBSD: TOKOCHAN,v 1.8 1999/07/29 10:37:26 augustss Exp $
+#	$NetBSD: TOKOCHAN,v 1.9 1999/08/05 15:05:56 minoura Exp $
 
 #
 #	TOKOCHAN -- Believe in the BSD power; Toko to issyo-ni make all!
@@ -308,3 +308,27 @@ pseudo-device	pty		16	# pseudo-ttys (for network, etc.)
 ## and generate randomness for some kernel formulae.
 
 pseudo-device	rnd
+
+
+## IPv6 options from GENERIC.v6
+
+# Pull in config fragments for kernel crypto.  Use only one of these,
+# and adjust the prefixes as necessary.
+
+#prefix ../crypto-us/sys
+#cinclude "conf/files.crypto-us"
+#prefix
+
+#prefix ../crypto-intl/sys
+#cinclude "conf/files.crypto-intl"
+#prefix
+
+# IPv6 options
+options 	INET6		# IPV6
+options 	IPSEC		# IP security
+#options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
+#options 	IPSEC_DEBUG	# debug for IP security
+
+# for IPv6
+pseudo-device	gif		1	# IPv[46] over IPv[46] tunnel (RFC1933)
+pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
