@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.8.2.1 2002/12/18 01:05:43 gmcgarry Exp $	*/
+/*	$NetBSD: trap.c,v 1.8.2.2 2002/12/19 04:01:42 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -425,7 +425,7 @@ copyfault:
 		if (error == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
-			       p->p_ucred ?  p->p_ucred->cr_uid : -1);
+			       p->p_ucred ? p->p_ucred->cr_uid : -1);
 			trapsignal(p, SIGKILL, T_PAGEFLT);
 		} else {
 #if 1
