@@ -34,78 +34,78 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)crt0.s	8.2 (Berkeley) 3/21/94
- *	$Id: crt0.s,v 1.2 1994/11/14 23:34:40 dean Exp $    
+ *	$Id: crt0.s,v 1.3 1994/12/15 17:04:55 mycroft Exp $    
  */
 
 #include <machine/regdef.h>
 #include <machine/machAsmDefs.h>
 
 	.data
-	.comm	_environ, 4
+	.comm	_C_LABEL(environ), 4
 	.align	2
-	.globl	___progname
-___progname:
+	.globl	_C_LABEL(__progname)
+_C_LABEL(__progname):
 	.word	$L1
 $L1:
 	.word	0		# null string plus padding
 	.text
 
-NON_LEAF(_start, 24, ra)
+NON_LEAF(start, 24, ra)
 	.set	noreorder
-	lw	s0, 0(sp)	# get argc from stack
-	addu	s1, sp, 4	# get pointer to argv
-	addu	s2, s1, 4	# skip null pointer on stack
-	sll	v0, s0, 2	# add number of argv pointers
-	addu	s2, s2, v0	# final pointer to environment list
-	sw	s2, _environ	# save environment pointer
-	subu	sp, sp, 24	# allocate standard frame
+	lw	s0, 0(sp)		# get argc from stack
+	addu	s1, sp, 4		# get pointer to argv
+	addu	s2, s1, 4		# skip null pointer on stack
+	sll	v0, s0, 2		# add number of argv pointers
+	addu	s2, s2, v0		# final pointer to environment list
+	sw	s2, _C_LABEL(environ)	# save environment pointer
+	subu	sp, sp, 24		# allocate standard frame
 	.mask	0x80000000, -4
-	sw	zero, 20(sp)	# clear return address for debugging
+	sw	zero, 20(sp)		# clear return address for debugging
 #ifdef MCRT0
 eprol:
 	la	a0, eprol
 	la	a1, etext
-	jal	_monstartup	# monstartup(eprol, etext);
+	jal	_C_LABEL(monstartup)	# monstartup(eprol, etext);
 	nop
-	la	a0, _mcleanup
-	jal	_atexit		# atext(_mcleanup);
+	la	a0, _C_LABEL(mcleanup)
+	jal	_C_LABEL(atexit)	# atexit(mcleanup);
 	nop
-	sw	zero, _errno
+	sw	zero, _C_LABEL(errno)
 #endif
-	lw	a0, 0(s1)	# a0 = argv[0];
+	lw	a0, 0(s1)		# a0 = argv[0];
 	nop
-	beq	a0, zero, 2f	# skip if a0 == NULL
-	move	s3, a0		# save argv[0]
-	jal	_strrchr
-	li	a1, 0x2f	# a1 = '/'
-	bne	v0, zero, 1f	# if slash found
+	beq	a0, zero, 2f		# skip if a0 == NULL
+	move	s3, a0			# save argv[0]
+	jal	_C_LABEL(strrchr)
+	li	a1, 0x2f		# a1 = '/'
+	bne	v0, zero, 1f		# if slash found
 	addu	v0, v0, 1
-	move	v0, s3		# v0 = argv[0];
+	move	v0, s3			# v0 = argv[0];
 1:
-	sw	v0, ___progname
+	sw	v0, _C_LABEL(__progname)
 2:
 	move	a0, s0
 	move	a1, s1
-	jal	_main		# v0 = main(argc, argv, env);
+	jal	_C_LABEL(main)		# v0 = main(argc, argv, env);
 	move	a2, s2
-	jal	_exit		# exit(v0);
+	jal	_C_LABEL(exit)		# exit(v0);
 	move	a0, v0
 	break	0
 	.set	reorder
-END(_start)
+END(start)
 
 #ifndef MCRT0
-LEAF(_moncontrol)
+LEAF(moncontrol)
 	j	ra
-END(_moncontrol)
+END(moncontrol)
 
-LEAF(__mcount)
+LEAF(_mcount)
 	.set	noreorder
 	.set	noat
-	addu	sp, sp, 8	# undo push
+	addu	sp, sp, 8		# undo push
 	j	ra
 	move	ra, AT
 	.set	at
 	.set	reorder
-END(__mcount)
+END(_mcount)
 #endif
