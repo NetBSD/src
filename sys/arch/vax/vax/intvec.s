@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.39 1999/06/28 08:20:48 itojun Exp $   */
+/*	$NetBSD: intvec.s,v 1.40 2000/01/17 04:55:26 matt Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -39,6 +39,12 @@
 #include "opt_ns.h"
 #include "arp.h"
 #include "ppp.h"
+
+#include "opt_vax410.h"
+#include "opt_vax46.h"
+#include "opt_vax630.h"
+#include "opt_vax650.h"
+
 
 #define ENTRY(name) \
 	.text			; \
@@ -311,7 +317,7 @@ ENTRY(netint)
 		.globl	hardclock
 hardclock:	mtpr	$0xc1,$PR_ICCS		# Reset interrupt flag
 		pushr	$0x3f
-#ifdef VAX46
+#if VAX46
 		cmpl	_vax_boardtype,$VAX_BTYP_46
 		bneq	1f
 		movl	_ka46_cpu,r0

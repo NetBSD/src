@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.h,v 1.7 1999/01/19 21:04:48 ragge Exp $ */
+/*	$NetBSD: gencons.h,v 1.8 2000/01/17 04:55:26 matt Exp $ */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -32,7 +32,7 @@
  */
 
  /* All bugs are subject to removal without further notice */
-		
+#include "opt_vax8600.h"
 
 /*
  * Some definitions for generic console interface (PR 32-35)
@@ -41,10 +41,8 @@
 /* PR_TXCS */
 #define	GC_RDY	0x80	/* Console ready to xmit chr */
 #define	GC_TIE	0x40	/* xmit interrupt enable */
-#if VAX8600
-#define	GC_LT	0x80000	/* Enable logical terminal */
-#define	GC_WRT	0x8000	/* Allow mtpr's to console */
-#endif
+#define	GC_LT	0x80000	/* VAX8600: Enable logical terminal */
+#define	GC_WRT	0x8000	/* VAX8600: Allow mtpr's to console */
 
 /* PR_RXCS */
 #define	GC_DON	0x80	/* character received */
