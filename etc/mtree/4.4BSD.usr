@@ -1,4 +1,4 @@
-#	$NetBSD: 4.4BSD.usr,v 1.4 1996/08/16 17:22:56 explorer Exp $
+#	$NetBSD: 4.4BSD.usr,v 1.5 1996/08/16 17:26:32 explorer Exp $
 #
 #	   user: bostic
 #	machine: vangogh.CS.Berkeley.EDU
@@ -1344,6 +1344,9 @@ generate        type=dir mode=0755
 # ./share/groff_font/devlj4
 /set type=file gname=wheel uname=root mode=0644
 devlj4		type=dir mode=0755
+
+# ./share/groff_font/devlj4
+..
 
 # ./share/groff_font
 ..
