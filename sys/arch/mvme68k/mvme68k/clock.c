@@ -1,4 +1,4 @@
-/*      $NetBSD: clock.c,v 1.3 1996/04/26 19:26:28 chuck Exp $ */
+/*      $NetBSD: clock.c,v 1.4 1996/05/08 05:58:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

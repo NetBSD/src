@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.8 1996/05/07 01:10:58 thorpej Exp $ */
+/*	$NetBSD: if_le.c,v 1.9 1996/05/08 05:55:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.

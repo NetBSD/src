@@ -1,4 +1,4 @@
-/* $Id: pccreg.h,v 1.3 1996/04/26 19:00:08 chuck Exp $ */
+/*	$NetBSD: pccreg.h,v 1.4 1996/05/08 05:55:08 thorpej Exp $	*/
 
 /*
  *
