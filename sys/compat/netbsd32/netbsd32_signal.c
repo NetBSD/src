@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_signal.c,v 1.1.4.4 2002/11/11 22:07:55 nathanw Exp $	*/
+/*	$NetBSD: netbsd32_signal.c,v 1.1.4.5 2002/11/20 20:58:58 petrov Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.1.4.4 2002/11/11 22:07:55 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.1.4.5 2002/11/20 20:58:58 petrov Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,8 +171,8 @@ netbsd32___sigaction14(l, v, retval)
 
 /* ARGSUSED */
 int
-netbsd32___sigaction_sigtramp(p, v, retval)
-	struct proc *p;
+netbsd32___sigaction_sigtramp(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -183,6 +183,7 @@ netbsd32___sigaction_sigtramp(p, v, retval)
 		syscallarg(netbsd32_voidp) tramp;
 		syscallarg(int) vers;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct netbsd32_sigaction sa32;
 	struct sigaction nsa, osa;
 	int error;
