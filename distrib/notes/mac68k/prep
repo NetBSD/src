@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.7 1999/01/13 07:30:06 ross Exp $	
+.\"	$NetBSD: prep,v 1.8 1999/05/07 03:30:44 ender Exp $	
 Find your favorite disk partitioning utility. Any formatter capable of
 partitioning a SCSI disk should work. Some of the ones that have been
 tried and seem to work are:
@@ -57,14 +57,15 @@ how much space to allocate to each partition. A minimal install of NetBSD
 (i.e.
 .Pa netbsd.tgz , base.tgz , No and
 .Pa etc.tgz )
-should fit in a 30M partition.
-For a full installation, you should allocate at least 80M. A general rule
-of thumb for sizing the swap partition is to allocate twice as much swap
-space as you have real memory. Having your swap + real memory total at
-least 20M is also a good idea. Systems that will be heavily used or that
-are low on real memory should have more swap space allocated. Systems that
-will be only lightly used or have a very large amount of real memory can
-get away with less.
+should just fit in a 32M partition.
+For a full installation, you should allocate at least 95M (150M if you
+wish to install the X sets as well). A general rule of thumb for sizing
+the swap partition is to allocate twice as much swap space as you have
+real memory. Having your swap + real memory total at least 20M is also
+a good idea. Systems that will be heavily used or that are low on real
+memory should have more swap space allocated. Systems that will be only
+lightly used or have a very large amount of real memory can get away
+with less.
 .Pp
 Next, use your favorite partitioning utility to make partitions of the
 necessary sizes. You can use any type of partition, but partitions of type
