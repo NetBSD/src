@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.7 2002/06/08 23:17:01 itojun Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.8 2002/08/24 19:00:31 martin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.7 2002/06/08 23:17:01 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.8 2002/08/24 19:00:31 martin Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -192,6 +192,8 @@ void	bridge_rtnode_destroy(struct bridge_softc *, struct bridge_rtnode *);
 
 struct bridge_iflist *bridge_lookup_member(struct bridge_softc *,
 	    const char *name);
+struct bridge_iflist *bridge_lookup_member_if(struct bridge_softc *,
+	    struct ifnet *ifp);
 void	bridge_delete_member(struct bridge_softc *, struct bridge_iflist *);
 
 int	bridge_ioctl_add(struct bridge_softc *, void *);
@@ -502,6 +504,24 @@ bridge_lookup_member(struct bridge_softc *sc, const char *name)
 	LIST_FOREACH(bif, &sc->sc_iflist, bif_next) {
 		ifp = bif->bif_ifp;
 		if (strcmp(ifp->if_xname, name) == 0)
+			return (bif);
+	}
+
+	return (NULL);
+}
+
+/*
+ * bridge_lookup_member_if:
+ *
+ *	Lookup a bridge member interface by ifnet*.  Must be called at splnet().
+ */
+struct bridge_iflist *
+bridge_lookup_member_if(struct bridge_softc *sc, struct ifnet *member_ifp)
+{
+	struct bridge_iflist *bif;
+
+	LIST_FOREACH(bif, &sc->sc_iflist, bif_next) {
+		if (bif->bif_ifp == member_ifp)
 			return (bif);
 	}
 
@@ -1187,9 +1207,8 @@ bridge_forward(struct bridge_softc *sc, struct mbuf *m)
 
 	/*
 	 * Look up the bridge_iflist.
-	 * XXX This should be more efficient.
 	 */
-	bif = bridge_lookup_member(sc, src_if->if_xname);
+	bif = bridge_lookup_member_if(sc, src_if);
 	if (bif == NULL) {
 		/* Interface is not a bridge member (anymore?) */
 		m_freem(m);
@@ -1265,8 +1284,7 @@ bridge_forward(struct bridge_softc *sc, struct mbuf *m)
 		m_freem(m);
 		return;
 	}
-	/* XXX This needs to be more efficient. */
-	bif = bridge_lookup_member(sc, dst_if->if_xname);
+	bif = bridge_lookup_member_if(sc, dst_if);
 	if (bif == NULL) {
 		/* Not a member of the bridge (anymore?) */
 		m_freem(m);
@@ -1302,8 +1320,7 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 	if ((sc->sc_if.if_flags & IFF_RUNNING) == 0)
 		return (m);
 
-	/* XXX This needs to be more efficient. */
-	bif = bridge_lookup_member(sc, ifp->if_xname);
+	bif = bridge_lookup_member_if(sc, ifp);
 	if (bif == NULL)
 		return (m);
 
