@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.1.1.1 1997/03/14 02:40:32 perry Exp $	*/
+/* $NetBSD: installboot.c,v 1.2 1997/06/13 22:15:09 drochner Exp $	 */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -39,9 +39,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/mount.h>
-#include <sys/time.h>
-#include <sys/stat.h>
 #include <sys/disklabel.h>
 #include <sys/dkio.h>
 #include <ufs/ufs/dinode.h>
@@ -58,6 +55,8 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 
+#include "installboot.h"
+
 #include "bbinfo.h"
 
 #define DEFBBLKNAME "boot"
@@ -71,22 +70,18 @@ struct nlist nl[] = {
 };
 
 int verbose = 0;
-int nowrite = 0;
-
-char bootblkpath[MAXPATHLEN];
-int bootblkscreated = 0; /* flag for error handling */
 
 char *
 loadprotoblocks(fname, size)
 	char *fname;
 	long *size;
 {
-	int	fd;
-	size_t	tdsize;		/* text+data size */
-	size_t	bbsize;		/* boot block size (block aligned) */
-	char	*bp;
-	struct	nlist *nlp;
-	struct	exec eh;
+	int fd;
+	size_t tdsize;	/* text+data size */
+	size_t bbsize;	/* boot block size (block aligned) */
+	char *bp;
+	struct nlist *nlp;
+	struct exec eh;
 
 	fd = -1;
 	bp = NULL;
@@ -117,18 +112,11 @@ loadprotoblocks(fname, size)
 		goto bad;
 	}
 	/*
-	 * We have to include the exec header in the beginning of
-	 * the buffer, and leave extra space at the end in case
-	 * the actual write to disk wants to skip the header.
+	 * We need only text and data.
 	 */
 	tdsize = eh.a_text + eh.a_data;
 	bbsize = roundup(tdsize, DEV_BSIZE);
 
-	/*
-	 * Allocate extra space here because the caller may copy
-	 * the boot block starting at the end of the exec header.
-	 * This prevents reading beyond the end of the buffer.
-	 */
 	if ((bp = calloc(bbsize, 1)) == NULL) {
 		warnx("malloc: %s: no memory", fname);
 		goto bad;
@@ -138,27 +126,24 @@ loadprotoblocks(fname, size)
 		warn("read: %s", fname);
 		goto bad;
 	}
+	*size = bbsize;		/* aligned to DEV_BSIZE */
 
-	*size = bbsize;	/* aligned to DEV_BSIZE */
-
-	fraglist = (struct fraglist*)(bp + nl[X_fraglist].n_value);
+	fraglist = (struct fraglist *) (bp + nl[X_fraglist].n_value);
 
 	if (fraglist->magic != FRAGLISTMAGIC) {
-	    printf("invalid bootblock version\n");
-	    goto bad;
+		printf("invalid bootblock version\n");
+		goto bad;
 	}
-
 	if (verbose) {
 		printf("%s: entry point %#lx\n", fname, eh.a_entry);
 		printf("proto bootblock size %ld\n", *size);
 		printf("room for %d filesystem blocks at %#lx\n",
-			fraglist->maxentries, nl[X_fraglist].n_value);
+		       fraglist->maxentries, nl[X_fraglist].n_value);
 	}
-
 	close(fd);
 	return bp;
 
- bad:
+bad:
 	if (bp)
 		free(bp);
 	if (fd >= 0)
@@ -168,186 +153,103 @@ loadprotoblocks(fname, size)
 
 static int
 devread(fd, buf, blk, size, msg)
-	int	fd;
-	void	*buf;
-	daddr_t	blk;
-	size_t	size;
-	char	*msg;
+	int fd;
+	void *buf;
+	daddr_t blk;
+	size_t size;
+	char *msg;
 {
 	if (lseek(fd, dbtob(blk), SEEK_SET) != dbtob(blk)) {
-	    warn("%s: devread: lseek", msg);
-	    return(1);
+		warn("%s: devread: lseek", msg);
+		return (1);
 	}
-
 	if (read(fd, buf, size) != size) {
-	    warn("%s: devread: read", msg);
-	    return(1);
+		warn("%s: devread: read", msg);
+		return (1);
 	}
-
-	return(0);
+	return (0);
 }
 
 /* add file system blocks to fraglist */
-static int add_fsblk(fs, blk, blcnt)
-struct fs *fs;
-daddr_t blk;
-int blcnt;
+static int
+add_fsblk(fs, blk, blcnt)
+	struct fs *fs;
+	daddr_t blk;
+	int blcnt;
 {
-  int nblk;
+	int nblk;
 
-  /* convert to disk blocks */
-  blk = fsbtodb(fs, blk);
-  nblk = fs->fs_bsize / DEV_BSIZE;
-  if(nblk > blcnt)
-      nblk = blcnt;
+	/* convert to disk blocks */
+	blk = fsbtodb(fs, blk);
+	nblk = fs->fs_bsize / DEV_BSIZE;
+	if (nblk > blcnt)
+		nblk = blcnt;
 
-  if (verbose)
-    printf("dblk: %d, num: %d\n", blk, nblk);
+	if (verbose)
+		printf("dblk: %d, num: %d\n", blk, nblk);
 
-  /* start new entry or append to previous? */
-  if(!fraglist->numentries ||
-     (fraglist->entries[fraglist->numentries - 1].offset
-      + fraglist->entries[fraglist->numentries - 1].num != blk)) {
+	/* start new entry or append to previous? */
+	if (!fraglist->numentries ||
+	    (fraglist->entries[fraglist->numentries - 1].offset
+	     + fraglist->entries[fraglist->numentries - 1].num != blk)) {
 
-    /* need new entry */
-    if(fraglist->numentries > fraglist->maxentries - 1)
-      errx(1, "not enough fragment space in bootcode\n");
+		/* need new entry */
+	        if (fraglist->numentries > fraglist->maxentries - 1) {
+			errx(1, "not enough fragment space in bootcode\n");
+			return(-1);
+		}
 
-    fraglist->entries[fraglist->numentries].offset = blk;
-    fraglist->entries[fraglist->numentries++].num = 0;
-  }
+		fraglist->entries[fraglist->numentries].offset = blk;
+		fraglist->entries[fraglist->numentries++].num = 0;
+	}
+	fraglist->entries[fraglist->numentries - 1].num += nblk;
 
-  fraglist->entries[fraglist->numentries - 1].num += nblk;
-
-  return(blcnt - nblk);
+	return (blcnt - nblk);
 }
 
 static char sblock[SBSIZE];
 
 int
-loadblocknums(diskdev, bootblkname, bp, size)
-char *diskdev, *bootblkname;
-char *bp;
-int size;
+loadblocknums(diskdev, inode)
+	char *diskdev;
+	ino_t inode;
 {
-	int		devfd = -1, fd = -1;
-	struct	stat	statbuf;
-	struct	statfs	statfsbuf;
-	struct fs	*fs;
-	char		*buf = 0;
-	daddr_t		blk, *ap;
-	struct dinode	*ip;
-	int		i, ndb;
-	char *p;
+	int devfd = -1;
+	struct fs *fs;
+	char *buf = 0;
+	daddr_t blk, *ap;
+	struct dinode *ip;
+	int i, ndb;
 	int allok = 0;
 
 	devfd = open(diskdev, O_RDONLY, 0);
-	if(devfd < 0) {
-	    warn("open raw partition");
-	    return(1);
+	if (devfd < 0) {
+		warn("open raw partition");
+		return (1);
 	}
-
 	/* Read superblock */
-	if(devread(devfd, sblock, SBLOCK, SBSIZE, "superblock"))
-	    goto out;
-	fs = (struct fs *)sblock;
+	if (devread(devfd, sblock, SBLOCK, SBSIZE, "superblock"))
+		goto out;
+	fs = (struct fs *) sblock;
 
-	if(fs->fs_magic != FS_MAGIC) {
-	    warnx("invalid super block");
-	    goto out;
+	if (fs->fs_magic != FS_MAGIC) {
+		warnx("invalid super block");
+		goto out;
 	}
-
-	if(verbose)
-	    printf("last mountpoint: %s\n", fs->fs_fsmnt);
-
-	/*
-	 * create file in (assumed) fs root for bootloader data
-	 */
-	sprintf(bootblkpath, "%s/%s", fs->fs_fsmnt, bootblkname);
-	fd = open(bootblkpath, O_RDWR | O_CREAT | O_EXCL, 0444);
-	if(fd < 0) {
-	    /* should overwrite if (!nowrite)???
-	     for now, be cautious */
-	    warn("open %s", bootblkpath);
-	    goto out;
-	}
-
-	bootblkscreated = 1;
-
-	/*
-	 * some checks to make sure the disk is mounted
-	 */
-
-	/* get info where we are really putting the file */
-	if (fstatfs(fd, &statfsbuf) != 0) {
-	    warn("statfs: %s", bootblkpath);
-	    goto out;
-	}
-
-	/* f_mntfromname should be the block device
-	 which corresponds to our raw device */
-	if((p = rindex(statfsbuf.f_mntfromname, '/'))) p++;
-	else p = statfsbuf.f_mntfromname;
-	if(strcmp(p, diskdev + strlen(diskdev) - strlen(p))) {
-	    warnx("%s is not mounted", diskdev);
-	    goto out;
-	}
-
-	/* perhaps redundant: (last) mountpoint of our device
-	 should be mountpoint belonging to the file */
-	if(strncmp(fs->fs_fsmnt, statfsbuf.f_mntonname, MFSNAMELEN)) {
-	    warnx("inconsistent mount info");
-	    goto out;
-	}
-
-	/* this code is FFS only */
-	if (strncmp(statfsbuf.f_fstypename, MOUNT_FFS, MFSNAMELEN)) {
-	    warnx("%s: must be on a FFS filesystem", bootblkpath);
-	    goto out;
-	}
-
-	/*
-	 * do the real write, flush, get inode number
-	 */
-	if(write(fd, bp, size) < 0) {
-	    warn("write %s", bootblkpath);
-	    goto out;
-	}
-	if (fsync(fd) != 0) {
-	    warn("fsync: %s", bootblkpath);
-	    goto out;
-	}
-	if (fstat(fd, &statbuf) != 0) {
-	    warn("fstat: %s", bootblkpath);
-	    goto out;
-	}
-
-	close(fd);
-	fd = -1;
-
-	/* paranoia */
-	sync();
-	sleep(3);
-
 	/* Read inode */
 	if ((buf = malloc(fs->fs_bsize)) == NULL) {
-	    warnx("No memory for filesystem block");
-	    goto out;
+		warnx("No memory for filesystem block");
+		goto out;
 	}
-
-	blk = fsbtodb(fs, ino_to_fsba(fs, statbuf.st_ino));
-	if(devread(devfd, buf, blk, fs->fs_bsize, "inode"))
-	    goto out;
-	ip = (struct dinode *)(buf) + ino_to_fsbo(fs, statbuf.st_ino);
+	blk = fsbtodb(fs, ino_to_fsba(fs, inode));
+	if (devread(devfd, buf, blk, fs->fs_bsize, "inode"))
+		goto out;
+	ip = (struct dinode *) (buf) + ino_to_fsbo(fs, inode);
 
 	/*
 	 * Have the inode.  Figure out how many blocks we need.
 	 */
-	if(size != ip->di_size) {
-	    warnx("size inconsistency");
-	    goto out;
-	}
-	ndb = size / DEV_BSIZE; /* size is rounded! */
+	ndb = ip->di_size / DEV_BSIZE;	/* size is rounded! */
 
 	if (verbose)
 		printf("Will load %d blocks.\n", ndb);
@@ -356,38 +258,38 @@ int size;
 	 * Get the block numbers, first direct blocks
 	 */
 	ap = ip->di_db;
-	for (i = 0; i < NDADDR && *ap && ndb; i++, ap++)
-	    ndb = add_fsblk(fs, *ap, ndb);
-
-	if (ndb) {
-	    /*
-	     * Just one level of indirections; there isn't much room
-	     * for more in the 1st-level bootblocks anyway.
-	     */
-	    blk = fsbtodb(fs, ip->di_ib[0]);
-	    if(devread(devfd, buf, blk, fs->fs_bsize, "indirect block"))
-		goto out;
-	    ap = (daddr_t *)buf;
-	    for (; i < NINDIR(fs) && *ap && ndb; i++, ap++) {
+	for (i = 0; i < NDADDR && *ap && ndb > 0; i++, ap++)
 		ndb = add_fsblk(fs, *ap, ndb);
-	    }
 
-	    if(ndb) {
-		warnx("too many fs blocks");
-		goto out;
-	    }
+	if (ndb > 0) {
+		/*
+	         * Just one level of indirections; there isn't much room
+	         * for more in the 1st-level bootblocks anyway.
+	         */
+		blk = fsbtodb(fs, ip->di_ib[0]);
+		if (devread(devfd, buf, blk, fs->fs_bsize, "indirect block"))
+			goto out;
+		ap = (daddr_t *) buf;
+		for (; i < NINDIR(fs) && *ap && ndb > 0; i++, ap++) {
+			ndb = add_fsblk(fs, *ap, ndb);
+		}
 	}
 
-	allok = 1;
+	if (!ndb)
+	    allok = 1;
+	else {
+	    if (ndb > 0)
+		warnx("too many fs blocks");
+	    /* else, ie ndb < 0, add_fsblk returned error */
+	    goto out;
+	}
 
 out:
-        if(buf)
-	    free(buf);
-        if(fd >= 0)
-	    close(fd);
-	if(devfd >= 0)
-	    close(devfd);
-	return(!allok);
+	if (buf)
+		free(buf);
+	if (devfd >= 0)
+		close(devfd);
+	return (!allok);
 }
 
 static void
@@ -398,122 +300,130 @@ usage()
 	exit(1);
 }
 
-int main(argc, argv)
-int argc;
-char *argv[];
+int
+main(argc, argv)
+	int argc;
+	char *argv[];
 {
-  char c, *bp = 0;
-  long size;
-  int devfd = -1;
-  struct disklabel dl;
-  int bsdoffs;
-  int i;
-  int res;
-  int forceifnolabel = 0;
-  char *bootblkname = DEFBBLKNAME;
-  int allok = 0;
+	char c, *bp = 0;
+	long size;
+	ino_t inode = (ino_t) -1;
+	int devfd = -1;
+	struct disklabel dl;
+	int bsdoffs;
+	int i, res;
+	int forceifnolabel = 0;
+	char *bootblkname = DEFBBLKNAME;
+	int nowrite = 0;
+	int allok = 0;
 
-  while ((c = getopt(argc, argv, "vnf")) != EOF) {
-    switch (c) {
-      case 'n':
-	/* Do not actually write the bootblock to disk */
-	nowrite = 1;
-	break;
-      case 'v':
-	/* Chat */
-	verbose = 1;
-	break;
-      case 'f':
-	/* assume zero offset if no disklabel */
-	forceifnolabel = 1;
-	break;
-      default:
-	usage();
-    }
-  }
+	while ((c = getopt(argc, argv, "vnf")) != EOF) {
+		switch (c) {
+		case 'n':
+			/* Do not actually write the bootblock to disk */
+			nowrite = 1;
+			break;
+		case 'v':
+			/* Chat */
+			verbose = 1;
+			break;
+		case 'f':
+			/* assume zero offset if no disklabel */
+			forceifnolabel = 1;
+			break;
+		default:
+			usage();
+		}
+	}
 
-  if (argc - optind != 2) {
-    usage();
-  }
+	if (argc - optind != 2) {
+		usage();
+	}
+	if (argv[optind + 1][strlen(argv[optind + 1]) - 1] != 'a')
+		errx(1, "use partition 'a'!");
 
-  if(argv[optind + 1][strlen(argv[optind + 1]) - 1] != 'a')
-      errx(1, "use partition 'a'!");
+	bp = loadprotoblocks(argv[optind], &size);
+	if (!bp)
+		errx(1, "error reading bootblocks");
 
-  bp = loadprotoblocks(argv[optind], &size);
-  if(!bp)
-      errx(1, "error reading bootblocks");
+	fraglist->numentries = 0;
 
-  fraglist->numentries = 0;
+	/* do we need the fraglist? */
+	if (size > fraglist->loadsz * DEV_BSIZE) {
 
-  /* do we need the fraglist? */
-  if(size > fraglist->loadsz * DEV_BSIZE) {
+		inode = createfileondev(argv[optind + 1], bootblkname, nowrite,
+					bp + fraglist->loadsz * DEV_BSIZE,
+					size - fraglist->loadsz * DEV_BSIZE);
+		if (inode == (ino_t) - 1)
+			goto out;
 
-      if(loadblocknums(argv[optind + 1], bootblkname,
-		       bp + fraglist->loadsz * DEV_BSIZE,
-		       size - fraglist->loadsz * DEV_BSIZE))
-	  goto out;
+		/* paranoia */
+		sync();
+		sleep(3);
 
-      size = fraglist->loadsz * DEV_BSIZE;
-      /* size to be written to bootsect */
-  }
+		if (loadblocknums(argv[optind + 1], inode))
+			goto out;
 
-  devfd = open(argv[optind + 1], O_RDWR, 0);
-  if(devfd < 0) {
-      warn("open raw partition RW");
-      goto out;
-  }
+		size = fraglist->loadsz * DEV_BSIZE;
+		/* size to be written to bootsect */
+	}
 
-  if(ioctl(devfd, DIOCGDINFO, &dl) < 0) {
-      if((errno == EINVAL) || (errno == ENOTTY)){
-	  if(forceifnolabel)
-	      bsdoffs = 0;
-	  else {
-	      warnx("no disklabel, use -f to install anyway");
-	      goto out;
-	  }
-      }	else {
-	  warn("get disklabel");
-	  goto out;
-      }
-  } else
-      bsdoffs = dl.d_partitions[0].p_offset;
+	devfd = open(argv[optind + 1], O_RDWR, 0);
+	if (devfd < 0) {
+		warn("open raw partition RW");
+		goto out;
+	}
+	if (ioctl(devfd, DIOCGDINFO, &dl) < 0) {
+		if ((errno == EINVAL) || (errno == ENOTTY)) {
+			if (forceifnolabel)
+				bsdoffs = 0;
+			else {
+				warnx("no disklabel, use -f to install anyway");
+				goto out;
+			}
+		} else {
+			warn("get disklabel");
+			goto out;
+		}
+	} else
+		bsdoffs = dl.d_partitions[0].p_offset;
 
-  if(verbose)
-      printf("BSD partition starts at sector %d\n", bsdoffs);
+	if (verbose)
+		printf("BSD partition starts at sector %d\n", bsdoffs);
 
-  /*
-   * add offset of BSD partition to fraglist entries
-   */
-  for(i=0; i < fraglist->numentries; i++)
-      fraglist->entries[i].offset += bsdoffs;
+	/*
+         * add offset of BSD partition to fraglist entries
+         */
+	for (i = 0; i < fraglist->numentries; i++)
+		fraglist->entries[i].offset += bsdoffs;
 
-  if(!nowrite) {
-      /*
-       * write first blocks (max loadsz) to start of BSD partition,
-       * skip disklabel (in second disk block)
-       */
-      lseek(devfd, 0, SEEK_SET);
-      res = write(devfd, bp, DEV_BSIZE);
-      if(res < 0) {
-	  warn("final write1");
-	  goto out;
-      }
-      lseek(devfd, 2 * DEV_BSIZE, SEEK_SET);
-      res = write(devfd, bp + 2 * DEV_BSIZE, size - 2 * DEV_BSIZE);
-      if(res < 0) {
-	  warn("final write2");
-	  goto out;
-      }
-  }
-
-  allok = 1;
+	if (!nowrite) {
+		/*
+	         * write first blocks (max loadsz) to start of BSD partition,
+	         * skip disklabel (in second disk block)
+	         */
+		lseek(devfd, 0, SEEK_SET);
+		res = write(devfd, bp, DEV_BSIZE);
+		if (res < 0) {
+			warn("final write1");
+			goto out;
+		}
+		lseek(devfd, 2 * DEV_BSIZE, SEEK_SET);
+		res = write(devfd, bp + 2 * DEV_BSIZE, size - 2 * DEV_BSIZE);
+		if (res < 0) {
+			warn("final write2");
+			goto out;
+		}
+	}
+	allok = 1;
 
 out:
-  if(devfd >= 0)
-      close(devfd);
-  if(bp)
-      free(bp);
-  if(bootblkscreated && (!allok || nowrite))
-      unlink(bootblkpath);
-  return(!allok);
+	if (devfd >= 0)
+		close(devfd);
+	if (bp)
+		free(bp);
+	if (inode != (ino_t) - 1 && (!allok || nowrite)) {
+		cleanupfileondev(argv[optind + 1], bootblkname);
+	}
+	return (!allok);
 }
