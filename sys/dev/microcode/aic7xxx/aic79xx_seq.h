@@ -3,7 +3,7 @@
  *		 from the following source files:
  *
  * Id: //depot/aic7xxx/aic7xxx/aic79xx.seq#94 $
- * Id: aic79xx.reg,v 1.13 2003/05/26 21:26:51 gibbs Exp $
+ * Id: //depot/aic7xxx/aic7xxx/aic79xx.reg#70 $
  */
 static uint8_t seqprog[] = {
 	0xff, 0x02, 0x06, 0x78,
