@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.25 1996/02/09 19:06:43 christos Exp $	*/
+/*	$NetBSD: advnops.c,v 1.26 1996/02/10 00:44:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -54,6 +54,9 @@ int	adosfs_write	__P((void *));
 int	adosfs_ioctl	__P((void *));
 int	adosfs_select	__P((void *));
 int	adosfs_strategy	__P((void *));
+int	adosfs_link	__P((void *));
+int	adosfs_symlink	__P((void *));
+int	adosfs_abortop	__P((void *));
 int	adosfs_lock	__P((void *));
 int	adosfs_unlock	__P((void *));
 int	adosfs_bmap	__P((void *));
