@@ -1,4 +1,4 @@
-/*	$NetBSD: __fts13.c,v 1.11 1998/11/05 21:26:03 christos Exp $	*/
+/*	$NetBSD: __fts13.c,v 1.12 1998/11/06 19:44:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: __fts13.c,v 1.11 1998/11/05 21:26:03 christos Exp $");
+__RCSID("$NetBSD: __fts13.c,v 1.12 1998/11/06 19:44:03 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -929,7 +929,8 @@ fts_sort(sp, head, nitems)
 	}
 	for (ap = sp->fts_array, p = head; p; p = p->fts_link)
 		*ap++ = p;
-	qsort((void *)sp->fts_array, nitems, sizeof(FTSENT *), sp->fts_compar);
+	qsort((void *)sp->fts_array, nitems, sizeof(FTSENT *), 
+		(int (*) __P((const void *, const void *)))sp->fts_compar);
 	for (head = *(ap = sp->fts_array); --nitems; ++ap)
 		ap[0]->fts_link = ap[1];
 	ap[0]->fts_link = NULL;
