@@ -1,18 +1,15 @@
-.\" $NetBSD: pckbd.4,v 1.1 1999/03/22 19:15:02 drochner Exp $
-
+.\" $NetBSD: pckbd.4,v 1.1.2.1 1999/04/22 15:17:02 perry Exp $
 .Dd March 20, 1999
 .Os
 .Dt PCKBD 4
 .Sh NAME
 .Nm pckbd
 .Nd PC keyboard driver for wscons
-
 .Sh SYNOPSIS
-.Cd "pckbc0 at isa?"
-.Cd "pckbd* at pckbc?"
-.Cd "wskbd* at pckbd? console ?"
-.Cd "options PCKBD_LAYOUT=XXX"
-
+.Cd pckbc* at isa?
+.Cd pckbd* at pckbc?
+.Cd wskbd* at pckbd? console ?
+.Cd options PCKBD_LAYOUT=XXX
 .Sh DESCRIPTION
 This driver supports PC/AT keyboards within the
 .Xr wscons 4
@@ -99,12 +96,18 @@ and
 .Dq Caps Lock
 keys.
 .El
-
+.Pp
+Because PC keyboard hardware doesn't contain a beeper, requests for
+.Dq keyboard beeps
+cannot be handled directly. On alpha and i386 a helper device attached
+to the
+.Xr pcppi 4
+driver allows to use the standard ISA speaker for this purpose.
 .Sh BUGS
 The list of builtin mappings doesn't follow any logics.
 It grew as people submitted what they needed.
-
 .Sh SEE ALSO
 .Xr isa 4 ,
 .Xr wskbd 4 ,
-.Xr wsconsctl 8
+.Xr wsconsctl 8 ,
+.Xr pcppi 4 .
