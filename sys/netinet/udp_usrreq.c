@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.63 2000/03/01 12:49:42 itojun Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.64 2000/03/22 20:58:30 ws Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,8 +65,7 @@
  */
 
 #include "opt_ipsec.h"
-
-#include "ipkdb.h"
+#include "opt_ipkdb.h"
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -118,6 +117,10 @@
 #include <netkey/key.h>
 #include <netkey/key_debug.h>
 #endif /*IPSEC*/
+
+#ifdef IPKDB
+#include <ipkdb/ipkdb.h>
+#endif
 
 /*
  * UDP protocol implementation.
@@ -289,7 +292,7 @@ udp_input(m, va_alist)
 			goto bad;
 		}
 		udpstat.udps_noport++;
-#if NIPKDB > 0
+#ifdef IPKDB
 		if (checkipkdb(&ip->ip_src, uh->uh_sport, uh->uh_dport,
 				m, iphlen + sizeof(struct udphdr),
 				m->m_pkthdr.len - iphlen - sizeof(struct udphdr))) {
@@ -638,7 +641,7 @@ udp4_realinput(src, dst, m, off)
 					goto bad;
 				}
 				udpstat.udps_noport++;
-#if NIPKDB > 0
+#ifdef IPKDB
 				if (checkipkdb(src4, *sport, *dport, m, off,
 					       m->m_pkthdr.len - off)) {
 					/*
@@ -1090,7 +1093,7 @@ udp_input(m, va_alist)
 			}
 			udpstat.udps_noport++;
 			*ip = save_ip;
-#if NIPKDB > 0
+#ifdef IPKDB
 			if (checkipkdb(&ip->ip_src,
 				       uh->uh_sport,
 				       uh->uh_dport,

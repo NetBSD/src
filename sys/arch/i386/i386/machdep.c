@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.376 2000/02/04 14:21:33 minoura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.377 2000/03/22 20:58:27 ws Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -77,6 +77,7 @@
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
+#include "opt_ipkdb.h"
 #include "opt_vm86.h"
 #include "opt_user_ldt.h"
 #include "opt_compat_netbsd.h"
@@ -105,6 +106,10 @@
 #include <sys/core.h>
 #include <sys/kcore.h>
 #include <machine/kcore.h>
+
+#ifdef IPKDB
+#include <ipkdb/ipkdb.h>
+#endif
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -1651,6 +1656,11 @@ init386(first_avail)
 	}
 	if (boothowto & RB_KDB)
 		Debugger();
+#endif
+#ifdef IPKDB
+	ipkdb_init();
+	if (boothowto & RB_KDB)
+		ipkdb_connect(0);
 #endif
 #ifdef KGDB
 	kgdb_port_init();

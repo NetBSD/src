@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.34 2000/03/22 18:02:59 ws Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.35 2000/03/22 20:58:28 ws Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -13,6 +13,7 @@
  * the author assume any responsibility for damages incurred with its use.
  */
 
+#include "opt_ipkdb.h"
 #include "opt_inet.h"
 #include "opt_ns.h"
 #include "bpfilter.h"
@@ -56,6 +57,10 @@
 #endif
 
 #include <machine/bus.h>
+
+#ifdef IPKDB_DP8390
+#include <ipkdb/ipkdb.h>
+#endif
 
 #include <dev/ic/dp8390reg.h>
 #include <dev/ic/dp8390var.h>
@@ -1355,3 +1360,273 @@ dp8390_detach(sc, flags)
 
 	return (0);
 }
+
+#ifdef IPKDB_DP8390
+static void dp8390_ipkdb_hwinit __P((struct ipkdb_if *));
+static void dp8390_ipkdb_init __P((struct ipkdb_if *));
+static void dp8390_ipkdb_leave __P((struct ipkdb_if *));
+static int dp8390_ipkdb_rcv __P((struct ipkdb_if *, u_char *, int));
+static void dp8390_ipkdb_send __P((struct ipkdb_if *, u_char *, int));
+
+/*
+ * This is essentially similar to dp8390_config above.
+ */
+int
+dp8390_ipkdb_attach(kip)
+	struct ipkdb_if *kip;
+{
+	struct dp8390_softc *sc = kip->port;
+
+	if (sc->mem_size < 8192 * 2)
+		sc->txb_cnt = 1;
+	else if (sc->mem_size < 8192 * 3)
+		sc->txb_cnt = 2;
+	else
+		sc->txb_cnt = 3;
+
+	sc->tx_page_start = sc->mem_start >> ED_PAGE_SHIFT;
+	sc->rec_page_start = sc->tx_page_start + sc->txb_cnt * ED_TXBUF_SIZE;
+	sc->rec_page_stop = sc->tx_page_start + (sc->mem_size >> ED_PAGE_SHIFT);
+	sc->mem_ring = sc->mem_start + (sc->rec_page_start << ED_PAGE_SHIFT);
+	sc->mem_end = sc->mem_start + sc->mem_size;
+
+	dp8390_stop(sc);
+
+	kip->start = dp8390_ipkdb_init;
+	kip->leave = dp8390_ipkdb_leave;
+	kip->receive = dp8390_ipkdb_rcv;
+	kip->send = dp8390_ipkdb_send;
+
+	return 0;
+}
+
+/*
+ * Similar to dp8390_init above.
+ */
+static void
+dp8390_ipkdb_hwinit(kip)
+	struct ipkdb_if *kip;
+{
+	struct dp8390_softc *sc = kip->port;
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	bus_space_tag_t regt = sc->sc_regt;
+	bus_space_handle_t regh = sc->sc_regh;
+	int i;
+
+	sc->txb_inuse = 0;
+	sc->txb_new = 0;
+	sc->txb_next_tx = 0;
+	dp8390_stop(sc);
+
+	if (sc->dcr_reg & ED_DCR_LS)
+		NIC_PUT(regt, regh, ED_P0_DCR, sc->dcr_reg);
+	else
+		NIC_PUT(regt, regh, ED_P0_DCR, ED_DCR_FT1 | ED_DCR_LS);
+	NIC_PUT(regt, regh, ED_P0_RBCR0, 0);
+	NIC_PUT(regt, regh, ED_P0_RBCR1, 0);
+	NIC_PUT(regt, regh, ED_P0_RCR, ED_RCR_MON | sc->rcr_proto);
+	NIC_PUT(regt, regh, ED_P0_TCR, ED_TCR_LB0);
+	if (sc->is790)
+		NIC_PUT(regt, regh, 0x09, 0);
+	NIC_PUT(regt, regh, ED_P0_BNRY, sc->rec_page_start);
+	NIC_PUT(regt, regh, ED_P0_PSTART, sc->rec_page_start);
+	NIC_PUT(regt, regh, ED_P0_PSTOP, sc->rec_page_stop);
+	NIC_PUT(regt, regh, ED_P0_IMR, 0);
+	NIC_BARRIER(regt, regh);
+	NIC_PUT(regt, regh, ED_P0_ISR, 0xff);
+
+	NIC_BARRIER(regt, regh);
+	NIC_PUT(regt, regh, ED_P0_CR,
+		sc->cr_proto | ED_CR_PAGE_1 | ED_CR_STP);
+	NIC_BARRIER(regt, regh);
+
+	for (i = 0; i < sizeof kip->myenetaddr; i++)
+		NIC_PUT(regt, regh, ED_P1_PAR0 + i, kip->myenetaddr[i]);
+	/* multicast filter? */
+
+	sc->next_packet = sc->rec_page_start + 1;
+	NIC_PUT(regt, regh, ED_P1_CURR, sc->next_packet);
+
+	NIC_BARRIER(regt, regh);
+	NIC_PUT(regt, regh, ED_P1_CR,
+		sc->cr_proto | ED_CR_PAGE_0 | ED_CR_STP);
+	NIC_BARRIER(regt, regh);
+
+	/* promiscuous mode? */
+	NIC_PUT(regt, regh, ED_P0_RCR, ED_RCR_AB | ED_RCR_AM | sc->rcr_proto);
+	NIC_PUT(regt, regh, ED_P0_TCR, 0);
+
+	/* card-specific initialization? */
+
+	NIC_BARRIER(regt, regh);
+	NIC_PUT(regt, regh, ED_P0_CR,
+		sc->cr_proto | ED_CR_PAGE_0 | ED_CR_STA);
+
+	ifp->if_flags &= ~IFF_OACTIVE;
+}
+
+static void
+dp8390_ipkdb_init(kip)
+	struct ipkdb_if *kip;
+{
+	struct dp8390_softc *sc = kip->port;
+	bus_space_tag_t regt = sc->sc_regt;
+	bus_space_handle_t regh = sc->sc_regh;
+	u_char cmd;
+
+	cmd = NIC_GET(regt, regh, ED_P0_CR) & ~(ED_CR_PAGE_3 | ED_CR_STA);
+
+	/* Select page 0 */
+	NIC_BARRIER(regt, regh);
+	NIC_PUT(regt, regh, ED_P0_CR, cmd | ED_CR_PAGE_0 | ED_CR_STP);
+	NIC_BARRIER(regt, regh);
+
+	/* If not started, init chip */
+	if (cmd & ED_CR_STP)
+		dp8390_ipkdb_hwinit(kip);
+
+	/* If output active, wait for packets to drain */
+	while (sc->txb_inuse) {
+		while (!(cmd = (NIC_GET(regt, regh, ED_P0_ISR)
+				& (ED_ISR_PTX | ED_ISR_TXE))))
+			DELAY(1);
+		NIC_PUT(regt, regh, ED_P0_ISR, cmd);
+		if (--sc->txb_inuse)
+			dp8390_xmit(sc);
+	}
+}
+
+static void
+dp8390_ipkdb_leave(kip)
+	struct ipkdb_if *kip;
+{
+	struct dp8390_softc *sc = kip->port;
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
+
+	ifp->if_timer = 0;
+}
+
+/*
+ * Similar to dp8390_intr above.
+ */
+static int
+dp8390_ipkdb_rcv(kip, buf, poll)
+	struct ipkdb_if *kip;
+	u_char *buf;
+	int poll;
+{
+	struct dp8390_softc *sc = kip->port;
+	bus_space_tag_t regt = sc->sc_regt;
+	bus_space_handle_t regh = sc->sc_regh;
+	u_char bnry, current, isr;
+	int len, nlen, packet_ptr;
+	struct dp8390_ring packet_hdr;
+
+	/* Switch to page 0. */
+	NIC_BARRIER(regt, regh);
+	NIC_PUT(regt, regh, ED_P0_CR,
+		sc->cr_proto | ED_CR_PAGE_0 | ED_CR_STA);
+	NIC_BARRIER(regt, regh);
+
+	while (1) {
+		isr = NIC_GET(regt, regh, ED_P0_ISR);
+		NIC_PUT(regt, regh, ED_P0_ISR, isr);
+
+		if (isr & (ED_ISR_PRX | ED_ISR_TXE)) {
+			NIC_GET(regt, regh, ED_P0_NCR);
+			NIC_GET(regt, regh, ED_P0_TSR);
+		}
+
+		if (isr & ED_ISR_OVW) {
+			dp8390_ipkdb_hwinit(kip);
+			continue;
+		}
+
+		if (isr & ED_ISR_CNT) {
+			NIC_GET(regt, regh, ED_P0_CNTR0);
+			NIC_GET(regt, regh, ED_P0_CNTR1);
+			NIC_GET(regt, regh, ED_P0_CNTR2);
+		}
+
+		/* Similar to dp8390_rint above. */
+		NIC_BARRIER(regt, regh);
+		NIC_PUT(regt, regh, ED_P0_CR,
+			sc->cr_proto | ED_CR_PAGE_1 | ED_CR_STA);
+		NIC_BARRIER(regt, regh);
+
+		current = NIC_GET(regt, regh, ED_P1_CURR);
+
+		NIC_BARRIER(regt, regh);
+		NIC_PUT(regt, regh, ED_P1_CR,
+			sc->cr_proto | ED_CR_PAGE_0 | ED_CR_STA);
+		NIC_BARRIER(regt, regh);
+
+		if (sc->next_packet == current) {
+			if (poll)
+				return 0;
+			continue;
+		}
+
+		packet_ptr = sc->mem_ring
+			+ ((sc->next_packet - sc->rec_page_start) << ED_PAGE_SHIFT);
+		sc->read_hdr(sc, packet_ptr, &packet_hdr);
+		len = packet_hdr.count;
+		nlen = packet_hdr.next_packet - sc->next_packet;
+		if (nlen < 0)
+			nlen += sc->rec_page_stop - sc->rec_page_start;
+		nlen--;
+		if ((len & ED_PAGE_MASK) + sizeof(packet_hdr) > ED_PAGE_SIZE)
+			nlen--;
+		len = (len & ED_PAGE_MASK) | (nlen << ED_PAGE_SHIFT);
+		len -= sizeof(packet_hdr);
+
+		if (len <= ETHERMTU
+		    && packet_hdr.next_packet >= sc->rec_page_start
+		    && packet_hdr.next_packet < sc->rec_page_stop) {
+			sc->ring_copy(sc, packet_ptr + sizeof(packet_hdr),
+				buf, len);
+			sc->next_packet = packet_hdr.next_packet;
+			bnry = sc->next_packet - 1;
+			if (bnry < sc->rec_page_start)
+				bnry = sc->rec_page_stop - 1;
+			NIC_PUT(regt, regh, ED_P0_BNRY, bnry);
+			return len;
+		}
+
+		dp8390_ipkdb_hwinit(kip);
+	}
+}
+
+static void
+dp8390_ipkdb_send(kip, buf, l)
+	struct ipkdb_if *kip;
+	u_char *buf;
+	int l;
+{
+	struct dp8390_softc *sc = kip->port;
+	bus_space_tag_t regt = sc->sc_regt;
+	bus_space_handle_t regh = sc->sc_regh;
+	struct mbuf mb;
+
+	mb.m_next = NULL;
+	mb.m_pkthdr.len = mb.m_len = l;
+	mtod(&mb, u_char *) = buf;
+	mb.m_flags = M_EXT | M_PKTHDR | M_EOR;
+	mb.m_type = MT_DATA;
+
+	l = sc->write_mbuf(sc, &mb,
+	    sc->mem_start + ((sc->txb_new * ED_TXBUF_SIZE) << ED_PAGE_SHIFT));
+	sc->txb_len[sc->txb_new] = max(l, ETHER_MIN_LEN - ETHER_CRC_LEN);
+
+	if (++sc->txb_new == sc->txb_cnt)
+		sc->txb_new = 0;
+
+	sc->txb_inuse++;
+	dp8390_xmit(sc);
+
+	while (!(NIC_GET(regt, regh, ED_P0_ISR) & (ED_ISR_PTX | ED_ISR_TXE)))
+		DELAY(1);
+
+	sc->txb_inuse--;
+}
+#endif

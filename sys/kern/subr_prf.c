@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.66 2000/01/26 07:50:33 thorpej Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.67 2000/03/22 20:58:30 ws Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -41,8 +41,8 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_ipkdb.h"
 #include "opt_multiprocessor.h"
-#include "ipkdb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,6 +64,10 @@
 
 #ifdef DDB
 #include <ddb/ddbvar.h>
+#endif
+
+#ifdef IPKDB
+#include <ipkdb/ipkdb.h>
 #endif
 
 #if defined(MULTIPROCESSOR)
@@ -199,7 +203,7 @@ panic(fmt, va_alist)
 	printf("\n");
 	va_end(ap);
 
-#if NIPKDB > 0
+#ifdef IPKDB
 	ipkdb_panic();
 #endif
 #ifdef KGDB

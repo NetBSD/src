@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.28 2000/03/22 18:02:59 ws Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.29 2000/03/22 20:58:28 ws Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -54,6 +54,8 @@
  * Common code shared by all NE2000-compatible Ethernet interfaces.
  */
 
+#include "opt_ipkdb.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -77,6 +79,10 @@
 #define	bus_space_read_multi_stream_2	bus_space_read_multi_2
 #endif /* __BUS_SPACE_HAS_STREAM_METHODS */
 
+#ifdef IPKDB_NE
+#include <ipkdb/ipkdb.h>
+#endif
+
 #include <dev/ic/dp8390reg.h>
 #include <dev/ic/dp8390var.h>
 
@@ -93,7 +99,7 @@ void	ne2000_read_hdr __P((struct dp8390_softc *, int, struct dp8390_ring *));
 int	ne2000_test_mem __P((struct dp8390_softc *));
 
 void	ne2000_writemem __P((bus_space_tag_t, bus_space_handle_t,
-	    bus_space_tag_t, bus_space_handle_t, u_int8_t *, int, size_t, 
+	    bus_space_tag_t, bus_space_handle_t, u_int8_t *, int, size_t,
 	    int, int));
 void	ne2000_readmem __P((bus_space_tag_t, bus_space_handle_t,
 	    bus_space_tag_t, bus_space_handle_t, int, u_int8_t *, size_t, int));
@@ -798,3 +804,100 @@ ne2000_detach(sc, flags)
 
 	return (dp8390_detach(&sc->sc_dp8390, flags));
 }
+
+#ifdef IPKDB_NE
+/*
+ * This code is essentially the same as ne2000_attach above.
+ */
+int
+ne2000_ipkdb_attach(kip)
+	struct ipkdb_if *kip;
+{
+	struct ne2000_softc *np = kip->port;
+	struct dp8390_softc *dp = &np->sc_dp8390;
+	bus_space_tag_t nict = dp->sc_regt;
+	bus_space_handle_t nich = dp->sc_regh;
+	int i, useword;
+
+#ifdef GWETHER
+	/* Not supported (yet?) */
+	return -1;
+#endif
+
+	if (np->sc_type == 0)
+		np->sc_type = ne2000_detect(nict, nich,
+			np->sc_asict, np->sc_asich);
+	if (np->sc_type == 0)
+		return -1;
+
+	useword = NE2000_USE_WORD(np);
+
+	dp->cr_proto = ED_CR_RD2;
+	dp->dcr_reg = ED_DCR_FT1 | ED_DCR_LS | (useword ? ED_DCR_WTS : 0);
+	dp->rcr_proto = 0;
+
+	dp->test_mem = ne2000_test_mem;
+	dp->ring_copy = ne2000_ring_copy;
+	dp->write_mbuf = ne2000_write_mbuf;
+	dp->read_hdr = ne2000_read_hdr;
+
+	for (i = 0; i < 16; i++)
+		dp->sc_reg_map[i] = i;
+
+	switch (np->sc_type) {
+	case NE2000_TYPE_NE1000:
+		dp->mem_start = dp->mem_size = 8192;
+		kip->name = "ne1000";
+		break;
+	case NE2000_TYPE_NE2000:
+		dp->mem_start = dp->mem_size = 8192 * 2;
+		kip->name = "ne2000";
+		break;
+	case NE2000_TYPE_DL10019:
+		dp->mem_start = dp->mem_size = 8192 * 3;
+		kip->name = "dl10019";
+		break;
+	case NE2000_TYPE_AX88190:
+		dp->rcr_proto = ED_RCR_INTT;
+		dp->sc_flags |= DP8390_DO_AX88190_WORKAROUND;
+		dp->mem_start = dp->mem_size = 8192 * 2;
+		kip->name = "ax88190";
+		break;
+	}
+
+	if (dp8390_ipkdb_attach(kip))
+		return -1;
+
+	dp->mem_ring = dp->mem_start
+		+ ((dp->txb_cnt * ED_TXBUF_SIZE) << ED_PAGE_SHIFT);
+
+	if (!(kip->flags & IPKDB_MYHW)) {
+		char romdata[16];
+
+		/* Read the station address. */
+		if (np->sc_type == NE2000_TYPE_AX88190) {
+			/* Select page 0 registers. */
+			NIC_BARRIER(nict, nich);
+			bus_space_write_1(nict, nich, ED_P0_CR,
+				ED_CR_RD2 | ED_CR_PAGE_0 | ED_CR_STA);
+			NIC_BARRIER(nict, nich);
+			/* Select word transfer */
+			bus_space_write_1(nict, nich, ED_P0_DCR, ED_DCR_WTS);
+			ne2000_readmem(nict, nich, np->sc_asict, np->sc_asich,
+				NE2000_AX88190_NODEID_OFFSET, kip->myenetaddr,
+				ETHER_ADDR_LEN, useword);
+		} else {
+			ne2000_readmem(nict, nich, np->sc_asict, np->sc_asich,
+				0, romdata, sizeof romdata, useword);
+			useword = useword ? 2 : 1;
+			for (i = 0; i < ETHER_ADDR_LEN; i++)
+				kip->myenetaddr[i] = romdata[i * useword];
+		}
+		kip->flags |= IPKDB_MYHW;
+
+	}
+	dp8390_stop(dp);
+
+	return 0;
+}
+#endif

@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.151 2000/03/16 14:53:29 ad Exp $
+#	$NetBSD: files.i386,v 1.152 2000/03/22 20:58:25 ws Exp $
 #
 # new style config file for i386 architecture
 #
@@ -54,6 +54,7 @@ file	arch/i386/i386/disksubr.c	disk
 file	arch/i386/i386/gdt.c
 file	arch/i386/i386/in_cksum.s	inet
 file	netinet/in4_cksum.c		inet
+file	arch/i386/i386/ipkdb_glue.c	ipkdb
 file	arch/i386/i386/kgdb_machdep.c	kgdb
 file	arch/i386/i386/machdep.c
 file	arch/i386/i386/math_emulate.c	math_emulate

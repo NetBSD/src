@@ -1,8 +1,8 @@
-/*	$NetBSD: ipkdb.h,v 1.3 1997/04/19 01:52:16 thorpej Exp $	*/
+/*	$NetBSD: ipkdb.h,v 1.4 2000/03/22 20:58:29 ws Exp $	*/
 
 /*
- * Copyright (C) 1993-1996 Wolfgang Solfrank.
- * Copyright (C) 1993-1996 TooLs GmbH.
+ * Copyright (C) 1993-2000 Wolfgang Solfrank.
+ * Copyright (C) 1993-2000 TooLs GmbH.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,65 +33,33 @@
 #ifndef	_IPKDB_H
 #define	_IPKDB_H
 
-struct device;
-struct cfdata;
-
-extern int ipkdb_probe __P((struct device *, struct cfdata *, void *));
-extern void ipkdb_attach __P((struct device *, struct device *, void *));
-
-struct ipkdb_allow {
-	u_char mask[4];
-	u_char match[4];
-};
-extern struct ipkdb_allow ipkdballow[];	/* allowed debuggers */
-extern int ipkdbcount;		/* count of above */
-
 extern int ipkdbpanic;
 
 #define	IPKDBPORT	1138	/* debugging port */
 
-extern void ipkdbcopy	__P((void *, void *, int));
-extern void ipkdbzero	__P((void *, int));
-extern int ipkdbcmp	__P((void *, void *, int));
-
-extern int ipkdbfbyte	__P((unsigned char *));
-extern int ipkdbsbyte	__P((unsigned char *, int));
-
 struct ipkdb_if {
 	/* These fields are used by IPKDB itself: */
-	u_char	myenetaddr[6];	/* to be filled by the driver */
-	u_char	myinetaddr[4];
-	u_char	hisenetaddr[6];
-	u_char	hisinetaddr[4];
-	u_char	flags;		/* driver marks IPKDB_MYHW here */
-	u_char	connect;
-	u_char	pkt[1500];
-	int	pktlen;
-	u_int32_t seq;
-	u_int32_t id;
-	int	mtu;
-	u_char	ass[1500];
-	u_char	assbit[1500/8/8 + 1];
-	short	asslen;
-	char	gotbuf[32*1024];
-	char	*got;
-	int	gotlen;
-	struct ethercom *arp;
-	struct cfdata *cfp;
-	char	*name;		/* to be filled by the driver */
-	int	port;		/* to be filled by the driver */
-	void	(*start)();	/* to be filled by the driver */
-	void	(*leave)();	/* to be filled by the driver */
-	int	(*receive)();	/* to be filled by the driver */
-	void	(*send)();	/* to be filled by the driver */
-	/* Additional routines used only if debugging via SLIP: */
-	int	(*getc)();	/* to be filled by the driver */
-	void	(*putc)();	/* to be filled by the driver */
-	/* The rest is solely used by the driver: */
-	int	unit;
-	int	speed;
-	int	fill;
-	int	drvflags;
+	u_int8_t	myenetaddr[6];	/* to be filled by the driver */
+	u_int8_t	myinetaddr[4];
+	u_int8_t	hisenetaddr[6];
+	u_int8_t	hisinetaddr[4];
+	u_int16_t	hisport;
+	u_char		pkt[1500];
+	int		pktlen;
+	u_int32_t	seq;
+	u_int32_t	id;
+	int		mtu;
+	u_char		ass[1500];
+	u_int8_t	assbit[1500/8/8 + 1];
+	u_int16_t	asslen;
+	u_int8_t	flags;		/* driver marks IPKDB_MYHW here */
+	/* Data from here on is to be filled by the driver */
+	char		*name;
+	void		*port;
+	void		(*start) __P((struct ipkdb_if *));
+	void		(*leave) __P((struct ipkdb_if *));
+	int		(*receive) __P((struct ipkdb_if *, u_char *, int));
+	void		(*send) __P((struct ipkdb_if *, u_char *, int));
 };
 
 /* flags: */
@@ -101,39 +69,46 @@ struct ipkdb_if {
 #define	IPKDB_HISIP	0x08
 #define	IPKDB_CONNECTED	0x10
 
-/* connect: */
-#define	IPKDB_NOIF	0	/* no interface */
-#define	IPKDB_NO	1	/* no host may connect to ipkdb */
-#define	IPKDB_SAME	2	/* only the previous host may connect */
-#define	IPKDB_ALL	3	/* any host may connect */
-#ifndef	IPKDB_DEF
-#define	IPKDB_DEF	IPKDB_ALL /* default to anyone may connect */
-#endif
+/*
+ * Interface routines, to be called by machine dependent code.
+ */
+extern void ipkdb_init __P((void));
+extern void ipkdb_connect __P((int));
+extern void ipkdb_panic __P((void));
+extern int ipkdbcmds __P((void));
+/* Return values from ipkdbcmds: */
+#define	IPKDB_CMD_RUN	0
+#define	IPKDB_CMD_STEP	1
+#define	IPKDB_CMD_EXIT	2
 
-/* Forward declaration to not force <sys/net/if.h> inclusion */
-struct ifnet;
+/* To be called by udp_input on receipt of a possible debugging packet */
+struct in_addr;
+struct mbuf;
+extern int checkipkdb __P((struct in_addr *, u_short, u_short,
+			struct mbuf *, int, int));
 
 /*
- * Interface routines, to be called by ipkdb itself
+ * Interface routines, to be called by ipkdb itself.
  */
-extern void ipkdbinet __P((struct ipkdb_if *kip));
-extern int ipkdbifinit __P((struct ipkdb_if *kip, int unit));
+extern int ipkdbifinit __P((struct ipkdb_if *));
 
 /*
- * Network interface routines, to be called by network card drivers
+ * Utilities (used to avoid calling system routines during debugging).
  */
-extern void ipkdbrint __P((struct ipkdb_if *kip, struct ifnet *ifp));
-extern void ipkdbgotpkt __P((struct ipkdb_if *kip, char *pkt, int len));
-extern __inline void ipkdbattach __P((struct ipkdb_if *kip, struct ethercom *arp));
-extern __inline void ipkdbattach(kip, arp)
-	struct ipkdb_if *kip;
-	struct ethercom *arp;
-{
-	if (!kip->arp)
-		kip->arp = arp;
-}
+extern void ipkdbcopy __P((void *, void *, int));
+extern void ipkdbzero __P((void *, int));
+extern int ipkdbcmp __P((void *, void *, int));
 
-/* Routine for SLIP IPKDB initialization: (to be called by serial driver) */
-extern void ipkdb_serial __P((struct ipkdb_if *));
+/*
+ * Machine dependent routines for IPKDB.
+ */
+extern void ipkdbinit __P((void));
+extern void ipkdb_trap __P((void));
+extern int ipkdb_poll __P((void));
 
-#endif
+extern int ipkdbif_init __P((struct ipkdb_if *));
+
+extern int ipkdbfbyte __P((u_char *));
+extern int ipkdbsbyte __P((u_char *, int));
+
+#endif	/* _IPKDB_H */

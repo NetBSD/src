@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.216 2000/02/21 20:06:08 dbj Exp $	*/
+/*	$NetBSD: locore.s,v 1.217 2000/03/22 20:58:27 ws Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
+#include "opt_ipkdb.h"
 #include "opt_vm86.h"
 #include "opt_user_ldt.h"
 #include "opt_dummy_nops.h"
@@ -2156,15 +2157,21 @@ ENTRY(savectx)
 #define	TRAP(a)		pushl $(a) ; jmp _C_LABEL(alltraps)
 #define	ZTRAP(a)	pushl $0 ; TRAP(a)
 
+#ifdef IPKDB
+#define	BPTTRAP(a)	pushl $0; pushl $(a); jmp _C_LABEL(bpttraps)
+#else
+#define	BPTTRAP(a)	ZTRAP(a)
+#endif
+
 	.text
 IDTVEC(trap00)
 	ZTRAP(T_DIVIDE)
 IDTVEC(trap01)
-	ZTRAP(T_TRCTRAP)
+	BPTTRAP(T_TRCTRAP)
 IDTVEC(trap02)
 	ZTRAP(T_NMI)
 IDTVEC(trap03)
-	ZTRAP(T_BPTFLT)
+	BPTTRAP(T_BPTFLT)
 IDTVEC(trap04)
 	ZTRAP(T_OFLOW)
 IDTVEC(trap05)
@@ -2328,6 +2335,86 @@ calltrap:
 	jmp	2b
 4:	.asciz	"WARNING: SPL NOT LOWERED ON TRAP EXIT\n"
 #endif /* DIAGNOSTIC */
+
+#ifdef IPKDB
+NENTRY(bpttraps)
+	INTRENTRY
+	call	_C_LABEL(ipkdb_trap_glue)
+	testl	%eax,%eax
+	jz	calltrap
+	INTRFASTEXIT
+
+ipkdbsetup:
+	popl	%ecx
+
+	/* Disable write protection: */
+	movl	%cr0,%eax
+	pushl	%eax
+	andl	$~CR0_WP,%eax
+	movl	%eax,%cr0
+
+	/* Substitute Protection & Page Fault handlers: */
+	movl	_C_LABEL(idt),%edx
+	pushl	13*8(%edx)
+	pushl	13*8+4(%edx)
+	pushl	14*8(%edx)
+	pushl	14*8+4(%edx)
+	movl	$fault,%eax
+	movw	%ax,13*8(%edx)
+	movw	%ax,14*8(%edx)
+	shrl	$16,%eax
+	movw	%ax,13*8+6(%edx)
+	movw	%ax,14*8+6(%edx)
+
+	pushl	%ecx
+	ret
+
+ipkdbrestore:
+	popl	%ecx
+
+	/* Restore Protection & Page Fault handlers: */
+	movl	_C_LABEL(idt),%edx
+	popl	14*8+4(%edx)
+	popl	14*8(%edx)
+	popl	13*8+4(%edx)
+	popl	13*8(%edx)
+
+	/* Restore write protection: */
+	popl	%edx
+	movl	%edx,%cr0
+
+	pushl	%ecx
+	ret
+
+NENTRY(ipkdbfbyte)
+	pushl	%ebp
+	movl	%esp,%ebp
+	call	ipkdbsetup
+	movl	8(%ebp),%edx
+	movzbl	(%edx),%eax
+faultexit:
+	call	ipkdbrestore
+	popl	%ebp
+	ret
+
+NENTRY(ipkdbsbyte)
+	pushl	%ebp
+	movl	%esp,%ebp
+	call	ipkdbsetup
+	movl	8(%ebp),%edx
+	movl	12(%ebp),%eax
+	movb	%al,(%edx)
+	call	ipkdbrestore
+	popl	%ebp
+	ret
+
+fault:
+	popl	%eax		/* error code */
+	movl	$faultexit,%eax
+	movl	%eax,(%esp)
+	movl	$-1,%eax
+	iret
+#endif	/* IPKDB */
 
 /*
  * Old call gate entry for syscall

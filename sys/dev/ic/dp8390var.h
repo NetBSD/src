@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390var.h,v 1.17 2000/03/22 18:02:59 ws Exp $	*/
+/*	$NetBSD: dp8390var.h,v 1.18 2000/03/22 20:58:28 ws Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -163,3 +163,7 @@ void	dp8390_disable __P((struct dp8390_softc *));
 int	dp8390_activate __P((struct device *, enum devact));
 
 int	dp8390_detach __P((struct dp8390_softc *, int));
+
+#ifdef IPKDB_DP8390
+int	dp8390_ipkdb_attach __P((struct ipkdb_if *));
+#endif

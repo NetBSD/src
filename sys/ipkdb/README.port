@@ -1,4 +1,4 @@
-$NetBSD: README.port,v 1.2 1997/06/26 07:21:44 thorpej Exp $
+$NetBSD: README.port,v 1.3 2000/03/22 20:58:29 ws Exp $
 
 What to Look for when Porting the IPKDB Interface
 ===============================================
@@ -17,62 +17,53 @@ General Considerations
 
 There is a problem when the debugger uses the same ethernet board as
 does the rest of the kernel.  For one thing there might arrive packets
-destined for the kernel during debugging sessions.  Since the debugger
-receives all available packets for the time being it has to deliver
-back to the driver those packets it has no use for.  This implies that
-the debugging driver must leave the interrupt pending conditions alone
-so that the kernel driver gets the interrupt at the next time its
-interrupt is enabled (whether this is when the debugger is left or
-later with an spl*()).  The same holds for the transmit interrupt
-pending, at least when ipkdbinit determines that there is some packet
-on its way out.
+destined for the kernel during debugging sessions.  These packets
+are currently lost.  For packets on their way out the driver has
+to leave the interrupt pending condition alone, so the interrupt
+handler gets a chance to send more packets via the interface.
 
 
 Configuration Files
 
 
-The interface that is used for debugging has to have a unique
-attribute with the option "disable", and must allow the attachment
-of a ipkdbif.  The relevant part of the "files" file for interface
-"xx" would look like this:
+For any interface that may be used for debugging there should be
+an option, put into opt_ipkdb.h, that is enabled if the kernel
+shall actually use this interface.  The relevant part of the
+"files" file for interface "xx" would look like this:
 
-	define	ipkdbxx { [ disable = 0 ] }
-	device	xx: ether, ifnet, ipkdbxx
-	attach	xx at yy
-	file	dev/zz/if_xx.c		xx | ipkdb_xx needs-flag
-	attach	ipkdbif at ipkdbxx with ipkdb_xx
+	defopt	opt_ipkdb.h	IPKDB_XX	: IPKDB
+	device	xx: ether, ifnet, arp
+	file	dev/zz/if_xx.c		xx | ipkdb_xx
 
-with proper values for yy and zz.  The file dev/zz/if_xx.c contains
-both the code of the kernel driver and the IPKDB driver for this
-interface.  You might want to #include "xx.h" in there and
-conditionalize the compilation of the IPKDB driver with
-#if NIPKDB_XX > 0.
+The file dev/zz/if_xx.c contains both the code of the kernel
+driver and the IPKDB driver for this interface.  You should
+#include "opt_ipkdb.h" in there and conditionalize the
+compilation of the IPKDB driver with
+#ifdef IPKDB_XX
 
 The appropriate part of the machine configuration would read like
 this:
 
-	xx*		at yy
-	ipkdbif0	at xx?
+	options 	IPKDBKEY="\"IPKDB key for remote debugging\""
+	options 	IPKDB_XX
 
-Note that the unit for ipkdbif in the configuration file must be
-given explicitly!  It's used to distinguish the interface used
-for debugging from the one you want to debug a new interface
-driver for (see below).
 
 Driver Code
 
 
-The interface is "probed" by calling the parent probe routine with
-a first argument of NULL.  The last argument to the probe routine
-is a struct ipkdb_if pointer that needs to be (partly) initialized by
-the probe code.  Fields to be set by the probe routine are:
+In order to be able to find the debugging interface, the driver
+has to provide an attach routine that the machine dependent code
+can call at an appropriate time (see below).  The attach routine
+should take as its first argument a pointer to a struct ipkdb_if
+plus some additional parameters that allow it to access the
+devices registers, hopefully using bus_space_* methods.
+In the ipkdb_if structure, the attach routine must initialize
+the following fields:
 
 	myenetaddr	fill this with the own ethernet address of
 			the device/machine.
 	flags		mark at least IPKDB_MYHW here.
 	name		Name of the device, only used for a message.
-	port		Port number, only used for a message by
-			machine/device independent code.
 	start		routine called everytime IPKDB is entered.
 	leave		routine called everytime IPKDB is left.
 	receive		routine called to receive a packet.
@@ -82,14 +73,13 @@ Additional fields that may be set are:
 
 	myinetaddr	fill this with the own internet address,
 			and mark IPKDB_MYIP in flags.
-	unit		These remaining fields are solely for
-	speed		use by the driver.
-	fill
-	drvflags
+	port		may be used as a pointer to some device
+			dependent data.  Unused by other code.
 
 The routine should check for existance of the ethernet board.
-This routine should also try to find the system driver for the
-same board and note its unit and device structure for later use.
+This routine should also note enough information so it is able
+to later find the system driver instance for the same board in
+order to coordinate its action with the system driver.
 
 The routine should return 0 on success and -1 on failure.
 
@@ -104,9 +94,9 @@ kip is a pointer to the ipkdb_if structure used for debugging.
 
 It should initialize the hardware and software interface.
 
-This routine should also note the current state of the ethernet board
-(as far as it can) so a later call to leave can reinstantiate this
-state.
+This routine should also note the current state of the board
+(as far as it can) so a later call to leave can reinstantiate
+this state.
 
 void leave(struct ipkdb_if *kip)
 
@@ -124,7 +114,7 @@ contain the ethernet checksum.
 If poll is set, it should return immediately, if no packet is available.
 Otherwise it should wait for the next packet.
 
-This routine should return the number of bytes transferred to buf.
+This routine shall return the number of bytes transferred to buf.
 
 void send(struct ipkdb_if *kip, u_char *buf, int l)
 
@@ -133,36 +123,9 @@ interface.  The packet is already complete with the ethernet header,
 but does not contain the ethernet checksum.
 
 
-Debugging
-
-
-If you have a working IPKDB, you can test new interface code for a
-different interface by supplying "option IPKDBTEST" and attaching
-a ipkdbif1 to the new interface in your configuration file.  When
-you boot the resulting kernel with the "-d" option, this will
-initialize the new interface right after starting IPKDB on the
-working one.  Thereafter, the code will continue to send and
-receive packets on the new interface until you set the variable
-"ipkdb_test" to 0.
-
-Note that during debugging interface code this way you are using
-most of the code that comprises the debugger code itself.  So you
-have to be extremely careful with setting breakpoints and the like.
-
-
 Interface between IPKDB and Machine (sys/arch/xxx/xxx/ipkdb_glue.c)
 -----------------------------------------------------------------
 
-
-void ipkdbcopy(s,d,n) void *s, *d; int n;
-void ipkdbzero(d,n) void *d; int n;
-void ipkdbcmp(s,d,n) char *s, *d; int n;
-
-These routines are the same as bcopy, bzero and bcmp resp.  They are
-here with other names to allow setting breakpoints into the normal
-routines during debugging.  This implies that you shouldn't use
-things like structure assignement in the code that gets used by
-the debugger.
 
 void ipkdbinit(void)
 

@@ -1,8 +1,8 @@
-/*	$NetBSD: ipkdb_if.c,v 1.10 2000/03/22 20:58:29 ws Exp $	*/
+/*	$NetBSD: ipkdb.h,v 1.1 2000/03/22 20:58:28 ws Exp $	*/
 
 /*
- * Copyright (C) 1993-2000 Wolfgang Solfrank.
- * Copyright (C) 1993-2000 TooLs GmbH.
+ * Copyright (C) 2000 Wolfgang Solfrank.
+ * Copyright (C) 2000 TooLs GmbH.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,39 +23,31 @@
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
  * IN NO EVENT SHALL TOOLS GMBH BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NO TLIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA OR PROFITS;
  * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * WHETHER IN CONTRACT, STRUCT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include <sys/param.h>
-#include <sys/socket.h>
-#include <sys/systm.h>
 
-#include <net/if.h>
-#include <net/if_ether.h>
+/* register array */
+#define	EAX	0
+#define	ECX	1
+#define	EDX	2
+#define	EBX	3
+#define	ESP	4
+#define	EBP	5
+#define	ESI	6
+#define	EDI	7
+#define	EIP	8
+#define	EFLAGS	9
+#define	CS	10
+#define	SS	11
+#define	DS	12
+#define	ES	13
+#define	FS	14
+#define	GS	15
+#define	NREG	16
 
-#include <netinet/in.h>
-
-#include <ipkdb/ipkdb.h>
-#include <machine/ipkdb.h>
-
-/*
- * Initialize IPKDB Interface handling
- */
-int
-ipkdbifinit(kip)
-	struct ipkdb_if *kip;
-{
-	u_char *cp;
-
-	/* defaults: */
-	kip->mtu = ETHERMTU;
-	for (cp = kip->hisenetaddr; cp < kip->hisenetaddr + sizeof kip->hisenetaddr;)
-		*cp++ = -1;
-	for (cp = kip->hisinetaddr; cp < kip->hisinetaddr + sizeof kip->hisinetaddr;)
-		*cp++ = -1;
-	return ipkdbif_init(kip);
-}
+extern int ipkdbregs[NREG];
