@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.180 2004/07/22 21:31:56 mycroft Exp $	*/
+/*	$NetBSD: wi.c,v 1.181 2004/07/22 21:56:58 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -106,11 +106,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.180 2004/07/22 21:31:56 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.181 2004/07/22 21:56:58 mycroft Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
 #undef WI_HISTOGRAM
+#undef WI_RING_DEBUG
 #define STATIC static
 
 #include "bpfilter.h"
@@ -180,6 +181,7 @@ STATIC void wi_tx_intr(struct wi_softc *);
 STATIC void wi_tx_ex_intr(struct wi_softc *);
 STATIC void wi_info_intr(struct wi_softc *);
 
+STATIC void wi_push_packet(struct wi_softc *);
 STATIC int  wi_get_cfg(struct ifnet *, u_long, caddr_t);
 STATIC int  wi_set_cfg(struct ifnet *, u_long, caddr_t);
 STATIC int  wi_cfg_txrate(struct wi_softc *);
@@ -798,6 +800,8 @@ wi_init(struct ifnet *ifp)
 	sc->sc_txalloced = 0;
 	sc->sc_txqueue = 0;
 	sc->sc_txqueued = 0;
+	sc->sc_txstart = 0;
+	sc->sc_txstarted = 0;
 
 	if (sc->sc_firmware_type != WI_SYMBOL || !wasenabled) {
 		sc->sc_buflen = IEEE80211_MAX_LEN + sizeof(struct wi_frame);
@@ -1145,14 +1149,19 @@ wi_start(struct ifnet *ifp)
 		sc->sc_txpending[ni->ni_txrate]++;
 		--sc->sc_txalloced;
 		if (sc->sc_txqueued++ == 0) {
-			if (wi_cmd(sc, WI_CMD_TX | WI_RECLAIM, fid, 0, 0)) {
-				printf("%s: xmit failed\n",
+#ifdef DIAGNOSTIC
+			if (cur != sc->sc_txstart)
+				printf("%s: ring is desynchronized\n",
 				    sc->sc_dev.dv_xname);
-				/* XXX ring might have a hole */
-				goto next;
-			}
-			sc->sc_tx_timer = 5;
-			ifp->if_timer = 1;
+#endif
+			wi_push_packet(sc);
+		} else {
+#ifdef WI_RING_DEBUG
+	printf("%s: queue %04x, alloc %d queue %d start %d alloced %d queued %d started %d\n",
+	    sc->sc_dev.dv_xname, fid,
+	    sc->sc_txalloc, sc->sc_txqueue, sc->sc_txstart,
+	    sc->sc_txalloced, sc->sc_txqueued, sc->sc_txstarted);
+#endif
 		}
 		sc->sc_txqueue = cur = (cur + 1) % WI_NTXBUF;
 		SLIST_REMOVE_HEAD(&sc->sc_rssdfree, rd_next);
@@ -1685,27 +1694,58 @@ wi_txalloc_intr(struct wi_softc *sc)
 	fid = CSR_READ_2(sc, WI_ALLOC_FID);
 
 	cur = sc->sc_txalloc;
-	if (sc->sc_txd[cur].d_fid != fid) {
-		printf("%s: bad alloc %x != %x, cur %d nxt %d\n",
+#ifdef DIAGNOSTIC
+	if (sc->sc_txstarted == 0) {
+		printf("%s: spurious alloc %x != %x, alloc %d queue %d start %d alloced %d queued %d started %d\n",
 		    sc->sc_dev.dv_xname, fid, sc->sc_txd[cur].d_fid, cur,
-		    sc->sc_txqueue);
+		    sc->sc_txqueue, sc->sc_txstart, sc->sc_txalloced, sc->sc_txqueued, sc->sc_txstarted);
 		return;
 	}
-	sc->sc_txalloc = cur = (cur + 1) % WI_NTXBUF;
+#endif
+	--sc->sc_txstarted;
 	++sc->sc_txalloced;
+	sc->sc_txd[cur].d_fid = fid;
+	sc->sc_txalloc = (cur + 1) % WI_NTXBUF;
+#ifdef WI_RING_DEBUG
+	printf("%s: alloc %04x, alloc %d queue %d start %d alloced %d queued %d started %d\n",
+	    sc->sc_dev.dv_xname, fid,
+	    sc->sc_txalloc, sc->sc_txqueue, sc->sc_txstart,
+	    sc->sc_txalloced, sc->sc_txqueued, sc->sc_txstarted);
+#endif
 	if (--sc->sc_txqueued == 0) {
 		sc->sc_tx_timer = 0;
 		ifp->if_flags &= ~IFF_OACTIVE;
-	} else {
-		if (wi_cmd(sc, WI_CMD_TX | WI_RECLAIM, sc->sc_txd[cur].d_fid,
-		    0, 0)) {
-			printf("%s: xmit failed\n", sc->sc_dev.dv_xname);
-			/* XXX ring might have a hole */
-		} else {
-			sc->sc_tx_timer = 5;
-			ifp->if_timer = 1;
-		}
+	} else
+		wi_push_packet(sc);
+}
+
+STATIC void
+wi_push_packet(struct wi_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
+	int cur, fid;
+
+	cur = sc->sc_txstart;
+	fid = sc->sc_txd[cur].d_fid;
+	if (wi_cmd(sc, WI_CMD_TX | WI_RECLAIM, fid, 0, 0)) {
+		printf("%s: xmit failed\n", sc->sc_dev.dv_xname);
+		/* XXX ring might have a hole */
 	}
+	++sc->sc_txstarted;
+#ifdef DIAGNOSTIC
+	if (sc->sc_txstarted > WI_NTXBUF)
+		printf("%s: too many buffers started\n", sc->sc_dev.dv_xname);
+#endif
+	sc->sc_txstart = (cur + 1) % WI_NTXBUF;
+	sc->sc_tx_timer = 5;
+	ifp->if_timer = 1;
+#ifdef WI_RING_DEBUG
+	printf("%s: push  %04x, alloc %d queue %d start %d alloced %d queued %d started %d\n",
+	    sc->sc_dev.dv_xname, fid,
+	    sc->sc_txalloc, sc->sc_txqueue, sc->sc_txstart,
+	    sc->sc_txalloced, sc->sc_txqueued, sc->sc_txstarted);
+#endif
 }
 
 STATIC void
