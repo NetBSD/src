@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.82 2003/08/07 16:32:00 agc Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.83 2003/09/04 04:33:49 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.82 2003/08/07 16:32:00 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.83 2003/09/04 04:33:49 matt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_pipe.h"
@@ -928,7 +928,7 @@ sys_pipe(struct lwp *l, void *v, register_t *retval)
 	wf->f_ops = &socketops;
 	wf->f_data = (caddr_t)wso;
 	retval[1] = fd;
-	if ((error = unp_connect2(wso, rso)) != 0)
+	if ((error = unp_connect2(wso, rso, PRU_CONNECT2)) != 0)
 		goto free4;
 	FILE_SET_MATURE(rf);
 	FILE_SET_MATURE(wf);
