@@ -1,4 +1,4 @@
-/* $NetBSD: fputwc.c,v 1.1.2.2 2002/01/28 20:50:57 nathanw Exp $ */
+/* $NetBSD: fputwc.c,v 1.1.2.3 2002/02/06 23:18:44 nathanw Exp $ */
 
 /*-
  * Copyright (c)2001 Citrus Project,
@@ -33,9 +33,9 @@
 #include <limits.h>
 #include <stdio.h>
 #include <wchar.h>
+#include "reentrant.h"
 #include "local.h"
 #include "fvwrite.h"
-#include "reentrant.h"
 
 wint_t
 fputwc(wchar_t wc, FILE *fp)

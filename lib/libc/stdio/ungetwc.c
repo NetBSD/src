@@ -1,4 +1,4 @@
-/* $NetBSD: ungetwc.c,v 1.1.2.2 2002/01/28 20:51:11 nathanw Exp $ */
+/* $NetBSD: ungetwc.c,v 1.1.2.3 2002/02/06 23:18:51 nathanw Exp $ */
 
 /*-
  * Copyright (c)2001 Citrus Project,
@@ -32,8 +32,8 @@
 #include <errno.h>
 #include <stdio.h>
 #include <wchar.h>
-#include "local.h"
 #include "reentrant.h"
+#include "local.h"
 
 wint_t
 ungetwc(wint_t wc, FILE *fp)

@@ -1,4 +1,4 @@
-/*	$NetBSD: sscanf.c,v 1.11.10.1 2002/01/28 20:51:08 nathanw Exp $	*/
+/*	$NetBSD: sscanf.c,v 1.11.10.2 2002/02/06 23:18:50 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)sscanf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: sscanf.c,v 1.11.10.1 2002/01/28 20:51:08 nathanw Exp $");
+__RCSID("$NetBSD: sscanf.c,v 1.11.10.2 2002/02/06 23:18:50 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: sscanf.c,v 1.11.10.1 2002/01/28 20:51:08 nathanw Exp $");
 #else
 #include <varargs.h>
 #endif
+#include "reentrant.h"
 #include "local.h"
 
 static int eofread __P((void *, char *, int));

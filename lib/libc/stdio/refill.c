@@ -1,4 +1,4 @@
-/*	$NetBSD: refill.c,v 1.11.10.1 2001/08/08 16:27:44 nathanw Exp $	*/
+/*	$NetBSD: refill.c,v 1.11.10.2 2002/02/06 23:18:48 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)refill.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: refill.c,v 1.11.10.1 2001/08/08 16:27:44 nathanw Exp $");
+__RCSID("$NetBSD: refill.c,v 1.11.10.2 2002/02/06 23:18:48 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,8 +49,8 @@ __RCSID("$NetBSD: refill.c,v 1.11.10.1 2001/08/08 16:27:44 nathanw Exp $");
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "local.h"
 #include "reentrant.h"
+#include "local.h"
 
 #ifdef _REENTRANT
 extern rwlock_t __sfp_lock;

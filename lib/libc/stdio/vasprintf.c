@@ -1,4 +1,4 @@
-/*	$NetBSD: vasprintf.c,v 1.7.6.1 2002/01/28 20:51:11 nathanw Exp $	*/
+/*	$NetBSD: vasprintf.c,v 1.7.6.2 2002/02/06 23:18:51 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -29,13 +29,14 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vasprintf.c,v 1.7.6.1 2002/01/28 20:51:11 nathanw Exp $");
+__RCSID("$NetBSD: vasprintf.c,v 1.7.6.2 2002/02/06 23:18:51 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "reentrant.h"
 #include "local.h"
 
 int
