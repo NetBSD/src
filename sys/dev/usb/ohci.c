@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.69 2000/01/31 22:09:13 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.70 2000/01/31 22:35:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -1737,8 +1737,8 @@ ohci_close_pipe(pipe, head)
 	s = splusb();
 #ifdef DIAGNOSTIC
 	sed->ed.ed_flags |= LE(OHCI_ED_SKIP);
-	if ((sed->ed.ed_tailp & LE(OHCI_TAILMASK)) != 
-	    (sed->ed.ed_headp & LE(OHCI_TAILMASK))) {
+	if ((sed->ed.ed_tailp & LE(OHCI_HEADMASK)) != 
+	    (sed->ed.ed_headp & LE(OHCI_HEADMASK))) {
 		ohci_physaddr_t td = sed->ed.ed_headp;
 		ohci_soft_td_t *std;
 		for (std = LIST_FIRST(&sc->sc_hash_tds[HASH(td)]); 
@@ -1751,8 +1751,8 @@ ohci_close_pipe(pipe, head)
 		       (int)LE(sed->ed.ed_headp), (int)LE(sed->ed.ed_tailp),
 		       pipe, std);
 		usb_delay_ms(&sc->sc_bus, 2);
-		if ((sed->ed.ed_tailp & LE(OHCI_TAILMASK)) != 
-		    (sed->ed.ed_headp & LE(OHCI_TAILMASK)))
+		if ((sed->ed.ed_tailp & LE(OHCI_HEADMASK)) != 
+		    (sed->ed.ed_headp & LE(OHCI_HEADMASK)))
 			printf("ohci_close_pipe: pipe still not empty\n");
 	}
 #endif
@@ -2643,8 +2643,8 @@ ohci_device_intr_close(pipe)
 		    pipe, nslots, pos));
 	s = splusb();
 	sed->ed.ed_flags |= LE(OHCI_ED_SKIP);
-	if ((sed->ed.ed_tailp & LE(OHCI_TAILMASK)) != 
-	    (sed->ed.ed_headp & LE(OHCI_TAILMASK)))
+	if ((sed->ed.ed_tailp & LE(OHCI_HEADMASK)) != 
+	    (sed->ed.ed_headp & LE(OHCI_HEADMASK)))
 		usb_delay_ms(&sc->sc_bus, 2);
 
 	for (p = sc->sc_eds[pos]; p && p->next != sed; p = p->next)
