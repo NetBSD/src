@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.16 2003/02/08 10:00:34 lukem Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.17 2003/05/08 14:42:06 lukem Exp $
 .\"
 .\" Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 .\" Toolchain prefix for commands
 .ds toolprefix nb
 .
-.Dd February 8, 2003
+.Dd May 8, 2003
 .Dt BUILDING 8
 .Os NetBSD
 .
@@ -297,6 +297,16 @@ Empty string if
 is
 .Dq yes ;
 unset otherwise.
+.Pp
+.Em Note :
+.Sy build.sh
+will provide a default of
+.Pa destdir. Ns Sy MACHINE
+(in the top-level
+.Sy .OBJDIR )
+unless run in
+.Sq expert
+mode
 .
 .It Sy MAKECONF
 The name of the
@@ -587,6 +597,16 @@ If set, specifies the directory to which a
 layout will be written at the end of a
 .Dq make release .
 .DFLTu
+.Pp
+.Em Note :
+.Sy build.sh
+will provide a default of
+.Pa releasedir
+(in the top-level
+.Sy .OBJDIR )
+unless run in
+.Sq expert
+mode
 .
 .It Sy UPDATE
 If set, then in addition to the effects described for UPDATE above, this
@@ -1140,14 +1160,17 @@ Build a new toolchain, and use the new toolchain to
 configure and build a new GENERIC kernel.
 .
 .It
-.Li "./build.sh -U -D /path/to/destdir distribution"
+.Li "./build.sh -U distribution"
 .Pp
 Using unprivileged mode,
-build a complete distribution in
-.Pa /path/to/destdir .
+build a complete distribution to a
+.Sy DESTDIR
+directory that
+.Sy build.sh
+selects (and will display).
 .
 .It
-.Li "# ./build.sh -U -D /path/to/destdir install=/"
+.Li "# ./build.sh -U install=/"
 .Pp
 As root, install to
 .Pa /
@@ -1156,16 +1179,21 @@ by example 2.
 Even though this is run as root,
 .Fl U
 is required so that the permissions stored in
-.Pa /path/to/destdir/METALOG
+.Sy DESTDIR Ns Pa /METALOG
 are correctly applied to the files as they're copied to
 .Pa / .
 .
 .It
-.Li "./build.sh -U -u -D /path/to/destdir -R /path/to/releasedir release"
+.Li "./build.sh -U -u release"
 .Pp
 Using unprivileged mode,
-build a complete release in
-.Pa /path/to/dir/releasedir .
+build a complete release to
+.Sy DESTDIR
+and
+.Sy RELEASEDIR
+directories that
+.Sy build.sh
+selects (and will display).
 .Sy UPDATE
 .Pq Fl u
 is set to prevent the
