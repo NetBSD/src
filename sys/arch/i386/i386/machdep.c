@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.515 2003/03/01 16:37:53 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.516 2003/03/03 22:14:16 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.515 2003/03/01 16:37:53 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.516 2003/03/03 22:14:16 fvdl Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1234,7 +1234,8 @@ setregs(l, pack, stack)
  * Initialize segments and descriptor tables
  */
 
-union	descriptor *idt, *gdt, *ldt;
+union	descriptor *gdt, *ldt;
+struct gate_descriptor *idt;
 char idt_allocmap[NIDT];
 struct simplelock idt_lock = SIMPLELOCK_INITIALIZER;
 #ifdef I586_CPU
@@ -1925,7 +1926,7 @@ init386(first_avail)
 	pmap_update(pmap_kernel());
 	memset((void *)idt_vaddr, 0, PAGE_SIZE);
 
-	idt = (union descriptor *)idt_vaddr;
+	idt = (struct gate_descriptor *)idt_vaddr;
 #ifdef I586_CPU
 	pmap_enter(pmap_kernel(), pentium_idt_vaddr, idt_paddr,
 	    VM_PROT_READ, PMAP_WIRED|VM_PROT_READ);
@@ -1934,7 +1935,8 @@ init386(first_avail)
 	pmap_update(pmap_kernel());
 
 	tgdt = gdt;
-	gdt = idt + NIDT;
+	gdt = (union descriptor *)
+		    ((char *)idt + NIDT * sizeof (struct gate_descriptor));
 	ldt = gdt + NGDT;
 
 	memcpy(gdt, tgdt, NGDT*sizeof(*gdt));
@@ -1952,18 +1954,18 @@ init386(first_avail)
 
 	/* exceptions */
 	for (x = 0; x < 32; x++) {
-		setgate(&idt[x].gd, IDTVEC(exceptions)[x], 0, SDT_SYS386TGT,
+		setgate(&idt[x], IDTVEC(exceptions)[x], 0, SDT_SYS386TGT,
 		    (x == 3 || x == 4) ? SEL_UPL : SEL_KPL,
 		    GSEL(GCODE_SEL, SEL_KPL));
 		idt_allocmap[x] = 1;
 	}
 
 	/* new-style interrupt gate for syscalls */
-	setgate(&idt[128].gd, &IDTVEC(syscall), 0, SDT_SYS386TGT, SEL_UPL,
+	setgate(&idt[128], &IDTVEC(syscall), 0, SDT_SYS386TGT, SEL_UPL,
 	    GSEL(GCODE_SEL, SEL_KPL));
 	idt_allocmap[128] = 1;
 #ifdef COMPAT_SVR4
-	setgate(&idt[0xd2].gd, &IDTVEC(svr4_fasttrap), 0, SDT_SYS386TGT,
+	setgate(&idt[0xd2], &IDTVEC(svr4_fasttrap), 0, SDT_SYS386TGT,
 	    SEL_UPL, GSEL(GCODE_SEL, SEL_KPL));
 	idt_allocmap[0xd2] = 1;
 #endif /* COMPAT_SVR4 */
@@ -2409,7 +2411,7 @@ idt_vec_set(vec, function)
 	 * Vector should be allocated, so no locking needed.
 	 */
 	KASSERT(idt_allocmap[vec] == 1);
-	setgate(&idt[vec].gd, function, 0, SDT_SYS386IGT, SEL_KPL,
+	setgate(&idt[vec], function, 0, SDT_SYS386IGT, SEL_KPL,
 	    GSEL(GCODE_SEL, SEL_KPL));
 }
 
@@ -2418,7 +2420,7 @@ idt_vec_free(vec)
 	int vec;
 {
 	simple_lock(&idt_lock);
-	unsetgate(&idt[vec].gd);
+	unsetgate(&idt[vec]);
 	idt_allocmap[vec] = 0;
 	simple_unlock(&idt_lock);
 }
