@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.23 1998/02/19 23:07:14 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.24 1998/02/25 23:25:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -160,8 +160,11 @@ int	want_resched;	/* resched() was called */
  */
 struct user;
 
+caddr_t	allocsys __P((caddr_t));
 void	dumpsys __P((void));
 int	savectx __P((struct user *));
+void	mips_init_msgbuf __P((void));
+void	mips_init_proc0 __P((caddr_t));
 
 /*
  * MIPS CPU types (cp_imp).
