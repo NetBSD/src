@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.8 1999/03/24 05:51:04 mrg Exp $	*/
+/*	$NetBSD: clock.c,v 1.9 2000/01/19 02:52:19 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -245,7 +245,7 @@ microtime(tvp)
 	asm volatile ("mtmsr %0" :: "r"(msr));
 	ticks /= 1000;
 	tvp->tv_usec += ticks;
-	while (tvp->tv_usec > 1000000) {
+	while (tvp->tv_usec >= 1000000) {
 		tvp->tv_usec -= 1000000;
 		tvp->tv_sec++;
 	}

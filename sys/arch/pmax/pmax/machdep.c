@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.160 2000/01/14 13:45:26 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.161 2000/01/19 02:52:20 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.160 2000/01/14 13:45:26 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.161 2000/01/19 02:52:20 msaitoh Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -650,7 +650,7 @@ microtime(tvp)
 
 	if (tvp->tv_sec == lasttime.tv_sec &&
 	    tvp->tv_usec <= lasttime.tv_usec &&
-	    (tvp->tv_usec = lasttime.tv_usec + 1) > 1000000) {
+	    (tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000) {
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;
 	}
