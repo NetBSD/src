@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.289 2001/11/30 13:33:27 kleink Exp $
+# $NetBSD: mi,v 1.290 2001/12/02 18:56:47 wiz Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1145,6 +1145,7 @@
 ./usr/share/man/cat6			base-man-share
 ./usr/share/man/cat7			base-man-share
 ./usr/share/man/cat8			base-man-share
+./usr/share/man/cat8/acorn32		base-man-share
 ./usr/share/man/cat8/alpha		base-man-share
 ./usr/share/man/cat8/amiga		base-man-share
 ./usr/share/man/cat8/arc		base-man-share
@@ -1225,6 +1226,7 @@
 ./usr/share/man/man6		base-man-share
 ./usr/share/man/man7		base-man-share
 ./usr/share/man/man8		base-man-share
+./usr/share/man/man8/acorn32		base-man-share
 ./usr/share/man/man8/alpha		base-man-share
 ./usr/share/man/man8/amiga		base-man-share
 ./usr/share/man/man8/arc		base-man-share

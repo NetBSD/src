@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.172 2001/11/10 22:56:18 wiz Exp $
+#	$NetBSD: NetBSD.dist,v 1.173 2001/12/02 18:56:47 wiz Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -416,6 +416,7 @@
 ./usr/share/man/cat6
 ./usr/share/man/cat7
 ./usr/share/man/cat8
+./usr/share/man/cat8/acorn32
 ./usr/share/man/cat8/alpha
 ./usr/share/man/cat8/amiga
 ./usr/share/man/cat8/arc
@@ -495,6 +496,7 @@
 ./usr/share/man/man6
 ./usr/share/man/man7
 ./usr/share/man/man8
+./usr/share/man/man8/acorn32
 ./usr/share/man/man8/alpha
 ./usr/share/man/man8/amiga
 ./usr/share/man/man8/arc

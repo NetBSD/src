@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.423 2001/11/19 09:46:09 martin Exp $
+# $NetBSD: mi,v 1.424 2001/12/02 18:56:48 wiz Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1175,6 +1175,8 @@
 ./usr/share/man/cat8/ac.0			man-sysutil-catman
 ./usr/share/man/cat8/accton.0			man-sysutil-catman
 ./usr/share/man/cat8/adduser.0			man-sysutil-catman
+./usr/share/man/cat8/acorn32/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/acorn32/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/alpha/MAKEDEV.0		man-sysutil-catman
 ./usr/share/man/cat8/alpha/boot.0		man-sys-catman
 ./usr/share/man/cat8/alpha/installboot.0	man-sysutil-catman
@@ -2819,6 +2821,8 @@
 ./usr/share/man/man8/ac.8			man-sysutil-man
 ./usr/share/man/man8/accton.8			man-sysutil-man
 ./usr/share/man/man8/adduser.8			man-sysutil-man
+./usr/share/man/man8/acorn32/MAKEDEV.8		man-sysutil-man
+./usr/share/man/man8/acorn32/makedev.8		man-sysutil-man
 ./usr/share/man/man8/alpha/MAKEDEV.8		man-sysutil-man
 ./usr/share/man/man8/alpha/boot.8		man-sys-man
 ./usr/share/man/man8/alpha/installboot.8	man-sysutil-man
