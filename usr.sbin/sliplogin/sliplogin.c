@@ -1,4 +1,4 @@
-/*	$NetBSD: sliplogin.c,v 1.15 1998/01/12 08:59:56 hubertf Exp $	*/
+/*	$NetBSD: sliplogin.c,v 1.16 1998/07/04 21:04:02 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)sliplogin.c	8.2 (Berkeley) 2/1/94";
 #else
-__RCSID("$NetBSD: sliplogin.c,v 1.15 1998/01/12 08:59:56 hubertf Exp $");
+__RCSID("$NetBSD: sliplogin.c,v 1.16 1998/07/04 21:04:02 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,10 +79,6 @@ __RCSID("$NetBSD: sliplogin.c,v 1.15 1998/01/12 08:59:56 hubertf Exp $");
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/syslog.h>
-#include <netdb.h>
-#include <signal.h>
-#include <stdlib.h>
-#include <string.h>
 
 #if BSD >= 199006
 #define POSIX
@@ -99,9 +95,13 @@ __RCSID("$NetBSD: sliplogin.c,v 1.15 1998/01/12 08:59:56 hubertf Exp $");
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <netdb.h>
+#include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
 #include "pathnames.h"
 
 int	unit;
@@ -164,7 +164,7 @@ findid(name)
 			}
 		}
 
-		(void) fclose(fp);
+		(void)fclose(fp);
 		return;
 	}
 	syslog(LOG_ERR, "SLIP access denied for %s\n", name);
@@ -176,13 +176,14 @@ const char *
 sigstr(s)
 	int s;
 {
+
 	if (s > 0 && s < NSIG)
-		return(sys_signame[s]);
+		return (sys_signame[s]);
 	else {
 		static char buf[32];
 
 		(void)snprintf(buf, sizeof buf, "sig %d", s);
-		return(buf);
+		return (buf);
 	}
 }
 
@@ -201,9 +202,9 @@ hup_handler(s)
 
 		(void)snprintf(logincmd, sizeof logincmd, "%s %d %d %s",
 		    logoutfile, unit, speed, loginargs);
-		(void) system(logincmd);
+		(void)system(logincmd);
 	}
-	(void) close(0);
+	(void)close(0);
 	syslog(LOG_INFO, "closed %s slip unit %d (%s)\n", loginname, unit,
 	       sigstr(s));
 	exit(1);
@@ -230,7 +231,7 @@ main(argc, argv)
 		name = argv[0];
 	s = getdtablesize();
 	for (fd = 3 ; fd < s ; fd++)
-		(void) close(fd);
+		(void)close(fd);
 	openlog(name, LOG_PID, LOG_DAEMON);
 	uid = getuid();
 	if (argc > 1) {
@@ -241,29 +242,37 @@ main(argc, argv)
 		 * and ensure that the slip line is our controlling terminal.
 		 */
 #ifdef POSIX
-		if (fork() > 0)
+		switch (fork()) {
+		case -1:
+			perror("fork");
+			syslog(LOG_ERR, "could not fork: %m");
+			exit(1);
+		case 0:
+			break;
+		default:
 			exit(0);
+		}
 		if (setsid() < 0)
 			perror("setsid");
 #else
 		if ((fd = open("/dev/tty", O_RDONLY, 0)) >= 0) {
 			extern char *ttyname();
 
-			(void) ioctl(fd, TIOCNOTTY, (caddr_t)0);
-			(void) close(fd);
+			(void)ioctl(fd, TIOCNOTTY, (caddr_t)0);
+			(void)close(fd);
 			/* open slip tty again to acquire as controlling tty? */
 			fd = open(ttyname(0), O_RDWR, 0);
 			if (fd >= 0)
-				(void) close(fd);
+				(void)close(fd);
 		}
-		(void) setpgrp(0, getpid());
+		(void)setpgrp(0, getpid());
 #endif
 		if (argc > 2) {
 			if ((fd = open(argv[2], O_RDWR)) == -1) {
 				perror(argv[2]);
 				exit(2);
 			}
-			(void) dup2(fd, 0);
+			(void)dup2(fd, 0);
 			if (fd > 2)
 				close(fd);
 		}
@@ -283,7 +292,7 @@ main(argc, argv)
 		syslog(LOG_ERR, "stdin not a tty");
 		errx(1, "stdin not a tty");
 	}
-	(void) fchmod(STDIN_FILENO, 0600);
+	(void)fchmod(STDIN_FILENO, 0600);
 	warnx("starting slip login for %s", loginname);
 #ifdef POSIX
 	/* set up the line parameters */
@@ -328,8 +337,8 @@ main(argc, argv)
 		syslog(LOG_ERR, "ioctl (SLIOCGUNIT): %m");
 		exit(1);
 	}
-	(void) signal(SIGHUP, hup_handler);
-	(void) signal(SIGTERM, hup_handler);
+	(void)signal(SIGHUP, hup_handler);
+	(void)signal(SIGTERM, hup_handler);
 
 	syslog(LOG_INFO, "attaching slip unit %d for %s\n", unit, loginname);
 	(void)snprintf(logincmd, sizeof logincmd, "%s %d %d %s", loginfile,
@@ -338,31 +347,31 @@ main(argc, argv)
 	 * aim stdout and errout at /dev/null so logincmd output won't
 	 * babble into the slip tty line.
 	 */
-	(void) close(1);
+	(void)close(1);
 	if ((fd = open(_PATH_DEVNULL, O_WRONLY)) != 1) {
 		if (fd < 0) {
 			syslog(LOG_ERR, "open /dev/null: %m");
 			exit(1);
 		}
-		(void) dup2(fd, 1);
-		(void) close(fd);
+		(void)dup2(fd, 1);
+		(void)close(fd);
 	}
-	(void) dup2(1, 2);
+	(void)dup2(1, 2);
 
 	/*
 	 * Run login and logout scripts as root (real and effective);
 	 * current route(8) is setuid root, and checks the real uid
 	 * to see whether changes are allowed (or just "route get").
 	 */
-	(void) setuid(0);
+	(void)setuid(0);
 	if ((s = system(logincmd)) != NULL) {
 		syslog(LOG_ERR, "%s login failed: exit status %d from %s",
 		       loginname, s, loginfile);
-		(void) ioctl(STDIN_FILENO, TIOCSETD, (caddr_t)&odisc);
+		(void)ioctl(STDIN_FILENO, TIOCSETD, (caddr_t)&odisc);
 #ifdef POSIX
-		(void) tcsetattr(STDIN_FILENO, TCSAFLUSH, &otios);
+		(void)tcsetattr(STDIN_FILENO, TCSAFLUSH, &otios);
 #else
-		(void) ioctl(STDIN_FILENO, TIOCSETP, (caddr_t)&otty);
+		(void)ioctl(STDIN_FILENO, TIOCSETP, (caddr_t)&otty);
 #endif
 		exit(6);
 	}
