@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.253.2.4 2000/07/02 16:53:23 assar Exp $
+# $NetBSD: mi,v 1.253.2.5 2000/07/13 01:04:53 thorpej Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -41,6 +41,7 @@
 ./usr/share/man/cat1/basename.0
 ./usr/share/man/cat1/batch.0
 ./usr/share/man/cat1/bc.0
+./usr/share/man/cat1/bdes.0
 ./usr/share/man/cat1/bg.0
 ./usr/share/man/cat1/biff.0
 ./usr/share/man/cat1/bunzip2.0
@@ -1069,6 +1070,7 @@
 ./usr/share/man/man1/basename.1
 ./usr/share/man/man1/batch.1
 ./usr/share/man/man1/bc.1
+./usr/share/man/man1/bdes.1
 ./usr/share/man/man1/bg.1
 ./usr/share/man/man1/biff.1
 ./usr/share/man/man1/bunzip2.1
