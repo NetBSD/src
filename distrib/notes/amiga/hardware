@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.42 2001/08/26 20:47:27 is Exp $
+.\"	$NetBSD: hardware,v 1.43 2002/01/27 19:50:10 aymeric Exp $
 .
 .Nx \*V
 runs on any Amiga that has a 68020 or better CPU with
@@ -106,7 +106,6 @@ Audio I/O
 Amiga builtin
 .It
 Melody Mpeg-audio layer 2 board
-.bullet)
 .It
 Repulse audio board
 .bullet)
