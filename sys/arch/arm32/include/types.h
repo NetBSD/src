@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.5 1997/11/05 04:36:08 thorpej Exp $	*/
+/*	$NetBSD: types.h,v 1.6 1998/06/14 20:09:22 kleink Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,13 +40,11 @@
 
 #include <sys/cdefs.h>
 
-typedef struct _physadr {
-	int r[1];
-} *physadr;
-
+#if defined(_KERNEL)
 typedef struct label_t {	/* Used by setjmp & longjmp */
         int val[11];
 } label_t;
+#endif
          
 typedef	unsigned long	vm_offset_t;
 typedef	unsigned long	vm_size_t;
