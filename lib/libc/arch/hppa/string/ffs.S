@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.2 2003/10/06 05:30:21 matt Exp $	*/
+/*	$NetBSD: ffs.S,v 1.3 2004/07/18 20:30:04 chs Exp $	*/
 
 /*	$OpenBSD: ffs.S,v 1.3 2001/06/04 23:14:02 mickey Exp $	*/
 
@@ -57,6 +57,7 @@ LEAF_ENTRY(ffs)
 	extru,=	%arg0,31,1,%r0		; If low bit is non-zero
 	addi	-1,%ret0,%ret0		;   subtract 1 from bitpos
 ffsdone:
+	bv,n	%r0(%rp)
 EXIT(ffs)
 
 	.end
