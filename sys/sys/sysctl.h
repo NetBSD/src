@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.39 1999/11/19 10:41:41 bouyer Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.40 2000/02/06 07:29:59 fair Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -157,7 +157,8 @@ struct ctlname {
 #define	KERN_MEMORY_PROTECTION	43	/* int: POSIX memory protections */
 #define	KERN_LOGIN_NAME_MAX	44	/* int: max length login name + NUL */
 #define	KERN_DEFCORENAME	45	/* old: sort core name format */
-#define	KERN_MAXID		46	/* number of valid kern ids */
+#define	KERN_LOGSIGEXIT		46	/* int: log signalled processes */
+#define	KERN_MAXID		47	/* number of valid kern ids */
 
 #define CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -206,6 +207,7 @@ struct ctlname {
 	{ "memory_protection", CTLTYPE_INT }, \
 	{ "login_name_max", CTLTYPE_INT }, \
 	{ "defcorename", CTLTYPE_STRING }, \
+	{ "logsigexit", CTLTYPE_INT }, \
 }
 
 /*

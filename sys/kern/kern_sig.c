@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.95 1999/12/30 16:00:23 eeh Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.96 2000/02/06 07:29:56 fair Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -1238,17 +1238,42 @@ killproc(p, why)
  * If dumping core, save the signal number for the debugger.  Calls exit and
  * does not return.
  */
+
+#if defined(DIAGNOSTIC) || defined(DEBUG)
+int	kern_logsigexit = 1;	/* not static to make public for sysctl */
+#else
+int	kern_logsigexit = 0;	/* not static to make public for sysctl */
+#endif
+
+static	char	*logcoredump =
+	"pid %d (%s), uid %d: exited on signal %d (core dumped)\n";
+static	char	*lognocoredump =
+	"pid %d (%s), uid %d: exited on signal %d (core not dumped, err = %d)\n";
+
 void
 sigexit(p, signum)
 	register struct proc *p;
 	int signum;
 {
+	int	error;
+	char	*errmsg;
+
 	p->p_acflag |= AXSIG;
 	if (sigprop[signum] & SA_CORE) {
 		p->p_sigacts->ps_sig = signum;
-		if (coredump(p) == 0)
+		if ((error = coredump(p)) == 0) {
 			signum |= WCOREFLAG;
+			errmsg = logcoredump;
+		} else {
+			errmsg = lognocoredump;
+		}
+
+		if (kern_logsigexit)
+			log(LOG_INFO, errmsg, p->p_pid, p->p_comm,
+			    p->p_cred && p->p_ucred ? p->p_ucred->cr_uid : -1,
+			    signum &~ WCOREFLAG, error);
 	}
+
 	exit1(p, W_EXITCODE(0, signum));
 	/* NOTREACHED */
 }

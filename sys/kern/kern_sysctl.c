@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.56 2000/01/16 15:07:48 assar Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.57 2000/02/06 07:29:58 fair Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -233,6 +233,7 @@ int defcorenamelen = sizeof(DEFCORENAME);
 char defcorename[MAXPATHLEN] = "%n.core";
 int defcorenamelen = sizeof("%n.core");
 #endif
+extern	int	kern_logsigexit;
 
 /*
  * kernel related system variables.
@@ -422,6 +423,8 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_rdint(oldp, oldlenp, newp, 1));
 	case KERN_LOGIN_NAME_MAX:
 		return (sysctl_rdint(oldp, oldlenp, newp, LOGIN_NAME_MAX));
+	case KERN_LOGSIGEXIT:
+		return (sysctl_int(oldp, oldlenp, newp, newlen, &kern_logsigexit));
 	default:
 		return (EOPNOTSUPP);
 	}
