@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/vector.h,v 1.3 1993/08/28 15:38:38 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/vector.h,v 1.4 1993/10/12 05:28:26 glass Exp $
  */
 
 #define COPY_ENTRY 0
@@ -37,7 +37,7 @@
 #define VEC_INTERRUPT_BASE 0x18
 #define VEC_LEVEL_7_INT    0x1F
 
-extern unsigned int vector_table[];
+extern void (*vector_table[])();
 
 void set_vector_entry __P((int, void (*handler)()));
 unsigned int get_vector_entry __P((int));
