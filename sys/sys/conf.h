@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.101.2.2 2002/05/19 14:01:59 gehenna Exp $	*/
+/*	$NetBSD: conf.h,v 1.101.2.3 2002/06/06 03:01:16 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -215,6 +215,7 @@ int	iskmemdev __P((dev_t));
 struct devsw_conv {
 	const char *d_name;
 	int d_bmajor;
+	int d_cmajor;
 };
 
 #ifdef _KERNEL
