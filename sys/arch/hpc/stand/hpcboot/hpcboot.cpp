@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcboot.cpp,v 1.11 2003/12/23 03:18:13 uwe Exp $	*/
+/*	$NetBSD: hpcboot.cpp,v 1.12 2003/12/23 16:50:22 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -153,8 +153,10 @@ hpcboot(void *arg)
 
 	menu.progress();
 	// put kernel to loader.
-	if (!f.attachLoader())
+	if (!f.attachLoader()) {
+		error_message = TEXT("Can't attach loader.\n");
 		goto file_close_exit;
+	}
 
 	if (!f._loader->setFile(f._file)) {
 		error_message = TEXT("Can't initialize loader.\n");
@@ -221,12 +223,14 @@ hpcboot(void *arg)
 
 	f._arch->jump(p, f._loader->tagStart());
 	// NOTREACHED
+	error_message = TEXT("Can't jump to the kernel.\n");
 
  file_close_exit:
-	if (error_message == 0)
-		error_message = TEXT("Can't jump to the kernel.\n");
 	f._file->close();
+
  failed_exit:
+	if (error_message == 0)
+		error_message = TEXT("Unknown error?\n");
 	MessageBox(menu._root->_window, error_message,
 	    TEXT("BOOT FAILED"), MB_ICONERROR | MB_OK);
 
