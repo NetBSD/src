@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.39 1999/08/03 20:19:21 wrstuden Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.40 2000/03/28 05:06:20 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -226,7 +226,6 @@ struct socket {
 extern	u_long sb_max;
 /* to catch callers missing new second argument to sonewconn: */
 #define	sonewconn(head, connstatus)	sonewconn1((head), (connstatus))
-struct	socket *sonewconn1 __P((struct socket *head, int connstatus));
 
 /* strings for sleep message: */
 extern	const char netio[], netcon[], netcls[];
