@@ -1,11 +1,11 @@
-/*	$NetBSD: rtld_start.S,v 1.1 1999/02/24 18:25:41 christos Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.2 1999/02/26 22:01:31 pk Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Christos Zoulas.
+ * by Christos Zoulas & Paul Kranenburg.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,30 +38,39 @@
 
 #include <machine/asm.h>
 
-	.text
+	.section	".text"
 	.align	8
-	.globl	_rtld_start
+	.global	_rtld_start
 	.type	_rtld_start,@function
 _rtld_start:
-	mov	0, %fp
-	add	%sp, 56, %o0		! &argc - 8
-	andn	%sp, 7,	%sp		! align
-	sub	%sp, 24, %sp		! expand to standard stack frame size
-	st	%g1, [%sp]		! Store ps_strings
+	mov	0, %fp			! Erect a fence post for ourselves
+	mov	%g1, %l1		! save ps_strings
+	sub	%sp, 8, %sp		! Make room for return args
 
-	call	_rtld,0			! _rtld(sp)
-	 nop
+	call	_rtld
+	 add	%sp, 64, %o0		! &argc - 8
 
-	ld	[%sp - 4], %g3
-	ld	[%sp - 8], %g2
-	ld	[%sp - 12], %g1
-	ld	[%o0], %o0
-	call	%o0
+	ld	[%sp + 64], %g3		! arg: cleanup
+	ld	[%sp + 64 + 4], %g2	! arg: obj
+	add	%sp, 8, %sp		! restore stack pointer
 
+	jmp	%o0
+	 mov	%l1, %g1		! restore ps_strings
+
+
+	.section	".text"
 	.align	4
-	.globl	_rtld_bind_start
+	.global	_rtld_bind_start
 	.type	_rtld_bind_start,@function
 _rtld_bind_start:	# (obj, reloff)
-	call	exit,0			! exit(random)
-	 nop
-	ret
+	save	%sp, -96, %sp		! setup standard stack frame
+	ld	[%i7 + 8], %o0		! obj id is in second PLT slot
+	srl	%g1, 10, %o1		! offset is in high 22 bits
+	call	_rtld_bind		! Call _rtld_bind(obj, offset)
+	 sub	%o1, 12*4, %o1		! first 4 `pltrel' entries are missing!
+
+	mov	%o0, %g1		! return value == function address
+	restore				! get rid of our context
+	 jmp	%g1			! and the jmpslot context, then go.
+	restore				!
+
