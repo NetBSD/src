@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.26 1996/02/26 08:25:47 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -247,7 +247,9 @@ in_pcbconnect(v, nam)
 			u_int16_t fport = sin->sin_port;
 
 			sin->sin_port = 0;
-			ia = ifatoia(ifa_ifwithdstaddr(sintosa(sin)));
+			ia = ifatoia(ifa_ifwithaddr(sintosa(sin)));
+			if (ia == 0)
+				ia = ifatoia(ifa_ifwithdstaddr(sintosa(sin)));
 			if (ia == 0)
 				ia = ifatoia(ifa_ifwithnet(sintosa(sin)));
 			sin->sin_port = fport;
