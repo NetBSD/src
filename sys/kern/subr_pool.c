@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.34 2000/05/08 20:09:44 thorpej Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.35 2000/05/31 15:03:54 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -425,6 +425,11 @@ pool_init(pp, size, align, ioff, flags, wchan, pagesz, alloc, release, mtype)
 	if (size < sizeof(struct pool_item))
 		size = sizeof(struct pool_item);
 
+	size = ALIGN(size);
+	if (size >= pagesz)
+		panic("pool_init: pool item size (%lu) too large",
+		      (u_long)size);
+
 	/*
 	 * Initialize the pool structure.
 	 */
@@ -436,7 +441,7 @@ pool_init(pp, size, align, ioff, flags, wchan, pagesz, alloc, release, mtype)
 	pp->pr_maxpages = UINT_MAX;
 	pp->pr_roflags = flags;
 	pp->pr_flags = 0;
-	pp->pr_size = ALIGN(size);
+	pp->pr_size = size;
 	pp->pr_align = align;
 	pp->pr_wchan = wchan;
 	pp->pr_mtype = mtype;
