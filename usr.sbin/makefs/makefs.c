@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.13 2002/01/31 22:44:02 tv Exp $	*/
+/*	$NetBSD: makefs.c,v 1.14 2002/11/29 13:06:33 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001-2002 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: makefs.c,v 1.13 2002/01/31 22:44:02 tv Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.14 2002/11/29 13:06:33 lukem Exp $");
 #endif	/* !__lint */
 
 #include <assert.h>
@@ -51,7 +51,6 @@ __RCSID("$NetBSD: makefs.c,v 1.13 2002/01/31 22:44:02 tv Exp $");
 
 #include "makefs.h"
 #include "mtree.h"
-#include "strsuftoull.h"
 
 /*
  * list of supported file systems and dispatch functions
@@ -144,18 +143,18 @@ main(int argc, char *argv[])
 			if (optarg[len] == '%') {
 				optarg[len] = '\0';
 				fsoptions.freeblockpc =
-				    strsuftoull("free block percentage",
+				    strsuftoll("free block percentage",
 					optarg, 0, 99);
 			} else {
 				fsoptions.freeblocks =
-				    strsuftoull("free blocks",
+				    strsuftoll("free blocks",
 					optarg, 0, LLONG_MAX);
 			}
 			break;
 
 		case 'd':
 			debug =
-			    (int)strsuftoull("debug mask", optarg, 0, UINT_MAX);
+			    (int)strsuftoll("debug mask", optarg, 0, UINT_MAX);
 			break;
 
 		case 'f':
@@ -163,11 +162,11 @@ main(int argc, char *argv[])
 			if (optarg[len] == '%') {
 				optarg[len] = '\0';
 				fsoptions.freefilepc =
-				    strsuftoull("free file percentage",
+				    strsuftoll("free file percentage",
 					optarg, 0, 99);
 			} else {
 				fsoptions.freefiles =
-				    strsuftoull("free files",
+				    strsuftoll("free files",
 					optarg, 0, LLONG_MAX);
 			}
 			break;
@@ -178,7 +177,7 @@ main(int argc, char *argv[])
 
 		case 'M':
 			fsoptions.minsize =
-			    strsuftoull("minimum size", optarg, 1LL, LLONG_MAX);
+			    strsuftoll("minimum size", optarg, 1LL, LLONG_MAX);
 			break;
 
 		case 'N':
@@ -190,7 +189,7 @@ main(int argc, char *argv[])
 
 		case 'm':
 			fsoptions.maxsize =
-			    strsuftoull("maximum size", optarg, 1LL, LLONG_MAX);
+			    strsuftoll("maximum size", optarg, 1LL, LLONG_MAX);
 			break;
 			
 		case 'o':
@@ -208,12 +207,12 @@ main(int argc, char *argv[])
 
 		case 's':
 			fsoptions.minsize = fsoptions.maxsize =
-			    strsuftoull("size", optarg, 1LL, LLONG_MAX);
+			    strsuftoll("size", optarg, 1LL, LLONG_MAX);
 			break;
 
 		case 'S':
 			fsoptions.sectorsize =
-			    (int)strsuftoull("sector size", optarg,
+			    (int)strsuftoll("sector size", optarg,
 				1LL, INT_MAX);
 			break;
 
@@ -276,7 +275,7 @@ set_option(option_t *options, const char *var, const char *val)
 	for (i = 0; options[i].name != NULL; i++) {
 		if (strcmp(options[i].name, var) != 0)
 			continue;
-		*options[i].value = (int)strsuftoull(options[i].desc, val,
+		*options[i].value = (int)strsuftoll(options[i].desc, val,
 		    options[i].minimum, options[i].maximum);
 		return (1);
 	}
