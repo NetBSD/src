@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.32 1997/03/18 04:47:22 mycroft Exp $	*/
+/*	$NetBSD: inetd.c,v 1.33 1997/03/19 00:05:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1991, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-static char rcsid[] = "$NetBSD: inetd.c,v 1.32 1997/03/18 04:47:22 mycroft Exp $";
+static char rcsid[] = "$NetBSD: inetd.c,v 1.33 1997/03/19 00:05:05 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -564,7 +564,7 @@ run_service(ctrl, sep)
 #ifndef LIBWRAP_INTERNAL
 	if (sep->se_bi == 0)
 #endif
-	{
+	if (!sep->se_wait || sep->se_socktype != SOCK_STREAM) {
 		request_init(&req, RQ_DAEMON, sep->se_argv[0] ?
 		    sep->se_argv[0] : sep->se_service, RQ_FILE, ctrl, NULL);
 		fromhost(&req);
