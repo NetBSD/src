@@ -1,3 +1,4 @@
+/*	$NetBSD: pfctl_osfp.c,v 1.2 2004/06/22 15:16:30 itojun Exp $	*/
 /*	$OpenBSD: pfctl_osfp.c,v 1.8 2004/02/27 10:42:00 henning Exp $ */
 
 /*
@@ -19,6 +20,10 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+
+#ifdef __NetBSD__
+#include <netinet/in.h>
+#endif
 
 #include <net/if.h>
 #include <net/pfvar.h>
