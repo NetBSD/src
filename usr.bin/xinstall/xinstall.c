@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.50 2001/10/11 02:06:32 lukem Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.51 2001/10/11 04:27:30 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.50 2001/10/11 02:06:32 lukem Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.51 2001/10/11 04:27:30 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -530,7 +530,8 @@ install(char *from_name, char *to_name, u_int flags)
 	 * flags, except for the dump flag.
 	 */
 	if (!dounpriv && chflags(to_name,
-	    flags & SETFLAGS ? fileflags : from_sb.st_flags & ~UF_NODUMP) != -1) {
+	    flags & SETFLAGS ? fileflags : from_sb.st_flags & ~UF_NODUMP) == -1)
+	{
 		if (errno != EOPNOTSUPP || (from_sb.st_flags & ~UF_NODUMP) != 0)
 			warn("%s: chflags", to_name);
 	}
