@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2000/12/04 18:35:16 scw Exp $
+#	$NetBSD: Makefile,v 1.12 2000/12/05 21:54:33 scw Exp $
 
 LIB=bug
 
@@ -9,22 +9,21 @@ MKPROFILE= no
 S=${.CURDIR}/../../../..
 DIR_SA=$S/lib/libsa
 
-SRCS=	delay.c diskrd.c diskwr.c getbrdid.c inchr.c instat.c outln.c \
-	outstr.c putchar.c return.c rtc_rd.c
-CLEANFILES+= bugcrt.o bugcrt.o.tmp
+SRCS=	bugcrt.c delay.c diskrd.c diskwr.c getbrdid.c inchr.c instat.c \
+	outln.c outstr.c putchar.c return.c rtc_rd.c
+CLEANFILES+= bugstart.o
 
 .include "../Makefile.booters"
 
 # only needed during build
 libinstall::
 
-# separate rule for bugcrt.c - NEED NOT BE COMPILED WITH -O2
+# separate rule for bugstart.c
 # this is build separately from rest of libbug
-bugcrt.o: bugcrt.c
-	${CC} -fomit-frame-pointer -nostdinc ${INCPATH} -D_STANDALONE \
-	    -o ${.TARGET}.tmp -c ${.IMPSRC}
-	${LD} -x -r ${.TARGET}.tmp -o ${.TARGET}
+bugstart.o: bugstart.s
+	${CC} -x assembler-with-cpp -traditional-cpp -nostdinc ${INCPATH} \
+	-D_STANDALONE -c ${.IMPSRC}
 
-all realall: lib${LIB}.a bugcrt.o
+all realall: lib${LIB}.a bugstart.o
 
 .include <bsd.lib.mk>
