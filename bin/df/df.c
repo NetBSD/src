@@ -44,7 +44,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)df.c	8.7 (Berkeley) 4/2/94";*/
-static char rcsid[] = "$Id: df.c,v 1.15 1994/09/16 20:59:29 mycroft Exp $";
+static char rcsid[] = "$Id: df.c,v 1.16 1995/01/13 23:23:43 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -63,12 +63,21 @@ int	 bread __P((off_t, void *, int));
 char	*getmntpt __P((char *));
 void	 prtstat __P((struct statfs *, int));
 void	 ufs_df __P((char *, int));
+void	 add_fsmask __P((char *));
 void	 usage __P((void));
 
-int	iflag, kflag = 0, nflag, lflag;
+struct fstype {
+	char *fs_name;
+	int fs_no;
+};
+
+int	iflag, kflag, nflag, tflag;
 long	blocksize, mntsize;
 struct	statfs *mntbuf;
 struct	ufs_args mdev;
+struct	fstype *fstypes;
+int	numfstypes, defmatch = 1;
+int	posflags, negflags;
 
 int
 main(argc, argv)
@@ -81,7 +90,7 @@ main(argc, argv)
 	int ch, i;
 	char *mntpt;
 
-	while ((ch = getopt(argc, argv, "ikln")) != EOF)
+	while ((ch = getopt(argc, argv, "iklnt:")) != -1)
 		switch (ch) {
 		case 'i':
 			iflag = 1;
@@ -91,10 +100,15 @@ main(argc, argv)
 			kflag = 1;
 			break;
 		case 'l':
-			lflag = 1;
+			add_fsmask("local");
+			tflag = 1;
 			break;
 		case 'n':
 			nflag = 1;
+			break;
+		case 't':
+			add_fsmask(optarg);
+			tflag = 1;
 			break;
 		case '?':
 		default:
@@ -103,8 +117,8 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	if (*argv && lflag)
-		errx(1, "-l does not make sense with list of mount points");
+	if (*argv && tflag)
+		errx(1, "-l or -t does not make sense with list of mount points");
 
 	mntsize = getmntinfo(&mntbuf, (nflag ? MNT_NOWAIT : MNT_WAIT));
 	if (mntsize == 0)
@@ -118,8 +132,7 @@ main(argc, argv)
 
 	if (!*argv) {
 		for (i = 0; i < mntsize; i++)
-			if (!lflag || mntbuf[i].f_flags & MNT_LOCAL)
-				prtstat(&mntbuf[i], maxwidth);
+			prtstat(&mntbuf[i], maxwidth);
 		exit(0);
 	}
 
@@ -184,6 +197,74 @@ getmntpt(name)
 	return (0);
 }
 
+struct fsflags {
+	char	*ff_name;
+	int	ff_pos;
+	int	ff_neg;
+} fsflags[] = {
+	{"local",	MNT_LOCAL,	0},
+	{"ro",		MNT_RDONLY,	0},
+	{"rw",		0,		MNT_RDONLY},
+};
+
+void
+add_fsmask(fstype)
+	char *fstype;
+{
+	int len, no, n;
+
+	len = strlen(fstype);
+
+	if (!bcmp(fstype, "no", 2)) {
+		no = 1;
+		defmatch = 1;
+		len -= 2;
+		fstype += 2;
+	} else {
+		no = 0;
+		defmatch = 0;
+	}
+
+	for (n = 0; n < sizeof(fsflags) / sizeof(fsflags[0]); n++) {
+		if (!bcmp(fstype, fsflags[n].ff_name, len+1)) {
+			if (!no) {
+				posflags |= fsflags[n].ff_pos;
+				posflags &= ~fsflags[n].ff_neg;
+				negflags |= fsflags[n].ff_neg;
+				negflags &= !fsflags[n].ff_pos;
+			} else {
+				posflags |= fsflags[n].ff_neg;
+				posflags &= ~fsflags[n].ff_pos;
+				negflags |= fsflags[n].ff_pos;
+				negflags &= ~fsflags[n].ff_neg;
+			}
+			return;
+		}
+	}
+
+	if (!bcmp(fstype, "all", len+1)) {
+		if (no) {
+			(void)fprintf(stderr, "I'm sorry.  I can't do that, Dave.\n");
+			exit(1);
+		} else {
+			fstypes = NULL;
+			posflags = negflags = 0;
+		}
+	}
+
+	for (n = 0; n < numfstypes; n++) {
+		if (!bcmp(fstype, fstypes[n].fs_name, len+1)) {
+			fstypes[n].fs_no = no;
+			return;
+		}
+	}
+
+	numfstypes++;
+	fstypes = (struct fstype *) realloc(fstypes, sizeof(struct fstype) * numfstypes);
+	fstypes[numfstypes - 1].fs_name = strdup(fstype);
+	fstypes[numfstypes - 1].fs_no = no;
+}
+
 /*
  * Convert statfs returned filesystem size into BLOCKSIZE units.
  * Attempts to avoid overflow for large filesystems.
@@ -203,7 +284,23 @@ prtstat(sfsp, maxwidth)
 	static int headerlen, timesthrough;
 	static char *header;
 	long used, availblks, inodes;
+	int i, gotmatch = defmatch;
 
+	if ((sfsp->f_flags & posflags) != posflags)
+		return;
+	if ((sfsp->f_flags & negflags) != 0)
+		return;
+	if (numfstypes) {
+		for (i = 0; i < numfstypes; i++)
+			if (!strcmp(sfsp->f_fstypename, fstypes[i].fs_name)) {
+				if (fstypes[i].fs_no)
+					return;
+				gotmatch = 1;
+				break;
+			}
+		if (!gotmatch)
+			return;
+	}
 	if (maxwidth < 11)
 		maxwidth = 11;
 	if (++timesthrough == 1) {
@@ -322,6 +419,6 @@ bread(off, buf, cnt)
 void
 usage()
 {
-	(void)fprintf(stderr, "usage: df [-ikln] [file | file_system ...]\n");
+	(void)fprintf(stderr, "usage: df [-ikln] [-t type] [file | file_system ...]\n");
 	exit(1);
 }
