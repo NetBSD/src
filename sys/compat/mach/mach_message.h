@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.h,v 1.1 2001/07/29 19:30:56 christos Exp $	 */
+/*	$NetBSD: mach_message.h,v 1.2 2002/10/30 15:04:17 christos Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -61,6 +61,47 @@ typedef u_int32_t mach_msg_option_t;
 #define MACH_RCV_OVERWRITE	0x00001000
 #define MACH_SEND_ALWAYS	0x00010000
 #define MACH_SEND_TRAILER	0x00020000	
+
+#define MACH_MSG_OPTION_BITS	"\177\20" \
+    "b\00send_msg\0b\01rcv_msg\0" \
+    "b\02rcv_large\0b\03invalid[0x8]\0" \
+    "b\04send_timeout\0b05invalid[0x20]\0" \
+    "b\06send_interrupt\0b\05send_cancel\0" \
+    "b\06rcv_timeout\0b\07rcv_notify\0" \
+    "b\10rcv_interrupt\0b\11invalid[0x800]\0" \
+    "b\12rcv_overwrite\0b\13invalid[0x2000]\0" \
+    "b\14invalid[0x4000]\0b\15invalid[0x8000]\0" \
+    "b\16send_always\0b\17send_trailer\0"
+
+#define MACH_MSGH_BITS_REMOTE_MASK	0x000000ff
+#define MACH_MSGH_BITS_LOCAL_MASK	0x0000ff00
+#define MACH_MSGH_BITS_COMPLEX		0x80000000
+#define MACH_MSGH_LOCAL_BITS(bits)	(((bits) >> 8) & 0xff)
+#define MACH_MSGH_REMOTE_BITS(bits)	((bits) & 0xff)
+
+#define MACH_MSG_TYPE_MOVE_RECEIVE	16
+#define MACH_MSG_TYPE_MOVE_SEND		17
+#define MACH_MSG_TYPE_MOVE_SEND_ONCE	18
+#define MACH_MSG_TYPE_COPY_SEND		19
+#define MACH_MSG_TYPE_MAKE_SEND		20
+#define MACH_MSG_TYPE_MAKE_SEND_ONCE	21
+#define MACH_MSG_TYPE_COPY_RECEIVE	22
+
+typedef unsigned int mach_msg_copy_options_t;
+
+#define MACH_MSG_PHYSICAL_COPY		0
+#define MACH_MSG_VIRTUAL_COPY   	1
+#define MACH_MSG_ALLOCATE		2
+#define MACH_MSG_OVERWRITE		3
+#define MACH_MSG_KALLOC_COPY_T		4
+#define MACH_MSG_PAGE_LIST_COPY_T	5
+
+typedef unsigned int mach_msg_descriptor_type_t;
+
+#define MACH_MSG_PORT_DESCRIPTOR 		0
+#define MACH_MSG_OOL_DESCRIPTOR  		1
+#define MACH_MSG_OOL_PORTS_DESCRIPTOR 		2
+#define MACH_MSG_OOL_VOLATILE_DESCRIPTOR  	3
 
 typedef	struct {
 	mach_msg_bits_t	msgh_bits;
