@@ -34,15 +34,15 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fixdfsi.s	5.4 (Berkeley) 4/12/91
- *	$Id: fixdfsi.S,v 1.3 1993/10/21 02:03:38 jtc Exp $
+ *	$Id: fixdfsi.S,v 1.4 1995/12/28 20:03:56 jtc Exp $
  */
+
+#include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: fixdfsi.S,v 1.3 1993/10/21 02:03:38 jtc Exp $"
+	.asciz "$Id: fixdfsi.S,v 1.4 1995/12/28 20:03:56 jtc Exp $"
 #endif
-
-#include "DEFS.h"
 
 ENTRY(__fixdfsi)
 	fldl	4(%esp)

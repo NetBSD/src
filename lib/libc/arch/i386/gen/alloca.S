@@ -34,17 +34,17 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)alloca.s	5.2 (Berkeley) 5/14/90
- *	$Id: alloca.S,v 1.3 1994/01/27 06:34:02 mycroft Exp $
+ *	$Id: alloca.S,v 1.4 1995/12/28 20:03:54 jtc Exp $
  */
+
+#include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: alloca.S,v 1.3 1994/01/27 06:34:02 mycroft Exp $"
+	.asciz "$Id: alloca.S,v 1.4 1995/12/28 20:03:54 jtc Exp $"
 #endif
 
 /* like alloc, but automatic automatic free in return */
-
-#include "DEFS.h"
 
 ENTRY(alloca)
 	popl	%edx		/*  pop return addr */

@@ -34,15 +34,15 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)modf.s	5.5 (Berkeley) 3/18/91
- *	$Id: modf.S,v 1.3 1994/01/27 06:34:05 mycroft Exp $
+ *	$Id: modf.S,v 1.4 1995/12/28 20:03:58 jtc Exp $
  */
+
+#include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: modf.S,v 1.3 1994/01/27 06:34:05 mycroft Exp $"
+	.asciz "$Id: modf.S,v 1.4 1995/12/28 20:03:58 jtc Exp $"
 #endif
-
-#include "DEFS.h"
 
 /*
  * modf(value, iptr): return fractional part of value, and stores the

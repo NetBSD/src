@@ -34,15 +34,15 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)divsi3.s	5.1 (Berkeley) 5/15/90
- *	$Id: divsi3.S,v 1.3 1993/10/21 02:03:37 jtc Exp $
+ *	$Id: divsi3.S,v 1.4 1995/12/28 20:03:54 jtc Exp $
  */
+
+#include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: divsi3.S,v 1.3 1993/10/21 02:03:37 jtc Exp $"
+	.asciz "$Id: divsi3.S,v 1.4 1995/12/28 20:03:54 jtc Exp $"
 #endif
-
-#include "DEFS.h"
 
 ENTRY(__divsi3)
 	movl 4(%esp),%eax
