@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.100 2003/03/28 08:03:39 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.101 2003/04/01 14:31:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.100 2003/03/28 08:03:39 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.101 2003/04/01 14:31:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1018,7 +1018,7 @@ lfs_reclaim(void *v)
 }
 
 /*
- * Read a block from, or write a block to, a storage device.
+ * Read a block from a storage device.
  * In order to avoid reading blocks that are in the process of being
  * written by the cleaner---and hence are not mutexed by the normal
  * buffer cache / page cache mechanisms---check for collisions before
@@ -1047,6 +1047,9 @@ lfs_strategy(void *v)
 	ip = VTOI(vp);
 	fs = ip->i_lfs;
 
+	/* lfs uses its strategy routine only for read */
+	KASSERT(bp->b_flags & B_READ);
+
 	if (vp->v_type == VBLK || vp->v_type == VCHR)
 		panic("lfs_strategy: spec");
 	KASSERT(bp->b_bcount != 0);
@@ -1069,7 +1072,7 @@ lfs_strategy(void *v)
 
 	slept = 1;
 	simple_lock(&fs->lfs_interlock);
-	while (slept && bp->b_flags & B_READ && fs->lfs_seglock) {
+	while (slept && fs->lfs_seglock) {
 		simple_unlock(&fs->lfs_interlock);
 		/*
 		 * Look through list of intervals.
