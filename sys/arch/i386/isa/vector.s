@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.s,v 1.49 2002/05/31 18:22:54 thorpej Exp $	*/
+/*	$NetBSD: vector.s,v 1.50 2002/06/10 14:52:21 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -220,7 +220,7 @@
 	ALIGN_TEXT; .globl _Xrecurse/**/irq_num; _Xrecurse/**/irq_num:
 #define	XSTRAY_VEC(irq_num)						\
 	ALIGN_TEXT; .globl _Xstray/**/irq_num; _Xstray/**/irq_num:
-#define	XHOLE_VEC(irq_num)						\
+#define	XHOLD_VEC(irq_num)						\
 	ALIGN_TEXT; .globl _Xhold/**/irq_num; _Xhold/**/irq_num:
 #endif /* __STDC__ */
 
