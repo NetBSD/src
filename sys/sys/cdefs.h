@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.35 2000/05/20 14:26:01 simonb Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.36 2000/05/27 12:22:24 kleink Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -212,7 +212,7 @@
  *	  document it), and/or __predict_true() `no-error' condition
  *	  checks, assuming you want to optimize for the no-error case.
  *
- *	* Other than that, if you don't know the liklyhood of a test
+ *	* Other than that, if you don't know the likelihood of a test
  *	  succeeding from empirical or other `hard' evidence, don't
  *	  make predictions.
  *
