@@ -1,4 +1,4 @@
-.\"     $NetBSD: vfsops.9,v 1.7 2002/10/14 13:43:36 wiz Exp $
+.\"     $NetBSD: vfsops.9,v 1.8 2003/01/03 04:18:57 jschauma Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -188,7 +188,7 @@ code for sysctl operations which are file system specific.
 .Sh FUNCTIONS
 .Bl -tag -width compact
 .It Fn vfs_rootmountalloc "fstypename" "devname" "mpp"
-Lookup a file system type specied by the name
+Lookup a file system type specified by the name
 .Fa fstypename
 and if found allocate and initialise a mount structure for it.
 The allocated mount structure is returned in the address specified by
@@ -256,7 +256,7 @@ is a set of flags for controlling the operation of
 .Fn VOP_START .
 This function is invoked after
 .Fn VFS_MOUNT
-and before the first acces to the file system.
+and before the first access to the file system.
 .It Fn VFS_UNMOUNT "mp" "mntflags" "p"
 Unmount a file system specified by the mount structure
 .Fa mp .
