@@ -1,4 +1,4 @@
-#	$NetBSD: DUALITY,v 1.17 1995/03/31 18:27:30 mycroft Exp $
+#	$NetBSD: DUALITY,v 1.18 1995/05/12 12:49:54 mycroft Exp $
 #
 # DUALITY (mycroft's hp370 test machine)
 #
@@ -105,3 +105,4 @@ pseudo-device	bpfilter 16
 pseudo-device	ppp	2
 pseudo-device	log
 pseudo-device	pty	32
+pseudo-device	vnd	4		# paging to files
