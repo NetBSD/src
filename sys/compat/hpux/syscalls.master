@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.10 1996/09/03 03:12:21 mycroft Exp $
+	$NetBSD: syscalls.master,v 1.11 1996/09/07 13:23:39 mycroft Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -36,6 +36,7 @@
 #include <sys/signal.h>
 #include <sys/mount.h>
 #include <sys/exec.h>
+#include <sys/poll.h>
 #include <sys/syscallargs.h>
 
 #include <compat/hpux/hpux.h>
@@ -367,7 +368,8 @@
 266	UNIMPL
 267	UNIMPL
 268	NOARGS		{ int compat_43_sys_getdtablesize(void); }
-269	UNIMPL
+269	NOARGS		{ int sys_poll(struct pollfd *fds, size_t nfds, \
+			    int timeout); }
 270	UNIMPL
 271	UNIMPL
 272	NOARGS		{ int sys_fchdir(int fd); }
