@@ -1,4 +1,4 @@
-/* $NetBSD: if_prom.c,v 1.17 2002/11/09 06:34:38 thorpej Exp $ */
+/* $NetBSD: if_prom.c,v 1.18 2003/03/13 13:35:55 drochner Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -54,7 +54,7 @@ struct netif_dif prom_ifs[] = {
 {	0,		1,		&prom_stats[0],	0,		},
 };
 
-struct netif_stats prom_stats[NENTS(prom_ifs)];
+struct netif_stats prom_stats[sizeof(prom_ifs) / sizeof(prom_ifs[0])];
 
 struct netbbinfo netbbinfo = {
 	0xfeedbabedeadbeef,			/* magic number */

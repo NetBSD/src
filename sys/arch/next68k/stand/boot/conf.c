@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.2 2002/07/11 16:03:17 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.3 2003/03/13 13:40:53 drochner Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -88,11 +88,11 @@ struct fs_ops file_system[] = {
 	{ nfs_open, nfs_close, nfs_read, nfs_write, nfs_seek, nfs_stat },
 };
 
-int nfsys = NENTS(file_system);
+int nfsys = sizeof(file_system) / sizeof(file_system[0]);
 
 extern struct netif_driver en_driver;
 
 struct netif_driver *netif_drivers[] = {
 	&en_driver,
 };
-int n_netif_drivers = NENTS(netif_drivers);
+int n_netif_drivers = sizeof(netif_drivers) / sizeof(netif_drivers[0]);
