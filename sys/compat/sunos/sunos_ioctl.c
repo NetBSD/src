@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.18 1995/05/04 19:46:31 pk Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.19 1995/06/11 22:33:52 pk Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -677,7 +677,6 @@ sunos_ioctl(p, uap, retval)
 
 		sunos_aui.play = *(struct sunos_audio_prinfo *)&aui.play;
 		sunos_aui.record = *(struct sunos_audio_prinfo *)&aui.record;
-		sunos_aui.monitor_gain = aui.__spare; /* XXX */
 
 		/* `avail_ports' is `seek' in BSD */
 #define AUDIO_SPEAKER	1
@@ -689,6 +688,12 @@ sunos_ioctl(p, uap, retval)
 		sunos_aui.record.waiting = 0;
 		sunos_aui.play.eof = 0;
 		sunos_aui.record.eof = 0;
+		sunos_aui.monitor_gain = aui.__spare; /* XXX */
+		/*XXXsunos_aui.output_muted = 0;*/
+		/*XXX*/sunos_aui.reserved[0] = 0;
+		/*XXX*/sunos_aui.reserved[1] = 0;
+		/*XXX*/sunos_aui.reserved[2] = 0;
+		/*XXX*/sunos_aui.reserved[3] = 0;
 
 		return copyout ((caddr_t)&sunos_aui, SCARG(uap, data),
 				sizeof (sunos_aui));

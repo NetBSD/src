@@ -44,6 +44,21 @@ struct sunos_ptrace_args {
 	syscallarg(char *) addr2;
 };
 
+struct sunos_access_args {
+	syscallarg(char *) path;
+	syscallarg(int) flags;
+};
+
+struct sunos_stat_args {
+	syscallarg(char *) path;
+	syscallarg(struct ostat *) ub;
+};
+
+struct sunos_lstat_args {
+	syscallarg(char *) path;
+	syscallarg(struct ostat *) ub;
+};
+
 struct sunos_mctl_args {
 	syscallarg(caddr_t) addr;
 	syscallarg(int) len;
