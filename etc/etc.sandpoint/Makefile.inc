@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.5 2001/12/17 14:41:49 briggs Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2002/05/02 15:09:47 lukem Exp $
 #
 #	etc.sandpoint/Makefile.inc -- sandpoint-specific etc Makefile targets
 #
 
-KERNEL_SETS=	GENERIC
+KERNEL_SETS=		GENERIC
 
-BUILD_KERNELS=  INSTALL
+BUILD_KERNELS=  	INSTALL
 
 snap_md_post:
 .ifndef UPDATE

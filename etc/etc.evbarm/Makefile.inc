@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2002/04/13 00:51:57 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2002/05/02 15:09:43 lukem Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -8,7 +8,7 @@ KERNEL_SUFFIXES=	bin srec
 
 BUILD_KERNELS+=		TEAMASA_NPWR_INSTALL
 
-INSTALLATION_DIRS+=	binary/gzimg				\
+INSTALLATION_DIRS+=	binary/gzimg		\
 			installation/instkernel
 
 snap_md_post:

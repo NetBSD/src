@@ -1,15 +1,15 @@
-#	$NetBSD: Makefile.inc,v 1.4 2002/03/31 16:07:55 bjh21 Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2002/05/02 15:09:45 lukem Exp $
 #
 #	etc.mvme68k/Makefile.inc -- mvme68k-specific etc Makefile targets
 #
 
-KERNEL_SETS=	GENERIC VME147 VME162 VME167 VME172 VME177
+KERNEL_SETS=		GENERIC VME147 VME162 VME167 VME172 VME177
 
-BUILD_KERNELS=	RAMDISK
+BUILD_KERNELS=		RAMDISK
 
-INSTALLATION_DIRS += installation/miniroot
-INSTALLATION_DIRS += installation/netboot
-INSTALLATION_DIRS += installation/tapeimage
+INSTALLATION_DIRS+=	installation/miniroot	\
+			installation/netboot	\
+			installation/tapeimage
 
 # Tar up extra kernel sets.
 # Build the boot floppies and install them
