@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.664 2004/11/17 03:06:03 junyoung Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.665 2004/11/17 11:18:27 jdarrow Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.665 2004/11/17 03:04:45 junyoung Exp 
+ *	NetBSD: pcidevs,v 1.666 2004/11/17 11:15:03 jdarrow Exp 
  */
 
 /*
@@ -2180,6 +2180,10 @@ const struct pci_vendor pci_vendors[] = {
 	    "S2io Technologies",
 	},
 	{
+	    PCI_VENDOR_RALINK,
+	    "Ralink Technologies",
+	},
+	{
 	    PCI_VENDOR_SYMPHONY2,
 	    "Symphony Labs (2nd PCI Vendor ID)",
 	},
@@ -2304,7 +2308,7 @@ const struct pci_vendor pci_vendors[] = {
 	    "INVALID VENDOR ID",
 	},
 };
-const int pci_nvendors = 566;
+const int pci_nvendors = 567;
 
 const struct pci_product pci_products[] = {
 	{
@@ -7704,6 +7708,10 @@ const struct pci_product pci_products[] = {
 	    "CryptoSwift 200 PKI Accelerator",
 	},
 	{
+	    PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2460,
+	    "RT2460 802.11b",
+	},
+	{
 	    PCI_VENDOR_RATOC, PCI_PRODUCT_RATOC_REXPCI31,
 	    "REX PCI-31/33 SCSI",
 	},
@@ -8706,6 +8714,10 @@ const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_ACX100,
 	    "ACX100 802.11b",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_ACX111,
+	    "ACX111 802.11b/g",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1130,
@@ -9824,4 +9836,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1879;
+const int pci_nproducts = 1881;
