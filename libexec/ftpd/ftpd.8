@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.8,v 1.55 2000/07/15 03:45:20 lukem Exp $
+.\"	$NetBSD: ftpd.8,v 1.56 2000/07/17 02:30:54 lukem Exp $
 .\"
 .\" Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -67,7 +67,7 @@
 .\"
 .\"     @(#)ftpd.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd July 15, 2000
+.Dd July 17, 2000
 .Dt FTPD 8
 .Os
 .Sh NAME
@@ -322,13 +322,13 @@ shell is assumed to be
 .It
 If directed by the file
 .Xr ftpchroot 5
-the session's root will be changed to the user's login directory by
+the session's root directory will be changed by
 .Xr chroot 2
-as for an
-.Dq anonymous
-or
-.Dq ftp
-account (see next item).
+to the directory specified in the
+.Xr ftpd.conf 5
+.Sy chroot
+directive (if set),
+or to the home directory of the user.
 However, the user must still supply a password.
 This feature is intended as a compromise between a fully anonymous account
 and a fully privileged account.
@@ -347,11 +347,28 @@ file (user
 In this case the user is allowed
 to log in by specifying any password (by convention an email address for
 the user should be used as the password).
+.Pp
 The server performs a
 .Xr chroot 2
-to the home directory of the
+to the directory specified in the
+.Xr ftpd.conf 5
+.Sy chroot
+directive (if set),
+the
+.Fl a Ar anondir
+directory (if set),
+or to the home directory of the
 .Dq ftp
 user.
+.Pp
+The server then performs a
+.Xr chdir 2
+to the directory specified in the
+.Xr ftpd.conf 5
+.Sy homedir
+directive (if set), otherwise to
+.Pa / .
+.Pp
 If other restrictions are required (such as disabling of certain
 commands and the setting of a specific umask), then appropriate
 entries in
@@ -398,7 +415,7 @@ Remote hostname.
 .It "\&%T"
 Current time.
 .It "\&%U"
-Username.
+User name.
 .It "\&%\&%"
 A
 .Dq \&%
