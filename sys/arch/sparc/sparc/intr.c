@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.33 1998/09/23 08:44:51 pk Exp $ */
+/*	$NetBSD: intr.c,v 1.34 1998/10/08 22:27:33 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -272,6 +272,55 @@ void
 nmi_soft()
 {
 	printf("Message interrupt on CPU %d\n", cpuinfo.mid);
+
+#ifdef MULTIPROCESSOR
+	switch (cpuinfo.msg.tag) {
+	case XPMSG_SAVEFPU: {
+		savefpstate(cpuinfo.fpproc->p_md.md_fpstate);
+		}
+		break;
+	case XPMSG_VCACHE_FLUSH_PAGE: {
+		struct xpmsg_flush_page *p = &cpuinfo.msg.u.xpmsg_flush_page;
+		int ctx = getcontext();
+		setcontext(p->ctx);
+		cpuinfo.sp_vcache_flush_page(p->va);
+		setcontext(ctx);
+		}
+		break;
+	case XPMSG_VCACHE_FLUSH_SEGMENT: {
+		struct xpmsg_flush_segment *p = &cpuinfo.msg.u.xpmsg_flush_segment;
+		int ctx = getcontext();
+		setcontext(p->ctx);
+		cpuinfo.sp_vcache_flush_segment(p->vr, p->vs);
+		setcontext(ctx);
+		}
+		break;
+	case XPMSG_VCACHE_FLUSH_REGION: {
+		struct xpmsg_flush_region *p = &cpuinfo.msg.u.xpmsg_flush_region;
+		int ctx = getcontext();
+		setcontext(p->ctx);
+		cpuinfo.sp_vcache_flush_region(p->vr);
+		setcontext(ctx);
+		}
+		break;
+	case XPMSG_VCACHE_FLUSH_CONTEXT: {
+		struct xpmsg_flush_context *p = &cpuinfo.msg.u.xpmsg_flush_context;
+		int ctx = getcontext();
+		setcontext(p->ctx);
+		cpuinfo.sp_vcache_flush_context();
+		setcontext(ctx);
+		}
+	case XPMSG_VCACHE_FLUSH_RANGE: {
+		struct xpmsg_flush_range *p = &cpuinfo.msg.u.xpmsg_flush_range;
+		int ctx = getcontext();
+		setcontext(p->ctx);
+		cpuinfo.sp_cache_flush(p->va, p->size);
+		setcontext(ctx);
+		}
+		break;
+	}
+	simple_unlock(&cpuinfo.msg.lock);
+#endif
 }
 #endif
 
