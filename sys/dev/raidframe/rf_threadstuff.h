@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_threadstuff.h,v 1.15 2003/12/29 05:01:14 oster Exp $	*/
+/*	$NetBSD: rf_threadstuff.h,v 1.16 2003/12/29 05:22:16 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -51,7 +51,6 @@
 
 #include <dev/raidframe/raidframevar.h>
 
-#define rf_create_managed_mutex(a,b) _rf_create_managed_mutex(a,b,__FILE__,__LINE__)
 #define rf_create_managed_cond(a,b) _rf_create_managed_cond(a,b,__FILE__,__LINE__)
 #define rf_init_managed_threadgroup(a,b) _rf_init_managed_threadgroup(a,b,__FILE__,__LINE__)
 #define rf_init_threadgroup(a) _rf_init_threadgroup(a,__FILE__,__LINE__)
@@ -182,10 +181,6 @@ struct RF_ThreadGroup_s {
 #endif
 
 #define rf_mutex_init(m) simple_lock_init(m)
-
-int 
-_rf_create_managed_mutex(RF_ShutdownList_t **, struct simplelock *,
-    char *, int);
 
 int     rf_lkmgr_mutex_init(struct lock *);
 int     rf_lkmgr_mutex_destroy(struct lock *);

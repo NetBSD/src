@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_engine.c,v 1.25 2002/10/04 22:56:54 oster Exp $	*/
+/*	$NetBSD: rf_engine.c,v 1.26 2003/12/29 05:22:16 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -55,7 +55,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.25 2002/10/04 22:56:54 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.26 2003/12/29 05:22:16 oster Exp $");
 
 #include <sys/errno.h>
 
@@ -74,10 +74,7 @@ static void rf_RaidIOThread(RF_ThreadArg_t arg);
 
 #define DO_INIT(_l_,_r_) { \
   int _rc; \
-  _rc = rf_create_managed_mutex(_l_,&(_r_)->node_queue_mutex); \
-  if (_rc) { \
-    return(_rc); \
-  } \
+  rf_mutex_init(&(_r_)->node_queue_mutex); \
   _rc = rf_create_managed_cond(_l_,&(_r_)->node_queue_cond); \
   if (_rc) { \
     return(_rc); \

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.74 2003/12/29 04:00:17 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.75 2003/12/29 05:22:16 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.74 2003/12/29 04:00:17 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.75 2003/12/29 05:22:16 oster Exp $");
 
 #include "opt_raid_diagnostic.h"
 
@@ -295,12 +295,7 @@ rf_Shutdown(raidPtr)
 }
 
 #define DO_RAID_MUTEX(_m_) { \
-	rc = rf_create_managed_mutex(&raidPtr->shutdownList, (_m_)); \
-	if (rc) { \
-		rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc); \
-		DO_RAID_FAIL(); \
-		return(rc); \
-	} \
+	rf_mutex_init((_m_)); \
 }
 
 #define DO_RAID_COND(_c_) { \
@@ -324,12 +319,8 @@ rf_Configure(raidPtr, cfgPtr, ac)
 	RF_LOCK_LKMGR_MUTEX(configureMutex);
 	configureCount++;
 	if (isconfigged == 0) {
-		rc = rf_create_managed_mutex(&globalShutdown, &rf_printf_mutex);
-		if (rc) {
-			rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
-			rf_ShutdownList(&globalShutdown);
-			return (rc);
-		}
+		rf_mutex_init(&rf_printf_mutex);
+
 		/* initialize globals */
 
 		DO_INIT_CONFIGURE(rf_ConfigureAllocList);
@@ -827,11 +818,7 @@ rf_InitThroughputStats(
 	int     rc;
 
 	/* these used by user-level raidframe only */
-	rc = rf_create_managed_mutex(listp, &raidPtr->throughputstats.mutex);
-	if (rc) {
-		rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
-		return (rc);
-	}
+	rf_mutex_init(&raidPtr->throughputstats.mutex);
 	raidPtr->throughputstats.sum_io_us = 0;
 	raidPtr->throughputstats.num_ios = 0;
 	raidPtr->throughputstats.num_out_ios = 0;
