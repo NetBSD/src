@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.36 2003/10/15 01:28:28 itojun Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.37 2004/06/16 02:36:37 itojun Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -533,7 +533,7 @@ do {								\
 		for ((in6m) = ia->ia6_multiaddrs.lh_first;	\
 		     (in6m) != NULL &&				\
 		     !IN6_ARE_ADDR_EQUAL(&(in6m)->in6m_addr, &(addr));	\
-		     (in6m) = in6m->in6m_entry.le_next)		\
+		     (in6m) = (in6m)->in6m_entry.le_next)	\
 			continue;				\
 } while (/*CONSTCOND*/ 0)
 
