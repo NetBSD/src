@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.9 2001/04/12 20:38:25 thorpej Exp $ */
+/*	$NetBSD: if_ni.c,v 1.10 2001/05/27 19:36:06 ragge Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -610,7 +610,8 @@ niintr(void *arg)
 			idx = data->bufs[0]._index;
 			bd = &bbd[idx];
 			m = (void *)data->nd_cmdref;
-			m->m_pkthdr.len = m->m_len = data->bufs[0]._len;
+			m->m_pkthdr.len = m->m_len =
+			    data->bufs[0]._len - ETHER_CRC_LEN;
 			m->m_pkthdr.rcvif = ifp;
 			if (ni_add_rxbuf(sc, data, idx)) {
 				bd->nb_len = (m->m_ext.ext_size - 2);
