@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.585 2003/06/02 14:45:09 grant Exp $
+# $NetBSD: mi,v 1.586 2003/06/05 15:59:41 jwise Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1806,6 +1806,7 @@
 ./usr/share/man/cat8/vax/format.0		man-sys-catman
 ./usr/share/man/cat8/vax/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/veriexecctl.0		man-sysutil-catman
+./usr/share/man/cat8/verify_krb5_conf.0		man-krb5-catman
 ./usr/share/man/cat8/vipw.0			man-sysutil-catman
 ./usr/share/man/cat8/virtual.0			man-sysutil-catman
 ./usr/share/man/cat8/vnconfig.0			man-sysutil-catman
@@ -3617,6 +3618,7 @@
 ./usr/share/man/man8/vax/format.8		man-sys-man
 ./usr/share/man/man8/vax/makedev.8		man-sysutil-man
 ./usr/share/man/man8/veriexecctl.8		man-sysutil-man
+./usr/share/man/man8/verify_krb5_conf.8		man-krb5-man
 ./usr/share/man/man8/vipw.8			man-sysutil-man
 ./usr/share/man/man8/virtual.8			man-sysutil-man
 ./usr/share/man/man8/vnconfig.8			man-sysutil-man
