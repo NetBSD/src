@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.17 1996/02/03 15:02:42 briggs Exp $
+#	$NetBSD: MAKEDEV,v 1.18 1996/11/21 08:28:44 scottr Exp $
 #
 # Device "make" file.  Valid arguments:
 #	all	a smattering--at least one of each except
@@ -38,7 +38,6 @@
 #	fd*	floppy disk drives (3 1/2") (unimp.)
 #	sd*	SCSI disks
 #	cd*	SCSI compact discs
-#	ch*	SCSI changers
 #	vnd*	vnode pseudo-disks
 #	ccd*	concatenated disk driver
 #
@@ -56,6 +55,10 @@
 #	bpf*	packet filter
 #	tun*	network tunnel driver
 #	lkm	Device to for loadable kernel modules
+#	ss*	SCSI scanner
+#	uk*	SCSI unknown
+#	ch*	SCSI changer
+#	adb	Apple Desktop Bus
 #
 
 PATH=/sbin:/bin/:/usr/bin:/usr/sbin
@@ -65,24 +68,13 @@ do
 case $i in
 
 all)
-	sh MAKEDEV std fd
-	sh MAKEDEV sd0 sd1 sd2 sd3 st0 st1 cd0 cd1
-	sh MAKEDEV vnd0 vnd1 vnd2 vnd3
-	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
-	sh MAKEDEV adb grf0 grf1 grf2 grf3 ttye0
-	sh MAKEDEV tty00 tty01 pty0
-	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
-	sh MAKEDEV bpf8 bpf9 bpfa bpfb
-	sh MAKEDEV tun0 tun1 tun2 tun3
-	sh MAKEDEV lkm
-	sh MAKEDEV local
-	;;
-
-raminst)
-	sh MAKEDEV std
-	sh MAKEDEV sd0 sd1 sd2 sd3 st0 st1 cd0 cd1
-	sh MAKEDEV adb grf0 grf1 ttye0
-	sh MAKEDEV tty00 tty01 pty0
+	sh $0 std fd sd0 sd1 sd2 sd3 tty0 tty1 pty0 pty1
+	sh $0 st0 st1 ch0 cd0 cd1 vnd0 vnd1 vnd2 vnd3
+	sh $0 ccd0 ccd1 ccd2 ccd3 rd0 ss0 uk0 uk1
+	sh $0 ttye0 adb grf0 grf1 grf2 grf3
+	sh $0 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
+	sh $0 bpf8 bpf9 bpf10 bpf11
+	sh $0 tun0 tun1 tun2 tun3 lkm local
 	;;
 
 std)
@@ -102,6 +94,33 @@ std)
 	mknod stderr		c 21 2	; chmod 666 stderr
 	;;
 
+raminst)
+	sh $0 std
+	sh $0 sd0 sd1 sd2 sd3 st0 st1 cd0 cd1
+	sh $0 adb grf0 grf1 ttye0
+	sh $0 tty0 tty1 pty0
+	;;
+
+ttye*)
+	chr=11; unit=${i#ttye}
+	rm -f ttye$unit ite*
+	mknod ttye$unit	c $chr $unit
+	chown root.wheel ttye$unit
+	;;
+
+grf*)
+	unit=${i#grf}
+	rm -f grf$unit
+	mknod grf$unit c 10 $unit
+	chmod 666 grf$unit
+	;;
+
+adb)
+	rm -f adb
+	mknod adb c 23 0
+	chmod 666 adb
+	;;
+
 fd)
 	rm -f fd/*
 	mkdir fd > /dev/null 2>&1
@@ -113,72 +132,68 @@ fd)
 	chmod 666 fd/*
 	;;
 
-sd*|vnd*|ccd*)
-	umask 2 ; unit=`expr $i : '.*[^0-9]\([0-9]*\)'`
+rd*)
 	case $i in
-	sd*) name=sd; blk=4; chr=13;;
-	vnd*) name=vnd; blk=8; chr=19;;
-	ccd*) name=ccd; blk=9; chr=20;;
+	rd*) name=rd;	unit=${i#rd};	blk=13;	chr=32;;
 	esac
 	rm -f $name$unit? r$name$unit?
-	case $unit in
-	0|1|2|3|4|5|6)
-		mknod ${name}${unit}a	b $blk `expr $unit '*' 8 + 0`
-		mknod ${name}${unit}b	b $blk `expr $unit '*' 8 + 1`
-		mknod ${name}${unit}c	b $blk `expr $unit '*' 8 + 2`
-		mknod ${name}${unit}d	b $blk `expr $unit '*' 8 + 3`
-		mknod ${name}${unit}e	b $blk `expr $unit '*' 8 + 4`
-		mknod ${name}${unit}f	b $blk `expr $unit '*' 8 + 5`
-		mknod ${name}${unit}g	b $blk `expr $unit '*' 8 + 6`
-		mknod ${name}${unit}h	b $blk `expr $unit '*' 8 + 7`
-		mknod r${name}${unit}a	c $chr `expr $unit '*' 8 + 0`
-		mknod r${name}${unit}b	c $chr `expr $unit '*' 8 + 1`
-		mknod r${name}${unit}c	c $chr `expr $unit '*' 8 + 2`
-		mknod r${name}${unit}d	c $chr `expr $unit '*' 8 + 3`
-		mknod r${name}${unit}e	c $chr `expr $unit '*' 8 + 4`
-		mknod r${name}${unit}f	c $chr `expr $unit '*' 8 + 5`
-		mknod r${name}${unit}g	c $chr `expr $unit '*' 8 + 6`
-		mknod r${name}${unit}h	c $chr `expr $unit '*' 8 + 7`
-		chgrp operator ${name}${unit}[a-h] r${name}${unit}[a-h]
-		chmod 640 ${name}${unit}[a-h] r${name}${unit}[a-h]
-		;;
-	*)
-		echo bad unit for disk in: $i
-		;;
-	esac
-	umask 77
+	mknod ${name}${unit}a	b $blk $(($unit * 8 + 0))
+	mknod ${name}${unit}b	b $blk $(($unit * 8 + 1))
+	mknod ${name}${unit}c	b $blk $(($unit * 8 + 2))
+	mknod r${name}${unit}a	c $chr $(($unit * 8 + 0))
+	mknod r${name}${unit}b	c $chr $(($unit * 8 + 1))
+	mknod r${name}${unit}c	c $chr $(($unit * 8 + 2))
+	chgrp operator $name$unit? r$name$unit?
+	chmod 640 $name$unit? r$name$unit?
 	;;
 
-tty0*)
-	unit=`expr $i : 'tty0\(.*\)'`
-	rm -f ser${unit} tty${unit} tty0${unit}
-	case ${unit} in
-	0|1)
-		mknod tty0${unit} c 12 ${unit}
-		chown uucp.wheel tty0${unit}
-		;;
-	*)
-		echo bad unit for serial tty in: $i
-		;;
+ss*)
+	case $i in
+	ss*) name=ss;	unit=${i#ss};	chr=33;;
 	esac
+	rm -f $name$unit n$name$unit
+	mknod $name$unit	c $chr $(($unit * 16 + 0))
+	mknod n$name$unit	c $chr $(($unit * 16 + 1))
+	chgrp operator $name$unit n$name$unit
+	chmod 640 $name$unit n$name$unit
 	;;
 
-ttye*)
-	unit=`expr $i : 'ttye\(.*\)'`
-	rm -f ttye${unit}
-	rm -f ite*
-	case $unit in
-	0|1)
-		mknod ttye${unit} c 11 ${unit}
-		;;
-	*)
-		echo bad unit for ttye in: $i
-		;;
+sd*|vnd*|ccd*)
+	case $i in
+	ccd*) name=ccd;	unit=${i#ccd};	blk=9;	chr=20;;
+	sd*) name=sd;	unit=${i#sd};	blk=4;	chr=13;;
+	vnd*) name=vnd;	unit=${i#vnd};	blk=8;	chr=19;;
 	esac
+	rm -f $name$unit? r$name$unit?
+	mknod ${name}${unit}a	b $blk $(($unit * 8 + 0))
+	mknod ${name}${unit}b	b $blk $(($unit * 8 + 1))
+	mknod ${name}${unit}c	b $blk $(($unit * 8 + 2))
+	mknod ${name}${unit}d	b $blk $(($unit * 8 + 3))
+	mknod ${name}${unit}e	b $blk $(($unit * 8 + 4))
+	mknod ${name}${unit}f	b $blk $(($unit * 8 + 5))
+	mknod ${name}${unit}g	b $blk $(($unit * 8 + 6))
+	mknod ${name}${unit}h	b $blk $(($unit * 8 + 7))
+	mknod r${name}${unit}a	c $chr $(($unit * 8 + 0))
+	mknod r${name}${unit}b	c $chr $(($unit * 8 + 1))
+	mknod r${name}${unit}c	c $chr $(($unit * 8 + 2))
+	mknod r${name}${unit}d	c $chr $(($unit * 8 + 3))
+	mknod r${name}${unit}e	c $chr $(($unit * 8 + 4))
+	mknod r${name}${unit}f	c $chr $(($unit * 8 + 5))
+	mknod r${name}${unit}g	c $chr $(($unit * 8 + 6))
+	mknod r${name}${unit}h	c $chr $(($unit * 8 + 7))
+	chgrp operator $name$unit? r$name$unit?
+	chmod 640 $name$unit? r$name$unit?
+	;;
+
+tty*)
+	unit=${i#tty}
+	rm -f ser$unit tty$unit tty0$unit
+	mknod tty0$unit c 12 $unit
+	chown uucp.wheel tty0$unit
 	;;
 
 pty*)
-	class=`expr $i : 'pty\(.*\)'`
+	class=${i#pty}
 	case $class in
 	0) offset=0 name=p;;
 	1) offset=16 name=q;;
@@ -193,8 +208,8 @@ pty*)
 		umask 0
 		eval `echo $offset $name | awk ' { b=$1; n=$2 } END {
 			for (i = 0; i < 16; i++)
-				printf("rm -f tty%s%x; mknod tty%s%x c 4 %d; \
-				    rm -f pty%s%x; mknod pty%s%x c 5 %d; ", \
+				printf("rm -f tty%s%x; mknod tty%s%x c 5 %d; \
+				    rm -f pty%s%x; mknod pty%s%x c 6 %d; ", \
 				    n, i, n, i, b+i, n, i, n, i, b+i); }'`
 		umask 77
 		;;
@@ -202,110 +217,57 @@ pty*)
 	;;
 
 st*)
-	umask 2 ; unit=`expr $i : '..\(.*\)'`
 	case $i in
-	st*) name=st;  chr=14; blk=5;;
+	st*) name=st;	unit=${i#st};	chr=14;	blk=5;;
 	esac
 	rm -f $name$unit n$name$unit e$name$unit en$name$unit \
 		r$name$unit nr$name$unit er$name$unit enr$name$unit 
-	case $unit in
-	0|1|2|3|4|5|6)
-		mknod ${name}${unit}	b $blk `expr $unit '*' 16 + 0`
-		mknod n${name}${unit}	b $blk `expr $unit '*' 16 + 1`
-		mknod e${name}${unit}	b $blk `expr $unit '*' 16 + 2`
-		mknod en${name}${unit}	b $blk `expr $unit '*' 16 + 3`
-		mknod r${name}${unit}	c $chr `expr $unit '*' 16 + 0`
-		mknod nr${name}${unit}	c $chr `expr $unit '*' 16 + 1`
-		mknod er${name}${unit}	c $chr `expr $unit '*' 16 + 2`
-		mknod enr${name}${unit}	c $chr `expr $unit '*' 16 + 3`
-		chgrp operator ${name}${unit} n${name}${unit} \
-			e$name$unit en$name$unit \
-			r${name}${unit} nr${name}${unit} \
-			er${name}${unit} enr${name}${unit} 
-		chmod 640 ${name}${unit} n${name}${unit} \
-			e$name$unit en$name$unit \
-			r${name}${unit} nr${name}${unit} \
-			er${name}${unit} enr${name}${unit} 
-		;;
-	*)
-		echo bad unit for tape in: $i
-		;;
-	esac
-	umask 77
+	mknod $name$unit	b $blk $(($unit * 16 + 0))
+	mknod n$name$unit	b $blk $(($unit * 16 + 1))
+	mknod e$name$unit	b $blk $(($unit * 16 + 2))
+	mknod en$name$unit	b $blk $(($unit * 16 + 3))
+	mknod r$name$unit	c $chr $(($unit * 16 + 0))
+	mknod nr$name$unit	c $chr $(($unit * 16 + 1))
+	mknod er$name$unit	c $chr $(($unit * 16 + 2))
+	mknod enr$name$unit	c $chr $(($unit * 16 + 3))
+	chgrp operator $name$unit n$name$unit e$name$unit en$name$unit \
+		r$name$unit nr$name$unit er$name$unit enr$name$unit 
+	chmod 640 $name$unit n$name$unit e$name$unit en$name$unit \
+		r$name$unit nr$name$unit er$name$unit enr$name$unit 
 	;;
 
-ch*)
-	umask 2 ; unit=`expr $i : '..\(.*\)'`
+ch*|uk*)
 	case $i in
-	ch*) name=ch;  chr=17;;
+	ch*) name=ch;	unit=${i#ch};	chr=17;;
+	uk*) name=uk;	unit=${i#uk};	chr=34;;
 	esac
 	rm -f $name$unit
-	case $unit in
-	0|1|2|3|4|5|6)
-		mknod ${name}${unit}	c $chr `expr $unit '*' 16 + 0`
-		chgrp operator ${name}${unit}
-		chmod 640 ${name}${unit}
-		;;
-	*)
-		echo bad unit for media changer in: $i
-		;;
-	esac
-	umask 77
+	mknod $name$unit	c $chr $unit
+	chgrp operator $name$unit
+	chmod 640 $name$unit
 	;;
 
 cd*)
-	umask 2 ; unit=`expr $i : '..\(.*\)'`
 	case $i in
-	cd*) name=cd; blk=6; chr=15;;
+	cd*) name=cd;	unit=${i#cd};	chr=15;	blk=6;;
 	esac
 	rm -f $name$unit? r$name$unit?
-	case $unit in
-	0|1|2|3|4|5|6)
-		mknod ${name}${unit}a	b $blk `expr $unit '*' 8 + 0`
-		mknod ${name}${unit}d	b $blk `expr $unit '*' 8 + 3`
-		mknod r${name}${unit}a	c $chr `expr $unit '*' 8 + 0`
-		mknod r${name}${unit}d	c $chr `expr $unit '*' 8 + 3`
-		chgrp operator ${name}${unit}[a-h] r${name}${unit}[a-h]
-		chmod 640 ${name}${unit}[a-h] r${name}${unit}[a-h]
-		;;
-	*)
-		echo bad unit for disk in: $i
-		;;
+	mknod ${name}${unit}a	b $blk $(($unit * 8 + 0))
+	mknod ${name}${unit}c	b $blk $(($unit * 8 + 2))
+	mknod r${name}${unit}a	c $chr $(($unit * 8 + 0))
+	mknod r${name}${unit}c	c $chr $(($unit * 8 + 2))
+	chgrp operator $name$unit? r$name$unit?
+	chmod 640 $name$unit? r$name$unit?
+	;;
+
+bpf*|tun*)
+	case $i in
+	bpf*) name=bpf;	unit=${i#bpf};	chr=22;;
+	tun*) name=tun;	unit=${i#tun};	chr=24;;
 	esac
-	umask 77
-	;;
-
-grf*)
-	unit=`expr $i : 'grf\(.*\)'`
-	rm -f grf${unit}
-	case ${unit} in
-	0|1|2|3)
-		mknod grf${unit} c 10 ${unit} ; chmod 666 grf${unit}
-		;;
-	*)
-		echo bad unit for grf in: $i
-		;;
-	esac
-	;;
-
-adb)
-	rm -f adb
-	mknod adb c 23 0 ; chmod 666 adb
-	;;
-
-bpf*)
-	unit=`expr $i : 'bpf\(.*\)'`
-	rm -f bpf${unit}
-	mknod bpf${unit} c 22 ${unit}
-	chown root.wheel bpf${unit}
-	;;
-
-tun*)
-	unit=`expr $i : 'tun\(.*\)'`
-	rm -f tun$unit
-	mknod tun$unit c 24 $unit
-	chmod 600 tun$unit
-	chown root.wheel tun$unit
+	rm -f $name$unit
+	mknod $name$unit	c $chr $unit
+	chown root.wheel $name$unit
 	;;
 
 lkm)
@@ -317,7 +279,7 @@ lkm)
 
 local)
 	umask 0
-	sh MAKEDEV.local
+	sh $0.local
 	;;
 
 *)
