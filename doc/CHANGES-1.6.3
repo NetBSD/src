@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.108 2004/06/07 09:00:14 tron Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.109 2004/06/14 02:43:44 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -1022,3 +1022,29 @@ usr.sbin/syslogd/syslogd.c			patch
 	configuration at the wrong moment. Fixes PR bin/24682.
 	[he, ticket #1707]
 
+
+sys/compat/linux/arch/arm/syscalls.master	patch
+sys/compat/linux/arch/i386/syscalls.master	patch
+sys/compat/linux/arch/mips/syscalls.master	patch
+sys/compat/linux/arch/powerpc/syscalls.master	patch
+sys/compat/linux/common/linux_file64.c		patch
+sys/compat/linux/arch/arm/linux_syscall.h	regen
+sys/compat/linux/arch/arm/linux_syscallargs.h	regen
+sys/compat/linux/arch/arm/linux_syscalls.c	regen
+sys/compat/linux/arch/arm/linux_sysent.c	regen
+sys/compat/linux/arch/i386/linux_syscall.h	regen
+sys/compat/linux/arch/i386/linux_syscallargs.h	regen
+sys/compat/linux/arch/i386/linux_syscalls.c	regen
+sys/compat/linux/arch/i386/linux_sysent.c	regen
+sys/compat/linux/arch/mips/linux_syscall.h	regen
+sys/compat/linux/arch/mips/linux_syscallargs.h	regen
+sys/compat/linux/arch/mips/linux_syscalls.c	regen
+sys/compat/linux/arch/mips/linux_sysent.c	regen
+sys/compat/linux/arch/powerpc/linux_syscall.h	regen
+sys/compat/linux/arch/powerpc/linux_syscallargs.h	regen
+sys/compat/linux/arch/powerpc/linux_syscalls.c	regen
+sys/compat/linux/arch/powerpc/linux_sysent.c	regen
+
+	Bring netbsd-1-6 inline with -current sources after the mistakes in 
+	ticket #1686
+	[skrll, ticket #1708]
