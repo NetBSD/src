@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.11 2000/01/14 13:45:22 simonb Exp $	*/
+/*	$NetBSD: intr.h,v 1.12 2000/02/29 04:41:58 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -120,14 +120,24 @@ extern u_long intrcnt[];
 #define	FLOPPY_INTR	15
 #define	STRAY_INTR	16
 
-
 struct intrhand {
 	int	(*ih_func) __P((void *));
 	void	*ih_arg;
 };
 extern struct intrhand intrtab[];
 
-#define	MAX_INTR_COOKIES	16
+#define SYS_DEV_SCSI	SCSI_INTR
+#define SYS_DEV_LANCE	LANCE_INTR
+#define SYS_DEV_SCC0	SERIAL0_INTR
+#define SYS_DEV_SCC1	SERIAL1_INTR
+#define SYS_DEV_DTOP	DTOP_INTR
+#define SYS_DEV_FDC	FLOPPY_INTR
+#define SYS_DEV_ISDN	ISDN_INTR
+#define SYS_DEV_OPT0	SLOT0_INTR
+#define SYS_DEV_OPT1	SLOT1_INTR
+#define SYS_DEV_OPT2	SLOT2_INTR
+#define SYS_DEV_BOGUS	-1
+#define MAX_DEV_NCOOKIES 16
 
 #endif /* !_LOCORE */
 #endif /* _KERNEL */
