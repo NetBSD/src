@@ -1,4 +1,4 @@
-/*	$NetBSD: pac.c,v 1.16 2002/07/14 15:28:01 wiz Exp $	*/
+/*	$NetBSD: pac.c,v 1.17 2003/05/17 14:56:40 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)pac.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: pac.c,v 1.16 2002/07/14 15:28:01 wiz Exp $");
+__RCSID("$NetBSD: pac.c,v 1.17 2003/05/17 14:56:40 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -220,8 +220,9 @@ account(FILE *acct)
 	int ic;
 
 	while (fgets(linebuf, BUFSIZ, acct) != NULL) {
-		if (sscanf(linebuf, "%f %d%s", &t, &ic, who) == 0) {
-			sscanf(linebuf, "%f %s", &t, who);
+		/* XXX sizeof(who) == 1024 */
+		if (sscanf(linebuf, "%f %d%1023s", &t, &ic, who) == 0) {
+			sscanf(linebuf, "%f %1023s", &t, who);
 			ic = 1;
 		}
 		
