@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";*/
-static char rcsid[] = "$Id: su.c,v 1.10 1994/05/24 06:52:23 deraadt Exp $";
+static char rcsid[] = "$Id: su.c,v 1.11 1996/10/12 23:54:39 christos Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -47,6 +47,7 @@ static char rcsid[] = "$Id: su.c,v 1.10 1994/05/24 06:52:23 deraadt Exp $";
 #include <sys/resource.h>
 #include <syslog.h>
 #include <stdio.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <pwd.h>
 #include <grp.h>
@@ -62,29 +63,39 @@ static char rcsid[] = "$Id: su.c,v 1.10 1994/05/24 06:52:23 deraadt Exp $";
 #define	ARGSTR	"-Kflm"
 
 int use_kerberos = 1;
+
+static int kerberos __P((char *, char *, int));
+static int koktologin __P((char *, char *, char *));
+
 #else
 #define	ARGSTR	"-flm"
 #endif
 
-extern char *crypt();
-int chshell();
+
+int main __P((int, char **));
+
+static int chshell __P((char *));
+static char *catarg __P((char *, const char *));
+static char *ontty __P((void));
+
 
 int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
+	extern char *__progname;
 	extern char **environ;
-	extern int errno, optind;
 	register struct passwd *pwd;
 	register char *p, **g;
+	char *shargv[10];	/* shell [-m] [-f] [-c "command"] NULL */
+	int shargc;
 	struct group *gr;
-	uid_t ruid, getuid();
+	uid_t ruid;
 	int asme, ch, asthem, fastlogin, prio;
 	enum { UNSET, YES, NO } iscsh = UNSET;
 	char *user, *shell, *avshell, *username, *cleanenv[10], **np;
 	char shellbuf[MAXPATHLEN], avshellbuf[MAXPATHLEN];
-	char *getpass(), *getenv(), *getlogin(), *ontty();
 
 	asme = asthem = fastlogin = 0;
 	while ((ch = getopt(argc, argv, ARGSTR)) != EOF)
@@ -108,8 +119,9 @@ main(argc, argv)
 			break;
 		case '?':
 		default:
-			(void)fprintf(stderr, "usage: su [%s] [login]\n",
-			    ARGSTR);
+			(void)fprintf(stderr,
+			    "Usage: %s [%s] [login [shell arguments]]\n",
+			    __progname, ARGSTR);
 			exit(1);
 		}
 	argv += optind;
@@ -216,7 +228,7 @@ badlogin:
 
 	/* if we're forking a csh, we want to slightly muck the args */
 	if (iscsh == UNSET)
-		iscsh = strcmp(avshell, "csh") ? NO : YES;
+		iscsh = strstr(avshell, "csh") ? YES : NO;
 
 	/* set permissions */
 	if (setgid(pwd->pw_gid) < 0) {
@@ -238,7 +250,8 @@ badlogin:
 			cleanenv[0] = NULL;
 			environ = cleanenv;
 			(void)setenv("PATH", _PATH_DEFPATH, 1);
-			(void)setenv("TERM", p, 1);
+			if (p)
+				(void)setenv("TERM", p, 1);
 			if (chdir(pwd->pw_dir) < 0) {
 				fprintf(stderr, "su: no directory\n");
 				exit(1);
@@ -250,12 +263,7 @@ badlogin:
 		(void)setenv("SHELL", shell, 1);
 	}
 
-	if (iscsh == YES) {
-		if (fastlogin)
-			*np-- = "-f";
-		if (asme)
-			*np-- = "-m";
-	}
+	shargc = 0;
 
 	if (asthem) {
 		avshellbuf[0] = '-';
@@ -267,21 +275,61 @@ badlogin:
 		strcpy(avshellbuf+1, avshell);
 		avshell = avshellbuf;
 	}
-			
-	*np = avshell;
+	shargv[shargc++] = avshell;
 
+	if (iscsh == YES) {
+		if (fastlogin)
+			shargv[shargc++] = "-f";
+		if (asme)
+			shargv[shargc++] = "-m";
+	}
+
+	/* if passed any additional arguments, shells need a "-c" */
+	if (*++np) {
+		char *arg = NULL;
+		shargv[shargc++] = "-c";
+		while (*np)
+			arg = catarg(arg, *np++);
+		shargv[shargc++] = arg;
+	}
+
+	shargv[shargc] = NULL;
+			
 	if (ruid != 0)
 		syslog(LOG_NOTICE|LOG_AUTH, "%s to %s%s",
 		    username, user, ontty());
 
 	(void)setpriority(PRIO_PROCESS, 0, prio);
 
-	execv(shell, np);
+	execv(shell, shargv);
 	(void)fprintf(stderr, "su: %s not found.\n", shell);
 	exit(1);
 }
 
-int
+static char *
+catarg(buf, arg)
+	char *buf;
+	const char *arg;
+{
+	char *cp;
+
+	if (buf && *buf) {
+		size_t i = strlen(buf) + strlen(arg) + 1 + 1;
+		if ((cp = malloc(i)) == NULL)
+			err(1, "%s", "");
+		(void)snprintf(cp, i, "%s %s", buf, arg);
+	}
+	else
+		if ((cp = strdup(arg)) == NULL)
+			err(1, "%s", "");
+	if (buf)
+		free(buf);
+
+	return cp;
+}
+
+
+static int
 chshell(sh)
 	char *sh;
 {
@@ -294,7 +342,7 @@ chshell(sh)
 	return (0);
 }
 
-char *
+static char *
 ontty()
 {
 	char *p, *ttyname();
@@ -307,11 +355,11 @@ ontty()
 }
 
 #ifdef KERBEROS
+static int
 kerberos(username, user, uid)
 	char *username, *user;
 	int uid;
 {
-	extern char *krb_err_txt[];
 	KTEXT_ST ticket;
 	AUTH_DAT authdata;
 	struct hostent *hp;
@@ -426,6 +474,7 @@ kerberos(username, user, uid)
 	return (0);
 }
 
+static int
 koktologin(name, realm, toname)
 	char *name, *realm, *toname;
 {
