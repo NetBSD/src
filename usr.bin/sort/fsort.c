@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.c,v 1.16 2001/02/19 20:50:17 jdolecek Exp $	*/
+/*	$NetBSD: fsort.c,v 1.17 2001/02/20 18:33:09 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -47,7 +47,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fsort.c,v 1.16 2001/02/19 20:50:17 jdolecek Exp $");
+__RCSID("$NetBSD: fsort.c,v 1.17 2001/02/20 18:33:09 jdolecek Exp $");
 __SCCSID("@(#)fsort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -211,7 +211,8 @@ fsort(binno, depth, top, filelist, nfiles, outfp, ftbl)
 				? sradixsort(keylist, nelem, weights, REC_D)
 				: radixsort(keylist, nelem, weights, REC_D) ))
 				err(2, NULL);
-			append(keylist, nelem, depth, outfp, putline, ftbl);
+			if (nelem > 0)
+			  append(keylist, nelem, depth, outfp, putline, ftbl);
 			break;					/* pop */
 		}
 		if (panic >= PANIC) {
