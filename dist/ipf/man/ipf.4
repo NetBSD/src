@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipf.4,v 1.6 2002/01/24 08:21:42 martti Exp $
+.\"	$NetBSD: ipf.4,v 1.7 2002/01/24 08:24:14 martti Exp $
 .\"
 .TH IPF 4
 .SH NAME
@@ -256,8 +256,6 @@ value returned is that of the list which is now inactive.
 .SH SEE ALSO
 ipl(4), ipnat(4), ipf(5), ipf(8), ipfstat(8)
 .SH BUGS
-ipf(4) does not work with non-IPv4 (including IPv6).
-.PP
 When a packet encapsulated by ipsec(4) tunnel comes in, ipf(4) looks at
 wire-format packet on inbound and outbound.
 ipf(4) will not look at decapsulated packets on inbound,
