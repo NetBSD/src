@@ -1,4 +1,4 @@
-/*	$NetBSD: telnetd.c,v 1.13 1998/07/06 06:49:41 mrg Exp $	*/
+/*	$NetBSD: telnetd.c,v 1.14 1998/07/09 18:32:52 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnetd.c,v 1.13 1998/07/06 06:49:41 mrg Exp $");
+__RCSID("$NetBSD: telnetd.c,v 1.14 1998/07/09 18:32:52 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -178,6 +178,7 @@ char valid_opts[] = {
 
 int
 main(argc, argv)
+	int argc;
 	char *argv[];
 {
 	struct sockaddr_in from;
