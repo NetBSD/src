@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.44.2.1 2000/06/30 16:27:39 simonb Exp $ */
+/*	$NetBSD: iommu.c,v 1.44.2.2 2000/07/22 21:18:57 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -91,6 +91,8 @@ struct cfattach iommu_ca = {
 };
 
 /* IOMMU DMA map functions */
+int	iommu_dmamap_create __P((bus_dma_tag_t, bus_size_t, int, bus_size_t,
+			bus_size_t, int, bus_dmamap_t *));
 int	iommu_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
 			bus_size_t, struct proc *, int));
 int	iommu_dmamap_load_mbuf __P((bus_dma_tag_t, bus_dmamap_t,
@@ -113,7 +115,7 @@ int	iommu_dvma_alloc(bus_dmamap_t, vaddr_t, bus_size_t, int,
 
 struct sparc_bus_dma_tag iommu_dma_tag = {
 	NULL,
-	_bus_dmamap_create,
+	iommu_dmamap_create,
 	_bus_dmamap_destroy,
 	iommu_dmamap_load,
 	iommu_dmamap_load_mbuf,
@@ -476,6 +478,40 @@ if ((int)sc->sc_dvmacur + len > 0)
 
 
 /*
+ * IOMMU DMA map functions.
+ */
+int
+iommu_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
+	bus_dma_tag_t t;
+	bus_size_t size;
+	int nsegments;
+	bus_size_t maxsegsz;
+	bus_size_t boundary;
+	int flags;
+	bus_dmamap_t *dmamp;
+{
+	bus_dmamap_t map;
+	int error;
+
+	if ((error = _bus_dmamap_create(t, size, nsegments, maxsegsz,
+					boundary, flags, &map)) != 0)
+		return (error);
+
+	if ((flags & BUS_DMA_24BIT) != 0) {
+		/* Limit this map to the range usable by `24-bit' devices */
+		map->_dm_ex_start = D24_DVMA_BASE;
+		map->_dm_ex_end = D24_DVMA_END;
+	} else {
+		/* Enable allocations from the entire map */
+		map->_dm_ex_start = iommu_dvmamap->ex_start;
+		map->_dm_ex_end = iommu_dvmamap->ex_end;
+	}
+
+	*dmamp = map;
+	return (0);
+}
+
+/*
  * Internal routine to allocate space in the IOMMU map.
  */
 int
@@ -489,7 +525,6 @@ iommu_dvma_alloc(map, va, len, flags, dvap, sgsizep)
 {
 	bus_size_t sgsize;
 	u_long align, voff;
-	u_long ex_start, ex_end;
 	int s, error;
 	int pagesz = PAGE_SIZE;
 
@@ -504,20 +539,11 @@ iommu_dvma_alloc(map, va, len, flags, dvap, sgsizep)
 		return (EINVAL);
 
 	sgsize = (len + voff + pagesz - 1) & -pagesz;
-	align = dvma_cachealign ? dvma_cachealign : pagesz;
+	align = dvma_cachealign ? dvma_cachealign : map->_dm_align;
 
 	s = splhigh();
-
-	/* Check `24 address bits' in the map's attributes */
-	if ((map->_dm_flags & BUS_DMA_24BIT) != 0) {
-		ex_start = D24_DVMA_BASE;
-		ex_end = D24_DVMA_END;
-	} else {
-		ex_start = iommu_dvmamap->ex_start;
-		ex_end = iommu_dvmamap->ex_end;
-	}
 	error = extent_alloc_subregion1(iommu_dvmamap,
-					ex_start, ex_end,
+					map->_dm_ex_start, map->_dm_ex_end,
 					sgsize, align, va & (align-1),
 					map->_dm_boundary,
 					(flags & BUS_DMA_NOWAIT) == 0
@@ -530,7 +556,7 @@ iommu_dvma_alloc(map, va, len, flags, dvap, sgsizep)
 }
 
 /*
- * IOMMU DMA map functions.
+ * Prepare buffer for DMA transfer.
  */
 int
 iommu_dmamap_load(t, map, buf, buflen, p, flags)
