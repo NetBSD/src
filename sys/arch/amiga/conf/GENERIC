@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.170 2002/01/27 11:07:38 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.171 2002/01/27 13:01:46 is Exp $
 #
 # GENERIC machine description file
 #
@@ -34,7 +34,7 @@
 
 include "arch/amiga/conf/std.amiga"
 
-#ident 		"GENERIC-$Revision: 1.170 $"
+#ident 		"GENERIC-$Revision: 1.171 $"
 
 #ifdef INSTALL_CONFIGURATION
 makeoptions	COPTS="-Os"
@@ -377,6 +377,9 @@ audio*		at melody?
 
 repulse*	at zbus0		# ALiENDESiGN Repulse
 audio*		at repulse?
+
+toccata*	at zbus0		# MacroSystem GmbH Toccata
+audio*		at toccata?
 
 # Ethernet cards:
 le*		at zbus0		# A2065, Ameristar, Ariadne
