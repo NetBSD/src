@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.53 2001/05/15 14:57:49 lukem Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.54 2001/07/18 20:42:54 thorpej Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -1438,7 +1438,7 @@ iy_mc_reset(sc)
 		 */
 		ETHER_FIRST_MULTI(step, ecp, enm);
 		while(enm) {
-			if (bcmp(enm->enm_addrlo, enm->enm_addrhi, 6) != 0) {
+			if (memcmp(enm->enm_addrlo, enm->enm_addrhi, 6) != 0) {
 				ifp->if_flags |= IFF_ALLMULTI;
 				goto setupmulti;
 			}

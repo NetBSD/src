@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hp.c,v 1.30 2000/03/30 12:45:33 augustss Exp $	*/
+/*	$NetBSD: if_hp.c,v 1.31 2001/07/18 20:42:54 thorpej Exp $	*/
 
 /* XXX THIS DRIVER IS BROKEN.  IT WILL NOT EVEN COMPILE. */
 
@@ -836,9 +836,9 @@ hpread(ns, buf, len)
 #endif
 
 	if ((ns->ns_if.if_flags & IFF_PROMISC)
-	    && bcmp(eh->ether_dhost, ns->ns_addrp,
+	    && memcmp(eh->ether_dhost, ns->ns_addrp,
 		sizeof(eh->ether_dhost)) != 0
-	    && bcmp(eh->ether_dhost, etherbroadcastaddr,
+	    && memcmp(eh->ether_dhost, etherbroadcastaddr,
 		sizeof(eh->ether_dhost)) != 0)
 		return;
 
