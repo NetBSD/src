@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.19 2002/02/03 17:39:54 manu Exp $
+	$NetBSD: syscalls.master,v 1.20 2002/02/04 20:26:34 manu Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -330,12 +330,15 @@
 203	STD		{ int irix_sys_getmountid(const char *path, \
 			    irix_mountid_t *buf); }
 204	UNIMPL		nsproc
-205	UNIMPL		getdents64
+205	STD		{ int irix_sys_getdents64(int fildes, \
+			    irix_dirent64_t *buf, int nbytes); }
 206	UNIMPL		afs_syscall
 207	STD		{ int irix_sys_ngetdents(int fildes, \
 			    irix_dirent_t *buf, unsigned short nbyte, \
 			    int *eof); }
-208	UNIMPL		ngetdents64
+208	STD		{ int irix_sys_ngetdents64(int fildes, \
+			    irix_dirent64_t *buf, unsigned short nbyte, \
+			    int *eof); }
 209	UNIMPL		sgi_sesmgr
 210	UNIMPL		pidsprocsp
 211	UNIMPL		rexec
