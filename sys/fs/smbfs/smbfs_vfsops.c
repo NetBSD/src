@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.23 2003/04/02 16:26:53 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.24 2003/04/08 16:26:31 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.23 2003/04/02 16:26:53 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.24 2003/04/08 16:26:31 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -345,6 +345,7 @@ smbfs_init(void)
 	/* Need explicit attach if LKM */
 	malloc_type_attach(M_SMBNODENAME);
 	malloc_type_attach(M_SMBFSDATA);
+	malloc_type_attach(M_SMBFSHASH);
 #endif
 
 	SMBVDEBUG("init.\n");
@@ -367,6 +368,7 @@ smbfs_done(void)
 	/* Need explicit detach if LKM */
 	malloc_type_detach(M_SMBNODENAME);
 	malloc_type_detach(M_SMBFSDATA);
+	malloc_type_detach(M_SMBFSHASH);
 #endif
 
 	SMBVDEBUG("done.\n");
