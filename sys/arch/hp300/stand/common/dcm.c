@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.4 2003/11/14 16:52:40 tsutsui Exp $	*/
+/*	$NetBSD: dcm.c,v 1.5 2005/02/20 13:59:27 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -87,8 +87,7 @@ struct dcmdevice *dcmcnaddr = NULL;
 #define	DCMCONUNIT	1	/* XXX */
 
 void
-dcmprobe(cp)
-	struct consdev *cp;
+dcmprobe(struct consdev *cp)
 {
 	struct hp_hw *hw;
 	struct dcmdevice *dcm;
@@ -123,8 +122,7 @@ dcmprobe(cp)
 }
 
 void
-dcminit(cp)
-	struct consdev *cp;
+dcminit(struct consdev *cp)
 {
 	struct dcmdevice *dcm = dcmcnaddr;
 	int port = DCMCONUNIT;
@@ -144,8 +142,7 @@ dcminit(cp)
 /* ARGSUSED */
 #ifndef SMALL
 int
-dcmgetchar(dev)
-	dev_t dev;
+dcmgetchar(dev_t dev)
 {
 	struct dcmdevice *dcm = dcmcnaddr;
 	struct dcmrfifo *fifo;
@@ -169,8 +166,7 @@ dcmgetchar(dev)
 }
 #else
 int
-dcmgetchar(dev)
-	dev_t dev;
+dcmgetchar(dev_t dev)
 {
 
 	return 0;
@@ -179,9 +175,7 @@ dcmgetchar(dev)
 
 /* ARGSUSED */
 void
-dcmputchar(dev, c)
-	dev_t dev;
-	int c;
+dcmputchar(dev_t dev, int c)
 {
 	struct dcmdevice *dcm = dcmcnaddr;
 	struct dcmpreg *pp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11 2003/11/14 16:52:40 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.12 2005/02/20 13:59:27 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -81,7 +81,7 @@
 #include <hp300/stand/common/samachdep.h>
 
 char *
-getmachineid()
+getmachineid(void)
 {
 	extern int machineid;
 	char *cp;
@@ -140,8 +140,7 @@ getmachineid()
 int userom;
 
 int
-trap(fp)
-	struct trapframe *fp;
+trap(struct trapframe *fp)
 {
 	static int intrap = 0;
 
@@ -178,8 +177,7 @@ trap(fp)
 #define COLS	80
 
 void
-romputchar(c)
-	int c;
+romputchar(int c)
 {
 	static char buf[COLS];
 	static int col = 0, row = 0;
@@ -215,11 +213,7 @@ romputchar(c)
 }
 
 void
-machdep_start(entry, howto, loadaddr, ssym, esym)
-	char *entry;
-	int howto; 
-	char *loadaddr;
-	char *ssym, *esym; 
+machdep_start(char *entry, int howto, char *loadaddr, char *ssym, char *esym)
 {
 
 	/* Adjust entry point. */
@@ -227,17 +221,14 @@ machdep_start(entry, howto, loadaddr, ssym, esym)
 }
 
 void
-transfer(entry, howto, od, csc, lr, es)
-	char *entry;
-	int howto, od, csc;
-	char *lr, *es;
+transfer(char *entry, int howto, int od, int csc, char *lr, char *es)
 {
 
 	printf("Entry point: 0x%lx\n", (u_long)entry);
 
 #ifdef EXEC_DEBUG
 	printf("\n\nReturn to boot...\n");
-	(void) getchar();
+	(void)getchar();
 #endif
 
 	_transfer(entry, howto, od, csc, lr, es);
