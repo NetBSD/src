@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.17 2003/08/07 16:30:06 agc Exp $ */
+/* $NetBSD: bootxx.c,v 1.18 2004/01/06 17:01:48 matt Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -112,8 +112,6 @@ Xmain()
 		 */
 		bcopy ((void *)bootregs[11], rpb, sizeof(struct rpb));
 		bcopy ((void*)rpb->iovec, bqo, rpb->iovecsz);
-		if (rpb->devtyp == BDEV_SDN)
-			rpb->devtyp = BDEV_SD;	/* XXX until driver fixed */
 	} else {
 		bzero(rpb, sizeof(struct rpb));
 		rpb->devtyp = bootregs[0];
