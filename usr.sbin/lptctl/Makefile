@@ -4,7 +4,8 @@ SRCS=		lptctl.c
 PROG=		lptctl
 MAN=		lptctl.8
 
-CFLAGS=		-g -Wall -ansi -pedantic -pipe
-LDFLAGS+=	-static
+CPPFLAGS+=	-I${NETBSDSRCDIR}/sys
+
+WARNS=	3
 
 .include <bsd.prog.mk>
