@@ -35,17 +35,17 @@
 .\"
 .\"	from: Header: le.4,v 1.2 92/10/13 05:31:33 leres Exp
 .\"	from: @(#)le.4	8.1 (Berkeley) 6/9/93
-.\"	$NetBSD: le.4,v 1.5 1998/06/19 07:43:19 fair Exp $
+.\"	$NetBSD: le.4,v 1.6 1999/12/15 23:44:54 abs Exp $
 .\"
 .Dd June 9, 1993
 .Dt LE 4 sun3
 .Os
 .Sh NAME
 .Nm le
-.Nd AMD 7990 LANCE ethernet interface driver
+.Nd AMD 7990 LANCE Ethernet interface driver
 .Sh SYNOPSIS
 .Cd "le* at obio0 addr ? level ?"
-.Cd "option LANCE_REVC_BUG"
+.Cd "options LANCE_REVC_BUG"
 .Sh DESCRIPTION
 The 
 .Nm
@@ -82,7 +82,7 @@ When
 .Dv LANCE_REVC_BUG
 is enabled, the
 .Nm
-driver executes one or two calls to an inline ethernet address
+driver executes one or two calls to an inline Ethernet address
 comparison function for every received packet.
 On the 
 .Tn mc68000
