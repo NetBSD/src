@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.48 2000/10/29 07:59:07 veego Exp $
+#	$NetBSD: services,v 1.49 2001/06/01 16:04:32 tshiozak Exp $
 #
 # Network services, Internet style
 #
@@ -240,6 +240,8 @@ nfs		2049/udp	nfsd	# Sun NFS
 nfs		2049/tcp	nfsd	# Sun NFS
 X11		6000/tcp		# X Window System
 ircd		6667/tcp		# Often used IRC port (also see 194)
+sstp-2		9801/tcp		# Sakura Script Transfer Protocol-2
+sstp-2		9801/udp		# Sakura Script Transfer Protocol-2
 amanda		10080/udp		# Amanda
 hunt		26740/udp		# multi-player/multi-host maze-wars
 
