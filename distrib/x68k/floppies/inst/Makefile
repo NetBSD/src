@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2001/04/08 03:28:44 minoura Exp $
+#	$NetBSD: Makefile,v 1.7 2001/04/11 17:32:57 wiz Exp $
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
@@ -8,7 +8,7 @@
 realall: inst.fs.gz
 all: realall
 
-RAMDISKDIR!=	cd ${.CURDIR}/../ramdisk.sysinst ; make print-objdir
+RAMDISKDIR!=	cd ${.CURDIR}/../ramdisk.sysinst ; ${MAKE} print-objdir
 
 inst.fs.gz: inst.fs
 	gzip -9vc inst.fs > ${.TARGET}
@@ -19,7 +19,7 @@ inst.fs: ${RAMDISKDIR}/ramdisk.fs
 CLEANFILES+=	inst.fs
 
 ${RAMDISKDIR}/ramdisk.fs:
-	cd ${.CURDIR}/../ramdisk.sysinst ; make
+	cd ${.CURDIR}/../ramdisk.sysinst ; ${MAKE}
 
 release:
 	-mkdir -p ${RELEASEDIR}/installation/floppy
