@@ -1,4 +1,41 @@
-/*	$NetBSD: if_le_isapnp.c,v 1.4 1997/04/09 02:10:48 jonathan Exp $	*/
+/*	$NetBSD: if_le_isapnp.c,v 1.4.2.1 1997/05/13 03:44:15 thorpej Exp $	*/
+
+/*-
+ * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone <jonathan@NetBSD.org> and 
@@ -78,14 +115,6 @@
 #include <dev/ic/am7990var.h>
 #include <dev/isapnp/if_levar.h>
 
-#ifdef __alpha__			/* XXX */
-/* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */ 
-#undef vtophys
-#define	vtophys(va)	alpha_XXX_dmamap((vm_offset_t)(va))
-#endif
-
-
-
 #ifdef __BROKEN_INDIRECT_CONFIG
 int le_isapnp_match __P((struct device *, void *, void *));
 #else
@@ -110,6 +139,7 @@ static char *if_le_isapnp_devnames[] = {
     0
 };
 
+#define	LE_ISAPNP_MEMSIZE	16384
 
 static void
 le_isapnp_wrcsr(sc, port, val)
@@ -169,11 +199,13 @@ le_isapnp_attach(parent, self, aux)
 	struct isapnp_attach_args *ipa = aux;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-	int i;
-
+	bus_dma_tag_t dmat;
+	bus_dma_segment_t seg;
+	int i, rseg;
 
 	lesc->sc_iot = iot = ipa->ipa_iot;
 	lesc->sc_ioh = ioh = ipa->ipa_io[0].h;
+	lesc->sc_dmat = dmat = ipa->ipa_dmat;
 
 	lesc->sc_rap = PCNET_RAP;
 	lesc->sc_rdp = PCNET_RDP;
@@ -190,17 +222,43 @@ le_isapnp_attach(parent, self, aux)
 	for (i = 0; i < sizeof(sc->sc_enaddr); i++)
 		sc->sc_enaddr[i] = bus_space_read_1(iot, ioh, PCNET_SAPROM+i);
 
-	/* XXX SHOULD GET DMA-CAPABLE BUFFER SPACE */
-	sc->sc_mem = malloc(16384, M_DEVBUF, M_NOWAIT);
-	if (sc->sc_mem == 0) {
+	/*
+	 * Allocate a DMA area for the card.
+	 */
+	if (bus_dmamem_alloc(dmat, LE_ISAPNP_MEMSIZE, &seg, 1,
+	    &rseg, BUS_DMA_NOWAIT)) {
 		printf("%s: couldn't allocate memory for card\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
+	if (bus_dmamem_map(dmat, &seg, rseg, LE_ISAPNP_MEMSIZE,
+	    (caddr_t *)&sc->sc_mem, BUS_DMA_NOWAIT|BUS_DMAMEM_NOSYNC)) {
+		printf("%s: couldn't map memory for card\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+
+	/*
+	 * Create and load the DMA map for the DMA area.
+	 */
+	if (bus_dmamap_create(dmat, LE_ISAPNP_MEMSIZE, 1,
+	    LE_ISAPNP_MEMSIZE, 0, BUS_DMA_NOWAIT, &lesc->sc_dmam)) {
+		printf("%s: couldn't create DMA map\n",
+		    sc->sc_dev.dv_xname);
+		bus_dmamem_free(dmat, &seg, rseg);
+		return;
+	}
+	if (bus_dmamap_load(dmat, lesc->sc_dmam,
+	    sc->sc_mem, LE_ISAPNP_MEMSIZE, NULL, BUS_DMA_NOWAIT)) {
+		printf("%s: coundn't load DMA map\n",
+		    sc->sc_dev.dv_xname);
+		bus_dmamem_free(dmat, &seg, rseg);
+		return;
+	}
 
 	sc->sc_conf3 = 0;
-	sc->sc_addr = kvtop(sc->sc_mem);	/* XXX XXX XXX !! */
-	sc->sc_memsize = 16384;
+	sc->sc_addr = lesc->sc_dmam->dm_segs[0].ds_addr;
+	sc->sc_memsize = LE_ISAPNP_MEMSIZE;
 
 	sc->sc_copytodesc = am7990_copytobuf_contig;
 	sc->sc_copyfromdesc = am7990_copyfrombuf_contig;
@@ -217,7 +275,7 @@ le_isapnp_attach(parent, self, aux)
 	am7990_config(sc);
 
 	if (ipa->ipa_ndrq > 0)
-		isa_dmacascade(ipa->ipa_drq[0].num);
+		isa_dmacascade(parent->dv_parent, ipa->ipa_drq[0].num);
 
 	lesc->sc_ih = isa_intr_establish(ipa->ipa_ic, ipa->ipa_irq[0].num,
 	    IST_EDGE, IPL_NET, le_isapnp_intredge, sc);
