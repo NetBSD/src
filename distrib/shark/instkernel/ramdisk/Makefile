@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.4 2002/03/31 03:04:49 thorpej Exp $
+#	$NetBSD: Makefile,v 1.5 2002/04/01 12:16:14 lukem Exp $
 
 .include "${.CURDIR}/../../../Makefile.inc"
 .include <bsd.own.mk>
 
 IMAGE=		ramdisk.fs
 IMAGESIZE=	3072k
+MAKEFS_FLAGS=	-f 15
 
 WARNS=		1
 
@@ -19,8 +20,6 @@ IMAGEDEPENDS=	${CRUNCHBIN} \
 		${_SRC_TOP_}/etc/group ${_SRC_TOP_}/etc/master.passwd \
 		${_SRC_TOP_}/etc/protocols ${_SRC_TOP_}/etc/netconfig \
 		${_SRC_TOP_}/etc/services
-
-MAKEFS_FLAGS=	-f 10
 
 # Use stubs to eliminate some large stuff from libc
 HACKSRC=	${DISTRIBDIR}/utils/libhack
