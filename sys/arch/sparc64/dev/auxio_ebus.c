@@ -1,4 +1,4 @@
-/*	$NetBSD: auxio_ebus.c,v 1.3 2000/04/08 03:07:07 mrg Exp $	*/
+/*	$NetBSD: auxio_ebus.c,v 1.4 2000/04/13 09:53:49 mrg Exp $	*/
 
 /*
  * Copyright (c) 2000 Matthew R. Green
@@ -55,6 +55,13 @@ struct cfattach auxio_ebus_ca = {
 	sizeof(struct device), auxio_ebus_match, auxio_ebus_attach
 };
 
+/*
+ * We export this structure so that anyone who wishes to fiddle the
+ * AUXIO registers can.
+ *
+ * XXX we need to better design the access here for when there are
+ * multiple Ebus2's in one system..
+ */
 struct auxio_registers auxio_registers;
 
 int
@@ -92,30 +99,39 @@ auxio_ebus_attach(parent, self, aux)
 
 		if (ea->ea_regs[i].lo == AUXIO_FD) {
 			SHOWIT("fd");
-			auxio_registers.auxio_fd = (caddr_t)AUXIO_FD;
+			auxio_registers.auxio_fd.lo = ea->ea_regs[i].lo;
+			auxio_registers.auxio_fd.hi = ea->ea_regs[i].hi;
 		} else if (ea->ea_regs[i].lo == AUXIO_AUDIO) {
 			SHOWIT("audio");
-			auxio_registers.auxio_audio = (caddr_t)AUXIO_AUDIO;
+			auxio_registers.auxio_audio.lo = ea->ea_regs[i].lo;
+			auxio_registers.auxio_audio.hi = ea->ea_regs[i].hi;
 		} else if (ea->ea_regs[i].lo == AUXIO_POWER) {
 			SHOWIT("power");
-			auxio_registers.auxio_power = (caddr_t)AUXIO_POWER;
+			auxio_registers.auxio_power.lo = ea->ea_regs[i].lo;
+			auxio_registers.auxio_power.hi = ea->ea_regs[i].hi;
 		} else if (ea->ea_regs[i].lo == AUXIO_LED) {
 			SHOWIT("led");
-			auxio_registers.auxio_led = (caddr_t)AUXIO_LED;
+			auxio_registers.auxio_led.lo = ea->ea_regs[i].lo;
+			auxio_registers.auxio_led.hi = ea->ea_regs[i].hi;
 		} else if (ea->ea_regs[i].lo == AUXIO_PCI) {
 			SHOWIT("pci");
-			auxio_registers.auxio_pci = (caddr_t)AUXIO_PCI;
+			auxio_registers.auxio_pci.lo = ea->ea_regs[i].lo;
+			auxio_registers.auxio_pci.hi = ea->ea_regs[i].hi;
 		} else if (ea->ea_regs[i].lo == AUXIO_FREQ) {
 			SHOWIT("freq");
-			auxio_registers.auxio_freq = (caddr_t)AUXIO_FREQ;
+			auxio_registers.auxio_freq.lo = ea->ea_regs[i].lo;
+			auxio_registers.auxio_freq.hi = ea->ea_regs[i].hi;
 		} else if (ea->ea_regs[i].lo == AUXIO_SCSI) {
 			SHOWIT("scsi");
-			auxio_registers.auxio_scsi = (caddr_t)AUXIO_SCSI;
+			auxio_registers.auxio_scsi.lo = ea->ea_regs[i].lo;
+			auxio_registers.auxio_scsi.hi = ea->ea_regs[i].hi;
 		} else if (ea->ea_regs[i].lo == AUXIO_TEMP) {
 			SHOWIT("temp");
-			auxio_registers.auxio_temp = (caddr_t)AUXIO_TEMP;
+			auxio_registers.auxio_temp.lo = ea->ea_regs[i].lo;
+			auxio_registers.auxio_temp.hi = ea->ea_regs[i].hi;
 		} else {
-			printf(": unknown auxio register lo=%x", ea->ea_regs[i].lo);
+			printf(": unknown auxio register %x.%x",
+			    ea->ea_regs[i].hi, ea->ea_regs[i].lo);
 		}
 	}
 	printf("\n");
