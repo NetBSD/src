@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.13 1997/03/31 07:32:18 scottr Exp $	*/
+/*	$NetBSD: dma.c,v 1.14 1997/04/01 03:10:57 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997
@@ -48,15 +48,13 @@
 #include <sys/proc.h>
 #include <sys/device.h>
 
+#include <machine/frame.h>
 #include <machine/cpu.h>
 
 #include <hp300/dev/dmareg.h>
 #include <hp300/dev/dmavar.h>
 
 #include <hp300/hp300/isr.h>
-
-extern u_int kvtop();
-extern void PCIA();
 
 /*
  * The largest single request will be MAXPHYS bytes which will require
@@ -362,7 +360,7 @@ dmago(unit, addr, count, flags)
 		 * Push back dirty cache lines
 		 */
 		if (mmutype == MMU_68040)
-			DCFP(dc->dm_chain[seg].dc_addr);
+			DCFP((vm_offset_t)dc->dm_chain[seg].dc_addr);
 #endif
 		if (count < (tcount = NBPG - ((int)addr & PGOFSET)))
 			tcount = count;
@@ -470,7 +468,6 @@ dmastop(unit)
 {
 	struct dma_softc *sc = &Dma_softc;
 	struct dma_channel *dc = &sc->sc_chan[unit];
-	struct dmaqueue *dq;
 
 #ifdef DEBUG
 	if (dmadebug & DDB_FOLLOW)
