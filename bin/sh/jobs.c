@@ -36,7 +36,7 @@
 
 #ifndef lint
 static char sccsid[] = "@(#)jobs.c	5.1 (Berkeley) 3/7/91";
-static char rcsid[] = "$Header: /cvsroot/src/bin/sh/jobs.c,v 1.3 1993/03/23 00:28:11 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/bin/sh/jobs.c,v 1.4 1993/04/26 06:09:17 dpassage Exp $";
 #endif /* not lint */
 
 #include "shell.h"
@@ -806,7 +806,7 @@ waitproc(block, status)
 #endif
 	if (block == 0)
 		flags |= WNOHANG;
-	return wait3((union wait *)status, flags, (struct rusage *)NULL);
+	return wait3((int *)status, flags, (struct rusage *)NULL);
 #else
 #ifdef SYSV
 	int (*save)();
