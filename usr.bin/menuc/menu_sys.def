@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.10 1998/06/30 06:57:57 phil Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.11 1998/07/01 07:46:02 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -189,18 +189,20 @@ static int menucmd (WINDOW *w)
 		switch (ch) {
 		case '\n':
 			return REQ_EXECUTE;
-		case '\016':
+		case '\016':  /* Contnrol-P */
 		case KEYSEQ_DOWN_ARROW:
 			return REQ_NEXT_ITEM;
-		case '\020':
+		case '\020':  /* Control-N */
 		case KEYSEQ_UP_ARROW:
 			return REQ_PREV_ITEM;
-		case '\014':
+		case '\014':  /* Control-L */
 		        return REQ_REDISPLAY;
 		case '<':
+		case '\010':  /* Control-H (backspace) */
 		case KEYSEQ_PAGE_UP:
 			return REQ_SCROLLUP;
 		case '>':
+		case ' ':
 		case KEYSEQ_PAGE_DOWN:
 			return REQ_SCROLLDOWN;
 		case '?':
@@ -445,6 +447,8 @@ static void process_req (struct menudesc *m, int num, int req)
 			m->cursel++;
 			scroll_sel = 1;
 			refresh = 1;
+			if (m->cursel >= m->topline + m->h -1 )
+				m->topline += 1;
 		} else
 			mbeep();
 
@@ -453,6 +457,8 @@ static void process_req (struct menudesc *m, int num, int req)
 			m->cursel--;
 			scroll_sel = 1;
 			refresh = 1;
+			if (m->cursel < m->topline )
+				m->topline -= 1;
 		} else
 			mbeep();
 
@@ -473,6 +479,8 @@ static void process_req (struct menudesc *m, int num, int req)
 			mbeep();
 		else {
 			m->topline -= m->h-1;
+			if (m->topline < 0)
+				m->topline = 0;
 			wclear (m->mw);
 			refresh = 1;
 		}

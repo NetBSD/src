@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb.c,v 1.8 1998/06/29 08:46:37 phil Exp $	*/
+/*	$NetBSD: mdb.c,v 1.9 1998/07/01 07:46:02 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -151,7 +151,20 @@ write_menu_file (char *initcode)
 		"#include <string.h>\n"
 		"#include <ctype.h>\n"
 		"#include <curses.h>\n"
-		"\n"
+		"\n");
+
+	if (do_dynamic)
+		(void) fprintf (out_file,
+			"\n#define DYNAMIC_MENUS\n\n"
+			"typedef\n"
+			"struct dyn_menu_ent {\n"
+			"	char   *optname;\n"
+			"	int	nextmenu;\n"
+			"	int	submenu;\n"
+			"	void	(*action)(void);\n"
+			"} dyn_menu_ent ;\n");
+
+	(void) fprintf (out_file, "%s",
 		"typedef\n"
 		"struct menudesc {\n"
 		"	char   *title;\n"
@@ -163,13 +176,27 @@ write_menu_file (char *initcode)
 		"	int	topline;\n"
 		"	char   **opts;\n"
 		"	WINDOW *mw;\n"
-		"	char   *helpstr;\n"
+		"	char   *helpstr;\n");
+
+	if (do_dynamic)
+		(void) fprintf (out_file, 
+			"	dyn_menu_ent   *dyn_opts;\n"
+			"	void   (*post_act)(void);\n"
+			"	void   (*exit_act)(void);\n");
+
+	(void) fprintf (out_file, "%s",
 		"} menudesc ;\n"
 		"\n"
 		"/* defines for mopt field. */\n"
 		"#define NOEXITOPT 1\n"
 		"#define NOBOX 2\n"
-		"#define SCROLL 4\n"
+		"#define SCROLL 4\n");
+
+	if (do_dynamic)
+		(void) fprintf (out_file,
+			"#define DYNAMIC 8\n");
+
+	(void) fprintf (out_file, "%s",
 		"\n"
 		"/* initilization flag */\n"
 		"extern int __m_endwin;\n"
@@ -185,8 +212,8 @@ write_menu_file (char *initcode)
 				menus[i]->id, i);
 	}
 	(void) fprintf (out_file, "\n#define MAX_STRLEN %d\n", max_strlen);
-	(void) fprintf (out_file, "#endif\n");
 
+	(void) fprintf (out_file, "#endif\n");
 	fclose (out_file);
 
 	/* Now the C file */
@@ -238,7 +265,7 @@ write_menu_file (char *initcode)
 			menus[i]->info->w, menus[i]->info->mopt,
 			menus[i]->info->numopt, i);
 		if (menus[i]->info->helpstr == NULL)
-			(void) fprintf (out_file, "NULL},\n");
+			(void) fprintf (out_file, "NULL");
 		else {
 			tmpstr = menus[i]->info->helpstr;
 			/* Skip an initial newline. */
@@ -252,8 +279,13 @@ write_menu_file (char *initcode)
 					(void) fprintf (out_file, "\\n\\\n");
 					tmpstr++;
 				}
-			(void) fprintf (out_file, "\"},\n");
+			(void) fprintf (out_file, "\"");
 		}
+		if (do_dynamic)
+			(void) fprintf (out_file, ",NULL,NULL,NULL},\n");
+		else
+			(void) fprintf (out_file, "},\n");
+
 	}
 	(void) fprintf (out_file, "{NULL}};\n\n");
 
