@@ -1,4 +1,4 @@
-/*	$NetBSD: dca.c,v 1.15 1995/04/10 01:01:40 mycroft Exp $	*/
+/*	$NetBSD: dca.c,v 1.16 1995/04/19 19:15:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -206,14 +206,11 @@ dcaprobe(hd)
 }
 
 /* ARGSUSED */
-#ifdef __STDC__
-dcaopen(dev_t dev, int flag, int mode, struct proc *p)
-#else
+int
 dcaopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
 	struct proc *p;
-#endif
 {
 	register struct tty *tp;
 	register int unit;
@@ -270,6 +267,7 @@ dcaopen(dev, flag, mode, p)
 }
  
 /*ARGSUSED*/
+int
 dcaclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
@@ -304,6 +302,7 @@ dcaclose(dev, flag, mode, p)
 	return (0);
 }
  
+int
 dcaread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
@@ -324,6 +323,7 @@ dcaread(dev, uio, flag)
 	return (error);
 }
  
+int
 dcawrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
@@ -333,7 +333,16 @@ dcawrite(dev, uio, flag)
  
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
+
+struct tty *
+dcatty(dev)
+	dev_t dev;
+{
+
+	return (dca_tty[UNIT(dev)]);
+}
  
+int
 dcaintr(unit)
 	register int unit;
 {
@@ -488,6 +497,7 @@ dcamint(unit, dca)
 	}
 }
 
+int
 dcaioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	int cmd;
@@ -549,6 +559,7 @@ dcaioctl(dev, cmd, data, flag, p)
 	return (0);
 }
 
+int
 dcaparam(tp, t)
 	register struct tty *tp;
 	register struct termios *t;
@@ -645,6 +656,7 @@ out:
  * Stop output on a line.
  */
 /*ARGSUSED*/
+int
 dcastop(tp, flag)
 	register struct tty *tp;
 	int flag;
@@ -811,6 +823,7 @@ dcainit(unit, rate)
 	splx(s);
 }
 
+int
 dcacngetc(dev)
 	dev_t dev;
 {
