@@ -1,14 +1,19 @@
-#	$NetBSD: Makefile,v 1.9 1999/02/09 19:21:54 tv Exp $
+#	$NetBSD: Makefile,v 1.10 2001/08/06 19:12:00 tv Exp $
 
 PROG=		c++filt
-SRCS=		cplus-dem.c underscore.c
-MAN=		c++filt.1
 CPPFLAGS+=	-DMAIN
-CLEANFILES+=	${MAN}
+CLEANFILES+=	c++filt.1
+
+.include <bsd.own.mk>
+.if defined(USE_NEW_TOOLCHAIN)
+.include "${.CURDIR}/../common/Makefile.prog"
+.else
+SRCS=		cplus-dem.c underscore.c
 
 .include <bsd.prog.mk>
+.endif
 
 .PATH: ${DIST}/libiberty
 
-${MAN}: ${DIST}/binutils/cxxfilt.man
+c++filt.1: ${DIST}/binutils/cxxfilt.man
 	sed -e "s/@PROGRAM@/${PROG}/" < $> > $@
