@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_pcmcia.c,v 1.6 2000/06/05 15:08:01 tsutsui Exp $	*/
+/*	$NetBSD: esp_pcmcia.c,v 1.7 2000/06/05 15:19:44 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -91,6 +91,7 @@ static struct scsipi_adapter esp_pci_adapter = {
 	minphys,		/* minphys */
 	NULL,			/* ioctl */
 	esp_pcmcia_enable,	/* enable */
+	NULL,			/* getgeom */
 };
 
 struct cfattach esp_pcmcia_ca = {
