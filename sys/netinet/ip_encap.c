@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.c,v 1.1 2000/04/19 06:30:54 itojun Exp $	*/
+/*	$NetBSD: ip_encap.c,v 1.2 2000/07/05 18:45:26 thorpej Exp $	*/
 /*	$KAME: ip_encap.c,v 1.30 2000/04/19 04:29:37 itojun Exp $	*/
 
 /*
@@ -128,7 +128,7 @@ static int mask_match __P((const struct encaptab *, const struct sockaddr *,
 static void encap_fillarg __P((struct mbuf *, const struct encaptab *));
 
 /* rely upon BSS initialization */
-LIST_HEAD(, encaptab) encaptab;
+LIST_HEAD(, encaptab) encaptab = LIST_HEAD_INITIALIZER(&encaptab);
 
 void
 encap_init()
