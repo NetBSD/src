@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.19 2002/01/28 13:20:43 augustss Exp $	*/
+/*	$NetBSD: iostat.c,v 1.20 2002/06/09 07:14:32 itojun Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: iostat.c,v 1.19 2002/01/28 13:20:43 augustss Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.20 2002/06/09 07:14:32 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -129,7 +129,7 @@ numlabels(int row)
 	int i, col, regions, ndrives;
 
 #define COLWIDTH	14
-#define DRIVESPERLINE	((getmaxx(wnd) - INSET) / COLWIDTH)
+#define DRIVESPERLINE	((getmaxx(wnd) - 1) / COLWIDTH)
 	for (ndrives = 0, i = 0; i < dk_ndrive; i++)
 		if (cur.dk_select[i])
 			ndrives++;
@@ -147,7 +147,7 @@ numlabels(int row)
 	col = 0;
 	for (i = 0; i < dk_ndrive; i++)
 		if (cur.dk_select[i] /*&& cur.dk_bytes[i] != 0.0*/) {
-			if (col + COLWIDTH >= getmaxx(wnd) - INSET) {
+			if (col + COLWIDTH > getmaxx(wnd)) {
 				col = 0, row += linesperregion + 1;
 				if (row > getmaxy(wnd) - (linesperregion + 1))
 					break;
@@ -221,7 +221,7 @@ showiostat(void)
 	winsertln(wnd);
 	for (i = 0; i < dk_ndrive; i++)
 		if (cur.dk_select[i] /*&& cur.dk_bytes[i] != 0.0*/) {
-			if (col + COLWIDTH >= getmaxx(wnd)) {
+			if (col + COLWIDTH > getmaxx(wnd)) {
 				col = 0, row += linesperregion + 1;
 				if (row > getmaxy(wnd) - (linesperregion + 1))
 					break;
