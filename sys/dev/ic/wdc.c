@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.153 2003/11/07 08:58:33 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.154 2003/11/13 22:18:10 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.153 2003/11/07 08:58:33 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.154 2003/11/13 22:18:10 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -410,7 +410,9 @@ atabusconfig(atabus_sc)
 			chp->ch_drive[0].drive_flags &= ~DRIVE_OLD;
 			chp->ch_drive[1].drive_flags &= ~DRIVE_OLD;
 		} else {
-			chp->ch_drive[i].drive_flags &=
+			chp->ch_drive[0].drive_flags &=
+			    ~(DRIVE_ATA | DRIVE_ATAPI);
+			chp->ch_drive[1].drive_flags &=
 			    ~(DRIVE_ATA | DRIVE_ATAPI);
 			WDCDEBUG_PRINT(("%s:%d:%d: IDENTIFY failed (%d)\n",
 			    chp->wdc->sc_dev.dv_xname,
