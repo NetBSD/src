@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.54.2.5 2004/06/24 08:30:15 tron Exp $	*/
+/*	$NetBSD: ehci.c,v 1.54.2.6 2004/06/24 08:31:58 tron Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,22 +54,18 @@
  *    devices using them don't work.
  *    Interrupt transfers are not difficult, it's just not done. 
  *
- * 3) There might also be some issues with the data toggle, it was not
- *    completely tested to work properly under all condistions. If wrong
- *    toggle would be sent/recvd, bulk data transfers would stop working.
- *
- * 4) The meaty part to implement is the support for USB 2.0 hubs.
+ * 3) The meaty part to implement is the support for USB 2.0 hubs.
  *    They are quite compolicated since the need to be able to do
  *    "transaction translation", i.e., converting to/from USB 2 and USB 1.
  *    So the hub driver needs to handle and schedule these things, to
  *    assign place in frame where different devices get to go. See chapter
  *    on hubs in USB 2.0 for details. 
  *
- * 5) command failures are not recovered correctly
+ * 4) command failures are not recovered correctly
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.54.2.5 2004/06/24 08:30:15 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.54.2.6 2004/06/24 08:31:58 tron Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
