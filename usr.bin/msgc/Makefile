@@ -1,14 +1,15 @@
-#	$NetBSD: Makefile,v 1.9 2001/10/05 22:54:51 jmc Exp $
+#	$NetBSD: Makefile,v 1.10 2001/11/12 20:26:55 tv Exp $
 
 .include <bsd.own.mk>
 
-PROG=	msgc
-SRCS=	msgmain.c msgparse.y msgscan.l msgdb.c util.c avl.c
-.PATH: ${.CURDIR}/../menuc
-CPPFLAGS+=-I. -I${.CURDIR}
-YHEADER=1
-LDADD+=	-ll
-DPADD+=	${LIBL}
+PROG=		msgc
+SRCS=		msgmain.c msgparse.y msgscan.l msgdb.c util.c avl.c
+.PATH:		${.CURDIR}/../menuc
+CPPFLAGS+=	-I. -I${.CURDIR}
+YHEADER=
+
+LDADD+=		-ll
+DPADD+=		${LIBL}
 
 MLINKS+=	msgc.1 msg_window.1 \
 		msgc.1 msg_window.1 \
@@ -24,8 +25,8 @@ MLINKS+=	msgc.1 msg_window.1 \
 		msgc.1 msg_table_add.1
 
 .if ${MKSHARE} != "no"
-FILES= msg_sys.def
-FILESDIR= /usr/share/misc
+FILES=		msg_sys.def
+FILESDIR=	/usr/share/misc
 .endif
 
 .ifndef HOSTPROG
