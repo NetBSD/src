@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.76 2002/05/09 06:49:15 itojun Exp $	*/
+/*	$NetBSD: in.c,v 1.76.4.1 2003/06/30 02:17:15 grant Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.76 2002/05/09 06:49:15 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.76.4.1 2003/06/30 02:17:15 grant Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -1062,6 +1062,8 @@ in_savemkludge(oia)
 		TAILQ_INSERT_TAIL(&in_mk, oia, ia_list);
 		IFAREF(&oia->ia_ifa);
 	}
+
+	igmp_purgeif(ifp);
 }
 
 /*
