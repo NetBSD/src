@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm32,v 1.11 1996/05/11 16:11:50 mycroft Exp $
+#	$NetBSD: Makefile.arm32,v 1.12 1996/05/20 14:37:24 mark Exp $
 
 # Makefile for NetBSD
 #
@@ -34,7 +34,7 @@ ARM32=	../..
 
 INCLUDES=	-I. -I$S/arch -I$S
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Darm32
-CFLAGS=		${DEBUG} -O2 -Werror -fno-builtin
+CFLAGS=		${DEBUG} -O2 -Werror
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-Ttext F0000020 -e start
 
