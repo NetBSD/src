@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.25.2.1 1999/11/01 06:19:12 scottr Exp $	*/
+/*	$NetBSD: pmap.h,v 1.25.2.2 1999/11/28 10:40:45 scottr Exp $	*/
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -185,8 +185,9 @@ extern	pt_entry_t *Sysmap;
 extern	char *vmmap;			/* map for mem, dumps, etc. */
 
 /* pmap.c */
-vaddr_t	pmap_map __P((vaddr_t, paddr_t, paddr_t, int));
-void	pmap_procwr __P((struct proc *, vaddr_t, u_long));
+vaddr_t		pmap_map __P((vaddr_t, paddr_t, paddr_t, int));
+void		pmap_procwr __P((struct proc *, vaddr_t, u_long));
+#define		PMAP_NEED_PROCWR
 
 #endif	/* _KERNEL */
 
