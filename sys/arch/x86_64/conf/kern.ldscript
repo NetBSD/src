@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.ldscript,v 1.1 2001/12/29 02:24:06 thorpej Exp $	*/
+/*	$NetBSD: kern.ldscript,v 1.2 2002/06/05 15:06:56 fvdl Exp $	*/
 
 /*
  * Kernel linker script for NetBSD/x86-64.  This script is based on
@@ -8,7 +8,7 @@
 /* Default linker script, for normal executables */
 OUTPUT_FORMAT("elf64-x86-64", "elf64-x86-64",
 	      "elf64-x86-64")
-OUTPUT_ARCH(i386)
+OUTPUT_ARCH(i386:x86-64)
 ENTRY(_start)
  SEARCH_DIR(/usr/local/gnu/x86_64-unknown-netbsd/lib);
 /* Do we need any of these for elf?
