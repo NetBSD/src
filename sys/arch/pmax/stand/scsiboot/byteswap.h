@@ -1,3 +1,5 @@
+/*	$NetBSD: byteswap.h,v 1.2 1998/01/05 07:03:16 perry Exp $	*/
+
 /*
  * inline macros for doing byteswapping on a little-endian machine.
  * for boot.

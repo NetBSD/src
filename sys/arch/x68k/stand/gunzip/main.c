@@ -1,3 +1,5 @@
+/*	$NetBSD: main.c,v 1.2 1998/01/05 07:03:53 perry Exp $	*/
+
 #include <unistd.h>
 #include "gzip.h"
 

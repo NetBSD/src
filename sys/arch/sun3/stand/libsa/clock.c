@@ -1,3 +1,5 @@
+/*	$NetBSD: clock.c,v 1.3 1998/01/05 07:03:23 perry Exp $	*/
+
 
 #include <sys/types.h>
 #include <machine/mon.h>

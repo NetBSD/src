@@ -1,3 +1,5 @@
+/*	$NetBSD: kn01var.h,v 1.2 1998/01/05 07:03:15 perry Exp $	*/
+
 /*
  * Declarations for the Decstation 3100 and 2100
  */

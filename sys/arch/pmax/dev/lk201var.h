@@ -1,3 +1,5 @@
+/*	$NetBSD: lk201var.h,v 1.2 1998/01/05 07:03:12 perry Exp $	*/
+
 #ifndef _LK201VAR_H_
 #define _LK201VAR_H_
 

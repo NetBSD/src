@@ -1,3 +1,5 @@
+/*	$NetBSD: kgdb.h,v 1.2 1998/01/05 07:02:54 perry Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
  * Copyright (C) 1995, 1996 TooLs GmbH.

@@ -1,3 +1,5 @@
+/*	$NetBSD: bsd_audioio.h,v 1.2 1998/01/05 07:03:46 perry Exp $	*/
+
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
  * All rights reserved.

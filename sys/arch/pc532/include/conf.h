@@ -1,3 +1,5 @@
+/*	$NetBSD: conf.h,v 1.2 1998/01/05 07:03:08 perry Exp $	*/
+
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
  *

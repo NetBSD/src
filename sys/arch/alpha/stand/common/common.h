@@ -1,3 +1,5 @@
+/*	$NetBSD: common.h,v 1.2 1998/01/05 07:02:48 perry Exp $	*/
+
 void init_prom_calls __P((void));
 int prom_open __P((char*, int));
 void OSFpal __P((void));
