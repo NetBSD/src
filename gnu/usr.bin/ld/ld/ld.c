@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.71 2000/10/27 01:05:30 mycroft Exp $	*/
+/*	$NetBSD: ld.c,v 1.72 2000/11/02 16:14:37 matt Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -88,7 +88,7 @@
 
 #ifndef lint
 /* from: "@(#)ld.c	6.10 (Berkeley) 5/22/91"; */
-__RCSID("$NetBSD: ld.c,v 1.71 2000/10/27 01:05:30 mycroft Exp $");
+__RCSID("$NetBSD: ld.c,v 1.72 2000/11/02 16:14:37 matt Exp $");
 #endif /* not lint */
 
 #define GNU_BINUTIL_COMPAT	/* forwards compatiblity with binutils 2.x */
@@ -3158,6 +3158,12 @@ perform_relocation(data, data_size, reloc, nreloc, entry, dataseg)
 			} else if (!RELOC_EXTERN_P(r)) {
 #if JMPSLOT_NONEXTERN_ARE_INTERMODULE
 				relocation = addend + sp->value;
+#ifdef DEBUG
+				printf("perform_relocation: jmpslot: %#x=%#lx (addend=%#lx %s=%#lx)\n",
+					pc_relocation + addr,
+					relocation - pc_relocation,
+					addend, sp->name, sp->value);
+#endif
 #else
 				relocation = addend +
 					data_relocation - text_relocation;
@@ -3464,7 +3470,7 @@ coptxtrel(entry)
 		symindex = RELOC_SYMBOL(r);
 		lsp = &entry->symbols[symindex];
 
-		if (!RELOC_EXTERN_P(r)) {
+		if (!RELOC_EXTERN_P(r) && !RELOC_JMPTAB_P(r)) {
 			if (!pic_code_seen)
 				continue;
 			if (RELOC_BASEREL_P(r))
