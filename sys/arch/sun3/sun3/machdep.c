@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.58 1995/04/26 23:25:26 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.59 1995/05/24 21:04:51 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -76,10 +76,6 @@
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
-#ifdef COMPAT_HPUX
-#include <compat/hpux/hpux.h>
-extern struct emul emul_hpux;
-#endif
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
@@ -103,7 +99,6 @@ extern struct emul emul_hpux;
 
 extern char *cpu_string;
 extern char version[];
-extern char kstack[];
 extern short exframesize[];
 extern vm_offset_t u_area_va;
 extern vm_offset_t vmmap;	/* XXX - poor name.  See mem.c */
@@ -135,81 +130,24 @@ int	bufpages = 0;
 int *nofault;
 
 caddr_t allocsys __P((caddr_t));
+void identifycpu();
 
 /*
- * Info for CTL_HW
+ * This is called at the beginning of init_main.c:main()
+ * to get the console device ready for kernel printf calls.
  */
-char	machine[] = "sun3";		/* cpu "architecture" */
-char	cpu_model[120];
-
-
-void
-identifycpu()
+void consinit()
 {
-    /*
-     * actual identification done earlier because i felt like it,
-     * and i believe i will need the info to deal with some VAC, and awful
-     * framebuffer placement problems.  could be moved later.
-     */
-	strcpy(cpu_model, "Sun 3/");
+    extern void cninit();
+    cninit();
 
-    /* should eventually include whether it has a VAC, mc6888x version, etc */
-	strcat(cpu_model, cpu_string);
-
-	printf("Model: %s\n", cpu_model);
-}
-
-/*
- * Save the page table entries for the u-area of the
- * process identified by procp using the u-area mapping
- * passed as VA (the location where they are permanent).
- */
-void
-save_u_area(procp, va)
-	struct proc *procp;
-	register vm_offset_t va;
-{
-	register int pte, *ptep, *limit;
-
-	ptep = &procp->p_md.md_upte[0];
-	limit = &ptep[UPAGES];
-
-	do {
-		pte = get_pte(va);
-		pte &= ~(PG_NC | PG_MODREF);
-		*ptep = pte;
-		va += NBPG;
-		ptep++;
-	} while (ptep < limit);
-}
-
-/*
- * Load mappings for the u-area of a process at UADDR for
- * a process that is about to become the current process.
- * The necessary page table entries have been stashed in
- * the machine-dependent part of the proc structure.
- */
-void
-load_u_area()
-{
-	register vm_offset_t va;
-	register int pte, *ptep, *limit;
-
-	va = (vm_offset_t) UADDR;
-	ptep = &curproc->p_md.md_upte[0];
-	limit = &ptep[UPAGES];
-
-	do {
-#ifdef	HAVECACHE
-		/* flush write-back before changing mapping */
-		if (cache_size)
-			cache_flush_page(va);
-#endif
-		pte = *ptep;
-		set_pte(va, pte);
-		va += NBPG;
-		ptep++;
-	} while (ptep < limit);
+#ifdef DDB
+	/* Now that we have a console, we can stop in DDB. */
+	db_machine_init();
+	ddb_init();
+	if (boothowto & RB_KDB)
+		Debugger();
+#endif DDB
 }
 
 /*
@@ -404,21 +342,51 @@ allocsys(v)
 }
 
 /*
- * This is called at the beginning of init_main.c:main()
- * to get the console device ready for kernel printf calls.
+ * Set registers on exec.
+ * XXX Should clear registers except sp, pc,
+ * but would break init; should be fixed soon.
  */
-void consinit()
+void
+setregs(p, pack, stack, retval)
+	register struct proc *p;
+	struct exec_package *pack;
+	u_long stack;
+	register_t *retval;
 {
-    extern void cninit();
-    cninit();
+	struct frame *frame = (struct frame *)p->p_md.md_regs;
 
-#ifdef DDB
-	/* Now that we have a console, we can stop in DDB. */
-	db_machine_init();
-	ddb_init();
-	if (boothowto & RB_KDB)
-		Debugger();
-#endif DDB
+	frame->f_pc = pack->ep_entry & ~1;
+	frame->f_regs[SP] = stack;
+	frame->f_regs[A2] = (int)PS_STRINGS;
+
+	/* restore a null state frame */
+	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
+	if (fpu_type) {
+		m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
+	}
+	/* XXX - HPUX sigcode hack would go here... */
+}
+
+/*
+ * Info for CTL_HW
+ */
+char	machine[] = "sun3";		/* cpu "architecture" */
+char	cpu_model[120];
+
+void
+identifycpu()
+{
+    /*
+     * actual identification done earlier because i felt like it,
+     * and i believe i will need the info to deal with some VAC, and awful
+     * framebuffer placement problems.  could be moved later.
+     */
+	strcpy(cpu_model, "Sun 3/");
+
+    /* should eventually include whether it has a VAC, mc6888x version, etc */
+	strcat(cpu_model, cpu_string);
+
+	printf("Model: %s\n", cpu_model);
 }
 
 /*
@@ -453,73 +421,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	/* NOTREACHED */
 }
 
-/*
- * Set registers on exec.
- * XXX Should clear registers except sp, pc,
- * but would break init; should be fixed soon.
- */
-void
-setregs(p, pack, stack, retval)
-	register struct proc *p;
-	struct exec_package *pack;
-	u_long stack;
-	register_t *retval;
-{
-	struct frame *frame = (struct frame *)p->p_md.md_regs;
-
-	frame->f_pc = pack->ep_entry & ~1;
-	frame->f_regs[SP] = stack;
-
-	/* restore a null state frame */
-	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
-	if (fpu_type) {
-		m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
-	}
-
-#ifdef COMPAT_HPUX
-	if (p->p_flag & SHPUX) {
-		frame->f_regs[A0] = 0; /* not 68010 (bit 31), no FPA (30) */
-		retval[0] = 0;		/* no float card */
-		retval[1] = fpu_type;		/* 0: none, 1: 68881 */
-	}
-	/*
-	 * XXX This doesn't have much to do with setting registers but
-	 * I didn't want to muck up kern_exec.c with this code, so I
-	 * stuck it here.
-	 *
-	 * Ensure we perform the right action on traps type 1 and 2:
-	 * If our parent is an HPUX process and we are being traced, turn
-	 * on HPUX style interpretation.  Else if we were using the HPUX
-	 * style interpretation, revert to the BSD interpretation.
-	 *
-	 * Note that we do this by changing the trap instruction in the
-	 * global "sigcode" array which then gets copied out to the user's
-	 * sigcode in the stack.  Since we are changing it in the global
-	 * array we must always reset it, even for non-HPUX processes.
-	 *
-	 * Note also that implementing it in this way creates a potential
-	 * race where we could have tweaked it for process A which then
-	 * blocks in the copyout to the stack and process B comes along
-	 * and untweaks it causing A to wind up with the wrong setting
-	 * when the copyout continues.  However, since we have already
-	 * copied something out to this user stack page (thereby faulting
-	 * it in), this scenerio is extremely unlikely.
-	 */
-	{
-		extern short sigcodetrap[];
-
-		if ((p->p_pptr->p_emul == &emul_hpux) &&
-		    (p->p_flag & P_TRACED)) {
-			p->p_md.md_flags |= MDP_HPUXTRACE;
-			*sigcodetrap = 0x4E42;
-		} else {
-			p->p_md.md_flags &= ~MDP_HPUXTRACE;
-			*sigcodetrap = 0x4E41;
-		}
-	}
-#endif
-}
-
 #define SS_RTEFRAME	1
 #define SS_FPSTATE	2
 #define SS_USERREGS	4
@@ -543,36 +444,6 @@ struct sigframe {
 	struct	sigcontext sf_sc;	/* actual context */
 };
 
-#ifdef COMPAT_HPUX
-struct	hpuxsigcontext {
-	int	hsc_syscall;
-	char	hsc_action;
-	char	hsc_pad1;
-	char	hsc_pad2;
-	char	hsc_onstack;
-	int	hsc_mask;
-	int	hsc_sp;
-	short	hsc_ps;
-	int	hsc_pc;
-/* the rest aren't part of the context but are included for our convenience */
-	short	hsc_pad;
-	u_int	hsc_magic;		/* XXX sigreturn: cookie */
-	struct	sigcontext *hsc_realsc;	/* XXX sigreturn: ptr to BSD context */
-};
-
-/*
- * For an HP-UX process, a partial hpuxsigframe follows the normal sigframe.
- * Tremendous waste of space, but some HP-UX applications (e.g. LCL) need it.
- */
-struct hpuxsigframe {
-	int	hsf_signum;
-	int	hsf_code;
-	struct	sigcontext *hsf_scp;
-	struct	hpuxsigcontext hsf_sc;
-	int	hsf_regs[15];
-};
-#endif
-
 #ifdef DEBUG
 int sigdebug = 0;
 int sigpid = 0;
@@ -593,14 +464,14 @@ sendsig(catcher, sig, mask, code)
 	register struct proc *p = curproc;
 	register struct sigframe *fp, *kfp;
 	register struct frame *frame;
-	register struct sigacts *ps = p->p_sigacts;
+	register struct sigacts *psp = p->p_sigacts;
 	register short ft;
 	int oonstack, fsize;
 	extern char sigcode[], esigcode[];
 
 	frame = (struct frame *)p->p_md.md_regs;
 	ft = frame->f_format;
-	oonstack = ps->ps_sigstk.ss_flags & SA_ONSTACK;
+	oonstack = psp->ps_sigstk.ss_flags & SA_ONSTACK;
 
 	/*
 	 * Allocate and validate space for the signal handler
@@ -609,17 +480,12 @@ sendsig(catcher, sig, mask, code)
 	 * will fail if the process has not already allocated
 	 * the space with a `brk'.
 	 */
-#ifdef COMPAT_HPUX
-	if (p->p_emul == &emul_hpux)
-		fsize = sizeof(struct sigframe) + sizeof(struct hpuxsigframe);
-	else
-#endif
 	fsize = sizeof(struct sigframe);
-	if ((ps->ps_flags & SAS_ALTSTACK) && !oonstack &&
-	    (ps->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sigframe *)(ps->ps_sigstk.ss_base +
-					 ps->ps_sigstk.ss_size - fsize);
-		ps->ps_sigstk.ss_flags |= SA_ONSTACK;
+	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
+	    (psp->ps_sigonstack & sigmask(sig))) {
+		fp = (struct sigframe *)(psp->ps_sigstk.ss_base +
+		    psp->ps_sigstk.ss_size - fsize);
+		psp->ps_sigstk.ss_flags |= SA_ONSTACK;
 	} else
 		fp = (struct sigframe *)(frame->f_regs[SP] - fsize);
 	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
@@ -715,36 +581,6 @@ sendsig(catcher, sig, mask, code)
 	kfp->sf_sc.sc_ap = (int)&fp->sf_state;
 	kfp->sf_sc.sc_pc = frame->f_pc;
 	kfp->sf_sc.sc_ps = frame->f_sr;
-#ifdef COMPAT_HPUX
-	/*
-	 * Create an HP-UX style sigcontext structure and associated goo
-	 */
-	if (p->p_emul == &emul_hpux) {
-		register struct hpuxsigframe *hkfp;
-
-		hkfp = (struct hpuxsigframe *)&kfp[1];
-		hkfp->hsf_signum = bsdtohpuxsig(kfp->sf_signum);
-		hkfp->hsf_code = kfp->sf_code;
-		hkfp->hsf_scp = (struct sigcontext *)
-			&((struct hpuxsigframe *)(&fp[1]))->hsf_sc;
-		hkfp->hsf_sc.hsc_syscall = 0;		/* XXX */
-		hkfp->hsf_sc.hsc_action = 0;		/* XXX */
-		hkfp->hsf_sc.hsc_pad1 = hkfp->hsf_sc.hsc_pad2 = 0;
-		hkfp->hsf_sc.hsc_onstack = kfp->sf_sc.sc_onstack;
-		hkfp->hsf_sc.hsc_mask = kfp->sf_sc.sc_mask;
-		hkfp->hsf_sc.hsc_sp = kfp->sf_sc.sc_sp;
-		hkfp->hsf_sc.hsc_ps = kfp->sf_sc.sc_ps;
-		hkfp->hsf_sc.hsc_pc = kfp->sf_sc.sc_pc;
-		hkfp->hsf_sc.hsc_pad = 0;
-		hkfp->hsf_sc.hsc_magic = 0xdeadbeef;
-		hkfp->hsf_sc.hsc_realsc = kfp->sf_scp;
-		bcopy((caddr_t)frame->f_regs, (caddr_t)hkfp->hsf_regs,
-		      sizeof (hkfp->hsf_regs));
-
-		kfp->sf_signum = hkfp->hsf_signum;
-		kfp->sf_scp = hkfp->hsf_scp;
-	}
-#endif
 	(void) copyout((caddr_t)kfp, (caddr_t)fp, fsize);
 	frame->f_regs[SP] = (int)fp;
 #ifdef DEBUG
@@ -779,7 +615,7 @@ sendsig(catcher, sig, mask, code)
 sigreturn(p, uap, retval)
 	struct proc *p;
 	struct sigreturn_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	register struct sigcontext *scp;
 	register struct frame *frame;
@@ -788,58 +624,18 @@ sigreturn(p, uap, retval)
 	struct sigstate tstate;
 	int flags;
 
-	scp = SCARG(uap,sigcntxp);
+	scp = SCARG(uap, sigcntxp);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
 		printf("sigreturn: pid %d, scp %x\n", p->p_pid, scp);
 #endif
 	if ((int)scp & 1)
 		return (EINVAL);
-#ifdef COMPAT_HPUX
+
 	/*
-	 * Grab context as an HP-UX style context and determine if it
-	 * was one that we contructed in sendsig.
+	 * Test and fetch the context structure.
+	 * We grab it all at once for speed.
 	 */
-	if (p->p_emul == &emul_hpux) {
-		struct hpuxsigcontext *hscp = (struct hpuxsigcontext *)scp;
-		struct hpuxsigcontext htsigc;
-
-		if (useracc((caddr_t)hscp, sizeof (*hscp), B_WRITE) == 0 ||
-		    copyin((caddr_t)hscp, (caddr_t)&htsigc, sizeof htsigc))
-			return (EINVAL);
-		/*
-		 * If not generated by sendsig or we cannot restore the
-		 * BSD-style sigcontext, just restore what we can -- state
-		 * will be lost, but them's the breaks.
-		 */
-		hscp = &htsigc;
-		if (hscp->hsc_magic != 0xdeadbeef ||
-		    (scp = hscp->hsc_realsc) == 0 ||
-		    useracc((caddr_t)scp, sizeof (*scp), B_WRITE) == 0 ||
-		    copyin((caddr_t)scp, (caddr_t)&tsigc, sizeof tsigc)) {
-			if (hscp->hsc_onstack & 01)
-				p->p_sigacts->ps_sigstk.ss_flags |= SA_ONSTACK;
-			else
-				p->p_sigacts->ps_sigstk.ss_flags &= ~SA_ONSTACK;
-			p->p_sigmask = hscp->hsc_mask &~ sigcantmask;
-			frame = (struct frame *) p->p_md.md_regs;
-			frame->f_regs[SP] = hscp->hsc_sp;
-			frame->f_pc = hscp->hsc_pc;
-			frame->f_sr = hscp->hsc_ps &~ PSL_USERCLR;
-			return (EJUSTRETURN);
-		}
-		/*
-		 * Otherwise, overlay BSD context with possibly modified
-		 * HP-UX values.
-		 */
-		tsigc.sc_onstack = hscp->hsc_onstack;
-		tsigc.sc_mask = hscp->hsc_mask;
-		tsigc.sc_sp = hscp->hsc_sp;
-		tsigc.sc_ps = hscp->hsc_ps;
-		tsigc.sc_pc = hscp->hsc_pc;
-	} else
-#endif
-
 	if (useracc((caddr_t)scp, sizeof (*scp), B_WRITE) == 0 ||
 	    copyin((caddr_t)scp, (caddr_t)&tsigc, sizeof tsigc))
 		return (EINVAL);
@@ -886,7 +682,7 @@ sigreturn(p, uap, retval)
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 		printf("sigreturn(%d): ssp %x usp %x scp %x ft %d\n",
-		       p->p_pid, &flags, scp->sc_sp, uap->sigcntxp,
+		       p->p_pid, &flags, scp->sc_sp, SCARG(uap, sigcntxp),
 		       (flags&SS_RTEFRAME) ? tstate.ss_frame.f_format : -1);
 #endif
 	/*
@@ -959,26 +755,29 @@ static void reboot_sync()
 /*
  * Common part of the BSD and SunOS reboot system calls.
  */
-static int reboot2(howto, user_boot_string)
+int reboot2(howto, user_boot_string)
 	int howto;
 	char *user_boot_string;
 {
 	char *bs, *p;
-	char default_boot_string[16];
+	char default_boot_string[8];
+
+	/* take a snap shot before clobbering any registers */
+	if (curproc && curproc->p_addr)
+		savectx(curproc->p_addr);
 
 	if ((howto & RB_NOSYNC) == 0) {
 		reboot_sync();
+		/*
+		 * If we've been adjusting the clock, the todr
+		 * will be out of synch; adjust it now.
+		 *
+		 * XXX - However, if the kernel has been sitting in ddb,
+		 * the time will be way off, so don't set the HW clock!
+		 * XXX - Should do sanity check against HW clock. -gwr
+		 */
+		/* resettodr(); */
 	}
-
-	/*
-	 * If we've been adjusting the clock, the todr
-	 * will be out of synch; adjust it now.
-	 *
-	 * XXX - However, if the kernel has been sitting in ddb,
-	 * the time will be way off, so don't set the HW clock!
-	 * XXX - Should do sanity check against HW clock. -gwr
-	 */
-	/* resettodr(); */
 
 	/* Write out a crash dump if asked. */
 	splhigh();
@@ -1045,7 +844,8 @@ long	dumplo = 0; 		/* blocks */
  * This is called by cpu_startup to set dumplo, dumpsize.
  * Dumps always skip the first CLBYTES of disk space
  * in case there might be a disk label stored there.
- * If there is extra space, put dump at the end.
+ * If there is extra space, put dump at the end to
+ * reduce the chance that swapping trashes it.
  */
 void
 dumpconf()
@@ -1131,7 +931,7 @@ regdump(fp, sbytes)
 	splx(s);
 }
 
-#define KSADDR	((int *)&(kstack[(UPAGES-1)*NBPG]))
+#define KSADDR	((int *)((u_int)curproc->p_addr + USPACE - NBPG))
 
 dumpmem(ptr, sz, ustack)
 	register int *ptr;
@@ -1179,12 +979,14 @@ hexstr(val, len)
 	return(nbuf);
 }
 
-straytrap(pc, evec)
-	int pc;
-	u_short evec;
+straytrap(frame)
+	struct frame frame;
 {
-	printf("unexpected trap (vector offset %x) from %x\n",
-	       evec & 0xFFF, pc);
+	printf("unexpected trap; vector offset 0x%x from 0x%x\n",
+		frame.f_vector, frame.f_pc);
+#ifdef	DDB
+	kdb_trap(-1, &frame);
+#endif
 }
 
 int
