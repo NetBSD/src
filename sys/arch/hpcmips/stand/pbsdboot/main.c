@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.44 2000/08/29 15:10:18 takemura Exp $	*/
+/*	$NetBSD: main.c,v 1.45 2000/09/10 08:29:53 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 Shin Takemura.
@@ -59,7 +59,7 @@
  */
 TCHAR *version_string = 
 	TEXT("PocketBSD boot loader\r\n")
-	TEXT("Version 1.15.0 2000.08.29\r\n")
+	TEXT("Version 1.16.0 2000.09.10\r\n")
 #if ( _WIN32_WCE < 200 )
 	TEXT("Compiled for WinCE 1.01\r\n")
 #else
@@ -103,6 +103,7 @@ struct fb_setting {
 -----------------------------------------------------------------------------*/
 HINSTANCE  hInst = NULL;
 HWND		hDlgMain;
+HWND		hBack;
 HWND		hWndCB = NULL;
 HWND		hDlgLoad = NULL;
 unsigned int	dlgStatus;
@@ -348,6 +349,7 @@ int kernel_list_items = ARRAYSIZEOF(kernel_list);
 
 -----------------------------------------------------------------------------*/
 BOOL CALLBACK MainDlgProc(HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 void SetBootInfo(struct bootinfo *bi, struct fb_setting *fbs);
 void wstrcpy(TCHAR* dst, TCHAR* src);
 int reverse_fb_type(int type);
@@ -434,13 +436,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		     _WIN32_WCE, osversion);
 
 	wc.style          = (UINT)NULL;
-	wc.lpfnWndProc    = (WNDPROC) DefWindowProc;
+	wc.lpfnWndProc    = (WNDPROC) WndProc;
 	wc.cbClsExtra     = 0;
 	wc.cbWndExtra     = 0;
 	wc.hInstance      = hInstance;
 	wc.hIcon          = NULL;
 	wc.hCursor        = NULL;
-	wc.hbrBackground  = (HBRUSH) GetStockObject(GRAY_BRUSH);//LTGRAY_BRUSH);//WHITE_BRUSH);
+	wc.hbrBackground  = (HBRUSH) GetStockObject(WHITE_BRUSH);
 	wc.lpszMenuName   = NULL;
 	wc.lpszClassName  = whoami;
 
@@ -451,18 +453,32 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 	hardware_test();
 
+
+	hBack = CreateWindowEx(0,
+				  szAppName,
+				  szTitle,
+				  WS_VISIBLE,
+				  CW_USEDEFAULT,
+				  CW_USEDEFAULT,
+				  CW_USEDEFAULT,
+				  CW_USEDEFAULT,
+				  NULL,
+				  NULL,
+				  hInstance,
+				  NULL);
+
+
 	hdc = GetDC(0);
 	width = GetDeviceCaps(hdc,HORZRES);
 	height = GetDeviceCaps(hdc,VERTRES);
 	ReleaseDC(0,hdc);
 
 	if(width > height){
-		hDlgMain = CreateDialog(hInstance,MAKEINTRESOURCE(IDD_MAIN_320X240),NULL,MainDlgProc); 
+		hDlgMain = CreateDialog(hInstance,MAKEINTRESOURCE(IDD_MAIN_320X240),hBack,MainDlgProc); 
 	}
 	else{
-		hDlgMain = CreateDialog(hInstance,MAKEINTRESOURCE(IDD_MAIN_240X320),NULL,MainDlgProc);
+		hDlgMain = CreateDialog(hInstance,MAKEINTRESOURCE(IDD_MAIN_240X320),hBack,MainDlgProc);
 	}
-
 
 	SetFocus(GetDlgItem(hDlgMain, IDC_BOOT));
 	SetForegroundWindow(hDlgMain);
@@ -587,6 +603,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 BOOL CALLBACK DlgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message) {
+
 	case WM_INITDIALOG:
 		return (1);
 
@@ -1056,8 +1073,7 @@ BOOL BootKernel(int directboot)
 	
 	char *p, *argv[32];
 	struct bootinfo bi;
-	
-	
+
 	if (GetDlgItemText(hDlgMain, IDC_KERNEL, wkernel_name,
 		sizeof(wkernel_name)) == 0) {      
 		MessageBox (NULL, TEXT("Kernel name required"),
@@ -1179,6 +1195,37 @@ BOOL BootKernel(int directboot)
 	return FALSE;
 }
 
+LRESULT CALLBACK WndProc(HWND hWnd, UINT message,
+						 WPARAM wParam, LPARAM lParam ){
+	switch (message) {
+	case WM_CREATE:
+		palette_init(hWnd);
+		break;
+
+	case WM_PALETTECHANGED:
+		palette_check(hWnd);
+		break;
+
+	 case WM_QUERYNEWPALETTE:
+		return(TRUE);
+
+	case WM_CLOSE:
+	        sndPlaySound(TEXT("Close"), SND_NODEFAULT | SND_ASYNC);
+
+		DestroyWindow(hWnd);
+		break;
+
+	case WM_DESTROY:
+	        PostQuitMessage(0);
+		break;
+
+	default:
+        	return (DefWindowProc(hWnd, message, wParam, lParam));
+
+	}
+	return 0;
+}
+
 BOOL CALLBACK MainDlgProc(HWND hWnd, UINT message,
                           WPARAM wParam, LPARAM lParam )
 {
@@ -1189,13 +1236,7 @@ BOOL CALLBACK MainDlgProc(HWND hWnd, UINT message,
 		sndPlaySound(TEXT("OpenProg"), SND_NODEFAULT | SND_ASYNC);
 		hWndCB = CommandBar_Create(hInst, hWnd, 1);
 		CommandBar_AddAdornments(hWndCB, STD_HELP, (DWORD)NULL);
-		palette_init(hWnd);
 		break;
-/*	 case WM_CTLCOLORSTATIC:
-		SetTextColor((HDC)wParam, GetSysColor(COLOR_STATICTEXT));
-		SetBkMode((HDC)wParam, TRANSPARENT);
-		return (long)GetStockObject(WHITE_BRUSH);
-		break;*/
 	case WM_PAINT:
 		{
 		HDC          hdc;
