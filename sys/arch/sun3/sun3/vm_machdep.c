@@ -119,11 +119,11 @@ cpu_fork(p1, p2)
  * pcb and stack and never returns.  We block memory allocation
  * until swtch_exit has made things safe again.
  */
-void
+volatile void
 cpu_exit(p)
 	struct proc *p;
 {
-
+	extern volatile void swtch_exit();
 	vmspace_free(p->p_vmspace);
 
 	(void) splimp();
