@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.2.6.4 2001/11/17 00:42:11 nathanw Exp $	*/
+/*	$NetBSD: userret.h,v 1.2.6.5 2001/12/17 20:48:22 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ userret(l)
 
 	/* Invoke any pending upcalls. */
 	if (l->l_flag & L_SA_UPCALL)
-		cpu_upcall(l);
+		sa_upcall_userret(l);
 
 	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }
