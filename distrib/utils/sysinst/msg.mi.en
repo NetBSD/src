@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.128 2004/06/05 21:18:59 dsl Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.129 2004/07/17 11:28:16 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -892,7 +892,7 @@ the old NetBSD/386BSD/FreeBSD partition type. Do you want to change the type
 of this partition to the new NetBSD-only partition type?}
 
 message choose_timezone
-{Please choose the timezone that fits you best from the list below.
+{Please choose the timezone that fits you best from the list below. 
 Press RETURN to select an entry. 
 Press 'x' followed by RETURN to quit the timezone selection. 
 

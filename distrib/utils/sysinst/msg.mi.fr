@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.78 2004/06/07 18:27:39 bouyer Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.79 2004/07/17 11:28:16 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -914,7 +914,7 @@ message upgradeparttype
 NetBSD/386BSD/FreeBSD. Voulez-vous le changer pour le nouveau ? }
 
 message choose_timezone	
-{Sélectionnez votre zone horaire dans la liste suivante.
+{Sélectionnez votre zone horaire dans la liste suivante. 
 Appuyez sur ENTREE pour confirmer votre choix. 
 Appuyez sur 'x' puis ENTREE pour quitter la selection de la zone horaire.
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.39 2004/06/05 21:19:00 dsl Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.40 2004/07/17 11:28:16 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -874,7 +874,7 @@ jest starego typu NetBSD/386BSD/FreeBSD. Czy chcesz zmienic typ tej partycji
 na nowa partycje tylko dla NetBSD?}
 
 message choose_timezone
-{Wybierz strefe czasowa, ktora najlepiej ci odpowiada z ponizszej listy.
+{Wybierz strefe czasowa, ktora najlepiej ci odpowiada z ponizszej listy. 
 Nacisnij ENTER aby wybrac. 
 Nacisnij 'x' a potem ENTER aby wyjsc.
 
