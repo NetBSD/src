@@ -1,4 +1,4 @@
-/*	$NetBSD: rsh.c,v 1.11 1997/07/06 19:31:29 christos Exp $	*/
+/*	$NetBSD: rsh.c,v 1.12 1997/07/20 20:44:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rsh.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: rsh.c,v 1.11 1997/07/06 19:31:29 christos Exp $");
+__RCSID("$NetBSD: rsh.c,v 1.12 1997/07/20 20:44:23 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,6 +98,10 @@ int	checkfd __P((struct pollfd *, int));
 void	talk __P((int, sigset_t *, pid_t, int));
 void	usage __P((void));
 int	main __P((int, char **));
+#ifdef IN_RCMD
+int	 orcmd __P((char **, int, const char *,
+    const char *, const char *, int *));
+#endif
 
 int
 main(argc, argv)
