@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.27 1998/09/18 20:35:12 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.28 1998/10/13 17:09:16 wsanchez Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: var.c,v 1.27 1998/09/18 20:35:12 christos Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.28 1998/10/13 17:09:16 wsanchez Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.27 1998/09/18 20:35:12 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.28 1998/10/13 17:09:16 wsanchez Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -95,6 +95,7 @@ __RCSID("$NetBSD: var.c,v 1.27 1998/09/18 20:35:12 christos Exp $");
 
 #include    <ctype.h>
 #ifndef MAKE_BOOTSTRAP
+#include    <sys/types.h>
 #include    <regex.h>
 #endif
 #include    <stdlib.h>
