@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.109 2005/02/22 14:40:00 peter Exp $
+# $NetBSD: mi,v 1.110 2005/03/15 02:34:54 atatat Exp $
 ./etc/mtree/set.misc				misc-sys-root
 ./usr/share/dict/README				misc-reference-share	share
 ./usr/share/dict/eign				misc-reference-share	share
@@ -700,12 +700,14 @@
 ./usr/share/sendmail/feature/bitdomain.m4	misc-sendmail-share	sendmail,share
 ./usr/share/sendmail/feature/blacklist_recipients.m4	misc-sendmail-share	sendmail,share
 ./usr/share/sendmail/feature/compat_check.m4	misc-sendmail-share	sendmail,share
+./usr/share/sendmail/feature/conncontrol.m4	misc-sendmail-share	sendmail,share
 ./usr/share/sendmail/feature/delay_checks.m4	misc-sendmail-share	sendmail,share
 ./usr/share/sendmail/feature/dnsbl.m4		misc-sendmail-share	sendmail,share
 ./usr/share/sendmail/feature/domaintable.m4	misc-sendmail-share	sendmail,share
 ./usr/share/sendmail/feature/enhdnsbl.m4	misc-sendmail-share	sendmail,share
 ./usr/share/sendmail/feature/generics_entire_domain.m4	misc-sendmail-share	sendmail,share
 ./usr/share/sendmail/feature/genericstable.m4	misc-sendmail-share	sendmail,share
+./usr/share/sendmail/feature/greet_pause.m4	misc-sendmail-share	sendmail,share
 ./usr/share/sendmail/feature/ldap_routing.m4	misc-sendmail-share	sendmail,share
 ./usr/share/sendmail/feature/limited_masquerade.m4	misc-sendmail-share	sendmail,share
 ./usr/share/sendmail/feature/local_lmtp.m4	misc-sendmail-share	sendmail,share
@@ -717,9 +719,10 @@
 ./usr/share/sendmail/feature/masquerade_entire_domain.m4	misc-sendmail-share	sendmail,share
 ./usr/share/sendmail/feature/masquerade_envelope.m4	misc-sendmail-share	sendmail,share
 ./usr/share/sendmail/feature/msp.m4		misc-sendmail-share	sendmail,share
+./usr/share/sendmail/feature/mtamark.m4		misc-sendmail-share	sendmail,share
 ./usr/share/sendmail/feature/no_default_msa.m4	misc-sendmail-share	sendmail,share
 ./usr/share/sendmail/feature/nocanonify.m4	misc-sendmail-share	sendmail,share
-./usr/share/sendmail/feature/nodns.m4		misc-sendmail-share	sendmail,share
+./usr/share/sendmail/feature/nodns.m4		misc-obsolete		obsolete
 ./usr/share/sendmail/feature/notsticky.m4	misc-sendmail-share	sendmail,share
 ./usr/share/sendmail/feature/nouucp.m4		misc-sendmail-share	sendmail,share
 ./usr/share/sendmail/feature/nullclient.m4	misc-sendmail-share	sendmail,share
@@ -727,6 +730,7 @@
 ./usr/share/sendmail/feature/preserve_luser_host.m4	misc-sendmail-share	sendmail,share
 ./usr/share/sendmail/feature/promiscuous_relay.m4	misc-sendmail-share	sendmail,share
 ./usr/share/sendmail/feature/queuegroup.m4	misc-sendmail-share	sendmail,share
+./usr/share/sendmail/feature/ratecontrol.m4	misc-sendmail-share	sendmail,share
 ./usr/share/sendmail/feature/rbl.m4		misc-obsolete		obsolete
 ./usr/share/sendmail/feature/redirect.m4	misc-sendmail-share	sendmail,share
 ./usr/share/sendmail/feature/relay_based_on_MX.m4	misc-sendmail-share	sendmail,share
@@ -736,6 +740,7 @@
 ./usr/share/sendmail/feature/relay_mail_from.m4	misc-sendmail-share	sendmail,share
 ./usr/share/sendmail/feature/smrsh.m4		misc-sendmail-share	sendmail,share
 ./usr/share/sendmail/feature/stickyhost.m4	misc-sendmail-share	sendmail,share
+./usr/share/sendmail/feature/use_client_ptr.m4	misc-sendmail-share	sendmail,share
 ./usr/share/sendmail/feature/use_ct_file.m4	misc-sendmail-share	sendmail,share
 ./usr/share/sendmail/feature/use_cw_file.m4	misc-sendmail-share	sendmail,share
 ./usr/share/sendmail/feature/uucpdomain.m4	misc-sendmail-share	sendmail,share
@@ -779,6 +784,7 @@
 ./usr/share/sendmail/ostype/darwin.m4		misc-sendmail-share	sendmail,share
 ./usr/share/sendmail/ostype/dgux.m4		misc-sendmail-share	sendmail,share
 ./usr/share/sendmail/ostype/domainos.m4		misc-sendmail-share	sendmail,share
+./usr/share/sendmail/ostype/dragonfly.m4	misc-sendmail-share	sendmail,share
 ./usr/share/sendmail/ostype/dynix3.2.m4		misc-sendmail-share	sendmail,share
 ./usr/share/sendmail/ostype/freebsd4.m4		misc-sendmail-share	sendmail,share
 ./usr/share/sendmail/ostype/freebsd5.m4		misc-sendmail-share	sendmail,share
@@ -813,6 +819,9 @@
 ./usr/share/sendmail/ostype/sunos4.1.m4		misc-sendmail-share	sendmail,share
 ./usr/share/sendmail/ostype/svr4.m4		misc-sendmail-share	sendmail,share
 ./usr/share/sendmail/ostype/ultrix4.m4		misc-sendmail-share	sendmail,share
+./usr/share/sendmail/ostype/unicos.m4		misc-sendmail-share	sendmail,share
+./usr/share/sendmail/ostype/unicosmk.m4		misc-sendmail-share	sendmail,share
+./usr/share/sendmail/ostype/unicosmp.m4		misc-sendmail-share	sendmail,share
 ./usr/share/sendmail/ostype/unixware7.m4	misc-sendmail-share	sendmail,share
 ./usr/share/sendmail/ostype/unknown.m4		misc-sendmail-share	sendmail,share
 ./usr/share/sendmail/ostype/uxpds.m4		misc-sendmail-share	sendmail,share
