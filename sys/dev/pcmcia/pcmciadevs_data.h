@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.205 2004/08/07 17:18:20 mycroft Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.206 2004/08/10 03:03:29 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.204 2004/08/07 17:18:09 mycroft Exp 
+ *	NetBSD: pcmciadevs,v 1.205 2004/08/10 03:03:11 mycroft Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -1310,13 +1310,6 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Corega Wireless LAN WLCFL-11",	}
 	,
 	{
-	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_DIGITAL_DEPCMXX,
-	    PCMCIA_CIS_DIGITAL_DEPCMXX,
-	    0,
-	    "Digital Equipment Corporation",
-	    "DEC DEPCM-BA",	}
-	,
-	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_DLINK_DE650,
 	    PCMCIA_CIS_DLINK_DE650,
 	    0,
@@ -1728,6 +1721,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_INVALID,
 	    0,
 	    "Sharp Corporation",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_DIGITAL,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "Digital Equipment Corporation",
 	    NULL,
 	},
 	{
@@ -2272,14 +2273,6 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_INVALID,
 	    0,
 	    "CNet",
-	    NULL,
-	},
-	{
-	    PCMCIA_VENDOR_DIGITAL,
-	    PCMCIA_KNOWNDEV_NOPROD,
-	    PCMCIA_CIS_INVALID,
-	    0,
-	    "Digital Equipment Corporation",
 	    NULL,
 	},
 	{
