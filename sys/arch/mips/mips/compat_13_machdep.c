@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.1 1998/09/13 10:29:03 thorpej Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.2 1998/09/14 07:04:07 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.1 1998/09/13 10:29:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.2 1998/09/14 07:04:07 jonathan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -26,7 +26,7 @@ __KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.1 1998/09/13 10:29:03 thorpe
 #include <sys/mount.h>
 #include <sys/syscallargs.h> 
 
-#include <machine/cpuregs.h>
+#include <mips/regnum.h>
 
 int
 compat_13_sys_sigreturn(p, v, retval)
@@ -55,14 +55,14 @@ compat_13_sys_sigreturn(p, v, retval)
 	if ((error = copyin(scp, &ksc, sizeof(ksc))) != 0)
 		return (error);
 
-	if (ksc.sc.regs[ZERO] != 0xACEDBADE)		/* magic number */
+	if (ksc.sc_regs[ZERO] != 0xACEDBADE)		/* magic number */
 		return (EINVAL);
 
 	/* Resture the register context. */
 	regs = p->p_md.md_regs;
 	regs[PC] = ksc.sc_pc;
 	regs[MULLO] = ksc.mullo;
-	rege[MULHI] = ksc.mulhi;
+	regs[MULHI] = ksc.mulhi;
 	memcpy(&regs[1], &scp->sc_regs[1],
 	    sizeof(scp->sc_regs) - sizeof(scp->sc_regs[0]));
 	if (scp->sc_fpused)
