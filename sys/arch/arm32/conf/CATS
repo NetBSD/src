@@ -1,4 +1,4 @@
-#	$NetBSD: CATS,v 1.28 2000/03/26 04:31:39 tsutsui Exp $
+#	$NetBSD: CATS,v 1.29 2000/04/03 00:03:29 augustss Exp $
 #
 #	CATS -- CHALTECH CATS Development kernel
 #
@@ -326,6 +326,7 @@ ucom*	at umodem?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
+atapibus* at umass? channel ?
 scsibus* at umass? channel ?
 
 # USB audio

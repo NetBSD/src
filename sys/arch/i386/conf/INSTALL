@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.139 2000/03/22 00:58:20 cgd Exp $
+#	$NetBSD: INSTALL,v 1.140 2000/04/03 00:03:30 augustss Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -543,6 +543,7 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # USB Mass Storage
 #umass*	at uhub? port ? configuration ? interface ?
+#atapibus* at umass? channel ?
 #scsibus* at umass? channel ?
 
 # USB Generic driver

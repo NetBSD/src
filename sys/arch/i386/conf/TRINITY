@@ -1,4 +1,4 @@
-#	$NetBSD: TRINITY,v 1.93 2000/03/22 00:58:20 cgd Exp $
+#	$NetBSD: TRINITY,v 1.94 2000/04/03 00:03:30 augustss Exp $
 #	From: GENERIC,v 1.260 1999/09/28 18:07:29 thorpej Exp
 #
 #	TRINITY -- Mycroft's laptop
@@ -547,6 +547,7 @@ ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 
 # USB Mass Storage
 #umass*	at uhub? port ? configuration ? interface ?
+#atapibus* at umass? channel ?
 #scsibus* at umass? channel ?
 
 # USB audio

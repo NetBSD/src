@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.319 2000/03/31 04:47:52 tsarna Exp $
+#	$NetBSD: GENERIC,v 1.320 2000/04/03 00:03:30 augustss Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.319 $"
+#ident 		"GENERIC-$Revision: 1.320 $"
 
 maxusers	32		# estimated number of users
 
@@ -623,6 +623,7 @@ ucom*	at umodem?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
+atapibus* at umass? channel ?
 scsibus* at umass? channel ?
 
 # USB audio

@@ -1,4 +1,4 @@
-#	$NetBSD: EBSA285,v 1.14 2000/03/22 00:58:18 cgd Exp $
+#	$NetBSD: EBSA285,v 1.15 2000/04/03 00:03:29 augustss Exp $
 #
 #	EBSA285 -- EBSA285 Architecture Kernel
 #
@@ -285,6 +285,7 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # USB Mass Storage
 #umass*	at uhub? port ? configuration ? interface ?
+#atapibus* at umass? channel ?
 #scsibus* at umass? channel ?
 
 # USB audio
