@@ -298,7 +298,7 @@ shnbsd_get_next_pc (CORE_ADDR pc)
     {
       displacement = read_register (BRANCH_FAR_REG(insn));
       /* XXX: cannot step through delay slot, so break at the target */
-      next_pc = pc + displacement;
+      next_pc = pc + 4 + displacement;
     }
 
   /* JMP, JSR */
