@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.1 1998/05/15 10:15:57 tsubai Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.2 1998/09/01 17:42:59 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -246,9 +246,10 @@ readdisklabel(dev, strat, lp, osdep)
 
 	osdep->cd_start = -1;
 
-if (get_netbsd_label(dev, strat, lp, 0)) {
- osdep->cd_start = 0;
-}
+	if (get_netbsd_label(dev, strat, lp, 0)) {
+		osdep->cd_start = 0;
+	}
+	osdep->cd_start = 0;	/* XXX for now */
 
 	/*mbr_to_label(dev, strat, MBRSECTOR, lp, &lp->d_npartitions, osdep, 0);*/
 	return 0;
