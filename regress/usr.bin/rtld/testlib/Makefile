@@ -1,29 +1,26 @@
-# $NetBSD: Makefile,v 1.2 2002/04/14 21:44:22 wiz Exp $
+# $NetBSD: Makefile,v 1.3 2002/08/28 17:05:30 drochner Exp $
 
 SRCS=	ccexc.cc construct.cc virt.cc
 
-LIB=	testlib.so
+LIB=	test
+TESTLIB=	testlib.so
 
-OBJS=	${SRCS:.cc=.o}
-
-CPICFLAGS= -fpic -DPIC
-
-.cc.o:
-	${COMPILE.cc} ${CPICFLAGS} ${.IMPSRC} -o ${.TARGET}
+CLEANFILES+=	${TESTLIB}
+NOPROFILE=	yes
+SHLIB_MAJOR=	1
+SHLIB_MINOR=	0
+#CXXFLAGS+= -fno-rtti
+LDADD+=	-lstdc++
 
 .if (${MACHINE_ARCH} == "i386")
-all realall:	${LIB}
+all realall:	${TESTLIB}
 .else
 all realall:
 .endif
 
-${LIB}: ${OBJS}
-	${CXX} -shared -o ${LIB} ${OBJS}
-
-clean cleandir:
-	rm -f *.o *.so
+${TESTLIB}: lib${LIB}.so.1.0
+	cp lib${LIB}.so.1.0 ${TESTLIB}
 
 regress:
 
-.include <bsd.obj.mk>
-.include <bsd.dep.mk>
+.include <bsd.lib.mk>
