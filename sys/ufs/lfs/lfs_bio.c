@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.73 2003/09/07 11:53:58 yamt Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.74 2003/09/23 05:26:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.73 2003/09/07 11:53:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.74 2003/09/23 05:26:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,6 @@ int	lfs_writing	     = 0;	/* Set if already kicked off a writer
 struct simplelock lfs_subsys_lock = SIMPLELOCK_INITIALIZER;
 
 extern int lfs_dostats;
-extern int lfs_do_flush;
 
 /*
  * reserved number/bytes of locked buffers
