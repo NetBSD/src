@@ -1,4 +1,4 @@
-/*	$NetBSD: __setjmp14.S,v 1.6 2004/01/19 18:33:21 martin Exp $	*/
+/*	$NetBSD: __setjmp14.S,v 1.7 2004/03/23 18:54:03 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 	.asciz "@(#)setjmp.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: __setjmp14.S,v 1.6 2004/01/19 18:33:21 martin Exp $")
+	RCSID("$NetBSD: __setjmp14.S,v 1.7 2004/03/23 18:54:03 pk Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -109,8 +109,8 @@ ENTRY(__setjmp14)
 	 add	%i0, 8, %o1		/* (foo being part of the sigcontext we're overwriting) */
 	
 	lduw	[%i0 + 8 + 0x10], %o0	/* foo.ss_flags */
-	and	%o0, 1, %o1		/* onstack = foo.ss_flags & 1; */
-	st	%o0, [%i0 + 0x00]	/* sc.sc_onstack = current onstack; */
+	and	%o0, 1, %o1		/* onstack = foo.ss_flags & SS_ONSTACK; */
+	st	%o1, [%i0 + 0x00]	/* sc.sc_onstack = current onstack; */
 
 	/* store essential state */
 	stx	%fp, [%i0 + 0x08]	/* sc.sc_sp = sp */
