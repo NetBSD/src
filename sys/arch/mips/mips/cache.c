@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.17 2003/02/07 17:38:48 cgd Exp $	*/
+/*	$NetBSD: cache.c,v 1.18 2003/03/08 04:43:24 rafal Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -81,7 +81,8 @@
 #endif
 
 #ifdef MIPS3_PLUS
-#include <mips/cache_r4k.h>	/* includes r5k and greater */
+#include <mips/cache_r4k.h>
+#include <mips/cache_r5k.h>
 #endif
 
 #if defined(MIPS32) || defined(MIPS64)
@@ -643,10 +644,6 @@ primary_cache_is_2way:
 #ifdef ENABLE_MIPS_R4700
 	case MIPS_R4700:
 #endif
-#ifndef ENABLE_MIPS_R3NKK
-	case MIPS_R5000:
-#endif
-	case MIPS_RM5200:
 		switch (mips_sdcache_ways) {
 		case 1:
 			switch (mips_sdcache_line_size) {
@@ -700,6 +697,21 @@ primary_cache_is_2way:
 			panic("r4k sdcache %d way line size %d",
 			    mips_sdcache_ways, mips_sdcache_line_size);
 		}
+		break;
+#ifndef ENABLE_MIPS_R3NKK
+	case MIPS_R5000:
+#endif
+	case MIPS_RM5200:
+		mips_cache_ops.mco_sdcache_wbinv_all =
+		    r5k_sdcache_wbinv_all;
+		mips_cache_ops.mco_sdcache_wbinv_range =
+		    r5k_sdcache_wbinv_range;
+		mips_cache_ops.mco_sdcache_wbinv_range_index =
+		    r5k_sdcache_wbinv_rangeall;	/* XXX? */
+		mips_cache_ops.mco_sdcache_inv_range =
+		    r5k_sdcache_wbinv_range;
+		mips_cache_ops.mco_sdcache_wb_range =
+		    r5k_sdcache_wb_range;
 		break;
 #endif /* MIPS3 || MIPS4 */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r4k.h,v 1.9 2003/02/17 11:35:02 simonb Exp $	*/
+/*	$NetBSD: cache_r4k.h,v 1.10 2003/03/08 04:43:26 rafal Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -356,29 +356,6 @@ void	r4k_pdcache_wbinv_range_index_32(vaddr_t, vsize_t);
 
 void	r4k_pdcache_inv_range_32(vaddr_t, vsize_t);
 void	r4k_pdcache_wb_range_32(vaddr_t, vsize_t);
-
-void	r5k_icache_sync_all_32(void);
-void	r5k_icache_sync_range_32(vaddr_t, vsize_t);
-void	r5k_icache_sync_range_index_32(vaddr_t, vsize_t);
-
-void	r5k_pdcache_wbinv_all_16(void);
-void	r5k_pdcache_wbinv_all_32(void);
-void	r4600v1_pdcache_wbinv_range_32(vaddr_t, vsize_t);
-void	r4600v2_pdcache_wbinv_range_32(vaddr_t, vsize_t);
-void	vr4131v1_pdcache_wbinv_range_16(vaddr_t, vsize_t);
-void	r5k_pdcache_wbinv_range_16(vaddr_t, vsize_t);
-void	r5k_pdcache_wbinv_range_32(vaddr_t, vsize_t);
-void	r5k_pdcache_wbinv_range_index_16(vaddr_t, vsize_t);
-void	r5k_pdcache_wbinv_range_index_32(vaddr_t, vsize_t);
-
-void	r4600v1_pdcache_inv_range_32(vaddr_t, vsize_t);
-void	r4600v2_pdcache_inv_range_32(vaddr_t, vsize_t);
-void	r5k_pdcache_inv_range_16(vaddr_t, vsize_t);
-void	r5k_pdcache_inv_range_32(vaddr_t, vsize_t);
-void	r4600v1_pdcache_wb_range_32(vaddr_t, vsize_t);
-void	r4600v2_pdcache_wb_range_32(vaddr_t, vsize_t);
-void	r5k_pdcache_wb_range_16(vaddr_t, vsize_t);
-void	r5k_pdcache_wb_range_32(vaddr_t, vsize_t);
 
 void	r4k_sdcache_wbinv_all_32(void);
 void	r4k_sdcache_wbinv_range_32(vaddr_t, vsize_t);

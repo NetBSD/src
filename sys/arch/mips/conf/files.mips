@@ -1,4 +1,4 @@
-#	$NetBSD: files.mips,v 1.45 2002/11/15 01:02:49 simonb Exp $
+#	$NetBSD: files.mips,v 1.46 2003/03/08 04:43:25 rafal Exp $
 #
 
 defflag	opt_cputype.h		NOFPU
@@ -45,6 +45,7 @@ file	arch/mips/mips/cache_tx39.c		mips1 & enable_mips_tx3900
 file	arch/mips/mips/cache_tx39_subr.S	mips1 & enable_mips_tx3900
 file	arch/mips/mips/cache_r4k.c		mips3 | mips4
 file	arch/mips/mips/cache_r5k.c		mips3 | mips4
+file	arch/mips/mips/cache_r5k_subr.S		mips3 | mips4
 file	arch/mips/mips/cache_r5900.c		mips3 & mips3_5900
 file	arch/mips/mips/cache_mipsNN.c		mips32 | mips64
 
