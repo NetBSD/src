@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa.c,v 1.3 2002/10/27 20:16:41 augustss Exp $	*/
+/*	$NetBSD: ubsa.c,v 1.4 2002/11/25 00:49:52 fvdl Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -81,6 +81,7 @@
 #endif
 #include <sys/proc.h>
 #include <sys/vnode.h>
+#include <sys/device.h>
 #include <sys/poll.h>
 #include <sys/sysctl.h>
 
