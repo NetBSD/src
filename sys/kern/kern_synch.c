@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.28 1994/08/30 05:37:14 mycroft Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.29 1994/08/30 06:22:10 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -690,7 +690,7 @@ db_show_all_procs(addr, haddr, count, modif)
     
 	p = allproc.lh_first;
 	db_printf("  pid proc     addr     %s comm         wchan\n",
-	    map ? "map     " : "uid  ppid  pgrp  flag stat ");
+	    map ? "map     " : "uid  ppid  pgrp  flag stat em ");
 	while (p != 0) {
 		pp = p->p_pptr;
 		if (p->p_stat) {
@@ -700,10 +700,10 @@ db_show_all_procs(addr, haddr, count, modif)
 				db_printf("%06x %s   ",
 				    p->p_vmspace, p->p_comm);
 			else
-				db_printf("%3d %5d %5d  %06x  %d  %s   ",
+				db_printf("%3d %5d %5d  %06x  %d  %d  %s   ",
 				    p->p_cred->p_ruid, pp ? pp->p_pid : -1,
 				    p->p_pgrp->pg_id, p->p_flag, p->p_stat,
-				    p->p_comm);
+				    p->p_emul, p->p_comm);
 			if (p->p_wchan) {
 				if (p->p_wmesg)
 					db_printf("%s ", p->p_wmesg);
