@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.101 2003/01/24 21:55:14 fvdl Exp $	*/
+/*	$NetBSD: fd.c,v 1.102 2003/01/30 16:33:50 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -1520,7 +1520,7 @@ loop:
 		{int block;
 		 block = (fd->sc_cylin * type->heads + head) * type->sectrac + sec;
 		 if (block != fd->sc_blkno) {
-			 printf("fdcintr: block %d != blkno %d\n", block, fd->sc_blkno);
+			 printf("fdcintr: block %d != blkno %d\n", block, (int)fd->sc_blkno);
 #ifdef DDB
 			 Debugger();
 #endif
