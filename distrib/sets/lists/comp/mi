@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.262 2000/10/05 01:55:49 itojun Exp $
+#	$NetBSD: mi,v 1.263 2000/10/06 13:43:22 itojun Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -3176,17 +3176,17 @@
 ./usr/share/man/man1/lorder.1		comp-util-man
 ./usr/share/man/man1/menuc.1		comp-miscutil-man
 ./usr/share/man/man1/mkstr.1		comp-miscutil-man
-./usr/share/man/man1/msg_clear.1	comp-miscutil-catman
-./usr/share/man/man1/msg_display.1	comp-miscutil-catman
-./usr/share/man/man1/msg_display_add.1	comp-miscutil-catman
-./usr/share/man/man1/msg_prompt.1	comp-miscutil-catman
-./usr/share/man/man1/msg_prompt_add.1	comp-miscutil-catman
-./usr/share/man/man1/msg_prompt_noecho.1	comp-miscutil-catman
-./usr/share/man/man1/msg_standend.1	comp-miscutil-catman
-./usr/share/man/man1/msg_standout.1	comp-miscutil-catman
-./usr/share/man/man1/msg_string.1	comp-miscutil-catman
-./usr/share/man/man1/msg_table_add.1	comp-miscutil-catman
-./usr/share/man/man1/msg_window.1	comp-miscutil-catman
+./usr/share/man/man1/msg_clear.1	comp-miscutil-man
+./usr/share/man/man1/msg_display.1	comp-miscutil-man
+./usr/share/man/man1/msg_display_add.1	comp-miscutil-man
+./usr/share/man/man1/msg_prompt.1	comp-miscutil-man
+./usr/share/man/man1/msg_prompt_add.1	comp-miscutil-man
+./usr/share/man/man1/msg_prompt_noecho.1	comp-miscutil-man
+./usr/share/man/man1/msg_standend.1	comp-miscutil-man
+./usr/share/man/man1/msg_standout.1	comp-miscutil-man
+./usr/share/man/man1/msg_string.1	comp-miscutil-man
+./usr/share/man/man1/msg_table_add.1	comp-miscutil-man
+./usr/share/man/man1/msg_window.1	comp-miscutil-man
 ./usr/share/man/man1/msgc.1		comp-miscutil-man
 ./usr/share/man/man1/nm.1		comp-util-man
 ./usr/share/man/man1/objcopy.1		comp-util-man
@@ -3459,13 +3459,13 @@
 ./usr/share/man/man3/RAND_load_file.3		comp-c-man
 ./usr/share/man/man3/RAND_seed.3		comp-c-man
 ./usr/share/man/man3/RAND_set_rand_method.3		comp-c-man
-./usr/share/man/man3/RMD160Data.3	comp-c-catman
-./usr/share/man/man3/RMD160End.3	comp-c-catman
-./usr/share/man/man3/RMD160File.3	comp-c-catman
-./usr/share/man/man3/RMD160Final.3	comp-c-catman
-./usr/share/man/man3/RMD160Init.3	comp-c-catman
-./usr/share/man/man3/RMD160Transform.3	comp-c-catman
-./usr/share/man/man3/RMD160Update.3	comp-c-catman
+./usr/share/man/man3/RMD160Data.3	comp-c-man
+./usr/share/man/man3/RMD160End.3	comp-c-man
+./usr/share/man/man3/RMD160File.3	comp-c-man
+./usr/share/man/man3/RMD160Final.3	comp-c-man
+./usr/share/man/man3/RMD160Init.3	comp-c-man
+./usr/share/man/man3/RMD160Transform.3	comp-c-man
+./usr/share/man/man3/RMD160Update.3	comp-c-man
 ./usr/share/man/man3/RSA_blinding_on.3		comp-c-man
 ./usr/share/man/man3/RSA_check_key.3		comp-c-man
 ./usr/share/man/man3/RSA_generate_key.3		comp-c-man
@@ -4144,7 +4144,7 @@
 ./usr/share/man/man3/pw_copy.3		comp-c-man
 ./usr/share/man/man3/pw_edit.3		comp-c-man
 ./usr/share/man/man3/pw_error.3		comp-c-man
-./usr/share/man/man3/pw_getconf.3	comp-c-catman
+./usr/share/man/man3/pw_getconf.3	comp-c-man
 ./usr/share/man/man3/pw_init.3		comp-c-man
 ./usr/share/man/man3/pw_lock.3		comp-c-man
 ./usr/share/man/man3/pw_mkdb.3		comp-c-man
@@ -4196,7 +4196,7 @@
 ./usr/share/man/man3/rint.3		comp-c-man
 ./usr/share/man/man3/rintf.3		comp-c-man
 ./usr/share/man/man3/ripemd.3		comp-c-man
-./usr/share/man/man3/rmd160.3	comp-c-catman
+./usr/share/man/man3/rmd160.3	comp-c-man
 ./usr/share/man/man3/rmtops.3		comp-c-man
 ./usr/share/man/man3/rpc.3		comp-c-man
 ./usr/share/man/man3/rpc_broadcast.3	comp-c-man
@@ -4655,8 +4655,8 @@
 ./usr/share/man/man9/callout_pending.9	comp-kern-man
 ./usr/share/man/man9/callout_reset.9	comp-kern-man
 ./usr/share/man/man9/callout_stop.9	comp-kern-man
-./usr/share/man/man9/clock_secs_to_ymdhms.9	comp-kern-catman
-./usr/share/man/man9/clock_ymdhms_to_secs.9	comp-kern-catman
+./usr/share/man/man9/clock_secs_to_ymdhms.9	comp-kern-man
+./usr/share/man/man9/clock_ymdhms_to_secs.9	comp-kern-man
 ./usr/share/man/man9/cltom.9		comp-kern-man
 ./usr/share/man/man9/copy.9		comp-kern-man
 ./usr/share/man/man9/copyin.9		comp-kern-man
