@@ -1,4 +1,4 @@
-/*	$NetBSD: tables.c,v 1.13 1995/05/24 15:22:57 christos Exp $	*/
+/*	$NetBSD: tables.c,v 1.14 1995/05/28 05:37:36 jtc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)tables.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: tables.c,v 1.13 1995/05/24 15:22:57 christos Exp $";
+static char rcsid[] = "$NetBSD: tables.c,v 1.14 1995/05/28 05:37:36 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -46,7 +46,7 @@ static char rcsid[] = "$NetBSD: tables.c,v 1.13 1995/05/24 15:22:57 christos Exp
  */
 #include "defs.h"
 #include <sys/ioctl.h>
-#include <sys/syslog.h>
+#include <syslog.h>
 #include <errno.h>
 #include <search.h>
 

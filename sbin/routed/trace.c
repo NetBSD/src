@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.c,v 1.11 1995/04/24 13:24:34 cgd Exp $	*/
+/*	$NetBSD: trace.c,v 1.12 1995/05/28 05:37:38 jtc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)trace.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: trace.c,v 1.11 1995/04/24 13:24:34 cgd Exp $";
+static char rcsid[] = "$NetBSD: trace.c,v 1.12 1995/05/28 05:37:38 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -47,7 +47,7 @@ static char rcsid[] = "$NetBSD: trace.c,v 1.11 1995/04/24 13:24:34 cgd Exp $";
 #define	RIPCMDS
 #include "defs.h"
 #include <sys/stat.h>
-#include <sys/signal.h>
+#include <signal.h>
 #include <fcntl.h>
 #include "pathnames.h"
 
