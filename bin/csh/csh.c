@@ -1,4 +1,4 @@
-/*	$NetBSD: csh.c,v 1.16 1997/01/13 17:53:15 tls Exp $	*/
+/*	$NetBSD: csh.c,v 1.17 1997/07/04 21:23:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1991, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)csh.c	8.2 (Berkeley) 10/12/93";
 #else
-static char rcsid[] = "$NetBSD: csh.c,v 1.16 1997/01/13 17:53:15 tls Exp $";
+__RCSID("$NetBSD: csh.c,v 1.17 1997/07/04 21:23:53 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -112,6 +112,8 @@ static void	phup __P((int));
 static void	srcunit __P((int, bool, bool));
 static void	mailchk __P((void));
 static Char   **defaultpath __P((void));
+
+int main __P((int, char **));
 
 int
 main(argc, argv)
