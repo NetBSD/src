@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.117 2004/06/21 10:31:57 tron Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.118 2004/06/22 08:37:35 tron Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -1144,4 +1144,11 @@ gnu/usr.bin/cvs/include/config.h		patch
 
 	Update cvs to version 1.1.17.
 	[taca, ticket #1716]
+
+tools/compat/compat_defs.h			1.40
+
+	On NetBSD boxes make sure and provide prototypes for strtouq since
+	quad_t gets exposed all the time, but routines which use it do not.
+	Otherwise callers of strtouq will lose.
+	[jmc, ticket #1717]
 
