@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.13 2000/01/10 02:25:25 deberg Exp $
+#	$NetBSD: MAKEDEV,v 1.14 2000/01/21 12:28:27 tsutsui Exp $
 #
 ###########################################################################
 #
@@ -183,12 +183,13 @@ fd)
 
 md*)
 	unit=${i#md}; blk=13; chr=32;
-	rm -f md${unit} md${unit}c rmd${unit}
-	mknod md${unit}  b $blk $((($unit +  0) * 8)) 
-	mknod md${unit}c b $blk $((($unit + 16) * 8)) 
-#	mknod rmd${unit} c $chr $((($unit + 16) * 8)) 
-	chgrp operator md${unit} md${unit}c #rmd${unit}
-	chmod 640 md${unit} md${unit}c #rmd${unit}
+	rm -f md${unit}? rmd${unit}?
+	mknod md${unit}a  b $blk $(($unit * 8 + 0)) 
+	mknod md${unit}c  b $blk $(($unit * 8 + 2)) 
+#	mknod rmd${unit}a c $chr $(($unit * 8 + 0)) 
+#	mknod rmd${unit}c c $chr $(($unit * 8 + 2)) 
+	chgrp operator md${unit}? #rmd${unit}?
+	chmod 640 md${unit}? #rmd${unit}?
 	;;
 
 ss*)

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.33 1999/12/18 03:09:49 tsutsui Exp $
+#	$NetBSD: MAKEDEV,v 1.34 2000/01/21 12:28:27 tsutsui Exp $
 #
 #	from: @(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -155,12 +155,13 @@ lkm)
 
 md*)
 	unit=${i#md}; blk=17; chr=97;
-	rm -f md${unit} md${unit}c rmd${unit}
-	mknod md${unit}  b $blk $((($unit +  0) * 8)) 
-	mknod md${unit}c b $blk $((($unit + 16) * 8)) 
-#	mknod rmd${unit} c $chr $((($unit + 16) * 8)) 
-	chgrp operator md${unit} md${unit}c #rmd${unit}
-	chmod 640 md${unit} md${unit}c #rmd${unit}
+	rm -f md${unit}? rmd${unit}?
+	mknod md${unit}a  b $blk $(($unit * 8 + 0)) 
+	mknod md${unit}c  b $blk $(($unit * 8 + 2)) 
+#	mknod rmd${unit}a c $chr $(($unit * 8 + 0)) 
+#	mknod rmd${unit}c c $chr $(($unit * 8 + 2)) 
+	chgrp operator md${unit}? #rmd${unit}?
+	chmod 640 md${unit}? #rmd${unit}?
 	;;
 
 rz*|vnd*|ccd*|raid*)
