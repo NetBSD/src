@@ -1,4 +1,4 @@
-/*	$NetBSD: wire.c,v 1.6 2003/03/09 01:38:49 christos Exp $	*/
+/*	$NetBSD: wire.c,v 1.7 2003/07/14 17:25:42 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997-2003 Erez Zadok
@@ -108,26 +108,26 @@ print_wires(void)
     return NULL;
 
   if (!localnets) {
-    sprintf(buf, "No networks.\n");
+    snprintf(buf, buf_size, "No networks.\n");
     return buf;
   }
   /* check if there's more than one network */
   if (!localnets->ip_next) {
-    sprintf(buf,
+    snprintf(buf, 1024,
 	    "Network: wire=\"%s\" (netnumber=%s).\n",
 	    localnets->ip_net_name, localnets->ip_net_num);
     return buf;
   }
   buf[0] = '\0';		/* null out buffer before appending */
   for (i = 1, al = localnets; al; al = al->ip_next, i++) {
-    sprintf(s, "Network %d: wire=\"%s\" (netnumber=%s).\n",
+    snprintf(s, sizeof(s), "Network %d: wire=\"%s\" (netnumber=%s).\n",
 	    i, al->ip_net_name, al->ip_net_num);
     bufcount += strlen(s);
     if (bufcount > buf_size) {
       buf_size *= 2;
       buf = xrealloc(buf, buf_size);
     }
-    strcat(buf, s);
+    strlcat(buf, s, buf_size);
   }
   return buf;
 }
@@ -212,16 +212,16 @@ getwire_lookup(u_long address, u_long netmask, int ishost)
   }
 
   if ((subnet & 0xffffff) == 0) {
-    sprintf(netNumberBuf, "%lu", C(subnet >> 24));
+    snprintf(netNumberBuf, sizeof(netNumberBuf), "%lu", C(subnet >> 24));
   } else if ((subnet & 0xffff) == 0) {
-    sprintf(netNumberBuf, "%lu.%lu",
+    snprintf(netNumberBuf, sizeof(netNumberBuf), "%lu.%lu",
 	C(subnet >> 24), C(subnet >> 16));
   } else if ((subnet & 0xff) == 0) {
-    sprintf(netNumberBuf, "%lu.%lu.%lu",
+    snprintf(netNumberBuf, sizeof(netNumberBuf), "%lu.%lu.%lu",
 	C(subnet >> 24), C(subnet >> 16),
 	C(subnet >> 8));
   } else {
-    sprintf(netNumberBuf, "%lu.%lu.%lu.%lu",
+    snprintf(netNumberBuf, sizeof(netNumberBuf), "%lu.%lu.%lu.%lu",
 	C(subnet >> 24), C(subnet >> 16),
 	C(subnet >> 8), C(subnet));
   }
