@@ -43,7 +43,7 @@ RSC=rc.exe
 # PROP Intermediate_Dir "WMIPSRel"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MT /W3 /O2 /D _WIN32_WCE=$(CEVersion) /D "$(CEConfigName)" /D "NDEBUG" /D "MIPS" /D "_MIPS_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /Yu"stdafx.h" /QMRWCE /c
-# ADD CPP /nologo /MT /W3 /O2 /I "." /I "../include" /I "../../../.." /I "..\libsa" /D _WIN32_WCE=$(CEVersion) /D "$(CEConfigName)" /D "NDEBUG" /D "MIPS" /D "_MIPS_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_STANDALONE" /D "__STDC__" /QMRWCE /c
+# ADD CPP /nologo /MT /W3 /O2 /I "." /I "../../../.." /I "../include" /I "..\libsa" /D _WIN32_WCE=$(CEVersion) /D "$(CEConfigName)" /D "NDEBUG" /D "MIPS" /D "_MIPS_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_STANDALONE" /D "__STDC__" /QMRWCE /c
 # SUBTRACT CPP /YX
 # ADD BASE RSC /l 0x411 /r /d "MIPS" /d "_MIPS_" /d UNDER_CE=$(CEVersion) /d _WIN32_WCE=$(CEVersion) /d "$(CEConfigName)" /d "UNICODE" /d "NDEBUG"
 # ADD RSC /l 0x411 /r /d "MIPS" /d "_MIPS_" /d UNDER_CE=$(CEVersion) /d _WIN32_WCE=$(CEVersion) /d "$(CEConfigName)" /d "UNICODE" /d "NDEBUG"
@@ -75,7 +75,7 @@ PFILE=pfile.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MTd /W3 /Zi /Od /D _WIN32_WCE=$(CEVersion) /D "$(CEConfigName)" /D "DEBUG" /D "MIPS" /D "_MIPS_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /Yu"stdafx.h" /QMRWCE /c
-# ADD CPP /nologo /MLd /W3 /Zi /Od /I "." /I "../include" /I "../../../.." /I "..\libsa" /D _WIN32_WCE=$(CEVersion) /D "$(CEConfigName)" /D "DEBUG" /D "MIPS" /D "_MIPS_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_STANDALONE" /D "__STDC__" /QMRWCE /c
+# ADD CPP /nologo /MLd /W3 /Zi /Od /I "." /I "../../../.." /I "../include" /I "..\libsa" /D _WIN32_WCE=$(CEVersion) /D "$(CEConfigName)" /D "DEBUG" /D "MIPS" /D "_MIPS_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_STANDALONE" /D "__STDC__" /QMRWCE /c
 # SUBTRACT CPP /YX
 # ADD BASE RSC /l 0x411 /r /d "MIPS" /d "_MIPS_" /d UNDER_CE=$(CEVersion) /d _WIN32_WCE=$(CEVersion) /d "$(CEConfigName)" /d "UNICODE" /d "DEBUG"
 # ADD RSC /l 0x411 /r /d "MIPS" /d "_MIPS_" /d UNDER_CE=$(CEVersion) /d _WIN32_WCE=$(CEVersion) /d "$(CEConfigName)" /d "UNICODE" /d "DEBUG"
@@ -125,10 +125,6 @@ SOURCE=.\pbsdboot.c
 # End Source File
 # Begin Source File
 
-SOURCE=.\res\pbsdboot.rc
-# End Source File
-# Begin Source File
-
 SOURCE=.\platid.c
 # End Source File
 # Begin Source File
@@ -145,6 +141,18 @@ SOURCE=.\print.c
 # End Source File
 # Begin Source File
 
+SOURCE=.\res/pbsd.bmp
+# End Source File
+# Begin Source File
+
+SOURCE=.\res/pbsd.ico
+# End Source File
+# Begin Source File
+
+SOURCE=.\res/pbsdboot.rc
+# End Source File
+# Begin Source File
+
 SOURCE=.\systeminfo.c
 # End Source File
 # Begin Source File
@@ -158,14 +166,6 @@ SOURCE=.\vmem.c
 # Begin Source File
 
 SOURCE=.\vr41xx.c
-# End Source File
-# Begin Source File
-
-SOURCE=.\res\pbsd.bmp
-# End Source File
-# Begin Source File
-
-SOURCE=.\res\pbsd.ico
 # End Source File
 # End Target
 # End Project
