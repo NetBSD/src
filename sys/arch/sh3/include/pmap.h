@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.20 2002/04/03 10:38:51 msaitoh Exp $	*/
+/*	$NetBSD: pmap.h,v 1.21 2002/04/04 18:12:23 uch Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -328,18 +328,6 @@ struct pmap_remove_record {
 };
 
 /*
- * pmap_transfer_location: used to pass the current location in the
- * pmap between pmap_transfer and pmap_transfer_ptes [e.g. during
- * a pmap_copy].
- */
-
-struct pmap_transfer_location {
-	vaddr_t addr;			/* the address (page-aligned) */
-	pt_entry_t *pte;		/* the PTE that maps address */
-	struct vm_page *ptp;		/* the PTP that the PTE lives in */
-};
-
-/*
  * global kernel variables
  */
 
@@ -381,8 +369,6 @@ void		pmap_protect(struct pmap *, vaddr_t,
 				vaddr_t, vm_prot_t);
 void		pmap_remove(struct pmap *, vaddr_t, vaddr_t);
 boolean_t	pmap_test_attrs(struct vm_page *, int);
-void		pmap_transfer(struct pmap *, struct pmap *, vaddr_t,
-				   vsize_t, vaddr_t, boolean_t);
 void		pmap_update_pg(vaddr_t);
 void		pmap_update_2pg(vaddr_t,vaddr_t);
 void		pmap_write_protect(struct pmap *, vaddr_t,
