@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1995/06/09 22:20:17 gwr Exp $
+#	$NetBSD: Makefile,v 1.5 1995/06/16 07:23:02 jtc Exp $
 
 LIB=sa
 
@@ -6,7 +6,7 @@ NOPIC=nopic
 NOPROFILE=noprofile
 
 # Logically src/sys
-S=../../../..
+S=${.CURDIR}/../../../..
 DIR_SA=$S/lib/libsa
 DIR_KERN=$S/lib/libkern
 
