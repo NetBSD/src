@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.232 2002/02/28 21:10:28 jmcneill Exp $
+$NetBSD: usbdevs,v 1.233 2002/03/10 02:54:57 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -317,6 +317,7 @@ vendor ATI2		0x0b6f	ATI
 vendor ADDONICS2	0x0bf6	Addonics Technology
 vendor AGATE		0x0c08	Agate Technologies
 vendor DMI		0x0c0b	DMI
+vendor PEN		0x0d7d	Pen Drive
 vendor MOTOROLA		0x1063	Motorola
 vendor CCYU		0x1065	CCYU Technology
 vendor PLX		0x10b5	PLX
@@ -940,6 +941,9 @@ product PALM M125		0x0040	Palm m125
 /* Panasonic products */
 product PANASONIC SDCAAE	0x1b00	MultiMediaCard Adapter
 product PANASONIC LS120		0x0901	LS-120 Camera
+
+/* Pen Driver */
+product PEN USBDISK		0x0d7d	USB Disk
 
 /* Peracom products */
 product PERACOM SERIAL1		0x0001	Serial Converter
