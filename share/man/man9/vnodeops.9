@@ -1,6 +1,6 @@
-.\"     $NetBSD: vnodeops.9,v 1.30 2004/06/25 15:33:13 wiz Exp $
+.\"     $NetBSD: vnodeops.9,v 1.31 2005/01/02 17:34:43 thorpej Exp $
 .\"
-.\" Copyright (c) 2001 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2001, 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 25, 2004
+.Dd January 2, 2005
 .Dt VNODEOPS 9
 .Os
 .Sh NAME
@@ -86,7 +86,10 @@
 .Nm VOP_GETPAGES ,
 .Nm VOP_PUTPAGES ,
 .Nm VOP_STRATEGY ,
-.Nm VOP_BWRITE
+.Nm VOP_BWRITE ,
+.Nm VOP_GETEXTATTR ,
+.Nm VOP_SETEXTATTR ,
+.Nm VOP_LISTEXTATTR ,
 .Nd vnode operations
 .Sh SYNOPSIS
 .In sys/param.h
@@ -99,6 +102,7 @@
 .In sys/unistd.h
 .In sys/fcntl.h
 .In sys/lockf.h
+.In sys/extattr.h
 .Ft int
 .Fn VOP_LOOKUP "struct vnode *dvp" "struct vnode **vpp" \
 "struct componentname *cnp"
@@ -229,6 +233,15 @@
 .Fn VOP_STRATEGY "struct vnode *vp" "struct buf *bp"
 .Ft int
 .Fn VOP_BWRITE "struct buf *bp"
+.Ft int
+.Fn VOP_GETEXTATTR "struct vnode *vp" "int attrnamespace" "const char *name" \
+"struct uio *uio" "size_t *size" "struct ucred *cred" "struct proc *p"
+.Ft int
+.Fn VOP_SETEXTATTR "struct vnode *vp" "int attrnamespace" "const char *name" \
+"struct uio *uio" "struct ucred *cred" "struct proc *p"
+.Ft int
+.Fn VOP_LISTEXTATTR "struct vnode *vp" "int attrnamespace" "struct uio *uio" \
+"size_t *size" "struct ucred *cred" "struct proc *p"
 .Pp
 Not all header files are required for each function.
 .Sh DESCRIPTION
@@ -301,6 +314,9 @@ int (*vop_getpages)() 	VOP_GETPAGES	Read VM pages from file
 int (*vop_putpages)() 	VOP_PUTPAGES	Write VM pages to file
 int (*vop_strategy)() 	VOP_STRATEGY	Read/write a file system buffer
 int (*vop_bwrite)() 	VOP_BWRITE	Write a file system buffer
+int (*vop_getextattr)()	VOP_GETEXTATTR	Get extended attribute
+int (*vop_setextattr)()	VOP_SETEXTATTR	Set extended attribute
+int (*vop_listextattr)()	VOP_LISTEXTATTR	List extended attributes
 .fi
 .Pp
 The implementation details of the vnode operations vector are not
@@ -1450,9 +1466,88 @@ The argument
 specifies the buffer to be written.
 If the operation is successful zero is returned, otherwise an
 appropriate error code is returned.
+.It Fn VOP_GETEXTATTR "vp" "attrnamespace" "name" "uio" "size" "cred" "p"
+Get an extended attribute.
+The argument
+.Fa vp
+is the locked vnode of the file or directory from which to retrieve the
+attribute.
+The argument
+.Fa attrnamespace
+specifies the extended attribute namespace.
+The argument
+.Fa name
+is a null-terminated character string naming the attribute to retrieve.
+The argument
+.Fa uio ,
+if not null, specifies where the extended attribute value is to be written.
+The argument
+.Fa size ,
+if not NULL, will contain the number of bytes required to read all of
+the attribute data upon return.
+In most cases,
+.Fa uio
+will be NULL when
+.Fa size
+is not, and vice versa.
+The argument
+.Fa cred
+specifies the user credentials to use when authorizing the request.
+The argument
+.Fa p
+specifies the process requesting the extended attribute.
+.It Fn VOP_SETEXTATTR "vp" "attrnamespace" "name" "uio" "cred" "p"
+Set an extended attribute.
+The argument
+.Fa vp
+is the locked vnode of the file or directory to which to store the
+attribute.
+The argument
+.Fa namespace
+specifies the extended attribute namespace.
+The argument
+.Fa name
+is a null-terminated character string naming the attribute to store.
+The argument
+.Fa uio
+specifies the source of the extended attribute data.
+The argument
+.Fa cred
+specifies the user credentials to use when authorizing the request.
+The argument
+.Fa p
+specifies the process setting the extended attribute.
+.It Fn VOP_LISTEXTATTR "vp" "attrnamespace" "uio" "size" "cred" "p"
+Retrieve the list of extended attributes.
+The argument
+.Fa vp
+is the locked vnode of the file or directory whose attributes are to be listed.
+The argument
+.Fa attrnamespace
+specifies the extended attribute namespace.
+The argument
+.Fa uio ,
+if not null, specifies where the extended attribute list is to be written.
+The argument
+.Fa size ,
+if not NULL, will contain the number of bytes required to read all of
+the attribute names upon return.
+In most cases,
+.Fa uio
+will be NULL when
+.Fa size
+is not, and vice versa.
+The argument
+.Fa cred
+specifies the user credentials to use when authorizing the request.
+The argument
+.Fa p
+specifies the process requesting the extended attribute list.
 .El
 .Sh ERRORS
 .Bl -tag -width Er
+.It Bq Er ENOATTR
+The requested attribute is not defined for this vnode.
 .It Bq Er ENOTDIR
 The vnode does not represent a directory.
 .It Bq Er ENOENT
@@ -1479,6 +1574,7 @@ contents of a symbolic link
 the filesystem is read-only
 .El
 .Sh SEE ALSO
+.Xr extattr 9 ,
 .Xr intro 9 ,
 .Xr lock 9 ,
 .Xr namei 9 ,
