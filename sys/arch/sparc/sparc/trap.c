@@ -42,7 +42,7 @@
  *	@(#)trap.c	8.1 (Berkeley) 6/16/93
  *
  * from: Header: trap.c,v 1.34 93/05/28 04:34:50 torek Exp 
- * $Id: trap.c,v 1.22 1994/10/20 04:46:32 cgd Exp $
+ * $Id: trap.c,v 1.23 1994/10/26 07:13:56 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -681,8 +681,8 @@ syscall(code, tf, pc)
 	extern int nsysent;
 	extern struct pcb *cpcb;
 #ifdef COMPAT_SUNOS
-	extern int nsun_sysent;
-	extern struct sysent sun_sysent[];
+	extern int nsunos_sysent;
+	extern struct sysent sunos_sysent[];
 #endif
 
 	cnt.v_syscall++;
@@ -706,8 +706,8 @@ syscall(code, tf, pc)
 		break;
 #ifdef COMPAT_SUNOS
 	case EMUL_SUNOS:
-		callp = sun_sysent;
-		nsys = nsun_sysent;
+		callp = sunos_sysent;
+		nsys = nsunos_sysent;
 		break;
 #endif
 	}
