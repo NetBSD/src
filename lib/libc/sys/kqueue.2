@@ -1,4 +1,4 @@
-.\"	$NetBSD: kqueue.2,v 1.9 2002/10/13 07:37:39 jdolecek Exp $
+.\"	$NetBSD: kqueue.2,v 1.10 2002/10/23 09:27:46 jdolecek Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -147,7 +147,7 @@ struct kevent {
 	uint32_t  filter;	/* filter for event */
 	uint32_t  flags;	/* action flags for kqueue */
 	uint32_t  fflags;	/* filter flag value */
-	intptr_t  data;		/* filter data value */
+	int64_t  data;		/* filter data value */
 	void	  *udata;	/* opaque user data identifier */
 };
 .Ed
