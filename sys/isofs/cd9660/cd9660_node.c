@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.22 2000/03/16 18:08:23 jdolecek Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.23 2000/03/30 12:13:31 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -119,7 +119,7 @@ iso_dmap(device, inum, create)
 	ino_t	inum;
 	int	create;
 {
-	register struct iso_dnode **dpp, *dp, *dq;
+	struct iso_dnode **dpp, *dp, *dq;
 
 	dpp = &idvhashtbl[DNOHASH(device, inum)];
 	for (dp = *dpp;; dp = dp->d_next) {
@@ -221,9 +221,9 @@ cd9660_ihashins(ip)
  */
 void
 cd9660_ihashrem(ip)
-	register struct iso_node *ip;
+	struct iso_node *ip;
 {
-	register struct iso_node *iq;
+	struct iso_node *iq;
 
 	simple_lock(&cd9660_ihash_slock);
 	if ((iq = ip->i_next) != NULL)
@@ -250,7 +250,7 @@ cd9660_inactive(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct proc *p = ap->a_p;
-	register struct iso_node *ip = VTOI(vp);
+	struct iso_node *ip = VTOI(vp);
 	int error = 0;
 	
 	if (prtactive && vp->v_usecount != 0)
@@ -278,8 +278,8 @@ cd9660_reclaim(v)
 		struct vnode *a_vp;
 		struct proc *a_p;
 	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
-	register struct iso_node *ip = VTOI(vp);
+	struct vnode *vp = ap->a_vp;
+	struct iso_node *ip = VTOI(vp);
 	
 	if (prtactive && vp->v_usecount != 0)
 		vprint("cd9660_reclaim: pushing active", vp);

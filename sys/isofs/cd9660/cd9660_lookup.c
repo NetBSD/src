@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_lookup.c,v 1.25 1999/09/06 10:10:05 jdolecek Exp $	*/
+/*	$NetBSD: cd9660_lookup.c,v 1.26 2000/03/30 12:13:30 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994
@@ -102,9 +102,9 @@ cd9660_lookup(v)
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
 	} */ *ap = v;
-	register struct vnode *vdp;	/* vnode for directory being searched */
-	register struct iso_node *dp;	/* inode for directory being searched */
-	register struct iso_mnt *imp;	/* file system that directory is in */
+	struct vnode *vdp;		/* vnode for directory being searched */
+	struct iso_node *dp;		/* inode for directory being searched */
+	struct iso_mnt *imp;		/* file system that directory is in */
 	struct buf *bp;			/* a buffer of directory entries */
 	struct iso_directory_record *ep = NULL;
 					/* the current directory entry */
@@ -438,7 +438,7 @@ cd9660_blkatoff(v)
 		struct buf **a_bpp;
 	} */ *ap = v;
 	struct iso_node *ip;
-	register struct iso_mnt *imp;
+	struct iso_mnt *imp;
 	struct buf *bp;
 	daddr_t lbn;
 	int bsize, error;
