@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.7 2003/07/15 00:05:07 lukem Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.8 2003/07/30 15:58:36 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.7 2003/07/15 00:05:07 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.8 2003/07/30 15:58:36 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,6 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.7 2003/07/15 00:05:07 lukem Exp $");
 #include <machine/stdarg.h>
 
 #include <machine/openfirm.h>
+
+#include <lib/libkern/libkern.h>
 
 #define min(x,y)	((x<y)?(x):(y))
 

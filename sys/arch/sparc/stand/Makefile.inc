@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7 2000/08/20 14:57:16 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2003/07/30 15:58:38 mrg Exp $
 
 .ifndef __INCLUDED_STAND_MAKEFILE_INC
 __INCLUDED_STAND_MAKEFILE_INC=
@@ -9,7 +9,7 @@ BINDIR=		/usr/mdec
 CPPFLAGS+=	-DSTANDALONE -DSUN4U
 CPPFLAGS+=	-I.
 
-CFLAGS+=	-msoft-float
+CFLAGS+=	-msoft-float -ffreestanding
 .endif
 
 .endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: prompatch.c,v 1.6 2002/12/16 13:01:01 jdc Exp $ */
+/*	$NetBSD: prompatch.c,v 1.7 2003/07/30 15:58:39 mrg Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -29,6 +29,7 @@
 
 #include <sys/param.h>
 #include <lib/libsa/stand.h>
+#include <lib/libkern/libkern.h>
 #include <machine/promlib.h>
 
 char *match_c5ip(void);
