@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.67 2000/03/23 07:01:28 thorpej Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.68 2000/03/30 02:02:53 simonb Exp $	*/
 
 #include "opt_ddb.h"
 #ifdef DDB
@@ -153,7 +153,6 @@
 int aic_debug = 0x00; /* AIC_SHOWSTART|AIC_SHOWMISC|AIC_SHOWTRACE; */
 #endif
 
-void	aicattach	__P((struct aic_softc *));
 void	aic_minphys	__P((struct buf *));
 void	aic_done	__P((struct aic_softc *, struct aic_acb *));
 void	aic_dequeue	__P((struct aic_softc *, struct aic_acb *));
