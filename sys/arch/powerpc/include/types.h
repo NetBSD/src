@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.17 2002/09/22 08:31:00 simonb Exp $	*/
+/*	$NetBSD: types.h,v 1.18 2003/01/16 09:17:01 matt Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -44,8 +44,11 @@ typedef	unsigned long	psize_t, vsize_t;
 #endif
 
 #ifdef _LP64
-typedef long	register_t;
-typedef int	register32_t;
+/*
+ * Because lwz etal don't sign extend, it's best to make registers unsigned.
+ */
+typedef unsigned long	register_t;
+typedef unsigned int	register32_t;
 #else
 typedef int	register_t;
 #endif
