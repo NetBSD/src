@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.125 2003/09/18 21:59:27 keihan Exp $
+$NetBSD: acronyms,v 1.126 2003/09/29 12:44:30 jmmv Exp $
 
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -7,6 +7,7 @@ AFAIR	as far as I recall
 AFAIU	as far as I understand
 AFD	away from desktop
 AFK	away from keyboard
+AFU	all fucked up
 AFW	away from window
 AIU	as I understand
 AIUI	as I understand it
