@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.23 2003/01/01 00:10:18 thorpej Exp $	*/
+/*	$NetBSD: cac.c,v 1.24 2003/01/06 12:38:51 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.23 2003/01/01 00:10:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.24 2003/01/06 12:38:51 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -381,7 +381,7 @@ cac_ccb_poll(struct cac_softc *sc, struct cac_ccb *wantccb, int timo)
 }
 
 /*
- * Enqueue the specifed command (if any) and attempt to start all enqueued 
+ * Enqueue the specified command (if any) and attempt to start all enqueued 
  * commands.  Must be called at splbio.
  */
 int
