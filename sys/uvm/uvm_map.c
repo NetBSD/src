@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.147 2003/11/02 07:58:52 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.148 2003/11/05 15:09:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.147 2003/11/02 07:58:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.148 2003/11/05 15:09:09 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -1421,14 +1421,18 @@ uvm_map_findspace(struct vm_map *map, vaddr_t hint, vsize_t length,
 				goto wraparound;
 			}
 
-			if (topdown)
+			if (topdown) {
 				/*
 				 * Still there is a chance to fit
 				 * if hint > entry->end.
 				 */
-				;
-			else
+			} else {
+				/* Start from higer gap. */
+				entry = entry->next;
+				if (entry == &map->header)
+					goto notfound;
 				goto nextgap;
+			}
 		}
 	}
 
@@ -1450,6 +1454,7 @@ uvm_map_findspace(struct vm_map *map, vaddr_t hint, vsize_t length,
 	}
 
 nextgap:
+	KDASSERT((flags & UVM_FLAG_FIXED) == 0);
 	/* If there is not enough space in the whole tree, we fail */
 	tmp = RB_ROOT(&map->rbhead);
 	if (tmp == NULL || tmp->space < length)
@@ -1496,17 +1501,23 @@ nextgap:
 		tmp = child;
 	}
 
-	if (tmp != NULL && hint < tmp->end + tmp->ownspace) {
+	if (tmp != NULL && tmp->start < hint && hint < tmp->next->start) {
 		/* 
 		 * Check if the entry that we found satifies the
 		 * space requirement
 		 */
-		if (hint < tmp->end || hint < tmp->end + tmp->ownspace - length)
-			hint = topdown ? tmp->next->start - length : tmp->end;
-		if (uvm_map_space_avail(&hint, length, uoffset, align,
-		    topdown, tmp) == 1) {
+		if (topdown) {
+			hint = tmp->next->start - length;
+		} else {
+			hint = tmp->end;
+		}
+		switch (uvm_map_space_avail(&hint, length, uoffset, align,
+		    topdown, tmp)) {
+		case 1:
 			entry = tmp;
 			goto found;
+		case -1:
+			goto wraparound;
 		}
 		if (tmp->ownspace >= length)
 			goto listsearch;
@@ -1514,11 +1525,21 @@ nextgap:
 	if (prev == NULL)
 		goto notfound;
 
-	hint = topdown ? prev->next->start - length : prev->end;
-	if (uvm_map_space_avail(&hint, length, uoffset, align, topdown, prev)
-	    == 1) {
+	if (topdown) {
+		KASSERT(hint >= prev->next->start - length ||
+		    prev->next->start - length > prev->next->start);
+		hint = prev->next->start - length;
+	} else {
+		KASSERT(hint <= prev->end);
+		hint = prev->end;
+	}
+	switch (uvm_map_space_avail(&hint, length, uoffset, align,
+	    topdown, prev)) {
+	case 1:
 		entry = prev;
 		goto found;
+	case -1:
+		goto wraparound;
 	}
 	if (prev->ownspace >= length)
 		goto listsearch;
@@ -1545,12 +1566,21 @@ nextgap:
 			tmp = RB_RIGHT(tmp, rb_entry);
 	}
 	
-	hint = topdown ? tmp->next->start - length : tmp->end;
+	if (topdown) {
+		KASSERT(hint >= tmp->next->start - length ||
+		    tmp->next->start - length > tmp->next->start);
+		hint = tmp->next->start - length;
+	} else {
+		KASSERT(hint <= tmp->end);
+		hint = tmp->end;
+	}
 	switch (uvm_map_space_avail(&hint, length, uoffset, align,
 	    topdown, tmp)) {
 	case 1:
 		entry = tmp;
 		goto found;
+	case -1:
+		goto wraparound;
 	}
 
 	/* 
@@ -1600,6 +1630,8 @@ nextgap:
 	SAVE_HINT(map, map->hint, entry);
 	*result = hint;
 	UVMHIST_LOG(maphist,"<- got it!  (result=0x%x)", hint, 0,0,0);
+	KASSERT( topdown || hint >= orig_hint);
+	KASSERT(!topdown || hint <= orig_hint);
 	KASSERT(entry->end <= hint);
 	KASSERT(hint + length <= entry->next->start);
 	return (entry);
