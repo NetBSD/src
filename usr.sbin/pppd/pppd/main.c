@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.27 1997/09/29 03:52:37 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.28 1997/09/29 16:57:51 christos Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -24,7 +24,7 @@
 #if 0
 static char rcsid[] = "Id: main.c,v 1.42 1997/07/14 03:53:25 paulus Exp ";
 #else
-__RCSID("$NetBSD: main.c,v 1.27 1997/09/29 03:52:37 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.28 1997/09/29 16:57:51 christos Exp $");
 #endif
 #endif
 
@@ -456,17 +456,12 @@ main(argc, argv)
 	} else
 	    tty_mode = statbuf.st_mode;
 
-	/*
-	 * Set line speed, flow control, etc.
-	 * Previously, if we had a connection script, we would set CLOCAL
-	 * while the script was running.  But then, if CD was negated
-	 * before the script finished, we would miss it.
-	 */
-	set_up_tty(ttyfd, 0);
-
 	/* run connection script */
 	if (connector && connector[0]) {
 	    MAINDEBUG((LOG_INFO, "Connecting with <%s>", connector));
+
+	    /* set line speed, flow control, etc.; set CLOCAL for now */
+	    set_up_tty(ttyfd, 1);
 
 	    /* drop dtr to hang up in case modem is off hook */
 	    if (!default_device && modem) {
@@ -484,6 +479,9 @@ main(argc, argv)
 	    syslog(LOG_INFO, "Serial connection established.");
 	    sleep(1);		/* give it time to set up its terminal */
 	}
+
+	/* set line speed, flow control, etc.; clear CLOCAL if modem option */
+	set_up_tty(ttyfd, 0);
 
 	/* reopen tty if necessary to wait for carrier */
 	if (connector == NULL && modem) {
