@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.2 1995/02/11 21:04:26 gwr Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.3 1995/02/13 22:22:22 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -122,12 +122,55 @@ db_write_bytes(addr, size, data)
 	}
 }
 
+static char *pgt_names[] = {
+	"MEM", "OBIO", "VMES", "VMEL" };
+
+void pte_print(pte)
+	int pte;
+{
+	int t;
+
+	if (pte & PG_VALID) {
+		db_printf(" V");
+		if (pte & PG_WRITE)
+			db_printf(" W");
+		if (pte & PG_SYSTEM)
+			db_printf(" S");
+		if (pte & PG_NC)
+			db_printf(" NC");
+		if (pte & PG_REF)
+			db_printf(" Ref");
+		if (pte & PG_MOD)
+			db_printf(" Mod");
+
+		t = (pte >> PG_TYPE_SHIFT) & 3;
+		db_printf(" %s", pgt_names[t]);
+		db_printf(" PA=0x%x\n", PG_PA(pte));
+	}
+	else db_printf(" INVALID\n");
+}
+
+static void
+db_pagemap(addr)
+	db_expr_t	addr;
+{
+	int pte, sme;
+
+	sme = get_segmap(addr);
+	if (sme == 0xFF) pte = 0;
+	else pte = get_pte(addr);
+
+	db_printf("0x%08x [%02x] 0x%08x", addr, sme, pte);
+	pte_print(pte);
+	db_next = addr + NBPG;
+}
 
 /*
  * Machine-specific ddb commands for the sun3:
  *    abort:	Drop into monitor via abort (allows continue)
  *    halt: 	Exit to monitor as in halt(8)
  *    reboot:	Reboot the machine as in reboot(8)
+ *    pgmap:	Given addr, Print addr, segmap, pagemap, pte
  */
 
 extern void sun3_mon_abort();
@@ -143,6 +186,7 @@ struct db_command db_machine_cmds[] = {
 	{ "abort",	sun3_mon_abort,	0,	0 },
 	{ "halt",	sun3_mon_halt,	0,	0 },
 	{ "reboot",	db_mon_reboot,	0,	0 },
+	{ "pgmap",	db_pagemap, 	CS_SET_DOT, 0 },
 	{ (char *)0, }
 };
 
