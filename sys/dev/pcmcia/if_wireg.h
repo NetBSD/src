@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wireg.h,v 1.2 1999/07/15 14:33:51 sommerfeld Exp $	*/
+/*	$NetBSD: if_wireg.h,v 1.3 2000/02/04 02:03:02 explorer Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_wireg.h,v 1.2 1999/07/15 14:33:51 sommerfeld Exp $
+ *	$Id: if_wireg.h,v 1.3 2000/02/04 02:03:02 explorer Exp $
  */
 
 /*
@@ -382,11 +382,9 @@ struct wi_ltv_scalethresh {
 struct wi_ltv_pcf {
 	u_int16_t		wi_len;
 	u_int16_t		wi_type;
-	u_int16_t		wi_energy_detect;
-	u_int16_t		wi_carrier_detect;
-	u_int16_t		wi_defer;
-	u_int16_t		wi_cell_search;
-	u_int16_t		wi_range;
+	u_int16_t		wi_medium_occupancy_limit;
+	u_int16_t		wi_cfp_period;
+	u_int16_t		wi_cfp_max_duration;
 };
 
 /*
@@ -453,6 +451,26 @@ struct wi_ltv_nodename {
 };
 
 /*
+ * Select de/encryption of tx/rx frames.
+ */
+#define WI_RID_ENCRYPTIONSELECT	0xFC20
+struct wi_ltv_encryptionselect {
+	u_int16_t		wi_len;
+	u_int16_t		wi_type;
+	u_int16_t		wi_encryption_enabled;
+};
+
+/*
+ * Select de/encryption of tx/rx frames.
+ */
+#define WI_RID_AUTHSELECT	0xFC21
+struct wi_ltv_authselect {
+	u_int16_t		wi_len;
+	u_int16_t		wi_type;
+	u_int16_t		wi_auth_type;
+};
+
+/*
  * Multicast addresses to be put in filter. We're
  * allowed up to 16 addresses in the filter.
  */
@@ -483,6 +501,33 @@ struct wi_ltv_mcast {
  * promiscuous mode.
  */
 #define WI_RID_PROMISC		0xFC85
+
+/*
+ * Set default keys.
+ */
+#define WI_RID_KEYS		0xFCB0
+struct wi_ltv_keys {
+	u_int16_t		wi_len;
+	u_int16_t		wi_type;
+	u_int16_t		wi_keylen_0;
+	u_int8_t		wi_key_0[14];
+	u_int16_t		wi_keylen_1;
+	u_int8_t		wi_key_1[14];
+	u_int16_t		wi_keylen_2;
+	u_int8_t		wi_key_2[14];
+	u_int16_t		wi_keylen_3;
+	u_int8_t		wi_key_3[14];
+};
+
+/*
+ * Select key for tx
+ */
+#define WI_RID_TXKEY		0xFCB1
+struct wi_ltv_txkey {
+	u_int16_t		wi_len;
+	u_int16_t		wi_type;
+	u_int16_t		wi_txkeyid;
+};
 
 /*
  * Auxiliary Timer tick interval
