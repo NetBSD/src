@@ -1,4 +1,4 @@
-/*	$NetBSD: libi386.h,v 1.14 2001/06/01 23:26:31 jdolecek Exp $	*/
+/*	$NetBSD: libi386.h,v 1.15 2003/04/16 13:47:53 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -102,3 +102,35 @@ time_t getsecs __P((void));
 /* in "user code": */
 void command_help __P((char *));
 extern const struct bootblk_command commands[];
+
+/* asm bios/dos calls */
+extern int biosdiskreset(int);
+extern int biosextread(int, void *);
+extern int biosgetrtc(u_long *);
+extern int biosgetsystime(void);
+extern int biosread(int, int, int, int, int, void *);
+extern int comgetc(int);
+extern void cominit(int);
+extern int computc(int, int);
+extern int comstatus(int);
+extern int congetc(void);
+extern int coniskey(void);
+extern void conputc(int);
+
+extern int get_diskinfo(int);
+extern int getextmem2(int *);
+extern int getextmemps2(void *);
+extern int getmementry(int *, int *);
+extern int int13_extension(int);
+struct biosdisk_ext13info;
+extern void int13_getextinfo(int, struct biosdisk_ext13info *);
+extern int pcibios_cfgread(unsigned int, int, int *);
+extern int pcibios_cfgwrite(unsigned int, int, int);
+extern int pcibios_finddev(int, int, int, unsigned int *);
+extern int pcibios_present(int *);
+
+extern void dosclose(int);
+extern int doserrno;	/* in dos_file.S */
+extern int dosopen(char *);
+extern int dosread(int, char *, int);
+extern int dosseek(int, int, int);
