@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.103 2003/10/15 11:28:59 hannken Exp $	*/
+/*	$NetBSD: vnd.c,v 1.104 2003/10/19 07:41:19 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.103 2003/10/15 11:28:59 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.104 2003/10/19 07:41:19 scw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -880,7 +880,10 @@ vndioctl(dev, cmd, data, flag, p)
 			 * XXX we?
 			 */
 			if (vnd->sc_geom.vng_secsize < DEV_BSIZE ||
-			    (vnd->sc_geom.vng_secsize % DEV_BSIZE) != 0) {
+			    (vnd->sc_geom.vng_secsize % DEV_BSIZE) != 0 ||
+			    vnd->sc_geom.vng_ncylinders == 0 ||
+			    (vnd->sc_geom.vng_ntracks *
+			     vnd->sc_geom.vng_nsectors) == 0) {
 				error = EINVAL;
 				goto close_and_exit;
 			}
