@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: evgpe - General Purpose Event handling and dispatch
- *              $Revision: 1.1.1.1 $
+ *              $Revision: 1.2 $
  *
  *****************************************************************************/
 
@@ -362,7 +362,7 @@ AcpiEvGpeInitialize (void)
                 ACPI_HIDWORD (ACPI_GET_ADDRESS (AcpiGbl_GpeBlockInfo[GpeBlock].BlockAddress->Address)),
                 ACPI_LODWORD (ACPI_GET_ADDRESS (AcpiGbl_GpeBlockInfo[GpeBlock].BlockAddress->Address))));
 
-            ACPI_REPORT_INFO (("GPE Block%d defined as GPE%d to GPE%d\n",
+            ACPI_DEBUG_PRINT ((ACPI_DB_INFO, "GPE Block%d defined as GPE%d to GPE%d\n",
                 (INT32) GpeBlock,
                 (UINT32) AcpiGbl_GpeBlockInfo[GpeBlock].BlockBaseNumber,
                 (UINT32) (AcpiGbl_GpeBlockInfo[GpeBlock].BlockBaseNumber +
