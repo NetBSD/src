@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.79 1996/04/15 18:54:31 cgd Exp $	*/
+/*	$NetBSD: com.c,v 1.80 1996/04/29 20:03:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -74,6 +74,7 @@
 
 #include "com.h"
 
+
 #define	COM_IBUFSIZE	(2 * 512)
 #define	COM_IHIGHWATER	((3 * COM_IBUFSIZE) / 4)
 
@@ -117,13 +118,25 @@ struct com_softc {
 #ifdef COM_HAYESP
 int comprobeHAYESP __P((bus_io_handle_t hayespioh, struct com_softc *sc));
 #endif
-int comopen __P((dev_t, int, int, struct proc *));
-int comclose __P((dev_t, int, int, struct proc *));
-void comdiag __P((void *));
-int comintr __P((void *));
-void compoll __P((void *));
-int comparam __P((struct tty *, struct termios *));
-void comstart __P((struct tty *));
+void	comdiag		__P((void *));
+int	comspeed	__P((long));
+int	comparam	__P((struct tty *, struct termios *));
+void	comstart	__P((struct tty *));
+int	comintr		__P((void *));
+void	compoll		__P((void *));
+
+/* XXX: These belong elsewhere */
+cdev_decl(com);
+bdev_decl(com);
+
+struct consdev;
+void	comcnprobe	__P((struct consdev *));
+void	comcninit	__P((struct consdev *));
+int	comcngetc	__P((dev_t));
+void	comcnputc	__P((dev_t, int));
+void	comcnpollc	__P((dev_t, int));
+
+static u_char tiocm_xxx2mcr __P((int));
 
 /*
  * XXX the following two cfattach structs should be different, and possibly
@@ -148,7 +161,7 @@ struct cfdriver com_cd = {
 	NULL, "com", DV_TTY
 };
 
-int cominit __P((bus_chipset_tag_t, bus_io_handle_t, int));
+void cominit __P((bus_chipset_tag_t, bus_io_handle_t, int));
 
 #ifdef COMCONSOLE
 int	comdefaultrate = CONSPEED;		/* XXX why set default? */
@@ -291,7 +304,6 @@ comprobe(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct cfdata *cf = match;
 	bus_chipset_tag_t bc;
 	bus_io_handle_t ioh;
 	int iobase, needioh;
@@ -313,6 +325,7 @@ comprobe(parent, match, aux)
 #endif
 #if NCOM_COMMULTI
 	if (1) {
+		struct cfdata *cf = match;
 		struct commulti_attach_args *ca = aux;
  
 		if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != ca->ca_slave)
@@ -356,11 +369,9 @@ comattach(parent, self, aux)
 	void *aux;
 {
 	struct com_softc *sc = (void *)self;
-	struct cfdata *cf = sc->sc_dev.dv_cfdata;
 	int iobase, irq;
 	bus_chipset_tag_t bc;
 	bus_io_handle_t ioh;
-	struct tty *tp;
 #ifdef COM_HAYESP
 	int	hayesp_ports[] = { 0x140, 0x180, 0x280, 0x300, 0 };
 	int	*hayespp;
@@ -482,7 +493,7 @@ comattach(parent, self, aux)
 		if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
 			kgdb_dev = -1;	/* can't debug over console port */
 		else {
-			(void) cominit(bc, ioh, kgdb_rate);
+			cominit(bc, ioh, kgdb_rate);
 			if (kgdb_debug_init) {
 				/*
 				 * Print prefix of device name,
@@ -1048,9 +1059,10 @@ stopped:
 /*
  * Stop output on a line.
  */
-void
+int
 comstop(tp, flag)
 	struct tty *tp;
+	int flag;
 {
 	int s;
 
@@ -1059,6 +1071,7 @@ comstop(tp, flag)
 		if (!ISSET(tp->t_state, TS_TTSTOP))
 			SET(tp->t_state, TS_FLUSH);
 	splx(s);
+	return 0;
 }
 
 void
@@ -1310,14 +1323,11 @@ void
 comcnprobe(cp)
 	struct consdev *cp;
 {
-	bus_chipset_tag_t bc;
+	/* XXX NEEDS TO BE FIXED XXX */
+	bus_chipset_tag_t bc = 0;
 	bus_io_handle_t ioh;
 	int found;
 
-#if 0
-	XXX NEEDS TO BE FIXED XXX
-	bc = ???;
-#endif
 	if (bus_io_map(bc, CONADDR, COM_NPORTS, &ioh)) {
 		cp->cn_pri = CN_DEAD;
 		return;
@@ -1360,6 +1370,7 @@ comcninit(cp)
 	comconsinit = 0;
 }
 
+void
 cominit(bc, ioh, rate)
 	bus_chipset_tag_t bc;
 	bus_io_handle_t ioh;
@@ -1379,6 +1390,7 @@ cominit(bc, ioh, rate)
 	splx(s);
 }
 
+int
 comcngetc(dev)
 	dev_t dev;
 {
@@ -1413,7 +1425,7 @@ comcnputc(dev, c)
 	if (dev != kgdb_dev)
 #endif
 	if (comconsinit == 0) {
-		(void) cominit(bc, ioh, comdefaultrate);
+		cominit(bc, ioh, comdefaultrate);
 		comconsinit = 1;
 	}
 	/* wait for any pending transmission to finish */
