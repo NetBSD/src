@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.124 2004/04/07 07:13:50 jmc Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.125 2004/04/07 21:51:14 jmc Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -2464,3 +2464,8 @@ sys/dev/pci/pcidevs_data.h			regen
 
 	Add National Semiconductors SC1100 (GEODE) PCI devices
 	[itojun, ticket #71]
+
+sys/netinet6/ipsec.c				1.83
+
+	Handle link-local address in ipsec6_tunnel_validate().
+	[itojun, ticket #91]
