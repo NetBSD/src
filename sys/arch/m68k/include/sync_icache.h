@@ -1,4 +1,5 @@
-/*	$NetBSD: sync_icache.h,v 1.2 1999/02/15 04:21:52 hubertf Exp $	*/
+/*	$NetBSD: sync_icache.h,v 1.3 1999/04/13 16:52:37 kleink Exp $	*/
+
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -42,6 +43,10 @@
 #ifndef _M68K_SYNC_ICACHE_H_
 #define _M68K_SYNC_ICACHE_H_
 
-void m68k_sync_icache __P((void *addr, size_t *len));
+#include <sys/cdefs.h>
 
-#endif
+__BEGIN_DECLS
+void m68k_sync_icache __P((void *, size_t));
+__END_DECLS
+
+#endif /* !_M68K_SYNC_ICACHE_H_ */
