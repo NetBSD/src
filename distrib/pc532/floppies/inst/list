@@ -1,4 +1,4 @@
-#	$Id: list,v 1.1.1.1 1995/09/10 06:13:42 phil Exp $
+#	$Id: list,v 1.2 1995/09/26 21:25:00 phil Exp $
 
 # the disktab explanation file
 COPY	disktab.preinstall		etc

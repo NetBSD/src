@@ -27,7 +27,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#	$Id: dot.commonutils,v 1.1.1.1 1995/09/10 06:13:44 phil Exp $
+#	$Id: dot.commonutils,v 1.2 1995/09/26 21:25:05 phil Exp $
 
 # Installation utilites (functions), to get NetBSD installed on
 # the hard disk.  These are meant to be invoked from the shell prompt,
@@ -129,4 +129,9 @@ Extract()
 		;;
 	esac
 	cat "$1"* | $GUNZIP | (cd $dest_dir ; $TAR  --unlink -xp"$tarverbose"f - )
+}
+
+xd()
+{
+	hexdump -e '"%6_ax  " 4/1 "%02x " "  " 4/1 "%02x " "  " 4/1 "%02x " "  " 4/1 "%02x " "  "' -e '16/1 "%_p" "\n"' $*
 }

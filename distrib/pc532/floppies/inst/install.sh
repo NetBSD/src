@@ -8,7 +8,6 @@
 # are met:
 # 1. Redistributions of source code must retain the above copyright
 #    notice, this list of conditions and the following disclaimer.
-# 2. Redistributions in binary form must reproduce the above copyright
 #    notice, this list of conditions and the following disclaimer in the
 #    documentation and/or other materials provided with the distribution.
 # 3. All advertising materials mentioning features or use of this software
@@ -28,7 +27,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#	$Id: install.sh,v 1.1.1.1 1995/09/10 06:13:42 phil Exp $
+#	$Id: install.sh,v 1.2 1995/09/26 21:24:58 phil Exp $
 
 #	NetBSD installation script.
 #	In a perfect world, this would be a nice C program, with a reasonable
@@ -189,17 +188,9 @@ if [ $sizeunit = "sectors" ]; then
 	echo	"multiples of the cylinder size ($cylindersize sectors)."
 fi
 
-echo -n ""
-echo -n "Size of NetBSD portion of disk (in $sizeunit)? "
-getresp
-partition=$resp
-partition_sects=`expr $resp \* $sizemult`
+partition=`expr $disksize / $sizemult`
+partition_sects=`expr $partition \* $sizemult`
 part_offset=0
-if [ $partition_sects -lt $disksize ]; then
-	echo -n "Offset of NetBSD portion of disk (in $sizeunit)? "
-	getresp
-	part_offset=$resp
-fi
 badspacesec=0
 if [ "$sect_fwd" = "sf:" ]; then
 	badspacecyl=`expr $sects_per_track + 126`
@@ -255,11 +246,32 @@ while [ $swap -eq 0 ]; do
 done
 swap_offset=`expr $root_offset + $root`
 part_used=`expr $part_used + $swap`
+units_left=`expr $partition - $part_used`
+echo	""
+
+boot=0
+while [ $boot -eq 0 ]; do 
+	echo	"$units_left $sizeunit remaining in NetBSD portion of disk."
+	echo -n	"Boot partition size (in $sizeunit)? "
+	getresp
+	case $resp in
+		[1-9]*)
+			if [ $boot -gt $units_left ]; then
+				echo -n	"Boot size is greater than remaining "
+				echo	"free space on disk."
+			else
+				boot=$resp
+			fi
+			;;
+	esac
+done
+boot_offset=`expr $root_offset + $root + $swap + $units_left - $boot`
+part_used=`expr $part_used + $boot`
 echo	""
 
 fragsize=1024
 blocksize=8192
-$DONTDOIT mount -u /dev/fd0a /
+$DONTDOIT mount -u /dev/rd0 /
 cat /etc/disktab.preinstall > $DT
 echo	"" >> $DT
 echo	"$labelname|NetBSD installation generated:\\" >> $DT
@@ -277,6 +289,9 @@ echo	"	:pb#${_size}:ob#${_offset}:tb=swap:\\" >> $DT
 _size=`expr $partition \* $sizemult`
 _offset=`expr $part_offset \* $sizemult`
 echo	"	:pc#${_size}:oc#${_offset}:\\" >> $DT
+_size=`expr $boot \* $sizemult`
+_offset=`expr $boot_offset \* $sizemult`
+echo	"	:ph#${_size}:oh#${_offset}:th=boot:\\" >> $DT
 
 echo	"You will now have to enter information about any other partitions"
 echo	"to be created in the NetBSD portion of the disk.  This process will"
@@ -311,9 +326,16 @@ while [ $part_used -lt $partition ]; do
 				;;
 		esac
 	done
-	if [ "$ename" = "" ]; then
-		ename=$part_name
+	if [ "$dname" = "" ]; then
+		dname=$part_name
 		offset=`expr $part_offset + $root + $swap`
+		_size=`expr $part_size \* $sizemult`
+		_offset=`expr $offset \* $sizemult`
+		echo -n "	:pd#${_size}:od#${_offset}" >> $DT
+		echo ":td=4.2BSD:bd#${blocksize}:fd#${fragsize}:\\" >> $DT
+		offset=`expr $offset + $part_size`
+	elif [ "$ename" = "" ]; then
+		ename=$part_name
 		_size=`expr $part_size \* $sizemult`
 		_offset=`expr $offset \* $sizemult`
 		echo -n "	:pe#${_size}:oe#${_offset}" >> $DT
@@ -333,13 +355,6 @@ while [ $part_used -lt $partition ]; do
 		echo -n "	:pg#${_size}:og#${_offset}" >> $DT
 		echo ":tg=4.2BSD:bg#${blocksize}:fg#${fragsize}:\\" >> $DT
 		offset=`expr $offset + $part_size`
-	elif [ "$hname" = "" ]; then
-		hname=$part_name
-		_size=`expr $part_size \* $sizemult`
-		_offset=`expr $offset \* $sizemult`
-		echo -n "	:ph#${_size}:oh#${_offset}" >> $DT
-		echo ":th=4.2BSD:bh#${blocksize}:fh#${fragsize}:\\" >> $DT
-		part_used=$partition
 	fi
 done
 echo	"	:pd#${disksize}:od#0:" >> $DT
@@ -374,7 +389,7 @@ done
 
 echo	""
 echo -n	"Labeling disk $drivename..."
-$DONTDOIT disklabel -w $drivename $labelname
+$DONTDOIT disklabel -r -w $drivename $labelname
 $DONTDOIT echo "y"|bim -c init -c "add /usr/mdec/boot boot" -c "default 0" -c "exit" /dev/${drivename}c
 echo	" done."
 
@@ -387,6 +402,13 @@ fi
 echo	"Initializing root filesystem, and mounting..."
 $DONTDOIT newfs /dev/r${drivename}a $name
 $DONTDOIT mount -v /dev/${drivename}a /mnt
+if [ "$dname" != "" ]; then
+	echo	""
+	echo	"Initializing $dname filesystem, and mounting..."
+	$DONTDOIT newfs /dev/r${drivename}d $name
+	$DONTDOIT mkdir -p /mnt/$dname
+	$DONTDOIT mount -v /dev/${drivename}d /mnt/$dname
+fi
 if [ "$ename" != "" ]; then
 	echo	""
 	echo	"Initializing $ename filesystem, and mounting..."
@@ -408,33 +430,30 @@ if [ "$gname" != "" ]; then
 	$DONTDOIT mkdir -p /mnt/$gname
 	$DONTDOIT mount -v /dev/${drivename}g /mnt/$gname
 fi
-if [ "$hname" != "" ]; then
-	echo	""
-	echo	"Initializing $hname filesystem, and mounting..."
-	$DONTDOIT newfs /dev/r${drivename}h $name
-	$DONTDOIT mkdir -p /mnt/$hname
-	$DONTDOIT mount -v /dev/${drivename}h /mnt/$hname
-fi
 
 echo	""
 echo    "Populating filesystems with bootstrapping binaries and config files"
 $DONTDOIT tar --one-file-system -cf - . | (cd /mnt ; tar --unlink -xpf - )
 $DONTDOIT cp /tmp/.hdprofile /mnt/.profile
+$DONTDOIT gzip -d /mnt/netbsd.gz
 
 echo	""
 echo -n	"Creating an fstab..."
-echo /dev/${drivename}a / ufs rw 1 1 | sed -e s,//,/, > $FSTAB
+echo /dev/${drivename}a / ffs rw 1 1 | sed -e s,//,/, > $FSTAB
+if [ "$dname" != "" ]; then
+	echo /dev/${drivename}d /$dname ffs rw 1 2 | sed -e s,//,/, >> $FSTAB
+fi
 if [ "$ename" != "" ]; then
-	echo /dev/${drivename}e /$ename ufs rw 1 2 | sed -e s,//,/, >> $FSTAB
+	echo /dev/${drivename}e /$ename ffs rw 1 2 | sed -e s,//,/, >> $FSTAB
 fi
 if [ "$fname" != "" ]; then
-	echo /dev/${drivename}f /$fname ufs rw 1 3 | sed -e s,//,/, >> $FSTAB
+	echo /dev/${drivename}f /$fname ffs rw 1 3 | sed -e s,//,/, >> $FSTAB
 fi
 if [ "$gname" != "" ]; then
-	echo /dev/${drivename}g /$gname ufs rw 1 4 | sed -e s,//,/, >> $FSTAB
+	echo /dev/${drivename}g /$gname ffs rw 1 4 | sed -e s,//,/, >> $FSTAB
 fi
 if [ "$hname" != "" ]; then
-	echo /dev/${drivename}h /$hname ufs rw 1 5 | sed -e s,//,/, >> $FSTAB
+	echo /dev/${drivename}h /$hname ffs rw 1 5 | sed -e s,//,/, >> $FSTAB
 fi
 sync
 echo	" done."
