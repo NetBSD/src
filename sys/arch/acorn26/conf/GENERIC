@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.11 2002/11/22 12:20:58 wiz Exp $
+# $NetBSD: GENERIC,v 1.12 2003/02/27 19:22:37 perseant Exp $
 #
 # GENERIC machine description file
 # 
@@ -228,6 +228,7 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
+#options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	sequencer	1	# MIDI sequencer
 pseudo-device	wsmux			# keyboard/mouse multiplexor
 pseudo-device	rnd			# /dev/random and in-kernel generator

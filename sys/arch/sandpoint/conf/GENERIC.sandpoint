@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.sandpoint,v 1.4 2002/10/14 18:39:38 elric Exp $
+# $NetBSD: GENERIC.sandpoint,v 1.5 2003/02/27 19:22:46 perseant Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.4 $"
+#ident 		"GENERIC-$Revision: 1.5 $"
 
 maxusers	32
 
@@ -83,6 +83,7 @@ config		netbsd	root on ? type ?
 pseudo-device	bpfilter	8	# packet filter
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	bridge			# simple inter-network bridging
+#options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 #pseudo-device	ipfilter
 pseudo-device	loop
 
