@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr.h,v 1.17.2.1 2000/07/14 16:46:33 fvdl Exp $	*/
+/*	$NetBSD: xdr.h,v 1.17.2.2 2000/07/18 19:12:06 matt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -154,7 +154,7 @@ typedef	bool_t (*xdrproc_t) __P((/* XDR *, void *, u_int */));
 #define xdr_putlong(xdrs, longp)			\
 	(*(xdrs)->x_ops->x_putlong)(xdrs, longp)
 
-static __inline
+static __inline int
 xdr_getint32(XDR *xdrs, int32_t *ip)
 {
 	long l;
@@ -165,7 +165,7 @@ xdr_getint32(XDR *xdrs, int32_t *ip)
 	return (TRUE);
 }
 
-static __inline
+static __inline int
 xdr_putint32(XDR *xdrs, int32_t *ip)
 {
 	long l;
