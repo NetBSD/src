@@ -1,4 +1,4 @@
-;	$NetBSD: siop.ss,v 1.5 2000/05/15 07:43:45 bouyer Exp $
+;	$NetBSD: siop.ss,v 1.6 2000/05/25 10:10:54 bouyer Exp $
 
 ;
 ;  Copyright (c) 2000 Manuel Bouyer.
@@ -70,7 +70,6 @@ ENTRY disconnect;
 ENTRY reselect;
 ENTRY selected;
 ENTRY get_extmsgdata;
-ENTRY sheduler;
 ENTRY slot;
 ENTRY idsa0;
 ENTRY idsa1;
@@ -80,6 +79,7 @@ ENTRY slotdata;
 ENTRY nextslot;
 ENTRY endslot;
 
+EXTERN script_abs_shed;
 EXTERN slot_nextp;
 EXTERN slot_shed_addrsrc;
 EXTERN slot_abs_reselect;
@@ -116,7 +116,7 @@ reselect_fail:
 	; check that host asserted SIGP, this'll clear SIGP in ISTAT
 	MOVE CTEST2 & 0x40 TO SFBR;
 	INT int_resfail,  IF 0x00;
-	JUMP REL(sheduler);
+	JUMP script_abs_shed;
 
 msgin:
 	CLEAR ATN
@@ -207,9 +207,9 @@ handle_dis:
 	CALL REL(disconnect);
 ; if we didn't get sdp, or if offset is 0, no need to interrupt
 	MOVE SCRATCHA0 & flag_sdp TO SFBR;
-	JUMP REL(sheduler), if 0x00; 
+	JUMP script_abs_shed, if 0x00; 
 	MOVE SCRATCHA1 TO SFBR;
-	JUMP REL(sheduler), if 0x00; 
+	JUMP script_abs_shed, if 0x00; 
 ; Ok, we need to save data pointers
 	INT int_disc;
 
@@ -231,9 +231,6 @@ get_extmsgdata:
 	INT int_err, IF NOT MSG_IN;
 	MOVE FROM t_ext_msg_data, WHEN MSG_IN;
 	INT int_extmsgdata;
-
-sheduler:
-	NOP; /* will be changed by the slot scripts */
 
 ; script used for the sheduler: when a slot is free the JUMP points to
 ; the next slot so that instructions for this slot are not run.

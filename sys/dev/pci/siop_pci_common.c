@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_pci_common.c,v 1.1 2000/05/15 07:53:18 bouyer Exp $	*/
+/*	$NetBSD: siop_pci_common.c,v 1.2 2000/05/25 10:10:56 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -199,6 +199,14 @@ siop_pci_attach_common(sc, pa)
 		printf("sym: broken match/attach!!\n");
 		return 0;
 	}
+	/* copy interesting infos about the chip */
+	sc->siop.features = sc->sc_pp->features;
+	sc->siop.maxburst = sc->sc_pp->maxburst;
+	sc->siop.maxoff = sc->sc_pp->maxoff;
+	sc->siop.clock_div = sc->sc_pp->clock_div;
+	sc->siop.clock_period = sc->sc_pp->clock_period;
+
+	sc->siop.sc_reset = siop_pci_reset;
 	printf(": %s\n", sc->sc_pp->name);
 	sc->sc_pc = pc;
 	sc->sc_tag = tag;
@@ -232,6 +240,20 @@ siop_pci_attach_common(sc, pa)
 		return 0;
 	}
 
+	if (sc->siop.features & SF_CHIP_RAM) {
+		if (pci_mapreg_map(pa, 0x18,
+		    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
+                    &sc->siop.sc_ramt, &sc->siop.sc_ramh,
+		    &sc->siop.sc_scriptaddr, NULL) == 0) {
+			printf("%s: using on-board RAM\n",
+			    sc->siop.sc_dev.dv_xname);
+		} else {
+			printf("%s: can't map on-board RAM\n",
+			    sc->siop.sc_dev.dv_xname);
+			sc->siop.features &= ~SF_CHIP_RAM;
+		}
+	}
+
 	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
 	    pa->pa_intrline, &intrhandle) != 0) {
 		printf("%s: couldn't map interrupt\n",
@@ -253,13 +275,6 @@ siop_pci_attach_common(sc, pa)
 		printf("\n");
 		return 0;
 	}
-	/* copy interesting infos about the chip */
-	sc->siop.features = sc->sc_pp->features;
-	sc->siop.maxburst = sc->sc_pp->maxburst;
-	sc->siop.maxoff = sc->sc_pp->maxoff;
-	sc->siop.clock_div = sc->sc_pp->clock_div;
-	sc->siop.clock_period = sc->sc_pp->clock_period;
-	sc->siop.sc_reset = siop_pci_reset;
 	return 1;
 }
 
