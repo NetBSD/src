@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.29 1999/12/05 23:28:57 dmcmahill Exp $
+.\" $NetBSD: main,v 1.30 1999/12/06 01:46:11 deberg Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -808,7 +808,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Julian Coleman Ta Mt jdc@NetBSD.ORG
 .It Ta Chuck Cranor Ta Mt chuck@NetBSD.ORG
 .It Ta Aidan Cully Ta Mt aidan@NetBSD.ORG
-.It Ta Matt Debergalis Ta Mt deberg@NetBSD.ORG
+.It Ta Matt DeBergalis Ta Mt deberg@NetBSD.ORG
 .It Ta Rob Deker Ta Mt deker@NetBSD.ORG
 .It Ta Chris G. Demetriou Ta Mt cgd@NetBSD.ORG
 .It Ta Jaromir Dolecek Ta Mt jdolecek@NetBSD.ORG
