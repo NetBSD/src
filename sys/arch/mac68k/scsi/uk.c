@@ -1,9 +1,9 @@
-#if NUK > 0
+
 /* 
  * Dummy driver for a device we can't identify.
  * by Julian Elischer (julian@tfs.com)
  *
- *      $Id: uk.c,v 1.2 1994/01/20 23:56:08 briggs Exp $
+ *      $Id: uk.c,v 1.3 1994/01/30 01:21:57 briggs Exp $
  */
 
 
@@ -11,8 +11,10 @@
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
+
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
+
 #define NUK 16
 
 /*
@@ -155,4 +157,3 @@ ukioctl(dev, cmd, arg, mode)
 	return(scsi_do_ioctl(sc_link,cmd,arg,mode));
 }
 
-#endif

@@ -18,7 +18,7 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  *
- *	$Id: scsi_all.h,v 1.2 1993/11/29 00:45:10 briggs Exp $
+ *	$Id: scsi_all.h,v 1.3 1994/01/30 01:21:20 briggs Exp $
  */
 
 #ifndef	_SCSI_SCSI_ALL_H
