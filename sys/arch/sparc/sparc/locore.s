@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.161 2002/08/14 14:45:37 uwe Exp $	*/
+/*	$NetBSD: locore.s,v 1.162 2002/08/17 02:23:18 uwe Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -6019,7 +6019,7 @@ _ENTRY(_C_LABEL(cypress_get_syncflt))
 	jmp	%l7 + 8			! return to caller
 	 st	%l5, [%l4]		! => dump.sfsr
 
-#if defined(MULTIPROCESSOR) && 0 /* notyet *
+#if defined(MULTIPROCESSOR) && 0 /* notyet */
 /*
  * Read Synchronous Fault Status registers.
  * On entry: %o0 == &sfsr, %o1 == &sfar
