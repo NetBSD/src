@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.223 2002/02/07 13:00:13 augustss Exp $
+$NetBSD: usbdevs,v 1.224 2002/02/07 13:52:08 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -210,6 +210,7 @@ vendor ACARD		0x0678	ACARD Technology
 vendor PROLIFIC		0x067b	Prolific Technology
 vendor ADVANCELOGIC	0x0680	Avance Logic
 vendor HAGIWARA		0x0693  Hagiwara Sys-Com
+vendor MINOLTA		0x0686	Minolta
 vendor CTX		0x0698	Chuntex
 vendor ASKEY		0x069a	Askey Computer
 vendor SAITEK		0x06a3	Saitek
@@ -827,6 +828,9 @@ product MICROTEK V6UL		0x80ac	ScanMaker V6UL
 
 /* Midiman products */
 product MIDIMAN MIDISPORT2X2	0x1001	Midisport 2x2
+
+/* Minolta Co., Ltd. */
+product MINOLTA S304		0x4007	Dimage S304
 
 /* Mitsumi products */
 product MITSUMI CDRRW		0x0000	CD-R/RW Drive
