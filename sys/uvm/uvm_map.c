@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.55 1999/06/16 00:29:04 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.56 1999/06/16 19:34:24 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -599,7 +599,7 @@ uvm_map(map, startp, size, uobj, uoffset, flags)
 		    prev_entry->advice != advice)
 			goto step3;
 
-		/* wired_count's must match (new area is unwired) */
+		/* wiring status must match (new area is unwired) */
 		if (VM_MAPENT_ISWIRED(prev_entry))
 			goto step3; 
 
@@ -1978,6 +1978,8 @@ uvm_map_advice(map, start, end, new_advice)
 /*
  * uvm_map_pageable: sets the pageability of a range in a map.
  *
+ * => wires map entries.  should not be used for transient page locking.
+ *	for that, use uvm_fault_wire()/uvm_fault_unwire() (see uvm_vslock()).
  * => regions sepcified as not pageable require lock-down (wired) memory
  *	and page tables.
  * => map must not be locked.
@@ -2024,10 +2026,8 @@ uvm_map_pageable(map, start, end, new_pageable)
 	 * handle wiring and unwiring seperately.
 	 */
 
-	if (new_pageable) {			/* unwire */
-
+	if (new_pageable) {		/* unwire */
 		UVM_MAP_CLIP_START(map, entry, start);
-
 		/*
 		 * unwiring.  first ensure that the range to be unwired is
 		 * really wired down and that there are no holes.  
@@ -2046,20 +2046,18 @@ uvm_map_pageable(map, start, end, new_pageable)
 		}
 
 		/* 
-		 * now decrement the wiring count for each region.  if a region
-		 * becomes completely unwired, unwire its physical pages and
-		 * mappings.
+		 * POSIX 1003.1b - a single munlock call unlocks a region,
+		 * regardless of the number of mlock calls made on that
+		 * region.
 		 *
 		 * Note, uvm_fault_unwire() (called via uvm_map_entry_unwire())
 		 * does not lock the map, so we don't have to do anything
 		 * special regarding locking here.
 		 */
-
 		entry = start_entry;
 		while ((entry != &map->header) && (entry->start < end)) {
 			UVM_MAP_CLIP_END(map, entry, end);
-			entry->wired_count--;
-			if (VM_MAPENT_ISWIRED(entry) == 0)
+			if (VM_MAPENT_ISWIRED(entry))
 				uvm_map_entry_unwire(map, entry);
 			entry = entry->next;
 		}
@@ -2080,7 +2078,7 @@ uvm_map_pageable(map, start, end, new_pageable)
 	 *    be wired and increment its wiring count.  
 	 *
 	 * 2: we downgrade to a read lock, and call uvm_fault_wire to fault
-	 *    in the pages for any newly wired area (wired_count is 1).
+	 *    in the pages for any newly wired area (wired_count == 1).
 	 *
 	 *    downgrading to a read lock for uvm_fault_wire avoids a possible
 	 *    deadlock with another thread that may have faulted on one of
@@ -2235,8 +2233,8 @@ uvm_map_pageable_all(map, flags, limit)
 
 	if (flags == 0) {			/* unwire */
 		/*
-		 * Decrement the wiring count on the entries.  If they
-		 * reach zero, unwire them.
+		 * POSIX 1003.1b -- munlockall unlocks all regions,
+		 * regardless of how many times mlockall has been called.
 		 *
 		 * Note, uvm_fault_unwire() (called via uvm_map_entry_unwire())
 		 * does not lock the map, so we don't have to do anything
@@ -2244,11 +2242,8 @@ uvm_map_pageable_all(map, flags, limit)
 		 */
 		for (entry = map->header.next; entry != &map->header;
 		     entry = entry->next) {
-			if (VM_MAPENT_ISWIRED(entry)) {
-				entry->wired_count--;
-				if (VM_MAPENT_ISWIRED(entry) == 0)
-					uvm_map_entry_unwire(map, entry);
-			}
+			if (VM_MAPENT_ISWIRED(entry))
+				uvm_map_entry_unwire(map, entry);
 		}
 		map->flags &= ~VM_MAP_WIREFUTURE;
 		vm_map_unlock(map);
@@ -2286,7 +2281,7 @@ uvm_map_pageable_all(map, flags, limit)
 	 *    need to be created.  then we increment its wiring count.
 	 *
 	 * 3: we downgrade to a read lock, and call uvm_fault_wire to fault
-	 *    in the pages for any newly wired area (wired count is 1).
+	 *    in the pages for any newly wired area (wired_count == 1).
 	 *
 	 *    downgrading to a read lock for uvm_fault_wire avoids a possible
 	 *    deadlock with another thread that may have faulted on one of
