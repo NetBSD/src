@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.200 2004/03/28 12:08:28 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.201 2004/03/28 18:02:17 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -591,8 +591,8 @@ The root server cache is also included with BIND.  However, the
 InterNIC version is usually more up to date.
 
 Package:	routed
-Version:	2.27
-Current Vers:	2.27
+Version:	2.28
+Current Vers:	2.28
 Maintainer:	Vernon Schryver <vjs@rhyolite.com>
 Archive Site:	ftp://ftp.rhyolite.com/src/
 Mailing List:
@@ -600,6 +600,8 @@ Responsible:	christos@NetBSD.org
 Notes:
 We use the md5 code from libc
 We don't allow RIP_TRACEON and RIP_TRACEOFF
+We use arc4random
+We use strlcpy/snprintf
 
 Package:	send-pr (part of GNATS)
 Version:	3.95
