@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.455 2002/07/12 22:27:56 enami Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.456 2002/07/22 07:48:48 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.453 2002/07/12 22:26:32 enami Exp 
+ *	NetBSD: pcidevs,v 1.454 2002/07/22 07:47:44 msaitoh Exp 
  */
 
 /*
@@ -3818,6 +3818,24 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82801BA Hub-to-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801E_SMB,
+	    0,
+	    "Intel",
+	    "82801E SMBus Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801E_LAN_1,
+	    0,
+	    "Intel",
+	    "82801E LAN Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801E_LAN_2,
+	    0,
+	    "Intel",
+	    "82801E LAN Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_LPC,
