@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb.c,v 1.1.1.1.2.1 1997/11/09 21:13:18 mellon Exp $	*/
+/*	$NetBSD: mdb.c,v 1.1.1.1.2.2 1998/01/29 10:49:36 mellon Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -106,7 +106,7 @@ write_menu_file (char *initcode)
 	int nlen;
 
 	char opt_ch;
-	char ch;
+	int ch;
 
 	optn_info *toptn;
 
