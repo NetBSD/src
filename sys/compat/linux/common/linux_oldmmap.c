@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldmmap.c,v 1.49 1998/10/04 00:02:38 fvdl Exp $	*/
+/*	$NetBSD: linux_oldmmap.c,v 1.50 1998/10/07 23:06:17 erh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -47,6 +47,7 @@
 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_mmap.h>
+#include <compat/linux/common/linux_oldmmap.h>
 #include <compat/linux/common/linux_signal.h>
 
 #include <compat/linux/linux_syscallargs.h>
