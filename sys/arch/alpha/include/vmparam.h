@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.14 1999/03/26 00:15:05 thorpej Exp $ */
+/* $NetBSD: vmparam.h,v 1.14.4.1 1999/07/04 01:27:57 chs Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -165,6 +165,13 @@ extern u_int32_t vm_kmem_size, vm_phys_size;
 
 #define	VM_NFREELIST		1
 #define	VM_FREELIST_DEFAULT	0
+
+/*
+ * Parameters for Unified Buffer Cache.
+ */
+
+#define UBC_WINSIZE 8192
+#define UBC_NWINS 1024
 
 /*
  * pmap-specific data stored in the vm_physmem[] array.

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.30.4.1 1999/06/21 00:50:01 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.30.4.2 1999/07/04 01:27:57 chs Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -153,6 +153,13 @@
 #define	VM_NFREELIST		2
 #define	VM_FREELIST_DEFAULT	0
 #define	VM_FREELIST_FIRST16	1
+
+/*
+ * Parameters for Unified Buffer Cache.
+ */
+
+#define UBC_WINSIZE 8192
+#define UBC_NWINS 2048
 
 /*
  * pmap specific data stored in the vm_physmem[] array
