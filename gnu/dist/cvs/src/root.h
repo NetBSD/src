@@ -20,8 +20,8 @@ typedef enum {
     ext_method,
     fork_method
 } CVSmethod;
-extern char *method_names[];	/* change this in root.c if you change
-				   the enum above */
+extern const char method_names[][16];	/* change this in root.c if you change
+					   the enum above */
 
 typedef struct cvsroot_s {
     char *original;		/* the complete source CVSroot string */
