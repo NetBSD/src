@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.26 2004/01/27 20:27:29 jsm Exp $ */
+/*	$NetBSD: extern.h,v 1.27 2004/02/08 00:32:48 jsm Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -52,7 +52,6 @@ extern gid_t egid;
 
 #define dieroll()		((random()) % 6 + 1)
 #define sqr(a)		((a) * (a))
-#define abs(a)		((a) > 0 ? (a) : -(a))
 #define min(a,b)	((a) < (b) ? (a) : (b))
 
 #define grappled(a)	((a)->file->ngrap)
