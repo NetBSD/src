@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.50 2002/03/05 04:13:01 itojun Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.51 2002/03/13 06:43:18 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.50 2002/03/05 04:13:01 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.51 2002/03/13 06:43:18 itojun Exp $");
 
 #include "tun.h"
 
@@ -418,8 +418,8 @@ tun_output(ifp, m0, dst, rt)
 	struct proc	*p;
 #ifdef INET
 	int		s;
-#endif
 	int		error;
+#endif
 	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	simple_lock(&tp->tun_lock);
