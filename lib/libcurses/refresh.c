@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.37 2000/06/15 21:20:16 jdc Exp $	*/
+/*	$NetBSD: refresh.c,v 1.37.2.1 2000/08/03 11:46:12 itojun Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.37 2000/06/15 21:20:16 jdc Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.37.2.1 2000/08/03 11:46:12 itojun Exp $");
 #endif
 #endif				/* not lint */
 
@@ -253,7 +253,7 @@ doupdate(void)
 	}
 	if (!CA) {
 		if (win->curx != 0)
-			putchar('\n');
+			__cputchar('\n');
 		if (!curwin)
 			werase(curscr);
 	}
@@ -616,11 +616,11 @@ makech(wy)
 					if (!(win->flags & __SCROLLWIN)) {
 						if (!curwin) {
 							csp->attr = nsp->attr;
-							putchar((int)
+							__cputchar((int)
 							    (csp->ch =
 							    nsp->ch));
 						} else
-							putchar((int) nsp->ch);
+							__cputchar((int) nsp->ch);
 					}
 					if (wx < curscr->maxx) {
 						domvcur(ly, wx,
@@ -635,17 +635,17 @@ makech(wy)
 			    !(win->flags & __SCROLLWIN)) {
 				if (!curwin) {
 					csp->attr = nsp->attr;
-					putchar((int) (csp->ch = nsp->ch));
+					__cputchar((int) (csp->ch = nsp->ch));
 					csp++;
 				} else
-					putchar((int) nsp->ch);
+					__cputchar((int) nsp->ch);
 			}
 #ifdef DEBUG
 			__CTRACE("makech: putchar(%c)\n", nsp->ch & 0177);
 #endif
 			if (UC && ((nsp->attr & __STANDOUT) ||
 			    (nsp->attr & __UNDERSCORE))) {
-				putchar('\b');
+				__cputchar('\b');
 				tputs(UC, 0, __cputchar);
 			}
 			nsp++;
