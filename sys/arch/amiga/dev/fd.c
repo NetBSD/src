@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: fd.c,v 1.9 1994/06/20 06:36:47 chopps Exp $
+ *	$Id: fd.c,v 1.10 1994/07/04 19:39:07 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,9 +63,9 @@ enum fd_parttypes {
 #define FDSBSIZE	(8192)
 
 #define b_cylin	b_resid
-#define FDUNIT(dev)	(minor(dev) / MAXPARTITIONS)
-#define FDPART(dev)	(minor(dev) % MAXPARTITIONS)
-#define FDMAKEDEV(m, u, p)	makedev((m), (u) * MAXPARTITIONS + (p))
+#define FDUNIT(dev)	DISKUNIT(dev)
+#define FDPART(dev)	DISKPART(dev)
+#define FDMAKEDEV(m, u, p)	MAKEDISKDEV((m), (u), (p))
 
 #define FDNHEADS	(2)	/* amiga drives always have 2 heads */
 #define FDSECSIZE	(512)	/* amiga drives always have 512 byte sectors */
