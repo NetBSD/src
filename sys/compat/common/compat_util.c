@@ -1,4 +1,4 @@
-/* 	$NetBSD: compat_util.c,v 1.22 2002/03/16 20:43:49 christos Exp $	*/
+/* 	$NetBSD: compat_util.c,v 1.23 2002/03/17 00:16:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.22 2002/03/16 20:43:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.23 2002/03/17 00:16:07 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,6 +244,8 @@ stackgap_init(p, sz)
 {
 	if (sz == 0)
 		sz = STACKGAPLEN;
+	if (sz > STACKGAPLEN)
+		panic("size %lu > STACKGAPLEN", (unsigned long)sz);
 #define szsigcode ((caddr_t)(p->p_emul->e_esigcode - p->p_emul->e_sigcode))
 	return (caddr_t)(((unsigned long)p->p_psstr - (unsigned long)szsigcode
 		- sz) & ~ALIGNBYTES);
