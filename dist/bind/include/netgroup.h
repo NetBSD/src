@@ -1,4 +1,4 @@
-/*	$NetBSD: netgroup.h,v 1.1.1.2 2003/06/03 07:04:45 itojun Exp $	*/
+/*	$NetBSD: netgroup.h,v 1.2 2003/06/03 07:33:47 itojun Exp $	*/
 
 #ifndef netgroup_h
 #define netgroup_h

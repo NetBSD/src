@@ -1,7 +1,7 @@
-/*	$NetBSD: ns_ixfr.c,v 1.5 2002/06/20 11:42:57 itojun Exp $	*/
+/*	$NetBSD: ns_ixfr.c,v 1.6 2003/06/03 07:33:35 itojun Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "Id: ns_ixfr.c,v 8.32 2002/05/18 01:02:57 marka Exp";
+static const char rcsid[] = "Id: ns_ixfr.c,v 8.33 2003/02/24 23:36:01 marka Exp";
 #endif /* not lint */
 
 /*
@@ -410,6 +410,7 @@ ixfr_log_maint(struct zoneinfo *zp) {
 	int len;
 	struct stat db_sb;
 	struct stat sb;
+	size_t check_size;
 	static char buf[MAXBSIZE];
 
 	ns_debug(ns_log_default, 3, "ixfr_log_maint(%s)", zp->z_origin);
@@ -444,22 +445,14 @@ ixfr_log_maint(struct zoneinfo *zp) {
 		return (-1);
 	}
 	ns_debug(ns_log_default, 3, "%s, size %llu max %ld\n", zp->z_ixfr_base, 
-		 (unsigned long long)sb.st_size,
-		 (long)zp->z_max_log_size_ixfr);
-	if (zp->z_max_log_size_ixfr) {
-		if (sb.st_size > zp->z_max_log_size_ixfr)
-			seek = sb.st_size -
-				(size_t)(zp->z_max_log_size_ixfr + 
-				(zp->z_max_log_size_ixfr * 0.10) );
-		else
-			seek = 0;
-	} else {
-		if (sb.st_size > (db_sb.st_size * 0.50))
-			seek = sb.st_size - (size_t)((db_sb.st_size * 0.50)
-			 + ((db_sb.st_size * zp->z_max_log_size_ixfr) * 0.10));
-		else 
-			 seek = 0;
-	}
+		 (unsigned long long)sb.st_size, (long)zp->z_max_log_size_ixfr);
+	check_size = zp->z_max_log_size_ixfr;
+	if (!check_size)
+		check_size = db_sb.st_size / 2;
+	if (sb.st_size > check_size)
+		seek = (sb.st_size - check_size) + (check_size / 10);
+	else
+		seek = 0;
 	ns_debug(ns_log_default, 3, "seek: %ld", (long)seek);
 	if (seek < 1) {
 		ns_debug(ns_log_default, 3, "%s does not need to be reduced", 
