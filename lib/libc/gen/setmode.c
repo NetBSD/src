@@ -1,4 +1,4 @@
-/*	$NetBSD: setmode.c,v 1.17 1997/07/21 14:07:31 jtc Exp $	*/
+/*	$NetBSD: setmode.c,v 1.18 1997/10/08 17:19:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setmode.c	8.2 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: setmode.c,v 1.17 1997/07/21 14:07:31 jtc Exp $");
+__RCSID("$NetBSD: setmode.c,v 1.18 1997/10/08 17:19:13 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -226,6 +226,7 @@ setmode(p)
 				return (NULL);
 			}
 		ADDCMD('=', (STANDARD_BITS|S_ISTXT), perm, mask);
+		set->cmd = 0;
 		return (saveset);
 	}
 
