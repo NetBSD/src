@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiep.c,v 1.17 2003/02/26 17:39:07 pk Exp $ */
+/*	$NetBSD: msiiep.c,v 1.18 2003/04/08 15:16:14 uwe Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.17 2003/02/26 17:39:07 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.18 2003/04/08 15:16:14 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -257,6 +257,8 @@ msiiep_attach(parent, self, aux)
 {
 	struct mainbus_attach_args *ma = aux;
 	struct msiiep_attach_args msa;
+
+	aprint_normal("\n");
 
 	/* pass on real mainbus_attach_args */
 	msa.msa_ma = ma;
