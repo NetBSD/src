@@ -1,4 +1,4 @@
-/*      $NetBSD: if_wi_pci.c,v 1.6 2002/04/04 17:30:33 jdolecek Exp $  */
+/*      $NetBSD: if_wi_pci.c,v 1.7 2002/04/04 17:43:33 jdolecek Exp $  */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.6 2002/04/04 17:30:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.7 2002/04/04 17:43:33 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,6 +91,7 @@ static int	wi_pci_match __P((struct device *, struct cfdata *, void *));
 static void	wi_pci_attach __P((struct device *, struct device *, void *));
 static int	wi_pci_enable __P((struct wi_softc *));
 static void	wi_pci_disable __P((struct wi_softc *));
+static void	wi_pci_reset __P((struct wi_softc *));
 static void	wi_pci_powerhook __P((int, void *));
 
 static const struct wi_pci_product
@@ -150,6 +151,20 @@ wi_pci_disable(sc)
 	struct wi_pci_softc *psc = (struct wi_pci_softc *)sc;
 
 	pci_intr_disestablish(psc->psc_pa->pa_pc, sc->sc_ih);
+}
+
+static void
+wi_pci_reset(sc)
+	struct wi_softc		*sc;
+{
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+			  WI_PCI_COR, WI_PCI_SOFT_RESET);
+	DELAY(100*1000); /* 100 m sec */
+
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, WI_PCI_COR, 0x0);
+	DELAY(100*1000); /* 100 m sec */
+
+	return;
 }
 
 static const struct wi_pci_product *
