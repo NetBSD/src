@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.18 1998/11/20 19:37:06 chuck Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.19 1999/01/24 23:53:15 chuck Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -421,7 +421,7 @@ int uvmfault_anonget(ufi, amap, anon)
 
 		locked = uvmfault_relock(ufi);
 		if (locked) {
-			simple_lock(&amap->am_l);
+			amap_lock(amap);
 		}
 		if (locked || we_own)
 			simple_lock(&anon->an_lock);
@@ -725,7 +725,7 @@ ReFault:
 	 */
 
 	if (amap) {
-		simple_lock(&amap->am_l);
+		amap_lock(amap);
 		anons = anons_store;
 		amap_lookups(&ufi.entry->aref, startva - ufi.entry->start,
 		    anons, npages);
@@ -1317,7 +1317,7 @@ Case2:
 
 		locked = uvmfault_relock(&ufi);
 		if (locked && amap)
-			simple_lock(&amap->am_l);
+			amap_lock(amap);
 		simple_lock(&uobj->vmobjlock);
 		
 		/* locked(locked): maps(read), amap(if !null), uobj, uobjpage */
@@ -1569,7 +1569,7 @@ Case2:
 			 * promote to shared amap?  make sure all sharing
 			 * procs see it
 			 */
-			if ((amap->am_flags & AMAP_SHARED) != 0) {
+			if ((amap_flags(amap) & AMAP_SHARED) != 0) {
 				pmap_page_protect(PMAP_PGARG(uobjpage),
 				    VM_PROT_NONE);
 			}
