@@ -39,6 +39,7 @@ char copyright[] =
 
 #ifndef lint
 static char sccsid[] = "@(#)pagesize.c	5.4 (Berkeley) 6/1/90";
+static char rcsid[] = "$Header: /cvsroot/src/usr.bin/pagesize/Attic/pagesize.c,v 1.2 1993/07/22 16:33:32 jtc Exp $";
 #endif /* not lint */
 
 main()
