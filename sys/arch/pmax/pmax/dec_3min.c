@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3min.c,v 1.39 2000/04/11 02:43:55 nisimura Exp $ */
+/* $NetBSD: dec_3min.c,v 1.40 2000/04/11 06:50:38 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.39 2000/04/11 02:43:55 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.40 2000/04/11 06:50:38 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,6 @@ dec_3min_init()
 	kn02ba_wbflush();
 
 	ioasic_base = MIPS_PHYS_TO_KSEG1(KMIN_SYS_ASIC);
-	mips_hardware_intr = dec_3min_intr; 
 
 	/*
 	 * Since all the motherboard interrupts come through the

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3100.c,v 1.27 2000/04/11 02:43:54 nisimura Exp $ */
+/* $NetBSD: dec_3100.c,v 1.28 2000/04/11 06:50:37 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -112,8 +112,6 @@ dec_3100_init()
 	platform.intr_establish = dec_3100_intr_establish;
 	platform.memsize = memsize_scan;
 	/* no high resolution timer available */
-
-	mips_hardware_intr = dec_3100_intr;
 
 	splvec.splbio = MIPS_SPL0;
 	splvec.splnet = MIPS_SPL_0_1;

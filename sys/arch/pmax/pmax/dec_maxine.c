@@ -1,4 +1,4 @@
-/* $NetBSD: dec_maxine.c,v 1.30 2000/04/11 02:43:56 nisimura Exp $ */
+/* $NetBSD: dec_maxine.c,v 1.31 2000/04/11 06:50:38 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.30 2000/04/11 02:43:56 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.31 2000/04/11 06:50:38 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,7 +132,6 @@ dec_maxine_init()
 	kn02ca_wbflush();
  
 	ioasic_base = MIPS_PHYS_TO_KSEG1(XINE_SYS_ASIC);
-	mips_hardware_intr = dec_maxine_intr;
 
 	/*
 	 * MAXINE IOASIC interrupts come through INT 3, while
