@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.5 2002/12/17 12:04:29 simonb Exp $	*/
+/*	$NetBSD: cache.h,v 1.6 2003/02/17 11:35:01 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -151,7 +151,6 @@ struct mips_cache_ops {
 	void	(*mco_intern_sdcache_wb_range)(vaddr_t, vsize_t);
 };
 
-#ifdef _KERNEL
 extern struct mips_cache_ops mips_cache_ops;
 
 /* PRIMARY CACHE VARIABLES */
@@ -261,5 +260,3 @@ void	mips_config_cache(void);
 void	mips_dcache_compute_align(void);
 
 #include <mips/cache_mipsNN.h>
-
-#endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r5900.h,v 1.3 2001/11/23 15:48:40 uch Exp $	*/
+/*	$NetBSD: cache_r5900.h,v 1.4 2003/02/17 11:35:02 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
 #define CACHEOP_R5900_HWB_D		0x1c
 					/* HIT WRITEBACK W/O INVALIDATE */
 
-#if defined(_KERNEL) && !defined(_LOCORE)
+#if !defined(_LOCORE)
 
 #define	cache_op_r5900_line_64(va, op)					\
 do {									\
@@ -144,4 +144,4 @@ void	r5900_pdcache_wbinv_range_index_64(vaddr_t, vsize_t);
 void	r5900_pdcache_inv_range_64(vaddr_t, vsize_t);
 void	r5900_pdcache_wb_range_64(vaddr_t, vsize_t);
 
-#endif /* _KERNEL && !_LOCORE */
+#endif /* !_LOCORE */

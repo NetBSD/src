@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r4k.h,v 1.8 2002/11/17 06:40:43 simonb Exp $	*/
+/*	$NetBSD: cache_r4k.h,v 1.9 2003/02/17 11:35:02 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -55,7 +55,7 @@
 #define	CACHEOP_R4K_HIT_WB		(6 << 2)	/* I, D, SD */
 #define	CACHEOP_R4K_HIT_SET_VIRTUAL	(7 << 2)	/* SI, SD */
 
-#if defined(_KERNEL) && !defined(_LOCORE)
+#if !defined(_LOCORE)
 
 /*
  * cache_r4k_op_line:
@@ -401,4 +401,4 @@ void	r4k_sdcache_wbinv_range_index_generic(vaddr_t, vsize_t);
 void	r4k_sdcache_inv_range_generic(vaddr_t, vsize_t);
 void	r4k_sdcache_wb_range_generic(vaddr_t, vsize_t);
 
-#endif /* _KERNEL && !_LOCORE */
+#endif /* !_LOCORE */
