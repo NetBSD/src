@@ -1,4 +1,4 @@
-/*	$NetBSD: ioctl.c,v 1.1 2001/09/20 16:56:53 atatat Exp $	*/
+/*	$NetBSD: ioctl.c,v 1.2 2001/12/31 20:18:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ioctl.c,v 1.1 2001/09/20 16:56:53 atatat Exp $");
+__RCSID("$NetBSD: ioctl.c,v 1.2 2001/12/31 20:18:28 thorpej Exp $");
 #endif
 
 #include <errno.h>
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: ioctl.c,v 1.1 2001/09/20 16:56:53 atatat Exp $");
 #include <signal.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdlib.h>
 #include <err.h>
 #include <sys/types.h>
 #include <sys/wait.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: initfini.c,v 1.1 2001/07/17 03:41:03 thorpej Exp $	*/
+/*	$NetBSD: initfini.c,v 1.2 2001/12/31 20:16:34 thorpej Exp $	*/
 
 /*
  * This file placed in the public domain.
@@ -6,6 +6,7 @@
  */
 
 #include <sys/types.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 void	i_am_init(void);
