@@ -1,4 +1,4 @@
-/*	$NetBSD: __longjmp14.c,v 1.1 2004/03/21 18:19:52 matt Exp $	*/
+/*	$NetBSD: __longjmp14.c,v 1.2 2004/03/23 01:41:47 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -76,18 +76,18 @@ __longjmp14(jmp_buf env, int val)
 	uc.uc_mcontext.__gregs[_REG_R0] = val;
 
 	/* Copy saved registers */
-        uc.uc_mcontext.__gregs[_REG_AP] = jb->jb_sc.sc_ap;
-        uc.uc_mcontext.__gregs[_REG_SP] = jb->jb_sc.sc_sp;
-        uc.uc_mcontext.__gregs[_REG_FP] = jb->jb_sc.sc_fp;
-        uc.uc_mcontext.__gregs[_REG_PC] = jb->jb_sc.sc_pc;
-        uc.uc_mcontext.__gregs[_REG_PSL] = jb->jb_sc.sc_ps;
+	uc.uc_mcontext.__gregs[_REG_AP] = jb->jb_sc.sc_ap;
+	uc.uc_mcontext.__gregs[_REG_SP] = jb->jb_sc.sc_sp;
+	uc.uc_mcontext.__gregs[_REG_FP] = jb->jb_sc.sc_fp;
+	uc.uc_mcontext.__gregs[_REG_PC] = jb->jb_sc.sc_pc;
+	uc.uc_mcontext.__gregs[_REG_PSL] = jb->jb_sc.sc_ps;
 
-        uc.uc_mcontext.__gregs[_REG_R6] = jb->jb_regs[0];
-        uc.uc_mcontext.__gregs[_REG_R7] = jb->jb_regs[1];
-        uc.uc_mcontext.__gregs[_REG_R8] = jb->jb_regs[2];
-        uc.uc_mcontext.__gregs[_REG_R9] = jb->jb_regs[3];
-        uc.uc_mcontext.__gregs[_REG_R10] = jb->jb_regs[4];
-        uc.uc_mcontext.__gregs[_REG_R11] = jb->jb_regs[5];
+	uc.uc_mcontext.__gregs[_REG_R6] = jb->jb_regs[0];
+	uc.uc_mcontext.__gregs[_REG_R7] = jb->jb_regs[1];
+	uc.uc_mcontext.__gregs[_REG_R8] = jb->jb_regs[2];
+	uc.uc_mcontext.__gregs[_REG_R9] = jb->jb_regs[3];
+	uc.uc_mcontext.__gregs[_REG_R10] = jb->jb_regs[4];
+	uc.uc_mcontext.__gregs[_REG_R11] = jb->jb_regs[5];
 
 	/* Copy signal mask */
 	uc.uc_sigmask = jb->jb_sc.sc_mask;
