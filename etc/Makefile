@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.261 2003/10/26 23:34:29 cl Exp $
+#	$NetBSD: Makefile,v 1.262 2003/11/15 08:50:26 jdolecek Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -146,7 +146,7 @@ distribution: check_DESTDIR .WAIT distrib-dirs
 
 .PHONY: MAKEDEV
 MAKEDEV:
-	awk -v ETCDIR="${.CURDIR}" -f ${.CURDIR}/MAKEDEV.awk ${.CURDIR}/MAKEDEV.tmpl > ${.TARGET}
+	MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH} awk -v ETCDIR="${.CURDIR}" -f ${.CURDIR}/MAKEDEV.awk ${.CURDIR}/MAKEDEV.tmpl > ${.TARGET}
 
 	
 
