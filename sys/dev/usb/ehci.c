@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.24 2001/11/21 16:22:58 augustss Exp $	*/
+/*	$NetBSD: ehci.c,v 1.25 2001/11/22 04:20:49 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.24 2001/11/21 16:22:58 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.25 2001/11/22 04:20:49 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,10 +176,10 @@ Static void		ehci_free_sqh(ehci_softc_t *, ehci_soft_qh_t *);
 
 Static ehci_soft_qtd_t  *ehci_alloc_sqtd(ehci_softc_t *);
 Static void		ehci_free_sqtd(ehci_softc_t *, ehci_soft_qtd_t *);
-Static usbd_status	ehci_alloc_std_chain(struct ehci_pipe *,
+Static usbd_status	ehci_alloc_sqtd_chain(struct ehci_pipe *,
 			    ehci_softc_t *, int, int, usbd_xfer_handle,
 			    ehci_soft_qtd_t **, ehci_soft_qtd_t **);
-Static void		ehci_free_std_chain(ehci_softc_t *, ehci_soft_qtd_t *,
+Static void		ehci_free_sqtd_chain(ehci_softc_t *, ehci_soft_qtd_t *,
 					    ehci_soft_qtd_t *);
 
 Static usbd_status	ehci_device_request(usbd_xfer_handle xfer);
@@ -934,8 +934,14 @@ usbd_status
 ehci_allocm(struct usbd_bus *bus, usb_dma_t *dma, u_int32_t size)
 {
 	struct ehci_softc *sc = (struct ehci_softc *)bus;
+	usbd_status err;
 
-	return (usb_allocmem(&sc->sc_bus, size, 0, dma));
+	err = usb_allocmem(&sc->sc_bus, size, 0, dma);
+#ifdef EHCI_DEBUG
+	if (err)
+		printf("ehci_allocm: usb_allocmem()=%d\n", err);
+#endif
+	return (err);
 }
 
 void
@@ -1196,6 +1202,10 @@ ehci_open(usbd_pipe_handle pipe)
 	case UE_CONTROL:
 		err = usb_allocmem(&sc->sc_bus, sizeof(usb_device_request_t), 
 				   0, &epipe->u.ctl.reqdma);
+#ifdef EHCI_DEBUG
+		if (err)
+			printf("ehci_open: usb_allocmem()=%d\n", err);
+#endif
 		if (err)
 			goto bad1;
 		pipe->methods = &ehci_device_ctrl_methods;
@@ -1934,6 +1944,10 @@ ehci_alloc_sqh(ehci_softc_t *sc)
 		DPRINTFN(2, ("ehci_alloc_sqh: allocating chunk\n"));
 		err = usb_allocmem(&sc->sc_bus, EHCI_SQH_SIZE * EHCI_SQH_CHUNK,
 			  EHCI_PAGE_SIZE, &dma);
+#ifdef EHCI_DEBUG
+		if (err)
+			printf("ehci_alloc_sqh: usb_allocmem()=%d\n", err);
+#endif
 		if (err)
 			return (NULL);
 		for(i = 0; i < EHCI_SQH_CHUNK; i++) {
@@ -1971,6 +1985,10 @@ ehci_alloc_sqtd(ehci_softc_t *sc)
 		DPRINTFN(2, ("ehci_alloc_sqtd: allocating chunk\n"));
 		err = usb_allocmem(&sc->sc_bus, EHCI_SQTD_SIZE*EHCI_SQTD_CHUNK,
 			  EHCI_PAGE_SIZE, &dma);
+#ifdef EHCI_DEBUG
+		if (err)
+			printf("ehci_alloc_sqtd: usb_allocmem()=%d\n", err);
+#endif
 		if (err)
 			return (NULL);
 		s = splusb();
@@ -2007,7 +2025,7 @@ ehci_free_sqtd(ehci_softc_t *sc, ehci_soft_qtd_t *sqtd)
 }
 
 usbd_status
-ehci_alloc_std_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
+ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 		     int alen, int rd, usbd_xfer_handle xfer,
 		     ehci_soft_qtd_t **sp, ehci_soft_qtd_t **ep)
 {
@@ -2018,7 +2036,7 @@ ehci_alloc_std_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 	int i;
 	usb_dma_t *dma = &xfer->dmabuf;
 
-	DPRINTFN(alen < 4096,("ehci_alloc_std_chain: start len=%d\n", alen));
+	DPRINTFN(alen<4*4096,("ehci_alloc_sqtd_chain: start len=%d\n", alen));
 
 	len = alen;
 	dataphys = DMAADDR(dma);
@@ -2033,31 +2051,39 @@ ehci_alloc_std_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 	    );
 
 	cur = ehci_alloc_sqtd(sc);
+	*sp = cur;
 	if (cur == NULL)
 		goto nomem;
-	*sp = cur;
 	for (;;) {
 		dataphyspage = EHCI_PAGE(dataphys);
 		/* The EHCI hardware can handle at most 4 page crossings. */
-		if (dataphyslastpage - dataphyspage < EHCI_QTD_NBUFFERS) {
+		if (dataphyslastpage - dataphyspage < 
+		    (EHCI_QTD_NBUFFERS-1) * EHCI_PAGE_SIZE) {
 			/* we can handle it in this QTD */
 			curlen = len;
 		} else {
-			DPRINTF(("ehci_alloc_std_chain: multiple QTDs\n"));
-
 			/* must use multiple TDs, fill as much as possible. */
 			curlen = EHCI_QTD_NBUFFERS * EHCI_PAGE_SIZE - 
 				 EHCI_PAGE_OFFSET(dataphys);
+#ifdef DIAGNOSTIC
+			if (curlen > len) {
+				printf("ehci_alloc_sqtd_chain: curlen=%d "
+				       "len=%d\n", curlen, len);
+				curlen = len;
+			}
+#endif
 
 			/* XXX true for EHCI? */
 			/* the length must be a multiple of the max size */
 			curlen -= curlen % UGETW(epipe->pipe.endpoint->edesc->wMaxPacketSize);
+			DPRINTFN(1,("ehci_alloc_sqtd_chain: multiple QTDs, "
+				    "curlen=%d\n", curlen));
 #ifdef DIAGNOSTIC
 			if (curlen == 0)
 				panic("ehci_alloc_std: curlen == 0\n");
 #endif
 		}
-		DPRINTFN(4,("ehci_alloc_std_chain: dataphys=0x%08x "
+		DPRINTFN(4,("ehci_alloc_sqtd_chain: dataphys=0x%08x "
 			    "dataphyslastpage=0x%08x len=%d curlen=%d\n",
 			    dataphys, dataphyslastpage,
 			    len, curlen));
@@ -2078,6 +2104,12 @@ ehci_alloc_std_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 			if (i != 0) /* use offset only in first buffer */
 				a = EHCI_PAGE(a);
 			cur->qtd.qtd_buffer[i] = htole32(a);
+#ifdef DIAGNOSTIC
+			if (i >= EHCI_QTD_NBUFFERS) {
+				printf("ehci_alloc_sqtd_chain: i=%d\n", i);
+				goto nomem;
+			}
+#endif
 		}
 		cur->nextqtd = next;
 		cur->qtd.qtd_next = cur->qtd.qtd_altnext = htole32(nextphys);
@@ -2085,11 +2117,11 @@ ehci_alloc_std_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 		    qtdstatus | htole32(EHCI_QTD_SET_BYTES(curlen));
 		cur->xfer = xfer;
 		cur->len = curlen;
-		DPRINTFN(10,("ehci_alloc_std_chain: cbp=0x%08x be=0x%08x\n",
+		DPRINTFN(10,("ehci_alloc_sqtd_chain: cbp=0x%08x be=0x%08x\n",
 			    dataphys, dataphys + curlen - 1));
 		if (len == 0)
 			break;
-		DPRINTFN(10,("ehci_alloc_std_chain: extend chain\n"));
+		DPRINTFN(10,("ehci_alloc_sqtd_chain: extend chain\n"));
 		dataphys += curlen;
 		cur = next;
 	}
@@ -2100,16 +2132,18 @@ ehci_alloc_std_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 
  nomem:
 	/* XXX free chain */
+	DPRINTFN(-1,("ehci_alloc_sqtd_chain: no memory\n"));
 	return (USBD_NOMEM);
 }
 
 Static void
-ehci_free_std_chain(ehci_softc_t *sc, ehci_soft_qtd_t *sqtd,
+ehci_free_sqtd_chain(ehci_softc_t *sc, ehci_soft_qtd_t *sqtd,
 		    ehci_soft_qtd_t *sqtdend)
 {
 	ehci_soft_qtd_t *p;
+	int i;
 
-	for (; sqtd != sqtdend; sqtd = p) {
+	for (i = 0; sqtd != sqtdend; sqtd = p, i++) {
 		p = sqtd->nextqtd;
 		ehci_free_sqtd(sc, sqtd);
 	}
@@ -2295,7 +2329,7 @@ ehci_device_ctrl_done(usbd_xfer_handle xfer)
 {
 	struct ehci_xfer *ex = EXFER(xfer);
 	ehci_softc_t *sc = (ehci_softc_t *)xfer->pipe->device->bus;
-	struct ehci_pipe *epipe = (struct ehci_pipe *)xfer->pipe;
+	/*struct ehci_pipe *epipe = (struct ehci_pipe *)xfer->pipe;*/
 
 	DPRINTFN(10,("ehci_ctrl_done: xfer=%p\n", xfer));
 
@@ -2305,12 +2339,12 @@ ehci_device_ctrl_done(usbd_xfer_handle xfer)
 	}
 #endif
 
-	ehci_del_intr_list(ex);	/* remove from active list */
+	if (xfer->status != USBD_NOMEM) {
+		ehci_del_intr_list(ex);	/* remove from active list */
+		ehci_free_sqtd_chain(sc, ex->sqtdstart, NULL);
+	}
 
-	if (epipe->u.ctl.length != 0)
-		ehci_free_std_chain(sc, ex->sqtdstart, NULL);
-
-	DPRINTFN(5, ("uhci_ctrl_done: length=%d\n", xfer->actlen));
+	DPRINTFN(5, ("ehci_ctrl_done: length=%d\n", xfer->actlen));
 }
 
 /* Abort a device control request. */
@@ -2396,7 +2430,7 @@ ehci_device_request(usbd_xfer_handle xfer)
 	if (len != 0) {
 		ehci_soft_qtd_t *end;
 
-		err = ehci_alloc_std_chain(epipe, sc, len, isread, xfer,
+		err = ehci_alloc_sqtd_chain(epipe, sc, len, isread, xfer,
 			  &next, &end);
 		if (err)
 			goto bad3;
@@ -2482,6 +2516,9 @@ ehci_device_request(usbd_xfer_handle xfer)
  bad2:
 	ehci_free_sqtd(sc, setup);
  bad1:
+	DPRINTFN(-1,("ehci_device_request: no memory\n"));
+	xfer->status = err;
+	usb_transfer_complete(xfer);
 	return (err);
 #undef exfer
 }
@@ -2533,10 +2570,14 @@ ehci_device_bulk_start(usbd_xfer_handle xfer)
 
 	epipe->u.bulk.length = len;
 
-	err = ehci_alloc_std_chain(epipe, sc, len, isread, xfer, &data,
+	err = ehci_alloc_sqtd_chain(epipe, sc, len, isread, xfer, &data,
 				   &dataend);
-	if (err)
+	if (err) {
+		DPRINTFN(-1,("ehci_device_bulk_transfer: no memory\n"));
+		xfer->status = err;
+		usb_transfer_complete(xfer);
 		return (err);
+	}
 
 #ifdef EHCI_DEBUG
 	if (ehcidebug > 5) {
@@ -2613,9 +2654,10 @@ ehci_device_bulk_done(usbd_xfer_handle xfer)
 	DPRINTFN(10,("ehci_bulk_done: xfer=%p, actlen=%d\n", 
 		     xfer, xfer->actlen));
 
-	ehci_del_intr_list(ex);	/* remove from active list */
-
-	ehci_free_std_chain(sc, ex->sqtdstart, 0);
+	if (xfer->status != USBD_NOMEM) {
+		ehci_del_intr_list(ex);	/* remove from active list */
+		ehci_free_sqtd_chain(sc, ex->sqtdstart, 0);
+	}
 
 	DPRINTFN(5, ("ehci_bulk_done: length=%d\n", xfer->actlen));
 }
