@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetbyaddr.c,v 1.12 1998/03/30 14:53:16 kleink Exp $	*/
+/*	$NetBSD: getnetbyaddr.c,v 1.13 1998/10/14 19:52:57 kleink Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,10 +40,11 @@ static char sccsid_[] = "from getnetbyaddr.c	1.1 (Coimbra) 93/06/02";
 static char rcsid[] = "Id: getnetbyaddr.c,v 8.2 1996/05/09 05:59:13 vixie Exp ";
 static char sccsid[] = "@(#)getnetbyaddr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getnetbyaddr.c,v 1.12 1998/03/30 14:53:16 kleink Exp $");
+__RCSID("$NetBSD: getnetbyaddr.c,v 1.13 1998/10/14 19:52:57 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <netdb.h>
 #include <stddef.h>
 
