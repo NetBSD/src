@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.74 2001/04/24 04:31:03 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.75 2001/05/08 05:36:01 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.74 2001/04/24 04:31:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.75 2001/05/08 05:36:01 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,6 +145,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	pcb->pcb_context[8] = (int)f - 24;		/* SP */
 	pcb->pcb_context[0] = (int)func;		/* S0 */
 	pcb->pcb_context[1] = (int)arg;			/* S1 */
+	pcb->pcb_context[11] |= MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 }
 
 /*
