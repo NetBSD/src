@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ssh-keygen.1,v 1.30 2001/02/08 19:22:38 itojun Exp $
+.\"	$OpenBSD: ssh-keygen.1,v 1.35 2001/03/11 22:33:23 markus Exp $
 .\"
 .\"  -*- nroff -*-
 .\"
@@ -13,9 +13,9 @@
 .\" called by a name other than "ssh" or "Secure Shell".
 .\"
 .\"
-.\" Copyright (c) 1999,2000 Markus Friedl. All rights reserved.
-.\" Copyright (c) 1999 Aaron Campbell. All rights reserved.
-.\" Copyright (c) 1999 Theo de Raadt. All rights reserved.
+.\" Copyright (c) 1999,2000 Markus Friedl.  All rights reserved.
+.\" Copyright (c) 1999 Aaron Campbell.  All rights reserved.
+.\" Copyright (c) 1999 Theo de Raadt.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -72,6 +72,9 @@
 .Op Fl f Ar keyfile
 .Nm ssh-keygen
 .Fl l
+.Op Fl f Ar input_keyfile
+.Nm ssh-keygen
+.Fl B
 .Op Fl f Ar input_keyfile
 .Sh DESCRIPTION
 .Nm
@@ -165,7 +168,9 @@ or
 .Dq dsa
 for protocol version 2.
 The default is
-.Dq rsa .
+.Dq rsa1 .
+.It Fl B
+Show the bubblebabble digest of specified private or public key file.
 .It Fl C Ar comment
 Provides the new comment.
 .It Fl N Ar new_passphrase

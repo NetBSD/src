@@ -51,7 +51,7 @@ static struct {
 	int fd_out;
 } cur;
 
-void *fudge_opendir(const char *path)
+static void *fudge_opendir(const char *path)
 {
 	struct SFTP_OPENDIR *r;
 	
@@ -65,7 +65,7 @@ void *fudge_opendir(const char *path)
 	return((void*)r);
 }
 
-struct dirent *fudge_readdir(struct SFTP_OPENDIR *od)
+static struct dirent *fudge_readdir(struct SFTP_OPENDIR *od)
 {
 	static struct dirent ret;
 	
@@ -79,13 +79,13 @@ struct dirent *fudge_readdir(struct SFTP_OPENDIR *od)
 	return(&ret);
 }
 
-void fudge_closedir(struct SFTP_OPENDIR *od)
+static void fudge_closedir(struct SFTP_OPENDIR *od)
 {
 	free_sftp_dirents(od->dir);
 	free(od);
 }
 
-void attrib_to_stat(Attrib *a, struct stat *st)
+static void attrib_to_stat(Attrib *a, struct stat *st)
 {
 	memset(st, 0, sizeof(*st));
 	
@@ -103,7 +103,7 @@ void attrib_to_stat(Attrib *a, struct stat *st)
 	}
 }
 
-int fudge_lstat(const char *path, struct stat *st)
+static int fudge_lstat(const char *path, struct stat *st)
 {
 	Attrib *a;
 	
@@ -115,7 +115,7 @@ int fudge_lstat(const char *path, struct stat *st)
 	return(0);
 }
 
-int fudge_stat(const char *path, struct stat *st)
+static int fudge_stat(const char *path, struct stat *st)
 {
 	Attrib *a;
 	
