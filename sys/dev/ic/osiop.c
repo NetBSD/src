@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop.c,v 1.2 2001/05/09 16:24:43 tsutsui Exp $	*/
+/*	$NetBSD: osiop.c,v 1.3 2001/05/17 10:35:30 scw Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -721,8 +721,7 @@ osiop_scsidone(acb, status)
 
 	callout_stop(&xs->xs_callout);
 	xs->resid = 0;
-	if ((xs->xs_control & XS_CTL_POLL) == 0)
-		scsipi_done(xs);
+	scsipi_done(xs);
 
 	if (dosched && sc->sc_nexus == NULL)
 		osiop_sched(sc);
