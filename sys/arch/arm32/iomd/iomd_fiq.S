@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_fiq.S,v 1.3 1997/10/14 10:40:27 mark Exp $	*/
+/*	$NetBSD: iomd_fiq.S,v 1.4 1998/03/26 20:05:13 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -41,22 +41,15 @@
  * Created      : 27/09/94
  */
 
+#include <machine/asm.h>
 #include <machine/cpu.h>
 
-sp	.req	r13
-lr	.req	r14
-pc	.req	r15
-
-	.text
 
 /*
  * if NOFDFIQLOOPS is defined only 1 byte is transferred per
  * FIQ. The new default behaviour is to keep looping
  * until there are no FD FIQ's pending.
  */
-
-	.global	_floppy_read_fiq
-	.global	_floppy_read_fiq_end
 
 /*
  * These registers needs to be consistent with fd
@@ -70,7 +63,7 @@ pc	.req	r15
  *	r13 - scratch (loop counter)
  */
 
-_floppy_read_fiq:
+ENTRY(floppy_read_fiq)
 	subs	r10, r10, #0x00000001
 	addeq	r12, r12, #0x00018000
 	ldrb	r8, [r12]
@@ -83,10 +76,10 @@ _floppy_read_fiq:
 	bne	_floppy_read_fiq
 #endif
 	subs	pc, lr, #0x00000004
+
+	.global	_floppy_read_fiq_end
 _floppy_read_fiq_end:
 
-	.global	_floppy_write_fiq
-	.global	_floppy_write_fiq_end
 
 /*
  * These registers needs to be consistent with fd
@@ -100,7 +93,7 @@ _floppy_read_fiq_end:
  *	r13 - scratch (loop counter)
  */
 
-_floppy_write_fiq:
+ENTRY(floppy_write_fiq)
 	subs	r10, r10, #0x00000001
 	addeq	r12, r12, #0x00018000
 	ldrb	r8, [r11], #0x0001
@@ -113,6 +106,8 @@ _floppy_write_fiq:
 	bne	_floppy_write_fiq
 #endif
 	subs	pc, lr, #0x00000004
+
+	.global	_floppy_write_fiq_end
 _floppy_write_fiq_end:
 
 /* End of fiq.S */

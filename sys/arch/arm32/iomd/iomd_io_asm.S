@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_io_asm.S,v 1.1 1997/10/14 10:58:50 mark Exp $	*/
+/*	$NetBSD: iomd_io_asm.S,v 1.2 1998/03/26 20:05:13 mark Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -33,34 +33,27 @@
  * SUCH DAMAGE.
  */
 
+#include <machine/asm.h>
+
 /*
  * bus_space I/O functions for iomd
  */
-
-sp	.req	r13
-lr	.req	r14
-pc	.req	r15
-
-	.text
 
 /*
  * read single
  */
 
-	.global	_iomd_r_1
-_iomd_r_1:
+ENTRY(iomd_r_1)
 	ldrb	r0, [r1, r2, lsl #2]
 	mov	pc, lr
 
-	.global	_iomd_r_2
-_iomd_r_2:
+ENTRY(iomd_r_2)
 	ldr	r0, [r1, r2, lsl #2]
 	bic	r0, r0, #0xff000000
 	bic	r0, r0, #0x00ff0000
 	mov	pc, lr
 
-	.global	_iomd_r_4
-_iomd_r_4:
+ENTRY(iomd_r_4)
 	ldr	r0, [r1, r2, lsl #2]
 	mov	pc, lr
 
@@ -68,20 +61,17 @@ _iomd_r_4:
  * write single
  */
 
-	.global	_iomd_w_1
-_iomd_w_1:
+ENTRY(iomd_w_1)
 	strb	r3, [r1, r2, lsl #2]
 	mov	pc, lr
 
-	.global	_iomd_w_2
-_iomd_w_2:
+ENTRY(iomd_w_2)
 	mov	r3, r3, lsl #16
 	orr	r3, r3, r3, lsr #16
 	str	r3, [r1, r2, lsl #2]
 	mov	pc, lr
 
-	.global	_iomd_w_4
-_iomd_w_4:
+ENTRY(iomd_w_4)
 	str	r3, [r1, r2, lsl #2]
 	mov	pc, lr
 
@@ -90,8 +80,7 @@ _iomd_w_4:
  * read multiple
  */
 
-	.global	_iomd_rm_2
-_iomd_rm_2:
+ENTRY(iomd_rm_2)
 	add	r0, r1, r2, lsl #2
 	mov	r1, r3
 	ldr	r2, [sp, #0]
@@ -101,8 +90,7 @@ _iomd_rm_2:
  * write multiple
  */
 
-	.global	_iomd_wm_2
-_iomd_wm_2:
+ENTRY(iomd_wm_2)
 	add	r0, r1, r2, lsl #2
 	mov	r1, r3
 	ldr	r2, [sp, #0]
