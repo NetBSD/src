@@ -1,22 +1,30 @@
+$NetBSD: README.files,v 1.10 1999/03/25 13:09:20 ross Exp $
 
-			Tape, CD, and Disk Images
+	   Tape, CD, Disk, and Netboot Images
+	   ----- --- ----- --- ------- ------
 
-This release or snapshot contains two installation image types:
+This release or snapshot contains three installation image types,
+the first, for floppies, is split into a multiple volume set.
 
 	installation/floppy/disk1of2
 	installation/floppy/disk2of2
 
-and
 	installation/diskimage/cdhdtape
 
-Both image sets load the same installation kernel into memory and
-then make no further use of the source media. The general idea is
-to load a kernel with a pre-initialized memory filesystem of
+	installation/instkernel/netbsd.gz
+
+All three boot images load the same installation kernel into memory
+and then make no further use of the source media. The general idea
+is to load a kernel with a pre-initialized memory filesystem of
 utilities and an installation program.
 
-The use of the floppy disk set should be obvious. The cdhdtape
-image can be written to a CD, hard drive, or tape and then booted
-from the SRM console.
+The floppy image set uses two floppies to load the install kernel.
+The cdhdtape image can be written to a CD, hard drive, or tape and
+then booted from the SRM console. The kernel image can be netbooted
+or loaded off the root directory of an existing installation.
+
+Note:	The netboot loader can load the netbsd.gz file directly; it
+	is not necessary to ungzip this kernel first.
 
 To copy the boot images to a magnetic disk under unix, the dd(1)
 command can be used:
