@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.285 1998/02/06 10:06:51 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.286 1998/02/06 19:51:54 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -2177,8 +2177,9 @@ i386_memio_alloc(t, rstart, rend, size, alignment, boundary, flags,
 	 * Do the requested allocation.
 	 */
 	error = extent_alloc_subregion(ex, rstart, rend, size, alignment,
-	    boundary, EX_NOWAIT | EX_FAST |
-	    (ioport_malloc_safe ?  EX_MALLOCOK : 0), &bpa);
+	    boundary,
+	    EX_FAST | EX_NOWAIT | (ioport_malloc_safe ?  EX_MALLOCOK : 0),
+	    &bpa);
 
 	if (error)
 		return (error);
