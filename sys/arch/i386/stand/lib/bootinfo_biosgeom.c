@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo_biosgeom.c,v 1.8 1999/03/30 17:58:05 drochner Exp $	*/
+/*	$NetBSD: bootinfo_biosgeom.c,v 1.9 2001/07/07 22:57:57 perry Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -69,7 +69,7 @@ void bi_getbiosgeom()
 
 		if (set_geometry(&d, &ed))
 			continue;
-		bzero(&bibg->disk[nvalid], sizeof(bibg->disk[nvalid]));
+		memset(&bibg->disk[nvalid], 0, sizeof(bibg->disk[nvalid]));
 
 		bibg->disk[nvalid].sec = d.sec;
 		bibg->disk[nvalid].head = d.head;
@@ -97,7 +97,7 @@ void bi_getbiosgeom()
 		for (j = 0, cksum = 0; j < BIOSDISK_SECSIZE; j++)
 			cksum += buf[j];
 		bibg->disk[nvalid].cksum = cksum;
-		bcopy(&buf[MBR_PARTOFF], bibg->disk[nvalid].dosparts,
+		memcpy(bibg->disk[nvalid].dosparts, &buf[MBR_PARTOFF],
 		      sizeof(bibg->disk[nvalid].dosparts));
 		nvalid++;
 	}
