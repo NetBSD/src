@@ -1,4 +1,4 @@
-.\"	$NetBSD: rsh.1,v 1.19 2004/09/05 08:48:32 wiz Exp $
+.\"	$NetBSD: rsh.1,v 1.20 2005/03/11 02:45:24 ginsbach Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)rsh.1	8.2 (Berkeley) 4/29/95
 .\"
-.Dd September 5, 2004
+.Dd March 9, 2005
 .Dt RSH 1
 .Os
 .Sh NAME
@@ -37,13 +37,13 @@
 .Nd remote shell
 .Sh SYNOPSIS
 .Nm
-.Op Fl dn
+.Op Fl 46dn
 .Op Fl l Ar username
 .Op Fl p Ar port
 .Ar host
 .Op command
 .Nm
-.Op Fl dn
+.Op Fl 46dn
 .Op Fl p Ar port
 .Ar username@host
 .Op command
@@ -64,6 +64,10 @@ command;
 normally terminates when the remote command does.
 The options are as follows:
 .Bl -tag -width XlXusernameX
+.It Fl 4
+Use IPv4 addresses only.
+.It Fl 6
+Use IPv6 addresses only.
 .It Fl d
 The
 .Fl d
