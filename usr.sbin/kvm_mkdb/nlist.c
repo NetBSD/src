@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)nlist.c	5.4 (Berkeley) 4/27/91";*/
-static char rcsid[] = "$Id: nlist.c,v 1.7 1993/12/02 20:55:52 pk Exp $";
+static char rcsid[] = "$Id: nlist.c,v 1.8 1994/04/05 01:45:22 chopps Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -131,7 +131,7 @@ create_knlist(name, db)
 			off_t cur_off, rel_off, vers_off;
 
 			/* Offset relative to start of text image in VM. */
-#ifdef hp300
+#ifdef m68k
 			rel_off = nbuf.n_value;
 #endif
 #ifdef tahoe
