@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.24 1998/02/18 02:05:36 cgd Exp $	*/
+/*	$NetBSD: pmap.h,v 1.25 1998/05/19 18:12:27 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -116,10 +116,6 @@ typedef struct pmap_statistics	*pmap_statistics_t;
 #ifdef _KERNEL
 __BEGIN_DECLS
 void		*pmap_bootstrap_alloc __P((int));
-#if 0
-/* Does not belong here! */
-void		 pmap_bootstrap( /* machine dependent */ );
-#endif
 void		 pmap_activate __P((struct proc *));
 void		 pmap_deactivate __P((struct proc *));
 void		 pmap_change_wiring __P((pmap_t, vm_offset_t, boolean_t));
