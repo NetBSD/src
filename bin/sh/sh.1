@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.43 2001/04/03 10:56:03 wiz Exp $
+.\"	$NetBSD: sh.1,v 1.44 2001/12/20 20:07:40 wiz Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -400,7 +400,7 @@ The following redirection is often called a
 .Bl -item -offset indent
 .It
 .Li [n]<< delimiter
-.Dl here-doc-text...
+.Dl here-doc-text ...
 .Li delimiter
 .El
 .Pp
@@ -454,7 +454,6 @@ Note that previous versions of this document and the source code itself
 misleadingly and sporadically refer to a shell script without a magic
 number as a "shell procedure".
 .Ss Path Search
-.Pp
 When locating a command, the shell first looks to see if it has a shell
 function by that name.  Then it looks for a builtin command by that name.
 If a builtin command is not found, one of two things happen:
@@ -499,7 +498,6 @@ function definition
 Unless otherwise stated, the exit status of a command is that of the last
 simple command executed by the command.
 .Ss Pipelines
-.Pp
 A pipeline is a sequence of one or more commands separated
 by the control operator |.  The standard output of all but
 the last command is connected to the standard input
@@ -601,7 +599,7 @@ repeat until the exit status of the first list is zero.
 .Pp
 The syntax of the for command is
 .Bd -literal -offset indent
-for variable in word...
+for variable in word ...
 do   list
 done
 .Ed
@@ -658,7 +656,6 @@ Note that
 must follow a control operator (here,
 .Dq \&; )
 so that it is recognized as a reserved word and not as another command argument.
-.Pp
 .Ss Functions
 The syntax of a function definition is
 .Pp
@@ -926,7 +923,6 @@ they may be translated into <space>s, depending on the value of
 .Ev IFS
 and quoting that is in effect.)
 .Ss Arithmetic Expansion
-.Pp
 Arithmetic expansion provides a mechanism for evaluating an arithmetic
 expression and substituting its value. The format for arithmetic
 expansion is as follows:
@@ -1003,7 +999,6 @@ in a character class, make it the first character listed (after the
 .Dq \&! ,
 if any).  To include a minus sign, make it the first or last character listed
 .Ss Builtins
-.Pp
 This section lists the builtin commands which are builtin because they
 need to perform some operation that can't be performed by a separate
 process. In addition to these, there are several other commands that may
@@ -1036,7 +1031,7 @@ names and values of all defined aliases (see
 .It bg [ Ar job ] ...
 Continue the specified jobs (or the current job if no
 jobs are given) in the background.
-.It command Ar command Ar arg...
+.It command Ar command Ar arg ...
 Execute the specified builtin command.  (This is useful when you
 have a shell function with the same name as a builtin command.)
 .It cd Op Ar directory
@@ -1062,10 +1057,10 @@ directory that it actually switched to if this is different from the name
 that the user gave.  These may be different either because the
 .Ev CDPATH
 mechanism was used or because a symbolic link was crossed.
-.It eval Ar string...
+.It eval Ar string ...
 Concatenate all the arguments with spaces.  Then re-parse and execute
 the command.
-.It exec Op Ar command arg...
+.It exec Op Ar command arg ...
 Unless command is omitted, the shell process is replaced with the
 specified program (which must be a real program, not a shell builtin or
 function).  Any redirections on the
@@ -1078,7 +1073,7 @@ Terminate the shell process.  If
 .Ar exitstatus
 is given it is used as the exit status of the shell; otherwise the
 exit status of the preceding command is used.
-.It export Ar name...
+.It export Ar name ...
 .It export Fl p
 The specified names are exported so that they will appear in the
 environment of subsequent commands. The only way to un-export a variable
@@ -1274,7 +1269,7 @@ cmd \-a \-c arg file file
 cmd \-carg -a file file
 cmd \-a \-carg \-\- file file
 .Ed
-.It hash Fl rv Ar command...
+.It hash Fl rv Ar command ...
 The shell maintains a hash table which remembers the
 locations of commands.  With no arguments whatsoever,
 the
@@ -1313,7 +1308,7 @@ renamed, the builtin version of
 will continue to print the old name for the directory.
 .It Xo read Op Fl p Ar prompt
 .Op Fl r
-.Op Ar variable...
+.Op Ar variable ...
 .Xc
 The prompt is printed if the
 .Fl p
@@ -1338,7 +1333,7 @@ option is specified, the backslash
 acts as an escape character, causing the following character to be treated
 literally.  If a backslash is followed by a newline, the backslash and the
 newline will be deleted.
-.It readonly Ar name...
+.It readonly Ar name ...
 .It readonly Fl p
 The specified names are marked as read only, so that they cannot be
 subsequently modified or unset.  The shell allows the value of a variable
@@ -1355,7 +1350,7 @@ option specified the output will be formatted suitably for non-interactive use.
 .It Xo set
 .Oo {
 .Fl options | Cm +options | Cm -- }
-.Oc Ar arg...
+.Oc Ar arg ...
 .Xc
 The
 .Ic set
@@ -1406,7 +1401,7 @@ does nothing.
 .Xc
 .It Xo trap
 .Op Ar action
-.Ar signal...
+.Ar signal ...
 .Xc
 Cause the shell to parse and execute action when any of the specified
 signals are received. The signals are specified by signal number or as
@@ -1534,7 +1529,7 @@ If
 is specified, the shell removes that alias. If
 .Fl a
 is specified, all aliases are removed.
-.It unset Ar name...
+.It unset Ar name ...
 The specified variables and functions are unset and unexported. If a given
 name corresponds to both a variable and a function, both the variable and
 the function are unset.
@@ -1563,6 +1558,13 @@ It's similar to vi: typing
 will throw you into command VI command mode. Hitting
 .Aq return
 while in command mode will pass the line to the shell.
+.Sh EXIT STATUS
+Errors that are detected by the shell, such as a syntax error, will cause the
+shell to exit with a non-zero exit status.  If the shell is not an
+interactive shell, the execution of the shell file will be aborted.  Otherwise
+the shell will return the exit status of the last command executed, or
+if the exit builtin is used with a numeric argument, it will return the
+argument.
 .Sh ENVIRONMENT
 .Bl -tag -width MAILCHECK
 .It Ev HOME
@@ -1638,13 +1640,6 @@ A
 command appeared in
 .At v1 .
 It was, however, unmaintainable so we wrote this one.
-.Sh EXIT STATUS
-Errors that are detected by the shell, such as a syntax error, will cause the
-shell to exit with a non-zero exit status.  If the shell is not an
-interactive shell, the execution of the shell file will be aborted.  Otherwise
-the shell will return the exit status of the last command executed, or
-if the exit builtin is used with a numeric argument, it will return the
-argument.
 .Sh BUGS
 Setuid shell scripts should be avoided at all costs, as they are a
 significant security risk.
