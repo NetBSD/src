@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.69 1997/07/07 03:54:38 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.70 1997/07/19 09:54:29 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -62,11 +62,12 @@
 #include <mips/locore.h>
 #include <mips/mips_opcode.h>
 
-#include <machine/trap.h>
-#include <machine/psl.h>
-#include <machine/reg.h>
 #include <machine/cpu.h>
-#include <machine/pte.h>
+#include <mips/trap.h>
+#include <machine/psl.h>
+#include <mips/reg.h>
+#include <mips/regnum.h>			/* symbolic register indices */
+#include <mips/pte.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>

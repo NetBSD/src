@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.6 1997/05/25 09:56:45 jonathan Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.7 1997/07/19 09:54:35 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass   
@@ -71,6 +71,7 @@
 #include <sys/user.h>
 #include <sys/vnode.h>
 #include <sys/ptrace.h>
+#include <mips/regnum.h>			/* symbolic register indices */
 #include <machine/psl.h>
 #include <machine/reg.h>
 
