@@ -1,4 +1,4 @@
-/*	$NetBSD: tuba_subr.c,v 1.9 1997/07/23 21:30:11 thorpej Exp $	*/
+/*	$NetBSD: tuba_subr.c,v 1.10 1997/07/28 11:50:05 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -266,7 +266,7 @@ tuba_tcpinput(m, va_alist)
 	register struct inpcb *inp;
 	caddr_t         optp = NULL;
 	int             optlen = 0;
-	int             len, tlen, off;
+	int             len, tlen, off, hdroptlen;
 	register struct tcpcb *tp = 0;
 	int             tiflags;
 	struct socket  *so = NULL;
