@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40 2001/11/07 08:02:54 shin Exp $
+#	$NetBSD: Makefile,v 1.41 2001/11/08 07:29:45 tron Exp $
 
 .include "../../Makefile.inc"
 .include <bsd.own.mk>
@@ -45,7 +45,7 @@ all:
 
 all: ${CBIN}
 	dd if=/dev/zero of=${IMAGE} count=${IMAGESIZE}
-	vnconfig ${DISKTYPEARG} -v -c ${VND_RDEV} ${IMAGE} ${VND_GEOM}
+	vnconfig ${DISKTYPEARG} -v -c ${VND_DEV} ${IMAGE} ${VND_GEOM}
 	${PRELABEL}
 	-newfs -m 0 -o space ${NEWFSOPTS} ${VND_RDEV} ${DISKTYPE}
 	${BOOTINSTALL}
@@ -59,11 +59,11 @@ all: ${CBIN}
 	@df -i ${MOUNT_POINT}
 	@echo ""
 	umount ${MOUNT_POINT}
-	vnconfig -u ${VND_RDEV}
+	vnconfig -u ${VND_DEV}
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND_RDEV}
+	-vnconfig -u ${VND_DEV}
 	-/bin/rm -f ${IMAGE}
 
 ${CBIN}.conf: ${LISTS}
