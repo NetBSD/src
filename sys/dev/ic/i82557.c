@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.78 2003/12/06 11:27:28 yamt Exp $	*/
+/*	$NetBSD: i82557.c,v 1.79 2004/02/09 22:29:26 hpeyerl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.78 2003/12/06 11:27:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.79 2004/02/09 22:29:26 hpeyerl Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -585,7 +585,7 @@ fxp_get_info(struct fxp_softc *sc, u_int8_t *enaddr)
 	 * Reset to a stable state.
 	 */
 	CSR_WRITE_4(sc, FXP_CSR_PORT, FXP_PORT_SELECTIVE_RESET);
-	DELAY(10);
+	DELAY(100);
 
 	sc->sc_eeprom_size = 0;
 	fxp_autosize_eeprom(sc);
@@ -662,17 +662,19 @@ fxp_eeprom_shiftin(struct fxp_softc *sc, int data, int len)
 	int x;
 
 	for (x = 1 << (len - 1); x != 0; x >>= 1) {
+		DELAY(40);
 		if (data & x)
 			reg = FXP_EEPROM_EECS | FXP_EEPROM_EEDI;
 		else
 			reg = FXP_EEPROM_EECS;
 		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, reg);
+		DELAY(40);
 		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL,
 		    reg | FXP_EEPROM_EESK);
-		DELAY(4);
+		DELAY(40);
 		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, reg);
-		DELAY(4);
 	}
+	DELAY(40);
 }
 
 /*
@@ -708,6 +710,7 @@ fxp_autosize_eeprom(struct fxp_softc *sc)
 	int x;
 
 	CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, FXP_EEPROM_EECS);
+	DELAY(40);
 
 	/* Shift in read opcode. */
 	fxp_eeprom_shiftin(sc, FXP_EEPROM_OPC_READ, 3);
@@ -718,17 +721,19 @@ fxp_autosize_eeprom(struct fxp_softc *sc)
 	 */
 	for (x = 1; x <= 8; x++) {
 		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, FXP_EEPROM_EECS);
+		DELAY(40);
 		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL,
 		    FXP_EEPROM_EECS | FXP_EEPROM_EESK);
-		DELAY(4);
+		DELAY(40);
 		if ((CSR_READ_2(sc, FXP_CSR_EEPROMCONTROL) &
 		    FXP_EEPROM_EEDO) == 0)
 			break;
+		DELAY(40);
 		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, FXP_EEPROM_EECS);
-		DELAY(4);
+		DELAY(40);
 	}
 	CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, 0);
-	DELAY(4);
+	DELAY(40);
 	if (x != 6 && x != 8) {
 #ifdef DEBUG
 		printf("%s: strange EEPROM size (%d)\n",
@@ -767,15 +772,15 @@ fxp_read_eeprom(struct fxp_softc *sc, u_int16_t *data, int offset, int words)
 		for (x = 16; x > 0; x--) {
 			CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL,
 			    reg | FXP_EEPROM_EESK);
-			DELAY(4);
+			DELAY(40);
 			if (CSR_READ_2(sc, FXP_CSR_EEPROMCONTROL) &
 			    FXP_EEPROM_EEDO)
 				data[i] |= (1 << (x - 1));
 			CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, reg);
-			DELAY(4);
+			DELAY(40);
 		}
 		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, 0);
-		DELAY(4);
+		DELAY(40);
 	}
 }
 
