@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.3 1997/06/24 00:41:29 thorpej Exp $	*/
+/*	$NetBSD: wd.c,v 1.4 1997/06/25 12:15:54 leo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -892,11 +892,11 @@ loop:
 		/* Push out data. */
 		if ((wd->sc_flags & WDF_32BIT) == 0)
 			bus_space_write_multi_2(wdc->sc_iot, wdc->sc_dataioh,
-			    wd_data, (caddr_t)(bp->b_data + wd->sc_skip),
+			    wd_data, (u_int16_t *)(bp->b_data + wd->sc_skip),
 			    wd->sc_nbytes >> 1);
 		else
 			bus_space_write_multi_4(wdc->sc_iot, wdc->sc_data32ioh,
-			    wd_data, (caddr_t)(bp->b_data + wd->sc_skip),
+			    wd_data, (u_int32_t *)(bp->b_data + wd->sc_skip),
 			    wd->sc_nbytes >> 2);
 	}
 
@@ -1006,11 +1006,11 @@ wdcintr(arg)
 		/* Pull in data. */
 		if ((wd->sc_flags & WDF_32BIT) == 0)
 			bus_space_read_multi_2(wdc->sc_iot, wdc->sc_dataioh,
-			    wd_data, (caddr_t)(bp->b_data + wd->sc_skip), 
+			    wd_data, (u_int16_t *)(bp->b_data + wd->sc_skip), 
 			    wd->sc_nbytes >> 1);
 		else
 			bus_space_read_multi_4(wdc->sc_iot, wdc->sc_data32ioh,
-			    wd_data, (caddr_t)(bp->b_data + wd->sc_skip), 
+			    wd_data, (u_int32_t *)(bp->b_data + wd->sc_skip), 
 			    wd->sc_nbytes >> 2);
 	}
     
@@ -1503,7 +1503,7 @@ wd_get_parms(wd)
 
 		/* Read in parameter block. */
 		bus_space_read_multi_2(wdc->sc_iot, wdc->sc_dataioh, wd_data,
-		    (caddr_t)tb, sizeof(tb) / sizeof(short));
+		    (u_int16_t *)tb, sizeof(tb) / sizeof(short));
 		bcopy(tb, &wd->sc_params, sizeof(struct wdparams));
 
 		/* Shuffle string byte order. */
@@ -1785,7 +1785,7 @@ wddump(dev, blkno, va, size)
 		}
 	
 		bus_space_write_multi_2(wdc->sc_iot, wdc->sc_dataioh, wd_data,
-		    (caddr_t)va, lp->d_secsize >> 1);
+		    (u_int16_t *)va, lp->d_secsize >> 1);
 	
 		/* Check data request (should be done). */
 		if (wait_for_ready(wdc) != 0) {
