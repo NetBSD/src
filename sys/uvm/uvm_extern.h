@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.96 2005/01/01 21:08:02 yamt Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.97 2005/01/09 16:42:44 chs Exp $	*/
 
 /*
  *
@@ -179,11 +179,25 @@ typedef off_t voff_t;		/* XXX: offset within a uvm_object */
 #define	UVM_PGA_ZERO		0x0002	/* returned page must be zero'd */
 
 /*
- * the following defines are for ubc_alloc's flags
+ * flags for ubc_alloc()
  */
 #define UBC_READ	0x01
 #define UBC_WRITE	0x02
 #define UBC_FAULTBUSY	0x04
+
+/*
+ * flags for ubc_release()
+ */
+#define UBC_UNMAP	0x01
+
+/*
+ * helpers for calling ubc_release()
+ */
+#ifdef PMAP_CACHE_VIVT
+#define UBC_WANT_UNMAP(vp) (((vp)->v_flag & VTEXT) != 0)
+#else
+#define UBC_WANT_UNMAP(vp) FALSE
+#endif
 
 /*
  * flags for uvn_findpages().
@@ -206,7 +220,9 @@ typedef off_t voff_t;		/* XXX: offset within a uvm_object */
  * structures
  */
 
+struct buf;
 struct core;
+struct loadavg;
 struct mount;
 struct pglist;
 struct proc;
@@ -222,8 +238,8 @@ struct simplelock;
 struct vm_map_entry;
 struct vm_map;
 struct vm_page;
-
-extern struct pool *uvm_aiobuf_pool;
+struct vmspace;
+struct vmtotal;
 
 /*
  * uvmexp: global data structures that are exported to parts of the kernel
@@ -437,6 +453,7 @@ struct uvmexp_sysctl {
 };
 
 #ifdef _KERNEL
+/* we need this before including uvm_page.h on some platforms */
 extern struct uvmexp uvmexp;
 #endif
 
@@ -479,6 +496,8 @@ struct vmspace {
 
 #ifdef _KERNEL
 
+extern struct pool *uvm_aiobuf_pool;
+
 /*
  * used to keep state while iterating over the map for a core dump.
  */
@@ -510,21 +529,8 @@ extern struct vm_map *phys_map;
 #define uvm_km_zalloc(MAP,SIZE) uvm_km_alloc1(MAP,SIZE,TRUE)
 #define uvm_km_alloc(MAP,SIZE)  uvm_km_alloc1(MAP,SIZE,FALSE)
 
-#endif /* _KERNEL */
-
 #define vm_resident_count(vm) (pmap_resident_count((vm)->vm_map.pmap))
 
-struct buf;
-struct loadavg;
-struct proc;
-struct pmap;
-struct vmspace;
-struct vmtotal;
-struct mount;
-struct vnode;
-struct core;
-
-#ifdef _KERNEL
 #include <sys/mallocvar.h>
 MALLOC_DECLARE(M_VMMAP);
 MALLOC_DECLARE(M_VMPMAP);

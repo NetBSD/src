@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.59 2004/09/10 09:36:05 yamt Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.60 2005/01/09 16:42:44 chs Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.59 2004/09/10 09:36:05 yamt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.60 2005/01/09 16:42:44 chs Exp $");
 
 #ifdef LFS_READWRITE
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
@@ -70,16 +70,16 @@ READ(void *v)
 	struct vnode *vp;
 	struct inode *ip;
 	struct uio *uio;
+	struct ufsmount *ump;
+	struct buf *bp;
 	FS *fs;
 	void *win;
 	vsize_t bytelen;
-	struct buf *bp;
 	daddr_t lbn, nextlbn;
 	off_t bytesinfile;
 	long size, xfersize, blkoffset;
-	int error;
+	int error, flags;
 	boolean_t usepc = FALSE;
-	struct ufsmount *ump;
 
 	vp = ap->a_vp;
 	ip = VTOI(vp);
@@ -121,7 +121,8 @@ READ(void *v)
 			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
 			    &bytelen, UBC_READ);
 			error = uiomove(win, bytelen, uio);
-			ubc_release(win, 0);
+			flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
+			ubc_release(win, flags);
 			if (error)
 				break;
 		}
@@ -203,7 +204,7 @@ WRITE(void *v)
 	off_t osize, origoff, oldoff, preallocoff, endallocoff, nsize;
 	int blkoffset, error, flags, ioflag, resid, size, xfersize;
 	int aflag;
-	int ubc_alloc_flags;
+	int ubc_alloc_flags, ubc_release_flags;
 	int extended=0;
 	void *win;
 	vsize_t bytelen;
@@ -368,7 +369,8 @@ WRITE(void *v)
 			 */
 			memset(win, 0, bytelen);
 		}
-		ubc_release(win, 0);
+		ubc_release_flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
+		ubc_release(win, ubc_release_flags);
 
 		/*
 		 * update UVM's notion of the size now that we've

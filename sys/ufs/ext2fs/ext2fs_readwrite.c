@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.34 2004/11/14 19:42:13 christos Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.35 2005/01/09 16:42:44 chs Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.34 2004/11/14 19:42:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.35 2005/01/09 16:42:44 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,13 +109,13 @@ ext2fs_read(v)
 	struct uio *uio;
 	struct m_ext2fs *fs;
 	struct buf *bp;
+	struct ufsmount *ump;
 	void *win;
 	vsize_t bytelen;
 	daddr_t lbn, nextlbn;
 	off_t bytesinfile;
 	long size, xfersize, blkoffset;
-	int error;
-	struct ufsmount *ump;
+	int error, flags;
 
 	vp = ap->a_vp;
 	ip = VTOI(vp);
@@ -152,7 +152,8 @@ ext2fs_read(v)
 			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
 			    &bytelen, UBC_READ);
 			error = uiomove(win, bytelen, uio);
-			ubc_release(win, 0);
+			flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
+			ubc_release(win, flags);
 			if (error)
 				break;
 		}
@@ -232,6 +233,7 @@ ext2fs_write(v)
 	struct m_ext2fs *fs;
 	struct buf *bp;
 	struct proc *p;
+	struct ufsmount *ump;
 	daddr_t lbn;
 	off_t osize;
 	int blkoffset, error, flags, ioflag, resid, xfersize;
@@ -240,7 +242,6 @@ ext2fs_write(v)
 	off_t oldoff;
 	boolean_t async;
 	int extended = 0;
-	struct ufsmount *ump;
 
 	ioflag = ap->a_ioflag;
 	uio = ap->a_uio;
@@ -308,7 +309,8 @@ ext2fs_write(v)
 			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
 			    &bytelen, UBC_WRITE);
 			error = uiomove(win, bytelen, uio);
-			ubc_release(win, 0);
+			flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
+			ubc_release(win, flags);
 			if (error)
 				break;
 

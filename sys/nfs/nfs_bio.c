@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.123 2004/12/14 09:13:13 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.124 2005/01/09 16:42:44 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.123 2004/12/14 09:13:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.124 2005/01/09 16:42:44 chs Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -198,6 +198,7 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 		}
 		while (uio->uio_resid > 0) {
 			void *win;
+			int flags;
 			vsize_t bytelen = MIN(np->n_size - uio->uio_offset,
 					      uio->uio_resid);
 
@@ -206,7 +207,8 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 			win = ubc_alloc(&vp->v_uobj, uio->uio_offset,
 					&bytelen, UBC_READ);
 			error = uiomove(win, bytelen, uio);
-			ubc_release(win, 0);
+			flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
+			ubc_release(win, flags);
 			if (error) {
 				break;
 			}
@@ -485,14 +487,14 @@ nfs_write(v)
 	struct vnode *vp = ap->a_vp;
 	struct nfsnode *np = VTONFS(vp);
 	struct ucred *cred = ap->a_cred;
-	int ioflag = ap->a_ioflag;
 	struct vattr vattr;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	void *win;
 	voff_t oldoff, origoff;
 	vsize_t bytelen;
-	int error = 0;
-	int extended = 0, wrotedta = 0;
+	int flags, error = 0;
+	int ioflag = ap->a_ioflag;
+	int extended = 0, wrotedata = 0;
 
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_WRITE)
@@ -594,7 +596,8 @@ nfs_write(v)
 		win = ubc_alloc(&vp->v_uobj, uio->uio_offset, &bytelen,
 			    UBC_WRITE | (extending ? UBC_FAULTBUSY : 0));
 		error = uiomove(win, bytelen, uio);
-		ubc_release(win, 0);
+		flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
+		ubc_release(win, flags);
 		if (error) {
 			if (extending) {
 				/*
@@ -607,7 +610,7 @@ nfs_write(v)
 			}
 			break;
 		}
-		wrotedta = 1;
+		wrotedata = 1;
 
 		/*
 		 * update UVM's notion of the size now that we've
@@ -628,7 +631,7 @@ nfs_write(v)
 				       ~(nmp->nm_wsize - 1)), PGO_CLEANIT);
 		}
 	} while (uio->uio_resid > 0);
-	if (wrotedta)
+	if (wrotedata)
 		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));
 	if ((np->n_flag & NQNFSNONCACHE) || (ioflag & IO_SYNC)) {
 		simple_lock(&vp->v_interlock);

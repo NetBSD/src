@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.63 2004/03/24 07:55:01 junyoung Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.64 2005/01/09 16:42:44 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.63 2004/03/24 07:55:01 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.64 2005/01/09 16:42:44 chs Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -490,20 +490,22 @@ uvm_vnp_zerorange(vp, off, len)
 	off_t off;
 	size_t len;
 {
-        void *win;
+	void *win;
+	int flags;
 
-        /*
-         * XXXUBC invent kzero() and use it
-         */
+	/*
+	 * XXXUBC invent kzero() and use it
+	 */
 
-        while (len) {
-                vsize_t bytelen = len;
+	while (len) {
+		vsize_t bytelen = len;
 
-                win = ubc_alloc(&vp->v_uobj, off, &bytelen, UBC_WRITE);
-                memset(win, 0, bytelen);
-                ubc_release(win, 0);
+		win = ubc_alloc(&vp->v_uobj, off, &bytelen, UBC_WRITE);
+		memset(win, 0, bytelen);
+		flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
+		ubc_release(win, flags);
 
-                off += bytelen;
-                len -= bytelen;
-        }
+		off += bytelen;
+		len -= bytelen;
+	}
 }
