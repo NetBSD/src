@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusdevs_data.h,v 1.14 2001/03/14 01:41:29 christos Exp $	*/
+/*	$NetBSD: cardbusdevs_data.h,v 1.15 2001/05/15 04:25:12 kanaoka Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -152,6 +152,12 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    "56k Modem",
 	},
 	{
+	    CARDBUS_VENDOR_COREGA, CARDBUS_PRODUCT_COREGA_CB_TXD,
+	    0,
+	    "Corega",
+	    "FEther CB-TXD 10/100 Ethernet",
+	},
+	{
 	    CARDBUS_VENDOR_ABOCOM, CARDBUS_PRODUCT_ABOCOM_FE2500,
 	    0,
 	    "AboCom Systems",
@@ -233,6 +239,18 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    CARDBUS_VENDOR_XIRCOM, 0,
 	    CARDBUS_KNOWNDEV_NOPROD,
 	    "Xircom",
+	    NULL,
+	},
+	{
+	    CARDBUS_VENDOR_COREGA, 0,
+	    CARDBUS_KNOWNDEV_NOPROD,
+	    "Corega",
+	    NULL,
+	},
+	{
+	    CARDBUS_VENDOR_ALLIEDTELESYN, 0,
+	    CARDBUS_KNOWNDEV_NOPROD,
+	    "Allied Telesyn International",
 	    NULL,
 	},
 	{
