@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.16 1995/03/04 09:50:07 pk Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.17 1995/04/02 10:43:29 pk Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -346,6 +346,12 @@ btios2stios(bt, st)
 	st->c_cc[15]= bt->c_cc[VLNEXT]  != _POSIX_VDISABLE? bt->c_cc[VLNEXT]:0;
 	st->c_cc[16]= bt->c_cc[VSTATUS] != _POSIX_VDISABLE? bt->c_cc[VSTATUS]:0;
 
+	if (!(bt->c_lflag & ICANON)) {
+		/* SunOS stores VMIN/VTIME in VEOF/VEOL (if ICANON is off) */
+		st->c_cc[4] = bt->c_cc[VMIN];
+		st->c_cc[5] = bt->c_cc[VTIME];
+	}
+
 	st->c_line = 0;
 }
 
@@ -661,6 +667,7 @@ sunos_ioctl(p, uap, retval)
  * Audio ioctl translations.
  */
 	case _IOR('A', 1, struct sunos_audio_info):	/* AUDIO_GETINFO */
+	sunos_au_getinfo:
 	    {
 		struct audio_info aui;
 		struct sunos_audio_info sunos_aui;
@@ -722,7 +729,10 @@ sunos_ioctl(p, uap, retval)
 			 sunos_aui.record.active != (u_char)~0)
 			aui.record.pause = 1;
 
-		return (*ctl)(fp, AUDIO_SETINFO, (caddr_t)&aui, p);
+		if (error = (*ctl)(fp, AUDIO_SETINFO, (caddr_t)&aui, p))
+			return error;
+		/* Return new state */
+		goto sunos_au_getinfo;
 	    }
 	case _IO('A', 3):	/* AUDIO_DRAIN */
 		return (*ctl)(fp, AUDIO_DRAIN, (void *)0, p);
@@ -731,6 +741,37 @@ sunos_ioctl(p, uap, retval)
 		int devtype = SUNOS_AUDIO_DEV_AMD;
 		return copyout ((caddr_t)&devtype, SCARG(uap, data),
 				sizeof (devtype));
+	    }
+
+/*
+ * Selected streams ioctls.
+ */
+#define SUNOS_S_FLUSHR		1
+#define SUNOS_S_FLUSHW		2
+#define SUNOS_S_FLUSHRW		3
+
+#define SUNOS_S_INPUT		1
+#define SUNOS_S_HIPRI		2
+#define SUNOS_S_OUTPUT		4
+#define SUNOS_S_MSG		8
+
+	case _IO('S', 5):	/* I_FLUSH */
+	    {
+		int tmp = 0;
+		switch ((int)SCARG(uap, data)) {
+		case SUNOS_S_FLUSHR:	tmp = FREAD;
+		case SUNOS_S_FLUSHW:	tmp = FWRITE;
+		case SUNOS_S_FLUSHRW:	tmp = FREAD|FWRITE;
+		}
+                return (*ctl)(fp, TIOCFLUSH, (caddr_t)&tmp, p);
+	    }
+	case _IO('S', 9):	/* I_SIGSET */
+	    {
+		int on = 1;
+		if (((int)SCARG(uap, data) & (SUNOS_S_HIPRI|SUNOS_S_INPUT)) ==
+		    SUNOS_S_HIPRI)
+			return EOPNOTSUPP;
+                return (*ctl)(fp, FIOASYNC, (caddr_t)&on, p);
 	    }
 	}
 	return (ioctl(p, uap, retval));
