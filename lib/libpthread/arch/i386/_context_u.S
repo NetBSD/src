@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.1.2.2 2001/07/31 00:07:49 nathanw Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.1.2.3 2001/08/02 19:10:28 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -76,17 +76,29 @@
 	movl	56(%ecx), %esi	; \
 	movl	60(%ecx), %ebp	; \
 	movl	68(%ecx), %ebx	; \
-	movl	72(%ecx), %edx	; \
+	;; \
+	movl	104(%ecx), %edx ; \
+	movl	96(%ecx), %eax  ; \
+	mov	%eax, -4(%edx)	; \
+	movl	92(%ecx), %eax	; \
+	movl	%eax, -8(%edx)	; \
+	movl	48(%ecx), %eax	; \
+	movl	%ax, -12(%edx)	; \
+	movl	72(%ecx), %eax	; \
+	movl	%eax, -16(%edx)	; \
+	movl	76(%ecx), %eax	; \
+	movl	%eax, -20(%edx)	; \
 	movl	80(%ecx), %eax	; \
-	pushl	100(%ecx)	; \
-	popfl			; \
+	movl	%eax, -24(%edx)	; \
+	movl	100(%ecx), %eax ; \
+	movl	%eax, -28(%edx)	; \
 	movl	108(%ecx), %ss	; \
-	movl	104(%ecx), %esp	; \
-	push	96(%ecx)	; \
-	pushl	92(%ecx)	; \
-	push	48(%ecx)	; \
-	movl	76(%ecx), %ecx	; \
-	pop	%ds		; \
+	leal	-28(%edx), %esp	; \
+	popfl			; \
+	popl	%eax		; \
+	popl	%ecx		; \
+	popl	%edx		; \
+	popl	%ds		; \
 	lret
 
 
