@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.c,v 1.26 2002/11/24 22:35:41 christos Exp $	*/
+/*	$NetBSD: memalloc.c,v 1.27 2003/01/22 20:36:04 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)memalloc.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: memalloc.c,v 1.26 2002/11/24 22:35:41 christos Exp $");
+__RCSID("$NetBSD: memalloc.c,v 1.27 2003/01/22 20:36:04 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -90,7 +90,7 @@ ckrealloc(pointer p, int nbytes)
  */
 
 char *
-savestr(char *s)
+savestr(const char *s)
 {
 	char *p;
 
