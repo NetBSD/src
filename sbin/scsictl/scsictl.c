@@ -1,4 +1,4 @@
-/*	$NetBSD: scsictl.c,v 1.11 2001/02/19 22:56:23 cgd Exp $	*/
+/*	$NetBSD: scsictl.c,v 1.12 2001/04/01 14:59:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -153,7 +153,7 @@ main(argc, argv)
 		if (strcmp(cmdname, commands[i].cmd_name) == 0)
 			break;
 	if (commands[i].cmd_name == NULL)
-		errx(1, "unknown %s command: %s\n",
+		errx(1, "unknown %s command: %s",
 		    commands == bus_commands ? "bus" : "device", cmdname);
 
 	argnames = commands[i].arg_names;
@@ -318,7 +318,7 @@ device_reassign(argc, argv)
 	for (i = 0; i < argc; i++) {
 		blkno = strtoul(argv[i], &cp, 10);
 		if (*cp != '\0')
-			errx(1, "invalid block number: %s\n", argv[i]);
+			errx(1, "invalid block number: %s", argv[i]);
 		_lto4b(blkno, data->defect_descriptor[i].dlbaddr);
 	}
 
@@ -396,7 +396,7 @@ bus_scan(argc, argv)
 	else {
 		args.sa_target = strtol(argv[0], &cp, 10);
 		if (*cp != '\0' || args.sa_target < 0)
-			errx(1, "invalid target: %s\n", argv[0]);
+			errx(1, "invalid target: %s", argv[0]);
 	}
 
 	if (strcmp(argv[1], "any") == 0 || strcmp(argv[1], "all") == 0)
@@ -404,7 +404,7 @@ bus_scan(argc, argv)
 	else {
 		args.sa_lun = strtol(argv[1], &cp, 10);
 		if (*cp != '\0' || args.sa_lun < 0)
-			errx(1, "invalid lun: %s\n", argv[1]);
+			errx(1, "invalid lun: %s", argv[1]);
 	}
 
 	if (ioctl(fd, SCBUSIOSCAN, &args) != 0)
