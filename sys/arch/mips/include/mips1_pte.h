@@ -1,4 +1,4 @@
-/*	$NetBSD: mips1_pte.h,v 1.8 1996/10/13 09:54:43 jonathan Exp $	*/
+/*	$NetBSD: mips1_pte.h,v 1.9 1997/06/15 17:24:24 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -93,5 +93,16 @@ typedef union pt_entry {
 #define PG_SHIFT	12
 #define	PG_PFNUM(x)	(((x) & PG_FRAME) >> PG_SHIFT)
 
+#define PG_ROPAGE	PG_V		/* ??? PG_RO */
+#define PG_RWPAGE	PG_M
+#define PG_CWPAGE	0
+#define PG_IOPAGE	(PG_M | PG_N)	/* ??? */
+
+#define pfn_to_vad(x) ((x) & PG_FRAME)
+#define vad_to_pfn(x) (x)
+
 #define PTE_TO_PADDR(pte) ((unsigned)(pte) & PG_FRAME)
 #define PAGE_IS_RDONLY(pte,va) ((pte) & PG_RO)
+
+/* User virtual to pte page entry */
+#define uvtopte(adr) (((adr) >> PGSHIFT) & (NPTEPG -1))

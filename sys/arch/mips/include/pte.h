@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.1 1996/10/13 09:28:56 jonathan Exp $	*/
+/*	$NetBSD: pte.h,v 1.2 1997/06/15 17:24:22 mhitch Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -18,10 +18,10 @@
 
 
 #if defined(MIPS1) && defined(MIPS3)
-#error  Cannot yet upport both  "MIPS1" (r2000 family) and "MIP3" (r4000 family) in the same kernel.
+#error  Cannot yet support both  "MIPS1" (r2000 family) and "MIPS3" (r4000 family) in the same kernel.
 #endif
 
-#ifdef MIPS1
+#ifndef MIPS3
 #include <mips/mips1_pte.h>
 #endif
 
