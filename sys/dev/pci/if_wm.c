@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.57 2003/10/22 15:50:39 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.58 2003/10/23 12:53:02 ragge Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.57 2003/10/22 15:50:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.58 2003/10/23 12:53:02 ragge Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1117,7 +1117,7 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_watchdog = wm_watchdog;
 	ifp->if_init = wm_init;
 	ifp->if_stop = wm_stop;
-	IFQ_SET_MAXLEN(&ifp->if_snd, WM_IFQUEUELEN);
+	IFQ_SET_MAXLEN(&ifp->if_snd, max(WM_IFQUEUELEN, IFQ_MAXLEN));
 	IFQ_SET_READY(&ifp->if_snd);
 
 	sc->sc_ethercom.ec_capabilities |= ETHERCAP_JUMBO_MTU;
