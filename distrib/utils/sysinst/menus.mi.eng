@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.eng,v 1.27 1999/04/13 14:49:56 bouyer Exp $	*/
+/*	$NetBSD: menus.mi.eng,v 1.28 1999/06/19 01:10:59 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -222,26 +222,24 @@ menu distset, title " Select your distribution";
 
 menu ftpsource, title "  Change";
 	display action
-		{ int i;
-		  msg_display (MSG_ftpsource, ftp_host, ftp_dir, ftp_user);
+		{ msg_display (MSG_ftpsource, ftp_host, ftp_dir, ftp_user);
 		  if (strcmp(ftp_user, "ftp") == 0)
 			msg_printf_add ("%s", ftp_pass);
-		  else
-			for (i = strlen(ftp_pass); i>0; i--)
-				msg_printf_add ("*");
+		  else if (strlen(ftp_pass) != 0)
+			msg_printf_add ("** hidden **", ftp_pass);
 		};
 	option "Host", action
-		{ msg_prompt (MSG_host, NULL, ftp_host, 255); };
+		{ msg_prompt (MSG_host, ftp_host, ftp_host, 255); };
 	option "Directory", action
-		{ msg_prompt (MSG_dir, NULL, ftp_dir, 255); };
+		{ msg_prompt (MSG_dir, ftp_dir, ftp_dir, 255); };
 	option "User", action
-		{ msg_prompt (MSG_user, NULL, ftp_user, 255); };
+		{ msg_prompt (MSG_user, ftp_user, ftp_user, 255); };
 	option "Password", action
 		{ if (strcmp(ftp_user, "ftp") == 0)
-			msg_prompt (MSG_email, NULL, ftp_pass, 255);
+			msg_prompt (MSG_email, ftp_pass, ftp_pass, 255);
 		  else {
 			msg_noecho ();
-			msg_prompt (MSG_passwd, NULL, ftp_pass, 255);
+			msg_prompt (MSG_passwd, "", ftp_pass, 255);
 			msg_echo ();
 		  }
 		};
