@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.19 1999/07/08 18:11:00 thorpej Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.20 1999/10/11 01:57:47 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -194,11 +194,9 @@ vunmapbuf(bp, len)
  */
 #ifdef __arch64__
 #define	TOPFRAMEOFF (USPACE-sizeof(struct trapframe)-CC64FSZ)
-#define rwindow		rwindow64
 #define STACK_OFFSET	BIAS
 #else
 #define	TOPFRAMEOFF (USPACE-sizeof(struct trapframe)-CC64FSZ)
-#define rwindow		rwindow32
 #define STACK_OFFSET	0
 #endif
 

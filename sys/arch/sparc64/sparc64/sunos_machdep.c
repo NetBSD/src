@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.6 1999/03/26 04:29:23 eeh Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.7 1999/10/11 01:57:47 eeh Exp $	*/
 
 /*
  * Copyright (c) 1995 Matthew R. Green
@@ -156,12 +156,12 @@ sunos_sendsig(catcher, sig, mask, code)
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK))
 	    printf("sunos_sendsig: saving sf to %p, setting stack pointer %p to %p\n",
-		   fp, &(((union rwindow *)newsp)->v8.rw_in[6]), oldsp);
+		   fp, &(((struct rwindow32 *)newsp)->rw_in[6]), oldsp);
 #endif
 	kwin = (struct rwindow32 *)(((caddr_t)tf)-CCFSZ);
 	if (rwindow_save(p) || 
 	    copyout((caddr_t)&sf, (caddr_t)fp, sizeof sf) || 
-	    suword(&(((union rwindow *)newsp)->v8.rw_in[6]), (u_long)oldsp)) {
+	    suword(&(((struct rwindow32 *)newsp)->rw_in[6]), (u_long)oldsp)) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
