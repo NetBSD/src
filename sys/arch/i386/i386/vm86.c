@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.c,v 1.23 2000/12/22 22:58:54 jdolecek Exp $	*/
+/*	$NetBSD: vm86.c,v 1.24 2001/06/15 05:43:40 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -69,68 +69,28 @@ static __inline int is_bitset __P((int, caddr_t));
 #define	SS(tf)		(*(u_short *)&tf->tf_ss)
 #define	SP(tf)		(*(u_short *)&tf->tf_esp)
 
-
 #define putword(base, ptr, val) \
-__asm__ __volatile__( \
-	"decw %w0\n\t" \
-	"movb %h2,0(%1,%0)\n\t" \
-	"decw %w0\n\t" \
-	"movb %b2,0(%1,%0)" \
-	: "=r" (ptr) \
-	: "r" (base), "q" (val), "0" (ptr))
+	({ ptr = (ptr - 1) & 0xffff;			\
+	   subyte((void *)(base+ptr), (val>>8));			\
+           ptr = (ptr - 1) & 0xffff;			\
+	   subyte((void *)(base+ptr), (val&0xff)); })
 
 #define putdword(base, ptr, val) \
-__asm__ __volatile__( \
-	"rorl $16,%2\n\t" \
-	"decw %w0\n\t" \
-	"movb %h2,0(%1,%0)\n\t" \
-	"decw %w0\n\t" \
-	"movb %b2,0(%1,%0)\n\t" \
-	"rorl $16,%2\n\t" \
-	"decw %w0\n\t" \
-	"movb %h2,0(%1,%0)\n\t" \
-	"decw %w0\n\t" \
-	"movb %b2,0(%1,%0)" \
-	: "=r" (ptr) \
-	: "r" (base), "q" (val), "0" (ptr))
+	({ putword(base, ptr, (val >> 16));	        \
+	   putword(base, ptr, (val & 0xffff)); })
 
 #define getbyte(base, ptr) \
-({ unsigned long __res; \
-__asm__ __volatile__( \
-	"movb 0(%1,%0),%b2\n\t" \
-	"incw %w0" \
-	: "=r" (ptr), "=r" (base), "=q" (__res) \
-	: "0" (ptr), "1" (base), "2" (0)); \
-__res; })
+	({ unsigned long __tmp = fubyte((void *)(base+ptr));	 \
+	   if (__tmp == ~0) goto bad;				 \
+	   ptr = (ptr + 1) & 0xffff; __tmp; })
 
 #define getword(base, ptr) \
-({ unsigned long __res; \
-__asm__ __volatile__( \
-	"movb 0(%1,%0),%b2\n\t" \
-	"incw %w0\n\t" \
-	"movb 0(%1,%0),%h2\n\t" \
-	"incw %w0" \
-	: "=r" (ptr), "=r" (base), "=q" (__res) \
-	: "0" (ptr), "1" (base), "2" (0)); \
-__res; })
+	({ unsigned long __tmp = getbyte(base, ptr);	\
+	   __tmp |= (getbyte(base, ptr) << 8); __tmp;})
 
 #define getdword(base, ptr) \
-({ unsigned long __res; \
-__asm__ __volatile__( \
-	"movb 0(%1,%0),%b2\n\t" \
-	"incw %w0\n\t" \
-	"movb 0(%1,%0),%h2\n\t" \
-	"incw %w0\n\t" \
-	"rorl $16,%2\n\t" \
-	"movb 0(%1,%0),%b2\n\t" \
-	"incw %w0\n\t" \
-	"movb 0(%1,%0),%h2\n\t" \
-	"incw %w0\n\t" \
-	"rorl $16,%2" \
-	: "=r" (ptr), "=r" (base), "=q" (__res) \
-	: "0" (ptr), "1" (base)); \
-__res; })
-
+	({ unsigned long __tmp = getword(base, ptr);	\
+	   __tmp |= (getword(base, ptr) << 16); __tmp;})
 
 static __inline int
 is_bitset(nr, bitmap)
@@ -242,7 +202,14 @@ vm86_return(p, retval)
 #endif
 		sigexit(p, SIGILL);
 		/* NOTREACHED */
+	} else if (sigismember(&p->p_sigctx.ps_sigignore, SIGURG)) {
+#ifdef DIAGNOSTIC
+		printf("pid %d killed on VM86 protocol screwup (SIGURG ignored)\n",
+		    p->p_pid);
+#endif
+		sigexit(p, SIGILL);
 	}
+	
 	trapsignal(p, SIGURG, retval);
 }
 
