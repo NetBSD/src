@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_clnt.c,v 1.10.2.1 2002/12/07 22:30:16 he Exp $	*/
+/*	$NetBSD: rpcb_clnt.c,v 1.10.2.2 2003/01/06 04:44:08 jmc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -71,7 +71,7 @@ static char sccsid[] = "@(#)rpcb_clnt.c 1.30 89/06/21 Copyr 1988 Sun Micro";
 #include <syslog.h>
 #include <unistd.h>
 
-#include "rpc_com.h"
+#include "rpc_internal.h"
 
 #ifdef __weak_alias
 __weak_alias(rpcb_set,_rpcb_set)
