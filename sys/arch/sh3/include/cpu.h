@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.12 2001/05/30 12:28:50 mrg Exp $	*/
+/*	$NetBSD: cpu.h,v 1.13 2001/06/24 05:34:07 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -90,11 +90,7 @@ extern struct cpu_info cpu_info_store;
  */
 #define clockframe intrframe
 
-#if 1
-#define	CLKF_USERMODE(frame)	(!KERNELMODE((frame)->if_r15))
-#else
-#define	CLKF_USERMODE(frame)	USERMODE((frame)->if_spc, (frame)->if_ssr)
-#endif
+#define	CLKF_USERMODE(frame)	(!KERNELMODE((frame)->if_r15, (frame)->if_ssr))
 #if 0
 #define	CLKF_BASEPRI(frame)	((frame)->if_pri == 0)
 #else
