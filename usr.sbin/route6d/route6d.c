@@ -1,4 +1,4 @@
-/*	$NetBSD: route6d.c,v 1.34 2002/06/07 16:45:30 itojun Exp $	*/
+/*	$NetBSD: route6d.c,v 1.35 2002/06/09 02:47:03 itojun Exp $	*/
 /*	$KAME: route6d.c,v 1.85 2002/06/07 16:39:41 itojun Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.34 2002/06/07 16:45:30 itojun Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.35 2002/06/09 02:47:03 itojun Exp $");
 #endif
 
 #include <stdio.h>
@@ -3022,11 +3022,11 @@ filterconfig()
 			iflp = ap;
 			goto ifonly;
 		}
-		if ((p = index(ap, ',')) != NULL) {
+		if ((p = strchr(ap, ',')) != NULL) {
 			*p++ = '\0';
 			iflp = p;
 		}
-		if ((p = index(ap, '/')) == NULL) {
+		if ((p = strchr(ap, '/')) == NULL) {
 			fatal("no prefixlen specified for '%s'", ap);
 			/*NOTREACHED*/
 		}
@@ -3047,7 +3047,7 @@ ifonly:
 		/* parse the interface listing portion */
 		while (iflp) {
 			ifname = iflp;
-			if ((iflp = index(iflp, ',')) != NULL)
+			if ((iflp = strchr(iflp, ',')) != NULL)
 				*iflp++ = '\0';
 			ifcp = ifc_find(ifname);
 			if (ifcp == NULL) {
