@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_page.c,v 1.9 1997/07/13 18:52:06 christos Exp $	*/
+/*	$NetBSD: hash_page.c,v 1.10 1998/06/30 21:30:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)hash_page.c	8.7 (Berkeley) 8/16/94";
 #else
-__RCSID("$NetBSD: hash_page.c,v 1.9 1997/07/13 18:52:06 christos Exp $");
+__RCSID("$NetBSD: hash_page.c,v 1.10 1998/06/30 21:30:52 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -543,8 +543,7 @@ __get_page(hashp, p, bucket, is_bucket, is_disk, is_bitmap)
 		page = BUCKET_TO_PAGE(bucket);
 	else
 		page = OADDR_TO_PAGE(bucket);
-	if ((lseek(fd, (off_t)page << hashp->BSHIFT, SEEK_SET) == -1) ||
-	    ((rsize = read(fd, p, size)) == -1))
+	if ((rsize = pread(fd, p, size, (off_t)page << hashp->BSHIFT)) == -1)
 		return (-1);
 	bp = (u_int16_t *)p;
 	if (!rsize)
@@ -614,8 +613,7 @@ __put_page(hashp, p, bucket, is_bucket, is_bitmap)
 		page = BUCKET_TO_PAGE(bucket);
 	else
 		page = OADDR_TO_PAGE(bucket);
-	if ((lseek(fd, (off_t)page << hashp->BSHIFT, SEEK_SET) == -1) ||
-	    ((wsize = write(fd, p, size)) == -1))
+	if ((wsize = pwrite(fd, p, size, (off_t)page << hashp->BSHIFT)) == -1)
 		/* Errno is set */
 		return (-1);
 	if (wsize != size) {
