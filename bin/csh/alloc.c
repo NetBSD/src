@@ -1,4 +1,4 @@
-/*	$NetBSD: alloc.c,v 1.6 1995/03/21 09:02:23 cgd Exp $	*/
+/*	$NetBSD: alloc.c,v 1.7 1997/07/04 21:23:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1991, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)alloc.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: alloc.c,v 1.6 1995/03/21 09:02:23 cgd Exp $";
+__RCSID("$NetBSD: alloc.c,v 1.7 1997/07/04 21:23:51 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -126,5 +127,6 @@ showall(v, t)
 {
     memtop = (char *) sbrk(0);
     (void) fprintf(cshout, "Allocated memory from 0x%lx to 0x%lx (%ld).\n",
-	    (unsigned long) membot, (unsigned long) memtop, memtop - membot);
+	    (unsigned long) membot, (unsigned long) memtop, 
+	    (unsigned long) (memtop - membot));
 }
