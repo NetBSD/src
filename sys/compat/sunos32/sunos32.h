@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32.h,v 1.2 2002/07/04 23:32:12 thorpej Exp $	 */
+/*	$NetBSD: sunos32.h,v 1.3 2003/06/29 13:35:41 martin Exp $	 */
 
 /*
  * Copyright (c) 2001 Matthew R. Green
@@ -80,10 +80,10 @@ __END_DECLS
 #define	SUNOS32TOX_UAP(name, type)	SUNOS32TOX(uap, &ua, name, type);
 #define	SUNOS32TOX64_UAP(name, type)	SUNOS32TOX64(uap, &ua, name, type);
 
-#define SUNOS32_CHECK_ALT_EXIST(p, sgp, path) \
-    emul_find(p, sgp, p->p_emul->e_path, (char *)(u_long)path, (const char **)&(path), CHECK_ALT_FL_EXISTS)
+#define SUNOS32_CHECK_ALT_EXIST(l, sgp, path) \
+    emul_find(l, sgp, l->l_proc->p_emul->e_path, (char *)(u_long)path, (const char **)&(path), CHECK_ALT_FL_EXISTS)
 
-#define SUNOS32_CHECK_ALT_CREAT(p, sgp, path) \
-    emul_find(p, sgp, p->p_emul->e_path, (char *)(u_long)path, (const char **)&(path), CHECK_ALT_FL_CREAT)
+#define SUNOS32_CHECK_ALT_CREAT(l, sgp, path) \
+    emul_find(l, sgp, l->l_proc->p_emul->e_path, (char *)(u_long)path, (const char **)&(path), CHECK_ALT_FL_CREAT)
  
 #endif /* _COMPAT_SUNOS32_SUNOS32_H_ */
