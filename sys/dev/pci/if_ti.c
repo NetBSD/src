@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.21 2001/06/02 16:17:08 thorpej Exp $ */
+/* $NetBSD: if_ti.c,v 1.22 2001/06/03 03:29:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -891,14 +891,14 @@ static int ti_newbuf_jumbo(sc, i, m)
 		m_new->m_data = m_new->m_ext.ext_buf = (void *)buf;
 		m_new->m_flags |= M_EXT;
 		m_new->m_len = m_new->m_pkthdr.len =
-		    m_new->m_ext.ext_size = TI_JUMBO_FRAMELEN;
+		    m_new->m_ext.ext_size = ETHER_MAX_LEN_JUMBO;
 		m_new->m_ext.ext_free = ti_jfree;
 		m_new->m_ext.ext_arg = sc;
 		MCLINITREFERENCE(m_new);
 	} else {
 		m_new = m;
 		m_new->m_data = m_new->m_ext.ext_buf;
-		m_new->m_ext.ext_size = TI_JUMBO_FRAMELEN;
+		m_new->m_ext.ext_size = ETHER_MAX_LEN_JUMBO;
 	}
 
 	m_adj(m_new, ETHER_ALIGN);
@@ -1082,8 +1082,8 @@ static int ti_init_tx_ring(sc)
 	SIMPLEQ_INIT(&sc->txdma_list);
 	for (i = 0; i < TI_RSLOTS; i++) {
 		/* I've seen mbufs with 30 fragments. */
-		if ((error = bus_dmamap_create(sc->sc_dmat, TI_JUMBO_FRAMELEN,
-					       40, TI_JUMBO_FRAMELEN, 0,
+		if ((error = bus_dmamap_create(sc->sc_dmat, ETHER_MAX_LEN_JUMBO,
+					       40, ETHER_MAX_LEN_JUMBO, 0,
 					       BUS_DMA_NOWAIT, &dmamap)) != 0) {
 			printf("%s: can't create tx map, error = %d\n",
 			       sc->sc_dev.dv_xname, error);
@@ -1488,7 +1488,7 @@ static int ti_gibinit(sc)
 	TI_HOSTADDR(rcb->ti_hostaddr) = sc->info_dmaaddr +
 		((caddr_t)&sc->ti_rdata->ti_rx_std_ring
 		 - (caddr_t)sc->ti_rdata);
-	rcb->ti_max_len = TI_FRAMELEN;
+	rcb->ti_max_len = ETHER_MAX_LEN;
 	rcb->ti_flags = 0;
 	if (ifp->if_capenable & IFCAP_CSUM_IPv4)
 		rcb->ti_flags |= TI_RCB_FLAG_IP_CKSUM;
@@ -1501,7 +1501,7 @@ static int ti_gibinit(sc)
 	rcb = &sc->ti_rdata->ti_info.ti_jumbo_rx_rcb;
 	TI_HOSTADDR(rcb->ti_hostaddr) = sc->info_dmaaddr +
 	    ((caddr_t)&sc->ti_rdata->ti_rx_jumbo_ring - (caddr_t)sc->ti_rdata);
-	rcb->ti_max_len = TI_JUMBO_FRAMELEN;
+	rcb->ti_max_len = ETHER_MAX_LEN_JUMBO;
 	rcb->ti_flags = 0;
 	if (ifp->if_capenable & IFCAP_CSUM_IPv4)
 		rcb->ti_flags |= TI_RCB_FLAG_IP_CKSUM;
@@ -2657,7 +2657,7 @@ static int ti_ioctl(ifp, command, data)
 		error = ti_ether_ioctl(ifp, command, data);
 		break;
 	case SIOCSIFMTU:
-		if (ifr->ifr_mtu > TI_JUMBO_MTU)
+		if (ifr->ifr_mtu > ETHERMTU_JUMBO)
 			error = EINVAL;
 		else {
 			ifp->if_mtu = ifr->ifr_mtu;
