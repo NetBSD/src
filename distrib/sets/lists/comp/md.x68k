@@ -1,5 +1,7 @@
 ./usr/include/machine/bsd_audioio.h
 ./usr/include/machine/cpufunc.h
+./usr/include/machine/grfioctl.h
+./usr/include/machine/iteioctl.h
 ./usr/include/machine/kbd.h
 ./usr/include/machine/kbio.h
 ./usr/include/machine/opmbellio.h
