@@ -1,4 +1,4 @@
-#	$NetBSD: SHARKINST,v 1.9 2000/11/13 18:40:34 abs Exp $
+#	$NetBSD: SHARKINST,v 1.10 2001/07/08 16:32:15 abs Exp $
 # From:  NetBSD: SHARK,v 1.23 1999/06/26 06:56:26 cgd Exp
 #
 #	SHARK Install Kernel
@@ -80,6 +80,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	NFS_BOOT_DHCP	# use NetBSD standard DHCP/NFS boot code
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # Compatibility options
 
@@ -90,7 +91,7 @@ options 	COMPAT_12	# NetBSD 1.2 compatibility.
 #options 	COMPAT_11	# NetBSD 1.1 compatibility.
 #options 	COMPAT_10	# NetBSD 1.0 compatibility.
 #options 	COMPAT_09	# NetBSD 0.9 compatibility.
-#options 	TCP_COMPAT_42   # TCP bug compatibility with 4.2BSD
+#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # Shared memory options
 

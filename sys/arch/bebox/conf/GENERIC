@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.39 2001/06/10 11:07:36 tsubai Exp $
+#	$NetBSD: GENERIC,v 1.40 2001/07/08 16:32:15 abs Exp $
 #
 # First try for BEBOX config file
 #
 
 include "arch/bebox/conf/std.bebox"
 
-#ident 		"GENERIC-$Revision: 1.39 $"
+#ident 		"GENERIC-$Revision: 1.40 $"
 
 maxusers	32
 
@@ -24,7 +24,7 @@ options 	DDB
 options 	KTRACE
 options 	NEWPMAP
 
-options 	TCP_COMPAT_42
+#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	COMPAT_43
 options 	COMPAT_09
 options 	COMPAT_10
@@ -57,6 +57,8 @@ options 	INET6		# IPV6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
+
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 options		NFS_BOOT_BOOTPARAM,NFS_BOOT_BOOTP
 

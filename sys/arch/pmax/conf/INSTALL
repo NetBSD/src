@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.39 2000/10/02 18:43:37 abs Exp $
+# 	$NetBSD: INSTALL,v 1.40 2001/07/08 16:32:23 abs Exp $
 #
 # Distribution	install kernel (any model)
 #    netbsd:	cut-down kernel for miniroots.
@@ -57,12 +57,13 @@ options 	VNODE_OP_NOINLINE	# Save space by not inlining vnode op calls
 
 # Networking options
 options 	INET			# Internet protocols
-options 	"TCP_COMPAT_42"		# compatibility with 4.2BSD TCP/IP
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 
 options 	COMPAT_12
 options 	COMPAT_13
 options 	COMPAT_14
+#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # Raster console options
 options 	FONT_BOLD8x16		# Font for fb devices

@@ -1,4 +1,4 @@
-#	$NetBSD: CQREEKSH3,v 1.10 2001/01/03 23:49:22 itojun Exp $
+#	$NetBSD: CQREEKSH3,v 1.11 2001/07/08 16:32:17 abs Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -118,9 +118,9 @@ options 	NS		# XNS
 #options 	PPP_DEFLATE	# Deflate compression support for PPP
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
-# Compatibility with 4.2BSD implementation of TCP/IP.  Not recommended.
-#options 	TCP_COMPAT_42
+#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
