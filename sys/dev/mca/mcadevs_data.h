@@ -1,10 +1,10 @@
-/*	$NetBSD: mcadevs_data.h,v 1.10 2001/04/19 18:38:50 jdolecek Exp $	*/
+/*	$NetBSD: mcadevs_data.h,v 1.11 2001/04/20 07:10:40 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: mcadevs,v 1.9 2001/04/19 18:38:23 jdolecek Exp 
+ *	NetBSD: mcadevs,v 1.10 2001/04/20 07:10:12 jdolecek Exp 
  */
 
 /*-
@@ -148,6 +148,7 @@ const struct mca_knowndev mca_knowndevs[] = {
     { 0x62F0,	"Plexus AIP2 Card" },
     { 0x62F6,	"3Com 3C529 Ethernet Adapter (10base2/T)" },
     { 0x62F7,	"3Com 3C529 Ethernet Adapter (10baseT)" },
+    { 0x6354,	"Arco Electronics AE/2 Ethernet Adapter" },
     { 0x6361,	"Arnet Smartport/2 Communications Adapter" },
     { 0x63B3,	"CH GameCard III-Automatic/MCA Adapter" },
     { 0x63CA,	"HP 27246 Ethernet Adapter" },
@@ -275,6 +276,7 @@ const struct mca_knowndev mca_knowndevs[] = {
     { 0x70B0,	"Intel AboveBoard MC32" },
     { 0x70D0,	"Kingston KTM-16000/386 Memory Expansion" },
     { 0x70D4,	"Kingston KTM-609/16 Memory Expansion" },
+    { 0x70DE,	"COMPEX INC. PS/2 ENET16-MC/P Microchannel Ad." },
     { 0x7151,	"Novell NE/2-32 Ethernet Adapter" },
     { 0x7154,	"Novell NE/2 Ethernet Adapter" },
     { 0x7188,	"Mountain QIC-02 Tape Adapter" },
