@@ -1,4 +1,4 @@
-/*	$NetBSD: restore.c,v 1.12 1997/09/15 08:04:35 lukem Exp $	*/
+/*	$NetBSD: restore.c,v 1.13 2001/01/18 08:59:23 enami Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)restore.c	8.3 (Berkeley) 9/13/94";
 #else
-__RCSID("$NetBSD: restore.c,v 1.12 1997/09/15 08:04:35 lukem Exp $");
+__RCSID("$NetBSD: restore.c,v 1.13 2001/01/18 08:59:23 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -699,6 +699,12 @@ createfiles()
 	skipdirs();
 	first = lowerbnd(ROOTINO);
 	last = upperbnd(maxino - 1);
+
+new_volume:
+	/*
+	 * Decide on the next inode needed in this volume.
+	 */
+	next = lowerbnd(curfile.ino);
 	for (;;) {
 		first = lowerbnd(first);
 		last = upperbnd(last);
@@ -711,19 +717,20 @@ createfiles()
 		 * Reject any volumes with inodes greater
 		 * than the last one needed
 		 */
-		while (curfile.ino > last) {
-			curfile.action = SKIP;
-			getvol((long)0);
-			skipmaps();
-			skipdirs();
+		if (curfile.ino > last) {
+			do {
+				curfile.action = SKIP;
+				getvol((long)0);
+				skipmaps();
+				skipdirs();
+			} while (curfile.ino > last);
+			goto new_volume;
 		}
 		/*
-		 * Decide on the next inode needed.
-		 * Skip across the inodes until it is found
+		 * Skip across the inodes until the next inode is found
 		 * or an out of order volume change is encountered
 		 */
-		next = lowerbnd(curfile.ino);
-		do	{
+		do {
 			curvol = volno;
 			while (next > curfile.ino && volno == curvol)
 				skipfile();
@@ -735,7 +742,7 @@ createfiles()
 		 * current state must be recalculated
 		 */
 		if (volno != curvol)
-			continue;
+			goto new_volume;
 		/*
 		 * If the current inode is greater than the one we were
 		 * looking for then we missed the one we were looking for.
@@ -764,8 +771,17 @@ createfiles()
 				panic("corrupted symbol table\n");
 			(void) extractfile(myname(ep));
 			ep->e_flags &= ~NEW;
-			if (volno != curvol)
+			if (volno != curvol) {
 				skipmaps();
+				goto new_volume;
+			}
+			/*
+			 * Decide the next inode.  Note that curfile.ino
+			 * already updated to the next file on the tape,
+			 * and we can't used it since it may be greater
+			 * than `next'.
+			 */
+			next = lowerbnd(next);
 		}
 	}
 }
