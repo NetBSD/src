@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2_isa.c,v 1.5 2001/11/15 09:48:10 lukem Exp $	*/
+/*	$NetBSD: tcic2_isa.c,v 1.6 2002/01/07 21:47:13 thorpej Exp $	*/
 
 /*
  *
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.5 2001/11/15 09:48:10 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.6 2002/01/07 21:47:13 thorpej Exp $");
 
 #undef	TCICISADEBUG
 
@@ -148,20 +148,35 @@ tcic_isa_probe(parent, match, aux)
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh, memh;
-	int val, found;
+	int val, found, msize;
+
+	if (ia->ia_nio < 1)
+		return (0);
+	if (ia->ia_niomem < 1)
+		return (0);
+
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
 
 	/* Disallow wildcarded i/o address. */
-	if (ia->ia_iobase == ISACF_PORT_DEFAULT)
+	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+		return (0);
+	if (ia->ia_iomem[0].ir_addr == ISACF_IOMEM_DEFAULT)
 		return (0);
 
-	if (bus_space_map(iot, ia->ia_iobase, TCIC_IOSIZE, 0, &ioh))
+	if (bus_space_map(iot, ia->ia_io[0].ir_addr, TCIC_IOSIZE, 0, &ioh))
 		return (0);
 
-	if (ia->ia_msize == -1)
-		ia->ia_msize = TCIC_MEMSIZE;
+	if (ia->ia_iomem[0].ir_size == ISACF_IOSIZ_DEFAULT)
+		msize = TCIC_MEMSIZE;
+	else
+		msize = ia->ia_iomem[0].ir_size;
 
-	if (bus_space_map(ia->ia_memt, ia->ia_maddr, ia->ia_msize, 0, &memh))
+	if (bus_space_map(ia->ia_memt, ia->ia_iomem[0].ir_addr,
+	    msize, 0, &memh)) {
+		bus_space_unmap(iot, ioh, TCIC_IOSIZE);
 		return (0);
+	}
 
 	DPRINTF(("tcic probing 0x%03x\n", ia->ia_iobase));
 	found = 0;
@@ -182,12 +197,20 @@ tcic_isa_probe(parent, match, aux)
 		DPRINTF(("tcic: reserved bits didn't check OK\n"));
 
 	bus_space_unmap(iot, ioh, TCIC_IOSIZE);
-	bus_space_unmap(ia->ia_memt, memh, ia->ia_msize);
+	bus_space_unmap(ia->ia_memt, memh, msize);
 
 	if (!found)
 		return (0);
 
-	ia->ia_iosize = TCIC_IOSIZE;
+	ia->ia_nio = 1;
+	ia->ia_io[0].ir_size = TCIC_IOSIZE;
+
+	ia->ia_niomem = 1;
+	ia->ia_iomem[0].ir_size = msize;
+
+	/* IRQ is special. */
+
+	ia->ia_ndrq = 0;
 
 	return (1);
 }
@@ -206,20 +229,22 @@ tcic_isa_attach(parent, self, aux)
 	bus_space_handle_t memh;
 
 	/* Map i/o space. */
-	if (bus_space_map(iot, ia->ia_iobase, ia->ia_iosize, 0, &ioh)) {
+	if (bus_space_map(iot, ia->ia_io[0].ir_addr, TCIC_IOSIZE, 0, &ioh)) {
 		printf(": can't map i/o space\n");
 		return;
 	}
 
 	/* Map mem space. */
-	if (bus_space_map(memt, ia->ia_maddr, ia->ia_msize, 0, &memh)) {
+	if (bus_space_map(memt, ia->ia_iomem[0].ir_addr,
+	    ia->ia_iomem[0].ir_size, 0, &memh)) {
 		printf(": can't map mem space\n");
 		return;
 	}
 
-	sc->membase = ia->ia_maddr;
-	sc->subregionmask = (1 << (ia->ia_msize / TCIC_MEM_PAGESIZE)) - 1;
-	sc->memsize2 = tcic_log2((u_int)ia->ia_msize);
+	sc->membase = ia->ia_iomem[0].ir_addr;
+	sc->subregionmask =
+	    (1 << (ia->ia_iomem[0].ir_size / TCIC_MEM_PAGESIZE)) - 1;
+	sc->memsize2 = tcic_log2((u_int)ia->ia_iomem[0].ir_size);
 
 	sc->intr_est = ic;
 	sc->pct = (pcmcia_chipset_tag_t) & tcic_isa_functions;
@@ -241,7 +266,11 @@ tcic_isa_attach(parent, self, aux)
 	 * scarce but for TCIC controllers very infrequent.
 	 */
 
-	if ((sc->irq = ia->ia_irq) == IRQUNK) {
+	if (ia->ia_nirq < 1)
+		sc->irq = ISACF_IRQ_DEFAULT;
+	else
+		sc->irq = ia->ia_irq[0].ir_irq;
+	if (sc->irq == ISACF_IRQ_DEFAULT) {
 		if (isa_intr_alloc(ic,
 		    sc->validirqs & (tcic_isa_intr_alloc_mask & 0xff00),
 		    IST_EDGE, &sc->irq)) {

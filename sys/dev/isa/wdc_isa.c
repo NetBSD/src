@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isa.c,v 1.23 2001/11/15 09:48:10 lukem Exp $ */
+/*	$NetBSD: wdc_isa.c,v 1.24 2002/01/07 21:47:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.23 2001/11/15 09:48:10 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.24 2002/01/07 21:47:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,22 +94,40 @@ wdc_isa_probe(parent, match, aux)
 	struct isa_attach_args *ia = aux;
 	int result = 0;
 
+	if (ia->ia_nio < 1)
+		return (0);
+	if (ia->ia_nirq < 1)
+		return (0);
+
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
+
+	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+		return (0);
+	if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT)
+		return (0);
+
 	memset(&ch, 0, sizeof(ch));
 
 	ch.cmd_iot = ia->ia_iot;
-	if (bus_space_map(ch.cmd_iot, ia->ia_iobase, WDC_ISA_REG_NPORTS, 0,
-	    &ch.cmd_ioh))
+
+	if (bus_space_map(ch.cmd_iot, ia->ia_io[0].ir_addr,
+	    WDC_ISA_REG_NPORTS, 0, &ch.cmd_ioh))
 		goto out;
 
 	ch.ctl_iot = ia->ia_iot;
-	if (bus_space_map(ch.ctl_iot, ia->ia_iobase + WDC_ISA_AUXREG_OFFSET,
-	    WDC_ISA_AUXREG_NPORTS, 0, &ch.ctl_ioh))
+	if (bus_space_map(ch.ctl_iot, ia->ia_io[0].ir_addr +
+	    WDC_ISA_AUXREG_OFFSET, WDC_ISA_AUXREG_NPORTS, 0, &ch.ctl_ioh))
 		goto outunmap;
 
 	result = wdcprobe(&ch);
 	if (result) {
-		ia->ia_iosize = WDC_ISA_REG_NPORTS;
-		ia->ia_msize = 0;
+		ia->ia_nio = 1;
+		ia->ia_io[0].ir_size = WDC_ISA_REG_NPORTS;
+
+		ia->ia_nirq = 1;
+
+		ia->ia_niomem = 0;
 	}
 
 	bus_space_unmap(ch.ctl_iot, ch.ctl_ioh, WDC_ISA_AUXREG_NPORTS);
@@ -132,22 +150,22 @@ wdc_isa_attach(parent, self, aux)
 	sc->wdc_channel.cmd_iot = ia->ia_iot;
 	sc->wdc_channel.ctl_iot = ia->ia_iot;
 	sc->sc_ic = ia->ia_ic;
-	if (bus_space_map(sc->wdc_channel.cmd_iot, ia->ia_iobase,
+	if (bus_space_map(sc->wdc_channel.cmd_iot, ia->ia_io[0].ir_addr,
 	    WDC_ISA_REG_NPORTS, 0, &sc->wdc_channel.cmd_ioh) ||
 	    bus_space_map(sc->wdc_channel.ctl_iot,
-	      ia->ia_iobase + WDC_ISA_AUXREG_OFFSET, WDC_ISA_AUXREG_NPORTS,
-	      0, &sc->wdc_channel.ctl_ioh)) {
+	      ia->ia_io[0].ir_addr + WDC_ISA_AUXREG_OFFSET,
+	      WDC_ISA_AUXREG_NPORTS, 0, &sc->wdc_channel.ctl_ioh)) {
 		printf("%s: couldn't map registers\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname);
 	}
 	sc->wdc_channel.data32iot = sc->wdc_channel.cmd_iot;
 	sc->wdc_channel.data32ioh = sc->wdc_channel.cmd_ioh;
 
-	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
-	    IPL_BIO, wdcintr, &sc->wdc_channel);
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
+	    IST_EDGE, IPL_BIO, wdcintr, &sc->wdc_channel);
 
-	if (ia->ia_drq != DRQUNK) {
-		sc->sc_drq = ia->ia_drq;
+	if (ia->ia_ndrq > 0 && ia->ia_drq[0].ir_drq != ISACF_DRQ_DEFAULT) {
+		sc->sc_drq = ia->ia_drq[0].ir_drq;
 
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA;
 		sc->sc_wdcdev.dma_arg = sc;

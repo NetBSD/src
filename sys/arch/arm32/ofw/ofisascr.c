@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisascr.c,v 1.5 1999/03/19 04:58:45 cgd Exp $	*/
+/*	$NetBSD: ofisascr.c,v 1.6 2002/01/07 21:46:59 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -87,6 +87,7 @@ ofisascrattach(parent, dev, aux)
 {
 	struct ofbus_attach_args *oba = aux;
 	struct isa_attach_args ia;
+	struct isa_io ia_io[1];
     
 	printf("\n");
 
@@ -94,12 +95,16 @@ ofisascrattach(parent, dev, aux)
 	ia.ia_iot = &isa_io_bs_tag;
 	ia.ia_memt = &isa_mem_bs_tag;
 	ia.ia_ic = NULL;			/* not used */
-	ia.ia_iobase = SEQUOIA_BASE;
-	ia.ia_iosize = SEQUOIA_NPORTS;
-	ia.ia_irq = IRQUNK;
-	ia.ia_drq = DRQUNK;
-	ia.ia_maddr = MADDRUNK;
-	ia.ia_msize = 0;
+
+	ia.ia_nio = 1;
+	ia.ia_io = ia_io;
+	ia.ia_io[0].ir_addr = SEQUOIA_BASE;
+	ia.ia_io[0].ir_size = SEQUOIA_NPORTS;
+
+	ia.ia_niomem = 0;
+	ia.ia_nirq = 0;
+	ia.ia_ndrq = 0;
+
 	ia.ia_aux = (void *)oba->oba_phandle;
     
 	config_found(dev, &ia, NULL);

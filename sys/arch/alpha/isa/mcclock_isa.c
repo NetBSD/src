@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_isa.c,v 1.10 1997/09/02 13:18:58 thorpej Exp $ */
+/* $NetBSD: mcclock_isa.c,v 1.11 2002/01/07 21:46:57 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.10 1997/09/02 13:18:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.11 2002/01/07 21:46:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -74,19 +74,35 @@ mcclock_isa_match(parent, match, aux)
 	struct isa_attach_args *ia = aux;
 	bus_space_handle_t ioh;
 
-        if ((ia->ia_iobase != IOBASEUNK && ia->ia_iobase != 0x70) ||
-            /* (ia->ia_iosize != 0 && ia->ia_iosize != 0x2) || XXX isa.c */
-            ia->ia_maddr != MADDRUNK || ia->ia_msize != 0 ||
-            ia->ia_irq != IRQUNK || ia->ia_drq != DRQUNK)
-                return (0);
+	if (ia->ia_nio < 1 ||
+	    (ia->ia_io[0].ir_addr != ISACF_PORT_DEFAULT &&
+	     ia->ia_io[0].ir_addr != 0x70))
+		return (0);
+
+	if (ia->ia_niomem > 0 &&
+	    (ia->ia_iomem[0].ir_addr != ISACF_IOMEM_DEFAULT))
+		return (0);
+
+	if (ia->ia_nirq > 0 &&
+	    (ia->ia_irq[0].ir_irq != ISACF_IRQ_DEFAULT))
+		return (0);
+
+	if (ia->ia_ndrq > 0 &&
+	    (ia->ia_drq[0].ir_drq != ISACF_DRQ_DEFAULT))
+		return (0);
 
 	if (bus_space_map(ia->ia_iot, 0x70, 0x2, 0, &ioh))
 		return (0);
 
 	bus_space_unmap(ia->ia_iot, ioh, 0x2);
 
-	ia->ia_iobase = 0x70;
-	ia->ia_iosize = 0x2;
+	ia->ia_nio = 1;
+	ia->ia_io[0].ir_addr = 0x70;
+	ia->ia_io[0].ir_size = 0x02;
+
+	ia->ia_niomem = 0;
+	ia->ia_nirq = 0;
+	ia->ia_ndrq = 0;
 
 	return (1);
 }
@@ -100,8 +116,8 @@ mcclock_isa_attach(parent, self, aux)
 	struct mcclock_isa_softc *sc = (struct mcclock_isa_softc *)self;
 
 	sc->sc_iot = ia->ia_iot;
-	if (bus_space_map(sc->sc_iot, ia->ia_iobase, ia->ia_iosize, 0,
-	    &sc->sc_ioh))
+	if (bus_space_map(sc->sc_iot, ia->ia_io[0].ir_addr,
+	    ia->ia_io[0].ir_size, 0, &sc->sc_ioh))
 		panic("mcclock_isa_attach: couldn't map clock I/O space");
 
 	mcclock_attach(&sc->sc_mcclock, &mcclock_isa_busfns);

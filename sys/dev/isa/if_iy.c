@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.56 2001/11/13 08:01:19 lukem Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.57 2002/01/07 21:47:08 thorpej Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.56 2001/11/13 08:01:19 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.57 2002/01/07 21:47:08 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -206,18 +206,25 @@ iyprobe(parent, match, aux)
 {
 	struct isa_attach_args *ia = aux;
 	u_int16_t eaddr[8];
-
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-
 	u_int8_t c, d;
+	int irq;
+
+	if (ia->ia_nio < 1)
+		return (0);
+	if (ia->ia_nirq < 1)
+		return (0);
+
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
 
 	iot = ia->ia_iot;
 
-	if (ia->ia_iobase == IOBASEUNK)
+	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
 		return 0;
 
-	if (bus_space_map(iot, ia->ia_iobase, 16, 0, &ioh))
+	if (bus_space_map(iot, ia->ia_io[0].ir_addr, 16, 0, &ioh))
 		return 0;
 
 	/* try to find the round robin sig: */
@@ -261,13 +268,15 @@ iyprobe(parent, match, aux)
 	if (eepromreadall(iot, ioh, eaddr, 8))
 		goto out;
 	
-	if (ia->ia_irq == IRQUNK)
-		ia->ia_irq = eepro_irqmap[eaddr[EEPPW1] & EEPP_Int];
+	if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT)
+		irq = eepro_irqmap[eaddr[EEPPW1] & EEPP_Int];
+	else
+		irq = ia->ia_irq[0].ir_irq;
 
-	if (ia->ia_irq >= sizeof(eepro_revirqmap))
+	if (irq >= sizeof(eepro_revirqmap))
 		goto out;
 
-	if (eepro_revirqmap[ia->ia_irq] == 0xff)
+	if (eepro_revirqmap[irq] == 0xff)
 		goto out;
 
 	/* now lets reset the chip */
@@ -275,7 +284,14 @@ iyprobe(parent, match, aux)
 	bus_space_write_1(iot, ioh, COMMAND_REG, RESET_CMD);
 	delay(200);
 	
-	ia->ia_iosize = 16;
+	ia->ia_nio = 1;
+	ia->ia_io[0].ir_size = 16;
+
+	ia->ia_nirq = 1;
+	ia->ia_irq[0].ir_irq = irq;
+
+	ia->ia_niomem = 0;
+	ia->ia_ndrq = 0;
 
 	bus_space_unmap(iot, ioh, 16);
 	return 1;		/* found */
@@ -301,7 +317,7 @@ iyattach(parent, self, aux)
 
 	iot = ia->ia_iot;
 	
-	if (bus_space_map(iot, ia->ia_iobase, 16, 0, &ioh)) {
+	if (bus_space_map(iot, ia->ia_io[0].ir_addr, 16, 0, &ioh)) {
 		printf(": can't map i/o space\n");
 		return;
 	}
@@ -309,7 +325,7 @@ iyattach(parent, self, aux)
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
 
-	sc->mappedirq = eepro_revirqmap[ia->ia_irq];
+	sc->mappedirq = eepro_revirqmap[ia->ia_irq[0].ir_irq];
 
 	/* now let's reset the chip */
 	
@@ -366,12 +382,12 @@ iyattach(parent, self, aux)
 	    sc->hard_vers, sc->sram/1024);
 
 	eirq = eepro_irqmap[eaddr[EEPPW1] & EEPP_Int];
-	if (eirq != ia->ia_irq)
+	if (eirq != ia->ia_irq[0].ir_irq)
 		printf("%s: EEPROM irq setting %d ignored\n",
 		    sc->sc_dev.dv_xname, eirq);
 
-	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE, 
-	    IPL_NET, iyintr, sc);
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
+	    IST_EDGE, IPL_NET, iyintr, sc);
 
 #if NRND > 0
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,

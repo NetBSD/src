@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi.c,v 1.5 2001/11/13 08:01:28 lukem Exp $ */
+/* $NetBSD: pcppi.c,v 1.6 2002/01/07 21:47:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.5 2001/11/13 08:01:28 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.6 2002/01/07 21:47:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,10 +90,25 @@ pcppi_match(parent, match, aux)
 	int have_pit1, have_ppi, rv;
 	u_int8_t v, nv;
 
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
+
 	/* If values are hardwired to something that they can't be, punt. */
-	if ((ia->ia_iobase != IOBASEUNK && ia->ia_iobase != IO_PPI) ||
-	    ia->ia_maddr != MADDRUNK || ia->ia_msize != 0 ||
-	    ia->ia_irq != IRQUNK || ia->ia_drq != DRQUNK)
+	if (ia->ia_nio < 1 ||  
+	    (ia->ia_io[0].ir_addr != ISACF_PORT_DEFAULT &&
+	    ia->ia_io[0].ir_addr != IO_PPI))
+		return (0);
+
+	if (ia->ia_niomem > 0 &&
+	    (ia->ia_iomem[0].ir_addr != ISACF_IOMEM_DEFAULT))
+		return (0);
+
+	if (ia->ia_nirq > 0 &&
+	    (ia->ia_irq[0].ir_irq != ISACF_IRQ_DEFAULT))
+		return (0);
+
+	if (ia->ia_ndrq > 0 &&
+	    (ia->ia_drq[0].ir_drq != ISACF_DRQ_DEFAULT))
 		return (0);
 
 	rv = 0;
@@ -139,9 +154,13 @@ lose:
 	if (have_ppi)
 		bus_space_unmap(ia->ia_iot, ppi_ioh, 1);
 	if (rv) {
-		ia->ia_iobase = IO_PPI;
-		ia->ia_iosize = 0x1;
-		ia->ia_msize = 0x0;
+		ia->ia_io[0].ir_addr = IO_PPI;
+		ia->ia_io[0].ir_size = 1;
+		ia->ia_nio = 1;
+
+		ia->ia_niomem = 0;
+		ia->ia_nirq = 0;
+		ia->ia_ndrq = 0;
 	}
 	return (rv);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isa.c,v 1.24 2001/11/13 08:01:30 lukem Exp $	*/
+/*	$NetBSD: sb_isa.c,v 1.25 2002/01/07 21:47:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb_isa.c,v 1.24 2001/11/13 08:01:30 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb_isa.c,v 1.25 2002/01/07 21:47:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: sb_isa.c,v 1.24 2001/11/13 08:01:30 lukem Exp $");
 
 #include <dev/isa/sbdspvar.h>
 
-static	int sbfind __P((struct device *, struct sbdsp_softc *, struct isa_attach_args *));
+static	int sbfind __P((struct device *, struct sbdsp_softc *, int,
+	    struct isa_attach_args *));
 
 int	sb_isa_match __P((struct device *, struct cfdata *, void *));
 void	sb_isa_attach __P((struct device *, struct device *, void *));
@@ -82,24 +83,36 @@ sb_isa_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
+	struct isa_attach_args *ia = aux;
 	struct sbdsp_softc probesc, *sc = &probesc;
 
+	if (ia->ia_nio < 1)
+		return (0);
+	if (ia->ia_nirq < 1)
+		return (0);
+	if (ia->ia_ndrq < 1)
+		return (0);
+
+	if (ISA_DIRECT_CONFIG(ia))
+		return (0);
+
 	memset(sc, 0, sizeof *sc);
-	sc->sc_dev.dv_cfdata = match;
 	strcpy(sc->sc_dev.dv_xname, "sb");
-	return sbfind(parent, sc, aux);
+	return sbfind(parent, sc, 1, aux);
 }
 
 static int
-sbfind(parent, sc, ia)
+sbfind(parent, sc, probing, ia)
 	struct device *parent;
 	struct sbdsp_softc *sc;
+	int probing;
 	struct isa_attach_args *ia;
 {
 	int rc = 0;
 
-	if (!SB_BASE_VALID(ia->ia_iobase)) {
-		printf("sb: configured iobase 0x%x invalid\n", ia->ia_iobase);
+	if (!SB_BASE_VALID(ia->ia_io[0].ir_addr)) {
+		printf("sb: configured iobase 0x%x invalid\n",
+		    ia->ia_io[0].ir_addr);
 		return 0;
 	}
 
@@ -107,31 +120,39 @@ sbfind(parent, sc, ia)
 
 	sc->sc_iot = ia->ia_iot;
 	/* Map i/o space [we map 24 ports which is the max of the sb and pro */
-	if (bus_space_map(sc->sc_iot, ia->ia_iobase, SBP_NPORT, 0,
+	if (bus_space_map(sc->sc_iot, ia->ia_io[0].ir_addr, SBP_NPORT, 0,
 	    &sc->sc_ioh))
 		return 0;
 
 	/* XXX These are only for setting chip configuration registers. */
-	sc->sc_iobase = ia->ia_iobase;
-	sc->sc_irq = ia->ia_irq;
+	sc->sc_iobase = ia->ia_io[0].ir_addr;
+	sc->sc_irq = ia->ia_irq[0].ir_irq;
 
-	sc->sc_drq8 = ia->ia_drq;
-	sc->sc_drq16 = ia->ia_drq2;
+	sc->sc_drq8 = ia->ia_drq[0].ir_drq;
+	sc->sc_drq16 = ia->ia_drq[1].ir_drq;
 
 	if (!sbmatch(sc))
 		goto bad;
 
-	if (ISSBPROCLASS(sc))
-		ia->ia_iosize = SBP_NPORT;
-	else
-		ia->ia_iosize = SB_NPORT;
-
-	if (!ISSB16CLASS(sc) && sc->sc_model != SB_JAZZ)
-		ia->ia_drq2 = -1;
-
-	ia->ia_irq = sc->sc_irq;
-
 	rc = 1;
+
+	if (probing) {
+		ia->ia_nio = 1;
+		if (ISSBPROCLASS(sc))
+			ia->ia_io[0].ir_size = SBP_NPORT;
+		else
+			ia->ia_io[0].ir_size = SB_NPORT;
+
+		if (!ISSB16CLASS(sc) && sc->sc_model != SB_JAZZ)
+			ia->ia_ndrq = 1;
+		else
+			ia->ia_ndrq = 2;
+
+		ia->ia_nirq = 1;
+		ia->ia_irq[0].ir_irq = sc->sc_irq;
+
+		ia->ia_niomem = 0;
+	}
 
 bad:
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, SBP_NPORT);
@@ -151,15 +172,15 @@ sb_isa_attach(parent, self, aux)
 	struct sbdsp_softc *sc = (struct sbdsp_softc *)self;
 	struct isa_attach_args *ia = aux;
 
-	if (!sbfind(parent, sc, ia) || 
-	    bus_space_map(sc->sc_iot, ia->ia_iobase, ia->ia_iosize, 
-			  0, &sc->sc_ioh)) {
+	if (!sbfind(parent, sc, 0, ia) || 
+	    bus_space_map(sc->sc_iot, ia->ia_io[0].ir_addr,
+	    ia->ia_io[0].ir_size, 0, &sc->sc_ioh)) {
 		printf("%s: sbfind failed\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
-	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
-	    IPL_AUDIO, sbdsp_intr, sc);
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
+	    IST_EDGE, IPL_AUDIO, sbdsp_intr, sc);
 
 	sbattach(sc);
 }

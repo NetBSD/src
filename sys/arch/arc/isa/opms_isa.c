@@ -1,4 +1,4 @@
-/* $NetBSD: opms_isa.c,v 1.1 2001/06/13 15:05:45 soda Exp $ */
+/* $NetBSD: opms_isa.c,v 1.2 2002/01/07 21:46:57 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -60,14 +60,16 @@ opms_isa_match(parent, match, aux)
 	bus_size_t iosize = IO_KBDSIZE;
 	int irq = 12;
 
-	if (ia->ia_iobase != IOBASEUNK)
-		iobase = ia->ia_iobase;
+	if (ia->ia_nio < 1)
+		return (0);
+	if (ia->ia_io[0].ir_addr != ISACF_PORT_DEFAULT)
+		iobase = ia->ia_io[0].ir_addr;
 #if 0	/* XXX isa.c */
 	if (ia->ia_iosize != 0)
 		iosize = ia->ia_iosize;
 #endif
-	if (ia->ia_irq != IRQUNK)
-		irq = ia->ia_irq;
+	if (ia->ia_irq[0].ir_irq != ISACF_IRQ_DEFAULT)
+		irq = ia->ia_irq[0].ir_irq;
 
 #if 0
 	/* If values are hardwired to something that they can't be, punt. */
@@ -83,9 +85,16 @@ opms_isa_match(parent, match, aux)
 	if (!opms_common_match(ia->ia_iot, pccons_isa_conf))
 		return (0);
 
-	ia->ia_iobase = iobase;
-	ia->ia_iosize = iosize;
-	ia->ia_msize = 0;
+	ia->ia_nio = 1;
+	ia->ia_io[0].ir_addr = iobase;
+	ia->ia_io[0].ir_size = iosize;
+
+	ia->ia_nirq = 1;
+	ia->ia_irq[0].ir_irq = irq;
+
+	ia->ia_niomem = 0;
+	ia->ia_ndrq = 0;
+
 	return (1);
 }
 
@@ -99,7 +108,7 @@ opms_isa_attach(parent, self, aux)
 
 	printf("\n");
 
-	isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE, IPL_TTY,
+	isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq, IST_EDGE, IPL_TTY,
 	    pcintr, self);
 	opms_common_attach(sc, ia->ia_iot, pccons_isa_conf);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: radiotrack.c,v 1.4 2002/01/03 18:13:19 augustss Exp $ */
+/* $NetBSD: radiotrack.c,v 1.5 2002/01/07 21:47:14 thorpej Exp $ */
 /* $OpenBSD: radiotrack.c,v 1.1 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: radiotrack.c,v 1.3 2001/10/18 16:51:36 pva Exp $ */
 
@@ -135,7 +135,15 @@ rt_probe(struct device *parent, struct cfdata *cf, void *aux)
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
 	u_int r;
-	int iosize = 1, iobase = ia->ia_iobase;
+	int iosize = 1, iobase;
+
+	if (ISA_DIRECT_CONFIG(ia))
+		return 0;
+
+	if (ia->ia_nio < 1)
+		return (0);
+
+	iobase = ia->ia_io[0].ir_addr;
 
 	if (!RT_BASE_VALID(iobase)) {
 		printf("rt: configured iobase 0x%x invalid\n", iobase);
@@ -149,9 +157,18 @@ rt_probe(struct device *parent, struct cfdata *cf, void *aux)
 
 	bus_space_unmap(iot, ioh, iosize);
 
-	ia->ia_iosize = iosize;
+	if (r != 0) {
+		ia->ia_nio = 1;
+		ia->ia_io[0].ir_size = iosize;
 
-	return (r != 0);
+		ia->ia_niomem = 0;
+		ia->ia_nirq = 0;
+		ia->ia_ndrq = 0;
+
+		return (1);
+	}
+
+	return (0);
 }
 
 void
@@ -168,11 +185,11 @@ rt_attach(struct device *parent, struct device *self, void *aux)
 	sc->vol = 0;
 
 	/* remap I/O */
-	if (bus_space_map(sc->lm.iot, ia->ia_iobase, ia->ia_iosize,
-			  0, &sc->lm.ioh))
+	if (bus_space_map(sc->lm.iot, ia->ia_io[0].ir_addr,
+	    ia->ia_io[0].ir_size, 0, &sc->lm.ioh))
 		panic(": bus_space_map() of %s failed", sc->sc_dev.dv_xname);
 
-	switch (sc->lm.iot) {
+	switch (ia->ia_io[0].ir_addr) {
 	case 0x20C:
 		/* FALLTHROUGH */
 	case 0x30C:
