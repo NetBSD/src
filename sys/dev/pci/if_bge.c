@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.22 2002/10/02 16:51:18 thorpej Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.23 2002/10/06 23:34:56 kristerw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1692,7 +1692,6 @@ bge_attach(parent, self, aux)
 	u_int32_t		hwcfg = 0;
 	u_int32_t		command;
 	struct ifnet		*ifp;
-	int			unit;
 	caddr_t			kva;
 	u_char			eaddr[ETHER_ADDR_LEN];
 	pcireg_t		memtype;
@@ -1775,7 +1774,8 @@ bge_attach(parent, self, aux)
 	 */
 	if (bge_read_eeprom(sc, (caddr_t)eaddr,
 	    BGE_EE_MAC_OFFSET + 2, ETHER_ADDR_LEN)) {
-		printf("bge%d: failed to read station address\n", unit);
+		printf("%s: failed to read station address\n",
+		    sc->bge_dev.dv_xname);
 		bge_release_resources(sc);
 		return;
 	}
