@@ -1,7 +1,7 @@
 #ifndef CDKGRAPH_H
 #define CDKGRAPH_H	1
 
-#include <cdk.h>
+#include <cdk/cdk.h>
 
 /*
  * Description of the widget:
