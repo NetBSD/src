@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect.c,v 1.21 2002/07/09 12:04:10 itojun Exp $	*/
+/*	$NetBSD: sshconnect.c,v 1.22 2002/07/10 10:28:00 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect.c,v 1.127 2002/06/27 08:49:44 markus Exp $");
+RCSID("$OpenBSD: sshconnect.c,v 1.130 2002/07/10 10:28:15 itojun Exp $");
 
 #include <openssl/bn.h>
 
@@ -306,11 +306,6 @@ ssh_connect(const char *host, struct sockaddr_storage * hostaddr,
 			} else {
 				if (errno == ECONNREFUSED)
 					full_failure = 0;
-#if 0
-				log("ssh: connect to address %s port %s: %s",
-				    sockaddr_ntop(ai->ai_addr, ai->ai_addrlen),
-				    strport, strerror(errno));
-#endif
 				/*
 				 * Close the failed socket; there appear to
 				 * be some problems when reusing a socket for
@@ -333,8 +328,11 @@ ssh_connect(const char *host, struct sockaddr_storage * hostaddr,
 	freeaddrinfo(aitop);
 
 	/* Return failure if we didn't get a successful connection. */
-	if (attempt >= connection_attempts)
+	if (attempt >= connection_attempts) {
+		log("ssh: connect to host %s port %s: %s",
+		    host, strport, strerror(errno));
 		return full_failure ? ECONNABORTED : ECONNREFUSED;
+	}
 
 	debug("Connection established.");
 
