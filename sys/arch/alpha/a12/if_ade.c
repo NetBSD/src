@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ade.c,v 1.11 2001/07/12 23:26:30 thorpej Exp $	*/
+/*	$NetBSD: if_ade.c,v 1.12 2001/07/12 23:35:42 thorpej Exp $	*/
 
 /*
  * NOTE: this version of if_de was modified for bounce buffers prior
@@ -267,7 +267,7 @@ static void a12r2pb(void *vsrc, void *vdst, int len) {
 		 */
 		if(offset)
 			bounce[0] = dst[0];
-		bcopy(src,(int8_t *)bounce+offset,t);
+		memcpy((int8_t *)bounce+offset,src,t);
 		for(i=llw; i>=0; --i) {	/* reverse so d_status is last */
 			alpha_mb();
 			dst[i] = bounce[i];
@@ -292,7 +292,7 @@ static void a12r2pb(void *vsrc, void *vdst, int len) {
 	alpha_wmb();
 }
 
-#define BEGIN(p) do { tulip_desc_t t; bcopy((p),&t,sizeof(t))
+#define BEGIN(p) do { tulip_desc_t t; memcpy(&t,(p),sizeof(t))
 #define	END(p)			   a12r2pb(&t,(p),sizeof(t)); } while(0)
 
 static void setstatus(tulip_desc_t *t, u_int32_t val) {
@@ -374,8 +374,8 @@ tulip_txprobe(
     /*
      * Construct a LLC TEST message which will point to ourselves.
      */
-    bcopy(sc->tulip_enaddr, mtod(m, struct ether_header *)->ether_dhost, 6);
-    bcopy(sc->tulip_enaddr, mtod(m, struct ether_header *)->ether_shost, 6);
+    memcpy(mtod(m, struct ether_header *)->ether_dhost, sc->tulip_enaddr, 6);
+    memcpy(mtod(m, struct ether_header *)->ether_shost, sc->tulip_enaddr, 6);
     mtod(m, struct ether_header *)->ether_type = htons(3);
     mtod(m, unsigned char *)[14] = 0;
     mtod(m, unsigned char *)[15] = 0;
@@ -2134,7 +2134,7 @@ tulip_identify_dec_nic(
 	return;
     if (memcmp(sc->tulip_rombuf + 29, "DE500", 5) == 0
 	|| memcmp(sc->tulip_rombuf + 29, "DE450", 5) == 0) {
-	bcopy(sc->tulip_rombuf + 29, &sc->tulip_boardid[D0], 8);
+	memcpy(&sc->tulip_boardid[D0], sc->tulip_rombuf + 29, 8);
 	sc->tulip_boardid[D0+8] = ' ';
     }
 #undef D0
@@ -2382,7 +2382,7 @@ tulip_srom_decode(
     /*
      * Save the hardware address.
      */
-    bcopy((caddr_t) shp->sh_ieee802_address, (caddr_t) sc->tulip_enaddr, 6);
+    memcpy((caddr_t) sc->tulip_enaddr, (caddr_t) shp->sh_ieee802_address, 6);
     /*
      * If this is a multiple port card, add the adapter index to the last
      * byte of the hardware address.  (if it isn't multiport, adding 0
@@ -2803,7 +2803,7 @@ tulip_read_macaddr(
 #if 0
 		printf("ade%d: Warning: reinit srom! Old Avalon format!",
 			cf->cf_unit);
-		bcopy(sc->tulip_rombuf + 4, sc->tulip_enaddr, 6);
+		memcpy(sc->tulip_enaddr, sc->tulip_rombuf + 4, 6);
 		sc->tulip_flags |= TULIP_ROMOK;
 		goto check_oui;
 #endif
@@ -2828,7 +2828,7 @@ tulip_read_macaddr(
 	if (sc->tulip_rombuf[0] == 0 && sc->tulip_rombuf[1] == 0
 		&& sc->tulip_rombuf[2] == 0)
 	    return -4;
-	bcopy(sc->tulip_rombuf, sc->tulip_enaddr, 6);
+	memcpy(sc->tulip_enaddr, sc->tulip_rombuf, 6);
 	sc->tulip_flags |= TULIP_ROMOK;
 	goto check_oui;
     } else {
@@ -2862,12 +2862,12 @@ tulip_read_macaddr(
 		sc->tulip_boardsw = root_sc->tulip_boardsw;
 		strcpy(sc->tulip_boardid, root_sc->tulip_boardid);
 		if (sc->tulip_boardsw->bd_type == TULIP_21140_ISV) {
-		    bcopy(root_sc->tulip_rombuf, sc->tulip_rombuf,
+		    memcpy(sc->tulip_rombuf, root_sc->tulip_rombuf,
 			  sizeof(sc->tulip_rombuf));
 		    if (!tulip_srom_decode(sc))
 			return -5;
 		} else {
-		    bcopy(root_sc->tulip_enaddr, sc->tulip_enaddr, 6);
+		    memcpy(sc->tulip_enaddr, root_sc->tulip_enaddr, 6);
 		    sc->tulip_enaddr[5] += sc->tulip_unit - root_sc->tulip_unit;
 		}
 		/*
@@ -2901,7 +2901,7 @@ tulip_read_macaddr(
     if (memcmp(&sc->tulip_rombuf[0], tmpbuf, 8) != 0)
 	return -2;
 
-    bcopy(sc->tulip_rombuf, sc->tulip_enaddr, 6);
+    memcpy(sc->tulip_enaddr, sc->tulip_rombuf, 6);
 
     cksum = *(u_int16_t *) &sc->tulip_enaddr[0];
     cksum *= 2;
@@ -3958,9 +3958,9 @@ tulip_ifioctl(
 			ina->x_host = *(union ns_host *)(sc->tulip_enaddr);
 		    } else {
 			ifp->if_flags &= ~IFF_RUNNING;
-			bcopy((caddr_t)ina->x_host.c_host,
-			      (caddr_t)sc->tulip_enaddr,
-			      sizeof(sc->tulip_enaddr));
+			memcpy((caddr_t)sc->tulip_enaddr,
+			    (caddr_t)ina->x_host.c_host,
+			    sizeof(sc->tulip_enaddr));
 		    }
 		    tulip_init(sc);
 		    break;
@@ -3975,9 +3975,8 @@ tulip_ifioctl(
 	    break;
 	}
 	case SIOCGIFADDR: {
-	    bcopy((caddr_t) sc->tulip_enaddr,
-		  (caddr_t) ((struct sockaddr *)&ifr->ifr_data)->sa_data,
-		  6);
+	    memcpy((caddr_t) ((struct sockaddr *)&ifr->ifr_data)->sa_data,
+		(caddr_t) sc->tulip_enaddr, 6);
 	    break;
 	}
 
@@ -4102,7 +4101,7 @@ tulip_ifstart(
 		ifp->if_flags |= IFF_OACTIVE;
 		return;
 	    }
-	    bcopy(sc->tulip_setupdata, sc->tulip_setupbuf,
+	    memcpy(sc->tulip_setupbuf, sc->tulip_setupdata,
 		   sizeof(sc->tulip_setupdata));
 	    sc->tulip_flags &= ~TULIP_WANTSETUP;
 	    sc->tulip_flags |= TULIP_DOINGSETUP;
@@ -5149,7 +5148,7 @@ tulip_pci_attach(
 
 
 #if defined(__NetBSD__)
-    bcopy(self->dv_xname, sc->tulip_if.if_xname, IFNAMSIZ);
+    strcpy(sc->tulip_if.if_xname, self->dv_xname);
     sc->tulip_if.if_softc = sc;
     sc->tulip_pc = pa->pa_pc;
 #else
