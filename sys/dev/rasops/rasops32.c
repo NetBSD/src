@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops32.c,v 1.11 2001/11/15 09:48:14 lukem Exp $	*/
+/*	 $NetBSD: rasops32.c,v 1.12 2003/04/16 23:28:41 petrov Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops32.c,v 1.11 2001/11/15 09:48:14 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops32.c,v 1.12 2003/04/16 23:28:41 petrov Exp $");
 
 #include "opt_rasops.h"
 
@@ -96,6 +96,11 @@ rasops32_putchar(cookie, row, col, uc, attr)
 	if ((unsigned)col >= (unsigned)ri->ri_cols)
 		return;
 #endif
+
+	/* check if character fits into font limits */
+	if (uc < ri->ri_font->firstchar ||
+	    (uc - ri->ri_font->firstchar) >= ri->ri_font->numchars)
+	    return;
 
 	rp = (int32_t *)(ri->ri_bits + row*ri->ri_yscale + col*ri->ri_xscale);
 
