@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)limits.h	5.9 (Berkeley) 4/3/91
- *	$Id: limits.h,v 1.5 1993/10/12 21:56:55 jtc Exp $
+ *	$Id: limits.h,v 1.6 1994/10/05 17:24:47 jtc Exp $
  */
 
 #ifndef _LIMITS_H_
@@ -60,7 +60,18 @@
 #define	_POSIX2_EXPR_NEST_MAX	32
 #define	_POSIX2_LINE_MAX	2048
 #define	_POSIX2_RE_DUP_MAX	255
-#endif
+#endif /* !_ANSI_SOURCE */
+
+#if (!defined(_ANSI_SOURCE)&&!defined(_POSIX_SOURCE)) || defined(_XOPEN_SOURCE)
+#define PASS_MAX		128
+
+#define NL_ARGMAX		9
+#define NL_LANGMAX		14
+#define NL_MSGMAX		32767
+#define NL_NMAX			1
+#define NL_SETMAX		255
+#define NL_TEXTMAX		255
+#endif 
 
 #include <machine/limits.h>
 #include <sys/syslimits.h>
