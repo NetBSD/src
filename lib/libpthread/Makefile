@@ -13,7 +13,7 @@ all beforedepend: pthread
 CLEANFILES+=pthread 
 
 pthread: 
-	if [ ! -e pthread ]; then; \
+	if [ ! -e pthread ]; then \
 		ln -s ${.CURDIR}/include pthread; \
 	fi
 	
