@@ -1,8 +1,8 @@
-/*	$NetBSD: main.c,v 1.37 2003/09/02 07:34:51 jlam Exp $	*/
+/*	$NetBSD: main.c,v 1.38 2003/09/08 07:04:40 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.37 2003/09/02 07:34:51 jlam Exp $");
+__RCSID("$NetBSD: main.c,v 1.38 2003/09/08 07:04:40 jlam Exp $");
 #endif
 
 /*
@@ -150,25 +150,121 @@ check1pkg(const char *pkgdir)
 	pkgcnt++;
 }
 
+/*
+ * add1pkg(<pkg>)
+ *	adds the files listed in the +CONTENTS of <pkg> into the
+ *	pkgdb.byfile.db database file in the current package dbdir.  It
+ *	returns the number of files added to the database file.
+ */
+static int
+add1pkg(const char *pkgdir)
+{
+	FILE	       *f;
+	plist_t	       *p;
+	package_t	Plist;
+	char 		contents[FILENAME_MAX];
+	char	       *PkgDBDir, *PkgName, *dirp;
+	char 		file[FILENAME_MAX];
+	char		dir[FILENAME_MAX];
+	int		cnt;
+
+	if (!pkgdb_open(ReadWrite))
+		err(EXIT_FAILURE, "cannot open pkgdb");
+
+	PkgDBDir = _pkgdb_getPKGDB_DIR();
+	(void) snprintf(contents, sizeof(contents), "%s/%s", PkgDBDir, pkgdir);
+	if (!isdir(contents))
+		errx(EXIT_FAILURE, "`%s' does not exist.", contents);
+
+	(void) strlcat(contents, "/", sizeof(contents));
+	(void) strlcat(contents, CONTENTS_FNAME, sizeof(contents));
+	if ((f = fopen(contents, "r")) == NULL)
+		errx(EXIT_FAILURE, "%s: can't open `%s'", pkgdir, CONTENTS_FNAME);
+
+	Plist.head = Plist.tail = NULL;
+	read_plist(&Plist, f);
+	if ((p = find_plist(&Plist, PLIST_NAME)) == NULL) {
+		errx(EXIT_FAILURE, "Package `%s' has no @name, aborting.", pkgdir);
+	}
+
+	PkgName = p->name;
+	dirp = NULL;
+	for (p = Plist.head; p; p = p->next) {
+		switch(p->type) {
+		case PLIST_FILE:
+			if (dirp == NULL) {
+				errx(EXIT_FAILURE, "@cwd not yet found, please send-pr!");
+			}
+			(void) snprintf(file, sizeof(file), "%s/%s", dirp, p->name);
+			if (!(isfile(file) || islinktodir(file))) {
+				warnx("%s: File `%s' is in %s but not on filesystem!",
+					PkgName, file, CONTENTS_FNAME);
+			} else {
+				pkgdb_store(file, PkgName);
+				cnt++;
+			}
+			break;
+		case PLIST_CWD:
+			if (strcmp(p->name, ".") != 0) {
+				dirp = p->name;
+			} else {
+				(void) snprintf(dir, sizeof(dir), "%s/%s", PkgDBDir, pkgdir);
+				dirp = dir;
+			}
+			break;
+		case PLIST_IGNORE:
+			p = p->next;
+			break;
+		case PLIST_SHOW_ALL:
+		case PLIST_SRC:
+		case PLIST_CMD:
+		case PLIST_CHMOD:
+		case PLIST_CHOWN:
+		case PLIST_CHGRP:
+		case PLIST_COMMENT:
+		case PLIST_NAME:
+		case PLIST_UNEXEC:
+		case PLIST_DISPLAY:
+		case PLIST_PKGDEP:
+		case PLIST_MTREE:
+		case PLIST_DIR_RM:
+		case PLIST_IGNORE_INST:
+		case PLIST_OPTION:
+		case PLIST_PKGCFL:
+		case PLIST_BLDDEP:
+			break;
+		}
+	}
+	free_plist(&Plist);
+	fclose(f);
+	pkgdb_close();
+
+	return cnt;
+}
+
+static void
+delete1pkg(const char *pkgdir)
+{
+	if (!pkgdb_open(ReadWrite))
+		err(EXIT_FAILURE, "cannot open pkgdb");
+	(void) pkgdb_remove_pkg(pkgdir);
+	pkgdb_close();
+}
+
 static void 
 rebuild(void)
 {
-	DIR    *dp;
-	struct dirent *de;
-	FILE   *f;
-	plist_t *p;
-	char   *PkgName, dir[FILENAME_MAX], *dirp = NULL;
-	char   *PkgDBDir = NULL, file[FILENAME_MAX];
-	char	cachename[FILENAME_MAX];
+	DIR	       *dp;
+	struct dirent  *de;
+	char	       *PkgDBDir;
+	char		cachename[FILENAME_MAX];
 
 	pkgcnt = 0;
 	filecnt = 0;
 
-	if (unlink(_pkgdb_getPKGDB_FILE(cachename, sizeof(cachename))) != 0 && errno != ENOENT)
+	(void) _pkgdb_getPKGDB_FILE(cachename, sizeof(cachename));
+	if (unlink(cachename) != 0 && errno != ENOENT)
 		err(EXIT_FAILURE, "unlink %s", cachename);
-
-	if (!pkgdb_open(ReadWrite))
-		err(EXIT_FAILURE, "cannot open pkgdb");
 
 	setbuf(stdout, NULL);
 	PkgDBDir = _pkgdb_getPKGDB_DIR();
@@ -180,8 +276,6 @@ rebuild(void)
 	if (dp == NULL)
 		err(EXIT_FAILURE, "opendir failed");
 	while ((de = readdir(dp))) {
-		package_t Plist;
-
 		if (!isdir(de->d_name))
 			continue;
 
@@ -195,76 +289,11 @@ rebuild(void)
 		printf(".");
 #endif
 
-		chdir(de->d_name);
-
-		f = fopen(CONTENTS_FNAME, "r");
-		if (f == NULL)
-			err(EXIT_FAILURE, "can't open %s/%s", de->d_name, CONTENTS_FNAME);
-
-		Plist.head = Plist.tail = NULL;
-		read_plist(&Plist, f);
-		p = find_plist(&Plist, PLIST_NAME);
-		if (p == NULL)
-			errx(EXIT_FAILURE, "Package %s has no @name, aborting.",
-			    de->d_name);
-		PkgName = p->name;
-		for (p = Plist.head; p; p = p->next) {
-			switch (p->type) {
-			case PLIST_FILE:
-				if (dirp == NULL) {
-					warnx("dirp not initialized, please send-pr!");
-					abort();
-				}
-
-				(void) snprintf(file, sizeof(file), "%s/%s", dirp, p->name);
-
-				if (!(isfile(file) || islinktodir(file)))
-					warnx("%s: File %s is in %s but not on filesystem!",
-					    PkgName, file, CONTENTS_FNAME);
-				else {
-					pkgdb_store(file, PkgName);
-					filecnt++;
-				}
-				break;
-			case PLIST_CWD:
-				if (strcmp(p->name, ".") != 0)
-					dirp = p->name;
-				else {
-					(void) snprintf(dir, sizeof(dir), "%s/%s", PkgDBDir, de->d_name);
-					dirp = dir;
-				}
-				break;
-			case PLIST_IGNORE:
-				p = p->next;
-				break;
-			case PLIST_SHOW_ALL:
-			case PLIST_SRC:
-			case PLIST_CMD:
-			case PLIST_CHMOD:
-			case PLIST_CHOWN:
-			case PLIST_CHGRP:
-			case PLIST_COMMENT:
-			case PLIST_NAME:
-			case PLIST_UNEXEC:
-			case PLIST_DISPLAY:
-			case PLIST_PKGDEP:
-			case PLIST_MTREE:
-			case PLIST_DIR_RM:
-			case PLIST_IGNORE_INST:
-			case PLIST_OPTION:
-			case PLIST_PKGCFL:
-			case PLIST_BLDDEP:
-				break;
-			}
-		}
-		free_plist(&Plist);
-		fclose(f);
+		filecnt += add1pkg(de->d_name);
 		pkgcnt++;
-
-		chdir("..");
 	}
+	chdir("..");
 	closedir(dp);
-	pkgdb_close();
 
 	printf("\n");
 	printf("Stored %d file%s from %d package%s in %s.\n",
@@ -537,11 +566,21 @@ main(int argc, char *argv[])
 
 		pkgdb_dump();
 
+	} else if (strcasecmp(argv[0], "add") == 0) {
+		argv++;		/* "add" */
+		while (*argv != NULL) {
+			add1pkg(*argv);
+			argv++;
+		}
+	} else if (strcasecmp(argv[0], "delete") == 0) {
+		argv++;		/* "delete" */
+		while (*argv != NULL) {
+			delete1pkg(*argv);
+			argv++;
+		}
 	}
 #ifdef PKGDB_DEBUG
-	else if (strcasecmp(argv[0], "del") == 0 ||
-	    strcasecmp(argv[0], "delete") == 0) {
-
+	else if (strcasecmp(argv[0], "delkey") == 0) {
 		int     rc;
 
 		if (!pkgdb_open(ReadWrite))
@@ -557,7 +596,7 @@ main(int argc, char *argv[])
 		
 		pkgdb_close();
 
-	} else if (strcasecmp(argv[0], "add") == 0) {
+	} else if (strcasecmp(argv[0], "addkey") == 0) {
 
 		int     rc;
 
@@ -596,9 +635,11 @@ usage(void)
 	    "Where 'commands' and 'args' are:\n"
 	    " rebuild                     - rebuild pkgdb from +CONTENTS files\n"
 	    " check [pkg ...]             - check md5 checksum of installed files\n"
+	    " add pkg ...                 - add pkg files to database\n"
+	    " delete pkg ...              - delete file entries for pkg in database\n"
 #ifdef PKGDB_DEBUG
-	    " add key value               - add key and value\n"
-	    " delete key                  - delete reference to key\n"
+	    " addkey key value            - add key and value\n"
+	    " delkey key                  - delete reference to key\n"
 #endif
 	    " lsall /path/to/pkgpattern   - list all pkgs matching the pattern\n"
 	    " lsbest /path/to/pkgpattern  - list pkgs matching the pattern best\n"
