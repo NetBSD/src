@@ -46,29 +46,30 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: lpt.c,v 1.7.4.10 1993/10/16 06:39:42 mycroft Exp $
+ *	$Id: lpt.c,v 1.7.4.11 1993/10/17 05:32:53 mycroft Exp $
  */
 
 /*
  * Device Driver for AT parallel printer port
  */
 
-#include "param.h"
-#include "systm.h"
-#include "proc.h"
-#include "user.h"
-#include "buf.h"
-#include "kernel.h"
-#include "ioctl.h"
-#include "uio.h"
-#include "sys/device.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <sys/buf.h>
+#include <sys/kernel.h>
+#include <sys/ioctl.h>
+#include <sys/uio.h>
+#include <sys/device.h>
+#include <sys/syslog.h>
 
-#include "machine/cpu.h"
-#include "machine/pio.h"
+#include <machine/cpu.h>
+#include <machine/pio.h>
 
-#include "i386/isa/isavar.h"
-#include "i386/isa/icu.h"
-#include "i386/isa/lptreg.h"
+#include <i386/isa/isavar.h>
+#include <i386/isa/icu.h>
+#include <i386/isa/lptreg.h>
 
 #define	TIMEOUT		hz*16	/* wait up to 4 seconds for a ready */
 #define	STEP		hz/4
@@ -121,8 +122,9 @@ struct	cfdriver lptcd =
 
 #define	LPS_INVERT	(LPS_SELECT|LPS_NERR|LPS_NBSY|LPS_NACK)
 #define	LPS_MASK	(LPS_SELECT|LPS_NERR|LPS_NBSY|LPS_NACK|LPS_NOPAPER)
-#define	NOT_READY()	((inb(iobase + lpt_status) ^ LPS_INVERT) & LPS_MASK)
+#define	NOT_READY()	isready(inb(iobase + lpt_status), sc)
 
+static int isready __P((u_char, struct lpt_softc *));
 static void lptout __P((struct lpt_softc *));
 static int pushbytes __P((struct lpt_softc *));
 
@@ -330,6 +332,23 @@ lptopen(dev, flag)
 	return 0;
 }
 
+static int
+isready(status, sc)
+	u_char status;
+	struct lpt_softc *sc;
+{
+	status ^= LPS_INVERT;
+
+	if (status & LPS_NOPAPER)
+		log(LOG_NOTICE, "%s: out of paper\n", sc->sc_dev.dv_xname);
+	else if (status & LPS_SELECT)
+		log(LOG_NOTICE, "%s: offline\n", sc->sc_dev.dv_xname);
+	else if (status & LPS_NERR)
+		log(LOG_NOTICE, "%s: output error\n", sc->sc_dev.dv_xname);
+
+	return status;
+}
+
 static void
 lptout(sc)
 	struct lpt_softc *sc;
@@ -346,7 +365,7 @@ lptout(sc)
 	 */
 	if (sc->sc_count) {
 		s = spltty();
-		lptintr(sc);
+		(void) lptintr(sc);
 		splx(s);
 	} else {
 		sc->sc_state &= ~LPT_OBUSY;
@@ -423,7 +442,7 @@ pushbytes(sc)
 				lprintf("%s: write %d\n", sc->sc_dev.dv_xname,
 					sc->sc_count);
 				s = spltty();
-				lptintr(sc);
+				(void) lptintr(sc);
 				splx(s);
 			}
 			if (error = tsleep((caddr_t)sc,
@@ -479,22 +498,22 @@ lptintr(arg)
 		return 0;
 
 	/* is printer online and ready for output */
-	if (!NOT_READY()) {
-		if (sc->sc_count) {
-			/* send char */
-			sc->sc_state |= LPT_OBUSY;
-			while (sc->sc_count &&
-			       (inb(iobase + lpt_status) & LPS_NBSY) == 0) {
-				outb(iobase + lpt_data, *sc->sc_cp++);
-				outb(iobase + lpt_control, control | LPC_STROBE);
-				sc->sc_count--;
-				outb(iobase + lpt_control, control);
-			}
-		} else {
-			/* none, wake up the top half to get more */
-			sc->sc_state &= ~LPT_OBUSY;
-			wakeup((caddr_t)sc);
+	if (NOT_READY())
+		return 0;
+
+	if (sc->sc_count) {
+		/* send char */
+		sc->sc_state |= LPT_OBUSY;
+		while (sc->sc_count && !NOT_READY()) {
+			outb(iobase + lpt_data, *sc->sc_cp++);
+			outb(iobase + lpt_control, control | LPC_STROBE);
+			sc->sc_count--;
+			outb(iobase + lpt_control, control);
 		}
+	} else {
+		/* none, wake up the top half to get more */
+		sc->sc_state &= ~LPT_OBUSY;
+		wakeup((caddr_t)sc);
 	}
 
 	return 1;
