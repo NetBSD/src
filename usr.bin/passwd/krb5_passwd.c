@@ -1,4 +1,4 @@
-/* $NetBSD: krb5_passwd.c,v 1.8.2.2 2000/12/15 00:11:53 he Exp $ */
+/* $NetBSD: krb5_passwd.c,v 1.8.2.3 2002/02/26 22:09:23 he Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -40,8 +40,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 #include <err.h>
+#include <pwd.h>
 
 #include <openssl/des.h>
 #include <krb5.h>
