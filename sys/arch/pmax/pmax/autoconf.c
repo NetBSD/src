@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.10 1995/08/10 05:17:09 jonathan Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.11 1995/08/17 06:54:56 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -201,13 +201,13 @@ configure()
 	cold = 0;
 }
 
+#define MAX_SCSI 4
 static int nscsi;
-static struct pmax_ctlr pmax_scsi_table[4] = {
+static struct pmax_ctlr pmax_scsi_table[MAX_SCSI+1] = {
 /*	driver,		unit,	addr,		flags */
 
-	{ NULL, },
-	{ NULL, }, { NULL, },	{ NULL, },	{ NULL, }
-
+	{ NULL, },  { NULL, }, { NULL, }, { NULL, },
+	{ NULL, } /* sentinel */
 };
 
 /*
@@ -221,7 +221,7 @@ pmax_add_scsi(dp, unit)
 	int unit;
 {
 	struct pmax_ctlr *cp  = &pmax_scsi_table[nscsi++];
-	if (nscsi > 4) {
+	if (nscsi > MAX_SCSI) {
 		panic("Too many old-style SCSI adaptors\n");
 	}
 	cp->pmax_driver = dp;
