@@ -1,4 +1,4 @@
-/*	$NetBSD: mknod.c,v 1.24 2001/10/08 04:45:29 lukem Exp $	*/
+/*	$NetBSD: mknod.c,v 1.25 2003/04/17 04:01:57 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1998 The NetBSD Foundation, Inc.  All rights reserved.\n");
-__RCSID("$NetBSD: mknod.c,v 1.24 2001/10/08 04:45:29 lukem Exp $");
+__RCSID("$NetBSD: mknod.c,v 1.25 2003/04/17 04:01:57 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -133,6 +133,7 @@ main(int argc, char **argv)
 	}
 
 	for (n = 0; n < argc; n++) {
+		errno = 0;
 		numbers[n] = strtoul(argv[n], &p, 0);
 		if ((p && *p != '\0') ||
 		    (numbers[n] == ULONG_MAX && errno == ERANGE))
