@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.22.4.2 2001/03/20 18:00:37 he Exp $	*/
+/*	$NetBSD: perform.c,v 1.22.4.3 2002/02/23 18:05:01 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.38 1997/10/13 15:03:51 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.22.4.2 2001/03/20 18:00:37 he Exp $");
+__RCSID("$NetBSD: perform.c,v 1.22.4.3 2002/02/23 18:05:01 he Exp $");
 #endif
 #endif
 
@@ -86,7 +86,7 @@ make_dist(char *home, char *pkg, char *suffix, package_t *plist)
 	}
 	if ((pid = fork()) == -1) {
 		cleanup(0);
-		errx(2, "cannot fork process for %s", TAR_CMD);
+		errx(2, "cannot fork process for %s", TAR_FULLPATHNAME);
 	}
 	if (pid == 0) {		/* The child */
 		dup2(pipefds[0], 0);
@@ -137,12 +137,20 @@ make_dist(char *home, char *pkg, char *suffix, package_t *plist)
 	}
 
 	for (p = plist->head; p; p = p->next) {
-		if (p->type == PLIST_FILE)
+		if (p->type == PLIST_FILE) {
 			fprintf(totar, "%s\n", p->name);
-		else if (p->type == PLIST_CWD || p->type == PLIST_SRC)
+		} else if (p->type == PLIST_CWD || p->type == PLIST_SRC) {
+			
+			/* XXX let PLIST_SRC override PLIST_CWD */
+			if (p->type == PLIST_CWD && p->next != NULL &&
+			    p->next->type == PLIST_SRC) {
+				continue;
+			}
+
 			fprintf(totar, "-C\n%s\n", p->name);
-		else if (p->type == PLIST_IGNORE)
+		} else if (p->type == PLIST_IGNORE) {
 			p = p->next;
+		}
 	}
 
 	fclose(totar);
@@ -233,6 +241,13 @@ pkg_perform(lpkg_head_t *pkgs)
 	} else
 		suffix = "tgz";
 
+	/* If a SrcDir override is set, add it now */
+	if (SrcDir) {
+		if (Verbose && !PlistOnly)
+			printf("Using SrcDir value of %s\n", (realprefix) ? realprefix : SrcDir);
+		add_plist(&plist, PLIST_SRC, SrcDir);
+	}
+
 	/* Stick the dependencies, if any, at the top */
 	if (Pkgdeps) {
 		if (Verbose && !PlistOnly)
@@ -265,13 +280,6 @@ pkg_perform(lpkg_head_t *pkgs)
 			printf(".\n");
 	}
 
-	/* If a SrcDir override is set, add it now */
-	if (SrcDir) {
-		if (Verbose && !PlistOnly)
-			printf("Using SrcDir value of %s\n", SrcDir);
-		add_plist(&plist, PLIST_SRC, SrcDir);
-	}
-
 	/* Slurp in the packing list */
 	read_plist(&plist, pkg_in);
 
@@ -297,7 +305,7 @@ pkg_perform(lpkg_head_t *pkgs)
          */
 	if (PlistOnly) {
 		check_list(home, &plist, basename_of(pkg));
-		write_plist(&plist, stdout);
+		write_plist(&plist, stdout, realprefix);
 		exit(0);
 	}
 
@@ -374,7 +382,7 @@ pkg_perform(lpkg_head_t *pkgs)
 		cleanup(0);
 		errx(2, "can't open file %s for writing", CONTENTS_FNAME);
 	}
-	write_plist(&plist, fp);
+	write_plist(&plist, fp, realprefix);
 	if (fclose(fp)) {
 		cleanup(0);
 		errx(2, "error while closing %s", CONTENTS_FNAME);
