@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.19 1997/04/02 21:23:28 christos Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.20 1997/08/14 01:12:35 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -84,7 +84,7 @@
 #include <net/bpf.h>
 #endif
 
-#define	LOMTU	(32768)
+#define	LOMTU	(32768 +  MHLEN + MLEN)
 
 struct	ifnet loif[NLOOP];
 
