@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.33 2000/04/03 01:40:51 enami Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.34 2000/04/03 03:37:34 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -204,10 +204,7 @@ scsipi_kill_pending(sc_link)
 {
 
 	(*sc_link->scsipi_kill_pending)(sc_link);
-#ifdef DIAGNOSTIC
-	if (TAILQ_FIRST(&sc_link->pending_xfers) != NULL)
-		panic("scsipi_kill_pending");
-#endif
+	scsipi_wait_drain(sc_link);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.72 2000/03/17 11:45:50 soren Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.73 2000/04/03 03:37:33 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -164,9 +164,15 @@ void
 scsi_kill_pending(sc_link)
 	struct scsipi_link *sc_link;
 {
-	struct scsipi_xfer *xs;
+	struct scsipi_xfer *xs, *xs_next;
 
-	while ((xs = TAILQ_FIRST(&sc_link->pending_xfers)) != NULL) {
+	/*
+	 * Note that the scsipi_done frees a xfer only if it is
+	 * an asynchronous transaction.
+	 */
+	for (xs = TAILQ_FIRST(&sc_link->pending_xfers); xs != NULL;
+	    xs = xs_next) {
+		xs_next = TAILQ_NEXT(xs, device_q);
 		xs->xs_status |= XS_STS_DONE;
 		xs->error = XS_DRIVER_STUFFUP;
 		scsipi_done(xs);
