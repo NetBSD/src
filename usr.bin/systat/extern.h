@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.11 1999/11/15 06:16:56 simonb Exp $	*/
+/*	$NetBSD: extern.h,v 1.12 1999/12/16 04:02:23 jwise Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,8 +39,9 @@
 #include <fcntl.h>
 #include <kvm.h>
 
-extern struct	cmdtab *curcmd;
-extern struct	cmdtab cmdtab[];
+extern struct	command global_commands[];
+extern struct	mode *curmode;
+extern struct	mode modes[];
 extern struct	text *xtext;
 extern WINDOW	*wnd;
 extern char	**dr_name;
@@ -76,7 +77,7 @@ void	 closetcp __P ((WINDOW *));
 int	 cmdiostat __P((char *, char *));
 int	 cmdkre __P((char *, char *));
 int	 cmdnetstat __P((char *, char *));
-struct	 cmdtab *lookup __P((char *));
+struct	 mode *lookup __P((char *));
 void	 command __P((char *));
 void	 die __P((int));
 void	 display __P((int));
@@ -93,6 +94,10 @@ void	 fetchnetstat __P((void));
 void	 fetchpigs __P((void));
 void	 fetchswap __P((void));
 void	 fetchtcp __P((void));
+void	 global_help __P((void));
+void	 global_load __P((void));
+void	 global_quit __P((void));
+void	 global_stop __P((void));
 int	 initbufcache __P((void));
 int	 initicmp __P((void));
 int	 initiostat __P((void));
@@ -118,7 +123,6 @@ void	 labels __P((void));
 void	 labelswap __P((void));
 void	 labeltcp __P((void));
 void	 labeltcpsyn __P((void));
-void	 load __P((void));
 int	 netcmd __P((char *, char *));
 void	 nlisterr __P((struct nlist []));
 WINDOW	*openbufcache __P((void));

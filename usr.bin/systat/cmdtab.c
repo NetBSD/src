@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.8 1999/11/15 06:16:56 simonb Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.9 1999/12/16 04:02:22 jwise Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,13 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cmdtab.c,v 1.8 1999/11/15 06:16:56 simonb Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.9 1999/12/16 04:02:22 jwise Exp $");
 #endif /* not lint */
 
 #include "systat.h"
 #include "extern.h"
 
-struct	cmdtab cmdtab[] = {
+struct	mode modes[] = {
 	/* "pigs" is the default, it must be first. */
 	{ "pigs",	showpigs,	fetchpigs,	labelpigs,
 	  initpigs,	openpigs,	closepigs,	0,
@@ -84,4 +84,14 @@ struct	cmdtab cmdtab[] = {
 	  0 },
 	{ 0 }
 };
-struct  cmdtab *curcmd = &cmdtab[0];
+struct  mode *curmode = &modes[0];
+
+struct	command global_commands[] = {
+	{ "help",	global_help,	"show help"},
+	{ "load",	global_load,	"show system load averages"},
+	{ "quit",	global_quit,	"exit systat"},
+	/* until prefix matching works, handle the same special case */
+	{ "q",		global_quit,	"exit systat"},
+	{ "stop",	global_stop,	"stop updating display"},
+	{ 0 }
+};
