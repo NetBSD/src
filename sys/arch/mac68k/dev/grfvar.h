@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.23.2.1 1999/11/15 23:31:15 scottr Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.23.2.2 1999/11/20 08:43:42 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -72,7 +72,6 @@ struct grfbus_softc {
 struct grf_softc {
 	char sc_xname[15];		/* name of the device */
 	struct macfb_softc *mfb_sc;
-	int sc_isopen;
 };
 
 /*
