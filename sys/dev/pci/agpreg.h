@@ -1,4 +1,4 @@
-/*	$NetBSD: agpreg.h,v 1.6 2003/07/20 18:56:32 hannken Exp $	*/
+/*	$NetBSD: agpreg.h,v 1.7 2004/02/04 06:58:24 soren Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -35,15 +35,6 @@
  * Offsets for various AGP configuration registers.
  */
 #define AGP_APBASE		0x10
-
-/*
- * Offsets from the AGP Capability pointer.
- */
-#define AGP_CAPID		0xa0
-#define AGP_CAPID_GET_MAJOR(x)		(((x) & 0x00f00000U) >> 20)
-#define AGP_CAPID_GET_MINOR(x)		(((x) & 0x000f0000U) >> 16)
-#define AGP_CAPID_GET_NEXT_PTR(x)	(((x) & 0x0000ff00U) >> 8)
-#define AGP_CAPID_GET_CAP_ID(x)		(((x) & 0x000000ffU) >> 0)
 
 #define AGP_STATUS		0x4
 #define AGP_COMMAND		0x8
