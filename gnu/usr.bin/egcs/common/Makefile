@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 1999/02/20 15:00:50 pk Exp $
+#	$NetBSD: Makefile,v 1.26 1999/02/24 02:58:42 itohy Exp $
 
 MKLINKLIB=no
 MKMAN=	no
@@ -114,5 +114,10 @@ s-${_GEN_}: gen${_GEN_} ${MD}
 
 ${OBJS} ${SOBJS} genattrtab.lo genextract.lo: \
 		insn-attr.h insn-codes.h insn-config.h insn-flags.h tree-check.h
+
+# this makes "make depend" optional
+bitmap.lo genemit.lo genopinit.lo genoutput.lo genpeep.lo \
+print-rtl.lo rtl.lo rtlanal.lo: \
+		genrtl.h
 
 .PATH:		${DIST}/config/${GCC_ARCH}
