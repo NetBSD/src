@@ -1,4 +1,4 @@
-/*	$NetBSD: sunms.c,v 1.1 2000/09/21 22:25:09 eeh Exp $	*/
+/*	$NetBSD: sunms.c,v 1.2 2000/10/10 23:33:52 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -94,7 +94,7 @@ struct cfattach ms_ca = {
 /*
  * ms_match: how is this zs channel configured?
  */
-int 
+int
 sunms_match(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
@@ -111,7 +111,7 @@ sunms_match(parent, cf, aux)
 	return 0;
 }
 
-void 
+void
 sunms_attach(parent, self, aux)
 	struct device *parent, *self;
 	void   *aux;
@@ -121,7 +121,6 @@ sunms_attach(parent, self, aux)
 	struct kbd_ms_tty_attach_args *args = aux;
 	struct cfdata *cf;
 	struct tty *tp = args->kmta_tp;
-	struct termios t;
 	int ms_unit;
 
 	cf = ms->ms_dev.dv_cfdata;
@@ -140,7 +139,7 @@ sunms_attach(parent, self, aux)
 	callout_stop(&tp->t_outq_ch);
 	callout_stop(&tp->t_rstrt_ch);
 #endif
-	
+
 	/* Initialize the speed, etc. */
 	tp->t_line = 8;
 	tp->t_oflag &= ~OPOST;
@@ -164,12 +163,16 @@ sunmsiopen(dev, flags)
 	struct proc *p = curproc;
 	struct termios t;
 	int maj;
+	int error;
 
 	maj = major(tp->t_dev);
-	if (!p) p = &proc0;
+	if (p == NULL)
+		p = &proc0;
 
 	/* Open the lower device */
-	(*cdevsw[maj].d_open)(tp->t_dev, O_NONBLOCK|flags, 0/* ignored? */, p);
+	if ((error = (*cdevsw[maj].d_open)(tp->t_dev, O_NONBLOCK|flags,
+					   0/* ignored? */, p)) != 0)
+		return (error);
 
 	/* Now configure it for the console. */
 	tp->t_ospeed = 0;
@@ -178,6 +181,7 @@ sunmsiopen(dev, flags)
 	t.c_cflag =  CLOCAL;
 	(*tp->t_param)(tp, &t);
 
+	return (0);
 }
 
 int
@@ -192,6 +196,6 @@ sunmsinput(c, tp)
 
 	/* Pass this up to the "middle" layer. */
 	ms_input(ms, c);
-	
+	return (0);
 }
 #endif
