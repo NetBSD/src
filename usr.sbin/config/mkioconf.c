@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.58 2002/02/12 23:20:11 atatat Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.58.8.1 2002/05/16 13:02:41 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -65,7 +65,6 @@ static int emitpseudo(FILE *);
 static int emitpv(FILE *);
 static int emitroots(FILE *);
 static int emitvfslist(FILE *);
-static int emitname2blk(FILE *);
 
 #define	SEP(pos, max)	(((u_int)(pos) % (max)) == 0 ? "\n\t" : " ")
 
@@ -92,7 +91,7 @@ mkioconf(void)
 	v = emithdr(fp);
 	if (v != 0 || emitcfdrivers(fp) || emitexterns(fp) || emitloc(fp) ||
 	    emitpv(fp) || emitcfdata(fp) || emitroots(fp) || emitpseudo(fp) ||
-	    emitvfslist(fp) || emitname2blk(fp)) {
+	    emitvfslist(fp)) {
 		if (v >= 0)
 			(void)fprintf(stderr,
 			    "config: error writing ioconf.c: %s\n",
@@ -440,34 +439,6 @@ emitvfslist(FILE *fp)
 	}
 
 	if (fputs("\tNULL,\n};\n", fp) < 0)
-		return (1);
-
-	return (0);
-}
-
-/*
- * Emit name to major block number table.
- */
-int
-emitname2blk(FILE *fp)
-{
-	struct devbase *dev;
-
-	if (fputs("\n/* device name to major block number */\n", fp) < 0)
-		return (1);
-
-	if (fprintf(fp, "struct devnametobdevmaj dev_name2blk[] = {\n") < 0)
-		return (1);
-
-	for (dev = allbases; dev != NULL; dev = dev->d_next) {
-		if (dev->d_major == NODEV)
-			continue;
-
-		if (fprintf(fp, "\t{ \"%s\", %d },\n",
-			    dev->d_name, dev->d_major) < 0)
-			return (1);
-	}
-	if (fprintf(fp, "\t{ NULL, 0 }\n};\n") < 0)
 		return (1);
 
 	return (0);
