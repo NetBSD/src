@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.9 1997/11/03 00:04:53 jonathan Exp $ */
+/*	$NetBSD: disks.c,v 1.10 1997/11/03 02:38:45 jonathan Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -71,6 +71,7 @@
 /* Local prototypes */
 static void get_disks (void);
 static void foundffs (struct data *list, int num);
+static int fsck_root __P((void));
 static void 
     do_ffs_newfs(const char *partname, int part, const char *mountpoint);
 
@@ -298,15 +299,15 @@ void make_filesystems (void)
 static void 
 do_ffs_newfs(const char *partname, int partno, const char *mountpoint)
 {
+	char devname[STRSIZE];
 	run_prog_or_continue ("/sbin/newfs /dev/r%s", partname);
 	if (*mountpoint) { 
+		snprintf(devname, STRSIZE, "/dev/%s", partname);
 		if (partno > 0) {
 			make_target_dir(mountpoint);
-			run_prog_or_continue ("/sbin/mount -v /dev/%s /mnt%s", 
-				  partname, mountpoint);
+			target_mount("-v", devname, mountpoint);
 		} else
-			run_prog_or_continue ("/sbin/mount -v /dev/%s%c"
-				  " /mnt", partname);
+			target_mount("-v", devname, mountpoint);
 	}
 }
 
@@ -317,7 +318,7 @@ void make_fstab (void)
 
 	/* Create the fstab. */
 	make_target_dir("/etc");
-	f = fopen ("/mnt/etc/fstab", "w");
+	f = target_fopen ("/etc/fstab", "w");
 	if (f == NULL) {
 #ifndef DEBUG
 		(void)fprintf (stderr, msg_string (MSG_createfstab));
@@ -425,28 +426,43 @@ do_fsck(char *disk, char *part)
 }
 
 int
+fsck_root()
+{
+	int   res;
+	char  devname[STRSIZE];
+	if ((res = do_fsck (diskdev, "a")) <= 0) {
+		msg_display (MSG_badfs, diskdev, "a", res);
+		process_menu (MENU_ok);
+		return res;
+	}
+
+	/* Mount /dev/<diskdev>a on  target's "".  Prefixing will DTRT. */
+	snprintf(devname, STRSIZE, "/dev/%sa", diskdev);
+	if ((res = target_mount("", devname, "")) <= 0) {
+		msg_display (MSG_badmount, diskdev, "a");
+		process_menu (MENU_ok);
+		return res;
+	}
+	return 0;
+}
+
+int
 fsck_disks (void)
 {	char *fstab;
 	int   fstabsize;
 	int   i;
-	int   res;
+	int   err;
+	char devname[STRSIZE];
 
 	/* First the root device. */
-	if ((res = do_fsck (diskdev, "a")) <= 0) {
-		msg_display (MSG_badfs, diskdev, "a", res);
-		process_menu (MENU_ok);
-		return 0;
+	if (!target_already_root()) {
+		if (fsck_root() <= 0)
+			return 0;
 	}
 
-	if (run_prog ("/sbin/mount /dev/%sa /mnt", diskdev)) {
-		msg_display (MSG_badmount, diskdev, "a");
-		process_menu (MENU_ok);
-		return 0;
-	}
-
-	/* Get the fstab. */
+	/* Get fstab entries from the target-root /etc/fstab. */
 	fs_num = 0;
-	fstabsize = collect (T_FILE, &fstab, "/mnt/etc/fstab");
+	fstabsize = target_collect_file (T_FILE, &fstab, "/etc/fstab");
 	if (fstabsize < 0) {
 		/* error ! */
 		return 0;
@@ -460,7 +476,8 @@ fsck_disks (void)
 			process_menu (MENU_ok);
 			return 0;
 		}
-		if (run_prog ("/sbin/mount /dev/%s /mnt/%s", dev[i], mnt[i])) {
+		snprintf(devname, STRSIZE, "/dev/%s", dev[i]);
+		if ((err = target_mount("", devname, mnt[i])) <= 0) {
 			msg_display (MSG_badmount, dev[i], "");
 			process_menu (MENU_ok);
 			return 0;
