@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.25 2005/01/04 00:36:18 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.26 2005/01/16 11:37:58 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.10 2004/04/02 23:25:39 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.25 2005/01/04 00:36:18 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.26 2005/01/16 11:37:58 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -493,14 +493,13 @@ ieee80211_getmbuf(int flags, int type, u_int pktlen)
 
 	IASSERT(pktlen <= MCLBYTES, ("802.11 packet too large: %u", pktlen));
 	MGETHDR(m, flags, type);
-	if (m != NULL && pktlen > MHLEN) {
-		MCLGET(m, flags);
-		if ((m->m_flags & M_EXT) == 0) {
-			m_free(m);
-			m = NULL;
-		}
-	}
-	return m;
+	if (m == NULL || pktlen <= MHLEN)
+		return m;
+	MCLGET(m, flags);
+	if ((m->m_flags & M_EXT) != 0)
+		return m;
+	m_free(m);
+	return NULL;
 }
 
 /*
