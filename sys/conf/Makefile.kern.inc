@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.44 2003/11/14 08:33:36 dsl Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.45 2003/11/17 09:39:29 lukem Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -21,6 +21,7 @@
 ## (0) toolchain settings for things that aren't part of the standard
 ## toolchain
 ##
+HOST_SH?=	sh
 DBSYM?=		dbsym
 MKDEP?=		mkdep
 STRIP?=		strip
@@ -71,20 +72,29 @@ CFLAGS+=	${CPPFLAGS.${.IMPSRC:T}}
 CFLAGS+=	${CPUFLAGS} -ffreestanding ${DEBUG} ${COPTS} ${CWARNFLAGS}
 AFLAGS+=	${CPUFLAGS} -D_LOCORE
 
-# Define a set of xxx_G variables that will add -g to just those
+# Use the per-source COPTS variables to add -g to just those
 # files that match the shell patterns given in ${DEBUGLIST}
 #
 .for i in ${DEBUGLIST}
 .for j in ${CFILES:T:M$i.c}
-${j:R}_G?= -g
+COPTS.${j}+=-g
 .endfor
 .endfor
 
 # compile rules: rules are named ${TYPE}_${SUFFIX} where TYPE is NORMAL or
 # NOPROF and SUFFIX is the file suffix, capitalized (e.g. C for a .c file).
-NORMAL_C?=	${CC} ${CFLAGS} ${CPPFLAGS} ${${<:T:R}_G} ${PROF} -c $<
-NOPROF_C?=	${CC} ${CFLAGS} ${CPPFLAGS} ${${<:T:R}_G} -c $<
-NORMAL_S?=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
+NORMAL_C?=	${_MKTARGET_COMPILE}; \
+		${_MKSHECHO}\
+		${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<; \
+		${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
+NOPROF_C?=	${_MKTARGET_COMPILE}; \
+		${_MKSHECHO}\
+		${CC} ${CFLAGS} ${CPPFLAGS} -c $<; \
+		${CC} ${CFLAGS} ${CPPFLAGS} -c $<
+NORMAL_S?=	${_MKTARGET_COMPILE}; \
+		${_MKSHECHO}\
+		${CC} ${AFLAGS} ${CPPFLAGS} -c $<; \
+		${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 
 ##
 ## (3) libkern and compat 
@@ -124,6 +134,7 @@ MI_CFILES=devsw.c ioconf.c param.c
 MI_OBJS=${MI_CFILES:S/.c/.o/}
 
 param.c: $S/conf/param.c
+	${_MKTARGET_CREATE}
 	rm -f param.c
 	cp $S/conf/param.c .
 
@@ -149,10 +160,12 @@ ${_cfile:T:R}.o: ${_cfile}
 #	${SYSTEM_LD_TAIL}
 SYSTEM_OBJ?=	${MD_OBJS} ${MI_OBJS} ${OBJS} ${LIBCOMPAT} ${LIBKERN}
 SYSTEM_DEP?=	Makefile ${SYSTEM_OBJ} .gdbinit
-SYSTEM_LD_HEAD?=	@rm -f $@
-SYSTEM_LD?=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' '$${EXTRA_OBJ}' vers.o; \
+SYSTEM_LD_HEAD?=@rm -f $@
+SYSTEM_LD?=	${_MKSHMSG} "   link  ${.TARGET}"; \
+		${_MKSHECHO}\
+		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o; \
 		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o
-SYSTEM_LD_TAIL?=	@${SIZE} $@; chmod 755 $@
+SYSTEM_LD_TAIL?=@${SIZE} $@; chmod 755 $@
 
 TEXTADDR?=	${LOADADDRESS}			# backwards compatibility
 LINKTEXT?=	${TEXTADDR:C/.+/-Ttext &/}
@@ -186,8 +199,9 @@ SYSTEM_LD_TAIL+=${SYSTEM_LD_TAIL_EXTRA}
 ##
 .if !target(assym.h)
 assym.h: $S/kern/genassym.sh ${GENASSYM} ${GENASSYM_EXTRAS}
+	${_MKTARGET_CREATE}
 	cat ${GENASSYM} ${GENASSYM_EXTRAS} | \
-	    sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
+	    ${HOST_SH} $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
 	    > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h
 ${MD_SFILES:C/\.[Ss]/.o/} ${SFILES:C/\.[Ss]/.o/}: assym.h
@@ -196,18 +210,22 @@ ${MD_SFILES:C/\.[Ss]/.o/} ${SFILES:C/\.[Ss]/.o/}: assym.h
 .if !target(vers.o)
 newvers: vers.o
 vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP} $S/conf/newvers.sh $S/conf/osrelease.sh
-	sh $S/conf/newvers.sh
+	${_MKMSG_CREATE} vers.c
+	${HOST_SH} $S/conf/newvers.sh
+	${_MKTARGET_COMPILE}
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 .endif
 
 .if !target(config_time.h)
 EXTRA_CLEAN+= config_time.h
 config_time.h: Makefile
+	${_MKTARGET_CREATE}
 	cp config_time.src config_time.h
 .endif
 
 .if defined(MEMORY_DISK_IMAGE)
 md_root_image.h: ${MEMORY_DISK_IMAGE}
+	${_MKTARGET_CREATE}
 	${TOOL_HEXDUMP} -v -e '"\t" 8/1 "0x%02x, " "\n"' ${.ALLSRC} > ${.TARGET}
 
 # XXX This is only needed when building md_root.o
@@ -237,7 +255,7 @@ assym.h machdep.o: Makefile
 ##
 .if !target(__CLEANKERNEL)
 __CLEANKERNEL: .USE
-	@echo "${.TARGET}ing the kernel objects"
+	${_MKMSG} "${.TARGET}ing the kernel objects"
 	rm -f ${KERNELS} eddep tags *.[io] *.ln [a-z]*.s vers.c \
 	    [Ee]rrs linterrs makelinks assym.h.tmp assym.h \
 	    ${EXTRA_KERNELS} ${EXTRA_CLEAN}
@@ -264,11 +282,12 @@ SRCS?=		${MD_SFILES} ${MD_CFILES} ${MI_CFILES} ${CFILES} ${SFILES}
 MKDEP_AFLAGS?=	${AFLAGS}
 MKDEP_CFLAGS?=	${CFLAGS}
 .depend: ${SRCS} assym.h config_time.h
+	${_MKTARGET_CREATE}
 	${MKDEP} -- ${MKDEP_AFLAGS} ${CPPFLAGS} ${MD_SFILES} ${SFILES}
 	${MKDEP} -a -- ${MKDEP_CFLAGS} ${CPPFLAGS} ${MD_CFILES} ${MI_CFILES} \
 	    ${CFILES}
 	cat ${GENASSYM} ${GENASSYM_EXTRAS} | \
-	    sh $S/kern/genassym.sh ${MKDEP} -f assym.dep -- \
+	    ${HOST_SH} $S/kern/genassym.sh ${MKDEP} -f assym.dep -- \
 	    ${CFLAGS} ${CPPFLAGS}
 	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
 	@rm -f assym.dep
@@ -285,12 +304,14 @@ LOBJS?= ${_lsrc:T:S/.c$/.ln/g} ${LIBKERNLN} ${LIBCOMPATLN}
 
 .for _sfile in ${ALLSFILES}
 LintStub_${_sfile:T:R}.c: ${_sfile} assym.h
+	${_MKTARGET_COMPILE}
 	${CC} -E -C ${AFLAGS} ${CPPFLAGS} ${_sfile} | \
 	      awk -f $S/kern/genlintstub.awk >${.TARGET}
 .endfor
 
 .for _cfile in ${CFILES} ${LINTSTUBS} ${MI_CFILES} ${MD_CFILES}
 ${_cfile:T:R}.ln: ${_cfile}
+	${_MKTARGET_COMPILE}
 	${NORMAL_LN}
 .endfor
 
@@ -320,7 +341,7 @@ tags:
 EXTRA_CLEAN+= cscope.out
 .if !target(cscope.out)
 cscope.out: Makefile depend
-	@echo Building cscope.out source database
+	${_MKTARGET_CREATE}
 	@echo ${SRCS} `sed 's/[^:]*://;s/^ *//;s/ *\\\\ *$$//;' \
 	lib/kern/.depend lib/compat/.depend | tr ' ' '\n' | \
 	sed "s|^../../||" | sort -u` \
@@ -341,7 +362,7 @@ EXTRA_CLEAN+= ID
 mkid: ID
 
 ID: Makefile depend
-	@echo Building mkid database
+	${_MKTARGET_CREATE}
 	@${MKID} `sed 's/[^:]*://;s/^ *//;s/ *\\\\ *$$//;' lib/kern/.depend \
 	lib/compat/.depend | tr ' ' '\n' | sed "s|^../../||" | sort -u` \
 	`sed 's/[^:]*://;s/^ *//;s/ *\\\\ *$$//;' .depend | tr ' ' '\n' \
@@ -353,7 +374,7 @@ ID: Makefile depend
 
 EXTRA_CLEAN+= .gdbinit
 .gdbinit: Makefile ${S}/gdbscripts/Makefile.inc
-	@echo building GDB initialization file
+	${_MKTARGET_CREATE}
 	rm -f .gdbinit
 .for __gdbinit in ${SYS_GDBINIT}
 	echo "source ${S}/gdbscripts/${__gdbinit}" >> .gdbinit
