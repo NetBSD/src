@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.25 2002/01/07 23:09:53 matt Exp $
+#	$NetBSD: Makefile,v 1.26 2002/02/01 18:45:29 wrstuden Exp $
 
 S=	${.CURDIR}/../../../..
 
 PROG=		ofwboot
 FILES=		${PROG}.elf ${PROG}.xcf
-SRCS=		Locore.c boot.c ofdev.c hfs.c net.c netif_of.c vers.c
+SRCS=		Locore.c ofdev.c hfs.c net.c netif_of.c vers.c
 XCOFFXTRA=	Xcoffxtra.c
 XCOFFXTRAOBJ=	Xcoffxtra.o
 CFLAGS+=	-msoft-float -Wno-main
@@ -37,17 +37,19 @@ NEWVERSWHAT=	"OpenFirmware Boot"
 
 # For now...
 #RELOC=		20000
-RELOC=		600000
+RELOC=		640000
+RELOC_FLATFILE=	600000
 
 ENTRY=		_start
 
-CLEANFILES+=	vers.c ${PROG}.elf ${PROG}.mrg ${PROG}.xcf machine powerpc
+CLEANFILES+=	vers.c ${PROG}.elf ${PROG}.el1 ${PROG}.mrg ${PROG}.xcf
+CLEANFILES+=	machine powerpc
 
 CPPFLAGS+=	-I. -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
-CPPFLAGS+=	-DRELOC=0x${RELOC}
+CPPFLAGS+=	-DRELOC=0x${RELOC} -DRELOC_FLATFILE=0x${RELOC_FLATFILE}
 #CPPFLAGS+=	-DXCOFF_GLUE		# for booting PCI Powermacs
 
-CLEANFILES+= ${XCOFFXTRAOBJ}
+CLEANFILES+= ${XCOFFXTRAOBJ} boot.o boot1.o
 
 .BEGIN:
 	@[ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine
@@ -75,15 +77,23 @@ LIBSA=		${SALIB}
 vers.c: version
 	sh ${S}/conf/newvers_stand.sh ${.CURDIR}/version "macppc" ${NEWVERSWHAT}
 
-${PROG}: ${OBJS} ${XCOFFXTRAOBJ} ${LIBSA} ${LIBZ} ${LIBKERN} ${FIXCOFFTARG}
+all: ${PROG} ${PROG}.xcf ${PROG}.elf
+
+${PROG}: ${OBJS} boot1.o ${LIBSA} ${LIBZ} ${LIBKERN} 
+	${LD} -s -N -Ttext ${RELOC_FLATFILE} -Bstatic -o ${PROG}.el1 \
+	    ${OBJS} boot1.o ${LIBSA} ${LIBZ} ${LIBKERN}
+	${OBJCOPY} -O binary ${PROG}.el1 ${PROG}
+
+.include <bsd.prog.mk>
+
+${PROG}.elf: ${OBJS} boot.o ${LIBSA} ${LIBZ} ${LIBKERN}
 	${LD} -s -N -Ttext ${RELOC} -Bstatic -o ${PROG}.elf \
-	    ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
-	${OBJCOPY} -O binary ${PROG}.elf ${PROG}
+	    ${OBJS} boot.o ${LIBSA} ${LIBZ} ${LIBKERN}
+
+${PROG}.xcf: ${OBJS} boot.o ${XCOFFXTRAOBJ} ${LIBSA} ${LIBZ} ${LIBKERN} ${FIXCOFFTARG}
 	${LD} -s -N -T ${.CURDIR}/../fixcoff/elf32_powerpc_merge.x -e _entry \
 	    -Ttext ${RELOC} -Bstatic -o ${PROG}.mrg  ${XCOFFXTRAOBJ} \
-	    ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
+	    ${OBJS} boot.o ${LIBSA} ${LIBZ} ${LIBKERN}
 	${OBJCOPY} -O aixcoff-rs6000 -R .comment -R .note \
 	    ${PROG}.mrg ${PROG}.xcf
 	${FIXCOFF} ${PROG}.xcf
-
-.include <bsd.prog.mk>
