@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.4 1999/11/08 15:14:51 mycroft Exp $
+# $NetBSD: shl.elf,v 1.5 2000/01/19 06:10:11 mycroft Exp $
 ./usr/lib/libacl.so
 ./usr/lib/libacl.so.2
 ./usr/lib/libcom_err.so
@@ -19,6 +19,10 @@
 ./usr/lib/libk5crypto.so.1
 ./usr/lib/libkadm.so
 ./usr/lib/libkadm.so.3
+./usr/lib/libkadm5clnt.so
+./usr/lib/libkadm5clnt.so.1
+./usr/lib/libkadm5srv.so
+./usr/lib/libkadm5srv.so.1
 ./usr/lib/libkafs.so
 ./usr/lib/libkafs.so.3
 ./usr/lib/libkdb.so
