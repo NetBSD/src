@@ -38,7 +38,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)modf.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: modf.S,v 1.4 1995/09/25 19:28:27 jonathan Exp $")
+	ASMSTR("$Id: modf.S,v 1.5 1995/09/29 21:59:45 jonathan Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -54,9 +54,10 @@ LEAF(modf)
 	xor	t1, t1, 0x2		#  (i.e., 01)
 	ctc1	t1, $31
 
+	mov.d	$f0, $f12		# f0 <- f12
 	abs.d	$f4, $f12		# f4 <- |f12|
 	c.olt.d $f4, $f2		# f4 ? < f2 
-	bc1f	1f			# leave alone if Nan, infinity 
+	bc1f	1f			# leave f0 alone if Nan, infinity 
 					# or >=2^52
 	c.eq.d	$f12,$f4		# was f12 positive ?
 	add.d	$f4,$f2,$f4		# round off to integer
