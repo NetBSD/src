@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.45 2000/03/29 04:03:08 simonb Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.46 2000/03/30 12:13:31 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -240,12 +240,12 @@ cd9660_mount(mp, path, data, ndp, p)
  */
 static int
 iso_mountfs(devvp, mp, p, argp)
-	register struct vnode *devvp;
+	struct vnode *devvp;
 	struct mount *mp;
 	struct proc *p;
 	struct iso_args *argp;
 {
-	register struct iso_mnt *isomp = (struct iso_mnt *)0;
+	struct iso_mnt *isomp = (struct iso_mnt *)0;
 	struct buf *bp = NULL, *pribp = NULL, *supbp = NULL;
 	dev_t dev = devvp->v_rdev;
 	int error = EINVAL;
@@ -492,7 +492,7 @@ cd9660_unmount(mp, mntflags, p)
 	int mntflags;
 	struct proc *p;
 {
-	register struct iso_mnt *isomp;
+	struct iso_mnt *isomp;
 	int error, flags = 0;
 	
 	if (mntflags & MNT_FORCE)
@@ -567,10 +567,10 @@ cd9660_quotactl(mp, cmd, uid, arg, p)
 int
 cd9660_statfs(mp, sbp, p)
 	struct mount *mp;
-	register struct statfs *sbp;
+	struct statfs *sbp;
 	struct proc *p;
 {
-	register struct iso_mnt *isomp;
+	struct iso_mnt *isomp;
 	
 	isomp = VFSTOISOFS(mp);
 
@@ -627,12 +627,12 @@ struct ifid {
 /* ARGSUSED */
 int
 cd9660_fhtovp(mp, fhp, vpp)
-	register struct mount *mp;
+	struct mount *mp;
 	struct fid *fhp;
 	struct vnode **vpp;
 {
 	struct ifid *ifhp = (struct ifid *)fhp;
-	register struct iso_node *ip;
+	struct iso_node *ip;
 	struct vnode *nvp;
 	int error;
 	
@@ -658,13 +658,13 @@ cd9660_fhtovp(mp, fhp, vpp)
 /* ARGSUSED */
 int
 cd9660_check_export(mp, nam, exflagsp, credanonp)
-	register struct mount *mp;
+	struct mount *mp;
 	struct mbuf *nam;
 	int *exflagsp;
 	struct ucred **credanonp;
 {
-	register struct netcred *np;
-	register struct iso_mnt *imp = VFSTOISOFS(mp);
+	struct netcred *np;
+	struct iso_mnt *imp = VFSTOISOFS(mp);
 	
 #ifdef	ISOFS_DBG
 	printf("check_export: ino %d, start %ld\n",
@@ -713,7 +713,7 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 	int relocated;
 	struct iso_directory_record *isodir;
 {
-	register struct iso_mnt *imp;
+	struct iso_mnt *imp;
 	struct iso_node *ip;
 	struct buf *bp;
 	struct vnode *vp, *nvp;
@@ -916,8 +916,8 @@ cd9660_vptofh(vp, fhp)
 	struct vnode *vp;
 	struct fid *fhp;
 {
-	register struct iso_node *ip = VTOI(vp);
-	register struct ifid *ifhp;
+	struct iso_node *ip = VTOI(vp);
+	struct ifid *ifhp;
 	
 	ifhp = (struct ifid *)fhp;
 	ifhp->ifid_len = sizeof(struct ifid);
