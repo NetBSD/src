@@ -1,4 +1,4 @@
-/*	$NetBSD: loadbsd.c,v 1.2 1995/03/28 06:26:50 leo Exp $	*/
+/*	$NetBSD: loadbsd.c,v 1.3 1995/04/08 21:01:39 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman
@@ -43,8 +43,10 @@
 
 char	*Progname;		/* How are we called		*/
 int	t_flag = 0;		/* Just test, do not execute	*/
+int	d_flag = 0;		/* Output debugging output?	*/
+int	s_flag = 0;		/* St-ram only			*/
 
-char version[] = "$VER: LoadBSD 1.0 (11/01/95)";
+char version[] = "$VER: LoadBSD 1.0 (08/04/95)";
 
 /*
  * Default name of kernel to boot, large enough to patch
@@ -68,6 +70,7 @@ void error(char *fmt, ...);
 void help(void);
 void usage(void);
 void start_kernel(void);
+void do_exit(int);
 
 int main(argc, argv)
 int	argc;
@@ -87,7 +90,7 @@ char	**argv;
 
 	kparam.boothowto = RB_SINGLE;
 
-	while ((ch = getopt(argc, argv, "abdhtv")) != EOF) {
+	while ((ch = getopt(argc, argv, "abdhstvDS:")) != EOF) {
 		switch(ch) {
 		case 'a':
 			kparam.boothowto &= ~(RB_SINGLE);
@@ -99,11 +102,20 @@ char	**argv;
 		case 'd':
 			kparam.boothowto |= RB_KDB;
 			break;
+		case 'D':
+			d_flag = 1;
+			break;
+		case 's':
+			s_flag = 1;
+			break;
+		case 'S':
+			kparam.stmem_size = atoi(optarg);
+			break;
 		case 't':
 			t_flag = 1;
 			break;
 		case 'v':
-			fprintf(stderr,"%s\n", version);
+			fprintf(stderr,"%s\r\n", version);
 			break;
 		case 'h':
 			help();
@@ -180,8 +192,8 @@ char	**argv;
 		start_kernel();
 		/* NOT REACHED */
 
-	fprintf(stderr, "Kernel '%s' was loaded OK\n", kname);
-	exit(0);
+	fprintf(stderr, "Kernel '%s' was loaded OK\r\n", kname);
+	do_exit(0);
 }
 
 /*
@@ -196,9 +208,12 @@ void get_sys_info()
 
 	stck = Super(0);
 
+	if(kparam.stmem_size <= 0)
+		kparam.stmem_size  = *ADDR_PHYSTOP;
+
 	kparam.ttmem_start = TTRAM_BASE;
-	kparam.ttmem_size  = *ADDR_RAMTOP - TTRAM_BASE;
-	kparam.stmem_size  = *ADDR_PHYSTOP;
+	if(!s_flag)
+		kparam.ttmem_size = *ADDR_RAMTOP - TTRAM_BASE;
 
 	/*
 	 * Scan cookiejar for cpu/fpu types
@@ -252,6 +267,14 @@ void get_sys_info()
 		error("Cannot determine FPU-type");
 
 	Super(stck);
+
+	if(d_flag) {
+	    fprintf(stderr, "Machine info:\r\n");
+	    fprintf(stderr, "ST-RAM size\t: %10d bytes\r\n", kparam.stmem_size);
+	    fprintf(stderr, "TT-RAM size\t: %10d bytes\r\n", kparam.ttmem_size);
+	    fprintf(stderr, "TT-RAM start\t: 0x%08x\r\n", kparam.ttmem_start);
+	    fprintf(stderr, "Cpu-type\t: 0x%08x\r\n", kparam.cputype);
+	}
 }
 
 void error(char *fmt, ...)
@@ -262,35 +285,47 @@ void error(char *fmt, ...)
 
 	fprintf(stderr, "%s: ", Progname);
 	vfprintf(stderr, fmt, ap);
-	fprintf(stderr, "\n");
-	exit(1);
+	fprintf(stderr, "\r\n");
+	do_exit(1);
 	/*NOTREACHED*/
 }
 
 void help()
 {
-	fprintf(stderr, "
-NetBSD loader for the Atari-TT
-
-Usage: %s [-abdhtv] [kernel]
-
-Description of options:
-
-\t-a  Boot up to multi-user mode.
-\t-b  Ask for root device to use.
-\t-d  Enter kernel debugger.
-\t-h  What your getting right now.
-\t-t  Test the loader. It will do everything except executing the
-\t    loaded kernel.
-\t-v  Print loader version.
+	fprintf(stderr, "\r
+NetBSD loader for the Atari-TT\r
+\r
+Usage: %s [-abdhstvD] [-S <stram-size>] [kernel]\r
+\r
+Description of options:\r
+\r
+\t-a  Boot up to multi-user mode.\r
+\t-b  Ask for root device to use.\r
+\t-d  Enter kernel debugger.\r
+\t-h  What your getting right now.\r
+\t-s  Use only ST-compatible RAM\r
+\t-S  Set amount of ST-compatible RAM\r
+\t-t  Test the loader. It will do everything except executing the\r
+\t    loaded kernel.\r
+\t-D  printout debugging information while loading\r
+\t-v  Print loader version.\r
 ", Progname);
-	exit(1);
+	do_exit(0);
 }
 
 void usage()
 {
-	fprintf(stderr, "Usage: %s [-abdhtv] [kernel]", Progname);
-	exit(1);
+	fprintf(stderr, "Usage: %s [-abdhtv] [kernel]\r\n", Progname);
+	do_exit(1);
+}
+
+void do_exit(code)
+int	code;
+{
+	fprintf(stderr, "\r\nHit any key to continue...");
+	(void)getchar();
+	fprintf(stderr, "\r\n");
+	exit(code);
 }
 
 void start_kernel()
