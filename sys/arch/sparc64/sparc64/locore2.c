@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.2.12.4 2002/01/09 01:07:30 eeh Exp $ */
+/*	$NetBSD: locore2.c,v 1.2.12.5 2002/05/10 16:55:57 petrov Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -66,20 +66,6 @@ void
 setrunqueue(l)
 	register struct lwp *l;
 {
-#if 0
-	int bit;
-
-	/* firewall: p->p_back must be NULL */
-	if (l->l_back != NULL)
-		panic("setrunqueue");
-
-	bit = l->l_priority >> 2;
-	sched_whichqs |= (1 << bit);
-	l->l_forw = (struct lwp *)&sched_qs[bit];
-	l->l_back = sched_qs[bit].ph_rlink;
-	l->l_back->l_forw = l;
-	sched_qs[bit].ph_rlink = l;
-#else
 	register struct prochd *q;
 	register struct lwp *oldlast;
 	register int which = l->l_priority >> 2;
@@ -92,7 +78,6 @@ setrunqueue(l)
 	l->l_back = oldlast = q->ph_rlink;
 	q->ph_rlink = l;
 	oldlast->l_forw = l;
-#endif
 }
 
 /*
@@ -103,7 +88,6 @@ void
 remrunqueue(l)
 	register struct lwp *l;
 {
-#if 1
 	register int which = l->l_priority >> 2;
 	register struct prochd *q;
 
@@ -115,18 +99,4 @@ remrunqueue(l)
 	q = &sched_qs[which];
 	if (q->ph_link == (struct lwp *)q)
 		sched_whichqs &= ~(1 << which);
-#else
-	int bit;
-
-	bit = l->l_priority >> 2;
-	if ((sched_whichqs & (1 << bit)) == 0)
-		panic("remrunqueue");
-
-	l->l_forw->l_back = l->l_back;
-	l->l_back->l_forw = l->l_forw;
-	l->l_back = NULL;	/* for firewall checking. */
-
-	if ((struct lwp *)&sched_qs[bit] == sched_qs[bit].ph_link)
-		sched_whichqs &= ~(1 << bit);
-#endif
 }
