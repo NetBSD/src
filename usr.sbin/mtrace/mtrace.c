@@ -47,13 +47,14 @@
  * have been derived from mrouted programs sources covered by the
  * license in the accompanying file named "LICENSE".
  *
- * $Id: mtrace.c,v 1.2 1995/06/01 23:27:00 thorpej Exp $
+ * $Id: mtrace.c,v 1.3 1995/06/02 01:02:12 thorpej Exp $
  */
 
 #include <sys/filio.h>
 #include <sys/time.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <ctype.h>
 #include <memory.h>
 #include <netdb.h>
 #include <string.h>
@@ -903,7 +904,7 @@ char *argv[];
 	exit(1);
     }
 
-    while ((ch = getopt(argc, argv, "d:g:i:lMm:npq:r:s:t:w:")) != -1) {
+    while ((ch = getopt(argc, argv, "d:g:i:lMm:npq:r:st:w:")) != -1) {
         switch (ch) {
 	case 'd':			/* Unlisted debug print option */
 	    if (!isdigit(*optarg))
@@ -931,7 +932,6 @@ char *argv[];
 	    passive = TRUE;
 	    break;
 
-	/* XXX: This is totally wrong, according to the manpage. */
 	case 's':			/* Short form, don't wait for stats */
 	    numstats = 0;
 	    break;
