@@ -1,7 +1,6 @@
 /*
- * Copyright (c) 1992 The Regents of the University of California
- * Copyright (c) 1990, 1992 Jan-Simon Pendry
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software donated to Berkeley by
  * Jan-Simon Pendry.
@@ -34,11 +33,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * From:
- *	Id: kernfs.h,v 4.1 1994/01/02 14:41:30 jsp Exp
- *
- *	$Id: kernfs.h,v 1.5 1994/01/05 11:04:54 cgd Exp $
+ *	from: @(#)kernfs.h	8.4 (Berkeley) 1/21/94
+ *	$Id: kernfs.h,v 1.6 1994/06/08 11:33:19 mycroft Exp $
  */
+
+#define	_PATH_KERNFS	"/kern"		/* Default mountpoint */
 
 #ifdef KERNEL
 struct kernfs_mount {
@@ -52,6 +51,7 @@ struct kernfs_node {
 #define VFSTOKERNFS(mp)	((struct kernfs_mount *)((mp)->mnt_data))
 #define	VTOKERN(vp) ((struct kernfs_node *)(vp)->v_data)
 
-extern struct vnodeops kernfs_vnodeops;
+extern int (**kernfs_vnodeop_p)();
 extern struct vfsops kernfs_vfsops;
+extern dev_t rrootdev;
 #endif /* KERNEL */

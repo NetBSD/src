@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 1993 The Regents of the University of California.
  * Copyright (c) 1993 Jan-Simon Pendry
- * All rights reserved.
+ * Copyright (c) 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Jan-Simon Pendry.
@@ -34,10 +34,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * From:
- *	Id: procfs_regs.c,v 4.1 1993/12/17 10:47:45 jsp Rel
- *
- *	$Id: procfs_regs.c,v 1.5 1994/05/04 03:42:21 cgd Exp $
+ *	from: Id: procfs_regs.c,v 3.2 1993/12/15 09:40:17 jsp Exp
+ *	from: @(#)procfs_regs.c	8.3 (Berkeley) 1/27/94
+ *	$Id: procfs_regs.c,v 1.6 1994/06/08 11:33:38 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -50,7 +49,8 @@
 #include <machine/reg.h>
 #include <miscfs/procfs/procfs.h>
 
-pfs_doregs(curp, p, pfs, uio)
+int
+procfs_doregs(curp, p, pfs, uio)
 	struct proc *curp;
 	struct proc *p;
 	struct pfsnode *pfs;
@@ -77,7 +77,7 @@ pfs_doregs(curp, p, pfs, uio)
 	if (error == 0)
 		error = uiomove(kv, kl, uio);
 	if (error == 0 && uio->uio_rw == UIO_WRITE) {
-		if ((p->p_flag & SSTOP) == 0)
+		if (p->p_stat != SSTOP)
 			error = EBUSY;
 		else
 			error = process_write_regs(p, &r);
@@ -86,67 +86,17 @@ pfs_doregs(curp, p, pfs, uio)
 	uio->uio_offset = 0;
 	return (error);
 #else
-	return EINVAL;
+	return (EINVAL);
 #endif
 }
 
 int
-procfs_validregs(procp)
-	struct proc *procp;
-{
-#if defined(PT_SETREGS) || defined(PT_GETREGS)
-	return ((procp->p_flag & P_SYSTEM) == 0);
-#else
-	return (0);
-#endif
-}
-
-pfs_dofpregs(curp, p, pfs, uio)
-	struct proc *curp;
+procfs_validregs(p)
 	struct proc *p;
-	struct pfsnode *pfs;
-	struct uio *uio;
 {
-#if defined(PT_GETFPREGS) || defined(PT_SETFPREGS)
-	int error;
-	struct fpreg r;
-	char *kv;
-	int kl;
 
-	kl = sizeof(r);
-	kv = (char *) &r;
-
-	kv += uio->uio_offset;
-	kl -= uio->uio_offset;
-	if (kl > uio->uio_resid)
-		kl = uio->uio_resid;
-
-	if (kl < 0)
-		error = EINVAL;
-	else
-		error = process_read_fpregs(p, &r);
-	if (error == 0)
-		error = uiomove(kv, kl, uio);
-	if (error == 0 && uio->uio_rw == UIO_WRITE) {
-		if ((p->p_flag & SSTOP) == 0)
-			error = EBUSY;
-		else
-			error = process_write_fpregs(p, &r);
-	}
-
-	uio->uio_offset = 0;
-	return (error);
-#else
-	return EINVAL;
-#endif
-}
-
-int
-procfs_validfpregs(procp)
-	struct proc *procp;
-{
-#if defined(PT_SETFPREGS) || defined(PT_GETFPREGS)
-	return ((procp->p_flag & SSYS) == 0);
+#if defined(PT_SETREGS) || defined(PT_GETREGS)
+	return ((p->p_flag & P_SYSTEM) == 0);
 #else
 	return (0);
 #endif
