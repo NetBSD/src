@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcbind.c,v 1.5 2003/10/21 02:51:37 fvdl Exp $	*/
+/*	$NetBSD: rpcbind.c,v 1.6 2003/10/29 17:51:33 fvdl Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -226,6 +226,7 @@ init_transport(struct netconfig *nconf)
 	int addrlen;
 	struct sockaddr *sa;
 	struct sockaddr_un sun;
+	const int one = 1;
 
 	if ((nconf->nc_semantics != NC_TPI_CLTS) &&
 		(nconf->nc_semantics != NC_TPI_COTS) &&
@@ -257,6 +258,19 @@ init_transport(struct netconfig *nconf)
 		    nconf->nc_netid);
 		return (1);
 	}
+
+	if (si.si_af == AF_INET6) {
+		/*
+		 * We're doing host-based access checks here, so don't allow
+		 * v4-in-v6 to confuse things.
+		 */
+		if (setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, &one,
+		    sizeof one) < 0) {
+			syslog(LOG_ERR, "can't make socket ipv6 only");
+			return (1);
+		}
+	}
+
 
 	if (!strcmp(nconf->nc_netid, "local")) {
 		memset(&sun, 0, sizeof sun);
