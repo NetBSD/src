@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.12 2003/11/09 21:04:44 pk Exp $ */
+/*	$NetBSD: lock.h,v 1.13 2003/11/16 11:22:30 pk Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -109,10 +109,11 @@ __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 {
 
 	/*
-	 * Do `*alp = __SIMPLELOCK_UNLOCKED;' with a compiler barrier
-	 * to prevent instruction re-ordering around the lock release.
+	 * Insert compiler barrier to prevent instruction re-ordering
+	 * around the lock release.
 	 */
-	__asm __volatile("st %%g0,[%0]" : : "r" (alp) : "memory");
+	__insn_barrier();
+	*alp = __SIMPLELOCK_UNLOCKED;
 }
 
 #endif /* _MACHINE_LOCK_H */
