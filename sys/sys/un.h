@@ -1,4 +1,4 @@
-/*	$NetBSD: un.h,v 1.13 1997/01/22 07:09:28 mikel Exp $	*/
+/*	$NetBSD: un.h,v 1.14 1997/02/20 06:43:48 mikel Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -73,7 +73,7 @@ void	unp_setpeeraddr __P((struct unpcb *, struct mbuf *));
 
 /* actual length of an initialized sockaddr_un */
 #define SUN_LEN(su) \
-	(sizeof(*(su)) - sizeof((su)->sun_path) + strlen((su)->sun_path))
+	(sizeof(*(su)) - sizeof((su)->sun_path) + strlen((su)->sun_path) + 1)
 #endif /* _KERNEL */
 
 #endif /* !_SYS_UN_H_ */
