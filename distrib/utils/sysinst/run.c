@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.11.2.2 1999/06/24 23:01:37 cgd Exp $	*/
+/*	$NetBSD: run.c,v 1.11.2.3 1999/07/15 03:04:43 perry Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -342,7 +342,6 @@ launch_subwin(actionwin, args, win, display)
 	FD_SET(dataflow[0], &active_fd_set);
 	FD_SET(STDIN_FILENO, &active_fd_set);
 
-	pid = wait4(child, &status, WNOHANG, 0);
 	for (selectfailed = 0;;) {
 		if (selectfailed) {
 			char *msg = "select(2) failed but no child died?";
