@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.25 2000/06/29 08:28:24 mrg Exp $	*/
+/*	$NetBSD: grf.c,v 1.26 2002/03/17 19:40:35 atatat Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -456,6 +456,6 @@ void			*arg;
 	default:
 			break;
 	}
-	return(EINVAL);
+	return(EPASSTHROUGH);
 }
 #endif	/* NGRF > 0 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: amidisplaycc.c,v 1.5 2002/03/13 15:05:18 ad Exp $ */
+/*	$NetBSD: amidisplaycc.c,v 1.6 2002/03/17 19:40:27 atatat Exp $ */
 
 /*-
  * Copyright (c) 2000 Jukka Andberg.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.5 2002/03/13 15:05:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.6 2002/03/17 19:40:27 atatat Exp $");
 
 /*
  * wscons interface to amiga custom chips. Contains the necessary functions
@@ -1065,7 +1065,7 @@ amidisplaycc_ioctl(void *dp, u_long cmd, caddr_t data, int flag, struct proc *p)
 			return amidisplaycc_gfxscreen(adp, 0);
 		if (INTDATA == WSDISPLAYIO_MODE_MAPPED)
 			return amidisplaycc_gfxscreen(adp, 1);
-		return (-1);
+		return (EINVAL);
 
 	case WSDISPLAYIO_GINFO:
 		FBINFO.width  = adp->gfxwidth;
@@ -1086,7 +1086,7 @@ amidisplaycc_ioctl(void *dp, u_long cmd, caddr_t data, int flag, struct proc *p)
 		(char)((cmd&0xff00)>>8),
 		(int)(cmd&0xff));
 
-	return (-1);
+	return (EPASSTHROUGH);
 
 #undef UINTDATA
 #undef INTDATA
@@ -1626,13 +1626,13 @@ amidisplaycc_load_font(void *dp, void *cookie, struct wsdisplay_font *font)
 	if (font->stride != 1) {
 		dprintf("amidisplaycc_load_font: stride %d != 1\n",
 		       font->stride);
-		return (-1);
+		return (EINVAL);
 	}
 
 	if (font->fontwidth != 8) {
 		dprintf("amidisplaycc_load_font: width %d not supported\n",
 		       font->fontwidth);
-		return (-1);
+		return (EINVAL);
 	}
 
 	/* Size of the font in bytes... Assuming stride==1 */
@@ -1822,7 +1822,7 @@ amidisplaycc_cmapioctl(view_t *view, u_long cmd, struct wsdisplay_cmap *cmap)
 		return (0);
 
 	} else
-		return (-1);
+		return (EPASSTHROUGH);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.35 2001/06/12 13:18:38 ragge Exp $	*/
+/*	$NetBSD: gencons.c,v 1.36 2002/03/17 19:40:52 atatat Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -161,13 +161,9 @@ gencnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	int error;
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return error;
-	error = ttioctl(tp, cmd, data, flag, p);
-	if (error >= 0)
-		return error;
- 
-	return ENOTTY;
+	return ttioctl(tp, cmd, data, flag, p);
 }
 
 void

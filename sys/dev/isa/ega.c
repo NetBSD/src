@@ -1,4 +1,4 @@
-/* $NetBSD: ega.c,v 1.8 2002/01/08 17:20:44 christos Exp $ */
+/* $NetBSD: ega.c,v 1.9 2002/03/17 19:40:59 atatat Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ega.c,v 1.8 2002/01/08 17:20:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ega.c,v 1.9 2002/03/17 19:40:59 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -604,7 +604,7 @@ ega_ioctl(v, cmd, data, flag, p)
 	/*
 	 * XXX "do something!"
 	 */
-	return (-1);
+	return (EPASSTHROUGH);
 }
 
 static paddr_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cc.c,v 1.30 2002/01/28 09:56:55 aymeric Exp $ */
+/*	$NetBSD: grf_cc.c,v 1.31 2002/03/17 19:40:28 atatat Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cc.c,v 1.30 2002/01/28 09:56:55 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cc.c,v 1.31 2002/03/17 19:40:28 atatat Exp $");
 
 #include "grfcc.h"
 #if NGRFCC > 0
@@ -180,7 +180,7 @@ cc_mode(struct grf_softc *gp, u_long cmd, void *arg, u_long a2, int a3)
 	default:
 		break;
 	}
-	return(EINVAL);
+	return(EPASSTHROUGH);
 }
 
 void

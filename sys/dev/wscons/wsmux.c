@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.28 2002/03/02 08:22:28 takemura Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.29 2002/03/17 19:41:06 atatat Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.28 2002/03/02 08:22:28 takemura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.29 2002/03/17 19:41:06 atatat Exp $");
 
 #include "wsdisplay.h"
 #include "wsmux.h"
@@ -732,9 +732,9 @@ wsmux_do_displayioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 
 	/* 
 	 * Return 0 if any of the ioctl() succeeds, otherwise the last error.
-	 * Return -1 if no mux component accepts the ioctl.
+	 * Return EPASSTHROUGH if no mux component accepts the ioctl.
 	 */
-	error = -1;
+	error = EPASSTHROUGH;
 	ok = 0;
 	CIRCLEQ_FOREACH(me, &sc->sc_cld, me_next) {
 		DPRINTF(("wsmux_displayioctl: me=%p\n", me));

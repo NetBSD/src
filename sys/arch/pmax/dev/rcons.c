@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.52 2002/03/13 15:05:20 ad Exp $	*/
+/*	$NetBSD: rcons.c,v 1.53 2002/03/17 19:40:48 atatat Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -400,11 +400,9 @@ rconsioctl(dev, cmd, data, flag, p)
 	int error;
 
 	tp = &rcons_tty [0];
-	if ((error = tp->t_linesw->l_ioctl(tp, cmd, data, flag, p)) >= 0)
+	if ((error = tp->t_linesw->l_ioctl(tp, cmd, data, flag, p)) != EPASSTHROUGH)
 		return (error);
-	if ((error = ttioctl(tp, cmd, data, flag, p)) >= 0)
-		return (error);
-	return (ENOTTY);
+	return ttioctl(tp, cmd, data, flag, p);
 }
 
 /* ARGSUSED */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcons.c,v 1.8 2001/10/05 21:53:56 eeh Exp $	*/
+/*	$NetBSD: pcons.c,v 1.9 2002/03/17 19:40:51 atatat Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo E. Horvath
@@ -212,11 +212,9 @@ pconsioctl(dev, cmd, data, flag, p)
 	struct tty *tp = sc->of_tty;
 	int error;
 	
-	if ((error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p)) >= 0)
+	if ((error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p)) != EPASSTHROUGH)
 		return error;
-	if ((error = ttioctl(tp, cmd, data, flag, p)) >= 0)
-		return error;
-	return ENOTTY;
+	return ttioctl(tp, cmd, data, flag, p);
 }
 
 struct tty *

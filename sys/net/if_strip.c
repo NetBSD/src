@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.43 2002/02/26 14:54:50 wiz Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.44 2002/03/17 19:41:11 atatat Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.43 2002/02/26 14:54:50 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.44 2002/03/17 19:41:11 atatat Exp $");
 
 #include "strip.h"
 
@@ -485,7 +485,12 @@ stripopen(dev, tp)
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 					softintr_disestablish(sc->sc_si);
 #endif
-					return(error);
+					/*
+					 * clalloc() might return -1 which
+					 * is no good, so we need to return
+					 * something else.
+					 */
+					return(ENOMEM);
 				}
 			} else
 				sc->sc_oldbufsize = sc->sc_oldbufquot = 0;
@@ -593,7 +598,7 @@ striptioctl(tp, cmd, data, flag)
 		break;
 
 	default:
-		return (-1);
+		return (EPASSTHROUGH);
 	}
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.8 2002/02/19 14:21:48 uch Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.9 2002/03/17 19:40:41 atatat Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -525,7 +525,7 @@ hd64461video_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return (EINVAL);
 	}
 
-	return (ENOTTY);
+	return (EPASSTHROUGH);
 }
 
 paddr_t

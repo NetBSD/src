@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.4 2002/03/13 15:05:19 ad Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.5 2002/03/17 19:40:33 atatat Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.4 2002/03/13 15:05:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.5 2002/03/17 19:40:33 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -459,7 +459,7 @@ vidcvideoioctl(v, cmd, data, flag, p)
 		vidcvideo_progr_scroll();
 		return (0);
 	}
-	return ENOTTY;
+	return EPASSTHROUGH;
 }
 
 
@@ -816,7 +816,7 @@ get_cursor(sc, p)
 	struct vidcvideo_softc *sc;
 	struct wsdisplay_cursor *p;
 {
-	return (ENOTTY); /* XXX */
+	return (EPASSTHROUGH); /* XXX */
 }
 
 

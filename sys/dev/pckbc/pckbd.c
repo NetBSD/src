@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.29 2001/12/09 13:42:01 fvdl Exp $ */
+/* $NetBSD: pckbd.c,v 1.30 2002/03/17 19:41:00 atatat Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.29 2001/12/09 13:42:01 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.30 2002/03/17 19:41:00 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -597,7 +597,7 @@ pckbd_ioctl(v, cmd, data, flag, p)
 		return (0);
 #endif
 	}
-	return -1;
+	return EPASSTHROUGH;
 }
 
 void

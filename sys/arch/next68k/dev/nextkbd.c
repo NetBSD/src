@@ -1,4 +1,4 @@
-/* $NetBSD: nextkbd.c,v 1.3 1999/03/26 04:17:46 dbj Exp $ */
+/* $NetBSD: nextkbd.c,v 1.4 2002/03/17 19:40:47 atatat Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -220,7 +220,7 @@ nextkbd_ioctl(v, cmd, data, flag, p)
 	case WSKBDIO_COMPLEXBELL:
 		return (0);
 	}
-	return -1;
+	return EPASSTHROUGH;
 }
 
 int

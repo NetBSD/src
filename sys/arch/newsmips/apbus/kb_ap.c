@@ -1,4 +1,4 @@
-/*	$NetBSD: kb_ap.c,v 1.1 2000/11/15 14:04:05 tsubai Exp $	*/
+/*	$NetBSD: kb_ap.c,v 1.2 2002/03/17 19:40:45 atatat Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -251,5 +251,5 @@ kb_ap_ioctl(v, cmd, data, flag, p)
 		return 0;
 	}
 
-	return -1;
+	return EPASSTHROUGH;
 }

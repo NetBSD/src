@@ -1,4 +1,4 @@
-/* $NetBSD: mfb.c,v 1.31 2002/03/13 15:05:16 ad Exp $ */
+/* $NetBSD: mfb.c,v 1.32 2002/03/17 19:41:02 atatat Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.31 2002/03/13 15:05:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.32 2002/03/17 19:41:02 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -359,7 +359,7 @@ mfbioctl(v, cmd, data, flag, p)
 
 	case WSDISPLAYIO_GETCMAP:
 	case WSDISPLAYIO_PUTCMAP:
-		return (ENOTTY);
+		return (EPASSTHROUGH);
 
 	case WSDISPLAYIO_SVIDEO:
 		turnoff = *(int *)data == WSDISPLAYIO_VIDEO_OFF;
@@ -398,7 +398,7 @@ mfbioctl(v, cmd, data, flag, p)
 	case WSDISPLAYIO_SCURSOR:
 		return set_cursor(sc, (struct wsdisplay_cursor *)data);
 	}
-	return (ENOTTY);
+	return (EPASSTHROUGH);
 }
 
 static paddr_t
@@ -671,7 +671,7 @@ get_cursor(sc, p)
 	struct mfb_softc *sc;
 	struct wsdisplay_cursor *p;
 {
-	return (ENOTTY); /* XXX */
+	return (EPASSTHROUGH); /* XXX */
 }
 
 static void

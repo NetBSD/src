@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.15 2001/11/13 07:26:28 lukem Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.16 2002/03/17 19:40:59 atatat Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.15 2001/11/13 07:26:28 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.16 2002/03/17 19:40:59 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -209,11 +209,9 @@ ofcons_ioctl(dev, cmd, data, flag, p)
 	struct tty *tp = sc->of_tty;
 	int error;
 	
-	if ((error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p)) >= 0)
+	if ((error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p)) != EPASSTHROUGH)
 		return error;
-	if ((error = ttioctl(tp, cmd, data, flag, p)) >= 0)
-		return error;
-	return ENOTTY;
+	return ttioctl(tp, cmd, data, flag, p);
 }
 
 struct tty *

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_et.c,v 1.14 2002/01/28 09:56:56 aymeric Exp $ */
+/*	$NetBSD: grf_et.c,v 1.15 2002/03/17 19:40:29 atatat Exp $ */
 
 /*
  * Copyright (c) 1997 Klaus Burkert
@@ -37,7 +37,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_et.c,v 1.14 2002/01/28 09:56:56 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_et.c,v 1.15 2002/03/17 19:40:29 atatat Exp $");
 
 #include "grfet.h"
 #if NGRFET > 0
@@ -669,7 +669,7 @@ et_mode(register struct grf_softc *gp, u_long cmd, void *arg, u_long a2,
 		break;
 	}
 
-	return (EINVAL);
+	return (EPASSTHROUGH);
 }
 
 
@@ -710,7 +710,7 @@ et_ioctl(register struct grf_softc *gp, u_long cmd, void *data)
 	    case GRFIOCBLANK:
 		return (et_blank(gp, (int *)data));
 	}
-	return (EINVAL);
+	return (EPASSTHROUGH);
 }
 
 

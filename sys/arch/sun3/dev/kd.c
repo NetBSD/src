@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.36 2001/09/05 13:27:53 tsutsui Exp $	*/
+/*	$NetBSD: kd.c,v 1.37 2002/03/17 19:40:51 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -268,17 +268,18 @@ kdioctl(dev, cmd, data, flag, p)
 	tp = kd->kd_tty;
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return error;
+
 	error = ttioctl(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return error;
 
 	/* Handle any ioctl commands specific to kbd/display. */
 	/* XXX - Send KB* ioctls to kbd module? */
 	/* XXX - Send FB* ioctls to fb module?  */
 
-	return ENOTTY;
+	return EPASSTHROUGH;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: pvr.c,v 1.9 2002/03/13 15:05:19 ad Exp $	*/
+/*	$NetBSD: pvr.c,v 1.10 2002/03/17 19:40:36 atatat Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.9 2002/03/13 15:05:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.10 2002/03/17 19:40:36 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -298,10 +298,10 @@ pvrioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	case WSDISPLAYIO_GETCMAP:
 	case WSDISPLAYIO_PUTCMAP:
-		return (ENOTTY);	/* XXX Colormap */
+		return (EPASSTHROUGH);	/* XXX Colormap */
 
 	case WSDISPLAYIO_SVIDEO:
-		return (ENOTTY);	/* XXX */
+		return (EPASSTHROUGH);	/* XXX */
 
 	case WSDISPLAYIO_GVIDEO:
 		*(u_int *)data = dc->dc_blanked ?
@@ -313,10 +313,10 @@ pvrioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case WSDISPLAYIO_GCURMAX:
 	case WSDISPLAYIO_GCURSOR:
 	case WSDISPLAYIO_SCURSOR:
-		return (ENOTTY);	/* XXX */
+		return (EPASSTHROUGH);	/* XXX */
 	}
 
-	return (ENOTTY);
+	return (EPASSTHROUGH);
 }
 
 paddr_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.24 2002/03/13 21:50:24 jdolecek Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.25 2002/03/17 19:41:07 atatat Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.24 2002/03/13 21:50:24 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.25 2002/03/17 19:41:07 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1621,7 +1621,7 @@ pipe_ioctl(fp, cmd, data, p)
 #endif /* NetBSD */
 
 	}
-	return (ENOTTY);
+	return (EPASSTHROUGH);
 }
 
 int

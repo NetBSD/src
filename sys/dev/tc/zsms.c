@@ -1,4 +1,4 @@
-/*	$NetBSD: zsms.c,v 1.4 2001/11/13 06:26:10 lukem Exp $	*/
+/*	$NetBSD: zsms.c,v 1.5 2002/03/17 19:41:04 atatat Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zsms.c,v 1.4 2001/11/13 06:26:10 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zsms.c,v 1.5 2002/03/17 19:41:04 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,8 +239,8 @@ zsms_ioctl(v, cmd, data, flag, p)
 		*(u_int *)data = WSMOUSE_TYPE_VSXXX;
 		return 0;
 	}
-	return -1;
-}
+	return EPASSTHROUGH;
+
 
 static void
 zsms_input(vsc, data)

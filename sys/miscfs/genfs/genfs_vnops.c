@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.50 2002/03/02 06:58:01 chs Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.51 2002/03/17 19:41:09 atatat Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.50 2002/03/02 06:58:01 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.51 2002/03/17 19:41:09 atatat Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -244,7 +244,7 @@ genfs_enoioctl(v)
 	void *v;
 {
 
-	return (ENOTTY);
+	return (EPASSTHROUGH);
 }
 
 

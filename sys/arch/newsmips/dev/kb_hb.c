@@ -1,4 +1,4 @@
-/*	$NetBSD: kb_hb.c,v 1.1 2000/11/13 16:48:44 tsubai Exp $	*/
+/*	$NetBSD: kb_hb.c,v 1.2 2002/03/17 19:40:46 atatat Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -236,5 +236,5 @@ kb_hb_ioctl(v, cmd, data, flag, p)
 		return 0;
 	}
 
-	return -1;
+	return EPASSTHROUGH;
 }

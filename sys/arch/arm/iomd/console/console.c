@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.2 2001/11/22 18:34:34 thorpej Exp $	*/
+/*	$NetBSD: console.c,v 1.3 2002/03/17 19:40:33 atatat Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -677,16 +677,16 @@ physconioctl(dev, cmd, data, flag, p)
 		
 	default: 
 		error = vc->IOCTL ( vc, dev, cmd, data, flag, p );
-		if ( error >=0 )
+		if (error != EPASSTHROUGH)
 			return error;
 		error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-		if (error >= 0)
+		if (error != EPASSTHROUGH)
 			return error;
 		error = ttioctl(tp, cmd, data, flag, p);
-		if (error >= 0)
+		if (error != EPASSTHROUGH)
 			return error;
 	} 
-	return(ENOTTY);
+	return(EPASSTHROUGH);
 }
 
 paddr_t

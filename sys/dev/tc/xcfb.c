@@ -1,4 +1,4 @@
-/* $NetBSD: xcfb.c,v 1.26 2002/03/13 15:05:17 ad Exp $ */
+/* $NetBSD: xcfb.c,v 1.27 2002/03/17 19:41:03 atatat Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.26 2002/03/13 15:05:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.27 2002/03/17 19:41:03 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -457,7 +457,7 @@ xcfbioctl(v, cmd, data, flag, p)
 	case WSDISPLAYIO_SCURSOR:
 		return set_cursor(sc, (struct wsdisplay_cursor *)data);
 	}
-	return (ENOTTY);
+	return (EPASSTHROUGH);
 }
 
 static paddr_t
@@ -650,7 +650,7 @@ get_cursor(sc, p)
 	struct xcfb_softc *sc;
 	struct wsdisplay_cursor *p;
 {
-	return (ENOTTY); /* XXX */
+	return (EPASSTHROUGH); /* XXX */
 }
 
 static void

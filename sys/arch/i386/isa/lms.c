@@ -1,4 +1,4 @@
-/*	$NetBSD: lms.c,v 1.40 2002/01/07 21:47:01 thorpej Exp $	*/
+/*	$NetBSD: lms.c,v 1.41 2002/03/17 19:40:41 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lms.c,v 1.40 2002/01/07 21:47:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lms.c,v 1.41 2002/03/17 19:40:41 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -222,7 +222,7 @@ lms_ioctl(v, cmd, data, flag, p)
 		*(u_int *)data = WSMOUSE_TYPE_LMS;
 		return (0);
 	}
-	return (-1);
+	return (EPASSTHROUGH);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.22 2002/03/02 22:26:27 uch Exp $ */
+/*	$NetBSD: scif.c,v 1.23 2002/03/17 19:40:50 atatat Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -876,11 +876,11 @@ scifioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return (EIO);
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 
 	error = ttioctl(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 
 	error = 0;
@@ -908,7 +908,7 @@ scifioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	default:
-		error = ENOTTY;
+		error = EPASSTHROUGH;
 		break;
 	}
 

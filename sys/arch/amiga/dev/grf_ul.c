@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_ul.c,v 1.30 2002/01/28 09:56:57 aymeric Exp $ */
+/*	$NetBSD: grf_ul.c,v 1.31 2002/03/17 19:40:30 atatat Exp $ */
 #define UL_DEBUG
 
 /*-
@@ -40,7 +40,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_ul.c,v 1.30 2002/01/28 09:56:57 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_ul.c,v 1.31 2002/03/17 19:40:30 atatat Exp $");
 
 #include "grful.h"
 #if NGRFUL > 0
@@ -725,7 +725,7 @@ ul_mode(gp, cmd, arg, a2, a3)
 		break;
 	}
 
-	return EINVAL;
+	return EPASSTHROUGH;
 }
 
 int
@@ -772,7 +772,7 @@ ul_ioctl (gp, cmd, data, dev)
 		return ul_blank (gp, (int *) data, dev);
 	}
 
-	return EINVAL;
+	return EPASSTHROUGH;
 }
 
 int
@@ -931,7 +931,7 @@ ul_bitblt (gp, bb, dev)
 	dev_t dev;
 {
 	/* XXX not yet implemented, but pretty trivial */
-	return EINVAL;
+	return EPASSTHROUGH;
 }
 
 void

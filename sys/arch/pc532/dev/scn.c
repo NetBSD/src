@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.51 2001/11/21 19:14:28 wiz Exp $ */
+/*	$NetBSD: scn.c,v 1.52 2002/03/17 19:40:47 atatat Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Philip L. Budne.
@@ -1648,10 +1648,11 @@ scnioctl(dev, cmd, data, flag, p)
 	register int error;
 
 	error = (*tp->t_linesw->l_ioctl) (tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
+
 	error = ttioctl(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 
 	switch (cmd) {
@@ -1768,7 +1769,7 @@ scnioctl(dev, cmd, data, flag, p)
 		}
 
 	default:
-		return (ENOTTY);
+		return (EPASSTHROUGH);
 	}
 	return (0);
 }

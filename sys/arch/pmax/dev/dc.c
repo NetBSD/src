@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.68 2001/07/07 14:21:00 simonb Exp $	*/
+/*	$NetBSD: dc.c,v 1.69 2002/03/17 19:40:48 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.68 2001/07/07 14:21:00 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.69 2002/03/17 19:40:48 atatat Exp $");
 
 /*
  * devDC7085.c --
@@ -627,10 +627,11 @@ dcioctl(dev, cmd, data, flag, p)
 	tp = sc->dc_tty[line];
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
+
 	error = ttioctl(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 
 	switch (cmd) {
@@ -670,7 +671,7 @@ dcioctl(dev, cmd, data, flag, p)
 		break;
 
 	default:
-		return (ENOTTY);
+		return (EPASSTHROUGH);
 	}
 	return (0);
 }

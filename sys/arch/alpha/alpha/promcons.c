@@ -1,4 +1,4 @@
-/* $NetBSD: promcons.c,v 1.18 2001/05/02 10:32:12 scw Exp $ */
+/* $NetBSD: promcons.c,v 1.19 2002/03/17 19:40:26 atatat Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.18 2001/05/02 10:32:12 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.19 2002/03/17 19:40:26 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,13 +160,9 @@ promioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	int error;
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return error;
-	error = ttioctl(tp, cmd, data, flag, p);
-	if (error >= 0)
-		return error;
-
-	return ENOTTY;
+	return ttioctl(tp, cmd, data, flag, p);
 }
 
 int

@@ -1,4 +1,4 @@
-/* $NetBSD: lunafb.c,v 1.6 2000/06/29 08:17:25 mrg Exp $ */
+/* $NetBSD: lunafb.c,v 1.7 2002/03/17 19:40:42 atatat Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.6 2000/06/29 08:17:25 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.7 2002/03/17 19:40:42 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -270,7 +270,7 @@ omfbioctl(v, cmd, data, flag, p)
 	case WSDISPLAYIO_SCURSOR:
 		break;
 	}
-	return (ENOTTY);
+	return (EPASSTHROUGH);
 }
 
 /*

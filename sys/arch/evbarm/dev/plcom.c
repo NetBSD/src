@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.2 2001/11/20 08:43:22 lukem Exp $	*/
+/*	$NetBSD: plcom.c,v 1.3 2002/03/17 19:40:37 atatat Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -851,11 +851,11 @@ plcomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return EIO;
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return error;
 
 	error = ttioctl(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return error;
 
 	error = 0;
@@ -999,7 +999,7 @@ plcomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	default:
-		error = ENOTTY;
+		error = EPASSTHROUGH;
 		break;
 	}
 

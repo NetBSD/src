@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcrender.c,v 1.4 2001/11/27 01:03:54 thorpej Exp $	*/
+/*	$NetBSD: vidcrender.c,v 1.5 2002/03/17 19:40:33 atatat Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -1494,8 +1494,9 @@ int vidcrender_ioctl ( struct vconsole *vc, dev_t dev, int cmd, caddr_t data,
 		ws.ws_row=vc->ychars;
 		ws.ws_col=vc->xchars;
 		error = (*tp->t_linesw->l_ioctl)(tp, TIOCSWINSZ, (char *)&ws, flag, p);
-		error = ttioctl(tp, TIOCSWINSZ, (char *)&ws, flag, p);
-		return 0;
+		if (error != EPASSTHROUGH)
+			return (error);
+		return ttioctl(tp, TIOCSWINSZ, (char *)&ws, flag, p);
 		break;
 
 	case CONSOLE_RESETSCREEN:
@@ -1545,7 +1546,7 @@ int vidcrender_ioctl ( struct vconsole *vc, dev_t dev, int cmd, caddr_t data,
  		return 0;
 	}
 	}
-	return -1;
+	return (EPASSTHROUGH);
 }
 
 int

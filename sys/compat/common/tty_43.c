@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_43.c,v 1.13 2001/11/13 02:08:03 lukem Exp $	*/
+/*	$NetBSD: tty_43.c,v 1.14 2002/03/17 19:40:53 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_43.c,v 1.13 2001/11/13 02:08:03 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_43.c,v 1.14 2002/03/17 19:40:53 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,7 +259,7 @@ ttcompat(tp, com, data, flag, p)
 		break;
 
 	default:
-		return (-1);
+		return (EPASSTHROUGH);
 	}
 	return (0);
 }

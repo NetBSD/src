@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.48 2002/03/13 23:17:18 ad Exp $ */
+/* $NetBSD: vga.c,v 1.49 2002/03/17 19:40:58 atatat Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.48 2002/03/13 23:17:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.49 2002/03/17 19:40:58 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -708,7 +708,7 @@ vga_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	case WSDISPLAYIO_GINFO:
 		/* XXX should get detailed hardware information here */
-		return ENOTTY;
+		return EPASSTHROUGH;
 
 	case WSDISPLAYIO_GVIDEO:
 		*(int *)data = (vga_get_video(vc) ? WSDISPLAYIO_VIDEO_ON :
@@ -727,14 +727,14 @@ vga_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case WSDISPLAYIO_GCURSOR:
 	case WSDISPLAYIO_SCURSOR:
 		/* NONE of these operations are by the generic VGA driver. */
-		return ENOTTY;
+		return EPASSTHROUGH;
 	}
 
 	if (vc->vc_funcs == NULL)
-		return (-1);
+		return (EPASSTHROUGH);
 
 	if (vf->vf_ioctl == NULL)
-		return (-1);
+		return (EPASSTHROUGH);
 
 	return ((*vf->vf_ioctl)(v, cmd, data, flag, p));
 }

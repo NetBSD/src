@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbd.c,v 1.11 2001/12/04 15:27:36 atatat Exp $	*/
+/*	$NetBSD: mkbd.c,v 1.12 2002/03/17 19:40:37 atatat Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -203,7 +203,7 @@ mkbd_ioctl(v, cmd, data, flag, p)
 		return 0;
 	}
 
-	return -1;
+	return EPASSTHROUGH;
 }
 
 

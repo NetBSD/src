@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.61 2002/01/28 09:57:02 aymeric Exp $ */
+/*	$NetBSD: ser.c,v 1.62 2002/03/17 19:40:31 atatat Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.61 2002/01/28 09:57:02 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.62 2002/03/17 19:40:31 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -668,11 +668,11 @@ serioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return ENXIO;
 
 	error = tp->t_linesw->l_ioctl(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return(error);
 
 	error = ttioctl(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return(error);
 
 	switch (cmd) {
@@ -720,7 +720,7 @@ serioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
                   (TIOCFLAG_SOFTCAR | TIOCFLAG_CLOCAL | TIOCFLAG_CRTSCTS);
 		break;
 	default:
-		return(ENOTTY);
+		return(EPASSTHROUGH);
 	}
 
 	return(0);
