@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.199 2004/04/17 10:06:29 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.200 2004/04/17 11:26:36 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -1315,16 +1315,23 @@ Lpanic_red:
  * locks the fault address and status registers if the translation
  * fails (thanks to Chris Torek for finding this quirk).
  */
-/* note: pmap currently does not use the PPROT_R_R and PPROT_RW_RW cases */
 #define CMP_PTE_USER_READ4M(pte, tmp) \
 	or	pte, ASI_SRMMUFP_L3, pte; \
 	lda	[pte] ASI_SRMMUFP, pte; \
 	set	SRMMU_SFSR, tmp; \
-	and	pte, (SRMMU_TETYPE | SRMMU_PROT_MASK), pte; \
-	cmp	pte, (SRMMU_TEPTE | PPROT_RWX_RWX); \
-	be	8f; \
-	 lda	[tmp] ASI_SRMMU, %g0; \
-	cmp	pte, (SRMMU_TEPTE | PPROT_RX_RX); \
+	lda	[tmp] ASI_SRMMU, %g0; \
+	and	pte, SRMMU_TETYPE, tmp; \
+	/* Check for valid pte */ \
+	cmp	tmp, SRMMU_TEPTE; \
+	bnz	8f; \
+	and	pte, SRMMU_PROT_MASK, pte; \
+	/* check for one of: R_R, RW_RW, RX_RX and RWX_RWX */ \
+	cmp	pte, PPROT_X_X; \
+	bcs,a	8f; \
+	 /* Now we have carry set if OK; turn it into Z bit */ \
+	 subxcc	%g0, -1, %g0; \
+	/* One more case to check: R_RW */ \
+	cmp	pte, PPROT_R_RW; \
 8:
 
 
