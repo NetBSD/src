@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.22 2002/01/31 22:43:53 tv Exp $	*/
+/*	$NetBSD: print.c,v 1.23 2002/05/18 07:00:46 pooka Exp $	*/
 
 /*
  * print.c - debugging printout routines
@@ -45,9 +45,9 @@
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
 #if 0
-FILE_RCSID("@(#)Id: print.c,v 1.34 2001/08/07 16:01:26 christos Exp ")
+FILE_RCSID("@(#)Id: print.c,v 1.35 2002/05/16 18:45:56 christos Exp ")
 #else
-__RCSID("$NetBSD: print.c,v 1.22 2002/01/31 22:43:53 tv Exp $");
+__RCSID("$NetBSD: print.c,v 1.23 2002/05/18 07:00:46 pooka Exp $");
 #endif
 #endif  /* lint */
 
@@ -61,7 +61,7 @@ mdump(m)
 				     "long", "string", "date", "beshort",
 				     "belong", "bedate", "leshort", "lelong",
 				     "ledate", "pstring", "ldate", "beldate",
-				     "leldate" };
+				     "leldate", "regex" };
 	static const char optyp[] = { '@', '&', '|', '^', '+', '-', 
 				      '*', '/', '%' };
 	(void) fputc('[', stderr);
@@ -117,6 +117,7 @@ mdump(m)
 			break;
 		case STRING:
 		case PSTRING:
+		case REGEX:
 			showstr(stderr, m->value.s, -1);
 			break;
 		case DATE:
