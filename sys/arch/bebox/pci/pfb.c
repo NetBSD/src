@@ -1,4 +1,4 @@
-/*	$NetBSD: pfb.c,v 1.8 2002/03/17 19:40:36 atatat Exp $	*/
+/*	$NetBSD: pfb.c,v 1.9 2002/07/04 14:43:49 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -70,7 +70,7 @@ struct wsdisplay_emulops pfb_emulops = {
 	rcons_erasecols,
 	rcons_copyrows,
 	rcons_eraserows,
-	rcons_alloc_attr
+	rcons_allocattr
 };
 
 struct wsscreen_descr pfb_stdscreen = {
@@ -253,7 +253,7 @@ pfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	*cookiep = &sc->sc_dc->dc_rcons; /* one and only for now */
 	*curxp = 0;
 	*curyp = 0;
-	rcons_alloc_attr(&sc->sc_dc->dc_rcons, 0, 0, 0, &defattr);
+	rcons_allocattr(&sc->sc_dc->dc_rcons, 0, 0, 0, &defattr);
 	*attrp = defattr;
 	sc->nscreens++;
 	return 0;
@@ -292,7 +292,7 @@ pfb_cnattach(addr)
 	long defattr;
 
 	pfb_common_init(addr, dc);
-	rcons_alloc_attr(&dc->dc_rcons, 0, 0, 0, &defattr);
+	rcons_allocattr(&dc->dc_rcons, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&pfb_stdscreen, &dc->dc_rcons, 0, 0, defattr);
 
 	pfb_is_console = 1;

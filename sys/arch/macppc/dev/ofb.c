@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.27 2002/06/24 21:08:37 nathanw Exp $	*/
+/*	$NetBSD: ofb.c,v 1.28 2002/07/04 14:43:50 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -408,7 +408,7 @@ ofb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	*cookiep = ri;			/* one and only for now */
 	*curxp = 0;
 	*curyp = 0;
-	(*ri->ri_ops.alloc_attr)(ri, 0, 0, 0, &defattr);
+	(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
 	*attrp = defattr;
 	sc->nscreens++;
 	return 0;
@@ -469,7 +469,7 @@ ofb_cnattach()
 		crow = 0;
 	}
 
-	(*ri->ri_ops.alloc_attr)(ri, 0, 0, 0, &defattr);
+	(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&ofb_stdscreen, ri, 0, crow, defattr);
 
 	return 0;
