@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.207 2003/09/13 14:44:50 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.208 2003/09/13 15:49:05 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.207 2003/09/13 14:44:50 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.208 2003/09/13 15:49:05 mycroft Exp $");
 
 #include "opt_scsi.h"
 #include "opt_bufq.h"
@@ -421,7 +421,7 @@ sdopen(dev, flag, fmt, p)
 		/* Check that it is still responding and ok. */
 		error = scsipi_test_unit_ready(periph,
 		    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_MEDIA_CHANGE |
-		    XS_CTL_SILENT_NODEV | silent);
+		    silent);
 
 		/*
 		 * Start the pack spinning if necessary. Always allow the
