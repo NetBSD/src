@@ -33,11 +33,14 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)bcmp.c	5.6 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: bcmp.c,v 1.6 1996/03/14 18:52:05 christos Exp $";
+static char *rcsid = "$Id: bcmp.c,v 1.7 1996/04/18 02:19:59 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
+#ifndef _KERNEL
 #include <string.h>
+#else
 #include <lib/libkern/libkern.h>
+#endif
 
 /*
  * bcmp -- vax cmpc3 instruction
