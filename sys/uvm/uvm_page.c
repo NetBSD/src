@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.15.2.3 1999/04/09 04:38:15 chs Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.15.2.4 1999/05/30 15:56:30 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -913,9 +913,6 @@ uvm_pagealloc_strat(obj, off, anon, strat, free_list)
 	pg->version++;
 	pg->wire_count = 0;
 	pg->loan_count = 0;
-#ifdef UBC
-	pg->blkno = 0;
-#endif
 	if (anon) {
 		anon->u.an_page = pg;
 		pg->pqflags = PQ_ANON;
