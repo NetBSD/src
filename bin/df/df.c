@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.55 2004/03/02 23:13:07 enami Exp $	*/
+/*	$NetBSD: df.c,v 1.56 2004/03/07 01:12:08 enami Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.55 2004/03/02 23:13:07 enami Exp $");
+__RCSID("$NetBSD: df.c,v 1.56 2004/03/07 01:12:08 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -317,8 +317,8 @@ prthuman(struct statfs *sfsp, long used)
  */
 #define fsbtoblk(num, fsbs, bs)					\
 	(((fsbs) != 0 && (fsbs) < (bs)) ?			\
-	    (unsigned long long)(num) / ((bs) / (fsbs)) :	\
-	    (unsigned long long)(num) * ((fsbs) / (bs)))
+	    (int64_t)(num) / ((bs) / (fsbs)) :			\
+	    (int64_t)(num) * ((fsbs) / (bs)))
 
 /*
  * Print out status about a filesystem.
@@ -366,12 +366,9 @@ prtstat(struct statfs *sfsp, int maxwidth)
 	if (hflag)
 		prthuman(sfsp, used);
 	else
-		(void)printf(" %*llu %8llu %9llu", headerlen,
-		    (unsigned long long)
+		(void)printf(" %*" PRId64 " %8" PRId64 " %9" PRId64, headerlen,
 		    fsbtoblk(sfsp->f_blocks, sfsp->f_bsize, blocksize),
-		    (unsigned long long)
 		    fsbtoblk(used, sfsp->f_bsize, blocksize),
-		    (unsigned long long)
 		    fsbtoblk(sfsp->f_bavail, sfsp->f_bsize, blocksize));
 	(void)printf("%7s",
 	    availblks == 0 ? full : strpct((u_long)used, (u_long)availblks, 0));
