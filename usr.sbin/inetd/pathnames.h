@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pathnames.h	5.3 (Berkeley) 6/1/90
- *	$Id: pathnames.h,v 1.3 1993/10/13 11:22:51 pk Exp $
+ *	$NetBSD: pathnames.h,v 1.4 1997/01/12 06:55:44 mikel Exp $
  */
 
 #include <paths.h>
