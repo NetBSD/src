@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.3 2001/09/11 06:51:47 fvdl Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.4 2001/09/13 16:18:53 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -377,8 +377,9 @@ agp_i810_alloc_memory(struct agp_softc *sc, int type, vsize_t size)
 			return NULL;
 		}
 	} else if (type != 1) {
-		if (bus_dmamap_create(sc->as_dmat, size, 1, size, 0,
-		    BUS_DMA_NOWAIT, &mem->am_dmamap) != 0) {
+		if (bus_dmamap_create(sc->as_dmat, size, size / PAGE_SIZE + 1,
+				      size, 0, BUS_DMA_NOWAIT,
+				      &mem->am_dmamap) != 0) {
 			free(mem, M_AGP);
 			return NULL;
 		}
@@ -413,7 +414,21 @@ agp_i810_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 		     off_t offset)
 {
 	struct agp_i810_softc *isc = sc->as_chipc;
-	u_int32_t i;
+	u_int32_t regval, i;
+
+	/*
+	 * XXX evil hack: the PGTBL_CTL appearently gets overwritten by the
+	 * X server for mysterious reasons which leads to crashes if we write
+	 * to the GTT through the MMIO window.
+	 * Until the issue is solved, simply restore it.
+	 */
+	regval = bus_space_read_4(isc->bst, isc->bsh, AGP_I810_PGTBL_CTL);
+	if (regval != (isc->gatt->ag_physical | 1)) {
+		printf("agp_i810_bind_memory: PGTBL_CTL is 0x%x - fixing\n",
+		       regval);
+		bus_space_write_4(isc->bst, isc->bsh, AGP_I810_PGTBL_CTL,
+				  isc->gatt->ag_physical | 1);
+	}
 
 	if (mem->am_type == 2)
 		return 0;
