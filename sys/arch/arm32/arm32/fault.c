@@ -1,4 +1,4 @@
-/* $NetBSD: fault.c,v 1.1 1996/01/31 23:15:51 mark Exp $ */
+/* $NetBSD: fault.c,v 1.2 1996/02/05 17:31:33 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -43,7 +43,7 @@
  * Created      : 28/11/94
  * Last updated : 28/08/95
  *
- *    $Id: fault.c,v 1.1 1996/01/31 23:15:51 mark Exp $
+ *    $Id: fault.c,v 1.2 1996/02/05 17:31:33 mark Exp $
  */
 
 /*
@@ -330,8 +330,6 @@ data_abort_handler(frame)
 		int count;
 		int *registers = &frame->tf_r0;
         
-/* REGISTER CORRECTION IS REQUIRED FOR THESE INSTRUCTIONS */
-
 #ifdef DEBUG_FAULT_CORRECTION
 		if (pmap_debug_level >= 0) {
 			printf("LDM/STM\n");
@@ -380,24 +378,38 @@ data_abort_handler(frame)
 	
 /* REGISTER CORRECTION IS REQUIRED FOR THESE INSTRUCTIONS */
 
-		printf("LDC/STC\n");
-		disassemble(fault_pc);        
+#ifdef DEBUG_FAULT_CORRECTION
+		if (pmap_debug_level >= 0) {
+			printf("LDC/STC\n");
+			disassemble(fault_pc);
+		}
+#endif
 
-/* Test for write back */
+/* Only need to fix registers if write back is turned on */
 
 		if ((fault_instruction & (1 << 21)) != 0) {
 			base = (fault_instruction >> 16) & 0x0f;
+			if (base == 13 && (frame->tf_spsr & PSR_MODE) == PSR_SVC32_MODE) {
+				disassemble(fault_pc);
+				panic("Abort handler cannot fix this :-(\n");
+			}
+			if (base == 15) {
+				disassemble(fault_pc);
+				panic("Abort handler cannot fix this :-(\n");
+			}
+
 			offset = (fault_instruction & 0xff) << 2;
-			printf("r%d=%08x\n", base, registers[base]);
+			if (pmap_debug_level >= 0)
+				printf("r%d=%08x\n", base, registers[base]);
 			if ((fault_instruction & (1 << 23)) != 0)
 				offset = -offset;
 			registers[base] += offset;
-			printf("r%d=%08x\n", base, registers[base]);
-			panic("LDC/STC not fixed\n");
+			if (pmap_debug_level >= 0)
+				printf("r%d=%08x\n", base, registers[base]);
 		}
 	} else if ((fault_instruction & 0x0e000000) == 0x0c000000) {
 		disassemble(fault_pc);
-		panic("How did this happen ?\n");
+		panic("How did this happen ...\nWe have faulted on a non data transfer instruction");
 	}
 
 /*
