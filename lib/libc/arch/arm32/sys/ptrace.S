@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.S,v 1.4 1997/10/06 00:07:15 mark Exp $ */
+/*	$NetBSD: ptrace.S,v 1.5 2000/01/24 21:57:40 kleink Exp $ */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,6 +38,13 @@
 #include "SYS.h"
 
 ENTRY(ptrace)
+#ifdef _REENTRANT
+	stmfd	sp!, {r0, r1, lr}
+	bl	_C_LABEL(__errno)
+	mov	r1, #0x00000000
+	str	r1, [r0]
+	ldmfd	sp!, {r0, r1, lr}
+#else
 	stmfd	sp!, {r0, r1}
 #ifdef PIC
 	/* Setup the GOT */
@@ -48,20 +55,23 @@ L1:
 	ldr	r1, [r0, r1]
 #else
 	ldr	r1, Lerrno
-#endif
+#endif /* PIC */
 	mov	r0, #0x00000000
 	str	r0, [r1]
 	ldmfd	sp!, {r0, r1}
+#endif /* _REENTRANT */
 
 	swi	SYS_ptrace
 	bcs	cerror
-	mov	r15, r14
+	mov	pc, lr
 
+#ifndef _REENTRANT
 #ifdef PIC
 	.align	0
 got:
 	.word	__GLOBAL_OFFSET_TABLE_ + (. - (L1+4))
-#endif
+#endif /* PIC */
 
 Lerrno:
 	.word	_errno
+#endif /* !_REENTRANT */

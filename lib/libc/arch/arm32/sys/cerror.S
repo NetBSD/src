@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.5 1997/10/17 19:57:17 mark Exp $	*/
+/*	$NetBSD: cerror.S,v 1.6 2000/01/24 21:57:39 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,6 +38,15 @@
 #include "SYS.h"
 
 ASENTRY(cerror)
+#ifdef _REENTRANT
+	stmfd	sp!, {r4, lr}
+	mov	r4, r0
+	bl	_C_LABEL(__errno)
+	str	r4, [r0]
+	mvn	r0, #0x00000000
+	mvn	r1, #0x00000000
+	ldmfd	sp!, {r4, pc}
+#else
 #ifdef PIC
 	/* Setup the GOT */
 	ldr	r3, got
@@ -47,19 +56,20 @@ L1:
 	ldr	r1, [r3, r1]
 #else
 	ldr	r1, Lerrno
-#endif
+#endif /* PIC */
 	str	r0, [r1]
 	mvn	r0, #0x00000000
 	mvn	r1, #0x00000000
-	mov	r15, r14
+	mov	pc, lr
 
 #ifdef PIC
 	.align	0
 got:
 	.word	__GLOBAL_OFFSET_TABLE_ + (. - (L1+4))
-#endif
+#endif /* PIC */
 
 	.globl	_errno
 
 Lerrno:
 	.word	_errno
+#endif /* _REENTRANT */
