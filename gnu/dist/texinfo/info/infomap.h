@@ -1,9 +1,9 @@
-/* infomap.h -- Description of a keymap in Info and related functions. */
+/*	$NetBSD: infomap.h,v 1.1.1.2 2003/01/17 14:54:32 wiz Exp $	*/
 
-/* This file is part of GNU Info, a program for reading online documentation
-   stored in Info format.
+/* infomap.h -- description of a keymap in Info and related functions.
+   Id: infomap.h,v 1.1 2002/08/25 23:38:38 karl Exp
 
-   Copyright (C) 1993 Free Software Foundation, Inc.
+   Copyright (C) 1993, 2001 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -52,9 +52,10 @@
    FUNCTION is the address of a function to run, or the
    address of a keymap to indirect through.
    TYPE says which kind of thing FUNCTION is. */
-typedef struct {
+typedef struct keymap_entry
+{
   char type;
-  VFunction *function;
+  InfoCommand *function;
 } KEYMAP_ENTRY;
 
 typedef KEYMAP_ENTRY *Keymap;

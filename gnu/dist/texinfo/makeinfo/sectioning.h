@@ -1,5 +1,7 @@
+/*	$NetBSD: sectioning.h,v 1.1.1.2 2003/01/17 14:54:36 wiz Exp $	*/
+
 /* sectioning.h -- all related stuff @chapter, @section... @contents
-   $Id: sectioning.h,v 1.1.1.1 2001/07/25 16:21:03 assar Exp $
+   Id: sectioning.h,v 1.1 2002/08/25 23:38:39 karl Exp
 
    Copyright (C) 1999 Free Software Foundation, Inc.
 

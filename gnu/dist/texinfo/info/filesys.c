@@ -1,7 +1,9 @@
-/* filesys.c -- filesystem specific functions.
-   $Id: filesys.c,v 1.1.1.2 2001/07/25 16:20:46 assar Exp $
+/*	$NetBSD: filesys.c,v 1.1.1.3 2003/01/17 14:54:31 wiz Exp $	*/
 
-   Copyright (C) 1993, 97, 98 Free Software Foundation, Inc.
+/* filesys.c -- filesystem specific functions.
+   Id: filesys.c,v 1.1 2002/08/25 23:38:38 karl Exp
+
+   Copyright (C) 1993, 1997, 1998, 2000, 2002 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -162,6 +164,11 @@ info_file_in_path (filename, path)
   struct stat finfo;
   char *temp_dirname;
   int statable, dirname_index;
+
+  /* Reject ridiculous cases up front, to prevent infinite recursion
+     later on.  E.g., someone might say "info '(.)foo'"...  */
+  if (!*filename || STREQ (filename, ".") || STREQ (filename, ".."))
+    return NULL;
 
   dirname_index = 0;
 
@@ -505,6 +512,7 @@ filesys_read_info_file (pathname, filesize, finfo, is_compressed)
 	 want to waste storage.  */
       if (*filesize < st_size)
 	contents = (char *)xrealloc (contents, 1 + *filesize);
+      contents[*filesize] = '\0';
 
       return (contents);
     }
@@ -557,7 +565,7 @@ filesys_read_compressed (pathname, filesize, finfo)
   /* Read chunks from this file until there are none left to read. */
   if (stream)
     {
-      int offset, size;
+      long offset, size;
       char *chunk;
     
       offset = size = 0;
@@ -591,6 +599,7 @@ filesys_read_compressed (pathname, filesize, finfo)
 	{
 	  *filesize = convert_eols (contents, offset);
 	  contents = (char *)xrealloc (contents, 1 + *filesize);
+	  contents[*filesize] = '\0';
 	}
     }
   else
@@ -689,25 +698,34 @@ filesys_error_string (filename, error_num)
 }
 
 
-/* Check for FILENAME eq "dir" first, then all the compression
-   suffixes.  */
+/* Check for "dir" with all the possible info and compression suffixes,
+   in combination.  */
 
 int
 is_dir_name (filename)
     char *filename;
 {
   unsigned i;
-  if (strcasecmp (filename, "dir") == 0)
-    return 1;
-  
-  for (i = 0; compress_suffixes[i].suffix; i++)
+
+  for (i = 0; info_suffixes[i]; i++)
     {
-      char dir_compressed[50]; /* can be short */
-      strcpy (dir_compressed, "dir"); 
-      strcat (dir_compressed, compress_suffixes[i].suffix);
-      if (strcasecmp (filename, dir_compressed) == 0)
+      unsigned c;
+      char trydir[50];
+      strcpy (trydir, "dir");
+      strcat (trydir, info_suffixes[i]);
+      
+      if (strcasecmp (filename, trydir) == 0)
         return 1;
-    }
-  
+
+      for (c = 0; compress_suffixes[c].suffix; c++)
+        {
+          char dir_compressed[50]; /* can be short */
+          strcpy (dir_compressed, trydir); 
+          strcat (dir_compressed, compress_suffixes[c].suffix);
+          if (strcasecmp (filename, dir_compressed) == 0)
+            return 1;
+        }
+    }  
+
   return 0;
 }
