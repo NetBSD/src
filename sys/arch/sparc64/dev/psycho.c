@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.59 2003/04/01 16:34:58 thorpej Exp $	*/
+/*	$NetBSD: psycho.c,v 1.60 2003/04/21 12:14:20 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo E. Horvath
@@ -64,6 +64,7 @@ int psycho_debug = 0x0;
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
+#include <dev/sysmon/sysmon_taskq.h>
 
 #include <sparc64/dev/iommureg.h>
 #include <sparc64/dev/iommuvar.h>
@@ -124,6 +125,10 @@ void psycho_dmamem_unmap __P((bus_dma_tag_t, caddr_t, size_t));
 
 /* base pci_chipset */
 extern struct sparc_pci_chipset _sparc_pci_chipset;
+
+/* power button handlers */
+static void psycho_register_power_button(struct psycho_softc *sc);
+static void psycho_power_button_pressed(void *arg);
 
 /*
  * autoconfiguration
@@ -461,6 +466,7 @@ found:
 		psycho_set_intr(sc, 15, psycho_powerfail,
 			&sc->sc_regs->power_int_map, 
 			&sc->sc_regs->power_clr_int);
+		psycho_register_power_button(sc);
 		psycho_set_intr(sc, 1, psycho_wakeup,
 			&sc->sc_regs->pwrmgt_int_map, 
 			&sc->sc_regs->pwrmgt_clr_int);
@@ -619,6 +625,38 @@ psycho_set_intr(sc, ipl, handler, mapper, clearer)
 	ih->ih_number = INTVEC(*(ih->ih_map));
 	intr_establish(ipl, ih);
 	*(ih->ih_map) |= INTMAP_V;
+}
+
+/*
+ * power button handlers
+ */
+static void
+psycho_register_power_button(struct psycho_softc *sc)
+{
+	sysmon_task_queue_init();
+
+	sc->sc_powerpressed = 0;
+	sc->sc_smcontext = malloc(sizeof(struct sysmon_pswitch), M_DEVBUF, 0);
+	if (!sc->sc_smcontext) {
+		printf("%s: could not allocate power button context\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+	memset(sc->sc_smcontext, 0, sizeof(struct sysmon_pswitch));
+	sc->sc_smcontext->smpsw_name = sc->sc_dev.dv_xname;
+	sc->sc_smcontext->smpsw_type = PSWITCH_TYPE_POWER;
+	if (sysmon_pswitch_register(sc->sc_smcontext) != 0)
+		printf("%s: unable to register power button with sysmon\n", 
+		    sc->sc_dev.dv_xname);
+}
+
+static void
+psycho_power_button_pressed(void *arg)
+{
+	struct psycho_softc *sc = arg;
+
+	sysmon_pswitch_event(sc->sc_smcontext, PSWITCH_EVENT_PRESSED);
+	sc->sc_powerpressed = 0;
 }
 
 /*
@@ -841,18 +879,24 @@ psycho_bus_b(arg)
 		(long long)regs->psy_pcictl[0].pci_afsr);
 	return (1);
 }
+
 static int 
 psycho_powerfail(arg)
 	void *arg;
 {
+	struct psycho_softc *sc = (struct psycho_softc *)arg;
 
 	/*
-	 * We lost power.  Try to shut down NOW.
+	 * We lost power. Queue a callback with thread context to
+	 * handle all the real work.
 	 */
-	printf("Power Failure Detected: Shutting down NOW.\n");
-	cpu_reboot(RB_POWERDOWN|RB_HALT, NULL);
+	if (sc->sc_powerpressed == 0 && sc->sc_smcontext != NULL) {
+		sc->sc_powerpressed = 1;
+		sysmon_task_queue_sched(0, psycho_power_button_pressed, sc);
+	}
 	return (1);
 }
+
 static 
 int psycho_wakeup(arg)
 	void *arg;
