@@ -33,7 +33,7 @@
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)sbrk.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: sbrk.S,v 1.6 2000/06/28 19:20:18 matt Exp $"
+	.asciz "$NetBSD: sbrk.S,v 1.7 2000/06/30 23:46:36 matt Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -64,4 +64,4 @@ ENTRY(_sbrk, 0)
 	addl2	4(r3),CURBRK
 	ret
 err:
-	jmp	CERROR
+	jmp	CERROR+2

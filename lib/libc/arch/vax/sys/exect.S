@@ -33,7 +33,7 @@
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)exect.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: exect.S,v 1.3 2000/06/28 19:20:18 matt Exp $"
+	.asciz "$NetBSD: exect.S,v 1.4 2000/06/30 23:46:36 matt Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -42,4 +42,4 @@
 ENTRY(exect, 0)
 	bispsw	$PSL_T
 	chmk	$ SYS_execve
-	jmp	CERROR		# exect(file, argv, env)
+	jmp	CERROR+2		# exect(file, argv, env)
