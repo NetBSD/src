@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.19 1997/02/01 00:39:14 cgd Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.20 1997/02/01 02:28:48 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -826,6 +826,8 @@ getstr(cp, size)
 	char *lp;
 	int c, len;
 
+	cnpollc(1);
+
 	lp = cp;
 	len = 0;
 	for (;;) {
@@ -835,6 +837,7 @@ getstr(cp, size)
 		case '\r':
 			printf("\n");
 			*lp++ = '\0';
+			cnpollc(0);
 			return (len);
 		case '\b':
 		case '\177':
