@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.615.2.10 2004/11/14 08:15:43 skrll Exp $
+#	$NetBSD: files,v 1.615.2.11 2004/11/29 07:24:06 skrll Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -25,7 +25,11 @@ defparam			HZ
 defparam			DEFCORENAME
 defflag	opt_pipe.h		PIPE_SOCKETPAIR PIPE_NODIRECT
 
-defflag	opt_bufq.h		NEW_BUFQ_STRATEGY
+#defflag				BUFQ_DISKSORT
+#defflag				BUFQ_FCFS
+defflag				BUFQ_PRIOCSCAN
+defflag				BUFQ_READPRIO
+defflag				NEW_BUFQ_STRATEGY	# same as BUFQ_READPRIO
 
 defparam			SOMAXKVA
 defflag	opt_sock_counters.h	SOSEND_COUNTERS
@@ -1165,10 +1169,10 @@ file	dev/rnd.c			rnd			needs-flag
 file	dev/rndpool.c			rnd			needs-flag
 file	dev/sequencer.c			sequencer		needs-flag
 file	dev/vnd.c			vnd			needs-flag
-file	kern/bufq_disksort.c
-file	kern/bufq_fcfs.c
-file	kern/bufq_priocscan.c
-file	kern/bufq_readprio.c
+file	kern/bufq_disksort.c		#bufq_disksort
+file	kern/bufq_fcfs.c		#bufq_fcfs
+file	kern/bufq_priocscan.c		bufq_priocscan
+file	kern/bufq_readprio.c		bufq_readprio | new_bufq_strategy
 file	kern/core_elf32.c		exec_elf32
 file	kern/core_elf64.c		exec_elf64
 file	kern/core_netbsd.c

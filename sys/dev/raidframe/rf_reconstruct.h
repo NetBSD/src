@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.h,v 1.9.6.3 2004/09/21 13:32:54 skrll Exp $	*/
+/*	$NetBSD: rf_reconstruct.h,v 1.9.6.4 2004/11/29 07:24:32 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -165,10 +165,6 @@ struct RF_ReconCtrl_s {
 
 	/* performance monitoring */
 	struct timeval starttime;	/* recon start time */
-
-	void    (*continueFunc) (void *);	/* function to call when io
-						 * returns */
-	void   *continueArg;	/* argument for Func */
 };
 /* the default priority for reconstruction accesses */
 #define RF_IO_RECON_PRIORITY RF_IO_LOW_PRIORITY

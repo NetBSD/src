@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_rpcb_pxy.c,v 1.1.2.2 2004/10/19 15:57:37 skrll Exp $	*/
+/*	$NetBSD: ip_rpcb_pxy.c,v 1.1.2.3 2004/11/29 07:24:33 skrll Exp $	*/
 
 /*
  * Copyright (C) 2002-2003 by Ryan Beasley <ryanb@goddamnbastard.org>
@@ -684,11 +684,11 @@ ippr_rpcb_getuaddr(rm, xu, p)
 	 * Expected format: a.b.c.d.e.f where [a-d] correspond to bytes of
 	 * an IP address and [ef] are the bytes of a L4 port.
 	 */
-	if (!(isdigit(uastr[0]) && isdigit(uastr[l-1])))
+	if (!(ISDIGIT(uastr[0]) && ISDIGIT(uastr[l-1])))
 		return(-1);
 	b = uastr;
 	for (c = &uastr[1], d = 0, dd = 0; c < &uastr[l-1]; c++) {
-		if (isdigit(*c)) {
+		if (ISDIGIT(*c)) {
 			dd = 0;
 			continue;
 		}
@@ -742,7 +742,7 @@ ippr_rpcb_atoi(ptr)
 	register char *s = ptr, c;
 	register u_int i = 0;
 
-	while (((c = *s++) != '\0') && isdigit(c)) {
+	while (((c = *s++) != '\0') && ISDIGIT(c)) {
 		i *= 10;
 		i += c - '0';
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.64.2.3 2004/09/21 13:37:34 skrll Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.64.2.4 2004/11/29 07:25:04 skrll Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.64.2.3 2004/09/21 13:37:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.64.2.4 2004/11/29 07:25:04 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -116,7 +116,6 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.64.2.3 2004/09/21 13:37:34 skrll Exp
 #include "loop.h"
 #include "faith.h"
 #include "gif.h"
-#include "bpfilter.h"
 
 #if NGIF > 0
 #include <netinet6/in6_gif.h>

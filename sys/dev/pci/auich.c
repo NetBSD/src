@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.39.2.8 2004/11/14 08:15:43 skrll Exp $	*/
+/*	$NetBSD: auich.c,v 1.39.2.9 2004/11/29 07:24:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.39.2.8 2004/11/14 08:15:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.39.2.9 2004/11/29 07:24:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,9 +175,13 @@ struct auich_softc {
 	struct device *sc_audiodev;
 	audio_device_t sc_audev;
 
+	pci_chipset_tag_t sc_pc;
+	pcitag_t sc_pt;
 	bus_space_tag_t iot;
 	bus_space_handle_t mix_ioh;
+	bus_size_t mix_size;
 	bus_space_handle_t aud_ioh;
+	bus_size_t aud_size;
 	bus_dma_tag_t dmat;
 
 	struct ac97_codec_if *codec_if;
@@ -202,16 +206,11 @@ struct auich_softc {
 
 	struct auich_dma *sc_dmas;
 
-#ifdef DIAGNOSTIC
-	pci_chipset_tag_t sc_pc;
-	pcitag_t sc_pt;
-#endif
 	/* SiS 7012 hack */
 	int  sc_sample_shift;
 	int  sc_sts_reg;
 	/* 440MX workaround */
 	int  sc_dmamap_flags;
-
 
 	/* Power Management */
 	void *sc_powerhook;
@@ -221,6 +220,10 @@ struct auich_softc {
 	struct sysctllog *sc_log;
 	uint32_t sc_ac97_clock;
 	int sc_ac97_clock_mib;
+
+#define AUICH_NFORMATS	3
+	struct audio_format sc_formats[AUICH_NFORMATS];
+	struct audio_encoding_set *sc_encodings;
 };
 
 /* Debug */
@@ -234,47 +237,53 @@ int auich_debug = 0xfffe;
 #define	DPRINTF(x,y)	/* nothing */
 #endif
 
-int	auich_match(struct device *, struct cfdata *, void *);
-void	auich_attach(struct device *, struct device *, void *);
-int	auich_intr(void *);
+static int	auich_match(struct device *, struct cfdata *, void *);
+static void	auich_attach(struct device *, struct device *, void *);
+static int	auich_detach(struct device *, int);
+static int	auich_activate(struct device *, enum devact);
+static int	auich_intr(void *);
 
 CFATTACH_DECL(auich, sizeof(struct auich_softc),
-    auich_match, auich_attach, NULL, NULL);
+    auich_match, auich_attach, auich_detach, auich_activate);
 
-int	auich_open(void *, int);
-void	auich_close(void *);
-int	auich_query_encoding(void *, struct audio_encoding *);
-int	auich_set_params(void *, int, int, struct audio_params *,
-	    struct audio_params *);
-int	auich_round_blocksize(void *, int);
-int	auich_halt_output(void *);
-int	auich_halt_input(void *);
-int	auich_getdev(void *, struct audio_device *);
-int	auich_set_port(void *, mixer_ctrl_t *);
-int	auich_get_port(void *, mixer_ctrl_t *);
-int	auich_query_devinfo(void *, mixer_devinfo_t *);
-void	*auich_allocm(void *, int, size_t, struct malloc_type *, int);
-void	auich_freem(void *, void *, struct malloc_type *);
-size_t	auich_round_buffersize(void *, int, size_t);
-paddr_t	auich_mappage(void *, void *, off_t, int);
-int	auich_get_props(void *);
-int	auich_trigger_output(void *, void *, void *, int, void (*)(void *),
-	    void *, struct audio_params *);
-int	auich_trigger_input(void *, void *, void *, int, void (*)(void *),
-	    void *, struct audio_params *);
+static int	auich_open(void *, int);
+static void	auich_close(void *);
+static int	auich_query_encoding(void *, struct audio_encoding *);
+static int	auich_set_params(void *, int, int, struct audio_params *,
+		    struct audio_params *);
+static int	auich_round_blocksize(void *, int);
+static int	auich_halt_output(void *);
+static int	auich_halt_input(void *);
+static int	auich_getdev(void *, struct audio_device *);
+static int	auich_set_port(void *, mixer_ctrl_t *);
+static int	auich_get_port(void *, mixer_ctrl_t *);
+static int	auich_query_devinfo(void *, mixer_devinfo_t *);
+static void	*auich_allocm(void *, int, size_t, struct malloc_type *, int);
+static void	auich_freem(void *, void *, struct malloc_type *);
+static size_t	auich_round_buffersize(void *, int, size_t);
+static paddr_t	auich_mappage(void *, void *, off_t, int);
+static int	auich_get_props(void *);
+static int	auich_trigger_output(void *, void *, void *, int,
+		    void (*)(void *), void *, struct audio_params *);
+static int	auich_trigger_input(void *, void *, void *, int,
+		    void (*)(void *), void *, struct audio_params *);
 
-int	auich_alloc_cdata(struct auich_softc *);
+static int	auich_alloc_cdata(struct auich_softc *);
 
-int	auich_allocmem(struct auich_softc *, size_t, size_t,
-	    struct auich_dma *);
-int	auich_freemem(struct auich_softc *, struct auich_dma *);
+static int	auich_allocmem(struct auich_softc *, size_t, size_t,
+		    struct auich_dma *);
+static int	auich_freemem(struct auich_softc *, struct auich_dma *);
 
-void	auich_powerhook(int, void *);
-int	auich_set_rate(struct auich_softc *, int, u_long);
+static void	auich_powerhook(int, void *);
+static int	auich_set_rate(struct auich_softc *, int, u_long);
 static int	auich_sysctl_verify(SYSCTLFN_ARGS);
-void	auich_finish_attach(struct device *);
-void	auich_calibrate(struct auich_softc *);
+static void	auich_finish_attach(struct device *);
+static void	auich_calibrate(struct auich_softc *);
 
+static int	auich_attach_codec(void *, struct ac97_codec_if *);
+static int	auich_read_codec(void *, u_int8_t, u_int16_t *);
+static int	auich_write_codec(void *, u_int8_t, u_int16_t);
+static int	auich_reset_codec(void *);
 
 const struct audio_hw_if auich_hw_if = {
 	auich_open,
@@ -306,10 +315,16 @@ const struct audio_hw_if auich_hw_if = {
 	NULL,			/* dev_ioctl */
 };
 
-int	auich_attach_codec(void *, struct ac97_codec_if *);
-int	auich_read_codec(void *, u_int8_t, u_int16_t *);
-int	auich_write_codec(void *, u_int8_t, u_int16_t);
-int	auich_reset_codec(void *);
+#define AUICH_FORMATS_4CH	1
+#define AUICH_FORMATS_6CH	2
+static const struct audio_format auich_formats[AUICH_NFORMATS] = {
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
+	 2, AUFMT_STEREO, 0, {8000, 48000}},
+	{NULL, AUMODE_PLAY, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
+	 4, AUFMT_SURROUND4, 0, {8000, 48000}},
+	{NULL, AUMODE_PLAY, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
+	 6, AUFMT_DOLBY_5_1, 0, {8000, 48000}},
+};
 
 #define PCI_ID_CODE0(v, p)	PCI_ID_CODE(PCI_VENDOR_##v, PCI_PRODUCT_##v##_##p)
 #define PCIID_ICH		PCI_ID_CODE0(INTEL, 82801AA_ACA)
@@ -334,18 +349,18 @@ static const struct auich_devtype {
 	const char	*shortname;	/* must be less than 11 characters */
 } auich_devices[] = {
 	{ PCIID_ICH,	"i82801AA (ICH) AC-97 Audio",	"ICH" },
-	{ PCIID_ICH0, 	"i82801AB (ICH0) AC-97 Audio",	"ICH0" },
-	{ PCIID_ICH2, 	"i82801BA (ICH2) AC-97 Audio",	"ICH2" },
-	{ PCIID_440MX, 	"i82440MX AC-97 Audio",		"440MX" },
-	{ PCIID_ICH3, 	"i82801CA (ICH3) AC-97 Audio",	"ICH3" },
-	{ PCIID_ICH4,	"i82801DB/DBM (ICH4/ICH4M) AC-97 Audio",	"ICH4" },
-	{ PCIID_ICH5, 	"i82801EB (ICH5) AC-97 Audio",	"ICH5" },
-	{ PCIID_ICH6, 	"i82801FB (ICH6) AC-97 Audio",	"ICH6" },
-	{ PCIID_SIS7012, "SiS 7012 AC-97 Audio",		"SiS7012" },
+	{ PCIID_ICH0,	"i82801AB (ICH0) AC-97 Audio",	"ICH0" },
+	{ PCIID_ICH2,	"i82801BA (ICH2) AC-97 Audio",	"ICH2" },
+	{ PCIID_440MX,	"i82440MX AC-97 Audio",		"440MX" },
+	{ PCIID_ICH3,	"i82801CA (ICH3) AC-97 Audio",	"ICH3" },
+	{ PCIID_ICH4,	"i82801DB/DBM (ICH4/ICH4M) AC-97 Audio", "ICH4" },
+	{ PCIID_ICH5,	"i82801EB (ICH5) AC-97 Audio",	"ICH5" },
+	{ PCIID_ICH6,	"i82801FB (ICH6) AC-97 Audio",	"ICH6" },
+	{ PCIID_SIS7012, "SiS 7012 AC-97 Audio",	"SiS7012" },
 	{ PCIID_NFORCE,	"nForce MCP AC-97 Audio",	"nForce" },
 	{ PCIID_NFORCE2, "nForce2 MCP-T AC-97 Audio",	"nForce2" },
 	{ PCIID_NFORCE3, "nForce3 MCP-T AC-97 Audio",	"nForce3" },
-	{ PCIID_NFORCE3_250,	"nForce3 250 MCP-T AC-97 Audio",	"nForce3" },
+	{ PCIID_NFORCE3_250, "nForce3 250 MCP-T AC-97 Audio", "nForce3" },
 	{ PCIID_AMD768,	"AMD768 AC-97 Audio",		"AMD768" },
 	{ PCIID_AMD8111,"AMD8111 AC-97 Audio",		"AMD8111" },
 	{ 0,		NULL,				NULL },
@@ -364,7 +379,7 @@ auich_lookup(struct pci_attach_args *pa)
 	return (NULL);
 }
 
-int
+static int
 auich_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -375,18 +390,17 @@ auich_match(struct device *parent, struct cfdata *match, void *aux)
 	return (0);
 }
 
-void
+static void
 auich_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct auich_softc *sc = (struct auich_softc *)self;
 	struct pci_attach_args *pa = aux;
 	pci_intr_handle_t ih;
-	bus_size_t mix_size, aud_size;
 	pcireg_t v;
 	const char *intrstr;
 	const struct auich_devtype *d;
 	struct sysctlnode *node;
-	int err, node_mib;
+	int err, node_mib, i;
 
 	aprint_naive(": Audio controller\n");
 
@@ -394,10 +408,8 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	if (d == NULL)
 		panic("auich_attach: impossible");
 
-#ifdef DIAGNOSTIC
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pt = pa->pa_tag;
-#endif
 
 	aprint_normal(": %s\n", d->name);
 
@@ -406,26 +418,26 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 		 * Use native mode for ICH4/ICH5/ICH6
 		 */
 		if (pci_mapreg_map(pa, ICH_MMBAR, PCI_MAPREG_TYPE_MEM, 0,
-				   &sc->iot, &sc->mix_ioh, NULL, &mix_size)) {
+				   &sc->iot, &sc->mix_ioh, NULL, &sc->mix_size)) {
 			v = pci_conf_read(pa->pa_pc, pa->pa_tag, ICH_CFG);
 			pci_conf_write(pa->pa_pc, pa->pa_tag, ICH_CFG,
 				       v | ICH_CFG_IOSE);
 			if (pci_mapreg_map(pa, ICH_NAMBAR, PCI_MAPREG_TYPE_IO,
 					   0, &sc->iot, &sc->mix_ioh, NULL,
-					   &mix_size)) {
+					   &sc->mix_size)) {
 				aprint_error("%s: can't map codec i/o space\n",
 					     sc->sc_dev.dv_xname);
 				return;
 			}
 		}
 		if (pci_mapreg_map(pa, ICH_MBBAR, PCI_MAPREG_TYPE_MEM, 0,
-				   &sc->iot, &sc->aud_ioh, NULL, &aud_size)) {
+				   &sc->iot, &sc->aud_ioh, NULL, &sc->aud_size)) {
 			v = pci_conf_read(pa->pa_pc, pa->pa_tag, ICH_CFG);
 			pci_conf_write(pa->pa_pc, pa->pa_tag, ICH_CFG,
 				       v | ICH_CFG_IOSE);
 			if (pci_mapreg_map(pa, ICH_NABMBAR, PCI_MAPREG_TYPE_IO,
 					   0, &sc->iot, &sc->aud_ioh, NULL,
-					   &aud_size)) {
+					   &sc->aud_size)) {
 				aprint_error("%s: can't map device i/o space\n",
 					     sc->sc_dev.dv_xname);
 				return;
@@ -433,13 +445,13 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 		}
 	} else {
 		if (pci_mapreg_map(pa, ICH_NAMBAR, PCI_MAPREG_TYPE_IO, 0,
-				   &sc->iot, &sc->mix_ioh, NULL, &mix_size)) {
+				   &sc->iot, &sc->mix_ioh, NULL, &sc->mix_size)) {
 			aprint_error("%s: can't map codec i/o space\n",
 				     sc->sc_dev.dv_xname);
 			return;
 		}
 		if (pci_mapreg_map(pa, ICH_NABMBAR, PCI_MAPREG_TYPE_IO, 0,
-				   &sc->iot, &sc->aud_ioh, NULL, &aud_size)) {
+				   &sc->iot, &sc->aud_ioh, NULL, &sc->aud_size)) {
 			aprint_error("%s: can't map device i/o space\n",
 				     sc->sc_dev.dv_xname);
 			return;
@@ -507,6 +519,24 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	if (ac97_attach(&sc->host_if) != 0)
 		return;
 
+	/* setup audio_format */
+	memcpy(sc->sc_formats, auich_formats, sizeof(auich_formats));
+	if (!AC97_IS_4CH(sc->codec_if))
+		AUFMT_INVALIDATE(&sc->sc_formats[AUICH_FORMATS_4CH]);
+	if (!AC97_IS_6CH(sc->codec_if))
+		AUFMT_INVALIDATE(&sc->sc_formats[AUICH_FORMATS_6CH]);
+	if (AC97_IS_FIXED_RATE(sc->codec_if)) {
+		for (i = 0; i < AUICH_NFORMATS; i++) {
+			sc->sc_formats[i].frequency_type = 1;
+			sc->sc_formats[i].frequency[0] = 48000;
+		}
+	}
+
+	if (0 != auconv_create_encodings(sc->sc_formats, AUICH_NFORMATS,
+					 &sc->sc_encodings)) {
+		return;
+	}
+
 	/* Watch for power change */
 	sc->sc_suspend = PWR_RESUME;
 	sc->sc_powerhook = powerhook_establish(auich_powerhook, sc);
@@ -545,23 +575,55 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	return;			/* failure of sysctl is not fatal. */
 }
 
-#if 0
-int
+static int
+auich_activate(struct device *self, enum devact act)
+{
+	struct auich_softc *sc;
+	int ret;
+
+	sc = (struct auich_softc *)self;
+	ret = 0;
+	switch (act) {
+	case DVACT_ACTIVATE:
+		return EOPNOTSUPP;
+	case DVACT_DEACTIVATE:
+		if (sc->sc_audiodev != NULL)
+			ret = config_deactivate(sc->sc_audiodev);
+		return ret;
+	}
+	return EOPNOTSUPP;
+}
+
+static int
 auich_detach(struct device *self, int flags)
 {
 	struct auich_softc *sc;
 
 	sc = (struct auich_softc *)self;
-	/* sysctl */
-	sysctl_teardown(&sc->sc_log);
+
 	/* audio */
 	if (sc->sc_audiodev != NULL)
 		config_detach(sc->sc_audiodev, flags);
-	/* XXX ac97 */
-	/* XXX memory */
+
+	/* sysctl */
+	sysctl_teardown(&sc->sc_log);
+
+	/* audio_encoding_set */
+	auconv_delete_encodings(sc->sc_encodings);
+
+	/* ac97 */
+	if (sc->codec_if != NULL)
+		sc->codec_if->vtbl->detach(sc->codec_if);
+
+	/* PCI */
+	if (sc->sc_ih != NULL)
+		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
+	if (sc->mix_size != 0)
+		bus_space_unmap(sc->iot, sc->mix_ioh, sc->mix_size);
+	if (sc->aud_size != 0)
+		bus_space_unmap(sc->iot, sc->aud_ioh, sc->aud_size);
 	return 0;
 }
-#endif
 
 static int
 auich_sysctl_verify(SYSCTLFN_ARGS)
@@ -587,7 +649,7 @@ auich_sysctl_verify(SYSCTLFN_ARGS)
 	return 0;
 }
 
-void
+static void
 auich_finish_attach(struct device *self)
 {
 	struct auich_softc *sc = (void *)self;
@@ -599,7 +661,7 @@ auich_finish_attach(struct device *self)
 }
 
 #define ICH_CODECIO_INTERVAL	10
-int
+static int
 auich_read_codec(void *v, u_int8_t reg, u_int16_t *val)
 {
 	struct auich_softc *sc = v;
@@ -632,7 +694,7 @@ auich_read_codec(void *v, u_int8_t reg, u_int16_t *val)
 	}
 }
 
-int
+static int
 auich_write_codec(void *v, u_int8_t reg, u_int16_t val)
 {
 	struct auich_softc *sc = v;
@@ -654,7 +716,7 @@ auich_write_codec(void *v, u_int8_t reg, u_int16_t val)
 	}
 }
 
-int
+static int
 auich_attach_codec(void *v, struct ac97_codec_if *cif)
 {
 	struct auich_softc *sc = v;
@@ -663,7 +725,7 @@ auich_attach_codec(void *v, struct ac97_codec_if *cif)
 	return 0;
 }
 
-int
+static int
 auich_reset_codec(void *v)
 {
 	struct auich_softc *sc = v;
@@ -696,54 +758,27 @@ auich_reset_codec(void *v)
 	return 0;
 }
 
-int
+static int
 auich_open(void *v, int flags)
 {
 	return 0;
 }
 
-void
+static void
 auich_close(void *v)
 {
 }
 
-int
+static int
 auich_query_encoding(void *v, struct audio_encoding *aep)
 {
-	static const struct auich_encoding {
-		const char *name;
-		int encoding, precision, flags;
-	} *p, auich_encoding[] = {
-		{AudioEulinear,    AUDIO_ENCODING_ULINEAR,
-					      8, AUDIO_ENCODINGFLAG_EMULATED},
-		{AudioEmulaw,      AUDIO_ENCODING_ULAW,
-					      8, AUDIO_ENCODINGFLAG_EMULATED},
-		{AudioEalaw,       AUDIO_ENCODING_ALAW,
-					      8, AUDIO_ENCODINGFLAG_EMULATED},
-		{AudioEslinear,    AUDIO_ENCODING_SLINEAR,
-					      8, AUDIO_ENCODINGFLAG_EMULATED},
-		{AudioEslinear_le, AUDIO_ENCODING_SLINEAR_LE,
-					     16, 0},
-		{AudioEulinear_le, AUDIO_ENCODING_ULINEAR_LE,
-					     16, AUDIO_ENCODINGFLAG_EMULATED},
-		{AudioEslinear_be, AUDIO_ENCODING_SLINEAR_BE,
-					     16, AUDIO_ENCODINGFLAG_EMULATED},
-		{AudioEulinear_be, AUDIO_ENCODING_ULINEAR_BE,
-					     16, AUDIO_ENCODINGFLAG_EMULATED},
-	};
+	struct auich_softc *sc;
 
-	if (aep->index >= 8)
-		return (EINVAL);
-
-	p = &auich_encoding[aep->index];
-	strcpy(aep->name, p->name);
-	aep->encoding = p->encoding;
-	aep->precision = p->precision;
-	aep->flags = p->flags;
-	return (0);
+	sc = (struct auich_softc *)v;
+	return auconv_query_encoding(sc->sc_encodings, aep);
 }
 
-int
+static int
 auich_set_rate(struct auich_softc *sc, int mode, u_long srate)
 {
 	int ret;
@@ -769,13 +804,13 @@ auich_set_rate(struct auich_softc *sc, int mode, u_long srate)
 	return ret;
 }
 
-int
+static int
 auich_set_params(void *v, int setmode, int usemode, struct audio_params *play,
     struct audio_params *rec)
 {
 	struct auich_softc *sc = v;
 	struct audio_params *p;
-	int mode;
+	int mode, index;
 	u_int32_t control;
 
 	for (mode = AUMODE_RECORD; mode != -1;
@@ -791,127 +826,19 @@ auich_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 		    p->sample_rate > 48000)
 			return (EINVAL);
 
-		if (p->precision == 8)
-			p->factor = 2;
-		else
-			p->factor = 1;
-
-		p->sw_code = NULL;
-		/* setup hardware formats */
-		p->hw_encoding = AUDIO_ENCODING_SLINEAR_LE;
-		p->hw_precision = 16;
-
-		if (mode == AUMODE_RECORD) {
-			if (p->channels < 1 || p->channels > 2)
-				return EINVAL;
-		} else {
-			switch (p->channels) {
-			case 1:
-				break;
-			case 2:
-				break;
-			case 4:
-				if (!AC97_IS_4CH(sc->codec_if))
-					return EINVAL;
-				break;
-			case 6:
-				if (!AC97_IS_6CH(sc->codec_if))
-					return EINVAL;
-				break;
-			default:
-				return EINVAL;
-			}
-		}
-		/* If monaural is requested, aurateconv expands a monaural
-		 * stream to stereo. */
-		if (p->channels == 1)
-			p->hw_channels = 2;
-
-		switch (p->encoding) {
-		case AUDIO_ENCODING_SLINEAR_BE:
-			if (p->precision == 16) {
-				p->sw_code = swap_bytes;
-			} else {
-				if (mode == AUMODE_PLAY)
-					p->sw_code = linear8_to_linear16_le;
-				else
-					p->sw_code = linear16_to_linear8_le;
-			}
-			break;
-
-		case AUDIO_ENCODING_SLINEAR_LE:
-			if (p->precision != 16) {
-				if (mode == AUMODE_PLAY)
-					p->sw_code = linear8_to_linear16_le;
-				else
-					p->sw_code = linear16_to_linear8_le;
-			}
-			break;
-
-		case AUDIO_ENCODING_ULINEAR_BE:
-			if (p->precision == 16) {
-				if (mode == AUMODE_PLAY)
-					p->sw_code =
-					    swap_bytes_change_sign16_le;
-				else
-					p->sw_code =
-					    change_sign16_swap_bytes_le;
-			} else {
-				if (mode == AUMODE_PLAY)
-					p->sw_code =
-					    ulinear8_to_slinear16_le;
-				else
-					p->sw_code =
-					    slinear16_to_ulinear8_le;
-			}
-			break;
-
-		case AUDIO_ENCODING_ULINEAR_LE:
-			if (p->precision == 16) {
-				p->sw_code = change_sign16_le;
-			} else {
-				if (mode == AUMODE_PLAY)
-					p->sw_code =
-					    ulinear8_to_slinear16_le;
-				else
-					p->sw_code =
-					    slinear16_to_ulinear8_le;
-			}
-			break;
-
-		case AUDIO_ENCODING_ULAW:
-			if (mode == AUMODE_PLAY) {
-				p->sw_code = mulaw_to_slinear16_le;
-			} else {
-				p->sw_code = slinear16_to_mulaw_le;
-			}
-			break;
-
-		case AUDIO_ENCODING_ALAW:
-			if (mode == AUMODE_PLAY) {
-				p->sw_code = alaw_to_slinear16_le;
-			} else {
-				p->sw_code = slinear16_to_alaw_le;
-			}
-			break;
-
-		default:
-			return (EINVAL);
-		}
-
-		if (AC97_IS_FIXED_RATE(sc->codec_if)) {
-			p->hw_sample_rate = AC97_SINGLE_RATE;
-			/* If hw_sample_rate is changed, aurateconv works. */
-		} else {
-			if (auich_set_rate(sc, mode, p->sample_rate))
-				return EINVAL;
-		}
+		index = auconv_set_converter(sc->sc_formats, AUICH_NFORMATS,
+					     mode, p, TRUE);
+		if (index < 0)
+			return EINVAL;
+		if (sc->sc_formats[index].frequency_type != 1
+		    && auich_set_rate(sc, mode, p->hw_sample_rate))
+			return EINVAL;
 		if (mode == AUMODE_PLAY) {
 			control = bus_space_read_4(sc->iot, sc->aud_ioh, ICH_GCTRL);
 			control &= ~ICH_PCM246_MASK;
-			if (p->channels == 4) {
+			if (p->hw_channels == 4) {
 				control |= ICH_PCM4;
-			} else if (p->channels == 6) {
+			} else if (p->hw_channels == 6) {
 				control |= ICH_PCM6;
 			}
 			bus_space_write_4(sc->iot, sc->aud_ioh, ICH_GCTRL, control);
@@ -921,14 +848,14 @@ auich_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 	return (0);
 }
 
-int
+static int
 auich_round_blocksize(void *v, int blk)
 {
 
 	return (blk & ~0x3f);		/* keep good alignment */
 }
 
-int
+static int
 auich_halt_output(void *v)
 {
 	struct auich_softc *sc = v;
@@ -941,7 +868,7 @@ auich_halt_output(void *v)
 	return (0);
 }
 
-int
+static int
 auich_halt_input(void *v)
 {
 	struct auich_softc *sc = v;
@@ -958,7 +885,7 @@ auich_halt_input(void *v)
 	return (0);
 }
 
-int
+static int
 auich_getdev(void *v, struct audio_device *adp)
 {
 	struct auich_softc *sc = v;
@@ -967,7 +894,7 @@ auich_getdev(void *v, struct audio_device *adp)
 	return (0);
 }
 
-int
+static int
 auich_set_port(void *v, mixer_ctrl_t *cp)
 {
 	struct auich_softc *sc = v;
@@ -975,7 +902,7 @@ auich_set_port(void *v, mixer_ctrl_t *cp)
 	return (sc->codec_if->vtbl->mixer_set_port(sc->codec_if, cp));
 }
 
-int
+static int
 auich_get_port(void *v, mixer_ctrl_t *cp)
 {
 	struct auich_softc *sc = v;
@@ -983,7 +910,7 @@ auich_get_port(void *v, mixer_ctrl_t *cp)
 	return (sc->codec_if->vtbl->mixer_get_port(sc->codec_if, cp));
 }
 
-int
+static int
 auich_query_devinfo(void *v, mixer_devinfo_t *dp)
 {
 	struct auich_softc *sc = v;
@@ -991,7 +918,7 @@ auich_query_devinfo(void *v, mixer_devinfo_t *dp)
 	return (sc->codec_if->vtbl->query_devinfo(sc->codec_if, dp));
 }
 
-void *
+static void *
 auich_allocm(void *v, int direction, size_t size, struct malloc_type *pool,
     int flags)
 {
@@ -1018,7 +945,7 @@ auich_allocm(void *v, int direction, size_t size, struct malloc_type *pool,
 	return (KERNADDR(p));
 }
 
-void
+static void
 auich_freem(void *v, void *ptr, struct malloc_type *pool)
 {
 	struct auich_softc *sc = v;
@@ -1034,7 +961,7 @@ auich_freem(void *v, void *ptr, struct malloc_type *pool)
 	}
 }
 
-size_t
+static size_t
 auich_round_buffersize(void *v, int direction, size_t size)
 {
 
@@ -1044,7 +971,7 @@ auich_round_buffersize(void *v, int direction, size_t size)
 	return size;
 }
 
-paddr_t
+static paddr_t
 auich_mappage(void *v, void *mem, off_t off, int prot)
 {
 	struct auich_softc *sc = v;
@@ -1061,7 +988,7 @@ auich_mappage(void *v, void *mem, off_t off, int prot)
 	    off, prot, BUS_DMA_WAITOK));
 }
 
-int
+static int
 auich_get_props(void *v)
 {
 	struct auich_softc *sc = v;
@@ -1078,7 +1005,7 @@ auich_get_props(void *v)
 	return props;
 }
 
-int
+static int
 auich_intr(void *v)
 {
 	struct auich_softc *sc = v;
@@ -1219,7 +1146,7 @@ auich_intr(void *v)
 	return ret;
 }
 
-int
+static int
 auich_trigger_output(void *v, void *start, void *end, int blksize,
     void (*intr)(void *), void *arg, struct audio_params *param)
 {
@@ -1287,7 +1214,7 @@ auich_trigger_output(void *v, void *start, void *end, int blksize,
 	return (0);
 }
 
-int
+static int
 auich_trigger_input(v, start, end, blksize, intr, arg, param)
 	void *v;
 	void *start, *end;
@@ -1361,7 +1288,7 @@ auich_trigger_input(v, start, end, blksize, intr, arg, param)
 	return (0);
 }
 
-int
+static int
 auich_allocmem(struct auich_softc *sc, size_t size, size_t align,
     struct auich_dma *p)
 {
@@ -1399,7 +1326,7 @@ auich_allocmem(struct auich_softc *sc, size_t size, size_t align,
 	return (error);
 }
 
-int
+static int
 auich_freemem(struct auich_softc *sc, struct auich_dma *p)
 {
 
@@ -1410,7 +1337,7 @@ auich_freemem(struct auich_softc *sc, struct auich_dma *p)
 	return (0);
 }
 
-int
+static int
 auich_alloc_cdata(struct auich_softc *sc)
 {
 	bus_dma_segment_t seg;
@@ -1470,7 +1397,7 @@ auich_alloc_cdata(struct auich_softc *sc)
 	return (error);
 }
 
-void
+static void
 auich_powerhook(int why, void *addr)
 {
 	struct auich_softc *sc = (struct auich_softc *)addr;
@@ -1508,7 +1435,7 @@ auich_powerhook(int why, void *addr)
 /*
  * Calibrate card (some boards are overclocked and need scaling)
  */
-void
+static void
 auich_calibrate(struct auich_softc *sc)
 {
 	struct timeval t1, t2;

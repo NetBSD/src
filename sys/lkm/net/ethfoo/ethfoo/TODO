@@ -1,0 +1,2 @@
+o hunt a bug in kqueue code that makes ethfoo crash under heavy load
+o add comments for all the device-related functions

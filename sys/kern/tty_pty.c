@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.70.2.5 2004/11/14 08:15:57 skrll Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.70.2.6 2004/11/29 07:24:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.70.2.5 2004/11/14 08:15:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.70.2.6 2004/11/29 07:24:51 skrll Exp $");
 
 #include "opt_compat_sunos.h"
 #include "opt_ptm.h"
@@ -419,6 +419,7 @@ again:
 			}
 			error = ttysleep(tp, (caddr_t)&tp->t_canq,
 					 TTIPRI | PCATCH | PNORELOCK, ttyin, 0);
+			splx(s);
 			if (error)
 				return (error);
 			goto again;

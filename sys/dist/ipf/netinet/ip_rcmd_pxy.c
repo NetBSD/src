@@ -1,7 +1,7 @@
-/*	$NetBSD: ip_rcmd_pxy.c,v 1.1.2.2 2004/10/19 15:57:37 skrll Exp $	*/
+/*	$NetBSD: ip_rcmd_pxy.c,v 1.1.2.3 2004/11/29 07:24:33 skrll Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_rcmd_pxy.c,v 1.1.2.2 2004/10/19 15:57:37 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_rcmd_pxy.c,v 1.1.2.3 2004/11/29 07:24:33 skrll Exp $");
 
 /*
  * Copyright (C) 1998-2003 by Darren Reed
@@ -91,7 +91,7 @@ char *ptr;
 	register char *s = ptr, c;
 	register u_short i = 0;
 
-	while (((c = *s++) != '\0') && isdigit(c)) {
+	while (((c = *s++) != '\0') && ISDIGIT(c)) {
 		i *= 10;
 		i += c - '0';
 	}

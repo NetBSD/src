@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.37.2.7 2004/11/02 07:52:10 skrll Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.37.2.8 2004/11/29 07:24:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.37.2.7 2004/11/02 07:52:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.37.2.8 2004/11/29 07:24:16 skrll Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.37.2.7 2004/11/02 07:52:10 skrll Exp $")
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/queue.h>
+#include <sys/syslog.h>
 
 #include <uvm/uvm_extern.h>		/* for PAGE_SIZE */
 
@@ -276,9 +277,12 @@ struct wm_softc {
 	struct evcnt sc_ev_txipsum;	/* IP checksums comp. out-bound */
 	struct evcnt sc_ev_txtusum;	/* TCP/UDP cksums comp. out-bound */
 
-	struct evcnt sc_ev_txctx_init;	/* Tx cksum context cache initialized */
-	struct evcnt sc_ev_txctx_hit;	/* Tx cksum context cache hit */
-	struct evcnt sc_ev_txctx_miss;	/* Tx cksum context cache miss */
+			/* m_pullup() needed for Tx offload */
+	struct evcnt sc_ev_txpullup_needed;
+			/* ...failed due to no memory */
+	struct evcnt sc_ev_txpullup_nomem;
+			/* ...failed due to lack of space in first mbuf */
+	struct evcnt sc_ev_txpullup_fail;
 
 	struct evcnt sc_ev_txseg[WM_NTXSEGS]; /* Tx packets w/ N segments */
 	struct evcnt sc_ev_txdrop;	/* Tx packets dropped (too many segs) */
@@ -307,9 +311,6 @@ struct wm_softc {
 	uint32_t sc_txfifo_addr;	/* internal address of start of FIFO */
 	int	sc_txfifo_stall;	/* Tx FIFO is stalled */
 	struct callout sc_txfifo_ch;	/* Tx FIFO stall work-around timer */
-
-	uint32_t sc_txctx_ipcs;		/* cached Tx IP cksum ctx */
-	uint32_t sc_txctx_tucs;		/* cached Tx TCP/UDP cksum ctx */
 
 	bus_addr_t sc_rdt_reg;		/* offset of RDT register */
 
@@ -786,13 +787,26 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 		if (i == PCI_MAPREG_END)
 			aprint_error("%s: WARNING: unable to find I/O BAR\n",
 			    sc->sc_dev.dv_xname);
-		else if (pci_mapreg_map(pa, i, PCI_MAPREG_TYPE_IO,
+		else {
+			/*
+			 * The i8254x doesn't apparently respond when the
+			 * I/O BAR is 0, which looks somewhat like it's not
+			 * been configured.
+			 */
+			preg = pci_conf_read(pc, pa->pa_tag, i);
+			if (PCI_MAPREG_MEM_ADDR(preg) == 0) {
+				aprint_error("%s: WARNING: I/O BAR at zero.",
+				    sc->sc_dev.dv_xname);
+			} else if (pci_mapreg_map(pa, i, PCI_MAPREG_TYPE_IO,
 					0, &sc->sc_iot, &sc->sc_ioh,
-					NULL, NULL) == 0)
-			sc->sc_flags |= WM_F_IOH_VALID;
-		else
-			aprint_error("%s: WARNING: unable to map I/O space\n",
-			    sc->sc_dev.dv_xname);
+					NULL, NULL) == 0) {
+				sc->sc_flags |= WM_F_IOH_VALID;
+			} else {
+				aprint_error("%s: WARNING: unable to map "
+				    "I/O space\n", sc->sc_dev.dv_xname);
+			}
+		}
+
 	}
 
 	/* Enable bus mastering.  Disable MWI on the i82542 2.0. */
@@ -1079,7 +1093,7 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	 * Toggle the LSB of the MAC address on the second port
 	 * of the i82546.
 	 */
-	if (sc->sc_type == WM_T_82546) {
+	if (sc->sc_type == WM_T_82546 || sc->sc_type == WM_T_82546_3) {
 		if ((CSR_READ(sc, WMREG_STATUS) >> STATUS_FUNCID_SHIFT) & 1)
 			enaddr[5] ^= 1;
 	}
@@ -1242,12 +1256,12 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	evcnt_attach_dynamic(&sc->sc_ev_txtusum, EVCNT_TYPE_MISC,
 	    NULL, sc->sc_dev.dv_xname, "txtusum");
 
-	evcnt_attach_dynamic(&sc->sc_ev_txctx_init, EVCNT_TYPE_MISC,
-	    NULL, sc->sc_dev.dv_xname, "txctx init");
-	evcnt_attach_dynamic(&sc->sc_ev_txctx_hit, EVCNT_TYPE_MISC,
-	    NULL, sc->sc_dev.dv_xname, "txctx hit");
-	evcnt_attach_dynamic(&sc->sc_ev_txctx_miss, EVCNT_TYPE_MISC,
-	    NULL, sc->sc_dev.dv_xname, "txctx miss");
+	evcnt_attach_dynamic(&sc->sc_ev_txpullup_needed, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "txpullup needed");
+	evcnt_attach_dynamic(&sc->sc_ev_txpullup_nomem, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "txpullup nomem");
+	evcnt_attach_dynamic(&sc->sc_ev_txpullup_fail, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "txpullup fail");
 
 	for (i = 0; i < WM_NTXSEGS; i++) {
 		sprintf(wm_txseg_evcnt_names[i], "txseg%d", i);
@@ -1324,13 +1338,13 @@ wm_shutdown(void *arg)
 }
 
 /*
- * wm_tx_cksum:
+ * wm_tx_offload:
  *
  *	Set up TCP/IP checksumming parameters for the
  *	specified packet.
  */
 static int
-wm_tx_cksum(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
+wm_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
     uint8_t *fieldsp)
 {
 	struct mbuf *m0 = txs->txs_mbuf;
@@ -1368,12 +1382,33 @@ wm_tx_cksum(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 	}
 
 	if (m0->m_len < (offset + iphl)) {
+		/*
+		 * Packet headers aren't in the first mbuf.  Let's hope
+		 * there is space at the end if it for them.
+		 */
+		WM_EVCNT_INCR(&sc->sc_ev_txpullup_needed);
 		if ((txs->txs_mbuf = m_pullup(m0, offset + iphl)) == NULL) {
-			printf("%s: wm_tx_cksum: mbuf allocation failed, "
+			WM_EVCNT_INCR(&sc->sc_ev_txpullup_nomem);
+			log(LOG_ERR,
+			    "%s: wm_tx_offload: mbuf allocation failed, "
 			    "packet dropped\n", sc->sc_dev.dv_xname);
 			return (ENOMEM);
+		} else if (m0 != txs->txs_mbuf) {
+			/*
+			 * The DMA map has already been loaded, so we
+			 * would have to unload and reload it.  But then
+			 * if that were to fail, we are already committed
+			 * to transmitting the packet (can't put it back
+			 * on the queue), so we have to drop the packet.
+			 */
+			WM_EVCNT_INCR(&sc->sc_ev_txpullup_fail);
+			log(LOG_ERR, "%s: wm_tx_offload: packet headers did "
+			    "not fit in first mbuf, packet dropped\n",
+			    sc->sc_dev.dv_xname);
+			m_freem(txs->txs_mbuf);
+			txs->txs_mbuf = NULL;
+			return (EINVAL);
 		}
-		m0 = txs->txs_mbuf;
 	}
 
 	ip = (struct ip *) (mtod(m0, caddr_t) + offset);
@@ -1385,20 +1420,12 @@ wm_tx_cksum(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 	 * MUST provide valid values for IPCSS and TUCSS fields.
 	 */
 
+	ipcs = WTX_TCPIP_IPCSS(offset) |
+	    WTX_TCPIP_IPCSO(offset + offsetof(struct ip, ip_sum)) |
+	    WTX_TCPIP_IPCSE(offset + iphl - 1);
 	if (m0->m_pkthdr.csum_flags & M_CSUM_IPv4) {
 		WM_EVCNT_INCR(&sc->sc_ev_txipsum);
 		fields |= WTX_IXSM;
-		ipcs = WTX_TCPIP_IPCSS(offset) |
-		    WTX_TCPIP_IPCSO(offset + offsetof(struct ip, ip_sum)) |
-		    WTX_TCPIP_IPCSE(offset + iphl - 1);
-	} else if (__predict_true(sc->sc_txctx_ipcs != 0xffffffff)) {
-		/* Use the cached value. */
-		ipcs = sc->sc_txctx_ipcs;
-	} else {
-		/* Just initialize it to the likely value anyway. */
-		ipcs = WTX_TCPIP_IPCSS(offset) |
-		    WTX_TCPIP_IPCSO(offset + offsetof(struct ip, ip_sum)) |
-		    WTX_TCPIP_IPCSE(offset + iphl - 1);
 	}
 
 	offset += iphl;
@@ -1409,9 +1436,6 @@ wm_tx_cksum(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 		tucs = WTX_TCPIP_TUCSS(offset) |
 		    WTX_TCPIP_TUCSO(offset + m0->m_pkthdr.csum_data) |
 		    WTX_TCPIP_TUCSE(0) /* rest of packet */;
-	} else if (__predict_true(sc->sc_txctx_tucs != 0xffffffff)) {
-		/* Use the cached value. */
-		tucs = sc->sc_txctx_tucs;
 	} else {
 		/* Just initialize it to a valid TCP context. */
 		tucs = WTX_TCPIP_TUCSS(offset) |
@@ -1419,33 +1443,17 @@ wm_tx_cksum(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 		    WTX_TCPIP_TUCSE(0) /* rest of packet */;
 	}
 
-	if (sc->sc_txctx_ipcs == ipcs &&
-	    sc->sc_txctx_tucs == tucs) {
-		/* Cached context is fine. */
-		WM_EVCNT_INCR(&sc->sc_ev_txctx_hit);
-	} else {
-		/* Fill in the context descriptor. */
-#ifdef WM_EVENT_COUNTERS
-		if (sc->sc_txctx_ipcs == 0xffffffff &&
-		    sc->sc_txctx_tucs == 0xffffffff)
-			WM_EVCNT_INCR(&sc->sc_ev_txctx_init);
-		else
-			WM_EVCNT_INCR(&sc->sc_ev_txctx_miss);
-#endif
-		t = (struct livengood_tcpip_ctxdesc *)
-		    &sc->sc_txdescs[sc->sc_txnext];
-		t->tcpip_ipcs = htole32(ipcs);
-		t->tcpip_tucs = htole32(tucs);
-		t->tcpip_cmdlen = htole32(WTX_CMD_DEXT | WTX_DTYP_C);
-		t->tcpip_seg = 0;
-		WM_CDTXSYNC(sc, sc->sc_txnext, 1, BUS_DMASYNC_PREWRITE);
+	/* Fill in the context descriptor. */
+	t = (struct livengood_tcpip_ctxdesc *)
+	    &sc->sc_txdescs[sc->sc_txnext];
+	t->tcpip_ipcs = htole32(ipcs);
+	t->tcpip_tucs = htole32(tucs);
+	t->tcpip_cmdlen = htole32(WTX_CMD_DEXT | WTX_DTYP_C);
+	t->tcpip_seg = 0;
+	WM_CDTXSYNC(sc, sc->sc_txnext, 1, BUS_DMASYNC_PREWRITE);
 
-		sc->sc_txctx_ipcs = ipcs;
-		sc->sc_txctx_tucs = tucs;
-
-		sc->sc_txnext = WM_NEXTTX(sc, sc->sc_txnext);
-		txs->txs_ndesc++;
-	}
+	sc->sc_txnext = WM_NEXTTX(sc, sc->sc_txnext);
+	txs->txs_ndesc++;
 
 	*cmdp = WTX_CMD_DEXT | WTX_DTYP_D;
 	*fieldsp = fields;
@@ -1459,11 +1467,13 @@ wm_dump_mbuf_chain(struct wm_softc *sc, struct mbuf *m0)
 	struct mbuf *m;
 	int i;
 
-	printf("%s: mbuf chain:\n", sc->sc_dev.dv_xname);
+	log(LOG_DEBUG, "%s: mbuf chain:\n", sc->sc_dev.dv_xname);
 	for (m = m0, i = 0; m != NULL; m = m->m_next, i++)
-		printf("\tm_data = %p, m_len = %d, m_flags = 0x%08x\n",
+		log(LOG_DEBUG, "%s:\tm_data = %p, m_len = %d, "
+		    "m_flags = 0x%08x\n", sc->sc_dev.dv_xname,
 		    m->m_data, m->m_len, m->m_flags);
-	printf("\t%d mbuf%s in chain\n", i, i == 1 ? "" : "s");
+	log(LOG_DEBUG, "%s:\t%d mbuf%s in chain\n", sc->sc_dev.dv_xname,
+	    i, i == 1 ? "" : "s");
 }
 
 /*
@@ -1629,7 +1639,7 @@ wm_start(struct ifnet *ifp)
 		if (error) {
 			if (error == EFBIG) {
 				WM_EVCNT_INCR(&sc->sc_ev_txdrop);
-				printf("%s: Tx packet consumes too many "
+				log(LOG_ERR, "%s: Tx packet consumes too many "
 				    "DMA segments, dropping...\n",
 				    sc->sc_dev.dv_xname);
 				IFQ_DEQUEUE(&ifp->if_snd, m0);
@@ -1653,7 +1663,7 @@ wm_start(struct ifnet *ifp)
 		 * the packet.  Note, we always reserve one descriptor
 		 * at the end of the ring due to the semantics of the
 		 * TDT register, plus one more in the event we need
-		 * to re-load checksum offload context.
+		 * to load offload context.
 		 */
 		if (segs_needed > sc->sc_txfree - 2) {
 			/*
@@ -1714,14 +1724,11 @@ wm_start(struct ifnet *ifp)
 		txs->txs_firstdesc = sc->sc_txnext;
 		txs->txs_ndesc = segs_needed;
 
-		/*
-		 * Set up checksum offload parameters for
-		 * this packet.
-		 */
+		/* Set up offload parameters for this packet. */
 		if (m0->m_pkthdr.csum_flags &
 		    (M_CSUM_IPv4|M_CSUM_TCPv4|M_CSUM_UDPv4)) {
-			if (wm_tx_cksum(sc, txs, &cksumcmd,
-					&cksumfields) != 0) {
+			if (wm_tx_offload(sc, txs, &cksumcmd,
+					  &cksumfields) != 0) {
 				/* Error message already displayed. */
 				bus_dmamap_unload(sc->sc_dmat, dmamap);
 				continue;
@@ -1857,7 +1864,8 @@ wm_watchdog(struct ifnet *ifp)
 	wm_txintr(sc);
 
 	if (sc->sc_txfree != WM_NTXDESC(sc)) {
-		printf("%s: device timeout (txfree %d txsfree %d txnext %d)\n",
+		log(LOG_ERR,
+		    "%s: device timeout (txfree %d txsfree %d txnext %d)\n",
 		    sc->sc_dev.dv_xname, sc->sc_txfree, sc->sc_txsfree,
 		    sc->sc_txnext);
 		ifp->if_oerrors++;
@@ -1974,7 +1982,8 @@ wm_intr(void *arg)
 		}
 
 		if (icr & ICR_RXO) {
-			printf("%s: Receive overrun\n", sc->sc_dev.dv_xname);
+			log(LOG_WARNING, "%s: Receive overrun\n",
+			    sc->sc_dev.dv_xname);
 			wantinit = 1;
 		}
 	}
@@ -2046,11 +2055,11 @@ wm_txintr(struct wm_softc *sc)
 		if (status & (WTX_ST_EC|WTX_ST_LC)) {
 			ifp->if_oerrors++;
 			if (status & WTX_ST_LC)
-				printf("%s: late collision\n",
+				log(LOG_WARNING, "%s: late collision\n",
 				    sc->sc_dev.dv_xname);
 			else if (status & WTX_ST_EC) {
 				ifp->if_collisions += 16;
-				printf("%s: excessive collisions\n",
+				log(LOG_WARNING, "%s: excessive collisions\n",
 				    sc->sc_dev.dv_xname);
 			}
 		} else
@@ -2196,13 +2205,13 @@ wm_rxintr(struct wm_softc *sc)
 		     (WRX_ER_CE|WRX_ER_SE|WRX_ER_SEQ|WRX_ER_CXE|WRX_ER_RXE)) {
 			ifp->if_ierrors++;
 			if (errors & WRX_ER_SE)
-				printf("%s: symbol error\n",
+				log(LOG_WARNING, "%s: symbol error\n",
 				    sc->sc_dev.dv_xname);
 			else if (errors & WRX_ER_SEQ)
-				printf("%s: receive sequence error\n",
+				log(LOG_WARNING, "%s: receive sequence error\n",
 				    sc->sc_dev.dv_xname);
 			else if (errors & WRX_ER_CE)
-				printf("%s: CRC error\n",
+				log(LOG_WARNING, "%s: CRC error\n",
 				    sc->sc_dev.dv_xname);
 			m_freem(m);
 			continue;
@@ -2231,7 +2240,8 @@ wm_rxintr(struct wm_softc *sc)
 			    M_NOWAIT);
 			if (vtag == NULL) {
 				ifp->if_ierrors++;
-				printf("%s: unable to allocate VLAN tag\n",
+				log(LOG_ERR,
+				    "%s: unable to allocate VLAN tag\n",
 				    sc->sc_dev.dv_xname);
 				m_freem(m);
 				continue;
@@ -2424,9 +2434,15 @@ wm_reset(struct wm_softc *sc)
 	case WM_T_82541:
 	case WM_T_82541_2:
 		/*
-		 * These chips have a problem with the memory-mapped
-		 * write cycle when issuing the reset, so use I/O-mapped
-		 * access, if possible.
+		 * On some chipsets, a reset through a memory-mapped write
+		 * cycle can cause the chip to reset before completing the
+		 * write cycle.  This causes major headache that can be
+		 * avoided by issuing the reset via indirect register writes
+		 * through I/O space.
+		 *
+		 * So, if we successfully mapped the I/O BAR at attach time,
+		 * use that.  Otherwise, try our luck with a memory-mapped
+		 * reset.
 		 */
 		if (sc->sc_flags & WM_F_IOH_VALID)
 			wm_io_write(sc, WMREG_CTRL, CTRL_RST);
@@ -2454,7 +2470,7 @@ wm_reset(struct wm_softc *sc)
 	}
 
 	if (CSR_READ(sc, WMREG_CTRL) & CTRL_RST)
-		printf("%s: WARNING: reset failed to complete\n",
+		log(LOG_ERR, "%s: reset failed to complete\n",
 		    sc->sc_dev.dv_xname);
 }
 
@@ -2503,9 +2519,6 @@ wm_init(struct ifnet *ifp)
 	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	sc->sc_txfree = WM_NTXDESC(sc);
 	sc->sc_txnext = 0;
-
-	sc->sc_txctx_ipcs = 0xffffffff;
-	sc->sc_txctx_tucs = 0xffffffff;
 
 	if (sc->sc_type < WM_T_82543) {
 		CSR_WRITE(sc, WMREG_OLD_TBDAH, WM_CDTXADDR_HI(sc, 0));
@@ -2567,7 +2580,7 @@ wm_init(struct ifnet *ifp)
 		rxs = &sc->sc_rxsoft[i];
 		if (rxs->rxs_mbuf == NULL) {
 			if ((error = wm_add_rxbuf(sc, i)) != 0) {
-				printf("%s: unable to allocate or map rx "
+				log(LOG_ERR, "%s: unable to allocate or map rx "
 				    "buffer %d, error = %d\n",
 				    sc->sc_dev.dv_xname, i, error);
 				/*
@@ -2717,7 +2730,8 @@ wm_init(struct ifnet *ifp)
 
  out:
 	if (error)
-		printf("%s: interface not running\n", sc->sc_dev.dv_xname);
+		log(LOG_ERR, "%s: interface not running\n",
+		    sc->sc_dev.dv_xname);
 	return (error);
 }
 
@@ -3058,9 +3072,10 @@ wm_add_rxbuf(struct wm_softc *sc, int idx)
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, rxs->rxs_dmamap, m,
 	    BUS_DMA_READ|BUS_DMA_NOWAIT);
 	if (error) {
+		/* XXX XXX XXX */
 		printf("%s: unable to load rx DMA map %d, error = %d\n",
 		    sc->sc_dev.dv_xname, idx, error);
-		panic("wm_add_rxbuf");	/* XXX XXX XXX */
+		panic("wm_add_rxbuf");
 	}
 
 	bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap, 0,
@@ -3238,16 +3253,16 @@ wm_tbi_mediainit(struct wm_softc *sc)
 
 #define	ADD(ss, mm, dd)							\
 do {									\
-	printf("%s%s", sep, ss);					\
+	aprint_normal("%s%s", sep, ss);					\
 	ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|(mm), (dd), NULL);	\
 	sep = ", ";							\
 } while (/*CONSTCOND*/0)
 
-	printf("%s: ", sc->sc_dev.dv_xname);
+	aprint_normal("%s: ", sc->sc_dev.dv_xname);
 	ADD("1000baseSX", IFM_1000_SX, ANAR_X_HD);
 	ADD("1000baseSX-FDX", IFM_1000_SX|IFM_FDX, ANAR_X_FD);
 	ADD("auto", IFM_AUTO, ANAR_X_FD|ANAR_X_HD);
-	printf("\n");
+	aprint_normal("\n");
 
 #undef ADD
 
@@ -3672,12 +3687,12 @@ wm_gmii_i82544_readreg(struct device *self, int phy, int reg)
 	}
 
 	if ((mdic & MDIC_READY) == 0) {
-		printf("%s: MDIC read timed out: phy %d reg %d\n",
+		log(LOG_WARNING, "%s: MDIC read timed out: phy %d reg %d\n",
 		    sc->sc_dev.dv_xname, phy, reg);
 		rv = 0;
 	} else if (mdic & MDIC_E) {
 #if 0 /* This is normal if no PHY is present. */
-		printf("%s: MDIC read error: phy %d reg %d\n",
+		log(LOG_WARNING, "%s: MDIC read error: phy %d reg %d\n",
 		    sc->sc_dev.dv_xname, phy, reg);
 #endif
 		rv = 0;
@@ -3713,10 +3728,10 @@ wm_gmii_i82544_writereg(struct device *self, int phy, int reg, int val)
 	}
 
 	if ((mdic & MDIC_READY) == 0)
-		printf("%s: MDIC write timed out: phy %d reg %d\n",
+		log(LOG_WARNING, "%s: MDIC write timed out: phy %d reg %d\n",
 		    sc->sc_dev.dv_xname, phy, reg);
 	else if (mdic & MDIC_E)
-		printf("%s: MDIC write error: phy %d reg %d\n",
+		log(LOG_WARNING, "%s: MDIC write error: phy %d reg %d\n",
 		    sc->sc_dev.dv_xname, phy, reg);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.70.2.3 2004/09/21 13:35:11 skrll Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.70.2.4 2004/11/29 07:24:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.70.2.3 2004/09/21 13:35:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.70.2.4 2004/11/29 07:24:51 skrll Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -280,7 +280,7 @@ sys_nanosleep(struct lwp *l, void *v, register_t *retval)
 	if (error)
 		return (error);
 
-	TIMESPEC_TO_TIMEVAL(&atv,&rqt)
+	TIMESPEC_TO_TIMEVAL(&atv,&rqt);
 	if (itimerfix(&atv))
 		return (EINVAL);
 

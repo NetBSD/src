@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.c,v 1.22.16.3 2004/09/21 13:39:31 skrll Exp $	 */
+/*	$NetBSD: uvm_stat.c,v 1.22.16.4 2004/11/29 07:25:05 skrll Exp $	 */
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.22.16.3 2004/09/21 13:39:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.22.16.4 2004/11/29 07:25:05 skrll Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ddb.h"
@@ -183,6 +183,9 @@ uvm_hist(bitmask)
 
 	if ((bitmask & UVMHIST_UBCHIST) || bitmask == 0)
 		hists[i++] = &ubchist;
+
+	if ((bitmask & UVMHIST_LOANHIST) || bitmask == 0)
+		hists[i++] = &loanhist;
 
 	hists[i] = NULL;
 

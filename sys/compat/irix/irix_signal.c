@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.25.2.4 2004/11/02 07:51:07 skrll Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.25.2.5 2004/11/29 07:24:06 skrll Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.25.2.4 2004/11/02 07:51:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.25.2.5 2004/11/29 07:24:06 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -155,7 +155,7 @@ irix_signal_siginfo(isi, sig, code, addr)
 	u_long code;
 	caddr_t addr;
 {
-	if (sig < 0 || sig > SVR4_NSIG) {
+	if (sig < 0 || sig >= SVR4_NSIG) {
 		isi->isi_errno = IRIX_EINVAL;
 		return;
 	}

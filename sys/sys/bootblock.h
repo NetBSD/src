@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.13.2.5 2004/11/14 08:16:13 skrll Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.13.2.6 2004/11/29 07:25:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
@@ -1220,6 +1220,91 @@ struct pmax_boot_block {
 #define	PMAX_BOOT_BLOCK_OFFSET		0
 #define	PMAX_BOOT_BLOCK_BLOCKSIZE	512
 
+
+/* ------------------------------------------
+ * sgimips
+ */
+
+/*
+ * Some IRIX man pages refer to the size being a multiple of whole cylinders.
+ * Later ones only refer to the size being "typically" 2MB.  IRIX fx(1)
+ * uses a default drive geometry if one can't be determined, suggesting
+ * that "whole cylinder" multiples are not required.
+ */
+
+#define SGI_BOOT_BLOCK_SIZE_VOLHDR	3135
+#define SGI_BOOT_BLOCK_MAGIC		0xbe5a941
+#define SGI_BOOT_BLOCK_MAXPARTITIONS	16
+#define SGI_BOOT_BLOCK_BLOCKSIZE	512
+
+/*
+ * SGI partition conventions:
+ *
+ * Partition 0 - root
+ * Partition 1 - swap
+ * Partition 6 - usr
+ * Partition 7 - volume body
+ * Partition 8 - volume header
+ * Partition 10 - whole disk
+ */
+
+struct sgi_boot_devparms {
+	uint8_t		dp_skew;
+	uint8_t		dp_gap1;
+	uint8_t		dp_gap2;
+	uint8_t		dp_spares_cyl;
+	uint16_t	dp_cyls;
+	uint16_t	dp_shd0;
+	uint16_t	dp_trks0;
+	uint8_t		dp_ctq_depth;
+	uint8_t		dp_cylshi;
+	uint16_t	dp_unused;
+	uint16_t	dp_secs;
+	uint16_t	dp_secbytes;
+	uint16_t	dp_interleave;
+	uint32_t	dp_flags;
+	uint32_t	dp_datarate;
+	uint32_t	dp_nretries;
+	uint32_t	dp_mspw;
+	uint16_t	dp_xgap1;
+	uint16_t	dp_xsync;
+	uint16_t	dp_xrdly;
+	uint16_t	dp_xgap2;
+	uint16_t	dp_xrgate;
+	uint16_t	dp_xwcont;
+} __packed;
+
+struct sgi_boot_block {
+	uint32_t	magic;
+	int16_t		root;
+	int16_t		swap;
+	char		bootfile[16];
+	struct sgi_boot_devparms dp;
+	struct {
+		char		name[8];
+		int32_t		block;
+		int32_t		bytes;
+	}		voldir[15];
+	struct {
+		int32_t		blocks;
+		int32_t		first;
+		int32_t		type;
+	}		partitions[SGI_BOOT_BLOCK_MAXPARTITIONS];
+	int32_t		checksum;
+	int32_t		_pad;
+} __packed;
+
+#define SGI_PTYPE_VOLHDR	0
+#define SGI_PTYPE_RAW		3
+#define SGI_PTYPE_BSD		4
+#define SGI_PTYPE_VOLUME	6
+#define SGI_PTYPE_EFS		7
+#define SGI_PTYPE_LVOL		8
+#define SGI_PTYPE_RLVOL		9
+#define SGI_PTYPE_XFS		10
+#define SGI_PTYPE_XFSLOG	11
+#define SGI_PTYPE_XLV		12
+#define SGI_PTYPE_XVM		13
 
 /* ------------------------------------------
  * sparc

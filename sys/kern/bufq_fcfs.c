@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq_fcfs.c,v 1.1.2.3 2004/11/02 07:53:23 skrll Exp $	*/
+/*	$NetBSD: bufq_fcfs.c,v 1.1.2.4 2004/11/29 07:24:51 skrll Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.61 2004/09/25 03:30:44 thorpej Exp 	*/
 
 /*-
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bufq_fcfs.c,v 1.1.2.3 2004/11/02 07:53:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bufq_fcfs.c,v 1.1.2.4 2004/11/29 07:24:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,6 +92,12 @@ __KERNEL_RCSID(0, "$NetBSD: bufq_fcfs.c,v 1.1.2.3 2004/11/02 07:53:23 skrll Exp 
 struct bufq_fcfs {
 	TAILQ_HEAD(, buf) bq_head;	/* actual list of buffers */
 };
+
+static void bufq_fcfs_init(struct bufq_state *);
+static void bufq_fcfs_put(struct bufq_state *, struct buf *);
+static struct buf *bufq_fcfs_get(struct bufq_state *, int);
+
+BUFQ_DEFINE(fcfs, BUFQ_FCFS, bufq_fcfs_init);
 
 static void
 bufq_fcfs_put(struct bufq_state *bufq, struct buf *bp)
@@ -115,7 +121,7 @@ bufq_fcfs_get(struct bufq_state *bufq, int remove)
 	return (bp);
 }
 
-void
+static void
 bufq_fcfs_init(struct bufq_state *bufq)
 {
 	struct bufq_fcfs *fcfs;

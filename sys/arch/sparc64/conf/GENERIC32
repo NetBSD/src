@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.69.2.6 2004/11/14 08:15:32 skrll Exp $
+# 	$NetBSD: GENERIC32,v 1.69.2.7 2004/11/29 07:24:06 skrll Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.69.2.6 $"
+#ident 		"GENERIC-$Revision: 1.69.2.7 $"
 
 maxusers	64
 
@@ -359,6 +359,7 @@ hptide* at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 optiide* at pci? dev ? function ?	# Opti IDE controllers
 piixide* at pci? dev ? function ?	# Intel IDE controllers
 pdcide* at pci? dev ? function ?	# Promise IDE controllers
+pdcsata* at pci? dev ? function ?	# Promise SATA150 controllers
 satalink* at pci? dev ? function ?	# SiI SATALink controllers
 siside* at pci? dev ? function ?	# SiS IDE controllers
 slide*  at pci? dev ? function ?	# Symphony Labs IDE controllers

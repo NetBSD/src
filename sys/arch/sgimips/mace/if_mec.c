@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.1.2.3 2004/11/02 07:50:47 skrll Exp $ */
+/* $NetBSD: if_mec.c,v 1.1.2.4 2004/11/29 07:24:05 skrll Exp $ */
 
 /*
  * Copyright (c) 2004 Izumi Tsutsui.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.1.2.3 2004/11/02 07:50:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.1.2.4 2004/11/29 07:24:05 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "bpfilter.h"
@@ -252,7 +252,7 @@ struct mec_control_data {
  * - Each txdesc should be 128byte aligned
  * - Each rxdesc should be 4kbyte aligned
  *
- * So we should specify 64k align to allocalte txdescs.
+ * So we should specify 8k align to allocalte txdescs.
  * In this case, sizeof(struct mec_txdesc) * MEC_NTXDESC is 8192
  * so rxdescs are also allocated at 4kbyte aligned.
  */

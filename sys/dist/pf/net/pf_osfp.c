@@ -1,5 +1,5 @@
-/*	$NetBSD: pf_osfp.c,v 1.3.2.4 2004/09/21 13:34:43 skrll Exp $	*/
-/*	$OpenBSD: pf_osfp.c,v 1.9 2004/01/04 20:08:42 pvalchev Exp $ */
+/*	$NetBSD: pf_osfp.c,v 1.3.2.5 2004/11/29 07:24:33 skrll Exp $	*/
+/*	$OpenBSD: pf_osfp.c,v 1.10 2004/04/09 19:30:41 frantzen Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@w4g.org>
@@ -238,9 +238,9 @@ void
 pf_osfp_initialize(void)
 {
 	pool_init(&pf_osfp_entry_pl, sizeof(struct pf_osfp_entry), 0, 0, 0,
-	    "pfosfpen", NULL);
+	    "pfosfpen", &pool_allocator_nointr);
 	pool_init(&pf_osfp_pl, sizeof(struct pf_os_fingerprint), 0, 0, 0,
-	    "pfosfp", NULL);
+	    "pfosfp", &pool_allocator_nointr);
 	SLIST_INIT(&pf_osfp_list);
 }
 

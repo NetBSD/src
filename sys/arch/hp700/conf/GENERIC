@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.15.2.7 2004/11/14 08:15:06 skrll Exp $
+# $NetBSD: GENERIC,v 1.15.2.8 2004/11/29 07:24:04 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -23,7 +23,7 @@ include 	"arch/hp700/conf/std.hp700"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.15.2.7 $"
+#ident 		"GENERIC-$Revision: 1.15.2.8 $"
 
 maxusers	32		# estimated number of users
 
@@ -383,6 +383,7 @@ hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 optiide* 	at pci? dev ? function ?	# Opti IDE controllers
 piixide* 	at pci? dev ? function ?	# Intel IDE controllers
 pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
+pdcsata*	at pci? dev ? function ?	# Promise SATA150 controllers
 rccide* 	at pci? dev ? function ?	# ServerWorks IDE controllers
 satalink*	at pci? dev ? function ?	# SiI SATALink controllers
 siside* 	at pci? dev ? function ?	# SiS IDE controllers

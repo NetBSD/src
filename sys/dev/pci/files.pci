@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.187.2.8 2004/11/02 07:52:09 skrll Exp $
+#	$NetBSD: files.pci,v 1.187.2.9 2004/11/29 07:24:16 skrll Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -247,6 +247,11 @@ device	piixide {[channel = -1]}: ata, pciide_common, wdc_common
 attach	piixide at pci
 file	dev/pci/piixide.c		piixide
 
+# Promise Serial ATA controllers
+device	pdcsata {[channel = -1]}: ata, pciide_common, wdc_common
+attach	pdcsata at pci
+file	dev/pci/pdcsata.c		pdcsata
+
 # Promise IDE controllers
 device	pdcide {[channel = -1]}: ata, pciide_common, wdc_common
 attach	pdcide at pci
@@ -403,7 +408,7 @@ attach	joy at eap with joy_eap
 file	dev/pci/joy_eap.c		joy_eap needs-flag
 
 # Acer Labs M5455
-device	auacer: audiobus, auconv, mulaw, ac97
+device	auacer: audiobus, auconv, mulaw, ac97, aurateconv
 attach	auacer at pci
 file	dev/pci/auacer.c		auacer
 
