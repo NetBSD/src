@@ -1,4 +1,4 @@
-/*	$NetBSD: print-nfs.c,v 1.5 1996/05/20 00:41:09 fvdl Exp $	*/
+/*	$NetBSD: print-nfs.c,v 1.5.2.1 1997/03/11 16:29:29 is Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -33,8 +33,12 @@ static char rcsid[] =
 
 #include <net/if.h>
 
-#include <netinet/in.h>
+#ifdef __NetBSD__
+#include <net/if_ether.h>
+#else
 #include <netinet/if_ether.h>
+#endif
+#include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
