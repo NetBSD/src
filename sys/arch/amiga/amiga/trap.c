@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.44 1996/04/21 21:07:15 veego Exp $	*/
+/*	$NetBSD: trap.c,v 1.45 1996/04/28 07:01:08 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -355,7 +355,7 @@ trapmmufault(type, code, v, fp, p, sticks)
 
 #ifdef DEBUG
 	if (mmudebug)
-		printf("vm_fault(%x,%lx,%d,0)\n", map, va, ftype);
+		printf("vm_fault(%p,%lx,%d,0)\n", map, va, ftype);
 #endif
 
 	rv = vm_fault(map, va, ftype, FALSE);
@@ -463,7 +463,7 @@ nogo:
 			trapcpfault(p, fp);
 			return;
 		}
-		printf("vm_fault(%x, %lx, %x, 0) -> %x\n",
+		printf("vm_fault(%p, %lx, %x, 0) -> %x\n",
 		       map, va, ftype, rv);
 		printf("  type %x, code [mmu,,ssw]: %x\n",
 		       type, code);
