@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.84 1996/03/19 03:05:15 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.85 1996/03/26 20:32:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -70,7 +70,7 @@
 #include <scsi/scsiconf.h>
 #include <scsi/scsi_conf.h>
 
-#define	CDOUTSTANDING	2
+#define	CDOUTSTANDING	4
 #define	CDRETRIES	1
 
 #define	CDUNIT(z)			DISKUNIT(z)
@@ -86,6 +86,7 @@ struct cd_softc {
 #define	CDF_WANTED	0x02
 #define	CDF_WLABEL	0x04		/* label is writable */
 #define	CDF_LABELLING	0x08		/* writing label */
+#define	CDF_ANCIENT	0x10		/* disk is ancient; for minphys */
 	struct scsi_link *sc_link;	/* contains our targ, lun, etc. */
 	struct cd_parms {
 		int blksize;
@@ -188,10 +189,12 @@ cdattach(parent, self, aux)
 	cd->sc_dk.dk_name = cd->sc_dev.dv_xname;
 	disk_attach(&cd->sc_dk);
 
-#if !defined(i386) || defined(NEWCONFIG)
-	dk_establish(&cd->sc_dk, &cd->sc_dev);		/* XXX */
-#endif
-  
+	/*
+	 * Note if this device is ancient.  This is used in sdminphys().
+	 */
+	if ((sa->sa_inqbuf->version & SID_ANSII) == 0)
+		cd->flags |= CDF_ANCIENT;
+
 	printf("\n");
 }
 
@@ -598,6 +601,34 @@ cddone(xs, complete)
 	return (0);
 }
 
+void
+cdminphys(bp)
+	struct buf *bp;
+{
+	struct cd_softc *cd = cd_cd.cd_devs[SDUNIT(bp->b_dev)];
+	long max;
+
+	/*
+	 * If the device is ancient, we want to make sure that
+	 * the transfer fits into a 6-byte cdb.
+	 *
+	 * XXX Note that the SCSI-I spec says that 256-block transfers
+	 * are allowed in a 6-byte read/write, and are specified
+	 * by settng the "length" to 0.  However, we're conservative
+	 * here, allowing only 255-block transfers in case an
+	 * ancient device gets confused by length == 0.  A length of 0
+	 * in a 10-byte read/write actually means 0 blocks.
+	 */
+	if (cd->flags & CDF_ANCIENT) {
+		max = cd->sc_dk.dk_label->d_secsize * 0xff;
+
+		if (bp->b_bcount > max)
+			bp->b_bcount = max;
+	}
+
+	(*cd->sc_link->adapter->scsi_minphys)(bp);
+}
+
 int
 cdread(dev, uio, ioflag)
 	dev_t dev;
@@ -606,8 +637,7 @@ cdread(dev, uio, ioflag)
 {
 	struct cd_softc *cd = cd_cd.cd_devs[CDUNIT(dev)];
 
-	return (physio(cdstrategy, NULL, dev, B_READ,
-		       cd->sc_link->adapter->scsi_minphys, uio));
+	return (physio(cdstrategy, NULL, dev, B_READ, cdminphys, uio));
 }
 
 int
@@ -618,8 +648,7 @@ cdwrite(dev, uio, ioflag)
 {
 	struct cd_softc *cd = cd_cd.cd_devs[CDUNIT(dev)];
 
-	return (physio(cdstrategy, NULL, dev, B_WRITE,
-		       cd->sc_link->adapter->scsi_minphys, uio));
+	return (physio(cdstrategy, NULL, dev, B_WRITE, cdminphys, uio));
 }
 
 /*
