@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)npx.c	7.2 (Berkeley) 5/12/91
- *	$Id: npx.c,v 1.7.4.2 1993/10/07 14:49:27 mycroft Exp $
+ *	$Id: npx.c,v 1.7.4.3 1993/10/09 11:02:22 mycroft Exp $
  */
 
 #include "param.h"
@@ -110,7 +110,7 @@ struct	npx_softc {
 static int npxprobe __P((struct device *, struct cfdata *, void *));
 static void npxforceintr __P((void *));
 static void npxattach __P((struct device *, struct device *, void *));
-static int npxintr __P((void *));
+int npxintr __P((void *));
 
 struct	cfdriver npxcd =
 { NULL, "npx", npxprobe, npxattach, sizeof(struct npx_softc) };
