@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.8,v 1.59 2000/07/26 13:53:33 lukem Exp $
+.\"	$NetBSD: ftpd.8,v 1.60 2000/07/28 12:54:01 lukem Exp $
 .\"
 .\" Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -187,7 +187,7 @@ then don't display any version information.
 By default each
 .Tn FTP
 session is logged to
-.Pa /var/run/wtmp ,
+.Pa /var/log/wtmp ,
 making them visible to commands such as
 .Xr last 1 .
 This option prevents that from occurring.
@@ -596,10 +596,10 @@ State file of logged-in processes for the
 .Nm
 class
 .Sq CLASS .
+.It Pa /var/log/wtmp
+Login history database.
 .It Pa /var/run/utmp
 List of logged-in users on the system.
-.It Pa /var/run/wtmp
-Login history database.
 .El
 .Sh SEE ALSO
 .Xr ftp 1 ,
