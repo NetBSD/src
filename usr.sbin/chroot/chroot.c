@@ -1,3 +1,5 @@
+/*	$NetBSD: chroot.c,v 1.8 2000/08/17 12:36:32 mrg Exp $	*/
+
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)chroot.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: chroot.c,v 1.7 1998/10/06 03:47:51 mrg Exp $");
+__RCSID("$NetBSD: chroot.c,v 1.8 2000/08/17 12:36:32 mrg Exp $");
 #endif
 #endif /* not lint */
 
