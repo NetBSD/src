@@ -1,4 +1,4 @@
-.\"	$NetBSD: mdoc.7,v 1.17 2000/08/28 16:51:56 kleink Exp $
+.\"	$NetBSD: mdoc.7,v 1.18 2000/08/31 01:54:40 jhawk Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -242,11 +242,14 @@ List item.
 The manual and general text domain macros are special in that
 most of them are parsed for callable macros
 for example:
-.Bl -tag -width ".Op Fl s Ar filex" -offset indent
-.It Li "\&.Op Fl s Ar file"
-Produces
+.Bd -unfilled -offset indent
+.Li "\&.Op Fl s Ar file"
+.Ed
+.Pp
+Produces:
+.Bd -unfilled -offset indent
 .Op Fl s Ar file
-.El
+.Ed
 .Pp
 In this example, the option enclosure macro
 .Ql \&.Op
@@ -276,22 +279,26 @@ one at a time.
 The string
 .Ql "),"
 is not recognized as punctuation and will be output with a leading white
-space and in what ever font the calling macro uses.
+space and in whatever font the calling macro uses.
 The
 argument list
 .Ql "] ) ,"
 is recognized as three sequential closing punctuation characters
 and a leading white space is not output between the characters
 and the previous argument (if any).
+.Pp
 The special meaning of a punctuation character may be escaped
 with the string
 .Ql \e& .
-For example the following string,
-.Bl -tag -width "&.Ar file1\ , file2\ , file3\ )\ ." -offset indent
-.It Li "\&.Ar file1\ , file2\ , file3\ )\ ."
-Produces
-.Ar file1 , file2 , file3 ) .
-.El
+For example the following string:
+.Bd -unfilled -offset indent
+.Li "\&.Ar file1\ \e&, file2\ , file3\ )\ ."
+.Ed
+.Pp
+Produces:
+.Bd -unfilled -offset indent
+.Ar file1 \&, file2 , file3 ) .
+.Ed
 .ne 1i
 .Ss Manual Domain Macros
 .Bl -column "Name" "Parsed" "Callable" -compact
