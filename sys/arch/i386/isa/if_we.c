@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_we.c	7.3 (Berkeley) 5/21/91
- *	$Id: if_we.c,v 1.9 1993/05/18 18:19:01 cgd Exp $
+ *	$Id: if_we.c,v 1.10 1993/05/20 10:40:48 deraadt Exp $
  */
 
 /*
@@ -50,7 +50,10 @@
  * BPF trailer support added by David Greenman, 1/7/93
  *
  * $Log: if_we.c,v $
- * Revision 1.9  1993/05/18 18:19:01  cgd
+ * Revision 1.10  1993/05/20 10:40:48  deraadt
+ * we driver prints same ethernet address message as other drivers
+ *
+ * Revision 1.9  1993/05/18  18:19:01  cgd
  * make kernel select interface be one-stop shopping & clean it all up.
  *
  * Revision 1.8  1993/05/01  19:12:45  mycroft
@@ -353,8 +356,8 @@ weattach(is)
 	/*
 	 * Banner...
 	 */
-	printf("we%d: %saddr %s\n", is->id_unit,
-		(sc->we_type & WD_ETHERNET) ? "enet" : "slan",
+	printf("we%d: %s address %s\n", is->id_unit,
+		(sc->we_type & WD_ETHERNET) ? "ethernet" : "starlan",
 		ether_sprintf(sc->we_addr));
 
 #if NBPFILTER > 0
