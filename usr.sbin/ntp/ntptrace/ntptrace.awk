@@ -111,6 +111,7 @@ function do_one_server( command, i, nvars, vars, stratum, peer, offset,
 }
 
 function dhost(myhost,  command) {
+	if (myhost == "localhost") return myhost
 	command = "host " myhost
 	while (command | getline) {
 	    if (use_numeric) {
