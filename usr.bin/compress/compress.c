@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.c,v 1.20 2003/08/07 11:13:28 agc Exp $	*/
+/*	$NetBSD: compress.c,v 1.21 2004/07/09 12:14:37 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-__RCSID("$NetBSD: compress.c,v 1.20 2003/08/07 11:13:28 agc Exp $");
+__RCSID("$NetBSD: compress.c,v 1.21 2004/07/09 12:14:37 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -422,10 +422,10 @@ usage(int iscompress)
 {
 	if (iscompress)
 		(void)fprintf(stderr,
-		    "usage: compress [-cfv] [-b bits] [file ...]\n");
+		    "usage: compress [-cdfv] [-b bits] [file ...]\n");
 	else
 		(void)fprintf(stderr,
-		    "usage: uncompress [-c] [-b bits] [file ...]\n");
+		    "usage: uncompress [-cdfv] [-b bits] [file ...]\n");
 	exit(1);
 }
 
