@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.1 1996/01/31 23:25:15 mark Exp $	*/
+/*	$NetBSD: wd.c,v 1.2 1996/02/22 23:03:44 mark Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -59,7 +59,7 @@
 
 #define inb ReadByte
 #define outb WriteByte
-int wdresethack = 1;
+extern int wdresethack;
 
 #define	WAITTIME	(4 * hz)	/* time to wait for a completion */
 #define	RECOVERYTIME	(hz / 2)	/* time to recover from an error */
