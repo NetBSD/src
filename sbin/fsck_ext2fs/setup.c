@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.11 2000/01/26 16:21:32 bouyer Exp $	*/
+/*	$NetBSD: setup.c,v 1.12 2000/01/28 16:01:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-__RCSID("$NetBSD: setup.c,v 1.11 2000/01/26 16:21:32 bouyer Exp $");
+__RCSID("$NetBSD: setup.c,v 1.12 2000/01/28 16:01:46 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -273,30 +273,7 @@ readsb(listerr)
 	sblk.b_size = SBSIZE;
 
 	/* Copy the superblock in memory */
-	sblock.e2fs.e2fs_icount = fs2h32(sblk.b_un.b_fs->e2fs_icount);
-	sblock.e2fs.e2fs_bcount = fs2h32(sblk.b_un.b_fs->e2fs_bcount);
-	sblock.e2fs.e2fs_rbcount = fs2h32(sblk.b_un.b_fs->e2fs_rbcount);
-	sblock.e2fs.e2fs_fbcount = fs2h32(sblk.b_un.b_fs->e2fs_fbcount);
-	sblock.e2fs.e2fs_ficount = fs2h32(sblk.b_un.b_fs->e2fs_ficount);
-	sblock.e2fs.e2fs_first_dblock = fs2h32(sblk.b_un.b_fs->e2fs_first_dblock);
-	sblock.e2fs.e2fs_log_bsize = fs2h32(sblk.b_un.b_fs->e2fs_log_bsize);
-	sblock.e2fs.e2fs_fsize = fs2h32(sblk.b_un.b_fs->e2fs_fsize);
-	sblock.e2fs.e2fs_bpg = fs2h32(sblk.b_un.b_fs->e2fs_bpg);
-	sblock.e2fs.e2fs_fpg = fs2h32(sblk.b_un.b_fs->e2fs_fpg);
-	sblock.e2fs.e2fs_ipg = fs2h32(sblk.b_un.b_fs->e2fs_ipg);
-	sblock.e2fs.e2fs_mtime = fs2h32(sblk.b_un.b_fs->e2fs_mtime);
-	sblock.e2fs.e2fs_wtime = fs2h32(sblk.b_un.b_fs->e2fs_wtime);
-	sblock.e2fs.e2fs_lastfsck = fs2h32(sblk.b_un.b_fs->e2fs_lastfsck);
-	sblock.e2fs.e2fs_fsckintv = fs2h32(sblk.b_un.b_fs->e2fs_fsckintv);
-	sblock.e2fs.e2fs_creator = fs2h32(sblk.b_un.b_fs->e2fs_creator);
-	sblock.e2fs.e2fs_rev = fs2h32(sblk.b_un.b_fs->e2fs_rev);
-	sblock.e2fs.e2fs_mnt_count = fs2h16(sblk.b_un.b_fs->e2fs_mnt_count);
-	sblock.e2fs.e2fs_max_mnt_count = fs2h16(sblk.b_un.b_fs->e2fs_max_mnt_count);
-	sblock.e2fs.e2fs_magic = fs2h16(sblk.b_un.b_fs->e2fs_magic);
-	sblock.e2fs.e2fs_state = fs2h16(sblk.b_un.b_fs->e2fs_state);
-	sblock.e2fs.e2fs_beh = fs2h16(sblk.b_un.b_fs->e2fs_beh);
-	sblock.e2fs.e2fs_ruid = fs2h16(sblk.b_un.b_fs->e2fs_ruid);
-	sblock.e2fs.e2fs_rgid = fs2h16(sblk.b_un.b_fs->e2fs_rgid);
+	e2fs_sbload(sblk.b_un.b_fs, &sblock.e2fs);
 	
 	/*
 	 * run a few consistency checks of the super block
@@ -324,14 +301,6 @@ readsb(listerr)
 	sblock.e2fs_ipb = sblock.e2fs_bsize / sizeof(struct ext2fs_dinode);
 	sblock.e2fs_itpg = sblock.e2fs.e2fs_ipg/sblock.e2fs_ipb;
 
-	cgoverhead =	1 /* super block */ +
-					sblock.e2fs_ngdb +
-					1 /* block bitmap */ +
-					1 /* inode bitmap */ +
-					sblock.e2fs_itpg;
-
-	if (debug) /* DDD */
-		printf("cg overhead %d blocks \n", cgoverhead);
 	/*
 	 * Compute block size that the filesystem is based on,
 	 * according to fsbtodb, and adjust superblock block number
@@ -370,15 +339,15 @@ readsb(listerr)
 	asblk.b_un.b_fs->e2fs_rgid = sblk.b_un.b_fs->e2fs_rgid;
 	asblk.b_un.b_fs->e2fs_block_group_nr =
 	    sblk.b_un.b_fs->e2fs_block_group_nr;
-	if (sblk.b_un.b_fs->e2fs_rev > E2FS_REV0 &&
-	    ((sblk.b_un.b_fs->e2fs_features_incompat & ~EXT2F_INCOMPAT_SUPP) ||
-	    (sblk.b_un.b_fs->e2fs_features_rocompat & ~EXT2F_ROCOMPAT_SUPP))) {
+	if (sblock.e2fs.e2fs_rev > E2FS_REV0 &&
+	    ((sblock.e2fs.e2fs_features_incompat & ~EXT2F_INCOMPAT_SUPP) ||
+	    (sblock.e2fs.e2fs_features_rocompat & ~EXT2F_ROCOMPAT_SUPP))) {
 		if (debug) {
 			printf("compat 0x%08x, incompat 0x%08x, compat_ro "
 			    "0x%08x\n",
-			    sblk.b_un.b_fs->e2fs_features_compat,
-			    sblk.b_un.b_fs->e2fs_features_incompat,
-			    sblk.b_un.b_fs->e2fs_features_rocompat);
+			    sblock.e2fs.e2fs_features_compat,
+			    sblock.e2fs.e2fs_features_incompat,
+			    sblock.e2fs.e2fs_features_rocompat);
 		}
 		badsb(listerr,"INCOMPATIBLE FEATURE BITS IN SUPER BLOCK");
 		return 0;
@@ -419,7 +388,7 @@ copyback_sb(bp)
 	bp->b_un.b_fs->e2fs_fbcount = fs2h32(sblock.e2fs.e2fs_fbcount);
 	bp->b_un.b_fs->e2fs_ficount = fs2h32(sblock.e2fs.e2fs_ficount);
 	bp->b_un.b_fs->e2fs_first_dblock =
-								fs2h32(sblock.e2fs.e2fs_first_dblock);
+					fs2h32(sblock.e2fs.e2fs_first_dblock);
 	bp->b_un.b_fs->e2fs_log_bsize = fs2h32(sblock.e2fs.e2fs_log_bsize);
 	bp->b_un.b_fs->e2fs_fsize = fs2h32(sblock.e2fs.e2fs_fsize);
 	bp->b_un.b_fs->e2fs_bpg = fs2h32(sblock.e2fs.e2fs_bpg);
@@ -433,7 +402,7 @@ copyback_sb(bp)
 	bp->b_un.b_fs->e2fs_rev = fs2h32(sblock.e2fs.e2fs_rev);
 	bp->b_un.b_fs->e2fs_mnt_count = fs2h16(sblock.e2fs.e2fs_mnt_count);
 	bp->b_un.b_fs->e2fs_max_mnt_count =
-								fs2h16(sblock.e2fs.e2fs_max_mnt_count);
+					fs2h16(sblock.e2fs.e2fs_max_mnt_count);
 	bp->b_un.b_fs->e2fs_magic = fs2h16(sblock.e2fs.e2fs_magic);
 	bp->b_un.b_fs->e2fs_state = fs2h16(sblock.e2fs.e2fs_state);
 	bp->b_un.b_fs->e2fs_beh = fs2h16(sblock.e2fs.e2fs_beh);
@@ -520,4 +489,21 @@ getdisklabel(s, fd)
 		errexit("%s: can't read disk label\n", s);
 	}
 	return (&lab);
+}
+
+daddr_t
+cgoverhead(c)
+	int c;
+{
+	int overh;
+	overh =	1 /* block bitmap */ +
+		1 /* inode bitmap */ +
+		sblock.e2fs_itpg;
+	if (sblock.e2fs.e2fs_rev > E2FS_REV0 &&
+	    sblock.e2fs.e2fs_features_rocompat & EXT2F_ROCOMPAT_SPARSESUPER) {
+		if (cg_has_sb(c) == 0)
+			return overh;
+	}
+	overh += 1 + sblock.e2fs_ngdb;
+	return overh;
 }

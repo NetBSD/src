@@ -1,4 +1,4 @@
-/*	$NetBSD: pass5.c,v 1.6 1998/07/28 19:22:54 mycroft Exp $	*/
+/*	$NetBSD: pass5.c,v 1.7 2000/01/28 16:01:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.6 (Berkeley) 11/30/94";
 #else
-__RCSID("$NetBSD: pass5.c,v 1.6 1998/07/28 19:22:54 mycroft Exp $");
+__RCSID("$NetBSD: pass5.c,v 1.7 2000/01/28 16:01:46 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -153,13 +153,12 @@ pass5()
 		for (i = fs->e2fs.e2fs_ipg / NBBY; i < fs->e2fs_bsize; i++)
 			ibmap[i] = 0xff; 
 
-		dbase = c * sblock.e2fs.e2fs_bpg + sblock.e2fs.e2fs_first_dblock +
-				cgoverhead;
-		dmax = (c+1) * sblock.e2fs.e2fs_bpg + sblock.e2fs.e2fs_first_dblock;
+		dbase = c * sblock.e2fs.e2fs_bpg +
+		    sblock.e2fs.e2fs_first_dblock;
+		dmax = (c+1) * sblock.e2fs.e2fs_bpg +
+		    sblock.e2fs.e2fs_first_dblock;
 
-		for (i = 0; i < cgoverhead; i++)
-			setbit(bbmap, i); /* blks allocated to fs metadata */
-		for (i = cgoverhead, d = dbase;
+		for (i = 0, d = dbase;
 		     d < dmax;
 		     d ++, i ++) {
 			if (testbmap(d) || d >= sblock.e2fs.e2fs_bcount) {
