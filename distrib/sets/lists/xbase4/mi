@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.8 2003/07/22 11:46:53 mrg Exp $
+# $NetBSD: mi,v 1.9 2003/08/26 04:50:21 lukem Exp $
 ./etc/X11
 ./etc/fonts
 ./etc/fonts/fonts.conf
@@ -41,6 +41,9 @@
 ./usr/X11R6/lib/X11/app-defaults/UXTerm
 ./usr/X11R6/lib/X11/app-defaults/Xedit-color
 ./usr/X11R6/lib/X11/app-defaults/Xmessage-color
+./usr/X11R6/lib/X11/etc
+./usr/X11R6/lib/X11/etc/xterm.termcap
+./usr/X11R6/lib/X11/etc/xterm.terminfo
 ./usr/X11R6/lib/X11/locale/C/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/armscii-8
 ./usr/X11R6/lib/X11/locale/armscii-8/Compose
