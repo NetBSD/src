@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)asm.h	5.5 (Berkeley) 5/7/91
- *	$Id: asm.h,v 1.6 1993/06/16 21:13:23 mycroft Exp $
+ *	$Id: asm.h,v 1.7 1993/06/16 21:28:56 mycroft Exp $
  */
 
 #ifndef _SYS_ASM_H_
@@ -53,13 +53,18 @@
 #endif
 
 #ifdef STDC
-# define _ENTRY(x)	.globl _ ## x; _ ## x:
+# define _C_FUNC(x)	_ ## x
 #else
-# define _ENTRY(x)	.globl _/**/x; _/**/x:
+# define _C_FUNC(x)	_/**/x
 #endif
+#define	_ASM_FUNC(x)	x
 
-#define	ENTRY(y)	_BEGIN_ENTRY; _ENTRY(y); _END_ENTRY
-#define	TWOENTRY(y,z)	_BEGIN_ENTRY; _ENTRY(y); _ENTRY(z); _END_ENTRY
+#define _ENTRY(x)	.globl x; x:
+
+#define	ENTRY(y)	_BEGIN_ENTRY; _ENTRY(_C_FUNC(y)); _END_ENTRY
+#define	TWOENTRY(y,z)	_BEGIN_ENTRY; _ENTRY(_C_FUNC(y)); _ENTRY(_C_FUNC(z)); \
+			_END_ENTRY
+#define	ASENTRY(y)	_BEGIN_ENTRY; _ENTRY(_ASM_FUNC(y)); _END_ENTRY
 
 #define	ASMSTR		.asciz
 
