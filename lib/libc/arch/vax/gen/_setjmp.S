@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)_setjmp.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: _setjmp.S,v 1.1 1995/04/17 12:23:37 ragge Exp $"
+	.asciz "$NetBSD: _setjmp.S,v 1.2 1998/10/13 00:02:19 matt Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -77,7 +77,7 @@ loop:
 	cmpl	(r1),12(fp)
 	beql	done
 	blssu	botch
-	movl	$loop,16(fp)
+	movab	loop,16(fp)
 	ret				# pop another frame
 
 done:
