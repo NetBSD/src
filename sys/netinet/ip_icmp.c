@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.24 1997/10/17 22:12:24 kml Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.25 1997/10/18 21:18:30 kml Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -71,7 +71,6 @@ int	icmpmaskrepl = 0;
 #ifdef ICMPPRINTFS
 int	icmpprintfs = 0;
 #endif
-int	icmp_do_mtudisc = 0;
 
 extern	struct protosw inetsw[];
 
@@ -316,7 +315,7 @@ icmp_input(m, va_alist)
 			printf("deliver to protocol %d\n", icp->icmp_ip.ip_p);
 #endif
 		icmpsrc.sin_addr = icp->icmp_ip.ip_dst;
-		if (code == PRC_MSGSIZE && icmp_do_mtudisc)
+		if (code == PRC_MSGSIZE && ip_mtudisc)
 			icmp_mtudisc(icp);
 		ctlfunc = inetsw[ip_protox[icp->icmp_ip.ip_p]].pr_ctlinput;
 		if (ctlfunc)
@@ -606,8 +605,6 @@ icmp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	switch (name[0]) {
 	case ICMPCTL_MASKREPL:
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &icmpmaskrepl));
-	case ICMPCTL_MTUDISC:
-		return (sysctl_int(oldp, oldlenp, newp, newlen, &icmp_do_mtudisc));
 	default:
 		return (ENOPROTOOPT);
 	}

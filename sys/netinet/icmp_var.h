@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp_var.h,v 1.9 1997/10/17 22:12:14 kml Exp $	*/
+/*	$NetBSD: icmp_var.h,v 1.10 1997/10/18 21:18:28 kml Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -64,7 +64,6 @@ struct	icmpstat {
 #define ICMPCTL_NAMES { \
 	{ 0, 0 }, \
 	{ "maskrepl", CTLTYPE_INT }, \
-	{ "mtudisc", CTLTYPE_INT }, \
 }
 
 #ifdef _KERNEL
