@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.27 2004/03/26 19:55:13 dsl Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.28 2004/06/06 06:06:59 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -366,14 +366,18 @@ get_ptn_sizes(int part_start, int sectors, int no_swap)
 
 	static struct ptn_info pi = { -1, {
 #define PI_ROOT 0
-		{ PART_ROOT,	"/",	DEFROOTSIZE,	DEFROOTSIZE },
+		{ PART_ROOT,	{ '/', '\0' },
+		  DEFROOTSIZE,	DEFROOTSIZE },
 #define PI_SWAP 1
-		{ PART_SWAP,	"swap",	DEFSWAPSIZE,	DEFSWAPSIZE },
-		{ PART_TMP_MFS,	"tmp (mfs)",	64 },
+		{ PART_SWAP,	{ 's', 'w', 'a', 'p', '\0' },
+	 	  DEFSWAPSIZE,	DEFSWAPSIZE },
+		{ PART_TMP_MFS,	
+		  { 't', 'm', 'p', ' ', '(', 'm', 'f', 's', ')', '\0' },
+		  64 },
 #define PI_USR 3
-		{ PART_USR,	"/usr",	DEFUSRSIZE },
-		{ PART_ANY,	"/var",	DEFVARSIZE },
-		{ PART_ANY,	"/home",	0 },
+		{ PART_USR,	{ '/', 'u', 's', 'r', '\0' },	DEFUSRSIZE },
+		{ PART_ANY,	{ '/', 'v', 'a', 'r', '\0' },	DEFVARSIZE },
+		{ PART_ANY,	{ '/', 'h', 'o', 'm', 'e', '\0' },	0 },
 	}, {
 		{ NULL, OPT_NOMENU, 0, set_ptn_size },
 		{ MSG_askunits, MENU_sizechoice, OPT_SUB, NULL },
