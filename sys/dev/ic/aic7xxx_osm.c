@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.c,v 1.2 2003/04/19 19:38:21 fvdl Exp $	*/
+/*	$NetBSD: aic7xxx_osm.c,v 1.3 2003/04/20 15:31:50 fvdl Exp $	*/
 
 /*
  * Bus independent FreeBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -988,9 +988,9 @@ ahc_detach(struct device *self, int flags)
 	if (rv == 0 && ahc->sc_child_b != NULL)
 		rv = config_detach(ahc->sc_child_b, flags);
 
-	ahc_free(ahc);
-
 	shutdownhook_disestablish(ahc->shutdown_hook);
+
+	ahc_free(ahc);
 
 	return (rv);
 }
