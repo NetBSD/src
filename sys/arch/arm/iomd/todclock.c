@@ -1,4 +1,4 @@
-/*	$NetBSD: todclock.c,v 1.1 2001/10/05 22:27:42 reinoud Exp $	*/
+/*	$NetBSD: todclock.c,v 1.2 2002/02/05 14:36:35 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -246,10 +246,6 @@ resettodr()
 	rtc.rtc_sec = sec;
 	rtc.rtc_centi =
 	rtc.rtc_micro = 0;
-
-	printf("resettod: %02d/%02d/%02d%02d %02d:%02d:%02d\n", rtc.rtc_day,
-	    rtc.rtc_mon, rtc.rtc_cen, rtc.rtc_year, rtc.rtc_hour,
-	    rtc.rtc_min, rtc.rtc_sec);
 
 	s = splclock();
 	todclock_sc->sc_rtc_write(todclock_sc->sc_rtc_arg, &rtc);
