@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.118 1997/11/03 21:33:33 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.119 1997/11/05 18:13:13 thorpej Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -340,6 +340,7 @@ lc0	at isa? port ? iomem ? irq ?		# DEC EtherWORKS III (LEMAC)
 #le0	at isa? port 0x320 irq 10 drq 7		# IsoLan, NE2100, and DEPCA
 ne0	at isa? port 0x280 irq 9		# NE[12]000 ethernet cards
 ne1	at isa? port 0x300 irq 10
+sm0	at isa? port 0x300 irq 10		# SMC91C9x Ethernet
 we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC Ethernet
 we1	at isa? port 0x300 iomem 0xcc000 irq 10
 
