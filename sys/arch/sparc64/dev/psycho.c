@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.53 2002/09/27 20:36:10 thorpej Exp $	*/
+/*	$NetBSD: psycho.c,v 1.54 2002/10/01 18:40:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo E. Horvath
@@ -125,9 +125,8 @@ static	int	psycho_match __P((struct device *, struct cfdata *, void *));
 static	void	psycho_attach __P((struct device *, struct device *, void *));
 static	int	psycho_print __P((void *aux, const char *p));
 
-const struct cfattach psycho_ca = {
-        sizeof(struct psycho_softc), psycho_match, psycho_attach
-};
+CFATTACH_DECL(psycho, sizeof(struct psycho_softc),
+    psycho_match, psycho_attach, NULL, NULL)
 
 /*
  * "sabre" is the UltraSPARC IIi onboard UPA to PCI bridge.  It manages a
