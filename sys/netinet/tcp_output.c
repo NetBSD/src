@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.43 1998/07/21 10:46:00 mycroft Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.44 1998/10/04 21:33:53 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -178,6 +178,7 @@ tcp_output(tp)
 	u_char opt[MAX_TCPOPTLEN];
 	unsigned optlen, hdrlen;
 	int idle, sendalot, txsegsize, rxsegsize;
+	int maxburst = TCP_MAXBURST;
 
 	tcp_segsize(tp, &txsegsize, &rxsegsize);
 
@@ -707,7 +708,11 @@ out:
 	tp->last_ack_sent = tp->rcv_nxt;
 	tp->t_flags &= ~TF_ACKNOW;
 	TCP_CLEAR_DELACK(tp);
-	if (sendalot)
+#ifdef DIAGNOSTIC
+	if (maxburst < 0)
+		printf("tcp_output: maxburst exceeded by %d\n", -maxburst);
+#endif
+	if (sendalot && --maxburst)
 		goto again;
 	return (0);
 }

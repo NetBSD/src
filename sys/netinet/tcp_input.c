@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.67 1998/09/19 04:34:34 mycroft Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.68 1998/10/04 21:33:53 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -1179,10 +1179,21 @@ after_listen:
 					u_int win =
 					    min(tp->snd_wnd, tp->snd_cwnd) / 
 					    2 /	tp->t_segsz;
+					if (SEQ_LT(ti->ti_ack, tp->snd_recover)) {
+						/*
+						 * False fast retransmit after
+						 * timeout.  Do not cut window.
+						 */
+						tp->snd_cwnd += tp->t_segsz;
+						tp->t_dupacks = 0;
+						(void) tcp_output(tp);
+						goto drop;
+					}
 
 					if (win < 2)
 						win = 2;
 					tp->snd_ssthresh = win * tp->t_segsz;
+					tp->snd_recover = tp->snd_max;
 					TCP_TIMER_DISARM(tp, TCPT_REXMT);
 					tp->t_rtt = 0;
 					tp->snd_nxt = ti->ti_ack;
@@ -1206,10 +1217,19 @@ after_listen:
 		 * If the congestion window was inflated to account
 		 * for the other side's cached packets, retract it.
 		 */
-		if (tp->t_dupacks >= tcprexmtthresh &&
-		    tp->snd_cwnd > tp->snd_ssthresh)
+		if (tp->t_dupacks >= tcprexmtthresh && !tcp_newreno(tp, ti)) {
 			tp->snd_cwnd = tp->snd_ssthresh;
-		tp->t_dupacks = 0;
+			/*
+			 * Window inflation should have left us with approx.
+			 * snd_ssthresh outstanding data.  But in case we 
+			 * would be inclined to send a burst, better to do
+			 * it via the slow start mechanism.
+			 */
+			if (SEQ_SUB(tp->snd_max, ti->ti_ack) < tp->snd_ssthresh)
+				tp->snd_cwnd = SEQ_SUB(tp->snd_max, ti->ti_ack)
+				     + tp->t_segsz;
+			tp->t_dupacks = 0;
+		}
 		if (SEQ_GT(ti->ti_ack, tp->snd_max)) {
 			tcpstat.tcps_rcvacktoomuch++;
 			goto dropafterack;
@@ -1258,7 +1278,8 @@ after_listen:
 
 		if (cw > tp->snd_ssthresh)
 			incr = incr * incr / cw;
-		tp->snd_cwnd = min(cw + incr, TCP_MAXWIN<<tp->snd_scale);
+		if (SEQ_GEQ(ti->ti_ack, tp->snd_recover))
+			tp->snd_cwnd = min(cw + incr,TCP_MAXWIN<<tp->snd_scale);
 		}
 		if (acked > so->so_snd.sb_cc) {
 			tp->snd_wnd -= so->so_snd.sb_cc;
@@ -1760,6 +1781,42 @@ tcp_xmit_timer(tp, rtt)
 	 */
 	tp->t_softerror = 0;
 }
+
+/*
+ * Checks for partial ack.  If partial ack arrives, force the retransmission
+ * of the next unacknowledged segment, do not clear tp->t_dupacks, and return
+ * 1.  By setting snd_nxt to ti_ack, this forces retransmission timer to
+ * be started again.  If the ack advances at least to tp->snd_recover, return 0.
+ */
+int
+tcp_newreno(tp, ti)
+	struct tcpcb *tp;
+	struct tcpiphdr *ti;
+{
+	if (SEQ_LT(ti->ti_ack, tp->snd_recover)) {
+	        tcp_seq onxt = tp->snd_nxt;
+	        tcp_seq ouna = tp->snd_una;  /* Haven't updated snd_una yet*/
+	        u_long  ocwnd = tp->snd_cwnd;
+		TCP_TIMER_DISARM(tp, TCPT_REXMT);
+	        tp->t_rtt = 0;
+	        tp->snd_nxt = ti->ti_ack;
+	        tp->snd_cwnd = tp->t_segsz;
+	        tp->snd_una = ti->ti_ack;
+	        (void) tcp_output(tp);
+	        tp->snd_cwnd = ocwnd;
+	        tp->snd_una = ouna;
+	        if (SEQ_GT(onxt, tp->snd_nxt))
+	                tp->snd_nxt = onxt;
+	        /*
+	         * Partial window deflation.  Relies on fact that tp->snd_una
+	         * not updated yet.
+	         */
+	        tp->snd_cwnd -= (ti->ti_ack - tp->snd_una - tp->t_segsz);
+	        return 1;
+	}
+	return 0;
+}
+
 
 /*
  * TCP compressed state engine.  Currently used to hold compressed
