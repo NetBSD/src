@@ -1,4 +1,4 @@
-/*	$NetBSD: chown.c,v 1.25 2000/12/17 22:47:14 mike Exp $	*/
+/*	$NetBSD: chown.c,v 1.26 2002/07/07 11:44:03 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)chown.c	8.8 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: chown.c,v 1.25 2000/12/17 22:47:14 mike Exp $");
+__RCSID("$NetBSD: chown.c,v 1.26 2002/07/07 11:44:03 bjh21 Exp $");
 #endif
 #endif /* not lint */
 
@@ -142,7 +142,8 @@ main(argc, argv)
 			fts_options &= ~FTS_PHYSICAL;
 			fts_options |= FTS_LOGICAL;
 		}
-	}
+	} else if (!hflag)
+		fts_options |= FTS_COMFOLLOW;
 
 	uid = (uid_t)-1;
 	gid = (gid_t)-1;
