@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.34 1994/04/24 02:48:10 deraadt Exp $
+ *	$Id: if_ep.c,v 1.35 1994/05/02 06:37:10 deraadt Exp $
  */
 
 #include "bpfilter.h"
@@ -823,7 +823,7 @@ epread(sc)
 			top->m_flags = M_PKTHDR;
 		}
 		insw(BASE + EP_W1_RX_PIO_RD_1, mtod(top, caddr_t),
-		    sizeof(struct ether_header));
+		    sizeof(struct ether_header) / 2);
 		top->m_next = m0;
 		top->m_len = sizeof(struct ether_header);
 		/* XXX Accomodate for type and len from beginning of trailer */
