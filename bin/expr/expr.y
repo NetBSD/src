@@ -514,7 +514,7 @@ struct val *a, *b;
 			v = make_str (a->u.s + rm[1].rm_so);
 
 		} else {
-			v = make_integer (rm[0].rm_eo - rm[0].rm_so);
+			v = make_integer ((int)(rm[0].rm_eo - rm[0].rm_so));
 		}
 	} else {
 		if (rp.re_nsub == 0) {
