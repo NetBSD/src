@@ -6,15 +6,21 @@ arch/amiga/amiga/conf.c			standard
 arch/amiga/amiga/cons.c			standard
 arch/amiga/amiga/disksubr.c		standard
 arch/amiga/amiga/dkbad.c		standard
-arch/amiga/amiga/in_cksum.c		optional inet
 arch/amiga/amiga/machdep.c		standard config-dependent
 arch/amiga/amiga/mem.c			standard
-arch/amiga/amiga/ns_cksum.c		optional ns
-arch/amiga/amiga/oc_cksum.s		optional inet
 arch/amiga/amiga/pmap.c			standard
 arch/amiga/amiga/sys_machdep.c		standard
 arch/amiga/amiga/trap.c			standard
 arch/amiga/amiga/vm_machdep.c		standard
+arch/amiga/amiga/cc.c			standard
+arch/amiga/amiga/cc_chipmem.c		standard
+arch/amiga/amiga/cc_vbl.c		standard
+arch/amiga/amiga/cc_audio.c		standard
+arch/amiga/amiga/cc_blitter.c		standard
+arch/amiga/amiga/cc_copper.c		standard
+arch/amiga/amiga/cc_2024.c		standard
+arch/amiga/amiga/dlists.c		standard
+arch/amiga/dev/view.c			optional view device-driver
 arch/amiga/dev/a3000dma.c		optional a3000scsi device-driver
 arch/amiga/dev/a2091dma.c		optional a2091scsi device-driver
 arch/amiga/dev/gvp11dma.c		optional gvp11scsi device-driver
@@ -22,26 +28,55 @@ arch/amiga/dev/vn.c			optional vn device-driver
 arch/amiga/dev/scsi.c			optional a3000scsi or a2091scsi or gvp11scsi
 arch/amiga/dev/sd.c			optional sd device-driver
 arch/amiga/dev/st.c			optional st device-driver
+arch/amiga/dev/zeusdma.c		optional zeusscsi device-driver
+arch/amiga/dev/magnumdma.c		optional magnumscsi device-driver
+arch/amiga/dev/siop.c			optional zeusscsi or magnumscsi
+arch/amiga/dev/rz.c			optional rz device-driver
+arch/amiga/dev/tz.c			optional tz device-driver
 arch/amiga/dev/ser.c			optional ser device-driver
 arch/amiga/dev/kbd.c			optional ite
 arch/amiga/dev/ite.c			optional ite device-driver
-arch/amiga/dev/ite_cc.c			optional ite
+arch/amiga/dev/ite_cc.c			optional ite view
 arch/amiga/dev/ite_tg.c			optional ite
 arch/amiga/dev/ite_rt.c			optional ite
 arch/amiga/dev/kernel_font.c		optional ite
 arch/amiga/dev/kbdmap.c			optional ite
 arch/amiga/dev/grf.c			optional grf device-driver
-arch/amiga/dev/grf_cc.c			optional grf
+arch/amiga/dev/grf_cc.c			optional grf view
 arch/amiga/dev/grf_tg.c			optional grf
 arch/amiga/dev/grf_rt.c			optional grf
 arch/amiga/dev/par.c			optional par device-driver
 arch/amiga/dev/if_le.c			optional le device-driver
 arch/amiga/dev/rtclocka.c		optional rtclocka device-driver
 arch/amiga/dev/rtclockb.c		optional rtclockb device-driver
+arch/amiga/dev/event.c			standard
+arch/amiga/dev/ms.c			optional mouse device-driver
+arch/amiga/dev/grf/grf_cc/grf_cc_a2024_mode.c	optional grf view
+arch/amiga/dev/grf/grf_cc/grf_cc_global.c	optional grf view
+arch/amiga/dev/grf/grf_cc/grf_cc_h_mode.c	optional grf view
+arch/amiga/dev/grf/grf_cc/grf_cc_hdl_mode.c	optional grf view
+arch/amiga/dev/grf/grf_cc/grf_cc_hl_mode.c	optional grf view
+arch/amiga/dev/grf/grf_cc/grf_cc_mode.c		optional grf view
+arch/amiga/dev/grf/grf_cc/grf_cc_ph_mode.c	optional grf view
+arch/amiga/dev/grf/grf_cc/grf_cc_phdl_mode.c	optional grf view
+arch/amiga/dev/grf/grf_cc/grf_cc_phl_mode.c	optional grf view
+arch/amiga/dev/grf/grf_cc/grf_cc_view.c		optional grf view
+arch/amiga/dev/grf/grf_cc/grf_ccc.c		optional grf view
+arch/amiga/dev/grf/grf_mode.c			optional grf view
+arch/amiga/dev/grf/grf_monitor.c		optional grf view
+arch/amiga/dev/grf/grf_view.c			optional grf view
+arch/amiga/dev/grf/grfcc.c		optional grf view
+arch/amiga/fpsp/fpsp.o			optional fpsp
+arch/amiga/fpsp/fpspnull.s		optional not fpsp
 kern/syscalls.c				standard
-arch/amiga/sunos/sun_disklabel.c	optional compat_sunos
-arch/amiga/sunos/sun_ioctl.c		optional compat_sunos
-arch/amiga/sunos/sun_misc.c		optional compat_sunos
-arch/amiga/sunos/sun_sysent.c		optional compat_sunos
-arch/amiga/sunos/sun_exec_aout.c	optional compat_sunos
-arch/amiga/sunos/sun_syscalls.c		optional compat_sunos
+compat/sunos/sun_misc.c         optional compat_sunos
+compat/sunos/sun_sysent.c       optional compat_sunos
+compat/sunos/sun_ioctl.c        optional compat_sunos
+compat/sunos/sun_exec.c         optional compat_sunos
+arch/m68k/m68k/db_disasm.c		optional ddb
+arch/m68k/m68k/db_interface.c		optional ddb
+arch/m68k/m68k/db_trace.c		optional ddb
+arch/m68k/m68k/in_cksum.c		optional inet
+arch/m68k/m68k/ns_cksum.c		optional ns
+arch/m68k/m68k/oc_cksum.s		optional inet
+arch/m68k/m68k/process_machdep.c	standard
