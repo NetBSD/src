@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.1.2.19 2003/01/08 19:34:22 thorpej Exp $	*/
+/*	$NetBSD: pthread.h,v 1.1.2.20 2003/01/13 22:50:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -80,6 +80,8 @@ int	pthread_mutex_trylock(pthread_mutex_t *mutex);
 int	pthread_mutex_unlock(pthread_mutex_t *mutex);
 int	pthread_mutexattr_init(pthread_mutexattr_t *attr);
 int	pthread_mutexattr_destroy(pthread_mutexattr_t *attr);
+int	pthread_mutexattr_gettype(const pthread_mutexattr_t *attr, int *type);
+int	pthread_mutexattr_settype(pthread_mutexattr_t *attr, int type);
 
 int	pthread_cond_init(pthread_cond_t *cond,
 	    const pthread_condattr_t *attr);
@@ -179,5 +181,13 @@ __END_DECLS
 #define PTHREAD_KEYS_MAX	256
 #define PTHREAD_STACK_MIN	4096 /* XXX Pulled out of my butt */
 #define PTHREAD_THREADS_MAX	64		/* Min. required */
+
+/*
+ * Mutex attributes.
+ */
+#define	PTHREAD_MUTEX_NORMAL		0
+#define	PTHREAD_MUTEX_ERRORCHECK	1
+#define	PTHREAD_MUTEX_RECURSIVE		2
+#define	PTHREAD_MUTEX_DEFAULT		PTHREAD_MUTEX_NORMAL
 
 #endif /* _LIB_PTHREAD_H */

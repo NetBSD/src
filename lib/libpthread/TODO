@@ -51,8 +51,6 @@ Ideas to play with:
 - Get rid of thread structures when too many accumulate (is this
   actually a good idea?)
 - Adaptive spin/sleep locks for mutexes.
-- Supporting different mutex types would be nice (normal, debugging,
-  recursive, etc).
 - Currently, each thread uses two real pages of memory: one at the top
   of the stack for actual stack data, and one at the bottom for the
   pthread_st. If we can get suitable space above the initial stack for
