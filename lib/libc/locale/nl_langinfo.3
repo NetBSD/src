@@ -1,4 +1,4 @@
-.\"	$NetBSD: nl_langinfo.3,v 1.8 2002/04/09 20:00:05 wiz Exp $
+.\"	$NetBSD: nl_langinfo.3,v 1.9 2003/02/12 02:46:57 gmcgarry Exp $
 .\"
 .\" Written by J.T. Conklin <jtc@netbsd.org>.
 .\" Public domain.
@@ -25,13 +25,124 @@ The names and values of
 .Fa item
 are defined in
 .Aq langinfo.h .
+The entries under Category indicate in which
+.Xr setlocale 3
+category each item is defined.
+.sp
+.nf
+.ta \w'ERA_D_T_FMT'u+1n +\w'LC_MESSAGES'u+1n +\w'Name of the third day of the week (eg: Tuesday)'u
+\fIConstant\fP	\fICategory\fP	\fIMeaning\fP
+.ta \w'ERA_D_T_FMT'u+1n +\w'LC_MESSAGES'u+1n +\w'Name of the third day of the week (eg: Tuesday)'u+1nC
+.sp 5p
+CODESET	LC_CTYPE	Codeset name
+D_T_FMT	LC_TIME	String for formatting date and time
+D_FMT	LC_TIME	Date format string
+T_FMT	LC_TIME	Time format string
+T_FMT_AMPM	LC_TIME	a.m. or p.m. time format string
+AM_STR	LC_TIME	Ante-meridiem affix
+PM_STR	LC_TIME	Post-meridiem affix
+DAY_1	LC_TIME	Name of the first day of the week (eg: Sunday)
+DAY_2	LC_TIME	Name of the second day of the week (eg: Monday)
+DAY_3	LC_TIME	Name of the third day of the week (eg: Tuesday)
+DAY_4	LC_TIME	Name of the fourth day of the week (eg: Wednesday)
+DAY_5	LC_TIME	Name of the fifth day of the week (eg: Thursday)
+DAY_6	LC_TIME	Name of the sixth day of the week (eg: Friday)
+DAY_7	LC_TIME	Name of the seventh day of the week (eg: Saturday)
+ABDAY_1	LC_TIME	Abbreviated name of the first day of the week
+ABDAY_2	LC_TIME	Abbreviated name of the second day of the week
+ABDAY_3	LC_TIME	Abbreviated name of the third day of the week
+ABDAY_4	LC_TIME	Abbreviated name of the fourth day of the week
+ABDAY_5	LC_TIME	Abbreviated name of the fifth day of the week
+ABDAY_6	LC_TIME	Abbreviated name of the sixth day of the week
+ABDAY_7	LC_TIME	Abbreviated name of the seventh day of the week
+MON_1	LC_TIME	Name of the first month of the year
+MON_2	LC_TIME	Name of the second month
+MON_3	LC_TIME	Name of the third month
+MON_4	LC_TIME	Name of the fourth month
+MON_5	LC_TIME	Name of the fifth month
+MON_6	LC_TIME	Name of the sixth month
+MON_7	LC_TIME	Name of the seventh month
+MON_8	LC_TIME	Name of the eighth month
+MON_9	LC_TIME	Name of the ninth month
+MON_10	LC_TIME	Name of the tenth month
+MON_11	LC_TIME	Name of the eleventh month
+MON_12	LC_TIME	Name of the twelfth month
+ABMON_1	LC_TIME	Abbreviated name of the first month
+ABMON_2	LC_TIME	Abbreviated name of the second month
+ABMON_3	LC_TIME	Abbreviated name of the third month
+ABMON_4	LC_TIME	Abbreviated name of the fourth month
+ABMON_5	LC_TIME	Abbreviated name of the fifth month
+ABMON_6	LC_TIME	Abbreviated name of the sixth month
+ABMON_7	LC_TIME	Abbreviated name of the seventh month
+ABMON_8	LC_TIME	Abbreviated name of the eighth month
+ABMON_9	LC_TIME	Abbreviated name of the ninth month
+ABMON_10	LC_TIME	Abbreviated name of the tenth month
+ABMON_11	LC_TIME	Abbreviated name of the eleventh month
+ABMON_12	LC_TIME	Abbreviated name of the twelfth month
+ERA	LC_TIME	Era description segments
+ERA_D_FMT	LC_TIME	Era date format string
+ERA_D_T_FMT	LC_TIME	Era date and time format string
+ERA_T_FMT	LC_TIME	Era time format string
+ALT_DIGITS	LC_TIME	Alternative symbols for digits
+RADIXCHAR	LC_NUMERIC	Radix character
+THOUSEP	LC_NUMERIC	Separator for thousands
+YESEXPR	LC_MESSAGES	Affirmative response expression
+NOEXPR	LC_MESSAGES	Negative response expression
+.\" CRNCYSTR	LC_MONETARY	Local currency symbol
+.fi
 .Sh RETURN VALUES
 .Fn nl_langinfo
 returns a pointer to an empty string if
 .Fa item
 is invalid.
+.Sh EXAMPLES
+The following example uses
+.Fn nl_langinfo
+to obtain the date and time format for the current locale:
+.Pp
+.Bd -literal
+	#include <time.h>
+	#include <langinfo.h>
+	#include <locale.h>
+	int main(void)
+	{
+		char datestring[100];
+		struct tm *tm;
+		time_t t;
+		char *ptr;
+		t = time(NULL);
+		tm = localtime(&t);
+		(void)setlocale(LC_ALL, "");
+		ptr = nl_langinfo(D_T_FMT);
+		strftime(datestring, sizeof(datestring), ptr, tm);
+		printf("%s\n",datestring);
+		return (0);
+	}
+.Ed
+.\" .Pp
+.\" The following example uses
+.\" .Fn nl_langinfo
+.\" to obtain the setting of the currency symbol for the current locale:
+.\" .Pp
+.\" .Bd
+.\" 	#include <langinfo.h>
+.\" 	#include <locale.h>
+.\" 	int main(void)
+.\" 	{
+.\" 		char *ptr;
+.\" 		(void)setlocale(LC_ALL, "");
+.\" 		ptr = nl_langinfo(CRNCYSTR);
+.\" 		printf("%s", ptr);
+.\" 	}
+.\" .Ed
 .Sh SEE ALSO
-.Xr setlocale 3
+.Xr setlocale 3 ,
+.Xr nls 7
+.Sh STANDARDS
+The
+.Fn nl_langinfo
+function conforms to
+.St -p1003.1-2001
 .Sh HISTORY
 The
 .Fn nl_langinfo
