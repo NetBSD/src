@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigaction14_sigtramp.c,v 1.3 2003/11/23 23:13:11 uwe Exp $	*/
+/*	$NetBSD: __sigtramp2.S,v 1.1 2003/11/23 23:13:11 uwe Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,38 +36,24 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define	__LIBC12_SOURCE__
+#include "SYS.h"
 
-#include <sys/types.h>
-#include <signal.h>
-#include <errno.h>
-
-#include "extern.h"
-
-__weak_alias(__sigaction14, __libc_sigaction14)
-
-int
-__libc_sigaction14(int sig, const struct sigaction *act, struct sigaction *oact)
-{
-	extern int __sigtramp_sigcontext_1[];
-	extern int __sigtramp_siginfo_2[];
-	int rv;
-
-	/*
-	 * We select the compatibility SIGCONTEXT trampoline if SA_SIGINFO
-	 * is not set in the sigaction.
-	 */
-	if (act && (act->sa_flags & SA_SIGINFO) == 0) {
-		rv =  __sigaction_sigtramp(sig, act, oact,
-					   __sigtramp_sigcontext_1, 1);
-		/*
-		 * EINVAL might indicate that trampoline version 1 is
-		 * not supported by the kernel; fall back on native
-		 * SIGINFO trampoline.
-		 */
-		if (rv >= 0 || errno != EINVAL)
-			return rv;
-	}
-
-	return __sigaction_sigtramp(sig, act, oact, __sigtramp_siginfo_2, 2);
-}
+/*
+ * The SH signal trampoline is invoked only to return from
+ * the signal; the kernel calls the signal handler directly.
+ *
+ * On entry, stack looks like:
+ *
+ *		siginfo structure
+ *	sp->	ucontext structure
+ *
+ * NB: This order is different from what other ports use (siginfo at
+ * the top of the stack), because we want to avoid wasting two
+ * instructions to skip to the ucontext.  Not that this order really
+ * matters, but I think this inconsistency deserves an explanation.	
+ */
+NENTRY(__sigtramp_siginfo_2)
+	mov	r15, r4			/* get pointer to ucontext */
+	SYSTRAP(setcontext)		/* and call setcontext() */
+	mov	r0, r4			/* exit with errno */
+	SYSTRAP(exit)			/* if sigreturn fails */
