@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.118 2000/09/19 00:00:18 fvdl Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.119 2000/09/19 17:04:51 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,6 +41,8 @@
 /*
  * vnode op calls for Sun NFS version 2 and 3
  */
+
+#include "opt_nfs.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -301,7 +303,7 @@ nfs_access(v)
 	int error = 0, attrflag, cachevalid;
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
 	u_int32_t mode, rmode;
-	int v3 = NFS_ISV3(vp);
+	const int v3 = NFS_ISV3(vp);
 	struct nfsnode *np = VTONFS(vp);
 
 	cachevalid = (np->n_accstamp != -1 &&
@@ -577,7 +579,7 @@ nfs_getattr(v)
 	caddr_t bpos, dpos;
 	int error = 0;
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
-	int v3 = NFS_ISV3(vp);
+	const int v3 = NFS_ISV3(vp);
 	
 	/*
 	 * Update local times for special files.
@@ -705,7 +707,7 @@ nfs_setattrrpc(vp, vap, cred, procp)
 	u_int32_t *tl;
 	int error = 0, wccflag = NFSV3_WCCRATTR;
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
-	int v3 = NFS_ISV3(vp);
+	const int v3 = NFS_ISV3(vp);
 
 	nfsstats.rpccnt[NFSPROC_SETATTR]++;
 	nfsm_reqhead(vp, NFSPROC_SETATTR, NFSX_FH(v3) + NFSX_SATTR(v3));
@@ -771,7 +773,7 @@ nfs_lookup(v)
 	nfsfh_t *fhp;
 	struct nfsnode *np;
 	int lockparent, wantparent, error = 0, attrflag, fhsize;
-	int v3 = NFS_ISV3(dvp);
+	const int v3 = NFS_ISV3(dvp);
 	cnp->cn_flags &= ~PDIRUNLOCK;
 	flags = cnp->cn_flags;
 
@@ -994,7 +996,7 @@ nfs_readlinkrpc(vp, uiop, cred)
 	caddr_t bpos, dpos, cp2;
 	int error = 0, len, attrflag;
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
-	int v3 = NFS_ISV3(vp);
+	const int v3 = NFS_ISV3(vp);
 
 	nfsstats.rpccnt[NFSPROC_READLINK]++;
 	nfsm_reqhead(vp, NFSPROC_READLINK, NFSX_FH(v3));
@@ -1027,7 +1029,7 @@ nfs_readrpc(vp, uiop, cred)
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
 	struct nfsmount *nmp;
 	int error = 0, len, retlen, tsiz, eof, attrflag;
-	int v3 = NFS_ISV3(vp);
+	const int v3 = NFS_ISV3(vp);
 
 #ifndef nolint
 	eof = 0;
@@ -1092,7 +1094,8 @@ nfs_writerpc(vp, uiop, cred, iomode, must_commit)
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	int error = 0, len, tsiz, wccflag = NFSV3_WCCRATTR, rlen, commit;
-	int v3 = NFS_ISV3(vp), committed = NFSV3WRITE_FILESYNC;
+	const int v3 = NFS_ISV3(vp);
+	int committed = NFSV3WRITE_FILESYNC;
 
 #ifndef DIAGNOSTIC
 	if (uiop->uio_iovcnt != 1)
@@ -1211,7 +1214,7 @@ nfs_mknodrpc(dvp, vpp, cnp, vap)
 	int error = 0, wccflag = NFSV3_WCCRATTR, gotvp = 0;
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
 	u_int32_t rdev;
-	int v3 = NFS_ISV3(dvp);
+	const int v3 = NFS_ISV3(dvp);
 
 	if (vap->va_type == VCHR || vap->va_type == VBLK)
 		rdev = txdr_unsigned(vap->va_rdev);
@@ -1328,7 +1331,7 @@ nfs_create(v)
 	caddr_t bpos, dpos, cp2;
 	int error, wccflag = NFSV3_WCCRATTR, gotvp = 0, fmode = 0;
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
-	int v3 = NFS_ISV3(dvp);
+	const int v3 = NFS_ISV3(dvp);
 
 	/*
 	 * Oops, not for me..
@@ -1511,7 +1514,7 @@ nfs_removerpc(dvp, name, namelen, cred, proc)
 	caddr_t bpos, dpos, cp2;
 	int error = 0, wccflag = NFSV3_WCCRATTR;
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
-	int v3 = NFS_ISV3(dvp);
+	const int v3 = NFS_ISV3(dvp);
 
 	nfsstats.rpccnt[NFSPROC_REMOVE]++;
 	nfsm_reqhead(dvp, NFSPROC_REMOVE,
@@ -1632,7 +1635,7 @@ nfs_renamerpc(fdvp, fnameptr, fnamelen, tdvp, tnameptr, tnamelen, cred, proc)
 	caddr_t bpos, dpos, cp2;
 	int error = 0, fwccflag = NFSV3_WCCRATTR, twccflag = NFSV3_WCCRATTR;
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
-	int v3 = NFS_ISV3(fdvp);
+	const int v3 = NFS_ISV3(fdvp);
 
 	nfsstats.rpccnt[NFSPROC_RENAME]++;
 	nfsm_reqhead(fdvp, NFSPROC_RENAME,
@@ -1678,6 +1681,7 @@ nfs_link(v)
 	caddr_t bpos, dpos, cp2;
 	int error = 0, wccflag = NFSV3_WCCRATTR, attrflag = 0;
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
+	/* XXX Should be const and initialised? */
 	int v3;
 
 	if (dvp->v_mount != vp->v_mount) {
@@ -1746,7 +1750,7 @@ nfs_symlink(v)
 	int slen, error = 0, wccflag = NFSV3_WCCRATTR, gotvp;
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
 	struct vnode *newvp = (struct vnode *)0;
-	int v3 = NFS_ISV3(dvp);
+	const int v3 = NFS_ISV3(dvp);
 
 	nfsstats.rpccnt[NFSPROC_SYMLINK]++;
 	slen = strlen(ap->a_target);
@@ -1815,7 +1819,7 @@ nfs_mkdir(v)
 	int error = 0, wccflag = NFSV3_WCCRATTR;
 	int gotvp = 0;
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
-	int v3 = NFS_ISV3(dvp);
+	const int v3 = NFS_ISV3(dvp);
 
 	len = cnp->cn_namelen;
 	nfsstats.rpccnt[NFSPROC_MKDIR]++;
@@ -1894,7 +1898,7 @@ nfs_rmdir(v)
 	caddr_t bpos, dpos, cp2;
 	int error = 0, wccflag = NFSV3_WCCRATTR;
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
-	int v3 = NFS_ISV3(dvp);
+	const int v3 = NFS_ISV3(dvp);
 
 	if (dvp == vp) {
 		vrele(dvp);
@@ -2036,7 +2040,7 @@ nfs_readdirrpc(vp, uiop, cred)
 	u_quad_t fileno;
 	int error = 0, tlen, more_dirs = 1, blksiz = 0, bigenough = 1;
 	int attrflag, nrpcs = 0, reclen;
-	int v3 = NFS_ISV3(vp);
+	const int v3 = NFS_ISV3(vp);
 	nfsquad_t cookie;
 
 #ifdef DIAGNOSTIC
@@ -2528,7 +2532,7 @@ nfs_lookitup(dvp, name, len, cred, procp, npp)
 	int error = 0, fhlen, attrflag;
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
 	nfsfh_t *nfhp;
-	int v3 = NFS_ISV3(dvp);
+	const int v3 = NFS_ISV3(dvp);
 
 	nfsstats.rpccnt[NFSPROC_LOOKUP]++;
 	nfsm_reqhead(dvp, NFSPROC_LOOKUP,
@@ -2968,7 +2972,7 @@ nfs_pathconf(v)
 	int error = 0, attrflag;
 	unsigned int l;
 	u_int64_t maxsize;
-	int v3 = NFS_ISV3(vp);
+	const int v3 = NFS_ISV3(vp);
 
 	switch (ap->a_name) {
 		/* Names that can be resolved locally. */

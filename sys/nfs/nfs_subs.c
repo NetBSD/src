@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.81 2000/08/03 20:41:32 thorpej Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.82 2000/09/19 17:04:51 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,6 +39,7 @@
  */
 
 #include "fs_nfs.h"
+#include "opt_nfs.h"
 #include "opt_nfsserver.h"
 #include "opt_iso.h"
 #include "opt_inet.h"

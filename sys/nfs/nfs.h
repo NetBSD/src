@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.22 2000/06/09 00:00:17 fvdl Exp $	*/
+/*	$NetBSD: nfs.h,v 1.23 2000/09/19 17:04:50 bjh21 Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -102,7 +102,11 @@ extern int nfs_niothreads;              /* Number of async_daemons desired */
 #define	NMOD(a)		((a) % nfs_asyncdaemons)
 #define NFS_CMPFH(n, f, s) \
 	((n)->n_fhsize == (s) && !memcmp((caddr_t)(n)->n_fhp,  (caddr_t)(f),  (s)))
+#ifdef NFS_V2_ONLY
+#define NFS_ISV3(v)	(0)
+#else
 #define NFS_ISV3(v)	(VFSTONFS((v)->v_mount)->nm_flag & NFSMNT_NFSV3)
+#endif
 #define NFS_SRVMAXDATA(n) \
 		(((n)->nd_flag & ND_NFSV3) ? (((n)->nd_nam2) ? \
 		 NFS_MAXDGRAMDATA : NFS_MAXDATA) : NFS_V2MAXDATA)
