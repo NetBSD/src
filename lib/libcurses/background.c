@@ -1,4 +1,4 @@
-/*	$NetBSD: background.c,v 1.3 2000/04/15 13:17:02 blymn Exp $	*/
+/*	$NetBSD: background.c,v 1.4 2000/04/16 09:52:49 jdc Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -40,6 +40,26 @@
 #include "curses_private.h"
 
 /*
+ * bkgdset
+ *	Set new background attributes on stdscr.
+ */
+void
+bkgdset(chtype ch)
+{
+	wbkgdset(stdscr, ch);
+}
+
+/*
+ * bkgd --
+ *	Set new background and new background attributes on stdscr.
+ */
+int
+bkgd(chtype ch)
+{
+	return(wbkgd(stdscr, ch));
+}
+
+/*
  * wbkgdset
  *	Set new background attributes.
  */
@@ -49,7 +69,7 @@ wbkgdset(WINDOW *win, chtype ch)
 	win->bchar = (wchar_t) ch & A_CHARTEXT;
 	win->battr = (attr_t) ch & A_ATTRIBUTES;
 #ifdef DEBUG
-	__CTRACE ("wbkgdset: %08x, %08x\n", win->bchar, win->battr);
+	__CTRACE("wbkgdset: %08x, %08x\n", win->bchar, win->battr);
 #endif
 }
 
@@ -62,7 +82,7 @@ wbkgd(WINDOW *win, chtype ch)
 {
 	wbkgdset(win, ch);
 	__touchwin(win);
-	return (OK);
+	return(OK);
 }
 
 /*
