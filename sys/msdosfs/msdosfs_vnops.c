@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.79.2.9 2000/07/27 17:43:09 he Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.79.2.10 2000/07/31 18:33:00 he Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -334,7 +334,7 @@ msdosfs_getattr(v)
 	}
 	vap->va_flags = 0;
 	if ((dep->de_Attributes & ATTR_ARCHIVE) == 0)
-		vap->va_flags |= SF_ARCHIVED;
+		vap->va_mode |= S_ARCH1;
 	vap->va_gen = 0;
 	vap->va_blocksize = pmp->pm_bpcluster;
 	vap->va_bytes =
