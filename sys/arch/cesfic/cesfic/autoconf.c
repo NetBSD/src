@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.7 2002/12/13 18:52:56 drochner Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.8 2003/04/01 23:57:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999
@@ -134,7 +134,7 @@ mainbus_map(physaddr, size, cacheable, virtaddr)
 		return (ENOMEM);
 
 	*virtaddr = (void*)(va + (physaddr & PGOFSET));
-	for (; pa < endpa; pa += NBPG, va += NBPG) {
+	for (; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
 		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
 		if (!cacheable) {
 			pt_entry_t *pte = kvtopte(va);
