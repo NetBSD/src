@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.10 2000/06/29 07:07:54 mrg Exp $	*/
+/*	$NetBSD: bus.c,v 1.11 2001/02/21 05:53:35 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -398,7 +398,6 @@ x68k_bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	vaddr_t va;
 	bus_addr_t addr;
 	int curseg;
-	extern vm_map_t kernel_map;
 
 	size = round_page(size);
 
@@ -434,8 +433,6 @@ x68k_bus_dmamem_unmap(t, kva, size)
 	caddr_t kva;
 	size_t size;
 {
-	extern vm_map_t kernel_map;
-
 #ifdef DIAGNOSTIC
 	if ((u_long)kva & PGOFSET)
 		panic("x68k_bus_dmamem_unmap");
