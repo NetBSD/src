@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.44 2003/08/06 12:32:07 bouyer Exp $
+# $NetBSD: GENERIC,v 1.45 2003/09/07 05:49:57 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.44 $"
+#ident 		"GENERIC-$Revision: 1.45 $"
 
 maxusers	32
 
@@ -56,7 +56,7 @@ options 	DDB		# kernel dynamic debugger
 
 # Compatibility options
 options 	COMPAT_43	# compatibility with 4.3BSD binaries
-#options 	COMPAT_10	# NetBSD 0.9 binary compatibility
+#options 	COMPAT_09	# NetBSD 0.9 binary compatibility
 #options 	COMPAT_10	# NetBSD 1.0 binary compatibility
 #options 	COMPAT_11	# NetBSD 1.1 binary compatibility
 #options 	COMPAT_12	# NetBSD 1.2 binary compatibility
