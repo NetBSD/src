@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.107 1995/02/04 14:54:57 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.108 1995/02/04 15:02:28 mycroft Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -1354,14 +1354,7 @@ ENTRY(suswintr)
 	jnz	1f
 
 	/* Simulate a trap. */
-	pushl	%edx
-	pushl	%edx
-	call	_trapwrite		# trapwrite(addr)
-	addl	$4,%esp			# clear parameter from the stack
-	popl	%edx
-	movl	_curpcb,%ecx
-	testl	%eax,%eax
-	jnz	_fusubail
+	jmp	_fusubail
 
 1:	/* XXX also need to check the following byte for validity! */
 #endif
