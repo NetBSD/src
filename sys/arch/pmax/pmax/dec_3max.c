@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3max.c,v 1.6 1998/08/29 16:16:37 mrg Exp $	*/
+/*	$NetBSD: dec_3max.c,v 1.7 1999/03/25 01:17:52 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.6 1998/08/29 16:16:37 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.7 1999/03/25 01:17:52 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -90,8 +90,8 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.6 1998/08/29 16:16:37 mrg Exp $");
 #include <mips/mips/mips_mcclock.h>	/* mcclock CPUspeed estimation */
 
 #include <pmax/pmax/clockreg.h>
-#include <pmax/pmax/turbochannel.h> 
-#include <pmax/pmax/pmaxtype.h> 
+#include <pmax/pmax/turbochannel.h>
+#include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/machdep.h>		/* XXXjrs replace with vectors */
 
 #include <pmax/pmax/kn02.h>
@@ -104,10 +104,10 @@ void		dec_3max_init __P((void));
 void		dec_3max_os_init __P((void));
 void		dec_3max_bus_reset __P((void));
 
-void		dec_3max_enable_intr 
+void		dec_3max_enable_intr
 		   __P ((u_int slotno, int (*handler)  __P((intr_arg_t sc)),
 			 intr_arg_t sc, int onoff));
-int		dec_3max_intr __P((u_int mask, u_int pc, 
+int		dec_3max_intr __P((u_int mask, u_int pc,
 			      u_int statusReg, u_int causeReg));
 void		dec_3max_cons_init __P((void));
 void		dec_3max_device_register __P((struct device *, void *));
@@ -116,7 +116,7 @@ static void	dec_3max_errintr __P((void));
 
 
 /*
- * Fill in platform struct. 
+ * Fill in platform struct.
  */
 void
 dec_3max_init()
@@ -255,7 +255,7 @@ dec_3max_intr(mask, pc, statusReg, causeReg)
 	unsigned causeReg;
 {
 	register unsigned i, m;
-	register volatile struct chiptime *c = 
+	register volatile struct chiptime *c =
 	    (volatile struct chiptime *) MIPS_PHYS_TO_KSEG1(KN02_SYS_CLOCK);
 	register unsigned csr;
 	int temp;
