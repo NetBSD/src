@@ -2596,7 +2596,7 @@ barrier_align (barrier_or_label)
   if (TARGET_SMALLCODE)
     return 0;
 
-  if (! TARGET_SH3 || ! optimize)
+  if (! TARGET_SH2 || ! optimize)
     return CACHE_LOG;
 
   /* Check if there is an immediately preceding branch to the insn beyond
