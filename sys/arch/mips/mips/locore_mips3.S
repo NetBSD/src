@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.62 2000/12/20 05:48:06 jeffs Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.63 2001/01/13 23:49:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -560,6 +560,18 @@ NESTED_NOPROFILE(mips3_UserGenException, CALLFRAME_SIZ, ra)
 	jal	_C_LABEL(trap)
 	sw	a3, CALLFRAME_SIZ-4(sp)		# for debugging
 /*
+ * Check pending asynchronous traps.
+ */
+	lw	t0, _C_LABEL(astpending)
+	beq	t0, zero, 1f
+	nop
+/*
+ * We have pending asynchronous traps; all the state is already saved.
+ */
+	jal	_C_LABEL(ast)
+	lw	a0, CALLFRAME_SIZ + FRAME_EPC(sp)
+1:
+/*
  * Restore user registers and return.
  * First disable interrupts and set exception level.
  */
@@ -691,6 +703,18 @@ NESTED_NOPROFILE(mips3_SystemCall, CALLFRAME_SIZ, ra)
 	mtc0	t0, MIPS_COP_0_STATUS		# re-enable interrupts
 	jal	_C_LABEL(syscall)
 	nop
+/*
+ * Check pending asynchronous traps.
+ */
+	lw	t0, _C_LABEL(astpending)
+	beq	t0, zero, 1f
+	nop
+/*
+ * We have pending asynchronous traps; all the state is already saved.
+ */
+	jal	_C_LABEL(ast)
+	lw	a0, CALLFRAME_SIZ + FRAME_EPC(sp)
+1:
 /*
  * Restore user registers and return.
  * First disable interrupts and set exception level.
