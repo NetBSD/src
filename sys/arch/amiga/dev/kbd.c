@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.30 1998/02/23 00:47:31 is Exp $	*/
+/*	$NetBSD: kbd.c,v 1.31 1998/02/28 21:53:15 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -45,6 +45,7 @@
 #include <sys/syslog.h>
 #include <sys/signalvar.h>
 #include <dev/cons.h>
+#include <m68k/asm_single.h>
 #include <machine/cpu.h>
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/custom.h>
@@ -67,6 +68,7 @@ struct kbd_softc {
 	struct evvar k_events;	/* event queue state */
 #ifdef DRACO
 	u_char k_rlprfx;	/* MF-II rel. prefix has been seen */
+	u_char k_mf2;
 #endif
 };
 struct kbd_softc kbd_softc;
@@ -75,6 +77,12 @@ int kbdmatch __P((struct device *, struct cfdata *, void *));
 void kbdattach __P((struct device *, struct device *, void *));
 void kbdintr __P((int));
 void kbdstuffchar __P((u_char));
+
+int drkbdgetc __P((void));
+int drkbdrputc __P((int));
+int drkbdputc __P((int));
+int drkbdputc2 __P((int, int));
+int drkbdwaitfor __P((int));
 
 struct cfattach kbd_ca = {
 	sizeof(struct device), kbdmatch, kbdattach
@@ -100,23 +108,11 @@ kbdattach(pdp, dp, auxp)
 	void *auxp;
 {
 #ifdef DRACO
-	/* 
-	 * XXX Must be kept in sync with kbdenable() switch.
-	 * XXX This should be probed, but this way we dont need to initialize
-	 * the keyboards.
-	 */
-	switch (is_draco()) {
-		case 0: 
-		case 1: 
-		case 2: 
-			printf(": CIA A type Amiga\n");
-			break;
-		case 3:
-		case 4:
-		default:
-			printf(": QuickLogic type MF-II\n");
-			break;
-	}
+	kbdenable();
+	if (kbd_softc.k_mf2)
+		printf(": QuickLogic type MF-II\n");
+	else
+		printf(": CIA A type Amiga\n");
 #else
 	printf(": CIA A type Amiga\n");
 #endif
@@ -127,6 +123,12 @@ kbdattach(pdp, dp, auxp)
 #define KEY_CODE(c)  ((c) & 0x7f)
 #define KEY_UP(c)    ((c) & 0x80)
 
+#define DATLO single_inst_bclr_b(draco_ioct->io_control, DRCNTRL_KBDDATOUT)
+#define DATHI single_inst_bset_b(draco_ioct->io_control, DRCNTRL_KBDDATOUT)
+
+#define CLKLO single_inst_bclr_b(draco_ioct->io_control, DRCNTRL_KBDCLKOUT)
+#define CLKHI single_inst_bset_b(draco_ioct->io_control, DRCNTRL_KBDCLKOUT)
+
 void
 kbdenable()
 {
@@ -135,7 +137,7 @@ kbdenable()
 	int s;
 
 #ifdef DRACO
-	u_char c;
+	int id;
 #endif
 	/*
 	 * collides with external ints from SCSI, watch out for this when
@@ -148,51 +150,193 @@ kbdenable()
 	}
 	kbd_inited = 1;
 #ifdef DRACO
-	switch (is_draco()) {
-		case 0:
-			custom.intena = INTF_SETCLR | INTF_PORTS;
+	if (is_draco()) {
 
-			ciaa.icr = CIA_ICR_IR_SC | CIA_ICR_SP;
-						/* SP interrupt enable */
-			ciaa.cra &= ~(1<<6);	/* serial line == input */
-			break;
-		case 1:
-		case 2:
-			/* XXX: tobedone: conditionally enable that one */
-			/* XXX: for now, just enable DraCo ports and CIA */
-			*draco_intena |= DRIRQ_INT2;
-			ciaa.icr = CIA_ICR_IR_SC | CIA_ICR_SP;
-						/* SP interrupt enable */
-			ciaa.cra &= ~(1<<6);	/* serial line == input */
-			break;
+		CLKLO;
+		delay(5000);
+		draco_ioct->io_kbdrst = 0;
 
-		case 3:
-			ciaa.icr = CIA_ICR_SP;  /* CIA SP interrupt disable */
-			ciaa.cra &= ~(1<<6);	/* serial line == input */
-			/* FALLTHROUGH */
-		case 4:
-		default:
-			/* XXX: for now: always enable own keyboard */
+		if (drkbdputc(0xf2))
+			goto LnoMFII;
 
-			while (draco_ioct->io_status & DRSTAT_KBDRECV) {
-				c = draco_ioct->io_kbddata;
-				draco_ioct->io_kbdrst = 0;
-				DELAY(2000);
-			}
+		id = drkbdgetc() << 8;
+		id |= drkbdgetc();
 
-			draco_ioct->io_control &= ~DRCNTRL_KBDINTENA;
-			break;
-	}
-#else
+		if (id != 0xab83)
+			goto LnoMFII;
+
+		if (drkbdputc2(0xf0, 3))	/* mode 3 */
+			goto LnoMFII;
+
+		if (drkbdputc(0xf8))		/* make/break, no typematic */
+			goto LnoMFII;
+
+		if (drkbdputc(0xf4))		/* enable */
+			goto LnoMFII;
+		kbd_softc.k_mf2 = 1;
+		draco_ioct->io_control &= ~DRCNTRL_KBDINTENA;
+		/*draco_ioct->io_control &= ~DRCNTRL_KBDKBDACK;*/
+		printf("ioctrl: 0x%02x, iostat: 0x%02x\n",
+			draco_ioct->io_control, draco_ioct->io_status);
+
+		ciaa.icr = CIA_ICR_SP;  /* CIA SP interrupt disable */
+		ciaa.cra &= ~(1<<6);	/* serial line == input */
+		splx(s);
+		return;
+
+	LnoMFII:
+		kbd_softc.k_mf2 = 0;
+		*draco_intena |= DRIRQ_INT2;
+		ciaa.icr = CIA_ICR_IR_SC | CIA_ICR_SP;
+					/* SP interrupt enable */
+		ciaa.cra &= ~(1<<6);	/* serial line == input */
+		splx(s);
+		return;
+		
+	} else {
+#endif
 	custom.intena = INTF_SETCLR | INTF_PORTS;
 	ciaa.icr = CIA_ICR_IR_SC | CIA_ICR_SP;  /* SP interrupt enable */
 	ciaa.cra &= ~(1<<6);		/* serial line == input */
+#ifdef DRACO
+	}
 #endif
 	kbd_softc.k_event_mode = 0;
 	kbd_softc.k_events.ev_io = 0;
 	splx(s);
 }
 
+/*
+ * call this with kbd interupt blocked
+ */
+
+int
+drkbdgetc()
+{
+	u_int8_t in;
+
+	while ((draco_ioct->io_status & DRSTAT_KBDRECV) == 0);
+	in = draco_ioct->io_kbddata;
+	draco_ioct->io_kbdrst = 0;
+
+	return in;
+}
+
+#define WAIT0 if (drkbdwaitfor(0)) goto Ltimeout
+#define WAIT1 if (drkbdwaitfor(DRSTAT_KBDCLKIN)) goto Ltimeout
+
+int
+drkbdwaitfor(bit)
+	int bit;
+{
+	int i;
+
+
+
+	i = 60000;	/* about 50 ms max */
+
+	do {
+		if ((draco_ioct->io_status & DRSTAT_KBDCLKIN) == bit)
+			return 0;
+
+	} while (--i >= 0);
+
+	return 1;
+}
+
+/*
+ * Output a raw byte to the keyboard (+ parity and stop bit).
+ * return 0 on success, 1 on timeout.
+ */
+int
+drkbdrputc(c)
+	u_int8_t c;
+{
+	u_int8_t parity;
+	int bitcnt;
+
+	DATLO; CLKHI; WAIT1;
+	parity = 0;
+
+	for (bitcnt=7; bitcnt >= 0; bitcnt--) {
+		WAIT0;
+		if (c & 1) {
+			DATHI;
+		} else {
+			++parity;
+			DATLO;
+		}
+		c >>= 1;
+		WAIT1;
+	}
+	WAIT0;
+	/* parity bit */
+	if (parity & 1) {
+		DATLO;
+	} else {
+		DATHI;
+	}
+	WAIT1;
+	/* stop bit */
+	WAIT0; DATHI; WAIT1;
+
+	WAIT0; /* XXX should check the ack bit here... */
+	WAIT1;
+	draco_ioct->io_kbdrst = 0;
+	return 0;
+
+Ltimeout:
+	DATHI;
+	draco_ioct->io_kbdrst = 0;
+	return 1;
+}
+
+/*
+ * Output one cooked byte to the keyboard, with wait for ACK or RESEND,
+ * and retry if necessary. 0 == success, 1 == timeout
+ */
+int
+drkbdputc(c)
+	u_int8_t c;
+{
+	int rc;
+
+	do {
+		if (drkbdrputc(c))
+			return(-1);
+
+		rc = drkbdgetc();
+	} while (rc == 0xfe);
+	return (!(rc == 0xfa));
+}
+
+/*
+ * same for twobyte sequence
+ */
+
+int
+drkbdputc2(c1, c2)
+	u_int8_t c1, c2;
+{
+	int rc;
+
+	do {
+		do {
+			if (drkbdrputc(c1))
+				return(-1);
+
+			rc = drkbdgetc();
+		} while (rc == 0xfe);
+		if (rc != 0xfa)
+			return (-1);
+
+		if (drkbdrputc(c2))
+			return(-1);
+
+		rc = drkbdgetc();
+	} while (rc == 0xfe);
+	return (!(rc == 0xfa));
+}
 
 int
 kbdopen(dev, flags, mode, p)
@@ -378,23 +522,26 @@ kbdgetcn ()
 	 * XXX todo: if CIA DraCo, get from cia if cia kbd 
 	 * installed.
 	 */
-	if (is_draco()) {
-		c = 0;
-		s = spltty ();
-		while ((draco_ioct->io_status & DRSTAT_KBDRECV) == 0);
-		in = draco_ioct->io_kbddata;
-		draco_ioct->io_kbdrst = 0;
-		if (in == 0xF0) { /* release prefix */
-			c = 0x80;
+	if (is_draco() && kbd_softc.k_mf2) {
+		do {
+			c = 0;
+			s = spltty ();
 			while ((draco_ioct->io_status & DRSTAT_KBDRECV) == 0);
 			in = draco_ioct->io_kbddata;
 			draco_ioct->io_kbdrst = 0;
-		}
-		splx(s);
+			if (in == 0xF0) { /* release prefix */
+				c = 0x80;
+				while ((draco_ioct->io_status & DRSTAT_KBDRECV) == 0);
+				in = draco_ioct->io_kbddata;
+				draco_ioct->io_kbdrst = 0;
+			}
+			splx(s);
 #ifdef DRACORAWKEYDEBUG
-		printf("<%02x>", in);
+			printf("<%02x>", in);
 #endif
-		return (in>=sizeof(drkbdtab) ? 0xff : drkbdtab[in]|c);
+			c |= in>=sizeof(drkbdtab) ? 0xff : drkbdtab[in];
+		} while (c == 0xff);
+		return (c);
 	}
 #endif
 	s = spltty();
