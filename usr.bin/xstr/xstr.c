@@ -1,4 +1,4 @@
-/*	$NetBSD: xstr.c,v 1.5 1994/12/24 16:57:59 cgd Exp $	*/
+/*	$NetBSD: xstr.c,v 1.6 1997/05/17 20:30:33 pk Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xstr.c	8.1 (Berkeley) 6/9/93";
 #endif
-static char rcsid[] = "$NetBSD: xstr.c,v 1.5 1994/12/24 16:57:59 cgd Exp $";
+static char rcsid[] = "$NetBSD: xstr.c,v 1.6 1997/05/17 20:30:33 pk Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -103,7 +103,7 @@ main(argc, argv)
 		default:
 			fprintf(stderr, "usage: xstr [ -v ] [ -c ] [ -l array ] [ - ] [ name ... ]\n");
 			exit (1);
-		} 
+		}
 	argc -= optind;
 	argv += optind;
 
@@ -162,7 +162,7 @@ process(name)
 			continue;
 		}
 		for (cp = linebuf; c = *cp++;) switch (c) {
-			
+
 		case '"':
 			if (incomm)
 				goto def;
@@ -195,7 +195,7 @@ process(name)
 				continue;
 			}
 			goto def;
-		
+
 def:
 		default:
 			putchar(c);
@@ -229,7 +229,7 @@ yankstr(cpp)
 			if (c == 0)
 				break;
 			if (c == '\n') {
-				if (fgets(linebuf, sizeof linebuf, stdin) 
+				if (fgets(linebuf, sizeof linebuf, stdin)
 				    == NULL) {
 					if (ferror(stdin)) {
 						perror("x.c");
@@ -283,7 +283,7 @@ inithash()
 		return;
 	for (;;) {
 		mesgpt = tellpt;
-		if (fgetNUL(buf, sizeof buf, mesgread) == NULL)
+		if (fgetNUL(buf, sizeof buf, mesgread) == 0)
 			break;
 		ignore(hashit(buf, 0));
 	}
@@ -301,7 +301,7 @@ fgetNUL(obuf, rmdr, file)
 	while (--rmdr > 0 && (c = xgetc(file)) != 0 && c != EOF)
 		*buf++ = c;
 	*buf++ = 0;
-	return ((feof(file) || ferror(file)) ? NULL : 1);
+	return ((feof(file) || ferror(file)) ? 0 : 1);
 }
 
 xgetc(file)

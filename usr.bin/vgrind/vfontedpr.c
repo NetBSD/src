@@ -1,4 +1,4 @@
-/*	$NetBSD: vfontedpr.c,v 1.4 1996/03/21 18:08:30 jtc Exp $	*/
+/*	$NetBSD: vfontedpr.c,v 1.5 1997/05/17 20:26:47 pk Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vfontedpr.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: vfontedpr.c,v 1.4 1996/03/21 18:08:30 jtc Exp $";
+static char rcsid[] = "$NetBSD: vfontedpr.c,v 1.5 1997/05/17 20:26:47 pk Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -103,7 +103,7 @@ static char    *defsfile[2] = { _PATH_VGRINDEFS, 0 };
 				/* name of language definitions file */
 static int	margin;
 static int	plstack[PSMAX];	/* the procedure nesting level stack */
-static char	pname[BUFSIZ+1]; 
+static char	pname[BUFSIZ+1];
 static boolean  prccont;	/* continue last procedure */
 static int	psptr;		/* the stack index of the current procedure */
 static char	pstack[PSMAX][PNAMELEN+1];	/* the procedure name stack */
@@ -233,12 +233,12 @@ main(argc, argv)
 	if (i == -1) {
 	    fprintf (stderr, "no entry for language %s\n", language);
 	    exit (0);
-	} else  if (i == -2) { fprintf(stderr, 
+	} else  if (i == -2) { fprintf(stderr,
 	    "cannot find vgrindefs file %s\n", defsfile[0]);
 	    exit (0);
-	} else if (i == -3) { fprintf(stderr, 
-	    "potential reference loop detected in vgrindefs file %s\n", 
-            defsfile[0]);				      
+	} else if (i == -3) { fprintf(stderr,
+	    "potential reference loop detected in vgrindefs file %s\n",
+            defsfile[0]);
 	    exit(0);
 	}
 	if (cgetustr(defs, "kw", &cp) == -1)
@@ -249,7 +249,7 @@ main(argc, argv)
 	    cpp = l_keywds;
 	    while (*cp) {
 		while (*cp == ' ' || *cp =='\t')
-		    *cp++ = NULL;
+		    *cp++ = '\0';
 		if (*cp)
 		    *cpp++ = cp;
 		while (*cp != ' ' && *cp  != '\t' && *cp)
@@ -291,7 +291,7 @@ main(argc, argv)
 	_escaped = FALSE;
 	blklevel = 0;
 	for (psptr=0; psptr<PSMAX; psptr++) {
-	    pstack[psptr][0] = NULL;
+	    pstack[psptr][0] = '\0';
 	    plstack[psptr] = 0;
 	}
 	psptr = -1;
@@ -375,10 +375,10 @@ putScp(os)
 	if (psptr < PSMAX) {
 	    ++psptr;
 	    strncpy (pstack[psptr], pname, PNAMELEN);
-	    pstack[psptr][PNAMELEN] = NULL;
+	    pstack[psptr][PNAMELEN] = '\0';
 	    plstack[psptr] = blklevel;
 	}
-    } 
+    }
 skip:
     do {
 	/* check for string, comment, blockstart, etc */
@@ -544,7 +544,7 @@ putKcp (start, end, force)
     while (start <= end) {
 	if (idx) {
 	    if (*start == ' ' || *start == '\t') {
-		if (xfld == 0)	
+		if (xfld == 0)
 		    printf("");
 		printf("\t");
 		xfld = 1;
@@ -564,12 +564,12 @@ putKcp (start, end, force)
 	}
 
 	if (!nokeyw && !force)
-	    if ((*start == '#' || isidchr(*start)) 
+	    if ((*start == '#' || isidchr(*start))
 	    && (start == _start || !isidchr(start[-1]))) {
 		i = iskw(start);
 		if (i > 0) {
 		    ps("\\*(+K");
-		    do 
+		    do
 			putcp(*start++);
 		    while (--i > 0);
 		    ps("\\*(-K");
@@ -680,7 +680,7 @@ static boolean
 isproc(s)
     char *s;
 {
-    pname[0] = NULL;
+    pname[0] = '\0';
     if (!l_toplex || blklevel == 0)
 	if (expmatch (s, l_prcbeg, pname) != NIL) {
 	    return (TRUE);
