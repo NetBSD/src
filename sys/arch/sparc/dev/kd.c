@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.30 2003/08/27 01:37:39 uwe Exp $	*/
+/*	$NetBSD: kd.c,v 1.31 2004/03/16 22:47:10 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.30 2003/08/27 01:37:39 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.31 2004/03/16 22:47:10 pk Exp $");
 
 #include "opt_kgdb.h"
 #include "fb.h"
@@ -145,7 +145,7 @@ kd_init(kd)
 
 	/* else, consult the PROM */
 	switch (prom_version()) {
-	char *prop;
+	char prop[6+1];		/* Enough for six digits */
 	struct eeprom *ep;
 	case PROM_OLDMON:
 		if ((ep = (struct eeprom *)eeprom_va) == NULL)
@@ -155,27 +155,19 @@ kd_init(kd)
 		if (kd->cols == 0)
 			kd->cols = (u_short)ep->eeTtyCols;
 		break;
+
 	case PROM_OBP_V0:
 	case PROM_OBP_V2:
 	case PROM_OBP_V3:
 	case PROM_OPENFIRM:
-
 		if (kd->rows == 0 &&
-		    (prop = PROM_getpropstring(optionsnode, "screen-#rows"))) {
-			int i = 0;
+		    prom_getoption("screen-#rows", prop, sizeof prop) == 0)
+			kd->rows = strtoul(prop, NULL, 10);
 
-			while (*prop != '\0')
-				i = i * 10 + *prop++ - '0';
-			kd->rows = (unsigned short)i;
-		}
 		if (kd->cols == 0 &&
-		    (prop = PROM_getpropstring(optionsnode, "screen-#columns"))) {
-			int i = 0;
+		    prom_getoption("screen-#columns", prop, sizeof prop) == 0)
+			kd->cols = strtoul(prop, NULL, 10);
 
-			while (*prop != '\0')
-				i = i * 10 + *prop++ - '0';
-			kd->cols = (unsigned short)i;
-		}
 		break;
 	}
 
