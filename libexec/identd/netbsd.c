@@ -1,5 +1,5 @@
 /*
-**	$Id: netbsd.c,v 1.7 1995/07/08 23:53:46 pk Exp $
+**	$Id: netbsd.c,v 1.8 1995/07/08 23:57:06 pk Exp $
 **
 ** netbsd.c		Low level kernel access functions for NetBSD
 **
@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <ctype.h>
+#include <limits.h>
 #include <nlist.h>
 #include <pwd.h>
 #include <signal.h>
