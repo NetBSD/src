@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83.2.20 2001/01/03 16:55:46 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.83.2.21 2001/01/04 00:16:58 thorpej Exp $	*/
 
 /*
  *
@@ -453,13 +453,6 @@ static vaddr_t		 pmap_tmpmap_pa __P((paddr_t));
 static pt_entry_t	*pmap_tmpmap_pvepte __P((struct pv_entry *));
 static void		 pmap_tmpunmap_pa __P((void));
 static void		 pmap_tmpunmap_pvepte __P((struct pv_entry *));
-#if 0
-static boolean_t	 pmap_transfer_ptes __P((struct pmap *,
-					 struct pmap_transfer_location *,
-					 struct pmap *,
-					 struct pmap_transfer_location *,
-					 int, boolean_t));
-#endif
 static void		pmap_unmap_ptes __P((struct pmap *));
 
 void			pmap_pinit __P((pmap_t));
