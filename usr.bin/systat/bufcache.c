@@ -1,4 +1,4 @@
-/*	$NetBSD: bufcache.c,v 1.5 1999/12/20 23:11:50 jwise Exp $	*/
+/*	$NetBSD: bufcache.c,v 1.6 2000/02/14 05:35:21 soren Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bufcache.c,v 1.5 1999/12/20 23:11:50 jwise Exp $");
+__RCSID("$NetBSD: bufcache.c,v 1.6 2000/02/14 05:35:21 soren Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -101,7 +101,7 @@ static struct nlist namelist[] = {
 static struct vcache vcache[VCACHE_SIZE];
 static LIST_HEAD(mount_list, ml_entry) mount_list;
 
-static int nbuf, bufpages, bufbytes;
+static int nbuf, bufpages, bufkb;
 static void *bufaddr;
 static struct buf *buf = NULL;
 static TAILQ_HEAD(bqueues, buf) bufqueues[BQUEUES];
@@ -136,7 +136,7 @@ void
 labelbufcache()
 {
 	mvwprintw(wnd, 0, 0, "There are %d buffers using %d kBytes of memory.",
-	    nbuf, bufbytes / 1024);
+	    nbuf, bufkb);
 	wclrtoeol(wnd);
 	wmove(wnd, 1, 0);
 	wclrtoeol(wnd);
@@ -163,12 +163,9 @@ showbufcache()
 			    "NULL" : ml->ml_mount.mnt_stat.f_mntonname);
 			wprintw(wnd,
 			    "    %6d %3d    %8ld %3d    %8ld %3d     %3d",
-			    ml->ml_count,
-			    (100 * ml->ml_count) / nbuf,
-			    ml->ml_valid / 1024,
-			    (100 * ml->ml_valid) / bufbytes,
-			    ml->ml_size / 1024,
-			    (100 * ml->ml_size) / bufbytes,
+			    ml->ml_count, (100 * ml->ml_count) / nbuf,
+			    ml->ml_valid, (100 * ml->ml_valid) / bufkb,
+			    ml->ml_size, (100 * ml->ml_size) / bufkb,
 			    (100 * ml->ml_valid) / ml->ml_size);
 			wclrtoeol(wnd);
 			lastrow = i;
@@ -176,16 +173,16 @@ showbufcache()
 
 		/* Update statistics. */
 		tbuf += ml->ml_count;
-		tvalid += ml->ml_valid / 1024;
-		tsize += ml->ml_size / 1024;
+		tvalid += ml->ml_valid;
+		tsize += ml->ml_size;
 	}
 
 	wclrtobot(wnd);
 	mvwprintw(wnd, lastrow + 2, 0,
 	    "%-20s    %6d %3d    %8d %3d    %8d %3d     %3d",
 	    "Total:", tbuf, (100 * tbuf) / nbuf,
-	    tvalid, (100 * tvalid * 1024) / bufbytes,
-	    tsize, (100 * tsize * 1024) / bufbytes, (100 * tvalid) / tsize); 
+	    tvalid, (100 * tvalid) / bufkb,
+	    tsize, (100 * tsize) / bufkb, (100 * tvalid) / tsize); 
 }
 
 int
@@ -204,7 +201,7 @@ initbufcache()
 
 	NREAD(X_NBUF, &nbuf, sizeof(nbuf));
 	NREAD(X_BUFPAGES, &bufpages, sizeof(bufpages));
-	bufbytes = bufpages * sysconf(_SC_PAGESIZE);
+	bufkb = bufpages * sysconf(_SC_PAGESIZE) / 1024;
 
 	if ((buf = malloc(nbuf * sizeof(struct buf))) == NULL) {
 		error("malloc failed");
@@ -345,8 +342,8 @@ ml_lookup(maddr, size, valid)
 	    ml = LIST_NEXT(ml, ml_entries))
 		if (ml->ml_addr == maddr) {
 			ml->ml_count++;
-			ml->ml_size += size;
-			ml->ml_valid += valid;
+			ml->ml_size += size / 1024;
+			ml->ml_valid += valid / 1024;
 			if (ml->ml_addr == NULL)
 				return(NULL);
 			else
@@ -359,8 +356,8 @@ ml_lookup(maddr, size, valid)
 	}
 	LIST_INSERT_HEAD(&mount_list, ml, ml_entries);
 	ml->ml_count = 1;
-	ml->ml_size = size;
-	ml->ml_valid = valid;
+	ml->ml_size = size / 1024;
+	ml->ml_valid = valid / 1024;
 	ml->ml_addr = maddr;
 	if (maddr == NULL)
 		return(NULL);
