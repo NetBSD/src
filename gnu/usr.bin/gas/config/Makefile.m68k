@@ -1,0 +1,6 @@
+#	from: @(#)Makefile.hp300	6.1 (Berkeley) 3/3/91
+#	$Id: Makefile.m68k,v 1.1 1993/11/25 01:10:44 paulus Exp $
+
+SRCS+=		tc-m68k.c atof-ieee.c
+
+gas_target=	m68k
