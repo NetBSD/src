@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.10 2000/11/30 21:38:57 jwise Exp $	*/
+/*	$NetBSD: main.c,v 1.11 2000/11/30 22:02:20 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.10 2000/11/30 21:38:57 jwise Exp $");
+__RCSID("$NetBSD: main.c,v 1.11 2000/11/30 22:02:20 jwise Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,7 +55,6 @@ __RCSID("$NetBSD: main.c,v 1.10 2000/11/30 21:38:57 jwise Exp $");
 
 int main (int, char **);
 
-/*ARGSUSED*/
 int
 main(int argc, char **argv)
 {

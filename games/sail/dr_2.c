@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_2.c,v 1.11 1999/09/30 18:01:33 jsm Exp $	*/
+/*	$NetBSD: dr_2.c,v 1.12 2000/11/30 22:02:20 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_2.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dr_2.c,v 1.11 1999/09/30 18:01:33 jsm Exp $");
+__RCSID("$NetBSD: dr_2.c,v 1.12 2000/11/30 22:02:20 jwise Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,7 +91,7 @@ checkup()
 		sink = sp->file->sink;
 		if (explode != 1 && sink != 1)
 			continue;
-		if (die() < 5)
+		if (dieroll() < 5)
 			continue;
 		Write(sink == 1 ? W_SINK : W_EXPLODE, sp, 2, 0, 0, 0);
 		Write(W_DIR, sp, 0, 0, 0, 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_3.c,v 1.7 1999/09/30 18:01:33 jsm Exp $	*/
+/*	$NetBSD: dr_3.c,v 1.8 2000/11/30 22:02:20 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_3.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dr_3.c,v 1.7 1999/09/30 18:01:33 jsm Exp $");
+__RCSID("$NetBSD: dr_3.c,v 1.8 2000/11/30 22:02:20 jwise Exp $");
 #endif
 #endif /* not lint */
 
@@ -135,7 +135,7 @@ moveall()		/* move all comp ships */
 					snap++;
 				if (!range(sp, sq) && !fouled2(sp, sq)) {
 					makesignal(sp, "collision with $$", sq);
-					if (die() < 4) {
+					if (dieroll() < 4) {
 						makesignal(sp, "fouled with $$",
 						    sq);
 						Write(W_FOUL, sp, l, 0, 0, 0);
