@@ -236,7 +236,11 @@ ppbus_MS_init_msq(struct ppbus_microseq * msq, int nbparam, ...)
 			break;
 
 		case MS_TYP_CHA:
+			/* XXX was:
 			msq[ins].arg[arg].i = (int)va_arg(p_list, char);
+			  which gives warning with gcc 3.3
+			*/
+			msq[ins].arg[arg].i = (int)va_arg(p_list, int);
 			break;
 
 		case MS_TYP_PTR:
@@ -288,6 +292,7 @@ ppbus_MS_microseq(struct device * dev, struct device * busdev,
 #define INCR_PC (mi ++)
 
 	mi = msq;
+again:
 	for (;;) {
 		switch (mi->opcode) {                                           
 		case MS_OP_PUT:
@@ -307,7 +312,7 @@ ppbus_MS_microseq(struct device * dev, struct device * busdev,
 					}
 
 					INCR_PC;
-					goto next;
+					goto again;
 				}
 				else {
 					panic("%s: IEEE1284 read not supported",
@@ -355,7 +360,6 @@ ppbus_MS_microseq(struct device * dev, struct device * busdev,
 			}
 			break;
 		}
-	next:
 	}
 error:
 	return (error);
