@@ -1,5 +1,5 @@
 '\" t
-.\" $NetBSD: ksh.Man,v 1.11 2002/10/12 00:02:47 wiz Exp $
+.\" $NetBSD: ksh.Man,v 1.12 2002/12/05 16:52:07 wiz Exp $
 .\"{{{}}}
 .\"{{{  Notes about man page
 .\"     - use the pseudo-macros .sh( and .sh) to begin and end sh-specific
@@ -769,7 +769,7 @@ parameters are separated by the first character of the \fBIFS\fP parameter
 Same as \fB$*\fP, unless it is used inside double quotes, in which case
 a separate word is generated for each positional parameter \- if there
 are no positional parameters, no word is generated ("$@" can be used
-to access arguments, verbatim, without loosing null arguments or
+to access arguments, verbatim, without losing null arguments or
 splitting arguments with spaces).
 .\"}}}
 .\"}}}
