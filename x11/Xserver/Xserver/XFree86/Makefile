@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2003/12/23 03:33:41 rtr Exp $
+#	$NetBSD: Makefile,v 1.4 2003/12/23 10:23:07 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -29,8 +29,16 @@ LDADD+=	${LDADD.hw/xfree86/xf86} ${LDADD.hw/xfree86/xf86config} \
 	${LDADD.randr} ${LDADD.render} ${LDADD.hw/xfree86/xf86_os} \
 	-lz -lm
 
+DPADD=	${DPADD.hw/xfree86/xf86} ${DPADD.hw/xfree86/xf86config} \
+	${DPADD.hw/xfree86/xf86_os} ${DPADD.hw/xfree86/loader} \
+	${DPADD.dix} ${DPADD.os} ${LIBXAU} ${LIBXDMCP} ${DPADD.fontbase} \
+	${DPADD.Xext/exts} ${DPADD.xkb} ${DPADD.xinput} ${DPADD.lbx} \
+	${LIBLBXUTIL} ${DPADD.randr} ${DPADD.render} ${DPADD.dix/xpstubs} \
+	${DPADD.mi} ${LIBZ} ${LIBM}
+
 .if ${MACHINE} == "i386"
 LDADD+=	-li386
+DPADD+=	${LIBI386}
 .endif
 
 .include <bsd.x11.mk>
