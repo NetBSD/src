@@ -1,10 +1,10 @@
-#	$NetBSD: GENERIC,v 1.97 2000/02/26 17:35:37 oster Exp $
+#	$NetBSD: GENERIC,v 1.98 2000/02/29 06:32:25 simonb Exp $
 #
 # GENERIC
 
 include	"arch/mac68k/conf/std.mac68k"
 
-#ident 		"GENERIC-$Revision: 1.97 $"
+#ident 		"GENERIC-$Revision: 1.98 $"
 
 maxusers	16		# estimated number of users
 
@@ -245,7 +245,7 @@ asc0	at obio?			# ASC/EASC audio
 # disk/mass storage pseudo-devices
 pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	raid		4	# RAIDframe disk driver
-#options	RAID_AUTOCONFIG		# auto-configuration of RAID components
+#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vcoda		1	# Venus/Coda distributed file system
 pseudo-device	vnd		4	# disk-like interface to files
