@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isasubr.c,v 1.19 2000/02/27 03:25:03 mycroft Exp $	*/
+/*	$NetBSD: i82365_isasubr.c,v 1.20 2000/02/28 05:30:19 enami Exp $	*/
 
 #define	PCICISADEBUG
 
@@ -100,15 +100,19 @@ int	pcic_isa_alloc_iosize = PCIC_ISA_ALLOC_IOSIZE;
 
 int	pcic_isa_intr_alloc_mask = PCIC_ISA_INTR_ALLOC_MASK;
 
-#ifndef	PCIC_NO_IRQ_PROBE
+#ifndef	PCIC_IRQ_PROBE
 #ifdef __hpcmips__
-#define	PCIC_NO_IRQ_PROBE	0
+/*
+ * The irq probing doesn't work with current vrisab implementation.
+ * The irq is just an key to find matching GPIO port to use and is fixed.
+ */
+#define	PCIC_IRQ_PROBE	0
 #else
-#define	PCIC_NO_IRQ_PROBE	1
+#define	PCIC_IRQ_PROBE	1
 #endif
 #endif
 
-int	pcic_no_irq_probe = PCIC_NO_IRQ_PROBE;
+int	pcic_irq_probe = PCIC_IRQ_PROBE;
 
 /*****************************************************************************
  * End of configurable parameters.
@@ -299,7 +303,7 @@ pcic_isa_config_interrupts(self)
 		    PCIC_INTR_IRQ_VALIDMASK & pcic_isa_intr_alloc_mask;
 
 		/* the cirrus chips lack support for the soft interrupt */
-		if (pcic_no_irq_probe != 0 &&
+		if (pcic_irq_probe != 0 &&
 		    h->vendor != PCIC_VENDOR_CIRRUS_PD6710 &&
 		    h->vendor != PCIC_VENDOR_CIRRUS_PD672X)
 			pcic_isa_probe_interrupts(sc, h);
