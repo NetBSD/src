@@ -42,7 +42,7 @@
  *	@(#)sys_machdep.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: sys_machdep.c,v 1.6 92/11/26 03:05:08 torek Exp  (LBL)
- * $Id: sys_machdep.c,v 1.2 1993/10/13 09:01:12 deraadt Exp $
+ * $Id: sys_machdep.c,v 1.3 1994/10/20 04:46:30 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -57,45 +57,48 @@
 #include <sys/buf.h>
 #include <sys/trace.h>
 
+#include <sys/mount.h>
+#include <sys/syscallargs.h>
+
 #ifdef TRACE
 int	nvualarm;
 
-struct vtrace_args {
-	int	request;
-	int	value;
-};
 vtrace(p, uap, retval)
 	struct proc *p;
-	register struct vtrace_args *uap;
-	int *retval;
+	register struct vtrace_args /* {
+		syscallarg(int) request;
+		syscallarg(int) value;
+	} */ *uap;
+	register_t *retval;
 {
 	int vdoualarm();
 
-	switch (uap->request) {
+	switch (SCARG(uap, request)) {
 
 	case VTR_DISABLE:		/* disable a trace point */
 	case VTR_ENABLE:		/* enable a trace point */
-		if (uap->value < 0 || uap->value >= TR_NFLAGS)
+		if (SCARG(uap, value) < 0 || SCARG(uap, value) >= TR_NFLAGS)
 			return (EINVAL);
-		*retval = traceflags[uap->value];
-		traceflags[uap->value] = uap->request;
+		*retval = traceflags[SCARG(uap, value)];
+		traceflags[SCARG(uap, value)] = SCARG(uap, request);
 		break;
 
 	case VTR_VALUE:		/* return a trace point setting */
-		if (uap->value < 0 || uap->value >= TR_NFLAGS)
+		if (SCARG(uap, value) < 0 || SCARG(uap, value) >= TR_NFLAGS)
 			return (EINVAL);
-		*retval = traceflags[uap->value];
+		*retval = traceflags[SCARG(uap, value)];
 		break;
 
 	case VTR_UALARM:	/* set a real-time ualarm, less than 1 min */
-		if (uap->value <= 0 || uap->value > 60 * hz || nvualarm > 5)
+		if (SCARG(uap, value) <= 0 || SCARG(uap, value) > 60 * hz ||
+		    nvualarm > 5)
 			return (EINVAL);
 		nvualarm++;
-		timeout(vdoualarm, (caddr_t)p->p_pid, uap->value);
+		timeout(vdoualarm, (caddr_t)p->p_pid, SCARG(uap, value));
 		break;
 
 	case VTR_STAMP:
-		trace(TR_STAMP, uap->value, p->p_pid);
+		trace(TR_STAMP, SCARG(uap, value), p->p_pid);
 		break;
 	}
 	return (0);
@@ -112,19 +115,17 @@ vdoualarm(arg)
 }
 #endif
 
-struct sysarch_args {
-	int op;
-	char *parms;
-};
-
 sysarch(p, uap, retval)
 	struct proc *p;
-	register struct sysarch_args *uap;
-	int *retval;
+	struct sysarch_args /* {
+		syscallarg(int) op;
+		syscallarg(char *) parms;
+	} */ *uap;
+	register_t *retval;
 {
 	int error = 0;
 
-	switch(uap->op) {
+	switch(SCARG(uap, op)) {
 	default:
 		error = EINVAL;
 		break;
