@@ -1,4 +1,4 @@
-/*	$NetBSD: m41st84.c,v 1.2 2004/01/20 19:12:54 briggs Exp $	*/
+/*	$NetBSD: m41st84.c,v 1.3 2004/11/24 14:46:18 scw Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -285,6 +285,30 @@ strtc_clock_read(struct strtc_softc *sc, struct clock_ymdhms *dt)
 		printf("%s: strtc_clock_read: failed to acquire I2C bus\n",
 		    sc->sc_dev.dv_xname);
 		return (0);
+	}
+
+	/*
+	 * Check for the HT bit -- if set, then clock lost power & stopped
+	 * If that happened, then clear the bit so that the clock will have
+	 * a chance to run again.
+	 */
+	cmdbuf[0] = M41ST84_REG_AL_HOUR;
+	if (iic_exec(sc->sc_tag, I2C_OP_READ, sc->sc_address,
+		     cmdbuf, 1, &cmdbuf[1], 1, I2C_F_POLL)) {
+		iic_release_bus(sc->sc_tag, I2C_F_POLL);
+		printf("%s: strtc_clock_read: failed to read HT\n",
+		    sc->sc_dev.dv_xname);
+		return (0);
+	}
+	if (cmdbuf[1] & M41ST84_AL_HOUR_HT) {
+		cmdbuf[1] &= ~M41ST84_AL_HOUR_HT;
+		if (iic_exec(sc->sc_tag, I2C_OP_WRITE, sc->sc_address,
+			     cmdbuf, 1, &cmdbuf[1], 1, I2C_F_POLL)) {
+			iic_release_bus(sc->sc_tag, I2C_F_POLL);
+			printf("%s: strtc_clock_read: failed to reset HT\n",
+			    sc->sc_dev.dv_xname);
+			return (0);
+		}
 	}
 
 	/* Read each RTC register in order. */
