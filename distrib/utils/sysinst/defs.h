@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.7.2.8 1997/12/04 09:11:02 jonathan Exp $	*/
+/*	$NetBSD: defs.h,v 1.7.2.9 1997/12/04 11:44:44 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -75,6 +75,8 @@ typedef struct distinfo {
 	char *desc;
 } distinfo;
 
+typedef  int partinfo[5];	/* Single partition from a disklabel */
+
 /* variables */
 
 EXTERN char rel[SSTRSIZE] INIT(REL);
@@ -137,7 +139,7 @@ enum DTYPE {T_UNUSED, T_SWAP, T_42BSD, T_MSDOS, T_ADOS};
 enum DINFO {D_SIZE, D_OFFSET, D_FSTYPE, D_BSIZE, D_FSIZE};
 enum DLTR {A,B,C,D,E,F,G,H};
 EXTERN char partname[] INIT("abcdefgh");
-EXTERN int bsdlabel[16][5];
+EXTERN partinfo bsdlabel[16];
 EXTERN char fsmount[16][20] INIT({""});
 #define DISKNAME_SIZE 80
 EXTERN char bsddiskname[DISKNAME_SIZE];
@@ -201,7 +203,7 @@ void	md_pre_disklabel __P((void));
 void	md_post_disklabel __P((void));
 void	md_post_newfs __P((void));
 void	md_copy_filesystem __P((void));
-void	md_make_bsd_partitions __P((void));
+int	md_make_bsd_partitions __P((void));
 int	md_update __P((void));
 
 /* from main.c */
@@ -217,6 +219,12 @@ void	write_disklabel __P((void));
 void	make_filesystems __P((void));
 void	make_fstab __P((void));
 int	fsck_disks __P((void));
+
+/* from label.c */
+
+void	emptylabel(partinfo *lp);
+int	edit_and_check_label __P((partinfo *lp, int nparts,
+				  int rawpart, int bsdpart));
 
 /* from install.c */
 void	do_install __P((void));
@@ -283,3 +291,4 @@ int	target_test __P((const char*, const char*));
 int	target_verify_dir __P((const char *path));
 int	target_verify_file __P((const char *path));
 void	unwind_mounts __P((void));
+
