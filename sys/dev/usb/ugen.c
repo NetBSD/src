@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.47 2001/09/16 16:34:39 wiz Exp $	*/
+/*	$NetBSD: ugen.c,v 1.48 2001/09/16 18:06:32 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -822,6 +822,7 @@ ugen_isoc_rintr(usbd_xfer_handle xfer, usbd_private_handle addr,
 	struct isoreq *req = addr;
 	struct ugen_endpoint *sce = req->sce;
 	u_int32_t count, n;
+	int i, isize;
 
 	/* Return if we are aborting. */
 	if (status == USBD_CANCELLED)
@@ -840,15 +841,25 @@ ugen_isoc_rintr(usbd_xfer_handle xfer, usbd_private_handle addr,
 			     count));
 	}
 
-	/* copy data to buffer */
-	while (count > 0) {
-		n = min(count, sce->limit - sce->fill);
-		memcpy(sce->fill, req->dmabuf, n);
+	isize = UGETW(sce->edesc->wMaxPacketSize);
+	for (i = 0; i < UGEN_NISORFRMS; i++) {
+		u_int32_t actlen = req->sizes[i];
+		char const *buf = (char const *)req->dmabuf + isize * i;
 
-		count -= n;
-		sce->fill += n;
-		if(sce->fill == sce->limit)
-			sce->fill = sce->ibuf;
+		/* copy data to buffer */
+		while (actlen > 0) {
+			n = min(actlen, sce->limit - sce->fill);
+			memcpy(sce->fill, buf, n);
+
+			buf += n;
+			actlen -= n;
+			sce->fill += n;
+			if(sce->fill == sce->limit)
+				sce->fill = sce->ibuf;
+		}
+
+		/* setup size for next transfer */
+		req->sizes[i] = isize;
 	}
 
 	usbd_setup_isoc_xfer(xfer, sce->pipeh, req, req->sizes, UGEN_NISORFRMS,
