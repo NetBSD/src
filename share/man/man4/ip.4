@@ -1,4 +1,4 @@
-.\"	$NetBSD: ip.4,v 1.4 1997/01/12 00:59:51 thorpej Exp $
+.\"	$NetBSD: ip.4,v 1.5 1998/01/07 23:39:49 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -109,6 +109,17 @@ setsockopt(s, IPPROTO_IP, IP_TOS, &tos, sizeof(tos));
 
 int ttl = 60;                   /* max = 255 */
 setsockopt(s, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl));
+.Ed
+.Pp
+.Dv IP_PORTRANGE
+controls how ephemeral ports are allocated for
+.Dv SOCK_STREAM 
+and 
+.Dv SOCK_DGRAM 
+sockets. For example,
+.Bd -literal
+int range = IP_PORTRANGE_LOW;       /* see <netinet/in.h> */
+setsockopt(s, IPPROTO_IP, IP_PORTRANGE, &range, sizeof(range));
 .Ed
 .Pp
 If the 
