@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.159 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.160 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -401,3 +401,4 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		Add '-U chr' to specify strunvis(3) decoding of keys/values
 		when writing a database or deleting entries from a database.
 		[seb 20030519]
+	file(1): update to 4.03. [pooka 20030525]
