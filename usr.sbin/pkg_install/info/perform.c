@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.5 1998/05/18 23:47:23 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.6 1998/07/09 17:49:51 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.5 1998/05/18 23:47:23 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.6 1998/07/09 17:49:51 hubertf Exp $");
 #endif
 #endif
 
@@ -34,6 +34,9 @@ __RCSID("$NetBSD: perform.c,v 1.5 1998/05/18 23:47:23 hubertf Exp $");
 
 #include <err.h>
 #include <signal.h>
+#include <sys/types.h>
+#include <dirent.h>
+#include <fnmatch.h>
 
 static int pkg_do(char *);
 
@@ -50,10 +53,40 @@ pkg_perform(char **pkgs)
 	tmp = DEF_LOG_DIR;
     /* Overriding action? */
     if (CheckPkg) {
+      if (!strpbrk(CheckPkg,"*?[]")) {
+	/* No shell meta character given - simple check */
 	char buf[FILENAME_MAX];
+	int error;
 
 	snprintf(buf, FILENAME_MAX, "%s/%s", tmp, CheckPkg);
-	return abs(access(buf, R_OK));
+	error=abs(access(buf, R_OK));
+	if (!error && !Quiet)
+	  printf("%s\n",CheckPkg);
+	return error;
+      } else {
+	/* Using glob-match */
+	int found;
+	DIR *d;
+	struct dirent *dp;
+
+	found=0;
+	d=opendir(tmp);
+	if (d == NULL) {
+	  warnx("can't opendir package dir '%s'", tmp);
+	  return !0;
+	}
+	  
+	while ((dp=readdir(d))){
+	  if (fnmatch(CheckPkg, dp->d_name, FNM_PERIOD)==0) {
+	    if (!Quiet)
+	      printf("%s\n",dp->d_name);
+	    found=1;
+	  }
+	}
+	closedir(d);
+
+	return !found; /* negate logic for shell return code */
+      }
     }
     else if (AllInstalled) {
 	DIR *dirp;
