@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.new.c,v 1.2 1998/02/06 22:26:13 thorpej Exp $	*/
+/*	$NetBSD: pmap.new.c,v 1.3 1998/03/01 23:19:01 fvdl Exp $	*/
 
 /*
  *
@@ -856,12 +856,12 @@ vm_offset_t kva_start;
 
 #if NCPU > 1
   lock_init(&pmap_main_lock, FALSE);
-#endif
   simple_lock_init(&pvalloc_lock);
   simple_lock_init(&pmaps_lock);
   simple_lock_init(&pmap_copy_page_lock);
   simple_lock_init(&pmap_zero_page_lock);
   simple_lock_init(&pmap_tmpptp_lock);
+#endif
   LIST_INIT(&pmaps);
   TAILQ_INIT(&pv_freepages);
   TAILQ_INIT(&pv_unusedpgs);
