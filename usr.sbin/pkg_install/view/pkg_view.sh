@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: pkg_view.sh,v 1.1.2.31 2003/08/25 22:03:33 jlam Exp $
+# $NetBSD: pkg_view.sh,v 1.1.2.32 2003/08/26 22:13:04 jlam Exp $
 
 #
 # Copyright (c) 2001 Alistair G. Crooks.  All rights reserved.
@@ -69,6 +69,10 @@ checkpkg() {
 		exit 1
 	fi
 }
+
+#########################################
+# Initialization and Options Processing #
+#########################################
 
 doit=""
 stowdir=""
@@ -147,6 +151,38 @@ esac
 #
 depot_pkg_dbdir=${stowdir:-${DEPOTBASE:-${viewbase}/packages}}
 
+##########################
+# Shell helper functions #
+##########################
+
+# symlinks check|add|delete <pkg>
+#
+# Calls linkfarm(1) to check, add or delete the symlink farm in
+# ${targetdir}.  We also ignore the right set of files when doing the
+# linkfarm operations.
+#
+symlinks() {
+	pkg=$2
+	case "$1" in
+	add)	linkfarmflags="" ;;
+	check)	linkfarmflags="-c" ;;
+	delete)	linkfarmflags="-D" ;;
+	esac
+	if [ -f ${depot_pkg_dbdir}/$pkg/+BUILD_INFO ]; then
+		ignore=`$grepprog "^_PLIST_IGNORE_FILES=" ${depot_pkg_dbdir}/$pkg/+BUILD_INFO | $sedprog -e 's|^_PLIST_IGNORE_FILES=[ 	]*||'`
+	fi
+	case "$ignore" in
+	"")	ignore="${dflt_ignorefiles}" ;;
+	esac
+	dbs=`(cd ${depot_pkg_dbdir}/$pkg; echo +*)`
+	ignore="${ignore} ${ignorefiles} $dbs"
+	$doit $envprog PLIST_IGNORE_FILES="${ignore}" $linkfarmprog $linkfarmflags --target=${targetdir} --dir=${depot_pkg_dbdir} $pkg
+}
+
+#############
+# Main Loop #
+#############
+
 while [ $# -gt 0 ]; do
 	case $action in
 	add)
@@ -156,15 +192,7 @@ while [ $# -gt 0 ]; do
 			exit 1
 		fi
 		$echo1 "Adding $1 to ${targetdir}."
-		if [ -f ${depot_pkg_dbdir}/$1/+BUILD_INFO ]; then
-			ignore=`$grepprog "^_PLIST_IGNORE_FILES=" ${depot_pkg_dbdir}/$1/+BUILD_INFO | $sedprog -e 's|^_PLIST_IGNORE_FILES=[ 	]*||'`
-		fi
-		case "$ignore" in
-		"")	ignore="${dflt_ignorefiles}" ;;
-		esac
-		dbs=`(cd ${depot_pkg_dbdir}/$1; echo +*)`
-		ignore="${ignore} ${ignorefiles} $dbs"
-		$doit $envprog PLIST_IGNORE_FILES="${ignore}" $linkfarmprog --target=${targetdir} --dir=${depot_pkg_dbdir} $1
+		symlinks add $1
 		$doit $mkdirprog -p ${depot_pkg_dbdir}/$1
 		temp=${depot_pkg_dbdir}/$1/+VIEWS.$$
 		$doit $touchprog ${depot_pkg_dbdir}/$1/+VIEWS
@@ -195,7 +223,7 @@ while [ $# -gt 0 ]; do
 	check)
 		checkpkg $1 ${depot_pkg_dbdir}
 		$echo1 "Checking $1 in ${targetdir}."
-		$doit $linkfarmprog -c --target=${targetdir} --dir=${depot_pkg_dbdir} $1
+		symlinks check $1
 		exit $?
 		;;
 	delete)
@@ -225,15 +253,7 @@ while [ $# -gt 0 ]; do
 				exit $ec
 			fi
 		fi
-		if [ -f ${depot_pkg_dbdir}/$1/+BUILD_INFO ]; then
-			ignore=`$grepprog "^_PLIST_IGNORE_FILES=" ${depot_pkg_dbdir}/$1/+BUILD_INFO | $sedprog -e 's|^_PLIST_IGNORE_FILES=[ 	]*||'`
-		fi
-		case "$ignore" in
-		"")	ignore="${dflt_ignorefiles}" ;;
-		esac
-		dbs=`(cd ${depot_pkg_dbdir}/$1; echo +*)`
-		ignore="${ignore} ${ignorefiles} $dbs"
-		$doit env PLIST_IGNORE_FILES="${ignore}" $linkfarmprog -D --target=${targetdir} --dir=${depot_pkg_dbdir} $1
+		symlinks delete $1
 		temp=${depot_pkg_dbdir}/$1/+VIEWS.$$
 		$doit $cpprog ${depot_pkg_dbdir}/$1/+VIEWS ${temp}
 		case "$doit" in
