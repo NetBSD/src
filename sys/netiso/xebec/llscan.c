@@ -1,4 +1,4 @@
-/*	$NetBSD: llscan.c,v 1.5 1994/06/29 06:41:05 cgd Exp $	*/
+/*	$NetBSD: llscan.c,v 1.6 2001/06/18 09:57:27 jdolecek Exp $	*/
 
 /*
  * ************************* NOTICE *******************************
@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include "procs.h"
 #include "debug.h"
+#include <string.h>
 
 #define EOFILE	0x01
 #define UNUSED	0x02
@@ -72,6 +73,10 @@ static int currentbuf = 1;
 
 static int ch = ' ';
 
+int getch();
+extern void AddCurrentEventName();
+
+void
 skip()
 {
 	while((chtype[ch] == IGNORE) ) {
@@ -79,8 +84,9 @@ skip()
 	}
 }
 
+void
 llaccept(t)
-LLtoken *t;
+	LLtoken *t;
 {
 	switch(t->llstate) {
 	case NORMAL:
@@ -96,7 +102,7 @@ LLtoken *t;
 
 #define	TVAL	(t->llattrib)
 
-
+void
 dump_buffer()
 {
 	register int i;
@@ -135,6 +141,7 @@ char **buf;
 	return(0);
 }
 
+void
 getstr(o,c) 
 	/* c is the string delimiter 
 	 * allow the delimiter to be escaped 
@@ -151,7 +158,7 @@ char o,c;
 	IFDEBUG(S)
 		fprintf(stdout,"getstr: ch=%c, delimiters %c %c\n",
 			ch,o, c);
-		fprintf(stdout,"getstr: buffptr 0x%x, currentbuf 0x%x\n",
+		fprintf(stdout,"getstr: buffptr 0x%p, currentbuf 0x%x\n",
 			buffptr, currentbuf);
 	ENDDEBUG
 
@@ -234,7 +241,7 @@ char o,c;
 			fprintf(stderr, 
 			"%s too long.\n", (o=='{')?"Action":"Predicate"); /*}*/
 			fprintf(stderr, 
-			"buffptr, currentbuf 0x%x, 0x%x\n",buffptr,currentbuf );
+			"buffptr, currentbuf 0x%p, 0x%x\n",buffptr,currentbuf );
 			Exit(-1);
 		}
 		IFDEBUG(S)
@@ -247,11 +254,12 @@ char o,c;
 
 	IFDEBUG(S)
 		fprintf(stdout,"exit getstr: got %s\n", buffer[currentbuf]);
-		fprintf(stdout,"exit getstr: buffptr 0x%x, currentbuf 0x%x\n",
+		fprintf(stdout,"exit getstr: buffptr 0x%p, currentbuf 0x%x\n",
 			buffptr, currentbuf);
 	ENDDEBUG
 }
 
+int
 getch()
 {
 	char c;
@@ -271,8 +279,9 @@ getch()
 	return c;
 }
 
+void
 llscan(t)
-LLtoken *t;
+	LLtoken *t;
 {
 	char c;
 
@@ -418,7 +427,7 @@ again:
 			TVAL.ID.address = buffer[currentbuf];
 		}
 		IFDEBUG(S)
-			fprintf(stdout, "llscan: id or keyword 0x%x, %s\n",
+			fprintf(stdout, "llscan: id or keyword 0x%p, %s\n",
 			TVAL.ID.address, TVAL.ID.address);
 		ENDDEBUG
 		break;
