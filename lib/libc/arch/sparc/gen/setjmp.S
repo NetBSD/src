@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.4 1997/07/16 14:37:44 christos Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.5 1997/12/04 21:00:18 tv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
 #if 0
 	.asciz "@(#)setjmp.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: setjmp.S,v 1.4 1997/07/16 14:37:44 christos Exp $")
+	RCSID("$NetBSD: setjmp.S,v 1.5 1997/12/04 21:00:18 tv Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -73,7 +73,7 @@ ENTRY(setjmp)
 	clr	%o1		/* sigprocmask(SIG_BLOCK, (sigset_t *)NULL) */
 	t	ST_SYSCALL
 	st	%o0, [%o2 + 4]	/* sc.sc_mask = current mask; */
-	mov	SYS_sigaltstack, %g1
+	mov	SYS___sigaltstack14, %g1
 	clr	%o0		/* sigstack(NULL, &foo) */
 	add	%sp, 0x48, %o1	/* (foo being in arg dump area) */
 	t	ST_SYSCALL
