@@ -1,4 +1,4 @@
-/*	$NetBSD: shield.c,v 1.5 1997/10/12 21:25:17 christos Exp $	*/
+/*	$NetBSD: shield.c,v 1.6 1998/08/30 09:19:40 veego Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)shield.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: shield.c,v 1.5 1997/10/12 21:25:17 christos Exp $");
+__RCSID("$NetBSD: shield.c,v 1.6 1998/08/30 09:19:40 veego Exp $");
 #endif
 #endif /* not lint */
 
@@ -140,11 +140,12 @@ int	f;
 			printf("down\n");
 		return;
 	}
-	if (i)
+	if (i) {
 		if (f >= 0)
 			Ship.energy -= Param.shupengy;
 		else
 			Ship.cloakgood = 0;
+	}
 	Move.free = 0;
 	if (f >= 0)
 		Move.shldchg = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fortune.c,v 1.12 1998/02/04 10:16:20 christos Exp $	*/
+/*	$NetBSD: fortune.c,v 1.13 1998/08/30 09:19:37 veego Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fortune.c,v 1.12 1998/02/04 10:16:20 christos Exp $");
+__RCSID("$NetBSD: fortune.c,v 1.13 1998/08/30 09:19:37 veego Exp $");
 #endif
 #endif /* not lint */
 
@@ -263,12 +263,13 @@ display(fp)
 	(void) fseek(fp->inf, (long)Seekpts[0], 0);
 	for (Fort_len = 0; fgets(line, sizeof line, fp->inf) != NULL &&
 	    !STR_ENDSTRING(line, fp->tbl); Fort_len++) {
-		if (fp->tbl.str_flags & STR_ROTATED)
+		if (fp->tbl.str_flags & STR_ROTATED) {
 			for (p = line; (ch = *p) != 0; ++p)
 				if (isupper(ch))
 					*p = 'A' + (ch - 'A' + 13) % 26;
 				else if (islower(ch))
 					*p = 'a' + (ch - 'a' + 13) % 26;
+		}
 		fputs(line, stdout);
 	}
 	(void) fflush(stdout);
@@ -410,13 +411,14 @@ form_file_list(files, file_cnt)
 	int	i, percent;
 	char	*sp;
 
-	if (file_cnt == 0)
+	if (file_cnt == 0) {
 		if (Find_files)
 			return add_file(NO_PROB, FORTDIR, NULL, &File_list,
 					&File_tail, NULL);
 		else
 			return add_file(NO_PROB, "fortunes", FORTDIR,
 					&File_list, &File_tail, NULL);
+	}
 	for (i = 0; i < file_cnt; i++) {
 		percent = NO_PROB;
 		if (!isdigit(files[i][0]))
@@ -884,8 +886,7 @@ init_prob()
 			num_noprob++;
 			if (Equal_probs)
 				last = fp;
-		}
-		else
+		} else
 			percent += fp->percent;
 	DPRINTF(1, (stderr, "summing probabilities:%d%% with %d NO_PROB's",
 		    percent, num_noprob));
@@ -897,7 +898,7 @@ init_prob()
 	else if (percent == 100 && num_noprob != 0)
 		errx(1, "No probability left to put in residual files");
 	percent = 100 - percent;
-	if (Equal_probs)
+	if (Equal_probs) {
 		if (num_noprob != 0) {
 			if (num_noprob > 1) {
 				frac = percent / num_noprob;
@@ -911,7 +912,7 @@ init_prob()
 			last->percent = percent;
 			DPRINTF(1, (stderr, ", residual = %d%%", percent));
 		}
-	else {
+	} else {
 		DPRINTF(1, (stderr,
 			    ", %d%% distributed over remaining fortunes\n",
 			    percent));
