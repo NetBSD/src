@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)uipc_socket.c	7.28 (Berkeley) 5/4/91
- *	$Id: uipc_socket.c,v 1.12 1994/04/25 08:41:03 mycroft Exp $
+ *	$Id: uipc_socket.c,v 1.13 1994/04/25 08:47:50 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -492,6 +492,7 @@ soreceive(so, paddr, uio, mp0, controlp, flagsp)
 	struct mbuf **controlp;
 	int *flagsp;
 {
+	struct proc *p = curproc;	/* XXX */
 	register struct mbuf *m, **mp;
 	register int flags, len, error, s, offset;
 	struct protosw *pr = so->so_proto;
@@ -592,8 +593,7 @@ restart:
 		goto restart;
 	}
 dontblock:
-	if (uio->uio_procp)
-		uio->uio_procp->p_stats->p_ru.ru_msgrcv++;
+	p->p_stats->p_ru.ru_msgrcv++;
 	nextrecord = m->m_nextpkt;
 	if (pr->pr_flags & PR_ADDR) {
 #ifdef DIAGNOSTIC
