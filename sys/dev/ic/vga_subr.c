@@ -1,4 +1,4 @@
-/* $NetBSD: vga_subr.c,v 1.8 2001/12/13 08:34:55 junyoung Exp $ */
+/* $NetBSD: vga_subr.c,v 1.9 2002/06/27 06:26:54 junyoung Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_subr.c,v 1.8 2001/12/13 08:34:55 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_subr.c,v 1.9 2002/06/27 06:26:54 junyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,11 +98,17 @@ vga_loadchars(struct vga_handle *vh, int fontset, int first, int num, int lpc,
 	s = splhigh();
 	fontram(vh);
 
-	for (i = 0; i < num; i++)
-		for (j = 0; j < lpc; j++)
-			bus_space_write_1(vh->vh_memt, vh->vh_allmemh,
-					  offset + (i << 5) + j,
-					  data[i * lpc + j]);
+#ifdef VGA_CONSOLE_ATI_BROKEN_FONTSEL
+	if (fontset == 1)
+		bus_space_copy_region_1(vh->vh_memt, vh->vh_allmemh, 0,
+					vh->vh_allmemh, offset, 8192);
+	else
+#endif
+		for (i = 0; i < num; i++)
+			for (j = 0; j < lpc; j++)
+				bus_space_write_1(vh->vh_memt, vh->vh_allmemh,
+						  offset + (i << 5) + j,
+						  data[i * lpc + j]);
 
 	textram(vh);
 	splx(s);
@@ -111,6 +117,22 @@ vga_loadchars(struct vga_handle *vh, int fontset, int first, int num, int lpc,
 void
 vga_setfontset(struct vga_handle *vh, int fontset1, int fontset2)
 {
+#ifdef VGA_CONSOLE_ATI_BROKEN_FONTSEL
+	/* XXXBJY: 512 character mode is still broken. */
+
+	int s;
+
+	s = splhigh();
+	fontram(vh);
+	
+	if (fontset1 == 0)
+		fontset1++;
+	bus_space_copy_region_1(vh->vh_memt, vh->vh_allmemh, fontset1 << 13,
+				vh->vh_allmemh, 0, 8192);
+	
+	textram(vh);
+	splx(s);
+#else
 	u_int8_t cmap;
 	static u_int8_t cmaptaba[] = {
 		0x00, 0x10, 0x01, 0x11,
@@ -125,6 +147,7 @@ vga_setfontset(struct vga_handle *vh, int fontset1, int fontset2)
 	cmap = cmaptaba[fontset1] | cmaptabb[fontset2];
 
 	vga_ts_write(vh, fontsel, cmap);
+#endif /* VGA_CONSOLE_ATI_BROKEN_FONTSEL */
 }
 
 void
