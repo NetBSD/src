@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 1996/11/18 11:20:16 pk Exp $
+#	$NetBSD: Makefile,v 1.14 1997/02/08 09:38:06 matthias Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/17/94
 
 PROG=	savecore
@@ -7,6 +7,7 @@ PROG=	savecore
 .if	(${MACHINE} == "alpha") || \
 	(${MACHINE} == "amiga") || \
 	(${MACHINE} == "atari") || \
+	(${MACHINE} == "pc532") || \
 	(${MACHINE} == "sparc") || \
 	(${MACHINE} == "sun3")
 SRCS=	savecore.c
