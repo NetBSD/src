@@ -35,7 +35,7 @@
 .ll 6.5i
 .lt 6.5i
 .pn 0
-.ds MO 2.27\"		\" mod number
+.ds MO 2.29\"		\" mod number
 .de TL			\" *** title line
 .lp
 .di XX
@@ -1913,9 +1913,9 @@ of the C/A/T phototypesetter roll.
 .ST *
 .DE
 Footnote number, actually
-.ST [ \c
+.ST { \c
 .NR ($f \c
-.ST ] .
+.ST } .
 This macro is incremented
 after each call to
 .b .)f .
@@ -1927,7 +1927,7 @@ Actually
 [\c
 .NR ($d ].
 .TL
-.ST [
+.ST {
 .DE
 Superscript.
 This string gives upward movement
@@ -1939,20 +1939,20 @@ otherwise it gives the left bracket character
 Extra space is left above the line
 to allow room for the superscript.
 .TL
-.ST ]
+.ST }
 .DE
 Unsuperscript.
 Inverse to
-.ST [ .
+.ST { .
 For example,
 to produce a superscript
 you might type
 .b x \c
-.ST [ \c
+.ST { \c
 .b 2 \c
-.ST ] ,
+.ST } ,
 which will produce
-.b x\*[2\*] .
+.b x\*{2\*} .
 .TL
 .ST <
 .DE
@@ -2214,7 +2214,7 @@ NAME	TYPE	DESCRIPTION
 \&.TE	M	end table
 \&.TH	M	end header of table
 \&.TS	M	begin table
-\e*[	S	begin superscript
+\e*{	S	begin superscript
 \en(\&.$	R\(sc	number of arguments to macro
 \en(\&.i	R\(sc	current indent
 \en(\&.l	R\(sc	current line length
@@ -2223,7 +2223,7 @@ NAME	TYPE	DESCRIPTION
 \e*(\&\`	S	grave accent
 \e(\'	F\(sc	acute accent
 \e(\`	F\(sc	grave accent
-\e*]	S	end superscript
+\e*}	S	end superscript
 \e^	F\(sc	1/12 em narrow space
 \e*^	S	caret
 \&.ac	M	ACM mode
