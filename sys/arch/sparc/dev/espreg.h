@@ -1,4 +1,4 @@
-/*	$NetBSD: espreg.h,v 1.4 1994/11/20 20:52:11 deraadt Exp $ */
+/*	$NetBSD: espreg.h,v 1.5 1995/01/07 05:17:15 mycroft Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -39,11 +39,7 @@
 
 #define	ESP_FIFO	0x08		/* RW - FIFO data		*/
 
-#define	ESP_FFLAG	0x1c		/* RO - FIFO Flags		*/
-#define  ESPFIFO_SS	0xe0		/*	Sequence Step (Dup)	*/
-#define  ESPFIFO_FF	0x1f		/*	Bytes in FIFO		*/
-
-#define	ESP_CMD	0x0c			/* RW - Command (2 deep)	*/
+#define	ESP_CMD		0x0c		/* RW - Command (2 deep)	*/
 #define  ESPCMD_DMA	0x80		/*	DMA Bit			*/
 #define  ESPCMD_NOP	0x00		/*	No Operation		*/
 #define  ESPCMD_FLUSH	0x01		/*	Flush FIFO		*/
@@ -84,7 +80,7 @@
 #define  ESPSTAT_VGC	0x08		/*	Valid Group Code	*/
 #define  ESPSTAT_PHASE	0x07		/*	Phase bits		*/
 
-#define	ESP_ID		0x10		/* WO - Destination ID		*/
+#define	ESP_SELID	0x10		/* WO - Select/Reselect Bus ID	*/
 
 #define	ESP_INTR	0x14		/* RO - Interrupt		*/
 #define  ESPINTR_SBR	0x80		/*	SCSI Bus Reset		*/
@@ -96,16 +92,19 @@
 #define  ESPINTR_SELATN	0x02		/*	Select with ATN		*/
 #define  ESPINTR_SEL	0x01		/*	Selected		*/
 
-#define	ESP_SELID	0x10		/* WO - Select/Reselect Bus ID	*/
 #define	ESP_TIMEOUT	0x14		/* WO - Select/Reselect Timeout */
 
 #define	ESP_STEP	0x18		/* RO - Sequence Step		*/
 #define  ESPSTEP_MASK	0x07		/*	the last 3 bits		*/
 #define  ESPSTEP_DONE	0x04		/*	command went out	*/
 
-
 #define	ESP_SYNCTP	0x18		/* WO - Synch Transfer Period	*/
 					/*	Default 5 (53C9X)	*/
+
+#define	ESP_FFLAG	0x1c		/* RO - FIFO Flags		*/
+#define  ESPFIFO_SS	0xe0		/*	Sequence Step (Dup)	*/
+#define  ESPFIFO_FF	0x1f		/*	Bytes in FIFO		*/
+
 #define	ESP_SYNCOFF	0x1c		/* WO - Synch Offset		*/
 					/*	0 = ASYNC		*/
 					/*	1 - 15 = SYNC bytes	*/
@@ -117,6 +116,18 @@
 #define  ESPCFG1_PARENB	0x10		/*	Enable Parity Check	*/
 #define  ESPCFG1_CTEST	0x08		/*	Enable Chip Test	*/
 #define  ESPCFG1_BUSID	0x07		/*	Bus ID			*/
+
+#define	ESP_CCF		0x24		/* WO -	Clock Conversion Factor	*/
+					/*	0 = 35.01 - 40Mhz	*/
+					/*	NEVER SET TO 1		*/
+					/*	2 = 10Mhz		*/
+					/*	3 = 10.01 - 15Mhz	*/
+					/*	4 = 15.01 - 20Mhz	*/
+					/*	5 = 20.01 - 25Mhz	*/
+					/*	6 = 25.01 - 30Mhz	*/
+					/*	7 = 30.01 - 35Mhz	*/
+
+#define	ESP_TEST	0x28		/* WO - Test (Chip Test Only)	*/
 
 #define	ESP_CFG2	0x2c		/* RW - Configuration #2	*/
 #define	 ESPCFG2_RSVD	0xe0		/*	reserved		*/
@@ -134,15 +145,3 @@
 #define  ESPCFG3_CDB	0x04		/*	CDB 10-bytes OK		*/
 #define  ESPCFG3_FSCSI	0x02		/*	Fast SCSI		*/
 #define  ESPCFG3_FCLK	0x01		/*	Fast Clock (>25Mhz)	*/
-
-#define	ESP_CCF	0x24			/* WO -	Clock Conversion Factor	*/
-					/*	0 = 35.01 - 40Mhz	*/
-					/*	NEVER SET TO 1		*/
-					/*	2 = 10Mhz		*/
-					/*	3 = 10.01 - 15Mhz	*/
-					/*	4 = 15.01 - 20Mhz	*/
-					/*	5 = 20.01 - 25Mhz	*/
-					/*	6 = 25.01 - 30Mhz	*/
-					/*	7 = 30.01 - 35Mhz	*/
-
-#define	ESP_TEST	0x28		/* WO - Test (Chip Test Only)	*/
