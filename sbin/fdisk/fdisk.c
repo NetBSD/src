@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.83 2004/10/28 19:48:41 dsl Exp $ */
+/*	$NetBSD: fdisk.c,v 1.84 2004/11/10 02:39:48 christos Exp $ */
 
 /*
  * Mach Operating System
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.83 2004/10/28 19:48:41 dsl Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.84 2004/11/10 02:39:48 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -266,6 +266,7 @@ struct part_type {
 	{0xb6, reserved},
 	{0xB7, "BSDI BSD/386 filesystem"},
 	{0xB8, "BSDI BSD/386 swap"},
+	{0xBF, "Solaris"},
 	{0xc0, "CTOS"},
 	{0xC1, "DRDOS/sec (FAT-12)"},
 	{0xC4, "DRDOS/sec (FAT-16, < 32M)"},
