@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.39 2000/03/19 14:56:53 ragge Exp $	   */
+/*	$NetBSD: pmap.h,v 1.40 2000/08/08 19:06:53 ragge Exp $	   */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -156,7 +156,6 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 
 /* Routines that are best to define as macros */
 #define pmap_phys_address(phys)		((u_int)(phys) << PGSHIFT)
-#define pmap_unwire(pmap, v)		/* no need */
 #define pmap_copy(a,b,c,d,e)		/* Dont do anything */
 #define pmap_update()	mtpr(0,PR_TBIA) /* Update buffes */
 #define pmap_collect(pmap)		/* No need so far */
