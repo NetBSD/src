@@ -1,4 +1,4 @@
-/*	$NetBSD: sysasic.c,v 1.6 2004/05/07 15:21:04 itohy Exp $	*/
+/*	$NetBSD: sysasic.c,v 1.7 2004/05/17 20:47:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysasic.c,v 1.6 2004/05/07 15:21:04 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysasic.c,v 1.7 2004/05/17 20:47:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,7 +183,7 @@ sysasic_intr_disestablish(void *arg)
 	syh = hnd->hnd_syh;
 
 #ifdef DIAGNOSTIC
-	if (syh->syh_events[SYSASIC_EVENT_INTR_MAP(event)] &
+	if ((syh->syh_events[SYSASIC_EVENT_INTR_MAP(event)] &
 	    SYSASIC_EVENT_INTR_BIT(event)) == 0)
 		panic("sysasic_intr_disestablish: event %d not installed for irq %d",
 		    event, SYSASIC_IRQ_INDEX_TO_IRQ(syh->syh_idx));
@@ -217,7 +217,7 @@ sysasic_intr_enable(void *arg, int on)
 	syh = hnd->hnd_syh;
 
 #ifdef DIAGNOSTIC
-	if (syh->syh_events[SYSASIC_EVENT_INTR_MAP(event)] &
+	if ((syh->syh_events[SYSASIC_EVENT_INTR_MAP(event)] &
 	    SYSASIC_EVENT_INTR_BIT(event)) == 0)
 		panic("sysasic_intr_enable: event %d not installed for irq %d",
 		    event, SYSASIC_IRQ_INDEX_TO_IRQ(syh->syh_idx));
