@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	5.1 (Berkeley) 6/28/91
-#	$Id: Makefile,v 1.2 1993/07/31 15:20:23 mycroft Exp $
+#	$NetBSD: Makefile,v 1.3 1994/12/22 06:33:38 jtc Exp $
+#	@(#)Makefile	8.1 (Berkeley) 6/9/93
 
 PROG=	logname
 
