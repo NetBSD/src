@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.h,v 1.10 1995/05/11 21:29:31 christos Exp $	*/
+/*	$NetBSD: memalloc.h,v 1.10.16.1 2000/11/03 02:36:06 tv Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,6 +42,7 @@ struct stackmark {
 	struct stack_block *stackp;
 	char *stacknxt;
 	int stacknleft;
+	struct stackmark *marknext;
 };
 
 
