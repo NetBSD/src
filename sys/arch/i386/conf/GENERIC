@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.189 1998/10/12 16:09:13 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.190 1998/10/13 03:57:27 enami Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -310,16 +310,16 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 # IDE and Related Devices
 # PCI IDE controllers (CMD tech's PCI0640, Intel's PIIx).
-#pciide* at pci ? dev ? function ? 
+#pciide* at pci ? dev ? function ?
 
 # ISA Plug-and-Play IDE controllers
 wdc*	at isapnp? flags 0x0000
 
 # PCMCIA IDE controllers
-wdc*	at pcmcia? function ? 
+wdc*	at pcmcia? function ?
 
 # ISA ST506, ESDI, and IDE controllers
-wdc0	at isa? port 0x1f0 irq 14 
+wdc0	at isa? port 0x1f0 irq 14
 wdc1	at isa? port 0x170 irq 15
 
 # IDE drives
