@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.82 2003/02/26 06:31:13 matt Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.83 2003/05/01 07:52:59 itojun Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.82 2003/02/26 06:31:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.83 2003/05/01 07:52:59 itojun Exp $");
 
 #include "sl.h"
 #if NSL > 0
@@ -778,6 +778,7 @@ slintr(void *arg)
 			struct mbuf n;
 			u_char *hp;
 
+			n.m_flags = 0;
 			n.m_next = bpf_m;
 			n.m_data = n.m_dat;
 			n.m_len = SLIP_HDRLEN;
