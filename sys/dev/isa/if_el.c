@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.46 1997/04/24 08:05:20 mycroft Exp $	*/
+/*	$NetBSD: if_el.c,v 1.47 1997/04/28 17:04:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -654,6 +654,7 @@ elget(sc, totlen)
 		if (totlen >= MINCLSIZE) {
 			MCLGET(m, M_DONTWAIT);
 			if ((m->m_flags & M_EXT) == 0) {
+				m_free(m);
 				m_freem(top);
 				return 0;
 			}

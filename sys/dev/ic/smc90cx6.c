@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.21 1997/04/24 08:05:15 mycroft Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.22 1997/04/28 17:04:08 mycroft Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -844,6 +844,7 @@ bah_srint(vsc, dummy)
 				MCLGET(m, M_DONTWAIT);
 				if ((m->m_flags & M_EXT) == 0) {
 					ifp->if_ierrors++;
+					m_free(m);
 					goto cleanup;
 				}
 			}
