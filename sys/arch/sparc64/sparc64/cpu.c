@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.26 2002/10/02 16:02:21 thorpej Exp $ */
+/*	$NetBSD: cpu.c,v 1.27 2002/12/22 02:17:25 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -77,7 +77,8 @@ struct cpu_info *cpus = NULL;
 /* The following are used externally (sysctl_hw). */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
-char	cpu_model[100];
+char	cpu_model[100];			/* machine model (primary cpu) */
+extern char machine_model[];
 
 /* The CPU configuration driver. */
 static void cpu_attach __P((struct device *, struct device *, void *));
@@ -230,6 +231,7 @@ cpu_attach(parent, dev, aux)
 	uint64_t ver;
 	int bigcache, cachesize;
 	extern uint64_t cpu_clockrate[];
+	char buf[100];
 
 	/* This needs to be 64-bit aligned */
 	fpstate = ALIGNFPSTATE(&fps[1]);
@@ -263,10 +265,11 @@ cpu_attach(parent, dev, aux)
 		cpu_clockrate[0] = clk; /* Tell OS what frequency we run on */
 		cpu_clockrate[1] = clk / 1000000;
 	}
-	sprintf(cpu_model, "%s @ %s MHz, version %d FPU",
+	snprintf(buf, sizeof buf, "%s @ %s MHz, version %d FPU",
 		PROM_getpropstring(node, "name"),
 		clockfreq(clk), fver);
-	printf(": %s\n", cpu_model);
+	printf(": %s\n", buf);
+	snprintf(cpu_model, sizeof cpu_model, "%s (%s)", machine_model, buf);
 
 	bigcache = 0;
 
