@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.10 1995/02/25 08:51:31 cgd Exp $	*/
+/*	$NetBSD: popen.c,v 1.11 1995/06/16 07:05:33 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: popen.c,v 1.10 1995/02/25 08:51:31 cgd Exp $";
+static char rcsid[] = "$NetBSD: popen.c,v 1.11 1995/06/16 07:05:33 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -79,7 +79,7 @@ popen(program, type)
 		return (NULL);
 
 	if (pipe(pdes) < 0) {
-		(void)free(cur);
+		free(cur);
 		return (NULL);
 	}
 
@@ -87,7 +87,7 @@ popen(program, type)
 	case -1:			/* Error. */
 		(void)close(pdes[0]);
 		(void)close(pdes[1]);
-		(void)free(cur);
+		free(cur);
 		return (NULL);
 		/* NOTREACHED */
 	case 0:				/* Child. */
