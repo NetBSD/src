@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.78 1999/11/09 22:14:29 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.79 1999/11/11 22:02:29 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -1054,3 +1054,47 @@ sys/nfs/nfs_socket.c				1.52-1.53
   Fix overzealous DIAGNOSTIC check in nfs_disconnect() and
   don't try to copy a possibly freed mbuf.  Fixes PR#8249, PR#8288
   and PR#8766.
+
+distrib/i386/floppies/Makefile			1.10
+distrib/i386/floppies/bootfloppy-common/Makefile.inc	1.19
+distrib/i386/floppies/fdset-common/Makefile.inc	1.7
+distrib/i386/floppies/ramdisk/Makefile		1.18
+etc/etc.i386/Makefile.inc			1.13
+
+  Improve automation for "make release", so that boot images are
+  automatically built and installed in RELEASEDIR.
+
+usr.bin/audio/play/play.c			1.15-1.16 via patch
+
+  Do not treat failure to open a file as a fatal error, fixing
+  PR#8748.  Change two GNU C statements to valid ANSI C.
+
+usr.bin/audio/record/record.c			1.9
+
+  Do not indicate success in the exit status if usage instructions
+  had to be printed.
+
+lib/libc/sys/Makefile.inc			1.97 via patch
+lib/libposix/sys/Makefile.inc			1.11
+
+  Do call graph profiling for system calls.  Fixes PR#4976.
+
+usr.bin/top/machine/m_netbsd13.c		1.9
+
+  Add trailing "," to memory names, making output easier to read.
+
+lib/libc/locale/_def_time.c			1.6
+
+  Make the output in the C/POSIX locale conform to XSH5 and C99,
+  so that single digits are not preceded by 0 but by a space.
+
+usr.sbin/pkg_install/add/main.c			1.13
+
+  Do not crash if realpath() fails, which can happen if current
+  directory is no longer valid.
+
+usr.sbin/apmd/apmd.c				1.12
+
+  Avoid excessive printing of power status.  (All printing can be
+  disabled with APM_NO_POWER_PRINT; there exist X11-based battery
+  status programs in pkgsrc such as kapm and xbatt.)
