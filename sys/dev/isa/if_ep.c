@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.37 1994/05/13 06:13:52 mycroft Exp $
+ *	$Id: if_ep.c,v 1.38 1994/05/21 05:34:02 deraadt Exp $
  */
 
 #include "bpfilter.h"
@@ -172,7 +172,7 @@ epprobe(parent, self, aux)
 			k = (k & 0x1f) * 0x10 + 0x200;
 			k2 = inw(port + EP_W0_RESOURCE_CFG);
 			k2 >>= 12;
-			epaddcard(port, k2, 1);
+			epaddcard(port, k2, 0);
 		}
 
 		/* find all isa cards */
