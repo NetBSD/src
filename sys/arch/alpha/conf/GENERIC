@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.176 2000/12/21 23:05:47 thorpej Exp $
+# $NetBSD: GENERIC,v 1.177 2000/12/29 22:03:47 mycroft Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 #
@@ -6,7 +6,7 @@
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"GENERIC-$Revision: 1.176 $"
+#ident 		"GENERIC-$Revision: 1.177 $"
 
 maxusers 32
 
@@ -102,6 +102,7 @@ options 	MIIVERBOSE		# verbose PHY autoconfig messages
 options 	SCSIVERBOSE		# Verbose SCSI errors
 options 	TCVERBOSE		# recognize "unknown" TC devices
 options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
+#options 	PCMCIAVERBOSE
 
 # The Alpha console firmware network boots using the BOOTP
 # protocol, so we ask the NFS code to use BOOTP/DHCP as well,
@@ -271,6 +272,7 @@ eisa*	at	jensenio?
 isa*	at	pceb?
 eisa*	at	pceb?
 isa*	at	sio?
+#isapnp*	at	isa?
 
 # ISA devices
 mcclock* at	isa? port 0x70
@@ -280,11 +282,15 @@ pms*	at	pckbc?				# PS/2-style mouse (aux port)
 pcppi*	at	isa?				# PC prog. periph. interface
 spkr0	at	pcppi?				# IBM BASIC emulation
 isabeep0 at	pcppi?				# "keyboard" beep
+midi*	at	pcppi?
 com*	at	isa? port 0x3f8 irq 4		# standard serial ports
 com*	at	isa? port 0x2f8 irq 3
 cs*	at	isa? port 0x300 iomem ? irq ? drq ? # CS8900 Ethernet
 ec0	at	isa? port 0x250 iomem 0xd8000 irq 9 # 3Com 3c503 Ethernet
 ep*	at	isa? port ? irq ?		# 3COM 3c509 Ethernet
+#ep*	at	isapnp?
+#ix0	at	isa? port 0x300 irq 10		# EtherExpress/16
+#iy0	at	isa? port 0x360 irq ?		# EtherExpress PRO 10 ISA
 fdc0	at	isa? port 0x3f0 irq 6 drq 2	# floppy controller
 lc0	at	isa? port 0x300 iomem ? irq ?	# DEC EtherWORKS III (LEMAC)
 lc1	at	isa? port 0x320 iomem ? irq ?	# DEC EtherWORKS III (LEMAC)
@@ -295,9 +301,11 @@ lpt*	at	isa? port 0x3bc irq 7		# standard parallel port
 vga*	at	isa?				# ISA (EISA: XXX) VGA
 wdc0	at	isa? port 0x1f0 irq 14		# ST506/ESDI/IDE controllers
 wdc1	at	isa? port 0x170 irq 15
+#wdc*	at	isapnp?
 we0     at 	isa? port 0x280 iomem 0xd0000 irq 9  # WD/SMC Ethernet
 we1     at 	isa? port 0x300 iomem 0xcc000 irq 10
 #wss*	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
+#wss*	at	isapnp?
 #audio*	at	wss?
 #midi*	at	wss?
 sb*	at	isa? port 0x220 irq 5 drq 1	# SoundBlaster
