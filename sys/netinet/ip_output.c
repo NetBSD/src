@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.121 2003/09/19 00:27:56 jonathan Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.122 2003/10/01 23:54:40 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.121 2003/09/19 00:27:56 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.122 2003/10/01 23:54:40 itojun Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_ipsec.h"
@@ -801,7 +801,7 @@ spd_done:
 	}
 
 	error = ip_fragment(m, ifp, mtu);
-	if (error == EMSGSIZE)
+	if (error)
 		goto bad;
 
 	for (; m; m = m0) {
@@ -907,8 +907,9 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 			mhip->ip_hl = mhlen >> 2;
 		}
 		m->m_len = mhlen;
-		mhip->ip_off = ((off - hlen) >> 3) + (ip->ip_off & ~IP_MF);
-		if (ip->ip_off & IP_MF)
+		mhip->ip_off = ((off - hlen) >> 3) +
+		    (ntohs(ip->ip_off) & ~IP_MF);
+		if (ip->ip_off & htons(IP_MF))
 			mhip->ip_off |= IP_MF;
 		if (off + len >= ntohs(ip->ip_len))
 			len = ntohs(ip->ip_len) - off;
