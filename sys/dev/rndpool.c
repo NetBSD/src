@@ -1,4 +1,4 @@
-/*      $NetBSD: rndpool.c,v 1.14 2001/11/15 09:48:03 lukem Exp $        */
+/*      $NetBSD: rndpool.c,v 1.15 2002/10/08 12:12:57 dan Exp $        */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpool.c,v 1.14 2001/11/15 09:48:03 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpool.c,v 1.15 2002/10/08 12:12:57 dan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ rndpool_init(rndpool_t *rp)
 	rp->stats.threshold = RND_ENTROPY_THRESHOLD;
 	rp->stats.maxentropy = RND_POOLBITS;
 
-	assert(RND_ENTROPY_THRESHOLD*2 <= 20); /* XXX sha knowledge */
+	KASSERT(RND_ENTROPY_THRESHOLD*2 <= 20); /* XXX sha knowledge */
 }
 
 u_int32_t
@@ -241,7 +241,7 @@ rndpool_extract_data(rndpool_t *rp, void *p, u_int32_t len, u_int32_t mode)
 	else
 		good = (rp->stats.curentropy >= (8 * RND_ENTROPY_THRESHOLD));
 
-	assert(RND_ENTROPY_THRESHOLD*2 <= 20); /* XXX SHA knowledge */
+	KASSERT(RND_ENTROPY_THRESHOLD*2 <= 20); /* XXX SHA knowledge */
 
 	while (good && (remain != 0)) {
 		/*
