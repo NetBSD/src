@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.12 1999/01/09 03:05:19 thorpej Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.13 1999/01/29 11:36:20 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -429,7 +429,7 @@ wdc_ata_bio_intr(chp, xfer)
 	if (xfer->c_flags & C_DMA) {
 		if (ata_bio->flags & ATA_POLL) {
 			/*
-			 * IDE drives deassert WDCS_BSY before transfert is
+			 * IDE drives deassert WDCS_BSY before transfer is
 			 * complete when using DMA. Polling for DRQ to deassert
 			 * is not enouth DRQ is not required to be
 			 * asserted for DMA transfers, so poll for DRDY.
