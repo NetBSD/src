@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_float.c,v 1.31 2003/01/18 11:29:07 thorpej Exp $	*/
+/*	$NetBSD: xdr_float.c,v 1.32 2003/12/08 06:18:16 matt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr_float.c 1.12 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_float.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_float.c,v 1.31 2003/01/18 11:29:07 thorpej Exp $");
+__RCSID("$NetBSD: xdr_float.c,v 1.32 2003/12/08 06:18:16 matt Exp $");
 #endif
 #endif
 
@@ -140,7 +140,7 @@ xdr_float(xdrs, fp)
 		is.mantissa = (vs.mantissa1 << 16) | vs.mantissa2;
 	shipit:
 		is.sign = vs.sign;
-		return (XDR_PUTINT32(xdrs, (int32_t *)&is));
+		return (XDR_PUTINT32(xdrs, (int32_t *)(void *)&is));
 #endif
 
 	case XDR_DECODE:
@@ -148,7 +148,7 @@ xdr_float(xdrs, fp)
 		return (XDR_GETINT32(xdrs, (int32_t *)(void *)fp));
 #else
 		vsp = (struct vax_single *)fp;
-		if (!XDR_GETINT32(xdrs, (int32_t *)&is))
+		if (!XDR_GETINT32(xdrs, (int32_t *)(void *)&is))
 			return (FALSE);
 		for (i = 0, lim = sgl_limits;
 			i < sizeof(sgl_limits)/sizeof(struct sgl_limits);
@@ -265,7 +265,7 @@ xdr_double(xdrs, dp)
 				((vd.mantissa4 >> 3) & MASK(13));
 	shipit:
 		id.sign = vd.sign;
-		lp = (int32_t *)&id;
+		lp = (int32_t *)(void *)&id;
 		return (XDR_PUTINT32(xdrs, lp++) && XDR_PUTINT32(xdrs, lp));
 #endif
 
@@ -286,7 +286,7 @@ xdr_double(xdrs, dp)
 #endif
 		return (rv);
 #else
-		lp = (int32_t *)&id;
+		lp = (int32_t *)(void *)&id;
 		if (!XDR_GETINT32(xdrs, lp++) || !XDR_GETINT32(xdrs, lp))
 			return (FALSE);
 		for (i = 0, lim = dbl_limits;
@@ -307,7 +307,7 @@ xdr_double(xdrs, dp)
 		vd.mantissa4 = (id.mantissa2 << 3);
 	doneit:
 		vd.sign = id.sign;
-		*dp = *((double *)&vd);
+		*dp = *((double *)(void *)&vd);
 		return (TRUE);
 #endif
 
