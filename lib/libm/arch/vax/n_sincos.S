@@ -1,4 +1,4 @@
-/*	$NetBSD: n_sincos.S,v 1.3 1999/07/02 15:37:35 simonb Exp $	*/
+/*	$NetBSD: n_sincos.S,v 1.3.8.1 2000/08/14 21:24:15 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -50,11 +50,8 @@
  */
 #include <machine/asm.h>
 	.text
-	.align	1
-	.globl	_sin
-	.type	_sin@function
-_sin:
-	.word	0xffc		# save r2-r11
+
+ENTRY(sin, R6|R7|R8|R9|R10|R11)
 	movq	4(ap),r0
 	bicw3	$0x807f,r0,r2
 	beql	1f		# if x is zero or reserved operand then return x
@@ -70,9 +67,9 @@ _sin:
 /*
  *  Entered by  sine    ; save  0  in  r4 .
  */
-	jsb	libm$argred
+	calls	$0,__libm_argred
 	movl	$0,r4
-	jsb	libm$sincos
+	calls	$0,__libm_sincos
 	bispsw	(sp)+
 1:	ret
 
@@ -82,12 +79,8 @@ _sin:
  * method: true range reduction to [-pi/4,pi/4], P. Tang  &  B. Corbett
  * S. McDonald, April 4,  1985
  */
-	.text
-	.align	1
-	.globl	_cos
-	.type	_cos,@function
-_cos:
-	.word	0xffc		# save r2-r11
+
+ENTRY(cos, R6|R7|R8|R9|R10|R11)
 	movq	4(ap),r0
 	bicw3	$0x7f,r0,r2
 	cmpw	$0x8000,r2
@@ -104,8 +97,8 @@ _cos:
 /*
  *  Entered by  cosine  ; save  1  in  r4 .
  */
-	jsb	libm$argred
+	calls	$0,__libm_argred
 	movl	$1,r4
-	jsb	libm$sincos
+	calls	$0,__libm_sincos
 	bispsw	(sp)+
 1:	ret

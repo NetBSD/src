@@ -1,4 +1,4 @@
-/*	$NetBSD: n_argred.S,v 1.4 1999/07/02 15:37:35 simonb Exp $	*/
+/*	$NetBSD: n_argred.S,v 1.4.8.1 2000/08/14 21:24:15 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,23 +35,19 @@
  */
 
 /*
- *  libm$argred implements Bob Corbett's argument reduction and
- *  libm$sincos implements Peter Tang's double precision sin/cos.
+ *  libm_argred implements Bob Corbett's argument reduction and
+ *  libm_sincos implements Peter Tang's double precision sin/cos.
  *
- *  Note: The two entry points libm$argred and libm$sincos are meant
+ *  Note: The two entry points libm_argred and libm_sincos are meant
  *        to be used only by _sin, _cos and _tan.
  *
  * method: true range reduction to [-pi/4,pi/4], P. Tang  &  B. Corbett
  * S. McDonald, April 4,  1985
  */
+#include <machine/asm.h>
 	.text
-	.globl	libm$argred
-	.type	libm$argred,@label
-	.globl	libm$sincos
-	.type	libm$sincos,@label
-	.align	1
 
-libm$argred:
+ENTRY(_libm_argred, 0)
 /*
  *  Compare the argument with the largest possible that can
  *  be reduced by table lookup.  r3 := |x|  will be used in  table_lookup .
@@ -63,10 +59,10 @@ abs1:
 	cmpd	r3,$0d+4.55530934770520019583e+01
 	blss	small_arg
 	jsb	trigred
-	rsb
+	ret
 small_arg:
 	jsb	table_lookup
-	rsb
+	ret
 /*
  *  At this point,
  *	   r0  contains the quadrant number, 0, 1, 2, or 3;
@@ -74,7 +70,7 @@ small_arg:
  *  	   r3  contains a F-format extension to the reduced argument;
  *          r4  contains a  0 or 1  corresponding to a  sin or cos  entry.
  */
-libm$sincos:
+ENTRY(_libm_sincos, 0)
 /*
  *  Compensate for a cosine entry by adding one to the quadrant number.
  */
@@ -124,7 +120,7 @@ done:
 	blbc	r9,even
 	mnegd	r0,r0
 even:
-	rsb
+	ret
 
 .data
 .align	2
