@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.61 2000/11/20 15:33:39 thorpej Exp $ */
+/* $NetBSD: trap.c,v 1.62 2000/11/22 03:54:01 itojun Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.61 2000/11/20 15:33:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.62 2000/11/22 03:54:01 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -639,7 +639,7 @@ syscall(code, framep)
 	u_int64_t code;
 	struct trapframe *framep;
 {
-	struct sysent *callp;
+	const struct sysent *callp;
 	struct proc *p;
 	int error, numsys;
 	u_int64_t opc;
