@@ -1,4 +1,4 @@
-/*	$NetBSD: aout2elf.c,v 1.2 2002/02/03 22:44:21 skrll Exp $
+/*	$NetBSD: aout2elf.c,v 1.3 2003/01/10 20:00:27 christos Exp $
  *
  * Copyright 1997 Piermont Information Systems Inc.
  * All rights reserved.
@@ -46,6 +46,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <err.h>
 
 #include "defs.h"
 #include "md.h"
@@ -132,7 +133,7 @@ handle_aout_libs(const char *dir, int op, const void *arg)
 {
 	DIR *dd;
 	struct dirent *dp;
-	char *fullname;
+	char *full_name;
 	const char *destdir;
 	int n;
 
@@ -161,9 +162,12 @@ handle_aout_libs(const char *dir, int op, const void *arg)
 		if (strncmp(dp->d_name, "lib", 3) != 0)
 			continue;
 
-		asprintf(&fullname, "%s/%s", dir, dp->d_name);
+		if (asprintf(&full_name, "%s/%s", dir, dp->d_name) == -1)  {
+			warn("Out of memory");
+			continue;
+		}
 
-		if (!is_aout_shared_lib(fullname))
+		if (!is_aout_shared_lib(full_name))
 			goto endloop;
 
 		switch (op) {
@@ -172,12 +176,12 @@ handle_aout_libs(const char *dir, int op, const void *arg)
 			break;
 		case LIB_MOVE:
 			run_prog(0, NULL, "mv -f %s %s/%s",
-			    fullname, destdir, dp->d_name);
+			    full_name, destdir, dp->d_name);
 			break;
 		}
 		
 endloop:
-		free(fullname);
+		free(full_name);
 	}
 
 	closedir(dd);
