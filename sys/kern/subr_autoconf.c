@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
+/*	$NetBSD: subr_autoconf.c,v 1.22 1996/06/13 04:50:29 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -352,6 +352,9 @@ config_attach(parent, match, aux, print)
 			if (cf->cf_fstate == FSTATE_STAR)
 				cf->cf_unit++;
 		}
+#ifdef __alpha__
+	device_register(dev, aux);
+#endif
 	(*ca->ca_attach)(parent, dev, aux);
 	return (dev);
 }
