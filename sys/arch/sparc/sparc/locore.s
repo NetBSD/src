@@ -1558,8 +1558,8 @@ syscall:
 	ldd	[%sp + CCFSZ + 0], %l0	! new %psr, new pc
 	ldd	[%sp + CCFSZ + 8], %l2	! new npc, new %y
 	wr	%l3, 0, %y
-	/* see `dostart' for the reason for this label */
-init_syscall_ret:
+	/* see `proc_trampoline' for the reason for this label */
+return_from_syscall:
 	ld	[%sp + CCFSZ + 20], %g1
 	ldd	[%sp + CCFSZ + 24], %g2
 	ldd	[%sp + CCFSZ + 32], %g4
@@ -2854,9 +2854,6 @@ noplab:	 nop
 	set	wb1, %l0
 	st	%l1, [%l0 + 6*4]
 	st	%l1, [%l0 + 7*4]
-	set	wb2, %l0
-	st	%l1, [%l0 + 6*4]
-	st	%l1, [%l0 + 7*4]
 1:
 #endif
 
@@ -2881,17 +2878,7 @@ noplab:	 nop
 	 */
 	call	_main
 	 clr	%o0			! our frame arg is ignored
-
-	/*
-	 * Here we finish up as in syscall, but simplified.  We need to
-	 * fiddle pc and npc a bit, as execve() / setregs() have only set
-	 * npc, in anticipation that trap.c will advance past the trap
-	 * instruction; but we bypass that, so we must do it manually.
-	 */
-	mov	PSR_S, %l0		! user psr (no need to load it)
-	ld	[%sp + CCFSZ + 8], %l1	! pc = npc from execve
-	b	init_syscall_ret
-	 add	%l1, 4, %l2		! npc = pc+4
+	/*NOTREACHED*/
 
 /*
  * The following code is copied to the top of the user stack when each
@@ -3801,21 +3788,10 @@ Lsw_sameproc:
 
 /*
  * Snapshot the current process so that stack frames are up to date.
- * This is called from two places:
- *  - just before a crash dump, for the stack update;
- *  - in cpu_fork(), before copying the kernel stack.
- * In the latter case the pcb and stack will be copied to the child,
- * and the child will be made runnable.  Eventually switch() will run
- * it.  When it does, we want its pcb_pc set so that we can appear
- * to return 1 from cpu_fork(), so we store the current sp and psr
- * in the given pcb, and set its pcb_pc to our return-1 code (offset
- * by -8 due to call/ret conventions).  This is not useful in the crash
- * dump code but it is easiest to do it anyway.
+ * Only used just before a crash dump.
  */
 ENTRY(snapshot)
 	st	%o6, [%o0 + PCB_SP]	! save sp
-	set	1f - 8, %o1		! set child-return pc
-	st	%o1, [%o0 + PCB_PC]
 	rd	%psr, %o1		! save psr
 	st	%o1, [%o0 + PCB_PSR]
 
@@ -3824,13 +3800,34 @@ ENTRY(snapshot)
 	 * 7 of each.  Minor tweak: the 7th restore is
 	 * done after a ret.
 	 */
-wb2:	SAVE; SAVE; SAVE; SAVE; SAVE; SAVE; SAVE
+	SAVE; SAVE; SAVE; SAVE; SAVE; SAVE; SAVE
 	restore; restore; restore; restore; restore; restore; ret; restore
 
-1:	/* this is reached only after a child gets chosen in switch() */
-	mov	1, %i0			! return 1 from cpu_fork
-	ret
-	 restore
+
+/*
+ * cpu_set_kpc() and cpu_fork() arrange for proc_trampoline() to run
+ * after after a process gets chosen in switch(). The stack frame will
+ * contain a function pointer in %l0, and an argument to pass to it in %l2.
+ *
+ * If the function *(%l0) returns, we arrange for an immediate return
+ * to user mode. This happens in two known cases: after execve(2) of init,
+ * and when returning a child to user mode after a fork(2).
+ */
+ENTRY(proc_trampoline)
+	call	%l0			! re-use current frame
+	 mov	%l1, %o0
+
+	/*
+	 * Here we finish up as in syscall, but simplified.  We need to
+	 * fiddle pc and npc a bit, as execve() / setregs() /cpu_set_kpc()
+	 * have only set npc, in anticipation that trap.c will advance past
+	 * the trap instruction; but we bypass that, so we must do it manually.
+	 */
+	mov	PSR_S, %l0		! user psr (no need to load it)
+	!?wr	%g0, 2, %wim		! %wim = 2
+	ld	[%sp + CCFSZ + 8], %l1	! pc = tf->tf_npc from execve/fork
+	b	return_from_syscall
+	 add	%l1, 4, %l2		! npc = pc+4
 
 /*
  * {fu,su}{,i}{byte,word}
