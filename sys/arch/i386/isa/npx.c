@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.44 1995/08/06 05:33:39 mycroft Exp $	*/
+/*	$NetBSD: npx.c,v 1.45 1995/08/06 06:05:28 mycroft Exp $	*/
 
 #if 0
 #define iprintf(x)	printf x
@@ -342,7 +342,7 @@ npxattach(parent, self, aux)
 	fninit();
 	if (npx586bug1(4195835, 3145727) != 0)
 		printf("WARNING: Pentium FDIV bug detected!\n");
-	lcr0(rcr0() | (CR0_EM|CR0_TS));
+	lcr0(rcr0() | (CR0_TS));
 }
 
 /*
@@ -497,15 +497,15 @@ npxdna()
 {
 	register struct pcb *pcb = &curproc->p_addr->u_pcb;
 
-	if ((pcb->pcb_cr0 & CR0_EM) != 0) {
-		if ((curproc->p_md.md_flags & MDP_USEDFPU) == 0 &&
-		    npx_type != NPX_NONE) {
-			iprintf(("Init"));
-			npxinit();
-			return (1);
-		}
+	if (npx_type == NPX_NONE) {
 		iprintf(("Emul"));
 		return (0);
+	}
+
+	if ((curproc->p_md.md_flags & MDP_USEDFPU) == 0) {
+		iprintf(("Init"));
+		npxinit();
+		return (1);
 	}
 
 #ifdef DIAGNOSTIC
@@ -546,7 +546,7 @@ void
 npxdrop()
 {
 
-	npxproc->p_addr->u_pcb.pcb_cr0 |= CR0_EM|CR0_TS;
+	npxproc->p_addr->u_pcb.pcb_cr0 |= CR0_TS;
 	npxproc = 0;
 }
 
@@ -590,7 +590,7 @@ npxinit()
 	if (cpl != 0 || npx_nointr != 0)
 		panic("npxinit: masked");
 #endif
-	lcr0(curproc->p_addr->u_pcb.pcb_cr0 &= ~(CR0_EM|CR0_TS));
+	lcr0(curproc->p_addr->u_pcb.pcb_cr0 &= ~CR0_TS);
 	if (npxproc != 0 && npxproc != curproc)
 		npxsave1();
 	else {
