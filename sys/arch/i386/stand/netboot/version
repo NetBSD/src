@@ -1,9 +1,10 @@
-$NetBSD: version,v 1.2 1997/09/20 12:28:29 drochner Exp $
+$NetBSD: version,v 1.3 2000/07/12 21:05:39 jdolecek Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
-file is important.  Make sure the current version number is on line 6.
+file is important - make sure the entries are appended on end, last item
+is taken as the current.
 
+1.0:	Matthias Drochner's new network boot program.
+1.1:	New welcoming banner.
 1.2:	Use common menu / parsing functions with other bootloaders.
 	New framework to pass information to the kernel.
-1.1:	New welcoming banner.
-1.0:	Matthias Drochner's new network boot program.

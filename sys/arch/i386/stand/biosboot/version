@@ -1,15 +1,16 @@
-$NetBSD: version,v 1.7 2000/05/13 05:31:00 jhawk Exp $
+$NetBSD: version,v 1.8 2000/07/12 21:05:39 jdolecek Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
-file is important.  Make sure the current version number is on line 6.
+file is important - make sure the entries are appended on end, last item
+is taken as the current.
 
-2.7:	Support on-the-fly switching of console devices.
-2.6:	Support ELF boot.
-2.5:	Support ustarfs boot.
-2.4:	Support BIOS Int13-Extensions.
-2.3:	Switch to new NetBSD MBR partition ID.
-2.2:	Use common menu / parsing functions with other bootloaders.
-	New framework to pass information to the kernel.
-2.1:	New welcoming banner.
 2.0:	Change over to Matthias Drochner's two-stage boot system.
 	All code is completely new.
+2.1:	New welcoming banner.
+2.2:	Use common menu / parsing functions with other bootloaders.
+	New framework to pass information to the kernel.
+2.3:	Switch to new NetBSD MBR partition ID.
+2.4:	Support BIOS Int13-Extensions.
+2.5:	Support ustarfs boot.
+2.6:	Support ELF boot.
+2.7:	Support on-the-fly switching of console devices.
