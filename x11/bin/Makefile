@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.3 2003/09/14 06:42:23 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2003/09/14 22:33:31 lukem Exp $
 
 SUBDIR=	appres bdftopcf bdftruncate beforelight bitmap cxpm dpsexec dpsinfo \
-	editres fc-cache fc-list fslsfonts fstobdf glxgears glxinfo iceauth \
+	editres fc-cache fc-list fslsfonts fstobdf iceauth \
 	ico imake lbxproxy listres lndir luit makepsres mkcfm mkfontdir \
 	mkfontscale oclock proxymngr pswrap rgb rstart scripts setxkbmap \
 	showfont smproxy sxpm texteroids twm ucs2any viewres x11perf xauth \
@@ -12,6 +12,10 @@ SUBDIR=	appres bdftopcf bdftruncate beforelight bitmap cxpm dpsexec dpsinfo \
 	xlsfonts xlogo xmag xman xmessage xmh xmkmf xmodmap xprop xrandr xrdb \
 	xrefresh xset xsetmode xsetpointer xsetroot xsm xstdcmap \
 	xterm xtrap xvidtune xvinfo xwd xwininfo xwud
+
+.if ${MACHINE_ARCH} != "vax"	# XXX: vax is missing ceilf (etc) in libm
+SUBDIR+=glxgears glxinfo 
+.endif
 
 SUBDIR+=ssh-askpass xsystrace
 
