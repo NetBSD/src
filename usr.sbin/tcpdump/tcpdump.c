@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpdump.c,v 1.12 1999/09/30 14:49:13 sjg Exp $	*/
+/*	$NetBSD: tcpdump.c,v 1.13 1999/10/05 20:37:22 is Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: tcpdump.c,v 1.12 1999/09/30 14:49:13 sjg Exp $");
+__RCSID("$NetBSD: tcpdump.c,v 1.13 1999/10/05 20:37:22 is Exp $");
 #endif
 #endif
 
@@ -98,6 +98,7 @@ struct printer {
 };
 
 static struct printer printers[] = {
+	{ arcnet_if_print,	DLT_ARCNET },
 	{ ether_if_print,	DLT_EN10MB },
 	{ token_if_print,	DLT_IEEE802 },
 	{ sl_if_print,		DLT_SLIP },
@@ -122,7 +123,7 @@ lookup_printer(int type)
 		if (type == p->type)
 			return p->f;
 
-	error("unknown data link type 0x%x", type);
+	error("lookup_printer: unknown data link type 0x%x", type);
 	/* NOTREACHED */
 }
 
