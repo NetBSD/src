@@ -1,4 +1,4 @@
-/*	$NetBSD: dc21040reg.h,v 1.4 1995/07/24 05:26:53 cgd Exp $	*/
+/*	$NetBSD: dc21040reg.h,v 1.5 1995/08/17 18:04:55 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995 Matt Thomas (thomas@lkg.dec.com)
@@ -309,4 +309,24 @@ typedef struct {
 #define	SROMCMD_RD	6
 
 #define	SROM_BITWIDTH	6
+
+/*
+ * Definitions for the DE425.
+ */
+#define	DE425_CFID		0x08	/* Configuration Id */
+#define	DE425_CFCS		0x0C	/* Configuration Command-Status */
+#define	DE425_CFRV		0x18	/* Configuration Revision */
+#define	DE425_CFLT		0x1C	/* Configuration Latency Timer */
+#define	DE425_CBIO		0x28	/* Configuration Base IO Address */
+#define	DE425_CFDA		0x2C	/* Configuration Driver Area */
+#define	DE425_ENETROM_OFFSET	0xC90	/* Offset in I/O space for ENETROM */
+#define	DE425_CFG0		0xC88	/* IRQ register */
+
+#define	DEC_VENDORID		0x1011
+#define	DC21040_CHIPID		0x0002
+#define	DC21140_CHIPID		0x0009
+#define	DC21041_CHIPID		0x0014
+#define	PCI_VENDORID(x)		((x) & 0xFFFF)
+#define	PCI_CHIPID(x)		(((x) >> 16) & 0xFFFF)
+
 #endif /* !defined(_DC21040_H) */
