@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.9 1998/07/26 19:37:11 mycroft Exp $	*/
+/*	$NetBSD: str.c,v 1.10 1998/07/28 02:23:40 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)str.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: str.c,v 1.9 1998/07/26 19:37:11 mycroft Exp $");
+__RCSID("$NetBSD: str.c,v 1.10 1998/07/28 02:23:40 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -321,7 +321,6 @@ s_strncmp(str1, str2, n)
 		return (1);
 	    else
 		return (*str1 - *str2);
-	    break;
 	}
         if (*str1 == '\0')
 	    return(0);
