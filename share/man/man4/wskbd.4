@@ -1,0 +1,95 @@
+.\" $NetBSD: wskbd.4,v 1.1 1999/03/22 19:15:02 drochner Exp $
+
+.Dd March 20, 1999
+.Os
+.Dt WSKBD 4
+.Sh NAME
+.Nm wskbd
+.Nd generic keyboard support in wscons
+
+.Sh SYNOPSIS
+.Cd "wskbd* at pckbd? console ?"
+(standard PC keyboard)
+.Cd "wskbd* at ukbd? console ?"
+(USB keyboard)
+.Cd "wskbd0 at akbd? console ?"
+(Apple ADB keyboard)
+.Cd "wskbd0 at nextkbd? console ?"
+(NeXT keyboard)
+
+.Sh DESCRIPTION
+The
+.Nm
+driver handles common tasks for keyboards within the
+.Xr wscons 4
+framework. It is attached to the hardware specific keyboard drivers and
+provides their connection to
+.Dq wsdisplay
+devices and a character device interface.
+.Pp
+The common keyboard support consists of:
+.Bl -bullet
+.It
+Mapping from keycodes (defined by the specific keyboard driver) to
+keysyms (hardware independant, defined in
+.Pa /usr/include/dev/wscons/wsksymdef.h .
+.It
+Handling of
+.Dq compose
+sequences. Characters commonly not present as separate key on keyboards
+can be generated after either a special
+.Dq compose
+key is pressed or a
+.Dq dead accent
+character is used.
+.It
+Automatic key repetition (
+.Dq typematic
+).
+.It
+Parameter handling for
+.Dq keyboard bells .
+.It
+Generation of
+.Dq keyboard events
+for use by X servers.
+.El
+.Pp
+The
+.Nm
+driver provides a number of ioctl functions to control key maps
+and other parameters. These functions are accessible though the
+associated
+.Dq wsdisplay
+device as well. A complete list is in
+.Pa /usr/include/dev/wscons/wsconsio.h .
+The
+.Xr wsconsctl 8
+utility allows to access key maps and other variables.
+
+.Sh FILES
+.Bl -item
+.It
+.Pa /dev/wskbd*
+.It
+.Pa /usr/include/dev/wscons/wsksymdef.h
+.It
+.Pa /usr/include/dev/wscons/wsconsio.h .
+.El
+
+.Sh BUGS
+.Dq wskbd
+devices are connected logically to
+.Dq wsdisplay
+devices at boot time. There is little support for hot insertion and
+removal. It is not possible to feed a
+.Dq wsdisplay
+from multiple
+.Dq wskbd
+devices.
+
+.Sh SEE ALSO
+.Xr wscons 4 ,
+.Xr wsconsctl 8 ,
+.Xr pckbd 4 ,
+.Xr ukbd 4
