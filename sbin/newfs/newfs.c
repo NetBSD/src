@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)newfs.c	8.8 (Berkeley) 4/18/94";*/
-static char *rcsid = "$Id: newfs.c,v 1.16 1995/03/04 06:11:13 cgd Exp $";
+static char *rcsid = "$Id: newfs.c,v 1.17 1995/03/18 07:02:38 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -624,8 +624,11 @@ rewritelabel(s, fd, lp)
 		*(struct disklabel *)(blk + LABELOFFSET) = *lp;
 		alt = lp->d_ncylinders * lp->d_secpercyl - lp->d_nsectors;
 		for (i = 1; i < 11 && i < lp->d_nsectors; i += 2) {
-			if (lseek(cfd, (off_t)(alt + i) * lp->d_secsize,
-			    SEEK_SET) == -1)
+			off_t offset;
+
+			offset = alt + i;
+			offset *= lp->d_secsize;
+			if (lseek(cfd, offset, SEEK_SET) == -1)
 				fatal("lseek to badsector area: %s",
 				    strerror(errno));
 			if (write(cfd, blk, lp->d_secsize) < lp->d_secsize)
