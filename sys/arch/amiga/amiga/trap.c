@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.38 1995/09/30 17:39:51 chopps Exp $	*/
+/*	$NetBSD: trap.c,v 1.39 1995/09/30 17:43:18 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -637,7 +637,7 @@ trap(type, code, v, frame)
 
 #ifdef DEBUG
 		/* watch for page zero access */
-		/if (v < NBPG) {
+		if (v < NBPG) {
 			printf("page 0 access pc %x fa %x fp %x\n", frame.f_pc,
 			    v, &frame);
 			mmudebug |= 0x100;
