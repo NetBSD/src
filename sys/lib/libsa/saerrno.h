@@ -1,4 +1,4 @@
-/*	$NetBSD: saerrno.h,v 1.5 1995/09/14 23:45:39 pk Exp $	*/
+/*	$NetBSD: saerrno.h,v 1.6 1995/09/18 21:19:45 pk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -35,35 +35,19 @@
  *	@(#)saerrno.h	8.1 (Berkeley) 6/11/93
  */
 
-extern	int errno;	/* just like unix */
+#include <sys/errno.h>
 
-/* error codes */
-#define	EADAPT	1	/* bad adaptor */
-#define	ECTLR	2	/* bad controller */
-#define	EUNIT	3	/* bad drive */
-#define	EPART	4	/* bad partition */
-#define	ERDLAB	5	/* can't read disk label */
-#define	EUNLAB	6	/* unlabeled disk */
-#define	ENXIO	7	/* Device not configured */
-#define	EBADF	8	/* bad file descriptor */
-#define	EOFFSET	9	/* relative seek not supported */
-#define	ESRCH	10	/* directory search for file failed */
-#define	EIO	11	/* generic error */
-#define	ECMD	12	/* undefined driver command */
-#define	EBSE	13	/* bad sector error */
-#define	EWCK	14	/* write check error */
-#define	EECC	15	/* uncorrectable ecc error */
-#define	EHER	16	/* hard error */
-#define	ENOEXEC	17	/* Exec format error */
-#define	EPERM	18	/* Operation not permitted */
-#define	ENOENT	19	/* No such file or directory */
-#define	ESTALE	20	/* Stale NFS file handle */
-#define	EINVAL	21	/* Invalid argument */
-#define	EMFILE	22	/* Too many open files */
-#define	EOPNOTSUPP	23	/* Operation not supported */
-#define	EFBIG	24	/* File too large */
-#define	ENOTDIR	25	/* Not a directory */
-#define	EROFS	26	/* Read-only file system */
-#define	ENODEV	27	/* Operation not supported by device */
-#define	EFTYPE	28	/* Inappropriate file type or format */
-#define	EBADRPC	29	/* RPC struct is bad */
+/* special stand error codes */
+#define	EADAPT	(ELAST+1)	/* bad adaptor */
+#define	ECTLR	(ELAST+2)	/* bad controller */
+#define	EUNIT	(ELAST+3)	/* bad drive */
+#define	EPART	(ELAST+4)	/* bad partition */
+#define	ERDLAB	(ELAST+5)	/* can't read disk label */
+#define	EUNLAB	(ELAST+6)	/* unlabeled disk */
+#define	EOFFSET	(ELAST+7)	/* relative seek not supported */
+#define	ECMD	(ELAST+8)	/* undefined driver command */
+#define	EBSE	(ELAST+9)	/* bad sector error */
+#define	EWCK	(ELAST+10)	/* write check error */
+#define	EECC	(ELAST+11)	/* uncorrectable ecc error */
+#define	EHER	(ELAST+12)	/* hard error */
+#define	ESALAST	(ELAST+12)	/* */

@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.7 1995/09/17 00:49:41 pk Exp $	*/
+/*	$NetBSD: net.c,v 1.8 1995/09/18 21:19:30 pk Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -56,9 +56,6 @@
 
 #include "stand.h"
 #include "net.h"
-#include "netif.h"
-
-n_long	myip;
 
 /* Caller must leave room for ethernet, ip and udp headers in front!! */
 ssize_t
@@ -79,9 +76,9 @@ sendudp(d, pkt, len)
 		printf("sendudp: d=%x called.\n", (u_int)d);
 		if (d) {
 			printf("saddr: %s:%d",
-				intoa(d->myip), d->myport);
+				inet_ntoa(d->myip), ntohs(d->myport));
 			printf(" daddr: %s:%d\n",
-				intoa(d->destip), d->destport);
+				inet_ntoa(d->destip), ntohs(d->destport));
 		}
 	}
 #endif
@@ -97,12 +94,12 @@ sendudp(d, pkt, len)
 	ip->ip_len = htons(len);
 	ip->ip_p = IPPROTO_UDP;			/* char */
 	ip->ip_ttl = IP_TTL;			/* char */
-	ip->ip_src.s_addr = htonl(d->myip);
-	ip->ip_dst.s_addr = htonl(d->destip);
+	ip->ip_src = d->myip;
+	ip->ip_dst = d->destip;
 	ip->ip_sum = in_cksum(ip, sizeof(*ip));	 /* short, but special */
 
-	uh->uh_sport = htons(d->myport);
-	uh->uh_dport = htons(d->destport);
+	uh->uh_sport = d->myport;
+	uh->uh_dport = d->destport;
 	uh->uh_ulen = htons(len - sizeof(*ip));
 
 	/* Calculate checksum (must save and restore ip header) */
@@ -116,10 +113,10 @@ sendudp(d, pkt, len)
 	*ip = tip;
 
 	if (ip->ip_dst.s_addr == INADDR_BROADCAST || ip->ip_src.s_addr == 0 ||
-	    mask == 0 || SAMENET(ip->ip_src.s_addr, ip->ip_dst.s_addr, mask))
-		ea = arpwhohas(d, ip->ip_dst.s_addr);
+	    netmask == 0 || SAMENET(ip->ip_src, ip->ip_dst, netmask))
+		ea = arpwhohas(d, ip->ip_dst);
 	else
-		ea = arpwhohas(d, htonl(gateip));
+		ea = arpwhohas(d, gateip);
 
 	cc = sendether(d, ip, len, ea, ETHERTYPE_IP);
 	if (cc == -1)
@@ -207,11 +204,11 @@ readudp(d, pkt, len, tleft)
 #endif
 		return -1;
 	}
-	if (d->myip && ntohl(ip->ip_dst.s_addr) != d->myip) {
+	if (d->myip.s_addr && ip->ip_dst.s_addr != d->myip.s_addr) {
 #ifdef NET_DEBUG
 		if (debug) {
-			printf("readudp: bad saddr %s != ", intoa(d->myip));
-			printf("%s\n", intoa(ntohl(ip->ip_dst.s_addr)));
+			printf("readudp: bad saddr %s != ", inet_ntoa(d->myip));
+			printf("%s\n", inet_ntoa(ip->ip_dst));
 		}
 #endif
 		return -1;
@@ -223,7 +220,7 @@ readudp(d, pkt, len, tleft)
 		ip->ip_len = sizeof(*ip);
 		n -= hlen - sizeof(*ip);
 	}
-	if (ntohs(uh->uh_dport) != d->myport) {
+	if (uh->uh_dport != d->myport) {
 #ifdef NET_DEBUG
 		if (debug)
 			printf("readudp: bad dport %d != %d\n",
@@ -305,6 +302,10 @@ sendrecv(d, sproc, sbuf, ssize, rproc, rbuf, rsize)
 	t = getsecs();
 	for (;;) {
 		if (tleft <= 0) {
+			if (tmo == MAXTMO) {
+				errno = ETIMEDOUT;
+				return -1;
+			}
 			cc = (*sproc)(d, sbuf, ssize);
 			if (cc == -1 || cc < ssize)
 				panic("sendrecv: short write! (%d < %d)",
@@ -330,16 +331,24 @@ sendrecv(d, sproc, sbuf, ssize, rproc, rbuf, rsize)
 	}
 }
 
+char *
+inet_ntoa(ia)
+	struct in_addr ia;
+{
+	return (intoa(ia.s_addr));
+}
+
 /* Similar to inet_ntoa() */
 char *
 intoa(addr)
-	n_long addr;
+	register n_long addr;
 {
 	register char *cp;
 	register u_int byte;
 	register int n;
 	static char buf[17];	/* strlen(".255.255.255.255") + 1 */
 
+	NTOHL(addr);
 	cp = &buf[sizeof buf];
 	*--cp = '\0';
 
@@ -397,5 +406,5 @@ ip_convertaddr(p)
 	if (*p != '\0')
 		return IP_ANYADDR;
 
-	return ntohl(addr);
+	return htonl(addr);
 }

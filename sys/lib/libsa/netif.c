@@ -1,4 +1,4 @@
-/*	$NetBSD: netif.c,v 1.4 1995/09/14 23:45:28 pk Exp $	*/
+/*	$NetBSD: netif.c,v 1.5 1995/09/18 21:19:34 pk Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -281,7 +281,8 @@ socktodesc(sock)
 	int sock;
 {
 	if (sock >= SOPEN_MAX) {
-		return(NULL);
+		errno = EBADF;
+		return (NULL);
 	}
 	return (&sockets[sock]);
 }
@@ -298,6 +299,7 @@ netif_open(machdep_hint)
 	for (fd = 0, s = sockets; fd < SOPEN_MAX; fd++, s++)
 		if (s->io_netif == (struct netif *)0)
 			goto fnd;
+	errno = EMFILE;
 	return (-1);
 
 fnd:
