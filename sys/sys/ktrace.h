@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.35 2003/11/24 16:51:33 manu Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.36 2003/12/14 22:56:45 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -212,6 +212,7 @@ struct ktr_mool {
 #define KTRFAC_ROOT	0x80000000	/* root set this trace */
 #define KTRFAC_INHERIT	0x40000000	/* pass trace flags to children */
 #define KTRFAC_ACTIVE	0x20000000	/* ktrace logging in progress, ignore */
+#define KTRFAC_TRC_EMUL	0x10000000	/* ktrace KTR_EMUL before next trace */
 
 #ifndef	_KERNEL
 

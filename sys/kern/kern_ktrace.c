@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.83 2003/11/24 16:51:33 manu Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.84 2003/12/14 22:56:45 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.83 2003/11/24 16:51:33 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.84 2003/12/14 22:56:45 dsl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -89,6 +89,8 @@ ktrderef(p)
 	p->p_traceflag = 0;
 	if (fp == NULL)
 		return;
+	p->p_tracep = NULL;
+
 	simple_lock(&fp->f_slock);
 	FILE_USE(fp);
 
@@ -97,8 +99,6 @@ ktrderef(p)
 	 * userspace), so no kqueue stuff here
 	 */
 	closef(fp, NULL);
-
-	p->p_tracep = NULL;
 }
 
 void
@@ -677,7 +677,7 @@ ktrops(curp, p, ops, facs, fp)
 	 * change/attach request. 
 	 */
 	if (KTRPOINT(p, KTR_EMUL))
-		ktremul(p);
+		p->p_traceflag |= KTRFAC_TRC_EMUL;
 #ifdef __HAVE_SYSCALL_INTERN
 	(*p->p_emul->e_syscall_intern)(p);
 #endif
@@ -734,6 +734,12 @@ ktrwrite(p, kth)
 	if (fp == NULL)
 		return 0;
 	
+	if (p->p_traceflag & KTRFAC_TRC_EMUL) {
+		/* Add emulation trace before first entry for this process */
+		p->p_traceflag &= ~KTRFAC_TRC_EMUL;
+		ktremul(p);
+	}
+
 	auio.uio_iov = &aiov[0];
 	auio.uio_offset = 0;
 	auio.uio_segflg = UIO_SYSSPACE;
