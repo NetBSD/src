@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3.newconf,v 1.30 1995/04/22 23:41:32 christos Exp $
+#	$NetBSD: files.sun3.newconf,v 1.31 1995/04/27 12:11:37 christos Exp $
 
 #
 # sun3-specific configuration info
@@ -145,17 +145,15 @@ file arch/sun3/dev/fb.c
 pseudo-device prom
 file arch/sun3/dev/prom.c		prom needs-flag
 
-# SunOS compatibility
-file	compat/sunos/sunos_exec.c		compat_sunos
-file	compat/sunos/sunos_init_sysent.c	compat_sunos
-file	compat/sunos/sunos_ioctl.c		compat_sunos
-file	compat/sunos/sunos_misc.c		compat_sunos
-#file	compat/sunos/sunos_syscalls.c		compat_sunos
-file	arch/m68k/m68k/sunos_machdep.c		compat_sunos
-
 # Major numbers for root/swap device configuration
 major	{sd=7}	# SCSI disk
 #major	{xy=3}	# Xylogics 450 and 451
 #major	{xd=10}	# Xylogics 7053
 #major	{rd=13}	# RAM disk (for mini-kernel)
 #major	{vnd=??}	# vnode pseudo-device
+
+# Compatibility modules
+
+# SunOS Binary Compatibility (COMPAT_SUNOS)
+include "../../../compat/sunos/files.sunos"
+file	arch/m68k/m68k/sunos_machdep.c	compat_sunos
