@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.1 1998/06/04 15:51:12 ragge Exp $ */
+/*	$NetBSD: smg.c,v 1.2 1998/06/05 22:02:56 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -122,11 +122,11 @@ const struct wsdisplay_accessops smg_accessops = {
 struct	smg_screen {
 	int	ss_curx;
 	int	ss_cury;
+	u_char	ss_image[SM_ROWS][SM_COLS];	/* Image of current screen */
 };
 
-struct	smg_config {
-	struct	smg_screen ss_devs[8]; /* XXX */
-};
+static	struct smg_screen smg_conscreen;
+static	struct smg_screen *curscr;
 
 int
 smg_match(parent, match, aux)
@@ -151,14 +151,12 @@ smg_attach(parent, self, aux)
 	void *aux;
 {
 	struct wsemuldisplaydev_attach_args aa;
-	struct smg_config *sc;
 
 	printf("\n");
-        sc = malloc(sizeof(struct smg_config), M_DEVBUF, M_WAITOK);
+	curscr = &smg_conscreen;
 	aa.console = !(vax_confdata & 0x20);
 	aa.scrdata = &smg_screenlist;
 	aa.accessops = &smg_accessops;
-        aa.accesscookie = sc;
 
 	config_found(self, &aa, wsemuldisplaydevprint);
 }
@@ -168,7 +166,12 @@ smg_cursor(id, on, row, col)
 	void *id;
 	int on, row, col;
 {
-	sm_addr[(row * 15 * 128) + col + (14 * 128)] = on ? 255 : 0;
+	struct smg_screen *ss = id;
+
+	ss->ss_curx = col;
+	ss->ss_cury = row;
+	if (ss == curscr)
+		sm_addr[(row * 15 * 128) + col + (14 * 128)] = on ? 255 : 0;
 }
 
 static void
@@ -179,9 +182,13 @@ smg_putstr(id, row, col, cp, len, attr)
 	int len;
 	long attr;
 {
+	struct smg_screen *ss = id;
 	int i, j;
 	extern char q_font[];
 
+	bcopy(cp, &ss->ss_image[row][col], len);
+	if (ss != curscr)
+		return;
 	for (i = 0; i < len; i++)
 		for (j = 0; j < 15; j++)
 			sm_addr[col + i + (row * 15 * 128) + j * 128] =
@@ -196,8 +203,12 @@ smg_copycols(id, row, srccol, dstcol, ncols)
 	void *id;
 	int row, srccol, dstcol, ncols;
 {
+	struct smg_screen *ss = id;
 	int i;
 
+	bcopy(&ss->ss_image[row][srccol], &ss->ss_image[row][dstcol], ncols);
+	if (ss != curscr)
+		return;
 	for (i = 0; i < SM_CHEIGHT; i++)
 		bcopy(&sm_addr[(row * SM_NEXTROW) + srccol + (i * 128)],
 		    &sm_addr[(row * SM_NEXTROW) + dstcol + i*128], ncols);
@@ -213,8 +224,12 @@ smg_erasecols(id, row, startcol, ncols, fillattr)
 	int row, startcol, ncols;
 	long fillattr;
 {
+	struct smg_screen *ss = id;
 	int i;
 
+	bzero(&ss->ss_image[row][startcol], ncols);
+	if (ss != curscr)
+		return;
 	for (i = 0; i < SM_CHEIGHT; i++)
 		bzero(&sm_addr[(row * SM_NEXTROW) + startcol + i * 128], ncols);
 }
@@ -224,8 +239,12 @@ smg_copyrows(id, srcrow, dstrow, nrows)
 	void *id;
 	int srcrow, dstrow, nrows;
 {
+	struct smg_screen *ss = id;
 	int frows;
 
+	bcopy(&ss->ss_image[srcrow][0], &ss->ss_image[dstrow][0], nrows * 128);
+	if (ss != curscr)
+		return;
 	if (nrows > 25) {
 		frows = nrows >> 1;
 		if (srcrow > dstrow) {
@@ -254,8 +273,12 @@ smg_eraserows(id, startrow, nrows, fillattr)
 	int startrow, nrows;
 	long fillattr;
 {
+	struct smg_screen *ss = id;
 	int frows;
 
+	bzero(&ss->ss_image[startrow][0], nrows * 128);
+	if (ss != curscr)
+		return;
 	if (nrows > 25) {
 		frows = nrows >> 1;
 		bzero(&sm_addr[(startrow * SM_NEXTROW)], frows * SM_NEXTROW);
@@ -303,6 +326,7 @@ smg_alloc_screen(v, type, cookiep, curxp, curyp, defattrp)
 	int *curxp, *curyp;
 	long *defattrp;
 {
+	*cookiep = malloc(sizeof(struct smg_screen), M_DEVBUF, M_WAITOK);
 	return 0;
 }
 
@@ -318,6 +342,26 @@ smg_show_screen(v, cookie)
 	void *v;
 	void *cookie;
 {
+	struct smg_screen *ss = cookie;
+	int row, col, line;
+	extern char q_font[];
+
+	if (ss == curscr)
+		return;
+
+	for (row = 0; row < 57; row++)
+		for (line = 0; line < 15; line++)
+			for (col = 0; col < 128; col++) {
+				u_char c = ss->ss_image[row][col];
+
+				if (c > 0x9f)
+					c -= 64;
+				else if (c > 0x1f)
+					c -= 32;
+				sm_addr[row * 128 * 15 + line * 128 + col] =
+					q_font[c * 15 + line];
+			}
+	curscr = ss;
 }
 
 static int
@@ -343,7 +387,8 @@ smgcninit(cndev)
 	/* Clear screen */
 	blkclr(sm_addr, 128*864);
 
-	wsdisplay_cnattach(&smg_stdscreen, 0, 0, 0, 0);
+	curscr = &smg_conscreen;
+	wsdisplay_cnattach(&smg_stdscreen, &smg_conscreen, 0, 0, 0);
 	cn_tab->cn_dev = makedev(WSCONSOLEMAJOR, 0);
 #if NLKC
 	lkccninit(cndev);
