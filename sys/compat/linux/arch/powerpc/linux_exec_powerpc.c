@@ -1,4 +1,4 @@
-/* $NetBSD: linux_exec_powerpc.c,v 1.14 2004/06/18 17:06:15 manu Exp $ */
+/* $NetBSD: linux_exec_powerpc.c,v 1.15 2004/07/25 23:26:44 chs Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 /* 
  * From NetBSD's sys/compat/arch/alpha/linux_exec_alpha.c, with some 
- * powerpc add-ons (ifdef LINUX_SHIFT and LINUX_SP_WRAP).
+ * powerpc add-ons (ifdef LINUX_SHIFT).
  * 
  * This code is to be common to alpha and powerpc. If it works on alpha, it 
  * should be moved to common/linux_exec_elf32.c. Beware that it needs 
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_powerpc.c,v 1.14 2004/06/18 17:06:15 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_powerpc.c,v 1.15 2004/07/25 23:26:44 chs Exp $");
 
 #if defined (__alpha__)
 #define ELFSIZE 64
@@ -71,11 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec_powerpc.c,v 1.14 2004/06/18 17:06:15 manu
 
 #include <compat/linux/common/linux_exec.h>
 
-#ifdef LINUX_SP_WRAP
-extern int linux_sp_wrap_start;
-extern int linux_sp_wrap_end;
-extern int linux_sp_wrap_entry;
-#endif
 /*
  * Alpha and PowerPC specific linux copyargs function.
  */
@@ -90,11 +85,6 @@ ELFNAME2(linux,copyargs)(p, pack, arginfo, stackp, argp)
 	size_t len;
 	AuxInfo ai[LINUX_ELF_AUX_ENTRIES], *a;
 	struct elf_args *ap;
-#ifdef LINUX_SP_WRAP
-	AuxInfo *prog_entry = NULL;
-	char	linux_sp_wrap_code[LINUX_SP_WRAP];
-	unsigned long*	cga;
-#endif
 	int error;
 
 #ifdef LINUX_SHIFT
@@ -128,16 +118,6 @@ ELFNAME2(linux,copyargs)(p, pack, arginfo, stackp, argp)
 	 * linked binaries.
 	 */
 	if ((ap = (struct elf_args *)pack->ep_emul_arg)) {
-#ifdef LINUX_SP_WRAP
-		memset(linux_sp_wrap_code, 0, LINUX_SP_WRAP);
-		bcopy(&linux_sp_wrap_start, linux_sp_wrap_code, 
-		    (unsigned long)(&linux_sp_wrap_end) 
-		    - (unsigned long)(&linux_sp_wrap_start));
-		(unsigned long)cga = ((unsigned long)linux_sp_wrap_code) 
-		    + ((unsigned long)(&linux_sp_wrap_entry))
-		    - ((unsigned long)(&linux_sp_wrap_start));	
-		(*cga) = (unsigned long)(ap->arg_entry); 
-#endif
 #if 1
 		/*
 		 * The exec_package doesn't have a proc pointer and it's not
@@ -164,9 +144,6 @@ ELFNAME2(linux,copyargs)(p, pack, arginfo, stackp, argp)
 
 		a->a_type = AT_ENTRY;
 		a->a_v = ap->arg_entry;
-#ifdef LINUX_SP_WRAP
-		prog_entry = a;
-#endif
 		a++;
 
 		a->a_type = AT_FLAGS;
@@ -211,78 +188,8 @@ ELFNAME2(linux,copyargs)(p, pack, arginfo, stackp, argp)
 
 	len = (a - ai) * sizeof(AuxInfo);
 
-#ifdef LINUX_SP_WRAP
-	if (prog_entry != NULL) 
-		prog_entry->a_v = (unsigned long)(*stackp) + len;
-#endif
-
 	if ((error = copyout(ai, *stackp, len)) != 0)
 		return error;
 	*stackp += len; 
-
-#ifdef LINUX_SP_WRAP
-	if (prog_entry != NULL) {
-		if ((error = copyout(linux_sp_wrap_code, *stackp,
-		    LINUX_SP_WRAP)) != 0)
-			return error;
-		*stackp += LINUX_SP_WRAP;
-	}
-#endif
-
-	return 0;
-}
-
-/* 
- * This is copied from sys/kern/exec_subr.c:exec_setup_stack()
- * We need a Linux version only to avoid the non executable
- * mappings. They will probably break signal delivery on Linux,
- * and they surely break the stack fixup hack.
- */
-int
-linux_exec_setup_stack(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
-{
-	u_long max_stack_size;
-	u_long access_linear_min, access_size;
-	u_long noaccess_linear_min, noaccess_size;
-
-#ifndef	USRSTACK32
-#define USRSTACK32	(0x00000000ffffffffL&~PGOFSET)
-#endif
-
-	if (epp->ep_flags & EXEC_32) {
-		epp->ep_minsaddr = USRSTACK32;
-		max_stack_size = MAXSSIZ;
-	} else {
-		epp->ep_minsaddr = USRSTACK;
-		max_stack_size = MAXSSIZ;
-	}
-	epp->ep_maxsaddr = (u_long)STACK_GROW(epp->ep_minsaddr, 
-		max_stack_size);
-	epp->ep_ssize = p->p_rlimit[RLIMIT_STACK].rlim_cur;
-
-	/*
-	 * set up commands for stack.  note that this takes *two*, one to
-	 * map the part of the stack which we can access, and one to map
-	 * the part which we can't.
-	 *
-	 * arguably, it could be made into one, but that would require the
-	 * addition of another mapping proc, which is unnecessary
-	 */
-	access_size = epp->ep_ssize;
-	access_linear_min = (u_long)STACK_ALLOC(epp->ep_minsaddr, access_size);
-	noaccess_size = max_stack_size - access_size;
-	noaccess_linear_min = (u_long)STACK_ALLOC(STACK_GROW(epp->ep_minsaddr, 
-	    access_size), noaccess_size);
-	if (noaccess_size > 0) {
-		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, noaccess_size,
-		    noaccess_linear_min, NULL, 0, VM_PROT_NONE);
-	}
-	KASSERT(access_size > 0);
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, access_size,
-	    access_linear_min, NULL, 0, 
-	    VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
-
 	return 0;
 }
