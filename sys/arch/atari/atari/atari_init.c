@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.30 1997/06/05 19:45:29 leo Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.31 1997/06/10 18:37:50 veego Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -180,7 +180,7 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	 * The round_page() call is ment to correct errors made by
 	 * binpatching!
 	 */
-	st_pool_size   = atari_round_page(st_pool_size);
+	st_pool_size   = m68k_round_page(st_pool_size);
 	st_pool_phys   = stphysize - st_pool_size;
 	stphysize      = st_pool_phys;
 
@@ -226,7 +226,7 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	 * avail : size of ST memory available.
 	 */
 	pstart = (u_int)end_loaded;
-	pstart = atari_round_page(pstart);
+	pstart = m68k_round_page(pstart);
 	avail  = stphysize - pstart;
   
 	/*
