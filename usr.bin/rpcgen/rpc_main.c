@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_main.c,v 1.14 1997/10/18 10:53:53 lukem Exp $	*/
+/*	$NetBSD: rpc_main.c,v 1.15 1998/12/19 21:19:12 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_main.c 1.30 89/03/30 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_main.c,v 1.14 1997/10/18 10:53:53 lukem Exp $");
+__RCSID("$NetBSD: rpc_main.c,v 1.15 1998/12/19 21:19:12 christos Exp $");
 #endif
 #endif
 
@@ -526,7 +526,7 @@ generate_guard(pathname)
 	/* convert to upper case */
 	tmp = guard;
 	while (*tmp) {
-		if (islower(*tmp))
+		if (islower((unsigned char)*tmp))
 			*tmp = toupper(*tmp);
 		tmp++;
 	}
