@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_machdep.c,v 1.1 2005/01/18 17:11:25 shige Exp $	*/
+/*	$NetBSD: ibm4xx_machdep.c,v 1.1.4.1 2005/01/28 13:52:18 yamt Exp $	*/
 /*	Original: ibm40x_machdep.c,v 1.3 2005/01/17 17:19:36 shige Exp $ */
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.1 2005/01/18 17:11:25 shige Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.1.4.1 2005/01/28 13:52:18 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -284,7 +284,8 @@ ibm4xx_cpu_startup(const char *model)
 	 * Besides, do we really have to put it at the end of core?
 	 * Let's use static buffer for now
 	 */
-	if (!(msgbuf_vaddr = uvm_km_alloc(kernel_map, round_page(MSGBUFSIZE))))
+	if (!(msgbuf_vaddr = uvm_km_alloc(kernel_map, round_page(MSGBUFSIZE),
+	    0, UVM_KMF_VAONLY)))
 		panic("startup: no room for message buffer");
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
 		pmap_kenter_pa(msgbuf_vaddr + i * PAGE_SIZE,
