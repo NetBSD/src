@@ -1,4 +1,4 @@
-.\"	$NetBSD: sockatmark.3,v 1.6 2003/04/16 13:34:42 wiz Exp $
+.\"	$NetBSD: sockatmark.3,v 1.7 2003/05/15 10:13:53 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 22, 2001
+.Dd May 15, 2003
 .Dt SOCKATMARK 3
 .Os
 .Sh NAME
@@ -80,13 +80,20 @@ does not refer to a socket.
 .Xr recv 2 ,
 .Xr socket 2
 .Rs
-.%T "BSD Interprocess Communication Tutorial"
-.%O "reprinted in UNIX Programmer's Supplementary Documents Volume 1"
+.%T "An Introductory 4.4BSD Interprocess Communication Tutorial"
+.%A Stuart Sechrest
 .Re
+.Pq see Pa /usr/share/doc/psd/20.ipctut
 .Rs
 .%T "Advanced 4.4BSD IPC Tutorial"
-.%O "reprinted in UNIX Programmer's Supplementary Documents Volume 1"
+.%A Samuel J. Leffler
+.%A Robert S. Fabry
+.%A William N. Joy
+.%A Phil Lapsley
+.%A Steve Miller
+.%A Chris Torek
 .Re
+.Pq see Pa /usr/share/doc/psd/21.ipc
 .Sh STANDARDS
 The
 .Nm sockatmark
