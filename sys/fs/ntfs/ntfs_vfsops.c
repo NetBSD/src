@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.5 2003/04/22 16:48:19 christos Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.6 2003/04/22 17:23:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.5 2003/04/22 16:48:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.6 2003/04/22 17:23:47 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,6 +210,7 @@ ntfs_init()
 	malloc_type_attach(M_NTFSFNODE);
 	malloc_type_attach(M_NTFSDIR);
 	malloc_type_attach(M_NTFSNTHASH);
+	malloc_type_attach(M_NTFSNTVATTR);
 #endif
 	ntfs_nthashinit();
 	ntfs_toupper_init();
@@ -231,6 +232,7 @@ ntfs_done()
 	malloc_type_detach(M_NTFSFNODE);
 	malloc_type_detach(M_NTFSDIR);
 	malloc_type_detach(M_NTFSNTHASH);
+	malloc_type_detach(M_NTFSNTVATTR);
 #endif
 }
 
