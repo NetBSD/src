@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.33 2002/04/12 18:50:31 thorpej Exp $	*/
+/*	$NetBSD: cpu.c,v 1.34 2002/05/02 22:57:36 rjs Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.33 2002/04/12 18:50:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.34 2002/05/02 22:57:36 rjs Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -447,7 +447,7 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 #ifdef CPU_ARM9
 	case CPU_CLASS_ARM9TDMI:
 #endif
-#ifdef CPU_SA110
+#if defined(CPU_SA110) || defined(CPU_SA1100) || defined(CPU_SA1110)
 	case CPU_CLASS_SA1:
 #endif
 #if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321)
