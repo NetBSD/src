@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.83 2003/12/29 02:01:27 simonb Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.84 2004/01/29 07:58:33 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.83 2003/12/29 02:01:27 simonb Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.84 2004/01/29 07:58:33 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,6 +69,10 @@ __RCSID("$NetBSD: xinstall.c,v 1.83 2003/12/29 02:01:27 simonb Exp $");
 #include <unistd.h>
 #include <vis.h>
 
+#include <md5.h>
+#include <rmd160.h>
+#include <sha1.h>
+
 #include "pathnames.h"
 #include "stat_flags.h"
 #include "mtree.h"
@@ -90,6 +94,14 @@ char	*afterinstallcmd;
 char	*suffix = BACKUP_SUFFIX;
 char	*destdir;
 
+enum {
+	DIGEST_NONE = 0,
+	DIGEST_MD5,
+	DIGEST_RMD160,
+	DIGEST_SHA1,
+} digesttype = DIGEST_NONE;
+char	*digest;
+
 #define LN_ABSOLUTE	0x01
 #define LN_RELATIVE	0x02
 #define LN_HARD		0x04
@@ -103,14 +115,15 @@ char	*destdir;
 
 void	afterinstall(const char *, const char *, int);
 void	backup(const char *);
-void	copy(int, char *, int, char *, off_t);
+char   *copy(int, char *, int, char *, off_t);
 int	do_link(char *, char *);
 void	do_symlink(char *, char *);
 void	install(char *, char *, u_int);
 void	install_dir(char *, u_int);
 int	main(int, char *[]);
 void	makelink(char *, char *);
-void	metadata_log(const char *, const char *, struct timeval *, const char *);
+void	metadata_log(const char *, const char *, struct timeval *,
+	    const char *, const char *);
 int	parseid(char *, id_t *);
 void	strip(char *);
 void	usage(void);
@@ -129,7 +142,7 @@ main(int argc, char *argv[])
 	setprogname(argv[0]);
 
 	iflags = 0;
-	while ((ch = getopt(argc, argv, "a:cbB:dD:f:g:l:m:M:N:o:prsS:T:U"))
+	while ((ch = getopt(argc, argv, "a:cbB:dD:f:g:h:l:m:M:N:o:prsS:T:U"))
 	    != -1)
 		switch((char)ch) {
 		case 'a':
@@ -174,6 +187,9 @@ main(int argc, char *argv[])
 #endif
 		case 'g':
 			group = optarg;
+			break;
+		case 'h':
+			digest = optarg;
 			break;
 		case 'l':
 			for (p = optarg; *p; p++)
@@ -261,6 +277,22 @@ main(int argc, char *argv[])
 	if (argc < 2 && !dodir)
 		usage();
 
+	if (digest) {
+		if (0) {
+		} else if (strcmp(digest, "none") == 0) {
+			digesttype = DIGEST_NONE;
+		} else if (strcmp(digest, "md5") == 0) {
+			digesttype = DIGEST_MD5;
+		} else if (strcmp(digest, "rmd160") == 0) {
+			digesttype = DIGEST_RMD160;
+		} else if (strcmp(digest, "sha1") == 0) {
+			digesttype = DIGEST_SHA1;
+		} else {
+			warnx("unknown digest `%s'", digest);
+			usage();
+		}
+	}
+
 	/* get group and owner id's */
 	if (group && !dounpriv) {
 		if (gid_from_group(group, &gid) == -1 && ! parseid(group, &gid))
@@ -284,7 +316,8 @@ main(int argc, char *argv[])
 	if (metafile) {
 		if ((metafp = fopen(metafile, "a")) == NULL)
 			warn("open %s", metafile);
-	}
+	} else
+		digesttype = DIGEST_NONE;
 
 	if (dodir) {
 		for (; *argv != NULL; ++argv)
@@ -442,7 +475,7 @@ makelink(char *from_name, char *to_name)
 				group = NULL;
 				offlags = fflags;
 				fflags = NULL;
-				metadata_log(to_name, "file", NULL, NULL);
+				metadata_log(to_name, "file", NULL, NULL, NULL);
 				mode = omode;
 				owner = oowner;
 				group = ogroup;
@@ -458,7 +491,7 @@ makelink(char *from_name, char *to_name)
 		if (realpath(from_name, src) == NULL)
 			err(1, "%s: realpath", from_name);
 		do_symlink(src, to_name);
-		metadata_log(to_name, "link", NULL, src);
+		metadata_log(to_name, "link", NULL, src, NULL);
 		return;
 	}
 
@@ -499,7 +532,7 @@ makelink(char *from_name, char *to_name)
 		(void)strlcat(lnk, ++s, sizeof(lnk));
 
 		do_symlink(lnk, dst);
-		metadata_log(dst, "link", NULL, lnk);
+		metadata_log(dst, "link", NULL, lnk, NULL);
 		return;
 	}
 
@@ -508,7 +541,7 @@ makelink(char *from_name, char *to_name)
 	 * try the names the user provided
 	 */
 	do_symlink(from_name, to_name);
-	metadata_log(to_name, "link", NULL, from_name);
+	metadata_log(to_name, "link", NULL, from_name, NULL);
 }
 
 /*
@@ -524,7 +557,7 @@ install(char *from_name, char *to_name, u_int flags)
 #endif
 	struct timeval	tv[2];
 	int		devnull, from_fd, to_fd, serrno, tmpmode;
-	char		*p, tmpl[MAXPATHLEN], *oto_name;
+	char		*p, tmpl[MAXPATHLEN], *oto_name, *digestresult;
 
 	if (!dolink) {
 			/* ensure that from_sb & tv are sane if !dolink */
@@ -603,7 +636,8 @@ install(char *from_name, char *to_name, u_int flags)
 			(void)unlink(to_name);
 			err(1, "%s: open", from_name);
 		}
-		copy(from_fd, from_name, to_fd, to_name, from_sb.st_size);
+		digestresult =
+		    copy(from_fd, from_name, to_fd, to_name, from_sb.st_size);
 		(void)close(from_fd);
 	}
 
@@ -684,21 +718,39 @@ install(char *from_name, char *to_name, u_int flags)
 	}
 #endif
 
-	metadata_log(to_name, "file", tv, NULL);
+	metadata_log(to_name, "file", tv, NULL, digestresult);
+	free(digestresult);
 }
 
 /*
  * copy --
  *	copy from one file to another
  */
-void
+char *
 copy(int from_fd, char *from_name, int to_fd, char *to_name, off_t size)
 {
 	ssize_t	nr, nw;
 	int	serrno;
 	char	*p;
 	char	buf[MAXBSIZE];
+	MD5_CTX		ctxMD5;
+	RMD160_CTX	ctxRMD160;
+	SHA1_CTX	ctxSHA1;
 
+	switch (digesttype) {
+	case DIGEST_MD5:
+		MD5Init(&ctxMD5);
+		break;
+	case DIGEST_RMD160:
+		RMD160Init(&ctxRMD160);
+		break;
+	case DIGEST_SHA1:
+		SHA1Init(&ctxSHA1);
+		break;
+	case DIGEST_NONE:
+	default:
+		break;
+	}
 	/*
 	 * There's no reason to do anything other than close the file
 	 * now if it's empty, so let's not bother.
@@ -729,15 +781,41 @@ copy(int from_fd, char *from_name, int to_fd, char *to_name, off_t size)
 				errx(1, "%s: write: %s",
 				    to_name, strerror(serrno));
 			}
+			switch (digesttype) {
+			case DIGEST_MD5:
+				MD5Update(&ctxMD5, p, size);
+				break;
+			case DIGEST_RMD160:
+				RMD160Update(&ctxRMD160, p, size);
+				break;
+			case DIGEST_SHA1:
+				SHA1Update(&ctxSHA1, p, size);
+				break;
+			default:
+				break;
+			}
 			(void)munmap(p, size);
 		} else {
-mmap_failed:
+ mmap_failed:
 			while ((nr = read(from_fd, buf, sizeof(buf))) > 0) {
 				if ((nw = write(to_fd, buf, nr)) != nr) {
 					serrno = errno;
 					(void)unlink(to_name);
 					errx(1, "%s: write: %s", to_name,
 					    strerror(nw > 0 ? EIO : serrno));
+				}
+				switch (digesttype) {
+				case DIGEST_MD5:
+					MD5Update(&ctxMD5, buf, nr);
+					break;
+				case DIGEST_RMD160:
+					RMD160Update(&ctxRMD160, buf, nr);
+					break;
+				case DIGEST_SHA1:
+					SHA1Update(&ctxSHA1, buf, nr);
+					break;
+				default:
+					break;
 				}
 			}
 			if (nr != 0) {
@@ -746,6 +824,16 @@ mmap_failed:
 				errx(1, "%s: read: %s", from_name, strerror(serrno));
 			}
 		}
+	}
+	switch (digesttype) {
+	case DIGEST_MD5:
+		return MD5End(&ctxMD5, NULL);
+	case DIGEST_RMD160:
+		return RMD160End(&ctxRMD160, NULL);
+	case DIGEST_SHA1:
+		return SHA1End(&ctxSHA1, NULL);
+	default:
+		return NULL;
 	}
 }
 
@@ -905,7 +993,7 @@ install_dir(char *path, u_int flags)
 	    || chmod(path, mode) == -1 )) {
                 warn("%s: chown/chmod", path);
 	}
-	metadata_log(path, "dir", NULL, NULL);
+	metadata_log(path, "dir", NULL, NULL, NULL);
 }
 
 /*
@@ -915,7 +1003,7 @@ install_dir(char *path, u_int flags)
  */
 void
 metadata_log(const char *path, const char *type, struct timeval *tv,
-	const char *link)
+	const char *link, const char *digestresult)
 {
 	static const char	extra[] = { ' ', '\t', '\n', '\\', '#', '\0' };
 	char		*buf, *p;
@@ -963,6 +1051,8 @@ metadata_log(const char *path, const char *type, struct timeval *tv,
 		fprintf(metafp, " tags=%s", tags);
 	if (tv != NULL && dopreserve)
 		fprintf(metafp, " time=%ld.%ld", tv[1].tv_sec, tv[1].tv_usec);
+	if (digestresult && digest)
+		fprintf(metafp, " %s=%s", digest, digestresult);
 	fputc('\n', metafp);
 	fflush(metafp);					/* flush output */
 							/* unlock log file */
@@ -1015,10 +1105,10 @@ usage(void)
 	(void)fprintf(stderr,
 "usage: %s [-Ubcprs] [-M log] [-D dest] [-T tags] [-B suffix]\n"
 "           [-a aftercmd] [-f flags] [-m mode] [-N dbdir] [-o owner] [-g group] \n"
-"           [-l linkflags] [-S stripflags] file1 file2\n"
+"           [-l linkflags] [-h hash] [-S stripflags] file1 file2\n"
 "       %s [-Ubcprs] [-M log] [-D dest] [-T tags] [-B suffix]\n"
 "           [-a aftercmd] [-f flags] [-m mode] [-N dbdir] [-o owner] [-g group]\n"
-"           [-l linkflags] [-S stripflags] file1 ... fileN directory\n"
+"           [-l linkflags] [-h hash] [-S stripflags] file1 ... fileN directory\n"
 "       %s -d [-Up] [-M log] [-D dest] [-T tags] [-a aftercmd] [-m mode]\n"
 "           [-N dbdir] [-o owner] [-g group] directory ...\n",
 	    prog, prog, prog);
