@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.43 1999/05/24 20:12:58 ragge Exp $	   */
+/*	$NetBSD: uba.c,v 1.44 1999/05/26 01:26:18 ragge Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -369,7 +369,7 @@ uba_attach(sc, iopagephys)
 	/*
 	 * Allocate place for unibus I/O space in virtual space.
 	 */
-	if (bus_space_map(sc->uh_tag, iopagephys, UBAIOSIZE, 0, &sc->uh_ioh))
+	if (bus_space_map(sc->uh_iot, iopagephys, UBAIOSIZE, 0, &sc->uh_ioh))
 		return;
 	/*
 	 * Initialize the UNIBUS, by freeing the map
@@ -401,10 +401,11 @@ ubasearch(parent, cf, aux)
 	struct	uba_attach_args ua;
 	int	i, vec, br;
 
-	ua.ua_addr = ubdevreg(cf->cf_loc[0]);
+	ua.ua_ioh = ubdevreg(cf->cf_loc[0]) + sc->uh_ioh;
+	ua.ua_iot = sc->uh_iot;
 	ua.ua_reset = NULL;
 
-	if (badaddr((caddr_t)(sc->uh_ioh + ua.ua_addr), 2) ||
+	if (badaddr((caddr_t)ua.ua_ioh, 2) ||
 	    (sc->uh_errchk ? (*sc->uh_errchk)(sc):0))
 		goto forgetit;
 
