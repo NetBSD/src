@@ -1,8 +1,8 @@
-/*	$NetBSD: getether.c,v 1.6 2002/07/14 00:30:02 wiz Exp $	*/
+/*	$NetBSD: getether.c,v 1.7 2003/07/14 08:36:34 itojun Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getether.c,v 1.6 2002/07/14 00:30:02 wiz Exp $");
+__RCSID("$NetBSD: getether.c,v 1.7 2003/07/14 08:36:34 itojun Exp $");
 #endif
 
 /*
@@ -47,8 +47,9 @@ getether(char *ifname, char *eap)
 	int rc = -1;
 	int fd;
 	struct ifdevea phys;
+
 	bzero(&phys, sizeof(phys));
-	strcpy(phys.ifr_name, ifname);
+	strncpy(phys.ifr_name, ifname, sizeof(phys.ifr_name));
 	if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
 		report(LOG_ERR, "getether: socket(INET,DGRAM) failed");
 		return -1;
@@ -197,7 +198,7 @@ getether(char *ifname, char *eap)
 	char *enaddr;
 	int unit = -1;				/* which unit to attach */
 
-	sprintf(devname, "/dev/%s", ifname);
+	snprintf(devname, sizeof(devname), "/dev/%s", ifname);
 	fd = open(devname, 2);
 	if (fd < 0) {
 		/* Try without the trailing digit. */
@@ -342,8 +343,9 @@ getether(char *ifname, char *eap)
 	int rc = -1;
 	int fd;
 	struct ifreq phys;
+
 	bzero(&phys, sizeof(phys));
-	strcpy(phys.ifr_name, ifname);
+	strncpy(phys.ifr_name, ifname, sizeof(phys.ifr_name));
 	if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
 		report(LOG_ERR, "getether: socket(INET,DGRAM) failed");
 		return -1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: device.c,v 1.6 2003/04/20 00:17:22 christos Exp $	*/
+/*	$NetBSD: device.c,v 1.7 2003/07/14 08:37:53 itojun Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: device.c,v 1.6 2003/04/20 00:17:22 christos Exp $");
+__RCSID("$NetBSD: device.c,v 1.7 2003/07/14 08:37:53 itojun Exp $");
 #endif
 
 #include "os.h"
@@ -118,7 +118,6 @@ deviceOpen(ifname, proto, trans)
 	}
 	
 	if (tmp.fd != -1) {
-		
 		p = (struct if_info *)malloc(sizeof(*p));
 		if (p == 0)
 			mopLogErr("deviceOpen: malloc");
@@ -126,7 +125,7 @@ deviceOpen(ifname, proto, trans)
 		p->next = iflist;
 		iflist = p;
 
-		strcpy(p->if_name,tmp.if_name);
+		strlcpy(p->if_name, tmp.if_name, sizeof(p->if_name));
 		p->iopen   = tmp.iopen;
 		p->write   = pfWrite;
 		p->read    = tmp.read;
