@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.17 2001/08/30 09:32:23 mrg Exp $	*/
+/*	$NetBSD: pmap.h,v 1.18 2001/08/31 18:06:13 martin Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -184,7 +184,6 @@ void	ctx_free __P((struct pmap*));
 
 
 #endif	/* _KERNEL */
-#endif	/* _LOCORE */
 
 /* This is only for compatibility with the SPARC */ 
 struct segmap {
@@ -192,4 +191,6 @@ struct segmap {
 	pmeg_t	sg_pmeg;		/* the MMU segment number (4c) */
 	u_char	sg_npte;		/* number of valid PTEs per seg */
 };
+
+#endif	/* _LOCORE */
 #endif	/* _MACHINE_PMAP_H_ */
