@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_network.c,v 1.11 2000/04/23 16:59:12 itojun Exp $	*/
+/*	$NetBSD: inet_network.c,v 1.11.4.1 2000/09/03 19:08:01 jhawk Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inet_network.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: inet_network.c,v 1.11 2000/04/23 16:59:12 itojun Exp $");
+__RCSID("$NetBSD: inet_network.c,v 1.11.4.1 2000/09/03 19:08:01 jhawk Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -63,8 +63,9 @@ u_long
 inet_network(cp)
 	register const char *cp;
 {
-	register u_long val, base, n, i;
-	register char c;
+	u_long val, base;
+	size_t i, n;
+	u_char c;
 	u_long parts[4], *pp = parts;
 	int digit;
 
@@ -101,7 +102,7 @@ again:
 		*pp++ = val, cp++;
 		goto again;
 	}
-	if (*cp && !isspace(*cp))
+	if (*cp && !isspace((u_char) *cp))
 		return (INADDR_NONE);
 	*pp++ = val;
 	n = pp - parts;
