@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.45 1995/04/23 01:00:46 briggs Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.46 1995/04/26 23:12:02 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1025,7 +1025,7 @@ bad:
  * saves and provides to the next boot program.
  */
 static struct sunos_howto_conv {
-	int sunos_howto;
+	int sun_howto;
 	int bsd_howto;
 } sunos_howto_conv[] = {
 	{ 0x001,	RB_ASKNAME },
@@ -1035,17 +1035,16 @@ static struct sunos_howto_conv {
 	{ 0x080,	RB_DUMP },
 	{ 0x000,	0 },
 };
+#define	SUNOS_RB_STRING	0x200
 
-int sunos_reboot(p, uap, retval)
+int
+sunos_reboot(p, uap, retval)
 	struct proc *p;
 	struct sunos_reboot_args *uap;
-	int *retval;
+	register_t *retval;
 {
-	struct reboot_args rb;
 	struct sunos_howto_conv *convp;
-	int error, bsd_howto, sunos_howto;
-	char bs[128];
-	char *bsd_bootstr = NULL;
+	int error, bsd_howto, sun_howto;
 
 	if (error = suser(p->p_ucred, &p->p_acflag))
 		return (error);
@@ -1053,30 +1052,31 @@ int sunos_reboot(p, uap, retval)
 	/*
 	 * Convert howto bits to BSD format.
 	 */
-	sunos_howto = SCARG(uap, howto);
+	sun_howto = SCARG(uap, howto);
 	bsd_howto = 0;
 	convp = sunos_howto_conv;
-	while (convp->sunos_howto) {
-		if (sunos_howto &  convp->sunos_howto)
+	while (convp->sun_howto) {
+		if (sun_howto &  convp->sun_howto)
 			bsd_howto |= convp->bsd_howto;
 		convp++;
 	}
 
-#ifdef notyet
-	/* Only works on sun3's */
+#if defined(SUN3)
 	/*
 	 * Sun RB_STRING (Get user supplied bootstring.)
+	 * If the machine supports passing a string to the
+	 * next booted kernel, add the machine name above
+	 * and provide a reboot2() function (see sun3).
 	 */
-	bsd_bootstr = NULL;
-	if (sunos_howto & 0x200) {
+	if (sun_howto & SUNOS_RB_STRING) {
+		char bs[128];
+
 		error = copyinstr(uap->bootstr, bs, sizeof(bs), 0);
 		if (error) return error;
-		bsd_bootstr = bs;
-	}
 
-	return (reboot2(bsd_howto, bsd_bootstr));
-#else
-	rb.opt = bsd_howto;
-	return reboot(p, &rb, retval);
-#endif
+		return (reboot2(bsd_howto, bs));
+	}
+#endif	/* sun3, ... */
+
+	return (boot(bsd_howto));
 }
