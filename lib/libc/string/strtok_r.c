@@ -1,4 +1,4 @@
-/*	$NetBSD: strtok_r.c,v 1.2 1997/07/13 20:24:36 christos Exp $	*/
+/*	$NetBSD: strtok_r.c,v 1.3 1998/02/03 18:49:25 perry Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char *sccsid = "@(#)strtok.c	5.8 (Berkeley) 2/24/91";
 #else
-__RCSID("$NetBSD: strtok_r.c,v 1.2 1997/07/13 20:24:36 christos Exp $");
+__RCSID("$NetBSD: strtok_r.c,v 1.3 1998/02/03 18:49:25 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -46,12 +46,12 @@ __RCSID("$NetBSD: strtok_r.c,v 1.2 1997/07/13 20:24:36 christos Exp $");
 
 char *
 strtok_r(s, delim, lasts)
-	register char *s;
-	register const char *delim;
-	register char **lasts;
+	char *s;
+	const char *delim;
+	char **lasts;
 {
-	register char *spanp;
-	register int c, sc;
+	char *spanp;
+	int c, sc;
 	char *tok;
 
 	if (s == NULL && (s = *lasts) == NULL)

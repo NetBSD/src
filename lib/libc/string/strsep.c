@@ -1,4 +1,4 @@
-/*	$NetBSD: strsep.c,v 1.6 1998/01/30 23:38:41 perry Exp $	*/
+/*	$NetBSD: strsep.c,v 1.7 1998/02/03 18:49:23 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)strsep.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strsep.c,v 1.6 1998/01/30 23:38:41 perry Exp $");
+__RCSID("$NetBSD: strsep.c,v 1.7 1998/02/03 18:49:23 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,12 +57,12 @@ __RCSID("$NetBSD: strsep.c,v 1.6 1998/01/30 23:38:41 perry Exp $");
  */
 char *
 strsep(stringp, delim)
-	register char **stringp;
-	register const char *delim;
+	char **stringp;
+	const char *delim;
 {
-	register char *s;
-	register const char *spanp;
-	register int c, sc;
+	char *s;
+	const char *spanp;
+	int c, sc;
 	char *tok;
 
 	if ((s = *stringp) == NULL)
