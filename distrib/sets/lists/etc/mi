@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.107 2002/09/17 18:42:59 briggs Exp $
+# $NetBSD: mi,v 1.108 2002/10/05 15:24:43 grant Exp $
 ./.cshrc				etc-util-etc
 ./.profile				etc-util-etc
 ./dev/MAKEDEV.local			etc-sys-etc
@@ -31,6 +31,7 @@
 ./etc/mail.rc				etc-mail-etc
 ./etc/mail/aliases			etc-sendmail-etc
 ./etc/mail/helpfile			etc-sendmail-etc
+./etc/mail/local-host-names 		etc-sendmail-etc
 ./etc/mail/sendmail.cf			etc-sendmail-etc
 ./etc/mailer.conf			etc-mailwrapper-etc
 ./etc/man.conf				etc-man-etc
