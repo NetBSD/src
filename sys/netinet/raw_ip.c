@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.44 1999/07/05 07:24:38 darrenr Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.45 1999/07/09 22:57:20 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -64,6 +64,7 @@
  *	@(#)raw_ip.c	8.7 (Berkeley) 5/15/95
  */
 
+#include "opt_ipsec.h"
 #include "opt_mrouting.h"
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.300 1999/07/09 06:51:47 thorpej Exp $
+#	$NetBSD: files,v 1.301 1999/07/09 22:57:15 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -51,6 +51,7 @@ defopt  opt_compat_netbsd.h	COMPAT_09 COMPAT_10 COMPAT_11 COMPAT_12
 
 # networking protocols
 defopt	INET
+defopt	opt_ipsec.h	IPSEC IPSEC_ESP
 defopt	opt_inet_conf.h	SUBNETSARELOCAL HOSTZEROBROADCAST
 defopt	opt_atalk.h	NETATALK
 defopt	opt_ns.h	NSIP	 	# XNS tunneled over IP

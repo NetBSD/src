@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.21 1999/07/01 08:12:49 itojun Exp $	*/
+/*	$NetBSD: igmp.c,v 1.22 1999/07/09 22:57:16 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -39,6 +39,7 @@
  * MULTICAST Revision: 1.3
  */
 
+#include "opt_ipsec.h"
 #include "opt_mrouting.h"
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.41 1999/07/02 12:45:32 itojun Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.42 1999/07/09 22:57:23 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,6 +102,7 @@
  */
 
 #include "opt_inet.h"
+#include "opt_ipsec.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

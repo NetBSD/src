@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.69 1999/07/02 21:02:05 fvdl Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.70 1999/07/09 22:57:22 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,6 +102,7 @@
  */
 
 #include "opt_inet.h"
+#include "opt_ipsec.h"
 #include "opt_tcp_compat_42.h"
 #include "rnd.h"
 
