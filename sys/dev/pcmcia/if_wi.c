@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.21.2.4 2000/07/21 18:54:18 onoe Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.21.2.5 2000/07/21 18:56:01 onoe Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -169,6 +169,8 @@ static void wi_request_fill_ssid __P((struct wi_req *,
     struct ieee80211_nwid *));
 static int wi_write_ssid __P((struct wi_softc *, int, struct wi_req *,
     struct ieee80211_nwid *));
+static int wi_set_nwkey __P((struct wi_softc *, struct ieee80211_nwkey *));
+static int wi_get_nwkey __P((struct wi_softc *, struct ieee80211_nwkey *));
 
 struct cfattach wi_ca = {
 	sizeof(struct wi_softc), wi_match, wi_attach, wi_detach, wi_activate
@@ -1459,6 +1461,12 @@ static int wi_ioctl(ifp, command, data)
 			/* Reinitialize WaveLAN. */
 			wi_init(sc);
 		break;
+	case SIOCS80211NWKEY:
+		error = wi_set_nwkey(sc, (struct ieee80211_nwkey *)data);
+		break;
+	case SIOCG80211NWKEY:
+		error = wi_get_nwkey(sc, (struct ieee80211_nwkey *)data);
+		break;
 	default:
 		error = EINVAL;
 		break;
@@ -1882,4 +1890,104 @@ wi_media_status(ifp, imr)
 
 	imr->ifm_active = sc->sc_media.ifm_cur->ifm_media;
 	imr->ifm_status = IFM_AVALID|IFM_ACTIVE;
+}
+
+static int
+wi_set_nwkey(sc, nwkey)
+	struct wi_softc *sc;
+	struct ieee80211_nwkey *nwkey;
+{
+	int i, len, error;
+	struct wi_req wreq;
+	struct wi_ltv_keys *wk = (struct wi_ltv_keys *)&wreq;
+
+	if (!sc->wi_has_wep)
+		return ENODEV;
+	if (nwkey->i_defkid <= 0 ||
+	    nwkey->i_defkid > IEEE80211_WEP_NKID)
+		return EINVAL;
+	memcpy(wk, &sc->wi_keys, sizeof(*wk));
+	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
+		if (nwkey->i_key[i].i_keydat == NULL)
+			continue;
+		len = nwkey->i_key[i].i_keylen;
+		if (len > sizeof(wk->wi_keys[i].wi_keydat))
+			return EINVAL;
+		error = copyin(nwkey->i_key[i].i_keydat,
+		    wk->wi_keys[i].wi_keydat, len);
+		if (error)
+			return error;
+		wk->wi_keys[i].wi_keylen = len;
+	}
+
+	wk->wi_len = (sizeof(*wk) / 2) + 1;
+	wk->wi_type = WI_RID_DEFLT_CRYPT_KEYS;
+	if (sc->sc_enabled != 0) {
+		error = wi_write_record(sc, (struct wi_ltv_gen *)&wreq);
+		if (error)
+			return error;
+	}
+	error = wi_setdef(sc, &wreq);
+	if (error)
+		return error;
+
+	wreq.wi_len = 2;
+	wreq.wi_type = WI_RID_TX_CRYPT_KEY;
+	wreq.wi_val[0] = nwkey->i_defkid - 1;
+	if (sc->sc_enabled != 0) {
+		error = wi_write_record(sc, (struct wi_ltv_gen *)&wreq);
+		if (error)
+			return error;
+	}
+	error = wi_setdef(sc, &wreq);
+	if (error)
+		return error;
+
+	wreq.wi_type = WI_RID_ENCRYPTION;
+	wreq.wi_val[0] = nwkey->i_wepon;
+	if (sc->sc_enabled != 0) {
+		error = wi_write_record(sc, (struct wi_ltv_gen *)&wreq);
+		if (error)
+			return error;
+	}
+	error = wi_setdef(sc, &wreq);
+	if (error)
+		return error;
+
+	if (sc->sc_enabled != 0)
+		wi_init(sc);
+	return 0;
+}
+
+static int
+wi_get_nwkey(sc, nwkey)
+	struct wi_softc *sc;
+	struct ieee80211_nwkey *nwkey;
+{
+	int i, len, error;
+	struct wi_ltv_keys *wk = &sc->wi_keys;
+
+	if (!sc->wi_has_wep)
+		return ENODEV;
+	nwkey->i_wepon = sc->wi_use_wep;
+	nwkey->i_defkid = sc->wi_tx_key + 1;
+
+	/* do not show any keys to non-root user */
+	error = suser(curproc->p_ucred, &curproc->p_acflag);
+	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
+		if (nwkey->i_key[i].i_keydat == NULL)
+			continue;
+		/* error holds results of suser() for the first time */
+		if (error)
+			return error;
+		len = wk->wi_keys[i].wi_keylen;
+		if (nwkey->i_key[i].i_keylen < len)
+			return ENOSPC;
+		nwkey->i_key[i].i_keylen = len;
+		error = copyout(wk->wi_keys[i].wi_keydat,
+		    nwkey->i_key[i].i_keydat, len);
+		if (error)
+			return error;
+	}
+	return 0;
 }

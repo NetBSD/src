@@ -1,4 +1,4 @@
-/*	$NetBSD: awi_wep.c,v 1.1.2.1 2000/07/14 14:37:22 onoe Exp $	*/
+/*	$NetBSD: awi_wep.c,v 1.1.2.2 2000/07/21 18:56:01 onoe Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -138,6 +138,84 @@ static struct awi_wep_algo awi_wep_algo[] = {
 	    awi_null_copy, awi_null_copy },
 			/* dummy for wep without encryption */
 };
+
+int
+awi_wep_setnwkey(sc, nwkey)
+	struct awi_softc *sc;
+	struct ieee80211_nwkey *nwkey;
+{
+	int i, len, error;
+	u_int8_t keybuf[AWI_MAX_KEYLEN];
+
+	if (nwkey->i_defkid <= 0 ||
+	    nwkey->i_defkid > IEEE80211_WEP_NKID)
+		return EINVAL;
+	error = 0;
+	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
+		if (nwkey->i_key[i].i_keydat == NULL)
+			continue;
+		len = nwkey->i_key[i].i_keylen;
+		if (len > sizeof(keybuf)) {
+			error = EINVAL;
+			break;
+		}
+		error = copyin(nwkey->i_key[i].i_keydat, keybuf, len);
+		if (error)
+			break;
+		error = awi_wep_setkey(sc, i, keybuf, len);
+		if (error)
+			break;
+	}
+	if (error == 0) {
+		sc->sc_wep_defkid = nwkey->i_defkid - 1;
+		error = awi_wep_setalgo(sc, nwkey->i_wepon);
+		if (error == 0 && sc->sc_enabled) {
+			awi_stop(sc);
+			error = awi_init(sc);
+		}
+	}
+	return error;
+}
+
+int
+awi_wep_getnwkey(sc, nwkey)
+	struct awi_softc *sc;
+	struct ieee80211_nwkey *nwkey;
+{
+	int i, len, error, suerr;
+	u_int8_t keybuf[AWI_MAX_KEYLEN];
+
+	nwkey->i_wepon = awi_wep_getalgo(sc);
+	nwkey->i_defkid = sc->sc_wep_defkid + 1;
+	/* do not show any keys to non-root user */
+#ifdef __FreeBSD__
+	suerr = suser(curproc);
+#else
+	suerr = suser(curproc->p_ucred, &curproc->p_acflag);
+#endif
+	error = 0;
+	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
+		if (nwkey->i_key[i].i_keydat == NULL)
+			continue;
+		if (suerr) {
+			error = suerr;
+			break;
+		}
+		len = sizeof(keybuf);
+		error = awi_wep_getkey(sc, i, keybuf, &len);
+		if (error)
+			break;
+		if (nwkey->i_key[i].i_keylen < len) {
+			error = ENOSPC;
+			break;
+		}
+		nwkey->i_key[i].i_keylen = len;
+		error = copyout(keybuf, nwkey->i_key[i].i_keydat, len);
+		if (error)
+			break;
+	}
+	return error;
+}
 
 int
 awi_wep_getalgo(sc)
