@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.35 1994/12/24 15:08:02 cgd Exp $	*/
+/*	$NetBSD: proc.h,v 1.36 1995/01/08 22:53:30 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -160,7 +160,7 @@ struct	proc {
 /* End area that is copied on creation. */
 #define	p_endcopy	p_thread
 
-	void 	*p_thread;	/* Id for this "thread"; Mach glue. XXX */
+	void	*p_thread;	/* Id for this "thread"; Mach glue. XXX */
 	struct	user *p_addr;	/* Kernel virtual addr of u-area (PROC ONLY). */
 	struct	mdproc p_md;	/* Any machine-dependent fields. */
 
@@ -279,7 +279,7 @@ void	fixjobc __P((struct proc *p, struct pgrp *pgrp, int entering));
 int	inferior __P((struct proc *p));
 int	leavepgrp __P((struct proc *p));
 void	mi_switch __P((void));
-void	pgdelete __P((struct pgrp *pgrp));    
+void	pgdelete __P((struct pgrp *pgrp));
 void	procinit __P((void));
 void	resetpriority __P((struct proc *));
 void	setrunnable __P((struct proc *));
