@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.176 2001/08/25 18:39:24 chs Exp $
+#	$NetBSD: bsd.own.mk,v 1.177 2001/08/26 06:00:30 eeh Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -82,11 +82,7 @@ OBJECT_FMT?=COFF
 NOPIC?=1
 .endif
 
-# The sparc64 port is incomplete.
-.if ${MACHINE_ARCH} == "sparc64"
-NOLINT=1
-.endif
-
+# Profiling and linting is also off on the x86_64 port at the moment.
 # The x86_64 port is incomplete.
 .if ${MACHINE_ARCH} == "x86_64"
 NOPROFILE=1
