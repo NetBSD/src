@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.37 1999/12/05 11:56:34 ragge Exp $	*/
+/*	$NetBSD: trap.c,v 1.38 2000/05/24 17:28:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller. All rights reserved.
@@ -101,7 +101,7 @@ userret(p, pc, oticks)
 	int pc;
 	u_quad_t oticks;
 {
-	int sig, s;
+	int sig;
 
 	/* take pending signals */
 	while ((sig = CURSIG(p)) != 0)
@@ -109,18 +109,9 @@ userret(p, pc, oticks)
 	p->p_priority = p->p_usrpri;
 	if (want_resched) {
 		/*
-		 * Since we are curproc, a clock interrupt could
-		 * change our priority without changing run queues
-		 * (the running process is not kept on a run queue).
-		 * If this happened after we setrunqueue ourselves but
-		 * before we switch()'ed, we might not be on the queue
-		 * indicated by our priority.
+		 * We are being preempted.
 		 */
-		s = splstatclock();
-		setrunqueue(p);
-		p->p_stats->p_ru.ru_nivcsw++;
-		mi_switch();
-		splx(s);
+		preempt(NULL);
 		while ((sig = CURSIG(p)) != 0)
 			postsig(sig);
 	}
