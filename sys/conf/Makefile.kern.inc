@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.1 2001/11/16 00:23:02 atatat Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.2 2001/11/16 13:14:10 atatat Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}. There are
@@ -200,6 +200,7 @@ depend: .depend
 
 .if !target(.depend)
 SRCS?=		${MD_SFILES} ${MD_CFILES} ${MI_CFILES} ${CFILES} ${SFILES}
+MKDEP?=		mkdep
 MKDEP_AFLAGS?=	${AFLAGS}
 MKDEP_CFLAGS?=	${CFLAGS}
 .depend: ${SRCS} assym.h
