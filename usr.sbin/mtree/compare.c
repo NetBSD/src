@@ -1,4 +1,4 @@
-/*	$NetBSD: compare.c,v 1.11 1996/09/05 09:56:48 mycroft Exp $	*/
+/*	$NetBSD: compare.c,v 1.12 1997/07/11 07:05:29 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: compare.c,v 1.11 1996/09/05 09:56:48 mycroft Exp $";
+static char rcsid[] = "$NetBSD: compare.c,v 1.12 1997/07/11 07:05:29 mikel Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,7 +65,7 @@ static char *ftype __P((u_int));
 			(void)printf("\n"); \
 		} else { \
 			tab = ""; \
-			(void)printf("%*s", INDENTNAMELEN - len, ""); \
+			(void)printf("%*s", INDENTNAMELEN - (int)len, ""); \
 		} \
 	}
 

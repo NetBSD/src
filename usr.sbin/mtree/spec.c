@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.8 1997/04/25 05:45:24 mikel Exp $	*/
+/*	$NetBSD: spec.c,v 1.9 1997/07/11 07:05:30 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: spec.c,v 1.8 1997/04/25 05:45:24 mikel Exp $";
+static char rcsid[] = "$NetBSD: spec.c,v 1.9 1997/07/11 07:05:30 mikel Exp $";
 #endif
 #endif /* not lint */
 
@@ -177,7 +177,7 @@ set(t, ip)
 	int value;
 	char *ep;
 
-	for (; kw = strtok(t, "= \t\n"); t = NULL) {
+	for (; (kw = strtok(t, "= \t\n")) != NULL; t = NULL) {
 		ip->flags |= type = parsekey(kw, &value);
 		if (value && (val = strtok(NULL, " \t\n")) == NULL)
 			err("missing value");
@@ -282,6 +282,6 @@ unset(t, ip)
 {
 	register char *p;
 
-	while (p = strtok(t, "\n\t "))
+	while ((p = strtok(t, "\n\t ")) != NULL)
 		ip->flags &= ~parsekey(p, NULL);
 }

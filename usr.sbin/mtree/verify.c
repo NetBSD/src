@@ -1,4 +1,4 @@
-/*	$NetBSD: verify.c,v 1.11 1997/06/23 14:34:52 lukem Exp $	*/
+/*	$NetBSD: verify.c,v 1.12 1997/07/11 07:05:31 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)verify.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: verify.c,v 1.11 1997/06/23 14:34:52 lukem Exp $";
+static char rcsid[] = "$NetBSD: verify.c,v 1.12 1997/07/11 07:05:31 mikel Exp $";
 #endif
 #endif /* not lint */
 
@@ -88,7 +88,7 @@ vwalk()
 		err("fts_open: %s", strerror(errno));
 	level = root;
 	ftsdepth = specdepth = rval = 0;
-	while (p = fts_read(t)) {
+	while ((p = fts_read(t)) != NULL) {
 		switch(p->fts_info) {
 		case FTS_D:
 			++ftsdepth; 
@@ -113,8 +113,8 @@ vwalk()
 		}
 
 		for (ep = level; ep; ep = ep->next)
-			if (ep->flags & F_MAGIC &&
-			    !fnmatch(ep->name, p->fts_name, FNM_PATHNAME) ||
+			if ((ep->flags & F_MAGIC &&
+			    !fnmatch(ep->name, p->fts_name, FNM_PATHNAME)) ||
 			    !strcmp(ep->name, p->fts_name)) {
 				ep->flags |= F_VISIT;
 				if (compare(ep->name, ep, p))
@@ -147,7 +147,7 @@ vwalk()
 	(void)fts_close(t);
 	if (sflag)
 		(void)fprintf(stderr,
-		    "mtree: %s checksum: %lu\n", fullpath, crc_total);
+		    "mtree: %s checksum: %u\n", fullpath, crc_total);
 	return (rval);
 }
 
