@@ -1,4 +1,4 @@
-/* $NetBSD: pcb.h,v 1.2 1996/03/13 21:08:36 mark Exp $ */
+/* $NetBSD: pcb.h,v 1.3 1996/10/17 02:37:48 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -60,7 +60,7 @@ struct pcb {
 	u_int	pcb_pc;
 	u_int	pcb_und_sp;
 	caddr_t	pcb_onfault;			/* On fault handler */
-	struct	fp_state pcb_fpstate; 		/* Floating Point state */
+	struct	fpe_sp_state pcb_fpstate;	/* Floating Point state */
 };
 
 /*
