@@ -1,4 +1,4 @@
-/*	$KAME: cftoken.l,v 1.57 2001/04/04 02:06:19 sakane Exp $	*/
+/*	$KAME: cftoken.l,v 1.59 2001/05/24 06:43:24 sakane Exp $	*/
 
 %{
 #include <sys/types.h>
@@ -256,6 +256,7 @@ hexstring	0x{hexdigit}+
 <S_RMTS>certificate_type	{ YYD; return(CERTIFICATE_TYPE); }
 <S_RMTS>x509		{ YYD; yylval.num = ISAKMP_CERT_X509SIGN; return(CERT_X509); }
 <S_RMTS>peers_certfile	{ YYD; return(PEERS_CERTFILE); }
+<S_RMTS>dnssec		{ YYD; return(DNSSEC); }
 <S_RMTS>verify_cert	{ YYD; return(VERIFY_CERT); }
 <S_RMTS>send_cert	{ YYD; return(SEND_CERT); }
 <S_RMTS>send_cr		{ YYD; return(SEND_CR); }
@@ -270,6 +271,7 @@ hexstring	0x{hexdigit}+
 <S_RMTS>exact		{ YYD; yylval.num = PROP_CHECK_EXACT; return(PROPOSAL_CHECK_LEVEL); }
 <S_RMTS>claim		{ YYD; yylval.num = PROP_CHECK_CLAIM; return(PROPOSAL_CHECK_LEVEL); }
 <S_RMTS>keepalive	{ YYD; return(KEEPALIVE); }
+<S_RMTS>passive		{ YYD; return(PASSIVE); }
 <S_RMTS>lifetime	{ YYD; return(LIFETIME); }
 <S_RMTS>time		{ YYD; return(LIFETYPE_TIME); }
 <S_RMTS>byte		{ YYD; return(LIFETYPE_BYTE); }

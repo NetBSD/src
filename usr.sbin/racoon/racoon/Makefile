@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2001/03/30 06:38:25 thorpej Exp $
+#	$NetBSD: Makefile,v 1.7 2001/08/02 12:15:00 itojun Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,8 @@ SRCS=	main.c session.c isakmp.c handler.c random.c \
 	policy.c localconf.c remoteconf.c crypto_openssl.c algorithm.c \
 	cfparse.c cftoken.c strnames.c \
 	vmbuf.c plog.c logger.c schedule.c str2val.c misc.c sockmisc.c \
-	proposal.c sainfo.c vendorid.c safefile.c backupsa.c
+	proposal.c sainfo.c vendorid.c safefile.c backupsa.c \
+	dnssec.c getcertsbyname.c
 
 MAN=	racoon.8 racoon.conf.5
 

@@ -1,4 +1,4 @@
-/*	$KAME: cfparse.y,v 1.97 2001/04/04 02:35:18 sakane Exp $	*/
+/*	$KAME: cfparse.y,v 1.102 2001/07/09 13:46:48 sakane Exp $	*/
 
 %{
 #include <sys/types.h>
@@ -145,8 +145,8 @@ static int fix_lifebyte __P((u_long));
 %token EXCHANGE_MODE EXCHANGETYPE DOI DOITYPE SITUATION SITUATIONTYPE
 %token CERTIFICATE_TYPE CERTTYPE PEERS_CERTFILE VERIFY_CERT SEND_CERT SEND_CR
 %token IDENTIFIERTYPE MY_IDENTIFIER PEERS_IDENTIFIER
-%token CERT_X509
-%token NONCE_SIZE DH_GROUP KEEPALIVE INITIAL_CONTACT
+%token DNSSEC CERT_X509
+%token NONCE_SIZE DH_GROUP KEEPALIVE PASSIVE INITIAL_CONTACT
 %token PROPOSAL_CHECK PROPOSAL_CHECK_LEVEL
 %token GENERATE_POLICY SUPPORT_MIP6
 %token POST_COMMAND
@@ -334,11 +334,11 @@ listen_stmt
 			lcconf->autograbaddr = 0;
 		}
 		EOS
-	|	X_ADMIN PORT
+	|	X_ADMIN
 		{
-			lcconf->port_admin = $2;
+			yyerror("admin directive is obsoleted.");
 		}
-		EOS
+		PORT EOS
 	|	STRICT_ADDRESS { lcconf->strict_address = TRUE; } EOS
 	;
 ike_addrinfo_port
@@ -995,8 +995,20 @@ remote_spec
 	|	PEERS_CERTFILE QUOTEDSTRING
 		{
 #ifdef HAVE_SIGNING_C
+			cur_rmconf->getcert_method = ISAKMP_GETCERT_LOCALFILE;
 			cur_rmconf->peerscertfile = strdup($2->v);
 			vfree($2);
+#else
+			yyerror("directive not supported");
+			return -1;
+#endif
+		}
+		EOS
+	|	PEERS_CERTFILE DNSSEC
+		{
+#ifdef HAVE_SIGNING_C
+			cur_rmconf->getcert_method = ISAKMP_GETCERT_DNS;
+			cur_rmconf->peerscertfile = NULL;
 #else
 			yyerror("directive not supported");
 			return -1;
@@ -1038,6 +1050,7 @@ remote_spec
 		}
 		dh_group_num EOS
 	|	KEEPALIVE { cur_rmconf->keepalive = TRUE; } EOS
+	|	PASSIVE SWITCH { cur_rmconf->passive = $2; } EOS
 	|	GENERATE_POLICY SWITCH { cur_rmconf->gen_policy = $2; } EOS
 	|	SUPPORT_MIP6 SWITCH { cur_rmconf->support_mip6 = $2; } EOS
 	|	INITIAL_CONTACT SWITCH { cur_rmconf->ini_contact = $2; } EOS
@@ -1501,7 +1514,7 @@ expand_isakmpspec(prop_no, trns_no, types,
 		return -1;
 	}
 	new->prop_no = prop_no;
-	new->trns_no = trns_no;
+	new->trns_no = trns_no++;
 	new->lifetime = lifetime;
 	new->lifebyte = lifebyte;
 	new->enctype = types[algclass_isakmp_enc];

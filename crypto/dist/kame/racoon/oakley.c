@@ -1,4 +1,4 @@
-/*	$KAME: oakley.c,v 1.79 2001/04/03 15:51:56 thorpej Exp $	*/
+/*	$KAME: oakley.c,v 1.86 2001/07/17 05:02:50 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -69,6 +69,7 @@
 #include "sainfo.h"
 #include "proposal.h"
 #include "crypto_openssl.h"
+#include "dnssec.h"
 #include "sockmisc.h"
 #include "strnames.h"
 #include "gcmalloc.h"
@@ -171,6 +172,11 @@ oakley_dh_compute(dh, pub, priv, pub_p, gxy)
 		return -1;
 	}
 
+#ifdef ENABLE_STATS
+    {
+	struct timeval start, end;
+	gettimeofday(&start, NULL);
+#endif
 	switch (dh->type) {
 	case OAKLEY_ATTR_GRP_TYPE_MODP:
 		if (eay_dh_compute(dh->prime, dh->gen1, pub, priv, pub_p, gxy) < 0) {
@@ -190,6 +196,13 @@ oakley_dh_compute(dh, pub, priv, pub_p, gxy)
 		return -1;
 	}
 
+#ifdef ENABLE_STATS
+	gettimeofday(&end, NULL);
+	syslog(LOG_NOTICE, "%s(%s): %8.6f", __FUNCTION__,
+		s_attr_isakmp_group(dh->type), timedelta(&start, &end));
+    }
+#endif
+
 	plog(LLV_DEBUG, LOCATION, NULL, "compute DH's shared.\n");
 	plogdump(LLV_DEBUG, (*gxy)->v, (*gxy)->l);
 
@@ -206,6 +219,10 @@ oakley_dh_generate(dh, pub, priv)
 	const struct dhgroup *dh;
 	vchar_t **pub, **priv;
 {
+#ifdef ENABLE_STATS
+	struct timeval start, end;
+	gettimeofday(&start, NULL);
+#endif
 	switch (dh->type) {
 	case OAKLEY_ATTR_GRP_TYPE_MODP:
 		if (eay_dh_generate(dh->prime, dh->gen1, dh->gen2, pub, priv) < 0) {
@@ -226,6 +243,11 @@ oakley_dh_generate(dh, pub, priv)
 		return -1;
 	}
 
+#ifdef ENABLE_STATS
+	gettimeofday(&end, NULL);
+	syslog(LOG_NOTICE, "%s(%s): %8.6f", __FUNCTION__,
+		s_attr_isakmp_group(dh->type), timedelta(&start, &end));
+#endif
 	plog(LLV_DEBUG, LOCATION, NULL, "compute DH's private.\n");
 	plogdump(LLV_DEBUG, (*priv)->v, (*priv)->l);
 	plog(LLV_DEBUG, LOCATION, NULL, "compute DH's public.\n");
@@ -299,6 +321,11 @@ oakley_prf(key, buf, iph1)
 		goto defs;
 	}
 
+#ifdef ENABLE_STATS
+    {
+	struct timeval start, end;
+	gettimeofday(&start, NULL);
+#endif
 	switch (iph1->approval->dh_group) {
 	default:
 		switch (iph1->approval->hashtype) {
@@ -319,6 +346,13 @@ defs:
 			break;
 		}
 	}
+#ifdef ENABLE_STATS
+	gettimeofday(&end, NULL);
+	syslog(LOG_NOTICE, "%s(%s size=%d): %8.6f", __FUNCTION__,
+		s_attr_isakmp_hash(iph1->approval->hashtype),
+		buf->l, timedelta(&start, &end));
+    }
+#endif
 
 	return res;
 }
@@ -341,6 +375,11 @@ oakley_hash(buf, iph1)
 		goto defs;
 	}
 
+#ifdef ENABLE_STATS
+    {
+	struct timeval start, end;
+	gettimeofday(&start, NULL);
+#endif
 	switch (iph1->approval->dh_group) {
 	default:
 		switch (iph1->approval->hashtype) {
@@ -363,6 +402,13 @@ defs:
 			break;
 		}
 	}
+#ifdef ENABLE_STATS
+	gettimeofday(&end, NULL);
+	syslog(LOG_NOTICE, "%s(%s size=%d): %8.6f", __FUNCTION__,
+		s_attr_isakmp_hash(iph1->approval->hashtype),
+		buf->l, timedelta(&start, &end));
+    }
+#endif
 
 	return res;
 }
@@ -1107,6 +1153,11 @@ oakley_validate_auth(iph1)
 	vchar_t *gsshash = NULL;
 #endif
 
+#ifdef ENABLE_STATS
+    {
+	struct timeval start, end;
+	gettimeofday(&start, NULL);
+#endif
 	switch (iph1->approval->authmethod) {
 	case OAKLEY_ATTR_AUTH_METHOD_PSKEY:
 		/* validate HASH */
@@ -1161,37 +1212,83 @@ oakley_validate_auth(iph1)
 	    {
 		int error = 0;
 
-		/* validate SIG & CERT */
-		if (iph1->id_p == NULL || iph1->sig_p == NULL) {
+		/* validation */
+		if (iph1->id_p == NULL) {
 			plog(LLV_ERROR, LOCATION, iph1->remote,
-				"few isakmp message received.\n");
+				"no ID payload was passed.\n");
 			return ISAKMP_NTYPE_PAYLOAD_MALFORMED;
 		}
-		if (iph1->cert_p == NULL && iph1->rmconf->peerscertfile == NULL) {
-			plog(LLV_ERROR, LOCATION, NULL,
-				"no CERT payload found "
-				"even though CR sent.\n");
-			return -1;
+		if (iph1->sig_p == NULL) {
+			plog(LLV_ERROR, LOCATION, iph1->remote,
+				"no SIG payload was passed.\n");
+			return ISAKMP_NTYPE_PAYLOAD_MALFORMED;
 		}
+
 		plog(LLV_DEBUG, LOCATION, NULL, "SIGN passed:\n");
 		plogdump(LLV_DEBUG, iph1->sig_p->v, iph1->sig_p->l);
 
-		/* get peer's certificate if no there */
-		if (iph1->cert_p == NULL
-		 && iph1->rmconf->peerscertfile != NULL) {
+		/* get peer's cert */
+		switch (iph1->rmconf->getcert_method) {
+		case ISAKMP_GETCERT_PAYLOAD:
+			if (iph1->cert_p == NULL) {
+				plog(LLV_ERROR, LOCATION, NULL,
+					"no peer's CERT payload found "
+					"even though CR sent.\n");
+				return -1;
+			}
+			break;
+		case ISAKMP_GETCERT_LOCALFILE:
+			if (iph1->rmconf->peerscertfile == NULL) {
+				plog(LLV_ERROR, LOCATION, NULL,
+					"no peer's CERT file found.\n");
+				return -1;
+			}
+
+			/* don't cache cert */
+			if (iph1->cert_p != NULL) {
+				oakley_delcert(iph1->cert_p);
+				iph1->cert_p = NULL;
+			}
+
 			error = get_cert_fromlocal(iph1, 0);
 			if (error)
 				return -1;
+			break;
+		case ISAKMP_GETCERT_DNS:
+			if (iph1->rmconf->peerscertfile != NULL) {
+				plog(LLV_ERROR, LOCATION, NULL,
+					"why peer's CERT file is defined "
+					"though getcert method is dns ?\n");
+				return -1;
+			}
+
+			/* don't cache cert */
+			if (iph1->cert_p != NULL) {
+				oakley_delcert(iph1->cert_p);
+				iph1->cert_p = NULL;
+			}
+
+			iph1->cert_p = dnssec_getcert(iph1->id_p);
+			if (iph1->cert_p == NULL) {
+				plog(LLV_ERROR, LOCATION, NULL,
+					"no CERT RR found.\n");
+				return -1;
+			}
+			break;
+		default:
+			plog(LLV_ERROR, LOCATION, NULL,
+				"invalid getcert_mothod: %d\n",
+				iph1->rmconf->getcert_method);
+			return -1;
 		}
 
-		/* don't cache the certificate passed. */
+		/* compare ID payload and certificate name */
+		if (iph1->rmconf->verify_cert && oakley_check_certid(iph1))
+			return error;
 
-		/* check ID payload and certificate name */
-		if (iph1->rmconf->verify_cert) {
-			error = oakley_check_certid(iph1);
-			if (error)
-				return error;
-
+		/* verify certificate */
+		if (iph1->rmconf->verify_cert
+		 && iph1->rmconf->getcert_method == ISAKMP_GETCERT_PAYLOAD) {
 			switch (iph1->rmconf->certtype) {
 			case ISAKMP_CERT_X509SIGN:
 				error = eay_check_x509cert(&iph1->cert_p->cert,
@@ -1209,9 +1306,11 @@ oakley_validate_auth(iph1)
 					"Invalid authority of the CERT.\n");
 				return ISAKMP_NTYPE_INVALID_CERT_AUTHORITY;
 			}
-			plog(LLV_DEBUG, LOCATION, NULL, "CERT validated\n");
 		}
 
+		plog(LLV_DEBUG, LOCATION, NULL, "CERT validated\n");
+
+		/* compute hash */
 		switch (iph1->etype) {
 		case ISAKMP_ETYPE_IDENT:
 		case ISAKMP_ETYPE_AGG:
@@ -1231,8 +1330,10 @@ oakley_validate_auth(iph1)
 		if (my_hash == NULL)
 			return -1;
 
+		/* check signature */
 		switch (iph1->rmconf->certtype) {
 		case ISAKMP_CERT_X509SIGN:
+		case ISAKMP_CERT_DNS:
 			error = eay_check_x509sign(my_hash,
 					iph1->sig_p,
 					&iph1->cert_p->cert);
@@ -1309,6 +1410,13 @@ oakley_validate_auth(iph1)
 			iph1->approval->authmethod);
 		return -1;
 	}
+#ifdef ENABLE_STATS
+	gettimeofday(&end, NULL);
+	syslog(LOG_NOTICE, "%s(%s): %8.6f", __FUNCTION__,
+		s_oakley_attr_method(iph1->approval->authmethod),
+		timedelta(&start, &end));
+    }
+#endif
 
 	return 0;
 }
@@ -1358,7 +1466,7 @@ get_cert_fromlocal(iph1, my)
 
 	switch (iph1->rmconf->certtype) {
 	case ISAKMP_CERT_X509SIGN:
-
+	case ISAKMP_CERT_DNS:
 		/* make public file name */
 		getpathname(path, sizeof(path), LC_PATHTYPE_CERT, certfile);
 		cert = eay_get_x509cert(path);
@@ -1369,6 +1477,7 @@ get_cert_fromlocal(iph1, my)
 			racoon_free(p);
 		};
 		break;
+
 	default:
 		plog(LLV_ERROR, LOCATION, NULL,
 			"not supported certtype %d\n",
@@ -1426,6 +1535,7 @@ oakley_getsign(iph1)
 
 	switch (iph1->rmconf->certtype) {
 	case ISAKMP_CERT_X509SIGN:
+	case ISAKMP_CERT_DNS:
 		if (iph1->rmconf->myprivfile == NULL) {
 			plog(LLV_ERROR, LOCATION, NULL, "no cert defined.\n");
 			goto end;
@@ -1671,9 +1781,13 @@ oakley_savecert(iph1, gen)
 	type = *(u_int8_t *)(gen + 1) & 0xff;
 
 	switch (type) {
+	case ISAKMP_CERT_DNS:
+		plog(LLV_WARNING, LOCATION, NULL,
+			"CERT payload is unnecessary in DNSSEC. "
+			"ignore this CERT payload.\n");
+		return 0;
 	case ISAKMP_CERT_PKCS7:
 	case ISAKMP_CERT_PGP:
-	case ISAKMP_CERT_DNS:
 	case ISAKMP_CERT_X509SIGN:
 	case ISAKMP_CERT_KERBEROS:
 	case ISAKMP_CERT_SPKI:
@@ -1695,8 +1809,10 @@ oakley_savecert(iph1, gen)
 	}
 
 	/* XXX choice the 1th cert, ignore after the cert. */ 
+	/* XXX should be processed. */
 	if (*c) {
-		plog(LLV_WARNING, LOCATION, NULL, "ignore the cert.\n");
+		plog(LLV_WARNING, LOCATION, NULL,
+			"ignore 2nd CERT payload.\n");
 		return 0;
 	}
 
@@ -1708,9 +1824,13 @@ oakley_savecert(iph1, gen)
 	}
 
 	switch ((*c)->type) {
+	case ISAKMP_CERT_DNS:
+		plog(LLV_WARNING, LOCATION, NULL,
+			"CERT payload is unnecessary in DNSSEC. "
+			"ignore it.\n");
+		return 0;
 	case ISAKMP_CERT_PKCS7:
 	case ISAKMP_CERT_PGP:
-	case ISAKMP_CERT_DNS:
 	case ISAKMP_CERT_X509SIGN:
 	case ISAKMP_CERT_KERBEROS:
 	case ISAKMP_CERT_SPKI:
@@ -1753,9 +1873,12 @@ oakley_savecr(iph1, gen)
 	type = *(u_int8_t *)(gen + 1) & 0xff;
 
 	switch (type) {
+	case ISAKMP_CERT_DNS:
+		plog(LLV_WARNING, LOCATION, NULL,
+			"CERT payload is unnecessary in DNSSEC\n");
+		/*FALLTHRU*/
 	case ISAKMP_CERT_PKCS7:
 	case ISAKMP_CERT_PGP:
-	case ISAKMP_CERT_DNS:
 	case ISAKMP_CERT_X509SIGN:
 	case ISAKMP_CERT_KERBEROS:
 	case ISAKMP_CERT_SPKI:
@@ -2468,9 +2591,9 @@ oakley_delivm(ivm)
 		return;
 
 	if (ivm->iv != NULL)
-		racoon_free(ivm->iv);
+		vfree(ivm->iv);
 	if (ivm->ive != NULL)
-		racoon_free(ivm->ive);
+		vfree(ivm->ive);
 	racoon_free(ivm);
 
 	return;
@@ -2528,7 +2651,19 @@ oakley_do_decrypt(iph1, msg, ivdp, ivep)
 	plog(LLV_DEBUG, LOCATION, NULL, "with key: ");
 	plogdump(LLV_DEBUG, iph1->key->v, iph1->key->l);
 
+#ifdef ENABLE_STATS
+    {
+	struct timeval start, end;
+	gettimeofday(&start, NULL);
+#endif
 	new = (cipher[iph1->approval->enctype].decrypt)(buf, iph1->key, ivdp->v);
+#ifdef ENABLE_STATS
+	gettimeofday(&end, NULL);
+	syslog(LOG_NOTICE, "%s(%s size=%d): %8.6f", __FUNCTION__,
+		s_attr_isakmp_enc(iph1->approval->enctype),
+		buf->l, timedelta(&start, &end));
+    }
+#endif
 	vfree(buf);
 	buf = NULL;
 	if (new == NULL)
@@ -2657,7 +2792,19 @@ oakley_do_encrypt(iph1, msg, ivep, ivp)
 	plog(LLV_DEBUG, LOCATION, NULL, "with key: ");
 	plogdump(LLV_DEBUG, iph1->key->v, iph1->key->l);
 
+#ifdef ENABLE_STATS
+    {
+	struct timeval start, end;
+	gettimeofday(&start, NULL);
+#endif
 	new = (cipher[iph1->approval->enctype].encrypt)(buf, iph1->key, ivep->v);
+#ifdef ENABLE_STATS
+	gettimeofday(&end, NULL);
+	syslog(LOG_NOTICE, "%s(%s size=%d): %8.6f", __FUNCTION__,
+		s_attr_isakmp_enc(iph1->approval->enctype),
+		buf->l, timedelta(&start, &end));
+    }
+#endif
 	vfree(buf);
 	buf = NULL;
 	if (new == NULL)

@@ -1,4 +1,4 @@
-# $KAME: racoon.conf.sample,v 1.22 2000/12/19 08:07:33 sakane Exp $
+# $KAME: racoon.conf.sample,v 1.24 2001/05/24 06:43:25 sakane Exp $
 
 # "path" affects "include" directive.  "path" must be specified before any
 # "include" directive with relative file path.
@@ -28,7 +28,8 @@ remote anonymous
 
 	lifetime time 24 hour ;	# sec,min,hour
 
-	#initial_contact off
+	#initial_contact off ;
+	#passive on ;
 
 	# phase 1 proposal (for ISAKMP SA)
 	proposal {
