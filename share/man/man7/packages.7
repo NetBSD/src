@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.82 2003/09/15 13:10:27 wiz Exp $
+.\"	$NetBSD: packages.7,v 1.83 2003/12/03 18:14:02 erh Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -110,6 +110,11 @@ replaced with OS release (
 etc.) and architecture (
 .Dq mipsel ,
 etc.).
+.It PKGMAKECONF
+Location of the mk.conf file used by a package's BSD-style Makefile.
+If this is not set, MAKECONF is set to
+.Pa /dev/null
+to avoid picking up settings used by builds in /usr/src.
 .El
 .Sh PACKAGE SPECIFIC VARIABLES
 This section documents variables that typically apply to an individual
