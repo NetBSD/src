@@ -1,4 +1,4 @@
-/*	$NetBSD: utils.c,v 1.4 1995/08/02 07:17:02 jtc Exp $	*/
+/*	$NetBSD: utils.c,v 1.5 1997/01/09 16:07:33 tls Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-static char rcsid[] = "$NetBSD: utils.c,v 1.4 1995/08/02 07:17:02 jtc Exp $";
+static char rcsid[] = "$NetBSD: utils.c,v 1.5 1997/01/09 16:07:33 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -237,7 +237,7 @@ copy_special(from_stat, exists)
 
 int
 setfile(fs, fd)
-	register struct stat *fs;
+	struct stat *fs;
 	int fd;
 {
 	static struct timeval tv[2];
