@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mdset,v 1.1 2002/04/11 15:28:14 lukem Exp $
+#	$NetBSD: Makefile.mdset,v 1.2 2002/04/12 05:34:01 lukem Exp $
 #
 # Makefile snippet to ${MDSETIMAGE} file system images into kernels
 #
@@ -10,9 +10,8 @@
 #				KERNEL	IMAGE
 #
 # Optional variables:
-#	MDSETDIR	where to install kernels 
-#	${IMAGE}.post	run on netbsd.tmp after ${MDSETIMAGE},${NM},${STRIP}
-#	
+#	MDSETDIR		where to install kernels with "release" target
+#	netbsd.${KERNEL}.post	run after ${STRIP}; kernel is netbsd.tmp
 #
 
 .include <bsd.kernobj.mk>
@@ -29,8 +28,8 @@ netbsd.${_KERNEL}.gz: .NOTMAIN ${KERNOBJDIR}/${_KERNEL}/netbsd ${_IMAGE}
 	${MDSETIMAGE} -v netbsd.tmp ${_IMAGE}
 	${NM} netbsd.tmp | gzip -9 > netbsd.${_KERNEL}.symbols.gz
 	${STRIP} netbsd.tmp
-.if defined(${_KERNEL}.post)
-	${${_KERNEL}.post}
+.if defined(netbsd.${_KERNEL}.post)
+	${netbsd.${_KERNEL}.post}
 .endif
 	gzip -9 netbsd.tmp
 	mv netbsd.tmp.gz ${.TARGET}
@@ -46,5 +45,3 @@ release: check_RELEASEDIR .WAIT ${KERNELS}
 	-mkdir -p ${RELEASEDIR}/${MDSETDIR}
 	${RELINSTALL} ${KERNELS} ${KERNELSYMS} ${RELEASEDIR}/${MDSETDIR}
 .endif
-
-.include <bsd.prog.mk>
