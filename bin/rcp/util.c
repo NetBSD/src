@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.2 1995/03/21 08:19:08 cgd Exp $	*/
+/*	$NetBSD: util.c,v 1.3 1997/05/28 00:32:19 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.2 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: util.c,v 1.2 1995/03/21 08:19:08 cgd Exp $";
+static char rcsid[] = "$NetBSD: util.c,v 1.3 1997/05/28 00:32:19 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -110,8 +110,7 @@ bad:	warnx("%s: invalid user name", cp0);
 }
 
 int
-susystem(s, userid)
-	int userid;
+susystem(s)
 	char *s;
 {
 	sig_t istat, qstat;
@@ -124,7 +123,6 @@ susystem(s, userid)
 		return (127);
 	
 	case 0:
-		(void)setuid(userid);
 		execl(_PATH_BSHELL, "sh", "-c", s, NULL);
 		_exit(127);
 	}
