@@ -1,5 +1,5 @@
-.\"     $NetBSD: stf.4,v 1.1 2000/04/19 06:34:21 itojun Exp $
-.\"     $KAME: stf.4,v 1.19 2000/04/19 05:22:08 itojun Exp $
+.\"     $NetBSD: stf.4,v 1.2 2000/05/02 04:05:25 itojun Exp $
+.\"     $KAME: stf.4,v 1.20 2000/05/02 03:59:44 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -78,6 +78,8 @@ where
 .Li xxyy:zzuu
 is a hexadecimal notation of an IPv4 address for the node.
 IPv4 address can be taken from any of interfaces your node has.
+Since the specification forbids the use of IPv4 private address,
+the address needs to be a global IPv4 address.
 .It
 Subnet identifier portion
 .Pq 48th to 63rd bit
@@ -162,13 +164,13 @@ written in hexadecimals.
 .Ed
 .Pp
 The following configuration accepts packets from IPv4 source
-.Li 10.1.0.0/16
+.Li 9.1.0.0/16
 only.
-It emits 6to4 packet only for IPv6 destination 2002:0a01::/32
-.Pq IPv4 destination will match Li 10.1.0.0/16 .
+It emits 6to4 packet only for IPv6 destination 2002:0901::/32
+.Pq IPv4 destination will match Li 9.1.0.0/16 .
 .Bd -literal
-# ifconfig ne0 inet 10.1.2.3 netmask 0xffff0000
-# ifconfig stf0 inet6 2002:0a01:0203:0000:a00:5aff:fe38:6f86 \\
+# ifconfig ne0 inet 9.1.2.3 netmask 0xffff0000
+# ifconfig stf0 inet6 2002:0901:0203:0000:a00:5aff:fe38:6f86 \\
 	prefixlen 32 alias
 .Ed
 .\"
