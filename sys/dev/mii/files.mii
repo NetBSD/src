@@ -1,4 +1,4 @@
-#	$NetBSD: files.mii,v 1.23 2001/07/12 17:30:45 thorpej Exp $
+#	$NetBSD: files.mii,v 1.24 2001/07/12 18:49:38 thorpej Exp $
 
 file	dev/mii/mii.c				mii
 
@@ -29,6 +29,10 @@ file	dev/mii/nsphy.c				nsphy
 device	nsphyter: mii_phy
 attach	nsphyter at mii
 file	dev/mii/nsphyter.c			nsphyter
+
+device	gentbi: mii_phy
+attach	gentbi at mii
+file	dev/mii/gentbi.c			gentbi
 
 device	gphyter: mii_phy
 attach	gphyter at mii
