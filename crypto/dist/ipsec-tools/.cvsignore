@@ -1,0 +1,16 @@
+Makefile
+Makefile.in
+aclocal.m4
+autom4te*
+config.*
+configure
+depcomp
+install-sh
+ltmain.sh
+libtool
+missing
+ylwrap
+mkinstalldirs
+stamp-h*
+*.tar.gz
+package_version.h
