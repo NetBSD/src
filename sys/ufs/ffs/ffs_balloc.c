@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.17 2000/02/25 19:58:25 fvdl Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.18 2000/05/28 08:15:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -217,8 +217,8 @@ ffs_balloc(v)
 	allocblk = allociblk;
 	if (nb == 0) {
 		pref = ffs_blkpref(ip, lbn, 0, (ufs_daddr_t *)0);
-		error = ffs_alloc(ip, lbn, pref, (int)fs->fs_bsize,
-			cred, &newb);
+		error = ffs_alloc(ip, lbn, pref, (int)fs->fs_bsize, cred,
+		    &newb);
 		if (error)
 			return (error);
 		nb = newb;
@@ -238,6 +238,7 @@ ffs_balloc(v)
 			if ((error = bwrite(bp)) != 0)
 				goto fail;
 		}
+		unwindidx = 0;
 		allocib = &ip->i_ffs_ib[indirs[0].in_off];
 		*allocib = ufs_rw32(nb, needswap);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
@@ -256,7 +257,7 @@ ffs_balloc(v)
 		nb = ufs_rw32(bap[indirs[i].in_off], needswap);
 		if (i == num)
 			break;
-		i += 1;
+		i++;
 		if (nb != 0) {
 			brelse(bp);
 			continue;
@@ -264,7 +265,7 @@ ffs_balloc(v)
 		if (pref == 0)
 			pref = ffs_blkpref(ip, lbn, 0, (ufs_daddr_t *)0);
 		error = ffs_alloc(ip, lbn, pref, (int)fs->fs_bsize, cred,
-				  &newb);
+		    &newb);
 		if (error) {
 			brelse(bp);
 			goto fail;
@@ -288,6 +289,8 @@ ffs_balloc(v)
 				goto fail;
 			}
 		}
+		if (unwindidx < 0)
+			unwindidx = i - 1;
 		bap[indirs[i - 1].in_off] = ufs_rw32(nb, needswap);
 		/*
 		 * If required, write synchronously, otherwise use
@@ -305,7 +308,7 @@ ffs_balloc(v)
 	if (nb == 0) {
 		pref = ffs_blkpref(ip, lbn, indirs[i].in_off, &bap[0]);
 		error = ffs_alloc(ip, lbn, pref, (int)fs->fs_bsize, cred,
-				  &newb);
+		    &newb);
 		if (error) {
 			brelse(bp);
 			goto fail;
@@ -320,8 +323,6 @@ ffs_balloc(v)
 			softdep_setup_allocindir_page(ip, lbn, bp,
 			    indirs[i].in_off, nb, 0, nbp);
 		bap[indirs[i].in_off] = ufs_rw32(nb, needswap);
-		if (allocib == NULL && unwindidx < 0)
-			unwindidx = i - 1;
 		/*
 		 * If required, write synchronously, otherwise use
 		 * delayed write.
@@ -364,24 +365,30 @@ fail:
 		ffs_blkfree(ip, *blkp, fs->fs_bsize);
 		deallocated += fs->fs_bsize;
 	}
-	if (allocib != NULL) {
-		*allocib = 0;
-	} else if (unwindidx >= 0) {
-		int r;
-
-		r = bread(vp, indirs[unwindidx].in_lbn, 
-		    (int)fs->fs_bsize, NOCRED, &bp);
-		if (r) {
-			panic("Could not unwind indirect block, error %d", r);
-			brelse(bp);
+	if (unwindidx >= 0) {
+		if (unwindidx == 0) {
+			*allocib = 0;
 		} else {
-			bap = (ufs_daddr_t *)bp->b_data;
-			bap[indirs[unwindidx].in_off] = 0;
-			if (flags & B_SYNC)
-				bwrite(bp);
-			else
-				bdwrite(bp);
+			int r;
+	
+			r = bread(vp, indirs[unwindidx].in_lbn, 
+			    (int)fs->fs_bsize, NOCRED, &bp);
+			if (r) {
+				panic("Could not unwind indirect block, error %d", r);
+				brelse(bp);
+			} else {
+				bap = (ufs_daddr_t *)bp->b_data;
+				bap[indirs[unwindidx].in_off] = 0;
+				if (flags & B_SYNC)
+					bwrite(bp);
+				else
+					bdwrite(bp);
+			}
 		}
+		bp = getblk(vp, indirs[unwindidx + 1].in_lbn,
+		    (int)fs->fs_bsize, 0, 0);
+		bp->b_flags |= B_INVAL;
+		brelse(bp);
 	}
 	if (deallocated) {
 #ifdef QUOTA
