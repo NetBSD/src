@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.88 2002/06/25 04:04:53 itojun Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.89 2002/06/25 04:16:31 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.88 2002/06/25 04:04:53 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.89 2002/06/25 04:16:31 enami Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -840,10 +840,12 @@ in_arpinput(m)
 
 	ah = mtod(m, struct arphdr *);
 	op = ntohs(ah->ar_op);
-	bcopy((caddr_t)ar_spa(ah), (caddr_t)&isaddr, sizeof (isaddr));
-	bcopy((caddr_t)ar_tpa(ah), (caddr_t)&itaddr, sizeof (itaddr));
 
-	switch (m->m_pkthdr.rcvif->if_type) {
+	/*
+	 * Fix up ah->ar_hrd if necessary, before using ar_tha() or
+	 * ar_tpa().
+	 */
+	switch (ifp->if_type) {
 	case IFT_IEEE1394:
 		if (ntohs(ah->ar_hrd) == ARPHRD_IEEE1394)
 			;
@@ -857,6 +859,9 @@ in_arpinput(m)
 		/* XXX check ar_hrd? */
 		break;
 	}
+
+	bcopy((caddr_t)ar_spa(ah), (caddr_t)&isaddr, sizeof (isaddr));
+	bcopy((caddr_t)ar_tpa(ah), (caddr_t)&itaddr, sizeof (itaddr));
 
 	if (m->m_flags & (M_BCAST|M_MCAST))
 		arpstat.as_rcvmcast++;
