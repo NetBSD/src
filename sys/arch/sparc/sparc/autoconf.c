@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.33 1995/08/29 19:59:49 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.34 1995/09/05 21:46:04 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -482,7 +482,7 @@ bootpath_fake(bp, cp)
 	 */
 	if (cp[0] == 'l' && cp[1] == 'e') {
 		BP_APPEND(bp,"sbus",0,0);
-		BP_APPEND(bp,"le",v0val[0],0);
+		BP_APPEND(bp,"le",-1,v0val[0]);
 		return;
 	}
 
