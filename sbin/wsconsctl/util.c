@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.9 2001/09/19 12:45:24 ad Exp $ */
+/*	$NetBSD: util.c,v 1.10 2001/12/04 04:31:56 gmcgarry Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,6 +65,8 @@ static struct nameint kbtype_tab[] = {
 	{ WSKBD_TYPE_HPC_BTN,		"hpc-btn" },
 	{ WSKBD_TYPE_ARCHIMEDES,	"archimedes" },
 	{ WSKBD_TYPE_RISCPC,		"riscpc" },
+	{ WSKBD_TYPE_ADB,		"adb" },
+	{ WSKBD_TYPE_HIL,		"hil" },
 };
 
 static struct nameint mstype_tab[] = {
@@ -76,6 +78,7 @@ static struct nameint mstype_tab[] = {
 	{ WSMOUSE_TYPE_TPANEL,		"touch-panel" },
 	{ WSMOUSE_TYPE_NEXT,		"next" },
 	{ WSMOUSE_TYPE_ARCHIMEDES,	"archimedes" },
+	{ WSMOUSE_TYPE_HIL,		"hil" },
 };
 
 static struct nameint dpytype_tab[] = {
@@ -104,6 +107,13 @@ static struct nameint dpytype_tab[] = {
 	{ WSDISPLAY_TYPE_SB_P9100,	"sparcbook-p9100" },
 	{ WSDISPLAY_TYPE_EGA,		"ega" },
 	{ WSDISPLAY_TYPE_DCPVR,		"dreamcast-pvr" },
+	{ WSDISPLAY_TYPE_GATOR,		"hp-gator" },
+	{ WSDISPLAY_TYPE_TOPCAT,	"hp-topcat" },
+	{ WSDISPLAY_TYPE_RENAISSANCE,	"hp-renaissance" },
+	{ WSDISPLAY_TYPE_CATSEYE,	"hp-catseye" },
+	{ WSDISPLAY_TYPE_DAVINCI,	"hp-davinci" },
+	{ WSDISPLAY_TYPE_TIGER,		"hp-tiger" },
+	{ WSDISPLAY_TYPE_HYPERION,	"hp-hyperion" },
 };
 
 static struct nameint kbdenc_tab[] = {
