@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.35 1998/11/20 00:35:39 thorpej Exp $	*/
+/*	$NetBSD: ch.c,v 1.36 1998/12/08 00:19:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998 Jason R. Thorpe <thorpej@and.com>
@@ -272,6 +272,8 @@ chclose(dev, flags, fmt, p)
 	struct proc *p;
 {
 	struct ch_softc *sc = ch_cd.cd_devs[CHUNIT(dev)];
+
+	scsipi_wait_drain(sc->sc_link);
 
 	scsipi_adapter_delref(sc->sc_link);
 	sc->sc_link->flags &= ~SDEV_OPEN;
