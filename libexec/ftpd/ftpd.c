@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.42 1997/11/28 23:32:30 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.43 1997/11/28 23:42:36 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.42 1997/11/28 23:32:30 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.43 1997/11/28 23:42:36 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -361,7 +361,7 @@ main(argc, argv)
 	(void) gethostname(hostname, sizeof(hostname));
 	reply(220, "%s FTP server (%s) ready.", hostname, version);
 	(void) setjmp(errcatch);
-	curclass.timeout = 900;		/* 15 minutes. XXXLUKEM this is ugly */
+	curclass.timeout = 300;		/* 5 minutes, as per login(1) */
 	for (;;)
 		(void) yyparse();
 	/* NOTREACHED */
