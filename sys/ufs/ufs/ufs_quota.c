@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.29 2003/10/15 11:29:01 hannken Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.30 2003/11/05 10:18:38 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.29 2003/10/15 11:29:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.30 2003/11/05 10:18:38 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -898,9 +898,7 @@ dqsync(vp, dq)
 		return (0);
 	if ((dqvp = dq->dq_ump->um_quotas[dq->dq_type]) == NULLVP)
 		panic("dqsync: file");
-	error = vn_start_write(dqvp, &mp, V_WAIT | V_LOWER);
-	if (error)
-		return (error);
+	vn_start_write(dqvp, &mp, V_WAIT | V_LOWER);
 	if (vp != dqvp)
 		vn_lock(dqvp, LK_EXCLUSIVE | LK_RETRY);
 	while (dq->dq_flags & DQ_LOCK) {
