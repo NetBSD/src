@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.40 2000/10/15 20:03:44 thorpej Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.41 2000/11/15 01:02:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -1648,11 +1648,6 @@ vr_attach(parent, self, aux)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->vr_enaddr);
-
-#if NBPFILTER > 0
-	bpfattach(&sc->vr_ec.ec_if.if_bpf,
-		ifp, DLT_EN10MB, sizeof (struct ether_header));
-#endif
 
 	sc->vr_ats = shutdownhook_establish(vr_shutdown, sc);
 	if (sc->vr_ats == NULL)

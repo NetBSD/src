@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.39 2000/10/17 16:14:42 bouyer Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.40 2000/11/15 01:02:16 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -152,9 +152,6 @@ dp8390_config(sc, media, nmedia, defmedia)
 	/* Attach the interface. */
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 
 #if NRND > 0
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
@@ -1334,9 +1331,6 @@ dp8390_detach(sc, flags)
 
 #if NRND > 0
 	rnd_detach_source(&sc->rnd_source);
-#endif
-#if NBPFILTER > 0
-	bpfdetach(ifp);
 #endif
 	ether_ifdetach(ifp);
 	if_detach(ifp);

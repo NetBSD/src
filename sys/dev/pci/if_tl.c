@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.36 2000/10/01 23:32:44 thorpej Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.37 2000/11/15 01:02:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -445,10 +445,6 @@ tl_pci_attach(parent, self, aux)
 	ifp->if_timer = 0;
 	if_attach(ifp);
 	ether_ifattach(&(sc)->tl_if, (sc)->tl_enaddr);
-#if NBPFILTER > 0
-	bpfattach(&sc->tl_bpf, &sc->tl_if, DLT_EN10MB,
-	    sizeof(struct ether_header));
-#endif
 }
 
 static void
