@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_obio.c,v 1.1 1998/08/29 20:49:37 pk Exp $	*/
+/*	$NetBSD: esp_obio.c,v 1.2 1998/08/29 21:43:46 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -149,7 +149,6 @@ espattach_obio(parent, self, aux)
 	struct obio4_attach_args *oba = &uoba->uoba_oba4;
 	struct esp_softc *esc = (void *)self;
 	struct ncr53c9x_softc *sc = &esc->sc_ncr53c9x;
-	bus_space_handle_t bh;
 
 	esc->sc_bustag = oba->oba_bustag;
 	esc->sc_dmatag = oba->oba_dmatag;
@@ -167,7 +166,7 @@ espattach_obio(parent, self, aux)
 	 * and a back pointer to us, for DMA
 	 */
 	if (esc->sc_dma)
-		esc->sc_dma->sc_ncr53c9x = sc;
+		esc->sc_dma->sc_client = sc;
 	else {
 		printf("\n");
 		panic("espattach: no dma found");
@@ -177,12 +176,10 @@ espattach_obio(parent, self, aux)
 			 0,	/* offset */
 			 16,	/* size (of ncr53c9xreg) */
 			 BUS_SPACE_MAP_LINEAR,
-			 0, &bh) != 0) {
+			 0, &esc->sc_reg) != 0) {
 		printf("%s @ obio: cannot map registers\n", self->dv_xname);
 		return;
 	}
-
-	esc->sc_reg = bh;
 
 	if (oba->oba_bp != NULL && strcmp(oba->oba_bp->name, "esp") == 0 &&
 	    oba->oba_bp->val[0] == -1 &&
