@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiu.c,v 1.30 2003/10/23 20:25:40 he Exp $	*/
+/*	$NetBSD: vrpiu.c,v 1.31 2003/12/26 11:13:40 shin Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 TAKEMURA Shin All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrpiu.c,v 1.30 2003/10/23 20:25:40 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrpiu.c,v 1.31 2003/12/26 11:13:40 shin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -608,6 +608,8 @@ vrpiu_tp_intr(struct vrpiu_softc *sc)
 	unsigned int intrstat, page;
 	int tpx0, tpx1, tpy0, tpy1;
 	int x, y, xraw, yraw;
+
+	tpx0 = tpx1 = tpy0 = tpy1 = 0;	/* XXX: gcc -Wuninitialized */
 
 	intrstat = vrpiu_read(sc, PIUINT_REG_W);
 
