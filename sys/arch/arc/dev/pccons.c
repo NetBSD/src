@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.18 2000/06/09 05:42:00 soda Exp $	*/
+/*	$NetBSD: pccons.c,v 1.19 2000/06/12 17:04:52 soda Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
 /*	NetBSD: pms.c,v 1.21 1995/04/18 02:25:18 mycroft Exp	*/
@@ -2314,11 +2314,12 @@ opmspoll(dev, events, p)
 	int revents = 0;
 	int s = spltty();
 
-	if (events & (POLLIN | POLLRDNORM))
+	if (events & (POLLIN | POLLRDNORM)) {
 		if (sc->sc_q.c_cc > 0)
 			revents |= events & (POLLIN | POLLRDNORM);
 		else
 			selrecord(p, &sc->sc_rsel);
+	}
 
 	splx(s);
 	return (revents);
