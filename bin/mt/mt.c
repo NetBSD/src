@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.20 1997/07/01 20:15:51 hannken Exp $	*/
+/*	$NetBSD: mt.c,v 1.21 1997/07/20 18:59:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)mt.c	8.2 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: mt.c,v 1.20 1997/07/01 20:15:51 hannken Exp $";
+__RCSID("$NetBSD: mt.c,v 1.21 1997/07/20 18:59:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,6 +99,7 @@ const struct commands com[] = {
 void printreg __P((char *, u_int, char *));
 void status __P((struct mtget *));
 void usage __P((void));
+int  main __P((int, char *[]));
 
 int
 main(argc, argv)
@@ -232,10 +233,10 @@ status(bp)
 	printreg("ds", bp->mt_dsreg, mt->t_dsbits);
 	printreg("\ner", bp->mt_erreg, mt->t_erbits);
 	(void)putchar('\n');
-	(void)printf("blocksize: %ld (%ld, %ld, %ld, %ld)\n",
+	(void)printf("blocksize: %d (%d, %d, %d, %d)\n",
 		bp->mt_blksiz, bp->mt_mblksiz[0], bp->mt_mblksiz[1],
 		bp->mt_mblksiz[2], bp->mt_mblksiz[3]);
-	(void)printf("density: %ld (%ld, %ld, %ld, %ld)\n",
+	(void)printf("density: %d (%d, %d, %d, %d)\n",
 		bp->mt_density, bp->mt_mdensity[0], bp->mt_mdensity[1],
 		bp->mt_mdensity[2], bp->mt_mdensity[3]);
 }
