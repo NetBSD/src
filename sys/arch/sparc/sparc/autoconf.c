@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.89 1998/03/30 14:15:57 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.90 1998/04/01 14:03:26 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -178,6 +178,7 @@ struct om_vector *oldpvec = (struct om_vector *)PROM_BASE;
 void
 bootstrap()
 {
+	extern struct user *proc0paddr;
 
 #if defined(SUN4)
 	if (CPU_ISSUN4) {
@@ -212,6 +213,9 @@ bootstrap()
 			*oldpvec->vector_cmd = oldmon_w_cmd;
 	}
 #endif /* SUN4 */
+
+	/* Attach user structure to proc0 */
+	proc0.p_addr = proc0paddr;
 
 	bzero(&cpuinfo, sizeof(struct cpu_softc));
 	cpuinfo.master = 1;
