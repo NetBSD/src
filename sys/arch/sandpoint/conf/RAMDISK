@@ -1,0 +1,12 @@
+#	$NetBSD: RAMDISK,v 1.1 2001/06/07 17:08:13 briggs Exp $
+#
+# GENERIC for Motorola Sandpoint
+#
+
+include "arch/sandpoint/conf/GENERIC"
+
+options 	MEMORY_DISK_HOOKS
+options 	MEMORY_DISK_IS_ROOT	# Force root on RAM disk
+options 	MINIROOTSIZE=4096	# 2 MB
+
+pseudo-device	md		1
