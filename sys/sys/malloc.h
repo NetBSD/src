@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.30 1997/06/11 10:40:16 bouyer Exp $	*/
+/*	$NetBSD: malloc.h,v 1.31 1997/06/12 17:59:13 mrg Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -126,7 +126,8 @@
 #define	M_NFSRVDESC	72	/* NFS server descriptor */
 #define	M_NFSDIROFF	73	/* NFS directory cookies */
 #define	M_NFSBIGFH	74	/* NFS big filehandle */
-#define M_EXT2FSNODE 75  /* EXT2FS vnode private part */
+#define M_EXT2FSNODE	75	/* EXT2FS vnode private part */
+#define M_VMSWAP	76	/* VM swap structures */
 #define	M_TEMP		84	/* misc temporary data buffers */
 #define	M_LAST		85	/* Must be last type + 1 */
 
@@ -207,7 +208,8 @@
 	"NFS diroff",	/* 73 M_NFSDIROFF */ \
 	"NFS bigfh",	/* 74 M_NFSBIGFH */ \
 	"EXT2FS node",  /* 75 M_EXT2FSNODE */ \
-	NULL, NULL, NULL, NULL, NULL, \
+	"VM swap",	/* 76 M_VMSWAP */ \
+	NULL, NULL, NULL, NULL, \
 	NULL, NULL, NULL, \
 	"temp",		/* 84 M_TEMP */ \
 }
