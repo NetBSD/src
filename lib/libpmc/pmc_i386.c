@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc_i386.c,v 1.2 2002/08/09 05:29:37 thorpej Exp $	*/
+/*	$NetBSD: pmc_i386.c,v 1.3 2002/08/09 10:13:07 wiz Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -362,7 +362,7 @@ static const struct pmc_event k7_pmc_evids[] = {
 	{ "branch-retired",		K7_RETIRED_BRANCHES },
 	{ "branch-miss-retired",	K7_RETIRED_BRANCH_MISPREDICTED },
 	{ "branch-taken-retired",	K7_RETIRED_TAKEN_BRANCH },
-	{ "branch-taked-miss-retired",
+	{ "branch-taken-miss-retired",
 	    K7_RETIRED_TAKEN_BRANCH_MISPREDICTED },
 	{ "branch-far-retired",
 	    K7_RETIRED_FAR_CONTROL_TRANSFER },
