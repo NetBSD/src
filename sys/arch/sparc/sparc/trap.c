@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.30 1995/04/22 20:28:43 christos Exp $ */
+/*	$NetBSD: trap.c,v 1.31 1995/04/22 20:50:37 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -715,7 +715,7 @@ syscall(code, tf, pc)
 		nap--;
 		break;
 	case SYS___syscall:
-		if (callp != p->p_emul->e_sysent)
+		if (callp != sysent)
 			break;
 		code = ap[_QUAD_LOWWORD];
 		ap += 2;

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.80 1995/04/22 20:26:50 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.81 1995/04/22 20:49:54 christos Exp $	*/
 
 #undef DEBUG
 #define DEBUG
@@ -513,7 +513,7 @@ syscall(frame)
 	code = frame.tf_eax;
 
 	nsys = p->p_emul->e_nsysent;
-	callp = p->p_emul->e_sysent;
+	callp = e_sysent;
 
 #ifdef COMPAT_IBCS2
 	if (p->p_emul == &emul_ibcs2)
@@ -540,7 +540,7 @@ syscall(frame)
 		 * Like syscall, but code is a quad, so as to maintain
 		 * quad alignment for the rest of the arguments.
 		 */
-		if (callp != p->p_emul->e_sysent)
+		if (callp != sysent)
 			break;
 		code = fuword(params + _QUAD_LOWWORD * sizeof(int));
 		params += sizeof(quad_t);
