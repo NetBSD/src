@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.122 2002/07/28 22:18:51 manu Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.123 2002/08/25 21:47:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.122 2002/07/28 22:18:51 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.123 2002/08/25 21:47:50 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -1347,8 +1347,9 @@ sigexit(struct proc *p, int signum)
 			exitsig |= WCOREFLAG;
 
 		if (kern_logsigexit) {
+			/* XXX What if we ever have really large UIDs? */
 			int uid = p->p_cred && p->p_ucred ? 
-				p->p_ucred->cr_uid : -1;
+				(int) p->p_ucred->cr_uid : -1;
 
 			if (error) 
 				log(LOG_INFO, lognocoredump, p->p_pid,
