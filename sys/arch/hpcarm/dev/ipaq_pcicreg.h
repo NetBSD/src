@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_pcicreg.h,v 1.1 2001/07/10 16:31:52 ichiro Exp $	*/
+/*	$NetBSD: ipaq_pcicreg.h,v 1.2 2001/08/01 06:14:31 ichiro Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,3 +41,33 @@
 #define IRQ_CD1		21
 #define IRQ_IRQ0	22
 #define IRQ_IRQ1	23
+
+/*
+ * Linkup register of DUAL PCMCIA SLEEVE
+ */
+#define LINKUP_STATUS_REG0	0x1a000000
+#define LINKUP_STATUS_REG1	0x19000000
+
+/* Status Register */
+#define LINKUP_S1		(1 << 0)
+#define LINKUP_S2		(1 << 1)
+#define LINKUP_S3		(1 << 2)
+#define LINKUP_S4		(1 << 3)
+#define LINKUP_BVD1		(1 << 4)
+#define LINKUP_BVD2		(1 << 5)
+#define LINKUP_VS1		(1 << 6)
+#define LINKUP_VS2		(1 << 7)
+#define LINKUP_RDY		(1 << 8)
+#define LINKUP_CD1		(1 << 9)
+#define LINKUP_CD2		(1 << 10)
+
+/* Command Register */
+#define LINKUP_CMD_S1		(1 << 0)
+#define LINKUP_CMD_S2		(1 << 1)
+#define LINKUP_CMD_S3		(1 << 2)
+#define LINKUP_CMD_S4		(1 << 3)
+#define LINKUP_CMD_RESET	(1 << 4)
+#define LINKUP_CMD_AUTO_PWOFF	(1 << 5)
+#define LINKUP_CMD_CFMODE	(1 << 6)
+#define LINKUP_CMD_SIGNAL_OUT	(1 << 7)
+#define LINKUP_CMD_SOCK_POLAR	(1 << 8)
