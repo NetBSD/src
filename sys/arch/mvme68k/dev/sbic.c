@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.10.2.2 2001/03/29 09:03:00 bouyer Exp $	*/
+/*	$NetBSD: sbic.c,v 1.10.2.3 2001/03/29 10:26:01 bouyer Exp $	*/
 
 /*
  * Changes Copyright (c) 1996 Steve Woodford
@@ -366,7 +366,7 @@ sbic_scsi_request(chan, req, arg)
 	void *arg;
 {
     struct scsipi_xfer *xs;
-    struct scsipi_periph;
+    struct scsipi_periph *periph;
     struct sbic_softc   *dev = (void *)chan->chan_adapter->adapt_dev;
     struct sbic_acb     *acb;
     int                 flags, s;
@@ -375,7 +375,7 @@ sbic_scsi_request(chan, req, arg)
     case ADAPTER_REQ_RUN_XFER:
 	xs = arg;
 	periph = xs->xs_periph;
-        flags = xs->xs_control
+        flags = xs->xs_control;
 
         if ( flags & XS_CTL_DATA_UIO )
             panic("sbic: scsi data uio requested");
@@ -566,7 +566,7 @@ sbic_scsidone(acb, stat)
 {
     struct scsipi_xfer    *xs  = acb->xs;
     struct scsipi_periph  *periph = xs->xs_periph;
-    struct sbic_softc   *dev = periph->periph_channel->chan_adapter->adapt_dev;
+    struct sbic_softc   *dev = (void *)periph->periph_channel->chan_adapter->adapt_dev;
     int                 dosched = 0;
 
 #ifdef DIAGNOSTIC
@@ -586,14 +586,14 @@ sbic_scsidone(acb, stat)
 			periph->periph_lun,
                                                    dev->target, dev->lun, stat);
 
-    if ( xs->xs_periph->periph.target == dev->sc_channel->chan_id)
+    if ( xs->xs_periph->periph_target == dev->sc_channel.chan_id)
         panic("target == hostid");
 #endif
 
     xs->status = stat;
     xs->resid = 0;      /* XXXX */
     if ( xs->error == XS_NOERROR) {
-        if ( stat == SCSI_CHECK || stat == SCSU_BUSY)
+        if ( stat == SCSI_CHECK || stat == SCSI_BUSY)
             xs->error = XS_BUSY;
     }
 
@@ -857,7 +857,7 @@ sbicreset(dev)
 
     s = splbio();
 
-    my_id = dev->sc_channel->chan_id & SBIC_ID_MASK;
+    my_id = dev->sc_channel.chan_id & SBIC_ID_MASK;
 
     if (dev->sc_clkfreq < 110)
         my_id |= SBIC_ID_FS_8_10;

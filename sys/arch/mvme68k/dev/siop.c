@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.3.2.2 2001/03/29 09:03:01 bouyer Exp $ */
+/*	$NetBSD: siop.c,v 1.3.2.3 2001/03/29 10:26:01 bouyer Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -199,7 +199,7 @@ siop_scsi_request(chan, req, arg)
 {
 	struct scsipi_xfer *xs;
 	struct siop_acb *acb;
-	struct siop_softc *sc = (void *)chan->chan_adapter->adapt_dev;;
+	struct siop_softc *sc = (void *)chan->chan_adapter->adapt_dev;
 	struct scsipi_periph *periph;
 	int flags, s;
 
@@ -398,7 +398,7 @@ siop_scsidone(acb, stat)
 		return;
 	}
 	periph = xs->xs_periph;
-	sc = (void *)periph->periph_channel->chan->chan_adapter->adapt_dev;
+	sc = (void *)periph->periph_channel->chan_adapter->adapt_dev;
 	/*
 	 * is this right?
 	 */
@@ -626,7 +626,7 @@ siopreset(sc)
 	rp->siop_dmode = 0x80;	/* burst length = 4 */
 	rp->siop_sien = 0x00;	/* don't enable interrupts yet */
 	rp->siop_dien = 0x00;	/* don't enable interrupts yet */
-	rp->siop_scid = 1 << sc->xs_periph.periph_channel->chan_id;
+	rp->siop_scid = 1 << sc->sc_channel.chan_id;
 	rp->siop_dwt = 0x00;
 	rp->siop_ctest0 |= SIOP_CTEST0_BTD | SIOP_CTEST0_EAN;
 	rp->siop_ctest7 |= sc->sc_ctest7;
@@ -644,7 +644,7 @@ siopreset(sc)
 
 	delay (siop_reset_delay * 1000);
 	printf("siop id %d reset V%d\n",
-	    sc->xs_periph->periph_channel->chan_id,
+	    sc->sc_channel.chan_id,
 	    rp->siop_ctest8 >> 4);
 
 	if ((sc->sc_flags & SIOP_ALIVE) == 0) {
