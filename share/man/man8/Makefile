@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.61 2002/11/30 15:29:36 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.62 2002/12/09 12:43:16 scw Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 MAN=	afterboot.8 \
@@ -18,15 +18,15 @@ MLINKS+=rc.8 rc.d.8
 MLINKS+=rc.8 rc.shutdown.8
 SUBDIR=	man8.acorn26 man8.acorn32 man8.algor man8.alpha man8.amiga \
 	man8.arc man8.atari man8.bebox man8.cats man8.cesfic \
-	man8.cobalt man8.dreamcast man8.evbarm man8.evbmips man8.evbsh3 \
-	man8.hp300 man8.hp700 man8.hpcarm man8.hpcmips man8.hpcsh \
+	man8.cobalt man8.dreamcast man8.evbarm man8.evbmips man8.evbppc \
+	man8.evbsh3 man8.hp300 man8.hp700 man8.hpcarm man8.hpcmips man8.hpcsh \
 	man8.i386 man8.luna68k \
 	man8.mac68k man8.macppc man8.mipsco man8.mmeye man8.mvme68k \
 	man8.mvmeppc man8.netwinder man8.news68k man8.newsmips \
 	man8.next68k man8.ofppc man8.pc532 man8.playstation2 man8.pmax \
 	man8.pmppc man8.prep man8.sandpoint man8.sbmips man8.sgimips \
 	man8.shark man8.sparc man8.sparc64 \
-	man8.sun2 man8.sun3 man8.vax man8.walnut man8.x68k man8.x86_64
+	man8.sun2 man8.sun3 man8.vax man8.x68k man8.x86_64
 
 # to create man8.${arch}/MAKEDEV.8 from ../../etc/etc.${arch}/MAKEDEV
 # set ARCHS to desired architectures, or leave empty for all.
