@@ -1,45 +1,26 @@
 #
-#	$NetBSD: Makefile.inc,v 1.2 1997/10/29 10:36:24 leo Exp $
+#	$NetBSD: Makefile.inc,v 1.3 1998/06/28 09:38:42 fair Exp $
 #
 #	etc.atari/Makefile.inc -- atari-specific etc Makefile targets
 #
 
 .ifdef DESTDIR
-snap_md: netbsd-ataritt netbsd-boot netbsd-bootx netbsd-generic netbsd-hades
-	cp ${.CURDIR}/../sys/arch/atari/compile/ATARITT/netbsd.gz \
-	    ${DESTDIR}/snapshot/netbsd-ataritt.gz
-	cp ${.CURDIR}/../sys/arch/atari/compile/BOOT/netbsd.gz \
-	    ${DESTDIR}/snapshot/netbsd-boot.gz
-	cp ${.CURDIR}/../sys/arch/atari/compile/BOOTX/netbsd.gz \
-	    ${DESTDIR}/snapshot/netbsd-bootx.gz
-	cp ${.CURDIR}/../sys/arch/atari/compile/GENERIC/netbsd.gz \
-	    ${DESTDIR}/snapshot/netbsd-generic.gz
-	cp ${.CURDIR}/../sys/arch/atari/compile/HADES/netbsd.gz \
-	    ${DESTDIR}/snapshot/netbsd-hades.gz
 
-netbsd-ataritt:
-	cd ${.CURDIR}/../sys/arch/atari/conf && config ATARITT
-	cd ${.CURDIR}/../sys/arch/atari/compile/ATARITT && \
-	    make clean && make depend && make && gzip -9 netbsd
+# the regular expression does a basename(1) on .CURDIR so that we don't
+# have to keep looking up .. at compile time.
 
-netbsd-boot:
-	cd ${.CURDIR}/../sys/arch/atari/conf && config BOOT
-	cd ${.CURDIR}/../sys/arch/atari/compile/BOOT && \
-	    make clean && make depend && make && gzip -9 netbsd
+KERNSRCDIR?=	${.CURDIR:C/[^\/]+$//}sys
+KERNOBJDIR?=	${KERNSRCDIR}/arch/${MACHINE}/compile
+KERNCONFDIR?=	${KERNSRCDIR}/arch/${MACHINE}/conf
 
-netbsd-bootx:
-	cd ${.CURDIR}/../sys/arch/atari/conf && config BOOTX
-	cd ${.CURDIR}/../sys/arch/atari/compile/BOOTX && \
-	    make clean && make depend && make && gzip -9 netbsd
-
-netbsd-generic:
-	cd ${.CURDIR}/../sys/arch/atari/conf && config GENERIC
-	cd ${.CURDIR}/../sys/arch/atari/compile/GENERIC && \
-	    make clean && make depend && make && gzip -9 netbsd
-
-netbsd-hades:
-	cd ${.CURDIR}/../sys/arch/atari/conf && config HADES
-	cd ${.CURDIR}/../sys/arch/atari/compile/HADES && \
-	    make clean && make depend && make && gzip -9 netbsd
+snap_md:
+.for kernel in GENERIC ATARITT BOOT BOOTX HADES
+	cd ${KERNCONFDIR} && config \
+		-b ${KERNOBJDIR}/${kernel} \
+		-s ${KERNSRCDIR} \
+		${kernel}
+	cd ${KERNOBJDIR}/${kernel} && make clean && make depend && make && \
+		gzip -c -9 netbsd > ${DESTDIR}/snapshot/netbsd.${kernel}.gz
+.endfor
 
 .endif	# DESTDIR check

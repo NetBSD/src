@@ -1,28 +1,24 @@
-#	$NetBSD: Makefile.inc,v 1.3 1997/03/06 23:41:26 mikel Exp $
+#	$NetBSD: Makefile.inc,v 1.4 1998/06/28 09:38:42 fair Exp $
 #
 #	etc.hp300/Makefile.inc -- hp300-specific etc Makefile targets
 
 .ifdef DESTDIR
-snap_md: netbsd-gen.gz netbsd-dl.gz
 
-netbsd-gen:
-	cd ${.CURDIR}/../sys/arch/hp300/conf && config GENERIC
-	cd ${.CURDIR}/../sys/arch/hp300/compile/GENERIC && \
-	    make clean && make depend && make
-	cp ${.CURDIR}/../sys/arch/hp300/compile/GENERIC/netbsd \
-	    ${DESTDIR}/snapshot/netbsd-gen
+# the regular expression does a basename(1) on .CURDIR so that we don't
+# have to keep looking up .. at compile time.
 
-netbsd-dl:
-	cd ${.CURDIR}/../sys/arch/hp300/conf && config DISKLESS
-	cd ${.CURDIR}/../sys/arch/hp300/compile/DISKLESS && \
-	    make clean && make depend && make
-	cp ${.CURDIR}/../sys/arch/hp300/compile/DISKLESS/netbsd \
-	    ${DESTDIR}/snapshot/netbsd-dl
+KERNSRCDIR?=	${.CURDIR:C/[^\/]+$//}sys
+KERNOBJDIR?=	${KERNSRCDIR}/arch/${MACHINE}/compile
+KERNCONFDIR?=	${KERNSRCDIR}/arch/${MACHINE}/conf
 
-netbsd-gen.gz: netbsd-gen
-	gzip -f9 ${DESTDIR}/snapshot/netbsd-gen
-
-netbsd-dl.gz: netbsd-dl
-	gzip -f9 ${DESTDIR}/snapshot/netbsd-dl
+snap_md:
+.for kernel in GENERIC DISKLESS
+	cd ${KERNCONFDIR} && config \
+		-b ${KERNOBJDIR}/${kernel} \
+		-s ${KERNSRCDIR} \
+		${kernel}
+	cd ${KERNOBJDIR}/${kernel} && make clean && make depend && make && \
+		gzip -c -9 netbsd > ${DESTDIR}/snapshot/netbsd.${kernel}.gz
+.endfor
 
 .endif	# DESTDIR check

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 1998/06/25 17:54:05 fair Exp $
+#	$NetBSD: Makefile.inc,v 1.6 1998/06/28 09:38:43 fair Exp $
 #
 #	etc.sun3/Makefile.inc -- sun3-specific etc Makefile targets
 #
@@ -14,19 +14,14 @@ KERNSRCDIR?=	${.CURDIR:C/[^\/]+$//}sys
 KERNOBJDIR?=	${KERNSRCDIR}/arch/${MACHINE}/compile
 KERNCONFDIR?=	${KERNSRCDIR}/arch/${MACHINE}/conf
 
-snap_md: netbsd
-	cp ${KERNOBJDIR}/GENERIC/netbsd \
-		${DESTDIR}/snapshot/netbsd.sun3
-	cp ${KERNOBJDIR}/GENERIC3X/netbsd \
-		${DESTDIR}/snapshot/netbsd.sun3x
-
-netbsd:
+snap_md:
 .for kernel in GENERIC GENERIC3X
 	cd ${KERNCONFDIR} && config \
 		-b ${KERNOBJDIR}/${kernel} \
 		-s ${KERNSRCDIR} \
 		${kernel}
-	cd ${KERNOBJDIR}/${kernel} && make clean && make depend && make
+	cd ${KERNOBJDIR}/${kernel} && make clean && make depend && make && \
+		cp netbsd ${DESTDIR}/snapshot/netbsd.${kernel}
 .endfor
 
 .endif	# DESTDIR check

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.10 1998/06/24 08:15:47 fair Exp $
+#	$NetBSD: Makefile.inc,v 1.11 1998/06/28 09:38:43 fair Exp $
 #
 #	etc.sparc/Makefile.inc -- sparc-specific etc Makefile targets
 #
@@ -18,11 +18,8 @@ snap_md:
 		-b ${KERNOBJDIR}/${kernel} \
 		-s ${KERNSRCDIR} \
 		${kernel}
-	cd ${KERNOBJDIR}/${kernel} && make clean && make depend && make
+	cd ${KERNOBJDIR}/${kernel} && make clean && make depend && make && \
+		cp netbsd ${DESTDIR}/snapshot/netbsd.${kernel}
 .endfor
-	cp ${KERNOBJDIR}/GENERIC/netbsd \
-		${DESTDIR}/snapshot/netbsd
-	cp ${KERNOBJDIR}/GENERIC_SCSI3/netbsd \
-		${DESTDIR}/snapshot/netbsd.scsi3
 
 .endif	# DESTDIR check
