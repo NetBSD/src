@@ -1,4 +1,4 @@
-/*	$NetBSD: pt_conf.c,v 1.4 1995/04/23 10:33:24 cgd Exp $	*/
+/*	$NetBSD: pt_conf.c,v 1.5 1997/09/15 05:58:28 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,6 +38,11 @@
  *	from: Id: pt_conf.c,v 1.2 1992/05/27 07:09:27 jsp Exp
  *	@(#)pt_conf.c	8.1 (Berkeley) 6/5/93
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: pt_conf.c,v 1.5 1997/09/15 05:58:28 lukem Exp $");
+#endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/param.h>
