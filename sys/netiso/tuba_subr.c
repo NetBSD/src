@@ -1,4 +1,4 @@
-/*	$NetBSD: tuba_subr.c,v 1.7.4.1 1996/12/11 04:08:47 mycroft Exp $	*/
+/*	$NetBSD: tuba_subr.c,v 1.7.4.2 1996/12/11 07:04:48 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -101,7 +101,7 @@ tuba_init()
 #define TUBAHDRSIZE (3 /*LLC*/ + 9 /*CLNP Fixed*/ + 42 /*Addresses*/ \
 		     + 6 /*CLNP Segment*/ + 20 /*TCP*/)
 
-	in_pcbinit(&tuba_inpcb, tuba_inpcbhashsize, tuba_inpcbhashsize);
+	in_pcbinit(&tuba_inpcb, tuba_inpcbhashsize);
 	tuba_isopcb.isop_next = tuba_isopcb.isop_prev = &tuba_isopcb;
 	tuba_isopcb.isop_faddr = &tuba_isopcb.isop_sfaddr;
 	tuba_isopcb.isop_laddr = &tuba_isopcb.isop_sladdr;
