@@ -612,7 +612,7 @@
 ./usr/share/man/cat8/netgroup_mkdb.0
 ./usr/share/man/cat8/newfs.0
 ./usr/share/man/cat8/newfs_msdos.0
-./usr/share/man/cat8/newlfs.0
+./usr/share/man/cat8/newfs_lfs.0
 ./usr/share/man/cat8/newsyslog.0
 ./usr/share/man/cat8/nfsd.0
 ./usr/share/man/cat8/nfsiod.0
@@ -1545,7 +1545,7 @@
 ./usr/share/man/man8/netgroup_mkdb.8
 ./usr/share/man/man8/newfs.8
 ./usr/share/man/man8/newfs_msdos.8
-./usr/share/man/man8/newlfs.8
+./usr/share/man/man8/newfs_lfs.8
 ./usr/share/man/man8/newsyslog.8
 ./usr/share/man/man8/nfsd.8
 ./usr/share/man/man8/nfsiod.8
