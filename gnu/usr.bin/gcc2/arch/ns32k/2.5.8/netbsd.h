@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: netbsd.h,v 1.1 1994/06/28 21:38:04 phil Exp $
+	$Id: netbsd.h,v 1.2 1994/12/21 11:25:39 cgd Exp $
 */
 
 #include <machine/ansi.h>
@@ -69,7 +69,7 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 /* Names to predefine in the preprocessor for this target machine.  */
 
 #undef CPP_PREDEFINES
-#define CPP_PREDEFINES "-Dns32532 -Dns32000 -Dns32k -Dpc532 -Dunix -D__NetBSD__ -Asystem(unix) -Asystem(bsd) -Acpu(ns32k) -Amachine(ns32k) -Amachine(pc532)"
+#define CPP_PREDEFINES "-Dns32532 -Dns32000 -Dns32k -Dpc532 -Dunix -D__NetBSD__ -D__ns32k__"
 
 
 /* Specify -k to assembler for pic generation. PIC needs -K too. */

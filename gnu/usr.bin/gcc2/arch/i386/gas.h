@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. 
 
-	$Id: gas.h,v 1.1 1993/08/23 09:21:45 cgd Exp $
+	$Id: gas.h,v 1.2 1994/12/21 11:24:51 cgd Exp $
 */
 
 /* Note that i386/seq-gas.h is a GAS configuration that does not use this
@@ -58,7 +58,7 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
 /* Specify predefined symbols in preprocessor.  */
 
-#define CPP_PREDEFINES "-Dunix -Di386"
+#define CPP_PREDEFINES "-Dunix -Di386 -D__NetBSD__ -D__i386__"
 #define CPP_SPEC "%{posix:-D_POSIX_SOURCE}"
 
 /* Allow #sccs in preprocessor.  */
