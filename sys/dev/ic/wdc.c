@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.105 2001/12/03 11:07:34 enami Exp $ */
+/*	$NetBSD: wdc.c,v 1.106 2001/12/05 20:43:00 bouyer Exp $ */
 
 
 /*
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.105 2001/12/03 11:07:34 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.106 2001/12/05 20:43:00 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -106,6 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.105 2001/12/03 11:07:34 enami Exp $");
 #include <dev/ic/wdcvar.h>
 
 #include "atapibus.h"
+#include "wd.h"
 
 #define WDCDELAY  100 /* 100 microseconds */
 #define WDCNDELAY_RST (WDC_RESET_WAIT * 1000 / WDCDELAY)
@@ -116,7 +117,21 @@ __KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.105 2001/12/03 11:07:34 enami Exp $");
 
 struct pool wdc_xfer_pool;
 
+#if NWD > 0
 extern const struct ata_bustype wdc_ata_bustype; /* in ata_wdc.c */
+#else
+/* A fake one, the autoconfig will print "wd at foo ... not configured */
+const struct ata_bustype wdc_ata_bustype = {
+	SCSIPI_BUSTYPE_ATA,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL
+};
+#endif
 
 static void  __wdcerror	  __P((struct channel_softc*, char *));
 static int   __wdcwait_reset  __P((struct channel_softc *, int));
@@ -147,7 +162,7 @@ wdprint(aux, pnp)
 {
 	struct ata_device *adev = aux;
 	if (pnp)
-		printf("drive at %s", pnp);
+		printf("wd at %s", pnp);
 	printf(" channel %d drive %d", adev->adev_channel,
 	    adev->adev_drv_data->drive);
 	return (UNCONF);
