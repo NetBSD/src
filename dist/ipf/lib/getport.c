@@ -1,14 +1,39 @@
-/*	$NetBSD: getport.c,v 1.1.1.1 2004/03/28 08:56:18 martti Exp $	*/
-
 #include "ipf.h"
 
-int getport(name)
+int getport(fr, name)
+frentry_t *fr;
 char *name;
 {
+	struct protoent *p;
 	struct servent *s;
+	u_short p1;
 
-	s = getservbyname(name, NULL);
+	if (fr == NULL || fr->fr_type != FR_T_IPF) {
+		s = getservbyname(name, NULL);
+		if (s != NULL)
+			return s->s_port;
+		return 0;
+	}
+
+	if ((fr->fr_flx & FI_TCPUDP) != 0) {
+		/*
+		 * If a rule is "tcp/udp" then check that both TCP and UDP
+		 * mappings for this protocol name match ports.
+		 */
+		s = getservbyname(name, "tcp");
+		if (s == NULL)
+			return 0;
+		p1 = s->s_port;
+		s = getservbyname(name, "udp");
+		if (s == NULL || s->s_port != p1)
+			return 0;
+		return p1;
+	}
+
+	p = getprotobynumber(fr->fr_proto);
+	s = getservbyname(name, p ? p->p_name : NULL);
 	if (s != NULL)
 		return s->s_port;
+
 	return 0;
 }
