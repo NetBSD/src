@@ -1,4 +1,4 @@
-.\"	$NetBSD: vs.4,v 1.2 2001/05/04 10:48:18 minoura Exp $
+.\"	$NetBSD: vs.4,v 1.3 2001/05/04 10:51:57 wiz Exp $
 .\"
 .\" Copyright (c) 2001 MINOURA Makoto
 .\"
@@ -31,7 +31,7 @@
 .Sh SYNOPSIS
 .Cd vs0 at intio0 addr 0xe92000 dma 3 dmaintr 106
 .Cd audio*	at vs?
-.Sh DESCRIPTION 
+.Sh DESCRIPTION
 .Nm
 drives x68k's built-in voice synthesizer.
 It is implemented as an
@@ -44,4 +44,4 @@ Recording is not tested.
 The sound quality is pretty bad.
 .Sh SEE ALSO
 .Xr audio 4 ,
-.Xr intio 4 .
+.Xr intio 4

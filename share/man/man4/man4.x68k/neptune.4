@@ -1,4 +1,4 @@
-.\"	$NetBSD: neptune.4,v 1.5 2001/04/21 14:36:41 wiz Exp $
+.\"	$NetBSD: neptune.4,v 1.6 2001/05/04 10:51:57 wiz Exp $
 .\"
 .\" Copyright (c) 1998 MINOURA Makoto
 .\" Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 The Neptune-X is a Ethernet interface card initially designed by
 Hirofumi Shimada, which utilizes popular NE2000 or its clone with its
 own x68k-proprietary bus to ISA bus bridge.
-
+.Pp
 The
 .Nx
 .Nm
@@ -52,19 +52,16 @@ It is implemented as a more generic `bus' with its own
 interface, and is intended to be used with
 .Xr ne 4
 driver.
-
 .Sh SEE ALSO
 .Xr intro 4 ,
-.Xr ne 4 ,
 .Xr isa 4 ,
+.Xr ne 4 ,
 .Xr bus_space 9
-
 .Sh HISTORY
 The
 .Nm
 device appeared in
 .Nx 1.4 .
-
 .Sh BUGS
 .Nm
 itself is always detected when it is specified in the kernel config file.
