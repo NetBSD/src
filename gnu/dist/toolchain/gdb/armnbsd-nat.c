@@ -27,6 +27,7 @@
 #include <machine/reg.h>
 #include <machine/frame.h>
 #include "inferior.h"
+#include "gdbcore.h"
 
 #define R15_PSR		0xfc000003
 #define R15_PC		0x03fffffc
@@ -126,4 +127,22 @@ int
 get_longjmp_target (CORE_ADDR *addr)
 {
   return 0;
+}
+
+/* Register that we are able to handle armnbsd core file formats.
+   FIXME: is this really bfd_target_unknown_flavour? */
+
+static struct core_fns armnbsd_core_fns =
+{
+  bfd_target_unknown_flavour,		/* core_flavour */
+  default_check_format,			/* check_format */
+  default_core_sniffer,			/* core_sniffer */
+  fetch_core_registers,			/* core_read_registers */
+  NULL					/* next */
+};
+
+void
+_initialize_armnbsd_nat ()
+{
+  add_core_fns (&armnbsd_core_fns);
 }
