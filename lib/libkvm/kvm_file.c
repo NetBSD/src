@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_file.c,v 1.21 2003/02/01 21:12:27 tron Exp $	*/
+/*	$NetBSD: kvm_file.c,v 1.22 2003/02/02 02:26:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_file.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_file.c,v 1.21 2003/02/01 21:12:27 tron Exp $");
+__RCSID("$NetBSD: kvm_file.c,v 1.22 2003/02/02 02:26:48 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,9 +50,6 @@ __RCSID("$NetBSD: kvm_file.c,v 1.21 2003/02/01 21:12:27 tron Exp $");
  */
 
 #include <sys/param.h>
-#define _KERNEL
-#include <sys/mallocvar.h>
-#undef _KERNEL
 #include <sys/user.h>
 #include <sys/lwp.h>
 #include <sys/proc.h>
