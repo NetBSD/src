@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gm.c,v 1.4 2000/03/26 09:15:17 tsubai Exp $	*/
+/*	$NetBSD: if_gm.c,v 1.5 2000/04/02 12:03:04 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -198,7 +198,7 @@ gmac_attach(parent, self, aux)
 	dp = sc->sc_rxlist;
 	for (i = 0; i < NRXBUF; i++) {
 		sc->sc_rxbuf[i] = p;
-		dp->address = htole32(vtophys(p));
+		dp->address = htole32(vtophys((vaddr_t)p));
 		dp->cmd = htole32(GMAC_OWN);
 		dp++;
 		p += 2048;
@@ -207,7 +207,7 @@ gmac_attach(parent, self, aux)
 	dp = sc->sc_txlist;
 	for (i = 0; i < NTXBUF; i++) {
 		sc->sc_txbuf[i] = p;
-		dp->address = htole32(vtophys(p));
+		dp->address = htole32(vtophys((vaddr_t)p));
 		dp++;
 		p += 2048;
 	}
@@ -569,9 +569,11 @@ gmac_reset(sc)
 	__asm __volatile ("sync");
 
 	gmac_write_reg(sc, GMAC_TXDMADESCBASEHI, 0);
-	gmac_write_reg(sc, GMAC_TXDMADESCBASELO, vtophys(sc->sc_txlist));
+	gmac_write_reg(sc, GMAC_TXDMADESCBASELO,
+		       vtophys((vaddr_t)sc->sc_txlist));
 	gmac_write_reg(sc, GMAC_RXDMADESCBASEHI, 0);
-	gmac_write_reg(sc, GMAC_RXDMADESCBASELO, vtophys(sc->sc_rxlist));
+	gmac_write_reg(sc, GMAC_RXDMADESCBASELO,
+		       vtophys((vaddr_t)sc->sc_rxlist));
 	gmac_write_reg(sc, GMAC_RXDMAKICK, NRXBUF);
 
 	splx(s);
