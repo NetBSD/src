@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.94 2000/07/03 23:30:34 pk Exp $
+#	$NetBSD: files.sparc,v 1.95 2000/08/22 21:29:49 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -71,6 +71,8 @@ device tctrl
 attach tctrl at obio
 file	arch/sparc/dev/tctrl.c			tctrl needs-flag
 
+include "dev/sun/files.sun"
+
 device zs {channel = -1}
 attach zs at mainbus with zs_mainbus
 attach zs at obio with zs_obio
@@ -111,7 +113,7 @@ file dev/ic/z8530tty.c			zstty needs-flag
 file arch/sparc/dev/zs_kgdb.c		kgdb
 
 define zsevent
-file dev/sun/event.c			zsevent
+#file dev/sun/event.c			zsevent
 
 device kbd: zsevent
 attach kbd at zs with kbd_zs
@@ -152,59 +154,31 @@ attach	audioamd at sbus with audioamd_sbus
 file	arch/sparc/dev/audioamd.c		audioamd
 file	arch/sparc/sparc/amd7930intr.s		audioamd
 
-# Brooktree DAC attribute
-define bt_dac
-
-# Raster operations for RASTERCONSOLE (this is here so dependancies work).
-include "dev/rasops/files.rasops"
-
-# Include /dev/fb driver only if a framebuffer card is included
-define fb
-
-device bwtwo: fb, rasops1
-attach bwtwo at sbus with bwtwo_sbus
 attach bwtwo at obio with bwtwo_obio
-file	arch/sparc/dev/bwtwo.c		bwtwo needs-flag
-file	arch/sparc/dev/bwtwo_sbus.c	bwtwo_sbus & sbus
 file	arch/sparc/dev/bwtwo_obio.c	bwtwo_obio & obio
 
 device cgtwo: fb, rasops8
 attach cgtwo at vme
 file	arch/sparc/dev/cgtwo.c		cgtwo needs-flag
 
-device cgthree: bt_dac, fb, rasops8
-attach cgthree at sbus with cgthree_sbus
 attach cgthree at obio with cgthree_obio
-file	arch/sparc/dev/cgthree.c	cgthree needs-flag
+file	arch/sparc/dev/cgthree_obio.c	cgthree_obio & obio
 
-device cgfour: bt_dac, fb, rasops8
+device cgfour: bt_dac, fb, rasops8, pfour
 attach cgfour at obio
 file	arch/sparc/dev/cgfour.c		cgfour needs-flag
 
-device cgsix: bt_dac, fb, rasops8
-attach cgsix at sbus with cgsix_sbus
 attach cgsix at obio with cgsix_obio
-file	arch/sparc/dev/cgsix.c		cgsix needs-flag
-file	arch/sparc/dev/cgsix_sbus.c	cgsix_sbus & sbus
 file	arch/sparc/dev/cgsix_obio.c	cgsix_obio & obio
 
-device cgeight: bt_dac, fb, rasops24
+device cgeight: bt_dac, fb, rasops24, pfour
 attach cgeight at obio
 file	arch/sparc/dev/cgeight.c	cgeight needs-flag
-
-device tcx: bt_dac, fb, rasops8, rasops24
-attach tcx at sbus
-file	arch/sparc/dev/tcx.c		tcx needs-flag
 
 device cgfourteen: fb, rasops32
 attach cgfourteen at obio
 file	arch/sparc/dev/cgfourteen.c	cgfourteen needs-flag
 
-device pnozz: fb, bt_dac, rasops8, rasops16, rasops32
-attach pnozz at sbus
-file	arch/sparc/dev/p9100.c		pnozz needs-flag
-
-file	arch/sparc/dev/bt_subr.c	bt_dac
 file	arch/sparc/dev/fb.c		fb needs-flag
 
 # device definition in sys/conf/files
