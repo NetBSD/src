@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.125.2.3 2001/08/24 00:13:12 nathanw Exp $	*/
+/*	$NetBSD: systm.h,v 1.125.2.4 2001/08/30 23:37:44 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -422,15 +422,15 @@ do {									\
  * Acquire/release kernel lock on behalf of a process.
  * Intended for use in the top half of the kernel.
  */
-#define	KERNEL_PROC_LOCK(p)						\
+#define	KERNEL_PROC_LOCK(l)						\
 do {									\
 	KERNEL_LOCK(LK_EXCLUSIVE);					\
-	(p)->p_flag |= P_BIGLOCK;					\
+	(l)->l_flag |= P_BIGLOCK;					\
 } while (/* CONSTCOND */ 0)
 
-#define	KERNEL_PROC_UNLOCK(p)						\
+#define	KERNEL_PROC_UNLOCK(l)						\
 do {									\
-	p->p_flag &= ~P_BIGLOCK;					\
+	l->l_flag &= ~P_BIGLOCK;					\
 	KERNEL_UNLOCK();						\
 } while (/* CONSTCOND */ 0)
 
@@ -439,8 +439,8 @@ do {									\
 #define	KERNEL_LOCK_INIT()		/* nothing */
 #define	KERNEL_LOCK(flag)		/* nothing */
 #define	KERNEL_UNLOCK()			/* nothing */
-#define	KERNEL_PROC_LOCK(p)		/* nothing */
-#define	KERNEL_PROC_UNLOCK(p)		/* nothing */
+#define	KERNEL_PROC_LOCK(l)		/* nothing */
+#define	KERNEL_PROC_UNLOCK(l)		/* nothing */
 
 #endif /* MULTIPROCESSOR */
 
