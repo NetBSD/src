@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: if_ec.c,v 1.10 1993/06/14 16:45:25 mycroft Exp $
+ *	$Id: if_ec.c,v 1.11 1993/12/10 10:57:40 cgd Exp $
  */
 
 /*
@@ -265,10 +265,10 @@ int unit;
 		return;
 
 	/*
-	 * select thick (e.g. AUI connector) if LLC0 bit is set
+	 * select thick (e.g. AUI connector) if LINK0 bit is set
 	 */
 	outb(sc->ec_io_ctl_addr + E33G_CNTRL,
-		(ifp->if_flags & IFF_LLC0) ? 0 : ECNTRL_ONBOARD);
+		(ifp->if_flags & IFF_LINK0) ? 0 : ECNTRL_ONBOARD);
 
 /*
  * Set up the 8390 chip.
