@@ -1,4 +1,4 @@
-/*	$NetBSD: wd80x3.c,v 1.1.1.1 1997/03/14 02:40:33 perry Exp $	*/
+/*	$NetBSD: wd80x3.c,v 1.2 1997/06/21 14:43:11 drochner Exp $	*/
 
 /* stripped down from netbsd:sys/arch/i386/netboot/wd8x13.c */
 
@@ -114,7 +114,11 @@ BoardIs16Bit(void) {
      * indicates an SMC Elite 16 board.
      */
     u_char tlb = inb(WD_BASEREG + WD_LTB);
-    return tlb == 0x05 || tlb == 0x27 || tlb == 0x29;
+    return tlb == 0x05 || tlb == 0x27 || tlb == 0x29
+#ifdef SUPPORT_SMC_ULTRA
+ || tlb == 0x2b
+#endif
+      ;
   }
   outb(WD_BASEREG + WD_REG1, bsreg);
   return 1;
@@ -244,6 +248,11 @@ char *myadr;
 
   edreset();
 
+#ifdef SUPPORT_SMC_ULTRA
+  outb(WD_BASEREG + 0, 0x40);
+  outb(WD_BASEREG + 5, 0x80);
+  outb(WD_BASEREG + 6, 0x1);
+#endif
   sprintf(etherdev, "ed@isa,0x%x", ourbasereg);
   return 1;
 }
