@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.48 1999/12/03 02:26:36 simonb Exp $	*/
+/*	$NetBSD: print.c,v 1.49 1999/12/05 18:33:28 fredb Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.48 1999/12/03 02:26:36 simonb Exp $");
+__RCSID("$NetBSD: print.c,v 1.49 1999/12/05 18:33:28 fredb Exp $");
 #endif
 #endif /* not lint */
 
@@ -605,7 +605,7 @@ getpmem(k)
 	/* XXX want pmap ptpages, segtab, etc. (per architecture) */
 	szptudot = USPACE/getpagesize();
 	/* XXX don't have info about shared */
-	fracmem = ((float)e->e_vm.vm_rssize + szptudot)/CLSIZE/mempages;
+	fracmem = ((float)e->e_vm.vm_rssize + szptudot)/mempages;
 	return (100.0 * fracmem);
 }
 
