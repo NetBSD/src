@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.58 2002/09/23 13:28:55 itojun Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.59 2002/10/31 17:36:16 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.58 2002/09/23 13:28:55 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.59 2002/10/31 17:36:16 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1654,8 +1654,7 @@ ip6_pcbopts(pktopt, m, so)
 		/*
 		 * Only turning off any previous options.
 		 */
-		if (opt)
-			free(opt, M_IP6OPT);
+		free(opt, M_IP6OPT);
 		if (m)
 			(void)m_free(m);
 		return (0);
@@ -1666,6 +1665,7 @@ ip6_pcbopts(pktopt, m, so)
 		priv = 1;
 	if ((error = ip6_setpktoptions(m, opt, priv)) != 0) {
 		(void)m_free(m);
+		free(opt, M_IP6OPT);
 		return (error);
 	}
 	*pktopt = opt;
