@@ -1,4 +1,4 @@
-/* $NetBSD: psm_intelli.c,v 1.11 2002/01/25 14:53:43 jmcneill Exp $ */
+/* $NetBSD: psm_intelli.c,v 1.12 2002/02/27 00:30:07 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psm_intelli.c,v 1.11 2002/01/25 14:53:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psm_intelli.c,v 1.12 2002/02/27 00:30:07 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,9 @@ struct pmsi_softc {		/* driver status information */
 	int sc_kbcslot;
 
 	int sc_enabled;		/* input enabled? */
+#ifndef PMSI_DISABLE_POWERHOOK
 	void *sc_powerhook;	/* cookie from power hook */
+#endif /* !PMSI_DISABLE_POWERHOOK */
 	int inputstate;
 	u_int buttons, oldbuttons;	/* mouse button status */
 	signed char dx, dy;
@@ -69,7 +71,9 @@ static void	do_disable __P((struct pmsi_softc *));
 int	pmsi_enable __P((void *));
 int	pmsi_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
 void	pmsi_disable __P((void *));
+#ifndef PMSI_DISABLE_POWERHOOK
 void	pmsi_power __P((int, void *));
+#endif /* !PMSI_DISABLE_POWERHOOK */
 
 const struct wsmouse_accessops pmsi_accessops = {
 	pmsi_enable,
@@ -215,7 +219,9 @@ pmsiattach(parent, self, aux)
 		printf("pmsiattach: disable error\n");
 	pckbc_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 0);
 
+#ifndef PMSI_DISABLE_POWERHOOK
 	sc->sc_powerhook = powerhook_establish(pmsi_power, sc);
+#endif /* !PMSI_DISABLE_POWERHOOK */
 }
 
 
@@ -236,8 +242,10 @@ do_enable(sc)
 	if (res)
 		printf("pmsi_enable: command error\n");
 
+#ifndef PMSI_DISABLE_POWERHOOK
 	if (sc->sc_powerhook == NULL)
 		return;
+#endif /* !PMSI_DISABLE_POWERHOOK */
 
 	if ((res = pmsi_setintellimode(sc->sc_kbctag, sc->sc_kbcslot))) {
 #ifdef DEBUG
@@ -391,6 +399,7 @@ int data;
 	return;
 }
 
+#ifndef PMSI_DISABLE_POWERHOOK
 void
 pmsi_power(why, v)
 	int why;
@@ -417,3 +426,4 @@ pmsi_power(why, v)
 		break;
 	}
 }
+#endif /* !PMSI_DISABLE_POWERHOOK */
