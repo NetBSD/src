@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_input.3,v 1.15 2004/03/22 18:57:10 jdc Exp $
+.\"	$NetBSD: curses_input.3,v 1.16 2004/03/23 21:53:34 jdc Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -30,13 +30,15 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd February 24, 2004
+.Dd March 23, 2004
 .Dt CURSES_INPUT 3
 .Os
 .Sh NAME
 .Nm curses_input ,
 .Nm getch ,
 .Nm wgetch ,
+.Nm mvgetch ,
+.Nm mvwgetch ,
 .Nm define_key ,
 .Nm keyok ,
 .Nm getnstr ,
@@ -62,6 +64,10 @@
 .Fn getch "void"
 .Ft int
 .Fn wgetch "WINDOW *win"
+.Ft int
+.Fn mvgetch "int y" "int x" "void"
+.Ft int
+.Fn mvwgetch "WINDOW *win" "int y" "int x"
 .Ft int
 .Fn keyok "int key_symbol" "bool flag"
 .Ft int
@@ -367,11 +373,18 @@ into an unsigned char and push that character back onto the input stream.
 Only one character of push-back is guaranteed to work, more may be possible
 depending on system resources.
 .Sh RETURN VALUES
-If
+The functions
+.Fn getch ,
+.Fn wgetch ,
+.Fn mvgetch
+and
+.Fn mvwgetch
+will return the value of the key pressed or
+.Dv ERR
+in the case of an error or a timeout.
+Additionally, if
 .Fn keypad TRUE
-has been called on a window, then
-.Fn getch
-may return one of the following values:
+has been called on a window, then they may return one of the following values:
 .Pp
 .Bl -column "Termcap entry" "getch Return Value" "Key Function" -offset indent
 .It Sy "Termcap entry" Ta Sy "getch Return Value" Ta Sy "Key Function"
@@ -531,10 +544,7 @@ Note that not all terminals are capable of generating all the keycodes
 listed above nor are termcap entries normally configured with all the
 above capabilities defined.
 .Pp
-Functions returning pointers will return
-.Dv NULL
-if an error is detected.
-The functions that return an int will return one of the following
+Other functions that return an int will return one of the following
 values:
 .Pp
 .Bl -tag -width ERR -compact
@@ -543,6 +553,10 @@ The function completed successfully.
 .It Er ERR
 An error occurred in the function.
 .El
+.Pp
+Functions returning pointers will return
+.Dv NULL
+if an error is detected.
 .Sh SEE ALSO
 .Xr curses_cursor 3 ,
 .Xr curses_keyname 3 ,
