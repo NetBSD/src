@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.11 2001/06/15 22:28:54 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.12 2001/06/16 03:32:48 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -120,13 +120,17 @@ struct pvo_entry {
 	pmap_t pvo_pmap;			/* ptr to owning pmap */
 	vaddr_t pvo_vaddr;			/* VA of entry */
 #define	PVO_PTEGIDX_MASK	0x0007		/* which PTEG slot */
+#define	PVO_PTEGIDX_VALID	0x0008		/* slot is valid */
 #define	PVO_WIRED		0x0010		/* PVO entry is wired */
 #define	PVO_MANAGED		0x0020		/* PVO entyy for managed page */
 };
 #define	PVO_VADDR(pvo)		((pvo)->pvo_vaddr & ~ADDR_POFF)
 #define	PVO_PTEGIDX_GET(pvo)	((pvo)->pvo_vaddr & PVO_PTEGIDX_MASK)
-#define	PVO_PTEGIDX_CLR(pvo)	((void)((pvo)->pvo_vaddr &= ~PVO_PTEGIDX_MASK))
-#define	PVO_PTEGIDX_SET(pvo,i)	((void)((pvo)->pvo_vaddr |= (i)))
+#define	PVO_PTEGIDX_ISSET(pvo)	((pvo)->pvo_vaddr & PVO_PTEGIDX_VALID)
+#define	PVO_PTEGIDX_CLR(pvo)	\
+	((void)((pvo)->pvo_vaddr &= ~(PVO_PTEGIDX_VALID|PVO_PTEGIDX_MASK)))
+#define	PVO_PTEGIDX_SET(pvo,i)	\
+	((void)((pvo)->pvo_vaddr |= (i)|PVO_PTEGIDX_VALID))
 
 struct pvo_head *pmap_pvo_table;	/* pvo entries by ptegroup index */
 struct pvo_head pmap_pvo_kunmanaged = LIST_HEAD_INITIALIZER(pmap_pvo_kunmanaged);	/* list of unmanaged pages */
@@ -184,8 +188,8 @@ STATIC struct pvo_entry *pmap_pvo_find_va(pmap_t, vaddr_t, int *);
 STATIC volatile pte_t *pmap_pvo_to_pte(const struct pvo_entry *, int);
 
 STATIC struct pvo_entry *pmap_rkva_alloc(int);
-STATIC void pmap_pa_map(struct pvo_entry *, paddr_t, pte_t *saved_pt);
-STATIC void pmap_pa_unmap(struct pvo_entry *, pte_t *saved_pt);
+STATIC void pmap_pa_map(struct pvo_entry *, paddr_t, pte_t *, int *);
+STATIC void pmap_pa_unmap(struct pvo_entry *, pte_t *, int *);
 STATIC void tlbia(void);
 
 STATIC void pmap_syncicache(paddr_t);
@@ -566,7 +570,7 @@ pmap_pte_spill(vaddr_t addr)
 			 */
 			i = pmap_pte_insert(ptegidx, &pvo->pvo_pte);
 			if (i >= 0) {
-				source_pvo->pvo_vaddr |= i;
+				PVO_PTEGIDX_SET(pvo, i);
 				pmap_pte_overflow--;
 				return 1;
 			}
@@ -849,7 +853,7 @@ pmap_zero_page(paddr_t pa)
 	} else if (pmap_initialized) {
 		if (__predict_false(pmap_pvo_zeropage == NULL))
 			pmap_pvo_zeropage = pmap_rkva_alloc(VM_PROT_READ|VM_PROT_WRITE);
-		pmap_pa_map(pmap_pvo_zeropage, pa, NULL);
+		pmap_pa_map(pmap_pvo_zeropage, pa, NULL, NULL);
 		va = (caddr_t) PVO_VADDR(pmap_pvo_zeropage);
 	} else {
 		panic("pmap_zero_page: can't zero pa %#lx", pa);
@@ -864,7 +868,7 @@ pmap_zero_page(paddr_t pa)
 	}
 #endif
 	if (pa >= SEGMENT_LENGTH)
-		pmap_pa_unmap(pmap_pvo_zeropage, NULL);
+		pmap_pa_unmap(pmap_pvo_zeropage, NULL, NULL);
 }
 
 /*
@@ -883,15 +887,15 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 		if (__predict_false(pmap_pvo_copypage_dst == NULL))
 			pmap_pvo_copypage_dst = pmap_rkva_alloc(VM_PROT_READ|VM_PROT_WRITE);
 
-		pmap_pa_map(pmap_pvo_copypage_src, src, NULL);
-		pmap_pa_map(pmap_pvo_copypage_dst, dst, NULL);
+		pmap_pa_map(pmap_pvo_copypage_src, src, NULL, NULL);
+		pmap_pa_map(pmap_pvo_copypage_dst, dst, NULL, NULL);
 
 		memcpy((caddr_t)PVO_VADDR(pmap_pvo_copypage_dst),
 		    (caddr_t)PVO_VADDR(pmap_pvo_copypage_src),
 		    NBPG);
 
-		pmap_pa_unmap(pmap_pvo_copypage_src, NULL);
-		pmap_pa_unmap(pmap_pvo_copypage_dst, NULL);
+		pmap_pa_unmap(pmap_pvo_copypage_src, NULL, NULL);
+		pmap_pa_unmap(pmap_pvo_copypage_dst, NULL, NULL);
 		return;
 	}
 	panic("pmap_copy_page: failed to copy contents of pa %#lx to pa %#lx", src, dst);
@@ -928,6 +932,17 @@ pmap_pvo_to_pte(const struct pvo_entry *pvo, int pteidx)
 	}
 
 	pt = &pmap_pteg_table[pteidx >> 3].pt[pteidx & 7];
+
+#ifdef DIAGNOSTIC
+	if ((pvo->pvo_pte.pte_hi & PTE_VALID) && !PVO_PTEGIDX_ISSET(pvo)) {
+		panic("pmap_pvo_to_pte: pvo %p: has valid pte in "
+		    "pvo but valid pte index", pvo);
+	}
+	if ((pvo->pvo_pte.pte_hi & PTE_VALID) == 0 && PVO_PTEGIDX_ISSET(pvo)) {
+		panic("pmap_pvo_to_pte: pvo %p: has valid pte index in "
+		    "pvo but no valid pte", pvo);
+	}
+#endif
 
 	if ((pt->pte_hi ^ (pvo->pvo_pte.pte_hi & ~PTE_VALID)) == PTE_VALID) {
 #ifdef DIAGNOSTIC
@@ -990,7 +1005,7 @@ pmap_pvo_find_va(pmap_t pm, vaddr_t va, int *pteidx_p)
 }
 
 void
-pmap_pa_map(struct pvo_entry *pvo, paddr_t pa, pte_t *saved_pt)
+pmap_pa_map(struct pvo_entry *pvo, paddr_t pa, pte_t *saved_pt, int *depth_p)
 {
 	int s;
 
@@ -1004,26 +1019,36 @@ pmap_pa_map(struct pvo_entry *pvo, paddr_t pa, pte_t *saved_pt)
 		volatile pte_t *pt;
 		pt = pmap_pvo_to_pte(pvo, -1);
 		if (pt != NULL) {
+			if (depth_p != NULL && *depth_p == 0)
+				panic("pmap_pa_map: pvo %p: valid pt %p"
+				    " on 0 depth", pvo, pt);
 			pmap_pte_unset(pt, &pvo->pvo_pte, pvo->pvo_vaddr);
-			*saved_pt = pvo->pvo_pte;
-			pvo->pvo_pte.pte_lo &= ~PTE_RPGN;
-			pvo->pvo_pte.pte_lo |= pa;
-			pmap_pte_set(pt, &pvo->pvo_pte);
-			splx(s);
-			return;
+			PVO_PTEGIDX_CLR(pvo);
+			pmap_pte_overflow++;
 		}
 		*saved_pt = pvo->pvo_pte;
-	} else if (pvo->pvo_pte.pte_hi & PTE_VALID) {
+		DPRINTFN(3,("pmap_pa_map: saved pte %#x/%#x va %#lx\n",
+		    pvo->pvo_pte.pte_hi, pvo->pvo_pte.pte_lo,
+		    pvo->pvo_vaddr));
+		pvo->pvo_pte.pte_lo &= ~PTE_RPGN;
+	} else if ((pvo->pvo_pte.pte_hi & PTE_VALID) ||
+	    (depth_p != NULL && (*depth_p) > 0)) {
 		panic("pmap_pa_map: unprotected recursive use of pvo %p", pvo);
 	}
 	pvo->pvo_pte.pte_lo |= pa;
 	if (!pmap_pte_spill(pvo->pvo_vaddr))
 		panic("pmap_pa_map: could not spill pvo %p", pvo);
+	if ((pvo->pvo_pte.pte_hi & PTE_VALID) == 0)
+		panic("pmap_pa_map: pvo %p: pte not valid after spill", pvo);
+	if (PVO_PTEGIDX_ISSET(pvo) == 0)
+		panic("pmap_pa_map: pvo %p: no pte index spill", pvo);
+	if (depth_p != NULL)
+		(*depth_p)++;
 	splx(s);
 }
 
 void
-pmap_pa_unmap(struct pvo_entry *pvo, pte_t *saved_pt)
+pmap_pa_unmap(struct pvo_entry *pvo, pte_t *saved_pt, int *depth_p)
 {
 	volatile pte_t *pt;
 	int s;
@@ -1032,26 +1057,46 @@ pmap_pa_unmap(struct pvo_entry *pvo, pte_t *saved_pt)
 	pt = pmap_pvo_to_pte(pvo, -1);
 	if (pt != NULL) {
 		pmap_pte_unset(pt, &pvo->pvo_pte, pvo->pvo_vaddr);
-		/*
-		 * If there is a saved PTE and its valid, restore it
-		 * and return.  Otherwise clear the entry.
-		 */
-		if (saved_pt != NULL && (saved_pt->pte_hi & PTE_VALID)) {
-			pvo->pvo_pte = *saved_pt;
-			pmap_pte_set(pt, saved_pt);
-		} else {
-			PVO_PTEGIDX_CLR(pvo);
-			pmap_pte_overflow++;
-			pvo->pvo_pte.pte_lo &= ~PTE_RPGN;
-		}
+		PVO_PTEGIDX_CLR(pvo);
+		pmap_pte_overflow++;
 	}
+	pvo->pvo_pte.pte_lo &= ~PTE_RPGN;
+
+	/*
+	 * If there is a saved PTE and its valid, restore it
+	 * and return.
+	 */
+	if (saved_pt != NULL && (saved_pt->pte_lo & PTE_RPGN) != 0) {
+		if (pvo->pvo_pte.pte_hi != saved_pt->pte_hi)
+			panic("pmap_pa_unmap: pvo %p pte_hi %#x "
+			    "!= saved pte_hi %#x", pvo, pvo->pvo_pte.pte_hi,
+			    saved_pt->pte_hi);
+		if (depth_p != NULL && --(*depth_p) == 0)
+			panic("pmap_pa_unmap: restoring but depth == 0");
+		pvo->pvo_pte = *saved_pt;
+		DPRINTFN(3,("pmap_pa_unmap: restored pte %#x/%#x "
+		    "va %#lx\n", pvo->pvo_pte.pte_hi,
+		    pvo->pvo_pte.pte_lo, pvo->pvo_vaddr));
+		if (!pmap_pte_spill(pvo->pvo_vaddr))
+			panic("pmap_pa_unmap: could not spill pvo %p", pvo);
+		if ((pvo->pvo_pte.pte_hi & PTE_VALID) == 0)
+			panic("pmap_pa_unmap: pvo %p: pte not valid after "
+			    "spill", pvo);
+	} else {
+		if (depth_p != NULL && --(*depth_p) != 0)
+			panic("pmap_pa_unmap: reseting but depth (%u) > 0",
+			    *depth_p);
+	}
+		
 	splx(s);
 }
 
 void
 pmap_syncicache(paddr_t pa)
 {
-	DPRINTFN(6,("pmap_syncicache: pa %#lx\n", pa));
+	static int depth;
+	static u_int calls;
+	DPRINTFN(6,("pmap_syncicache[%d]: pa %#lx\n", depth, pa));
 	if (pa < SEGMENT_LENGTH) {
 		__syncicache((void *)pa, NBPG);
 		return;
@@ -1060,9 +1105,10 @@ pmap_syncicache(paddr_t pa)
 		pte_t saved_pte;
 		if (__predict_false(pmap_pvo_syncicache == NULL))
 			pmap_pvo_syncicache = pmap_rkva_alloc(VM_PROT_READ|VM_PROT_WRITE);
-		pmap_pa_map(pmap_pvo_syncicache, pa, &saved_pte);
+		calls++;
+		pmap_pa_map(pmap_pvo_syncicache, pa, &saved_pte, &depth);
 		__syncicache((void *)PVO_VADDR(pmap_pvo_syncicache), NBPG);
-		pmap_pa_unmap(pmap_pvo_syncicache, &saved_pte);
+		pmap_pa_unmap(pmap_pvo_syncicache, &saved_pte, &depth);
 		return;
 	}
 	panic("pmap_syncicache: can't sync the icache @ pa %#lx", pa);
@@ -1226,7 +1272,7 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 		if (pvo->pvo_pmap == pm && PVO_VADDR(pvo) == va) {
 #ifdef DEBUG
 			if (((pvo->pvo_pte.pte_lo ^ (pa|pte_lo)) &
-			    (PTE_RPGN|PTE_W|PTE_M|PTE_I|PTE_G|PTE_PP)) == 0 &&
+			    ~(PTE_REF|PTE_CHG)) == 0 &&
 			   va < VM_MIN_KERNEL_ADDRESS) {
 				printf("pmap_pvo_enter: pvo %p: dup %#x/%#lx\n",
 				    pvo, pvo->pvo_pte.pte_lo, pte_lo|pa);
@@ -1234,7 +1280,7 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 				    pvo->pvo_pte.pte_hi,
 				    pm->pm_sr[va >> ADDR_SR_SHFT]);
 				pmap_pte_print(pmap_pvo_to_pte(pvo, -1));
-#ifdef DDB
+#ifdef DDBX
 				Debugger();
 #endif
 			}
@@ -2126,7 +2172,7 @@ pmap_pvo_verify(void)
 		struct pvo_entry *pvo;
 		LIST_FOREACH(pvo, &pmap_pvo_table[ptegidx], pvo_olink) {
 			if ((uintptr_t) pvo >= SEGMENT_LENGTH)
-				panic("pmap_pvo_find_va: invalid pvo %p "
+				panic("pmap_pvo_verify: invalid pvo %p "
 				    "on list %#x", pvo, ptegidx);
 			pmap_pvo_check(pvo);
 		}
