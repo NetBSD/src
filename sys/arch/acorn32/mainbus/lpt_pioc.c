@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_pioc.c,v 1.1 2001/10/05 22:27:53 reinoud Exp $	*/
+/*	$NetBSD: lpt_pioc.c,v 1.2 2001/11/27 00:53:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -39,7 +39,7 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <machine/bus.h>
-#include <machine/irqhandler.h>
+#include <machine/intr.h>
 #include <acorn32/mainbus/piocvar.h>
 #include <dev/ic/lptreg.h>
 #include <dev/ic/lptvar.h>
