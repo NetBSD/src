@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.262 2004/06/13 08:24:36 jdc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.263 2004/06/13 08:47:40 jdc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -3639,4 +3639,28 @@ usr.sbin/wsmoused/wsmoused.8			1.14
 
 	Spelling fixes, English tweaks.  Avoid using < and > directly.
 	[snj, ticket #458]
+
+sbin/ping/ping.8				1.44
+
+	Add -h option in synopsis.  PR#25863.
+	[cjep, ticket #459]
+
+sbin/swapctl/swapctl.c				1.26
+sbin/swapctl/swapctl.8				1.30
+
+	Fix usage string (i.e. add information about -z).  PR#25865.
+	Add options for swapon in the Synopsis section.  PR#25866.
+	[cjep, ticket #460]
+
+distrib/utils/sysinst/msg.mi.de			1.8
+
+	Make message net_media short enough (it needs space for [autoselect]
+	after it and should stay within 80 columns).
+	[martin, ticket #461]
+
+distrib/utils/sysinst/msg.mi.fr			1.78
+
+	Adapt the french translation to the split base/sets directories,
+	and other minor nits.
+	[bouyer, ticket #462]
 
