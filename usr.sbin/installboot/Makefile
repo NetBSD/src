@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2002/04/03 06:34:31 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2002/04/03 09:09:01 lukem Exp $
 #
 
 PROG=	installboot
@@ -6,6 +6,9 @@ SRCS=	installboot.c sum.c machines.c
 MAN=	installboot.8
 
 WARNS?=	3
+
+CPPFLAGS+=	-I${.CURDIR}
+.PATH:		${.CURDIR}/arch
 
 # list of MACHINEs to build this version of installboot for.
 #
