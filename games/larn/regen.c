@@ -1,5 +1,5 @@
 #ifndef lint
-static char rcsid[] = "$NetBSD: regen.c,v 1.3 1995/03/23 08:34:11 cgd Exp $";
+static char rcsid[] = "$NetBSD: regen.c,v 1.4 1997/07/13 20:21:39 christos Exp $";
 #endif /* not lint */
 
 /* regen.c 			Larn is copyrighted 1986 by Noah Morgan. */
@@ -25,7 +25,7 @@ regen()
 
 	if (d[STRENGTH]<3)	{ d[STRENGTH]=3; flag=1; }
 	if ((d[HASTESELF]==0) || ((d[HASTESELF] & 1) == 0))
-		gtime++;
+		gltime++;
 
 	if (d[HP] != d[HPMAX])
 		if (d[REGENCOUNTER]-- <= 0)		/*	regenerate hit points	*/
