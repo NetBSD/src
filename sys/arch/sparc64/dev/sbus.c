@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.48 2002/03/20 18:54:48 eeh Exp $ */
+/*	$NetBSD: sbus.c,v 1.49 2002/03/21 00:48:43 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -278,7 +278,7 @@ sbus_attach(parent, self, aux)
 	/* XXXX Use sysio PROM mappings for interrupt vector regs. */
 	sparc_promaddr_to_handle(sc->sc_bustag,	ma->ma_address[0], &sc->sc_bh);
 	sc->sc_sysio = (struct sysioreg *)bus_space_vaddr(sc->sc_bustag, 
-		&sc->sc_bh);
+		sc->sc_bh);
 
 #ifdef _LP64
 	/* 
