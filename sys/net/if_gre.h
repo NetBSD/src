@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.h,v 1.1 1998/09/13 20:27:47 hwr Exp $ */
+/*	$NetBSD: if_gre.h,v 1.2 1998/09/30 05:59:28 hwr Exp $ */
 
 /*
  * (c) 1998 The NetBSD Foundation, Inc.
@@ -119,11 +119,42 @@ struct greioctl {
 	struct    in_addr addr;
 };
 
+/* for mobile encaps */
+
+struct mobile_h {
+	u_int16_t proto;		/* protocol and S-bit */
+	u_int16_t hcrc;			/* header checksum */
+	u_int32_t odst;			/* original destination address */
+	u_int32_t osrc;			/* original source addr, if S-bit set */
+};
+
+struct mobip_h {
+	struct ip       mi;
+	struct mobile_h mh;
+};
+
+
+#define MOB_H_SIZ_S		(sizeof(struct mobile_h) - sizeof(u_int32_t))
+#define MOB_H_SIZ_L		(sizeof(struct mobile_h))
+#define MOB_H_SBIT	0x0080
+
+
+/* 
+ * ioctls needed to manipulate the interface 
+ */
+
 #define GRESADDRS       _IOW('i', 101, struct ifreq)
 #define GRESADDRD       _IOW('i', 102, struct ifreq)   
 #define GREGADDRS       _IOWR('i', 103, struct ifreq)
 #define GREGADDRD       _IOWR('i', 104, struct ifreq)
 #define GRESPROTO       _IOW('i' , 105, struct ifreq)
 #define GREGPROTO       _IOWR('i', 106, struct ifreq)
+
+/*
+ * do a checksum of a buffer - much like in_cksum, which operates on
+ * mbufs.
+ */
+
+u_short gre_in_cksum(u_short *p, u_int len);
 
 #endif
