@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1998/08/18 17:26:36 tv Exp $
+#	$NetBSD: Makefile,v 1.3 1998/08/18 17:42:59 tv Exp $
 
 LIB=		g2c
 
@@ -62,7 +62,7 @@ POBJS+=		${E77OBJS:.o=.po}
 CLEANFILES+=	${LIBF77SRCS}
 DPSRCS+=	g2c.h
 
-NOLINT=
+NOLINT=		nolint (FORTRAN runtime)
 
 CPPFLAGS+=	-I. -I${.CURDIR} -I${ARCH} -I${ARCH}/${MACHINE_ARCH} \
 		-I${DIST}/libf2c -I${DIST}/libf2c/libF77 \
@@ -71,17 +71,16 @@ CPPFLAGS+=	-I. -I${.CURDIR} -I${ARCH} -I${ARCH}/${MACHINE_ARCH} \
 		-DNETBSD_NATIVE -DHAVE_CONFIG_H=1 -DSTDC_HEADERS=1 \
 		-DRETSIGTYPE=void -DIEEE_drem=1 -DSkip_f2c_Undefs=1 \
 		-DHAVE_TEMPNAM=1 -DNO_EOF_CHAR_CHECK=1
-HOST_CPPFLAGS+=	${CPPFLAGS}
 
 CLEANFILES+=	g2c.h g2ctypes.sed
 
-# XXX may need a better way to do this
+# XXX may need a better way to do this; can be overridden with "cp"
 MAKE_SYMLINK?=	ln -sf
 
 DIST=		${.CURDIR}/../../dist
 ARCH=		${.CURDIR}/../../usr.bin/egcs/arch
 
-.PATH:	${DIST}/libf2c ${DIST}/gcc/f
+.PATH:${DIST}/libf2c ${DIST}/gcc/f
 
 g2ctypes.sed: g2ctypes.c
 	${CC} ${CPPFLAGS} -E ${.CURDIR}/g2ctypes.c | grep 'F2C_' >g2ctypes.sed
