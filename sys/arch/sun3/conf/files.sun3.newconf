@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3.newconf,v 1.23 1995/03/10 02:31:35 gwr Exp $
+#	$NetBSD: files.sun3.newconf,v 1.24 1995/03/24 17:27:12 gwr Exp $
 
 #
 # sun3-specific configuration info
@@ -29,15 +29,20 @@ file arch/m68k/fpe/fpu_emulate.c		fpu_emulate
 file arch/m68k/m68k/copy.s
 file dev/cons.c
 
-#
+# Declare our "catch-all" root node.
+device mainbus at root {}
+# Misc. mainbus things (catch-all)
+# Control space hack
+device obctl at mainbus {addr = -1, [level = -1]}
+# Floating Point Unit
+device fpu at mainbus {}
+file arch/sun3/sun3/fpu.c		fpu
+
 # Bus types
 #
 # The implementation of the bus_* functions in autoconfig.c
 # requires these all to agree with <autoconf.h> struct bus_loc
-#
-device mainbus at root {}
-# Control space hack
-device obctl at mainbus {addr = -1, [level = -1]}
+
 # On-board MEMory space
 device obmem at mainbus {addr = -1, [level = -1]}
 # On-board I/O space

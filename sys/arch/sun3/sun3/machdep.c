@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.47 1995/03/10 02:24:42 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.48 1995/03/24 17:27:41 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -99,10 +99,11 @@
 #include <setjmp.h>
 
 extern char *cpu_string;
-extern int fpu_type;
 
 int physmem;
 int cold;
+int fpu_type;
+
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
  * during autoconfiguration or after a panic.
