@@ -96,7 +96,7 @@ REDO=		right_only
 # to the end of the "CFLAGS=" line
 
 .PATH:	${.CURDIR}/datfiles
-CFLAGS=	-DTM_GMTOFF=tm_gmtoff -DTM_ZONE=tm_zone
+CFLAGS+=	-DTM_GMTOFF=tm_gmtoff -DTM_ZONE=tm_zone
 PROG=	zic
 MAN5=	tzfile.0
 MAN8=	zic.0
