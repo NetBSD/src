@@ -1,4 +1,4 @@
-/*	$NetBSD: pipe.S,v 1.1 2002/07/05 13:31:34 scw Exp $	*/
+/*	$NetBSD: pipe.S,v 1.2 2002/07/10 11:02:25 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -78,12 +78,12 @@
 #if 0
 	RCSID("from: @(#)pipe.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: pipe.S,v 1.1 2002/07/05 13:31:34 scw Exp $")
+	RCSID("$NetBSD: pipe.S,v 1.2 2002/07/10 11:02:25 scw Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef WEAK_ALIAS
-WEAK_ALIAS(pipe, _pipe)
+WEAK_ALIAS(pipe,_pipe)
 #endif
 
 ENTRY(_pipe)
