@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.112.4.6 2002/01/04 19:12:30 eeh Exp $ */
+/*	$NetBSD: machdep.c,v 1.112.4.7 2002/01/04 22:38:54 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -639,6 +639,7 @@ sendsig(catcher, sig, mask, code)
 	 * It needs the function to call in %g1, and a new stack pointer.
 	 */
 	addr = (vaddr_t)p->p_sigctx.ps_sigcode;
+	addr += 8; /* XXX skip the upcall code */
 	tf->tf_global[1] = (vaddr_t)catcher;
 	tf->tf_pc = addr;
 	tf->tf_npc = addr + 4;
@@ -657,6 +658,44 @@ sendsig(catcher, sig, mask, code)
 #endif
 	}
 #endif
+}
+
+
+/*
+ * Set the lwp to begin execution in the upcall handler.  The upcall
+ * handler will then simply call the upcall routine and then exit.
+ *
+ * Because we have a bunch of different signal trampolines, the first
+ * two instructions in the signal trampoline call the upcall handler.
+ * Signal dispatch should skip the first two instructions in the signal
+ * trampolines.
+ */
+void 
+cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
+	void *sas, void *ap, void *sp, sa_upcall_t upcall)
+{
+	struct proc *p = l->l_proc;
+       	struct trapframe *tf;
+	vaddr_t addr;
+
+	tf = l->l_md.md_tf;
+
+	addr = (vaddr_t)p->p_sigctx.ps_sigcode;
+
+	/* Jump to the upcall handler */
+	tf->tf_pc = addr;
+	tf->tf_npc = addr + 4;
+
+	/* The upcall itself is in %g1 */
+	tf->tf_global[1] = (vaddr_t)upcall;  
+
+	tf->tf_out[0] = (vaddr_t)type;
+	tf->tf_out[1] = (vaddr_t)sas;
+	tf->tf_out[2] = nevents;
+	tf->tf_out[3] = ninterrupted;
+	tf->tf_out[4] = (vaddr_t)ap;
+	tf->tf_out[6] = (vaddr_t)sp - STACK_OFFSET;
+
 }
 
 /*
@@ -2162,29 +2201,3 @@ cpu_setmcontext(l, mcp, flags)
 	return (0);
 }
 
-
-void 
-cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
-	void *sas, void *ap, void *sp, sa_upcall_t upcall)
-{
-#if 0
-	struct proc *p = l->l_proc;
-       	struct trapframe *tf;
-
-	extern char sigcode[], upcallcode[];
-
-	tf = l->l_md.md_tf;
-
-	tf->tf_regs[FRAME_PC] = ((u_int64_t)p->p_sigctx.ps_sigcode) +
-	    ((u_int64_t)upcallcode - (u_int64_t)sigcode);
-	tf->tf_regs[FRAME_A0] = type;
-	tf->tf_regs[FRAME_A1] = (u_int64_t)sas;
-	tf->tf_regs[FRAME_A2] = nevents;
-	tf->tf_regs[FRAME_A3] = ninterrupted;
-	tf->tf_regs[FRAME_A4] = (u_int64_t)ap;
-	tf->tf_regs[FRAME_T12] = (u_int64_t)upcall;  /* t12 is pv */
-	alpha_pal_wrusp((unsigned long)sp);
-#else
-	panic("cpu_upcall");
-#endif
-}
