@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.30 2003/05/29 17:51:27 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.31 2003/05/30 13:34:58 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -62,7 +62,7 @@
 #define	PART_USR	D
 
 int
-md_get_info (void)
+md_get_info(void)
 {
 	struct disklabel disklabel;
 	int fd;
@@ -109,7 +109,8 @@ md_get_info (void)
 /*
  * hook called before writing new disklabel.
  */
-int	md_pre_disklabel (void)
+int
+md_pre_disklabel(void)
 {
 	return 0;
 }
@@ -117,7 +118,8 @@ int	md_pre_disklabel (void)
 /*
  * hook called after writing disklabel to new target disk.
  */
-int	md_post_disklabel (void)
+int
+md_post_disklabel(void)
 {
 	return 0;
 }
@@ -131,7 +133,8 @@ int	md_post_disklabel (void)
  *
  * On the Alpha, we use this opportunity to install the boot blocks.
  */
-int	md_post_newfs (void)
+int
+md_post_newfs(void)
 {
 	printf (msg_string(MSG_dobootblks), diskdev);
 	cp_to_target("/usr/mdec/boot", "/boot");
@@ -140,12 +143,14 @@ int	md_post_newfs (void)
 	return 0;
 }
 
-int	md_copy_filesystem (void)
+int
+md_copy_filesystem(void)
 {
 	return 0;
 }
 
-int md_make_bsd_partitions (void)
+int
+md_make_bsd_partitions(void)
 {
 	int i, part;
 	int remain;
@@ -354,25 +359,25 @@ md_cleanup_install(void)
 }
 
 int
-md_pre_update()
+md_pre_update(void)
 {
 	return 1;
 }
 
 void
-md_init()
+md_init(void)
 {
 }
 
 void
-md_set_sizemultname()
+md_set_sizemultname(void)
 {
 
 	set_sizemultname_meg();
 }
 
 void
-md_set_no_x()
+md_set_no_x(void)
 {
 	toggle_getit (8);
 	toggle_getit (9);
