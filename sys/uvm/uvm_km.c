@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.72 2005/01/01 21:08:02 yamt Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.73 2005/01/03 04:01:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -134,7 +134,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.72 2005/01/01 21:08:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.73 2005/01/03 04:01:13 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -191,6 +191,7 @@ km_vacache_alloc(struct pool *pp, int flags)
 
 	map = KM_VACACHE_POOL_TO_MAP(pp);
 
+	va = vm_map_min(map); /* hint */
 	if (uvm_map(map, &va, size, NULL, UVM_UNKNOWN_OFFSET, size,
 	    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 	    UVM_ADV_RANDOM, UVM_FLAG_QUANTUM |
