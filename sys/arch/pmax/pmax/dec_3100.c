@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3100.c,v 1.3 1998/03/26 12:46:34 jonathan Exp $	*/
+/*	$NetBSD: dec_3100.c,v 1.4 1998/04/19 10:54:55 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -91,7 +91,6 @@
 #include <pmax/pmax/pmaxtype.h> 
 #include <pmax/pmax/machdep.h>		/* XXXjrs replace with vectors */
 
-#include <pmax/pmax/kn01var.h>
 #include <pmax/pmax/kn01.h>
 
 
@@ -105,6 +104,8 @@ struct ifnet;
 #include <net/if_ether.h>	/* ethercom */
 #include <net/if_media.h>	/* ifmedia requests for am7990 */
 #include <dev/ic/am7990var.h>	/* all this to get lance intr */
+
+#include <pmax/ibus/ibusvar.h>
 
 #include "dc_ds.h"
 #include "le_pmax.h"
@@ -126,6 +127,12 @@ void		dec_3100_device_register __P((struct device *, void *));
 
 static void	dec_3100_errintr __P((void));
 
+void
+dec_3100_intr_establish __P((void* cookie, int level,
+			 int (*handler) __P((intr_arg_t)), intr_arg_t arg));
+void	dec_3100_intr_disestablish __P((struct ibus_attach_args *ia));
+
+  
 /*
  * Fill in platform struct. 
  */
@@ -301,6 +308,24 @@ dec_3100_intr(mask, pc, statusReg, causeReg)
 	return ((statusReg & ~causeReg & MIPS_HARD_INT_MASK) |
 		MIPS_SR_INT_ENA_CUR);
 }
+
+void
+dec_3100_intr_establish(cookie, level, handler, arg)
+	void * cookie;
+	int level;
+	int (*handler) __P((intr_arg_t));
+	intr_arg_t arg;
+{
+	dec_3100_enable_intr((u_int)cookie, handler, arg, 1);
+}
+
+
+void
+dec_3100_intr_disestablish(struct ibus_attach_args *ia)
+{
+	printf("dec_3100_intr_distestablish: not implemented\n");
+}
+  
 
 /*
  * Handle memory errors.
