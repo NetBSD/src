@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.12 1995/04/18 03:14:18 mycroft Exp $	*/
+/*	$NetBSD: route.c,v 1.13 1995/04/20 17:39:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$NetBSD: route.c,v 1.12 1995/04/18 03:14:18 mycroft Exp $";
+static char rcsid[] = "$NetBSD: route.c,v 1.13 1995/04/20 17:39:20 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -548,6 +548,9 @@ newroute(argc, argv)
 				iflag++;
 			case K_NOSTATIC:
 				flags &= ~RTF_STATIC;
+				break;
+			case K_LLINFO:
+				flags |= RTF_LLINFO;
 				break;
 			case K_LOCK:
 				locking = 1;
