@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 1997/02/04 03:51:38 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.2 1997/02/04 08:39:26 thorpej Exp $
 
 BINDIR=			/usr/mdec
 
@@ -9,8 +9,8 @@ CPPFLAGS+=		-DDCACONSOLE -DITECONSOLE -DDCMCONSOLE
 CPPFLAGS+=		-DSTANDALONE -DCOMPAT_NOLABEL -Dhp300
 CPPFLAGS+=		-DCOMPAT_UFS -DNO_LSEEK
 
-COMMONSOURCE=		autoconf.c clock.c conf.c cons.c devopen.c \
-			machdep.c prf.c rawfs.c srt0.s netio.c
+COMMONSOURCE=		srt0.o autoconf.c clock.c conf.c cons.c devopen.c \
+			machdep.c prf.c rawfs.c netio.c
 DRIVERSOURCE=		ct.c dca.c dcm.c fhpib.c hil.c hpib.c if_le.c \
 			ite.c ite_dv.c ite_gb.c ite_rb.c ite_subr.c \
 			ite_tc.c ite_hy.c nhpib.c rd.c scsi.c sd.c
