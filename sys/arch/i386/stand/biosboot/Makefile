@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1997/08/14 17:00:20 drochner Exp $
+#	$NetBSD: Makefile,v 1.9 1997/09/17 18:28:50 drochner Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -11,6 +11,9 @@ SRCS= main.c devopen.c conf.c
 CLEANFILES+= ${BSSTART} ${PROG}.sym ${PROG}.list
 
 CPPFLAGS+= -DCOMPAT_OLDBOOT
+#CPPFLAGS+= -DSUPPORT_SERIAL
+#CPPFLAGS+= -DDIRECT_SERIAL -DCOMCONS_KEYPRESS -DCONSPEED=38400
+#CPPFLAGS+= -DPASS_BIOSGEOM
 #uncomment if there are problems with memory detection
 #CPPFLAGS+= -DCONSERVATIVE_MEMDETECT
 #increase MAXFLENTRIES if "installboot" complains about
