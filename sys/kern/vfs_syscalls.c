@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.85 1997/04/11 22:08:28 kleink Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.86 1997/04/30 19:29:43 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -60,6 +60,7 @@
 #include <sys/sysctl.h>
 
 static int change_dir __P((struct nameidata *, struct proc *));
+static int change_owner __P((struct vnode *, uid_t, gid_t, struct proc *));
 
 void checkdirs __P((struct vnode *));
 int dounmount __P((struct mount *, int, struct proc *));
@@ -1498,26 +1499,16 @@ sys_chown(p, v, retval)
 		syscallarg(uid_t) uid;
 		syscallarg(gid_t) gid;
 	} */ *uap = v;
-	register struct vnode *vp;
-	struct vattr vattr;
 	int error;
 	struct nameidata nd;
 
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
-	vp = nd.ni_vp;
-	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
-	VOP_LOCK(vp);
-	if (vp->v_mount->mnt_flag & MNT_RDONLY)
-		error = EROFS;
-	else {
-		VATTR_NULL(&vattr);
-		vattr.va_uid = SCARG(uap, uid);
-		vattr.va_gid = SCARG(uap, gid);
-		error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
-	}
-	vput(vp);
+
+	error = change_owner(nd.ni_vp, SCARG(uap, uid), SCARG(uap, gid), p);
+
+	vrele(nd.ni_vp);
 	return (error);
 }
 
@@ -1536,24 +1527,50 @@ sys_fchown(p, v, retval)
 		syscallarg(uid_t) uid;
 		syscallarg(gid_t) gid;
 	} */ *uap = v;
-	register struct vnode *vp;
-	struct vattr vattr;
 	int error;
 	struct file *fp;
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
-	vp = (struct vnode *)fp->f_data;
+
+	return (change_owner((struct vnode *)fp->f_data, SCARG(uap, uid),
+	    SCARG(uap, gid), p));
+}
+
+/*
+ * Common routine to set ownership given a vnode.
+ */
+static int
+change_owner(vp, uid, gid, p)
+	register struct vnode *vp;
+	uid_t uid;
+	gid_t gid;
+	struct proc *p;
+{
+	struct vattr vattr;
+	mode_t newmode = VNOVAL;
+	int error;
+
 	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
 	VOP_LOCK(vp);
-	if (vp->v_mount->mnt_flag & MNT_RDONLY)
+	if (vp->v_mount->mnt_flag & MNT_RDONLY) {
 		error = EROFS;
-	else {
-		VATTR_NULL(&vattr);
-		vattr.va_uid = SCARG(uap, uid);
-		vattr.va_gid = SCARG(uap, gid);
-		error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
+		goto out;
 	}
+	if ((error = VOP_GETATTR(vp, &vattr, p->p_ucred, p)))
+		goto out;
+
+	/* Clear (VSUID | VSGID) bits: alter va_mode only if necessary. */
+	if (vattr.va_mode & (VSUID | VSGID))
+		newmode = vattr.va_mode & ~(VSUID | VSGID);
+
+	VATTR_NULL(&vattr);
+	vattr.va_uid = uid;
+	vattr.va_gid = gid;
+	vattr.va_mode = newmode;
+	error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
+
+out:
 	VOP_UNLOCK(vp);
 	return (error);
 }
