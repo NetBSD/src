@@ -1,4 +1,4 @@
-/*	$NetBSD: dkstats.c,v 1.11 2001/01/27 11:08:23 enami Exp $	*/
+/*	$NetBSD: dkstats.c,v 1.12 2001/06/03 04:02:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -73,6 +73,7 @@ struct _disk	cur, last;
 static kvm_t	*kd = NULL;
 extern char	*nlistf;
 extern char	*memf;
+extern int	hz;
 
 /* Pointer to list of disks. */
 static struct disk	*dk_drivehead = NULL;
@@ -200,7 +201,6 @@ dkinit(int select, gid_t egid)
 	struct disk	cur_disk, *p;
 	char		errbuf[_POSIX2_LINE_MAX];
 	static int	once = 0;
-	extern int	hz;
 	int		i;
 
 	if (once)
