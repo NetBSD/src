@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.alpha,v 1.60 2000/11/29 13:02:51 jdolecek Exp $
+# $NetBSD: Makefile.alpha,v 1.61 2000/12/07 17:32:33 jdolecek Exp $
 
 # Makefile for NetBSD
 #
@@ -176,6 +176,10 @@ depend: .depend
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	test -z "${SFILES}" || \
 	${MKDEP} -a -x assembler-with-cpp ${AFLAGS} ${CPPFLAGS} ${SFILES}
+	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
+	  ${CPPFLAGS} < ${ALPHA}/alpha/genassym.cf
+	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
+	@rm -f assym.dep
 
 dependall: depend all
 
@@ -187,7 +191,7 @@ autoconf.o conf.o: Makefile
 uipc_proto.o vfs_conf.o: Makefile 
 
 # depend on maxusers
-genassym.o machdep.o: Makefile
+assym.h machdep.o: Makefile
 
 # depend on CPU configuration 
 clock.o machdep.o apecs.o cia.o lca.o ioasic.o scc.o icasic.o: Makefile
