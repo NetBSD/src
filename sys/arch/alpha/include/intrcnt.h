@@ -1,4 +1,4 @@
-/* $NetBSD: intrcnt.h,v 1.12 1998/04/29 00:34:06 thorpej Exp $ */
+/* $NetBSD: intrcnt.h,v 1.13 1998/06/05 02:13:41 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -183,7 +183,55 @@
 		ASCIZ "eb64+ irq 28";					\
 		ASCIZ "eb64+ irq 29";					\
 		ASCIZ "eb64+ irq 30";					\
-		ASCIZ "eb64+ irq 31";
+		ASCIZ "eb64+ irq 31";					\
+		ASCIZ "dec 550 irq 0";					\
+		ASCIZ "dec 550 irq 1";					\
+		ASCIZ "dec 550 irq 2";					\
+		ASCIZ "dec 550 irq 3";					\
+/* 0x100 */	ASCIZ "dec 550 irq 4";					\
+		ASCIZ "dec 550 irq 5";					\
+		ASCIZ "dec 550 irq 6";					\
+		ASCIZ "dec 550 irq 7";					\
+		ASCIZ "dec 550 irq 8";					\
+		ASCIZ "dec 550 irq 9";					\
+		ASCIZ "dec 550 irq 10";					\
+		ASCIZ "dec 550 irq 11";					\
+		ASCIZ "dec 550 irq 12";					\
+		ASCIZ "dec 550 irq 13";					\
+		ASCIZ "dec 550 irq 14";					\
+		ASCIZ "dec 550 irq 15";					\
+		ASCIZ "dec 550 irq 16";					\
+		ASCIZ "dec 550 irq 17";					\
+		ASCIZ "dec 550 irq 18";					\
+		ASCIZ "dec 550 irq 19";					\
+/* 0x110 */	ASCIZ "dec 550 irq 20";					\
+		ASCIZ "dec 550 irq 21";					\
+		ASCIZ "dec 550 irq 22";					\
+		ASCIZ "dec 550 irq 23";					\
+		ASCIZ "dec 550 irq 24";					\
+		ASCIZ "dec 550 irq 25";					\
+		ASCIZ "dec 550 irq 26";					\
+		ASCIZ "dec 550 irq 27";					\
+		ASCIZ "dec 550 irq 28";					\
+		ASCIZ "dec 550 irq 29";					\
+		ASCIZ "dec 550 irq 30";					\
+		ASCIZ "dec 550 irq 31";					\
+		ASCIZ "dec 550 irq 32";					\
+		ASCIZ "dec 550 irq 33";					\
+		ASCIZ "dec 550 irq 34";					\
+		ASCIZ "dec 550 irq 35";					\
+/* 0x120 */	ASCIZ "dec 550 irq 36";					\
+		ASCIZ "dec 550 irq 37";					\
+		ASCIZ "dec 550 irq 38";					\
+		ASCIZ "dec 550 irq 39";					\
+		ASCIZ "dec 550 irq 40";					\
+		ASCIZ "dec 550 irq 41";					\
+		ASCIZ "dec 550 irq 42";					\
+		ASCIZ "dec 550 irq 43";					\
+		ASCIZ "dec 550 irq 44";					\
+		ASCIZ "dec 550 irq 45";					\
+		ASCIZ "dec 550 irq 46";					\
+		ASCIZ "dec 550 irq 47";
 
 #define INTRCNT_DEFINITION						\
 /* 0x00 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
@@ -195,7 +243,10 @@
 /* 0x60 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
 /* 0x70 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
 /* 0x80 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
-/* 0x90 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
+/* 0x90 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
+/* 0x100 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
+/* 0x110 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
+/* 0x120 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
 
 #define	INTRCNT_CLOCK		0
 #define	INTRCNT_ISA_IRQ		(INTRCNT_CLOCK + 1)
@@ -223,6 +274,10 @@
 #define	INTRCNT_KN300_LEN	19
 #define	INTRCNT_EB64PLUS_IRQ	(INTRCNT_KN300_IRQ + INTRCNT_KN300_LEN)
 #define	INTRCNT_EB64PLUS_IRQ_LEN 32
+#define	INTRCNT_DEC_550_IRQ	(INTRCNT_EB64PLUS_IRQ + \
+				    INTRCNT_EB64PLUS_IRQ_LEN)
+#define	INTRCNT_DEC_550_IRQ_LEN	48
+
 #ifndef _LOCORE
 extern volatile long intrcnt[];
 #endif
