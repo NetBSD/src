@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.11 2002/01/29 02:43:38 tv Exp $	*/
+/*	$NetBSD: main1.c,v 1.12 2002/01/31 19:33:50 tv Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -32,8 +32,8 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: main1.c,v 1.11 2002/01/29 02:43:38 tv Exp $");
+#if defined(__RCSID) && !defined(lint)
+__RCSID("$NetBSD: main1.c,v 1.12 2002/01/31 19:33:50 tv Exp $");
 #endif
 
 #include <sys/types.h>
@@ -123,6 +123,8 @@ main(int argc, char *argv[])
 	int	c;
 	char	*ptr;
 
+	setprogname(argv[0]);
+
 	ERR_ZERO(&msgset);
 	while ((c = getopt(argc, argv, "abcdeghmprstuvwyzFX:")) != -1) {
 		switch (c) {
@@ -206,7 +208,6 @@ main(int argc, char *argv[])
 static void
 usage(void)
 {
-
 	(void)fprintf(stderr,
 	    "Usage: %s [-abcdeghmprstuvwyzF] [-X <id>[,<id>]... src dest\n",
 	    getprogname());
@@ -216,7 +217,6 @@ usage(void)
 void
 norecover(void)
 {
-
 	/* cannot recover from previous errors */
 	error(224);
 	exit(1);
