@@ -1,4 +1,4 @@
-/*	$NetBSD: sio_pic.c,v 1.7.4.2 1996/06/05 22:30:11 cgd Exp $	*/
+/*	$NetBSD: sio_pic.c,v 1.7.4.3 1996/06/05 22:50:23 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -296,10 +296,18 @@ sio_intr_establish(v, irq, type, level, ih_fun, ih_arg)
 		if (type == sio_intrsharetype[irq])
 			break;
 	case IST_PULSE:
-		if (type != IST_NONE)
-			panic("intr_establish: irq %d: can't share %s with %s",
-			    irq, isa_intr_typename(type),
-			    isa_intr_typename(sio_intrsharetype[irq]));
+		if (type != IST_NONE) {
+			if (sio_intrhand[irq] == NULL) {
+				printf("sio_intr_establish: irq %d: warning: using %s on %s\n",
+				    irq, isa_intr_typename(type),
+				    isa_intr_typename(sio_intrsharetype[irq]));
+				type = sio_intrsharetype[irq];
+			} else {
+				panic("sio_intr_establish: irq %d: can't share %s with %s",
+				    irq, isa_intr_typename(type),
+				    isa_intr_typename(sio_intrsharetype[irq]));
+			}
+		}
 		break;
         }
 
