@@ -1,4 +1,4 @@
-.\"	$NetBSD: audiorecord.1,v 1.1 1999/03/26 14:02:41 mrg Exp $
+.\"	$NetBSD: audiorecord.1,v 1.2 1999/03/26 15:46:22 mrg Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -123,10 +123,12 @@ Be verbose.
 Set the volume (gain) to
 .Ar volume .
 This value must be between 0 and 255.
-.Sh NOTES
+.Sh BUGS
 Many audio device hardware is limited in capabilities.  Any attempt
 to use an audio device beyond it's capabilities will result in an
-error.
+error.  This program is not finished and will become much more
+versatile in it's understanding of the audio device and the desired
+output.
 .Sh HISTORY
 The
 .Nm
