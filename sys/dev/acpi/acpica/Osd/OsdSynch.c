@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdSynch.c,v 1.4 2002/12/23 00:22:05 kanaoka Exp $	*/
+/*	$NetBSD: OsdSynch.c,v 1.5 2003/03/05 23:00:57 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdSynch.c,v 1.4 2002/12/23 00:22:05 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdSynch.c,v 1.5 2003/03/05 23:00:57 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -78,6 +78,8 @@ __KERNEL_RCSID(0, "$NetBSD: OsdSynch.c,v 1.4 2002/12/23 00:22:05 kanaoka Exp $")
 #include <sys/proc.h>
 
 #include <dev/acpi/acpica.h>
+
+MALLOC_DECLARE(M_ACPI);
 
 #define	_COMPONENT	ACPI_OS_SERVICES
 ACPI_MODULE_NAME("SYNCH")
@@ -110,7 +112,7 @@ AcpiOsCreateSemaphore(UINT32 MaxUnits, UINT32 InitialUnits,
 	if (InitialUnits > MaxUnits)
 		return_ACPI_STATUS(AE_BAD_PARAMETER);
 
-	as = malloc(sizeof(*as), M_DEVBUF, M_NOWAIT);
+	as = malloc(sizeof(*as), M_ACPI, M_NOWAIT);
 	if (as == NULL)
 		return_ACPI_STATUS(AE_NO_MEMORY);
 
@@ -141,7 +143,7 @@ AcpiOsDeleteSemaphore(ACPI_HANDLE Handle)
 	if (as == NULL)
 		return_ACPI_STATUS(AE_BAD_PARAMETER);
 
-	free(as, M_DEVBUF);
+	free(as, M_ACPI);
 
 	ACPI_DEBUG_PRINT((ACPI_DB_MUTEX, "destroyed semaphre %p\n", as));
 

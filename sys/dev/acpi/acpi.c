@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.32 2003/02/14 11:05:39 tshiozak Exp $	*/
+/*	$NetBSD: acpi.c,v 1.33 2003/03/05 23:00:56 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.32 2003/02/14 11:05:39 tshiozak Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.33 2003/03/05 23:00:56 christos Exp $");
 
 #include "opt_acpi.h"
 
@@ -72,6 +72,8 @@ __KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.32 2003/02/14 11:05:39 tshiozak Exp $");
 #include <dev/acpi/acpica/Subsystem/acnamesp.h> /* AcpiNsGetNodeByPath() */
 #include <dev/pci/pcidevs.h>
 #endif
+
+MALLOC_DECLARE(M_ACPI);
 
 #include <machine/acpi_machdep.h>
 
@@ -412,7 +414,7 @@ acpi_build_tree(struct acpi_softc *sc)
 	 * Scan the namespace and build our tree.
 	 */
 	for (i = 0; scopes[i] != NULL; i++) {
-		as = malloc(sizeof(*as), M_DEVBUF, M_WAITOK);
+		as = malloc(sizeof(*as), M_ACPI, M_WAITOK);
 		as->as_name = scopes[i];
 		TAILQ_INIT(&as->as_devnodes);
 
@@ -537,7 +539,7 @@ acpi_make_devnode(ACPI_HANDLE handle, UINT32 level, void *context,
 		case ACPI_TYPE_PROCESSOR:
 		case ACPI_TYPE_THERMAL:
 		case ACPI_TYPE_POWER:
-			ad = malloc(sizeof(*ad), M_DEVBUF, M_NOWAIT|M_ZERO);
+			ad = malloc(sizeof(*ad), M_ACPI, M_NOWAIT|M_ZERO);
 			if (ad == NULL)
 				return (AE_NO_MEMORY);
 
@@ -1046,7 +1048,7 @@ acpi_get_intr(ACPI_HANDLE handle)
 			break;
 		}
 	}
-	free(ret.Pointer, M_DEVBUF);
+	free(ret.Pointer, M_ACPI);
 	return (intr);
 }
 
@@ -1186,7 +1188,7 @@ acpi_pci_fixup_bus(ACPI_HANDLE handle, UINT32 level, void *context,
 
 	sc->sc_pci_bus++;
 
-	free(buf.Pointer, M_DEVBUF);
+	free(buf.Pointer, M_ACPI);
 	return (AE_OK);
 }
 #endif /* ACPI_PCI_FIXUP */
@@ -1211,7 +1213,7 @@ acpi_allocate_resources(ACPI_HANDLE handle)
 	}
 
 	bufn.Length = 1000;
-	bufn.Pointer = resn = malloc(bufn.Length, M_DEVBUF, M_WAITOK);
+	bufn.Pointer = resn = malloc(bufn.Length, M_ACPI, M_WAITOK);
 	resp = bufp.Pointer;
 	resc = bufc.Pointer;
 	while (resc->Id != ACPI_RSTYPE_END_TAG &&
@@ -1250,7 +1252,7 @@ acpi_allocate_resources(ACPI_HANDLE handle)
 		    bufn.Length-ACPI_SIZEOF_RESOURCE(ACPI_RESOURCE_DATA)) {
 			bufn.Length *= 2;
 			bufn.Pointer = realloc(bufn.Pointer, bufn.Length,
-					       M_DEVBUF, M_WAITOK);
+					       M_ACPI, M_WAITOK);
 			resn = (ACPI_RESOURCE *)((UINT8 *)bufn.Pointer + delta);
 		}
 	}
@@ -1268,11 +1270,11 @@ acpi_allocate_resources(ACPI_HANDLE handle)
 	}
 
 out3:
-	free(bufn.Pointer, M_DEVBUF);
+	free(bufn.Pointer, M_ACPI);
 out2:
-	free(bufc.Pointer, M_DEVBUF);
+	free(bufc.Pointer, M_ACPI);
 out1:
-	free(bufp.Pointer, M_DEVBUF);
+	free(bufp.Pointer, M_ACPI);
 out:
 	return rv;
 }
