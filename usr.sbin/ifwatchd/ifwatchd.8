@@ -1,4 +1,4 @@
-.\" $NetBSD: ifwatchd.8,v 1.16 2003/06/23 21:50:12 martin Exp $
+.\" $NetBSD: ifwatchd.8,v 1.17 2003/06/24 09:31:17 martin Exp $
 .\"
 .\" Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -102,8 +102,13 @@ Specify the command to invoke on
 .Dq interface up
 events (or: addition of an address to an interface).
 .It Fl v
+Run in verbose debug mode and do not detach from the controlling terminal.
 Output verbose progress messages and flag errors ignored during normal
-operation.
+operation. Adding more
+.Fl v
+increases the verbosity.
+.Em You do not want to use this option in
+.Pa /etc/rc.conf !
 .It Fl q
 Be quiet and don't log non-error messages to syslog.
 .It Ar ifname(s)
