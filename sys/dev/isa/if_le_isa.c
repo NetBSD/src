@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isa.c,v 1.30 2002/06/29 05:20:15 rafal Exp $	*/
+/*	$NetBSD: if_le_isa.c,v 1.31 2002/06/29 05:30:44 rafal Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_isa.c,v 1.30 2002/06/29 05:20:15 rafal Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_isa.c,v 1.31 2002/06/29 05:30:44 rafal Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,7 +137,8 @@ struct le_isa_params {
 	0, 2
 };
 
-int lance_isa_probe __P((struct isa_attach_args *, struct le_isa_params *));
+int lance_isa_probe __P((struct isa_attach_args *, 
+			 struct le_isa_params *, int));
 void le_isa_attach __P((struct device *, struct le_softc *,
 			struct isa_attach_args *, struct le_isa_params *));
 
@@ -194,7 +195,7 @@ ne2100_isa_probe(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	return (lance_isa_probe(aux, &ne2100_params));
+	return (lance_isa_probe(aux, &ne2100_params, match->cf_flags));
 }
 
 int
@@ -203,16 +204,17 @@ bicc_isa_probe(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	return (lance_isa_probe(aux, &bicc_params));
+	return (lance_isa_probe(aux, &bicc_params, match->cf_flags));
 }
 
 /*
  * Determine which chip is present on the card.
  */
 int
-lance_isa_probe(ia, p)
+lance_isa_probe(ia, p, flags)
 	struct isa_attach_args *ia;
 	struct le_isa_params *p;
+	int flags;
 {
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
@@ -234,7 +236,8 @@ lance_isa_probe(ia, p)
 		return (0);
 	if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT)
 		return (0);
-	if (ia->ia_drq[0].ir_drq == ISACF_DRQ_DEFAULT)
+	if ((flags & LANCEISA_FLAG_LOCALBUS) == 0 && 
+	    ia->ia_drq[0].ir_drq == ISACF_DRQ_DEFAULT)
 		return (0);
 
 	/* Map i/o space. */
@@ -260,7 +263,12 @@ lance_isa_probe(ia, p)
 	ia->ia_io[0].ir_size = p->iosize;
 
 	ia->ia_nirq = 1;
-	ia->ia_ndrq = 1;
+
+	if ((flags & LANCEISA_FLAG_LOCALBUS) != 0 &&
+	    ia->ia_drq[0].ir_drq == ISACF_DRQ_DEFAULT)
+	    ia->ia_ndrq = 0;
+	else
+	    ia->ia_ndrq = 1;
 
 	ia->ia_niomem = 0;
 
@@ -387,10 +395,13 @@ le_isa_attach(parent, lesc, ia, p)
 	sc->sc_wrcsr = le_isa_wrcsr;
 	sc->sc_hwinit = NULL;
 
-	if ((error = isa_dmacascade(ia->ia_ic, ia->ia_drq[0].ir_drq)) != 0) {
-		printf("%s: unable to cascade DRQ, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
-		return;
+	if (ia->ia_ndrq > 0) {
+		if ((error = isa_dmacascade(ia->ia_ic, 
+					    ia->ia_drq[0].ir_drq)) != 0) {
+			printf("%s: unable to cascade DRQ, error = %d\n",
+				    sc->sc_dev.dv_xname, error);
+			return;
+		}
 	}
 
 	lesc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
