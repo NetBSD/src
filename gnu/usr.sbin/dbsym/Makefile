@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2003/05/18 07:57:31 lukem Exp $
+#	$NetBSD: Makefile,v 1.11 2003/11/27 14:36:45 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,14 @@
      (${TOOLCHAIN_MISSING} != "yes" || defined(EXTERNAL_TOOLCHAIN))) || \
     ${MKBFD} != "no"
 TOP=		${NETBSDSRCDIR}/gnu
+.if ${HAVE_BINUTILS214} == "yes"
+DIST=		${TOP}/dist/binutils
+BFDSUBDIR=	usr.bin/binutils
+.else
+DIST=		${.CURDIR}/../../../dist/toolchain
 DIST=		${TOP}/dist/toolchain
+BFDSUBDIR=	lib
+.endif
 
 PROG=		dbsym
 MAN=		dbsym.8
@@ -24,12 +31,12 @@ DPADD+=		${IBERTYDIR}/libiberty.a
 LDADD+=		-L${IBERTYDIR} -liberty
 
 .ifndef HOSTPROG
-.include	"${TOP}/lib/libbfd/arch/${MACHINE_ARCH}/defs.mk"
+.include	"${TOP}/${BFDSUBDIR}/libbfd/arch/${MACHINE_ARCH}/defs.mk"
 
-BFDDIR!=	cd ${TOP}/lib/libbfd && ${PRINTOBJDIR}
-IBERTYDIR!=	cd ${TOP}/lib/libiberty && ${PRINTOBJDIR}
+BFDDIR!=	cd ${TOP}/${BFDSUBDIR}/libbfd && ${PRINTOBJDIR}
+IBERTYDIR!=	cd ${TOP}/${BFDSUBDIR}/libiberty && ${PRINTOBJDIR}
 
-CPPFLAGS+=	-I${TOP}/lib/libbfd/arch/${MACHINE_ARCH} ${G_INCLUDES}
+CPPFLAGS+=	-I${TOP}/${BFDSUBDIR}/libbfd/arch/${MACHINE_ARCH} ${G_INCLUDES}
 LDADD+=		-lintl
 DPADD+=		${LIBINTL}
 .endif # HOSTPROG
