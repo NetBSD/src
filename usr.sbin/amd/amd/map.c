@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: map.c,v 1.6 1997/07/24 23:16:39 christos Exp $
+ * $Id: map.c,v 1.7 1997/09/22 22:10:21 christos Exp $
  *
  */
 
@@ -352,8 +352,7 @@ free_map(am_node *mp)
 
 
 /*
- * Convert from file handle to
- * automount node.
+ * Convert from file handle to automount node.
  */
 am_node *
 fh_to_mp3(am_nfs_fh *fhp, int *rp, int c_or_d)
@@ -495,8 +494,7 @@ fh_to_mp(am_nfs_fh *fhp)
 
 
 /*
- * Convert from automount node to
- * file handle.
+ * Convert from automount node to file handle.
  */
 void
 mp_to_fh(am_node *mp, am_nfs_fh *fhp)
@@ -529,7 +527,7 @@ mp_to_fh(am_node *mp, am_nfs_fh *fhp)
 }
 
 
-static am_node *
+am_node *
 find_ap2(char *dir, am_node *mp)
 {
   if (mp) {
@@ -552,10 +550,8 @@ find_ap2(char *dir, am_node *mp)
 
 
 /*
- * Find the mount node corresponding
- * to dir.  dir can match either the
- * automount path or, if the node is
- * mounted, the mount location.
+ * Find the mount node corresponding to dir.  dir can match either the
+ * automount path or, if the node is mounted, the mount location.
  */
 am_node *
 find_ap(char *dir)
@@ -566,8 +562,9 @@ find_ap(char *dir)
     am_node *mp = exported_ap[i];
     if (mp && (mp->am_flags & AMF_ROOT)) {
       mp = find_ap2(dir, exported_ap[i]);
-      if (mp)
+      if (mp) {
 	return mp;
+      }
     }
   }
 
@@ -835,8 +832,6 @@ unmount_node(am_node *mp)
 
   return error;
 }
-
-
 
 
 static int

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 1997/07/28 00:46:57 christos Exp $
+#	$NetBSD: Makefile,v 1.13 1997/09/22 22:10:01 christos Exp $
 
 PROG= amd
 SRCS=	conf_parse.c conf_tok.c srvr_nfs.c srvr_afs.c sched.c rpc_fwd.c \

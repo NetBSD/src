@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: ops_host.c,v 1.2 1997/07/24 23:16:56 christos Exp $
+ * $Id: ops_host.c,v 1.3 1997/09/22 22:10:36 christos Exp $
  *
  */
 
@@ -320,7 +320,7 @@ host_fmount(mntfs *mf)
   /*
    * Read the mount list
    */
-  mlist = read_mtab(mf->mf_mount);
+  mlist = read_mtab(mf->mf_mount, mnttab_file_name);
 
 #ifdef MOUNT_TABLE_ON_FILE
   /*
@@ -525,7 +525,7 @@ host_fumount(mntfs *mf)
   /*
    * Read the mount list
    */
-  mntlist *mlist = read_mtab(mf->mf_mount);
+  mntlist *mlist = read_mtab(mf->mf_mount, mnttab_file_name);
 
 #ifdef MOUNT_TABLE_ON_FILE
   /*
@@ -560,7 +560,7 @@ host_fumount(mntfs *mf)
       /*
        * Unmount "dir"
        */
-      error = UMOUNT_FS(dir);
+      error = UMOUNT_FS(dir, mnttab_file_name);
       /*
        * Keep track of errors
        */

@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-#	$NetBSD: amd2netbsd,v 1.4 1997/09/07 21:56:12 veego Exp $
+#	$NetBSD: amd2netbsd,v 1.5 1997/09/22 22:09:55 christos Exp $
 #
 #  Perl script to convert a standard distribution directory for am-utils into
 #	a NetBSD source tree.
@@ -25,14 +25,15 @@ $version = "6.0a8";
 @subdirs = ("usr.sbin/amd/libamu", "usr.sbin/amd/include",
 	    "usr.sbin/amd/amd", "usr.sbin/amd/hlfsd",
 	    "usr.sbin/amd/amq", "usr.sbin/amd/fsinfo",
-	    "usr.sbin/amd/fixmount", "usr.sbin/amd/mk-amd-map");
+	    "usr.sbin/amd/fixmount", "usr.sbin/amd/mk-amd-map",
+	    "usr.sbin/amd/doc");
 
 
 @includef = ("am_compat.h", "am_defs.h", "am_utils.h", "amq_defs.h");
 
 
 @libamuf = ("hasmntopt.c", "misc_rpc.c", "mount_fs.c", "mtab.c",
-	   "nfs_prot_xdr.c", "util.c", "wire.c", "xdr_mountres3.c", 
+	   "nfs_prot_xdr.c", "util.c", "wire.c", "xdr_func.c", 
 	   "xutil.c");
 
 @libamudf = ("amu.h");
@@ -94,6 +95,15 @@ $version = "6.0a8";
 
 @mkamdmapef = ();
 
+
+@docf = ("am-utils.info", "am-utils.info-1", "am-utils.info-2",
+	 "am-utils.info-3", "am-utils.info-4", "am-utils.info-5",
+	 "am-utils.info-6", "am-utils.texi", "hlfsd.ps", "texinfo.tex",
+	 "version.texi");
+
+@docdf = ();
+
+@docef = ();
 
 #
 # Utility Subroutines
@@ -206,6 +216,10 @@ print "Populating the usr.sbin/amd/fixmount directory.\n";
 &copyfile("$srcdir/conf/checkmount/checkmount_bsd44.c",
 	  "$targetdir/usr.sbin/amd/fixmount/check_mount.c");
 
+print "Populating the usr.sbin/amd/doc directory.\n";
+&copyfiles ("$srcdir/doc", "$targetdir/usr.sbin/amd/doc",
+	    @docf, @docdf);
+
 print "Populating the usr.sbin/amd/fsinfo directory.\n";
 &copyfiles ("$srcdir/fsinfo", "$targetdir/usr.sbin/amd/fsinfo", @fsinfof,
 	    @fsinfodf);
@@ -255,6 +269,8 @@ while ($line = <DATA>) {
 		&dumpsrcs (@libamuf, @libamuef);
 	    } elsif ($cmd[2] eq "mk-amd-map") {
 		&dumpsrcs (@mkamdmapf, @mkamdmapef);
+	    } elsif ($cmd[2] eq "doc") {
+		&dumpsrcs (@docf, @docef);
 	    } else {
 		die "Unknown SRCS command";
 	    }
@@ -300,8 +316,8 @@ SUBDIR= libamu amd amq hlfsd fixmount fsinfo mk-amd-map
 LIBAMU != cd ${.CURDIR}/../libamu;\
     printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
 CFLAGS += -I${.CURDIR}/../include -I${.CURDIR} -I${LIBAMU} -I. -DHAVE_CONFIG_H
-LDADD += -L${LIBAMU} -lamu -lrpcsvc
-DPADD += ${LIBAMU}/libamu.a
+LDADD += -L${LIBAMU} -lamu -lrpcsvc -ll
+DPADD += ${LIBAMU}/libamu.a ${LIBRPCSVC} ${LIBL}
 BINDIR = /usr/sbin
 %% file usr.sbin/amd/amd/Makefile
 %% NetBSD #
@@ -371,7 +387,7 @@ fsi_gram.c fsi_gram.h: fsi_gram.y
 %% NetBSD #
 
 LIB= amu
-%% srcs libamu config_local.h
+%% srcs libamu
 
 config_local.h: mkconf
 	@rm -f ${.TARGET}
@@ -411,6 +427,22 @@ cat << __EOF
 #define HOST_OS "`uname -s | tr '[A-Z]' '[a-z]'``uname -r`"
 
 __EOF
+%% file usr.sbin/amd/doc/Makefile
+%% NetBSD #
+
+PROG = am-utils
+SRCS = am-utils.texinfo
+
+${PROG}: am-utils.dvi
+
+am-utils.dvi: ${SRCS}
+	-tex am-utils.texinfo; tex am-utils.texinfo
+
+clean:
+	-rm -f am-utils.aux am-utils.cp am-utils.cps am-utils.dvi am-utils.fn \
+	 am-utils.fns am-utils.ky am-utils.kys am-utils.log am-utils.pg \
+	 am-utils.pgs am-utils.toc am-utils.tp am-utils.tps am-utils.vr \
+	 am-utils.vrs
 %% file usr.sbin/amd/include/config.h
 /* config.h.  Generated automatically by configure.  */
 /* aux/config.h.in.  Generated automatically from ./aux/configure.in by autoheader.  */
@@ -462,6 +494,9 @@ __EOF
 
 /* Define if have union filesystem */
 #define HAVE_AM_FS_UNION 1
+
+/* Define if have Sun's autofs filesystem */
+/* #undef HAVE_AM_FS_AUTOFS */
 
 
 /*
@@ -603,8 +638,6 @@ __EOF
 #define MOUNT_TYPE_UMAPFS MOUNT_UMAP
 
 
-  /*
-   * Check for the string name for the mount-table of a filesystem.
 /*
  * Check for the string name for the mount-table of a filesystem.
  */
@@ -903,6 +936,9 @@ __EOF
  * NFS-specific mount(2) options (hex numbers)
  */
 
+/* hide mount type from df(1) */
+/* #undef MNT2_NFS_OPT_AUTO */
+
 /* set max secs for dir attr cache */
 /* #undef MNT2_NFS_OPT_ACDIRMAX */
 
@@ -1120,6 +1156,12 @@ __EOF
 /* does struct sockaddr have field sa_len? */
 #define HAVE_FIELD_STRUCT_SOCKADDR_SA_LEN 1
 
+/* does struct autofs_args have an addr field? */
+/* #undef HAVE_FIELD_AUTOFS_ARGS_T_ADDR */
+
+/* does umntrequest have an rdevid field? */
+/* #undef HAVE_FIELD_UMNTREQUEST_RDEVID */
+
 
 /* should signal handlers be reinstalled? */
 /* #undef REINSTALL_SIGNAL_HANDLER */
@@ -1215,6 +1257,9 @@ __EOF
 #define WORDS_BIGENDIAN 
 #endif
 
+/* Define if lex declares yytext as a char * by default, not a char[].  */
+#define YYTEXT_POINTER 1
+
 /* Turn off general debugging by default */
 /* #undef DEBUG */
 
@@ -1228,7 +1273,7 @@ __EOF
 #define PACKAGE "am-utils"
 
 /* Define version of package (must be defined by configure.in) */
-#define VERSION "6.0a8"
+#define VERSION "6.0a10"
 
 /* Define name of host machine's cpu (eg. sparc) */
 #define HOST_CPU MACHINE
@@ -1296,6 +1341,9 @@ __EOF
 /* Type of the 3rd argument to yp_order() */
 #define YP_ORDER_OUTORDER_TYPE int
 
+/* Type of the 5rd argument to authunix_create() */
+#define AUTH_CREATE_GIDLIST_TYPE gid_t
+
 /* The string used in printf to print the mount-type field of mount(2) */
 #define MTYPE_PRINTF_TYPE "%s"
 
@@ -1329,6 +1377,9 @@ __EOF
 /* Define a type for the rfs_args structure */
 /* #undef rfs_args_t */
 
+/* define if have a bad version of memcmp() */
+/* #undef HAVE_BAD_MEMCMP */
+
 /* Define if you have the __seterr_reply function.  */
 /* #undef HAVE___SETERR_REPLY */
 
@@ -1346,6 +1397,9 @@ __EOF
 
 /* Define if you have the clnt_sperrno function.  */
 #define HAVE_CLNT_SPERRNO 1
+
+/* Define if you have the clnt_tp_create_timed function.  */
+/* #undef HAVE_CLNT_TP_CREATE_TIMED */
 
 /* Define if you have the cnodeid function.  */
 /* #undef HAVE_CNODEID */
@@ -1398,14 +1452,14 @@ __EOF
 /* Define if you have the hasmntopt function.  */
 /* #undef HAVE_HASMNTOPT */
 
-/* Define if you have the hes_resolve function.  */
-/* #undef HAVE_HES_RESOLVE */
+/* Define if you have the hes_init function.  */
+/* #undef HAVE_HES_INIT */
+
+/* Define if you have the hesiod_init function.  */
+/* #undef HAVE_HESIOD_INIT */
 
 /* Define if you have the hesiod_reload function.  */
 /* #undef HAVE_HESIOD_RELOAD */
-
-/* Define if you have the hesiod_resolve function.  */
-/* #undef HAVE_HESIOD_RESOLVE */
 
 /* Define if you have the hesiod_to_bind function.  */
 /* #undef HAVE_HESIOD_TO_BIND */
@@ -1515,6 +1569,9 @@ __EOF
 /* Define if you have the umount function.  */
 /* #undef HAVE_UMOUNT */
 
+/* Define if you have the uname function.  */
+#define HAVE_UNAME 1
+
 /* Define if you have the unmount function.  */
 #define HAVE_UNMOUNT 1
 
@@ -1590,6 +1647,12 @@ __EOF
 /* Define if you have the xdr_linkargs function.  */
 #define HAVE_XDR_LINKARGS 1
 
+/* Define if you have the xdr_mntrequest function.  */
+/* #undef HAVE_XDR_MNTREQUEST */
+
+/* Define if you have the xdr_mntres function.  */
+/* #undef HAVE_XDR_MNTRES */
+
 /* Define if you have the xdr_mountbody function.  */
 #define HAVE_XDR_MOUNTBODY 1
 
@@ -1656,6 +1719,12 @@ __EOF
 /* Define if you have the xdr_symlinkargs function.  */
 #define HAVE_XDR_SYMLINKARGS 1
 
+/* Define if you have the xdr_umntrequest function.  */
+/* #undef HAVE_XDR_UMNTREQUEST */
+
+/* Define if you have the xdr_umntres function.  */
+/* #undef HAVE_XDR_UMNTRES */
+
 /* Define if you have the xdr_writeargs function.  */
 #define HAVE_XDR_WRITEARGS 1
 
@@ -1673,6 +1742,9 @@ __EOF
 
 /* Define if you have the <assert.h> header file.  */
 #define HAVE_ASSERT_H 1
+
+/* Define if you have the <bsd/rpc/rpc.h> header file.  */
+/* #undef HAVE_BSD_RPC_RPC_H */
 
 /* Define if you have the <cluster.h> header file.  */
 /* #undef HAVE_CLUSTER_H */
@@ -1709,6 +1781,9 @@ __EOF
 
 /* Define if you have the <libgen.h> header file.  */
 /* #undef HAVE_LIBGEN_H */
+
+/* Define if you have the <linux/auto_fs.h> header file.  */
+/* #undef HAVE_LINUX_AUTO_FS_H */
 
 /* Define if you have the <linux/fs.h> header file.  */
 /* #undef HAVE_LINUX_FS_H */
@@ -1765,7 +1840,7 @@ __EOF
 /* #undef HAVE_NETDIR_H */
 
 /* Define if you have the <netinet/if_ether.h> header file.  */
-/* #undef HAVE_NETINET_IF_ETHER_H */
+#define HAVE_NETINET_IF_ETHER_H 1
 
 /* Define if you have the <netinet/in.h> header file.  */
 #define HAVE_NETINET_IN_H 1
@@ -1887,6 +1962,9 @@ __EOF
 /* Define if you have the <sys/fs/autofs.h> header file.  */
 /* #undef HAVE_SYS_FS_AUTOFS_H */
 
+/* Define if you have the <sys/fs/autofs_prot.h> header file.  */
+/* #undef HAVE_SYS_FS_AUTOFS_PROT_H */
+
 /* Define if you have the <sys/fs/cachefs_fs.h> header file.  */
 /* #undef HAVE_SYS_FS_CACHEFS_FS_H */
 
@@ -2007,6 +2085,9 @@ __EOF
 /* Define if you have the <sys/uio.h> header file.  */
 #define HAVE_SYS_UIO_H 1
 
+/* Define if you have the <sys/utsname.h> header file.  */
+#define HAVE_SYS_UTSNAME_H 1
+
 /* Define if you have the <sys/vfs.h> header file.  */
 /* #undef HAVE_SYS_VFS_H */
 
@@ -2037,8 +2118,8 @@ __EOF
 /* Define if you have the <varargs.h> header file.  */
 #define HAVE_VARARGS_H 1
 
-/* Define if you have the c library (-lc).  */
-#define HAVE_LIBC 1
+/* Define if you have the gdbm library (-lgdbm).  */
+/* #undef HAVE_LIBGDBM */
 
 /* Define if you have the rpc library (-lrpc).  */
 /* #undef HAVE_LIBRPC */
@@ -2074,6 +2155,9 @@ __EOF
 
 /* does gethostname() exist? */
 #define HAVE_EXTERN_GETHOSTNAME 1
+
+/* does getlogin() exist? */
+#define HAVE_EXTERN_GETLOGIN 1
 
 /* does gettablesize() exist? */
 /* #undef HAVE_EXTERN_GETTABLESIZE */

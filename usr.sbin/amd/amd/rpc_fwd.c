@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: rpc_fwd.c,v 1.4 1997/07/24 23:17:15 christos Exp $
+ * $Id: rpc_fwd.c,v 1.5 1997/09/22 22:10:43 christos Exp $
  *
  */
 
@@ -300,9 +300,19 @@ fwd_packet(int type_id, voidp pkt, int len, struct sockaddr_in *fwdto, struct so
 #ifdef DEBUG
   {
     char dq[20];
-    dlog("Sending packet id %#x to %s.%d", p->rf_xid, inet_dquad(dq, fwdto->sin_addr.s_addr), ntohs(fwdto->sin_port));
+    if (p && fwdto)
+      dlog("Sending packet id %#x to %s.%d",
+	   p->rf_xid,
+	   inet_dquad(dq, fwdto->sin_addr.s_addr),
+	   ntohs(fwdto->sin_port));
   }
 #endif /* DEBUG */
+
+  /* if NULL, remote server probably down */
+  if (!fwdto) {
+    error = AM_ERRNO_HOST_DOWN;
+    goto out;
+  }
 
 #ifdef HAVE_TRANSPORT_TYPE_TLI
   ud.addr.buf = (char *) fwdto;
@@ -320,14 +330,14 @@ fwd_packet(int type_id, voidp pkt, int len, struct sockaddr_in *fwdto, struct so
   }
 #else /* not HAVE_TRANSPORT_TYPE_TLI */
   if (sendto(fwd_sock, (char *) pkt, len, 0,
-	     (struct sockaddr *) fwdto, sizeof(*fwdto)) < 0) {
+	     (struct sockaddr *) fwdto, sizeof(*fwdto)) < 0)
     error = errno;
-  }
 #endif /* not HAVE_TRANSPORT_TYPE_TLI */
 
   /*
    * Save callback function and return address
    */
+out:
   p->rf_fwd = cb;
   if (replyto)
     p->rf_sin = *replyto;

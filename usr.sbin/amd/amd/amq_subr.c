@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: amq_subr.c,v 1.5 1997/07/24 23:16:18 christos Exp $
+ * $Id: amq_subr.c,v 1.6 1997/09/22 22:10:07 christos Exp $
  *
  */
 /*
@@ -259,6 +259,17 @@ amqproc_getvers_1_svc(voidp argp, struct svc_req *rqstp)
   static amq_string res;
 
   res = get_version_string();
+  return &res;
+}
+
+
+/* get PID of remote amd */
+int *
+amqproc_getpid_1_svc(voidp argp, struct svc_req *rqstp)
+{
+  static int res;
+
+  res = getpid();
   return &res;
 }
 

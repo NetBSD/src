@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: conf.c,v 1.2 1997/07/24 23:16:23 christos Exp $
+ * $Id: conf.c,v 1.3 1997/09/22 22:10:14 christos Exp $
  *
  */
 
@@ -82,8 +82,11 @@ static int gopt_cache_duration(const char *val);
 static int gopt_cluster(const char *val);
 static int gopt_debug_options(const char *val);
 static int gopt_dismount_interval(const char *val);
+static int gopt_fully_qualified_hosts(const char *val);
 static int gopt_karch(const char *val);
 static int gopt_ldap_base(const char *val);
+static int gopt_ldap_cache_maxmem(const char *val);
+static int gopt_ldap_cache_seconds(const char *val);
 static int gopt_ldap_hostports(const char *val);
 static int gopt_local_domain(const char *val);
 static int gopt_log_file(const char *val);
@@ -91,6 +94,7 @@ static int gopt_log_options(const char *val);
 static int gopt_map_options(const char *val);
 static int gopt_map_type(const char *val);
 static int gopt_mount_type(const char *val);
+static int gopt_portmap_program(const char *val);
 static int gopt_nfs_retransmit_counter(const char *val);
 static int gopt_nfs_retry_interval(const char *val);
 static int gopt_nis_domain(const char *val);
@@ -103,6 +107,7 @@ static int gopt_print_version(const char *val);
 static int gopt_restart_mounts(const char *val);
 static int gopt_search_path(const char *val);
 static int gopt_selectors_on_default(const char *val);
+static int gopt_show_statfs_entries(const char *val);
 static int process_global_option(const char *key, const char *val);
 static int process_regular_map(cf_map_t *cfm);
 static int process_regular_option(const char *section, const char *key, const char *val, cf_map_t *cfm);
@@ -128,8 +133,11 @@ static struct _func_map glob_functable[] = {
   {"cluster",			gopt_cluster},
   {"debug_options",		gopt_debug_options},
   {"dismount_interval",		gopt_dismount_interval},
+  {"fully_qualified_hosts",	gopt_fully_qualified_hosts},
   {"karch",			gopt_karch},
   {"ldap_base",			gopt_ldap_base},
+  {"ldap_cache_maxmem",		gopt_ldap_cache_maxmem},
+  {"ldap_cache_seconds",	gopt_ldap_cache_seconds},
   {"ldap_hostports",		gopt_ldap_hostports},
   {"local_domain",		gopt_local_domain},
   {"log_file",			gopt_log_file},
@@ -137,6 +145,7 @@ static struct _func_map glob_functable[] = {
   {"map_options",		gopt_map_options},
   {"map_type",			gopt_map_type},
   {"mount_type",		gopt_mount_type},
+  {"portmap_program",		gopt_portmap_program},
   {"nfs_retransmit_counter",	gopt_nfs_retransmit_counter},
   {"nfs_retry_interval",	gopt_nfs_retry_interval},
   {"nis_domain",		gopt_nis_domain},
@@ -149,6 +158,7 @@ static struct _func_map glob_functable[] = {
   {"restart_mounts",		gopt_restart_mounts},
   {"search_path",		gopt_search_path},
   {"selectors_on_default",	gopt_selectors_on_default},
+  {"show_statfs_entries",	gopt_show_statfs_entries},
   {NULL, NULL}
 };
 
@@ -170,6 +180,11 @@ reset_cf_map(cf_map_t *cfm)
   if (cfm->cfm_name) {
     free(cfm->cfm_name);
     cfm->cfm_name = NULL;
+  }
+
+  if (cfm->cfm_tag) {
+    free(cfm->cfm_tag);
+    cfm->cfm_tag = NULL;
   }
 
   /*
@@ -365,6 +380,22 @@ gopt_dismount_interval(const char *val)
 
 
 static int
+gopt_fully_qualified_hosts(const char *val)
+{
+  if (STREQ(val, "yes")) {
+    gopt.flags |= CFM_FULLY_QUALIFIED_HOSTS;
+    return 0;
+  } else if (STREQ(val, "no")) {
+    gopt.flags &= ~CFM_FULLY_QUALIFIED_HOSTS;
+    return 0;
+  }
+
+  fprintf(stderr, "conf: unknown value to fully_qualified_hosts \"%s\"\n", val);
+  return 1;			/* unknown value */
+}
+
+
+static int
 gopt_karch(const char *val)
 {
   gopt.karch = strdup((char *)val);
@@ -388,6 +419,44 @@ gopt_ldap_base(const char *val)
   return 0;
 #else /* not HAVE_MAP_LDAP */
   fprintf(stderr, "conf: ldap_base option ignored.  No LDAP support available.\n");
+  return 1;
+#endif /* not HAVE_MAP_LDAP */
+}
+
+
+static int
+gopt_ldap_cache_seconds(const char *val)
+{
+#ifdef HAVE_MAP_LDAP
+  char *end;
+
+  gopt.ldap_cache_seconds = strtol((char *)val, &end, 10);
+  if (end == val) {
+    fprintf(stderr, "conf: bad LDAP cache (seconds) option: %s\n",val);
+    return 1;
+  }
+  return 0;
+#else /* not HAVE_MAP_LDAP */
+  fprintf(stderr, "conf: ldap_cache option ignored.  No LDAP support available.\n");
+  return 1;
+#endif /* not HAVE_MAP_LDAP */
+}
+
+
+static int
+gopt_ldap_cache_maxmem(const char *val)
+{
+#ifdef HAVE_MAP_LDAP
+  char *end;
+
+  gopt.ldap_cache_maxmem = strtol((char *)val, &end, 10);
+  if (end == val) {
+    fprintf(stderr, "conf: bad LDAP cache (maxmem) option: %s\n",val);
+    return 1;
+  }
+  return 0;
+#else /* not HAVE_MAP_LDAP */
+  fprintf(stderr, "conf: ldap_cache option ignored.  No LDAP support available.\n");
   return 1;
 #endif /* not HAVE_MAP_LDAP */
 }
@@ -443,8 +512,13 @@ static int
 gopt_mount_type(const char *val)
 {
   if (STREQ(val, "autofs")) {
+#ifdef HAVE_FS_AUTOFS
     gopt.flags |= CFM_MOUNT_TYPE_AUTOFS;
     return 0;
+#else /* not HAVE_FS_AUTOFS */
+    fprintf(stderr, "conf: no autofs support available\n");
+    return 1;
+#endif /* not HAVE_FS_AUTOFS */
   } else if (STREQ(val, "nfs")) {
     gopt.flags &= ~CFM_MOUNT_TYPE_AUTOFS;
     return 0;
@@ -452,6 +526,27 @@ gopt_mount_type(const char *val)
 
   fprintf(stderr, "conf: unknown value to mount_type \"%s\"\n", val);
   return 1;			/* unknown value */
+}
+
+
+static int
+gopt_portmap_program(const char *val)
+{
+  gopt.portmap_program = atoi(val);
+  /*
+   * allow alternate program numbers to be no more than 10 offset from
+   * official amd program number (300019).
+   */
+  if (gopt.portmap_program < AMQ_PROGRAM ||
+      gopt.portmap_program > AMQ_PROGRAM + 10) {
+    gopt.portmap_program = AMQ_PROGRAM;
+    set_amd_program_number(gopt.portmap_program);
+    fprintf(stderr, "conf: illegal amd program numver \"%s\"\n", val);
+    return 1;
+  }
+
+  set_amd_program_number(gopt.portmap_program);
+  return 0;			/* all is OK */
 }
 
 
@@ -520,10 +615,10 @@ static int
 gopt_plock(const char *val)
 {
   if (STREQ(val, "yes")) {
-    gopt.flags |= CFM_NOSWAP;
+    gopt.flags |= CFM_PROCESS_LOCK;
     return 0;
   } else if (STREQ(val, "no")) {
-    gopt.flags &= ~CFM_NOSWAP;
+    gopt.flags &= ~CFM_PROCESS_LOCK;
     return 0;
   }
 
@@ -599,6 +694,22 @@ gopt_selectors_on_default(const char *val)
   }
 
   fprintf(stderr, "conf: unknown value to enable_default_selectors \"%s\"\n", val);
+  return 1;			/* unknown value */
+}
+
+
+static int
+gopt_show_statfs_entries(const char *val)
+{
+  if (STREQ(val, "yes")) {
+    gopt.flags |= CFM_SHOW_STATFS_ENTRIES;
+    return 0;
+  } else if (STREQ(val, "no")) {
+    gopt.flags &= ~CFM_SHOW_STATFS_ENTRIES;
+    return 0;
+  }
+
+  fprintf(stderr, "conf: unknown value to show_statfs_entries \"%s\"\n", val);
   return 1;			/* unknown value */
 }
 
@@ -694,8 +805,13 @@ static int
 ropt_mount_type(const char *val, cf_map_t *cfm)
 {
   if (STREQ(val, "autofs")) {
+#ifdef HAVE_FS_AUTOFS
     cfm->cfm_flags |= CFM_MOUNT_TYPE_AUTOFS;
     return 0;
+#else /* not HAVE_FS_AUTOFS */
+    fprintf(stderr, "conf: no autofs support available\n");
+    return 1;
+#endif /* not HAVE_FS_AUTOFS */
   } else if (STREQ(val, "nfs")) {
     cfm->cfm_flags &= ~CFM_MOUNT_TYPE_AUTOFS;
     return 0;
@@ -758,10 +874,16 @@ process_regular_map(cf_map_t *cfm)
 
 
 /*
- * Process last map in conf file
+ * Process last map in conf file (if any)
  */
 int
 process_last_regular_map(void)
 {
+  /*
+   * If the amd.conf file only has a [global] section (pretty useless
+   * IMHO), do not try to process a map that does not exist.
+   */
+  if (!cur_map.cfm_dir)
+    return 0;
   return process_regular_map(&cur_map);
 }

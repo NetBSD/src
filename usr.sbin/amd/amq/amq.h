@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: amq.h,v 1.2 1997/07/24 23:17:30 christos Exp $
+ * $Id: amq.h,v 1.3 1997/09/22 22:10:47 christos Exp $
  *
  */
 
@@ -58,5 +58,6 @@ extern int *amqproc_setopt_1(amq_setopt *argp, CLIENT *rqstp);
 extern amq_mount_info_list *amqproc_getmntfs_1(voidp argp, CLIENT *rqstp);
 extern int *amqproc_mount_1(voidp argp, CLIENT *rqstp);
 extern amq_string *amqproc_getvers_1(voidp argp, CLIENT *rqstp);
+extern int *amqproc_getpid_1(voidp argp, CLIENT *rqstp);
 
 #endif /* not _AMQ_H */

@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: amq_svc.c,v 1.2 1997/07/24 23:16:20 christos Exp $
+ * $Id: amq_svc.c,v 1.3 1997/09/22 22:10:09 christos Exp $
  *
  */
 
@@ -116,6 +116,12 @@ amq_program_1(struct svc_req *rqstp, SVCXPRT *transp)
     xdr_argument = xdr_void;
     xdr_result = xdr_amq_string;
     local = (char *(*)()) amqproc_getvers_1_svc;
+    break;
+
+  case AMQPROC_GETPID:
+    xdr_argument = xdr_void;
+    xdr_result = xdr_int;
+    local = (char *(*)()) amqproc_getpid_1_svc;
     break;
 
   default:

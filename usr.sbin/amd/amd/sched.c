@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: sched.c,v 1.4 1997/07/24 23:17:16 christos Exp $
+ * $Id: sched.c,v 1.5 1997/09/22 22:10:44 christos Exp $
  *
  */
 
@@ -60,11 +60,7 @@ struct pjob {
   int pid;			/* Process ID of job */
   cb_fun cb_fun;		/* Callback function */
   voidp cb_closure;		/* Closure for callback */
-#ifdef HAVE_SIGACTION
-  int w;
-#else /* not HAVE_SIGACTION */
-  union wait w;			/* Status filled in by sigchld */
-#endif /* not HAVE_SIGACTION */
+  int w;		/* everyone these days uses int, not a "union wait" */
   voidp wchan;			/* Wait channel */
 };
 
@@ -239,14 +235,10 @@ do_task_notify(void)
      * Do callback if it exists
      */
     if (p->cb_fun) {
-#ifdef HAVE_SIGACTION
       /* these two trigraphs will ensure compatibity with strict POSIX.1 */
       (*p->cb_fun) (WIFEXITED(p->w)   ? WEXITSTATUS(p->w) : 0,
 		    WIFSIGNALED(p->w) ? WTERMSIG(p->w)	  : 0,
 		    p->cb_closure);
-#else /* not HAVE_SIGACTION */
-      (*p->cb_fun) (p->w.w_retcode, p->w.w_termsig, p->cb_closure);
-#endif /* not HAVE_SIGACTION */
     }
     free((voidp) p);
   }
@@ -256,11 +248,7 @@ do_task_notify(void)
 RETSIGTYPE
 sigchld(int sig)
 {
-#ifdef HAVE_SIGACTION
-  int w;
-#else /* not HAVE_SIGACTION */
-  union wait w;
-#endif /* not HAVE_SIGACTION */
+  int w;	/* everyone these days uses int, not a "union wait" */
   int pid;
 
 #ifdef HAVE_WAITPID
@@ -272,21 +260,11 @@ sigchld(int sig)
 
     if (WIFSIGNALED(w))
       plog(XLOG_ERROR, "Process %d exited with signal %d",
-#ifdef HAVE_SIGACTION
 	   pid, WTERMSIG(w));
-#else /* not HAVE_SIGACTION */
-	   pid, w.w_termsig);
-#endif /* not HAVE_SIGACTION */
-
 #ifdef DEBUG
     else
       dlog("Process %d exited with status %d",
-# ifdef HAVE_SIGACTION
 	   pid, WEXITSTATUS(w));
-# else /* not HAVE_SIGACTION */
-	   pid, w.w_retcode);
-# endif /* not HAVE_SIGACTION */
-
 #endif /* DEBUG */
 
     for (p = AM_FIRST(pjob, &proc_wait_list);

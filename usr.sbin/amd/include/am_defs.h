@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: am_defs.h,v 1.2 1997/07/24 23:18:43 christos Exp $
+ * $Id: am_defs.h,v 1.3 1997/09/22 22:11:05 christos Exp $
  *
  */
 
@@ -281,6 +281,13 @@ extern int errno;
 #endif /* HAVE_SYS_FSID_H */
 
 /*
+ * Actions to take if <sys/utsname.h> exists.
+ */
+#ifdef HAVE_SYS_UTSNAME_H
+# include <sys/utsname.h>
+#endif /* HAVE_SYS_UTSNAME_H */
+
+/*
  * Actions to take if <sys/mntent.h> exists.
  */
 #ifdef HAVE_SYS_MNTENT_H
@@ -454,6 +461,27 @@ extern int errno;
 #endif /* HAVE_LINUX_FS_H */
 
 /*
+ * Actions to take if <linux/auto_fs.h> exists.
+ */
+#ifdef HAVE_LINUX_AUTO_FS_H
+# include <linux/auto_fs.h>
+#endif /* HAVE_LINUX_AUTO_FS_H */
+
+/*
+ * Actions to take if <sys/fs/autofs.h> exists.
+ */
+#ifdef HAVE_SYS_FS_AUTOFS_H
+# include <sys/fs/autofs.h>
+#endif /* HAVE_SYS_FS_AUTOFS_H */
+
+/*
+ * Actions to take if <sys/fs/autofs_prot.h> exists.
+ */
+#ifdef HAVE_SYS_FS_AUTOFS_PROT_H
+# include <sys/fs/autofs_prot.h>
+#endif /* HAVE_SYS_FS_AUTOFS_PROT_H */
+
+/*
  * NFS PROTOCOL HEADER FILES:
  */
 
@@ -493,7 +521,7 @@ extern int errno;
 #ifdef HAVE_NFS_MOUNT_H
 # include <nfs/mount.h>
 #endif /* HAVE_NFS_MOUNT_H */
-#ifdef HAVE_NFS_NFS_MOUNT_H
+#ifdef HAVE_NFS_NFS_MOUNT_H_off
 # include <nfs/nfs_mount.h>
 #endif /* HAVE_NFS_NFS_MOUNT_H */
 #ifdef HAVE_NFS_PATHCONF_H
@@ -572,13 +600,6 @@ extern int errno;
 #ifdef HAVE_SYS_UIO_H
 # include <sys/uio.h>
 #endif /* HAVE_SYS_UIO_H */
-
-/*
- * Actions to take if <sys/fs/autofs.h> exists.
- */
-#ifdef HAVE_SYS_FS_AUTOFS_H
-# include <sys/fs/autofs.h>
-#endif /* HAVE_SYS_FS_AUTOFS_H */
 
 /*
  * Actions to take if <sys/fs/cachefs_fs.h> exists.
@@ -987,12 +1008,22 @@ extern char *nc_sperror(void);
 # endif /* not HAVE_BCOPY */
 #endif /* not HAVE_MEMMOVE */
 
-#ifndef HAVE_MEMCMP
+/*
+ * memcmp() is more problematic:
+ * Systems that don't have it, but have bcmp(), will use bcmp() instead.
+ * Those that have it, but it is bad (SunOS 4 doesn't handle
+ * 8 bit comparisons correctly), will get to use am_memcmp().
+ * Otherwise if you have memcmp() and it is good, use it.
+ */
+#ifdef HAVE_MEMCMP
+# ifdef HAVE_BAD_MEMCMP
+#  define	memcmp		am_memcmp
+extern int am_memcmp(const voidp s1, const voidp s2, size_t len);
+# endif /* HAVE_BAD_MEMCMP */
+#else /* not HAVE_MEMCMP */
 # ifdef HAVE_BCMP
 #  define	memcmp(a, b, len)	bcmp((a), (b), (len))
-# else /* not HAVE_BCMP */
-#  error Cannot find either memcmp or bcmp!
-# endif /* not HAVE_BCMP */
+# endif /* HAVE_BCMP */
 #endif /* not HAVE_MEMCMP */
 
 #ifndef HAVE_SETEUID
@@ -1100,6 +1131,9 @@ extern int wait3(int *statusp, int options, struct rusage *rusage);
 extern bool_t xdr_opaque_auth(XDR *, struct opaque_auth *);
 #endif /* not HAVE_EXTERN_XDR_OPAQUE_AUTH */
 
+#ifndef HAVE_EXTERN_GETLOGIN
+extern char *getlogin(void);
+#endif /* not HAVE_EXTERN_GETLOGIN */
 
 /****************************************************************************/
 /*

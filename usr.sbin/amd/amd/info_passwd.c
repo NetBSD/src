@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: info_passwd.c,v 1.4 1997/07/24 23:16:37 christos Exp $
+ * $Id: info_passwd.c,v 1.5 1997/09/22 22:10:19 christos Exp $
  *
  */
 
@@ -64,7 +64,23 @@ int
 passwd_init(mnt_map *m, char *map, time_t *tp)
 {
   *tp = 0;
-  return STREQ(map, PASSWD_MAP) ? 0 : ENOENT;
+
+  /*
+   * Recognize the old format "PASSWD_MAP"
+   * Uses default return string
+   * "type:=nfs;rfs:=/${var0}/${var1};rhost:=${var1};sublink:=${var2};fs:=${autodir}${var3}"
+   */
+  if (STREQ(map, PASSWD_MAP))
+    return 0;
+  /*
+   * Recognize the new format "PASSWD_MAP:pval-format"
+   */
+  if (strncmp(map, PASSWD_MAP, sizeof(PASSWD_MAP)-1) != 0)
+    return ENOENT;
+  if (map[sizeof(PASSWD_MAP)-1] != ':')
+    return ENOENT;
+
+  return 0;
 }
 
 
@@ -91,6 +107,11 @@ passwd_search(mnt_map *m, char *map, char *key, char **pval, time_t *tp)
      *
      * and return
      * rfs:=/anydir/dom3;rhost:=dom3.dom2.dom1;sublink:=user
+     * and now have
+     * var0:=pw-prefix:=anydir
+     * var1:=pw-rhost:=dom3.dom2.dom1
+     * var2:=pw-user:=user
+     * var3:=pw-home:=/anydir/dom1/dom2/dom3/user
      *
      * This allows cross-domain entries in your passwd file.
      * ... but forget about security!
@@ -146,8 +167,16 @@ passwd_search(mnt_map *m, char *map, char *key, char **pval, time_t *tp)
     q = strchr(rhost, '.');
     if (q)
       *q = '\0';
-    sprintf(val, "rfs:=%s/%s;rhost:=%s;sublink:=%s;fs:=${autodir}%s",
-	    dir, rhost, rhost, user, pw->pw_dir);
+    p = strchr(map, ':');
+    if (p)
+      p++;
+    else
+      p = "type:=nfs;rfs:=/${var0}/${var1};rhost:=${var1};sublink:=${var2};fs:=${autodir}${var3}";
+    sprintf(val, "var0:=%s;var1:=%s;var2:=%s;var3:=%s;%s",
+	    dir+1, rhost, user, pw->pw_dir, p);
+#ifdef DEBUG
+    dlog("passwd_search: map=%s key=%s -> %s", map, key, val);
+#endif /* DEBUG */
     if (q)
       *q = '.';
     *pval = strdup(val);
