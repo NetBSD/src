@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.15 2000/03/16 02:36:57 eeh Exp $	*/
+/*	$NetBSD: zs.c,v 1.16 2000/04/08 03:09:00 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -69,6 +69,7 @@
 
 #include <dev/cons.h>
 #include <dev/ic/z8530reg.h>
+#include <ddb/db_output.h>
 
 #include <sparc64/sparc64/vaddrs.h>
 #include <sparc64/sparc64/auxreg.h>
