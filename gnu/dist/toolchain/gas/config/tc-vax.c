@@ -1002,8 +1002,11 @@ md_assemble (instruction_string)
 			{
 			  know (operandP->vop_short == ' ');
 #ifndef OBJ_VMS
-			  if (S_IS_WEAK (this_add_symbol)
-			      || S_IS_EXTERNAL (this_add_symbol))
+			  if (S_IS_EXTERNAL (this_add_symbol)
+#ifdef OBJ_ELF
+			      || S_IS_WEAK (this_add_symbol)
+#endif
+			      )
 			    p = frag_var (rs_machine_dependent, 10, 2,
 			       ENCODE_RELAX (STATE_PC_RELATIVE, STATE_UNDF),
 					  this_add_symbol, this_add_number,
@@ -1053,7 +1056,9 @@ md_assemble (instruction_string)
 			     || (length > 0 && operandP->vop_short != ' '));
 			  if (is_undefined
 #ifndef OBJ_VMS
+#ifdef OBJ_ELF
 			      || S_IS_WEAK(this_add_symbol)
+#endif
 			      || S_IS_EXTERNAL(this_add_symbol)
 #endif
 			      )
@@ -1235,7 +1240,9 @@ md_estimate_size_before_relax (fragP, segment)
     {
       if (S_GET_SEGMENT (fragP->fr_symbol) != segment
 #ifndef OBJ_VMS
+#ifdef OBJ_ELF
 	  || S_IS_WEAK (fragP->fr_symbol)
+#endif
 	  || S_IS_EXTERNAL (fragP->fr_symbol)
 #endif
 	  )
@@ -1268,7 +1275,9 @@ md_estimate_size_before_relax (fragP, segment)
 	      && (PLT_symbol == NULL || fragP->fr_symbol != PLT_symbol)
 	      && fragP->fr_symbol != NULL
 	      && (!S_IS_DEFINED (fragP->fr_symbol)
+#ifdef OBJ_ELF
 	          || S_IS_WEAK (fragP->fr_symbol)
+#endif
 	          || S_IS_EXTERNAL (fragP->fr_symbol)))
 	    {
 	      if (p[0] & 0x10)
