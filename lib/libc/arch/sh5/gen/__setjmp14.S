@@ -1,4 +1,4 @@
-/*	$NetBSD: __setjmp14.S,v 1.4 2003/03/24 14:29:34 scw Exp $	*/
+/*	$NetBSD: __setjmp14.S,v 1.5 2004/03/17 00:35:08 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -177,21 +177,96 @@ ENTRY_NOPROFILE(__setjmp14)
 
 
 ENTRY_NOPROFILE(__longjmp14)
-	LINK_FRAME(0)
+	LINK_FRAME(8)
 	PIC_PROLOGUE
-	PIC_PTAL(_C_LABEL(__sigreturn14), r0, tr0)
+	pta/u	Lbotch, tr0		/* Exit on error */
+	LDUC32(0xACEBABE5, r0)		/* Check magic number */
+	ld.q	r2, _JB_R24, r1
+	bne/u	r1, r0, tr0
+	PIC_PTAL(_C_LABEL(__sigprocmask14), r0, tr0)
+	st.q	r14, 0, r2		/* Preserve jmp_buf */
 	movi	1, r1
 	cmveq	r3, r1, r3		/* Ensure a non-zero return value */
 	st.q	r2, _JB_R2, r3		/* Modify jmp_buf's copy of r2 */
-	blink	tr0, r18
+	movi	_JB_SIGMASK, r0
+	add	r2, r0, r3		/* Point to sigset_t */
+	movi	3, r2			/* SIG_SETMASK */
+	movi	0, r4
+	blink	tr0, r18		/* Restore the signal mask */
+	ld.q	r14, 0, r2		/* Restore jmp_buf */
+#if 0
+	/* These are not needed at this point */
 	PIC_EPILOGUE
-	UNLINK_FRAME(0)
+	UNLINK_FRAME(8)
+#endif
+	ld.q	r2, _JB_R10, r10	/* Restore saved registers */
+	ld.q	r2, _JB_R11, r11
+	ld.q	r2, _JB_R12, r12	/* No PIC calls past this point */
+	ld.q	r2, _JB_R13, r13
+	ld.q	r2, _JB_R14, r14
+	ld.q	r2, _JB_R15, r4		/* Don't restore SP just yet */
+	ld.q	r2, _JB_R18, r18
+	ptabs/u	r18, tr1
+	ld.q	r2, _JB_R26, r26
+	ld.q	r2, _JB_R27, r27
+	ld.q	r2, _JB_R28, r28
+	ld.q	r2, _JB_R29, r29
+	ld.q	r2, _JB_R30, r30
+	ld.q	r2, _JB_R31, r31
+	ld.q	r2, _JB_R32, r32
+	ld.q	r2, _JB_R33, r33
+	ld.q	r2, _JB_R34, r34
+	ld.q	r2, _JB_R35, r35
+	ld.q	r2, _JB_R44, r44
+	ld.q	r2, _JB_R45, r45
+	ld.q	r2, _JB_R46, r46
+	ld.q	r2, _JB_R47, r47
+	ld.q	r2, _JB_R48, r48
+	ld.q	r2, _JB_R49, r49
+	ld.q	r2, _JB_R50, r50
+	ld.q	r2, _JB_R51, r51
+	ld.q	r2, _JB_R52, r52
+	ld.q	r2, _JB_R53, r53
+	ld.q	r2, _JB_R54, r54
+	ld.q	r2, _JB_R55, r55
+	ld.q	r2, _JB_R56, r56
+	ld.q	r2, _JB_R57, r57
+	ld.q	r2, _JB_R58, r58
+	ld.q	r2, _JB_R59, r59
+	ld.q	r2, _JB_USR, r1
+	pta/l	1f, tr0
+	ld.q	r2, _JB_TR5, r0
+	ptabs/u	r0, tr5
+	ld.q	r2, _JB_TR6, r0
+	ptabs/u	r0, tr6
+	ld.q	r2, _JB_TR7, r0
+	ptabs/u	r0, tr7
+	shlri	r1, 8, r3		/* Check saved FP status */
+	andi	r3, 0xff, r3
+	beq/u	r3, r63, tr0		/* Jump if no FP regs saved */
+	fld.d	r2, _JB_DR12, dr12	/* Quicker to restore all FP-regs */
+	fld.d	r2, _JB_DR14, dr14	/* than check USR bits */
+	fld.d	r2, _JB_DR36, dr36
+	fld.d	r2, _JB_DR38, dr38
+	fld.d	r2, _JB_DR40, dr40
+	fld.d	r2, _JB_DR42, dr42
+	fld.d	r2, _JB_DR44, dr44
+	fld.d	r2, _JB_DR46, dr46
+	fld.d	r2, _JB_DR48, dr48
+	fld.d	r2, _JB_DR50, dr50
+	fld.d	r2, _JB_DR52, dr52
+	fld.d	r2, _JB_DR54, dr54
+	fld.d	r2, _JB_DR56, dr56
+	fld.d	r2, _JB_DR58, dr58
+	fld.d	r2, _JB_DR60, dr60
+	fld.d	r2, _JB_DR62, dr62
+1:	fld.s	r2, _JB_FPSCR, fr0
+	fputscr	fr0			/* Restore FPSCR */
+	ld.q	r2, _JB_R2, r2		/* Restore return value */
+	add	r4, r63, r15		/* Now ok to update SP */
+	putcon	r1, usr			/* Restore USR */
+	blink	tr1, r63		/* Done */
 
-	/*
-	 * The call to __sigreturn14 will only return here on error.
-	 * This usually happens if the kernel determines that the jmp_buf
-	 * is invalid in some way.
-	 */
 
 Lbotch:	LINK_FRAME(0)
 	PIC_PROLOGUE
@@ -199,5 +274,5 @@ Lbotch:	LINK_FRAME(0)
 	blink	tr0, r18
 	PIC_PTAL(_C_LABEL(abort), r0, tr0)
 	blink	tr0, r18
-	brk
+	brk				/* Just in case abort() should return */
 
