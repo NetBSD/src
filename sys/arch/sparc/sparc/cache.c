@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.73 2003/01/09 12:29:52 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.74 2003/01/15 16:42:27 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -760,12 +760,18 @@ srmmu_cache_flush(base, len, ctx)
 #endif
 
 	if (i < CACHE_FLUSH_MAGIC) {
+		int octx;
 		/* cache_flush_page, for i pages */
 		p = (char *)((int)base & ~baseoff);
 		ls = CACHEINFO.c_linesize;
 		i <<= PGSHIFT - CACHEINFO.c_l2linesize;
+		octx = getcontext4m();
+		trapoff();
+		setcontext4m(ctx);
 		for (; --i >= 0; p += ls)
 			sta(p, ASI_IDCACHELFP, 0);
+		setcontext4m(octx);
+		trapon();
 		return;
 	}
 	baseoff = (u_int)base & SGOFSET;
@@ -775,7 +781,11 @@ srmmu_cache_flush(base, len, ctx)
 	else {
 		baseoff = (u_int)base & RGOFSET;
 		i = (baseoff + len + RGOFSET) >> RGSHIFT;
-		srmmu_vcache_flush_region(VA_VREG(base), ctx);
+		p = (char *)VA_VREG(base);
+		while (i--) {
+			srmmu_vcache_flush_region((int)p, ctx);
+			p += NBPRG;
+		}
 	}
 }
 
