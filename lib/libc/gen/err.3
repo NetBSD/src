@@ -1,4 +1,4 @@
-.\" $NetBSD: err.3,v 1.18 2003/08/07 16:42:47 agc Exp $
+.\" $NetBSD: err.3,v 1.19 2003/08/10 10:45:33 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -90,6 +90,13 @@ is output next, preceded by a colon character and a space if
 is not
 .Dv NULL .
 In all cases, the output is followed by a newline character.
+The
+.Fn errx ,
+.Fn verrx ,
+.Fn warnx ,
+and
+.Fn vwarnx
+functions will not output this error message string.
 .Pp
 The
 .Fn err ,
