@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.37 2000/07/06 17:03:20 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.38 2000/07/06 17:22:25 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -812,3 +812,7 @@ domestic/lib/libss/Makefile			patch
   Use shlib_version files instead of specifying SHLIB_MAJOR and
   SHLIB_MINOR in the Makefiles, which does not work very well
   after the recent update of bsd.lib.mk.
+
+distrib/sets/lists/comp/mi			patch
+
+  Include <dev/pcmcia/if_wi_ieee.h> header file in distrib set.
