@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.3 1998/11/16 11:25:41 bouyer Exp $      */
+/*      $NetBSD: ata.c,v 1.4 1999/01/18 20:06:24 bouyer Exp $      */
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
  *
@@ -148,4 +148,39 @@ ata_set_mode(drvp, mode, flags)
 		return CMD_ERR;
 	}
 	return CMD_OK;
+}
+
+void
+ata_perror(drvp, errno, buf)
+	struct ata_drive_datas *drvp;
+	int errno;
+	char *buf;
+{
+	static char *errstr0_3[] = {"address mark not found",
+	    "track 0 not found", "aborted command", "media change requested",
+	    "id not found", "media changed", "uncorrectable data error",
+	    "bad block detected"};
+	static char *errstr4_5[] = {"",
+	    "no media/write protected", "aborted command",
+	    "media change requested", "id not found", "media changed",
+	    "uncorrectable data error", "interface CRC error"};
+	char **errstr;
+	int i;
+	char *sep = "";
+
+	if (drvp->ata_vers >= 4)
+		errstr = errstr4_5;
+	else
+		errstr = errstr0_3;
+
+	if (errno == 0) {
+		sprintf(buf, "error not notified");
+	}
+
+	for (i = 0; i < 8; i++) {
+		if (errno & (1 << i)) {
+			buf += sprintf(buf, "%s %s", sep, errstr[i]);
+			sep = ",";
+		}
+	}
 }
