@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	7.7 (Berkeley)	5/12/91
- *	$Id: pmap.c,v 1.8.2.7 1993/10/15 13:11:29 mycroft Exp $
+ *	$Id: pmap.c,v 1.8.2.8 1993/10/16 02:34:01 mycroft Exp $
  */
 
 /*
@@ -813,7 +813,7 @@ pmap_protect(pmap, sva, eva, prot)
 
 		ix = 0;
 		i386prot = pte_prot(pmap, prot);
-		if (va < VM_MIN_KERNEL_ADDRESS)	/* see also pmap_enter() */
+		if (va < VM_MAX_ADDRESS)	/* see also pmap_enter() */
 			i386prot |= PG_u;
 		do {
 			/* clear VAC here if PG_RO? */
@@ -1016,7 +1016,7 @@ validate:
 
 	if (va < VM_MAXUSER_ADDRESS)	/* i.e. below USRSTACK */
 		npte |= PG_u;
-	else if (va < VM_MIN_KERNEL_ADDRESS)
+	else if (va < VM_MAX_ADDRESS)
 		/* pagetables need to be user RW, for some reason, and the
 		 * user area must be writable too.  Anything above
 		 * VM_MAXUSER_ADDRESS is protected from user access by
@@ -1696,9 +1696,9 @@ pads(pm) pmap_t pm; {
 		if(pm->pm_pdir[i].pd_v)
 			for (j = 0; j < 1024 ; j++) {
 				va = (i<<22)+(j<<12);
-				if (pm == kernel_pmap && va < KERNBASE)
+				if (pm == kernel_pmap && va < VM_MIN_KERNEL_ADDRESS)
 						continue;
-				if (pm != kernel_pmap && va > VM_MIN_KERNEL_ADDRESS)
+				if (pm != kernel_pmap && va > VM_MAX_ADDRESS)
 						continue;
 				ptep = pmap_pte(pm, va);
 				if(pmap_pte_v(ptep)) 
