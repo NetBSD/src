@@ -1,4 +1,4 @@
-/* $NetBSD: fdc_acpi.c,v 1.2 2002/12/28 19:53:50 jmcneill Exp $ */
+/* $NetBSD: fdc_acpi.c,v 1.3 2003/01/09 00:22:39 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.2 2002/12/28 19:53:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.3 2003/01/09 00:22:39 jmcneill Exp $");
 
 #include "rnd.h"
 
@@ -41,6 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.2 2002/12/28 19:53:50 jmcneill Exp $"
 #include <sys/device.h>
 #include <sys/buf.h>
 #include <sys/queue.h>
+#include <sys/disk.h>
+#include <sys/dkstat.h>
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
@@ -56,6 +58,10 @@ __KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.2 2002/12/28 19:53:50 jmcneill Exp $"
 #include <dev/acpi/acpivar.h>
 
 #include <dev/isa/fdcvar.h>
+#include <dev/isa/fdvar.h>
+#include <dev/isa/fdreg.h>
+
+#include <dev/acpi/fdc_acpireg.h>
 
 int	fdc_acpi_match(struct device *, struct cfdata *, void *);
 void	fdc_acpi_attach(struct device *, struct device *, void *);
@@ -63,7 +69,13 @@ void	fdc_acpi_attach(struct device *, struct device *, void *);
 struct fdc_acpi_softc {
 	struct fdc_softc sc_fdc;
 	bus_space_handle_t sc_baseioh;
+	struct acpi_devnode *sc_node;	/* ACPI devnode */
 };
+
+static int	fdc_acpi_enumerate(struct fdc_acpi_softc *);
+static void	fdc_acpi_getknownfds(struct fdc_acpi_softc *);
+
+static const struct fd_type *fdc_acpi_nvtotype(char *, int, int);
 
 CFATTACH_DECL(fdc_acpi, sizeof(struct fdc_acpi_softc), fdc_acpi_match,
     fdc_acpi_attach, NULL, NULL);
@@ -120,6 +132,7 @@ fdc_acpi_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	sc->sc_ic = aa->aa_ic;
+	asc->sc_node = aa->aa_node;
 
 	/* parse resources */
 	rv = acpi_resource_parse(&sc->sc_dev, aa->aa_node, &res,
@@ -180,7 +193,6 @@ fdc_acpi_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/*
-	 * XXX: This is bad. If the pnpbios claims only 1 I/O range then it's
 	 * omitting the controller I/O port. (One has to exist for there to
 	 * be a working fdc). Just try and force the mapping in.
 	 */
@@ -206,5 +218,131 @@ fdc_acpi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = isa_intr_establish(aa->aa_ic, irq->ar_irq, 0,
 				       IPL_BIO, fdcintr, sc);
 
-	fdcattach(sc);
+	/* Setup direct configuration of floppy drives */
+	sc->sc_present = fdc_acpi_enumerate(asc);
+	if (sc->sc_present >= 0) {
+		sc->sc_known = 1;
+		fdc_acpi_getknownfds(asc);
+		fdcattach(sc);
+	} else {
+		printf("%s: unable to enumerate floppy drives\n",
+		    sc->sc_dev.dv_xname);
+	}
+}
+
+static int
+fdc_acpi_enumerate(struct fdc_acpi_softc *asc)
+{
+	struct fdc_softc *sc = &asc->sc_fdc;
+	ACPI_OBJECT *fde;
+	ACPI_BUFFER buf;
+	ACPI_STATUS rv;
+	UINT8 *p;
+	int i, drives = -1;
+
+	rv = acpi_eval_struct(asc->sc_node->ad_handle, "_FDE", &buf);
+	if (rv != AE_OK) {
+		printf("%s: failed to evalulate _FDE: %x\n",
+		    sc->sc_dev.dv_xname, rv);
+		return drives;
+	}
+	fde = (ACPI_OBJECT *)buf.Pointer;
+	if (fde->Type != ACPI_TYPE_BUFFER) {
+		printf("%s: expected BUFFER, got %d\n", sc->sc_dev.dv_xname,
+		    fde->Type);
+		goto out;
+	}
+	if (fde->Buffer.Length < 14) {
+		printf("%s: expected buffer len of 14, got %d\n",
+		    sc->sc_dev.dv_xname, fde->Buffer.Length);
+		goto out;
+	}
+
+	p = fde->Buffer.Pointer;
+	/*
+	 * Indexes 0 through 3 are each UINT32 booleans. True if a drive
+	 * is present.
+	 */
+	drives = 0;
+	for (i = 0; i < 4; i++) {
+		if (p[i]) drives |= (1 << i);
+#ifdef ACPI_FDC_DEBUG
+		printf("%s: drive %d %sattached\n", sc->sc_dev.dv_xname, i,
+		    p[i] ? "" : "not ");
+#endif
+	}
+
+	/*
+	 * XXX p[4] reports tape presence. Possible values:
+	 * 	0	- Unknown if device is present
+	 *	1	- Device is present
+	 *	2	- Device is never present
+	 *	>2	- Reserved
+	 * How should we handle this?
+	 */
+
+out:
+	AcpiOsFree(buf.Pointer);
+	return drives;
+}
+
+static void
+fdc_acpi_getknownfds(struct fdc_acpi_softc *asc)
+{
+	struct fdc_softc *sc = &asc->sc_fdc;
+	ACPI_OBJECT *fdi, *e;
+	ACPI_BUFFER buf;
+	ACPI_STATUS rv;
+	int i;
+
+	for (i = 0; i < 4; i++) {
+		if ((sc->sc_present & (1 << i)) == 0)
+			continue;
+		rv = acpi_eval_struct(asc->sc_node->ad_handle, "_FDI", &buf);
+		if (rv != AE_OK) {
+			printf("%s: failed to evalulate _FDI: %x on drive %d\n",
+			    sc->sc_dev.dv_xname, rv, i);
+			continue;
+		}
+		fdi = (ACPI_OBJECT *)buf.Pointer;
+		if (fdi->Type != ACPI_TYPE_PACKAGE) {
+			printf("%s: expected PACKAGE, got %d\n",
+			    sc->sc_dev.dv_xname, fdi->Type);
+			goto out;
+		}
+		e = fdi->Package.Elements;
+		sc->sc_knownfds[i] = fdc_acpi_nvtotype(sc->sc_dev.dv_xname,
+		    e[1].Integer.Value, e[0].Integer.Value); 
+		/* XXX What to do if fdc_acpi_nvtotype returns NULL? */
+out:
+		AcpiOsFree(buf.Pointer);
+	}
+}
+
+static const struct fd_type *
+fdc_acpi_nvtotype(char *fdc, int nvraminfo, int drive)
+{
+	int type;
+
+	type = (drive == 0 ? nvraminfo : nvraminfo << 4) & 0xf0;
+	switch (type) {
+	case ACPI_FDC_DISKETTE_NONE:
+		return NULL;
+	case ACPI_FDC_DISKETTE_12M:
+		return &fdc_acpi_fdtypes[1];
+	case ACPI_FDC_DISKETTE_TYPE5:
+	case ACPI_FDC_DISKETTE_TYPE6:
+	case ACPI_FDC_DISKETTE_144M:
+		return &fdc_acpi_fdtypes[0];
+	case ACPI_FDC_DISKETTE_360K:
+		return &fdc_acpi_fdtypes[3];
+	case ACPI_FDC_DISKETTE_720K:
+		return &fdc_acpi_fdtypes[4];
+	default:
+#ifdef ACPI_FDC_DEBUG
+		printf("%s: drive %d: unknown device type 0x%x\n",
+		    fdc, drive, type);
+#endif
+		return NULL;
+	}
 }
