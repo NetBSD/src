@@ -55,9 +55,15 @@ sparc*-*-linux-gnu*)	targ_emul=elf32_sparc
 			tdir_sun4=sparc-sun-sunos4
 			;;
 sparc*-*-lynxos*)	targ_emul=sparclynx ;;
-sparc64-*-netbsd*)	targ_emul=elf64_sparc targ_extra_emuls=elf32_sparc ;;
-sparc*-*-netbsdelf*)	targ_emul=elf32_sparc ;;
-sparc*-*-netbsd*)	targ_emul=sparcnbsd ;;
+sparc64-*-netbsd*)	targ_emul=elf64_sparc
+			targ_extra_emuls="elf32_sparc sparcnbsd"
+			;;
+sparc*-*-netbsdelf*)	targ_emul=elf32_sparc
+			targ_extra_emuls=sparcnbsd
+			;;
+sparc*-*-netbsd*)	targ_emul=sparcnbsd
+			targ_extra_emuls=elf32_sparc
+			;;
 sparc-*-solaris2.[0-6] | sparc-*-solaris2.[0-6].*)
 			targ_emul=elf32_sparc ;;
 sparc-*-solaris2*)	targ_emul=elf32_sparc
@@ -122,8 +128,12 @@ i[3456]86-*-sysv4*)	targ_emul=elf_i386 ;;
 i[3456]86-*-solaris2*)	targ_emul=elf_i386 ;;
 i[3456]86-*-unixware)	targ_emul=elf_i386 ;;
 i[3456]86-*-solaris*)	targ_emul=elf_i386 ;;
-i[3456]86-*-netbsdelf*)	targ_emul=elf_i386 ;;
-i[3456]86-*-netbsd*)	targ_emul=i386nbsd ;;
+i[3456]86-*-netbsdelf*)	targ_emul=elf_i386
+			targ_extra_emuls=i386nbsd
+			;;
+i[3456]86-*-netbsd*)	targ_emul=i386nbsd
+			targ_extra_emuls=elf_i386
+			;;
 i[3456]86-*-netware)	targ_emul=i386nw ;;
 i[3456]86-*-elf*)	targ_emul=elf_i386 ;;
 i[3456]86-*-freebsdaout* | i[3456]86-*-freebsd[12].* | i[3456]86-*-freebsd[12])
@@ -204,9 +214,15 @@ m68k-*-linux-gnu*)	targ_emul=m68kelf
 			;;
 m68*-*-gnu*)		targ_emul=m68kelf ;;
 m68*-*-lynxos*)		targ_emul=m68klynx ;;
-m68k4k-*-netbsd*)	targ_emul=m68k4knbsd ;;
-m68*-*-netbsdelf*)	targ_emul=m68kelf ;;
-m68*-*-netbsd*)		targ_emul=m68knbsd ;;
+m68k4k-*-netbsd*)	targ_emul=m68k4knbsd
+			targ_extra_emuls=m68knbsd
+			;;
+m68*-*-netbsdelf*)	targ_emul=m68kelf
+			targ_extra_emuls="m68knbsd m68k4knbsd"
+			;;
+m68*-*-netbsd*)		targ_emul=m68knbsd
+			targ_extra_emuls=m68k4knbsd
+			;;
 m68*-*-psos*)		targ_emul=m68kpsos ;;
 m68*-*-rtemscoff*)	targ_emul=m68kcoff ;;
 m68*-*-rtemself)	targ_emul=m68kelf ;;
@@ -229,8 +245,12 @@ mips*-sgi-irix*)	targ_emul=mipsbig ;;
 mips*el-*-ecoff*)	targ_emul=mipsidtl ;;
 mips*-*-ecoff*)		targ_emul=mipsidt ;;
 mips*-dec-bsd*)		targ_emul=mipsbsd ;;
-mips*el*-*-netbsd*)	targ_emul=elf32lmip; targ_extra_emuls=elf32bmip ;;
-mips*eb*-*-netbsd*)	targ_emul=elf32bmip; targ_extra_emuls=elf32lmip ;;
+mips*el*-*-netbsd*)	targ_emul=elf32lmip
+			targ_extra_emuls=elf32bmip
+			;;
+mips*eb*-*-netbsd*)	targ_emul=elf32bmip
+			targ_extra_emuls=elf32lmip
+			;;
 mips*-*-bsd*)		targ_emul=mipsbig ;;
 mips*vr4300el-*-elf*)	targ_emul=elf32l4300 ;;
 mips*vr4300-*-elf*)	targ_emul=elf32b4300 ;;
@@ -281,9 +301,9 @@ powerpcle-*-rtems*)	targ_emul=elf32leppc ;;
 powerpc-*-rtems*)	targ_emul=elf32ppc ;;
 powerpc-*-macos*)	targ_emul=ppcmacos ;;
 powerpc-*-netware*)	targ_emul=ppcnw ;;
-powerpcle-*-pe)         targ_emul=ppcpe ;;
-powerpcle-*-winnt*)     targ_emul=ppcpe ;;
-powerpcle-*-cygwin*)   targ_emul=ppcpe ;;
+powerpcle-*-pe)		targ_emul=ppcpe ;;
+powerpcle-*-winnt*)	targ_emul=ppcpe ;;
+powerpcle-*-cygwin*)	targ_emul=ppcpe ;;
 powerpc-*-aix*)		targ_emul=aixppc ;;
 powerpc-*-beos*)	targ_emul=aixppc ;;
 rs6000-*-aix*)		targ_emul=aixrs6 ;;
