@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1 2001/04/06 15:05:55 fredette Exp $	*/
+/*	$NetBSD: conf.c,v 1.2 2001/06/27 17:04:59 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1994 Adam Glass, Gordon W. Ross
@@ -82,6 +82,9 @@ cdev_decl(log);
 #include "md.h"
 
 #include "ms.h"
+
+#include "pcons.h"
+cdev_decl(pcons);
 
 #include "pty.h"
 #define	ptstty		ptytty
@@ -249,6 +252,13 @@ struct cdevsw	cdevsw[] =
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 81: SCSI bus */
 	cdev_disk_init(NRAID,raid), 	/* 82: RAIDframe disk driver */
 	cdev_svr4_net_init(NSVR4_NET,svr4_net), /* 83: svr4 net pseudo-device */
+	cdev_notdef(),			/* 83 */
+	cdev_notdef(),			/* 84 */
+	cdev_notdef(),			/* 85 */
+	cdev_notdef(),			/* 86 */
+	cdev_notdef(),			/* 87 */
+	cdev_tty_init(NPCONS,pcons),	/* 88: PROM console */
+
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
