@@ -1,4 +1,4 @@
-/*	$NetBSD: type_integer.c,v 1.2 2001/01/20 11:03:43 blymn Exp $	*/
+/*	$NetBSD: type_integer.c,v 1.3 2001/01/23 01:57:01 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -103,6 +103,9 @@ integer_check_field(FIELD *field, char *args)
 	int precision;
 	char *buf, *new_buf;
 
+	if (args == NULL)
+		return FALSE;
+	
 	precision = ((integer_args *) (void *) field->args)->precision;
 	min = ((integer_args *) (void *) field->args)->min;
 	max = ((integer_args *) (void *) field->args)->max;
