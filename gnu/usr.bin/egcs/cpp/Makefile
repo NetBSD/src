@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	6.4 (Berkeley) 2/21/91
-#	$NetBSD: Makefile,v 1.1.1.1 1998/03/29 11:34:24 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 1998/03/30 03:27:33 mrg Exp $
 
 .if	(${MACHINE_ARCH} == "sparc") || \
 	(${MACHINE_ARCH} == "mips")
@@ -21,7 +21,7 @@ FILESNAME=cpp
 FILESDIR=/usr/bin
 FILESMODE=${BINMODE}
 
-MAN=	cpp.1
-MLINKS=	cpp.1 cccp.1 cpp.1 gcpp.1
+MAN=	cccp.1
+MLINKS=	cccp.1 cpp.1 cccp.1 gcpp.1
 
 .include <bsd.prog.mk>
