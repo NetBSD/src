@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.9 1997/07/29 09:42:00 fair Exp $ */
+/*	$NetBSD: db_trace.c,v 1.10 1998/08/21 14:13:54 pk Exp $ */
 
 /*
  * Mach Operating System
@@ -35,7 +35,7 @@
 #include <ddb/db_interface.h>
 #include <ddb/db_output.h>
 
-#define INKERNEL(va)	(((vm_offset_t)(va)) >= USRSTACK)
+#define INKERNEL(va)	(((vaddr_t)(va)) >= USRSTACK)
 
 void
 db_stack_trace_cmd(addr, have_addr, count, modif)
