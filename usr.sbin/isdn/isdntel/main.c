@@ -27,7 +27,7 @@
  *	isdntel - isdn4bsd telephone answering machine support
  *      ======================================================
  *
- *      $Id: main.c,v 1.3 2002/09/20 15:15:50 mycroft Exp $ 
+ *      $Id: main.c,v 1.4 2003/10/06 04:19:41 itojun Exp $ 
  *
  * $FreeBSD$
  *
@@ -193,12 +193,12 @@ makecurrent(int cur_pos, struct onefile *cur_file, int cold)
 
 	if(!cold && lastfile && cur_file)
 	{
-		sprintf(buffer, "%s %s %-16s %-16s %-20s %-6s%*s",
-			lastfile->date, lastfile->time,
-			lastfile->dstnumber, lastfile->srcnumber,
-			lastfile->alias == NULL ? "-/-" : lastfile->alias,
-			lastfile->seconds,
-			COLS - LAST_POS - 2, "");
+		snprintf(buffer, sizeof(buffer),
+		    "%s %s %-16s %-16s %-20s %-6s%*s",
+		    lastfile->date, lastfile->time,
+		    lastfile->dstnumber, lastfile->srcnumber,
+		    lastfile->alias == NULL ? "-/-" : lastfile->alias,
+		    lastfile->seconds, COLS - LAST_POS - 2, "");
 			
 		wattroff(main_w, A_REVERSE);
 		mvwprintw(main_w, lastpos, 0, "%s", buffer);
@@ -239,7 +239,7 @@ makecurrent(int cur_pos, struct onefile *cur_file, int cold)
 		cur_pos_scr = cur_pos - top_dis;
 	}		
 
-	sprintf(buffer, "%s %s %-16s %-16s %-20s %-6s%*s",
+	snprintf(buffer, sizeof(buffer), "%s %s %-16s %-16s %-20s %-6s%*s",
 			cur_file->date, cur_file->time,
 			cur_file->dstnumber, cur_file->srcnumber,
 			cur_file->alias == NULL ? "-/-" : cur_file->alias,

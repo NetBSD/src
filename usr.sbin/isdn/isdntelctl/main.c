@@ -27,7 +27,7 @@
  *	isdntelctl - i4b set telephone interface options
  *	------------------------------------------------
  *
- *	$Id: main.c,v 1.3 2003/04/06 18:20:14 wiz Exp $
+ *	$Id: main.c,v 1.4 2003/10/06 04:19:41 itojun Exp $
  *
  * $FreeBSD$
  *
@@ -88,7 +88,7 @@ main(int argc, char **argv)
 
 			case 'u':
 				opt_unit = atoi(optarg);
-				if(opt_unit < 0 || opt_unit > 9)
+				if (opt_unit < 0 || opt_unit > 9)
 					usage();
 				break;
 
@@ -111,43 +111,43 @@ main(int argc, char **argv)
 		}
 	}
 
-	if(opt_get == 0 && opt_N == 0 && opt_U == 0 && opt_A == 0 && opt_C == 0)
+	if (opt_get == 0 && opt_N == 0 && opt_U == 0 && opt_A == 0 && opt_C == 0)
 	{
 		opt_get = 1;
 	}
 
-	if((opt_get + opt_N + opt_U + opt_A + opt_C) > 1)
+	if ((opt_get + opt_N + opt_U + opt_A + opt_C) > 1)
 	{
 		usage();
 	}
 
-	sprintf(namebuffer,"%s%d", I4BTELDEVICE, opt_unit);
+	snprintf(namebuffer, sizeof(namebuffer), "%s%d", I4BTELDEVICE, opt_unit);
 	
-	if((telfd = open(namebuffer, O_RDWR)) < 0)
+	if ((telfd = open(namebuffer, O_RDWR)) < 0)
 	{
 		fprintf(stderr, "isdntelctl: cannot open %s: %s\n", namebuffer, strerror(errno));
 		exit(1);
 	}
 
-	if(opt_get)
+	if (opt_get)
 	{
 		int format;
 		
-		if((ret = ioctl(telfd, I4B_TEL_GETAUDIOFMT, &format)) < 0)
+		if ((ret = ioctl(telfd, I4B_TEL_GETAUDIOFMT, &format)) < 0)
 		{
 			fprintf(stderr, "ioctl I4B_TEL_GETAUDIOFMT failed: %s", strerror(errno));
 			exit(1);
 		}
 
-		if(format == CVT_NONE)
+		if (format == CVT_NONE)
 		{
 			printf("device %s does not do A-law/mu-law format conversion\n", namebuffer);
 		}
-		else if(format == CVT_ALAW2ULAW)
+		else if (format == CVT_ALAW2ULAW)
 		{
 			printf("device %s does ISDN: A-law -> user: mu-law format conversion\n", namebuffer);
 		}
-		else if(format == CVT_ULAW2ALAW)
+		else if (format == CVT_ULAW2ALAW)
 		{
 			printf("device %s does ISDN: mu-law -> user: A-law format conversion\n", namebuffer);
 		}
@@ -158,11 +158,11 @@ main(int argc, char **argv)
 		exit(0);
 	}
 
-	if(opt_A)
+	if (opt_A)
 	{
 		int format = CVT_ALAW2ULAW;
 		
-		if((ret = ioctl(telfd, I4B_TEL_SETAUDIOFMT, &format)) < 0)
+		if ((ret = ioctl(telfd, I4B_TEL_SETAUDIOFMT, &format)) < 0)
 		{
 			fprintf(stderr, "ioctl I4B_TEL_SETAUDIOFMT failed: %s", strerror(errno));
 			exit(1);
@@ -170,32 +170,32 @@ main(int argc, char **argv)
 		exit(0);
 	}
 
-	if(opt_U)
+	if (opt_U)
 	{
 		int format = CVT_ULAW2ALAW;
 		
-		if((ret = ioctl(telfd, I4B_TEL_SETAUDIOFMT, &format)) < 0)
+		if ((ret = ioctl(telfd, I4B_TEL_SETAUDIOFMT, &format)) < 0)
 		{
 			fprintf(stderr, "ioctl I4B_TEL_SETAUDIOFMT failed: %s", strerror(errno));
 			exit(1);
 		}
 		exit(0);
 	}
-	if(opt_N)
+	if (opt_N)
 	{
 		int format = CVT_NONE;
 		
-		if((ret = ioctl(telfd, I4B_TEL_SETAUDIOFMT, &format)) < 0)
+		if ((ret = ioctl(telfd, I4B_TEL_SETAUDIOFMT, &format)) < 0)
 		{
 			fprintf(stderr, "ioctl I4B_TEL_SETAUDIOFMT failed: %s", strerror(errno));
 			exit(1);
 		}
 		exit(0);
 	}
-	if(opt_C)
+	if (opt_C)
 	{
 		int dummy;
-		if((ret = ioctl(telfd, I4B_TEL_EMPTYINPUTQUEUE, &dummy)) < 0)
+		if ((ret = ioctl(telfd, I4B_TEL_EMPTYINPUTQUEUE, &dummy)) < 0)
 		{
 			fprintf(stderr, "ioctl I4B_TEL_EMPTYINPUTQUEUE failed: %s", strerror(errno));
 			exit(1);

@@ -27,7 +27,7 @@
  *	i4b daemon - curses fullscreen output
  *	-------------------------------------
  *
- *	$Id: curses.c,v 1.5 2002/12/06 15:00:14 thorpej Exp $ 
+ *	$Id: curses.c,v 1.6 2003/10/06 04:19:41 itojun Exp $ 
  *
  * $FreeBSD$
  *
@@ -336,7 +336,7 @@ menuexit(WINDOW *menu_w)
 	/*      01234567890123456789012345678901234567890123456789012345678901234567890123456789 */
 	addstr("# tei b remote                 iface  dir outbytes   obps inbytes    ibps  units");
 	
-	sprintf(buffer, "----- isdn userland interface state ------------------------------------------");	
+	snprintf(buffer, sizeof(buffer), "----- isdn userland interface state ------------------------------------------");	
 	while(strlen(buffer) < COLS)
 		strcat(buffer, "-");	
 
@@ -345,7 +345,7 @@ menuexit(WINDOW *menu_w)
 	addstr(buffer);
 	standend();
 
-	sprintf(buffer, "----- isdnd logfile display --------------------------------------------------");
+	snprintf(buffer, sizeof(buffer), "----- isdnd logfile display --------------------------------------------------");
 	while(strlen(buffer) < COLS)
 		strcat(buffer, "-");	
 
