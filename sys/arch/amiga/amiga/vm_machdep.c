@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.27 1996/04/21 21:07:17 veego Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.28 1996/04/23 22:46:42 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -63,8 +63,6 @@
 void child_return __P((struct proc *, struct frame));
 void cpu_exit __P((struct proc *));
 void pagemove __P((register caddr_t, register caddr_t, size_t));
-int cpu_coredump __P((struct proc *, struct vnode *, struct ucred *,
-			struct core *));
 
 
 /*
