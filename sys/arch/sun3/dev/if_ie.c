@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.16.6.1 1997/03/06 14:03:42 is Exp $ */
+/*	$NetBSD: if_ie.c,v 1.16.6.2 1997/03/06 16:14:10 is Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -1085,7 +1085,7 @@ iestart(ifp)
 	}
 
 	do {
-		IF_DEQUEUE(ifp->if_snd, m);
+		IF_DEQUEUE(&ifp->if_snd, m);
 		if (!m)
 			break;
 
