@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.48 2000/02/19 09:43:40 nisimura Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.49 2000/02/23 18:50:51 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.48 2000/02/19 09:43:40 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.49 2000/02/23 18:50:51 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,12 +108,13 @@ makebootdev(cp)
 	if (cp[0] == 'r' && cp[1] == 'z' && cp[2] == '(') {
 		if (cp[3] >= '0' && cp[3] <= '9' && cp[4] == ','
 		    && cp[5] >= '0' && cp[5] <= '9' && cp[6] == ','
-		    && cp[7] >= '0' && cp[7] <= '9' && cp[8] == ')')
-			return;
-		booted_slot = cp[3] - '0';
-		booted_unit = cp[5] - '0';
-		booted_partition = cp[7] - '0';
-		booted_protocol = "SCSI";
+		    && cp[7] >= '0' && cp[7] <= '9' && cp[8] == ')') {
+			booted_slot = cp[3] - '0';
+			booted_unit = cp[5] - '0';
+			booted_partition = cp[7] - '0';
+			booted_protocol = "SCSI";
+		}
+		return;
 	}
 	if (cp[0] >= '0' && cp[0] <= '9' && cp[1] == '/') {
 		booted_slot = cp[0] - '0';
