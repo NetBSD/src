@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.15 2002/07/30 16:16:45 thorpej Exp $	*/
+/*	$NetBSD: ofw.c,v 1.16 2002/07/31 00:20:54 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -753,6 +753,7 @@ ofw_configmem(void)
 {
 	pv_addr_t proc0_ttbbase;
 	pv_addr_t proc0_ptpt;
+	int i;
 
 	/* Set-up proc0 address space. */
 	ofw_construct_proc0_addrspace(&proc0_ttbbase, &proc0_ptpt);
@@ -786,7 +787,6 @@ ofw_configmem(void)
 		struct mem_region *mp;
 		int totalcnt;
 		int availcnt;
-		int i;
 
 		/* physmem, physical_start, physical_end */
 		physmem = 0;
@@ -866,8 +866,79 @@ ofw_configmem(void)
 		bootconfig.dramblocks = availcnt;
 	}
 
-	/* Initialize pmap module. */
+	/* Load memory into UVM. */
 	uvm_setpagesize();	/* initialize PAGE_SIZE-dependent variables */
+
+	/* XXX Please kill this code dead. */
+	for (i = 0; i < bootconfig.dramblocks; i++) {
+		paddr_t start = (paddr_t)bootconfig.dram[i].address;
+		paddr_t end = start + (bootconfig.dram[i].pages * NBPG);
+#if NISADMA > 0
+		paddr_t istart, isize;
+#endif
+
+		if (start < physical_freestart)
+			start = physical_freestart;
+		if (end > physical_freeend)
+			end = physical_freeend;
+
+#if 0
+		printf("%d: %lx -> %lx\n", loop, start, end - 1);
+#endif
+
+#if NISADMA > 0
+		if (pmap_isa_dma_range_intersect(start, end - start,
+						 &istart, &isize)) {
+			/*
+			 * Place the pages that intersect with the
+			 * ISA DMA range onto the ISA DMA free list.
+			 */
+#if 0
+			printf("    ISADMA 0x%lx -> 0x%lx\n", istart,
+			    istart + isize - 1);
+#endif
+			uvm_page_physload(atop(istart),
+			    atop(istart + isize), atop(istart),
+			    atop(istart + isize), VM_FREELIST_ISADMA);
+
+			/*
+			 * Load the pieces that come before the
+			 * intersection onto the default free list.
+			 */
+			if (start < istart) {
+#if 0
+				printf("    BEFORE 0x%lx -> 0x%lx\n",
+				    start, istart - 1);
+#endif
+				uvm_page_physload(atop(start),
+				    atop(istart), atop(start),
+				    atop(istart), VM_FREELIST_DEFAULT);
+			}
+
+			/*
+			 * Load the pieces that come after the
+			 * intersection onto the default free list.
+			 */
+			if ((istart + isize) < end) {
+#if 0
+				printf("     AFTER 0x%lx -> 0x%lx\n",
+				    (istart + isize), end - 1);
+#endif
+				uvm_page_physload(atop(istart + isize),
+				    atop(end), atop(istart + isize),
+				    atop(end), VM_FREELIST_DEFAULT);
+			}
+		} else {
+			uvm_page_physload(atop(start), atop(end),
+			    atop(start), atop(end), VM_FREELIST_DEFAULT);
+		}
+#else /* NISADMA > 0 */
+		uvm_page_physload(atop(start), atop(end),
+		    atop(start), atop(end), VM_FREELIST_DEFAULT);
+#endif /* NISADMA > 0 */
+	}
+
+	/* Initialize pmap module. */
 	pmap_bootstrap((pd_entry_t *)proc0_ttbbase.pv_va, proc0_ptpt);
 }
 
