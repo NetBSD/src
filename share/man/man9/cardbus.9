@@ -1,4 +1,4 @@
-.\"     $NetBSD: cardbus.9,v 1.10 2003/06/30 19:12:33 wiz Exp $
+.\"     $NetBSD: cardbus.9,v 1.11 2004/07/03 17:40:31 mycroft Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 20, 2001
+.Dd July 3, 2004
 .Dt CARDBUS 9
 .Os
 .Sh NAME
@@ -62,7 +62,7 @@
 .Nm Cardbus_free_tag ,
 .Nm Cardbus_conf_read ,
 .Nm Cardbus_conf_write
-.Nd support for Cardbus PC-Card devices
+.Nd support for CardBus PC-Card devices
 .Sh SYNOPSIS
 .In machine/bus.h
 .In dev/cardbus/cardbusvar.h
@@ -138,21 +138,21 @@
 .Sh DESCRIPTION
 The machine-independent
 .Nm
-subsystem provides support for Cardbus devices.
+subsystem provides support for CardBus devices.
 .Pp
-The Cardbus interface is an improvement to the PC-Card interface
+The CardBus interface is an improvement to the PC-Card interface
 supported by
 .Xr pcmcia 9 .
 It introduces several new capabilities such as 32-bit addressing,
 33MHz operation, busmaster operation and 3.3 volt low-voltage power.
 It remains compatible with all features of the PC-Card standard.
 .Pp
-The Cardbus interface signaling protocol is derived from the PCI
+The CardBus interface signaling protocol is derived from the PCI
 signaling protocol.
-There are some differences between PCI and Cardbus, however operations
+There are some differences between PCI and CardBus, however operations
 are identical for most functions implemented.
-Since a 32-bit Cardbus interface is also defined for 16-bit PC-Cards,
-the same Card Services client to be used to manage both Cardbus and
+Since a 32-bit CardBus interface is also defined for 16-bit PC-Cards,
+the same Card Services client to be used to manage both CardBus and
 PCMCIA PC-Cards.
 By interrogating the card upon detection of an insertion event,
 .Nx
@@ -161,7 +161,7 @@ determines whether the card requires
 support or not, and then applies the appropriate power and signaling
 protocol requirements.
 .Sh DATA TYPES
-Drivers attached to the Cardbus bus will make use of the following
+Drivers attached to the CardBus will make use of the following
 data types:
 .Bl -tag -width compact
 .It struct cardbus_attach_args
@@ -169,8 +169,8 @@ Devices have their identity recorded in this structure.
 It contains the following members:
 .Bd -literal
 	cardbus_devfunc_t ca_ct;
-	bus_space_tag_t ca_iot;       /* Cardbus I/O space tag */
-	bus_space_tag_t ca_memt;      /* Cardbus MEM space tag */
+	bus_space_tag_t ca_iot;       /* CardBus I/O space tag */
+	bus_space_tag_t ca_memt;      /* CardBus MEM space tag */
 	bus_dma_tag_t ca_dmat;        /* DMA tag */
 	u_int ca_device;
 	cardbustag_t ca_tag;
@@ -232,19 +232,19 @@ Returns the capability in
 and
 .Fa valuep .
 .It Fn cardbus_make_tag "cc" "cf" "bus" "device" "function"
-Make a tag to access config space of a Cardbus card.
+Make a tag to access config space of a CardBus card.
 It works the same as
 .Fn pci_make_tag .
 .It Fn cardbus_free_tag "cc" "cf" "tag"
-Release a tag used to access the config space of a Cardbus card.
+Release a tag used to access the config space of a CardBus card.
 It works the same as
 .Fn pci_free_tag .
 .It Fn cardbus_conf_read "cc" "cf" "tag" "offs"
-Read the config space of a Cardbus card.
+Read the config space of a CardBus card.
 It works the same as
 .Fn pci_conf_read .
 .It Fn cardbus_conf_write "cc" "cf" "tag" "offs" "val"
-Write to the config space of a Cardbus card.
+Write to the config space of a CardBus card.
 It works same as
 .Fn pci_conf_write .
 .It Fn cardbus_intr_establish "cc" "cf" "irq" "level" "handler" "arg"
@@ -268,10 +268,10 @@ with handle
 The handle was returned from
 .Fn cardbus_intr_establish .
 .It Fn CARDBUS_VENDOR "id"
-Return the Cardbus vendor id for device
+Return the CardBus vendor ID for device
 .Fa id .
 .It Fn CARDBUS_PRODUCT "id"
-Return the Cardbus product id for device
+Return the CardBus product ID for device
 .Fa id .
 .El
 .Pp
@@ -286,7 +286,7 @@ During autoconfiguration, a
 .Nm
 driver will receive a pointer to
 .Fa struct isapnp_attach_args
-describing the device attaches to the Cardbus bus.
+describing the device attaches to the CardBus.
 Drivers match the device using the
 .Fa ca_id
 member using
@@ -310,13 +310,13 @@ Finally, power should be removed from the device using
 or
 .Fn Cardbus_function_disable .
 .Pp
-Since Cardbus devices support dynamic configuration, drivers should
+Since CardBus devices support dynamic configuration, drivers should
 make use of
 .Fn powerhook_establish 9 .
 Power can be applied and the interrupt handler should be established
 through this interface.
 .Sh DMA SUPPORT
-No additional support is provided for Cardbus DMA beyond the
+No additional support is provided for CardBus DMA beyond the
 facilities provided by the
 .Xr bus_dma 9
 interface.
@@ -324,11 +324,11 @@ interface.
 This section describes places within the
 .Nx
 source tree where actual code implementing or using the
-machine-independent Cardbus subsystem can be found.
+machine-independent CardBus subsystem can be found.
 All pathnames are relative to
 .Pa /usr/src .
 .Pp
-The Cardbus subsystem itself is implemented within the files
+The CardBus subsystem itself is implemented within the files
 .Pa sys/dev/cardbus/cardbus.c ,
 .Pa sys/dev/cardbus/cardbus_map.c
 and
