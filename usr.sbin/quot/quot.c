@@ -1,4 +1,4 @@
-/*	$NetBSD: quot.c,v 1.12 1997/10/18 11:11:18 lukem Exp $	*/
+/*	$NetBSD: quot.c,v 1.13 1997/11/06 14:36:45 mrg Exp $	*/
 
 /*
  * Copyright (C) 1991, 1994 Wolfgang Solfrank.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: quot.c,v 1.12 1997/10/18 11:11:18 lukem Exp $");
+__RCSID("$NetBSD: quot.c,v 1.13 1997/11/06 14:36:45 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -557,7 +557,7 @@ quot(name, mp)
 	if ((fd = open(name, 0)) < 0
 	    || lseek(fd, SBOFF, 0) != SBOFF
 	    || read(fd, superblock, SBSIZE) != SBSIZE) {
-		warnx("%s", name);
+		warn("%s", name);
 		close(fd);
 		return;
 	}
