@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.52 2001/02/19 22:12:41 cgd Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.53 2001/03/10 01:46:08 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -267,6 +267,10 @@ quad_t	 strtoq __P((const char *, char **, int));
 u_quad_t strtouq __P((const char *, char **, int));
 
 int	 l64a_r __P((long, char *, int));
+
+size_t	shquote __P((const char *arg, char *buf, size_t bufsize));
+size_t	shquotev __P((int argc, char * const * argv, char *buf,
+	    size_t bufsize));
 #endif /* !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
 #endif /* !_ANSI_SOURCE */
 __END_DECLS
