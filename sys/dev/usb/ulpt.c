@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.9 1998/12/30 17:46:20 augustss Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.10 1999/01/08 11:58:25 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -409,5 +409,5 @@ ulpt_detach(device_t self)
 	return 0;
 }
 
-DRIVER_MODULE(ulpt, usb, ulpt_driver, ulpt_devclass, usb_driver_load, 0);
+DRIVER_MODULE(ulpt, usb, ulpt_driver, ulpt_devclass, usbd_driver_load, 0);
 #endif
