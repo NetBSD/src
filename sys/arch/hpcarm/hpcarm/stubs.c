@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.16 2003/06/16 20:01:00 thorpej Exp $	*/
+/*	$NetBSD: stubs.c,v 1.17 2003/06/23 22:18:10 he Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -270,7 +270,7 @@ ipl_to_spl(ipl)
 	case IPL_TTY:
 		return _SPL_TTY;
 	case IPL_VM:
-		return _SPL_IMP;
+		return _SPL_VM;
 	case IPL_AUDIO:
 		return _SPL_AUDIO;
 	case IPL_CLOCK:
