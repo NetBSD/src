@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.c,v 1.15 2002/12/15 19:05:31 provos Exp $	*/
+/*	$NetBSD: systrace.c,v 1.16 2003/03/25 23:04:48 provos Exp $	*/
 /*	$OpenBSD: systrace.c,v 1.32 2002/08/05 23:27:53 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -45,6 +45,7 @@
 #include <string.h>
 #include <err.h>
 #include <errno.h>
+#include <grp.h>
 #include <pwd.h>
 
 #include "intercept.h"
@@ -449,6 +450,54 @@ requestor_start(char *path)
 	return (0);
 }
 
+static int
+get_uid_gid(const char *argument, uid_t *uid, gid_t *gid)
+{
+	struct group *gp;
+	struct passwd *pw;
+	unsigned long ulval;
+	char uid_gid_str[128];
+	char *endp, *g, *u;
+
+	strlcpy(uid_gid_str, argument, sizeof(uid_gid_str));
+	g = uid_gid_str;
+	u = strsep(&g, ":");
+
+	if ((pw = getpwnam(u)) != NULL) {
+		memset(pw->pw_passwd, 0, strlen(pw->pw_passwd));
+		*uid = pw->pw_uid;
+		*gid = pw->pw_gid;
+		/* Ok if group not specified. */
+		if (g == NULL)
+			return (0);
+	} else {
+		errno = 0;
+		ulval = strtoul(u, &endp, 10);
+		if (u[0] == '\0' || *endp != '\0')
+			errx(1, "no such user '%s'", u);
+		if (errno == ERANGE && ulval == ULONG_MAX)
+			errx(1, "invalid uid %s", u);
+		*uid = (uid_t)ulval;
+	}
+
+	if (g == NULL)
+		return (-1);
+
+	if ((gp = getgrnam(g)) != NULL)
+		*gid = gp->gr_gid;
+	else {
+		errno = 0;
+		ulval = strtoul(g, &endp, 10);
+		if (g[0] == '\0' || *endp != '\0')
+			errx(1, "no such group '%s'", g);
+		if (errno == ERANGE && ulval == ULONG_MAX)
+			errx(1, "invalid gid %s", g);
+		*gid = (gid_t)ulval;
+	}
+
+	return (0);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -456,7 +505,7 @@ main(int argc, char **argv)
 	char **args;
 	char *filename = NULL;
 	char *policypath = NULL;
-	char *guipath = _PATH_XSYSTRACE, *p;
+	char *guipath = _PATH_XSYSTRACE;
 	struct timeval tv, tv_wait = {60, 0};
 	pid_t pidattach = 0;
 	int usex11 = 1, count;
@@ -468,14 +517,8 @@ main(int argc, char **argv)
 	while ((c = getopt(argc, argv, "c:aAituUd:g:f:p:")) != -1) {
 		switch (c) {
 		case 'c':
-			p = strsep(&optarg, ":");
-			if (optarg == NULL || *optarg == '\0')
-				usage();
 			setcredentials = 1;
-			cr_uid = atoi(p);
-			cr_gid = atoi(optarg);
-
-			if (cr_uid <= 0 || cr_gid <= 0)
+			if (get_uid_gid(optarg, &cr_uid, &cr_gid) == -1)
 				usage();
 			break;
 		case 'a':
