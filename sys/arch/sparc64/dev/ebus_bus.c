@@ -1,7 +1,7 @@
-/*	$NetBSD: ebus_bus.c,v 1.6 2000/04/05 03:05:15 mrg Exp $	*/
+/*	$NetBSD: ebus_bus.c,v 1.7 2000/04/08 04:33:10 mrg Exp $	*/
 
 /*
- * Copyright (c) 1999 Matthew R. Green
+ * Copyright (c) 1999, 2000 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -111,6 +111,8 @@
 /*
  * bus space and bus dma support for UltraSPARC `ebus'.  this is largely
  * copied from the psycho code which was largely copied from the sbus code.
+ *
+ * note that this driver is far from complete.
  */
 
 #include "opt_ddb.h"
@@ -154,10 +156,6 @@ int ebus_busdma_debug = 0;
  * here are our bus space and bus dma routines.  this is copied from the sbus
  * code.
  */
-void ebus_enter __P((struct ebus_softc *, vaddr_t, int64_t, int));
-void ebus_remove __P((struct ebus_softc *, vaddr_t, size_t));
-int ebus_flush __P((struct ebus_softc *sc));
-
 static int ebus_bus_mmap __P((bus_space_tag_t, bus_type_t, bus_addr_t,
 				int, bus_space_handle_t *));
 static int _ebus_bus_map __P((bus_space_tag_t, bus_type_t, bus_addr_t,
@@ -404,158 +402,6 @@ ebus_intr_establish(t, level, flags, handler, arg)
 }
 
 /*
- * Here are the iommu control routines. 
- */
-void
-ebus_enter(sc, va, pa, flags)
-	struct ebus_softc *sc;
-	vaddr_t va;
-	int64_t pa;
-	int flags;
-{
-#if 0	/* PSYCHO CODE */
-	int64_t tte;
-
-#ifdef DIAGNOSTIC
-	if (va < sc->sc_is.is_dvmabase)
-		panic("ebus_enter: va 0x%lx not in DVMA space",va);
-#endif
-
-	tte = MAKEIOTTE(pa, !(flags&BUS_DMA_NOWRITE), !(flags&BUS_DMA_NOCACHE), 
-			!(flags&BUS_DMA_COHERENT));
-	
-	/* Is the streamcache flush really needed? */
-	bus_space_write_8(sc->sc_bustag,
-	    &sc->sc_is.is_sb->strbuf_pgflush, 0, va);
-	ebus_flush(sc);
-	DPRINTF(EDB_BUSDMA, ("Clearing TSB slot %d for va %p\n", (int)IOTSBSLOT(va,sc->sc_is.is_tsbsize), va));
-	sc->sc_is.is_tsb[IOTSBSLOT(va,sc->sc_is.is_tsbsize)] = tte;
-	bus_space_write_8(sc->sc_bustag,
-	    &sc->sc_regs->psy_iommu.iommu_flush, 0, va);
-	DPRINTF(EDB_BUSDMA, ("ebus_enter: va %lx pa %lx TSB[%lx]@%p=%lx\n",
-		       va, (long)pa, IOTSBSLOT(va,sc->sc_is.is_tsbsize), 
-		       &sc->sc_is.is_tsb[IOTSBSLOT(va,sc->sc_is.is_tsbsize)],
-		       (long)tte));
-#endif
-}
-
-/*
- * ebus_clear: clears mappings created by ebus_enter
- *
- * Only demap from IOMMU if flag is set.
- */
-void
-ebus_remove(sc, va, len)
-	struct ebus_softc *sc;
-	vaddr_t va;
-	size_t len;
-{
-#if 0	/* PSYCHO CODE */
-
-#ifdef DIAGNOSTIC
-	if (va < sc->sc_is.is_dvmabase)
-		panic("ebus_remove: va 0x%lx not in BUSDMA space", (long)va);
-	if ((long)(va + len) < (long)va)
-		panic("ebus_remove: va 0x%lx + len 0x%lx wraps", 
-		      (long) va, (long) len);
-	if (len & ~0xfffffff) 
-		panic("ebus_remove: rediculous len 0x%lx", (long)len);
-#endif
-
-	va = trunc_page(va);
-	while (len > 0) {
-
-		/*
-		 * Streaming buffer flushes:
-		 * 
-		 *   1 Tell strbuf to flush by storing va to strbuf_pgflush
-		 * If we're not on a cache line boundary (64-bits):
-		 *   2 Store 0 in flag
-		 *   3 Store pointer to flag in flushsync
-		 *   4 wait till flushsync becomes 0x1
-		 *
-		 * If it takes more than .5 sec, something went wrong.
-		 */
-		DPRINTF(EDB_BUSDMA, ("ebus_remove: flushing va %p TSB[%lx]@%p=%lx, %lu bytes left\n", 	       
-		    (long)va, (long)IOTSBSLOT(va,sc->sc_is.is_tsbsize), 
-		    (long)&sc->sc_is.is_tsb[IOTSBSLOT(va,sc->sc_is.is_tsbsize)],
-		    (long)(sc->sc_is.is_tsb[IOTSBSLOT(va,sc->sc_is.is_tsbsize)]), 
-		    (u_long)len));
-		bus_space_write_8(sc->sc_bustag,
-		    &sc->sc_is.is_sb->strbuf_pgflush, 0, va);
-		if (len <= NBPG) {
-			ebus_flush(sc);
-			len = 0;
-		} else len -= NBPG;
-		DPRINTF(EDB_BUSDMA, ("ebus_remove: flushed va %p TSB[%lx]@%p=%lx, %lu bytes left\n", 	       
-		    (long)va, (long)IOTSBSLOT(va,sc->sc_is.is_tsbsize), 
-		    (long)&sc->sc_is.is_tsb[IOTSBSLOT(va,sc->sc_is.is_tsbsize)],
-		    (long)(sc->sc_is.is_tsb[IOTSBSLOT(va,sc->sc_is.is_tsbsize)]), 
-		    (u_long)len));
-
-		sc->sc_is.is_tsb[IOTSBSLOT(va,sc->sc_is.is_tsbsize)] = 0;
-		bus_space_write_8(sc->sc_bustag,
-		     &sc->sc_regs->psy_iommu.iommu_flush, 0, va);
-		va += NBPG;
-	}
-#endif
-}
-
-int 
-ebus_flush(sc)
-	struct ebus_softc *sc;
-{
-#if 0	/* PSYCHO CODE */
-	struct iommu_state *is = &sc->sc_is;
-	struct timeval cur, flushtimeout;
-
-#define BUMPTIME(t, usec) { \
-	register volatile struct timeval *tp = (t); \
-	register long us; \
- \
-	tp->tv_usec = us = tp->tv_usec + (usec); \
-	if (us >= 1000000) { \
-		tp->tv_usec = us - 1000000; \
-		tp->tv_sec++; \
-	} \
-}
-
-	is->is_flush = 0;
-	membar_sync();
-	bus_space_write_8(sc->sc_bustag, &is->is_sb->strbuf_flushsync, 0, is->is_flushpa);
-	membar_sync();
-
-	microtime(&flushtimeout); 
-	cur = flushtimeout;
-	BUMPTIME(&flushtimeout, 500000); /* 1/2 sec */
-
-	DPRINTF(EDB_BUSDMA, ("ebus_flush: flush = %lx at va = %lx pa = %lx now=%lx:%lx until = %lx:%lx\n", 
-	    (long)is->is_flush, (long)&is->is_flush, 
-	    (long)is->is_flushpa, cur.tv_sec, cur.tv_usec, 
-	    flushtimeout.tv_sec, flushtimeout.tv_usec));
-	/* Bypass non-coherent D$ */
-	while (!ldxa(is->is_flushpa, ASI_PHYS_CACHED) && 
-	       ((cur.tv_sec <= flushtimeout.tv_sec) && 
-		(cur.tv_usec <= flushtimeout.tv_usec)))
-		microtime(&cur);
-
-#ifdef DIAGNOSTIC
-	if (!is->is_flush) {
-		printf("ebus_flush: flush timeout %p at %p\n", (long)is->is_flush, 
-		       (long)is->is_flushpa); /* panic? */
-#ifdef DDB
-		Debugger();
-#endif
-	}
-#endif
-	DPRINTF(EDB_BUSDMA, ("ebus_flush: flushed\n"));
-	return (is->is_flush);
-#else	
-	return (0);
-#endif
-}
-
-/*
  * bus dma support -- XXXMRG this looks mostly OK.
  */
 int
@@ -659,7 +505,7 @@ ebus_dmamap_load(t, map, buf, buflen, p, flags)
 
 		DPRINTF(EDB_BUSDMA, ("ebus_dmamap_load: map %p loading va %lx at pa %lx\n",
 		    map, (long)dvmaddr, (long)(curaddr & ~(NBPG-1))));
-		ebus_enter(sc, trunc_page(dvmaddr), trunc_page(curaddr), flags);
+		iommu_enter(sc->sc_parent.sc_is, trunc_page(dvmaddr), trunc_page(curaddr), flags);
 			
 		dvmaddr += PAGE_SIZE;
 		vaddr += sgsize;
@@ -692,7 +538,7 @@ ebus_dmamap_unload(t, map)
 
 	DPRINTF(EDB_BUSDMA, ("ebus_dmamap_unload: map %p removing va %lx size %lx\n",
 	    map, (long)addr, (long)len));
-	ebus_remove(sc, addr, len);
+	iommu_remove(sc->sc_parent.sc_is, addr, len);
 #if 1
 	dvmaddr = (map->dm_segs[0].ds_addr & ~PGOFSET);
 	sgsize = map->dm_segs[0].ds_len;
@@ -761,7 +607,7 @@ ebus_dmamap_sync(t, map, offset, len, ops)
 			bus_space_write_8(sc->sc_bustag,
 			    &sc->sc_is.is_sb->strbuf_pgflush, 0, va);
 			if (len <= NBPG) {
-				ebus_flush(sc);
+				iommu_flush(sc->sc_parent.sc_is);
 				len = 0;
 			} else
 				len -= NBPG;
@@ -837,7 +683,7 @@ ebus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 			curaddr = VM_PAGE_TO_PHYS(m);
 			DPRINTF(EDB_BUSDMA, ("ebus_dmamem_alloc: map %p loading va %lx at pa %lx\n",
 			    (long)m, (long)dvmaddr, (long)(curaddr & ~(NBPG-1))));
-			ebus_enter(sc, dvmaddr, curaddr, flags);
+			iommu_enter(sc->sc_parent.sc_is, dvmaddr, curaddr, flags);
 			dvmaddr += PAGE_SIZE;
 		}
 	}
@@ -860,7 +706,7 @@ ebus_dmamem_free(t, segs, nsegs)
 	for (n = 0; n < nsegs; n++) {
 		addr = segs[n].ds_addr;
 		len = segs[n].ds_len;
-		ebus_remove(sc, addr, len);
+		iommu_remove(sc->sc_parent.sc_is, addr, len);
 #if 1
 		s = splhigh();
 		error = extent_free(sc->sc_is.is_dvmamap, addr, len, EX_NOWAIT);

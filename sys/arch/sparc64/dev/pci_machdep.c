@@ -1,7 +1,7 @@
-/*	$NetBSD: pci_machdep.c,v 1.4 2000/04/05 08:03:03 mrg Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.5 2000/04/08 04:33:10 mrg Exp $	*/
 
 /*
- * Copyright (c) 1999 Matthew R. Green
+ * Copyright (c) 1999, 2000 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
