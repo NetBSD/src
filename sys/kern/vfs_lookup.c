@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.14 1994/12/14 19:41:23 mycroft Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.15 1995/03/08 01:20:50 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,6 +41,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/syslimits.h>
 #include <sys/time.h>
 #include <sys/namei.h>
