@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.168 2003/10/30 00:26:54 christos Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.169 2003/11/26 08:36:49 he Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -119,7 +119,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.168 2003/10/30 00:26:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.169 2003/11/26 08:36:49 he Exp $");
 
 #include "opt_cputype.h"
 
@@ -1090,10 +1090,10 @@ setregs(l, pack, stack)
 	struct frame *f = (struct frame *)l->l_md.md_regs;
 
 	memset(f, 0, sizeof(struct frame));
-	f->f_regs[SP] = (int)stack;
-	f->f_regs[PC] = (int)pack->ep_entry & ~3;
-	f->f_regs[T9] = (int)pack->ep_entry & ~3; /* abicall requirement */
-	f->f_regs[SR] = PSL_USERSET;
+	f->f_regs[_R_SP] = (int)stack;
+	f->f_regs[_R_PC] = (int)pack->ep_entry & ~3;
+	f->f_regs[_R_T9] = (int)pack->ep_entry & ~3; /* abicall requirement */
+	f->f_regs[_R_SR] = PSL_USERSET;
 	/*
 	 * Set up arguments for _start():
 	 *	_start(stack, obj, cleanup, ps_strings);
@@ -1103,10 +1103,10 @@ setregs(l, pack, stack)
 	 *	  vectors.  They are fixed up by ld.elf_so.
 	 *	- ps_strings is a NetBSD extension.
 	 */
-	f->f_regs[A0] = (int)stack;
-	f->f_regs[A1] = 0;
-	f->f_regs[A2] = 0;
-	f->f_regs[A3] = (int)l->l_proc->p_psstr;
+	f->f_regs[_R_A0] = (int)stack;
+	f->f_regs[_R_A1] = 0;
+	f->f_regs[_R_A2] = 0;
+	f->f_regs[_R_A3] = (int)l->l_proc->p_psstr;
 
 	if ((l->l_md.md_flags & MDP_FPUSED) && l == fpcurlwp)
 		fpcurlwp = (struct lwp *)0;
@@ -1488,7 +1488,7 @@ savefpregs(l)
 	 * this process yielded FPA.
 	 */
 	f = (struct frame *)l->l_md.md_regs;
-	f->f_regs[SR] &= ~MIPS_SR_COP_1_BIT;
+	f->f_regs[_R_SR] &= ~MIPS_SR_COP_1_BIT;
 
 	/*
 	 * save FPCSR and 32bit FP register values.
@@ -1672,15 +1672,15 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
 		/* NOTREACHED */
 	}
 
-	f->f_regs[PC] = (u_int32_t)upcall;
-	f->f_regs[SP] = (u_int32_t)sf;
-	f->f_regs[A0] = type;
-	f->f_regs[A1] = (u_int32_t)sas;
-	f->f_regs[A2] = nevents;
-	f->f_regs[A3] = ninterrupted;
-	f->f_regs[S8] = 0;
-	f->f_regs[RA] = 0;
-	f->f_regs[T9] = (u_int32_t)upcall;  /* t9=Upcall function*/
+	f->f_regs[_R_PC] = (u_int32_t)upcall;
+	f->f_regs[_R_SP] = (u_int32_t)sf;
+	f->f_regs[_R_A0] = type;
+	f->f_regs[_R_A1] = (u_int32_t)sas;
+	f->f_regs[_R_A2] = nevents;
+	f->f_regs[_R_A3] = ninterrupted;
+	f->f_regs[_R_S8] = 0;
+	f->f_regs[_R_RA] = 0;
+	f->f_regs[_R_T9] = (u_int32_t)upcall;  /* t9=Upcall function*/
 }
 
 
@@ -1695,13 +1695,13 @@ cpu_getmcontext(l, mcp, flags)
 	__greg_t ras_pc;
 
 	/* Save register context. Dont copy R0 - it is always 0 */
-	memcpy(&gr[_REG_AT], &f->f_regs[AST], sizeof(mips_reg_t) * 31);
+	memcpy(&gr[_REG_AT], &f->f_regs[_R_AST], sizeof(mips_reg_t) * 31);
 
-	gr[_REG_MDLO]  = f->f_regs[MULLO];
-	gr[_REG_MDHI]  = f->f_regs[MULHI];
-	gr[_REG_CAUSE] = f->f_regs[CAUSE];
-	gr[_REG_EPC]   = f->f_regs[PC];
-	gr[_REG_SR]    = f->f_regs[SR];
+	gr[_REG_MDLO]  = f->f_regs[_R_MULLO];
+	gr[_REG_MDHI]  = f->f_regs[_R_MULHI];
+	gr[_REG_CAUSE] = f->f_regs[_R_CAUSE];
+	gr[_REG_EPC]   = f->f_regs[_R_PC];
+	gr[_REG_SR]    = f->f_regs[_R_SR];
 
 	if ((ras_pc = (__greg_t)ras_lookup(l->l_proc,
 	    (caddr_t) gr[_REG_EPC])) != -1)
@@ -1737,12 +1737,13 @@ cpu_setmcontext(l, mcp, flags)
 	if (flags & _UC_CPU) {
 		/* Save register context. */
 		/* XXX:  Do we validate the addresses?? */
-		memcpy(&f->f_regs[AST], &gr[_REG_AT], sizeof(mips_reg_t) * 31);
+		memcpy(&f->f_regs[_R_AST], &gr[_REG_AT],
+		       sizeof(mips_reg_t) * 31);
 
-		f->f_regs[MULLO] = gr[_REG_MDLO];
-		f->f_regs[MULHI] = gr[_REG_MDHI];
-		f->f_regs[CAUSE] = gr[_REG_CAUSE];
-		f->f_regs[PC]    = gr[_REG_EPC];
+		f->f_regs[_R_MULLO] = gr[_REG_MDLO];
+		f->f_regs[_R_MULHI] = gr[_REG_MDHI];
+		f->f_regs[_R_CAUSE] = gr[_REG_CAUSE];
+		f->f_regs[_R_PC]    = gr[_REG_EPC];
 		/* Do not restore SR. */
 	}
 

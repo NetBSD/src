@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.15 2003/08/07 16:42:15 agc Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.16 2003/11/26 08:36:49 he Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)setjmp.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: setjmp.S,v 1.15 2003/08/07 16:42:15 agc Exp $")
+	ASMSTR("$NetBSD: setjmp.S,v 1.16 2003/11/26 08:36:49 he Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef __ABICALLS__
@@ -91,18 +91,18 @@ NON_LEAF(setjmp, SETJMP_FRAME_SIZE, ra)
 	REG_PROLOGUE
 	REG_S	ra, (2 * 4)(a0)			# sc_pc = return address
 	REG_LI	v0, 0xACEDBADE			# sigcontext magic number
-	REG_S	v0, (_OFFSETOF_SC_REGS + SZREG * ZERO)(a0) # saved in sc_regs[0]
-	REG_S	s0, (_OFFSETOF_SC_REGS + SZREG * S0)(a0)
-	REG_S	s1, (_OFFSETOF_SC_REGS + SZREG * S1)(a0)
-	REG_S	s2, (_OFFSETOF_SC_REGS + SZREG * S2)(a0)
-	REG_S	s3, (_OFFSETOF_SC_REGS + SZREG * S3)(a0)
-	REG_S	s4, (_OFFSETOF_SC_REGS + SZREG * S4)(a0)
-	REG_S	s5, (_OFFSETOF_SC_REGS + SZREG * S5)(a0)
-	REG_S	s6, (_OFFSETOF_SC_REGS + SZREG * S6)(a0)
-	REG_S	s7, (_OFFSETOF_SC_REGS + SZREG * S7)(a0)
-	REG_S	gp, (_OFFSETOF_SC_REGS + SZREG * GP)(a0)
-	REG_S	sp, (_OFFSETOF_SC_REGS + SZREG * SP)(a0)
-	REG_S	s8, (_OFFSETOF_SC_REGS + SZREG * S8)(a0)
+	REG_S	v0, (_OFFSETOF_SC_REGS + SZREG * _R_ZERO)(a0) # saved in sc_regs[0]
+	REG_S	s0, (_OFFSETOF_SC_REGS + SZREG * _R_S0)(a0)
+	REG_S	s1, (_OFFSETOF_SC_REGS + SZREG * _R_S1)(a0)
+	REG_S	s2, (_OFFSETOF_SC_REGS + SZREG * _R_S2)(a0)
+	REG_S	s3, (_OFFSETOF_SC_REGS + SZREG * _R_S3)(a0)
+	REG_S	s4, (_OFFSETOF_SC_REGS + SZREG * _R_S4)(a0)
+	REG_S	s5, (_OFFSETOF_SC_REGS + SZREG * _R_S5)(a0)
+	REG_S	s6, (_OFFSETOF_SC_REGS + SZREG * _R_S6)(a0)
+	REG_S	s7, (_OFFSETOF_SC_REGS + SZREG * _R_S7)(a0)
+	REG_S	gp, (_OFFSETOF_SC_REGS + SZREG * _R_GP)(a0)
+	REG_S	sp, (_OFFSETOF_SC_REGS + SZREG * _R_SP)(a0)
+	REG_S	s8, (_OFFSETOF_SC_REGS + SZREG * _R_S8)(a0)
 	li	v0, 1				# be nice if we could tell
 	sw	v0, (_OFFSETOF_SC_REGS + 34 * SZREG)(a0)	# sc_fpused = 1
 	cfc1	v0, $31
@@ -133,8 +133,8 @@ LEAF(longjmp)
 	.cprestore 16
 #endif
 	REG_PROLOGUE
-	/* save return value in sc_regs[V0] */
-	REG_S	a1, (_OFFSETOF_SC_REGS + V0 * SZREG)(a0)
+	/* save return value in sc_regs[_R_V0] */
+	REG_S	a1, (_OFFSETOF_SC_REGS + _R_V0 * SZREG)(a0)
 	REG_EPILOGUE
 	li	v0, SYS_compat_13_sigreturn13
 	syscall
