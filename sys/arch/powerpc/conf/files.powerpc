@@ -1,16 +1,10 @@
-#	$NetBSD: files.powerpc,v 1.6 1998/02/23 01:54:26 mycroft Exp $
+#	$NetBSD: files.powerpc,v 1.7 1998/02/24 05:45:51 mycroft Exp $
 #
 # First try for powerpc-specific configuration info
 #
 maxpartitions 16
 
 maxusers 2 8 64
-
-#
-# Openfirmware support
-#
-include "dev/ofw/files.ofw"
-major	{ofdisk = 0}
 
 file	arch/powerpc/powerpc/autoconf.c
 file	arch/powerpc/powerpc/clock.c
@@ -51,12 +45,29 @@ file    arch/powerpc/powerpc/db_trace.c                 ddb
 # Firmworks OpenFirmware Bug Workarounds
 file	arch/powerpc/powerpc/ofwreal.S		firmworksbugs
 
+
+#
+# Generic OpenFirmware device support
+#
+include "dev/ofw/files.ofw"
+major	{ofdisk = 0}
+
+
 # For now, hardwire soft interrupt handling
 file	arch/powerpc/powerpc/soft_spl.c
 
 # FirePower specific code
-#device firepower: openfirm
+#device firepower: ofbus
 #attach firepower at root
 
 #file	arch/powerpc/firepower/firedep.c	firepower needs-flag
 #file	arch/powerpc/firepower/fireirq.c	firepower
+
+
+#
+# System bus types
+#
+define	mainbus {}
+device	mainbus: mainbus, ofbus
+attach	mainbus at root
+file	arch/powerpc/powerpc/mainbus.c		mainbus
