@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.2 2002/08/24 00:51:12 lukem Exp $
+#	$NetBSD: list,v 1.3 2002/08/26 08:57:29 lukem Exp $
 
 SRCDIRS	bin
 
@@ -29,12 +29,16 @@ PROG	rcmd
 PROG	rcp
 PROG	rm
 PROG	rmdir
-PROG	sh -sh
+PROG	sh
 PROG	sleep
 PROG	stty
 PROG	sync
 PROG	systrace
 PROG	test		[
+
+ARGVLN	csh -cksh
+ARGVLN	ksh -ksh
+ARGVLN	sh -sh
 
 SRCDIRS	sbin
 
