@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.4 2003/02/25 20:35:35 thorpej Exp $	*/
+/*	$NetBSD: ld_ataraid.c,v 1.5 2003/06/07 23:37:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -261,7 +261,6 @@ ld_ataraid_start_span(struct ld_softc *ld, struct buf *bp)
 	daddr_t bn;
 	long bcount, rcount;
 	u_int comp;
-	int s;
 
 	/* Allocate component buffers. */
 	SIMPLEQ_INIT(&cbufq);
@@ -275,8 +274,6 @@ ld_ataraid_start_span(struct ld_softc *ld, struct buf *bp)
 		bn -= adi->adi_compsize;
 		adi = &aai->aai_disks[++comp];
 	}
-
-	s = splbio();		/* XXX big hammer */
 
 	bp->b_resid = bp->b_bcount;
 
@@ -292,11 +289,7 @@ ld_ataraid_start_span(struct ld_softc *ld, struct buf *bp)
 				SIMPLEQ_REMOVE_HEAD(&cbufq, cb_q);
 				CBUF_PUT(cbp);
 			}
-
-			splx(s);
-
-			/* Notify the upper layer that we are out of memory. */
-			return (ENOMEM);
+			return (EAGAIN);
 		}
 
 		/*
@@ -318,8 +311,6 @@ ld_ataraid_start_span(struct ld_softc *ld, struct buf *bp)
 		VOP_STRATEGY(&cbp->cb_buf);
 	}
 
-	splx(s);
-
 	return (0);
 }
 
@@ -334,14 +325,11 @@ ld_ataraid_start_raid0(struct ld_softc *ld, struct buf *bp)
 	daddr_t bn, cbn, tbn, off;
 	long bcount, rcount;
 	u_int comp;
-	int s;
 
 	/* Allocate component buffers. */
 	SIMPLEQ_INIT(&cbufq);
 	addr = bp->b_data;
 	bn = bp->b_rawblkno;
-
-	s = splbio();		/* XXX big hammer */
 
 	bp->b_resid = bp->b_bcount;
 
@@ -373,11 +361,7 @@ ld_ataraid_start_raid0(struct ld_softc *ld, struct buf *bp)
 				SIMPLEQ_REMOVE_HEAD(&cbufq, cb_q);
 				CBUF_PUT(cbp);
 			}
-
-			splx(s);
-
-			/* Notify the upper layer that we are out of memory. */
-			return (ENOMEM);
+			return (EAGAIN);
 		}
 		SIMPLEQ_INSERT_TAIL(&cbufq, cbp, cb_q);
 		bn += btodb(rcount);
@@ -391,8 +375,6 @@ ld_ataraid_start_raid0(struct ld_softc *ld, struct buf *bp)
 			cbp->cb_buf.b_vp->v_numoutput++;
 		VOP_STRATEGY(&cbp->cb_buf);
 	}
-
-	splx(s);
 
 	return (0);
 }
