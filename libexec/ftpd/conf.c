@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.4 1997/07/31 00:08:04 jtc Exp $	*/
+/*	$NetBSD: conf.c,v 1.5 1997/08/14 02:06:15 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.4 1997/07/31 00:08:04 jtc Exp $");
+__RCSID("$NetBSD: conf.c,v 1.5 1997/08/14 02:06:15 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -75,7 +75,6 @@ parse_conf(findclass)
 	int		 none, match;
 	char		*endp;
 	char		*class, *word, *arg;
-	char		*types, *disable, *convcmd;
 	const char	*infile;
 	int		 line;
 	unsigned int	 timeout;
@@ -115,8 +114,14 @@ parse_conf(findclass)
 	while ((buf = fgetln(f, &len)) != NULL) {
 		none = match = 0;
 		line++;
-		if (buf[len - 1] == '\n')
-			buf[--len] = '\0';
+		if (len < 1)
+			continue;
+		if (buf[len - 1] != '\n') {
+			syslog(LOG_WARNING,
+			    "%s line %d is partially truncated?", infile, line);
+			continue;
+		}
+		buf[--len] = '\0';
 		if ((p = strchr(buf, '#')) != NULL)
 			*p = '\0';
 		if (EMPTYSTR(buf))
@@ -134,6 +139,8 @@ parse_conf(findclass)
 			continue;
 
 		if (strcasecmp(word, "conversion") == 0) {
+			char *suffix, *types, *disable, *convcmd;
+
 			if (EMPTYSTR(arg)) {
 				syslog(LOG_WARNING,
 				    "%s line %d: %s requires a suffix",
@@ -145,6 +152,11 @@ parse_conf(findclass)
 			convcmd = buf;
 			if (convcmd)
 				convcmd += strspn(convcmd, " \t");
+			suffix = strdup(arg);
+			if (suffix == NULL) {
+				syslog(LOG_WARNING, "can't strdup");
+				continue;
+			}
 			if (none || EMPTYSTR(types) ||
 			    EMPTYSTR(disable) || EMPTYSTR(convcmd)) {
 				types = NULL;
@@ -154,10 +166,21 @@ parse_conf(findclass)
 				types = strdup(types);
 				disable = strdup(disable);
 				convcmd = strdup(convcmd);
+				if (types == NULL || disable == NULL ||
+				    convcmd == NULL) {
+					syslog(LOG_WARNING, "can't strdup");
+					if (types)
+						free(types);
+					if (disable)
+						free(disable);
+					if (convcmd)
+						free(convcmd);
+					continue;
+				}
 			}
 			for (conv = curclass.conversions; conv != NULL;
 			    conv = conv->next) {
-				if (strcmp(conv->suffix, arg) == 0)
+				if (strcmp(conv->suffix, suffix) == 0)
 					break;
 			}
 			if (conv == NULL) {
@@ -170,7 +193,7 @@ parse_conf(findclass)
 				conv->next = curclass.conversions;
 				curclass.conversions = conv;
 			}
-			REASSIGN(conv->suffix, arg);
+			REASSIGN(conv->suffix, suffix);
 			REASSIGN(conv->types, types);
 			REASSIGN(conv->disable, disable);
 			REASSIGN(conv->command, convcmd);
@@ -291,14 +314,15 @@ show_chdir_messages(code)
 
 		/* Check if this directory has already been visited */
 	if (getcwd(cwd, sizeof(cwd) - 1) == NULL) {
-		syslog(LOG_WARNING, "show_chdir_messages: can't malloc");
+		syslog(LOG_WARNING, "can't malloc");
 		return;
 	}
 	if (sl_find(slist, cwd) != NULL)
 		return;	
 
-	if ((cp = strdup(cwd)) == NULL) {
-		syslog(LOG_WARNING, "show_chdir_messages: can't strdup");
+	cp = strdup(cwd);
+	if (cp == NULL) {
+		syslog(LOG_WARNING, "can't strdup");
 		return;
 	}
 	sl_add(slist, cp);
@@ -410,9 +434,14 @@ do_conversion(fname)
 
 	o_errno = errno;
 	for (cp = curclass.conversions; cp != NULL; cp = cp->next) {
+		if (cp->suffix == NULL) {
+			syslog(LOG_WARNING,
+			    "cp->suffix==NULL in conv list; SHOULDN'T HAPPEN!");
+			continue;
+		}
 		if ((base = strend(fname, cp->suffix)) == NULL)
 			continue;
-		if (cp->suffix == NULL || cp->types == NULL ||
+		if (cp->types == NULL || cp->disable == NULL ||
 		    cp->command == NULL)
 			continue;
 					/* Is it enabled? */
