@@ -1,4 +1,4 @@
-.\" $NetBSD: midiplay.1,v 1.10 2002/01/05 00:04:27 augustss Exp $
+.\" $NetBSD: midiplay.1,v 1.11 2002/01/05 20:55:16 wiz Exp $
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -64,7 +64,7 @@ specifies the number of the MIDI device used for output (as listed
 by the
 .Fl l
 flag).  The default is device is given by environment variable
-.Pa MIDIUNIT .
+.Ev MIDIUNIT .
 .It Fl f Ar file
 specifies the name of the sequencer device.
 .It Fl l
@@ -82,15 +82,15 @@ be verbose.  If the flag is repeated the verbosity increases.
 .It Fl x
 play a small sample sound instead of the a file.
 .El
+.Sh ENVIRONMENT
+.Bl -tag -width MIDIUNIT
+.It Ev MIDIUNIT
+the default number of the MIDI device used for output.  The default is 0.
+.El
 .Sh FILES
 .Bl -tag -width /dev/music
 .It Pa /dev/music
 MIDI sequencer device
-.El
-.Sh ENVIRONMENT
-.Bl -tag -width MIDIUNIT
-.It Pa MIDIUNIT
-the default number of the MIDI device used for output.  The default is 0.
 .El
 .Sh SEE ALSO
 .Xr midi 4
