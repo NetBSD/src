@@ -1,4 +1,4 @@
-	$NetBSD: INSTALL,v 1.1 1995/09/16 12:00:21 ragge Exp $
+	$NetBSD: INSTALL,v 1.2 1997/03/15 20:08:33 ragge Exp $
 
 
 How to install NetBSD/vax
@@ -8,10 +8,14 @@ How to install NetBSD/vax
 	NetBSD standalone system addresses devices like
 	'devicename(adapter, controller, unit, partition)'
 	Known devicenames are:
-		tms - TMSCP tape.
-		ts  - TSV05/TS11 tape.
-		ra  - RA??/RD?? disks/floppies.
-		hp  - RP??/RM?? disks.
+		mt  -  MSCP tape. (TK50, TU81, ...)
+		ts  -  TSV05/TS11 tape.
+		ra  -  RA??/RD?? disks/floppies.
+		hp  -  RP??/RM?? disks.
+		rd  -  RD?? disks on MicroVAX 2000.
+		sd  -  SCSI disks.
+		st  -  SCSI tapes.
+		le  -  LANCE ethernet controller.
 
 	You can omit parameters; ra(0,0) refers to disk 0 partition a
 	on default controller. On tapes partition refers to file #
@@ -23,10 +27,11 @@ How to install NetBSD/vax
 
 
 2.	Installation.
-	This document only covers installation of a miniroot
-	filesystem on the swap partition of a disk. Installation
-	of the remaining system is best done over network or
-	from tape, but this is your own decision.
+	This document covers installation of a miniroot filesystem on
+	the swap partition of a disk from tape/floppy, or setting up
+	a netbooted environment.
+	Installation of the remaining system on a local disk is best
+	done over network or from tape, but this is your own decision.
 	The installation principle is to label the root disk,
 	copy a miniroot filesystem onto the swap partition,
 	boot up from that miniroot filesystem, then create
@@ -42,7 +47,7 @@ How to install NetBSD/vax
 
 2.1	INSTALLATION
 
-2.1.1	Installation from TK50. (MicroVAX II)
+2.1.1	Installation from TK50. (MicroVAX II/III)
 	You will need a file called tk50-file1-???.fs and a
 	file called tk50-file2-???.fs, where ??? is the
 	revision og NetBSD. These files must be written on tape
@@ -76,7 +81,7 @@ How to install NetBSD/vax
 	Now go to step 3.
 
 
-2.2	Installation from RX33/RX50. (MicroVAX II)
+2.2	Installation from RX33/RX50. (MicroVAX II/III)
 	The difference between RX33 and RX50 is its size. RX50
 	is 400k and RX33 is 1200k.
 	You will need a file called rxDD-bootdisk-???.fs and 
@@ -107,8 +112,48 @@ How to install NetBSD/vax
 
 2.3	Installation from TU58. (VAX 11/750).
 
-	Not yet :-( But will be...
+	Not yet :-(
 
+2.4	Setting up a net-booted environment (VS2000)
+
+	All VAXen that can boot over network uses MOP, a DEC protocol.
+	To be able to use MOP, a MOP daemon must be present on one of
+	the machines on the local network. The boot principle is:
+	* The VS2000 broadcast a wish to load an image.
+	* A mopd answers and send the boot program to the VAX.
+	* The boot program does rarp requests, mounts the root filesystem
+	    and loads the kernel.
+	* The kernel is loaded and starts executing.
+
+	You must have a mop daemon available to be able to boot. 
+	A mopd written by moj@stacken.kth.se can be found at
+	ftp.stacken.kth.se:/pub/OS/NetBSD/mopd, and can be compiled
+	on many different architectures.
+	The boot program uses bootparamd for the rest of the boot sequence
+	in exactly the same way as SUNs does.
+
+	To set up a netbooted environment, you need to do the following:
+	* Get a mop daemon, and read the docs for configuration. The boot
+	    file that shall be loaded is snapshot/boot.mopformat
+	* Get the snapshot tar files, and unpack them in a exportable
+	    directory somewhere. Do also put the netbsd.GENERIC kernel
+	    in the root of your NetBSD/vax hierarchy. Be sure you
+	    remember to populate the /dev directory.
+	* Put the VS2000 ethernet number in ethers, the path to mount
+	    root and swap in bootparams and exports and be sure to
+	    export it. See your diskless docs for this.
+	* Now it shall boot up diskless.
+
+	You can use the same flags when booting over the net as when
+	booting from local disks; like: ">>>B/3 ESA0" will load boot
+	in ask state. From here you can load any file you want, even
+	copy and edlabel if they are located in the exported root fs.
+
+	Note 1: Netbooting of MicroVAX II/III systems with DEQNA/DELUA
+	    ethernet does not work does not work yet because lack of standalone
+	    drivers. Mounting of root and swap over NFS works goos though.
+	Note 2: Mopd won't work on VAXen with de/qe ethernet, due to the
+	    lack of bpf support for those interfaces.
 
 3.	Booting up miniroot.
 	When copying is ready, bring the boot program up a third

@@ -1,37 +1,42 @@
-	$NetBSD: README,v 1.9 1995/09/16 12:00:21 ragge Exp $
+	$NetBSD: README,v 1.10 1997/03/15 20:08:34 ragge Exp $
 
 Devices supported in kernel and _known_ to work:
-CPU:	VAX 11/750 with 2-14MB of memory.
-	KA630 (MicroVAX II) with 2-16 MB memory.
+CPU:	VAX11/750, VAX11/78X, VAX86X0.
+	MicroVAX II/III (MicroVAX 3200/3300/3400/3500/3600/3800/3900)
+	VAXstation 2000/MicroVAX 2000.
 
 Net:	DEUNA/DELUA Unibus ethernet cards.
 	DEQNA/DELQA Q22 bus ethernet cards.
+	LANCE ethernet.
 
 Disks:	UDA50 Unibus MSCP controller.
 	KDA50/RQDX3 Q22 bus MSCP controller.
 		RA??-disks on UDA50 or KDA50.
 		RD??-disks on RQDX3. (known as RA?? by system).
+	RP??/RM?? disks on Massbus.
+	RD?? disks on MFM ctlr.
+	SCSI disks.
 
 Tapes:	DILOG Q22 bus tape ctlr w/ Exabyte. (TMSCP emulating)
 	TSV05 Q22 bus tape ctlr.
+	SCSI tapes.
 	TK50 (TMSCP) on Q22 bus.
 		Other TMSCP ctlrs may also work, but haven't tried.
 
 
-To install and run NetBSD/vax you need a MicroVAX II or VAX 11/750
-with at least 4MB of memory, and a usable install media. Supported
-install media is TK50 tape and RX33/RX50 floppy. If you do initial
-installation from floppy then you need a way to load the rest of
-the system, like tape or ethernet. 
-NOTE! TU58 INSTALLATION IS NOT YET SUPPORTED, BUT WILL BE.
+To install and run NetBSD/vax you need at least 4MB of memory,
+and a usable install media. I can provide (on request) a kernel that
+will netboot and run fine on standard 2MB VS2000.
+Supported install media is TK50 tape and RX33/RX50 floppy, or over
+the net. If you do initial installation from floppy then you need a way
+to load the rest of the system, like tape or ethernet. 
+NOTE! TU58 INSTALLATION IS NOT YET SUPPORTED.
 
 Actually, the system will run fine on only 2MB of memory, but
 installation program needs 4MB. If this causes trouble for someone
 tell me and I'll fix it.
 
 Differences between the NetBSD/vax port and other ports:
- * It uses gcc 2.7.0 as default compiler.
- * libm is not the same as the other ports; instead it is 4.4BSD libm. 
  * No dynamic linked libraries, all binaries is statically linked.
 These things will be fixed in the future.
 
@@ -42,6 +47,8 @@ We who have done parts of the VAX port is:
 	Mattias ]slund, lots of help and ideas everywhere.
 	Bertram Barth, bootblocks and boot routines for MicroVAX.
 	Rick Macklem, fixed all MicroVAX II, TMSCP and DEQNA support.
+	Gunnar Helliesen is maintaining the NetBSD/VAX FAQ.
+	Ken Wellsch wrote DHU11 driver and did kernel optimizations.
 	Anders Magnusson (ragge), that's me, who put things together
 		and wrote the rest.
 
