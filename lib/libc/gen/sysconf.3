@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysconf.3,v 1.17 2001/09/16 02:57:05 wiz Exp $
+.\"	$NetBSD: sysconf.3,v 1.18 2002/01/31 00:32:47 kleink Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)sysconf.3	8.3 (Berkeley) 4/19/94
 .\"
-.Dd June 24, 1999
+.Dd January 31, 2002
 .Dt SYSCONF 3
 .Os
 .Sh NAME
@@ -103,6 +103,10 @@ otherwise \-1.
 .It Li _SC_MEMORY_PROTECTION
 Return 1 if the Memory Protection Option is available on this system,
 otherwise \-1.
+.It Li _SC_MONOTONIC_CLOCK
+Return the standard version the implementation of the Monotonic Clock
+Option on this systems conforms to,
+or \-1 if unavailable.
 .It Li _SC_NGROUPS_MAX
 The maximum number of supplemental groups.
 .It Li _SC_OPEN_MAX

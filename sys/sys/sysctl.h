@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.72 2002/01/28 02:06:04 simonb Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.73 2002/01/31 00:32:47 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -177,7 +177,8 @@ struct ctlname {
 #define	KERN_MAXPHYS		57	/* int: kernel value of MAXPHYS */
 #define	KERN_SBMAX		58	/* int: max socket buffer size */
 #define	KERN_TKSTAT		59	/* tty in/out counters */
-#define	KERN_MAXID		60	/* number of valid kern ids */
+#define	KERN_MONOTONIC_CLOCK	60	/* int: POSIX monotonic clock */
+#define	KERN_MAXID		61	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -240,6 +241,7 @@ struct ctlname {
 	{ "maxphys", CTLTYPE_INT }, \
 	{ "sbmax", CTLTYPE_INT }, \
 	{ "tkstat", CTLTYPE_NODE }, \
+	{ "monotonic_clock", CTLTYPE_INT }, \
 }
 
 /*

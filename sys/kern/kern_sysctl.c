@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.100 2002/01/28 02:06:02 simonb Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.101 2002/01/31 00:32:47 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.100 2002/01/28 02:06:02 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.101 2002/01/31 00:32:47 kleink Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -563,6 +563,8 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	case KERN_TKSTAT:
 		return (sysctl_dotkstat(name + 1, namelen - 1, oldp, oldlenp,
 		    newp));
+	case KERN_MONOTONIC_CLOCK:	/* XXX _POSIX_VERSION */
+		return (sysctl_rdint(oldp, oldlenp, newp, 200112));
 	default:
 		return (EOPNOTSUPP);
 	}
