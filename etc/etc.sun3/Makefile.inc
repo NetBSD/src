@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 1998/02/11 19:19:53 gwr Exp $
+#	$NetBSD: Makefile.inc,v 1.5 1998/06/25 17:54:05 fair Exp $
 #
 #	etc.sun3/Makefile.inc -- sun3-specific etc Makefile targets
 #
@@ -6,20 +6,27 @@
 BIN3+= etc.sun3/ttyaction
 
 .ifdef DESTDIR
-snap_md: netbsd.sun3 netbsd.sun3x
-	cp ${.CURDIR}/../sys/arch/sun3/compile/GENERIC/netbsd \
-	    ${DESTDIR}/snapshot/netbsd.sun3
-	cp ${.CURDIR}/../sys/arch/sun3/compile/GENERIC3X/netbsd \
-	    ${DESTDIR}/snapshot/netbsd.sun3x
 
-netbsd.sun3:
-	cd ${.CURDIR}/../sys/arch/sun3/conf && config GENERIC
-	cd ${.CURDIR}/../sys/arch/sun3/compile/GENERIC && \
-	    make clean && make depend && make
+# the regular expression does a basename(1) on .CURDIR so that we don't
+# have to keep looking up .. at compile time.
 
-netbsd.sun3x:
-	cd ${.CURDIR}/../sys/arch/sun3/conf && config GENERIC3X
-	cd ${.CURDIR}/../sys/arch/sun3/compile/GENERIC3X && \
-	    make clean && make depend && make
+KERNSRCDIR?=	${.CURDIR:C/[^\/]+$//}sys
+KERNOBJDIR?=	${KERNSRCDIR}/arch/${MACHINE}/compile
+KERNCONFDIR?=	${KERNSRCDIR}/arch/${MACHINE}/conf
+
+snap_md: netbsd
+	cp ${KERNOBJDIR}/GENERIC/netbsd \
+		${DESTDIR}/snapshot/netbsd.sun3
+	cp ${KERNOBJDIR}/GENERIC3X/netbsd \
+		${DESTDIR}/snapshot/netbsd.sun3x
+
+netbsd:
+.for kernel in GENERIC GENERIC3X
+	cd ${KERNCONFDIR} && config \
+		-b ${KERNOBJDIR}/${kernel} \
+		-s ${KERNSRCDIR} \
+		${kernel}
+	cd ${KERNOBJDIR}/${kernel} && make clean && make depend && make
+.endfor
 
 .endif	# DESTDIR check
