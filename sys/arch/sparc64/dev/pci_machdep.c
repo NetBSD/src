@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.1 1999/06/04 13:42:15 mrg Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.2 1999/06/05 05:29:50 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -74,6 +74,11 @@ struct sparc_pci_chipset _sparc_pci_chipset = {
 	NULL,
 };
 
+/* commonly used */
+#define TAG2BUS(tag)	((tag) >> 16) & 0xff;
+#define TAG2DEV(tag)	((tag) >> 11) & 0x1f;
+#define TAG2FN(tag)	((tag) >> 8) & 0x7;
+
 /*
  * functions provided to the MI code.
  */
@@ -90,8 +95,8 @@ pci_attach_hook(parent, self, pba)
 	pcitag_t tag;
 	char *name, *devtype;
 	u_int32_t hi, mid, lo, intr;
+	u_int32_t dev, fn, bus;
 	int node, i, n, *ip, *ap;
-	u_int bus, dev, fn;
 
 	DPRINTF((SPDB_INTFIX|SPDB_INTMAP), ("\npci_attach_hook:"));
 
@@ -165,9 +170,9 @@ pci_attach_hook(parent, self, pba)
 			goto clean2;
 		DPRINTF(SPDB_INTFIX, (" got reg"));
 
-		bus = (ap[0] >> 16) & 0xff;
-		dev = (ap[0] >> 11) & 0x1f;
-		fn = (ap[0] >> 8) & 0x7;
+		bus = TAG2BUS(ap[0]);
+		dev = TAG2DEV(ap[0]);
+		fn = TAG2FN(ap[0]);
 
 		DPRINTF(SPDB_INTFIX, ("; bus %u dev %u fn %u", bus, dev, fn));
 
@@ -241,6 +246,7 @@ pci_make_tag(pc, b, d, f)
 	int f;
 {
 
+	/* make me a useable offset */
 	return (b << 16) | (d << 11) | (f << 8);
 }
 
@@ -260,9 +266,9 @@ confaddr_ok(sc, tag)
 {
 	int bus, dev, fn;
 
-	bus = (tag >> 16) & 0xff;
-	dev = (tag >> 11) & 0x1f;
-	fn = (tag >> 8) & 0x7;
+	bus = TAG2BUS(tag);
+	dev = TAG2DEV(tag);
+	fn = TAG2FN(tag);
 
 	if (sc->sc_mode == PSYCHO_MODE_SABRE) {
 		/*
@@ -281,6 +287,7 @@ confaddr_ok(sc, tag)
 		 * make sure we are reading our own bus
 		 */
 		/* XXX??? */
+		panic("confaddr_ok: can't do SUNW,psycho yet");
 	}
 	return (1);
 }
@@ -294,6 +301,7 @@ pci_conf_read(pc, tag, reg)
 {
 	struct psycho_pbm *pp = pc->cookie;
 	struct psycho_softc *sc = pp->pp_sc;
+	u_int32_t data;
 	pcireg_t val;
 
 	DPRINTF(SPDB_CONF, ("pci_conf_read: tag %lx; reg %x; ", (long)tag, reg));
@@ -304,10 +312,21 @@ pci_conf_read(pc, tag, reg)
 	if (confaddr_ok(sc, tag) == 0) {
 		val = (pcireg_t)~0;
 	} else {
+#if 0
+		membar_sync();
+		data = probeget(bus_type_asi[sc->sc_configtag->type],
+			       sc->sc_configaddr + tag + reg, 4);
+		membar_sync();
+		if (data == -1)
+			val = (pcireg_t)~0;
+		else
+			val = (pcireg_t)data;
+#else
 		membar_sync();
 		val = bus_space_read_4(sc->sc_configtag, sc->sc_configaddr,
 		    tag + reg);
 		membar_sync();
+#endif
 	}
 	DPRINTF(SPDB_CONF, (" returning %08x\n", (u_int)val));
 
@@ -333,7 +352,12 @@ pci_conf_write(pc, tag, reg, data)
 		panic("pci_conf_write: bad addr");
 		
 	membar_sync();
+#if 0
+	probeset(bus_type_asi[sc->sc_configtag->type],
+		 sc->sc_configaddr + tag + reg, 4, data);
+#else
 	bus_space_write_4(sc->sc_configtag, sc->sc_configaddr, tag + reg, data);
+#endif
 	membar_sync();
 }
 
