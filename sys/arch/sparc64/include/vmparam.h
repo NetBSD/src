@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.24 2003/08/07 16:29:50 agc Exp $ */
+/*	$NetBSD: vmparam.h,v 1.25 2003/08/10 02:30:52 chs Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -177,9 +177,4 @@ do {									\
 
 #endif	/* _KERNEL */
 
-#if defined (_KERNEL) && !defined(_LOCORE)
-struct vm_map;
-vaddr_t		dvma_mapin __P((struct vm_map *, vaddr_t, int, int));
-void		dvma_mapout __P((vaddr_t, vaddr_t, int));
-#endif
 #endif
