@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.82.2.2 2004/08/03 10:42:37 skrll Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.82.2.3 2004/08/12 16:17:15 skrll Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.82.2.2 2004/08/03 10:42:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.82.2.3 2004/08/12 16:17:15 skrll Exp $");
 
 #include "opt_compat_ultrix.h"
 #include "opt_multiprocessor.h"
@@ -257,7 +257,6 @@ cpu_coredump(l, vp, cred, chdr)
 	struct ucred *cred;
 	struct core *chdr;
 {
-	struct proc *p = l->l_proc;
 	struct trapframe *tf;
 	struct md_coredump state;
 	struct coreseg cseg;
@@ -277,13 +276,13 @@ cpu_coredump(l, vp, cred, chdr)
 
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
 	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
+	    IO_NODELOCKED|IO_UNIT, cred, NULL, l);
 	if (error)
 		return error;
 
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&state, sizeof(state),
 	    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
+	    IO_NODELOCKED|IO_UNIT, cred, NULL, l);
 
 	if (!error)
 		chdr->c_nseg++;

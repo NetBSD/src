@@ -1,4 +1,4 @@
-/*	$NetBSD: vax1k_exec.c,v 1.8.2.2 2004/08/03 10:44:43 skrll Exp $	*/
+/*	$NetBSD: vax1k_exec.c,v 1.8.2.3 2004/08/12 16:17:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vax1k_exec.c,v 1.8.2.2 2004/08/03 10:44:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vax1k_exec.c,v 1.8.2.3 2004/08/12 16:17:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,6 +83,7 @@ exec_vax1k_makecmds(l, epp)
 	u_short mid;
 	int error;
 	struct exec *execp = epp->ep_hdr;
+	struct proc *p = l->l_proc;
 
 	if (epp->ep_hdrvalid < sizeof(struct exec))
 		return ENOEXEC;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cfl.c,v 1.9.6.1 2004/08/03 10:42:35 skrll Exp $	*/
+/*	$NetBSD: cfl.c,v 1.9.6.2 2004/08/12 16:17:14 skrll Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cfl.c,v 1.9.6.1 2004/08/03 10:42:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfl.c,v 1.9.6.2 2004/08/12 16:17:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,10 +131,10 @@ const struct cdevsw cfl_cdevsw = {
 
 /*ARGSUSED*/
 int
-cflopen(dev, flag, mode, p)
+cflopen(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	if (vax_cputype != VAX_780)
 		return (ENXIO);
@@ -147,10 +147,10 @@ cflopen(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-cflclose(dev, flag, mode, p)
+cflclose(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	int s;
 	s = splbio();

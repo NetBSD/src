@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.34.2.1 2004/08/03 10:42:35 skrll Exp $ */
+/*	$NetBSD: hp.c,v 1.34.2.2 2004/08/12 16:17:14 skrll Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hp.c,v 1.34.2.1 2004/08/03 10:42:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hp.c,v 1.34.2.2 2004/08/12 16:17:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -254,7 +254,7 @@ hpstart(struct	mba_device *md)
 }
 
 int
-hpopen(dev_t dev, int flag, int fmt, struct proc *p)
+hpopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct	hp_softc *sc;
 	int	unit, part;
@@ -287,7 +287,7 @@ hpopen(dev_t dev, int flag, int fmt, struct proc *p)
 }
 
 int
-hpclose(dev_t dev, int flag, int fmt, struct proc *p)
+hpclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct	hp_softc *sc;
 	int	unit, part;
@@ -313,7 +313,7 @@ hpclose(dev_t dev, int flag, int fmt, struct proc *p)
 }
 
 int
-hpioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
+hpioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 {
 	struct	hp_softc *sc = hp_cd.cd_devs[DISKUNIT(dev)];
 	struct	disklabel *lp = sc->sc_disk.dk_label;
