@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.22 1999/05/09 14:36:42 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.23 1999/05/13 23:29:41 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -949,6 +949,11 @@ usbd_transfer_cb(reqh)
 
 	DPRINTFN(10, ("usbd_transfer_cb: reqh=%p\n", reqh));
 	/* Count completed transfers. */
+#ifdef DIAGNOSTIC
+	if (!pipe)
+		printf("usbd_transfer_cb: pipe==0, reqh=%p\n", reqh);
+	else
+#endif
 	++pipe->device->bus->stats.requests
 		[pipe->endpoint->edesc->bmAttributes & UE_XFERTYPE];
 
