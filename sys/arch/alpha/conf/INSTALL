@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.10 1998/04/15 21:19:22 drochner Exp $
+# $NetBSD: INSTALL,v 1.11 1998/04/18 01:19:40 thorpej Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -114,6 +114,8 @@ isp*	at	pci? dev ? function ?		# Qlogic ISP 10x0 SCSI
 ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
 pceb*	at	pci? dev ? function ?		# Intel PCI-EISA Bridges
 ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
+pciide*	at	pci? dev ? function ?		# PCI IDE controllers
+wdc*	at	pciide? channel ?
 sio*	at	pci? dev ? function ?		# Intel PCI-ISA Bridges
 tga*	at	pci? dev ? function ?		# DEC ZLXp-E[123] Graphics
 vga*	at	pci? dev ? function ?		# PCI VGA Graphics
