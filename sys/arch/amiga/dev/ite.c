@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.59 2002/03/17 19:40:30 atatat Exp $ */
+/*	$NetBSD: ite.c,v 1.59.4.1 2002/05/16 16:11:52 gehenna Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,7 +50,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.59 2002/03/17 19:40:30 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.59.4.1 2002/05/16 16:11:52 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -80,7 +80,6 @@ __KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.59 2002/03/17 19:40:30 atatat Exp $");
 #include <machine/cpu.h>	/* for is_draco() */
 
 #include <sys/conf.h>
-#include <machine/conf.h>
 
 #include "grfcc.h"
 #include "ite.h"
@@ -161,6 +160,19 @@ struct cfattach ite_ca = {
 
 extern struct cfdriver ite_cd;
 
+dev_type_open(iteopen);
+dev_type_close(iteclose);
+dev_type_read(iteread);
+dev_type_write(itewrite);
+dev_type_ioctl(iteioctl);
+dev_type_tty(itetty);
+dev_type_poll(itepoll);
+
+const struct cdevsw ite_cdevsw = {
+	iteopen, iteclose, iteread, itewrite, iteioctl,
+	nostop, itetty, itepoll, nommap, D_TTY
+};
+
 int
 itematch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
@@ -180,9 +192,7 @@ itematch(struct device *pdp, struct cfdata *cfp, void *auxp)
 	 * during early init we do not have a device pointer
 	 * and thus no unit number.
 	 */
-	for(maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == iteopen)
-			break;
+	maj = cdevsw_lookup_major(&ite_cdevsw);
 	gp->g_itedev = makedev(maj, cfp->cf_unit);
 	return(1);
 }
@@ -522,12 +532,6 @@ struct tty *
 itetty(dev_t dev)
 {
 	return (getitesp(dev)->tp);
-}
-
-void
-itestop(struct tty *tp, int flag)
-{
-
 }
 
 int
