@@ -1,4 +1,4 @@
-/*	$NetBSD: swdmover.c,v 1.2 2002/08/02 00:31:36 thorpej Exp $	*/
+/*	$NetBSD: swdmover.c,v 1.3 2002/12/10 01:09:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swdmover.c,v 1.2 2002/08/02 00:31:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swdmover.c,v 1.3 2002/12/10 01:09:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -180,6 +180,12 @@ swdmover_func_zero_process(struct dmover_request *dreq)
 		}
 		break;
 	    }
+
+	default:
+		/* XXXLOCK */
+		dreq->dreq_error = EINVAL;
+		dreq->dreq_flags |= DMOVER_REQ_ERROR;
+		/* XXXUNLOCK */
 	}
 
 	dmover_done(dreq);
@@ -236,6 +242,12 @@ swdmover_func_fill8_process(struct dmover_request *dreq)
 		}
 		break;
 	    }
+
+	default:
+		/* XXXLOCK */
+		dreq->dreq_error = EINVAL;
+		dreq->dreq_flags |= DMOVER_REQ_ERROR;
+		/* XXXUNLOCK */
 	}
 
 	dmover_done(dreq);
@@ -308,6 +320,12 @@ swdmover_func_copy_process(struct dmover_request *dreq)
 		}
 		break;
 	    }
+
+	default:
+		/* XXXLOCK */
+		dreq->dreq_error = EINVAL;
+		dreq->dreq_flags |= DMOVER_REQ_ERROR;
+		/* XXXUNLOCK */
 	}
 
 	dmover_done(dreq);
