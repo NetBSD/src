@@ -1,5 +1,5 @@
-#	$NetBSD: NetBSD.dist,v 1.37 1997/03/13 03:36:59 perry Exp $
-#	from: @(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
+#	$NetBSD: NetBSD.dist,v 1.38 1997/04/25 06:57:23 mikel Exp $
+#	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -19,7 +19,7 @@ bin
 dev
 
 # ./dev/fd
-fd		gname=bin uname=bin mode=0555
+fd
 # ./dev/fd
 ..
 
@@ -88,7 +88,7 @@ stand
 ..
 
 # ./tmp
-tmp             mode=01777
+tmp		mode=01777
 # ./tmp
 ..
 
@@ -104,7 +104,7 @@ bin
 games
 
 # ./usr/games/hide
-hide            gname=games uname=games mode=0700
+hide		uname=games gname=games mode=0700
 # ./usr/games/hide
 ..
 
@@ -112,23 +112,23 @@ hide            gname=games uname=games mode=0700
 ..
 
 # ./usr/include
-include		gname=bin uname=bin mode=0755
+include		uname=bin gname=bin mode=0755
 
 # ./usr/include/arpa
-arpa		gname=bin uname=bin mode=0755
+arpa		uname=bin gname=bin mode=0755
 # ./usr/include/arpa
 ..
 
 # ./usr/include/g++
-g++		gname=bin uname=bin mode=0755
+g++		uname=bin gname=bin mode=0755
 
 # ./usr/include/g++/gen
-gen		gname=bin uname=bin mode=0755
+gen		uname=bin gname=bin mode=0755
 # ./usr/include/g++/gen
 ..
 
 # ./usr/include/g++/std
-std		gname=bin uname=bin mode=0755
+std		uname=bin gname=bin mode=0755
 # ./usr/include/g++/std
 ..
 
@@ -136,22 +136,22 @@ std		gname=bin uname=bin mode=0755
 ..
 
 # ./usr/include/kerberosIV
-kerberosIV		gname=bin uname=bin mode=0755
+kerberosIV	uname=bin gname=bin mode=0755
 # ./usr/include/kerberosIV
 ..
 
 # ./usr/include/protocols
-protocols		gname=bin uname=bin mode=0755
+protocols	uname=bin gname=bin mode=0755
 # ./usr/include/protocols
 ..
 
 # ./usr/include/rpc
-rpc		gname=bin uname=bin mode=0755
+rpc		uname=bin gname=bin mode=0755
 # ./usr/include/rpc
 ..
 
 # ./usr/include/rpcsvc
-rpcsvc		gname=bin uname=bin mode=0755
+rpcsvc		uname=bin gname=bin mode=0755
 # ./usr/include/rpcsvc
 ..
 
@@ -845,15 +845,15 @@ devlj4
 ..
 
 # ./usr/share/keymaps
-keymaps		gname=bin uname=bin
+keymaps		uname=bin gname=bin
 
 # ./usr/share/keymaps/amiga
-amiga		gname=bin uname=bin
+amiga		uname=bin gname=bin
 # ./usr/share/keymaps/amiga
 ..
 
 # ./usr/share/keymaps/atari
-atari		gname=bin uname=bin
+atari		uname=bin gname=bin
 # ./usr/share/keymaps/atari
 ..
 
@@ -861,20 +861,20 @@ atari		gname=bin uname=bin
 ..
 
 # ./usr/share/lkm
-lkm		gname=bin uname=bin
+lkm		uname=bin gname=bin
 
 # ./usr/share/lkm/misc
-misc		gname=bin uname=bin
+misc		uname=bin gname=bin
 # ./usr/share/lkm/misc
 ..
 
 # ./usr/share/lkm/syscall
-syscall		gname=bin uname=bin
+syscall		uname=bin gname=bin
 # ./usr/share/lkm/syscall
 ..
 
 # ./usr/share/lkm/vfs
-vfs		gname=bin uname=bin
+vfs		uname=bin gname=bin
 # ./usr/share/lkm/vfs
 ..
 
@@ -1314,40 +1314,40 @@ catalog
 ..
 
 # ./usr/share/zoneinfo
-zoneinfo         gname=bin uname=bin mode=0555
+zoneinfo	uname=bin gname=bin mode=0555
 
 # ./usr/share/zoneinfo/Australia
-Australia        gname=bin uname=bin mode=0555
+Australia	uname=bin gname=bin mode=0555
 # ./usr/share/zoneinfo/Australia
 ..
 
 # ./usr/share/zoneinfo/Brazil
-Brazil           gname=bin uname=bin mode=0555
+Brazil		uname=bin gname=bin mode=0555
 # ./usr/share/zoneinfo/Brazil
 ..
 
 # ./usr/share/zoneinfo/Canada
-Canada           gname=bin uname=bin mode=0555
+Canada		uname=bin gname=bin mode=0555
 # ./usr/share/zoneinfo/Canada
 ..
 
 # ./usr/share/zoneinfo/Chile
-Chile            gname=bin uname=bin mode=0555
+Chile		uname=bin gname=bin mode=0555
 # ./usr/share/zoneinfo/Chile
 ..
 
 # ./usr/share/zoneinfo/Mexico
-Mexico           gname=bin uname=bin mode=0555
+Mexico		uname=bin gname=bin mode=0555
 # ./usr/share/zoneinfo/Mexico
 ..
 
 # ./usr/share/zoneinfo/SystemV
-SystemV          gname=bin uname=bin mode=0555
+SystemV		uname=bin gname=bin mode=0555
 # ./usr/share/zoneinfo/SystemV
 ..
 
 # ./usr/share/zoneinfo/US
-US               gname=bin uname=bin mode=0555
+US		uname=bin gname=bin mode=0555
 # ./usr/share/zoneinfo/US
 ..
 
@@ -1358,7 +1358,7 @@ US               gname=bin uname=bin mode=0555
 ..
 
 # ./usr/src
-src
+src		ignore
 # ./usr/src
 ..
 
@@ -1395,7 +1395,7 @@ backups
 ..
 
 # ./var/crash
-crash		mode=770
+crash		mode=0770
 # ./var/crash
 ..
 
@@ -1422,13 +1422,13 @@ ns
 ..
 
 # ./var/games
-games            uname=games gname=games mode=0775
+games		uname=games gname=games mode=0775
 
 # ./var/games/hackdir
-hackdir          uname=games gname=games mode=0775
+hackdir		uname=games gname=games mode=0775
 
 # ./var/games/hackdir/save
-save		 uname=games gname=games mode=0770
+save		uname=games gname=games mode=0770
 # ./var/games/hackdir/save
 ..
 
@@ -1441,12 +1441,12 @@ save		uname=games gname=games mode=0775
 ..
 
 # ./var/games/larn
-larn             uname=games gname=games mode=0775
+larn		uname=games gname=games mode=0775
 # ./var/games/larn
 ..
 
 # ./var/games/phantasia
-phantasia        uname=games gname=games mode=0775
+phantasia	uname=games gname=games mode=0775
 # ./var/games/phantasia
 ..
 
@@ -1485,7 +1485,7 @@ preserve
 ..
 
 # ./var/quotas
-quotas            gname=operator mode=0750
+quotas		gname=operator mode=0750
 # ./var/quotas
 ..
 
@@ -1516,12 +1516,12 @@ etc
 ..
 
 # ./var/spool/ftp/hidden
-hidden           mode=0111
+hidden		mode=0111
 # ./var/spool/ftp/hidden
 ..
 
 # ./var/spool/ftp/pub			XXX
-#pub               mode=0777
+#pub		mode=0777
 # ./var/spool/ftp/pub			XXX
 #..
 
@@ -1554,30 +1554,28 @@ secretmail
 ..
 
 # ./var/spool/sockets
-sockets	mode=777
+sockets		mode=0777
 # ./var/spool/sockets
 ..
 
-/set uname=uucp gname=daemon
 # ./var/spool/uucp
-uucp
+uucp		uname=uucp gname=daemon
 # ./var/spool/uucp
 ..
 
 # ./var/spool/uucppublic
-uucppublic       mode=01777
+uucppublic	uname=uucp gname=daemon mode=01777
 # ./var/spool/uucppublic
 ..
 
-/set uname=root gname=wheel
 # ./var/spool
 ..
 
 # ./var/tmp
-tmp        mode=01777
+tmp		mode=01777
 
 # ./var/tmp/vi.recover
-vi.recover	 mode=01777
+vi.recover	mode=01777
 # ./var/tmp/vi.recover
 ..
 
