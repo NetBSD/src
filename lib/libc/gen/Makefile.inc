@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.130 2004/05/09 19:34:11 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.131 2004/05/31 05:06:51 itojun Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
 .PATH: ${ARCHDIR}/gen ${.CURDIR}/gen
 
 SRCS+= 	_errno.c alarm.c arc4random.c assert.c basename.c clock.c closedir.c \
-	confstr.c ctermid.c ctype_.c daemon.c devname.c dirname.c \
+	closefrom.c confstr.c ctermid.c ctype_.c daemon.c devname.c dirname.c \
 	disklabel.c err.c errx.c __errlist14.c errlist.c errno.c execl.c \
 	execle.c execlp.c execv.c execvp.c fmtcheck.c fmtmsg.c fnmatch.c \
 	fstab.c ftok.c __fts13.c fts.c getbsize.c getcap.c getcwd.c \

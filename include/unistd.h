@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.97 2004/05/10 22:33:08 kleink Exp $	*/
+/*	$NetBSD: unistd.h,v 1.98 2004/05/31 05:06:51 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -98,6 +98,7 @@ int	chown __P((const char *, uid_t, gid_t)) __RENAME(__posix_chown);
 int	chown __P((const char *, uid_t, gid_t));
 #endif /* defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) */
 int	 close __P((int));
+int	 closefrom __P((int));
 size_t	 confstr __P((int, char *, size_t));
 #ifndef __CUSERID_DECLARED
 #define __CUSERID_DECLARED
