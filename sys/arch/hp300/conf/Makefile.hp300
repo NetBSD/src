@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hp300,v 1.33 1996/02/03 00:44:00 mycroft Exp $
+#	$NetBSD: Makefile.hp300,v 1.34 1996/02/03 01:17:22 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -125,7 +125,7 @@ param.o: param.c Makefile
 ioconf.o: ioconf.c
 	${NORMAL_C}
 
-newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
+vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	sh $S/conf/newvers.sh
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 
