@@ -1,4 +1,7 @@
 ./usr/X11R6/bin/Xamiga
 ./usr/X11R6/bin/X
+./usr/X11R6/lib/modules
+./usr/X11R6/lib/modules/pex5.so
+./usr/X11R6/lib/modules/xie.so
 ./usr/X11R6/man/cat1/Xamiga.0
 ./usr/X11R6/man/cat1/Xamiga24.0
