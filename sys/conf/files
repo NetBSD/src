@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.203 1998/06/25 23:40:33 thorpej Exp $
+#	$NetBSD: files,v 1.204 1998/06/25 23:56:39 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -27,6 +27,7 @@ defopt	opt_execfmt.h	EXEC_AOUT EXEC_ECOFF EXEC_ELF32 EXEC_ELF64 EXEC_SCRIPT
 
 # compatibility options
 defopt	COMPAT_FREEBSD
+defopt	COMPAT_HPUX
 defopt	COMPAT_LINUX
 defopt	COMPAT_IBCS2
 defopt	COMPAT_SUNOS

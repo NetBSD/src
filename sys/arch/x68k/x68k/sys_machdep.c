@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.9 1998/05/24 19:32:50 is Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.10 1998/06/25 23:59:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -34,6 +34,8 @@
  *
  *	@(#)sys_machdep.c	8.2 (Berkeley) 1/13/94
  */
+
+#include "opt_compat_hpux.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

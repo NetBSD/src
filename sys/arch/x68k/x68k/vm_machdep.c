@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.8 1998/01/06 07:49:48 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.9 1998/06/25 23:59:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,6 +41,8 @@
  *
  *	@(#)vm_machdep.c	8.6 (Berkeley) 1/12/94
  */
+
+#include "opt_compat_hpux.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
