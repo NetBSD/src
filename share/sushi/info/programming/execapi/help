@@ -9,7 +9,7 @@ For example, an exec file might contain the following:
 
 pkg_info -v
 
-And it's preceeding form (if any) might contain one field, such as the
+And it's preceding form (if any) might contain one field, such as the
 name of a package to get detailed information on.  So the actual command
 that might get run, could look something like this:
 
@@ -17,4 +17,4 @@ pkg_info -v fooshi-1.3
 
 Note that all fields are passed as arguments, if you want them to be or not.
 
-$NetBSD: help,v 1.1 2001/01/05 02:06:55 garbled Exp $
+$NetBSD: help,v 1.2 2001/08/20 12:00:50 wiz Exp $

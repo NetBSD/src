@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.11 2001/06/16 21:47:42 kleink Exp $	*/
+/*	$NetBSD: indent.c,v 1.12 2001/08/20 12:00:55 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -48,7 +48,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985 Sun Microsystems, Inc.\n\
 #if 0
 static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #else
-__RCSID("$NetBSD: indent.c,v 1.11 2001/06/16 21:47:42 kleink Exp $");
+__RCSID("$NetBSD: indent.c,v 1.12 2001/08/20 12:00:55 wiz Exp $");
 #endif
 #endif				/* not lint */
 
@@ -817,7 +817,7 @@ check_type:
 			if (ps.in_parameter_declaration)
 				prefix_blankline_requested = 0;
 
-			if (ps.p_l_follow > 0) {	/* check for preceeding
+			if (ps.p_l_follow > 0) {	/* check for preceding
 							 * unbalanced parens */
 				diag(1, "Unbalanced parens");
 				ps.p_l_follow = 0;

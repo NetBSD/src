@@ -440,7 +440,7 @@
 	+ Fix relative cursor motion to handle folded lines.
 	+ Recompile the search pattern if applicable edit options change.
 	+ Change +/-c command ordering to match historic practice.
-	+ Rework autoindent code to always resolve preceeding <blank>
+	+ Rework autoindent code to always resolve preceding <blank>
 	  characters when a ^T or ^D are entered.
 	+ Add the print/noprint edit options, so can now specify if
 	  a character is printable.

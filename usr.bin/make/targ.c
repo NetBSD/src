@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.22 2001/07/03 18:08:51 christos Exp $	*/
+/*	$NetBSD: targ.c,v 1.23 2001/08/20 12:00:56 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: targ.c,v 1.22 2001/07/03 18:08:51 christos Exp $";
+static char rcsid[] = "$NetBSD: targ.c,v 1.23 2001/08/20 12:00:56 wiz Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: targ.c,v 1.22 2001/07/03 18:08:51 christos Exp $");
+__RCSID("$NetBSD: targ.c,v 1.23 2001/08/20 12:00:56 wiz Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -648,7 +648,7 @@ TargPrintNode (gnp, passp)
  *	0.
  *
  * Side Effects:
- *	The name of each file is printed preceeded by #\t
+ *	The name of each file is printed preceded by #\t
  *
  *-----------------------------------------------------------------------
  */

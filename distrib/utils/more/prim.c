@@ -1,4 +1,4 @@
-/*	$NetBSD: prim.c,v 1.5 1998/02/09 07:40:18 thorpej Exp $	*/
+/*	$NetBSD: prim.c,v 1.6 2001/08/20 12:00:47 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988 Mark Nudleman
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)prim.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: prim.c,v 1.5 1998/02/09 07:40:18 thorpej Exp $");
+__RCSID("$NetBSD: prim.c,v 1.6 2001/08/20 12:00:47 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -798,13 +798,13 @@ search(search_forward, pattern, n, wantmatch)
 				*q = isupper(*p) ? tolower(*p) : *p;
 
 		/*
-		 * Remove any backspaces along with the preceeding char.
+		 * Remove any backspaces along with the preceding char.
 		 * This allows us to match text which is underlined or
 		 * overstruck.
 		 */
 		for (p = q = line;  *p;  p++, q++)
 			if (q > line && *p == '\b')
-				/* Delete BS and preceeding char. */
+				/* Delete BS and preceding char. */
 				q -= 2;
 			else
 				/* Otherwise, just copy. */
