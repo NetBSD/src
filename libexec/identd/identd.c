@@ -1,4 +1,6 @@
 /*
+**	$Id: identd.c,v 1.2 1994/02/04 23:17:56 cgd Exp $
+**
 ** identd.c                       A TCP/IP link identification protocol server
 **
 ** This program is in the public domain and may be used freely by anyone
@@ -9,7 +11,7 @@
 ** Please send bug fixes/bug reports to: Peter Eriksson <pen@lysator.liu.se>
 */
 
-#if defined(IRIX) || defined(SVR4) || defined(NeXT)
+#if defined(IRIX) || defined(SVR4) || defined(NeXT) || defined(__NetBSD__)
 #  define SIGRETURN_TYPE void
 #  define SIGRETURN_TYPE_IS_VOID
 #else
@@ -149,7 +151,6 @@ char *gethost(addr)
     return inet_ntoa(*addr);
 }
 
-#ifdef USE_SIGALARM
 /*
 ** Exit cleanly after our time's up.
 */
@@ -161,8 +162,6 @@ alarm_handler()
   
   exit(0);
 }
-#endif
-
 
 #if !defined(hpux) && !defined(__hpux) && !defined(SVR4) || defined(_CRAY)
 /*
@@ -212,9 +211,7 @@ int main(argc,argv)
   int i, len;
   struct sockaddr_in sin;
   struct in_addr laddr, faddr;
-#ifndef USE_SIGALARM
   struct timeval tv;
-#endif
 
   int background_flag = 0;
   int timeout = 0;
@@ -488,7 +485,6 @@ int main(argc,argv)
     */
     do
     {
-#ifdef USE_SIGALARM
       /*
       ** Terminate if we've been idle for 'timeout' seconds
       */
@@ -497,7 +493,6 @@ int main(argc,argv)
 	signal(SIGALRM, alarm_handler);
 	alarm(timeout);
       }
-#endif
       
       /*
       ** Wait for a connection request to occur.
@@ -508,7 +503,6 @@ int main(argc,argv)
 	FD_ZERO(&read_set);
 	FD_SET(0, &read_set);
 
-#ifndef USE_SIGALARM
 	if (timeout)
 	{
 	  tv.tv_sec = timeout;
@@ -516,7 +510,6 @@ int main(argc,argv)
 	  nfds = select(FD_SETSIZE, &read_set, NULL, NULL, &tv);
 	}
 	else
-#endif
 
 	nfds = select(FD_SETSIZE, &read_set, NULL, NULL, NULL);
       } while (nfds < 0  && errno == EINTR);
@@ -533,12 +526,10 @@ int main(argc,argv)
       if (nfds == 0)
 	exit(0);
       
-#ifdef USE_SIGALARM
       /*
       ** Disable the alarm timeout
       */
       alarm(0);
-#endif
       
       /*
       ** Accept the new client

@@ -1,5 +1,7 @@
 /*
-** kernel/386bsd.c		Low level kernel access functions for 386BSD
+**	$Id: netbsd.c,v 1.2 1994/02/04 23:18:00 cgd Exp $
+**
+** netbsd.c		Low level kernel access functions for NetBSD
 **
 ** This program is in the public domain and may be used freely by anyone
 ** who wants to. 
@@ -113,7 +115,7 @@ static int getbuf(addr, buf, len, what)
   int len;
   char *what;
 {
-  if (kvm_read(addr, buf, len) < 0)
+  if (kvm_read((caddr_t) addr, buf, len) < 0)
   {
     if (syslog_flag)
       syslog(LOG_ERR, "getbuf: kvm_read(%08x, %d) - %s : %m",

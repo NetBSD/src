@@ -2,11 +2,13 @@
 .\" Copyright (c) 1992 Peter Eriksson, Lysator, Linkoping University.
 .\" This software has been released into the public domain.
 .\"
+.\"	$Id: identd.8,v 1.2 1994/02/04 23:17:55 cgd Exp $
+.\"
 .TH IDENTD 8 "27 May 1992"
 .SH NAME
-identd, in.identd \- TCP/IP IDENT protocol server
+identd \- TCP/IP IDENT protocol server
 .SH SYNOPSIS
-.B /usr/sbin/in.identd
+.B identd
 .RB [ \-i | \-w | \-b ]
 .RB [ \-t<seconds> ]
 .RB [ \-u<uid> ]
@@ -215,51 +217,13 @@ defaults to the normally running kernel file.
 .PP
 .B kmemfile
 defaults to the memory space of the normally running kernel.
-.SH INSTALLATION
-.B identd
-is invoked either by the internet server (see
-.BR inetd (8C)
-) for requests to connect to the
-.SM IDENT
-port as indicated by the
-.B /etc/services
-file (see
-.BR services (5)
-) when using the
-.B -w
-or
-.B -i
-modes of operation or started manually by using the
-.B -b
-mode of operation.
-.SH EXAMPLES
-Assuming the server is located in
-.B /usr/etc/in.identd
-one can put either:
-.PP
-ident stream tcp wait sys /usr/etc/in.identd in.identd -w -t120
-.PP
-or:
-.PP
-ident stream tcp nowait sys /usr/etc/in.identd in.identd -i
-.PP
-into the
-.B /etc/inetd.conf
-file. User "sys" should have enough rights to READ the kernel
-but NOT to write to it.
-.PP
-To start it using the
-.B -b
-mode of operation one can put a line like this into the
-.B /etc/rc.local
-file:
-.PP
-/usr/etc/in.identd -b -u2 -g2
-.PP
-This will make it run in the background as user 2, group 2 (user "sys",
-group "kmem" on SunOS 4.1.1).
 .SH SEE ALSO
-.BR authuser (3)
 .BR inetd.conf (5)
 .SH BUGS
 The handling of fatal errors could be better.
+.PP
+If the
+.B -N
+flag is specified and a user's ".noident" file is not accessible,
+then ident information regarding that user will be returned
+if requested.

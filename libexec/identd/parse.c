@@ -1,4 +1,6 @@
 /*
+**	$Id: parse.c,v 1.2 1994/02/04 23:18:01 cgd Exp $
+**
 ** parse.c                         This file contains the protocol parser
 **
 ** This program is in the public domain and may be used freely by anyone
@@ -21,11 +23,8 @@
 #  include <arpa/inet.h>
 #endif
 
-#ifdef HAVE_KVM
-#  include <kvm.h>
-#else
-#  include "kvm.h"
-#endif
+#include <nlist.h>
+#include <kvm.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -83,7 +82,7 @@ static int valid_fhost(faddr, password)
     {
       if (strcmp(inet_ntoa(*faddr), indirect_host))
       {
-	syslog(LOG_NOTICE, "valid_fhost: Access Denied for: %s",
+	syslog(LOG_NOTICE, "valid_fhost: access denied for: %s",
 	       gethost(faddr));
 	return 0;
       }
@@ -92,7 +91,7 @@ static int valid_fhost(faddr, password)
     {
       if (strcmp(gethost(faddr), indirect_host))
       {
-	syslog(LOG_NOTICE, "valid_fhost: Access Denied for: %s",
+	syslog(LOG_NOTICE, "valid_fhost: access denied for: %s",
 	       gethost(faddr));
 	return 0;
       }
@@ -104,7 +103,7 @@ static int valid_fhost(faddr, password)
   
   if (strcmp(password, indirect_password))
   {
-    syslog(LOG_NOTICE, "valid_fhost: Invalid password from: %s",
+    syslog(LOG_NOTICE, "valid_fhost: invalid password from: %s",
 	   gethost(faddr));
     return 0;
   }
@@ -369,7 +368,7 @@ int parse(fp, laddr, faddr)
     if (noident_flag && check_noident(pwp->pw_dir))
     {
       if (syslog_flag)
-	syslog(LOG_NOTICE, "User %s requested HIDDEN-USER for host %s: %d, %d",
+	syslog(LOG_NOTICE, "user %s requested HIDDEN-USER for host %s: %d, %d",
 	       pwp->pw_name,
 	       gethost(faddr),
 	       lport, fport);
