@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.h,v 1.8 2002/07/27 19:38:08 christos Exp $	 */
+/*	$NetBSD: utmpx.h,v 1.9 2002/07/28 22:48:38 christos Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -111,23 +111,23 @@ struct lastlogx {
 
 __BEGIN_DECLS
 
-void setutxent(void);
-void endutxent(void);
-struct utmpx *getutxent(void);
-struct utmpx *getutxid(const struct utmpx *);
-struct utmpx *getutxline(const struct utmpx *);
-struct utmpx *pututxline(const struct utmpx *);
+void setutxent __P((void));
+void endutxent __P((void));
+struct utmpx *getutxent __P((void));
+struct utmpx *getutxid __P((const struct utmpx *));
+struct utmpx *getutxline __P((const struct utmpx *));
+struct utmpx *pututxline __P((const struct utmpx *));
 
 #ifndef _XOPEN_SOURCE
-int updwtmpx(const char *, const struct utmpx *);
-int lastlogxname(const char *);
-struct lastlogx *getlastlogx(uid_t, struct lastlogx *);
-int updlastlogx(const char *, uid_t, struct lastlogx *);
+int updwtmpx __P((const char *, const struct utmpx *));
+int lastlogxname __P((const char *));
+struct lastlogx *getlastlogx __P((uid_t, struct lastlogx *));
+int updlastlogx __P((const char *, uid_t, struct lastlogx *));
 struct utmp;
-void getutmp(const struct utmpx *, struct utmp *);
-void getutmpx(const struct utmp *, struct utmpx *);
+void getutmp __P((const struct utmpx *, struct utmp *));
+void getutmpx __P((const struct utmp *, struct utmpx *));
 
-int utmpxname(const char *);
+int utmpxname __P((const char *));
 
 #endif /* !_XOPEN_SOURCE */
 
