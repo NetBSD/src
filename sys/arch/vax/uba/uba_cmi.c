@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_cmi.c,v 1.2 1999/08/14 11:31:48 ragge Exp $	   */
+/*	$NetBSD: uba_cmi.c,v 1.3 2000/05/27 21:44:35 ragge Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -103,8 +103,6 @@ dw750_attach(parent, self, aux)
 {
 	struct uba_vsoftc *sc = (void *)self;
 	struct sbi_attach_args *sa = aux;
-	struct  uba_regs *uh_uba = (void *)sa->nexaddr;
-	int ubaddr = sa->nexinfo & 1;
 
 	printf(": DW750\n");
 	/*
@@ -120,11 +118,11 @@ dw750_attach(parent, self, aux)
 	/*
 	 * Fill in variables used by the sgmap system.
 	 */
-	sc->uv_size = UBASIZE;		/* Size in bytes of Qbus space */
-	sc->uv_addr = (paddr_t)uh_uba->uba_map;	/* Map regs physical address */
+	sc->uv_size = UBAPAGES * VAX_NBPG;
+	sc->uv_uba = (void *)sa->nexaddr; /* Map registers is in adaptor */
 
 	uba_dma_init(sc);
-	uba_attach(&sc->uv_sc, UIOPAGE(ubaddr));
+	uba_attach(&sc->uv_sc, UIOPAGE(sa->type == NEX_UBA1));
 }
 
 void
