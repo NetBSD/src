@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_usrreq.c,v 1.7 1995/08/12 23:59:58 mycroft Exp $	*/
+/*	$NetBSD: spp_usrreq.c,v 1.8 1995/08/16 00:32:42 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -1297,22 +1297,21 @@ spp_usrreq(so, req, m, nam, controlp)
 				break;
 		}
 		nsp = sotonspcb(so);
-
-		mm = m_getclr(M_DONTWAIT, MT_PCB);
 		sb = &so->so_snd;
 
-		if (mm == NULL) {
+		cb = malloc(sizeof(*cb), M_PCB, M_NOWAIT);
+		if (cb == 0) {
 			error = ENOBUFS;
 			break;
 		}
-		cb = mtod(mm, struct sppcb *);
-		mm = m_getclr(M_DONTWAIT, MT_HEADER);
-		if (mm == NULL) {
-			(void) m_free(dtom(m));
+		bzero((caddr_t)cb, sizeof(*cb));
+		cb->s_idp = malloc(sizeof(*cb->s_idp), M_PCB, M_NOWAIT);
+		if (cb->s_idp == 0) {
+			free(cb, M_PCB);
 			error = ENOBUFS;
 			break;
 		}
-		cb->s_idp = mtod(mm, struct idp *);
+		bzero((caddr_t)cb->s_idp, sizeof(*cb->s_idp));
 		cb->s_state = TCPS_LISTEN;
 		cb->s_smax = -1;
 		cb->s_swl1 = -1;
@@ -1572,8 +1571,8 @@ spp_close(cb)
 		remque(s->si_prev);
 		m_freem(m);
 	}
-	(void) m_free(dtom(cb->s_idp));
-	(void) m_free(dtom(cb));
+	free(cb->s_idp, M_PCB);
+	free(cb, M_PCB);
 	nsp->nsp_pcb = 0;
 	soisdisconnected(so);
 	ns_pcbdetach(nsp);
