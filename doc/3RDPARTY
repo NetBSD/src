@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.81 2003/03/31 14:45:03 atatat Exp $
+#	$NetBSD: 3RDPARTY,v 1.82 2003/03/31 15:04:39 perry Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -508,7 +508,7 @@ exploit/DoS attack which has been pulled up to the 1.4 and 1.5 branches.
 
 Package:	OpenSSH
 Version:	3.5 around 20021001
-Current Vers:	3.5 / portable 3.5p1
+Current Vers:	3.6 / portable 3.6p1
 Maintainer:	OpenSSH
 Archive Site:	http://www.openssh.com/ftp.html
 Mailing List:	openssh-unix-announce@mindrot.org
