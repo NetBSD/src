@@ -1,4 +1,4 @@
-/* $NetBSD: tlsbvar.h,v 1.3 1997/04/06 20:08:41 cgd Exp $ */
+/* $NetBSD: tlsbvar.h,v 1.4 1998/04/15 00:51:00 mjacob Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -50,9 +50,9 @@ struct tlsb_dev_attach_args {
 };
 
 /*
- * Bus-dependent structure for CPUs.  This is dynamically allocated
+ * Bus-dependent structure for CPUs. This is dynamically allocated
  * for each CPU on the TurboLaser, and glued into the cpu_softc
- * as sc_busdep.
+ * as sc_busdep (when there is a cpu_softc to do this to).
  */
 struct tlsb_cpu_busdep {
 	u_int8_t	tcpu_vid;	/* virtual ID of CPU */
