@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.251 2003/04/18 05:41:47 thorpej Exp $
+#	$NetBSD: Makefile,v 1.252 2003/05/18 08:28:05 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -40,6 +40,10 @@
 # For KERNSRCDIR, KERNOBJDIR, ...
 #
 .include <bsd.kernobj.mk>
+
+# For TARGET_ENDIANNESS
+#
+.include <bsd.endian.mk>
 
 
 .MAKEOVERRIDES+=	USETOOLS
@@ -124,16 +128,13 @@ ETC_INSTALL_SYMLINK=cd ${.CURDIR} && ${INSTALL_SYMLINK} ${ETC_PKG}
 
 NAMEDB=	127 root.cache named.conf localhost loopback.v6
 
-.if make(install-etc-files)						# {
-.include <bsd.endian.mk>
 .if ${TARGET_ENDIANNESS} == "1234"
-TARGET_ENDIANNESS=	-L
+PWD_MKDB_ENDIAN=	-L
 .elif ${TARGET_ENDIANNESS} == "4321"
-TARGET_ENDIANNESS=	-B
+PWD_MKDB_ENDIAN=	-B
 .else
-TARGET_ENDIANNESS=
+PWD_MKDB_ENDIAN=
 .endif
-.endif	# install-etc-files						# }
 
 
 # distribution --
@@ -167,7 +168,7 @@ install-etc-files: check_DESTDIR
 	    crontab ${DESTDIR}/var/cron/tabs/root
 	${ETC_INSTALL_FILE} -o root -g wheel -m 600 \
 	    master.passwd ${DESTDIR}/etc
-	${PWD_MKDB} -p ${TARGET_ENDIANNESS} -d ${DESTDIR}/ \
+	${PWD_MKDB} -p ${PWD_MKDB_ENDIAN} -d ${DESTDIR}/ \
 	    ${DESTDIR}/etc/master.passwd
 .if defined(UNPRIVED)
 	( \
