@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.29 1996/09/07 14:20:09 mycroft Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.30 1996/09/07 21:47:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -703,7 +703,7 @@ sys_poll(p, v, retval)
 	if (error)
 		goto done;
 
-	if (SCARG(uap, timeout) != -1) {
+	if (SCARG(uap, timeout) != INFTIM) {
 		atv.tv_sec = SCARG(uap, timeout) / 1000;
 		atv.tv_usec = (SCARG(uap, timeout) % 1000) * 1000;
 		if (itimerfix(&atv)) {
