@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.30 2003/10/30 01:58:18 simonb Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.31 2003/10/31 22:03:18 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.30 2003/10/30 01:58:18 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.31 2003/10/31 22:03:18 cl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -398,7 +398,8 @@ sa_yield(struct lwp *l)
 #if 0
 	} else {
 		DPRINTFN(1,("sa_yield(%d.%d) stepping aside\n", p->p_pid, l->l_lid));
-	
+
+		PHOLD(l);
 		SCHED_LOCK(s);
 		l2 = sa->sa_woken;
 		sa->sa_woken = NULL;
@@ -572,6 +573,7 @@ sys_sa_unblockyield(struct lwp *l, void *v, register_t *retval)
 		}
 
 		p->p_nrlwps--;
+		PHOLD(l);
 		sa_putcachelwp(p, l);
 		mi_switch(l, NULL);
 		/* mostly NOTREACHED */
@@ -838,8 +840,7 @@ sa_switch(struct lwp *l, int type)
 			&sau->sau_state.captured.e_ctx) != 0) {
 			sadata_upcall_free(sau);
 			sa->sa_stacks[sa->sa_nstacks++] = st;
-			sa_putcachelwp(p, l2);
-			PRELE(l2); /* Remove the artificial hold-count */
+			sa_putcachelwp(p, l2); /* PHOLD from sa_getcachelwp */
 			mi_switch(l, NULL);
 			return;
 		}
@@ -909,8 +910,7 @@ sa_switch(struct lwp *l, int type)
 #else
 		
 		/* sa_putcachelwp does not block because we have a hold count on l2 */
-		sa_putcachelwp(p, l2);
-		PRELE(l2); /* Remove the artificial hold-count */
+		sa_putcachelwp(p, l2); /* PHOLD from sa_getcachelwp */
 
 		mi_switch(l, NULL);
 		return;
@@ -1017,6 +1017,7 @@ sa_newcachelwp(struct lwp *l)
 		 * newlwp helpfully puts it there. Unclear if newlwp should
 		 * be tweaked.
 		 */
+		PHOLD(l2);
 		SCHED_LOCK(s);
 		sa_putcachelwp(p, l2);
 		SCHED_UNLOCK(s);
@@ -1042,7 +1043,6 @@ sa_putcachelwp(struct proc *p, struct lwp *l)
 	p->p_nlwps--;
 	l->l_stat = LSSUSPENDED;
 	l->l_flag |= (L_DETACHED | L_SA);
-	PHOLD(l);
 	/* XXX lock sadata */
 	DPRINTFN(5,("sa_putcachelwp(%d.%d) Adding LWP %d to cache\n",
 	    p->p_pid, curlwp->l_lid, l->l_lid));
@@ -1110,6 +1110,7 @@ sa_upcall_userret(struct lwp *l)
 			l->l_flag &= ~(L_SA_UPCALL|L_SA_BLOCKING);
 			l->l_upcallstack = NULL;
 			p->p_nrlwps--;
+			PHOLD(l);
 			sa_putcachelwp(p, l);
 			SA_LWP_STATE_UNLOCK(l, f);
 			KERNEL_PROC_UNLOCK(l);
@@ -1367,6 +1368,7 @@ sa_vp_repossess(struct lwp *l)
 
 	KDASSERT(l2 != l);
 	if (l2) {
+		PHOLD(l2);
 		SCHED_LOCK(s);
 		switch (l2->l_stat) {
 		case LSRUN:
@@ -1462,6 +1464,7 @@ sa_vp_donate(struct lwp *l)
 
 	LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
 		if(l2->l_flag &  L_SA_WANTS_VP) {
+			PHOLD(l);
 			SCHED_LOCK(s);
 			
 			p->p_nrlwps--;
