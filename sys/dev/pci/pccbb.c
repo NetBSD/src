@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.35 2000/03/14 10:26:10 enami Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.36 2000/03/22 09:35:07 haya Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -627,7 +627,6 @@ pccbb_pci_callback(self)
 		cba.cba_iot = sc->sc_iot;
 		cba.cba_memt = sc->sc_memt;
 		cba.cba_dmat = sc->sc_dmat;
-		cba.cba_function = 0;
 		cba.cba_bus = (busreg >> 8) & 0x0ff;
 		cba.cba_cc = (void *)sc;
 		cba.cba_cf = &pccbb_funcs;
@@ -2775,18 +2774,18 @@ pccbb_rbus_cb_space_alloc(ct, rb, addr, size, mask, align, flags, addrp, bshp)
 		if (align < 4) {
 			return 1;
 		}
+		/* XXX: hack for avoiding ISA image */
+		if (mask < 0x0100) {
+			mask = 0x3ff;
+			addr = 0x300;
+		}
+
 	} else {
 		DPRINTF(
 		    ("pccbb_rbus_cb_space_alloc: Bus space tag %x is NOT used.\n",
 		    rb->rb_bt));
 		return 1;
 		/* XXX: panic here? */
-	}
-
-	/* XXX: hack for avoiding ISA image */
-	if (mask < 0x3ff) {
-		mask = 0x3ff;
-		addr = 0x300;
 	}
 
 	if (rbus_space_alloc(rb, addr, size, mask, align, flags, addrp, bshp)) {
