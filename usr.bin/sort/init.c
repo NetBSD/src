@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.14 2004/02/17 20:17:38 jdolecek Exp $	*/
+/*	$NetBSD: init.c,v 1.15 2004/02/18 20:44:36 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: init.c,v 1.14 2004/02/17 20:17:38 jdolecek Exp $");
+__RCSID("$NetBSD: init.c,v 1.15 2004/02/18 20:44:36 jdolecek Exp $");
 __SCCSID("@(#)init.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -111,7 +111,7 @@ insertcol(field)
 	struct coldesc *p;
 
 	/* Make space for new item */
-	p = realloc(clist, (ncols + 1) * sizeof(*clist));
+	p = realloc(clist, (ncols + 2) * sizeof(*clist));
 	if (!p)
 		err(1, "realloc");
 	clist = p;
