@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4.2.1 1999/04/07 06:51:26 cgd Exp $
+#	$NetBSD: Makefile,v 1.4.2.2 2000/02/29 23:52:55 he Exp $
 
 MOUNT_POINT?=	/mnt
 VND?=		vnd0
@@ -49,6 +49,8 @@ unconfig:
 
 clean cleandir distclean:
 	/bin/rm -f *.core ${CLEANFILES} ${GZKERNEL} ${GZKERNEL}.gz *.tmp
+
+depend:
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
