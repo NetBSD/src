@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.118 2004/09/13 12:55:49 drochner Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.119 2004/10/23 13:26:33 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.118 2004/09/13 12:55:49 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.119 2004/10/23 13:26:33 augustss Exp $");
 
 #include "opt_usbverbose.h"
 
@@ -83,7 +83,6 @@ extern int usbdebug;
 Static usbd_status usbd_set_config(usbd_device_handle, int);
 Static void usbd_devinfo_vp(usbd_device_handle, char *, size_t, char *,
 	size_t, int);
-Static char *usbd_get_string(usbd_device_handle, int, char *);
 Static int usbd_getnewaddr(usbd_bus_handle bus);
 #if defined(__NetBSD__)
 Static int usbd_print(void *, const char *);
@@ -190,51 +189,6 @@ usbd_get_string_desc(usbd_device_handle dev, int sindex, int langid,
 	return (USBD_NORMAL_COMPLETION);
 }
 
-char *
-usbd_get_string(usbd_device_handle dev, int si, char *buf)
-{
-	int swap = dev->quirks->uq_flags & UQ_SWAP_UNICODE;
-	usb_string_descriptor_t us;
-	char *s;
-	int i, n;
-	u_int16_t c;
-	usbd_status err;
-	int size;
-
-	if (si == 0)
-		return (0);
-	if (dev->quirks->uq_flags & UQ_NO_STRINGS)
-		return (0);
-	if (dev->langid == USBD_NOLANG) {
-		/* Set up default language */
-		err = usbd_get_string_desc(dev, USB_LANGUAGE_TABLE, 0, &us,
-		    &size);
-		if (err || size < 4) {
-			dev->langid = 0; /* Well, just pick something then */
-		} else {
-			/* Pick the first language as the default. */
-			dev->langid = UGETW(us.bString[0]);
-		}
-	}
-	err = usbd_get_string_desc(dev, si, dev->langid, &us, &size);
-	if (err)
-		return (0);
-	s = buf;
-	n = size / 2 - 1;
-	for (i = 0; i < n; i++) {
-		c = UGETW(us.bString[i]);
-		/* Convert from Unicode, handle buggy strings. */
-		if ((c & 0xff00) == 0)
-			*s++ = c;
-		else if ((c & 0x00ff) == 0 && swap)
-			*s++ = c >> 8;
-		else
-			*s++ = '?';
-	}
-	*s++ = 0;
-	return (buf);
-}
-
 static void
 usbd_trim_spaces(char *p)
 {
@@ -267,9 +221,15 @@ usbd_devinfo_vp(usbd_device_handle dev, char *v, size_t lv, char *p, size_t lp,
 	}
 
 	if (usedev) {
-		vendor = usbd_get_string(dev, udd->iManufacturer, v);
+		if (usbd_get_string(dev, udd->iManufacturer, v))
+			vendor = NULL;
+		else
+			vendor = v;
 		usbd_trim_spaces(vendor);
-		product = usbd_get_string(dev, udd->iProduct, p);
+		if (usbd_get_string(dev, udd->iProduct, p))
+			product = NULL;
+		else
+			product = p;
 		usbd_trim_spaces(product);
 		if (vendor && !*vendor)
 			vendor = NULL;
