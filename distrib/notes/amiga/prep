@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.18.2.1 1999/07/02 17:56:46 perry Exp $	
+.\"	$NetBSD: prep,v 1.18.2.2 2000/01/18 20:13:33 he Exp $	
 .Pp
 You will need an AmigaDOS hard drive prep tool to prepare your hard
 drives for use with NetBSD/Amiga.  HDToolBox is provided with the
@@ -104,7 +104,7 @@ Turn custom boot code on
 .It
 Set Reserved Blocks start and end to 0.
 .It
-Set Number of Custom Boot Blocks to 16
+Set Number of Custom Boot Blocks to 16.
 .It
 Set Automount This Partition on
 .It
