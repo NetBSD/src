@@ -1,4 +1,4 @@
-/*	$NetBSD: siop2.c,v 1.18 2002/01/28 09:57:03 aymeric Exp $ */
+/*	$NetBSD: siop2.c,v 1.19 2002/02/24 15:20:06 is Exp $ */
 
 /*
  * Copyright (c) 1994,1998 Michael L. Hitch
@@ -46,7 +46,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop2.c,v 1.18 2002/01/28 09:57:03 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop2.c,v 1.19 2002/02/24 15:20:06 is Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: siop2.c,v 1.18 2002/01/28 09:57:03 aymeric Exp $");
 void siopng_select(struct siop_softc *);
 void siopngabort(struct siop_softc *, siop_regmap_p, char *);
 void siopngerror(struct siop_softc *, siop_regmap_p, u_char);
-void siopngstart(struct siop_softc *);
 int  siopng_checkintr(struct siop_softc *, u_char, u_char, u_short, int *);
 void siopngreset(struct siop_softc *);
 void siopngsetdelay(int);
