@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.41 1999/05/17 04:26:45 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.42 1999/06/02 02:03:58 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.41 1999/05/17 04:26:45 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.42 1999/06/02 02:03:58 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -164,7 +164,7 @@ main(argc, argv)
 	if (gatemode) {
 		if (*gateserver == '\0') {
 			warnx(
-"Neither $FTPSERVER nor $GATE_SERVER is defined; disabling gate-ftp");
+"Neither $FTPSERVER nor GATE_SERVER is defined; disabling gate-ftp");
 			gatemode = 0;
 		}
 	}
