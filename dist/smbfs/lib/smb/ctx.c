@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ctx.c,v 1.8 2004/03/21 07:16:39 jdolecek Exp $");
+__RCSID("$NetBSD: ctx.c,v 1.9 2004/03/21 12:30:51 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -668,14 +668,26 @@ smb_ctx_lookup(struct smb_ctx *ctx, int level, int flags)
 	if (ioctl(ctx->ct_fd, SMBIOC_LOOKUP, &rq) == -1) {
 		error = errno;
 
+		close(ctx->ct_fd);
+		ctx->ct_fd = -1;
+
 		/*
-		 * If we don't use real NetBIOS name, WinXP ('Home' at least)
-		 * seems to require to use name *SMBSERVER instead
-		 * of the NetBIOS name. If the original request fails,
-		 * try this now.
+		 * Fallback to *SMBSERVER as NetBIOS name. At least
+		 * Windows NT and Windows XP require this (or valid
+		 * NetBIOS server name), otherwise they refuse connection.
 		 */
 		if (smb_ctx_setserver(ctx, "*SMBSERVER") != 0)
 			goto fail;
+
+		error = smb_ctx_resolve(ctx);
+		if (error)
+			goto fail;
+
+		error = smb_ctx_gethandle(ctx);
+		if (error)
+			goto fail;
+
+		bcopy(&ctx->ct_ssn, &rq.ioc_ssn, sizeof(struct smbioc_ossn));
 
 		if (ioctl(ctx->ct_fd, SMBIOC_LOOKUP, &rq) != -1)
 			goto success;
