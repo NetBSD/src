@@ -369,6 +369,7 @@
 ./usr/share/man/cat4/tb.0
 ./usr/share/man/cat4/tcp.0
 ./usr/share/man/cat4/termios.0
+./usr/share/man/cat4/tl.0
 ./usr/share/man/cat4/tp.0
 ./usr/share/man/cat4/tty.0
 ./usr/share/man/cat4/tun.0
@@ -1273,6 +1274,7 @@
 ./usr/share/man/man4/tb.4
 ./usr/share/man/man4/tcp.4
 ./usr/share/man/man4/termios.4
+./usr/share/man/man4/tl.4
 ./usr/share/man/man4/tp.4
 ./usr/share/man/man4/tty.4
 ./usr/share/man/man4/tun.4
