@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxlreg.h,v 1.2.12.2 2001/03/20 17:24:31 he Exp $	*/
+/*	$NetBSD: elinkxlreg.h,v 1.2.12.3 2001/05/03 21:23:10 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -212,8 +212,8 @@ struct ex_fraghdr {
 #define EX_FR_LENMASK	0x00001fff	/* mask for length in fr_len field */
 #define EX_FR_LAST	0x80000000	/* indicates last fragment */
 
-#define EX_NDPD		128
-#define EX_NUPD		64
+#define EX_NDPD		256
+#define EX_NUPD		128
 
 /*
  * Note: the number of receive fragments in an UPD is 1, since we're
