@@ -1,4 +1,4 @@
-#	$NetBSD: std.macppc,v 1.4 1998/09/03 15:11:52 tsubai Exp $
+#	$NetBSD: std.macppc,v 1.5 1999/03/15 02:26:10 tsubai Exp $
 #
 # Standard/required options for NetBSD/macppc.
 
@@ -18,6 +18,5 @@ options 	VNODEPAGER	# mmap() of files; REQUIRED
 options 	DEVPAGER	# mmap() of devices; REQUIRED
 
 # UVM is the standard VM system on NetBSD/powerpc.
-# XXX not yet, apparently.
 options 	UVM		# New UVM VM system
 #options 	PMAP_NEW	# UVM's new pmap interface
