@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.15 2001/11/10 07:37:00 lukem Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.16 2003/03/04 06:18:54 thorpej Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.15 2001/11/10 07:37:00 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.16 2003/03/04 06:18:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,6 +141,12 @@ uvm_init()
 
 	amap_init();		/* init amap module */
 	uvm_anon_init();	/* allocate initial anons */
+
+	/*
+	 * step 9: init the uvm_loan() facility.
+	 */
+
+	uvm_loan_init();
 
 	/*
 	 * the VM system is now up!  now that malloc is up we can resize the
