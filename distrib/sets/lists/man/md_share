@@ -237,6 +237,7 @@
 ./usr/share/man/cat8/alpha/setnetbootinfo.0
 ./usr/share/man/cat8/amiga/MAKEDEV.0
 ./usr/share/man/cat8/amiga/binpatch.0
+./usr/share/man/cat8/amiga/boot.0
 ./usr/share/man/cat8/amiga/installboot.0
 ./usr/share/man/cat8/amiga/makedev.0
 ./usr/share/man/cat8/arm32/MAKEDEV.0
@@ -546,6 +547,7 @@
 ./usr/share/man/man8/alpha/setnetbootinfo.8
 ./usr/share/man/man8/amiga/MAKEDEV.8
 ./usr/share/man/man8/amiga/binpatch.8
+./usr/share/man/man8/amiga/boot.8
 ./usr/share/man/man8/amiga/installboot.8
 ./usr/share/man/man8/amiga/makedev.8
 ./usr/share/man/man8/arm32/MAKEDEV.8
