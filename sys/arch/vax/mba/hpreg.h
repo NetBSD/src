@@ -1,4 +1,4 @@
-/*	$NetBSD: hpreg.h,v 1.1 1995/02/13 00:44:01 ragge Exp $ */
+/*	$NetBSD: hpreg.h,v 1.2 1995/06/16 15:20:11 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,7 +33,7 @@
 		
 
 
-struct hp_drv {
+struct hp_regs {
         int     hp_cs1;
         int     hp_ds;
         int     hp_er1;
@@ -53,9 +53,24 @@ struct hp_drv {
         int     utrymme[16];
 };
 
+#define	hp_drv	hp_regs
+
 #define	HPCS_PA		0x13	/* Pack acknowledge */
 #define	HPCS_SEEK	0x5
 #define	HPCS_READ	0x39
+#define HPCS_DVA       0x800   /* Drive avail, in dual-port config */
+
+#define HPDS_VV         0x40    /* Volume valid, not changed */
+#define HPDS_DRY        0x80    /* Drive ready to accept commands */
+#define HPDS_DPR        0x100   /* Drive present */
+#define HPDS_PGM        0x200   /* Programmable in dual-port config */
+#define HPDS_WRL        0x800   /* Write locked media */
+#define HPDS_MOL        0x1000  /* Medium on-line */
+
+#define HPDT_DRQ        0x800   /* Dual-port disk */
+
+#define	HPOF_FMT	0x1000	/* 16/18 bit data */
+
 #if 0
 #define	HPCS_
 #define	HPCS_
@@ -67,6 +82,5 @@ struct hp_drv {
 #define	HPCS_
 #endif
 
-#define	HPOF_FMT	0x1000	/* 16/18 bit data */
 
 
