@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_null.c,v 1.3 1996/04/13 01:31:49 jtc Exp $	*/
+/*	$NetBSD: mount_null.c,v 1.4 1997/09/15 05:35:38 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -36,17 +36,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1992, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)mount_null.c	8.5 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$NetBSD: mount_null.c,v 1.3 1996/04/13 01:31:49 jtc Exp $";
+__RCSID("$NetBSD: mount_null.c,v 1.4 1997/09/15 05:35:38 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,6 +67,7 @@ const struct mntopt mopts[] = {
 	{ NULL }
 };
 
+int	main __P((int, char *[]));
 int	subdir __P((const char *, const char *));
 void	usage __P((void));
 
@@ -80,7 +81,7 @@ main(argc, argv)
 	char target[MAXPATHLEN];
 
 	mntflags = 0;
-	while ((ch = getopt(argc, argv, "o:")) != EOF)
+	while ((ch = getopt(argc, argv, "o:")) != -1)
 		switch(ch) {
 		case 'o':
 			getmntopts(optarg, mopts, &mntflags);
@@ -105,7 +106,7 @@ main(argc, argv)
 	args.target = target;
 
 	if (mount(MOUNT_NULL, argv[1], mntflags, &args))
-		err(1, NULL);
+		err(1, "%s", "");
 	exit(0);
 }
 
