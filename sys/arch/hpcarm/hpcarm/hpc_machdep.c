@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.11 2001/04/17 16:10:47 toshii Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.12 2001/06/01 14:04:29 toshii Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -320,12 +320,6 @@ initarm(argc, argv, bi)
 	 * Heads up ... Setup the CPU / MMU / TLB functions
 	 */
 	set_cpufuncs();
-
-	/* Put the processer in SVC mode */
-	__asm("mov r0, sp; mov r1, lr; mrs r2, cpsr_all;");
-	/* PSR_MODE, PSR_SVC32_MODE" */
-	__asm("bic r2, r2, #31; orr r2, r2, #19;");
-	__asm("msr cpsr_all, r2; mov sp, r0; mov lr, r1;");
 
 #ifdef DEBUG_BEFOREMMU
 	/*
@@ -682,8 +676,6 @@ initarm(argc, argv, bi)
 	/* Set the page table address. */
 	setttb(kernel_l1pt.pv_pa);
 
-	/* Disable PID virtual address mapping */ 
-	asm("mcr 15, 0, %0, c13, c0, 0" : : "r" (0));
 #ifdef BOOT_DUMP
 	dumppages((char *)0xc0000000, 16 * NBPG);
 	dumppages((char *)0xb0100000, 64); /* XXX */
