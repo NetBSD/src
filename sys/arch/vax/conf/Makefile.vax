@@ -1,5 +1,5 @@
-#	@(#)Makefile.vax	7.18 (Berkeley) 12/16/90
-#	$Id: Makefile.vax,v 1.1 1994/08/02 20:19:22 ragge Exp $
+#	from: @(#)Makefile.vax	7.18 (Berkeley) 12/16/90
+#	$Id: Makefile.vax,v 1.2 1994/08/16 23:41:11 ragge Exp $
 #
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -154,10 +154,10 @@ param.o: param.c Makefile
 	${CC} -c ${CFLAGS} ${PARAM} param.c
 
 glue.o: ${VAX}/vax/glue.c
-	${CC} -c ${CFLAGS} ${PARAM} glue.c
+	${CC} -c ${CFLAGS} ${PARAM} ${VAX}/vax/glue.c
 
 conf.o: ${VAX}/vax/conf.c
-	${CC} -c -traditional ${CFLAGS} ${PARAM} conf.c
+	${CC} -c -traditional ${CFLAGS} ${PARAM} ${VAX}/vax/conf.c
 
 newvers:
 	sh $S/conf/newvers.sh
