@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.32 2002/11/17 19:29:31 itojun Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.33 2003/05/01 07:52:59 itojun Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $	*/
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.32 2002/11/17 19:29:31 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.33 2003/05/01 07:52:59 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -407,6 +407,7 @@ stf_output(ifp, m, dst, rt)
 		struct mbuf m0;
 		u_int32_t af = AF_INET6;
 		
+		m0.m_flags = 0;
 		m0.m_next = m;
 		m0.m_len = 4;
 		m0.m_data = (char *)&af;
@@ -686,6 +687,7 @@ in_stf_input(m, va_alist)
 		struct mbuf m0;
 		u_int32_t af = AF_INET6;
 		
+		m0.m_flags = 0;
 		m0.m_next = m;
 		m0.m_len = 4;
 		m0.m_data = (char *)&af;

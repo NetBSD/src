@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.47 2003/02/26 06:31:13 matt Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.48 2003/05/01 07:52:59 itojun Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.47 2003/02/26 06:31:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.48 2003/05/01 07:52:59 itojun Exp $");
 
 #include "strip.h"
 
@@ -1171,6 +1171,7 @@ stripintr(void *arg)
 			struct mbuf n;
 			u_char *hp;
 
+			n.m_flags = 0;
 			n.m_next = bpf_m;
 			n.m_data = n.m_dat;
 			n.m_len = SLIP_HDRLEN;
