@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: failover.c,v 1.1.1.4 2000/07/08 20:41:09 mellon Exp $ Copyright (c) 1999-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: failover.c,v 1.1.1.5 2000/09/04 23:10:50 mellon Exp $ Copyright (c) 1999-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -55,40 +55,42 @@ static struct hash_table *failover_hash;
 static dhcp_failover_state_t *failover_states;
 static isc_result_t do_a_failover_option (omapi_object_t *,
 					  dhcp_failover_link_t *);
+dhcp_failover_listener_t *failover_listeners;
 
 void dhcp_failover_startup ()
 {
 	dhcp_failover_state_t *state;
 	isc_result_t status;
+	dhcp_failover_listener_t *l;
 
 	for (state = failover_states; state; state = state -> next) {
 		dhcp_failover_state_transition (state, "startup");
-		if (state -> i_am == secondary) {
-			status = (dhcp_failover_listen
-				  ((omapi_object_t *)state));
-			if (status != ISC_R_SUCCESS) {
-				add_timeout (cur_time + 90,
-					     dhcp_failover_listener_restart,
-					     state,
-					     (tvref_t)omapi_object_reference,
-					     (tvunref_t)
-					     omapi_object_dereference);
-			}
-		} else {
-			status = (dhcp_failover_link_initiate
-				  ((omapi_object_t *)state));
-			if (status != ISC_R_SUCCESS) {
-				add_timeout (cur_time + 90,
-					     dhcp_failover_reconnect, state,
-					     (tvref_t)
-					     dhcp_failover_state_reference,
-					     (tvunref_t)
-					     dhcp_failover_state_dereference);
-			}
+
+		/* In case the peer is already running, immediately try
+		   to establish a connection with it. */
+		status = (dhcp_failover_link_initiate
+			  ((omapi_object_t *)state));
+		if (status != ISC_R_SUCCESS) {
+			add_timeout (cur_time + 90,
+				     dhcp_failover_reconnect, state,
+				     (tvref_t)
+				     dhcp_failover_state_reference,
+				     (tvunref_t)
+				     dhcp_failover_state_dereference);
 		}
 		if (status != ISC_R_SUCCESS) {
 			log_error ("failover peer %s: %s", state -> name,
 				   isc_result_totext (status));
+		}
+
+		status = (dhcp_failover_listen
+			  ((omapi_object_t *)state));
+		if (status != ISC_R_SUCCESS) {
+			add_timeout (cur_time + 90,
+				     dhcp_failover_listener_restart,
+				     state,
+				     (tvref_t)omapi_object_reference,
+				     (tvunref_t)omapi_object_dereference);
 		}
 	}
 }
@@ -184,8 +186,9 @@ isc_result_t dhcp_failover_link_initiate (omapi_object_t *h)
 	status = dhcp_failover_link_allocate (&obj, MDL);
 	if (status != ISC_R_SUCCESS)
 		return status;
-	option_cache_reference (&obj -> peer_address, state -> address, MDL);
-	obj -> peer_port = state -> port;
+	option_cache_reference (&obj -> peer_address,
+				state -> partner.address, MDL);
+	obj -> peer_port = state -> partner.port;
 	dhcp_failover_state_reference (&obj -> state_object, state, MDL);
 
 	memset (&ds, 0, sizeof ds);
@@ -215,10 +218,12 @@ isc_result_t dhcp_failover_link_initiate (omapi_object_t *h)
 	data_string_forget (&ds, MDL);
 
 	/* Now figure out the local address that we're supposed to use. */
-	if (!evaluate_option_cache (&ds, (struct packet *)0, (struct lease *)0,
+	if (!state -> me.address ||
+	    !evaluate_option_cache (&ds, (struct packet *)0,
+				    (struct lease *)0,
 				    (struct option_state *)0,
 				    (struct option_state *)0,
-				    &global_scope, state -> server_addr,
+				    &global_scope, state -> me.address,
 				    MDL)) {
 		memset (&local_addr, 0, sizeof local_addr);
 		local_addr.addrtype = AF_INET;
@@ -269,15 +274,29 @@ isc_result_t dhcp_failover_link_signal (omapi_object_t *h,
 	link = (dhcp_failover_link_t *)h;
 
 	if (!strcmp (name, "connect")) {
-		/* If we're primary, send the connect message. */
+	    if (link -> state_object -> i_am == primary) {
 		status = dhcp_failover_send_connect (h);
-		if (status != ISC_R_SUCCESS)
-			omapi_disconnect (h -> outer, 1);
+		if (status != ISC_R_SUCCESS) {
+		    log_info ("dhcp_failover_send_connect: %s",
+			      isc_result_totext (status));
+		    omapi_disconnect (h -> outer, 1);
+		}
 		return status;
+	    } else {
+		    /* Allow the peer fifteen seconds to send us a
+		       startup message. */
+		add_timeout (cur_time + 15,
+			     dhcp_failover_link_startup_timeout,
+			     link,
+			     (tvref_t)dhcp_failover_link_reference,
+			     (tvunref_t)dhcp_failover_link_dereference);
+	    }
+	    return ISC_R_SUCCESS;
 	}
 
 	if (!strcmp (name, "disconnect")) {
-	    if (link -> state_object) {
+	    if (link -> state_object &&
+		link -> state_object -> link_to_peer == link) {
 		if (link -> state_object -> i_am == primary) {
 		    add_timeout (cur_time + 5, dhcp_failover_reconnect,
 				 link -> state_object,
@@ -322,6 +341,7 @@ isc_result_t dhcp_failover_link_signal (omapi_object_t *h,
 				link -> imsg = (failover_message_t *)0;
 			}
 			link -> state = dhcp_flink_disconnected;
+			log_info ("message length wait: no memory");
 			omapi_disconnect (c, 1);
 			/* XXX just blow away the protocol state now?
 			   XXX or will disconnect blow it away? */
@@ -367,6 +387,13 @@ isc_result_t dhcp_failover_link_signal (omapi_object_t *h,
 		omapi_connection_get_uint32 (c, &link -> imsg -> xid);
 		link -> imsg_count += 4;
 
+#if defined (DEBUG_FAILOVER_MESSAGES)
+		log_info ("link: message %s  payoff %d  time %ld  xid %ld",
+			  dhcp_failover_message_name (link -> imsg -> type),
+			  link -> imsg_payoff,
+			  (unsigned long)link -> imsg -> time,
+			  (unsigned long)link -> imsg -> xid);
+#endif
 		/* Skip over any portions of the message header that we
 		   don't understand. */
 		if (link -> imsg_payoff - link -> imsg_count) {
@@ -420,6 +447,7 @@ isc_result_t dhcp_failover_link_signal (omapi_object_t *h,
 			    dhcp_failover_send_connectack
 				    ((omapi_object_t *)link, state,
 				     reason, errmsg);
+			    log_info ("failover: disconnect: %s", errmsg);
 			    omapi_disconnect (c, 0);
 			    link -> state = dhcp_flink_disconnected;
 			    return ISC_R_SUCCESS;
@@ -444,14 +472,17 @@ isc_result_t dhcp_failover_link_signal (omapi_object_t *h,
 		    if (!link -> state_object)
 			    dhcp_failover_state_reference
 				    (&link -> state_object, state, MDL);
-		    option_cache_reference
-			    (&link -> peer_address, state -> address, MDL);
+		    if (!link -> peer_address)
+			    option_cache_reference
+				    (&link -> peer_address,
+				     state -> partner.address, MDL);
 		}
 
 		/* If we don't have a state object at this point, it's
 		   some kind of bogus situation, so just drop the
 		   connection. */
 		if (!link -> state_object) {
+			log_info ("failover: connect: no matching state.");
 			omapi_disconnect (c, 1);
 			link -> state = dhcp_flink_disconnected;
 			return ISC_R_INVALIDARG;
@@ -517,9 +548,11 @@ static isc_result_t do_a_failover_option (c, link)
 
 	/* If it's an unknown code, skip over it. */
 	if (option_code > FTO_MAX) {
-#if defined (FAILOVER_PROTOCOL_DEBUG) && defined (FAILOVER_DEBUG_VERBOSE)
-		log_debug ("  option code %d len %d (not recognized)",
-			   option_code, option_len);
+#if defined (DEBUG_FAILOVER_MESSAGES)
+		log_debug ("  option code %d (%s) len %d (not recognized)",
+			   option_code,
+			   dhcp_failover_option_name (option_code),
+			   option_len);
 #endif
 		omapi_connection_copyout ((unsigned char *)0, c, option_len);
 		link -> imsg_count += option_len;
@@ -533,7 +566,7 @@ static isc_result_t do_a_failover_option (c, link)
 			log_error ("FAILOVER: digest not at end of message");
 			return ISC_R_PROTOCOLERROR;
 		}
-#if defined (FAILOVER_PROTOCOL_DEBUG) && defined (FAILOVER_DEBUG_VERBOSE)
+#if defined (DEBUG_FAILOVER_MESSAGES)
 		log_debug ("  option %s len %d",
 			   ft_options [option_code].name, option_len);
 #endif
@@ -806,7 +839,7 @@ isc_result_t dhcp_failover_link_stuff_values (omapi_object_t *c,
 isc_result_t dhcp_failover_listen (omapi_object_t *h)
 {
 	isc_result_t status;
-	dhcp_failover_listener_t *obj;
+	dhcp_failover_listener_t *obj, *l;
 	omapi_value_t *value = (omapi_value_t *)0;
 	omapi_addr_t local_addr;
 	unsigned long port;
@@ -847,13 +880,26 @@ isc_result_t dhcp_failover_listen (omapi_object_t *h)
 
 	omapi_value_dereference (&value, MDL);
 
+	/* Are we already listening on this port and address? */
+	for (l = failover_listeners; l; l = l -> next) {
+		if (l -> address.port == local_addr.port &&
+		    l -> address.addrtype == local_addr.addrtype &&
+		    l -> address.addrlen == local_addr.addrlen &&
+		    !memcmp (l -> address.address, local_addr.address,
+			     local_addr.addrlen))
+			break;
+	}
+	/* Already listening. */
+	if (l)
+		return ISC_R_SUCCESS;
+
 	obj = (dhcp_failover_listener_t *)0;
 	status = dhcp_failover_listener_allocate (&obj, MDL);
 	if (status != ISC_R_SUCCESS)
 		return status;
-	obj -> local_port = local_addr.port;
+	obj -> address = local_addr;
 	
-	status = omapi_listen_addr ((omapi_object_t *)obj, &local_addr, 1);
+	status = omapi_listen_addr ((omapi_object_t *)obj, &obj -> address, 1);
 	if (status != ISC_R_SUCCESS)
 		return status;
 
@@ -868,6 +914,12 @@ isc_result_t dhcp_failover_listen (omapi_object_t *h)
 		dhcp_failover_listener_dereference (&obj, MDL);
 		return status;
 	}
+
+	/* Put this listener on the list. */
+	dhcp_failover_listener_reference (&obj -> next,
+					  failover_listeners, MDL);
+	dhcp_failover_listener_dereference (&failover_listeners, MDL);
+	dhcp_failover_listener_reference (&failover_listeners, obj, MDL);
 
 	return dhcp_failover_listener_dereference (&obj, MDL);
 }
@@ -900,6 +952,19 @@ isc_result_t dhcp_failover_listener_signal (omapi_object_t *o,
 	if (!c || c -> type != omapi_type_connection)
 		return ISC_R_INVALIDARG;
 
+	/* See if we can find a failover_state object that
+	   matches this connection. */
+	for (s = failover_states; s; s = s -> next) {
+		if (dhcp_failover_state_match
+		    (s, (u_int8_t *)&c -> remote_addr.sin_addr,
+		     sizeof c -> remote_addr.sin_addr))
+			state = s;
+	}		
+	if (!state) {
+		log_info ("failover: listener: no matching state");
+		return omapi_disconnect ((omapi_object_t *)c, 1);
+	}
+
 	obj = (dhcp_failover_link_t *)0;
 	status = dhcp_failover_link_allocate (&obj, MDL);
 	if (status != ISC_R_SUCCESS)
@@ -911,6 +976,7 @@ isc_result_t dhcp_failover_listener_signal (omapi_object_t *o,
 	if (status != ISC_R_SUCCESS) {
 	      lose:
 		dhcp_failover_link_dereference (&obj, MDL);
+		log_info ("failover: listener: picayune failure.");
 		omapi_disconnect ((omapi_object_t *)c, 1);
 		return status;
 	}
@@ -919,6 +985,13 @@ isc_result_t dhcp_failover_listener_signal (omapi_object_t *o,
 					 (omapi_object_t *)obj, MDL);
 	if (status != ISC_R_SUCCESS)
 		goto lose;
+
+	status = dhcp_failover_state_reference (&obj -> state_object,
+						state, MDL);
+	if (status != ISC_R_SUCCESS)
+		goto lose;
+
+	omapi_signal_in ((omapi_object_t *)obj, "connect");
 
 	return dhcp_failover_link_dereference (&obj, MDL);
 }
@@ -1002,7 +1075,7 @@ isc_result_t dhcp_failover_register (omapi_object_t *h)
 
 	obj = (dhcp_failover_state_t *)0;
 	dhcp_failover_state_allocate (&obj, MDL);
-	obj -> listen_port = port;
+	obj -> me.port = port;
 	
 	status = omapi_listen ((omapi_object_t *)obj, port, 1);
 	if (status != ISC_R_SUCCESS) {
@@ -1065,15 +1138,26 @@ isc_result_t dhcp_failover_state_signal (omapi_object_t *o,
 		if (link -> imsg -> type == FTM_CONNECT) {
 			/* If we already have a link to the peer, it must be
 			   dead, so drop it.
-			   XXX Is this the right thing to do? */
+			   XXX Is this the right thing to do?
+			   XXX Probably not - what if both peers start at
+			   XXX the same time? */
 			if (state -> link_to_peer) {
-				omapi_disconnect ((omapi_object_t *)
-						  state -> link_to_peer, 1);
-				dhcp_failover_link_dereference
-					(&state -> link_to_peer, MDL);
-				dhcp_failover_state_transition (state,
-								"disconnect");
+				dhcp_failover_send_connectack
+					((omapi_object_t *)link, state,
+					 FTR_DUP_CONNECTION,
+					 "already connected");
+				omapi_disconnect (link -> outer, 1);
+				return ISC_R_SUCCESS;
 			}
+			if (!(link -> imsg -> options_present & FTB_MCLT)) {
+				dhcp_failover_send_connectack
+					((omapi_object_t *)link, state,
+					 FTR_INVALID_MCLT,
+					 "no MCLT provided");
+				omapi_disconnect (link -> outer, 1);
+				return ISC_R_SUCCESS;
+			}				
+
 			dhcp_failover_link_reference (&state -> link_to_peer,
 						      link, MDL);
 			status = (dhcp_failover_send_connectack
@@ -1081,10 +1165,22 @@ isc_result_t dhcp_failover_state_signal (omapi_object_t *o,
 			if (status != ISC_R_SUCCESS) {
 				dhcp_failover_link_dereference
 					(&state -> link_to_peer, MDL);
+				log_info ("dhcp_failover_send_connectack: %s",
+					  isc_result_totext (status));
 				omapi_disconnect (link -> outer, 1);
 				return ISC_R_SUCCESS;
 			}
-			dhcp_failover_state_transition (state, "connect");
+			if (link -> imsg -> options_present & FTB_MAX_UNACKED)
+				state -> partner.max_flying_updates =
+					link -> imsg -> max_unacked;
+			if (link -> imsg -> options_present &
+			    FTB_RECEIVE_TIMER)
+				state -> partner.max_response_delay =
+					link -> imsg -> receive_timer;
+			state -> mclt = link -> imsg -> mclt;
+			dhcp_failover_send_state (state);
+			cancel_timeout (dhcp_failover_link_startup_timeout,
+					link);
 		} else if (link -> imsg -> type == FTM_CONNECTACK) {
 		    const char *errmsg;
 		    int reason;
@@ -1137,14 +1233,23 @@ isc_result_t dhcp_failover_state_signal (omapi_object_t *o,
 
 		    dhcp_failover_link_reference (&state -> link_to_peer,
 						  link, MDL);
+		    dhcp_failover_send_state (state);
+#if 0
 		    dhcp_failover_state_transition (state, "connect");
+#endif
+		    if (link -> imsg -> options_present & FTB_MAX_UNACKED)
+			    state -> partner.max_flying_updates =
+				    link -> imsg -> max_unacked;
+		    if (link -> imsg -> options_present & FTB_RECEIVE_TIMER)
+			    state -> partner.max_response_delay =
+				    link -> imsg -> receive_timer;
 		    add_timeout (cur_time +
-				 (int)state -> max_transmit_idle,
+				 (int)state -> partner.max_response_delay / 3,
 				 dhcp_failover_send_contact, state,
 				 (tvref_t)dhcp_failover_state_reference,
 				 (tvunref_t)dhcp_failover_state_dereference);
 		    add_timeout (cur_time +
-				 (int)state -> max_response_delay,
+				 (int)state -> me.max_response_delay,
 				 dhcp_failover_timeout, state,
 				 (tvref_t)dhcp_failover_state_reference,
 				 (tvunref_t)dhcp_failover_state_dereference);
@@ -1169,21 +1274,33 @@ isc_result_t dhcp_failover_state_signal (omapi_object_t *o,
 							   link -> imsg);
 		} else if (link -> imsg -> type == FTM_BNDACK) {
 			dhcp_failover_process_bind_ack (state, link -> imsg);
+		} else if (link -> imsg -> type == FTM_UPDREQ) {
+			dhcp_failover_process_update_request (state,
+							      link -> imsg);
+		} else if (link -> imsg -> type == FTM_UPDREQALL) {
+			dhcp_failover_process_update_request_all
+				(state, link -> imsg);
+		} else if (link -> imsg -> type == FTM_UPDDONE) {
+			dhcp_failover_process_update_done (state,
+							   link -> imsg);
 		} else if (link -> imsg -> type == FTM_POOLREQ) {
 			dhcp_failover_pool_rebalance (state);
 		} else if (link -> imsg -> type == FTM_POOLRESP) {
 			log_info ("pool response: %ld leases",
 				  (unsigned long)
 				  link -> imsg -> addresses_transferred);
+		} else if (link -> imsg -> type == FTM_STATE) {
+			dhcp_failover_peer_state_changed (state,
+							  link -> imsg);
 		}
 	}
 
 	/* Add a timeout so that if the partner doesn't send another message
 	   for the maximum transmit idle time plus a grace of one second,
 	   we close the connection. */
-	if (state -> my_state == normal)
+	if (state -> me.state == normal)
 		add_timeout (cur_time +
-			     (int)state -> max_response_delay,
+			     (int)state -> me.max_response_delay,
 			     dhcp_failover_timeout, state,
 			     (tvref_t)dhcp_failover_state_reference,
 			     (tvunref_t)dhcp_failover_state_dereference);
@@ -1198,6 +1315,7 @@ isc_result_t dhcp_failover_state_transition (dhcp_failover_state_t *state,
 	/* XXX Check these state transitions against the spec! */
 	if (!strcmp (name, "disconnect")) {
 		if (state -> link_to_peer) {
+		    log_info ("peer %s: disconnected", state -> name);
 		    if (state -> link_to_peer -> state_object)
 			dhcp_failover_state_dereference
 				(&state -> link_to_peer -> state_object, MDL);
@@ -1206,17 +1324,22 @@ isc_result_t dhcp_failover_state_transition (dhcp_failover_state_t *state,
 		}
 		cancel_timeout (dhcp_failover_send_contact, state);
 		cancel_timeout (dhcp_failover_timeout, state);
+		cancel_timeout (dhcp_failover_startup_timeout, state);
 
-		switch (state -> my_state) {
-		      case potential_conflict_nic:
+		switch (state -> me.state == startup ?
+			state -> saved_state : state -> me.state) {
+		      case resolution_interrupted:
 		      case partner_down:
 		      case communications_interrupted:
 			/* Already in the right state? */
+			if (state -> me.state == startup)
+				return (dhcp_failover_set_state
+					(state, state -> saved_state));
 			return ISC_R_SUCCESS;
 		
 		      case potential_conflict:
 			return dhcp_failover_set_state
-				(state, potential_conflict_nic);
+				(state, resolution_interrupted);
 				
 		      case recover:
 			/* XXX I don't think it makes sense to make a
@@ -1228,44 +1351,40 @@ isc_result_t dhcp_failover_state_transition (dhcp_failover_state_t *state,
 			return dhcp_failover_set_state
 				(state, communications_interrupted);
 
-			/* XXX ??? */
 		      case unknown_state:
-		      default:
 			return dhcp_failover_set_state
-				(state, potential_conflict_nic);
-
+				(state, resolution_interrupted);
+		      case startup:
+			break;	/* can't happen. */
 		}
 	} else if (!strcmp (name, "connect")) {
-		switch (state -> my_state) {
+		switch (state -> me.state) {
 		      case communications_interrupted:
 			return dhcp_failover_set_state (state, normal);
 
-		      case partner_down:
-			return dhcp_failover_set_state (state, recover);
-		
-		      case potential_conflict_nic:
+		      case resolution_interrupted:
 			return dhcp_failover_set_state (state,
 							potential_conflict);
 
-			/* We should never be in these states when we make
-			   a "connect" transition. */
-		      case recover:
+		      case partner_down:
 		      case potential_conflict:
 		      case normal:
-			return ISC_R_INVALIDARG;
-
-			/* We should never be in the unknown_state or an
-			   unknown state either. */
+		      case recover:
+		      case shut_down:
+		      case paused:
 		      case unknown_state:
-		      default:
-			return dhcp_failover_set_state (state,
-							potential_conflict);
+		      case recover_done:
+		      case startup:
+			return dhcp_failover_send_state (state);
 		}
 	} else if (!strcmp (name, "startup")) {
-		switch (state -> my_state) {
+		dhcp_failover_set_state (state, startup);
+		return ISC_R_SUCCESS;
+	} else if (!strcmp (name, "connect-timeout")) {
+		switch (state -> me.state) {
 		      case communications_interrupted:
 		      case partner_down:
-		      case potential_conflict_nic:
+		      case resolution_interrupted:
 			return ISC_R_SUCCESS;
 
 		      case normal:
@@ -1275,7 +1394,7 @@ isc_result_t dhcp_failover_state_transition (dhcp_failover_state_t *state,
 
 		      case potential_conflict:
 			return dhcp_failover_set_state
-				(state, potential_conflict_nic);
+				(state, resolution_interrupted);
 
 		      case unknown_state:
 			return dhcp_failover_set_state
@@ -1283,10 +1402,90 @@ isc_result_t dhcp_failover_state_transition (dhcp_failover_state_t *state,
 
 		      default:
 			return dhcp_failover_set_state
-				(state, potential_conflict_nic);
+				(state, resolution_interrupted);
 		}
 	}
 	return ISC_R_INVALIDARG;
+}
+
+isc_result_t dhcp_failover_set_service_state (dhcp_failover_state_t *state)
+{
+	switch (state -> me.state) {
+	      case unknown_state:
+		state -> service_state = not_responding;
+		state -> nrr = " (my state unknown)";
+		break;
+
+	      case partner_down:
+		state -> service_state = service_partner_down;
+		state -> nrr = "";
+		break;
+
+	      case normal:
+		state -> service_state = cooperating;
+		state -> nrr = "";
+		break;
+
+	      case communications_interrupted:
+		state -> service_state = not_cooperating;
+		state -> nrr = "";
+		break;
+
+	      case resolution_interrupted:
+	      case potential_conflict:
+		state -> service_state = not_responding;
+		state -> nrr = " (resolving conflicts)";
+		break;
+
+	      case recover:
+		state -> service_state = not_responding;
+		state -> nrr = " (recovering)";
+		break;
+
+	      case shut_down:
+		state -> service_state = not_responding;
+		state -> nrr = " (shut down)";
+		break;
+
+	      case paused:
+		state -> service_state = not_responding;
+		state -> nrr = " (paused)";
+		break;
+
+	      case recover_done:
+		state -> service_state = not_responding;
+		state -> nrr = " (recover done)";
+		break;
+
+	      case startup:
+		state -> service_state = service_startup;
+		state -> nrr = " (startup)";
+		break;
+	}
+
+	/* Some peer states can require us not to respond, even if our
+	   state doesn't. */
+	/* XXX hm.   I suspect this isn't true anymore. */
+	if (state -> service_state != not_responding) {
+		switch (state -> partner.state) {
+		      case partner_down:
+		      case recover:
+			state -> service_state = not_responding;
+			state -> nrr = " (recovering)";
+			break;
+
+		      case potential_conflict:
+			state -> service_state = not_responding;
+			state -> nrr = " (resolving conflicts)";
+			break;
+
+			/* Other peer states don't affect our behaviour. */
+		      default:
+			break;
+		}
+	}
+
+	return ISC_R_SUCCESS;
 }
 
 isc_result_t dhcp_failover_set_state (dhcp_failover_state_t *state,
@@ -1296,10 +1495,8 @@ isc_result_t dhcp_failover_set_state (dhcp_failover_state_t *state,
     TIME saved_stos;
 
     /* First make the transition out of the current state. */
-    switch (state -> my_state) {
+    switch (state -> me.state) {
       case normal:
-      case recover:
-      case potential_conflict:
 	/* Any updates that haven't been acked yet, we have to
 	   resend, just in case. */
 	if (state -> ack_queue_tail) {
@@ -1329,18 +1526,21 @@ isc_result_t dhcp_failover_set_state (dhcp_failover_state_t *state,
 	cancel_timeout (dhcp_failover_keepalive, state);
 	break;
 
+      case recover:
+      case potential_conflict:
       case partner_down:
       case communications_interrupted:
-      case potential_conflict_nic:
+      case resolution_interrupted:
+      case startup:
       default:
 	break;
     }
 
     /* Tentatively make the transition. */
-    saved_state = state -> my_state;
-    saved_stos = state -> my_stos;
-    state -> my_stos = cur_time;
-    state -> my_state = new_state;
+    saved_state = state -> me.state;
+    saved_stos = state -> me.stos;
+    state -> me.stos = cur_time;
+    state -> me.state = new_state;
 
     if (!write_failover_state (state) || !commit_leases ()) {
 	    /* XXX What to do?   What to do? */
@@ -1348,35 +1548,340 @@ isc_result_t dhcp_failover_set_state (dhcp_failover_state_t *state,
 		       state -> name);
 	    /* XXX for now, we don't make the state transition, but this is
 	       XXX kind of a scary choice. */
-	    state -> my_state = saved_state;
-	    state -> my_stos = saved_stos;
+	    state -> me.state = saved_state;
+	    state -> me.stos = saved_stos;
 	    return ISC_R_IOERROR;
     }
 
-    log_info ("failover peer %s moves from %s to %s",
+    log_info ("failover peer %s: I move from %s to %s",
 	      state -> name, dhcp_failover_state_name_print (saved_state),
-	      dhcp_failover_state_name_print (state -> my_state));
+	      dhcp_failover_state_name_print (state -> me.state));
     
     switch (new_state)
     {
       case normal:
-      case recover:
-      case potential_conflict:
 	/* If we go into communications-interrupted and then back into
 	   potential-conflict, do we need to start over, or just continue
 	   with the reconciliation process?    This came up at one of the
 	   teleconferences, so it's probably answered in the draft. */
-	if (state -> max_flying_updates > state -> cur_unacked_updates &&
-	    state -> update_queue_head) {
+	if ((state -> partner.max_flying_updates >
+	     state -> cur_unacked_updates) && state -> update_queue_head) {
 		dhcp_failover_send_updates (state);
 	}
 	dhcp_failover_state_pool_check (state);
 	break;
+
+      case potential_conflict:
+	if (state -> i_am == primary)
+		dhcp_failover_send_update_request (state);
+	break;
+
+      case startup:
+	if (saved_state != startup)
+		state -> saved_state = saved_state;
+	add_timeout (cur_time + 15,
+		     dhcp_failover_startup_timeout,
+		     state,
+		     (tvref_t)omapi_object_reference,
+		     (tvunref_t)
+		     omapi_object_dereference);
+	break;
+
       default:
 	break;
     }
 
+    if (new_state != startup && saved_state == startup)
+	cancel_timeout (dhcp_failover_startup_timeout, state);
+
+    dhcp_failover_set_service_state (state);
+    if (state -> link_to_peer)
+	    dhcp_failover_send_state (state);
+
     return ISC_R_SUCCESS;
+}
+
+isc_result_t dhcp_failover_peer_state_changed (dhcp_failover_state_t *state,
+					       failover_message_t *msg)
+{
+	enum failover_state previous_state = state -> partner.state;
+	enum failover_state new_state;
+	int startupp;
+
+	new_state = msg -> server_state;
+	startupp = (msg -> server_flags & FTF_STARTUP) ? 1 : 0;
+
+	state -> partner.state = new_state;
+
+	log_info ("failover peer %s: peer moves from %s to %s",
+		  state -> name,
+		  dhcp_failover_state_name_print (previous_state),
+		  dhcp_failover_state_name_print (state -> partner.state));
+    
+	if (!write_failover_state (state) || !commit_leases ()) {
+		/* This is bad, but it's not fatal.  Of course, if we
+		   can't write to the lease database, we're not going to
+		   get much done anyway. */
+		log_error ("Unable to record current failover state for %s",
+			   state -> name);
+	}
+
+	/* Do any state transitions that are required as a result of the
+	   peer's state transition. */
+
+	switch (state -> me.state == startup ?
+		state -> saved_state : state -> me.state) {
+	      case startup: /* can't happen. */
+		break;
+
+	      case normal:
+		switch (new_state) {
+		      case normal:
+		      case communications_interrupted:
+			break;
+
+		      case recover:
+		      case potential_conflict:
+		      case partner_down:
+		      case resolution_interrupted:
+			/* XXX this isn't really going to work, is it? */
+			/* XXX probably should just goto the switch
+			   XXX statement below for
+			   XXX communications_interrupted. */
+			dhcp_failover_set_state (state,
+						 communications_interrupted);
+			break;
+			   
+		      case shut_down:
+			/* XXX This one is specified, but it's specified in
+			   XXX the documentation for the shut_down state,
+			   XXX not the normal state. */
+			dhcp_failover_set_state (state, partner_down);
+
+		      case paused:
+			dhcp_failover_set_state (state,
+						 communications_interrupted);
+			break;
+
+		      case recover_done:
+			/* XXX what to do here? */
+			break;
+
+		      case unknown_state:
+		      case startup:
+			break;
+		}
+		break;
+
+	      case recover:
+		switch (new_state) {
+		      case recover:
+		      case recover_done:
+			log_error ("Failover partner %s in recover state",
+				   state -> name);
+			log_error ("while this server is also in recover");
+			log_error ("state - this is an invalid state");
+			log_error ("transition, so all processing for this");
+			log_error ("failover peer is being terminated.");
+			log_error ("You must intervene manually to resolve");
+			log_error ("this problem.");
+			dhcp_failover_set_state (state, shut_down);
+			break;
+				   
+		      case potential_conflict:
+		      case resolution_interrupted:
+		      case normal:
+			dhcp_failover_set_state (state, potential_conflict);
+			break;
+
+		      case partner_down:
+		      case communications_interrupted:
+			/* We're supposed to send an update request at this
+			   point. */
+			/* XXX we don't currently have code here to do any
+			   XXX clever detection of when we should send an
+			   XXX UPDREQALL message rather than an UPDREQ
+			   XXX message.   What to do, what to do? */
+			dhcp_failover_send_update_request (state);
+			break;
+
+		      case shut_down:
+			/* XXX We're not explicitly told what to do in this
+			   XXX case, but this transition is consistent with
+			   XXX what is elsewhere in the draft. */
+			dhcp_failover_set_state (state, partner_down);
+			break;
+
+			/* We can't really do anything in this case. */
+		      case paused:
+			break;
+
+		      case unknown_state:
+		      case startup:
+			break;
+		}
+		break;
+
+	      case potential_conflict:
+		switch (new_state) {
+		      case normal:
+			if (previous_state == potential_conflict &&
+			    state -> i_am == secondary)
+				dhcp_failover_send_update_request (state);
+			break;
+
+		      case recover:
+		      case recover_done:
+		      case potential_conflict:
+		      case partner_down:
+		      case communications_interrupted:
+		      case resolution_interrupted:
+		      case paused:
+			break;
+
+		      case shut_down:
+			dhcp_failover_set_state (state, partner_down);
+			break;
+
+		      case unknown_state:
+		      case startup:
+			break;
+		}
+		break;
+
+	      case partner_down:
+		/* Take no action if other server is starting up. */
+		if (startupp)
+			break;
+
+		switch (new_state) {
+			/* This is where we should be. */
+		      case recover:
+		      case recover_done:
+			break;
+
+		      case normal:
+		      case potential_conflict:
+		      case partner_down:
+		      case communications_interrupted:
+		      case resolution_interrupted:
+			dhcp_failover_set_state (state, potential_conflict);
+			break;
+
+			/* These don't change anything. */
+		      case shut_down:
+		      case paused:
+			break;
+
+		      case unknown_state:
+		      case startup:
+			break;
+		}
+		break;
+
+	      case communications_interrupted:
+		switch (new_state) {
+		      case recover:
+		      case paused:
+			/* Stick with the status quo. */
+			break;
+
+		      case normal:
+		      case communications_interrupted:
+		      case recover_done:
+			/* XXX so we don't need to do this specially in
+			   XXX the CONNECT and CONNECTACK handlers. */
+			dhcp_failover_set_state (state, normal);
+			break;
+
+		      case potential_conflict:
+		      case partner_down:
+		      case resolution_interrupted:
+			dhcp_failover_set_state (state, potential_conflict);
+			break;
+
+		      case shut_down:
+			dhcp_failover_set_state (state, partner_down);
+			break;
+
+		      case unknown_state:
+		      case startup:
+			break;
+		}
+		break;
+
+	      case resolution_interrupted:
+		switch (new_state) {
+		      case normal:
+		      case recover:
+		      case potential_conflict:
+		      case partner_down:
+		      case communications_interrupted:
+		      case resolution_interrupted:
+		      case recover_done:
+			dhcp_failover_set_state (state, potential_conflict);
+			break;
+
+		      case shut_down:
+			dhcp_failover_set_state (state, partner_down);
+			break;
+
+		      case paused:
+			break;
+
+		      case unknown_state:
+		      case startup:
+			break;
+		}
+		break;
+
+	      case recover_done:
+		switch (new_state) {
+		      case normal:
+			dhcp_failover_set_state (state, normal);
+			break;
+
+		      case recover:
+		      case potential_conflict:
+		      case partner_down:
+		      case communications_interrupted:
+		      case resolution_interrupted:
+		      case paused:
+		      case recover_done:
+			break;
+
+		      case shut_down:
+			dhcp_failover_set_state (state, partner_down);
+			break;
+
+		      case unknown_state:
+		      case startup:
+			break;
+		}
+		break;
+
+		/* We are essentially dead in the water when we're in
+		   either shut_down or paused states, and do not do any
+		   automatic state transitions. */
+	      case shut_down:
+	      case paused:
+		break;
+
+	      case unknown_state:
+		break;	
+	}
+
+	/* If we didn't make a transition out of startup as a result of
+	   the peer's state change, do it now as a result of the fact that
+	   we got a state change from the peer. */
+	if (state -> me.state == startup && state -> saved_state != startup)
+		dhcp_failover_set_state (state, state -> saved_state);
+	
+	/* For now, just set the service state based on the peer's state
+	   if necessary. */
+	dhcp_failover_set_service_state (state);
+
+	return ISC_R_SUCCESS;
 }
 
 int dhcp_failover_pool_rebalance (dhcp_failover_state_t *state)
@@ -1392,7 +1897,7 @@ int dhcp_failover_pool_rebalance (dhcp_failover_state_t *state)
 	binding_state_t my_lease_state;
 	struct lease **lq;
 
-	if (state -> my_state != normal || state -> i_am == secondary)
+	if (state -> me.state != normal || state -> i_am == secondary)
 		return 0;
 
 	for (s = shared_networks; s; s = s -> next) {
@@ -1470,7 +1975,7 @@ int dhcp_failover_pool_check (struct pool *pool)
 
 	if (!pool -> failover_peer ||
 	    pool -> failover_peer -> i_am == primary ||
-	    pool -> failover_peer -> my_state != normal)
+	    pool -> failover_peer -> me.state != normal)
 		return 0;
 
 	if (pool -> failover_peer -> i_am == primary)
@@ -1514,13 +2019,13 @@ isc_result_t dhcp_failover_send_updates (dhcp_failover_state_t *state)
 	isc_result_t status;
 
 	/* Can't update peer if we're not talking to it! */
-	if (state -> my_state != normal &&
-	    state -> my_state != recover &&
-	    state -> my_state != potential_conflict)
+	if (state -> me.state != normal &&
+	    state -> me.state != recover &&
+	    state -> me.state != potential_conflict)
 		return ISC_R_SUCCESS;
 
-	while (state -> max_flying_updates > state -> cur_unacked_updates &&
-	       state -> update_queue_head) {
+	while ((state -> partner.max_flying_updates >
+		state -> cur_unacked_updates) && state -> update_queue_head) {
 		/* Grab the head of the update queue. */
 		lease_reference (&lp, state -> update_queue_head, MDL);
 
@@ -1672,6 +2177,31 @@ void dhcp_failover_reconnect (void *vs)
 	}
 }
 
+void dhcp_failover_startup_timeout (void *vs)
+{
+	dhcp_failover_state_t *state = vs;
+	isc_result_t status;
+
+	dhcp_failover_state_transition (state, "disconnect");
+}
+
+void dhcp_failover_link_startup_timeout (void *vl)
+{
+	dhcp_failover_link_t *link = vl;
+	isc_result_t status;
+	omapi_object_t *p;
+
+	for (p = (omapi_object_t *)link; p -> inner; p = p -> inner)
+		;
+	for (; p; p = p -> outer)
+		if (p -> type == omapi_type_connection)
+			break;
+	if (p) {
+		log_info ("failover: startup timeout");
+		omapi_disconnect (p, 1);
+	}
+}
+
 void dhcp_failover_listener_restart (void *vs)
 {
 	dhcp_failover_state_t *state = vs;
@@ -1708,7 +2238,7 @@ isc_result_t dhcp_failover_state_get_value (omapi_object_t *h,
 							name, s -> name, MDL);
 		return ISC_R_NOTFOUND;
 	} else if (!omapi_ds_strcmp (name, "partner-address")) {
-		oc = s -> address;
+		oc = s -> partner.address;
 	      getaddr:
 		memset (&ds, 0, sizeof ds);
 		if (!evaluate_option_cache (&ds, (struct packet *)0,
@@ -1721,21 +2251,23 @@ isc_result_t dhcp_failover_state_get_value (omapi_object_t *h,
 		status = omapi_make_const_value (value,
 						 name, ds.data, ds.len, MDL);
 		/* Disgusting kludge: */
-		if (oc == s -> server_addr && !s -> server_identifier.len)
+		if (oc == s -> me.address && !s -> server_identifier.len)
 			data_string_copy (&s -> server_identifier, &ds, MDL);
 		data_string_forget (&ds, MDL);
 		return status;
 	} else if (!omapi_ds_strcmp (name, "local-address")) {
-		oc = s -> server_addr;
+		oc = s -> me.address;
 		goto getaddr;
 	} else if (!omapi_ds_strcmp (name, "partner-port")) {
-		return omapi_make_int_value (value, name, s -> port, MDL);
+		return omapi_make_int_value (value, name,
+					     s -> partner.port, MDL);
 	} else if (!omapi_ds_strcmp (name, "local-port")) {
 		return omapi_make_int_value (value,
-					     name, s -> listen_port, MDL);
+					     name, s -> me.port, MDL);
 	} else if (!omapi_ds_strcmp (name, "max-outstanding-updates")) {
 		return omapi_make_uint_value (value, name,
-					      s -> max_flying_updates, MDL);
+					      s -> me.max_flying_updates,
+					      MDL);
 	} else if (!omapi_ds_strcmp (name, "mclt")) {
 		return omapi_make_uint_value (value, name, s -> mclt, MDL);
 	} else if (!omapi_ds_strcmp (name, "load-balance-max-secs")) {
@@ -1748,16 +2280,16 @@ isc_result_t dhcp_failover_state_get_value (omapi_object_t *h,
 		return ISC_R_NOTFOUND;
 	} else if (!omapi_ds_strcmp (name, "partner-state")) {
 		return omapi_make_uint_value (value, name,
-					     s -> partner_state, MDL);
+					     s -> partner.state, MDL);
 	} else if (!omapi_ds_strcmp (name, "local-state")) {
 		return omapi_make_uint_value (value, name,
-					      s -> my_state, MDL);
+					      s -> me.state, MDL);
 	} else if (!omapi_ds_strcmp (name, "partner-stos")) {
 		return omapi_make_int_value (value, name,
-					     s -> partner_stos, MDL);
+					     s -> partner.stos, MDL);
 	} else if (!omapi_ds_strcmp (name, "local-stos")) {
 		return omapi_make_int_value (value, name,
-					     s -> my_stos, MDL);
+					     s -> me.stos, MDL);
 	} else if (!omapi_ds_strcmp (name, "hierarchy")) {
 		return omapi_make_uint_value (value, name, s -> i_am, MDL);
 	} else if (!omapi_ds_strcmp (name, "last-packet-sent")) {
@@ -1769,12 +2301,10 @@ isc_result_t dhcp_failover_state_get_value (omapi_object_t *h,
 					     MDL);
 	} else if (!omapi_ds_strcmp (name, "skew")) {
 		return omapi_make_int_value (value, name, s -> skew, MDL);
-	} else if (!omapi_ds_strcmp (name, "max-transmit-idle")) {
-		return omapi_make_uint_value (value, name,
-					     s -> max_transmit_idle, MDL);
 	} else if (!omapi_ds_strcmp (name, "max-response-delay")) {
 		return omapi_make_uint_value (value, name,
-					     s -> max_response_delay, MDL);
+					     s -> me.max_response_delay,
+					      MDL);
 	} else if (!omapi_ds_strcmp (name, "cur-unacked-updates")) {
 		return omapi_make_int_value (value, name,
 					     s -> cur_unacked_updates, MDL);
@@ -1798,10 +2328,10 @@ isc_result_t dhcp_failover_state_destroy (omapi_object_t *h,
 		dhcp_failover_link_dereference (&s -> link_to_peer, MDL);
 	if (s -> name)
 		dfree (s -> name, MDL);
-	if (s -> address)
-		option_cache_dereference (&s -> address, MDL);
-	if (s -> server_addr)
-		option_cache_dereference (&s -> server_addr, MDL);
+	if (s -> partner.address)
+		option_cache_dereference (&s -> partner.address, MDL);
+	if (s -> me.address)
+		option_cache_dereference (&s -> me.address, MDL);
 	
 	return ISC_R_SUCCESS;
 }
@@ -1835,11 +2365,11 @@ isc_result_t dhcp_failover_state_stuff (omapi_object_t *c,
 	status = omapi_connection_put_name (c, "partner-address");
 	if (status != ISC_R_SUCCESS)
 		return status;
-	status = omapi_connection_put_uint32 (c, sizeof s -> address);
+	status = omapi_connection_put_uint32 (c, sizeof s -> partner.address);
 	if (status != ISC_R_SUCCESS)
 		return status;
-	status = omapi_connection_copyin (c, (u_int8_t *)&s -> address,
-					  sizeof s -> address);
+	status = omapi_connection_copyin (c, (u_int8_t *)&s -> partner.address,
+					  sizeof s -> partner.address);
 	if (status != ISC_R_SUCCESS)
 		return status;
 	
@@ -1849,18 +2379,18 @@ isc_result_t dhcp_failover_state_stuff (omapi_object_t *c,
 	status = omapi_connection_put_uint32 (c, sizeof (u_int32_t));
 	if (status != ISC_R_SUCCESS)
 		return status;
-	status = omapi_connection_put_uint32 (c, (u_int32_t)s -> port);
+	status = omapi_connection_put_uint32 (c, (u_int32_t)s -> partner.port);
 	if (status != ISC_R_SUCCESS)
 		return status;
 	
 	status = omapi_connection_put_name (c, "local-address");
 	if (status != ISC_R_SUCCESS)
 		return status;
-	status = omapi_connection_put_uint32 (c, sizeof s -> server_addr);
+	status = omapi_connection_put_uint32 (c, sizeof s -> me.address);
 	if (status != ISC_R_SUCCESS)
 		return status;
-	status = omapi_connection_copyin (c, (u_int8_t *)&s -> server_addr,
-					  sizeof s -> server_addr);
+	status = omapi_connection_copyin (c, (u_int8_t *)&s -> me.address,
+					  sizeof s -> me.address);
 	if (status != ISC_R_SUCCESS)
 		return status;
 	
@@ -1870,7 +2400,7 @@ isc_result_t dhcp_failover_state_stuff (omapi_object_t *c,
 	status = omapi_connection_put_uint32 (c, sizeof (u_int32_t));
 	if (status != ISC_R_SUCCESS)
 		return status;
-	status = omapi_connection_put_uint32 (c, (u_int32_t)s -> listen_port);
+	status = omapi_connection_put_uint32 (c, (u_int32_t)s -> me.port);
 	if (status != ISC_R_SUCCESS)
 		return status;
 	
@@ -1880,7 +2410,8 @@ isc_result_t dhcp_failover_state_stuff (omapi_object_t *c,
 	status = omapi_connection_put_uint32 (c, sizeof (u_int32_t));
 	if (status != ISC_R_SUCCESS)
 		return status;
-	status = omapi_connection_put_uint32 (c, s -> max_flying_updates);
+	status = omapi_connection_put_uint32 (c,
+					      s -> me.max_flying_updates);
 	if (status != ISC_R_SUCCESS)
 		return status;
 
@@ -1924,7 +2455,7 @@ isc_result_t dhcp_failover_state_stuff (omapi_object_t *c,
 	status = omapi_connection_put_uint32 (c, sizeof (u_int32_t));
 	if (status != ISC_R_SUCCESS)
 		return status;
-	status = omapi_connection_put_uint32 (c, s -> partner_state);
+	status = omapi_connection_put_uint32 (c, s -> partner.state);
 	if (status != ISC_R_SUCCESS)
 		return status;
 	
@@ -1934,7 +2465,7 @@ isc_result_t dhcp_failover_state_stuff (omapi_object_t *c,
 	status = omapi_connection_put_uint32 (c, sizeof (u_int32_t));
 	if (status != ISC_R_SUCCESS)
 		return status;
-	status = omapi_connection_put_uint32 (c, s -> my_state);
+	status = omapi_connection_put_uint32 (c, s -> me.state);
 	if (status != ISC_R_SUCCESS)
 		return status;
 	
@@ -1944,7 +2475,8 @@ isc_result_t dhcp_failover_state_stuff (omapi_object_t *c,
 	status = omapi_connection_put_uint32 (c, sizeof (u_int32_t));
 	if (status != ISC_R_SUCCESS)
 		return status;
-	status = omapi_connection_put_uint32 (c, (u_int32_t)s -> partner_stos);
+	status = omapi_connection_put_uint32 (c,
+					      (u_int32_t)s -> partner.stos);
 	if (status != ISC_R_SUCCESS)
 		return status;
 
@@ -1954,7 +2486,7 @@ isc_result_t dhcp_failover_state_stuff (omapi_object_t *c,
 	status = omapi_connection_put_uint32 (c, sizeof (u_int32_t));
 	if (status != ISC_R_SUCCESS)
 		return status;
-	status = omapi_connection_put_uint32 (c, (u_int32_t)s -> my_stos);
+	status = omapi_connection_put_uint32 (c, (u_int32_t)s -> me.stos);
 	if (status != ISC_R_SUCCESS)
 		return status;
 
@@ -2000,17 +2532,6 @@ isc_result_t dhcp_failover_state_stuff (omapi_object_t *c,
 	if (status != ISC_R_SUCCESS)
 		return status;
 
-	status = omapi_connection_put_name (c, "max-transmit-idle");
-	if (status != ISC_R_SUCCESS)
-		return status;
-	status = omapi_connection_put_uint32 (c, sizeof (u_int32_t));
-	if (status != ISC_R_SUCCESS)
-		return status;
-	status = (omapi_connection_put_uint32
-		  (c, (u_int32_t)s -> max_transmit_idle));
-	if (status != ISC_R_SUCCESS)
-		return status;
-
 	status = omapi_connection_put_name (c, "max-response-delay");
 	if (status != ISC_R_SUCCESS)
 		return status;
@@ -2018,7 +2539,7 @@ isc_result_t dhcp_failover_state_stuff (omapi_object_t *c,
 	if (status != ISC_R_SUCCESS)
 		return status;
 	status = (omapi_connection_put_uint32
-		  (c, (u_int32_t)s -> max_response_delay));
+		  (c, (u_int32_t)s -> me.max_response_delay));
 	if (status != ISC_R_SUCCESS)
 		return status;
 	
@@ -2122,7 +2643,7 @@ int dhcp_failover_state_match (dhcp_failover_state_t *state,
 				   (struct option_state *)0,
 				   (struct option_state *)0,
 				   &global_scope,
-				   state -> address, MDL)) {
+				   state -> partner.address, MDL)) {
 		for (i = 0; i + addrlen - 1 < ds.len; i += addrlen) {
 			if (!memcmp (&ds.data [i],
 				     addr, addrlen)) {
@@ -2217,14 +2738,161 @@ const char *dhcp_failover_state_name_print (enum failover_state state)
 	      case communications_interrupted:
 		return "communications-interrupted";
 
-	      case potential_conflict_nic:
-		return "potential-conflict-nic";
+	      case resolution_interrupted:
+		return "resolution-interrupted";
 
 	      case potential_conflict:
 		return "potential-conflict";
 
 	      case recover:
 		return "recover";
+
+	      case recover_done:
+		return "recover-done";
+
+	      case shut_down:
+		return "shutdown";
+
+	      case paused:
+		return "paused";
+
+	      case startup:
+		return "startup";
+	}
+}
+
+const char *dhcp_failover_message_name (unsigned type)
+{
+	switch (type) {
+	      case FTM_POOLREQ:
+		return "pool-request";
+		
+	      case FTM_POOLRESP:
+		return "pool-response";
+
+	      case FTM_BNDUPD:
+		return "bind-update";
+
+	      case FTM_BNDACK:
+		return "bind-ack";
+
+	      case FTM_CONNECT:
+		return "connect";
+
+	      case FTM_CONNECTACK:
+		return "connect-ack";
+
+	      case FTM_UPDREQ:
+		return "update-request";
+
+	      case FTM_UPDDONE:
+		return "update-done";
+
+	      case FTM_UPDREQALL:
+		return "update-request-all";
+
+	      case FTM_STATE:
+		return "state";
+
+	      case FTM_CONTACT:
+		return "contact";
+
+	      case FTM_DISCONNECT:
+		return "disconnect";
+
+	      default:
+		return "<unknown message type>";
+	}
+}
+
+const char *dhcp_failover_option_name (unsigned type) {
+	switch (type) {
+	      case FTO_BINDING_STATUS:
+		return "binding-status";
+
+	      case FTO_ASSIGNED_IP_ADDRESS:
+		return "assigned-ip-address";
+
+	      case FTO_SERVER_ADDR:
+		return "server-addr";
+
+	      case FTO_ADDRESSES_TRANSFERRED:
+		return "addresses-transferred";
+
+	      case FTO_CLIENT_IDENTIFIER:
+		return "client-identifier";
+
+	      case FTO_CHADDR:
+		return "chaddr";
+
+	      case FTO_DDNS:
+		return "ddns";
+
+	      case FTO_REJECT_REASON:
+		return "reject-reason";
+
+	      case FTO_MESSAGE:
+		return "message";
+
+	      case FTO_MCLT:
+		return "mclt";
+
+	      case FTO_VENDOR_CLASS:
+		return "vendor-class";
+
+	      case FTO_LEASE_EXPIRY:
+		return "lease-expiry";
+
+	      case FTO_POTENTIAL_EXPIRY:
+		return "potential-expiry";
+
+	      case FTO_GRACE_EXPIRY:
+		return "grace-expiry";
+
+	      case FTO_CLTT:
+		return "cltt";
+
+	      case FTO_STOS:
+		return "stos";
+
+	      case FTO_SERVER_STATE:
+		return "server-state";
+
+	      case FTO_SERVER_FLAGS:
+		return "server-flags";
+
+	      case FTO_VENDOR_OPTIONS:
+		return "vendor-options";
+
+	      case FTO_MAX_UNACKED:
+		return "max-unacked";
+
+	      case FTO_RECEIVE_TIMER:
+		return "receive-timer";
+
+	      case FTO_HBA:
+		return "hba";
+
+	      case FTO_MESSAGE_DIGEST:
+		return "message-digest";
+
+	      case FTO_PROTOCOL_VERSION:
+		return "protocol-version";
+
+	      case FTO_TLS_REQUEST:
+		return "tls-request";
+
+	      case FTO_TLS_REPLY:
+		return "tls-reply";
+
+	      case FTO_REQUEST_OPTIONS:
+		return "request-options";
+
+	      case FTO_REPLY_OPTIONS:
+		return "reply-options";
+
+	      default:
+		return "<unknown option>";
 	}
 }
 
@@ -2555,7 +3223,8 @@ isc_result_t dhcp_failover_put_message (dhcp_failover_link_t *link,
 	if (link -> state_object &&
 	    link -> state_object -> link_to_peer == link)
 		add_timeout (cur_time +
-			     (int)link -> state_object -> max_transmit_idle,
+			     (int)(link -> state_object ->
+				   partner.max_response_delay) / 3,
 			     dhcp_failover_send_contact, link -> state_object,
 			     (tvref_t)dhcp_failover_state_reference,
 			     (tvunref_t)dhcp_failover_state_dereference);
@@ -2563,6 +3232,7 @@ isc_result_t dhcp_failover_put_message (dhcp_failover_link_t *link,
 
       err:
 	dfree (opbuf, MDL);
+	log_info ("dhcp_failover_put_message: something went wrong.");
 	omapi_disconnect (connection, 1);
 	return status;
 }
@@ -2575,7 +3245,7 @@ void dhcp_failover_timeout (void *vstate)
 
 	if (!state || state -> type != dhcp_type_failover_state)
 		return;
-	if (state -> my_state != normal)
+	if (state -> me.state != normal)
 		return;
 	link = state -> link_to_peer;
 	if (!link ||
@@ -2630,6 +3300,54 @@ void dhcp_failover_send_contact (void *vstate)
 	return;
 }
 
+isc_result_t dhcp_failover_send_state (dhcp_failover_state_t *state)
+{
+	dhcp_failover_link_t *link;
+	isc_result_t status;
+
+#if defined (DEBUG_FAILOVER_MESSAGES)	
+	char obuf [64];
+	unsigned obufix = 0;
+	
+# define FMA obuf, &obufix, sizeof obuf
+	failover_print (FMA, "(state");
+#else
+# define FMA (char *)0, (unsigned *)0, 0
+#endif
+
+	if (!state || state -> type != dhcp_type_failover_state)
+		return ISC_R_INVALIDARG;
+	link = state -> link_to_peer;
+	if (!link ||
+	    !link -> outer ||
+	    link -> outer -> type != omapi_type_connection)
+		return ISC_R_INVALIDARG;
+
+	status = (dhcp_failover_put_message
+		  (link, link -> outer,
+		   FTM_STATE,
+		   dhcp_failover_make_option (FTO_SERVER_STATE, FMA,
+					      (state -> me.state == startup
+					       ? state -> saved_state
+					       : state -> me.state)),
+		   dhcp_failover_make_option
+		   (FTO_SERVER_FLAGS, FMA,
+		    (state -> service_state == service_startup
+		     ? FTF_STARTUP : 0)),
+		   dhcp_failover_make_option (FTO_STOS, FMA, state -> me.stos),
+		   (failover_option_t *)0));
+
+#if defined (DEBUG_FAILOVER_MESSAGES)
+	if (status != ISC_R_SUCCESS)
+		failover_print (FMA, " (failed)");
+	failover_print (FMA, ")");
+	if (obufix) {
+		log_debug ("%s", obuf);
+	}
+#endif
+	return ISC_R_SUCCESS;
+}
+
 /* Send a connect message. */
 
 isc_result_t dhcp_failover_send_connect (omapi_object_t *l)
@@ -2655,35 +3373,30 @@ isc_result_t dhcp_failover_send_connect (omapi_object_t *l)
 	if (!l -> outer || l -> outer -> type != omapi_type_connection)
 		return ISC_R_INVALIDARG;
 
-	if (state -> hba) {
-		int i;
-		for (i = 0; i < 32; i++)
-			hba [i] = ~state -> hba [i];
-	}
-
-	status = (dhcp_failover_put_message
-		  (link, l -> outer,
-		   FTM_CONNECT,
-		   dhcp_failover_make_option (FTO_SERVER_ADDR, FMA,
-					      state -> server_identifier.len,
-					      state -> server_identifier.data),
-		   dhcp_failover_make_option (FTO_MAX_UNACKED, FMA,
-					      state -> max_flying_updates),
-		   dhcp_failover_make_option (FTO_RECEIVE_TIMER, FMA,
-					      state -> max_response_delay),
-		   dhcp_failover_option_printf (FTO_VENDOR_CLASS, FMA,
-						"isc-%s", DHCP_VERSION),
-		   dhcp_failover_make_option (FTO_PROTOCOL_VERSION, FMA,
-					      DHCP_FAILOVER_VERSION),
-		   dhcp_failover_make_option (FTO_TLS_REQUEST, FMA,
-					      0, 0),
-		   dhcp_failover_make_option (FTO_MCLT, FMA,
-					      state -> mclt),
-		   (state -> hba
-		    ? dhcp_failover_make_option (FTO_HBA, FMA, 32, hba)
-		    : &skip_failover_option),
-		   (failover_option_t *)0));
-
+	status =
+	    (dhcp_failover_put_message
+	     (link, l -> outer,
+	      FTM_CONNECT,
+	      dhcp_failover_make_option (FTO_SERVER_ADDR, FMA,
+					 state -> server_identifier.len,
+					 state -> server_identifier.data),
+	      dhcp_failover_make_option (FTO_MAX_UNACKED, FMA,
+					 state -> me.max_flying_updates),
+	      dhcp_failover_make_option (FTO_RECEIVE_TIMER, FMA,
+					 state -> me.max_response_delay),
+	      dhcp_failover_option_printf (FTO_VENDOR_CLASS, FMA,
+					   "isc-%s", DHCP_VERSION),
+	      dhcp_failover_make_option (FTO_PROTOCOL_VERSION, FMA,
+					 DHCP_FAILOVER_VERSION),
+	      dhcp_failover_make_option (FTO_TLS_REQUEST, FMA,
+					 0, 0),
+	      dhcp_failover_make_option (FTO_MCLT, FMA,
+					 state -> mclt),
+	      (state -> hba
+	       ? dhcp_failover_make_option (FTO_HBA, FMA, 32, state -> hba)
+	       : &skip_failover_option),
+	      (failover_option_t *)0));
+	
 #if defined (DEBUG_FAILOVER_MESSAGES)
 	if (status != ISC_R_SUCCESS)
 		failover_print (FMA, " (failed)");
@@ -2717,38 +3430,39 @@ isc_result_t dhcp_failover_send_connectack (omapi_object_t *l,
 	if (!l -> outer || l -> outer -> type != omapi_type_connection)
 		return ISC_R_INVALIDARG;
 
-	status = (dhcp_failover_put_message
-		  (link, l -> outer,
-		   FTM_CONNECTACK,
-		   (state
-		    ? (dhcp_failover_make_option
-		       (FTO_SERVER_ADDR, FMA,
-			state -> server_identifier.len,
-			state -> server_identifier.data))
-		    : &skip_failover_option),
-		   (state
-		    ? dhcp_failover_make_option (FTO_MAX_UNACKED, FMA,
-						 state -> max_flying_updates)
-		    : &skip_failover_option),
-		   (state
-		    ? dhcp_failover_make_option (FTO_RECEIVE_TIMER, FMA,
-						 state -> max_response_delay)
-		    : &skip_failover_option),
-		   dhcp_failover_option_printf (FTO_VENDOR_CLASS, FMA,
-						"isc-%s", DHCP_VERSION),
-		   dhcp_failover_make_option (FTO_PROTOCOL_VERSION, FMA,
-					      DHCP_FAILOVER_VERSION),
-		   dhcp_failover_make_option (FTO_TLS_REQUEST, FMA,
-					      0, 0),
-		   (reason
-		    ? dhcp_failover_make_option (FTO_REJECT_REASON,
-						 FMA, reason)
-		    : &skip_failover_option),
-		   (errmsg
-		    ? dhcp_failover_make_option (FTO_MESSAGE, FMA,
-						 strlen (errmsg), errmsg)
-		    : &skip_failover_option),
-		   (failover_option_t *)0));
+	status =
+	    (dhcp_failover_put_message
+	     (link, l -> outer,
+	      FTM_CONNECTACK,
+	      (state
+	       ? (dhcp_failover_make_option
+		  (FTO_SERVER_ADDR, FMA,
+		   state -> server_identifier.len,
+		   state -> server_identifier.data))
+	       : &skip_failover_option),
+	      (state
+	       ? dhcp_failover_make_option (FTO_MAX_UNACKED, FMA,
+					    state -> me.max_flying_updates)
+	       : &skip_failover_option),
+	      (state
+	       ? dhcp_failover_make_option (FTO_RECEIVE_TIMER, FMA,
+					    state -> me.max_response_delay)
+	       : &skip_failover_option),
+	      dhcp_failover_option_printf (FTO_VENDOR_CLASS, FMA,
+					   "isc-%s", DHCP_VERSION),
+	      dhcp_failover_make_option (FTO_PROTOCOL_VERSION, FMA,
+					 DHCP_FAILOVER_VERSION),
+	      dhcp_failover_make_option (FTO_TLS_REQUEST, FMA,
+					 0, 0),
+	      (reason
+	       ? dhcp_failover_make_option (FTO_REJECT_REASON,
+					    FMA, reason)
+	       : &skip_failover_option),
+	      (errmsg
+	       ? dhcp_failover_make_option (FTO_MESSAGE, FMA,
+					    strlen (errmsg), errmsg)
+	       : &skip_failover_option),
+	      (failover_option_t *)0));
 
 #if defined (DEBUG_FAILOVER_MESSAGES)
 	if (status != ISC_R_SUCCESS)
@@ -3038,6 +3752,121 @@ isc_result_t dhcp_failover_send_poolresp (dhcp_failover_state_t *state,
 	return status;
 }
 
+isc_result_t dhcp_failover_send_update_request (dhcp_failover_state_t *state)
+{
+	dhcp_failover_link_t *link;
+	isc_result_t status;
+#if defined (DEBUG_FAILOVER_MESSAGES)	
+	char obuf [64];
+	unsigned obufix = 0;
+	
+# define FMA obuf, &obufix, sizeof obuf
+	failover_print (FMA, "(updreq");
+#else
+# define FMA (char *)0, (unsigned *)0, 0
+#endif
+
+	if (!state -> link_to_peer ||
+	    state -> link_to_peer -> type != dhcp_type_failover_link)
+		return ISC_R_INVALIDARG;
+	link = (dhcp_failover_link_t *)state -> link_to_peer;
+
+	if (!link -> outer || link -> outer -> type != omapi_type_connection)
+		return ISC_R_INVALIDARG;
+
+	status = (dhcp_failover_put_message
+		  (link, link -> outer,
+		   FTM_UPDREQ,
+		   (failover_option_t *)0));
+
+#if defined (DEBUG_FAILOVER_MESSAGES)
+	if (status != ISC_R_SUCCESS)
+		failover_print (FMA, " (failed)");
+	failover_print (FMA, ")");
+	if (obufix) {
+		log_debug ("%s", obuf);
+	}
+#endif
+	return status;
+}
+
+isc_result_t dhcp_failover_send_update_request_all (dhcp_failover_state_t
+						    *state)
+{
+	dhcp_failover_link_t *link;
+	isc_result_t status;
+#if defined (DEBUG_FAILOVER_MESSAGES)	
+	char obuf [64];
+	unsigned obufix = 0;
+	
+# define FMA obuf, &obufix, sizeof obuf
+	failover_print (FMA, "(updreqall");
+#else
+# define FMA (char *)0, (unsigned *)0, 0
+#endif
+
+	if (!state -> link_to_peer ||
+	    state -> link_to_peer -> type != dhcp_type_failover_link)
+		return ISC_R_INVALIDARG;
+	link = (dhcp_failover_link_t *)state -> link_to_peer;
+
+	if (!link -> outer || link -> outer -> type != omapi_type_connection)
+		return ISC_R_INVALIDARG;
+
+	status = (dhcp_failover_put_message
+		  (link, link -> outer,
+		   FTM_UPDREQALL,
+		   (failover_option_t *)0));
+
+#if defined (DEBUG_FAILOVER_MESSAGES)
+	if (status != ISC_R_SUCCESS)
+		failover_print (FMA, " (failed)");
+	failover_print (FMA, ")");
+	if (obufix) {
+		log_debug ("%s", obuf);
+	}
+#endif
+	return status;
+}
+
+isc_result_t dhcp_failover_send_update_done (dhcp_failover_state_t *state)
+{
+	dhcp_failover_link_t *link;
+	isc_result_t status;
+#if defined (DEBUG_FAILOVER_MESSAGES)	
+	char obuf [64];
+	unsigned obufix = 0;
+	
+# define FMA obuf, &obufix, sizeof obuf
+	failover_print (FMA, "(upddone");
+#else
+# define FMA (char *)0, (unsigned *)0, 0
+#endif
+
+	if (!state -> link_to_peer ||
+	    state -> link_to_peer -> type != dhcp_type_failover_link)
+		return ISC_R_INVALIDARG;
+	link = (dhcp_failover_link_t *)state -> link_to_peer;
+
+	if (!link -> outer || link -> outer -> type != omapi_type_connection)
+		return ISC_R_INVALIDARG;
+
+	status = (dhcp_failover_put_message
+		  (link, link -> outer,
+		   FTM_UPDDONE,
+		   (failover_option_t *)0));
+
+#if defined (DEBUG_FAILOVER_MESSAGES)
+	if (status != ISC_R_SUCCESS)
+		failover_print (FMA, " (failed)");
+	failover_print (FMA, ")");
+	if (obufix) {
+		log_debug ("%s", obuf);
+	}
+#endif
+	return status;
+}
+
 isc_result_t dhcp_failover_process_bind_update (dhcp_failover_state_t *state,
 					       failover_message_t *msg)
 {
@@ -3108,14 +3937,17 @@ isc_result_t dhcp_failover_process_bind_update (dhcp_failover_state_t *state,
 	}
 
 	if (msg -> options_present & FTB_BINDING_STATUS) {
-		/* Check the requested transition to make sure it's
-		   valid. */
-		new_binding_state = (binding_state_transition_check
-				     (lease, state, msg -> binding_status));
-		if (new_binding_state != msg -> binding_status) {
-			dhcp_failover_send_bind_ack
-				(state, lease, msg, FTR_FATAL_CONFLICT,
-				 "invalid binding state transition");
+		/* If we're in normal state, make sure the state transition
+		   we got is valid. */
+		if (state -> me.state == normal) {
+			new_binding_state = (binding_state_transition_check
+					     (lease, state,
+					      msg -> binding_status));
+			if (new_binding_state != msg -> binding_status) {
+				dhcp_failover_send_bind_ack
+					(state, lease, msg, FTR_FATAL_CONFLICT,
+					 "invalid binding state transition");
+			}
 		}
 		lt -> next_binding_state = new_binding_state;
 	}
@@ -3184,6 +4016,13 @@ isc_result_t dhcp_failover_process_bind_ack (dhcp_failover_state_t *state,
       unqueue:
 	dhcp_failover_ack_queue_remove (state, lease);
 
+	/* If we are supposed to send an update done after we send
+	   this lease, go ahead and send it. */
+	if (state -> send_update_done == lease) {
+		lease_dereference (&state -> send_update_done, MDL);
+		dhcp_failover_send_update_done (state);
+	}
+
 	/* If there are updates pending, we've created space to send at
 	   least one. */
 	dhcp_failover_send_updates (state);
@@ -3199,6 +4038,168 @@ isc_result_t dhcp_failover_process_bind_ack (dhcp_failover_state_t *state,
 	log_info ("bind update on %s from %s: %s.",
 		  piaddr (ia), state -> name, message);
 	goto out;
+}
+
+isc_result_t dhcp_failover_generate_update_queue (dhcp_failover_state_t *state,
+						  int everythingp)
+{
+	struct shared_network *s;
+	struct pool *p;
+	struct lease *l, *n;
+	int i;
+	struct lease **lptr [5];
+#define FREE_LEASES 0
+#define ACTIVE_LEASES 1
+#define EXPIRED_LEASES 2
+#define ABANDONED_LEASES 3
+#define BACKUP_LEASES 4
+
+	/* First remove everything from the update and ack queues. */
+	l = n = (struct lease *)0;
+	if (state -> update_queue_head) {
+		lease_reference (&l, state -> update_queue_head, MDL);
+		lease_dereference (&state -> update_queue_head, MDL);
+		do {
+			l -> flags &= ~ON_UPDATE_QUEUE;
+			if (l -> next_pending)
+				lease_reference (&n,
+						 l -> next_pending, MDL);
+			lease_dereference (&l, MDL);
+			if (n) {
+				lease_reference (&l, n, MDL);
+				lease_dereference (&n, MDL);
+			}
+		} while (l);
+		lease_dereference (&state -> update_queue_tail, MDL);
+	}
+
+	if (state -> ack_queue_head) {
+		lease_reference (&l, state -> ack_queue_head, MDL);
+		lease_dereference (&state -> ack_queue_head, MDL);
+		do {
+			l -> flags &= ~ON_ACK_QUEUE;
+			if (l -> next_pending)
+				lease_reference (&n,
+						 l -> next_pending, MDL);
+			lease_dereference (&l, MDL);
+			if (n) {
+				lease_reference (&l, n, MDL);
+				lease_dereference (&n, MDL);
+			}
+		} while (l);
+		lease_dereference (&state -> ack_queue_tail, MDL);
+	}
+	if (state -> send_update_done)
+		lease_dereference (&state -> send_update_done, MDL);
+			
+	/* Loop through each pool in each shared network and call the
+	   expiry routine on the pool. */
+	for (s = shared_networks; s; s = s -> next) {
+	    for (p = s -> pools; p; p = p -> next) {
+		lptr [FREE_LEASES] = &p -> free;
+		lptr [ACTIVE_LEASES] = &p -> active;
+		lptr [EXPIRED_LEASES] = &p -> expired;
+		lptr [ABANDONED_LEASES] = &p -> abandoned;
+		lptr [BACKUP_LEASES] = &p -> backup;
+
+		for (i = FREE_LEASES; i <= BACKUP_LEASES; i++) {
+		    for (l = *(lptr [i]); l; l = l -> next) {
+			if (p -> failover_peer == state &&
+			    (everythingp ||
+			     l -> tstp > l -> tsfp)) {
+				dhcp_failover_queue_update (l, 0);
+			}
+		    }
+		}
+	    }
+	}
+	return ISC_R_SUCCESS;
+}
+
+isc_result_t
+dhcp_failover_process_update_request (dhcp_failover_state_t *state,
+				      failover_message_t *msg)
+{
+	/* Generate a fresh update queue. */
+	dhcp_failover_generate_update_queue (state, 0);
+
+	/* If there's anything on the update queue (there shouldn't be
+	   anything on the ack queue), trigger an update done message
+	   when we get an ack for that lease. */
+	if (state -> update_queue_tail) {
+		lease_reference (&state -> send_update_done,
+				 state -> update_queue_tail, MDL);
+		dhcp_failover_send_updates (state);
+	} else {
+		/* Otherwise, there are no updates to send, so we can
+		   just send an UPDDONE message immediately. */
+		dhcp_failover_send_update_done (state);
+	}
+
+	return ISC_R_SUCCESS;
+}
+
+isc_result_t
+dhcp_failover_process_update_request_all (dhcp_failover_state_t *state,
+					  failover_message_t *msg)
+{
+	/* Generate a fresh update queue that includes every lease. */
+	dhcp_failover_generate_update_queue (state, 1);
+
+	if (state -> update_queue_tail) {
+		lease_reference (&state -> send_update_done,
+				 state -> update_queue_tail, MDL);
+		dhcp_failover_send_updates (state);
+	} else {
+		/* This should really never happen, but it could happen
+		   on a server that currently has no leases configured. */
+		dhcp_failover_send_update_done (state);
+	}
+
+	return ISC_R_SUCCESS;
+}
+
+isc_result_t
+dhcp_failover_process_update_done (dhcp_failover_state_t *state,
+				      failover_message_t *msg)
+{
+	switch (state -> me.state) {
+	      case unknown_state:
+	      case partner_down:
+	      case normal:
+	      case communications_interrupted:
+	      case resolution_interrupted:
+	      case shut_down:
+	      case paused:
+	      case recover_done:
+	      case startup:
+		break;	/* shouldn't happen. */
+
+		/* We got the UPDDONE, so we can go into normal state! */
+	      case potential_conflict:
+		dhcp_failover_set_state (state, normal);
+		break;
+
+	      case recover:
+		if (state -> me.stos + state -> mclt > cur_time)
+			add_timeout ((int)(state -> me.stos + state -> mclt),
+				     dhcp_failover_recover_done,
+				     state,
+				     (tvref_t)omapi_object_reference,
+				     (tvunref_t)
+				     omapi_object_dereference);
+		else
+			dhcp_failover_recover_done (state);
+	}
+
+	return ISC_R_SUCCESS;
+}
+
+void dhcp_failover_recover_done (void *sp)
+{
+	dhcp_failover_state_t *state = sp;
+
+	dhcp_failover_set_state (state, recover_done);
 }
 
 #if defined (DEBUG_FAILOVER_MESSAGES)
@@ -3459,33 +4460,66 @@ binding_state_t binding_state_transition_check (struct lease *lease,
 	return lease -> binding_state;
 }
 
-int lease_mine_to_extend (struct lease *lease)
+/* We can reallocate a lease under the following circumstances:
+
+   (1) It belongs to us - it's FTS_FREE, and we're primary, or it's
+       FTS_BACKUP, and we're secondary.
+   (2) We're in partner_down, and the lease is not active, and we
+       can be sure that the other server didn't make it active.
+       We can only be sure that the server didn't make it active
+       when we are in the partner_down state and one of the following
+       two conditions holds:
+       (a) in the case that the time sent from the peer is earlier than
+           the time we entered the partner_down state, at least MCLT has
+	   gone by since we entered partner_down, or
+       (b) in the case that the time sent from the peer is later than
+           the time when we entered partner_down, the current time is
+	   later than the time sent from the peer by at least MCLT. */
+
+int lease_mine_to_reallocate (struct lease *lease)
 {
 	dhcp_failover_state_t *peer;
 
 	if (lease && lease -> pool &&
 	    lease -> pool -> failover_peer) {
 		peer = lease -> pool -> failover_peer;
-/* XXX This does't seem right - either peer can extend a lease to MCLT. */
-		if (peer -> my_state == normal) { /* XXX */
-			switch (lease -> binding_state) {
-			      case FTS_ACTIVE:
-			      case FTS_ABANDONED:
-			      case FTS_RESET:
-			      case FTS_RELEASED:
-			      case FTS_EXPIRED:
-			      case FTS_FREE:
-			      case FTS_BOOTP:
-			      case FTS_RESERVED:
-				if (peer -> i_am == secondary)
-					return 0;
-				break;
-			      case FTS_BACKUP:
-				if (peer -> i_am == primary)
-					return 0;
-				break;
-			}
+		switch (lease -> binding_state) {
+		      case FTS_ACTIVE:
+			return 0;
+
+		      case FTS_FREE:
+			if (peer -> i_am == primary)
+				return 1;
+			if (peer -> service_state == service_partner_down &&
+			    (lease -> tsfp < peer -> me.stos
+			     ? peer -> me.stos + peer -> mclt < cur_time
+			     : lease -> tsfp + peer -> mclt < cur_time))
+				return 1;
+			return 0;
+
+		      case FTS_ABANDONED:
+		      case FTS_RESET:
+		      case FTS_RELEASED:
+		      case FTS_EXPIRED:
+		      case FTS_BOOTP:
+		      case FTS_RESERVED:
+			if (peer -> service_state == service_partner_down &&
+			    (lease -> tsfp < peer -> me.stos
+			     ? peer -> me.stos + peer -> mclt < cur_time
+			     : lease -> tsfp + peer -> mclt < cur_time))
+				return 1;
+			return 0;
+		      case FTS_BACKUP:
+			if (peer -> i_am == secondary)
+				return 1;
+			if (peer -> service_state == service_partner_down &&
+			    (lease -> tsfp < peer -> me.stos
+			     ? peer -> me.stos + peer -> mclt < cur_time
+			     : lease -> tsfp + peer -> mclt < cur_time))
+				return 1;
+			return 0;
 		}
+		return 0;
 	}
 	return 1;
 }

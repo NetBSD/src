@@ -120,6 +120,7 @@ struct binding {
 };
 
 struct binding_scope {
+	int refcnt;
 	struct binding_scope *outer;
 	struct binding *bindings;
 };
@@ -178,7 +179,10 @@ enum expr_op {
 	expr_subtract,
 	expr_multiply,
 	expr_divide,
-	expr_remainder
+	expr_remainder,
+	expr_binary_and,
+	expr_binary_or,
+	expr_binary_xor
 };
 
 struct expression {
@@ -288,7 +292,7 @@ struct universe {
 	int (*get_func) PROTO ((struct data_string *, struct universe *,
 				struct packet *, struct lease *,
 				struct option_state *, struct option_state *,
-				struct option_state *, struct binding_scope *,
+				struct option_state *, struct binding_scope **,
 				unsigned));
 	void (*set_func) PROTO ((struct universe *, struct option_state *,
 				 struct option_cache *, enum statement_op));
@@ -301,7 +305,8 @@ struct universe {
 	int (*encapsulate) PROTO ((struct data_string *, struct packet *,
 				   struct lease *, struct option_state *,
 				   struct option_state *,
-				   struct binding_scope *, struct universe *));
+				   struct binding_scope **,
+				   struct universe *));
 	void (*store_tag) PROTO ((unsigned char *, u_int32_t));
 	void (*store_length) PROTO ((unsigned char *, u_int32_t));
 	int tag_size, length_size;

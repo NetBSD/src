@@ -57,6 +57,10 @@ isc_result_t omapi_connect (omapi_object_t *c,
 	struct in_addr foo;
 	isc_result_t status;
 
+#ifdef DEBUG_PROTOCOL
+	log_debug ("omapi_connect(%s, port=%d)", server_name, port);
+#endif
+
 	if (!inet_aton (server_name, &foo)) {
 		/* If we didn't get a numeric address, try for a domain
 		   name.  It's okay for this call to block. */
@@ -209,6 +213,10 @@ isc_result_t omapi_disconnect (omapi_object_t *h,
 {
 	omapi_connection_object_t *c;
 
+#ifdef DEBUG_PROTOCOL
+	log_debug ("omapi_disconnect(%s)", force ? "force" : "");
+#endif
+
 	c = (omapi_connection_object_t *)h;
 	if (c -> type != omapi_type_connection)
 		return ISC_R_INVALIDARG;
@@ -353,7 +361,7 @@ isc_result_t omapi_connection_connect (omapi_object_t *h)
 				return ISC_R_UNEXPECTED;
 			}
 			c -> state = omapi_connection_connecting;
-			return ISC_R_SUCCESS;
+			return ISC_R_INCOMPLETE;
 		}
 		c -> state = omapi_connection_connected;
 	}
@@ -399,10 +407,136 @@ isc_result_t omapi_connection_reaper (omapi_object_t *h)
 
 	c = (omapi_connection_object_t *)h;
 	if (c -> state == omapi_connection_disconnecting &&
-	    c -> out_bytes == 0)
+	    c -> out_bytes == 0) {
+#ifdef DEBUG_PROTOCOL
+		log_debug ("omapi_connection_reaper(): disconnect");
+#endif
 		omapi_disconnect (h, 1);
-	if (c -> state == omapi_connection_closed)
+	}
+	if (c -> state == omapi_connection_closed) {
+#ifdef DEBUG_PROTOCOL
+		log_debug ("omapi_connection_reaper(): closed");
+#endif
 		return ISC_R_NOTCONNECTED;
+	}
+	return ISC_R_SUCCESS;
+}
+
+static isc_result_t make_dst_key (DST_KEY **dst_key, omapi_object_t *a) {
+	omapi_value_t *name      = (omapi_value_t *)0;
+	omapi_value_t *algorithm = (omapi_value_t *)0;
+	omapi_value_t *key       = (omapi_value_t *)0;
+	int algorithm_id;
+	char *name_str;
+	isc_result_t status = ISC_R_SUCCESS;
+
+	if (status == ISC_R_SUCCESS)
+		status = omapi_get_value_str
+			(a, (omapi_object_t *)0, "name", &name);
+
+	if (status == ISC_R_SUCCESS)
+		status = omapi_get_value_str
+			(a, (omapi_object_t *)0, "algorithm", &algorithm);
+
+	if (status == ISC_R_SUCCESS)
+		status = omapi_get_value_str
+			(a, (omapi_object_t *)0, "key", &key);
+
+	if (status == ISC_R_SUCCESS) {
+		if (omapi_td_strcmp (algorithm -> value, "hmac-md5") == 0) {
+			algorithm_id = KEY_HMAC_MD5;
+		} else {
+			status = ISC_R_INVALIDARG;
+		}
+	}
+
+	if (status == ISC_R_SUCCESS) {
+		name_str = dmalloc (name -> value -> u.buffer.len + 1, MDL);
+		if (!name_str)
+			status = ISC_R_NOMEMORY;
+	}
+
+	if (status == ISC_R_SUCCESS) {
+		memcpy (name_str,
+			name -> value -> u.buffer.value,
+			name -> value -> u.buffer.len);
+		name_str [name -> value -> u.buffer.len] = 0;
+
+		*dst_key = dst_buffer_to_key (name_str, algorithm_id, 0, 0,
+					      key -> value -> u.buffer.value,
+					      key -> value -> u.buffer.len);
+		if (!*dst_key)
+			status = ISC_R_NOMEMORY;
+	}
+
+	if (name_str)
+		dfree (name_str, MDL);
+	if (key)
+		omapi_value_dereference (&key, MDL);
+	if (algorithm)
+		omapi_value_dereference (&algorithm, MDL);
+	if (name)
+		omapi_value_dereference (&name, MDL);
+
+	return status;
+}
+
+isc_result_t omapi_connection_sign_data (int mode,
+					 DST_KEY *key,
+					 void **context,
+					 const unsigned char *data,
+					 const unsigned len,
+					 omapi_typed_data_t **result)
+{
+	omapi_typed_data_t *td = (omapi_typed_data_t *)0;
+	isc_result_t status;
+	int r;
+
+	if (mode & SIG_MODE_FINAL) {
+		status = omapi_typed_data_new (MDL, &td,
+					       omapi_datatype_data,
+					       dst_sig_size (key));
+		if (status != ISC_R_SUCCESS)
+			return status;
+	}
+
+	r = dst_sign_data (mode, key, context, data, len,
+			   td ? td -> u.buffer.value : (u_char *)0,
+			   td ? td -> u.buffer.len   : 0);
+
+	/* dst_sign_data() really should do this for us, shouldn't it? */
+	if (mode & SIG_MODE_FINAL)
+		*context = (void *)0;
+
+	if (r < 0) {
+		if (td)
+			omapi_typed_data_dereference (&td, MDL);
+		return ISC_R_INVALIDKEY;
+	}
+
+	if (result && td) {
+		omapi_typed_data_reference (result, td, MDL);
+	}
+
+	if (td)
+		omapi_typed_data_dereference (&td, MDL);
+
+	return ISC_R_SUCCESS;
+}
+
+isc_result_t omapi_connection_output_auth_length (omapi_object_t *h,
+						  unsigned *l)
+{
+	omapi_connection_object_t *c;
+
+	if (h -> type != omapi_type_connection)
+		return ISC_R_INVALIDARG;
+	c = (omapi_connection_object_t *)h;
+
+	if (!c -> out_key)
+		return ISC_R_NOTFOUND;
+
+	*l = dst_sig_size (c -> out_key);
 	return ISC_R_SUCCESS;
 }
 
@@ -411,8 +545,65 @@ isc_result_t omapi_connection_set_value (omapi_object_t *h,
 					 omapi_data_string_t *name,
 					 omapi_typed_data_t *value)
 {
+	omapi_connection_object_t *c;
+	isc_result_t status;
+
 	if (h -> type != omapi_type_connection)
 		return ISC_R_INVALIDARG;
+	c = (omapi_connection_object_t *)h;
+
+	if (omapi_ds_strcmp (name, "input-authenticator") == 0) {
+		if (value && value -> type != omapi_datatype_object)
+			return ISC_R_INVALIDARG;
+
+		if (c -> in_context) {
+			omapi_connection_sign_data (SIG_MODE_FINAL,
+						    c -> in_key,
+						    &c -> in_context,
+						    0, 0,
+						    (omapi_typed_data_t **) 0);
+		}
+
+		if (c -> in_key) {
+			dst_free_key (c -> in_key);
+			c -> in_key = (DST_KEY *)0;
+		}
+
+		if (value) {
+			status = make_dst_key (&c -> in_key,
+					       value -> u.object);
+			if (status != ISC_R_SUCCESS)
+				return status;
+		}
+
+		return ISC_R_SUCCESS;
+	}
+	else if (omapi_ds_strcmp (name, "output-authenticator") == 0) {
+		if (value && value -> type != omapi_datatype_object)
+			return ISC_R_INVALIDARG;
+
+		if (c -> out_context) {
+			omapi_connection_sign_data (SIG_MODE_FINAL,
+						    c -> out_key,
+						    &c -> out_context,
+						    0, 0,
+						    (omapi_typed_data_t **) 0);
+		}
+
+		if (c -> out_key) {
+			dst_free_key (c -> out_key);
+			c -> out_key = (DST_KEY *)0;
+		}
+
+		if (value) {
+			status = make_dst_key (&c -> out_key,
+					       value -> u.object);
+			if (status != ISC_R_SUCCESS)
+				return status;
+		}
+
+		return ISC_R_SUCCESS;
+	}
 	
 	if (h -> inner && h -> inner -> type -> set_value)
 		return (*(h -> inner -> type -> set_value))
@@ -425,8 +616,58 @@ isc_result_t omapi_connection_get_value (omapi_object_t *h,
 					 omapi_data_string_t *name,
 					 omapi_value_t **value)
 {
+	omapi_connection_object_t *c;
+	omapi_typed_data_t *td = (omapi_typed_data_t *)0;
+	isc_result_t status;
+
 	if (h -> type != omapi_type_connection)
 		return ISC_R_INVALIDARG;
+	c = (omapi_connection_object_t *)h;
+
+	if (omapi_ds_strcmp (name, "input-signature") == 0) {
+		if (!c -> in_key || !c -> in_context)
+			return ISC_R_NOTFOUND;
+
+		status = omapi_connection_sign_data (SIG_MODE_FINAL,
+						     c -> in_key,
+						     &c -> in_context,
+						     0, 0, &td);
+		if (status != ISC_R_SUCCESS)
+			return status;
+
+		status = omapi_make_value (value, name, td, MDL);
+		omapi_typed_data_dereference (&td, MDL);
+		return status;
+
+	} else if (omapi_ds_strcmp (name, "input-signature-size") == 0) {
+		if (!c -> in_key)
+			return ISC_R_NOTFOUND;
+
+		return omapi_make_int_value (value, name,
+					     dst_sig_size (c -> in_key), MDL);
+
+	} else if (omapi_ds_strcmp (name, "output-signature") == 0) {
+		if (!c -> out_key || !c -> out_context)
+			return ISC_R_NOTFOUND;
+
+		status = omapi_connection_sign_data (SIG_MODE_FINAL,
+						     c -> out_key,
+						     &c -> out_context,
+						     0, 0, &td);
+		if (status != ISC_R_SUCCESS)
+			return status;
+
+		status = omapi_make_value (value, name, td, MDL);
+		omapi_typed_data_dereference (&td, MDL);
+		return status;
+
+	} else if (omapi_ds_strcmp (name, "output-signature-size") == 0) {
+		if (!c -> out_key)
+			return ISC_R_NOTFOUND;
+
+		return omapi_make_int_value (value, name,
+					     dst_sig_size (c -> out_key), MDL);
+	}
 	
 	if (h -> inner && h -> inner -> type -> get_value)
 		return (*(h -> inner -> type -> get_value))
@@ -438,6 +679,10 @@ isc_result_t omapi_connection_destroy (omapi_object_t *h,
 				       const char *file, int line)
 {
 	omapi_connection_object_t *c;
+
+#ifdef DEBUG_PROTOCOL
+	log_debug ("omapi_connection_destroy()");
+#endif
 
 	if (h -> type != omapi_type_connection)
 		return ISC_R_UNEXPECTED;
@@ -456,6 +701,10 @@ isc_result_t omapi_connection_signal_handler (omapi_object_t *h,
 {
 	if (h -> type != omapi_type_connection)
 		return ISC_R_INVALIDARG;
+
+#ifdef DEBUG_PROTOCOL
+	log_debug ("omapi_connection_signal_handler(%s)", name);
+#endif
 	
 	if (h -> inner && h -> inner -> type -> signal_handler)
 		return (*(h -> inner -> type -> signal_handler)) (h -> inner,

@@ -91,6 +91,7 @@ dhcpctl_status dhcpctl_connect (dhcpctl_handle *connection,
 				dhcpctl_handle authinfo)
 {
 	isc_result_t status;
+	dhcpctl_status waitstatus;
 
 	status = omapi_generic_new (connection, MDL);
 	if (status != ISC_R_SUCCESS) {
@@ -99,7 +100,9 @@ dhcpctl_status dhcpctl_connect (dhcpctl_handle *connection,
 
 	status = omapi_protocol_connect (*connection, server_name,
 					 (unsigned)port, authinfo);
-	if (status != ISC_R_SUCCESS) {
+	if (status == ISC_R_SUCCESS)
+		return status;
+	if (status != ISC_R_INCOMPLETE) {
 		omapi_object_dereference (connection, MDL);
 		return status;
 	}

@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: db.c,v 1.1.1.11 2000/07/08 20:41:05 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: db.c,v 1.1.1.12 2000/09/04 23:10:38 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -196,7 +196,8 @@ int write_lease (lease)
 			putc (';', db_file);
 		}
 	}
-	for (b = lease -> scope.bindings; b; b = b -> next) {
+	if (lease -> scope) {
+	    for (b = lease -> scope -> bindings; b; b = b -> next) {
 		if (!b -> value)
 			continue;
 		if (b -> value -> type == binding_data) {
@@ -257,6 +258,7 @@ int write_lease (lease)
 			log_error ("%s: unknown binding type %d",
 				   b -> name, b -> value -> type);
 		}
+	    }
 	}
 	if (lease -> client_hostname &&
 	    db_printable (lease -> client_hostname)) {
@@ -514,21 +516,24 @@ int write_failover_state (dhcp_failover_state_t *state)
 	if (errno)
 		++errors;
 
-	t = gmtime (&state -> my_stos);
+	t = gmtime (&state -> me.stos);
 	errno = 0;
 	fprintf (db_file, "\n  my state %s at %d %d/%02d/%02d %02d:%02d:%02d;",
-		 dhcp_failover_state_name_print (state -> my_state),
+		 /* Never record our state as "startup"! */
+		 (state -> me.state == startup
+		  ? dhcp_failover_state_name_print (state -> saved_state)
+		  : dhcp_failover_state_name_print (state -> me.state)),
 		 t -> tm_wday, t -> tm_year + 1900,
 		 t -> tm_mon + 1, t -> tm_mday,
 		 t -> tm_hour, t -> tm_min, t -> tm_sec);
 	if (errno)
 		++errors;
 
-	t = gmtime (&state -> partner_stos);
+	t = gmtime (&state -> partner.stos);
 	errno = 0;
 	fprintf (db_file,
 		 "\n  partner state %s at %d %d/%02d/%02d %02d:%02d:%02d;",
-		 dhcp_failover_state_name_print (state -> my_state),
+		 dhcp_failover_state_name_print (state -> partner.state),
 		 t -> tm_wday, t -> tm_year + 1900,
 		 t -> tm_mon + 1, t -> tm_mday,
 		 t -> tm_hour, t -> tm_min, t -> tm_sec);
@@ -620,8 +625,8 @@ int write_billing_class (class)
 			break;
 	if (i == class -> hash_string.len) {
 		errno = 0;
-		fprintf (db_file, " \"%*s\";",
-			 class -> hash_string.len,
+		fprintf (db_file, " \"%.*s\";",
+			 (int)class -> hash_string.len,
 			 class -> hash_string.data);
 		if (errno)
 			++errors;
