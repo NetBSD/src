@@ -1,4 +1,4 @@
-/*	$NetBSD: mkboot.c,v 1.5 2003/08/07 16:27:43 agc Exp $
+/*	$NetBSD: mkboot.c,v 1.6 2003/11/13 14:07:01 tsutsui Exp $
 
 /*
  * Copyright (c) 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT(
 #ifdef notdef
 static char sccsid[] = "@(#)mkboot.c	7.2 (Berkeley) 12/16/90";
 #endif
-__RCSID("$NetBSD: mkboot.c,v 1.5 2003/08/07 16:27:43 agc Exp $");
+__RCSID("$NetBSD: mkboot.c,v 1.6 2003/11/13 14:07:01 tsutsui Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -182,7 +182,7 @@ main(int argc, char **argv)
 		lifd[1].dir_addr = htobe32(lifv.vol_length);
 		lifd[1].dir_length = htobe32(n);
 		bcddate(n2, lifd[1].dir_toc);
-		lifd[1].dir_flag = htobe32(DIR_FLAG);
+		lifd[1].dir_flag = htobe16(DIR_FLAG);
 		lifd[1].dir_exec = htobe32(loadpoint);
 		lifv.vol_length = htobe32(be32toh(lifd[1].dir_addr) +
 					  be32toh(lifd[1].dir_length));
@@ -198,7 +198,7 @@ main(int argc, char **argv)
 		lifd[2].dir_addr = htobe32(lifv.vol_length);
 		lifd[2].dir_length = htobe32(n);
 		bcddate(n3, lifd[2].dir_toc);
-		lifd[2].dir_flag = htobe32(DIR_FLAG);
+		lifd[2].dir_flag = htobe16(DIR_FLAG);
 		lifd[2].dir_exec = htobe32(loadpoint);
 		lifv.vol_length = htobe32(be32toh(lifd[2].dir_addr) +
 					  be32toh(lifd[2].dir_length));
