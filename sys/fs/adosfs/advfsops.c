@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.8.2.6 2004/08/24 17:57:36 skrll Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.8.2.7 2004/08/26 07:46:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.8.2.6 2004/08/24 17:57:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.8.2.7 2004/08/26 07:46:51 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -64,7 +64,7 @@ int adosfs_mount __P((struct mount *, const char *, void *, struct nameidata *,
 		      struct lwp *));
 int adosfs_start __P((struct mount *, int, struct lwp *));
 int adosfs_unmount __P((struct mount *, int, struct lwp *));
-int adosfs_root __P((struct mount *, struct vnode **, struct lwp *));
+int adosfs_root __P((struct mount *, struct vnode **));
 int adosfs_quotactl __P((struct mount *, int, uid_t, void *, struct lwp *));
 int adosfs_statvfs __P((struct mount *, struct statvfs *, struct lwp *));
 int adosfs_sync __P((struct mount *, int, struct ucred *, struct lwp *));
@@ -345,10 +345,9 @@ adosfs_unmount(mp, mntflags, l)
 }
 
 int
-adosfs_root(mp, vpp, l)
+adosfs_root(mp, vpp)
 	struct mount *mp;
 	struct vnode **vpp;
-	struct lwp *l;
 {
 	struct vnode *nvp;
 	int error;
