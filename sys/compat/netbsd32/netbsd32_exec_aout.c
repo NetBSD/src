@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec_aout.c,v 1.18 2004/02/20 16:14:38 drochner Exp $	*/
+/*	$NetBSD: netbsd32_exec_aout.c,v 1.19 2004/02/20 17:04:27 drochner Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_aout.c,v 1.18 2004/02/20 16:14:38 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_aout.c,v 1.19 2004/02/20 17:04:27 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,6 +116,9 @@ exec_netbsd32_makecmds(p, epp)
 
 	midmag = mid << 16 | magic;
 
+	/* this is already needed by setup_stack() */
+	epp->ep_flags |= EXEC_32;
+
 	switch (midmag) {
 	case (NETBSD32_MID_MACHINE << 16) | ZMAGIC:
 		error = netbsd32_exec_aout_prep_zmagic(p, epp);
@@ -132,12 +135,10 @@ exec_netbsd32_makecmds(p, epp)
 		break;
 	}
 
-	if (error == 0) {
-		/* set up our emulation information */
-		epp->ep_flags |= EXEC_32;
-	} else
+	if (error) {
 		kill_vmcmds(&epp->ep_vmcmds);
-
+		epp->ep_flags &= ~EXEC_32;	
+	}
 	return error;
 }
 
