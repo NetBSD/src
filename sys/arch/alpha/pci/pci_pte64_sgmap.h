@@ -1,4 +1,4 @@
-/* $NetBSD: pci_pte64_sgmap.h,v 1.2.2.1 1997/06/03 07:03:25 thorpej Exp $ */
+/* $NetBSD: pci_pte64_sgmap.h,v 1.2.2.2 1997/06/03 23:10:03 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -40,6 +40,19 @@
 #define	SGMAP_TYPE		pci_pte64
 #define	SGMAP_PTE_TYPE		u_int64_t
 #define	SGMAP_PTE_OFFSET_SHIFT	3
+#define	SGMAP_PTE_SPACING	1
+
+/*
+ * A 64-bit PCI SGMAP page table entry looks like this:
+ *
+ * 63                           n+1 n             1   0
+ * |                               | Page address | V |
+ *
+ * The page address is bits <n:13> of the physical address of the
+ * page.  The V bit is set if the PTE holds a valid mapping. 
+ */
+#define SGPTE_PGADDR_SHIFT      12
+#define SGPTE_VALID             0x0000000000000001UL
 
 #include <alpha/common/sgmapvar.h>
 #include <alpha/common/sgmap_typedep.h>
