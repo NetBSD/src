@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.91 2001/02/06 17:01:51 eeh Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.92 2001/02/10 05:05:28 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -2849,6 +2849,11 @@ uvmspace_free(vm)
 		 * all of the mappings and pages they hold, then call the pmap
 		 * module to reclaim anything left.
 		 */
+#ifdef SYSVSHM
+		/* Get rid of any SYSV shared memory segments. */
+		if (vm->vm_shm != NULL)
+			shmexit(vm);
+#endif
 		vm_map_lock(&vm->vm_map);
 		if (vm->vm_map.nentries) {
 			(void)uvm_unmap_remove(&vm->vm_map,

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.87 2000/12/22 22:59:00 jdolecek Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.88 2001/02/10 05:05:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -143,7 +143,6 @@ void
 exit1(struct proc *p, int rv)
 {
 	struct proc *q, *nq;
-	struct vmspace *vm;
 	int s;
 
 	if (__predict_false(p == initproc))
@@ -177,27 +176,9 @@ exit1(struct proc *p, int rv)
 	fdfree(p);
 	cwdfree(p);
 
-	/* The next three chunks should probably be moved to vmspace_exit. */
-	vm = p->p_vmspace;
-#ifdef SYSVSHM
-	if (vm->vm_shm && vm->vm_refcnt == 1)
-		shmexit(vm);
-#endif
 #ifdef SYSVSEM
 	semexit(p);
 #endif
-	/*
-	 * Release user portion of address space.
-	 * This releases references to vnodes,
-	 * which could cause I/O if the file has been unlinked.
-	 * Need to do this early enough that we can still sleep.
-	 * Can't free the entire vmspace as the kernel stack
-	 * may be mapped within that space also.
-	 */
-	if (vm->vm_refcnt == 1)
-		(void) uvm_deallocate(&vm->vm_map, VM_MIN_ADDRESS,
-		    VM_MAXUSER_ADDRESS - VM_MIN_ADDRESS);
-
 	if (SESS_LEADER(p)) {
 		struct session *sp = p->p_session;
 
