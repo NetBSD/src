@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.70 1999/06/28 01:56:58 briggs Exp $	*/
+/*	$NetBSD: via.c,v 1.71 2000/02/21 05:36:13 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -66,7 +66,7 @@ static void	via2_noint __P((void *));
 static void	slot_ignore __P((void *));
 static void	slot_noint __P((void *));
 
-int	VIA2 = 1;		/* default for II, IIx, IIcx, SE/30. */
+int	VIA2 = VIA2OFF;		/* default for II, IIx, IIcx, SE/30. */
 
 /* VIA1 interrupt handler table */
 void (*via1itab[7]) __P((void *)) = {
