@@ -1,4 +1,4 @@
-/*	$NetBSD: inch.c,v 1.5 2002/01/02 10:38:27 blymn Exp $	*/
+/*	$NetBSD: inch.c,v 1.6 2004/01/20 08:29:09 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: inch.c,v 1.5 2002/01/02 10:38:27 blymn Exp $");
+__RCSID("$NetBSD: inch.c,v 1.6 2004/01/20 08:29:09 wiz Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -88,7 +88,6 @@ mvwinch(WINDOW *win, int y, int x)
 chtype
 winch(WINDOW *win)
 {
-
 	chtype	 ch;
 
 	ch = (chtype) (((win)->lines[(win)->cury]->line[(win)->curx].ch & __CHARTEXT) |
