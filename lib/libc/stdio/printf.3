@@ -1,4 +1,4 @@
-.\"	$NetBSD: printf.3,v 1.18 2001/04/28 15:41:29 kleink Exp $
+.\"	$NetBSD: printf.3,v 1.19 2001/04/30 08:47:59 kleink Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 .\"
 .\"     @(#)printf.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd April 26, 2001
+.Dd April 30, 2001
 .Dt PRINTF 3
 .Os
 .Sh NAME
@@ -666,7 +666,21 @@ and
 .Fn vsprintf
 functions
 conform to
-.St -ansiC .
+.St -isoC90 .
+The conversion format modifiers
+.Cm %j ,
+.Cm %t
+and
+.Cm %z
+conform to
+.St -isoC99 .
+The
+.Fn snprintf
+and
+.Fn vsnprintf
+functions
+conform to
+.St -isoC99 .
 .Sh HISTORY
 The functions
 .Fn snprintf
