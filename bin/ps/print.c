@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.56 2000/06/29 06:27:33 mrg Exp $	*/
+/*	$NetBSD: print.c,v 1.57 2000/10/23 05:54:06 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.56 2000/06/29 06:27:33 mrg Exp $");
+__RCSID("$NetBSD: print.c,v 1.57 2000/10/23 05:54:06 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -401,7 +401,10 @@ state(k, ve, mode)
 		*cp++ = 'E';
 	if (flag & P_PPWAIT)
 		*cp++ = 'V';
-	if ((flag & P_SYSTEM) || k->p_holdcnt)
+	if (flag & P_SYSTEM)
+		*cp++ = 'K';
+	/* system process might have this too, don't need to double up */
+	else if (k->p_holdcnt)
 		*cp++ = 'L';
 	if (k->p_eflag & EPROC_SLEADER)
 		*cp++ = 's';
