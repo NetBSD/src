@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.10 1999/09/15 10:25:31 augustss Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.11 1999/09/15 21:14:03 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@ typedef struct ohci_soft_td {
 	u_int16_t len;
 	u_int16_t flags;
 #define OHCI_CALL_DONE	0x0001
-#define OHCI_SET_LEN	0x0002
+#define OHCI_ADD_LEN	0x0002
 } ohci_soft_td_t;
 #define OHCI_STD_SIZE ((sizeof (struct ohci_soft_td) + OHCI_TD_ALIGN - 1) / OHCI_TD_ALIGN * OHCI_TD_ALIGN)
 #define OHCI_STD_CHUNK 128
