@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.13 2004/05/07 08:12:16 sjg Exp $
+# $NetBSD: Makefile,v 1.14 2004/06/30 03:26:26 jmc Exp $
 #
 # Unit tests for make(1)
 # The main targets are:
