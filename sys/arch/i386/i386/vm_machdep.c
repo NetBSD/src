@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.82 1999/07/08 18:05:28 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.83 1999/07/20 22:25:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -213,6 +213,20 @@ cpu_exit(p)
 
 	uvmexp.swtch++;
 	switch_exit(p);
+}
+
+/*
+ * cpu_wait is called from reaper() to let machine-dependent
+ * code free machine-dependent resources that couldn't be freed
+ * in cpu_exit().
+ */
+void
+cpu_wait(p)
+	struct proc *p;
+{
+
+	/* Nuke the TSS. */
+	tss_free(&p->p_addr->u_pcb);
 }
 
 /*
