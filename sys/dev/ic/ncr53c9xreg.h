@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xreg.h,v 1.3 1997/05/01 22:16:26 pk Exp $	*/
+/*	$NetBSD: ncr53c9xreg.h,v 1.4 1997/05/17 20:56:55 pk Exp $	*/
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -148,29 +148,79 @@
 #define  NCRCFG3_FSCSI	0x02		/*	Fast SCSI		*/
 #define  NCRCFG3_FCLK	0x01		/*	Fast Clock (>25Mhz)	*/
 
-/* Config #4 only on ESP406 or FAS408 */
+/*
+ * For some unknown reason, the ESP406/FAS408 looks like every
+ * other ncr53c9x, except for configuration #3 register.  At any
+ * rate, if you're dealing with these chips, you need to use these
+ * defines instead.
+ */
+
+/* Config #3 different on ESP406/FAS408 */
+#define	NCR_ESPCFG3		0x0c	/* RW - Configuration #3	*/
+#define  NCRESPCFG3_IDM		0x80	/*	ID Message Res Check	*/
+#define  NCRESPCFG3_QTE		0x40	/*	Queue Tag Enable	*/
+#define  NCRESPCFG3_CDB		0x20	/*	CDB 10-bytes OK		*/
+#define  NCRESPCFG3_FSCSI	0x10	/*	Fast SCSI		*/
+#define	 NCRESPCFG3_SRESB	0x08	/*	Save Residual Byte	*/
+#define  NCRESPCFG3_FCLK	0x04	/*	Fast Clock (>25Mhz)	*/
+#define	 NCRESPCFG3_ADMA	0x02	/*	Alternate DMA Mode	*/
+#define	 NCRESPCFG3_T8M		0x01	/*	Threshold 8 Mode	*/
+
+/* Config #4 only on ESP406/FAS408 */
 #define	NCR_CFG4	0x0d		/* RW - Configuration #4	*/
 #define	 NCRCFG4_CRS1	0x80		/*	Select register set #1	*/
-#define	 NCRCFG4_RSVD1	0x40		/*	reserved		*/
-#define	 NCRCFG4_RSVD2	0x20		/*	reserved		*/
-#define	 NCRCFG4_RSVD3	0x10		/*	reserved		*/
-#define	 NCRCFG4_RSVD4	0x08		/*	reserved		*/
+#define	 NCRCFG4_RSVD	0x7b		/*	reserved		*/
 #define	 NCRCFG4_ACTNEG	0x04		/*	Active negation		*/
-#define	 NCRCFG4_RSVD5	0x02		/*	reserved		*/
-#define	 NCRCFG4_RSVD6	0x01		/*	reserved		*/
 
 #define	NCR_SCSIREGS(sc) do { NCR_WRITE_REG(sc, NCR_CFG4, \
 	~NCRCFG4_CRS1 & NCR_READ_REG(sc, NCR_CFG4)); } while(0)
 #define	NCR_PIOREGS(sc) do { NCR_WRITE_REG(sc, NCR_CFG4, \
 	NCRCFG4_CRS1 | NCR_READ_REG(sc, NCR_CFG4)); } while(0)
 
-/* Config #5 only on ESP406 or FAS408 */
+/*
+   The following registers are only on the ESP406/FAS408.  The
+   documentation refers to them as "Control Register Set #1".
+   These are the registers that are visible when bit 7 of 
+   register 0x0d is set.  This bit is common to both register sets.
+*/
+
+#define	NCR_JMP		0x00		/* RO - Jumper Sense Register	*/
+#define  NCRJMP_RSVD	0xc0		/*	reserved		*/
+#define  NCRJMP_ROMSZ	0x20		/*	ROM Size 1=16K, 0=32K	*/
+#define	 NCRJMP_J4	0x10		/*	Jumper #4		*/
+#define	 NCRJMP_J3	0x08		/*	Jumper #3		*/
+#define	 NCRJMP_J2	0x04		/*	Jumper #2		*/
+#define	 NCRJMP_J1	0x02		/*	Jumper #1		*/
+#define	 NCRJMP_J0	0x01		/*	Jumper #0		*/
+
+#define	NCR_PIOFIFO	0x04		/* WO - PIO FIFO, 4 bytes deep	*/
+
+#define NCR_PSTAT	0x08		/* RW - PIO Status Register	*/
+#define  NCRPSTAT_PERR	0x80		/*	PIO Error		*/
+#define  NCRPSTAT_SIRQ	0x40		/*	Active High of SCSI IRQ */
+#define  NCRPSTAT_ATAI	0x20		/*	ATA IRQ			*/
+#define  NCRPSTAT_FEMPT	0x10		/*	PIO FIFO Empty		*/
+#define  NCRPSTAT_F13	0x08		/*	PIO FIFO 1/3		*/
+#define  NCRPSTAT_F23	0x04		/*	PIO FIFO 2/3		*/
+#define  NCRPSTAT_FFULL	0x02		/*	PIO FIFO Full		*/
+#define  NCRPSTAT_PIOM	0x01		/*	PIO/DMA Mode		*/
+
+#define NCR_PIOI	0x0b		/* RW - PIO Interrupt Enable	*/
+#define	 NCRPIOI_RSVD	0xe0		/*	reserved		*/
+#define	 NCRPIOI_EMPTY	0x10		/*	IRQ When Empty		*/
+#define	 NCRPIOI_13	0x08		/*	IRQ When 1/3		*/
+#define	 NCRPIOI_23	0x04		/*	IRQ When 2/3		*/
+#define	 NCRPIOI_FULL	0x02		/*	IRQ When Full		*/
+#define	 NCRPIOI_FINV	0x01		/*	Flag Invert		*/
+
 #define	NCR_CFG5	0x0d		/* RW - Configuration #5	*/
-#define	 NCRCFG5_CRS1	0x80		/*	Select register set #1	*/
-#define	 NCRCFG5_SRAM	0x40		/*	SRAM memory map		*/
-#define  NCRCFG5_AADDR	0x20		/*	Auto address		*/
-#define  NCRCFG5_PTRINC	0x10		/*	Pointer increment	*/
-#define  NCRCFG5_LOWPWR	0x08		/*	Low power mode		*/
-#define  NCRCFG5_SINT	0x04		/*	SCSI interupt enable	*/
-#define  NCRCFG5_INTP	0x02		/*	INT polarity		*/
-#define  NCRCFG5_AINT	0x01		/*	ATA interupt enable	*/
+#define	 NCRCFG5_CRS1	0x80		/*	Select Register Set #1	*/
+#define	 NCRCFG5_SRAM	0x40		/*	SRAM Memory Map		*/
+#define  NCRCFG5_AADDR	0x20		/*	Auto Address		*/
+#define  NCRCFG5_PTRINC	0x10		/*	Pointer Increment	*/
+#define  NCRCFG5_LOWPWR	0x08		/*	Low Power Mode		*/
+#define  NCRCFG5_SINT	0x04		/*	SCSI Interupt Enable	*/
+#define  NCRCFG5_INTP	0x02		/*	INT Polarity		*/
+#define  NCRCFG5_AINT	0x01		/*	ATA Interupt Enable	*/
+
+#define	NCR_SIGNTR	0x0e		/* RO - Signature		*/
