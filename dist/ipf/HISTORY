@@ -20,6 +20,18 @@
 # and especially those who have found the time to port IP Filter to new
 # platforms.
 #
+3.4.2 - 10/5/2000 - Released
+
+Fix bug in dealing with "hlen == 1 and opt > 1" - Itojun
+
+ignore previous NAT mappings for 0/0 and 0/32 rules
+
+bring in a completely new ftp proxy
+
+allow NAT to cause packets to be dropped.
+
+add NetBSD callout support for 1.4-current
+
 3.4.1 - 30/4/2000 - Released
 
 add ratoui() and fix parsing of group numbers to allow 0 - UINT_MAX
