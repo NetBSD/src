@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.126 2005/03/12 07:53:08 yamt Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.127 2005/03/16 00:38:27 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.126 2005/03/12 07:53:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.127 2005/03/16 00:38:27 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -550,11 +550,13 @@ tcp_output(struct tcpcb *tp)
 	struct tcphdr *th;
 	u_char opt[MAX_TCPOPTLEN];
 	unsigned optlen, hdrlen;
+	unsigned int sack_optlen;
 	int idle, sendalot, txsegsize, rxsegsize;
+	int txsegsize_nosack;
 	int maxburst = TCP_MAXBURST;
 	int af;		/* address family on the wire */
 	int iphdrlen;
-	int use_tso;
+	int has_tso, use_tso;
 	int sack_rxmit;
 	int sack_bytes_rxmt;
 	struct sackhole *p;
@@ -612,7 +614,7 @@ tcp_output(struct tcpcb *tp)
 	 * - If there is not an IPsec policy that prevents it
 	 * - If the interface can do it
 	 */
-	use_tso = tp->t_inpcb != NULL &&
+	has_tso = tp->t_inpcb != NULL &&
 #if defined(IPSEC) || defined(FAST_IPSEC)
 		  IPSEC_PCB_SKIP_IPSEC(tp->t_inpcb->inp_sp,
 		  		       IPSEC_DIR_OUTBOUND) &&
@@ -667,7 +669,17 @@ tcp_output(struct tcpcb *tp)
 		}
 	}
 
+	txsegsize_nosack = txsegsize;
 again:
+	sack_optlen = tcp_sack_optlen(tp);
+	if (sack_optlen && (tp->rcv_sack_flags & TCPSACK_HAVED) != 0) {
+		/* don't duplicate D-SACK. */
+		use_tso = 0;
+	} else {
+		use_tso = has_tso;
+	}
+	txsegsize = txsegsize_nosack - sack_optlen;
+
 	/*
 	 * Determine length of data that should be transmitted, and
 	 * flags that should be used.  If there is some data or critical
@@ -1064,8 +1076,7 @@ send:
 	/*
 	 * Tack on the SACK block if it is necessary.
 	 */
-	if (TCP_SACK_ENABLED(tp) && (tp->t_flags & TF_ACKNOW)
-			&& (tp->rcv_sack_num > 0)) {
+	if (sack_optlen) {
 		int sack_len, i;
 		u_char *bp = (u_char *)(opt + optlen);
 		u_int32_t *lp = (u_int32_t *)(bp + 4);
@@ -1079,7 +1090,11 @@ send:
 			*lp++ = htonl(tp->rcv_sack_block[i].left);
 			*lp++ = htonl(tp->rcv_sack_block[i].right);
 		}
-		tp->rcv_sack_num = 0;
+		if ((tp->rcv_sack_flags & TCPSACK_HAVED) != 0) {
+			tp->rcv_sack_flags &= ~TCPSACK_HAVED;
+			tcp_update_sack_list(tp);
+		}
+		KASSERT(sack_len + 2 == sack_optlen);
 		optlen += sack_len + 2;
 	}
 
