@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.22 2000/11/29 21:51:50 jdolecek Exp $
+#	$NetBSD: genassym.cf,v 1.23 2001/12/08 04:09:19 gmcgarry Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -57,6 +57,7 @@ endif
 
 include <machine/hp300spu.h>
 include <machine/cpu.h>
+include <machine/intr.h>
 include <machine/psl.h>
 include <machine/reg.h>
 include <machine/pte.h>
@@ -160,6 +161,10 @@ define	P_MD_REGS		offsetof(struct proc, p_md.md_regs)
 define	SSLEEP			SSLEEP
 define	SRUN			SRUN
 define	SONPROC			SONPROC
+
+# interrupt event counters
+define	HI_EVCNT		offsetof(struct hp300_intr, hi_evcnt)
+define	SIZEOF_HI		sizeof(struct hp300_intr)
 
 # interrupt/fault metering
 define	UVMEXP_INTRS		offsetof(struct uvmexp, intrs)
