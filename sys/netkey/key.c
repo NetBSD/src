@@ -1,5 +1,5 @@
-/*	$NetBSD: key.c,v 1.35 2000/09/21 20:35:09 itojun Exp $	*/
-/*	$KAME: key.c,v 1.156 2000/09/21 04:10:52 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.36 2000/09/22 16:55:04 itojun Exp $	*/
+/*	$KAME: key.c,v 1.160 2000/09/22 16:04:37 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -400,6 +400,7 @@ static int key_delete __P((struct socket *, struct mbuf *,
 static int key_get __P((struct socket *, struct mbuf *,
 	const struct sadb_msghdr *));
 
+static void key_getcomb_setlifetime __P((struct sadb_comb *));
 #ifdef IPSEC_ESP
 static struct mbuf *key_getcomb_esp __P((void));
 #endif
@@ -1663,8 +1664,10 @@ key_spdadd(so, m, mhp)
 	if (mhp->msg->sadb_msg_type == SADB_X_SPDUPDATE) {
 		struct secspacq *spacq;
 		if ((spacq = key_getspacq(&spidx)) != NULL) {
-			/* reset counter in order to deletion by timehander. */
-			spacq->tick = key_blockacq_lifetime;
+			/* reset counter in order to deletion by timehandler. */
+			struct timeval tv;
+			microtime(&tv);
+			spacq->created = tv.tv_sec;
 			spacq->count = 0;
 		}
     	}
@@ -2437,8 +2440,12 @@ key_newsav(m, mhp, sah, errp)
 		}
 	}
 
-	/* reset tick */
-	newsav->tick = 0;
+	/* reset created */
+    {
+	struct timeval tv;
+	microtime(&tv);
+	newsav->created = tv.tv_sec;
+    }
 
 	newsav->pid = mhp->msg->sadb_msg_pid;
 
@@ -2802,8 +2809,9 @@ key_setsaval(sav, m, mhp)
 		goto fail;
 	}
 
-	/* reset tick */
-	sav->tick = 0;
+	/* reset created */
+	microtime(&tv);
+	sav->created = tv.tv_sec;
 
 	/* make lifetime for CURRENT */
 	KMALLOC(sav->lft_c, struct sadb_lifetime *,
@@ -3941,12 +3949,16 @@ key_bbcmp(p1, p2, bits)
  * time handler.
  * scanning SPD and SAD to check status for each entries,
  * and do to remove or to expire.
+ * XXX: year 2038 problem may remain.
  */
 void
 key_timehandler(void)
 {
 	u_int dir;
 	int s;
+	struct timeval tv;
+
+	microtime(&tv);
 
 	s = splsoftnet();	/*called from softclock()*/
 
@@ -3991,9 +4003,7 @@ key_timehandler(void)
 
 			nextsav = LIST_NEXT(sav, chain);
 
-			sav->tick++;
-
-			if (key_larval_lifetime < sav->tick) {
+			if (tv.tv_sec - sav->created > key_larval_lifetime) {
 				key_freesav(sav);
 			}
 		}
@@ -4008,8 +4018,6 @@ key_timehandler(void)
 
 			nextsav = LIST_NEXT(sav, chain);
 
-			sav->tick++;
-
 			/* we don't need to check. */
 			if (sav->lft_s == NULL)
 				continue;
@@ -4023,9 +4031,9 @@ key_timehandler(void)
 				continue;
 			}
 
-			/* compare SOFT lifetime and tick */
+			/* check SOFT lifetime */
 			if (sav->lft_s->sadb_lifetime_addtime != 0
-			 && sav->lft_s->sadb_lifetime_addtime < sav->tick) {
+			 && tv.tv_sec - sav->created > sav->lft_s->sadb_lifetime_addtime) {
 				/*
 				 * check SA to be used whether or not.
 				 * when SA hasn't been used, delete it.
@@ -4070,8 +4078,6 @@ key_timehandler(void)
 
 			nextsav = LIST_NEXT(sav, chain);
 
-			sav->tick++;
-
 			/* we don't need to check. */
 			if (sav->lft_h == NULL)
 				continue;
@@ -4085,9 +4091,8 @@ key_timehandler(void)
 				continue;
 			}
 
-			/* compare HARD lifetime and tick */
 			if (sav->lft_h->sadb_lifetime_addtime != 0
-			 && sav->lft_h->sadb_lifetime_addtime < sav->tick) {
+			 && tv.tv_sec - sav->created > sav->lft_h->sadb_lifetime_addtime) {
 				key_sa_chgstate(sav, SADB_SASTATE_DEAD);
 				key_freesav(sav);
 				sav = NULL;
@@ -4095,7 +4100,7 @@ key_timehandler(void)
 #if 0	/* XXX Should we keep to send expire message until HARD lifetime ? */
 			else if (sav->lft_s != NULL
 			      && sav->lft_s->sadb_lifetime_addtime != 0
-			      && sav->lft_s->sadb_lifetime_addtime < sav->tick) {
+			      && tv.tv_sec - sav->created > sav->lft_s->sadb_lifetime_addtime) {
 				/*
 				 * XXX: should be checked to be
 				 * installed the valid SA.
@@ -4156,9 +4161,8 @@ key_timehandler(void)
 
 		nextacq = LIST_NEXT(acq, chain);
 
-		acq->tick++;
-
-		if (key_blockacq_lifetime < acq->tick && __LIST_CHAINED(acq)) {
+		if (tv.tv_sec - acq->created > key_blockacq_lifetime
+		 && __LIST_CHAINED(acq)) {
 			LIST_REMOVE(acq, chain);
 			KFREE(acq);
 		}
@@ -4176,9 +4180,8 @@ key_timehandler(void)
 
 		nextacq = LIST_NEXT(acq, chain);
 
-		acq->tick++;
-
-		if (key_blockacq_lifetime < acq->tick && __LIST_CHAINED(acq)) {
+		if (tv.tv_sec - acq->created > key_blockacq_lifetime
+		 && __LIST_CHAINED(acq)) {
 			LIST_REMOVE(acq, chain);
 			KFREE(acq);
 		}
@@ -4438,7 +4441,9 @@ key_getspi(so, m, mhp)
 		struct secacq *acq;
 		if ((acq = key_getacqbyseq(mhp->msg->sadb_msg_seq)) != NULL) {
 			/* reset counter in order to deletion by timehander. */
-			acq->tick = key_blockacq_lifetime;
+			struct timeval tv;
+			microtime(&tv);
+			acq->created = tv.tv_sec;
 			acq->count = 0;
 		}
     	}
@@ -5261,11 +5266,26 @@ key_get(so, m, mhp)
     }
 }
 
+/* XXX make it sysctl-configurable? */
+static void
+key_getcomb_setlifetime(comb)
+	struct sadb_comb *comb;
+{
+
+	comb->sadb_comb_soft_allocations = 1;
+	comb->sadb_comb_hard_allocations = 1;
+	comb->sadb_comb_soft_bytes = 0;
+	comb->sadb_comb_hard_bytes = 0;
+	comb->sadb_comb_hard_addtime = 86400;	/* 1 day */
+	comb->sadb_comb_soft_addtime = comb->sadb_comb_soft_addtime * 80 / 100;
+	comb->sadb_comb_soft_usetime = 28800;	/* 8 hours */
+	comb->sadb_comb_hard_usetime = comb->sadb_comb_hard_usetime * 80 / 100;
+}
+
 #ifdef IPSEC_ESP
 /*
  * XXX reorder combinations by preference
  * XXX no idea if the user wants ESP authentication or not
- * XXX lifetime - should be in policy?
  */
 static struct mbuf *
 key_getcomb_esp()
@@ -5324,6 +5344,8 @@ key_getcomb_esp()
 				goto fail;
 			}
 			comb = (struct sadb_comb *)(mtod(n, caddr_t) + o);
+			bzero(comb, sizeof(*comb));
+			key_getcomb_setlifetime(comb);
 			comb->sadb_comb_encrypt = i;
 			comb->sadb_comb_encrypt_minbits = encmin;
 			comb->sadb_comb_encrypt_maxbits = algo->keymax;
@@ -5346,7 +5368,6 @@ key_getcomb_esp()
 
 /*
  * XXX reorder combinations by preference
- * XXX lifetime - should be in policy?
  */
 static struct mbuf *
 key_getcomb_ah()
@@ -5394,6 +5415,7 @@ key_getcomb_ah()
 
 		comb = mtod(m, struct sadb_comb *);
 		bzero(comb, sizeof(*comb));
+		key_getcomb_setlifetime(comb);
 		comb->sadb_comb_auth = i;
 		comb->sadb_comb_auth_minbits = min;
 		comb->sadb_comb_auth_maxbits = algo->keymax;
@@ -5669,6 +5691,7 @@ key_newacq(saidx)
 	struct secasindex *saidx;
 {
 	struct secacq *newacq;
+	struct timeval tv;
 
 	/* get new entry */
 	KMALLOC(newacq, struct secacq *, sizeof(struct secacq));
@@ -5683,7 +5706,8 @@ key_newacq(saidx)
 	/* copy secindex */
 	bcopy(saidx, &newacq->saidx, sizeof(newacq->saidx));
 	newacq->seq = (acq_seq == ~0 ? 1 : ++acq_seq);
-	newacq->tick = 0;
+	microtime(&tv);
+	newacq->created = tv.tv_sec;
 	newacq->count = 0;
 
 	return newacq;
@@ -5723,6 +5747,7 @@ key_newspacq(spidx)
 	struct secpolicyindex *spidx;
 {
 	struct secspacq *acq;
+	struct timeval tv;
 
 	/* get new entry */
 	KMALLOC(acq, struct secspacq *, sizeof(struct secspacq));
@@ -5736,7 +5761,8 @@ key_newspacq(spidx)
 
 	/* copy secindex */
 	bcopy(spidx, &acq->spidx, sizeof(acq->spidx));
-	acq->tick = 0;
+	microtime(&tv);
+	acq->created = tv.tv_sec;
 	acq->count = 0;
 
 	return acq;
@@ -5795,6 +5821,7 @@ key_acquire2(so, m, mhp)
 	if (mhp->msg->sadb_msg_len == PFKEY_UNIT64(sizeof(struct sadb_msg))) {
 #ifndef IPSEC_NONBLOCK_ACQUIRE
 		struct secacq *acq;
+		struct timeval tv;
 
 		/* check sequence number */
 		if (mhp->msg->sadb_msg_seq == 0) {
@@ -5815,7 +5842,8 @@ key_acquire2(so, m, mhp)
 		}
 
 		/* reset acq counter in order to deletion by timehander. */
-		acq->tick = key_blockacq_lifetime;
+		microtime(&tv);
+		acq->created = tv.tv_sec;
 		acq->count = 0;
 #endif
 		m_freem(m);

@@ -1,5 +1,5 @@
-/*	$NetBSD: key_debug.c,v 1.13 2000/07/04 04:41:54 itojun Exp $	*/
-/*	$KAME: key_debug.c,v 1.23 2000/07/04 04:08:15 itojun Exp $	*/
+/*	$NetBSD: key_debug.c,v 1.14 2000/09/22 16:55:04 itojun Exp $	*/
+/*	$KAME: key_debug.c,v 1.25 2000/07/24 13:23:12 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
