@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.14 1999/07/28 10:03:02 drochner Exp $	*/
+/*	$NetBSD: xy.c,v 1.15 2000/01/21 23:43:10 thorpej Exp $	*/
 
 /*
  *
@@ -553,9 +553,7 @@ xyattach(parent, self, aux)
 
 		/* init queue of waiting bufs */
 
-		xy->xyq.b_active = 0;
-		xy->xyq.b_actf = 0;
-		xy->xyq.b_actb = &xy->xyq.b_actf; /* XXX b_actb: not used? */
+		BUFQ_INIT(&xy->xyq);
 
 		xy->xyrq = &xyc->reqs[xa->driveno];
 
@@ -1095,7 +1093,7 @@ xystrategy(bp)
 	 */
 	s = splbio();		/* protect the queues */
 
-	disksort(&xy->xyq, bp);
+	disksort_blkno(&xy->xyq, bp);	/* XXX disksort_cylinder */
 
 	/* start 'em up */
 
@@ -1716,7 +1714,7 @@ xyc_reset(xycsc, quiet, blastmode, error, xysc)
                 
 			    bus_dmamap_unload(xycsc->dmatag, iorq->dmamap);
 
-			    iorq->xy->xyq.b_actf = iorq->buf->b_actf;
+			    BUFQ_REMOVE(&iorq->xy->xyq, iorq->buf);
 			    disk_unbusy(&xycsc->reqs[lcv].xy->sc_dk,
 				(xycsc->reqs[lcv].buf->b_bcount -
 				xycsc->reqs[lcv].buf->b_resid));
@@ -1762,9 +1760,9 @@ xyc_start(xycsc, iorq)
 	if (iorq == NULL) {
 		for (lcv = 0; lcv < XYC_MAXDEV ; lcv++) {
 			if ((xy = xycsc->sc_drives[lcv]) == NULL) continue;
-			if (xy->xyq.b_actf == NULL) continue;
+			if (BUFQ_FIRST(&xy->xyq) == NULL) continue;
 			if (xy->xyrq->mode != XY_SUB_FREE) continue;
-			xyc_startbuf(xycsc, xy, xy->xyq.b_actf);
+			xyc_startbuf(xycsc, xy, BUFQ_FIRST(&xy->xyq));
 		}
 	}
 	xyc_submit_iorq(xycsc, iorq, XY_SUB_NOQ);
@@ -1899,7 +1897,7 @@ xyc_remove_iorq(xycsc)
                 
 			bus_dmamap_unload(xycsc->dmatag, iorq->dmamap);
 
-			iorq->xy->xyq.b_actf = bp->b_actf;
+			BUFQ_REMOVE(&iorq->xy->xyq, bp);
 			disk_unbusy(&iorq->xy->sc_dk,
 			    (bp->b_bcount - bp->b_resid));
 			iorq->mode = XY_SUB_FREE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.32 2000/01/11 06:57:51 chs Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.33 2000/01/21 23:43:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -144,7 +144,8 @@ struct swapdev {
 
 	int			swd_bsize;	/* blocksize (bytes) */
 	int			swd_maxactive;	/* max active i/o reqs */
-	struct buf		swd_tab;	/* buffer list */
+	struct buf_queue	swd_tab;	/* buffer list */
+	int			swd_active;	/* number of active buffers */
 	struct ucred		*swd_cred;	/* cred for file access */
 };
 
@@ -691,6 +692,7 @@ sys_swapctl(p, v, retval)
 		sdp->swd_flags = SWF_FAKE;	/* placeholder only */
 		sdp->swd_vp = vp;
 		sdp->swd_dev = (vp->v_type == VBLK) ? vp->v_rdev : NODEV;
+		BUFQ_INIT(&sdp->swd_tab);
 
 		/*
 		 * XXX Is NFS elaboration necessary?
@@ -1332,7 +1334,6 @@ sw_reg_strategy(sdp, bp, bn)
 		/*
 		 * Just sort by block number
 		 */
-		nbp->vb_buf.b_cylinder = nbp->vb_buf.b_blkno;
 		s = splbio();
 		if (vnx->vx_error != 0) {
 			putvndbuf(nbp);
@@ -1344,7 +1345,7 @@ sw_reg_strategy(sdp, bp, bn)
 		bgetvp(vp, &nbp->vb_buf);	
 
 		/* sort it in and start I/O if we are not over our limit */
-		disksort(&sdp->swd_tab, &nbp->vb_buf);
+		disksort_blkno(&sdp->swd_tab, &nbp->vb_buf);
 		sw_reg_start(sdp);
 		splx(s);
 
@@ -1388,12 +1389,12 @@ sw_reg_start(sdp)
 
 	sdp->swd_flags |= SWF_BUSY;
 
-	while (sdp->swd_tab.b_active < sdp->swd_maxactive) {
-		bp = sdp->swd_tab.b_actf;
+	while (sdp->swd_active < sdp->swd_maxactive) {
+		bp = BUFQ_FIRST(&sdp->swd_tab);
 		if (bp == NULL)
 			break;
-		sdp->swd_tab.b_actf = bp->b_actf;
-		sdp->swd_tab.b_active++;
+		BUFQ_REMOVE(&sdp->swd_tab, bp);
+		sdp->swd_active++;
 
 		UVMHIST_LOG(pdhist,
 		    "sw_reg_start:  bp %p vp %p blkno %p cnt %lx",
@@ -1477,7 +1478,7 @@ sw_reg_iodone(bp)
 	/*
 	 * done!   start next swapdev I/O if one is pending
 	 */
-	sdp->swd_tab.b_active--;
+	sdp->swd_active--;
 	sw_reg_start(sdp);
 	splx(s);
 }
