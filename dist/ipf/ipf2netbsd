@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: ipf2netbsd,v 1.9 2002/05/13 06:23:30 martti Exp $
+#	$NetBSD: ipf2netbsd,v 1.10 2003/06/27 05:45:11 martti Exp $
 #
 # Copyright (c) 1999 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -34,7 +34,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 # ipf2netbsd:  convert a ipf source tree into a netbsd ipf source tree,
-# under basesrc/dist/ipf, syssrc/sys/netinet and syssrc/sys/lkm/netinet/if_ipl
+# under src/dist/ipf, src/sys/netinet and src/sys/lkm/netinet/if_ipl
 
 if [ $# -ne 2 ]; then echo "ipf2netbsd src dest"; exit 1; fi
 
@@ -49,10 +49,10 @@ case "$dest" in
 		;;
 esac
 
-dbase=$dest/basesrc/dist/ipf
-dsys=$dest/syssrc/sys/netinet
-dlkm=$dest/syssrc/sys/lkm/netinet/if_ipl
-dregress=$dest/basesrc/regress/sys/kern/ipf
+dbase=$dest/src/dist/ipf
+dsys=$dest/src/sys/netinet
+dlkm=$dest/src/sys/lkm/netinet/if_ipl
+dregress=$dest/src/regress/sys/kern/ipf
 
 case "$r" in
 	/*)
