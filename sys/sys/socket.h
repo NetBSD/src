@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.72 2005/03/08 07:43:14 kleink Exp $	*/
+/*	$NetBSD: socket.h,v 1.73 2005/03/09 05:07:19 atatat Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -359,6 +359,47 @@ struct sockcred {
 	{ "arp", CTLTYPE_NODE }, \
 	{ "key", CTLTYPE_NODE }, \
 }
+
+struct kinfo_pcb {
+	uint64_t	ki_pcbaddr;	/* PTR: pcb addr */
+	uint64_t	ki_ppcbaddr;	/* PTR: ppcb addr */
+	uint64_t	ki_sockaddr;	/* PTR: socket addr */
+
+	uint32_t	ki_family;	/* INT: protocol family */
+	uint32_t	ki_type;	/* INT: socket type */
+	uint32_t	ki_protocol;	/* INT: protocol */
+	uint32_t	ki_pflags;	/* INT: generic protocol flags */
+
+	uint32_t	ki_sostate;	/* INT: socket state */
+	uint32_t	ki_prstate;	/* INT: protocol state */
+	int32_t		ki_tstate;	/* INT: tcp state */
+	uint32_t	ki_tflags;	/* INT: tcp flags */
+
+	uint64_t	ki_rcvq;	/* U_LONG: receive queue len */
+	uint64_t	ki_sndq;	/* U_LONG: send queue len */
+
+	union {
+		struct sockaddr	_kis_src; /* STRUCT: local address */
+		char _kis_pad[256 + 8];		/* pad to max addr length */
+	} ki_s;
+	union {
+		struct sockaddr	_kid_dst; /* STRUCT: remote address */
+		char _kid_pad[256 + 8];		/* pad to max addr length */
+	} ki_d;
+
+	uint64_t	ki_inode;	/* INO_T: fake inode number */
+	uint64_t	ki_vnode;	/* PTR: if associated with file */
+	uint64_t	ki_conn;	/* PTR: control block of peer */
+	uint64_t	ki_refs;	/* PTR: referencing socket */
+	uint64_t	ki_nextref;	/* PTR: link in refs list */
+};
+
+#define ki_src ki_s._kis_src
+#define ki_dst ki_d._kid_dst
+
+#define PCB_SLOP		20
+#define PCB_ALL			0
+
 #endif /* _NETBSD_SOURCE */
 
 #if defined(_NETBSD_SOURCE)
