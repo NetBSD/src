@@ -1,4 +1,4 @@
-/*	$NetBSD: private.h,v 1.7 1996/09/13 17:46:49 jtc Exp $	*/
+/*	$NetBSD: private.h,v 1.8 1997/06/18 01:12:48 jtc Exp $	*/
 
 #ifndef PRIVATE_H
 #define PRIVATE_H
@@ -11,7 +11,7 @@
 
 /*
 ** This file is in the public domain, so clarified as of
-** June 5, 1996 by Arthur David Olson (arthur_david_olson@nih.gov).
+** 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
 */
 
 /*
@@ -28,7 +28,7 @@
 
 #ifndef lint
 #ifndef NOID
-static char	privatehid[] = "@(#)private.h	7.43";
+static char	privatehid[] = "@(#)private.h	7.45";
 #endif /* !defined NOID */
 #endif /* !defined lint */
 
@@ -178,6 +178,19 @@ extern int	unlink P((const char * filename));
 #ifndef errno
 extern int errno;
 #endif /* !defined errno */
+
+/*
+** Private function declarations.
+*/
+char *	icalloc P((int nelem, int elsize));
+char *	icatalloc P((char * old, const char * new));
+char *	icpyalloc P((const char * string));
+char *	imalloc P((int n));
+void *	irealloc P((void * pointer, int size));
+void	icfree P((char * pointer));
+void	ifree P((char * pointer));
+char *  scheck P((const char *string, char *format));
+
 
 /*
 ** Finally, some convenience items.
