@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.8 1998/09/27 22:59:40 jonathan Exp $	*/
+/*	$NetBSD: __setjmp14.S,v 1.1 1998/09/27 22:59:40 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)setjmp.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: setjmp.S,v 1.8 1998/09/27 22:59:40 jonathan Exp $")
+	ASMSTR("$NetBSD: __setjmp14.S,v 1.1 1998/09/27 22:59:40 jonathan Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef ABICALLS
@@ -62,7 +62,7 @@
 
 #define SETJMP_FRAME_SIZE	(STAND_FRAME_SIZE + 12)
 
-NON_LEAF(setjmp, SETJMP_FRAME_SIZE, ra)
+NON_LEAF(__setjmp14, SETJMP_FRAME_SIZE, ra)
 	.mask	0x80000000, (STAND_RA_OFFSET - STAND_FRAME_SIZE)
 #ifdef ABICALLS
 	.set	noreorder
@@ -73,22 +73,30 @@ NON_LEAF(setjmp, SETJMP_FRAME_SIZE, ra)
 #ifdef ABICALLS
 	.cprestore 16
 #endif
-	sw	ra, STAND_RA_OFFSET(sp)		# save state
-	sw	a0, SETJMP_FRAME_SIZE(sp)
-	move	a0, zero			# get current signal mask
-	jal	_C_LABEL(sigblock)
-	lw	v1, SETJMP_FRAME_SIZE(sp)	# v1 = jmpbuf
-	sw	v0, (1 * 4)(v1)			# save sc_mask = sigblock(0)
+	sw	ra, STAND_RA_OFFSET(sp)		# save RA
+	sw	a0, SETJMP_FRAME_SIZE(sp)	# squirrel away sc
+
+	/* Get the signal mask. */
+	addu	a2, a0, 320			# &sc.sc_mask
+	move	a1, zero
+	jal	_C_LABEL(__sigprocmask14)	# get current signal mask
+	move	a0, zero			# (in delay slot)
+
+	/* Get the signal stack. */
 	move	a0, zero
 	addu	a1, sp, STAND_FRAME_SIZE	# pointer to struct sigaltstack
 	jal	_C_LABEL(__sigaltstack14)
-	lw	a0, SETJMP_FRAME_SIZE(sp)	# restore jmpbuf
+	nop
 	lw	v1, STAND_FRAME_SIZE+8(sp)	# get old ss_onstack
+	lw	a0, SETJMP_FRAME_SIZE(sp)	# restore sc pointer
 	and	v1, v1, 1			# extract onstack flag
 	sw	v1, 0(a0)			# save it in sc_onstack
-	lw	ra, STAND_RA_OFFSET(sp)
-	addu	sp, sp, SETJMP_FRAME_SIZE
-	blt	v0, zero, botch			# check for sigstack() error
+
+	lw	ra, STAND_RA_OFFSET(sp)		# restore RA
+	addu	sp, sp, SETJMP_FRAME_SIZE	# pop stack frame
+
+	blt	v0, zero, botch			# check for sigaltstack() error
+
 	sw	ra, (2 * 4)(a0)			# sc_pc = return address
 	li	v0, 0xACEDBADE			# sigcontext magic number
 	sw	v0, ((ZERO + 3) * 4)(a0)	#   saved in sc_regs[0]
@@ -121,9 +129,9 @@ NON_LEAF(setjmp, SETJMP_FRAME_SIZE, ra)
 	sw	v0, ((32 + 38) * 4)(a0)
 	move	v0, zero
 	j	ra
-END(setjmp)
+END(__setjmp14)
 
-LEAF(longjmp)
+LEAF(__longjmp14)
 #ifdef ABICALLS
 	.set	noreorder
 	.cpload	t9
@@ -132,9 +140,9 @@ LEAF(longjmp)
 	.cprestore 16
 #endif
 	sw	a1, ((V0 + 3) * 4)(a0)	# save return value in sc_regs[V0]
-	li	v0, SYS_compat_13_sigreturn13
+	li	v0, SYS___sigreturn14
 	syscall
 botch:
 	jal	_C_LABEL(longjmperror)
 	jal	_C_LABEL(abort)
-END(longjmp)
+END(__longjmp14)
