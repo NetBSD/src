@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.1 1999/03/06 16:36:04 ragge Exp $
+#	$NetBSD: Makefile.inc,v 1.2 1999/07/18 05:55:45 abs Exp $
 
 XXRPB=0x1F4240
 RELOC=0x2f0000
-.PATH:	../../vax ../common
+.PATH:	${.CURDIR}/../../vax ${.CURDIR}/../common
 
-CPPFLAGS+=-I../../../../ -I../../ -I../common -I../../include
+CPPFLAGS+=-I${.CURDIR}/../../../../ -I${.CURDIR}/../../ -I${.CURDIR}/../common -I${.CURDIR}/../../include
 CPPFLAGS+=-DXXRPB=${XXRPB} -DRELOC=${RELOC}
 
 # Private handling of assembler files.
