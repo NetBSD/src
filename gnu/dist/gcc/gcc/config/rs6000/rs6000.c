@@ -12504,6 +12504,10 @@ rs6000_initialize_trampoline (addr, fnaddr, cxt)
 			 GEN_INT (rs6000_trampoline_size ()), SImode,
 			 fnaddr, pmode,
 			 ctx_reg, pmode);
+#ifdef TRANSFER_FROM_TRAMPOLINE
+     emit_library_call (gen_rtx_SYMBOL_REF (Pmode, "__enable_execute_stack"), 
+			LCT_NORMAL, VOIDmode, 1, addr, Pmode);
+#endif    
       break;
     }
 
