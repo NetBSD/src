@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc_i386.c,v 1.1 2002/08/09 00:03:15 thorpej Exp $	*/
+/*	$NetBSD: pmc_i386.c,v 1.2 2002/08/09 05:29:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -385,21 +385,21 @@ static const struct pmc_event k7_pmc_evids[] = {
 };
 
 static const struct pmc_class2evid i386_pmc_classes[] = {
-	{ PMC_TYPE_I586,		"i586",
+	{ PMC_CLASS_I586,		"i586",
 	  i586_pmc_evids },
 	{ PMC_TYPE_I586_TSC,		"i586 cycle counter",
 	  NULL },
 	{ PMC_TYPE_I586_PMCx,		"i586 performance counter",
 	  NULL },
 
-	{ PMC_TYPE_I686,		"i686",
+	{ PMC_CLASS_I686,		"i686",
 	  i686_pmc_evids },
 	{ PMC_TYPE_I686_TSC,		"i686 cycle counter",
 	  NULL },
 	{ PMC_TYPE_I686_PMCx,		"i686 performance counter",
 	  NULL },
 
-	{ PMC_TYPE_K7,			"K7",
+	{ PMC_CLASS_K7,			"K7",
 	  k7_pmc_evids },
 	{ PMC_TYPE_K7_TSC,		"K7 cycle counter",
 	  NULL },
