@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.533 2003/06/07 05:07:52 ichiro Exp $
+$NetBSD: pcidevs,v 1.534 2003/06/07 09:07:12 wiz Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -916,6 +916,12 @@ product ATI RADEON_M9_GL	0x4c64	Radeon Mobility M9 GL
 product ATI RADEON_M9		0x4c66	Radeon Mobility M9
 product ATI RADEON_128_AGP4X	0x4d46	Radeon Mobility 128 AGP 4x
 product ATI RADEON_128_AGP2X	0x4d4c	Radeon Mobility 128 AGP 2x
+product ATI RADEON_9700_9500	0x4e44	Radeon 9700/9500 Series
+product ATI RADEON_9700_9500_2	0x4e45	Radeon 9700/9500 Series
+product ATI RADEON_9600		0x4e46	Radeon 9600TX
+product ATI RADEON_9700_9500_S	0x4e64	Radeon 9700/9500 Series Secondary
+product ATI RADEON_9700_9500_S2	0x4e65	Radeon 9700/9500 Series Secondary
+product ATI RADEON_9600_2	0x4e66	Radeon 9600TX Secondary
 product ATI RAGE1PCI		0x5041	Rage 128 Pro PCI
 product ATI RAGE1AGP2X		0x5042	Rage 128 Pro AGP 2x
 product ATI RAGE1AGP4X		0x5043	Rage 128 Pro AGP 4x
@@ -941,9 +947,11 @@ product ATI RAGE4PCIT  		0x5056	Rage 128 Pro PCI (TMDS)
 product ATI RAGE4AGP2XT		0x5057	Rage 128 Pro AGP 2x (TMDS)
 product ATI RAGE4AGP4XT		0x5058	Rage 128 Pro AGP 4x (TMDS)
 product ATI RADEON_7200		0x5144	Radeon 7200
-product ATI RADEON_8500		0x514c	Radeon 8500
+product ATI RADEON_8500		0x514c	Radeon 8500/8500LE
+product ATI RADEON_9100		0x514d	Radeon 9100 Series
 product ATI RADEON_7500		0x5157	Radeon 7500
 product ATI RADEON_7000		0x5159	Radeon 7000/VE
+product ATI RADEON_9100		0x514d	Radeon 9100 Series Secondary
 product ATI RAGEGLPCI		0x5245	Rage 128 GL PCI
 product ATI RAGEGLAGP		0x5246	Rage 128 GL AGP 2x
 product ATI RAGEVRPCI		0x524b	Rage 128 VR PCI
