@@ -1,4 +1,4 @@
-/*	$NetBSD: cltp_var.h,v 1.8 1996/05/22 13:55:48 mycroft Exp $	*/
+/*	$NetBSD: cltp_var.h,v 1.9 2002/05/12 21:30:36 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,8 +51,8 @@ struct cltpstat {
 };
 
 #ifdef _KERNEL
-struct isopcb   cltb;
-struct cltpstat cltpstat;
+extern struct isopcb   cltb;
+extern struct cltpstat cltpstat;
 
 /* cltp_usrreq.c */
 void cltp_init __P((void));

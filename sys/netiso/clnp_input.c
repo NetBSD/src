@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_input.c,v 1.24 2001/11/13 01:10:47 lukem Exp $	*/
+/*	$NetBSD: clnp_input.c,v 1.25 2002/05/12 21:30:35 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -63,7 +63,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_input.c,v 1.24 2001/11/13 01:10:47 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_input.c,v 1.25 2002/05/12 21:30:35 matt Exp $");
 
 #include "opt_iso.h"
 
@@ -110,6 +110,7 @@ void            x25esis_input();
 #endif				/* ISO_X25ESIS */
 struct iso_ifaddrhead iso_ifaddr = TAILQ_HEAD_INITIALIZER(iso_ifaddr);
 struct ifqueue  clnlintrq;
+struct clnp_stat clnp_stat;
 
 /*
  * FUNCTION:		clnp_init
