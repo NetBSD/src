@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.52 1999/04/12 20:38:21 pk Exp $	*/
+/*	$NetBSD: asc.c,v 1.53 1999/04/25 03:02:05 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -821,7 +821,7 @@ asc_intr(sc)
 {
 	register asc_softc_t asc = (asc_softc_t) sc;
 	register asc_regmap_t *regs = asc->regs;
-	register State *state;
+	register State *state = NULL;			/* XXX shut gcc up */
 	register script_t *scpt;
 	register int ss, ir, status;
 	register unsigned char cmd_was;
