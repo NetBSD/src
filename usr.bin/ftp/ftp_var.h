@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.58 2000/08/01 22:47:28 lukem Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.59 2000/11/15 00:11:03 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -315,7 +315,9 @@ GLOBAL	int	macnum;		/* number of defined macros */
 GLOBAL	struct macel macros[16];
 GLOBAL	char	macbuf[4096];
 
-GLOBAL	char	 home[MAXPATHLEN];	/* home directory (for lcd) */
+GLOBAL	char	*localhome;		/* local home directory */
+GLOBAL	char	*localname;		/* local user name */
+GLOBAL	char	 netrc[MAXPATHLEN];	/* path to .netrc file */
 GLOBAL	char	 reply_string[BUFSIZ];	/* first line of previous reply */
 GLOBAL	void	(*reply_callback)(const char *);
 					/*
