@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.25 1999/05/02 13:07:16 fvdl Exp $ */
+/*	$NetBSD: md.c,v 1.26 1999/05/02 15:26:22 fvdl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -49,7 +49,7 @@
 #include "menu_defs.h"
 
 
-char mbr[16 * 512];	/* Entire first track, for possible boot selector */
+char mbr[512];
 int mbr_present, mbr_len;
 int c1024_resp;
 struct disklist *disklist = NULL;
@@ -63,6 +63,7 @@ static int count_mbr_parts __P((struct mbr_partition *));
 static int mbr_part_above_chs __P((struct mbr_partition *));
 static int mbr_partstart_above_chs __P((struct mbr_partition *));
 static void configure_bootsel __P((void));
+static void md_upgrade_mbrtype __P((void));
 
 struct mbr_bootsel *mbs;
 int defbootselpart, defbootseldisk;
@@ -167,6 +168,7 @@ md_pre_disklabel()
 		process_menu(MENU_ok);
 		return 1;
 	}
+	md_upgrade_mbrtype();
 	return 0;
 }
 
@@ -447,10 +449,38 @@ md_update(void)
 	endwin();
 	md_copy_filesystem();
 	md_post_newfs();
+	md_upgrade_mbrtype();
 	puts(CL);
 	wrefresh(stdscr);
 	return 1;
 }
+
+void
+md_upgrade_mbrtype()
+{
+	struct mbr_partition *mbrp;
+	int i, netbsdpart = -1, oldbsdpart = -1, oldbsdcount = 0;
+
+	if (read_mbr(diskdev, mbr, sizeof mbr) < 0)
+		return;
+
+	mbrp = (struct mbr_partition *)&mbr[MBR_PARTOFF];
+
+	for (i = 0; i < NMBRPART; i++) {
+		if (mbrp[i].mbrp_typ == MBR_PTYPE_386BSD) {
+			oldbsdpart = i;
+			oldbsdcount++;
+		} else if (mbrp[i].mbrp_typ == MBR_PTYPE_NETBSD)
+			netbsdpart = i;
+	}
+
+	if (netbsdpart == -1 && oldbsdcount == 1) {
+		mbrp[oldbsdpart].mbrp_typ = MBR_PTYPE_NETBSD;
+		write_mbr(diskdev, mbr, sizeof mbr);
+	}
+}
+
+
 
 void
 md_cleanup_install(void)
