@@ -1,4 +1,4 @@
-# $NetBSD: files.acorn26,v 1.1 2002/03/24 15:46:51 bjh21 Exp $
+# $NetBSD: files.acorn26,v 1.2 2002/04/22 09:41:19 augustss Exp $
 
 # Copyright (c) 1997, 1998, 2000 Ben Harris
 # All rights reserved.
@@ -160,7 +160,7 @@ device	arcvideo: rasops1, rasops2, rasops4, rasops8, wsemuldisplaydev
 attach	arcvideo at root
 file	arch/acorn26/vidc/arcvideo.c		arcvideo	needs-flag
 
-device	arcaudio: audio
+device	arcaudio: audiobus
 attach	arcaudio at root
 
 ###

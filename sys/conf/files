@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.518 2002/04/21 22:52:05 bouyer Exp $
+#	$NetBSD: files,v 1.519 2002/04/22 09:41:21 augustss Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -151,7 +151,7 @@ devclass tty
 
 # generic attributes
 #
-define	audio		{ }
+define	audiobus	{ }
 define	midibus		{ }
 define	midisyn
 define	wdc_base
@@ -171,7 +171,7 @@ file	dev/aurateconv.c	aurateconv	needs-flag
 # audio and midi devices, attaches to audio hardware driver
 #
 device	audio
-attach	audio at audio
+attach	audio at audiobus
 device	midi
 attach	midi at midibus
 
@@ -604,7 +604,7 @@ file	dev/ic/am7930.c			am7930
 
 # SPARC `SUNW,audiocs'
 #
-device	audiocs: audio, auconv, ad1848
+device	audiocs: audiobus, auconv, ad1848
 file	dev/ic/cs4231.c			audiocs
 
 # AC-97 CODECs

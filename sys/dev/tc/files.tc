@@ -1,4 +1,4 @@
-#	$NetBSD: files.tc,v 1.26 2001/11/28 10:21:24 lukem Exp $
+#	$NetBSD: files.tc,v 1.27 2002/04/22 09:41:23 augustss Exp $
 #
 # Config file and device description for machine-independent
 # TURBOchannel code.  Included by ports that need it.
@@ -25,7 +25,7 @@ attach le at tc with le_tc:		le24, le_dec_subr
 file	dev/tc/if_le_tc.c		le_tc
 
 # baseboard audio
-device  bba: audio,am7930
+device  bba: audiobus,am7930
 attach  bba at ioasic
 file    dev/tc/bba.c                    bba
 

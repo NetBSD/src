@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.49 2002/04/16 20:50:21 thorpej Exp $
+#	$NetBSD: files.macppc,v 1.50 2002/04/22 09:41:20 augustss Exp $
 #
 # macppc-specific configuration info
 
@@ -182,7 +182,7 @@ file arch/macppc/dev/wdc_obio.c			wdc_obio
 attach wi at obio with wi_obio
 file arch/macppc/dev/if_wi_obio.c		wi_obio
 
-device awacs: audio, auconv, mulaw
+device awacs: audiobus, auconv, mulaw
 attach awacs at obio
 file arch/macppc/dev/awacs.c			awacs
 
