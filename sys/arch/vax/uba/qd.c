@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.10 1998/11/29 14:48:52 ragge Exp $	*/
+/*	$NetBSD: qd.c,v 1.11 1999/01/01 21:43:18 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -256,7 +256,7 @@ static void qdiint(int);
 /*
  * macro to create a system virtual page number from system virtual adrs 
  */
-#define VTOP(x)  (((int)x & ~0xC0000000) >> PGSHIFT)
+#define VTOP(x)  (((int)x & ~0xC0000000) >> VAX_PGSHIFT)
 
 /*
  * QDSS register address offsets from start of QDSS address space 
@@ -405,7 +405,7 @@ qdcnprobe(cndev)
 		 */
 	    
                 /* Temporarily map in physical memory */
-	        pmap_map((int)qd_ubaio, 0x200B8000, 0x200B8000 + NBPG,
+	        pmap_map((int)qd_ubaio, 0x200B8000, 0x200B8000 + VAX_NBPG,
 		        	            VM_PROT_READ|VM_PROT_WRITE);
 
 	        /* Now check some undocumented flag */
@@ -424,7 +424,7 @@ qdcnprobe(cndev)
         /*
 	 * Map device registers - the last 8K of qvmem.
 	 */
-        pmap_map((int)qd_ubaio, QIOPAGE, QIOPAGE + UBAIOPAGES * NBPG,
+        pmap_map((int)qd_ubaio, QIOPAGE, QIOPAGE + UBAIOPAGES * VAX_NBPG,
 			            VM_PROT_READ|VM_PROT_WRITE);
         qdaddr = (u_short *)((u_int)qd_ubaio + ubdevreg(QDSSCSR));
 
@@ -606,7 +606,7 @@ qd_match(parent, match, aux)
 			*/
 			mapix = (int) (VTOP(qdbase[unit]) - VTOP(qvmem[0]));
 			ptep = (int *) QVmap[0] + mapix;
-			phys_adr = (caddr_t)(((int)*ptep&0x001FFFFF)<<PGSHIFT);
+			phys_adr = (caddr_t)(((int)*ptep&0x001FFFFF)<<VAX_PGSHIFT);
 			*(u_short *)reg = (u_short) ((int)phys_adr >> 16);
 
 			/*
