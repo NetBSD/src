@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.21 1995/05/07 22:16:26 cgd Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.22 1995/06/27 00:40:53 jtc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: vmstat.c,v 1.21 1995/05/07 22:16:26 cgd Exp $";
+static char rcsid[] = "$NetBSD: vmstat.c,v 1.22 1995/06/27 00:40:53 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,7 +55,6 @@ static char rcsid[] = "$NetBSD: vmstat.c,v 1.21 1995/05/07 22:16:26 cgd Exp $";
 #include <sys/buf.h>
 #include <sys/namei.h>
 #include <sys/malloc.h>
-#include <sys/signal.h>
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/sysctl.h>
@@ -66,6 +65,7 @@ static char rcsid[] = "$NetBSD: vmstat.c,v 1.21 1995/05/07 22:16:26 cgd Exp $";
 #include <kvm.h>
 #include <errno.h>
 #include <unistd.h>
+#include <signal.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
