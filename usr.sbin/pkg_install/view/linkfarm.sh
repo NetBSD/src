@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: linkfarm.sh,v 1.1.2.14 2003/08/24 09:28:39 jlam Exp $
+# $NetBSD: linkfarm.sh,v 1.1.2.15 2003/08/27 08:09:25 jlam Exp $
 
 #
 # Copyright (c) 2002 Alistair G. Crooks.  All rights reserved.
@@ -56,9 +56,7 @@ version() {
 }
 
 checkdir() {
-	if [ -d "$1" ]; then
-		:
-	else
+	if [ ! -d "$1" ]; then
 		echo "linkfarm: \`$1' doesn't exist"
 		exit 1
 	fi
