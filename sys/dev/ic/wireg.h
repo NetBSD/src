@@ -1,4 +1,4 @@
-/*	$NetBSD: wireg.h,v 1.47 2003/10/24 23:58:22 mycroft Exp $	*/
+/*	$NetBSD: wireg.h,v 1.48 2003/10/25 13:45:07 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -413,10 +413,12 @@ struct wi_pcf {
  */
 struct wi_macaddr {
 	union {
-		u_int16_t	wi_mac_addr_aligned[3];
-		u_int8_t	wi_mac_addr[6];
-	};
+		u_int16_t	wi_mu_mac_addr_aligned[3];
+		u_int8_t	wi_mu_mac_addr[6];
+	} mu;
 };
+#define	wi_mac_addr_aligned	mu.wi_mu_mac_addr_aligned
+#define	wi_mac_addr		mu.wi_mu_mac_addr
 
 /*
  * Station set identification (SSID). (0xFC02, 0xFC04)
