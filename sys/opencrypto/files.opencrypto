@@ -1,4 +1,4 @@
-#	$NetBSD: files.opencrypto,v 1.4 2003/07/28 21:28:23 jonathan Exp $
+#	$NetBSD: files.opencrypto,v 1.5 2003/07/30 18:28:58 jonathan Exp $
 #
 #
 
@@ -6,7 +6,7 @@ file	opencrypto/criov.c		opencrypto
 file	opencrypto/cryptodev.c		opencrypto
 file	opencrypto/cryptosoft.c		opencrypto
 file	opencrypto/xform.c		opencrypto
-file	opencrypto/crypto.c		opencrypto
+file	opencrypto/crypto.c		opencrypto	needs-flag
 
 #Standalone m_apply()/m_getptr()
 #file	opencrypto/crypto_mbuf.c	opencrypto
