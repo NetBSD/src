@@ -1,4 +1,4 @@
-.\"	$NetBSD: disk.9,v 1.10 1999/03/16 00:40:47 garbled Exp $
+.\"	$NetBSD: disk.9,v 1.11 2000/05/31 19:39:21 cgd Exp $
 .\"
 .\" Copyright (c) 1995, 1996 Jason R. Thorpe.
 .\" All rights reserved.
@@ -180,7 +180,7 @@ device.  In the case of disks, the softc should also contain one instance
 of the disk stucture, eg:
 .Bd -literal
 struct foo_softc {
-	struct	device *sc_dev;		/* generic device information */
+	struct	device sc_dev;		/* generic device information */
 	struct	disk sc_dk;		/* generic disk information */
 	[ . . . more . . . ]
 };
