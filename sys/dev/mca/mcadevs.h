@@ -1,10 +1,10 @@
-/*	$NetBSD: mcadevs.h,v 1.18 2002/12/04 18:53:14 jdolecek Exp $	*/
+/*	$NetBSD: mcadevs.h,v 1.19 2003/06/29 14:49:15 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: mcadevs,v 1.17 2002/12/04 18:52:28 jdolecek Exp 
+ *	NetBSD: mcadevs,v 1.18 2003/06/29 14:48:21 jdolecek Exp 
  */
 
 /*-
@@ -48,6 +48,7 @@
  * Supported MCA devices
  */
 
+#define	MCA_PRODUCT_BT640A	0x0708	/* BusTek BT-640A SCSI Host Adapter */
 #define	MCA_PRODUCT_AHA1640	0x0F1F	/* Adaptec AHA-1640 SCSI Adapter */
 #define	MCA_PRODUCT_3C523	0x6042	/* 3Com EtherLink/MC Ethernet Adapter (3C523) */
 #define	MCA_PRODUCT_WD_8013EP	0x61C8	/* EtherCard PLUS Elite/A (8013EP/A) */
