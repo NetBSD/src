@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prop.c,v 1.11 2003/05/17 03:12:08 itojun Exp $	*/
+/*	$NetBSD: subr_prop.c,v 1.12 2003/12/21 11:54:16 simonb Exp $	*/
 
 /*  
  * Copyright (c) 2001 Eduardo Horvath.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prop.c,v 1.11 2003/05/17 03:12:08 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prop.c,v 1.12 2003/12/21 11:54:16 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -668,4 +668,3 @@ oprop = prop; /* XXXX -- use vars to make gcc happy. */
 	return (0);
 
 }
-
