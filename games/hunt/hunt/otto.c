@@ -1,4 +1,4 @@
-/*	$NetBSD: otto.c,v 1.3 1999/04/18 03:29:01 simonb Exp $	*/
+/*	$NetBSD: otto.c,v 1.4 2001/02/05 00:40:45 christos Exp $	*/
 # ifdef OTTO
 /*
  *	otto	- a hunt otto-matic player
@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: otto.c,v 1.3 1999/04/18 03:29:01 simonb Exp $");
+__RCSID("$NetBSD: otto.c,v 1.4 2001/02/05 00:40:45 christos Exp $");
 #endif /* not lint */
 
 # include	<sys/time.h>
@@ -119,6 +119,8 @@ STATIC	SIGNAL_TYPE	nothing __P((int));
 STATIC	int		stop_look __P((struct item *, char, int, int));
 STATIC	void		wander __P((void));
 
+extern	int	Otto_count;
+
 STATIC SIGNAL_TYPE
 nothing(dummy)
 	int dummy;
@@ -131,7 +133,6 @@ otto(y, x, face)
 	char	face;
 {
 	int		i;
-	extern	int	Otto_count;
 	int		old_mask;
 
 # ifdef	DEBUG
