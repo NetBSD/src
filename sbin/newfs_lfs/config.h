@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.2 2000/06/27 21:06:24 perseant Exp $	*/
+/*	$NetBSD: config.h,v 1.3 2000/07/03 01:49:11 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -53,15 +53,18 @@
 #define	DFL_BLKSIZE	8192
 
 /*
+ * 1/DFL_MIN_FREE_SEGS gives the fraction of segments to be reserved for
+ * the cleaner.  Experimental data show this number should be around
+ * 5-10.
+ */
+#define DFL_MIN_FREE_SEGS 8
+
+/*
  * MINFREE gives the minimum acceptable percentage of file system
  * blocks which may be free. If the freelist drops below this level
- * only the superuser may continue to allocate blocks. This may
- * be set to 0 if no reserve of free blocks is deemed necessary,
- * however throughput drops by (how many?) percent if the file system
- * is run at between 80% and 100% full; thus the default value of
- * fs_minfree is 20%.
+ * only the superuser may continue to allocate blocks.
  */
-#define MINFREE		20
+#define MINFREE		10
 
 /*
  * The following constants set the default block and segment size for a log
