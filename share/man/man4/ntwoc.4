@@ -1,4 +1,4 @@
-.\"	$NetBSD: ntwoc.4,v 1.1 2000/01/05 00:17:25 chopps Exp $
+.\"	$NetBSD: ntwoc.4,v 1.2 2001/06/12 11:35:03 wiz Exp $
 .\"
 .\" Copyright (c) 2000 Christian E. Hopps
 .\" All rights reserved.
@@ -51,9 +51,9 @@ into the card must be specified with the
 .Cm port
 and
 .Cm irq
-locators in the kernel configuration line. 
+locators in the kernel configuration line.
 The
-.Cm iomem  
+.Cm iomem
 locator must be specified and must occur on a 16k boundary.
 The driver utilizes a 16k region of io memory.  Bit 0 of the
 .Cm flags
@@ -132,7 +132,7 @@ not be specified.
 .El
 .Pp
 .Sh HARDWARE
-Cards supported by the 
+Cards supported by the
 .Nm
 driver include:
 .Pp
@@ -146,7 +146,7 @@ SDL Communications WAN/ic 400 (untested)
 .El
 .Sh DIAGNOSTICS
 .Bl -diag
-.It "ntwo0: TXDMA underun - fifo depth maxed"
+.It "ntwo0: TXDMA underrun - fifo depth maxed"
 Indicates that the serial port's FIFO is being drained faster
 than DMA can fill it.  The driver automatically increases the
 low-water mark at which to begin dma transfers when underruns
