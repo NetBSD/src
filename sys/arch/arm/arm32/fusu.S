@@ -1,4 +1,4 @@
-/*	$NetBSD: fusu.S,v 1.3 2002/03/25 16:32:55 thorpej Exp $	*/
+/*	$NetBSD: fusu.S,v 1.4 2002/08/09 04:13:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Mark Brinicombe.
@@ -38,24 +38,12 @@
 Lcurpcb:
 	.word	_C_LABEL(curpcb)
 
-Lvm_min_address:
-	.word	VM_MIN_ADDRESS
-Lvm_maxuser_address:
-	.word	VM_MAXUSER_ADDRESS
-
 /*
  * fuword(caddr_t uaddr);
  * Fetch an int from the user's address space.
  */
 
 ENTRY(fuword)
-	ldr	r2, Lvm_min_address
-	cmp	r0, r2
-	bcc	fusuaddrfault
-	ldr	r2, Lvm_maxuser_address
-	cmp	r0, r2
-	bcs	fusuaddrfault
-
 	ldr	r2, Lcurpcb
 	ldr	r2, [r2]
 
@@ -67,10 +55,11 @@ ENTRY(fuword)
 	add	r1, pc, #fusufault - . - 8
 	str	r1, [r2, #PCB_ONFAULT]
 
-	ldr	r0, [r0]
+	ldrt	r3, [r0]
 
 	mov	r1, #0x00000000
 	str	r1, [r2, #PCB_ONFAULT]
+	mov	r0, r3
 	mov	pc, lr
 
 /*
@@ -79,13 +68,6 @@ ENTRY(fuword)
  */
 
 ENTRY(fusword)
-	ldr	r2, Lvm_min_address
-	cmp	r0, r2
-	bcc	fusuaddrfault
-	ldr	r2, Lvm_maxuser_address
-	cmp	r0, r2
-	bcs	fusuaddrfault
-
 	ldr	r2, Lcurpcb
 	ldr	r2, [r2]
 
@@ -97,12 +79,12 @@ ENTRY(fusword)
 	add	r1, pc, #fusufault - . - 8
 	str	r1, [r2, #PCB_ONFAULT]
 
-	ldr	r0, [r0]
-	bic	r0, r0, #0xff000000
-	bic	r0, r0, #0x00ff0000
+	ldrt	r3, [r0]
 
 	mov	r1, #0x00000000
 	str	r1, [r2, #PCB_ONFAULT]
+	bic	r0, r3, #0xff000000
+	bic	r0, r0, #0x00ff0000
 	mov	pc, lr
 
 /*
@@ -118,13 +100,6 @@ ENTRY(fuswintr)
 	mvnne	r0, #0x00000000
 	movne	pc, lr
 
-	ldr	r2, Lvm_min_address
-	cmp	r0, r2
-	bcc	fusuaddrfault
-	ldr	r2, Lvm_maxuser_address
-	cmp	r0, r2
-	bcs	fusuaddrfault
-
 	ldr	r2, Lcurpcb
 	ldr	r2, [r2]
 
@@ -136,12 +111,12 @@ ENTRY(fuswintr)
 	add	r1, pc, #_C_LABEL(fusubailout) - . - 8
 	str	r1, [r2, #PCB_ONFAULT]
 
-	ldr	r0, [r0]
-	bic	r0, r0, #0xff000000
-	bic	r0, r0, #0x00ff0000
+	ldrt	r3, [r0]
 
 	mov	r1, #0x00000000
 	str	r1, [r2, #PCB_ONFAULT]
+	bic	r0, r3, #0xff000000
+	bic	r0, r0, #0x00ff0000
 	mov	pc, lr
 
 Lblock_userspace_access:
@@ -160,13 +135,6 @@ _C_LABEL(block_userspace_access):
  */
 
 ENTRY(fubyte)
-	ldr	r2, Lvm_min_address
-	cmp	r0, r2
-	bcc	fusuaddrfault
-	ldr	r2, Lvm_maxuser_address
-	cmp	r0, r2
-	bcs	fusuaddrfault
-
 	ldr	r2, Lcurpcb
 	ldr	r2, [r2]
 
@@ -178,10 +146,11 @@ ENTRY(fubyte)
 	add	r1, pc, #fusufault - . - 8
 	str	r1, [r2, #PCB_ONFAULT]
 
-	ldrb	r0, [r0]
+	ldrbt	r3, [r0]
 
 	mov	r1, #0x00000000
 	str	r1, [r2, #PCB_ONFAULT]
+	mov	r0, r3
 	mov	pc, lr
 
 /*
@@ -208,14 +177,6 @@ _C_LABEL(fusubailout):
 	mvn	r0, #0x00000000
 	mov	pc, lr
 
-/*
- * Handle earlier faults from [fs]u*(), due to our of range addresses.
- */
-
-fusuaddrfault:
-	mvn	r0, #0x00000000
-	mov	pc, lr
-
 #ifdef DIAGNOSTIC
 /*
  * Handle earlier faults from [fs]u*(), due to no pcb
@@ -237,13 +198,6 @@ fusupcbfaulttext:
  */
 
 ENTRY(suword)
-	ldr	r2, Lvm_min_address
-	cmp	r0, r2
-	bcc	fusuaddrfault
-	ldr	r2, Lvm_maxuser_address
-	cmp	r0, r2
-	bcs	fusuaddrfault
-
 	ldr	r2, Lcurpcb
 	ldr	r2, [r2]
 
@@ -255,7 +209,7 @@ ENTRY(suword)
 	add	r3, pc, #fusufault - . - 8
 	str	r3, [r2, #PCB_ONFAULT]
 
-	str	r1, [r0]
+	strt	r1, [r0]
 
 	mov	r0, #0x00000000
 	str	r0, [r2, #PCB_ONFAULT]
@@ -274,13 +228,6 @@ ENTRY(suswintr)
 	mvnne	r0, #0x00000000
 	movne	pc, lr
 
-	ldr	r2, Lvm_min_address
-	cmp	r0, r2
-	bcc	fusuaddrfault
-	ldr	r2, Lvm_maxuser_address
-	cmp	r0, r2
-	bcs	fusuaddrfault
-
 	ldr	r2, Lcurpcb
 	ldr	r2, [r2]
 
@@ -292,9 +239,9 @@ ENTRY(suswintr)
 	add	r3, pc, #_C_LABEL(fusubailout) - . - 8
 	str	r3, [r2, #PCB_ONFAULT]
 
-	strb	r1, [r0, #0x0000]
+	strbt	r1, [r0], #1
 	mov	r1, r1, lsr #8
-	strb	r1, [r0, #0x0001]
+	strbt	r1, [r0]
 
 	mov	r0, #0x00000000
 	str	r0, [r2, #PCB_ONFAULT]
@@ -306,13 +253,6 @@ ENTRY(suswintr)
  */
 
 ENTRY(susword)
-	ldr	r2, Lvm_min_address
-	cmp	r0, r2
-	bcc	fusuaddrfault
-	ldr	r2, Lvm_maxuser_address
-	cmp	r0, r2
-	bcs	fusuaddrfault
-
 	ldr	r2, Lcurpcb
 	ldr	r2, [r2]
 
@@ -324,9 +264,9 @@ ENTRY(susword)
 	add	r3, pc, #fusufault - . - 8
 	str	r3, [r2, #PCB_ONFAULT]
 
-	strb	r1, [r0, #0x0000]
+	strbt	r1, [r0], #1
 	mov	r1, r1, lsr #8
-	strb	r1, [r0, #0x0001]
+	strbt	r1, [r0]
 
 	mov	r0, #0x00000000
 	str	r0, [r2, #PCB_ONFAULT]
@@ -338,13 +278,6 @@ ENTRY(susword)
  */
 
 ENTRY(subyte)
-	ldr	r2, Lvm_min_address
-	cmp	r0, r2
-	bcc	fusuaddrfault
-	ldr	r2, Lvm_maxuser_address
-	cmp	r0, r2
-	bcs	fusuaddrfault
-
 	ldr	r2, Lcurpcb
 	ldr	r2, [r2]
 
@@ -357,7 +290,7 @@ ENTRY(subyte)
 	add	r3, pc, #fusufault - . - 8
 	str	r3, [r2, #PCB_ONFAULT]
 
-	strb	r1, [r0]
+	strbt	r1, [r0]
 
 	mov	r0, #0x00000000
 	str	r0, [r2, #PCB_ONFAULT]
