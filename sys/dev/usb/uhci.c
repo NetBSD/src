@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.57 1999/10/12 11:21:26 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.58 1999/10/12 20:02:47 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -2853,6 +2853,13 @@ uhci_root_intr_abort(reqh)
 
 	usb_untimeout(uhci_timo, reqh, reqh->timo_handle);
 	sc->sc_has_timo = 0;
+
+	if (reqh->pipe->intrreqh == reqh) {
+		DPRINTF(("uhci_root_intr_abort: remove\n"));
+		reqh->pipe->intrreqh = 0;
+	}
+	reqh->status = USBD_CANCELLED;
+	usb_transfer_complete(reqh);
 }
 
 usbd_status
