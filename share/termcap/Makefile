@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.14 (Berkeley) 9/15/92
-#	$Id: Makefile,v 1.19 1997/03/24 21:57:11 christos Exp $
+#	$NetBSD: Makefile,v 1.20 1997/06/06 00:24:36 kleink Exp $
 
 MAN=	termcap.5
 
