@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr.h,v 1.12 1998/07/26 12:36:38 mycroft Exp $	*/
+/*	$NetBSD: xdr.h,v 1.13 1998/07/26 12:39:40 mycroft Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -102,11 +102,11 @@ typedef struct __rpc_xdr {
 		/* get a long from underlying stream */
 		bool_t	(*x_getlong) __P((struct __rpc_xdr *, long *));
 		/* put a long to " */
-		bool_t	(*x_putlong) __P((struct __rpc_xdr *, long *));
+		bool_t	(*x_putlong) __P((struct __rpc_xdr *, const long *));
 		/* get some bytes from " */
 		bool_t	(*x_getbytes) __P((struct __rpc_xdr *, caddr_t, u_int));
 		/* put some bytes to " */
-		bool_t	(*x_putbytes) __P((struct __rpc_xdr *, caddr_t, u_int));
+		bool_t	(*x_putbytes) __P((struct __rpc_xdr *, const caddr_t, u_int));
 		/* returns bytes off from beginning */
 		u_int	(*x_getpostn) __P((struct __rpc_xdr *));
 		/* lets you reposition the stream */
