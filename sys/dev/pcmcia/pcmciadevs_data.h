@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.157 2001/12/29 15:01:24 pooka Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.158 2002/01/13 10:39:33 aymeric Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -300,6 +300,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Dual",
 	    "Dual NE2000",	}
+	,
+	{
+	    PCMCIA_VENDOR_EDIMAX, PCMCIA_PRODUCT_EDIMAX_EP4000A,
+	    PCMCIA_CIS_EDIMAX_EP4000A,
+	    0,
+	    "Edimax Technology Inc.",
+	    "Edimax EP4000A",	}
 	,
 	{
 	    PCMCIA_VENDOR_ELSA, PCMCIA_PRODUCT_ELSA_MC2_IEEE,
@@ -1844,6 +1851,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_INVALID,
 	    0,
 	    "Elsa",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_EDIMAX,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "Edimax Technology Inc.",
 	    NULL,
 	},
 	{

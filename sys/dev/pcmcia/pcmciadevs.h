@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciadevs.h,v 1.156 2001/12/29 15:01:23 pooka Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.157 2002/01/13 10:39:33 aymeric Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -109,6 +109,7 @@
 #define	PCMCIA_VENDOR_EMTAC	0xc250	/* EMTAC Technology Corporation */
 #define	PCMCIA_VENDOR_LINKSYS2	0x0274	/* The Linksys Group */
 #define	PCMCIA_VENDOR_ELSA	0xd601	/* Elsa */
+#define	PCMCIA_VENDOR_EDIMAX	0x890f	/* Edimax Technology Inc. */
 
 /*
  * List of known products.  Grouped by vendor, sorted by number within the
@@ -246,6 +247,11 @@
 #define	PCMCIA_CIS_DUAL_NE2000	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_DUAL_NE2000	0x0100
 #define	PCMCIA_STR_DUAL_NE2000	"Dual NE2000"
+
+/* Edimax Products */
+#define	PCMCIA_CIS_EDIMAX_EP4000A	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_EDIMAX_EP4000A	0x0100
+#define	PCMCIA_STR_EDIMAX_EP4000A	"Edimax EP4000A"
 
 /* ELSA Products */
 #define	PCMCIA_CIS_ELSA_MC2_IEEE	{ NULL, NULL, NULL, NULL }
