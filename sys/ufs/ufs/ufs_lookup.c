@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.34 2001/10/26 05:56:10 lukem Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.35 2001/11/08 02:39:16 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,6 +39,9 @@
  *
  *	@(#)ufs_lookup.c	8.9 (Berkeley) 8/11/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.35 2001/11/08 02:39:16 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

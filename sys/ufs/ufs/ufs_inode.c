@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.27 2001/10/10 06:37:53 chs Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.28 2001/11/08 02:39:16 lukem Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -39,6 +39,9 @@
  *
  *	@(#)ufs_inode.c	8.9 (Berkeley) 5/14/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.28 2001/11/08 02:39:16 lukem Exp $");
 
 #include "opt_quota.h"
 
