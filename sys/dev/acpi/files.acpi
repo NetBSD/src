@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.5 2002/03/24 03:46:10 sommerfeld Exp $
+#	$NetBSD: files.acpi,v 1.6 2002/04/22 12:42:56 augustss Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -33,3 +33,7 @@ file	dev/acpi/acpi_acad.c		acpiacad
 device	acpibat
 attach	acpibat at acpi
 file	dev/acpi/acpi_bat.c		acpibat
+
+# Sony SPIC (jog dial etc.)
+attach	spic at acpi with spic_acpi
+file	dev/acpi/spic_acpi.c		spic_acpi
