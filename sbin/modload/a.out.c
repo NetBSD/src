@@ -1,4 +1,4 @@
-/*	$NetBSD: a.out.c,v 1.3 2002/10/07 02:33:55 simonb Exp $	*/
+/*	$NetBSD: a.out.c,v 1.4 2002/10/10 01:57:10 simonb Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: a.out.c,v 1.3 2002/10/07 02:33:55 simonb Exp $");
+__RCSID("$NetBSD: a.out.c,v 1.4 2002/10/10 01:57:10 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -68,7 +68,8 @@ a_out_linkcmd(char *buf,
 	      const char *entry,
 	      const char *outfile,
 	      const void *address,
-	      const char *object)
+	      const char *object,
+	      const char *ldscript)	/* XXX ignored on a.out */
 {
 	ssize_t n;
 

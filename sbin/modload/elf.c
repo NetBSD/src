@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.12 2002/10/07 02:33:55 simonb Exp $	*/
+/*	$NetBSD: elf.c,v 1.13 2002/10/10 01:57:10 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Johan Danielsson <joda@pdc.kth.se>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: elf.c,v 1.12 2002/10/07 02:33:55 simonb Exp $");
+__RCSID("$NetBSD: elf.c,v 1.13 2002/10/10 01:57:10 simonb Exp $");
 
 #include <sys/param.h>
 
@@ -318,10 +318,14 @@ elf_mod_sizes(int fd,
  * -Ttext	address to link text segment to in hex (assumes it's
  *		a page boundary)
  * -Tdata	address to link data segment to in hex
- * <target>	object file */
+ * <target>	object file
+ * -T ldscript	linker script (on some archs)
+ */
 
 #define	LINKCMD		"ld -R %s -e %s -o %s -Ttext %p %s"
 #define	LINKCMD2	"ld -R %s -e %s -o %s -Ttext %p -Tdata %p %s"
+#define	LINKSCRIPTCMD	"ld -T %s -R %s -e %s -o %s -Ttext %p %s"
+#define	LINKSCRIPTCMD2	"ld -T %s -R %s -e %s -o %s -Ttext %p -Tdata %p %s"
 
 /* make a link command; XXX if data_offset above is non-zero, force
    data address to be at start of text + offset */
@@ -332,17 +336,31 @@ elf_linkcmd(char *buf,
 	    const char *entry,
 	    const char *outfile,
 	    const void *address,
-	    const char *object)
+	    const char *object,
+	    const char *ldscript)
 {
 	ssize_t n;
 
-	if (data_offset == NULL)
-		n = snprintf(buf, len, LINKCMD, kernel, entry,
-			     outfile, address, object);
-	else
-		n = snprintf(buf, len, LINKCMD2, kernel, entry,
-			     outfile, address,
-			     (const char *)address + data_offset, object);
+	if (ldscript == NULL) {
+		if (data_offset == NULL)
+			n = snprintf(buf, len, LINKCMD, kernel, entry, 
+				     outfile, address, object);
+		else
+			n = snprintf(buf, len, LINKCMD2, kernel, entry, 
+				     outfile, address, 
+				     (const char *)address + data_offset,
+				     object);
+	} else {
+		if (data_offset == NULL)
+			n = snprintf(buf, len, LINKSCRIPTCMD, ldscript, kernel,
+				     entry, outfile, address, object);
+		else
+			n = snprintf(buf, len, LINKSCRIPTCMD2, ldscript, kernel,
+				     entry, outfile, address, 
+				     (const char *)address + data_offset,
+				     object);
+	}
+
 	if (n >= len)
 		errx(1, "link command longer than %lu bytes", (u_long)len);
 }

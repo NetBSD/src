@@ -1,4 +1,4 @@
-/*	$NetBSD: modload.h,v 1.4 2002/10/07 02:33:55 simonb Exp $	*/
+/*	$NetBSD: modload.h,v 1.5 2002/10/10 01:57:10 simonb Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -38,14 +38,14 @@
 int	elf_mod_sizes(int, size_t *, int *, struct lmc_resrv *, struct stat *);
 void	*elf_mod_load(int);
 void	elf_linkcmd(char *, size_t, const char *, const char *, const char *,
-		    const void *, const char *);
+		    const void *, const char *, const char *);
 void	elf_mod_symload(int);
 
 int	a_out_mod_sizes(int, size_t *, int *, struct lmc_resrv *,
 			struct stat *);
 void	*a_out_mod_load(int);
 void	a_out_linkcmd(char *, size_t, const char *, const char *, const char *,
-		      const void *, const char *);
+		      const void *, const char *, const char *);
 void	a_out_mod_symload(int);
 
 #ifndef USE_AOUT

@@ -1,4 +1,4 @@
-/*	$NetBSD: modload.c,v 1.34 2002/10/07 02:33:55 simonb Exp $	*/
+/*	$NetBSD: modload.c,v 1.35 2002/10/10 01:57:10 simonb Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: modload.c,v 1.34 2002/10/07 02:33:55 simonb Exp $");
+__RCSID("$NetBSD: modload.c,v 1.35 2002/10/10 01:57:10 simonb Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -79,13 +79,14 @@ prelink(const char *kernel,
 	const char *entry,
 	const char *outfile,
 	const void *address,
-	const char *object)
+	const char *object,
+	const char *ldscript)
 {
 	char cmdbuf[1024];
 	int error = 0;
 
-	linkcmd(cmdbuf, sizeof(cmdbuf),
-		kernel, entry, outfile, address, object);
+	linkcmd(cmdbuf, sizeof(cmdbuf), kernel, entry, outfile, address,
+	    object, ldscript);
 
 	if (debug)
 		fprintf(stderr, "%s\n", cmdbuf);
@@ -244,6 +245,7 @@ main(int argc, char **argv)
 	char *kname = _PATH_UNIX;
 	char *entry = DFLT_ENTRY;
 	char *post = NULL;
+	char *ldscript = NULL;
 	char *modobj;
 	char modout[80], *p;
 	struct stat stb;
@@ -252,7 +254,7 @@ main(int argc, char **argv)
 	void *modentry;	/* XXX */
 	int noready = 0, old = 0;
 
-	while ((c = getopt(argc, argv, "dnvsA:Se:p:o:")) != -1) {
+	while ((c = getopt(argc, argv, "dnvse:p:o:A:ST:")) != -1) {
 		switch (c) {
 		case 'd':
 			debug = 1;
@@ -272,6 +274,9 @@ main(int argc, char **argv)
 		case 'o':
 			out = optarg;
 			break;	/* output file */
+		case 'T':
+			ldscript = optarg;
+			break;	/* linker script */
 		case 'n':
 			noready = 1;
 			break;
@@ -298,6 +303,9 @@ main(int argc, char **argv)
 	modobj = argv[0];
 
 	atexit(cleanup);
+
+	if (ldscript == NULL && access(_PATH_LDSCRIPT, R_OK) == 0)
+		ldscript = _PATH_LDSCRIPT;
 
 	/*
 	 * Open the virtual device device driver for exclusive use (needed
@@ -343,7 +351,7 @@ main(int argc, char **argv)
 	/*
 	 * Prelink to get file size
 	 */
-	if (prelink(kname, entry, out, 0, modobj))
+	if (prelink(kname, entry, out, 0, modobj, ldscript))
 		errx(1, "can't prelink `%s' creating `%s'", modobj, out);
 	if (Sflag == 0)
 		fileopen |= OUTFILE_CREAT;
@@ -398,7 +406,7 @@ main(int argc, char **argv)
 	/*
 	 * Relink at kernel load address
 	 */
-	if (prelink(kname, entry, out, (void *)resrv.addr, modobj))
+	if (prelink(kname, entry, out, (void *)resrv.addr, modobj, ldscript))
 		errx(1, "can't link `%s' creating `%s' bound to %p",
 		     modobj, out, (void *)resrv.addr);
 
