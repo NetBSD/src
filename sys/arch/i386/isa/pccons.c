@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.93 1996/03/17 01:31:21 thorpej Exp $	*/
+/*	$NetBSD: pccons.c,v 1.94 1996/03/30 07:51:51 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -149,6 +149,8 @@ static unsigned int addr_6845 = MONO_BASE;
 
 char *sget __P((void));
 void sput __P((u_char *, int));
+void pc_xmode_on __P((void));
+void pc_xmode_off __P((void));
 
 void	pcstart();
 int	pcparam();
@@ -760,6 +762,7 @@ pccnputc(dev, c)
 }
 
 /* ARGSUSED */
+int
 pccngetc(dev)
 	dev_t dev;
 {
@@ -1634,6 +1637,7 @@ pcmmap(dev, offset, nprot)
 	return i386_btop(0xa0000 + offset);
 }
 
+void
 pc_xmode_on()
 {
 	struct trapframe *fp;
@@ -1655,6 +1659,7 @@ pc_xmode_on()
 #endif
 }
 
+void
 pc_xmode_off()
 {
 	struct trapframe *fp;
