@@ -1,4 +1,4 @@
-/*	$NetBSD: yppush_svc.c,v 1.2 1997/07/18 21:57:15 thorpej Exp $	*/
+/*	$NetBSD: yppush_svc.c,v 1.3 1997/10/07 14:59:37 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -87,7 +87,7 @@ void _msgout(msg)
 void
 yppush_xfrrespprog_1(rqstp, transp)
 	struct svc_req *rqstp;
-	register SVCXPRT *transp;
+	SVCXPRT *transp;
 {
 	union {
 		struct yppushresp_xfr yppushproc_xfrresp_1_arg;
