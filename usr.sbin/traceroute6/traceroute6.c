@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute6.c,v 1.9 2000/03/02 07:43:32 itojun Exp $	*/
+/*	$NetBSD: traceroute6.c,v 1.10 2000/03/12 02:42:43 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -78,7 +78,7 @@ static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: traceroute6.c,v 1.9 2000/03/02 07:43:32 itojun Exp $");
+__RCSID("$NetBSD: traceroute6.c,v 1.10 2000/03/12 02:42:43 itojun Exp $");
 #endif
 #endif
 
@@ -528,7 +528,7 @@ main(argc, argv)
 	datalen += sizeof(struct opacket);
 	outpacket = (struct opacket *)malloc((unsigned)datalen);
 	if (! outpacket) {
-		perror("traceroute6: malloc");
+		perror("malloc");
 		exit(1);
 	}
 	(void) bzero((char *)outpacket, datalen);
@@ -537,7 +537,7 @@ main(argc, argv)
 	 * Receive ICMP
 	 */
 	if ((rcvsock = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6)) < 0) {
-		perror("traceroute6: icmp socket");
+		perror("socket(ICMPv6)");
 		exit(5);
 	}
 	/* initialize msghdr for receiving packets */
@@ -621,13 +621,13 @@ main(argc, argv)
 	 * Send UDP
 	 */
 	if ((sndsock = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
-		perror("traceroute6: udp socket");
+		perror("socket(SOCK_DGRAM)");
 		exit(5);
 	}
 #ifdef SO_SNDBUF
 	if (setsockopt(sndsock, SOL_SOCKET, SO_SNDBUF, (char *)&datalen,
 		       sizeof(datalen)) < 0) {
-		perror("traceroute6: SO_SNDBUF");
+		perror("setsockopt(SO_SNDBUF)");
 		exit(6);
 	}
 #endif /* SO_SNDBUF */
@@ -725,7 +725,7 @@ main(argc, argv)
 	Src.sin6_family = AF_INET6;
 	Src.sin6_port = htons(ident);
 	if (bind(sndsock, (struct sockaddr *)src, sizeof(Src))  < 0){
-		perror ("traceroute6: bind:");
+		perror("bind");
 		exit (1);
 	}
 
