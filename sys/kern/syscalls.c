@@ -63,7 +63,7 @@ char *syscallnames[] = {
 	"setlogin",			/* 50 = setlogin */
 	"acct",			/* 51 = acct */
 	"sigpending",			/* 52 = sigpending */
-	"sigaltstack",			/* 53 = sigaltstack */
+	"compat_13_sigaltstack13",	/* 53 = compat_13 sigaltstack13 */
 	"ioctl",			/* 54 = ioctl */
 	"compat_12_oreboot",	/* 55 = compat_12 oreboot */
 	"revoke",			/* 56 = revoke */
@@ -356,4 +356,5 @@ char *syscallnames[] = {
 	"__stat13",			/* 278 = __stat13 */
 	"__fstat13",			/* 279 = __fstat13 */
 	"__lstat13",			/* 280 = __lstat13 */
+	"sigaltstack",			/* 281 = sigaltstack */
 };

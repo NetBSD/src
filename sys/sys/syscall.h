@@ -158,8 +158,7 @@
 /* syscall: "sigpending" ret: "int" args: */
 #define	SYS_sigpending	52
 
-/* syscall: "sigaltstack" ret: "int" args: "const struct sigaltstack *" "struct sigaltstack *" */
-#define	SYS_sigaltstack	53
+				/* 53 is compat_13 sigaltstack13 */
 
 /* syscall: "ioctl" ret: "int" args: "int" "u_long" "..." */
 #define	SYS_ioctl	54
@@ -598,4 +597,7 @@
 /* syscall: "__lstat13" ret: "int" args: "const char *" "struct stat *" */
 #define	SYS___lstat13	280
 
-#define	SYS_MAXSYSCALL	281
+/* syscall: "sigaltstack" ret: "int" args: "const struct sigaltstack *" "struct sigaltstack *" */
+#define	SYS_sigaltstack	281
+
+#define	SYS_MAXSYSCALL	282

@@ -229,9 +229,9 @@ struct sys_acct_args {
 	syscallarg(const char *) path;
 };
 
-struct sys_sigaltstack_args {
-	syscallarg(const struct sigaltstack *) nss;
-	syscallarg(struct sigaltstack *) oss;
+struct compat_13_sys_sigaltstack_args {
+	syscallarg(const struct sigaltstack13 *) nss;
+	syscallarg(struct sigaltstack13 *) oss;
 };
 
 struct sys_ioctl_args {
@@ -1048,6 +1048,11 @@ struct sys___lstat13_args {
 	syscallarg(struct stat *) ub;
 };
 
+struct sys_sigaltstack_args {
+	syscallarg(const struct sigaltstack *) nss;
+	syscallarg(struct sigaltstack *) oss;
+};
+
 /*
  * System call prototypes.
  */
@@ -1106,7 +1111,7 @@ int	sys___getlogin	__P((struct proc *, void *, register_t *));
 int	sys_setlogin	__P((struct proc *, void *, register_t *));
 int	sys_acct	__P((struct proc *, void *, register_t *));
 int	sys_sigpending	__P((struct proc *, void *, register_t *));
-int	sys_sigaltstack	__P((struct proc *, void *, register_t *));
+int	compat_13_sys_sigaltstack	__P((struct proc *, void *, register_t *));
 int	sys_ioctl	__P((struct proc *, void *, register_t *));
 int	compat_12_sys_reboot	__P((struct proc *, void *, register_t *));
 int	sys_revoke	__P((struct proc *, void *, register_t *));
@@ -1306,3 +1311,4 @@ int	sys___msync13	__P((struct proc *, void *, register_t *));
 int	sys___stat13	__P((struct proc *, void *, register_t *));
 int	sys___fstat13	__P((struct proc *, void *, register_t *));
 int	sys___lstat13	__P((struct proc *, void *, register_t *));
+int	sys_sigaltstack	__P((struct proc *, void *, register_t *));
