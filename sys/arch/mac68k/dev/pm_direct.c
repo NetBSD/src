@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.13 2000/04/05 07:29:18 scottr Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.14 2000/07/03 08:59:27 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -385,9 +385,9 @@ pm_receive_pm1(data)
  * Send data to PM for the PB1XX series
  */
 int
-pm_send_pm1(data, delay)
+pm_send_pm1(data, timo)
 	u_char data;
-	int delay;
+	int timo;
 {
 	int rval;
 
@@ -395,17 +395,19 @@ pm_send_pm1(data, delay)
 	via_reg(VIA2, 0x200) = data;
 
 	PM_SET_STATE_ACKOFF();
-	if (pm_wait_busy(0x400) != 0) {
+#if 0
+	if (pm_wait_busy(0x400) == 0) {
+#else
+	if (pm_wait_busy(timo) == 0) {
+#endif
 		PM_SET_STATE_ACKON();
-		via_reg(VIA2, vDirA) = 0x00;
-
-		return 0xffffcd36;
+		if (pm_wait_free(0x40) != 0)
+			rval = 0x0;
+		else
+			rval = 0xffffcd35;
+	} else {
+		rval = 0xffffcd36;
 	}
-
-	rval = 0x0;
-	PM_SET_STATE_ACKON();
-	if (pm_wait_free(0x40) == 0)
-		rval = 0xffffcd35;
 
 	PM_SET_STATE_ACKON();
 	via_reg(VIA2, vDirA) = 0x00;
@@ -668,19 +670,15 @@ pm_send_pm2(data)
 	PM_SR() = data;
 
 	PM_SET_STATE_ACKOFF();
-	rval = 0xffffcd36;
-	if (pm_wait_busy((int)ADBDelay*32) != 0) {
+	if (pm_wait_busy((int)ADBDelay*32) == 0) {
 		PM_SET_STATE_ACKON();
-
-		via_reg(VIA1, vACR) |= 0x1c;
-
-		return rval;		
+		if (pm_wait_free((int)ADBDelay*32) != 0)
+			rval = 0;
+		else
+			rval = 0xffffcd35;
+	} else {
+		rval = 0xffffcd36;
 	}
-
-	PM_SET_STATE_ACKON();
-	rval = 0xffffcd35;
-	if (pm_wait_free((int)ADBDelay*32) != 0)
-		rval = 0;
 
 	PM_SET_STATE_ACKON();
 	via_reg(VIA1, vACR) |= 0x1c;
