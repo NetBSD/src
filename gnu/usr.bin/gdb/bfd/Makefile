@@ -1,8 +1,11 @@
-# $Id: Makefile,v 1.6 1997/05/07 16:20:32 mycroft Exp $
+# $Id: Makefile,v 1.7 1997/05/30 13:43:14 cjs Exp $
 
 LIB=		bfd
 NOPROFILE=
 NOPIC=
+
+# this library is used only for the build
+NOINSTALL=1
 
 CFLAGS+=	-I$(.CURDIR)/arch/$(MACHINE_ARCH) -I$(.CURDIR) \
 		-I$(.CURDIR)/../include
@@ -19,8 +22,5 @@ SRCS=		archive.c archures.c bfd.c cache.c coffgen.c core.c ctor.c \
 
 targets.o archures.o: $(.CURDIR)/$(.TARGET:S/.o$/.c/)
 	${COMPILE.c} $(VECTORS) -o $(.TARGET) $(.IMPSRC)
-
-# only needed during build
-libinstall::
 
 .include <bsd.lib.mk>

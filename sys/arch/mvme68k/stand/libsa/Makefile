@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1997/05/07 16:20:42 mycroft Exp $
+#	$NetBSD: Makefile,v 1.4 1997/05/30 13:43:31 cjs Exp $
 
 LIB=sa
 
@@ -6,6 +6,9 @@ CLEANFILES+=SRT0.o
 
 NOPIC=nopic
 NOPROFILE=noprofile
+
+# this library is used only for the build
+NOINSTALL=1
 
 # Logically src/sys
 S=${.CURDIR}/../../../..
@@ -39,8 +42,5 @@ CFLAGS= -O2 ${COPTS} ${DEFS} ${DBG} ${INCL}
 .PATH:  ${DIR_SA} ${DIR_KERN} 
 
 all: libsa.a SRT0.o 
-
-# only needed during build
-libinstall::
 
 .include <bsd.lib.mk>
