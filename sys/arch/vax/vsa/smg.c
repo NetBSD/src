@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.24 2000/07/26 21:50:49 matt Exp $ */
+/*	$NetBSD: smg.c,v 1.25 2000/09/08 19:26:17 chs Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -441,7 +441,7 @@ smg_show_screen(v, cookie, waitok, cb, cbarg)
 	void *v;
 	void *cookie;
 	int waitok;
-	void (*cb)(void *, int, int));
+	void (*cb)(void *, int, int);
 	void *cbarg;
 {
 	struct smg_screen *ss = cookie;
