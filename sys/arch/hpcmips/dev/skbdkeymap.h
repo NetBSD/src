@@ -1,4 +1,4 @@
-/*	$NetBSD: skbdkeymap.h,v 1.2 1999/12/12 17:08:37 uch Exp $ */
+/*	$NetBSD: skbdkeymap.h,v 1.3 2000/01/07 15:19:12 uch Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -48,6 +48,26 @@ const u_int8_t default_keymap[] = {
 /*15 */	UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK
 };
 
+const u_int8_t tc5165_mobilon_keymap[] = {
+/*      0    1    2    3    4    5    6    7 */       
+/* 0 */	37 , 45 , 44 , UNK, 9  , 51 , 23 , UNK,
+/* 1 */	UNK, 56 , UNK, UNK, UNK, UNK, UNK, UNK,
+/* 2 */	UNK, UNK, 29 , UNK, UNK, UNK, UNK, UNK,
+/* 3 */	24 , 203, UNK, 38 , 10 , 27 , 13 , UNK,
+/* 4 */	40 , UNK, UNK, 39 , 26 , UNK, 11 , 12 ,
+/* 5 */	UNK, UNK, UNK, 53 , 25 , UNK, UNK, IGN,
+/* 6 */	208, UNK, UNK, UNK, 52 , UNK, 43 , 14 ,
+/* 7 */	205, 200, UNK, UNK, IGN, UNK, UNK, 28 ,
+/* 8 */	UNK, 41 , 59 , 15 , 2  , UNK, UNK, UNK,
+/* 9 */	63 , 64 , 1  , UNK, 65 , 16 , 17 , UNK,
+/*10 */	60 , UNK, 61 , 62 , 3  , UNK, UNK, UNK,
+/*11 */	UNK, UNK, UNK, 42 , 58 , UNK, UNK, UNK,
+/*12 */	47 , 33 , 46 , 5  , 4  , 18 , 19 , UNK,
+/*13 */	34 , 35 , 20 , 48 , 6  , 7  , 21 , 49 ,
+/*14 */	22 , 31 , 32 , 36 , 8  , 30 , 50 , 57 ,
+/*15 */	UNK, IGN, UNK, UNK, UNK, UNK, UNK, UNK
+};
+
 const u_int8_t tc5165_telios_jp_keymap[] = {
 /*      0    1    2    3    4    5    6    7 */       
 /* 0 */	58,  15,  IGN, 1,   IGN, IGN, IGN, IGN,
@@ -68,7 +88,7 @@ const u_int8_t tc5165_telios_jp_keymap[] = {
 /*15 */	IGN, IGN, IGN, IGN, IGN, IGN, 221, IGN
 };
 
-const u_int8_t p7416_compaq_c_jp_keymap[] = {
+const u_int8_t tc5165_compaq_c_jp_keymap[] = {
 /*      0    1    2    3    4    5    6    7 */       
 /* 0 */	38,  50,  49,  48,  47,  46,  45,  44, 
 /* 1 */	56,  IGN, IGN, IGN, IGN, IGN, IGN, IGN,
@@ -114,13 +134,16 @@ const struct skbd_keymap_table {
 	kbd_t		st_layout;
 } skbd_keymap_table[] = {
 	{{{PLATID_WILD, PLATID_MACH_COMPAQ_C}},
-	 p7416_compaq_c_jp_keymap, KB_JP},
+	 tc5165_compaq_c_jp_keymap, KB_JP},
 
 	{{{PLATID_WILD, PLATID_MACH_VICTOR_INTERLINK}},
 	 m38813c_keymap, KB_JP},
 
 	{{{PLATID_WILD, PLATID_MACH_SHARP_TELIOS}},
 	 tc5165_telios_jp_keymap, KB_JP},
+
+	{{{PLATID_WILD, PLATID_MACH_SHARP_MOBILON}},
+	 tc5165_mobilon_keymap, KB_US},
 
 	{{{0, 0}}, NULL, 0}
 };
