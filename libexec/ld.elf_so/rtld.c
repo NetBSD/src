@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.49 2002/05/26 00:02:07 wiz Exp $	 */
+/*	$NetBSD: rtld.c,v 1.50 2002/06/01 23:50:53 lukem Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -609,7 +609,7 @@ _rtld_unload_object(root, do_fini_funcs)
 					(*obj->fini)();
 
 		/* Remove the DAG from all objects' DAG lists. */
-		for (elm = SIMPLEQ_FIRST(&root->dagmembers); elm; elm = SIMPLEQ_NEXT(elm, link))
+		SIMPLEQ_FOREACH(elm, &root->dagmembers, link)
 			_rtld_objlist_remove(&elm->obj->dldags, root);
 
 		/* Remove the DAG from the RTLD_GLOBAL list. */
@@ -956,17 +956,7 @@ _rtld_objlist_remove(list, obj)
 	Objlist_Entry *elm;
 	
 	if ((elm = _rtld_objlist_find(list, obj)) != NULL) {
-		if ((list)->sqh_first == (elm)) {
-			SIMPLEQ_REMOVE_HEAD(list, elm, link);
-		}
-		else {
-			struct Struct_Objlist_Entry *curelm = (list)->sqh_first;
-			while (curelm->link.sqe_next != (elm))
-				curelm = curelm->link.sqe_next;
-			if((curelm->link.sqe_next =
-			    curelm->link.sqe_next->link.sqe_next) == NULL)
-				(list)->sqh_last = &(curelm)->link.sqe_next;
-		}
+		SIMPLEQ_REMOVE(list, elm, Struct_Objlist_Entry, link);
 		free(elm);
 	}
 }

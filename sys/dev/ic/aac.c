@@ -1,4 +1,4 @@
-/*	$NetBSD: aac.c,v 1.2 2002/05/31 17:36:29 thorpej Exp $	*/
+/*	$NetBSD: aac.c,v 1.3 2002/06/01 23:50:57 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.2 2002/05/31 17:36:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.3 2002/06/01 23:50:57 lukem Exp $");
 
 #include "locators.h"
 
@@ -850,7 +850,7 @@ aac_host_response(struct aac_softc *sc)
 	 * Deal with any completed commands.
 	 */
 	while ((ac = SIMPLEQ_FIRST(&sc->sc_ccb_complete)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_ccb_complete, ac, ac_chain);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_ccb_complete, ac_chain);
 		ac->ac_flags |= AAC_CCB_COMPLETED;
 
 		if (ac->ac_intr != NULL)
@@ -860,7 +860,7 @@ aac_host_response(struct aac_softc *sc)
 	/*
 	 * Try to submit more commands.
 	 */
-	if (SIMPLEQ_FIRST(&sc->sc_ccb_queue) != NULL)
+	if (! SIMPLEQ_EMPTY(&sc->sc_ccb_queue))
 		aac_ccb_enqueue(sc, NULL);
 }
 
@@ -988,7 +988,7 @@ aac_ccb_alloc(struct aac_softc *sc, int flags)
 	if (ac == NULL)
 		panic("aac_ccb_get: no free CCBS");
 #endif
-	SIMPLEQ_REMOVE_HEAD(&sc->sc_ccb_free, ac, ac_chain);
+	SIMPLEQ_REMOVE_HEAD(&sc->sc_ccb_free, ac_chain);
 	splx(s);
 
 	ac->ac_flags = flags;
@@ -1094,7 +1094,7 @@ aac_ccb_enqueue(struct aac_softc *sc, struct aac_ccb *ac)
 	while ((ac = SIMPLEQ_FIRST(&sc->sc_ccb_queue)) != NULL) {
 		if (aac_ccb_submit(sc, ac))
 			break;
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_ccb_queue, ac, ac_chain);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_ccb_queue, ac_chain);
 	}
 
 	splx(s);

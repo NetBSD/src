@@ -1,4 +1,4 @@
-/*	$NetBSD: load.c,v 1.15 2001/11/02 15:28:36 skrll Exp $	 */
+/*	$NetBSD: load.c,v 1.16 2002/06/01 23:50:53 lukem Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -77,7 +77,7 @@ _rtld_objlist_find(Objlist *list, const Obj_Entry *obj)
 {
 	Objlist_Entry *elm;
 
-	for (elm = SIMPLEQ_FIRST(list); elm; elm = SIMPLEQ_NEXT(elm, link)) {
+	SIMPLEQ_FOREACH(elm, list, link) {
 		if (elm->obj == obj)
 			return elm;
 	}

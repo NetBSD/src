@@ -1,4 +1,4 @@
-/*	$NetBSD: dklist.c,v 1.3 2001/09/29 17:04:10 jdolecek Exp $	*/
+/*	$NetBSD: dklist.c,v 1.4 2002/06/01 23:51:06 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dklist.c,v 1.3 2001/09/29 17:04:10 jdolecek Exp $");
+__RCSID("$NetBSD: dklist.c,v 1.4 2002/06/01 23:51:06 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -128,7 +128,7 @@ int
 mlx_disk_empty(void)
 {
 
-	return (SIMPLEQ_FIRST(&mlx_disks) == NULL);
+	return (SIMPLEQ_EMPTY(&mlx_disks));
 }
 
 void

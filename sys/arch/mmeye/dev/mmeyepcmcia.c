@@ -1,4 +1,4 @@
-/*	$NetBSD: mmeyepcmcia.c,v 1.1 2002/03/24 18:08:46 uch Exp $	*/
+/*	$NetBSD: mmeyepcmcia.c,v 1.2 2002/06/01 23:50:55 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -401,7 +401,7 @@ mmeyepcmcia_event_thread(void *arg)
 			    "mmeyepcmciass", hz/4);
 		}
 		s = splhigh();
-		SIMPLEQ_REMOVE_HEAD(&h->events, pe, pe_q);
+		SIMPLEQ_REMOVE_HEAD(&h->events, pe_q);
 		splx(s);
 
 		switch (pe->pe_type) {
@@ -417,9 +417,9 @@ mmeyepcmcia_event_thread(void *arg)
 				if ((pe2 = SIMPLEQ_NEXT(pe1, pe_q)) == NULL)
 					break;
 				if (pe2->pe_type == MMEYEPCMCIA_EVENT_INSERTION) {
-					SIMPLEQ_REMOVE_HEAD(&h->events, pe1, pe_q);
+					SIMPLEQ_REMOVE_HEAD(&h->events, pe_q);
 					free(pe1, M_TEMP);
-					SIMPLEQ_REMOVE_HEAD(&h->events, pe2, pe_q);
+					SIMPLEQ_REMOVE_HEAD(&h->events, pe_q);
 					free(pe2, M_TEMP);
 				}
 			}
@@ -441,9 +441,9 @@ mmeyepcmcia_event_thread(void *arg)
 				if ((pe2 = SIMPLEQ_NEXT(pe1, pe_q)) == NULL)
 					break;
 				if (pe2->pe_type == MMEYEPCMCIA_EVENT_REMOVAL) {
-					SIMPLEQ_REMOVE_HEAD(&h->events, pe1, pe_q);
+					SIMPLEQ_REMOVE_HEAD(&h->events, pe_q);
 					free(pe1, M_TEMP);
-					SIMPLEQ_REMOVE_HEAD(&h->events, pe2, pe_q);
+					SIMPLEQ_REMOVE_HEAD(&h->events, pe_q);
 					free(pe2, M_TEMP);
 				}
 			}

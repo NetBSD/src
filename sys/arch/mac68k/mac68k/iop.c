@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.4 2002/03/08 20:48:31 thorpej Exp $	*/
+/*	$NetBSD: iop.c,v 1.5 2002/06/01 23:50:55 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 Allen Briggs.
@@ -339,7 +339,7 @@ iop_message_sent(iop, chan)
 
 	msg = SIMPLEQ_FIRST(&iop->sendq[chan]);
 	msg->status = IOP_MSGSTAT_SENT;
-	SIMPLEQ_REMOVE_HEAD(&iop->sendq[chan], msg, iopm);
+	SIMPLEQ_REMOVE_HEAD(&iop->sendq[chan], iopm);
 
 	msg->handler(iop, msg);
 
@@ -363,7 +363,7 @@ receive_iop_message(iop, chan)
 
 	msg = SIMPLEQ_FIRST(&iop->recvq[chan]);
 	if (msg) {
-		SIMPLEQ_REMOVE_HEAD(&iop->recvq[chan], msg, iopm);
+		SIMPLEQ_REMOVE_HEAD(&iop->recvq[chan], iopm);
 	} else {
 		msg = &iop->unsolicited_msg;
 		msg->channel = chan;
