@@ -1,4 +1,4 @@
-/*	$NetBSD: tropicvar.h,v 1.5 2000/03/23 07:01:33 thorpej Exp $	*/
+/*	$NetBSD: tropicvar.h,v 1.6 2000/05/27 04:46:56 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -71,7 +71,6 @@ struct	tr_softc {
 	bus_space_handle_t sc_sramh;	/* handle for the shared ram area */
 	bus_space_handle_t sc_mmioh;	/* handle for the bios/mmio area */
 
-	struct callout sc_timeout_callout;
 	struct callout sc_init_callout;
 	struct callout sc_reinit_callout;
 
