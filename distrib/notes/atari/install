@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.14 2000/10/10 12:55:17 lukem Exp $
+.\"	$NetBSD: install,v 1.15 2000/10/19 06:29:27 leo Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -106,7 +106,7 @@ The programs in section
 if you don't
 want this.
 .It
-Setting AHDI partition id's on your root disk (using edahdi)
+Setting AHDI partition id's on your root disk (using ahdilabel)
 Because NetBSD imposes a special ordering in disk partitions it
 uses for root and swap. And because it wants to guard you against
 an unwanted demolition of partitions used by other systems, you
@@ -114,7 +114,8 @@ have to tell it what partitions it is allowed to use. You have
 to mark the partition you want to use as swap 'NBS' or 'SWP'
 and the other partitions as 'NBD'. Note that all the changes
 you make to the id's are reversable as long as you remember the
-original value.
+original value. Since NetBSD-1.5, ahdilabel is capable of creating or
+changing an AHDI compatible partitioning on the disk!
 In the partition-id editor, the partitions are shown in the order
 that AHDI created them. When you leave this editor and continue
 at item 4b, your changes to the id's do have consequences to the
