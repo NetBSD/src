@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)vmstat.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$Id: vmstat.c,v 1.14 1994/05/11 07:35:58 cgd Exp $";
+static char *rcsid = "$Id: vmstat.c,v 1.15 1994/05/13 08:41:12 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -780,10 +780,8 @@ domem()
 		for (i = 0, ks = &kmemstats[0]; i < M_LAST; i++, ks++) {
 			if (ks->ks_calls == 0)
 				continue;
-#ifdef notdef
 			if ((ks->ks_size & j) == 0)
 				continue;
-#endif
 			name = kmemnames[i] ? kmemnames[i] : "undefined";
 			len += 2 + strlen(name);
 			if (first)
@@ -804,13 +802,11 @@ domem()
 	(void)printf(
 	    "\nMemory statistics by type                        Type  Kern\n");
 	(void)printf(
-"      Type  InUse MemUse HighUse  Limit Requests Limit Limit Size(s)\n");
+"       Type  InUse MemUse HighUse  Limit Requests Limit Limit Size(s)\n");
 	for (i = 0, ks = &kmemstats[0]; i < M_LAST; i++, ks++) {
-#ifdef notdef
 		if (ks->ks_calls == 0)
 			continue;
-#endif
-		(void)printf("%11s%6ld%6ldK%7ldK%6ldK%9ld%5u%6u",
+		(void)printf("%12s%6ld%6ldK%7ldK%6ldK%9ld%5u%6u",
 		    kmemnames[i] ? kmemnames[i] : "undefined",
 		    ks->ks_inuse, (ks->ks_memuse + 1023) / 1024,
 		    (ks->ks_maxused + 1023) / 1024,
@@ -818,7 +814,6 @@ domem()
 		    ks->ks_limblocks, ks->ks_mapblocks);
 		first = 1;
 		for (j =  1 << MINBUCKET; j < 1 << (MINBUCKET + 16); j <<= 1) {
-#ifdef notdef
 			if ((ks->ks_size & j) == 0)
 				continue;
 			if (first)
@@ -826,7 +821,6 @@ domem()
 			else
 				printf(",%d", j);
 			first = 0;
-#endif
 		}
 		printf("\n");
 		totuse += ks->ks_memuse;
