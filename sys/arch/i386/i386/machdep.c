@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.88 1994/02/25 21:11:50 mycroft Exp $
+ *	$Id: machdep.c,v 1.89 1994/02/25 22:30:34 mycroft Exp $
  */
 
 #include <stddef.h>
@@ -537,15 +537,14 @@ sigreturn(p, uap, retval)
 #define null_sel(sel) \
 	(!ISLDT(sel) && IDXSEL(sel) == 0)
 
-	if (!valid_sel(context.sc_cs) ||
-	    !valid_sel(context.sc_ss) ||
+	if (!valid_sel(context.sc_cs) || !valid_sel(context.sc_ss) ||
 	    (!valid_sel(context.sc_ds) && !null_sel(context.sc_ds)) ||
 	    (!valid_sel(context.sc_es) && !null_sel(context.sc_es))) {
 		trapsignal(p, SIGBUS, T_PROTFLT);
 		return(EINVAL);
 	}
 
-#undef valid_ldt
+#undef valid_sel
 #undef null_sel
 
 	p->p_sigacts->ps_onstack = context.sc_onstack & 01;
