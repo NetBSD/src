@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.15 2004/06/28 09:13:12 fvdl Exp $	*/
+/*	$NetBSD: vector.S,v 1.16 2004/07/07 01:03:57 mycroft Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -290,10 +290,11 @@ IDTVEC(intr_/**/name/**/num)						;\
 	cmpl	%esi,%edi						;\
 	jle	7f							;\
 	pushl	IH_ARG(%ebx)						;\
+	movl	IH_FUN(%ebx),%eax					;\
 	movl	%edi,CPUVAR(ILEVEL)					;\
-	call	*IH_FUN(%ebx)		/* call it */			;\
-	addl	$4,%esp			/* toss the arg */		;\
 	movl	IH_NEXT(%ebx),%ebx	/* next handler in chain */	;\
+	call	*%eax			/* call it */			;\
+	addl	$4,%esp			/* toss the arg */		;\
 	testl	%ebx,%ebx						;\
 	jnz	6b							;\
 5:									\
