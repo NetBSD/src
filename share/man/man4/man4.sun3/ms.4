@@ -1,4 +1,4 @@
-.\"	$NetBSD: ms.4,v 1.4 1998/06/11 09:03:46 fair Exp $
+.\"	$NetBSD: ms.4,v 1.5 1998/09/29 02:46:36 jeremy Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -87,10 +87,20 @@ The argument is of type
 .Dv VUID_FIRM_EVENT
 is always returned.
 .El
+.Ss OPTIONS
+The mouse driver can be configured using the following kernel configuration
+file options.
+.Bl -tag
+.It Cd options SUN_MS_BPS=integer
+This option causes the kernel to communicate with the mouse using the serial
+baud rate
+.Va integer .
+It is useful for mice which do not communicate at 1200 baud.
+.El
 .Sh SEE ALSO
 .Xr kbd 4
 .Sh BUGS
 .Nm
 is hardwired to the built-in
 .Em zs1
-serial port at 1200 bps.
+serial port.
