@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.16 1994/11/03 22:05:08 mycroft Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.17 1994/11/03 22:09:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -160,10 +160,9 @@ struct cfdriver scsibuscd = {
 };
 
 int
-scsibusmatch(parent, cf, aux)
+scsibusmatch(parent, match, aux)
         struct device *parent;
-        void *match;
-        void *aux;
+        void *match, *aux;
 {
 
 	return 1;
@@ -323,8 +322,7 @@ scsi_probe_bus(bus, targ, lun)
 int
 scsi_targmatch(parent, match, aux)
 	struct device *parent;
-	void *match;
-	void *aux;
+	void *match, *aux;
 {
 	struct cfdata *cf = match;
 	struct scsi_link *sc_link = aux;
