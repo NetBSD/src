@@ -906,8 +906,8 @@ sparc64_elf_build_plt (output_bfd, contents, nentries)
 	  entry = contents + i*PLT_ENTRY_SIZE + j*4*6;
 	  ptr = contents + i*PLT_ENTRY_SIZE + block*4*6 + j*8;
 
-	  /* ldx [%o7 + ptr - entry+4], %g1 */
-	  ldx = 0xc25be000 | ((ptr - entry+4) & 0x1fff);
+	  /* ldx [%o7 + ptr - (entry+4)], %g1 */
+	  ldx = 0xc25be000 | ((ptr - (entry+4)) & 0x1fff);
 
 	  bfd_put_32 (output_bfd, 0x8a10000f, entry);    /* mov %o7,%g5 */
 	  bfd_put_32 (output_bfd, 0x40000002, entry+4);  /* call .+8 */
