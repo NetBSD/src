@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist.c,v 1.23 2004/03/27 14:09:10 simonb Exp $	*/
+/*	$NetBSD: nlist.c,v 1.24 2004/08/22 18:55:44 dsl Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: nlist.c,v 1.23 2004/03/27 14:09:10 simonb Exp $");
+__RCSID("$NetBSD: nlist.c,v 1.24 2004/08/22 18:55:44 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -153,13 +153,14 @@ donlist_sysctl(void)
 	int mib[2];
 	size_t size;
 	fixpt_t xccpu;
+	uint64_t memsize;
 
 	nlistread = 1;
 	mib[0] = CTL_HW;
-	mib[1] = HW_PHYSMEM;
-	size = sizeof(mempages);
-	if (sysctl(mib, 2, &mempages, &size, NULL, 0) == 0)
-		mempages /= getpagesize();
+	mib[1] = HW_PHYSMEM64;
+	size = sizeof(memsize);
+	if (sysctl(mib, 2, &memsize, &size, NULL, 0) == 0)
+		mempages = memsize / getpagesize();
 	else
 		mempages = 0;
 
