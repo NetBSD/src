@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3reg.h,v 1.8 1996/12/07 16:23:40 cjs Exp $	*/
+/*	$NetBSD: elink3reg.h,v 1.9 1996/12/29 10:21:48 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995 Herb Peyerl <hpeyerl@beer.org>
@@ -96,13 +96,17 @@
 #define EP_W2_ADDR_0		0x00
 
 /* 
- * Window 3 registers.  FIFO Management.
+ * Window 3 registers.  Configuration and FIFO Management.
  */
 	/* Read */
 #define EP_W3_FREE_TX		0x0c
 #define EP_W3_FREE_RX		0x0a
-	/* Read/Write */
-#define EP_W3_INTERNAL_CONFIG	0x00
+	/* Read/Write, at least on busmastering cards. */
+#define EP_W3_INTERNAL_CONFIG	0x00	/* 32 bits */
+#define EP_W3_OTHER_INT		0x04	/*  8 bits */
+#define EP_W3_PIO_RESERVED	0x05	/*  8 bits */
+#define EP_W3_MAC_CONTROL	0x06	/* 16 bits */
+#define EP_W3_RESET_OPTIONS	0x08	/* 16 bits */
 
 /*
  * Window 4 registers. Diagnostics.
@@ -181,6 +185,9 @@
 #define TX_RESET		(u_short) (0xb<<11)
 #define REQ_INTR		(u_short) (0xc<<11)
 
+/* busmastering-cards only? */
+#define STATUS_ENABLE		(u_short) (0xf<<11)
+
 /*
  * The following C_* acknowledge the various interrupts.
  * Some of them don't do anything.  See the manual.
@@ -223,10 +230,10 @@
  *
  *     15-13:  Window number(0-7).
  *     12:     Command_in_progress.
- *     11:     reserved.
+ *     11:     reserved / DMA in progress on busmaster cards.
  *     10:     reserved.
  *     9:      reserved.
- *     8:      reserved.
+ *     8:      reserved / DMA done on busmaster cards.
  *     7:      Update Statistics.
  *     6:      Interrupt Requested.
  *     5:      RX Early.
@@ -244,6 +251,8 @@
 #define S_RX_EARLY		(u_short) (0x0020)
 #define S_INT_RQD		(u_short) (0x0040)
 #define S_UPD_STATS		(u_short) (0x0080)
+#define S_DMA_DONE		(u_short) (0x0100)	/* DMA cards only */
+#define S_DMA_IN_PROGRESS	(u_short) (0x0800)	/* DMA cards only */
 #define S_COMMAND_IN_PROGRESS	(u_short) (0x1000)
 
 /*
@@ -295,6 +304,55 @@
 #define TXS_UNDERRUN		0x10
 #define TXS_MAX_COLLISION	0x08
 #define TXS_STATUS_OVERFLOW	0x04
+
+/*
+ * Internal Config and MAC control (Window 3)
+ * Window 3 / Port 0: 32-bit internal config register:
+ * bits  0-2:    fifo buffer ram  size
+ *         3:    ram width (word/byte)     (ro)
+ *       4-5:    ram speed
+ *       6-7:    rom size
+ *      8-15:   reserved
+ *          
+ *     16-17:   ram split (5:3, 3:1, or 1:1).
+ *     18-19:   reserved
+ *     20-22:   selected media type
+ *        21:   unused
+ *        24:  (nonvolatile) driver should autoselect media
+ *     25-31: reseerved
+ *
+ * The low-order 16 bits should generally not be changed by software.
+ * Offsets defined for two 16-bit words, to help out 16-bit busses.
+ */
+#define	CONFIG_RAMSIZE		(u_short) 0x0007
+#define	CONFIG_RAMSIZE_SHIFT	(u_short)      0
+
+#define	CONFIG_RAMWIDTH		(u_short) 0x0008
+#define	CONFIG_RAMWIDTH_SHIFT	(u_short)      3
+
+#define	CONFIG_RAMSPEED		(u_short) 0x0030
+#define	CONFIG_RAMSPEED_SHIFT	(u_short)      4
+#define	CONFIG_ROMSIZE		(u_short) 0x00c0
+#define	CONFIG_ROMSIZE_SHIFT	(u_short)      6
+
+/* Window 3/port 2 */
+#define	CONFIG_RAMSPLIT		(u_short) 0x0003
+#define	CONFIG_RAMSPLIT_SHIFT	(u_short)      0
+#define	CONFIG_MEDIAMASK	(u_short) 0x0070
+#define	CONFIG_MEDIAMASK_SHIFT	(u_short)      4
+
+#define CONFIG_MEDIA_10BASE_T	(u_short)   0x00
+#define CONFIG_MEDIA_AUI	(u_short)   0x01
+#define CONFIG_MEDIA_RESV1	(u_short)   0x02
+#define CONFIG_MEDIA_10BASE_2	(u_short)   0x03
+#define CONFIG_MEDIA_100BASE_TX	(u_short)   0x04
+#define CONFIG_MEDIA_100BASE_FX	(u_short)   0x05
+#define CONFIG_MEDIA_MII	(u_short)   0x06
+#define CONFIG_MEDIA_RESV2	(u_short)   0x07	/* 100Base-T4? */
+
+
+#define	CONFIG_AUTOSELECT	(u_short) 0x0100
+#define	CONFIG_AUTOSELECT_SHIFT	(u_short)      8
 
 /*
  * FIFO Status (Window 4)
