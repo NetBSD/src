@@ -1,4 +1,4 @@
-/*	$NetBSD: com6.c,v 1.3 1995/03/21 15:07:09 cgd Exp $	*/
+/*	$NetBSD: com6.c,v 1.4 1995/03/28 17:20:22 jtc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)com6.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: com6.c,v 1.3 1995/03/21 15:07:09 cgd Exp $";
+static char rcsid[] = "$NetBSD: com6.c,v 1.4 1995/03/28 17:20:22 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -99,9 +99,9 @@ live()
  * sigh -- this program thinks "time" is an int.  It's easier to not load
  * <time.h> than try and fix it.
  */
-#define KERNEL
+#define _KERNEL
 #include <sys/time.h>
-#undef KERNEL
+#undef _KERNEL
 
 post(ch)
 char ch;

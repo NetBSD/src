@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";*/
-static char *rcsid = "$Id: route.c,v 1.10 1994/05/13 08:08:22 mycroft Exp $";
+static char *rcsid = "$Id: route.c,v 1.11 1995/03/28 17:26:49 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -44,9 +44,9 @@ static char *rcsid = "$Id: route.c,v 1.10 1994/05/13 08:08:22 mycroft Exp $";
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
-#define  KERNEL
+#define _KERNEL
 #include <net/route.h>
-#undef KERNEL
+#undef _KERNEL
 #include <netinet/in.h>
 
 #include <netns/ns.h>
