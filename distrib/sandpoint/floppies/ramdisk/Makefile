@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.5 2002/04/12 01:15:15 briggs Exp $
+#	$NetBSD: Makefile,v 1.6 2002/04/12 14:05:46 lukem Exp $
 
-.include "${.CURDIR}/../../../Makefile.inc"
 .include <bsd.own.mk>
+.include "${_SRC_TOP_}/distrib/Makefile.inc"
 
 IMAGE=		ramdisk.fs
 IMAGESIZE=	2048k
