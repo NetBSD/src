@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.44 1999/06/20 06:08:15 cgd Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.45 1999/06/20 06:42:05 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -50,7 +50,7 @@ message install
 {install}
 
 message reinstall
-{re-install sets for}
+{reinstall sets for}
 
 message upgrade
 {upgrade}
@@ -97,7 +97,7 @@ any existing configuration info.  (Quit and choose `install' or
 `upgrade' if you want those options.)  You should have already done an
 `install' or `upgrade' before starting this procedure!
 
-Do you really want to re-install NetBSD distribution sets?
+Do you really want to reinstall NetBSD distribution sets?
 (This is your last warning before this procedure starts modifying your
 disks.)
 }
@@ -192,8 +192,8 @@ message sizechoice
 disklabel, or on some ports, for MBR slices). You must first choose a
 size unit to use.  Choosing megabytes will give partition sizes close
 to your choice, but aligned to cylinder boundaries. Choosing sectors
-will allow you to more acurately specify the sizes.  On modern ZBR disks,
-acutal cylinder size varies across the disk and there is little real
+will allow you to more accurately specify the sizes.  On modern ZBR disks,
+actual cylinder size varies across the disk and there is little real
 gain from cylinder alignment. On older disks, it is most efficient to
 choose partition sizes that are exact multiples of your actual
 cylinder size, which is %d sectors.
@@ -316,10 +316,10 @@ match your needs.
 message unpackcomplete
 {The upgrade to NetBSD-@@VERSION@@ is now complete.  You will
 now need to follow the instructions in the INSTALL document as to 
-what you need to do to get your system re-configured for your
+what you need to do to get your system reconfigured for your
 situation.  Your old /etc has been saved as /etc.old.
 
-At a minimum, you must edit rc.conf for your local environmment and change
+At a minimum, you must edit rc.conf for your local environment and change
 rc_configured=NO to rc_configured=YES or reboots will stop at single-user.
 }
 
@@ -329,9 +329,9 @@ message upgrcomplete
 complete.  Unpacking sets has clobbered the target /etc.  Any /etc.old
 saved by an earlier upgrade was not touched.  You will now need to
 follow the instructions in the INSTALL document to get your system
-re-configured for your situation.
+reconfigured for your situation.
 
-At a minimum, you must edit rc.conf for your local environmment and change
+At a minimum, you must edit rc.conf for your local environment and change
 rc_configured=NO to rc_configured=YES or reboots will stop at single-user.
 }
 
@@ -339,7 +339,7 @@ message distmedium
 {Your disk is now ready for installing the kernel and the distribution
 sets.  As noted in your INSTALL notes, you have several options.  For
 ftp or nfs, you must be connected to a network with access to the proper
-machines.  If you are not ready complete the installation at this time,
+machines.  If you are not ready to complete the installation at this time,
 you may select "none" and you will be returned to the main menu.  When
 you are ready at a later time, you may select "upgrade" from the main
 menu to complete the installation.
@@ -432,7 +432,7 @@ message badlocalsetdir
 
 message badsetdir 
 {%s does not contain the mandatory installation sets
-base.tgz and kern.tgz.  Are you sure you'e got the right directory?}
+base.tgz and kern.tgz.  Are you sure you've got the right directory?}
 
 message nonet
 {I can not find any network interfaces for use by NetBSD.  You will be
@@ -504,7 +504,7 @@ message ftperror_cont
 {Ftp detected an error.  Press <return> to continue.}
 
 message ftperror
-{Ftp could not retreive a file.  Do you want to try again?}
+{Ftp could not retrieve a file.  Do you want to try again?}
 
 message distdir
 {What directory shall I use for %s? }
@@ -533,7 +533,7 @@ You selected %d distribution sets.  I couldn't find %d of those sets at all.
 Of the %d that were found, %d unpacked without errors and %d with errors.
 
 The installation is aborted. Please recheck your distribution source
-and consider re-installing sets from the main menu.}
+and consider reinstalling sets from the main menu.}
 
 message abort
 {Your choices have made it impossible to install NetBSD.  Install aborted.
@@ -614,7 +614,7 @@ message makedev
 
 message badfs
 {It appears that %s%s is not a BSD file system or the fsck was
-not successfull.  The upgrade has been aborted.  (Error number %d.)
+not successful.  The upgrade has been aborted.  (Error number %d.)
 }
 
 message badmount
