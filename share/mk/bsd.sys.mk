@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.100 2003/10/19 03:21:18 lukem Exp $
+#	$NetBSD: bsd.sys.mk,v 1.101 2003/10/19 03:53:33 lukem Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -28,6 +28,7 @@ _MKMSGCREATE=	${_MKMSG} " create  ${.TARGET}"
 _MKMSGCOMPILE=	${_MKMSG} "compile  ${.TARGET}"
 _MKMSGFORMAT=	${_MKMSG} " format  ${.TARGET}"
 _MKMSGINSTALL=	${_MKMSG} "install  ${.TARGET}"
+_MKMSGINSTALL.m=${_MKMSG} "install "
 _MKMSGLINK=	${_MKMSG} "   link  ${.TARGET}"
 _MKMSGLINK.m=	${_MKMSG} "   link "
 _MKMSGLEX=	${_MKMSG} "    lex  ${.TARGET}"
