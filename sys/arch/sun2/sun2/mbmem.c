@@ -1,4 +1,4 @@
-/*	$NetBSD: mbmem.c,v 1.4 2001/05/03 03:13:03 fredette Exp $	*/
+/*	$NetBSD: mbmem.c,v 1.5 2001/06/14 15:54:18 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <uvm/uvm_extern.h>
 
-#define _SUN2_BUS_DMA_PRIVATE
+#define _SUN68K_BUS_DMA_PRIVATE
 #include <machine/autoconf.h>
 #include <machine/pmap.h>
 #include <machine/dvma.h>
@@ -77,7 +77,7 @@ static	int mbmem_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
 static	int mbmem_dmamap_load_raw __P((bus_dma_tag_t, bus_dmamap_t,
 		    		    bus_dma_segment_t *, int, bus_size_t, int));
 
-static struct sun2_bus_space_tag mbmem_space_tag = {
+static struct sun68k_bus_space_tag mbmem_space_tag = {
 	NULL,				/* cookie */
 	NULL,				/* parent bus tag */
 	_mbmem_bus_map,			/* bus_space_map */ 
@@ -85,10 +85,12 @@ static struct sun2_bus_space_tag mbmem_space_tag = {
 	NULL,				/* bus_space_subregion */
 	NULL,				/* bus_space_barrier */ 
 	mbmem_bus_mmap,			/* bus_space_mmap */ 
-	NULL				/* bus_intr_establish */
+	NULL,				/* bus_intr_establish */
+	NULL,				/* bus_space_peek_N */
+	NULL				/* bus_space_poke_N */
 }; 
 
-static struct sun2_bus_dma_tag mbmem_dma_tag;
+static struct sun68k_bus_dma_tag mbmem_dma_tag;
 
 static int
 mbmem_match(parent, cf, aux)
@@ -139,7 +141,7 @@ mbmem_attach(parent, self, aux)
 	/*
 	 * Prepare the skeleton attach arguments for our devices.
 	 * The values we give in the locators are indications to
-	 * sun2_bus_search about which locators must and must not
+	 * sun68k_bus_search about which locators must and must not
 	 * be defined.
 	 */
 	sub_ca = *ca;
@@ -151,12 +153,12 @@ mbmem_attach(parent, self, aux)
 	/* Find all `early' mbmem devices */
 	for (cpp = special; *cpp != NULL; cpp++) {
 		sub_ca.ca_name = *cpp;
-		(void)config_search(sun2_bus_search, self, &sub_ca);
+		(void)config_search(sun68k_bus_search, self, &sub_ca);
 	}
 
 	/* Find all other mbmem devices */
 	sub_ca.ca_name = NULL;
-	(void)config_search(sun2_bus_search, self, &sub_ca);
+	(void)config_search(sun68k_bus_search, self, &sub_ca);
 }
 
 int
