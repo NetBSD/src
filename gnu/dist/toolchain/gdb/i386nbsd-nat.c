@@ -149,16 +149,7 @@ store_inferior_registers (regno)
   ptrace (PT_SETFPREGS, inferior_pid,
 	  (PTRACE_ARG3_TYPE) &inferior_fpregisters, 0);
 }
-
-int
-i386nbsd_use_struct_convention (int gcc_p, struct type *type)
-{
-  return !(TYPE_LENGTH (type) == 1
-	   || TYPE_LENGTH (type) == 2
-	   || TYPE_LENGTH (type) == 4
-	   || TYPE_LENGTH (type) == 8);
-}
-
+
 struct md_core
 {
   struct reg intreg;
