@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.66 1994/03/10 20:05:32 mycroft Exp $
+ *	$Id: wd.c,v 1.67 1994/03/10 21:52:10 mycroft Exp $
  */
 
 #define	INSTRUMENT	/* instrumentation stuff by Brad Parker */
@@ -236,6 +236,8 @@ int
 wdprobe(dev)
 	struct isa_device *dev;
 {
+
+	return 1;
 }
 
 /*
