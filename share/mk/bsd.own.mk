@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.248 2002/01/03 22:45:26 tv Exp $
+#	$NetBSD: bsd.own.mk,v 1.249 2002/01/04 06:23:41 thorpej Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -18,6 +18,7 @@ NEED_OWN_INSTALL_TARGET?=	yes
 .if ${MACHINE_ARCH} == "alpha" || \
     ${MACHINE_ARCH} == "arm" || \
     ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "mipseb" || ${MACHINE_ARCH} == "mipsel" || \
     ${MACHINE_ARCH} == "powerpc" || \
     ${MACHINE_ARCH} == "sparc" || \
     ${MACHINE_ARCH} == "sparc64" || \
@@ -268,7 +269,7 @@ NOPROFILE=	# defined
 #
 .if ${MACHINE_ARCH} == "alpha" || \
     ${MACHINE_ARCH} == "arm" || \
-    ${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb" || \
+    ${MACHINE_ARCH} == "mipseb" || ${MACHINE_ARCH} == "mipsel" || \
     ${MACHINE_ARCH} == "powerpc" || \
     ${MACHINE_ARCH} == "sparc" || \
     ${MACHINE_ARCH} == "sparc64" || \
