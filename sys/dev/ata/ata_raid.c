@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid.c,v 1.8 2004/01/25 18:06:48 hannken Exp $	*/
+/*	$NetBSD: ata_raid.c,v 1.9 2004/09/13 12:55:47 drochner Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.8 2004/01/25 18:06:48 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.9 2004/09/13 12:55:47 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -75,7 +75,8 @@ static int	ataraid_match(struct device *, struct cfdata *, void *);
 static void	ataraid_attach(struct device *, struct device *, void *);
 static int	ataraid_print(void *, const char *);
 
-static int	ataraid_submatch(struct device *, struct cfdata *, void *);
+static int	ataraid_submatch(struct device *, struct cfdata *,
+				 const locdesc_t *, void *);
 
 static int	ata_raid_finalize(struct device *);
 
@@ -182,6 +183,8 @@ static void
 ataraid_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ataraid_array_info *aai;
+	int help[3];
+	locdesc_t *ldesc = (void *)help; /* XXX */
 
 	/*
 	 * We're a pseudo-device, so we get to announce our own
@@ -192,7 +195,12 @@ ataraid_attach(struct device *parent, struct device *self, void *aux)
 	    ataraid_array_info_count == 1 ? "" : "s");
 
 	TAILQ_FOREACH(aai, &ataraid_array_info_list, aai_list) {
-		config_found_sm(self, aai, ataraid_print, ataraid_submatch);
+		ldesc->len = 2;
+		ldesc->locs[ATARAIDCF_VENDTYPE] = aai->aai_type;
+		ldesc->locs[ATARAIDCF_UNIT] = aai->aai_arrayno;
+
+		config_found_sm_loc(self, "ataraid", NULL, aai,
+				    ataraid_print, ataraid_submatch);
 	}
 }
 
@@ -218,16 +226,16 @@ ataraid_print(void *aux, const char *pnp)
  *	Submatch routine for ATA RAID logical disks.
  */
 static int
-ataraid_submatch(struct device *parent, struct cfdata *cf, void *aux)
+ataraid_submatch(struct device *parent, struct cfdata *cf,
+		 const locdesc_t *ldesc, void *aux)
 {
-	struct ataraid_array_info *aai = aux;
 
 	if (cf->cf_loc[ATARAIDCF_VENDTYPE] != ATARAIDCF_VENDTYPE_DEFAULT &&
-	    cf->cf_loc[ATARAIDCF_VENDTYPE] != aai->aai_type)
+	    cf->cf_loc[ATARAIDCF_VENDTYPE] != ldesc->locs[ATARAIDCF_VENDTYPE])
 		return (0);
 
 	if (cf->cf_loc[ATARAIDCF_UNIT] != ATARAIDCF_UNIT_DEFAULT &&
-	    cf->cf_loc[ATARAIDCF_UNIT] != aai->aai_arrayno)
+	    cf->cf_loc[ATARAIDCF_UNIT] != ldesc->locs[ATARAIDCF_UNIT])
 		return (0);
 
 	return (config_match(parent, cf, aux));

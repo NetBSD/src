@@ -1,4 +1,4 @@
-/*	$NetBSD: aac.c,v 1.12 2004/08/24 00:53:28 thorpej Exp $	*/
+/*	$NetBSD: aac.c,v 1.13 2004/09/13 12:55:47 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -77,9 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.12 2004/08/24 00:53:28 thorpej Exp $");
-
-#include "locators.h"
+__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.13 2004/09/13 12:55:47 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,6 +94,8 @@ __KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.12 2004/08/24 00:53:28 thorpej Exp $");
 #include <dev/ic/aacvar.h>
 #include <dev/ic/aac_tables.h>
 
+#include "locators.h"
+
 static int	aac_check_firmware(struct aac_softc *);
 static void	aac_describe_controller(struct aac_softc *);
 static int	aac_dequeue_fib(struct aac_softc *, int, u_int32_t *,
@@ -111,7 +111,8 @@ static int	aac_sync_command(struct aac_softc *, u_int32_t, u_int32_t,
 				 u_int32_t, u_int32_t, u_int32_t, u_int32_t *);
 static int	aac_sync_fib(struct aac_softc *, u_int32_t, u_int32_t, void *,
 			     u_int16_t, void *, u_int16_t *);
-static int	aac_submatch(struct device *, struct cfdata *, void *);
+static int	aac_submatch(struct device *, struct cfdata *,
+			     const locdesc_t *, void *);
 
 #ifdef AAC_DEBUG
 static void	aac_print_fib(struct aac_softc *, struct aac_fib *, char *);
@@ -153,6 +154,8 @@ aac_attach(struct aac_softc *sc)
 	struct aac_ccb *ac;
 	struct aac_fib *fib;
 	bus_addr_t fibpa;
+	int help[2];
+	locdesc_t *ldesc = (void *)help; /* XXX */
 
 	SIMPLEQ_INIT(&sc->sc_ccb_free);
 	SIMPLEQ_INIT(&sc->sc_ccb_queue);
@@ -250,7 +253,12 @@ aac_attach(struct aac_softc *sc)
 		if (!sc->sc_hdr[i].hd_present)
 			continue;
 		aaca.aaca_unit = i;
-		config_found_sm(&sc->sc_dv, &aaca, aac_print, aac_submatch);
+
+		ldesc->len = 1;
+		ldesc->locs[AACCF_UNIT] = i;
+
+		config_found_sm_loc(&sc->sc_dv, "aac", ldesc, &aaca,
+				    aac_print, aac_submatch);
 	}
 
 	/*
@@ -302,14 +310,15 @@ aac_print(void *aux, const char *pnp)
  * Match a sub-device.
  */
 static int
-aac_submatch(struct device *parent, struct cfdata *cf, void *aux)
+aac_submatch(struct device *parent, struct cfdata *cf,
+	     const locdesc_t *ldesc, void *aux)
 {
 	struct aac_attach_args *aaca;
 
 	aaca = aux;
 
-	if (cf->aaccf_unit != AACCF_UNIT_DEFAULT &&
-	    cf->aaccf_unit != aaca->aaca_unit)
+	if (cf->cf_loc[AACCF_UNIT] != AACCF_UNIT_DEFAULT &&
+	    cf->cf_loc[AACCF_UNIT] != ldesc->locs[AACCF_UNIT])
 		return (0);
 
 	return (config_match(parent, cf, aux));

@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.58 2004/06/04 20:11:17 thorpej Exp $	*/
+/*	$NetBSD: twe.c,v 1.59 2004/09/13 12:55:48 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.58 2004/06/04 20:11:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.59 2004/09/13 12:55:48 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,6 +97,8 @@ __KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.58 2004/06/04 20:11:17 thorpej Exp $");
 #include <dev/pci/twevar.h>
 #include <dev/pci/tweio.h>
 
+#include "locators.h"
+
 #define	PCI_CBIO	0x10
 
 static int	twe_aen_get(struct twe_softc *, uint16_t *);
@@ -112,7 +114,8 @@ static int	twe_param_set(struct twe_softc *, int, int, size_t, void *);
 static void	twe_poll(struct twe_softc *);
 static int	twe_print(void *, const char *);
 static int	twe_reset(struct twe_softc *);
-static int	twe_submatch(struct device *, struct cfdata *, void *);
+static int	twe_submatch(struct device *, struct cfdata *,
+			     const locdesc_t *, void *);
 static int	twe_status_check(struct twe_softc *, u_int);
 static int	twe_status_wait(struct twe_softc *, u_int, int);
 static void	twe_describe_controller(struct twe_softc *);
@@ -513,6 +516,8 @@ twe_add_unit(struct twe_softc *sc, int unit)
 	int rv;
 	uint16_t dsize;
 	uint8_t newtype, newstripe;
+	int help[2];
+	locdesc_t *ldesc = (void *)help; /* XXX */
 
 	if (unit < 0 || unit >= TWE_MAX_UNITS)
 		return (EINVAL);
@@ -599,8 +604,12 @@ twe_add_unit(struct twe_softc *sc, int unit)
 	twe_recompute_openings(sc);
 
 	twea.twea_unit = unit;
-	td->td_dev = config_found_sm(&sc->sc_dv, &twea, twe_print,
-	    twe_submatch);
+
+	ldesc->len = 1;
+	ldesc->locs[TWECF_UNIT] = unit;
+
+	td->td_dev = config_found_sm_loc(&sc->sc_dv, "twe", NULL, &twea,
+					 twe_print, twe_submatch);
 
 	rv = 0;
  out:
@@ -735,14 +744,12 @@ twe_print(void *aux, const char *pnp)
  * Match a sub-device.
  */
 static int
-twe_submatch(struct device *parent, struct cfdata *cf, void *aux)
+twe_submatch(struct device *parent, struct cfdata *cf,
+	     const locdesc_t *ldesc, void *aux)
 {
-	struct twe_attach_args *twea;
 
-	twea = aux;
-
-	if (cf->tweacf_unit != TWECF_UNIT_DEFAULT &&
-	    cf->tweacf_unit != twea->twea_unit)
+	if (cf->cf_loc[TWECF_UNIT] != TWECF_UNIT_DEFAULT &&
+	    cf->cf_loc[TWECF_UNIT] != ldesc->locs[TWECF_UNIT])
 		return (0);
 
 	return (config_match(parent, cf, aux));
