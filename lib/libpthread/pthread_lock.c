@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_lock.c,v 1.1.2.3 2001/07/13 02:42:38 nathanw Exp $	*/
+/*	$NetBSD: pthread_lock.c,v 1.1.2.4 2001/07/20 21:23:53 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,13 +35,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <assert.h>
-#include <errno.h>
-#include <signal.h>
-#include <stdlib.h>
-#include <ucontext.h>
-#include <sys/queue.h>
 
 #include "pthread.h"
 #include "pthread_int.h"
