@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sun3,v 1.26 1995/01/24 05:45:54 gwr Exp $
+#	$NetBSD: Makefile.sun3,v 1.27 1995/03/01 05:07:02 gwr Exp $
 
 #
 # Makefile for NetBSD
@@ -26,10 +26,10 @@ XINC = -nostdinc -I../xinc
 AWK = nawk
 
 # DEBUG is set to -g by config if debugging is requested (config -g).
-# DEBUG=-g XXX
+DEBUG?=-O
 # PROF is set to -pg by config if profiling is requested (config -p).
 AS=	gas 
-CC=	gcc -O ${DEBUG}
+CC=	gcc -msoft-float ${DEBUG}
 CPP=	gcpp
 LD=	ld
 TOUCH=	touch -f -c
