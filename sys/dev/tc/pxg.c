@@ -1,7 +1,7 @@
-/* 	$NetBSD: pxg.c,v 1.2 2000/12/22 13:30:32 ad Exp $	*/
+/* 	$NetBSD: pxg.c,v 1.3 2001/01/09 16:04:03 ad Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -73,7 +73,7 @@
 #define	PXG_STIC_POLL_OFFSET	0x000000	/* STIC DMA poll space */
 #define	PXG_STAMP_OFFSET	0x0c0000	/* pixelstamp space on STIC */
 #define	PXG_STIC_OFFSET		0x180000	/* STIC registers */
-#define	PXG_SRAM_OFFSET		0x200000	/* i860 SRAM */
+#define	PXG_SRAM_OFFSET		0x200000	/* 128 or 256kB of SRAM */
 #define	PXG_HOST_INTR_OFFSET	0x280000	/* i860 host interrupt */
 #define	PXG_COPROC_INTR_OFFSET	0x2c0000	/* i860 coprocessor interrupt */
 #define	PXG_VDAC_OFFSET		0x300000	/* VDAC registers (bt459) */
@@ -216,15 +216,6 @@ pxg_init(struct stic_info *si)
 	else
 		si->si_depth = pxg_probe_planes(si);
 
-#ifdef notdef
-	/* Restart the co-processor and enable STIC interrupts */
-	slot[PXG_I860_START_OFFSET >> 2] = 1;
-	tc_syncbus();
-	DELAY(2000);
-	sr->sr_sticsr = STIC_INT_WE | STIC_INT_CLR;
-	tc_wmb();
-#endif
-
 	stic_init(si);
 }
 
@@ -295,12 +286,8 @@ pxg_intr(void *cookie)
 	tc_wmb();
 
 	/*
-	 * Since we disable the co-processor, we won't get to see vblank
-	 * interrupts (so in effect, this code is useless).
-	 *
-	 * Packet-done and error interrupts will only ever be seen by the
-	 * co-processor (although ULTRIX seems to think that they're posted
-	 * to us - more investigation required).
+	 * On the PXG, STIC interrupts are posted to the co-processor. 
+	 * Since we don't yet run it, this code is useless.
 	 */
 	if (it == 3) {
 		sr->sr_ipdvint = 
@@ -315,50 +302,12 @@ pxg_intr(void *cookie)
 static u_int32_t *
 pxg_pbuf_get(struct stic_info *si)
 {
-#ifdef notdef
-	volatile u_int32_t *poll;
-
-	/* Ask i860 which buffer to use */
-	poll = si->si_slotkva;
-	poll += PXG_COPROC_INTR_OFFSET >> 2;
-
-	/* 
-	 * XXX These should be defined as constants.  0x30 is "pause
-	 * coprocessor and interrupt."
-	 */
-	*poll = 0x30;
-	tc_wmb();
-
-	for (i = 1000000; i; i--) {
-		DELAY(4);
-		switch(j = *poll) {
-			case 2:
-				si->si_pbuf_select = STIC_PACKET_SIZE;
-				break;
-			case 1:
-				si->si_pbuf_select = 0;
-				break;
-			default:	
-				if (j == 0x30)
-					continue;
-				break;
-		}
-		break;
-	}
-	
-	if (j != 1 || j != 2) {
-		/* STIC has lost the plot, punish it */
-		stic_reset(si);
-		si->si_pbuf_select = 0;
-	}
-#else
 
 	/*
 	 * XXX We should be synchronizing with STIC_INT_P so that an ISR
 	 * doesn't blow us up.
 	 */
 	si->si_pbuf_select ^= STIC_PACKET_SIZE;
-#endif
 	return ((u_int32_t *)((caddr_t)si->si_buf + si->si_pbuf_select));
 }
 
@@ -381,18 +330,8 @@ pxg_pbuf_post(struct stic_info *si, u_int32_t *buf)
 	tc_syncbus();
 
 	for (c = STAMP_RETRIES; c != 0; c--) {
-		if (*poll == STAMP_OK) {
-#ifdef notdef
-			/* Tell the co-processor that we are done. */
-			poll = si->si_slotkva + (PXG_HOST_INTR_OFFSET >> 2);
-			poll[0] = 0;
-			tc_wmb();
-			poll[2] = 0;
-			tc_wmb();
-#endif
-				return (0);
-		}
-
+		if (*poll == STAMP_OK)
+			return (0);
 		DELAY(STAMP_DELAY);
 	}
 
