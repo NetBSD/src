@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.157 2003/11/04 10:33:15 dsl Exp $	*/
+/*	$NetBSD: locore.S,v 1.158 2004/03/04 20:17:01 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -936,10 +936,10 @@ XNESTED(MachFPTrap)
 	REG_S	a1, FRAME_CAUSE(a3)
 	REG_EPILOGUE
 
-	move	a2, a0				# code = instruction
+	move	a1, a0				# code = instruction
 	lw	a0, _C_LABEL(curlwp)		# get current process
-	jal	_C_LABEL(trapsignal)
-	li	a1, SIGILL
+	jal	_C_LABEL(mips_fpuillinst)
+	nop
 
 	b	FPReturn
 	nop
@@ -953,10 +953,13 @@ XNESTED(MachFPTrap)
 	REG_S	a1, FRAME_CAUSE(a3)
 	REG_EPILOGUE
 
-	move	a2, a0				# code = instruction
+	and	a0, t0, ~MIPS_FPU_EXCEPTION_BITS
+	ctc1	a0, MIPS_FPU_CSR
+
+	move	a1, t0				# FPU status
 	lw	a0, _C_LABEL(curlwp)		# get current process
-	jal	_C_LABEL(trapsignal)
-	li	a1, SIGFPE			# BDSLOT
+	jal	_C_LABEL(mips_fpuexcept)
+	nop
 
 	b	FPReturn
 	nop
