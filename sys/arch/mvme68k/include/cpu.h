@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.5 1996/09/12 05:01:47 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.6 1996/09/12 05:26:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -133,10 +133,45 @@ extern unsigned long allocate_sir();
 	{ "console_device", CTLTYPE_STRUCT }, \
 }
 
-#define	MHZ_16			2	/* XXX kill */
+#ifdef _KERNEL
+/*
+ * Associate MVME models with CPU types.
+ */
+
+/*
+ * MVME-147; 68030 CPU
+ */
+#if defined(MVME147) && !defined(M68030)
+#define M68030
+#endif
+
+/*
+ * MVME-162/166/167; 68040 CPU
+ */
+#if (defined(MVME162) || defined(MVME167)) && !defined(M68040)
+#define M68040
+#endif
+
+/*
+ * MVME-177 (what about 172?); 68060 CPU
+ */
+#if defined(MVME177) && !defined(M68060)
+#define M68060
+#endif
+#endif /* _KERNEL */
+
+/*
+ * Values for machineid; these match the Bug's values.
+ */
+#define	MVME_147	0x147
+#define	MVME_162	0x162
+#define	MVME_166	0x166
+#define	MVME_167	0x167
+#define	MVME_172	0x172
+#define	MVME_177	0x177
 
 #ifdef _KERNEL
-extern	int cpuspeed;			/* XXX kill */
+extern	int machineid;
 extern	char *intiobase, *intiolimit;
 
 struct frame;
