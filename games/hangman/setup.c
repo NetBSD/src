@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.8 1999/09/17 20:45:49 jsm Exp $	*/
+/*	$NetBSD: setup.c,v 1.9 2001/12/06 12:07:37 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: setup.c,v 1.8 1999/09/17 20:45:49 jsm Exp $");
+__RCSID("$NetBSD: setup.c,v 1.9 2001/12/06 12:07:37 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -57,7 +57,7 @@ setup()
 	static struct stat sbuf;
 
 	noecho();
-	crmode();
+	cbreak();
 
 	mvaddstr(PROMPTY, PROMPTX, "Guess:");
 	mvaddstr(GUESSY, GUESSX, "Guessed:");
