@@ -1,8 +1,8 @@
-#	$NetBSD: _mipsel.mk,v 1.3 1998/08/23 04:42:33 simonb Exp $
+#	$NetBSD: _mipsel.mk,v 1.4 1999/02/02 22:16:57 tv Exp $
 
 BFD_ARCH_SRCS=	cpu-mips.c \
-		elf32-mips.c elf32.c elf.c elflink.c ecofflink.c \
-		coff-mips.c ecoff.c \
+		elf32-mips.c elf32.c elf.c elflink.c dwarf2.c \
+		coff-mips.c ecoff.c ecofflink.c \
 		mips-dis.c mips-opc.c mips16-opc.c
 
 BFD_ARCH_DEFS=	-DARCH_mips \

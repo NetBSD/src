@@ -1,8 +1,8 @@
-#	$NetBSD: _m68k.mk,v 1.5 1998/08/23 20:57:45 frueauf Exp $
+#	$NetBSD: _m68k.mk,v 1.6 1999/02/02 22:16:57 tv Exp $
 
 BFD_ARCH_SRCS=	cpu-m68k.c \
 		m68knetbsd.c m68k4knetbsd.c sunos.c aout32.c \
-		elf32-m68k.c elf32.c elf.c elflink.c \
+		elf32-m68k.c elf32.c elf.c elflink.c dwarf2.c \
 		m68k-dis.c m68k-opc.c
 
 BFD_ARCH_DEFS=	-DARCH_m68k \
