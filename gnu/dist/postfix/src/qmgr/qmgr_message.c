@@ -460,7 +460,11 @@ static void qmgr_message_resolve(QMGR_MESSAGE *message)
 	 * every front-ent program.
 	 */
 	if ((at = strrchr(recipient->address, '@')) != 0
+#ifdef INET6
+	    && (at + 1)[strspn(at + 1, "[]0123456789.:abcdef")] != 0
+#else
 	    && (at + 1)[strspn(at + 1, "[]0123456789.")] != 0
+#endif
 	    && valid_hostname(at + 1, DONT_GRIPE) == 0) {
 	    qmgr_bounce_recipient(message, recipient,
 				  "bad host/domain syntax: \"%s\"", at + 1);

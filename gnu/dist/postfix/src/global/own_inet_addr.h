@@ -15,11 +15,18 @@
   * System library.
   */
 #include <netinet/in.h>
+#ifdef INET6
+#include <sys/socket.h>
+#endif
 
  /*
   * External interface.
   */
+#ifdef INET6
+extern int own_inet_addr(struct sockaddr *);
+#else
 extern int own_inet_addr(struct in_addr *);
+#endif
 extern struct INET_ADDR_LIST *own_inet_addr_list(void);
 extern struct INET_ADDR_LIST *own_inet_mask_list(void);
 

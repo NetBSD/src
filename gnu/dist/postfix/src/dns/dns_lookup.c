@@ -132,6 +132,9 @@ typedef struct DNS_REPLY {
 } DNS_REPLY;
 
 #define INET_ADDR_LEN	4		/* XXX */
+#ifdef INET6
+#define INET6_ADDR_LEN	16
+#endif
 
 /* dns_query - query name server and pre-parse the reply */
 
@@ -337,6 +340,19 @@ static DNS_RR *dns_get_rr(DNS_REPLY *reply, unsigned char *pos,
 	memcpy(temp, pos, fixed->length);
 	data_len = fixed->length;
 	break;
+#ifdef INET6
+    case T_AAAA:
+	if (fixed->length != INET6_ADDR_LEN) {
+	    msg_warn("extract_answer: bad IPv6 address length: %d", fixed->length);
+	    return (0);
+	}
+	if (fixed->length > sizeof(temp))
+	    msg_panic("dns_get_rr: length %d > DNS_NAME_LEN",
+		      fixed->length);
+	memcpy(temp, pos, fixed->length);
+	data_len = fixed->length;
+	break;
+#endif
     case T_TXT:
 	data_len = MIN2(pos[0] + 1, MIN2(fixed->length + 1, sizeof(temp)));
 	for (src = pos + 1, dst = (unsigned char *) (temp);

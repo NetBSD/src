@@ -90,6 +90,7 @@
 #include <mail_proto.h>
 #include <mail_params.h>
 #include <own_inet_addr.h>
+#include <wildcard_inet_addr.h>
 
 /* Local stuff. */
 
@@ -271,8 +272,13 @@ MASTER_SERV *get_master_ent()
     if (STR_SAME(transport, MASTER_XPORT_NAME_INET)) {
 	serv->type = MASTER_SERV_TYPE_INET;
 	if (strcasecmp(var_inet_interfaces, DEF_INET_INTERFACES) == 0) {
+#ifdef INET6
+	    serv->addr_list.inet = wildcard_inet_addr_list();
+	    serv->listen_fd_count = serv->addr_list.inet->used;
+#else
 	    serv->addr_list.inet = 0;		/* wild-card */
 	    serv->listen_fd_count = 1;
+#endif
 	} else {
 	    serv->addr_list.inet = own_inet_addr_list();	/* virtual */
 	    serv->listen_fd_count = serv->addr_list.inet->used;

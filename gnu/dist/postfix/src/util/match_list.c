@@ -107,7 +107,7 @@ static ARGV *match_list_parse(ARGV *list, char *string)
 		    list = match_list_parse(list, vstring_str(buf));
 	    if (vstream_fclose(fp))
 		msg_fatal("%s: read file %s: %m", myname, pattern);
-	} else if (strchr(pattern, ':') != 0) {	/* type:table */
+	} else if ((strchr(pattern, ']') == 0) && (strchr(pattern, ':') != 0)) {	/* type:table */
 	    for (cp = pattern; *cp == '!'; cp++)
 		 /* void */ ;
 	    if (dict_handle(pattern) == 0)

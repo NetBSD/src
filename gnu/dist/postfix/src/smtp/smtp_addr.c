@@ -111,18 +111,74 @@
 static void smtp_print_addr(char *what, DNS_RR *addr_list)
 {
     DNS_RR *addr;
-    struct in_addr in_addr;
+#ifdef INET6
+    SOCKADDR_SIZE salen;
+    struct sockaddr_storage ss;
+#else
+    struct sockaddr ss;
+#endif
+    struct sockaddr_in *sin;
+#ifdef INET6
+    struct sockaddr_in6 *sin6;
+    char   hbuf[NI_MAXHOST];
+#else
+    char   hbuf[sizeof("255.255.255.255") + 1];
+#endif
 
     msg_info("begin %s address list", what);
     for (addr = addr_list; addr; addr = addr->next) {
-	if (addr->data_len > sizeof(addr)) {
-	    msg_warn("skipping address length %d", addr->data_len);
-	} else {
-	    memcpy((char *) &in_addr, addr->data, sizeof(in_addr));
-	    msg_info("pref %4d host %s/%s",
-		     addr->pref, addr->name,
-		     inet_ntoa(in_addr));
+	if (addr->class != C_IN) {
+	    msg_warn("skipping unsupported address (class=%u)", addr->class);
+	    continue;
 	}
+	switch (addr->type) {
+	case T_A:
+	    if (addr->data_len != sizeof(sin->sin_addr)) {
+		msg_warn("skipping invalid address (AAAA, len=%u)",
+		    addr->data_len);
+		continue;
+	    }
+	    sin = (struct sockaddr_in *)&ss;
+	    memset(sin, 0, sizeof(*sin));
+	    sin->sin_family = AF_INET;
+#ifdef HAS_SA_LEN
+	    sin->sin_len = sizeof(*sin);
+#endif
+	    memcpy(&sin->sin_addr, addr->data, sizeof(sin->sin_addr));
+	    break;
+#ifdef INET6
+	case T_AAAA:
+	    if (addr->data_len != sizeof(sin6->sin6_addr)) {
+		msg_warn("skipping invalid address (AAAA, len=%u)",
+		    addr->data_len);
+		continue;
+	    }
+	    sin6 = (struct sockaddr_in6 *)&ss;
+	    memset(sin6, 0, sizeof(*sin6));
+	    sin6->sin6_family = AF_INET6;
+#ifdef HAS_SA_LEN
+	    sin6->sin6_len = sizeof(*sin6);
+#endif
+	    memcpy(&sin6->sin6_addr, addr->data, sizeof(sin6->sin6_addr));
+	    break;
+#endif
+	default:
+	    msg_warn("skipping unsupported address (type=%u)", addr->type);
+	    continue;
+	}
+
+#ifdef INET6
+#ifndef HAS_SA_LEN
+	salen = SA_LEN((struct sockaddr *)&ss);
+#else
+	salen = ((struct sockaddr *)&ss)->sa_len;
+#endif
+	(void)getnameinfo((struct sockaddr *)&ss, salen,
+	    hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST);
+#else
+	(void)inet_ntop(AF_INET, &sin->sin_addr, hbuf, sizeof(hbuf));
+#endif
+	msg_info("pref %4d host %s/%s", addr->pref, addr->name, hbuf);
     }
     msg_info("end %s address list", what);
 }
@@ -132,15 +188,23 @@ static void smtp_print_addr(char *what, DNS_RR *addr_list)
 static DNS_RR *smtp_addr_one(DNS_RR *addr_list, char *host, unsigned pref, VSTRING *why)
 {
     char   *myname = "smtp_addr_one";
+#ifndef INET6
     struct in_addr inaddr;
-    DNS_FIXED fixed;
     DNS_RR *addr = 0;
     DNS_RR *rr;
     struct hostent *hp;
+#else
+    struct addrinfo hints, *res0, *res;
+    int error = -1;
+    char *addr;
+    size_t addrlen;
+#endif
+    DNS_FIXED fixed;
 
     if (msg_verbose)
 	msg_info("%s: host %s", myname, host);
 
+#ifndef INET6
     /*
      * Interpret a numerical name as an address.
      */
@@ -193,6 +257,48 @@ static DNS_RR *smtp_addr_one(DNS_RR *addr_list, char *host, unsigned pref, VSTRI
 	smtp_errno = SMTP_FAIL;
 	break;
     }
+#else
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = PF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    error = getaddrinfo(host, NULL, &hints, &res0);
+    if (error) {
+	switch (error) {
+	case EAI_AGAIN:
+	    smtp_errno = SMTP_RETRY;
+	    break;
+	default:
+	    vstring_sprintf(why, "[%s]: %s",host,gai_strerror(error));
+	    smtp_errno = SMTP_FAIL;
+	    break;
+	}
+	return (addr_list);
+    }
+    for (res = res0; res; res = res->ai_next) {
+	memset((char *) &fixed, 0, sizeof(fixed));
+	switch(res->ai_family) {
+	case AF_INET6:
+	    /* XXX not scope friendly */
+	    fixed.type = T_AAAA;
+	    addr = (char *)&((struct sockaddr_in6 *)res->ai_addr)->sin6_addr;
+	    addrlen = sizeof(struct in6_addr);
+	    break;
+	case AF_INET:
+	    fixed.type = T_A;
+	    addr = (char *)&((struct sockaddr_in *)res->ai_addr)->sin_addr;
+	    addrlen = sizeof(struct in_addr);
+	    break;
+	default:
+	    msg_warn("%s: unknown address family %d for %s",
+	        myname, res->ai_family, host);
+	    continue;
+	}
+	addr_list = dns_rr_append(addr_list,
+	    dns_rr_create(host, &fixed, pref, addr, addrlen));
+    }
+    if (res0)
+	freeaddrinfo(res0);
+#endif
     return (addr_list);
 }
 
@@ -223,6 +329,9 @@ static DNS_RR *smtp_find_self(DNS_RR *addr_list)
     INET_ADDR_LIST *self;
     DNS_RR *addr;
     int     i;
+#ifdef INET6
+    struct sockaddr *sa;
+#endif
 
     /*
      * Find the first address that lists any address that this mail system is
@@ -232,12 +341,36 @@ static DNS_RR *smtp_find_self(DNS_RR *addr_list)
 
     self = own_inet_addr_list();
     for (addr = addr_list; addr; addr = addr->next) {
-	for (i = 0; i < self->used; i++)
+	for (i = 0; i < self->used; i++) {
+#ifdef INET6
+	    sa = (struct sockaddr *)&self->addrs[i];
+	    switch(addr->type) {
+	    case T_AAAA:
+		/* XXX scope */
+		if (sa->sa_family != AF_INET6)
+		    break;
+		if (memcmp(&((struct sockaddr_in6 *)sa)->sin6_addr,
+			addr->data, sizeof(struct in6_addr)) == 0) {
+		    return(addr);
+		}
+		break;
+	    case T_A:
+		if (sa->sa_family != AF_INET)
+		    break;
+		if (memcmp(&((struct sockaddr_in *)sa)->sin_addr,
+			addr->data, sizeof(struct in_addr)) == 0) {
+		    return(addr);
+		}
+		break;
+	    }
+#else
 	    if (INADDRP(addr->data)->s_addr == self->addrs[i].s_addr) {
 		if (msg_verbose)
 		    msg_info("%s: found at pref %d", myname, addr->pref);
 		return (addr);
 	    }
+#endif
+	}
     }
 
     /*

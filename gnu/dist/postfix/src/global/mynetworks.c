@@ -50,6 +50,11 @@
 #include <vstring.h>
 #include <inet_addr_list.h>
 #include <name_mask.h>
+#ifdef INET6
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h>
+#endif
 
 /* Global library. */
 
@@ -75,6 +80,9 @@ static NAME_MASK mask_styles[] = {
 const char *mynetworks(void)
 {
     static VSTRING *result;
+#ifdef INET6
+    char hbuf[NI_MAXHOST];
+#endif
 
     if (result == 0) {
 	char   *myname = "mynetworks";
@@ -87,6 +95,10 @@ const char *mynetworks(void)
 	int     junk;
 	int     i;
 	int     mask_style;
+#ifdef INET6
+	struct sockaddr *sa;
+	SOCKADDR_SIZE salen;
+#endif
 
 	mask_style = name_mask("mynetworks mask style", mask_styles,
 			       var_mynetworks_style);
@@ -96,8 +108,23 @@ const char *mynetworks(void)
 	my_mask_list = own_inet_mask_list();
 
 	for (i = 0; i < my_addr_list->used; i++) {
+#ifdef INET6
+	    sa = (struct sockaddr *)&my_addr_list->addrs[i];
+#ifndef HAS_SA_LEN					
+	    salen = SA_LEN((struct sockaddr *)&sa);
+#else					
+	    salen = sa->sa_len;
+#endif					
+	    if (sa->sa_family != AF_INET) {
+	        vstring_sprintf_append(result, "XAATODOmynetworks ");
+		continue;
+	    }
+	    addr = ntohl(((struct sockaddr_in *)sa)->sin_addr.s_addr);
+	    mask = ntohl(((struct sockaddr_in *)&my_mask_list->addrs[i])->sin_addr.s_addr);
+#else
 	    addr = ntohl(my_addr_list->addrs[i].s_addr);
 	    mask = ntohl(my_mask_list->addrs[i].s_addr);
+#endif
 
 	    switch (mask_style) {
 
@@ -119,8 +146,15 @@ const char *mynetworks(void)
 		    mask = IN_CLASSD_NET;
 		    shift = IN_CLASSD_NSHIFT;
 		} else {
+#ifdef INET6
+		    if (getnameinfo(sa, salen, hbuf, sizeof(hbuf), NULL, 0,
+			    NI_NUMERICHOST))
+			strncpy(hbuf, "???", sizeof(hbuf));
+		    msg_fatal("%s: bad address class: %s", myname, hbuf);
+#else
 		    msg_fatal("%s: bad address class: %s",
 			      myname, inet_ntoa(my_addr_list->addrs[i]));
+#endif
 		}
 		break;
 

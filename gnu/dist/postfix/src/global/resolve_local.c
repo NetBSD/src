@@ -42,6 +42,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string.h>
+#include <netdb.h>
 
 #ifndef INADDR_NONE
 #define INADDR_NONE 0xffffffff
@@ -78,7 +79,12 @@ int     resolve_local(const char *addr)
 {
     char   *saved_addr = mystrdup(addr);
     char   *dest;
+#ifdef INET6
+    struct addrinfo hints, *res, *res0;
+    int error;
+#else
     struct in_addr ipaddr;
+#endif
     int     len;
 
 #define RETURN(x) { myfree(saved_addr); return(x); }
@@ -108,9 +114,25 @@ int     resolve_local(const char *addr)
     if (*dest == '[' && dest[len - 1] == ']') {
 	dest++;
 	dest[len -= 2] = 0;
+#ifdef INET6
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = PF_UNSPEC;
+	hints.ai_socktype = SOCK_DGRAM;
+	error = getaddrinfo(dest, NULL, &hints, &res0);
+	if (!error) {
+	    for (res = res0; res; res = res->ai_next) {
+		if (own_inet_addr(res->ai_addr)) {
+		    freeaddrinfo(res0);
+		    RETURN(1);
+		}
+	    }
+	    freeaddrinfo(res0);
+	}
+#else
 	if ((ipaddr.s_addr = inet_addr(dest)) != INADDR_NONE
 	    && own_inet_addr(&ipaddr))
 	    RETURN(1);
+#endif
     }
 
     /*

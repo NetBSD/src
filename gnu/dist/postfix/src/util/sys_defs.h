@@ -67,6 +67,10 @@
 #define DEF_MAILBOX_LOCK "flock, dotlock"
 #endif
 
+#if (defined(__NetBSD_Version__) && __NetBSD_Version__ >= 105000000)
+#define HAVE_GETIFADDRS
+#endif
+
  /*
   * UNIX on MAC.
   */

@@ -39,6 +39,10 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string.h>
+#ifdef INET6
+#include <sys/socket.h>
+#include <netdb.h>
+#endif
 
 #ifdef STRCASECMP_IN_STRINGS_H
 #include <strings.h>
@@ -113,15 +117,39 @@ static void own_inet_addr_init(INET_ADDR_LIST *addr_list,
 	    msg_fatal("could not find any active network interfaces");
 	for (nvirtual = 0; nvirtual < addr_list->used; nvirtual++) {
 	    for (nlocal = 0; /* see below */ ; nlocal++) {
-		if (nlocal >= local_addrs.used)
+		if (nlocal >= local_addrs.used) {
+#ifdef INET6
+		    char hbuf[NI_MAXHOST];
+		    if (getnameinfo((struct sockaddr *)&addr_list->addrs[nvirtual],
+		        addr_list->addrs[nvirtual].ss_len, hbuf,
+		        sizeof(hbuf), NULL, 0, NI_NUMERICHOST) != 0)
+			strncpy(hbuf, "???", sizeof(hbuf));
+		    msg_fatal("parameter %s: no local interface found for %s",
+			      VAR_INET_INTERFACES, hbuf);
+#else
 		    msg_fatal("parameter %s: no local interface found for %s",
 			      VAR_INET_INTERFACES,
 			      inet_ntoa(addr_list->addrs[nvirtual]));
+#endif
+		}
+#ifdef INET6
+		if (addr_list->addrs[nvirtual].ss_family == 
+		    local_addrs.addrs[nlocal].ss_family &&
+		    addr_list->addrs[nvirtual].ss_len == 
+		    local_addrs.addrs[nlocal].ss_len &&
+		    memcmp(&addr_list->addrs[nvirtual],
+		    &local_addrs.addrs[nlocal],
+		    local_addrs.addrs[nlocal].ss_len) == 0) {
+		    inet_addr_list_append(mask_list, (struct sockaddr *)&local_masks.addrs[nlocal]);
+		    break;
+		}
+#else
 		if (addr_list->addrs[nvirtual].s_addr
 		    == local_addrs.addrs[nlocal].s_addr) {
 		    inet_addr_list_append(mask_list, &local_masks.addrs[nlocal]);
 		    break;
 		}
+#endif
 	    }
 	}
 	inet_addr_list_free(&local_addrs);
@@ -131,6 +159,42 @@ static void own_inet_addr_init(INET_ADDR_LIST *addr_list,
 
 /* own_inet_addr - is this my own internet address */
 
+#ifdef INET6
+int     own_inet_addr(struct sockaddr * addr)
+{
+    int     i;
+    char *p, *q;
+    int l;
+    struct sockaddr *sa;
+
+    if (addr_list.used == 0)
+	own_inet_addr_init(&addr_list, &mask_list);
+
+    for (i = 0; i < addr_list.used; i++) {
+	sa = (struct sockaddr *)&addr_list.addrs[i];
+	if (addr->sa_family != sa->sa_family)
+	    continue;
+	switch (addr->sa_family) {
+	case AF_INET:
+	    p = (char *)&((struct sockaddr_in *)addr)->sin_addr;
+	    q = (char *)&((struct sockaddr_in *)&addr_list.addrs[i])->sin_addr;
+	    l = sizeof(struct in_addr);
+	    break;
+	case AF_INET6:
+	    /* XXX scope */
+	    p = (char *)&((struct sockaddr_in6 *)addr)->sin6_addr;
+	    q = (char *)&((struct sockaddr_in6 *)&addr_list.addrs[i])->sin6_addr;
+	    l = sizeof(struct in6_addr);
+	    break;
+	default:
+	    continue;
+	}
+	if (memcmp(p, q, l) == 0)
+	    return (1);
+    }
+    return (0);
+}
+#else
 int     own_inet_addr(struct in_addr * addr)
 {
     int     i;
@@ -141,8 +205,8 @@ int     own_inet_addr(struct in_addr * addr)
     for (i = 0; i < addr_list.used; i++)
 	if (addr->s_addr == addr_list.addrs[i].s_addr)
 	    return (1);
-    return (0);
 }
+#endif
 
 /* own_inet_addr_list - return list of addresses */
 

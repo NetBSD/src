@@ -52,6 +52,21 @@ ARFL=rv
 SYSTEM=`(uname -s) 2>/dev/null`
 RELEASE=`(uname -r) 2>/dev/null`
 VERSION=`(uname -v) 2>/dev/null`
+if test -f /usr/include/netinet6/in6.h; then
+	grep __KAME__ /usr/include/netinet6/in6.h 2>&1 >/dev/null
+	if $?; then
+		INET6=
+	else
+		if [ -f /usr/local/v6/lib/libinet6.a ]; then
+			INET6=kame
+		else
+			INET6=kame-merged
+		fi
+	fi
+fi
+if [ -z "$INET6" -a -f /usr/include/netinet/ip6.h -a -f /usr/include/linux/icmpv6.h ]; then
+	INET6=linux
+fi
 
 case "$VERSION" in
  dcosx*) SYSTEM=$VERSION;;
@@ -265,6 +280,21 @@ case "$CC" in
 esac
 
 : ${CC='gcc $(WARN)'} ${OPT='-O'} ${DEBUG='-g'} ${AWK=awk}
+
+case "$INET6" in
+kame)
+	CCARGS="$CCARGS -DINET6 -D__ss_family=ss_family -D__ss_len=ss_len"
+	if test -f /usr/local/v6/lib/libinet6.a; then
+		SYSLIBS="$SYSLIBS -L/usr/local/v6/lib -linet6"
+	fi
+	;;
+kame-merged)
+	CCARGS="$CCARGS -DINET6 -D__ss_family=ss_family -D__ss_len=ss_len"
+	;;
+linux)
+	CCARGS="$CCARGS -DINET6"
+	;;
+esac
 
 export SYSTYPE AR ARFL RANLIB SYSLIBS CC OPT DEBUG AWK OPTS
 

@@ -51,6 +51,11 @@
 #include <sys_defs.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#ifdef INET6
+#if (! __GLIBC__ >= 2 && __GLIBC_MINOR__ >=1 )
+#include <netinet6/in6.h>
+#endif
+#endif
 #include <arpa/inet.h>
 #include <netdb.h>
 #ifndef MAXHOSTNAMELEN
@@ -79,33 +84,96 @@
 
 int     inet_listen(const char *addr, int backlog, int block_mode)
 {
+#ifdef INET6
+    struct addrinfo *res, *res0, hints;
+    int error;
+#else
+    struct ai {
+	int ai_family;
+	int ai_socktype;
+	int ai_protocol;
+	struct sockaddr *ai_addr;
+	SOCKADDR_SIZE ai_addrlen;
+	struct ai *ai_next;
+    } *res, *res0, resbody;
     struct sockaddr_in sin;
+#endif
     int     sock;
     int     t = 1;
     char   *buf;
     char   *host;
     char   *port;
+#ifdef INET6
+    char hbuf[NI_MAXHOST], pbuf[NI_MAXSERV];
+#else
+    char hbuf[sizeof("255.255.255.255") + 1];
+    char pbuf[sizeof("255.255.255.255") + 1];
+#endif
+    char *cause = "unknown";
 
     /*
      * Translate address information to internal form.
      */
     buf = inet_parse(addr, &host, &port);
-    memset((char *) &sin, 0, sizeof(sin));
+#ifdef INET6
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_flags = AI_PASSIVE;
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    error = getaddrinfo(*host ? host : NULL, *port ? port : "0", &hints, &res0);
+    if (error) {
+	msg_fatal("getaddrinfo: %s", gai_strerror(error));
+    }
+    myfree(buf);
+#else
+    memset(&sin, 0, sizeof(sin));
     sin.sin_family = AF_INET;
+#ifdef HAS_SA_LEN
+    sin.sin_len = sizeof(sin);
+#endif
     sin.sin_port = find_inet_port(port, "tcp");
     sin.sin_addr.s_addr = (*host ? find_inet_addr(host) : INADDR_ANY);
-    myfree(buf);
 
-    /*
-     * Create a listener socket.
-     */
-    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-	msg_fatal("socket: %m");
-    if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *) &t, sizeof(t)) < 0)
-	msg_fatal("setsockopt: %m");
-    if (bind(sock, (struct sockaddr *) & sin, sizeof(sin)) < 0)
-	msg_fatal("bind %s port %d: %m", sin.sin_addr.s_addr == INADDR_ANY ?
-	       "INADDR_ANY" : inet_ntoa(sin.sin_addr), ntohs(sin.sin_port));
+    memset(&resbody, 0, sizeof(resbody)); 
+    resbody.ai_socktype = SOCK_STREAM;
+    resbody.ai_family = AF_INET;
+    resbody.ai_addr = (struct sockaddr *)&sin;
+    resbody.ai_addrlen = sizeof(sin);
+
+    res0 = &resbody;
+#endif
+
+    sock = -1;
+    for (res = res0; res; res = res->ai_next) {
+	if ((res->ai_family != AF_INET) && (res->ai_family != AF_INET6))
+	    continue;
+
+	/*
+	 * Create a listener socket.
+	 */
+	if ((sock = socket(res->ai_family, res->ai_socktype, 0)) < 0) {
+	    cause = "socket";
+	    continue;
+	}
+	if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *) &t, sizeof(t)) < 0) {
+	    cause = "setsockopt";
+	    close(sock);
+	    sock = -1;
+	    continue;
+	}
+	if (bind(sock, res->ai_addr, res->ai_addrlen) < 0) {
+	    cause = "bind";
+	    close(sock);
+	    sock = -1;
+	    continue;
+	}
+	break;
+    }
+    if (sock < 0)
+	msg_fatal("%s: %m", cause);
+#ifdef INET6
+    freeaddrinfo(res0);
+#endif
     non_blocking(sock, block_mode);
     if (listen(sock, backlog) < 0)
 	msg_fatal("listen: %m");
