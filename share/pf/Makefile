@@ -1,4 +1,5 @@
 #
+#	$NetBSD: Makefile,v 1.2 2004/06/30 03:26:27 jmc Exp $
 #	$OpenBSD: Makefile,v 1.6 2003/08/22 15:25:50 henning Exp $
 #
 FILES=	queue1 queue2 queue3 ackpri faq-example1 faq-example2 faq-example3
