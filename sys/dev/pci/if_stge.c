@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.2 2001/07/25 00:12:33 thorpej Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.3 2001/07/25 01:48:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -343,6 +343,9 @@ const struct stge_product {
 
 	{ PCI_VENDOR_DLINK,		PCI_PRODUCT_DLINK_DL4000,
 	  "D-Link DL-4000 Gigabit Ethernet" },
+
+	{ PCI_VENDOR_ANTARES,		PCI_PRODUCT_ANTARES_TC9021,
+	  "Antares Gigabit Ethernet" },
 
 	{ 0,				0,
 	  NULL },
