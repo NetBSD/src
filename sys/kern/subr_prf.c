@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.40 1997/04/17 00:06:28 thorpej Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.41 1997/06/16 15:02:27 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -81,14 +81,14 @@
  * This is the size of the buffer that should be passed to ksnprintn().
  * It's the length of a long in base 8, plus NULL.
  */
-#define KSNPRINTN_BUFSIZE	(sizeof(long) * NBBY / 3 + 2)
+#define KSNPRINTN_BUFSIZE	(sizeof(quad_t) * NBBY / 3 + 2)
 
 struct	tty *constty;			/* pointer to console "window" tty */
 
 void	(*v_putc) __P((int)) = cnputc;	/* routine to putc on virtual console */
 
 static void putchar __P((int, int, struct tty *));
-static char *ksnprintn __P((u_long, int, int *, char *, size_t));
+static char *ksnprintn __P((u_quad_t, int, int *, char *, size_t));
 void kprintf __P((const char *, int, struct tty *, va_list));
 
 int consintr = 1;			/* Ok to handle console interrupts? */
@@ -406,17 +406,27 @@ vprintf(fmt, ap)
  * Space or zero padding and a field width are supported for the numeric
  * formats only.
  */
+#define	LONGINT		0x010		/* long integer */
+#define	QUADINT		0x020		/* quad integer */
+#define	SARG() \
+	(flags&QUADINT ? va_arg(ap, quad_t) : \
+	    flags&LONGINT ? va_arg(ap, long) : \
+	    (long)va_arg(ap, int))
+#define	UARG() \
+	(flags&QUADINT ? va_arg(ap, u_quad_t) : \
+	    flags&LONGINT ? va_arg(ap, u_long) : \
+	    (u_long)va_arg(ap, u_int))
 void
-kprintf(fmt, flags, tp, ap)
+kprintf(fmt, oflags, tp, ap)
 	register const char *fmt;
-	int flags;
+	int oflags;
 	struct tty *tp;
 	va_list ap;
 {
 	register char *p, *q;
 	register int ch, n;
-	u_long ul;
-	int base, lflag, tmp, width;
+	u_quad_t ul;
+	int base, flags, tmp, width;
 	char padc, snbuf[KSNPRINTN_BUFSIZE];
 
 	for (;;) {
@@ -425,9 +435,9 @@ kprintf(fmt, flags, tp, ap)
 		while ((ch = *(const u_char *)fmt++) != '%') {
 			if (ch == '\0')
 				return;
-			putchar(ch, flags, tp);
+			putchar(ch, oflags, tp);
 		}
-		lflag = 0;
+		flags = 0;
 reswitch:	switch (ch = *(const u_char *)fmt++) {
 		case '0':
 		case '.':
@@ -443,85 +453,87 @@ reswitch:	switch (ch = *(const u_char *)fmt++) {
 			}
 			goto reswitch;
 		case 'l':
-			lflag = 1;
+			flags |= LONGINT;
+			goto reswitch;
+		case 'q':
+			flags |= QUADINT;
 			goto reswitch;
 		case 'b':
 			ul = va_arg(ap, int);
 			p = va_arg(ap, char *);
 			for (q = ksnprintn(ul, *p++, NULL, snbuf,
 			    sizeof(snbuf)); (ch = *q--) != 0;)
-				putchar(ch, flags, tp);
+				putchar(ch, oflags, tp);
 
 			if (!ul)
 				break;
 
 			for (tmp = 0; (n = *p++) != 0;) {
 				if (ul & (1 << (n - 1))) {
-					putchar(tmp ? ',' : '<', flags, tp);
+					putchar(tmp ? ',' : '<', oflags, tp);
 					for (; (n = *p) > ' '; ++p)
-						putchar(n, flags, tp);
+						putchar(n, oflags, tp);
 					tmp = 1;
 				} else
 					for (; *p > ' '; ++p)
 						continue;
 			}
 			if (tmp)
-				putchar('>', flags, tp);
+				putchar('>', oflags, tp);
 			break;
 		case 'c':
-			putchar(va_arg(ap, int), flags, tp);
+			putchar(va_arg(ap, int), oflags, tp);
 			break;
 #ifndef __powerpc__			/* XXX XXX XXX */
 		case ':':
 			p = va_arg(ap, char *);
-			kprintf(p, flags, tp, va_arg(ap, va_list));
+			kprintf(p, oflags, tp, va_arg(ap, va_list));
 			break;
 #endif /* __powerpc__ */		/* XXX XXX XXX */
 		case 's':
 			if ((p = va_arg(ap, char *)) == NULL)
 				p = "(null)";
 			while ((ch = *p++) != 0)
-				putchar(ch, flags, tp);
+				putchar(ch, oflags, tp);
 			break;
 		case 'd':
-			ul = lflag ? va_arg(ap, long) : va_arg(ap, int);
-			if ((long)ul < 0) {
-				putchar('-', flags, tp);
-				ul = -(long)ul;
+		        ul = SARG();
+			if ((quad_t)ul < 0) {
+				putchar('-', oflags, tp);
+				ul = -ul;
 			}
 			base = 10;
 			goto number;
 		case 'o':
-			ul = lflag ? va_arg(ap, u_long) : va_arg(ap, u_int);
+			ul = UARG();
 			base = 8;
 			goto number;
 		case 'u':
-			ul = lflag ? va_arg(ap, u_long) : va_arg(ap, u_int);
+			ul = UARG();
 			base = 10;
 			goto number;
 		case 'p':
-			putchar('0', flags, tp);
-			putchar('x', flags, tp);
+			putchar('0', oflags, tp);
+			putchar('x', oflags, tp);
 			ul = (u_long)va_arg(ap, void *);
 			base = 16;
 			goto number;
 		case 'x':
-			ul = lflag ? va_arg(ap, u_long) : va_arg(ap, u_int);
+			ul = UARG();
 			base = 16;
 number:			p = ksnprintn(ul, base, &tmp, snbuf, sizeof(snbuf));
 			if (width && (width -= tmp) > 0)
 				while (width--)
-					putchar(padc, flags, tp);
+					putchar(padc, oflags, tp);
 			while ((ch = *p--) != 0)
-				putchar(ch, flags, tp);
+				putchar(ch, oflags, tp);
 			break;
 		default:
-			putchar('%', flags, tp);
-			if (lflag)
-				putchar('l', flags, tp);
+			putchar('%', oflags, tp);
+		        /* flags??? */
 			/* FALLTHROUGH */
 		case '%':
-			putchar(ch, flags, tp);
+			putchar(ch, oflags, tp);
 		}
 	}
 }
@@ -580,8 +592,8 @@ sprintf(buf, cfmt, va_alist)
 	register const char *fmt = cfmt;
 	register char *p, *bp;
 	register int ch, base;
-	u_long ul;
-	int lflag, tmp, width;
+	u_quad_t ul;
+	int flags, tmp, width;
 	va_list ap;
 	char padc, snbuf[KSNPRINTN_BUFSIZE];
 
@@ -593,7 +605,7 @@ sprintf(buf, cfmt, va_alist)
 			if ((*bp++ = ch) == '\0')
 				return ((bp - buf) - 1);
 
-		lflag = 0;
+		flags = 0;
 reswitch:	switch (ch = *(const u_char *)fmt++) {
 		case '0':
 			padc = '0';
@@ -608,7 +620,10 @@ reswitch:	switch (ch = *(const u_char *)fmt++) {
 			}
 			goto reswitch;
 		case 'l':
-			lflag = 1;
+			flags |= LONGINT;
+			goto reswitch;
+		case 'q':
+			flags |= QUADINT;
 			goto reswitch;
 		/* case 'b': ... break; XXX */
 		case 'c':
@@ -622,24 +637,21 @@ reswitch:	switch (ch = *(const u_char *)fmt++) {
 			--bp;
 			break;
 		case 'd':
-			ul = lflag ? va_arg(ap, long) : va_arg(ap, int);
-			if ((long)ul < 0) {
+		        ul = SARG();
+			if ((quad_t)ul < 0) {
 				*bp++ = '-';
-				ul = -(long)ul;
+				ul = -ul;
 			}
 			base = 10;
 			goto number;
-			break;
 		case 'o':
-			ul = lflag ? va_arg(ap, u_long) : va_arg(ap, u_int);
+			ul = UARG();
 			base = 8;
 			goto number;
-			break;
 		case 'u':
-			ul = lflag ? va_arg(ap, u_long) : va_arg(ap, u_int);
+			ul = UARG();
 			base = 10;
 			goto number;
-			break;
 		case 'p':
 			*bp++ = '0';
 			*bp++ = 'x';
@@ -647,7 +659,7 @@ reswitch:	switch (ch = *(const u_char *)fmt++) {
 			base = 16;
 			goto number;
 		case 'x':
-			ul = lflag ? va_arg(ap, u_long) : va_arg(ap, u_int);
+			ul = UARG();
 			base = 16;
 number:			p = ksnprintn(ul, base, &tmp, snbuf, sizeof(snbuf));
 			if (width && (width -= tmp) > 0)
@@ -658,8 +670,7 @@ number:			p = ksnprintn(ul, base, &tmp, snbuf, sizeof(snbuf));
 			break;
 		default:
 			*bp++ = '%';
-			if (lflag)
-				*bp++ = 'l';
+		        /* flags??? */
 			/* FALLTHROUGH */
 		case '%':
 			*bp++ = ch;
@@ -675,7 +686,7 @@ number:			p = ksnprintn(ul, base, &tmp, snbuf, sizeof(snbuf));
  */
 static char *
 ksnprintn(ul, base, lenp, buf, buflen)
-	register u_long ul;
+	register u_quad_t ul;
 	register int base, *lenp;
 	char *buf;
 	size_t buflen;
