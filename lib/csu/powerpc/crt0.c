@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.c,v 1.24 2003/07/26 19:24:28 salo Exp $ */
+/* $NetBSD: crt0.c,v 1.25 2004/08/26 21:15:05 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -50,16 +50,14 @@ __weak_extern(_SDA2_BASE_);
  * First 5 arguments are specified by the PowerPC SVR4 ABI.  The
  * last argument, ps_strings, is a NetBSD extension.
  */
-void _start __P((int, char **, char **, const Obj_Entry *,
-		void (*) __P((void)), struct ps_strings *));
+void _start(int, char **, char **, const Obj_Entry *,
+		void (*)(void), struct ps_strings *);
 
 void
-_start(argc, argv, envp, obj, cleanup, ps_strings)
-	int argc;
-	char **argv, **envp;
-	const Obj_Entry *obj;			/* from shared loader */
-	void (*cleanup) __P((void));		/* from shared loader */
-	struct ps_strings *ps_strings;		/* NetBSD extension */
+_start(int argc, char **argv, char **envp,
+    const Obj_Entry *obj,			/* from shared loader */
+    void (*cleanup)(void),			/* from shared loader */
+    struct ps_strings *ps_strings)		/* NetBSD extension */
 {
 	char *namep;
 
@@ -105,7 +103,7 @@ _start(argc, argv, envp, obj, cleanup, ps_strings)
  * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.24 2003/07/26 19:24:28 salo Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.25 2004/08/26 21:15:05 thorpej Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"
