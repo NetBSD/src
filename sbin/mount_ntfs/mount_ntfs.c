@@ -1,4 +1,4 @@
-/* $NetBSD: mount_ntfs.c,v 1.6 2002/09/21 18:43:36 christos Exp $ */
+/* $NetBSD: mount_ntfs.c,v 1.7 2002/10/01 09:20:35 itojun Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_ntfs.c,v 1.6 2002/09/21 18:43:36 christos Exp $");
+__RCSID("$NetBSD: mount_ntfs.c,v 1.7 2002/10/01 09:20:35 itojun Exp $");
 #endif
 
 #include <sys/cdefs.h>
@@ -167,12 +167,12 @@ mount_ntfs(argc, argv)
 #ifdef __FreeBSD__
 #if __FreeBSD_version >= 300000
 	c = getvfsbyname("ntfs", &vfc);
-	if(c && vfsisloadable("ntfs")) {
-		if(vfsload("ntfs"))
+	if (c && vfsisloadable("ntfs")) {
+		if (vfsload("ntfs"))
 #else
 	vfc = getvfsbyname("ntfs");
-	if(!vfc && vfsisloadable("ntfs")) {
-		if(vfsload("ntfs"))
+	if (!vfc && vfsisloadable("ntfs")) {
+		if (vfsload("ntfs"))
 #endif
 			err(EX_OSERR, "vfsload(ntfs)");
 		endvfsent();	/* clear cache */
