@@ -1,4 +1,4 @@
-/*	$OpenBSD$ */
+/*	$NetBSD: bootst.c,v 1.2 1996/05/17 20:07:37 chuck Exp $ */
 
 #include <sys/types.h>
 #include <sys/param.h>
