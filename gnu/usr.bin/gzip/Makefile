@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.15 1994/12/22 09:35:22 cgd Exp $
+#	$NetBSD: Makefile,v 1.16 1995/04/23 07:58:45 cgd Exp $
 
 PROG=	gzip
 SRCS=	gzip.c zip.c deflate.c trees.c bits.c unzip.c inflate.c util.c \

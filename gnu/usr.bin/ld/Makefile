@@ -1,5 +1,4 @@
-# $Id: Makefile,v 1.12 1994/08/19 04:24:01 cgd Exp $
-#
+#	$NetBSD: Makefile,v 1.13 1995/04/23 07:58:46 cgd Exp $
 
 PROG=	ld
 SRCS=	ld.c symbol.c lib.c shlib.c warnings.c etc.c rrs.c xbits.c md.c

@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.5 1995/03/22 17:32:28 glass Exp $
+#	$NetBSD: Makefile,v 1.6 1995/04/23 07:58:43 cgd Exp $
 
 SUBDIR=		libgroff libdriver libbib\
 		groff troff nroff tbl pic eqn grog grops grotty grodvi\

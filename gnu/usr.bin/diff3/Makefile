@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.6 1994/03/09 19:07:00 jtc Exp $
+#	$NetBSD: Makefile,v 1.7 1995/04/23 07:58:33 cgd Exp $
 
 PROG=		diff3
 SRCS=		diff3.c getopt.c getopt1.c version.c

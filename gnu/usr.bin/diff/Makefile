@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.6 1994/03/09 19:06:47 jtc Exp $
+#	$NetBSD: Makefile,v 1.7 1995/04/23 07:58:31 cgd Exp $
 
 PROG=	diff
 SRCS=	diff.c analyze.c cmpbuf.o io.c context.c ed.c normal.c util.c dir.c \

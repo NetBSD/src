@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.11 1994/12/22 09:35:44 cgd Exp $
+#	$NetBSD: Makefile,v 1.12 1995/04/23 07:58:55 cgd Exp $
 
 PROG=	tar
 SRCS=	buffer.c create.c diffarch.c extract.c fnmatch.c getdate.y \
