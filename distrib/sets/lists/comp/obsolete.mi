@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.76 2002/09/12 17:18:51 joda Exp $
+# $NetBSD: obsolete.mi,v 1.77 2002/09/19 10:47:48 ragge Exp $
 /usr/bin/genclass
 /usr/bin/gettextize
 /usr/include/bfd
@@ -545,6 +545,7 @@
 /usr/include/readline.h
 /usr/include/smbfs
 /usr/include/sys/bootinfo.h
+/usr/include/sys/clist.h
 /usr/include/sys/dmap.h
 /usr/include/sys/fnv_hash.h
 /usr/include/sys/vcmd.h
