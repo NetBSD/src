@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_mcclock.c,v 1.4 1999/03/01 08:37:05 jonathan Exp $	*/
+/*	$NetBSD: mips_mcclock.c,v 1.5 1999/03/13 00:05:39 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_mcclock.c,v 1.4 1999/03/01 08:37:05 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_mcclock.c,v 1.5 1999/03/13 00:05:39 jonathan Exp $");
 
 
 #include <sys/types.h>
@@ -162,8 +162,10 @@ mips_mcclock_tickloop(mcclock_addr, clockmask)
 			iters++;
 		}
 	} else {
-		while ((mips_read_causereg() & clockmask) == 0)
+		while ((mips_read_causereg() & clockmask) == 0) {
+			__asm __volatile ("nop; nop;");
 			iters++;
+		}
 	}
 
 	/* Ack the  interrupt from the just-gone-off tick */
