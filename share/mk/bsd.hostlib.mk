@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostlib.mk,v 1.5 2003/07/28 23:54:24 lukem Exp $
+#	$NetBSD: bsd.hostlib.mk,v 1.6 2003/07/31 13:47:32 lukem Exp $
 
 .include <bsd.init.mk>
 .include <bsd.sys.mk>
@@ -57,7 +57,7 @@ afterdepend: .depend
 .endif
 
 ##### Pull in related .mk logic
-.include <bsd.dep.mk>
 .include <bsd.obj.mk>
+.include <bsd.dep.mk>
 
 ${TARGETS}:	# ensure existence
