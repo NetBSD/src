@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.5 1998/05/03 10:02:11 drochner Exp $ */
+/* $NetBSD: pckbc.c,v 1.6 1998/05/03 11:54:38 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -394,6 +394,7 @@ pckbc_attach(parent, self, aux)
 		ioh_d = t->t_ioh_d;
 		ioh_c = t->t_ioh_c;
 		pckbc_console_attached = 1;
+		/* t->t_cmdbyte was initialized by cnattach */
 	} else {
 		if (bus_space_map(iot, IO_KBD + KBDATAP, 1, 0, &ioh_d) ||
 		    bus_space_map(iot, IO_KBD + KBCMDP, 1, 0, &ioh_c))
@@ -404,6 +405,7 @@ pckbc_attach(parent, self, aux)
 		t->t_iot = iot;
 		t->t_ioh_d = ioh_d;
 		t->t_ioh_c = ioh_c;
+		t->t_cmdbyte = KC8_CPU; /* Enable ports */
 	}
 
 	t->t_sc = sc;
@@ -414,8 +416,7 @@ pckbc_attach(parent, self, aux)
 	/* flush */
 	(void) pckbc_poll_data1(iot, ioh_d, ioh_c, PCKBC_KBD_SLOT, 0);
 
-	/* Enable ports */
-	t->t_cmdbyte = KC8_CPU;
+	/* set initial cmd byte */
 	if (!pckbc_put8042cmd(t)) {
 		printf("kbc: cmd word write error\n");
 		return;
