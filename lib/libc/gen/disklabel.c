@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)disklabel.c	5.17 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: disklabel.c,v 1.5 1994/06/12 22:52:01 cgd Exp $";
+static char *rcsid = "$Id: disklabel.c,v 1.6 1994/10/19 03:13:09 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -68,7 +68,7 @@ getdiskbyname(name)
 	register struct partition *pp;
 	char	p, max, psize[3], pbsize[3],
 		pfsize[3], poffset[3], ptype[3];
-	u_long	*dx;
+	u_int32_t *dx;
 
 	if (dgetent(buf, name) <= 0)
 		return ((struct disklabel *)0);
