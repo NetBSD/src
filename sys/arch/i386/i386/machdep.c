@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.240 1997/07/10 16:02:24 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.241 1997/07/16 00:01:49 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -513,7 +513,7 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			CPUCLASS_586,
 			{
 				0, "Pentium", "Pentium (P54C)",
-				"Pentium (P24T)", "Pentium", "Pentium", 0,
+				"Pentium (P24T)", "Pentium/MMX", "Pentium", 0,
 				"Pentium (P54C)", 0, 0, 0, 0, 0, 0, 0, 0,
 				"Pentium"	/* Default */
 			}
@@ -550,7 +550,7 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		{
 			CPUCLASS_586,
 			{
-				"K5", "K5", 0, 0, 0, 0, "K6",
+				"K5", "K5", "K5", "K5", 0, 0, "K6",
 				0, 0, 0, 0, 0, 0, 0, 0, 0,
 				"K5 or K6",		/* Default */
 			},
@@ -669,8 +669,8 @@ identifycpu()
 		}
 	}
 
-	sprintf(cpu_model, "%s %s%s (%s-class)%s", vendorname, modifier, name,
-		classnames[class], cpu_feature & 0x800000 ? " with MMX" : "");
+	sprintf(cpu_model, "%s %s%s (%s-class)", vendorname, modifier, name,
+		classnames[class]);
 	printf("cpu0: %s\n", cpu_model);
 
 	cpu_class = class;
