@@ -1,4 +1,4 @@
-.\"	$NetBSD: pms.4,v 1.7 1996/11/12 19:27:29 explorer Exp $
+.\"	$NetBSD: pms.4,v 1.8 1996/12/03 18:16:35 perry Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -49,7 +49,7 @@ The MOUSEIOCREAD ioctl, found in machine/mouse.h, returns a struct mouseinfo.
 When reading the mouse device directly, each change of button state or
 mouse movement generates a five byte event.  The format of this message
 is described in
-.Xr 4 busmouse
+.Xr busmouse 4
 .Sh FILES
 .Bl -tag -width Pa -compact
 .It Pa /dev/pms0
