@@ -1,4 +1,4 @@
-/* $NetBSD: i386.c,v 1.14 2004/03/13 22:51:50 dsl Exp $ */
+/* $NetBSD: i386.c,v 1.15 2004/03/14 23:05:47 lukem Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: i386.c,v 1.14 2004/03/13 22:51:50 dsl Exp $");
+__RCSID("$NetBSD: i386.c,v 1.15 2004/03/14 23:05:47 lukem Exp $");
 #endif /* !__lint */
 
 #include <sys/param.h>
@@ -155,7 +155,7 @@ i386_setboot(ib_params *params)
 		bpbsize = bootstrapbuf[1] + 2 - MBR_BPB_OFFSET;
 
 	/*
-	 * Ensure bootxx hasn't got any code or date (i.e, non-zero bytes) in
+	 * Ensure bootxx hasn't got any code or data (i.e, non-zero bytes) in
 	 * the partition table.
 	 */
 	for (i = 0; i < sizeof(mbr.mbr_parts); i++) {
@@ -181,7 +181,10 @@ i386_setboot(ib_params *params)
 	    sizeof(mbr.mbr_parts));
 
 	/*
-	 * Fill in any user-specified options.
+	 * Fill in any user-specified options into the
+	 *	struct x86_boot_params
+	 * that's 8 bytes in from the start of the third sector.
+	 * See sys/arch/i386/stand/bootxx/bootxx.S for more information.
 	 */
 	bp = (void *)(bootstrapbuf + 512 * 2 + 8);
 	if (le32toh(bp->bp_length) < sizeof *bp) {
