@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.18 1998/09/20 21:08:49 dbj Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.19 1998/10/07 01:08:57 jtk Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.16 1998/09/20 19:19:54 dbj Exp 
+ *	NetBSD: pcmciadevs,v 1.17 1998/10/07 01:08:37 jtk Exp 
  */
 
 /*-
@@ -122,9 +122,9 @@
 #define	PCMCIA_STR_IODATA_PCLAT	"I-O DATA PCLA/T"
 
 /* Linksys corporation */
-#define	PCMCIA_CIS_LINKSYS_ECARD	{ NULL, NULL, NULL, NULL }
-#define	PCMCIA_PRODUCT_LINKSYS_ECARD	0x0265
-#define	PCMCIA_STR_LINKSYS_ECARD	"Linksys EthernetCard"
+#define	PCMCIA_CIS_LINKSYS_ECARD_1	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_LINKSYS_ECARD_1	0x0265
+#define	PCMCIA_STR_LINKSYS_ECARD_1	"Linksys EthernetCard"
 #define	PCMCIA_CIS_LINKSYS_COMBO_ECARD	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_LINKSYS_COMBO_ECARD	0xc1ab
 #define	PCMCIA_STR_LINKSYS_COMBO_ECARD	"Linksys Combo EthernetCard"
@@ -221,3 +221,6 @@
 #define	PCMCIA_CIS_TEAC_IDECARDII	{ NULL, "NinjaATA-", NULL, NULL }
 #define	PCMCIA_PRODUCT_TEAC_IDECARDII	-1
 #define	PCMCIA_STR_TEAC_IDECARDII	"TEAC IDE Card/II"
+#define	PCMCIA_CIS_LINKSYS_ECARD_2	{ "LINKSYS", "E-CARD", NULL, NULL }
+#define	PCMCIA_PRODUCT_LINKSYS_ECARD_2	-1
+#define	PCMCIA_STR_LINKSYS_ECARD_2	"Linksys E-Card"
