@@ -42,17 +42,19 @@
  *	from: @(#)stdarg.h	8.2 (Berkeley) 9/27/93
  *		from: Header: stdarg.h,v 1.9 93/09/27 21:12:38 torek Exp
  *
- *	$Id: stdarg.h,v 1.3 1994/05/25 16:56:05 pk Exp $
+ *	$Id: stdarg.h,v 1.4 1994/10/15 04:58:07 cgd Exp $
  */
 
 /*
  * SPARC stdarg.h
  */
 
-#ifndef _MACHINE_STDARG_H
-#define _MACHINE_STDARG_H
+#ifndef _SPARC_STDARG_H_
+#define	_SPARC_STDARG_H_
 
-typedef char *va_list;
+#include <machine/ansi.h>
+
+typedef _BSD_VA_LIST_	va_list;
 
 /*
  * va_start sets ap to point to the first variable argument.
@@ -62,10 +64,10 @@ typedef char *va_list;
  * va_end cleans up after va_start.  There is nothing to do there.
  */
 #ifdef __GCC_NEW_VARARGS__	/* gcc 2.4.5 */
-#define va_start(ap, l)	((ap) = (char *)__builtin_saveregs())
+#define va_start(ap, l)	((ap) = (va_list)__builtin_saveregs())
 #else				/* gcc 2.3.3 */
 #define va_start(ap, l)	(__builtin_saveregs(), \
-			 (ap) = (char *)__builtin_next_arg())
+			 (ap) = (va_list)__builtin_next_arg())
 #endif
 #define va_end(ap)	/* empty */
 
@@ -114,4 +116,4 @@ typedef char *va_list;
     sizeof(ty) == 8 ? __va_8byte(ap, ty) : \
 	((ty *)(void *)(ap += sizeof(ty)))[-1]; })
 
-#endif /* _MACHINE_STDARG_H */
+#endif /* !_SPARC_STDARG_H_ */
