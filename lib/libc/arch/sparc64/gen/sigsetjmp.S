@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsetjmp.S,v 1.2.10.1 2000/07/26 23:55:00 mycroft Exp $	*/
+/*	$NetBSD: sigsetjmp.S,v 1.2.10.2 2000/09/04 21:36:34 eeh Exp $	*/
 /*
  * Copyright (c) 1995 Paul Kranenburg
  * All rights reserved.
@@ -39,17 +39,17 @@ ENTRY(sigsetjmp)
 	set	_C_LABEL(setjmp), %o2	! if (%o1 != 0) goto _setjmp;
 	set	_C_LABEL(_setjmp), %o3	! else goto __setjmp;
 	movrnz	%o1, %o2, %o3
-	ldx [%g1+%o2], %g1
+	ldx [%g1+%o3], %g1
 	jmp %g1
-	 st	%o1,[%o0+0x38]		! jmpbuf[JBLEN]
+	 st	%o1,[%o0+0x48]		! jmpbuf[JBLEN]
 
 
 ENTRY(siglongjmp)
 	PIC_PROLOGUE(%g1,%o2)		! %g1 = _GLOBAL_OFFSET_TABLE
-	ld	[%o0 + 0x38],%o2	! jmpbuf[JBLEN]
+	ld	[%o0 + 0x48],%o2	! jmpbuf[JBLEN]
 	set	_C_LABEL(longjmp), %o3	! if (%o2 != 0) goto _longjmp;
 	set	_C_LABEL(_longjmp), %o4	! else goto __longjmp;
-	movrz	%o2, %o3, %o4 
+	movrnz	%o2, %o3, %o4 
 	ldx	[%g1 + %o4], %g1
 	jmp %g1
 	 nop
@@ -59,13 +59,13 @@ ENTRY(siglongjmp)
 
 ENTRY(sigsetjmp)
 	brz,pt	%o1,_C_LABEL(_setjmp)
-	 st	%o1,[%o0+0x38]		! jmpbuf[JBLEN]
+	 st	%o1,[%o0+0x48]		! jmpbuf[JBLEN]
 	ba,a,pt	%icc,_C_LABEL(setjmp)
 	 nop				! spitfire bug
 	unimp 0
 
 ENTRY(siglongjmp)
-	ld	[%o0 + 0x38], %g1
+	ld	[%o0 + 0x48], %g1
 	brz,pt	%g1, _C_LABEL(_longjmp)
 	 nop
 	ba,a,pt	%icc, _C_LABEL(longjmp)
