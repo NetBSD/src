@@ -337,10 +337,17 @@ struct sysent ultrix_sysent[] = {
 	    compat_43_sys_getsockname },	/* 150 = getsockname */
 	{ 0, 0,
 	    sys_nosys },			/* 151 = unimplemented sysmips / * 4 args * / */
+#ifdef __mips
+	{ 3, s(struct ultrix_sys_cacheflush_args),
+	    ultrix_sys_cacheflush },		/* 152 = cacheflush */
+	{ 3, s(struct ultrix_sys_cachectl_args),
+	    ultrix_sys_cachectl },		/* 153 = cachectl */
+#else	/* !mips */
 	{ 0, 0,
-	    sys_nosys },			/* 152 = unimplemented cacheflush / * 4 args * / */
+	    sys_nosys },			/* 152 = unimplemented */
 	{ 0, 0,
-	    sys_nosys },			/* 153 = unimplemented cachectl / * 3 args * / */
+	    sys_nosys },			/* 153 = unimplemented */
+#endif	/* !mips */
 	{ 0, 0,
 	    sys_nosys },			/* 154 = unimplemented */
 	{ 0, 0,

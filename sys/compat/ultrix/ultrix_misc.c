@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.34 1997/05/25 11:09:39 jonathan Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.35 1997/06/09 11:57:48 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -127,13 +127,15 @@
 #include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
 
-#include <vm/vm.h>
+#include <vm/vm.h>					/* pmap declarations */
 
 #include <sys/conf.h>					/* iszerodev() */
 #include <sys/socketvar.h>				/* sosetopt() */
 
+
 extern struct sysent ultrix_sysent[];
 extern char *ultrix_syscallnames[];
+
 
 /*
  * Select the appropriate setregs callback for the target architecture.
@@ -550,6 +552,51 @@ ultrix_sys_vhangup(p, v, retval)
 
 	return 0;
 }
+
+
+/*
+ * RISC Ultrix cache control syscalls
+ */
+#ifdef __mips
+int
+ultrix_sys_cacheflush(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	register struct ultrix_sys_cacheflush_args /* {
+		syscallarg(void *) addr;
+		syscallarg(int) nbytes;
+		syscallarg(int) flag;
+	} */ *uap = v;
+	register vm_offset_t va  = (vm_offset_t)SCARG(uap, addr);
+	register int nbytes     = SCARG(uap, nbytes);
+	register int whichcache = SCARG(uap, whichcache);
+
+	return (mips_user_cacheflush(p, va, nbytes, whichcache));
+}
+
+
+int
+ultrix_sys_cachectl(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	register struct ultrix_sys_cachectl_args /* {
+		syscallarg(void *) addr;
+		syscallarg(int) nbytes;
+		syscallarg(int) cacheop;
+	} */ *uap = v;
+	register vm_offset_t va  = (vm_offset_t)SCARG(uap, addr);
+	register int nbytes  = SCARG(uap, nbytes);
+	register int cacheop = SCARG(uap, cacheop);
+
+	return mips_user_cachectl(p, va, nbytes, cacheop);
+}
+
+#endif	/* __mips */
+
 
 int
 ultrix_sys_exportfs(p, v, retval)

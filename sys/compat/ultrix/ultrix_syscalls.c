@@ -158,8 +158,13 @@ char *ultrix_syscallnames[] = {
 	"#149 (unimplemented quota / * needs to be nullop to boot on Ultrix root partition * /)",		/* 149 = unimplemented quota / * needs to be nullop to boot on Ultrix root partition * / */
 	"getsockname",			/* 150 = getsockname */
 	"#151 (unimplemented sysmips / * 4 args * /)",		/* 151 = unimplemented sysmips / * 4 args * / */
-	"#152 (unimplemented cacheflush / * 4 args * /)",		/* 152 = unimplemented cacheflush / * 4 args * / */
-	"#153 (unimplemented cachectl / * 3 args * /)",		/* 153 = unimplemented cachectl / * 3 args * / */
+#ifdef __mips
+	"cacheflush",			/* 152 = cacheflush */
+	"cachectl",			/* 153 = cachectl */
+#else	/* !mips */
+	"#152 (unimplemented)",		/* 152 = unimplemented */
+	"#153 (unimplemented)",		/* 153 = unimplemented */
+#endif	/* !mips */
 	"#154 (unimplemented)",		/* 154 = unimplemented */
 	"#155 (unimplemented atomic_op)",		/* 155 = unimplemented atomic_op */
 	"#156 (unimplemented)",		/* 156 = unimplemented */

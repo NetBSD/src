@@ -104,6 +104,18 @@ struct ultrix_sys_sigcleanup_args {
 	syscallarg(struct sigcontext *) sigcntxp;
 };
 
+struct ultrix_sys_cacheflush_args {
+	syscallarg(char *) addr;
+	syscallarg(int) nbytes;
+	syscallarg(int) whichcache;
+};
+
+struct ultrix_sys_cachectl_args {
+	syscallarg(char *) addr;
+	syscallarg(int) nbytes;
+	syscallarg(int) cacheop;
+};
+
 struct ultrix_sys_nfssvc_args {
 	syscallarg(int) fd;
 };
@@ -297,6 +309,11 @@ int	compat_43_sys_getrlimit	__P((struct proc *, void *, register_t *));
 int	compat_43_sys_setrlimit	__P((struct proc *, void *, register_t *));
 int	compat_43_sys_killpg	__P((struct proc *, void *, register_t *));
 int	compat_43_sys_getsockname	__P((struct proc *, void *, register_t *));
+#ifdef __mips
+int	ultrix_sys_cacheflush	__P((struct proc *, void *, register_t *));
+int	ultrix_sys_cachectl	__P((struct proc *, void *, register_t *));
+#else	/* !mips */
+#endif	/* !mips */
 #ifdef NFSSERVER
 int	ultrix_sys_nfssvc	__P((struct proc *, void *, register_t *));
 #else
