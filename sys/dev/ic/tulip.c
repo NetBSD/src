@@ -1,12 +1,12 @@
-/*	$NetBSD: tulip.c,v 1.109 2002/04/14 19:10:18 mycroft Exp $	*/
+/*	$NetBSD: tulip.c,v 1.110 2002/05/03 05:41:46 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center.
+ * NASA Ames Research Center; and by Charles M. Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.109 2002/04/14 19:10:18 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.110 2002/05/03 05:41:46 mycroft Exp $");
 
 #include "bpfilter.h"
 
@@ -3627,7 +3627,7 @@ tlp_dm9102_reset(sc)
 const struct tulip_srom_to_ifmedia tulip_srom_to_ifmedia_table[] = {
 	{ TULIP_ROM_MB_MEDIA_TP,	IFM_10_T,	0,
 	  "10baseT",
-	  0,
+	  OPMODE_TTM,
 	  { SIACONN_21040_10BASET,
 	    SIATXRX_21040_10BASET,
 	    SIAGEN_21040_10BASET },
@@ -3687,7 +3687,7 @@ const struct tulip_srom_to_ifmedia tulip_srom_to_ifmedia_table[] = {
 
 	{ TULIP_ROM_MB_MEDIA_TP_FDX,	IFM_10_T,	IFM_FDX,
 	  "10baseT-FDX",
-	  OPMODE_FD|OPMODE_HBD,
+	  OPMODE_TTM|OPMODE_FD|OPMODE_HBD,
 	  { SIACONN_21040_10BASET_FDX,
 	    SIATXRX_21040_10BASET_FDX,
 	    SIAGEN_21040_10BASET_FDX },
@@ -5239,7 +5239,7 @@ tlp_2114x_nway_status(sc)
 	struct tulip_softc *sc;
 {
 	struct mii_data *mii = &sc->sc_mii;
-	uint32_t siatxrx, siastat, anlpar, opmode;
+	uint32_t siatxrx, siastat, anlpar;
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
@@ -5250,15 +5250,15 @@ tlp_2114x_nway_status(sc)
 	siastat = TULIP_READ(sc, CSR_SIASTAT);
 	siatxrx = TULIP_READ(sc, CSR_SIATXRX);
 
-	if (~siastat & (SIASTAT_LS10 | SIASTAT_LS100))
-		mii->mii_media_status |= IFM_ACTIVE;
-
 	if (siatxrx & SIATXRX_ANE) {
 		if ((siastat & SIASTAT_ANS) != SIASTAT_ANS_FLPGOOD) {
 			/* Erg, still trying, I guess... */
 			mii->mii_media_active |= IFM_NONE;
 			return;
 		}
+
+		if (~siastat & (SIASTAT_LS10 | SIASTAT_LS100))
+			mii->mii_media_status |= IFM_ACTIVE;
 
 		if (siastat & SIASTAT_LPN) {
 			anlpar = SIASTAT_GETLPC(siastat);
@@ -5277,7 +5277,6 @@ tlp_2114x_nway_status(sc)
 				mii->mii_media_active |= IFM_10_T;
 			else
 				mii->mii_media_active |= IFM_NONE;
-			TULIP_CLR(sc, CSR_SIATXRX, SIATXRX_ANE);
 			return;
 		}
 
@@ -5296,14 +5295,15 @@ tlp_2114x_nway_status(sc)
 			mii->mii_media_active |= IFM_10_T;
 		else
 			mii->mii_media_active |= IFM_NONE;
-		TULIP_CLR(sc, CSR_SIATXRX, SIATXRX_ANE);
 	} else {
-		opmode = TULIP_READ(sc, CSR_OPMODE);
-		if (opmode & OPMODE_TTM)
+		if (~siastat & (SIASTAT_LS10 | SIASTAT_LS100))
+			mii->mii_media_status |= IFM_ACTIVE;
+
+		if (sc->sc_opmode & OPMODE_TTM)
 			mii->mii_media_active |= IFM_10_T;
 		else
 			mii->mii_media_active |= IFM_100_TX;
-		if (opmode & OPMODE_FD)
+		if (sc->sc_opmode & OPMODE_FD)
 			mii->mii_media_active |= IFM_FDX;
 	}
 }
