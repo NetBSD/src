@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.47 1999/10/05 20:09:44 nathanw Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.48 1999/10/11 09:17:22 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.46 1999/10/04 19:05:13 augustss Exp 
+ *	NetBSD: usbdevs,v 1.48 1999/10/11 09:16:59 augustss Exp 
  */
 
 /*
@@ -83,6 +83,7 @@
 #define	USB_VENDOR_ANCHOR	0x0547		/* Anchor Chips Inc. */
 #define	USB_VENDOR_VISION	0x0553		/* VLSI Vision Ltd. */
 #define	USB_VENDOR_ATEN	0x0557		/* ATEN International Corp. Ltd. */
+#define	USB_VENDOR_MUSTEK	0x055f		/* Mustek Systems Inc. */
 #define	USB_VENDOR_PERACOM	0x0565		/* Peracom Networks Inc. */
 #define	USB_VENDOR_WACOM	0x056a		/* WACOM Corp. Ltd. */
 #define	USB_VENDOR_ETEK	0x056c		/* e-TEK Labs */
@@ -101,6 +102,7 @@
 #define	USB_VENDOR_MULTITECH	0x06e0		/* MultiTech */
 #define	USB_VENDOR_ADS	0x06e1		/* ADS Technologies */
 #define	USB_VENDOR_ACTIVEWIRE	0x0854		/* ActiveWire Inc. */
+#define	USB_VENDOR_MOTOROLA	0x1063		/* Motorola */
 #define	USB_VENDOR_PLX	0x10b5		/* PLX */
 #define	USB_VENDOR_INSIDEOUT	0x1608		/* Inside Out Networks */
 #define	USB_VENDOR_ENTREGA	0x1645		/* Entrega */
@@ -216,6 +218,9 @@
 /* ATen products */
 #define	USB_PRODUCT_ATEN_UC1284	0x2001		/* Parallel printer adapter */
 
+/* Mustek products */
+#define	USB_PRODUCT_MUSTEK_MDC800	0xa800		/* MDC-800 digital camera */
+
 /* Peracom products */
 #define	USB_PRODUCT_PERACOM_SERIAL1	0x0001		/* Serial Converter */
 
@@ -282,6 +287,9 @@
 /* ActiveWire Inc. products */
 #define	USB_PRODUCT_ACTIVEWIRE_IOBOARD	0x0100		/* I/O Board */
 #define	USB_PRODUCT_ACTIVEWIRE_IOBOARD_FW1	0x0101		/* I/O Board, rev. 1 firmware */
+
+/* Motorola products */
+#define	USB_PRODUCT_MOTOROLA_MC141555	0x1555		/* MC141555 hub controller */
 
 /* PLX products */
 #define	USB_PRODUCT_PLX_TESTBOARD	0x9060		/* test board */
