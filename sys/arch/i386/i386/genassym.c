@@ -1,6 +1,7 @@
-/*	$NetBSD: genassym.c,v 1.38 1995/05/01 04:48:28 mycroft Exp $	*/
+/*	$NetBSD: genassym.c,v 1.39 1995/05/01 07:55:04 mycroft Exp $	*/
 
 /*-
+ * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1982, 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -114,7 +115,6 @@ main()
 	def("PCB_GS", &pcb->pcb_tss.tss_gs);
 	def("PCB_CR0", &pcb->pcb_cr0);
 	def("PCB_ONFAULT", &pcb->pcb_onfault);
-	def("PCB_SAVEFPU", &pcb->pcb_savefpu);
 	def("PCB_USERLDT", &pcb->pcb_ldt);
 
 	def("TF_CS", &tf->tf_cs);
