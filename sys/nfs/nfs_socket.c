@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.52 1999/07/30 09:46:24 fvdl Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.53 1999/08/29 16:29:16 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -324,12 +324,14 @@ nfs_disconnect(nmp)
 	register struct nfsmount *nmp;
 {
 	register struct socket *so;
-
+	int drain = 0;
+	
 	if (nmp->nm_so) {
 		so = nmp->nm_so;
 		nmp->nm_so = (struct socket *)0;
 		soshutdown(so, 2);
-		if (nmp->nm_iflag & NFSMNT_DISMNT) {
+		drain = (nmp->nm_iflag & NFSMNT_DISMNT) != 0;
+		if (drain) {
 			/*
 			 * soshutdown() above should wake up the current
 			 * listener.
@@ -345,7 +347,7 @@ nfs_disconnect(nmp)
 		soclose(so);
 	}
 #ifdef DIAGNOSTIC
-	if (nmp->nm_waiters > 0)
+	if (drain && (nmp->nm_waiters > 0))
 		panic("nfs_disconnect: waiters left after drain?\n");
 #endif
 }
