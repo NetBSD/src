@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.242.2.20 2001/06/18 16:51:53 jhawk Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.242.2.21 2001/10/25 17:58:38 he Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD
+ *	NetBSD: pcidevs,v 1.236.2.20 2001/06/18 16:48:57 jhawk Exp 
  */
 
 /*
@@ -605,6 +605,7 @@
 
 /* 3ware products */
 #define	PCI_PRODUCT_3WARE_ESCALADE	0x1000		/* Escalade IDE RAID */
+#define	PCI_PRODUCT_3WARE_ESCALADE_ASIC	0x1001		/* Escalade IDE RAID (ASIC) */
 
 /* ACC Products */
 #define	PCI_PRODUCT_ACC_2188	0x0000		/* ACCM 2188 VL-PCI Bridge */
@@ -937,6 +938,7 @@
 #define	PCI_PRODUCT_DEC_21153	0x0025		/* DECchip 21153 PCI-PCI Bridge */
 #define	PCI_PRODUCT_DEC_21154	0x0026		/* DECchip 21154 PCI-PCI Bridge */
 #define	PCI_PRODUCT_DEC_CPQ42XX	0x0046		/* Compaq SMART RAID 42xx */
+#define	PCI_PRODUCT_DEC_SWXCR	0x1065		/* SWXCR RAID */
 
 /* Delta products */
 #define	PCI_PRODUCT_DELTA_8139	0x1360		/* 8139 Ethernet */
@@ -1200,7 +1202,10 @@
 #define	PCI_PRODUCT_MOT_MPC106	0x0002		/* MPC106 \"Grackle\" Host Bridge */
 
 /* Mylex products */
-#define	PCI_PRODUCT_MYLEX_960P	0x0001		/* DAC960P RAID controller */
+#define	PCI_PRODUCT_MYLEX_RAID_V2	0x0001		/* DAC960 RAID (v2 interface) */
+#define	PCI_PRODUCT_MYLEX_RAID_V3	0x0002		/* DAC960 RAID (v3 interface) */
+#define	PCI_PRODUCT_MYLEX_RAID_V4	0x0010		/* DAC960 RAID (v4 interface) */
+#define	PCI_PRODUCT_MYLEX_RAID_V5	0x0020		/* DAC960 RAID (v5 interface) */
 
 /* Mutech products */
 #define	PCI_PRODUCT_MUTECH_MV1000	0x0001		/* MV1000 */
