@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.21 1999/03/14 00:04:06 fvdl Exp $
+#	$NetBSD: Makefile.booters,v 1.22 1999/04/28 09:13:51 christos Exp $
 
 BINDIR= /usr/mdec
 STRIPFLAG=
@@ -39,6 +39,7 @@ LIBZ=		${ZLIB}
 
 ### find out what to use for libsa
 SA_AS=		library
+SAMISCMAKEFLAGS+="SA_USE_LOADFILE=yes"
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
@@ -60,17 +61,19 @@ LDFLAGS=-M -e start 	# -N does not work properly.
 LDFLAGS=-N -M -e _start 
 .endif
 
+LIBLIST=${LIBI386} ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} ${LIBI386} ${LIBSA}
+
 vers.o: ${VERSIONFILE}
 	sh ${I386_STAND_DIR}/newvers.sh ${.ALLSRC} ${NEWVERSWHAT}
 	${COMPILE.c} vers.c
 
 ${BASE}.sym: ${BSSTART} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386} vers.o
 	${LD} -o ${BASE}.sym ${LDFLAGS} -Ttext 0 ${BSSTART} ${OBJS} \
-	vers.o ${LIBI386} ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} >${BASE}.list
+	vers.o ${LIBLIST} >${BASE}.list
 
 ${BASE}.rom: ${GENPROM} ${ROMSTART} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386} vers.o
 	${LD} -o ${BASE}.sym ${LDFLAGS} -Ttext ${RELOC} ${ROMSTART} ${OBJS} \
-	vers.o ${LIBI386} ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} >${BASE}.list
+	vers.o ${LIBLIST} >${BASE}.list
 	cp ${BASE}.sym ${BASE}.bin
 	strip ${BASE}.bin
 	(cd ${GENPROMDIR}; ${MAKE} rom BINFILE=${.OBJDIR:Q}/${BASE:Q}.bin \
@@ -79,7 +82,7 @@ ${BASE}.rom: ${GENPROM} ${ROMSTART} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI38
 
 ${BASE}.com: ${DOSSTART} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386} vers.o
 	${LD} -o ${BASE}.sym ${LDFLAGS} -Ttext 0x100 ${DOSSTART} ${OBJS} \
-	vers.o ${LIBI386} ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} >${BASE}.list
+	vers.o ${LIBLIST} >${BASE}.list
 	cp ${BASE}.sym ${BASE}.bin
 	strip ${BASE}.bin
 	dd if=${BASE}.bin of=${BASE}.com ibs=32 skip=1 obs=1024b
