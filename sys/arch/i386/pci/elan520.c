@@ -1,4 +1,4 @@
-/*	$NetBSD: elan520.c,v 1.6 2003/10/25 18:40:58 christos Exp $	*/
+/*	$NetBSD: elan520.c,v 1.7 2003/10/25 21:34:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.6 2003/10/25 18:40:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.7 2003/10/25 21:34:07 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,7 @@ static void
 elansc_wdogctl_reset(struct elansc_softc *sc)
 {
 	int s;
-	uint8_t echo_mode;
+	uint8_t echo_mode = 0/* XXX: gcc */;
 
 	s = splhigh();
 
@@ -156,7 +156,7 @@ elansc_wdog_setmode(struct sysmon_wdog *smw)
 {
 	struct elansc_softc *sc = smw->smw_cookie;
 	int i;
-	uint16_t exp_sel;
+	uint16_t exp_sel = 0; /* XXX: gcc */
 
 	if ((smw->smw_mode & WDOG_MODE_MASK) == WDOG_MODE_DISARMED) {
 		elansc_wdogctl_write(sc,
