@@ -16,7 +16,7 @@
  * This driver is derived from the old 386bsd Wangtek streamer tape driver,
  * made by Robert Baron at CMU, based on Intel sources.
  *
- *	$Id: wt.c,v 1.12 1994/04/21 00:41:52 mycroft Exp $
+ *	$Id: wt.c,v 1.13 1994/04/22 22:59:02 mycroft Exp $
  */
 
 /*
@@ -65,6 +65,7 @@
 #include <machine/pio.h>
 
 #include <i386/isa/isavar.h>
+#include <i386/isa/dmavar.h>
 #include <i386/isa/wtreg.h>
 
 /*
