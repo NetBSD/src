@@ -1,3 +1,5 @@
+/*	$NetBSD: fnv_hash.h,v 1.3 2001/11/19 05:37:49 lukem Exp $	*/
+
 /*
  * Fowler / Noll / Vo Hash (FNV Hash)
  * http://www.isthe.com/chongo/tech/comp/fnv/
@@ -7,6 +9,9 @@
  *
  * $FreeBSD: src/sys/sys/fnv_hash.h,v 1.2 2001/03/20 02:10:18 peter Exp $
  */
+
+#ifndef	_SYS_FNV_HASH_H_
+#define	_SYS_FNV_HASH_H_
 
 typedef u_int32_t Fnv32_t;
 typedef u_int64_t Fnv64_t;
@@ -66,3 +71,5 @@ fnv_64_str(const char *str, Fnv64_t hval)
 	}
 	return hval;
 }
+
+#endif	/* !_SYS_FNV_HASH_H_ */
