@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.h,v 1.5 2003/05/22 22:07:39 manu Exp $ */
+/*	$NetBSD: darwin_iohidsystem.h,v 1.6 2003/09/07 09:07:19 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -235,7 +235,7 @@ struct darwin_iohidsystem_evglobals {
 /* Shared memory between the IOHIDSystem driver and userland */
 struct  darwin_iohidsystem_shmem {
 	int dis_global_offset;	/* Offset to global zone, usually 8 */
-	int dis_private_offset;	/* Offset to privete memory. Don't care. */
+	int dis_private_offset;	/* Offset to private memory. Don't care. */
 	struct darwin_iohidsystem_evglobals dis_evglobals; 
 };
 
