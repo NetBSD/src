@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.11 2000/04/16 15:00:57 itojun Exp $	*/
+/*	$NetBSD: nd6.h,v 1.12 2000/04/16 15:28:00 itojun Exp $	*/
 /*	$KAME: nd6.h,v 1.19 2000/03/25 07:23:57 sumikawa Exp $	*/
 
 /*
@@ -68,10 +68,13 @@ struct nd_ifinfo {
 	u_int32_t basereachable;	/* BaseReachableTime */
 	u_int32_t reachable;		/* Reachable Time */
 	u_int32_t retrans;		/* Retrans Timer */
+	u_int32_t flags;		/* Flags */
 	int recalctm;			/* BaseReacable re-calculation timer */
 	u_int8_t chlim;			/* CurHopLimit */
 	u_int8_t receivedra;
 };
+
+#define ND6_IFF_PERFORMNUD	0x1
 
 struct in6_nbrinfo {
 	char ifname[IFNAMSIZ];	/* if name, e.g. "en0" */
