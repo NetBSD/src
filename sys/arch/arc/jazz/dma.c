@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.2 2001/02/17 04:27:55 tsutsui Exp $	*/
+/*	$NetBSD: dma.c,v 1.3 2001/05/15 14:29:17 tsutsui Exp $	*/
 /*	$OpenBSD: dma.c,v 1.5 1998/03/01 16:49:57 niklas Exp $	*/
 
 /*
@@ -145,6 +145,7 @@ picaDmaStart(sc, addr, size, datain)
 
 	/* Load new transfer parameters */
 	regs->dma_addr = sc->dma_va + va;
+	regs->dma_count = size;
 	regs->dma_mode = sc->mode & R4030_DMA_MODE;
 
 	sc->sc_active = 1;
