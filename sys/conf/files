@@ -1,4 +1,4 @@
-#	$Id: files,v 1.45 1994/05/05 05:37:40 cgd Exp $
+#	$Id: files,v 1.46 1994/05/07 01:30:45 cgd Exp $
 #
 ddb/db_access.c		optional ddb
 ddb/db_aout.c		optional ddb
@@ -36,7 +36,6 @@ kern/kern_descrip.c	standard
 kern/kern_exec.c	standard
 kern/kern_exit.c	standard
 kern/kern_fork.c	standard
-kern/kern_kinfo.c	standard
 kern/kern_ktrace.c	optional ktrace
 kern/kern_lkm.c		optional lkm
 kern/kern_malloc.c	standard
@@ -47,6 +46,7 @@ kern/kern_resource.c	standard
 kern/kern_sig.c		standard
 kern/kern_subr.c	standard
 kern/kern_synch.c	standard
+kern/kern_sysctl.c	standard
 kern/kern_time.c	standard
 kern/kern_xxx.c		standard
 kern/subr_disk.c	standard

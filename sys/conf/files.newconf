@@ -73,7 +73,6 @@ file kern/kern_descrip.c
 file kern/kern_exec.c	
 file kern/kern_exit.c	
 file kern/kern_fork.c	
-file kern/kern_kinfo.c	
 file kern/kern_ktrace.c	 	ktrace
 file kern/kern_lkm.c		lkm
 file kern/kern_malloc.c	
@@ -83,6 +82,7 @@ file kern/kern_prot.c
 file kern/kern_resource.c	
 file kern/kern_sig.c		
 file kern/kern_subr.c	
+file kern/kern_sysctl.c	
 file kern/kern_synch.c	
 file kern/kern_time.c	
 file kern/kern_xxx.c		
