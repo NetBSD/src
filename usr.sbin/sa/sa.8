@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: sa.8,v 1.3 1997/09/01 23:32:45 mikel Exp $
+.\"	$Id: sa.8,v 1.4 1997/10/18 03:57:30 lukem Exp $
 .\"
 .Dd February 25, 1994
 .Dt SA 8
@@ -36,18 +36,18 @@
 .Nm sa
 .Nd print system accounting statistics
 .Sh SYNOPSIS
-.Nm sa
+.Nm
 .Op Fl abcdDfijkKlmnqrstu
 .Op Fl v Ar cutoff
 .Op Ar
 .Sh DESCRIPTION
 The
-.Nm sa
+.Nm
 utility reports on, cleans up,
 and generally maintains system
 accounting files.
 .Pp
-.Nm Sa
+.Nm
 is able to condense the information in
 .Pa /var/account/acct
 into the summary files
@@ -96,13 +96,13 @@ User time, in minutes
 .El
 .Pp
 The options to
-.Nm sa
+.Nm
 are:
 .Bl -tag -width Ds
 .It Fl a
 List all command names, including those containing unprintable
 characters and those used only once.  By default,
-.Nm sa
+.Nm
 places all names containing unprintable characters and
 those used only once under the name ``***other''.
 .It Fl b
@@ -195,7 +195,7 @@ and
 flags are honored.
 .Pp
 The
-.Nm sa
+.Nm
 utility exits 0 on success, and >0 if an error occurs.
 .Sh FILES
 .Bl -tag -width /var/account/usracct -compact
@@ -220,7 +220,7 @@ The field labels should be more consistent.
 NetBSD's VM system does not record the CPU storage integral.
 .Sh CAVEATS
 While the behavior of the options in this version of
-.Nm sa
+.Nm
 was modeled after the original version, there are some intentional
 differences and undoubtedly some unintentional ones as well.  In
 particular, the
@@ -230,12 +230,12 @@ option has been added, and the
 option now understands more options than it used to.
 .Pp
 The formats of the summary files created by this version of
-.Nm sa
+.Nm
 are very different than the those used by the original version.
 This is not considered a problem, however, because the accounting record
 format has changed as well (since user ids are now 32 bits).
 .Sh HISTORY
-.Nm Sa
+.Nm
 was written for
 .Nx 0.9a
 from the specification provided by various systems' manual pages.

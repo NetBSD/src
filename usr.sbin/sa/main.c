@@ -28,12 +28,12 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef LINT
-static char copright[] = 
-"@(#) Copyright (c) 1994 Christopher G. Demetriou\n\
- All rights reserved.\n";
+#include <sys/cdefs.h>
+#ifndef lint
+__COPYRIGHT("@(#) Copyright (c) 1994 Christopher G. Demetriou\n\
+ All rights reserved.\n");
 
-static char rcsid[] = "$Id: main.c,v 1.6 1996/03/30 23:51:42 mark Exp $";
+__RCSID("$NetBSD: main.c,v 1.7 1997/10/18 03:57:25 lukem Exp $");
 #endif
 
 /*
@@ -82,6 +82,7 @@ main(argc, argv)
 	int ch;
 	int error;
 
+	error = 0;
 	while ((ch = getopt(argc, argv, "abcdDfijkKlmnqrstuv:")) != -1)
 		switch (ch) {
 			case 'a':
@@ -237,7 +238,7 @@ main(argc, argv)
 			 * but we want every accounting record intact.
 			 */
 			if (ftruncate(fd, 0) == -1) {
-				warn("couldn't truncate %s", argv);
+				warn("couldn't truncate %s", *argv);
 				error = 1;
 			}
 
@@ -264,7 +265,7 @@ main(argc, argv)
 		 * close the opened accounting file
 		 */
 		if (close(fd) == -1) {
-			warn("close %s", argv);
+			warn("close %s", *argv);
 			error = 1;
 		}
 	}
@@ -350,7 +351,7 @@ acct_load(pn, wr)
 			if (sflag || (mflag && !qflag))
 				usracct_add(&ci);
 		} else if (!qflag)
-			printf("%6u %12.2lf cpu %12quk mem %12qu io %s\n",
+			printf("%6u %12.2f cpu %12quk mem %12qu io %s\n",
 			    ci.ci_uid,
 			    (ci.ci_utime + ci.ci_stime) / (double) AHZ,
 			    ci.ci_mem, ci.ci_io, ci.ci_comm);
