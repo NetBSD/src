@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.13 2000/06/18 07:05:09 mrg Exp $	*/
+/*	$NetBSD: iommu.c,v 1.14 2000/06/18 07:17:40 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -140,6 +140,7 @@ int iommudebug = 0x0;
 #define DPRINTF(l, s)
 #endif
 
+static	int iommu_strbuf_flush __P((struct iommu_state *));
 
 /*
  * initialise the UltraSPARC IOMMU (SBUS or PCI):
@@ -216,13 +217,10 @@ iommu_init(name, is, tsbsize)
 	{
 		/* Probe the iommu */
 		struct iommureg *regs = is->is_iommu;
-		int64_t cr, tsb;
 
 		printf("iommu regs at: cr=%lx tsb=%lx flush=%lx\n", &regs->iommu_cr,
 		       &regs->iommu_tsb, &regs->iommu_flush);
-		cr = regs->iommu_cr;
-		tsb = regs->iommu_tsb;
-		printf("iommu cr=%qx tsb=%qx\n", cr, tsb);
+		printf("iommu cr=%qx tsb=%qx\n", regs->iommu_cr, regs->iommu_tsb);
 		printf("TSB base %p phys %qx\n", (void *)is->is_tsb, (u_int64_t)is->is_ptsb);
 		delay(1000000); /* 1 s */
 	}
@@ -304,7 +302,7 @@ iommu_enter(is, va, pa, flags)
 	if (is->is_sb) {
 		bus_space_write_8(is->is_bustag, &is->is_sb->strbuf_pgflush, 0,
 		    va);
-		iommu_flush(is);
+		iommu_strbuf_flush(is);
 	}
 	DPRINTF(IDB_DVMA, ("Clearing TSB slot %d for va %p\n", 
 		       (int)IOTSBSLOT(va,is->is_tsbsize), va));
@@ -357,7 +355,7 @@ iommu_remove(is, va, len)
 			bus_space_write_8(is->is_bustag,
 			    &is->is_sb->strbuf_pgflush, 0, va);
 			if (len <= NBPG)
-				iommu_flush(is);
+				iommu_strbuf_flush(is);
 			DPRINTF(IDB_DVMA, ("iommu_remove: flushed va %p TSB[%lx]@%p=%lx, %lu bytes left\n", 	       
 			       (long)va, (long)IOTSBSLOT(va,is->is_tsbsize), 
 			       (long)&is->is_tsb[IOTSBSLOT(va,is->is_tsbsize)],
@@ -377,8 +375,8 @@ iommu_remove(is, va, len)
 	}
 }
 
-int 
-iommu_flush(is)
+static int 
+iommu_strbuf_flush(is)
 	struct iommu_state *is;
 {
 	struct timeval cur, flushtimeout;
@@ -419,7 +417,7 @@ iommu_flush(is)
 	cur = flushtimeout;
 	BUMPTIME(&flushtimeout, 500000); /* 1/2 sec */
 	
-	DPRINTF(IDB_DVMA, ("iommu_flush: flush = %lx at va = %lx pa = %lx now=%lx:%lx until = %lx:%lx\n", 
+	DPRINTF(IDB_DVMA, ("iommu_strbuf_flush: flush = %lx at va = %lx pa = %lx now=%lx:%lx until = %lx:%lx\n", 
 		       (long)is->is_flush, (long)&is->is_flush, 
 		       (long)is->is_flushpa, cur.tv_sec, cur.tv_usec, 
 		       flushtimeout.tv_sec, flushtimeout.tv_usec));
@@ -431,14 +429,14 @@ iommu_flush(is)
 
 #ifdef DIAGNOSTIC
 	if (!is->is_flush) {
-		printf("iommu_flush: flush timeout %p at %p\n", (long)is->is_flush, 
+		printf("iommu_strbuf_flush: flush timeout %p at %p\n", (long)is->is_flush, 
 		       (long)is->is_flushpa); /* panic? */
 #ifdef DDB
 		Debugger();
 #endif
 	}
 #endif
-	DPRINTF(IDB_DVMA, ("iommu_flush: flushed\n"));
+	DPRINTF(IDB_DVMA, ("iommu_strbuf_flush: flushed\n"));
 	return (is->is_flush);
 }
 
@@ -722,7 +720,7 @@ iommu_dvmamap_sync(t, is, map, offset, len, ops)
 				bus_space_write_8(is->is_bustag,
 				    &is->is_sb->strbuf_pgflush, 0, va);
 				if (len <= NBPG) {
-					iommu_flush(is);
+					iommu_strbuf_flush(is);
 					len = 0;
 				} else
 					len -= NBPG;
