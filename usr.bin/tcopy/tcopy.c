@@ -1,4 +1,4 @@
-/*	$NetBSD: tcopy.c,v 1.4 1995/08/31 22:17:24 jtc Exp $	*/
+/*	$NetBSD: tcopy.c,v 1.5 1997/04/15 07:23:08 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1987, 1993, 1995
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tcopy.c	8.3 (Berkeley) 1/23/95";
 #endif
-static char rcsid[] = "$NetBSD: tcopy.c,v 1.4 1995/08/31 22:17:24 jtc Exp $";
+static char rcsid[] = "$NetBSD: tcopy.c,v 1.5 1997/04/15 07:23:08 lukem Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -53,6 +53,7 @@ static char rcsid[] = "$NetBSD: tcopy.c,v 1.4 1995/08/31 22:17:24 jtc Exp $";
 
 #include <err.h>
 #include <errno.h>
+#include <paths.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <stdio.h>
@@ -60,7 +61,6 @@ static char rcsid[] = "$NetBSD: tcopy.c,v 1.4 1995/08/31 22:17:24 jtc Exp $";
 #include <string.h>
 #include <unistd.h>
 
-#include "pathnames.h"
 
 #define	MAXREC	(64 * 1024)
 #define	NOCOUNT	(-2)
