@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.15 2000/09/21 10:43:50 ad Exp $
+.\"	$NetBSD: uvm.9,v 1.16 2001/03/23 17:07:38 drochner Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -655,8 +655,8 @@ swaps in the named process.
 .Ft boolean_t
 .Fn uvm_useracc "caddr_t addr" "size_t len" "int rw"
 
-.Ft void
-.Fn uvm_vslock "struct proc *p" "caddr_t addr" "size_t len"
+.Ft int
+.Fn uvm_vslock "struct proc *p" "caddr_t addr" "size_t len" "vm_prot_t prot"
 .Ft void
 .Fn uvm_vsunlock "struct proc *p" "caddr_t addr" "size_t len"
 
