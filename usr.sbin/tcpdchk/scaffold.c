@@ -1,4 +1,4 @@
-/*	$NetBSD: scaffold.c,v 1.8 2002/06/06 21:28:50 itojun Exp $	*/
+/*	$NetBSD: scaffold.c,v 1.9 2002/12/26 14:11:28 itojun Exp $	*/
 
  /*
   * Routines for testing only. Not really industrial strength.
@@ -11,7 +11,7 @@
 #if 0
 static char sccs_id[] = "@(#) scaffold.c 1.6 97/03/21 19:27:24";
 #else
-__RCSID("$NetBSD: scaffold.c,v 1.8 2002/06/06 21:28:50 itojun Exp $");
+__RCSID("$NetBSD: scaffold.c,v 1.9 2002/12/26 14:11:28 itojun Exp $");
 #endif
 #endif
 
@@ -103,7 +103,6 @@ char   *host;
 	if (STR_EQ(eval_hostname(request.client), unknown))
 	    tcpd_warn("host address %s->name lookup failed",
 		      eval_hostaddr(request.client));
-	    tcpd_warn("%s %s", eval_hostname(request.client), unknown);
     }
     freeaddrinfo(res0);
     return (count);
