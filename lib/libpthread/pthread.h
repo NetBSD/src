@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.4 2003/01/19 16:03:50 christos Exp $	*/
+/*	$NetBSD: pthread.h,v 1.5 2003/01/19 19:21:49 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@ int	pthread_mutex_unlock(pthread_mutex_t *);
 int	pthread_mutexattr_init(pthread_mutexattr_t *);
 int	pthread_mutexattr_destroy(pthread_mutexattr_t *);
 int	pthread_mutexattr_gettype(const pthread_mutexattr_t *, int *);
-int	pthread_mutexattr_settype(pthread_mutexattr_t *attr, int type);
+int	pthread_mutexattr_settype(pthread_mutexattr_t *attr, int);
 
 int	pthread_cond_init(pthread_cond_t *, const pthread_condattr_t *);
 int	pthread_cond_destroy(pthread_cond_t *);
