@@ -23,7 +23,7 @@ struct sysent linux_sysent[] = {
 	{ 1, s(struct sys_exit_args),
 	    sys_exit },				/* 1 = exit */
 	{ 0, 0,
-	    linux_sys_fork },			/* 2 = fork */
+	    sys_fork },				/* 2 = fork */
 	{ 3, s(struct sys_read_args),
 	    sys_read },				/* 3 = read */
 	{ 3, s(struct sys_write_args),
