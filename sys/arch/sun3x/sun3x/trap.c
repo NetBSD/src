@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.2 1997/01/23 22:52:46 gwr Exp $	*/
+/*	$NetBSD: trap.c,v 1.3 1997/01/25 21:51:11 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -460,24 +460,15 @@ trap(type, code, v, frame)
 			ftype = VM_PROT_READ;
 		va = trunc_page((vm_offset_t)v);
 
-		/* Need to resolve the fault. */
-		if (map == kernel_map) {
-			/* XXX: Do not allow faults outside the "managed" space. */
-			if (va < virtual_avail) {
-				if (p->p_addr->u_pcb.pcb_onfault) {
-					/* XXX - Can this happen? -gwr */
-					printf("trap: kernel_map & va < avail\n");
-					Debugger();
-				}
-				goto dopanic;
-			}
-		}
-
 		/*
+		 * Need to resolve the fault.
+		 *
 		 * We give the pmap code a chance to resolve faults by
 		 * reloading translations that it was forced to unload.
 		 * This function does that, and calls vm_fault if it
 		 * could not resolve the fault by reloading the MMU.
+		 * This function may also, for example, disallow any
+		 * faults in the kernel text segment, etc.
 		 */
 		rv = _pmap_fault(map, va, ftype);
 
@@ -485,10 +476,8 @@ trap(type, code, v, frame)
 		if (rv && MDB_ISPID(p->p_pid)) {
 			printf("vm_fault(%x, %x, %x, 0) -> %x\n",
 			       map, va, ftype, rv);
-#ifdef	DDB
 			if (mmudebug & MDB_WBFAILED)
 				Debugger();
-#endif	/* DDB */
 		}
 #endif	/* DEBUG */
 
@@ -530,7 +519,7 @@ trap(type, code, v, frame)
 		ucode = v;
 		sig = SIGSEGV;
 		break;
-	} /* T_MMUFLT */
+		} /* T_MMUFLT */
 	} /* switch */
 
 finish:
