@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.18 1998/12/03 18:24:31 bouyer Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.19 1999/02/19 21:49:43 abs Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -102,6 +102,11 @@ struct wdc_pcmcia_product {
 	  PCMCIA_PRODUCT_DIGITAL_MOBILE_MEDIA_CDROM,
 	  0, { NULL, "Digital Mobile Media CD-ROM", NULL, NULL },
 	  PCMCIA_STR_DIGITAL_MOBILE_MEDIA_CDROM },
+
+	{ PCMCIA_VENDOR_IBM,
+	  PCMCIA_PRODUCT_IBM_PORTABLE_CDROM_DRIVE,
+	  0, { NULL, "PCMCIA Portable CD-ROM Drive", NULL, NULL },
+	  PCMCIA_STR_IBM_PORTABLE_CDROM_DRIVE },
 
 	{ PCMCIA_VENDOR_HAGIWARASYSCOM,
 	  -1,			/* XXX */

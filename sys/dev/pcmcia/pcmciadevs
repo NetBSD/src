@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.32 1999/02/19 02:52:17 nathanw Exp $
+$NetBSD: pcmciadevs,v 1.33 1999/02/19 21:49:43 abs Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -95,6 +95,7 @@ product MOTOROLA PM100C		0x0302 Motorola Personal Messenger 100C CDPD Modem
 product IBM INFOMOVER		0x0002 National Semiconductor InfoMover
 product IBM HOME_AND_AWAY	0x002e IBM Home and Away Modem
 product IBM WIRELESS_LAN_ENTRY	0x0032 Wireless LAN Entry 
+product IBM PORTABLE_CDROM_DRIVE 0x002d PCMCIA Portable CD-ROM Drive
 
 /* I-O DATA */
 product IODATA PCLAT		0x2216 I-O DATA PCLA/T
@@ -108,6 +109,7 @@ product LINKSYS TRUST_COMBO_ECARD 0x021b Trust (Linksys) Combo EthernetCard
 product MEGAHERTZ XJ4288	0x0023 Megahertz XJ4288 Modem
 product MEGAHERTZ XJ5560	0x0034 Megahertz X-JACK 56kbps Modem
 product MEGAHERTZ2 XJACK	0x0103 Megahertz X-JACK Ethernet
+product MEGAHERTZ XJEM3336 	0x0006 Megahertz X-JACK Ethernet Modem
 
 /* US Robotics Products */
 product USROBOTICS WORLDPORT144	0x3330 US Robotics WorldPort 14.4 Modem
