@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.72 2002/11/24 08:27:00 yamt Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.73 2002/11/24 16:39:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.72 2002/11/24 08:27:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.73 2002/11/24 16:39:13 yamt Exp $");
 
 #define LFS		/* for prototypes in syscallargs.h */
 
@@ -128,6 +128,7 @@ extern TAILQ_HEAD(bqueues, buf) bufqueues[BQUEUES];
 
 static int lfs_bmapv(struct proc *, fsid_t *, BLOCK_INFO *, int);
 static int lfs_markv(struct proc *, fsid_t *, BLOCK_INFO *, int);
+static void lfs_fakebuf_iodone(struct buf *);
 
 /*
  * sys_lfs_markv:
@@ -1248,12 +1249,36 @@ lfs_fastvget(struct mount *mp, ino_t ino, ufs_daddr_t daddr, struct vnode **vpp,
 	return (0);
 }
 
+static void
+lfs_fakebuf_iodone(struct buf *bp)
+{
+	struct buf *obp = bp->b_saveaddr;
+
+	if (!(obp->b_flags & (B_DELWRI | B_DONE)))
+		obp->b_flags |= B_INVAL;
+	brelse(obp);
+	lfs_callback(bp);
+}
+
 struct buf *
 lfs_fakebuf(struct lfs *fs, struct vnode *vp, int lbn, size_t size, caddr_t uaddr)
 {
 	struct buf *bp;
 	int error;
 	
+	struct buf *obp;
+
+	/*
+	 * make corresponding buffer busy to avoid
+	 * reading blocks that isn't written yet.
+	 * it's needed because we'll update metadatas in lfs_updatemeta
+	 * before data pointed by them is actually written to disk.
+	 * XXX no need to allocbuf.
+	 */
+	obp = getblk(vp, lbn, size, 0, 0);
+	if (obp == NULL)
+		panic("lfs_fakebuf: getblk failed");
+
 #ifndef ALLOW_VFLUSH_CORRUPTION
 	bp = lfs_newbuf(VTOI(vp)->i_lfs, vp, lbn, size);
 	error = copyin(uaddr, bp->b_data, size);
@@ -1261,6 +1286,15 @@ lfs_fakebuf(struct lfs *fs, struct vnode *vp, int lbn, size_t size, caddr_t uadd
 		lfs_freebuf(bp);
 		return NULL;
 	}
+	bp->b_saveaddr = obp;
+	KDASSERT(bp->b_iodone == lfs_callback);
+	bp->b_iodone = lfs_fakebuf_iodone;
+
+#ifdef DIAGNOSTIC
+	if (obp->b_flags & B_GATHERED)
+		panic("lfs_fakebuf: gathered bp: %p, ino=%u, lbn=%d",
+		    bp, VTOI(vp)->i_number, lbn);
+#endif
 #else
 	bp = lfs_newbuf(VTOI(vp)->i_lfs, vp, lbn, 0);
 	bp->b_flags |= B_INVAL;
