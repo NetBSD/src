@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.75 1995/12/24 02:31:37 mycroft Exp $	*/
+/*	$NetBSD: isa.c,v 1.76 1996/01/16 07:52:38 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -71,7 +71,7 @@ isascan(parent, match)
 	struct isa_attach_args ia;
 
 	if (cf->cf_fstate == FSTATE_STAR)
-		panic("not bloody likely");
+		panic("clone devices not supported on ISA bus");
 
 	ia.ia_iobase = cf->cf_loc[0];
 	ia.ia_iosize = 0x666;
