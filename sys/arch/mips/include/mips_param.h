@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.3 1997/06/08 10:46:04 jonathan Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.4 1997/06/16 03:52:08 jonathan Exp $	*/
 
 /*
  * Architecture name.
@@ -82,7 +82,6 @@ extern int (*Mach_splnet) __P((void)), (*Mach_splbio) __P((void)),
 #define	splclock()	((*Mach_splclock)())
 #define	splstatclock()	((*Mach_splstatclock)())
 
-extern void wbflush __P ((void));		/* XXX */
 extern void delay __P((int n));
 
 #endif	/* _LOCORE */
