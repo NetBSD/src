@@ -33,7 +33,7 @@
 
 #include "kdc_locl.h"
 
-RCSID("$Id: kerberos5.c,v 1.3 2001/06/19 22:39:55 assar Exp $");
+RCSID("$Id: kerberos5.c,v 1.4 2001/09/17 12:32:36 assar Exp $");
 
 #define MAX_TIME ((time_t)((1U << 31) - 1))
 
@@ -1237,7 +1237,7 @@ tgs_check_authenticator(krb5_auth_context ac,
     krb5_error_code ret;
     krb5_crypto crypto;
     
-    krb5_auth_getauthenticator(context, ac, &auth);
+    krb5_auth_con_getauthenticator(context, ac, &auth);
     if(auth->cksum == NULL){
 	kdc_log(0, "No authenticator in request");
 	ret = KRB5KRB_AP_ERR_INAPP_CKSUM;
@@ -1438,7 +1438,7 @@ tgs_rep2(KDC_REQ_BODY *b,
     {
 	krb5_authenticator auth;
 
-	ret = krb5_auth_getauthenticator(context, ac, &auth);
+	ret = krb5_auth_con_getauthenticator(context, ac, &auth);
 	if (ret == 0) {
 	    *csec   = malloc(sizeof(**csec));
 	    if (*csec == NULL) {

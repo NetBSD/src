@@ -33,7 +33,7 @@
 
 #include <krb5_locl.h>
 
-RCSID("$Id: get_cred.c,v 1.3 2001/06/19 22:39:58 assar Exp $");
+RCSID("$Id: get_cred.c,v 1.4 2001/09/17 12:32:38 assar Exp $");
 
 /*
  * Take the `body' and encode it into `padata' using the credentials
@@ -558,10 +558,13 @@ get_cred_kdc_la(krb5_context context, krb5_ccache id, krb5_kdc_flags flags,
 		krb5_creds *out_creds)
 {
     krb5_error_code ret;
-    krb5_addresses addresses;
+    krb5_addresses addresses, *addrs = &addresses;
     
     krb5_get_all_client_addrs(context, &addresses);
-    ret = get_cred_kdc(context, id, flags, &addresses, 
+    /* XXX this sucks. */
+    if(addresses.len == 0)
+	addrs = NULL;
+    ret = get_cred_kdc(context, id, flags, addrs, 
 		       in_creds, krbtgt, out_creds);
     krb5_free_addresses(context, &addresses);
     return ret;
