@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.c,v 1.32 2004/03/06 22:59:42 oster Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.33 2004/03/06 23:52:20 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.32 2004/03/06 22:59:42 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.33 2004/03/06 23:52:20 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -269,8 +269,8 @@ rf_FreeFuncList(RF_FuncList_t *funcList)
 
 /* allocates a buffer big enough to hold the data described by pda */
 void   *
-rf_AllocBuffer(RF_Raid_t *raidPtr, RF_DagHeader_t *dag_h,
-	       RF_PhysDiskAddr_t *pda, RF_AllocListElem_t *allocList)
+rf_AllocBuffer(RF_Raid_t *raidPtr, RF_PhysDiskAddr_t *pda,
+	       RF_AllocListElem_t *allocList)
 {
 	char   *p;
 
