@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.8 2003/01/18 06:58:35 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.9 2003/06/23 11:01:45 martin Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -45,6 +45,7 @@
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
+#include "opt_fpu_emulate.h"
 #include "opt_kgdb.h"
 #include "opt_compat_aout_m68k.h"
 #include "opt_compat_sunos.h"

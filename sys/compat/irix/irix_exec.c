@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.c,v 1.27 2003/01/22 12:58:22 rafal Exp $ */
+/*	$NetBSD: irix_exec.c,v 1.28 2003/06/23 11:01:53 martin Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.27 2003/01/22 12:58:22 rafal Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.28 2003/06/23 11:01:53 martin Exp $");
+
+#include "opt_syscall_debug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

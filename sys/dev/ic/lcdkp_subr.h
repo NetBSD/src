@@ -1,4 +1,4 @@
-/* $NetBSD: lcdkp_subr.h,v 1.1 2003/01/20 01:26:12 soren Exp $ */
+/* $NetBSD: lcdkp_subr.h,v 1.2 2003/06/23 11:01:58 martin Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -31,6 +31,7 @@
 #define _DEV_IC_LCDKP_SUBR_H_
 
 #ifdef _KERNEL
+#include "opt_multiprocessor.h"
 #include <sys/lock.h>
 
 /* Key code translation */

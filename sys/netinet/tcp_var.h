@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.97 2003/04/19 20:58:35 christos Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.98 2003/06/23 11:02:16 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -146,6 +146,7 @@
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
+#include "opt_mbuftrace.h"
 #endif
 
 /*

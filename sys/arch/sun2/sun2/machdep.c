@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.24 2003/05/03 18:11:03 wiz Exp $	*/
+/*	$NetBSD: machdep.c,v 1.25 2003/06/23 11:01:44 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette.
@@ -127,6 +127,7 @@
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+#include "opt_fpu_emulate.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

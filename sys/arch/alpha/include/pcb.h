@@ -1,4 +1,4 @@
-/* $NetBSD: pcb.h,v 1.9 2002/11/30 01:37:29 simonb Exp $ */
+/* $NetBSD: pcb.h,v 1.10 2003/06/23 11:01:01 martin Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,6 +29,8 @@
 
 #ifndef _ALPHA_PCB_H_
 #define	_ALPHA_PCB_H_
+
+#include "opt_multiprocessor.h"
 
 #include <sys/lock.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.1 2002/12/23 17:30:41 jdolecek Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.2 2003/06/23 11:02:02 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -37,7 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.1 2002/12/23 17:30:41 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.2 2003/06/23 11:02:02 martin Exp $");
+
+#include "opt_nfsserver.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

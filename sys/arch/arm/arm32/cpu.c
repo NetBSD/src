@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.50 2003/05/23 00:57:24 ichiro Exp $	*/
+/*	$NetBSD: cpu.c,v 1.51 2003/06/23 11:01:06 martin Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -42,10 +42,11 @@
  */
 
 #include "opt_armfpe.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.50 2003/05/23 00:57:24 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.51 2003/06/23 11:01:06 martin Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>

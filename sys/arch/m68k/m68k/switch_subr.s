@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.3 2003/03/05 05:56:26 jklos Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.4 2003/06/23 11:01:26 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.
@@ -40,6 +40,10 @@
  *
  * Split from: Utah $Hdr: locore.s 1.66 92/12/22$
  */
+
+#include "opt_fpu_emulate.h"
+#include "opt_lockdebug.h"
+#include "opt_pmap_debug.h"
 
 /*
  * NOTICE: This is not a standalone file.  To use it, #include it in

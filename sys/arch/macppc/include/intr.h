@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.17 2003/06/16 20:01:01 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.18 2003/06/23 11:01:28 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,6 +38,8 @@
 
 #ifndef _MACPPC_INTR_H_
 #define _MACPPC_INTR_H_
+
+#include "opt_multiprocessor.h"
 
 /* Interrupt priority `levels'. */
 #define	IPL_NONE	9	/* nothing */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.7 2003/05/21 17:57:21 kristerw Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.8 2003/06/23 11:02:05 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.30 2003/02/27 07:50:57 martin Exp $ */
+/*	$NetBSD: if_xi.c,v 1.31 2003/06/23 11:01:59 martin Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -49,9 +49,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.30 2003/02/27 07:50:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.31 2003/06/23 11:01:59 martin Exp $");
 
 #include "opt_inet.h"
+#include "opt_ipx.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>

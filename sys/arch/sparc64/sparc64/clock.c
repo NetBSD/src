@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.58 2003/05/17 01:38:40 nakayama Exp $ */
+/*	$NetBSD: clock.c,v 1.59 2003/06/23 11:01:43 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,6 +53,8 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/11/93
  *
  */
+
+#include "opt_multiprocessor.h"
 
 /*
  * Clock driver.  This is the id prom and eeprom driver as well

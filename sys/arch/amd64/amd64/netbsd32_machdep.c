@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.1 2003/04/26 18:39:30 fvdl Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.2 2003/06/23 11:01:03 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,6 +36,7 @@
  */
 
 #include "opt_compat_netbsd.h"
+#include "opt_user_ldt.h"
 
 #include <sys/param.h>
 #include <sys/exec.h>

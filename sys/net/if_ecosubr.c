@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecosubr.c,v 1.11 2003/01/17 08:11:53 itojun Exp $	*/
+/*	$NetBSD: if_ecosubr.c,v 1.12 2003/06/23 11:02:09 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -62,14 +62,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.11 2003/01/17 08:11:53 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.12 2003/06/23 11:02:09 martin Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
+#include "opt_pfil_hooks.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.11 2003/01/17 08:11:53 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.12 2003/06/23 11:02:09 martin Exp $");
 
 #include <sys/errno.h>
 #include <sys/kernel.h>

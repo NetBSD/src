@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.50 2002/12/21 16:23:59 manu Exp $	*/
+/*	$NetBSD: trap.c,v 1.51 2003/06/23 11:01:34 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller. All rights reserved.
@@ -49,6 +49,7 @@
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
+#include "opt_math_emulate.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.h,v 1.20 2001/05/30 12:04:53 mrg Exp $	*/
+/*	$NetBSD: pfil.h,v 1.21 2003/06/23 11:02:11 martin Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthew R. Green
@@ -30,6 +30,8 @@
 
 #ifndef _NET_PFIL_H_
 #define _NET_PFIL_H_
+
+#include "opt_pfil_hooks.h"
 
 #include <sys/queue.h>
 #include <net/dlt.h>

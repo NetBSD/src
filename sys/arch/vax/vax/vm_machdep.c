@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.79 2003/01/18 07:10:35 thorpej Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.80 2003/06/23 11:01:50 martin Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,6 +31,7 @@
  */
 
 #include "opt_compat_ultrix.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/types.h>
 #include <sys/param.h>

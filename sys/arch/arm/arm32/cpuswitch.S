@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.35 2003/06/23 09:05:22 chris Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.36 2003/06/23 11:01:07 martin Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -80,6 +80,7 @@
 #include "opt_armfpe.h"
 #include "opt_arm32_pmap.h"
 #include "opt_multiprocessor.h"
+#include "opt_lockdebug.h"
 
 #include "assym.h"
 #include <machine/param.h>

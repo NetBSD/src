@@ -1,4 +1,4 @@
-/*	$NetBSD: aoutm68k_stat.h,v 1.1 2000/12/02 20:40:04 scw Exp $	*/
+/*	$NetBSD: aoutm68k_stat.h,v 1.2 2003/06/23 11:01:52 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,6 +38,8 @@
 
 #ifndef _AOUTM68K_STAT_H
 #define _AOUTM68K_STAT_H
+
+#include "opt_compat_43.h"
 
 #pragma pack(2)
 

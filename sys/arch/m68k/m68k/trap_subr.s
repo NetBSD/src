@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.s,v 1.7 2001/11/26 21:10:32 fredette Exp $	*/
+/*	$NetBSD: trap_subr.s,v 1.8 2003/06/23 11:01:26 martin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,6 +41,8 @@
  *
  *	@(#)locore.s	8.6 (Berkeley) 5/27/94
  */
+
+#include "opt_compat_sunos.h"
 
 /*
  * NOTICE: This is not a standalone file.  To use it, #include it in

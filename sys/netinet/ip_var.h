@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.52 2003/06/15 02:49:33 matt Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.53 2003/06/23 11:02:15 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -37,6 +37,9 @@
 
 #ifndef _NETINET_IP_VAR_H_
 #define _NETINET_IP_VAR_H_
+
+#include "opt_gateway.h"
+#include "opt_mbuftrace.h"
 
 #include <sys/queue.h>
 #include <net/route.h>

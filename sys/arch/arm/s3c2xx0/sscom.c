@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.4 2003/05/13 06:26:57 bsh Exp $ */
+/*	$NetBSD: sscom.c,v 1.5 2003/06/23 11:01:08 martin Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -111,6 +111,8 @@
 #include "opt_sscom.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+#include "opt_multiprocessor.h"
+#include "opt_lockdebug.h"
 
 #include "rnd.h"
 #if NRND > 0 && defined(RND_COM)

@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.32 2003/02/05 12:16:41 nakayama Exp $ */
+/* $NetBSD: clock.c,v 1.33 2003/06/23 11:01:00 martin Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,9 +42,11 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/10/93
  */
 
+#include "opt_multiprocessor.h"
+
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.32 2003/02/05 12:16:41 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.33 2003/06/23 11:01:00 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

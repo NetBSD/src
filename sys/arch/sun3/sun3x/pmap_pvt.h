@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_pvt.h,v 1.9 2001/09/05 12:15:21 tsutsui Exp $	*/
+/*	$NetBSD: pmap_pvt.h,v 1.10 2003/06/23 11:01:49 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,6 +38,8 @@
 
 #ifndef _SUN3X_PMAPPVT_H
 #define _SUN3X_PMAPPVT_H
+
+#include "opt_pmap_debug.h"
 
 /*************************** TMGR STRUCTURES ***************************
  * The sun3x 'tmgr' structures contain MMU tables and additional       *

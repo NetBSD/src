@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.18 2003/04/02 07:35:59 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.19 2003/06/23 11:01:22 martin Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -38,6 +38,7 @@
 #ifndef _I386_PROC_H_
 #define _I386_PROC_H_
 
+#include "opt_noredzone.h"
 #include <machine/frame.h>
 
 /*

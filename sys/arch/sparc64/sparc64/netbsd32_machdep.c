@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.31 2003/04/16 08:56:43 dsl Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.32 2003/06/23 11:01:43 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -30,6 +30,7 @@
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
+#include "opt_compat_sunos.h"
 #include "firm_events.h"
 #endif
 

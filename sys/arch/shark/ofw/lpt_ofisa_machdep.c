@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_ofisa_machdep.c,v 1.1 2002/02/10 01:57:57 thorpej Exp $	*/
+/*	$NetBSD: lpt_ofisa_machdep.c,v 1.2 2003/06/23 11:01:38 martin Exp $	*/
 
 /*
  * Copyright 1998
@@ -32,6 +32,8 @@
  *    negligence, tort, under statute, in equity, at law or otherwise,
  *    even if advised of the possibility of such damage.
  */
+
+#include "opt_compat_old_ofw.h"
 
 #include <sys/param.h>
 #include <sys/device.h>

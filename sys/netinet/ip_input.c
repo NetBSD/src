@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.166 2003/06/15 02:49:33 matt Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.167 2003/06/23 11:02:14 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,12 +102,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.166 2003/06/15 02:49:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.167 2003/06/23 11:02:14 martin Exp $");
 
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
 #include "opt_ipsec.h"
 #include "opt_mrouting.h"
+#include "opt_mbuftrace.h"
 #include "opt_inet_csum.h"
 
 #include <sys/param.h>

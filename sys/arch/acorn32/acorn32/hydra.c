@@ -1,4 +1,4 @@
-/*	$NetBSD: hydra.c,v 1.15 2003/02/23 23:40:02 thorpej Exp $	*/
+/*	$NetBSD: hydra.c,v 1.16 2003/06/23 11:00:59 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -27,9 +27,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_multiprocessor.h"
+
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.15 2003/02/23 23:40:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.16 2003/06/23 11:00:59 martin Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>

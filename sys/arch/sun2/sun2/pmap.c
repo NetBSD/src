@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.22 2003/05/10 21:10:41 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.23 2003/06/23 11:01:44 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -89,6 +89,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_pmap_debug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

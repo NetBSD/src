@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.6 2003/03/08 09:47:13 he Exp $	*/
+/*	$NetBSD: plcom.c,v 1.7 2003/06/23 11:01:13 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -107,6 +107,8 @@
 #include "opt_plcom.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+#include "opt_lockdebug.h"
+#include "opt_multiprocessor.h"
 
 #include "rnd.h"
 #if NRND > 0 && defined(RND_COM)

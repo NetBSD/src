@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.19 1999/11/13 21:17:56 thorpej Exp $	*/
+/*	$NetBSD: exec.c,v 1.20 2003/06/23 11:02:08 martin Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -32,6 +32,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include "opt_insecure.h"
 
 #include <sys/param.h>
 #include <sys/reboot.h>

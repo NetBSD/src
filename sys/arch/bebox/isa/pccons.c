@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.27 2003/01/17 22:36:32 thorpej Exp $	*/
+/*	$NetBSD: pccons.c,v 1.28 2003/06/23 11:01:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -80,6 +80,7 @@
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
+#include "opt_xserver.h"
 
 #include <sys/param.h>
 #include <sys/ioctl.h>

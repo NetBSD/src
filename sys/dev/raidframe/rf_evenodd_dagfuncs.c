@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_evenodd_dagfuncs.c,v 1.11 2001/11/13 07:11:14 lukem Exp $	*/
+/*	$NetBSD: rf_evenodd_dagfuncs.c,v 1.12 2003/06/23 11:02:00 martin Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,9 +31,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_evenodd_dagfuncs.c,v 1.11 2001/11/13 07:11:14 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_evenodd_dagfuncs.c,v 1.12 2003/06/23 11:02:00 martin Exp $");
 
 #include "rf_archs.h"
+#include "opt_raid_diagnostic.h"
 
 #if RF_INCLUDE_EVENODD > 0
 

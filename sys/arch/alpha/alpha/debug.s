@@ -1,4 +1,4 @@
-/* $NetBSD: debug.s,v 1.9 2003/04/08 22:37:52 thorpej Exp $ */
+/* $NetBSD: debug.s,v 1.10 2003/06/23 11:01:00 martin Exp $ */
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -37,8 +37,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(6, "$NetBSD: debug.s,v 1.9 2003/04/08 22:37:52 thorpej Exp $")
+__KERNEL_RCSID(6, "$NetBSD: debug.s,v 1.10 2003/06/23 11:01:00 martin Exp $")
 
+#include "opt_multiprocessor.h"
 #include "opt_kgdb.h"
 
 /*

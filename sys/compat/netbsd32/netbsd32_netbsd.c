@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.70 2003/01/18 08:28:26 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.71 2003/06/23 11:01:56 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.70 2003/01/18 08:28:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.71 2003/06/23 11:01:56 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -38,6 +38,8 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.70 2003/01/18 08:28:26 thorpej
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
 #include "opt_sysv.h"
+#include "opt_nfsserver.h"
+#include "opt_syscall_debug.h"
 
 #include "fs_lfs.h"
 #include "fs_nfs.h"

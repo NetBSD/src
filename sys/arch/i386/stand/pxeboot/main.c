@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.5 2003/03/11 16:30:02 drochner Exp $	*/
+/*	$NetBSD: main.c,v 1.6 2003/06/23 11:01:24 martin Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -36,6 +36,7 @@
  *
  */
 
+#include "opt_compat_oldboot.h"
 #include <lib/libkern/libkern.h>
 
 #include <lib/libsa/stand.h>

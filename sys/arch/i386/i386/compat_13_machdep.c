@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.10 2003/01/17 23:10:30 thorpej Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.11 2003/06/23 11:01:17 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.10 2003/01/17 23:10:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.11 2003/06/23 11:01:17 martin Exp $");
+
+#include "opt_vm86.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

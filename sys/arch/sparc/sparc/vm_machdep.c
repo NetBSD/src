@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.73 2003/05/07 08:24:29 pk Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.74 2003/06/23 11:01:42 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -47,6 +47,8 @@
  *
  *	@(#)vm_machdep.c	8.2 (Berkeley) 9/23/93
  */
+
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

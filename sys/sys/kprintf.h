@@ -1,4 +1,4 @@
-/*	$NetBSD: kprintf.h,v 1.2 2003/02/17 22:19:13 christos Exp $	*/
+/*	$NetBSD: kprintf.h,v 1.3 2003/06/23 11:02:19 martin Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -41,6 +41,7 @@
 #ifndef _SYS_KPRINTF_H_
 #define	_SYS_KPRINTF_H_
 
+#include "opt_multiprocessor.h"
 #include <sys/lock.h>
 
 /*

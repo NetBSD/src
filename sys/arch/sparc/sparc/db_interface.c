@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.55 2003/05/18 16:45:21 martin Exp $ */
+/*	$NetBSD: db_interface.c,v 1.56 2003/06/23 11:01:39 martin Exp $ */
 
 /*
  * Mach Operating System
@@ -34,6 +34,7 @@
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_multiprocessor.h"
+#include "opt_lockdebug.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.133 2003/05/07 08:25:30 pk Exp $ */
+/*	$NetBSD: trap.c,v 1.134 2003/06/23 11:01:42 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -54,6 +54,7 @@
 #include "opt_compat_svr4.h"
 #include "opt_compat_sunos.h"
 #include "opt_sparc_arch.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

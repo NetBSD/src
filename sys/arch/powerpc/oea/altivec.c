@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.c,v 1.3 2003/04/02 02:47:19 thorpej Exp $	*/
+/*	$NetBSD: altivec.c,v 1.4 2003/06/23 11:01:36 martin Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -30,6 +30,9 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_multiprocessor.h"
+
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/sa.h>

@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.14 2003/03/07 13:30:35 rjs Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.15 2003/06/23 11:01:09 martin Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -78,6 +78,8 @@
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
 #include "opt_kgdb.h"
+#include "opt_multiprocessor.h"
+#include "opt_lockdebug.h"
 
 #include "rnd.h"
 #if NRND > 0 && defined(RND_COM)

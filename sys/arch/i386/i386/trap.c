@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.181 2003/05/21 23:47:55 lukem Exp $	*/
+/*	$NetBSD: trap.c,v 1.182 2003/06/23 11:01:21 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -79,11 +79,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.181 2003/05/21 23:47:55 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.182 2003/06/23 11:01:21 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+#include "opt_lockdebug.h"
 #include "opt_math_emulate.h"
+#include "opt_multiprocessor.h"
 #include "opt_vm86.h"
 #include "opt_kvm86.h"
 #include "opt_cputype.h"

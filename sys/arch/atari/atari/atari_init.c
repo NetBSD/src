@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.57 2003/04/01 23:47:01 thorpej Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.58 2003/06/23 11:01:09 martin Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -34,6 +34,7 @@
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
+#include "opt_m060sp.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.111 2003/06/11 10:44:10 martin Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.112 2003/06/23 11:02:10 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,13 +65,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.111 2003/06/11 10:44:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.112 2003/06/23 11:02:10 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
 #include "opt_ccitt.h"
 #include "opt_llc.h"
 #include "opt_iso.h"
+#include "opt_ipx.h"
+#include "opt_mbuftrace.h"
 #include "opt_ns.h"
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
