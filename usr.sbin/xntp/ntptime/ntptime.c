@@ -68,6 +68,7 @@ extern int syscall	P((int, void *, ...));
 #endif /* NTP_SYSCALLS_LIBC */
 char *sprintb		P((u_int, char *));
 char *timex_state	P((int));
+int debug = 0;
 
 #ifdef SIGSYS
 void pll_trap		P((int));
@@ -79,8 +80,8 @@ static sigjmp_buf env;		/* environment var. for pll_trap() */
 
 static volatile int pll_control; /* (0) daemon, (1) kernel loop */
 
-static char* progname;
-static char optargs[] = "ce:f:hm:o:rs:t:";
+char* progname;
+static char optargs[] = "cde:f:hm:o:rs:t:";
 
 void
 main(argc, argv)
@@ -105,6 +106,9 @@ main(argc, argv)
   while ((c = ntp_getopt(argc, argv, optargs)) != EOF) switch (c) {
   case 'c':
     cost++;
+    break;
+  case 'd':
+    debug++;
     break;
   case 'e':
     ntx.modes |= MOD_ESTERROR;
@@ -291,7 +295,7 @@ main(argc, argv)
     printf("  time constant %ld, precision %ld us, tolerance %.0f ppm,\n",
 	   ntx.constant, ntx.precision, ftemp);
     if (ntx.shift == 0)
-      return;
+	exit(0);
     ftemp = ntx.ppsfreq;
     ftemp /= (1 << SHIFT_USEC);
     gtemp = ntx.stabil;
