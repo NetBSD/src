@@ -1,12 +1,11 @@
 #
-#	$NetBSD: files.luna68k,v 1.9 2002/10/26 13:50:32 jdolecek Exp $
+#	$NetBSD: files.luna68k,v 1.10 2002/11/02 20:26:39 chs Exp $
 #
 maxpartitions 8
 maxusers 2 8 64
 
 file arch/luna68k/luna68k/autoconf.c
 file arch/luna68k/luna68k/clock.c
-file arch/luna68k/luna68k/db_memrw.c		ddb | kgdb
 file arch/luna68k/luna68k/disksubr.c
 file arch/luna68k/luna68k/isr.c
 file arch/luna68k/luna68k/machdep.c
@@ -17,6 +16,7 @@ file arch/luna68k/luna68k/procfs_machdep.c	procfs
 file arch/luna68k/luna68k/sys_machdep.c
 file arch/luna68k/luna68k/trap.c
 file arch/m68k/m68k/cacheops.c
+file arch/m68k/m68k/db_memrw.c		ddb | kgdb
 file arch/m68k/m68k/vm_machdep.c
 file dev/clock_subr.c
 file dev/cons.c
