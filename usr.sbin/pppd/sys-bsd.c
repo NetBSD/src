@@ -1,3 +1,5 @@
+/*	$NetBSD: sys-bsd.c,v 1.16 1997/03/12 20:18:24 christos Exp $	*/
+
 /*
  * sys-bsd.c - System-dependent procedures for setting up
  * PPP interfaces on bsd-4.4-ish systems (including 386BSD, NetBSD, etc.)
@@ -21,7 +23,11 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: sys-bsd.c,v 1.15 1997/03/10 20:21:01 is Exp $";
+#if 0
+static char rcsid[] = "Id: sys-bsd.c,v 1.27 1997/03/04 03:43:53 paulus Exp ";
+#else
+static char rcsid[] = "$NetBSD: sys-bsd.c,v 1.16 1997/03/12 20:18:24 christos Exp $";
+#endif
 #endif
 
 /*
@@ -37,11 +43,15 @@ static char rcsid[] = "$Id: sys-bsd.c,v 1.15 1997/03/10 20:21:01 is Exp $";
 #include <fcntl.h>
 #include <termios.h>
 #include <signal.h>
+#include <util.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/stat.h>
+#ifdef PPP_FILTER
+#include <net/bpf.h>
+#endif
 
 #include <net/if.h>
 #include <net/ppp_defs.h>
@@ -55,6 +65,8 @@ static char rcsid[] = "$Id: sys-bsd.c,v 1.15 1997/03/10 20:21:01 is Exp $";
 #endif
 
 #include "pppd.h"
+#include "fsm.h"
+#include "ipcp.h"
 
 static int initdisc = -1;	/* Initial TTY discipline for ppp_fd */
 static int initfdflags = -1;	/* Initial file descriptor flags for ppp_fd */
@@ -91,11 +103,6 @@ static int get_ether_addr __P((u_int32_t, struct sockaddr_dl *));
 void
 sys_init()
 {
-    openlog("pppd", LOG_PID | LOG_NDELAY, LOG_PPP);
-    setlogmask(LOG_UPTO(LOG_INFO));
-    if (debug)
-	setlogmask(LOG_UPTO(LOG_DEBUG));
-
     /* Get an internet socket for doing socket ioctl's on. */
     if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
 	syslog(LOG_ERR, "Couldn't create IP socket: %m");
@@ -124,7 +131,7 @@ sys_cleanup()
     if (ifaddrs[0] != 0)
 	cifaddr(0, ifaddrs[0], ifaddrs[1]);
     if (default_route_gateway)
-	cifdefaultroute(0, default_route_gateway);
+	cifdefaultroute(0, 0, default_route_gateway);
     if (proxy_arp_addr)
 	cifproxyarp(0, proxy_arp_addr);
 }
@@ -140,7 +147,6 @@ sys_close()
 	close(loop_slave);
 	close(loop_master);
     }
-    closelog();
 }
 
 /*
@@ -149,21 +155,6 @@ sys_close()
 void
 sys_check_options()
 {
-}
-
-
-/*
- * note_debug_level - note a change in the debug level.
- */
-void
-note_debug_level()
-{
-    if (debug) {
-	syslog(LOG_INFO, "Debug turned ON, Level %d", debug);
-	setlogmask(LOG_UPTO(LOG_DEBUG));
-    } else {
-	setlogmask(LOG_UPTO(LOG_WARNING));
-    }
 }
 
 /*
@@ -643,7 +634,6 @@ get_loop_output()
 {
     int rv = 0;
     int n;
-    struct ppp_idle idle;
 
     while ((n = read(loop_master, inbuf, sizeof(inbuf))) >= 0) {
 	if (loop_chars(inbuf, n))
@@ -657,16 +647,7 @@ get_loop_output()
 	syslog(LOG_ERR, "read from loopback: %m");
 	die(1);
     }
-    if (get_idle_time(0, &idle)) {
-	/* somebody sent a packet which poked the active filter. */
-	/* VJ compression may result in get_loop_output() never
-	   matching the idle filter since it's applied here in user space
-	   after the kernel has compressed the packet.
-	   The kernel applies the active filter before the VJ compression. */
-	if (idle.xmit_idle < idle_time_limit)
-	    rv = 1;
-	SYSDEBUG((LOG_DEBUG, "xmit idle %d", idle.xmit_idle));
-    }
+
     return rv;
 }
 
@@ -823,6 +804,7 @@ get_idle_time(u, ip)
 }
 
 
+#ifdef PPP_FILTER
 /*
  * set_filters - transfer the pass and active filters to the kernel.
  */
@@ -846,7 +828,7 @@ set_filters(pass, active)
     }
     return ret;
 }
-
+#endif
 
 /*
  * sifvjcomp - config tcp header compression
@@ -867,7 +849,7 @@ sifvjcomp(u, vjcomp, cidcomp, maxcid)
 	syslog(LOG_ERR, "ioctl(PPPIOCSFLAGS): %m");
 	return 0;
     }
-    if (ioctl(ppp_fd, PPPIOCSMAXCID, (caddr_t) &maxcid) < 0) {
+    if (vjcomp && ioctl(ppp_fd, PPPIOCSMAXCID, (caddr_t) &maxcid) < 0) {
 	syslog(LOG_ERR, "ioctl(PPPIOCSFLAGS): %m");
 	return 0;
     }
@@ -882,7 +864,6 @@ sifup(u)
     int u;
 {
     struct ifreq ifr;
-    struct npioctl npi;
 
     strncpy(ifr.ifr_name, ifname, sizeof (ifr.ifr_name));
     if (ioctl(sockfd, SIOCGIFFLAGS, (caddr_t) &ifr) < 0) {
@@ -895,12 +876,6 @@ sifup(u)
 	return 0;
     }
     if_is_up = 1;
-    npi.protocol = PPP_IP;
-    npi.mode = NPMODE_PASS;
-    if (ioctl(ppp_fd, PPPIOCSNPMODE, &npi) < 0) {
-	syslog(LOG_ERR, "ioctl(set IP mode to PASS): %m");
-	return 0;
-    }
     return 1;
 }
 
@@ -991,7 +966,8 @@ sifaddr(u, o, h, m)
 	    return 0;
 	}
 	syslog(LOG_WARNING,
-	       "Couldn't set interface address: Address already exists");
+	       "Couldn't set interface address: Address %s already exists",
+		ip_ntoa(o));
     }
     ifaddrs[0] = o;
     ifaddrs[1] = h;
@@ -1028,9 +1004,9 @@ cifaddr(u, o, h)
  * sifdefaultroute - assign a default route through the address given.
  */
 int
-sifdefaultroute(u, g)
+sifdefaultroute(u, l, g)
     int u;
-    u_int32_t g;
+    u_int32_t l, g;
 {
     return dodefaultroute(g, 's');
 }
@@ -1039,9 +1015,9 @@ sifdefaultroute(u, g)
  * cifdefaultroute - delete a default route through the address given.
  */
 int
-cifdefaultroute(u, g)
+cifdefaultroute(u, l, g)
     int u;
-    u_int32_t g;
+    u_int32_t l, g;
 {
     return dodefaultroute(g, 'c');
 }

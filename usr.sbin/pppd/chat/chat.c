@@ -1,3 +1,5 @@
+/*	$NetBSD: chat.c,v 1.8 1997/03/12 20:18:36 christos Exp $	*/
+
 /*
  *	Chat -- a program for automatic session establishment (i.e. dial
  *		the phone and log in).
@@ -21,6 +23,9 @@
  *      Added -r "report file" switch & REPORT keyword.
  *              Robert Geer <bgeer@xmission.com>
  *
+ *	Added -e "echo" switch & ECHO keyword
+ *		Dick Streefland <dicks@tasking.nl>
+ *
  *	The original author is:
  *
  *		Karl Fox <karl@MorningStar.Com>
@@ -31,15 +36,23 @@
  *
  */
 
-static char rcsid[] = "$Id: chat.c,v 1.7 1996/08/10 23:57:22 explorer Exp $";
+#ifndef lint
+#if 0
+static char rcsid[] = "Id: chat.c,v 1.13 1997/03/04 03:25:59 paulus Exp ";
+#else
+static char rcsid[] = "$NetBSD: chat.c,v 1.8 1997/03/12 20:18:36 christos Exp $";
+#endif
+#endif
 
 #include <stdio.h>
+#include <ctype.h>
 #include <time.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <syslog.h>
@@ -92,7 +105,9 @@ char *program_name;
 #define	MAX_REPORTS		50
 #define	DEFAULT_CHAT_TIMEOUT	45
 
+int echo          = 0;
 int verbose       = 0;
+int Verbose       = 0;
 int quiet         = 0;
 int report        = 0;
 int exit_code     = 0;
@@ -119,7 +134,7 @@ struct termios saved_tty_parameters;
 
 char *abort_string[MAX_ABORTS], *fail_reason = (char *)0,
 	fail_buffer[50];
-int n_aborts = 0, abort_next = 0, timeout_next = 0;
+int n_aborts = 0, abort_next = 0, timeout_next = 0, echo_next = 0;
 
 char *report_string[MAX_REPORTS] ;
 char  report_buffer[50] ;
@@ -139,6 +154,7 @@ SIGTYPE sighup __P((int signo));
 void unalarm __P((void));
 void init __P((void));
 void set_tty_parameters __P((void));
+void echo_stderr __P((int));
 void break_sequence __P((void));
 void terminate __P((int status));
 void do_file __P((char *chat_file));
@@ -154,6 +170,9 @@ char *clean __P((register char *s, int sending));
 void break_sequence __P((void));
 void terminate __P((int status));
 void die __P((void));
+char *expect_strtok __P((char *, char *));
+
+int main __P((int, char *[]));
 
 void *dup_mem(b, c)
 void *b;
@@ -191,16 +210,24 @@ char **argv;
     program_name = *argv;
     tzset();
 
-    while (option = OPTION(argc, argv))
+    while ((option = OPTION(argc, argv)) != 0)
         {
 	switch (option)
 	    {
+	    case 'e':
+		++echo;
+		break;
+
 	    case 'v':
 		++verbose;
 		break;
 
+	    case 'V':
+	        ++Verbose;
+		break;
+
 	    case 'f':
-		if (arg = OPTARG(argc, argv))
+		if ((arg = OPTARG(argc, argv)) != NULL)
 		    {
 		    chat_file = copy_of(arg);
 		    }
@@ -211,7 +238,7 @@ char **argv;
 		break;
 
 	    case 't':
-		if (arg = OPTARG(argc, argv))
+		if ((arg = OPTARG(argc, argv)) != NULL)
 		    {
 		    timeout = atoi(arg);
 		    }
@@ -287,11 +314,11 @@ char **argv;
 	}
     else
 	{
-	while (arg = ARG(argc, argv))
+	while ((arg = ARG(argc, argv)) != NULL)
 	    {
 	    chat_expect(arg);
 
-	    if (arg = ARG(argc, argv))
+	    if ((arg = ARG(argc, argv)) != NULL)
 	        {
 		chat_send(arg);
 	        }
@@ -299,6 +326,7 @@ char **argv;
 	}
 
     terminate(0);
+    return 0;
     }
 
 /*
@@ -308,7 +336,7 @@ char **argv;
 void do_file (chat_file)
 char *chat_file;
     {
-    int linect, len, sendflg;
+    int linect, sendflg;
     char *sp, *arg, quote;
     char buf [STR_LEN];
     FILE *cfp;
@@ -333,8 +361,6 @@ char *chat_file;
 
 	linect++;
 	sp = buf;
-	if (*sp == '#')
-		continue;
 	while (*sp != '\0')
 	    {
 	    if (*sp == ' ' || *sp == '\t')
@@ -399,26 +425,30 @@ char *chat_file;
 void usage()
     {
     fprintf(stderr, "\
-Usage: %s [-v] [-t timeout] [-r report-file] {-f chat-file | chat-script}\n",
+Usage: %s [-e] [-v] [-t timeout] [-r report-file] {-f chat-file | chat-script}\n",
 	    program_name);
     exit(1);
     }
 
-char line[256];
+char line[128];
 char *p;
 
 void logf (str)
 const char *str;
-    {
-    p = line + strlen(line);
-    strcat (p, str);
+{
+    int l = strlen(line);
 
-    if (str[strlen(str)-1] == '\n')
-	{
+    if (l + strlen(str) >= sizeof(line)) {
+	syslog(LOG_INFO, "%s", line);
+	l = 0;
+    }
+    strcpy(line + l, str);
+
+    if (str[strlen(str)-1] == '\n') {
 	syslog (LOG_INFO, "%s", line);
 	line[0] = 0;
-	}
     }
+}
 
 void logflush()
     {
@@ -575,14 +605,34 @@ void break_sequence()
 void terminate(status)
 int status;
     {
+    echo_stderr(-1);
     if (report_file != (char *) 0 && report_fp != (FILE *) NULL)
-        {
+	{
+/*
+ * Allow the last of the report string to be gathered before we terminate.
+ */
+	if (report_gathering) {
+	    int c, rep_len;
+
+	    rep_len = strlen(report_buffer);
+	    while (rep_len + 1 <= sizeof(report_buffer)) {
+		alarm(1);
+		c = get_char();
+		alarm(0);
+		if (c < 0 || iscntrl(c))
+		    break;
+		report_buffer[rep_len] = c;
+		++rep_len;
+	    }
+	    report_buffer[rep_len] = 0;
+	    fprintf (report_fp, "chat:  %s\n", report_buffer);
+	}
 	if (verbose)
 	    {
 	    fprintf (report_fp, "Closing \"%s\".\n", report_file);
 	    }
 	fclose (report_fp);
-	report_fp = (FILE*) NULL;
+	report_fp = (FILE *) NULL;
         }
 
 #if defined(get_term_param)
@@ -755,11 +805,76 @@ int sending;
     }
 
 /*
+ * A modified version of 'strtok'. This version skips \ sequences.
+ */
+
+char *expect_strtok (s, term)
+char *s, *term;
+    {
+    static  char *str   = "";
+    int	    escape_flag = 0;
+    char   *result;
+/*
+ * If a string was specified then do initial processing.
+ */
+    if (s)
+	{
+	str = s;
+	}
+/*
+ * If this is the escape flag then reset it and ignore the character.
+ */
+    if (*str)
+        {
+	result = str;
+        }
+    else
+        {
+	result = (char *) 0;
+        }
+
+    while (*str)
+	{
+	if (escape_flag)
+	    {
+	    escape_flag = 0;
+	    ++str;
+	    continue;
+	    }
+
+	if (*str == '\\')
+	    {
+	    ++str;
+	    escape_flag = 1;
+	    continue;
+	    }
+/*
+ * If this is not in the termination string, continue.
+ */
+	if (strchr (term, *str) == (char *) 0)
+	    {
+	    ++str;
+	    continue;
+	    }
+/*
+ * This is the terminator. Mark the end of the string and stop.
+ */
+	*str++ = '\0';
+	break;
+	}
+    return (result);
+    }
+
+/*
  * Process the expect string
  */
-void chat_expect(s)
-register char *s;
+
+void chat_expect (s)
+char *s;
     {
+    char *expect;
+    char *reply;
+
     if (strcmp(s, "ABORT") == 0)
 	{
 	++abort_next;
@@ -778,80 +893,61 @@ register char *s;
 	return;
 	}
 
-    while (*s)
+    if (strcmp(s, "ECHO") == 0)
 	{
-	register char *hyphen;
-
-	for (hyphen = s; *hyphen; ++hyphen)
-	    {
-	    if (*hyphen == '-')
-	        {
-		if (hyphen == s || hyphen[-1] != '\\')
-		    {
-		    break;
-		    }
-	        }
-	    }
-	
-	if (*hyphen == '-')
-	    {
-	    *hyphen = '\0';
-
-	    if (get_string(s))
-	        {
-		return;
-	        }
-	    else
-		{
-		s = hyphen + 1;
-
-		for (hyphen = s; *hyphen; ++hyphen)
-		    {
-		    if (*hyphen == '-')
-		        {
-			if (hyphen == s || hyphen[-1] != '\\')
-			    {
-			    break;
-			    }
-		        }
-		    }
-
-		if (*hyphen == '-')
-		    {
-		    *hyphen = '\0';
-
-		    chat_send(s);
-		    s = hyphen + 1;
-		    }
-		else
-		    {
-		    chat_send(s);
-		    return;
-		    }
-		}
-	    }
-	else
-	    {
-	    if (get_string(s))
-	        {
-		return;
-	        }
-	    else
-		{
-		if (fail_reason)
-		    {
-		    syslog(LOG_INFO, "Failed (%s)", fail_reason);
-		    }
-		else
-		    {
-		    syslog(LOG_INFO, "Failed");
-		    }
-
-		terminate(exit_code);
-		}
-	    }
+	++echo_next;
+	return;
 	}
+/*
+ * Fetch the expect and reply string.
+ */
+    for (;;)
+	{
+	expect = expect_strtok (s, "-");
+	s      = (char *) 0;
+
+	if (expect == (char *) 0)
+	    {
+	    return;
+	    }
+
+	reply = expect_strtok (s, "-");
+/*
+ * Handle the expect string. If successful then exit.
+ */
+	if (get_string (expect))
+	    {
+	    return;
+	    }
+/*
+ * If there is a sub-reply string then send it. Otherwise any condition
+ * is terminal.
+ */
+	if (reply == (char *) 0 || exit_code != 3)
+	    {
+	    break;
+	    }
+
+	chat_send (reply);
+	}
+/*
+ * The expectation did not occur. This is terminal.
+ */
+    if (fail_reason)
+	{
+	syslog(LOG_INFO, "Failed (%s)", fail_reason);
+	}
+    else
+	{
+	syslog(LOG_INFO, "Failed");
+	}
+    terminate(exit_code);
     }
+
+/*
+ * Translate the input character to the appropriate string for printing
+ * the data.
+ */
 
 char *character(c)
 int c;
@@ -887,6 +983,12 @@ int c;
 void chat_send (s)
 register char *s;
     {
+    if (echo_next)
+	{
+	echo_next = 0;
+	echo = (strcmp(s, "ON") == 0);
+	return;
+	}
     if (abort_next)
         {
 	char *s1;
@@ -1157,6 +1259,37 @@ register char *s;
     }
 
 /*
+ *	Echo a character to stderr.
+ *	When called with -1, a '\n' character is generated when
+ *	the cursor is not at the beginning of a line.
+ */
+void echo_stderr(n)
+int n;
+    {
+	static int need_lf;
+	char *s;
+
+	switch (n)
+	    {
+	case '\r':		/* ignore '\r' */
+	    break;
+	case -1:
+	    if (need_lf == 0)
+		break;
+	    /* fall through */
+	case '\n':
+	    write(2, "\n", 1);
+	    need_lf = 0;
+	    break;
+	default:
+	    s = character(n);
+	    write(2, s, strlen(s));
+	    need_lf = 1;
+	    break;
+	    }
+    }
+
+/*
  *	'Wait for' this string to appear on this file descriptor.
  */
 int get_string(string)
@@ -1209,6 +1342,10 @@ register char *string;
 	{
 	int n, abort_len, report_len;
 
+	if (echo)
+	    {
+	    echo_stderr(c);
+	    }
 	if (verbose)
 	    {
 	    if (c == '\n')
@@ -1221,39 +1358,12 @@ register char *string;
 	        }
 	    }
 
+	if (Verbose) {
+	   if (c == '\n')      fputc( '\n', stderr );
+	   else if (c != '\r') fprintf( stderr, "%s", character(c) );
+	}
+
 	*s++ = c;
-
-	if (s - temp >= len &&
-	    c == string[len - 1] &&
-	    strncmp(s - len, string, len) == 0)
-	    {
-	    if (verbose)
-		{
-		logf(" -- got it\n");
-		}
-
-	    alarm(0);
-	    alarmed = 0;
-	    return (1);
-	    }
-
-	for (n = 0; n < n_aborts; ++n)
-	    {
-	    if (s - temp >= (abort_len = strlen(abort_string[n])) &&
-		strncmp(s - abort_len, abort_string[n], abort_len) == 0)
-	        {
-		if (verbose)
-		    {
-		    logf(" -- failed\n");
-		    }
-		
-		alarm(0);
-		alarmed = 0;
-		exit_code = n + 4;
-		strcpy(fail_reason = fail_buffer, abort_string[n]);
-		return (0);
-	        }
-	    }
 
 	if (!report_gathering)
 	    {
@@ -1287,6 +1397,38 @@ register char *string;
 	        {
 		report_gathering = 0;
 		fprintf (report_fp, "chat:  %s\n", report_buffer);
+	        }
+	    }
+
+	if (s - temp >= len &&
+	    c == string[len - 1] &&
+	    strncmp(s - len, string, len) == 0)
+	    {
+	    if (verbose)
+		{
+		logf(" -- got it\n");
+		}
+
+	    alarm(0);
+	    alarmed = 0;
+	    return (1);
+	    }
+
+	for (n = 0; n < n_aborts; ++n)
+	    {
+	    if (s - temp >= (abort_len = strlen(abort_string[n])) &&
+		strncmp(s - abort_len, abort_string[n], abort_len) == 0)
+	        {
+		if (verbose)
+		    {
+		    logf(" -- failed\n");
+		    }
+		
+		alarm(0);
+		alarmed = 0;
+		exit_code = n + 4;
+		strcpy(fail_reason = fail_buffer, abort_string[n]);
+		return (0);
 	        }
 	    }
 

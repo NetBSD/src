@@ -1,3 +1,5 @@
+/*	$NetBSD: fsm.c,v 1.9 1997/03/12 20:17:41 christos Exp $	*/
+
 /*
  * fsm.c - {Link, IP} Control Protocol Finite State Machine.
  *
@@ -18,7 +20,11 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: fsm.c,v 1.8 1996/03/15 03:03:44 paulus Exp $";
+#if 0
+static char rcsid[] = "Id: fsm.c,v 1.12 1996/07/01 01:13:11 paulus Exp ";
+#else
+static char rcsid[] = "$NetBSD: fsm.c,v 1.9 1997/03/12 20:17:41 christos Exp $";
+#endif
 #endif
 
 /*
@@ -35,13 +41,11 @@ static char rcsid[] = "$Id: fsm.c,v 1.8 1996/03/15 03:03:44 paulus Exp $";
 #include "pppd.h"
 #include "fsm.h"
 
-extern char *proto_name();
-
 static void fsm_timeout __P((caddr_t));
 static void fsm_rconfreq __P((fsm *, int, u_char *, int));
 static void fsm_rconfack __P((fsm *, int, u_char *, int));
 static void fsm_rconfnakrej __P((fsm *, int, int, u_char *, int));
-static void fsm_rtermreq __P((fsm *, int));
+static void fsm_rtermreq __P((fsm *, int, u_char *, int));
 static void fsm_rtermack __P((fsm *));
 static void fsm_rcoderej __P((fsm *, u_char *, int));
 static void fsm_sconfreq __P((fsm *, int));
@@ -347,7 +351,7 @@ fsm_input(f, inpacket, l)
 	break;
     
     case TERMREQ:
-	fsm_rtermreq(f, id);
+	fsm_rtermreq(f, id, inp, len);
 	break;
     
     case TERMACK:
@@ -509,7 +513,7 @@ fsm_rconfnakrej(f, code, id, inp, len)
     u_char *inp;
     int len;
 {
-    int (*proc)();
+    int (*proc) __P((fsm *, u_char *, int));
     int ret;
 
     FSMDEBUG((LOG_INFO, "fsm_rconfnakrej(%s): Rcvd id %d.",
@@ -564,10 +568,14 @@ fsm_rconfnakrej(f, code, id, inp, len)
  * fsm_rtermreq - Receive Terminate-Req.
  */
 static void
-fsm_rtermreq(f, id)
+fsm_rtermreq(f, id, p, len)
     fsm *f;
     int id;
+    u_char *p;
+    int len;
 {
+    char str[80];
+
     FSMDEBUG((LOG_INFO, "fsm_rtermreq(%s): Rcvd id %d.",
 	      PROTO_NAME(f), id));
 
@@ -578,7 +586,11 @@ fsm_rtermreq(f, id)
 	break;
 
     case OPENED:
-	syslog(LOG_INFO, "%s terminated at peer's request", PROTO_NAME(f));
+	if (len > 0) {
+	    fmtmsg(str, sizeof(str), "%0.*v", len, p);
+	    syslog(LOG_INFO, "%s terminated by peer (%s)", PROTO_NAME(f), str);
+	} else
+	    syslog(LOG_INFO, "%s terminated by peer", PROTO_NAME(f));
 	if (f->callbacks->down)
 	    (*f->callbacks->down)(f);	/* Inform upper layers */
 	f->retransmits = 0;
