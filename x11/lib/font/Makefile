@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8.4.1 2005/04/06 20:52:27 tron Exp $
+#	$NetBSD: Makefile,v 1.8.4.2 2005/04/06 21:08:47 tron Exp $
 
 .include <bsd.own.mk>
 
@@ -138,8 +138,6 @@ CPPFLAGS.${fn}+=${X11FLAGS.SERVER} -DXFreeXDGA -DXFree86LOADER \
 #.for fn in ${SRCS.X-TrueType}
 #CPPFLAGS.${fn}=	-DTT_MAKE_OPTION_SINGLE_OBJECT=1 \
 #		-DTT_CONFIG_OPTION_EXTEND_ENGINE \
-#		-DCCONV_MODULE -DCCONV_MODULE_DIR=\"${X11USRLIBDIR}/modules\" \
-#		-DCCONV_MODULE_SUBDIR=\"${X11USRLIBDIR}/modules/codeconv\" \
 #		-DOPT_ENCODINGS -DFREETYPE1_BUILD_DEFINES
 # .endfor
 
