@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)logname.c	5.1 (Berkeley) 6/28/91";*/
-static char rcsid[] = "$Id: logname.c,v 1.2 1993/08/01 18:13:28 mycroft Exp $";
+static char rcsid[] = "$Id: logname.c,v 1.3 1993/08/28 04:52:12 jtc Exp $";
 #endif /* not lint */
 
 #include <errno.h>
@@ -52,17 +52,11 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int ch;
 	char *p;
 
-	while ((ch = getopt(argc, argv, "")) != EOF)
-		switch(ch) {
-		case '?':
-		default:
-			usage();
-		}
-	argc -= optind;
-	argv += optind;
+	if (argc != 1) {
+		usage();
+	}
 
 	if ((p = getlogin()) == NULL) {
 		(void)fprintf(stderr, "logname: %s\n", strerror(errno));
