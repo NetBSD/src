@@ -7,7 +7,7 @@ RELEASE=NetBSD-current
 GNATS_HOST=sun-lamp
 
 BINDIR=		/usr/bin
-LIBDIR=		/usr/lib
+LIBDIR=		/usr/share
 
 NOPROG=	
 MAN1=		send-pr.0

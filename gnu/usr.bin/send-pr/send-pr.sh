@@ -34,7 +34,7 @@ GNATS_ROOT=/b/gnats
 GNATS_ADDR=gnats-bugs@sun-lamp.cs.berkeley.edu
 
 # Where the gnats category tree lives.
-DATADIR=/usr/lib/gnats
+DATADIR=/usr/share/gnats
 
 # If we've been moved around, try using GCC_EXEC_PREFIX.
 [ ! -d $DATADIR/gnats -a -d "$GCC_EXEC_PREFIX" ] && DATADIR=${GCC_EXEC_PREFIX}..
