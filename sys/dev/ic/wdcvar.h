@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.37 2003/09/19 21:36:03 mycroft Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.38 2003/09/21 11:14:01 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -103,6 +103,7 @@ struct wdc_softc { /* Per controller state */
 #define WDC_CAPABILITY_NO_EXTRA_RESETS 0x0100 /* only reset once */
 #define WDC_CAPABILITY_PREATA 0x0200 /* ctrl can be a pre-ata one */
 #define WDC_CAPABILITY_IRQACK 0x0400 /* callback to ack interrupt */
+#define WDC_CAPABILITY_SINGLE_DRIVE 0x0800 /* Don't probe second drive */
 #define WDC_CAPABILITY_NOIRQ  0x1000	/* Controller never interrupts */
 #define WDC_CAPABILITY_SELECT  0x2000	/* Controller selects target */
 #define	WDC_CAPABILITY_RAID   0x4000	/* Controller "supports" RAID */

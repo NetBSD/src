@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.201 2003/09/20 22:46:02 enami Exp $	*/
+/*	$NetBSD: pciide.c,v 1.202 2003/09/21 11:14:02 bouyer Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.201 2003/09/20 22:46:02 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.202 2003/09/21 11:14:02 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -2521,7 +2521,7 @@ apollo_sata_chip_map(sc, pa)
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
-		WDC_CAPABILITY_MODE;
+		WDC_CAPABILITY_MODE | WDC_CAPABILITY_SINGLE_DRIVE;
 	sc->sc_wdcdev.set_modes = sata_setup_channel;
 
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
