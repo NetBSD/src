@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.4 2004/02/02 08:28:00 soren Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.5 2004/02/19 17:09:39 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -134,6 +134,7 @@
  */
 
 #define CPUID_MPC	0x00080000	/* Multiprocessing Capable */
+#define CPUID_NOX	0x00100000	/* No Execute Page Protection */
 #define CPUID_MMXX	0x00400000	/* AMD MMX Extensions */
 #define CPUID_3DNOW2	0x40000000	/* 3DNow! Instruction Extension */
 #define CPUID_3DNOW	0x80000000	/* 3DNow! Instructions */
