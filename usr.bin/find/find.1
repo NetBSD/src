@@ -1,4 +1,4 @@
-.\"	$NetBSD: find.1,v 1.29 2001/12/01 14:10:04 kleink Exp $
+.\"	$NetBSD: find.1,v 1.30 2001/12/01 16:43:13 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -66,10 +66,10 @@ The
 .Fl H
 option causes the file information and file type (see
 .Xr stat 2 ) ,
-returned for each symbolic link encountered on the command line to be 
+returned for each symbolic link encountered on the command line to be
 those of the file referenced by the link, not the link itself.
 If the referenced file does not exist, the file information and type will
-be for the link itself.  File information of all symbolic links not on 
+be for the link itself.  File information of all symbolic links not on
 the command line is that of the link itself.
 .It Fl L
 The
@@ -161,36 +161,36 @@ than that of the file from which the descent began.
 .El
 .Sh PRIMARIES
 .Bl -tag -width Ds
-.It Ic -amin Ar n 
+.It Ic -amin Ar n
 True if the difference between the file last access time and the time
 .Nm
 was started, rounded up to the next full minute, is
 .Ar n
 minutes.
-.It Ic -atime Ar n 
+.It Ic -atime Ar n
 True if the difference between the file last access time and the time
 .Nm
 was started, rounded up to the next full 24\-hour period, is
 .Ar n
 24\-hour periods.
-.It Ic -cmin Ar n 
+.It Ic -cmin Ar n
 True if the difference between the time of last change of file status
 information and the time
 .Nm
 was started, rounded up to the next full minute, is
 .Ar n
 minutes.
-.It Ic -cnewer Ar file 
+.It Ic -cnewer Ar file
 True if the current file has a more recent last change time than
 .Ar file  .
-.It Ic -ctime Ar n 
+.It Ic -ctime Ar n
 True if the difference between the time of last change of file status
 information and the time
 .Nm
 was started, rounded up to the next full 24\-hour period, is
 .Ar n
 24\-hour periods.
-.It Ic -exec Ar utility Op argument ... ; 
+.It Ic -exec Ar utility Op argument ... ;
 True if the program named
 .Ar utility
 returns a zero value as its exit status.
@@ -205,7 +205,7 @@ was executed.
 .It Xo
 .Ic -flags
 .Op Fl
-.Ns Ar flags 
+.Ns Ar flags
 .Xc
 If
 .Ar flags
@@ -229,7 +229,7 @@ files with no flags bits set are matched.
 for more information about file flags.)
 .It Ic -follow
 Follow symbolic links.
-.It Ic -fstype Ar type 
+.It Ic -fstype Ar type
 True if the file is contained in a file system of type
 .Ar type .
 The
@@ -245,7 +245,7 @@ the
 .Nm
 is being executed, and the latter matches any file system which is
 mounted read-only.
-.It Ic -group Ar gname 
+.It Ic -group Ar gname
 True if the file belongs to the group
 .Ar gname  .
 If
@@ -253,7 +253,7 @@ If
 is numeric and there is no such group name, then
 .Ar gname
 is treated as a group id.
-.It Ic -inum Ar n 
+.It Ic -inum Ar n
 True if the file has inode number
 .Ar n  .
 .It Ic -iregex Ar regexp
@@ -263,7 +263,7 @@ basic regular expression
 .Ar regexp .
 This is a match on the whole path, not a search for the regular expression
 within the path.
-.It Ic -links Ar n 
+.It Ic -links Ar n
 True if the file has
 .Ar n
 links.
@@ -277,19 +277,19 @@ will be displayed instead of the size in bytes.
 If the file is a symbolic link, the pathname of the linked\-to file will be
 displayed preceded by ``\->''.
 The format is identical to that produced by ``ls \-dgils''.
-.It Ic -mmin Ar n 
+.It Ic -mmin Ar n
 True if the difference between the file last modification time and the time
 .Nm
 was started, rounded up to the next full minute, is
 .Ar n
 minutes.
-.It Ic -mtime Ar n 
+.It Ic -mtime Ar n
 True if the difference between the file last modification time and the time
 .Nm
 was started, rounded up to the next full 24\-hour period, is
 .Ar n
 24\-hour periods.
-.It Ic \&-ok Ar utility Op argument ... ; 
+.It Ic \&-ok Ar utility Op argument ... ;
 The
 .Ic \&-ok
 primary is identical to the
@@ -302,7 +302,7 @@ If the response is other than ``y'' the command is not executed and the
 value of the
 .Ar \&ok
 expression is false.
-.It Ic -name Ar pattern 
+.It Ic -name Ar pattern
 True if the last component of the pathname being examined matches
 .Ar pattern  .
 Special shell pattern matching characters
@@ -316,14 +316,14 @@ may be used as part of
 .Ar pattern  .
 These characters may be matched explicitly by escaping them with a
 backslash (``\e'').
-.It Ic -newer Ar file 
+.It Ic -newer Ar file
 True if the current file has a more recent last modification time than
 .Ar file  .
 .It Ic -nouser
 True if the file belongs to an unknown user.
 .It Ic -nogroup
 True if the file belongs to an unknown group.
-.It Ic -path Ar pattern 
+.It Ic -path Ar pattern
 True if the pathname being examined matches
 .Ar pattern  .
 Special shell pattern matching characters (``['', ``]'', ``*'', and ``?'')
@@ -336,7 +336,7 @@ matched explicitly.
 .It Xo
 .Ic -perm
 .Op Fl
-.Ns Ar mode 
+.Ns Ar mode
 .Xc
 The
 .Ar mode
@@ -377,7 +377,7 @@ If none of
 nor
 .Ic -printx
 is specified, the given expression shall be effectively replaced by
-.Cm \&( Ns Ar given\& expression Ns Cm \&) 
+.Cm \&( Ns Ar given\& expression Ns Cm \&)
 .Ic -print .
 .It Ic -print0
 This primary always evaluates to true.
@@ -408,7 +408,7 @@ basic regular expression
 .Ar regexp .
 This is a match on the whole path, not a search for the regular expression
 within the path.
-.It Ic -size Ar n Ns Op Cm c 
+.It Ic -size Ar n Ns Op Cm c
 True if the file's size, rounded up, in 512\-byte blocks is
 .Ar n  .
 If
@@ -417,7 +417,7 @@ is followed by a ``c'', then the primary is true if the
 file's size is
 .Ar n
 bytes.
-.It Ic -type Ar t 
+.It Ic -type Ar t
 True if the file is of the specified type.
 Possible file types are as follows:
 .Pp
@@ -440,7 +440,7 @@ FIFO
 socket
 .El
 .Pp
-.It Ic -user Ar uname 
+.It Ic -user Ar uname
 True if the file belongs to the user
 .Ar uname  .
 If
@@ -457,19 +457,19 @@ A preceding plus sign means ``more than n'', a preceding minus sign means
 .Sh OPERATORS
 The primaries may be combined using the following operators.
 The operators are listed in order of decreasing precedence.
-.Bl -tag -width (expression) 
-.It Cm \&( Ns Ar expression Ns Cm \&) 
+.Bl -tag -width (expression)
+.It Cm \&( Ns Ar expression Ns Cm \&)
 This evaluates to true if the parenthesized expression evaluates to
 true.
 .Pp
-.It Cm \&! Ns Ar expression 
+.It Cm \&! Ns Ar expression
 This is the unary
 .Tn NOT
 operator.
 It evaluates to true if the expression is false.
 .Pp
-.It Ar expression Cm -and Ar expression 
-.It Ar expression expression 
+.It Ar expression Cm -and Ar expression
+.It Ar expression expression
 The
 .Cm -and
 operator is the logical
@@ -480,7 +480,7 @@ have to be specified.
 The expression evaluates to true if both expressions are true.
 The second expression is not evaluated if the first expression is false.
 .Pp
-.It Ar expression Cm -or Ar expression 
+.It Ar expression Cm -or Ar expression
 The
 .Cm -or
 operator is the logical

@@ -1,4 +1,4 @@
-.\"	$NetBSD: menuc.1,v 1.5 2001/01/07 06:09:20 phil Exp $
+.\"	$NetBSD: menuc.1,v 1.6 2001/12/01 16:43:19 wiz Exp $
 .\"
 .\" Copyright 1997 Piermont Information Systems Inc.
 .\" All rights reserved.
@@ -24,13 +24,13 @@
 .\" THIS SOFTWARE IS PROVIDED BY PIERMONT INFORMATION SYSTEMS INC. ``AS IS''
 .\" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 .\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-.\" ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE 
-.\" LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+.\" ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE
+.\" LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 .\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
 .\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
 .\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd September 26, 1997
@@ -48,23 +48,23 @@ This implements a curses based menu system.  A source file that describes
 menus, their options, and how to process the options is given to
 .Nm
 and produces both a .c and a .h file that implement the menu system.
-The standard base name of the files is 
+The standard base name of the files is
 .Pa menu_defs .
-The 
+The
 .Fl o Ar name
 can be used to specify a different base name.
 .Sh ENVIRONMENT
 .Bl -tag -width MENUDEF
 .It Ev MENUDEF
-Can be set to point to a different set of 
+Can be set to point to a different set of
 definition files for
 .Nm menuc .
 The current location defaults to
 .Pa /usr/share/misc .
 .El
 .Sh MENU DESCRIPTIONS
-The input 
-.Ar file 
+The input
+.Ar file
 defines static menus and options for processing
 those menus.  It also contains comments, initial C code that
 is required to provide for definitions and other code necssary
@@ -73,21 +73,21 @@ menus are requested.
 .Pp
 Comments may appear anywhere in the input
 .Ar file
-and are like a space in the input.  
+and are like a space in the input.
 They are like C comments starting with
 .Em /*
 and ending with
 .Em */.
 They are unlike C comments in that they may be nested.  A comment
-does not end until a matching end comment is found. 
+does not end until a matching end comment is found.
 .Pp
 In many places, C code is included in the definition
 .Ar file.
 All C code is passed verbatim to the C output file.
-.Nm menuc 
+.Nm menuc
 comments do not start in C code
 and comments in the C code are passed verbatim to
-the output.  The C comments are not recognized by 
+the output.  The C comments are not recognized by
 .Nm menuc.
 In all cases, C code starts with a left brace
 .Em ({)
@@ -101,7 +101,7 @@ The
 contains an initial (and optional) code block followed by any
 number of menu definition elements in any order.  The initial
 code block usually contains includes of header files used by
-code in the menu code blocks later in the 
+code in the menu code blocks later in the
 .Ar file.
 The file is free format, so the actual formatting of the input
 .Ar file
@@ -109,13 +109,13 @@ is to the taste of the programmer.
 .Pp
 All other C code that will appear in an
 .Em action.
-This will be specified as 
+This will be specified as
 .Em <action>
 in later text.  Such an action will appear as:
 .Dl action <opt_endwin> <code>
-in the 
+in the
 .Ar file.
-The 
+The
 .Em <opt_endwin>,
 if present is:
 .Dl ( endwin )
@@ -123,7 +123,7 @@ and specifies that the curses
 .Fn endwin
 function should be called before executing the code and
 then reinstating the current curses window after the
-code has been run.  The 
+code has been run.  The
 .Em <code>
 is as described above.
 .Pp
@@ -136,11 +136,11 @@ method to create and modify menus during the running of the program.
 To include dynamic menus, one needs only add the declaration:
 .Dl allow dynamic menus ;
 The semicolon is required to terminate this declaration.  This
-declaration may appear anywhere in the 
+declaration may appear anywhere in the
 .Ar file,
 but usually appears before any menus are defined.
 .Pp
-The next element is a code block to execute if the curses 
+The next element is a code block to execute if the curses
 screen can not be sucessfully initialized.  The declaration
 .Dl error code ;
 tells the menu system to execute the associated code block
@@ -165,7 +165,7 @@ The options appear in three forms:
 .Dl [no] switch
 .Dl variable "string"
 .Pp
-The variables for the first form are 
+The variables for the first form are
 .Va x,
 .Va y,
 .Va h,
@@ -173,25 +173,25 @@ and
 .Va w.
 These specify the upper left (x,y) and the
 height (h) and width (w) of the menu window.  The upper
-left is in the curses coordinate system.  If not 
+left is in the curses coordinate system.  If not
 specified, the upper left is the upper left of the screen
 and the height and width of the menu window is computed
 from the menu definition.
 .Pp
-Options of the second form turn on or off (with the 
+Options of the second form turn on or off (with the
 optional no) features of the menu system.  The
 .Li box
 option turns on a box around the menu window.  The
 .Li exit
 opton enables the standard exit option in the menus.  The
 .Li scrollable
-option allows the menu to be scrollable if the 
+option allows the menu to be scrollable if the
 menu window is smaller than the number of menu options.  The
 .Li shortcut
 option prints a single character shortcut with each menu
 option.
 .Pp
-The third sets text variables.  The variable 
+The third sets text variables.  The variable
 .Va title
 sets the text title for the menus.  The varible
 .Va exitstring
@@ -199,7 +199,7 @@ sets the text for the exit menu option.
 .Pp
 The default declaration may appear multiple times.  Each time,
 it sets the default values for menu definitions that follow
-in the 
+in the
 .Ar file.
 In each menu definition, any or all of these default definitions
 may be overridden for that menu.
@@ -215,18 +215,18 @@ menu <name> <options> ;
 .Ed
 .Pp
 Names are unquoted strings of alpha-numeric and underscore
-characters.  They must start with an alpha character. 
+characters.  They must start with an alpha character.
 In C source, a menu named
 .Nm foo
-is appears as 
+is appears as
 .Nm MENU_foo.
 (Capitalization is important.)  This is important,
 because the menu is displayed and processed by
 calling the function
-.Dl process_menu (MENU_foo) ; 
+.Dl process_menu (MENU_foo) ;
 .Pp
 The options are a comma separated list of options as in the
-.Na default 
+.Na default
 declaration.  These override the options from the most
 recent default declaration.
 .Pp
@@ -235,11 +235,11 @@ execute at each and every time the menu is displayed
 for processing.  If it is included, the format is:
 .Dl display <action> ;
 .Pp
-The bulk of the menu definition is the specification 
+The bulk of the menu definition is the specification
 of the menu items.  The general format of a menu
 item is:
 .Dl option <string>, <element_list> ;
-The 
+The
 .Em <string>
 is the text displayed for the menu item.  There
 may be an arbitrary number of these items.  (If
@@ -248,7 +248,7 @@ of 51 should be recoginzed.  It produces shortcuts
 a to w, y, z and A to Z.  x is the shortcut for the
 exit item.)
 .Pp
-The 
+The
 .Em <element_list>
 is a comma separated list of what to do when the
 item is selected.  They may appear in any order.
@@ -261,21 +261,21 @@ menu option.  They are declared as:
 .Dl sub menu <name>
 The difference between these two is that a sub
 menu will return to the current menu when exited.
-The next menu will just replace the current 
+The next menu will just replace the current
 menu and when exited, will return to where the
 current menu would have gone.  Only one of menu
 element may be used for each menu item.  Finally,
 after processing both the action and a sub menu,
 the current menu will be exited if the element
 .Dl exit
-is specified.  
+is specified.
 .Em Note:
-If 
+If
 .Em exit
 is specified, next menu will not work because
-the menu system will exit the 
+the menu system will exit the
 .Em current
-menu, even if current has been set by 
+menu, even if current has been set by
 .Em next menu.
 .Pp
 After all menu items, the final two menu definition
@@ -299,7 +299,7 @@ help string, but all other characters between
 them are included.  Newlines in the code
 translate to newlines in the help text.
 .Sh DYNAMIC MENUS
-If requested, 
+If requested,
 .Nm menuc
 supports dynamic menus by allowing the user to create new
 menus.  The related definitions for using dynamic menus
@@ -347,7 +347,7 @@ struct menudesc {
 #define MC_SCROLL 4
 #define MC_NOSHORTCUT 8
 
-int new_menu (char * title, menu_ent * opts, int numopts, 
+int new_menu (char * title, menu_ent * opts, int numopts,
         int x, int y, int h, int w, int mopt,
         void (*post_act)(void), void (*exit_act)(void), char * help);
 
@@ -355,7 +355,7 @@ void free_menu (int menu_no);
 
 .Ed
 .Pp
-The 
+The
 .Ar title
 is the title displayed at the top of the menu.  The
 .Ar opts
@@ -420,7 +420,7 @@ int
 main()
   {
     process_menu (MENU_main);
-    endwin(); 
+    endwin();
     return 0;
   }
 
@@ -451,7 +451,7 @@ menu main, title "Main Menu", no exit, no shortcut;
    help {
 This is a simple help screen for an example menu definition file.
 };
- 
+
 menu othermenu, title "Sub/Next Menu", x=5, y=5, no box;
    option "Do Nothing!", action { };
 
