@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.91 1999/10/24 12:31:38 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.92 1999/11/03 07:42:02 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.91 1999/10/24 12:31:38 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.92 1999/11/03 07:42:02 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -1582,9 +1582,12 @@ go_fetch(url)
 			fputs(
 "NetBSD is a freely available and redistributable UNIX-like operating system.\n"
 "For more information, see http://www.netbsd.org/index.html\n", ttyout);
+		} else if (strcasecmp(url, "version") == 0) {
+			fprintf(ttyout, "Version: %s\n", FTP_VERSION);
 		} else {
 			fprintf(ttyout, "`%s' is an interesting topic.\n", url);
 		}
+		fputs("\n", ttyout);
 		return (0);
 	}
 
