@@ -1,4 +1,4 @@
-.\"	$NetBSD: lpd.8,v 1.18 2000/10/03 11:45:30 scw Exp $
+.\"	$NetBSD: lpd.8,v 1.19 2000/11/07 06:43:37 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -47,7 +47,7 @@
 .Op Fl w Ar maxwait
 .Op port
 .Sh DESCRIPTION
-.Nm Lpd
+.Nm
 is the line printer daemon (spool area handler) and is normally invoked
 at boot time from the
 .Xr rc 8
@@ -71,14 +71,14 @@ Available options:
 Normally, if the
 .Fl s
 option is not specified,
-.Nm lpd
+.Nm
 will listen on all network interfaces for incoming TCP connections.
 The
 .Fl b
 option, followed by a
 .Ar bind-address
 specifies that
-.Nm lpd
+.Nm
 should listen on that address instead of INADDR_ANY. Multiple
 .Fl b
 options are permitted, allowing a list of addresses to be specified.
@@ -101,7 +101,7 @@ for more details.
 The
 .Fl l
 flag causes
-.Nm lpd
+.Nm
 to log valid requests received from the network.
 This can be useful for debugging purposes.
 .It Fl n
@@ -123,12 +123,12 @@ would not use the output filter for remote printers.
 The
 .Fl s
 flag selects ``secure'' mode, in which 
-.Nm lpd
+.Nm
 does not listen on a TCP socket but only takes commands from a
 .Ux
 domain socket.
 This is valuable when the machine on which
-.Nm lpd 
+.Nm
 runs is subject to attack over the network and it is desired that the
 machine be protected from attempts to remotely fill spools and similar
 attacks.
@@ -288,11 +288,11 @@ If a file cannot be opened, a message will be logged via
 using the
 .Em LOG_LPR
 facility.
-.Nm Lpd
+.Nm
 will try up to 20 times to reopen a file it expects to be there,
 after which it will skip the file to be printed.
 .Pp
-.Nm Lpd
+.Nm
 uses
 .Xr flock 2
 to provide exclusive access to the lock file and to prevent multiple
@@ -305,7 +305,7 @@ form and contains two lines.
 The first is the process id of the daemon and the second is the control
 file name of the current job being printed.
 The second line is updated to reflect the current status of
-.Nm lpd
+.Nm
 for the programs
 .Xr lpq 1
 and

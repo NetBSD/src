@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_delete.1,v 1.16 2000/07/26 15:18:09 hubertf Exp $
+.\" $NetBSD: pkg_delete.1,v 1.17 2000/11/07 06:43:37 lukem Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -96,10 +96,10 @@ which do not explicitly set theirs.  For most packages, the prefix will
 be set automatically to the installed location by
 .Xr pkg_add 1 .
 .It Fl r
-.Nm Pkg_delete
+.Nm
 first builds a list of all packages that require (directly and indirectly)
 the one being deleted.  It then deletes these packages using 
-.Nm pkg_delete
+.Nm
 with the given options before deleting the user specified package.
 .It Fl R
 Like the
@@ -179,7 +179,7 @@ around the package's installation, since all
 .Nm
 knows how to do is delete the files created in the original distribution.
 The
-.Nm deinstall
+.Ic deinstall
 script is called as:
 .Bd -filled -offset indent -compact
 .Cm deinstall

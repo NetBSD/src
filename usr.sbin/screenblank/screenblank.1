@@ -1,4 +1,4 @@
-.\"	$NetBSD: screenblank.1,v 1.7 1999/08/16 20:10:37 is Exp $
+.\"	$NetBSD: screenblank.1,v 1.8 2000/11/07 06:43:38 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -47,13 +47,13 @@
 .Op Fl e Ar timeout
 .Op Fl f Ar framebuffer
 .Sh DESCRIPTION
-.Nm Screenblank
+.Nm
 disables the framebuffer if the keyboard and mouse are idle for a period
 of time, and re-enables the framebuffer when keyboard or mouse activity
 resumes.
 .Pp
 When killed with a SIGINT, SIGHUP, or SIGTERM,
-.Nm screenblank
+.Nm
 will re-enable the framebuffer.  The pid can be found in the file
 .Pa /var/run/screenblank.pid .
 .Pp
@@ -103,5 +103,5 @@ The mouse device for wscons machines.
 The console device for wscons machines.
 .It /var/run/screenblank.pid
 File containing the pid of
-.Nm screenblank .
+.Nm "" .
 .El

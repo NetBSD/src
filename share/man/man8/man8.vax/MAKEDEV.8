@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\"	$NetBSD: MAKEDEV.8,v 1.8 2000/05/02 00:31:01 hubertf Exp $
+.\"	$NetBSD: MAKEDEV.8,v 1.9 2000/11/07 06:43:34 lukem Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -49,11 +49,15 @@
 .Nm makedev
 .Nd create system and device special files
 .Sh SYNOPSIS
-MAKEDEV name ...
+.Nm MAKEDEV
+.Ar name
+.Op Ar ...
 .Sh DESCRIPTION
 The shell script
-.Nm MAKEDEV ,
-found in the ``/dev'' directory, is used to create the common special
+.Nm "" ,
+found in the
+.Pa /dev
+directory, is used to create the common special
 files.
 .\" See
 .\" .IR special (8)
@@ -240,7 +244,10 @@ Random number generator
 .El
 .Pp
 .Sh FILES
-/dev		The special file directory.
+.Bl -tag -width /dev -compact
+.It Pa /dev
+The special file directory.
+.El
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr config 8 ,

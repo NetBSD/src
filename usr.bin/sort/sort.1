@@ -1,4 +1,4 @@
-.\"	$NetBSD: sort.1,v 1.5 2000/10/16 21:53:19 jdolecek Exp $
+.\"	$NetBSD: sort.1,v 1.6 2000/11/07 06:43:35 lukem Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -57,13 +57,13 @@
 .Ar ...
 .Sh DESCRIPTION
 The
-.Nm sort
+.Nm
 utility
 sorts text files by lines.
 Comparisons are based on one or more sort keys extracted
 from each line of input, and are performed
 lexicographically. By default, if keys are not given,
-.Nm sort
+.Nm
 regards each input line as a single field.
 .Pp
 The following options are available:
@@ -329,10 +329,10 @@ which has no
 equivalent.
 .Sh ENVIRONMENT
 If the following environment variable exists, it is utilized by
-.Nm sort .
+.Nm "" .
 .Bl -tag -width Ev
 .It Ev TMPDIR
-.Nm Sort
+.Nm
 uses the contents of the
 .Ev TMPDIR
 environment variable as the path in which to store
@@ -367,16 +367,16 @@ an error occurred.
 .El
 .Sh BUGS
 To sort files larger than 60Mb, use
-.Nm sort
+.Nm
 .Fl H ;
 files larger than 704Mb must be sorted in smaller pieces, then merged.
 To protect data
-.Nm sort
+.Nm
 .Fl o
 calls link and unlink, and thus fails in protected directories.
 .Sh HISTORY
 A
-.Nm sort
+.Nm
 command appeared in
 .At v6 .
 .Sh NOTES
@@ -391,9 +391,9 @@ argument of the
 .Fl k
 option should be used whenever possible.
 Similarly,
-.Nm sort
+.Nm
 .Fl k1f
 is equivalent to
-.Nm sort
+.Nm
 .Fl f
 and may take twice as long.

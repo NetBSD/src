@@ -1,4 +1,4 @@
-.\"	$NetBSD: eeprom.8,v 1.3 1997/07/30 22:54:23 jtc Exp $
+.\"	$NetBSD: eeprom.8,v 1.4 2000/11/07 06:43:36 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,7 +41,7 @@
 .Nm eeprom
 .Nd display or modify contents of the EEPROM or OpenProm
 .Sh SUN 3 SYNOPSIS
-.Nm eeprom
+.Nm ""
 .Op Fl
 .Op Fl c
 .Op Fl f Ar device
@@ -52,7 +52,7 @@
 .Oc ...
 .Oc
 .Sh SPARC SYNOPSIS
-.Nm eeprom
+.Nm ""
 .Op Fl
 .Op Fl c
 .Op Fl f Ar device
@@ -65,13 +65,13 @@
 .Oc ...
 .Oc
 .Sh DESCRIPTION
-.Nm Eeprom
+.Nm
 provides an interface for displaying and changing the contents of the
 EEPROM or OpenProm.  Without any arguments,
-.Nm eeprom
+.Nm
 will list all of the known fields and their corresponding values.
 When given the name of a specific field,
-.Nm eeprom
+.Nm
 will display that value or set it if the field name is followed by
 .Sq =
 and a value.  Only the super-user may modify the contents of the EEPROM
@@ -82,7 +82,7 @@ The options are as follows:
 .It Fl
 Commands are taken from stdin and displayed on stdout.
 .It Fl c
-.Nm Eeprom
+.Nm
 will fix incorrect checksum values and exit.  This flag is quietly ignored
 on systems with an OpenProm.
 .It Fl f Ar device
@@ -96,7 +96,7 @@ instead of the default
 .Pa /dev/openprom .
 .It Fl i
 If checksum values are incorrect,
-.Nm eeprom
+.Nm
 will ignore them and continue after displaying a warning.  This flag is
 quietly ignored on systems with an OpenProm.
 .El

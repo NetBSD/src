@@ -1,4 +1,4 @@
-.\"	$NetBSD: newsyslog.8,v 1.18 2000/09/21 10:29:11 ad Exp $
+.\"	$NetBSD: newsyslog.8,v 1.19 2000/11/07 06:43:35 lukem Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
 .\" All rights reserved.
@@ -52,7 +52,7 @@
 .Op Fl f Ar config_file
 .Op Pa file ...
 .Sh DESCRIPTION
-.Nm Newsyslog
+.Nm
 is a program that should be scheduled to run periodically by
 .Xr cron 8 .
 When it is executed it archives log files if necessary.  If a log file
@@ -98,7 +98,7 @@ By default, this configuration file is
 .Pa /etc/newsyslog.conf .
 Each line of the file contains information about a particular log file
 that should be handled by
-.Nm newsyslog .
+.Nm "" .
 Each line has six mandatory fields and three optional fields, with
 whitespace separating each field.  Blank lines or lines beginning with
 ``#'' are ignored.  The fields of the configuration file are as

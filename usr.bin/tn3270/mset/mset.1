@@ -1,4 +1,4 @@
-.\"	$NetBSD: mset.1,v 1.7 1999/03/22 18:16:44 garbled Exp $
+.\"	$NetBSD: mset.1,v 1.8 2000/11/07 06:43:36 lukem Exp $
 .\"
 .\" Copyright (c) 1986, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)mset.1	4.6 (Berkeley) 7/27/91
-.\"	$NetBSD: mset.1,v 1.7 1999/03/22 18:16:44 garbled Exp $
+.\"	$NetBSD: mset.1,v 1.8 2000/11/07 06:43:36 lukem Exp $
 .\"
 .Dd July 27, 1991
 .Dt MSET 1
@@ -50,7 +50,7 @@ to
 .Op Fl shell
 .Op Ar keyboardname
 .Sh DESCRIPTION
-.Nm Mset
+.Nm
 retrieves mapping information
 for the
 .Tn ASCII
@@ -69,12 +69,12 @@ command (see
 .Xr tn3270  1  ) .
 .Pp
 The default
-.Nm mset
+.Nm
 output can be used to store the mapping information in the process environment
 in order to avoid scanning
 .Pa map3270
 each time
-.Nm tn3270
+.Ic tn3270
 is invoked.
 To do this, place the following command in your
 .Pa .login
@@ -86,7 +86,7 @@ set noglob; setenv MAP3270 "\(gamset\(ga"; unset noglob
 If the
 .Ar keyboardname
 argument is not supplied,
-.Nm mset
+.Nm
 attempts to determine the name of the keyboard the user is using,
 by checking the
 .Ev KEYBD
@@ -94,12 +94,12 @@ environment variable.
 If the
 .Ev KEYBD
 environment variable is not set, then
-.Nm mset
+.Nm
 uses the user's terminal type from the environment variable
 .Ev TERM
 as the keyboard name.
 Normally,
-.Nm mset
+.Nm
 then uses the file
 .Xr map3270 5
 to find the keyboard mapping for that terminal.
@@ -120,7 +120,7 @@ then a default mapping
 is used.
 .Pp
 The arguments to
-.Nm mset
+.Nm
 are:
 .Pp
 .Bl -tag -width Fl
@@ -129,30 +129,30 @@ When processing the various
 .Pa map3270
 entries (for the user's keyboard,
 and all those encountered before the one for the user's keyboard),
-.Nm mset
+.Nm
 normally will not complain about entries for unknown functions (like
 .Dq PFX1 ) ;
 the
 .Fl picky
 argument causes
-.Nm mset
+.Nm
 to issue warning messages about these unknown entries.
 .It Fl shell
 If the
 .Pa map3270
 entry is longer than the shell's 1024 environmental variable
 length limit, the default
-.Nm mset
+.Nm
 output cannot be used to store the mapping information in the process
 environment to avoid scanning
 .Pa map3270
 each time
-.Nm tn3270
+.Ic tn3270
 is invoked.
 The
 .Fl shell
 argument causes
-.Nm mset
+.Nm
 to generate shell commands to set the environmental variables
 .Ev MAP3270  ,
 .Ev MAP3270A ,
@@ -168,7 +168,7 @@ mset -shell > tmp ; source tmp ; /bin/rm tmp
 When searching for the
 .Pa map3270
 entry that matches the user's keyboard,
-.Nm mset
+.Nm
 will use
 .Ar keyboardname
 instead of determining the keyboard name from the
@@ -187,6 +187,6 @@ keyboard mapping for known keyboards
 .Xr map3270 5
 .Sh HISTORY
 The
-.Nm mset
+.Nm
 command appeared in
 .Bx 4.3 .

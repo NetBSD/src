@@ -1,4 +1,4 @@
-.\"	$NetBSD: pim6dd.8,v 1.6 2000/05/19 10:43:43 itojun Exp $
+.\"	$NetBSD: pim6dd.8,v 1.7 2000/11/07 06:43:37 lukem Exp $
 .\"
 .\" Copyright (C) 1998 WIDE Project.
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 .Op Fl c Ar configfile
 .Op Fl d Op debug_level Op ,debug_level
 .Sh DESCRIPTION
-.Nm Pim6dd
+.Nm
 is an IPv6 multicast routing daemon, which supports
 PIMv2(Protocol Independent Multicast Version 2) dense mode
 for IPv6.
@@ -68,7 +68,7 @@ and
 .Ic asserts.
 .El
 .Pp
-.Nm Pim6dd 
+.Nm
 automatically configures itself to forward on all multicast-capable
 interfaces, i.e., interfaces that have the IFF_MULTICAST flag set (excluding
 the "loopback interface").
@@ -93,21 +93,21 @@ The default configuration file.
 The
 .Nm
 command is based on
-.Nm pimdd,
+.Ic pimdd ,
 which is an IPv4 multicast routing daemon
 developed at the University of Oregon.
-.Nm Pimdd
+.Ic pimdd
 has been derived from PIM sparse-mode
-.Nm pimd
+.Ic pimd
 developed at University of Southern California.
 Part of these two programs above has also been derived from
-.Nm mrouted.
-.Nm Mrouted
+.Ic mrouted .
+.Ic mrouted
 is COPYRIGHT 1989 by The Board of Trustees of
 Leland Stanford Junior University.
 .\"
 .Sh BUGS
-.Nm Pim6dd
+.Nm
 does not contain any unicast routing engine, so a unicast routing
 daemon needs to run on the system. 
 .Pp

@@ -1,4 +1,4 @@
-.\" $NetBSD: lkm.4,v 1.11 2000/07/05 02:30:18 enami Exp $
+.\" $NetBSD: lkm.4,v 1.12 2000/11/07 06:43:26 lukem Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -99,7 +99,7 @@ system call is implemented.
 .It Device Driver modules
 New block and character device
 drivers may be loaded into the system with
-.Nm LKM .
+.Li "options LKM" .
 The major problem with loading
 a device driver is that the driver's
 device nodes must be exist for the

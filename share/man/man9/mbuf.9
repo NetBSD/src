@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbuf.9,v 1.10 2000/10/13 04:19:58 itojun Exp $
+.\"	$NetBSD: mbuf.9,v 1.11 2000/11/07 06:43:34 lukem Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -147,18 +147,18 @@ The
 functions and macros provide an easy and consistent way to handle
 a networking stack's memory management needs.
 An
-.Nm mbuf
+.Nm
 consists of a header and a data area.
 It is of a fixed size,
 .Dv MSIZE
 .Pq defined in Aq Pa machine/param.h ,
 which includes overhead.
 The header contains a pointer to the next
-.Nm mbuf
+.Nm
 in the
-.Nm mbuf chain ,
+.Sq "mbuf chain" ,
 a pointer to the next
-.Nm mbuf chain ,
+.Sq "mbuf chain" ,
 a pointer to the data area, the amount of data in this mbuf, its type
 and a
 .Dv flags
@@ -189,7 +189,7 @@ mbuf contains out-of-band data.
 The
 .Dv flags
 variable contains information describing the
-.Nm mbuf ,
+.Nm "" ,
 notably:
 .Bl -tag -compact -offset indent -width "XXXXXXXXXXX"
 .It Dv M_EXT
@@ -203,7 +203,7 @@ external storage is a cluster.
 .El
 .Pp
 If an
-.Nm mbuf
+.Nm
 designates the start of a record
 .Pq Dv M_PKTHDR ,
 its
@@ -222,9 +222,9 @@ three link-level specific flags.
 .El
 .Pp
 An
-.Nm mbuf
+.Nm
 may add a single
-.Nm mbuf cluster
+.Sq "mbuf cluster"
 of
 .Dv MCLBYTES
 bytes
@@ -587,7 +587,7 @@ Current implementation of external storage by Matt Thomas
 <matt@3am-software.com> and Jason R. Thorpe <thorpej@NetBSD.ORG>.
 .Sh FILES
 The
-.Nm mbuf
+.Nm
 management functions are implemented within the file
 .Pa sys/kern/uipc_mbuf.c .
 Function prototypes, and the functions implemented as macros

@@ -1,4 +1,4 @@
-.\"	$NetBSD: loadfont.1,v 1.5 1999/03/15 08:22:21 garbled Exp $
+.\"	$NetBSD: loadfont.1,v 1.6 2000/11/07 06:43:25 lukem Exp $
 .\"
 .\" This software is in the Public Domain.
 .\" Author: Masaru Oki
@@ -15,14 +15,16 @@ console.
 .Nm loadfont
 .Ar fontfile
 .Sh DESCRIPTION
-.Nm Loadfont
+.Nm
 command reads font data from
 .Ar fontfile
 and replaces the x68k console font with it.
 .Pp
-.Ar Fontfile
+.Ar fontfile
 format is compatible with that of
-.Nm Human68k IOCS font .
+.Tn Human68k
+.Sq IOCS
+font.
 .Sh BUGS
 Replacing kanji fonts is not supported, 
 because current

@@ -1,4 +1,4 @@
-.\"	$NetBSD: palette.1,v 1.4 1999/03/15 08:22:21 garbled Exp $
+.\"	$NetBSD: palette.1,v 1.5 2000/11/07 06:43:25 lukem Exp $
 .\"
 .\" This software is in the Public Domain.
 .\" Author: Masaru Oki
@@ -13,7 +13,8 @@
 .Nm palette
 .Op Ar red green blue Op Ar code
 .Sh DESCRIPTION
-.Nm Palette
+The
+.Nm
 utility manipulates the colormap of x68k's console.
 The value of the color cell number
 .Ar code
@@ -21,24 +22,24 @@ is replaced according to the arguments
 .Ar red, green, blue 
 .Po
 each value is an integer from
-.Nm 0
+.Li 0
 to
-.Nm 31
+.Li 31
 .Pc .
-
+.Pp
 Each part of the console corresponds to the
 .Ar code :
 .Bl -tag -width "foreground (default)" -compact
 .It background
-.Nm 0
+.Li 0
 .It cursor
-.Nm 1
+.Li 1
 .It foreground (default)
-.Nm 7
+.Li 7
 .El
-
+.Pp
 If no arguments are supplied,
-.Nm palette
+.Nm
 resets the colormap to the default.
 .Sh BUGS
 Quite a few.

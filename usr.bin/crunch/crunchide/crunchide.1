@@ -1,4 +1,4 @@
-.\" $NetBSD: crunchide.1,v 1.8 2000/06/14 06:49:20 cgd Exp $
+.\" $NetBSD: crunchide.1,v 1.9 2000/11/07 06:43:35 lukem Exp $
 .\"
 .\" Copyright (c) 1994 University of Maryland
 .\" All Rights Reserved.
@@ -42,7 +42,7 @@
 .Op Ar object-file ...
 .Ek
 .Sh DESCRIPTION
-.Nm Crunchide
+.Nm
 hides the global symbols of
 .Ar object-file
 such that they are ignored by subsequent runs of the linker, 
@@ -65,7 +65,7 @@ visible, the option
 .Dq -k foo 
 should be used.
 .Pp
-.Nm Crunchide
+.Nm
 is designed as a companion program for 
 .Xr crunchgen 1 ,
 which automates the process of creating crunched binaries from
@@ -74,7 +74,7 @@ multiple component programs.
 .Xr crunchgen 1 ,
 .Xr ld 1
 .Sh AUTHORS
-.Nm Crunch
+.Nm
 was written by James da Silva <jds@cs.umd.edu>.
 .sp 0
 Copyright (c) 1994 University of Maryland.  All Rights Reserved.

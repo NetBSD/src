@@ -1,4 +1,4 @@
-.\"	$NetBSD: esis.4,v 1.6 1999/12/15 22:07:31 abs Exp $
+.\"	$NetBSD: esis.4,v 1.7 2000/11/07 06:43:26 lukem Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,7 +44,7 @@
 .Fd #include <netiso/esis.h>
 .Sh DESCRIPTION
 The
-.Nm ES-IS
+.Tn ES-IS
 routing protocol is used to dynamically map between
 .Tn ISO NSAP
 addresses and
@@ -168,7 +168,7 @@ is generated.
 .Sh MANUAL ROUTING TABLE MODIFICATION
 .Pp
 To facilitate communications with systems which do not use
-.Nm ES-IS ,
+.Tn ES-IS ,
 one may add a route whose destination is a struct sockaddr_iso containing the
 .Tn NSAP
 in question, and the gateway being a link-level struct sockaddr,

@@ -1,4 +1,4 @@
-.\" $NetBSD: login_cap.3,v 1.6 2000/10/10 13:17:28 itojun Exp $
+.\" $NetBSD: login_cap.3,v 1.7 2000/11/07 06:43:24 lukem Exp $
 .\"
 .\" Copyright (c) 1996,1997 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -140,11 +140,11 @@ the name of a user class,
 and sets the resources defined by that class according to
 .Ar flags.
 Only the
-.Nm LOGIN_SETPATH ,
-.Nm LOGIN_SETPRIORITY ,
-.Nm LOGIN_SETRESOURCES ,
+.Dv LOGIN_SETPATH ,
+.Dv LOGIN_SETPRIORITY ,
+.Dv LOGIN_SETRESOURCES ,
 and
-.Nm LOGIN_SETUMASK
+.Dv LOGIN_SETUMASK
 bits are used.  (See 
 .Fn setusercontext
 below).

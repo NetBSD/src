@@ -1,4 +1,4 @@
-.\"	$NetBSD: apropos.1,v 1.7 1998/10/15 08:18:46 ross Exp $
+.\"	$NetBSD: apropos.1,v 1.8 2000/11/07 06:43:35 lukem Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -45,19 +45,19 @@
 .Op Fl m Ar path
 .Ar keyword ...
 .Sh DESCRIPTION
-.Nm Apropos
+.Nm
 shows which manual pages contain instances of any of the given
 .Ar keyword(s)
 in their title line.
 Each word is considered separately and case of letters is ignored.
 Words which are part of other words are considered; when looking for
 .Dq compile ,
-.Nm apropos
+.Nm
 will also list all instances of
 .Dq compiler .
 .Pp
 If the line output by
-.Nm apropos
+.Nm
 starts
 .Dq Li name(section) ...
 you can enter
@@ -69,7 +69,7 @@ The options are as follows:
 .Bl -tag -width flag
 .It Fl M
 Override the list of standard directories
-.Nm apropos
+.Nm
 searches for a database named
 .Pa whatis.db .
 The supplied
@@ -81,7 +81,7 @@ This search path may also be set using the environment variable
 .Ev MANPATH .
 .It Fl m
 Augment the list of standard directories
-.Nm apropos
+.Nm
 searches for its database.
 The supplied
 .Ar path
@@ -119,6 +119,6 @@ name of the apropos database
 .Xr makewhatis 8
 .Sh HISTORY
 The
-.Nm apropos
+.Nm
 command appeared in
 .Bx 3.0 .
