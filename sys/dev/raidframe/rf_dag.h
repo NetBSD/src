@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dag.h,v 1.12 2004/03/18 16:40:05 oster Exp $	*/
+/*	$NetBSD: rf_dag.h,v 1.13 2004/03/19 15:16:18 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -170,6 +170,8 @@ struct RF_DagHeader_s {
 	void   *cbArg;		/* argument for cbFunc */
 	char   *creator;	/* name of function used to create this dag */
 	RF_DagNode_t *nodes;    /* linked list of nodes used in this DAG */
+	RF_PhysDiskAddr_t *pda_cleanup_list; /* for PDAs that can't get 
+						cleaned up any other way... */
 	RF_Raid_t *raidPtr;	/* the descriptor for the RAID device this DAG
 				 * is for */
 	void   *bp;		/* the bp for this I/O passed down from the

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_map.c,v 1.35 2004/03/19 02:57:34 oster Exp $	*/
+/*	$NetBSD: rf_map.c,v 1.36 2004/03/19 15:16:18 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.35 2004/03/19 02:57:34 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.36 2004/03/19 15:16:18 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -471,13 +471,11 @@ rf_AllocPDAList(int count)
 	return (p);
 }
 
-#if RF_INCLUDE_PARITYLOGGING > 0
 void 
 rf_FreePhysDiskAddr(RF_PhysDiskAddr_t *p)
 {
 	pool_put(&rf_pools.pda, p);
 }
-#endif
 
 static void 
 rf_FreePDAList(RF_PhysDiskAddr_t *pda_list)
