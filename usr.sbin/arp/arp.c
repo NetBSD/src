@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.22 1997/11/18 23:14:38 fvdl Exp $ */
+/*	$NetBSD: arp.c,v 1.23 1998/02/10 03:45:06 mrg Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\n\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: arp.c,v 1.22 1997/11/18 23:14:38 fvdl Exp $");
+__RCSID("$NetBSD: arp.c,v 1.23 1998/02/10 03:45:06 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,7 +92,7 @@ int	set __P((int, char **));
 void	usage __P((void));
 
 static int pid;
-static int nflag;
+static int nflag, vflag;
 static int s = -1;
 
 int	delete __P((const char *, const char *));
@@ -116,7 +116,7 @@ main(argc, argv)
 
 	pid = getpid();
 
-	while ((ch = getopt(argc, argv, "andsf")) != -1)
+	while ((ch = getopt(argc, argv, "andsfv")) != -1)
 		switch((char)ch) {
 		case 'a':
 		case 'd':
@@ -128,6 +128,9 @@ main(argc, argv)
 			break;
 		case 'n':
 			nflag = 1;
+			break;
+		case 'v':
+			vflag = 1;
 			break;
 		default:
 			usage();
@@ -226,6 +229,7 @@ set(argc, argv)
 	struct sockaddr_dl *sdl;
 	struct rt_msghdr *rtm;
 	char *host = argv[0], *eaddr;
+	int rval;
 
 	sin = &sin_m;
 	rtm = &(m_rtmsg.m_rtm);
@@ -293,7 +297,10 @@ overwrite:
 	}
 	sdl_m.sdl_type = sdl->sdl_type;
 	sdl_m.sdl_index = sdl->sdl_index;
-	return (rtmsg(RTM_ADD));
+	rval = rtmsg(RTM_ADD);
+	if (vflag)
+		(void)printf("%s (%s) added\n", host, eaddr);
+	return (rval);
 }
 
 /*
@@ -368,7 +375,9 @@ delete:
 	}
 	if (rtmsg(RTM_DELETE)) 
 		return (1);
-	(void)printf("%s (%s) deleted\n", host, inet_ntoa(sin->sin_addr));
+	if (vflag)
+		(void)printf("%s (%s) deleted\n", host,
+		    inet_ntoa(sin->sin_addr));
 	return (0);
 }
 
