@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 1999/10/18 20:13:56 pk Exp $
+#	$NetBSD: Makefile,v 1.13 1999/11/09 12:57:37 mycroft Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${.CURDIR}/../../miniroot
@@ -50,7 +50,7 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CBIN}.conf
 	crunchgen -D ${TOP}/../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
 ${CBIN}.conf: ${LISTS}
-	awk -f ${MINIROOT}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf
+	awk -f ${MINIROOT}/makeconf.awk CBIN=${CBIN} ${.CURDIR}/${LISTS} > ${CBIN}.conf
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	make -f ${CBIN}.mk all
