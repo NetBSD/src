@@ -1,4 +1,3 @@
-arch/alpha/alpha/machdep.c
 arch/alpha/conf/ALPHA
 arch/alpha/conf/GENERIC
 arch/alpha/conf/files.alpha
