@@ -1,45 +1,32 @@
-/*	$NetBSD: ipresend.c,v 1.4 2002/04/09 02:32:54 thorpej Exp $	*/
+/*	$NetBSD: ipresend.c,v 1.5 2004/03/28 09:00:56 martti Exp $	*/
 
 /*
  * ipresend.c (C) 1995-1998 Darren Reed
  *
- * This was written to test what size TCP fragments would get through
- * various TCP/IP packet filters, as used in IP firewalls.  In certain
- * conditions, enough of the TCP header is missing for unpredictable
- * results unless the filter is aware that this can happen.
- *
  * See the IPFILTER.LICENCE file for details on licencing.
+ *
  */
-#ifdef __sgi
-# include <sys/ptimers.h>
+#if !defined(lint)
+static const char sccsid[] = "%W% %G% (C)1995 Darren Reed";
+static const char rcsid[] = "@(#)Id: ipresend.c,v 2.4 2004/01/08 13:34:31 darrenr Exp";
 #endif
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <netdb.h>
-#include <string.h>
-#include <sys/types.h>
 #include <sys/param.h>
+#include <sys/types.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
-#include <netinet/tcp.h>
-#include <netinet/udp.h>
-#include <netinet/ip_icmp.h>
 #ifndef	linux
 #include <netinet/ip_var.h>
 #endif
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <netdb.h>
+#include <string.h>
 #include "ipsend.h"
-
-#if !defined(lint)
-static const char sccsid[] __attribute__((__unused__)) =
-    "%W% %G% (C)1995 Darren Reed";
-static const char rcsid[] __attribute__((__unused__)) =
-    "@(#)Id: ipresend.c,v 2.1.4.3 2002/02/22 15:32:57 darrenr Exp";
-#endif
 
 
 extern	char	*optarg;

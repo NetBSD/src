@@ -1,35 +1,37 @@
-/*	$NetBSD: 44arp.c,v 1.3 2002/03/14 12:32:39 martti Exp $	*/
+/*	$NetBSD: 44arp.c,v 1.4 2004/03/28 09:00:55 martti Exp $	*/
 
 /*
  * Based upon 4.4BSD's /usr/sbin/arp
  */
-#ifdef __sgi
-# include <sys/ptimers.h>
-#endif
-#include <unistd.h>
-#include <string.h>
-#include <stdlib.h>
 #include <sys/param.h>
 #include <sys/file.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>
 #include <net/if.h>
+#if __FreeBSD_version >= 300000
+# include <net/if_var.h>
+#endif
 #include <net/if_dl.h>
 #include <net/if_types.h>
+#if defined(__FreeBSD__)
+# include "radix_ipf.h"
+#endif
 #include <net/route.h>
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #include <arpa/inet.h>
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/ip.h>
+#include <netinet/ip_var.h>
+#include <netinet/tcp.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdlib.h>
 #include <netdb.h>
 #include <errno.h>
 #include <nlist.h>
 #include <stdio.h>
-#include <netinet/in.h>
-#include <netinet/ip_var.h>
-#include <netinet/tcp.h>
-#if __FreeBSD_version >= 300000
-# include <net/if_var.h>
-#endif
 #include "ipsend.h"
 #include "iplang/iplang.h"
 
@@ -39,7 +41,7 @@
  * its IP address in address
  * (4 bytes)
  */
-int	resolve(host, address) 
+int	resolve(host, address)
 char	*host, *address;
 {
         struct	hostent	*hp;
