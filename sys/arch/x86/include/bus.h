@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.1 2003/02/26 21:26:10 fvdl Exp $	*/
+/*	$NetBSD: bus.h,v 1.2 2003/05/07 21:33:57 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -1073,6 +1073,9 @@ struct x86_bus_dma_tag {
 	 * ignored.
 	 */
 	bus_addr_t _bounce_thresh;
+	bus_addr_t _bounce_alloc_lo;
+	bus_addr_t _bounce_alloc_hi;
+	int	(*_may_bounce) __P((bus_dma_tag_t, bus_dmamap_t, int, int *));
 
 	/*
 	 * DMA mapping methods.
@@ -1193,6 +1196,52 @@ int	_bus_dmamem_alloc_range __P((bus_dma_tag_t tag, bus_size_t size,
 	    bus_size_t alignment, bus_size_t boundary,
 	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags,
 	    paddr_t low, paddr_t high));
+
+int	_bus_dma_alloc_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map,
+	    bus_size_t size, int flags);
+void	_bus_dma_free_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map);
+int	_bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map,
+	    void *buf, bus_size_t buflen, struct proc *p, int flags,
+	    paddr_t *lastaddrp, int *segp, int first);
+
+
+
+/*
+ * Cookie used for bounce buffers. A pointer to one of these it stashed in
+ * the DMA map.
+ */
+struct x86_bus_dma_cookie {
+	int	id_flags;		/* flags; see below */
+
+	/*
+	 * Information about the original buffer used during
+	 * DMA map syncs.  Note that origibuflen is only used
+	 * for ID_BUFTYPE_LINEAR.
+	 */
+	void	*id_origbuf;		/* pointer to orig buffer if
+					   bouncing */
+	bus_size_t id_origbuflen;	/* ...and size */
+	int	id_buftype;		/* type of buffer */
+
+	void	*id_bouncebuf;		/* pointer to the bounce buffer */
+	bus_size_t id_bouncebuflen;	/* ...and size */
+	int	id_nbouncesegs;		/* number of valid bounce segs */
+	bus_dma_segment_t id_bouncesegs[0]; /* array of bounce buffer
+					       physical memory segments */
+};
+
+/* id_flags */
+#define	X86_DMA_ID_MIGHT_NEED_BOUNCE	0x01	/* may eed bounce buffers */
+#define	X86_DMA_ID_HAS_BOUNCE		0x02	/* has bounce buffers */
+#define	X86_DMA_ID_IS_BOUNCING		0x04	/* is bouncing current xfer */
+
+/* id_buftype */
+#define	X86_DMA_ID_BUFTYPE_INVALID	0
+#define	X86_DMA_ID_BUFTYPE_LINEAR	1
+#define	X86_DMA_ID_BUFTYPE_MBUF		2
+#define	X86_DMA_ID_BUFTYPE_UIO		3
+#define	X86_DMA_ID_BUFTYPE_RAW		4
+
 #endif /* _X86_BUS_DMA_PRIVATE */
 
 #endif /* _X86_BUS_H_ */
