@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 static char sccsid[] = "@(#)rm.c	4.26 (Berkeley) 3/10/91";
-static char rcsid[] = "$Header: /cvsroot/src/bin/rm/rm.c,v 1.3 1993/03/23 00:27:09 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/bin/rm/rm.c,v 1.4 1993/04/10 00:57:03 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -99,7 +99,7 @@ main(argc, argv)
 
 	checkdot(argv);
 	if (!*argv)
-		exit(retval);
+		exit(fflag ? 0 : retval);
 
 	stdin_ok = isatty(STDIN_FILENO);
 
@@ -107,7 +107,7 @@ main(argc, argv)
 		rmtree(argv);
 	else
 		rmfile(argv);
-	exit(retval);
+	exit(fflag ? 0 : retval);
 }
 
 rmtree(argv)
@@ -132,7 +132,7 @@ rmtree(argv)
 
 	if (!(fts = fts_open(argv,
 	    needstat ? FTS_PHYSICAL : FTS_PHYSICAL|FTS_NOSTAT,
-	    (int (*)())NULL))) {
+	    (int (*)())NULL)) && !fflag) {
 		(void)fprintf(stderr, "rm: %s.\n", strerror(errno));
 		exit(1);
 	}
@@ -182,7 +182,7 @@ rmtree(argv)
 			if (errno == ENOENT) {
 				if (fflag)
 					continue;
-			} else if (p->fts_info != FTS_DP)
+			} else if (p->fts_info != FTS_DP && !fflag)
 				(void)fprintf(stderr,
 				    "rm: unable to read %s.\n", p->fts_path);
 		} else if (!unlink(p->fts_accpath) || fflag && errno == ENOENT)
@@ -210,7 +210,7 @@ rmfile(argv)
 				error(f, errno);
 			continue;
 		}
-		if (S_ISDIR(sb.st_mode) && !df) {
+		if (S_ISDIR(sb.st_mode) && !df && !fflag) {
 			(void)fprintf(stderr, "rm: %s: is a directory\n", f);
 			retval = 1;
 			continue;
@@ -242,10 +242,11 @@ check(path, name, sp)
 		if (S_ISLNK(sp->st_mode) || !stdin_ok || !access(name, W_OK))
 			return(1);
 		strmode(sp->st_mode, modep);
-		(void)fprintf(stderr, "override %s%s%s/%s for %s? ",
-		    modep + 1, modep[9] == ' ' ? "" : " ",
-		    user_from_uid(sp->st_uid, 0),
-		    group_from_gid(sp->st_gid, 0), path);
+		if (!fflag)
+			(void)fprintf(stderr, "override %s%s%s/%s for %s? ",
+			    modep + 1, modep[9] == ' ' ? "" : " ",
+			    user_from_uid(sp->st_uid, 0),
+			    group_from_gid(sp->st_gid, 0), path);
 	}
 	(void)fflush(stderr);
 
@@ -269,7 +270,7 @@ checkdot(argv)
 		else
 			p = *t;
 		if (ISDOT(p)) {
-			if (!complained++)
+			if (!complained++ && !fflag)
 			    (void)fprintf(stderr,
 				"rm: \".\" and \"..\" may not be removed.\n");
 			retval = 1;
@@ -284,12 +285,14 @@ error(name, val)
 	char *name;
 	int val;
 {
-	(void)fprintf(stderr, "rm: %s: %s.\n", name, strerror(val));
+	if (!fflag)
+		(void)fprintf(stderr, "rm: %s: %s.\n", name, strerror(val));
 	retval = 1;
 }
 
 usage()
 {
-	(void)fprintf(stderr, "usage: rm [-dfiRr] file ...\n");
+	if (!fflag)
+		(void)fprintf(stderr, "usage: rm [-dfiRr] file ...\n");
 	exit(1);
 }
