@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_nubus.c,v 1.5 2003/07/15 02:43:24 lukem Exp $	*/
+/*	$NetBSD: if_sm_nubus.c,v 1.6 2005/01/15 16:00:59 chs Exp $	*/
 
 /*
  * Copyright (c) 2000 Allen Briggs.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_nubus.c,v 1.5 2003/07/15 02:43:24 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_nubus.c,v 1.6 2005/01/15 16:00:59 chs Exp $");
 
 #include "opt_inet.h"
 
@@ -55,17 +55,14 @@ __KERNEL_RCSID(0, "$NetBSD: if_sm_nubus.c,v 1.5 2003/07/15 02:43:24 lukem Exp $"
 
 #include <mac68k/nubus/nubus.h>
 
-static int	sm_nubus_match __P((struct device *, struct cfdata *, void *));
-static void	sm_nubus_attach __P((struct device *, struct device *, void *));
+static int	sm_nubus_match(struct device *, struct cfdata *, void *);
+static void	sm_nubus_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(sm_nubus, sizeof(struct smc91cxx_softc),
     sm_nubus_match, sm_nubus_attach, NULL, NULL);
 
 static int
-sm_nubus_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+sm_nubus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct nubus_attach_args *na = (struct nubus_attach_args *) aux;
 	bus_space_handle_t bsh;
@@ -99,9 +96,7 @@ sm_nubus_match(parent, cf, aux)
  * Install interface into kernel networking data structures
  */
 static void
-sm_nubus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void   *aux;
+sm_nubus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct smc91cxx_softc *smc = (struct smc91cxx_softc *) self;
 	struct nubus_attach_args *na = (struct nubus_attach_args *)aux;

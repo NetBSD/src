@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.112 2004/08/28 17:53:01 jdolecek Exp $	*/
+/*	$NetBSD: trap.c,v 1.113 2005/01/15 16:00:59 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.112 2004/08/28 17:53:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.113 2005/01/15 16:00:59 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -183,16 +183,15 @@ int mmupid = -1;
 #endif
 
 /* trap() only called from locore */
-void	trap __P((int, u_int, u_int, struct frame));
+void	trap(int, u_int, u_int, struct frame);
 
-static inline void userret __P((struct lwp *l, struct frame *fp,
-	    u_quad_t oticks, u_int faultaddr, int fromtrap));
+static inline void userret(struct lwp *, struct frame *, u_quad_t, u_int, int);
 
 #if defined(M68040)
-static int	writeback __P((struct frame *, int));
+static int	writeback(struct frame *, int);
 #if DEBUG
-static void dumpssw __P((u_short));
-static void dumpwb __P((int, u_short, u_int, u_int));
+static void dumpssw(u_short);
+static void dumpwb(int, u_short, u_int, u_int);
 #endif
 #endif
 
@@ -201,12 +200,8 @@ static void dumpwb __P((int, u_short, u_int, u_int));
  * to user mode.
  */
 static inline void
-userret(l, fp, oticks, faultaddr, fromtrap)
-	struct lwp *l;
-	struct frame *fp;
-	u_quad_t oticks;
-	u_int faultaddr;
-	int fromtrap;
+userret(struct lwp *l, struct frame *fp, u_quad_t oticks, u_int faultaddr,
+    int fromtrap)
 {
 	struct proc *p = l->l_proc;
 #if defined(M68040)
@@ -268,10 +263,7 @@ again:
 void machine_userret(struct lwp *, struct frame *, u_quad_t);
 
 void
-machine_userret(l, f, t)
-	struct lwp *l;
-	struct frame *f;
-	u_quad_t t;
+machine_userret(struct lwp *l, struct frame *f, u_quad_t t)
 {
 
 	userret(l, f, t, 0, 0);
@@ -284,11 +276,7 @@ machine_userret(l, f, t)
  */
 /*ARGSUSED*/
 void
-trap(type, code, v, frame)
-	int type;
-	u_int code;
-	u_int v;
-	struct frame frame;
+trap(int type, u_int code, u_int v, struct frame frame)
 {
 	extern char fubail[], subail[];
 	struct lwp *l;
@@ -544,14 +532,14 @@ copyfault:
 	case T_SSIR|T_USER:
 #if NZSC > 0
 		if (ssir & SIR_SERIAL) {
-			void zssoft __P((int));
+			void zssoft(int);
 			siroff(SIR_SERIAL);
 			uvmexp.softs++;
 			zssoft(0);
 		}
 #endif
 		if (ssir & SIR_NET) {
-			void netintr __P((void));
+			void netintr(void);
 			siroff(SIR_NET);
 			uvmexp.softs++;
 			netintr();
@@ -562,13 +550,13 @@ copyfault:
 			softclock(NULL);
 		}
 		if (ssir & SIR_DTMGR) {
-			void mrg_execute_deferred __P((void));
+			void mrg_execute_deferred(void);
 			siroff(SIR_DTMGR);
 			uvmexp.softs++;
 			mrg_execute_deferred();
 		}
 		if (ssir & SIR_ADB) {
-			void adb_soft_intr __P((void));
+			void adb_soft_intr(void);
 			siroff(SIR_ADB);
 			uvmexp.softs++;
 			adb_soft_intr();
@@ -724,9 +712,7 @@ char wberrstr[] =
 #endif
 
 static int
-writeback(fp, docachepush)
-	struct frame *fp;
-	int docachepush;
+writeback(struct frame *fp, int docachepush)
 {
 	struct fmt7 *f = &fp->f_fmt7;
 	struct lwp *l = curlwp;
@@ -962,8 +948,7 @@ writeback(fp, docachepush)
 
 #ifdef DEBUG
 static void
-dumpssw(ssw)
-	u_short ssw;
+dumpssw(u_short ssw)
 {
 	printf(" SSW: %x: ", ssw);
 	if (ssw & SSW4_CP)
@@ -990,10 +975,7 @@ dumpssw(ssw)
 
 static
 void
-dumpwb(num, s, a, d)
-	int num;
-	u_short s;
-	u_int a, d;
+dumpwb(int num, u_short s, u_int a, u_int d)
 {
 	struct proc *p = curproc;
 	paddr_t pa;

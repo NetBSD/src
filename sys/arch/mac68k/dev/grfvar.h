@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.25 2003/08/07 16:28:20 agc Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.26 2005/01/15 16:00:59 chs Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -119,10 +119,10 @@ struct grfbus_attach_args {
 	nubus_slot	*ga_slot;
 	bus_addr_t	ga_phys;
 	bus_addr_t	ga_fboff;
-	int		(*ga_mode) __P((struct grf_softc *, int, void *));
+	int		(*ga_mode)(struct grf_softc *, int, void *);
 };
 
-typedef	caddr_t (*grf_phys_t) __P((struct grf_softc *gp, vaddr_t addr));
+typedef	caddr_t (*grf_phys_t)(struct grf_softc *, vaddr_t);
 
 /* flags */
 #define	GF_ALIVE	0x01
@@ -172,8 +172,8 @@ struct image_data {
 #define VID_PAGE_CNT		3
 #define VID_DEV_TYPE		4
 
-void	grf_attach __P((struct macfb_softc *, int));
+void	grf_attach(struct macfb_softc *, int);
 
-void	grf_establish __P((struct grfbus_softc *, nubus_slot *,
-	    int (*)(struct grf_softc *, int, void *)));
-int	grfbusprint __P((void *, const char *));
+void	grf_establish(struct grfbus_softc *, nubus_slot *,
+	    int (*)(struct grf_softc *, int, void *));
+int	grfbusprint(void *, const char *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ams.c,v 1.14 2003/07/15 02:43:16 lukem Exp $	*/
+/*	$NetBSD: ams.c,v 1.15 2005/01/15 16:00:59 chs Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ams.c,v 1.14 2003/07/15 02:43:16 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ams.c,v 1.15 2005/01/15 16:00:59 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -59,10 +59,10 @@ __KERNEL_RCSID(0, "$NetBSD: ams.c,v 1.14 2003/07/15 02:43:16 lukem Exp $");
 /*
  * Function declarations.
  */
-static int	amsmatch __P((struct device *, struct cfdata *, void *));
-static void	amsattach __P((struct device *, struct device *, void *));
-static void	ems_init __P((struct ams_softc *));
-static void	ms_processevent __P((adb_event_t *event, struct ams_softc *));
+static int	amsmatch(struct device *, struct cfdata *, void *);
+static void	amsattach(struct device *, struct device *, void *);
+static void	ems_init(struct ams_softc *);
+static void	ms_processevent(adb_event_t *, struct ams_softc *);
 
 /*
  * Global variables.
@@ -79,9 +79,9 @@ CFATTACH_DECL(ams, sizeof(struct ams_softc),
 
 extern struct cfdriver ams_cd;
 
-int ams_enable __P((void *));
-int ams_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-void ams_disable __P((void *));
+int ams_enable(void *);
+int ams_ioctl(void *, u_long, caddr_t, int, struct proc *);
+void ams_disable(void *);
 
 const struct wsmouse_accessops ams_accessops = {
 	ams_enable,
@@ -90,10 +90,7 @@ const struct wsmouse_accessops ams_accessops = {
 };
 
 static int
-amsmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+amsmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct adb_attach_args * aa_args = (struct adb_attach_args *)aux;
 
@@ -104,9 +101,7 @@ amsmatch(parent, cf, aux)
 }
 
 static void
-amsattach(parent, self, aux)
-	struct device *parent, *self;
-	void   *aux;
+amsattach(struct device *parent, struct device *self, void *aux)
 {
 	ADBSetInfoBlock adbinfo;
 	struct ams_softc *sc = (struct ams_softc *)self;
@@ -217,8 +212,7 @@ amsattach(parent, self, aux)
  * 	     Mouse Systems A^3 Mouse, Logitech non-EMP MouseMan
  */
 void
-ems_init(sc)
-	struct ams_softc * sc;
+ems_init(struct ams_softc *sc)
 {
 	int adbaddr;
 	short cmd;
@@ -304,7 +298,7 @@ ems_init(sc)
 				sc->sc_class = buffer[7];
 				sc->sc_buttons = buffer[8];
 				sc->sc_res = (int)*(short *)&buffer[5];
-				bcopy(&(buffer[1]), sc->sc_devid, 4);
+				memcpy(sc->sc_devid, &(buffer[1]), 4);
 			} else if (buffer[1] == 0x9a && 
 			    ((buffer[2] == 0x20) || (buffer[2] == 0x21))) {
 				/* 
@@ -390,10 +384,7 @@ ems_init(sc)
  * an ADB event record.
  */
 void 
-ms_adbcomplete(buffer, data_area, adb_command)
-	caddr_t buffer;
-	caddr_t data_area;
-	int adb_command;
+ms_adbcomplete(caddr_t buffer, caddr_t data_area, int adb_command)
 {
 	adb_event_t event;
 	struct ams_softc *amsc;
@@ -450,9 +441,7 @@ ms_adbcomplete(buffer, data_area, adb_command)
  * x- and y-axis motion, and handoff the event to the appropriate subsystem.
  */
 static void
-ms_processevent(event, amsc)
-	adb_event_t *event;
-	struct ams_softc *amsc;
+ms_processevent(adb_event_t *event, struct ams_softc *amsc)
 {
 	adb_event_t new_event;
 	int i, button_bit, max_byte, mask, buttons;
@@ -523,25 +512,18 @@ ms_processevent(event, amsc)
 }
 
 int
-ams_enable(v)
-	void *v;
+ams_enable(void *v)
 {
 	return 0;
 }
 
 int
-ams_ioctl(v, cmd, data, flag, p)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+ams_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	return (EPASSTHROUGH);
 }
 
 void
-ams_disable(v)
-	void *v;
+ams_disable(void *v)
 {
 }

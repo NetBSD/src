@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.35 2003/07/15 02:43:25 lukem Exp $	*/
+/*	$NetBSD: esp.c,v 1.36 2005/01/15 16:01:00 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.35 2003/07/15 02:43:25 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.36 2005/01/15 16:01:00 chs Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -108,8 +108,8 @@ __KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.35 2003/07/15 02:43:25 lukem Exp $");
 #include <mac68k/obio/espvar.h>
 #include <mac68k/obio/obiovar.h>
 
-void	espattach	__P((struct device *, struct device *, void *));
-int	espmatch	__P((struct device *, struct cfdata *, void *));
+void	espattach(struct device *, struct device *, void *);
+int	espmatch(struct device *, struct cfdata *, void *);
 
 /* Linkup to the rest of the kernel */
 CFATTACH_DECL(esp, sizeof(struct esp_softc),
@@ -118,29 +118,29 @@ CFATTACH_DECL(esp, sizeof(struct esp_softc),
 /*
  * Functions and the switch for the MI code.
  */
-u_char	esp_read_reg __P((struct ncr53c9x_softc *, int));
-void	esp_write_reg __P((struct ncr53c9x_softc *, int, u_char));
-int	esp_dma_isintr __P((struct ncr53c9x_softc *));
-void	esp_dma_reset __P((struct ncr53c9x_softc *));
-int	esp_dma_intr __P((struct ncr53c9x_softc *));
-int	esp_dma_setup __P((struct ncr53c9x_softc *, caddr_t *,
-	    size_t *, int, size_t *));
-void	esp_dma_go __P((struct ncr53c9x_softc *));
-void	esp_dma_stop __P((struct ncr53c9x_softc *));
-int	esp_dma_isactive __P((struct ncr53c9x_softc *));
-void	esp_quick_write_reg __P((struct ncr53c9x_softc *, int, u_char));
-int	esp_quick_dma_intr __P((struct ncr53c9x_softc *));
-int	esp_quick_dma_setup __P((struct ncr53c9x_softc *, caddr_t *,
-	    size_t *, int, size_t *));
-void	esp_quick_dma_go __P((struct ncr53c9x_softc *));
+u_char	esp_read_reg(struct ncr53c9x_softc *, int);
+void	esp_write_reg(struct ncr53c9x_softc *, int, u_char);
+int	esp_dma_isintr(struct ncr53c9x_softc *);
+void	esp_dma_reset(struct ncr53c9x_softc *);
+int	esp_dma_intr(struct ncr53c9x_softc *);
+int	esp_dma_setup(struct ncr53c9x_softc *, caddr_t *, size_t *, int,
+	    size_t *);
+void	esp_dma_go(struct ncr53c9x_softc *);
+void	esp_dma_stop(struct ncr53c9x_softc *);
+int	esp_dma_isactive(struct ncr53c9x_softc *);
+void	esp_quick_write_reg(struct ncr53c9x_softc *, int, u_char);
+int	esp_quick_dma_intr(struct ncr53c9x_softc *);
+int	esp_quick_dma_setup(struct ncr53c9x_softc *, caddr_t *, size_t *, int,
+	     size_t *);
+void	esp_quick_dma_go(struct ncr53c9x_softc *);
 
-void	esp_intr __P((void *sc));
-void	esp_dualbus_intr __P((void *sc));
-static struct esp_softc		*esp0 = NULL, *esp1 = NULL;
+void	esp_intr(void *);
+void	esp_dualbus_intr(void *);
+static struct esp_softc		*esp0, *esp1;
 
-static __inline__ int esp_dafb_have_dreq __P((struct esp_softc *esc));
-static __inline__ int esp_iosb_have_dreq __P((struct esp_softc *esc));
-int (*esp_have_dreq) __P((struct esp_softc *esc));
+static __inline__ int esp_dafb_have_dreq(struct esp_softc *);
+static __inline__ int esp_iosb_have_dreq(struct esp_softc *);
+int (*esp_have_dreq)(struct esp_softc *);
 
 struct ncr53c9x_glue esp_glue = {
 	esp_read_reg,

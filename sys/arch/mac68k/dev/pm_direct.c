@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.22 2003/07/15 02:43:18 lukem Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.23 2005/01/15 16:00:59 chs Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -32,7 +32,7 @@
 /* From: pm_direct.c 1.3 03/18/98 Takashi Hamada */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.22 2003/07/15 02:43:18 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.23 2005/01/15 16:00:59 chs Exp $");
 
 #include "opt_adb.h"
 
@@ -166,38 +166,38 @@ char pm_receive_cmd_type[] = {
 
 /* for debugging */
 #ifdef ADB_DEBUG
-void	pm_printerr __P((char *, int, int, char *));
+void	pm_printerr(char *, int, int, char *);
 #endif
 
-int	pm_wait_busy __P((int));
-int	pm_wait_free __P((int));
+int	pm_wait_busy(int);
+int	pm_wait_free(int);
 
 /* these functions are for the PB1XX series */
-int	pm_receive_pm1 __P((u_char *));
-int	pm_send_pm1 __P((u_char,int));
-int	pm_pmgrop_pm1 __P((PMData *));
-void	pm_intr_pm1 __P((void *));
+int	pm_receive_pm1(u_char *);
+int	pm_send_pm1(u_char, int);
+int	pm_pmgrop_pm1(PMData *);
+void	pm_intr_pm1(void *);
 
 /* these functions are for the PB Duo series and the PB 5XX series */
-int	pm_receive_pm2 __P((u_char *));
-int	pm_send_pm2 __P((u_char));
-int	pm_pmgrop_pm2 __P((PMData *));
-void	pm_intr_pm2 __P((void *));
+int	pm_receive_pm2(u_char *);
+int	pm_send_pm2(u_char);
+int	pm_pmgrop_pm2(PMData *);
+void	pm_intr_pm2(void *);
 
 /* this function is MRG-Based (for testing) */
-int	pm_pmgrop_mrg __P((PMData *));
+int	pm_pmgrop_mrg(PMData *);
 
 /* these functions are called from adb_direct.c */
-void	pm_setup_adb __P((void));
-void	pm_check_adb_devices __P((int));
-void	pm_intr __P((void *));
-int	pm_adb_op __P((u_char *, void *, void *, int));
-void	pm_hw_setup __P((void));
+void	pm_setup_adb(void);
+void	pm_check_adb_devices(int);
+void	pm_intr(void *);
+int	pm_adb_op(u_char *, void *, void *, int);
+void	pm_hw_setup(void);
 
 /* these functions also use the variables of adb_direct.c */
-void	pm_adb_get_TALK_result __P((PMData *));
-void	pm_adb_get_ADB_data __P((PMData *));
-void	pm_adb_poll_next_device_pm1 __P((PMData *));
+void	pm_adb_get_TALK_result(PMData *);
+void	pm_adb_get_ADB_data(PMData *);
+void	pm_adb_poll_next_device_pm1(PMData *);
 
 
 /*
@@ -222,18 +222,14 @@ struct adbCommand {
 	u_int	unsol;		/* 1 if packet was unsolicited */
 	u_int	ack_only;	/* 1 for no special processing */
 };
-extern	void	adb_pass_up __P((struct adbCommand *));
+extern	void	adb_pass_up(struct adbCommand *);
 
 #ifdef ADB_DEBUG
 /*
  * This function dumps contents of the PMData
  */
 void
-pm_printerr(ttl, rval, num, data)
-	char *ttl;
-	int rval;
-	int num;
-	char *data;
+pm_printerr(char *ttl, int rval, int num, char *data)
 {
 	int i;
 
@@ -250,7 +246,7 @@ pm_printerr(ttl, rval, num, data)
  * Check the hardware type of the Power Manager
  */
 void
-pm_setup_adb()
+pm_setup_adb(void)
 {
 	switch (mac68k_machine.machineid) {
 		case MACH_MACPB140:
@@ -285,8 +281,7 @@ pm_setup_adb()
  * Check the existent ADB devices
  */
 void
-pm_check_adb_devices(id)
-	int id;
+pm_check_adb_devices(int id)
 {
 	u_short ed = 0x1;
 
@@ -299,8 +294,7 @@ pm_check_adb_devices(id)
  * Wait until PM IC is busy
  */
 int
-pm_wait_busy(delay)
-	int delay;
+pm_wait_busy(int delay)
 {
 	while (PM_IS_ON) {
 #ifdef PM_GRAB_SI
@@ -317,8 +311,7 @@ pm_wait_busy(delay)
  * Wait until PM IC is free
  */
 int
-pm_wait_free(delay)
-	int delay;
+pm_wait_free(int delay)
 {
 	while (PM_IS_OFF) {
 #ifdef PM_GRAB_SI
@@ -340,8 +333,7 @@ pm_wait_free(delay)
  * Receive data from PM for the PB1XX series
  */
 int
-pm_receive_pm1(data)
-	u_char *data;
+pm_receive_pm1(u_char *data)
 {
 	int rval = 0xffffcd34;
 
@@ -375,9 +367,7 @@ pm_receive_pm1(data)
  * Send data to PM for the PB1XX series
  */
 int
-pm_send_pm1(data, timo)
-	u_char data;
-	int timo;
+pm_send_pm1(u_char data, int timo)
 {
 	int rval;
 
@@ -410,8 +400,7 @@ pm_send_pm1(data, timo)
  * My PMgrOp routine for the PB1XX series
  */
 int
-pm_pmgrop_pm1(pmdata)
-	PMData *pmdata;
+pm_pmgrop_pm1(PMData *pmdata)
 {
 	int i;
 	int s = 0x81815963;
@@ -551,8 +540,7 @@ pm_pmgrop_pm1(pmdata)
  * My PM interrupt routine for PB1XX series
  */
 void
-pm_intr_pm1(arg)
-	void *arg;
+pm_intr_pm1(void *arg)
 {
 	int s;
 	int rval;
@@ -609,8 +597,7 @@ pm_intr_pm1(arg)
  * Receive data from PM for the PB Duo series and the PB 5XX series
  */
 int
-pm_receive_pm2(data)
-	u_char *data;
+pm_receive_pm2(u_char *data)
 {
 	int i;
 	int rval;
@@ -651,8 +638,7 @@ pm_receive_pm2(data)
  * Send data to PM for the PB Duo series and the PB 5XX series
  */
 int
-pm_send_pm2(data)
-	u_char data;
+pm_send_pm2(u_char data)
 {
 	int rval;
 
@@ -682,8 +668,7 @@ pm_send_pm2(data)
  * My PMgrOp routine for the PB Duo series and the PB 5XX series
  */
 int
-pm_pmgrop_pm2(pmdata)
-	PMData *pmdata;
+pm_pmgrop_pm2(PMData *pmdata)
 {
 	int i;
 	int s;
@@ -817,8 +802,7 @@ pm_pmgrop_pm2(pmdata)
  * My PM interrupt routine for the PB Duo series and the PB 5XX series
  */
 void
-pm_intr_pm2(arg)
-	void *arg;
+pm_intr_pm2(void *arg)
 {
 	int s;
 	int rval;
@@ -901,8 +885,7 @@ pm_intr_pm2(arg)
  * MRG-based PMgrOp routine
  */
 int
-pm_pmgrop_mrg(pmdata)
-	PMData *pmdata;
+pm_pmgrop_mrg(PMData *pmdata)
 {
 	u_int32_t rval=0;
 
@@ -922,8 +905,7 @@ pm_pmgrop_mrg(pmdata)
  * My PMgrOp routine
  */
 int
-pmgrop(pmdata)
-	PMData *pmdata;
+pmgrop(PMData *pmdata)
 {
 	switch (pmHardware) {
 		case PM_HW_PB1XX:
@@ -943,8 +925,7 @@ pmgrop(pmdata)
  * My PM interrupt routine
  */
 void
-pm_intr(arg)
-	void *arg;
+pm_intr(void *arg)
 {
 	switch (pmHardware) {
 		case PM_HW_PB1XX:
@@ -960,7 +941,7 @@ pm_intr(arg)
 
 
 void
-pm_hw_setup()
+pm_hw_setup(void)
 {
 	switch (pmHardware) {
 		case PM_HW_PB1XX:
@@ -981,11 +962,7 @@ pm_hw_setup()
  * Synchronous ADBOp routine for the Power Manager
  */
 int
-pm_adb_op(buffer, compRout, data, command)
-	u_char *buffer;
-	void *compRout;
-	void *data;
-	int command;
+pm_adb_op(u_char *buffer, void *compRout, void *data, int command)
 {
 	int i;
 	int s;
@@ -1111,8 +1088,7 @@ pm_adb_op(buffer, compRout, data, command)
 
 
 void
-pm_adb_get_TALK_result(pmdata)
-	PMData *pmdata;
+pm_adb_get_TALK_result(PMData *pmdata)
 {
 	int i;
 	struct adbCommand packet;
@@ -1140,8 +1116,7 @@ pm_adb_get_TALK_result(pmdata)
 
 
 void
-pm_adb_get_ADB_data(pmdata)
-	PMData *pmdata;
+pm_adb_get_ADB_data(PMData *pmdata)
 {
 	int i;
 	struct adbCommand packet;
@@ -1158,8 +1133,7 @@ pm_adb_get_ADB_data(pmdata)
 
 
 void
-pm_adb_poll_next_device_pm1(pmdata)
-	PMData *pmdata;
+pm_adb_poll_next_device_pm1(PMData *pmdata)
 {
 	int i;
 	int ndid;

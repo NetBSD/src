@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_nubus.c,v 1.23 2003/07/15 02:43:24 lukem Exp $	*/
+/*	$NetBSD: if_sn_nubus.c,v 1.24 2005/01/15 16:00:59 chs Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn_nubus.c,v 1.23 2003/07/15 02:43:24 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn_nubus.c,v 1.24 2005/01/15 16:00:59 chs Exp $");
 
 #include "opt_inet.h"
 
@@ -60,20 +60,17 @@ __KERNEL_RCSID(0, "$NetBSD: if_sn_nubus.c,v 1.23 2003/07/15 02:43:24 lukem Exp $
 #include <mac68k/dev/if_snreg.h>
 #include <mac68k/dev/if_snvar.h>
 
-static int	sn_nubus_match __P((struct device *, struct cfdata *, void *));
-static void	sn_nubus_attach __P((struct device *, struct device *, void *));
-static int	sn_nb_card_vendor __P((bus_space_tag_t, bus_space_handle_t,
-		    struct nubus_attach_args *));
+static int	sn_nubus_match(struct device *, struct cfdata *, void *);
+static void	sn_nubus_attach(struct device *, struct device *, void *);
+static int	sn_nb_card_vendor(bus_space_tag_t, bus_space_handle_t,
+		    struct nubus_attach_args *);
 
 CFATTACH_DECL(sn_nubus, sizeof(struct sn_softc),
     sn_nubus_match, sn_nubus_attach, NULL, NULL);
 
 
 static int
-sn_nubus_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+sn_nubus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct nubus_attach_args *na = (struct nubus_attach_args *) aux;
 	bus_space_handle_t bsh;
@@ -109,9 +106,7 @@ sn_nubus_match(parent, cf, aux)
  * Install interface into kernel networking data structures
  */
 static void
-sn_nubus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void   *aux;
+sn_nubus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sn_softc *sc = (void *)self;
 	struct nubus_attach_args *na = (struct nubus_attach_args *)aux;
@@ -272,10 +267,8 @@ sn_nubus_attach(parent, self, aux)
 }
 
 static int
-sn_nb_card_vendor(bst, bsh, na)
-	bus_space_tag_t bst;
-	bus_space_handle_t bsh;
-	struct nubus_attach_args *na;
+sn_nb_card_vendor(bus_space_tag_t bst, bus_space_handle_t bsh,
+    struct nubus_attach_args *na)
 {
 	int vendor = SN_VENDOR_UNKNOWN;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380reg.h,v 1.15 2004/12/07 21:12:42 thorpej Exp $	*/
+/*	$NetBSD: ncr5380reg.h,v 1.16 2005/01/15 16:00:59 chs Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -231,30 +231,30 @@ static SC_REQ	*connected = NULL;	/* Command currently connected	*/
 /*
  * Function decls:
  */
-static int  transfer_pio __P((u_char *, u_char *, u_long *, int));
-static int  wait_req_true __P((void));
-static int  wait_req_false __P((void));
-static int  scsi_select __P((SC_REQ *, int));
-static int  handle_message __P((SC_REQ *, u_int));
-static void ack_message __P((void));
-static void nack_message __P((SC_REQ *, u_char));
-static void finish_req __P((SC_REQ *reqp));
-static int  information_transfer __P((struct ncr_softc *));
-static void reselect __P((struct ncr_softc *));
-static int  check_autosense __P((SC_REQ *, int));
-static int  reach_msg_out __P((struct ncr_softc *, u_long));
-static int  check_intr __P((struct ncr_softc *));
-static void scsi_reset __P((void));
-static void scsi_reset_verbose __P((struct ncr_softc *, const char *));
-static void run_main __P((struct ncr_softc *));
-static void scsi_main __P((struct ncr_softc *));
-static void ncr_ctrl_intr __P((struct ncr_softc *));
-static void ncr_tprint __P((SC_REQ *, char *, ...));
-static void ncr_aprint __P((struct ncr_softc *, char *, ...));
+static int  transfer_pio(u_char *, u_char *, u_long *, int);
+static int  wait_req_true(void);
+static int  wait_req_false(void);
+static int  scsi_select(SC_REQ *, int);
+static int  handle_message(SC_REQ *, u_int);
+static void ack_message(void);
+static void nack_message(SC_REQ *, u_char);
+static void finish_req(SC_REQ *);
+static int  information_transfer(struct ncr_softc *);
+static void reselect(struct ncr_softc *);
+static int  check_autosense(SC_REQ *, int);
+static int  reach_msg_out(struct ncr_softc *, u_long);
+static int  check_intr(struct ncr_softc *);
+static void scsi_reset(void);
+static void scsi_reset_verbose(struct ncr_softc *, const char *);
+static void run_main(struct ncr_softc *);
+static void scsi_main(struct ncr_softc *);
+static void ncr_ctrl_intr(struct ncr_softc *);
+static void ncr_tprint(SC_REQ *, char *, ...);
+static void ncr_aprint(struct ncr_softc *, char *, ...);
 
-static void show_data_sense __P((struct scsipi_xfer *xs));
-static void show_request __P((SC_REQ *, char *));
-/* static void show_phase __P((SC_REQ *, int)); */
-static void show_signals __P((u_char, u_char));
+static void show_data_sense(struct scsipi_xfer *);
+static void show_request(SC_REQ *, char *);
+/* static void show_phase(SC_REQ *, int); */
+static void show_signals(u_char, u_char);
 
 #endif /* _NCR5380REG_H */

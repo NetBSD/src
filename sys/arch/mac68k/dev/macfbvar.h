@@ -1,4 +1,4 @@
-/* $NetBSD: macfbvar.h,v 1.2 2000/02/14 07:01:47 scottr Exp $ */
+/* $NetBSD: macfbvar.h,v 1.3 2005/01/15 16:00:59 chs Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -66,5 +66,5 @@ struct macfb_softc {
 	struct macfb_devconfig *sc_dc;
 };
 
-int	macfb_cnattach __P((paddr_t));
-void	macfb_clear __P((struct macfb_devconfig *));
+int	macfb_cnattach(paddr_t);
+void	macfb_clear(struct macfb_devconfig *);

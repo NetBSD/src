@@ -1,4 +1,4 @@
-/*	$NetBSD: iopreg.h,v 1.4 2000/07/30 21:48:54 briggs Exp $	*/
+/*	$NetBSD: iopreg.h,v 1.5 2005/01/15 16:00:59 chs Exp $	*/
 
 /*
  * Copyright (c) 2000 Allen Briggs.
@@ -146,15 +146,12 @@ typedef struct _s_IOP {
 #define	IOP_LOADADDR(ioph,addr)	(ioph->ram_lo = addr & 0xff, \
 				 ioph->ram_hi = (addr >> 8) & 0xff)
 
-void	iop_init __P((int fullinit));
-void	iop_upload __P((int iop, u_char *mem, u_long nb, u_long iopbase));
-void	iop_download __P((int iop, u_char *mem, u_long nb, u_long iopbase));
-int	iop_send_msg __P((int iopn, int chan, u_char *msg, int msglen,
-			 iop_msg_handler handler, void *udata));
-int	iop_queue_receipt __P((int iopn, int chan, iop_msg_handler handler,
-				void *user_data));
-int	iop_register_listener __P((int iopn, int chan, iop_msg_handler handler,
-				void *user_data));
+void	iop_init(int);
+void	iop_upload(int, u_char *, u_long, u_long);
+void	iop_download(int, u_char *, u_long, u_long);
+int	iop_send_msg(int, int, u_char *, int, iop_msg_handler, void *);
+int	iop_queue_receipt(int, int, iop_msg_handler, void *);
+int	iop_register_listener(int, int, iop_msg_handler, void *);
 
 /* ADB support */
 #define IOP_CHAN_ADB	2

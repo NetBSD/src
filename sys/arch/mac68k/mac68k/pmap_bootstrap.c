@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.60 2003/08/07 16:28:22 agc Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.61 2005/01/15 16:00:59 chs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.60 2003/08/07 16:28:22 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.61 2005/01/15 16:00:59 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -106,8 +106,8 @@ extern caddr_t	ROMBase;
 caddr_t		CADDR1, CADDR2, vmmap;
 extern caddr_t	msgbufaddr;
 
-void	pmap_bootstrap __P((paddr_t, paddr_t));
-void	bootstrap_mac68k __P((int));
+void	pmap_bootstrap(paddr_t, paddr_t);
+void	bootstrap_mac68k(int);
 
 /*
  * Bootstrap the VM system.
@@ -120,9 +120,7 @@ void	bootstrap_mac68k __P((int));
  * on 12 May 1996, that was 0xf9000 beyond firstpa.
  */
 void
-pmap_bootstrap(nextpa, firstpa)
-	paddr_t nextpa;
-	paddr_t firstpa;
+pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 {
 	paddr_t kstpa, kptpa, vidpa, iiopa, rompa, kptmpa, lkptpa, p0upa;
 	u_int nptpages, kstsize;
@@ -567,11 +565,10 @@ pmap_bootstrap(nextpa, firstpa)
 }
 
 void
-bootstrap_mac68k(tc)
-	int	tc;
+bootstrap_mac68k(int tc)
 {
 #if NZSC > 0
-	extern void zs_init __P((void));
+	extern void zs_init(void);
 #endif
 	extern int *esym;
 	paddr_t nextpa;

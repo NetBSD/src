@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.54 2003/10/28 04:56:23 fredb Exp $	*/
+/*	$NetBSD: macrom.c,v 1.55 2005/01/15 16:00:59 chs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: macrom.c,v 1.54 2003/10/28 04:56:23 fredb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: macrom.c,v 1.55 2005/01/15 16:00:59 chs Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -140,7 +140,7 @@ caddr_t	ResHndls[] = {
  */
 
 int
-mrg_Delay()
+mrg_Delay(void)
 {
 #define TICK_DURATION 16625
 	u_int32_t ticks;
@@ -171,7 +171,7 @@ mrg_Delay()
 static caddr_t	mrg_DTList = NULL;
 
 void
-mrg_DTInstall()
+mrg_DTInstall(void)
 {
 	caddr_t	ptr, prev;
 
@@ -188,7 +188,7 @@ mrg_DTInstall()
 }
 
 void
-mrg_execute_deferred()
+mrg_execute_deferred(void)
 {
 	caddr_t ptr;
 	int s;
@@ -210,7 +210,7 @@ mrg_execute_deferred()
 }
 
 void
-mrg_VBLQueue()
+mrg_VBLQueue(void)
 {
 #define qLink 0
 #define qType 4
@@ -265,7 +265,7 @@ mrg_VBLQueue()
 }
 
 void
-mrg_init_stub_1()
+mrg_init_stub_1(void)
 {
 	__asm __volatile ("movml #0xffff,%sp@-");
 	printf("mrg: hit mrg_init_stub_1\n");
@@ -273,7 +273,7 @@ mrg_init_stub_1()
 }
 
 void
-mrg_init_stub_2()
+mrg_init_stub_2(void)
 {
 	panic("mrg: hit mrg_init_stub_2");
 }
@@ -349,19 +349,19 @@ Get_Ind_Resource(u_int32_t rsrc_type, u_int16_t rsrc_ind)
 }
 
 void
-mrg_FixDiv()
+mrg_FixDiv(void)
 {
 	panic("Oops! Need ROM address of _FixDiv for this system!");
 }
 
 void
-mrg_FixMul()
+mrg_FixMul(void)
 {
 	panic("Oops! Need ROM address of _FixMul for this system!");
 }
 
 void
-mrg_1sec_timer_tick()
+mrg_1sec_timer_tick(void)
 {	
 	/* The timer tick from the Egret chip triggers this routine via
 	 * Lvl1DT[0] (addr 0x192) once every second.
@@ -369,7 +369,7 @@ mrg_1sec_timer_tick()
 }
   
 void
-mrg_lvl1dtpanic()		/* Lvl1DT stopper */
+mrg_lvl1dtpanic(void)		/* Lvl1DT stopper */
 {
 	printf("Agh!  I was called from Lvl1DT!!!\n");
 #ifdef DDB
@@ -378,7 +378,7 @@ mrg_lvl1dtpanic()		/* Lvl1DT stopper */
 }
 
 void
-mrg_lvl2dtpanic()		/* Lvl2DT stopper */
+mrg_lvl2dtpanic(void)		/* Lvl2DT stopper */
 {
 	panic("Agh!  I was called from Lvl2DT!!!");
 }
@@ -390,13 +390,13 @@ mrg_jadbprocpanic()	/* JADBProc stopper */
 }
 
 void
-mrg_jswapmmupanic()	/* jSwapMMU stopper */
+mrg_jswapmmupanic(void)	/* jSwapMMU stopper */
 {
 	panic("Agh!  Called jSwapMMU!");
 }
 
 void
-mrg_jkybdtaskpanic()	/* JKybdTask stopper */
+mrg_jkybdtaskpanic(void)	/* JKybdTask stopper */
 {
 	panic("Agh!  Called JKybdTask!");
 }
@@ -408,7 +408,7 @@ mrg_jkybdtaskpanic()	/* JKybdTask stopper */
  */
 
 long
-mrg_adbintr()	/* Call ROM ADB Interrupt */
+mrg_adbintr(void)	/* Call ROM ADB Interrupt */
 {
 	if (mrg_romadbintr != NULL) {
 #if defined(MRG_TRACE)
@@ -436,7 +436,7 @@ mrg_adbintr()	/* Call ROM ADB Interrupt */
 }
 
 long
-mrg_pmintr()	/* Call ROM PM Interrupt */
+mrg_pmintr(void)	/* Call ROM PM Interrupt */
 {
 	if (mrg_rompmintr != NULL) {
 #if defined(MRG_TRACE)
@@ -465,21 +465,21 @@ mrg_pmintr()	/* Call ROM PM Interrupt */
 
 
 void
-mrg_notrap()
+mrg_notrap(void)
 {
 	printf("Aigh!\n");
 	panic("mrg_notrap: We're doomed!");
 }
 
 int
-myowntrap()
+myowntrap(void)
 {
 	printf("Oooo!  My Own Trap Routine!\n");
 	return (50);
 }
 
 int
-mrg_NewPtr()
+mrg_NewPtr(void)
 {
 	int result = noErr;
 	u_int numbytes;
@@ -516,7 +516,7 @@ mrg_NewPtr()
 }
 
 int
-mrg_DisposPtr()
+mrg_DisposPtr(void)
 {
 	int result = noErr;
 	caddr_t ptr;
@@ -536,7 +536,7 @@ mrg_DisposPtr()
 }
 
 int
-mrg_GetPtrSize()
+mrg_GetPtrSize(void)
 {
 	caddr_t ptr;
 
@@ -553,7 +553,7 @@ mrg_GetPtrSize()
 }
 
 int
-mrg_SetPtrSize()
+mrg_SetPtrSize(void)
 {
 	caddr_t ptr;
 	int newbytes;
@@ -571,18 +571,18 @@ mrg_SetPtrSize()
 }
 
 int
-mrg_PostEvent()
+mrg_PostEvent(void)
 {
 	return 0;
 }
 
 void
-mrg_StripAddress()
+mrg_StripAddress(void)
 {
 }
 
 int
-mrg_SetTrapAddress()
+mrg_SetTrapAddress(void)
 {
 	extern caddr_t mrg_OStraps[];
 	caddr_t ptr;
@@ -772,7 +772,7 @@ extern u_int32_t traceloopend;
 extern u_int32_t *traceloopptr;
 
 void
-dumptrace()
+dumptrace(void)
 {
 #if defined(MRG_TRACE)
 	u_int32_t *traceindex;
@@ -791,7 +791,7 @@ dumptrace()
 
 	/* To find out if we're okay calling ROM vectors */
 int
-mrg_romready()
+mrg_romready(void)
 {
 	return (mrg_romident != NULL);
 }
@@ -801,7 +801,7 @@ extern volatile u_char	*sccA;
 
 	/* initialize Mac ROM Glue */
 void
-mrg_init()
+mrg_init(void)
 {
 	char *findername = "MacBSD FakeFinder";
 	int i;
@@ -1037,7 +1037,7 @@ mrg_init()
 }
 
 #ifdef MRG_ADB
-static void	setup_egret __P((void));
+static void	setup_egret(void);
 
 static void
 setup_egret(void)
@@ -1070,7 +1070,7 @@ setup_egret(void)
 #endif
 
 void
-mrg_initadbintr()
+mrg_initadbintr(void)
 {
 	if (mac68k_machine.do_graybars)
 		printf("Got following HwCfgFlags: 0x%4x, 0x%8x, 0x%8x, 0x%8x\n",
@@ -1132,9 +1132,7 @@ mrg_initadbintr()
  *        once and all in one place.
  */
 void
-mrg_fixupROMBase(obase, nbase)
-	caddr_t obase;
-	caddr_t nbase;
+mrg_fixupROMBase(caddr_t obase, caddr_t nbase)
 {
 	u_int32_t oldbase, newbase;
 	romvec_t *rom;

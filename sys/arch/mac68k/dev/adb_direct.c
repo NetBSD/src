@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.49 2003/07/15 02:43:15 lukem Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.50 2005/01/15 16:00:59 chs Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -62,7 +62,7 @@
 #ifdef __NetBSD__
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.49 2003/07/15 02:43:15 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.50 2005/01/15 16:00:59 chs Exp $");
 
 #include "opt_adb.h"
 
@@ -177,7 +177,7 @@ __KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.49 2003/07/15 02:43:15 lukem Exp $"
  * A structure for storing information about each ADB device.
  */
 struct ADBDevEntry {
-	void	(*ServiceRtPtr) __P((void));
+	void	(*ServiceRtPtr)(void);
 	void	*DataAreaAddr;
 	int	devType;
 	int	origAddr;
@@ -275,51 +275,51 @@ struct callout adb_cuda_tickle_ch = CALLOUT_INITIALIZER;
 
 extern struct mac68k_machine_S mac68k_machine;
 
-void	pm_setup_adb __P((void));
-void	pm_hw_setup __P((void));
-void	pm_check_adb_devices __P((int));
-void	pm_intr __P((void *));
-int	pm_adb_op __P((u_char *, void *, void *, int));
-void	pm_init_adb_device __P((void));
+void	pm_setup_adb(void);
+void	pm_hw_setup(void);
+void	pm_check_adb_devices(int);
+void	pm_intr(void *);
+int	pm_adb_op(u_char *, void *, void *, int);
+void	pm_init_adb_device(void);
 
 /*
  * The following are private routines.
  */
 #ifdef ADB_DEBUG
-void	print_single __P((u_char *));
+void	print_single(u_char *);
 #endif
-void	adb_intr __P((void *));
-void	adb_intr_II __P((void *));
-void	adb_intr_IIsi __P((void *));
-void	adb_intr_cuda __P((void *));
-void	adb_soft_intr __P((void));
-int	send_adb_II __P((u_char *, u_char *, void *, void *, int));
-int	send_adb_IIsi __P((u_char *, u_char *, void *, void *, int));
-int	send_adb_cuda __P((u_char *, u_char *, void *, void *, int));
-void	adb_intr_cuda_test __P((void));
-void	adb_cuda_tickle __P((void));
-void	adb_pass_up __P((struct adbCommand *));
-void	adb_op_comprout __P((void));
-void	adb_reinit __P((void));
-int	count_adbs __P((void));
-int	get_ind_adb_info __P((ADBDataBlock *, int));
-int	get_adb_info __P((ADBDataBlock *, int));
-int	set_adb_info __P((ADBSetInfoBlock *, int));
-void	adb_setup_hw_type __P((void));
-int	adb_op __P((Ptr, Ptr, Ptr, short));
-void	adb_read_II __P((u_char *));
-void	adb_hw_setup __P((void));
-void	adb_hw_setup_IIsi __P((u_char *));
-void	adb_comp_exec __P((void));
-int	adb_cmd_result __P((u_char *));
-int	adb_cmd_extra __P((u_char *));
-int	adb_guess_next_device __P((void));
-int	adb_prog_switch_enable __P((void));
-int	adb_prog_switch_disable __P((void));
+void	adb_intr(void *);
+void	adb_intr_II(void *);
+void	adb_intr_IIsi(void *);
+void	adb_intr_cuda(void *);
+void	adb_soft_intr(void);
+int	send_adb_II(u_char *, u_char *, void *, void *, int);
+int	send_adb_IIsi(u_char *, u_char *, void *, void *, int);
+int	send_adb_cuda(u_char *, u_char *, void *, void *, int);
+void	adb_intr_cuda_test(void);
+void	adb_cuda_tickle(void);
+void	adb_pass_up(struct adbCommand *);
+void	adb_op_comprout(void);
+void	adb_reinit(void);
+int	count_adbs(void);
+int	get_ind_adb_info(ADBDataBlock *, int);
+int	get_adb_info(ADBDataBlock *, int);
+int	set_adb_info(ADBSetInfoBlock *, int);
+void	adb_setup_hw_type(void);
+int	adb_op(Ptr, Ptr, Ptr, short);
+void	adb_read_II(u_char *);
+void	adb_hw_setup(void);
+void	adb_hw_setup_IIsi(u_char *);
+void	adb_comp_exec(void);
+int	adb_cmd_result(u_char *);
+int	adb_cmd_extra(u_char *);
+int	adb_guess_next_device(void);
+int	adb_prog_switch_enable(void);
+int	adb_prog_switch_disable(void);
 /* we should create this and it will be the public version */
-int	send_adb __P((u_char *, void *, void *));
-void	adb_iop_recv __P((IOP *, struct iop_msg *));
-int	send_adb_iop __P((int, u_char *, void *, void *));
+int	send_adb(u_char *, void *, void *);
+void	adb_iop_recv(IOP *, struct iop_msg *);
+int	send_adb_iop(int, u_char *, void *, void *);
 
 #ifdef ADB_DEBUG
 /*
@@ -329,8 +329,7 @@ int	send_adb_iop __P((int, u_char *, void *, void *));
  * is in [0].
  */
 void
-print_single(str)
-	u_char *str;
+print_single(u_char *str)
 {
 	int x;
 
@@ -613,7 +612,7 @@ switch_start:
 
 
 int
-send_adb_cuda(u_char * in, u_char * buffer, void *compRout, void *data, int
+send_adb_cuda(u_char *in, u_char *buffer, void *compRout, void *data, int
 	command)
 {
 	int s, len;
@@ -1061,7 +1060,7 @@ switch_start:
  * send_adb version for II series machines
  */
 int
-send_adb_II(u_char * in, u_char * buffer, void *compRout, void *data, int command)
+send_adb_II(u_char *in, u_char *buffer, void *compRout, void *data, int command)
 {
 	int s, len;
 
@@ -1444,7 +1443,7 @@ switch_start:
  *
  */
 int
-send_adb_IIsi(u_char * in, u_char * buffer, void *compRout, void *data, int
+send_adb_IIsi(u_char *in, u_char *buffer, void *compRout, void *data, int
 	command)
 {
 	int s, len;
@@ -2035,7 +2034,7 @@ adb_hw_setup(void)
  *
  */
 void
-adb_hw_setup_IIsi(u_char * buffer)
+adb_hw_setup_IIsi(u_char *buffer)
 {
 	int i;
 	int dummy;
@@ -2628,7 +2627,7 @@ count_adbs(void)
 }
 
 int 
-get_ind_adb_info(ADBDataBlock * info, int index)
+get_ind_adb_info(ADBDataBlock *info, int index)
 {
 	if ((index < 1) || (index > 15))	/* check range 1-15 */
 		return (-1);
@@ -2650,7 +2649,7 @@ get_ind_adb_info(ADBDataBlock * info, int index)
 }
 
 int 
-get_adb_info(ADBDataBlock * info, int adbAddr)
+get_adb_info(ADBDataBlock *info, int adbAddr)
 {
 	int i;
 
@@ -2670,7 +2669,7 @@ get_adb_info(ADBDataBlock * info, int adbAddr)
 }
 
 int 
-set_adb_info(ADBSetInfoBlock * info, int adbAddr)
+set_adb_info(ADBSetInfoBlock *info, int adbAddr)
 {
 	int i;
 
@@ -2953,19 +2952,19 @@ ADBReInit(void)
 }
 
 int 
-GetIndADB(ADBDataBlock * info, int index)
+GetIndADB(ADBDataBlock *info, int index)
 {
 	return (get_ind_adb_info(info, index));
 }
 
 int 
-GetADBInfo(ADBDataBlock * info, int adbAddr)
+GetADBInfo(ADBDataBlock *info, int adbAddr)
 {
 	return (get_adb_info(info, adbAddr));
 }
 
 int 
-SetADBInfo(ADBSetInfoBlock * info, int adbAddr)
+SetADBInfo(ADBSetInfoBlock *info, int adbAddr)
 {
 	return (set_adb_info(info, adbAddr));
 }

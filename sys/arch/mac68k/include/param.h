@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.39 2003/08/07 16:28:20 agc Exp $	*/
+/*	$NetBSD: param.h,v 1.40 2005/01/15 16:00:59 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -150,7 +150,7 @@
 #include <machine/psl.h>
 
 #if defined(_KERNEL) && !defined(_LOCORE)
-void	delay		__P((unsigned));
+void	delay(unsigned);
 #define DELAY(ms)	delay(ms)
 #endif	/* _KERNEL && !_LOCORE */
 

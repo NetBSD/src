@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.16 2003/07/15 02:43:16 lukem Exp $	*/
+/*	$NetBSD: akbd.c,v 1.17 2005/01/15 16:00:59 chs Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.16 2003/07/15 02:43:16 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.17 2005/01/15 16:00:59 chs Exp $");
 
 #include "opt_adb.h"
 
@@ -69,14 +69,14 @@ __KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.16 2003/07/15 02:43:16 lukem Exp $");
 /*
  * Function declarations.
  */
-static int	akbdmatch __P((struct device *, struct cfdata *, void *));
-static void	akbdattach __P((struct device *, struct device *, void *));
-void		kbd_adbcomplete __P((caddr_t buffer, caddr_t data_area, int adb_command));
-static void	kbd_processevent __P((adb_event_t *event, struct akbd_softc *));
+static int	akbdmatch(struct device *, struct cfdata *, void *);
+static void	akbdattach(struct device *, struct device *, void *);
+void		kbd_adbcomplete(caddr_t, caddr_t, int);
+static void	kbd_processevent(adb_event_t *, struct akbd_softc *);
 #ifdef notyet
-static u_char	getleds __P((int));
-static int	setleds __P((struct akbd_softc *, u_char));
-static void	blinkleds __P((struct akbd_softc *));
+static u_char	getleds(int);
+static int	setleds(struct akbd_softc *, u_char);
+static void	blinkleds(struct akbd_softc *);
 #endif
 
 /*
@@ -89,10 +89,10 @@ CFATTACH_DECL(akbd, sizeof(struct akbd_softc),
 
 extern struct cfdriver akbd_cd;
 
-int kbd_intr __P((adb_event_t *event, struct akbd_softc *));
-int akbd_enable __P((void *, int));
-void akbd_set_leds __P((void *, int));
-int akbd_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
+int kbd_intr(adb_event_t *, struct akbd_softc *);
+int akbd_enable(void *, int);
+void akbd_set_leds(void *, int);
+int akbd_ioctl(void *, u_long, caddr_t, int, struct proc *);
 
 struct wskbd_accessops akbd_accessops = {
 	akbd_enable,
@@ -100,9 +100,9 @@ struct wskbd_accessops akbd_accessops = {
 	akbd_ioctl,
 };
 
-void akbd_cngetc __P((void *, u_int *, int *));
-void akbd_cnpollc __P((void *, int));
-int akbd_cnattach __P((void));
+void akbd_cngetc(void *, u_int *, int *);
+void akbd_cnpollc(void *, int);
+int akbd_cnattach(void);
 
 struct wskbd_consops akbd_consops = {
 	akbd_cngetc,
@@ -114,13 +114,10 @@ struct wskbd_mapdata akbd_keymapdata = {
 	KB_US,
 };
 
-static int akbd_is_console __P((void));
+static int akbd_is_console(void);
 
 static int
-akbdmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void   *aux;
+akbdmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct adb_attach_args *aa_args = (struct adb_attach_args *)aux;
 
@@ -131,9 +128,7 @@ akbdmatch(parent, cf, aux)
 }
 
 static void
-akbdattach(parent, self, aux)
-	struct device *parent, *self;
-	void   *aux;
+akbdattach(struct device *parent, struct device *self, void *aux)
 {
 	ADBSetInfoBlock adbinfo;
 	struct akbd_softc *sc = (struct akbd_softc *)self;
@@ -143,7 +138,7 @@ akbdattach(parent, self, aux)
 	u_char buffer[9];
 #if NWSKBD > 0
 	struct wskbddev_attach_args a;
-	static int akbd_console_initted = 0;
+	static int akbd_console_initted;
 	int wskbd_eligible;
 
 	wskbd_eligible = 1;
@@ -278,10 +273,7 @@ akbdattach(parent, self, aux)
  * an ADB event record.
  */
 void 
-kbd_adbcomplete(buffer, data_area, adb_command)
-	caddr_t buffer;
-	caddr_t data_area;
-	int adb_command;
+kbd_adbcomplete(caddr_t buffer, caddr_t data_area, int adb_command)
 {
 	adb_event_t event;
 	struct akbd_softc *ksc;
@@ -323,9 +315,7 @@ kbd_adbcomplete(buffer, data_area, adb_command)
  * button emulation handler first.
  */
 static void
-kbd_processevent(event, ksc)
-        adb_event_t *event;
-        struct akbd_softc *ksc;
+kbd_processevent(adb_event_t *event, struct akbd_softc *ksc)
 {
         adb_event_t new_event;
 
@@ -363,8 +353,7 @@ kbd_processevent(event, ksc)
  * Get the actual hardware LED state and convert it to softc format.
  */
 static u_char
-getleds(addr)
-	int	addr;
+getleds(int addr)
 {
 	short cmd;
 	u_char buffer[9], leds;
@@ -387,9 +376,7 @@ getleds(addr)
  * actual keyboard register format
  */
 static int 
-setleds(ksc, leds)
-	struct akbd_softc *ksc;
-	u_char	leds;
+setleds(struct akbd_softc *ksc, u_char leds)
 {
 	int addr;
 	short cmd;
@@ -429,8 +416,7 @@ setleds(ksc, leds)
  * Toggle all of the LED's on and off, just for show.
  */
 static void 
-blinkleds(ksc)
-	struct akbd_softc *ksc;
+blinkleds(struct akbd_softc *ksc)
 {
 	int addr, i;
 	u_char blinkleds, origleds;
@@ -455,7 +441,7 @@ blinkleds(ksc)
 #endif
 
 int
-akbd_is_console()
+akbd_is_console(void)
 {
 	extern struct mac68k_machine_S mac68k_machine;
 
@@ -463,27 +449,18 @@ akbd_is_console()
 }
 
 int
-akbd_enable(v, on)
-	void *v;
-	int on;
+akbd_enable(void *v, int on)
 {
 	return 0;
 }
 
 void
-akbd_set_leds(v, on)
-	void *v;
-	int on;
+akbd_set_leds(void *v, int on)
 {
 }
 
 int
-akbd_ioctl(v, cmd, data, flag, p)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+akbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	switch (cmd) {
 
@@ -512,9 +489,7 @@ static int polledkey;
 extern int adb_polling;
 
 int
-kbd_intr(event, sc)
-	adb_event_t *event;
-	struct akbd_softc *sc;
+kbd_intr(adb_event_t *event, struct akbd_softc *sc)
 {
 	int key, press, val;
 	int type;
@@ -540,7 +515,7 @@ kbd_intr(event, sc)
 }
 
 int
-akbd_cnattach()
+akbd_cnattach(void)
 {
 	wskbd_cnattach(&akbd_consops, NULL, &akbd_keymapdata);
 
@@ -548,10 +523,7 @@ akbd_cnattach()
 }
 
 void
-akbd_cngetc(v, type, data)
-	void *v;
-	u_int *type;
-	int *data;
+akbd_cngetc(void *v, u_int *type, int *data)
 {
 	int intbits, key, press, val;
 	int s;
@@ -586,8 +558,6 @@ akbd_cngetc(v, type, data)
 }
 
 void
-akbd_cnpollc(v, on)
-	void *v;
-	int on;
+akbd_cnpollc(void *v, int on)
 {
 }
