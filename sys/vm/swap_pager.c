@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: swap_pager.c 1.4 91/04/30
  *	from: @(#)swap_pager.c	7.4 (Berkeley) 5/7/91
- *	$Id: swap_pager.c,v 1.10 1993/11/12 05:57:31 cgd Exp $
+ *	$Id: swap_pager.c,v 1.11 1993/11/29 16:05:20 pk Exp $
  */
 
 /*
@@ -575,6 +575,8 @@ swap_pager_io(swp, m, flags)
 	splx(s);
 	bp->b_flags = B_BUSY | (flags & B_READ);
 	bp->b_proc = &proc0;	/* XXX (but without B_PHYS set this is ok) */
+	/* No need for crhold(), as we hope that proc0 won't go away soon */
+	bp->b_rcred = bp->b_wcred = proc0.p_ucred;
 	bp->b_un.b_addr = (caddr_t)kva;
 	if (!swb->swb_block)
 		panic("swap_pager_io: page to first block\n");
