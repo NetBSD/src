@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.23 1999/02/02 18:37:22 ragge Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.24 1999/03/06 11:11:11 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -129,8 +129,6 @@
 
 #define SAFERSS		8		/* nominal ``small'' resident set size
 					   protected against replacement */
-#if defined(UVM)
-
 #define VM_PHYSSEG_MAX		1
 #define VM_PHYSSEG_NOADD
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH /* XXX */
@@ -141,7 +139,6 @@
 struct pmap_physseg {
 	int	dummy;
 };
-#endif
 
 /*
  * Mach derived constants
