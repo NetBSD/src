@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.750 2005/01/02 16:43:26 thorpej Exp $
+#	$NetBSD: mi,v 1.751 2005/01/02 17:34:43 thorpej Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -4771,12 +4771,14 @@
 ./usr/share/man/cat9/VOP_FCNTL.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_FSYNC.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_GETATTR.0		comp-sys-catman		.cat
+./usr/share/man/cat9/VOP_GETEXTATTR.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_GETPAGES.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_INACTIVE.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_IOCTL.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_ISLOCKED.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_LEASE.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_LINK.0			comp-sys-catman		.cat
+./usr/share/man/cat9/VOP_LISTEXTATTR.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_LOCK.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_LOOKUP.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_MKDIR.0		comp-sys-catman		.cat
@@ -4798,6 +4800,7 @@
 ./usr/share/man/cat9/VOP_RMDIR.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_SEEK.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_SETATTR.0		comp-sys-catman		.cat
+./usr/share/man/cat9/VOP_SETEXTATTR.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_STRATEGY.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_SYMLINK.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VOP_TRUNCATE.0		comp-sys-catman		.cat
@@ -5042,6 +5045,7 @@
 ./usr/share/man/cat9/evcnt_attach_static.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/evcnt_detach.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/execsigs.0			comp-sys-catman		.cat
+./usr/share/man/cat9/extattr.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/extent.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/extent_alloc.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/extent_alloc_region.0	comp-sys-catman		.cat
@@ -8597,12 +8601,14 @@
 ./usr/share/man/man9/VOP_FCNTL.9		comp-sys-man		.man
 ./usr/share/man/man9/VOP_FSYNC.9		comp-sys-man		.man
 ./usr/share/man/man9/VOP_GETATTR.9		comp-sys-man		.man
+./usr/share/man/man9/VOP_GETEXTATTR.9		comp-sys-man		.man
 ./usr/share/man/man9/VOP_GETPAGES.9		comp-sys-man		.man
 ./usr/share/man/man9/VOP_INACTIVE.9		comp-sys-man		.man
 ./usr/share/man/man9/VOP_IOCTL.9		comp-sys-man		.man
 ./usr/share/man/man9/VOP_ISLOCKED.9		comp-sys-man		.man
 ./usr/share/man/man9/VOP_LEASE.9		comp-sys-man		.man
 ./usr/share/man/man9/VOP_LINK.9			comp-sys-man		.man
+./usr/share/man/man9/VOP_LISTEXTATTR.9		comp-sys-man		.man
 ./usr/share/man/man9/VOP_LOCK.9			comp-sys-man		.man
 ./usr/share/man/man9/VOP_LOOKUP.9		comp-sys-man		.man
 ./usr/share/man/man9/VOP_MKDIR.9		comp-sys-man		.man
@@ -8624,6 +8630,7 @@
 ./usr/share/man/man9/VOP_RMDIR.9		comp-sys-man		.man
 ./usr/share/man/man9/VOP_SEEK.9			comp-sys-man		.man
 ./usr/share/man/man9/VOP_SETATTR.9		comp-sys-man		.man
+./usr/share/man/man9/VOP_SETEXTATTR.9		comp-sys-man		.man
 ./usr/share/man/man9/VOP_STRATEGY.9		comp-sys-man		.man
 ./usr/share/man/man9/VOP_SYMLINK.9		comp-sys-man		.man
 ./usr/share/man/man9/VOP_TRUNCATE.9		comp-sys-man		.man
@@ -8868,6 +8875,7 @@
 ./usr/share/man/man9/evcnt_attach_static.9	comp-sys-man		.man
 ./usr/share/man/man9/evcnt_detach.9		comp-sys-man		.man
 ./usr/share/man/man9/execsigs.9			comp-sys-man		.man
+./usr/share/man/man9/extattr.9			comp-sys-man		.man
 ./usr/share/man/man9/extent.9			comp-sys-man		.man
 ./usr/share/man/man9/extent_alloc.9		comp-sys-man		.man
 ./usr/share/man/man9/extent_alloc_region.9	comp-sys-man		.man
