@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.122 2003/02/02 01:50:04 erh Exp $	   */
+/*	$NetBSD: pmap.c,v 1.123 2003/02/26 21:54:35 ragge Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -235,7 +235,11 @@ pmap_bootstrap()
 
 	physmem = btoc(avail_end);
 
+#if USE_TOPDOWN_VM==1
+	usrptsize = (1024*1024*1024)/VAX_NBPG;	/* 1GB total VM */
+#else
 	usrptsize = PROCPTSIZE * maxproc;
+#endif
 	if (vax_btop(usrptsize)* PPTESZ > avail_end/20)
 		usrptsize = (avail_end/(20 * PPTESZ)) * VAX_NBPG;
 		
@@ -1610,7 +1614,7 @@ pmap_activate(struct lwp *l)
 	pmap_t pmap;
 	struct pcb *pcb;
 
-	PMDEBUG(("pmap_activate: p %p\n", p));
+	PMDEBUG(("pmap_activate: l %p\n", l));
 
 	pmap = l->l_proc->p_vmspace->vm_map.pmap;
 	pcb = &l->l_addr->u_pcb;
@@ -1642,7 +1646,7 @@ pmap_deactivate(struct lwp *l)
 	pmap_t pmap;
 	struct pcb *pcb;
 
-	PMDEBUG(("pmap_deactivate: p %p\n", p));
+	PMDEBUG(("pmap_deactivate: l %p\n", l));
 
 	pmap = p->p_vmspace->vm_map.pmap;
 	pcb = &l->l_addr->u_pcb;

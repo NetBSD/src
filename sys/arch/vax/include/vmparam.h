@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.39 2002/12/10 05:14:36 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.40 2003/02/26 21:54:37 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -68,11 +68,20 @@
 #ifndef MAXTSIZ
 #define MAXTSIZ		(8*1024*1024)		/* max text size */
 #endif
+#if USE_TOPDOWN_VM==1
+#ifndef DFLDSIZ
+#define DFLDSIZ		(128*1024*1024)		/* initial data size limit */
+#endif
+#ifndef MAXDSIZ
+#define MAXDSIZ		(1024*1024*1024)	/* max data size */
+#endif
+#else
 #ifndef DFLDSIZ
 #define DFLDSIZ		(32*1024*1024)		/* initial data size limit */
 #endif
 #ifndef MAXDSIZ
 #define MAXDSIZ		(64*1024*1024)		/* max data size */
+#endif
 #endif
 #ifndef DFLSSIZ
 #define DFLSSIZ		(512*1024)		/* initial stack size limit */
@@ -81,6 +90,7 @@
 #define MAXSSIZ		(8*1024*1024)		/* max stack size */
 #endif
 
+#ifndef USE_TOPDOWN_VM
 /*
  * All mmap()'ed data will be mapped above MAXDSIZ. This means that
  * pte space must be allocated for (possible) mmap()'ed data.
@@ -88,6 +98,7 @@
  * table will be expanded. (at the cost of speed).
  */
 #define MMAPSPACE	(8*1024*1024)
+#endif
 
 /* 
  * Size of shared memory map
@@ -118,6 +129,15 @@
 #define VM_MAX_ADDRESS		((vaddr_t)KERNBASE)
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)KERNBASE)
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)(0xC0000000))
+
+/*
+ * The address to which unspecified mapping requests default
+ */
+#define __HAVE_TOPDOWN_VM
+#ifdef USE_TOPDOWN_VM
+#define VM_DEFAULT_ADDRESS(da, sz) \
+	trunc_page(VM_MAXUSER_ADDRESS - MAXSSIZ - (sz))
+#endif
 
 #define	USRIOSIZE		(8 * VAX_NPTEPG)	/* 512MB */
 #define	VM_PHYS_SIZE		(USRIOSIZE*VAX_NBPG)
