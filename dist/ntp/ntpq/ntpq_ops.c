@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpq_ops.c,v 1.1.1.2 2000/04/22 14:53:46 simonb Exp $	*/
+/*	$NetBSD: ntpq_ops.c,v 1.2 2002/12/06 15:13:56 thorpej Exp $	*/
 
 /*
  * ntpdc_ops.c - subroutines which are called to perform operations by ntpdc
@@ -866,7 +866,7 @@ dogetassoc(
 	u_short rstatus;
 
 	res = doquery(CTL_OP_READSTAT, 0, 0, 0, (char *)0, &rstatus,
-			  &dsize, (char **)&datap);
+			  &dsize, (void *)&datap);
 
 	if (res != 0)
 		return 0;
