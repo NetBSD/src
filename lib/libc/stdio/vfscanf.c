@@ -1,4 +1,4 @@
-/*	$NetBSD: vfscanf.c,v 1.24 1999/09/20 04:39:34 lukem Exp $	*/
+/*	$NetBSD: vfscanf.c,v 1.25 2000/01/21 19:56:07 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)vfscanf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vfscanf.c,v 1.24 1999/09/20 04:39:34 lukem Exp $");
+__RCSID("$NetBSD: vfscanf.c,v 1.25 2000/01/21 19:56:07 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -136,14 +136,18 @@ __svfscanf(fp, fmt0, ap)
 	_DIAGASSERT(fp != NULL);
 	_DIAGASSERT(fmt0 != NULL);
 
+	FLOCKFILE(fp);
+
 	nassigned = 0;
 	nread = 0;
 	base = 0;		/* XXX just to keep gcc happy */
 	ccfn = NULL;		/* XXX just to keep gcc happy */
 	for (;;) {
 		c = *fmt++;
-		if (c == 0)
+		if (c == 0) {
+			FUNLOCKFILE(fp);
 			return (nassigned);
+		}
 		if (isspace(c)) {
 			while ((fp->_r > 0 || __srefill(fp) == 0) &&
 			    isspace(*fp->_p))
@@ -288,6 +292,7 @@ literal:
 		 * Disgusting backwards compatibility hacks.	XXX
 		 */
 		case '\0':	/* compat */
+			FUNLOCKFILE(fp);
 			return (EOF);
 
 		default:	/* compat */
@@ -670,8 +675,10 @@ literal:
 		}
 	}
 input_failure:
+	FUNLOCKFILE(fp);
 	return (nassigned ? nassigned : EOF);
 match_failure:
+	FUNLOCKFILE(fp);
 	return (nassigned);
 }
 
