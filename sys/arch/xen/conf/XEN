@@ -1,4 +1,4 @@
-# $NetBSD: XEN,v 1.19 2005/03/09 22:39:19 bouyer Exp $
+# $NetBSD: XEN,v 1.20 2005/03/09 23:24:50 xtraeme Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -183,8 +183,6 @@ xencons*	at hypervisor?		# Xen virtual console
 xennet* 	at hypervisor?		# Xen virtual network interface
 
 xbd*		at hypervisor?		# Xen virtual block device
-
-include	"arch/xen/conf/GENERIC.local"
 
 # Pseudo-Devices
 
