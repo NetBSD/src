@@ -1,4 +1,4 @@
-.\"	$NetBSD: chrtbl.8,v 1.6 2002/02/08 01:38:47 ross Exp $
+.\"	$NetBSD: chrtbl.8,v 1.7 2003/03/15 22:30:37 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Christos Zoulas
 .\" All rights reserved.
@@ -68,7 +68,7 @@ Set the attribute of the specified characters range(s) to be hexadecimal digits.
 .It Nm isblank Ar begin-char Op - Ar end-char
 Set the attribute of the specified characters range(s) to be blank.
 .It Nm ul Ar \*[Lt]upper-char lower-char\*[Gt] ...
-Specify a case correspondance between upper and lower char.
+Specify a case correspondence between upper and lower char.
 .It Nm cswidth Ar n1,s1:n2,s2:n3,s3
 Specify the character set byte width (n1,n2,n3) and the screen width(s1,s2,s3)
 for the 3 character sets.
@@ -80,7 +80,7 @@ Specify the thousands separator numeric formatting character.
 .Ss Available options
 .Bl -tag -width indent
 .It Fl o Ar ofile
-Print the convertion tables in a human readable (C source) form.
+Print the conversion tables in a human readable (C source) form.
 .El
 .Sh SEE ALSO
 .Xr setlocale 3
