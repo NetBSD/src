@@ -1,4 +1,4 @@
-/*	$NetBSD: joy.c,v 1.5.2.1 1997/01/18 04:15:44 thorpej Exp $	*/
+/*	$NetBSD: joy.c,v 1.5.2.2 1997/01/30 05:50:50 thorpej Exp $	*/
 
 /*
  * XXX This _really_ should be rewritten such that it doesn't
@@ -96,6 +96,7 @@ joyattach(sc)
 	struct joy_softc *sc;
 {
 
+	sc->port = iobase;
 	sc->timeout[0] = sc->timeout[1] = 0;
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, 0, 0xff);
 	DELAY(10000);		/* 10 ms delay */
