@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.43 1996/05/25 21:54:24 is Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.44 1996/06/20 09:32:00 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -610,7 +610,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 #ifdef DRACO
 	if ((id >> 24) == 0x7D) {
 		pg_proto = DRCCBASE | PG_RW | PG_CI | PG_V;
-		while (pg_proto < DRCIATOP) {
+		while (pg_proto < DRZ2BASE) {
 			*pg++ = pg_proto;
 			pg_proto += DRCCSTRIDE;
 		}
@@ -852,7 +852,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 	if ((id >> 24) == 0x7D) { /* mapping on, is_draco() is valid */
 		int i;
 		/* XXX experimental Altais register mapping only */
-		altaiscolpt = (volatile u_int8_t *)(DRCCADDR+NBPG*8+0x3c8);
+		altaiscolpt = (volatile u_int8_t *)(DRCCADDR+NBPG*9+0x3c8);
 		altaiscol = altaiscolpt + 1;
 		for (i=0; i<140000; i++) {
 			*altaiscolpt = 0;
