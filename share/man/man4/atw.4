@@ -1,4 +1,4 @@
-.\"     $NetBSD: atw.4,v 1.3 2003/07/06 23:12:37 dyoung Exp $
+.\"     $NetBSD: atw.4,v 1.4 2003/07/06 23:14:35 dyoung Exp $
 .\"
 .\" Copyright (c) 2003
 .\"	David Young <dyoung@netbsd.org>. All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: atw.4,v 1.3 2003/07/06 23:12:37 dyoung Exp $
+.\"	$Id: atw.4,v 1.4 2003/07/06 23:14:35 dyoung Exp $
 .\"
 .Dd April 22, 2003
 .Dt ATW 4
@@ -160,6 +160,9 @@ fields for the PLCP header and the 802.11 header undergo before
 they are applied to a transmitted frame.  If the duration fields
 in transmitted frames are incorrect, the performance of your network
 may suffer.
+.Pp
+The driver does not provide rate control when the media type is
+set to autoselect.
 .Pp
 The driver lets you change to hostap mode, but it does not work
 and it probably never will.
