@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)dma.c
- *	$Id: atzsc.c,v 1.4 1994/06/16 14:28:42 chopps Exp $
+ *	$Id: atzsc.c,v 1.5 1994/07/02 21:15:10 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,6 +141,7 @@ atzscattach(pdp, dp, auxp)
 	/*
 	 * only 24 bit mem.
 	 */
+	sc->sc_flags |= SBICF_BADDMA;
 	sc->sc_dmamask = ~0x00ffffff;
 	sc->sc_sbicp = (sbic_regmap_p) ((int)rp + 0x91);
 	sc->sc_clkfreq = sbic_clock_override ? sbic_clock_override : 77;
