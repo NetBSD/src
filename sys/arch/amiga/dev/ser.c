@@ -156,7 +156,7 @@ serprobe(ad)
   ad->amiga_ipl = 2;
   ser_addr[unit] = ser;
   ser_active |= 1 << unit;
-  ser_vbl_node[unit].function = sermint;
+  ser_vbl_node[unit].function = (void (*)(void *))sermint;
   add_vbl_function (&ser_vbl_node[unit], SER_VBL_PRIORITY, (void *)unit);
 #ifdef KGDB
   if (kgdb_dev == makedev(sermajor, unit)) {
@@ -221,7 +221,7 @@ seropen(dev, flag, mode, p)
   else
     tp = ser_tty[unit];
 
-  tp->t_oproc = serstart;
+  tp->t_oproc = (void (*)(struct tty *)) serstart;
   tp->t_param = serparam;
   tp->t_dev = dev;
  
@@ -758,7 +758,7 @@ serstart(tp)
       if (tp->t_state & TS_ASLEEP) 
 	{
 	  tp->t_state &= ~TS_ASLEEP;
-	  wakeup(&tp->t_outq);
+	  wakeup((caddr_t)&tp->t_outq);
 	}
       selwakeup(&tp->t_wsel);
     }
@@ -1002,7 +1002,7 @@ sercnputc(dev, c)
 serspit(c)
      int c;
 {
-  register struct Custom *cu asm("a2") = CUSTOMbase;
+  register struct Custom *cu asm("a2") = (struct Custom *)CUSTOMbase;
   register int timo asm("d2");
   extern int cold;
   int s;

@@ -129,6 +129,14 @@ ite_new_size (struct ite_softc *ip, struct ite_window_size *vs)
     ip->rows = (cci->view->display.height) / ip->ftheight;
     ip->cols = (cci->view->display.width-1)  / ip->ftwidth; /* -1 for bold. */
 
+    /* save new values so that future opens use them */
+    /* this may not be correct when we implement Virtual Consoles */
+    ite_default_height = cci->view->display.height;
+    ite_default_width = cci->view->display.width;
+    ite_default_x = cci->view->display.x;
+    ite_default_y = cci->view->display.y;
+    ite_default_depth = cci->view->bitmap->depth;
+
     if (cci->row_ptr) 
         free_chipmem (cci->row_ptr);
     if (cci->column_offset)
@@ -309,11 +317,11 @@ ite_view_deinit(ip)
     if (cci->view) {
         viewclose (IPUNIT(ip));
     }
+#endif
     
     /* well at least turn it off. */
     XXX_grf_cc_off (IPUNIT (ip));
     /* viewioctl (IPUNIT(ip), VIEW_REMOVE, NULL, 0, -1); */
-#endif
     
     if (cci->row_ptr) 
    	free_chipmem (cci->row_ptr);
