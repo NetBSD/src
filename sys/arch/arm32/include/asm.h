@@ -1,4 +1,4 @@
-/* $NetBSD: asm.h,v 1.3 1996/11/30 02:48:58 jtc Exp $ */
+/* $NetBSD: asm.h,v 1.3.10.1 1997/10/14 08:42:34 thorpej Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -42,11 +42,8 @@
 #define _ARM32_ASM_H_
 
 #ifdef GPROF
-/*
- * XXX assumes that arguments are not passed in %eax
- */
-# define _BEGIN_ENTRY	/*.data; 1:; .long 0;*/ .text; .align 0
-# define _END_ENTRY	/*movl $1b,%eax; call PIC_PLT(mcount)*/
+# define _BEGIN_ENTRY	.text; .align 0
+# define _END_ENTRY
 #else
 # define _BEGIN_ENTRY	.text; .align 0
 # define _END_ENTRY
@@ -59,7 +56,7 @@
 #endif
 #define	_ASM_FUNC(x)	x
 
-#define _ENTRY(x)	.globl x; /*.type x,@function;*/ x:
+#define _ENTRY(x)	.globl x; .type x,@function; x:
 
 #define	ENTRY(y)	_BEGIN_ENTRY; _ENTRY(_C_FUNC(y)); _END_ENTRY
 #define	TWOENTRY(y,z)	_BEGIN_ENTRY; _ENTRY(_C_FUNC(y)); _ENTRY(_C_FUNC(z)); \

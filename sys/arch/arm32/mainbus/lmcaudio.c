@@ -1,4 +1,4 @@
-/* $NetBSD: lmcaudio.c,v 1.10.2.2 1997/08/27 22:16:24 thorpej Exp $ */
+/* $NetBSD: lmcaudio.c,v 1.10.2.3 1997/10/14 08:42:42 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -357,7 +357,7 @@ lmcaudio_query_encoding(addr, fp)
 {
 	switch (fp->index) {
 	case 0:
-		strcpy (fp->name, AudioElinear_le);
+		strcpy (fp->name, AudioEslinear_le);
 		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		fp->precision = 16;
 		fp->flags = 0;

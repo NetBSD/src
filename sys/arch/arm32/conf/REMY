@@ -31,7 +31,6 @@ options		CPU_LATE_ABORT	# ARM7XX compatibility
 
 # FPA options
 
-#options	FPE		# Single precision FPE
 options		ARMFPE		# ARM Ltd FPE
 
 # File systems

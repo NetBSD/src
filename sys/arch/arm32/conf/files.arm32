@@ -259,9 +259,7 @@ file	arch/arm32/arm32/fiq.S
 # library functions
 file	arch/arm32/arm32/strstr.c
 file	arch/arm32/arm32/strtoul.c
-file	arch/arm32/arm32/memset.S
 file	arch/arm32/arm32/bcopy_page.S
-file	arch/arm32/arm32/bcopy.S
 file	arch/arm32/arm32/bcopyinout.S
 file	arch/arm32/arm32/copystr.S
 
@@ -278,16 +276,6 @@ file	arch/arm32/arm32/postmortem.c
  
 file    dev/cons.c
 file	dev/cninit.c
-
-# Signal precision FPE
-file	arch/arm32/fpe-sp/fpe.c			fpe
-file	arch/arm32/fpe-sp/fpeadd.S		fpe
-file	arch/arm32/fpe-sp/fpesub.S		fpe
-file	arch/arm32/fpe-sp/fpemul.S		fpe
-file	arch/arm32/fpe-sp/fpediv.S		fpe
-file	arch/arm32/fpe-sp/fpefix.S		fpe
-file	arch/arm32/fpe-sp/fpecmf.S		fpe
-file	arch/arm32/fpe-sp/fpetoe.S		fpe
 
 # ARM FPE
 file	arch/arm32/fpe-arm/armfpe_glue.S	armfpe
