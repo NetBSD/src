@@ -202,12 +202,14 @@ char *DES_LIB_FUNCTION des_fcrypt(const char *buf,const char *salt, char *ret);
 #ifdef PERL5
 char *des_crypt(const char *buf,const char *salt);
 #else
+#ifndef __NetBSD__
 /* some stupid compilers complain because I have declared char instead
  * of const char */
 #ifdef HEADER_DES_LOCL_H
 char *DES_LIB_FUNCTION crypt(const char *buf,const char *salt);
 #else
 char *crypt();
+#endif
 #endif
 #endif
 void DES_LIB_FUNCTION des_ofb_encrypt(unsigned char *in,unsigned char *out,
