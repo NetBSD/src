@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmeat.c,v 1.12 1997/07/08 05:01:16 mikel Exp $	*/
+/*	$NetBSD: supcmeat.c,v 1.13 1997/07/15 18:15:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -1225,26 +1225,40 @@ char *from;		/* 0 if reading from network */
 		lockout (FALSE);
 		return (FALSE);
 	}
-	/* uncompress it first */
+	/*
+	** If the file is compressed, uncompress it in place.  We open the
+	** temp file for reading, unlink the file, and then open the same
+	** file again for writing.  Then we pipe through gzip.  When 
+	** finished the temp file contains the uncompressed version and we
+	** can continue as before.
+	**
+	** Since sup prefers to write close to the original file the
+	** benefits of atomic updates probably outweigh the cost of the
+	** extra filecopy which occurs when the temp file is on a different
+	** filesystem from the original.
+	*/
 	if (docompress) {
 		char *av[4];
 		int   ac = 0;
+		int   infd = -1;
+		int   outfd = -1;
 		av[ac++] = "gzip";
 		av[ac++] = "-d";
 		av[ac++] = NULL;
-		if (runio(av, tname, to, NULL) != 0) {
-			/* Uncompress it onto the destination */
-			notify ("SUP: Error in uncompressing file %s\n",
-				to);
+		if ( (infd = open(tname, O_RDONLY)) == -1 ||
+		     unlink(tname) == -1 ||
+		     (outfd = open(tname, O_WRONLY|O_CREAT|O_TRUNC)) == -1 ||
+		     runiofd( av, infd, outfd, 2 ) != 0 ) {
+			notify("SUP: Error in uncompressing file %s (%s)\n",
+				to, tname );
 			(void) unlink (tname);
-			/* Just in case */
-			(void) unlink (to);
-			lockout (FALSE);
-			return (TRUE);
+			if ( infd != -1 ) (void) close (infd);
+			if ( outfd != -1 ) (void) close (outfd);
+			lockout(FALSE);
+			return(TRUE);
 		}
-		(void) unlink (tname);
-		lockout (FALSE);
-		return (FALSE);
+		(void) close(infd);
+		(void) close(outfd);
 	}
 	/* move to destination */
 	if (rename (tname,to) == 0) {
