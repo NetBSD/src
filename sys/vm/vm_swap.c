@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.37.2.29 1997/06/05 23:02:54 pk Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.37.2.30 1997/06/08 15:54:26 pk Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -131,20 +131,39 @@ struct swappri {
 	LIST_ENTRY(swappri)	spi_swappri;
 };
 
-struct swtbuf {
-	struct buf	sb_buf;
-	struct buf	*sb_obp;
-	struct swapdev	*sb_sdp;	/* XXX: regular files only */
+
+/*
+ * The following two structures are used to keep track of data transfers
+ * on swap devices associated with regular files.
+ * NOTE: this code is more or less a copy of vnd.c; we use the same
+ * structure names here to ease porting..
+ */
+struct vndxfer {
+	struct buf	*vx_bp;		/* Pointer to parent buffer */
+	struct swapdev	*vx_sdp;
+	int		vx_error;
+	int		vx_pending;	/* # of pending aux buffers */
+};
+
+struct vndbuf {
+	struct buf	vb_buf;
+	struct vndxfer	*vb_xfer;
 };
 
 /*
  * XXX: Not a very good idea in a swap strategy module!
  */
-#define gettmpbuf()	\
-	((struct swtbuf *)malloc(sizeof(struct swtbuf), M_DEVBUF, M_WAITOK))
+#define	getvndxfer()	\
+	((struct vndxfer *)malloc(sizeof(struct vndxfer), M_DEVBUF, M_WAITOK))
 
-#define puttmpbuf(sbp)	\
-	free((caddr_t)(sbp), M_DEVBUF)
+#define putvndxfer(vnx)	\
+	free((caddr_t)(vnx), M_DEVBUF)
+
+#define getvndbuf()	\
+	((struct vndbuf *)malloc(sizeof(struct vndbuf), M_DEVBUF, M_WAITOK))
+
+#define putvndbuf(vbp)	\
+	free((caddr_t)(vbp), M_DEVBUF)
 
 int nswapdev, nswap;
 int swflags;
@@ -861,7 +880,8 @@ sw_reg_strategy(sdp, bp, bn)
 	int		bn;
 {
 	struct vnode	*vp;
-	struct swtbuf	*sbp;
+	struct vndbuf	*nbp;
+	struct vndxfer	*vnx;
 	daddr_t		nbn;
 	caddr_t		addr;
 	int		s, off, nra, error, sz, resid;
@@ -874,6 +894,13 @@ sw_reg_strategy(sdp, bp, bn)
 	addr = bp->b_data;
 	bn   = dbtob(bn);
 
+	/* Allocate a header for this transfer and link it to the buffer */
+	vnx = getvndxfer();
+	vnx->vx_error = 0;
+	vnx->vx_pending = 0;
+	vnx->vx_bp = bp;
+	vnx->vx_sdp = sdp;
+
 	for (resid = bp->b_resid; resid; resid -= sz) {
 		if (doswvnlock) VOP_LOCK(sdp->swd_vp);
 		nra = 0;
@@ -884,6 +911,28 @@ sw_reg_strategy(sdp, bp, bn)
 		if (error == 0 && (long)nbn == -1)
 			error = EIO;
 
+		/*
+		 * If there was an error or a hole in the file...punt.
+		 * Note that we may have to wait for any operations
+		 * that we have already fired off before releasing
+		 * the buffer.
+		 *
+		 * XXX we could deal with holes here but it would be
+		 * a hassle (in the write case).
+		 */
+		if (error) {
+			vnx->vx_error = error;
+			s = splbio();
+			if (vnx->vx_pending == 0) {
+				bp->b_error = error;
+				bp->b_flags |= B_ERROR;
+				putvndxfer(vnx);
+				biodone(bp);
+			}
+			splx(s);
+			return;
+		}
+
 		if ((off = bn % sdp->swd_bsize) != 0)
 			sz = sdp->swd_bsize - off;
 		else
@@ -891,81 +940,58 @@ sw_reg_strategy(sdp, bp, bn)
 
 		if (resid < sz)
 			sz = resid;
+
 #ifdef SWAPDEBUG
 		if (vmswapdebug & VMSDB_SWFLOW)
 			printf("sw_reg_strategy: vp %p/%p bn 0x%x/0x%x"
 				" sz 0x%x\n", sdp->swd_vp, vp, bn, nbn, sz);
 #endif /* SWAPDEBUG */
 
-		sbp = gettmpbuf();
-		sbp->sb_buf.b_flags    = bp->b_flags | B_CALL;
-		sbp->sb_buf.b_bcount   = sz;
-		sbp->sb_buf.b_bufsize  = bp->b_bufsize;
-		sbp->sb_buf.b_error    = 0;
-		sbp->sb_buf.b_dev      = vp->v_type == VREG
+		nbp = getvndbuf();
+		nbp->vb_buf.b_flags    = bp->b_flags | B_CALL;
+		nbp->vb_buf.b_bcount   = sz;
+		nbp->vb_buf.b_bufsize  = bp->b_bufsize;
+		nbp->vb_buf.b_error    = 0;
+		nbp->vb_buf.b_dev      = vp->v_type == VREG
 						? NODEV : vp->v_rdev;
-		sbp->sb_buf.b_data     = addr;
-		sbp->sb_buf.b_blkno    = nbn + btodb(off);
-		sbp->sb_buf.b_proc     = bp->b_proc;
-		sbp->sb_buf.b_iodone   = sw_reg_iodone;
-		sbp->sb_buf.b_vp       = NULLVP;
-		sbp->sb_buf.b_rcred    = sdp->swd_cred;
-		sbp->sb_buf.b_wcred    = sdp->swd_cred;
+		nbp->vb_buf.b_data     = addr;
+		nbp->vb_buf.b_blkno    = nbn + btodb(off);
+		nbp->vb_buf.b_proc     = bp->b_proc;
+		nbp->vb_buf.b_iodone   = sw_reg_iodone;
+		nbp->vb_buf.b_vp       = NULLVP;
+		nbp->vb_buf.b_rcred    = sdp->swd_cred;
+		nbp->vb_buf.b_wcred    = sdp->swd_cred;
 		if (bp->b_dirtyend == 0) {
-			sbp->sb_buf.b_dirtyoff = 0;
-			sbp->sb_buf.b_dirtyend = sz;
+			nbp->vb_buf.b_dirtyoff = 0;
+			nbp->vb_buf.b_dirtyend = sz;
 		} else {
-			sbp->sb_buf.b_dirtyoff =
+			nbp->vb_buf.b_dirtyoff =
 			    max(0, bp->b_dirtyoff - (bp->b_bcount-resid));
-			sbp->sb_buf.b_dirtyend =
+			nbp->vb_buf.b_dirtyend =
 			    min(sz,
 				max(0, bp->b_dirtyend - (bp->b_bcount-resid)));
 		}
 		if (bp->b_validend == 0) {
-			sbp->sb_buf.b_validoff = 0;
-			sbp->sb_buf.b_validend = sz;
+			nbp->vb_buf.b_validoff = 0;
+			nbp->vb_buf.b_validend = sz;
 		} else {
-			sbp->sb_buf.b_validoff =
+			nbp->vb_buf.b_validoff =
 			    max(0, bp->b_validoff - (bp->b_bcount-resid));
-			sbp->sb_buf.b_validend =
+			nbp->vb_buf.b_validend =
 			    min(sz,
 				max(0, bp->b_validend - (bp->b_bcount-resid)));
 		}
 
-		/* save a reference to the old buffer and swapdev */
-		sbp->sb_obp = bp;
-		sbp->sb_sdp = sdp;
-
-		/*
-		 * If there was an error or a hole in the file...punt.
-		 * Note that we deal with this after the sbp
-		 * allocation. This ensures that we properly clean up
-		 * any operations that we have already fired off.
-		 *
-		 * XXX we could deal with holes here but it would be
-		 * a hassle (in the write case).
-		 */
-		if (error) {
-#ifdef SWAPDEBUG
-			if (vmswapdebug & VMSDB_SWFLOW)
-			    printf("sw_reg_strategy: error %d\n", error);
-#endif /* SWAPDEBUG */
-
-			sbp->sb_buf.b_error = error;
-			sbp->sb_buf.b_flags |= B_ERROR;
-			bp->b_resid -= (resid - sz);
-			biodone(&sbp->sb_buf);
-			return;
-		}
+		nbp->vb_xfer = vnx;
 
 		/*
 		 * Just sort by block number
 		 */
-		sbp->sb_buf.b_cylinder = sbp->sb_buf.b_blkno;
+		nbp->vb_buf.b_cylinder = nbp->vb_buf.b_blkno;
 		s = splbio();
-
-		bgetvp(vp, &sbp->sb_buf);
-		disksort(&sdp->swd_tab, &sbp->sb_buf);
+		vnx->vx_pending++;
+		bgetvp(vp, &nbp->vb_buf);
+		disksort(&sdp->swd_tab, &nbp->vb_buf);
 		if (sdp->swd_tab.b_active < sdp->swd_maxactive) {
 			sdp->swd_tab.b_active++;
 			sw_reg_start(sdp);
@@ -1006,45 +1032,64 @@ static void
 sw_reg_iodone(bp)
 	struct buf *bp;
 {
-	struct swtbuf	*sbp = (struct swtbuf *) bp;
-	struct buf	*pbp = sbp->sb_obp;
-	struct swapdev	*sdp;
-	int		s;
+	register struct vndbuf *vbp = (struct vndbuf *) bp;
+	register struct vndxfer *vnx = (struct vndxfer *)vbp->vb_xfer;
+	register struct buf *pbp = vnx->vx_bp;
+	struct swapdev	*sdp = vnx->vx_sdp;
+	int		s, resid;
 
 #ifdef SWAPDEBUG
 	if (vmswapdebug & VMSDB_SWFLOW)
-		printf("sw_reg_iodone: sbp %p vp %p blkno %x addr %p "
+		printf("sw_reg_iodone: vbp %p vp %p blkno %x addr %p "
 				"cnt %lx(%lx)\n",
-				sbp, sbp->sb_buf.b_vp, sbp->sb_buf.b_blkno,
-				sbp->sb_buf.b_data, sbp->sb_buf.b_bcount,
-				sbp->sb_buf.b_resid);
+				vbp, vbp->vb_buf.b_vp, vbp->vb_buf.b_blkno,
+				vbp->vb_buf.b_data, vbp->vb_buf.b_bcount,
+				vbp->vb_buf.b_resid);
 #endif /* SWAPDEBUG */
-
-	if (sbp->sb_buf.b_error) {
-#ifdef SWAPDEBUG
-		if (vmswapdebug & VMSDB_SWFLOW)
-			printf("sw_reg_iodone: sbp %p error %d\n", sbp,
-				sbp->sb_buf.b_error);
-#endif /* SWAPDEBUG */
-
-		pbp->b_flags |= B_ERROR;
-		pbp->b_error = biowait(&sbp->sb_buf);
-	}
-	sdp = sbp->sb_sdp;
-
-	pbp->b_resid -= sbp->sb_buf.b_bcount;
-	if (pbp->b_resid == 0)
-		biodone(pbp);
 
 	s = splbio();
-	if (sbp->sb_buf.b_vp != NULLVP)
-		brelvp(&sbp->sb_buf);
-	puttmpbuf(sbp);
+	resid = vbp->vb_buf.b_bcount - vbp->vb_buf.b_resid;
+	pbp->b_resid -= resid;
+	vnx->vx_pending--;
+
+	if (vbp->vb_buf.b_error) {
+#ifdef SWAPDEBUG
+		if (vmswapdebug & VMSDB_SWFLOW)
+			printf("sw_reg_iodone: vbp %p error %d\n", vbp,
+				vbp->vb_buf.b_error);
+#endif /* SWAPDEBUG */
+
+		vnx->vx_error = vbp->vb_buf.b_error;
+	}
+
+	if (vbp->vb_buf.b_vp != NULLVP)
+		brelvp(&vbp->vb_buf);
+
+	putvndbuf(vbp);
+
+	/*
+	 * Wrap up this transaction if it has run to completion or, in
+	 * case of an error, when all auxiliary buffers have returned.
+	 */
+	if (pbp->b_resid == 0 || (vnx->vx_error && vnx->vx_pending == 0)) {
+
+		if (vnx->vx_error != 0) {
+			pbp->b_flags |= B_ERROR;
+			pbp->b_error = vnx->vx_error;
+		}
+		putvndxfer(vnx);
+#ifdef SWAPDEBUG
+		if (vmswapdebug & VMSDB_SWFLOW)
+			printf("swiodone: pbp %p iodone\n", pbp);
+#endif
+		biodone(pbp);
+	}
 
 	if (sdp->swd_tab.b_actf)
 		sw_reg_start(sdp);
 	else
 		sdp->swd_tab.b_active--;
+
 	splx(s);
 }
 #endif /* SWAP_TO_FILES */
