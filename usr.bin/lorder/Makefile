@@ -2,7 +2,7 @@
 
 MAN1=	lorder.0
 
-all lorder: ${MAN1}
+all lorder:
 
 clean depend lint tags:
 
