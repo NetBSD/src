@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.55 2000/02/09 15:40:26 enami Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.56 2000/02/14 23:13:49 enami Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -175,15 +175,20 @@ struct ne2000dev {
       PCMCIA_CIS_PLANEX_FNW3600T,
       0, -1, { 0x00, 0x90, 0xcc }, NE2000DVF_DL10019 },
 
-    { PCMCIA_STR_PLANEX_FNW3700T, 
-      PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_COMBO_ECARD,
-      PCMCIA_CIS_PLANEX_FNW3700T, 
-      0, -1, { 0x00, 0x90, 0xcc }, NE2000DVF_AX88190 },
-
     { PCMCIA_STR_SVEC_PN650TX,
       PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_COMBO_ECARD,
       PCMCIA_CIS_SVEC_PN650TX,
       0, -1, { 0x00, 0xe0, 0x98 }, NE2000DVF_DL10019 },
+
+    /*
+     * This entry should be here so that above two cards doesn't
+     * match with this.  FNW-3700T won't match above entries due to
+     * MAC address check.
+     */
+    { PCMCIA_STR_PLANEX_FNW3700T, 
+      PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_COMBO_ECARD,
+      PCMCIA_CIS_PLANEX_FNW3700T, 
+      0, -1, { 0x00, 0x90, 0xcc }, NE2000DVF_AX88190 },
 
     { PCMCIA_STR_LINKSYS_ETHERFAST,
       PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ETHERFAST,
