@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.33 2003/07/23 00:27:25 itojun Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.34 2003/08/22 06:22:23 itojun Exp $	*/
 /*	$KAME: ipsec.h,v 1.51 2001/08/05 04:52:58 itojun Exp $	*/
 
 /*
@@ -77,6 +77,11 @@ struct secpolicy {
 	int refcnt;			/* reference count */
 	struct secpolicyindex *spidx;	/* selector - NULL if not valid */
 	u_int32_t id;			/* It's unique number on the system. */
+#define IPSEC_MANUAL_POLICYID_MAX	0x3fff
+				/*
+				 * 1 - 0x3fff are reserved for user operation.
+				 * 0 are reserved.  Others are for kernel use.
+				 */
 	u_int state;			/* 0: dead, others: alive */
 #define IPSEC_SPSTATE_DEAD	0
 #define IPSEC_SPSTATE_ALIVE	1
