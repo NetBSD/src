@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.256 2001/05/04 12:13:27 drochner Exp $
+# $NetBSD: mi,v 1.257 2001/05/07 08:03:15 martin Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -633,6 +633,7 @@
 ./usr/sbin/isdntelctl		base-isdn-bin
 ./usr/sbin/isdntrace		base-isdn-bin
 ./usr/sbin/ispppcontrol		base-isdn-bin
+./usr/sbin/pppoectl		base-isdn-bin
 ./usr/sbin/kadmin		base-krb5-bin
 ./usr/sbin/kdc			base-krb5-bin
 ./usr/sbin/kstash		base-krb5-bin

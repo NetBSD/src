@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.348 2001/05/06 23:52:14 wiz Exp $
+# $NetBSD: mi,v 1.349 2001/05/07 08:03:16 martin Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1229,6 +1229,7 @@
 ./usr/share/man/cat8/isdntelctl.0		man-isdn-catman
 ./usr/share/man/cat8/isdntrace.0		man-isdn-catman
 ./usr/share/man/cat8/ispppcontrol.0		man-isdn-catman
+./usr/share/man/cat8/pppoectl.0			man-isdn-catman
 ./usr/share/man/cat8/iteconfig.0		man-sysutil-catman
 ./usr/share/man/cat8/kadmin.0			man-krb5-catman
 ./usr/share/man/cat8/kadmind.0			man-krb5-catman
@@ -2729,6 +2730,7 @@
 ./usr/share/man/man8/isdntelctl.8		man-isdn-man
 ./usr/share/man/man8/isdntrace.8		man-isdn-man
 ./usr/share/man/man8/ispppcontrol.8		man-isdn-man
+./usr/share/man/man8/pppoectl.8			man-isdn-man
 ./usr/share/man/man8/iteconfig.8		man-sysutil-man
 ./usr/share/man/man8/kadmin.8			man-krb5-man
 ./usr/share/man/man8/kadmind.8			man-krb5-man
