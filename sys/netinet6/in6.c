@@ -1,4 +1,5 @@
-/*	$NetBSD: in6.c,v 1.19 2000/02/24 12:59:12 itojun Exp $	*/
+/*	$NetBSD: in6.c,v 1.20 2000/02/25 05:13:05 itojun Exp $	*/
+/*	$KAME: in6.c,v 1.55 2000/02/25 00:32:23 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -100,6 +101,9 @@
 #include <netinet6/in6_ifattach.h>
 
 #include <net/net_osdep.h>
+
+/* enable backward compatibility code for obsoleted ioctls */
+#define COMPAT_IN6IFIOCTL
 
 /*
  * Definitions of some costant IP6 addresses.
@@ -419,7 +423,10 @@ in6_control(so, cmd, data, ifp, p)
 	struct	in6_ifreq *ifr = (struct in6_ifreq *)data;
 	struct	in6_ifaddr *ia, *oia;
 	struct	in6_aliasreq *ifra = (struct in6_aliasreq *)data;
-	struct	sockaddr_in6 oldaddr, net;
+	struct	sockaddr_in6 oldaddr;
+#ifdef COMPAT_IN6IFIOCTL
+	struct sockaddr_in6 net;
+#endif
 	int	error = 0, hostIsNew, prefixIsNew;
 	time_t time_second = (time_t)time.tv_sec;
 	int privileged;
@@ -450,7 +457,7 @@ in6_control(so, cmd, data, ifp, p)
 		return (mrt6_ioctl(cmd, data));
 	}
 
-	if (ifp == 0)
+	if (ifp == NULL)
 		return(EOPNOTSUPP);
 
 	switch (cmd) {
@@ -495,8 +502,7 @@ in6_control(so, cmd, data, ifp, p)
 	/*
 	 * Find address for this interface, if it exists.
 	 */
-	{
-
+	if (ifra->ifra_addr.sin6_family == AF_INET6) { /* XXX */
 		struct sockaddr_in6 *sa6 =
 			(struct sockaddr_in6 *)&ifra->ifra_addr;
 
@@ -506,10 +512,10 @@ in6_control(so, cmd, data, ifp, p)
 				sa6->sin6_addr.s6_addr16[1] =
 					htons(ifp->if_index);
 			}
-			else
-				if (sa6->sin6_addr.s6_addr16[1] !=
-				    htons(ifp->if_index))
-					return(EINVAL);	/* ifid is contradict */
+			else if (sa6->sin6_addr.s6_addr16[1] !=
+				    htons(ifp->if_index)) {
+				return(EINVAL);	/* ifid is contradict */
+			}
 			if (sa6->sin6_scope_id) {
 				if (sa6->sin6_scope_id !=
 				    (u_int32_t)ifp->if_index)
@@ -517,30 +523,53 @@ in6_control(so, cmd, data, ifp, p)
 				sa6->sin6_scope_id = 0; /* XXX: good way? */
 			}
 		}
+		ia = in6ifa_ifpwithaddr(ifp, &ifra->ifra_addr.sin6_addr);
 	}
- 	ia = in6ifa_ifpwithaddr(ifp, &ifra->ifra_addr.sin6_addr);
 
 	switch (cmd) {
 
 	case SIOCDIFADDR_IN6:
-		if (ia == 0)
+		/*
+		 * for IPv4, we look for existing in6_ifaddr here to allow
+		 * "ifconfig if0 delete" to remove first IPv4 address on the
+		 * interface.  For IPv6, as the spec allow multiple interface
+		 * address from the day one, we consider "remove the first one"
+		 * semantics to be not preferrable.
+		 */
+		if (ia == NULL)
 			return(EADDRNOTAVAIL);
 		/* FALLTHROUGH */
 	case SIOCAIFADDR_IN6:
 	case SIOCSIFADDR_IN6:
-	case SIOCSIFNETMASK_IN6:
+#ifdef COMPAT_IN6IFIOCTL
 	case SIOCSIFDSTADDR_IN6:
+	case SIOCSIFNETMASK_IN6:
+		/*
+		 * Since IPv6 allows a node to assign multiple addresses
+		 * on a single interface, SIOCSIFxxx ioctls are not suitable
+		 * and should be unused.
+		 */
+#endif 
+		if (ifra->ifra_addr.sin6_family != AF_INET6)
+			return(EAFNOSUPPORT);
 		if (!privileged)
 			return(EPERM);
-		if (ia == 0) {
+		if (ia == NULL) {
 			ia = (struct in6_ifaddr *)
 				malloc(sizeof(*ia), M_IFADDR, M_WAITOK);
 			if (ia == NULL)
 				return (ENOBUFS);
 			bzero((caddr_t)ia, sizeof(*ia));
+			/* Initialize the address and masks */
 			ia->ia_ifa.ifa_addr = (struct sockaddr *)&ia->ia_addr;
+			ia->ia_addr.sin6_family = AF_INET6;
+			ia->ia_addr.sin6_len = sizeof(ia->ia_addr);
 			ia->ia_ifa.ifa_dstaddr
 				= (struct sockaddr *)&ia->ia_dstaddr;
+			if (ifp->if_flags & IFF_POINTOPOINT) {
+				ia->ia_dstaddr.sin6_family = AF_INET6;
+				ia->ia_dstaddr.sin6_len = sizeof(ia->ia_dstaddr);
+			}
 			ia->ia_ifa.ifa_netmask
 				= (struct sockaddr *)&ia->ia_prefixmask;
 
@@ -581,7 +610,7 @@ in6_control(so, cmd, data, ifp, p)
 	case SIOCGIFDSTADDR_IN6:
 	case SIOCGIFALIFETIME_IN6:
 		/* must think again about its semantics */
-		if (ia == 0)
+		if (ia == NULL)
 			return(EADDRNOTAVAIL);
 		break;
 	case SIOCSIFALIFETIME_IN6:
@@ -590,7 +619,7 @@ in6_control(so, cmd, data, ifp, p)
 
 		if (!privileged)
 			return(EPERM);
-		if (ia == 0)
+		if (ia == NULL)
 			return(EADDRNOTAVAIL);
 		/* sanity for overflow - beware unsigned */
 		lt = &ifr->ifr_ifru.ifru_lifetime;
@@ -651,6 +680,7 @@ in6_control(so, cmd, data, ifp, p)
 				*icmp6_ifstat[ifp->if_index];
 		break;
 
+#ifdef COMPAT_IN6IFIOCTL		/* should be unused */
 	case SIOCSIFDSTADDR_IN6:
 		if ((ifp->if_flags & IFF_POINTOPOINT) == 0)
 			return(EINVAL);
@@ -664,12 +694,11 @@ in6_control(so, cmd, data, ifp, p)
 				ia->ia_dstaddr.sin6_addr.s6_addr16[1]
 					= htons(ifp->if_index);
 			}
-			else
-				if (ia->ia_dstaddr.sin6_addr.s6_addr16[1] !=
+			else if (ia->ia_dstaddr.sin6_addr.s6_addr16[1] !=
 				    htons(ifp->if_index)) {
-					ia->ia_dstaddr = oldaddr;
-					return(EINVAL);	/* ifid is contradict */
-				}
+				ia->ia_dstaddr = oldaddr;
+				return(EINVAL);	/* ifid is contradict */
+			}
 		}
 
 		if (ifp->if_ioctl && (error = (ifp->if_ioctl)
@@ -686,6 +715,7 @@ in6_control(so, cmd, data, ifp, p)
 		}
 		break;
 
+#endif 
 	case SIOCGIFALIFETIME_IN6:
 		ifr->ifr_ifru.ifru_lifetime = ia->ia6_lifetime;
 		break;
@@ -708,6 +738,7 @@ in6_control(so, cmd, data, ifp, p)
 	case SIOCSIFADDR_IN6:
 		return(in6_ifinit(ifp, ia, &ifr->ifr_addr, 1));
 
+#ifdef COMPAT_IN6IFIOCTL		/* XXX should be unused */
 	case SIOCSIFNETMASK_IN6:
 		ia->ia_prefixmask = ifr->ifr_addr;
 		bzero(&net, sizeof(net));
@@ -729,6 +760,7 @@ in6_control(so, cmd, data, ifp, p)
 				ia->ia_prefixmask.sin6_addr.s6_addr32[3];
 		ia->ia_net = net;
 		break;
+#endif 
 
 	case SIOCAIFADDR_IN6:
 		prefixIsNew = 0;
@@ -740,6 +772,22 @@ in6_control(so, cmd, data, ifp, p)
 		} else if (IN6_ARE_ADDR_EQUAL(&ifra->ifra_addr.sin6_addr,
 					      &ia->ia_addr.sin6_addr))
 			hostIsNew = 0;
+
+		/* Validate address families: */
+		/*
+		 * The destination address for a p2p link must have a family
+		 * of AF_UNSPEC or AF_INET6.
+		 */
+		if ((ifp->if_flags & IFF_POINTOPOINT) != 0 &&
+		    ifra->ifra_dstaddr.sin6_family != AF_INET6 &&
+		    ifra->ifra_dstaddr.sin6_family != AF_UNSPEC)
+			return(EAFNOSUPPORT);
+		/*
+		 * The prefixmask must have a family of AF_UNSPEC or AF_INET6.
+		 */
+		if (ifra->ifra_prefixmask.sin6_family != AF_INET6 &&
+		    ifra->ifra_prefixmask.sin6_family != AF_UNSPEC)
+			return(EAFNOSUPPORT);
 
 		if (ifra->ifra_prefixmask.sin6_len) {
 			in6_ifscrub(ifp, ia);
@@ -760,21 +808,17 @@ in6_control(so, cmd, data, ifp, p)
 					 */
 					ia->ia_dstaddr.sin6_addr.s6_addr16[1]
 						= htons(ifp->if_index);
-				}
-				else
-					if (ia->ia_dstaddr.sin6_addr.s6_addr16[1] !=
+				} else if (ia->ia_dstaddr.sin6_addr.s6_addr16[1] !=
 					    htons(ifp->if_index)) {
-						ia->ia_dstaddr = oldaddr;
-						return(EINVAL);	/* ifid is contradict */
-					}
+					ia->ia_dstaddr = oldaddr;
+					return(EINVAL);	/* ifid is contradict */
+				}
 			}
 			prefixIsNew = 1; /* We lie; but effect's the same */
 		}
-		if (ifra->ifra_addr.sin6_family == AF_INET6 &&
-		    (hostIsNew || prefixIsNew))
+		if (hostIsNew || prefixIsNew)
 			error = in6_ifinit(ifp, ia, &ifra->ifra_addr, 0);
-		if (ifra->ifra_addr.sin6_family == AF_INET6
-		    && hostIsNew && (ifp->if_flags & IFF_MULTICAST)) {
+		if (hostIsNew && (ifp->if_flags & IFF_MULTICAST)) {
 			int error_local = 0;
 
 			/*
@@ -860,7 +904,7 @@ in6_control(so, cmd, data, ifp, p)
 		break;
 
 	default:
-		if (ifp == 0 || ifp->if_ioctl == 0)
+		if (ifp == NULL || ifp->if_ioctl == 0)
 			return(EOPNOTSUPP);
 		return((*ifp->if_ioctl)(ifp, cmd, data));
 	}

@@ -1,4 +1,5 @@
-/*	$NetBSD: in6_var.h,v 1.10 2000/02/04 14:34:26 itojun Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.11 2000/02/25 05:13:06 itojun Exp $	*/
+/*	$KAME: in6_var.h,v 1.28 2000/02/25 00:32:22 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -356,9 +357,17 @@ struct	in6_rrenumreq {
 
 #define SIOCSIFADDR_IN6		 _IOW('i', 12, struct in6_ifreq)
 #define SIOCGIFADDR_IN6		_IOWR('i', 33, struct in6_ifreq)
+
+#ifdef _KERNEL
+/*
+ * SIOCSxxx ioctls should be unused (see comments in in6.c), but
+ * we do not shift numbers for binary compatibility.
+ */
 #define SIOCSIFDSTADDR_IN6	 _IOW('i', 14, struct in6_ifreq)
-#define SIOCGIFDSTADDR_IN6	_IOWR('i', 34, struct in6_ifreq)
 #define SIOCSIFNETMASK_IN6	 _IOW('i', 22, struct in6_ifreq)
+#endif 
+
+#define SIOCGIFDSTADDR_IN6	_IOWR('i', 34, struct in6_ifreq)
 #define SIOCGIFNETMASK_IN6	_IOWR('i', 37, struct in6_ifreq)
 
 #define SIOCDIFADDR_IN6		 _IOW('i', 25, struct in6_ifreq)
@@ -408,6 +417,11 @@ struct	in6_rrenumreq {
 
 /* do not input/output */
 #define IN6_IFF_NOTREADY (IN6_IFF_TENTATIVE|IN6_IFF_DUPLICATED)
+
+#ifdef _KERNEL
+#define IN6_ARE_SCOPE_CMP(a,b) ((a)-(b))
+#define IN6_ARE_SCOPE_EQUAL(a,b) ((a)==(b))
+#endif
 
 #ifdef _KERNEL
 extern struct in6_ifaddr *in6_ifaddr;
