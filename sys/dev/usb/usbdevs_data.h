@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs_data.h,v 1.6 1998/10/05 02:31:14 mark Exp $	*/
+/*	$NetBSD: usbdevs_data.h,v 1.7 1998/12/02 17:14:53 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.5 1998/10/05 02:30:17 mark Exp 
+ *	NetBSD: usbdevs,v 1.7 1998/12/02 17:11:51 augustss Exp 
  */
 
 /*
@@ -57,6 +57,12 @@ struct usb_knowndev usb_knowndevs[] = {
 	    "Digital Science DC260",
 	},
 	{
+	    USB_VENDOR_CATC, USB_PRODUCT_CATC_ANDROMEDA,
+	    0,
+	    "Computer Access Technology Corporation",
+	    "Andromeda hub",
+	},
+	{
 	    USB_VENDOR_NANAO, USB_PRODUCT_NANAO_HUB,
 	    0,
 	    "Nanao",
@@ -99,6 +105,12 @@ struct usb_knowndev usb_knowndevs[] = {
 	    "My3000 hub",
 	},
 	{
+	    USB_VENDOR_BTC, USB_PRODUCT_BTC_BTC7932,
+	    0,
+	    "Behavior Technology Corporation",
+	    "Keyboard with mouse port",
+	},
+	{
 	    USB_VENDOR_PHILIPS, USB_PRODUCT_PHILIPS_DSS,
 	    0,
 	    "Philips",
@@ -117,10 +129,34 @@ struct usb_knowndev usb_knowndevs[] = {
 	    "QuickCam",
 	},
 	{
+	    USB_VENDOR_3COM, USB_PRODUCT_3COM_USR56K,
+	    0,
+	    "3Com",
+	    "U.S.Robotics 56000 Voice USB Modem",
+	},
+	{
+	    USB_VENDOR_JAZZ, USB_PRODUCT_JAZZ_J6502,
+	    0,
+	    "Jazz",
+	    "J-6502 speakers",
+	},
+	{
 	    USB_VENDOR_CYPRESS, USB_PRODUCT_CYPRESS_MOUSE,
 	    0,
-	    "Cypress Semicondutor",
+	    "Cypress Semiconductor",
 	    "mouse",
+	},
+	{
+	    USB_VENDOR_ATEN, USB_PRODUCT_ATEN_UC1284,
+	    0,
+	    "ATen",
+	    "Parallel printer adapter",
+	},
+	{
+	    USB_VENDOR_AGILER, USB_PRODUCT_AGILER_MOUSE29UO,
+	    0,
+	    "Agiler",
+	    "mouse 29UO",
 	},
 	{
 	    USB_VENDOR_BELKIN, USB_PRODUCT_BELKIN_F5U002,
@@ -189,6 +225,12 @@ struct usb_knowndev usb_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    USB_VENDOR_CATC, 0,
+	    USB_KNOWNDEV_NOPROD,
+	    "Computer Access Technology Corporation",
+	    NULL,
+	},
+	{
 	    USB_VENDOR_NANAO, 0,
 	    USB_KNOWNDEV_NOPROD,
 	    "Nanao",
@@ -213,6 +255,12 @@ struct usb_knowndev usb_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    USB_VENDOR_BTC, 0,
+	    USB_KNOWNDEV_NOPROD,
+	    "Behavior Technology Corporation",
+	    NULL,
+	},
+	{
 	    USB_VENDOR_PHILIPS, 0,
 	    USB_KNOWNDEV_NOPROD,
 	    "Philips",
@@ -227,13 +275,37 @@ struct usb_knowndev usb_knowndevs[] = {
 	{
 	    USB_VENDOR_CYPRESS, 0,
 	    USB_KNOWNDEV_NOPROD,
-	    "Cypress Semicondutor",
+	    "Cypress Semiconductor",
+	    NULL,
+	},
+	{
+	    USB_VENDOR_3COM, 0,
+	    USB_KNOWNDEV_NOPROD,
+	    "3Com",
+	    NULL,
+	},
+	{
+	    USB_VENDOR_JAZZ, 0,
+	    USB_KNOWNDEV_NOPROD,
+	    "Jazz",
+	    NULL,
+	},
+	{
+	    USB_VENDOR_ATEN, 0,
+	    USB_KNOWNDEV_NOPROD,
+	    "ATen",
 	    NULL,
 	},
 	{
 	    USB_VENDOR_EIZO, 0,
 	    USB_KNOWNDEV_NOPROD,
 	    "EIZO",
+	    NULL,
+	},
+	{
+	    USB_VENDOR_AGILER, 0,
+	    USB_KNOWNDEV_NOPROD,
+	    "Agiler",
 	    NULL,
 	},
 	{
