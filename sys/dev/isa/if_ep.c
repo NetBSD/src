@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep.c,v 1.84 1995/11/13 20:50:22 christos Exp $	*/
+/*	$NetBSD: if_ep.c,v 1.85 1995/12/05 03:30:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
@@ -201,7 +201,6 @@ epprobe(parent, match, aux)
 			return 0;
 
 		epcards[nepcards++].available = 0;
-		sc->bustype = EP_BUS_PCI;
 		return 1;
 	}
 #endif
@@ -390,6 +389,7 @@ epattach(parent, self, aux)
 			printf("%s: couldn't map io\n", sc->sc_dev.dv_xname);
 			return;
 		}
+		sc->bustype = EP_BUS_PCI;
 		sc->ep_iobase = iobase; /* & 0xfffffff0 */
 		i = pci_conf_read(pa->pa_tag, PCI_CONN);
 
@@ -434,6 +434,7 @@ epattach(parent, self, aux)
 			       sc->sc_dev.dv_xname);
 			return;
 		}
+		epstop(sc);
 	}
 	else
 #endif
