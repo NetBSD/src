@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.25 1997/09/02 19:03:58 thorpej Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.26 1997/09/02 20:15:37 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.25 1997/09/02 19:03:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.26 1997/09/02 20:15:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,7 +155,7 @@ cpu_fork(p1, p2)
 #else
 	p2->p_md.md_pcbpaddr = (void *)vtophys((vm_offset_t)&up->u_pcb);
 	printf("process %d pcbpaddr = 0x%lx, pmap = %p\n",
-	    p2->p_pid, p2->p_md.md_pcbpaddr, &p2->p_vmspace->vm_pmap);
+	    p2->p_pid, p2->p_md.md_pcbpaddr, p2->p_vmspace->vm_map.pmap);
 #endif
 
 	/*
