@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.28 1995/01/26 07:35:49 mycroft Exp $	*/
+/*	$NetBSD: lpt.c,v 1.29 1995/01/29 07:37:10 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -68,7 +68,7 @@
 #include <machine/pio.h>
 
 #include <i386/isa/isavar.h>
-#include <i386/isa/lptreg.h>
+#include <dev/isa/lptreg.h>
 
 #define	TIMEOUT		hz*16	/* wait up to 16 seconds for a ready */
 #define	STEP		hz/4

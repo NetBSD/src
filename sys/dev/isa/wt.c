@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.22 1995/01/03 01:31:14 mycroft Exp $	*/
+/*	$NetBSD: wt.c,v 1.23 1995/01/29 07:37:18 cgd Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -66,7 +66,7 @@
 
 #include <i386/isa/isavar.h>
 #include <i386/isa/dmavar.h>
-#include <i386/isa/wtreg.h>
+#include <dev/isa/wtreg.h>
 
 /*
  * Uncomment this to enable internal device tracing.

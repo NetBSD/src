@@ -1,4 +1,4 @@
-/*	$NetBSD: elink.c,v 1.6 1995/01/07 21:37:54 mycroft Exp $	*/
+/*	$NetBSD: elink.c,v 1.7 1995/01/29 07:36:56 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/types.h>
 #include <machine/pio.h>
-#include <i386/isa/elink.h>
+#include <dev/isa/elink.h>
 
 /*
  * Issue a `global reset' to all cards, and reset the ID state machines.  We

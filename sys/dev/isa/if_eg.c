@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.9 1995/01/03 01:30:35 mycroft Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.10 1995/01/29 07:37:00 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -74,8 +74,8 @@
 #include <machine/pio.h>
 
 #include <i386/isa/isavar.h>
-#include <i386/isa/if_egreg.h>
-#include <i386/isa/elink.h>
+#include <dev/isa/if_egreg.h>
+#include <dev/isa/elink.h>
 
 /* for debugging convenience */
 #ifdef EGDEBUG
