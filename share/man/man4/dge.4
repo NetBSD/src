@@ -1,4 +1,4 @@
-.\"	$NetBSD: dge.4,v 1.5 2004/05/11 23:16:59 wiz Exp $
+.\"	$NetBSD: dge.4,v 1.6 2004/05/11 23:21:37 wiz Exp $
 .\"
 .\" Copyright (c) 2004, SUNET, Swedish University Computer Network.
 .\" All rights reserved.
@@ -35,26 +35,19 @@
 .Dd March 18, 2004
 .Dt DGE 4
 .Os
-.\" the next line has to end in a whitespace
-.ds nummer "i82597EX
 .Sh NAME
 .Nm dge
-.Nd Intel
-.nummer
-Ten Gigabit Ethernet driver
+.Nd Intel i82597EX Ten Gigabit Ethernet driver
 .Sh SYNOPSIS
 .Cd "dge* at pci? dev ? function ?"
 .Sh DESCRIPTION
 The
 .Nm
-device driver supports the Intel
-.nummer
-PRO/10GbE LR Ethernet adapter,
+device driver supports the Intel i82597EX PRO/10GbE LR Ethernet
+adapter,
 which uses a single mode fiber (1310nm) interface.
 .Pp
-The
-.nummer
-supports IPv4/TCP/UDP checksumming in hardware, as well
+The i82597EX supports IPv4/TCP/UDP checksumming in hardware, as well
 as TCP Segmentation Offloading (TSO).
 The driver does currently only support the hardware checksumming
 features.
@@ -93,10 +86,8 @@ segments, but over 80 segments has been seen using large (16k)
 jumbo frames.
 .Pp
 .It dge%s: device timeout (txfree %d txsfree %d txnext %d)
-The
-.nummer
-had been given packets to send, but didn't interrupt within 5
-seconds.
+The i82597EX had been given packets to send, but didn't interrupt
+within 5 seconds.
 This diagnostic is most likely the result of a hardware failure,
 and the chip will be reset to resume normal operation.
 .Pp
