@@ -1,4 +1,4 @@
-/*	$NetBSD: abtn.c,v 1.1 1999/07/12 17:48:26 tsubai Exp $	*/
+/*	$NetBSD: abtn.c,v 1.2 2001/03/29 17:44:50 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -82,7 +82,8 @@ abtn_attach(parent, self, aux)
 	printf("brightness/volume button\n");
 
 	bright = pm_read_nvram(NVRAM_BRIGHTNESS);
-	pm_set_brightness(bright);
+	if (bright != 0)
+		pm_set_brightness(bright);
 	sc->brightness = bright;
 
 	sc->origaddr = aa->origaddr;
@@ -95,7 +96,7 @@ abtn_attach(parent, self, aux)
 	SetADBInfo(&adbinfo, sc->adbaddr);
 }
 
-void 
+void
 abtn_adbcomplete(buffer, data, adb_command)
 	caddr_t buffer, data;
 	int adb_command;
