@@ -209,4 +209,7 @@
 #define	SYS_shmctl	229
 #define	SYS_shmdt	230
 #define	SYS_shmget	231
-#define	SYS_MAXSYSCALL	232
+#define	SYS_clock_gettime	232
+#define	SYS_clock_settime	233
+#define	SYS_clock_getres	234
+#define	SYS_MAXSYSCALL	241

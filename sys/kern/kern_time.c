@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.21 1996/10/24 04:35:33 cgd Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.22 1996/11/15 22:44:26 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -64,6 +64,116 @@
  * timers when they expire.
  */
 
+
+/* This function is used by clock_settime and settimeofday */
+static void
+settime(tv)
+	struct timeval *tv;
+{
+	struct timeval delta;
+	int s;
+
+	/* WHAT DO WE DO ABOUT PENDING REAL-TIME TIMEOUTS??? */
+	s = splclock();
+	timersub(tv, &time, &delta);
+	time = *tv;
+	(void) splsoftclock();
+	timeradd(&boottime, &delta, &boottime);
+	timeradd(&runtime, &delta, &runtime);
+#	if defined(NFSCLIENT) || defined(NFSSERVER)
+		nqnfs_lease_updatetime(delta.tv_sec);
+#	endif
+	splx(s);
+	resettodr();
+}
+
+/* ARGSUSED */
+int
+sys_clock_gettime(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	register struct sys_clock_gettime_args /* {
+		syscallarg(clockid_t) clock_id;
+                syscallarg(struct timespec *) tp;
+        } */ *uap = v;
+	clockid_t clock_id;
+	struct timeval atv;
+	struct timespec ats;
+
+	clock_id = SCARG(uap, clock_id);
+	if (clock_id != CLOCK_REALTIME)
+		return (EINVAL);
+
+	microtime(&atv);
+	TIMEVAL_TO_TIMESPEC(&atv,&ats);
+
+	return copyout((caddr_t)&ats, SCARG(uap, tp), sizeof(ats));
+}
+
+/* ARGSUSED */
+int
+sys_clock_settime(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	register struct sys_clock_settime_args /* {
+		syscallarg(clockid_t) clock_id;
+                syscallarg(struct timespec *) tp;
+        } */ *uap = v;
+	clockid_t clock_id;
+	struct timeval atv;
+	struct timespec ats;
+	int error;
+
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		return (error);
+
+	clock_id = SCARG(uap, clock_id);
+	if (clock_id != CLOCK_REALTIME)
+		return (EINVAL);
+
+	if (error = copyin((caddr_t)SCARG(uap, tp), (caddr_t)&ats, sizeof(ats)))
+                return (error);
+
+	TIMESPEC_TO_TIMEVAL(&atv,&ats);
+	settime(&atv);
+
+	return 0;
+}
+
+int
+sys_clock_getres(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	register struct sys_clock_getres_args /* {
+		syscallarg(clockid_t) clock_id;
+                syscallarg(struct timespec *) tp;
+        } */ *uap = v;
+	clockid_t clock_id;
+	struct timespec ts;
+	int error = 0;
+
+	clock_id = SCARG(uap, clock_id);
+	if (clock_id != CLOCK_REALTIME)
+		return (EINVAL);
+
+	if (SCARG(uap, tp)) {
+		ts.tv_sec = 0;
+		ts.tv_nsec = 1000000000 / hz;
+
+		error = copyout((caddr_t)&ts, (caddr_t)SCARG(uap, tp),
+			sizeof (ts));
+	}
+
+	return error;
+}
+
+
 /* ARGSUSED */
 int
 sys_gettimeofday(p, v, retval)
@@ -102,9 +212,9 @@ sys_settimeofday(p, v, retval)
 		syscallarg(struct timeval *) tv;
 		syscallarg(struct timezone *) tzp;
 	} */ *uap = v;
-	struct timeval atv, delta;
+	struct timeval atv;
 	struct timezone atz;
-	int error, s;
+	int error;
 
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
@@ -115,20 +225,8 @@ sys_settimeofday(p, v, retval)
 	if (SCARG(uap, tzp) && (error = copyin((caddr_t)SCARG(uap, tzp),
 	    (caddr_t)&atz, sizeof(atz))))
 		return (error);
-	if (SCARG(uap, tv)) {
-		/* WHAT DO WE DO ABOUT PENDING REAL-TIME TIMEOUTS??? */
-		s = splclock();
-		timersub(&atv, &time, &delta);
-		time = atv;
-		(void) splsoftclock();
-		timeradd(&boottime, &delta, &boottime);
-		timeradd(&runtime, &delta, &runtime);
-# 		if defined(NFSCLIENT) || defined(NFSSERVER)
-			nqnfs_lease_updatetime(delta.tv_sec);
-#		endif
-		splx(s);
-		resettodr();
-	}
+	if (SCARG(uap, tv))
+		settime(&atv);
 	if (SCARG(uap, tzp))
 		tz = atz;
 	return (0);
