@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.5 1998/05/23 01:06:36 thorpej Exp $ */
+/* $NetBSD: wskbd.c,v 1.6 1998/06/09 07:34:22 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wskbd.c,v 1.5 1998/05/23 01:06:36 thorpej Exp $";
+    "$NetBSD: wskbd.c,v 1.6 1998/06/09 07:34:22 thorpej Exp $";
 
 /*
  * Copyright (c) 1992, 1993
@@ -179,11 +179,7 @@ struct wskbd_softc {
 #define MOD_ONESET(id, mask)	(((id)->t_modifiers & (mask)) != 0)
 #define MOD_ALLSET(id, mask)	(((id)->t_modifiers & (mask)) == (mask))
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	wskbd_match __P((struct device *, void *, void *));
-#else
 int	wskbd_match __P((struct device *, struct cfdata *, void *));
-#endif
 void	wskbd_attach __P((struct device *, struct device *, void *));
 static inline void update_leds __P((struct wskbd_internal *));
 static inline void update_modifier __P((struct wskbd_internal *, u_int, int, int));
@@ -259,22 +255,11 @@ wskbddevprint(aux, pnp)
 }
 
 int
-#ifdef __BROKEN_INDIRECT_CONFIG
-wskbd_match(parent, matchv, aux)
-#else
 wskbd_match(parent, match, aux)
-#endif
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *matchv;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
-#ifdef __BROKEN_INDIRECT_CONFIG
-	struct cfdata *match = matchv;
-#endif
 	struct wskbddev_attach_args *ap = aux;
 
 	if (match->wskbddevcf_console != WSKBDDEVCF_CONSOLE_UNK) {

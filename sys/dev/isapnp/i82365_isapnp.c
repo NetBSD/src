@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isapnp.c,v 1.1 1998/06/07 18:28:31 sommerfe Exp $	*/
+/*	$NetBSD: i82365_isapnp.c,v 1.2 1998/06/09 07:28:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Bill Sommerfeld.  All rights reserved.
@@ -65,11 +65,7 @@ int	pcicisapnp_debug = 0 /* XXX */ ;
 #define	DPRINTF(arg)
 #endif
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int pcic_isapnp_match __P((struct device *, void *, void *));
-#else
 int pcic_isapnp_match __P((struct device *, struct cfdata *, void *));
-#endif
 void	pcic_isapnp_attach __P((struct device *, struct device *, void *));
 
 struct cfattach pcic_isapnp_ca = {
@@ -97,11 +93,7 @@ static struct pcmcia_chip_functions pcic_isa_functions = {
 int
 pcic_isapnp_match(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct isapnp_attach_args *ipa = aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ix.c,v 1.4 1998/04/15 01:45:44 thorpej Exp $	*/
+/*	$NetBSD: if_ix.c,v 1.5 1998/06/09 07:25:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -104,11 +104,7 @@ static void	ix_eeprom_outbits __P((bus_space_tag_t, bus_space_handle_t, int, int
 static int	ix_eeprom_inbits  __P((bus_space_tag_t, bus_space_handle_t));
 static void	ix_eeprom_clock   __P((bus_space_tag_t, bus_space_handle_t, int));
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int ix_match __P((struct device *, void*, void *));
-#else
 int ix_match __P((struct device *, struct cfdata *, void *));
-#endif
 void ix_attach __P((struct device *, struct device *, void *));
 
 /*
@@ -359,11 +355,7 @@ ix_mediastatus(sc, ifmr)
 int
 ix_match(parent, cf, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-        void *cf;
-#else
 	struct cfdata *cf;
-#endif
 	void *aux;
 {
 	int i;

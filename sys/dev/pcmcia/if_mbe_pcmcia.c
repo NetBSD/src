@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mbe_pcmcia.c,v 1.1 1998/03/22 04:32:27 enami Exp $	*/
+/*	$NetBSD: if_mbe_pcmcia.c,v 1.2 1998/06/09 07:32:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -59,11 +59,7 @@
 #define	PCMCIA_PRODUCT_TDK_LAK_CD021BX	0x0200
 #define	PCMCIA_PRODUCT_TDK_DFL9610	0x0d0a
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	mbe_pcmcia_match __P((struct device *, void *, void *));
-#else
 int	mbe_pcmcia_match __P((struct device *, struct cfdata *, void *));
-#endif
 void	mbe_pcmcia_attach __P((struct device *, struct device *, void *));
 
 struct mbe_pcmcia_softc {
@@ -98,11 +94,7 @@ int	mbe_pcmcia_get_enaddr __P((struct pcmcia_tuple *, void *));
 int
 mbe_pcmcia_match(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct pcmcia_attach_args *pa = aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ef.c,v 1.4 1998/04/15 01:45:44 thorpej Exp $	*/
+/*	$NetBSD: if_ef.c,v 1.5 1998/06/09 07:25:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -111,11 +111,7 @@ static void	ef_mediastatus __P((struct ie_softc *, struct ifmediareq *));
 /* Local routines */
 static int 	ef_port_check __P((bus_space_tag_t, bus_space_handle_t));
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int ef_match __P((struct device *, void*, void *));
-#else
 int ef_match __P((struct device *, struct cfdata *, void *));
-#endif
 void ef_attach __P((struct device *, struct device *, void *));
 
 /*
@@ -355,11 +351,7 @@ ef_mediastatus(sc, ifmr)
 int
 ef_match(parent, cf, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-        void *cf;
-#else
 	struct cfdata *cf;
-#endif
 	void *aux;
 {
 	struct isa_attach_args * const ia = aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: com_isa.c,v 1.10 1997/10/20 18:43:08 thorpej Exp $	*/
+/*	$NetBSD: com_isa.c,v 1.11 1998/06/09 07:24:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -67,11 +67,7 @@ struct com_isa_softc {
 	void	*sc_ih;			/* interrupt handler */
 };
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int com_isa_probe __P((struct device *, void *, void *));
-#else
 int com_isa_probe __P((struct device *, struct cfdata *, void *));
-#endif
 void com_isa_attach __P((struct device *, struct device *, void *));
 void com_isa_cleanup __P((void *));
 
@@ -82,11 +78,7 @@ struct cfattach com_isa_ca = {
 int
 com_isa_probe(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	bus_space_tag_t iot;
