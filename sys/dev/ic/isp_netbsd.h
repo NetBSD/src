@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.16 1999/09/07 22:54:45 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.17 1999/09/30 23:06:19 thorpej Exp $ */
 /* release_6_5_99 */
 /*
  * NetBSD Specific definitions for the Qlogic ISP Host Adapter
@@ -154,19 +154,19 @@ struct isposinfo {
 #define	XS_ERR(xs)		(xs)->error
 #define	XS_NOERR(xs)		(xs)->error == XS_NOERROR
 
-#define	XS_CMD_DONE(xs)		(xs)->flags |= ITSDONE, scsipi_done(xs)
-#define	XS_IS_CMD_DONE(xs)	(((xs)->flags & ITSDONE) != 0)
+#define	XS_CMD_DONE(xs)		(xs)->xs_status |= XS_STS_DONE, scsipi_done(xs)
+#define	XS_IS_CMD_DONE(xs)	(((xs)->xs_status & XS_STS_DONE) != 0)
 
 /*
  * We use whether or not we're a polled command to decide about tagging.
  */
-#define	XS_CANTAG(xs)		(((xs)->flags & SCSI_POLL) != 0)
+#define	XS_CANTAG(xs)		(((xs)->xs_control & XS_CTL_POLL) != 0)
 
 /*
  * This is our default tag (simple).
  */
 #define	XS_KINDOF_TAG(xs)	\
-	(((xs)->flags & SCSI_URGENT)? REQFLAG_HTAG : REQFLAG_OTAG)
+	(((xs)->xs_control & XS_CTL_URGENT) ? REQFLAG_HTAG : REQFLAG_OTAG)
 
 #define	CMD_COMPLETE		COMPLETE
 #define	CMD_EAGAIN		TRY_AGAIN_LATER
