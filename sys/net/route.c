@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.40 2001/01/27 04:49:31 itojun Exp $	*/
+/*	$NetBSD: route.c,v 1.41 2001/01/27 10:39:33 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -138,6 +138,8 @@ struct pool rttimer_pool;	/* pool for rttimer structures */
 struct callout rt_timer_ch; /* callout for rt_timer_timer() */
 
 static int rtdeletemsg __P((struct rtentry *));
+static int rtflushit __P((struct radix_node *, void *));
+static void rtflushclone __P((struct radix_node_head *, struct rtentry *));
 
 void
 rtable_init(table)
@@ -403,6 +405,35 @@ rtdeletemsg(rt)
 	return (error);
 }
 
+static int
+rtflushit(rn, arg)
+	struct radix_node *rn;
+	void *arg;
+{
+	struct rtentry *rt, *parent;
+
+	rt = (struct rtentry *)rn;
+	parent = (struct rtentry *)arg;
+	if ((rt->rt_flags & RTF_CLONED) != 0 && rt->rt_parent == parent)
+		rtdeletemsg(rt);
+	return 0;
+}
+
+static void
+rtflushclone(rnh, parent)
+	struct radix_node_head *rnh;
+	struct rtentry *parent;
+{
+
+#ifdef DIAGNOSTIC
+	if (!parent || (parent->rt_flags & RTF_CLONING) == 0)
+		panic("rtflushclone: called with a non-cloning route");
+	if (!rnh->rnh_walktree)
+		panic("rtflushclone: no rnh_walktree");
+#endif
+	rnh->rnh_walktree(rnh, rtflushit, (void *)parent);
+}
+
 /*
  * Routing table ioctl interface.
  */
@@ -547,6 +578,13 @@ rtrequest1(req, info, ret_nrt)
 		netmask = 0;
 	switch (req) {
 	case RTM_DELETE:
+		if ((rn = rnh->rnh_lookup(dst, netmask, rnh)) == 0)
+			senderr(ESRCH);
+		rt = (struct rtentry *)rn;
+		if ((rt->rt_flags & RTF_CLONING) != 0) {
+			/* clean up any cloned children */
+			rtflushclone(rnh, rt);
+		}
 		if ((rn = rnh->rnh_deladdr(dst, netmask, rnh)) == 0)
 			senderr(ESRCH);
 		if (rn->rn_flags & (RNF_ACTIVE | RNF_ROOT))
@@ -606,6 +644,8 @@ rtrequest1(req, info, ret_nrt)
 		rt->rt_ifp = ifa->ifa_ifp;
 		if (req == RTM_RESOLVE) {
 			rt->rt_rmx = (*ret_nrt)->rt_rmx; /* copy metrics */
+			rt->rt_parent = *ret_nrt;
+			rt->rt_parent->rt_refcnt++;
 		} else if (rt->rt_rmx.rmx_mtu == 0
 			    && !(rt->rt_rmx.rmx_locks & RTV_MTU)) { /* XXX */
 			if (rt->rt_gwroute != NULL) {
@@ -627,6 +667,8 @@ rtrequest1(req, info, ret_nrt)
 		}
 		if (rn == 0) {
 			IFAFREE(ifa);
+			if ((rt->rt_flags & RTF_CLONED) != 0 && rt->rt_parent)
+				rtfree(rt->rt_parent);
 			if (rt->rt_gwroute)
 				rtfree(rt->rt_gwroute);
 			Free(rt_key(rt));
@@ -638,6 +680,10 @@ rtrequest1(req, info, ret_nrt)
 		if (ret_nrt) {
 			*ret_nrt = rt;
 			rt->rt_refcnt++;
+		}
+		if ((rt->rt_flags & RTF_CLONING) != 0) {
+			/* clean up any cloned children */
+			rtflushclone(rnh, rt);
 		}
 		break;
 	}
