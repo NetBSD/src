@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.11 2002/09/11 18:18:37 mycroft Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.12 2002/09/11 20:56:09 mycroft Exp $	*/
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -28,8 +28,6 @@
  */
 
 #include <machine/asm.h>
-
-	.extern	_GLOBAL_OFFSET_TABLE_
 
 /*
  * Note: we can call ourselves LEAF even though we use callee-saved
