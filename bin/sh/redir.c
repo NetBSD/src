@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.22 2000/05/22 10:18:47 elric Exp $	*/
+/*	$NetBSD: redir.c,v 1.22.6.1 2002/03/27 20:37:41 elric Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: redir.c,v 1.22 2000/05/22 10:18:47 elric Exp $");
+__RCSID("$NetBSD: redir.c,v 1.22.6.1 2002/03/27 20:37:41 elric Exp $");
 #endif
 #endif /* not lint */
 
@@ -120,6 +120,9 @@ redirect(redir, flags)
 		memory[i] = 0;
 	memory[1] = flags & REDIR_BACKQ;
 	if (flags & REDIR_PUSH) {
+		/* We don't have to worry about REDIR_VFORK here, as
+		 * flags & REDIR_PUSH is never true if REDIR_VFORK is set.
+		 */
 		sv = ckmalloc(sizeof (struct redirtab));
 		for (i = 0 ; i < 10 ; i++)
 			sv->renamed[i] = EMPTY;
@@ -335,7 +338,7 @@ RESET {
 }
 
 SHELLPROC {
-	clearredir();
+	clearredir(0);
 }
 
 #endif
@@ -351,7 +354,9 @@ fd0_redirected_p () {
  */
 
 void
-clearredir() {
+clearredir(vforked)
+	int vforked;
+{
 	struct redirtab *rp;
 	int i;
 
@@ -360,7 +365,8 @@ clearredir() {
 			if (rp->renamed[i] >= 0) {
 				close(rp->renamed[i]);
 			}
-			rp->renamed[i] = EMPTY;
+			if (!vforked)
+				rp->renamed[i] = EMPTY;
 		}
 	}
 }

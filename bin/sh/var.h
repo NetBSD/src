@@ -1,4 +1,4 @@
-/*	$NetBSD: var.h,v 1.18 2000/05/22 10:18:47 elric Exp $	*/
+/*	$NetBSD: var.h,v 1.18.6.1 2002/03/27 20:37:47 elric Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -123,7 +123,7 @@ void shprocvar __P((void));
 int showvarscmd __P((int, char **));
 int exportcmd __P((int, char **));
 int localcmd __P((int, char **));
-void mklocal __P((char *));
+void mklocal __P((char *, int));
 void poplocalvars __P((void));
 int setvarcmd __P((int, char **));
 int unsetcmd __P((int, char **));

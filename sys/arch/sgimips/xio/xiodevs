@@ -1,6 +1,0 @@
-$NetBSD: xiodevs,v 1.1 2000/06/14 15:49:10 soren Exp $
-
-00000000 xbow
-c0010036 heart
-c0020036 pci
-c00302aa mgras
