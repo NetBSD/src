@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.39 1996/08/26 23:40:27 mrg Exp $
+#	$NetBSD: GENERIC,v 1.40 1996/09/10 22:30:26 thorpej Exp $
 #
 # GENERIC
 
@@ -62,6 +62,7 @@ options		COMPAT_09
 options		COMPAT_10
 options 	COMPAT_11
 options 	COMPAT_12
+#options 	COMPAT_M68K4K	# compatibility with NetBSD/m68k4k binaries
 options		MACHINE_NONCONTIG
 
 config		netbsd	swap generic

@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.7 1996/08/25 01:22:19 thorpej Exp $
+#	$NetBSD: DISKLESS,v 1.8 1996/09/10 22:26:51 thorpej Exp $
 #
 # Diskless HP 9000/300-series workstation.
 #
@@ -60,6 +60,8 @@ options		SE_KEYBOARD	# include Swedish HIL keymap
 # NOTE: THIS IS STILL VERY EXPERIMENTAL.  YOUR MILEAGE MAY VARY.
 #
 options	COMPAT_HPUX		# HP-UX binary compatibility
+
+#options 	"COMPAT_M68K4K"	# compat. with NetBSD/m68k4k binaries
 
 # Debugging options
 options		DDB		# Kernel Dynamic Debugger
