@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.292 2004/04/22 11:45:48 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.293 2004/04/22 11:57:33 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.292 2004/04/22 11:45:48 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.293 2004/04/22 11:57:33 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -2317,8 +2317,23 @@ ctx_free(pm)
 
 #if defined(SUN4M) || defined(SUN4D)
 	if (CPU_HAS_SRMMU) {
+		int i;
+
 		cache_flush_context(ctx);
 		tlb_flush_context(ctx, PMAP_CPUSET(pm));
+#if defined(MULTIPROCESSOR)
+		for (i = 0; i < ncpu; i++)
+#else
+		i = 0;
+#endif
+		{
+			struct cpu_info *cpi = cpus[i];
+#if defined(MULTIPROCESSOR)
+			if (cpi == NULL)
+				continue;
+#endif
+			setpgt4m(&cpi->ctx_tbl[ctx], SRMMU_TEINVALID);
+		}
 	}
 #endif
 
