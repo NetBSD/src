@@ -1,4 +1,4 @@
-/*	$NetBSD: statd.c,v 1.5 1997/10/17 16:03:04 lukem Exp $	*/
+/*	$NetBSD: statd.c,v 1.6 1997/10/17 16:12:53 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: statd.c,v 1.5 1997/10/17 16:03:04 lukem Exp $");
+__RCSID("$NetBSD: statd.c,v 1.6 1997/10/17 16:12:53 lukem Exp $");
 #endif
 
 
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: statd.c,v 1.5 1997/10/17 16:03:04 lukem Exp $");
 #include <fcntl.h>
 #include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
@@ -68,6 +69,7 @@ static off_t	status_file_len;	/* Current on-disc length of file */
 
 	int	main __P((int, char **));
 static	void	handle_sigchld __P((int));
+static	int	notify_one_host __P((char *));
 extern	void	sm_prog_1 __P((struct svc_req *, SVCXPRT *));
 
 int
