@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.34 1999/03/10 01:28:24 fvdl Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.35 1999/03/12 01:01:41 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -68,8 +68,8 @@ static int match_harddisk __P((struct device *, struct btinfo_bootdisk *));
 static void matchbiosdisks __P((void));
 void findroot __P((struct device **, int *));
 
-extern struct bi_devmatch *native_disks;
-extern int nnative_disks;
+extern struct disklist *i386_alldisks;
+extern int i386_ndisks;
 
 /*
  * The following several variables are related to
@@ -155,13 +155,28 @@ matchbiosdisks()
 		if (dv->dv_class == DV_DISK &&
 		    (!strcmp(dv->dv_cfdata->cf_driver->cd_name, "sd") ||
 		     !strcmp(dv->dv_cfdata->cf_driver->cd_name, "wd")))
-			nnative_disks++;
+			i386_ndisks++;
+
+	if (i386_ndisks == 0)
+		return;
 
 	/* XXX M_TEMP is wrong */
-	native_disks = malloc(nnative_disks * sizeof (struct bi_devmatch),
-	    M_TEMP, M_NOWAIT);
-	if (native_disks == NULL)
+	i386_alldisks = malloc(sizeof (struct disklist) + (i386_ndisks - 1) *
+				sizeof (struct nativedisk_info),
+				M_TEMP, M_NOWAIT);
+	if (i386_alldisks == NULL)
 		return;
+
+	i386_alldisks->dl_nnativedisks = i386_ndisks;
+	i386_alldisks->dl_nbiosdisks = big->num;
+	for (i = 0; i < big->num; i++) {
+		i386_alldisks->dl_biosdisks[i].bi_dev = big->disk[i].dev;
+		i386_alldisks->dl_biosdisks[i].bi_sec = big->disk[i].sec;
+		i386_alldisks->dl_biosdisks[i].bi_head = big->disk[i].head;
+		i386_alldisks->dl_biosdisks[i].bi_cyl = big->disk[i].cyl;
+		i386_alldisks->dl_biosdisks[i].bi_lbasecs = big->disk[i].totsec;
+		i386_alldisks->dl_biosdisks[i].bi_flags = big->disk[i].flags;
+	}
 
 	/*
 	 * XXX code duplication from findroot()
@@ -177,8 +192,8 @@ matchbiosdisks()
 		if (!strcmp(dv->dv_cfdata->cf_driver->cd_name, "sd") ||
 		    !strcmp(dv->dv_cfdata->cf_driver->cd_name, "wd")) {
 			n++;
-			sprintf(native_disks[n].bd_devname, "%s%d",
-			    dv->dv_cfdata->cf_driver->cd_name,
+			sprintf(i386_alldisks->dl_nativedisks[n].ni_devname,
+			    "%s%d", dv->dv_cfdata->cf_driver->cd_name,
 			    dv->dv_unit);
 
 			for (d = i386_nam2blk; d->d_name &&
@@ -225,10 +240,11 @@ matchbiosdisks()
 					printf("matched bios disk %x with %s\n",
 					    be->dev, be->devname);
 #endif
-					native_disks[n].bd_matches[m++] = i;
+					i386_alldisks->dl_nativedisks[n].
+					    ni_biosmatches[m++] = i;
 				}
 			}
-			native_disks[n].bd_nmatches = m;
+			i386_alldisks->dl_nativedisks[n].ni_nmatches = m;
 			vrele(tv);
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo_biosgeom.c,v 1.5 1999/03/11 12:34:36 fvdl Exp $	*/
+/*	$NetBSD: bootinfo_biosgeom.c,v 1.6 1999/03/12 01:01:42 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -34,6 +34,7 @@
 
 #include <sys/types.h>
 #include <machine/disklabel.h>
+#include <machine/cpu.h>
 
 #include <lib/libkern/libkern.h>
 #include <lib/libsa/stand.h>
@@ -59,7 +60,7 @@ void bi_getbiosgeom()
 	if (!bibg)
 		return;
 
-	for (i = nvalid = 0; i < BI_NHD && nvalid < (int)nhd; i++) {
+	for (i = nvalid = 0; i < MAX_BIOSDISKS && nvalid < (int)nhd; i++) {
 		struct biosdisk_ll d;
 		struct biosdisk_ext13info ed;
 		char buf[BIOSDISK_SECSIZE];
@@ -87,7 +88,12 @@ void bi_getbiosgeom()
 #endif
 
 		if (d.flags & BIOSDISK_EXT13) {
-			bibg->disk[nvalid].totsec = ed.totsec;
+			if (ed.flags & EXT13_GEOM_VALID)
+				bibg->disk[nvalid].totsec = 
+				    (u_int64_t)ed.sec * (u_int64_t)ed.head *
+				    (u_int64_t)ed.cyl;
+			else
+				bibg->disk[nvalid].totsec = ed.totsec;
 			bibg->disk[nvalid].flags |= BI_GEOM_EXTINT13;
 		}
 		for (j = 0, cksum = 0; j < BIOSDISK_SECSIZE; j++)
