@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.21 1997/04/29 04:00:40 cjs Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.22 1997/05/23 22:09:53 cjs Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: ftpd.c,v 1.21 1997/04/29 04:00:40 cjs Exp $";
+static char rcsid[] = "$NetBSD: ftpd.c,v 1.22 1997/05/23 22:09:53 cjs Exp $";
 #endif
 #endif /* not lint */
 
@@ -136,6 +136,7 @@ char	hostname[MAXHOSTNAMELEN];
 char	remotehost[MAXHOSTNAMELEN];
 static char ttyline[20];
 char	*tty = ttyline;		/* for klogin */
+static char *anondir = NULL;
 
 #if defined(KERBEROS)
 int	notickets = 1;
@@ -242,9 +243,14 @@ main(argc, argv, envp)
 	/* set this here so klogin can use it... */
 	(void)sprintf(ttyline, "ftp%d", getpid());
 
-	while ((ch = getopt(argc, argv, "dlt:T:u:v")) != EOF) {
+	while ((ch = getopt(argc, argv, "a:dlt:T:u:v")) != EOF) {
 		switch (ch) {
+		case 'a':
+			anondir = optarg;
+			break;
+
 		case 'd':
+		case 'v':		/* deprecated */
 			debug = 1;
 			break;
 
@@ -275,10 +281,6 @@ main(argc, argv, envp)
 				defumask = val;
 			break;
 		    }
-
-		case 'v':
-			debug = 1;
-			break;
 
 		default:
 			warnx("unknown flag -%c ignored", optopt);
@@ -672,7 +674,7 @@ skip:
 		 * the old current directory will be accessible as "."
 		 * outside the new root!
 		 */
-		if (chroot(pw->pw_dir) < 0 || chdir("/") < 0) {
+		if (chroot(anondir ? anondir : pw->pw_dir) < 0 || chdir("/") < 0) {
 			reply(550, "Can't set guest privileges.");
 			goto bad;
 		}
