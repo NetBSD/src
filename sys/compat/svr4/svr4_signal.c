@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.c,v 1.23 1996/03/30 22:38:07 christos Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.24 1996/12/06 03:21:53 christos Exp $	 */
 /*
  * Copyright (c) 1994 Christos Zoulas
  * All rights reserved.
@@ -647,4 +647,16 @@ svr4_sys_context(p, v, retval)
 		return ENOSYS;
 	}
 	return 0;
+}
+
+int
+svr4_sys_pause(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct sys_sigsuspend_args bsa;
+
+	SCARG(&bsa, mask) = p->p_sigmask;
+	return sys_sigsuspend(p, &bsa, retval);
 }
