@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.29 2003/01/08 16:52:49 fvdl Exp $	*/
+/*	$NetBSD: acpi.c,v 1.30 2003/01/09 10:35:29 jdolecek Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.29 2003/01/08 16:52:49 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.30 2003/01/09 10:35:29 jdolecek Exp $");
 
 #include "opt_acpi.h"
 
@@ -598,8 +598,8 @@ acpi_print(void *aux, const char *pnp)
 			    
 #endif
 		} else {
-			/* XXX print something more meaningful.. */
-			aprint_normal("ACPI Object Type 0x%02x ",
+			aprint_normal("ACPI Object Type '%s' (0x%02x) ",
+			   AcpiUtGetTypeName(aa->aa_node->ad_devinfo.Type),
 			   aa->aa_node->ad_devinfo.Type);
 		}
 		aprint_normal("at %s", pnp);
