@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rt.c,v 1.27.4.1 1996/05/26 17:26:43 is Exp $	*/
+/*	$NetBSD: grf_rt.c,v 1.27.4.2 1996/06/11 21:23:49 is Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -1464,7 +1464,7 @@ rt_blank(gp, on)
 
 	r = 0x01 | ((md->FLG & MDF_CLKDIV2)/ MDF_CLKDIV2 * 8);
 
-	WSeq(gp->g_regkva, SEQ_ID_CLOCKING_MODE, *on ? r : 0x21);
+	WSeq(gp->g_regkva, SEQ_ID_CLOCKING_MODE, *on > 0 ? r : 0x21);
 
 	return(0);
 }       

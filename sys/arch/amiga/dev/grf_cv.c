@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv.c,v 1.14 1996/05/19 21:05:27 veego Exp $	*/
+/*	$NetBSD: grf_cv.c,v 1.14.4.1 1996/06/11 21:23:45 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -783,7 +783,7 @@ cv_blank(gp, on)
 	volatile caddr_t ba;
 
 	ba = gp->g_regkva;
-	gfx_on_off(*on ? 0 : 1, ba);
+	gfx_on_off(*on > 0 ? 0 : 1, ba);
 	return (0);
 }
 
