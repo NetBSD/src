@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.13 1999/09/26 03:39:01 thorpej Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.14 1999/09/27 19:03:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -205,6 +205,7 @@ struct tulip_21040_21041_sia_media {
  */
 struct tulip_2114x_media {
 	int		tm_type;	/* type of media; see tulipreg.h */
+	const char	*tm_name;	/* name of media */
 
 	void		(*tm_get) __P((struct tulip_softc *,
 			    struct ifmediareq *));
@@ -219,6 +220,27 @@ struct tulip_2114x_media {
 	int		tm_reset_offset;/* MII reset sequence offset */
 
 	u_int32_t	tm_opmode;	/* OPMODE bits for this media */
+	u_int32_t	tm_gpdata;	/* GPIO bits for this media */
+	u_int32_t	tm_actmask;	/* `active' bits for this data */
+	u_int32_t	tm_actdata;	/* active high/low info */
+};
+
+/*
+ * Table for converting Tulip SROM media info into ifmedia data.
+ */
+struct tulip_srom_to_ifmedia {
+	u_int8_t	tsti_srom;	/* SROM media type */
+	int		tsti_subtype;	/* ifmedia subtype */
+	int		tsti_options;	/* ifmedia options */
+	const char	*tsti_name;	/* media name */
+
+	/*
+	 * These members provide 21041 SIA default settings in case
+	 * the SROM doesn't have them.
+	 */
+	u_int32_t	tsti_21041_siaconn;
+	u_int32_t	tsti_21041_siatxrx;
+	u_int32_t	tsti_21041_siagen;
 };
 
 /*
