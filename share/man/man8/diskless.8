@@ -1,4 +1,4 @@
-.\"	$NetBSD: diskless.8,v 1.13 1998/02/06 06:14:52 perry Exp $
+.\"	$NetBSD: diskless.8,v 1.14 1998/07/18 23:03:05 frueauf Exp $
 .\"
 .\" Copyright (c) 1994 Gordon W. Ross, Theo de Raadt
 .\" All rights reserved.
@@ -297,7 +297,7 @@ Copy and customize at least the following files in
 # cp fstab.nfs fstab
 # cp /etc/hosts hosts
 # echo myclient > myname
-# echo 192.197.96.12 > hostname.le0
+# echo "inet 192.197.96.12" > ifconfig.le0
 .Ed
 .Pp
 Note that "le0" above should be replaced with the name of
