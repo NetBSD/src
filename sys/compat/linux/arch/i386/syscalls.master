@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.58 2001/05/30 11:37:26 mrg Exp $
+	$NetBSD: syscalls.master,v 1.59 2001/09/30 18:57:43 martin Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -358,4 +358,4 @@
 218	UNIMPL		mincore
 219	UNIMPL		madvise
 220	UNIMPL		getdents64
-221	UNIMPL		fcntl64
+221	STD		{ int linux_sys_fcntl64(int fd, int cmd, long arg); }
