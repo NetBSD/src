@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipccall.c,v 1.18 1999/01/03 04:30:56 erh Exp $	*/
+/*	$NetBSD: linux_ipccall.c,v 1.19 1999/01/10 15:05:36 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,6 +36,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_sysv.h"
+#endif
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/shm.h>
@@ -47,7 +51,6 @@
 /* real syscalls */
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
-
 
 /* sys_ipc + args prototype */
 #include <compat/linux/common/linux_types.h>
@@ -66,7 +69,6 @@
 
 /* prototypes for sys_ipc stuff */
 #include <compat/linux/common/linux_ipccall.h>
-
 
 /* Used on: arm, i386, m68k, mips, ppc, sparc, sparc64 */
 /* Not used on: alpha */
