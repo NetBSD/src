@@ -1,4 +1,4 @@
-.\" 	$NetBSD: db.1,v 1.13 2003/05/20 08:27:39 wiz Exp $
+.\" 	$NetBSD: db.1,v 1.14 2003/05/20 08:32:42 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -77,7 +77,7 @@ databases
 .
 .Nm
 .Fl d
-.Op Fl Niq
+.Op Fl iNq
 .Bk -words
 .Op Fl E Ar endian
 .Ek
@@ -95,16 +95,15 @@ databases
 .
 .Nm
 .Fl w
-.Op Fl Niq
+.Op Fl CDiNqR
 .Bk -words
 .Op Fl E Ar endian
 .Ek
 .Bk -words
-.Op Fl f Ar infile
+.Op Fl F Ar sep
 .Ek
-.Op Fl CDR
 .Bk -words
-.Op Fl F Ar fieldsep
+.Op Fl f Ar infile
 .Ek
 .Bk -words
 .Op Fl m Ar mode
@@ -156,7 +155,7 @@ and
 and keys and values described in
 .Ar infile
 (in the latter case, entries are separated by
-.Ar fieldsep ) .
+.Ar sep ) .
 .El
 .Pp
 There are two mandatory arguments:
@@ -191,7 +190,7 @@ Defaults to
 .It Fl f Ar infile
 Contains a list of keys
 (for read and delete), or
-.Ar fieldsep
+.Ar sep
 separated keys and values (for write)
 to be used as arguments to the given mode.
 If
@@ -297,7 +296,7 @@ Allow duplicate entries.
 .Fl R
 to be useful.)
 .
-.It Fl F Ar fieldsep
+.It Fl F Ar sep
 Field separator between key and value used when parsing
 .Ar infile .
 Defaults to a single space
