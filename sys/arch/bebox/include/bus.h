@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.2 1997/11/27 10:18:38 sakamoto Exp $	*/
+/*	$NetBSD: bus.h,v 1.3 1997/12/01 07:11:34 sakamoto Exp $	*/
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 /*
@@ -109,6 +109,9 @@ extern struct bebox_bus_space bebox_bus_io, bebox_bus_mem;
     ((*(bshp) = (t)->bus_base + (addr)), 0)
 
 #define bus_space_unmap(t, bsh, size)
+
+#define	bus_space_subregion(t, addr, size, cacheable, bshp)		      \
+    ((*(bshp) = (t)->bus_base + (addr)), 0)
 
 #define bus_space_read(n,m)						      \
 static __inline CAT3(u_int,m,_t)					      \
