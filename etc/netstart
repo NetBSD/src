@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: netstart,v 1.47.2.1 1997/11/18 01:44:08 mellon Exp $
+#	$NetBSD: netstart,v 1.47.2.2 1998/11/25 06:04:15 cgd Exp $
 #	from: @(#)netstart	8.1 (Berkeley) 7/23/93
 
 if [ -f /etc/rc.subr ]; then
@@ -43,7 +43,8 @@ if checkyesno ipfilter; then
 		echo 'installing packet filter rules ... '
 		ipf -E -Fa -f /etc/ipf.conf
 	else
-		logger -s "WARNING: /etc/ipf.conf not readable " \
+		echo
+		echo "WARNING: /etc/ipf.conf not readable " \
 		    "ipfilter not started."
 		# abort the boot rather than risk a security problem
 		exit 1;
