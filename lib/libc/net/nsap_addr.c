@@ -1,7 +1,7 @@
-/*	$NetBSD: getnetent.c,v 1.6 1996/02/02 15:22:21 mrg Exp $	*/
+/*	$NetBSD: nsap_addr.c,v 1.1 1996/02/02 15:22:24 mrg Exp $	*/
 
 /*
- * Copyright (c) 1983, 1993
+ * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,93 +35,97 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char sccsid[] = "@(#)getnetent.c	8.1 (Berkeley) 6/4/93";
+static char rcsid[] = "$Id: lib-libc-net,v 8.1 1995/12/22 21:59:52 vixie Exp ";
 #else
-static char rcsid[] = "$NetBSD: getnetent.c,v 1.6 1996/02/02 15:22:21 mrg Exp $";
+static char rcsid[] = "$NetBSD: nsap_addr.c,v 1.1 1996/02/02 15:22:24 mrg Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <stdio.h>
-#include <string.h>
+#include <arpa/nameser.h>
+#include <ctype.h>
+#include <resolv.h>
 
-#define	MAXALIASES	35
-
-static FILE *netf;
-static char line[BUFSIZ+1];
-static struct netent net;
-static char *net_aliases[MAXALIASES];
-int _net_stayopen;
-
-void
-setnetent(f)
-	int f;
+static char
+xtob(c)
+	register int c;
 {
-	if (netf == NULL)
-		netf = fopen(_PATH_NETWORKS, "r" );
-	else
-		rewind(netf);
-	_net_stayopen |= f;
+	return (c - (((c >= '0') && (c <= '9')) ? '0' : '7'));
 }
 
-void
-endnetent()
-{
-	if (netf) {
-		fclose(netf);
-		netf = NULL;
-	}
-	_net_stayopen = 0;
-}
+/* These have to be here for BIND and its utilities (DiG, nslookup, et al)
+ * but should not be promulgated since the calling interface is not pretty.
+ * (They do, however, implement the RFC standard way of representing ISO NSAPs
+ * and as such, are preferred over the more general iso_addr.c routines.
+ */
 
-struct netent *
-getnetent()
+u_int
+inet_nsap_addr(ascii, binary, maxlen)
+	const char *ascii;
+	u_char *binary;
+	int maxlen;
 {
-	char *p;
-	register char *cp, **q;
+	register u_char c, nib;
+	u_char *start = binary;
+	u_int len = 0;
 
-	if (netf == NULL && (netf = fopen(_PATH_NETWORKS, "r" )) == NULL)
-		return (NULL);
-again:
-	p = fgets(line, BUFSIZ, netf);
-	if (p == NULL)
-		return (NULL);
-	if (*p == '#')
-		goto again;
-	cp = strpbrk(p, "#\n");
-	if (cp == NULL)
-		goto again;
-	*cp = '\0';
-	net.n_name = p;
-	cp = strpbrk(p, " \t");
-	if (cp == NULL)
-		goto again;
-	*cp++ = '\0';
-	while (*cp == ' ' || *cp == '\t')
-		cp++;
-	p = strpbrk(cp, " \t");
-	if (p != NULL)
-		*p++ = '\0';
-	net.n_net = inet_network(cp);
-	net.n_addrtype = AF_INET;
-	q = net.n_aliases = net_aliases;
-	if (p != NULL) 
-		cp = p;
-	while (cp && *cp) {
-		if (*cp == ' ' || *cp == '\t') {
-			cp++;
+	while ((c = *ascii++) != '\0' && len < maxlen) {
+		if (c == '.' || c == '+' || c == '/')
 			continue;
+		if (!isascii(c))
+			return (0);
+		if (islower(c))
+			c = toupper(c);
+		if (isxdigit(c)) {
+			nib = xtob(c);
+			if (c = *ascii++) {
+				c = toupper(c);
+				if (isxdigit(c)) {
+					*binary++ = (nib << 4) | xtob(c);
+					len++;
+				} else
+					return (0);
+			}
+			else
+				return (0);
 		}
-		if (q < &net_aliases[MAXALIASES - 1])
-			*q++ = cp;
-		cp = strpbrk(cp, " \t");
-		if (cp != NULL)
-			*cp++ = '\0';
+		else
+			return (0);
 	}
-	*q = NULL;
-	return (&net);
+	return (len);
+}
+
+char *
+inet_nsap_ntoa(binlen, binary, ascii)
+	int binlen;
+	register const u_char *binary;
+	register char *ascii;
+{
+	register int nib;
+	int i;
+	static char tmpbuf[255*3];
+	char *start;
+
+	if (ascii)
+		start = ascii;
+	else {
+		ascii = tmpbuf;
+		start = tmpbuf;
+	}
+
+	if (binlen > 255)
+		binlen = 255;
+
+	for (i = 0; i < binlen; i++) {
+		nib = *binary >> 4;
+		*ascii++ = nib + (nib < 10 ? '0' : '7');
+		nib = *binary++ & 0x0f;
+		*ascii++ = nib + (nib < 10 ? '0' : '7');
+		if (((i % 2) == 0 && (i + 1) < binlen))
+			*ascii++ = '.';
+	}
+	*ascii = '\0';
+	return (start);
 }
