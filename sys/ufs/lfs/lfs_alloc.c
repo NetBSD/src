@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.76 2005/03/08 00:18:19 perseant Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.77 2005/03/23 00:12:51 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.76 2005/03/08 00:18:19 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.77 2005/03/23 00:12:51 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -294,7 +294,6 @@ lfs_valloc(void *v)
 	fs = VTOI(ap->a_pvp)->i_lfs;
 	if (fs->lfs_ronly)
 		return EROFS;
-	*ap->a_vpp = NULL;
 
 	lfs_seglock(fs, SEGM_PROT);
 
@@ -352,17 +351,8 @@ lfs_ialloc(struct lfs *fs, struct vnode *pvp, ino_t new_ino, int new_gen,
 {
 	struct inode *ip;
 	struct vnode *vp;
-	IFILE *ifp;
-	struct buf *bp, *cbp;
-	int error;
-	CLEANERINFO *cip;
 
-	error = getnewvnode(VT_LFS, pvp->v_mount, lfs_vnodeop_p, &vp);
-	DLOG((DLOG_ALLOC, "lfs_ialloc: ino %d vp %p error %d\n", new_ino,
-	      vp, error));
-	if (error)
-		goto errout;
-
+	vp = *vpp;
 	lockmgr(&ufs_hashlock, LK_EXCLUSIVE, 0);
 	/* Create an inode to associate with the vnode. */
 	lfs_vcreate(pvp->v_mount, new_ino, vp);
@@ -382,13 +372,13 @@ lfs_ialloc(struct lfs *fs, struct vnode *pvp, ino_t new_ino, int new_gen,
 	ufs_ihashins(ip);
 	lockmgr(&ufs_hashlock, LK_RELEASE, 0);
 
-	ufs_vinit(vp->v_mount, lfs_specop_p, lfs_fifoop_p, &vp);
+	ufs_vinit(vp->v_mount, lfs_specop_p, lfs_fifoop_p, vpp);
+	vp = *vpp;
 	ip = VTOI(vp);
 
 	memset(ip->i_lfs_fragsize, 0, NDADDR * sizeof(*ip->i_lfs_fragsize));
 
 	uvm_vnp_setsize(vp, 0);
-	*vpp = vp;
 	lfs_mark_vnode(vp);
 	genfs_node_init(vp, &lfs_genfsops);
 	VREF(ip->i_devvp);
@@ -396,21 +386,6 @@ lfs_ialloc(struct lfs *fs, struct vnode *pvp, ino_t new_ino, int new_gen,
 	fs->lfs_fmod = 1;
 	++fs->lfs_nfiles;
 	return (0);
-
-    errout:
-	/*
-	 * Put the new inum back on the free list.
-	 */
-	lfs_seglock(fs, SEGM_PROT);
-	LFS_IENTRY(ifp, fs, new_ino, bp);
-	ifp->if_daddr = LFS_UNUSED_DADDR;
-	LFS_GET_HEADFREE(fs, cip, cbp, &(ifp->if_nextfree));
-	LFS_PUT_HEADFREE(fs, cip, cbp, new_ino);
-	(void) LFS_BWRITE_LOG(bp); /* Ifile */
-	lfs_segunlock(fs);
-
-	*vpp = NULLVP;
-	return (error);
 }
 
 /* Create a new vnode/inode pair and initialize what fields we can. */
