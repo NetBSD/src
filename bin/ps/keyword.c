@@ -1,4 +1,4 @@
-/*	$NetBSD: keyword.c,v 1.25 2000/06/07 04:57:59 simonb Exp $	*/
+/*	$NetBSD: keyword.c,v 1.25.2.1 2002/10/18 00:11:03 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: keyword.c,v 1.25 2000/06/07 04:57:59 simonb Exp $");
+__RCSID("$NetBSD: keyword.c,v 1.25.2.1 2002/10/18 00:11:03 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,9 +66,9 @@ static int  vcmp __P((const void *, const void *));
 #ifdef NOTINUSE
 	{"stime", "STIME", NULL, 0, cputime},	/* XXX add stime, utime ... */
 	{"utime", "UTIME", NULL, 0, cputime},	/* ... display to cputime() */
-	{"idrss", "IDRSS", NULL, 0, pvar, 0, POFF(p_uru_idrss), ULONG, "d"},
-	{"isrss", "ISRSS", NULL, 0, pvar, 0, POFF(p_uru_isrss), ULONG, "d"},
-	{"ixrss", "IXRSS", NULL, 0, pvar, 0, POFF(p_uru_ixrss), ULONG, "d"},
+	{"idrss", "IDRSS", NULL, 0, pvar, 0, POFF(p_uru_idrss), ULONG, "lu"},
+	{"isrss", "ISRSS", NULL, 0, pvar, 0, POFF(p_uru_isrss), ULONG, "lu"},
+	{"ixrss", "IXRSS", NULL, 0, pvar, 0, POFF(p_uru_ixrss), ULONG, "lu"},
 #endif
 
 /* Compute offset in common structures. */
@@ -91,13 +91,13 @@ VAR var[] = {
 	{"blocked", "", "sigmask"},
 	{"caught", "", "sigcatch"},
 	{"command", "COMMAND", NULL, COMM|LJUST, command},
-	{"cpu", "CPU", NULL, 0, pvar, 0, POFF(p_estcpu), UINT, "d"},
+	{"cpu", "CPU", NULL, 0, pvar, 0, POFF(p_estcpu), UINT, "u"},
 	{"cputime", "", "time"},
 	{"f", "F", NULL, 0, pvar, 0, POFF(p_flag), INT, "x"},
 	{"flags", "", "f"},
 	{"holdcnt", "HOLDCNT", NULL, 0, pvar, 0, POFF(p_holdcnt), INT, "d"},
 	{"ignored", "", "sigignore"},
-	{"inblk", "INBLK", NULL, 0, pvar, 0, POFF(p_uru_inblock), ULONG, "d"},
+	{"inblk", "INBLK", NULL, 0, pvar, 0, POFF(p_uru_inblock), ULONG, "lu"},
 	{"inblock", "", "inblk"},
 	{"jobc", "JOBC", NULL, 0, pvar, 0, POFF(p_jobc), SHORT, "d"},
 	{"ktrace", "KTRACE", NULL, 0, pvar, 0, POFF(p_traceflag), INT, "x"},
@@ -107,20 +107,20 @@ VAR var[] = {
 	{"login", "LOGIN", NULL, LJUST, logname},
 	{"logname", "", "login"},
 	{"lstart", "STARTED", NULL, LJUST, lstarted},
-	{"majflt", "MAJFLT", NULL, 0, pvar, 0, POFF(p_uru_majflt), ULONG, "d"},
-	{"minflt", "MINFLT", NULL, 0, pvar, 0, POFF(p_uru_minflt), ULONG, "d"},
-	{"msgrcv", "MSGRCV", NULL, 0, pvar, 0, POFF(p_uru_msgrcv), ULONG, "d"},
-	{"msgsnd", "MSGSND", NULL, 0, pvar, 0, POFF(p_uru_msgsnd), ULONG, "d"},
+	{"majflt", "MAJFLT", NULL, 0, pvar, 0, POFF(p_uru_majflt), ULONG, "lu"},
+	{"minflt", "MINFLT", NULL, 0, pvar, 0, POFF(p_uru_minflt), ULONG, "lu"},
+	{"msgrcv", "MSGRCV", NULL, 0, pvar, 0, POFF(p_uru_msgrcv), ULONG, "lu"},
+	{"msgsnd", "MSGSND", NULL, 0, pvar, 0, POFF(p_uru_msgsnd), ULONG, "lu"},
 	{"ni", "", "nice"},
 	{"nice", "NI", NULL, 0, pnice},
-	{"nivcsw", "NIVCSW", NULL, 0, pvar, 0, POFF(p_uru_nivcsw), ULONG, "d"},
+	{"nivcsw", "NIVCSW", NULL, 0, pvar, 0, POFF(p_uru_nivcsw), ULONG, "lu"},
 	{"nsignals", "", "nsigs"},
-	{"nsigs", "NSIGS", NULL, 0, pvar, 0, POFF(p_uru_nsignals), ULONG, "d"},
-	{"nswap", "NSWAP", NULL, 0, pvar, 0, POFF(p_uru_nswap), ULONG, "d"},
-	{"nvcsw", "NVCSW", NULL, 0, pvar, 0, POFF(p_uru_nvcsw), ULONG, "d"},
+	{"nsigs", "NSIGS", NULL, 0, pvar, 0, POFF(p_uru_nsignals), ULONG, "lu"},
+	{"nswap", "NSWAP", NULL, 0, pvar, 0, POFF(p_uru_nswap), ULONG, "lu"},
+	{"nvcsw", "NVCSW", NULL, 0, pvar, 0, POFF(p_uru_nvcsw), ULONG, "lu"},
 	/* XXX */
 	{"nwchan", "WCHAN", NULL, 0, pvar, 0, POFF(p_wchan), KPTR, "x"},
-	{"oublk", "OUBLK", NULL, 0, pvar, 0, POFF(p_uru_oublock), ULONG, "d"},
+	{"oublk", "OUBLK", NULL, 0, pvar, 0, POFF(p_uru_oublock), ULONG, "lu"},
 	{"oublock", "", "oublk"},
 	/* XXX */
 	{"p_ru", "P_RU", NULL, 0, pvar, 0, POFF(p_ru), KPTR, "x"},
@@ -134,7 +134,7 @@ VAR var[] = {
 	{"pmem", "", "%mem"},
 	PID("ppid", "PPID", pvar, POFF(p_ppid)),
 	{"pri", "PRI", NULL, 0, pri},
-	{"re", "RE", NULL, INF127, pvar, 0, POFF(p_swtime), UINT, "d"},
+	{"re", "RE", NULL, INF127, pvar, 0, POFF(p_swtime), UINT, "u"},
 	GID("rgid", "RGID", pvar, POFF(p_rgid)),
 	/* XXX */
 	{"rlink", "RLINK", NULL, 0, pvar, 0, POFF(p_back), KPTR, "x"},
@@ -153,7 +153,7 @@ VAR var[] = {
 	    NULL, 0, pvar, 0, POFF(p_sigignore), SIGLIST, "s"},
 	{"sigmask", "BLOCKED",
 	    NULL, 0, pvar, 0, POFF(p_sigmask), SIGLIST, "s"},
-	{"sl", "SL", NULL, INF127, pvar, 0, POFF(p_slptime), UINT, "d"},
+	{"sl", "SL", NULL, INF127, pvar, 0, POFF(p_slptime), UINT, "u"},
 	{"start", "STARTED", NULL, 0, started},
 	{"stat", "", "state"},
 	{"state", "STAT", NULL, LJUST, state},
@@ -168,7 +168,7 @@ VAR var[] = {
 	{"tty", "TTY", NULL, LJUST, longtname},
 	{"ucomm", "UCOMM", NULL, LJUST, ucomm},
 	UID("uid", "UID", pvar, POFF(p_uid)),
-	{"upr", "UPR", NULL, 0, pvar, 0, POFF(p_usrpri), UCHAR, "d"},
+	{"upr", "UPR", NULL, 0, pvar, 0, POFF(p_usrpri), UCHAR, "u"},
 	{"user", "USER", NULL, LJUST, uname},
 	{"usrpri", "", "upr"},
 	{"vsize", "", "vsz"},
