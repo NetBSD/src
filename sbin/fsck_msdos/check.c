@@ -1,4 +1,4 @@
-/*	$NetBSD: check.c,v 1.11 2000/09/15 22:11:41 abs Exp $	*/
+/*	$NetBSD: check.c,v 1.12 2001/04/06 16:52:41 wiz Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997 Wolfgang Solfrank
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: check.c,v 1.11 2000/09/15 22:11:41 abs Exp $");
+__RCSID("$NetBSD: check.c,v 1.12 2001/04/06 16:52:41 wiz Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -49,8 +49,8 @@ __RCSID("$NetBSD: check.c,v 1.11 2000/09/15 22:11:41 abs Exp $");
 #include "fsutil.h"
 
 int
-checkfilesys(fname)
-	const char *fname;
+checkfilesys(filename)
+	const char *filename;
 {
 	int dosfs;
 	struct bootblock boot;
@@ -61,11 +61,11 @@ checkfilesys(fname)
 
 	rdonly = alwaysno;
 	if (!preen)
-		printf("** %s", fname);
+		printf("** %s", filename);
 
-	dosfs = open(fname, rdonly ? O_RDONLY : O_RDWR, 0);
+	dosfs = open(filename, rdonly ? O_RDONLY : O_RDWR, 0);
 	if (dosfs < 0 && !rdonly) {
-		dosfs = open(fname, O_RDONLY, 0);
+		dosfs = open(filename, O_RDONLY, 0);
 		if (dosfs >= 0)
 			pwarn(" (NO WRITE)\n");
 		else if (!preen)
