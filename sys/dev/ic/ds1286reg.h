@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1286reg.h,v 1.3 2003/01/07 16:37:31 rafal Exp $ 	*/
+/*	$NetBSD: ds1286reg.h,v 1.4 2003/01/19 22:20:43 rafal Exp $ 	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -70,61 +70,61 @@
  * and writing the RTC's registers are handled by machine-specific 
  * functions.
  *
- * The Dallas chip always stored time-of-day and alarm data in BCD.
- * The "hour" time-of-year and alarm fields can either be expressed in
- * AM/PM format, or in 24-hour format.  If AM/PM format is chosen, the
- * hour fields can have the values: 1-12 and 21-32 (the latter being
- * PM).  If the 24-hour format is chosen, they can have the values
- * 0-23.  The hour format is selectable separately for the time and
- * alarm fields, and is controller by bit 6 of the respective register.
+ * The DS1286/DS1386 chips always store time-of-day and alarm data in
+ * BCD.  The "hour" time-of-year and alarm fields can either be stored
+ * in AM/PM format, or in 24-hour format.  If AM/PM format is chosen, 
+ * the hour fields can have the values: 1-12 (for AM) and 21-32 (for
+ * PM).  If the 24-hour format is chosen, they can have the values 0
+ * to 23.  The hour format is selectable separately for the time and
+ *  alarm fields, and is controller by bit 6 of the respective register.
  */
 
 /*
  * The registers, and the bits within each register.
  */
 
-#define	DS_SUBSEC	0x0	/* Time of year: hundredths of seconds (0-99) */
-#define	DS_SEC		0x1	/* Time of year: seconds (0-59) */
-#define	DS_MIN		0x2	/* Time of year: minutes (0-59) */
-#define	DS_AMIN		0x3	/* Alarm: minutes */
-#define	DS_HOUR		0x4	/* Time of year: hour (see above) */
+#define	DS1286_SUBSEC	0x0	/* Time of year: hundredths of seconds (0-99) */
+#define	DS1286_SEC	0x1	/* Time of year: seconds (0-59) */
+#define	DS1286_MIN	0x2	/* Time of year: minutes (0-59) */
+#define	DS1286_AMIN	0x3	/* Alarm: minutes */
+#define	DS1286_HOUR	0x4	/* Time of year: hour (see above) */
 
-#define  DS_HOUR_12MODE		0x40	/* Hour mode: 12-hour (on), 24 (off) */
-#define  DS_HOUR_12HR_PM	0x20	/* AM/PM in 12-hour mode: on = PM */
-#define  DS_HOUR_12HR_MASK	0x1f	/* Mask for hours in 12hour mode */
-#define  DS_HOUR_24HR_MASK	0x3f	/* Mask for hours in 24hour mode */
+#define  DS1286_HOUR_12MODE	0x40	/* Hour mode: 12-hour (on), 24 (off) */
+#define  DS1286_HOUR_12HR_PM	0x20	/* AM/PM in 12-hour mode: on = PM */
+#define  DS1286_HOUR_12HR_MASK	0x1f	/* Mask for hours in 12hour mode */
+#define  DS1286_HOUR_24HR_MASK	0x3f	/* Mask for hours in 24hour mode */
 
-#define	DS_AHOUR	0x5	/* Alarm: hour */
-#define	DS_DOW		0x6	/* Time of year: day of week (1-7) */
-#define	DS_ADOW		0x7	/* Alarm: day of week (1-7) */
-#define	DS_DOM		0x8	/* Time of year: day of month (1-31) */
-#define	DS_MONTH	0x9	/* Time of year: month (1-12), wave generator */
+#define	DS1286_AHOUR	0x5	/* Alarm: hour */
+#define	DS1286_DOW	0x6	/* Time of year: day of week (1-7) */
+#define	DS1286_ADOW	0x7	/* Alarm: day of week (1-7) */
+#define	DS1286_DOM	0x8	/* Time of year: day of month (1-31) */
+#define	DS1286_MONTH	0x9	/* Time of year: month (1-12), wave generator */
 
-#define	 DS_MONTH_MASK		0x3f	/* Mask to extract month */
-#define	 DS_WAVEGEN_MASK	0xc0	/* Mask to extract wave bits */
+#define	 DS1286_MONTH_MASK	0x3f	/* Mask to extract month */
+#define	 DS1286_WAVEGEN_MASK	0xc0	/* Mask to extract wave bits */
 
-#define	DS_YEAR		0xA	/* Time of year: year in century (0-99) */
+#define	DS1286_YEAR	0xA	/* Time of year: year in century (0-99) */
 
-#define	DS_CONTROL	0xB	/* Control register A */
+#define	DS1286_CONTROL	0xB	/* Control register A */
 
-#define	 DS_TE		0x80	/* Update in progress (on == disable update) */
-#define	 DS_INTSWAP	0x40	/* Swap INTA, INTB outputs */
-#define	 DS_INTBSRC	0x20	/* INTB source (on) or sink (off) current */
-#define	 DS_INTAPLS	0x10	/* INTA pulse (on) or level (off) mode */
-#define  DS_WAM		0x08	/* Watchdog alarm mask */
-#define  DS_TDM		0x04	/* Time-of-day alarm mask */
-#define  DS_WAF		0x02	/* Watchdog alarm flag */
-#define  DS_TDF		0x01	/* Time-of-day alarm flag */
+#define	 DS1286_TE	0x80	/* Update in progress (on == disable update) */ 
+#define	 DS1286_INTSWAP	0x40	/* Swap INTA, INTB outputs */
+#define	 DS1286_INTBSRC	0x20	/* INTB source (on) or sink (off) current */
+#define	 DS1286_INTAPLS	0x10	/* INTA pulse (on) or level (off) mode */
+#define  DS1286_WAM	0x08	/* Watchdog alarm mask */
+#define  DS1286_TDM	0x04	/* Time-of-day alarm mask */
+#define  DS1286_WAF	0x02	/* Watchdog alarm flag */
+#define  DS1286_TDF	0x01	/* Time-of-day alarm flag */
 
-#define	DS_NREGS	0xd	/* 14 registers; CMOS follows */
-#define	DS_NTODREGS	0xb	/* 10 of those regs are for TOD and alarm */
+#define	DS1286_NREGS	0xd	/* 14 registers; CMOS follows */
+#define	DS1286_NTODREGS	0xb	/* 11 of those regs are for TOD and alarm */
 
-#define	DS_NVRAM_START	0xe	/* start of NVRAM: offset 14 */
+#define	DS1286_NVRAM_START 0xe	/* start of NVRAM: offset 14 */
 
 /* NVRAM size depends on the chip -- the 1286 only has 50 bytes, whereas
  * the 1386 can have 8K or 32K
  */
-#define	DS_NVRAM_SIZE	50		/* 50 bytes of NVRAM */
+#define	DS1286_NVRAM_SIZE	50		/* 50 bytes of NVRAM */
 
 /*
  * RTC register/NVRAM read and write functions -- machine-dependent.
@@ -136,7 +136,7 @@ void ds1286_write __P((void *sc, u_int reg, u_int datum));
 /*
  * A collection of TOD/Alarm registers.
  */
-typedef u_int ds_todregs[DS_NTODREGS];
+typedef u_int ds1286_todregs[DS1286_NTODREGS];
 
 /*
  * Get all of the TOD/Alarm registers
@@ -148,15 +148,15 @@ typedef u_int ds_todregs[DS_NTODREGS];
 		u_int ctl;						\
 									\
 		/* turn off update for now */				\
-		ctl = ds1286_read(sc, DS_CONTROL);			\
-		ds1286_write(sc, DS_CONTROL, ctl | DS_TE);		\
+		ctl = ds1286_read(sc, DS1286_CONTROL);			\
+		ds1286_write(sc, DS1286_CONTROL, ctl | DS1286_TE);	\
 									\
 		/* read all of the tod/alarm regs */			\
-		for (i = 0; i < DS_NTODREGS; i++) 			\
+		for (i = 0; i < DS1286_NTODREGS; i++) 			\
 			(*regs)[i] = ds1286_read(sc, i);		\
 									\
 		/* turn update back on */				\
-		ds1286_write(sc, DS_CONTROL, ctl);			\
+		ds1286_write(sc, DS1286_CONTROL, ctl);			\
 	} while (0);
 
 /*
@@ -169,13 +169,13 @@ typedef u_int ds_todregs[DS_NTODREGS];
 		u_int ctl;						\
 									\
 		/* turn off update for now */				\
-		ctl = ds1286_read(sc, DS_CONTROL);			\
-		ds1286_write(sc, DS_CONTROL, ctl | DS_TE);		\
+		ctl = ds1286_read(sc, DS1286_CONTROL);			\
+		ds1286_write(sc, DS1286_CONTROL, ctl | DS1286_TE);	\
 									\
 		/* write all of the tod/alarm regs */			\
-		for (i = 0; i < DS_NTODREGS; i++) 			\
+		for (i = 0; i < DS1286_NTODREGS; i++) 			\
 			ds1286_write(sc, i, (*regs)[i]);		\
 									\
 		/* turn update back on */				\
-		ds1286_write(sc, DS_CONTROL, ctl);			\
+		ds1286_write(sc, DS1286_CONTROL, ctl);			\
 	} while (0);
