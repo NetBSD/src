@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.15 1998/02/05 04:57:54 gwr Exp $	*/
+/*	$NetBSD: clock.c,v 1.16 1998/02/08 05:05:54 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -147,6 +147,10 @@ oclock_match(parent, cf, args)
 	if (bus_peek(ca->ca_bustype, ca->ca_paddr, 1) == -1)
 		return (0);
 
+	/* Default interrupt priority. */
+	if (ca->ca_intpri == -1)
+		ca->ca_intpri = CLOCK_PRI;
+
 	return (1);
 }
 
@@ -214,6 +218,7 @@ clock_match(parent, cf, args)
 	struct cfdata *cf;
     void *args;
 {
+	struct confargs *ca = args;
 
 	/* This driver only supports one unit. */
 	if (cf->cf_unit != 0)
@@ -222,8 +227,12 @@ clock_match(parent, cf, args)
 	/* If intersil was found, use that. */
 	if (intersil_va)
 		return (0);
+	/* Else assume a Mostek is there... */
 
-	/* Assume a Mostek is there... */
+	/* Default interrupt priority. */
+	if (ca->ca_intpri == -1)
+		ca->ca_intpri = CLOCK_PRI;
+
 	return (1);
 }
 
@@ -342,7 +351,7 @@ cpu_initclocks(void)
 	s = splhigh();
 
 	/* Install isr (in locore.s) that calls clock_intr(). */
-	isr_add_custom(5, (void*)_isr_clock);
+	isr_add_custom(CLOCK_PRI, (void*)_isr_clock);
 
 	/* Now enable the clock at level 5 in the interrupt reg. */
 	set_clk_mode(IREG_CLOCK_ENAB_5, 0, 1);
