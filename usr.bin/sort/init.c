@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.4 2001/01/12 19:30:22 jdolecek Exp $	*/
+/*	$NetBSD: init.c,v 1.5 2001/02/19 20:50:17 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: init.c,v 1.4 2001/01/12 19:30:22 jdolecek Exp $");
+__RCSID("$NetBSD: init.c,v 1.5 2001/02/19 20:50:17 jdolecek Exp $");
 __SCCSID("@(#)init.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -103,11 +103,13 @@ fldreset(fldtab)
 	int i;
 	fldtab[0].tcol.p = clist+ncols-1;
 	for (++fldtab; fldtab->icol.num; ++fldtab) {
-		for (i = 0; fldtab->icol.num != clist[i].num; i++);
+		for (i = 0; fldtab->icol.num != clist[i].num; i++)
+			;
 		fldtab->icol.p = clist + i;
 		if (!fldtab->tcol.num)
 			continue;
-		for (i = 0; fldtab->tcol.num != clist[i].num; i++);
+		for (i = 0; fldtab->tcol.num != clist[i].num; i++)
+			;
 		fldtab->tcol.p = clist + i;
 	}
 }
@@ -213,15 +215,15 @@ optval(desc, tcolflag)
 	switch(desc) {
 		case 'b':
 			if (!tcolflag)
-				return(BI);
+				return (BI);
 			else
-				return(BT);
-		case 'd': return(D);
-		case 'f': return(F);
-		case 'i': return(I);
-		case 'n': return(N);
-		case 'r': return(R);
-		default:  return(0);
+				return (BT);
+		case 'd': return (D);
+		case 'f': return (F);
+		case 'i': return (I);
+		case 'n': return (N);
+		case 'r': return (R);
+		default:  return (0);
 	}
 }
 

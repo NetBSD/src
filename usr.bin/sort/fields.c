@@ -1,4 +1,4 @@
-/*	$NetBSD: fields.c,v 1.9 2001/02/19 19:52:27 jdolecek Exp $	*/
+/*	$NetBSD: fields.c,v 1.10 2001/02/19 20:50:17 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fields.c,v 1.9 2001/02/19 19:52:27 jdolecek Exp $");
+__RCSID("$NetBSD: fields.c,v 1.10 2001/02/19 20:50:17 jdolecek Exp $");
 __SCCSID("@(#)fields.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -76,10 +76,10 @@ u_char fnum[NBINS], rnum[NBINS];
  */
 length_t
 enterkey(keybuf, line, size, fieldtable)
-	struct recheader *keybuf;	/* pointer to start of key */
+	RECHEADER *keybuf;	/* pointer to start of key */
 	DBT *line;
 	int size;
-	struct field *fieldtable;
+	struct field fieldtable[];
 {
 	int i;
 	u_char *l_d_mask;
@@ -95,8 +95,9 @@ enterkey(keybuf, line, size, fieldtable)
 
 	for (i = 0; i < ncols; i++) {
 		clpos = clist + i;
-		for (; (col < clpos->num) && (pos < lineend); col++)
-			{ NEXTCOL(pos); }
+		for (; (col < clpos->num) && (pos < lineend); col++) {
+			NEXTCOL(pos);
+		}
 		if (pos >= lineend)
 			break;
 		clpos->start = SEP_FLAG ? pos + 1 : pos;
@@ -105,14 +106,14 @@ enterkey(keybuf, line, size, fieldtable)
 		col++;
 		if (pos >= lineend) {
 			clpos->end = lineend;
-			++i;
+			i++;
 			break;
 		}
 	}
 	for (; i <= ncols; i++)
 		clist[i].start = clist[i].end = lineend;
 	if (clist[0].start < (u_char *) line->data)
-		++clist[0].start;
+		clist[0].start++;
 
 	keypos = keybuf->data;
 	endkey = (u_char *) keybuf + size - line->size;
@@ -154,6 +155,7 @@ enterfield(tablepos, endkey, cur_fld, gflags)
 	struct column icol, tcol;
 	u_int flags;
 	u_int Rflag;
+
 	icol = cur_fld->icol;
 	tcol = cur_fld->tcol;
 	flags = cur_fld->flags;
@@ -163,6 +165,7 @@ enterfield(tablepos, endkey, cur_fld, gflags)
 		blancmange(start);
 	start += icol.indent;
 	start = min(start, lineend);
+
 	if (!tcol.num)
 		end = lineend;
 	else {
@@ -211,7 +214,7 @@ enterfield(tablepos, endkey, cur_fld, gflags)
  * if the exponent is exactly 61, 61+252, etc--this is ok, since it's the
  * only time a field delimiter can come in that position.
  * Reverse order is done analagously.
-*/
+ */
 
 static u_char *
 number(pos, bufend, line, lineend, Rflag)
@@ -230,8 +233,10 @@ number(pos, bufend, line, lineend, Rflag)
 		nweights = fnum;
 	if (pos > bufend - 8)
 		return (NULL);
-	/* or_sign sets the sort direction:
-	 *	(-r: +/-)(sign: +/-)(expsign: +/-) */
+	/*
+	 * or_sign sets the sort direction:
+	 *	(-r: +/-)(sign: +/-)(expsign: +/-)
+	 */
 	or_sign = sign ^ expsign ^ Rflag;
 	blancmange(line);
 	if (*line == '-') {	/* set the sign */
@@ -240,7 +245,8 @@ number(pos, bufend, line, lineend, Rflag)
 		line++;
 	}
 	/* eat initial zeroes */
-	for (; *line == '0' && line < lineend; line++);
+	for (; *line == '0' && line < lineend; line++)
+		;
 	/* calculate exponents < 0 */
 	if (*line == DECIMAL) {
 		exponent = 1;
@@ -309,7 +315,7 @@ number(pos, bufend, line, lineend, Rflag)
 /* This forces a gap around the record delimiter
  * Thus fnum has vaues over (0,254) -> ((0,REC_D-1),(REC_D+1,255));
  * rnum over (0,254) -> (255,REC_D+1),(REC_D-1,0))
-*/
+ */
 void
 num_init()
 {
@@ -319,15 +325,15 @@ num_init()
 	OFF_TENS = TENS - '0';
 	OFF_NTENS = NEGTENS - '0';
 	for (i = 1; i < 10; i++) {
-		TENS[i] = TENS[i-1] + 10;
-		NEGTENS[i] = NEGTENS[i-1] - 10;
+		TENS[i] = TENS[i - 1] + 10;
+		NEGTENS[i] = NEGTENS[i - 1] - 10;
 	}
 	for (i = 0; i < REC_D; i++) {
 		fnum[i] = i;
-		rnum[255-i] = i;
+		rnum[255 - i] = i;
 	}
 	for (i = REC_D; i <255; i++) {
-		fnum[i] = i+1;
-		rnum[255-i] = i-1;
+		fnum[i] = i + 1;
+		rnum[255 - i] = i - 1;
 	}
 }
