@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.21.2.3 1999/06/24 22:46:17 cgd Exp $ */
+/*	$NetBSD: md.c,v 1.21.2.4 1999/07/12 19:37:52 perry Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -163,7 +163,7 @@ md_pre_disklabel()
 	msg_display(MSG_dofdisk);
 
 	/* write edited MBR onto disk. */
-	if (write_mbr(diskdev, mbr, sizeof mbr) != 0) {
+	if (write_mbr(diskdev, mbr, sizeof mbr, 1) != 0) {
 		msg_display(MSG_wmbrfail);
 		process_menu(MENU_ok);
 		return 1;
@@ -458,7 +458,7 @@ md_upgrade_mbrtype()
 
 	if (netbsdpart == -1 && oldbsdcount == 1) {
 		mbrp[oldbsdpart].mbrp_typ = MBR_PTYPE_NETBSD;
-		write_mbr(diskdev, mbr, sizeof mbr);
+		write_mbr(diskdev, mbr, sizeof mbr, 0);
 	}
 }
 
