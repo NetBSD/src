@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.49 2000/05/31 23:55:52 matt Exp $      */
+/*      $NetBSD: cpu.h,v 1.50 2000/06/02 21:47:02 matt Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -110,9 +110,6 @@ struct cpu_info {
 #define	need_resched() {curcpu()->ci_want_resched++; mtpr(AST_OK,PR_ASTLVL); }
 
 extern int mastercpu;
-
-#define	setsoftnet()	mtpr(12,PR_SIRR)
-#define setsoftclock()	mtpr(8,PR_SIRR)
 
 /*
  * Notify the current process (p) that it has a signal pending,
