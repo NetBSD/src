@@ -248,6 +248,8 @@ setdefuser()
 **  HOST_MAP_INIT -- initialize host class structures
 */
 
+bool host_map_init __P((MAP *map, char *args));
+
 bool
 host_map_init(map, args)
 	MAP *map;
@@ -917,7 +919,7 @@ getla()
 
 /* Non Apollo stuff removed by Don Lewis 11/15/93 */
 #ifndef lint
-static char  rcsid[] = "@(#)$Id: conf.c,v 1.8 1994/04/20 06:26:38 glass Exp $";
+static char  rcsid[] = "@(#)$Id: conf.c,v 1.9 1994/09/26 06:50:12 glass Exp $";
 #endif /* !lint */
 
 #ifdef apollo
