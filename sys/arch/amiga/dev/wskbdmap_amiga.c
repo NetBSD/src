@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_amiga.c,v 1.5 2002/05/30 20:02:24 thorpej Exp $ */
+/*	$NetBSD: wskbdmap_amiga.c,v 1.6 2003/10/25 10:02:05 jandberg Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdmap_amiga.c,v 1.5 2002/05/30 20:02:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdmap_amiga.c,v 1.6 2003/10/25 10:02:05 jandberg Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -207,6 +207,20 @@ static const keysym_t amikbd_keydesc_de_nodead[] = {
     KC(12),  KS_apostrophe,	KS_grave,
     KC(27),  KS_plus,		KS_asterisk,	KS_asciitilde,
     KC(0),   KS_asciicircum,	KS_degree,
+};
+
+static const keysym_t amikbd_keydesc_pl[] = {
+/*  pos      normal		shifted		altgr		shift-altgr */
+    KC(18),  KS_e,		KS_E,		KS_ecircumflex,	KS_Ecircumflex,
+    KC(24),  KS_o,		KS_O,		KS_oacute,	KS_Oacute,
+    KC(32),  KS_a,		KS_A,		KS_plusminus,	KS_exclamdown,
+    KC(33),  KS_s,		KS_S,		KS_paragraph,	KS_brokenbar,
+    KC(40),  KS_l,		KS_L,		KS_threesuperior,	KS_sterling,
+    KC(49),  KS_z,		KS_Z,		KS_questiondown,	KS_macron,
+    KC(50),  KS_x,		KS_X,		KS_onequarter,	KS_notsign,
+    KC(51),  KS_c,		KS_C,		KS_ae,		KS_AE,
+    KC(54),  KS_n,		KS_N,		KS_ntilde,	KS_Ntilde,
+    KC(101), KS_Mode_switch,	KS_Multi_key,
 };
 
 static const keysym_t pckbd_keydesc_fr[] = {
@@ -487,6 +501,7 @@ const struct wscons_keydesc amigakbd_keydesctab[] = {
 	KBD_MAP(KB_FR,                  KB_US,  pckbd_keydesc_fr),
 	KBD_MAP(KB_DK,			KB_US,	amikbd_keydesc_dk),
 	KBD_MAP(KB_DK | KB_NODEAD,	KB_DK,	amikbd_keydesc_dk_nodead),
+	KBD_MAP(KB_PL,			KB_US,	amikbd_keydesc_pl),
 /*	KBD_MAP(KB_IT,			KB_US,	pckbd_keydesc_it),
 	KBD_MAP(KB_UK,			KB_US,	pckbd_keydesc_uk),
 	KBD_MAP(KB_JP,			KB_US,	pckbd_keydesc_jp),*/
