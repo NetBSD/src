@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma_machdep.c,v 1.6 2003/07/15 03:36:01 lukem Exp $	*/
+/*	$NetBSD: isadma_machdep.c,v 1.7 2003/08/01 22:43:27 kristerw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isadma_machdep.c,v 1.6 2003/07/15 03:36:01 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma_machdep.c,v 1.7 2003/08/01 22:43:27 kristerw Exp $");
 
 #define ISA_DMA_STATS
 
@@ -100,6 +100,7 @@ void	_isa_dma_free_bouncebuf __P((bus_dma_tag_t, bus_dmamap_t));
 struct arm32_bus_dma_tag isa_bus_dma_tag = {
 	0,				/* _ranges */
 	0,				/* _nranges */
+	NULL,				/* _cookie */
 	_isa_bus_dmamap_create,
 	_isa_bus_dmamap_destroy,
 	_isa_bus_dmamap_load,
