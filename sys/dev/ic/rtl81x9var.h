@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.8 2001/02/02 03:51:51 thorpej Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.9 2001/02/02 04:34:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -37,20 +37,6 @@
 #define RTK_ETHER_ALIGN	2
 #define RTK_RXSTAT_LEN	4
 
-struct rtk_chain_data {
-	struct mbuf		*rtk_tx_chain[RTK_TX_LIST_CNT];
-	int			last_tx;
-	int			cur_tx;
-};
-
-#define RTK_INC(x)		(x = (x + 1) % RTK_TX_LIST_CNT)
-#define RTK_CUR_TXADDR(x)	((x->rtk_cdata.cur_tx * 4) + RTK_TXADDR0)
-#define RTK_CUR_TXSTAT(x)	((x->rtk_cdata.cur_tx * 4) + RTK_TXSTAT0)
-#define RTK_CUR_TXMBUF(x)	(x->rtk_cdata.rtk_tx_chain[x->rtk_cdata.cur_tx])
-#define RTK_LAST_TXADDR(x)	((x->rtk_cdata.last_tx * 4) + RTK_TXADDR0)
-#define RTK_LAST_TXSTAT(x)	((x->rtk_cdata.last_tx * 4) + RTK_TXSTAT0)
-#define RTK_LAST_TXMBUF(x)	(x->rtk_cdata.rtk_tx_chain[x->rtk_cdata.last_tx])
-
 struct rtk_type {
 	u_int16_t		rtk_vid;
 	u_int16_t		rtk_did;
@@ -78,6 +64,14 @@ struct rtk_mii_frame {
 #define RTK_8129		1
 #define RTK_8139		2
 
+struct rtk_tx_desc {
+	SIMPLEQ_ENTRY(rtk_tx_desc) txd_q;
+	struct mbuf		*txd_mbuf;
+	bus_dmamap_t		txd_dmamap;
+	bus_addr_t		txd_txaddr;
+	bus_addr_t		txd_txstat;
+};
+
 struct rtk_softc {
 	struct device sc_dev;		/* generic device structures */
 	struct ethercom		ethercom;	/* interface info */
@@ -93,8 +87,9 @@ struct rtk_softc {
 	bus_dmamap_t 		recv_dmamap;
 	caddr_t			rtk_rx_buf;
 
-	struct rtk_chain_data	rtk_cdata;
-	bus_dmamap_t		snd_dmamap[RTK_TX_LIST_CNT];
+	struct rtk_tx_desc	rtk_tx_descs[RTK_TX_LIST_CNT];
+	SIMPLEQ_HEAD(, rtk_tx_desc) rtk_tx_free;
+	SIMPLEQ_HEAD(, rtk_tx_desc) rtk_tx_dirty;
 
 	int			sc_flags;	/* misc flags */
 	void	*sc_sdhook;			/* shutdown hook */
