@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.35 1996/05/19 01:54:49 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.36 1996/05/19 17:58:20 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -330,7 +330,7 @@ extern void MachEmptyWriteBuffer __P((void));
 extern void MachUTLBMiss __P((void));
 extern void setsoftclock __P((void));
 extern int main __P((void*));
-extern void lememinit __P((void*));
+extern void am7990_meminit __P((void*)); /* XXX */
 #endif	/* DEBUG */
 
 
@@ -1708,7 +1708,7 @@ static struct { void *addr; char *name;} names[] = {
 	Name(interrupt),
 	Name(trap),
 #ifdef pmax
-	Name(lememinit),
+	Name(am7990_meminit),
 #endif
 #ifdef CPU_R3000
 	Name(mips_r2000_KernGenException),
