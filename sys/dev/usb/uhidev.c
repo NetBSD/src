@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.1 2001/12/28 17:32:36 augustss Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.2 2001/12/29 18:56:52 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -107,6 +107,7 @@ USB_ATTACH(uhidev)
 	struct uhidev_attach_arg uha;
 	struct uhidev *dev;
 	int size, nrepid, repid, repsz;
+	int repsizes[256];
 	void *desc;
 	usbd_status err;
 	char devinfo[1024];
@@ -202,6 +203,7 @@ USB_ATTACH(uhidev)
 	for (repid = 0; repid < nrepid; repid++) {
 		repsz = hid_report_size(desc, size, hid_input, repid);
 		DPRINTF(("uhidev_match: repid=%d, repsz=%d\n", repid, repsz));
+		repsizes[repid] = repsz;
 		if (repsz > 0) {
 			if (repsz > sc->sc_isize)
 				sc->sc_isize = repsz;
@@ -222,6 +224,7 @@ USB_ATTACH(uhidev)
 			dev = (struct uhidev *)config_found_sm(self, &uha,
 			                           uhidevprint, uhidevsubmatch);
 			sc->sc_subdevs[repid] = dev;
+			dev->sc_in_rep_size = repsizes[repid];
 #ifdef DIAGNOSTIC
 			if (dev != NULL) {
 				DPRINTF(("uhidev_match: repid=%d dev=%p\n",
@@ -360,7 +363,10 @@ uhidev_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 		return;
 
 	if (status != USBD_NORMAL_COMPLETION) {
-		DPRINTF(("uhidev_intr: status=%d\n", status));
+#ifdef DIAGNOSTIC
+		printf("%s: interrupr status=%d\n", USBDEVNAME(sc->sc_dev),
+		       status);
+#endif
 		usbd_clear_endpoint_stall_async(sc->sc_intrpipe);
 		return;
 	}
@@ -379,6 +385,11 @@ uhidev_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 		    rep, scd, scd ? scd->sc_state : 0));
 	if (scd == NULL || !(scd->sc_state & UHIDEV_OPEN))
 		return;
+#ifdef DIAGNOSTIC
+	if (scd->sc_in_rep_size != cc)
+		printf("%s: bad input length %d != %d\n",USBDEVNAME(sc->sc_dev),
+		       scd->sc_in_rep_size, cc);
+#endif
 	scd->sc_intr(scd, p, cc);
 }
 
