@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.227 2004/05/26 19:58:28 he Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.228 2004/05/26 20:16:13 he Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -3083,3 +3083,18 @@ sys/netipsec/key.c				1.16
 	The FAST_IPSEC code actually supports KEYCTL_PREFERED_OLDSA, so export
 	it via sysctl.
 	[atatat, ticket #386]
+
+sys/compat/darwin/darwin_sysctl.c		1.26
+sys/compat/irix/irix_sysctl.c			1.4
+sys/compat/linux/common/linux_sysctl.c		1.16
+
+	Add sysctl descriptions under emul subtree.
+	[atatat, ticket #387]
+
+sys/kern/tty.c					1.168
+sys/kern/uipc_mbuf.c				1.82
+sys/kern/uipc_socket.c				1.103
+sys/kern/vfs_bio.c				1.125
+
+	Add remaining sysctl descriptions under kern subtree.
+	[atatat, ticket #388]
