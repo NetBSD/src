@@ -1,4 +1,4 @@
-/* $NetBSD: sio_pic.c,v 1.20 1998/04/14 22:31:17 thorpej Exp $ */
+/* $NetBSD: sio_pic.c,v 1.21 1998/05/23 18:35:56 matt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.20 1998/04/14 22:31:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.21 1998/05/23 18:35:56 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -544,4 +544,79 @@ sio_iointr(framep, vec)
 		    sio_ioh_icu2, 0, 0x20 | (irq & 0x07));	/* XXX */
 	bus_space_write_1(sio_iot,
 	    sio_ioh_icu1, 0, 0x20 | (irq > 7 ? 2 : irq));	/* XXX */
+}
+
+#define	LEGAL_IRQ(x)	((x) >= 0 && (x) < ICU_LEN && (x) != 2)
+
+int
+sio_intr_alloc(v, mask, type, irq)
+	void *v;
+	int mask;
+	int type;
+	int *irq;
+{
+	int i, tmp, bestirq, count;
+	struct alpha_shared_intrhand **p, *q;
+
+	if (type == IST_NONE)
+		panic("intr_alloc: bogus type");
+
+	bestirq = -1;
+	count = -1;
+
+	/* some interrupts should never be dynamically allocated */
+	mask &= 0xdef8;
+
+	/*
+	 * XXX some interrupts will be used later (6 for fdc, 12 for pms).
+	 * the right answer is to do "breadth-first" searching of devices.
+	 */
+	mask &= 0xefbf;
+
+	for (i = 0; i < ICU_LEN; i++) {
+		if (LEGAL_IRQ(i) == 0 || (mask & (1<<i)) == 0)
+			continue;
+
+		switch(sio_intr[i].intr_sharetype) {
+		case IST_NONE:
+			/*
+			 * if nothing's using the irq, just return it
+			 */
+			*irq = i;
+			return (0);
+
+		case IST_EDGE:
+		case IST_LEVEL:
+			if (type != sio_intr[i].intr_sharetype)
+				continue;
+			/*
+			 * if the irq is shareable, count the number of other
+			 * handlers, and if it's smaller than the last irq like
+			 * this, remember it
+			 *
+			 * XXX We should probably also consider the
+			 * interrupt level and stick IPL_TTY with other
+			 * IPL_TTY, etc.
+			 */
+			for (p = &TAILQ_FIRST(&sio_intr[i].intr_q), tmp = 0;
+			     (q = *p) != NULL; p = &TAILQ_NEXT(q, ih_q), tmp++)
+				;
+			if ((bestirq == -1) || (count > tmp)) {
+				bestirq = i;
+				count = tmp;
+			}
+			break;
+
+		case IST_PULSE:
+			/* this just isn't shareable */
+			continue;
+		}
+	}
+
+	if (bestirq == -1)
+		return (1);
+
+	*irq = bestirq;
+
+	return (0);
 }
