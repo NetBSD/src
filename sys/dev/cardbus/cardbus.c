@@ -1,4 +1,4 @@
-/*	$Id: cardbus.c,v 1.1 1999/10/15 06:07:17 haya Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.2 1999/10/15 06:41:27 haya Exp $	*/
 
 /*
  * Copyright (c) 1997 and 1998 HAYAKAWA Koichi.  All rights reserved.
