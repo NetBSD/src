@@ -374,7 +374,6 @@
 ./usr/games/hide
 ./usr/include
 ./usr/include/arpa
-./usr/include/bfd
 ./usr/include/compat
 ./usr/include/dev
 ./usr/include/dev/microcode
@@ -744,6 +743,7 @@
 ./usr/share/keymaps/amiga
 ./usr/share/keymaps/atari
 ./usr/share/keymaps/x68k
+./usr/share/ldscripts
 ./usr/share/lkm
 ./usr/share/lkm/misc
 ./usr/share/lkm/misc/module
