@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.220 2004/09/26 03:03:17 dyoung Exp $
+#	$NetBSD: files.pci,v 1.221 2004/10/10 16:37:07 augustss Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -401,6 +401,11 @@ file	dev/pci/eap.c			eap
 
 attach	joy at eap with joy_eap
 file	dev/pci/joy_eap.c		joy_eap needs-flag
+
+# Acer Labs M5455
+device	auacer: audiobus, auconv, mulaw, ac97
+attach	auacer at pci
+file	dev/pci/auacer.c		auacer
 
 # Intel ICH AC'97 audio
 device	auich: audiobus, auconv, mulaw, ac97, aurateconv
