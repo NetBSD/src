@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.22 1998/01/02 20:37:34 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.23 1998/01/03 01:13:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -56,10 +56,6 @@ typedef struct pmap *pmap_t;
 #ifdef _KERNEL
 extern	struct pmap	kernel_pmap_store;
 #define	pmap_kernel()	(&kernel_pmap_store)
-
-struct proc;
-void	pmap_activate __P((struct proc *));
-void	pmap_deactivate __P((struct proc *));
 
 /*
  * We give the pmap code a chance to resolve faults by
