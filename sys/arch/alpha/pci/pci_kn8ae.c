@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn8ae.c,v 1.7 1997/09/02 13:19:46 thorpej Exp $ */
+/* $NetBSD: pci_kn8ae.c,v 1.8 1998/03/23 06:32:39 mjacob Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn8ae.c,v 1.7 1997/09/02 13:19:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn8ae.c,v 1.8 1998/03/23 06:32:39 mjacob Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -65,13 +65,11 @@ void	*dec_kn8ae_intr_establish __P((void *, pci_intr_handle_t,
 	    int, int (*func)(void *), void *));
 void	dec_kn8ae_intr_disestablish __P((void *, void *));
 
-#define	NIONODE	5
-#define	NHOSE	4
 struct vectab {
 	int (*func) __P((void *));
 	void *arg;
-} vectab[NIONODE][NHOSE][DWLPX_MAXDEV];
-static u_int32_t imaskcache[NIONODE][NHOSE][NHPC];
+} vectab[DWLPX_NIONODE][DWLPX_NHOSE][DWLPX_MAXDEV];
+static u_int32_t imaskcache[DWLPX_NIONODE][DWLPX_NHOSE][NHPC];
 
 #ifdef EVCNT_COUNTERS
 struct evcnt kn8ae_intr_evcnt;
@@ -101,8 +99,8 @@ pci_kn8ae_pickintr(ccp, first)
 		return;
 	}
 
-	for (io = 0; io < NIONODE; io++) {
-		for (hose = 0; hose < NHOSE; hose++) {
+	for (io = 0; io < DWLPX_NIONODE; io++) {
+		for (hose = 0; hose < DWLPX_NHOSE; hose++) {
 			for (dev = 0; dev < DWLPX_MAXDEV; dev++) {
 				vectab[io][hose][dev].func = kn8ae_spurious;
 				vectab[io][hose][dev].arg = (void *)
@@ -110,8 +108,8 @@ pci_kn8ae_pickintr(ccp, first)
 			}
 		}
 	}
-	for (io = 0; io < NIONODE; io++) {
-		for (hose = 0; hose < NHOSE; hose++) {
+	for (io = 0; io < DWLPX_NIONODE; io++) {
+		for (hose = 0; hose < DWLPX_NHOSE; hose++) {
 			for (dev = 0; dev < NHPC; dev++) {
 				imaskcache[io][hose][dev] = DWLPX_IMASK_DFLT;
 			}
@@ -181,10 +179,10 @@ dec_kn8ae_intr_establish(ccv, ih, level, func, arg)
 	hose	= ccp->cc_sc->dwlpx_hosenum;
 	device	= DWLPX_MVEC_PCISLOT(ih);
 
-	if (ionode < 0 || ionode >= NIONODE) {
+	if (ionode < 0 || ionode >= DWLPX_NIONODE) {
 		panic("dec_kn8ae_intr_establish: bad ionode %d\n", ionode);
 	}
-	if (hose < 0 || hose >= NHOSE) {
+	if (hose < 0 || hose >= DWLPX_NHOSE) {
 		panic("dec_kn8ae_intr_establish: bad hose %d\n", hose);
 	}
 	if (device < 0 || device >= DWLPX_MAXDEV) {
@@ -217,7 +215,8 @@ dec_kn8ae_intr_disestablish(ccv, cookie)
 	ionode = DWLPX_MVEC_IONODE(cookie);
 	hose = DWLPX_MVEC_HOSE(cookie);
 	device = DWLPX_MVEC_PCISLOT(cookie);
-	if (ionode < 0 || ionode >= NIONODE || hose < 0 || hose >= NHOSE ||
+	if (ionode < 0 || ionode >= DWLPX_NIONODE ||
+	    hose < 0 || hose >= DWLPX_NHOSE ||
 	    device < 0 || device >= DWLPX_MAXDEV) {
 		return;
 	}
@@ -235,8 +234,13 @@ kn8ae_iointr(framep, vec)
 {
 	struct vectab *vp;
 	int ionode, hose, device;
+	if ((vec & DWLPX_VEC_EMARK) != 0) {
+		dwlpx_iointr(framep, vec);
+		return;
+	}
 	if ((vec & DWLPX_VEC_MARK) == 0) {
 		panic("kn8ae_iointr: vec 0x%x\n", vec);
+		/* NOTREACHED */
 	}
 #ifdef	EVCNT_COUNTERS
 	kn8ae_intr_evcnt.ev_count++;
@@ -247,9 +251,11 @@ kn8ae_iointr(framep, vec)
 	hose = DWLPX_MVEC_HOSE(vec);
 	device = DWLPX_MVEC_PCISLOT(vec);
 
-	if (ionode < 0 || ionode >= NIONODE || hose < 0 || hose >= NHOSE ||
+	if (ionode < 0 || ionode >= DWLPX_NIONODE ||
+	    hose < 0 || hose >= DWLPX_NHOSE ||
 	    device < 0 || device >= DWLPX_MAXDEV) {
 		panic("kn8ae_iointr: malformed vector 0x%x\n", vec);
+		/* NOTREACHED */
 	}
 	vp = &vectab[ionode][hose][device];
 	if ((*vp->func)(vp->arg) == 0) {
