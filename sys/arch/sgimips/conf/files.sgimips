@@ -1,4 +1,4 @@
-#	$NetBSD: files.sgimips,v 1.25 2003/10/05 15:38:08 tsutsui Exp $
+#	$NetBSD: files.sgimips,v 1.26 2003/11/13 02:31:46 sekiya Exp $
 
 maxpartitions 16
 
@@ -46,6 +46,10 @@ file arch/sgimips/dev/mcclock_mace.c	mcclock_mace
 device mec: arp, ether, ifnet, mii
 attach mec at mace
 file arch/sgimips/dev/if_mec.c		mec
+
+device macau: audiobus, ad1848, auconv
+attach macau at mace with macau
+file arch/sgimips/dev/macau_mace.c	macau
 
 device macepci: pcibus
 attach macepci at mace
