@@ -1,4 +1,4 @@
-/*	$NetBSD: news3400.c,v 1.3.2.2 2000/11/20 20:17:32 bouyer Exp $	*/
+/*	$NetBSD: news3400.c,v 1.3.2.3 2000/12/08 09:28:52 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -37,10 +37,16 @@
 #include <machine/psl.h>
 #include <newsmips/newsmips/machid.h>
 
-void level0_intr __P((void));
-void level1_intr __P((void));
-void hb_intr_dispatch __P((int));
-void MachFPInterrupt __P((unsigned, unsigned, unsigned, struct frame *));
+void level0_intr (void);
+void level1_intr (void);
+void hb_intr_dispatch (int);
+void MachFPInterrupt (unsigned, unsigned, unsigned, struct frame *);
+
+int news3400_badaddr (void *, u_int);
+static void enable_intr_3400 (void);
+static void disable_intr_3400 (void);
+static void readidrom_3400 (u_char *);
+void news3400_init (void);
 
 static int badaddr_flag;
 
@@ -194,8 +200,8 @@ news3400_badaddr(addr, size)
 	return badaddr_flag;
 }
 
-void
-enable_intr_3400()
+static void
+enable_intr_3400(void)
 {
 	volatile u_int8_t *inten0 = (void *)INTEN0;
 	volatile u_int8_t *inten1 = (void *)INTEN1;
@@ -222,8 +228,8 @@ enable_intr_3400()
 		  INTEN1_SLOT1 | INTEN1_SLOT3;
 }
 
-void
-disable_intr_3400()
+static void
+disable_intr_3400(void)
 {
 	volatile u_int8_t *inten0 = (void *)INTEN0;
 	volatile u_int8_t *inten1 = (void *)INTEN1;
@@ -232,7 +238,7 @@ disable_intr_3400()
 	*inten1 = 0;
 }
 
-void
+static void
 readidrom_3400(rom)
 	register u_char *rom;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: romcalls.S,v 1.1.8.2 2000/11/20 20:16:19 bouyer Exp $	*/
+/*	$NetBSD: romcalls.S,v 1.1.8.3 2000/12/08 09:28:48 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1999 Izumi Tsutsui.  All rights reserved.
@@ -32,7 +32,7 @@
 	.text
 	.align	4
 
-ASENTRY_NOPROFILE(halt)
+ENTRY_NOPROFILE(rom_halt)
 	moveq	#8, %d7		| RB_HALT
 	trap	#15
 

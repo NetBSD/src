@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.2 1998/06/01 19:31:05 tsubai Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.2.14.1 2000/12/08 09:28:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -71,5 +71,5 @@ void  zs_write_csr __P((struct zs_chanstate *cs, u_char val));
 void  zs_write_data __P((struct zs_chanstate *cs, u_char val));
 
 /* Zilog Serial hardware interrupts (level 1) */
-#define splzs()		cpu_spl1()
-extern int splzs();
+#define splzs		cpu_spl1
+extern int splzs(void);

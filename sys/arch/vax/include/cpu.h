@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.40.2.1 2000/11/20 20:32:49 bouyer Exp $      */
+/*      $NetBSD: cpu.h,v 1.40.2.2 2000/12/08 09:30:51 bouyer Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -168,6 +168,7 @@ void	ioaccess(vaddr_t, paddr_t, int);
 void	iounaccess(vaddr_t, int);
 void	findcpu(void);
 void	child_return(void *);
+int	getmajor(void *);
 #ifdef DDB
 int	kdbrint(int);
 #endif

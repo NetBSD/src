@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.16.2.2 2000/11/22 16:01:19 bouyer Exp $	*/
+/*	$NetBSD: trap.c,v 1.16.2.3 2000/12/08 09:28:54 bouyer Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/trap.c
@@ -990,7 +990,7 @@ syscall(code, frame)
 	struct frame frame;
 {
 	caddr_t params;
-	struct const sysent *callp;
+	const struct sysent *callp;
 	struct proc *p;
 	int error, opc, nsys;
 	size_t argsize;

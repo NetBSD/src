@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.12.2.1 2000/11/20 20:26:47 bouyer Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.12.2.2 2000/12/08 09:30:34 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
@@ -454,9 +454,9 @@ static __inline__ void stda __P((paddr_t loc, int asi, u_int64_t value));
 #if 0
 static __inline__ unsigned int casa __P((paddr_t loc, int asi, 
 	unsigned int value, unsigned int oldvalue));
-#endif
 static __inline__ u_int64_t casxa __P((paddr_t loc, int asi, 
 	u_int64_t value, u_int64_t oldvalue));
+#endif
 
 #ifdef __arch64__
 static __inline__ u_char 
@@ -955,6 +955,7 @@ stxa(paddr_t loc, int asi, u_int64_t value)
 }
 #endif
 
+#if 0
 #ifdef __arch64__
 /* native store 64-bit int to alternate address space w/64-bit compiler*/
 static __inline__ u_int64_t
@@ -1009,6 +1010,7 @@ casxa(paddr_t loc, int asi, u_int64_t value, u_int64_t oldvalue)
 	}
 }
 #endif
+#endif /* 0 */
 
 #if 0
 #ifdef __arch64__

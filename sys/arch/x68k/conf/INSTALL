@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.18.2.1 2000/11/20 20:29:54 bouyer Exp $
+#	$NetBSD: INSTALL,v 1.18.2.2 2000/12/08 09:30:54 bouyer Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -6,7 +6,7 @@
 
 include "arch/x68k/conf/std.x68k"
 
-#ident 		"INSTALL-$Revision: 1.18.2.1 $"
+#ident 		"INSTALL-$Revision: 1.18.2.2 $"
 
 makeoptions     COPTS="-Os"             # Optimise for space. Implies -O2
 
@@ -18,7 +18,7 @@ options 	MEMORY_DISK_IS_ROOT     # Force root on memory-disk
 options 	MEMORY_DISK_SERVER=0	# No user space hooks
 #options 	MINIROOTSIZE=2400	# 1.2M, same as a 130mm floppy
 #options 	MINIROOTSIZE=2880	# 1.44M, same as a 90mm floppy
-options 	MINIROOTSIZE=2200
+options 	MINIROOTSIZE=2400
 
 ## System kernel configuration.  See options(4) for more detail.
 

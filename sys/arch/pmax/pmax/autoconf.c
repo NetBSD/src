@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.41.2.1 2000/11/20 20:20:33 bouyer Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.41.2.2 2000/12/08 09:30:15 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.41.2.1 2000/11/20 20:20:33 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.41.2.2 2000/12/08 09:30:15 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.41.2.1 2000/11/20 20:20:33 bouyer Exp
 #include <machine/intr.h>
 #include <machine/sysconf.h>
 
-#include <pmax/dev/device.h>
+#include <pmax/pmax/pmaxtype.h>
 
 #include <dev/tc/tcvar.h>
 
@@ -65,8 +65,11 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.41.2.1 2000/11/20 20:20:33 bouyer Exp
 
 #include "rz.h"
 #include "tz.h"
-#include "xasc_ioasic.h"
-#include "xasc_pmaz.h"
+#include "opt_dec_3100.h"
+
+#if NRZ > 0 || NTZ > 0
+#include <pmax/dev/device.h>
+#endif
 
 struct intrhand intrtab[MAX_DEV_NCOOKIES];
 struct device *booted_device;
@@ -111,6 +114,7 @@ makebootdev(cp)
 	booted_slot = booted_unit = booted_partition = 0;
 	booted_protocol = NULL;
 
+#ifdef DEC_3100
 	if (cp[0] == 'r' && cp[1] == 'z' && cp[2] == '(') {
 		cp += 3;
 		if (*cp >= '0' && *cp <= '9')
@@ -126,6 +130,16 @@ makebootdev(cp)
 		booted_protocol = "SCSI";
 		return;
 	}
+	if (strncmp(cp, "tftp(", 5) == 0) {
+		booted_protocol = "BOOTP";
+		return;
+	}
+	if (strncmp(cp, "mop(", 4) == 0) {
+		booted_protocol = "MOP";
+		return;
+	}
+#endif
+
 	if (cp[0] >= '0' && cp[0] <= '9' && cp[1] == '/') {
 		booted_slot = cp[0] - '0';
 		if (cp[2] == 'r' && cp[3] == 'z'
@@ -275,6 +289,14 @@ device_register(dev, aux)
 	if (netboot && strcmp(cd->cd_name, "le") == 0) {
 		struct tc_attach_args *ta = aux;
 
+#ifdef DEC_3100
+		/* Only one Ethernet interface on 3100. */
+		if (systype == DS_PMAX) {
+			booted_device = dev;
+			found = 1;
+			return;
+		}
+#endif
 		if (parent == ioasicdev ||
 		    ta->ta_slot == booted_slot) {
 			booted_device = dev;

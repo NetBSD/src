@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.8.2.1 2000/11/20 20:26:58 bouyer Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.8.2.2 2000/12/08 09:30:43 bouyer Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -489,7 +489,7 @@ svr4_sendsig(catcher, sig, mask, code)
 	sigpid = p->p_pid;
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid) {
 		printf("svr4_sendsig: %s[%d] sig %d newusp %p scp %p oldsp %p\n",
-		    p->p_comm, p->p_pid, sig, fp, &fp->sf_uc, oldsp);
+		    p->p_comm, p->p_pid, sig, fp, &fp->sf_uc, (void *)(u_long)oldsp);
 #ifdef DDB
 		if (sigdebug & SDB_DDB) Debugger();
 #endif
@@ -521,7 +521,7 @@ svr4_sendsig(catcher, sig, mask, code)
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK))
 	    printf("svr4_sendsig: saving sf to %p, setting stack pointer %p to %p\n",
-		   fp, &(((struct rwindow32 *)newsp)->rw_in[6]), oldsp);
+		   fp, &(((struct rwindow32 *)newsp)->rw_in[6]), (void *)(u_long)oldsp);
 #endif
 	if (rwindow_save(p) || copyout(&frame, fp, sizeof(frame)) != 0 ||
 	    copyout(&oldsp, &((struct rwindow32 *)newsp)->rw_in[6], sizeof(oldsp))) {
@@ -562,7 +562,7 @@ svr4_sendsig(catcher, sig, mask, code)
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid) {
 		printf("svr4_sendsig: about to return to catcher %p thru %p\n", 
-		       catcher, addr);
+		       catcher, (void *)(u_long)addr);
 #ifdef DDB
 		if (sigdebug & SDB_DDB) Debugger();
 #endif

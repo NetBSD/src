@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.51.2.1 2000/11/20 20:32:42 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.51.2.2 2000/12/08 09:30:49 bouyer Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
 
 include		"arch/vax/conf/std.vax"
 
-#ident 		"GENERIC-$Revision: 1.51.2.1 $"
+#ident 		"GENERIC-$Revision: 1.51.2.2 $"
 
 # Here are all different supported CPU types listed.
 #options 	"VAX8800"	# VAX 8500, 8530, 8550, 8700, 8800
@@ -35,7 +35,7 @@ options 	DDB
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 options 	KTRACE
 #options 	DIAGNOSTIC
-#options 	DEBUG,KMEMSTATS,PMAPDEBUG,TRAPDEBUG
+#options 	DEBUG,KMEMSTATS,PMAPDEBUG,TRAPDEBUG,LOCKDEBUG
 
 options 	SCSIVERBOSE		# Verbose SCSI errors
 
@@ -72,6 +72,7 @@ options 	NFS_BOOT_BOOTPARAM	# Use the Sun way for netbooting.
 # WS console uses VT100 terminal emulation
 options 	WSEMUL_VT100
 options 	WSDISPLAY_DEFAULTSCREENS=8
+options 	FONT_QVSS8x15
 
 # System V shared memory & semaphores support.
 options 	SYSVMSG
@@ -206,7 +207,10 @@ wsdisplay0	at smg0
 #wsdisplay0	at clr0
 #wsdisplay0	at qd0
 #wsdisplay0	at qv0
-lkc0		at dz0
+lkkbd0		at dz0 line 0
+wskbd*		at lkkbd? console ?
+lkms0		at dz0 line 1
+wsmouse*	at lkms?
 
 pseudo-device   loop	1
 pseudo-device   pty			# pseudo-terminals

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.4.2.2 2000/11/20 20:16:12 bouyer Exp $	*/
+/*	$NetBSD: intr.h,v 1.4.2.3 2000/12/08 09:28:46 bouyer Exp $	*/
 
 /*
  *
@@ -39,6 +39,7 @@
 #define	_NEWS68K_INTR_H_
 
 #include <machine/psl.h>
+#include <m68k/asm_single.h>
 
 #ifdef _KERNEL
 /*
@@ -75,10 +76,8 @@ extern volatile u_char *ctrl_int2;
 #define	SIR_CLOCK	1
 #define	NEXT_SIR	2
 
-#define	siron(x)	\
-	__asm __volatile ("orb %0,%1" : : "di" ((u_char)(x)), "g" (ssir))
-#define	siroff(x)	\
-	__asm __volatile ("andb %0,%1" : : "di" ((u_char)~(x)), "g" (ssir))
+#define	siron(x)	single_inst_bset_b((ssir), (x))
+#define	siroff(x)	single_inst_bclr_b((ssir), (x))
 #define	setsoftint(x)	do {				\
 				siron(x);		\
 				*ctrl_int2 = 0xff;	\

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.86.2.2 2000/11/22 16:01:42 bouyer Exp $ */
+/*	$NetBSD: trap.c,v 1.86.2.3 2000/12/08 09:30:31 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,6 @@
 #include "opt_ktrace.h"
 #include "opt_compat_svr4.h"
 #include "opt_compat_sunos.h"
-#include "opt_compat_aout.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,10 +93,6 @@ extern struct emul emul_sunos;
 #include <sparc/fpu/fpu_extern.h>
 #include <sparc/sparc/memreg.h>
 #include <sparc/sparc/cpuvar.h>
-
-#ifdef COMPAT_AOUT
-extern struct emul emul_netbsd;
-#endif /* COMPAT_AOUT */
 
 #ifdef DEBUG
 int	rwindow_debug = 0;
@@ -1137,7 +1132,7 @@ syscall(code, tf, pc)
 	register_t pc;
 {
 	int i, nsys, *ap, nap;
-	struct const sysent *callp;
+	const struct sysent *callp;
 	struct proc *p;
 	int error, new;
 	struct args {
@@ -1196,11 +1191,7 @@ syscall(code, tf, pc)
 		nap--;
 		break;
 	case SYS___syscall:
-		if (callp != sysent
-#ifdef COMPAT_AOUT
-		    && p->p_emul != &emul_netbsd	/* Our a.out */
-#endif
-		)
+		if (!(p->p_emul->e_flags & EMUL_HAS_SYS___syscall))
 			break;
 		code = ap[_QUAD_LOWWORD];
 		ap += 2;

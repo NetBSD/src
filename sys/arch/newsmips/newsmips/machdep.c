@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.30.2.1 2000/11/20 20:17:31 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.30.2.2 2000/12/08 09:28:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30.2.1 2000/11/20 20:17:31 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30.2.2 2000/12/08 09:28:52 bouyer Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -310,17 +310,6 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 #endif
 
 	/*
-	 * Alloc u pages for proc0 stealing KSEG0 memory.
-	 */
-	proc0.p_addr = proc0paddr = (struct user *)kernend;
-	proc0.p_md.md_regs = (struct frame *)(kernend + USPACE) - 1;
-	memset(proc0.p_addr, 0, USPACE);
-	curpcb = &proc0.p_addr->u_pcb;
-	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
-
-	kernend += USPACE;
-
-	/*
 	 * Load the rest of the available pages into the VM system.
 	 */
 	first = round_page(MIPS_KSEG0_TO_PHYS(kernend));
@@ -332,6 +321,15 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 	 * Initialize error message buffer (at end of core).
 	 */
 	mips_init_msgbuf();
+
+	/*
+	 * Allocate space for proc0's USPACE.
+	 */
+	v = (caddr_t)pmap_steal_memory(USPACE, NULL, NULL); 
+	proc0.p_addr = proc0paddr = (struct user *)v;
+	proc0.p_md.md_regs = (struct frame *)(v + USPACE) - 1;
+	curpcb = &proc0.p_addr->u_pcb;
+	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 
 	/*
 	 * Allocate space for system data structures.  These data structures

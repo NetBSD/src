@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.51.2.1 2000/11/20 20:26:56 bouyer Exp $ */
+/*	$NetBSD: machdep.c,v 1.51.2.2 2000/12/08 09:30:41 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -520,15 +520,14 @@ sendsig(catcher, sig, mask, code)
 	tf = p->p_md.md_tf;
 	oldsp = (struct rwindow *)(u_long)(tf->tf_out[6] + STACK_OFFSET);
 
-	/* Do we need to jump onto the signal stack? */
-	onstack =
-	    (psp->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-	    (psp->ps_sigact[sig].sa_flags & SA_ONSTACK) != 0;
-
 	/*
 	 * Compute new user stack addresses, subtract off
 	 * one signal frame, and align.
 	 */
+	onstack =
+	    (psp->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (psp->ps_sigact[sig].sa_flags & SA_ONSTACK) != 0;
+
 	if (onstack)
 		fp = (struct sigframe *)((caddr_t)psp->ps_sigstk.ss_sp +
 						  psp->ps_sigstk.ss_size);
@@ -582,7 +581,6 @@ sendsig(catcher, sig, mask, code)
 	sf.sf_sc.sc_g1 = tf->tf_global[1];
 	sf.sf_sc.sc_o0 = tf->tf_out[0];
 
-
 	/*
 	 * Put the stack in a consistent state before we whack away
 	 * at it.  Note that write_user_windows may just dump the
@@ -597,7 +595,8 @@ sendsig(catcher, sig, mask, code)
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK))
 	    printf("sendsig: saving sf to %p, setting stack pointer %p to %p\n",
-		   fp, &(((struct rwindow *)newsp)->rw_in[6]), (vaddr_t)tf->tf_out[6]);
+		   fp, &(((struct rwindow *)newsp)->rw_in[6]),
+		   (void *)(unsigned long)tf->tf_out[6]);
 #endif
 	if (rwindow_save(p) || copyout((caddr_t)&sf, (caddr_t)fp, sizeof sf) || 
 #ifdef NOT_DEBUG
@@ -644,7 +643,7 @@ sendsig(catcher, sig, mask, code)
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid) {
 		printf("sendsig: about to return to catcher %p thru %p\n", 
-		       catcher, addr);
+		       catcher, (void *)(unsigned long)addr);
 #ifdef DDB
 		if (sigdebug & SDB_DDB) Debugger();
 #endif
@@ -673,9 +672,13 @@ sys___sigreturn14(p, v, retval)
 	} */ *uap = v;
 	struct sigcontext sc, *scp;
 	register struct trapframe64 *tf;
+	int error = EINVAL;
 
 	/* First ensure consistent stack state (see sendsig). */
 	write_user_windows();
+if (p->p_addr->u_pcb.pcb_nsaved) 
+printf("sigreturn14: pid %d nsaved %d\n",
+       p->p_pid, (p->p_addr->u_pcb.pcb_nsaved));
 	if (rwindow_save(p)) {
 #ifdef DEBUG
 		printf("sigreturn14: rwindow_save(%p) failed, sending SIGILL\n", p);
@@ -695,17 +698,17 @@ sys___sigreturn14(p, v, retval)
 	}
 #endif
 	scp = SCARG(uap, sigcntxp);
- 	if ((vaddr_t)scp & 3 || (copyin((caddr_t)scp, &sc, sizeof sc) != 0))
+ 	if ((vaddr_t)scp & 3 || (error = copyin((caddr_t)scp, &sc, sizeof sc) != 0))
 #ifdef DEBUG
 	{
 		printf("sigreturn14: copyin failed: scp=%p\n", scp);
 #ifdef DDB
 		Debugger();
 #endif
-		return (EINVAL);
+		return (error);
 	}
 #else
-		return (EINVAL);
+		return (error);
 #endif
 	scp = &sc;
 
@@ -718,7 +721,9 @@ sys___sigreturn14(p, v, retval)
 	if (((sc.sc_pc | sc.sc_npc) & 3) != 0 || (sc.sc_pc == 0) || (sc.sc_npc == 0))
 #ifdef DEBUG
 	{
-		printf("sigreturn14: pc %p or npc %p invalid\n", sc.sc_pc, sc.sc_npc);
+		printf("sigreturn14: pc %p or npc %p invalid\n",
+		   (void *)(unsigned long)sc.sc_pc,
+		   (void *)(unsigned long)sc.sc_npc);
 #ifdef DDB
 		Debugger();
 #endif
@@ -728,16 +733,18 @@ sys___sigreturn14(p, v, retval)
 		return (EINVAL);
 #endif
 	/* take only psr ICC field */
-	tf->tf_tstate = (int64_t)(tf->tf_tstate & ~TSTATE_CCR) | (scp->sc_tstate & TSTATE_CCR);
-	tf->tf_pc = (int64_t)scp->sc_pc;
-	tf->tf_npc = (int64_t)scp->sc_npc;
-	tf->tf_global[1] = (int64_t)scp->sc_g1;
-	tf->tf_out[0] = (int64_t)scp->sc_o0;
-	tf->tf_out[6] = (int64_t)scp->sc_sp;
+	tf->tf_tstate = (u_int64_t)(tf->tf_tstate & ~TSTATE_CCR) | (scp->sc_tstate & TSTATE_CCR);
+	tf->tf_pc = (u_int64_t)scp->sc_pc;
+	tf->tf_npc = (u_int64_t)scp->sc_npc;
+	tf->tf_global[1] = (u_int64_t)scp->sc_g1;
+	tf->tf_out[0] = (u_int64_t)scp->sc_o0;
+	tf->tf_out[6] = (u_int64_t)scp->sc_sp;
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW) {
 		printf("sigreturn14: return trapframe pc=%p sp=%p tstate=%llx\n",
-		       (vaddr_t)tf->tf_pc, (vaddr_t)tf->tf_out[6], tf->tf_tstate);
+		       (void *)(unsigned long)tf->tf_pc,
+		       (void *)(unsigned long)tf->tf_out[6],
+		       (unsigned long long)tf->tf_tstate);
 #ifdef DDB
 		if (sigdebug & SDB_DDB) Debugger();
 #endif
@@ -1007,15 +1014,26 @@ void
 trapdump(tf)
 	struct trapframe64* tf;
 {
-	printf("TRAPFRAME: tstate=%x:%x pc=%x:%x npc=%x:%x y=%x\n",
-	       tf->tf_tstate, tf->tf_pc, tf->tf_npc, tf->tf_y);
-	printf("%%g1-7: %x:%x %x:%x %x:%x %x:%x %x:%x %x:%x %x:%x\n",
-	       tf->tf_global[1], tf->tf_global[2], tf->tf_global[3], 
-	       tf->tf_global[4], tf->tf_global[5], tf->tf_global[6], 
-	       tf->tf_global[7]);
-	printf("%%o0-7: %x:%x %x:%x %x:%x %x:%x\n %x:%x %x:%x %x:%x %x:%x\n",
-	       tf->tf_out[0], tf->tf_out[1], tf->tf_out[2], tf->tf_out[3], 
-	       tf->tf_out[4], tf->tf_out[5], tf->tf_out[6], tf->tf_out[7]);
+	printf("TRAPFRAME: tstate=%llx pc=%llx npc=%llx y=%x\n",
+	       (unsigned long long)tf->tf_tstate, (unsigned long long)tf->tf_pc,
+	       (unsigned long long)tf->tf_npc, (unsigned)tf->tf_y);
+	printf("%%g1-7: %llx %llx %llx %llx %llx %llx %llx\n",
+	       (unsigned long long)tf->tf_global[1],
+	       (unsigned long long)tf->tf_global[2],
+	       (unsigned long long)tf->tf_global[3], 
+	       (unsigned long long)tf->tf_global[4],
+	       (unsigned long long)tf->tf_global[5],
+	       (unsigned long long)tf->tf_global[6], 
+	       (unsigned long long)tf->tf_global[7]);
+	printf("%%o0-7: %llx %llx %llx %llx\n %llx %llx %llx %llx\n",
+	       (unsigned long long)tf->tf_out[0],
+	       (unsigned long long)tf->tf_out[1],
+	       (unsigned long long)tf->tf_out[2],
+	       (unsigned long long)tf->tf_out[3], 
+	       (unsigned long long)tf->tf_out[4],
+	       (unsigned long long)tf->tf_out[5],
+	       (unsigned long long)tf->tf_out[6],
+	       (unsigned long long)tf->tf_out[7]);
 }
 /*
  * get the fp and dump the stack as best we can.  don't leave the
@@ -1034,14 +1052,20 @@ stackdump()
 		if( ((long)fp) & 1 ) {
 			fp64 = (struct frame64*)(((char*)fp)+BIAS);
 			/* 64-bit frame */
-			printf("%x(%llx, %llx, %llx, %llx, %llx, %llx, %llx) fp = %p\n",
-			       fp64->fr_pc, fp64->fr_arg[0], fp64->fr_arg[1], fp64->fr_arg[2],
-			       fp64->fr_arg[3], fp64->fr_arg[4], fp64->fr_arg[5], fp64->fr_arg[6],
-			       fp64->fr_fp);
+			printf("%llx(%llx, %llx, %llx, %llx, %llx, %llx, %llx) fp = %llx\n",
+			       (unsigned long long)fp64->fr_pc,
+			       (unsigned long long)fp64->fr_arg[0],
+			       (unsigned long long)fp64->fr_arg[1],
+			       (unsigned long long)fp64->fr_arg[2],
+			       (unsigned long long)fp64->fr_arg[3],
+			       (unsigned long long)fp64->fr_arg[4],
+			       (unsigned long long)fp64->fr_arg[5],	
+			       (unsigned long long)fp64->fr_arg[6],
+			       (unsigned long long)fp64->fr_fp);
 			fp = (struct frame32 *)(u_long)fp64->fr_fp;
 		} else {
 			/* 32-bit frame */
-			printf("  pc = %x  args = (%x, %x, %x, %x, %x, %x, %x) fp = %p\n",
+			printf("  pc = %x  args = (%x, %x, %x, %x, %x, %x, %x) fp = %x\n",
 			       fp->fr_pc, fp->fr_arg[0], fp->fr_arg[1], fp->fr_arg[2],
 			       fp->fr_arg[3], fp->fr_arg[4], fp->fr_arg[5], fp->fr_arg[6],
 			       fp->fr_fp);
@@ -1154,7 +1178,8 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	if (buflen > map->_dm_size)
 	{ 
 #ifdef DEBUG
-		printf("_bus_dmamap_load(): error %d > %d -- map size exceeded!\n", buflen, map->_dm_size);
+		printf("_bus_dmamap_load(): error %lu > %lu -- map size exceeded!\n",
+		    (unsigned long)buflen, (unsigned long)map->_dm_size);
 #ifdef DDB
 		Debugger();
 #endif
@@ -1215,8 +1240,27 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 	struct uio *uio;
 	int flags;
 {
+#if 0
+	int i;
+	struct proc *p = uio->uio_procp;
+	struct pmap *pm;
 
+	if (uio->uio_segflg == UIO_USERSPACE) 
+		pm = uio->uio_procp->p_vmspace.vm_map.pmap;
+	else
+		pm = pmap_kernel();
+
+	for (i=0; i<uio->uio_iovcnt; i++) {
+		struct iovec *iov = &uio->uio_iov[i];
+		void *buf = iov->iov_base;
+		bus_size_t buflen = iov->iov_len;
+
+		bus_dmamap_load(t, map, buf, buflen, p, flags);
+	}
 	panic("_bus_dmamap_load_uio: not implemented");
+#else
+	return 0;
+#endif
 }
 
 /*
@@ -1315,7 +1359,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 			for (m = TAILQ_FIRST(mlist);
 			     m != NULL; m = TAILQ_NEXT(m,pageq)) {
 				paddr_t start;
-				psize_t size;
+				psize_t size = NBPG;
 
 				if (offset < NBPG) {
 					start = VM_PAGE_TO_PHYS(m) + offset;
@@ -1620,12 +1664,14 @@ sparc_bus_map(t, iospace, addr, size, flags, vaddr, hp)
 
 	DPRINTF(BSDB_MAP, ("\nsparc_bus_map: type %x flags %x "
 		"addr %016llx size %016llx virt %llx paddr %016llx\n",
-		(int)iospace, (int) flags, (u_int64_t)addr, (u_int64_t)size,
-		(u_int64_t)*hp, (u_int64_t)pa));
+		(int)iospace, (int) flags, (unsigned long long)addr,
+		(unsigned long long)size, (unsigned long long)*hp,
+		(unsigned long long)pa));
 
 	do {
 		DPRINTF(BSDB_MAP, ("sparc_bus_map: phys %llx virt %p hp %llx\n", 
-			(u_int64_t)pa, (char *)v, (u_int64_t)*hp));
+			(unsigned long long)pa, (char *)v,
+			(unsigned long long)*hp));
 		pmap_enter(pmap_kernel(), v, pa | pm_flags, pm_prot,
 			pm_prot|PMAP_WIRED);
 		v += PAGE_SIZE;

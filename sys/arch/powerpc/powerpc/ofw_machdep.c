@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.4.14.1 2000/11/20 20:31:16 bouyer Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.4.14.2 2000/12/08 09:30:17 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -76,12 +76,13 @@ mem_regions(memp, availp)
 
 	/* Remove zero sized entry in the returned data. */
 	cnt /= sizeof OFmem[0];
-	for (i = 0; i < cnt; i++)
+	for (i = 0; i < cnt; )
 		if (OFmem[i].size == 0) {
 			bcopy(&OFmem[i + 1], &OFmem[i],
 			      (cnt - i) * sizeof OFmem[0]);
 			cnt--;
-		}
+		} else
+			i++;
 
 	bzero(OFavail, sizeof OFavail);
 	cnt = OF_getprop(phandle, "available",
@@ -90,12 +91,13 @@ mem_regions(memp, availp)
 		goto error;
 
 	cnt /= sizeof OFavail[0];
-	for (i = 0; i < cnt; i++)
+	for (i = 0; i < cnt; )
 		if (OFavail[i].size == 0) {
 			bcopy(&OFavail[i + 1], &OFavail[i],
 			      (cnt - i) * sizeof OFavail[0]);
 			cnt--;
-		}
+		} else
+			i++;
 
 	*memp = OFmem;
 	*availp = OFavail;

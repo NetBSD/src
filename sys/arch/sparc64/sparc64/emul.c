@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.4.10.1 2000/11/20 20:26:52 bouyer Exp $	*/
+/*	$NetBSD: emul.c,v 1.4.10.2 2000/12/08 09:30:37 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -309,7 +309,7 @@ fixalign(p, tf)
 	    "w*hd"[op.bits.sz], op.bits.fl ? 'f' : REGNAME(code.i_op3.i_rd),
 	    REGNAME(code.i_op3.i_rs1));
 	if (code.i_loadstore.i_i)
-		uprintf("0x%x\n", rs2);
+		uprintf("0x%llx\n", (unsigned long long)rs2);
 	else
 		uprintf("%c%d\n", REGNAME(code.i_asi.i_rs2));
 #endif

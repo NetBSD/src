@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus.c,v 1.4.2.2 2000/11/20 20:17:14 bouyer Exp $	*/
+/*	$NetBSD: apbus.c,v 1.4.2.3 2000/12/08 09:28:49 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -39,10 +39,27 @@
 #include <machine/bus.h>
 #include <newsmips/apbus/apbusvar.h>
 
-static int  apbusmatch __P((struct device *, struct cfdata *, void *));
-static void apbusattach __P((struct device *, struct device *, void *));
-static int apbusprint __P((void *, const char *));
-/* static void *aptokseg0 __P((void *)); */
+static int  apbusmatch (struct device *, struct cfdata *, void *);
+static void apbusattach (struct device *, struct device *, void *);
+static int apbusprint (void *, const char *);
+/* static void *aptokseg0 (void *); */
+static void apbus_dma_unmapped (bus_dma_tag_t, bus_dmamap_t);
+static int apbus_dma_mapalloc (bus_dma_tag_t, bus_dmamap_t, int);
+static void apbus_dma_mapfree (bus_dma_tag_t, bus_dmamap_t);
+static void apbus_dma_mapset (bus_dma_tag_t, bus_dmamap_t);
+static int apbus_dmamap_create (bus_dma_tag_t, bus_size_t, int, bus_size_t,
+			bus_size_t, int, bus_dmamap_t *);
+static void apbus_dmamap_destroy (bus_dma_tag_t, bus_dmamap_t);
+static int apbus_dmamap_load (bus_dma_tag_t, bus_dmamap_t, void *, bus_size_t,
+			struct proc *, int);
+static int apbus_dmamap_load_mbuf (bus_dma_tag_t, bus_dmamap_t, struct mbuf *,
+			int);
+static int apbus_dmamap_load_uio (bus_dma_tag_t, bus_dmamap_t, struct uio *,
+			int);
+static int apbus_dmamap_load_raw (bus_dma_tag_t, bus_dmamap_t,
+			bus_dma_segment_t *, int, bus_size_t, int);
+static void apbus_dmamap_sync (bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
+			bus_size_t, int);
 
 #define	MAXAPDEVNUM	32
 
@@ -60,7 +77,7 @@ struct ap_intrhand {
 	struct ap_intrhand *ai_next;
 	int ai_mask;
 	int ai_priority;
-	int (*ai_func) __P((void*));	/* function */
+	int (*ai_func) (void*);		/* function */
 	void *ai_aux;			/* softc */
 	char ai_name[APBUS_DEVNAMELEN];
 	int ai_ctlno;
@@ -204,7 +221,7 @@ apbus_intr_establish(level, mask, priority, func, aux, name, ctlno)
 	int level;
 	int mask;
 	int priority;
-	int (*func) __P((void *));
+	int (*func) (void *);
 	void *aux;
 	char *name;
 	int ctlno;
@@ -348,7 +365,7 @@ apbus_dma_mapset(t, map)
 	map->dm_nsegs = 1;
 }
 
-int
+static int
 apbus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	bus_dma_tag_t t;
 	bus_size_t size;
@@ -374,7 +391,7 @@ apbus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	return error;
 }
 
-void
+static void
 apbus_dmamap_destroy(t, map)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
@@ -384,7 +401,7 @@ apbus_dmamap_destroy(t, map)
 	_bus_dmamap_destroy(t, map);
 }
 
-int
+static int
 apbus_dmamap_load(t, map, buf, buflen, p, flags)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
@@ -405,7 +422,7 @@ apbus_dmamap_load(t, map, buf, buflen, p, flags)
 	return error;
 }
 
-int
+static int
 apbus_dmamap_load_mbuf(t, map, m0, flags)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
@@ -424,7 +441,7 @@ apbus_dmamap_load_mbuf(t, map, m0, flags)
 	return error;
 }
 
-int
+static int
 apbus_dmamap_load_uio(t, map, uio, flags)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
@@ -443,7 +460,7 @@ apbus_dmamap_load_uio(t, map, uio, flags)
 	return error;
 }
 
-int
+static int
 apbus_dmamap_load_raw(t, map, segs, nsegs, size, flags)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
@@ -464,7 +481,7 @@ apbus_dmamap_load_raw(t, map, segs, nsegs, size, flags)
 	return error;
 }
 
-void
+static void
 apbus_dmamap_sync(t, map, offset, len, ops)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;

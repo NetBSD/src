@@ -1,4 +1,4 @@
-/* $NetBSD: scif.c,v 1.5.2.2 2000/11/22 16:01:34 bouyer Exp $ */
+/* $NetBSD: scif.c,v 1.5.2.3 2000/12/08 09:30:26 bouyer Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -276,9 +276,9 @@ void InitializeScif  __P((unsigned int));
 #define USART_ON (unsigned int)~0x08
 
 static void WaitFor __P((int));
-void PutcScif __P((unsigned char));
+void scif_putc __P((unsigned char));
+unsigned char scif_getc __P((void));
 int ScifErrCheck __P((void));
-unsigned char GetcScif __P((void));
 
 /*
  * WaitFor
@@ -352,14 +352,17 @@ InitializeScif(bps)
 
 
 /*
- * PutcScif
+ * scif_putc
  *  : unsigned char c;
  */
 
 void
-PutcScif(c)
+scif_putc(c)
 	unsigned char c;
 {
+
+	if (c == '\n')
+		scif_putc('\r');
 
 	/* wait for ready */
 	while ((SHREG_SCFDR2 & SCFDR2_TXCNT) == SCFDR2_TXF_FULL)
@@ -370,15 +373,6 @@ PutcScif(c)
 
 	/* clear ready flag */
 	SHREG_SCSSR2 &= ~(SCSSR2_TDFE | SCSSR2_TEND);
-
-	if (c == '\n') {
-		while ((SHREG_SCFDR2 & SCFDR2_TXCNT) == SCFDR2_TXF_FULL)
-			;
-
-		SHREG_SCFTDR2 = '\r';
-
-		SHREG_SCSSR2 &= ~(SCSSR2_TDFE | SCSSR2_TEND);
-	}
 }
 
 /*
@@ -395,12 +389,12 @@ ScifErrCheck(void)
 }
 
 /*
- * GetcScif
+ * scif_getc
  */
 #if 0
 /* Old code */
 unsigned char
-GetcScif(void)
+scif_getc(void)
 {
 	unsigned char c, err_c;
 
@@ -420,7 +414,7 @@ GetcScif(void)
 }
 #else
 unsigned char
-GetcScif(void)
+scif_getc(void)
 {
 	unsigned char c, err_c;
 
@@ -582,7 +576,7 @@ scifstart(tp)
 			n = max;
 
 		for (i = 0; i < n; i++) {
-			PutcScif(*(sc->sc_tba));
+			scif_putc(*(sc->sc_tba));
 			sc->sc_tba++;
 		}
 		sc->sc_tbc -= n;
@@ -736,23 +730,6 @@ scif_iflush(sc)
 		SHREG_SCSSR2 &= ~(SCSSR2_RDF | SCSSR2_DR);
 		i--;
 	}
-}
-
-int scif_getc __P((void));
-void scif_putc __P((int));
-
-int
-scif_getc()
-{
-
-	return (GetcScif());
-}
-
-void
-scif_putc(int c)
-{
-
-	PutcScif(c);
 }
 
 int
@@ -1480,7 +1457,7 @@ scifintr(arg)
 				n = max;
 
 			for (i = 0; i < n; i++) {
-				PutcScif(*(sc->sc_tba));
+				scif_putc(*(sc->sc_tba));
 				sc->sc_tba++;
 			}
 			sc->sc_tbc -= n;
@@ -1548,9 +1525,6 @@ scifcninit(cp)
 	scifisconsole = 1;
 }
 
-#define scif_getc GetcScif
-#define scif_putc PutcScif
-
 int
 scifcngetc(dev)
 	dev_t dev;
@@ -1573,6 +1547,6 @@ scifcnputc(dev, c)
 	int s;
 
 	s = splserial();
-	scif_putc(c);
+	scif_putc((u_char)c);
 	splx(s);
 }

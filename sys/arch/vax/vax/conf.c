@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.43.2.1 2000/11/20 20:33:13 bouyer Exp $	*/
+/*	$NetBSD: conf.c,v 1.43.2.2 2000/12/08 09:30:51 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -155,11 +155,15 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
  */
 #include <dev/cons.h>
 
-#include "lkc.h"
-#if NLKC
-#define	smgcngetc lkccngetc
+#include "wskbd.h"
+#if NWSKBD > 0
+#define smgcngetc wskbd_cngetc
 #else
-#define	smgcngetc nullcngetc
+static int
+smgcngetc(dev_t dev)
+{
+	return 0;
+}
 #endif
 
 #define smgcnputc wsdisplay_cnputc
@@ -597,4 +601,15 @@ iszerodev(dev)
 {
 
 	return (major(dev) == 3 && minor(dev) == 12);
+}
+
+int
+getmajor(void *ptr)
+{
+	int i;
+
+	for (i = 0; i < nchrdev; i++)
+		if (cdevsw[i].d_open == ptr)
+			return i;
+	panic("getmajor");
 }

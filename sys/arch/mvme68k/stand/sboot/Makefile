@@ -1,31 +1,40 @@
-#	$NetBSD: Makefile,v 1.5.8.1 2000/11/20 20:15:31 bouyer Exp $
+#	$NetBSD: Makefile,v 1.5.8.2 2000/12/08 09:28:44 bouyer Exp $
 
 #
 # sboot would like a newer GNU ld because it can generate S-Records.
 # Until then, we convert.
 #
 
-COMPILE.s= $(AS) $(ASFLAGS) -o $*.o
-LDFLAGS=-x -N -Ttext 0x4000 -e start
+COMPILE.s= $(CC) -x assembler-with-cpp -traditional-cpp \
+	$(ASFLAGS) $(CPPFLAGS) $(INCPATH) -c -o $*.o
+
+RELOC=	0x4000
 SRCS=	start.s clock.c console.c etherfun.c le_poll.c oc_cksum.s sboot.c
-CLEANFILES+= srec sboot
-# OPTS= -Os
+SRTOBJ=
+PROG=		sboot
+PROGNAME=	sboot.srec
+LIBS=		${LIBSA}
+DPADD=		${LIBS}
+CLEANFILES+=	srec sboot.srec
 
-PROG=		sboot.srec
-PROGNAME=	sboot
-DPADD=	srec sboot
+PROGDEPENDS=	${OBJS} ${LIBS}
+PROGLINKOBJS=	${OBJS} ${LIBS}
 
-${PROG}:
-	dd ibs=32 skip=1 if=${.OBJDIR}/sboot | ${.OBJDIR}/srec 4 0x4000 ${.OBJDIR}/sboot > ${.TARGET}
-
-sboot: ${OBJS}
-	${LD} ${LDFLAGS} -o ${.TARGET} ${OBJS} ${LIBSA}
+sboot.srec:	${PROG} srec
+	${OBJCOPY} -O binary ${.OBJDIR}/sboot
+	${.OBJDIR}/srec 4 0x4000 ${.OBJDIR}/sboot \
+	> ${.TARGET} < ${.OBJDIR}/sboot
 
 srec: srec.c
-	${CC} ${COPTS} ${.IMPSRC} -o ${.TARGET}
-
-all: ${OBJS} ${PROG}
+	${HOST_CC} ${COPTS} ${.IMPSRC} -o ${.TARGET}
 
 .include "../Makefile.booters"
+
+all realall:	sboot.srec
+
+install:	sboot.srec
+	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} ${STRIPFLAG} ${INSTPRIV} \
+	   -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} ${.OBJDIR}/sboot.srec \
+	   ${DESTDIR}${MDECDIR}/sboot
 
 .include <bsd.prog.mk>

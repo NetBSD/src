@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.7.2.1 2000/11/20 20:26:57 bouyer Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.7.2.2 2000/12/08 09:30:43 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Matthew R. Green
@@ -196,7 +196,7 @@ sunos_sendsig(catcher, sig, mask, code)
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid) {
 		printf("sunos_sendsig: about to return to catcher %p thru %p\n", 
-		       catcher, addr);
+		       catcher, (void *)(u_long)addr);
 #ifdef DDB
 		if (sigdebug & SDB_DDB) Debugger();
 #endif
@@ -245,7 +245,7 @@ sunos_sys_sigreturn(p, v, retval)
 	if (((scp->sc_pc | scp->sc_npc) & 3) != 0 || scp->sc_pc == 0 || scp->sc_npc == 0)
 #ifdef DEBUG
 	{
-		printf("sunos_sigreturn: pc %p or npc %p invalid\n", scp->sc_pc, scp->sc_npc);
+		printf("sunos_sigreturn: pc %p or npc %p invalid\n", (void *)(u_long)scp->sc_pc, (void *)(u_long)scp->sc_npc);
 #ifdef DDB
 		Debugger();
 #endif
@@ -263,7 +263,7 @@ sunos_sys_sigreturn(p, v, retval)
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW) {
 		printf("sunos_sigreturn: return trapframe pc=%p sp=%p tstate=%llx\n",
-		       (vaddr_t)tf->tf_pc, (vaddr_t)tf->tf_out[6], tf->tf_tstate);
+		       (void *)(u_long)tf->tf_pc, (void *)(u_long)tf->tf_out[6], (unsigned long long)tf->tf_tstate);
 #ifdef DDB
 		if (sigdebug & SDB_DDB) Debugger();
 #endif

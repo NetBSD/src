@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.1.6.2 2000/11/20 20:23:04 bouyer Exp $	*/
+/*	$NetBSD: pcib.c,v 1.1.6.3 2000/12/08 09:30:22 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -109,12 +109,33 @@ pcibattach(parent, self, aux)
 {
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];
+	u_int32_t v;
+	int lvlmask = 0;
 
 	printf("\n");
 
+	v = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x40);
+	if ((v & 0x20) == 0) {
+		printf("%s: PIRQ[0-3] not used\n");
+	} else {
+		v = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x60);
+		if ((v & 0x80808080) == 0x80808080) {
+			printf("%s: PIRQ[0-3] disabled\n");
+		} else {
+			int i;
+			printf("%s:", self->dv_xname);
+			for (i = 0; i < 4; i++, v >>= 8) {
+				if ((v & 80) == 0 && (v & 0x0f) != 0) {
+					printf(" PIRQ[%d]=%d", i, v & 0x0f);
+					lvlmask |= (1 << (v & 0x0f));
+				}
+			}
+			printf("\n");
+		}
+	}
 #if NISA > 0
 	/* Initialize interrupt controller */
-	init_icu();
+	init_icu(lvlmask);
 #endif
 
 	/*
@@ -141,8 +162,8 @@ pcib_callback(self)
 	bzero(&iba, sizeof(iba));
 	iba.iba_busname = "isa";
 	iba.iba_ic = &sc->sc_chipset;
-	iba.iba_iot = (bus_space_tag_t)PREP_BUS_SPACE_IO;
-	iba.iba_memt = (bus_space_tag_t)PREP_BUS_SPACE_MEM;
+	iba.iba_iot = &prep_isa_io_space_tag;
+	iba.iba_memt = &prep_isa_mem_space_tag;
 #if NISA > 0
 	iba.iba_dmat = &isa_bus_dma_tag;
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.20.2.2 2000/11/22 16:01:48 bouyer Exp $ */
+/*	$NetBSD: sbus.c,v 1.20.2.3 2000/12/08 09:30:33 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -646,7 +646,7 @@ sbus_intr_establish(t, pri, level, flags, handler, arg)
 		vec = INTVEC(vec);
 		DPRINTF(SDB_INTR,
 		    ("\nsbus: intr[%ld]%lx: %lx\nHunting for IRQ...\n",
-		    (long)ipl, (long)vec, intrlev[vec]));
+		    (long)ipl, (long)vec, (u_long)intrlev[vec]));
 		if ((vec & INTMAP_OBIO) == 0) {
 			/* We're in an SBUS slot */
 			/* Register the map and clear intr registers */
@@ -670,7 +670,7 @@ sbus_intr_establish(t, pri, level, flags, handler, arg)
 			/* Insert IGN */
 			vec |= sc->sc_ign;
 			bus_space_write_8(sc->sc_bustag,
-			    (bus_space_handle_t)ih->ih_map, 0, vec);
+			    (bus_space_handle_t)(u_long)ih->ih_map, 0, vec);
 		} else {
 			int64_t *intrptr = &sc->sc_sysio->scsi_int_map;
 			int64_t intrmap = 0;
@@ -693,7 +693,7 @@ sbus_intr_establish(t, pri, level, flags, handler, arg)
 				/* Enable the interrupt */
 				intrmap |= INTMAP_V;
 				bus_space_write_8(sc->sc_bustag,
-				    (bus_space_handle_t)ih->ih_map, 0,
+				    (bus_space_handle_t)(u_long)ih->ih_map, 0,
 				    (u_long)intrmap);
 			} else
 				panic("IRQ not found!");

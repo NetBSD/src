@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.13.2.1 2000/11/20 20:31:19 bouyer Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.13.2.2 2000/12/08 09:30:18 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,6 +30,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include "opt_altivec.h"
 
 #include <sys/param.h>
 #include <sys/core.h>
@@ -87,6 +88,14 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	if (p1 == fpuproc)
 		save_fpu(p1);
 	*pcb = p1->p_addr->u_pcb;
+#ifdef ALTIVEC
+	if (p1->p1_addr->u_pcb.pcb_vr != NULL) {
+		if (p1 == vecproc)
+			save_vec(p1);
+		pcb->pcb_vr = pool_get(vecpl, POOL_WAITOK);
+		*pcb->pcb_vr = *p1->p1_addr->u_ucb.pcb_vr;
+	}
+#endif
 
 	pcb->pcb_pm = p2->p_vmspace->vm_map.pmap;
 	(void) pmap_extract(pmap_kernel(), (vaddr_t)pcb->pcb_pm,
@@ -177,8 +186,17 @@ void
 cpu_exit(p)
 	struct proc *p;
 {
-	if (p == fpuproc)	/* release the fpu */
-		fpuproc = 0;
+#ifdef ALTIVEC
+	struct pcb *pcb = &p->p_addr->u_pcb;
+#endif
+	if (p == fpuproc)	/* release the FPU */
+		fpuproc = NULL;
+#ifdef ALTIVEC
+	if (p == vecproc)	/* release the AltiVEC */
+		vecproc = NULL;
+	if (pcb->pcb_vr != NULL)
+		pool_put(vecpl, pcb->pcb_vr);
+#endif
 
 	splsched();
 	switchexit(p);
@@ -213,6 +231,15 @@ cpu_coredump(p, vp, cred, chdr)
 		md_core.fpstate = pcb->pcb_fpu;
 	} else
 		bzero(&md_core.fpstate, sizeof(md_core.fpstate));
+
+#ifdef ALTIVEC
+	if (pcb->pcb_flags & PCB_ALTIVEC) {
+		if (p == vecproc)
+			save_vec(p);
+		md_core.vstate = *pcb->pcb_vr;
+	} else
+#endif
+		bzero(&md_core.vstate, sizeof(md_core.vstate));
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
 	cseg.c_addr = 0;

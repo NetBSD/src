@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.12.2.1 2000/11/20 20:26:40 bouyer Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.12.2.2 2000/12/08 09:30:32 bouyer Exp $
 
 # Makefile for NetBSD
 #
@@ -64,8 +64,10 @@ SPARC64=	$S/arch/sparc64
 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL ${SVR4}
-CWARNFLAGS=	-Wimplicit -Wunused -Wswitch -Wcomment -Wtrigraphs -Wchar-subscripts -Wparentheses -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith
+#CWARNFLAGS=	-Wimplicit -Wunused -Wswitch -Wcomment -Wtrigraphs -Wchar-subscripts -Wparentheses -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith -Wno-main -Werror
 #CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes
+CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith -Wno-main
+CWARNFLAGS+=	-Wno-uninitialized
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -Wa,-Av9a -mno-fpu
 .if defined(PROF)
 # We need to run the compiler in medlow memory model.

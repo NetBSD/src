@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.8.1 2000/11/20 20:30:20 bouyer Exp $
+#	$NetBSD: Makefile,v 1.5.8.2 2000/12/08 09:30:56 bouyer Exp $
 # Makefile for loadkmap
 
 PROG=		loadkmap
@@ -10,16 +10,16 @@ CLEANFILES+=	ascii_kmap jis_kmap
 
 realall:	loadkmap ascii_kmap jis_kmap
 
+OBJCOPY?=	/usr/bin/objcopy
+
 ascii_kmap: ascii_kmap.c
 	$(CC) -c -o ${.TARGET}.aout ${.CURDIR}/ascii_kmap.c
-	strip ${.TARGET}.aout
-	dd bs=1 skip=32 if=${.TARGET}.aout of=${.TARGET}
+	${OBJCOPY} -O binary ${.TARGET}.aout ${.TARGET}
 	rm ${.TARGET}.aout
 
 jis_kmap: jis_kmap.c
 	$(CC) -c -o ${.TARGET}.aout ${.CURDIR}/jis_kmap.c
-	strip ${.TARGET}.aout
-	dd bs=1 skip=32 if=${.TARGET}.aout of=${.TARGET}
+	${OBJCOPY} -O binary ${.TARGET}.aout ${.TARGET}
 	rm ${.TARGET}.aout
 
 .include <bsd.prog.mk>

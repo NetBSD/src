@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.9.2.1 2000/11/20 20:26:51 bouyer Exp $ */
+/*	$NetBSD: db_trace.c,v 1.9.2.2 2000/12/08 09:30:36 bouyer Exp $ */
 
 /*
  * Mach Operating System
@@ -178,7 +178,7 @@ db_dump_window(addr, have_addr, count, modif)
 		else frame = (u_int64_t)((struct frame32 *)(u_long)frame)->fr_fp;
 	}
 
-	db_printf("Window %x ", addr);
+	db_printf("Window %lx ", addr);
 	db_print_window(frame);
 }
 
@@ -189,16 +189,28 @@ u_int64_t frame;
 	if (frame & 1) {
 		struct frame64* f = (struct frame64*)(u_long)(frame + BIAS);
 
-		db_printf("frame64 %x locals, ins:\n", f);		
+		db_printf("frame64 %p locals, ins:\n", f);		
 		if (INKERNEL(f)) {
 			db_printf("%llx %llx %llx %llx ",
-				  f->fr_local[0], f->fr_local[1], f->fr_local[2], f->fr_local[3]);
+				  (unsigned long long)f->fr_local[0],
+				  (unsigned long long)f->fr_local[1],
+				  (unsigned long long)f->fr_local[2],
+				  (unsigned long long)f->fr_local[3]);
 			db_printf("%llx %llx %llx %llx\n",
-				  f->fr_local[4], f->fr_local[5], f->fr_local[6], f->fr_local[7]);
+				  (unsigned long long)f->fr_local[4],
+				  (unsigned long long)f->fr_local[5],
+				  (unsigned long long)f->fr_local[6],
+				  (unsigned long long)f->fr_local[7]);
 			db_printf("%llx %llx %llx %llx ",
-				  f->fr_arg[0], f->fr_arg[1], f->fr_arg[2], f->fr_arg[3]);
+				  (unsigned long long)f->fr_arg[0],	
+				  (unsigned long long)f->fr_arg[1],
+				  (unsigned long long)f->fr_arg[2],
+				  (unsigned long long)f->fr_arg[3]);
 			db_printf("%llx %llx %llx=sp %llx=pc:",
-				  f->fr_arg[4], f->fr_arg[5], f->fr_fp, f->fr_pc);
+				  (unsigned long long)f->fr_arg[4],	
+				  (unsigned long long)f->fr_arg[5],
+				  (unsigned long long)f->fr_fp,
+				  (unsigned long long)f->fr_pc);
 			/* Sometimes this don't work.  Dunno why. */
 			db_printsym(f->fr_pc, DB_STGY_PROC, db_printf);
 			db_printf("\n");
@@ -208,19 +220,25 @@ u_int64_t frame;
 			if (copyin(f, &fr, sizeof(fr))) return;
 			f = &fr;
 			db_printf("%llx %llx %llx %llx ",
-				  f->fr_local[0], f->fr_local[1], f->fr_local[2], f->fr_local[3]);
+				  (unsigned long long)f->fr_local[0], (unsigned long long)f->fr_local[1], (unsigned long long)f->fr_local[2], (unsigned long long)f->fr_local[3]);
 			db_printf("%llx %llx %llx %llx\n",
-				  f->fr_local[4], f->fr_local[5], f->fr_local[6], f->fr_local[7]);
+				  (unsigned long long)f->fr_local[4], (unsigned long long)f->fr_local[5], (unsigned long long)f->fr_local[6], (unsigned long long)f->fr_local[7]);
 			db_printf("%llx %llx %llx %llx ",
-				  f->fr_arg[0], f->fr_arg[1], f->fr_arg[2], f->fr_arg[3]);
+				  (unsigned long long)f->fr_arg[0],
+				  (unsigned long long)f->fr_arg[1],
+				  (unsigned long long)f->fr_arg[2],
+				  (unsigned long long)f->fr_arg[3]);
 			db_printf("%llx %llx %llx=sp %llx=pc",
-				  f->fr_arg[4], f->fr_arg[5], f->fr_fp, f->fr_pc);
+				  (unsigned long long)f->fr_arg[4],
+				  (unsigned long long)f->fr_arg[5],
+				  (unsigned long long)f->fr_fp,
+				  (unsigned long long)f->fr_pc);
 			db_printf("\n");	 
 		}
 	} else {
 		struct frame32* f = (struct frame32*)(u_long)frame;
 
-		db_printf("frame %x locals, ins:\n", f);
+		db_printf("frame %p locals, ins:\n", f);
 		if (INKERNEL(f)) {
 			db_printf("%8x %8x %8x %8x %8x %8x %8x %8x\n",
 				  f->fr_local[0], f->fr_local[1], f->fr_local[2], f->fr_local[3],
@@ -277,7 +295,8 @@ db_dump_stack(addr, have_addr, count, modif)
 	oldframe = 0;
 	for (i=0; i<count && frame; i++) {
 		if (oldframe == frame) {
-			db_printf("WARNING: stack loop at %p\n", (long) frame);
+			db_printf("WARNING: stack loop at %llx\n",
+			    (unsigned long long) frame);
 			break;
 		}
 		oldframe = frame;
@@ -330,35 +349,54 @@ db_dump_trap(addr, have_addr, count, modif)
 	if (have_addr)
 		tf = (struct trapframe64 *)addr;
 
-	db_printf("Trapframe %p:\ttstate: %p\tpc: %p\tnpc: %p\n",
-		  tf, (long)tf->tf_tstate, (long)tf->tf_pc, (long)tf->tf_npc);
-	db_printf("y: %x\tpil: %d\toldpil: %d\tfault: %p\tkstack: %p\ttt: %x\tGlobals:\n", 
-		  (int)tf->tf_y, (int)tf->tf_pil, (int)tf->tf_oldpil, (long)tf->tf_fault,
-		  (long)tf->tf_kstack, (int)tf->tf_tt);
+	db_printf("Trapframe %p:\ttstate: %llx\tpc: %llx\tnpc: %llx\n",
+		  tf, (unsigned long long)tf->tf_tstate,
+		  (unsigned long long)tf->tf_pc,
+		  (unsigned long long)tf->tf_npc);
+	db_printf("y: %x\tpil: %d\toldpil: %d\tfault: %llx\tkstack: %llx\ttt: %x\tGlobals:\n", 
+		  (int)tf->tf_y, (int)tf->tf_pil, (int)tf->tf_oldpil,
+		  (unsigned long long)tf->tf_fault,
+		  (unsigned long long)tf->tf_kstack, (int)tf->tf_tt);
 	db_printf("%016llx %016llx %016llx %016llx\n",
-		  (int64_t)tf->tf_global[0], (int64_t)tf->tf_global[1],
-		  (int64_t)tf->tf_global[2], (int64_t)tf->tf_global[3]);
+		  (unsigned long long)tf->tf_global[0],
+		  (unsigned long long)tf->tf_global[1],
+		  (unsigned long long)tf->tf_global[2],
+		  (unsigned long long)tf->tf_global[3]);
 	db_printf("%016llx %016llx %016llx %016llx\nouts:\n",
-		  (int64_t)tf->tf_global[4], (int64_t)tf->tf_global[5],
-		  (int64_t)tf->tf_global[6], (int64_t)tf->tf_global[7]);
+		  (unsigned long long)tf->tf_global[4],
+		  (unsigned long long)tf->tf_global[5],
+		  (unsigned long long)tf->tf_global[6],
+		  (unsigned long long)tf->tf_global[7]);
 	db_printf("%016llx %016llx %016llx %016llx\n",
-		  (int64_t)tf->tf_out[0], (int64_t)tf->tf_out[1],
-		  (int64_t)tf->tf_out[2], (int64_t)tf->tf_out[3]);
+		  (unsigned long long)tf->tf_out[0],
+		  (unsigned long long)tf->tf_out[1],
+		  (unsigned long long)tf->tf_out[2],
+		  (unsigned long long)tf->tf_out[3]);
 	db_printf("%016llx %016llx %016llx %016llx\nlocals:\n",
-		  (int64_t)tf->tf_out[4], (int64_t)tf->tf_out[5],
-		  (int64_t)tf->tf_out[6], (int64_t)tf->tf_out[7]);
+		  (unsigned long long)tf->tf_out[4],
+		  (unsigned long long)tf->tf_out[5],
+		  (unsigned long long)tf->tf_out[6],
+		  (unsigned long long)tf->tf_out[7]);
 	db_printf("%016llx %016llx %016llx %016llx\n",
-		  (int64_t)tf->tf_local[0], (int64_t)tf->tf_local[1],
-		  (int64_t)tf->tf_local[2], (int64_t)tf->tf_local[3]);
+		  (unsigned long long)tf->tf_local[0],
+		  (unsigned long long)tf->tf_local[1],
+		  (unsigned long long)tf->tf_local[2],
+		  (unsigned long long)tf->tf_local[3]);
 	db_printf("%016llx %016llx %016llx %016llx\nins:\n",
-		  (int64_t)tf->tf_local[4], (int64_t)tf->tf_local[5],
-		  (int64_t)tf->tf_local[6], (int64_t)tf->tf_local[7]);
+		  (unsigned long long)tf->tf_local[4],
+		  (unsigned long long)tf->tf_local[5],
+		  (unsigned long long)tf->tf_local[6],
+		  (unsigned long long)tf->tf_local[7]);
 	db_printf("%016llx %016llx %016llx %016llx\n",
-		  (int64_t)tf->tf_in[0], (int64_t)tf->tf_in[1],
-		  (int64_t)tf->tf_in[2], (int64_t)tf->tf_in[3]);
+		  (unsigned long long)tf->tf_in[0],
+		  (unsigned long long)tf->tf_in[1],
+		  (unsigned long long)tf->tf_in[2],
+		  (unsigned long long)tf->tf_in[3]);
 	db_printf("%016llx %016llx %016llx %016llx\n",
-		  (int64_t)tf->tf_in[4], (int64_t)tf->tf_in[5],
-		  (int64_t)tf->tf_in[6], (int64_t)tf->tf_in[7]);
+		  (unsigned long long)tf->tf_in[4],
+		  (unsigned long long)tf->tf_in[5],
+		  (unsigned long long)tf->tf_in[6],
+		  (unsigned long long)tf->tf_in[7]);
 #if 0
 	if (tf == curproc->p_md.md_tf) {
 		struct rwindow32 *kstack = (struct rwindow32 *)(((caddr_t)tf)+CCFSZ);

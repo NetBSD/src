@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.60.2.1 2000/11/20 20:32:44 bouyer Exp $
+#       $NetBSD: files.vax,v 1.60.2.2 2000/12/08 09:30:50 bouyer Exp $
 #
 # new style config file for vax architecture
 #
@@ -85,8 +85,14 @@ device	ht: tape
 attach	ht at mba
 file	arch/vax/mba/ht.c		ht needs-flag
 
+#
+# Bus-independent support for DEC devices
+#
+include "dev/dec/files.dec"
+
 # wscons files.
 include "dev/wscons/files.wscons"
+include "dev/wsfont/files.wsfont"
 
 # Memory Disk for install floppy
 file arch/vax/vax/md_root.c		memory_disk_hooks
@@ -144,7 +150,7 @@ attach	ts at uba
 file	arch/vax/uba/ts.c		ts needs-flag
 
 attach	dz at vsbus with dz_vsbus
-file	arch/vax/vsa/dz_ibus.c		dz_vsbus
+file	arch/vax/vsa/dz_ibus.c		dz_vsbus | smg
 
 # RD-type disks at VS2000's onboard MFM-controller
 device	hdc { drive = -1 }
@@ -171,23 +177,27 @@ device	si: scsi, ncr5380sbc
 attach	si at vsbus with si_vsbus
 file	arch/vax/vsa/ncr.c		si_vsbus
 
+# Monochrome framebuffer on VS3100.
+device	smg: wsemuldisplaydev
+attach	smg at vsbus
+file	arch/vax/vsa/smg.c		smg needs-flag
+
 # LANCE ethernet controller on VAXstation
 attach	le at vsbus with le_vsbus:	le24
 file	arch/vax/if/if_le_vsbus.c	le_vsbus
-
-# Monochrome framebuffer on VS3100.
-device	smg: wsemuldisplaydev, qfont
-attach	smg at vsbus
-file	arch/vax/vsa/smg.c		smg needs-flag
 
 # builtin NCR53C95 SCSI Controlller on VAXstation 4000 VLC/60/9x
 device	asc: scsi, ncr53c9x
 attach	asc at vsbus with asc_vsbus
 file	arch/vax/vsa/asc_vsbus.c	asc_vsbus
 
-device	lkc: qfont
-attach	lkc at dz
-file	arch/vax/vsa/lkc.c		lkc needs-flag
+device	lkkbd: wskbddev 
+attach	lkkbd at dz with dzkbd
+file	dev/dec/dzkbd.c			dzkbd needs-flag
+
+device	lkms: wsmousedev
+attach	lkms at dz with dzms
+file	dev/dec/dzms.c			dzms needs-flag
 
 # These devices aren't tested (or even compiled!)
 # They are just included here to make some files happy ;)

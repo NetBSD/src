@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.3.4.1 2000/11/20 20:26:43 bouyer Exp $	*/
+/*	$NetBSD: ebus.c,v 1.3.4.2 2000/12/08 09:30:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -330,7 +330,7 @@ ebus_find_ino(sc, ea)
 			hi = ea->ea_regs[i].hi & sc->sc_intmapmask.hi;
 			lo = ea->ea_regs[i].lo & sc->sc_intmapmask.lo;
 
-			DPRINTF(EDB_INTRMAP, ("; reg hi.lo %08x.08x masked to %08x.%08x", ea->ea_regs[i].hi, ea->ea_regs[i].lo, hi, lo));
+			DPRINTF(EDB_INTRMAP, ("; reg hi.lo %08x.%08x masked to %08x.%08x", ea->ea_regs[i].hi, ea->ea_regs[i].lo, hi, lo));
 			for (k = 0; k < sc->sc_nintmap; k++) {
 				DPRINTF(EDB_INTRMAP, ("; checking hi.lo %08x.%08x intr %x", sc->sc_intmap[k].hi, sc->sc_intmap[k].lo, sc->sc_intmap[k].intr));
 				if (hi == sc->sc_intmap[k].hi &&
@@ -476,7 +476,7 @@ _ebus_bus_map(t, btype, offset, size, flags, vaddr, hp)
 	bus_addr_t hi, lo;
 	int i;
 
-	DPRINTF(EDB_BUSMAP, ("\n_ebus_bus_map: type %d off %016llx sz %x flags %d va %p", (int)t->type, (u_int64_t)offset, (int)size, (int)flags, vaddr));
+	DPRINTF(EDB_BUSMAP, ("\n_ebus_bus_map: type %d off %016llx sz %x flags %d va %p", (int)t->type, (unsigned long long)offset, (int)size, (int)flags, (void *)vaddr));
 
 	hi = offset >> 32UL;
 	lo = offset & 0xffffffff;
@@ -494,7 +494,8 @@ _ebus_bus_map(t, btype, offset, size, flags, vaddr, hp)
 				       sc->sc_range[i].phys_lo;
 		pciaddr += lo;
 		DPRINTF(EDB_BUSMAP, ("\n_ebus_bus_map: mapping paddr offset %qx pciaddr %qx\n",
-			       offset, pciaddr));
+			       (unsigned long long)offset,
+			       (unsigned long long)pciaddr));
 		/* pass it onto the psycho */
 		return (bus_space_map2(sc->sc_bustag, t->type, pciaddr,
 					size, flags, vaddr, hp));
@@ -522,7 +523,7 @@ ebus_bus_mmap(t, btype, paddr, flags, hp)
 		if (offset != paddr)
 			continue;
 
-		DPRINTF(EDB_BUSMAP, ("\n_ebus_bus_mmap: mapping paddr %qx\n", paddr));
+		DPRINTF(EDB_BUSMAP, ("\n_ebus_bus_mmap: mapping paddr %qx\n", (unsigned long long)paddr));
 		return (bus_space_mmap(sc->sc_bustag, 0, paddr,
 				       flags, hp));
 	}
