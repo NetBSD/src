@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.134 2000/01/04 08:05:49 itojun Exp $
+#	$NetBSD: INSTALL,v 1.135 2000/01/13 19:10:22 ad Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -301,6 +301,7 @@ pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 ahb*	at eisa? slot ?			# Adaptec 174[02] SCSI
 ahc*	at eisa? slot ?			# Adaptec 274x, aic7770 SCSI
 bha*	at eisa? slot ?			# BusLogic 7xx SCSI
+dpt*	at eisa? slot ?			# DPT SmartCache/SmartRAID
 uha*	at eisa? slot ?			# UltraStor 24f SCSI
 
 # PCMCIA SCSI controllers

@@ -1,4 +1,4 @@
-#	$NetBSD: ZYGORTHIAN-SPACE-RAIDERS,v 1.16 1999/12/12 11:53:42 soren Exp $
+#	$NetBSD: ZYGORTHIAN-SPACE-RAIDERS,v 1.17 2000/01/13 19:10:23 ad Exp $
 #	From: GENERIC,v 1.260 1999/09/28 18:07:29 thorpej Exp
 #
 #	GENERIC -- everything that's currently supported
@@ -315,6 +315,7 @@ ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
 #ahb*	at eisa? slot ?			# Adaptec 174[02] SCSI
 #ahc*	at eisa? slot ?			# Adaptec 274x, aic7770 SCSI
 #bha*	at eisa? slot ?			# BusLogic 7xx SCSI
+#dpt*	at eisa? slot ?			# DPT SmartCache/SmartRAID
 #uha*	at eisa? slot ?			# UltraStor 24f SCSI
 
 # PCMCIA SCSI controllers
