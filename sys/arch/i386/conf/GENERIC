@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.99 1997/09/12 05:22:55 mycroft Exp $
+#	$NetBSD: GENERIC,v 1.100 1997/10/07 10:39:56 augustss Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -227,6 +227,8 @@ pas0	at isa? port 0x220 irq 7 drq 1		# ProAudio Spectrum
 audio*	at pas0
 gus0	at isa? port 0x220 irq 7 drq 1 drq2 6	# Gravis Ultra Sound
 audio*	at gus0
+guspnp*	at isapnp?				# Gravis Ultra Sound PnP
+audio*	at guspnp?
 #spkr0	at pckbd? port 0x61
 
 # Joystick driver. Probe is a little strange; add only if you have one.
