@@ -25,6 +25,7 @@ dev/isa/ad1848.c
 dev/isa/ad1848var.h 
 dev/isa/aha_isa.c
 dev/isa/bha_isa.c
+dev/isa/esp_isa.c
 dev/isa/gus.c
 dev/isa/if_le_isa.c
 dev/isa/if_levar.h 
