@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.27 2002/02/05 03:04:29 thorpej Exp $ */
+/* $NetBSD: scan.l,v 1.28 2002/09/13 14:59:25 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.27 2002/02/05 03:04:29 thorpej Exp $");
+__RCSID("$NetBSD: scan.l,v 1.28 2002/09/13 14:59:25 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -396,7 +396,7 @@ name(void)
 
 	if (sym != NULL) {
 		if (blklev < sym->s_blklev)
-			lerror("name() 1");
+			LERROR("name()");
 		sb->sb_name = sym->s_name;
 		sb->sb_len = strlen(sym->s_name);
 		tok = sym->s_scl == TYPEDEF ? T_TYPENAME : T_NAME;
@@ -504,7 +504,7 @@ icon(int base)
 		uq = strtouq(cp, &eptr, base);
 	}
 	if (eptr != cp + len)
-		lerror("icon() 1");
+		LERROR("icon()");
 	if (errno != 0)
 		/* integer constant out of range */
 		warning(252);
@@ -679,7 +679,7 @@ fcon(void)
 	errno = 0;
 	d = strtod(cp, &eptr);
 	if (eptr != cp + len)
-		lerror("fcon() 1");
+		LERROR("fcon()");
 	if (errno != 0)
 		/* floating-point constant out of range */
 		warning(248);
@@ -1286,7 +1286,7 @@ getsym(sbuf_t *sb)
 
 	if (sym != NULL) {
 		if (sym->s_kind != symtyp)
-			lerror("storesym() 1");
+			LERROR("storesym()");
 		symtyp = FVFT;
 		freesb(sb);
 		return (sym);
@@ -1305,7 +1305,7 @@ getsym(sbuf_t *sb)
 		while (di->d_nxt != NULL && di->d_nxt->d_nxt != NULL)
 			di = di->d_nxt;
 		if (di->d_ctx != AUTO)
-			lerror("storesym() 2");
+			LERROR("storesym()");
 	} else {
 		sym = getblk(sizeof (sym_t));
 		sym->s_name = sb->sb_name;
@@ -1378,7 +1378,7 @@ inssym(int bl, sym_t *sym)
 	(symtab[h] = sym)->s_rlink = &symtab[h];
 	sym->s_blklev = bl;
 	if (sym->s_link != NULL && sym->s_blklev < sym->s_link->s_blklev)
-		lerror("inssym()");
+		LERROR("inssym()");
 }
 
 /*
@@ -1419,7 +1419,7 @@ pushdown(sym_t *sym)
 	h = hash(sym->s_name);
 	nsym = getblk(sizeof (sym_t));
 	if (sym->s_blklev > blklev)
-		lerror("pushdown()");
+		LERROR("pushdown()");
 	nsym->s_name = sym->s_name;
 	UNIQUE_CURR_POS(nsym->s_dpos);
 	nsym->s_kind = sym->s_kind;
@@ -1456,7 +1456,7 @@ freeyyv(void *sp, int tok)
 		} else if (strg->st_tspec == WCHAR) {
 			free(strg->st_wcp);
 		} else {
-			lerror("fryylv() 1");
+			LERROR("fryylv()");
 		}
 		free(strg);
 	}
