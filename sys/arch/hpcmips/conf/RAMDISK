@@ -2,7 +2,7 @@
 # Distribution kernel (any  model) kernel config file
 
 #
-# 	$NetBSD: RAMDISK,v 1.4 1999/10/30 11:29:20 enami Exp $
+# 	$NetBSD: RAMDISK,v 1.5 1999/10/30 11:36:44 enami Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -22,13 +22,13 @@ options 	DDB			# in-kernel debugger
 #options 	DIAGNOSTIC		# extra kernel debugging checks
 #options 	DEBUG			# extra kernel debugging support
 options 	KTRACE			# system call tracing support
-options 	"NKMEMCLUSTERS=1024"	# 4K pages in kernel malloc pool
+options 	NKMEMCLUSTERS=1024	# 4K pages in kernel malloc pool
 
 options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 
 options		RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
-#options	"RTC_OFFSET=-540"	# JST-9
+#options	RTC_OFFSET=-540	# JST-9
 #options	RTC_OFFSET=480	# PST8
 options 	NTP			# network time protocol
 #options 	UCONSOLE		# users can redirect console (unsafe)
@@ -61,7 +61,7 @@ options 	QUOTA		# UFS quotas
 
 # Networking options
 options 	INET		# Internet protocols
-#options 	"TCP_COMPAT_42"	# compatibility with 4.2BSD TCP/IP
+#options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 #options 	GATEWAY		# IP packet forwarding
 #options 	MROUTING	# Multicast routing support
 #options 	ISO		# OSI networking
