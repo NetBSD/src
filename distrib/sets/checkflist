@@ -1,13 +1,15 @@
-#!/bin/csh -f
+#! /bin/sh --
+#
+#	$NetBSD: checkflist,v 1.3 1997/02/18 06:58:56 mikel Exp $
+#
+# Verify output of makeflist against contents of $DESTDIR.
 
-if (! $?DESTDIR) then
+[ "$DESTDIR" ] || {
 	echo DESTDIR must be set
 	exit 1
-endif
+}
 
-set fsdir=$DESTDIR
-
-./makeflist >! /tmp/_CHECK.$$
-( cd $fsdir ; find . \( -type d -o -type f -o -type l \) ) | sort | \
+sh makeflist > /tmp/_CHECK.$$
+( cd $DESTDIR ; find . \( -type d -o -type f -o -type l \) ) | sort | \
     diff /tmp/_CHECK.$$ -
 /bin/rm -f /tmp/_CHECK.$$
