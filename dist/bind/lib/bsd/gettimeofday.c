@@ -1,5 +1,7 @@
+/*	$NetBSD: gettimeofday.c,v 1.1.1.1.2.1 2002/06/28 11:40:46 lukem Exp $	*/
+
 #ifndef LINT
-static const char rcsid[] = "$Id: gettimeofday.c,v 1.1.1.1 2001/05/17 22:41:07 itojun Exp $";
+static const char rcsid[] = "Id: gettimeofday.c,v 8.5 2001/02/12 23:13:44 marka Exp";
 #endif
 
 #include "port_before.h"
