@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.61 2003/10/05 14:50:09 tsutsui Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.62 2003/10/05 14:57:14 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.61 2003/10/05 14:50:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.62 2003/10/05 14:57:14 tsutsui Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -115,7 +115,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.61 2003/10/05 14:50:09 tsutsui Exp $");
 
 /* number of transmit/receive buffers */
 #ifndef TL_NBUF
-#define TL_NBUF 10
+#define TL_NBUF 32
 #endif
 
 static int tl_pci_match __P((struct device *, struct cfdata *, void *));
