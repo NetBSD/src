@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.97 2002/01/27 11:40:48 martin Exp $	*/
+/*	$NetBSD: conf.h,v 1.98 2002/02/27 01:17:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -330,7 +330,7 @@ extern struct cdevsw cdevsw[];
 /* open, close, read, write, mmap */
 #define cdev_mm_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_noimpl(ioctl,enodev), \
+	dev_init(c,n,write), dev_init(c,n,ioctl), \
 	dev_noimpl(stop,enodev), 0, seltrue, dev_init(c,n,mmap) }
 
 /* (open), (close), read, write */
@@ -540,6 +540,19 @@ cdev_decl(ptc);
 #define	ptstty		ptytty
 #define	ptsioctl	ptyioctl
 cdev_decl(pts);
+
+#define mmread		mmrw
+#define mmwrite		mmrw
+cdev_decl(mm);
+#define	DEV_MEM		0	/* minor device 0 is physical memory */
+#define	DEV_KMEM	1	/* minor device 1 is kernel memory */
+#define DEV_NULL	2	/* minor device 2 is EOF/rathole */
+#ifdef __arm__			/* XXX: FIX ME ARM! */
+#define DEV_ZERO	3	/* minor device 3 is '\0'/rathole */
+#else
+#define DEV_ZERO	12	/* minor device 12 is '\0'/rathole */
+#endif
+
 
 /*
  * [bc]dev_decl()s for 'fake' disk devices.
