@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.647 2004/08/26 13:14:59 itohy Exp $
+$NetBSD: pcidevs,v 1.648 2004/09/10 13:56:32 darrenr Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1904,6 +1904,7 @@ product LUCENT LTMODEM_045a	0x045a	LTMODEM
 product LUCENT OR3LP26		0x5400	ORCA FPGA w/32-bit PCI ASIC core
 product LUCENT OR3TP12		0x5401	ORCA FPGA w/64-bit PCI ASIC core
 product LUCENT USBHC		0x5801	USB Host Controller
+product	LUCENT EVDO		0x5802	Sierra Wireless AirCard 580 
 product LUCENT FW322_323	0x5811	FW322/323 IEEE 1394 Host Controller
 
 /* Macronix */
