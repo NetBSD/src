@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.129 2001/05/26 21:27:17 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.130 2001/06/02 18:09:22 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -452,7 +452,7 @@ current_pmap __P((void))
 {
 	struct proc *p;
 	struct vmspace *vm;
-	vm_map_t	map;
+	struct vm_map *map;
 	pmap_t	pmap;
 
 	p = curproc;	/* XXX */
@@ -2482,7 +2482,7 @@ pmap_kremove(va, len)
  */
 int
 _pmap_fault(map, va, ftype)
-	vm_map_t map;
+	struct vm_map *map;
 	vm_offset_t va;
 	vm_prot_t ftype;
 {

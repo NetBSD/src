@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.62 2001/06/02 16:47:17 matthias Exp $	*/
+/*	$NetBSD: pmap.c,v 1.63 2001/06/02 18:09:18 chs Exp $	*/
 
 /*
  *
@@ -1165,7 +1165,7 @@ pmap_free_pvpage()
 {
 	int s;
 	struct vm_map *map;
-	vm_map_entry_t dead_entries;
+	struct vm_map_entry *dead_entries;
 	struct pv_page *pvp;
 
 	s = splvm(); /* protect kmem_map */

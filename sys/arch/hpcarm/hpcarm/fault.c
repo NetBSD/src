@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.4 2001/03/21 14:40:00 toshii Exp $	*/
+/*	$NetBSD: fault.c,v 1.5 2001/06/02 18:09:12 chs Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -327,10 +327,10 @@ copyfault:
 	{
 		register vm_offset_t va;
 		register struct vmspace *vm = p->p_vmspace;
-		register vm_map_t map;
+		register struct vm_map *map;
 		int rv;
 		vm_prot_t ftype;
-		extern vm_map_t kernel_map;
+		extern struct vm_map *kernel_map;
 
 		va = trunc_page((vm_offset_t)fault_address);
 

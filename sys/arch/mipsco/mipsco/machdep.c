@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.26 2001/05/30 15:24:34 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.27 2001/06/02 18:09:16 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26 2001/05/30 15:24:34 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.27 2001/06/02 18:09:16 chs Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -114,9 +114,9 @@ struct cpu_info cpu_info_store;
 
 /* maps for VM objects */
 
-vm_map_t exec_map = NULL;
-vm_map_t mb_map = NULL;
-vm_map_t phys_map = NULL;
+struct vm_map *exec_map = NULL;
+struct vm_map *mb_map = NULL;
+struct vm_map *phys_map = NULL;
 
 int	physmem;		/* max supported memory, changes to actual */
 char	*bootinfo = NULL;	/* pointer to bootinfo structure */

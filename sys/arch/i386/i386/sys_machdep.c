@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.56 2001/02/14 01:29:46 nathanw Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.57 2001/06/02 18:09:13 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 #include <machine/pmc.h>
 #endif
 
-extern vm_map_t kernel_map;
+extern struct vm_map *kernel_map;
 
 int i386_iopl __P((struct proc *, void *, register_t *));
 int i386_get_ioperm __P((struct proc *, void *, register_t *));

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.16 2001/05/30 15:24:31 lukem Exp $ */
+/* $NetBSD: machdep.c,v 1.17 2001/06/02 18:09:14 chs Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16 2001/05/30 15:24:31 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 2001/06/02 18:09:14 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -101,9 +101,9 @@ struct cpu_info cpu_info_store;
 extern char kernel_text[];
 extern char etext[];
 
-vm_map_t exec_map = NULL;  
-vm_map_t mb_map = NULL;
-vm_map_t phys_map = NULL;
+struct vm_map *exec_map = NULL;  
+struct vm_map *mb_map = NULL;
+struct vm_map *phys_map = NULL;
 
 caddr_t	msgbufaddr;
 int	maxmem;			/* max memory per process */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.49 2001/05/30 15:24:23 lukem Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.50 2001/06/02 18:09:26 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -151,7 +151,7 @@ uvm_useracc(addr, len, rw)
 	size_t len;
 	int rw;
 {
-	vm_map_t map;
+	struct vm_map *map;
 	boolean_t rv;
 	vm_prot_t prot = rw == B_READ ? VM_PROT_READ : VM_PROT_WRITE;
 
@@ -217,7 +217,7 @@ uvm_vslock(p, addr, len, access_type)
 	size_t	len;
 	vm_prot_t access_type;
 {
-	vm_map_t map;
+	struct vm_map *map;
 	vaddr_t start, end;
 	int error;
 

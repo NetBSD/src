@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.2 2001/05/30 15:24:38 lukem Exp $	*/
+/*	$NetBSD: trap.c,v 1.3 2001/06/02 18:09:22 chs Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -456,10 +456,10 @@ trap(type, code, v, tf)
 	case T_MMUFLT|T_USER: { 	/* page fault */
 		register vm_offset_t va;
 		register struct vmspace *vm = p->p_vmspace;
-		register vm_map_t map;
+		register struct vm_map *map;
 		int rv;
 		vm_prot_t ftype;
-		extern vm_map_t kernel_map;
+		extern struct vm_map *kernel_map;
 
 #ifdef DEBUG
 		if ((mmudebug & MDB_WBFOLLOW) || MDB_ISPID(p->p_pid))

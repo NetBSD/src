@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.11 2001/04/24 04:30:52 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.12 2001/06/02 18:09:09 chs Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -81,9 +81,9 @@ int imask[NIPL];
 /* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
 
-vm_map_t exec_map = NULL;
-vm_map_t mb_map = NULL;
-vm_map_t phys_map = NULL;
+struct vm_map *exec_map = NULL;
+struct vm_map *mb_map = NULL;
+struct vm_map *phys_map = NULL;
 
 struct bat battable[16];
 extern int aga_enable, eclockfreq;
