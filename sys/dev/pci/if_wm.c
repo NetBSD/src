@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.38 2003/07/14 15:47:25 lukem Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.39 2003/07/29 19:49:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.38 2003/07/14 15:47:25 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.39 2003/07/29 19:49:50 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -498,6 +498,10 @@ const struct wm_product {
 	  WM_T_82545,		WMP_F_1000T },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82546EB_COPPER,
+	  "Intel i82546EB 1000BASE-T Ethernet",
+	  WM_T_82546,		WMP_F_1000T },
+
+	{ PCI_VENDOR_INTEL,     PCI_PRODUCT_INTEL_82546EB_QUAD,
 	  "Intel i82546EB 1000BASE-T Ethernet",
 	  WM_T_82546,		WMP_F_1000T },
 
