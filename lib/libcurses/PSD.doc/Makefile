@@ -1,16 +1,17 @@
-#	$NetBSD: Makefile,v 1.7 1998/01/09 04:12:02 perry Exp $
+#	$NetBSD: Makefile,v 1.8 1999/01/26 22:45:02 tron Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 5/23/94
 
 DIR=	psd/19.curses
 SRCS=	Master
 MACROS=	-me
-EXTRA=	appen.A appen.B appen.C c_macros doc.I doc.II doc.III \
-	doc.IV ex1.c ex2.c fns.doc intro.0 intro.1 intro.2 intro.3 \
-	intro.4 intro.5 intro.6 life.c macros twinkle1.c twinkle2.c \
-	win_st.c
+OTHER=	appen.A appen.B appen.C doc.I doc.II doc.III doc.IV fns.doc \
+	intro.0 intro.1 intro.3 intro.4 intro.5 intro.6 \
+	macros c_macros
+CEXAMPLES= ex1.gr ex2.gr life.gr twinkle1.gr twinkle2.gr win_st.gr
+TBLFILES=  intro.2.tbl
+EXTRA=	${OTHER} ${CEXAMPLES:R:S/$/.c/g} ${TBLFILES:R}
 
-CLEANFILES+=win_st.gr twinkle1.gr twinkle2.gr life.gr intro.2.tbl appen.A.tbl \
-	ex1.gr ex2.gr
+CLEANFILES+= ${CEXAMPLES} ${TBLFILES}
 
 .SUFFIXES:
 .SUFFIXES: .c .gr
@@ -26,13 +27,11 @@ VFONT=	/usr/libexec/vfontedpr
 .c.gr:
 	${VFONT} ${.IMPSRC} | grep -v "^'wh" > ${.TARGET}
 
-paper.ps: ${SRCS}
-	${SOELIM} -I${.CURDIR} ${.ALLSRC} | ${ROFF} > ${.TARGET}
+paper.ps: ${SRCS} ${OTHER} ${CEXAMPLES} ${TBLFILES}
+	${SOELIM} -I${.CURDIR} Master | ${ROFF} > ${.TARGET}
 
-Master: twinkle1.gr ex1.gr ex2.gr fns.doc intro.5 intro.2.tbl intro.0 intro.1 \
-	intro.3 intro.4 intro.6 macros c_macros
-
+# Unfortunately our make doesn't handle single-suffix rules.
 intro.2.tbl: intro.2
-	${TBL} ${.ALLSRC} > intro.2.tbl
+	${TBL} ${.ALLSRC} > ${.TARGET}
 
 .include <bsd.doc.mk>
