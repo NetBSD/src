@@ -27,7 +27,7 @@
  *	q932_fac.c - decode Q.932 facilities
  *	------------------------------------
  *
- *	$Id: q932_fac.c,v 1.1.1.1 2001/01/06 13:00:32 martin Exp $ 
+ *	$Id: q932_fac.c,v 1.2 2003/10/06 09:43:28 itojun Exp $ 
  *
  * $FreeBSD$
  *
@@ -88,26 +88,26 @@ q932_facility(char *pbuf, unsigned char *buf)
 
 	sprintf((pbuf+strlen(pbuf)), "Protocol=");
 	
-	switch(*buf & 0x1f)
+	switch (*buf & 0x1f)
 	{
-		case FAC_PROTO_ROP:
-			sprintf((pbuf+strlen(pbuf)), "Remote Operations Protocol\n");
-			break;
+	case FAC_PROTO_ROP:
+		sprintf((pbuf+strlen(pbuf)), "Remote Operations Protocol\n");
+		break;
 
-		case FAC_PROTO_CMIP:
-			sprintf((pbuf+strlen(pbuf)), "CMIP Protocol (Q.941), UNSUPPORTED!\n");
-			return(len+2);
-			break;
+	case FAC_PROTO_CMIP:
+		sprintf((pbuf+strlen(pbuf)), "CMIP Protocol (Q.941), UNSUPPORTED!\n");
+		return(len+2);
+		break;
 
-		case FAC_PROTO_ACSE:
-			sprintf((pbuf+strlen(pbuf)), "ACSE Protocol (X.217/X.227), UNSUPPORTED!\n");
-			return(len+2);
-			break;
+	case FAC_PROTO_ACSE:
+		sprintf((pbuf+strlen(pbuf)), "ACSE Protocol (X.217/X.227), UNSUPPORTED!\n");
+		return(len+2);
+		break;
 
-		default:
-			sprintf((pbuf+strlen(pbuf)), "Unknown Protocol (val = 0x%x), UNSUPPORTED!\n", *buf & 0x1f);
-			return(len+2);
-			break;
+	default:
+		sprintf((pbuf+strlen(pbuf)), "Unknown Protocol (val = 0x%x), UNSUPPORTED!\n", *buf & 0x1f);
+		return(len+2);
+		break;
 	}
 
 	/* next byte */
@@ -161,20 +161,20 @@ again:
 
 	comp_tag_class = (*byte_buf & 0xc0) >> 6;
 	
-	switch(comp_tag_class)
+	switch (comp_tag_class)
 	{
-		case FAC_TAGCLASS_UNI:
-			sprintf((pbuf+strlen(pbuf)), "Universal");
-			break;
-		case FAC_TAGCLASS_APW:
-			sprintf((pbuf+strlen(pbuf)), "Applic-wide");
-			break;
-		case FAC_TAGCLASS_COS:
-			sprintf((pbuf+strlen(pbuf)), "Context-spec");
-			break;
-		case FAC_TAGCLASS_PRU:
-			sprintf((pbuf+strlen(pbuf)), "Private");
-			break;
+	case FAC_TAGCLASS_UNI:
+		sprintf((pbuf+strlen(pbuf)), "Universal");
+		break;
+	case FAC_TAGCLASS_APW:
+		sprintf((pbuf+strlen(pbuf)), "Applic-wide");
+		break;
+	case FAC_TAGCLASS_COS:
+		sprintf((pbuf+strlen(pbuf)), "Context-spec");
+		break;
+	case FAC_TAGCLASS_PRU:
+		sprintf((pbuf+strlen(pbuf)), "Private");
+		break;
 	}
 
 	/* tag form bit */
@@ -183,7 +183,7 @@ again:
 	
 	sprintf((pbuf+strlen(pbuf)), ", ");
 
-	if(comp_tag_form == FAC_TAGFORM_CON)
+	if (comp_tag_form == FAC_TAGFORM_CON)
 	{
 		sprintf((pbuf+strlen(pbuf)), "Constructor");
 	}
@@ -198,7 +198,7 @@ again:
 	
 	sprintf((pbuf+strlen(pbuf)), ", ");	
 
-	if(comp_tag_code == 0x1f)
+	if (comp_tag_code == 0x1f)
 	{
 		comp_tag_code = 0;
 		
@@ -218,7 +218,7 @@ again:
 	{
 		comp_tag_code = (*byte_buf & 0x1f);
 
-		if(comp_tag_class == FAC_TAGCLASS_UNI)
+		if (comp_tag_class == FAC_TAGCLASS_UNI)
 		{
 			sprintf((pbuf+strlen(pbuf)), "%s (%d)\n", uni_str(comp_tag_code), comp_tag_code);
 		}
@@ -239,13 +239,13 @@ again:
 
 	comp_length = 0;
 	
-	if(*byte_buf & 0x80)
+	if (*byte_buf & 0x80)
 	{
 		int i = *byte_buf & 0x7f;
 
 		byte_len += i;
 		
-		for(;i > 0;i++)
+		for (;i > 0;i++)
 		{
 			byte_buf++;
 			comp_length += (*byte_buf * (i*256));
@@ -263,89 +263,89 @@ again:
 	byte_len++;
 	byte_buf++;
 	
-	if(comp_length)
+	if (comp_length)
 	{
 
 		/*---------------------------------------------*/
 		/* third component element: component contents */
 		/*---------------------------------------------*/
 			
-		if(comp_tag_form)	/* == constructor */
+		if (comp_tag_form)	/* == constructor */
 		{
 			do_component(comp_length, pbuf);
 		}
 		else 
 		{
 			int val = 0;		
-			if(comp_tag_class == FAC_TAGCLASS_UNI)
+			if (comp_tag_class == FAC_TAGCLASS_UNI)
 			{
-				switch(comp_tag_code)
+				switch (comp_tag_code)
 				{
-					case FAC_CODEUNI_INT:
-					case FAC_CODEUNI_ENUM:
-					case FAC_CODEUNI_BOOL:
-						if(comp_length)
+				case FAC_CODEUNI_INT:
+				case FAC_CODEUNI_ENUM:
+				case FAC_CODEUNI_BOOL:
+					if (comp_length)
+					{
+						int i;
+				
+						sprintf((pbuf+strlen(pbuf)), "\t");
+						
+						for (i = comp_length-1; i >= 0; i--)
 						{
-							int i;
-					
-							sprintf((pbuf+strlen(pbuf)), "\t");
-							
-							for(i = comp_length-1; i >= 0; i--)
-							{
-								sprintf((pbuf+strlen(pbuf)), "0x%02x ", *byte_buf);
-								val += (*byte_buf + (i*255));
-								byte_buf++;
-								byte_len++;
-								if(i)
-									sprintf((pbuf+strlen(pbuf)), "\n\t");
-							}
-							sprintf((pbuf+strlen(pbuf)), "Val: %d\n", val);
+							sprintf((pbuf+strlen(pbuf)), "0x%02x ", *byte_buf);
+							val += (*byte_buf + (i*255));
+							byte_buf++;
+							byte_len++;
+							if (i)
+								sprintf((pbuf+strlen(pbuf)), "\n\t");
 						}
-						break;
+						sprintf((pbuf+strlen(pbuf)), "Val: %d\n", val);
+					}
+					break;
 
-					case FAC_CODEUNI_OBJI: /* object id */
+				case FAC_CODEUNI_OBJI: /* object id */
 
-						if(comp_length)
-							object_id(comp_length, pbuf);
-						break;
-					
-					default:	
-						if(comp_length)
+					if (comp_length)
+						object_id(comp_length, pbuf);
+					break;
+				
+				default:	
+					if (comp_length)
+					{
+						int i;
+				
+						sprintf((pbuf+strlen(pbuf)), "\t");
+						
+						for (i = comp_length-1; i >= 0; i--)
 						{
-							int i;
-					
-							sprintf((pbuf+strlen(pbuf)), "\t");
-							
-							for(i = comp_length-1; i >= 0; i--)
-							{
-								sprintf((pbuf+strlen(pbuf)), "0x%02x = %d", *byte_buf, *byte_buf);
-								if(isprint(*byte_buf))
-									sprintf((pbuf+strlen(pbuf)), " = '%c'", *byte_buf);
-								byte_buf++;
-								byte_len++;
-								if(i)
-									sprintf((pbuf+strlen(pbuf)), "\n\t");
-							}
+							sprintf((pbuf+strlen(pbuf)), "0x%02x = %d", *byte_buf, *byte_buf);
+							if (isprint(*byte_buf))
+								sprintf((pbuf+strlen(pbuf)), " = '%c'", *byte_buf);
+							byte_buf++;
+							byte_len++;
+							if (i)
+								sprintf((pbuf+strlen(pbuf)), "\n\t");
 						}
-						break;
+					}
+					break;
 				}
 			}
 	
 			else	/* comp_tag_class != FAC_TAGCLASS_UNI */
 			{
-				if(comp_length)
+				if (comp_length)
 				{
 					int i;
 			
 					sprintf((pbuf+strlen(pbuf)), "\t");
 					
-					for(i = comp_length-1; i >= 0; i--)
+					for (i = comp_length-1; i >= 0; i--)
 					{
 						sprintf((pbuf+strlen(pbuf)), "0x%02x", *byte_buf);
 						val += (*byte_buf + (i*255)); 
 						byte_buf++;
 						byte_len++;
-						if(i)
+						if (i)
 							sprintf((pbuf+strlen(pbuf)), "\n\t");
 					}
 					sprintf((pbuf+strlen(pbuf)), "\n");
@@ -358,7 +358,7 @@ again:
 #ifdef FAC_DEBUG
 	sprintf((pbuf+strlen(pbuf)), "PREGOTO - comp_length = %d, byte_len = %d, length =%d\n", comp_length, byte_len, length);
 #endif	
-	if(byte_len < length)
+	if (byte_len < length)
 		goto again;
 #ifdef FAC_DEBUG
 	sprintf((pbuf+strlen(pbuf)), "RETURN - comp_length = %d, byte_len = %d, length =%d\n", comp_length, byte_len, length);		
@@ -398,7 +398,7 @@ static char *uni_str(int code)
 		"GENERAL STRING"
 	};
 
-	if(code >= 1 && code <=	FAC_CODEUNI_GNSTR)
+	if (code >= 1 && code <=	FAC_CODEUNI_GNSTR)
 		return(tbl[code-1]);
 	else
 		return("ERROR, Value out of Range!");
@@ -412,143 +412,143 @@ static char *opval_str(int val)
 	static char buffer[80];
 	char *r;
 	
-	switch(val)
+	switch (val)
 	{
-		case FAC_OPVAL_UUS:
-			r = "uUs";
-			break;
-		case FAC_OPVAL_CUG:
-			r = "cUGCall";
-			break;
-		case FAC_OPVAL_MCID:
-			r = "mCIDRequest";
-			break;
-		case FAC_OPVAL_BTPY:
-			r = "beginTPY";
-			break;
-		case FAC_OPVAL_ETPY:
-			r = "endTPY";
-			break;
-		case FAC_OPVAL_ECT:
-			r = "eCTRequest";
-			break;
-		case FAC_OPVAL_DIV_ACT:
-			r = "activationDiversion";
-			break;
-		case FAC_OPVAL_DIV_DEACT:
-			r = "deactivationDiversion";
-			break;
-		case FAC_OPVAL_DIV_ACTSN:
-			r = "activationStatusNotificationDiv";
-			break;
-		case FAC_OPVAL_DIV_DEACTSN:
-			r = "deactivationStatusNotificationDiv";
-			break;
-		case FAC_OPVAL_DIV_INTER:
-			r = "interrogationDiversion";
-			break;
-		case FAC_OPVAL_DIV_INFO:
-			r = "diversionInformation";
-			break;
-		case FAC_OPVAL_DIV_CALLDEF:
-			r = "callDeflection";
-			break;
-		case FAC_OPVAL_DIV_CALLRER:
-			r = "callRerouting";
-			break;
-		case FAC_OPVAL_DIV_LINF2:
-			r = "divertingLegInformation2";
-			break;
-		case FAC_OPVAL_DIV_INVS:
-			r = "invokeStatus";
-			break;
-		case FAC_OPVAL_DIV_INTER1:
-			r = "interrogationDiversion1";
-			break;
-		case FAC_OPVAL_DIV_LINF1:
-			r = "divertingLegInformation1";
-			break;
-		case FAC_OPVAL_DIV_LINF3:
-			r = "divertingLegInformation3";
-			break;
-		case FAC_OPVAL_ER_CRCO:
-			r = "explicitReservationCreationControl";
-			break;
-		case FAC_OPVAL_ER_MGMT:
-			r = "explicitReservationManagement";
-			break;
-		case FAC_OPVAL_ER_CANC:
-			r = "explicitReservationCancel";
-			break;
-		case FAC_OPVAL_MLPP_QUERY:
-			r = "mLPP lfb Query";
-			break;
-		case FAC_OPVAL_MLPP_CALLR:
-			r = "mLPP Call Request";
-			break;
-		case FAC_OPVAL_MLPP_CALLP:
-			r = "mLPP Call Preemption";
-			break;
-		case FAC_OPVAL_AOC_REQ:
-			r = "chargingRequest";
-			break;
-		case FAC_OPVAL_AOC_S_CUR:
-			r = "aOCSCurrency";
-			break;
-		case FAC_OPVAL_AOC_S_SPC:
-			r = "aOCSSpecialArrangement";
-			break;
-		case FAC_OPVAL_AOC_D_CUR:
-			r = "aOCDCurrency";
-			break;
-		case FAC_OPVAL_AOC_D_UNIT:
-			r = "aOCDChargingUnit";
-			break;
-		case FAC_OPVAL_AOC_E_CUR:
-			r = "aOCECurrency";
-			break;
-		case FAC_OPVAL_AOC_E_UNIT:
-			r = "aOCEChargingUnit";
-			break;
-		case FAC_OPVAL_AOC_IDOFCRG:
-			r = "identificationOfCharge";
-			break;
-		case FAC_OPVAL_CONF_BEG:
-			r = "beginConf";
-			break;
-		case FAC_OPVAL_CONF_ADD:
-			r = "addConf";
-			break;
-		case FAC_OPVAL_CONF_SPLIT:
-			r = "splitConf";
-			break;
-		case FAC_OPVAL_CONF_DROP:
-			r = "dropConf";
-			break;
-		case FAC_OPVAL_CONF_ISOLATE:
-			r = "isolateConf";
-			break;
-		case FAC_OPVAL_CONF_REATT:
-			r = "reattachConf";
-			break;
-		case FAC_OPVAL_CONF_PDISC:
-			r = "partyDISC";
-			break;
-		case FAC_OPVAL_CONF_FCONF:
-			r = "floatConf";
-			break;
-		case FAC_OPVAL_CONF_END:
-			r = "endConf";
-			break;
-		case FAC_OPVAL_CONF_IDCFE:
-			r = "indentifyConferee";
-			break;
-		case FAC_OPVAL_REVC_REQ:
-			r = "requestREV";
-			break;
-		default:
-			sprintf(buffer, "unknown operation value %d!", val);
-			r = buffer;
+	case FAC_OPVAL_UUS:
+		r = "uUs";
+		break;
+	case FAC_OPVAL_CUG:
+		r = "cUGCall";
+		break;
+	case FAC_OPVAL_MCID:
+		r = "mCIDRequest";
+		break;
+	case FAC_OPVAL_BTPY:
+		r = "beginTPY";
+		break;
+	case FAC_OPVAL_ETPY:
+		r = "endTPY";
+		break;
+	case FAC_OPVAL_ECT:
+		r = "eCTRequest";
+		break;
+	case FAC_OPVAL_DIV_ACT:
+		r = "activationDiversion";
+		break;
+	case FAC_OPVAL_DIV_DEACT:
+		r = "deactivationDiversion";
+		break;
+	case FAC_OPVAL_DIV_ACTSN:
+		r = "activationStatusNotificationDiv";
+		break;
+	case FAC_OPVAL_DIV_DEACTSN:
+		r = "deactivationStatusNotificationDiv";
+		break;
+	case FAC_OPVAL_DIV_INTER:
+		r = "interrogationDiversion";
+		break;
+	case FAC_OPVAL_DIV_INFO:
+		r = "diversionInformation";
+		break;
+	case FAC_OPVAL_DIV_CALLDEF:
+		r = "callDeflection";
+		break;
+	case FAC_OPVAL_DIV_CALLRER:
+		r = "callRerouting";
+		break;
+	case FAC_OPVAL_DIV_LINF2:
+		r = "divertingLegInformation2";
+		break;
+	case FAC_OPVAL_DIV_INVS:
+		r = "invokeStatus";
+		break;
+	case FAC_OPVAL_DIV_INTER1:
+		r = "interrogationDiversion1";
+		break;
+	case FAC_OPVAL_DIV_LINF1:
+		r = "divertingLegInformation1";
+		break;
+	case FAC_OPVAL_DIV_LINF3:
+		r = "divertingLegInformation3";
+		break;
+	case FAC_OPVAL_ER_CRCO:
+		r = "explicitReservationCreationControl";
+		break;
+	case FAC_OPVAL_ER_MGMT:
+		r = "explicitReservationManagement";
+		break;
+	case FAC_OPVAL_ER_CANC:
+		r = "explicitReservationCancel";
+		break;
+	case FAC_OPVAL_MLPP_QUERY:
+		r = "mLPP lfb Query";
+		break;
+	case FAC_OPVAL_MLPP_CALLR:
+		r = "mLPP Call Request";
+		break;
+	case FAC_OPVAL_MLPP_CALLP:
+		r = "mLPP Call Preemption";
+		break;
+	case FAC_OPVAL_AOC_REQ:
+		r = "chargingRequest";
+		break;
+	case FAC_OPVAL_AOC_S_CUR:
+		r = "aOCSCurrency";
+		break;
+	case FAC_OPVAL_AOC_S_SPC:
+		r = "aOCSSpecialArrangement";
+		break;
+	case FAC_OPVAL_AOC_D_CUR:
+		r = "aOCDCurrency";
+		break;
+	case FAC_OPVAL_AOC_D_UNIT:
+		r = "aOCDChargingUnit";
+		break;
+	case FAC_OPVAL_AOC_E_CUR:
+		r = "aOCECurrency";
+		break;
+	case FAC_OPVAL_AOC_E_UNIT:
+		r = "aOCEChargingUnit";
+		break;
+	case FAC_OPVAL_AOC_IDOFCRG:
+		r = "identificationOfCharge";
+		break;
+	case FAC_OPVAL_CONF_BEG:
+		r = "beginConf";
+		break;
+	case FAC_OPVAL_CONF_ADD:
+		r = "addConf";
+		break;
+	case FAC_OPVAL_CONF_SPLIT:
+		r = "splitConf";
+		break;
+	case FAC_OPVAL_CONF_DROP:
+		r = "dropConf";
+		break;
+	case FAC_OPVAL_CONF_ISOLATE:
+		r = "isolateConf";
+		break;
+	case FAC_OPVAL_CONF_REATT:
+		r = "reattachConf";
+		break;
+	case FAC_OPVAL_CONF_PDISC:
+		r = "partyDISC";
+		break;
+	case FAC_OPVAL_CONF_FCONF:
+		r = "floatConf";
+		break;
+	case FAC_OPVAL_CONF_END:
+		r = "endConf";
+		break;
+	case FAC_OPVAL_CONF_IDCFE:
+		r = "indentifyConferee";
+		break;
+	case FAC_OPVAL_REVC_REQ:
+		r = "requestREV";
+		break;
+	default:
+		sprintf(buffer, "unknown operation value %d!", val);
+		r = buffer;
 	}
 	return(r);
 }
@@ -561,35 +561,35 @@ static char *bid_str(int val)
 	static char buffer[80];
 	char *r;
 	
-	switch(val)
+	switch (val)
 	{
-		case 0:
-			r = "normalCharging";
-			break;
-		case 1:
-			r = "reverseCharging";
-			break;
-		case 2:
-			r = "creditCardCharging";
-			break;
-		case 3:
-			r = "callForwardingUnconditional";
-			break;
-		case 4:
-			r = "callForwardingBusy";
-			break;
-		case 5:
-			r = "callForwardingNoReply";
-			break;
-		case 6:
-			r = "callDeflection";
-			break;
-		case 7:
-			r = "callTransfer";
-			break;
-		default:
-			sprintf(buffer, "unknown billing-id value %d!", val);
-			r = buffer;
+	case 0:
+		r = "normalCharging";
+		break;
+	case 1:
+		r = "reverseCharging";
+		break;
+	case 2:
+		r = "creditCardCharging";
+		break;
+	case 3:
+		r = "callForwardingUnconditional";
+		break;
+	case 4:
+		r = "callForwardingBusy";
+		break;
+	case 5:
+		r = "callForwardingNoReply";
+		break;
+	case 6:
+		r = "callDeflection";
+		break;
+	case 7:
+		r = "callTransfer";
+		break;
+	default:
+		sprintf(buffer, "unknown billing-id value %d!", val);
+		r = buffer;
 	}
 	return(r);
 }
@@ -603,7 +603,7 @@ F_1_1(char *pbuf, int val)
 #ifdef ST_DEBUG
 	sprintf((pbuf+strlen(pbuf)), "next_state: exec F_1_1, val = %d\n", val);
 #endif
-	if(val == -1)
+	if (val == -1)
 	{
 		sprintf((pbuf+strlen(pbuf)), "\t          invokeComponent\n");
 		state = ST_EXP_INV_ID;
@@ -619,7 +619,7 @@ F_1_2(char *pbuf, int val)
 #ifdef ST_DEBUG
 	sprintf((pbuf+strlen(pbuf)), "next_state: exec F_1_2, val = %d\n", val);
 #endif
-	if(val == -1)
+	if (val == -1)
 	{
 		sprintf((pbuf+strlen(pbuf)), "\t          returnResult\n");
 		state = ST_EXP_RR_INV_ID;
@@ -634,7 +634,7 @@ F_1_3(char *pbuf, int val)
 #ifdef ST_DEBUG
 	sprintf((pbuf+strlen(pbuf)), "next_state: exec F_1_3, val = %d\n", val);
 #endif
-	if(val == -1)
+	if (val == -1)
 	{
 		sprintf((pbuf+strlen(pbuf)), "\t          returnError\n");
 		state = ST_EXP_NIX;
@@ -649,7 +649,7 @@ F_1_4(char *pbuf, int val)
 #ifdef ST_DEBUG
 	sprintf((pbuf+strlen(pbuf)), "next_state: exec F_1_4, val = %d\n", val);
 #endif
-	if(val == -1)
+	if (val == -1)
 	{
 		sprintf((pbuf+strlen(pbuf)), "\t          reject\n");
 		state = ST_EXP_REJ_INV_ID;
@@ -665,7 +665,7 @@ F_RJ2(char *pbuf, int val)
 #ifdef ST_DEBUG
 	sprintf((pbuf+strlen(pbuf)), "next_state: exec F_RJ2, val = %d\n", val);
 #endif
-	if(val != -1)
+	if (val != -1)
 	{
 		sprintf((pbuf+strlen(pbuf)), "\t          InvokeIdentifier = %d\n", val);
 		state = ST_EXP_REJ_OP_VAL;
@@ -681,26 +681,26 @@ F_RJ30(char *pbuf, int val)
 #ifdef ST_DEBUG
 	sprintf((pbuf+strlen(pbuf)), "next_state: exec F_RJ30, val = %d\n", val);
 #endif
-	if(val == -1)
+	if (val == -1)
 	{
 		sprintf((pbuf+strlen(pbuf)), "\t          General problem\n");
 	}
 	else
 	{
-		switch(val)
+		switch (val)
 		{
-			case 0:
-				sprintf((pbuf+strlen(pbuf)), "\t          problem = unrecognized component\n");
-				break;
-			case 1:
-				sprintf((pbuf+strlen(pbuf)), "\t          problem = mistyped component\n");
-				break;
-			case 2:
-				sprintf((pbuf+strlen(pbuf)), "\t          problem = badly structured component\n");
-				break;
-			default:
-				sprintf((pbuf+strlen(pbuf)), "\t          problem = unknown problem code 0x%x\n", val);
-				break;
+		case 0:
+			sprintf((pbuf+strlen(pbuf)), "\t          problem = unrecognized component\n");
+			break;
+		case 1:
+			sprintf((pbuf+strlen(pbuf)), "\t          problem = mistyped component\n");
+			break;
+		case 2:
+			sprintf((pbuf+strlen(pbuf)), "\t          problem = badly structured component\n");
+			break;
+		default:
+			sprintf((pbuf+strlen(pbuf)), "\t          problem = unknown problem code 0x%x\n", val);
+			break;
 		}
 		state = ST_EXP_NIX;
 	}
@@ -715,41 +715,41 @@ F_RJ31(char *pbuf, int val)
 #ifdef ST_DEBUG
 	sprintf((pbuf+strlen(pbuf)), "next_state: exec F_RJ31, val = %d\n", val);
 #endif
-	if(val == -1)
+	if (val == -1)
 	{
 		sprintf((pbuf+strlen(pbuf)), "\t          Invoke problem\n");
 	}
 	else
 	{
-		switch(val)
+		switch (val)
 		{
-			case 0:
-				sprintf((pbuf+strlen(pbuf)), "\t          problem = duplicate invocation\n");
-				break;
-			case 1:
-				sprintf((pbuf+strlen(pbuf)), "\t          problem = unrecognized operation\n");
-				break;
-			case 2:
-				sprintf((pbuf+strlen(pbuf)), "\t          problem = mistyped argument\n");
-				break;
-			case 3:
-				sprintf((pbuf+strlen(pbuf)), "\t          problem = resource limitation\n");
-				break;
-			case 4:
-				sprintf((pbuf+strlen(pbuf)), "\t          problem = initiator releasing\n");
-				break;
-			case 5:
-				sprintf((pbuf+strlen(pbuf)), "\t          problem = unrecognized linked identifier\n");
-				break;
-			case 6:
-				sprintf((pbuf+strlen(pbuf)), "\t          problem = linked resonse unexpected\n");
-				break;
-			case 7:
-				sprintf((pbuf+strlen(pbuf)), "\t          problem = unexpected child operation\n");
-				break;
-			default:
-				sprintf((pbuf+strlen(pbuf)), "\t          problem = unknown problem code 0x%x\n", val);
-				break;
+		case 0:
+			sprintf((pbuf+strlen(pbuf)), "\t          problem = duplicate invocation\n");
+			break;
+		case 1:
+			sprintf((pbuf+strlen(pbuf)), "\t          problem = unrecognized operation\n");
+			break;
+		case 2:
+			sprintf((pbuf+strlen(pbuf)), "\t          problem = mistyped argument\n");
+			break;
+		case 3:
+			sprintf((pbuf+strlen(pbuf)), "\t          problem = resource limitation\n");
+			break;
+		case 4:
+			sprintf((pbuf+strlen(pbuf)), "\t          problem = initiator releasing\n");
+			break;
+		case 5:
+			sprintf((pbuf+strlen(pbuf)), "\t          problem = unrecognized linked identifier\n");
+			break;
+		case 6:
+			sprintf((pbuf+strlen(pbuf)), "\t          problem = linked resonse unexpected\n");
+			break;
+		case 7:
+			sprintf((pbuf+strlen(pbuf)), "\t          problem = unexpected child operation\n");
+			break;
+		default:
+			sprintf((pbuf+strlen(pbuf)), "\t          problem = unknown problem code 0x%x\n", val);
+			break;
 		}
 		state = ST_EXP_NIX;
 	}
@@ -764,26 +764,26 @@ F_RJ32(char *pbuf, int val)
 #ifdef ST_DEBUG
 	sprintf((pbuf+strlen(pbuf)), "next_state: exec F_RJ32, val = %d\n", val);
 #endif
-	if(val == -1)
+	if (val == -1)
 	{
 		sprintf((pbuf+strlen(pbuf)), "\t          Return result problem\n");
 	}
 	else
 	{
-		switch(val)
+		switch (val)
 		{
-			case 0:
-				sprintf((pbuf+strlen(pbuf)), "\t          problem = unrecognized invocation\n");
-				break;
-			case 1:
-				sprintf((pbuf+strlen(pbuf)), "\t          problem = return response unexpected\n");
-				break;
-			case 2:
-				sprintf((pbuf+strlen(pbuf)), "\t          problem = mistyped result\n");
-				break;
-			default:
-				sprintf((pbuf+strlen(pbuf)), "\t          problem = unknown problem code 0x%x\n", val);
-				break;
+		case 0:
+			sprintf((pbuf+strlen(pbuf)), "\t          problem = unrecognized invocation\n");
+			break;
+		case 1:
+			sprintf((pbuf+strlen(pbuf)), "\t          problem = return response unexpected\n");
+			break;
+		case 2:
+			sprintf((pbuf+strlen(pbuf)), "\t          problem = mistyped result\n");
+			break;
+		default:
+			sprintf((pbuf+strlen(pbuf)), "\t          problem = unknown problem code 0x%x\n", val);
+			break;
 		}
 		state = ST_EXP_NIX;
 	}
@@ -798,32 +798,32 @@ F_RJ33(char *pbuf, int val)
 #ifdef ST_DEBUG
 	sprintf((pbuf+strlen(pbuf)), "next_state: exec F_RJ33, val = %d\n", val);
 #endif
-	if(val == -1)
+	if (val == -1)
 	{
 		sprintf((pbuf+strlen(pbuf)), "\t          Return error problem\n");
 	}
 	else
 	{
-		switch(val)
+		switch (val)
 		{
-			case 0:
-				sprintf((pbuf+strlen(pbuf)), "\t          problem = unrecognized invocation\n");
-				break;
-			case 1:
-				sprintf((pbuf+strlen(pbuf)), "\t          problem = error response unexpected\n");
-				break;
-			case 2:
-				sprintf((pbuf+strlen(pbuf)), "\t          problem = unrecognized error\n");
-				break;
-			case 3:
-				sprintf((pbuf+strlen(pbuf)), "\t          problem = unexpected error\n");
-				break;
-			case 4:
-				sprintf((pbuf+strlen(pbuf)), "\t          problem = mistyped parameter\n");
-				break;
-			default:
-				sprintf((pbuf+strlen(pbuf)), "\t          problem = unknown problem code 0x%x\n", val);
-				break;
+		case 0:
+			sprintf((pbuf+strlen(pbuf)), "\t          problem = unrecognized invocation\n");
+			break;
+		case 1:
+			sprintf((pbuf+strlen(pbuf)), "\t          problem = error response unexpected\n");
+			break;
+		case 2:
+			sprintf((pbuf+strlen(pbuf)), "\t          problem = unrecognized error\n");
+			break;
+		case 3:
+			sprintf((pbuf+strlen(pbuf)), "\t          problem = unexpected error\n");
+			break;
+		case 4:
+			sprintf((pbuf+strlen(pbuf)), "\t          problem = mistyped parameter\n");
+			break;
+		default:
+			sprintf((pbuf+strlen(pbuf)), "\t          problem = unknown problem code 0x%x\n", val);
+			break;
 		}
 		state = ST_EXP_NIX;
 	}
@@ -838,7 +838,7 @@ F_2(char *pbuf, int val)
 #ifdef ST_DEBUG
 	sprintf((pbuf+strlen(pbuf)), "next_state: exec F_2, val = %d\n", val);
 #endif
-	if(val != -1)
+	if (val != -1)
 	{
 		sprintf((pbuf+strlen(pbuf)), "\t          InvokeIdentifier = %d\n", val);		
 		state = ST_EXP_OP_VAL;
@@ -854,7 +854,7 @@ F_RR2(char *pbuf, int val)
 #ifdef ST_DEBUG
 	sprintf((pbuf+strlen(pbuf)), "next_state: exec F_RR2, val = %d\n", val);
 #endif
-	if(val != -1)
+	if (val != -1)
 	{
 		sprintf((pbuf+strlen(pbuf)), "\t          InvokeIdentifier = %d\n", val);
 		state = ST_EXP_RR_OP_VAL;
@@ -870,7 +870,7 @@ F_3(char *pbuf, int val)
 #ifdef ST_DEBUG
 	sprintf((pbuf+strlen(pbuf)), "next_state: exec F_3, val = %d\n", val);
 #endif
-	if(val != -1)
+	if (val != -1)
 	{
 		sprintf((pbuf+strlen(pbuf)), "\t          Operation Value = %s (%d)\n", opval_str(val), val);
 		state = ST_EXP_INFO;
@@ -886,7 +886,7 @@ F_RR3(char *pbuf, int val)
 #ifdef ST_DEBUG
 	sprintf((pbuf+strlen(pbuf)), "next_state: exec F_RR3, val = %d\n", val);
 #endif
-	if(val != -1)
+	if (val != -1)
 	{
 		sprintf((pbuf+strlen(pbuf)), "\t          Operation Value = %s (%d)\n", opval_str(val), val);
 		state = ST_EXP_RR_RESULT;
@@ -914,7 +914,7 @@ F_4(char *pbuf, int val)
 #ifdef ST_DEBUG
 	sprintf((pbuf+strlen(pbuf)), "next_state: exec F_4, val = %d\n", val);	
 #endif
-	if(val == -1)
+	if (val == -1)
 	{
 		sprintf((pbuf+strlen(pbuf)), "\t          specificChargingUnits\n");
 		state = ST_EXP_RUL;
@@ -930,7 +930,7 @@ F_4_1(char *pbuf, int val)
 #ifdef ST_DEBUG
 	sprintf((pbuf+strlen(pbuf)), "next_state: exec F_4_1, val = %d\n", val);	
 #endif
-	if(val == -1)
+	if (val == -1)
 	{
 		sprintf((pbuf+strlen(pbuf)), "\t          freeOfCharge\n");
 		state = ST_EXP_NIX;
@@ -946,7 +946,7 @@ F_4_2(char *pbuf, int val)
 #ifdef ST_DEBUG
 	sprintf((pbuf+strlen(pbuf)), "next_state: exec F_4_2, val = %d\n", val);	
 #endif
-	if(val == -1)
+	if (val == -1)
 	{
 		sprintf((pbuf+strlen(pbuf)), "\t          chargeNotAvailable\n");
 		state = ST_EXP_NIX;
@@ -962,7 +962,7 @@ F_5(char *pbuf, int val)
 #ifdef ST_DEBUG
 	sprintf((pbuf+strlen(pbuf)), "next_state: exec F_5, val = %d\n", val);	
 #endif
-	if(val == -1)
+	if (val == -1)
 	{
 		sprintf((pbuf+strlen(pbuf)), "\t          recordedUnitsList [1]\n");
 		state = ST_EXP_RU;
@@ -978,7 +978,7 @@ F_6(char *pbuf, int val)
 #ifdef ST_DEBUG
 	sprintf((pbuf+strlen(pbuf)), "next_state: exec F_6, val = %d\n", val);	
 #endif
-	if(val == -1)
+	if (val == -1)
 	{
 		sprintf((pbuf+strlen(pbuf)), "\t          RecordedUnits\n");
 		state = ST_EXP_RNOU;
@@ -994,7 +994,7 @@ F_7(char *pbuf, int val)
 #ifdef ST_DEBUG
 	sprintf((pbuf+strlen(pbuf)), "next_state: exec F_7, val = %d\n", val);	
 #endif
-	if(val != -1)
+	if (val != -1)
 	{
 		sprintf((pbuf+strlen(pbuf)), "\t          NumberOfUnits = %d\n", val);
 		state = ST_EXP_TOCI;
@@ -1010,7 +1010,7 @@ F_8(char *pbuf, int val)
 #ifdef ST_DEBUG
 	sprintf((pbuf+strlen(pbuf)), "next_state: exec F_8, val = %d\n", val);	
 #endif
-	if(val != -1)
+	if (val != -1)
 	{
 		sprintf((pbuf+strlen(pbuf)), "\t          typeOfChargingInfo = %s\n", val == 0 ? "subTotal" : "total");
 		state = ST_EXP_DBID;
@@ -1026,7 +1026,7 @@ F_9(char *pbuf, int val)
 #ifdef ST_DEBUG
 	sprintf((pbuf+strlen(pbuf)), "next_state: exec F_9, val = %d\n", val);	
 #endif
-	if(val != -1)
+	if (val != -1)
 	{
 		sprintf((pbuf+strlen(pbuf)), "\t          AOCDBillingId = %s (%d)\n", bid_str(val), val);
 		state = ST_EXP_NIX;
@@ -1097,15 +1097,15 @@ next_state(char *pbuf, int class, int form, int code, int val)
 	sprintf((pbuf+strlen(pbuf)), "next_state: class=%d, form=%d, code=%d, val=%d\n", class, form, code, val);
 #endif
 
-	for(i=0; ; i++)
+	for (i=0; ; i++)
 	{
-		if((statetab[i].currstate > state) ||
+		if ((statetab[i].currstate > state) ||
 		   (statetab[i].currstate == -1))
 		{
 			break;
 		}
 
-		if((statetab[i].currstate == state) 	&&
+		if ((statetab[i].currstate == state) 	&&
 		   (statetab[i].form == form)		&&
 		   (statetab[i].class == class)		&&
 		   (statetab[i].code == code))
@@ -1130,62 +1130,62 @@ object_id(int comp_length, unsigned char *pbuf)
 	
 	sprintf((pbuf+strlen(pbuf)), "\t");
 	
-	for(i = comp_length-1; i >= 0; i--, j++)
+	for (i = comp_length - 1; i >= 0; i--, j++)
 	{
 		sprintf((pbuf+strlen(pbuf)), "0x%02x = %d", *byte_buf, *byte_buf);
 
-		if(j == 0)
+		if (j == 0)
 		{
 			x = *byte_buf;
 
-			if(x >= 0 && x <= 39)
+			if (x >= 0 && x <= 39)
 			{
 				sprintf((pbuf+strlen(pbuf)), " ccitt/itu-t (0)");
-				switch(x)
+				switch (x)
 				{
-					case 0:
-						sprintf((pbuf+strlen(pbuf)), " recommendation (0)");
-						break;
-					case 1:
-						sprintf((pbuf+strlen(pbuf)), " question (1)");
-						break;
-					case 2:
-						sprintf((pbuf+strlen(pbuf)), " administration (2)");
-						break;
-					case 3:
-						sprintf((pbuf+strlen(pbuf)), " network-operator (3)");
-						break;
-					case 4:
-						sprintf((pbuf+strlen(pbuf)), " identified-organization (4)");
-						id_org = 1;
-						break;
-					default:
-						sprintf((pbuf+strlen(pbuf)), " error: undefined-identifier (%d)", x);
-						break;
+				case 0:
+					sprintf((pbuf+strlen(pbuf)), " recommendation (0)");
+					break;
+				case 1:
+					sprintf((pbuf+strlen(pbuf)), " question (1)");
+					break;
+				case 2:
+					sprintf((pbuf+strlen(pbuf)), " administration (2)");
+					break;
+				case 3:
+					sprintf((pbuf+strlen(pbuf)), " network-operator (3)");
+					break;
+				case 4:
+					sprintf((pbuf+strlen(pbuf)), " identified-organization (4)");
+					id_org = 1;
+					break;
+				default:
+					sprintf((pbuf+strlen(pbuf)), " error: undefined-identifier (%d)", x);
+					break;
 				}
 			}
-			else if(x >= 40 && x <= 79)
+			else if (x >= 40 && x <= 79)
 			{
 				sprintf((pbuf+strlen(pbuf)), " iso (1)");
 				x -= 40;
-				switch(x)
+				switch (x)
 				{
-					case 0:
-						sprintf((pbuf+strlen(pbuf)), " standard (0)");
-						break;
-					case 1:
-						sprintf((pbuf+strlen(pbuf)), " registration-authority (1)");
-						break;
-					case 2:
-						sprintf((pbuf+strlen(pbuf)), " member-body (2)");
-						break;
-					case 3:
-						sprintf((pbuf+strlen(pbuf)), " identified-organization (3)");
-						id_org = 1;
-						break;
-					default:
-						sprintf((pbuf+strlen(pbuf)), " error: undefined-identifier (%d)", x);
-						break;
+				case 0:
+					sprintf((pbuf+strlen(pbuf)), " standard (0)");
+					break;
+				case 1:
+					sprintf((pbuf+strlen(pbuf)), " registration-authority (1)");
+					break;
+				case 2:
+					sprintf((pbuf+strlen(pbuf)), " member-body (2)");
+					break;
+				case 3:
+					sprintf((pbuf+strlen(pbuf)), " identified-organization (3)");
+					id_org = 1;
+					break;
+				default:
+					sprintf((pbuf+strlen(pbuf)), " error: undefined-identifier (%d)", x);
+					break;
 				}
 			}
 			else
@@ -1195,11 +1195,11 @@ object_id(int comp_length, unsigned char *pbuf)
 			}
 		}
 
-		if(j == 1)
+		if (j == 1)
 		{
-			if(id_org == 1)
+			if (id_org == 1)
 			{
-				if(*byte_buf == 0)
+				if (*byte_buf == 0)
 				{
 					sprintf((pbuf+strlen(pbuf)), " etsi (0)");
 					etsi = 1;
@@ -1207,15 +1207,15 @@ object_id(int comp_length, unsigned char *pbuf)
 			}
 		}
 
-		if(j == 2)
+		if (j == 2)
 		{
-			if(etsi == 1)
+			if (etsi == 1)
 			{
-				if(*byte_buf == 0)
+				if (*byte_buf == 0)
 				{
 					sprintf((pbuf+strlen(pbuf)), " mobileDomain (0)");
 				}
-				if(*byte_buf == 1)
+				if (*byte_buf == 1)
 				{
 					sprintf((pbuf+strlen(pbuf)), " inDomain (1)");
 				}
@@ -1225,7 +1225,7 @@ object_id(int comp_length, unsigned char *pbuf)
 		byte_buf++;
 		byte_len++;
 		
-		if(i)
+		if (i)
 			sprintf((pbuf+strlen(pbuf)), "\n\t");
 		else
 			sprintf((pbuf+strlen(pbuf)), "\n");

@@ -27,7 +27,7 @@
  *	i4b daemon - curses fullscreen output
  *	-------------------------------------
  *
- *	$Id: curses.c,v 1.5 2003/10/06 09:18:41 itojun Exp $
+ *	$Id: curses.c,v 1.6 2003/10/06 09:43:27 itojun Exp $
  *
  * $FreeBSD$
  *
@@ -139,7 +139,7 @@ init_screen(void)
 
 	refresh();
 
-	for(i=0, j=0; i <= nctrl; i++, j+=2)
+	for (i=0, j=0; i <= nctrl; i++, j+=2)
 	{
 		mvwprintw(upper_w, j,   H_CNTL, "%d --- 1 ", i);  /*TEI*/
 		mvwprintw(upper_w, j+1, H_CNTL, "  L12 2 ");
@@ -147,7 +147,7 @@ init_screen(void)
 	wrefresh(upper_w);
 
 #ifdef NOTDEF
-	for(i=0, j=0; i < nentries; i++)	/* walk thru all entries */
+	for (i=0, j=0; i < nentries; i++)	/* walk thru all entries */
 	{
 		p = &cfg_entry_tab[i];		/* get ptr to enry */
 
@@ -334,7 +334,7 @@ do_menu(void)
 
 	/* fill the window with the menu options */
 
-	for(mpos=0; mpos <= (WMITEMS-1); mpos++)
+	for (mpos=0; mpos <= (WMITEMS-1); mpos++)
 		mvwaddstr(menu_w, mpos + 2, 2, menu[mpos]);
 
 	/* highlight the first menu option */
@@ -348,7 +348,7 @@ do_menu(void)
 
 	set[0].fd = STDIN_FILENO;
 	set[0].events = POLLIN;
-	for(;;)
+	for (;;)
 	{
 		wrefresh(menu_w);
 
@@ -359,70 +359,70 @@ do_menu(void)
 
 		c = wgetch(menu_w);
 
-		switch(c)
+		switch (c)
 		{
-			case ' ':
-			case '\t':	/* hilite next option */
-				mvwaddstr(menu_w, mpos + 2, 2, menu[mpos]);
-				mpos++;
-				if (mpos >= WMITEMS)
-					mpos = 0;
-				wstandout(menu_w);
-				mvwaddstr(menu_w, mpos + 2, 2, menu[mpos]);
-				wstandend(menu_w);
-				break;
+		case ' ':
+		case '\t':	/* hilite next option */
+			mvwaddstr(menu_w, mpos + 2, 2, menu[mpos]);
+			mpos++;
+			if (mpos >= WMITEMS)
+				mpos = 0;
+			wstandout(menu_w);
+			mvwaddstr(menu_w, mpos + 2, 2, menu[mpos]);
+			wstandend(menu_w);
+			break;
 
-			case ('0'+WREFRESH+1):	/* display refresh */
-			case 'D':
-			case 'd':
+		case ('0'+WREFRESH+1):	/* display refresh */
+		case 'D':
+		case 'd':
+			wrefresh(curscr);
+			goto mexit;
+
+		case ('0'+WQUIT+1):	/* quit program */
+		case 'Q':
+		case 'q':
+			do_exit(0);
+			goto mexit;
+
+
+		case ('0'+WHANGUP+1):	/* hangup connection */
+		case 'H':
+		case 'h':
+			display_chans();
+			goto mexit;
+
+		case ('0'+WREREAD+1):	/* reread config file */
+		case 'R':
+		case 'r':
+			reread();
+			goto mexit;
+
+		case '\n':
+		case '\r':	/* exec highlighted option */
+			switch (mpos)
+			{
+			case WREFRESH:
 				wrefresh(curscr);
-				goto mexit;
+				break;
 
-			case ('0'+WQUIT+1):	/* quit program */
-			case 'Q':
-			case 'q':
+			case WQUIT:
 				do_exit(0);
-				goto mexit;
+				break;
 
-
-			case ('0'+WHANGUP+1):	/* hangup connection */
-			case 'H':
-			case 'h':
+			case WHANGUP:
 				display_chans();
-				goto mexit;
+				break;
 
-			case ('0'+WREREAD+1):	/* reread config file */
-			case 'R':
-			case 'r':
+			case WREREAD:
 				reread();
-				goto mexit;
-
-			case '\n':
-			case '\r':	/* exec highlighted option */
-				switch(mpos)
-				{
-					case WREFRESH:
-						wrefresh(curscr);
-						break;
-
-					case WQUIT:
-						do_exit(0);
-						break;
-
-					case WHANGUP:
-						display_chans();
-						break;
-
-					case WREREAD:
-						reread();
-						break;
-				}
-				goto mexit;
 				break;
+			}
+			goto mexit;
+			break;
 
-			default:
-				goto mexit;
-				break;
+		default:
+			goto mexit;
+			break;
 		}
 	}
 
@@ -489,7 +489,7 @@ display_chans(void)
 		int chn;
 	} *cc = NULL;
 
-        for(i = 0; i < nctrl; i++)
+        for (i = 0; i < nctrl; i++)
         {
 		if (remstate[i].ch1state)
 	                cnt++;
@@ -577,7 +577,7 @@ display_chans(void)
 
 	set[0].fd = STDIN_FILENO;
 	set[0].events = POLLIN;
-	for(;;)
+	for (;;)
 	{
 		wrefresh(chan_w);
 
