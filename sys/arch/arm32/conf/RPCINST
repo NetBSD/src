@@ -1,4 +1,4 @@
-#	$NetBSD: RPCINST,v 1.30 2001/04/12 20:15:07 reinoud Exp $
+#	$NetBSD: RPCINST,v 1.31 2001/06/02 10:48:55 bjh21 Exp $
 #
 #	RPCINST -- RiscPC install configuration
 #
@@ -227,6 +227,9 @@ scsibus* at oak?
 
 csa*	at podulebus?			# Cumana SCSI I adpater
 scsibus* at csa?
+
+hcsc*	at podulebus0 slot ?	# HCCS 8-bit SCSI interface
+scsibus* at hcsc?
 
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 st*	at scsibus? target ? lun ?	# SCSI tape drives
