@@ -1,4 +1,4 @@
-.\"	$NetBSD: portmap.8,v 1.5 1999/01/11 20:51:09 jwise Exp $
+.\"	$NetBSD: portmap.8,v 1.6 1999/03/12 18:06:12 christos Exp $
 .\"
 .\" Copyright (c) 1987 Sun Microsystems
 .\" Copyright (c) 1990, 1991, 1993
@@ -46,7 +46,7 @@ program number to
 port mapper
 .Sh SYNOPSIS
 .Nm
-.Op Fl dls
+.Op Fl dils
 .Sh DESCRIPTION
 .Nm
 is a server that converts
@@ -109,6 +109,14 @@ prevents
 from running as a daemon,
 and causes errors and debugging information
 to be printed to the standard error output.
+.It Fl i
+.Dq insecure
+mode. Allows to call PMAPPROC_SET and PMAPPROC_UNSET from any host. Normally
+.Nm
+accepts these requests only from the loopback interface for security reasons.
+This change is necessary for programs that were compiled with earlier
+versions of the rpc library and do not make those requests using the
+loopback interface. 
 .It Fl l
 Turns on libwrap connection logging.
 .It Fl s
