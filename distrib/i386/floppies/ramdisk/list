@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.18 1999/05/06 17:13:08 christos Exp $
+#	$NetBSD: list,v 1.19 1999/05/23 07:31:20 tron Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/ramdiskbin		ramdiskbin
@@ -95,10 +95,10 @@ COPY	${DESTDIR}/usr/mdec/mbr_bootsel		usr/mdec/mbr_bootsel
 # and the common installation tools
 # COPY	${CURDIR}/../../../utils/script-installer/dot.commonutils  .commonutils
 # COPY	${CURDIR}/../../../utils/script-installer/dot.instutils	   .instutils
-COPY	termcap.mini			usr/share/misc/termcap
+COPY	${CURDIR}/termcap.mini		usr/share/misc/termcap
 
 # the disktab explanation file
-COPY	disktab.preinstall		etc/disktab.preinstall
+COPY	${CURDIR}/disktab.preinstall	etc/disktab.preinstall
 
 #the lists of obsolete files used by sysinst
 COPY dist/base_obsolete dist/base_obsolete
@@ -111,11 +111,11 @@ COPY dist/xbase_obsolete dist/xbase_obsolete
 COPY dist/xserver_obsolete dist/xserver_obsolete
 
 # and the installation tools
-COPY	dot.profile			.profile
+COPY	${CURDIR}/dot.profile		.profile
 # COPY	${OBJDIR}/install.sh		install
 # COPY	${OBJDIR}/upgrade.sh		upgrade
 # COPY	${OBJDIR}/start.sh		start
-COPY	dot.hdprofile			tmp/.hdprofile
+COPY	${CURDIR}/dot.hdprofile		tmp/.hdprofile
 # SPECIAL	chmod 755 install
 # SPECIAL	chmod 755 upgrade
 # SPECIAL	chmod 755 start
