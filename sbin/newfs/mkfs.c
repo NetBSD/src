@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.27 1997/09/16 14:05:39 lukem Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.28 1997/09/21 08:32:04 jeremy Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.27 1997/09/16 14:05:39 lukem Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.28 1997/09/21 08:32:04 jeremy Exp $");
 #endif
 #endif /* not lint */
 
@@ -1003,6 +1003,9 @@ calcipg(cpg, bpcg, usedbp)
 	int i;
 	int32_t ipg, new_ipg, ncg, ncyl;
 	off_t usedb;
+#if __GNUC__ /* XXX work around gcc 2.7.2 initialization bug */
+	(void)&usedb;
+#endif
 
 	/*
 	 * Prepare to scale by fssize / (number of sectors in cylinder groups).
