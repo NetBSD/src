@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetnamadr.c,v 1.19.4.2 2002/09/04 02:30:52 itojun Exp $	*/
+/*	$NetBSD: getnetnamadr.c,v 1.19.4.3 2002/11/13 00:25:18 itojun Exp $	*/
 
 /* Copyright (c) 1993 Carlos Leandro and Rui Salgueiro
  *	Dep. Matematica Universidade de Coimbra, Portugal, Europe
@@ -47,7 +47,7 @@ static char sccsid[] = "@(#)getnetbyaddr.c	8.1 (Berkeley) 6/4/93";
 static char sccsid_[] = "from getnetnamadr.c	1.4 (Coimbra) 93/06/03";
 static char rcsid[] = "Id: getnetnamadr.c,v 8.8 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: getnetnamadr.c,v 1.19.4.2 2002/09/04 02:30:52 itojun Exp $");
+__RCSID("$NetBSD: getnetnamadr.c,v 1.19.4.3 2002/11/13 00:25:18 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -135,8 +135,9 @@ getnetanswer(answer, anslen, net_i)
 	int n;
 	u_char *eom;
 	int type, class, ancount, qdcount, haveanswer, i, nchar;
-	char aux1[30], aux2[30], ans[30], *in, *st, *pauxt, *bp, **ap,
-		*paux1 = &aux1[0], *paux2 = &aux2[0], flag = 0, *ep;
+	char aux1[MAXDNAME], aux2[MAXDNAME], ans[MAXDNAME];
+	char *in, *st, *pauxt, *bp, **ap;
+	char *paux1 = &aux1[0], *paux2 = &aux2[0], flag = 0, *ep;
 	static	char netbuf[PACKETSZ];
 
 	_DIAGASSERT(answer != NULL);
@@ -181,7 +182,7 @@ getnetanswer(answer, anslen, net_i)
 			break;
 		cp += n;
 		ans[0] = '\0';
-		(void)strcpy(&ans[0], bp);
+		(void)strlcpy(&ans[0], bp, sizeof(ans));
 		GETSHORT(type, cp);
 		GETSHORT(class, cp);
 		cp += INT32SZ;		/* TTL */
@@ -218,10 +219,9 @@ getnetanswer(answer, anslen, net_i)
 					;
 				if (nchar != 1 || *in != '0' || flag) {
 					flag = 1;
-					(void)strncpy(paux1,
+					(void)strlcpy(paux1,
 					    (i==0) ? in : in-1,
-					    (size_t)((i==0) ? nchar : nchar+1));
-					paux1[(i==0) ? nchar : nchar+1] = '\0';
+					    (size_t)((i==0) ? nchar+1 : nchar+2));
 					pauxt = paux2;
 					paux2 = strcat(paux1, paux2);
 					paux1 = pauxt;
@@ -423,7 +423,7 @@ _dns_getnetbyname(rv, cb_data, ap)
 	_DIAGASSERT(rv != NULL);
 
 	net = va_arg(ap, const char *);
-	strcpy(&qbuf[0], net);
+	strlcpy(&qbuf[0], net, sizeof(qbuf));
 	buf = malloc(sizeof(*buf));
 	if (buf == NULL) {
 		h_errno = NETDB_INTERNAL;
