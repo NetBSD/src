@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.49 1998/05/19 19:00:19 thorpej Exp $	   */
+/*	$NetBSD: pmap.c,v 1.50 1998/05/23 19:18:59 ragge Exp $	   */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -937,8 +937,6 @@ if(startpmapdebug) printf("pmap_page_protect: pa %lx, prot %x\n",pa, prot);
 		return;
 
 	if (prot == VM_PROT_NONE) {
-if(startpmapdebug) printf("pv %p\n", pv);
-if(startpmapdebug) asm("halt");
 		pt = pv->pv_pte;
 		s = splimp();
 		if (pt)
