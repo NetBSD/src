@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.23 1999/04/06 23:32:44 thorpej Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.24 1999/04/29 17:47:19 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_poollog.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
