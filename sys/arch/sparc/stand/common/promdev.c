@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.7 1999/02/15 18:59:36 pk Exp $ */
+/*	$NetBSD: promdev.c,v 1.8 1999/04/28 13:20:55 christos Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -37,6 +37,7 @@
  */
 #include <sys/param.h>
 #include <sys/reboot.h>
+#include <sys/systm.h>
 #include <machine/idprom.h>
 #include <machine/oldmon.h>
 #include <machine/promlib.h>
