@@ -1,30 +1,23 @@
-.\"$NetBSD: hardware,v 1.1 2000/08/19 13:16:00 mrg Exp $	
+.\"$NetBSD: hardware,v 1.2 2000/09/17 21:03:32 mrg Exp $	
 .
-NetBSD/sparc \*V runs on the following classes of machines:
+NetBSD/sparc64 \*V runs on the following classes of machines:
 .Bl -bullet -compact
 .	It
-sun4c (e.g. the SS1, SS1+, SS2, IPC, ELC, IPX, and SLC)
+Sbus-based UltraSPARC systems (the Ultra1, Ultra1E, Ultra2, Ultra2E)
 .	It
-sun4 (e.g. the 4/100, 4/200, and 4/300 \- note that support
-for the 4/400 processor is incomplete)
-.	It
-sun4m (e.g. Classic, LX, SS4, SS5, SS10, and SS20)
+PCI-based UltraSPARC systems (known to work on the Ultra5, Ultra10, Ultra30
+and Ultra250, and may work on many other systems)
 .El
 .Pp
-NetBSD/sparc \*V does
+NetBSD/sparc64 \*V does
 .Em not
 run on these machines (yet):
 .Bl -bullet -compact
 .	It
-sun-4/400 (lacking support for the I/O cache, and has
-ethernet problems)
-.	It
-sun4d (e.g. sparc center 2000)
-.	It
-sun4u (e.g. Ultrasparcs)
+Enterprise Systems (Ex000, E10000)
 .El
 .Pp
-The minimal configuration requires 4M of RAM and ~60M of disk space.
+The minimal configuration requires 16M of RAM and ~60M of disk space.
 To install the entire system requires much more disk space, and to run
 X or compile the system, more RAM is recommended.  (NetBSD with 4M of
 RAM feels like Solaris with 4M of RAM.) Note that until you have
@@ -32,52 +25,54 @@ around 16M of RAM, getting more RAM is more important than getting a
 faster CPU.)
 .Pp
 Supported devices include:
-.Bl -tag -width indent
-.	It Em sun4c/sun4m sbus video: 
-cgsix, cgthree, and bwtwo frame buffers
-.		br
-cgfourteen and tcx frame buffers (limited
-.Dq emulation
-mode)
-.	It Em sun4 video (not thoroughly tested?): 
-P4 on-board bwtwo, and VME cgtwo card
-.	It Em serial ports: 
-ttya and ttyb (can be used as console if needed)
-.	It Em ethernet: 
-on-board AMD Lance ethernet ("le0"), 
-.		br
-Sbus AMD Lance ethernet cards, 
-.		br
-on-board Intel 82586 ethernet (ie0 on 4/100's and 4/200's), 
-.		br
-VME Intel 82586 ethernet cards
-.	It Em SCSI: 
-on-board "esp" SCSI controller (sun4c, sun4m and the 4/300),
-.		br
-sbus "esp" SCSI controller, 
-.		br
-Sun "SUN-3"/"si" VME SCSI controller (polled mode only, slow),
-.		br
-Sun "SCSI Weird"/"sw" on-board controller (4/110 only, polled)
-.	It Em VME disks:
-Xylogics 7053 VME/SMD disk controller ("xd"),
-.		br
-Xylogics 450/451 VME disk controller ("xy")
-.		br
-[note: VME/IPI disks are not supported]
-.	It Em sun floppy disk drive
-.	It Em sun keyboard and mouse
-.	It Em sun4c audio
-.	It Em sun4m audio on Sparcstation Classic
+.Bd -literal
+	Ethernet devices:
+		- Sbus LANCE ethernet (le) [*]
+		- Sbus HME ethernet (hme) [*]
+		- Sbus BigMac ethernet (be) [*]
+		- PCI HME ethernet (hme)
+		- PCI Tulip (tlp)
+	Video devices:
+		- Sbus cgsix
+	SCSI host controllers:
+		- ncr53c9x based controllers (esp)
+		- ncr53c8xx based controllers (siop)
+		- ISP10x0 based controllers (isp)
+		- Adaptec AHA-2x4x[U][2][W] cards and onboard PCI designs
+		using the AIC-7770, AIC-7850, AIC-7860, AIC-7870,
+		AIC-7880 and AIC-789x chipsets.
+	PCI IDE host controllers:
+		- CMD Tech PCI064[3689] IDE Controllers (pciide) [**]
+	Serial devices:
+		- Sbus z8530 serial (zs)
+	Parallel devices:
+		- Sbus parallel ports (bpp)
+		- PCI/Ebus parallel ports (lpt)
 .El
+There are a large number of untested PCI drivers that have never
+been tested on UltraSPARC PCI systems, that may "just work".
 .Pp
-Hardware the we do NOT currently support, but get many questions
+[*] Sbus ethernet drivers current have a problem with interrupts and
+do not perform properly except in extreme low usage conditions, rendering
+them effectively unusable.
+.Pp
+[**]
+Access to devices on the secondary PCIIDE channel currently do not work.
+.Pp
+Hardware the we do NOT currently support, but get questions
 about:
-.Bl -bullet -compact
-.	It
-multiprocessor sun4m machines
-.	It
-audio drivers for sun4m machines (other than the Sparcstation Classic)
-.	It
-interrupt driven SCSI driver for sun-4/100's and sun-4/200's
+.Bl -literal
+	Floppy drives
+	Audio devices:
+		- Sbus & PCI based system audio (audiocs)
+	Serial devices:
+		- PCI based systems (sab)
+	Keyboard & Mouse devices:
+		- PCI based systems
+	Video devices:
+		- Creator3D framebuffers (ffb)
+		- General PCI VGA support
+	SCSI host controllers:
+		- ESP366 based controllers found in Ultra1E and Ultra2
+		  systems (esp)
 .El

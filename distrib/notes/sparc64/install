@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.1 2000/08/19 13:16:00 mrg Exp $	
+.\"	$NetBSD: install,v 1.2 2000/09/17 21:03:32 mrg Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -38,12 +38,10 @@ this document in hand it shouldn't be too much trouble.
 There are several ways to install NetBSD onto a disk. The easiest way
 in terms of preliminary setup is to use the NetBSD miniroot that can
 be booted off your local disk's swap partition. Alternatively, if your
-Sparcstation is hooked up in a network you can find a server and arrange
+UltraSPARC is hooked up in a network you can find a server and arrange
 for a diskless setup which is a convenient way to install on a machine
 whose disk does not currently hold a usable operating system (see the
-section `Installing NetBSD by using a diskless setup' below).  There is
-also a bootable 1.4MB floppy available that contains a slightly less
-featureful miniroot environment.
+section `Installing NetBSD by using a diskless setup' below).
 .
 .Ss2 Installing NetBSD by using the NetBSD miniroot.
 .
@@ -56,9 +54,9 @@ other unused partition, but remember that the partition will then not
 available during the installation process.
 .Pp
 Loading the miniroot onto your raw partition is simple. On NetBSD as well
-as SunOS you use a command like:
-.Dl # Ic dd if=miniroot.fs of=/dev/rsd0b bs=4k conv=sync
-(Here, `/dev/rsd0b' is assumed to be your swap partition.) There's a
+as Solaris you use a command like:
+.Dl # Ic dd if=miniroot.fs of=/dev/rdsk/c0t0d0s1 bs=4k conv=sync
+(Here, `/dev/rdsk/c0t0d0s1' is assumed to be your swap partition.) There's a
 potential problem here if /dev/rsd0b is actually in use as a swap
 partition by your currently running system. If you don't have another
 disk or partition to spare, you can usually get away with running this
@@ -69,45 +67,16 @@ After transferring the miniroot to disk, bring the system down by:
 .Dl # Ic halt
 .Pp
 Then boot the miniroot by typing the appropriate command at the PROM:
-.Dl \*> Ic "b sd(,,1)netbsd -s            # for sun4 monitors
-.Dl ok Ic "boot sd(,,1)netbsd -s        # for version 1 OpenBOOT ROMs
-.Dl ok Ic "boot disk:b netbsd -s        # for version 2 OpenBOOT ROMs
+.Dl ok Ic "boot disk:b netbsd -s
 .Pp
 If you've loaded the miniroot onto some other disk than `sd0' adapt
 the boot specifier accordingly, e.g.:
 .Dl ok Ic boot disk1:b netbsd -s
-to boot from SCSI disk target 1 from a version 2 OpenBOOT ROM.
-If you have to use the old-style
-.Ic sd( Ns Ar c,u,p Ns Ic \&)
-syntax to boot from a
-SCSI disk, you can calculate the parameters as follows:
-.Bl -tag -width xcc
-.	It Ar c
-specifies the controller number
-.	It Ar u 
-the hexadecimal number obtained from evaluating
-the expression `(8 * TARGET) + LUN'
-.	It Ar p
-the partition number from which to boot (0=`a', 1=`b', etc).
 .El
 .Pp
 The monitor boot command will cause the NetBSD kernel contained in the
 miniroot image to be booted. After the initial probe messages you'll be
 asked to start the install or upgrade procedure. Proceed to the section
-.Sx Running the installation scripts
-below.
-.
-.Ss2 Installing NetBSD by using the bootable floppy.
-.
-The NetBSD install floppy works only on the sun4c and sun4m class
-machines.  From the OpenBOOT prompt, the following should boot the
-floppy.
-.Dl ok Ic "boot fd(,,1)                 # for version 1 OpenBOOT ROMs
-.Dl ok Ic "boot /fd                     # either of these for version
-.Dl ok Ic "boot floppy                  # 2 OpenBOOT ROMs
-.Pp
-After the initial probe messages you'll be asked to start
-the install or upgrade procedure. Proceed to the section
 .Sx Running the installation scripts
 below.
 .
@@ -126,18 +95,17 @@ program via TFTP after having acquired its IP address through RevARP when
 instructed to boot "over the net". It will look for a filename composed of
 the machine's IP address followed by the machine's architecture, separated
 by a period. For example, a sun4c machine which has been assigned IP
-address 130.115.144.11, will make an TFTP request for `8273900B.SUN4C'.
+address 130.115.144.11, will make an TFTP request for `8273900B.SUN4U'.
 Normally, this file is a symbolic link to an appropriate second-stage
 boot program, which should be located in a place where the TFTP daemon
 can find it (remember, many TFTP daemons run in a chroot'ed environment).
 You can find the boot program in
-.Pa /usr/mdec/boot.net
+.Pa /usr/mdec/ofwboot.net
 in the NetBSD/sparc distribution.
 .(Note
-The only difference between
-.Pa /usr/mdec/boot.net No and Pa /usr/mdec/boot
-is in the a.out header, which has been magically
-transformed in a way that makes it usable on all versions of Sparc PROMs.
+The 
+.Pa /usr/mdec/ofwboot
+does not know about netbooting.
 .Note)
 .Pp
 After the boot program has been loaded into memory and given control by
@@ -186,8 +154,8 @@ name as in \*<root\*>/etc/hosts.
 .	It Ar root Ns Pa /etc/fstab
 Enter the entries for the remotely mounted filesystems.
 For example:
-.Dl server:/export/root/client       /     nfs  rw 0 0
-.Dl server:/export/exec/sun4.netbsd  /usr  nfs  rw 0 0
+.Dl server:/export/root/client        /     nfs  rw 0 0
+.Dl server:/export/exec/sun4u.netbsd  /usr  nfs  rw 0 0
 .El
 .Pp
 Now you must populate the `/dev' directory for your client. If yoarserver
@@ -205,19 +173,9 @@ MAKEDEV on your NetBSD machine once it has booted.
 Boot your workstation from the server by entering the appropriate `boot'
 command at the monitor prompt. Depending on the PROM version in your machine,
 this command takes one of the following forms:
-.Dl "\*> b le()netbsd -s               # for sun4 monitors
-.Dl "ok boot le()netbsd -s           # for version 1 OpenBOOT ROMs
-.Dl "ok boot net netbsd -s           # for version 2 OpenBOOT ROMs
+.Dl "ok boot net netbsd -s
 .Pp
 This will boot the NetBSD kernel in single-user mode.
-.(Note
-The latter two examples assume you operate the OpenBOOT ROM in
-"new command mode". If your machine comes up and gives you a `\*>' prompt
-instead of `ok', type:
-.Dl "\*>n                                  # enter native OpenBOOT mode
-.Dl "ok setenv sunmon-compat? false      # make it permanent
-.Dl "ok
-.Note)
 .Pp
 If you use a diskless setup with a separately NFS-mounted /usr filesystem,
 mount
@@ -226,7 +184,6 @@ by hand now:
 .Dl netbsd# Ic mount /usr
 .Pp
 .Em NOTE:
-.Em For floppy installs, the text editor provided is ed.
 .Em For miniroot installs, the text editor is vi.
 When using
 .Xr disklabel 8
@@ -269,7 +226,7 @@ the kernel might be picky about these things, but aside from this you'll
 have the least chance of wasting disk space.
 Partitions on which you intend to have a mountable filesystem, should
 be given fstype `4.2BSD'. Remember, the `c' partition should describe
-the whole disk.
+The whole disk and typically does not require editing.
 The `(Cyl. x - y)' info that appears after the hash (`#') character is
 treated as a comment and need not be filled in when altering partitions.
 .(Note
@@ -307,16 +264,14 @@ drivedata: 0
   d:   525504   114688    4.2BSD   0   0   0   # (Cyl.  256 - 1428)
 .Ed
 .Pp
-If you are upgrading a NetBSD installation, start the upgrade script:
-.Dl netbsd# Ic sh upgrade.sh
-else, start the installation script:
-.Dl netbsd# Ic sh install.sh
+To begin installation or the upgrade procedure, run sysinst:
+.Dl netbsd# Ic sysinst
 .
-.Ss2 Running the installation scripts.
+.Ss2 Running sysinst
 .
-The installation scripts will do most of the work of transferring the
+The sysinst program will do most of the work of transferring the
 system from the distribution sets onto your disk. You will frequently be
-asked for confirmation before the script proceeds with each phase of the
+asked for confirmation before sysinst proceeds with each phase of the
 installation process.
 .Pp
 Occasionally, you will have to provide a piece of information such as the
@@ -332,6 +287,8 @@ The installation script goes through the following phases:
 .	It
 	checking of the partition information on the disk
 .	It
+	setting of the local timezone
+.	It
 	creating and mounting the NetBSD filesystems
 .	It
 	setup of IP configuration
@@ -341,22 +298,9 @@ The installation script goes through the following phases:
 	installation of boot programs
 .El
 .Pp
-Now try a reboot.  Initially I'd suggest you "boot sd()netbsd -bs", then
+Now try a reboot.  Initially I'd suggest you "boot netbsd -bs", then
 try multiuser after that. If you boot single-user the NetBSD incantation
 to make the root filesystem writable is
 .Dl netbsd# Ic mount -u /dev/sd0a /
-The Sun monitor might have been setup to instruct the boot program to load
-a file called "vmunix". On OpenBOOT ROM systems you can change it to load
-"netbsd" instead using the following commands:
-.Pp
-On version 1 OpenBOOT ROMs:
-.Dl \*>n
-.Dl ok Ic setenv boot-from sd(0,0,0)netbsd
-.Dl ok
-.Pp
-On version 2 OpenBOOT ROMs:
-.Dl ok Ic setenv boot-file netbsd
-.Dl ok Ic setenv boot-device /sbus/esp/sd@0,0
-.Pp
 .Em Congratulations ,
 you have successfully installed NetBSD \*V. 
