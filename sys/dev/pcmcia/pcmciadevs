@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.138 2001/09/18 11:07:33 ichiro Exp $
+$NetBSD: pcmciadevs,v 1.139 2001/09/29 13:59:16 augustss Exp $
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
 /*-
@@ -326,6 +326,7 @@ vendor AMD			-1	AMD
 vendor INTERSIL			-1	Intersil
 vendor SYNERGY21		-1	Synergy 21
 vendor CNET			-1	CNet
+vendor EIGERLABS		-1	Eiger labs,Inc.
 
 product MEGAHERTZ XJ2288 	{ "MEGAHERTZ", "MODEM&spXJ2288", NULL, NULL } Megahertz XJ2288 Modem
 product PREMAX PE200		{ "PMX&sp&sp&sp", "PE-200", NULL, NULL } PreMax PE-200
@@ -380,3 +381,8 @@ product NTT_ME WLAN		{ "NTT-ME", "11Mbps&spWireless&spLAN&spPC&spCard", NULL, NU
 product SYNERGY21 S21810	{ "PCMCIA", "Ethernet", "A", "004743118001" } Synergy 21 S21810+ NE2000 Compatible Card
 product CNET NE2000		{ "CNet", "CN40BC&spEthernet", "D", "NE2000" } CNet CN40BC NE2000 Compatible
 product GEMTEK WLAN		{ "Intersil", "PRISM&sp2_5&spPCMCIA&spADAPTER", "ISL37300P", "Eval-RevA" } GEMTEK Prism2_5 WaveLAN Card
+/*
+ * vendor ID of EPX_AA2000 is Fujitsu (0x0004) and product ID is 0x2000, but
+ * it conflicts with Fujitsu Towa LA501 Ethernet.
+ */
+product EIGERLABS EPX_AA2000	{ "Eiger&splabs,Inc.", "EPX-AA2000&spPC&spSound&spCard", NULL, NULL } EPX-AA2000 PC Sound Card
