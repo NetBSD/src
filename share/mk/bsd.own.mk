@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.54.2.1 1997/10/29 00:24:19 mellon Exp $
+#	$NetBSD: bsd.own.mk,v 1.54.2.2 1997/11/04 21:53:48 thorpej Exp $
 
 .if defined(MAKECONF) && exists(${MAKECONF})
 .include "${MAKECONF}"
@@ -73,7 +73,9 @@ NOPIC=
 .endif
 
 # No lint, for now.
+.if !defined(NONOLINT)
 NOLINT=
+.endif
 
 # Profiling doesn't work on PowerPC yet.
 .if (${MACHINE_ARCH} == "powerpc")
