@@ -1,4 +1,4 @@
-#	$NetBSD: POWERMAC,v 1.3 1998/06/05 12:22:43 tsubai Exp $
+#	$NetBSD: POWERMAC,v 1.4 1998/06/21 13:46:02 tsubai Exp $
 #
 # POWERMAC config file
 #
@@ -6,9 +6,6 @@
 machine		macppc powerpc
 
 maxusers	32
-
-# various hacks due to bugs in Openfirmware implementation
-options 	FIRMWORKSBUGS
 
 # Standard system options
 options 	SWAPPAGER, VNODEPAGER, DEVPAGER

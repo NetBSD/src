@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.2 1998/06/05 12:22:45 tsubai Exp $	*/
+/*	$NetBSD: locore.S,v 1.3 1998/06/21 13:46:02 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -80,6 +80,7 @@ GLOBAL(eintrcnt)
 	.data
 idle_u:
 	.long	0			/* fake uarea during idle after exit */
+	.globl	openfirmware_entry
 openfirmware_entry:
 	.long	0			/* openfirmware entry point */
 
@@ -158,7 +159,7 @@ ENTRY(openfirmware)
 	lwz	4,openfirmware_entry@l(4)
 	mtlr	4
 
-	li	0,0			/* turn off any ints/mmu/etc. */
+	li	0,PSL_IR|PSL_DR		/* turn on MMU */
 	mtmsr	0
 	isync
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4 1998/06/12 20:58:57 tsubai Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5 1998/06/21 13:46:02 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -102,9 +102,7 @@ struct proc *fpuproc;
 extern struct user *proc0paddr;
 
 struct bat battable[16];
-
 int astpending;
-
 char *bootpath;
 
 /*
@@ -127,6 +125,10 @@ int	bufpages = 0;
 
 caddr_t allocsys __P((caddr_t));
 void install_extint __P((void (*)(void)));
+static void ofwinit __P((void));
+
+extern u_int openfirmware_entry;
+static u_int ofw_va, ofw_pa, ofw_len;
 
 int cold = 1;
 
@@ -154,11 +156,41 @@ initppc(startkernel, endkernel, args)
 	extern void ext_intr __P((void));
 	int exc, scratch;
 
+	int node, i;
+	u_int trans[80];
+	char type[8];
+
+	/*
+	 * Read translations for Openfirmware call.
+	 */
+	node = OF_peer(0);
+	node = OF_child(node);
+	while (node) {
+		bzero(type, 8);
+		OF_getprop(node, "device_type", type, sizeof(type));
+		if (strcmp(type, "cpu") == 0)
+			break;
+		node = OF_peer(node);
+	}
+
+	bzero(trans, sizeof(trans));
+	OF_getprop(node, "translations", trans, sizeof(trans));
+
+	for (i = 0; i < 80; i += 4) {
+		if (trans[i] <= openfirmware_entry &&
+		    trans[i] + trans[i+1] > openfirmware_entry) {
+			    ofw_va  = trans[i];
+			    ofw_len = trans[i + 1];
+			    ofw_pa  = trans[i + 2];
+			    break;
+		    }
+	}
+
 	proc0.p_addr = proc0paddr;
 	bzero(proc0.p_addr, sizeof *proc0.p_addr);
-	
+
 	curpcb = &proc0paddr->u_pcb;
-	
+
 	curpm = curpcb->pcb_pmreal = curpcb->pcb_pm = pmap_kernel();
 
 #if 0
@@ -185,7 +217,7 @@ initppc(startkernel, endkernel, args)
 	asm volatile ("mtdbatu 1,%0" :: "r"(0));
 	asm volatile ("mtdbatu 2,%0" :: "r"(0));
 	asm volatile ("mtdbatu 3,%0" :: "r"(0));
-	
+
 	/*
 	 * Set up initial BAT table to only map the lowest 256 MB area
 	 */
@@ -204,7 +236,7 @@ initppc(startkernel, endkernel, args)
 	/* DBAT0 used similar */
 	asm volatile ("mtdbatl 0,%0; mtdbatu 0,%1"
 		      :: "r"(battable[0].batl), "r"(battable[0].batu));
-	
+
 	/*
 	 * Set up trap vectors
 	 */
@@ -282,7 +314,7 @@ initppc(startkernel, endkernel, args)
 				break;
 			}
 		}
-	}			
+	}
 
 #ifdef DDB
 	/* ddb_init(startsym, endsym); */
@@ -309,6 +341,36 @@ initppc(startkernel, endkernel, args)
 	 * Initialize pmap module.
 	 */
 	pmap_bootstrap(startkernel, endkernel);
+
+	/*
+	 * Map Openfirmware address into the kernel space.
+	 */
+	ofwinit();
+}
+
+void
+ofwinit()
+{
+	int len  = ofw_len;
+	u_int pa = ofw_pa;
+	u_int va = ofw_va;
+
+	/*
+	 * Map 0xf0000000 - 0xf7ffffff (128MB) --> 0xf0000000 -
+	 */
+	battable[1].batl = 0xf0000002 | BAT_I;
+	battable[1].batu = 0xf0000ffe;
+
+	/* DBAT1 used for mapping I/O devices */
+	asm volatile ("mtdbatl 1,%0; mtdbatu 1,%1"
+		      :: "r"(battable[1].batl), "r"(battable[1].batu));
+
+	while (len > 0) {
+		pmap_enter(pmap_kernel(), va, pa, VM_PROT_ALL, 1);
+		pa += NBPG;
+		va += NBPG;
+		len -= NBPG;
+	}
 }
 
 /*
@@ -394,7 +456,7 @@ cpu_startup()
 	caddr_t v;
 	vm_offset_t minaddr, maxaddr;
 	int base, residual;
-	
+
 	initmsgbuf((caddr_t)MSGBUFADDR, round_page(MSGBUFSIZE));
 	msgbufmapped = 1;
 
@@ -403,9 +465,9 @@ cpu_startup()
 
 	printf("%s", version);
 	identifycpu();
-	
+
 	printf("real mem  = %d\n", ctob(physmem));
-	
+
 	/*
 	 * Find out how much space we need, allocate it,
 	 * and then give everything true virtual addresses.
@@ -420,7 +482,7 @@ cpu_startup()
 #endif
 	if (allocsys(v) - v != sz)
 		panic("startup: table size inconsistency");
-	
+
 	/*
 	 * Now allocate buffers proper.  They are different than the above
 	 * in that they usually occupy more virtual memory than physical.
@@ -500,7 +562,7 @@ cpu_startup()
 	phys_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
 				 VM_PHYS_SIZE, TRUE);
 #endif
-	
+
 	/*
 	 * Finally, allocate mbuf cluster submap.
 	 */
@@ -511,14 +573,14 @@ cpu_startup()
 	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
 			       VM_MBUF_SIZE, FALSE);
 #endif
-	
+
 	/*
 	 * Initialize callouts.
 	 */
 	callfree = callout;
 	for (i = 1; i < ncallout; i++)
 		callout[i - 1].c_next = &callout[i];
-	
+
 #if defined(UVM)
 	printf("avail mem = %ld\n", ptoa(uvmexp.free));
 #else
@@ -526,7 +588,7 @@ cpu_startup()
 #endif
 	printf("using %d buffers containing %d bytes of memory\n",
 	       nbuf, bufpages * CLBYTES);
-	
+
 	/*
 	 * Set up the buffers.
 	 */
@@ -537,12 +599,12 @@ cpu_startup()
 	 */
 	{
 		int msr;
-		
+
 		splhigh();
 		asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
 			      : "=r"(msr) : "K"((u_short)(PSL_EE|PSL_RI)));
 	}
-	
+
 	/*
 	 * Configure devices.
 	 */
@@ -594,7 +656,7 @@ allocsys(v)
 	valloc(swbuf, struct buf, nswbuf);
 #endif
 	valloc(buf, struct buf, nbuf);
-	
+
 	return v;
 #undef valloc
 }
@@ -607,7 +669,7 @@ void
 consinit()
 {
 	static int initted;
-	
+
 	if (initted)
 		return;
 	initted = 1;
@@ -675,12 +737,12 @@ sendsig(catcher, sig, mask, code)
 	struct sigframe *fp, frame;
 	struct sigacts *psp = p->p_sigacts;
 	int oldonstack;
-	
+
 	frame.sf_signum = sig;
-	
+
 	tf = trapframe(p);
 	oldonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
-	
+
 	/*
 	 * Allocate stack space for signal handler.
 	 */
@@ -693,9 +755,9 @@ sendsig(catcher, sig, mask, code)
 	} else
 		fp = (struct sigframe *)tf->fixreg[1];
 	fp = (struct sigframe *)((int)(fp - 1) & ~0xf);
-	
+
 	frame.sf_code = code;
-	
+
 	/*
 	 * Generate signal context for SYS_sigreturn.
 	 */
@@ -704,7 +766,7 @@ sendsig(catcher, sig, mask, code)
 	bcopy(tf, &frame.sf_sc.sc_frame, sizeof *tf);
 	if (copyout(&frame, fp, sizeof frame) != 0)
 		sigexit(p, SIGILL);
-	
+
 	tf->fixreg[1] = (int)fp;
 	tf->lr = (int)catcher;
 	tf->fixreg[3] = (int)sig;
@@ -729,7 +791,7 @@ sys_sigreturn(p, v, retval)
 	struct sigcontext sc;
 	struct trapframe *tf;
 	int error;
-	
+
 	if (error = copyin(SCARG(uap, sigcntxp), &sc, sizeof sc))
 		return error;
 	tf = trapframe(p);
@@ -959,7 +1021,7 @@ mapiodev(pa, len)
 {
 	vm_offset_t faddr, taddr, off;
 	vm_offset_t va;
-	
+
 	faddr = trunc_page(pa);
 	off = pa - faddr;
 	len = round_page(off + len);
