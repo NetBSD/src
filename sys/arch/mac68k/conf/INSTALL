@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.1.4.2 1999/05/16 22:38:08 scottr Exp $
+#	$NetBSD: INSTALL,v 1.1.4.3 1999/06/15 04:32:10 scottr Exp $
 #
 # INSTALL
 
@@ -54,7 +54,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	SCSIVERBOSE	# human readable SCSI error messages
 
 # Mac-specific options
-options 	DISABLE_EXT_CACHE # Don't use IIci external cache
+#options 	DISABLE_EXT_CACHE # If really paranoid, disable IIci ext. cache
 options 	GRF_COMPAT	# Include grf compatibility code
 #options 	MRG_ADB		# Use ROM-based ADB driver
 options 	ZS_CONSOLE_ABORT
