@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.61 2002/07/11 18:07:56 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.62 2002/08/10 22:54:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.61 2002/07/11 18:07:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.62 2002/08/10 22:54:54 thorpej Exp $");
 
 #include "bpfilter.h"
 
@@ -258,6 +258,7 @@ struct sip_softc {
 	struct evcnt sc_ev_txdintr;	/* Tx descriptor interrupts */
 	struct evcnt sc_ev_txiintr;	/* Tx idle interrupts */
 	struct evcnt sc_ev_rxintr;	/* Rx interrupts */
+	struct evcnt sc_ev_hiberr;	/* HIBERR interrupts */
 #ifdef DP83820
 	struct evcnt sc_ev_rxipsum;	/* IP checksums checked in-bound */
 	struct evcnt sc_ev_rxtcpsum;	/* TCP checksums checked in-bound */
@@ -1029,6 +1030,8 @@ SIP_DECL(attach)(struct device *parent, struct device *self, void *aux)
 	    NULL, sc->sc_dev.dv_xname, "txiintr");
 	evcnt_attach_dynamic(&sc->sc_ev_rxintr, EVCNT_TYPE_INTR,
 	    NULL, sc->sc_dev.dv_xname, "rxintr");
+	evcnt_attach_dynamic(&sc->sc_ev_hiberr, EVCNT_TYPE_INTR,
+	    NULL, sc->sc_dev.dv_xname, "hiberr");
 #ifdef DP83820
 	evcnt_attach_dynamic(&sc->sc_ev_rxipsum, EVCNT_TYPE_MISC,
 	    NULL, sc->sc_dev.dv_xname, "rxipsum");
@@ -1573,15 +1576,31 @@ SIP_DECL(intr)(void *arg)
 #endif /* ! DP83820 */
 
 		if (isr & ISR_HIBERR) {
+			int want_init = 0;
+
+			SIP_EVCNT_INCR(&sc->sc_ev_hiberr);
+
 #define	PRINTERR(bit, str)						\
-			if (isr & (bit))				\
-				printf("%s: %s\n", sc->sc_dev.dv_xname, str)
+			do {						\
+				if (isr & (bit)) {			\
+					printf("%s: %s\n",		\
+					    sc->sc_dev.dv_xname, str);	\
+					want_init = 1;			\
+				}					\
+			} while (/*CONSTCOND*/0)
+
 			PRINTERR(ISR_DPERR, "parity error");
 			PRINTERR(ISR_SSERR, "system error");
 			PRINTERR(ISR_RMABT, "master abort");
 			PRINTERR(ISR_RTABT, "target abort");
 			PRINTERR(ISR_RXSOVR, "receive status FIFO overrun");
-			(void) SIP_DECL(init)(ifp);
+			/*
+			 * Ignore:
+			 *	Tx reset complete
+			 *	Rx reset complete
+			 */
+			if (want_init)
+				(void) SIP_DECL(init)(ifp);
 #undef PRINTERR
 		}
 	}
