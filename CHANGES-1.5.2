@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.2,v 1.1.2.15 2001/08/16 16:19:12 tv Exp $
+#	$NetBSD: CHANGES-1.5.2,v 1.1.2.16 2001/08/16 16:52:36 tv Exp $
 
 A complete list of changes from NetBSD 1.5.1 to NetBSD 1.5.2:
 
@@ -206,3 +206,23 @@ sys/dev/wscons/wsconsio.h			1.40
 
   Introduce hard limits on wscons font size and keymap size, and
   bounds check against those limits.
+
+sys/arch/amiga/dev/grf_cl.c			1.26
+sys/arch/amiga/dev/grfioctl.h			1.14
+sys/arch/hpcmips/dev/plumvideo.c		1.20
+sys/arch/macppc/dev/ofb.c			1.25
+sys/arch/sparc/dev/cgtwo.c			1.35
+sys/arch/sparc/include/fbio.h			patch
+sys/arch/sparc64/include/fbio.h			patch
+sys/arch/sun3/dev/cg2.c				1.14
+sys/arch/sun3/include/fbio.h			patch
+sys/dev/pci/tga.c				1.35
+sys/dev/tc/cfb.c				1.28
+sys/dev/tc/mfb.c				1.27
+sys/dev/tc/sfb.c				1.46
+sys/dev/tc/sfbplus.c				1.10 via patch
+sys/dev/tc/tfb.c				1.30
+sys/dev/tc/xcfb.c				1.23
+sys/net/if_ppp.c				1.71
+
+  Use unsigned variable types to make bounds checking more correct.
