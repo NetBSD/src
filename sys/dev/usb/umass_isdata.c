@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_isdata.c,v 1.8 2003/12/14 05:34:29 thorpej Exp $	*/
+/*	$NetBSD: umass_isdata.c,v 1.9 2003/12/30 19:30:39 thorpej Exp $	*/
 
 /*
  * TODO:
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.8 2003/12/14 05:34:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.9 2003/12/30 19:30:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,6 @@ int umass_wd_attach(struct umass_softc *);
 
 #include <dev/ata/atareg.h>
 #include <dev/ata/atavar.h>
-#include <dev/ic/wdcreg.h>
 
 /* XXX move this */
 struct isd200_config {
