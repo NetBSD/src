@@ -1,8 +1,5 @@
-#	$NetBSD: Makefile,v 1.7 1995/04/23 07:50:21 cgd Exp $
+#	$NetBSD: Makefile,v 1.8 1996/12/17 21:33:20 cgd Exp $
 
-SUBDIR+= libmalloc
-.if (${MACHINE_ARCH} != "alpha")
-SUBDIR+= libg++
-.endif
+SUBDIR+= libg++ libmalloc
 
 .include <bsd.subdir.mk>
