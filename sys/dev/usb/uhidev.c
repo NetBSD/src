@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.15 2003/07/14 15:47:29 lukem Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.16 2003/10/25 18:28:31 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.15 2003/07/14 15:47:29 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.16 2003/10/25 18:28:31 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -308,6 +308,9 @@ uhidev_activate(device_ptr_t self, enum devact act)
 				rv |= config_deactivate(
 					&sc->sc_subdevs[i]->sc_dev);
 		sc->sc_dying = 1;
+		break;
+	default:
+		rv = 0;
 		break;
 	}
 	return (rv);
