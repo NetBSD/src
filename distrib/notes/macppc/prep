@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.30 2002/06/14 06:04:33 itojun Exp $
+.\"	$NetBSD: prep,v 1.31 2002/06/14 11:28:33 wiz Exp $
 .
 .Ss2 Prepare yourself
 .
@@ -1161,7 +1161,7 @@ interprets these partitions as normal
 .Nx No Ns -style
 partitions.
 These partitions are not readable from
-.Tn MacOS No Ns .
+.Tn MacOS .
 .It Em HFS
 Any size.  You may want to leave an additional partition available to 
 transfer files between
