@@ -1,4 +1,4 @@
-/* $NetBSD: lock_machdep.c,v 1.2 1999/07/27 21:45:41 thorpej Exp $ */
+/* $NetBSD: lock_machdep.c,v 1.3 1999/12/02 01:09:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lock_machdep.c,v 1.2 1999/07/27 21:45:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lock_machdep.c,v 1.3 1999/12/02 01:09:11 thorpej Exp $");
 
 /*
  * Machine-dependent spin lock operations.
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: lock_machdep.c,v 1.2 1999/07/27 21:45:41 thorpej Exp
 #include <sys/types.h>
 #include <sys/lock.h>
 
+#include <machine/atomic.h>
 #include <machine/alpha_cpu.h>
 
 void

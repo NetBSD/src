@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.22 1999/11/29 19:58:39 thorpej Exp $ */
+/* $NetBSD: intr.h,v 1.23 1999/12/02 01:09:13 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -32,6 +32,7 @@
 #define _ALPHA_INTR_H_
 
 #include <sys/queue.h>
+#include <machine/atomic.h>
 
 #define	IPL_NONE	0	/* disable only this interrupt */
 #define	IPL_BIO		1	/* disable block I/O interrupts */
