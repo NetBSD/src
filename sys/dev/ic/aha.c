@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.44 2004/08/24 00:53:29 thorpej Exp $	*/
+/*	$NetBSD: aha.c,v 1.45 2004/12/07 14:50:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aha.c,v 1.44 2004/08/24 00:53:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aha.c,v 1.45 2004/12/07 14:50:56 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -1157,6 +1157,12 @@ aha_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			ccb->scsi_cmd_length = 0;
 		} else {
 			/* can't use S/G if zero length */
+			if (xs->cmdlen > sizeof(ccb->scsi_cmd)) {
+				printf("%s: cmdlen %d too large for CCB\n",
+				    sc->sc_dev.dv_xname, xs->cmdlen);
+				xs->error = XS_DRIVER_STUFFUP;
+				goto out_bad;
+			}
 			ccb->opcode = (xs->datalen ? AHA_INIT_SCAT_GATH_CCB
 						   : AHA_INITIATOR_CCB);
 			memcpy(&ccb->scsi_cmd, xs->cmd,
