@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.16 1997/10/23 22:25:06 christos Exp $
+#	$NetBSD: Makefile,v 1.17 1997/10/25 10:10:23 lukem Exp $
 
 PROG=	bc
-CFLAGS+=-D_POSIX_SOURCE -I. -I${.CURDIR}
+CPPFLAGS+=-D_POSIX_SOURCE -I. -I${.CURDIR}
 LFLAGS+=-I8
 SRCS=	bc.y execute.c getopt.c getopt1.c global.c load.c main.c number.c \
 	scan.l storage.c util.c

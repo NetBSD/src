@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1997/10/18 05:59:37 lukem Exp $
+#	$NetBSD: Makefile,v 1.8 1997/10/25 10:12:35 lukem Exp $
 
 .if exists(/usr/X11)
 XINCDIR=	/usr/X11/include
@@ -21,7 +21,7 @@ XLIBDIR=	/usr/X386/lib
 BINDIR=		/usr/bin
 
 PROG=		gxditview
-CFLAGS+=	-I$(XINCDIR) -DFONTPATH=\"/usr/share/groff_font\"
+CPPFLAGS+=	-I$(XINCDIR) -DFONTPATH=\"/usr/share/groff_font\"
 SRCS+=		xditview.c Dvi.c draw.c font.c lex.c page.c parse.c \
 		XFontName.c DviChar.c device.c
 LDADD+=		-L$(XLIBDIR) -lXaw -lXmu -lXt -lXext -lX11 -lm 
