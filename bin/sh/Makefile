@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.53 2001/11/03 13:40:30 lukem Exp $
+#	$NetBSD: Makefile,v 1.54 2002/02/07 06:25:07 lukem Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 .include <bsd.own.mk>
@@ -20,6 +20,10 @@ LFLAGS= -8	# 8-bit lex scanner for arithmetic
 YFLAGS=	-d
 
 CPPFLAGS+=-DSHELL -I. -I${.CURDIR}
+
+.ifdef SMALLPROG
+CPPFLAGS+=-DSMALL
+.endif
 
 .PATH:	${.CURDIR}/bltin ${.CURDIR}/../../usr.bin/printf ${.CURDIR}/../test
 
