@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.58 1996/05/20 10:49:20 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.59 1996/06/12 15:24:05 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1175,6 +1175,8 @@ mainbus_attach(parent, dev, aux)
 #define openboot_special4m	((void *)0)
 #endif
 
+	if (CPU_ISSUN4M)
+		printf(": %s", getpropstring(ca->ca_ra.ra_node, "name"));
 	printf("\n");
 
 	/*
@@ -1911,6 +1913,13 @@ setroot()
 	bp = nbootpath == 0 ? NULL : &bootpath[nbootpath-1];
 	bootdv = bp == NULL ? NULL : bp->dev;
 
+	/*
+	 * If `swap generic' and we couldn't determine boot device,
+	 * ask the user.
+	 */
+	if (mountroot == NULL && bootdv == NULL)
+		boothowto |= RB_ASKNAME;
+
 	if (boothowto & RB_ASKNAME) {
 		for (;;) {
 			printf("root device ");
@@ -1991,9 +2000,6 @@ gotswap:
 		/*
 		 * `swap generic': Use the device the ROM told us to use.
 		 */
-		if (bootdv == NULL)
-			panic("boot device not known");
-
 		majdev = findblkmajor(bootdv);
 		if (majdev >= 0) {
 			/*
@@ -2021,7 +2027,9 @@ gotswap:
 		 * `root DEV swap DEV': honour rootdev/swdevt.
 		 * rootdev/swdevt/mountroot already properly set.
 		 */
-		return;
+		majdev = major(rootdev);
+		mindev = minor(rootdev);
+		goto gotroot;
 	}
 
 	switch (bootdv->dv_class) {
@@ -2046,17 +2054,7 @@ gotswap:
 	}
 
 	/*
-	 * Find mountroot hook and execute.
-	 */
-	for (mrhp = mrh_list.lh_first; mrhp != NULL;
-	    mrhp = mrhp->mr_link.le_next)
-		if (mrhp->mr_device == bootdv) {
-			(*mrhp->mr_func)(bootdv);
-			break;
-		}
-
-	/*
-	 * XXX: What is this doing?
+	 * Make the swap partition on the root drive the primary swap.
 	 */
 	mindev &= ~PARTITIONMASK;
 	temp = NODEV;
@@ -2069,15 +2067,26 @@ gotswap:
 			break;
 		}
 	}
-	if (swp->sw_dev == NODEV)
-		return;
+	if (swp->sw_dev != NODEV) {
+		/*
+		 * If dumpdev was the same as the old primary swap device,
+		 * move it to the new primary swap device.
+		 */
+		if (temp == dumpdev)
+			dumpdev = swdevt[0].sw_dev;
+	}
 
+gotroot:
 	/*
-	 * If dumpdev was the same as the old primary swap device, move
-	 * it to the new primary swap device.
+	 * Find mountroot hook and execute.
 	 */
-	if (temp == dumpdev)
-		dumpdev = swdevt[0].sw_dev;
+	for (mrhp = mrh_list.lh_first; mrhp != NULL;
+	     mrhp = mrhp->mr_link.le_next)
+		if (mrhp->mr_device == bootdv) {
+			(*mrhp->mr_func)(bootdv);
+			break;
+		}
+
 }
 
 static int
