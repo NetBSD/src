@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.67 1994/03/10 21:52:10 mycroft Exp $
+ *	$Id: wd.c,v 1.68 1994/03/10 22:30:09 mycroft Exp $
  */
 
 #define	INSTRUMENT	/* instrumentation stuff by Brad Parker */
@@ -230,6 +230,16 @@ int
 wdcattach(dev)
 	struct isa_device *dev;
 {
+
+	/* XXXX */
+	if (dev->id_iobase == 0) {
+		static int warned;
+		if (!warned) {
+			warned = 1;
+			printf("PLEASE UPDATE YOUR COPY OF CONFIG(8)!\n");
+		}
+		return wdattach(dev);
+	}
 }
 
 int
