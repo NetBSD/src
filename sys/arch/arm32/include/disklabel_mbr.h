@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel_mbr.h,v 1.1 1998/06/08 20:21:18 mark Exp $	*/
+/*	$NetBSD: disklabel_mbr.h,v 1.2 1998/07/07 04:30:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1998 Christopher G. Demetriou
@@ -44,16 +44,16 @@
 
 #ifndef __ASSEMBLER__
 struct mbr_partition {
-	unsigned char	mbrp_flag;	/* bootstrap flags */
-	unsigned char	mbrp_shd;	/* starting head */
-	unsigned char	mbrp_ssect;	/* starting sector */
-	unsigned char	mbrp_scyl;	/* starting cylinder */
-	unsigned char	mbrp_typ;	/* partition type (see below) */
-	unsigned char	mbrp_ehd;	/* end head */
-	unsigned char	mbrp_esect;	/* end sector */
-	unsigned char	mbrp_ecyl;	/* end cylinder */
-	unsigned long	mbrp_start;	/* absolute starting sector number */
-	unsigned long	mbrp_size;	/* partition size in sectors */
+	u_int8_t	mbrp_flag;	/* bootstrap flags */
+	u_int8_t	mbrp_shd;	/* starting head */
+	u_int8_t	mbrp_ssect;	/* starting sector */
+	u_int8_t	mbrp_scyl;	/* starting cylinder */
+	u_int8_t	mbrp_typ;	/* partition type (see below) */
+	u_int8_t	mbrp_ehd;	/* end head */
+	u_int8_t	mbrp_esect;	/* end sector */
+	u_int8_t	mbrp_ecyl;	/* end cylinder */
+	u_int32_t	mbrp_start;	/* absolute starting sector number */
+	u_int32_t	mbrp_size;	/* partition size in sectors */
 };
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.6 1998/02/22 14:45:43 drochner Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.7 1998/07/07 04:29:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -45,16 +45,16 @@
 
 #ifndef __ASSEMBLER__
 struct dos_partition {
-	unsigned char	dp_flag;	/* bootstrap flags */
-	unsigned char	dp_shd;		/* starting head */
-	unsigned char	dp_ssect;	/* starting sector */
-	unsigned char	dp_scyl;	/* starting cylinder */
-	unsigned char	dp_typ;		/* partition type (see below) */
-	unsigned char	dp_ehd;		/* end head */
-	unsigned char	dp_esect;	/* end sector */
-	unsigned char	dp_ecyl;	/* end cylinder */
-	unsigned long	dp_start;	/* absolute starting sector number */
-	unsigned long	dp_size;	/* partition size in sectors */
+	u_int8_t	dp_flag;	/* bootstrap flags */
+	u_int8_t	dp_shd;		/* starting head */
+	u_int8_t	dp_ssect;	/* starting sector */
+	u_int8_t	dp_scyl;	/* starting cylinder */
+	u_int8_t	dp_typ;		/* partition type (see below) */
+	u_int8_t	dp_ehd;		/* end head */
+	u_int8_t	dp_esect;	/* end sector */
+	u_int8_t	dp_ecyl;	/* end cylinder */
+	u_int32_t	dp_start;	/* absolute starting sector number */
+	u_int32_t	dp_size;	/* partition size in sectors */
 };
 #endif
 
