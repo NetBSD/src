@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.170 2000/06/25 05:07:22 erh Exp $
+#	$NetBSD: bsd.lib.mk,v 1.171 2000/07/03 21:08:55 christos Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -19,6 +19,13 @@ clean cleandir distclean: cleanlib
 .if exists(${SHLIB_VERSION_FILE})
 SHLIB_MAJOR != . ${SHLIB_VERSION_FILE} ; echo $$major
 SHLIB_MINOR != . ${SHLIB_VERSION_FILE} ; echo $$minor
+SHLIB_TEENY != . ${SHLIB_VERSION_FILE} ; echo $$teeny
+.if !empty(SHLIB_TEENY)
+SHLIB_FULLVERSION=${SHLIB_MAJOR}.${SHLIB_MINOR}.${SHLIB_TEENY}
+.else
+SHLIB_FULLVERSION=${SHLIB_MAJOR}.${SHLIB_MINOR}
+.endif
+
 
 # Check for higher installed library versions.
 .if !defined(NOCHECKVER) && !defined(NOCHECKVER_${LIB}) && \
@@ -35,6 +42,9 @@ print-shlib-major:
 
 print-shlib-minor:
 	@echo ${SHLIB_MINOR}
+
+print-shlib-teeny:
+	@echo ${SHLIB_TEENY}
 .else
 checkver:
 
@@ -42,6 +52,9 @@ print-shlib-major:
 	@false
 
 print-shlib-minor:
+	@false
+
+print-shlib-teeny:
 	@false
 .endif
 
@@ -60,7 +73,8 @@ print-shlib-minor:
 # OBJECT_FMT:		currently either "ELF" or "a.out", from <bsd.own.mk>
 # SHLIB_SOVERSION:	version number to be compiled into a shared library
 #			via -soname. Usualy ${SHLIB_MAJOR} on ELF.
-#			NetBSD/pmax used to use ${SHLIB_MAJOR}.{SHLIB-MINOR}.
+#			NetBSD/pmax used to use ${SHLIB_MAJOR}.${SHLIB_MINOR}
+#			[.${SHLIB_TEENY}]
 # SHLIB_SHFLAGS:	Flags to tell ${LD} to emit shared library.
 #			with ELF, also set shared-lib version for ld.so.
 # SHLIB_LDSTARTFILE:	support .o file, call C++ file-level constructors
@@ -100,8 +114,8 @@ APICFLAGS ?= -KPIC
 # Platform-independent flags for NetBSD a.out shared libraries (and PowerPC)
 SHLIB_LDSTARTFILE=
 SHLIB_LDENDFILE=
+SHLIB_SOVERSION=${SHLIB_FULLVERSION}
 SHLIB_SHFLAGS=
-SHLIB_SOVERSION=${SHLIB_MAJOR}.${SHLIB_MINOR}
 CPICFLAGS?= -fPIC -DPIC
 CPPPICFLAGS?= -DPIC 
 CAPICFLAGS?= ${CPPPICFLAGS} ${CPICFLAGS}
@@ -254,8 +268,8 @@ SOLIB=lib${LIB}_pic.a
 _LIBS+=${SOLIB}
 SOBJS+=${OBJS:.o=.so}
 .endif
-.if defined(SHLIB_MAJOR) && defined(SHLIB_MINOR)
-_LIBS+=lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
+.if defined(SHLIB_FULLVERSION)
+_LIBS+=lib${LIB}.so.${SHLIB_FULLVERSION}
 .endif
 .endif
 
@@ -300,10 +314,10 @@ lib${LIB}_p.a:: ${POBJS} __archivebuild
 lib${LIB}_pic.a:: ${SOBJS} __archivebuild
 	@echo building shared object ${LIB} library
 
-lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: ${SOLIB} ${DPADD} \
+lib${LIB}.so.${SHLIB_FULLVERSION}: ${SOLIB} ${DPADD} \
     ${SHLIB_LDSTARTFILE} ${SHLIB_LDENDFILE}
-	@echo building shared ${LIB} library \(version ${SHLIB_MAJOR}.${SHLIB_MINOR}\)
-	@rm -f lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
+	@echo building shared ${LIB} library \(version ${SHLIB_FULLVERSION}\)
+	@rm -f lib${LIB}.so.${SHLIB_FULLVERSION}
 .if defined(DESTDIR)
 	$(LD) -nostdlib -x -shared ${SHLIB_SHFLAGS} -o ${.TARGET} \
 	    ${SHLIB_LDSTARTFILE} \
@@ -319,11 +333,9 @@ lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: ${SOLIB} ${DPADD} \
 .endif
 .if ${OBJECT_FMT} == "ELF"
 	rm -f lib${LIB}.so.${SHLIB_MAJOR}
-	ln -s lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-	    lib${LIB}.so.${SHLIB_MAJOR}
+	ln -s lib${LIB}.so.${SHLIB_FULLVERSION} lib${LIB}.so.${SHLIB_MAJOR}
 	rm -f lib${LIB}.so
-	ln -s lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-	    lib${LIB}.so
+	ln -s lib${LIB}.so.${SHLIB_FULLVERSION} lib${LIB}.so
 .endif
 
 LLIBS?=		-lc
@@ -396,17 +408,17 @@ ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a: lib${LIB}_pic.a __archiveinstall
 .endif
 .endif
 
-.if ${MKPIC} != "no" && defined(SHLIB_MAJOR) && defined(SHLIB_MINOR)
-libinstall:: ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
-.PRECIOUS: ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
+.if ${MKPIC} != "no" && defined(SHLIB_FULLVERSION)
+libinstall:: ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_FULLVERSION}
+.PRECIOUS: ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_FULLVERSION}
 .if !defined(UPDATE)
-.PHONY: ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
+.PHONY: ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_FULLVERSION}
 .endif
 
-.if !defined(BUILD) && !make(all) && !make(lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR})
-${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: .MADE
+.if !defined(BUILD) && !make(all) && !make(lib${LIB}.so.${SHLIB_FULLVERSION})
+${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_FULLVERSION}: .MADE
 .endif
-${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
+${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_FULLVERSION}: lib${LIB}.so.${SHLIB_FULLVERSION}
 	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} ${INSTPRIV} -o ${LIBOWN} \
 	    -g ${LIBGRP} -m ${LIBMODE} ${.ALLSRC} ${.TARGET}
 .if ${OBJECT_FMT} == "a.out" && !defined(DESTDIR)
@@ -414,11 +426,11 @@ ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}.so.${S
 .endif
 .if ${OBJECT_FMT} == "ELF"
 	rm -f ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}
-	ln -s lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+	ln -s lib${LIB}.so.${SHLIB_FULLVERSION} \
 	    ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}
 	rm -f ${DESTDIR}${LIBDIR}/lib${LIB}.so
 .if ${MKLINKLIB} != "no"
-	ln -s lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+	ln -s lib${LIB}.so.${SHLIB_FULLVERSION} \
 	    ${DESTDIR}${LIBDIR}/lib${LIB}.so
 .endif
 .endif
