@@ -66,8 +66,8 @@ extern enum arch_type sparc_arch_type;
 /* Provide required defaults for linker -e and -d switches.  */
 
 #define LINK_SPEC \
- "%{!shared:%{!nostdlib:%{!r*:%{!e*:-e start}}} -dc -dp} %{static:-Bstatic} \
-  %{assert*} %{shared:-assert pure-text}"
+ "%{nostdlib:-nostdlib} %{!shared:%{!nostdlib:%{!r*:%{!e*:-e start}}} -dc -dp} \
+  %{static:-Bstatic} %{assert*} %{shared:-assert pure-text}"
 
 /* Special flags to the Sun-4 assembler when using pipe for input.  */
 

@@ -57,7 +57,7 @@ Boston, MA 02111-1307, USA.  */
    %{call_shared} %{no_archive} %{exact_version} \
    %{!shared: %{!non_shared: %{!call_shared: -non_shared}}} \
    %{!dynamic-linker:-dynamic-linker /usr/libexec/ld.so} \
-   %{!nostdlib:%{!r*:%{!e*:-e __start}}} -dc -dp \
+   %{nostdlib:-nostdlib} %{!nostdlib:%{!r*:%{!e*:-e __start}}} -dc -dp \
    %{static:-Bstatic} %{!static:-Bdynamic} %{assert*}"
 
 /* We have atexit(3).  */
