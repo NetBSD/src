@@ -1,5 +1,5 @@
-/*	$NetBSD: ping6.c,v 1.35 2001/05/09 11:22:22 itojun Exp $	*/
-/*	$KAME: ping6.c,v 1.125 2001/05/09 11:17:33 itojun Exp $	*/
+/*	$NetBSD: ping6.c,v 1.36 2001/06/22 13:25:03 itojun Exp $	*/
+/*	$KAME: ping6.c,v 1.129 2001/06/22 13:16:02 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -81,7 +81,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.35 2001/05/09 11:22:22 itojun Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.36 2001/06/22 13:25:03 itojun Exp $");
 #endif
 #endif
 
@@ -191,6 +191,7 @@ __RCSID("$NetBSD: ping6.c,v 1.35 2001/05/09 11:22:22 itojun Exp $");
 #define F_FQDNOLD	0x20000
 #define F_NIGROUP	0x40000
 #define F_SUPTYPES	0x80000
+#define F_NOMINMTU	0x100000
 #define F_NOUSERDATA	(F_NODEADDR | F_FQDN | F_FQDNOLD | F_SUPTYPES)
 u_int options;
 
@@ -222,6 +223,7 @@ int ident;			/* process id to identify our packets */
 u_int8_t nonce[8];		/* nonce field for node information */
 struct in6_addr srcaddr;
 int hoplimit = -1;		/* hoplimit */
+int pathmtu = 0;		/* path MTU for the destination.  0 = unspec. */
 
 /* counters */
 long npackets;			/* max packets to transmit */
@@ -257,11 +259,13 @@ volatile sig_atomic_t seeninfo;
 int	 main __P((int, char *[]));
 void	 fill __P((char *, char *));
 int	 get_hoplim __P((struct msghdr *));
+int	 get_pathmtu __P((struct msghdr *));
 struct in6_pktinfo *get_rcvpktinfo __P((struct msghdr *));
 void	 onsignal __P((int));
 void	 retransmit __P((void));
 void	 onint __P((int));
-void	 pinger __P((void));
+size_t	 pingerlen __P((void));
+int	 pinger __P((void));
 const char *pr_addr __P((struct sockaddr *, int));
 void	 pr_icmph __P((struct icmp6_hdr *, u_char *));
 void	 pr_iph __P((struct ip6_hdr *));
@@ -329,7 +333,7 @@ main(argc, argv)
 #endif /*IPSEC_POLICY_IPSEC*/
 #endif
 	while ((ch = getopt(argc, argv,
-	    "a:b:c:dfHh:I:i:l:nNp:qRS:s:tvwW" ADDOPTS)) != -1) {
+	    "a:b:c:dfHh:I:i:l:mnNp:qRS:s:tvwW" ADDOPTS)) != -1) {
 #undef ADDOPTS
 		switch (ch) {
 		case 'a':
@@ -445,6 +449,14 @@ main(argc, argv)
 			if (preload < 0 || *optarg == '\0' || *e != '\0')
 				errx(1, "illegal preload value -- %s", optarg);
 			break;
+		case 'm':
+#ifdef IPV6_USE_MIN_MTU
+			options |= F_NOMINMTU;
+			break;
+#else
+			errx(1, "-%c is not supported on this platform", ch);
+			/*NOTREACHED*/
+#endif
 		case 'n':
 			options &= ~F_HOSTNAME;
 			break;
@@ -626,13 +638,18 @@ main(argc, argv)
 			timing = 1;
 		} else
 			timing = 0;
+		/* in F_VERBOSE case, we may get non-echoreply packets*/
+		if (options & F_VERBOSE)
+			packlen = 2048 + IP6LEN + ICMP6ECHOLEN + EXTRA;
+		else
+			packlen = datalen + IP6LEN + ICMP6ECHOLEN + EXTRA;
 	} else {
 		/* suppress timing for node information query */
 		timing = 0;
 		datalen = 2048;
+		packlen = 2048 + IP6LEN + ICMP6ECHOLEN + EXTRA;
 	}
 
-	packlen = datalen + IP6LEN + ICMP6ECHOLEN + EXTRA;
 	if (!(packet = (u_char *)malloc((u_int)packlen)))
 		err(1, "Unable to allocate packet");
 	if (!(options & F_PINGFILLED))
@@ -959,12 +976,13 @@ main(argc, argv)
 		warn("setsockopt(IPV6_HOPLIMIT)"); /* XXX err? */
 #endif
 
-	printf("PING6(%d=40+8+%d bytes) ", datalen + 48, datalen);
+	printf("PING6(%lu=40+8+%lu bytes) ", (unsigned long)(40 + pingerlen()),
+	    (unsigned long)(pingerlen() - 8));
 	printf("%s --> ", pr_addr((struct sockaddr *)&src, sizeof(src)));
 	printf("%s\n", pr_addr((struct sockaddr *)&dst, sizeof(dst)));
 
 	while (preload--)		/* Fire off them quickies. */
-		pinger();
+		(void)pinger();
 
 	(void)signal(SIGINT, onsignal);
 #ifdef SIGINFO
@@ -1014,7 +1032,7 @@ main(argc, argv)
 #endif
 
 		if (options & F_FLOOD) {
-			pinger();
+			(void)pinger();
 			timeout.tv_sec = 0;
 			timeout.tv_usec = 10000;
 			tv = &timeout;
@@ -1049,6 +1067,21 @@ main(argc, argv)
 			if (errno != EINTR) {
 				warn("recvmsg");
 				sleep(1);
+			}
+			continue;
+		} else if (cc == 0) {
+			int mtu;
+
+			/*
+			 * receive control messages only. Process the
+			 * exceptions (currently the only possiblity is
+			 * a path MTU notification.)
+			 */
+			if ((mtu = get_pathmtu(&m)) > 0) {
+				if ((options & F_VERBOSE) != 0) {
+					printf("new path MTU (%d) is "
+					    "notified\n", mtu);
+				}
 			}
 			continue;
 		} else {
@@ -1093,10 +1126,8 @@ retransmit()
 {
 	struct itimerval itimer;
 
-	if (!npackets || ntransmitted < npackets) {
-		pinger();
+	if (pinger() == 0)
 		return;
-	}
 
 	/*
 	 * If we're not transmitting any more packets, change the timer
@@ -1126,7 +1157,26 @@ retransmit()
  * of the data portion are used to hold a UNIX "timeval" struct in VAX
  * byte-order, to compute the round-trip time.
  */
-void
+size_t
+pingerlen()
+{
+	size_t l;
+
+	if (options & F_FQDN)
+		l = ICMP6_NIQLEN + sizeof(dst.sin6_addr);
+	else if (options & F_FQDNOLD)
+		l = ICMP6_NIQLEN;
+	else if (options & F_NODEADDR)
+		l = ICMP6_NIQLEN + sizeof(dst.sin6_addr);
+	else if (options & F_SUPTYPES)
+		l = ICMP6_NIQLEN;
+	else
+		l = ICMP6ECHOLEN + datalen;
+
+	return l;
+}
+
+int
 pinger()
 {
 	struct icmp6_hdr *icp;
@@ -1134,6 +1184,9 @@ pinger()
 	int i, cc;
 	struct icmp6_nodeinfo *nip;
 	int seq;
+
+	if (npackets && ntransmitted >= npackets)
+		return(-1);	/* no more transmission */
 
 	icp = (struct icmp6_hdr *)outpack;
 	nip = (struct icmp6_nodeinfo *)outpack;
@@ -1206,6 +1259,11 @@ pinger()
 		cc = ICMP6ECHOLEN + datalen;
 	}
 
+#ifdef DIAGNOSTIC
+	if (pingerlen() != cc)
+		errx(1, "internal error; length mismatch");
+#endif
+
 	smsghdr.msg_name = (caddr_t)&dst;
 	smsghdr.msg_namelen = sizeof(dst);
 	memset(&iov, 0, sizeof(iov));
@@ -1224,6 +1282,8 @@ pinger()
 	}
 	if (!(options & F_QUIET) && options & F_FLOOD)
 		(void)write(STDOUT_FILENO, &DOT, 1);
+
+	return(0);
 }
 
 int
@@ -1957,6 +2017,62 @@ get_rcvpktinfo(mhdr)
 	return(NULL);
 }
 
+int
+get_pathmtu(mhdr)
+	struct msghdr *mhdr;
+{
+#ifdef IPV6_RECVPATHMTU
+	struct cmsghdr *cm;
+	struct ip6_mtuinfo *mtuctl = NULL;
+
+	for (cm = (struct cmsghdr *)CMSG_FIRSTHDR(mhdr); cm;
+	     cm = (struct cmsghdr *)CMSG_NXTHDR(mhdr, cm)) {
+		if (cm->cmsg_len == 0)
+			return(0);
+
+		if (cm->cmsg_level == IPPROTO_IPV6 &&
+		    cm->cmsg_type == IPV6_PATHMTU &&
+		    cm->cmsg_len == CMSG_LEN(sizeof(struct ip6_mtuinfo))) {
+			mtuctl = (struct ip6_mtuinfo *)CMSG_DATA(cm);
+
+			/*
+			 * If the notified destination is different from
+			 * the one we are pinging, just ignore the info.
+			 * We check the scope ID only when both notified value
+			 * and our own value have non-0 values, because we may
+			 * have used the default scope zone ID for sending,
+			 * in which case the scope ID value is 0.
+			 */
+			if (!IN6_ARE_ADDR_EQUAL(&mtuctl->ip6m_addr.sin6_addr,
+						&dst.sin6_addr) ||
+			    (mtuctl->ip6m_addr.sin6_scope_id &&
+			     dst.sin6_scope_id &&
+			     mtuctl->ip6m_addr.sin6_scope_id !=
+			     dst.sin6_scope_id)) {
+				if ((options & F_VERBOSE) != 0) {
+					printf("path MTU for %s is notified. "
+					       "(ignored)\n",
+					   pr_addr((struct sockaddr *)&mtuctl->ip6m_addr,
+					   sizeof(mtuctl->ip6m_addr)));
+				}
+				return(0);
+			}
+
+			/*
+			 * Ignore an invalid MTU. XXX: can we just believe
+			 * the kernel check?
+			 */
+			if (mtuctl->ip6m_mtu < IPV6_MMTU)
+				return(0);
+
+			/* notification for our destination. return the MTU. */
+			return((int)mtuctl->ip6m_mtu);
+		}
+	}
+#endif
+	return(0);
+}
+
 /*
  * tvsub --
  *	Subtract 2 timeval structs:  out = out - in.  Out is assumed to
@@ -2524,7 +2640,11 @@ void
 usage()
 {
 	(void)fprintf(stderr,
-	    "usage: ping6 [-dfHnNqvwW"
+	    "usage: ping6 [-dfH"
+#ifdef IPV6_USE_MIN_MTU
+	    "m"
+#endif
+	    "nNqtvwW"
 #ifdef IPV6_REACHCONF
 	    "R"
 #endif
