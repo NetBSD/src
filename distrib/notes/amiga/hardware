@@ -1,5 +1,5 @@
 NetBSD/amiga 1.2 runs on any Amiga that has a 68020 or better CPU with
-some form of FPU and MMU, and on DraCos which still have a CIA.
+some form of FPU and MMU, and on DraCos.
 
 The minimal configuration requires 4M of RAM and about 75M of disk
 space.  To install the entire system requires much more disk space,
@@ -31,7 +31,8 @@ Supported devices include:
 		    Emplant.*)
 		53c710 based boards: A4091, Magnum, Warp Engine, Zeus 
 		    and DraCo builtin.
-		FAS216 based SCSI boards: Fastlane Z3, Blizzard I and II**)
+		FAS216 based SCSI boards: FastLane Z3, Blizzard I and II,
+		    Blizzard IV, Blizzard 2060, CyberSCSI Mk I**)
 	Video controllers:
 		ECS, AGA and A2024 built in on various Amigas.
 		Retina Z2, Retina Z3 and Altais.
@@ -70,6 +71,7 @@ Supported devices include:
 	Amiga parallel port.
 	Amiga serial port.
 	Amiga mouse.
+	DraCo serial port, including serial mouse.
 
 If its not on the above lists, there is no support for it in this
 release. Especially (but this is an incomplete list), there is no
@@ -85,7 +87,7 @@ Known problems with some hardware:
 
 	**) Fastlane SCSI is reported to show data errors and hangs at
 	least when used with multiple devices on the bus. This might
-	be a problem with any FAS board.
+	be a problem with any FAS board. 
 
 	***) SCSI scanner support is machine independent, so it should
 	work, but hasn't been tested yet on most Amiga configurations.
