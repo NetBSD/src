@@ -1,5 +1,5 @@
 /*
- * $Id: md.h,v 1.2 1993/10/24 00:47:05 pk Exp $		- I386 dependent definitions
+ * $Id: md.h,v 1.3 1993/10/24 00:52:40 pk Exp $		- I386 dependent definitions
  */
 
 
@@ -11,7 +11,7 @@
 
 #define	MAX_ALIGNMENT		(sizeof (long))
 
-#ifdef __NetBSD__
+#ifdef NetBSD
 #define PAGSIZ			__LDPGSZ
 #else
 #define PAGSIZ			4096
