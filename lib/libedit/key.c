@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.10 2001/01/04 15:56:31 christos Exp $	*/
+/*	$NetBSD: key.c,v 1.11 2001/01/23 15:55:30 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)key.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: key.c,v 1.10 2001/01/04 15:56:31 christos Exp $");
+__RCSID("$NetBSD: key.c,v 1.11 2001/01/23 15:55:30 jdolecek Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -87,7 +87,7 @@ struct key_node_t {
 
 private int		 node_trav(EditLine *, key_node_t *, char *,
     key_value_t *);
-private int		 node__try(EditLine *, key_node_t *, char *,
+private int		 node__try(EditLine *, key_node_t *, const char *,
     key_value_t *, int);
 private key_node_t	*node__get(int);
 private void		 node__put(EditLine *, key_node_t *);
@@ -191,7 +191,7 @@ key_get(EditLine *el, char *ch, key_value_t *val)
  *      out str or a unix command.
  */
 protected void
-key_add(EditLine *el, char *key, key_value_t *val, int ntype)
+key_add(EditLine *el, const char *key, key_value_t *val, int ntype)
 {
 
 	if (key[0] == '\0') {
@@ -315,7 +315,7 @@ node_trav(EditLine *el, key_node_t *ptr, char *ch, key_value_t *val)
  * 	Find a node that matches *str or allocate a new one
  */
 private int
-node__try(EditLine *el, key_node_t *ptr, char *str, key_value_t *val, int ntype)
+node__try(EditLine *el, key_node_t *ptr, const char *str, key_value_t *val, int ntype)
 {
 
 	if (ptr->ch != *str) {
