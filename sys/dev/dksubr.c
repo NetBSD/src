@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.6 2003/05/10 23:12:43 thorpej Exp $ */
+/* $NetBSD: dksubr.c,v 1.7 2003/05/12 00:19:00 atatat Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -168,7 +168,6 @@ dk_close(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
 void
 dk_strategy(struct dk_intf *di, struct dk_softc *dksc, struct buf *bp)
 {
-	struct	disklabel *lp = dksc->sc_dkdev.dk_label;
 	int	s;
 	int	wlabel;
 
