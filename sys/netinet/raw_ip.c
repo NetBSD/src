@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.85 2005/03/10 05:43:25 atatat Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.86 2005/03/11 06:16:16 atatat Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.85 2005/03/10 05:43:25 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.86 2005/03/11 06:16:16 atatat Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -689,7 +689,7 @@ SYSCTL_SETUP(sysctl_net_inet_raw_setup, "sysctl net.inet.raw subtree setup")
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "pcblist",
+		       CTLTYPE_STRUCT, "pcblist",
 		       SYSCTL_DESCR("Raw IPv4 control block list"),
 		       sysctl_inpcblist, 0, &rawcbtable, 0,
 		       CTL_NET, PF_INET, IPPROTO_RAW,
