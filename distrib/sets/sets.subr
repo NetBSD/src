@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.25 2004/01/12 09:42:07 lukem Exp $
+#	$NetBSD: sets.subr,v 1.26 2004/01/17 05:07:09 lukem Exp $
 #
 
 #
@@ -82,7 +82,7 @@ nlists="base comp etc games man misc text"
 case $x11_version in
 3)	xlists="xbase3 xcomp3 xcontrib3 xfont3 xmisc3 xserver3" ;;
 4)	xlists="xbase4 xcomp4 xcontrib4 xfont4 xmisc4 xserver4" ;;
-"")	xlists="xbase xcomp xcontrib xfont xmisc xserver" ;;
+"")	xlists="xbase xcomp xfont xmisc xserver" ;;
 *)	xlists="" ;;	# unknown!
 esac
 obsolete=0
@@ -109,7 +109,7 @@ fi
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.25 2004/01/12 09:42:07 lukem Exp $
+# 	# $NetBSD: sets.subr,v 1.26 2004/01/17 05:07:09 lukem Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
