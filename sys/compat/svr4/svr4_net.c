@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_net.c,v 1.22 2000/03/23 05:16:16 thorpej Exp $	 */
+/*	$NetBSD: svr4_net.c,v 1.23 2000/09/11 15:12:40 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -245,13 +245,8 @@ svr4_ptm_alloc(p)
 	 * ENXIO), short circuit the cycle and exit.
 	 */
 	static char ptyname[] = "/dev/ptyXX";
-#if _MACHINE_ARCH == i386
-	/* XXX.  Fix this, pcvt people! */
-	static char ttyletters[] = "pqrstuwxyzPQRST";
-#else
-	static char ttyletters[] = "pqrstuvwxyzPQRST";
-#endif
-	static char ttynumbers[] = "0123456789abcdef";
+	static const char ttyletters[] = "pqrstuvwxyzPQRST";
+	static const char ttynumbers[] = "0123456789abcdef";
 	caddr_t sg = stackgap_init(p->p_emul);
 	char *path = stackgap_alloc(&sg, sizeof(ptyname));
 	struct sys_open_args oa;
