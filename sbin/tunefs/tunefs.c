@@ -1,4 +1,4 @@
-/*	$NetBSD: tunefs.c,v 1.11 1997/09/15 11:27:13 lukem Exp $	*/
+/*	$NetBSD: tunefs.c,v 1.12 1997/09/16 12:54:42 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,9 +41,9 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)tunefs.c	8.2 (Berkeley) 4/19/94";
+static char sccsid[] = "@(#)tunefs.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: tunefs.c,v 1.11 1997/09/15 11:27:13 lukem Exp $");
+__RCSID("$NetBSD: tunefs.c,v 1.12 1997/09/16 12:54:42 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: tunefs.c,v 1.11 1997/09/15 11:27:13 lukem Exp $");
 #include <sys/param.h>
 #include <sys/stat.h>
 
+#include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
 
 #include <errno.h>
@@ -90,7 +91,7 @@ main(argc, argv)
 	char *cp, *special, *name;
 	struct stat st;
 	int i;
-	int Aflag = 0;
+	int Aflag = 0, Nflag = 0;
 	struct fstab *fs;
 	char *chg[2], device[MAXPATHLEN];
 
@@ -115,12 +116,18 @@ again:
 	if (!S_ISBLK(st.st_mode) && !S_ISCHR(st.st_mode))
 		errx(10, "%s: not a block or character device", special);
 	getsb(&sblock, special);
+	chg[FS_OPTSPACE] = "space";
+	chg[FS_OPTTIME] = "time";
 	for (; argc > 0 && argv[0][0] == '-'; argc--, argv++) {
 		for (cp = &argv[0][1]; *cp; cp++)
 			switch (*cp) {
 
 			case 'A':
 				Aflag++;
+				continue;
+
+			case 'N':
+				Nflag++;
 				continue;
 
 			case 'a':
@@ -188,8 +195,6 @@ again:
 				if (argc < 1)
 					errx(10, "-o: missing %s", name);
 				argc--, argv++;
-				chg[FS_OPTSPACE] = "space";
-				chg[FS_OPTTIME] = "time";
 				if (strcmp(*argv, chg[FS_OPTSPACE]) == 0)
 					i = FS_OPTSPACE;
 				else if (strcmp(*argv, chg[FS_OPTTIME]) == 0)
@@ -213,12 +218,48 @@ again:
 					warnx(OPTWARN, "space", "<", MINFREE);
 				continue;
 
+			case 't':
+				name = "track skew in sectors";
+				if (argc < 1)
+					errx(10, "-t: missing %s", name);
+				argc--, argv++;
+				i = atoi(*argv);
+				if (i < 0)
+					errx(10, "%s: %s must be >= 0",
+						*argv, name);
+				warnx("%s changes from %d to %d",
+					name, sblock.fs_trackskew, i);
+				sblock.fs_trackskew = i;
+				continue;
+
 			default:
 				usage();
 			}
 	}
 	if (argc != 1)
 		usage();
+	if (Nflag) {
+		fprintf(stdout, "tunefs: current settings\n");
+		fprintf(stdout, "\tmaximum contiguous block count %d\n",
+		    sblock.fs_maxcontig);
+		fprintf(stdout,
+		    "\trotational delay between contiguous blocks %dms\n",
+		    sblock.fs_rotdelay);
+		fprintf(stdout,
+		    "\tmaximum blocks per file in a cylinder group %d\n",
+		    sblock.fs_maxbpg);
+		fprintf(stdout, "\tminimum percentage of free space %d%%\n",
+		    sblock.fs_minfree);
+		fprintf(stdout, "\toptimization preference: %s\n",
+		    chg[sblock.fs_optim]);
+		fprintf(stdout, "\ttrack skew %d sectors\n",
+			sblock.fs_trackskew);
+		fprintf(stdout, "tunefs: no changes made\n");
+		exit(0);
+	}
+	fi = open(special, 1);
+	if (fi < 0)
+		err(3, "cannot open %s for writing", special);
 	bwrite((daddr_t)SBOFF / dev_bsize, (char *)&sblock, SBSIZE);
 	if (Aflag)
 		for (i = 0; i < sblock.fs_ncg; i++)
@@ -232,13 +273,14 @@ void
 usage()
 {
 
-	fprintf(stderr, "Usage: tunefs tuneup-options special-device\n");
+	fprintf(stderr, "Usage: tunefs [-AN] tuneup-options special-device\n");
 	fprintf(stderr, "where tuneup-options are:\n");
-	fprintf(stderr, "\t-a maximum contiguous blocks\n");
 	fprintf(stderr, "\t-d rotational delay between contiguous blocks\n");
+	fprintf(stderr, "\t-a maximum contiguous blocks\n");
 	fprintf(stderr, "\t-e maximum blocks per file in a cylinder group\n");
 	fprintf(stderr, "\t-m minimum percentage of free space\n");
 	fprintf(stderr, "\t-o optimization preference (`space' or `time')\n");
+	fprintf(stderr, "\t-t track skew in sectors\n");
 	exit(2);
 }
 
@@ -248,14 +290,15 @@ getsb(fs, file)
 	char *file;
 {
 
-	fi = open(file, 2);
+	fi = open(file, 0);
 	if (fi < 0)
-		err(3, "cannot open %s", file);
+		err(3, "cannot open %s for reading", file);
 	if (bread((daddr_t)SBOFF, (char *)fs, SBSIZE))
 		err(4, "%s: bad super block", file);
 	if (fs->fs_magic != FS_MAGIC)
 		err(5, "%s: bad magic number", file);
 	dev_bsize = fs->fs_fsize / fsbtodb(fs, 1);
+	close(fi);
 }
 
 void
