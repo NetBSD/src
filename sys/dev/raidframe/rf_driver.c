@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.80 2003/12/30 19:28:26 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.81 2004/01/01 19:27:36 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.80 2003/12/30 19:28:26 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.81 2004/01/01 19:27:36 oster Exp $");
 
 #include "opt_raid_diagnostic.h"
 
@@ -357,7 +357,6 @@ rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 	raidPtr->waitShutdown = 0;
 
 	DO_RAID_MUTEX(&raidPtr->access_suspend_mutex);
-	raidPtr->quiescent_cond = 0;
 
 	raidPtr->waitForReconCond = 0;
 
@@ -460,7 +459,6 @@ rf_AllocRaidAccDesc(RF_Raid_t *raidPtr, RF_IoType_t type,
 
 	desc = pool_get(&rf_rad_pool, PR_WAITOK);
 	simple_lock_init(&desc->mutex);
-	desc->cond = 0;
 
 	if (raidPtr->waitShutdown) {
 		/*
@@ -493,7 +491,6 @@ rf_AllocRaidAccDesc(RF_Raid_t *raidPtr, RF_IoType_t type,
 	desc->callbackFunc = NULL;
 	desc->callbackArg = NULL;
 	desc->next = NULL;
-	desc->head = desc;
 	desc->cleanupList = NULL;
 	rf_MakeAllocList(desc->cleanupList);
 	return (desc);
@@ -902,13 +899,6 @@ void
 rf_print_unable_to_init_mutex(char *file, int line, int rc)
 {
 	RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n",
-		     file, line, rc);
-}
-
-void
-rf_print_unable_to_init_cond(char *file, int line, int rc)
-{
-	RF_ERRORMSG3("Unable to init cond file %s line %d rc=%d\n",
 		     file, line, rc);
 }
 

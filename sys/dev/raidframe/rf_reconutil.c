@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconutil.c,v 1.19 2003/12/30 21:59:03 oster Exp $	*/
+/*	$NetBSD: rf_reconutil.c,v 1.20 2004/01/01 19:27:36 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  ********************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.19 2003/12/30 21:59:03 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.20 2004/01/01 19:27:36 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -125,7 +125,6 @@ rf_MakeReconControl(RF_RaidReconDesc_t *reconDesc,
 	/* initialize the event queue */
 	simple_lock_init(&reconCtrlPtr->eq_mutex);
 
-	reconCtrlPtr->eq_cond = 0;
 	reconCtrlPtr->eventQueue = NULL;
 	reconCtrlPtr->eq_count = 0;
 
