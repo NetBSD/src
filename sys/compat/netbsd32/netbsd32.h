@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.4 1999/03/25 16:22:49 mrg Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.5 1999/03/25 16:27:56 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -419,7 +419,7 @@ typedef u_int32_t netbsd32_outsnamep_t;
  *	<arch32>_sigcontext
  */
 
-#include <machine/netbsd32.h>
+#include <machine/netbsd32_machdep.h>
 
 /*
  * here are some macros to convert between netbsd32 and sparc64 types.
