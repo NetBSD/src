@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.75 2000/06/01 15:38:20 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.76 2000/06/01 17:42:59 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -42,7 +42,7 @@
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/custom.h>
 
-void findroot __P((struct device **, int *));
+static void findroot __P((void));
 void mbattach __P((struct device *, struct device *, void *));
 int mbprint __P((void *, const char *));
 int mbmatch __P((struct device *, struct cfdata *, void *));
@@ -350,9 +350,7 @@ struct cfdriver *genericconf[] = {
 };
 
 void
-findroot(devpp, partp)
-	struct device **devpp;
-	int *partp;
+findroot(void)
 {
 	struct disk *dkp;
 	struct partition *pp;
@@ -411,16 +409,16 @@ findroot(devpp, partp)
 				    pp->p_fstype != FS_SWAP))
 					continue;
 				if (pp->p_offset == boot_partition) {
-					if (*devpp == NULL) {
-						*devpp = devs[unit];
-						*partp = i;
+					if (booted_device == NULL) {
+						booted_device = devs[unit];
+						booted_partition = i;
 					} else
 						printf("Ambiguous boot device\n");
 				}
 			}
 		}
 	}
-	if (*devpp != NULL)
+	if (booted_device != NULL)
 		return;		/* we found the boot device */
 #endif
 
@@ -459,8 +457,8 @@ findroot(devpp, partp)
 
 			pp = &dkp->dk_label->d_partitions[0];
 			if (pp->p_size != 0 && pp->p_fstype == FS_BSDFFS) {
-				*devpp = devs[unit];
-				*partp = 0;
+				booted_device = devs[unit];
+				booted_partition = 0;
 				return;
 			}
 		}
