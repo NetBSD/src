@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: getdate.y,v 1.1 1995/07/13 18:14:01 thorpej Exp $	*/
+/*	$NetBSD: getdate.y,v 1.2 1997/07/23 20:58:39 thorpej Exp $	*/
 
 /*
 **
@@ -100,7 +100,7 @@ extern struct tm	*localtime();
 
 #if	!defined(lint) && !defined(SABER)
 static char RCS[] =
-	"$Header: /cvsroot/src/usr.sbin/eeprom/Attic/getdate.y,v 1.1 1995/07/13 18:14:01 thorpej Exp $";
+	"$Header: /cvsroot/src/usr.sbin/eeprom/Attic/getdate.y,v 1.2 1997/07/23 20:58:39 thorpej Exp $";
 #endif	/* !defined(lint) && !defined(SABER) */
 
 
@@ -159,6 +159,18 @@ static time_t	yyYear;
 static MERIDIAN	yyMeridian;
 static time_t	yyRelMonth;
 static time_t	yyRelSeconds;
+
+/* Prototyes for local functions. */
+static	int yyerror __P((const char *));
+static	time_t ToSeconds __P((time_t, time_t, time_t, MERIDIAN));
+static	time_t Convert __P((time_t, time_t, time_t, time_t, time_t, time_t,
+	    MERIDIAN, DSTMODE));
+static	time_t DSTcorrect __P((time_t, time_t));
+static	time_t RelativeDate __P((time_t, time_t, time_t));
+static	time_t RelativeMonth __P((time_t, time_t));
+static	int LookupWord __P((char *));
+static	int yylex __P((void));
+static	int yyparse __P((void));
 
 %}
 
@@ -561,7 +573,7 @@ static TABLE const MilitaryTable[] = {
 /* ARGSUSED */
 static int
 yyerror(s)
-    char	*s;
+    const char *s;
 {
   return 0;
 }
@@ -589,6 +601,9 @@ ToSeconds(Hours, Minutes, Seconds, Meridian)
 	if (Hours < 1 || Hours > 12)
 	    return -1;
 	return ((Hours + 12) * 60L + Minutes) * 60L + Seconds;
+    default:
+	/* for gcc */
+	return -1;
     }
     /* NOTREACHED */
 }
