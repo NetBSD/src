@@ -1,15 +1,15 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.207 2004/08/10 18:39:08 mycroft Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.208 2004/08/10 18:45:36 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.206 2004/08/10 18:00:15 mycroft Exp 
+ *	NetBSD: pcmciadevs,v 1.207 2004/08/10 18:45:25 mycroft Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
