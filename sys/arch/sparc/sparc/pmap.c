@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.214 2002/12/16 16:59:12 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.215 2002/12/21 12:13:38 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -531,6 +531,33 @@ void 		(*pmap_rmu_p) __P((struct pmap *, vaddr_t, vaddr_t, int, int));
  */
 
 #if defined(SUN4M) || defined(SUN4D)
+/*
+ * SP versions of the tlb flush routines.
+ */
+static __inline__ void sp_tlb_flush_page(int va)
+{
+	tlb_flush_page_real(va);
+}
+
+static __inline__ void sp_tlb_flush_segment(int vr, int vs)
+{
+	tlb_flush_segment_real(vr, vs);
+}
+
+static __inline__ void sp_tlb_flush_region(int vr)
+{
+	tlb_flush_region_real(vr);
+}
+
+static __inline__ void sp_tlb_flush_context(void)
+{
+	tlb_flush_context_real();
+}
+
+static __inline__ void sp_tlb_flush_all(void)
+{
+	tlb_flush_all_real();
+}
 
 #if defined(MULTIPROCESSOR)
 /*
@@ -567,7 +594,7 @@ db_print_tlb_stats()
 #else
 #define INCR_COUNT(x) /* nothing */
 #define INCR_CALL(x) /* nothing */
-#endif
+#endif /* MULTIPROCESSOR */
 
 /*
  * SMP TLB flush routines; these *must* be broadcast on sun4m systems
@@ -576,159 +603,58 @@ static __inline__ void
 smp_tlb_flush_page(va)
 	int va;
 {
-	int n, s;
 
 	INCR_COUNT(smp_tlb_fp_cnt);
-	tlb_flush_page_real(va);
-	if (cold || (cpuinfo.flags & CPUFLG_READY) == 0)
-		return;
-	INCR_CALL(smp_tlb_fc_cnt);
-	LOCK_XPMSG();
-	for (n = 0; n < ncpu; n++) {
-		struct cpu_info *cpi = cpus[n];
-		struct xpmsg_flush_page *p;
-
-		if (CPU_READY(cpi))
-			continue;
-		p = &cpi->msg.u.xpmsg_flush_page;
-		s = splhigh();
-		simple_lock(&cpi->msg.lock);
-		cpi->msg.tag = XPMSG_DEMAP_TLB_PAGE;
-		p->ctx = getcontext4m();
-		p->va = va;
-		raise_ipi_wait_and_unlock(cpi);
-		splx(s);
-	}
-	UNLOCK_XPMSG();
+	xcall((xcall_func_t)sp_tlb_flush_page, (int)va, 0/*ctx*/, 0, 0, 0);
 }
 
 static __inline__ void
 smp_tlb_flush_segment(vr, vs)
 	int vr, vs;
 {
-	int n, s;
 
 	INCR_COUNT(smp_tlb_fs_cnt);
-	tlb_flush_segment_real(vr, vs);
-	if (cold || (cpuinfo.flags & CPUFLG_READY) == 0)
-		return;
-	INCR_CALL(smp_tlb_fs_cnt);
-	LOCK_XPMSG();
-	for (n = 0; n < ncpu; n++) {
-		struct cpu_info *cpi = cpus[n];
-		struct xpmsg_flush_segment *p;
-
-		if (CPU_READY(cpi))
-			continue;
-		p = &cpi->msg.u.xpmsg_flush_segment;
-		s = splhigh();
-		simple_lock(&cpi->msg.lock);
-		cpi->msg.tag = XPMSG_DEMAP_TLB_SEGMENT;
-		p->ctx = getcontext4m();
-		p->vr = vr;
-		p->vs = vs;
-		raise_ipi_wait_and_unlock(cpi);
-		splx(s);
-	}
-	UNLOCK_XPMSG();
+	xcall((xcall_func_t)sp_tlb_flush_segment, vr, vs, 0/*ctx*/, 0, 0);
 }
 
 static __inline__ void
 smp_tlb_flush_region(vr)
 	int vr;
 {
-	int n, s;
 
 	INCR_COUNT(smp_tlb_fr_cnt);
-	tlb_flush_region_real(vr);
-	if (cold || (cpuinfo.flags & CPUFLG_READY) == 0)
-		return;
-	INCR_CALL(smp_tlb_fr_cnt);
-	LOCK_XPMSG();
-	for (n = 0; n < ncpu; n++) {
-		struct cpu_info *cpi = cpus[n];
-		struct xpmsg_flush_region *p;
-
-		if (CPU_READY(cpi))
-			continue;
-		p = &cpi->msg.u.xpmsg_flush_region;
-		s = splhigh();
-		simple_lock(&cpi->msg.lock);
-		cpi->msg.tag = XPMSG_DEMAP_TLB_REGION;
-		p->ctx = getcontext4m();
-		p->vr = vr;
-		raise_ipi_wait_and_unlock(cpi);
-		splx(s);
-	}
-	UNLOCK_XPMSG();
+	xcall((xcall_func_t)sp_tlb_flush_region, vr, 0/*ctx*/, 0, 0, 0);
 }
 
 static __inline__ void
 smp_tlb_flush_context()
 {
-	int n, s;
 
 	INCR_COUNT(smp_tlb_fc_cnt);
-	tlb_flush_context_real();
-	if (cold || (cpuinfo.flags & CPUFLG_READY) == 0)
-		return;
-	INCR_CALL(smp_tlb_fc_cnt);
-	LOCK_XPMSG();
-	for (n = 0; n < ncpu; n++) {
-		struct cpu_info *cpi = cpus[n];
-		struct xpmsg_flush_context *p;
-
-		if (CPU_READY(cpi))
-			continue;
-		p = &cpi->msg.u.xpmsg_flush_context;
-		s = splhigh();
-		simple_lock(&cpi->msg.lock);
-		cpi->msg.tag = XPMSG_DEMAP_TLB_CONTEXT;
-		p->ctx = getcontext4m();
-		raise_ipi_wait_and_unlock(cpi);
-		splx(s);
-	}
-	UNLOCK_XPMSG();
+	xcall((xcall_func_t)sp_tlb_flush_context, 0/*ctx*/, 0, 0, 0, 0);
 }
 
 static __inline__ void
 smp_tlb_flush_all()
 {
-	int n, s;
 
 	INCR_COUNT(smp_tlb_fa_cnt);
-	tlb_flush_all_real();
-	if (cold || (cpuinfo.flags & CPUFLG_READY) == 0)
-		return;
-	INCR_CALL(smp_tlb_fa_cnt);
-	LOCK_XPMSG();
-	for (n = 0; n < ncpu; n++) {
-		struct cpu_info *cpi = cpus[n];
-
-		if (CPU_READY(cpi))
-			continue;
-		s = splhigh();
-		simple_lock(&cpi->msg.lock);
-		cpi->msg.tag = XPMSG_DEMAP_TLB_ALL;
-		raise_ipi_wait_and_unlock(cpi);
-		splx(s);
-	}
-	UNLOCK_XPMSG();
+	xcall((xcall_func_t)sp_tlb_flush_all, 0, 0, 0, 0, 0);
 }
 #endif
 
-#if defined(MULTIPROCESSOR) && 0
+#if defined(MULTIPROCESSOR)
 #define tlb_flush_page(va)		smp_tlb_flush_page((int)va)
 #define tlb_flush_segment(vr, vs)	smp_tlb_flush_segment(vr, vs)
 #define tlb_flush_region(vr)		smp_tlb_flush_region(vr)
 #define tlb_flush_context()		smp_tlb_flush_context()
 #define tlb_flush_all()			smp_tlb_flush_all()
 #else
-#define tlb_flush_page(va)		tlb_flush_page_real(va)
-#define tlb_flush_segment(vr, vs)	tlb_flush_segment_real(vr, vs)
-#define tlb_flush_region(vr)		tlb_flush_region_real(vr)
-#define tlb_flush_context()		tlb_flush_context_real()
-#define tlb_flush_all()			tlb_flush_all_real()
+#define tlb_flush_page(va)		sp_tlb_flush_page(va)
+#define tlb_flush_segment(vr, vs)	sp_tlb_flush_segment(vr, vs)
+#define tlb_flush_region(vr)		sp_tlb_flush_region(vr)
+#define tlb_flush_context()		sp_tlb_flush_context()
+#define tlb_flush_all()			sp_tlb_flush_all()
 #endif
 
 /*
@@ -940,7 +866,7 @@ pgt_page_free(struct pool *pp, void *v)
 	pmap_kremove(va, PAGE_SIZE);
 	uvm_km_free(kernel_map, va, PAGE_SIZE);
 }
-#endif /* 4m only */
+#endif /* SUN4M || SUN4D */
 
 /*----------------------------------------------------------------*/
 
@@ -6831,7 +6757,7 @@ pmap_zero_page4m(pa)
 	setpgt4m(vpage_pte[0], pte);
 	qzero(va, NBPG);
 	/* Remove temporary mapping */
-	tlb_flush_page(va);
+	tlb_flush_page((int)va);
 	setpgt4m(vpage_pte[0], SRMMU_TEINVALID);
 }
 
@@ -6896,7 +6822,7 @@ pmap_zero_page_hypersparc(pa)
 		sta(va + offset, ASI_BLOCKFILL, 0);
 	}
 	/* Remove temporary mapping */
-	tlb_flush_page(va);
+	tlb_flush_page((int)va);
 	setpgt4m(vpage_pte[0], SRMMU_TEINVALID);
 }
 
@@ -6946,9 +6872,9 @@ pmap_copy_page4m(src, dst)
 	setpgt4m(vpage_pte[1], dpte);
 	qcopy(sva, dva, NBPG);	/* loads cache, so we must ... */
 	cache_flush_page((vaddr_t)sva, getcontext4m());
-	tlb_flush_page(sva);
+	tlb_flush_page((int)sva);
 	setpgt4m(vpage_pte[0], SRMMU_TEINVALID);
-	tlb_flush_page(dva);
+	tlb_flush_page((int)dva);
 	setpgt4m(vpage_pte[1], SRMMU_TEINVALID);
 }
 
@@ -7023,9 +6949,9 @@ pmap_copy_page_hypersparc(src, dst)
 		sta(dva + offset, ASI_BLOCKCOPY, sva + offset);
 	}
 
-	tlb_flush_page(sva);
+	tlb_flush_page((int)sva);
 	setpgt4m(vpage_pte[0], SRMMU_TEINVALID);
-	tlb_flush_page(dva);
+	tlb_flush_page((int)dva);
 	setpgt4m(vpage_pte[1], SRMMU_TEINVALID);
 }
 #endif /* SUN4M || SUN4D */
