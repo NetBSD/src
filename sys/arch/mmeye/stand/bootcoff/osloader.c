@@ -136,7 +136,7 @@ main(argc, argv)
 	toffset = sh.s_scnptr - (sh.s_vaddr - ep_taddr);
 	ep_tsize = sh.s_size + (sh.s_vaddr - ep_taddr);
 
-	printf("VMCMD: addr %lx size 0x%lx offset 0x%lx\n", ep_taddr,
+	printf("addr %lx size 0x%lx offset 0x%lx\n", ep_taddr,
 	       ep_tsize, toffset); 
 
 	/* set up command for data segment */
@@ -151,17 +151,17 @@ main(argc, argv)
 	dsize = sh.s_size + (sh.s_vaddr - ep_daddr);
 	ep_dsize = round_page(dsize) + AoutHdr.a_bsize;
 
-	printf("VMCMD: addr 0x%lx size 0x%lx offset 0x%lx\n", ep_daddr,
+	printf("addr 0x%lx size 0x%lx offset 0x%lx\n", ep_daddr,
 		 dsize, doffset); 
 
-	osimage = malloc(ep_tsize+dsize+sizeof(u_long)*2);
+	osimage = malloc(ep_tsize+dsize+sizeof(u_long) * 2);
 	if (osimage == NULL) {
 		printf("osloader:no memory\n");
 		exit(1);
 	}
 
 	*(u_long *)osimage = ep_tsize+dsize;
-	p = osimage + 2*sizeof(u_long);
+	p = osimage + 2 * sizeof(u_long);
 	
 	/* load text area */
 	fseek(fp, toffset, SEEK_SET);
@@ -172,7 +172,7 @@ main(argc, argv)
 
 	/* load data area */
 	fseek(fp, doffset, SEEK_SET);
-	if (fread(p+ep_daddr-ep_taddr, 1, dsize, fp) != dsize) {
+	if (fread(p + ep_daddr - ep_taddr, 1, dsize, fp) != dsize) {
 		perror("osloader:");
 		exit(1);
 	}
@@ -191,5 +191,5 @@ main(argc, argv)
 
 	LoadAndReset(osimage);
 
-	return (0);	/* NOT REACHED */
+	return (0);	/* NOTREACHED */
 }
