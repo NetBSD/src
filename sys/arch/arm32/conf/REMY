@@ -2,7 +2,7 @@
 #	REMY -- Scott's development machine
 #
 
-include	"std.arm32"
+include	"arch/arm32/conf/std.arm32"
 
 # estimated number of users
 
@@ -23,7 +23,7 @@ options		CPU_LATE_ABORT	# ARM7XX compatibility
 
 # FPA options
 
-options		FPE		# Single precision FPE
+#options		FPE		# Single precision FPE
 options		ARMFPE		# ARM Ltd FPE
 
 # File system options
@@ -57,19 +57,19 @@ options		INET		# IP + ICMP + TCP + UDP
 
 # Compatibility options
 
-options		COMPAT_43
-options 	COMPAT_12
-options		COMPAT_11
-options		COMPAT_10
-options		COMPAT_09
+options		COMPAT_43	# 4.3BSD compatibility.
+options		COMPAT_12	# NetBSD 1.2 compatibility.
+#options	COMPAT_11	# NetBSD 1.1 compatibility.
+#options	COMPAT_10	# NetBSD 1.0 compatibility.
+#options	COMPAT_09	# NetBSD 0.9 compatibility.
 options         TCP_COMPAT_42   # TCP bug compatibility with 4.2BSD
 
 # Shared memory options
 
-#options	SYSVMSG		# System V-like message queues
-#options	SYSVSEM		# System V-like semaphores
-#options	SYSVSHM		# System V-like memory sharing
-#options	SHMMAXPGS=1024	# 1024 pages is the default
+options		SYSVMSG		# System V-like message queues
+options		SYSVSEM		# System V-like semaphores
+options		SYSVSHM		# System V-like memory sharing
+options		SHMMAXPGS=1024	# 1024 pages is the default
 
 # Device options
 
@@ -99,6 +99,9 @@ mainbus0 at root
 
 # The boot cpu
 cpu0 at mainbus?
+
+# The IOMD
+iomd0 at mainbus?
 
 # The vidc
 vidcvideo0	at mainbus?
@@ -150,10 +153,14 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 ch*	at scsibus? target ? lun ?	# SCSI auto-changers
 uk*	at scsibus? target ? lun ?	# SCSI unknown device
 
-asc0	at podulebus0	slot 0		# Acorn SCSI card
-asc1	at podulebus0	slot 1		# Acorn SCSI card
-asc2	at podulebus0	slot 2		# Acorn SCSI card
-asc3	at podulebus0	slot 3		# Acorn SCSI card
+#asc0	at podulebus0	slot 0		# Acorn SCSI card
+#asc1	at podulebus0	slot 1		# Acorn SCSI card
+#asc2	at podulebus0	slot 2		# Acorn SCSI card
+#asc3	at podulebus0	slot 3		# Acorn SCSI card
+#cosc0	at podulebus0	slot 0		# MCS Connect32 SCSI II card
+#cosc1	at podulebus0	slot 1		# MCS Connect32 SCSI II card
+#cosc2	at podulebus0	slot 2		# MCS Connect32 SCSI II card
+#cosc3	at podulebus0	slot 3		# MCS Connect32 SCSI II card
 csc0	at podulebus0	slot 0		# Cumana SCSI card
 csc1	at podulebus0	slot 1		# Cumana SCSI card
 csc2	at podulebus0	slot 2		# Cumana SCSI card
@@ -167,10 +174,14 @@ ptsc3	at podulebus0	slot 3		# Power-tec SCSI card
 #oak2	at podulebus0	slot 2		# Oak SCSI card
 #oak3	at podulebus0	slot 3		# Oak SCSI card
 
-scsibus0 at asc0
-scsibus1 at asc1
-scsibus2 at asc2
-scsibus3 at asc3
+#scsibus0 at asc0
+#scsibus1 at asc1
+#scsibus2 at asc2
+#scsibus3 at asc3
+#scsibus0 at cosc0
+#scsibus1 at cosc1
+#scsibus2 at cosc2
+#scsibus3 at cosc3
 scsibus0 at csc0
 scsibus1 at csc1
 scsibus2 at csc2
