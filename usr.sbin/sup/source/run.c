@@ -29,6 +29,7 @@
  *	i = runv (file, arglist);
  *	i = runp (file, arg1, arg2, ..., argn, 0);
  *	i = runvp (file, arglist);
+ *	i = runio (argv, in, out, err);
  *
  *  Run, runv, runp and runvp have argument lists exactly like the
  *  corresponding routines, execl, execv, execlp, execvp.  The run
@@ -47,6 +48,11 @@
  **********************************************************************
  * HISTORY
  * $Log: run.c,v $
+ * Revision 1.2  1995/06/24 16:21:33  christos
+ * - Don't use system(3) to fork processes. It is a big security hole.
+ * - Encode the filenames in the scan files using strvis(3), so filenames
+ *   that contain newlines or other weird characters don't break the scanner.
+ *
  * Revision 1.1.1.1  1993/05/21 14:52:17  cgd
  * initial import of CMU's SUP to NetBSD
  *
@@ -90,8 +96,15 @@
 
 #include <stdio.h>
 #include <signal.h>
+#include <fcntl.h>
 #include <sys/wait.h>
 #include <varargs.h>
+
+#ifndef __STDC__
+#ifndef const
+#define const
+#endif
+#endif
 
 static int dorun();
 
@@ -175,4 +188,62 @@ int usepath;
 		return (-1);
 
 	return (status.w_retcode);
+}
+
+/*
+ * Like system(3), but with an argument list and explicit redirections
+ * that does not use the shell
+ */
+int
+runio(argv, infile, outfile, errfile)
+	char *const argv[];
+	const char *infile;
+	const char *outfile;
+	const char *errfile;
+{
+	int	fd;
+	pid_t	pid;
+	int	status;
+
+	switch ((pid = fork())) {
+	case -1:
+		return -1;
+
+	case 0:
+		if (infile) {
+			(void) close(0);
+			if ((fd = open(infile, O_RDONLY)) == -1)
+				exit(1);
+			if (fd != 0)
+				(void) dup2(fd, 0);
+		}
+
+		if (outfile) {
+			(void) close(1);
+			if ((fd = open(outfile, O_RDWR|O_CREAT|O_TRUNC,
+				       0666)) == -1)
+				exit(1);
+			if (fd != 1)
+				(void) dup2(fd, 1);
+		}
+
+		if (errfile) {
+			(void) close(2);
+			if ((fd = open(errfile, O_RDWR|O_CREAT|O_TRUNC,
+				       0666)) == -1)
+				exit(1);
+			if (fd != 2)
+				(void) dup2(fd, 2);
+		}
+
+		execvp(argv[0], argv);
+		exit(1);
+		/*NOTREACHED*/
+		return 0;
+	
+	default:
+		if (waitpid(pid, &status, 0) == -1)
+			return -1;
+		return status;
+	}
 }
