@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.21 2004/03/01 12:06:02 drochner Exp $	*/
+/*	$NetBSD: machdep.c,v 1.22 2004/03/23 19:35:16 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,12 +72,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21 2004/03/01 12:06:02 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22 2004/03/23 19:35:16 drochner Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_compat_netbsd.h"
+#include "opt_compat_netbsd32.h"
+#include "opt_compat_ibcs2.h"
 #include "opt_cpureset_delay.h"
 #include "opt_multiprocessor.h"
 #include "opt_mtrr.h"
@@ -1029,8 +1031,12 @@ void cpu_init_idt()
 typedef void (vector) __P((void));
 extern vector IDTVEC(syscall);
 extern vector IDTVEC(syscall32);
+#if defined(COMPAT_16) || defined(COMPAT_NETBSD32)
 extern vector IDTVEC(osyscall);
+#endif
+#if defined(COMPAT_10) || defined(COMPAT_IBCS2)
 extern vector IDTVEC(oosyscall);
+#endif
 extern vector *IDTVEC(exceptions)[];
 
 #define	KBTOB(x)	((size_t)(x) * 1024UL)
@@ -1437,10 +1443,11 @@ init_x86_64(first_avail)
 	    x86_btop(VM_MAXUSER_ADDRESS) - 1, SDT_MEMRWA, SEL_UPL, 1, 0, 1);
 
 	/* make ldt gates and memory segments */
+#if defined(COMPAT_10) || defined(COMPAT_IBCS2)
 	setgate((struct gate_descriptor *)(ldtstore + LSYS5CALLS_SEL),
 	    &IDTVEC(oosyscall), 0, SDT_SYS386CGT, SEL_UPL,
 	    GSEL(GCODE_SEL, SEL_KPL));
-
+#endif
 	*(struct mem_segment_descriptor *)(ldtstore + LUCODE_SEL) =
 	    *GDT_ADDR_MEM(gdtstore, GUCODE_SEL);
 	*(struct mem_segment_descriptor *)(ldtstore + LUDATA_SEL) =
@@ -1485,10 +1492,12 @@ init_x86_64(first_avail)
 		idt_allocmap[x] = 1;
 	}
 
+#if defined(COMPAT_16) || defined(COMPAT_NETBSD32)
 	/* new-style interrupt gate for syscalls */
 	setgate(&idt[128], &IDTVEC(osyscall), 0, SDT_SYS386IGT, SEL_UPL,
 	    GSEL(GCODE_SEL, SEL_KPL));
 	idt_allocmap[128] = 1;
+#endif
 
 	setregion(&region, gdtstore, DYNSEL_START - 1);
 	lgdt(&region);
