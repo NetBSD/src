@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_machdep.c	7.3 (Berkeley) 5/13/91
- *	$Id: vm_machdep.c,v 1.28 1994/06/29 01:54:09 mycroft Exp $
+ *	$Id: vm_machdep.c,v 1.29 1994/06/29 02:32:56 mycroft Exp $
  */
 
 /*
@@ -370,12 +370,12 @@ extern vm_map_t phys_map;
  * (a name with only slightly more meaning than "kernelmap")
  */
 vmapbuf(bp, len)
-	register struct buf *bp;
+	struct buf *bp;
 	vm_size_t len;
 {
 	vm_offset_t faddr, taddr, off;
-	struct pmap *fpmap, *tpmap;
-	register vm_offset_t pa;
+	struct pte *fpte, *tpte;
+	struct pte *pmap_pte __P((pmap_t, vm_offset_t));
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
@@ -384,15 +384,14 @@ vmapbuf(bp, len)
 	len = round_page(off + len);
 	taddr = kmem_alloc_wait(phys_map, len);
 	bp->b_data = (caddr_t)(taddr + off);
-	fpmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
-	tpmap = vm_map_pmap(phys_map);
+	/*
+	 * The region is locked, so we expect that pmap_pte() will return
+	 * non-NULL.
+	 */
+	fpte = pmap_pte(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map), faddr);
+	tpte = pmap_pte(vm_map_pmap(phys_map), taddr);
 	do {
-		pa = pmap_extract(fpmap, faddr);
-		if (pa == 0)
-			panic("vmapbuf: null page frame");
-		pmap_enter(tpmap, taddr, pa, VM_PROT_READ|VM_PROT_WRITE, TRUE);
-		faddr += PAGE_SIZE;
-		taddr += PAGE_SIZE;
+		*tpte++ = *fpte++;
 		len -= PAGE_SIZE;
 	} while (len);
 }
@@ -402,7 +401,7 @@ vmapbuf(bp, len)
  * We also invalidate the TLB entries and restore the original b_addr.
  */
 vunmapbuf(bp, len)
-	register struct buf *bp;
+	struct buf *bp;
 	vm_size_t len;
 {
 	vm_offset_t addr, off;
