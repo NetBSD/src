@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.458 2002/03/25 19:19:46 martin Exp $
+# $NetBSD: mi,v 1.459 2002/03/28 05:09:57 thorpej Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1043,6 +1043,7 @@
 ./usr/share/man/cat4/wds.0			man-sys-catman
 ./usr/share/man/cat4/we.0			man-sys-catman
 ./usr/share/man/cat4/wi.0			man-sys-catman
+./usr/share/man/cat4/wm.0			man-sys-catman
 ./usr/share/man/cat4/wscons.0			man-sys-catman
 ./usr/share/man/cat4/wsdisplay.0		man-sys-catman
 ./usr/share/man/cat4/wskbd.0			man-sys-catman
@@ -2720,6 +2721,7 @@
 ./usr/share/man/man4/wds.4			man-sys-man
 ./usr/share/man/man4/we.4			man-sys-man
 ./usr/share/man/man4/wi.4			man-sys-man
+./usr/share/man/man4/wm.4			man-sys-man
 ./usr/share/man/man4/wscons.4			man-sys-man
 ./usr/share/man/man4/wsdisplay.4		man-sys-man
 ./usr/share/man/man4/wskbd.4			man-sys-man
