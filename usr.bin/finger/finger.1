@@ -30,9 +30,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)finger.1	6.14 (Berkeley) 7/27/91
-.\"	$Id: finger.1,v 1.5 1995/07/25 18:16:57 jtc Exp $
+.\"	$Id: finger.1,v 1.6 1996/11/21 06:01:48 lukem Exp $
 .\"
-.Dd July 27, 1991
+.Dd November 21, 1996
 .Dt FINGER 1
 .Os BSD 4
 .Sh NAME
@@ -40,7 +40,7 @@
 .Nd user information lookup program
 .Sh SYNOPSIS
 .Nm finger
-.Op Fl lmsp
+.Op Fl lmpsho
 .Op Ar user ...
 .Op Ar user@host ...
 .Sh DESCRIPTION
@@ -54,17 +54,37 @@ Options are:
 .Nm Finger
 displays the user's login name, real name, terminal name and write
 status (as a ``*'' before the terminal name if write permission is
-denied), idle time, login time, office location and office phone
-number.
+denied), idle time, login time, and either office location and office
+phone number, or the remote host.
+If
+.Fl h
+is given, the remote is printed.
+If
+.Fl o
+is given, the office location and phone number is printed instead
+(the default).
 .Pp
 Idle time is in minutes if it is a single integer, hours and minutes
 if a ``:'' is present, or days if a ``d'' is present.
-Login time is displayed as month, day, hours and minutes, unless
+Login time is displayed as the dayname if less than six days,
+else month, day, hours and minutes, unless
 more than six months ago, in which case the year is displayed rather
 than the hours and minutes.
 .Pp
 Unknown devices as well as nonexistent idle and login times are
 displayed as single asterisks.
+.Pp
+.It Fl h
+When used in conjunction with the
+.Fl s
+option, the name of the remote host is displayed instead of the office
+location and office phone.
+.Pp
+.It Fl o
+When used in conjunction with the
+.Fl s
+option, the office location and office phone information is displayed
+instead of the name of the remote host.
 .Pp
 .It Fl l
 Produces a multi-line format displaying all of the information
@@ -93,6 +113,11 @@ One entry per user is displayed with the
 .Fl l
 option; if a user is logged on multiple times, terminal information
 is repeated once per login.
+.Pp
+Mail status is shown as ``No Mail.'' if there is no mail at all, ``Mail
+last read DDD MMM ## HH:MM YYYY (TZ)'' if the person has looked at their
+mailbox since new mail arriving, or ``New mail received ...'', ``Unread
+since ...'' if they have new mail.
 .Pp
 Mail status is shown as ``No Mail.'' if there is no mail at all,
 ``Mail last read DDD MMM ## HH:MM YYYY (TZ)'' if the person has looked
