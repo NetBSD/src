@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.22.2.4 2000/01/15 17:51:09 he Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.22.2.5 2000/01/20 21:02:03 he Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -98,18 +98,21 @@ static int lfs_vinvalbuf __P((struct vnode *, struct ucred *, struct proc *, ufs
 
 /* Search a block for a specific dinode. */
 struct dinode *
-lfs_ifind(fs, ino, dip)
+lfs_ifind(fs, ino, bp)
 	struct lfs *fs;
 	ino_t ino;
-	register struct dinode *dip;
+	struct buf *bp;
 {
 	register int cnt;
+	register struct dinode *dip = (struct dinode *)bp->b_data;
 	register struct dinode *ldip;
 	
 	for (cnt = INOPB(fs), ldip = dip + (cnt - 1); cnt--; --ldip)
 		if (ldip->di_inumber == ino)
 			return (ldip);
 	
+	printf("offset is %d (seg %d)\n", fs->lfs_offset, datosn(fs,fs->lfs_offset));
+	printf("block is %d (seg %d)\n", bp->b_blkno, datosn(fs,bp->b_blkno));
 	panic("lfs_ifind: dinode %u not found", ino);
 	/* NOTREACHED */
 }
@@ -269,7 +272,7 @@ lfs_truncate(v)
 	 *
 	 * XXX KS - too restrictive?  Maybe only when cleaning?
 	 */
-	while(fs->lfs_seglock) {
+	while(fs->lfs_seglock && fs->lfs_lockpid != ap->a_p->p_pid) {
 		tsleep(&fs->lfs_seglock, (PRIBIO+1), "lfs_truncate", 0);
 	}
 	
