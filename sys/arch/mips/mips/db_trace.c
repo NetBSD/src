@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.5 1999/01/15 01:23:12 castor Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.6 1999/01/16 03:44:42 nisimura Exp $	*/
 
 /* 
  * Mach Operating System
@@ -142,12 +142,10 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 #else
 /*
  * Imcomplete but practically useful stack backtrace.
- * Fails to work when nested exception path steps across a LEAF
- * function because below can not detected the return address.
  */
 #define	MIPS_JR_RA	0x03e00008	/* instruction code for jr ra */
 #define	MIPS_JR_K0	0x03400008	/* instruction code for jr k0 */
-#define	MIPS_ERET	0x12345678	/* instruction code for eret */
+#define	MIPS_ERET	0x42000018	/* instruction code for eret */
 	unsigned va, pc, ra, sp, func;
 	int insn;
 	InstFmt i;
@@ -158,7 +156,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 
 	pc = ddb_regs.f_regs[PC];
 	sp = ddb_regs.f_regs[SP];
-	ra = 0;
+	ra = ddb_regs.f_regs[RA];
 	do {
 		va = pc;
 		do {
@@ -186,8 +184,6 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 				stacksize = -(short)i.IType.imm;
 			va += sizeof(int);
 		} while (va < pc);
-		if (ra == 0)
-			ra = ddb_regs.f_regs[RA]; /* LEAF made the exception */
 
 		db_find_sym_and_offset(func, &name, &offset);
 		if (name == 0)
@@ -196,7 +192,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 			name, pc - func, (void *)ra, stacksize);
 
 		if (ra == pc) {
-			db_printf("--loop?--\n");
+			db_printf("-- loop? --\n");
 			return;
 		}
 		sp += stacksize;
