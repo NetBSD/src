@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.431.2.27 2004/03/15 05:42:06 jmc Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.431.2.28 2004/03/28 08:44:56 jmc Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.428.2.30 2003/10/20 04:49:34 cyber Exp 
+ *	NetBSD: pcidevs,v 1.428.2.31 2004/03/15 05:41:25 jmc Exp 
  */
 
 /*
@@ -56,6 +56,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "3Com",
 	    "3c556 V.90 MiniPCI Modem",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C940,
+	    0,
+	    "3Com",
+	    "3c940 Gigabit Ethernet",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C450TX,
@@ -7546,16 +7552,34 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "VT82C686A MC-97 Modem Controller",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237_EHCI,
+	    0,
+	    "VIA Technologies",
+	    "VT8237 EHCI USB Controller",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8233A,
 	    0,
 	    "VIA Technologies",
 	    "VT8233A PCI-ISA Bridge",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237_RAID,
+	    0,
+	    "VIA Technologies",
+	    "VT8237 Integrated RAID Controller",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8235,
 	    0,
 	    "VIA Technologies",
 	    "VT8235 (Apollo KT400) PCI-ISA Bridge",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237,
+	    0,
+	    "VIA Technologies",
+	    "VT8237 (Apollo KT600) PCI-ISA Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C100A,
@@ -7610,6 +7634,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "VIA Technologies",
 	    "VT8366 CPU-AGP Bridge",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8377CEAGP,
+	    0,
+	    "VIA Technologies",
+	    "VT8377CE CPU-AGP Bridge (KT600)",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_60x0,
