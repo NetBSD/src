@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.24 1998/06/19 18:29:31 tv Exp $	*/
+/*	$NetBSD: conf.c,v 1.25 1998/08/20 06:30:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -156,6 +156,7 @@ int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #include "ofrtc.h"			/* XXX not used for anything?! */
 #include "scr.h"
 #include "pc.h"
+#include "joy.h"
 
 /* Character devices */
 
@@ -232,6 +233,7 @@ struct cdevsw cdevsw[] = {
 #endif
 	cdev_lkm_dummy(),		/* 54: */
 	cdev_lkm_dummy(),		/* 55: */
+	cdev_joy_init(NJOY,joy),	/* 56: ISA joystick */
 };
 
 int nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
@@ -329,6 +331,7 @@ static int chrtoblktbl[] = {
     /* 53 */        NODEV,
     /* 54 */        NODEV,
     /* 55 */        NODEV,
+    /* 56 */	    NODEV,
 };
 
 /*
