@@ -1,6 +1,7 @@
 /* Collect static initialization info into data structures that can be
    traversed by C++ initialization and finalization routines.
-   Copyright (C) 1992, 93-98, 1999 Free Software Foundation, Inc.
+   Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000
+   Free Software Foundation, Inc.
    Contributed by Chris Smith (csmith@convex.com).
    Heavily modified by Michael Meissner (meissner@cygnus.com),
    Per Bothner (bothner@cygnus.com), and John Gilmore (gnu@cygnus.com).
@@ -3044,21 +3045,11 @@ scan_prog_file (prog_name, which_pass)
 
 #ifdef COLLECT_EXPORT_LIST
 
-/* This new function is used to decide whether we should
-   generate import list for an object or to use it directly.  */
+/* Never generate import list (gcc-2.95 branch).  */
 static int
 use_import_list (prog_name)
      char *prog_name;
 {
-  char *p;
-
-  /* If we do not build a shared object then import list should not be used.  */
-  if (! shared_obj) return 0;
-
-  /* Currently we check only for libgcc, but this can be changed in future.  */
-  p = strstr (prog_name, "libgcc.a");
-  if (p != 0 && (strlen (p) == sizeof ("libgcc.a") - 1))
-    return 1;
   return 0;
 }
 
