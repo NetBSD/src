@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.57 1998/08/02 00:36:19 thorpej Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.58 1998/09/04 22:29:54 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -857,16 +857,14 @@ tcp_new_iss(tp, len, addin)
 		printf("Random %08x, ", tcp_iss);
 #endif
 		tcp_iss &= TCP_ISS_RANDOM_MASK;
-		tcp_iss = tcp_iss + addin + TCP_ISSINCR;
-		tcp_iss_seq += TCP_ISSINCR;
-		tcp_iss += tcp_iss_seq;
+		tcp_iss += addin + TCP_ISSINCR;
 #ifdef TCPISS_DEBUG
 		printf("Old ISS %08x, ISS %08x\n", addin, tcp_iss);
 #endif
 	} else {
 		tcp_iss &= TCP_ISS_RANDOM_MASK;
-		tcp_iss_seq += TCP_ISSINCR;
 		tcp_iss += tcp_iss_seq;
+		tcp_iss_seq += TCP_ISSINCR;
 #ifdef TCPISS_DEBUG
 		printf("ISS %08x\n", tcp_iss);
 #endif
@@ -877,7 +875,7 @@ tcp_new_iss(tp, len, addin)
 		 * Limit it to the positive range for really old TCP
 		 * implementations.
 		 */
-		if ((int)tcp_iss < 0)
+		if (tcp_iss >= 0x80000000)
 			tcp_iss &= 0x7fffffff;		/* XXX */
 	}
 
