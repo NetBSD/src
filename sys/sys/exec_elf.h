@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.2 1996/01/16 23:19:43 fvdl Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.3 1996/06/13 18:36:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -111,6 +111,38 @@ typedef struct {
 	Elf32_Word	p_align;	/* memory & file alignment */
 } Elf32_Phdr;
 
+enum Elf32_s_sht {
+	Elf32_sht_null = 0,
+	Elf32_sht_progbits = 1,
+	Elf32_sht_symtab = 2,
+	Elf32_sht_strtab = 3,
+	Elf32_sht_rela = 4,
+	Elf32_sht_hash = 5,
+	Elf32_sht_dynamic = 6,
+	Elf32_sht_note = 7,
+	Elf32_sht_nobits = 8,
+	Elf32_sht_rel =	9,
+	Elf32_sht_shlib = 10,
+	Elf32_sht_dynsym = 11,
+	Elf32_sht_loproc = 0x70000000,
+	Elf32_sht_hiproc = 0x7FFFFFFF
+};
+
+
+typedef struct {
+	Elf32_Word	sh_name;	/* section name */
+	Elf32_Word	sh_type;	/* section type */
+	Elf32_Word	sh_flags;	/* section flags */
+	Elf32_Addr	sh_addr;	/* virtual address */
+	Elf32_Off	sh_offset;	/* file offset */
+	Elf32_Word	sh_size;	/* section size */
+	Elf32_Word	sh_link;	/* link to another */
+	Elf32_Word	sh_info;	/* misc info */
+	Elf32_Word	sh_addralign;	/* memory alignment */
+	Elf32_Word	sh_entsize;	/* table entry size */
+} Elf32_Shdr;
+
+
 #define Elf32_e_ident "\177ELF"
 #define Elf32_e_siz (sizeof(Elf32_e_ident) - 1)
 
@@ -154,9 +186,11 @@ struct elf_args {
 
 int exec_elf_makecmds __P((struct proc *, struct exec_package *));
 void *elf_copyargs __P((struct exec_package *, struct ps_strings *, void *,
-	void *));
+    void *));
 void *elf_copyargs __P((struct exec_package *, struct ps_strings *,
-        void *, void *));
+    void *, void *));
+int elf_read_from __P((struct proc *, struct vnode *, u_long,
+    caddr_t, int));
 
 #endif /* _KERNEL */
 
