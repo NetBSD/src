@@ -1,4 +1,4 @@
-/*	$NetBSD: vrkiu.c,v 1.4 1999/11/05 04:28:14 takemura Exp $	*/
+/*	$NetBSD: vrkiu.c,v 1.5 1999/11/21 12:53:57 shin Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi All rights reserved.
@@ -49,6 +49,7 @@
 #include <machine/cpu.h>
 #include <machine/bus.h>
 #include <machine/platid.h>
+#include <machine/platid_mask.h>
 
 #include <hpcmips/vr/vr.h>
 #include <hpcmips/vr/vripvar.h>
@@ -61,6 +62,8 @@
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
 #include <dev/pckbc/wskbdmap_mfii.h>
+
+#include "opt_pckbd_layout.h"
 
 #ifdef VRKIUDEBUG
 int vrkiu_debug = 0;
@@ -141,41 +144,145 @@ const struct wskbd_consops vrkiu_consops = {
 	vrkiu_cnpollc,
 };
 
-const struct wskbd_mapdata vrkiu_keymapdata = {
+struct wskbd_mapdata vrkiu_keymapdata = {
 	pckbd_keydesctab,
+#ifdef VRKIU_LAYOUT
+	VRKIU_LAYOUT,
+#else
 	KB_US,
+#endif
 };
 
 struct vrkiu_chip *vrkiu_consdata = NULL;
 
-/* XXX: This tranlation table may depend on each machine.
-        Should I build it in? */
-static char keytrans[] = {
-	-1,  28,  25,  52,  21,  48,  44,  57,  /* - enter p . y b z space */
-	-1,  53,  24,  51,  20,  47,  30,  -1,  /* - / o , t v a - */
-	-1,  -1,  23,  50,  19,  46,  17,  -1,  /* - - i m r c w - */
-	13,  -1,  22,  -1,  18,  45,  16,   2,  /* = - u - e x q 1 */
-	-1,  -1,  11,  38,  40,  34,  15,  59,  /* - - 0 l ' g tab f1 */
-	-1,  39,  10,  49,   6,  33,   3,  37,  /* - ; 9 n 5 f 2 k */
-	-1,  27,   9,  36,   5,  32,   7,  -1,  /* - ] 8 j 4 d 6 - */
-	12,  26,   8,  35,   4,  41,  31,  -1,  /* - [ 7 h 3 ` s - */
-	58,  -1,  -1,  -1,  14,  -1,  66,  61,  /* caps - - - bs - f8 f3 */
-	-1,  56,  -1,  -1,  43,  -1,  65,  62,  /* - alt - - \ - f7 f4 */
-	-1,  -1,  29,  -1,  68,  -1,  64,  60,  /* - - ctrl - f10 - f6 f2 */
-	-1,  -1,  -1,  42,  -1,  67,  63,   1,  /* - - - shift - f9 f5 esc */
-};
-/* XXX: fill the field of funct. keys, ex. arrow, fnc, nfer... */
+#define UNK	-1	/* unknown */
+#define IGN	-2	/* ignore */
 
-#define	SCROLL		0x0001	/* stop output */
-#define	NUM		0x0002	/* numeric shift  cursors vs. numeric */
-#define	CAPS		0x0004	/* caps shift -- swaps case of letter */
-#define	SHIFT		0x0008	/* keyboard shift */
-#define	CTL		0x0010	/* control shift  -- allows ctl function */
-#define	ASCII		0x0020	/* ascii code for this key */
-#define	ALT		0x0080	/* alternate shift -- alternate chars */
-#define	FUNC		0x0100	/* function key */
-#define	KP		0x0200	/* Keypad keys */
-#define	NONE		0x0400	/* no function */
+static char default_keytrans[] = {
+/*00*/ UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,	/* - - - - - - - - */
+/*08*/ UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,	/* - - - - - - - - */
+/*10*/ UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,	/* - - - - - - - - */
+/*18*/ UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,	/* - - - - - - - - */
+/*20*/ UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,	/* - - - - - - - - */
+/*28*/ UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,	/* - - - - - - - - */
+/*30*/ UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,	/* - - - - - - - - */
+/*38*/ UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,	/* - - - - - - - - */
+/*40*/ UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,	/* - - - - - - - - */
+/*48*/ UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,	/* - - - - - - - - */
+/*50*/ UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,	/* - - - - - - - - */
+/*58*/ UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,  UNK,	/* - - - - - - - - */
+};
+
+/* NEC MobileGearII MCR series (Japan) */
+static char mcr_jp_keytrans[] = {
+/*00*/  77,  28,  25,  52,  21,  48,  44,  57, /* right ent p . y b z space */
+/*08*/  80,  53,  24,  51,  20,  47,  30, 123, /* down / o , t v a nfer */
+/*10*/  75, 115,  23,  50,  19,  46,  17, 221, /* left \ i m r c w menu */
+/*18*/  13, IGN,  22, IGN,  18,  45,  16,   2, /* ^ - u - e x q 1 */
+/*20*/  81,  41,  11,  38,  40,  34,  15,  59, /* pgdn h/z 0 l : g tab f1 */
+/*28*/ 121,  39,  10,  49,   6,  33,   3,  37, /* xfer ; 9 n 5 f 2 k */
+/*30*/  72,  27,   9,  36,   5,  32,   7, IGN, /* up [ 8 j 4 d 6 - */
+/*38*/  12,  26,   8,  35,   4,  43,  31, IGN, /* - @ 7 h 3 ] s - */
+/*40*/  58, IGN, IGN, IGN,  14, IGN,  66,  61, /* caps - - - bs - f8 f3 */
+/*48*/ IGN,  56, IGN, IGN, 125, 112,  65,  62, /* - alt - - | k/h f7 f4 */
+/*50*/ IGN, IGN,  29, IGN,  68,  73,  64,  60, /* - - ctrl - f10 pgup f6 f2 */
+/*58*/ IGN, IGN, IGN,  42,  14,  67,  63,   1, /* - - - shift del f9 f5 esc */
+};
+
+/* IBM WorkPad z50 */
+static char z50_keytrans[] = {
+/*00*/  59,  61,  63,  65,  67, IGN, IGN,  87,	/* f1 f3 f5 f7 f9 - - f11 */
+/*08*/  60,  62,  64,  66,  68, IGN, IGN,  88,	/* f2 f4 f6 f8 f10 - - f12 */
+/*10*/  40,  26,  12,  11,  25,  39,  72,  53,	/* ' [ - 0 p ; up / */
+/*18*/ IGN, IGN, IGN,  10,  24,  38,  52, IGN,	/* - - - 9 o l . - */
+/*20*/  75,  27,  13,   9,  23,  37,  51, IGN,	/* left ] = 8 i k , - */
+/*28*/  35,  21,   7,   8,  22,  36,  50,  49,	/* h y 6 7 u j m n */
+/*30*/ IGN,  14,  69,  14, IGN,  43,  28,  57,	/* - bs num del - \ ent sp */
+/*38*/  34,  20,   6,   5,  19,  33,  47,  48,	/* g t 5 4 r f v b */
+/*40*/ IGN, IGN, IGN,   4,  18,  32,  46,  77,	/* - - - 3 e d c right */
+/*48*/ IGN, IGN, IGN,   3,  17,  31,  45,  80,	/* - - - 2 w s x down */
+/*50*/   1,  29,  41,   2,  16,  30,  44, IGN,	/* esc tab ~ 1 q a z - */
+/*58*/ 221,  42,  29,  29,  56,  56,  54, IGN,	/* menu Ls Lc Rc La Ra Rs - */
+};
+
+/* Sharp Tripad PV6000 */
+static char tripad_keytrans[] = {
+/*00*/  42,  15,  41,  16,   1,   2, 104, 221,	/* lsh tab ` q esc 1 WIN - */
+/*08*/  58,  44,  45,  30,  31,  17,  18,   3,	/* ctrl z x a s w e 2 */
+/*10*/  56,  57,  46,  47,  32,  33,  19,   4,	/* lalt sp c v d f r 3 */
+/*18*/  48,  49,  34,  35,  20,  21,   5,   6,	/* b n g h t y 4 5 */
+/*20*/  50,  51,  36,  37,  22,  23,   7,   8,	/* m , j k u i 6 7 */
+/*28*/ 105,  29,  38,  24,  25,   9,  10,  11,	/* Fn caps l o p 8 9 0 */
+/*30*/  26,  27, 102,  52,  53,  39,  12,  13,	/* [ ] dar , / ; \- = */
+/*38*/  54, 103, 100, 102,  39,  28,  43,  14,	/* rsh - - uar - ; ent \ del */
+/*40*/ IGN, IGN, IGN, IGN, IGN, IGN, IGN, IGN,	/* - - - - - - - - */
+/*48*/ IGN, IGN, IGN, IGN, IGN, IGN, IGN, IGN,	/* - - - - - - - - */
+/*50*/ IGN, IGN, IGN, IGN, IGN, IGN, IGN, IGN,	/* - - - - - - - - */
+/*58*/ IGN, IGN, IGN, IGN, IGN, IGN, IGN, IGN,	/* - - - - - - - - */
+};
+
+/* NEC Mobile Gear MCCS series */
+static char mccs_keytrans[] = {
+/*00*/  58,  28, 102,  25,  52,  21,  48,  44,  /* caps cr rar p . y b z */
+/*08*/  56,  27, 103,  24,  51,  20,  47,  30,  /* alt [ dar o , t v a */
+/*10*/  41,  26, 101,  23,  50,  19,  46,  17,  /* zen @ lar i m r c w */
+/*18*/  29,  39, 100,  22,  49,  18,  45,  16,  /* lctrl ; uar u n e x q */
+/*20*/  42,  14, 115,  11,  38,   7,  34,  15,  /* lshft bs \ 0 l 6 g tab */
+/*28*/ 123, 125,  53,  10,  37,   6,  33,   3,  /* nconv | / 9 k 5 f 2 */
+/*30*/ 121,  13,  43,   9,  36,   5,  32,   2,  /* conv = ] 8 j 4 d 1 */
+/*38*/ 112,  12,  40,   8,  35,   4,  31,   1,  /* hira - ' 7 h 3 s esc */
+/*40*/ IGN,  57, IGN, IGN, IGN, IGN, IGN, IGN,  /* - sp - - - - - - */
+/*48*/ IGN, IGN, IGN, IGN, IGN, IGN, IGN, IGN,  /* - - - - - - - - */
+/*50*/ IGN, IGN, IGN, IGN, IGN, IGN, IGN, IGN,  /* - - - - - - - - */
+/*58*/ IGN, IGN, IGN, IGN, IGN, IGN, IGN, IGN,  /* - - - - - - - - */
+};
+
+static char mobilepro_keytrans[] = {
+/*00*/  57,  27,  43,  53,  75,  80,  28,  38,  /* space ] \ / - - enter l */
+/*08*/ IGN,  26,  40,  39,  77,  72,  52,  24,  /* - [ ' ; - - . o */
+/*10*/ IGN, IGN, IGN, 221,  47,  46,  45,  44,  /* - - - Windows v c x z */
+/*18*/ IGN,  13,  12,  41,  33,  32,  31,  30,  /* - = \- ` f d s a */
+/*20*/   9,   8,   7,   6,  19,  18,  17,  16,  /* 8 7 6 5 r e w q */
+/*28*/  51,  50,  49,  48, IGN, IGN,  11,  10,  /* , m n b - - 0 9 */
+/*30*/  37,  36,  35,  34,   5,   4,   3,   2,  /* k j h g 4 3 2 1 */
+/*38*/  23,  22,  21,  20, IGN,  58,  14,   1,  /* i u y t - caps del esc */
+/*40*/ 184, IGN, IGN, IGN,  14,  25,  15, IGN,  /* alt_R - - - BS p TAB Fn */
+/*48*/ IGN,  56, IGN, IGN,  88,  87,  68,  67,  /* - alt_L - - f12 f11 f10 f9*/
+/*50*/ IGN, IGN,  29, IGN,  66,  65,  64,  63,  /* - - ctrl - f8 f7 f6 f5 */
+/*58*/ IGN, IGN, IGN,  42,  62,  61,  60,  59,  /* - - - shift f4 f3 f2 f1 */
+};
+
+/* FUJITSU INTERTOP CX300 */ 
+static char intertop_keytrans[] = {
+  57,  60,   2,  15,  28,  58,  75,  41,
+ 112,  59,   3,  16, IGN,  30,  56,   1,
+ 210,  17,   4,  31,  83,  43,  80,  45,
+  44,  18,   5,  32,  68, 125,  77,  46,
+ 115,  19,  39,  33,  67,  26,  13,  47,
+  53,  20,   6,  34,  66,  25,  12,  48,
+  52,  21,   7,  35,  65,  38,  11,  49,
+ IGN,  22,   8,  36,  63,  24,  14,  50,
+ IGN,  61,   9,  62, IGN,  23,  37,  51,
+  69,  40,  10,  27,  64, IGN,  72, IGN,
+ IGN, IGN, IGN, IGN,  42, IGN, IGN,  54,
+ 157, 221, 123, 121, 184, IGN, IGN, IGN,
+};
+/*
+space   a2      1       tab     enter   caps    left    zenkaku
+hiraga  a1      2       q       -       a       fnc     esc
+ins     w       3       s       del     ]       down    x
+z       e       4       d       a10     \       right   c
+backsla r       ;       f       a9      @       ^       v
+/       t       5       g       a8      p       -       b
+.       y       6       h       a7      l       0       n
+-       u       7       j       a5      o       bs      m
+-       a3      8       a4      -       i       k       ,
+num     :       9       [       a6      -       up      -
+-       -       -       -       shift_L -       -       shift_R
+ctrl    win     muhenka henkan  alt     -       -       -
+*/
+
+static char *keytrans = default_keytrans;
 
 /*
  * utilities
@@ -289,6 +396,42 @@ vrkiuattach(parent, self, aux)
 
 	printf("\n");
 
+	if (platid_match(&platid, &platid_mask_MACH_NEC_MCR_520A)) {
+		keytrans = mobilepro_keytrans;
+#if !defined(VRKIU_LAYOUT)
+		vrkiu_keymapdata.layout = KB_US;
+#endif
+	} else if (platid_match(&platid, &platid_mask_MACH_NEC_MCR_700A)) {
+		keytrans = mobilepro_keytrans;
+#if !defined(VRKIU_LAYOUT)
+		vrkiu_keymapdata.layout = KB_US;
+#endif
+	} else if (platid_match(&platid, &platid_mask_MACH_NEC_MCR)) {
+		keytrans = mcr_jp_keytrans;
+#if !defined(VRKIU_LAYOUT)
+		vrkiu_keymapdata.layout = KB_JP;
+#endif
+	} else if (platid_match(&platid, &platid_mask_MACH_IBM_WORKPAD_Z50)) {
+		keytrans = z50_keytrans;
+#if !defined(VRKIU_LAYOUT)
+		vrkiu_keymapdata.layout = KB_US;
+#endif
+	} else if (platid_match(&platid, &platid_mask_MACH_SHARP_TRIPAD)) {
+		keytrans = tripad_keytrans;
+#if !defined(VRKIU_LAYOUT)
+		vrkiu_keymapdata.layout = KB_JP;
+#endif
+	} else if (platid_match(&platid, &platid_mask_MACH_NEC_MCCS)) {
+		keytrans = mccs_keytrans;
+#if !defined(VRKIU_LAYOUT)
+		vrkiu_keymapdata.layout = KB_JP;
+#endif
+	} else if (platid_match(&platid, &platid_mask_MACH_FUJITSU_INTERTOP)) {
+		keytrans = intertop_keytrans;
+#if !defined(VRKIU_LAYOUT)
+		vrkiu_keymapdata.layout = KB_JP;
+#endif
+	}
 	wa.console = isconsole;
 	wa.keymap = &vrkiu_keymapdata;
 	wa.accessops = &vrkiu_accessops;
@@ -348,9 +491,11 @@ detect_key(chip)
 			if (modified & mask) {
 				int key, type;
 				key = i * 16 + j;
-				if (keytrans[key] < 0) {
-	                                printf("vrkiu: Unkown scan code 0x%02x\n", key);
+				if (keytrans[key] == UNK) {
+	                                printf("vrkiu: Unknown scan code 0x%02x\n", key);
 	                                continue;
+				} else if (keytrans[key] == IGN) {
+					continue;
 				}
 				type = (scandata[i] & mask) ? 
 					WSCONS_EVENT_KEY_DOWN :
