@@ -206,8 +206,9 @@ isc_result_t omapi_wait_for_completion (omapi_object_t *object,
 	if (waiter -> inner)
 		omapi_object_dereference (&waiter -> inner, MDL);
 	
+	status = waiter -> waitstatus;
 	omapi_waiter_dereference (&waiter, MDL);
-	return ISC_R_SUCCESS;
+	return status;;
 }
 
 isc_result_t omapi_one_dispatch (omapi_object_t *wo,
@@ -510,6 +511,14 @@ isc_result_t omapi_waiter_signal_handler (omapi_object_t *h,
 	if (!strcmp (name, "ready")) {
 		waiter = (omapi_waiter_object_t *)h;
 		waiter -> ready = 1;
+		waiter -> waitstatus = ISC_R_SUCCESS;
+		return ISC_R_SUCCESS;
+	}
+
+	if (!strcmp (name, "status")) {
+		waiter = (omapi_waiter_object_t *)h;
+		waiter -> ready = 1;
+		waiter -> waitstatus = va_arg (ap, isc_result_t);
 		return ISC_R_SUCCESS;
 	}
 

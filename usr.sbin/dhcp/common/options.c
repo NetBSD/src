@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: options.c,v 1.1.1.13 2000/07/08 20:40:22 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: options.c,v 1.1.1.14 2000/09/04 23:10:13 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #define DHCP_OPTION_DATA
@@ -205,7 +205,7 @@ int cons_options (inpacket, outpacket, lease, mms, in_options, cfg_options,
 	int mms;
 	struct option_state *in_options;
 	struct option_state *cfg_options;
-	struct binding_scope *scope;
+	struct binding_scope **scope;
 	int overload;	/* Overload flags that may be set. */
 	int terminate;
 	int bootpp;
@@ -420,7 +420,7 @@ int store_options (buffer, buflen, packet, lease,
 	struct lease *lease;
 	struct option_state *in_options;
 	struct option_state *cfg_options;
-	struct binding_scope *scope;
+	struct binding_scope **scope;
 	unsigned *priority_list;
 	int priority_len;
 	unsigned first_cutoff, second_cutoff;
@@ -751,7 +751,7 @@ int hashed_option_get (result, universe, packet, lease,
 	struct option_state *in_options;
 	struct option_state *cfg_options;
 	struct option_state *options;
-	struct binding_scope *scope;
+	struct binding_scope **scope;
 	unsigned code;
 {
 	struct option_cache *oc;
@@ -776,7 +776,7 @@ int agent_option_get (result, universe, packet, lease,
 	struct option_state *in_options;
 	struct option_state *cfg_options;
 	struct option_state *options;
-	struct binding_scope *scope;
+	struct binding_scope **scope;
 	unsigned code;
 {
 	struct agent_options *ao;
@@ -1154,7 +1154,7 @@ int store_option (result, universe, packet, lease,
 	struct lease *lease;
 	struct option_state *in_options;
 	struct option_state *cfg_options;
-	struct binding_scope *scope;
+	struct binding_scope **scope;
 	struct option_cache *oc;
 {
 	struct data_string d1, d2;
@@ -1201,7 +1201,7 @@ int option_space_encapsulate (result, packet, lease,
 	struct lease *lease;
 	struct option_state *in_options;
 	struct option_state *cfg_options;
-	struct binding_scope *scope;
+	struct binding_scope **scope;
 	struct data_string *name;
 {
 	struct universe *u;
@@ -1229,7 +1229,7 @@ int hashed_option_space_encapsulate (result, packet, lease,
 	struct lease *lease;
 	struct option_state *in_options;
 	struct option_state *cfg_options;
-	struct binding_scope *scope;
+	struct binding_scope **scope;
 	struct universe *universe;
 {
 	pair p, *hash;
@@ -1263,7 +1263,7 @@ int nwip_option_space_encapsulate (result, packet, lease,
 	struct lease *lease;
 	struct option_state *in_options;
 	struct option_state *cfg_options;
-	struct binding_scope *scope;
+	struct binding_scope **scope;
 	struct universe *universe;
 {
 	pair p, *hash;
@@ -1376,7 +1376,7 @@ void do_packet (interface, packet, len, from_port, from, hfrom)
 					       (struct lease *)0,
 					       decoded_packet -> options,
 					       (struct option_state *)0,
-					       (struct binding_scope *)0,
+					       (struct binding_scope **)0,
 					       op, MDL);
 			if (dp.len > 0)
 				decoded_packet -> packet_type = dp.data [0];

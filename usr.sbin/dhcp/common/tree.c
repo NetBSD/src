@@ -43,13 +43,13 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: tree.c,v 1.1.1.6 2000/07/08 20:40:25 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: tree.c,v 1.1.1.7 2000/09/04 23:10:17 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
 #include <omapip/omapip_p.h>
 
-struct binding_scope global_scope;
+struct binding_scope *global_scope;
 
 static int do_host_lookup PROTO ((struct data_string *,
 				  struct dns_host_entry *));
@@ -430,7 +430,7 @@ int evaluate_expression (result, packet, lease,
 	struct lease *lease;
 	struct option_state *in_options;
 	struct option_state *cfg_options;
-	struct binding_scope *scope;
+	struct binding_scope **scope;
 	struct expression *expr;
 {
 	struct binding_value *bv;
@@ -440,7 +440,10 @@ int evaluate_expression (result, packet, lease,
 	bv = (struct binding_value *)0;
 
 	if (expr -> op == expr_variable_reference) {
-		binding = find_binding (scope, expr -> data.variable);
+		if (!scope || !*scope)
+			return 0;
+
+		binding = find_binding (*scope, expr -> data.variable);
 
 		if (binding && binding -> value) {
 			if (result)
@@ -455,7 +458,14 @@ int evaluate_expression (result, packet, lease,
 		struct expression *arg;
 		struct binding_scope *ns;
 		struct binding *nb;
-		binding = find_binding (scope, expr -> data.funcall.name);
+
+		if (!scope || !*scope) {
+			log_error ("%s: no such function.",
+				   expr -> data.funcall.name);
+			return 0;
+		}
+
+		binding = find_binding (*scope, expr -> data.funcall.name);
 
 		if (!binding || !binding -> value) {
 			log_error ("%s: no such function.",
@@ -518,27 +528,16 @@ int evaluate_expression (result, packet, lease,
 			return 0;
 		}
 
-		ns -> outer = scope;
-		if (execute_statements
-		    (packet, lease, in_options, cfg_options, ns,
-		     binding -> value -> value.fundef -> statements)) {
-			if (ns -> bindings && ns -> bindings -> name) {
-			    binding_value_reference (result,
-						     ns -> bindings -> value,
-						     MDL);
-			    status = 1;
-			} else
-			    status = 0;
-		} else
-			status = 0;
+		if (scope && *scope)
+			binding_scope_reference (&ns -> outer, *scope, MDL);
+
+		status = (execute_statements
+			  (&bv, packet, lease, in_options, cfg_options, &ns,
+			   binding -> value -> value.fundef -> statements));
 		binding_scope_dereference (&ns, MDL);
-		return status;
-	} else if (expr -> op == expr_funcall) {
-		if (!binding_value_allocate (&bv, MDL))
-			return 0;
-		bv -> type = binding_function;
-		fundef_reference (&bv -> value.fundef, expr -> data.func, MDL);
-		return 1;
+
+		if (!bv)
+			return 1;
         } else if (is_boolean_expression (expr)) {
 		if (!binding_value_allocate (&bv, MDL))
 			return 0;
@@ -572,6 +571,7 @@ int evaluate_expression (result, packet, lease,
 	} else {
 		log_error ("%s: invalid expression type: %d",
 			   "evaluate_expression", expr -> op);
+		return 0;
 	}
 	if (result)
 		binding_value_reference (result, bv, MDL);
@@ -641,7 +641,7 @@ int evaluate_dns_expression (result, packet, lease, in_options,
 	struct lease *lease;
 	struct option_state *in_options;
 	struct option_state *cfg_options;
-	struct binding_scope *scope;
+	struct binding_scope **scope;
 	struct expression *expr;
 {
 	ns_updrec *foo;
@@ -856,6 +856,9 @@ int evaluate_dns_expression (result, packet, lease, in_options,
 	      case expr_multiply:
 	      case expr_divide:
 	      case expr_remainder:
+	      case expr_binary_and:
+	      case expr_binary_or:
+	      case expr_binary_xor:
 		log_error ("Numeric opcode in evaluate_dns_expression: %d",
 		      expr -> op);
 		return 0;
@@ -882,7 +885,7 @@ int evaluate_boolean_expression (result, packet, lease, in_options,
 	struct lease *lease;
 	struct option_state *in_options;
 	struct option_state *cfg_options;
-	struct binding_scope *scope;
+	struct binding_scope **scope;
 	struct expression *expr;
 {
 	struct data_string left, right;
@@ -972,29 +975,26 @@ int evaluate_boolean_expression (result, packet, lease, in_options,
 		return 0;
 
 	      case expr_or:
+		bleft = bright = 0;
 		sleft = evaluate_boolean_expression (&bleft, packet, lease,
 						     in_options, cfg_options,
 						     scope,
 						     expr -> data.or [0]);
-		if (sleft && !bleft)
+		if (!sleft || !bleft)
 			sright = evaluate_boolean_expression
 				(&bright, packet, lease,
 				 in_options, cfg_options,
 				 scope, expr -> data.or [1]);
 		else
-			sright = bright = 0;
+			sright = 0;
 #if defined (DEBUG_EXPRESSIONS)
 		log_debug ("bool: or (%s, %s) = %s",
 		      sleft ? (bleft ? "true" : "false") : "NULL",
 		      sright ? (bright ? "true" : "false") : "NULL",
-		      ((sleft && sright)
+		      ((sleft || sright)
 		       ? (bleft || bright ? "true" : "false") : "NULL"));
 #endif
-		if (sleft && bleft) {
-			*result = 1;
-			return 1;
-		}
-		if (sleft && sright) {
+		if (sleft || sright) {
 			*result = bleft || bright;
 			return 1;
 		}
@@ -1067,12 +1067,15 @@ int evaluate_boolean_expression (result, packet, lease, in_options,
 		return 1;
 
 	      case expr_variable_exists:
-		binding = find_binding (scope, expr -> data.variable);
+		if (scope && *scope) {
+			binding = find_binding (*scope, expr -> data.variable);
 
-		if (binding) {
-			if (binding -> value)
-				*result = 1;
-			else
+			if (binding) {
+				if (binding -> value)
+					*result = 1;
+				else
+					*result = 0;
+			} else
 				*result = 0;
 		} else
 			*result = 0;
@@ -1083,18 +1086,22 @@ int evaluate_boolean_expression (result, packet, lease, in_options,
 		return 1;
 
 	      case expr_variable_reference:
-		binding = find_binding (scope, expr -> data.variable);
+		if (scope && *scope) {
+		    binding = find_binding (*scope, expr -> data.variable);
 
-		if (binding && binding -> value) {
-			if (binding -> value -> type == binding_boolean) {
+		    if (binding && binding -> value) {
+			if (binding -> value -> type ==
+			    binding_boolean) {
 				*result = binding -> value -> value.boolean;
-			    sleft = 1;
+				sleft = 1;
 			} else {
 				log_error ("binding type %d in %s.",
 					   binding -> value -> type,
 					   "evaluate_boolean_expression");
 				sleft = 0;
 			}
+		    } else
+			    sleft = 0;
 		} else
 			sleft = 0;
 #if defined (DEBUG_EXPRESSIONS)
@@ -1162,6 +1169,9 @@ int evaluate_boolean_expression (result, packet, lease, in_options,
 	      case expr_multiply:
 	      case expr_divide:
 	      case expr_remainder:
+	      case expr_binary_and:
+	      case expr_binary_or:
+	      case expr_binary_xor:
 		log_error ("Numeric opcode in evaluate_boolean_expression: %d",
 		      expr -> op);
 		return 0;
@@ -1194,7 +1204,7 @@ int evaluate_data_expression (result, packet, lease,
 	struct lease *lease;
 	struct option_state *in_options;
 	struct option_state *cfg_options;
-	struct binding_scope *scope;
+	struct binding_scope **scope;
 	struct expression *expr;
 {
 	struct data_string data, other;
@@ -1487,7 +1497,7 @@ int evaluate_data_expression (result, packet, lease,
 		s0 = evaluate_numeric_expression (&len, packet, lease,
 						  in_options, cfg_options,
 						  scope,
-						  expr -> data.packet.len);
+						  expr -> data.encode_int);
 		if (s0) {
 			result -> len = 1;
 			if (!buffer_allocate (&result -> buffer, 1, MDL)) {
@@ -1516,7 +1526,7 @@ int evaluate_data_expression (result, packet, lease,
 		s0 = evaluate_numeric_expression (&len, packet, lease,
 						  in_options, cfg_options,
 						  scope,
-						  expr -> data.packet.len);
+						  expr -> data.encode_int);
 		if (s0) {
 			result -> len = 2;
 			if (!buffer_allocate (&result -> buffer, 2, MDL)) {
@@ -1544,7 +1554,7 @@ int evaluate_data_expression (result, packet, lease,
 		s0 = evaluate_numeric_expression (&len, packet, lease,
 						  in_options, cfg_options,
 						  scope,
-						  expr -> data.packet.len);
+						  expr -> data.encode_int);
 		if (s0) {
 			result -> len = 4;
 			if (!buffer_allocate (&result -> buffer, 4, MDL)) {
@@ -1829,23 +1839,26 @@ int evaluate_data_expression (result, packet, lease,
 		return 0;
 
 	      case expr_variable_reference:
-		binding = find_binding (scope, expr -> data.variable);
+		if (scope && *scope) {
+		    binding = find_binding (*scope, expr -> data.variable);
 
-		if (binding && binding -> value) {
-		    if (binding -> value -> type == binding_data) {
+		    if (binding && binding -> value) {
+			if (binding -> value -> type == binding_data) {
 			    data_string_copy (result,
 					      &binding -> value -> value.data,
 					      MDL);
 			    s0 = 1;
-		    } else if (binding -> value -> type != binding_data) {
+			} else if (binding -> value -> type != binding_data) {
 			    log_error ("binding type %d in %s.",
 				       binding -> value -> type,
 				       "evaluate_data_expression");
 			    s0 = 0;
-		    } else
+			} else
 			    s0 = 0;
-		} else
+		    } else
 			s0 = 0;
+		} else
+		    s0 = 0;
 #if defined (DEBUG_EXPRESSIONS)
 		log_debug ("data: %s = %s", expr -> data.variable,
 			   s0 ? print_hex_1 (result -> len,
@@ -1967,6 +1980,9 @@ int evaluate_data_expression (result, packet, lease,
 	      case expr_multiply:
 	      case expr_divide:
 	      case expr_remainder:
+	      case expr_binary_and:
+	      case expr_binary_or:
+	      case expr_binary_xor:
 		log_error ("Numeric opcode in evaluate_data_expression: %d",
 		      expr -> op);
 		return 0;
@@ -1998,7 +2014,7 @@ int evaluate_numeric_expression (result, packet, lease,
 	struct lease *lease;
 	struct option_state *in_options;
 	struct option_state *cfg_options;
-	struct binding_scope *scope;
+	struct binding_scope **scope;
 	struct expression *expr;
 {
 	struct data_string data;
@@ -2172,9 +2188,10 @@ int evaluate_numeric_expression (result, packet, lease,
 #endif /* NSUPDATE */
 
 	      case expr_variable_reference:
-		binding = find_binding (scope, expr -> data.variable);
+		if (scope && *scope) {
+		    binding = find_binding (*scope, expr -> data.variable);
 
-		if (binding && binding -> value) {
+		    if (binding && binding -> value) {
 			if (binding -> value -> type == binding_numeric) {
 				*result = binding -> value -> value.intval;
 			    status = 1;
@@ -2184,8 +2201,10 @@ int evaluate_numeric_expression (result, packet, lease,
 					   "evaluate_numeric_expression");
 				status = 0;
 			}
-		} else
+		    } else
 			status = 0;
+		} else
+		    status = 0;
 #if defined (DEBUG_EXPRESSIONS)
 		log_debug ("numeric: %s = %s", expr -> data.variable,
 			   status ? *result : 0);
@@ -2318,6 +2337,69 @@ int evaluate_numeric_expression (result, packet, lease,
 		}
 		return 0;
 
+	      case expr_binary_and:
+		sleft = evaluate_numeric_expression (&ileft, packet, lease,
+						     in_options, cfg_options,
+						     scope,
+						     expr -> data.and [0]);
+		sright = evaluate_numeric_expression (&iright, packet, lease,
+						      in_options, cfg_options,
+						      scope,
+						      expr -> data.and [1]);
+
+#if defined (DEBUG_EXPRESSIONS)
+		log_debug ("num: %d & %d = %d",
+		      ileft, iright,
+		      ((sleft && sright) ? (ileft & iright) : 0));
+#endif
+		if (sleft && sright) {
+			*result = ileft & iright;
+			return 1;
+		}
+		return 0;
+
+	      case expr_binary_or:
+		sleft = evaluate_numeric_expression (&ileft, packet, lease,
+						     in_options, cfg_options,
+						     scope,
+						     expr -> data.and [0]);
+		sright = evaluate_numeric_expression (&iright, packet, lease,
+						      in_options, cfg_options,
+						      scope,
+						      expr -> data.and [1]);
+
+#if defined (DEBUG_EXPRESSIONS)
+		log_debug ("num: %d | %d = %d",
+		      ileft, iright,
+		      ((sleft && sright) ? (ileft | iright) : 0));
+#endif
+		if (sleft && sright) {
+			*result = ileft | iright;
+			return 1;
+		}
+		return 0;
+
+	      case expr_binary_xor:
+		sleft = evaluate_numeric_expression (&ileft, packet, lease,
+						     in_options, cfg_options,
+						     scope,
+						     expr -> data.and [0]);
+		sright = evaluate_numeric_expression (&iright, packet, lease,
+						      in_options, cfg_options,
+						      scope,
+						      expr -> data.and [1]);
+
+#if defined (DEBUG_EXPRESSIONS)
+		log_debug ("num: %d ^ %d = %d",
+		      ileft, iright,
+		      ((sleft && sright) ? (ileft ^ iright) : 0));
+#endif
+		if (sleft && sright) {
+			*result = ileft ^ iright;
+			return 1;
+		}
+		return 0;
+
 	      case expr_ns_add:
 	      case expr_ns_delete:
 	      case expr_ns_exists:
@@ -2350,7 +2432,7 @@ int evaluate_option_cache (result, packet, lease,
 	struct lease *lease;
 	struct option_state *in_options;
 	struct option_state *cfg_options;
-	struct binding_scope *scope;
+	struct binding_scope **scope;
 	struct option_cache *oc;
 	const char *file;
 	int line;
@@ -2376,7 +2458,7 @@ int evaluate_boolean_option_cache (ignorep, packet, lease, in_options,
 	struct lease *lease;
 	struct option_state *in_options;
 	struct option_state *cfg_options;
-	struct binding_scope *scope;
+	struct binding_scope **scope;
 	struct option_cache *oc;
 	const char *file;
 	int line;
@@ -2416,7 +2498,7 @@ int evaluate_boolean_expression_result (ignorep, packet, lease, in_options,
 	struct lease *lease;
 	struct option_state *in_options;
 	struct option_state *cfg_options;
-	struct binding_scope *scope;
+	struct binding_scope **scope;
 	struct expression *expr;
 {
 	int result;
@@ -2482,6 +2564,9 @@ void expression_dereference (eptr, file, line)
 	      case expr_multiply:
 	      case expr_divide:
 	      case expr_remainder:
+	      case expr_binary_and:
+	      case expr_binary_or:
+	      case expr_binary_xor:
 		if (expr -> data.equal [0])
 			expression_dereference (&expr -> data.equal [0],
 						file, line);
@@ -2727,7 +2812,10 @@ int is_numeric_expression (expr)
 		expr -> op == expr_subtract ||
 		expr -> op == expr_multiply ||
 		expr -> op == expr_divide ||
-		expr -> op == expr_remainder);
+		expr -> op == expr_remainder ||
+		expr -> op == expr_binary_and ||
+		expr -> op == expr_binary_or ||
+		expr -> op == expr_binary_xor);
 }
 
 int is_compound_expression (expr)
@@ -2803,6 +2891,10 @@ static int op_val (op)
 	      case expr_arg:
 	      case expr_funcall:
 	      case expr_function:
+		/* XXXDPN: Need to assign sane precedences to these. */
+	      case expr_binary_and:
+	      case expr_binary_or:
+	      case expr_binary_xor:
 		return 100;
 
 	      case expr_equal:
@@ -2896,6 +2988,9 @@ enum expression_context op_context (op)
 	      case expr_multiply:
 	      case expr_divide:
 	      case expr_remainder:
+	      case expr_binary_and:
+	      case expr_binary_or:
+	      case expr_binary_xor:
 		return context_numeric;
 	}
 	return context_any;
@@ -3028,6 +3123,18 @@ int write_expression (file, expr, col, indent, firstp)
 
 	      case expr_remainder:
 		s = "%";
+		goto binary;
+
+	      case expr_binary_and:
+		s = "&";
+		goto binary;
+
+	      case expr_binary_or:
+		s = "|";
+		goto binary;
+
+	      case expr_binary_xor:
+		s = "^";
 		goto binary;
 
 	      case expr_and:
@@ -3407,6 +3514,9 @@ int binding_scope_dereference (ptr, file, line)
 	const char *file;
 	int line;
 {
+	int i;
+	struct binding_scope *binding_scope;
+
 	if (!ptr || !*ptr) {
 		log_error ("%s(%d): null pointer", file, line);
 #if defined (POINTER_DEBUG)
@@ -3416,10 +3526,29 @@ int binding_scope_dereference (ptr, file, line)
 #endif
 	}
 
-	if ((*ptr) -> bindings)
-		free_bindings (*ptr, file, line);
-	dfree ((*ptr), file, line);
+	binding_scope = *ptr;
 	*ptr = (struct binding_scope *)0;
+	--binding_scope -> refcnt;
+	rc_register (file, line, ptr, binding_scope, binding_scope -> refcnt);
+	if (binding_scope -> refcnt > 0)
+		return 1;
+
+	if (binding_scope -> refcnt < 0) {
+		log_error ("%s(%d): negative refcnt!", file, line);
+#if defined (DEBUG_RC_HISTORY)
+		dump_rc_history ();
+#endif
+#if defined (POINTER_DEBUG)
+		abort ();
+#else
+		return 0;
+#endif
+	}
+
+	free_bindings (binding_scope, file, line);
+	if (binding_scope -> outer)
+		binding_scope_dereference (&binding_scope -> outer, MDL);
+	dfree (binding_scope, file, line);
 	return 1;
 }
 

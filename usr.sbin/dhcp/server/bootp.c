@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: bootp.c,v 1.1.1.10 2000/06/10 18:05:30 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: bootp.c,v 1.1.1.11 2000/09/04 23:10:36 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -93,7 +93,7 @@ void bootp (packet)
 			     packet -> raw -> hlen, MDL);
 
 	lease  = (struct lease *)0;
-	find_lease (&lease, packet, packet -> shared_network, 0, MDL);
+	find_lease (&lease, packet, packet -> shared_network, 0, 0, MDL);
 
 	/* Find an IP address in the host_decl that matches the
 	   specified network. */
@@ -155,20 +155,23 @@ void bootp (packet)
 	option_state_allocate (&options, MDL);
 	
 	/* Execute the subnet statements. */
-	execute_statements_in_scope (packet, lease, packet -> options, options,
+	execute_statements_in_scope ((struct binding_value **)0,
+				     packet, lease, packet -> options, options,
 				     &lease -> scope, lease -> subnet -> group,
 				     (struct group *)0);
 	
 	/* Execute statements from class scopes. */
 	for (i = packet -> class_count; i > 0; i--) {
 		execute_statements_in_scope
-			(packet, lease, packet -> options, options,
+			((struct binding_value **)0,
+			 packet, lease, packet -> options, options,
 			 &lease -> scope, packet -> classes [i - 1] -> group,
 			 lease -> subnet -> group);
 	}
 
 	/* Execute the host statements. */
-	execute_statements_in_scope (packet, lease, packet -> options, options,
+	execute_statements_in_scope ((struct binding_value **)0,
+				     packet, lease, packet -> options, options,
 				     &lease -> scope,
 				     hp -> group, subnet -> group);
 	
@@ -315,7 +318,8 @@ void bootp (packet)
 	}
 
 	/* Execute the commit statements, if there are any. */
-	execute_statements (packet, lease, packet -> options,
+	execute_statements ((struct binding_value **)0,
+			    packet, lease, packet -> options,
 			    options, &lease -> scope, lease -> on_commit);
 
 	/* We're done with the option state. */

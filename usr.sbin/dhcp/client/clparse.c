@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: clparse.c,v 1.1.1.11 2000/07/20 05:49:10 mellon Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: clparse.c,v 1.1.1.12 2000/09/04 23:09:59 mellon Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -948,7 +948,8 @@ void parse_client_lease_declaration (cfile, lease, ipp, clientp)
 			skip_to_semi (cfile);
 			break;
 		}
-		if (tsig_key_lookup (&lease -> key, val) != ISC_R_SUCCESS)
+		if (omapi_auth_key_lookup_name (&lease -> key, val) !=
+		    ISC_R_SUCCESS)
 			parse_warn (cfile, "unknown key %s", val);
 		parse_semi (cfile);
 		break;

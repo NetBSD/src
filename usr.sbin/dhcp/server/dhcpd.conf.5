@@ -346,6 +346,249 @@ immediately allocated to the client.   If the address is available for
 allocation but has been previously assigned to a different client, the
 server will keep looking in hopes of finding an address that has never
 before been assigned to a client.
+.SH DHCP FAILOVER
+This version of the ISC DHCP server supports the DHCP failover
+protocol as documented in draft-ietf-dhc-failover-07.txt.   This is
+not a final protocol document, and we have not done interoperability
+testing with other vendors' implementations of this protocol, so you
+must not assume that this implementation conforms to the standard.
+If you wish to use the failover protocol, make sure that both failover
+peers are running the same version of the ISC DHCP server.
+.PP
+The failover protocol allows two DHCP servers (and no more than two)
+to share a common address pool.   Each server will have about half of
+the available IP addresses in the pool at any given time for
+allocation.   If one server fails, the other server will continue to
+renew leases out of the pool, and will allocate new addresses out of
+the roughly half of available addresses that it had when
+communications with the other server were lost.
+.PP
+It is possible during a prolonged failure to tell the remaining server
+that the other server is down, in which case the remaining server will
+(over time) reclaim all the addresses the other server had available
+for allocation, and begin to reuse them.   This is called putting the
+server into the PARTNER-DOWN state.
+.PP
+When the other server comes back online, it should automatically
+detect that it has been offline and request a complete update from the
+server that was running in the PARTNER-DOWN state, and then both
+servers will resume processing together.
+.PP
+It is possible to get into a dangerous situation: if you put one
+server into the PARTNER-DOWN state, and then *that* server goes down,
+and the other server comes back up, the other server will not know
+that the first server was in the PARTNER-DOWN state, and may issue
+addresses previously issued by the other server to different clients,
+resulting in IP address conflicts.   Before putting a server into
+PARTNER-DOWN state, therefore, make
+.I sure
+that the other server will not restart automatically.
+.PP
+The failover protocol defines a primary server role and a secondary
+server role.   There are some differences in how primaries and
+secondaries act, but most of the differences simply have to do with
+providing a way for each peer to behave in the opposite way from the
+other.   So one server must be configured as primary, and the other
+must be configured as secondary, and it doesn't matter too much which
+one is which.
+.SH CONFIGURING FAILOVER
+In order to configure failover, you need to write a peer declaration
+that configures the failover protocol, and you need to write peer
+references in each pool declaration for which you want to do
+failover.   You do not have to do failover for all pools on a given
+network segment.    You must not tell one server it's doing failover
+on a particular address pool and tell the other it is not.   You must
+not have any common address pools on which you are not doing
+failover.
+.PP
+The  server currently  does very  little  sanity checking,  so if  you
+configure it wrong, it will just  fail in odd ways.  I would recommend
+therefore that you either do  failover or don't do failover, but don't
+do any mixed pools.  Also,  use the same master configuration file for
+both  servers,  and  have  a  seperate file  that  contains  the  peer
+declaration and includes the master file.  This will help you to avoid
+configuration  mismatches.  As our  implementation evolves,  this will
+become  less of  a  problem.  A  basic  sample dhcpd.conf  file for  a
+primary server might look like this:
+.PP
+.nf
+failover peer "foo" {
+  primary;
+  address anthrax.rc.vix.com;
+  port 519;
+  peer address trantor.rc.vix.com;
+  peer port 520;
+  max-response-delay 60;
+  max-unacked-updates 10;
+  mclt 3600;
+  hba ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:
+      00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00;
+  load balance max seconds 3;
+}
+
+include "/etc/dhcpd.master";
+.fi
+.PP
+The statements in the peer declaration are as follows:
+.PP
+.B The 
+.I primary
+.B and
+.I secondary
+.B statements
+.PP
+[ \fBprimary\fR | \fBsecondary\fR ]
+.PP
+This determines whether the server is primary or secondary, as
+described earlier under DHCP FAILOVER.
+.PP
+.B The 
+.I address
+.B statement
+.PP
+.B address
+.I address
+.PP
+The \fBaddress\fR statement declares the IP address on which the server
+should listen for connections from its failover peer.   This statement
+can be omitted, in which case the server will accept connections to
+any of its configured IP addresses.
+.PP
+.B The 
+.I peer address
+.B statement
+.PP
+.B peer address
+.I address
+.PP
+The \fBpeer address\fR statement declares the IP address to which the
+server should connect to reach its failover peer for failover
+messages.
+.PP
+.B The 
+.I port
+.B statement
+.PP
+.B port
+.I port-number
+.PP
+The \fBport\fR statement declares the TCP port on which the server
+should listen for connections from its failover peer.   This statement
+may not currently be omitted, because the failover protocol does not
+yet have a reserved TCP port number.
+.PP
+.B The 
+.I peer port
+.B statement
+.PP
+.B peer port
+.I port-number
+.PP
+The \fBpeer port\fR statement declares the TCP port to which the
+server should connect to reach its failover peer for failover
+messages.   This statement may not be omitted because the failover
+protocol does not yet have a reserved TCP port number.   The port
+number declared in the \fBpeer port\fR statement may be the same as
+the port number declared in the \fBport\fR statement.
+.PP
+.B The 
+.I max-response-delay
+.B statement
+.PP
+.nf
+.B max-response-delay
+.I seconds
+.fi
+.PP
+The \fBmax-response-delay\fR statement tells the DHCP server how
+many seconds may pass without receiving a message from its failover
+peer before it assumes that connection has failed.   This number
+should be small enough that a transient network failure that breaks
+the connection will not result in the servers being out of
+communication for a long time, but large enough that the server isn't
+constantly making and breaking connections.   This parameter must be
+specified.
+.PP
+.B The 
+.I max-unacked-updates
+.B statement
+.PP
+.B max-unacked-updates
+.I count
+.PP
+The \fBmax-unacked-updates\fR statement tells the DHCP server how
+many many BINDUPD messages it can send before it receives a BNDACK
+from the failover peer.   We don't have enough operational experience
+to say what a good value for this is, but 10 seems to work.   This
+parameter must be specified.
+.PP
+.B The 
+.I mclt
+.B statement
+.PP
+.B mclt
+.I seconds
+.PP
+The \fBmclt\fR statement defines the Maximum Client Lead Time.   It
+must be specified on the primary, and may not be specified on the
+secondary.   This is the length of time for which a lease may be
+renewed by either failover peer without contacting the other.   The
+longer you set this, the longer it will take for the running server to
+recover IP addresses after moving into PARTNER-DOWN state.   The
+shorter you set it, the more load your servers will experience when
+they are not communicating.   A value of something like 3600 is
+probably reasonable, but again bear in mind that we have no real
+operational experience with this.
+.PP
+.B The 
+.I split
+.B statement
+.PP
+.B split
+.I index
+.PP
+The split statement specifies the split between the primary and
+secondary for the purposes of load balancing.   Whenever a client
+makes a DHCP request, the DHCP server runs a hash on the client
+identification.   If the hash comes out to less than the split value,
+the primary answers.   If it comes out to equal to or more than the
+split, the secondary answers.   This value should generally be set to
+128, and can only be configured on the primary.
+.PP
+.B The 
+.I hba
+.B statement
+.PP
+.B hba
+.I colon-seperated-hex-list
+.PP
+The hba statement specifies the split between the primary and
+secondary as a bitmap rather than a cutoff, which theoretically allows
+for finer-grained control.   In practice, there is probably no need
+for such fine-grained control, however.   An example hba statement:
+.PP
+.nf
+  hba ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:
+      00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00;
+.fi
+.PP
+.B The 
+.I load balance max seconds
+.B statement
+.PP
+.B load balance max seconds
+.I seconds
+.PP
+This statement allows you to configure a cutoff after which load
+balancing is disabled.  The cutoff is based on the number of seconds
+since the client sent its first DHCPDISCOVER or DHCPREQUEST message,
+and only works with clients that correctly implement the \fIsecs\fR
+field - fortunately most clients do.  We recommend setting this to
+something like 3 or 5.  The effect of this is that if one of the
+failover peers gets into a state where it is responding to failover
+messages but not responding to some client requests, the other
+failover peer will take over its client load automatically as the
+clients retry.
 .SH CLIENT CLASSING
 Clients can be seperated into classes, and treated differently
 depending on what class they are in.   This seperation can be done
@@ -526,9 +769,7 @@ The DHCP server has the ability to dynamically update the Domain Name
 System.  Within the configuration files, you can define how you want
 the Domain Name System to be updated.  These updates are RFC 2136
 compliant so any DNS server supporting RFC 2136 should be able to
-accept updates from the DHCP server.   The DHCP server will only
-perform DNS updates if it has been built with DNS updates enabled as
-described in the README file that comes with the DHCP distribution.
+accept updates from the DHCP server.
 .PP
 The Dynamic DNS update scheme implemented in this version of the ISC
 DHCP server is an interim implementation, which does not implement any
@@ -607,37 +848,73 @@ by sending a DHCPRELEASE message, the server will likewise remove the
 A and PTR records.
 .SH DYNAMIC DNS UPDATE SECURITY
 .PP
-Support for TSIG and DNSSEC is not yet available.  When you set your
-DNS server up to allow updates from the DHCP server, you may
-be exposing it to unauthorized updates.  To avoid this, the best you
-can do right now is to use IP address-based packet filtering to
-prevent unauthorized hosts from submitting update requests.
+When you set your DNS server up to allow updates from the DHCP server,
+you may be exposing it to unauthorized updates.  To avoid this, you
+should use TSIG signatures - a method of cryptographically signing
+updates using a shared secret key.   As long as you protect the
+secrecy of this key, your updates should also be secure.   Note,
+however, that the DHCP protocol itself provides no security, and that
+clients can therefore provide information to the DHCP server which the
+DHCP server will then use in its updates, with the constraints
+described previously.
 .PP
 The DNS server must be configured to allow updates for any zone that
 the DHCP server will be updating.  For example, let us say that
 clients in the sneedville.edu domain will be assigned addresses on the
-10.10.17.0/24 subnet.  In that case, assuming you are using ISC BIND
-8.2.1 or later, you would need to have the following declarations in
-your /etc/named.conf file:
+10.10.17.0/24 subnet.  In that case, you will need a key declaration
+for the TSIG key you will be using, and also two zone declarations -
+one for the zone containing A records that will be updates and one for
+the zone containing PTR records - for ISC BIND, something like this:
 .PP
 .nf
-zone "sneedville.edu" {
+key DHCP_UPDATER {
+  algorithm HMAC-MD5.SIG-ALG.REG.INT;
+  secret pRP5FapFoJ95JEL06sv4PQ==;
+};
+
+zone "example.org" {
 	type master;
-	file "sneedville.edu.db";
-	allow-update { localhost; };
+	file "example.org.db";
+	allow-update { key DHCP_UPDATER; };
 };
 
 zone "17.10.10.in-addr.arpa" {
 	type master;
 	file "10.10.17.db";
-	allow-update { localhost; };
+	allow-update { key DHCP_UPDATER; };
 };
 .fi
 .PP
-This assumes that your DHCP server and your name server will be
-running on the same computer - the "localhost" name is taken in the
-DNS server as an alias for all of that host's IP addresses, and
-updates from any of those addresses will be accepted.
+You will also have to configure your DHCP server to do updates to
+these zones.   To do so, you need to add something like this to your
+dhcpd.conf file:
+.PP
+.nf
+key DHCP_UPDATER {
+  algorithm HMAC-MD5.SIG-ALG.REG.INT;
+  secret pRP5FapFoJ95JEL06sv4PQ==;
+};
+
+zone EXAMPLE.ORG. {
+  primary 127.0.0.1;
+  key DHCP_UPDATER;
+}
+
+zone 17.127.10.in-addr.arpa. {
+  primary 127.0.0.1;
+  key DHCP_UPDATER;
+}
+.fi
+.PP
+You should choose your own secret key, of course.  The ISC BIND 8 and
+9 distributions come with a program for generating secret keys called
+dnskeygen.  The version that comes with BIND 9 is likely to produce a
+substantially more random key, so we recommend you use that one even
+if you are not using BIND 9 as your DNS server.  The key above was
+generated with the command:
+.nf
+	dnskeygen -H 128 -u -c -n DHCP_UPDATER
+.fi
 .PP
 You may wish to enable logging of DNS transactions on your DNS server.
 To do so, you might write a logging statement like the following:
@@ -683,6 +960,12 @@ followed by a series of statements to execute when the event happens,
 enclosed in braces.   Events are used to implement dynamic DNS
 updates, so you should not define your own event handlers if you are
 using the built-in dynamic DNS update mechanism.
+.PP
+The built-in version of the dynamic DNS update mechanism is in a text
+string towards the top of server/dhcpd.c.   If you want to use events
+for things other than DNS updates, and you also want DNS updates, you
+will have to start out by copying this code into your dhcpd.conf file
+and modifying it.
 .SH REFERENCE: DECLARATIONS
 .PP
 .B The 
@@ -1198,7 +1481,7 @@ from zero (Sunday) to six (Saturday).  YYYY is the year, including the
 century.  MM is the month expressed as a number from 1 to 12.  DD is
 the day of the month, counting from 1.  HH is the hour, from zero to
 23.  MM is the minute and SS is the second.  The time is always in
-Greenwich Mean Time (GMT), not local time.
+Coordinated Universal Time (UTC), not local time.
 .PP
 .B The
 .I dynamic-bootp-lease-length

@@ -40,35 +40,68 @@
 #include <sys/time.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <stdarg.h>
 #include <isc/result.h>
 #include "dhcpctl.h"
 
 int main (int, char **);
 
-enum modes { up, down };
+enum modes { up, down, undefined };
+
+static void usage (char *s) {
+	fprintf (stderr,
+		 "Usage: %s [-n <username>] [-p <password>] [-a <algorithm>]"
+		 "(-u | -d) <if>\n", s);
+	exit (1);
+}
 
 int main (argc, argv)
 	int argc;
 	char **argv;
 {
 	isc_result_t status, waitstatus;
+	dhcpctl_handle authenticator;
 	dhcpctl_handle connection;
 	dhcpctl_handle host_handle, group_handle, interface_handle;
 	dhcpctl_data_string cid;
 	dhcpctl_data_string result, groupname, identifier;
 	int i;
-	int mode;
+	int mode = undefined;
+	const char *name = 0, *pass = 0, *algorithm = "hmac-md5";
+	const char *interface = 0;
 	const char *action;
-
-	if (!strcmp (argv [1], "-u")) {
-		mode = up;
-	} else if (!strcmp (argv [1], "-d")) {
-		mode = down;
-	} else {
-		fprintf (stderr, "Unknown switch \"%s\"\n", argv [1]);
-		exit (1);
+	
+	for (i = 1; i < argc; i++) {
+		if (!strcmp (argv[i], "-u")) {
+			mode = up;
+		} else if (!strcmp (argv [1], "-d")) {
+			mode = down;
+		} else if (!strcmp (argv[i], "-n")) {
+			if (++i == argc)
+				usage(argv[0]);
+			name = argv[i];
+		} else if (!strcmp (argv[i], "-p")) {
+			if (++i == argc)
+				usage(argv[0]);
+			pass = argv[i];
+		} else if (!strcmp (argv[i], "-a")) {
+			if (++i == argc)
+				usage(argv[0]);
+			algorithm = argv[i];
+		} else if (argv[i][0] == '-') {
+			usage(argv[0]);
+		} else {
+			interface = argv[i];
+		}
 	}
+
+	if (!interface)
+		usage(argv[0]);
+	if (mode == undefined)
+		usage(argv[0]);
+	if ((name || pass) && !(name && pass))
+		usage(argv[0]);
 
 	status = dhcpctl_initialize ();
 	if (status != ISC_R_SUCCESS) {
@@ -77,16 +110,29 @@ int main (argc, argv)
 		exit (1);
 	}
 
-	memset (&connection, 0, sizeof connection);
+	authenticator = dhcpctl_null_handle;
+
+	if (name) {
+		status = dhcpctl_new_authenticator (&authenticator,
+						    name, algorithm, pass,
+						    strlen (pass) + 1);
+		if (status != ISC_R_SUCCESS) {
+			fprintf (stderr, "Cannot create authenticator: %s\n",
+				 isc_result_totext (status));
+			exit (1);
+		}
+	}
+
+	connection = dhcpctl_null_handle;
 	status = dhcpctl_connect (&connection, "127.0.0.1", 7911,
-				  (dhcpctl_handle)0);
+				  authenticator);
 	if (status != ISC_R_SUCCESS) {
 		fprintf (stderr, "dhcpctl_connect: %s\n",
 			 isc_result_totext (status));
 		exit (1);
 	}
 
-	memset (&interface_handle, 0, sizeof interface_handle);
+	interface_handle = dhcpctl_null_handle;
 	status = dhcpctl_new_object (&interface_handle,
 				     connection, "interface");
 	if (status != ISC_R_SUCCESS) {
@@ -95,7 +141,8 @@ int main (argc, argv)
 		exit (1);
 	}
 
-	status = dhcpctl_set_string_value (interface_handle, argv [2], "name");
+	status = dhcpctl_set_string_value (interface_handle,
+					   interface, "name");
 	if (status != ISC_R_SUCCESS) {
 		fprintf (stderr, "dhcpctl_set_value: %s\n",
 			 isc_result_totext (status));
@@ -104,7 +151,7 @@ int main (argc, argv)
 
 	if (mode == up) {
 		/* "up" the interface */
-		printf ("upping interface %s\n", argv [2]);
+		printf ("upping interface %s\n", interface);
 		action = "create";
 		status = dhcpctl_open_object (interface_handle, connection,
 					      DHCPCTL_CREATE | DHCPCTL_EXCL);
@@ -115,7 +162,7 @@ int main (argc, argv)
 		}
 	} else {
 		/* down the interface */
-		printf ("downing interface %s\n", argv [2]);
+		printf ("downing interface %s\n", interface);
 		action = "remove";
 		status = dhcpctl_open_object (interface_handle, connection, 0);
 		if (status != ISC_R_SUCCESS) {

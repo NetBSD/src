@@ -43,15 +43,14 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhcpd.c,v 1.1.1.23 2000/07/20 05:50:43 mellon Exp $ Copyright 1995-2000 Internet Software Consortium.";
+"$Id: dhcpd.c,v 1.1.1.24 2000/09/04 23:10:43 mellon Exp $ Copyright 1995-2000 Internet Software Consortium.";
 #endif
 
   static char copyright[] =
 "Copyright 1995-2000 Internet Software Consortium.";
 static char arr [] = "All rights reserved.";
 static char message [] = "Internet Software Consortium DHCP Server";
-static char contrib [] = "\nPlease contribute if you find this software useful.";
-static char url [] = "For info, please visit http://www.isc.org/dhcp-contrib.html\n";
+static char url [] = "For info, please visit http://www.isc.org/products/DHCP";
 
 #include "dhcpd.h"
 #include "version.h"
@@ -60,7 +59,6 @@ static char url [] = "For info, please visit http://www.isc.org/dhcp-contrib.htm
 static void usage PROTO ((void));
 
 TIME cur_time;
-struct binding_scope global_scope;
 
 struct iaddr server_identifier;
 int server_identifier_matched;
@@ -139,6 +137,18 @@ const char *path_dhcpd_pid = _PATH_DHCPD_PID;
 
 int dhcp_max_agent_option_packet_length = DHCP_MTU_MAX;
 
+static omapi_auth_key_t *omapi_key = (omapi_auth_key_t *)0;
+
+static isc_result_t verify_addr (omapi_object_t *l, omapi_addr_t *addr) {
+	return ISC_R_SUCCESS;
+}
+
+static isc_result_t verify_auth (omapi_object_t *p, omapi_auth_key_t *a) {
+	if (a != omapi_key)
+		return ISC_R_INVALIDKEY;
+	return ISC_R_SUCCESS;
+}
+
 int main (argc, argv, envp)
 	int argc;
 	char **argv, **envp;
@@ -166,6 +176,9 @@ int main (argc, argv, envp)
 	struct parse *parse;
 	int lose;
 	int omapi_port;
+	omapi_object_t *auth;
+	struct tsig_key *key;
+	omapi_typed_data_t *td;
 	int no_dhcpd_conf = 0;
 	int no_dhcpd_db = 0;
 	int no_dhcpd_pid = 0;
@@ -288,7 +301,6 @@ int main (argc, argv, envp)
 		log_info ("%s %s", message, DHCP_VERSION);
 		log_info (copyright);
 		log_info (arr);
-		log_info (contrib);
 		log_info (url);
 	} else {
 		quiet = 0;
@@ -365,7 +377,8 @@ int main (argc, argv, envp)
 	/* Now try to get the lease file name. */
 	option_state_allocate (&options, MDL);
 
-	execute_statements_in_scope ((struct packet *)0,
+	execute_statements_in_scope ((struct binding_value **)0,
+				     (struct packet *)0,
 				     (struct lease *)0,
 				     (struct option_state *)0,
 				     options, &global_scope,
@@ -414,6 +427,24 @@ int main (argc, argv, envp)
 		} else
 			log_fatal ("invalid omapi port data length");
 		data_string_forget (&db, MDL);
+	}
+
+	oc = lookup_option (&server_universe, options, SV_OMAPI_KEY);
+	if (oc &&
+	    evaluate_option_cache (&db, (struct packet *)0,
+				   (struct lease *)0, options,
+				   (struct option_state *)0,
+				   &global_scope, oc, MDL)) {
+		s = dmalloc (db.len + 1, MDL);
+		if (!s)
+			log_fatal ("no memory for OMAPI key filename.");
+		memcpy (s, db.data, db.len);
+		s [db.len] = 0;
+		data_string_forget (&db, MDL);
+		result = omapi_auth_key_lookup_name (&omapi_key, s);
+		dfree (s, MDL);
+		if (result != ISC_R_SUCCESS)
+			log_fatal ("Invalid OMAPI key: %s", s);
 	}
 
 	oc = lookup_option (&server_universe, options, SV_LOCAL_PORT);
@@ -513,6 +544,9 @@ int main (argc, argv, envp)
 				   isc_result_totext (result));
 		result = omapi_protocol_listen (listener,
 						(unsigned)omapi_port, 1);
+		if (result == ISC_R_SUCCESS && omapi_key)
+			result = omapi_protocol_configure_security
+				(listener, verify_addr, verify_auth);
 		if (result != ISC_R_SUCCESS)
 			log_fatal ("Can't start OMAPI protocol: %s",
 				   isc_result_totext (result));

@@ -50,7 +50,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: omapi.c,v 1.1.1.4 2000/07/08 20:41:11 mellon Exp $ Copyright (c) 1999-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: omapi.c,v 1.1.1.5 2000/09/04 23:10:51 mellon Exp $ Copyright (c) 1999-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -284,14 +284,20 @@ isc_result_t dhcp_lease_get_value (omapi_object_t *h, omapi_object_t *id,
 				 ((omapi_object_t *)lease -> billing_class),
 				 MDL);
 		return ISC_R_NOTFOUND;
-	} else if (!omapi_ds_strcmp (name, "hardware-address"))
-		return omapi_make_const_value
-			(value, name, &lease -> hardware_addr.hbuf [1],
-			 (unsigned)(lease -> hardware_addr.hlen - 1), MDL);
-	else if (!omapi_ds_strcmp (name, "hardware-type"))
-		return omapi_make_int_value (value, name,
-					     lease -> hardware_addr.hbuf [0],
-					     MDL);
+	} else if (!omapi_ds_strcmp (name, "hardware-address")) {
+		if (lease -> hardware_addr.hlen)
+			return omapi_make_const_value
+				(value, name, &lease -> hardware_addr.hbuf [1],
+				 (unsigned)(lease -> hardware_addr.hlen - 1),
+				 MDL);
+		return ISC_R_NOTFOUND;
+	} else if (!omapi_ds_strcmp (name, "hardware-type")) {
+		if (lease -> hardware_addr.hlen)
+			return omapi_make_int_value
+				(value, name, lease -> hardware_addr.hbuf [0],
+				 MDL);
+		return ISC_R_NOTFOUND;
+	}
 
 	/* Try to find some inner object that can take the value. */
 	if (h -> inner && h -> inner -> type -> get_value) {
@@ -485,30 +491,33 @@ isc_result_t dhcp_lease_stuff_values (omapi_object_t *c,
 	if (status != ISC_R_SUCCESS)
 		return status;
 
-	status = omapi_connection_put_name (c, "hardware-address");
-	if (status != ISC_R_SUCCESS)
-		return status;
-	status = (omapi_connection_put_uint32
-		  (c, (unsigned long)(lease -> hardware_addr.hlen - 1)));
-	if (status != ISC_R_SUCCESS)
-		return status;
-	status = (omapi_connection_copyin
-		  (c, &lease -> hardware_addr.hbuf [1],
-		   (unsigned long)(lease -> hardware_addr.hlen - 1)));
-	
-	if (status != ISC_R_SUCCESS)
-		return status;
+	if (lease -> hardware_addr.hlen) {
+		status = omapi_connection_put_name (c, "hardware-address");
+		if (status != ISC_R_SUCCESS)
+			return status;
+		status = (omapi_connection_put_uint32
+			  (c,
+			   (unsigned long)(lease -> hardware_addr.hlen - 1)));
+		if (status != ISC_R_SUCCESS)
+			return status;
+		status = (omapi_connection_copyin
+			  (c, &lease -> hardware_addr.hbuf [1],
+			   (unsigned long)(lease -> hardware_addr.hlen - 1)));
 
-	status = omapi_connection_put_name (c, "hardware-type");
-	if (status != ISC_R_SUCCESS)
-		return status;
-	status = omapi_connection_put_uint32 (c, sizeof (int));
-	if (status != ISC_R_SUCCESS)
-		return status;
-	status = omapi_connection_put_uint32 (c,
-					      lease -> hardware_addr.hbuf [0]);
-	if (status != ISC_R_SUCCESS)
-		return status;
+		if (status != ISC_R_SUCCESS)
+			return status;
+
+		status = omapi_connection_put_name (c, "hardware-type");
+		if (status != ISC_R_SUCCESS)
+			return status;
+		status = omapi_connection_put_uint32 (c, sizeof (int));
+		if (status != ISC_R_SUCCESS)
+			return status;
+		status = omapi_connection_put_uint32
+			(c, lease -> hardware_addr.hbuf [0]);
+		if (status != ISC_R_SUCCESS)
+			return status;
+	}
 
 
 	status = omapi_connection_put_name (c, "ends");

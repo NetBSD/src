@@ -41,7 +41,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhclient.c,v 1.1.1.20 2000/07/20 05:49:12 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.1.1.21 2000/09/04 23:10:01 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -65,8 +65,6 @@ struct in_addr inaddr_any;
 struct sockaddr_in sockaddr_broadcast;
 struct in_addr giaddr;
 
-struct binding_scope global_scope;
-
 /* ASSERT_STATE() does nothing now; it used to be
    assert (state_is == state_shouldbe). */
 #define ASSERT_STATE(state_is, state_shouldbe) {}
@@ -74,8 +72,7 @@ struct binding_scope global_scope;
 static char copyright[] = "Copyright 1995-2000 Internet Software Consortium.";
 static char arr [] = "All rights reserved.";
 static char message [] = "Internet Software Consortium DHCP Client";
-static char contrib [] = "\nPlease contribute if you find this software useful.";
-static char url [] = "For info, please visit http://www.isc.org/dhcp-contrib.html\n";
+static char url [] = "For info, please visit http://www.isc.org/products/DHCP";
 
 u_int16_t local_port;
 u_int16_t remote_port;
@@ -229,7 +226,6 @@ int main (argc, argv, envp)
 		log_info ("%s %s", message, DHCP_VERSION);
 		log_info (copyright);
 		log_info (arr);
-		log_info (contrib);
 		log_info (url);
 	} else
 		log_perror = 0;
@@ -661,7 +657,7 @@ void dhcpack (packet)
 
 	log_info ("DHCPACK from %s", piaddr (packet -> client_addr));
 
-	lease = packet_to_lease (packet);
+	lease = packet_to_lease (packet, client);
 	if (!lease) {
 		log_info ("packet_to_lease failed.");
 		return;
@@ -1010,7 +1006,7 @@ void dhcpoffer (packet)
 		}
 	}
 
-	lease = packet_to_lease (packet);
+	lease = packet_to_lease (packet, client);
 	if (!lease) {
 		log_info ("packet_to_lease failed.");
 		return;
@@ -1063,8 +1059,9 @@ void dhcpoffer (packet)
 /* Allocate a client_lease structure and initialize it from the parameters
    in the specified packet. */
 
-struct client_lease *packet_to_lease (packet)
+struct client_lease *packet_to_lease (packet, client)
 	struct packet *packet;
+	struct client_state *client;
 {
 	struct client_lease *lease;
 	int i;
@@ -1699,7 +1696,8 @@ void make_client_options (client, lease, type, sid, rip, prl, op)
 	/* Run statements that need to be run on transmission. */
 	if (client -> config -> on_transmission)
 		execute_statements_in_scope
-			((struct packet *)0, (struct lease *)0,
+			((struct binding_value **)0,
+			 (struct packet *)0, (struct lease *)0,
 			 (lease ? lease -> options : (struct option_state *)0),
 			 *op, &global_scope,
 			 client -> config -> on_transmission,
@@ -2229,7 +2227,8 @@ void script_write_params (client, prefix, lease)
 		client_envadd (client, prefix, "server_name",
 			       "%s", lease -> server_name);
 
-	execute_statements_in_scope ((struct packet *)0,
+	execute_statements_in_scope ((struct binding_value **)0,
+				     (struct packet *)0,
 				     (struct lease *)0, lease -> options,
 				     lease -> options, &global_scope,
 				     client -> config -> on_receipt,
@@ -2370,7 +2369,7 @@ void client_envadd (struct client_state *client,
 
 int dhcp_option_ev_name (buf, buflen, option)
 	char *buf;
-	unsigned buflen;
+	size_t buflen;
 	struct option *option;
 {
 	int i;

@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: print.c,v 1.1.1.6 2000/04/22 07:11:37 mellon Exp $ Copyright (c) 1995, 1996, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: print.c,v 1.1.1.7 2000/09/04 23:10:15 mellon Exp $ Copyright (c) 1995, 1996, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -455,6 +455,18 @@ static unsigned print_subexpression (expr, buf, len)
 
 	      case expr_remainder:
 		s = "%";
+		goto binop;
+
+	      case expr_binary_and:
+		s = "&";
+		goto binop;
+
+	      case expr_binary_or:
+		s = "|";
+		goto binop;
+
+	      case expr_binary_xor:
+		s = "^";
 		goto binop;
 		
 	      case expr_not:
