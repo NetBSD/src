@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.4 1997/03/16 11:26:29 veego Exp $
+#	$NetBSD: Makefile.inc,v 1.5 1997/05/10 15:42:56 lukem Exp $
 
-# Revision is 1.2D
-REV=	12D
+REV!=sh ${BSDSRCDIR}/sys/conf/osrelease.sh -s
 
 LDSTATIC=	-static
 
