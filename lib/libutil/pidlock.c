@@ -1,4 +1,4 @@
-/*	$NetBSD: pidlock.c,v 1.4 1998/07/06 06:47:24 mrg Exp $ */
+/*	$NetBSD: pidlock.c,v 1.5 1998/12/09 14:35:03 christos Exp $ */
 
 /*
  * Copyright 1996, 1997 by Curt Sampson <cjs@netbsd.org>.
@@ -24,7 +24,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pidlock.c,v 1.4 1998/07/06 06:47:24 mrg Exp $");
+__RCSID("$NetBSD: pidlock.c,v 1.5 1998/12/09 14:35:03 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/errno.h>
@@ -137,7 +137,7 @@ lockfailed:
 			pid2 = atoi(s);
 			read(f, s, sizeof(s)-2);
 			s[sizeof(s)-1] = '\0';
-			if ((p=strchr(s, '\n')))
+			if ((p=strchr(s, '\n')) != NULL)
 				*p = '\0';
 			close(f);
 
@@ -187,6 +187,7 @@ lockfailed:
 #define LOCKPATH	"/var/spool/lock/LCK.."
 #define	DEVPATH		"/dev/"
 
+/*ARGSUSED*/
 int
 ttylock(tty, flags, locker)
 	const char *tty;
