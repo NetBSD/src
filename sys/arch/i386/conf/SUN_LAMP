@@ -1,7 +1,7 @@
 #
 # SUN_LAMP -- kernel for one of cgd's 486/50 EISA boxes...
 #
-#	$Id: SUN_LAMP,v 1.42 1994/04/15 00:25:18 cgd Exp $
+#	$Id: SUN_LAMP,v 1.43 1994/04/20 23:39:34 mycroft Exp $
 #
 machine		"i386"
 cpu		"I486_CPU"
@@ -29,18 +29,18 @@ config		netbsd	root on sd0 swap on sd0 and sd1 and sd2
 
 controller	isa0
 
-device		pc0	at isa? port "IO_KBD" tty irq 1 vector pcrint
-master		ast0	at isa? port 0x1a0 tty irq 3 vector astintr
+device		pc0	at isa? port "IO_KBD" irq 1
+master		ast0	at isa? port 0x1a0 irq 3
 device		com0	at ast0 flags 1 slave ?
 device		com1	at ast0 flags 1 slave ?
 device		com2	at ast0 flags 1 slave ?
 device		com3	at ast0 flags 1 slave ?
 
-controller	fdc0	at isa? port "IO_FD1" bio irq 6 drq 2 vector fdintr
+controller	fdc0	at isa? port "IO_FD1" irq 6 drq 2
 disk		fd0	at fdc0 drive ?
 disk		fd1	at fdc0 drive ?
 
-controller	ahb0	at isa? bio irq 11 vector ahbintr
+controller	ahb0	at isa? irq 11
 master		scsibus0 at ahb0
 disk		sd0	at scsibus0 slave 000
 disk		sd1	at scsibus0 slave 010
@@ -54,7 +54,7 @@ disk		sd5	at scsibus0 slave ?
 tape		st2	at scsibus0 slave ?
 disk		cd1	at scsibus0 slave ?
 
-controller	bt0	at isa? port 0x130 bio irq 12 vector btintr
+controller	bt0	at isa? port 0x130 irq 12
 master		scsibus1 at bt0
 disk		sd0	at scsibus1 slave 000
 disk		sd1	at scsibus1 slave 010
@@ -68,9 +68,9 @@ disk		sd5	at scsibus1 slave ?
 tape		st2	at scsibus1 slave ?
 disk		cd1	at scsibus1 slave ?
 
-device		ed0 at isa? port 0x300 net irq 10 iomem 0xd0000 vector edintr
+device		ed0 at isa? port 0x300 irq 10 iomem 0xd0000
 
-device		npx0	at isa? port "IO_NPX" irq 13 vector npxintr
+device		npx0	at isa? port "IO_NPX" irq 13
 
 pseudo-device	loop
 pseudo-device	ether
