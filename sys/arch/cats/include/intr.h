@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.2 2001/11/26 20:43:47 thorpej Exp $	*/
+/* 	$NetBSD: intr.h,v 1.3 2002/09/28 10:23:26 chris Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -50,7 +50,7 @@
 #define IPL_SERIAL	7	/* serial */
 #define IPL_NONE	8
 
-#define IPL_LEVELS	8
+#define IPL_LEVELS	9	
 
 #define	IST_UNUSABLE	-1	/* interrupt cannot be used */
 #define	IST_NONE	0	/* none (dummy) */
