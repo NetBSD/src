@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.4 2000/12/27 20:29:36 jdolecek Exp $	*/
+/*	$NetBSD: elf.c,v 1.5 2001/03/26 15:50:20 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998 Johan Danielsson <joda@pdc.kth.se> 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: elf.c,v 1.4 2000/12/27 20:29:36 jdolecek Exp $");
+__RCSID("$NetBSD: elf.c,v 1.5 2001/03/26 15:50:20 drochner Exp $");
 
 #include <sys/param.h>
 
@@ -204,15 +204,15 @@ elf_mod_sizes(fd, modsize, strtablen, resrvp, sp)
 		/* XXX try to get rid of the hole before the data
                    section that GNU-ld likes to put there */
 		if (strcmp(s->name, ".data") == 0 && s->addr > (void*)off) {
+#define ROUND(V, S) (((V) + (S) - 1) & ~((S) - 1))
+			data_offset = ROUND(off, s->align);
 			if (debug)
 				fprintf(stderr, ".data section forced to "
-				    "offset %p (was %p)\n", 
-				    (void*)off, 
+				    "offset %p (was %p)\n",
+				    (void*)data_offset,
 				    s->addr);
-			data_offset = off;
 			/* later remove size of compressed hole from off */
-#define ROUND(V, S) (((V) + (S) - 1) & ~((S) - 1))
-			data_hole = (ssize_t)s->addr - ROUND(off, s->align);
+			data_hole = (ssize_t)s->addr - data_offset;
 		}
 		off = (ssize_t)s->addr + s->size;
 	}
