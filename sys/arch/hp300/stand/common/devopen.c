@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.3 2001/05/13 00:01:45 gmcgarry Exp $	*/
+/*	$NetBSD: devopen.c,v 1.4 2002/08/04 00:44:58 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -151,10 +151,6 @@ devparse(fname, dev, adapt, ctlr, unit, part, file)
 {
     int *argp, i;
     char *s, *args[4];
-
-    /* get device name and make lower case */
-    for (s = (char *)fname; *s && *s != '/' && *s != ':' && *s != '('; s++)
-	if (isupper(*s)) *s = tolower(*s);
 
     /* first form */
     if (*s == '(') {
