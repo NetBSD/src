@@ -18,12 +18,12 @@ Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 #ifdef __GNUG__
 #pragma implementation
 #endif
-#include <Rational.h>
 #include <std.h>
 #include <math.h>
 #include <values.h>
 #include <builtin.h>
 #include <float.h>
+#include <Rational.h>
 
 void Rational::error(const char* msg) const
 {

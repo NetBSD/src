@@ -22,11 +22,12 @@ Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 #ifdef __GNUG__
 #pragma implementation
 #endif
-#include <Fix.h>
 #include <std.h>
+#include <math.h>
 #include <Obstack.h>
 #include <AllocRing.h>
 #include <strstream.h>
+#include <Fix.h>
 
 // default parameters
 
