@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.60 2003/07/07 12:30:21 dsl Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.61 2003/07/07 21:26:33 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -44,8 +44,6 @@ message usage
 
 message sysinst_message_language
 {Installation messages in French}	/* XXX translate */
-
-message newline {\n}
 
 message Yes {Oui}
 message No {Non}
@@ -162,18 +160,6 @@ message heads
 
 message sectors
 {secteurs}
-
-message size
-{taille}
-
-message start
-{début}
-
-message bsize
-{taille de block}
-
-message fsize
-{taille de fragment}
 
 message mountpoint
 {point de montage (ou 'none')}
@@ -327,13 +313,6 @@ message mountpt_fmt
 
 message restore		/* XXX translate */
 {Restore original values}
-
-.if 0
-message not42bsd
-{La partition %c n'est pas de type 4.2BSD, et vous devez également
-spécifier sa taille de bloc et fragment.
-}
-.endif
 
 message Select_the_type
 {Selection du type de système de fichier}
@@ -934,13 +913,10 @@ message upgradeparttype
 {La seule partition disponible pour installer NetBSD est de l'ancien type
 NetBSD/386BSD/FreeBSD. Voulez-vous le changer pour le nouveau ? }
 
-message continue
-{Continuer?}
-
 message choose_timezone	
 {Sélectionnez votre zone horaire dans la liste suivante.
-Appuyez sur ENTREE pour confirmer votre choix. Appuyez sur 'x' puis ENTREE
-pour quitter la selection de la zone horaire.
+Appuyez sur ENTREE pour confirmer votre choix. 
+Appuyez sur 'x' puis ENTREE pour quitter la selection de la zone horaire.
 
  Défaut:	%s
  Séléctionée:	%s
@@ -1039,7 +1015,6 @@ message Directory {Répertoire}
 message User {Utilisateur}
 message Password {Mot de passe}
 message Proxy {Proxy}
-message ftp_proxy {ftp_proxy}
 message Get_Distribution {Récupérer la Distribution}
 message Continue {Continuer}
 message What_do_you_want_to_do {Que voulez vous faire?}

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.8 2003/06/12 11:20:08 dsl Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.9 2003/07/07 21:26:35 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.10 2001/07/26 22:47:34 wiz Exp */
 
@@ -165,6 +165,7 @@ the disk and will be available the next time NetBSD is booted. Please
 reboot immediately and restart the Installation Process.
 }
 
+.if debug
 message mapdebug
 {Mapa partycji:
 HFS count: %d
@@ -183,12 +184,6 @@ dlsec: %d
 dlsize: %d
 }
 
-message partdebug
-{Partycja %s%c:
-Przesuniecie: %d
-Rozmiar: %d
-}
-
 message newfsdebug
 {Uruchamianie newfs na partycji: %s\n
 }
@@ -199,6 +194,13 @@ message geomdebug
 
 message geomdebug2
 {Wywolywanie: %s %d\n"
+}
+.endif
+
+message partdebug
+{Partycja %s%c:
+Przesuniecie: %d
+Rozmiar: %d
 }
 
 message disksetup_no_root

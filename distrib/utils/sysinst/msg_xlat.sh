@@ -1,5 +1,5 @@
 #! /bin/sh
-#	$NetBSD: msg_xlat.sh,v 1.2 2003/07/07 12:30:22 dsl Exp $
+#	$NetBSD: msg_xlat.sh,v 1.3 2003/07/07 21:26:33 dsl Exp $
 
 #-
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@ do
 	msg="$(printf "%bz" "${m#\{}")"
 	msg="${msg%z}"
 	eval old=\"\$MSGTEXT_$number\"
-	[ -n "$old" ] && {
+	[ -n "$old" -a "$number" != unknown ] && {
 		echo "ERROR: Two translations for message \"$name\"" >&2
 		[ -n "$IGNORE_MISSING_TRANSLATIONS" ] || rval=1
 	}

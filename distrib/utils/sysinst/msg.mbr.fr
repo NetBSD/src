@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.fr,v 1.8 2003/07/07 12:55:48 dsl Exp $	*/
+/*	$NetBSD: msg.mbr.fr,v 1.9 2003/07/07 21:26:32 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -101,37 +101,11 @@ message biosguess
 {En utilisant les informations déja présentes sur le disque, je suppose que
 la géométrie utilisée par le BIOS est %d cylindres %d secteurs %d têtes\n}
 
-.if 0
-message confirmbiosgeom
-{SVP vérifiez que la géometrie du BIOS ci-dessous est correcte. Le nombre
-de cylindre à pu etre tronquée à 1024. Ce n'est pas un problème du moment
-que les autres paramètres sont corrects. Seulement 1024 cuylindres peuvent
-etre specifiés dans le secteur de boot, le reste sera trouvé d'une manière
-différente par NetBSD.
-
-Si vous réentrez ces valeurs, vérifiez qu'elles sont correctes et
-correspondent à celles utilisées par d'autre systèmes sur ce disque. Des
-valeurs différentes peuvent conduire à des pertes de données.
-}
-
-message badgeom
-{Les valeurs actuelles de la géométrie de votre disque sont :
-
-}
-.endif
-
 message realgeom
 { géom réelle: %d cylindres, %d têtes, %d secteurs (pour information)\n}
 
 message biosgeom
 { géom fdisk:  %d cylindres, %d têtes, %d secteurs \n}
-
-.if 0
-message reentergeom
-{La géométrie que vous venez de spécifier n'est pas utilisable. SVP entrez
-de nouveau la géométrie.
-}
-.endif
 
 message ovrwrite
 {Votre disque a actuellement une partition autre que NetBSD. Voulez vous

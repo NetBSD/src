@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.en,v 1.7 2003/07/07 12:55:48 dsl Exp $	*/
+/*	$NetBSD: msg.mbr.en,v 1.8 2003/07/07 21:26:32 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -99,37 +99,11 @@ message biosguess
 {Using the information already on the disk, my best guess for the BIOS
 geometry is %d cylinders %d sectors %d heads\n}
 
-.if 0
-message confirmbiosgeom
-{Please verify if the BIOS disk geometry below is correct. The value for
-the number of cylinders may have been truncated to 1024. This is ok as
-long as the other numbers are correct; only 1024 cylinders can be
-specified in the MBR, the rest will be found in a different way by NetBSD.
-
-If you reenter the values, make sure that the values are correct and
-match those used by other systems on this disk. Values that do not match
-may result in data corruption.
-
-}
-
-message badgeom
-{The current values for your disk geometry are:
-
-}
-.endif
-
 message realgeom
 {real geom: %d cyl, %d heads, %d sec  (NB: for comparison only)\n}
 
 message biosgeom
 {BIOS geom: %d cyl, %d heads, %d sec\n}
-
-.if 0
-message reentergeom
-{The values just entered for the geometry are not usable.  Please,
-reenter the geometry.
-}
-.endif
 
 message ovrwrite
 {Your disk currently has a non-NetBSD partition.  Do you really want to

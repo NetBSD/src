@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.17 2003/06/12 11:20:08 dsl Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.18 2003/07/07 21:26:34 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -164,6 +164,7 @@ the disk and will be available the next time NetBSD is booted. Please
 reboot immediately and restart the Installation Process.
 }
  
+.if debug
 message mapdebug
 {Partition Map:
 HFS count: %d
@@ -182,12 +183,6 @@ dlsec: %d
 dlsize: %d
 }
 
-message partdebug
-{Partition %s%c:
-Offset: %d
-Size: %d
-}
-
 message newfsdebug
 {Running newfs on partition: %s\n
 }
@@ -198,6 +193,13 @@ message geomdebug
 
 message geomdebug2
 {Calling: %s %d\n"
+}
+.endif
+
+message partdebug
+{Partition %s%c:
+Offset: %d
+Size: %d
 }
 
 message disksetup_no_root
