@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.20 2001/03/04 16:24:39 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.21 2001/04/21 11:54:25 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1422,8 +1422,8 @@ Lm68881rdone:
 
 /*
  * Handle the nitty-gritty of rebooting the machine.
- * Basically we just turn off the MMU, restore the Bug's initial VBR
- * and either return to Bug or jump through the ROM reset vector
+ * Basically we just turn off the MMU, restore the PROM's initial VBR
+ * and jump through the PROM halt vector with argument via %d7
  * depending on how the system was halted.
  */
 ENTRY_NOPROFILE(doboot)
