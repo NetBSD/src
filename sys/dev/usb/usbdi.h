@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.18 1999/05/16 13:51:05 augustss Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.19 1999/06/14 17:09:58 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,32 +44,6 @@ typedef struct usbd_pipe	*usbd_pipe_handle;
 typedef struct usbd_request	*usbd_request_handle;
 typedef void			*usbd_private_handle;
 
-typedef enum {
-	USBD_ENDPOINT_ACTIVE,
-	USBD_ENDPOINT_STALLED,
-} usbd_endpoint_state;
-
-typedef enum {
-	USBD_PIPE_ACTIVE,
-	USBD_PIPE_STALLED,
-	USBD_PIPE_IDLE,
-} usbd_pipe_state;
-
-typedef enum {
-	USBD_INTERFACE_ACTIVE,
-	USBD_INTERFACE_STALLED,
-	USBD_INTERFACE_IDLE,
-} usbd_interface_state;
-
-typedef enum {
-	USBD_DEVICE_ATTACHED,
-	USBD_DEVICE_POWERED,
-	USBD_DEVICE_DEFAULT,
-	USBD_DEVICE_ADDRESSED,
-	USBD_DEVICE_CONFIGURED,
-	USBD_DEVICE_SUSPENDED,
-} usbd_device_state;
-
 typedef enum { 
 	USBD_NORMAL_COMPLETION = 0,
 	USBD_IN_PROGRESS,
@@ -77,12 +51,10 @@ typedef enum {
 	USBD_PENDING_REQUESTS,
 	USBD_NOT_STARTED,
 	USBD_INVAL,
-	USBD_IS_IDLE,
 	USBD_NOMEM,
 	USBD_CANCELLED,
 	USBD_BAD_ADDRESS,
 	USBD_IN_USE,
-	USBD_INTERFACE_NOT_ACTIVE,
 	USBD_NO_ADDR,
 	USBD_SET_ADDR_FAILED,
 	USBD_NO_POWER,
@@ -125,83 +97,27 @@ usbd_status usbd_setup_request
 	     usbd_private_handle priv, void *buffer,
 	     u_int32_t length, u_int16_t flags, u_int32_t timeout,
 	     usbd_callback));
-usbd_status usbd_setup_device_request	
-	__P((usbd_request_handle reqh, usb_device_request_t *req));
 usbd_status usbd_setup_default_request
 	__P((usbd_request_handle reqh, usbd_device_handle dev,
 	     usbd_private_handle priv, u_int32_t timeout,
 	     usb_device_request_t *req,  void *buffer,
 	     u_int32_t length, u_int16_t flags, usbd_callback));
-usbd_status usbd_set_request_timeout	
-	__P((usbd_request_handle reqh, u_int32_t timeout));
 usbd_status usbd_get_request_status
 	__P((usbd_request_handle reqh, usbd_private_handle *priv,
 	     void **buffer, u_int32_t *count, usbd_status *status));
-usbd_status usbd_request_device_data	
-	__P((usbd_request_handle reqh, usb_device_request_t *req));
-usb_descriptor_t *usbd_get_descriptor
-	__P((usbd_interface_handle *iface, u_int8_t desc_type));
 usb_endpoint_descriptor_t *usbd_interface2endpoint_descriptor
 	__P((usbd_interface_handle iface, u_int8_t address));
-usbd_status usbd_set_configuration
-	__P((usbd_device_handle dev, u_int8_t conf));
-usbd_status usbd_retry_request
-	__P((usbd_request_handle reqh, u_int32_t retry_count));
 usbd_status usbd_abort_pipe __P((usbd_pipe_handle pipe));
-usbd_status usbd_abort_interface __P((usbd_interface_handle iface));
-usbd_status usbd_reset_pipe __P((usbd_pipe_handle pipe));
-usbd_status usbd_reset_interface __P((usbd_interface_handle iface));
 usbd_status usbd_clear_endpoint_stall __P((usbd_pipe_handle pipe));
 usbd_status usbd_clear_endpoint_stall_async __P((usbd_pipe_handle pipe));
-usbd_status usbd_set_pipe_state 
-	__P((usbd_pipe_handle pipe, usbd_pipe_state state));
-usbd_status usbd_get_pipe_state 
-	__P((usbd_pipe_handle pipe, usbd_pipe_state *state,
-	     u_int32_t *endpoint_state, u_int32_t *request_count));
-usbd_status usbd_set_interface_state 
-	__P((usbd_interface_handle iface, usbd_interface_state state));
-usbd_status usbd_get_interface_state 
-	__P((usbd_interface_handle iface, usbd_interface_state *state));
-usbd_status usbd_get_device_state
-	__P((usbd_device_handle dev, usbd_device_state *state));
-usbd_status usbd_set_device_state
-	__P((usbd_device_handle dev, usbd_device_state state));
-usbd_status usbd_device_address
-	__P((usbd_device_handle dev, u_int8_t *address));
-usbd_status usbd_endpoint_address
-	__P((usbd_pipe_handle dev, u_int8_t *address));
 usbd_status usbd_endpoint_count
 	__P((usbd_interface_handle dev, u_int8_t *count));
 usbd_status usbd_interface_count
 	__P((usbd_device_handle dev, u_int8_t *count));
-#if 0
-u_int8_t usbd_bus_count __P((void));
-usbd_status usbd_get_bus_handle __P((u_int8_t index, usbd_bus_handle *bus));
-#endif
-usbd_status usbd_get_root_hub 
-	__P((usbd_bus_handle bus, usbd_device_handle *dev));
-usbd_status usbd_port_count __P((usbd_device_handle hub, u_int8_t *nports));
-usbd_status usbd_hub2device_handle
-	__P((usbd_device_handle hub, u_int8_t port, usbd_device_handle *dev));
-usbd_status usbd_request2pipe_handle
-	__P((usbd_request_handle reqh, usbd_pipe_handle *pipe));
-usbd_status usbd_pipe2interface_handle
-	__P((usbd_pipe_handle pipe, usbd_interface_handle *iface));
 usbd_status usbd_interface2device_handle
 	__P((usbd_interface_handle iface, usbd_device_handle *dev));
-usbd_status usbd_device2bus_handle
-	__P((usbd_device_handle dev, usbd_bus_handle *bus));
 usbd_status usbd_device2interface_handle
-	__P((usbd_device_handle dev, u_int8_t ifaceno,
-	     usbd_interface_handle *iface));
-usbd_status usbd_set_interface_private_handle
-	__P((usbd_interface_handle iface, usbd_private_handle priv));
-usbd_status usbd_get_interface_private_handle
-	__P((usbd_interface_handle iface, usbd_private_handle *priv));
-usbd_status usbd_reference_pipe __P((usbd_pipe_handle pipe));
-usbd_status usbd_dereference_pipe __P((usbd_pipe_handle pipe));
-usbd_lock_token usbd_lock __P((void));
-void usbd_unlock __P((usbd_lock_token tok));
+	__P((usbd_device_handle dev, u_int8_t ifaceno, usbd_interface_handle *iface));
 
 /* Non-standard */
 usbd_status usbd_sync_transfer	__P((usbd_request_handle req));
