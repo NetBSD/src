@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.6 2000/02/12 23:35:28 enami Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.7 2000/02/13 06:17:58 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_wi.c,v 1.6 2000/02/12 23:35:28 enami Exp $
+ *	$Id: if_wi.c,v 1.7 2000/02/13 06:17:58 itojun Exp $
  */
 
 /*
@@ -115,7 +115,7 @@
 
 #if !defined(lint)
 static const char rcsid[] =
-	"$Id: if_wi.c,v 1.6 2000/02/12 23:35:28 enami Exp $";
+	"$Id: if_wi.c,v 1.7 2000/02/13 06:17:58 itojun Exp $";
 #endif
 
 #ifdef foo
@@ -229,8 +229,10 @@ wi_attach(parent, self, aux)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct wi_ltv_macaddr	mac;
 	struct wi_ltv_gen	gen;
+	u_int8_t empty_macaddr[ETHER_ADDR_LEN];
 
 	ifp = &sc->sc_ethercom.ec_if;
+	sc->wi_resource = 0;
 
 	/* Enable the card */
 	sc->sc_pf = pa->pf;
@@ -255,6 +257,7 @@ wi_attach(parent, self, aux)
 		pcmcia_function_disable(sc->sc_pf);
 		return;
 	}
+	sc->wi_resource |= WI_RES_IO;
 	sc->wi_btag = sc->sc_pcioh.iot;
 	sc->wi_bhandle = sc->sc_pcioh.ioh;
 
@@ -271,6 +274,17 @@ wi_attach(parent, self, aux)
 	mac.wi_len = 4;
 	wi_read_record(sc, (struct wi_ltv_gen *)&mac);
 	memcpy(sc->sc_macaddr, mac.wi_mac_addr, ETHER_ADDR_LEN);
+
+	/* check if we got anything meaningful */
+	bzero(empty_macaddr, sizeof(empty_macaddr));
+	if (bcmp(sc->sc_macaddr, empty_macaddr, ETHER_ADDR_LEN) == 0) {
+		printf(": could not get mac address, attach failed\n");
+		pcmcia_io_unmap(sc->sc_pf, sc->sc_iowin);
+		pcmcia_io_free(sc->sc_pf, &sc->sc_pcioh);
+		pcmcia_function_disable(sc->sc_pf);
+		sc->wi_resource &= ~WI_RES_IO;
+		return;
+	}
 
 	printf("\n%s: address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(sc->sc_macaddr));
@@ -339,6 +353,7 @@ wi_attach(parent, self, aux)
 	bpfattach(&sc->sc_ethercom.ec_if.if_bpf, ifp, DLT_EN10MB,
 	    sizeof(struct ether_header));
 #endif
+	sc->wi_resource |= WI_RES_NET;
 
 	sc->sc_sdhook = shutdownhook_establish(wi_shutdown, sc);
 
@@ -1440,15 +1455,19 @@ wi_detach(self, flags)
 		untimeout(wi_inquire, sc);
 	wi_disable(sc);
 
+	if (sc->wi_resource & WI_RES_NET) {
 #if NBPFILTER > 0
-	bpfdetach(ifp);
+		bpfdetach(ifp);
 #endif
-	ether_ifdetach(ifp);
-	if_detach(ifp);
+		ether_ifdetach(ifp);
+		if_detach(ifp);
+	}
 
-	/* unmap and free our i/o windows */
-	pcmcia_io_unmap(sc->sc_pf, sc->sc_iowin);
-	pcmcia_io_free(sc->sc_pf, &sc->sc_pcioh);
+	if (sc->wi_resource & WI_RES_IO) {
+		/* unmap and free our i/o windows */
+		pcmcia_io_unmap(sc->sc_pf, sc->sc_iowin);
+		pcmcia_io_free(sc->sc_pf, &sc->sc_pcioh);
+	}
 
 	return (0);
 }
