@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.8 1998/02/05 04:58:00 gwr Exp $	*/
+/*	$NetBSD: mem.c,v 1.9 1998/06/09 20:47:18 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,6 +44,8 @@
  * Memory special file
  */
 
+#include "opt_uvm.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
@@ -55,6 +57,12 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_map.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+/* XXX - Gratuitous name changes... */
+#define kernacc uvm_kernacc
+#endif  
 
 #include <machine/cpu.h>
 #include <machine/eeprom.h>
@@ -152,7 +160,7 @@ mmrw(dev, uio, flags)
 			}
 			/* Temporarily map the memory at vmmap. */
 			pmap_enter(pmap_kernel(), vmmap,
-			    trunc_page(v), uio->uio_rw == UIO_READ ?
+			    m68k_trunc_page(v), uio->uio_rw == UIO_READ ?
 			    VM_PROT_READ : VM_PROT_WRITE, TRUE);
 			o = v & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));
@@ -255,6 +263,7 @@ mmmmap(dev, off, prot)
 		return (v);
 
 #if 0	/* XXX - NOTYET */
+		/* XXX - Move this to bus_subr.c? */
 	case 5: 	/* dev/vme16d16 */
 		if (v & 0xffff0000)
 			break;
@@ -310,7 +319,7 @@ promacc(va, len, rw)
 		return (1);
 
 	/* PROM data page is OK for read/write. */
-	if ((sva >=  SUN3X_MONDATA) &&
+	if ((sva >= SUN3X_MONDATA) &&
 		(eva <= (SUN3X_MONDATA + NBPG)))
 		return (1);
 

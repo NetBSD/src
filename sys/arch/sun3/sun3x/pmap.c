@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.37 1998/06/09 20:31:28 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.38 1998/06/09 20:47:18 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -111,6 +111,8 @@
  * of the previous note does not apply to the sun3x pmap.
  */
 
+#include "opt_uvm.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -122,6 +124,13 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
+
+#if defined(UVM)
+#include <uvm/uvm.h>
+/* XXX - Gratuitous name changes... */
+#define vm_page_physload uvm_page_physload
+#define vm_set_page_size uvm_setpagesize
+#endif	/* UVM */
 
 #include <machine/cpu.h>
 #include <machine/kcore.h>
