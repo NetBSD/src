@@ -8,7 +8,7 @@
 # are included, only the more common ones.
 #
 #	from: @(#)services	5.8 (Berkeley) 5/9/91
-#	$Id: services,v 1.11 1994/03/16 03:57:06 cgd Exp $
+#	$Id: services,v 1.12 1994/03/16 23:03:01 cgd Exp $
 #
 tcpmux		1/tcp		# TCP port service multiplexer
 echo		7/tcp
@@ -24,7 +24,7 @@ msp		18/tcp		# message send protocol
 msp		18/udp		# message send protocol
 chargen		19/tcp		ttytst source
 chargen		19/udp		ttytst source
-ftp-data	21/tcp		# default ftp data port
+ftp-data	20/tcp		# default ftp data port
 ftp		21/tcp
 # 22 - unassigned
 telnet		23/tcp
