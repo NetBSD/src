@@ -1,11 +1,11 @@
-/* $NetBSD: stubs.c,v 1.2 2000/05/13 17:57:15 bjh21 Exp $ */
+/* $NetBSD: stubs.c,v 1.2.4.1 2000/07/03 22:28:05 thorpej Exp $ */
 /*
  * stubs.c -- functions I haven't written yet
  */
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: stubs.c,v 1.2 2000/05/13 17:57:15 bjh21 Exp $");
+__RCSID("$NetBSD: stubs.c,v 1.2.4.1 2000/07/03 22:28:05 thorpej Exp $");
 
 #include <sys/kernel.h>
 #include <sys/systm.h>
@@ -107,7 +107,8 @@ cpu_coredump(p, vp, cred, chdr)
 	struct ucred *cred;
 	struct core *chdr;
 {
-	panic("cpu_coredump not implemented");
+	printf("FIXME: cpu_coredump() not implemented.\n");
+	return ENOSYS;
 }
 
 int
