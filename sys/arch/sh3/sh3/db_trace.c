@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.9 2002/04/28 17:10:38 uch Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.10 2003/04/13 04:07:34 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -180,7 +180,7 @@ db_nextframe(
 			}
 		}
 
-		printf("unknown instrunction in prologue\n");
+		printf("unknown instruction in prologue\n");
 		db_disasm(pc - 2, 0);
 	}
 
