@@ -35,7 +35,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$Id: e_scalb.S,v 1.2 1995/02/18 01:39:51 jtc Exp $")
+RCSID("$NetBSD: e_scalb.S,v 1.3 1995/05/09 01:14:51 jtc Exp $")
 
 ENTRY(__ieee754_scalb)
 	fmoved	sp@(4),fp0

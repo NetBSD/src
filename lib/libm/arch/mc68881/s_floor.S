@@ -40,7 +40,7 @@
 ;_sccsid:
 ;.asciz	"from: @(#)floor.s	5.1 (Berkeley) 5/17/90"
 
-RCSID("$Id: s_floor.S,v 1.2 1994/03/18 23:23:03 jtc Exp $")
+RCSID("$NetBSD: s_floor.S,v 1.3 1995/05/09 02:11:19 jtc Exp $")
 
 | floor(x)
 | the largest integer no larger than x

@@ -5,7 +5,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$Id: s_rintf.S,v 1.2 1995/04/28 22:44:16 jtc Exp $")
+RCSID("$NetBSD: s_rintf.S,v 1.3 1995/05/09 00:17:22 jtc Exp $")
 
 ENTRY(rintf)
 	flds	4(%esp)

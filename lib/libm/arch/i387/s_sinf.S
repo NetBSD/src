@@ -5,7 +5,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$Id: s_sinf.S,v 1.2 1995/04/28 22:44:25 jtc Exp $")
+RCSID("$NetBSD: s_sinf.S,v 1.3 1995/05/09 00:27:53 jtc Exp $")
 
 /* A float's domain isn't large enough to require argument reduction. */
 ENTRY(sinf)

@@ -40,7 +40,7 @@
 ;_sccsid:
 ;.asciz	"from: @(#)sqrt.s	5.1 (Berkeley) 5/17/90"
 
-RCSID("$Id: e_sqrt.S,v 1.2 1994/03/18 23:22:32 jtc Exp $")
+RCSID("$NetBSD: e_sqrt.S,v 1.3 1995/05/09 01:28:27 jtc Exp $")
 
 /*
  * sqrt(x) 

@@ -40,7 +40,7 @@
 ;_sccsid:
 ;.asciz	"from: @(#)atanh.s	5.1 (Berkeley) 5/17/90"
 
-RCSID("$Id: e_atanh.S,v 1.2 1994/03/18 23:22:19 jtc Exp $")
+RCSID("$NetBSD: e_atanh.S,v 1.3 1995/05/09 00:45:54 jtc Exp $")
 
 ENTRY(__ieee754_atanh)
 	fatanhd	sp@(4),fp0

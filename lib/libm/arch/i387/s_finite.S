@@ -5,7 +5,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$Id: s_finite.S,v 1.3 1995/04/28 22:44:00 jtc Exp $")
+RCSID("$NetBSD: s_finite.S,v 1.4 1995/05/08 23:57:41 jtc Exp $")
 
 ENTRY(finite)
 	movl	8(%esp),%eax

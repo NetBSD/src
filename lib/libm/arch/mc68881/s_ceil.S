@@ -40,7 +40,7 @@
 ;_sccsid:
 ;.asciz	"from: @(#)floor.s	5.1 (Berkeley) 5/17/90"
 
-RCSID("$Id: s_ceil.S,v 1.2 1994/03/18 23:22:42 jtc Exp $")
+RCSID("$NetBSD: s_ceil.S,v 1.3 1995/05/09 01:39:23 jtc Exp $")
 
 | ceil(x)
 | -floor(-x), for all real x

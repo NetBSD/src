@@ -5,7 +5,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$Id: s_tanf.S,v 1.2 1995/04/28 22:44:27 jtc Exp $")
+RCSID("$NetBSD: s_tanf.S,v 1.3 1995/05/09 00:31:09 jtc Exp $")
 
 /* A float's domain isn't large enough to require argument reduction. */
 ENTRY(tanf)

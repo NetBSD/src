@@ -40,7 +40,7 @@
 ;_sccsid:
 ;.asciz	"from: @(#)expm1.s	5.1 (Berkeley) 5/17/90"
 
-RCSID("$Id: s_expm1.S,v 1.2 1994/03/18 23:22:56 jtc Exp $")
+RCSID("$NetBSD: s_expm1.S,v 1.3 1995/05/09 01:57:05 jtc Exp $")
 
 ENTRY(expm1)
 	fetoxm1d	sp@(4),fp0

@@ -40,7 +40,7 @@
 ;_sccsid:
 ;.asciz	"from: @(#)log10.s	5.1 (Berkeley) 5/17/90"
 
-RCSID("$Id: e_log10.S,v 1.2 1994/03/18 23:22:28 jtc Exp $")
+RCSID("$NetBSD: e_log10.S,v 1.3 1995/05/09 01:01:17 jtc Exp $")
 
 ENTRY(__ieee754_log10)
 	flog10d	sp@(4),fp0
