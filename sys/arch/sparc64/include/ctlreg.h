@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.33 2004/06/17 19:35:14 petrov Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.34 2004/06/24 19:42:27 martin Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -490,7 +490,7 @@ lduba(paddr_t loc, int asi)
 			: "r" ((unsigned long)(loc)), "r" (_loc_hi), "r" (asi));
 	} else {
 		__asm __volatile(
-			"wr %3,%%g0,%%asi	"
+			"wr %3,%%g0,%%asi;	"
 			"sllx %2,32,%0;		"
 			"or %0,%1,%0;		"
 			"lduba [%0]%%asi,%0;	"
