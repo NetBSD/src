@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.52 2003/09/22 16:54:14 tsutsui Exp $	*/
+/*	$NetBSD: clock.c,v 1.53 2003/09/22 17:53:46 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -83,13 +83,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.52 2003/09/22 16:54:14 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.53 2003/09/22 17:53:46 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <m68k/asm_single.h>
 
@@ -103,6 +105,8 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.52 2003/09/22 16:54:14 tsutsui Exp $");
 
 #include <dev/clock_subr.h>
 #include <dev/ic/intersil7170.h>
+
+extern int intrcnt[];
 
 #define	CLOCK_PRI	5
 #define IREG_CLK_BITS	(IREG_CLOCK_ENAB_7 | IREG_CLOCK_ENAB_5)
@@ -312,6 +316,9 @@ clock_intr(cf)
 
 	/* Read the clock intr. reg. AGAIN! */
 	intersil_clear();
+
+	intrcnt[CLOCK_PRI]++;
+	uvmexp.intrs++;
 
 	{ /* Entertainment! */
 #ifdef	LED_IDLE_CHECK
