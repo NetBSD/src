@@ -1,4 +1,4 @@
-/*	$NetBSD: crti.c,v 1.1 2002/11/22 06:44:59 thorpej Exp $	*/
+/*	$NetBSD: crti.c,v 1.2 2002/11/23 17:21:22 thorpej Exp $	*/
 
 /*- 
  * Copyright (c) 1998, 2001, 2002 The NetBSD Foundation, Inc.
@@ -46,8 +46,8 @@
 INIT_FALLTHRU_DECL;
 FINI_FALLTHRU_DECL;
 
-void	_init(void);
-void	_fini(void);
+void	_init(void) __attribute__((section(".init")));
+void	_fini(void) __attribute__((section(".fini")));
 
 void
 _init(void)
