@@ -2,8 +2,8 @@
 
 /*
  * $Author: garbled $
- * $Date: 2001/01/04 19:58:41 $
- * $Revision: 1.1.1.1 $
+ * $Date: 2001/01/04 20:15:31 $
+ * $Revision: 1.2 $
  */
 
 /*
@@ -327,7 +327,7 @@ int injectCDKSlider (CDKSLIDER *slider, chtype input)
 		 slider->exitType = vESCAPE_HIT;
 		 return -1;
 
-	    case KEY_RETURN : case KEY_TAB : case KEY_ENTER :
+	    case KEY_RETURN : case KEY_TAB : case KEY_ENTER : case KEY_CR :
 		 slider->exitType = vNORMAL;
 		 return (slider->current);
 
