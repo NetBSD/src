@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.272 1998/01/15 22:25:57 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.273 1998/01/18 14:48:55 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -1943,9 +1943,9 @@ cpu_reset()
 	 * connected to the RESET pin on the CPU in many PCs.  We tell the
 	 * keyboard controller to pulse this line a couple of times.
 	 */
-	outb(KBCMDP, KBC_PULSE0);
+	outb(IO_KBD + KBCMDP, KBC_PULSE0);
 	delay(100000);
-	outb(KBCMDP, KBC_PULSE0);
+	outb(IO_KBD + KBCMDP, KBC_PULSE0);
 	delay(100000);
 
 	/*
