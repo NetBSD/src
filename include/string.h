@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.25 2003/08/07 09:44:11 agc Exp $	*/
+/*	$NetBSD: string.h,v 1.25.2.1 2004/07/12 20:53:05 he Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -51,6 +51,9 @@ int	 memcmp __P((const void *, const void *, size_t));
 void	*memcpy __P((void * __restrict, const void * __restrict, size_t));
 void	*memmove __P((void *, const void *, size_t));
 void	*memset __P((void *, int, size_t));
+#if defined(_NETBSD_SOURCE)
+char	*strcasestr(const char *, const char *);
+#endif
 char	*strcat __P((char * __restrict, const char * __restrict));
 char	*strchr __P((const char *, int));
 int	 strcmp __P((const char *, const char *));
