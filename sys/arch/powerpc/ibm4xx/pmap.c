@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.2 2001/07/22 11:29:45 wiz Exp $	*/
+/*	$NetBSD: pmap.c,v 1.3 2001/07/22 13:08:09 wiz Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -391,8 +391,8 @@ pmap_bootstrap(u_int kernelstart, u_int kernelend)
 		 */
 		if (sz == 0) {
 		empty:
-			memcpy(mp, mp + 1,
-			      (cnt - (mp - avail)) * sizeof *mp);
+			memmove(mp, mp + 1,
+				(cnt - (mp - avail)) * sizeof *mp);
 			cnt--;
 			mp--;
 			continue;
@@ -405,7 +405,7 @@ pmap_bootstrap(u_int kernelstart, u_int kernelend)
 			if (s < mp1->start)
 				break;
 		if (mp1 < mp) {
-			memcpy(mp1 + 1, mp1, (char *)mp - (char *)mp1);
+			memmove(mp1 + 1, mp1, (char *)mp - (char *)mp1);
 			mp1->start = s;
 			mp1->size = sz;
 		} else {
@@ -434,7 +434,7 @@ pmap_bootstrap(u_int kernelstart, u_int kernelend)
 	msgbuf_paddr = mp->start + mp->size - sz;
 	mp->size -= sz;
 	if (mp->size <= 0)
-		memcpy(mp, mp + 1, (cnt - (mp - avail)) * sizeof *mp);
+		memmove(mp, mp + 1, (cnt - (mp - avail)) * sizeof *mp);
 #endif
 
 	printf("Loading pages\n");
