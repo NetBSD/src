@@ -1,3 +1,5 @@
+.\" $NetBSD: ifwatchd.8,v 1.2 2001/11/19 10:10:45 wiz Exp $
+.\"
 .\" Copyright (C) 2001 by Martin Husemann
 .\" All rights reserved.
 .\"
@@ -27,7 +29,7 @@
 .Dt IFWATCHD 8
 .Sh NAME
 .Nm ifwatchd
-.Nd watch for adresses added to or deleted from interfaces and call up/down scripts for them
+.Nd watch for addresses added to or deleted from interfaces and call up/down scripts for them
 .Sh SYNOPSIS
 .Nm
 .Op Fl h
@@ -35,66 +37,74 @@
 .Op Fl d Ar down-script
 .Op Fl u Ar up-script
 .Ar ifname(s)
-.Pp
 .Sh DESCRIPTION
 .Nm Ifwatchd
 is used to monitor dynamic interfaces (for example PPP interfaces) for address
-changes. Sometimes this interfaces are acompanied by a daemon program, which
-can take care of running any necesary scripts (like pppd or isdnd), but 
-sometimes the interfaces run completely autonomus (like pppoe).
+changes.  Sometimes these interfaces are accompanied by a daemon program, which
+can take care of running any necessary scripts (like
+.Xr pppd 8
+or
+.Xr isdnd 8 ) ,
+but sometimes the interfaces run completely autonomously (like
+.Xr pppoe 8 ) .
 .Pp
 .Nm Ifwatchd
-provides a generic way to watch this type of changes. It works by monitoring
+provides a generic way to watch this type of changes.  It works by monitoring
 the routing socket and interpreting
 .Ql RTM_NEWADDR
 .Pq address added
 and
 .Ql RTM_DELADDR
 .Pq address deleted
-messages. It does not need special privileges to do this. The scripts called
+messages.  It does not need special privileges to do this.  The scripts called
 for up or down events are run with the same user id as
 .Nm
 is run.
 .Pp
 The following options are available:
 .Bl -tag -width indent
-.It Fl h
-Show the synopsis.
-.It Fl v
-Output verbose progress messages and flag errors ignored during normal
-operation.
-.It Fl u Ar up-script
-Specify the command to invoke on
-.Dq interface up
-events (or: addition of an address to an interface).
 .It Fl d Ar down-script
 Specify the command to invoke on
 .Dq interface down
 events (or: deletion of an address from an interface).
-.It ifname(s)
-The name of the interface to watch. Multiple interfaces may be specified.
+.It Fl h
+Show the synopsis.
+.It Fl u Ar up-script
+Specify the command to invoke on
+.Dq interface up
+events (or: addition of an address to an interface).
+.It Fl v
+Output verbose progress messages and flag errors ignored during normal
+operation.
+.It Ar ifname(s)
+The name of the interface to watch.  Multiple interfaces may be specified.
 Events for other interfaces are ignored.
 .El
 .Sh EXAMPLES
 Note: you may be able to run
 .Nm
-from 
+from
 .Pa /etc/ifconfig.*
 files via the
 .Em !
-shell command syntax, but only if your /usr partition is already mounted
-(i.e. you either do not have a separate /usr partition or you have its
-mount point included in the critical_filesystems_beforenet /etc/rc.conf
+shell command syntax, but only if your
+.Pa /usr
+partition is already mounted
+(i.e. you either do not have a separate
+.Pa /usr
+partition or you have its
+mount point included in the critical_filesystems_beforenet
+.Pa /etc/rc.conf
 variable.)
-.Bd -literal
+.Bd -literal -offset indent
 # ifwatchd -u /etc/ppp/ip-up -d /etc/ppp/ip-down pppoe0
 .Ed
 .Sh PARAMETERS PASSED TO SCRIPTS
 The invoked scripts get three parameters passed:
-.Bl -tag -width indent
+.Bl -tag -width address
 .It Ar ifname
 The name of the interface this change is for (this allows to share the same
-script for multiple interfaces wathed and dispatching on the interface name
+script for multiple interfaces watched and dispatching on the interface name
 in the script).
 .It Ar up/down
 Verbatim
@@ -103,7 +113,7 @@ or
 .Em down ,
 which allows for the sharing of up and down scripts.
 .It Ar address
-the new address if this is an up event, or the no long valid old address
+The new address if this is an up event, or the no longer valid old address
 if this is a down event.
 .Pp
 The format of the address depends on the address family, for IPv4 it is the
@@ -116,11 +126,10 @@ usual dotted quad notation, for IPv6 the colon separated standard notation.
 .Xr rc.d 8 ,
 .Xr route 8
 .Sh HISTORY
-The 
+The
 .Nm
 utility appeared in
 .Nx 1.6 .
-.Sh AUTHOR
+.Sh AUTHORS
 The program was written by
-.ie t Martin Husemann.
-.el Martin Husemann.
+.An Martin Husemann Aq martin@netbsd.org .
