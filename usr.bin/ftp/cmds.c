@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.34 1998/01/18 22:09:39 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.35 1998/04/01 21:07:03 kleink Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.34 1998/01/18 22:09:39 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.35 1998/04/01 21:07:03 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,6 +58,7 @@ __RCSID("$NetBSD: cmds.c,v 1.34 1998/01/18 22:09:39 lukem Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "ftp_var.h"
