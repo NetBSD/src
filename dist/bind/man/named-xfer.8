@@ -1,4 +1,4 @@
-.\"     $NetBSD: named-xfer.8,v 1.4 2001/06/05 12:49:36 wiz Exp $
+.\"     $NetBSD: named-xfer.8,v 1.4.2.1 2002/06/28 11:59:42 lukem Exp $
 .\"
 .\" ++Copyright++ 1985
 .\" -
@@ -91,9 +91,7 @@
 .Op Fl p Ar port#
 .Op Fl S 
 .Ar nameserver 
-.Op Ar [ Sy axfr 
-| 
-.Op Sy ixfr ]
+.Op Sy axfr | ixfr
 .Sh DESCRIPTION
 .Ic Named-xfer
 is an ancillary program executed by
@@ -163,7 +161,7 @@ for more information.
 Additional arguments are taken as name server addresses in so-called
 .Dq dotted-quad 
 syntax 
-.Em only; 
+.Em only ;
 no host name are allowed here.  At least one address must be specified.  
 Any additional addresses will be tried, in order, if the first one fails 
 to transfer to us successfully.
