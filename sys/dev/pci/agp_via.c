@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_via.c,v 1.1 2001/09/10 10:01:02 fvdl Exp $	*/
+/*	$NetBSD: agp_via.c,v 1.2 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -70,18 +70,6 @@ struct agp_via_softc {
 	u_int32_t	initial_aperture; /* aperture size at startup */
 	struct agp_gatt *gatt;
 };
-
-int
-agp_via_match(struct device *parent, struct cfdata *match, void *aux)
-{
-	struct pci_attach_args *pa = aux;
-
-	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_AGP, NULL, NULL) 
-	    == 0)
-		return 0;
-
-	return 1;
-}
 
 int
 agp_via_attach(struct device *parent, struct device *self, void *aux)

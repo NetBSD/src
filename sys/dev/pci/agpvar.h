@@ -1,4 +1,4 @@
-/*	$NetBSD: agpvar.h,v 1.2 2001/09/11 06:51:47 fvdl Exp $	*/
+/*	$NetBSD: agpvar.h,v 1.3 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -33,8 +33,8 @@
 
 #include <sys/lock.h>
 
-struct agp_phcb_attach_args {
-	char	*apa_busname;	/* XXX layout compat with pcibus_attach_args */
+struct agpbus_attach_args {
+	char	*apa_busname;
 	struct pci_attach_args apa_pci_args;
 };
 
@@ -182,13 +182,7 @@ int agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 int agp_generic_unbind_memory(struct agp_softc *sc, struct agp_memory *mem);
 
 /* The vendor has already been matched when these functions are called */
-int agp_ali_match(struct device *, struct cfdata *, void *);
-int agp_amd_match(struct device *, struct cfdata *, void *);
-int agp_i810_match(struct device *, struct cfdata *, void *);
-int agp_i810_bridgematch(struct pci_attach_args *);
-int agp_intel_match(struct device *, struct cfdata *, void *);
-int agp_sis_match(struct device *, struct cfdata *, void *);
-int agp_via_match(struct device *, struct cfdata *, void *);
+int agp_amd_match(const struct pci_attach_args *);
 
 int agp_ali_attach(struct device *parent, struct device *self, void *aux);
 int agp_amd_attach(struct device *parent, struct device *self, void *aux);
