@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.10 1999/04/24 21:08:12 eeh Exp $	*/
+/*	$NetBSD: zs.c,v 1.11 1999/04/25 16:16:31 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -169,6 +169,12 @@ zs_get_chan_addr(zs_unit, channel)
 	if (zs_unit >= NZS)
 		return (NULL);
 	addr = zsaddr[zs_unit];
+#ifdef DEBUG
+	if (addr == NULL) {
+		db_printf("zs_get_chan_addr(): unit %d channel %d not found\n", zs_unit, channel);
+		Debugger();
+	}
+#endif
 	if (addr == NULL)
 		return (NULL);
 	if (channel == 0) {
@@ -342,7 +348,8 @@ zs_attach_sbus(parent, self, aux)
 				       self->dv_xname);
 				return;
 			}
-			zsaddr[zs_unit] = (struct zsdevice *)kvaddr;
+			zsaddr[zs_unit] = (struct zsdevice *)
+				(long)kvaddr;
 		}
 	}
 	zs_attach(zsc, sa->sa_pri);
@@ -411,6 +418,9 @@ zs_attach(zsc, pri)
 		cs->cs_brg_clk = PCLK / 16;
 
 		zc = zs_get_chan_addr(zs_unit, channel);
+		if (zs_hwflags[zs_unit][channel] == ZS_HWFLAG_CONSOLE) {
+			zs_conschan = (struct zschan *)zc;
+		}
 		cs->cs_reg_csr  = &zc->zc_csr;
 		cs->cs_reg_data = &zc->zc_data;
 
@@ -1033,38 +1043,16 @@ consinit()
 	OF_getprop(node, "stdin",  &stdin, sizeof(stdin));
 	DBPRINT(("stdin instance = %x\r\n", stdin));
 
-	node = OF_instance_to_package(stdin);
+	if ((node = OF_instance_to_package(stdin)) == 0)
+		goto setup_output;
 	DBPRINT(("stdin package = %x\r\n", node));
 	if (OF_getproplen(node,"keyboard") >= 0) {
 		inSource = PROMDEV_KBD;
-		goto setup_output;
-	}
-	if (strcmp(getpropstring(node,"device_type"),"serial") != 0) {
+	} else if (strcmp(getpropstring(node,"device_type"),"serial") != 0) {
 		/* not a serial, not keyboard. what is it?!? */
 		inSource = -1;
-		goto setup_output;
 	}
-	/*
-	 * At this point we assume the device path is in the form
-	 *   ....device@x,y:a for ttya and ...device@x,y:b for ttyb.
-	 * If it isn't, we defer to the ROM
-	 */
-	if(OF_instance_to_path(stdin, buffer, sizeof(buffer)) <= 0) {
-		printf("consinit: bogus stdin path.\n");
-		goto setup_output;
-	}
-	cp = buffer;
-	while (*cp)
-		cp++;
-	cp -= 2;
-#ifdef DEBUG
-	if (cp < buffer)
-		panic("consinit: bad stdin path %s",buffer);
-#endif
-	/* XXX: only allows tty's a->z, assumes PROMDEV_TTYx contig */
-	if (cp[0]==':' && cp[1] >= 'a' && cp[1] <= 'z')
-		inSource = PROMDEV_TTYA + (cp[1] - 'a');
-	/* else use rom */
+
 setup_output:
 	DBPRINT(("setting up stdout\r\n"));
 	node = OF_finddevice("/chosen");
@@ -1082,29 +1070,6 @@ setup_output:
 		   != 0) {
 		/* not screen, not serial. Whatzit? */
 		outSink = -1;
-	} else { /* serial console. which? */
-		/*
-		 * At this point we assume the device path is in the
-		 * form:
-		 * ....device@x,y:a for ttya, etc.
-		 * If it isn't, we defer to the ROM
-		 */
-		if(OF_instance_to_path(stdout, buffer, sizeof(buffer)) <= 0) {
-			printf("consinit: bogus stdin path.\n");
-			goto setup_output;
-		}
-		cp = buffer;
-		while (*cp)
-			cp++;
-		cp -= 2;
-#ifdef DEBUG
-		if (cp < buffer)
-			panic("consinit: bad stdout path %s",buffer);
-#endif
-		/* XXX: only allows tty's a->z, assumes PROMDEV_TTYx contig */
-		if (cp[0]==':' && cp[1] >= 'a' && cp[1] <= 'z')
-			outSink = PROMDEV_TTYA + (cp[1] - 'a');
-		else outSink = -1;
 	}	
 	if (inSource != outSink) {
 		printf("cninit: mismatched PROM output selector\n");
@@ -1145,16 +1110,17 @@ setup_output:
 	/* Now that inSource has been validated, print it. */
 	printf("console is %s\n", prom_inSrc_name[inSource]);
 
-	zc = zs_get_chan_addr(zs_unit, channel);
-	if (zc == NULL) {
-		printf("cninit: zs not mapped.\n");
-		return;
-	}
-	zs_conschan = zc;
+	/* 
+	 * We'll just mark this as the future console, but still
+	 * use the PROM until the zs driver attaches.
+	 */
 	zs_hwflags[zs_unit][channel] = ZS_HWFLAG_CONSOLE;
+	zs_conschan = NULL; 
 	cn_tab = cn;
+
 	(*cn->cn_init)(cn);
 #ifdef	KGDB
 	zs_kgdb_init();
 #endif
+	/* Defer the rest to zs_attach */
 }

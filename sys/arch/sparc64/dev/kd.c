@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.1.1.1 1998/06/20 04:58:51 eeh Exp $	*/
+/*	$NetBSD: kd.c,v 1.2 1999/04/25 16:16:31 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -517,35 +517,40 @@ kdcngetc(dev)
 	struct kbd_state *ks = &kdcn_state;
 	int code, class, data, keysym;
 
-	for (;;) {
-		code = zs_getc(zs_conschan);
-		keysym = kbd_code_to_keysym(ks, code);
-		class = KEYSYM_CLASS(keysym);
-
-		switch (class) {
-		case KEYSYM_ASCII:
-			goto out;
-
-		case KEYSYM_CLRMOD:
-		case KEYSYM_SETMOD:
-			data = (keysym & 0x1F);
-			/* Only allow ctrl or shift. */
-			if (data > KBMOD_SHIFT_R)
+	if (!zs_conschan) {
+		/* Not initialized yet */
+		return -1;
+	} else {
+		for (;;) {
+			code = zs_getc(zs_conschan);
+			keysym = kbd_code_to_keysym(ks, code);
+			class = KEYSYM_CLASS(keysym);
+			
+			switch (class) {
+			case KEYSYM_ASCII:
+				goto out;
+				
+			case KEYSYM_CLRMOD:
+			case KEYSYM_SETMOD:
+				data = (keysym & 0x1F);
+				/* Only allow ctrl or shift. */
+				if (data > KBMOD_SHIFT_R)
+					break;
+				data = 1 << data;
+				if (class == KEYSYM_SETMOD)
+					ks->kbd_modbits |= data;
+				else
+					ks->kbd_modbits &= ~data;
 				break;
-			data = 1 << data;
-			if (class == KEYSYM_SETMOD)
-				ks->kbd_modbits |= data;
-			else
-				ks->kbd_modbits &= ~data;
-			break;
-
-		case KEYSYM_ALL_UP:
-			/* No toggle keys here. */
-			ks->kbd_modbits = 0;
-			break;
-
-		default:	/* ignore all other keysyms */
-			break;
+				
+			case KEYSYM_ALL_UP:
+				/* No toggle keys here. */
+				ks->kbd_modbits = 0;
+				break;
+				
+			default:	/* ignore all other keysyms */
+				break;
+			}
 		}
 	}
 out:
