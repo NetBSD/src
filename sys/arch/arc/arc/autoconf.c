@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.13 2000/01/23 21:01:50 soda Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.14 2000/06/01 00:49:52 matt Exp $	*/
 /*	$OpenBSD: autoconf.c,v 1.9 1997/05/18 13:45:20 pefo Exp $	*/
 
 /*
@@ -72,6 +72,9 @@ int getpno __P((char **cp));
  * the machine.
  */
 int	cpuspeed = 150;	/* approx # instr per usec. */
+struct device *booted_device;
+int booted_partition;
+
 
 void	findroot __P((struct device **, int *));
 
@@ -97,9 +100,6 @@ int nfs_boot_rfc951 = 1;
 void
 cpu_rootconf()
 {
-	struct device *booted_device;
-	int booted_partition;
-
 	findroot(&booted_device, &booted_partition);
 
 	printf("boot device: %s\n",

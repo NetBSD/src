@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.31 1999/09/17 19:59:40 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.32 2000/06/01 00:49:53 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -47,6 +47,9 @@ void mbattach __P((struct device *, struct device *, void *));
 int mbprint __P((void *, const char *));
 int mbmatch __P((struct device *, struct cfdata *, void *));
 
+struct device *booted_device;
+int booted_partition;
+
 int atari_realconfig;
 #include <sys/kernel.h>
 
@@ -67,9 +70,6 @@ cpu_configure()
 void
 cpu_rootconf()
 {
-	struct device *booted_device;
-	int booted_partition;
-
 	findroot(&booted_device, &booted_partition);
 	setroot(booted_device, booted_partition);
 }

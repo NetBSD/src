@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.22 1999/09/23 15:14:59 minoura Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.23 2000/06/01 00:49:58 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -59,7 +59,11 @@ static int simple_devprint __P((void *, const char *));
 static struct device *scsi_find __P((dev_t));
 static struct device *find_dev_byname __P((const char *));
 
+struct device *booted_device;
+int booted_partition;
+
 int x68k_realconfig;
+
 #include <sys/kernel.h>
 
 /*
@@ -82,9 +86,6 @@ cpu_configure()
 void
 cpu_rootconf()
 {
-	struct device *booted_device;
-	int booted_partition;
-
 	findroot(&booted_device, &booted_partition);
 
 	printf("boot device: %s\n",

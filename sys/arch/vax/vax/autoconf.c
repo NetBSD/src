@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.57 2000/05/31 23:55:51 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.58 2000/06/01 00:49:57 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -64,8 +64,10 @@
 void	gencnslask __P((void));
 
 struct cpu_dep *dep_call;
-int	mastercpu;	/* chief of the system */
+int mastercpu;	/* chief of the system */
 struct device *booted_device;
+int booted_partition;	/* defaults to 0 (aka 'a' partition */
+
 
 #define MAINBUS	0
 
@@ -87,8 +89,6 @@ cpu_configure()
 void
 cpu_rootconf()
 {
-	int booted_partition = 0;
-
 	/*
 	 * The device we booted from are looked for during autoconfig.
 	 * If there has been a match, it's already been done.
