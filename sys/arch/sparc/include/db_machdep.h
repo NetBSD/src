@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.7 1996/03/31 22:21:28 pk Exp $ */
+/*	$NetBSD: db_machdep.h,v 1.8 1997/02/05 00:02:23 pk Exp $ */
 
 /*
  * Mach Operating System
@@ -43,7 +43,7 @@
 /* end of mangling */
 
 typedef	vm_offset_t	db_addr_t;	/* address - unsigned */
-typedef	int		db_expr_t;	/* expression - signed */
+typedef	long		db_expr_t;	/* expression - signed */
 
 typedef struct {
 	struct trapframe ddb_tf;
@@ -55,7 +55,11 @@ db_regs_t		ddb_regs;	/* register state */
 #define	DDB_TF		(&ddb_regs.ddb_tf)
 #define	DDB_FR		(&ddb_regs.ddb_fr)
 
+#if defined(lint)
+#define	PC_REGS(regs)	((regs)->ddb_tf.tf_pc)
+#else
 #define	PC_REGS(regs)	((db_addr_t)(regs)->ddb_tf.tf_pc)
+#endif
 
 #define	BKPT_INST	0x91d02001	/* breakpoint instruction */
 #define	BKPT_SIZE	(4)		/* size of breakpoint inst */
