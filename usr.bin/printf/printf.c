@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.22 2001/05/05 17:29:39 kleink Exp $	*/
+/*	$NetBSD: printf.c,v 1.23 2002/06/14 01:12:15 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printf.c	8.2 (Berkeley) 3/22/95";
 #else
-__RCSID("$NetBSD: printf.c,v 1.22 2001/05/05 17:29:39 kleink Exp $");
+__RCSID("$NetBSD: printf.c,v 1.23 2002/06/14 01:12:15 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,32 +57,32 @@ __RCSID("$NetBSD: printf.c,v 1.22 2001/05/05 17:29:39 kleink Exp $");
 #include <inttypes.h>
 #include <limits.h>
 #include <locale.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
 #include <unistd.h>
 
-static int	 print_escape_str __P((const char *));
-static size_t	 print_escape __P((const char *));
+static int	 print_escape_str(const char *);
+static size_t	 print_escape(const char *);
 
-static int	 getchr __P((void));
-static double	 getdouble __P((void));
-static int	 getint __P((void));
-static intmax_t	 getintmax __P((void));
+static int	 getchr(void);
+static double	 getdouble(void);
+static int	 getint(void);
+static intmax_t	 getintmax(void);
 static uintmax_t getuintmax __P ((void));
-static char	*getstr __P((void));
-static char	*mklong __P((const char *, int)); 
-static void      check_conversion __P((const char *, const char *));
-static void	 usage __P((void)); 
+static char	*getstr(void);
+static char	*mklong(const char *, int); 
+static void      check_conversion(const char *, const char *);
+static void	 usage(void); 
      
 static int	rval;
 static char  **gargv;
 
 #ifdef BUILTIN
-int progprintf __P((int, char **));
+int progprintf(int, char **);
 #else
-int main __P((int, char **));
+int main(int, char **);
 #endif
 
 #define isodigit(c)	((c) >= '0' && (c) <= '7')
@@ -93,32 +93,17 @@ int main __P((int, char **));
 #define main printfcmd
 #include "../../bin/sh/bltin/bltin.h"
 
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <vararg.h>
-#endif
 
-static void warnx __P((const char *fmt, ...));
+static void warnx(const char *fmt, ...);
 
 static void 
-#ifdef __STDC__
 warnx(const char *fmt, ...)
-#else
-warnx(fmt, va_alist)
-	const char *fmt;
-	va_dcl
-#endif
 {
 	
 	char buf[64];
 	va_list ap;
 
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	vsprintf(buf, fmt, ap);
 	va_end(ap);
 
@@ -142,10 +127,8 @@ int
 #ifdef BUILTIN
 progprintf(argc, argv)
 #else
-main(argc, argv)
+main(int argc, char **argv)
 #endif
-	int argc;
-	char *argv[];
 {
 	char *fmt, *start;
 	int fieldwidth, precision;
@@ -287,8 +270,7 @@ main(argc, argv)
  *	Halts processing string and returns 1 if a \c escape is encountered.
  */
 static int
-print_escape_str(str)
-	const char *str;
+print_escape_str(const char *str)
 {
 	int value;
 	int c;
@@ -328,8 +310,7 @@ print_escape_str(str)
  * Print "standard" escape characters 
  */
 static size_t
-print_escape(str)
-	const char *str;
+print_escape(const char *str)
 {
 	const char *start = str;
 	int value;
@@ -375,11 +356,7 @@ print_escape(str)
 		break;
 
 	case 'a':			/* alert */
-#ifdef __STDC__
 		(void)putchar('\a');
-#else
-		(void)putchar(007);
-#endif
 		break;
 
 	case 'b':			/* backspace */
@@ -425,9 +402,7 @@ print_escape(str)
 }
 
 static char *
-mklong(str, ch)
-	const char *str;
-	char ch;
+mklong(const char *str, int ch)
 {
 	static char copy[64];
 	size_t len;	
@@ -441,7 +416,7 @@ mklong(str, ch)
 }
 
 static int
-getchr()
+getchr(void)
 {
 	if (!*gargv)
 		return ('\0');
@@ -449,7 +424,7 @@ getchr()
 }
 
 static char *
-getstr()
+getstr(void)
 {
 	if (!*gargv)
 		return ("");
@@ -458,7 +433,7 @@ getstr()
 
 static char *Number = "+-.0123456789";
 static int
-getint()
+getint(void)
 {
 	if (!*gargv)
 		return(0);
@@ -470,7 +445,7 @@ getint()
 }
 
 static intmax_t
-getintmax()
+getintmax(void)
 {
 	intmax_t val;
 	char *ep;
@@ -488,7 +463,7 @@ getintmax()
 }
 
 static uintmax_t
-getuintmax()
+getuintmax(void)
 {
 	uintmax_t val;
 	char *ep;
@@ -506,7 +481,7 @@ getuintmax()
 }
 
 static double
-getdouble()
+getdouble(void)
 {
 	double val;
 	char *ep;
@@ -524,9 +499,7 @@ getdouble()
 }
 
 static void
-check_conversion(s, ep)
-	const char *s;
-	const char *ep;
+check_conversion(const char *s, const char *ep)
 {
 	if (*ep) {
 		if (ep == s)
@@ -541,7 +514,7 @@ check_conversion(s, ep)
 }
 
 static void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage: printf format [arg ...]\n");
 }
