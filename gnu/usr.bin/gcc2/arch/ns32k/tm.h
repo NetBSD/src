@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: tm.h,v 1.5 1994/12/23 21:17:00 pk Exp $
+	$Id: tm.h,v 1.6 1995/06/05 01:59:27 pk Exp $
 */
 
 #if 0
@@ -80,7 +80,8 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
  "%{!nostdlib:%{!r*:%{!e*:-e start}}} -dc -dp %{static:-Bstatic} %{assert*}"
 
 #define STARTFILE_SPEC  \
-  "%{!shared:%{pg:gcrt0.o%s}%{!pg:%{p:mcrt0.o%s}%{!p:crt0.o%s}}}"
+  "%{!shared:%{pg:gcrt0.o%s}%{!pg:%{p:mcrt0.o%s}\
+   %{!p:%{static:scrt0.o%s}%{!static:crt0.o%s}}}}"
 
 /* No more libg.a; no libraries if making shared object */
 

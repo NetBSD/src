@@ -1,6 +1,6 @@
 /* Configuration for an i386 running NetBSD as the target machine. 
 
-	$Id: tm.h,v 1.8 1994/12/23 21:16:50 pk Exp $
+	$Id: tm.h,v 1.9 1995/06/05 01:59:14 pk Exp $
 */
 
 /* This is tested by i386gas.h.  */
@@ -16,6 +16,11 @@
 
 /* Like the default, except no -lg.  */
 #define LIB_SPEC "%{!p:%{!pg:-lc}}%{p:-lc_p}%{pg:-lc_p}"
+
+#define STARTFILE_SPEC  \
+  "%{pg:gcrt0.o%s}\
+   %{!pg:%{p:mcrt0.o%s}\
+         %{!p:%{static:scrt0.o%s}%{!static:crt0.o%s}}}"
 
 #undef SIZE_TYPE
 #define SIZE_TYPE "unsigned int"

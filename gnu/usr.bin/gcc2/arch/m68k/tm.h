@@ -1,4 +1,4 @@
-/*	$Id: tm.h,v 1.5 1994/12/23 21:16:58 pk Exp $ */
+/*	$Id: tm.h,v 1.6 1995/06/05 01:59:23 pk Exp $ */
 
 #include <machine/ansi.h>
 #include "m68k/m68k.h"
@@ -29,7 +29,8 @@
    %{!static:%{!shared:-dp}}"
 
 #define STARTFILE_SPEC  \
-  "%{!shared:%{pg:gcrt0.o%s}%{!pg:%{p:mcrt0.o%s}%{!p:crt0.o%s}}}"
+  "%{!shared:%{pg:gcrt0.o%s}%{!pg:%{p:mcrt0.o%s}\
+   %{!p:%{static:scrt0.o%s}%{!static:crt0.o%s}}}}"
 
 /* No more libg.a; no libraries if making shared object */
 
