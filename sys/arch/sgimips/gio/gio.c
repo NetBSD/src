@@ -1,4 +1,4 @@
-/*	$NetBSD: gio.c,v 1.13 2004/01/10 02:26:44 sekiya Exp $	*/
+/*	$NetBSD: gio.c,v 1.14 2004/01/11 01:48:46 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.13 2004/01/10 02:26:44 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.14 2004/01/11 01:48:46 sekiya Exp $");
 
 #include "opt_ddb.h"
 
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.13 2004/01/10 02:26:44 sekiya Exp $");
 
 #include <sgimips/gio/gioreg.h>
 #include <sgimips/gio/giovar.h>
-#include <sgimips/gio/giodevs.h>
+#include <sgimips/gio/giodevs_data.h>
 
 #include "locators.h"
 #include "newport.h"
