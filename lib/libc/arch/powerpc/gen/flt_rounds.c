@@ -1,4 +1,4 @@
-/*	$NetBSD: flt_rounds.c,v 1.2 1998/02/03 01:30:43 mycroft Exp $	*/
+/*	$NetBSD: flt_rounds.c,v 1.3 1998/08/09 12:43:33 tsubai Exp $	*/
 
 #include <float.h>
 
@@ -15,6 +15,6 @@ __flt_rounds()
 	double tmp;
 	int x;
 
-	asm("mffs %0; stfiwx %0,0,%1" : "=f"(tmp): "b"(&x));
+	__asm("mffs %0; stfiwx %0,0,%1" : "=f"(tmp): "b"(&x));
 	return map[x & 0x03];
 }
