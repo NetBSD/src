@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_et.c,v 1.20 2002/09/27 15:35:52 provos Exp $	*/
+/*	$NetBSD: grfabs_et.c,v 1.21 2003/02/02 18:12:25 thomas Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -112,7 +112,7 @@ struct grfabs_sw et_vid_sw = {
 
 static struct grfvideo_mode hw_modes[] = {
     { 
-	0, "", 25175000,		/* num, descr, pix-clock	*/
+	0, "", 22450000,		/* num, descr, pix-clock	*/
 	640, 400, 4,			/* width, height, depth		*/
 	632/8, 672/8, 688/8, 808/8, 768/8,/* HBS, HBE, HSS, HSE, HT	*/
 	399, 450, 408, 413, 449		/* VBS, VBE, VSS, VSE, VT	*/
@@ -166,7 +166,7 @@ struct grfabs_et_priv {
 
 /*
  * XXX: called from ite console init routine.
- * Initialize list of possible video modes.
+ * Initialize list of posible video modes.
  */
 void
 et_probe_video(modelp)
@@ -444,7 +444,27 @@ et_probe_card()
 
 	if (PCI_PRODUCT(id) ==  PCI_PRODUCT_TSENG_ET6000)
 		et_priv.board_type = BT_ET6000;
-	else et_priv.board_type = BT_ET4000;
+	else {
+#ifdef ET4000_HAS_2MB_MEM
+		volatile u_char *ba;
+#endif
+
+		et_priv.board_type = BT_ET4000;
+
+#ifdef ET4000_HAS_2MB_MEM
+		/* set KEY to access the tseng private registers */
+		ba = (volatile caddr_t)pci_io_addr;
+		vgaw(ba, GREG_HERCULESCOMPAT, 0x03);
+		vgaw(ba, GREG_DISPMODECONTROL, 0xa0);
+
+		/* enable memory interleave */
+		WCrt(ba, CRT_ID_RASCAS_CONFIG, 0xa0);
+		WCrt(ba, CRT_ID_VIDEO_CONFIG2, 0x89);
+
+		/* release KEY */
+		vgaw(ba, GREG_DISPMODECONTROL, 0x00);
+#endif
+	}
 
 	et_priv.pci_tag = tag;
 
