@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.3 1999/01/27 21:30:08 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.4 1999/01/31 13:54:24 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -36,6 +36,7 @@
 #include <sys/device.h>
 #include <sys/disk.h>
 #include <sys/disklabel.h>
+#include <sys/disklabel_mbr.h>
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
@@ -167,7 +168,7 @@ mbr_to_label(dev, strat, bno, lp, pnpart, osdep, off)
 	mp = (struct mbr_partition *)(bp->b_data + MBR_PARTOFF);
 	for (i = 0; i < NMBRPART; i++, mp++) {
 		if (get_long(&mp->mbrp_size)) {
-			switch (mp->mbrp_type) {
+			switch (mp->mbrp_typ) {
 			case MBR_PTYPE_EXT:
 				if (*pnpart < MAXPARTITIONS) {
 					pp = lp->d_partitions + *pnpart;
