@@ -1,4 +1,4 @@
-/*	$NetBSD: mln_ipl.c,v 1.12 1997/07/06 22:13:49 thorpej Exp $	*/
+/*	$NetBSD: mln_ipl.c,v 1.13 1997/07/06 22:19:43 thorpej Exp $	*/
 
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
@@ -118,17 +118,17 @@ extern int vd_unuseddev __P((void));
 extern struct cdevsw cdevsw[];
 extern int nchrdev;
 
-static int iplaction(lkmtp, cmd)
-struct lkm_table *lkmtp;
-int cmd;
+static int
+iplaction(lkmtp, cmd)
+	struct lkm_table *lkmtp;
+	int cmd;
 {
 	int i;
 	struct lkm_dev *args = lkmtp->private.lkm_dev;
 	int err = 0;
 
-	switch (cmd)
-	{
-	case LKM_E_LOAD :
+	switch (cmd) {
+	case LKM_E_LOAD:
 		if (lkmexists(lkmtp))
 			return EEXIST;
 
@@ -147,23 +147,24 @@ int cmd;
 		printf("IP Filter: loaded into slot %d\n", ipl_major);
 #endif
 		return ipl_load();
-	case LKM_E_UNLOAD :
+	case LKM_E_UNLOAD:
 		err = ipl_unload();
 		if (!err)
 			printf("IP Filter: unloaded from slot %d\n",
-				ipl_major);
+			    ipl_major);
 		return err;
-	case LKM_E_STAT :
+	case LKM_E_STAT:
 		break;
 	default:
 		err = EIO;
 		break;
 	}
-	return 0;
+	return err;
 }
 
 
-static int ipl_remove()
+static int
+ipl_remove()
 {
 	char *name;
 	struct nameidata nd;
@@ -182,7 +183,8 @@ static int ipl_remove()
 }
 
 
-static int ipl_unload()
+static int
+ipl_unload()
 {
 	int error;
 
@@ -198,7 +200,8 @@ static int ipl_unload()
 }
 
 
-static int ipl_load()
+static int
+ipl_load()
 {
 	struct nameidata nd;
 	struct vattr vattr;
@@ -231,9 +234,10 @@ static int ipl_load()
 }
 
 
-int if_ipl_lkmentry(lkmtp, cmd, ver)
-struct lkm_table *lkmtp;
-int cmd, ver;
+int
+if_ipl_lkmentry(lkmtp, cmd, ver)
+	struct lkm_table *lkmtp;
+	int cmd, ver;
 {
 	DISPATCH(lkmtp, cmd, ver, iplaction, iplaction, iplaction);
 }
