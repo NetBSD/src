@@ -1,4 +1,4 @@
-/*	$NetBSD: serv.c,v 1.8 1996/11/06 00:11:58 pk Exp $	*/
+/*	$NetBSD: serv.c,v 1.9 1996/11/10 21:23:53 pk Exp $	*/
 
 /*
  * Copyright (c) 1989
@@ -45,7 +45,7 @@
 #if 0
 static char sccsid[] = "@(#)serv.c	5.4 (Berkeley) 1/21/94";
 #else
-static char rcsid[] = "$NetBSD: serv.c,v 1.8 1996/11/06 00:11:58 pk Exp $";
+static char rcsid[] = "$NetBSD: serv.c,v 1.9 1996/11/10 21:23:53 pk Exp $";
 #endif
 #endif /* not lint */
 
@@ -110,7 +110,7 @@ register int argc;
                         case '*':
                                 for (n = argc - 1; n > 2; n--) {
                                         pbstr(argv[n]);
-                                        putback(',');
+                                        putback(COMMA);
                                 }
                                 pbstr(argv[2]);
                                 break;
@@ -119,7 +119,7 @@ register int argc;
                                         pbstr(lquote);
                                         pbstr(argv[n]);
                                         pbstr(rquote);
-                                        putback(',');
+                                        putback(COMMA);
                                 }
 				pbstr(lquote);
                                 pbstr(argv[2]);
