@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.96.2.1.4.1 1999/07/06 11:02:36 itojun Exp $	*/
+/*	$NetBSD: machdep.c,v 1.96.2.1.4.2 1999/11/30 13:32:47 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
