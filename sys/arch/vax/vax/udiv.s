@@ -1,4 +1,4 @@
-/*	$NetBSD: udiv.s,v 1.3 2000/07/19 01:01:02 matt Exp $	*/
+/*	$NetBSD: udiv.s,v 1.4 2000/07/19 18:15:03 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -53,7 +53,7 @@
 #ifdef __ELF__
 ENTRY(__udiv, 0)
 #else
-ENTRY(udiv, 0)
+ASENTRY(udiv, 0)
 #endif
 	movl	DIVISOR,r2
 	jlss	Leasy		# big divisor: settle by comparison
