@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 2002/03/23 03:22:56 shin Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2002/03/27 13:32:08 uch Exp $
 
 IMAGESIZE=	5m
 IMAGEENDIAN=	le
@@ -8,3 +8,4 @@ MTREECONF+=	${.CURDIR}/mtree.usr.install
 IMAGEDEPENDS+=	${ARCHDIR}/dot.profile ${ARCHDIR}/termcap.vt100 \
 		${DESTDIR}/.profile ${DESTDIR}/etc/disktab \
 		${DESTDIR}/etc/spwd.db
+MAKEFS_FLAGS=	-o density=2048
