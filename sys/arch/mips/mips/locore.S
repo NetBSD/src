@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.83 1999/12/29 04:41:12 castor Exp $	*/
+/*	$NetBSD: locore.S,v 1.84 2000/01/09 08:01:54 shin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -110,7 +110,7 @@ _C_LABEL(kernel_text):
 	nop
 #endif /* R3900_CACHE_DISABLE */
 	
-#ifdef SOFTFLOAT /* No FPU; avoid touching FPU registers */
+#ifdef NOFPU /* No FPU; avoid touching FPU registers */
 	li	t0, 0				# Disable interrupts and
 	mtc0	t0, MIPS_COP_0_STATUS		# the fp coprocessor
 #ifdef HPCMIPS_L1CACHE_DISABLE
@@ -128,7 +128,7 @@ _C_LABEL(kernel_text):
 	nop					# wait for new SR
 	nop					# to be effective
 	nop
-#ifdef SOFTFLOAT /* No FPU; avoid touching FPU registers */
+#ifdef NOFPU /* No FPU; avoid touching FPU registers */
 	add	t1, zero, zero
 #else	
 	cfc1	t1, MIPS_FPU_ID			# read FPU ID register
@@ -1019,7 +1019,7 @@ LEAF_NOPROFILE(mips_read_causereg)
 END(mips_read_causereg)
 
 
-#ifndef SOFTFLOAT
+#if !defined(NOFPU) && !defined(SOFTFLOAT)
 /*
  * void switchfpregs(struct proc *old, struct proc *new)
  *
@@ -1197,8 +1197,9 @@ LEAF(savefpregs)
 	j	ra
 	mtc0	v0, MIPS_COP_0_STATUS	# Restore the status register.
 END(savefpregs)
-#endif /* !SOFTFLOAT */
+#endif /* !defined(NOFPU) && !defined(SOFTFLOAT) */
 
+#if !defined(NOFPU) || defined(SOFTFLOAT)
 /*----------------------------------------------------------------------------
  *
  * MachFPInterrupt --
@@ -1363,6 +1364,7 @@ FPReturn:
 
 #endif
 END(MachFPInterrupt)
+#endif /* !defined(NOFPU) || defined(SOFTFLOAT) */
 
 
 #ifndef DDB_TRACE

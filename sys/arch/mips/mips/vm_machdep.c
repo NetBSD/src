@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.45 1999/12/04 21:20:51 ragge Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.46 2000/01/09 08:01:55 shin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.45 1999/12/04 21:20:51 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.46 2000/01/09 08:01:55 shin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ cpu_fork(p1, p2, stack, stacksize)
 	if (p1 != curproc && p1 != &proc0)
 		panic("cpu_fork: curproc");
 #endif
-#ifndef SOFTFLOAT
+#if !defined(NOFPU) && !defined(SOFTFLOAT)
 	if (p1 == fpcurproc)
 		savefpregs(p1);
 #endif
@@ -231,7 +231,7 @@ cpu_coredump(p, vp, cred, chdr)
 
 	cpustate.frame = *(struct frame *)p->p_md.md_regs;
 	if (p->p_md.md_flags & MDP_FPUSED) {
-#ifndef SOFTFLOAT
+#if !defined(NOFPU) && !defined(SOFTFLOAT)
 		if (p == fpcurproc)
 			savefpregs(p);
 #endif
