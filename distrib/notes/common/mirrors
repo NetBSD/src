@@ -4,7 +4,7 @@
 .\"	appropriate changes to the script.
 .\"
 .Ss2 "NetBSD Mirror Site List"
-The following sites mirror NetBSD as of April 06, 1999.
+The following sites mirror NetBSD as of May 09, 1999.
 .Pp
 If you wish to become a distribution site for NetBSD, contact
 .Mt mirrors@netbsd.org .
@@ -28,7 +28,7 @@ If you wish to become a distribution site for NetBSD, contact
 "RMIT University, Melbourne" \
 "ftp://ftp.au.netbsd.org/pub/NetBSD/"
 .mirror "ftp2.au.netbsd.org" \
-"University of Queensland, Brisbane" \
+"AARNet Mirror Project, UQ, Brisbane" \
 "ftp://ftp2.au.netbsd.org/pub/NetBSD/"
 .
 .Country "Austria"
