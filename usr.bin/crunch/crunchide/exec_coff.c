@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.7 1999/11/26 13:47:53 msaitoh Exp $	*/
+/*	$NetBSD: exec_coff.c,v 1.1 1999/11/26 13:47:53 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -30,45 +30,56 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if defined(__alpha__)
-# define	NLIST_ECOFF
-# define	NLIST_ELF64
-#elif defined(__mips__)
-# define	NLIST_ELF32
-#elif defined(__powerpc__)
-# define	NLIST_ELF32
-#elif defined(__sh3__)
-# define	NLIST_COFF
-# define	NLIST_ELF32
-#elif defined(__sparc__) || defined(__i386__)
-# define	NLIST_AOUT
-# define	NLIST_ELF32
-#else
-# define	NLIST_AOUT
-/* #define	NLIST_ECOFF */
-/* #define	NLIST_ELF32 */
-/* #define	NLIST_ELF64 */
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: exec_coff.c,v 1.1 1999/11/26 13:47:53 msaitoh Exp $");
 #endif
+ 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <errno.h>
+#include <a.out.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
-#ifdef NLIST_AOUT
-int	check_aout(int, const char *);
-int	hide_aout(int, const char *);
-#endif
-#ifdef NLIST_COFF
-int	check_coff(int, const char *);
-int	hide_coff(int, const char *);
-#endif
-#ifdef NLIST_ECOFF
-int	check_ecoff(int, const char *);
-int	hide_ecoff(int, const char *);
-#endif
-#ifdef NLIST_ELF32
-int	check_elf32(int, const char *);
-int	hide_elf32(int, const char *);
-#endif
-#ifdef NLIST_ELF64
-int	check_elf64(int, const char *);
-int	hide_elf64(int, const char *);
-#endif
+#include "extern.h"
 
-int	in_keep_list(const char *symbol);
+#if defined(NLIST_COFF)
+
+#include <machine/exec_coff.h>	/* XXX DIRTY HACK */
+
+int
+check_coff(int fd, const char *filename)
+{
+	struct coff_filehdr fh;
+	struct stat sb;
+
+	/*
+	 * Check the header to make sure it's an COFF file (of the
+	 * appropriate size).
+	 */
+	if (fstat(fd, &sb) == -1)
+		return 0;
+	if (sb.st_size > SIZE_T_MAX)
+		return 0;
+	if (read(fd, &fh, sizeof fh) != sizeof fh)
+		return 0;
+
+	if (COFF_BADMAG(&fh))
+		return 0;
+
+	return 1;
+}
+
+int
+hide_coff(int fd, const char *filename)
+{
+
+	fprintf(stderr, "%s: COFF executables not currently supported\n",
+		filename);
+	return 1;
+}
+
+#endif /* defined(NLIST_COFF) */
