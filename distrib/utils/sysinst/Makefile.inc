@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.6 1999/12/27 20:31:32 garbled Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2000/03/24 21:56:04 thorpej Exp $
 #
 # Makefile for install
+
+.include <bsd.own.mk>		# for mk.conf
 
 PROG=sysinst
 
@@ -16,6 +18,14 @@ VER != sh ${.CURDIR}/../../../../../sys/conf/osrelease.sh
 
 CPPFLAGS+= -I. -I${.CURDIR}/../.. -I${.CURDIR} \
 	 -DREL=\"${VER}\" -DMACH=\"${MACHINE}\"
+
+.if defined(SYSINST_FTP_HOST)
+CPPFLAGS+=-DFTP_HOST="${SYSINST_FTP_HOST}"
+.endif
+
+.if defined(SYSINST_FTP_DIR)
+CPPFLAGS+=-DFTP_DIR="${SYSINST_FTP_DIR}"
+.endif
 
 MKMAN=no
 
