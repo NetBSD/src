@@ -1,6 +1,6 @@
 #if !defined(lint) && !defined(SABER)
 static char sccsid[] = "@(#)ns_req.c	4.47 (Berkeley) 7/1/91";
-static char rcsid[] = "$Id: ns_req.c,v 1.2 1997/04/13 10:51:41 mrg Exp $";
+static char rcsid[] = "$Id: ns_req.c,v 1.3 1997/04/21 05:54:02 mrg Exp $";
 #endif /* not lint */
 
 /*
@@ -257,7 +257,8 @@ ns_req(msg, msglen, buflen, qsp, from, dfd)
 		if (sendto(dfd, (char*)msg, cp - msg, 0,
 			   (struct sockaddr *)from,
 			   sizeof(*from)) < 0) {
-			if (!haveComplained((char*)from->sin_addr.s_addr,
+			if (!haveComplained((char*)(long)
+					    from->sin_addr.s_addr,
 					    sendtoStr))
 				syslog(LOG_INFO,
 				       "ns_req: sendto(%s): %m",
@@ -1621,8 +1622,8 @@ doaddinfo(hp, msg, msglen)
 					NULL, 0, QUERY);
 		}
 		if (foundcname) {
-			if (!haveComplained((char*)nhash(ap->a_dname),
-					    (char*)nhash(ap->a_rname))) {
+			if (!haveComplained((char*)(long)nhash(ap->a_dname),
+					    (char*)(long)nhash(ap->a_rname))) {
 				syslog(LOG_DEBUG,
 				       "\"%s %s %s\" points to a CNAME (%s)",
 				       ap->a_rname, p_class(ap->a_class),

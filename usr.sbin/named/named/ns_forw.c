@@ -1,6 +1,6 @@
 #if !defined(lint) && !defined(SABER)
 static char sccsid[] = "@(#)ns_forw.c	4.32 (Berkeley) 3/3/91";
-static char rcsid[] = "$Id: ns_forw.c,v 1.2 1997/04/13 10:51:30 mrg Exp $";
+static char rcsid[] = "$Id: ns_forw.c,v 1.3 1997/04/21 05:53:58 mrg Exp $";
 #endif /* not lint */
 
 /*
@@ -184,7 +184,8 @@ ns_forw(nsp, msg, msglen, fp, qsp, dfd, qpp, dname, class, type, np)
 #endif
 	if (sendto(ds, (char *)msg, msglen, 0, (struct sockaddr *)nsa,
 		   sizeof(struct sockaddr_in)) < 0) {
-		if (!haveComplained((char*)nsa->sin_addr.s_addr, sendtoStr))
+		if (!haveComplained((char *)(long)nsa->sin_addr.s_addr,
+		    sendtoStr))
 			syslog(LOG_INFO, "ns_forw: sendto([%s].%d): %m",
 			       inet_ntoa(nsa->sin_addr), ntohs(nsa->sin_port));
 		nameserIncr(nsa->sin_addr, nssSendtoErr);
