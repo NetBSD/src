@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.116 2000/01/25 08:32:03 augustss Exp $	*/
+/*	$NetBSD: conf.c,v 1.117 2000/02/25 02:17:45 groo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -129,6 +129,15 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
 	(dev_type_mmap((*))) enodev }
+
+/* open, close, ioctl */
+#define cdev_lm78_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, seltrue, \
+	(dev_type_mmap((*))) enodev }
+
+cdev_decl(lm);
 
 cdev_decl(cn);
 cdev_decl(ctty);
@@ -360,6 +369,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ugen_init(NUGEN,ugen),	/* 64: USB generic driver */
 	cdev_mouse_init(NWSMUX,	wsmux), /* 65: ws multiplexor */
 	cdev_tty_init(NUCOM, ucom),	/* 66: USB tty */
+	cdev_lm78_init(1,lm),		/* 67: LM7[89] */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
