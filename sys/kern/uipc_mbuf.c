@@ -536,7 +536,7 @@ m_copym0(struct mbuf *m, int off0, int len, int wait, int deep)
 		copyhdr = 1;
 	while (off > 0) {
 		if (m == 0)
-			panic("m_copym: m == 0");
+			panic("m_copym: m == 0, off %d", off);
 		if (off < m->m_len)
 			break;
 		off -= m->m_len;
@@ -547,7 +547,8 @@ m_copym0(struct mbuf *m, int off0, int len, int wait, int deep)
 	while (len > 0) {
 		if (m == 0) {
 			if (len != M_COPYALL)
-				panic("m_copym: m == 0 and not COPYALL");
+				panic("m_copym: m == 0, len %d [!COPYALL]",
+				    len);
 			break;
 		}
 		MGET(n, wait, m->m_type);
@@ -671,10 +672,10 @@ m_copydata(struct mbuf *m, int off, int len, void *vp)
 	char *cp = vp;
 
 	if (off < 0 || len < 0)
-		panic("m_copydata");
+		panic("m_copydata: off %d, len %d", off, len);
 	while (off > 0) {
 		if (m == 0)
-			panic("m_copydata");
+			panic("m_copydata: m == 0, off %d", off);
 		if (off < m->m_len)
 			break;
 		off -= m->m_len;
@@ -682,7 +683,7 @@ m_copydata(struct mbuf *m, int off, int len, void *vp)
 	}
 	while (len > 0) {
 		if (m == 0)
-			panic("m_copydata");
+			panic("m_copydata: m == 0, len %d", len);
 		count = min(m->m_len - off, len);
 		memcpy(cp, mtod(m, caddr_t) + off, count);
 		len -= count;
