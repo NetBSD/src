@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.43 2001/01/27 04:53:14 itojun Exp $	*/
+/*	$NetBSD: route.c,v 1.44 2001/02/04 21:09:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.43 2001/01/27 04:53:14 itojun Exp $");
+__RCSID("$NetBSD: route.c,v 1.44 2001/02/04 21:09:07 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -132,12 +132,16 @@ int	iflag, verbose, aflen = sizeof (struct sockaddr_in);
 int	locking, lockrest, debugonly;
 struct	rt_metrics rt_metrics;
 u_int32_t  rtm_inits;
+short ns_nullh[] = {0,0,0};
+short ns_bh[] = {-1,-1,-1};
+
+extern char *__progname;
+
 
 static void
 usage(cp)
 	char *cp;
 {
-	extern char *__progname;
 	if (cp)
 		warnx("botched keyword: %s", cp);
 	(void) fprintf(stderr,
@@ -1075,7 +1079,6 @@ getaddr(which, s, hpp)
 
 	case AF_NS:
 		if (which == RTA_DST) {
-			extern short ns_bh[3];
 			struct sockaddr_ns *sms = &(so_mask.sns);
 			memset(sms, 0, sizeof(*sms));
 			sms->sns_family = 0;
@@ -1205,8 +1208,6 @@ x25_makemask()
 	return 0;
 }
 
-short ns_nullh[] = {0,0,0};
-short ns_bh[] = {-1,-1,-1};
 
 char *
 ns_print(sns)
