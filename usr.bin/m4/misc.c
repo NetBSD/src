@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.9 1997/12/29 19:52:57 cgd Exp $	*/
+/*	$NetBSD: misc.c,v 1.10 2000/05/08 00:52:18 tv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.9 1997/12/29 19:52:57 cgd Exp $");
+__RCSID("$NetBSD: misc.c,v 1.10 2000/05/08 00:52:18 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -248,6 +248,6 @@ basename(s)
 void
 usage()
 {
-	fprintf(stderr, "usage: m4 [-Dname[=val]] [-Uname]\n");
+	fprintf(stderr, "usage: m4 [-P] [-Dname[=val]] [-Uname]\n");
 	exit(1);
 }
