@@ -1,4 +1,4 @@
-/*	$NetBSD: rndctl.c,v 1.4 1999/02/28 17:42:37 explorer Exp $	*/
+/*	$NetBSD: rndctl.c,v 1.5 1999/03/30 17:32:44 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997 Michael Graff.
@@ -66,7 +66,9 @@ void do_list(int, u_int32_t, char *);
 static void
 usage(void)
 {
-	errx(1, "Usage:  rndctl [-CEce | -l] [-d name | -t type]");
+	fprintf(stderr, "usage: rndctl -CEce [-t devtype] [-d devname]\n");
+	fprintf(stderr, "       rndctl -l [-t devtype] [-d devname]\n");
+	exit(1);
 }
 
 u_int32_t
