@@ -1,4 +1,4 @@
-/*	$NetBSD: nl.c,v 1.2 1999/02/16 17:31:25 kleink Exp $	*/
+/*	$NetBSD: nl.c,v 1.3 1999/04/23 14:43:05 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1999\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: nl.c,v 1.2 1999/02/16 17:31:25 kleink Exp $");
+__RCSID("$NetBSD: nl.c,v 1.3 1999/04/23 14:43:05 kleink Exp $");
 #endif    
 
 #include <errno.h>
@@ -141,7 +141,8 @@ main(argc, argv)
 	char *argv[];
 {
 	int c;
-	long val, uval;
+	long val;
+	unsigned long uval;
 	char *ep;
 	size_t intbuffersize;
 
