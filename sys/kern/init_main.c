@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.192.2.2 2001/08/25 06:16:46 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.192.2.3 2001/09/07 15:54:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -77,6 +77,7 @@
 #include <sys/reboot.h>
 #include <sys/user.h>
 #include <sys/sysctl.h>
+#include <sys/event.h>
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
@@ -201,6 +202,9 @@ main(void)
 	 * allocate mbufs or mbuf clusters during autoconfiguration.
 	 */
 	mbinit();
+
+	/* Initialize kqueues. */
+	kqueue_init();
 
 	/* Initialize sockets. */
 	soinit();

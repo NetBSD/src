@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.1.1.1.2.1 2001/07/10 13:42:29 lukem Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.1.1.1.2.2 2001/09/07 15:54:17 thorpej Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -77,7 +77,6 @@ static void	knote_attach(struct knote *kn, struct filedesc *fdp);
 static void	knote_drop(struct knote *kn, struct proc *p);
 static void	knote_enqueue(struct knote *kn);
 static void	knote_dequeue(struct knote *kn);
-static void	knote_init(void);
 static struct knote *knote_alloc(void);
 static void	knote_free(struct knote *kn);
 
@@ -95,6 +94,7 @@ static struct filterops proc_filtops =
 static struct filterops file_filtops =
 	{ 1, filt_fileattach, NULL, NULL };
 
+struct pool	kqueue_pool;
 struct pool	knote_pool;
 
 #define	KNOTE_ACTIVATE(kn)						\
@@ -139,6 +139,21 @@ static int		user_kfiltermaxc;	/* max size so far */
 
 static struct kfilter *kfilter_byname(const char *);
 static struct kfilter *kfilter_byfilter(uint32_t);
+
+/*
+ * kqueue_init:
+ *
+ *	Initialize the kqueue/knote facility.
+ */
+void
+kqueue_init(void)
+{
+
+	pool_init(&kqueue_pool, sizeof(struct kqueue), 0, 0, 0, "kqueuepl",
+	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_KEVENT);
+	pool_init(&knote_pool, sizeof(struct knote), 0, 0, 0, "knotepl",
+	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_KEVENT);
+}
 
 /*
  * Find kfilter entry by name, or NULL if not found.
@@ -442,8 +457,8 @@ sys_kqueue(struct proc *p, void *v, register_t *retval)
 	fp->f_flag = FREAD | FWRITE;
 	fp->f_type = DTYPE_KQUEUE;
 	fp->f_ops = &kqueueops;
-	MALLOC(kq, struct kqueue *, sizeof(struct kqueue), M_KEVENT, M_WAITOK);
-	memset((char *)kq, 0, (u_long)sizeof(struct kqueue));
+	kq = pool_get(&kqueue_pool, PR_WAITOK);
+	memset((char *)kq, 0, sizeof(struct kqueue));
 	TAILQ_INIT(&kq->kq_head);
 	fp->f_data = (caddr_t)kq;	/* store the kqueue with the fp */
 	*retval = fd;
@@ -1029,7 +1044,7 @@ kqueue_close(struct file *fp, struct proc *p)
 			}
 		}
 	}
-	free(kq, M_KEVENT);
+	pool_put(&kqueue_pool, kq);
 	fp->f_data = NULL;
 
 	return (0);
@@ -1229,31 +1244,11 @@ knote_dequeue(struct knote *kn)
 }
 
 /*
- * Initialise pool for knotes.
- */
-static void
-knote_init(void)
-{
-				/* XXXLUKEM: how to initialise this? */
-
-	pool_init(&knote_pool, sizeof(struct knote), 0, 0, 0, "knotepl",
-	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_KEVENT);
-}
-
-/*
  * Create a new knote.
  */
 static struct knote *
 knote_alloc(void)
 {
-	static int knote_pool_initialised;
-
-	if (! knote_pool_initialised) {	
-				/* initialise pool if necessary */
-				/* XXXLUKEM: is there a better way? */
-		knote_init();
-		knote_pool_initialised++;
-	}
 
 	return (pool_get(&knote_pool, PR_WAITOK));
 }
