@@ -1,0 +1,185 @@
+#	$NetBSD: files.sun2,v 1.1 2001/03/29 21:07:58 fredette Exp $
+
+#
+# sun2-specific configuration info
+#
+
+# maxpartitions must be first item in files.${ARCH}
+maxpartitions 8
+
+maxusers 2 8 64
+
+# Standard stuff
+file arch/sun2/sun2/bus_subr.c
+file arch/sun2/sun2/locore2.c
+file arch/sun2/sun2/machdep.c
+file arch/sun2/sun2/pmap.c
+file arch/sun2/sun2/control.c
+file arch/sun2/sun2/ctrlsp.S
+file arch/sun2/sun2/dvma.c
+file arch/sun2/sun2/mem.c
+file arch/sun2/sun2/enable.c
+file arch/sun2/sun2/autoconf.c
+file arch/sun2/sun2/conf.c
+file arch/sun2/sun2/db_machdep.c		ddb
+file arch/sun2/sun2/db_memrw.c  		ddb | kgdb
+file arch/sun2/sun2/disksubr.c
+file arch/sun2/sun2/fpu.c
+file arch/sun2/sun2/isr.c
+file arch/sun2/sun2/kgdb_machdep.c 		kgdb
+file arch/sun2/sun2/leds.c
+file arch/sun2/sun2/idprom.c
+file arch/sun2/sun2/stub.c
+file arch/sun2/sun2/sunmon.c
+file arch/sun2/sun2/sys_machdep.c
+file arch/sun2/sun2/trap.c
+file arch/sun2/sun2/vector.c
+file arch/sun2/sun2/vm_machdep.c
+
+include "arch/m68k/fpe/files.fpe"
+
+# Console support
+#file arch/sun2/sun2/cninit.c
+file dev/cons.c
+
+#
+# Bus types
+#
+
+device mainbus {}
+attach mainbus at root
+file	arch/sun2/sun2/mainbus.c
+
+# On-board I/O space (required).
+device obio {addr = -1, [ipl = -1], [vect = -1]}
+attach obio at mainbus
+file arch/sun2/sun2/obio.c
+
+# On-board MEMory space (required).
+device obmem {addr = -1, [ipl = -1], [vect = -1]}
+attach obmem at mainbus
+file arch/sun2/sun2/obmem.c		obmem
+
+# MultiBus MEMory space (optional).
+device mbmem {addr = -1, [ipl = -1], [vect = -1]}
+attach mbmem at mainbus
+file arch/sun2/sun2/mbmem.c		mbmem
+
+# MultiBus I/O space (optional).
+device mbmem {addr = -1, [ipl = -1], [vect = -1]}
+attach mbmem at mainbus
+file arch/sun2/sun2/mbio.c		mbio
+
+# VME
+include "dev/vme/files.vme"
+device sun2vme: vmebus
+attach sun2vme at mainbus with vme_mainbus
+
+#
+# Machine-independent SCSI drivers
+#
+include "dev/scsipi/files.scsipi"
+
+#
+# Devices and attributes needed below
+#
+
+device sc: scsi, sunscpal
+file	arch/sun2/dev/sc.c		sc
+
+#
+# On-Board I/O (OBIO), in attach order.
+# The following are all required.
+#
+
+# Zilog Serial (ZS)
+device zs {channel = -1}
+attach zs at obio with zs_obio
+attach zs at obmem with zs_obmem
+file arch/sun/dev/zs.c			zs needs-count
+file dev/ic/z8530sc.c			zs
+
+# AMD, Intersil or Mostek clock
+device clock
+attach clock at obio
+file arch/sun2/sun2/clock.c
+file dev/clock_subr.c
+
+# National Semiconductor Time-Of-Day clock
+device tod
+attach tod at obio
+file arch/sun2/sun2/tod.c
+
+# These are optional:
+
+# Intel Ethernet
+attach ie at obio with ie_obio
+file	arch/sun2/dev/if_ie_obio.c	ie_obio
+
+#
+# On-Board MEMory (OBMEM)
+#
+
+attach bwtwo at obio with bwtwo_obio
+file	arch/sun2/dev/bwtwo_obio.c	bwtwo_obio & obio
+
+#
+# MultiBus MEMory (MBMEM)
+#
+
+attach ie at mbmem with ie_mbmem
+file	arch/sun2/dev/if_ie_mbmem.c	ie_mbmem
+
+attach sc at mbmem with sc_mbmem
+file	arch/sun2/dev/sc_mbmem.c	sc_mbmem
+
+#
+# Console (zs) related stuff
+#
+
+device zstty: tty
+attach zstty at zs
+file dev/ic/z8530tty.c			zstty needs-flag
+file arch/sun2/dev/zs_kgdb.c		kgdb
+
+define zsevent
+file dev/sun/event.c			zsevent
+
+device kbd: zsevent
+attach kbd at zs with kbd_zs
+file dev/sun/kbd_zs.c			kbd_zs
+file dev/sun/kbd.c			kbd needs-flag
+file dev/sun/kbd_tables.c 		kbd
+file arch/sun2/dev/kd.c 		kbd
+
+device ms: zsevent
+attach ms at zs with ms_zs
+file dev/sun/ms_zs.c			ms_zs
+file dev/sun/ms.c			ms needs-flag
+
+
+# Memory Disk for boot tape
+file arch/sun2/dev/md_root.c		memory_disk_hooks
+
+# Compatibility modules
+
+# SunOS Binary Compatibility (COMPAT_SUNOS)
+include "compat/sunos/files.sunos"
+file	arch/m68k/m68k/sunos_machdep.c	compat_sunos
+
+# SVR4 Binary Compatibility (COMPAT_SVR4)
+include "compat/svr4/files.svr4"
+
+# Linux binary compatibility (COMPAT_LINUX)
+include "compat/linux/files.linux"
+include "compat/linux/arch/m68k/files.linux_m68k"
+
+# OSS audio driver compatibility
+include "compat/ossaudio/files.ossaudio"
+
+# Major numbers for root/swap device configuration
+major	{xy=3}	# Xylogics 450 and 451
+major	{sd=7}	# SCSI disk
+major	{xd=10}	# Xylogics 7053
+major	{md=13}	# Memory disk (for mini-kernel)
+major	{raid=25} # RAIDframe
