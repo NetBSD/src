@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.23 1996/12/04 03:54:04 mycroft Exp $	*/
+/*	$NetBSD: tape.c,v 1.24 1996/12/26 17:35:35 cjs Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.6 (Berkeley) 9/13/94";
 #else
-static char rcsid[] = "$NetBSD: tape.c,v 1.23 1996/12/04 03:54:04 mycroft Exp $";
+static char rcsid[] = "$NetBSD: tape.c,v 1.24 1996/12/26 17:35:35 cjs Exp $";
 #endif
 #endif /* not lint */
 
@@ -327,7 +327,7 @@ again:
 			    "Unless you know which volume your",
 			    " file(s) are on you should start\n",
 			    "with the last volume and work",
-			    " towards towards the first.\n");
+			    " towards the first.\n");
 		} else {
 			fprintf(stderr, "You have read volumes");
 			strcpy(buf, ": ");
