@@ -1,0 +1,22 @@
+# $NetBSD: md.x86_64,v 1.1 2003/03/08 20:49:14 fvdl Exp $
+./usr/X11R6/man/cat3/XF86VidMode.0
+./usr/X11R6/man/cat3/XF86VidModeDeleteModeLine.0
+./usr/X11R6/man/cat3/XF86VidModeGetAllModeLines.0
+./usr/X11R6/man/cat3/XF86VidModeGetDotClocks.0
+./usr/X11R6/man/cat3/XF86VidModeGetGamma.0
+./usr/X11R6/man/cat3/XF86VidModeGetGammaRamp.0
+./usr/X11R6/man/cat3/XF86VidModeGetGammaRampSize.0
+./usr/X11R6/man/cat3/XF86VidModeGetModeLine.0
+./usr/X11R6/man/cat3/XF86VidModeGetMonitor.0
+./usr/X11R6/man/cat3/XF86VidModeGetViewPort.0
+./usr/X11R6/man/cat3/XF86VidModeLockModeSwitch.0
+./usr/X11R6/man/cat3/XF86VidModeModModeLine.0
+./usr/X11R6/man/cat3/XF86VidModeQueryExtension.0
+./usr/X11R6/man/cat3/XF86VidModeQueryVersion.0
+./usr/X11R6/man/cat3/XF86VidModeSetClientVersion.0
+./usr/X11R6/man/cat3/XF86VidModeSetGamma.0
+./usr/X11R6/man/cat3/XF86VidModeSetGammaRamp.0
+./usr/X11R6/man/cat3/XF86VidModeSetViewPort.0
+./usr/X11R6/man/cat3/XF86VidModeSwitchMode.0
+./usr/X11R6/man/cat3/XF86VidModeSwitchToMode.0
+./usr/X11R6/man/cat3/XF86VidModeValidateModeLine.0
