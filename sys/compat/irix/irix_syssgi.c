@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.c,v 1.7 2001/12/08 19:29:03 manu Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.8 2001/12/22 09:35:11 manu Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.7 2001/12/08 19:29:03 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.8 2001/12/22 09:35:11 manu Exp $");
+
+#include "opt_ddb.h"
 
 #ifndef ELFSIZE
 #define ELFSIZE 32
@@ -152,6 +154,11 @@ irix_sys_syssgi(p, v, retval)
 	case IRIX_SGI_SYSCONF:		/* POSIX sysconf */
 		arg1 = SCARG(uap, arg1); /* system variable name */
 		return irix_syssgi_sysconf((int)arg1, p, retval);	
+		break;
+
+	case IRIX_SGI_RXEV_GET:		/* Trusted IRIX call */
+		/* Undocumented (?) and unimplemented */
+		return EINVAL;
 		break;
 
 	default:
@@ -269,7 +276,7 @@ irix_syssgi_mapelf(fd, ph, count, p, retval)
 			printf("pht->p_align = 0x%lx\n", (long)pht->p_align);
 #endif
 			NEW_VMCMD2(&vcset, pht->p_align < PAGE_SIZE ?
-			    vmcmd_map_readvn : vmcmd_map_pagedvn, psize, 
+			    vmcmd_map_readvn : vmcmd_map_pagedvn, psize,
 			    uaddr, vp, offset, prot, flags);
 		}
 		if (psize < size) {
@@ -314,8 +321,10 @@ irix_syssgi_mapelf(fd, ph, count, p, retval)
 	printf("psize = 0x%lx, rm = 0x%lx, rf = 0x%lx\n",
 	    psize, rm, rf);
 #endif
-			error = (*vcp->ev_proc)(p, vcp);
+			/* Sleeping here seems to trigger some bugs */
+			/* (void)tsleep ((void *)&vcp, 0, NULL, 10); */
 
+			error = (*vcp->ev_proc)(p, vcp);
 			if (vcp->ev_flags & VMCMD_BASE)
 			base_vcp = vcp;
 		}
@@ -370,6 +379,15 @@ irix_syssgi_sysconf(name, p, retval)
 		break;
 	case IRIX_SC_SAVED_IDS:
 		*retval = 1;
+		return 0;
+		break;
+	/* Trusted IRIX capabilities are unsupported */
+	case IRIX_SC_ACL:	/* ACcess Lists */
+	case IRIX_SC_AUDIT:	/* Audit */
+	case IRIX_SC_INF:	/* Information labels */
+	case IRIX_SC_MAC:	/* Mandatory Access Control */
+	case IRIX_SC_CAP:	/* Capabilities */
+		*retval = 0;
 		return 0;
 		break;
 	case IRIX_SC_PAGESIZE:
