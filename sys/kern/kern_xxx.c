@@ -103,6 +103,41 @@ sethostname(p, uap, retval)
 }
 
 /* ARGSUSED */
+getdomainname(p, uap, retval)
+	struct proc *p;
+	struct args {
+		char	*domainname;
+		u_int	len;
+	} *uap;
+	int *retval;
+{
+	if (uap->len > domainnamelen + 1)
+		uap->len = domainnamelen + 1;
+	return (copyout((caddr_t)domainname, (caddr_t)uap->domainname, uap->len));
+}
+
+/* ARGSUSED */
+setdomainname(p, uap, retval)
+	struct proc *p;
+	struct args {
+		char	*domainname;
+		u_int	len;
+	} *uap;
+	int *retval;
+{
+	int error;
+
+	if (error = suser(p->p_ucred, &p->p_acflag))
+		return (error);
+	if (uap->len > sizeof (domainname) - 1)
+		return EINVAL;
+	domainnamelen = uap->len;
+	error = copyin((caddr_t)uap->domainname, domainname, uap->len);
+	domainname[domainnamelen] = 0;
+	return (error);
+}
+
+/* ARGSUSED */
 reboot(p, uap, retval)
 	struct proc *p;
 	struct args {
