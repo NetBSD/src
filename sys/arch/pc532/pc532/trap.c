@@ -432,19 +432,24 @@ if (code == -1 && p->p_pid == 1) {
 	    (error = copyin(params, (caddr_t)args, (u_int)i))) {
 		frame.sf_reg[R0] = error;
 		frame.sf_psr |= PSL_C;	
+#ifdef SYSCALL_DEBUG
+		scdebug_call(p, code, callp->sy_narg, args);
+#endif
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_SYSCALL))
 			ktrsyscall(p->p_tracep, code, callp->sy_narg, &args);
 #endif
 		goto done;
 	}
+#ifdef SYSCALL_DEBUG
+	scdebug_call(p, code, callp->sy_narg, args);
+#endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
 		ktrsyscall(p->p_tracep, code, callp->sy_narg, &args);
 #endif
 	rval[0] = 0;
 	rval[1] = 0;
-/*pg("%d. s %d\n", p->p_pid, code);*/
 	error = (*callp->sy_call)(p, args, rval);
 	if (error == ERESTART)
 		frame.sf_pc = opc;
@@ -503,6 +508,9 @@ done:
 		}
 	}
 	curpri = p->p_pri;
+#ifdef SYSCALL_DEBUG
+	scdebug_ret(p, code, error, rval[0]);
+#endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p->p_tracep, code, error, rval[0]);
