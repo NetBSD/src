@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.107 2003/08/07 16:33:49 agc Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.108 2003/08/26 16:40:10 pk Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.107 2003/08/07 16:33:49 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.108 2003/08/26 16:40:10 pk Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -640,6 +640,7 @@ nfs_write(v)
 				 * backout size and free pages past eof.
 				 */
 				np->n_size = oldsize;
+				simple_lock(&vp->v_interlock);
 				(void)VOP_PUTPAGES(vp, round_page(vp->v_size),
 				    0, PGO_SYNCIO | PGO_FREE);
 			}
