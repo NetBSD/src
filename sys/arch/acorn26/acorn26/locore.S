@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.4 2003/05/20 10:21:29 simonb Exp $ */
+/* $NetBSD: locore.S,v 1.5 2003/05/31 00:36:46 kristerw Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -49,6 +49,9 @@
 #include "opt_ddb.h"
 
 #include "fiq.h"
+	
+/* LINTSTUB: include <sys/types.h> */
+/* LINTSTUB: include <machine/frame.h> */
 	
 /*
  * MODE_CHANGE_NOP should be inserted between a mode change and a
@@ -353,7 +356,7 @@ ENTRY(int_off)
 ENTRY_NP(int_off_save)
 	mov	r0, r15
 	orrs	r15, r14, #(R15_IRQ_DISABLE)
-/* LINTSTUB: Func: void int_restore(int) */
+/* LINTSTUB: Func: void int_restore(int i) */
 ENTRY_NP(int_restore)
 	tst	r0, #(R15_IRQ_DISABLE)	/* Were IRQs already disabled? */
 	biceqs	r15, r14, #(R15_IRQ_DISABLE)	/* No, enable again */
@@ -416,13 +419,13 @@ ENTRY(proc_trampoline)
 Lproc_trampoline_nofunc:
 	b	pull_trapframe
 
-/* LINTSTUB: Func: int setjmp(label_t *) */
+/* LINTSTUB: Func: int setjmp(label_t *l) */
 ENTRY(setjmp)
 	stmia	r0, {r4-r11, r13-r14}	/* Save relevant registers */
 	mov	r0, #0			/* Return 0 */
 	mov	pc, lr
 
-/* LINTSTUB: Func: void longjmp(label_t *) */
+/* LINTSTUB: Func: void longjmp(label_t *l) */
 ENTRY(longjmp)
 	ldmia	r0, {r4-r11, r13-r14}	/* Restore registers */
 	mov	r0, #1			/* Return 1 through longjmp */
@@ -450,4 +453,4 @@ _C_LABEL(intrcnt):
 	.global	_C_LABEL(eintrcnt)
 _C_LABEL(eintrcnt):
 
-RCSID("$NetBSD: locore.S,v 1.4 2003/05/20 10:21:29 simonb Exp $")
+RCSID("$NetBSD: locore.S,v 1.5 2003/05/31 00:36:46 kristerw Exp $")
