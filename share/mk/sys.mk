@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.51 1999/02/06 02:07:55 simonb Exp $
+#	$NetBSD: sys.mk,v 1.52 1999/02/12 01:10:08 lukem Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 
 unix?=		We run NetBSD.
@@ -19,11 +19,11 @@ COMPILE.S?=	${CC} ${AFLAGS} ${CPPFLAGS} -c -traditional-cpp
 LINK.S?=	${CC} ${AFLAGS} ${CPPFLAGS} ${LDFLAGS}
 
 CC?=		cc
-.if (${MACHINE_ARCH} == "arm32") || \
-    (${MACHINE_ARCH} == "i386") || \
-    (${MACHINE_ARCH} == "m68k") || \
-    (${MACHINE_ARCH} == "mips") || \
-    (${MACHINE_ARCH} == "sparc")
+.if ${MACHINE_ARCH} == "arm32" || \
+    ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "m68k" || \
+    ${MACHINE_ARCH} == "mips" || \
+    ${MACHINE_ARCH} == "sparc"
 CFLAGS?=	-O2
 .else
 CFLAGS?=	-O
