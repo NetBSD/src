@@ -1,4 +1,4 @@
-.\"	$NetBSD: rpc.rwalld.8,v 1.7 1999/03/22 18:25:47 garbled Exp $
+.\"	$NetBSD: rpc.rwalld.8,v 1.8 2002/01/15 02:27:15 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -44,21 +44,21 @@
 .Nm
 is a server which will send a message to users
 currently logged in to the system. This server
-invokes the 
+invokes the
 .Xr wall 1
 command to actually write the messages to the
 system.
 .Pp
-Messages are sent to this server by the 
+Messages are sent to this server by the
 .Xr rwall 1
 command.
 The
 .Nm
-daemon is normally invoked by 
+daemon is normally invoked by
 .Xr inetd 8 .
 .Pp
 .Nm
-uses an RPC protocol defined in 
+uses an RPC protocol defined in
 .Pa /usr/include/rpcsvc/rwall.x .
 .Sh SEE ALSO
 .Xr rwall 1 ,
