@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.16 1997/09/19 19:17:17 leo Exp $
+.\"	$NetBSD: sysctl.3,v 1.17 1997/10/17 21:30:36 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -468,6 +468,8 @@ The currently defined protocols and names are:
 .It ip	ttl	integer	yes
 .It ip	forwsrcrt	integer	yes
 .It ip	directed-broadcast	integer	yes
+.It ip	allowsrcrt	integer	yes
+.It ip	subnetsarelocal	integer	yes
 .It icmp	maskrepl	integer	yes
 .It tcp	rfc1323	integer	yes
 .It tcp	sendspace	integer	yes
@@ -499,6 +501,10 @@ the host.  This value may only be changed if the kernel security
 level is less than 1.
 .It Li ip.directed-broadcast
 Returns 1 if directed broadcast behavior is enabled for the host.
+.It Li ip.allowsrcrt
+Returns 1 if the host accepts source routed packets.
+.It Li ip.subnetsarelocal
+Returns 1 if subnets are to be considered local addresses.
 .It Li icmp.maskrepl
 Returns 1 if ICMP network mask requests are to be answered.
 .It Li tcp.rfc1323
