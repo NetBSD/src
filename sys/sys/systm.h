@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.156 2003/01/18 09:53:21 thorpej Exp $	*/
+/*	$NetBSD: systm.h,v 1.157 2003/01/24 01:42:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -328,6 +328,14 @@ void	doexechooks __P((struct proc *));
 void	*exithook_establish __P((void (*)(struct proc *, void *), void *));
 void	exithook_disestablish __P((void *));
 void	doexithooks __P((struct proc *));
+
+/*
+ * Fork hooks.  Subsystems may want to do special processing when a process
+ * forks.
+ */
+void	*forkhook_establish __P((void (*)(struct proc *, struct proc *)));
+void	forkhook_disestablish __P((void *));
+void	doforkhooks __P((struct proc *, struct proc *p));
 
 /*
  * kernel syscall tracing/debugging hooks.
