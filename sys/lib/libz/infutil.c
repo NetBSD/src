@@ -1,4 +1,4 @@
-/* $NetBSD: infutil.c,v 1.7 2004/06/30 15:44:55 christos Exp $ */
+/* $NetBSD: infutil.c,v 1.8 2004/07/01 19:04:58 christos Exp $ */
 
 /* inflate_util.c -- data and routines common to blocks and codes
  * Copyright (C) 1995-2002 Mark Adler
@@ -41,7 +41,7 @@ static const char *const zerrlist[] = {
 char *zerror(e)
 	int e;
 {
-	return __DECONST(zerrlist[e]);
+	return __UNCONST(zerrlist[e]);
 }
 #endif
 
