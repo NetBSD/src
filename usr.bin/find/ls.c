@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.12 1998/10/27 04:53:03 simonb Exp $	*/
+/*	$NetBSD: ls.c,v 1.13 1998/11/06 23:21:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)ls.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: ls.c,v 1.12 1998/10/27 04:53:03 simonb Exp $");
+__RCSID("$NetBSD: ls.c,v 1.13 1998/11/06 23:21:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,8 +76,8 @@ printlong(name, accpath, sb)
 	(void)printf("%7lu %6qd ", (u_long)sb->st_ino,
 	    (long long)sb->st_blocks);
 	(void)strmode(sb->st_mode, modep);
-	(void)printf("%s %3u %-*s %-*s ", modep, sb->st_nlink, UT_NAMESIZE,
-	    user_from_uid(sb->st_uid, 0), UT_NAMESIZE,
+	(void)printf("%s %3lu %-*s %-*s ", modep, (unsigned long)sb->st_nlink,
+	    UT_NAMESIZE, user_from_uid(sb->st_uid, 0), UT_NAMESIZE,
 	    group_from_gid(sb->st_gid, 0));
 
 	if (S_ISCHR(sb->st_mode) || S_ISBLK(sb->st_mode))
