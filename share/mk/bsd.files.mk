@@ -1,9 +1,12 @@
-#	$NetBSD: bsd.files.mk,v 1.7 1999/02/04 11:58:30 christos Exp $
+#	$NetBSD: bsd.files.mk,v 1.8 1999/02/11 13:25:42 tv Exp $
+
+# This file can be included multiple times.  It clears the definition of
+# FILES at the end so that this is possible.
 
 .PHONY:		filesinstall
 realinstall:	filesinstall
 
-.if defined(FILES)
+.if defined(FILES) && !empty(FILES)
 FILESDIR?=${BINDIR}
 FILESOWN?=${BINOWN}
 FILESGRP?=${BINGRP}
@@ -18,7 +21,6 @@ FILESNAME_${F} ?= ${FILESNAME}
 .else
 FILESNAME_${F} ?= ${F:T}
 .endif
-FILESDIR_${F} ?= ${FILESDIR}
 filesinstall:: ${DESTDIR}${FILESDIR_${F}}/${FILESNAME_${F}}
 .if !defined(UPDATE)
 .PHONY: ${DESTDIR}${FILESDIR_${F}}/${FILESNAME_${F}}
@@ -37,3 +39,5 @@ ${DESTDIR}${FILESDIR_${F}}/${FILESNAME_${F}}: ${F}
 .if !target(filesinstall)
 filesinstall::
 .endif
+
+FILES:=
