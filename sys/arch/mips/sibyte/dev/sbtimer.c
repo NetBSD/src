@@ -1,6 +1,4 @@
-/* $NetBSD: sbtimer.c,v 1.1 2002/03/05 23:46:43 simonb Exp $ */
-
-/* XXX wasabi copyright */
+/* $NetBSD: sbtimer.c,v 1.2 2002/03/06 03:25:09 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -157,7 +155,8 @@ sbtimer_clock_init(void *arg)
 
 	WRITE_REG(sc->sc_addr_cfg, 0x00);		/* XXX */
 	if (G_SYS_PLL_DIV(READ_REG(MIPS_PHYS_TO_KSEG1(A_SCD_SYSTEM_CFG))) == 0) {
-		printf("%s: PLL_DIV == 0; speeding up clock ticks for simulator\n", sc->sc_dev.dv_xname);
+		printf("%s: PLL_DIV == 0; speeding up clock ticks for simulator\n",
+		    sc->sc_dev.dv_xname);
 		WRITE_REG(sc->sc_addr_icnt, (tick/100) - 1); /* XXX */
 	} else {
 		WRITE_REG(sc->sc_addr_icnt, tick - 1);	/* XXX */
