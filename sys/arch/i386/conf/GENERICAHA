@@ -1,6 +1,8 @@
 #
 # GENERICISA -- Generic ISA machine -- distribution floppy
 #
+#	$Id: GENERICAHA,v 1.15 1993/05/07 08:33:20 cgd Exp $
+#
 
 machine		"i386"
 cpu		"i386"

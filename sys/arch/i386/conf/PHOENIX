@@ -1,6 +1,8 @@
 #
 # Compaq DeskPro/20 PHOENIX
 #
+#	$Id: PHOENIX,v 1.8 1993/05/07 08:33:30 cgd Exp $
+#
 machine		"i386"
 cpu		"i386"
 ident		PHOENIX

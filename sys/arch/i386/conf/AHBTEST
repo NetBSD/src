@@ -1,6 +1,8 @@
 #
 # SCSITEST -- Generic ISA machine -- scsi test kernel
 #
+#	$Id: AHBTEST,v 1.11 1993/05/07 08:33:02 cgd Exp $
+#
 machine		"i386"
 cpu		"i386"
 ident		SCSITEST

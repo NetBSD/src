@@ -1,5 +1,7 @@
 #
-# SCSITEST -- Generic ISA machine -- scsi test kernel
+#	SCSITEST -- Generic ISA machine -- scsi test kernel
+#
+#	$Id: BTTEST,v 1.11 1993/05/07 08:33:07 cgd Exp $
 #
 machine		"i386"
 cpu		"i386"

@@ -1,6 +1,8 @@
 #
 # TRINITY -- Mycroft's 386 box
 #
+#	$Id: TRINITY,v 1.6 1993/05/07 08:33:40 cgd Exp $
+#
 
 machine		"i386"
 cpu		"i386"

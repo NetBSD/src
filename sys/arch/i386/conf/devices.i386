@@ -1,12 +1,6 @@
 # This file tells what major numbers the various possible swap devices have.
 #
-# PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
-# --------------------         -----   ----------------------
-# CURRENT PATCH LEVEL:         1       00097
-# --------------------         -----   ----------------------
-#
-# 17 Feb 93	Julian Elischer		Add devices for new scsi disks
-# 10 Mar 93	Rodney W. Grimes	Add more devices, st and cd
+# $Id: devices.i386,v 1.3 1993/05/07 08:33:44 cgd Exp $
 #
 wd	0
 dk	1
