@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.75 2002/05/21 13:50:46 lukem Exp $
+#	$NetBSD: security,v 1.75.2.1 2002/06/10 17:42:32 tv Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -314,7 +314,7 @@ if checkyesno check_rootdotfiles; then
 				source $i
 				/bin/ls -ldgT \$path > $TMP1
 end-of-csh
-			PATH=$SAVE_PATH
+			export PATH=$SAVE_PATH
 			awk '{
 				if ($10 ~ /^\.$/) {
 					print "\tThe root path includes .";
@@ -358,7 +358,7 @@ end-of-csh
 				    's/^:/.:/;s/:$/:./;s/::/:.:/g;s/:/ /g'\`
 				/bin/ls -ldgT \$list > $TMP1
 end-of-sh
-			PATH=$SAVE_PATH
+			export PATH=$SAVE_PATH
 			awk '{
 				if ($10 ~ /^\.$/) {
 					print "\tThe root path includes .";
