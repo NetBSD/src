@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.12 1999/09/27 09:47:45 kleink Exp $	*/
+/*	$NetBSD: profile.h,v 1.13 1999/09/28 09:57:35 enami Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
 #endif
 
 #define	MCOUNT \
-MCOUNT_COMPAT
+MCOUNT_COMPAT								\
 extern void mcount __P((void)) __asm__(MCOUNT_ENTRY);			\
 void									\
 mcount()								\
