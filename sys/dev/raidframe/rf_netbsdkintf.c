@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.52 2000/02/22 16:07:02 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.53 2000/02/22 23:13:15 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -204,7 +204,9 @@ struct raidbuf {
 #define	RAIDPUTBUF(rs, cbp) pool_put(&(rs)->sc_cbufpool, cbp)
 
 /* XXX Not sure if the following should be replacing the raidPtrs above,
-   or if it should be used in conjunction with that... */
+   or if it should be used in conjunction with that... 
+   Note: Don't use sc_dev until the raidinit(0,_,_) call in 
+   rf_auto_config_set() actually passes in a real dev_t!  */
 
 struct raid_softc {
 	int     sc_flags;	/* flags */
