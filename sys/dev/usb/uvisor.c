@@ -1,4 +1,4 @@
-/*	$NetBSD: uvisor.c,v 1.4 2000/04/06 13:32:28 augustss Exp $	*/
+/*	$NetBSD: uvisor.c,v 1.5 2000/04/14 14:21:55 augustss Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -140,6 +140,8 @@ struct ucom_methods uvisor_methods = {
 	NULL,
 	NULL,
 	uvisor_close,
+	NULL,
+	NULL,
 };
 
 USB_DECLARE_DRIVER(uvisor);
@@ -237,6 +239,8 @@ USB_ATTACH(uvisor)
 	/* bulkin, bulkout set above */
 	uca.ibufsize = UVISORIBUFSIZE;
 	uca.obufsize = UVISOROBUFSIZE;
+	uca.ibufsizepad = UVISORIBUFSIZE;
+	uca.obufsizepad = UVISOROBUFSIZE;
 	uca.device = dev;
 	uca.iface = iface;
 	uca.methods = &uvisor_methods;

@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.26 2000/04/06 13:32:28 augustss Exp $	*/
+/*	$NetBSD: umodem.c,v 1.27 2000/04/14 14:21:55 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -141,6 +141,8 @@ Static struct ucom_methods umodem_methods = {
 	umodem_ioctl,
 	NULL,
 	NULL,
+	NULL,
+	NULL,
 };
 
 USB_DECLARE_DRIVER(umodem);
@@ -276,6 +278,8 @@ USB_ATTACH(umodem)
 	/* bulkin, bulkout set above */
 	uca.ibufsize = UMODEMIBUFSIZE;
 	uca.obufsize = UMODEMOBUFSIZE;
+	uca.ibufsizepad = UMODEMIBUFSIZE;
+	uca.obufsizepad = UMODEMOBUFSIZE;
 	uca.device = sc->sc_udev;
 	uca.iface = sc->sc_data_iface;
 	uca.methods = &umodem_methods;
@@ -489,6 +493,7 @@ void
 umodem_set(addr, portno, reg, onoff)
 	void *addr;
 	int portno;
+	int reg;
 	int onoff;
 {
 	struct umodem_softc *sc = addr;
