@@ -1,8 +1,9 @@
-#	$NetBSD: genassym.cf,v 1.2 2003/01/18 10:34:21 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.3 2003/01/31 12:06:27 pk Exp $
 
 
 include <ucontext.h>
 include <sys/queue.h>
+include <sys/types.h>
 include <machine/reg.h>
 include <machine/mcontext.h>
 include <machine/frame.h>
@@ -31,9 +32,7 @@ define _UC_FPU		_UC_FPU
 
 define CCFSZ		CCFSZ
 
-define FPRS_FEF		FPRS_FEF
-
-define	_REG_CCR	_REG_CCR
+define	_REG_PSR	_REG_PSR
 define	_REG_PC		_REG_PC
 define	_REG_nPC	_REG_nPC
 define	_REG_Y		_REG_Y
@@ -52,5 +51,3 @@ define	_REG_O4		_REG_O4
 define	_REG_O5		_REG_O5
 define	_REG_O6		_REG_O6
 define	_REG_O7		_REG_O7
-define	_REG_ASI	_REG_ASI
-define	_REG_FPRS	_REG_FPRS
