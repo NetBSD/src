@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.14 1998/09/02 20:01:15 drochner Exp $ */
+/* $NetBSD: pckbd.c,v 1.15 1998/09/17 18:21:04 drochner Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -90,12 +90,12 @@
 
 #include <dev/pckbc/pckbdreg.h>
 #include <dev/pckbc/pckbdvar.h>
+#include <dev/pckbc/wskbdmap_mfii.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
-#include <dev/wscons/wskbdmap_mfii.h>
 
 #if defined(__i386__) || defined(__alpha__)
 #include <sys/kernel.h> /* XXX for hz */
@@ -161,7 +161,6 @@ const struct wskbd_consops pckbd_consops = {
 
 const struct wskbd_mapdata pckbd_keymapdata = {
 	pckbd_keydesctab,
-	sizeof(pckbd_keydesctab)/sizeof(pckbd_keydesctab[0]),
 #ifdef PCKBD_LAYOUT
 	PCKBD_LAYOUT,
 #else
