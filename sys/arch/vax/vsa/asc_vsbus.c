@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_vsbus.c,v 1.12 2000/04/24 21:59:22 matt Exp $	*/
+/*	$NetBSD: asc_vsbus.c,v 1.13 2000/05/17 21:22:20 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.12 2000/04/24 21:59:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.13 2000/05/17 21:22:20 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -93,8 +93,8 @@ struct asc_vsbus_softc {
 
 #define	ASC_REG_KA46_ADR	0x0000
 #define	ASC_REG_KA46_DIR	0x000C
-#define	ASC_REG_KA49_ADR	0x0004
-#define	ASC_REG_KA49_DIR	0x0008
+#define	ASC_REG_KA49_ADR	0x0000
+#define	ASC_REG_KA49_DIR	0x0004
 #define	ASC_REG_NCR		0x0080
 #define	ASC_REG_END		0x00B0
 
@@ -184,6 +184,7 @@ asc_vsbus_match( struct device *parent, struct cfdata *cf, void *aux)
 	DELAY(10000);
 
 	dummy = ncr_regs[NCR_INTR << 2] & 0xFF;
+	printf("ncr intr = %d\n", dummy);
 	return (dummy & NCRINTR_SBR) != 0;
 }
 

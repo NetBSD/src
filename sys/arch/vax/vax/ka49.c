@@ -38,6 +38,10 @@
 #include <machine/cpu.h>
 #include <machine/scb.h>
 
+#define	KA49_CPMBX	0x38
+#define	KA49_HLT_HALT	0x03
+#define	KA49_HLT_BOOT	0x02
+
 static	void	ka49_conf __P((void));
 static	void	ka49_memerr __P((void));
 static	int	ka49_mchk __P((caddr_t));
@@ -225,6 +229,7 @@ ka49_steal_pages()
 static void
 ka49_halt()
 {
+	((u_int8_t *) clk_page)[KA49_CPMBX] = KA49_HLT_HALT;
 	asm("halt");
 }
 
@@ -232,5 +237,6 @@ static void
 ka49_reboot(arg)
 	int arg;
 {
+	((u_int8_t *) clk_page)[KA49_CPMBX] = KA49_HLT_BOOT;
 	asm("halt");
 }
