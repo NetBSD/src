@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.73 2003/01/04 01:04:00 wiz Exp $
+.\"	$NetBSD: packages.7,v 1.74 2003/01/10 17:25:38 jschauma Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -503,15 +503,6 @@ Command for extracting archive.  The default is
 .It EXTRACT_SUFX
 Suffix for archive names.  The default is
 .Dq .tar.gz .
-.It EXTRACT_BEFORE_ARGS
-Arguments to
-.Dv ${EXTRACT_CMD}
-before the filename argument.  The default is
-.Dq -xzf .
-.It EXTRACT_AFTER_ARGS
-Arguments to
-.Dv ${EXTRACT_CMD}
-following the filename argument.  There is no default.
 .It FETCH_CMD
 Full path to ftp/http command if not in
 .Dv $PATH .
