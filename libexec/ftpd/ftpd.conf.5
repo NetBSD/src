@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.conf.5,v 1.19 2002/01/15 02:20:50 wiz Exp $
+.\"	$NetBSD: ftpd.conf.5,v 1.20 2002/05/30 00:24:47 enami Exp $
 .\"
 .\" Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -376,6 +376,17 @@ is
 or
 .Ar time
 is not specified, set to default of 2 hours.
+.It Sy mmapsize Ar class Ar size
+Set the size of sliding window to map a file using
+.Xr mmap 2 .
+If zero,
+.Xr ftpd 8
+will use
+.Xr read 2
+instead.  The default is zero.
+An optional suffix may be provided as per
+.Sy rateget .
+This option affects only for binary transfer.
 .It Sy modify Ar class Op Sy off
 If
 .Ar class
@@ -510,6 +521,14 @@ If
 is
 .Dq none
 or no arguments are given, disable this.
+.It Sy readsize Ar class Ar size
+Set the size of read buffer to
+.Xr read 2
+a file.
+The default is file system block size.
+An optional suffix may be provided as per
+.Sy rateget .
+This option affects only for binary transfer.
 .It Sy sanenames Ar class Op Sy off
 If
 .Ar class
@@ -523,6 +542,18 @@ Otherwise, only permit file names which don't start with a
 .Sq \&.
 and only comprise of characters from the set
 .Dq [-+,._A-Za-z0-9] .
+.It Sy sendbufsize Ar class Ar size
+Set the size of socket send buffer.
+An optional suffix may be provided as per
+.Sy rateget .
+The default is zero and system default value will be used.
+This option affects only for binary transfer.
+.It Sy sendlowat Ar class Ar size
+Set the low water mark of socket send buffer.
+An optional suffix may be provided as per
+.Sy rateget .
+The default is zero and system default value will be used.
+This option affects only for binary transfer.
 .It Sy template Ar class Op Ar refclass
 Define
 .Ar refclass
@@ -586,6 +617,18 @@ as well as the modify commands:
 and
 .Sy UMASK .
 Otherwise, enable them.
+.It Sy writesize Ar class Ar size
+Limit the number of bytes to
+.Xr write 2
+at a time.  The default is zero and
+whole data available as a resul of
+.Xr mmap 2
+or
+.Xr read 2
+will be written at a time.
+An optional suffix may be provided as per
+.Sy rateget .
+This option affects only for binary transfer.
 .El
 .Sh DEFAULTS
 The following defaults are used:

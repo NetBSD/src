@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.46 2001/12/04 13:54:12 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.47 2002/05/30 00:24:47 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.46 2001/12/04 13:54:12 lukem Exp $");
+__RCSID("$NetBSD: conf.c,v 1.47 2002/05/30 00:24:47 enami Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -119,6 +119,11 @@ init_curclass(void)
 	curclass.timeout =	DEFAULT_TIMEOUT;
 	    /* curclass.type is set elsewhere */
 	curclass.umask =	DEFAULT_UMASK;
+	curclass.mmapsize =	0;
+	curclass.readsize =	0;
+	curclass.writesize =	0;
+	curclass.sendbufsize =	0;
+	curclass.sendlowat =	0;
 
 	CURCLASS_FLAGS_SET(checkportcmd);
 	CURCLASS_FLAGS_CLR(denyquick);
@@ -397,6 +402,71 @@ parse_conf(const char *findclass)
 				continue;
 			}
 			curclass.maxtimeout = timeout;
+
+		} else if (strcasecmp(word, "mmapsize") == 0) {
+			curclass.mmapsize = 0;
+			if (none || EMPTYSTR(arg))
+				continue;
+			llval = strsuftoll(arg);
+			if (llval == -1) {
+				syslog(LOG_WARNING,
+				    "%s line %d: invalid mmapsize %s",
+				    infile, (int)line, arg);
+				continue;
+			}
+			curclass.mmapsize = llval;
+
+		} else if (strcasecmp(word, "readsize") == 0) {
+			curclass.readsize = 0;
+			if (none || EMPTYSTR(arg))
+				continue;
+			llval = strsuftoll(arg);
+			if (llval == -1) {
+				syslog(LOG_WARNING,
+				    "%s line %d: invalid readsize %s",
+				    infile, (int)line, arg);
+				continue;
+			}
+			curclass.readsize = llval;
+
+		} else if (strcasecmp(word, "writesize") == 0) {
+			curclass.writesize = 0;
+			if (none || EMPTYSTR(arg))
+				continue;
+			llval = strsuftoll(arg);
+			if (llval == -1) {
+				syslog(LOG_WARNING,
+				    "%s line %d: invalid writesize %s",
+				    infile, (int)line, arg);
+				continue;
+			}
+			curclass.writesize = llval;
+
+		} else if (strcasecmp(word, "sendbufsize") == 0) {
+			curclass.sendbufsize = 0;
+			if (none || EMPTYSTR(arg))
+				continue;
+			llval = strsuftoll(arg);
+			if (llval == -1) {
+				syslog(LOG_WARNING,
+				    "%s line %d: invalid sendbufsize %s",
+				    infile, (int)line, arg);
+				continue;
+			}
+			curclass.sendbufsize = llval;
+
+		} else if (strcasecmp(word, "sendlowat") == 0) {
+			curclass.sendlowat = 0;
+			if (none || EMPTYSTR(arg))
+				continue;
+			llval = strsuftoll(arg);
+			if (llval == -1) {
+				syslog(LOG_WARNING,
+				    "%s line %d: invalid sendlowat %s",
+				    infile, (int)line, arg);
+				continue;
+			}
+			curclass.sendlowat = llval;
 
 		} else if (strcasecmp(word, "modify") == 0) {
 			CONF_FLAG(modify);
