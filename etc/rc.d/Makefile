@@ -1,8 +1,8 @@
-# $NetBSD: Makefile,v 1.7.2.4 2000/09/29 05:46:44 thorpej Exp $
+# $NetBSD: Makefile,v 1.7.2.5 2002/03/07 18:05:08 he Exp $
 
 FILES=	DAEMON LOGIN NETWORK SERVERS accounting amd apmd bootparams \
 	bootconf.sh ccd cleartmp cron dhclient dhcpd dhcrelay dmesg \
-	fsck gated inetd ipfilter ipmon ipnat ipsec kdc ldconfig \
+	fsck gated inetd ipfilter ipfs ipmon ipnat ipsec kdc ldconfig \
 	lkm1 lkm2 lkm3 local lpd mopd motd mountall mountcritlocal \
 	mountcritremote mountd mrouted named network nfsd nfslocking \
 	ntpd ntpdate rpcbind postfix ppp pwcheck quota raidframe \
