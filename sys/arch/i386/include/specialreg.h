@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.22 2002/06/07 01:30:19 gmcgarry Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.23 2002/06/07 04:03:49 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -220,9 +220,17 @@
 #define MSR_MC3_MISC		0x413
 
 /*
- * AMD K6 MSRs.
+ * AMD K6/K7 MSRs.
  */
 #define	MSR_K6_UWCCR		0xc0000085
+#define	MSR_K7_EVNTSEL0		0xc0010000
+#define	MSR_K7_EVNTSEL1		0xc0010001
+#define	MSR_K7_EVNTSEL2		0xc0010002
+#define	MSR_K7_EVNTSEL3		0xc0010003
+#define	MSR_K7_PERFCTR0		0xc0010004
+#define	MSR_K7_PERFCTR1		0xc0010005
+#define	MSR_K7_PERFCTR2		0xc0010006
+#define	MSR_K7_PERFCTR3		0xc0010007
 
 /*
  * Constants related to MTRRs
@@ -454,3 +462,92 @@
 #define	PMC6_SEG_RENAME_STALLS		0xd4	/* P-II and P-III only */
 #define	PMC6_SEG_REG_RENAMES		0xd5	/* P-II and P-III only */
 #define	PMC6_RET_SEG_RENAMES		0xd6	/* P-II and P-III only */
+
+/*
+ * AMD K7 Event Selector MSR format.
+ */
+
+#define	K7_EVTSEL_EVENT			0x000000ff
+#define	K7_EVTSEL_UNIT			0x0000ff00
+#define	K7_EVTSEL_UNIT_SHIFT		8
+#define	K7_EVTSEL_USR			(1 << 16)
+#define	K7_EVTSEL_OS			(1 << 17)
+#define	K7_EVTSEL_E			(1 << 18)
+#define	K7_EVTSEL_PC			(1 << 19)
+#define	K7_EVTSEL_INT			(1 << 20)
+#define	K7_EVTSEL_EN			(1 << 22)
+#define	K7_EVTSEL_INV			(1 << 23)
+#define	K7_EVTSEL_COUNTER_MASK		0xff000000
+#define	K7_EVTSEL_COUNTER_MASK_SHIFT	24
+
+/* Segment Register Loads */
+#define	K7_SEGMENT_REG_LOADS		0x20
+
+#define	K7_STORES_TO_ACTIVE_INST_STREAM	0x21
+
+/* Data Cache Unit */
+#define	K7_DATA_CACHE_ACCESS		0x40
+#define	K7_DATA_CACHE_MISS		0x41
+#define	K7_DATA_CACHE_REFILL		0x42
+#define	K7_DATA_CACHE_REFILL_SYSTEM	0x43
+#define	K7_DATA_CACHE_WBACK		0x44
+#define	K7_L2_DTLB_HIT			0x45
+#define	K7_L2_DTLB_MISS			0x46
+#define	K7_MISALIGNED_DATA_REF		0x47
+#define	K7_SYSTEM_REQUEST		0x64
+#define	K7_SYSTEM_REQUEST_TYPE		0x65
+
+#define	K7_SNOOP_HIT			0x73
+#define	K7_SINGLE_BIT_ECC_ERROR		0x74
+#define	K7_CACHE_LINE_INVAL		0x75
+#define	K7_CYCLES_PROCESSOR_IS_RUNNING	0x76
+#define	K7_L2_REQUEST			0x79
+#define	K7_L2_REQUEST_BUSY		0x7a
+
+/* Instruction Fetch Unit */
+#define	K7_IFU_IFETCH			0x80
+#define	K7_IFU_IFETCH_MISS		0x81
+#define	K7_IFU_REFILL_FROM_L2		0x82
+#define	K7_IFU_REFILL_FROM_SYSTEM	0x83
+#define	K7_ITLB_L1_MISS			0x84
+#define	K7_ITLB_L2_MISS			0x85
+#define	K7_SNOOP_RESYNC			0x86
+#define	K7_IFU_STALL			0x87
+
+#define	K7_RETURN_STACK_HITS		0x88
+#define	K7_RETURN_STACK_OVERFLOW	0x89
+
+/* Retired */
+#define	K7_RETIRED_INST			0xc0
+#define	K7_RETIRED_OPS			0xc1
+#define	K7_RETIRED_BRANCHES		0xc2
+#define	K7_RETIRED_BRANCH_MISPREDICTED	0xc3
+#define	K7_RETIRED_TAKEN_BRANCH		0xc4
+#define	K7_RETIRED_TAKEN_BRANCH_MISPREDICTED	0xc5
+#define	K7_RETIRED_FAR_CONTROL_TRANSFER	0xc6
+#define	K7_RETIRED_RESYNC_BRANCH	0xc7
+#define	K7_RETIRED_NEAR_RETURNS		0xc8
+#define	K7_RETIRED_NEAR_RETURNS_MISPREDICTED	0xc9
+#define	K7_RETIRED_INDIRECT_MISPREDICTED	0xca
+
+/* Interrupts */
+#define	K7_CYCLES_INT_MASKED		0xcd
+#define	K7_CYCLES_INT_PENDING_AND_MASKED	0xce
+#define	K7_HW_INTR_RECV			0xcf
+
+#define	K7_INSTRUCTION_DECODER_EMPTY	0xd0
+#define	K7_DISPATCH_STALLS		0xd1
+#define	K7_BRANCH_ABORTS_TO_RETIRE	0xd2
+#define	K7_SERIALIZE			0xd3
+#define	K7_SEGMENT_LOAD_STALL		0xd4
+#define	K7_ICU_FULL			0xd5
+#define	K7_RESERVATION_STATIONS_FULL	0xd6
+#define	K7_FPU_FULL			0xd7
+#define	K7_LS_FULL			0xd8
+#define	K7_ALL_QUIET_STALL		0xd9
+#define	K7_FAR_TRANSFER_OR_RESYNC_BRANCH_PENDING	0xda
+
+#define	K7_BP0_MATCH			0xdc
+#define	K7_BP1_MATCH			0xdd
+#define	K7_BP2_MATCH			0xde
+#define	K7_BP3_MATCH			0xdf
