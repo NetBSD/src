@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4 1997/01/27 22:25:20 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5 1997/02/11 00:58:34 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -143,8 +143,7 @@ void consinit()
 
 #ifdef KGDB
 	/* XXX - Ask on console for kgdb_dev? */
-	zs_kgdb_init();		/* XXX */
-	/* Note: kgdb_connect() will just return if kgdb_dev<0 */
+	/* Note: this will just return if kgdb_dev<0 */
 	if (boothowto & RB_KDB)
 		kgdb_connect(1);
 #endif
@@ -346,7 +345,7 @@ cpu_startup()
 	 * If we don't, we might end up COW'ing the text segment!
 	 */
 	if (vm_map_protect(kernel_map, (vm_offset_t) kernel_text,
-					   sun3x_trunc_page((vm_offset_t) etext),
+					   trunc_page((vm_offset_t) etext),
 					   VM_PROT_READ|VM_PROT_EXECUTE, TRUE)
 		!= KERN_SUCCESS)
 		panic("can't protect kernel text");
@@ -391,11 +390,11 @@ setregs(p, pack, stack, retval)
 	u_long stack;
 	register_t *retval;
 {
-	struct frame *frame = (struct frame *)p->p_md.md_regs;
+	struct trapframe *tf = (struct trapframe *)p->p_md.md_regs;
 
-	frame->f_pc = pack->ep_entry & ~1;
-	frame->f_regs[SP] = stack;
-	frame->f_regs[A2] = (int)PS_STRINGS;
+	tf->tf_pc = pack->ep_entry & ~1;
+	tf->tf_regs[SP] = stack;
+	tf->tf_regs[A2] = (int)PS_STRINGS;
 
 	/* restore a null state frame */
 	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
@@ -1069,8 +1068,8 @@ static char *hexstr __P((int, int));
  * Print a register and stack dump.
  */
 void
-regdump(fp, sbytes)
-	struct frame *fp; /* must not be register */
+regdump(tf, sbytes)
+	struct trapframe *tf; /* must not be register */
 	int sbytes;
 {
 	static int doingdump = 0;
@@ -1082,8 +1081,8 @@ regdump(fp, sbytes)
 	s = splhigh();
 	doingdump = 1;
 	printf("pid = %d, pc = %s, ",
-	       curproc ? curproc->p_pid : -1, hexstr(fp->f_pc, 8));
-	printf("ps = %s, ", hexstr(fp->f_sr, 4));
+	       curproc ? curproc->p_pid : -1, hexstr(tf->tf_pc, 8));
+	printf("ps = %s, ", hexstr(tf->tf_sr, 4));
 	printf("sfc = %s, ", hexstr(getsfc(), 4));
 	printf("dfc = %s\n", hexstr(getdfc(), 4));
 	printf("Registers:\n     ");
@@ -1091,18 +1090,18 @@ regdump(fp, sbytes)
 		printf("        %d", i);
 	printf("\ndreg:");
 	for (i = 0; i < 8; i++)
-		printf(" %s", hexstr(fp->f_regs[i], 8));
+		printf(" %s", hexstr(tf->tf_regs[i], 8));
 	printf("\nareg:");
 	for (i = 0; i < 8; i++)
-		printf(" %s", hexstr(fp->f_regs[i+8], 8));
+		printf(" %s", hexstr(tf->tf_regs[i+8], 8));
 	if (sbytes > 0) {
-		if (fp->f_sr & PSL_S) {
+		if (tf->tf_sr & PSL_S) {
 			printf("\n\nKernel stack (%s):",
-			       hexstr((int)(((int *)&fp)-1), 8));
-			dumpmem(((int *)&fp)-1, sbytes, 0);
+			       hexstr((int)(((int *)&tf)-1), 8));
+			dumpmem(((int *)&tf)-1, sbytes, 0);
 		} else {
-			printf("\n\nUser stack (%s):", hexstr(fp->f_regs[SP], 8));
-			dumpmem((int *)fp->f_regs[SP], sbytes, 1);
+			printf("\n\nUser stack (%s):", hexstr(tf->tf_regs[SP], 8));
+			dumpmem((int *)tf->tf_regs[SP], sbytes, 1);
 		}
 	}
 	doingdump = 0;
