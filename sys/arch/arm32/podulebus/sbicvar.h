@@ -1,4 +1,4 @@
-/* $NetBSD: sbicvar.h,v 1.6 2001/04/21 20:47:27 rearnsha Exp $ */
+/* $NetBSD: sbicvar.h,v 1.7 2001/04/23 20:32:34 rearnsha Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -76,7 +76,8 @@ struct sbic_acb {
 #define	ACB_DATAIN	0x20	/* DMA direction flag */
 	struct scsi_generic cmd;	/* SCSI command block */
 	int	 clen;
-	struct	dma_chain sc_kv;	/* Virtual address of whole DMA */
+	u_char	*data;			/* Data buffer... */
+	int	 datalen;		/* ... and its length. */
 	struct	dma_chain sc_pa;	/* Physical address of DMA segment */
 	u_long	sc_tcnt;		/* number of bytes for this DMA */
 	u_char *sc_dmausrbuf;		/* user buffer kva - for bounce copy */
@@ -130,7 +131,6 @@ struct	sbic_softc {
 	struct sbic_acb sc_acb[8];	/* the real command blocks */
 	struct sbic_tinfo sc_tinfo[8];
 
-	struct	scsipi_xfer *sc_xs;	/* transfer from high level code */
 	u_char	sc_flags;
 	u_char	sc_scsiaddr;
 	u_char	sc_stat[2];
