@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.files.mk,v 1.29 2004/01/29 01:48:45 lukem Exp $
+#	$NetBSD: bsd.files.mk,v 1.30 2004/03/18 02:00:00 jmc Exp $
 
 .if !defined(_BSD_FILES_MK_)
 _BSD_FILES_MK_=1
@@ -75,6 +75,23 @@ cleandir: cleanbuildsymlinks
 cleanbuildsymlinks: .PHONY
 	rm -f ${BUILDSYMLINKS.t}
 
+.endif								# }
+
+#
+# .uue -> "" handling (i.e. decode a given binary/object)
+.if defined(UUDECODE_FILES)					# {
+.SUFFIXES:	.uue
+
+.uue:
+	${_MKTARGET_CREATE}
+	rm -f ${.TARGET}
+	${TOOL_UUDECODE} ${.IMPSRC}
+
+realall: ${UUDECODE_FILES}
+
+clean: cleanuudecodefiles
+cleanuudecodefiles: .PHONY
+	rm -f ${UUDECODE_FILES}
 .endif								# }
 
 .endif	# !defined(_BSD_FILES_MK_)
