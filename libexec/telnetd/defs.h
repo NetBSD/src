@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.7 1998/04/01 15:05:10 kleink Exp $	*/
+/*	$NetBSD: defs.h,v 1.8 2000/11/19 20:17:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -298,3 +298,8 @@ typedef struct {
 
 #define his_will_wont_is_changing	my_do_dont_is_changing
 #define his_do_dont_is_changing		my_will_wont_is_changing
+
+/*
+ * Initialization buffer for tty device [16 characters long]
+ */
+#define NULL16STR	"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
