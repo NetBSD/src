@@ -1,2 +1,3 @@
-/*	$NetBSD: math.h,v 1.1 1999/12/23 10:15:16 kleink Exp $	*/
+/*	$NetBSD: math.h,v 1.2 2003/10/26 00:02:02 kleink Exp $	*/
 
+#define	__INFINITY	1.0E+39F
