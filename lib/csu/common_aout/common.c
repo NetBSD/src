@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.3 1995/06/15 21:41:41 pk Exp $	*/
+/*	$NetBSD: common.c,v 1.4 1995/09/23 22:34:20 pk Exp $	*/
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
  * All rights reserved.
@@ -39,9 +39,8 @@ static void
 __load_rtld(dp)
 	struct _dynamic *dp;
 {
-	struct crt_ldso	crt;
+	static struct crt_ldso	crt;
 	struct exec	hdr;
-	char		*ldso;
 	rtld_entry_fn	entry;
 #if defined(sun) && defined(DUPZFD)
 	int		dupzfd;
@@ -49,11 +48,11 @@ __load_rtld(dp)
 
 #ifdef DEBUG
 	/* Provision for alternate ld.so - security risk! */
-	if (!(ldso = _getenv("LDSO")))
+	if ((crt.crt_ldso = _getenv("LDSO")) == NULL)
 #endif
-		ldso = LDSO;
+		crt.crt_ldso = LDSO;
 
-	crt.crt_ldfd = open(ldso, 0, 0);
+	crt.crt_ldfd = open(crt.crt_ldso, 0, 0);
 	if (crt.crt_ldfd == -1) {
 		_FATAL("No ld.so\n");
 	}
@@ -130,10 +129,19 @@ __load_rtld(dp)
 	__call(CRT_VERSION_SUN, &crt, crt.crt_ba + sizeof hdr);
 #else
 	entry = (rtld_entry_fn)(crt.crt_ba + sizeof hdr);
-	if ((*entry)(CRT_VERSION_BSD_3, &crt) == -1) {
-		_FATAL("ld.so failed\n");
+	if ((*entry)(CRT_VERSION_BSD_4, &crt) == -1) {
+		/* Feeble attempt to deal with out-dated ld.so */
+#		define str "crt0: update /usr/libexec/ld.so\n"
+		(void)write(2, str, sizeof(str));
+#		undef str
+		if ((*entry)(CRT_VERSION_BSD_3, &crt) == -1) {
+			_FATAL("ld.so failed\n");
+		}
+		ld_entry = dp->d_entry;
+		return;
 	}
-	ld_entry = dp->d_entry;
+	ld_entry = crt.crt_ldentry;
+	atexit(ld_entry->dlexit);
 #endif
 
 #if defined(sun) && defined(DUPZFD)
