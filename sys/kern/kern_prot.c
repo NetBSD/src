@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.21 1994/10/30 21:47:42 cgd Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.22 1994/12/24 14:04:43 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -507,6 +507,7 @@ crget()
  * Free a cred structure.
  * Throws away space when ref count gets to 0.
  */
+void
 crfree(cr)
 	struct ucred *cr;
 {
