@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.x68k,v 1.2 1996/05/11 16:13:24 mycroft Exp $
+#	$NetBSD: Makefile.x68k,v 1.3 1996/05/19 12:29:20 oki Exp $
 
 # Makefile for NetBSD
 #
@@ -56,6 +56,9 @@ LIBCOMPAT=	${COMPATLIB_PROF}
 
 ### for the Motorola 68040 Floating Point Software Product
 .include "$S/arch/m68k/fpsp/Makefile.inc"
+
+### for the Motorola 68060 Software Support Package
+.include "$S/arch/m68k/060sp/Makefile.inc"
 
 # compile rules: rules are named ${TYPE}_${SUFFIX}${CONFIG_DEP}
 # where TYPE is NORMAL, DRIVER, or PROFILE}; SUFFIX is the file suffix,
