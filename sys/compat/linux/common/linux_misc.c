@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.50 1998/10/04 00:02:36 fvdl Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.51 1998/10/04 10:17:54 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -531,7 +531,7 @@ linux_sys_getdents(p, v, retval)
 	struct vnode *vp;
 	caddr_t	inp, buf;		/* BSD-format */
 	int len, reclen;		/* BSD-format */
-	struct linux_dirent *outp;	/* Linux-format */
+	caddr_t outp;			/* Linux-format */
 	int resid, linux_reclen = 0;	/* Linux-format */
 	struct file *fp;
 	struct uio auio;
@@ -591,7 +591,7 @@ again:
 		goto out;
 
 	inp = buf;
-	outp = SCARG(uap, dent);
+	outp = (caddr_t)SCARG(uap, dent);
 	resid = nbytes;
 	if ((len = buflen - auio.uio_resid) == 0)
 		goto eof;
@@ -647,7 +647,7 @@ again:
 	}
 
 	/* if we squished out the whole block, try again */
-	if (outp == SCARG(uap, dent))
+	if (outp == (caddr_t)SCARG(uap, dent))
 		goto again;
 	fp->f_offset = off;	/* update the vnode offset */
 
