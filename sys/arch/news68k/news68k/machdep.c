@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.14 2001/01/15 20:19:55 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.15 2001/01/25 14:33:32 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1067,7 +1067,6 @@ news1200_init()
 void intrhand_lev2 __P((void));
 void intrhand_lev3 __P((void));
 void intrhand_lev4 __P((void));
-void intrhand_lev5 __P((void));
 
 void (*sir_routines[NSIR]) __P((void *));
 void *sir_args[NSIR];
@@ -1169,17 +1168,6 @@ intrhand_lev4()
 #endif
 #if 0
 	printf("level 4 interrupt\n");
-#endif
-}
-
-void
-intrhand_lev5()
-{
-
-	intrcnt[5]++;
-	uvmexp.intrs++;
-#if 1
-	printf("level 5 interrupt.\n");
 #endif
 }
 

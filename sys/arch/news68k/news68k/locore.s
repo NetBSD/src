@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.17 2000/12/24 07:13:36 jhawk Exp $	*/
+/*	$NetBSD: locore.s,v 1.18 2001/01/25 14:33:32 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -833,11 +833,13 @@ ENTRY_NOPROFILE(lev4intr)		/* Level 4: scsi, le, vme etc. */
 	INTERRUPT_RESTOREREG
 	rte
 
+#if 0
 ENTRY_NOPROFILE(lev5intr)		/* Level 5: kb, ms (zs is vectored) */
 	INTERRUPT_SAVEREG
 	jbsr	_C_LABEL(intrhand_lev5)
 	INTERRUPT_RESTOREREG
 	rte
+#endif
 
 ENTRY_NOPROFILE(_isr_clock)		/* Level 6: clock (see clock_hb.c) */
 	INTERRUPT_SAVEREG

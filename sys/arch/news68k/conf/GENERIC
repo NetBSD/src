@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC,v 1.16 2000/12/19 10:42:05 bouyer Exp $
+# 	$NetBSD: GENERIC,v 1.17 2001/01/25 14:33:31 tsutsui Exp $
 
 #	news68k GENERIC config file;
 #
 include		"arch/news68k/conf/std.news68k"
 
-#ident 		"GENERIC-$Revision: 1.16 $"
+#ident 		"GENERIC-$Revision: 1.17 $"
 
 maxusers	8
 
@@ -113,11 +113,16 @@ clock0	at hb1 addr 0xe1420000 ipl 6			# news1200
 le0	at hb0 addr 0xe0f00000 ipl 4			# news1700
 le0	at hb1 addr 0xe1a40000 ipl 4			# news1200
 
-# keyboard/mouse; not yet
-#kb0	at hb0 addr 0xe0d00000 ipl 5			# news1700
-#ms0	at hb0 addr 0xe0d00005 ipl 5			# news1700
-#kb0	at hb1 addr 0xe1240000 ipl 5			# news1200
-#ms0	at hb1 addr 0xe1280000 ipl 5			# news1200
+# keyboard/mouse
+kbc0	at hb0 addr 0xe0d00000 ipl 5			# news1700
+kb0	at kbc0						# news1700
+ms0	at kbc0						# news1700
+
+kb0	at hb1 addr 0xe1240000 ipl 5			# news1200
+ms0	at hb1 addr 0xe1280000 ipl 5			# news1200
+
+wskbd*	at kb?
+wsmouse* at ms?
 
 # onboard z8530 SCC
 zsc0	at hb0 addr 0xe0d40000 ipl 5 vect 64 flags 0x0	# news1700
