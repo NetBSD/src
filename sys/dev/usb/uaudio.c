@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.73 2004/07/07 22:04:28 mycroft Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.74 2004/07/09 02:57:48 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.73 2004/07/07 22:04:28 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.74 2004/07/09 02:57:48 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1265,7 +1265,7 @@ uaudio_identify_as(struct uaudio_softc *sc, usb_config_descriptor_t *cdesc)
 		return (USBD_INVAL);
 	DPRINTF(("uaudio_identify_as: %d alts available\n", sc->sc_nalts));
 
-	if ((sc->sc_mode & (AUMODE_PLAY | AUMODE_RECORD)) == 0) {
+	if (sc->sc_mode == 0) {
 		printf("%s: no usable endpoint found\n",
 		       USBDEVNAME(sc->sc_dev));
 		return (USBD_INVAL);
@@ -1456,20 +1456,8 @@ uaudio_open(void *addr, int flags)
 	if (sc->sc_dying)
 		return (EIO);
 
-	if (sc->sc_mode == 0)
-		return (ENXIO);
-
-	if (flags & FREAD) {
-		if ((sc->sc_mode & AUMODE_RECORD) == 0)
-			return (EACCES);
-		sc->sc_recchan.intr = NULL;
-	}
-
-	if (flags & FWRITE) {
-		if ((sc->sc_mode & AUMODE_PLAY) == 0)
-			return (EACCES);
-		sc->sc_playchan.intr = NULL;
-	}
+	if ((flags & ~sc->sc_mode) & (AUMODE_PLAY | AUMODE_RECORD))
+		return (EACCES);
 
 	return (0);
 }
@@ -1480,13 +1468,6 @@ uaudio_open(void *addr, int flags)
 void
 uaudio_close(void *addr)
 {
-	struct uaudio_softc *sc = addr;
-
-	DPRINTF(("uaudio_close: sc=%p\n", sc));
-	uaudio_halt_in_dma(sc);
-	uaudio_halt_out_dma(sc);
-
-	sc->sc_playchan.intr = sc->sc_recchan.intr = NULL;
 }
 
 int
@@ -1509,6 +1490,7 @@ uaudio_halt_out_dma(void *addr)
 		uaudio_chan_close(sc, &sc->sc_playchan);
 		sc->sc_playchan.pipe = NULL;
 		uaudio_chan_free_buffers(sc, &sc->sc_playchan);
+		sc->sc_playchan.intr = NULL;
 	}
 	return (0);
 }
@@ -1523,6 +1505,7 @@ uaudio_halt_in_dma(void *addr)
 		uaudio_chan_close(sc, &sc->sc_recchan);
 		sc->sc_recchan.pipe = NULL;
 		uaudio_chan_free_buffers(sc, &sc->sc_recchan);
+		sc->sc_recchan.intr = NULL;
 	}
 	return (0);
 }
