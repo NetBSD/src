@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.522 2005/02/04 17:10:40 perry Exp $
+# $NetBSD: mi,v 1.523 2005/02/10 18:03:01 tnozaki Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1927,8 +1927,8 @@
 ./usr/share/locale/ko/LC_MESSAGES		base-locale-ko
 ./usr/share/locale/ko/LC_MESSAGES/grep.mo	base-locale-ko		nls
 ./usr/share/locale/ko/LC_MESSAGES/tar.mo	base-obsolete		obsolete
-./usr/share/locale/ko_KR.UTF-8			base-locale-ko
-./usr/share/locale/ko_KR.UTF-8/LC_CTYPE		base-locale-ko		nls
+./usr/share/locale/ko_KR.UTF-8			base-obsolete		obsolete
+./usr/share/locale/ko_KR.UTF-8/LC_CTYPE		base-obsolete		obsolete
 ./usr/share/locale/ko_KR.eucKR			base-locale-ko
 ./usr/share/locale/ko_KR.eucKR/LC_CTYPE		base-locale-ko		nls
 ./usr/share/locale/locale.alias			base-locale-share	nls
