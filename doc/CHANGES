@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.129 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.130 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -341,3 +341,5 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	wall(1): added "-g group".  [lukem 20030327]
 	dump(8), dump_lfs(8): remove setgid tty, as "wall -g operator"
 		is now used to notify operators.  [lukem 20030327]
+	vnd(4), vnconfig(8): add read-only configuration support.
+		[yamt 20030327]
