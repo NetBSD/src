@@ -1,4 +1,4 @@
-.\"	$NetBSD: tn3270.1,v 1.4 1997/01/09 20:22:38 tls Exp $
+.\"	$NetBSD: tn3270.1,v 1.4.2.1 1997/11/01 23:21:54 mellon Exp $
 .\"
 .\" Copyright (c) 1986, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)tn3270.1	4.6 (Berkeley) 7/27/91
-.\"	$NetBSD: tn3270.1,v 1.4 1997/01/09 20:22:38 tls Exp $
+.\"	$NetBSD: tn3270.1,v 1.4.2.1 1997/11/01 23:21:54 mellon Exp $
 .\"
 .Dd July 27, 1991
 .Dt TN3270 1
@@ -80,17 +80,17 @@ raw 3270 control streams.
 The flags to
 .Nm tn3270
 are as follows:
-.Bl -tag -width Fl
+.Bl -tag -width indent
 .It Fl d
 Turn on socket-level tracing (for super-user only)
-.It Fl n Ns Ar filename
+.It Fl n Ar filename
 Specify a file to receive network trace data
 output (from commands "toggle netdata" and
 "toggle options", see
 .Xr telnet 1 ) ;
 the default is for output
 to be directed to the standard error file.
-.It Fl t Ns Ar commandname
+.It Fl t Ar commandname
 Specify a
 .Tn UNIX
 command to process
@@ -320,7 +320,7 @@ and
 .Xr curses 3 ,
 .Xr termcap 3 ,
 .Xr termcap 5 ,
-.Xr map3270 5 ,
+.Xr map3270 5
 .Rs
 .%T "Yale ASCII Terminal Communication"
 .%B "System II Program Description/Operator's Manual"
@@ -332,7 +332,8 @@ The
 command appeared in
 .Bx 4.3 .
 .Sh BUGS
-Tn3270 is slow and uses system resources prodigiously.
+.Nm Tn3270
+is slow and uses system resources prodigiously.
 .Pp
 Not all 3270 functions are supported,
 nor all Yale enhancements.
