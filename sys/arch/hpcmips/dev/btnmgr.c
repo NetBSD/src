@@ -1,4 +1,4 @@
-/*	$NetBSD: btnmgr.c,v 1.3 2000/03/12 12:08:17 takemura Exp $	*/
+/*	$NetBSD: btnmgr.c,v 1.4 2000/03/13 01:46:45 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -268,10 +268,7 @@ btnmgr_wskbd_ioctl(scx, cmd, data, flag, p)
 {
 	switch (cmd) {
 	case WSKBDIO_GTYPE:
-		/*
-		 * XXX, fix me !
-		 */
-		*(int *)data = WSKBD_TYPE_PC_XT;
+		*(int *)data = WSKBD_TYPE_HPC_BTN;
 		return 0;
 	case WSKBDIO_SETLEDS:
 		DPRINTF(("%s(%d): no LED\n", __FILE__, __LINE__));
