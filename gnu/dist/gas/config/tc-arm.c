@@ -5278,11 +5278,6 @@ tc_gen_reloc (section, fixp)
 	}
 
     case BFD_RELOC_32:
-      if (pic_code && fixp->fx_pcrel == 0 && fixp->fx_addsy != NULL)
-	{
-	  code = fixp->fx_r_type;
-	  break;
-	}
       if (fixp->fx_pcrel)
 	{
 	  code = BFD_RELOC_32_PCREL;
