@@ -1,4 +1,4 @@
-/* $NetBSD: apicvec.s,v 1.1.2.1 2000/02/20 17:01:44 sommerfeld Exp $ */	
+/* $NetBSD: apicvec.s,v 1.1.2.2 2000/02/21 21:54:01 sommerfeld Exp $ */	
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -103,38 +103,9 @@ XINTR(softnet):
 	sti
 	xorl	%edi,%edi
 	xchgl	_C_LABEL(netisr),%edi
-#ifdef INET
-#include "arp.h"
-#if NARP > 0
-	DONET(NETISR_ARP, _C_LABEL(arpintr))
-#endif
-	DONET(NETISR_IP, _C_LABEL(ipintr))
-#endif
-#ifdef INET6
-	DONET(NETISR_IPV6, _C_LABEL(ip6intr))
-#endif
-#ifdef IMP
-	DONET(NETISR_IMP, _C_LABEL(impintr))
-#endif
-#ifdef NS
-	DONET(NETISR_NS, _C_LABEL(nsintr))
-#endif
-#ifdef ISO
-	DONET(NETISR_ISO, _C_LABEL(clnlintr))
-#endif
-#ifdef CCITT
-	DONET(NETISR_CCITT, _C_LABEL(ccittintr))
-#endif
-#ifdef NATM
-	DONET(NETISR_NATM, _C_LABEL(natmintr))
-#endif
-#ifdef NETATALK
-	DONET(NETISR_ATALK, _C_LABEL(atintr))
-#endif
-#include "ppp.h"
-#if NPPP > 0
-	DONET(NETISR_PPP, _C_LABEL(pppintr))
-#endif
+
+#include "net/netisr_dispatch.h"
+	
 	jmp	_C_LABEL(Xdoreti)
 
 XINTR(softser):	
