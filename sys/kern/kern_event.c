@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.10 2003/02/23 14:37:34 pk Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.11 2003/02/23 21:44:26 pk Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -834,7 +834,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 			kn->kn_kevent.udata = kev->udata;
 		}
 
-		s = splhigh();
+		s = splsched();
 		if (kn->kn_fop->f_event(kn, 0))
 			KNOTE_ACTIVATE(kn);
 		splx(s);
@@ -848,14 +848,14 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 	/* disable knote */
 	if ((kev->flags & EV_DISABLE) &&
 	    ((kn->kn_status & KN_DISABLED) == 0)) {
-		s = splhigh();
+		s = splsched();
 		kn->kn_status |= KN_DISABLED;
 		splx(s);
 	}
 
 	/* enable knote */
 	if ((kev->flags & EV_ENABLE) && (kn->kn_status & KN_DISABLED)) {
-		s = splhigh();
+		s = splsched();
 		kn->kn_status &= ~KN_DISABLED;
 		if ((kn->kn_status & KN_ACTIVE) &&
 		    ((kn->kn_status & KN_QUEUED) == 0))
@@ -922,7 +922,7 @@ kqueue_scan(struct file *fp, size_t maxevents, struct kevent *ulistp,
 
  start:
 	kevp = kq->kq_kev;
-	s = splhigh();
+	s = splsched();
 	if (kq->kq_count == 0) {
 		if (timeout < 0) { 
 			error = EWOULDBLOCK;
@@ -979,7 +979,7 @@ kqueue_scan(struct file *fp, size_t maxevents, struct kevent *ulistp,
 			splx(s);
 			kn->kn_fop->f_detach(kn);
 			knote_drop(kn, p, p->p_fd);
-			s = splhigh();
+			s = splsched();
 		} else if (kn->kn_flags & EV_CLEAR) {
 			/* clear state after retrieval */
 			kn->kn_data = 0;
@@ -999,7 +999,7 @@ kqueue_scan(struct file *fp, size_t maxevents, struct kevent *ulistp,
 			ulistp += nkev;
 			nkev = 0;
 			kevp = kq->kq_kev;
-			s = splhigh();
+			s = splsched();
 			if (error)
 				break;
 		}
@@ -1371,7 +1371,7 @@ knote_enqueue(struct knote *kn)
 	int		s;
 
 	kq = kn->kn_kq;
-	s = splhigh();
+	s = splsched();
 	KASSERT((kn->kn_status & KN_QUEUED) == 0);
 
 	TAILQ_INSERT_TAIL(&kq->kq_head, kn, kn_tqe); 
@@ -1391,7 +1391,7 @@ knote_dequeue(struct knote *kn)
 	int		s;
 
 	kq = kn->kn_kq;
-	s = splhigh();
+	s = splsched();
 	KASSERT(kn->kn_status & KN_QUEUED);
 
 	TAILQ_REMOVE(&kq->kq_head, kn, kn_tqe); 
