@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.h,v 1.7 1999/06/21 17:25:11 thorpej Exp $	*/
+/*	$NetBSD: uvm_loan.h,v 1.8 2001/09/22 05:58:05 jdolecek Exp $	*/
 
 /*
  *
@@ -45,14 +45,14 @@
 
 #define UVM_LOAN_TOANON		0x1		/* loan to anon */
 #define UVM_LOAN_TOPAGE		0x2		/* loan to page */
+#define UVM_LOAN_WIRED		0x4		/* wire the page loan */
 
 /*
  * loan prototypes
  */
 
 int uvm_loan __P((struct vm_map *, vaddr_t, vsize_t, void **, int));
-void uvm_unloananon __P((struct vm_anon **, int));
-void uvm_unloanpage __P((struct vm_page **, int));
+void uvm_unloan __P((void **, int, int));
 
 #endif /* _KERNEL */
 
