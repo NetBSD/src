@@ -58,10 +58,9 @@
 
 #include "des_locl.h"
 #include "spr.h"
-#include <openssl/opensslv.h>
 
-OPENSSL_GLOBAL const char *libdes_version="libdes" OPENSSL_VERSION_PTEXT;
-OPENSSL_GLOBAL const char *DES_version="DES" OPENSSL_VERSION_PTEXT;
+const char *libdes_version="libdes" OPENSSL_VERSION_PTEXT;
+const char *DES_version="DES" OPENSSL_VERSION_PTEXT;
 
 const char *des_options(void)
 	{
