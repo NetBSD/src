@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.55 1999/07/30 10:35:38 itojun Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.56 1999/11/27 18:45:08 hannken Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -765,8 +765,8 @@ pppoutput(ifp, m0, dst, rtp)
 	ip = mtod(m0, struct ip *);
 	if (ip->ip_tos & IPTOS_LOWDELAY)
 	    m0->m_flags |= M_HIGHPRI;
-	break;
 #endif
+	break;
 #endif
     case AF_UNSPEC:
 	address = PPP_ADDRESS(dst->sa_data);
