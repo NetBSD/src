@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page_i.h,v 1.6 1998/03/22 21:29:30 chuck Exp $	*/
+/*	$NetBSD: uvm_page_i.h,v 1.7 1998/07/08 04:28:28 thorpej Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -267,6 +267,24 @@ uvm_pagecopy(src, dst)
 
 	dst->flags &= ~PG_CLEAN;
 	pmap_copy_page(VM_PAGE_TO_PHYS(src), VM_PAGE_TO_PHYS(dst));
+}
+
+/*
+ * uvm_page_lookup_freelist: look up the free list for the specified page
+ */
+
+PAGE_INLINE int
+uvm_page_lookup_freelist(pg)
+	struct vm_page *pg;
+{
+	int lcv;
+
+	lcv = vm_physseg_find(atop(VM_PAGE_TO_PHYS(pg)), NULL);
+#ifdef DIAGNOSTIC
+	if (lcv == -1)
+		panic("uvm_page_lookup_freelist: unable to locate physseg");
+#endif
+	return (vm_physmem[lcv].free_list);
 }
 
 #endif /* defined(UVM_PAGE_INLINE) || defined(UVM_PAGE) */
