@@ -1,4 +1,4 @@
-/*	$NetBSD: cia.h,v 1.10 1999/09/25 21:47:03 is Exp $	*/
+/*	$NetBSD: cia.h,v 1.11 2001/08/31 04:44:55 simonb Exp $	*/
 
 /*
  * Mach Operating System
@@ -142,4 +142,4 @@ void dispatch_cia_ints __P((int, int));
 void ciaa_intr __P((void));
 void ciab_intr __P((void));
 
-#endif _AMIGA_CIA_
+#endif /* _AMIGA_CIA_ */

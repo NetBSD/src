@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.19 2001/04/24 04:31:14 thorpej Exp $	*/
+/*	$NetBSD: dvma.c,v 1.20 2001/08/31 04:44:57 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -235,7 +235,7 @@ dvma_mapin(kmem_va, len, canwait)
 #ifdef	DEBUG
 		if (rv == FALSE)
 			panic("dvma_mapin: null page frame");
-#endif	DEBUG
+#endif	/* DEBUG */
 
 		iommu_enter((tva & IOMMU_VA_MASK), pa);
 		pmap_enter(pmap_kernel(), tva, pa | PMAP_NC,

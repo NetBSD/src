@@ -1,4 +1,4 @@
-/*	$NetBSD: nextrom.h,v 1.6 1999/03/24 23:15:59 dbj Exp $	*/
+/*	$NetBSD: nextrom.h,v 1.7 2001/08/31 04:44:56 simonb Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -124,7 +124,7 @@
 #import <mon/assym.h>
 #define	MG(type, off) \
 	((type) ((u_int) (mg) + off))
-#endif	MONITOR
+#endif	/* MONITOR */
 
 #import <mon/nvram.h>
 #import <mon/region.h>

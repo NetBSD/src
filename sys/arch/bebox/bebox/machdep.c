@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.66 2001/08/26 02:47:35 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.67 2001/08/31 04:44:57 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -705,7 +705,7 @@ cpu_reboot(howto, what)
 		printf("halted\n\n");
 #if 0
 		ppc_exit();
-#endif 0
+#endif
 	}
 	if (!cold && (howto & RB_DUMP))
 		dumpsys();
@@ -730,7 +730,7 @@ cpu_reboot(howto, what)
 		*ap1 = 0;
 #if 0
 	ppc_boot(str);
-#endif 0
+#endif
 	while (1);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.1 2001/02/23 21:23:49 reinoud Exp $	*/
+/*	$NetBSD: frame.h,v 1.2 2001/08/31 04:44:58 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -194,7 +194,7 @@ void validate_trapframe __P((trapframe_t *, int));
 	add	sp, sp, #(4*15);	/* Adjust the stack pointer */	   \
 	ldmia	sp, {sp, lr, pc}^	/* Restore lr and exit */
 
-#endif _LOCORE
+#endif /* _LOCORE */
 
 #endif /* _ARM32_FRAME_H_ */
   
