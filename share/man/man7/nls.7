@@ -1,4 +1,4 @@
-.\"     $NetBSD: nls.7,v 1.1 2003/02/12 02:42:44 gmcgarry Exp $
+.\"     $NetBSD: nls.7,v 1.2 2003/02/12 18:48:14 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,61 +42,67 @@
 .Nd Natural Language Support Overview
 .Sh DESCRIPTION
 National Language Support (NLS) provides commands for a single
-worldwide operating system base.  An internationalized system has no
-built-in assumptions or dependencies on language-specific or
-cultural-specific conventions such as:
+worldwide operating system base.
+An internationalized system has no built-in assumptions or dependencies
+on language-specific or cultural-specific conventions such as:
 .Pp
 .Bl -bullet -indent -compact
 .It
-Character classifications 
+Character classifications
 .It
-Character comparison rules 
+Character comparison rules
 .It
-Character collation order 
+Character collation order
 .It
-Numeric and monetary formatting 
+Numeric and monetary formatting
 .It
-Date and time formatting 
+Date and time formatting
 .It
 Message-text language
 .It
-Code sets 
+Code sets
 .El
 .Pp
 All information pertaining to cultural conventions and language is
 obtained at program run time.
 .Pp
-"Internationalization" (often abbreviated "i18n") refers to the
-operation by which system software is developed to support multiple
-cultural-specific and language-specific conventions.  This is a
-generalization process by which the system is untied from calling only
-English strings or other English-specific conventions.  "Localization"
-(often abbreviated "l10n") refers to the operations by which the user
-environment is customized to handle its input and output appropriate
-for specific language and cultural conventions.  This is a
-specialization process, by which generic methods already implemented
-in an internationalized system are used in specific ways.  The formal
-description of cultural conventions for some country, together with
-all associated translations targeted to the native language, is called
-the "locale".
+.Dq Internationalization
+(often abbreviated
+.Dq i18n )
+refers to the operation by which system software is developed to support
+multiple cultural-specific and language-specific conventions.
+This is a generalization process by which the system is untied from
+calling only English strings or other English-specific conventions.
+.Dq Localization
+(often abbreviated
+.Dq l10n )
+refers to the operations by which the user environment is customized to
+handle its input and output appropriate for specific language and cultural
+conventions.
+This is a specialization process, by which generic methods already
+implemented in an internationalized system are used in specific ways.
+The formal description of cultural conventions for some country, together
+with all associated translations targeted to the native language, is
+called the
+.Dq locale .
 .Pp
 .Nx
 provides extensive support to programmers and system developers to
 enable internationalized software to be developed.
 .Nx
 also supplies a large variety of locales for system localization.
-.Ss Localization of Information 
+.Ss Localization of Information
 All locale information is accessible to programs at run time so that
 data is processed and displayed correctly for specific cultural
 conventions and language.
 .Pp
-A locale is divided into categories.  A category is a group of
-language-specific and culture-specific conventions as outlined in the
-list above.  ISO C specifies the following six standard categories
-supported by
+A locale is divided into categories.
+A category is a group of language-specific and culture-specific conventions
+as outlined in the list above.
+ISO C specifies the following six standard categories supported by
 .Nx :
 .Pp
-.Bl -tag -compact -width LC_MESSAGES
+.Bl -tag -compact -width LC_MONETARYXX
 .It LC_COLLATE
 string-collation order information
 .It LC_CTYPE
@@ -112,14 +118,36 @@ rules and symbols for formatting time and date information
 .El
 .Pp
 Localization of the system is achieved by setting appropriate values
-in environment variables to identify which locale should be used.  The
-following environment variables are used: LANG, LC_ALL, LC_COLLATE,
-LC_CTYPE, LC_MESSAGES, LC_MONETARY, LC_NUMERIC, LC_TIME, and NLSPATH.
-The NLSPATH environment variable specifies a colon-separated list of
-directory names where the message catalog files of the NLS database
-are located.  The LC_COLLATE, LC_CTYPE, LC_MONETARY, LC_NUMERIC,
-LC_TIME, and LC_MESSAGES environment variables determine the current
-values for their respective categories.  The LC_ALL and LANG
+in environment variables to identify which locale should be used.
+The following environment variables are used:
+.Ev LANG ,
+.Ev LC_ALL ,
+.Ev LC_COLLATE ,
+.Ev LC_CTYPE ,
+.Ev LC_MESSAGES ,
+.Ev LC_MONETARY ,
+.Ev LC_NUMERIC ,
+.Ev LC_TIME ,
+and
+.Ev NLSPATH .
+The
+.Ev NLSPATH
+environment variable specifies a colon-separated list of directory names
+where the message catalog files of the NLS database are located.
+The
+.Ev LC_COLLATE ,
+.Ev LC_CTYPE ,
+.Ev LC_MONETARY ,
+.Ev LC_NUMERIC ,
+.Ev LC_TIME ,
+and
+.Ev LC_MESSAGES
+environment variables determine the current values for their respective
+categories.
+The
+.Ev LC_ALL
+and
+.Ev LANG
 environment variables also determine the current locale.
 .Pp
 The values of these environment variables contains a string format as:
@@ -129,57 +157,95 @@ The values of these environment variables contains a string format as:
 .Ed
 .Pp
 For example, the locale for the Danish language spoken in Denmark
-using the ISO8859-1 code set is da_DK.ISO8859-1.  The da stands for
-the Danish language and the DK stands for Denmark.  The short form of
-da_DK is sufficient to indicate this locale.
+using the ISO8859-1 code set is da_DK.ISO8859-1.
+The da stands for the Danish language and the DK stands for Denmark.
+The short form of da_DK is sufficient to indicate this locale.
 .Pp
 The environment variable settings are queried by their priority level
 in the following manner:
 .Pp
 .Bl -bullet
 .It
-If the LC_ALL environment variable is set, all six categories use the
-locale it specified.  For example, if the LC_ALL environment variable
-is set to en_US and the LANG environment variable is set to fr_FR,
+If the
+.Ev LC_ALL
+environment variable is set, all six categories use the locale it
+specifies.
+For example, if the
+.Ev LC_ALL
+environment variable is set to en_US and the
+.Ev LANG
+environment variable is set to fr_FR,
 each of the six categories is defined as the en_US locale.
 .It
-If the LC_ALL environment variable is not set, each individual
-category uses the locale specified by its corresponding environment
-variable.  For example, if the LC_ALL environment variable is not set,
-the LC_COLLATE environment variable is set to de_DE, and the LC_TIME
+If the
+.Ev LC_ALL
+environment variable is not set, each individual category uses the
+locale specified by its corresponding environment variable.
+For example, if the
+.Ev LC_ALL
+environment variable is not set, the
+.Ev LC_COLLATE
+environment variable is set to de_DE, and the
+.Ev LC_TIME
 environment variable is set to fr_CA, then the LC_COLLATE category is
 defined as de_DE and the LC_TIME category is defined as fr_CA.
 Neither environment variable has precedence over the other in this
 situation.
 .It
-If the LC_ALL environment variable is not set, and a value for a
-particular LC_* environment variable is not set, the value of the LANG
+If the
+.Ev LC_ALL
+environment variable is not set, and a value for a particular
+.Ev LC_*
+environment variable is not set, the value of the
+.Ev LANG
 environment variable determines the definition for that specific
-category.  For example, if the LC_ALL environment variable is not set,
-the LC_CTYPE environment variable is set to en_US, the LC_NUMERIC
-environment variable is not set, and the LANG environment variable is
-set to is_IS, then the LC_CTYPE category is defined as en_US and the
-LC_NUMERIC category to defined as is_IS.  The LANG environment
-variable specifies the locale for only those categories not previously
-determined by an LC_* environment variable.
+category.
+For example, if the
+.Ev LC_ALL
+environment variable is not set, the
+.Ev LC_CTYPE
+environment variable is set to en_US, the
+.Ev LC_NUMERIC
+environment variable is not set, and the
+.Ev LANG
+environment variable is set to is_IS, then the LC_CTYPE category is
+defined as en_US and the LC_NUMERIC category to defined as is_IS.
+The
+.Ev LANG
+environment variable specifies the locale for only those categories not
+previously determined by an
+.Ev LC_*
+environment variable.
 .It
-If the LC_ALL environment variable is not set, a value for a
-particular LC_* environment variable is not set, and the value of the
-LANG environment variable is not set, the locale for that specific
-category defaults to the C locale.  The C or POSIX locale assumes the
-7-bit ASCII character set and defines information for the six
-categories.  For example, if the LC_ALL environment variable is not
-set, the LC_MONETARY environment variable is set to sv_SE, the LC_TIME
-environment variable is not set, and the LANG environment variable is
-not set, then the LC_MONETARY category is defined as sv_SE and the
-LC_TIME category as C.
+If the
+.Ev LC_ALL
+environment variable is not set, a value for a particular
+.Ev LC_*
+environment variable is not set, and the value of the
+.Ev LANG
+environment variable is not set, the locale for that specific
+category defaults to the C locale.
+The C or POSIX locale assumes the 7-bit ASCII character set and defines
+information for the six categories.
+For example, if the
+.Ev LC_ALL
+environment variable is not set, the
+.Ev LC_MONETARY
+environment variable is set to sv_SE, the
+.Ev LC_TIME
+environment variable is not set, and the
+.Ev LANG
+environment variable is not set, then the LC_MONETARY category is defined
+as sv_SE and the LC_TIME category as C.
 .El
 .Ss Code Sets
 A character is any symbol used for the organization, control, or
-representation of data.  A group of such symbols used to describe a
-particular language make up a character set.  A code set contains the
-encoding values (conversion from bits to displayed characters) for a
-character set.  It is the encoding values in a code set that provide
+representation of data.
+A group of such symbols used to describe a
+particular language make up a character set.
+A code set contains the encoding values (conversion from bits to
+displayed characters) for a character set.
+It is the encoding values in a code set that provide
 the interface between the system and its input and output devices.
 .Pp
 The following code sets are supported in
@@ -189,14 +255,15 @@ The following code sets are supported in
 Industry-standard code sets are provided by means of the ISO8859
 family of code sets, which provide a range of single-byte code set
 support that includes Latin-1, Latin-2, Arabic, Cyrillic, Hebrew,
-Greek, and Turkish.  The eucJP code set is the industry-standard code
-set used to support the Japanese locale.
+Greek, and Turkish.
+The eucJP code set is the industry-standard code set used to support
+the Japanese locale.
 .It Unicode
 A Unicode environment based on the UTF-8 codeset is supported for all
-supported language/territories.  UTF-8 provides character support for
-most of the major languages of the world and can be used in
-environments where multiple languages must be processed
-simultaneously.
+supported language/territories.
+UTF-8 provides character support for most of the major languages of the
+world and can be used in environments where multiple languages must be
+processed simultaneously.
 .El
 .Ss Internationalization for Programmers
 To facilitate translations of messages into various languages and to
@@ -209,28 +276,33 @@ Access to locale information is provided through the
 .Xr setlocale 3
 and
 .Xr nl_langinfo 3
-interfaces.  See their respective man pages for further information.
+interfaces.
+See their respective man pages for further information.
 .Pp
 Message source files containing application messages are created by
-the programmer and converted to message catalogs.  These catalogs are
-used by the application to retrieve and display messages, as needed.
+the programmer and converted to message catalogs.
+These catalogs are used by the application to retrieve and display
+messages, as needed.
 .Pp
 .Nx
 supports two message catalog interfaces: the X/Open
 .Xr catgets 3
-interface and
-the Uniforum
+interface and the Uniforum
 .Xr gettext 3
-interface.  The
-.Xr catgets
+interface.
+The
+.Xr catgets 3
 interface has the advantage that it belongs to a standard which is
-well supported.  Unfortunately the interface is complicated to use and
-maintenance of the catalogs is difficult.  The implementation also
-doesn't support different codesets.  The
+well supported.
+Unfortunately the interface is complicated to use and
+maintenance of the catalogs is difficult.
+The implementation also doesn't support different codesets.
+The
 .Xr gettext 3
 interface has not been standardized yet, however it is being supported
-by an increasing number of systems.  It also provides many additional
-tools which make programming and catalog maintenance much easier.
+by an increasing number of systems.
+It also provides many additional tools which make programming and
+catalog maintenance much easier.
 .Sh SEE ALSO
 .Xr gencat 1 ,
 .Xr catgets 3 ,
