@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.114 2003/04/16 21:44:27 christos Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.115 2003/04/23 07:20:38 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.114 2003/04/16 21:44:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.115 2003/04/23 07:20:38 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -244,13 +244,6 @@ lfs_writerd(void *arg)
 	/* NOTREACHED */
 }
 
-#if 0
-extern struct malloc_type *debug_malloc_type;
-extern int debug_malloc_size;
-extern int debug_malloc_size_lo;
-extern int debug_malloc_size_hi;
-#endif
-
 /*
  * Initialize the filesystem, most work done by ufs_init.
  */
@@ -272,12 +265,6 @@ lfs_init()
 	memset(lfs_log, 0, sizeof(lfs_log));
 #endif
 	simple_lock_init(&lfs_subsys_lock);
-#if 0
-	debug_malloc_type = M_SEGMENT;
-	debug_malloc_size = 0;
-	debug_malloc_size_lo = 1;
-	debug_malloc_size_hi = 65536;
-#endif
 }
 
 void
@@ -363,12 +350,6 @@ lfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
 	error = copyin(data, &args, sizeof (struct ufs_args));
 	if (error)
 		return (error);
-
-#if 0
-	/* Until LFS can do NFS right.		XXX */
-	if (args.export.ex_flags & MNT_EXPORTED)
-		return (EINVAL);
-#endif
 
 	/*
 	 * If updating, check whether changing from read-only to
@@ -1118,9 +1099,6 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	TAILQ_INIT(&fs->lfs_dchainhd);
 	/* and paging tailq */
 	TAILQ_INIT(&fs->lfs_pchainhd);
-#if 0 /* XXXDEBUG */
-	fs->lfs_lastwrit = dbtofsb(fs, fs->lfs_offset - 1);
-#endif
 
 	/*
 	 * We use the ifile vnode for almost every operation.  Instead of
@@ -1676,26 +1654,38 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 
 /*
  * File handle to vnode
- *
- * Have to be really careful about stale file handles:
- * - check that the inode number is valid
- * - call lfs_vget() to get the locked inode
- * - check for an unallocated inode (i_mode == 0)
- *
- * XXX
- * use ifile to see if inode is allocated instead of reading off disk
- * what is the relationship between my generational number and the NFS
- * generational number.
  */
 int
 lfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 {
-	struct ufid *ufhp;
+	struct lfid *lfhp;
+	struct buf *bp;
+	IFILE *ifp;
+	int32_t daddr;
+	struct lfs *fs;
 
-	ufhp = (struct ufid *)fhp;
-	if (ufhp->ufid_ino < ROOTINO)
-		return (ESTALE);
-	return (ufs_fhtovp(mp, ufhp, vpp));
+	lfhp = (struct lfid *)fhp;
+	if (lfhp->lfid_ino < LFS_IFILE_INUM)
+		return ESTALE;
+
+	fs = VFSTOUFS(mp)->um_lfs;
+	if (lfhp->lfid_ident != fs->lfs_ident)
+		return ESTALE;
+
+	if (lfhp->lfid_ino >
+	    ((VTOI(fs->lfs_ivnode)->i_ffs1_size >> fs->lfs_bshift) -
+	     fs->lfs_cleansz - fs->lfs_segtabsz) * fs->lfs_ifpb)
+		return ESTALE;
+
+	if (ufs_ihashlookup(VFSTOUFS(mp)->um_dev, lfhp->lfid_ino) == NULLVP) {
+		LFS_IENTRY(ifp, fs, lfhp->lfid_ino, bp);
+		daddr = ifp->if_daddr;
+		brelse(bp);
+		if (daddr == LFS_UNUSED_DADDR)
+			return ESTALE;
+	}
+
+	return (ufs_fhtovp(mp, &lfhp->lfid_ufid, vpp));
 }
 
 /*
@@ -1706,13 +1696,14 @@ int
 lfs_vptofh(struct vnode *vp, struct fid *fhp)
 {
 	struct inode *ip;
-	struct ufid *ufhp;
+	struct lfid *lfhp;
 
 	ip = VTOI(vp);
-	ufhp = (struct ufid *)fhp;
-	ufhp->ufid_len = sizeof(struct ufid);
-	ufhp->ufid_ino = ip->i_number;
-	ufhp->ufid_gen = ip->i_gen;
+	lfhp = (struct lfid *)fhp;
+	lfhp->lfid_len = sizeof(struct lfid);
+	lfhp->lfid_ino = ip->i_number;
+	lfhp->lfid_gen = ip->i_gen;
+	lfhp->lfid_ident = ip->i_lfs->lfs_ident;
 	return (0);
 }
 
@@ -1841,7 +1832,10 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 	bytes = MIN(npages << PAGE_SHIFT, eof - startoffset);
 	skipbytes = 0;
 
-	KASSERT(bytes != 0);
+	/* KASSERT(bytes != 0); */
+	if (bytes == 0)
+		printf("ino %d bytes == 0 offset %" PRId64 "\n",
+			VTOI(vp)->i_number, pgs[0]->offset);
 
 	/* Swap PG_DELWRI for PG_PAGEOUT */
 	for (i = 0; i < npages; i++)
@@ -1904,9 +1898,9 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 			break;
 		}
 
-		iobytes = MIN((((off_t)lbn + 1 + run) << fs_bshift) - offset,
-		    bytes);
+		iobytes = MIN(MAXPHYS, bytes);
 		if (blkno == (daddr_t)-1) {
+			iobytes = MIN(fs->lfs_bsize, bytes);
 			skipbytes += iobytes;
 			continue;
 		}
