@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.65 1999/05/24 21:57:19 ross Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.66 1999/06/05 13:49:53 briggs Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -80,7 +80,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.65 1999/05/24 21:57:19 ross Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.66 1999/06/05 13:49:53 briggs Exp $");
 #endif
 #endif /* not lint */
 
@@ -237,7 +237,7 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int addrlen, ch, on = 1, tos;
+	int addrlen, ch, on = 1, tos, keepalive;
 	char *cp, line[LINE_MAX];
 	FILE *fd;
 #ifdef KERBEROS5  
@@ -327,6 +327,13 @@ main(argc, argv)
 #ifdef SO_OOBINLINE
 	if (setsockopt(0, SOL_SOCKET, SO_OOBINLINE, (char *)&on, sizeof(on)) < 0)
 		syslog(LOG_ERR, "setsockopt: %m");
+#endif
+	/* Set keepalives on the socket to detect dropped connections.  */
+#ifdef SO_KEEPALIVE
+	keepalive = 1;
+	if (setsockopt(0, SOL_SOCKET, SO_KEEPALIVE, (char *)&keepalive,
+	    sizeof(int)) < 0)
+		syslog(LOG_WARNING, "setsockopt (SO_KEEPALIVE): %m");
 #endif
 
 #ifdef	F_SETOWN
@@ -1021,6 +1028,9 @@ getdatasock(mode)
 	if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR,
 	    (char *) &on, sizeof(on)) < 0)
 		goto bad;
+	if (setsockopt(s, SOL_SOCKET, SO_KEEPALIVE,
+	    (char *) &on, sizeof(on)) < 0)
+		goto bad;
 	/* anchor socket to avoid multi-homing problems */
 	data_source.sin_len = sizeof(struct sockaddr_in);
 	data_source.sin_family = AF_INET;
@@ -1057,7 +1067,7 @@ dataconn(name, size, mode)
 {
 	char sizebuf[32];
 	FILE *file;
-	int retry = 0, tos;
+	int retry = 0, tos, keepalive;
 
 	file_size = size;
 	byte_count = 0;
@@ -1085,6 +1095,12 @@ dataconn(name, size, mode)
 		tos = IPTOS_THROUGHPUT;
 		(void) setsockopt(s, IPPROTO_IP, IP_TOS, (char *)&tos,
 		    sizeof(int));
+#endif
+		/* Set keepalives on the socket to detect dropped conns. */
+#ifdef SO_KEEPALIVE
+		keepalive = 1;
+		(void) setsockopt(s, SOL_SOCKET, SO_KEEPALIVE,
+		    (char *)&keepalive, sizeof(int));
 #endif
 		reply(150, "Opening %s mode data connection for '%s'%s.",
 		     type == TYPE_A ? "ASCII" : "BINARY", name, sizebuf);
