@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.18 2001/07/25 15:59:48 tsutsui Exp $	*/
+/*	$NetBSD: pmap.c,v 1.19 2001/08/26 16:05:25 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -706,6 +706,7 @@ pmap_map(va, spa, epa, prot)
 		va += NBPG;
 		spa += NBPG;
 	}
+	pmap_update();
 	return (va);
 }
 
