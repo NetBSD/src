@@ -39,11 +39,6 @@ i386/isa/aha1542.c	optional aha
 i386/isa/bt742a.c	optional bt
 i386/isa/ultra14f.c	optional uha
 i386/isa/wd7000.c	optional wds
-scsi/scsiconf.c		optional scbus
-scsi/st.c		optional st
-scsi/sd.c		optional sd
-scsi/cd.c		optional cd
-scsi/ch.c		optional ch
 i386/i386/microtime.s   standard
 i386/isa/lpt.c	optional lpt
 i386/isa/lpa.c	optional lpa
