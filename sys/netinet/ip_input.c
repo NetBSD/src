@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ip_input.c	7.19 (Berkeley) 5/25/91
- *	$Id: ip_input.c,v 1.9 1994/01/10 20:14:19 mycroft Exp $
+ *	$Id: ip_input.c,v 1.10 1994/01/29 11:58:01 brezak Exp $
  */
 
 #include <sys/param.h>
@@ -278,6 +278,14 @@ next:
 		struct in_multi *inm;
 #ifdef MROUTING
 		extern struct socket *ip_mrouter;
+
+		if (m->m_flags & M_EXT) {
+			if ((m = m_pullup(m, hlen)) == 0) {
+				ipstat.ips_toosmall++;
+				goto next;
+			}
+			ip = mtod(m, struct ip *);
+		}
 
 		if (ip_mrouter) {
 			/*
