@@ -1,4 +1,4 @@
-/*	$NetBSD: collect.c,v 1.8 1997/07/07 22:57:52 phil Exp $	*/
+/*	$NetBSD: collect.c,v 1.9 1997/07/09 05:25:45 mikel Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$NetBSD: collect.c,v 1.8 1997/07/07 22:57:52 phil Exp $";
+static char rcsid[] = "$NetBSD: collect.c,v 1.9 1997/07/09 05:25:45 mikel Exp $";
 #endif
 #endif /* not lint */
 
@@ -93,6 +93,7 @@ collect(hp, printheaders)
 	(void) &escape;
 	(void) &eofcount;
 	(void) &getsub;
+	(void) &longline;
 #endif
 
 	collf = NULL;
