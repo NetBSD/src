@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.208 2002/12/09 12:48:22 scw Exp $
+#	$NetBSD: NetBSD.dist,v 1.209 2002/12/17 04:26:42 perry Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -170,6 +170,7 @@
 ./usr/share/doc/html/bzip2
 ./usr/share/doc/html/ntp
 ./usr/share/doc/html/ntp/hints
+./usr/share/doc/html/postfix
 ./usr/share/doc/psd
 ./usr/share/doc/psd/01.cacm
 ./usr/share/doc/psd/02.implement
