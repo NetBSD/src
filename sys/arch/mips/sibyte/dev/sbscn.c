@@ -1,4 +1,4 @@
-/* $NetBSD: sbscn.c,v 1.10.2.3 2004/09/21 13:18:54 skrll Exp $ */
+/* $NetBSD: sbscn.c,v 1.10.2.4 2005/01/24 12:10:40 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -116,7 +116,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.10.2.3 2004/09/21 13:18:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbscn.c,v 1.10.2.4 2005/01/24 12:10:40 simonb Exp $");
 
 #define	SBSCN_DEBUG
 
@@ -539,7 +539,7 @@ sbscn_shutdown(struct sbscn_channel *ch)
 }
 
 int
-sbscnopen(dev_t dev, int flag, int mode, struct proc *p)
+sbscnopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit = SBSCN_UNIT(dev);
 	int chan = SBSCN_CHAN(dev);
@@ -570,7 +570,7 @@ sbscnopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    p->p_ucred->cr_uid != 0)
+	    l->l_proc->p_ucred->cr_uid != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -676,7 +676,7 @@ bad:
 }
 
 int
-sbscnclose(dev_t dev, int flag, int mode, struct proc *p)
+sbscnclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct sbscn_softc *sc = sbscn_cd.cd_devs[SBSCN_UNIT(dev)];
 	struct sbscn_channel *ch = &sc->sc_channels[SBSCN_CHAN(dev)];
@@ -722,13 +722,13 @@ sbscnwrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-sbscnpoll(dev_t dev, int events, struct proc *p)
+sbscnpoll(dev_t dev, int events, struct lwp *l)
 {
 	struct sbscn_softc *sc = sbscn_cd.cd_devs[SBSCN_UNIT(dev)];
 	struct sbscn_channel *ch = &sc->sc_channels[SBSCN_CHAN(dev)];
 	struct tty *tp = ch->ch_tty;
 
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 struct tty *
@@ -742,7 +742,7 @@ sbscntty(dev_t dev)
 }
 
 int
-sbscnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+sbscnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct sbscn_softc *sc = sbscn_cd.cd_devs[SBSCN_UNIT(dev)];
 	struct sbscn_channel *ch = &sc->sc_channels[SBSCN_CHAN(dev)];
@@ -750,11 +750,11 @@ sbscnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	int error;
 	int s;
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
@@ -784,7 +784,7 @@ sbscnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(p->p_ucred, &p->p_acflag);
+		error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag);
 		if (error)
 			break;
 		ch->ch_swflags = *(int *)data;
