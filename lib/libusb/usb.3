@@ -1,4 +1,4 @@
-.\"	$NetBSD: usb.3,v 1.6 1999/07/02 15:46:53 simonb Exp $
+.\"	$NetBSD: usb.3,v 1.7 1999/07/24 01:42:49 augustss Exp $
 .\"
 .\" Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>
 .\" All rights reserved.
@@ -81,7 +81,7 @@ library contains routines to extract the
 .Em report descriptor
 which contains the data layout information and then use this information.
 .Pp
-The routines can be divided into four part: extraction of the descriptor,
+The routines can be divided into four parts: extraction of the descriptor,
 parsing of the descriptor, translating to/from symbolic names, and
 data manipulation.
 .Sh DESCRIPTOR FUNCTIONS
@@ -130,7 +130,7 @@ can be found in
 .Pa <usb.h>
 and the meaning of the components in the USB HID documentation.
 .Pp
-Data is should be read/written to the device in the size of
+Data should be read/written to the device in the size of
 the report.  The size of a report (of a certain kind) can be
 computed by the
 .Fn hid_report_size
@@ -153,7 +153,7 @@ will return the symbolic name of a usage page, and the function
 will return the symbolic name of the usage within the page.
 Both these functions may return a pointer to static data.
 Before either of these functions can be called the usage table
-must be parse, this is done by calling
+must be parsed, this is done by calling
 .Fn hid_init
 with the name of the table.  Passing
 .Fa NULL
