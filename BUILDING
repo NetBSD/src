@@ -294,7 +294,7 @@ CONFIGURATION
                       ject directories will be created automatically (via a
                       ``make obj'' pass) at the start of a build.
 
-                      Default: ``yes''
+                      Default: ``no''
 
      NBUILDJOBS       Now obsolete.  Use the make(1) option -j, instead (see
                       below)
@@ -563,7 +563,9 @@ BUILDING
                ting of /usr/obj will place build-time files under
                /usr/obj/bin, /usr/obj/lib, and so forth.
 
-     -o        Set the value of MKOBJDIRS to ``no''.
+     -o        Set the value of MKOBJDIRS to ``no''.  Otherwise, it will be
+               automatically set to ``yes'' (which is opposite to the default
+               behaviour).
 
      -R rel    Set the value of RELEASEDIR to rel.
 
@@ -642,4 +644,4 @@ HISTORY
 BUGS
      A few platforms are not yet using this build system.
 
-NetBSD                           May 17, 2003                               10
+NetBSD                           May 18, 2003                               10
