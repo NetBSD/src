@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.15 2003/08/07 09:05:10 agc Exp $	*/
+/*	$NetBSD: extern.h,v 1.16 2003/09/14 19:20:19 jschauma Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -51,7 +51,6 @@ void terminate(int);
 void unblock(void);
 void unblock_close(void);
 ssize_t bwrite(int, const void *, size_t);
-char *printescaped(const char *);
 
 extern IO		in, out;
 extern STAT		st;

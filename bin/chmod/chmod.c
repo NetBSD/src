@@ -1,4 +1,4 @@
-/* $NetBSD: chmod.c,v 1.30 2003/08/07 09:05:02 agc Exp $ */
+/* $NetBSD: chmod.c,v 1.31 2003/09/14 19:20:17 jschauma Exp $ */
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)chmod.c	8.8 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: chmod.c,v 1.30 2003/08/07 09:05:02 agc Exp $");
+__RCSID("$NetBSD: chmod.c,v 1.31 2003/09/14 19:20:17 jschauma Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,6 @@ int stdout_ok;
 
 int	main(int, char *[]);
 void	usage(void);
-char	*printescaped(const char *);
 
 int
 main(int argc, char *argv[])
@@ -72,7 +71,7 @@ main(int argc, char *argv[])
 	FTSENT *p;
 	mode_t *set;
 	int Hflag, Lflag, Rflag, ch, fflag, fts_options, hflag, rval;
-	char *mode, *fn;
+	char *mode;
 	int (*change_mode)(const char *, mode_t);
 
 	setprogname(argv[0]);
@@ -171,18 +170,14 @@ done:	argv += optind;
 				(void)fts_set(ftsp, p, FTS_SKIP);
 			break;
 		case FTS_DNR:			/* Warn, chmod, continue. */
-			fn = printescaped(p->fts_path);
-			warnx("%s: %s", fn, strerror(p->fts_errno));
-			free(fn);
+			warnx("%s: %s", p->fts_path, strerror(p->fts_errno));
 			rval = 1;
 			break;
 		case FTS_DP:			/* Already changed at FTS_D. */
 			continue;
 		case FTS_ERR:			/* Warn, continue. */
 		case FTS_NS:
-			fn = printescaped(p->fts_path);
-			warnx("%s: %s", fn, strerror(p->fts_errno));
-			free(fn);
+			warnx("%s: %s", p->fts_path, strerror(p->fts_errno));
 			rval = 1;
 			continue;
 		case FTS_SL:			/* Ignore. */
@@ -201,9 +196,7 @@ done:	argv += optind;
 		}
 		if ((*change_mode)(p->fts_accpath,
 		    getmode(set, p->fts_statp->st_mode)) && !fflag) {
-			fn = printescaped(p->fts_path);
-			warn("%s", fn);
-			free(fn);
+			warn("%s", p->fts_path);
 			rval = 1;
 		}
 	}
@@ -223,28 +216,4 @@ usage(void)
 	    getprogname());
 	exit(1);
 	/* NOTREACHED */
-}
-
-char *
-printescaped(const char *src)
-{
-	size_t len;
-	char *retval;
-
-	len = strlen(src);
-	if (len != 0 && SIZE_T_MAX/len <= 4) {
-		errx(EXIT_FAILURE, "%s: name too long", src);
-		/* NOTREACHED */
-	}
-
-	retval = (char *)malloc(4*len+1);
-	if (retval != NULL) {
-		if (stdout_ok)
-			(void)strvis(retval, src, VIS_NL | VIS_CSTYLE);
-		else
-			(void)strcpy(retval, src);
-		return retval;
-	} else
-		errx(EXIT_FAILURE, "out of memory!");
-		/* NOTREACHED */
 }
