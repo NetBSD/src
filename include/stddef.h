@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)stddef.h	5.5 (Berkeley) 4/3/91
+ *	@(#)stddef.h	8.1 (Berkeley) 6/2/93
  */
 
 #ifndef _STDDEF_H_
@@ -38,16 +38,19 @@
 
 #include <machine/ansi.h>
 
-typedef	_PTRDIFF_T_	ptrdiff_t;
+typedef	_BSD_PTRDIFF_T_	ptrdiff_t;
 
-#ifdef	_SIZE_T_
-typedef	_SIZE_T_	size_t;
-#undef	_SIZE_T_
+#ifdef	_BSD_SIZE_T_
+typedef	_BSD_SIZE_T_	size_t;
+#undef	_BSD_SIZE_T_
 #endif
 
-#ifdef	_WCHAR_T_
-typedef	_WCHAR_T_	wchar_t;
-#undef	_WCHAR_T_
+#ifdef	_BSD_WCHAR_T_
+#ifndef _ANSI_SOURCE
+typedef	_BSD_WCHAR_T_	rune_t;
+#endif
+typedef	_BSD_WCHAR_T_	wchar_t;
+#undef	_BSD_WCHAR_T_
 #endif
 
 #ifndef	NULL

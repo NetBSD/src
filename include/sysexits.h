@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1987 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1987, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,11 +30,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)sysexits.h	4.8 (Berkeley) 4/3/91
+ *	@(#)sysexits.h	8.1 (Berkeley) 6/2/93
  */
 
 #ifndef	_SYSEXITS_H_
-#define	_SYSEXIST_H_
+#define	_SYSEXITS_H_
 
 /*
  *  SYSEXITS.H -- Exit status codes for system programs.
@@ -115,4 +115,4 @@
 
 #define EX__MAX	78	/* maximum listed value */
 
-#endif /* !_SYSEXIST_H_ */
+#endif /* !_SYSEXITS_H_ */
