@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.4 1999/07/06 08:55:56 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.5 1999/07/06 12:23:21 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -345,7 +345,7 @@ icmp6_input(mp, offp, proto)
 #endif
 
 #ifdef IPSEC
-	/*drop it if it does not match the default policy */
+	/* drop it if it does not match the default policy */
 	if (ipsec6_in_reject(m, NULL)) {
 		ipsecstat.in_polvio++;
 		goto freeit;
@@ -1512,7 +1512,16 @@ icmp6_redirect_output(m0, rt)
 	/* sanity check */
 	if (!m0 || !rt || !(rt->rt_flags & RTF_UP) || !(ifp = rt->rt_ifp))
 		goto fail;
+
+	/*
+	 * Address check:
+	 *  the source address must identify a neighbor, and
+	 *  the destination address must not be a multicast address
+	 *  [RFC 2461, sec 8.2]
+	 */
 	sip6 = mtod(m0, struct ip6_hdr *);
+	if (nd6_is_addr_neighbor(&sip6->ip6_src, ifp) == 0)
+		goto fail;
 	if (IN6_IS_ADDR_MULTICAST(&sip6->ip6_dst))
 		goto fail;	/* what should we do here? */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.3 1999/07/03 21:30:19 thorpej Exp $	*/
+/*	$NetBSD: nd6.h,v 1.4 1999/07/06 12:23:22 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -258,6 +258,7 @@ union nd_opts {
 /* nd6.c */
 void nd6_init __P((void));
 void nd6_ifattach __P((struct ifnet *));
+int nd6_is_addr_neighbor __P((struct in6_addr *, struct ifnet *));
 void nd6_option_init __P((void *, int, union nd_opts *));
 struct nd_opt_hdr *nd6_option __P((union nd_opts *));
 int nd6_options __P((union nd_opts *));
