@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.212 2002/09/07 04:01:46 lukem Exp $
+.\"	$NetBSD: main,v 1.213 2002/09/07 04:04:05 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@
 .
 .so \*[.CURDIR]/../common/macros
 .
-.Dd July 24, 2002
+.Dd September 7, 2002
 .Dt INSTALL 8
 .Os NetBSD
 .Sh NAME
