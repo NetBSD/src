@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.24 2000/05/22 10:18:47 elric Exp $	*/
+/*	$NetBSD: trap.c,v 1.25 2001/02/04 19:52:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)trap.c	8.5 (Berkeley) 6/5/95";
 #else
-__RCSID("$NetBSD: trap.c,v 1.24 2000/05/22 10:18:47 elric Exp $");
+__RCSID("$NetBSD: trap.c,v 1.25 2001/02/04 19:52:07 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,8 +76,6 @@ __RCSID("$NetBSD: trap.c,v 1.24 2000/05/22 10:18:47 elric Exp $");
 #define S_HARD_IGN 4		/* signal is ignored permenantly */
 #define S_RESET 5		/* temporary - to reset a hard ignored sig */
 
-
-extern char nullstr[1];		/* null string */
 
 char *trap[NSIG+1];		/* trap handler commands */
 MKINIT char sigmode[NSIG];	/* current value of signal */

@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.56 2000/05/22 10:18:46 elric Exp $	*/
+/*	$NetBSD: eval.c,v 1.57 2001/02/04 19:52:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.56 2000/05/22 10:18:46 elric Exp $");
+__RCSID("$NetBSD: eval.c,v 1.57 2001/02/04 19:52:06 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,7 @@ __RCSID("$NetBSD: eval.c,v 1.56 2000/05/22 10:18:46 elric Exp $");
 #define EV_TESTED 02		/* exit status is checked; ignore -e flag */
 #define EV_BACKCMD 04		/* command executing within back quotes */
 
-MKINIT int evalskip;		/* set if we are skipping commands */
+int evalskip;			/* set if we are skipping commands */
 STATIC int skipcount;		/* number of levels to skip */
 MKINIT int loopnest;		/* current loop nesting level */
 int funcnest;			/* depth of function calls */

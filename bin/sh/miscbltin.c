@@ -1,4 +1,4 @@
-/*	$NetBSD: miscbltin.c,v 1.29 2001/01/04 15:39:51 lukem Exp $	*/
+/*	$NetBSD: miscbltin.c,v 1.30 2001/02/04 19:52:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)miscbltin.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: miscbltin.c,v 1.29 2001/01/04 15:39:51 lukem Exp $");
+__RCSID("$NetBSD: miscbltin.c,v 1.30 2001/02/04 19:52:06 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,6 @@ __RCSID("$NetBSD: miscbltin.c,v 1.29 2001/01/04 15:39:51 lukem Exp $");
 
 #undef rflag
 
-extern char **argptr;		/* argument list for builtin command */
 
 
 /*
@@ -100,7 +99,7 @@ readcmd(argc, argv)
 	prompt = NULL;
 	while ((i = nextopt("p:r")) != '\0') {
 		if (i == 'p')
-			prompt = optarg;
+			prompt = optionarg;
 		else
 			rflag = 1;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.34 2000/05/22 10:18:47 elric Exp $	*/
+/*	$NetBSD: input.c,v 1.35 2001/02/04 19:52:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
 #else
-__RCSID("$NetBSD: input.c,v 1.34 2000/05/22 10:18:47 elric Exp $");
+__RCSID("$NetBSD: input.c,v 1.35 2001/02/04 19:52:06 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,11 +99,11 @@ struct parsefile {
 
 
 int plinno = 1;			/* input line number */
-MKINIT int parsenleft;		/* copy of parsefile->nleft */
+int parsenleft;			/* copy of parsefile->nleft */
 MKINIT int parselleft;		/* copy of parsefile->lleft */
 char *parsenextc;		/* copy of parsefile->nextc */
 MKINIT struct parsefile basepf;	/* top level input file */
-char basebuf[BUFSIZ];		/* buffer for top level input file */
+MKINIT char basebuf[BUFSIZ];	/* buffer for top level input file */
 struct parsefile *parsefile = &basepf;	/* current input file */
 int init_editline = 0;		/* editline library initialized? */
 int whichprompt;		/* 1 == PS1, 2 == PS2 */
@@ -114,12 +114,11 @@ STATIC void pushfile __P((void));
 static int preadfd __P((void));
 
 #ifdef mkinit
+INCLUDE <stdio.h>
 INCLUDE "input.h"
 INCLUDE "error.h"
 
 INIT {
-	extern char basebuf[];
-
 	basepf.nextc = basepf.buf = basebuf;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.49 2000/03/13 22:47:19 soren Exp $	*/
+/*	$NetBSD: expand.c,v 1.50 2001/02/04 19:52:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.49 2000/03/13 22:47:19 soren Exp $");
+__RCSID("$NetBSD: expand.c,v 1.50 2001/02/04 19:52:06 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -114,6 +114,8 @@ STATIC struct strlist *expsort __P((struct strlist *));
 STATIC struct strlist *msort __P((struct strlist *, int));
 STATIC int pmatch __P((char *, char *, int));
 STATIC char *cvtnum __P((int, char *));
+
+extern int oexitstatus;
 
 /*
  * Expand shell variables and backquotes inside a here document.
@@ -831,7 +833,6 @@ varvalue(name, quoted, allow_split)
 	int num;
 	char *p;
 	int i;
-	extern int oexitstatus;
 	char sep;
 	char **ap;
 	char const *syntax;

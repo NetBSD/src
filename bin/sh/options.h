@@ -1,4 +1,4 @@
-/*	$NetBSD: options.h,v 1.13 1999/07/09 03:05:50 christos Exp $	*/
+/*	$NetBSD: options.h,v 1.14 2001/02/04 19:52:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -102,7 +102,7 @@ extern char *minusc;		/* argument to -c option */
 extern char *arg0;		/* $0 */
 extern struct shparam shellparam;  /* $@ */
 extern char **argptr;		/* argument list for builtin commands */
-extern char *optarg;		/* set by nextopt */
+extern char *optionarg;		/* set by nextopt */
 extern char *optptr;		/* used by nextopt */
 
 void procargs __P((int, char **));
