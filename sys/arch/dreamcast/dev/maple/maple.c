@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.c,v 1.11 2002/03/24 18:21:25 uch Exp $	*/
+/*	$NetBSD: maple.c,v 1.12 2002/03/25 18:59:40 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -66,29 +66,28 @@
 /*
  * Function declarations.
  */
-static int	maplematch __P((struct device *, struct cfdata *, void *));
-static void	mapleattach __P((struct device *, struct device *, void *));
-static int	mapleprint __P((void *, const char *));
-static int	maplesubmatch __P((struct device *, struct cfdata *, void *));
-static void	maple_attach_dev __P((struct maple_softc *, int, int));
-static void	maple_begin_txbuf __P((struct maple_softc *));
-static int	maple_end_txbuf __P((struct maple_softc *));
-static void	maple_write_command __P((struct maple_softc *, int, int,
-					 int, int, void *));
-static void	maple_scanbus __P((struct maple_softc *));
-static void	maple_callout __P((void *));
-static void	maple_send_commands __P((struct maple_softc *));
-static void	maple_check_responses __P((struct maple_softc *));
+static int	maplematch(struct device *, struct cfdata *, void *);
+static void	mapleattach(struct device *, struct device *, void *);
+static int	mapleprint(void *, const char *);
+static int	maplesubmatch(struct device *, struct cfdata *, void *);
+static void	maple_attach_dev(struct maple_softc *, int, int);
+static void	maple_begin_txbuf(struct maple_softc *);
+static int	maple_end_txbuf(struct maple_softc *);
+static void	maple_write_command(struct maple_softc *, int, int,
+		    int, int, void *);
+static void	maple_scanbus(struct maple_softc *);
+static void	maple_callout(void *);
+static void	maple_send_commands(struct maple_softc *);
+static void	maple_check_responses(struct maple_softc *);
 
-int maple_alloc_dma __P((size_t, vaddr_t *, paddr_t *));
-void maple_free_dma __P((paddr_t, size_t));
+int	maple_alloc_dma(size_t, vaddr_t *, paddr_t *);
+void	maple_free_dma(paddr_t, size_t);
 
-int	mapleopen __P((dev_t, int, int, struct proc *));
-int	mapleclose __P((dev_t, int, int, struct proc *));
-int	maple_internal_ioctl __P((struct maple_softc *,  int, int, u_long, caddr_t, int, struct proc *));
-int	mapleioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-
-
+int	mapleopen(dev_t, int, int, struct proc *);
+int	mapleclose(dev_t, int, int, struct proc *);
+int	maple_internal_ioctl(struct maple_softc *,  int, int, u_long, caddr_t,
+	    int, struct proc *);
+int	mapleioctl(dev_t, u_long, caddr_t, int, struct proc *);
 
 /*
  * Global variables.
@@ -105,23 +104,17 @@ struct cfattach maple_ca = {
 extern struct cfdriver maple_cd;
 
 static int
-maplematch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+maplematch(struct device *parent, struct cfdata *cf, void *aux)
 {
 
 	if (strcmp("maple", cf->cf_driver->cd_name))
-	  return (0);
+		return (0);
 
 	return (1);
 }
 
 static void
-maple_attach_dev(sc, port, subunit)
-	struct maple_softc *sc;
-	int port;
-	int subunit;
+maple_attach_dev(struct maple_softc *sc, int port, int subunit)
 {
 	struct maple_attach_args ma;
 	u_int32_t func;
@@ -138,30 +131,30 @@ maple_attach_dev(sc, port, subunit)
 	printf("\n");
 	strcpy(oldxname, sc->sc_dev.dv_xname);
 	sprintf(sc->sc_dev.dv_xname, "maple%c", port+'A');
-	if(subunit)
-	  sprintf(sc->sc_dev.dv_xname+6, "%d", subunit);
-	for(f=0; f<32; f++, ma.ma_function<<=1)
-		if(func & ma.ma_function)
-			(void) config_found_sm(&sc->sc_dev, &ma,
-					       NULL, maplesubmatch);
+	if (subunit)
+		sprintf(sc->sc_dev.dv_xname+6, "%d", subunit);
+
+	for (f = 0; f < 32; f++, ma.ma_function <<= 1)
+		if (func & ma.ma_function)
+			(void)config_found_sm(&sc->sc_dev, &ma,
+			    NULL, maplesubmatch);
 	strcpy(sc->sc_dev.dv_xname, oldxname);
 }
 
 static void
-maple_begin_txbuf(sc)
-	struct maple_softc *sc;
+maple_begin_txbuf(struct maple_softc *sc)
 {
+
 	sc->sc_txlink = sc->sc_txpos = sc->sc_txbuf;
 }
 
 static int
-maple_end_txbuf(sc)
-	struct maple_softc *sc;
+maple_end_txbuf(struct maple_softc *sc)
 {
 	/* if no frame have been written, we can't mark the
 	   list end, and so the DMA must not be activated   */
   	if (sc->sc_txpos == sc->sc_txbuf)
-	  return (0);
+		return (0);
 
 	*sc->sc_txlink |= 0x80000000;
 
@@ -171,30 +164,25 @@ maple_end_txbuf(sc)
 static int8_t subunit_code[] = { 0x20, 0x01, 0x02, 0x04, 0x08, 0x10 };
 
 static void
-maple_write_command(sc, port, subunit, command, datalen, dataaddr)
-	struct maple_softc *sc;
-	int port;
-	int subunit;
-	int command;
-	int datalen;
-	void *dataaddr;
+maple_write_command(struct maple_softc *sc, int port, int subunit, int command,
+    int datalen, void *dataaddr)
 {
 	int to, from;
 	u_int32_t *p = sc->sc_txpos;
 
 	if ((port & ~(MAPLE_PORTS-1)) != 0 ||
 	    subunit < 0 || subunit >= MAPLE_SUBUNITS)
-	  return;
+		return;
 
 	/* Compute sender and recipient address */
 	from = port << 6;
 	to = from | subunit_code[subunit];
 
 	/* Max data length = 255 longs = 1020 bytes */
-	if(datalen > 255)
-	  datalen = 255;
-	else if(datalen < 0)
-	  datalen = 0;
+	if (datalen > 255)
+		datalen = 255;
+	else if (datalen < 0)
+		datalen = 0;
 
 	sc->sc_txlink = p;
 
@@ -211,18 +199,17 @@ maple_write_command(sc, port, subunit, command, datalen, dataaddr)
 
 	/* Copy parameter data, if any */
 	if (datalen > 0) {
-	  u_int32_t *param = dataaddr;
-	  int i;
-	  for (i = 0; i < datalen; i++)
-	    *p++ = *param++;
+		u_int32_t *param = dataaddr;
+		int i;
+		for (i = 0; i < datalen; i++)
+			*p++ = *param++;
 	}
 
 	sc->sc_txpos = p;
 }
 
 static void
-maple_scanbus(sc)
-	struct maple_softc *sc;
+maple_scanbus(struct maple_softc *sc)
 {
 	int p, s;
 
@@ -231,71 +218,80 @@ maple_scanbus(sc)
 	maple_begin_txbuf(sc);
 
 	for (p = 0; p < MAPLE_PORTS; p++) {
-	  maple_write_command(sc, p, 0, MAPLE_COMMAND_DEVINFO, 0, NULL);
+		maple_write_command(sc, p, 0, MAPLE_COMMAND_DEVINFO, 0, NULL);
 	}
 
 	if (maple_end_txbuf(sc)) {
 
-	  MAPLE_DMAADDR = sc->sc_txbuf_phys;
-	  MAPLE_STATE = 1;
-	  while (MAPLE_STATE != 0)
-	    ;
+		MAPLE_DMAADDR = sc->sc_txbuf_phys;
+		MAPLE_STATE = 1;
+		while (MAPLE_STATE != 0)
+			;
 
-	  for (p = 0; p < MAPLE_PORTS; p++)
-	    if ((sc->sc_rxbuf[p][0][0] & 0xff) == MAPLE_RESPONSE_DEVINFO)
+		for (p = 0; p < MAPLE_PORTS; p++)
+			if ((sc->sc_rxbuf[p][0][0] & 0xff) ==
+			    MAPLE_RESPONSE_DEVINFO)
+				sc->sc_port_units[p] =
+				    ((sc->sc_rxbuf[p][0][0] >> 15) & 0x3e) | 1;
+			else
+				sc->sc_port_units[p] = 0;
 
-	      sc->sc_port_units[p] = ((sc->sc_rxbuf[p][0][0]>>15)&0x3e)|1;
 
-	    else
+		maple_begin_txbuf(sc);
 
-	      sc->sc_port_units[p] = 0;
-
-
-	  maple_begin_txbuf(sc);
-
-	  for (p = 0; p < MAPLE_PORTS; p++) {
-	    for (s = 0; s < MAPLE_SUBUNITS; s++) {
-	      if (sc->sc_port_units[p] & (1<<s))
-		maple_write_command(sc, p, s, MAPLE_COMMAND_DEVINFO, 0, NULL);
-	    }
-	  }
-
-	  if (maple_end_txbuf(sc)) {
-
-	    MAPLE_DMAADDR = sc->sc_txbuf_phys;
-	    MAPLE_STATE = 1;
-	    while (MAPLE_STATE != 0)
-	      ;
-
-	    for (p = 0; p < MAPLE_PORTS; p++)
-	      for (s = 0; s < MAPLE_SUBUNITS; s++)
-		if (sc->sc_port_units[p] & (1<<s)) {
-
-		  if ((sc->sc_rxbuf[p][s][0] & 0xff) ==
-		      MAPLE_RESPONSE_DEVINFO) {
-
-		    u_int32_t *to_swap;
-		    int i;
-		    
-		    memcpy((to_swap = &sc->sc_unit[p][s].devinfo.di_func),
-			   sc->sc_rxbuf[p][s]+1, sizeof(struct maple_devinfo));
-		    
-		    for (i = 0; i < 4; i++, to_swap++)
-		      *to_swap = ntohl(*to_swap);
-		    
-		    maple_attach_dev(sc, p, s);
-
-		  } else {
-
-		    printf("%s: no response from port %d subunit %d\n",
-			   sc->sc_dev.dv_xname, p, s);
-
-		    sc->sc_port_units[p] &= ~(1<<s);
-
-		  }
+		for (p = 0; p < MAPLE_PORTS; p++) {
+			for (s = 0; s < MAPLE_SUBUNITS; s++) {
+				if (sc->sc_port_units[p] & (1 << s))
+					maple_write_command(sc, p, s,
+					    MAPLE_COMMAND_DEVINFO, 0, NULL);
+			}
 		}
+
+		if (maple_end_txbuf(sc)) {
+			MAPLE_DMAADDR = sc->sc_txbuf_phys;
+			MAPLE_STATE = 1;
+			while (MAPLE_STATE != 0)
+				;
+
+			for (p = 0; p < MAPLE_PORTS; p++)
+				for (s = 0; s < MAPLE_SUBUNITS; s++)
+					if (sc->sc_port_units[p] & (1 << s)) {
+
+						if ((sc->sc_rxbuf[p][s][0] &
+						    0xff) ==
+						    MAPLE_RESPONSE_DEVINFO) {
+
+							u_int32_t *to_swap;
+							int i;
+		    
+							memcpy((to_swap =
+							    &sc->sc_unit[p][s].
+							    devinfo.di_func),
+							    sc->sc_rxbuf[p][s] +
+							    1,
+							    sizeof(struct
+								maple_devinfo));
+		    
+							for (i = 0; i < 4; i++,
+							    to_swap++)
+								*to_swap =
+								    ntohl
+								    (*to_swap);
+							maple_attach_dev(sc, p,
+							    s);
+						} else {
+
+							printf("%s: no response"
+							    " from port %d "
+							    " subunit %d\n",
+							    sc->sc_dev.dv_xname,
+							    p, s);
+							sc->sc_port_units[p] &=
+							    ~(1 << s);
+						}
+					}
 	    
-	  }
+		}
 
 	}
 
@@ -304,34 +300,29 @@ maple_scanbus(sc)
 }
 
 static void
-maple_send_commands(sc)
-	struct maple_softc *sc;
+maple_send_commands(struct maple_softc *sc)
 {
 	int p, s;
 
 	if (sc->maple_commands_pending || MAPLE_STATE != 0)
-	  return;
+		return;
 
 	maple_begin_txbuf(sc);
 
 	for (p = 0; p < MAPLE_PORTS; p++) {
-
-	  for (s = 0; s < MAPLE_SUBUNITS; s++) {
-
-	    if (sc->sc_unit[p][s].getcond_callback != NULL) {
-
-	      u_int32_t func = ntohl(sc->sc_unit[p][s].getcond_func);
+		for (s = 0; s < MAPLE_SUBUNITS; s++) {
+			if (sc->sc_unit[p][s].getcond_callback != NULL) {
+				u_int32_t func =
+				    ntohl(sc->sc_unit[p][s].getcond_func);
 	      
-	      maple_write_command(sc, p, s, MAPLE_COMMAND_GETCOND, 1, &func);
-
-	    }
-
-	  }
-
+				maple_write_command(sc, p, s,
+				    MAPLE_COMMAND_GETCOND, 1, &func);
+			}
+		}
 	}
 
 	if (!maple_end_txbuf(sc))
-	  return;
+		return;
 
 	MAPLE_DMAADDR = sc->sc_txbuf_phys;
 	MAPLE_STATE = 1;
@@ -340,58 +331,52 @@ maple_send_commands(sc)
 }
 
 static void
-maple_check_responses(sc)
-	struct maple_softc *sc;
+maple_check_responses(struct maple_softc *sc)
 {
 	int p, s;
 
 	if (!sc->maple_commands_pending || MAPLE_STATE != 0)
-	  return;
+		return;
 
 	for (p = 0; p < MAPLE_PORTS; p++) {
-	  for (s = 0; s < MAPLE_SUBUNITS; s++) {
-	    struct maple_unit * u = &sc->sc_unit[p][s];
-	    if (u->getcond_callback != NULL &&
-		(sc->sc_rxbuf[p][s][0] & 0xff) == MAPLE_RESPONSE_DATATRF &&
-		(sc->sc_rxbuf[p][s][0]>>24) >= 1 &&
-		htonl(sc->sc_rxbuf[p][s][1]) == u->getcond_func) {
-	      (*u->getcond_callback)(u->getcond_data,
-				     (void *)(sc->sc_rxbuf[p][s]+2),
-				     ((sc->sc_rxbuf[p][s][0]>>22)&1020)-4);
-	    }
-	  }
+		for (s = 0; s < MAPLE_SUBUNITS; s++) {
+			struct maple_unit *u = &sc->sc_unit[p][s];
+			if (u->getcond_callback != NULL &&
+			    (sc->sc_rxbuf[p][s][0] & 0xff) ==
+			    MAPLE_RESPONSE_DATATRF &&
+			    (sc->sc_rxbuf[p][s][0] >> 24) >= 1 &&
+			    htonl(sc->sc_rxbuf[p][s][1]) == u->getcond_func) {
+				(*u->getcond_callback)(u->getcond_data,
+				    (void *)(sc->sc_rxbuf[p][s] + 2),
+				    ((sc->sc_rxbuf[p][s][0] >> 22) & 1020) - 4);
+			}
+		}
 	}
 
 	sc->maple_commands_pending = 0;
 }
 
 void
-maple_run_polling(dev)
-	struct device *dev;
+maple_run_polling(struct device *dev)
 {
 	struct maple_softc *sc;
 
 	sc = (struct maple_softc *)dev;
 
 	if (MAPLE_STATE != 0)
-	  return;
+		return;
 
 	maple_send_commands(sc);
 
 	while (MAPLE_STATE != 0)
-	  ;
+		;
 
 	maple_check_responses(sc);
 }
 
 void
-maple_set_condition_callback(dev, port, subunit, func, callback, data)
-	struct device *dev;
-	int port;
-	int subunit;
-	u_int32_t func;
-	void (*callback)(void *, void *, int);
-	void *data;
+maple_set_condition_callback(struct device *dev, int port, int subunit,
+    u_int32_t func, void (*callback)(void *, void *, int), void *data)
 {
 	struct maple_softc *sc;
 
@@ -399,7 +384,7 @@ maple_set_condition_callback(dev, port, subunit, func, callback, data)
 
 	if ((port & ~(MAPLE_PORTS-1)) != 0 ||
 	    subunit < 0 || subunit >= MAPLE_SUBUNITS)
-	  return;
+		return;
 
 	sc->sc_unit[port][subunit].getcond_func = func;
 	sc->sc_unit[port][subunit].getcond_callback = callback;
@@ -407,31 +392,23 @@ maple_set_condition_callback(dev, port, subunit, func, callback, data)
 }
 
 static void
-maple_callout(ctx)
-	void *ctx;
+maple_callout(void *ctx)
 {
 	struct maple_softc *sc = ctx;
 
-	if(!maple_polling) {
-
-	  maple_check_responses(sc);
-
-	  maple_send_commands(sc);
-
+	if (!maple_polling) {
+		maple_check_responses(sc);
+		maple_send_commands(sc);
 	}
 
 	callout_reset(&sc->maple_callout_ch, MAPLE_CALLOUT_TICKS,
-		      (void *)maple_callout, sc);
+	    (void *)maple_callout, sc);
 }
 
 int
-maple_alloc_dma(size, vap, pap)
-	size_t size;
-	vaddr_t *vap;
-	paddr_t *pap;
+maple_alloc_dma(size_t size, vaddr_t *vap, paddr_t *pap)
 {
 	extern paddr_t avail_start, avail_end;	/* from pmap.c */
-
 	struct pglist mlist;
 	struct vm_page *m;
 	int error;
@@ -452,9 +429,7 @@ maple_alloc_dma(size, vap, pap)
 }
 
 void
-maple_free_dma(paddr, size)
-	paddr_t paddr;
-	size_t size;
+maple_free_dma(paddr_t paddr, size_t size)
 {
 	struct pglist mlist;
 	struct vm_page *m;
@@ -469,9 +444,7 @@ maple_free_dma(paddr, size)
 }
 
 static void
-mapleattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+mapleattach(struct device *parent, struct device *self, void *aux)
 {
 	struct maple_softc *sc;
 	vaddr_t dmabuffer;
@@ -484,20 +457,19 @@ mapleattach(parent, self, aux)
 	printf("\n");
 
 	if (maple_alloc_dma(MAPLE_DMABUF_SIZE, &dmabuffer, &dmabuffer_phys)) {
-	  printf("%s: unable to allocate DMA buffers.\n", sc->sc_dev.dv_xname);
-	  return;
+		printf("%s: unable to allocate DMA buffers.\n",
+		    sc->sc_dev.dv_xname);
+		return;
 	}
 
-	p = (u_int32_t *) dmabuffer;
+	p = (u_int32_t *)dmabuffer;
 
 	for (i = 0; i < MAPLE_PORTS; i++)
-	  for (j = 0; j < MAPLE_SUBUNITS; j++) {
-
-	    sc->sc_rxbuf[i][j] = p;
-	    sc->sc_rxbuf_phys[i][j] = SH3_P2SEG_TO_PHYS(p);
-	    p += 256;
-
-	  }
+		for (j = 0; j < MAPLE_SUBUNITS; j++) {
+			sc->sc_rxbuf[i][j] = p;
+			sc->sc_rxbuf_phys[i][j] = SH3_P2SEG_TO_PHYS(p);
+			p += 256;
+		}
 
 	sc->sc_txbuf = p;
 	sc->sc_txbuf_phys = SH3_P2SEG_TO_PHYS(p);
@@ -516,13 +488,11 @@ mapleattach(parent, self, aux)
 	memset(&sc->maple_callout_ch, 0, sizeof(sc->maple_callout_ch));
 
 	callout_reset(&sc->maple_callout_ch, MAPLE_CALLOUT_TICKS,
-		      (void *)maple_callout, sc);
+	    (void *)maple_callout, sc);
 }
 
 int
-mapleprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+mapleprint(void *aux, const char *pnp)
 {
 	struct maple_attach_args *ma = aux;
 
@@ -539,17 +509,14 @@ mapleprint(aux, pnp)
 		printf(" subunit %d", ma->ma_subunit);
 
 	printf(": %.*s",
-	       (int)sizeof(ma->ma_devinfo->di_product_name),
-	       ma->ma_devinfo->di_product_name);
+	    (int)sizeof(ma->ma_devinfo->di_product_name),
+	    ma->ma_devinfo->di_product_name);
 
 	return (0);
 }
 
 static int
-maplesubmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+maplesubmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct maple_attach_args *ma = aux;
 
@@ -565,30 +532,26 @@ maplesubmatch(parent, match, aux)
 }
 
 u_int32_t
-maple_get_function_data(devinfo, function_code)
-	struct maple_devinfo *devinfo;
-	u_int32_t function_code;
+maple_get_function_data(struct maple_devinfo *devinfo, u_int32_t function_code)
 {
 	int i, p = 0;
 
 	for (i = 31; i >= 0; --i)
-	  if (devinfo->di_func & (1U<<i)) {
-	    if (function_code & (1U<<i))
-	      return devinfo->di_function_data[p];
-	    else
-	      if (++p >= 3)
-		break;
-	  }
+		if (devinfo->di_func & (1U << i)) {
+			if (function_code & (1U << i))
+				return devinfo->di_function_data[p];
+			else
+				if (++p >= 3)
+					break;
+		}
+
 	return (0);
 }
 
 /* Generic maple device interface */
 
 int
-mapleopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+mapleopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct maple_softc *sc;
 
@@ -602,42 +565,33 @@ mapleopen(dev, flag, mode, p)
 	if (MAPLESUBUNIT(dev) >= MAPLE_SUBUNITS)
 		return (ENXIO);
 
-	if(!(sc->sc_port_units[MAPLEPORT(dev)] & (1<<MAPLESUBUNIT(dev))))
+	if (!(sc->sc_port_units[MAPLEPORT(dev)] & (1 << MAPLESUBUNIT(dev))))
 		return (ENXIO);
 
-	sc->sc_port_units_open[MAPLEPORT(dev)] |= 1<<MAPLESUBUNIT(dev);
+	sc->sc_port_units_open[MAPLEPORT(dev)] |= 1 << MAPLESUBUNIT(dev);
 
 	return (0);
 }
 
 int
-mapleclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+mapleclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct maple_softc *sc;
 
 	sc = device_lookup(&maple_cd, MAPLEBUSUNIT(dev));
 
-	sc->sc_port_units_open[MAPLEPORT(dev)] &= ~(1<<MAPLESUBUNIT(dev));
+	sc->sc_port_units_open[MAPLEPORT(dev)] &= ~(1 << MAPLESUBUNIT(dev));
 
 	return (0);
 }
 
 int
-maple_internal_ioctl(sc, port, subunit, cmd, data, flag, p)
-	struct maple_softc *sc;
-	int port;
-	int subunit;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+maple_internal_ioctl(struct maple_softc *sc, int port, int subunit, u_long cmd,
+    caddr_t data, int flag, struct proc *p)
 {
 	struct maple_unit *u = &sc->sc_unit[port][subunit];
 
-	if(!(sc->sc_port_units[port] & (1<<subunit)))
+	if (!(sc->sc_port_units[port] & (1 << subunit)))
 		return (ENXIO);
 
 	switch(cmd) {
@@ -650,17 +604,12 @@ maple_internal_ioctl(sc, port, subunit, cmd, data, flag, p)
 }
 
 int
-mapleioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+mapleioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct maple_softc *sc;
 
 	sc = device_lookup(&maple_cd, MAPLEBUSUNIT(dev));
 
-	return maple_internal_ioctl(sc, MAPLEPORT(dev), MAPLESUBUNIT(dev),
-				    cmd, data, flag, p);
+	return (maple_internal_ioctl(sc, MAPLEPORT(dev), MAPLESUBUNIT(dev),
+	    cmd, data, flag, p));
 }
