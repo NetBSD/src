@@ -1,7 +1,7 @@
-/* $Id: pcc.c,v 1.2 1996/03/17 01:35:03 thorpej Exp $ */
+/* $Id: pcc.c,v 1.3 1996/04/26 19:00:06 chuck Exp $ */
 
 /*
- *
+ * Copyright (c) 1996 Jason R. Thorpe
  * Copyright (c) 1995 Charles D. Cranor
  * All rights reserved.
  *
@@ -50,9 +50,11 @@
 #include <sys/device.h>
 #include <machine/cpu.h>
 #include <dev/cons.h>
+
 #include <mvme68k/mvme68k/isr.h>
-#include <mvme68k/dev/iio.h>
+
 #include <mvme68k/dev/pccreg.h>
+#include <mvme68k/dev/pccvar.h>
 
 /*
  * Autoconfiguration stuff.
@@ -63,9 +65,9 @@ struct pccsoftc {
 	struct pcc	*sc_pcc;
 };
 
-
-void pccattach __P((struct device *, struct device *, void *));
-int  pccmatch __P((struct device *, void *, void *));
+void	pccattach __P((struct device *, struct device *, void *));
+int	pccmatch __P((struct device *, void *, void *));
+int	pccprint __P((void *, char *));
 
 struct cfattach pcc_ca = {
 	sizeof(struct pccsoftc), pccmatch, pccattach
@@ -75,26 +77,40 @@ struct cfdriver pcc_cd = {
 	NULL, "pcc", DV_DULL, 0
 };
 
+int	pccintr __P((void *));
+
 /*
  * globals
  */
 
 struct pcc *sys_pcc = NULL;
 
-struct {
-	int	(*pcc_fn)();
-	void	*arg;
-	int	lvl;
-} pcc_vecs[PCC_NVEC];
+/*
+ * Devices that live on the PCC, attached in this order.
+ */
+struct pcc_device pcc_devices[] = {
+	{ "clock",	PCC_CLOCK_OFF,	1 },
+	{ "zsc",	PCC_ZS0_OFF,	1 },
+	{ "zsc",	PCC_ZS1_OFF,	1 },
+	{ "le",		PCC_LE_OFF,	2 },
+	{ "wdsc",	PCC_WDSC_OFF,	1 },
+	{ "lpt",	PCC_LPT_OFF,	1 },
+	{ "vmechip",	PCC_VME_OFF,	2 },
+	{ NULL,		0,		0 },
+};
 
 int
 pccmatch(parent, vcf, args)
 	struct device *parent;
 	void *vcf, *args;
 {
-	struct cfdata *cf = vcf;
+	char *ma_name = args;
 
-	return !badbaddr((caddr_t) IIO_CFLOC_ADDR(cf));
+	/* Only attach one PCC. */
+	if (sys_pcc)
+		return (0);
+
+	return (strcmp(ma_name, pcc_cd.cd_name) == 0);
 }
 
 void
@@ -103,72 +119,140 @@ pccattach(parent, self, args)
 	void *args;
 {
 	struct pccsoftc *pccsc;
+	struct pcc_attach_args npa;
+	caddr_t kva;
+	int i, error;
 
 	if (sys_pcc)
-		panic("pcc already attached!");
+		panic("pccattach: pcc already attached!");
 
-	iio_print(self->dv_cfdata);
+	sys_pcc = (struct pcc *)PCC_VADDR(PCC_REG_OFF);
 
 	/*
-	 * link into softc and set up interrupt vector base
+	 * link into softc and set up interrupt vector base,
+	 * and initialize the chip.
 	 */
 	pccsc = (struct pccsoftc *) self;
-	sys_pcc = pccsc->sc_pcc = (struct pcc *)IIO_CFLOC_ADDR(self->dv_cfdata);
+	pccsc->sc_pcc = sys_pcc;
 	pccsc->sc_pcc->int_vectr = PCC_VECBASE;
-	bzero(pcc_vecs, sizeof(pcc_vecs));
 
-	printf(" rev %d intbvr 0x%x\n", pccsc->sc_pcc->pcc_rev,
+	printf(": Peripheral Channel Controller, "
+	    "rev %d, vecbase 0x%x\n", pccsc->sc_pcc->pcc_rev,
 	    pccsc->sc_pcc->int_vectr);
+
+	/* Hook up interrupt handler for abort button. */
+	pccintr_establish(PCCV_ABORT, pccintr, 7, NULL);
+
+	/*
+	 * Now that the interrupt handler has been established,
+	 * enable the ABORT switch interrupt.
+	 */
+	pccsc->sc_pcc->abrt_int = PCC_ABORT_IEN | PCC_ABORT_ACK;
+
+	/* Make sure the global interrupt line is hot. */
+	pccsc->sc_pcc->gen_cr |= PCC_GENCR_IEN;
+
+	/*
+	 * Attach configured children.
+	 */
+	for (i = 0; pcc_devices[i].pcc_name != NULL; ++i) {
+		/*
+		 * Note that IPL is filled in by match function.
+		 */
+		npa.pa_name = pcc_devices[i].pcc_name;
+		npa.pa_offset = pcc_devices[i].pcc_offset;
+		npa.pa_ipl = -1;
+
+		/* Check for hardware. (XXX is this really necessary?) */
+		kva = PCC_VADDR(npa.pa_offset);
+		/* XXX should change interface to badaddr() */
+		switch (pcc_devices[i].pcc_bytes) {
+		case 1:
+			error = badbaddr(kva);
+			break;
+
+		case 2:
+			error = badaddr(kva);
+			break;
+
+		default:
+			panic("pccattach: bad probe size");
+		}
+		if (error) {
+			/*
+			 * Hardware not present.
+			 */
+			continue;
+		}
+
+		/* Attach the device if configured. */
+		(void)config_found(self, &npa, pccprint);
+	}
 }
 
-
-/*
- * pccintr: called from locore with the PC and evec from the trap frame.
- */
 int
-pccintr(pc, evec, frame)
-	int pc;
-	int evec;
-	void *frame;
+pccprint(aux, cp)
+	void *aux;
+	char *cp;
 {
-	int vec = (evec & 0xfff) >> 2; /* XXX should be m68k macro? */
-	extern u_long intrcnt[]; /* XXX from locore */
+	struct pcc_attach_args *pa = aux;
 
-	vec = vec & 0xf; /* XXX mask out */
-	if (vec >= PCC_NVEC || pcc_vecs[vec].pcc_fn == NULL) 
-		return(straytrap(pc, evec));
+	if (cp)
+		printf("%s at %s", pa->pa_name, cp);
 
-	cnt.v_intr++;
-	intrcnt[pcc_vecs[vec].lvl]++;
-  
-	/* arg override?  only timer1 gets access to frame */
-	if (vec != PCCV_TIMER1)
-		frame = pcc_vecs[vec].arg;
-	return((*pcc_vecs[vec].pcc_fn)(frame));
+	printf(" offset 0x%lx", pa->pa_offset);
+	if (pa->pa_ipl != -1)
+		printf(" ipl %d", pa->pa_ipl);
+
+	return (UNCONF);
 }
-
 
 /*
  * pccintr_establish: establish pcc interrupt
  */
-int
-pccintr_establish(vec, hand, lvl, arg)
-	u_long vec;
-	int (*hand)(), lvl;
+void
+pccintr_establish(pccvec, hand, lvl, arg)
+	int pccvec;
+	int (*hand) __P((void *)), lvl;
 	void *arg;
 {
-	if (vec >= PCC_NVEC) {
-		printf("pcc: illegal vector: 0x%x\n", vec);
+
+	if ((pccvec < 0) || (pccvec >= PCC_NVEC)) {
+		printf("pcc: illegal vector offset: 0x%x\n", pccvec);
 		panic("pccintr_establish");
 	}
 
-	if (pcc_vecs[vec].pcc_fn) {
-		printf("pcc: vector 0x%x in use: (0x%x,0x%x) (0x%x,0x%x)\n",
-		    hand, arg, pcc_vecs[vec].pcc_fn, pcc_vecs[vec].arg);
+	if ((lvl < 1) || (lvl > 7)) {
+		printf("pcc: illegal interrupt level: %d\n", lvl);
 		panic("pccintr_establish");
 	}
 
-	pcc_vecs[vec].pcc_fn = hand;
-	pcc_vecs[vec].lvl = lvl;
-	pcc_vecs[vec].arg = arg;
+	isrlink_vectored(hand, arg, lvl, pccvec + PCC_VECBASE);
+}
+
+void
+pccintr_disestablish(pccvec)
+	int pccvec;
+{
+
+	if ((pccvec < 0) || (pccvec >= PCC_NVEC)) {
+		printf("pcc: illegal vector offset: 0x%x\n", pccvec);
+		panic("pccintr_establish");
+	}
+
+	isrunlink_vectored(pccvec + PCC_VECBASE);
+}
+
+/*
+ * Handle NMI from abort switch.
+ */
+int
+pccintr(frame)
+	void *frame;
+{
+
+	/* XXX wait until button pops out */
+	sys_pcc->abrt_int = PCC_ABORT_IEN | PCC_ABORT_ACK;
+	nmihand((struct frame *)frame);
+	return (1);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.6 1996/04/22 02:28:34 christos Exp $ */
+/*	$NetBSD: if_le.c,v 1.7 1996/04/26 19:00:00 chuck Exp $ */
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -60,10 +60,12 @@
 #include <machine/cpu.h>
 #include <machine/pmap.h>
 
-#include <mvme68k/dev/iio.h>
 #include <mvme68k/dev/pccreg.h>
+#include <mvme68k/dev/pccvar.h>
+
 #include <mvme68k/dev/if_lereg.h>
 #include <mvme68k/dev/if_levar.h>
+
 #include <dev/ic/am7990reg.h>
 #define	LE_NEED_BUF_CONTIG
 #include <dev/ic/am7990var.h>
@@ -71,12 +73,12 @@
 #define	LE_SOFTC(unit)	le_cd.cd_devs[unit]
 #define	LE_DELAY(x)	DELAY(x)
 
-int	lematch __P((struct device *, void *, void *));
-void	leattach __P((struct device *, struct device *, void *));
+int	le_pcc_match __P((struct device *, void *, void *));
+void	le_pcc_attach __P((struct device *, struct device *, void *));
 int	leintr __P((void *));
 
-struct cfattach le_ca = {
-	sizeof(struct le_softc), lematch, leattach
+struct cfattach le_pcc_ca = {
+	sizeof(struct le_softc), le_pcc_match, le_pcc_attach
 };
 
 struct	cfdriver le_cd = {
@@ -116,30 +118,34 @@ lerdcsr(sc, port)
 }
 
 int
-lematch(parent, match, aux)
+le_pcc_match(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
 	struct cfdata *cf = match;
+	struct pcc_attach_args *pa = aux;
 
-	return !badbaddr((caddr_t) IIO_CFLOC_ADDR(cf));
+	if (strcmp(pa->pa_name, le_cd.cd_name))
+		return (0);
+
+	pa->pa_ipl = cf->pcccf_ipl;
+	return (1);
 }
 
 void
-leattach(parent, self, aux)
+le_pcc_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
 	struct le_softc *sc = (void *)self;
-	struct cfdata *cf = self->dv_cfdata;
-	int pri = IIO_CFLOC_LEVEL(cf);
+	struct pcc_attach_args *pa = aux;
 
 	/* XXX the following declarations should be elsewhere */
 	extern void myetheraddr __P((u_char *));
 
-	iio_print(cf);
+	/* Map control registers. */
+	sc->sc_r1 = (struct lereg1 *)PCC_VADDR(pa->pa_offset);
 
-	sc->sc_r1 = (struct lereg1 *)IIO_CFLOC_ADDR(cf);
 	sc->sc_mem = ledatabuf;		/* XXX */
 	sc->sc_conf3 = LE_C3_BSWP;
 	sc->sc_addr = (u_long)sc->sc_mem;
@@ -156,8 +162,8 @@ leattach(parent, self, aux)
 	sc->sc_arpcom.ac_if.if_name = le_cd.cd_name;
 	leconfig(sc);
 
-	pccintr_establish(PCCV_LE, leintr, pri, sc);
-	sys_pcc->le_int = pri | PCC_IENABLE;
+	pccintr_establish(PCCV_LE, leintr, pa->pa_ipl, sc);
+	sys_pcc->le_int = pa->pa_ipl | PCC_IENABLE;
 }
 
 #include <dev/ic/am7990.c>

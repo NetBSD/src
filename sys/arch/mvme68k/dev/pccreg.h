@@ -1,4 +1,4 @@
-/* $Id: pccreg.h,v 1.2 1996/04/18 18:07:08 chuck Exp $ */
+/* $Id: pccreg.h,v 1.3 1996/04/26 19:00:08 chuck Exp $ */
 
 /*
  *
@@ -32,8 +32,27 @@
  */
 
 /*
- * peripheral channel controller (at pa fffe1000)
+ * peripheral channel controller (at pa fffe0000)
  */
+
+#define PCC_BASE	0xfffe0000	/* PA of PCC chip space */
+#define PCC_CLOCK_OFF	0x0000		/* offset of Mostek clock chip */
+#define PCC_RTC_OFF	0x07f8		/* offset of clock registers in MK */
+#define PCC_REG_OFF	0x1000		/* offset of PCC chip registers */
+#define PCC_LE_OFF	0x1800		/* offset of LANCE ethernet chip */
+#define PCC_VME_OFF	0x2000		/* offset of VME chip */
+#define PCC_LPT_OFF	0x2800		/* offset of parallel port register */
+#define PCC_ZS0_OFF	0x3000		/* offset of first 8530 UART */
+#define PCC_ZS1_OFF	0x3800		/* offset of second 8530 UART */
+#define PCC_WDSC_OFF	0x4000		/* offset of 33c93 SCSI chip */
+
+#define PCC_PADDR(off)	((void *)(PCC_BASE + (off)))
+
+/*
+ * The PCC space is permanently mapped by pmap_bootstrap().  This
+ * macro translates PCC offsets into the corresponding KVA.
+ */
+#define PCC_VADDR(off)	((void *)IIOV(PCC_BASE + (off))) 
 
 struct pcc {
   volatile u_long dma_taddr;		/* dma table address */
@@ -122,6 +141,7 @@ extern struct pcc *sys_pcc;
 #define PCC_TIMERACK 0x80	/* ack intr */
 #define PCC_TIMER100HZ 63936	/* load value for 100Hz */
 #define PCC_TIMERCLEAR 0x0	/* reset and clear timer */
+#define PCC_TIMERSTOP  0x1	/* stop clock, but don't clear it */
 #define PCC_TIMERSTART 0x3      /* start timer */
 
 /*
@@ -129,3 +149,17 @@ extern struct pcc *sys_pcc;
  */
 
 #define PCC_ZSEXTERN 0x10	/* let PCC supply vector */
+
+/*
+ * abort switch
+ */
+
+#define PCC_ABORT_IEN	0x08	/* enable interrupt */
+#define PCC_ABORT_ABS	0x40	/* current state of switch */
+#define PCC_ABORT_ACK	0x80	/* interrupt active; write to ack */
+
+/*
+ * general control register
+ */
+
+#define PCC_GENCR_IEN	0x10	/* global interrupt enable */
