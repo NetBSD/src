@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_core.c,v 1.6 2003/03/11 23:11:22 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_core.c,v 1.28 2003/03/12 00:14:40 wiz Exp $	*/
+/*	$NetBSD: bktr_core.c,v 1.29 2003/03/12 00:19:21 wiz Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp$ */
 
 /*
@@ -98,20 +98,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.28 2003/03/12 00:14:40 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.29 2003/03/12 00:19:21 wiz Exp $");
 
 #include "opt_bktr.h"		/* Include any kernel config options */
-
-#ifdef __FreeBSD__
-#include "bktr.h"
-#endif /* __FreeBSD__ */
-
-#if (                                                            \
-       (defined(__FreeBSD__) && (NBKTR > 0))                     \
-    || (defined(__bsdi__))                                       \
-    || (defined(__OpenBSD__))                                    \
-    || (defined(__NetBSD__))                                     \
-    )
 
 
 /*******************/
@@ -3415,6 +3404,7 @@ yuv12_prog(bktr_ptr_t bktr, char i_flag,
 	*dma_prog++ = htole32((u_long) vtophys(bktr->dma_prog));
 	*dma_prog++ = htole32(0);  /* NULL WORD */
 }
+
 
 
 /*

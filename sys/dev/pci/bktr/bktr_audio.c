@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_audio.c,v 1.6 2003/03/11 23:11:20 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_audio.c,v 1.11 2003/03/12 00:14:40 wiz Exp $	*/
+/*	$NetBSD: bktr_audio.c,v 1.12 2003/03/12 00:19:20 wiz Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_audio.c,v 1.8 2000/10/31 13:09:56 roger Exp$ */
 /*
  * This is part of the Driver for Video Capture Cards (Frame grabbers)
@@ -49,9 +49,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_audio.c,v 1.11 2003/03/12 00:14:40 wiz Exp $");
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -74,7 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: bktr_audio.c,v 1.11 2003/03/12 00:14:40 wiz Exp $");
 
 #ifdef __NetBSD__
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_audio.c,v 1.11 2003/03/12 00:14:40 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_audio.c,v 1.12 2003/03/12 00:19:20 wiz Exp $");
 
 #include <sys/proc.h>
 #include <dev/ic/bt8xx.h>	/* NetBSD location of .h files */
