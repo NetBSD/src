@@ -1,8 +1,8 @@
-#	$NetBSD: files.opencrypto,v 1.11 2003/08/26 16:37:38 thorpej Exp $
+#	$NetBSD: files.opencrypto,v 1.12 2003/08/27 00:05:28 thorpej Exp $
 #
 #
 
-defpseudo opencrypto: des, cast128, rijndael, ripemd160, sha2
+defpseudo opencrypto: blowfish, des, cast128, rijndael, ripemd160, sha2
 
 file	opencrypto/criov.c		opencrypto
 file	opencrypto/cryptodev.c		opencrypto
@@ -11,7 +11,6 @@ file	opencrypto/xform.c		opencrypto
 file	opencrypto/crypto.c		opencrypto	needs-flag
 
 # local crypto algorithms - XXX should G/C and use crypto/...
-file	opencrypto/blf.c		opencrypto
 file	opencrypto/skipjack.c		opencrypto
 
 file	opencrypto/deflate.c		opencrypto
