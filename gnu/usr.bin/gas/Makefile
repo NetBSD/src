@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	6.1 (Berkeley) 3/3/91
-#	$Id: Makefile,v 1.11 1993/12/05 00:54:33 cgd Exp $
+#	$Id: Makefile,v 1.12 1993/12/19 04:35:57 davidb Exp $
 
 .include "config/Makefile.$(MACHINE_ARCH)"
 
@@ -25,7 +25,7 @@ SRCS+=		app.c as.c atof-generic.c bignum-copy.c \
 		symbols.c version.c write.c xmalloc.c xrealloc.c \
 		obj-$(gas_objformat).c
 CFLAGS+=	-I$(.CURDIR) ${ADDINCLUDE} -I$(.CURDIR)/config \
-		-DPIC -DOLD_GAS -DSIGTY=void -Derror=as_fatal
+		-DOLD_GAS -DSIGTY=void -Derror=as_fatal
 #LDADD+=		-lgnumalloc
 DPADD+=		/usr/lib/libgnumalloc.a
 
