@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.17 2000/03/23 07:01:43 thorpej Exp $	*/
+/*	$NetBSD: be.c,v 1.18 2000/05/09 22:51:34 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -128,6 +128,7 @@ struct be_softc {
 	struct	sbusdev sc_sd;		/* sbus device */
 	bus_space_tag_t	sc_bustag;	/* bus & dma tags */
 	bus_dma_tag_t	sc_dmatag;
+	bus_dmamap_t	sc_dmamap;
 	struct	ethercom sc_ethercom;
 	/*struct	ifmedia sc_ifmedia;	-* interface media */
 	struct mii_data	sc_mii;		/* MII media control */
@@ -237,10 +238,11 @@ beattach(parent, self, aux)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mii_data *mii = &sc->sc_mii;
 	struct mii_softc *child;
-	int instance;
 	int node = sa->sa_node;
+	bus_dma_tag_t dmatag = sa->sa_dmatag;
 	bus_dma_segment_t seg;
 	bus_size_t size;
+	int instance;
 	int rseg, error;
 	u_int32_t v;
 	extern void myetheraddr __P((u_char *));
@@ -317,6 +319,14 @@ beattach(parent, self, aux)
 		QEC_XD_RING_MAXSIZE * sizeof(struct qec_xd) +
 		sc->sc_rb.rb_ntbuf * BE_PKT_BUF_SZ +
 		sc->sc_rb.rb_nrbuf * BE_PKT_BUF_SZ;
+
+	if ((error = bus_dmamap_create(dmatag, size, 1, size, NBPG,
+				    BUS_DMA_NOWAIT, &sc->sc_dmamap)) != 0) {
+		printf("%s: DMA map create error %d\n", self->dv_xname, error);
+		return;
+	}
+
+	/* Allocate DMA buffer */
 	if ((error = bus_dmamem_alloc(sa->sa_dmatag, size,
 				      NBPG, 0,
 				      &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
@@ -324,13 +334,24 @@ beattach(parent, self, aux)
 			self->dv_xname, error);
 		return;
 	}
-	sc->sc_rb.rb_dmabase = seg.ds_addr;
 
+	/* Load the buffer */
+	if ((error = bus_dmamap_load_raw(dmatag, sc->sc_dmamap,
+				&seg, rseg, size, BUS_DMA_NOWAIT)) != 0) {
+		printf("%s: DMA buffer map load error %d\n",
+			self->dv_xname, error);
+		bus_dmamem_free(dmatag, &seg, rseg);
+		return;
+	}
+	sc->sc_rb.rb_dmabase = sc->sc_dmamap->dm_segs[0].ds_addr;
+
+	/* Map DMA memory in CPU addressable space */
 	if ((error = bus_dmamem_map(sa->sa_dmatag, &seg, rseg, size,
 			            &sc->sc_rb.rb_membase,
 			            BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		printf("%s: DMA buffer map error %d\n",
 			self->dv_xname, error);
+		bus_dmamap_unload(dmatag, sc->sc_dmamap);
 		bus_dmamem_free(sa->sa_dmatag, &seg, rseg);
 		return;
 	}
