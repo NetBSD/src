@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.86.2.11 2001/01/03 16:55:47 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.86.2.12 2001/01/07 22:12:45 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -46,6 +46,7 @@
  */
 
 #include "opt_user_ldt.h"
+#include "opt_largepages.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,14 +126,15 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	 * during the allocations below.
 	 *
 	 * Note: pcb_ldt_sel is handled in the pmap_activate() call when
-	 * the process runs.
+	 * we run the new process.
 	 */
-	pcb->pcb_tss_sel = GSEL(GNULL_SEL, SEL_KPL);
+	p2->p_md.md_tss_sel = GSEL(GNULL_SEL, SEL_KPL);
 
 	/* Fix up the TSS. */
 	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
 	pcb->pcb_tss.tss_esp0 = (int)p2->p_addr + USPACE - 16;
-	tss_alloc(pcb);
+
+	p2->p_md.md_tss_sel = tss_alloc(pcb);
 
 	/*
 	 * Copy the trapframe.
@@ -213,7 +215,7 @@ cpu_wait(p)
 {
 
 	/* Nuke the TSS. */
-	tss_free(&p->p_addr->u_pcb);
+	tss_free(p);
 }
 
 /*
@@ -301,10 +303,17 @@ pagemove(from, to, size)
 	register pt_entry_t *fpte, *tpte, ofpte, otpte;
 	int32_t cpumask = 0;
 
-	if (size % NBPG)
+	if (size & PAGE_MASK)
 		panic("pagemove");
-	fpte = kvtopte(from);
-	tpte = kvtopte(to);
+	fpte = kvtopte((vaddr_t)from);
+	tpte = kvtopte((vaddr_t)to);
+#ifdef LARGEPAGES
+	/* XXX For now... */
+	if (*fpte & PG_PS)
+		panic("pagemove: fpte PG_PS");
+	if (*tpte & PG_PS)
+		panic("pagemove: tpte PG_PS");
+#endif
 	while (size > 0) {
 		otpte = *tpte;
 		ofpte = *fpte;
@@ -316,9 +325,9 @@ pagemove(from, to, size)
 		if (ofpte & PG_V)
 			pmap_tlb_shootdown(pmap_kernel(),
 			    (vaddr_t)from, ofpte, &cpumask);
-		from += NBPG;
-		to += NBPG;
-		size -= NBPG;
+		from += PAGE_SIZE;
+		to += PAGE_SIZE;
+		size -= PAGE_SIZE;
 	}
 	pmap_tlb_shootnow(cpumask);
 }

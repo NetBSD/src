@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.35.2.5 2000/12/29 21:21:58 sommerfeld Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.35.2.6 2001/01/07 22:12:49 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -482,7 +482,7 @@ pci_intr_map(pa, ihp)
 	struct mp_intr_map *mip;
 	int bus, dev, func;
 #endif
-	
+
 	if (pin == 0) {
 		/* No IRQ used. */
 		goto bad;

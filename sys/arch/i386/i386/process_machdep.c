@@ -1,7 +1,7 @@
-/*	$NetBSD: process_machdep.c,v 1.30.10.3 2000/08/18 13:39:14 sommerfeld Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.30.10.4 2001/01/07 22:12:44 sommerfeld Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -179,12 +179,19 @@ process_write_regs(p, regs)
 	pmap_t pmap = p->p_vmspace->vm_map.pmap;
 
 #ifdef VM86
-	if (tf->tf_eflags & PSL_VM) {
+	if (regs->r_eflags & PSL_VM) {
+		void syscall_vm86 __P((struct trapframe));
+
 		tf->tf_vm86_gs = regs->r_gs;
 		tf->tf_vm86_fs = regs->r_fs;
 		tf->tf_vm86_es = regs->r_es;
 		tf->tf_vm86_ds = regs->r_ds;
 		set_vflags(p, regs->r_eflags);
+		/*
+		 * Make sure that attempts at system calls from vm86
+		 * mode die horribly.
+		 */
+		p->p_md.md_syscall = syscall_vm86;
 	} else
 #endif
 	{
@@ -222,6 +229,11 @@ process_write_regs(p, regs)
 		pcb->pcb_fs = regs->r_fs;
 		tf->tf_es = regs->r_es;
 		tf->tf_ds = regs->r_ds;
+#ifdef VM86
+		/* Restore normal syscall handler */
+		if (tf->tf_eflags & PSL_VM)
+			(*p->p_emul->e_syscall_intern)(p);
+#endif
 		tf->tf_eflags = regs->r_eflags;
 	}
 	tf->tf_edi = regs->r_edi;

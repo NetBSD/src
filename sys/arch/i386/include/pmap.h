@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.43.2.9 2001/01/03 16:55:48 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.43.2.10 2001/01/07 22:12:47 sommerfeld Exp $	*/
 
 /*
  *
@@ -41,6 +41,7 @@
 
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_user_ldt.h"
+#include "opt_largepages.h"
 #endif
 
 #include <machine/cpufunc.h>
@@ -130,12 +131,12 @@
  *   |1023|
  *   +----+
  *
- * note that mapping of the PDP at PTP#959's VA (0xeffbf000) is
+ * note that mapping of the PDP at PTP#767's VA (0xbffbf000) is
  * defined as "PDP_BASE".... within that mapping there are two
  * defines:
- *   "PDP_PDE" (0xeffbfefc) is the VA of the PDE in the PDP
+ *   "PDP_PDE" (0xbffbfefc) is the VA of the PDE in the PDP
  *      which points back to itself.
- *   "APDP_PDE" (0xeffbfffc) is the VA of the PDE in the PDP which
+ *   "APDP_PDE" (0xbffbfffc) is the VA of the PDE in the PDP which
  *      establishes the recursive mapping of the alternate pmap.
  *      to set the alternate PDP, one just has to put the correct
  *	PA info in *APDP_PDE.
@@ -188,27 +189,6 @@
 #define NKPTP_MIN	4	/* smallest value we allow */
 #define NKPTP_MAX	(1024 - (KERNBASE/NBPD) - 1)
 				/* largest value (-1 for APTP space) */
-
-/*
- * various address macros
- *
- *  vtopte: return a pointer to the PTE mapping a VA
- *  kvtopte: same as above (takes a KVA, but doesn't matter with this pmap)
- *  ptetov: given a pointer to a PTE, return the VA that it maps
- *  vtophys: translate a VA to the PA mapped to it
- *
- * plus alternative versions of the above
- */
-
-#define vtopte(VA)	(PTE_BASE + i386_btop(VA))
-#define kvtopte(VA)	vtopte(VA)
-#define ptetov(PT)	(i386_ptob(PT - PTE_BASE))
-#define	vtophys(VA)	((*vtopte(VA) & PG_FRAME) | \
-			 ((unsigned)(VA) & ~PG_FRAME))
-#define	avtopte(VA)	(APTE_BASE + i386_btop(VA))
-#define	ptetoav(PT)	(i386_ptob(PT - APTE_BASE))
-#define	avtophys(VA)	((*avtopte(VA) & PG_FRAME) | \
-			 ((unsigned)(VA) & ~PG_FRAME))
 
 /*
  * pdei/ptei: generate index into PDP/PTP from a VA
@@ -358,6 +338,7 @@ extern int pmap_pg_g;			/* do we support PG_G? */
 
 #define	pmap_kernel()			(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
+#define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 #define	pmap_update()			/* nothing (yet) */
 
 #define pmap_clear_modify(pg)		pmap_clear_attrs(pg, PG_M)
@@ -384,8 +365,6 @@ static void	pmap_protect __P((struct pmap *, vaddr_t,
 				vaddr_t, vm_prot_t));
 void		pmap_remove __P((struct pmap *, vaddr_t, vaddr_t));
 boolean_t	pmap_test_attrs __P((struct vm_page *, int));
-void		pmap_transfer __P((struct pmap *, struct pmap *, vaddr_t,
-				   vsize_t, vaddr_t, boolean_t));
 static void	pmap_update_pg __P((vaddr_t));
 static void	pmap_update_2pg __P((vaddr_t,vaddr_t));
 void		pmap_write_protect __P((struct pmap *, vaddr_t,
@@ -402,8 +381,8 @@ void	pmap_do_tlb_shootdown __P((struct cpu_info *));
 /*
  * Do idle page zero'ing uncached to avoid polluting the cache.
  */
-void		pmap_zero_page_uncached __P((paddr_t));
-#define	PMAP_PAGEIDLEZERO(pa)	(pmap_zero_page_uncached((pa)), TRUE)
+boolean_t	pmap_zero_page_uncached __P((paddr_t));
+#define	PMAP_PAGEIDLEZERO(pa)	pmap_zero_page_uncached((pa))
 
 /*
  * inline functions
@@ -491,6 +470,46 @@ pmap_protect(pmap, sva, eva, prot)
 	}
 }
 
+/*
+ * various address inlines
+ *
+ *  vtopte: return a pointer to the PTE mapping a VA, works only for
+ *  user and PT addresses
+ *
+ *  kvtopte: return a pointer to the PTE mapping a kernel VA
+ */
+
+#include <lib/libkern/libkern.h>
+
+static __inline pt_entry_t *
+vtopte(vaddr_t va)
+{
+
+	KASSERT(va < (PDSLOT_KERN << PDSHIFT));
+
+	return (PTE_BASE + i386_btop(va));
+}
+
+static __inline pt_entry_t *
+kvtopte(vaddr_t va)
+{
+
+	KASSERT(va >= (PDSLOT_KERN << PDSHIFT));
+
+#ifdef LARGEPAGES
+	{
+		pd_entry_t *pde;
+
+		pde = PDP_BASE + pdei(va);
+		if (*pde & PG_PS)
+			return ((pt_entry_t *)pde);
+	}
+#endif
+
+	return (PTE_BASE + i386_btop(va));
+}
+
+paddr_t vtophys __P((vaddr_t));
 vaddr_t	pmap_map __P((vaddr_t, paddr_t, paddr_t, vm_prot_t));
 
 #if defined(USER_LDT)

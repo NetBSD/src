@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.26.10.3 2001/01/07 22:12:47 sommerfeld Exp $	*/
+/*	$NetBSD: svr4_sigcode.s,v 1.1.4.2 2001/01/07 22:12:44 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,66 +71,114 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)pcb.h	5.10 (Berkeley) 5/12/91
+ *	@(#)locore.s	7.3 (Berkeley) 5/13/91
  */
-
-/*
- * Intel 386 process control block
- */
-
-#ifndef _I386_PCB_H_
-#define _I386_PCB_H_
 
 #if defined(_KERNEL) && !defined(_LKM)
-#include "opt_multiprocessor.h"
+#include "opt_vm86.h"
 #endif
 
-#include <sys/signal.h>
+#include "assym.h"
 
+#include <machine/psl.h>
 #include <machine/segments.h>
-#include <machine/tss.h>
-#include <machine/npx.h>
-#include <machine/sysarch.h>
+#include <machine/trap.h>
+#include <compat/svr4/svr4_syscall.h>
 
-#define	NIOPORTS	1024		/* # of ports we allow to be mapped */
-
-struct pcb {
-	struct	i386tss pcb_tss;
-#define	pcb_cr3	pcb_tss.tss_cr3
-#define	pcb_esp	pcb_tss.tss_esp
-#define	pcb_ebp	pcb_tss.tss_ebp
-#define	pcb_fs	pcb_tss.tss_fs
-#define	pcb_gs	pcb_tss.tss_gs
-#define	pcb_ldt_sel	pcb_tss.tss_ldt
-	int	pcb_cr0;		/* saved image of CR0 */
-	struct	save87 pcb_savefpu;	/* floating point state for 287/387 */
-	struct	emcsts pcb_saveemc;	/* Cyrix EMC state */
 /*
- * Software pcb (extension)
+ * override user-land alignment before including asm.h
  */
-	int	pcb_flags;
-#define	PCB_USER_LDT	0x01		/* has user-set LDT */
-	caddr_t	pcb_onfault;		/* copyin/out fault recovery */
-	int	vm86_eflags;		/* virtual eflags for vm86 mode */
-	int	vm86_flagmask;		/* flag mask for vm86 mode */
-	void	*vm86_userp;		/* XXX performance hack */
-	struct pmap *pcb_pmap;		/* back pointer to our pmap */
-	struct cpu_info *pcb_fpcpu;	/* cpu holding our fp state. */
-	u_long	pcb_iomap[NIOPORTS/32];	/* I/O bitmap */
-};
-
-/*    
- * The pcb is augmented with machine-dependent additional data for 
- * core dumps. For the i386, there is nothing to add.
- */     
-struct md_coredump {
-	long	md_pad[8];
-};    
-
-#ifdef _KERNEL
-#ifndef MULTIPROCESSOR
-struct pcb *curpcb;		/* our current running pcb */
+#ifdef __ELF__
+#define	ALIGN_DATA	.align	4
+#define	ALIGN_TEXT	.align	4,0x90	/* 4-byte boundaries, NOP-filled */
+#define	SUPERALIGN_TEXT	.align	16,0x90	/* 16-byte boundaries better for 486 */
+#else
+#define	ALIGN_DATA	.align	2
+#define	ALIGN_TEXT	.align	2,0x90	/* 4-byte boundaries, NOP-filled */
+#define	SUPERALIGN_TEXT	.align	4,0x90	/* 16-byte boundaries better for 486 */
 #endif
+#define _ALIGN_TEXT	ALIGN_TEXT
+#include <machine/asm.h>
+
+/*
+ * XXX traditional CPP's evaluation semantics make this necessary.
+ * XXX (__CONCAT() would be evaluated incorrectly)
+ */
+#ifdef __ELF__
+#define	IDTVEC(name)	ALIGN_TEXT; .globl X/**/name; X/**/name:
+#else
+#define	IDTVEC(name)	ALIGN_TEXT; .globl _X/**/name; _X/**/name:
 #endif
 
-#endif /* _I386_PCB_H_ */
+
+/*
+ * These are used on interrupt or trap entry or exit.
+ */
+#define	INTRENTRY \
+	pushl	%eax		; \
+	pushl	%ecx		; \
+	pushl	%edx		; \
+	pushl	%ebx		; \
+	pushl	%ebp		; \
+	pushl	%esi		; \
+	pushl	%edi		; \
+	pushl	%ds		; \
+	pushl	%es		; \
+	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax	; \
+	movl	%ax,%ds		; \
+	movl	%ax,%es
+#define	INTRFASTEXIT \
+	popl	%es		; \
+	popl	%ds		; \
+	popl	%edi		; \
+	popl	%esi		; \
+	popl	%ebp		; \
+	popl	%ebx		; \
+	popl	%edx		; \
+	popl	%ecx		; \
+	popl	%eax		; \
+	addl	$8,%esp		; \
+	iret
+
+/*
+ * Signal trampoline; copied to top of user stack.
+ */
+
+NENTRY(svr4_sigcode)
+	call	SVR4_SIGF_HANDLER(%esp)
+	leal	SVR4_SIGF_UC(%esp),%eax	# ucp (the call may have clobbered the
+					# copy at SIGF_UCP(%esp))
+#ifdef VM86
+	testl	$PSL_VM,SVR4_UC_EFLAGS(%eax)
+	jnz	1f
+#endif
+	movl	SVR4_UC_FS(%eax),%ecx
+	movl	SVR4_UC_GS(%eax),%edx
+	movl	%cx,%fs
+	movl	%dx,%gs
+1:	pushl	%eax
+	pushl	$1			# setcontext(p) == syscontext(1, p) 
+	pushl	%eax			# junk to fake return address
+	movl	$SVR4_SYS_context,%eax
+	int	$0x80	 		# enter kernel with args on stack
+	movl	$SVR4_SYS_exit,%eax
+	int	$0x80			# exit if sigreturn fails
+	.globl	_C_LABEL(svr4_esigcode)
+_C_LABEL(svr4_esigcode):
+
+IDTVEC(svr4_fasttrap)
+	pushl	$2		# size of instruction for restart
+	pushl	$T_ASTFLT	# trap # for doing ASTs
+	INTRENTRY
+	call	_C_LABEL(svr4_fasttrap)
+2:	/* Check for ASTs on exit to user mode. */
+	cli
+	CHECK_ASTPENDING(%ecx)		
+	je	1f
+	/* Always returning to user mode here. */
+	CLEAR_ASTPENDING(%ecx)
+	sti
+	/* Pushed T_ASTFLT into tf_trapno on entry. */
+	call	_C_LABEL(trap)
+	jmp	2b
+1:	INTRFASTEXIT

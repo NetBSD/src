@@ -1,7 +1,7 @@
-/*	$NetBSD: locore.s,v 1.215.2.17 2001/01/07 18:17:28 sommerfeld Exp $	*/
+/*	$NetBSD: locore.s,v 1.215.2.18 2001/01/07 22:12:41 sommerfeld Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -80,12 +80,9 @@
 #include "opt_vm86.h"
 #include "opt_user_ldt.h"
 #include "opt_dummy_nops.h"
-#include "opt_compat_freebsd.h"
-#include "opt_compat_linux.h"
-#include "opt_compat_ibcs2.h"
-#include "opt_compat_svr4.h"
-#include "opt_multiprocessor.h"
 #include "opt_compat_oldboot.h"
+#include "opt_multiprocessor.h"
+#include "opt_lockdebug.h"
 
 #include "npx.h"
 #include "assym.h"
@@ -95,18 +92,6 @@
 
 #include <sys/errno.h>
 #include <sys/syscall.h>
-#ifdef COMPAT_SVR4
-#include <compat/svr4/svr4_syscall.h>
-#endif
-#ifdef COMPAT_LINUX
-#include <compat/linux/linux_syscall.h>
-#endif
-#ifdef COMPAT_FREEBSD
-#include <compat/freebsd/freebsd_syscall.h>
-#endif
-#ifdef COMPAT_IBCS2
-#include <compat/ibcs2/ibcs2_syscall.h>
-#endif
 
 #include <machine/cputypes.h>
 #include <machine/param.h>
@@ -237,12 +222,12 @@
 	pushl	%ecx		; \
 	pushl	%edx		; \
 	pushl	%ebx		; \
+	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax	; \
 	pushl	%ebp		; \
 	pushl	%esi		; \
 	pushl	%edi		; \
 	pushl	%ds		; \
 	pushl	%es		; \
-	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax	; \
 	movl	%ax,%ds		; \
 	movl	%ax,%es
 #define	INTRFASTEXIT \
@@ -287,6 +272,7 @@
 
 	.globl	_C_LABEL(cpu),_C_LABEL(cpu_id),_C_LABEL(cpu_vendor)
 	.globl	_C_LABEL(cpuid_level),_C_LABEL(cpu_feature)
+	.globl	_C_LABEL(cpu_brand_id)
 	.globl	_C_LABEL(esym),_C_LABEL(boothowto)
 	.globl	_C_LABEL(bootinfo),_C_LABEL(atdevbase)
 #ifdef COMPAT_OLDBOOT
@@ -336,6 +322,7 @@ _C_LABEL(cpuid_level):	.long	-1	# max. level accepted by 'cpuid'
 					#   instruction
 _C_LABEL(cpu_vendor):	.space	16	# vendor string returned by `cpuid'
 					#   instruction
+_C_LABEL(cpu_brand_id):	.long	0	# brand ID from 'cpuid' instruction
 _C_LABEL(esym):		.long	0	# ptr to end of syms
 _C_LABEL(atdevbase):	.long	0	# location of start of iomem in virtual
 _C_LABEL(proc0paddr):	.long	0
@@ -598,6 +585,10 @@ try586:	/* Use the `cpuid' instruction. */
 	movl	%eax,RELOC(cpu_id)	# store cpu_id and features
 	movl	%edx,RELOC(cpu_feature)
 
+	/* Brand ID is bits 0-7 of %ebx */
+	andl	$255,%ebx
+	movl	%ebx,RELOC(cpu_brand_id)
+
 2:
 	/*
 	 * Finished with old stack; load new %esp now instead of later so we
@@ -695,11 +686,7 @@ try586:	/* Use the `cpuid' instruction. */
 	movl	%edx,%ecx
 	subl	%eax,%ecx
 	shrl	$PGSHIFT,%ecx
-#ifdef DDB
-	orl	$(PG_V|PG_KW),%eax
-#else
 	orl	$(PG_V|PG_KR),%eax
-#endif
 	fillkpt
 
 	/* Map the data, BSS, and bootstrap tables read-write. */
@@ -843,120 +830,6 @@ NENTRY(sigcode)
 	.globl	_C_LABEL(esigcode)
 _C_LABEL(esigcode):
 
-/*****************************************************************************/
-
-#ifdef COMPAT_SVR4
-NENTRY(svr4_sigcode)
-	call	SVR4_SIGF_HANDLER(%esp)
-	leal	SVR4_SIGF_UC(%esp),%eax	# ucp (the call may have clobbered the
-					# copy at SIGF_UCP(%esp))
-#ifdef VM86
-	testl	$PSL_VM,SVR4_UC_EFLAGS(%eax)
-	jnz	1f
-#endif
-	movl	SVR4_UC_FS(%eax),%ecx
-	movl	SVR4_UC_GS(%eax),%edx
-	movl	%cx,%fs
-	movl	%dx,%gs
-1:	pushl	%eax
-	pushl	$1			# setcontext(p) == syscontext(1, p) 
-	pushl	%eax			# junk to fake return address
-	movl	$SVR4_SYS_context,%eax
-	int	$0x80	 		# enter kernel with args on stack
-	movl	$SVR4_SYS_exit,%eax
-	int	$0x80			# exit if sigreturn fails
-	.globl	_C_LABEL(svr4_esigcode)
-_C_LABEL(svr4_esigcode):
-#endif
-
-/*****************************************************************************/
-
-#ifdef COMPAT_LINUX
-/*
- * Signal trampoline; copied to top of user stack.
- */
-NENTRY(linux_sigcode)
-	call	LINUX_SIGF_HANDLER(%esp)
-	leal	LINUX_SIGF_SC(%esp),%ebx # scp (the call may have clobbered the
-					# copy at SIGF_SCP(%esp))
-#ifdef VM86
-	testl	$PSL_VM,LINUX_SC_EFLAGS(%ebx)
-	jnz	1f
-#endif
-	movl	LINUX_SC_FS(%ebx),%ecx
-	movl	LINUX_SC_GS(%ebx),%edx
-	movl	%cx,%fs
-	movl	%dx,%gs
-1:	pushl	%eax			# junk to fake return address
-	movl	$LINUX_SYS_sigreturn,%eax
-	int	$0x80	 		# enter kernel with args on stack
-	movl	$LINUX_SYS_exit,%eax
-	int	$0x80			# exit if sigreturn fails
-	.globl	_C_LABEL(linux_esigcode)
-_C_LABEL(linux_esigcode):
-
-NENTRY(linux_rt_sigcode)
-	call	LINUX_SIGF_HANDLER(%esp)
-	leal	LINUX_SIGF_SC(%esp),%ebx # scp (the call may have clobbered the
-					# copy at SIGF_SCP(%esp))
-#ifdef VM86
-	testl	$PSL_VM,LINUX_SC_EFLAGS(%ebx)
-	jnz	1f
-#endif
-	movl	LINUX_SC_FS(%ebx),%ecx
-	movl	LINUX_SC_GS(%ebx),%edx
-	movl	%cx,%fs
-	movl	%dx,%gs
-1:	pushl	%eax			# junk to fake return address
-	movl	$LINUX_SYS_rt_sigreturn,%eax
-	int	$0x80	 		# enter kernel with args on stack
-	movl	$LINUX_SYS_exit,%eax
-	int	$0x80			# exit if sigreturn fails
-	.globl	_C_LABEL(linux_rt_esigcode)
-_C_LABEL(linux_rt_esigcode):
-#endif
-
-/*****************************************************************************/
-
-#ifdef COMPAT_FREEBSD
-/*
- * Signal trampoline; copied to top of user stack.
- */
-NENTRY(freebsd_sigcode)
-	call	FREEBSD_SIGF_HANDLER(%esp)
-	leal	FREEBSD_SIGF_SC(%esp),%eax # scp (the call may have clobbered
-					# the copy at SIGF_SCP(%esp))
-	pushl	%eax
-	pushl	%eax			# junk to fake return address
-	movl	$FREEBSD_SYS_sigreturn,%eax
-	int	$0x80	 		# enter kernel with args on stack
-	movl	$FREEBSD_SYS_exit,%eax
-	int	$0x80			# exit if sigreturn fails
-	.globl	_C_LABEL(freebsd_esigcode)
-_C_LABEL(freebsd_esigcode):
-#endif
-
-/*****************************************************************************/
-
-#ifdef COMPAT_IBCS2
-NENTRY(ibcs2_sigcode)
-	call    SIGF_HANDLER(%esp)
-	leal    SIGF_SC(%esp),%eax      # scp (the call may have clobbered the
-					# copy at SIGF_SCP(%esp))
-	movl    SC_FS(%eax),%ecx
-	movl    SC_GS(%eax),%edx
-	movl    %cx,%fs
-	movl    %dx,%gs
-	pushl   %eax
-	pushl   %eax                    # junk to fake return address
-	movl    $IBCS2_SYS_sigreturn,%eax
-	int     $0x80                   # enter kernel with args on stack
-	movl    $IBCS2_SYS_exit,%eax
-	int     $0x80                   # exit if sigreturn fails
-	.globl  _C_LABEL(ibcs2_esigcode)
-_C_LABEL(ibcs2_esigcode):
-#endif
-	
 /*****************************************************************************/
 
 /*
@@ -2023,9 +1896,11 @@ ENTRY(cpu_switch)
 #ifndef MULTIPROCESSOR
 	movl	$_C_LABEL(proc0),%ebx
 	movl	P_ADDR(%ebx),%esi
+	movl	P_MD_TSS_SEL(%ebx),%edx
 #else
 	GET_CPUINFO(%ebx)
 	movl	CPU_INFO_IDLE_PCB(%ebx),%esi
+	movl	CPU_INFO_IDLE_TSS_SEL(%ebx),%edx
 #endif
 	/* In case we fault... */
 	CLEAR_CURPROC(%ecx)
@@ -2037,21 +1912,19 @@ ENTRY(cpu_switch)
 	movl	PCB_ESP(%esi),%esp
 	movl	PCB_EBP(%esi),%ebp
 
-	/* Load TSS info. */
-	movl	_C_LABEL(gdt),%eax
-	movl	PCB_TSS_SEL(%esi),%edx
 
 	/* Switch address space. */
 	movl	PCB_CR3(%esi),%ecx
 	movl	%ecx,%cr3
 
-	/* Switch TSS. */
+	/* Switch TSS. Reset "task busy" flag before loading. */
+	movl	_C_LABEL(gdt),%eax
 	andl	$~0x0200,4-SEL_KPL(%eax,%edx,1)
 	ltr	%dx
 
 	/* We're always in the kernel, so we don't need the LDT. */
 
-	/* Clear segment registers; always null in proc0. */
+	/* Clear segment registers; always null in idle pcb. */
 	xorl	%ecx,%ecx
 	movl	%cx,%fs
 	movl	%cx,%gs
@@ -2203,9 +2076,9 @@ switch_exited:
 
 	/* Load TSS info. */
 	movl	_C_LABEL(gdt),%eax
-	movl	PCB_TSS_SEL(%esi),%edx
+	movl	P_MD_TSS_SEL(%edi),%edx
 
-	/* Switch TSS. Reset "task busy" flag before */
+	/* Switch TSS. Reset "task busy" flag before loading. */
 	andl	$~0x0200,4(%eax,%edx, 1)
 	ltr	%dx
 
@@ -2264,10 +2137,16 @@ switch_return:
  * something to come ready.
  */
 ENTRY(idle)
-	cli
+	/*
+	 * When we get here, interrupts are off (via cli) and
+	 * sched_lock is held.
+	 */
 	movl	_C_LABEL(sched_whichqs),%ecx
 	testl	%ecx,%ecx
 	jnz	sw1
+#if defined(LOCKDEBUG)
+	call	_C_LABEL(sched_unlock_idle)
+#endif
 	sti
 
 	/* Try to zero some pages. */
@@ -2289,6 +2168,10 @@ ENTRY(idle)
 sw2:	
 	sti
 	call	_C_LABEL(apm_cpu_busy)
+#endif
+	cli
+#if defined(LOCKDEBUG)
+	call	_C_LABEL(sched_lock_idle)
 #endif
 	jmp	_C_LABEL(idle)
 
@@ -2323,6 +2206,11 @@ ENTRY(cpu_switch)
 	 */
 	CLEAR_CURPROC(%ecx)
 
+#if defined(LOCKDEBUG)
+	/* Release the sched_lock before processing interrupts. */
+	call	_C_LABEL(sched_unlock_idle)
+#endif
+
 	movl	$0,CPL			# spl0()
 	call	_C_LABEL(Xspllower)	# process pending interrupts
 
@@ -2339,9 +2227,14 @@ switch_search:
 	 *   %edi - new process
 	 */
 
-	/* Wait for new process. */
+	/* Lock the scheduler. */
 	cli				# splhigh doesn't do a cli
-	movl	_C_LABEL(sched_whichqs),%ecx	# XXX MP
+#if defined(LOCKDEBUG)
+	call	_C_LABEL(sched_lock_idle)
+#endif
+
+	/* Wait for new process. */
+	movl	_C_LABEL(sched_whichqs),%ecx
 
 sw1:	bsfl	%ecx,%ebx		# find a full q
 	jz	_C_LABEL(idle)		# if none, idle
@@ -2375,6 +2268,20 @@ sw1:	bsfl	%ecx,%ebx		# find a full q
 
 	/* Isolate process.  XXX Is this necessary? */
 	movl	%eax,P_BACK(%edi)
+
+#if defined(LOCKDEBUG)
+	/*
+	 * Unlock the sched_lock, but leave interrupts off, for now.
+	 */
+	call	_C_LABEL(sched_unlock_idle)
+#endif
+
+#if defined(MULTIPROCESSOR)
+	/*
+	 * p->p_cpu = curcpu()
+	 * XXXSMP
+	 */
+#endif
 
 	/* Record new process. */
 	movb	$SONPROC,P_STAT(%edi)	# p->p_stat = SONPROC
@@ -2436,15 +2343,21 @@ switch_exited:
 	jnz	switch_restored
 #endif
 
+	/*
+	 * Activate the address space.  We're curproc, so %cr3 will
+	 * be reloaded, but we're not yet curpcb, so the LDT won't
+	 * be reloaded, although the PCB copy of the selector will
+	 * be refreshed from the pmap.
+	 */
+	pushl	%edi
+	call	_C_LABEL(pmap_activate)
+	addl	$4,%esp
+
 	/* Load TSS info. */
 	movl	_C_LABEL(gdt),%eax
-	movl	PCB_TSS_SEL(%esi),%edx
+	movl	P_MD_TSS_SEL(%edi),%edx
 
-	/* Switch address space. */
-	movl	PCB_CR3(%esi),%ecx
-	movl	%ecx,%cr3
-
-	/* Switch TSS. Reset "task busy" flag before */
+	/* Switch TSS. Reset "task busy" flag before loading */
 	andl	$~0x0200,4(%eax,%edx, 1)
 	ltr	%dx
 
@@ -2507,9 +2420,11 @@ ENTRY(switch_exit)
 #ifndef MULTIPROCESSOR
 	movl	$_C_LABEL(proc0),%ebx
 	movl	P_ADDR(%ebx),%esi
+	movl	P_MD_TSS_SEL(%ebx),%edx
 #else
 	GET_CPUINFO(%ebx)
 	movl	CPU_INFO_IDLE_PCB(%ebx),%esi
+	movl	CPU_INFO_IDLE_TSS_SEL(%ebx),%edx
 #endif
 	/* In case we fault... */
 	CLEAR_CURPROC(%ecx)
@@ -2523,7 +2438,6 @@ ENTRY(switch_exit)
 
 	/* Load TSS info. */
 	movl	_C_LABEL(gdt),%eax
-	movl	PCB_TSS_SEL(%esi),%edx
 
 	/* Switch address space. */
 	movl	PCB_CR3(%esi),%ecx
@@ -2888,10 +2802,6 @@ IDTVEC(osyscall)
 	/* Set eflags in trap frame. */
 	pushfl
 	popl	8(%esp)
-	/* Turn off trace flag and nested task. */
-	pushfl
-	andb	$~((PSL_T|PSL_NT)>>8),1(%esp)
-	popfl
 	pushl	$7		# size of instruction for restart
 	jmp	syscall1
 
@@ -2903,7 +2813,7 @@ IDTVEC(syscall)
 syscall1:
 	pushl	$T_ASTFLT	# trap # for doing ASTs
 	INTRENTRY
-	
+
 #ifdef DIAGNOSTIC
 	movzbl	CPL,%ebx
 	testl	%ebx,%ebx
@@ -2916,9 +2826,11 @@ syscall1:
 #endif
 1:	
 #endif
-	call	_C_LABEL(syscall)
-	/* Check for ASTs on exit to user mode. */
-2:
+#endif /* DIAGNOSTIC */
+	GET_CURPROC(%edx, %eax)
+	movl	%esp,P_MD_REGS(%edx)	# save pointer to frame
+	call	P_MD_SYSCALL(%edx)	# get pointer to syscall() function
+2:	/* Check for ASTs on exit to user mode. */
 	cli
 	CHECK_ASTPENDING(%ecx)
 	je	1f
@@ -2946,25 +2858,6 @@ syscall1:
 4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL EXIT\n"
 5:	.asciz	"WARNING: SPL NOT ZERO ON SYSCALL ENTRY\n"	
 #endif /* DIAGNOSTIC */
-
-#ifdef COMPAT_SVR4
-IDTVEC(svr4_fasttrap)
-	pushl	$2		# size of instruction for restart
-	pushl	$T_ASTFLT	# trap # for doing ASTs
-	INTRENTRY
-	call	_C_LABEL(svr4_fasttrap)
-2:	/* Check for ASTs on exit to user mode. */
-	cli
-	CHECK_ASTPENDING(%ecx)		
-	je	1f
-	/* Always returning to user mode here. */
-	CLEAR_ASTPENDING(%ecx)
-	sti
-	/* Pushed T_ASTFLT into tf_trapno on entry. */
-	call	_C_LABEL(trap)
-	jmp	2b
-1:	INTRFASTEXIT
-#endif /* COMPAT_SVR4 */
 
 #if NNPX > 0
 /*
