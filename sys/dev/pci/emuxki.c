@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.2 2001/10/18 19:15:38 jdolecek Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.3 2001/10/22 20:31:26 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -78,22 +78,22 @@
 #include <dev/pci/emuxkivar.h>
 
 /* autconf goo */
-static int  emuxki_match  __P((struct device *, struct cfdata *, void *));
-static void emuxki_attach __P((struct device *, struct device *, void *));
-static int  emuxki_detach __P((struct device *, int));
+static int  emuxki_match(struct device *, struct cfdata *, void *);
+static void emuxki_attach(struct device *, struct device *, void *);
+static int  emuxki_detach(struct device *, int);
 
 /* dma mem mgmt */
-static struct dmamem *dmamem_alloc __P((bus_dma_tag_t, size_t, bus_size_t,
-				 int, int, int));
-static void           dmamem_free  __P((struct dmamem *, int));
+static struct dmamem *dmamem_alloc(bus_dma_tag_t, size_t, bus_size_t,
+				 int, int, int);
+static void           dmamem_free(struct dmamem *, int);
 
 /* Emu10k1 init & shutdown */
-static int  emuxki_init     __P((struct emuxki_softc *));
-static void emuxki_shutdown __P((struct emuxki_softc *));
+static int  emuxki_init(struct emuxki_softc *);
+static void emuxki_shutdown(struct emuxki_softc *);
 
 /* Emu10k1 mem mgmt */
-static void   *emuxki_pmem_alloc __P((struct emuxki_softc *, size_t,int,int));
-static void   *emuxki_rmem_alloc __P((struct emuxki_softc *, size_t,int,int));
+static void   *emuxki_pmem_alloc(struct emuxki_softc *, size_t,int,int);
+static void   *emuxki_rmem_alloc(struct emuxki_softc *, size_t,int,int);
 
 /*
  * Emu10k1 channels funcs : There is no direct access to channels, everything
@@ -102,72 +102,72 @@ static void   *emuxki_rmem_alloc __P((struct emuxki_softc *, size_t,int,int));
  */
 
 /* Emu10k1 voice mgmt */
-static struct emuxki_voice *emuxki_voice_new __P((struct emuxki_softc *,
-					u_int8_t));
-static void   emuxki_voice_delete	    __P((struct emuxki_voice *));
-static int    emuxki_voice_set_audioparms __P((struct emuxki_voice *, u_int8_t,
-					 u_int8_t, u_int32_t));
+static struct emuxki_voice *emuxki_voice_new(struct emuxki_softc *,
+					u_int8_t);
+static void   emuxki_voice_delete(struct emuxki_voice *);
+static int    emuxki_voice_set_audioparms(struct emuxki_voice *, u_int8_t,
+					 u_int8_t, u_int32_t);
 /* emuxki_voice_set_fxparms will come later, it'll need channel distinction */
-static int emuxki_voice_set_bufparms   __P((struct emuxki_voice *,
-				      void *, u_int32_t, u_int16_t));
-static void emuxki_voice_commit_parms  __P((struct emuxki_voice *));
-static u_int32_t emuxki_voice_curaddr  __P((struct emuxki_voice *));
-static void emuxki_voice_start         __P((struct emuxki_voice *,
-				      void (*) (void *), void *));
-static void emuxki_voice_halt          __P((struct emuxki_voice *));
+static int emuxki_voice_set_bufparms(struct emuxki_voice *,
+				      void *, u_int32_t, u_int16_t);
+static void emuxki_voice_commit_parms(struct emuxki_voice *);
+static u_int32_t emuxki_voice_curaddr(struct emuxki_voice *);
+static void emuxki_voice_start(struct emuxki_voice *,
+				      void (*) (void *), void *);
+static void emuxki_voice_halt(struct emuxki_voice *);
 
 /*
  * Emu10k1 stream mgmt : not done yet
  */
 #if 0
-static struct emuxki_stream *emuxki_stream_new __P((struct emu10k1 *));
-static void   emuxki_stream_delete __P((struct emuxki_stream *));
-static int    emuxki_stream_set_audio_params __P((struct emuxki_stream *, u_int8_t,
-					    u_int8_t, u_int8_t, u_int16_t));
-static void   emuxki_stream_start __P((struct emuxki_stream *));
-static void   emuxki_stream_halt __P((struct emuxki_stream *));
+static struct emuxki_stream *emuxki_stream_new(struct emu10k1 *);
+static void   emuxki_stream_delete(struct emuxki_stream *);
+static int    emuxki_stream_set_audio_params(struct emuxki_stream *, u_int8_t,
+					    u_int8_t, u_int8_t, u_int16_t);
+static void   emuxki_stream_start(struct emuxki_stream *);
+static void   emuxki_stream_halt(struct emuxki_stream *);
 #endif
 
 /* audio interface callbacks */
 
-static int	emuxki_open             __P((void *, int));
-static void	emuxki_close            __P((void *));
+static int	emuxki_open(void *, int);
+static void	emuxki_close(void *);
 
-static int	emuxki_query_encoding   __P((void *, struct audio_encoding *));
-static int	emuxki_set_params       __P((void *, int, int,
+static int	emuxki_query_encoding(void *, struct audio_encoding *);
+static int	emuxki_set_params(void *, int, int,
 				      struct audio_params *,
-				      struct audio_params *));
+				      struct audio_params *);
 
-static size_t	emuxki_round_buffersize __P((void *, int, size_t));
+static size_t	emuxki_round_buffersize(void *, int, size_t);
 
-static int	emuxki_trigger_output   __P((void *, void *, void *, int,
+static int	emuxki_trigger_output(void *, void *, void *, int,
 				      void (*)(void *), void *,
-				      struct audio_params *));
-static int	emuxki_trigger_input    __P((void *, void *, void *, int,
+				      struct audio_params *);
+static int	emuxki_trigger_input(void *, void *, void *, int,
 				      void (*) (void *), void *,
-				      struct audio_params *));
-static int	emuxki_halt_output      __P((void *));
-static int	emuxki_halt_input       __P((void *));
+				      struct audio_params *);
+static int	emuxki_halt_output(void *);
+static int	emuxki_halt_input(void *);
 
-static int	emuxki_getdev           __P((void *, struct audio_device *));
-static int	emuxki_set_port         __P((void *, mixer_ctrl_t *));
-static int	emuxki_get_port         __P((void *, mixer_ctrl_t *));
-static int	emuxki_query_devinfo    __P((void *, mixer_devinfo_t *));
+static int	emuxki_getdev(void *, struct audio_device *);
+static int	emuxki_set_port(void *, mixer_ctrl_t *);
+static int	emuxki_get_port(void *, mixer_ctrl_t *);
+static int	emuxki_query_devinfo(void *, mixer_devinfo_t *);
 
-static void   *emuxki_allocm           __P((void *, int, size_t, int, int));
-static void	emuxki_freem            __P((void *, void *, int));
+static void   *emuxki_allocm(void *, int, size_t, int, int);
+static void	emuxki_freem(void *, void *, int);
 
-static paddr_t	emuxki_mappage          __P((void *, void *, off_t, int));
-static int	emuxki_get_props        __P((void *));
+static paddr_t	emuxki_mappage(void *, void *, off_t, int);
+static int	emuxki_get_props(void *);
 
 /* Interrupt handler */
-static int  emuxki_intr __P((void *));
+static int  emuxki_intr(void *);
 
 /* Emu10k1 AC97 interface callbacks */
-static int  emuxki_ac97_attach __P((void *, struct ac97_codec_if *));
-static int  emuxki_ac97_read   __P((void *, u_int8_t, u_int16_t *));
-static int  emuxki_ac97_write  __P((void *, u_int8_t, u_int16_t));
-static void emuxki_ac97_reset  __P((void *));
+static int  emuxki_ac97_attach(void *, struct ac97_codec_if *);
+static int  emuxki_ac97_read(void *, u_int8_t, u_int16_t *);
+static int  emuxki_ac97_write(void *, u_int8_t, u_int16_t);
+static void emuxki_ac97_reset(void *);
 
 /*
  * Autoconfig goo.
