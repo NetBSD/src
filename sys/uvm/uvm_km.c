@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.55 2001/11/10 07:37:00 lukem Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.56 2002/03/07 20:15:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -134,7 +134,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.55 2001/11/10 07:37:00 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.56 2002/03/07 20:15:32 thorpej Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -181,15 +181,17 @@ uvm_km_init(start, end)
 				 VM_MIN_KERNEL_ADDRESS, UAO_FLAG_KERNOBJ);
 
 	/*
-	 * init the map and reserve already allocated kernel space
-	 * before installing.
+	 * init the map and reserve any space that might already
+	 * have been allocated kernel space before installing.
 	 */
 
 	uvm_map_setup(&kernel_map_store, base, end, VM_MAP_PAGEABLE);
 	kernel_map_store.pmap = pmap_kernel();
-	if (uvm_map(&kernel_map_store, &base, start - base, NULL,
-	    UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL,
-	    UVM_INH_NONE, UVM_ADV_RANDOM,UVM_FLAG_FIXED)) != 0)
+	if (start != base &&
+	    uvm_map(&kernel_map_store, &base, start - base, NULL,
+		    UVM_UNKNOWN_OFFSET, 0,
+		    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
+		    		UVM_ADV_RANDOM, UVM_FLAG_FIXED)) != 0)
 		panic("uvm_km_init: could not reserve space for kernel");
 
 	/*
