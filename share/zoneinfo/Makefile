@@ -99,6 +99,7 @@ REDO=		right_only
 CFLAGS=	-DTM_GMTOFF=tm_gmtoff -DTM_ZONE=tm_zone
 PROG=	zic
 MAN5=	tzfile.0
+MAN8=	zic.0
 
 SRCS=	zic.c scheck.c ialloc.c
 
