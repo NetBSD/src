@@ -1,3 +1,5 @@
+/*	$NetBSD: extern.h,v 1.2 1995/01/20 08:51:54 jtc Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
