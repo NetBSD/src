@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 2003/04/02 04:18:40 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9 2003/05/08 13:35:07 shin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -164,9 +164,9 @@ mach_init()
 	 * Allocate space for proc0's USPACE.
 	 */
 	v = (caddr_t)uvm_pageboot_alloc(USPACE); 
-	proc0.p_addr = proc0paddr = (struct user *)v;
-	proc0.p_md.md_regs = (struct frame *)(v + USPACE) - 1;
-	curpcb = &proc0.p_addr->u_pcb;
+	lwp0.l_addr = proc0paddr = (struct user *) v;
+	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
+	curpcb = &lwp0.l_addr->u_pcb;
 	curpcb->pcb_context[11] = PSL_LOWIPL;	/* SR */
 #ifdef IPL_ICU_MASK
 	curpcb->pcb_ppl = 0;
