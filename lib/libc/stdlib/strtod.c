@@ -90,7 +90,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$Id: strtod.c,v 1.16 1994/11/14 23:48:02 dean Exp $";
+static char *rcsid = "$Id: strtod.c,v 1.17 1994/12/20 00:43:48 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #if defined(i386) || defined(ns32k) || defined(alpha) || defined(mipsel)
@@ -1168,7 +1168,7 @@ ratio
 	return da / db;
 	}
 
- static double
+static CONST double
 tens[] = {
 		1e0, 1e1, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9,
 		1e10, 1e11, 1e12, 1e13, 1e14, 1e15, 1e16, 1e17, 1e18, 1e19,
@@ -1178,19 +1178,18 @@ tens[] = {
 #endif
 		};
 
- static double
 #ifdef IEEE_Arith
-bigtens[] = { 1e16, 1e32, 1e64, 1e128, 1e256 };
-static double tinytens[] = { 1e-16, 1e-32, 1e-64, 1e-128, 1e-256 };
+static CONST double bigtens[] = { 1e16, 1e32, 1e64, 1e128, 1e256 };
+static CONST double tinytens[] = { 1e-16, 1e-32, 1e-64, 1e-128, 1e-256 };
 #define n_bigtens 5
 #else
 #ifdef IBM
-bigtens[] = { 1e16, 1e32, 1e64 };
-static double tinytens[] = { 1e-16, 1e-32, 1e-64 };
+static CONST double bigtens[] = { 1e16, 1e32, 1e64 };
+static CONST double tinytens[] = { 1e-16, 1e-32, 1e-64 };
 #define n_bigtens 3
 #else
-bigtens[] = { 1e16, 1e32 };
-static double tinytens[] = { 1e-16, 1e-32 };
+static CONST double bigtens[] = { 1e16, 1e32 };
+static CONST double tinytens[] = { 1e-16, 1e-32 };
 #define n_bigtens 2
 #endif
 #endif
