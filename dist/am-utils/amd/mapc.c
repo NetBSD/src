@@ -1,7 +1,7 @@
-/*	$NetBSD: mapc.c,v 1.1.1.4 2001/05/13 17:50:13 veego Exp $	*/
+/*	$NetBSD: mapc.c,v 1.1.1.5 2002/11/29 22:58:14 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: mapc.c,v 1.7.2.3 2001/04/14 21:08:22 ezk Exp
+ * Id: mapc.c,v 1.15 2002/02/09 06:55:42 ib42 Exp
  *
  */
 
@@ -388,9 +387,7 @@ mapc_add_kv(mnt_map *m, char *key, char *val)
   regex_t re;
 #endif /* HAVE_REGEXEC */
 
-#ifdef DEBUG
   dlog("add_kv: %s -> %s", key, val);
-#endif /* DEBUG */
 
 #ifdef HAVE_REGEXEC
   if (MAPC_ISRE(m)) {
@@ -514,10 +511,8 @@ mapc_reload_map(mnt_map *m)
   if (m->reloads != 0 && do_mapc_reload != 0) {
     if (t <= m->modify) {
       plog(XLOG_INFO, "reload of map %s is not needed (in sync)", m->map_name);
-#ifdef DEBUG
       dlog("map %s last load time is %d, last modify time is %d",
 	   m->map_name, (int) m->modify, (int) t);
-#endif /* DEBUG */
       return;
     }
   }
@@ -526,9 +521,7 @@ mapc_reload_map(mnt_map *m)
   memcpy((voidp) maphash, (voidp) m->kvhash, sizeof(m->kvhash));
   memset((voidp) m->kvhash, 0, sizeof(m->kvhash));
 
-#ifdef DEBUG
   dlog("calling map reload on %s", m->map_name);
-#endif /* DEBUG */
   error = (*m->reload) (m, m->map_name, mapc_add_kv);
   if (error) {
     if (m->reloads == 0)
@@ -552,9 +545,7 @@ mapc_reload_map(mnt_map *m)
   }
   m->wildcard = 0;
 
-#ifdef DEBUG
   dlog("calling mapc_search for wildcard");
-#endif /* DEBUG */
   error = mapc_search(m, wildcard, &m->wildcard);
   if (error)
     m->wildcard = 0;
@@ -605,9 +596,7 @@ mapc_create(char *map, char *opt, const char *type)
     for (mt = maptypes;
 	 mt < maptypes + sizeof(maptypes) / sizeof(maptypes[0]);
 	 mt++) {
-#ifdef DEBUG
       dlog("trying to initialize map %s of type %s ...", map, mt->name);
-#endif /* DEBUG */
       if ((*mt->init) (m, map, &modify) == 0) {
 	break;
       }
@@ -654,9 +643,7 @@ mapc_create(char *map, char *opt, const char *type)
 #endif /* HAVE_REGEXEC */
   }
 
-#ifdef DEBUG
   dlog("Map for %s coming from maptype %s", map, mt->name);
-#endif /* DEBUG */
 
   m->alloc = alloc;
   m->reload = mt->reload;
@@ -734,7 +721,7 @@ mapc_find(char *map, char *opt, const char *maptype)
    * add it to the list of maps
    */
   ITER(m, mnt_map, &map_list_head)
-  if (STREQ(m->map_name, map))
+    if (STREQ(m->map_name, map))
       return mapc_dup(m);
   m = mapc_create(map, opt, maptype);
   ins_que(&m->hdr, &map_list_head);
@@ -888,9 +875,7 @@ mapc_meta_search(mnt_map *m, char *key, char **pval, int recurse)
       strcpy(wildname, key);
       while (error && (subp = strrchr(wildname, '/'))) {
 	strcpy(subp, "/*");
-#ifdef DEBUG
 	dlog("mapc recurses on %s", wildname);
-#endif /* DEBUG */
 	error = mapc_meta_search(m, wildname, pval, MREC_PART);
 	if (error)
 	  *subp = 0;
@@ -1009,8 +994,8 @@ root_newmap(const char *dir, const char *opts, const char *map, const cf_map_t *
 
   if (cfm) {
     if (map) {
-      sprintf(str, "cache:=mapdefault;type:=%s;fs:=\"%s\"",
-	      cfm->cfm_flags & CFM_MOUNT_TYPE_AUTOFS ? "autofs" : "toplvl",
+      sprintf(str, "cache:=mapdefault;type:=toplvl;mount_type:=%s;fs:=\"%s\"",
+	      cfm->cfm_flags & CFM_MOUNT_TYPE_AUTOFS ? "autofs" : "nfs",
 	      get_full_path(map, cfm->cfm_search_path, cfm->cfm_type));
       if (opts && opts[0] != '\0') {
 	strcat(str, ";");

@@ -1,7 +1,7 @@
-/*	$NetBSD: info_file.c,v 1.1.1.4 2001/05/13 17:50:14 veego Exp $	*/
+/*	$NetBSD: info_file.c,v 1.1.1.5 2002/11/29 22:58:17 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: info_file.c,v 1.3.2.2 2001/01/12 23:28:56 ro Exp
+ * Id: info_file.c,v 1.8 2002/02/02 20:58:54 ezk Exp
  *
  */
 
@@ -163,9 +162,7 @@ search_or_reload_file(FILE *fp, char *map, char *key, char **val, mnt_map *m, vo
 	  (*fn) (m, strdup(kp), dc);
 	} else {
 	  *val = dc;
-#ifdef DEBUG
 	  dlog("%s returns %s", key, dc);
-#endif /* DEBUG */
 	}
 	if (!fn)
 	  return 0;

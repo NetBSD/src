@@ -1,7 +1,7 @@
-/*	$NetBSD: amfs_link.c,v 1.1.1.4 2001/05/13 17:50:12 veego Exp $	*/
+/*	$NetBSD: amfs_link.c,v 1.1.1.5 2002/11/29 22:58:11 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: amfs_link.c,v 1.3.2.1 2001/01/10 03:23:02 ezk Exp
+ * Id: amfs_link.c,v 1.14 2002/03/29 20:01:26 ib42 Exp
  *
  */
 
@@ -63,17 +62,19 @@ am_ops amfs_link_ops =
   "link",
   amfs_link_match,
   0,				/* amfs_link_init */
-  amfs_auto_fmount,
-  amfs_link_fmount,
-  amfs_auto_fumount,
-  amfs_link_fumount,
-  amfs_error_lookuppn,
+  amfs_link_mount,
+  amfs_link_umount,
+  amfs_error_lookup_child,
+  amfs_error_mount_child,
   amfs_error_readdir,
   0,				/* amfs_link_readlink */
   0,				/* amfs_link_mounted */
   0,				/* amfs_link_umounted */
   find_amfs_auto_srvr,
-  0
+  0,				/* nfs_fs_flags */
+#ifdef HAVE_FS_AUTOFS
+  AUTOFS_LINK_FS_FLAGS,
+#endif /* HAVE_FS_AUTOFS */
 };
 
 
@@ -127,17 +128,26 @@ amfs_link_match(am_opts *fo)
 
 
 int
-amfs_link_fmount(mntfs *mf)
+amfs_link_mount(am_node *mp, mntfs *mf)
 {
-  /*
-   * Wow - this is hard to implement! :-)
-   */
+#ifdef HAVE_FS_AUTOFS
+  if (mp->am_flags & AMF_AUTOFS) {
+    return autofs_link_mount(mp);
+  }
+#endif /* HAVE_FS_AUTOFS */
+
   return 0;
 }
 
 
 int
-amfs_link_fumount(mntfs *mf)
+amfs_link_umount(am_node *mp, mntfs *mf)
 {
+#ifdef HAVE_FS_AUTOFS
+  if (mp->am_flags & AMF_AUTOFS) {
+    return autofs_link_umount(mp);
+  }
+#endif /* HAVE_FS_AUTOFS */
+
   return 0;
 }

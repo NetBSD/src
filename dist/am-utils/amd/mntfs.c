@@ -1,7 +1,7 @@
-/*	$NetBSD: mntfs.c,v 1.1.1.4 2001/05/13 17:50:13 veego Exp $	*/
+/*	$NetBSD: mntfs.c,v 1.1.1.5 2002/11/29 22:58:15 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2001 Erez Zadok
+ * Copyright (c) 1997-2002 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: mntfs.c,v 1.5.2.1 2001/01/10 03:23:07 ezk Exp
+ * Id: mntfs.c,v 1.21 2002/06/24 15:41:33 ib42 Exp
  *
  */
 
@@ -73,16 +72,30 @@ static void
 init_mntfs(mntfs *mf, am_ops *ops, am_opts *mo, char *mp, char *info, char *auto_opts, char *mopts, char *remopts)
 {
   mf->mf_ops = ops;
+  mf->mf_fsflags = ops->nfs_fs_flags;
   mf->mf_fo = mo;
   mf->mf_mount = strdup(mp);
+  mf->mf_real_mount = strdup(mp);
   mf->mf_info = strdup(info);
   mf->mf_auto = strdup(auto_opts);
   mf->mf_mopts = strdup(mopts);
   mf->mf_remopts = strdup(remopts);
+  mf->mf_loopdev = NULL;
   mf->mf_refc = 1;
-  mf->mf_flags = 0;
+#ifdef HAVE_FS_AUTOFS
+  /* Note: mo can be NULL for the root pseudo-mountpoint */
+  if (mo && mo->opt_mount_type &&
+      STREQ(mo->opt_mount_type, "autofs") &&
+      amd_use_autofs)
+    mf->mf_flags = MFF_AUTOFS;
+  else
+#endif /* HAVE_FS_AUTOFS */
+    mf->mf_flags = 0;
   mf->mf_error = -1;
   mf->mf_cid = 0;
+#ifdef HAVE_FS_AUTOFS
+  mf->mf_autofs_fh = 0;
+#endif /* HAVE_FS_AUTOFS */
   mf->mf_private = 0;
   mf->mf_prfree = 0;
 
@@ -111,12 +124,10 @@ find_mntfs(am_ops *ops, am_opts *mo, char *mp, char *info, char *auto_opts, char
 {
   mntfs *mf;
 
-#ifdef DEBUG
   dlog("Locating mntfs reference to %s", mp);
-#endif /* DEBUG */
 
   ITER(mf, mntfs, &mfhead) {
-    if (STREQ(mf->mf_mount, mp)) {
+    if (STREQ(mf->mf_mount, mp) && STREQ(mf->mf_info, info)) {
       /*
        * Handle cases where error ops are involved
        */
@@ -143,9 +154,7 @@ find_mntfs(am_ops *ops, am_opts *mo, char *mp, char *info, char *auto_opts, char
 	 * Restart a previously mounted filesystem.
 	 */
 	mntfs *mf2 = alloc_mntfs(&amfs_inherit_ops, mo, mp, info, auto_opts, mopts, remopts);
-#ifdef DEBUG
 	dlog("Restarting filesystem %s", mf->mf_mount);
-#endif /* DEBUG */
 
 	/*
 	 * Remember who we are restarting
@@ -166,7 +175,7 @@ find_mntfs(am_ops *ops, am_opts *mo, char *mp, char *info, char *auto_opts, char
 	mf->mf_info = strealloc(mf->mf_info, info);
 
 	if (mf->mf_private && mf->mf_prfree) {
-	  (*mf->mf_prfree) (mf->mf_private);
+	  mf->mf_prfree(mf->mf_private);
 	  mf->mf_private = 0;
 	}
 
@@ -191,7 +200,7 @@ new_mntfs(void)
 
 
 static void
-uninit_mntfs(mntfs *mf, int rmd)
+uninit_mntfs(mntfs *mf)
 {
   if (mf->mf_auto)
     XFREE(mf->mf_auto);
@@ -201,17 +210,20 @@ uninit_mntfs(mntfs *mf, int rmd)
     XFREE(mf->mf_remopts);
   if (mf->mf_info)
     XFREE(mf->mf_info);
+#ifdef HAVE_FS_AUTOFS
+  /* shouldn't be necessary, but we do it just in case */
+  if (mf->mf_autofs_fh) {
+    autofs_release_fh(mf->mf_autofs_fh);
+    mf->mf_autofs_fh = 0;
+  }
+#endif /* HAVE_FS_AUTOFS */
   if (mf->mf_private && mf->mf_prfree)
     (*mf->mf_prfree) (mf->mf_private);
 
-  /*
-   * Clean up any directories that were made
-   */
-  if (rmd && (mf->mf_flags & MFF_MKMNT))
-    rmdirs(mf->mf_mount);
-  /* free mf_mount _AFTER_ removing the directories */
   if (mf->mf_mount)
     XFREE(mf->mf_mount);
+  if (mf->mf_real_mount)
+    XFREE(mf->mf_real_mount);
 
   /*
    * Clean up the file server
@@ -239,7 +251,7 @@ discard_mntfs(voidp v)
   /*
    * Free memory
    */
-  uninit_mntfs(mf, TRUE);
+  uninit_mntfs(mf);
   XFREE(mf);
 
   --mntfs_allocated;
@@ -283,15 +295,12 @@ free_mntfs(voidp v)
 	   mf->mf_ops->fs_type, mf->mf_mount);
     }
 
-    if (mf->mf_ops->fs_flags & FS_DISCARD) {
-#ifdef DEBUG
+    if (mf->mf_fsflags & FS_DISCARD) {
       dlog("Immediately discarding mntfs for %s", mf->mf_mount);
-#endif /* DEBUG */
       discard_mntfs(mf);
 
     } else {
 
-#ifdef DEBUG
       if (mf->mf_flags & MFF_RESTART) {
 	dlog("Discarding remount hook for %s", mf->mf_mount);
       } else {
@@ -300,7 +309,6 @@ free_mntfs(voidp v)
       }
       if (mf->mf_flags & (MFF_MOUNTED | MFF_MOUNTING | MFF_UNMOUNTING))
 	dlog("mntfs reference for %s still active", mf->mf_mount);
-#endif /* DEBUG */
       mf->mf_cid = timeout(ALLOWED_MOUNT_TIME, discard_mntfs, (voidp) mf);
     }
   }

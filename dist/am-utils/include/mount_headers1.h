@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_headers1.h,v 1.1.1.2 2001/05/13 17:50:31 veego Exp $	*/
+/*	$NetBSD: mount_headers1.h,v 1.1.1.3 2002/11/29 22:59:04 christos Exp $	*/
 
 #ifdef HAVE_SYS_TYPES_H
 # include <sys/types.h>
@@ -66,7 +66,7 @@
 #  define MSDOSFS
 # endif /* not MSDOSFS */
 # ifndef MFS
-#  define MFS
+#  define MFS 1
 # endif /* not MFS */
 # ifndef CD9660
 #  define CD9660

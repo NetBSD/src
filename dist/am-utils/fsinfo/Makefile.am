@@ -54,7 +54,7 @@ YFLAGS = -d
 # dependencies
 $(PROGRAMS): $(LDADD)
 fsinfo.o: fsi_gram.h
-$(OBJECTS):					\
+$(fsinfo_OBJECTS):				\
 	../config.h				\
 	../aux_conf.h				\
 	$(top_srcdir)/include/am_compat.h	\
