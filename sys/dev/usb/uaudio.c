@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.84 2004/10/22 15:34:04 kent Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.85 2004/10/22 15:36:30 kent Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.84 2004/10/22 15:34:04 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.85 2004/10/22 15:36:30 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,8 +77,8 @@ __KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.84 2004/10/22 15:34:04 kent Exp $");
 /* #define UAUDIO_DEBUG */
 /* #define UAUDIO_MULTIPLE_ENDPOINTS */
 #ifdef UAUDIO_DEBUG
-#define DPRINTF(x)	if (uaudiodebug) logprintf x
-#define DPRINTFN(n,x)	if (uaudiodebug>(n)) logprintf x
+#define DPRINTF(x)	do { if (uaudiodebug) logprintf x; } while (0)
+#define DPRINTFN(n,x)	do { if (uaudiodebug>(n)) logprintf x; } while (0)
 int	uaudiodebug = 0;
 #else
 #define DPRINTF(x)
