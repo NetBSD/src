@@ -42,7 +42,7 @@
  *	@(#)pmap.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: pmap.c,v 1.39 93/04/20 11:17:12 torek Exp 
- * $Id: pmap.c,v 1.11 1994/05/30 20:03:57 pk Exp $
+ * $Id: pmap.c,v 1.12 1994/05/31 10:20:59 pk Exp $
  */
 
 /*
@@ -577,7 +577,6 @@ me_alloc(mh, newpm, newvseg)
 	if ((me = me_lru.mh_next) == (struct mmuentry *)&me_lru)
 		panic("me_alloc: all pmegs gone");
 	pm = me->me_pmap;
-#ifdef DEBUG
 	if (pm == NULL)
 		panic("me_alloc: LRU entry has no pmap");
 	if (pm == kernel_pmap)
@@ -585,6 +584,7 @@ me_alloc(mh, newpm, newvseg)
 	pte = pm->pm_pte[me->me_vseg];
 	if (pte == NULL)
 		panic("me_alloc: LRU entry's pmap has no ptes");
+#ifdef DEBUG
 	if (pmapdebug & (PDB_MMU_ALLOC | PDB_MMU_STEAL))
 		printf("me_alloc: stealing pmeg %x from pmap %x\n",
 		    me->me_pmeg, pm);
@@ -2072,8 +2072,8 @@ if (nva == 0) panic("pmap_protect: last segment");	/* cannot happen */
 		}
 	}
 	simple_unlock(&pm->pm_lock);
-	setcontext(ctx);
 	splx(s);
+	setcontext(ctx);
 }
 
 /*
