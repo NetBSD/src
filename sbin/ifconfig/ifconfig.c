@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.79 2000/04/20 02:08:55 enami Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.80 2000/06/30 17:45:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.79 2000/04/20 02:08:55 enami Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.80 2000/06/30 17:45:11 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -149,33 +149,35 @@ int	Lflag;
 int	reset_if_flags;
 int	explicit_prefix = 0;
 
-void 	notealias __P((char *, int));
-void 	notrailers __P((char *, int));
-void 	setifaddr __P((char *, int));
-void 	setifdstaddr __P((char *, int));
-void 	setifflags __P((char *, int));
-void 	setifbroadaddr __P((char *, int));
-void 	setifipdst __P((char *, int));
-void 	setifmetric __P((char *, int));
-void 	setifmtu __P((char *, int));
-void	setifnwid __P((char *, int));
-void 	setifnetmask __P((char *, int));
-void	setifprefixlen __P((char *, int));
-void 	setnsellength __P((char *, int));
-void 	setsnpaoffset __P((char *, int));
-void	setatrange __P((char *, int));
-void	setatphase __P((char *, int));
+void 	notealias __P((const char *, int));
+void 	notrailers __P((const char *, int));
+void 	setifaddr __P((const char *, int));
+void 	setifdstaddr __P((const char *, int));
+void 	setifflags __P((const char *, int));
+void 	setifbroadaddr __P((const char *, int));
+void 	setifipdst __P((const char *, int));
+void 	setifmetric __P((const char *, int));
+void 	setifmtu __P((const char *, int));
+void	setifnwid __P((const char *, int));
+void 	setifnetmask __P((const char *, int));
+void	setifprefixlen __P((const char *, int));
+void 	setnsellength __P((const char *, int));
+void 	setsnpaoffset __P((const char *, int));
+void	setatrange __P((const char *, int));
+void	setatphase __P((const char *, int));
+void	settunnel __P((const char *, const char *));
+void	deletetunnel __P((const char *, int));
 #ifdef INET6
-void 	setia6flags __P((char *, int));
-void	setia6pltime __P((char *, int));
-void	setia6vltime __P((char *, int));
-void	setia6lifetime __P((char *, char *));
+void 	setia6flags __P((const char *, int));
+void	setia6pltime __P((const char *, int));
+void	setia6vltime __P((const char *, int));
+void	setia6lifetime __P((const char *, const char *));
 #endif
 void	checkatrange __P ((struct sockaddr_at *));
-void	setmedia __P((char *, int));
-void	setmediaopt __P((char *, int));
-void	unsetmediaopt __P((char *, int));
-void	setmediainst __P((char *, int));
+void	setmedia __P((const char *, int));
+void	setmediaopt __P((const char *, int));
+void	unsetmediaopt __P((const char *, int));
+void	setmediainst __P((const char *, int));
 void	fixnsel __P((struct sockaddr_iso *));
 int	main __P((int, char *[]));
 
@@ -199,12 +201,14 @@ int	actions;			/* Actions performed */
 #define	A_MEDIAINST	0x0008		/* instance or inst command */
 
 #define	NEXTARG		0xffffff
+#define	NEXTARG2	0xfffffe
 
-struct	cmd {
-	char	*c_name;
-	int	c_parameter;		/* NEXTARG means next argv */
+const struct cmd {
+	const char *c_name;
+	int	c_parameter;	/* NEXTARG means next argv */
 	int	c_action;	/* defered action */
-	void	(*c_func) __P((char *, int));
+	void	(*c_func) __P((const char *, int));
+	void	(*c_func2) __P((const char *, const char *));
 } cmds[] = {
 	{ "up",		IFF_UP,		0,		setifflags } ,
 	{ "down",	-IFF_UP,	0,		setifflags },
@@ -243,6 +247,9 @@ struct	cmd {
 	{ "snpaoffset",	NEXTARG,	0,		setsnpaoffset },
 	{ "nsellength",	NEXTARG,	0,		setnsellength },
 #endif	/* INET_ONLY */
+	{ "tunnel",	NEXTARG2,	0,		NULL,
+							settunnel } ,
+	{ "deletetunnel", 0,		0,		deletetunnel },
 	{ "link0",	IFF_LINK0,	0,		setifflags } ,
 	{ "-link0",	-IFF_LINK0,	0,		setifflags } ,
 	{ "link1",	IFF_LINK1,	0,		setifflags } ,
@@ -263,7 +270,7 @@ int	getinfo __P((struct ifreq *));
 int	carrier __P((void));
 void	getsock __P((int));
 void	printall __P((void));
-void 	printb __P((char *, unsigned short, char *));
+void 	printb __P((const char *, unsigned short, const char *));
 int	prefix __P((void *, int));
 void 	status __P((const u_int8_t *, int));
 void 	usage __P((void));
@@ -285,29 +292,31 @@ void	init_current_media __P((void));
  */
 void	in_alias __P((struct ifreq *));
 void	in_status __P((int));
-void 	in_getaddr __P((char *, int));
+void 	in_getaddr __P((const char *, int));
 #ifdef INET6
 void	in6_fillscopeid __P((struct sockaddr_in6 *sin6));
 void	in6_alias __P((struct in6_ifreq *));
 void	in6_status __P((int));
-void 	in6_getaddr __P((char *, int));
-void 	in6_getprefix __P((char *, int));
+void 	in6_getaddr __P((const char *, int));
+void 	in6_getprefix __P((const char *, int));
 #endif
 void	at_status __P((int));
-void	at_getaddr __P((char *, int));
+void	at_getaddr __P((const char *, int));
 void 	xns_status __P((int));
-void 	xns_getaddr __P((char *, int));
+void 	xns_getaddr __P((const char *, int));
 void 	iso_status __P((int));
-void 	iso_getaddr __P((char *, int));
+void 	iso_getaddr __P((const char *, int));
+
 void	ieee80211_status __P((void));
+void	tunnel_status __P((void));
 
 /* Known address families */
 struct afswtch {
-	char *af_name;
+	const char *af_name;
 	short af_af;
 	void (*af_status) __P((int));
-	void (*af_getaddr) __P((char *, int));
-	void (*af_getprefix) __P((char *, int));
+	void (*af_getaddr) __P((const char *, int));
+	void (*af_getprefix) __P((const char *, int));
 	u_long af_difaddr;
 	u_long af_aifaddr;
 	u_long af_gifaddr;
@@ -487,7 +496,7 @@ main(argc, argv)
 
 	/* Process commands. */
 	while (argc > 0) {
-		struct cmd *p;
+		const struct cmd *p;
 
 		for (p = cmds; p->c_name; p++)
 			if (strcmp(argv[0], p->c_name) == 0)
@@ -499,13 +508,19 @@ main(argc, argv)
 			}
 			p++;	/* got src, do dst */
 		}
-		if (p->c_func) {
+		if (p->c_func != NULL || p->c_func2 != NULL) {
 			if (p->c_parameter == NEXTARG) {
 				if (argc < 2)
 					errx(1, "'%s' requires argument",
 					    p->c_name);
 				(*p->c_func)(argv[1], 0);
 				argc--, argv++;
+			} else if (p->c_parameter == NEXTARG2) {
+				if (argc < 3)
+					errx(1, "'%s' requires 2 arguments",
+					    p->c_name);
+				(*p->c_func2)(argv[1], argv[2]);
+				argc -= 2, argv += 2;
 			} else
 				(*p->c_func)(argv[0], p->c_parameter);
 			actions |= p->c_action;
@@ -766,7 +781,7 @@ printall()
 /*ARGSUSED*/
 void
 setifaddr(addr, param)
-	char *addr;
+	const char *addr;
 	int param;
 {
 	struct ifreq *ifr;		/* XXX */
@@ -796,8 +811,80 @@ setifaddr(addr, param)
 }
 
 void
+settunnel(src, dst)
+	const char *src, *dst;
+{
+	struct addrinfo hints, *srcres, *dstres;
+	struct ifaliasreq addreq;
+	int ecode;
+#ifdef INET6
+	struct in6_aliasreq in6_addreq; 
+#endif
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = afp->af_af;
+
+	if ((ecode = getaddrinfo(src, NULL, NULL, &srcres)) != 0)
+		errx(1, "error in parsing address string: %s",
+		    gai_strerror(ecode));
+
+	if ((ecode = getaddrinfo(dst, NULL, NULL, &dstres)) != 0)  
+		errx(1, "error in parsing address string: %s",
+		    gai_strerror(ecode));
+
+	if (srcres->ai_addr->sa_family != dstres->ai_addr->sa_family)
+		errx(1,
+		    "source and destination address families do not match");
+
+	switch (srcres->ai_addr->sa_family) {
+	case AF_INET:
+		memset(&addreq, 0, sizeof(addreq));
+		strncpy(addreq.ifra_name, name, IFNAMSIZ);
+		memcpy(&addreq.ifra_addr, srcres->ai_addr,
+		    srcres->ai_addr->sa_len);
+		memcpy(&addreq.ifra_dstaddr, dstres->ai_addr,
+		    dstres->ai_addr->sa_len);
+
+		if (ioctl(s, SIOCSIFPHYADDR, &addreq) < 0)
+			warn("SIOCSIFPHYADDR");
+		break;
+
+#ifdef INET6
+	case AF_INET6:
+		memset(&in6_addreq, 0, sizeof(in6_addreq));
+		strncpy(in6_addreq.ifra_name, name, IFNAMSIZ);
+		memcpy(&in6_addreq.ifra_addr, srcres->ai_addr,
+		    srcres->ai_addr->sa_len);
+		memcpy(&in6_addreq.ifra_dstaddr, dstres->ai_addr,
+		    dstres->ai_addr->sa_len);
+
+		if (ioctl(s, SIOCSIFPHYADDR_IN6, &in6_addreq) < 0)
+			warn("SIOCSIFPHYADDR_IN6");
+		break;
+#endif /* INET6 */
+
+	default:
+		warn("address family not supported");
+	}
+
+	freeaddrinfo(srcres);
+	freeaddrinfo(dstres);
+}
+
+/* ARGSUSED */
+void
+deletetunnel(vname, param)
+	const char *vname;
+	int param;
+{
+
+	if (ioctl(s, SIOCDIFPHYADDR, &ifr) < 0)
+		err(1, "SIOCDIFPHYADDR");
+}
+
+void
 setifnetmask(addr, d)
-	char *addr;
+	const char *addr;
 	int d;
 {
 	(*afp->af_getaddr)(addr, MASK);
@@ -805,7 +892,7 @@ setifnetmask(addr, d)
 
 void
 setifbroadaddr(addr, d)
-	char *addr;
+	const char *addr;
 	int d;
 {
 	(*afp->af_getaddr)(addr, DSTADDR);
@@ -813,7 +900,7 @@ setifbroadaddr(addr, d)
 
 void
 setifipdst(addr, d)
-	char *addr;
+	const char *addr;
 	int d;
 {
 	in_getaddr(addr, DSTADDR);
@@ -826,7 +913,7 @@ setifipdst(addr, d)
 /*ARGSUSED*/
 void
 notealias(addr, param)
-	char *addr;
+	const char *addr;
 	int param;
 {
 	if (setaddr && doalias == 0 && param < 0)
@@ -843,7 +930,7 @@ notealias(addr, param)
 /*ARGSUSED*/
 void
 notrailers(vname, value)
-	char *vname;
+	const char *vname;
 	int value;
 {
 	puts("Note: trailers are no longer sent, but always received");
@@ -852,7 +939,7 @@ notrailers(vname, value)
 /*ARGSUSED*/
 void
 setifdstaddr(addr, param)
-	char *addr;
+	const char *addr;
 	int param;
 {
 	(*afp->af_getaddr)(addr, DSTADDR);
@@ -860,7 +947,7 @@ setifdstaddr(addr, param)
 
 void
 setifflags(vname, value)
-	char *vname;
+	const char *vname;
 	int value;
 {
 	struct ifreq ifreq;
@@ -885,7 +972,7 @@ setifflags(vname, value)
 #ifdef INET6
 void
 setia6flags(vname, value)
-	char *vname;
+	const char *vname;
 	int value;
 {
 	if (value < 0) {
@@ -897,7 +984,7 @@ setia6flags(vname, value)
 
 void
 setia6pltime(val, d)
-	char *val;
+	const char *val;
 	int d;
 {
 	setia6lifetime("pltime", val);
@@ -905,7 +992,7 @@ setia6pltime(val, d)
 
 void
 setia6vltime(val, d)
-	char *val;
+	const char *val;
 	int d;
 {
 	setia6lifetime("vltime", val);
@@ -913,8 +1000,8 @@ setia6vltime(val, d)
 
 void
 setia6lifetime(cmd, val)
-	char *cmd;
-	char *val;
+	const char *cmd;
+	const char *val;
 {
 	time_t newval, t;
 	char *ep;
@@ -937,7 +1024,7 @@ setia6lifetime(cmd, val)
 
 void
 setifmetric(val, d)
-	char *val;
+	const char *val;
 	int d;
 {
 	(void) strncpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
@@ -948,7 +1035,7 @@ setifmetric(val, d)
 
 void
 setifmtu(val, d)
-	char *val;
+	const char *val;
 	int d;
 {
 	(void)strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
@@ -959,7 +1046,7 @@ setifmtu(val, d)
 
 void
 setifnwid(val, d)
-	char *val;
+	const char *val;
 	int d;
 {
 	u_int8_t nwid[IEEE80211_NWID_LEN];
@@ -1040,7 +1127,7 @@ process_media_commands()
 
 void
 setmedia(val, d)
-	char *val;
+	const char *val;
 	int d;
 {
 	int type, subtype, inst;
@@ -1074,7 +1161,7 @@ setmedia(val, d)
 
 void
 setmediaopt(val, d)
-	char *val;
+	const char *val;
 	int d;
 {
 
@@ -1095,7 +1182,7 @@ setmediaopt(val, d)
 
 void
 unsetmediaopt(val, d)
-	char *val;
+	const char *val;
 	int d;
 {
 
@@ -1121,7 +1208,7 @@ unsetmediaopt(val, d)
 
 void
 setmediainst(val, d)
-	char *val;
+	const char *val;
 	int d;
 {
 	int type, subtype, options, inst;
@@ -1332,6 +1419,7 @@ status(ap, alen)
 	putchar('\n');
 
 	ieee80211_status();
+	tunnel_status();
 
 	if (ap && alen > 0) {
 		printf("\taddress:");
@@ -1432,6 +1520,72 @@ status(ap, alen)
 		ifr.ifr_addr.sa_family = p->af_af;
 		(*p->af_status)(0);
 	}
+}
+
+void
+tunnel_status()
+{
+	char psrcaddr[NI_MAXHOST];
+	char pdstaddr[NI_MAXHOST];
+	u_long srccmd, dstcmd;
+	struct ifreq *ifrp;
+	const char *ver = "";
+#ifdef NI_WITHSCOPEID
+	const int niflag = NI_NUMERICHOST | NI_WITHSCOPEID;
+#else
+	const int niflag = NI_NUMERICHOST;
+#endif
+#ifdef INET6
+	struct in6_ifreq in6_ifr;
+	int s6;
+#endif /* INET6 */
+
+	psrcaddr[0] = pdstaddr[0] = '\0';
+
+#ifdef INET6
+	memset(&in6_ifr, 0, sizeof(in6_ifr));
+	strncpy(in6_ifr.ifr_name, name, IFNAMSIZ);
+	s6 = socket(AF_INET6, SOCK_DGRAM, 0);
+	if (s6 < 0) {
+		srccmd = SIOCGIFPSRCADDR;
+		dstcmd = SIOCGIFPDSTADDR;
+		ifrp = &ifr;
+	} else {
+		close(s6);
+		srccmd = SIOCGIFPSRCADDR_IN6;
+		dstcmd = SIOCGIFPDSTADDR_IN6;
+		ifrp = (struct ifreq *)&in6_ifr;
+	}
+#else /* INET6 */
+	srccmd = SIOCGIFPSRCADDR;
+	dstcmd = SIOCGIFPDSTADDR;
+	ifrp = &ifr;
+#endif /* INET6 */
+
+	if (ioctl(s, srccmd, (caddr_t)ifrp) < 0)
+		return;
+#ifdef INET6
+	if (ifrp->ifr_addr.sa_family == AF_INET6)
+		in6_fillscopeid((struct sockaddr_in6 *)&ifrp->ifr_addr);
+#endif
+	getnameinfo(&ifrp->ifr_addr, ifrp->ifr_addr.sa_len,
+	    psrcaddr, sizeof(psrcaddr), 0, 0, niflag);
+#ifdef INET6
+	if (ifrp->ifr_addr.sa_family == AF_INET6)
+		ver = "6";
+#endif
+
+	if (ioctl(s, dstcmd, (caddr_t)ifrp) < 0)
+		return;
+#ifdef INET6
+	if (ifrp->ifr_addr.sa_family == AF_INET6)
+		in6_fillscopeid((struct sockaddr_in6 *)&ifrp->ifr_addr);
+#endif
+	getnameinfo(&ifrp->ifr_addr, ifrp->ifr_addr.sa_len,
+	    pdstaddr, sizeof(pdstaddr), 0, 0, niflag);
+
+	printf("\ttunnel inet%s %s --> %s\n", ver,
+	    psrcaddr, pdstaddr);
 }
 
 void
@@ -1562,7 +1716,7 @@ in_status(force)
 
 void
 setifprefixlen(addr, d)
-	char *addr;
+	const char *addr;
 	int d;
 {
 	if (*afp->af_getprefix)
@@ -1922,7 +2076,7 @@ SIN(addreq.ifra_mask), SIN(addreq.ifra_broadaddr)};
 
 void
 in_getaddr(s, which)
-	char *s;
+	const char *s;
 	int which;
 {
 	struct sockaddr_in *sin = sintab[which];
@@ -1969,9 +2123,9 @@ in_getaddr(s, which)
  */
 void
 printb(s, v, bits)
-	char *s;
-	char *bits;
+	const char *s;
 	unsigned short v;
+	const char *bits;
 {
 	int i, any = 0;
 	char c;
@@ -2006,7 +2160,7 @@ SIN6(in6_addreq.ifra_prefixmask), SIN6(in6_addreq.ifra_dstaddr)};
 
 void
 in6_getaddr(s, which)
-	char *s;
+	const char *s;
 	int which;
 {
 #if defined(__KAME__) && defined(KAME_SCOPEID)
@@ -2057,7 +2211,7 @@ in6_getaddr(s, which)
 
 void
 in6_getprefix(plen, which)
-	char *plen;
+	const char *plen;
 	int which;
 {
 	register struct sockaddr_in6 *sin = sin6tab[which];
@@ -2109,7 +2263,7 @@ prefix(val, size)
 #ifndef INET_ONLY
 void
 at_getaddr(addr, which)
-	char *addr;
+	const char *addr;
 	int which;
 {
 	struct sockaddr_at *sat = (struct sockaddr_at *) &addreq.ifra_addr;
@@ -2128,7 +2282,7 @@ at_getaddr(addr, which)
 
 void
 setatrange(range, d)
-	char *range;
+	const char *range;
 	int d;
 {
 	u_short	first = 123, last = 123;
@@ -2143,7 +2297,7 @@ setatrange(range, d)
 
 void
 setatphase(phase, d)
-	char *phase;
+	const char *phase;
 	int d;
 {
 	if (!strcmp(phase, "1"))
@@ -2181,7 +2335,7 @@ SNS(addreq.ifra_mask), SNS(addreq.ifra_broadaddr)};
 
 void
 xns_getaddr(addr, which)
-	char *addr;
+	const char *addr;
 	int which;
 {
 	struct sockaddr_ns *sns = snstab[which];
@@ -2200,7 +2354,7 @@ SISO(iso_addreq.ifra_mask), SISO(iso_addreq.ifra_dstaddr)};
 
 void
 iso_getaddr(addr, which)
-	char *addr;
+	const char *addr;
 	int which;
 {
 	struct sockaddr_iso *siso = sisotab[which];
@@ -2217,7 +2371,7 @@ iso_getaddr(addr, which)
 
 void
 setsnpaoffset(val, d)
-	char *val;
+	const char *val;
 	int d;
 {
 	iso_addreq.ifra_snpaoffset = atoi(val);
@@ -2225,7 +2379,7 @@ setsnpaoffset(val, d)
 
 void
 setnsellength(val, d)
-	char *val;
+	const char *val;
 	int d;
 {
 	nsellength = atoi(val);
@@ -2257,25 +2411,30 @@ adjust_nsellength()
 void
 usage()
 {
+	extern const char *__progname;
+
 	fprintf(stderr,
-	    "usage: ifconfig [ -m ] [ -A ] %s interface\n%s%s%s%s%s%s%s%s%s%s%s%s",
+	    "usage: %s [ -m ] [ -A ] "
 #ifdef INET6
-		"[ -L ]",
-#else
-		"",
+		"[ -L ] "
 #endif
-		"\t[ af [ address [ dest_addr ] ] [ up ] [ down ] ",
-		"[ netmask mask ] ]\n",
-		"\t[ metric n ]\n",
-		"\t[ mtu n ]\n",
-		"\t[ arp | -arp ]\n",
-		"\t[ media mtype ]\n",
-		"\t[ mediaopt mopts ]\n",
-		"\t[ -mediaopt mopts ]\n",
-		"\t[ instance minst ]\n",
-		"\t[ link0 | -link0 ] [ link1 | -link1 ] [ link2 | -link2 ]\n",
-		"       ifconfig -a [ -A ] [ -m ] [ -d ] [ -u ] [ af ]\n",
-		"       ifconfig -l [ -d ] [ -u ]\n");
+		"interface\n"
+		"\t[ af [ address [ dest_addr ] ] [ up ] [ down ] "
+		"[ netmask mask ] ]\n"
+		"\t[ metric n ]\n"
+		"\t[ mtu n ]\n"
+		"\t[ nwid network_id ]\n"
+		"\t[ [ af ] tunnel src_addr dest_addr ]\n"
+		"\t[ deletetunnel ]\n"
+		"\t[ arp | -arp ]\n"
+		"\t[ media mtype ]\n"
+		"\t[ mediaopt mopts ]\n"
+		"\t[ -mediaopt mopts ]\n"
+		"\t[ instance minst ]\n"
+		"\t[ link0 | -link0 ] [ link1 | -link1 ] [ link2 | -link2 ]\n"
+		"       %s -a [ -A ] [ -m ] [ -d ] [ -u ] [ af ]\n"
+		"       %s -l [ -d ] [ -u ]\n",
+		__progname, __progname, __progname);
 	exit(1);
 }
 
