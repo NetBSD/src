@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.7 2000/10/29 14:08:08 lukem Exp $
+.\"	$NetBSD: xfer,v 1.8 2000/11/01 10:58:29 scw Exp $
 .
 Installation is supported from several media types, including:
 .(bullet
@@ -107,10 +107,15 @@ where the TFTP daemon can find it (remember, many TFTP daemons run in
 a chroot'ed environment). The netboot program may be found in the
 install directory of this distribution.
 .Pp
-The MVME167 boot ROM has code builtin to boot over ethernet from a
+The
+.Tn MVME162-LX
+and
+.Tn MVME167
+boot ROMs have code builtin to boot over ethernet from a
 TFTP server. You should configure it to download the same
 .Pa netboot
-program as is used for MVME147.
+program as is used for
+.Tn MVME147 .
 .Pp
 The netboot program will query a bootparamd server to find the NFS
 server address and path name for its root, and then load a kernel from
@@ -129,7 +134,7 @@ in the client's root directory before trying to netboot the client.
 The client will need access to the miniroot image, which can be
 provided using NFS or remote shell. If using NFS, miniroot.gz should be
 expanded on the server, because doing so from the RAMDISK shell is not
-so easy. The unzipped miniroot takes about 6 MB of space.
+so easy. The unzipped miniroot takes about 7.5 MB of space.
 .Pp
 If you will be installing
 .Nx
