@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.94 2000/08/23 09:59:22 enami Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.95 2000/09/19 17:04:51 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -40,6 +40,7 @@
 
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_compat_netbsd.h"
+#include "opt_nfs.h"
 #endif
 
 #include <sys/param.h>
@@ -139,7 +140,12 @@ nfs_statfs(mp, sbp, p)
 	int32_t t1, t2;
 	caddr_t bpos, dpos, cp2;
 	struct nfsmount *nmp = VFSTONFS(mp);
-	int error = 0, v3 = (nmp->nm_flag & NFSMNT_NFSV3), retattr;
+	int error = 0, retattr;
+#ifdef NFS_V2_ONLY
+	const int v3 = 0;
+#else
+	int v3 = (nmp->nm_flag & NFSMNT_NFSV3);
+#endif
 	struct mbuf *mreq, *mrep = NULL, *md, *mb, *mb2;
 	struct ucred *cred;
 	struct nfsnode *np;
@@ -206,6 +212,7 @@ nfs_statfs(mp, sbp, p)
 	return (error);
 }
 
+#ifndef NFS_V2_ONLY
 /*
  * nfs version 3 fsinfo rpc call
  */
@@ -271,6 +278,7 @@ nfs_fsinfo(nmp, vp, cred, p)
 	nfsm_reqdone;
 	return (error);
 }
+#endif
 
 /*
  * Mount a remote root fs via. NFS.  It goes like this:
@@ -447,12 +455,14 @@ nfs_decode_args(nmp, argp)
 			nmp->nm_retry = NFS_MAXREXMIT;
 	}
 
+#ifndef NFS_V2_ONLY
 	if (argp->flags & NFSMNT_NFSV3) {
 		if (argp->sotype == SOCK_DGRAM)
 			maxio = NFS_MAXDGRAMDATA;
 		else
 			maxio = NFS_MAXDATA;
 	} else
+#endif
 		maxio = NFS_V2MAXDATA;
 
 	if ((argp->flags & NFSMNT_WSIZE) && argp->wsize > 0) {
@@ -558,6 +568,9 @@ nfs_mount(mp, path, data, ndp, p)
 		return (error);
 	if (args.version != NFS_ARGSVERSION)
 		return (EPROGMISMATCH);
+#ifdef NFS_V2_ONLY
+	args.flags &= ~(NFSMNT_NFSV3 | NFSMNT_NQNFS);
+#endif
 	if (mp->mnt_flag & MNT_UPDATE) {
 		struct nfsmount *nmp = VFSTONFS(mp);
 
@@ -638,6 +651,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, p)
 	vfs_getnewfsid(mp);
 	nmp->nm_mountp = mp;
 
+#ifndef NFS_V2_ONLY
 	if (argp->flags & NFSMNT_NQNFS)
 		/*
 		 * We have to set mnt_maxsymlink to a non-zero value so
@@ -646,8 +660,11 @@ mountnfs(argp, mp, nam, pth, hst, vpp, p)
 		 * unsuspecting binaries).
 		 */
 		mp->mnt_maxsymlinklen = 1;
+#endif
 
+#ifndef NFS_V2_ONLY
 	if ((argp->flags & NFSMNT_NFSV3) == 0)
+#endif
 		/*
 		 * V2 can only handle 32 bit filesizes. For v3, nfs_fsinfo
 		 * will fill this in.

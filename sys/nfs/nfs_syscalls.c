@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.42 2000/08/23 23:17:14 nathanw Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.43 2000/09/19 17:04:51 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,6 +39,7 @@
  */
 
 #include "fs_nfs.h"
+#include "opt_nfs.h"
 #include "opt_nfsserver.h"
 #include "opt_iso.h"
 #include "opt_inet.h"
