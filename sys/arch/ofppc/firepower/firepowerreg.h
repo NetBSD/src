@@ -1,4 +1,4 @@
-/*	$NetBSD: firepowerreg.h,v 1.2 2001/10/29 04:48:21 thorpej Exp $	*/
+/*	$NetBSD: firepowerreg.h,v 1.3 2001/10/29 18:57:15 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -66,6 +66,18 @@
 /*****************************************************************************
  * SYSTEM REGISTERS
  *****************************************************************************/
+
+/*
+ * For registers which are defined as < 32-bits, the 16 or 8 bits of
+ * the register are "left justified" within the 32-bit word.
+ */
+#define	CSR_READ1(addr)		(in32rb((addr)))
+#define	CSR_READ2(addr)		(in32((addr)) >> 16)
+#define	CSR_READ4(addr)		(in32((addr)))
+
+#define	CSR_WRITE1(addr, val)	out32rb((addr), (val))
+#define	CSR_WRITE2(addr, val)	out32((addr), (val) << 16)
+#define	CSR_WRITE4(addr, val)	out32((addr), (val))
 
 #define	FPR_INTR_REQUEST	0xff000000	/* Interrupt Request */
 #define	FPR_INTR_REQUEST_SET	0xff000008	/* Interrupt Request Set */
