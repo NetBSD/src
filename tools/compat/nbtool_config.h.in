@@ -1,7 +1,7 @@
-/*	$NetBSD: config.h.in,v 1.30 2003/07/25 03:21:16 atatat Exp $	*/
+/*	$NetBSD: nbtool_config.h.in,v 1.1 2003/10/27 01:42:50 lukem Exp $	*/
 
-#ifndef	__NETBSD_COMPAT_CONFIG_H__
-#define	__NETBSD_COMPAT_CONFIG_H__
+#ifndef	__NETBSD_NBTOOL_CONFIG_H__
+#define	__NETBSD_NBTOOL_CONFIG_H__
 
 /* Values set by "configure" based on available functions in the host. */
 
@@ -112,4 +112,4 @@
 
 #include "compat_defs.h"
 
-#endif	/* !__NETBSD_COMPAT_CONFIG_H__ */
+#endif	/* !__NETBSD_NBTOOL_CONFIG_H__ */
