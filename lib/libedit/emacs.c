@@ -1,4 +1,4 @@
-/*	$NetBSD: emacs.c,v 1.15 2003/08/07 16:44:31 agc Exp $	*/
+/*	$NetBSD: emacs.c,v 1.16 2003/11/02 20:07:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)emacs.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: emacs.c,v 1.15 2003/08/07 16:44:31 agc Exp $");
+__RCSID("$NetBSD: emacs.c,v 1.16 2003/11/02 20:07:58 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -119,10 +119,8 @@ em_yank(EditLine *el, int c __attribute__((__unused__)))
 {
 	char *kp, *cp;
 
-	if (el->el_chared.c_kill.last == el->el_chared.c_kill.buf) {
-		if (!ch_enlargebufs(el, 1))
-			return (CC_ERROR);
-	}
+	if (el->el_chared.c_kill.last == el->el_chared.c_kill.buf)
+		return (CC_NORM);
 
 	if (el->el_line.lastchar +
 	    (el->el_chared.c_kill.last - el->el_chared.c_kill.buf) >=
