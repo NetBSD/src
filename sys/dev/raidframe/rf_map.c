@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_map.c,v 1.17 2002/09/21 01:14:22 oster Exp $	*/
+/*	$NetBSD: rf_map.c,v 1.18 2002/09/21 01:18:45 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.17 2002/09/21 01:14:22 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.18 2002/09/21 01:18:45 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -416,12 +416,14 @@ rf_AllocPDAList(count)
 	return (p);
 }
 
+#if RF_INCLUDE_PARITYLOGGING > 0
 void 
 rf_FreePhysDiskAddr(p)
 	RF_PhysDiskAddr_t *p;
 {
 	RF_FREELIST_FREE(rf_pda_freelist, p, next);
 }
+#endif
 
 static void 
 rf_FreePDAList(l_start, l_end, count)
@@ -574,6 +576,7 @@ rf_CheckStripeForFailures(raidPtr, asmap)
 	}
 	return (0);
 }
+#if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0) || (RF_INCLUDE_EVENODD >0)
 /*
    return the number of failed data units in the stripe.
 */
@@ -608,20 +611,21 @@ rf_NumFailedDataUnitsInStripe(raidPtr, asmap)
 
 	return numFailures;
 }
-
+#endif
 
 /*****************************************************************************************
  *
  * debug routines
  *
  ****************************************************************************************/
-
+#if RF_DEBUG_MAP
 void 
 rf_PrintAccessStripeMap(asm_h)
 	RF_AccessStripeMapHeader_t *asm_h;
 {
 	rf_PrintFullAccessStripeMap(asm_h, 0);
 }
+#endif
 
 void 
 rf_PrintFullAccessStripeMap(asm_h, prbuf)
