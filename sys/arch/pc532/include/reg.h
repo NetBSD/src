@@ -86,7 +86,7 @@ struct reg {
 	unsigned int 	r_fp;
 	unsigned int 	r_pc;
 	unsigned int 	r_psr;
-}
+};
 
 
 /*
