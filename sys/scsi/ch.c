@@ -1,5 +1,5 @@
 /*
- *	$Id: ch.c,v 1.3 1993/05/20 03:46:22 cgd Exp $
+ *	$Id: ch.c,v 1.3.2.1 1993/07/31 12:28:20 cgd Exp $
  */
 
 #include	<sys/types.h>
@@ -635,7 +635,7 @@ int	datalen;
 		ch_xfer_block_wait[unit]++;	/* there is someone waiting */
 		while (xs->flags & INUSE)
 		{
-			sleep(&ch_xfer_block_wait[unit],PRIBIO+1);
+			tsleep(&ch_xfer_block_wait[unit],PRIBIO+1,"cd_cmd1",0);
 		}
 		ch_xfer_block_wait[unit]--;
 		xs->flags = INUSE;
@@ -669,7 +669,7 @@ retry:		xs->error	=	XS_NOERROR;
 		{
 		case	SUCCESSFULLY_QUEUED:
 			while(!(xs->flags & ITSDONE))
-				sleep(xs,PRIBIO+1);
+				tsleep(xs,PRIBIO+1,"cd_cmd2",0);
 
 		case	HAD_ERROR:
 		case	COMPLETE:

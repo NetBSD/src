@@ -38,7 +38,7 @@
  * from: Utah $Hdr: swap_pager.c 1.4 91/04/30$
  *
  *	from: @(#)swap_pager.c	7.4 (Berkeley) 5/7/91
- *	$Id: swap_pager.c,v 1.6 1993/07/07 06:04:12 cgd Exp $
+ *	$Id: swap_pager.c,v 1.6.2.1 1993/07/31 12:20:49 cgd Exp $
  */
 
 /*
@@ -572,7 +572,7 @@ swap_pager_io(swp, m, flags)
 			       m, flags);
 #endif
 		bswlist.b_flags |= B_WANTED;
-		sleep((caddr_t)&bswlist, PSWP+1);
+		tsleep((caddr_t)&bswlist, PSWP+1, "swpgio", 0);
 	}
 	bp = bswlist.av_forw;
 	bswlist.av_forw = bp->av_forw;

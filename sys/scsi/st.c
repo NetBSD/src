@@ -13,7 +13,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: st.c,v 1.14.2.2 1993/07/26 21:54:41 briggs Exp $
+ *	$Id: st.c,v 1.14.2.3 1993/07/31 12:28:24 cgd Exp $
  */
 
 /*
@@ -1113,7 +1113,7 @@ st_scsi_cmd(int unit, struct scsi_generic *scsi_cmd, int cmdlen,
 		s = splbio();
 	st->blockwait++;	/* there is someone waiting */
 	while (xs->flags & INUSE)
-		sleep((caddr_t)&st->blockwait, PRIBIO+1);
+		tsleep((caddr_t)&st->blockwait, PRIBIO+1, "st_cmd1", 0);
 	st->blockwait--;
 	xs->flags = INUSE;
 	if(!(flags & SCSI_NOMASK))
@@ -1144,7 +1144,7 @@ retry:
 	case SUCCESSFULLY_QUEUED:
 		s = splbio();
 		while(!(xs->flags & ITSDONE))
-			sleep((caddr_t)xs,PRIBIO+1);
+			tsleep((caddr_t)xs,PRIBIO+1, "st_cmd2", 0);
 		splx(s);
 	case HAD_ERROR:
 	case COMPLETE:
