@@ -1,4 +1,4 @@
-/*	$NetBSD: r3900regs.h,v 1.2 2000/05/23 04:21:40 soren Exp $ */
+/*	$NetBSD: r3900regs.h,v 1.3 2000/07/10 16:23:18 uch Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -123,18 +123,11 @@
 #define R3900_CONFIG_DRSIZE_MASK	0x00000003
 
 /*
- *	R3900 CACHE instruction (not MIPS3 cache op)
+ *	R3900 CACHE
  */
 #define R3900_MIN_CACHE_SIZE		1024
 #define R3900_MAX_DCACHE_SIZE		(8 * 1024)
-#ifndef OP_CACHE
-#define OP_CACHE	057
-#endif
-#define R3900_CACHE(op, offset, base) \
-	.word (OP_CACHE << 26 | ((base) << 21) | ((op) << 16) | \
-	((offset) & 0xffff))
-#define R3900_CACHE_I_INDEXINVALIDATE	0
-#define R3900_CACHE_D_HITINVALIDATE	0x11
 
-#define	CPUREG_A0	4	
-#define CPUREG_T0	8
+#define R3900_CACHE_I_INDEX_INVALIDATE			0
+#define R3900_CACHE_D_INDEX_WRITEBACK_INVALIDATE	0
+#define R3900_CACHE_D_HITINVALIDATE			0x11
