@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.72 1998/01/14 15:27:45 drochner Exp $
+#	$NetBSD: INSTALL,v 1.73 1998/01/15 02:26:37 cgd Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -296,6 +296,7 @@ atapibus* at wdc?
 
 # ATAPI devices
 cd*	at atapibus? drive ?		# ATAPI CD-ROM drives
+sd*	at atapibus? drive ?		# ATAPI disk drives
 
 
 # Miscellaneous mass storage devices
