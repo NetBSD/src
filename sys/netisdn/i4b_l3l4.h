@@ -27,7 +27,7 @@
  *	i4b_l3l4.h - layer 3 / layer 4 interface
  *	------------------------------------------
  *
- *	$Id: i4b_l3l4.h,v 1.8 2002/03/25 12:07:34 martin Exp $
+ *	$Id: i4b_l3l4.h,v 1.9 2002/03/25 14:25:06 martin Exp $
  *
  * $FreeBSD$
  *
@@ -273,7 +273,7 @@ struct isdn_l3_driver {
 struct isdn_l3_driver * isdn_attach_bri(const char *devname,
     const char *cardname, void *l1_token, 
     const struct isdn_l3_driver_functions * l3driver);
-int isdn_detach_bri(const struct isdn_l3_driver *);
+int isdn_detach_bri(struct isdn_l3_driver *);
 struct isdn_l3_driver *isdn_find_l3_by_bri(int bri);
 int isdn_count_bri(int *maxbri);
 

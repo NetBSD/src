@@ -27,7 +27,7 @@
  *	i4b_l4.c - kernel interface to userland
  *	-----------------------------------------
  *
- *	$Id: i4b_l4.c,v 1.13 2002/03/25 12:07:34 martin Exp $ 
+ *	$Id: i4b_l4.c,v 1.14 2002/03/25 14:25:07 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.13 2002/03/25 12:07:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.14 2002/03/25 14:25:07 martin Exp $");
 
 #include "isdn.h"
 #include "irip.h"
@@ -126,7 +126,7 @@ isdn_attach_bri(const char *devname, const char *cardname,
  * Detach a L3 driver instance
  */
 int
-isdn_detach_bri(const struct isdn_l3_driver *l3drv)
+isdn_detach_bri(struct isdn_l3_driver *l3drv)
 {
 	struct isdn_l3_driver *sc;
 	int s = splnet();
@@ -144,6 +144,7 @@ isdn_detach_bri(const struct isdn_l3_driver *l3drv)
 
 	splx(s);
 
+	free(l3drv, M_DEVBUF);
 	printf("BRI %d detached\n", bri);
 	return 1;
 }
