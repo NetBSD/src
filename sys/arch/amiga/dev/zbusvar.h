@@ -1,4 +1,4 @@
-/*	$NetBSD: zbusvar.h,v 1.1 1994/12/28 09:26:09 chopps Exp $	*/
+/*	$NetBSD: zbusvar.h,v 1.2 1999/09/25 21:47:12 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -41,10 +41,10 @@ struct zbus_args {
 	int prodid;
 	int serno;
 };
-vm_offset_t	ZTWOROMADDR;
-vm_offset_t	ZTWOMEMADDR;
+vaddr_t	ZTWOROMADDR;
+vaddr_t	ZTWOMEMADDR;
 u_int		NZTWOMEMPG;
-vm_offset_t	ZBUSADDR;	/* kva of Zorro bus I/O pages */
+vaddr_t	ZBUSADDR;	/* kva of Zorro bus I/O pages */
 u_int		ZBUSAVAIL;	/* bytes of Zorro bus I/O space left */
 #define ZTWOROMBASE	(0x00D80000)
 #define ZTWOROMTOP	(0x00F80000)

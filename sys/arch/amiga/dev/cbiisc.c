@@ -1,4 +1,4 @@
-/*	$NetBSD: cbiisc.c,v 1.7 1998/11/19 21:44:35 thorpej Exp $	*/
+/*	$NetBSD: cbiisc.c,v 1.8 1999/09/25 21:47:07 is Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -353,7 +353,7 @@ cbiisc_dma_setup(sc, addr, len, datain, dmasize)
 	size_t *dmasize;
 {
 	struct cbiisc_softc *csc = (struct cbiisc_softc *)sc;
-	vm_offset_t pa;
+	paddr_t pa;
 	u_char *ptr;
 	size_t xfer;
 

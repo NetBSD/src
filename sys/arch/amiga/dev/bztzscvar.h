@@ -1,4 +1,4 @@
-/*	$NetBSD: bztzscvar.h,v 1.2 1997/10/04 04:01:22 mhitch Exp $	*/
+/*	$NetBSD: bztzscvar.h,v 1.3 1999/09/25 21:47:07 is Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael L. Hitch.
@@ -46,7 +46,7 @@ struct bztzsc_softc {
 	size_t		sc_dmatrans;
 	char		**sc_dmaaddr;
 	size_t		*sc_pdmalen;
-	vm_offset_t	sc_pa;
+	paddr_t		sc_pa;
 
 	u_char		sc_pad1[18];		/* XXX */
 	u_char		sc_alignbuf[256];
