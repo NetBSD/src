@@ -1,4 +1,4 @@
-/*	$NetBSD: keyboard.c,v 1.16 2004/03/27 00:53:59 martin Exp $	*/
+/*	$NetBSD: keyboard.c,v 1.17 2004/07/03 18:31:36 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)keyboard.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: keyboard.c,v 1.16 2004/03/27 00:53:59 martin Exp $");
+__RCSID("$NetBSD: keyboard.c,v 1.17 2004/07/03 18:31:36 mycroft Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -50,7 +50,8 @@ __RCSID("$NetBSD: keyboard.c,v 1.16 2004/03/27 00:53:59 martin Exp $");
 void
 keyboard(void)
 {
-	char ch, rch, *line;
+	int ch, rch;
+	char *line;
 	int i, linesz;
 	sigset_t set;
 
@@ -69,11 +70,14 @@ keyboard(void)
 
 		while (col == 0 || (ch != '\r' && ch != '\n')) {
 			refresh();
-			ch = getch() & 0177;
-			if (ch == 0177 && ferror(stdin)) {
+			ch = getch();
+			if (ch == -1 && ferror(stdin)) {
 				clearerr(stdin);
 				continue;
 			}
+			if (ch == KEY_RESIZE)
+				redraw(0);
+			ch &= 0177;
 			rch = ch;
 			if (col == 0) {
 				switch(ch) {
