@@ -1,4 +1,4 @@
-/* $NetBSD: verify.c,v 1.4 2003/09/23 09:36:04 wiz Exp $ */
+/* $NetBSD: verify.c,v 1.4.2.1 2004/04/19 03:43:13 jmc Exp $ */
 
 /*
  * Copyright (c) 2001 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: verify.c,v 1.4 2003/09/23 09:36:04 wiz Exp $");
+__RCSID("$NetBSD: verify.c,v 1.4.2.1 2004/04/19 03:43:13 jmc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -57,7 +57,8 @@ enum {
 /* this struct defines a verification type */ 
 typedef struct ver_t {
 	const char     *name;				/* name of type */
-	const char     *command;			/* command to execute to verify */
+	const char     *command1;			/* command to execute to verify */
+	const char     *command2;			/* command to execute to verify */
 	const char     *extensions[MaxExtensions];	/* signature file extensions */
 } ver_t;
 
@@ -65,22 +66,24 @@ static char	*verification_type;	/* the verification type which has been selected
 
 /* called when gpg verification type is selected */
 static int
-do_verify(const char *pkgname, const char *cmd, const char *const *extensions)
+do_verify(const char *pkgname, const char *cmd1, const char *cmd2, const char *const *extensions)
 {
 	struct stat	st;
 	const char    *const *ep;
 	char		buf[BUFSIZ];
 	char		f[FILENAME_MAX];
+	int		ret;
 	int		i;
 
-	if (cmd == NULL) {
+	if (cmd1 == NULL) {
 		return 1;
 	}
 	for (i = 0, ep = extensions ; i < MaxExtensions && *ep ; ep++, i++) {
 		(void) snprintf(f, sizeof(f), "%s%s", pkgname, *ep);
 		if (stat(f, &st) == 0) {
 			(void) fprintf(stderr, "pkg_add: Using signature file: %s\n", f);
-			if (fexec(cmd, f, NULL) != 0) {
+			ret = (cmd2 == NULL) ? fexec(cmd1, f, NULL) : fexec(cmd1, cmd2, f, NULL);
+			if (ret != 0) {
 				(void) fprintf(stderr, "*** WARNING ***: `%s' has a bad signature\n", f);
 				return 0;
 			}
@@ -105,9 +108,9 @@ do_verify(const char *pkgname, const char *cmd, const char *const *extensions)
 
 /* table holding possible verifications which can be made */
 static const ver_t	vertab[] = {
-	{ "none",	NULL,			{ NULL } },
-	{ "gpg",	"gpg --verify %s",	{ ".sig", ".asc", NULL } },
-	{ "pgp5",	"pgpv %s",		{ ".sig", ".asc", ".pgp", NULL } },
+	{ "none",	NULL,	NULL,		{ NULL } },
+	{ "gpg",	"gpg", "--verify",	{ ".sig", ".asc", NULL } },
+	{ "pgp5",	"pgpv", NULL,		{ ".sig", ".asc", ".pgp", NULL } },
 	{ NULL }
 };
 
@@ -144,11 +147,11 @@ verify(const char *pkg)
 	const ver_t *vp;
 
 	if (verification_type == NULL) {
-		return do_verify(pkg, NULL, NULL);
+		return do_verify(pkg, NULL, NULL, NULL);
 	}
 	for (vp = vertab ; vp->name ; vp++) {
 		if (strcasecmp(verification_type, vp->name) == 0) {
-			return do_verify(pkg, vp->command, vp->extensions);
+			return do_verify(pkg, vp->command1, vp->command2, vp->extensions);
 		}
 	}
 	(void) fprintf(stderr, "Can't find `%s' verification details\n", verification_type);
