@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcrm.c,v 1.8 1999/08/25 05:12:15 thorpej Exp $	*/
+/*	$NetBSD: ipcrm.c,v 1.9 1999/08/25 05:13:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -29,9 +29,13 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $NetBSD: ipcrm.c,v 1.8 1999/08/25 05:12:15 thorpej Exp $
  */
+
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/msg.h>
+#include <sys/sem.h>
+#include <sys/shm.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -39,11 +43,6 @@
 #include <ctype.h>
 #include <err.h>
 #include <signal.h>
-#include <sys/types.h>
-#include <sys/ipc.h>
-#include <sys/msg.h>
-#include <sys/sem.h>
-#include <sys/shm.h>
 
 #define IPC_TO_STR(x) (x == 'Q' ? "msq" : (x == 'M' ? "shm" : "sem"))
 #define IPC_TO_STRING(x) (x == 'Q' ? "message queue" : \
