@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.396 2002/01/29 06:07:16 junyoung Exp $
+$NetBSD: pcidevs,v 1.397 2002/01/30 01:52:32 tron Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -391,7 +391,7 @@ vendor MAXTOR		0x115f	Maxtor
 vendor MEGASOFT		0x1160	Megasoft
 vendor PFU		0x1161	PFU Limited
 vendor OALAB		0x1162	OA Laboratory
-vendor SYNEMA		0x1163	Synema Corporation
+vendor RENDITION	0x1163	Rendition Inc.
 vendor APT		0x1164	Advanced Peripherals Technologies
 vendor IMAGRAPH		0x1165	Imagraph
 vendor SERVERWORKS	0x1166	ServerWorks
