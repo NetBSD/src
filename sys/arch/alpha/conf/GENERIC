@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.162 2000/07/27 17:53:35 mason Exp $
+# $NetBSD: GENERIC,v 1.163 2000/08/11 03:05:21 thorpej Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 #
@@ -6,7 +6,7 @@
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"GENERIC-$Revision: 1.162 $"
+#ident 		"GENERIC-$Revision: 1.163 $"
 
 maxusers 32
 
@@ -173,15 +173,15 @@ lca*	at	mainbus?
 dwlpx*	at	kft?
 mcpcia*	at	mcbus? mid ?
 tsp*	at	tsc?
-#ttwoga*	at	mainbus?
+ttwoga*	at	mainbus?
 
 # Sable PCI and STDIO bus and devices
-#ttwopci* at	ttwoga? hose ?  
-#sableio* at	ttwopci? bus ?  
-#com*	at	sableio? port ? 
-#lpt*	at	sableio? port ? 
-#pckbc*	at	sableio? port ? 
-#fdc*	at	sableio? port ?
+ttwopci* at	ttwoga? hose ?  
+sableio* at	ttwopci? bus ?  
+com*	at	sableio? port ? 
+lpt*	at	sableio? port ? 
+pckbc*	at	sableio? port ? 
+fdc*	at	sableio? port ?
 
 # PCI bus support
 pci*	at	apecs?
@@ -192,7 +192,7 @@ pci*	at	ppb?
 pci*	at	dwlpx?
 pci*	at	mcpcia?
 pci*	at	tsp?
-#pci*	at	ttwopci?
+pci*	at	ttwopci?
 
 # PCI devices
 adv*	at	pci? dev ? function ?		# AdvanSys SCSI
@@ -317,6 +317,8 @@ bha*	at	eisa? slot ?			# BusLogic 7xx SCSI
 ep*	at	eisa? slot ?			# 3COM 3c579 Ethernet (untested)
 fea*	at	eisa? slot ?			# DEC DEFEA FDDI
 tlp*	at	eisa? slot ?			# DEC DE-425 Ethernet
+depca*	at	eisa? slot ?			# DEC DE-422 Ethernet
+le*	at	depca?
 uha*	at	eisa? slot ?			# UltraStor 24f SCSI (unt.)
 
 # PCMCIA device
