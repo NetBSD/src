@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.1.2.11 2002/04/26 17:45:57 nathanw Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.1.2.12 2002/10/04 00:26:52 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@
 #include "pthread.h"
 #include "pthread_int.h"
 
+static void pthread_mutex_lock_slow(pthread_mutex_t *);
 
 int
 pthread_mutex_init(pthread_mutex_t *mutex, const pthread_mutexattr_t *attr)
@@ -96,12 +97,27 @@ pthread_mutex_destroy(pthread_mutex_t *mutex)
 int
 pthread_mutex_lock(pthread_mutex_t *mutex)
 {
-	pthread_t self;
 
 #ifdef ERRORCHECK
 	if ((mutex == NULL) || (mutex->ptm_magic != _PT_MUTEX_MAGIC))
 		return EINVAL;
 #endif
+
+	if (__predict_false(__cpu_simple_lock_try(&mutex->ptm_lock) == 0))
+		pthread_mutex_lock_slow(mutex);
+
+	/* We have the lock! */
+#ifdef ERRORCHECK
+	mutex->ptm_owner = (pthread_t)pthread__sp();
+#endif	
+	return 0;
+}
+
+static void
+pthread_mutex_lock_slow(pthread_mutex_t *mutex)
+{
+	pthread_t self;
+
 	self = pthread__self();
 
 	while (/*CONSTCOND*/1) {
@@ -139,12 +155,6 @@ pthread_mutex_lock(pthread_mutex_t *mutex)
 		}
 		/* Go around for another try. */
 	}
-
-	/* We have the lock! */
-#ifdef ERRORCHECK
-	mutex->ptm_owner = self;
-#endif	
-	return 0;
 }
 
 
@@ -161,7 +171,7 @@ pthread_mutex_trylock(pthread_mutex_t *mutex)
 		return EBUSY;
 
 #ifdef ERRORCHECK
-	mutex->ptm_owner = pthread__self();
+	mutex->ptm_owner = (pthread_t)pthread__sp();
 #endif
 	return 0;
 }
@@ -180,10 +190,6 @@ pthread_mutex_unlock(pthread_mutex_t *mutex)
 
 	if (mutex->ptm_lock != __SIMPLELOCK_LOCKED)
 		return EPERM; /* Not exactly the right error. */
-
-	/* One is only permitted to unlock one's own mutexes. */
-	if (mutex->ptm_owner != self)
-		return EPERM; 
 #endif
 
 	pthread_spinlock(self, &mutex->ptm_interlock);
