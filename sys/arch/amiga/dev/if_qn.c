@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.13 1998/01/12 10:39:53 thorpej Exp $	*/
+/*	$NetBSD: if_qn.c,v 1.14 1998/04/17 17:38:14 veego Exp $	*/
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -278,7 +278,7 @@ qninit(sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	u_short i;
-	static retry = 0;
+	static int retry = 0;
 
 	*sc->nic_r_mask   = NIC_R_MASK;
 	*sc->nic_t_mode   = NO_LOOPBACK;
