@@ -1,8 +1,13 @@
-/*	$NetBSD: cpu.h,v 1.13 2000/05/05 03:18:25 soren Exp $	*/
+/*	$NetBSD: cpu.h,v 1.14 2000/05/09 07:27:04 soda Exp $	*/
 /*	$OpenBSD: cpu.h,v 1.9 1998/01/28 13:46:10 pefo Exp $ */
 
 #ifndef _ARC_CPU_H_
 #define _ARC_CPU_H_
+
+/*
+ *  Internal timer causes hard interrupt 5.
+ */
+#define MIPS_INT_MASK_CLOCK	MIPS_INT_MASK_5
 
 #include <mips/cpu.h>
 #include <mips/cpuregs.h>
@@ -12,6 +17,8 @@
  * referenced in generic code
  */
 #define	COPY_SIGCODE		/* copy sigcode above user stack in exec */
+
+#define	INT_MASK_REAL_DEV	MIPS3_HARD_INT_MASK	/* XXX */
 
 #ifndef _LOCORE
 struct tlb;
