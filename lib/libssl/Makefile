@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2000/06/16 04:54:48 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 2000/06/16 06:16:40 thorpej Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -16,11 +16,15 @@
 #	sjg@quick.com.au
 #
 
+# XXX There's a bit of work to do before we can enable warnings.
+WARNS=0
+
 LIB=	ssl
 CFLAGS+= -Dlib${LIB}
 
-CRYPTODIST=	${.CURDIR}/../../dist
-.include "../../Makefile.openssl"
+CRYPTODIST=	${.CURDIR}/../../crypto/dist
+
+.include "../../crypto/Makefile.openssl"
 .PATH: ${OPENSSLSRC}
 
 .include "srcs.inc"
@@ -43,8 +47,8 @@ INCSDIR=/usr/include/openssl
 # we patch `ssl.inc' as we need to be able to turn off SSLv2.
 update_inc:
 	(cd ${.CURDIR}; \
-	find ../../dist/openssl/ssl -name Makefile.ssl | \
-		perl ../../dist/openssl/extsrcs.pl 2> srcs.inc; \
+	find ${OPENSSLSRC}/ssl -name Makefile.ssl | \
+		perl ${OPENSSLSRC}/extsrcs.pl 2> srcs.inc; \
 	patch -s ssl.inc < ssl.diff )
 
 .include <bsd.lib.mk>
