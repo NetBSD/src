@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.428.2.16 2002/11/26 18:29:31 tron Exp $
+$NetBSD: pcidevs,v 1.428.2.17 2002/11/28 13:22:36 tron Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -945,6 +945,7 @@ product BIT3 PCIVME2706		0x0300	PCI-VME Interface Mod. 2706
 /* Broadcom Corporation products */
 product BROADCOM BCM5700	0x1644	BCM5700 10/100/1000 Ethernet
 product BROADCOM BCM5701	0x1645	BCM5701 10/100/1000 Ethernet
+product BROADCOM BCM4401	0x4401	BCM4401 10/100 Ethernet
 
 /* Brooktree products */
 product	BROOKTREE BT848		0x0350	Bt848 Video Capture
@@ -2117,12 +2118,13 @@ product VIATECH VT3043		0x3043	VT3043 (Rhine) 10/100 Ethernet
 product VIATECH VT6306		0x3044	VT3606 OHCI IEEE 1394 Controller
 product VIATECH VT82C686A_SMB	0x3057	VT82C686A SMBus Controller
 product VIATECH VT82C686A_AC97	0x3058	VT82C686A AC-97 Audio Controller
-product VIATECH VT8233_AC97	0x3059	VT8233 AC-97 Audio Controller
+product VIATECH VT8233_AC97	0x3059	VT8233/VT8235 AC-97 Audio Controller
 product	VIATECH	VT6102		0x3065	VT6102 (Rhine II) 10/100 Ethernet
 product VIATECH VT8233		0x3074	VT8233 PCI-ISA Bridge
 product VIATECH VT8366		0x3099	VT8366 (Apollo KT266) CPU-PCI Bridge
 product VIATECH VT82C686A_MC97	0x3068	VT82C686A MC-97 Modem Controller
 product VIATECH VT8233A		0x3147	VT8233A PCI-ISA Bridge
+product VIATECH VT8235		0x3177	VT8235 (Apollo KT400) PCI-ISA Bridge
 product VIATECH VT86C100A	0x6100	VT86C100A (Rhine-II) 10/100 Ethernet
 product VIATECH VT8231		0x8231	VT8231 IDE Controller
 product VIATECH VT8363_PPB	0x8305	VT8363 KT133 PCI to AGP Bridge
