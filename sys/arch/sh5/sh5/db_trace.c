@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.8 2002/10/18 09:16:14 scw Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.9 2002/10/19 08:50:30 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -324,6 +324,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 			pc_adj = 4;
 		} else {
 			(*pr)("Can't find caller's stack frame.\n");
+			lastpc = lastfp = 0;
 			break;
 		}
 	}
