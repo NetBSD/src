@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1999/05/11 20:08:01 veego Exp $
+#	$NetBSD: Makefile,v 1.6 2001/12/09 00:37:38 ross Exp $
 
 IMAGE=		cdhdtape
 IMAGESIZE=	5760
@@ -39,22 +39,22 @@ all:	netbsd
 		echo There are $$bytes \($$(($$bytes / 1024))K\) bytes free)
 	@ echo ''
 	dd if=/dev/zero of=${IMAGE} count=${IMAGESIZE}
-	vnconfig -v -c ${VND_CDEV} ${IMAGE}	\
+	vnconfig -v -c ${VND} ${IMAGE}	\
 		512/18/2/$$((${IMAGESIZE} / (18 * 2)))
 	dd bs=8k seek=1 if=${FSTMP} of=${VND_CDEV}
 	@echo not really doing rm ${FSTMP}
-	disklabel -rw ${VND_CDEV} ${DISKTYPE}
+	disklabel -rw ${VND} ${DISKTYPE}
 	@echo "installing new bootblocks"
 	${MDEC}/installboot.old -b 17 -v	\
 		${SECONDARYBOOT} ${PRIMARYBOOT} ${VND_CRDEV}
-	vnconfig -u ${VND_CDEV}
+	vnconfig -u ${VND}
 
 netbsd: ${INSTKERNEL}
 	cp ${INSTKERNEL} netbsd
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND_CDEV}
+	-vnconfig -u ${VND}
 	-/bin/rm -f ${IMAGE}
 
 clean cleandir distclean:
