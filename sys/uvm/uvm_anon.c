@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.29 2004/05/05 11:54:32 yamt Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.30 2004/09/01 10:09:26 yamt Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.29 2004/05/05 11:54:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.30 2004/09/01 10:09:26 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -236,8 +236,6 @@ uvm_anfree(anon)
 
 			/*
 			 * page has no uobject, so we must be the owner of it.
-			 * if page is busy then we wait until it is not busy,
-			 * and then free it.
 			 */
 
 			KASSERT((pg->flags & PG_RELEASED) == 0);
