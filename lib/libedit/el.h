@@ -1,4 +1,4 @@
-/*	$NetBSD: el.h,v 1.9 2001/09/27 19:29:50 christos Exp $	*/
+/*	$NetBSD: el.h,v 1.10 2001/10/09 13:50:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -117,6 +117,7 @@ struct editline {
 	coord_t		  el_cursor;	/* Cursor location		*/
 	char		**el_display;	/* Real screen image = what is there */
 	char		**el_vdisplay;	/* Virtual screen image = what we see */
+	void		 *el_data;	/* Client data			*/
 	el_line_t	  el_line;	/* The current line information	*/
 	el_state_t	  el_state;	/* Current editor state		*/
 	el_term_t	  el_term;	/* Terminal dependent stuff	*/
