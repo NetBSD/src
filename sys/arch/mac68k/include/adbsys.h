@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsys.h,v 1.4 1996/05/05 06:17:29 briggs Exp $	*/
+/*	$NetBSD: adbsys.h,v 1.5 1996/05/05 14:34:07 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994	Allen K. Briggs, Chris P. Caputo,
@@ -94,8 +94,11 @@ typedef struct adb_dev_s{
 	/* Interesting handler IDs */
 #define ADB_STDKBD	1
 #define ADB_EXTKBD	2
+#define ADB_PBKBD	12
 #define ADBMS_100DPI	1
 #define ADBMS_200DPI	2
+#define ADBMS_EXTENDED	4
+#define ADBMS_USPEED	47	/* MicroSpeed mouse */
 
 
 	/* Get device info from ADB system */
