@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.9 1995/12/16 21:40:28 leo Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.10 1996/03/10 21:54:44 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -49,6 +49,8 @@
 #include <sys/dkbad.h>
 #include <sys/reboot.h>
 #include <sys/exec.h>
+#include <sys/core.h>
+#include <sys/kcore.h>
 #include <vm/pmap.h>
 #include <machine/vmparam.h>
 #include <machine/pte.h>
@@ -57,7 +59,19 @@
 #include <machine/mfp.h>
 #include <machine/scu.h>
 #include <machine/video.h>
+#include <machine/kcore.h>
 #include <atari/atari/misc.h>
+
+/*
+ * All info needed to generate a panic dump. All fields are setup by
+ * start_c().
+ * XXX: Should sheck usage of phys_segs. There is some unwanted overlap
+ *      here.... Also, the name is badly choosen. Phys_segs contains the
+ *      segment descriptions _after_ reservations are made.
+ * XXX: The 'boot_*' stuff is obsoleted by the cpu_kcore_hdr
+ * XXX: 'lowram' is obsoleted by the new panicdump format
+ */
+static cpu_kcore_hdr_t cpu_kcore_hdr;
 
 extern u_int 	lowram;
 extern u_int	Sysptmap, Sysptsize, Sysseg, proc0paddr;
@@ -135,6 +149,17 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	boot_ttphystart = ttphystart;
 	boot_ttphysize  = ttphysize;
 	boot_stphysize  = stphysize;
+
+	/*
+	 * Initialize the cpu_kcore_header.
+	 */
+	cpu_kcore_hdr.ram_segs[0].start = 0;
+	cpu_kcore_hdr.ram_segs[0].size  = stphysize;
+	cpu_kcore_hdr.ram_segs[1].start = ttphystart;
+	cpu_kcore_hdr.ram_segs[1].size  = ttphysize;
+	cpu_kcore_hdr.ram_segs[2].start = 0;
+	cpu_kcore_hdr.ram_segs[2].size  = 0;
+	cpu_kcore_hdr.mmutype = mmutype;
 
 	/*
 	 * The following is a hack. We do not know how much ST memory we
@@ -415,6 +440,12 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	protorp[1] = Sysseg + kbase;	/* + segtable address */
 
 	/*
+	 * Finish init of cpu_kcore_hdr
+	 */
+	cpu_kcore_hdr.kernel_pa = kbase;
+	cpu_kcore_hdr.sysseg_pa = (st_entry_t *)(Sysseg + kbase);
+
+	/*
 	 * copy over the kernel (and all now initialized variables) 
 	 * to fastram.  DONT use bcopy(), this beast is much larger 
 	 * than 128k !
@@ -488,6 +519,7 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 		 */
 		SCU->sys_mask |= SCU_IRQ7;
 #endif
+		
 	}
 	else machineid |= ATARI_FALCON;
 
@@ -495,6 +527,51 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	 * Initialize stmem allocator
 	 */
 	init_stmem();
+}
+
+/*
+ * Used by dumpconf() to get the size of the machine-dependent panic-dump
+ * header in disk blocks.
+ */
+int
+cpu_dumpsize()
+{
+	int	size;
+
+	size = ALIGN(sizeof(kcore_seg_t)) + ALIGN(sizeof(cpu_kcore_hdr_t));
+	return (btodb(roundup(size, dbtob(1))));
+}
+
+/*
+ * Called by dumpsys() to dump the machine-dependent header.
+ * XXX: Assumes that it will all fit in one diskblock.
+ */
+int
+cpu_dump(dump, blkno)
+int	(*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+daddr_t	*blkno;
+{
+	int		buf[dbtob(1)/sizeof(int)];
+	int		error;
+	kcore_seg_t	*kseg_p;
+	cpu_kcore_hdr_t	*chdr_p;
+
+	kseg_p = (kcore_seg_t *)buf;
+	chdr_p = (cpu_kcore_hdr_t *)&buf[ALIGN(sizeof(*kseg_p)) / sizeof(int)];
+
+	/*
+	 * Generate a segment header
+	 */
+	CORE_SETMAGIC(*kseg_p, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
+	kseg_p->c_size = dbtob(1) - ALIGN(sizeof(*kseg_p));
+
+	/*
+	 * Add the md header
+	 */
+	*chdr_p = cpu_kcore_hdr;
+	error = dump(dumpdev, *blkno, (caddr_t)buf, dbtob(1));
+	*blkno += 1;
+	return (error);
 }
 
 #ifdef DEBUG

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.19 1996/02/22 10:10:51 leo Exp $	*/
+/*	$NetBSD: machdep.c,v 1.20 1996/03/10 21:54:46 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -807,6 +807,9 @@ boot(howto)
 #define	BYTES_PER_DUMP	NBPG		/* Must be a multiple of NBPG	*/
 static vm_offset_t	dumpspace;	/* Virt. space to map dumppages	*/
 
+/*
+ * Reserve _virtual_ memory to map in the page to be dumped
+ */
 vm_offset_t
 reserve_dumppages(p)
 vm_offset_t	p;
@@ -825,6 +828,7 @@ dumpconf()
 	extern	 u_long	boot_ttphysize, boot_stphysize;
 		 int	nblks;
 
+	/* LWP: XXX better determine dumpsize through header */
 	dumpsize = (boot_ttphysize + boot_stphysize) / NBPG;
 	if (dumpdev != NODEV && bdevsw[major(dumpdev)].d_psize) {
 		nblks = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
@@ -833,6 +837,8 @@ dumpconf()
 		else if (dumplo == 0)
 			dumplo = nblks - btodb(ctob(dumpsize));
 	}
+	dumplo -= cpu_dumpsize();
+
 	/*
 	 * Don't dump on the first CLBYTES (why CLBYTES?)
 	 * in case the dump device includes a disk label.
@@ -893,7 +899,9 @@ dumpsys()
 
 	printf("dump ");
 
-	for (i = 0; i < nbytes; i += n, segbytes -= n) {
+	error = cpu_dump(dump, &blkno);
+	if (!error) {
+	    for (i = 0; i < nbytes; i += n, segbytes -= n) {
 		/*
 		 * Skip the hole
 		 */
@@ -926,6 +934,7 @@ dumpsys()
 
 		maddr += n;
 		blkno += btodb(n);
+	    }
 	}
 	switch (error) {
 
