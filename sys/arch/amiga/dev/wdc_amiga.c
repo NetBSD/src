@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_amiga.c,v 1.1 2000/02/05 18:46:28 mhitch Exp $	*/
+/*	$NetBSD: wdc_amiga.c,v 1.2 2000/02/09 22:27:20 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ wdc_amiga_probe(parent, cfp, aux)
 	struct cfdata *cfp;
 	void *aux;
 {
-	if (!(is_a4000() && !is_a1200()) || !matchname(aux, "wdc"))
+	if ((!is_a4000() && !is_a1200()) || !matchname(aux, "wdc"))
 		return(0);
 	return 1;
 }
@@ -100,8 +100,8 @@ wdc_amiga_attach(parent, self, aux)
 	} else {
 		sc->iot.base = (u_long)ztwomap(0xda0000 + 2);
 		sc->sc_a1200 = 1;
-		sc->sc_intreg = &gayle.intreq;
 		gayle_init();
+		sc->sc_intreg = &gayle.intreq;
 		gayle.intena |= GAYLE_INT_IDE;
 	}
 	sc->iot.absm = &amiga_bus_stride_4swap;
