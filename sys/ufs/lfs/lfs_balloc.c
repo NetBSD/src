@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.37 2003/02/20 04:27:23 perseant Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.38 2003/02/28 07:36:32 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.37 2003/02/20 04:27:23 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.38 2003/02/28 07:36:32 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -203,9 +203,9 @@ lfs_balloc(void *v)
 			if (bpp) {
 				*ap->a_bpp = bp = getblk(vp, lbn, nsize, 0, 0);
 				bp->b_blkno = UNWRITTEN;
+				if (ap->a_flags & B_CLRBUF)
+					clrbuf(bp);
 			}
-			if (ap->a_flags & B_CLRBUF)
-				clrbuf(bp);
 			ip->i_lfs_effnblks += bb;
 			ip->i_lfs->lfs_bfree -= bb;
 			ip->i_ffs_db[lbn] = UNWRITTEN;
