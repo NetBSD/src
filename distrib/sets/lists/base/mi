@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.324.2.2 2002/06/26 16:58:10 tv Exp $
+# $NetBSD: mi,v 1.324.2.3 2002/07/09 02:04:34 lukem Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -916,6 +916,7 @@
 ./usr/share/examples/emul/svr4/etc	base-sys-examples
 ./usr/share/examples/emul/ultrix	base-sys-examples
 ./usr/share/examples/emul/ultrix/etc	base-sys-examples
+./usr/share/examples/fstab		base-fstab-examples
 ./usr/share/examples/fstab/fstab.md		base-fstab-examples
 ./usr/share/examples/fstab/fstab.nfs.1		base-fstab-examples
 ./usr/share/examples/fstab/fstab.nfs.2		base-fstab-examples
