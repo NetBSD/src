@@ -1,4 +1,32 @@
-/*	$NetBSD: cpu.c,v 1.6 2001/04/11 08:23:27 sato Exp $	*/
+/*	$NetBSD: cpu.c,v 1.7 2001/04/18 10:42:39 sato Exp $	*/
+/*-
+ * Copyright (c) 1999 Shin Takemura, All rights reserved.
+ * Copyright (c) 1999-2001 SATO Kazumi, All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -39,6 +67,7 @@
 #include <machine/platid_mask.h>
 
 #include "opt_vr41xx.h"
+#include "opt_tx39xx.h"
 
 /* Definition of the driver for autoconfig. */
 static int	cpumatch(struct device *, struct cfdata *, void *);
@@ -82,9 +111,21 @@ cpuattach(parent, dev, aux)
 	cpu_identify();
 
 #ifdef VR41XX
-	if (platid_match(&platid, &platid_mask_CPU_MIPS_VR_41XX)) {
+#ifdef TX39XX
+	if (platid_match(&platid, &platid_mask_CPU_MIPS_VR_41XX))
+#endif /* TX39XX */
+	{
 		printf("cpu0: install VR specific idle routine\n");
 		CPU_IDLE = (long *)vr_idle;
+	}
+#endif
+#ifdef TX39XX
+#ifdef VR41XX
+	if (platid_match(&platid, &platid_mask_CPU_MIPS_TX_3900)
+	    || platid_match(&platid, &platid_mask_CPU_MIPS_TX_3920))
+#endif /* VR41XX */
+	{
+		; /* XXXX: currenty not implemented */
 	}
 #endif
 }

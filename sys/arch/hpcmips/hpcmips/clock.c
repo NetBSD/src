@@ -1,4 +1,33 @@
-/* $NetBSD: clock.c,v 1.10 2001/01/15 15:36:38 sato Exp $ */
+/* $NetBSD: clock.c,v 1.11 2001/04/18 10:42:39 sato Exp $ */
+
+/*-
+ * Copyright (c) 1999 Shin Takemura, All rights reserved.
+ * Copyright (c) 1999-2001 SATO Kazumi, All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,11 +70,12 @@
  *
  *	@(#)clock.c	8.1 (Berkeley) 6/10/93
  */
+#include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.10 2001/01/15 15:36:38 sato Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.11 2001/04/18 10:42:39 sato Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -55,6 +85,8 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.10 2001/01/15 15:36:38 sato Exp $");
 
 #include <dev/clock_subr.h>
 #include <machine/clock_machdep.h>
+#include <machine/platid.h>
+#include <machine/platid_mask.h>
 #include <dev/dec/clockvar.h>
 
 #define MINYEAR 2001 /* "today" */
@@ -107,17 +139,27 @@ cpu_initclocks()
 {
 	if (clockfns == NULL)
 		panic("cpu_initclocks: no clock attached");
-#ifndef TX39XX /* TX3912/22 periodic timer is not CLOCK_RATE, it is 100Hz */
-	hz = CLOCK_RATE;	/* 128 Hz clock */
-	tick = 1000000 / hz;	/* number of microseconds between interrupts */
-	tickfix = 1000000 - (hz * tick);
-	if (tickfix) {
-		int ftp;
+	/* 
+	 * VR41XX clock is not 100Hz but CLOCK_RATE,
+	 * TX3912/22 periodic timer is not CLOCK_RATE, it is 100Hz by default.
+	 */
+#if defined VR41XX
+#if defined TX39XX
+	if (platid_match(&platid, &platid_mask_CPU_MIPS_VR_41XX))
+#endif /* defined TX39XX */
+	{
+		hz = CLOCK_RATE;	/* 128 Hz clock */
+		tick = 1000000 / hz;	
+			/* number of microseconds between interrupts */
+		tickfix = 1000000 - (hz * tick);
+		if (tickfix) {
+			int ftp;
 
-		ftp = min(ffs(tickfix), ffs(hz));
-		tickfix >>= (ftp - 1);
-		tickfixinterval = hz >> (ftp - 1);
-        }
+			ftp = min(ffs(tickfix), ffs(hz));
+			tickfix >>= (ftp - 1);
+			tickfixinterval = hz >> (ftp - 1);
+		}
+	}
 #endif /* !TX39XX */
 	/*
 	 * Get the clock started.

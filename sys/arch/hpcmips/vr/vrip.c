@@ -1,4 +1,4 @@
-/*	$NetBSD: vrip.c,v 1.6 2000/03/10 09:18:00 sato Exp $	*/
+/*	$NetBSD: vrip.c,v 1.7 2001/04/18 10:46:00 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -33,6 +33,9 @@
  * SUCH DAMAGE.
  *
  */
+#include "opt_vr41xx.h"
+#include "opt_tx39xx.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -134,7 +137,11 @@ vripmatch(parent, match, aux)
 	void *aux;
 {
 	struct mainbus_attach_args *ma = aux;
-    
+   
+#ifdef TX39XX 
+	if (!platid_match(&platid, &platid_mask_CPU_MIPS_VR_41XX))
+		return 1;
+#endif /* !TX39XX */
 	if (strcmp(ma->ma_name, match->cf_driver->cd_name))
 		return 0;
 	return 1;
