@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.13 1994/11/21 21:30:51 gwr Exp $	*/
+/*	$NetBSD: if_le.c,v 1.14 1994/11/23 08:13:53 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -106,7 +106,7 @@ long	lerpacketsizes[LEMTU+1];
 
 /* autoconfiguration driver */
 void	leattach(struct device *, struct device *, void *);
-int 	le_md_match(struct device *, struct cfdata *, void *args);
+int 	le_md_match(struct device *, void *, void *args);
 
 struct	cfdriver lecd = {
 	NULL, "le",
@@ -125,7 +125,7 @@ void	lerint(struct le_softc *);
 void	leread(struct le_softc *, char *, int);
 int 	leput(char *, struct mbuf *);
 struct mbuf *leget(char *, int, int, struct ifnet *);
-int 	leioctl(struct ifnet *, int, caddr_t);
+int 	leioctl(struct ifnet *, u_long, caddr_t);
 void	leerror(struct le_softc *, int);
 void	lererror(struct le_softc *, char *);
 void	lexerror(struct le_softc *);
@@ -836,7 +836,7 @@ leget(lebuf, totlen, off0, ifp)
 int
 leioctl(ifp, cmd, data)
 	register struct ifnet *ifp;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 {
 	register struct ifaddr *ifa;
