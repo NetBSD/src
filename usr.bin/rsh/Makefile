@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.13 2000/10/18 00:24:19 simonb Exp $
+#	$NetBSD: Makefile,v 1.14 2002/06/14 00:50:47 wiz Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 7/19/93
 
 PROG=	rsh
+WARNS=	2
 #CPPFLAGS+=-DKERBEROS -DCRYPT
 #SRCS=	rsh.c krcmd.c kcmd.c des_rw.c
 #DPADD=	${LIBKRB} ${LIBDES}
