@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.10 1996/06/25 07:36:54 thorpej Exp $
+#	$NetBSD: install.sub,v 1.11 1996/06/26 19:07:29 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -543,8 +543,9 @@ __install_ftp_2
 	echo "Extraction complete."
 }
 
-install_common_nfs_cdrom() {
-	# $1 - directory containing file
+install_from_mounted_fs() {
+	# expects filesystem to be installed to be mounted on `/mnt2'
+	# $1 - directory containing file (within /mnt2)
 	local _filename
 	local _setsdone
 	local _prev
@@ -701,7 +702,7 @@ __install_cdrom_2
 	done
 	_directory=$resp
 
-	install_common_nfs_cdrom ${_directory}
+	install_from_mounted_fs ${_directory}
 	umount -f /mnt2 > /dev/null 2>&1
 }
 
@@ -812,7 +813,7 @@ __install_disk_2
 	done
 	_directory=$resp
 
-	install_common_nfs_cdrom ${_directory}
+	install_from_mounted_fs ${_directory}
 	umount -f /mnt2 > /dev/null 2>&1
 }
 
@@ -863,11 +864,13 @@ install_nfs() {
 	done
 	_nfs_directory=$resp
 
-	install_common_nfs_cdrom ${_nfs_directory}
+	install_from_mounted_fs ${_nfs_directory}
 	umount -f /mnt2 > /dev/null 2>&1
 }
 
 install_tape() {
+	local _xcmd
+
 	# Get the name of the tape from the user.
 	cat << \__install_tape_1
 
@@ -939,25 +942,20 @@ __install_tape_2
 		echo -n "Which way is it? [1] "
 		getresp "1"
 		case "$resp" in
-			1)
-				(
-					cd /mnt
-					dd if=$TAPE | tar --unlink -zxvpf -
-				)
-				;;
+		1)
+			_xcmd="tar --unlink -zxvpf -"
+			;;
 
-			2)
-				(
-					cd /mnt
-					dd if=$TAPE | tar --unlink -xvpf -
-				)
-				;;
+		2)
+			_xcmd="tar --unlink -xvpf -"
+			;;
 
-			*)
-				echo "Invalid response: $resp."
-				resp=""		# force loop to repeat
-				;;
+		*)
+			echo "Invalid response: $resp."
+			resp=""		# force loop to repeat
+			;;
 		esac
+		( cd /mnt; dd if=$TAPE | $_xcmd )
 	done
 	echo "Extraction complete."
 }
