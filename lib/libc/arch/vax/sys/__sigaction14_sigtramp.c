@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigaction14_sigtramp.c,v 1.1.2.2 2002/08/01 03:28:08 nathanw Exp $	*/
+/*	$NetBSD: __sigaction14_sigtramp.c,v 1.1.2.3 2002/09/17 21:32:47 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 int
 __sigaction14(int sig, const struct sigaction *act, struct sigaction *oact)
 {
-	extern int __sigtramp_sigcontext_1[];
+	extern int __sigtramp_sigcontext_2[];
 
 	/*
 	 * Right here we should select the SA_SIGINFO trampoline
@@ -54,5 +54,5 @@ __sigaction14(int sig, const struct sigaction *act, struct sigaction *oact)
 	 */
 
 	return (__sigaction_sigtramp(sig, act, oact,
-				     __sigtramp_sigcontext_1, 1));
+				     __sigtramp_sigcontext_2, 2));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: gettemp.c,v 1.5.10.1 2002/02/06 23:18:47 nathanw Exp $	*/
+/*	$NetBSD: gettemp.c,v 1.5.10.2 2002/09/17 21:32:51 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -33,12 +33,18 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#if !HAVE_CONFIG_H || !HAVE_MKSTEMP || !HAVE_MKDTEMP
+
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)mktemp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: gettemp.c,v 1.5.10.1 2002/02/06 23:18:47 nathanw Exp $");
+__RCSID("$NetBSD: gettemp.c,v 1.5.10.2 2002/09/17 21:32:51 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,10 +60,16 @@ __RCSID("$NetBSD: gettemp.c,v 1.5.10.1 2002/02/06 23:18:47 nathanw Exp $");
 #include <unistd.h>
 
 #include "reentrant.h"
+
+#if HAVE_CONFIG_H
+#define	GETTEMP		gettemp
+#else
 #include "local.h"
+#define	GETTEMP		__gettemp
+#endif
 
 int
-__gettemp(path, doopen, domkdir)
+GETTEMP(path, doopen, domkdir)
 	char *path;
 	int *doopen;
 	int domkdir;
@@ -159,3 +171,5 @@ __gettemp(path, doopen, domkdir)
 	}
 	/*NOTREACHED*/
 }
+
+#endif /* !HAVE_CONFIG_H || !HAVE_MKSTEMP || !HAVE_MKDTEMP */

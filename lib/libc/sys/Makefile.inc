@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.111.2.11 2002/08/13 00:59:57 nathanw Exp $
+#	$NetBSD: Makefile.inc,v 1.111.2.12 2002/09/17 21:32:53 nathanw Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -54,7 +54,7 @@ ASM=	accept.S access.S acct.S bind.S chdir.S chflags.S \
 	madvise.S mincore.S minherit.S mkdir.S mkfifo.S mknod.S \
 	mlock.S mlockall.S mount.S mprotect.S __msgctl13.S msgget.S \
 	munlock.S munlockall.S munmap.S \
-	nfssvc.S ntp_gettime.S pathconf.S \
+	nfssvc.S ntp_gettime.S rasctl.S pathconf.S \
 	pmc_get_info.S pmc_control.S profil.S quotactl.S \
 	readlink.S reboot.S recvfrom.S recvmsg.S rename.S revoke.S \
 	rmdir.S semconfig.S semget.S semop.S ____semctl13.S sendmsg.S \
@@ -104,17 +104,17 @@ ${PSEUDONOERR}: ${ARCHDIR}/SYS.h ${DESTDIR}/usr/include/sys/syscall.h
 
 LintSysNormal.c: ${.CURDIR}/sys/makelintstub \
     ${DESTDIR}/usr/include/sys/syscall.h
-	sh ${.CURDIR}/sys/makelintstub -o ${.TARGET} \
+	CPP=${CPP:Q} sh ${.CURDIR}/sys/makelintstub -o ${.TARGET} \
 	    -s ${DESTDIR}/usr/include/sys/syscall.h ${ASM} ${WEAKASM}
 
 LintSysNoerr.c: ${.CURDIR}/sys/makelintstub \
     ${DESTDIR}/usr/include/sys/syscall.h
-	sh ${.CURDIR}/sys/makelintstub -o ${.TARGET} -n \
+	CPP=${CPP:Q} sh ${.CURDIR}/sys/makelintstub -o ${.TARGET} -n \
 	    -s ${DESTDIR}/usr/include/sys/syscall.h ${NOERR}
 
 LintSysPseudoNoerr.c: ${.CURDIR}/sys/makelintstub \
     ${DESTDIR}/usr/include/sys/syscall.h
-	sh ${.CURDIR}/sys/makelintstub -o ${.TARGET} -p \
+	CPP=${CPP:Q} sh ${.CURDIR}/sys/makelintstub -o ${.TARGET} -p \
 	    -s ${DESTDIR}/usr/include/sys/syscall.h ${PSEUDONOERR}
 
 MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \
@@ -130,7 +130,8 @@ MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \
 	madvise.2 mincore.2 minherit.2 mlock.2 mlockall.2 mmap.2 mount.2 \
 	mprotect.2 msgctl.2 msgget.2 msgrcv.2 msgsnd.2 msync.2 \
 	munmap.2 nanosleep.2 nfssvc.2 ntp_adjtime.2 open.2 pathconf.2 pipe.2 \
-	pmc_control.2 poll.2 profil.2 ptrace.2 quotactl.2 read.2 readlink.2 \
+	pmc_control.2 poll.2 profil.2 ptrace.2 quotactl.2 rasctl.2 \
+	read.2 readlink.2 \
 	reboot.2 recv.2 rename.2 revoke.2 rmdir.2 select.2 semctl.2 \
 	semget.2 semop.2 send.2 setgroups.2 setpgid.2 setregid.2 \
 	setreuid.2 setsid.2 setuid.2 shmat.2 shmctl.2 shmget.2 \

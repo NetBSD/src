@@ -1,8 +1,7 @@
-/*	$NetBSD: __sigtramp1.S,v 1.1.2.2 2002/08/01 03:28:08 nathanw Exp $	*/
+/*	$NetBSD: movstr_i4.S,v 1.1.2.2 2002/09/17 21:32:44 nathanw Exp $	*/
 
-/*
- * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
- * All rights reserved.
+/*-
+ * Copyright (C) 2002 SHIMIZU Ryo.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -12,11 +11,8 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *     This product includes software developed at Ludd, University of Lule}.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -26,22 +22,51 @@
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "SYS.h"
+#include <machine/asm.h>
 
-	.text
-	_ALIGN_TEXT
+ENTRY(__movstr_i4_odd)
+	add	#-8,r4
+	nop
+odd_loop:
+	mov.l	@r5+,r0
+	add	#8,r4
+	mov.l	@r5+,r1
+	dt	r6
+	mov.l	r0,@(0,r4)
+	bf/s	odd_loop
+	mov.l	r1,@(4,r4)
 
-	.globl	_C_LABEL(__sigtramp_sigcontext_1)
-_C_LABEL(__sigtramp_sigcontext_1):
-	pushr	$0x3f
-	subl2	$0xc,%sp
-	movl	0x24(%sp),%r0
-	calls	$3,(%r0)
-	popr	$0x3f
-	SYSTRAP(__sigreturn14)
-	SYSTRAP(exit)
-	halt	
+	mov.l	@r5+,r0
+	mov.l	@r5+,r1
+	mov.l	@r5+,r2
+	mov.l	r0,@(8,r4)
+	mov.l	r1,@(12,r4)
+	rts
+	mov.l	r2,@(16,r4)
+
+
+
+ENTRY(__movstr_i4_even)
+	add	#-8,r4
+	nop
+even_loop:
+	mov.l	@r5+,r0
+	add	#8,r4
+	mov.l	@r5+,r1
+	dt	r6
+	mov.l	r0,@(0,r4)
+	bf/s	even_loop
+	mov.l	r1,@(4,r4)
+
+	mov.l	@r5+,r0
+	mov.l	@r5+,r1
+	mov.l	r0,@(8,r4)
+	rts
+	mov.l	r1,@(12,r4)
+
+
+

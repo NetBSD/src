@@ -1,4 +1,4 @@
-/*	$NetBSD: mkdtemp.c,v 1.3.10.1 2002/02/06 23:18:48 nathanw Exp $	*/
+/*	$NetBSD: mkdtemp.c,v 1.3.10.2 2002/09/17 21:32:51 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -33,15 +33,24 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#if !HAVE_CONFIG_H || !HAVE_MKDTEMP
+
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)mktemp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: mkdtemp.c,v 1.3.10.1 2002/02/06 23:18:48 nathanw Exp $");
+__RCSID("$NetBSD: mkdtemp.c,v 1.3.10.2 2002/09/17 21:32:51 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#if HAVE_CONFIG_H
+#define	GETTEMP		gettemp
+#else
 #include <assert.h>
 #include <errno.h>
 #include <stdio.h>
@@ -49,6 +58,8 @@ __RCSID("$NetBSD: mkdtemp.c,v 1.3.10.1 2002/02/06 23:18:48 nathanw Exp $");
 #include <unistd.h>
 #include "reentrant.h"
 #include "local.h"
+#define	GETTEMP		__gettemp
+#endif
 
 char *
 mkdtemp(path)
@@ -56,5 +67,7 @@ mkdtemp(path)
 {
 	_DIAGASSERT(path != NULL);
 
-	return (__gettemp(path, (int *)NULL, 1) ? path : (char *)NULL);
+	return (GETTEMP(path, (int *)NULL, 1) ? path : (char *)NULL);
 }
+
+#endif /* !HAVE_CONFIG_H || !HAVE_MKDTEMP */
