@@ -61,23 +61,17 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  * 
- *	$Id: open.c,v 1.2 1994/03/01 20:57:56 pk Exp $
+ * 	$Id: open.c,v 1.3 1994/05/08 16:11:33 brezak Exp $
  */
 
 #include "stand.h"
-#include "ufs.h"
+struct open_file files[SOPEN_MAX];
 
 /*
  *	File primitives proper
  */
 
-struct fs_ops file_system[] = {
-	{ ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat }
-};
-#define	NFSYS	(sizeof(file_system) / sizeof(struct fs_ops))
-
-struct open_file files[SOPEN_MAX];
-
+int
 open(fname, mode)
 	char *fname;
 	int mode;
@@ -101,7 +95,8 @@ fnd:
 	f->f_dev = (struct devsw *)0;
 	file = (char *)0;
 	error = devopen(f, fname, &file);
-	if (error || f->f_dev == (struct devsw *)0)
+	if (error ||
+	    (((f->f_flags & F_NODEV) == 0) && f->f_dev == (struct devsw *)0))
 		goto err;
 
 	/* see if we opened a raw device; otherwise, 'file' is the file name. */
@@ -111,7 +106,7 @@ fnd:
 	}
 
 	/* pass file name to the different filesystem open routines */
-	for (i = 0; i < NFSYS; i++) {
+	for (i = 0; i < nfsys; i++) {
 		/* convert mode (0,1,2) to FREAD, FWRITE. */
 		error = (file_system[i].open)(file, f);
 		if (error == 0) {
@@ -126,3 +121,42 @@ err:
 	errno = error;
 	return (-1);
 }
+
+/*
+ * Null filesystem
+ */
+int	null_open (char *path, struct open_file *f)
+{
+	errno  = EIO;
+	return -1;
+}
+
+int	null_close(struct open_file *f)
+{
+	return 0;
+}
+
+int	null_read (struct open_file *f, char *buf, u_int size, u_int *resid)
+{
+	errno = EIO;
+	return -1;
+}
+
+int	null_write (struct open_file *f, char *buf, u_int size, u_int *resid)
+{
+	errno = EIO;
+	return -1;
+}
+
+off_t	null_seek (struct open_file *f, off_t offset, int where)
+{
+	errno = EIO;
+	return -1;
+}
+
+int	null_stat (struct open_file *f, struct stat *sb)
+{
+	errno = EIO;
+	return -1;
+}
+
