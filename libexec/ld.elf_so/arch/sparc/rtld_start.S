@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.6 2002/09/09 19:01:52 mycroft Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.7 2002/09/11 19:11:05 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -56,19 +56,11 @@ _rtld_start:
 	sethi	%hi(_GLOBAL_OFFSET_TABLE_-4), %l7
 	call	.LLGETPC0
 	 add	%l7, %lo(_GLOBAL_OFFSET_TABLE_+4), %l7
-	ld	[%l7+_GOT_END_], %o0
+	ld	[%l7+_DYNAMIC], %o0
 	ld	[%l7+_GLOBAL_OFFSET_TABLE_], %o1
-	mov	%l7, %o2
-	sub	%o2, %o1, %o1
-	add	%o0, %o1, %o0
-	ld	[%o2], %o3
-1:
-	add	%o3, %o1, %o3
-	st	%o3, [%o2]
-	add	%o2, 4, %o2
-	cmp	%o2, %o0
-	blu,a	1b
-	 ld	[%o2], %o3
+	sub	%l7, %o1, %o1
+	call	_rtld_relocate_nonplt_self
+	 add	%o0, %o1, %o0
 
 	call	_rtld
 	 add	%sp, 64, %o0		/* &argc - 8 */
