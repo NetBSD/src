@@ -1,4 +1,4 @@
-.\"	$NetBSD: ps.1,v 1.50.2.3 2002/04/23 23:57:32 wrstuden Exp $
+.\"	$NetBSD: ps.1,v 1.50.2.4 2002/04/24 04:29:59 nathanw Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -159,7 +159,7 @@ children to their parent process.
 .It Fl s
 Display one line for each LWP, rather than one line for each process,
 and display information associated with the following keywords:
-uid, pid, ppid, cpu, lid, nlwp, pri, nice, vsz, rss, wchan, state, tt, time
+uid, pid, ppid, cpu, lid, nlwp, pri, nice, vsz, rss, wchan, lstate, tt, time
 and command.
 .It Fl T
 Display information about processes attached to the device associated
@@ -292,6 +292,8 @@ information:
 .Bl -tag -width indent -compact
 .It +
 The process is in the foreground process group of its control terminal.
+.It -
+The LWP is detached (can't be waited for).
 .It \*[Lt]
 The process has raised
 .Tn CPU
@@ -306,6 +308,8 @@ the process has asked for random page replacement
 from
 .Xr madvise 2 ,
 for example, a LISP interpreter in a garbage collect).
+.It a
+The process is using scheduler activations.
 .It E
 The process is trying to exit.
 .It K
@@ -313,6 +317,8 @@ The process is a kernel thread or system process.
 .It L
 The process has pages locked in core (for example, for raw
 .Tn I/O ) .
+.It l
+The process has multiple LWPs.
 .It N
 The process has reduced
 .Tn CPU
@@ -431,6 +437,8 @@ memoryuse limit
 login name of user who started the process
 .It lstart
 time started
+.It lstate
+symbolic LWP state
 .It majflt
 total page faults
 .It minflt

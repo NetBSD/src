@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.20.2.2 2002/04/23 20:41:12 nathanw Exp $	*/
+/*	$NetBSD: extern.h,v 1.20.2.3 2002/04/24 04:29:58 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -61,6 +61,7 @@ double	 getpmem __P((struct kinfo_proc2 *));
 void	 logname __P((void *, VARENT *, int));
 void	 longtname __P((void *, VARENT *, int));
 void	 lstarted __P((void *, VARENT *, int));
+void	 lstate __P((void *, VARENT *, int));
 void	 maxrss __P((void *, VARENT *, int));
 void	 nlisterr __P((struct nlist *));
 void	 p_rssize __P((void *, VARENT *, int));
