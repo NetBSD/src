@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.4 1997/04/17 21:09:02 christos Exp $
+#	$NetBSD: Makefile,v 1.5 1997/10/16 07:36:37 lukem Exp $
 
 PROG=	mopa.out
-SRCS=	mopa.out.c file.c
 
 .include <bsd.prog.mk>

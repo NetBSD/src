@@ -1,4 +1,4 @@
-/*	$NetBSD: mopchk.c,v 1.4 1997/04/17 21:09:12 christos Exp $	*/
+/*	$NetBSD: mopchk.c,v 1.5 1997/10/16 07:36:50 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995-96 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$NetBSD: mopchk.c,v 1.4 1997/04/17 21:09:12 christos Exp $";
+static char rcsid[] = "$NetBSD: mopchk.c,v 1.5 1997/10/16 07:36:50 lukem Exp $";
 #endif
 
 /*
@@ -64,7 +64,7 @@ int     AllFlag = 0;		/* listen on "all" interfaces  */
 int	VersionFlag = 0;	/* Show version */
 int	promisc = 0;		/* promisc mode not needed */
 char	*Program;
-char	version[];
+extern char	version[];
 
 void
 main(argc, argv)
@@ -75,8 +75,6 @@ main(argc, argv)
 	char   *filename;
 	struct if_info *ii;
 	int	err, aout;
-
-	extern int optind, opterr;
 
 	if ((Program = strrchr(argv[0], '/')))
 		Program++;
