@@ -1,4 +1,4 @@
-$NetBSD: tcdevs,v 1.9 1998/05/27 02:51:02 matt Exp $
+$NetBSD: tcdevs,v 1.10 1998/06/18 23:28:12 jonathan Exp $
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -31,6 +31,7 @@ $NetBSD: tcdevs,v 1.9 1998/05/27 02:51:02 matt Exp $
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+device	AV01B-AA	lofi	DecAudio \"LoFi\" audio/isdn
 device	DGLTA-FA	otto	DGLTA ATM
 device	FORE_ATM	fa	Fore TCA-100 ATM
 device	KZTSA-AA	tza	TZA FWD SCSI
