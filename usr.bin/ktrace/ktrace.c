@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.c,v 1.35 2004/06/24 15:50:50 christos Exp $	*/
+/*	$NetBSD: ktrace.c,v 1.36 2004/07/10 00:00:58 enami Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ktrace.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ktrace.c,v 1.35 2004/06/24 15:50:50 christos Exp $");
+__RCSID("$NetBSD: ktrace.c,v 1.36 2004/07/10 00:00:58 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -380,8 +380,7 @@ do_ktrace(const char *tracefile, int ops, int trpoints, int pid, int block)
 				    read(pi[0], buf, sizeof(buf))) > 0) {
 					if (write(STDOUT_FILENO, buf,
 					    (size_t)n) == -1)
-						warn("write failed (%s)",
-							strerror(errno));
+						warn("write failed");
 					cnt += n;
 				}
 			}
