@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.4 1998/02/07 12:45:53 mrg Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.5 1998/02/08 22:23:33 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -209,19 +209,19 @@ uvm_total(totalp)
 		 */
 #if 0
 		/*
-		 * XXXCDC: BOGUS!  you can't walk a map entry chain without
-		 * first locking the map.   rethink this.   in the mean time
-		 * just don't do it.
+		 * XXXCDC: BOGUS!  rethink this.   in the mean time
+		 * don't do it.
 		 */
 		paging = 0;
+		vm_map_lock(map);
 		for (map = &p->p_vmspace->vm_map, entry = map->header.next;
 		    entry != &map->header; entry = entry->next) {
 			if (entry->is_a_map || entry->is_sub_map ||
-			    entry->object.vm_object == NULL)
+			    entry->object.uvm_obj == NULL)
 				continue;
-			entry->object.vm_object->flags |= OBJ_ACTIVE;
-			paging |= vm_object_paging(entry->object.vm_object);
+			/* XXX how to do this with uvm */
 		}
+		vm_map_unlock(map);
 		if (paging)
 			totalp->t_pw++;
 #endif
@@ -229,27 +229,13 @@ uvm_total(totalp)
 	/*
 	 * Calculate object memory usage statistics.
 	 */
-#if 0 /* XXXCDC: rethink! rethink! */
-	simple_lock(&vm_object_list_lock);
-	for (object = vm_object_list.tqh_first;
-	    object != NULL;
-	    object = object->object_list.tqe_next) {
-		totalp->t_vm += num_pages(object->size);
-		totalp->t_rm += object->resident_page_count;
-		if (object->flags & OBJ_ACTIVE) {
-			totalp->t_avm += num_pages(object->size);
-			totalp->t_arm += object->resident_page_count;
-		}
-		if (object->ref_count > 1) {
-			/* shared object */
-			totalp->t_vmshr += num_pages(object->size);
-			totalp->t_rmshr += object->resident_page_count;
-			if (object->flags & OBJ_ACTIVE) {
-				totalp->t_avmshr += num_pages(object->size);
-				totalp->t_armshr += object->resident_page_count;
-			}
-		}
-	}
-	totalp->t_free = cnt.v_free_count;
-#endif
+	totalp->t_free = uvmexp.free;
+	totalp->t_vm = uvmexp.npages - uvmexp.free + uvmexp.swpginuse;
+	totalp->t_avm = uvmexp.active + uvmexp.swpginuse;	/* XXX */
+	totalp->t_rm = uvmexp.npages - uvmexp.free;
+	totalp->t_arm = uvmexp.active;
+	totalp->t_vmshr = 0;		/* XXX */
+	totalp->t_avmshr = 0;		/* XXX */
+	totalp->t_rmshr = 0;		/* XXX */
+	totalp->t_armshr = 0;		/* XXX */
 }
