@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.97 2003/02/23 00:22:34 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.98 2003/02/25 13:47:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.97 2003/02/23 00:22:34 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.98 2003/02/25 13:47:44 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -211,9 +211,7 @@ lfs_writerd(void *arg)
 				if (fs->lfs_pdflush ||
 				    !TAILQ_EMPTY(&fs->lfs_pchainhd)) {
 					fs->lfs_pdflush = 0;
-					simple_unlock(&mountlist_slock);
 					lfs_flush_fs(fs, 0);
-					simple_lock(&mountlist_slock);
 				}
 			}
 
