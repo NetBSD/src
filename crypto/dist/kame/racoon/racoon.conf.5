@@ -1,4 +1,4 @@
-.\"	$KAME: racoon.conf.5,v 1.77 2001/02/22 02:40:06 itojun Exp $
+.\"	$KAME: racoon.conf.5,v 1.85 2001/07/17 02:05:20 sakane Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -206,10 +206,6 @@ will only listen on
 .Ar address .
 The default port is 500, which is specified by IANA.
 You can provide more than one address definition.
-.\".It Ic admin Ic [ Ar port ] ;
-.\"specify the port for connecting to
-.\".Xr kmpstat 8 .
-.\"The default port is 61225.
 .It Ic strict_address ;
 require that all addresses for ISAKMP must be bound.
 This statement will be ignored if you do not specify any addresses.
@@ -279,7 +275,7 @@ If
 .Ar string
 is omitted,
 .Xr racoon 8
-will get DN from the certificate.
+will get DN from Subject field in the certificate.
 .El 
 .\"
 .It Ic peers_identifier Ar idtype ... ;
@@ -303,10 +299,19 @@ means a file name of certificate.
 means a file name of secret key.
 .El
 .\"
-.It Ic peers_certfile Ar certfile ;
-When the peer does not send a certificate,
+.It Ic peers_certfile ( dnssec \*(Ba Ar certfile ) ;
+If
+.Ic dnssec
+is defined,
 .Xr racoon 8
-can use this certificate as the peer's certificate.
+will ignore the CERT payload from the peer,
+and try to get the peer's certificate from DNS instead.
+If
+.Ar certfile
+is defined,
+.Xr racoon 8
+will ignore the CERT payload from the peer,
+and will use this certificate as the peer's certificate.
 .\"
 .It Ic send_cert (on \(ba off) ;
 If you do not want to send a certificate for some reason, set this to off.
@@ -334,6 +339,12 @@ Note that the lifetime of bytes is unused right now.
 enable this to send an INITIAL-CONTACT message.
 The default value is
 .Ic on .
+.\"
+.It Ic passive (on \(ba off) ;
+If you do not want to initiate the negotiation, set this to on.
+The default value is
+.Ic off .
+It is useful for a server.
 .\"
 .It Ic proposal_check Ar level ;
 specifies the action of lifetime length and PFS of the phase 2
@@ -374,6 +385,24 @@ If this value is set on then both values of ID payloads in phase 2 exchange
 are always used as the addresses of end-point of IPsec-SAs.
 The default is off.
 .\"
+.It Ic generate_policy (on \(ba off) ;
+This directive is for the responder.
+Therefore you should set
+.Ic passive
+on in order that
+.Xr racoon 8
+only becomes a responder.
+If the responder does not have any policy in SPD during phase 2 negotiation,
+and the directive is set on, then
+.Xr racoon 8
+will choice the first proposal in the
+SA payload from the initiator, and generate policy entries from the proposal.
+It is useful to negotiate with the client which is allocated IP address
+dynamically and the communication needs IPSec tunnel mode.
+This directive is ignored in the initiator case.
+The default value is
+.Ic off .
+.\"
 .It Ic nonce_size Ar number ;
 define the byte size of nonce value.
 Racoon can send any value although
@@ -408,7 +437,7 @@ defines the authentication method used for the phase 1 negotiation.
 This directive must be defined.
 .Ar type
 is one of:
-.Ic pre_shared_key, rsasig , dsssig , rsaenc , rsarev, gssapi_krb .
+.Ic pre_shared_key, rsasig , gssapi_krb .
 .\"
 .It Ic dh_group Ar group ;
 define the group used for the Diffie-Hellman exponentiations.
@@ -603,9 +632,7 @@ The default is off.
 .Ss Special directives
 .Bl -tag -width Ds -compact
 .It Ic complex_bundle (on \(ba off) ;
-Use KAME interpretation regarding to proposal for SA bundle.
-The default value is
-.Ic off .
+defines the interpretation of proposal in the case of SA bundle.
 Normally
 .Dq IP AH ESP IP payload
 is proposed as
@@ -614,6 +641,8 @@ The interpretation is more common to other IKE implementations, however,
 it allows very limited set of combinations for proposals.
 With the option enabled, it will be proposed as
 .Dq AH transport and ESP tunnel .
+The default value is
+.Ic off .
 .El
 .\"
 .Ss Pre-shared key File
@@ -674,7 +703,7 @@ foo.kame.net    hoge
 .Ed
 .\"
 .Sh SEE ALSO
-.\".Xr kmpstat 8 ,
+.\".Xr racoonctl 8 ,
 .Xr racoon 8
 .Xr setkey 8
 .\"
