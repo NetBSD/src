@@ -1,7 +1,7 @@
 #
 # @(#)Makefile	2.3 88/08/11 4.0 RPCSRC
 #
-# $Header: /cvsroot/src/include/rpcsvc/Attic/Makefile,v 1.3 1993/05/05 18:45:34 proven Exp $
+# $Header: /cvsroot/src/include/rpcsvc/Attic/Makefile,v 1.4 1993/05/06 02:23:15 proven Exp $
 #
 
 .SUFFIXES: .x
@@ -17,9 +17,9 @@ HFILES= yp_prot.h ypclnt.h
 
 CLEANFILES+= ${HDRS}
 
-all:	${HDRS}
+all: ${HDRS}
 
-install:
+install: all
 	@echo "Creating RPC service headers directory"
 	@/bin/rm -rf ${DESTDIR}/usr/include/rpcsvc
 	@-mkdir ${DESTDIR}/usr/include/rpcsvc
@@ -38,4 +38,4 @@ install:
 	@PWD=`pwd` ; cd ${.CURDIR} ; ${RPCCOM} -h $*.x -o $$PWD/$@
 
 .include <bsd.prog.mk>
-prog.mk>
+mk>
