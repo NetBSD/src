@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 1994/10/26 08:25:49 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3 1996/11/07 07:34:02 matthias Exp $	*/
 
 /* 
  * Copyright (c) 1994 Philip L. Budne.
@@ -41,13 +41,6 @@
 #include "samachdep.h"
 
 int testing = 0;
-
-void
-bzero( char *addr, int len )
-{
-    while (len-- > 0)
-	*addr++ = '\0';
-}
 
 /* XXX TEMP; would like to use code more like hp300 scsi.c */
 
