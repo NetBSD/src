@@ -1,4 +1,4 @@
-/*	$NetBSD: pcio.c,v 1.18 2004/08/15 22:04:45 dsl Exp $	 */
+/*	$NetBSD: pcio.c,v 1.19 2005/01/27 18:20:45 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -40,6 +40,7 @@
 
 extern void conputc __P((int));
 extern int congetc __P((void));
+extern int conisshift __P((void));
 extern int coniskey __P((void));
 extern struct x86_boot_params boot_params;
 
@@ -282,14 +283,14 @@ getchar()
 }
 
 int
-iskey()
+iskey(int intr)
 {
 #ifdef SUPPORT_SERIAL
 	switch (iodev) {
 	    default: /* to make gcc -Wall happy... */
 	    case CONSDEV_PC:
 #endif
-		return (coniskey());
+		return ((intr && conisshift()) || coniskey());
 #ifdef SUPPORT_SERIAL
 	    case CONSDEV_COM0:
 	    case CONSDEV_COM1:
@@ -313,7 +314,7 @@ awaitkey(timeout, tell)
 
 	i = timeout * POLL_FREQ;
 
-	while (i) {
+	for (;;) {
 		if (tell && (i % POLL_FREQ) == 0) {
 			char numbuf[20];
 			int len, j;
@@ -325,16 +326,18 @@ awaitkey(timeout, tell)
 			numbuf[len + j] = '\0';
 			printf(numbuf);
 		}
-		if (iskey()) {
+		if (iskey(1)) {
 			/* flush input buffer */
-			while (iskey())
+			while (iskey(0))
 				c = getchar();
 			if (c == 0)
 				c = -1;
 			goto out;
 		}
-		delay(1000000 / POLL_FREQ);
-		i--;
+		if (i--)
+			delay(1000000 / POLL_FREQ);
+		else
+			break;
 	}
 
 out:
