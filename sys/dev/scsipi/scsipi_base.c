@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.47 2001/06/27 13:21:30 bouyer Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.48 2001/06/27 23:14:26 ross Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1338,7 +1338,9 @@ scsipi_complete(xs)
 			if (xs->resid < xs->datalen) {
 				printf("we read %d bytes of sense anyway:\n",
 				    xs->datalen - xs->resid);
+#ifdef SCSIVERBOSE
 				scsipi_print_sense_data((void *)xs->data, 0);
+#endif
 			}
 			return EINVAL;
 		}
