@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_ecoff.c,v 1.9 2003/07/15 12:37:35 itojun Exp $ */
+/* $NetBSD: nlist_ecoff.c,v 1.10 2003/09/19 06:24:04 itojun Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: nlist_ecoff.c,v 1.9 2003/07/15 12:37:35 itojun Exp $");
+__RCSID("$NetBSD: nlist_ecoff.c,v 1.10 2003/09/19 06:24:04 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -87,7 +87,7 @@ create_knlist_ecoff(name, db)
 	struct stat st;
 	struct nlist nbuf;
 	DBT key, data;
-	char *mappedfile, *symname, *fsymname, *tmpcp;
+	char *mappedfile, *symname, *nsymname, *fsymname, *tmpcp;
 	size_t mappedsize, symnamesize, fsymnamesize;
 	u_long symhdroff, extrstroff;
 	u_long symhdrsize, i, nesyms;
@@ -186,11 +186,12 @@ create_knlist_ecoff(name, db)
 		fsymname = &mappedfile[extrstroff + esyms[i].es_strindex];
 		fsymnamesize = strlen(fsymname) + 1;
 		while (symnamesize < fsymnamesize + 1) {
-			symnamesize *= 2;
-			if ((symname = realloc(symname, symnamesize)) == NULL) {
+			if ((nsymname = realloc(symname, symnamesize * 2)) == NULL) {
 				warn("malloc");
 				punt();
 			}
+			symname = nsymname;
+			symnamesize *= 2;
 		}
 		strlcpy(symname, "_", symnamesize);
 		strlcat(symname, fsymname, symnamesize);
