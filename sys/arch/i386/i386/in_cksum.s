@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.s,v 1.12 2001/03/06 19:20:51 mycroft Exp $	*/
+/*	$NetBSD: in_cksum.s,v 1.13 2001/05/19 00:36:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -126,6 +126,8 @@ ENTRY(in4_cksum)
 
 	movl	16(%esp), %ebp
 	movzbl	20(%esp), %eax		/* sum = nxt */
+	testl	%eax, %eax
+	jz	mbuf_loop_0		/* skip if nxt == 0 */
 	movl	28(%esp), %esi
 	movl	M_DATA(%ebp), %ebx
 	addl	%esi, %eax		/* sum += len */
