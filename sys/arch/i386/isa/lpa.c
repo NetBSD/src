@@ -45,7 +45,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: lpa.c,v 1.4 1993/06/05 22:58:29 cgd Exp $
+ *	$Id: lpa.c,v 1.5 1993/08/28 00:11:33 brezak Exp $
  */
 
 /*
@@ -296,7 +296,7 @@ lpaopen(dev, flag)
 		}
 
 		/* sleep a moment */
-		if ((err = tsleep (sc, LPPRI, "lpa: open", LONG)) !=
+		if ((err = tsleep ((caddr_t)sc, LPPRI, "lpa: open", LONG)) !=
 				EWOULDBLOCK) {
 			sc->sc_flags = 0;
 			return (EBUSY);
@@ -338,7 +338,7 @@ pushbytes(sc)
 				 * little longer ..
 				 */
 				tic = tic + tic + 1;
-				err = tsleep(sc, LPPRI, "lpa: write", tic);
+				err = tsleep((caddr_t)sc, LPPRI, "lpa: write", tic);
 				if (err != EWOULDBLOCK) {
 					return (err);
 				}
