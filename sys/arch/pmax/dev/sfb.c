@@ -1,4 +1,4 @@
-/*	$NetBSD: sfb.c,v 1.11.4.2 1996/09/05 23:56:35 jtc Exp $	*/
+/*	$NetBSD: sfb.c,v 1.11.4.3 1996/09/09 20:47:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -218,6 +218,7 @@ sfbattach(parent, self, aux)
 		tc_intr_establish(parent, (void*)ta->ta_cookie, TC_IPL_NONE,
 				  sfb_intr, fi);
 	}
+	printf("\n");
 }
 
 
@@ -243,7 +244,7 @@ sfbinit(fi, base, unit, silent)
 	else {
     		fi->fi_cmap_bits = malloc(CMAP_BITS, M_DEVBUF, M_NOWAIT);
 		if (fi->fi_cmap_bits == NULL) {
-			printf("cfb%d: no memory for cmap\n", unit);
+			printf("sfb%d: no memory for cmap\n", unit);
 			return (0);
 		}
 	}
