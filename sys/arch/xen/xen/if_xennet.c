@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.13.2.1 2005/03/20 14:35:18 tron Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.13.2.2 2005/03/22 15:24:58 tron Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.13.2.1 2005/03/20 14:35:18 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.13.2.2 2005/03/22 15:24:58 tron Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -1104,6 +1104,9 @@ xennet_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 #ifdef mediacode
 	struct ifreq *ifr = (struct ifreq *)data;
+#endif
+#ifdef XENNET_DEBUG
+	struct xennet_softc *sc = ifp->if_softc;
 #endif
 	int s, error = 0;
 
