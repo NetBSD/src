@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2000/01/23 17:04:05 mycroft Exp $
+#	$NetBSD: Makefile,v 1.9 2000/02/07 16:27:00 tsubai Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -7,9 +7,13 @@ FILES=		${PROG}.elf
 SRCS=		Locore.c boot.c ofdev.c net.c netif_of.c alloc.c
 XCOFFXTRA=	Xcoffxtra.c
 XCOFFXTRAOBJ=	Xcoffxtra.o
+CFLAGS+=	-msoft-float
+#CFLAGS+=	-DDEBUG -DNETIF_DEBUG
+CPPFLAGS+=	-D_STANDALONE
+
 .PATH:		${S}/arch/powerpc/powerpc
 SRCS+=		ofwmagic.S
-#CFLAGS+=	-DDEBUG -DNETIF_DEBUG
+
 MKMAN=		no
 STRIPFLAG=
 BINMODE=	444
