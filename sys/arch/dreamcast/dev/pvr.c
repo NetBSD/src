@@ -1,4 +1,4 @@
-/*	$NetBSD: pvr.c,v 1.18 2003/12/10 10:36:02 tsutsui Exp $	*/
+/*	$NetBSD: pvr.c,v 1.19 2005/02/19 15:37:34 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.18 2003/12/10 10:36:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.19 2005/02/19 15:37:34 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,7 +238,7 @@ int
 pvr_match(struct device *parent, struct cfdata *match, void *aux)
 {
 
-	return (1);
+	return 1;
 }
 
 void
@@ -261,8 +261,8 @@ pvr_getdevconfig(struct fb_devconfig *dc)
 	dc->dc_dispflags = 0;
 
 	/* Clear the screen. */
-	for (i = 0; i < dc->dc_ht * dc->dc_rowbytes; i += sizeof(u_int32_t))
-		*(u_int32_t *)(dc->dc_videobase + i) = 0x0;
+	for (i = 0; i < dc->dc_ht * dc->dc_rowbytes; i += sizeof(uint32_t))
+		*(uint32_t *)(dc->dc_videobase + i) = 0x0;
 
 	/* Initialize the device. */
 	pvrinit(dc);
@@ -348,7 +348,7 @@ pvrioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
 		*(u_int *)data = WSDISPLAY_TYPE_DCPVR;
-		return (0);
+		return 0;
 
 	case WSDISPLAYIO_GINFO:
 #define	wsd_fbip ((struct wsdisplay_fbinfo *)data)
@@ -357,11 +357,11 @@ pvrioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		wsd_fbip->depth = sc->sc_dc->dc_depth;
 		wsd_fbip->cmsize = 0;	/* XXX Colormap */
 #undef wsd_fbip
-		return (0);
+		return 0;
 
 	case WSDISPLAYIO_GETCMAP:
 	case WSDISPLAYIO_PUTCMAP:
-		return (EPASSTHROUGH);	/* XXX Colormap */
+		return EPASSTHROUGH;	/* XXX Colormap */
 
 	case WSDISPLAYIO_SVIDEO:
 		switch (*(u_int *)data) {
@@ -382,24 +382,24 @@ pvrioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 			}
 			break;
 		default:
-			return (EPASSTHROUGH);	/* XXX */
+			return EPASSTHROUGH;	/* XXX */
 		}
-		return (0);
+		return 0;
 
 	case WSDISPLAYIO_GVIDEO:
 		*(u_int *)data = dc->dc_blanked ?
 		    WSDISPLAYIO_VIDEO_OFF : WSDISPLAYIO_VIDEO_ON;
-		return (0);
+		return 0;
 
 	case WSDISPLAYIO_GCURPOS:
 	case WSDISPLAYIO_SCURPOS:
 	case WSDISPLAYIO_GCURMAX:
 	case WSDISPLAYIO_GCURSOR:
 	case WSDISPLAYIO_SCURSOR:
-		return (EPASSTHROUGH);	/* XXX */
+		return EPASSTHROUGH;	/* XXX */
 	}
 
-	return (EPASSTHROUGH);
+	return EPASSTHROUGH;
 }
 
 paddr_t
@@ -432,7 +432,7 @@ pvr_alloc_screen(void *v, const struct wsscreen_descr *type,
 	long defattr;
 
 	if (sc->nscreens > 0)
-		return (ENOMEM);
+		return ENOMEM;
 
 	*cookiep = &sc->sc_dc->rinfo; /* one and only for now */
 	*curxp = 0;
@@ -441,7 +441,7 @@ pvr_alloc_screen(void *v, const struct wsscreen_descr *type,
 	    &defattr);
 	*attrp = defattr;
 	sc->nscreens++;
-	return (0);
+	return 0;
 }
 
 void
@@ -460,21 +460,21 @@ pvr_show_screen(void *v, void *cookie, int waitok,
     void (*cb)(void *, int, int), void *cbarg)
 {
 
-	return (0);
+	return 0;
 }
 
 static void
 pvr_check_cable(struct fb_devconfig *dc)
 {
-	__volatile u_int32_t *porta =
-	    (__volatile u_int32_t *)0xff80002c;
-	u_int16_t v;
+	__volatile uint32_t *porta =
+	    (__volatile uint32_t *)0xff80002c;
+	uint16_t v;
 
 	/* PORT8 and PORT9 is input */
 	*porta = (*porta & ~0xf0000) | 0xa0000;
 
 	/* Read PORT8 and PORT9 */
-	v = ((*(__volatile u_int16_t *)(porta + 1)) >> 8) & 3;
+	v = ((*(__volatile uint16_t *)(porta + 1)) >> 8) & 3;
 
 	if ((v & 2) == 0)
 		dc->dc_dispflags |= PVR_VGAMODE|PVR_RGBMODE;
@@ -487,7 +487,7 @@ pvr_check_tvsys(struct fb_devconfig *dc)
 {
 
 	/* XXX should use flashmem device when one exists */
-	dc->dc_tvsystem = (*(__volatile u_int8_t *)0xa021a004) & 3;
+	dc->dc_tvsystem = (*(__volatile uint8_t *)0xa021a004) & 3;
 }
 
 void
@@ -591,7 +591,7 @@ pvrinit(struct fb_devconfig *dc)
 	PVR_REG_WRITE(dc, PVRREG_DIWCONF, DIWCONF_MAGIC);
 
 	/* RGB / composite */
-	*(__volatile u_int32_t *)
+	*(__volatile uint32_t *)
 	    SH3_PHYS_TO_P2SEG(0x00702c00) =
 	    ((dc->dc_dispflags & PVR_RGBMODE) ? 0 : 3) << 8;
 
