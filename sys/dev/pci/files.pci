@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.18 1996/07/14 19:13:22 cgd Exp $
+#	$NetBSD: files.pci,v 1.19 1996/09/01 00:12:11 mycroft Exp $
 #
 # Config.new file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -14,6 +14,11 @@ file	dev/pci/pci_subr.c		pci
 attach	ahc at pci with ahc_pci
 file	dev/pci/ahc_pci.c		ahc_pci
 file	dev/ic/smc93cx6.c		ahc_pci
+
+# BusLogic BT-9xx PCI family
+# device declaration in sys/dev/isa/files.isa
+attach	bha at pci with bha_pci
+file	dev/pci/bha_pci.c		bha_pci
 
 # Ethernet driver for DC21040-based boards
 device	de: ether, ifnet

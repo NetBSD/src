@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
+#	$NetBSD: files.isa,v 1.22 1996/09/01 00:11:43 mycroft Exp $
 #
 # Config.new file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -74,10 +74,10 @@ device	aic: scsi, isadma
 attach	aic at isa
 file	dev/isa/aic6360.c		aic
 
-# BusLogic BT-74x EISA family (XXX; should be EISA.  it's special)
-device	bt: scsi, isadma
-attach	bt at isa
-file	dev/isa/bt.c			bt
+# BusLogic BT-[45]4x ISA family
+# device declaration in sys/conf/files
+attach	bha at isa with bha_isa: isadma
+file	dev/isa/bha_isa.c		bha_isa
 
 # Seagate ST0[12] ICs
 device	sea: scsi, isadma
@@ -85,9 +85,9 @@ attach	sea at isa
 file	dev/isa/seagate.c		sea
 
 # UltraStor UHA-[13]4f boards
-device	uha: scsi, isadma
-attach	uha at isa
-file	dev/isa/ultra14f.c		uha
+# device declaration in sys/conf/files
+attach	uha at isa with uha_isa: isadma
+file	dev/isa/uha_isa.c		uha_isa
 
 # Western Digital WD7000 and Future Domain TMC-7000 boards
 device	wds: scsi, isadma
