@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.9 1999/07/16 09:03:45 christos Exp $
+$NetBSD: acronyms,v 1.10 1999/07/16 09:05:47 mycroft Exp $
 
 AFAICT	as far as I can tell
 AFAIK	as far as I know
@@ -15,8 +15,8 @@ DTWT	do the wrong thing
 DWIM	do what I mean
 FWIW	for what it's worth
 FYI	for your information
-L8R	later
 ISTR	I seem to recall
+L8R	later
 OIC	oh, I see
 PPL	pretty please
 SMOP	simple matter of programming
@@ -24,3 +24,4 @@ SOL	shit out [of] luck
 UTSL	use the source, Luke
 WTF	what the fuck
 WTH	what the hell
+YKWIM	you know what I mean
