@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.20 1999/05/29 01:22:03 fvdl Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.21 2002/04/03 00:20:15 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -484,6 +484,7 @@
 		case NFSV3SATTRTIME_TOSERVER: \
 			(a)->va_atime.tv_sec = time.tv_sec; \
 			(a)->va_atime.tv_nsec = time.tv_usec * 1000; \
+			(a)->va_vaflags |= VA_UTIMES_NULL; \
 			break; \
 		}; \
 		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED); \
@@ -491,10 +492,12 @@
 		case NFSV3SATTRTIME_TOCLIENT: \
 			nfsm_dissect(tl, u_int32_t *, 2 * NFSX_UNSIGNED); \
 			fxdr_nfsv3time(tl, &(a)->va_mtime); \
+			(a)->va_vaflags &= ~VA_UTIMES_NULL; \
 			break; \
 		case NFSV3SATTRTIME_TOSERVER: \
 			(a)->va_mtime.tv_sec = time.tv_sec; \
 			(a)->va_mtime.tv_nsec = time.tv_usec * 1000; \
+			(a)->va_vaflags |= VA_UTIMES_NULL; \
 			break; \
 		}; }
 
