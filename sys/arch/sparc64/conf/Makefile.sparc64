@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.47 2002/07/20 11:48:17 mrg Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.48 2002/09/06 06:16:57 jdolecek Exp $
 
 #=========================================================================
 #
@@ -117,6 +117,10 @@ machdep.o mem.o openprom.o pmap.o vm_machdep.o: Makefile
 ##
 ## (7) misc settings
 ##
+
+# define .MAIN _before_ the make() check, so that implicit target
+# would be defined
+.MAIN: all
 
 .if make(depend) || make(all) || make(dependall)
 .BEGIN:
