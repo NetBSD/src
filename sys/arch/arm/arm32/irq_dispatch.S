@@ -1,4 +1,4 @@
-/*	$NetBSD: irq_dispatch.S,v 1.2 2003/01/03 00:38:16 thorpej Exp $	*/
+/*	$NetBSD: irq_dispatch.S,v 1.3 2003/10/25 20:42:49 scw Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -73,6 +73,10 @@
 #include <machine/cpu.h>
 #include <machine/frame.h>
 
+#include "opt_compat_netbsd.h"
+#include "opt_execfmt.h"
+#include "opt_multiprocessor.h"
+
 #include "opt_arm_intr_impl.h"
 #ifdef ARM_INTR_IMPL
 #include ARM_INTR_IMPL
@@ -83,6 +87,43 @@
 #ifndef ARM_IRQ_HANDLER
 #error ARM_IRQ_HANDLER not defined
 #endif
+
+#if defined(COMPAT_15) && defined(EXEC_AOUT)
+.Lcpufuncs:
+	.word	_C_LABEL(cpufuncs)
+#ifndef MULTIPROCESSOR
+.Lcurpcb:
+	.word	_C_LABEL(curpcb)
+.Lcpu_info_store:
+	.word	_C_LABEL(cpu_info_store)
+#define	GET_CURPCB							\
+	ldr	r1, .Lcurpcb						;\
+	ldr	r1, [r1]
+#define	GET_CPUINFO							\
+	ldr	r0, .Lcpu_info_store
+#else
+.Lcpu_info:
+	.word	_C_LABEL(cpu_info)
+#define	GET_CURPCB							\
+	ldr	r4, .Lcpu_info						;\
+	bl	_C_LABEL(cpu_number)					;\
+	ldr	r0, [r4, r0, lsl #2]					;\
+	ldr	r1, [r0, #CI_CURPCB]
+#define	GET_CPUINFO	/* nothing to do */
+#endif
+#define	ENABLE_ALIGNMENT_FAULTS						\
+	GET_CURPCB							;\
+	ldr	r1, [r1, #PCB_FLAGS]	/* Fetch curpcb->pcb_flags */	;\
+	tst	r1, #PCB_NOALIGNFLT					;\
+	beq	1f		/* Alignment faults already enabled */	;\
+	GET_CPUINFO							;\
+	ldr	r2, .Lcpufuncs						;\
+	ldr	r1, [r0, #CI_CTRL]	/* Fetch control register */	;\
+	mov	r0, #-1							;\
+	mov	lr, pc							;\
+	ldr	pc, [r2, #CF_CONTROL]	/* Enable alignment faults */	;\
+1:
+#endif /* COMPAT_15 && EXEC_AOUT */
 
 /*
  * irq_entry:
@@ -100,6 +141,14 @@ ASENTRY_NP(irq_entry)
 	sub	lr, lr, #0x00000004	/* Adjust the lr */
 
 	PUSHFRAMEINSVC			/* Push an interrupt frame */
+
+#if defined(COMPAT_15) && defined(EXEC_AOUT)
+	and	r0, r0, #(PSR_MODE)	/* Test for USR32 mode (r0 = spsr_all)*/
+	teq	r0, #(PSR_USR32_MODE)
+	bne	99f			/* Not USR mode so skip AFLT check */
+	ENABLE_ALIGNMENT_FAULTS
+99:
+#endif
 
 	/*
 	 * Increment the interrupt nesting depth and call the interrupt
@@ -130,16 +179,48 @@ ASENTRY_NP(irq_entry)
 	ldr	r0, [sp]		/* Get the SPSR from stack */
 	and	r0, r0, #(PSR_MODE)	/* Test for USR32 mode before the IRQ */
 	teq	r0, #(PSR_USR32_MODE)
-	bne	2f			/* Nope, get out now */
+	bne	.Lirq_do_exit		/* Nope, get out now */
 
-1:
-	ldr	r0, .Lastpending	/* Do we have an AST pending? */
-	ldr	r1, [r0]
+	ldr	r5, .Lastpending
+#if defined(COMPAT_15) && defined(EXEC_AOUT) && !defined(MULTIPROCESSOR)
+	ldr	r6, .Lcurpcb
+	ldr	r7, .Lcpu_info_store
+#endif
+
+.Lirq_ast_loop:
+	ldr	r1, [r5]		/* Do we have an AST pending? */
 	teq	r1, #0x00000000
-	beq	2f			/* Nope, get out now */
+	bne	.Lirq_do_ast		/* Yup. Go deal with it */
 
+#if defined(COMPAT_15) && defined(EXEC_AOUT)
+	/* Disable alignment faults for the process, if necessary. */
+#ifdef MULTIPROCESSOR
+	ldr	r7, .Lcpu_info
+	bl	_C_LABEL(cpu_number)
+	ldr	r7, [r7, r0, lsl #2]
+	ldr	r1, [r7, #CI_CURPCB]
+#else
+	ldr	r1, [r6]
+#endif
+	ldr	r1, [r1, #PCB_FLAGS]	/* Fetch curpcb->pcb_flags */
+	tst	r1, #PCB_NOALIGNFLT
+	beq	1f			/* Keep alignment faults enabled */
+	ldr	r1, [r7, #CI_CTRL]	/* Fetch control register */
+	ldr	r2, .Lcpufuncs
+	mov	r0, #-1
+	bic	r1, r1, #CPU_CONTROL_AFLT_ENABLE  /* Disable alignment faults */
+	mov	lr, pc
+	ldr	pc, [r2, #CF_CONTROL]	/* Set the new control register value */
+1:
+#endif
+
+.Lirq_do_exit:
+	PULLFRAMEFROMSVCANDEXIT
+	movs	pc, lr			/* Exit */
+
+.Lirq_do_ast:
 	mov	r1, #0x00000000
-	str	r1, [r0]		/* Clear astpending */
+	str	r1, [r5]		/* Clear astpending */
 
 	mrs	r4, cpsr		/* save CPSR */
 	bic	r0, r4, #(I32_bit)	/* Enable IRQs */
@@ -149,11 +230,7 @@ ASENTRY_NP(irq_entry)
 	bl	_C_LABEL(ast)		/* ast(frame) */
 
 	msr	cpsr_c, r4		/* Disable IRQs */
-	b	1b			/* Check for more ASTs */
-
-2:
-	PULLFRAMEFROMSVCANDEXIT
-	movs	pc, lr			/* Exit */
+	b	.Lirq_ast_loop		/* Check for more ASTs */
 
 	.bss
 	.align	0
