@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.18 1996/02/18 22:17:37 mycroft Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.19 1996/02/18 22:19:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -1319,6 +1319,7 @@ sbdsp_mixer_get_port(addr, cp)
 	mixer_ctrl_t *cp;
 {
 	register struct sbdsp_softc *sc = addr;
+	int gain;
     
 	DPRINTF(("sbdsp_mixer_get_port: port=%d", cp->dev));
 
