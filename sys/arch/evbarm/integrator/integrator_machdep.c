@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_machdep.c,v 1.23 2002/07/08 16:20:07 rearnsha Exp $	*/
+/*	$NetBSD: integrator_machdep.c,v 1.24 2002/07/30 16:16:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 ARM Ltd
@@ -791,6 +791,7 @@ initarm(void *arg)
 
 	/* Boot strap pmap telling it where the kernel page table is */
 	printf("pmap ");
+	uvm_setpagesize();	/* initialize PAGE_SIZE-dependent variables */
 	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va, kernel_ptpt);
 
 	/* Setup the IRQ system */

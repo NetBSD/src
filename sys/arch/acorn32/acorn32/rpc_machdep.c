@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.36 2002/05/03 16:45:21 rjs Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.37 2002/07/30 16:16:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Reinoud Zandijk.
@@ -55,7 +55,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.36 2002/05/03 16:45:21 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.37 2002/07/30 16:16:38 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -940,6 +940,7 @@ initarm(void *cookie)
 #ifdef VERBOSE_INIT_ARM
 	printf("pmap ");
 #endif
+	uvm_setpagesize();	/* initialize PAGE_SIZE-dependent variables */
 	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va, kernel_ptpt);
 	console_flush();
 

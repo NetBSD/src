@@ -1,4 +1,4 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.2 2002/07/21 14:26:05 ichiro Exp $ */
+/*	$NetBSD: ixm1200_machdep.c,v 1.3 2002/07/30 16:16:43 thorpej Exp $ */
 #undef DEBUG_BEFOREMMU
 /*
  * Copyright (c) 2002
@@ -697,6 +697,7 @@ initarm(void *arg)
 
 	/* Boot strap pmap telling it where the kernel page table is */
 	printf("pmap ");
+	uvm_setpagesize();	/* initialize PAGE_SIZE-dependent variables */
 	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va, kernel_ptpt);
 
 	/* Setup the IRQ system */

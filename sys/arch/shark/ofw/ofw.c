@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.14 2002/06/02 14:44:46 drochner Exp $	*/
+/*	$NetBSD: ofw.c,v 1.15 2002/07/30 16:16:45 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -867,6 +867,7 @@ ofw_configmem(void)
 	}
 
 	/* Initialize pmap module. */
+	uvm_setpagesize();	/* initialize PAGE_SIZE-dependent variables */
 	pmap_bootstrap((pd_entry_t *)proc0_ttbbase.pv_va, proc0_ptpt);
 }
 
