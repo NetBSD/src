@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.17 2000/06/12 21:32:25 veego Exp $
+#	$NetBSD: Makefile,v 1.18 2002/01/24 08:24:39 martti Exp $
 
 PROG=	ipftest
 SRCS=	ipt.c parse.c common.c fil.c ipft_sn.c ipft_ef.c ipft_td.c \
 	ipft_pc.c opt.c ipft_tx.c misc.c ip_frag.c ip_state.c \
 	ip_nat.c ip_proxy.c ip_auth.c ipft_hx.c ip_fil.c \
-	natparse.c facpri.c
+	natparse.c facpri.c printnat.c printstate.c
 MAN=	ipftest.1
 CPPFLAGS+=-I${.CURDIR}/../../../dist/ipf
 
