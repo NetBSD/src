@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.38 1997/10/04 14:30:21 kleink Exp $	*/
+/*	$NetBSD: param.h,v 1.39 1997/10/04 17:33:42 veego Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -76,13 +76,13 @@
 #define	NOGROUP		65535		/* marker for empty group set member */
 #define MAXHOSTNAMELEN	256		/* max hostname size */
 
-#ifndef MAXUPROC			/* max simultaneous processes */
-#define MAXUPROC	CHILD_MAX	/* POSIX 1003.1-compliant default */
+#ifndef MAXUPRC				/* max simultaneous processes */
+#define MAXUPRC		CHILD_MAX	/* POSIX 1003.1-compliant default */
 #else
-#if (MAXUPROC - 0) < CHILD_MAX
-#error MAXUPROC less than CHILD_MAX.  See options(4) for details.
-#endif /* (MAXUPROC - 0) < CHILD_MAX */
-#endif /* !defined(MAXUPROC) */
+#if (MAXUPRC - 0) < CHILD_MAX
+#error MAXUPRC less than CHILD_MAX.  See options(4) for details.
+#endif /* (MAXUPRC - 0) < CHILD_MAX */
+#endif /* !defined(MAXUPRC) */
 
 /* More types and definitions used throughout the kernel. */
 #ifdef _KERNEL
