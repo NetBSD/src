@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.87 2004/02/25 21:34:18 enami Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.88 2004/02/25 21:40:40 enami Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.87 2004/02/25 21:34:18 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.88 2004/02/25 21:40:40 enami Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -75,6 +75,7 @@ ktrsamefile(f1, f2)
 	struct file *f1;
 	struct file *f2;
 {
+
 	return ((f1 == f2) ||
 	    ((f1 != NULL) && (f2 != NULL) &&
 		(f1->f_type == f2->f_type) &&
@@ -141,7 +142,7 @@ ktrsyscall(p, code, realcode, callp, args)
 
 	if (callp == NULL)
 		callp = p->p_emul->e_sysent;
-	
+
 	argsize = callp[code].sy_argsize;
 #ifdef _LP64
 	if (p->p_flag & P_32)
@@ -166,9 +167,9 @@ ktrsyscall(p, code, realcode, callp, args)
 
 void
 ktrsysret(p, code, error, retval)
-	struct proc *p; 
-	register_t code; 
-	int error; 
+	struct proc *p;
+	register_t code;
+	int error;
 	register_t *retval;
 {
 	struct ktr_header kth;
@@ -396,10 +397,10 @@ ktrmmsg(p, msgh, size)
 {
 	struct ktr_header kth;
 	struct ktr_mmsg	*kp;
-	
+
 	p->p_traceflag |= KTRFAC_ACTIVE;
 	ktrinitheader(&kth, p, KTR_MMSG);
-	
+
 	kp = (struct ktr_mmsg *)msgh;
 	kth.ktr_buf = (caddr_t)kp;
 	kth.ktr_len = size;
@@ -426,7 +427,7 @@ ktrmool(p, kaddr, size, uaddr)
 	kp->size = size;
 	buf = kp + 1; /* Skip uaddr and size */
 	memcpy(buf, kaddr, size);
-	
+
 	kth.ktr_buf = (caddr_t)kp;
 	kth.ktr_len = size + sizeof(*kp);
 	(void) ktrwrite(p, &kth);
@@ -482,7 +483,7 @@ ktrace_common(curp, ops, facs, pid, fp)
 		fp->f_flag |= FNONBLOCK;
 		(*fp->f_ops->fo_ioctl)(fp, FIONBIO, (caddr_t)&one, curp);
 	}
-	
+
 	/*
 	 * need something to (un)trace (XXX - why is this here?)
 	 */
@@ -490,7 +491,7 @@ ktrace_common(curp, ops, facs, pid, fp)
 		error = EINVAL;
 		goto done;
 	}
-	/* 
+	/*
 	 * do it
 	 */
 	if (pid < 0) {
@@ -505,10 +506,10 @@ ktrace_common(curp, ops, facs, pid, fp)
 		LIST_FOREACH(p, &pg->pg_members, p_pglist) {
 			if (descend)
 				ret |= ktrsetchildren(curp, p, ops, facs, fp);
-			else 
+			else
 				ret |= ktrops(curp, p, ops, facs, fp);
 		}
-					
+
 	} else {
 		/*
 		 * by pid
@@ -620,12 +621,12 @@ sys_ktrace(l, v, retval)
 		 * that would require changing its interface to allow
 		 * the caller to pass in a ucred..
 		 *
-		 * This will FILE_USE the fp it returns, if any.  
+		 * This will FILE_USE the fp it returns, if any.
 		 * Keep it in use until we return.
 		 */
 		if ((error = falloc(curp, &fp, &fd)) != 0)
 			goto done;
-		
+
 		fp->f_flag = FWRITE|FAPPEND;
 		fp->f_type = DTYPE_VNODE;
 		fp->f_ops = &vnops;
@@ -635,7 +636,7 @@ sys_ktrace(l, v, retval)
 	}
 	error = ktrace_common(curp, SCARG(uap, ops), SCARG(uap, facs),
 	    SCARG(uap, pid), fp);
-done:	
+done:
 	if (vp != NULL)
 		(void) vn_close(vp, FWRITE, curp->p_ucred, curp);
 	if (fp != NULL) {
@@ -657,7 +658,7 @@ ktrops(curp, p, ops, facs, fp)
 	if (!ktrcanset(curp, p))
 		return (0);
 	if (KTROP(ops) == KTROP_SET) {
-		if (p->p_tracep != fp) { 
+		if (p->p_tracep != fp) {
 			/*
 			 * if trace file already in use, relinquish
 			 */
@@ -668,7 +669,7 @@ ktrops(curp, p, ops, facs, fp)
 		p->p_traceflag |= facs;
 		if (curp->p_ucred->cr_uid == 0)
 			p->p_traceflag |= KTRFAC_ROOT;
-	} else {	
+	} else {
 		/* KTROP_CLEAR */
 		if (((p->p_traceflag &= ~facs) & KTRFAC_MASK) == 0) {
 			/* no more tracing */
@@ -678,7 +679,7 @@ ktrops(curp, p, ops, facs, fp)
 
 	/*
 	 * Emit an emulation record, every time there is a ktrace
-	 * change/attach request. 
+	 * change/attach request.
 	 */
 	if (KTRPOINT(p, KTR_EMUL))
 		p->p_traceflag |= KTRFAC_TRC_EMUL;
@@ -737,7 +738,7 @@ ktrwrite(p, kth)
 
 	if (fp == NULL)
 		return 0;
-	
+
 	if (p->p_traceflag & KTRFAC_TRC_EMUL) {
 		/* Add emulation trace before first entry for this process */
 		p->p_traceflag &= ~KTRFAC_TRC_EMUL;
@@ -768,8 +769,8 @@ ktrwrite(p, kth)
 		error = (*fp->f_ops->fo_write)(fp, &fp->f_offset, &auio,
 		    fp->f_cred, FOF_UPDATE_OFFSET);
 		tries++;
-		if (error == EWOULDBLOCK) 
-		  	preempt(1);
+		if (error == EWOULDBLOCK)
+			preempt(1);
 	} while ((error == EWOULDBLOCK) && (tries < 3));
 	FILE_UNUSE(fp, NULL);
 
@@ -797,7 +798,7 @@ ktrwrite(p, kth)
  * Return true if caller has permission to set the ktracing state
  * of target.  Essentially, the target can't possess any
  * more permissions than the caller.  KTRFAC_ROOT signifies that
- * root previously set the tracing status on the target process, and 
+ * root previously set the tracing status on the target process, and
  * so, only root may further change it.
  *
  * TODO: check groups.  use caller effective gid.
@@ -811,12 +812,12 @@ ktrcanset(callp, targetp)
 	struct pcred *target = targetp->p_cred;
 
 	if ((caller->pc_ucred->cr_uid == target->p_ruid &&
-	     target->p_ruid == target->p_svuid &&
-	     caller->p_rgid == target->p_rgid &&	/* XXX */
-	     target->p_rgid == target->p_svgid &&
-	     (targetp->p_traceflag & KTRFAC_ROOT) == 0 &&
-	     (targetp->p_flag & P_SUGID) == 0) ||
-	     caller->pc_ucred->cr_uid == 0)
+	    target->p_ruid == target->p_svuid &&
+	    caller->p_rgid == target->p_rgid &&	/* XXX */
+	    target->p_rgid == target->p_svgid &&
+	    (targetp->p_traceflag & KTRFAC_ROOT) == 0 &&
+	    (targetp->p_flag & P_SUGID) == 0) ||
+	    caller->pc_ucred->cr_uid == 0)
 		return (1);
 
 	return (0);
@@ -839,6 +840,7 @@ sys_utrace(l, v, retval)
 		syscallarg(size_t) len;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
+
 	if (!KTRPOINT(p, KTR_USER))
 		return (0);
 
