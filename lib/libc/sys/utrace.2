@@ -1,4 +1,4 @@
-.\"	$NetBSD: utrace.2,v 1.1 2001/01/05 21:49:48 jdolecek Exp $
+.\"	$NetBSD: utrace.2,v 1.2 2001/01/05 22:28:41 jdolecek Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -69,6 +69,11 @@ is set to indicate the error.
 Currently running kernel was compiled without
 .Xr ktrace 2
 support (option KTRACE).
+.It Bq Er EINVAL
+Specified data length
+.Fa len
+was bigger than
+.Dv KTR_USER_MAXLEN .
 .El
 .Sh SEE ALSO
 .Xr kdump 1 ,
