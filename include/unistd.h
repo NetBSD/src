@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.92 2003/04/28 23:16:15 bjh21 Exp $	*/
+/*	$NetBSD: unistd.h,v 1.93 2003/07/08 01:43:28 kristerw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -265,7 +265,7 @@ int	 lockf __P((int, int, off_t));
 int	 readlink __P((const char *, char *, size_t));
 void	*sbrk __P((intptr_t));
 /* XXX prototype wrong! */
-int	 setpgrp __P((pid_t pid, pid_t pgrp));	/* obsoleted by setpgid() */
+int	 setpgrp __P((pid_t, pid_t));		/* obsoleted by setpgid() */
 int	 setregid __P((gid_t, gid_t));
 int	 setreuid __P((uid_t, uid_t));
 void	 swab __P((const void *, void *, size_t));
