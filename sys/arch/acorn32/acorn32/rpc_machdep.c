@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.43 2002/10/15 20:46:12 bjh21 Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.44 2002/10/15 20:50:01 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Reinoud Zandijk.
@@ -55,7 +55,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.43 2002/10/15 20:46:12 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.44 2002/10/15 20:50:01 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -180,32 +180,32 @@ static vaddr_t sa110_cc_base;
 #endif	/* CPU_SA110 */
 
 /* Prototypes */
-void physcon_display_base	__P((u_int addr));
-extern void consinit		__P((void));
+void physcon_display_base(u_int);
+extern void consinit(void);
 
-void data_abort_handler		__P((trapframe_t *frame));
-void prefetch_abort_handler	__P((trapframe_t *frame));
-void undefinedinstruction_bounce	__P((trapframe_t *frame));
+void data_abort_handler(trapframe_t *);
+void prefetch_abort_handler(trapframe_t *);
+void undefinedinstruction_bounce(trapframe_t *frame);
 
-static void canonicalise_bootconfig __P((BootConfig *, BootConfig *));
-static void process_kernel_args	__P((void));
+static void canonicalise_bootconfig(BootConfig *, BootConfig *);
+static void process_kernel_args(void);
 
-extern void dump_spl_masks	__P((void));
-extern void vidcrender_reinit	__P((void));
-extern int vidcrender_blank	__P((struct vconsole *vc, int type));
+extern void dump_spl_masks(void);
+extern void vidcrender_reinit(void);
+extern int vidcrender_blank(struct vconsole *, int);
 
-void rpc_sa110_cc_setup		__P((void));
+void rpc_sa110_cc_setup(void);
 
-extern void parse_mi_bootargs	__P((char *args));
-void parse_rpc_bootargs		__P((char *args));
+extern void parse_mi_bootargs(char *args);
+void parse_rpc_bootargs(char *args);
 
-extern void dumpsys		__P((void));
+extern void dumpsys(void);
 
 
 #if NVIDCVIDEO > 0
 #	define console_flush()		/* empty */
 #else
-	extern void console_flush	__P((void));
+	extern void console_flush(void);
 #endif
 
 
@@ -230,9 +230,7 @@ extern u_int spl_mask;
 extern u_int current_mask;
 
 void
-cpu_reboot(howto, bootstr)
-	int howto;
-	char *bootstr;
+cpu_reboot(int howto, char *bootstr)
 {
 
 #ifdef DIAGNOSTIC
@@ -395,9 +393,7 @@ struct l1_sec_map {
 
 
 static void
-canonicalise_bootconfig(bootconf, raw_bootconf)
-	BootConfig *bootconf;
-	BootConfig *raw_bootconf;
+canonicalise_bootconfig(BootConfig *bootconf, BootConfig *raw_bootconf)
 {
 	BootConfig_v1 *old_v1_style;
 	int block;
@@ -1124,8 +1120,7 @@ process_kernel_args(void)
 
 
 void
-parse_rpc_bootargs(args)
-	char *args;
+parse_rpc_bootargs(char *args)
 {
 	int integer;
 
