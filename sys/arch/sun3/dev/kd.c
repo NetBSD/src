@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.30 2000/03/23 06:46:17 thorpej Exp $	*/
+/*	$NetBSD: kd.c,v 1.31 2000/03/31 14:24:03 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -396,7 +396,6 @@ cons_attach_input(cc)
  */
 static int kd_rom_iopen __P((struct cons_channel *));
 static int kd_rom_iclose __P((struct cons_channel *));
-static void kd_rom_intr __P((void *));
 
 static struct cons_channel prom_cons_channel;
 
