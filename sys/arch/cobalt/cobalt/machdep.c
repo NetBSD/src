@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 2000/03/31 15:00:49 soren Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9 2000/04/09 00:13:54 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -68,6 +68,11 @@
 #include <ddb/db_access.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
+#ifndef DB_ELFSIZE
+#error Must define DB_ELFSIZE!
+#endif
+#define ELFSIZE		DB_ELFSIZE
+#include <sys/exec_elf.h>
 #endif
 
 #include <dev/cons.h>
@@ -104,6 +109,7 @@ extern void	stacktrace(void);
  */
 int	safepri = MIPS1_PSL_LOWIPL;
 
+extern caddr_t esym;
 extern struct user *proc0paddr;
 
 static int cobalt_hardware_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
@@ -122,10 +128,21 @@ mach_init(memsize)
 	int i;
 
 	/*
-	 * Clear BSS.
+	 * Clear the BSS segment.
 	 */
-	kernend = (caddr_t)mips_round_page(end);
-	memset(edata, 0, kernend - edata);
+#ifdef DDB
+	if (memcmp(((Elf_Ehdr *)end)->e_ident, ELFMAG, SELFMAG) == 0 &&
+	    ((Elf_Ehdr *)end)->e_ident[EI_CLASS] == ELFCLASS) {
+		esym = end;
+		esym += ((Elf_Ehdr *)end)->e_entry;
+		kernend = (caddr_t)mips_round_page(esym);
+		bzero(edata, end - edata);
+	} else
+#endif
+	{
+		kernend = (caddr_t)mips_round_page(end);
+		memset(edata, 0, kernend - edata);
+	}
 
 	physmem = btoc(memsize - MIPS_KSEG0_START);
 
@@ -149,6 +166,7 @@ mach_init(memsize)
 	mem_cluster_cnt = 1;
 
 	memcpy(bootstring, (char *)(memsize - 512), 512);
+	memset((char *)(memsize - 512), 0, 512);
 	bootstring[511] = '\0';
 
 	for (i = 0; i < 512; i++) {
@@ -158,8 +176,7 @@ mach_init(memsize)
 		case ' ':
 			continue;
 		case '-':
-			while (bootstring[i] != ' ') {
-				i++;
+			while (bootstring[i] != ' ' && bootstring[i] != '\0') {
 				switch (bootstring[i]) {
 				case 'a':
 					boothowto |= RB_ASKNAME;
@@ -171,6 +188,7 @@ mach_init(memsize)
 					boothowto |= RB_SINGLE;
 					break;
 				}
+				i++;
 			}
 		}
 		if (memcmp("single", bootstring + i, 5) == 0)
