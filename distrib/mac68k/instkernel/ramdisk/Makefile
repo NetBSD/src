@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6.2.1 2002/03/25 17:32:54 he Exp $
+#	$NetBSD: Makefile,v 1.6.2.2 2004/08/13 04:45:57 jmc Exp $
 
 .ifndef NOTESOBJDIR
 NOTESOBJDIR!=cd ${.CURDIR}/../../../notes/mac68k; ${MAKE} ${MAKEFLAGS} -V .OBJDIR
@@ -28,6 +28,8 @@ all: notes ${CBIN}
 	dd if=/dev/zero of=${IMAGE} count=5120
 	vnconfig -v -c ${VND_CDEV} ${IMAGE}
 #	disklabel -rw ${VND_CDEV} ${DISKTYPE}
+	-disklabel ${VND} >tmplabel
+	disklabel -r -R ${VND} tmplabel
 	newfs -m 0 -o space -i 5120 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${.CURDIR}/${MTREE} -p ${MOUNT_POINT}/ -u
