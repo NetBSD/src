@@ -64,7 +64,7 @@
 	first 29 sectors of the active partition is reserved for boot code
 	which will be loaded by the first stage boot.  All the disk types
 	recognized by BIOS are supported by this bootstrap loader. 
-[for 386bsd we load the second stage booter to 9000:0]
+[for 386bsd we load the second stage booter to 6000:0]
 
 
 
