@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.h,v 1.24 2003/12/09 12:13:44 manu Exp $	 */
+/*	$NetBSD: mach_exec.h,v 1.25 2003/12/20 19:43:17 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,6 +64,11 @@ struct mach_emuldata {
 
 };
 
+struct mach_lwp_emuldata {
+	struct mach_port *mle_kernel;	/* Thread's kernel port */
+	struct mach_port *mle_exc;	/* Exception we stop on */
+};
+
 int exec_mach_copyargs(struct proc *, struct exec_package *, 
     struct ps_strings *, char **, void *);
 int exec_mach_probe(char **);
@@ -72,6 +77,8 @@ void mach_e_proc_exit(struct proc *);
 void mach_e_proc_exec(struct proc *, struct exec_package *);
 void mach_e_proc_fork(struct proc *, struct proc *);
 void mach_e_proc_fork1(struct proc *, struct proc *, int);
+void mach_e_lwp_fork(struct lwp *, struct lwp *);
+void mach_e_lwp_exit(struct lwp *);
 
 extern const struct emul emul_mach;
 
