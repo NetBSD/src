@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.29 1997/07/31 22:20:47 augustss Exp $	*/
+/*	$NetBSD: isadma.c,v 1.30 1997/08/04 22:13:32 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -186,7 +186,7 @@ isa_dmamap_create(isadev, chan, size, flags)
 
 	if (ISA_DRQ_ISFREE(sc, chan) == 0) {
 		printf("%s: drq %d is not free\n", sc->sc_dev.dv_xname, chan);
-		return EBUSY;	/* XXX should caller check for free drq? */
+		goto lose;
 	}
 
 	ISA_DRQ_ALLOC(sc, chan);
@@ -581,6 +581,19 @@ isa_dmamem_mmap(isadev, chan, addr, size, off, prot, flags)
 	seg.ds_len = size;
 
 	return (bus_dmamem_mmap(sc->sc_dmat, &seg, 1, off, prot, flags));
+}
+
+int
+isa_drq_isfree(isadev, chan)
+	struct device *isadev;
+	int chan;
+{
+	struct isa_softc *sc = (struct isa_softc *)isadev;
+	if (chan < 0 || chan > 7) {
+		printf("%s: bogus drq %d\n", sc->sc_dev.dv_xname, chan);
+		panic("isa_drq_isfree");
+	}
+	return ISA_DRQ_ISFREE(sc, chan);
 }
 
 void *

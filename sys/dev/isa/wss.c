@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.30 1997/07/31 22:33:41 augustss Exp $	*/
+/*	$NetBSD: wss.c,v 1.31 1997/08/04 22:13:34 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -209,8 +209,8 @@ wssprobe(parent, match, aux)
     struct device *parent;
     void *match, *aux;
 {
-    register struct wss_softc *sc = match;
-    register struct isa_attach_args *ia = aux;
+    struct wss_softc *sc = match;
+    struct isa_attach_args *ia = aux;
     static u_char interrupt_bits[12] = {
 	-1, -1, -1, -1, -1, -1, -1, 0x08, -1, 0x10, 0x18, 0x20
     };
@@ -246,6 +246,10 @@ wssprobe(parent, match, aux)
 	goto bad;
     }
     sc->wss_drq = ia->ia_drq;
+
+    /* XXX reqdrq? */
+    if (sc->wss_drq != -1 && isa_drq_isfree(parent, sc->wss_drq) == 0)
+	    goto bad;
 
 #ifdef NEWCONFIG
     /*
@@ -291,7 +295,7 @@ wssattach(parent, self, aux)
     struct device *parent, *self;
     void *aux;
 {
-    register struct wss_softc *sc = (struct wss_softc *)self;
+    struct wss_softc *sc = (struct wss_softc *)self;
     struct isa_attach_args *ia = (struct isa_attach_args *)aux;
     int version;
     int err;
@@ -387,7 +391,7 @@ wss_set_in_port(addr, port)
     void *addr;
     int port;
 {
-    register struct ad1848_softc *ac = addr;
+    struct ad1848_softc *ac = addr;
 	
     DPRINTF(("wss_set_in_port: %d\n", port));
 
@@ -413,7 +417,7 @@ int
 wss_get_in_port(addr)
     void *addr;
 {
-    register struct ad1848_softc *ac = addr;
+    struct ad1848_softc *ac = addr;
     int port = WSS_MIC_IN_LVL;
     
     switch(ad1848_get_rec_port(ac)) {
@@ -438,8 +442,8 @@ wss_mixer_set_port(addr, cp)
     void *addr;
     mixer_ctrl_t *cp;
 {
-    register struct ad1848_softc *ac = addr;
-    register struct wss_softc *sc = ac->parent;
+    struct ad1848_softc *ac = addr;
+    struct wss_softc *sc = ac->parent;
     struct ad1848_volume vol;
     int error = EINVAL;
     
@@ -524,8 +528,8 @@ wss_mixer_get_port(addr, cp)
     void *addr;
     mixer_ctrl_t *cp;
 {
-    register struct ad1848_softc *ac = addr;
-    register struct wss_softc *sc = ac->parent;
+    struct ad1848_softc *ac = addr;
+    struct wss_softc *sc = ac->parent;
     struct ad1848_volume vol;
     int error = EINVAL;
     
@@ -611,7 +615,7 @@ wss_mixer_get_port(addr, cp)
 int
 wss_query_devinfo(addr, dip)
     void *addr;
-    register mixer_devinfo_t *dip;
+    mixer_devinfo_t *dip;
 {
     DPRINTF(("wss_query_devinfo: index=%d\n", dip->index));
 
