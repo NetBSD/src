@@ -1,4 +1,4 @@
-/*	$NetBSD: sparc32_sysent.c,v 1.3 1998/08/26 13:46:57 mrg Exp $	*/
+/*	$NetBSD: sparc32_sysent.c,v 1.4 1998/10/01 14:27:57 eeh Exp $	*/
 
 /*
  * System call switch table.
@@ -10,6 +10,7 @@
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"
 #include "opt_compat_netbsd.h"
+#include "opt_ntp.h"
 #include "fs_lfs.h"
 #include "fs_nfs.h"
 #include <sys/param.h>
@@ -61,8 +62,8 @@
 struct sysent sparc32_sysent[] = {
 	{ 0, 0,
 	    sys_nosys },			/* 0 = syscall (indir) */
-	{ 1, s(struct sys_exit_args),
-	    sys_exit },				/* 1 = exit */
+	{ 1, s(struct compat_sparc32_exit_args),
+	    compat_sparc32_exit },		/* 1 = compat_sparc32_exit */
 	{ 0, 0,
 	    sys_fork },				/* 2 = fork */
 	{ 3, s(struct compat_sparc32_read_args),
@@ -71,8 +72,8 @@ struct sysent sparc32_sysent[] = {
 	    compat_sparc32_write },		/* 4 = compat_sparc32_write */
 	{ 3, s(struct compat_sparc32_open_args),
 	    compat_sparc32_open },		/* 5 = compat_sparc32_open */
-	{ 1, s(struct sys_close_args),
-	    sys_close },			/* 6 = close */
+	{ 1, s(struct compat_sparc32_close_args),
+	    compat_sparc32_close },		/* 6 = compat_sparc32_close */
 	{ 4, s(struct compat_sparc32_wait4_args),
 	    compat_sparc32_wait4 },		/* 7 = compat_sparc32_wait4 */
 	{ 2, s(struct compat_43_compat_sparc32_ocreat_args),
@@ -85,8 +86,8 @@ struct sysent sparc32_sysent[] = {
 	    sys_nosys },			/* 11 = obsolete execv */
 	{ 1, s(struct compat_sparc32_chdir_args),
 	    compat_sparc32_chdir },		/* 12 = compat_sparc32_chdir */
-	{ 1, s(struct sys_fchdir_args),
-	    sys_fchdir },			/* 13 = fchdir */
+	{ 1, s(struct compat_sparc32_fchdir_args),
+	    compat_sparc32_fchdir },		/* 13 = compat_sparc32_fchdir */
 	{ 3, s(struct compat_sparc32_mknod_args),
 	    compat_sparc32_mknod },		/* 14 = compat_sparc32_mknod */
 	{ 2, s(struct compat_sparc32_chmod_args),
@@ -105,8 +106,8 @@ struct sysent sparc32_sysent[] = {
 	    compat_sparc32_mount },		/* 21 = compat_sparc32_mount */
 	{ 2, s(struct compat_sparc32_unmount_args),
 	    compat_sparc32_unmount },		/* 22 = compat_sparc32_unmount */
-	{ 1, s(struct sys_setuid_args),
-	    sys_setuid },			/* 23 = setuid */
+	{ 1, s(struct compat_sparc32_setuid_args),
+	    compat_sparc32_setuid },		/* 23 = compat_sparc32_setuid */
 	{ 0, 0,
 	    sys_getuid },			/* 24 = getuid */
 	{ 0, 0,
@@ -133,16 +134,16 @@ struct sysent sparc32_sysent[] = {
 	    compat_sparc32_fchflags },		/* 35 = compat_sparc32_fchflags */
 	{ 0, 0,
 	    sys_sync },				/* 36 = sync */
-	{ 2, s(struct sys_kill_args),
-	    sys_kill },				/* 37 = kill */
+	{ 2, s(struct compat_sparc32_kill_args),
+	    compat_sparc32_kill },		/* 37 = compat_sparc32_kill */
 	{ 2, s(struct compat_43_compat_sparc32_stat43_args),
 	    compat_43(compat_sparc32_stat43) },	/* 38 = compat_43 compat_sparc32_stat43 */
 	{ 0, 0,
 	    sys_getppid },			/* 39 = getppid */
 	{ 2, s(struct compat_43_compat_sparc32_lstat43_args),
 	    compat_43(compat_sparc32_lstat43) },/* 40 = compat_43 compat_sparc32_lstat43 */
-	{ 1, s(struct sys_dup_args),
-	    sys_dup },				/* 41 = dup */
+	{ 1, s(struct compat_sparc32_dup_args),
+	    compat_sparc32_dup },		/* 41 = compat_sparc32_dup */
 	{ 0, 0,
 	    sys_pipe },				/* 42 = pipe */
 	{ 0, 0,
@@ -160,8 +161,8 @@ struct sysent sparc32_sysent[] = {
 	    compat_sparc32_sigaction },		/* 46 = compat_sparc32_sigaction */
 	{ 0, 0,
 	    sys_getgid },			/* 47 = getgid */
-	{ 2, s(struct sys_sigprocmask_args),
-	    sys_sigprocmask },			/* 48 = sigprocmask */
+	{ 2, s(struct compat_13_compat_sparc32_sigprocmask_args),
+	    compat_13(compat_sparc32_sigprocmask) },/* 48 = compat_13 sigprocmask13 */
 	{ 2, s(struct compat_sparc32___getlogin_args),
 	    compat_sparc32___getlogin },	/* 49 = compat_sparc32___getlogin */
 	{ 1, s(struct compat_sparc32_setlogin_args),
@@ -169,14 +170,14 @@ struct sysent sparc32_sysent[] = {
 	{ 1, s(struct compat_sparc32_acct_args),
 	    compat_sparc32_acct },		/* 51 = compat_sparc32_acct */
 	{ 0, 0,
-	    sys_sigpending },			/* 52 = sigpending */
+	    compat_13(sys_sigpending) },	/* 52 = compat_13 sigpending13 */
 	{ 2, s(struct compat_13_compat_sparc32_sigaltstack13_args),
 	    compat_13(compat_sparc32_sigaltstack13) },/* 53 = compat_13 compat_sparc32_sigaltstack13 */
 	{ 3, s(struct compat_sparc32_ioctl_args),
 	    compat_sparc32_ioctl },		/* 54 = compat_sparc32_ioctl */
 #ifdef COMPAT_12
-	{ 1, s(struct compat_12_sys_reboot_args),
-	    compat_12_sys_reboot },		/* 55 = reboot */
+	{ 1, s(struct compat_12_compat_sparc32_reboot_args),
+	    compat_12(compat_sparc32_reboot) },	/* 55 = compat_12 compat_sparc32_reboot */
 #else
 	{ 0, 0,
 	    sys_nosys },			/* 55 = obsolete oreboot */
@@ -189,8 +190,8 @@ struct sysent sparc32_sysent[] = {
 	    compat_sparc32_readlink },		/* 58 = compat_sparc32_readlink */
 	{ 3, s(struct compat_sparc32_execve_args),
 	    compat_sparc32_execve },		/* 59 = compat_sparc32_execve */
-	{ 1, s(struct sys_umask_args),
-	    sys_umask },			/* 60 = umask */
+	{ 1, s(struct compat_sparc32_umask_args),
+	    compat_sparc32_umask },		/* 60 = compat_sparc32_umask */
 	{ 1, s(struct compat_sparc32_chroot_args),
 	    compat_sparc32_chroot },		/* 61 = compat_sparc32_chroot */
 	{ 2, s(struct compat_43_compat_sparc32_fstat43_args),
@@ -207,14 +208,14 @@ struct sysent sparc32_sysent[] = {
 	    sys_nosys },			/* 67 = obsolete vread */
 	{ 0, 0,
 	    sys_nosys },			/* 68 = obsolete vwrite */
-	{ 1, s(struct sys_sbrk_args),
-	    sys_sbrk },				/* 69 = sbrk */
-	{ 1, s(struct sys_sstk_args),
-	    sys_sstk },				/* 70 = sstk */
+	{ 1, s(struct compat_sparc32_sbrk_args),
+	    compat_sparc32_sbrk },		/* 69 = compat_sparc32_sbrk */
+	{ 1, s(struct compat_sparc32_sstk_args),
+	    compat_sparc32_sstk },		/* 70 = compat_sparc32_sstk */
 	{ 6, s(struct compat_43_compat_sparc32_ommap_args),
 	    compat_43(compat_sparc32_ommap) },	/* 71 = compat_43 compat_sparc32_ommap */
-	{ 1, s(struct sys_ovadvise_args),
-	    sys_ovadvise },			/* 72 = vadvise */
+	{ 1, s(struct compat_sparc32_ovadvise_args),
+	    compat_sparc32_ovadvise },		/* 72 = vadvise */
 	{ 2, s(struct compat_sparc32_munmap_args),
 	    compat_sparc32_munmap },		/* 73 = compat_sparc32_munmap */
 	{ 3, s(struct compat_sparc32_mprotect_args),
@@ -233,8 +234,8 @@ struct sysent sparc32_sysent[] = {
 	    compat_sparc32_setgroups },		/* 80 = compat_sparc32_setgroups */
 	{ 0, 0,
 	    sys_getpgrp },			/* 81 = getpgrp */
-	{ 2, s(struct sys_setpgid_args),
-	    sys_setpgid },			/* 82 = setpgid */
+	{ 2, s(struct compat_sparc32_setpgid_args),
+	    compat_sparc32_setpgid },		/* 82 = compat_sparc32_setpgid */
 	{ 3, s(struct compat_sparc32_setitimer_args),
 	    compat_sparc32_setitimer },		/* 83 = compat_sparc32_setitimer */
 	{ 0, 0,
@@ -249,8 +250,8 @@ struct sysent sparc32_sysent[] = {
 	    compat_43(compat_sparc32_osethostname) },/* 88 = compat_43 compat_sparc32_osethostname */
 	{ 0, 0,
 	    compat_43(sys_getdtablesize) },	/* 89 = compat_43 ogetdtablesize */
-	{ 2, s(struct sys_dup2_args),
-	    sys_dup2 },				/* 90 = dup2 */
+	{ 2, s(struct compat_sparc32_dup2_args),
+	    compat_sparc32_dup2 },		/* 90 = compat_sparc32_dup2 */
 	{ 0, 0,
 	    sys_nosys },			/* 91 = unimplemented getdopt */
 	{ 3, s(struct compat_sparc32_fcntl_args),
@@ -259,18 +260,18 @@ struct sysent sparc32_sysent[] = {
 	    compat_sparc32_select },		/* 93 = compat_sparc32_select */
 	{ 0, 0,
 	    sys_nosys },			/* 94 = unimplemented setdopt */
-	{ 1, s(struct sys_fsync_args),
-	    sys_fsync },			/* 95 = fsync */
-	{ 3, s(struct sys_setpriority_args),
-	    sys_setpriority },			/* 96 = setpriority */
-	{ 3, s(struct sys_socket_args),
-	    sys_socket },			/* 97 = socket */
+	{ 1, s(struct compat_sparc32_fsync_args),
+	    compat_sparc32_fsync },		/* 95 = compat_sparc32_fsync */
+	{ 3, s(struct compat_sparc32_setpriority_args),
+	    compat_sparc32_setpriority },	/* 96 = compat_sparc32_setpriority */
+	{ 3, s(struct compat_sparc32_socket_args),
+	    compat_sparc32_socket },		/* 97 = compat_sparc32_socket */
 	{ 3, s(struct compat_sparc32_connect_args),
 	    compat_sparc32_connect },		/* 98 = compat_sparc32_connect */
 	{ 3, s(struct compat_43_compat_sparc32_oaccept_args),
 	    compat_43(compat_sparc32_oaccept) },/* 99 = compat_43 compat_sparc32_oaccept */
-	{ 2, s(struct sys_getpriority_args),
-	    sys_getpriority },			/* 100 = getpriority */
+	{ 2, s(struct compat_sparc32_getpriority_args),
+	    compat_sparc32_getpriority },	/* 100 = compat_sparc32_getpriority */
 	{ 4, s(struct compat_43_compat_sparc32_osend_args),
 	    compat_43(compat_sparc32_osend) },	/* 101 = compat_43 compat_sparc32_osend */
 	{ 4, s(struct compat_43_compat_sparc32_orecv_args),
@@ -281,25 +282,25 @@ struct sysent sparc32_sysent[] = {
 	    compat_sparc32_bind },		/* 104 = compat_sparc32_bind */
 	{ 5, s(struct compat_sparc32_setsockopt_args),
 	    compat_sparc32_setsockopt },	/* 105 = compat_sparc32_setsockopt */
-	{ 2, s(struct sys_listen_args),
-	    sys_listen },			/* 106 = listen */
+	{ 2, s(struct compat_sparc32_listen_args),
+	    compat_sparc32_listen },		/* 106 = compat_sparc32_listen */
 	{ 0, 0,
 	    sys_nosys },			/* 107 = obsolete vtimes */
 	{ 3, s(struct compat_43_compat_sparc32_osigvec_args),
 	    compat_43(compat_sparc32_osigvec) },/* 108 = compat_43 compat_sparc32_osigvec */
 #ifdef COMPAT_43
-	{ 1, s(struct compat_43_sys_sigblock_args),
-	    compat_43_sys_sigblock },		/* 109 = sigblock */
-	{ 1, s(struct compat_43_sys_sigsetmask_args),
-	    compat_43_sys_sigsetmask },		/* 110 = sigsetmask */
+	{ 1, s(struct compat_43_compat_sparc32_sigblock_args),
+	    compat_43(compat_sparc32_sigblock) },/* 109 = compat_43 compat_sparc32_sigblock */
+	{ 1, s(struct compat_43_compat_sparc32_sigsetmask_args),
+	    compat_43(compat_sparc32_sigsetmask) },/* 110 = compat_43 compat_sparc32_sigsetmask */
 #else
 	{ 0, 0,
 	    sys_nosys },			/* 109 = obsolete sigblock */
 	{ 0, 0,
 	    sys_nosys },			/* 110 = obsolete sigsetmask */
 #endif
-	{ 1, s(struct sys_sigsuspend_args),
-	    sys_sigsuspend },			/* 111 = sigsuspend */
+	{ 1, s(struct compat_13_compat_sparc32_sigsuspend_args),
+	    compat_13(compat_sparc32_sigsuspend) },/* 111 = compat_13 sigsuspend13 */
 	{ 2, s(struct compat_43_compat_sparc32_osigstack_args),
 	    compat_43(compat_sparc32_osigstack) },/* 112 = compat_43 compat_sparc32_osigstack */
 	{ 3, s(struct compat_43_compat_sparc32_orecvmsg_args),
@@ -307,8 +308,8 @@ struct sysent sparc32_sysent[] = {
 	{ 3, s(struct compat_43_compat_sparc32_osendmsg_args),
 	    compat_43(compat_sparc32_osendmsg) },/* 114 = compat_43 compat_sparc32_osendmsg */
 #ifdef TRACE
-	{ 2, s(struct sys_vtrace_args),
-	    sys_vtrace },			/* 115 = vtrace */
+	{ 2, s(struct compat_sparc32_vtrace_args),
+	    compat_sparc32_vtrace },		/* 115 = compat_sparc32_vtrace */
 #else
 	{ 0, 0,
 	    sys_nosys },			/* 115 = obsolete vtrace */
@@ -327,30 +328,30 @@ struct sysent sparc32_sysent[] = {
 	    compat_sparc32_writev },		/* 121 = compat_sparc32_writev */
 	{ 2, s(struct compat_sparc32_settimeofday_args),
 	    compat_sparc32_settimeofday },	/* 122 = compat_sparc32_settimeofday */
-	{ 3, s(struct sys_fchown_args),
-	    sys_fchown },			/* 123 = fchown */
-	{ 2, s(struct sys_fchmod_args),
-	    sys_fchmod },			/* 124 = fchmod */
+	{ 3, s(struct compat_sparc32_fchown_args),
+	    compat_sparc32_fchown },		/* 123 = compat_sparc32_fchown */
+	{ 2, s(struct compat_sparc32_fchmod_args),
+	    compat_sparc32_fchmod },		/* 124 = compat_sparc32_fchmod */
 	{ 6, s(struct compat_43_compat_sparc32_orecvfrom_args),
 	    compat_43(compat_sparc32_orecvfrom) },/* 125 = compat_43 compat_sparc32_orecvfrom */
-	{ 2, s(struct sys_setreuid_args),
-	    sys_setreuid },			/* 126 = setreuid */
-	{ 2, s(struct sys_setregid_args),
-	    sys_setregid },			/* 127 = setregid */
+	{ 2, s(struct compat_sparc32_setreuid_args),
+	    compat_sparc32_setreuid },		/* 126 = compat_sparc32_setreuid */
+	{ 2, s(struct compat_sparc32_setregid_args),
+	    compat_sparc32_setregid },		/* 127 = compat_sparc32_setregid */
 	{ 2, s(struct compat_sparc32_rename_args),
 	    compat_sparc32_rename },		/* 128 = compat_sparc32_rename */
 	{ 2, s(struct compat_43_compat_sparc32_otruncate_args),
 	    compat_43(compat_sparc32_otruncate) },/* 129 = compat_43 compat_sparc32_otruncate */
 	{ 2, s(struct compat_43_compat_sparc32_oftruncate_args),
 	    compat_43(compat_sparc32_oftruncate) },/* 130 = compat_43 compat_sparc32_oftruncate */
-	{ 2, s(struct sys_flock_args),
-	    sys_flock },			/* 131 = flock */
+	{ 2, s(struct compat_sparc32_flock_args),
+	    compat_sparc32_flock },		/* 131 = compat_sparc32_flock */
 	{ 2, s(struct compat_sparc32_mkfifo_args),
 	    compat_sparc32_mkfifo },		/* 132 = compat_sparc32_mkfifo */
 	{ 6, s(struct compat_sparc32_sendto_args),
 	    compat_sparc32_sendto },		/* 133 = compat_sparc32_sendto */
-	{ 2, s(struct sys_shutdown_args),
-	    sys_shutdown },			/* 134 = shutdown */
+	{ 2, s(struct compat_sparc32_shutdown_args),
+	    compat_sparc32_shutdown },		/* 134 = compat_sparc32_shutdown */
 	{ 4, s(struct compat_sparc32_socketpair_args),
 	    compat_sparc32_socketpair },	/* 135 = compat_sparc32_socketpair */
 	{ 2, s(struct compat_sparc32_mkdir_args),
@@ -368,8 +369,8 @@ struct sysent sparc32_sysent[] = {
 	{ 0, 0,
 	    compat_43(sys_gethostid) },		/* 142 = compat_43 ogethostid */
 #ifdef COMPAT_43
-	{ 1, s(struct compat_43_sys_sethostid_args),
-	    compat_43_sys_sethostid },		/* 143 = sethostid */
+	{ 1, s(struct compat_43_compat_sparc32_sethostid_args),
+	    compat_43(compat_sparc32_sethostid) },/* 143 = compat_43 compat_sparc32_sethostid */
 #else
 	{ 0, 0,
 	    sys_nosys },			/* 143 = obsolete sethostid */
@@ -379,8 +380,8 @@ struct sysent sparc32_sysent[] = {
 	{ 2, s(struct compat_43_compat_sparc32_osetrlimit_args),
 	    compat_43(compat_sparc32_osetrlimit) },/* 145 = compat_43 compat_sparc32_osetrlimit */
 #ifdef COMPAT_43
-	{ 2, s(struct compat_43_sys_killpg_args),
-	    compat_43_sys_killpg },		/* 146 = killpg */
+	{ 2, s(struct compat_43_compat_sparc32_killpg_args),
+	    compat_43(compat_sparc32_killpg) },	/* 146 = compat_43 compat_sparc32_killpg */
 #else
 	{ 0, 0,
 	    sys_nosys },			/* 146 = obsolete killpg */
@@ -440,22 +441,22 @@ struct sysent sparc32_sysent[] = {
 	{ 0, 0,
 	    sys_nosys },			/* 168 = unimplemented */
 #if defined(SYSVSEM) && !defined(alpha)
-	{ 5, s(struct compat_10_sys_semsys_args),
-	    compat_10_sys_semsys },		/* 169 = osemsys */
+	{ 5, s(struct compat_sparc32_compat_10_sys_semsys_args),
+	    compat_sparc32_compat_10_sys_semsys },/* 169 = osemsys */
 #else
 	{ 0, 0,
 	    sys_nosys },			/* 169 = unimplemented 1.0 semsys */
 #endif
 #if defined(SYSVMSG) && !defined(alpha)
-	{ 6, s(struct compat_10_sys_msgsys_args),
-	    compat_10_sys_msgsys },		/* 170 = omsgsys */
+	{ 6, s(struct compat_sparc32_compat_10_sys_msgsys_args),
+	    compat_sparc32_compat_10_sys_msgsys },/* 170 = omsgsys */
 #else
 	{ 0, 0,
 	    sys_nosys },			/* 170 = unimplemented 1.0 msgsys */
 #endif
 #if defined(SYSVSHM) && !defined(alpha)
-	{ 4, s(struct compat_10_sys_shmsys_args),
-	    compat_10_sys_shmsys },		/* 171 = oshmsys */
+	{ 4, s(struct compat_sparc32_compat_10_sys_shmsys_args),
+	    compat_sparc32_compat_10_sys_shmsys },/* 171 = oshmsys */
 #else
 	{ 0, 0,
 	    sys_nosys },			/* 171 = unimplemented 1.0 shmsys */
@@ -466,10 +467,17 @@ struct sysent sparc32_sysent[] = {
 	    compat_sparc32_pread },		/* 173 = compat_sparc32_pread */
 	{ 5, s(struct compat_sparc32_pwrite_args),
 	    compat_sparc32_pwrite },		/* 174 = compat_sparc32_pwrite */
+#ifdef NTP
 	{ 1, s(struct compat_sparc32_ntp_gettime_args),
 	    compat_sparc32_ntp_gettime },	/* 175 = compat_sparc32_ntp_gettime */
 	{ 1, s(struct compat_sparc32_ntp_adjtime_args),
 	    compat_sparc32_ntp_adjtime },	/* 176 = compat_sparc32_ntp_adjtime */
+#else
+	{ 0, 0,
+	    sys_nosys },			/* 175 = unimplemented compat_sparc32_ntp_gettime */
+	{ 0, 0,
+	    sys_nosys },			/* 176 = unimplemented compat_sparc32_ntp_adjtime */
+#endif
 	{ 0, 0,
 	    sys_nosys },			/* 177 = unimplemented */
 	{ 0, 0,
@@ -478,12 +486,12 @@ struct sysent sparc32_sysent[] = {
 	    sys_nosys },			/* 179 = unimplemented */
 	{ 0, 0,
 	    sys_nosys },			/* 180 = unimplemented */
-	{ 1, s(struct sys_setgid_args),
-	    sys_setgid },			/* 181 = setgid */
-	{ 1, s(struct sys_setegid_args),
-	    sys_setegid },			/* 182 = setegid */
-	{ 1, s(struct sys_seteuid_args),
-	    sys_seteuid },			/* 183 = seteuid */
+	{ 1, s(struct compat_sparc32_setgid_args),
+	    compat_sparc32_setgid },		/* 181 = compat_sparc32_setgid */
+	{ 1, s(struct compat_sparc32_setegid_args),
+	    compat_sparc32_setegid },		/* 182 = compat_sparc32_setegid */
+	{ 1, s(struct compat_sparc32_seteuid_args),
+	    compat_sparc32_seteuid },		/* 183 = compat_sparc32_seteuid */
 #ifdef LFS
 	{ 3, s(struct compat_sparc32_lfs_bmapv_args),
 	    compat_sparc32_lfs_bmapv },		/* 184 = compat_sparc32_lfs_bmapv */
@@ -525,12 +533,12 @@ struct sysent sparc32_sysent[] = {
 	    compat_sparc32_mmap },		/* 197 = compat_sparc32_mmap */
 	{ 0, 0,
 	    sys_nosys },			/* 198 = __syscall (indir) */
-	{ 4, s(struct sys_lseek_args),
-	    sys_lseek },			/* 199 = lseek */
+	{ 4, s(struct compat_sparc32_lseek_args),
+	    compat_sparc32_lseek },		/* 199 = compat_sparc32_lseek */
 	{ 3, s(struct compat_sparc32_truncate_args),
 	    compat_sparc32_truncate },		/* 200 = compat_sparc32_truncate */
-	{ 3, s(struct sys_ftruncate_args),
-	    sys_ftruncate },			/* 201 = ftruncate */
+	{ 3, s(struct compat_sparc32_ftruncate_args),
+	    compat_sparc32_ftruncate },		/* 201 = compat_sparc32_ftruncate */
 	{ 6, s(struct compat_sparc32___sysctl_args),
 	    compat_sparc32___sysctl },		/* 202 = compat_sparc32___sysctl */
 	{ 2, s(struct compat_sparc32_mlock_args),
@@ -541,8 +549,8 @@ struct sysent sparc32_sysent[] = {
 	    compat_sparc32_undelete },		/* 205 = compat_sparc32_undelete */
 	{ 2, s(struct compat_sparc32_futimes_args),
 	    compat_sparc32_futimes },		/* 206 = compat_sparc32_futimes */
-	{ 1, s(struct sys_getpgid_args),
-	    sys_getpgid },			/* 207 = getpgid */
+	{ 1, s(struct compat_sparc32_getpgid_args),
+	    compat_sparc32_getpgid },		/* 207 = compat_sparc32_getpgid */
 	{ 2, s(struct compat_sparc32_reboot_args),
 	    compat_sparc32_reboot },		/* 208 = compat_sparc32_reboot */
 	{ 3, s(struct compat_sparc32_poll_args),
@@ -597,8 +605,8 @@ struct sysent sparc32_sysent[] = {
 	    compat_sparc32_semget },		/* 221 = compat_sparc32_semget */
 	{ 3, s(struct compat_sparc32_semop_args),
 	    compat_sparc32_semop },		/* 222 = compat_sparc32_semop */
-	{ 1, s(struct sys_semconfig_args),
-	    sys_semconfig },			/* 223 = semconfig */
+	{ 1, s(struct compat_sparc32_semconfig_args),
+	    compat_sparc32_semconfig },		/* 223 = compat_sparc32_semconfig */
 #else
 	{ 0, 0,
 	    sys_nosys },			/* 220 = unimplemented compat_sparc32_semctl */
@@ -665,8 +673,8 @@ struct sysent sparc32_sysent[] = {
 	    sys_nosys },			/* 239 = unimplemented timer_getoverrun */
 	{ 2, s(struct compat_sparc32_nanosleep_args),
 	    compat_sparc32_nanosleep },		/* 240 = compat_sparc32_nanosleep */
-	{ 1, s(struct sys_fdatasync_args),
-	    sys_fdatasync },			/* 241 = fdatasync */
+	{ 1, s(struct compat_sparc32_fdatasync_args),
+	    compat_sparc32_fdatasync },		/* 241 = compat_sparc32_fdatasync */
 	{ 0, 0,
 	    sys_nosys },			/* 242 = unimplemented */
 	{ 0, 0,
@@ -751,17 +759,17 @@ struct sysent sparc32_sysent[] = {
 	    sys___vfork14 },			/* 282 = __vfork14 */
 	{ 3, s(struct compat_sparc32___posix_chown_args),
 	    compat_sparc32___posix_chown },	/* 283 = compat_sparc32___posix_chown */
-	{ 3, s(struct sys___posix_fchown_args),
-	    sys___posix_fchown },		/* 284 = __posix_fchown */
+	{ 3, s(struct compat_sparc32___posix_fchown_args),
+	    compat_sparc32___posix_fchown },	/* 284 = compat_sparc32___posix_fchown */
 	{ 3, s(struct compat_sparc32___posix_lchown_args),
 	    compat_sparc32___posix_lchown },	/* 285 = compat_sparc32___posix_lchown */
-	{ 1, s(struct sys_getsid_args),
-	    sys_getsid },			/* 286 = getsid */
+	{ 1, s(struct compat_sparc32_getsid_args),
+	    compat_sparc32_getsid },		/* 286 = compat_sparc32_getsid */
 	{ 0, 0,
 	    sys_nosys },			/* 287 = unimplemented */
 #ifdef KTRACE
-	{ 4, s(struct sys_fktrace_args),
-	    sys_fktrace },			/* 288 = fktrace */
+	{ 4, s(struct compat_sparc32_fktrace_args),
+	    compat_sparc32_fktrace },		/* 288 = compat_sparc32_fktrace */
 #else
 	{ 0, 0,
 	    sys_nosys },			/* 288 = unimplemented */

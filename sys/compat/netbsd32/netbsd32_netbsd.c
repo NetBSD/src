@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.5 1998/09/11 00:01:57 eeh Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.6 1998/10/01 14:27:57 eeh Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -29,9 +29,13 @@
  */
 
 #include "opt_ktrace.h"
+#include "opt_ntp.h"
+#include "fs_lfs.h"
+#include "fs_nfs.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
 #include <sys/sem.h>
@@ -40,13 +44,27 @@
 #include <sys/mount.h>
 #include <sys/socket.h>
 #include <sys/sockio.h>
+#include <sys/socketvar.h>
+#include <sys/mbuf.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/timex.h>
 #include <sys/signalvar.h>
+#include <sys/wait.h>
+#include <sys/ptrace.h>
+#include <sys/ktrace.h>
+#include <sys/trace.h>
+#include <sys/resourcevar.h>
+#include <sys/pool.h>
+#include <sys/vnode.h>
+#include <sys/file.h>
+#include <sys/filedesc.h>
+#include <sys/namei.h>
 
 #include <vm/vm.h>
 #include <sys/syscallargs.h>
+#include <sys/proc.h>
+#include <sys/sysctl.h>
 
 #include <net/if.h>
 
@@ -63,8 +81,9 @@ static __inline void sparc32_to_timespec __P((struct sparc32_timespec *, struct 
 static __inline void sparc32_from_timespec __P((struct timespec *, struct sparc32_timespec *));
 static __inline void sparc32_from_rusage __P((struct rusage *, struct sparc32_rusage *));
 static __inline void sparc32_to_rusage __P((struct sparc32_rusage *, struct rusage *));
-static __inline void sparc32_to_iovec __P((struct sparc32_iovec *, struct iovec *, int));
+static __inline int sparc32_to_iovecin __P((struct sparc32_iovec *, struct iovec *, int));
 static __inline void sparc32_to_msghdr __P((struct sparc32_msghdr *, struct msghdr *));
+static __inline void sparc32_from_msghdr __P((struct sparc32_msghdr *, struct msghdr *));
 static __inline void sparc32_from_statfs __P((struct statfs *, struct sparc32_statfs *));
 static __inline void sparc32_from_timex __P((struct timex *, struct sparc32_timex *));
 static __inline void sparc32_to_timex __P((struct sparc32_timex *, struct timex *));
@@ -79,6 +98,15 @@ static __inline void sparc32_to_shmid_ds __P((struct sparc32_shmid_ds *, struct 
 static __inline void sparc32_from_shmid_ds __P((struct shmid_ds *, struct sparc32_shmid_ds *));
 static __inline void sparc32_to_semid_ds __P((struct  sparc32_semid_ds *, struct  semid_ds *));
 static __inline void sparc32_from_semid_ds __P((struct  semid_ds *, struct  sparc32_semid_ds *));
+
+
+static int recvit32 __P((struct proc *, int, struct sparc32_msghdr *, struct iovec *, caddr_t, 
+			 register_t *));
+static int dofilereadv32 __P((struct proc *, int, struct file *, struct sparc32_iovec *, 
+			      int, off_t *, int, register_t *));
+static int dofilewritev32 __P((struct proc *, int, struct file *, struct sparc32_iovec *, 
+			       int,  off_t *, int, register_t *));
+static int change_utimes32 __P((struct vnode *, struct timeval *, struct proc *));
 
 /* converters for structures that we need */
 static __inline void
@@ -107,8 +135,10 @@ sparc32_from_itimerval(itv, itv32)
 	struct sparc32_itimerval *itv32;
 {
 
-	sparc32_from_timeval(&itv->it_interval, &itv32->it_interval);
-	sparc32_from_timeval(&itv->it_value, &itv32->it_value);
+	sparc32_from_timeval(&itv->it_interval, 
+			     &itv32->it_interval);
+	sparc32_from_timeval(&itv->it_value, 
+			     &itv32->it_value);
 }
 
 static __inline void
@@ -117,8 +147,8 @@ sparc32_to_itimerval(itv32, itv)
 	struct itimerval *itv;
 {
 
-	sparc32_to_timeval(&itv->it_interval, &itv32->it_interval);
-	sparc32_to_timeval(&itv->it_value, &itv32->it_value);
+	sparc32_to_timeval(&itv32->it_interval, &itv->it_interval);
+	sparc32_to_timeval(&itv32->it_value, &itv->it_value);
 }
 
 static __inline void
@@ -193,21 +223,34 @@ sparc32_to_rusage(ru32p, rup)
 #undef C
 }
 
-static __inline void
-sparc32_to_iovec(iov32p, iovp, len)
+static __inline int
+sparc32_to_iovecin(iov32p, iovp, len)
 	struct sparc32_iovec *iov32p;
 	struct iovec *iovp;
 	int len;
 {
-	int i;
-
+	int i, error=0;
+	u_int32_t iov_base;
+	u_int32_t iov_len;
+	/* 
+	 * We could allocate an iov32p, do a copyin, and translate
+	 * each field and then free it all up, or we could copyin
+	 * each field separately.  I'm doing the latter to reduce
+	 * the number of MALLOC()s.
+	 */
+printf("converting iovec at %p len %lx to %p\n", iov32p, len, iovp);
 	for (i = 0; i < len; i++, iovp++, iov32p++) {
-		iovp->iov_base = (void *)(u_long)iov32p->iov_base;
-		iovp->iov_len = (size_t)iov32p->iov_len;
+		if ((error = copyin((caddr_t)&iov32p->iov_base, &iov_base, sizeof(iov_base))))
+		    return (error);
+		if ((error = copyin((caddr_t)&iov32p->iov_len, &iov_len, sizeof(iov_len))))
+		    return (error);
+		iovp->iov_base = (void *)(u_long)iov_base;
+		iovp->iov_len = (size_t)iov_len;
+printf("iovec slot %d base %p len %lx\n", i, iovp->iov_base, iovp->iov_len);
 	}
 }
 
-/* assumes that mhp's msg_iov has been allocated */
+/* msg_iov must be done separately */
 static __inline void
 sparc32_to_msghdr(mhp32, mhp)
 	struct sparc32_msghdr *mhp32;
@@ -220,7 +263,21 @@ sparc32_to_msghdr(mhp32, mhp)
 	mhp->msg_control = (caddr_t)(u_long)mhp32->msg_control;
 	mhp->msg_controllen = mhp32->msg_controllen;
 	mhp->msg_flags = mhp32->msg_flags;
-	sparc32_to_iovec(mhp32->msg_iov, mhp->msg_iov, mhp->msg_iovlen);
+}
+
+/* msg_iov must be done separately */
+static __inline void
+sparc32_from_msghdr(mhp32, mhp)
+	struct sparc32_msghdr *mhp32;
+	struct msghdr *mhp;
+{
+
+	mhp32->msg_name = mhp32->msg_name;
+	mhp32->msg_namelen = mhp32->msg_namelen;
+	mhp32->msg_iovlen = mhp32->msg_iovlen;
+	mhp32->msg_control = mhp32->msg_control;
+	mhp32->msg_controllen = mhp->msg_controllen;
+	mhp32->msg_flags = mhp->msg_flags;
 }
 
 static __inline void
@@ -240,9 +297,19 @@ sparc32_from_statfs(sbp, sb32p)
 	sb32p->f_ffree = (sparc32_long)sbp->f_ffree;
 	sb32p->f_fsid = sbp->f_fsid;
 	sb32p->f_owner = sbp->f_owner;
-	strncpy(sbp->f_fstypename, sb32p->f_fstypename, MFSNAMELEN);
-	strncpy(sbp->f_fstypename, sb32p->f_fstypename, MNAMELEN);
-	strncpy(sbp->f_fstypename, sb32p->f_mntfromname, MNAMELEN);
+	sb32p->f_spare[0] = 0;
+	sb32p->f_spare[1] = 0;
+	sb32p->f_spare[2] = 0;
+	sb32p->f_spare[3] = 0;
+#if 1
+	/* May as well do the whole batch in one go */
+	memcpy(sb32p->f_fstypename, sbp->f_fstypename, MFSNAMELEN+MNAMELEN+MNAMELEN);
+#else
+	/* If we want to be careful */
+	memcpy(sb32p->f_fstypename, sbp->f_fstypename, MFSNAMELEN);
+	memcpy(sb32p->f_mntonname, sbp->f_mntonname, MNAMELEN);
+	memcpy(sb32p->f_mntfromname, sbp->f_mntfromname, MNAMELEN);
+#endif
 }
 
 static __inline void
@@ -384,8 +451,8 @@ sparc32_to_msqid_ds(ds32p, dsp)
 {
 
 	sparc32_to_ipc_perm(&ds32p->msg_perm, &dsp->msg_perm);
-	sparc32_to_msg(&ds32p->msg_first, &dsp->msg_first);
-	sparc32_to_msg(&ds32p->msg_last, &dsp->msg_last);
+	sparc32_to_msg((struct sparc32_msg *)(u_long)ds32p->msg_first, dsp->msg_first);
+	sparc32_to_msg((struct sparc32_msg *)(u_long)ds32p->msg_last, dsp->msg_last);
 	dsp->msg_cbytes = (u_long)ds32p->msg_cbytes;
 	dsp->msg_qnum = (u_long)ds32p->msg_qnum;
 	dsp->msg_qbytes = (u_long)ds32p->msg_qbytes;
@@ -403,8 +470,8 @@ sparc32_from_msqid_ds(dsp, ds32p)
 {
 
 	sparc32_from_ipc_perm(&dsp->msg_perm, &ds32p->msg_perm);
-	sparc32_from_msg(&dsp->msg_first, &ds32p->msg_first);
-	sparc32_from_msg(&dsp->msg_last, &ds32p->msg_last);
+	sparc32_from_msg(dsp->msg_first, (struct sparc32_msg *)(u_long)ds32p->msg_first);
+	sparc32_from_msg(dsp->msg_last, (struct sparc32_msg *)(u_long)ds32p->msg_last);
 	ds32p->msg_cbytes = (sparc32_u_long)dsp->msg_cbytes;
 	ds32p->msg_qnum = (sparc32_u_long)dsp->msg_qnum;
 	ds32p->msg_qbytes = (sparc32_u_long)dsp->msg_qbytes;
@@ -481,6 +548,22 @@ sparc32_from_semid_ds(dsp, s32dsp)
  * calling the real syscall.
  */
 
+
+int
+compat_sparc32_exit(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_sparc32_exit_args /* {
+		syscallarg(int) rval;
+	} */ *uap = v;
+	struct sys_exit_args ua;
+
+	SPARC32TO64_UAP(rval);
+	sys_exit(p, &ua, retval);
+}
+
 int
 compat_sparc32_read(p, v, retval)
 	struct proc *p;
@@ -493,16 +576,11 @@ compat_sparc32_read(p, v, retval)
 		syscallarg(sparc32_size_t) nbyte;
 	} */ *uap = v;
 	struct sys_read_args ua;
-	ssize_t rt;
-	int error;
 
 	SPARC32TO64_UAP(fd);
 	SPARC32TOP_UAP(buf, void *);
 	SPARC32TOX_UAP(nbyte, size_t);
-	error = sys_read(p, &ua, (register_t *)&rt);
-	*(sparc32_ssize_t *)retval = rt;
-
-	return (error);
+	return sys_read(p, &ua, retval);
 }
 
 int
@@ -517,16 +595,26 @@ compat_sparc32_write(p, v, retval)
 		syscallarg(sparc32_size_t) nbyte;
 	} */ *uap = v;
 	struct sys_write_args ua;
-	ssize_t rt;
-	int error;
 
 	SPARC32TO64_UAP(fd);
 	SPARC32TOP_UAP(buf, void *);
 	SPARC32TOX_UAP(nbyte, size_t);
-	error = sys_write(p, &ua, (register_t *)&rt);
-	*(sparc32_ssize_t *)retval = rt;
+	return sys_write(p, &ua, retval);
+}
 
-	return (error);
+int
+compat_sparc32_close(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_sparc32_close_args /* {
+		syscallarg(int) fd;
+	} */ *uap = v;
+	struct sys_close_args ua;
+
+	SPARC32TO64_UAP(fd);
+	return sys_write(p, &ua, retval);
 }
 
 int
@@ -553,8 +641,8 @@ compat_sparc32_open(p, v, retval)
 }
 
 int
-compat_sparc32_wait4(p, v, retval)
-	struct proc *p;
+compat_sparc32_wait4(q, v, retval)
+	struct proc *q;
 	void *v;
 	register_t *retval;
 {
@@ -564,31 +652,127 @@ compat_sparc32_wait4(p, v, retval)
 		syscallarg(int) options;
 		syscallarg(sparc32_rusagep_t) rusage;
 	} */ *uap = v;
-	struct sys_wait4_args ua;
-	struct rusage ru;
-	struct sparc32_rusage *ru32p;
 	struct sparc32_rusage ru32;
-	int error;
+	register int nfound;
+	register struct proc *p, *t;
+	int status, error;
 
-	SPARC32TO64_UAP(pid);
-	SPARC32TOP_UAP(status, int);
-	SPARC32TO64_UAP(options);
-	ru32p = (struct sparc32_rusage *)(u_long)SCARG(uap, rusage);
-	if (ru32p) {
-		if (copyin(ru32p, &ru32, sizeof(ru32)))
-			return (EFAULT);
-		SCARG(&ua, rusage) = &ru;
-		sparc32_to_rusage(&ru32, &ru);
-	} else
-		SCARG(&ua, rusage) = NULL;
+	if (SCARG(uap, pid) == 0)
+		SCARG(uap, pid) = -q->p_pgid;
+	if (SCARG(uap, options) &~ (WUNTRACED|WNOHANG))
+		return (EINVAL);
 
-	error = sys_wait4(p, &ua, retval);
-	if (ru32p) {
-		sparc32_from_rusage(&ru, &ru32);
-		if (copyout(&ru32, ru32p, sizeof(ru32)))
-			error = EFAULT;
+loop:
+	nfound = 0;
+	for (p = q->p_children.lh_first; p != 0; p = p->p_sibling.le_next) {
+		if (SCARG(uap, pid) != WAIT_ANY &&
+		    p->p_pid != SCARG(uap, pid) &&
+		    p->p_pgid != -SCARG(uap, pid))
+			continue;
+		nfound++;
+		if (p->p_stat == SZOMB) {
+			retval[0] = p->p_pid;
+
+			if (SCARG(uap, status)) {
+				status = p->p_xstat;	/* convert to int */
+				error = copyout((caddr_t)&status,
+						(caddr_t)(u_long)SCARG(uap, status),
+						sizeof(status));
+				if (error)
+					return (error);
+			}
+			if (SCARG(uap, rusage)) {
+				sparc32_from_rusage(p->p_ru, &ru32);
+				if ((error = copyout((caddr_t)&ru32,
+						     (caddr_t)(u_long)SCARG(uap, rusage),
+						     sizeof(struct sparc32_rusage))))
+					return (error);
+			}
+			/*
+			 * If we got the child via ptrace(2) or procfs, and
+			 * the parent is different (meaning the process was
+			 * attached, rather than run as a child), then we need
+			 * to give it back to the old parent, and send the
+			 * parent a SIGCHLD.  The rest of the cleanup will be
+			 * done when the old parent waits on the child.
+			 */
+			if ((p->p_flag & P_TRACED) &&
+			    p->p_oppid != p->p_pptr->p_pid) {
+				t = pfind(p->p_oppid);
+				proc_reparent(p, t ? t : initproc);
+				p->p_oppid = 0;
+				p->p_flag &= ~(P_TRACED|P_WAITED|P_FSTRACE);
+				psignal(p->p_pptr, SIGCHLD);
+				wakeup((caddr_t)p->p_pptr);
+				return (0);
+			}
+			p->p_xstat = 0;
+			ruadd(&q->p_stats->p_cru, p->p_ru);
+			pool_put(&rusage_pool, p->p_ru);
+
+			/*
+			 * Finally finished with old proc entry.
+			 * Unlink it from its process group and free it.
+			 */
+			leavepgrp(p);
+
+			LIST_REMOVE(p, p_list);	/* off zombproc */
+
+			LIST_REMOVE(p, p_sibling);
+
+			/*
+			 * Decrement the count of procs running with this uid.
+			 */
+			(void)chgproccnt(p->p_cred->p_ruid, -1);
+
+			/*
+			 * Free up credentials.
+			 */
+			if (--p->p_cred->p_refcnt == 0) {
+				crfree(p->p_cred->pc_ucred);
+				pool_put(&pcred_pool, p->p_cred);
+			}
+
+			/*
+			 * Release reference to text vnode
+			 */
+			if (p->p_textvp)
+				vrele(p->p_textvp);
+
+			/*
+			 * Give machine-dependent layer a chance
+			 * to free anything that cpu_exit couldn't
+			 * release while still running in process context.
+			 */
+			cpu_wait(p);
+			pool_put(&proc_pool, p);
+			nprocs--;
+			return (0);
+		}
+		if (p->p_stat == SSTOP && (p->p_flag & P_WAITED) == 0 &&
+		    (p->p_flag & P_TRACED || SCARG(uap, options) & WUNTRACED)) {
+			p->p_flag |= P_WAITED;
+			retval[0] = p->p_pid;
+
+			if (SCARG(uap, status)) {
+				status = W_STOPCODE(p->p_xstat);
+				error = copyout((caddr_t)&status,
+				    (caddr_t)(u_long)SCARG(uap, status),
+				    sizeof(status));
+			} else
+				error = 0;
+			return (error);
+		}
 	}
-	return (error);
+	if (nfound == 0)
+		return (ECHILD);
+	if (SCARG(uap, options) & WNOHANG) {
+		retval[0] = 0;
+		return (0);
+	}
+	if ((error = tsleep((caddr_t)q, PWAIT | PCATCH, "wait", 0)) != 0)
+		return (error);
+	goto loop;
 }
 
 int
@@ -638,6 +822,22 @@ compat_sparc32_chdir(p, v, retval)
 	SPARC32TOP_UAP(path, const char);
 
 	return (sys_chdir(p, &ua, retval));
+}
+
+int
+compat_sparc32_fchdir(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_sparc32_fchdir_args /* {
+		syscallarg(int) fd;
+	} */ *uap = v;
+	struct sys_fchdir_args ua;
+
+	SPARC32TO64_UAP(fd);
+
+	return (sys_fchdir(p, &ua, retval));
 }
 
 int
@@ -789,6 +989,21 @@ compat_sparc32_unmount(p, v, retval)
 }
 
 int
+compat_sparc32_setuid(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_sparc32_setuid_args /* {
+		syscallarg(uid_t) uid;
+	} */ *uap = v;
+	struct sys_setuid_args ua;
+
+	SPARC32TO64_UAP(uid);
+	return (sys_setuid(p, &ua, retval));
+}
+
+int
 compat_sparc32_ptrace(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -820,30 +1035,200 @@ compat_sparc32_recvmsg(p, v, retval)
 		syscallarg(sparc32_msghdrp_t) msg;
 		syscallarg(int) flags;
 	} */ *uap = v;
-	struct sys_recvmsg_args ua;
-	struct msghdr mh;
-	struct msghdr *mhp = &mh;
-	struct sparc32_msghdr *mhp32, mh32;
-	ssize_t rt;
-	int error;
+	struct sparc32_msghdr msg;
+	struct iovec aiov[UIO_SMALLIOV], *uiov, *iov;
+	register int error;
 
-	SPARC32TO64_UAP(s);
-	SPARC32TO64_UAP(flags);
-
-	SCARG(&ua, msg) = mhp;
-	mhp32 = (struct sparc32_msghdr *)(u_long)SCARG(uap, msg);
-	if (copyin(mhp32, &mh32, sizeof(mh32))) 
-		return EFAULT;
-	/* sparc32_msghdr needs the iov pre-allocated */
-	MALLOC(mhp->msg_iov, struct iovec *,
-	    sizeof(struct iovec) * mh32.msg_iovlen, M_TEMP, M_WAITOK);
-	sparc32_to_msghdr(&mh32, mhp);
-
-	error = sys_recvmsg(p, &ua, (register_t *)&rt);
-	FREE(mhp->msg_iov, M_TEMP);
-	*(sparc32_ssize_t *)retval = rt;
+	error = copyin((caddr_t)(u_long)SCARG(uap, msg), (caddr_t)&msg,
+		       sizeof(msg));
+		/* sparc32_msghdr needs the iov pre-allocated */
+	if (error)
+		return (error);
+	if ((u_int)msg.msg_iovlen > UIO_SMALLIOV) {
+		if ((u_int)msg.msg_iovlen > IOV_MAX)
+			return (EMSGSIZE);
+		MALLOC(iov, struct iovec *,
+		       sizeof(struct iovec) * (u_int)msg.msg_iovlen, M_IOV,
+		       M_WAITOK);
+	} else if ((u_int)msg.msg_iovlen > 0)
+		iov = aiov;
+	else
+		return (EMSGSIZE);
+#ifdef COMPAT_OLDSOCK
+	msg.msg_flags = SCARG(uap, flags) &~ MSG_COMPAT;
+#else
+	msg.msg_flags = SCARG(uap, flags);
+#endif
+	uiov = (struct iovec *)(u_long)msg.msg_iov;
+	error = sparc32_to_iovecin((struct sparc32_iovec *)uiov, 
+				   iov, msg.msg_iovlen);
+	if (error)
+		goto done;
+	if ((error = recvit32(p, SCARG(uap, s), &msg, iov, (caddr_t)0, retval)) == 0) {
+		error = copyout((caddr_t)&msg, (caddr_t)(u_long)SCARG(uap, msg),
+		    sizeof(msg));
+	}
+done:
+	if (iov != aiov)
+		FREE(iov, M_IOV);
 	return (error);
 }
+
+int
+recvit32(p, s, mp, iov, namelenp, retsize)
+	struct proc *p;
+	int s;
+	struct sparc32_msghdr *mp;
+	struct iovec *iov;
+	caddr_t namelenp;
+	register_t *retsize;
+{
+	struct file *fp;
+	struct uio auio;
+	register int i;
+	int len, error;
+	struct mbuf *from = 0, *control = 0;
+	struct socket *so;
+#ifdef KTRACE
+	struct iovec *ktriov = NULL;
+#endif
+	
+	if ((error = getsock(p->p_fd, s, &fp)) != 0)
+		return (error);
+	auio.uio_iov = (struct iovec *)(u_long)mp->msg_iov;
+	auio.uio_iovcnt = mp->msg_iovlen;
+	auio.uio_segflg = UIO_USERSPACE;
+	auio.uio_rw = UIO_READ;
+	auio.uio_procp = p;
+	auio.uio_offset = 0;			/* XXX */
+	auio.uio_resid = 0;
+	for (i = 0; i < mp->msg_iovlen; i++, iov++) {
+#if 0
+		/* cannot happen iov_len is unsigned */
+		if (iov->iov_len < 0)
+			return (EINVAL);
+#endif
+		/*
+		 * Reads return ssize_t because -1 is returned on error.
+		 * Therefore we must restrict the length to SSIZE_MAX to
+		 * avoid garbage return values.
+		 */
+		auio.uio_resid += iov->iov_len;
+		if (iov->iov_len > SSIZE_MAX || auio.uio_resid > SSIZE_MAX)
+			return (EINVAL);
+	}
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_GENIO)) {
+		int iovlen = auio.uio_iovcnt * sizeof(struct iovec);
+
+		MALLOC(ktriov, struct iovec *, iovlen, M_TEMP, M_WAITOK);
+		memcpy((caddr_t)ktriov, (caddr_t)auio.uio_iov, iovlen);
+	}
+#endif
+	len = auio.uio_resid;
+	so = (struct socket *)fp->f_data;
+	error = (*so->so_receive)(so, &from, &auio, NULL,
+			  mp->msg_control ? &control : NULL, &mp->msg_flags);
+	if (error) {
+		if (auio.uio_resid != len && (error == ERESTART ||
+		    error == EINTR || error == EWOULDBLOCK))
+			error = 0;
+	}
+#ifdef KTRACE
+	if (ktriov != NULL) {
+		if (error == 0)
+			ktrgenio(p->p_tracep, s, UIO_READ,
+				ktriov, len - auio.uio_resid, error);
+		FREE(ktriov, M_TEMP);
+	}
+#endif
+	if (error)
+		goto out;
+	*retsize = len - auio.uio_resid;
+	if (mp->msg_name) {
+		len = mp->msg_namelen;
+		if (len <= 0 || from == 0)
+			len = 0;
+		else {
+#ifdef COMPAT_OLDSOCK
+			if (mp->msg_flags & MSG_COMPAT)
+				mtod(from, struct osockaddr *)->sa_family =
+				    mtod(from, struct sockaddr *)->sa_family;
+#endif
+			if (len > from->m_len)
+				len = from->m_len;
+			/* else if len < from->m_len ??? */
+			error = copyout(mtod(from, caddr_t),
+					(caddr_t)(u_long)mp->msg_name, (unsigned)len);
+			if (error)
+				goto out;
+		}
+		mp->msg_namelen = len;
+		if (namelenp &&
+		    (error = copyout((caddr_t)&len, namelenp, sizeof(int)))) {
+#ifdef COMPAT_OLDSOCK
+			if (mp->msg_flags & MSG_COMPAT)
+				error = 0;	/* old recvfrom didn't check */
+			else
+#endif
+			goto out;
+		}
+	}
+	if (mp->msg_control) {
+#ifdef COMPAT_OLDSOCK
+		/*
+		 * We assume that old recvmsg calls won't receive access
+		 * rights and other control info, esp. as control info
+		 * is always optional and those options didn't exist in 4.3.
+		 * If we receive rights, trim the cmsghdr; anything else
+		 * is tossed.
+		 */
+		if (control && mp->msg_flags & MSG_COMPAT) {
+			if (mtod(control, struct cmsghdr *)->cmsg_level !=
+			    SOL_SOCKET ||
+			    mtod(control, struct cmsghdr *)->cmsg_type !=
+			    SCM_RIGHTS) {
+				mp->msg_controllen = 0;
+				goto out;
+			}
+			control->m_len -= sizeof(struct cmsghdr);
+			control->m_data += sizeof(struct cmsghdr);
+		}
+#endif
+		len = mp->msg_controllen;
+		if (len <= 0 || control == 0)
+			len = 0;
+		else {
+			struct mbuf *m = control;
+			caddr_t p = (caddr_t)(u_long)mp->msg_control;
+
+			do {
+				i = m->m_len;
+				if (len < i) {
+					mp->msg_flags |= MSG_CTRUNC;
+					i = len;
+				}
+				error = copyout(mtod(m, caddr_t), p,
+				    (unsigned)i);
+				if (m->m_next)
+					i = ALIGN(i);
+				p += i;
+				len -= i;
+				if (error != 0 || len <= 0)
+					break;
+			} while ((m = m->m_next) != NULL);
+			len = p - (caddr_t)(u_long)mp->msg_control;
+		}
+		mp->msg_controllen = len;
+	}
+out:
+	if (from)
+		m_freem(from);
+	if (control)
+		m_freem(control);
+	return (error);
+}
+
 
 int
 compat_sparc32_sendmsg(p, v, retval)
@@ -856,28 +1241,39 @@ compat_sparc32_sendmsg(p, v, retval)
 		syscallarg(const sparc32_msghdrp_t) msg;
 		syscallarg(int) flags;
 	} */ *uap = v;
-	struct sys_sendmsg_args ua;
-	struct msghdr mh;
-	struct msghdr *mhp = &mh;
-	struct sparc32_msghdr *mhp32, mh32;
-	ssize_t rt;
+	struct msghdr msg;
+	struct sparc32_msghdr msg32;
+	struct iovec aiov[UIO_SMALLIOV], *iov;
 	int error;
 
-	SPARC32TO64_UAP(s);
-	SPARC32TO64_UAP(flags);
-
-	SCARG(&ua, msg) = mhp;
-	mhp32 = (struct sparc32_msghdr *)(u_long)SCARG(uap, msg);
-	if (copyin(mhp32, &mh32, sizeof(mh32))) 
-		return EFAULT;
-	/* sparc32_msghdr needs the iov pre-allocated */
-	MALLOC(mhp->msg_iov, struct iovec *,
-	    sizeof(struct iovec) * mh32.msg_iovlen, M_TEMP, M_WAITOK);
-	sparc32_to_msghdr(mhp32, mhp);
-
-	error = sys_sendmsg(p, &ua, (register_t *)&rt);
-	FREE(mhp->msg_iov, M_TEMP);
-	*(sparc32_ssize_t *)retval = rt;
+	error = copyin((caddr_t)(u_long)SCARG(uap, msg), 
+		       (caddr_t)&msg32, sizeof(msg32));
+	if (error)
+		return (error);
+	sparc32_to_msghdr(&msg32, &msg);
+	if ((u_int)msg.msg_iovlen > UIO_SMALLIOV) {
+		if ((u_int)msg.msg_iovlen > IOV_MAX)
+			return (EMSGSIZE);
+		MALLOC(iov, struct iovec *,
+		       sizeof(struct iovec) * (u_int)msg.msg_iovlen, M_IOV,
+		       M_WAITOK);
+	} else if ((u_int)msg.msg_iovlen > 0)
+		iov = aiov;
+	else
+		return (EMSGSIZE);
+	error = sparc32_to_iovecin((struct sparc32_iovec *)msg.msg_iov, 
+				   iov, msg.msg_iovlen);
+	if (error)
+		goto done;
+	msg.msg_iov = iov;
+#ifdef COMPAT_OLDSOCK
+	msg.msg_flags = 0;
+#endif
+	/* Luckily we can use this directly */
+	error = sendit(p, SCARG(uap, s), &msg, SCARG(uap, flags), retval);
+done:
+	if (iov != aiov)
+		FREE(iov, M_IOV);
 	return (error);
 }
 
@@ -895,20 +1291,27 @@ compat_sparc32_recvfrom(p, v, retval)
 		syscallarg(sparc32_sockaddrp_t) from;
 		syscallarg(sparc32_intp) fromlenaddr;
 	} */ *uap = v;
-	struct sys_recvfrom_args ua;
-	off_t rt;
+	struct sparc32_msghdr msg;
+	struct iovec aiov;
 	int error;
 
-	SPARC32TO64_UAP(s);
-	SPARC32TOP_UAP(buf, void);
-	SPARC32TOX_UAP(len, size_t);
-	SPARC32TO64_UAP(flags);
-	SPARC32TOP_UAP(from, struct sockaddr);
-	SPARC32TOP_UAP(fromlenaddr, int);
-
-	error = sys_recvfrom(p, &ua, (register_t *)&rt);
-	*(sparc32_ssize_t *)retval = rt;
-	return (error);
+	if (SCARG(uap, fromlenaddr)) {
+		error = copyin((caddr_t)(u_long)SCARG(uap, fromlenaddr),
+			       (caddr_t)&msg.msg_namelen,
+			       sizeof(msg.msg_namelen));
+		if (error)
+			return (error);
+	} else
+		msg.msg_namelen = 0;
+	msg.msg_name = SCARG(uap, from);
+	msg.msg_iov = NULL; /* We can't store a real pointer here */
+	msg.msg_iovlen = 1;
+	aiov.iov_base = (caddr_t)(u_long)SCARG(uap, buf);
+	aiov.iov_len = (u_long)SCARG(uap, len);
+	msg.msg_control = 0;
+	msg.msg_flags = SCARG(uap, flags);
+	return (recvit32(p, SCARG(uap, s), &msg, &aiov,
+		       (caddr_t)(u_long)SCARG(uap, fromlenaddr), retval));
 }
 
 int
@@ -925,41 +1328,20 @@ compat_sparc32_sendto(p, v, retval)
 		syscallarg(const sparc32_sockaddrp_t) to;
 		syscallarg(int) tolen;
 	} */ *uap = v;
-	struct sys_sendto_args ua;
-	off_t rt;
-	int error;
+	struct msghdr msg;
+	struct iovec aiov;
 
-	SPARC32TO64_UAP(s);
-	SPARC32TOP_UAP(buf, void);
-	SPARC32TOX_UAP(len, size_t);
-	SPARC32TO64_UAP(flags);
-	SPARC32TOP_UAP(to, struct sockaddr);
-	SPARC32TOX_UAP(tolen, int);
-
-	error = sys_sendto(p, &ua, (register_t *)&rt);
-	*(sparc32_ssize_t *)retval = rt;
-	return (error);
-}
-
-int
-compat_sparc32_socketpair(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct compat_sparc32_socketpair_args /* {
-		syscallarg(int) domain;
-		syscallarg(int) type;
-		syscallarg(int) protocol;
-		syscallarg(sparc32_intp) rsv;
-	} */ *uap = v;
-	struct sys_socketpair_args ua;
-
-	SPARC32TO64_UAP(domain);
-	SPARC32TO64_UAP(type);
-	SPARC32TO64_UAP(protocol);
-	SPARC32TOP_UAP(rsv, int);
-	return (sys_socketpair(p, &ua, retval));
+	msg.msg_name = (caddr_t)(u_long)SCARG(uap, to);		/* XXX kills const */
+	msg.msg_namelen = SCARG(uap, tolen);
+	msg.msg_iov = &aiov;
+	msg.msg_iovlen = 1;
+	msg.msg_control = 0;
+#ifdef COMPAT_OLDSOCK
+	msg.msg_flags = 0;
+#endif
+	aiov.iov_base = (char *)(u_long)SCARG(uap, buf);	/* XXX kills const */
+	aiov.iov_len = SCARG(uap, len);
+	return (sendit(p, SCARG(uap, s), &msg, SCARG(uap, flags), retval));
 }
 
 int
@@ -997,6 +1379,7 @@ compat_sparc32_getpeername(p, v, retval)
 	SPARC32TO64_UAP(fdes);
 	SPARC32TOP_UAP(asa, struct sockaddr);
 	SPARC32TOP_UAP(alen, int);
+/* NB: do the protocol specific sockaddrs need to be converted? */
 	return (sys_getpeername(p, &ua, retval));
 }
 
@@ -1077,6 +1460,40 @@ compat_sparc32_fchflags(p, v, retval)
 }
 
 int
+compat_sparc32_kill(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_sparc32_kill_args /* {
+		syscallarg(int) pid;
+		syscallarg(int) signum;
+	} */ *uap = v;
+	struct sys_kill_args ua;
+
+	SPARC32TO64_UAP(pid);
+	SPARC32TO64_UAP(signum);
+
+	return (sys_kill(p, &ua, retval));
+}
+
+int
+compat_sparc32_dup(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_sparc32_dup_args /* {
+		syscallarg(int) fd;
+	} */ *uap = v;
+	struct sys_dup_args ua;
+
+	SPARC32TO64_UAP(fd);
+
+	return (sys_dup(p, &ua, retval));
+}
+
+int
 compat_sparc32_profil(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -1129,28 +1546,22 @@ compat_sparc32_sigaction(p, v, retval)
 		syscallarg(const sparc32_sigactionp_t) nsa;
 		syscallarg(sparc32_sigactionp_t) osa;
 	} */ *uap = v;
-	struct sys_sigaction_args ua;
 	struct sigaction nsa, osa;
 	struct sparc32_sigaction *sa32p, sa32;
 	int error;
 
-	SPARC32TO64_UAP(signum);
-	if (SCARG(uap, osa))
-		SCARG(&ua, osa) = &osa;
-	else
-		SCARG(&ua, osa) = NULL;
 	if (SCARG(uap, nsa)) {
-		SCARG(&ua, nsa) = &nsa;
 		sa32p = (struct sparc32_sigaction *)(u_long)SCARG(uap, nsa);
 		if (copyin(sa32p, &sa32, sizeof(sa32)))
 			return EFAULT;
 		nsa.sa_handler = (void *)(u_long)sa32.sa_handler;
 		nsa.sa_mask = sa32.sa_mask;
 		nsa.sa_flags = sa32.sa_flags;
-	} else
-		SCARG(&ua, nsa) = NULL;
-	SCARG(&ua, nsa) = &osa;
-	error = sys_sigaction(p, &ua, retval);
+	}
+	error = sigaction1(p, SCARG(uap, signum), 
+			   SCARG(uap, nsa) ? &nsa : 0, 
+			   SCARG(uap, osa) ? &osa : 0);
+ 
 	if (error)
 		return (error);
 
@@ -1297,6 +1708,21 @@ compat_sparc32_execve(p, v, retval)
 }
 
 int
+compat_sparc32_umask(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_sparc32_umask_args /* {
+		syscallarg(mode_t) newmask;
+	} */ *uap = v;
+	struct sys_umask_args ua;
+
+	SPARC32TO64_UAP(newmask);
+	return (sys_umask(p, &ua, retval));
+}
+
+int
 compat_sparc32_chroot(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -1309,6 +1735,36 @@ compat_sparc32_chroot(p, v, retval)
 
 	SPARC32TOP_UAP(path, const char);
 	return (sys_chroot(p, &ua, retval));
+}
+
+int
+compat_sparc32_sbrk(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_sparc32_sbrk_args /* {
+		syscallarg(int) incr;
+	} */ *uap = v;
+	struct sys_sbrk_args ua;
+
+	SPARC32TO64_UAP(incr);
+	return (sys_sbrk(p, &ua, retval));
+}
+
+int
+compat_sparc32_sstk(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_sparc32_sstk_args /* {
+		syscallarg(int) incr;
+	} */ *uap = v;
+	struct sys_sstk_args ua;
+
+	SPARC32TO64_UAP(incr);
+	return (sys_sstk(p, &ua, retval));
 }
 
 int
@@ -1395,11 +1851,26 @@ compat_sparc32_getgroups(p, v, retval)
 		syscallarg(int) gidsetsize;
 		syscallarg(sparc32_gid_tp) gidset;
 	} */ *uap = v;
-	struct sys_getgroups_args ua;
+	register struct pcred *pc = p->p_cred;
+	register int ngrp;
+	int error;
 
-	SPARC32TO64_UAP(gidsetsize);
-	SPARC32TOP_UAP(gidset, gid_t);
-	return (sys_getgroups(p, &ua, retval));
+	ngrp = SCARG(uap, gidsetsize);
+	if (ngrp == 0) {
+		*retval = pc->pc_ucred->cr_ngroups;
+		return (0);
+	}
+	if (ngrp < pc->pc_ucred->cr_ngroups)
+		return (EINVAL);
+	ngrp = pc->pc_ucred->cr_ngroups;
+	/* Should convert gid_t to sparc32_gid_t, but they're the same */
+	error = copyout((caddr_t)pc->pc_ucred->cr_groups,
+			(caddr_t)(u_long)SCARG(uap, gidset), 
+			ngrp * sizeof(gid_t));
+	if (error)
+		return (error);
+	*retval = ngrp;
+	return (0);
 }
 
 int
@@ -1420,6 +1891,23 @@ compat_sparc32_setgroups(p, v, retval)
 }
 
 int
+compat_sparc32_setpgid(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_sparc32_setpgid_args /* {
+		syscallarg(int) pid;
+		syscallarg(int) pgid;
+	} */ *uap = v;
+	struct sys_setpgid_args ua;
+
+	SPARC32TO64_UAP(pid);
+	SPARC32TO64_UAP(pgid);
+	return (sys_setpgid(p, &ua, retval));
+}
+
+int
 compat_sparc32_setitimer(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -1430,35 +1918,39 @@ compat_sparc32_setitimer(p, v, retval)
 		syscallarg(const sparc32_itimervalp_t) itv;
 		syscallarg(sparc32_itimervalp_t) oitv;
 	} */ *uap = v;
-	struct sys_setitimer_args ua;
-	struct itimerval iit, oit;
-	struct sparc32_itimerval *s32itp, s32it;
-	int error;
+	struct sparc32_itimerval s32it, *itvp;
+	int which = SCARG(uap, which);
+	struct compat_sparc32_getitimer_args getargs;
+	struct itimerval aitv;
+	int s, error;
 
-	SPARC32TO64_UAP(which);
-	s32itp = (struct sparc32_itimerval *)(u_long)SCARG(uap, itv);
-	if (s32itp) {
-		if (copyin(s32itp, &s32it, sizeof(s32it)))
-			return EFAULT;
-		SCARG(&ua, itv) = &iit;
-		sparc32_to_itimerval(&s32it, &iit);
-	} else
-		SCARG(&ua, itv) = NULL;
-	s32itp = (struct sparc32_itimerval *)(u_long)SCARG(uap, oitv);
-	if (s32itp)
-		SCARG(&ua, oitv) = &oit;
-	else
-		SCARG(&ua, oitv) = NULL;
-
-	error = sys_setitimer(p, &ua, retval);
-	if (error)
+	if ((u_int)which > ITIMER_PROF)
+		return (EINVAL);
+	itvp = (struct sparc32_itimerval *)(u_long)SCARG(uap, itv);
+	if (itvp && (error = copyin(itvp, &s32it, sizeof(s32it))))
 		return (error);
-
-	if (s32itp) {
-		sparc32_from_itimerval(&oit, &s32it);
-		if (copyout(&s32it, s32itp, sizeof(s32it)))
-			return EFAULT;
+	sparc32_to_itimerval(&s32it, &aitv);
+	if (SCARG(uap, oitv) != NULL) {
+		SCARG(&getargs, which) = which;
+		SCARG(&getargs, itv) = SCARG(uap, oitv);
+		if ((error = compat_sparc32_getitimer(p, &getargs, retval)) != 0)
+			return (error);
 	}
+	if (itvp == 0)
+		return (0);
+	if (itimerfix(&aitv.it_value) || itimerfix(&aitv.it_interval))
+		return (EINVAL);
+	s = splclock();
+	if (which == ITIMER_REAL) {
+		untimeout(realitexpire, p);
+		if (timerisset(&aitv.it_value)) {
+			timeradd(&aitv.it_value, &time, &aitv.it_value);
+			timeout(realitexpire, p, hzto(&aitv.it_value));
+		}
+		p->p_realtimer = aitv;
+	} else
+		p->p_stats->p_timer[which] = aitv;
+	splx(s);
 	return (0);
 }
 
@@ -1472,28 +1964,33 @@ compat_sparc32_getitimer(p, v, retval)
 		syscallarg(int) which;
 		syscallarg(sparc32_itimervalp_t) itv;
 	} */ *uap = v;
-	struct sys_getitimer_args ua;
-	struct itimerval it;
-	struct sparc32_itimerval *s32itp, s32it;
-	int error;
+	int which = SCARG(uap, which);
+	struct sparc32_itimerval s32it;
+	struct itimerval aitv;
+	int s;
 
-	SPARC32TO64_UAP(which);
-	s32itp = (struct sparc32_itimerval *)(u_long)SCARG(uap, itv);
-	if (s32itp == NULL)
-		SCARG(&ua, itv) = &it;
-	else
-		SCARG(&ua, itv) = NULL;
-
-	error = sys_getitimer(p, &ua, retval);
-	if (error)
-		return (error);
-
-	if (s32itp) {
-		sparc32_from_itimerval(&it, &s32it);
-		if (copyout(&s32it, s32itp, sizeof(s32it)))
-			return EFAULT;
-	}
-	return (0);
+	if ((u_int)which > ITIMER_PROF)
+		return (EINVAL);
+	s = splclock();
+	if (which == ITIMER_REAL) {
+		/*
+		 * Convert from absolute to relative time in .it_value
+		 * part of real time timer.  If time for real time timer
+		 * has passed return 0, else return difference between
+		 * current time and time for the timer to go off.
+		 */
+		aitv = p->p_realtimer;
+		if (timerisset(&aitv.it_value)) {
+			if (timercmp(&aitv.it_value, &time, <))
+				timerclear(&aitv.it_value);
+			else
+				timersub(&aitv.it_value, &time, &aitv.it_value);
+		}
+	} else
+		aitv = p->p_stats->p_timer[which];
+	splx(s);
+	sparc32_from_itimerval(&aitv, &s32it);
+	return (copyout(&s32it, (caddr_t)(u_long)SCARG(uap, itv), sizeof(s32it)));
 }
 
 int
@@ -1512,7 +2009,25 @@ compat_sparc32_fcntl(p, v, retval)
 	SPARC32TO64_UAP(fd);
 	SPARC32TO64_UAP(cmd);
 	SPARC32TOP_UAP(arg, void);
+	/* XXXX we can do this 'cause flock doesn't change */
 	return (sys_fcntl(p, &ua, retval));
+}
+
+int
+compat_sparc32_dup2(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_sparc32_dup2_args /* {
+		syscallarg(int) from;
+		syscallarg(int) to;
+	} */ *uap = v;
+	struct sys_dup2_args ua;
+
+	SPARC32TO64_UAP(from);
+	SPARC32TO64_UAP(to);
+	return (sys_dup2(p, &ua, retval));
 }
 
 int
@@ -1528,31 +2043,158 @@ compat_sparc32_select(p, v, retval)
 		syscallarg(sparc32_fd_setp_t) ex;
 		syscallarg(sparc32_timevalp_t) tv;
 	} */ *uap = v;
-	struct sys_select_args ua;
-	struct timeval tv;
-	struct sparc32_timeval *tv32p, tv32;
-	int error;
+/* This one must be done in-line 'cause of the timeval */
+	struct sparc32_timeval tv32;
+	caddr_t bits;
+	char smallbits[howmany(FD_SETSIZE, NFDBITS) * sizeof(fd_mask) * 6];
+	struct timeval atv;
+	int s, ncoll, error = 0, timo;
+	size_t ni;
+	extern int	selwait, nselcoll;
+	extern int selscan __P((struct proc *, fd_mask *, fd_mask *, int, register_t *));
 
-	SPARC32TO64_UAP(nd);
-	SPARC32TOP_UAP(in, fd_set);
-	SPARC32TOP_UAP(ou, fd_set);
-	SPARC32TOP_UAP(ex, fd_set);
-	tv32p = (struct sparc32_timeval *)(u_long)SCARG(uap, tv);
-	if (tv32p) {
-		if (copyin(tv32p &tv32, sizeof(tv32)))
-			return EFAULT;
-		sparc32_to_timeval(&tv32, &tv);
+	if (SCARG(uap, nd) < 0)
+		return (EINVAL);
+	if (SCARG(uap, nd) > p->p_fd->fd_nfiles) {
+		/* forgiving; slightly wrong */
+		SCARG(uap, nd) = p->p_fd->fd_nfiles;
 	}
-	SCARG(&ua, tv) = &tv;
+	ni = howmany(SCARG(uap, nd), NFDBITS) * sizeof(fd_mask);
+	if (ni * 6 > sizeof(smallbits))
+		bits = malloc(ni * 6, M_TEMP, M_WAITOK);
+	else
+		bits = smallbits;
 
-	error = sys_select(p, &ua, retval);
-	if (tv32p) {
-		sparc32_from_timeval(&tv, &tv32);
-		if (copyout(&tv32 tv32p, sizeof(tv32)))
-			return EFAULT;
+#define	getbits(name, x) \
+	if (SCARG(uap, name)) { \
+		error = copyin((caddr_t)(u_long)SCARG(uap, name), bits + ni * x, ni); \
+		if (error) \
+			goto done; \
+	} else \
+		memset(bits + ni * x, 0, ni);
+	getbits(in, 0);
+	getbits(ou, 1);
+	getbits(ex, 2);
+#undef	getbits
+
+	if (SCARG(uap, tv)) {
+		error = copyin((caddr_t)(u_long)SCARG(uap, tv), (caddr_t)&tv32,
+			sizeof(tv32));
+		if (error)
+			goto done;
+		sparc32_to_timeval(&tv32, &atv);
+		if (itimerfix(&atv)) {
+			error = EINVAL;
+			goto done;
+		}
+		s = splclock();
+		timeradd(&atv, &time, &atv);
+		timo = hzto(&atv);
+		/*
+		 * Avoid inadvertently sleeping forever.
+		 */
+		if (timo == 0)
+			timo = 1;
+		splx(s);
+	} else
+		timo = 0;
+retry:
+	ncoll = nselcoll;
+	p->p_flag |= P_SELECT;
+	error = selscan(p, (fd_mask *)(bits + ni * 0),
+			   (fd_mask *)(bits + ni * 3), SCARG(uap, nd), retval);
+	if (error || *retval)
+		goto done;
+	s = splhigh();
+	if (timo && timercmp(&time, &atv, >=)) {
+		splx(s);
+		goto done;
 	}
-
+	if ((p->p_flag & P_SELECT) == 0 || nselcoll != ncoll) {
+		splx(s);
+		goto retry;
+	}
+	p->p_flag &= ~P_SELECT;
+	error = tsleep((caddr_t)&selwait, PSOCK | PCATCH, "select", timo);
+	splx(s);
+	if (error == 0)
+		goto retry;
+done:
+	p->p_flag &= ~P_SELECT;
+	/* select is not restarted after signals... */
+	if (error == ERESTART)
+		error = EINTR;
+	if (error == EWOULDBLOCK)
+		error = 0;
+	if (error == 0) {
+#define	putbits(name, x) \
+		if (SCARG(uap, name)) { \
+			error = copyout(bits + ni * x, (caddr_t)(u_long)SCARG(uap, name), ni); \
+			if (error) \
+				goto out; \
+		}
+		putbits(in, 3);
+		putbits(ou, 4);
+		putbits(ex, 5);
+#undef putbits
+	}
+out:
+	if (ni * 6 > sizeof(smallbits))
+		free(bits, M_TEMP);
 	return (error);
+}
+
+int
+compat_sparc32_fsync(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_sparc32_fsync_args /* {
+		syscallarg(int) fd;
+	} */ *uap = v;
+	struct sys_fsync_args ua;
+
+	SPARC32TO64_UAP(fd);
+	return (sys_fsync(p, &ua, retval));
+}
+
+int
+compat_sparc32_setpriority(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_sparc32_setpriority_args /* {
+		syscallarg(int) which;
+		syscallarg(int) who;
+		syscallarg(int) prio;
+	} */ *uap = v;
+	struct sys_setpriority_args ua;
+
+	SPARC32TO64_UAP(which);
+	SPARC32TO64_UAP(who);
+	SPARC32TO64_UAP(prio);
+	return (sys_setpriority(p, &ua, retval));
+}
+
+int
+compat_sparc32_socket(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_sparc32_socket_args /* {
+		syscallarg(int) domain;
+		syscallarg(int) type;
+		syscallarg(int) protocol;
+	} */ *uap = v;
+	struct sys_socket_args ua;
+
+	SPARC32TO64_UAP(domain);
+	SPARC32TO64_UAP(type);
+	SPARC32TO64_UAP(protocol);
+	return (sys_socket(p, &ua, retval));
 }
 
 int
@@ -1574,6 +2216,23 @@ compat_sparc32_connect(p, v, retval)
 	return (sys_connect(p, &ua, retval));
 }
 
+int
+compat_sparc32_getpriority(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_sparc32_getpriority_args /* {
+		syscallarg(int) which;
+		syscallarg(int) who;
+	} */ *uap = v;
+	struct sys_getpriority_args ua;
+
+	SPARC32TO64_UAP(which);
+	SPARC32TO64_UAP(who);
+	return (sys_getpriority(p, &ua, retval));
+}
+
 #undef DEBUG
 int
 compat_sparc32_sigreturn(p, v, retval)
@@ -1588,7 +2247,7 @@ compat_sparc32_sigreturn(p, v, retval)
 	struct sparc32_sigcontext sc;
 	register struct trapframe *tf;
 	struct rwindow32 *rwstack, *kstack;
-	int i;
+	sigset_t mask;
 
 	/* First ensure consistent stack state (see sendsig). */
 	write_user_windows();
@@ -1606,8 +2265,8 @@ compat_sparc32_sigreturn(p, v, retval)
 		if (sigdebug & SDB_DDB) Debugger();
 	}
 #endif
-	scp = SCARG(uap, sigcntxp);
- 	if ((int)scp & 3 || (copyin((caddr_t)scp, &sc, sizeof sc) != 0))
+	scp = (struct sparc32_sigcontext *)(u_long)SCARG(uap, sigcntxp);
+ 	if ((vaddr_t)scp & 3 || (copyin((caddr_t)scp, &sc, sizeof sc) != 0))
 #ifdef DEBUG
 	{
 		printf("sigreturn: copyin failed\n");
@@ -1642,31 +2301,6 @@ compat_sparc32_sigreturn(p, v, retval)
 	tf->tf_out[6] = (int64_t)sc.sc_sp;
 	rwstack = (struct rwindow32 *)tf->tf_out[6];
 	kstack = (struct rwindow32 *)(((caddr_t)tf)-CCFSZ);
-	for (i=0; i<8; i++) {
-		int tmp;
-		if (copyin((caddr_t)&rwstack->rw_local[i], &tmp, sizeof tmp)) {
-			printf("sigreturn: cannot load \%l%d from %p\n", i, &rwstack->rw_local[i]);
-			Debugger();
-		}
-		tf->tf_local[i] = (int64_t)tmp;
-		if (copyin((caddr_t)&rwstack->rw_in[i], &tmp, sizeof tmp)) {
-			printf("sigreturn: cannot load \%i%d from %p\n", i, &rwstack->rw_in[i]);
-			Debugger();
-		}
-		tf->tf_in[i] = (int)tmp;
-	}
-#ifdef DEBUG
-	/* Need to sync tf locals and ins with stack to prevent panic */
-	{
-		int i;
-
-		kstack = (struct rwindow32 *)tf->tf_out[6];
-		for (i=0; i<8; i++) {
-			tf->tf_local[i] = fuword(&kstack->rw_local[i]);
-			tf->tf_in[i] = fuword(&kstack->rw_in[i]);
-		}
-	}
-#endif
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW) {
 		printf("sys_sigreturn: return trapframe pc=%p sp=%p tstate=%x\n",
@@ -1674,11 +2308,14 @@ compat_sparc32_sigreturn(p, v, retval)
 		if (sigdebug & SDB_DDB) Debugger();
 	}
 #endif
-	if (sc.sc_onstack & 1)
+	if (scp->sc_onstack & SS_ONSTACK)
 		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
 		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
-	p->p_sigmask = sc.sc_mask & ~sigcantmask;
+
+	/* Restore signal mask */
+	native_sigset13_to_sigset(&scp->sc_mask, &mask);
+	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
 	return (EJUSTRETURN);
 }
 
@@ -1694,12 +2331,12 @@ compat_sparc32_bind(p, v, retval)
 		syscallarg(const sparc32_sockaddrp_t) name;
 		syscallarg(int) namelen;
 	} */ *uap = v;
-	struct sys_connect_args ua;
+	struct sys_bind_args ua;
 
 	SPARC32TO64_UAP(s);
 	SPARC32TOP_UAP(name, struct sockaddr);
 	SPARC32TO64_UAP(namelen);
-	return (sys_connect(p, &ua, retval));
+	return (sys_bind(p, &ua, retval));
 }
 
 int
@@ -1722,7 +2359,46 @@ compat_sparc32_setsockopt(p, v, retval)
 	SPARC32TO64_UAP(name);
 	SPARC32TOP_UAP(val, void);
 	SPARC32TO64_UAP(valsize);
+	/* may be more efficient to do this inline. */
 	return (sys_setsockopt(p, &ua, retval));
+}
+
+int
+compat_sparc32_listen(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_sparc32_listen_args /* {
+		syscallarg(int) s;
+		syscallarg(int) backlog;
+	} */ *uap = v;
+	struct sys_listen_args ua;
+
+	SPARC32TO64_UAP(s);
+	SPARC32TO64_UAP(backlog);
+	return (sys_listen(p, &ua, retval));
+}
+
+int
+compat_sparc32_vtrace(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+#ifdef TRACE
+	struct compat_sparc32_vtrace_args /* {
+		syscallarg(int) request;
+		syscallarg(int) value;
+	} */ *uap = v;
+	struct sys_vtrace_args ua;
+
+	SPARC32TO64_UAP(request);
+	SPARC32TO64_UAP(value);
+	return (vtrace(p, &ua, retval));
+#else
+	return (ENOSYS);
+#endif
 }
 
 int
@@ -1735,30 +2411,60 @@ compat_sparc32_gettimeofday(p, v, retval)
 		syscallarg(sparc32_timevalp_t) tp;
 		syscallarg(sparc32_timezonep_t) tzp;
 	} */ *uap = v;
-	struct sys_gettimeofday_args ua;
-	struct timeval tv;
-	struct sparc32_timeval *tv32p, tv32;
-	int error;
+	struct timeval atv;
+	struct sparc32_timeval tv32;
+	int error = 0;
+	struct sparc32_timezone tzfake;
 
-	tv32p = (struct sparc32_timeval *)(u_long)SCARG(uap, tp);
-	if (tv32p) {
-		SCARG(&ua, tp) = &tv;
-		if (copyin(tv32p, &tv32, sizeof(tv32)))
-			return EINVAL;
-		sparc32_to_timeval(tv32p, &tv);
-	} else
-		SCARG(&ua, tp) = NULL;
-	SPARC32TOP_UAP(tzp, struct timezone)
-		
-	error = sys_gettimeofday(p, &ua, retval);
-	if (error)
-		return (error);
+	if (SCARG(uap, tp)) {
+		microtime(&atv);
+		sparc32_from_timeval(&atv, &tv32);
+		error = copyout(&tv32, (caddr_t)(u_long)SCARG(uap, tp), sizeof(tv32));
+		if (error)
+			return (error);
+	}
+	if (SCARG(uap, tzp)) {
+		/*
+		 * NetBSD has no kernel notion of time zone, so we just
+		 * fake up a timezone struct and return it if demanded.
+		 */
+		tzfake.tz_minuteswest = 0;
+		tzfake.tz_dsttime = 0;
+		error = copyout(&tzfake, (caddr_t)(u_long)SCARG(uap, tzp), sizeof(tzfake));
+	}
+	return (error);
+}
 
-	if (tv32p)
-		sparc32_from_timeval(&tv, tv32p);
-	
+static int settime __P((struct timeval *));
+/* This function is used by clock_settime and settimeofday */
+static int
+settime(tv)
+	struct timeval *tv;
+{
+	struct timeval delta;
+	int s;
+
+	/* WHAT DO WE DO ABOUT PENDING REAL-TIME TIMEOUTS??? */
+	s = splclock();
+	timersub(tv, &time, &delta);
+	if ((delta.tv_sec < 0 || delta.tv_usec < 0) && securelevel > 1)
+		return (EPERM);
+#ifdef notyet
+	if ((delta.tv_sec < 86400) && securelevel > 0)
+		return (EPERM);
+#endif
+	time = *tv;
+	(void) splsoftclock();
+	timeradd(&boottime, &delta, &boottime);
+	timeradd(&runtime, &delta, &runtime);
+#	if defined(NFS) || defined(NFSSERVER)
+		nqnfs_lease_updatetime(delta.tv_sec);
+#	endif
+	splx(s);
+	resettodr();
 	return (0);
 }
+
 
 int
 compat_sparc32_settimeofday(p, v, retval)
@@ -1770,27 +2476,103 @@ compat_sparc32_settimeofday(p, v, retval)
 		syscallarg(const sparc32_timevalp_t) tv;
 		syscallarg(const sparc32_timezonep_t) tzp;
 	} */ *uap = v;
-	struct sys_settimeofday_args ua;
-	struct timeval tv;
-	struct sparc32_timeval *tv32p;
+	struct sparc32_timeval atv32;
+	struct timeval atv;
+	struct sparc32_timezone atz;
 	int error;
 
-	tv32p = (struct sparc32_timeval *)(u_long)SCARG(uap, tv);
-	if (tv32p) {
-		SCARG(&ua, tv) = &tv;
-		sparc32_to_timeval(tv32p, &tv);
-	} else
-		SCARG(&ua, tv) = NULL;
-	SPARC32TOP_UAP(tzp, struct timezone)
-		
-	error = sys_settimeofday(p, &ua, retval);
-	if (error)
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
-
-	if (tv32p)
-		sparc32_from_timeval(&tv, tv32p);
-	
+	/* Verify all parameters before changing time. */
+	if (SCARG(uap, tv) && (error = copyin((caddr_t)(u_long)SCARG(uap, tv),
+	    &atv32, sizeof(atv32))))
+		return (error);
+	sparc32_to_timeval(&atv32, &atv);
+	/* XXX since we don't use tz, probably no point in doing copyin. */
+	if (SCARG(uap, tzp) && (error = copyin((caddr_t)(u_long)SCARG(uap, tzp),
+	    &atz, sizeof(atz))))
+		return (error);
+	if (SCARG(uap, tv))
+		if ((error = settime(&atv)))
+			return (error);
+	/*
+	 * NetBSD has no kernel notion of time zone, and only an
+	 * obsolete program would try to set it, so we log a warning.
+	 */
+	if (SCARG(uap, tzp))
+		printf("pid %d attempted to set the "
+		    "(obsolete) kernel time zone\n", p->p_pid); 
 	return (0);
+}
+
+int
+compat_sparc32_fchown(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_sparc32_fchown_args /* {
+		syscallarg(int) fd;
+		syscallarg(uid_t) uid;
+		syscallarg(gid_t) gid;
+	} */ *uap = v;
+	struct sys_fchown_args ua;
+
+	SPARC32TO64_UAP(fd);
+	SPARC32TO64_UAP(uid);
+	SPARC32TO64_UAP(gid);
+	return (sys_fchown(p, &ua, retval));
+}
+
+int
+compat_sparc32_fchmod(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_sparc32_fchmod_args /* {
+		syscallarg(int) fd;
+		syscallarg(mode_t) mode;
+	} */ *uap = v;
+	struct sys_fchmod_args ua;
+
+	SPARC32TO64_UAP(fd);
+	SPARC32TO64_UAP(mode);
+	return (sys_fchmod(p, &ua, retval));
+}
+
+int
+compat_sparc32_setreuid(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_sparc32_setreuid_args /* {
+		syscallarg(uid_t) ruid;
+		syscallarg(uid_t) euid;
+	} */ *uap = v;
+	struct sys_setreuid_args ua;
+
+	SPARC32TO64_UAP(ruid);
+	SPARC32TO64_UAP(euid);
+	return (sys_setreuid(p, &ua, retval));
+}
+
+int
+compat_sparc32_setregid(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_sparc32_setregid_args /* {
+		syscallarg(gid_t) rgid;
+		syscallarg(gid_t) egid;
+	} */ *uap = v;
+	struct sys_setregid_args ua;
+
+	SPARC32TO64_UAP(rgid);
+	SPARC32TO64_UAP(egid);
+	return (sys_setregid(p, &ua, retval));
 }
 
 int
@@ -1803,24 +2585,25 @@ compat_sparc32_getrusage(p, v, retval)
 		syscallarg(int) who;
 		syscallarg(sparc32_rusagep_t) rusage;
 	} */ *uap = v;
-	struct sys_getrusage_args ua;
-	struct rusage ru;
-	struct sparc32_rusage *ru32p;
-	int error;
+	struct rusage *rup;
+	struct sparc32_rusage ru;
 
-	SPARC32TO64_UAP(who);
-	ru32p = (struct sparc32_rusage *)(u_long)SCARG(uap, rusage);
-	if (ru32p) {
-		SCARG(&ua, rusage) = &ru;
-		sparc32_to_rusage(ru32p, &ru);
-	} else
-		SCARG(&ua, rusage) = NULL;
+	switch (SCARG(uap, who)) {
 
-	error = sys_getrusage(p, &ua, retval);
-	if (ru32p)
-		sparc32_from_rusage(&ru, ru32p);
+	case RUSAGE_SELF:
+		rup = &p->p_stats->p_ru;
+		calcru(p, &rup->ru_utime, &rup->ru_stime, NULL);
+		break;
 
-	return (error);
+	case RUSAGE_CHILDREN:
+		rup = &p->p_stats->p_cru;
+		break;
+
+	default:
+		return (EINVAL);
+	}
+	sparc32_from_rusage(rup, &ru);
+	return (copyout(&ru, (caddr_t)(u_long)SCARG(uap, rusage), sizeof(ru)));
 }
 
 int
@@ -1841,7 +2624,7 @@ compat_sparc32_getsockopt(p, v, retval)
 	SPARC32TO64_UAP(s);
 	SPARC32TO64_UAP(level);
 	SPARC32TO64_UAP(name);
-	SPARC32TOP_UAP(val, void)
+	SPARC32TOP_UAP(val, void);
 	SPARC32TOP_UAP(avalsize, int);
 	return (sys_getsockopt(p, &ua, retval));
 }
@@ -1857,24 +2640,107 @@ compat_sparc32_readv(p, v, retval)
 		syscallarg(const sparc32_iovecp_t) iovp;
 		syscallarg(int) iovcnt;
 	} */ *uap = v;
-	struct sys_readv_args ua;
-	struct iovec *iov;
-	ssize_t rt;
-	int error;
+	int fd = SCARG(uap, fd);
+	register struct file *fp;
+	register struct filedesc *fdp = p->p_fd;
 
-	SPARC32TO64_UAP(fd)
-	SPARC32TO64_UAP(iovcnt);
-	MALLOC(iov, struct iovec *,
-	    sizeof(struct iovec) * SCARG(uap, iovcnt), M_TEMP, M_WAITOK);
-	sparc32_to_iovec((struct sparc32_iovec *)(u_long)SCARG(uap, iovp), iov,
-	    SCARG(uap, iovcnt));
-	SCARG(&ua, iovp) = iov;
+	if ((u_int)fd >= fdp->fd_nfiles ||
+	    (fp = fdp->fd_ofiles[fd]) == NULL ||
+	    (fp->f_flag & FREAD) == 0)
+		return (EBADF);
 
-	error = sys_readv(p, &ua, (register_t *)&rt);
-	FREE(iov, M_TEMP);
-	*(sparc32_ssize_t *)retval = rt;
+	return (dofilereadv32(p, fd, fp, (struct sparc32_iovec *)(u_long)SCARG(uap, iovp), 
+			      SCARG(uap, iovcnt), &fp->f_offset, FOF_UPDATE_OFFSET, retval));
+}
+
+/* Damn thing copies in the iovec! */
+int
+dofilereadv32(p, fd, fp, iovp, iovcnt, offset, flags, retval)
+	struct proc *p;
+	int fd;
+	struct file *fp;
+	struct sparc32_iovec *iovp;
+	int iovcnt;
+	off_t *offset;
+	int flags;
+	register_t *retval;
+{
+	struct uio auio;
+	register struct iovec *iov;
+	struct iovec *needfree;
+	struct iovec aiov[UIO_SMALLIOV];
+	long i, cnt, error = 0;
+	u_int iovlen;
+#ifdef KTRACE
+	struct iovec *ktriov = NULL;
+#endif
+
+	/* note: can't use iovlen until iovcnt is validated */
+	iovlen = iovcnt * sizeof(struct iovec);
+	if ((u_int)iovcnt > UIO_SMALLIOV) {
+		if ((u_int)iovcnt > IOV_MAX)
+			return (EINVAL);
+		MALLOC(iov, struct iovec *, iovlen, M_IOV, M_WAITOK);
+		needfree = iov;
+	} else if ((u_int)iovcnt > 0) {
+		iov = aiov;
+		needfree = NULL;
+	} else
+		return (EINVAL);
+
+	auio.uio_iov = iov;
+	auio.uio_iovcnt = iovcnt;
+	auio.uio_rw = UIO_READ;
+	auio.uio_segflg = UIO_USERSPACE;
+	auio.uio_procp = p;
+	error = sparc32_to_iovecin(iovp, iov, iovcnt);
+	if (error)
+		goto done;
+	auio.uio_resid = 0;
+	for (i = 0; i < iovcnt; i++) {
+		auio.uio_resid += iov->iov_len;
+		/*
+		 * Reads return ssize_t because -1 is returned on error.
+		 * Therefore we must restrict the length to SSIZE_MAX to
+		 * avoid garbage return values.
+		 */
+		if (iov->iov_len > SSIZE_MAX || auio.uio_resid > SSIZE_MAX) {
+			error = EINVAL;
+			goto done;
+		}
+		iov++;
+	}
+#ifdef KTRACE
+	/*
+	 * if tracing, save a copy of iovec
+	 */
+	if (KTRPOINT(p, KTR_GENIO))  {
+		MALLOC(ktriov, struct iovec *, iovlen, M_TEMP, M_WAITOK);
+		memcpy((caddr_t)ktriov, (caddr_t)auio.uio_iov, iovlen);
+	}
+#endif
+	cnt = auio.uio_resid;
+	error = (*fp->f_ops->fo_read)(fp, offset, &auio, fp->f_cred, flags);
+	if (error)
+		if (auio.uio_resid != cnt && (error == ERESTART ||
+		    error == EINTR || error == EWOULDBLOCK))
+			error = 0;
+	cnt -= auio.uio_resid;
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_GENIO))
+		if (error == 0) {
+			ktrgenio(p->p_tracep, fd, UIO_READ, ktriov, cnt,
+			    error);
+		FREE(ktriov, M_TEMP);
+	}
+#endif
+	*retval = cnt;
+done:
+	if (needfree)
+		FREE(needfree, M_IOV);
 	return (error);
 }
+
 
 int
 compat_sparc32_writev(p, v, retval)
@@ -1887,24 +2753,109 @@ compat_sparc32_writev(p, v, retval)
 		syscallarg(const sparc32_iovecp_t) iovp;
 		syscallarg(int) iovcnt;
 	} */ *uap = v;
-	struct sys_writev_args ua;
-	struct iovec *iov;
-	ssize_t rt;
-	int error;
+	int fd = SCARG(uap, fd);
+	register struct file *fp;
+	register struct filedesc *fdp = p->p_fd;
 
-	SPARC32TO64_UAP(fd)
-	SPARC32TO64_UAP(iovcnt);
-	MALLOC(iov, struct iovec *, sizeof(struct iovec) * SCARG(uap, iovcnt),
-	    M_TEMP, M_WAITOK);
-	sparc32_to_iovec((struct sparc32_iovec *)(u_long)SCARG(uap, iovp), iov,
-	    SCARG(uap, iovcnt));
-	SCARG(&ua, iovp) = iov;
+	if ((u_int)fd >= fdp->fd_nfiles ||
+	    (fp = fdp->fd_ofiles[fd]) == NULL ||
+	    (fp->f_flag & FWRITE) == 0)
+		return (EBADF);
 
-	error = sys_writev(p, &ua, (register_t *)&rt);
-	FREE(iov, M_TEMP);
-	*(sparc32_ssize_t *)retval = rt;
+	return (dofilewritev32(p, fd, fp, (struct sparc32_iovec *)(u_long)SCARG(uap, iovp),
+			       SCARG(uap, iovcnt), &fp->f_offset, FOF_UPDATE_OFFSET, retval));
+}
+
+int
+dofilewritev32(p, fd, fp, iovp, iovcnt, offset, flags, retval)
+	struct proc *p;
+	int fd;
+	struct file *fp;
+	struct sparc32_iovec *iovp;
+	int iovcnt;
+	off_t *offset;
+	int flags;
+	register_t *retval;
+{
+	struct uio auio;
+	register struct iovec *iov;
+	struct iovec *needfree;
+	struct iovec aiov[UIO_SMALLIOV];
+	long i, cnt, error = 0;
+	u_int iovlen;
+#ifdef KTRACE
+	struct iovec *ktriov = NULL;
+#endif
+
+	/* note: can't use iovlen until iovcnt is validated */
+	iovlen = iovcnt * sizeof(struct iovec);
+	if ((u_int)iovcnt > UIO_SMALLIOV) {
+		if ((u_int)iovcnt > IOV_MAX)
+			return (EINVAL);
+		MALLOC(iov, struct iovec *, iovlen, M_IOV, M_WAITOK);
+		needfree = iov;
+	} else if ((u_int)iovcnt > 0) {
+		iov = aiov;
+		needfree = NULL;
+	} else
+		return (EINVAL);
+
+	auio.uio_iov = iov;
+	auio.uio_iovcnt = iovcnt;
+	auio.uio_rw = UIO_WRITE;
+	auio.uio_segflg = UIO_USERSPACE;
+	auio.uio_procp = p;
+	error = sparc32_to_iovecin(iovp, iov, iovcnt);
+	if (error)
+		goto done;
+	auio.uio_resid = 0;
+	for (i = 0; i < iovcnt; i++) {
+		auio.uio_resid += iov->iov_len;
+		/*
+		 * Writes return ssize_t because -1 is returned on error.
+		 * Therefore we must restrict the length to SSIZE_MAX to
+		 * avoid garbage return values.
+		 */
+		if (iov->iov_len > SSIZE_MAX || auio.uio_resid > SSIZE_MAX) {
+			error = EINVAL;
+			goto done;
+		}
+		iov++;
+	}
+#ifdef KTRACE
+	/*
+	 * if tracing, save a copy of iovec
+	 */
+	if (KTRPOINT(p, KTR_GENIO))  {
+		MALLOC(ktriov, struct iovec *, iovlen, M_TEMP, M_WAITOK);
+		memcpy((caddr_t)ktriov, (caddr_t)auio.uio_iov, iovlen);
+	}
+#endif
+	cnt = auio.uio_resid;
+	error = (*fp->f_ops->fo_write)(fp, offset, &auio, fp->f_cred, flags);
+	if (error) {
+		if (auio.uio_resid != cnt && (error == ERESTART ||
+		    error == EINTR || error == EWOULDBLOCK))
+			error = 0;
+		if (error == EPIPE)
+			psignal(p, SIGPIPE);
+	}
+	cnt -= auio.uio_resid;
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_GENIO))
+		if (error == 0) {
+			ktrgenio(p->p_tracep, fd, UIO_WRITE, ktriov, cnt,
+			    error);
+		FREE(ktriov, M_TEMP);
+	}
+#endif
+	*retval = cnt;
+done:
+	if (needfree)
+		FREE(needfree, M_IOV);
 	return (error);
 }
+
 
 int
 compat_sparc32_rename(p, v, retval)
@@ -1918,9 +2869,28 @@ compat_sparc32_rename(p, v, retval)
 	} */ *uap = v;
 	struct sys_rename_args ua;
 
-	SPARC32TOP_UAP(from, const char)
-	SPARC32TOP_UAP(to, const char)
+	SPARC32TOP_UAP(from, const char *);
+	SPARC32TOP_UAP(to, const char *)
+
 	return (sys_rename(p, &ua, retval));
+}
+
+int
+compat_sparc32_flock(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_sparc32_flock_args /* {
+		syscallarg(int) fd;
+		syscallarg(int) how;
+	} */ *uap = v;
+	struct sys_flock_args ua;
+
+	SPARC32TO64_UAP(fd);
+	SPARC32TO64_UAP(how)
+
+	return (sys_flock(p, &ua, retval));
 }
 
 int
@@ -1938,6 +2908,45 @@ compat_sparc32_mkfifo(p, v, retval)
 	SPARC32TOP_UAP(path, const char)
 	SPARC32TO64_UAP(mode);
 	return (sys_mkfifo(p, &ua, retval));
+}
+
+int
+compat_sparc32_shutdown(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_sparc32_shutdown_args /* {
+		syscallarg(int) s;
+		syscallarg(int) how;
+	} */ *uap = v;
+	struct sys_shutdown_args ua;
+
+	SPARC32TO64_UAP(s)
+	SPARC32TO64_UAP(how);
+	return (sys_shutdown(p, &ua, retval));
+}
+
+int
+compat_sparc32_socketpair(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_sparc32_socketpair_args /* {
+		syscallarg(int) domain;
+		syscallarg(int) type;
+		syscallarg(int) protocol;
+		syscallarg(sparc32_intp) rsv;
+	} */ *uap = v;
+	struct sys_socketpair_args ua;
+
+	SPARC32TO64_UAP(domain);
+	SPARC32TO64_UAP(type);
+	SPARC32TO64_UAP(protocol);
+	SPARC32TOP_UAP(rsv, int);
+	/* Since we're just copying out two `int's we can do this */
+	return (sys_socketpair(p, &ua, retval));
 }
 
 int
@@ -1982,19 +2991,54 @@ compat_sparc32_utimes(p, v, retval)
 		syscallarg(const sparc32_charp) path;
 		syscallarg(const sparc32_timevalp_t) tptr;
 	} */ *uap = v;
-	struct sys_utimes_args ua;
-	struct timeval tv;
-	struct sparc32_timeval *tv32p;
+	int error;
+	struct nameidata nd;
 
-	SPARC32TOP_UAP(path, const char);
-	tv32p = (struct sparc32_timeval *)(u_long)SCARG(uap, tptr);
-	if (tv32p) {
-		SCARG(&ua, tptr) = &tv;
-		sparc32_to_timeval(tv32p, &tv);
-	} else
-		SCARG(&ua, tptr) = NULL;
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, (char *)(u_long)SCARG(uap, path), p);
+	if ((error = namei(&nd)) != 0)
+		return (error);
 
-	return (sys_utimes(p, &ua, retval));
+	error = change_utimes32(nd.ni_vp, (struct timeval *)(u_long)SCARG(uap, tptr), p);
+
+	vrele(nd.ni_vp);
+	return (error);
+}
+
+/*
+ * Common routine to set access and modification times given a vnode.
+ */
+static int
+change_utimes32(vp, tptr, p)
+	struct vnode *vp;
+	struct timeval *tptr;
+	struct proc *p;
+{
+	struct sparc32_timeval tv32[2];
+	struct timeval tv[2];
+	struct vattr vattr;
+	int error;
+
+	VATTR_NULL(&vattr);
+	if (tptr == NULL) {
+		microtime(&tv[0]);
+		tv[1] = tv[0];
+		vattr.va_vaflags |= VA_UTIMES_NULL;
+	} else {
+		error = copyin(tptr, tv, sizeof(tv));
+		if (error)
+			return (error);
+	}
+	sparc32_to_timeval(&tv32[0], &tv[0]);
+	sparc32_to_timeval(&tv32[1], &tv[1]);
+	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	vattr.va_atime.tv_sec = tv[0].tv_sec;
+	vattr.va_atime.tv_nsec = tv[0].tv_usec * 1000;
+	vattr.va_mtime.tv_sec = tv[1].tv_sec;
+	vattr.va_mtime.tv_nsec = tv[1].tv_usec * 1000;
+	error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
+	VOP_UNLOCK(vp, 0);
+	return (error);
 }
 
 int
@@ -2007,29 +3051,52 @@ compat_sparc32_adjtime(p, v, retval)
 		syscallarg(const sparc32_timevalp_t) delta;
 		syscallarg(sparc32_timevalp_t) olddelta;
 	} */ *uap = v;
-	struct sys_adjtime_args ua;
-	struct timeval tv, otv;
-	struct sparc32_timeval *tv32p, *otv32p;
-	int error;
+	struct sparc32_timeval atv;
+	int32_t ndelta, ntickdelta, odelta;
+	int s, error;
+	extern long bigadj, timedelta;
+	extern int tickdelta;
 
-	tv32p = (struct sparc32_timeval *)(u_long)SCARG(uap, delta);
-	otv32p = (struct sparc32_timeval *)(u_long)SCARG(uap, olddelta);
-
-	if (tv32p) {
-		SCARG(&ua, delta) = &tv;
-		sparc32_to_timeval(tv32p, &tv);
-	} else
-		SCARG(&ua, delta) = NULL;
-	if (otv32p)
-		SCARG(&ua, olddelta) = &otv;
-	else
-		SCARG(&ua, olddelta) = NULL;
-	error = sys_adjtime(p, &ua, retval);
-	if (error)
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
 
-	if (otv32p)
-		sparc32_from_timeval(&otv, otv32p);
+	error = copyin((caddr_t)(u_long)SCARG(uap, delta), &atv, sizeof(struct timeval));
+	if (error)
+		return (error);
+	/*
+	 * Compute the total correction and the rate at which to apply it.
+	 * Round the adjustment down to a whole multiple of the per-tick
+	 * delta, so that after some number of incremental changes in
+	 * hardclock(), tickdelta will become zero, lest the correction
+	 * overshoot and start taking us away from the desired final time.
+	 */
+	ndelta = atv.tv_sec * 1000000 + atv.tv_usec;
+	if (ndelta > bigadj)
+		ntickdelta = 10 * tickadj;
+	else
+		ntickdelta = tickadj;
+	if (ndelta % ntickdelta)
+		ndelta = ndelta / ntickdelta * ntickdelta;
+
+	/*
+	 * To make hardclock()'s job easier, make the per-tick delta negative
+	 * if we want time to run slower; then hardclock can simply compute
+	 * tick + tickdelta, and subtract tickdelta from timedelta.
+	 */
+	if (ndelta < 0)
+		ntickdelta = -ntickdelta;
+	s = splclock();
+	odelta = timedelta;
+	timedelta = ndelta;
+	tickdelta = ntickdelta;
+	splx(s);
+
+	if (SCARG(uap, olddelta)) {
+		atv.tv_sec = odelta / 1000000;
+		atv.tv_usec = odelta % 1000000;
+		(void) copyout(&atv, (caddr_t)(u_long)SCARG(uap, olddelta),
+		    sizeof(struct timeval));
+	}
 	return (0);
 }
 
@@ -2054,12 +3121,14 @@ compat_sparc32_quotactl(p, v, retval)
 	return (sys_quotactl(p, &ua, retval));
 }
 
+#if defined(NFS) || defined(NFSSERVER)
 int
 compat_sparc32_nfssvc(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
+#if 0
 	struct compat_sparc32_nfssvc_args /* {
 		syscallarg(int) flag;
 		syscallarg(sparc32_voidp) argp;
@@ -2069,7 +3138,12 @@ compat_sparc32_nfssvc(p, v, retval)
 	SPARC32TO64_UAP(flag);
 	SPARC32TOP_UAP(argp, void);
 	return (sys_nfssvc(p, &ua, retval));
+#else
+	/* Why would we want to support a 32-bit nfsd? */
+	return (ENOSYS);
+#endif
 }
+#endif
 
 int
 compat_sparc32_statfs(p, v, retval)
@@ -2081,27 +3155,23 @@ compat_sparc32_statfs(p, v, retval)
 		syscallarg(const sparc32_charp) path;
 		syscallarg(sparc32_statfsp_t) buf;
 	} */ *uap = v;
-	struct sys_statfs_args ua;
-	struct statfs sb;
-	struct sparc32_statfs *sb32p;
-	caddr_t sg;
+	register struct mount *mp;
+	register struct statfs *sp;
+	struct sparc32_statfs s32;
 	int error;
+	struct nameidata nd;
 
-	SPARC32TOP_UAP(path, const char);
-	sb32p = (struct sparc32_statfs *)(u_long)SCARG(uap, buf);
-	if (sb32p)
-		SCARG(&ua, buf) = &sb;
-	else
-		SCARG(&ua, buf) = NULL;
-	sg = stackgap_init(p->p_emul);
-	SPARC32_CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
-	error = sys_statfs(p, &ua, retval);
-	if (error)
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, (char *)(u_long)SCARG(uap, path), p);
+	if ((error = namei(&nd)) != 0)
 		return (error);
-
-	if (sb32p)
-		sparc32_from_statfs(&sb, sb32p);
-	return (0);
+	mp = nd.ni_vp->v_mount;
+	sp = &mp->mnt_stat;
+	vrele(nd.ni_vp);
+	if ((error = VFS_STATFS(mp, sp, p)) != 0)
+		return (error);
+	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
+	sparc32_from_statfs(sp, &s32);
+	return (copyout(&s32, (caddr_t)(u_long)SCARG(uap, buf), sizeof(s32)));
 }
 
 int
@@ -2114,26 +3184,24 @@ compat_sparc32_fstatfs(p, v, retval)
 		syscallarg(int) fd;
 		syscallarg(sparc32_statfsp_t) buf;
 	} */ *uap = v;
-	struct sys_fstatfs_args ua;
-	struct statfs sb;
-	struct sparc32_statfs *sb32p;
+	struct file *fp;
+	register struct mount *mp;
+	register struct statfs *sp;
+	struct sparc32_statfs s32;
 	int error;
 
-	SPARC32TO64_UAP(fd);
-	sb32p = (struct sparc32_statfs *)(u_long)SCARG(uap, buf);
-	if (sb32p)
-		SCARG(&ua, buf) = &sb;
-	else
-		SCARG(&ua, buf) = NULL;
-	error = sys_fstatfs(p, &ua, retval);
-	if (error)
+	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
-
-	if (sb32p)
-		sparc32_from_statfs(&sb, sb32p);
-	return (0);
+	mp = ((struct vnode *)fp->f_data)->v_mount;
+	sp = &mp->mnt_stat;
+	if ((error = VFS_STATFS(mp, sp, p)) != 0)
+		return (error);
+	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
+	sparc32_from_statfs(sp, &s32);
+	return (copyout(&s32, (caddr_t)(u_long)SCARG(uap, buf), sizeof(s32)));
 }
 
+#if defined(NFS) || defined(NFSSERVER)
 int
 compat_sparc32_getfh(p, v, retval)
 	struct proc *p;
@@ -2148,8 +3216,10 @@ compat_sparc32_getfh(p, v, retval)
 
 	SPARC32TOP_UAP(fname, const char);
 	SPARC32TOP_UAP(fhp, struct fhandle);
+	/* Lucky for us a fhandlep_t doesn't change sizes */
 	return (sys_getfh(p, &ua, retval));
 }
+#endif
 
 int
 compat_sparc32_sysarch(p, v, retval)
@@ -2161,11 +3231,12 @@ compat_sparc32_sysarch(p, v, retval)
 		syscallarg(int) op;
 		syscallarg(sparc32_voidp) parms;
 	} */ *uap = v;
-	struct sys_sysarch_args ua;
 
-	SPARC32TO64_UAP(op);
-	SPARC32TOP_UAP(parms, void);
-	return (sys_getfh(p, &ua, retval));
+	switch (SCARG(uap, op)) {
+	default:
+		printf("(sparc64) compat_sparc32_sysarch(%d)\n", SCARG(uap, op));
+		return EINVAL;
+	}
 }
 
 int
@@ -2222,6 +3293,7 @@ compat_sparc32_pwrite(p, v, retval)
 	return (error);
 }
 
+#ifdef NTP
 int
 compat_sparc32_ntp_gettime(p, v, retval)
 	struct proc *p;
@@ -2231,26 +3303,87 @@ compat_sparc32_ntp_gettime(p, v, retval)
 	struct compat_sparc32_ntp_gettime_args /* {
 		syscallarg(sparc32_ntptimevalp_t) ntvp;
 	} */ *uap = v;
-	struct sys_ntp_gettime_args ua;
+	struct sparc32_ntptimeval ntv32;
+	struct timeval atv;
 	struct ntptimeval ntv;
-	struct sparc32_ntptimeval *ntv32p;
-	int error;
+	int error = 0;
+	int s;
 
-	ntv32p = (struct sparc32_ntptimeval *)(u_long)SCARG(uap, ntvp);
-	if (ntv32p)
-		SCARG(&ua, ntvp) = &ntv;
-	else
-		SCARG(&ua, ntvp) = NULL;
-	error = sys_ntp_gettime(p, &ua, retval);
-	if (error)
-		return (error);
+	/* The following are NTP variables */
+	extern long time_maxerror;
+	extern long time_esterror;
+	extern int time_status;
+	extern int time_state;	/* clock state */
+	extern int time_status;	/* clock status bits */
 
-	if (ntv32p) {
-		sparc32_from_timeval(&ntv, ntv32p);
+	if (SCARG(uap, ntvp)) {
+		s = splclock();
+#ifdef EXT_CLOCK
+		/*
+		 * The microtime() external clock routine returns a
+		 * status code. If less than zero, we declare an error
+		 * in the clock status word and return the kernel
+		 * (software) time variable. While there are other
+		 * places that call microtime(), this is the only place
+		 * that matters from an application point of view.
+		 */
+		if (microtime(&atv) < 0) {
+			time_status |= STA_CLOCKERR;
+			ntv.time = time;
+		} else
+			time_status &= ~STA_CLOCKERR;
+#else /* EXT_CLOCK */
+		microtime(&atv);
+#endif /* EXT_CLOCK */
+		ntv.time = atv;
+		ntv.maxerror = time_maxerror;
+		ntv.esterror = time_esterror;
+		(void) splx(s);
+
+		sparc32_from_timeval(&ntv.time, &ntv32.time);
 		ntv32.maxerror = (sparc32_long)ntv.maxerror;
 		ntv32.esterror = (sparc32_long)ntv.esterror;
+		error = copyout((caddr_t)&ntv32, (caddr_t)(u_long)SCARG(uap, ntvp),
+		    sizeof(ntv32));
 	}
-	return (0);
+	if (!error) {
+
+		/*
+		 * Status word error decode. If any of these conditions
+		 * occur, an error is returned, instead of the status
+		 * word. Most applications will care only about the fact
+		 * the system clock may not be trusted, not about the
+		 * details.
+		 *
+		 * Hardware or software error
+		 */
+		if ((time_status & (STA_UNSYNC | STA_CLOCKERR)) ||
+
+		/*
+		 * PPS signal lost when either time or frequency
+		 * synchronization requested
+		 */
+		    (time_status & (STA_PPSFREQ | STA_PPSTIME) &&
+		    !(time_status & STA_PPSSIGNAL)) ||
+
+		/*
+		 * PPS jitter exceeded when time synchronization
+		 * requested
+		 */
+		    (time_status & STA_PPSTIME &&
+		    time_status & STA_PPSJITTER) ||
+
+		/*
+		 * PPS wander exceeded or calibration error when
+		 * frequency synchronization requested
+		 */
+		    (time_status & STA_PPSFREQ &&
+		    time_status & (STA_PPSWANDER | STA_PPSERROR)))
+			*retval = TIME_ERROR;
+		else
+			*retval = (register_t)time_state;
+	}
+	return(error);
 }
 
 int
@@ -2262,38 +3395,166 @@ compat_sparc32_ntp_adjtime(p, v, retval)
 	struct compat_sparc32_ntp_adjtime_args /* {
 		syscallarg(sparc32_timexp_t) tp;
 	} */ *uap = v;
-	struct sys_ntp_adjtime_args ua;
-	struct timex tx;
-	struct sparc32_timex *tx32p;
-	int error;
+	struct sparc32_timex ntv32;
+	struct timex ntv;
+	int error = 0;
+	int modes;
+	int s;
+	extern long time_freq;		/* frequency offset (scaled ppm) */
+	extern long time_maxerror;
+	extern long time_esterror;
+	extern int time_state;	/* clock state */
+	extern int time_status;	/* clock status bits */
+	extern long time_constant;		/* pll time constant */
+	extern long time_offset;		/* time offset (us) */
+	extern long time_tolerance;	/* frequency tolerance (scaled ppm) */
+	extern long time_precision;	/* clock precision (us) */
 
-	tx32p = (struct sparc32_timex *)(u_long)SCARG(uap, tp);
-	if (tx32p) {
-		SCARG(&ua, tp) = &tx;
-		sparc32_to_timex(tx32p, &tx);
-	} else
-		SCARG(&ua, tp) = NULL;
-	error = sys_ntp_adjtime(p, &ua, retval);
-	if (error)
+	if ((error = copyin((caddr_t)(u_long)SCARG(uap, tp), (caddr_t)&ntv32,
+			sizeof(ntv32))))
+		return (error);
+	sparc32_to_timex(&ntv32, &ntv);
+
+	/*
+	 * Update selected clock variables - only the superuser can
+	 * change anything. Note that there is no error checking here on
+	 * the assumption the superuser should know what it is doing.
+	 */
+	modes = ntv.modes;
+	if (modes != 0 && (error = suser(p->p_ucred, &p->p_acflag)))
 		return (error);
 
-	if (tx32p)
-		sparc32_from_timeval(&tx, tx32p);
-	return (0);
+	s = splclock();
+	if (modes & MOD_FREQUENCY)
+#ifdef PPS_SYNC
+		time_freq = ntv.freq - pps_freq;
+#else /* PPS_SYNC */
+		time_freq = ntv.freq;
+#endif /* PPS_SYNC */
+	if (modes & MOD_MAXERROR)
+		time_maxerror = ntv.maxerror;
+	if (modes & MOD_ESTERROR)
+		time_esterror = ntv.esterror;
+	if (modes & MOD_STATUS) {
+		time_status &= STA_RONLY;
+		time_status |= ntv.status & ~STA_RONLY;
+	}
+	if (modes & MOD_TIMECONST)
+		time_constant = ntv.constant;
+	if (modes & MOD_OFFSET)
+		hardupdate(ntv.offset);
+
+	/*
+	 * Retrieve all clock variables
+	 */
+	if (time_offset < 0)
+		ntv.offset = -(-time_offset >> SHIFT_UPDATE);
+	else
+		ntv.offset = time_offset >> SHIFT_UPDATE;
+#ifdef PPS_SYNC
+	ntv.freq = time_freq + pps_freq;
+#else /* PPS_SYNC */
+	ntv.freq = time_freq;
+#endif /* PPS_SYNC */
+	ntv.maxerror = time_maxerror;
+	ntv.esterror = time_esterror;
+	ntv.status = time_status;
+	ntv.constant = time_constant;
+	ntv.precision = time_precision;
+	ntv.tolerance = time_tolerance;
+#ifdef PPS_SYNC
+	ntv.shift = pps_shift;
+	ntv.ppsfreq = pps_freq;
+	ntv.jitter = pps_jitter >> PPS_AVG;
+	ntv.stabil = pps_stabil;
+	ntv.calcnt = pps_calcnt;
+	ntv.errcnt = pps_errcnt;
+	ntv.jitcnt = pps_jitcnt;
+	ntv.stbcnt = pps_stbcnt;
+#endif /* PPS_SYNC */
+	(void)splx(s);
+
+	sparc32_from_timeval(&ntv, &ntv32);
+	error = copyout((caddr_t)&ntv32, (caddr_t)SCARG(uap, tp), sizeof(ntv32));
+	if (!error) {
+
+		/*
+		 * Status word error decode. See comments in
+		 * ntp_gettime() routine.
+		 */
+		if ((time_status & (STA_UNSYNC | STA_CLOCKERR)) ||
+		    (time_status & (STA_PPSFREQ | STA_PPSTIME) &&
+		    !(time_status & STA_PPSSIGNAL)) ||
+		    (time_status & STA_PPSTIME &&
+		    time_status & STA_PPSJITTER) ||
+		    (time_status & STA_PPSFREQ &&
+		    time_status & (STA_PPSWANDER | STA_PPSERROR)))
+			*retval = TIME_ERROR;
+		else
+			*retval = (register_t)time_state;
+	}
+	return error;
+}
+#endif
+
+int
+compat_sparc32_setgid(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_sparc32_setgid_args /* {
+		syscallarg(gid_t) gid;
+	} */ *uap = v;
+	struct sys_setgid_args ua;
+
+	SPARC32TO64_UAP(gid);
+	return (sys_setgid(p, v, retval));
 }
 
+int
+compat_sparc32_setegid(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_sparc32_setegid_args /* {
+		syscallarg(gid_t) egid;
+	} */ *uap = v;
+	struct sys_setegid_args ua;
+
+	SPARC32TO64_UAP(egid);
+	return (sys_setegid(p, v, retval));
+}
+
+int
+compat_sparc32_seteuid(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_sparc32_seteuid_args /* {
+		syscallarg(gid_t) euid;
+	} */ *uap = v;
+	struct sys_seteuid_args ua;
+
+	SPARC32TO64_UAP(euid);
+	return (sys_seteuid(p, v, retval));
+}
+
+#ifdef LFS
 int
 compat_sparc32_lfs_bmapv(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
+#if 0
 	struct compat_sparc32_lfs_bmapv_args /* {
 		syscallarg(sparc32_fsid_tp_t) fsidp;
 		syscallarg(sparc32_block_infop_t) blkiov;
 		syscallarg(int) blkcnt;
 	} */ *uap = v;
-#if 0
 	struct sys_lfs_bmapv_args ua;
 
 	SPARC32TOP_UAP(fdidp, struct fsid);
@@ -2345,6 +3606,7 @@ compat_sparc32_lfs_segwait(p, v, retval)
 	} */ *uap = v;
 	return (ENOSYS);	/* XXX */
 }
+#endif
 
 int
 compat_sparc32_pathconf(p, v, retval)
@@ -2398,11 +3660,12 @@ compat_sparc32_getrlimit(p, v, retval)
 		syscallarg(int) which;
 		syscallarg(sparc32_rlimitp_t) rlp;
 	} */ *uap = v;
-	struct sys_getrlimit_args ua;
+	int which = SCARG(uap, which);
 
-	SPARC32TO64_UAP(which);
-	SPARC32TOP_UAP(rlp, struct rlimit);
-	return (sys_getrlimit(p, &ua, retval));
+	if ((u_int)which >= RLIM_NLIMITS)
+		return (EINVAL);
+	return (copyout(&p->p_rlimit[which], (caddr_t)(u_long)SCARG(uap, rlp),
+	    sizeof(struct rlimit)));
 }
 
 int
@@ -2415,11 +3678,14 @@ compat_sparc32_setrlimit(p, v, retval)
 		syscallarg(int) which;
 		syscallarg(const sparc32_rlimitp_t) rlp;
 	} */ *uap = v;
-	struct sys_setrlimit_args ua;
+		int which = SCARG(uap, which);
+	struct rlimit alim;
+	int error;
 
-	SPARC32TO64_UAP(which);
-	SPARC32TOP_UAP(rlp, struct rlimit);
-	return (sys_setrlimit(p, &ua, retval));
+	error = copyin((caddr_t)(u_long)SCARG(uap, rlp), &alim, sizeof(struct rlimit));
+	if (error)
+		return (error);
+	return (dosetrlimit(p, which, &alim));
 }
 
 int
@@ -2457,6 +3723,27 @@ compat_sparc32_mmap(p, v, retval)
 }
 
 int
+compat_sparc32_lseek(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_sparc32_lseek_args /* {
+		syscallarg(int) fd;
+		syscallarg(int) pad;
+		syscallarg(off_t) offset;
+		syscallarg(int) whence;
+	} */ *uap = v;
+	struct sys_lseek_args ua;
+
+	SPARC32TO64_UAP(fd);
+	SPARC32TO64_UAP(pad);
+	SPARC32TO64_UAP(offset);
+	SPARC32TO64_UAP(whence);
+	return (sys_lseek(p, &ua, retval));
+}
+
+int
 compat_sparc32_truncate(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -2476,6 +3763,25 @@ compat_sparc32_truncate(p, v, retval)
 }
 
 int
+compat_sparc32_ftruncate(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_sparc32_ftruncate_args /* {
+		syscallarg(int) fd;
+		syscallarg(int) pad;
+		syscallarg(off_t) length;
+	} */ *uap = v;
+	struct sys_ftruncate_args ua;
+
+	SPARC32TO64_UAP(fd);
+	SPARC32TO64_UAP(pad);
+	SPARC32TO64_UAP(length);
+	return (sys_ftruncate(p, &ua, retval));
+}
+
+int
 compat_sparc32___sysctl(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -2489,15 +3795,119 @@ compat_sparc32___sysctl(p, v, retval)
 		syscallarg(sparc32_voidp) new;
 		syscallarg(sparc32_size_t) newlen;
 	} */ *uap = v;
-	struct sys___sysctl_args ua;
+	int error, dolock = 1;
+	sparc32_size_t savelen = 0;
+	size_t oldlen = 0;
+	sysctlfn *fn;
+	int name[CTL_MAXNAME];
 
-	SPARC32TO64_UAP(namelen);
-	SPARC32TOP_UAP(name, int);
-	SPARC32TOP_UAP(old, void);
-	SPARC32TOP_UAP(oldlenp, size_t);
-	SPARC32TOP_UAP(new, void);
-	SPARC32TOX_UAP(newlen, size_t);
-	return (sys___sysctl(p, &ua, retval));
+/*
+ * Some of these sysctl functions do their own copyin/copyout.
+ * We need to disable or emulate the ones that need their
+ * arguments converted.
+ */
+
+	if (SCARG(uap, new) != NULL &&
+	    (error = suser(p->p_ucred, &p->p_acflag)))
+		return (error);
+	/*
+	 * all top-level sysctl names are non-terminal
+	 */
+	if (SCARG(uap, namelen) > CTL_MAXNAME || SCARG(uap, namelen) < 2)
+		return (EINVAL);
+	error = copyin((caddr_t)(u_long)SCARG(uap, name), &name,
+		       SCARG(uap, namelen) * sizeof(int));
+	if (error)
+		return (error);
+
+	switch (name[0]) {
+	case CTL_KERN:
+		fn = kern_sysctl;
+		if (name[2] != KERN_VNODE)	/* XXX */
+			dolock = 0;
+		break;
+	case CTL_HW:
+		fn = hw_sysctl;
+		break;
+	case CTL_VM:
+#if defined(UVM)
+		fn = uvm_sysctl;
+#else
+		fn = vm_sysctl;
+#endif
+		break;
+	case CTL_NET:
+		fn = net_sysctl;
+		break;
+	case CTL_VFS:
+		fn = vfs_sysctl;
+		break;
+	case CTL_MACHDEP:
+		fn = cpu_sysctl;
+		break;
+#ifdef DEBUG
+	case CTL_DEBUG:
+		fn = debug_sysctl;
+		break;
+#endif
+#ifdef DDB
+	case CTL_DDB:
+		fn = ddb_sysctl;
+		break;
+#endif
+	default:
+		return (EOPNOTSUPP);
+	}
+
+	if (SCARG(uap, oldlenp) &&
+	    (error = copyin((caddr_t)(u_long)SCARG(uap, oldlenp), &savelen, sizeof(savelen))))
+		return (error);
+	if (SCARG(uap, old) != NULL) {
+#if defined(UVM)
+		if (!uvm_useracc((caddr_t)(u_long)SCARG(uap, old), savelen, B_WRITE))
+#else
+		if (!useracc(SCARG(uap, old), savelen, B_WRITE))
+#endif
+			return (EFAULT);
+#if 0 /* XXXXXXXX */
+		while (memlock.sl_lock) {
+			memlock.sl_want = 1;
+			sleep((caddr_t)&memlock, PRIBIO+1);
+			memlock.sl_locked++;
+		}
+		memlock.sl_lock = 1;
+#endif /* XXXXXXXX */
+		if (dolock)
+#if defined(UVM)
+			uvm_vslock(p, SCARG(uap, old), savelen);
+#else
+			vslock(p, SCARG(uap, old), savelen);
+#endif
+		oldlen = savelen;
+	}
+	error = (*fn)(name + 1, SCARG(uap, namelen) - 1, SCARG(uap, old),
+	    &oldlen, SCARG(uap, new), SCARG(uap, newlen), p);
+	if (SCARG(uap, old) != NULL) {
+		if (dolock)
+#if defined(UVM)
+			uvm_vsunlock(p, SCARG(uap, old), savelen);
+#else
+			vsunlock(p, SCARG(uap, old), savelen);
+#endif
+#if 0 /* XXXXXXXXXXX */
+		memlock.sl_lock = 0;
+		if (memlock.sl_want) {
+			memlock.sl_want = 0;
+			wakeup((caddr_t)&memlock);
+		}
+#endif /* XXXXXXXXX */
+	}
+	savelen = oldlen;
+	if (error)
+		return (error);
+	if (SCARG(uap, oldlenp))
+		error = copyout(&savelen, (caddr_t)(u_long)SCARG(uap, oldlenp), sizeof(savelen));
+	return (error);
 }
 
 int
@@ -2559,18 +3969,29 @@ compat_sparc32_futimes(p, v, retval)
 		syscallarg(int) fd;
 		syscallarg(const sparc32_timevalp_t) tptr;
 	} */ *uap = v;
-	struct sys_futimes_args ua;
-	struct timeval tv;
-	struct sparc32_timeval *tv32p;
+	int error;
+	struct file *fp;
 
-	SPARC32TO64_UAP(fd);
-	tv32p = (struct sparc32_timeval *)(u_long)SCARG(uap, tptr);
-	if (tv32p) {
-		SCARG(&ua, tptr) = &tv;
-		sparc32_to_timeval(tv32p, &tv);
-	} else
-		SCARG(&ua, tptr) = NULL;
-	return (sys_futimes(p, &ua, retval));
+	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+		return (error);
+
+	return (change_utimes32((struct vnode *)fp->f_data, 
+				(struct timeval *)(u_long)SCARG(uap, tptr), p));
+}
+
+int
+compat_sparc32_getpgid(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_sparc32_getpgid_args /* {
+		syscallarg(pid_t) pid;
+	} */ *uap = v;
+	struct sys_getpgid_args ua;
+
+	SPARC32TO64_UAP(pid);
+	return (sys_getpgid(p, &ua, retval));
 }
 
 int
@@ -2609,55 +4030,178 @@ compat_sparc32_poll(p, v, retval)
 	return (sys_poll(p, &ua, retval));
 }
 
+/*
+ * XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+ *
+ * This is BSD.  We won't support System V IPC.
+ * Too much work.
+ *
+ * XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+ */
 int
 compat_sparc32___semctl(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
+#if 0
 	struct compat_sparc32___semctl_args /* {
 		syscallarg(int) semid;
 		syscallarg(int) semnum;
 		syscallarg(int) cmd;
 		syscallarg(sparc32_semunu_t) arg;
 	} */ *uap = v;
-	struct sys___semctl_args ua;
-	struct semid_ds ds, *dsp = &ds;
-	union sparc32_semun *sem32p;
-	int error;
+	union sparc32_semun sem32;
+	int semid = SCARG(uap, semid);
+	int semnum = SCARG(uap, semnum);
+	int cmd = SCARG(uap, cmd);
+	union sparc32_semun *arg = (void*)(u_long)SCARG(uap, arg);
+	union sparc32_semun real_arg;
+	struct ucred *cred = p->p_ucred;
+	int i, rval, eval;
+	struct sparc32_semid_ds sbuf;
+	register struct semid_ds *semaptr;
 
-	SPARC32TO64_UAP(semid);
-	SPARC32TO64_UAP(semnum);
-	SPARC32TO64_UAP(cmd);
-	sem32p = (union sparc32_semun *)(u_long)SCARG(uap, arg);
-	if (sem32p) {
-		SCARG(&ua, arg)->buf = dsp;
-		switch (SCARG(uap, cmd)) {
-		case IPC_SET:
-			sparc32_to_semid_ds(sem32.buf, &ds);
-			break;
-		case SETVAL:
-			SCARG(&ua, arg)->val = sem32.val;
-			break;
-		case SETALL:
-			SCARG(&ua, arg)->array = (u_short *)(u_long)sem32.array;
-			break;
+	semlock(p);
+
+	semid = IPCID_TO_IX(semid);
+	if (semid < 0 || semid >= seminfo.semmsl)
+		return(EINVAL);
+
+	semaptr = &sema[semid];
+	if ((semaptr->sem_perm.mode & SEM_ALLOC) == 0 ||
+	    semaptr->sem_perm.seq != IPCID_TO_SEQ(SCARG(uap, semid)))
+		return(EINVAL);
+
+	eval = 0;
+	rval = 0;
+
+	switch (cmd) {
+	case IPC_RMID:
+		if ((eval = ipcperm(cred, &semaptr->sem_perm, IPC_M)) != 0)
+			return(eval);
+		semaptr->sem_perm.cuid = cred->cr_uid;
+		semaptr->sem_perm.uid = cred->cr_uid;
+		semtot -= semaptr->sem_nsems;
+		for (i = semaptr->sem_base - sem; i < semtot; i++)
+			sem[i] = sem[i + semaptr->sem_nsems];
+		for (i = 0; i < seminfo.semmni; i++) {
+			if ((sema[i].sem_perm.mode & SEM_ALLOC) &&
+			    sema[i].sem_base > semaptr->sem_base)
+				sema[i].sem_base -= semaptr->sem_nsems;
 		}
-	} else
-		SCARG(&ua, arg) = NULL;
+		semaptr->sem_perm.mode = 0;
+		semundo_clear(semid, -1);
+		wakeup((caddr_t)semaptr);
+		break;
 
-	error = sys___semctl(p, &ua, retval);
-	if (error)
-		return (error);
+	case IPC_SET:
+		if ((eval = ipcperm(cred, &semaptr->sem_perm, IPC_M)))
+			return(eval);
+		if ((eval = copyin(arg, &real_arg, sizeof(real_arg))) != 0)
+			return(eval);
+		if ((eval = copyin((caddr_t)(u_long)real_arg.buf, (caddr_t)&sbuf,
+		    sizeof(sbuf))) != 0)
+			return(eval);
+		semaptr->sem_perm.uid = sbuf.sem_perm.uid;
+		semaptr->sem_perm.gid = sbuf.sem_perm.gid;
+		semaptr->sem_perm.mode = (semaptr->sem_perm.mode & ~0777) |
+		    (sbuf.sem_perm.mode & 0777);
+		semaptr->sem_ctime = time.tv_sec;
+		break;
 
-	if (sem32p) {
-		switch (SCARG(uap, cmd)) {
-		case IPC_STAT:
-			sparc32_from_semid_ds(&ds, sem32.buf);
-			break;
+	case IPC_STAT:
+		if ((eval = ipcperm(cred, &semaptr->sem_perm, IPC_R)))
+			return(eval);
+		if ((eval = copyin(arg, &real_arg, sizeof(real_arg))) != 0)
+			return(eval);
+		eval = copyout((caddr_t)semaptr, (caddr_t)(u_long)real_arg.buf,
+		    sizeof(struct semid_ds));
+		break;
+
+	case GETNCNT:
+		if ((eval = ipcperm(cred, &semaptr->sem_perm, IPC_R)))
+			return(eval);
+		if (semnum < 0 || semnum >= semaptr->sem_nsems)
+			return(EINVAL);
+		rval = semaptr->sem_base[semnum].semncnt;
+		break;
+
+	case GETPID:
+		if ((eval = ipcperm(cred, &semaptr->sem_perm, IPC_R)))
+			return(eval);
+		if (semnum < 0 || semnum >= semaptr->sem_nsems)
+			return(EINVAL);
+		rval = semaptr->sem_base[semnum].sempid;
+		break;
+
+	case GETVAL:
+		if ((eval = ipcperm(cred, &semaptr->sem_perm, IPC_R)))
+			return(eval);
+		if (semnum < 0 || semnum >= semaptr->sem_nsems)
+			return(EINVAL);
+		rval = semaptr->sem_base[semnum].semval;
+		break;
+
+	case GETALL:
+		if ((eval = ipcperm(cred, &semaptr->sem_perm, IPC_R)))
+			return(eval);
+		if ((eval = copyin(arg, &real_arg, sizeof(real_arg))) != 0)
+			return(eval);
+		for (i = 0; i < semaptr->sem_nsems; i++) {
+			eval = copyout((caddr_t)&semaptr->sem_base[i].semval,
+			    &real_arg.array[i], sizeof(real_arg.array[0]));
+			if (eval != 0)
+				break;
 		}
+		break;
+
+	case GETZCNT:
+		if ((eval = ipcperm(cred, &semaptr->sem_perm, IPC_R)))
+			return(eval);
+		if (semnum < 0 || semnum >= semaptr->sem_nsems)
+			return(EINVAL);
+		rval = semaptr->sem_base[semnum].semzcnt;
+		break;
+
+	case SETVAL:
+		if ((eval = ipcperm(cred, &semaptr->sem_perm, IPC_W)))
+			return(eval);
+		if (semnum < 0 || semnum >= semaptr->sem_nsems)
+			return(EINVAL);
+		if ((eval = copyin(arg, &real_arg, sizeof(real_arg))) != 0)
+			return(eval);
+		semaptr->sem_base[semnum].semval = real_arg.val;
+		semundo_clear(semid, semnum);
+		wakeup((caddr_t)semaptr);
+		break;
+
+	case SETALL:
+		if ((eval = ipcperm(cred, &semaptr->sem_perm, IPC_W)))
+			return(eval);
+		if ((eval = copyin(arg, &real_arg, sizeof(real_arg))) != 0)
+			return(eval);
+		for (i = 0; i < semaptr->sem_nsems; i++) {
+			eval = copyin(&real_arg.array[i],
+			    (caddr_t)&semaptr->sem_base[i].semval,
+			    sizeof(real_arg.array[0]));
+			if (eval != 0)
+				break;
+		}
+		semundo_clear(semid, -1);
+		wakeup((caddr_t)semaptr);
+		break;
+
+	default:
+		return(EINVAL);
 	}
-	return (0);
+
+	if (eval == 0)
+		*retval = rval;
+	return(eval);
+#else
+	return (ENOSYS);
+#endif
 }
 
 int
@@ -2699,11 +4243,27 @@ compat_sparc32_semop(p, v, retval)
 }
 
 int
+compat_sparc32_semconfig(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_sparc32_semconfig_args /* {
+		syscallarg(int) flag;
+	} */ *uap = v;
+	struct sys_semconfig_args ua;
+
+	SPARC32TO64_UAP(flag);
+	return (sys_semconfig(p, &ua, retval));
+}
+
+int
 compat_sparc32_msgctl(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
+#if 0
 	struct compat_sparc32_msgctl_args /* {
 		syscallarg(int) msqid;
 		syscallarg(int) cmd;
@@ -2729,6 +4289,9 @@ compat_sparc32_msgctl(p, v, retval)
 	if (ds32p)
 		sparc32_from_msqid_ds(&ds, ds32p);
 	return (0);
+#else
+	return (ENOSYS);
+#endif
 }
 
 int
@@ -2737,6 +4300,7 @@ compat_sparc32_msgget(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+#if 0
 	struct compat_sparc32_msgget_args /* {
 		syscallarg(sparc32_key_t) key;
 		syscallarg(int) msgflg;
@@ -2746,6 +4310,9 @@ compat_sparc32_msgget(p, v, retval)
 	SPARC32TOX_UAP(key, key_t);
 	SPARC32TO64_UAP(msgflg);
 	return (sys_msgget(p, &ua, retval));
+#else
+	return (ENOSYS);
+#endif
 }
 
 int
@@ -2754,6 +4321,7 @@ compat_sparc32_msgsnd(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+#if 0
 	struct compat_sparc32_msgsnd_args /* {
 		syscallarg(int) msqid;
 		syscallarg(const sparc32_voidp) msgp;
@@ -2767,6 +4335,9 @@ compat_sparc32_msgsnd(p, v, retval)
 	SPARC32TOX_UAP(msgsz, size_t);
 	SPARC32TO64_UAP(msgflg);
 	return (sys_msgsnd(p, &ua, retval));
+#else
+	return (ENOSYS);
+#endif
 }
 
 int
@@ -2775,6 +4346,7 @@ compat_sparc32_msgrcv(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+#if 0
 	struct compat_sparc32_msgrcv_args /* {
 		syscallarg(int) msqid;
 		syscallarg(sparc32_voidp) msgp;
@@ -2794,6 +4366,9 @@ compat_sparc32_msgrcv(p, v, retval)
 	error = sys_msgrcv(p, &ua, (register_t *)&rt);
 	*(sparc32_ssize_t *)retval = rt;
 	return (error);
+#else
+	return (ENOSYS);
+#endif
 }
 
 int
@@ -2802,6 +4377,7 @@ compat_sparc32_shmat(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+#if 0
 	struct compat_sparc32_shmat_args /* {
 		syscallarg(int) shmid;
 		syscallarg(const sparc32_voidp) shmaddr;
@@ -2817,6 +4393,9 @@ compat_sparc32_shmat(p, v, retval)
 	error = sys_shmat(p, &ua, (register_t *)&rt);
 	*retval = (sparc32_voidp)(u_long)rt;
 	return (error);
+#else
+	return (ENOSYS);
+#endif
 }
 
 int
@@ -2825,6 +4404,7 @@ compat_sparc32_shmctl(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+#if 0
 	struct compat_sparc32_shmctl_args /* {
 		syscallarg(int) shmid;
 		syscallarg(int) cmd;
@@ -2850,6 +4430,9 @@ compat_sparc32_shmctl(p, v, retval)
 	if (ds32p)
 		sparc32_from_shmid_ds(&ds, ds32p);
 	return (0);
+#else
+	return (ENOSYS);
+#endif
 }
 
 int
@@ -2858,6 +4441,7 @@ compat_sparc32_shmdt(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+#if 0
 	struct compat_sparc32_shmdt_args /* {
 		syscallarg(const sparc32_voidp) shmaddr;
 	} */ *uap = v;
@@ -2865,6 +4449,9 @@ compat_sparc32_shmdt(p, v, retval)
 
 	SPARC32TOP_UAP(shmaddr, const char);
 	return (sys_shmdt(p, &ua, retval));
+#else
+	return (ENOSYS);
+#endif
 }
 
 int
@@ -2873,6 +4460,7 @@ compat_sparc32_shmget(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+#if 0
 	struct compat_sparc32_shmget_args /* {
 		syscallarg(sparc32_key_t) key;
 		syscallarg(sparc32_size_t) size;
@@ -2884,6 +4472,9 @@ compat_sparc32_shmget(p, v, retval)
 	SPARC32TOX_UAP(size, size_t)
 	SPARC32TO64_UAP(shmflg);
 	return (sys_shmget(p, &ua, retval));
+#else
+	return (ENOSYS);
+#endif
 }
 
 int
@@ -2896,24 +4487,20 @@ compat_sparc32_clock_gettime(p, v, retval)
 		syscallarg(sparc32_clockid_t) clock_id;
 		syscallarg(sparc32_timespecp_t) tp;
 	} */ *uap = v;
-	struct sys_clock_gettime_args ua;
-	struct timespec ts;
-	struct sparc32_timespec *ts32p;
-	int error;
+	clockid_t clock_id;
+	struct timeval atv;
+	struct timespec ats;
+	struct sparc32_timespec ts32;
 
-	SPARC32TO64_UAP(clock_id);
-	ts32p = (struct sparc32_timespec *)(u_long)SCARG(uap, tp);
-	if (ts32p)
-		SCARG(&ua, tp) = &ts;
-	else
-		SCARG(&ua, tp) = NULL;
-	error = sys_clock_gettime(p, &ua, retval);
-	if (error)
-		return (error);
+	clock_id = SCARG(uap, clock_id);
+	if (clock_id != CLOCK_REALTIME)
+		return (EINVAL);
 
-	if (ts32p)
-		sparc32_from_timespec(&ts, ts32p);
-	return (0);
+	microtime(&atv);
+	TIMEVAL_TO_TIMESPEC(&atv,&ats);
+	sparc32_from_timespec(&ats, &ts32);
+
+	return copyout(&ts32, (caddr_t)(u_long)SCARG(uap, tp), sizeof(ts32));
 }
 
 int
@@ -2926,18 +4513,28 @@ compat_sparc32_clock_settime(p, v, retval)
 		syscallarg(sparc32_clockid_t) clock_id;
 		syscallarg(const sparc32_timespecp_t) tp;
 	} */ *uap = v;
-	struct sys_clock_settime_args ua;
-	struct timespec ts;
-	struct sparc32_timespec *ts32p;
+	struct sparc32_timespec ts32;
+	clockid_t clock_id;
+	struct timeval atv;
+	struct timespec ats;
+	int error;
 
-	SPARC32TO64_UAP(clock_id);
-	ts32p = (struct sparc32_timespec *)(u_long)SCARG(uap, tp);
-	if (ts32p) {
-		SCARG(&ua, tp) = &ts;
-		sparc32_to_timespec(ts32p, &ts);
-	} else
-		SCARG(&ua, tp) = NULL;
-	return (sys_clock_settime(p, &ua, retval));
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		return (error);
+
+	clock_id = SCARG(uap, clock_id);
+	if (clock_id != CLOCK_REALTIME)
+		return (EINVAL);
+
+	if ((error = copyin((caddr_t)(u_long)SCARG(uap, tp), &ts32, sizeof(ts32))) != 0)
+		return (error);
+
+	sparc32_to_timespec(&ts32, &ats);
+	TIMESPEC_TO_TIMEVAL(&atv,&ats);
+	if ((error = settime(&atv)))
+		return (error);
+
+	return 0;
 }
 
 int
@@ -2950,24 +4547,24 @@ compat_sparc32_clock_getres(p, v, retval)
 		syscallarg(sparc32_clockid_t) clock_id;
 		syscallarg(sparc32_timespecp_t) tp;
 	} */ *uap = v;
-	struct sys_clock_getres_args ua;
+	struct sparc32_timespec ts32;
+	clockid_t clock_id;
 	struct timespec ts;
-	struct sparc32_timespec *ts32p;
-	int error;
+	int error = 0;
 
-	SPARC32TO64_UAP(clock_id);
-	ts32p = (struct sparc32_timespec *)(u_long)SCARG(uap, tp);
-	if (ts32p)
-		SCARG(&ua, tp) = &ts;
-	else
-		SCARG(&ua, tp) = NULL;
-	error = sys_clock_getres(p, &ua, retval);
-	if (error)
-		return (error);
+	clock_id = SCARG(uap, clock_id);
+	if (clock_id != CLOCK_REALTIME)
+		return (EINVAL);
 
-	if (ts32p)
-		sparc32_from_timespec(&ts, ts32p);
-	return (0);
+	if (SCARG(uap, tp)) {
+		ts.tv_sec = 0;
+		ts.tv_nsec = 1000000000 / hz;
+
+		sparc32_from_timespec(&ts, &ts32);
+		error = copyout(&ts, (caddr_t)(u_long)SCARG(uap, tp), sizeof(ts));
+	}
+
+	return error;
 }
 
 int
@@ -2980,29 +4577,75 @@ compat_sparc32_nanosleep(p, v, retval)
 		syscallarg(const sparc32_timespecp_t) rqtp;
 		syscallarg(sparc32_timespecp_t) rmtp;
 	} */ *uap = v;
-	struct sys_nanosleep_args ua;
-	struct timespec qts, mts;
-	struct sparc32_timespec *qts32p, *mts32p;
-	int error;
-	
-	qts32p = (struct sparc32_timespec *)(u_long)SCARG(uap, rqtp);
-	mts32p = (struct sparc32_timespec *)(u_long)SCARG(uap, rmtp);
-	if (qts32p) {
-		SCARG(&ua, rqtp) = &qts;
-		sparc32_to_timespec(qts32p, &qts);
-	} else
-		SCARG(&ua, rqtp) = NULL;
-	if (mts32p) {
-		SCARG(&ua, rmtp) = &mts;
-	} else
-		SCARG(&ua, rmtp) = NULL;
-	error = sys_nanosleep(p, &ua, retval);
+	static int nanowait;
+	struct sparc32_timespec ts32;
+	struct timespec rqt;
+	struct timespec rmt;
+	struct timeval atv, utv;
+	int error, s, timo;
+
+	error = copyin((caddr_t)(u_long)SCARG(uap, rqtp), (caddr_t)&ts32,
+		       sizeof(ts32));
 	if (error)
 		return (error);
 
-	if (mts32p)
-		sparc32_from_timespec(&mts, mts32p);
-	return (0);
+	sparc32_to_timespec(&ts32, &rqt);
+	TIMESPEC_TO_TIMEVAL(&atv,&rqt)
+	if (itimerfix(&atv))
+		return (EINVAL);
+
+	s = splclock();
+	timeradd(&atv,&time,&atv);
+	timo = hzto(&atv);
+	/* 
+	 * Avoid inadvertantly sleeping forever
+	 */
+	if (timo == 0)
+		timo = 1;
+	splx(s);
+
+	error = tsleep(&nanowait, PWAIT | PCATCH, "nanosleep", timo);
+	if (error == ERESTART)
+		error = EINTR;
+	if (error == EWOULDBLOCK)
+		error = 0;
+
+	if (SCARG(uap, rmtp)) {
+		int error;
+
+		s = splclock();
+		utv = time;
+		splx(s);
+
+		timersub(&atv, &utv, &utv);
+		if (utv.tv_sec < 0)
+			timerclear(&utv);
+
+		TIMEVAL_TO_TIMESPEC(&utv,&rmt);
+		sparc32_from_timespec(&rmt, &ts32);
+		error = copyout((caddr_t)&ts32, (caddr_t)(u_long)SCARG(uap,rmtp),
+			sizeof(ts32));
+		if (error)
+			return (error);
+	}
+
+	return error;
+}
+
+int
+compat_sparc32_fdatasync(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_sparc32_fdatasync_args /* {
+		syscallarg(int) fd;
+	} */ *uap = v;
+	struct sys_fdatasync_args ua;
+
+	SPARC32TO64_UAP(fd);
+
+	return (sys_fdatasync(p, &ua, retval));
 }
 
 int
@@ -3017,8 +4660,9 @@ compat_sparc32___posix_rename(p, v, retval)
 	} */ *uap = v;
 	struct sys___posix_rename_args ua;
 
-	SPARC32TOP_UAP(from, const char)
-	SPARC32TOP_UAP(to, const char)
+	SPARC32TOP_UAP(from, const char *);
+	SPARC32TOP_UAP(to, const char *);
+
 	return (sys___posix_rename(p, &ua, retval));
 }
 
@@ -3052,13 +4696,19 @@ compat_sparc32_getdents(p, v, retval)
 		syscallarg(sparc32_charp) buf;
 		syscallarg(sparc32_size_t) count;
 	} */ *uap = v;
-	struct sys_getdents_args ua;
+	struct file *fp;
+	int error, done;
 
-	SPARC32TO64_UAP(fd);
-	SPARC32TOP_UAP(buf, char);
-	SPARC32TOX_UAP(count, size_t);
-	return (sys_getdents(p, &ua, retval));
+	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+		return (error);
+	if ((fp->f_flag & FREAD) == 0)
+		return (EBADF);
+	error = vn_readdir(fp, (caddr_t)(u_long)SCARG(uap, buf), UIO_USERSPACE,
+			SCARG(uap, count), &done, p, 0, 0);
+	*retval = done;
+	return (error);
 }
+
 
 int
 compat_sparc32_minherit(p, v, retval)
@@ -3125,19 +4775,19 @@ compat_sparc32_lutimes(p, v, retval)
 		syscallarg(const sparc32_charp) path;
 		syscallarg(const sparc32_timevalp_t) tptr;
 	} */ *uap = v;
-	struct sys_lutimes_args ua;
-	struct timeval tv;
-	struct sparc32_timeval *tv32p;
+	int error;
+	struct nameidata nd;
 
-	SPARC32TOP_UAP(path, const char);
-	tv32p = (struct sparc32_timeval *)(u_long)SCARG(uap, tptr);
-	if (tv32p) {
-		SCARG(&ua, tptr) = &tv;
-		sparc32_to_timeval(tv32p, &tv);
-	}
-		SCARG(&ua, tptr) = NULL;
-	return (sys_lutimes(p, &ua, retval));
+	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, (caddr_t)(u_long)SCARG(uap, path), p);
+	if ((error = namei(&nd)) != 0)
+		return (error);
+
+	error = change_utimes32(nd.ni_vp, (struct timeval *)(u_long)SCARG(uap, tptr), p);
+
+	vrele(nd.ni_vp);
+	return (error);
 }
+
 
 int
 compat_sparc32___msync13(p, v, retval)
@@ -3168,28 +4818,22 @@ compat_sparc32___stat13(p, v, retval)
 		syscallarg(const sparc32_charp) path;
 		syscallarg(sparc32_statp_t) ub;
 	} */ *uap = v;
-	struct sys___stat13_args ua;
+	struct sparc32_stat sb32;
 	struct stat sb;
-	struct sparc32_stat *sb32p;
-	caddr_t sg;
 	int error;
+	struct nameidata nd;
 
-	SPARC32TOP_UAP(path, const char);
-	sb32p = (struct sparc32_stat *)(u_long)SCARG(uap, ub);
-	if (sb32p)
-		SCARG(&ua, ub) = &sb;
-	else
-		SCARG(&ua, ub) = NULL;
-	sg = stackgap_init(p->p_emul);
-	SPARC32_CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
-
-	error = sys___stat13(p, &ua, retval);
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
+	    (caddr_t)(u_long)SCARG(uap, path), p);
+	if ((error = namei(&nd)) != 0)
+		return (error);
+	error = vn_stat(nd.ni_vp, &sb, p);
+	vput(nd.ni_vp);
 	if (error)
 		return (error);
-
-	if (sb32p)
-		sparc32_from___stat13(&sb, sb32p);
-	return (0);
+	sparc32_from___stat13(&sb, &sb32);
+	error = copyout(&sb32, (caddr_t)(u_long)SCARG(uap, ub), sizeof(sb32));
+	return (error);
 }
 
 int
@@ -3202,24 +4846,35 @@ compat_sparc32___fstat13(p, v, retval)
 		syscallarg(int) fd;
 		syscallarg(sparc32_statp_t) sb;
 	} */ *uap = v;
-	struct sys___fstat13_args ua;
-	struct stat sb;
-	struct sparc32_stat *sb32p;
-	int error;
+	int fd = SCARG(uap, fd);
+	register struct filedesc *fdp = p->p_fd;
+	register struct file *fp;
+	struct sparc32_stat sb32;
+	struct stat ub;
+	int error = 0;
 
-	SPARC32TO64_UAP(fd);
-	sb32p = (struct sparc32_stat *)(u_long)SCARG(uap, sb);
-	if (sb32p)
-		SCARG(&ua, sb) = &sb;
-	else
-		SCARG(&ua, sb) = NULL;
-	error = sys___fstat13(p, &ua, retval);
-	if (error)
-		return (error);
+	if ((u_int)fd >= fdp->fd_nfiles ||
+	    (fp = fdp->fd_ofiles[fd]) == NULL)
+		return (EBADF);
+	switch (fp->f_type) {
 
-	if (sb32p)
-		sparc32_from___stat13(&sb, sb32p);
-	return (0);
+	case DTYPE_VNODE:
+		error = vn_stat((struct vnode *)fp->f_data, &ub, p);
+		break;
+
+	case DTYPE_SOCKET:
+		error = soo_stat((struct socket *)fp->f_data, &ub);
+		break;
+
+	default:
+		panic("fstat");
+		/*NOTREACHED*/
+	}
+	if (error == 0) {
+		sparc32_from___stat13(&ub, &sb32);
+		error = copyout(&sb32, (caddr_t)(u_long)SCARG(uap, sb), sizeof(sb32));
+	}
+	return (error);
 }
 
 int
@@ -3232,28 +4887,22 @@ compat_sparc32___lstat13(p, v, retval)
 		syscallarg(const sparc32_charp) path;
 		syscallarg(sparc32_statp_t) ub;
 	} */ *uap = v;
-
-	struct sys___lstat13_args ua;
+	struct sparc32_stat sb32;
 	struct stat sb;
-	struct sparc32_stat *sb32p;
-	caddr_t sg;
 	int error;
+	struct nameidata nd;
 
-	SPARC32TOP_UAP(path, const char);
-	sb32p = (struct sparc32_stat *)(u_long)SCARG(uap, ub);
-	if (sb32p)
-		SCARG(&ua, ub) = &sb;
-	else
-		SCARG(&ua, ub) = NULL;
-	sg = stackgap_init(p->p_emul);
-	SPARC32_CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
-	error = sys___lstat13(p, &ua, retval);
+	NDINIT(&nd, LOOKUP, NOFOLLOW | LOCKLEAF, UIO_USERSPACE,
+	    (caddr_t)(u_long)SCARG(uap, path), p);
+	if ((error = namei(&nd)) != 0)
+		return (error);
+	error = vn_stat(nd.ni_vp, &sb, p);
+	vput(nd.ni_vp);
 	if (error)
 		return (error);
-
-	if (sb32p)
-		sparc32_from___stat13(&sb, sb32p);
-	return (0);
+	sparc32_from___stat13(&sb, &sb32);
+	error = copyout(&sb32, (caddr_t)(u_long)SCARG(uap, ub), sizeof(sb32));
+	return (error);
 }
 
 int
@@ -3266,33 +4915,29 @@ compat_sparc32___sigaltstack14(p, v, retval)
 		syscallarg(const sparc32_sigaltstackp_t) nss;
 		syscallarg(sparc32_sigaltstackp_t) oss;
 	} */ *uap = v;
-	struct sys___sigaltstack14_args ua;
-	struct sparc32_sigaltstack *nss32, *oss32;
+	struct sparc32_sigaltstack s32;
 	struct sigaltstack nss, oss;
 	int error;
 
-	nss32 = (struct sparc32_sigaltstack *)(u_long)SCARG(uap, nss);
-	oss32 = (struct sparc32_sigaltstack *)(u_long)SCARG(uap, oss);
-	if (nss32) {
-		SCARG(&ua, nss) = &nss;
-		nss.ss_sp = (void *)(u_long)nss32->ss_sp;
-		nss.ss_size = (size_t)nss32->ss_size;
-		nss.ss_flags = nss32->ss_flags;
-	} else
-		SCARG(&ua, nss) = NULL;
-	if (oss32)
-		SCARG(&ua, oss) = &oss;
-	else
-		SCARG(&ua, oss) = NULL;
-
-	error = sys___sigaltstack14(p, &ua, retval);
+	if (SCARG(uap, nss)) {
+		error = copyin((caddr_t)(u_long)SCARG(uap, nss), &s32, sizeof(s32));
+		if (error)
+			return (error);
+		nss.ss_sp = (void *)(u_long)s32.ss_sp;
+		nss.ss_size = (size_t)s32.ss_size;
+		nss.ss_flags = s32.ss_flags;
+	}
+	error = sigaltstack1(p,
+	    SCARG(uap, nss) ? &nss : 0, SCARG(uap, oss) ? &oss : 0);
 	if (error)
 		return (error);
-
-	if (oss32) {
-		oss32->ss_sp = (sparc32_voidp)(u_long)oss.ss_sp;
-		oss32->ss_size = (sparc32_size_t)oss.ss_size;
-		oss32->ss_flags = oss.ss_flags;
+	if (SCARG(uap, oss)) {
+		s32.ss_sp = (sparc32_voidp)(u_long)oss.ss_sp;
+		s32.ss_size = (sparc32_size_t)oss.ss_size;
+		s32.ss_flags = oss.ss_flags;
+		error = copyout(&s32, (caddr_t)(u_long)SCARG(uap, oss), sizeof(s32));
+		if (error)
+			return (error);
 	}
 	return (0);
 }
@@ -3317,6 +4962,25 @@ compat_sparc32___posix_chown(p, v, retval)
 }
 
 int
+compat_sparc32___posix_fchown(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_sparc32___posix_fchown_args /* {
+		syscallarg(int) fd;
+		syscallarg(uid_t) uid;
+		syscallarg(gid_t) gid;
+	} */ *uap = v;
+	struct sys___posix_fchown_args ua;
+
+	SPARC32TO64_UAP(fd);
+	SPARC32TO64_UAP(uid);
+	SPARC32TO64_UAP(gid);
+	return (sys___posix_fchown(p, &ua, retval));
+}
+
+int
 compat_sparc32___posix_lchown(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -3336,6 +5000,42 @@ compat_sparc32___posix_lchown(p, v, retval)
 }
 
 int
+compat_sparc32_getsid(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_sparc32_getsid_args /* {
+		syscallarg(pid_t) pid;
+	} */ *uap = v;
+	struct sys_getsid_args ua;
+
+	SPARC32TO64_UAP(pid);
+	return (sys_getsid(p, &ua, retval));
+}
+
+int
+compat_sparc32_fktrace(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_sparc32_fktrace_args /* {
+		syscallarg(const int) fd;
+		syscallarg(int) ops;
+		syscallarg(int) facs;
+		syscallarg(int) pid;
+	} */ *uap = v;
+	struct sys_fktrace_args ua;
+
+	SPARC32TO64_UAP(fd);
+	SPARC32TO64_UAP(ops);
+	SPARC32TO64_UAP(facs);
+	SPARC32TO64_UAP(pid);
+	return (sys_fktrace(p, &ua, retval));
+}
+
+int
 compat_sparc32_preadv(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -3348,25 +5048,33 @@ compat_sparc32_preadv(p, v, retval)
 		syscallarg(int) pad;
 		syscallarg(off_t) offset;
 	} */ *uap = v;
-	struct sys_preadv_args ua;
-	struct iovec *iov;
-	ssize_t rt;
-	int error;
+	struct filedesc *fdp = p->p_fd;
+	struct file *fp;
+	struct vnode *vp;
+	off_t offset;
+	int error, fd = SCARG(uap, fd);
 
-	SPARC32TO64_UAP(fd);
-	SPARC32TO64_UAP(iovcnt);
-	SPARC32TO64_UAP(pad);
-	SPARC32TO64_UAP(offset);
-	MALLOC(iov, struct iovec *, sizeof(struct iovec) * SCARG(uap, iovcnt),
-	    M_TEMP, M_WAITOK);
-	sparc32_to_iovec((struct sparc32_iovec *)(u_long)SCARG(uap, iovp), iov,
-	    SCARG(uap, iovcnt));
-	SCARG(&ua, iovp) = iov;
+	if ((u_int)fd >= fdp->fd_nfiles ||
+	    (fp = fdp->fd_ofiles[fd]) == NULL ||
+	    (fp->f_flag & FREAD) == 0)
+		return (EBADF);
 
-	error = sys_preadv(p, &ua, (register_t *)&rt);
-	FREE(iov, M_TEMP);
-	*(sparc32_ssize_t *)retval = rt;
-	return (error);
+	vp = (struct vnode *)fp->f_data;
+	if (fp->f_type != DTYPE_VNODE
+	    || vp->v_type == VFIFO)
+		return (ESPIPE);
+
+	offset = SCARG(uap, offset);
+
+	/*
+	 * XXX This works because no file systems actually
+	 * XXX take any action on the seek operation.
+	 */
+	if ((error = VOP_SEEK(vp, fp->f_offset, offset, fp->f_cred)) != 0)
+		return (error);
+
+	return (dofilereadv32(p, fd, fp, (struct sparc32_iovec *)(u_long)SCARG(uap, iovp), SCARG(uap, iovcnt),
+	    &offset, 0, retval));
 }
 
 int
@@ -3382,23 +5090,75 @@ compat_sparc32_pwritev(p, v, retval)
 		syscallarg(int) pad;
 		syscallarg(off_t) offset;
 	} */ *uap = v;
-	struct sys_pwritev_args ua;
-	struct iovec *iov;
-	ssize_t rt;
+	struct filedesc *fdp = p->p_fd;
+	struct file *fp;
+	struct vnode *vp;
+	off_t offset;
+	int error, fd = SCARG(uap, fd);
+
+	if ((u_int)fd >= fdp->fd_nfiles ||
+	    (fp = fdp->fd_ofiles[fd]) == NULL ||
+	    (fp->f_flag & FWRITE) == 0)
+		return (EBADF);
+
+	vp = (struct vnode *)fp->f_data;
+	if (fp->f_type != DTYPE_VNODE
+	    || vp->v_type == VFIFO)
+		return (ESPIPE);
+
+	offset = SCARG(uap, offset);
+
+	/*
+	 * XXX This works because no file systems actually
+	 * XXX take any action on the seek operation.
+	 */
+	if ((error = VOP_SEEK(vp, fp->f_offset, offset, fp->f_cred)) != 0)
+		return (error);
+
+	return (dofilewritev32(p, fd, fp, (struct sparc32_iovec *)(u_long)SCARG(uap, iovp), SCARG(uap, iovcnt),
+	    &offset, 0, retval));
+}
+
+
+
+int
+compat_13_compat_sparc32_sigprocmask(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_13_compat_sparc32_sigprocmask_args /* {
+		syscallarg(int) how;
+		syscallarg(int) mask;
+	} */ *uap = v;
+	sigset13_t ness, oess;
+	sigset_t nbss, obss;
 	int error;
 
-	SPARC32TO64_UAP(fd);
-	SPARC32TO64_UAP(iovcnt);
-	SPARC32TO64_UAP(pad);
-	SPARC32TO64_UAP(offset);
-	MALLOC(iov, struct iovec *, sizeof(struct iovec) * SCARG(uap, iovcnt),
-	    M_TEMP, M_WAITOK);
-	sparc32_to_iovec((struct sparc32_iovec *)(u_long)SCARG(uap, iovp), iov,
-	    SCARG(uap, iovcnt));
-	SCARG(&ua, iovp) = iov;
+	ness = SCARG(uap, mask);
+	native_sigset13_to_sigset(&ness, &nbss);
+	error = sigprocmask1(p, SCARG(uap, how), &nbss, &obss);
+	if (error)
+		return (error);
+	native_sigset_to_sigset13(&obss, &oess);
+	*retval = oess;
+	return (0);
+}
 
-	error = sys_pwritev(p, &ua, (register_t *)&rt);
-	FREE(iov, M_TEMP);
-	*(sparc32_ssize_t *)retval = rt;
-	return (error);
+
+int
+compat_13_compat_sparc32_sigsuspend(p, v, retval)
+	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_13_compat_sparc32_sigsuspend_args /* {
+		syscallarg(sigset13_t) mask;
+	} */ *uap = v;
+	sigset13_t ess;
+	sigset_t bss;
+
+	ess = SCARG(uap, mask);
+	native_sigset13_to_sigset(&ess, &bss);
+	return (sigsuspend1(p, &bss));
 }

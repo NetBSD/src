@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_syscallargs.h,v 1.3 1998/08/26 13:46:57 mrg Exp $	*/
+/*	$NetBSD: netbsd32_syscallargs.h,v 1.4 1998/10/01 14:27:57 eeh Exp $	*/
 
 /*
  * System call argument lists.
@@ -7,7 +7,25 @@
  * created from	NetBSD: syscalls.master,v 1.2 1998/08/26 13:42:50 mrg Exp 
  */
 
-#define	syscallarg(x)	union { x datum; register_t pad; }
+#ifdef	syscallarg
+#undef	syscallarg
+#endif
+
+#define	syscallarg(x)								\
+		union {								\
+			register32_t pad;						\
+			struct { x datum; } le;					\
+			struct {						\
+				int8_t pad[ (sizeof (register32_t) < sizeof (x))	\
+					? 0					\
+					: sizeof (register32_t) - sizeof (x)];	\
+				x datum;					\
+			} be;							\
+		}
+
+struct compat_sparc32_exit_args {
+	syscallarg(int) rval;
+};
 
 struct compat_sparc32_read_args {
 	syscallarg(int) fd;
@@ -25,6 +43,10 @@ struct compat_sparc32_open_args {
 	syscallarg(const sparc32_charp) path;
 	syscallarg(int) flags;
 	syscallarg(mode_t) mode;
+};
+
+struct compat_sparc32_close_args {
+	syscallarg(int) fd;
 };
 
 struct compat_sparc32_wait4_args {
@@ -50,6 +72,10 @@ struct compat_sparc32_unlink_args {
 
 struct compat_sparc32_chdir_args {
 	syscallarg(const sparc32_charp) path;
+};
+
+struct compat_sparc32_fchdir_args {
+	syscallarg(int) fd;
 };
 
 struct compat_sparc32_mknod_args {
@@ -95,6 +121,10 @@ struct compat_sparc32_mount_args {
 struct compat_sparc32_unmount_args {
 	syscallarg(const sparc32_charp) path;
 	syscallarg(int) flags;
+};
+
+struct compat_sparc32_setuid_args {
+	syscallarg(uid_t) uid;
 };
 
 struct compat_sparc32_ptrace_args {
@@ -158,6 +188,11 @@ struct compat_sparc32_fchflags_args {
 	syscallarg(sparc32_u_long) flags;
 };
 
+struct compat_sparc32_kill_args {
+	syscallarg(int) pid;
+	syscallarg(int) signum;
+};
+
 struct compat_43_compat_sparc32_stat43_args {
 	syscallarg(const sparc32_charp) path;
 	syscallarg(sparc32_stat43p_t) ub;
@@ -166,6 +201,10 @@ struct compat_43_compat_sparc32_stat43_args {
 struct compat_43_compat_sparc32_lstat43_args {
 	syscallarg(const sparc32_charp) path;
 	syscallarg(sparc32_stat43p_t) ub;
+};
+
+struct compat_sparc32_dup_args {
+	syscallarg(int) fd;
 };
 
 struct compat_sparc32_profil_args {
@@ -186,6 +225,11 @@ struct compat_sparc32_sigaction_args {
 	syscallarg(int) signum;
 	syscallarg(const sparc32_sigactionp_t) nsa;
 	syscallarg(sparc32_sigactionp_t) osa;
+};
+
+struct compat_13_compat_sparc32_sigprocmask_args {
+	syscallarg(int) how;
+	syscallarg(int) mask;
 };
 
 struct compat_sparc32___getlogin_args {
@@ -212,6 +256,10 @@ struct compat_sparc32_ioctl_args {
 	syscallarg(sparc32_voidp) data;
 };
 
+struct compat_12_compat_sparc32_reboot_args {
+	syscallarg(int) opt;
+};
+
 struct compat_sparc32_revoke_args {
 	syscallarg(const sparc32_charp) path;
 };
@@ -231,6 +279,10 @@ struct compat_sparc32_execve_args {
 	syscallarg(const sparc32_charp) path;
 	syscallarg(sparc32_charpp) argp;
 	syscallarg(sparc32_charpp) envp;
+};
+
+struct compat_sparc32_umask_args {
+	syscallarg(mode_t) newmask;
 };
 
 struct compat_sparc32_chroot_args {
@@ -254,6 +306,14 @@ struct compat_12_compat_sparc32_msync_args {
 	syscallarg(sparc32_size_t) len;
 };
 
+struct compat_sparc32_sbrk_args {
+	syscallarg(int) incr;
+};
+
+struct compat_sparc32_sstk_args {
+	syscallarg(int) incr;
+};
+
 struct compat_43_compat_sparc32_ommap_args {
 	syscallarg(sparc32_caddr_t) addr;
 	syscallarg(sparc32_size_t) len;
@@ -261,6 +321,10 @@ struct compat_43_compat_sparc32_ommap_args {
 	syscallarg(int) flags;
 	syscallarg(int) fd;
 	syscallarg(sparc32_long) pos;
+};
+
+struct compat_sparc32_ovadvise_args {
+	syscallarg(int) anom;
 };
 
 struct compat_sparc32_munmap_args {
@@ -296,6 +360,11 @@ struct compat_sparc32_setgroups_args {
 	syscallarg(const sparc32_gid_tp) gidset;
 };
 
+struct compat_sparc32_setpgid_args {
+	syscallarg(int) pid;
+	syscallarg(int) pgid;
+};
+
 struct compat_sparc32_setitimer_args {
 	syscallarg(int) which;
 	syscallarg(const sparc32_itimervalp_t) itv;
@@ -321,6 +390,11 @@ struct compat_43_compat_sparc32_osethostname_args {
 	syscallarg(u_int) len;
 };
 
+struct compat_sparc32_dup2_args {
+	syscallarg(int) from;
+	syscallarg(int) to;
+};
+
 struct compat_sparc32_fcntl_args {
 	syscallarg(int) fd;
 	syscallarg(int) cmd;
@@ -335,6 +409,22 @@ struct compat_sparc32_select_args {
 	syscallarg(sparc32_timevalp_t) tv;
 };
 
+struct compat_sparc32_fsync_args {
+	syscallarg(int) fd;
+};
+
+struct compat_sparc32_setpriority_args {
+	syscallarg(int) which;
+	syscallarg(int) who;
+	syscallarg(int) prio;
+};
+
+struct compat_sparc32_socket_args {
+	syscallarg(int) domain;
+	syscallarg(int) type;
+	syscallarg(int) protocol;
+};
+
 struct compat_sparc32_connect_args {
 	syscallarg(int) s;
 	syscallarg(const sparc32_sockaddrp_t) name;
@@ -345,6 +435,11 @@ struct compat_43_compat_sparc32_oaccept_args {
 	syscallarg(int) s;
 	syscallarg(sparc32_caddr_t) name;
 	syscallarg(sparc32_intp) anamelen;
+};
+
+struct compat_sparc32_getpriority_args {
+	syscallarg(int) which;
+	syscallarg(int) who;
 };
 
 struct compat_43_compat_sparc32_osend_args {
@@ -379,10 +474,27 @@ struct compat_sparc32_setsockopt_args {
 	syscallarg(int) valsize;
 };
 
+struct compat_sparc32_listen_args {
+	syscallarg(int) s;
+	syscallarg(int) backlog;
+};
+
 struct compat_43_compat_sparc32_osigvec_args {
 	syscallarg(int) signum;
 	syscallarg(sparc32_sigvecp_t) nsv;
 	syscallarg(sparc32_sigvecp_t) osv;
+};
+
+struct compat_43_compat_sparc32_sigblock_args {
+	syscallarg(int) mask;
+};
+
+struct compat_43_compat_sparc32_sigsetmask_args {
+	syscallarg(int) mask;
+};
+
+struct compat_13_compat_sparc32_sigsuspend_args {
+	syscallarg(int) mask;
 };
 
 struct compat_43_compat_sparc32_osigstack_args {
@@ -400,6 +512,11 @@ struct compat_43_compat_sparc32_osendmsg_args {
 	syscallarg(int) s;
 	syscallarg(sparc32_caddr_t) msg;
 	syscallarg(int) flags;
+};
+
+struct compat_sparc32_vtrace_args {
+	syscallarg(int) request;
+	syscallarg(int) value;
 };
 
 struct compat_sparc32_gettimeofday_args {
@@ -437,6 +554,17 @@ struct compat_sparc32_settimeofday_args {
 	syscallarg(const sparc32_timezonep_t) tzp;
 };
 
+struct compat_sparc32_fchown_args {
+	syscallarg(int) fd;
+	syscallarg(uid_t) uid;
+	syscallarg(gid_t) gid;
+};
+
+struct compat_sparc32_fchmod_args {
+	syscallarg(int) fd;
+	syscallarg(mode_t) mode;
+};
+
 struct compat_43_compat_sparc32_orecvfrom_args {
 	syscallarg(int) s;
 	syscallarg(sparc32_caddr_t) buf;
@@ -444,6 +572,16 @@ struct compat_43_compat_sparc32_orecvfrom_args {
 	syscallarg(int) flags;
 	syscallarg(sparc32_caddr_t) from;
 	syscallarg(sparc32_intp) fromlenaddr;
+};
+
+struct compat_sparc32_setreuid_args {
+	syscallarg(uid_t) ruid;
+	syscallarg(uid_t) euid;
+};
+
+struct compat_sparc32_setregid_args {
+	syscallarg(gid_t) rgid;
+	syscallarg(gid_t) egid;
 };
 
 struct compat_sparc32_rename_args {
@@ -461,6 +599,11 @@ struct compat_43_compat_sparc32_oftruncate_args {
 	syscallarg(sparc32_long) length;
 };
 
+struct compat_sparc32_flock_args {
+	syscallarg(int) fd;
+	syscallarg(int) how;
+};
+
 struct compat_sparc32_mkfifo_args {
 	syscallarg(const sparc32_charp) path;
 	syscallarg(mode_t) mode;
@@ -473,6 +616,11 @@ struct compat_sparc32_sendto_args {
 	syscallarg(int) flags;
 	syscallarg(const sparc32_sockaddrp_t) to;
 	syscallarg(int) tolen;
+};
+
+struct compat_sparc32_shutdown_args {
+	syscallarg(int) s;
+	syscallarg(int) how;
 };
 
 struct compat_sparc32_socketpair_args {
@@ -507,6 +655,10 @@ struct compat_43_compat_sparc32_ogetpeername_args {
 	syscallarg(sparc32_intp) alen;
 };
 
+struct compat_43_compat_sparc32_sethostid_args {
+	syscallarg(int32_t) hostid;
+};
+
 struct compat_43_compat_sparc32_ogetrlimit_args {
 	syscallarg(int) which;
 	syscallarg(sparc32_orlimitp_t) rlp;
@@ -515,6 +667,11 @@ struct compat_43_compat_sparc32_ogetrlimit_args {
 struct compat_43_compat_sparc32_osetrlimit_args {
 	syscallarg(int) which;
 	syscallarg(const sparc32_orlimitp_t) rlp;
+};
+
+struct compat_43_compat_sparc32_killpg_args {
+	syscallarg(int) pgid;
+	syscallarg(int) signum;
 };
 
 struct compat_sparc32_quotactl_args {
@@ -576,6 +733,30 @@ struct compat_sparc32_sysarch_args {
 	syscallarg(sparc32_voidp) parms;
 };
 
+struct compat_sparc32_compat_10_sys_semsys_args {
+	syscallarg(int) which;
+	syscallarg(int) a2;
+	syscallarg(int) a3;
+	syscallarg(int) a4;
+	syscallarg(int) a5;
+};
+
+struct compat_sparc32_compat_10_sys_msgsys_args {
+	syscallarg(int) which;
+	syscallarg(int) a2;
+	syscallarg(int) a3;
+	syscallarg(int) a4;
+	syscallarg(int) a5;
+	syscallarg(int) a6;
+};
+
+struct compat_sparc32_compat_10_sys_shmsys_args {
+	syscallarg(int) which;
+	syscallarg(int) a2;
+	syscallarg(int) a3;
+	syscallarg(int) a4;
+};
+
 struct compat_sparc32_pread_args {
 	syscallarg(int) fd;
 	syscallarg(sparc32_voidp) buf;
@@ -598,6 +779,18 @@ struct compat_sparc32_ntp_gettime_args {
 
 struct compat_sparc32_ntp_adjtime_args {
 	syscallarg(sparc32_timexp_t) tp;
+};
+
+struct compat_sparc32_setgid_args {
+	syscallarg(gid_t) gid;
+};
+
+struct compat_sparc32_setegid_args {
+	syscallarg(gid_t) egid;
+};
+
+struct compat_sparc32_seteuid_args {
+	syscallarg(uid_t) euid;
 };
 
 struct compat_sparc32_lfs_bmapv_args {
@@ -674,8 +867,21 @@ struct compat_sparc32_mmap_args {
 	syscallarg(off_t) pos;
 };
 
+struct compat_sparc32_lseek_args {
+	syscallarg(int) fd;
+	syscallarg(int) pad;
+	syscallarg(off_t) offset;
+	syscallarg(int) whence;
+};
+
 struct compat_sparc32_truncate_args {
 	syscallarg(const sparc32_charp) path;
+	syscallarg(int) pad;
+	syscallarg(off_t) length;
+};
+
+struct compat_sparc32_ftruncate_args {
+	syscallarg(int) fd;
 	syscallarg(int) pad;
 	syscallarg(off_t) length;
 };
@@ -708,6 +914,10 @@ struct compat_sparc32_futimes_args {
 	syscallarg(const sparc32_timevalp_t) tptr;
 };
 
+struct compat_sparc32_getpgid_args {
+	syscallarg(pid_t) pid;
+};
+
 struct compat_sparc32_reboot_args {
 	syscallarg(int) opt;
 	syscallarg(sparc32_charp) bootstr;
@@ -736,6 +946,10 @@ struct compat_sparc32_semop_args {
 	syscallarg(int) semid;
 	syscallarg(sparc32_sembufp_t) sops;
 	syscallarg(sparc32_size_t) nsops;
+};
+
+struct compat_sparc32_semconfig_args {
+	syscallarg(int) flag;
 };
 
 struct compat_sparc32_msgctl_args {
@@ -804,6 +1018,10 @@ struct compat_sparc32_clock_getres_args {
 struct compat_sparc32_nanosleep_args {
 	syscallarg(const sparc32_timespecp_t) rqtp;
 	syscallarg(sparc32_timespecp_t) rmtp;
+};
+
+struct compat_sparc32_fdatasync_args {
+	syscallarg(int) fd;
 };
 
 struct compat_sparc32___posix_rename_args {
@@ -877,10 +1095,27 @@ struct compat_sparc32___posix_chown_args {
 	syscallarg(gid_t) gid;
 };
 
+struct compat_sparc32___posix_fchown_args {
+	syscallarg(int) fd;
+	syscallarg(uid_t) uid;
+	syscallarg(gid_t) gid;
+};
+
 struct compat_sparc32___posix_lchown_args {
 	syscallarg(const sparc32_charp) path;
 	syscallarg(uid_t) uid;
 	syscallarg(gid_t) gid;
+};
+
+struct compat_sparc32_getsid_args {
+	syscallarg(pid_t) pid;
+};
+
+struct compat_sparc32_fktrace_args {
+	syscallarg(const int) fd;
+	syscallarg(int) ops;
+	syscallarg(int) facs;
+	syscallarg(int) pid;
 };
 
 struct compat_sparc32_preadv_args {
@@ -903,18 +1138,18 @@ struct compat_sparc32_pwritev_args {
  * System call prototypes.
  */
 
-int	sys_exit	__P((struct proc *, void *, register_t *));
+int	compat_sparc32_exit	__P((struct proc *, void *, register_t *));
 int	sys_fork	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_read	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_write	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_open	__P((struct proc *, void *, register_t *));
-int	sys_close	__P((struct proc *, void *, register_t *));
+int	compat_sparc32_close	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_wait4	__P((struct proc *, void *, register_t *));
 int	compat_43_compat_sparc32_ocreat	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_link	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_unlink	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_chdir	__P((struct proc *, void *, register_t *));
-int	sys_fchdir	__P((struct proc *, void *, register_t *));
+int	compat_sparc32_fchdir	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_mknod	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_chmod	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_chown	__P((struct proc *, void *, register_t *));
@@ -924,7 +1159,7 @@ int	compat_43_compat_sparc32_olseek	__P((struct proc *, void *, register_t *));
 int	sys_getpid	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_mount	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_unmount	__P((struct proc *, void *, register_t *));
-int	sys_setuid	__P((struct proc *, void *, register_t *));
+int	compat_sparc32_setuid	__P((struct proc *, void *, register_t *));
 int	sys_getuid	__P((struct proc *, void *, register_t *));
 int	sys_geteuid	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_ptrace	__P((struct proc *, void *, register_t *));
@@ -938,11 +1173,11 @@ int	compat_sparc32_access	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_chflags	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_fchflags	__P((struct proc *, void *, register_t *));
 int	sys_sync	__P((struct proc *, void *, register_t *));
-int	sys_kill	__P((struct proc *, void *, register_t *));
+int	compat_sparc32_kill	__P((struct proc *, void *, register_t *));
 int	compat_43_compat_sparc32_stat43	__P((struct proc *, void *, register_t *));
 int	sys_getppid	__P((struct proc *, void *, register_t *));
 int	compat_43_compat_sparc32_lstat43	__P((struct proc *, void *, register_t *));
-int	sys_dup	__P((struct proc *, void *, register_t *));
+int	compat_sparc32_dup	__P((struct proc *, void *, register_t *));
 int	sys_pipe	__P((struct proc *, void *, register_t *));
 int	sys_getegid	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_profil	__P((struct proc *, void *, register_t *));
@@ -952,32 +1187,32 @@ int	compat_sparc32_ktrace	__P((struct proc *, void *, register_t *));
 #endif
 int	compat_sparc32_sigaction	__P((struct proc *, void *, register_t *));
 int	sys_getgid	__P((struct proc *, void *, register_t *));
-int	sys_sigprocmask	__P((struct proc *, void *, register_t *));
+int	compat_13_compat_sparc32_sigprocmask	__P((struct proc *, void *, register_t *));
 int	compat_sparc32___getlogin	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_setlogin	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_acct	__P((struct proc *, void *, register_t *));
-int	sys_sigpending	__P((struct proc *, void *, register_t *));
+int	compat_13_sys_sigpending	__P((struct proc *, void *, register_t *));
 int	compat_13_compat_sparc32_sigaltstack13	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_ioctl	__P((struct proc *, void *, register_t *));
 #ifdef COMPAT_12
-int	compat_12_sys_reboot	__P((struct proc *, void *, register_t *));
+int	compat_12_compat_sparc32_reboot	__P((struct proc *, void *, register_t *));
 #else
 #endif
 int	compat_sparc32_revoke	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_symlink	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_readlink	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_execve	__P((struct proc *, void *, register_t *));
-int	sys_umask	__P((struct proc *, void *, register_t *));
+int	compat_sparc32_umask	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_chroot	__P((struct proc *, void *, register_t *));
 int	compat_43_compat_sparc32_fstat43	__P((struct proc *, void *, register_t *));
 int	compat_43_compat_sparc32_ogetkerninfo	__P((struct proc *, void *, register_t *));
 int	compat_43_sys_getpagesize	__P((struct proc *, void *, register_t *));
 int	compat_12_compat_sparc32_msync	__P((struct proc *, void *, register_t *));
 int	sys_vfork	__P((struct proc *, void *, register_t *));
-int	sys_sbrk	__P((struct proc *, void *, register_t *));
-int	sys_sstk	__P((struct proc *, void *, register_t *));
+int	compat_sparc32_sbrk	__P((struct proc *, void *, register_t *));
+int	compat_sparc32_sstk	__P((struct proc *, void *, register_t *));
 int	compat_43_compat_sparc32_ommap	__P((struct proc *, void *, register_t *));
-int	sys_ovadvise	__P((struct proc *, void *, register_t *));
+int	compat_sparc32_ovadvise	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_munmap	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_mprotect	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_madvise	__P((struct proc *, void *, register_t *));
@@ -985,7 +1220,7 @@ int	compat_sparc32_mincore	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_getgroups	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_setgroups	__P((struct proc *, void *, register_t *));
 int	sys_getpgrp	__P((struct proc *, void *, register_t *));
-int	sys_setpgid	__P((struct proc *, void *, register_t *));
+int	compat_sparc32_setpgid	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_setitimer	__P((struct proc *, void *, register_t *));
 int	compat_43_sys_wait	__P((struct proc *, void *, register_t *));
 int	compat_12_compat_sparc32_oswapon	__P((struct proc *, void *, register_t *));
@@ -993,33 +1228,33 @@ int	compat_sparc32_getitimer	__P((struct proc *, void *, register_t *));
 int	compat_43_compat_sparc32_ogethostname	__P((struct proc *, void *, register_t *));
 int	compat_43_compat_sparc32_osethostname	__P((struct proc *, void *, register_t *));
 int	compat_43_sys_getdtablesize	__P((struct proc *, void *, register_t *));
-int	sys_dup2	__P((struct proc *, void *, register_t *));
+int	compat_sparc32_dup2	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_fcntl	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_select	__P((struct proc *, void *, register_t *));
-int	sys_fsync	__P((struct proc *, void *, register_t *));
-int	sys_setpriority	__P((struct proc *, void *, register_t *));
-int	sys_socket	__P((struct proc *, void *, register_t *));
+int	compat_sparc32_fsync	__P((struct proc *, void *, register_t *));
+int	compat_sparc32_setpriority	__P((struct proc *, void *, register_t *));
+int	compat_sparc32_socket	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_connect	__P((struct proc *, void *, register_t *));
 int	compat_43_compat_sparc32_oaccept	__P((struct proc *, void *, register_t *));
-int	sys_getpriority	__P((struct proc *, void *, register_t *));
+int	compat_sparc32_getpriority	__P((struct proc *, void *, register_t *));
 int	compat_43_compat_sparc32_osend	__P((struct proc *, void *, register_t *));
 int	compat_43_compat_sparc32_orecv	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_sigreturn	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_bind	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_setsockopt	__P((struct proc *, void *, register_t *));
-int	sys_listen	__P((struct proc *, void *, register_t *));
+int	compat_sparc32_listen	__P((struct proc *, void *, register_t *));
 int	compat_43_compat_sparc32_osigvec	__P((struct proc *, void *, register_t *));
 #ifdef COMPAT_43
-int	compat_43_sys_sigblock	__P((struct proc *, void *, register_t *));
-int	compat_43_sys_sigsetmask	__P((struct proc *, void *, register_t *));
+int	compat_43_compat_sparc32_sigblock	__P((struct proc *, void *, register_t *));
+int	compat_43_compat_sparc32_sigsetmask	__P((struct proc *, void *, register_t *));
 #else
 #endif
-int	sys_sigsuspend	__P((struct proc *, void *, register_t *));
+int	compat_13_compat_sparc32_sigsuspend	__P((struct proc *, void *, register_t *));
 int	compat_43_compat_sparc32_osigstack	__P((struct proc *, void *, register_t *));
 int	compat_43_compat_sparc32_orecvmsg	__P((struct proc *, void *, register_t *));
 int	compat_43_compat_sparc32_osendmsg	__P((struct proc *, void *, register_t *));
 #ifdef TRACE
-int	sys_vtrace	__P((struct proc *, void *, register_t *));
+int	compat_sparc32_vtrace	__P((struct proc *, void *, register_t *));
 #else
 #endif
 int	compat_sparc32_gettimeofday	__P((struct proc *, void *, register_t *));
@@ -1028,18 +1263,18 @@ int	compat_sparc32_getsockopt	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_readv	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_writev	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_settimeofday	__P((struct proc *, void *, register_t *));
-int	sys_fchown	__P((struct proc *, void *, register_t *));
-int	sys_fchmod	__P((struct proc *, void *, register_t *));
+int	compat_sparc32_fchown	__P((struct proc *, void *, register_t *));
+int	compat_sparc32_fchmod	__P((struct proc *, void *, register_t *));
 int	compat_43_compat_sparc32_orecvfrom	__P((struct proc *, void *, register_t *));
-int	sys_setreuid	__P((struct proc *, void *, register_t *));
-int	sys_setregid	__P((struct proc *, void *, register_t *));
+int	compat_sparc32_setreuid	__P((struct proc *, void *, register_t *));
+int	compat_sparc32_setregid	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_rename	__P((struct proc *, void *, register_t *));
 int	compat_43_compat_sparc32_otruncate	__P((struct proc *, void *, register_t *));
 int	compat_43_compat_sparc32_oftruncate	__P((struct proc *, void *, register_t *));
-int	sys_flock	__P((struct proc *, void *, register_t *));
+int	compat_sparc32_flock	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_mkfifo	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_sendto	__P((struct proc *, void *, register_t *));
-int	sys_shutdown	__P((struct proc *, void *, register_t *));
+int	compat_sparc32_shutdown	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_socketpair	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_mkdir	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_rmdir	__P((struct proc *, void *, register_t *));
@@ -1048,13 +1283,13 @@ int	compat_sparc32_adjtime	__P((struct proc *, void *, register_t *));
 int	compat_43_compat_sparc32_ogetpeername	__P((struct proc *, void *, register_t *));
 int	compat_43_sys_gethostid	__P((struct proc *, void *, register_t *));
 #ifdef COMPAT_43
-int	compat_43_sys_sethostid	__P((struct proc *, void *, register_t *));
+int	compat_43_compat_sparc32_sethostid	__P((struct proc *, void *, register_t *));
 #else
 #endif
 int	compat_43_compat_sparc32_ogetrlimit	__P((struct proc *, void *, register_t *));
 int	compat_43_compat_sparc32_osetrlimit	__P((struct proc *, void *, register_t *));
 #ifdef COMPAT_43
-int	compat_43_sys_killpg	__P((struct proc *, void *, register_t *));
+int	compat_43_compat_sparc32_killpg	__P((struct proc *, void *, register_t *));
 #else
 #endif
 int	sys_setsid	__P((struct proc *, void *, register_t *));
@@ -1077,24 +1312,27 @@ int	compat_09_compat_sparc32_osetdomainname	__P((struct proc *, void *, register
 int	compat_09_compat_sparc32_uname	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_sysarch	__P((struct proc *, void *, register_t *));
 #if defined(SYSVSEM) && !defined(alpha)
-int	compat_10_sys_semsys	__P((struct proc *, void *, register_t *));
+int	compat_sparc32_compat_10_sys_semsys	__P((struct proc *, void *, register_t *));
 #else
 #endif
 #if defined(SYSVMSG) && !defined(alpha)
-int	compat_10_sys_msgsys	__P((struct proc *, void *, register_t *));
+int	compat_sparc32_compat_10_sys_msgsys	__P((struct proc *, void *, register_t *));
 #else
 #endif
 #if defined(SYSVSHM) && !defined(alpha)
-int	compat_10_sys_shmsys	__P((struct proc *, void *, register_t *));
+int	compat_sparc32_compat_10_sys_shmsys	__P((struct proc *, void *, register_t *));
 #else
 #endif
 int	compat_sparc32_pread	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_pwrite	__P((struct proc *, void *, register_t *));
+#ifdef NTP
 int	compat_sparc32_ntp_gettime	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_ntp_adjtime	__P((struct proc *, void *, register_t *));
-int	sys_setgid	__P((struct proc *, void *, register_t *));
-int	sys_setegid	__P((struct proc *, void *, register_t *));
-int	sys_seteuid	__P((struct proc *, void *, register_t *));
+#else
+#endif
+int	compat_sparc32_setgid	__P((struct proc *, void *, register_t *));
+int	compat_sparc32_setegid	__P((struct proc *, void *, register_t *));
+int	compat_sparc32_seteuid	__P((struct proc *, void *, register_t *));
 #ifdef LFS
 int	compat_sparc32_lfs_bmapv	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_lfs_markv	__P((struct proc *, void *, register_t *));
@@ -1111,15 +1349,15 @@ int	compat_sparc32_getrlimit	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_setrlimit	__P((struct proc *, void *, register_t *));
 int	compat_12_compat_sparc32_getdirentries	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_mmap	__P((struct proc *, void *, register_t *));
-int	sys_lseek	__P((struct proc *, void *, register_t *));
+int	compat_sparc32_lseek	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_truncate	__P((struct proc *, void *, register_t *));
-int	sys_ftruncate	__P((struct proc *, void *, register_t *));
+int	compat_sparc32_ftruncate	__P((struct proc *, void *, register_t *));
 int	compat_sparc32___sysctl	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_mlock	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_munlock	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_undelete	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_futimes	__P((struct proc *, void *, register_t *));
-int	sys_getpgid	__P((struct proc *, void *, register_t *));
+int	compat_sparc32_getpgid	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_reboot	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_poll	__P((struct proc *, void *, register_t *));
 #ifdef LKM
@@ -1139,7 +1377,7 @@ int	sys_lkmnosys	__P((struct proc *, void *, register_t *));
 int	compat_sparc32___semctl	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_semget	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_semop	__P((struct proc *, void *, register_t *));
-int	sys_semconfig	__P((struct proc *, void *, register_t *));
+int	compat_sparc32_semconfig	__P((struct proc *, void *, register_t *));
 #else
 #endif
 #ifdef SYSVMSG
@@ -1160,7 +1398,7 @@ int	compat_sparc32_clock_gettime	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_clock_settime	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_clock_getres	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_nanosleep	__P((struct proc *, void *, register_t *));
-int	sys_fdatasync	__P((struct proc *, void *, register_t *));
+int	compat_sparc32_fdatasync	__P((struct proc *, void *, register_t *));
 int	compat_sparc32___posix_rename	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_swapctl	__P((struct proc *, void *, register_t *));
 int	compat_sparc32_getdents	__P((struct proc *, void *, register_t *));
@@ -1175,11 +1413,11 @@ int	compat_sparc32___lstat13	__P((struct proc *, void *, register_t *));
 int	compat_sparc32___sigaltstack14	__P((struct proc *, void *, register_t *));
 int	sys___vfork14	__P((struct proc *, void *, register_t *));
 int	compat_sparc32___posix_chown	__P((struct proc *, void *, register_t *));
-int	sys___posix_fchown	__P((struct proc *, void *, register_t *));
+int	compat_sparc32___posix_fchown	__P((struct proc *, void *, register_t *));
 int	compat_sparc32___posix_lchown	__P((struct proc *, void *, register_t *));
-int	sys_getsid	__P((struct proc *, void *, register_t *));
+int	compat_sparc32_getsid	__P((struct proc *, void *, register_t *));
 #ifdef KTRACE
-int	sys_fktrace	__P((struct proc *, void *, register_t *));
+int	compat_sparc32_fktrace	__P((struct proc *, void *, register_t *));
 #else
 #endif
 int	compat_sparc32_preadv	__P((struct proc *, void *, register_t *));

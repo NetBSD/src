@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_12.c,v 1.2 1998/08/29 17:01:16 mrg Exp $	*/
+/*	$NetBSD: netbsd32_compat_12.c,v 1.3 1998/10/01 14:27:56 eeh Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -69,6 +69,21 @@ compat_sparc32_stat12_to_sparc32(sp12, sp32)
 	sp32->st_blksize = sp12->st_blksize;
 	sp32->st_flags = sp12->st_flags;
 	sp32->st_gen = sp12->st_gen;
+}
+
+int
+compat_12_compat_sparc32_reboot(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_12_compat_sparc32_reboot_args /* {
+		syscallarg(int) opt;
+	} */ *uap = v;
+	struct compat_12_sys_reboot_args ua;
+
+	SPARC32TO64_UAP(opt);
+	return (compat_12_sys_reboot(p, &ua, retval));
 }
 
 int

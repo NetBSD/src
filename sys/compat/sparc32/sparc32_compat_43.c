@@ -1,4 +1,4 @@
-/*	$NetBSD: sparc32_compat_43.c,v 1.3 1998/08/29 17:01:16 mrg Exp $	*/
+/*	$NetBSD: sparc32_compat_43.c,v 1.4 1998/10/01 14:27:56 eeh Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -321,6 +321,21 @@ compat_43_compat_sparc32_osethostname(p, v, retval)
 }
 
 int
+compat_43_compat_sparc32_sethostid(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_43_compat_sparc32_sethostid_args /* {
+		syscallarg(int32_t) hostid;
+	} */ *uap = v;
+	struct compat_43_sys_sethostid_args ua;
+
+	SPARC32TO64_UAP(hostid);
+	return (compat_43_sys_sethostid(p, &ua, retval));
+}
+
+int
 compat_43_compat_sparc32_ogetrlimit(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -345,13 +360,30 @@ compat_43_compat_sparc32_osetrlimit(p, v, retval)
 {
 	struct compat_43_compat_sparc32_osetrlimit_args /* {
 		syscallarg(int) which;
-		syscallarg(const sparc32_orlimitp_t) rlp;
+		syscallarg(sparc32_orlimitp_t) rlp;
 	} */ *uap = v;
 	struct compat_43_sys_setrlimit_args ua;
 
 	SPARC32TO64_UAP(which);
 	SPARC32TOP_UAP(rlp, struct orlimit);
 	return (compat_43_sys_setrlimit(p, &ua, retval));
+}
+
+int
+compat_43_compat_sparc32_killpg(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_43_compat_sparc32_killpg_args /* {
+		syscallarg(int) pgid;
+		syscallarg(int) signum;
+	} */ *uap = v;
+	struct compat_43_sys_killpg_args ua;
+
+	SPARC32TO64_UAP(pgid);
+	SPARC32TO64_UAP(signum);
+	return (compat_43_sys_killpg(p, &ua, retval));
 }
 
 /* virtual memory syscalls */
@@ -378,6 +410,22 @@ compat_43_compat_sparc32_ommap(p, v, retval)
 	SPARC32TO64_UAP(fd);
 	SPARC32TOX_UAP(pos, long);
 	return (compat_43_sys_mmap(p, &ua, retval));
+}
+
+/* virtual memory syscalls */
+int
+compat_sparc32_ovadvise(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_sparc32_ovadvise_args /* {
+		syscallarg(int) anom;
+	} */ *uap = v;
+	struct sys_ovadvise_args ua;
+
+	SPARC32TO64_UAP(anom);
+	return (sys_ovadvise(p, &ua, retval));
 }
 
 /* network syscalls */
@@ -633,6 +681,36 @@ compat_43_compat_sparc32_osigvec(p, v, retval)
 	}
 
 	return (0);
+}
+
+int
+compat_43_compat_sparc32_sigblock(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_43_compat_sparc32_sigblock_args /* {
+		syscallarg(int) mask;
+	} */ *uap = v;
+	struct compat_43_sys_sigblock_args ua;
+
+	SPARC32TO64_UAP(mask);
+	return (compat_43_sys_sigblock(p, &ua, retval));
+}
+
+int
+compat_43_compat_sparc32_sigsetmask(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct compat_43_compat_sparc32_sigsetmask_args /* {
+		syscallarg(int) mask;
+	} */ *uap = v;
+	struct compat_43_sys_sigsetmask_args ua;
+
+	SPARC32TO64_UAP(mask);
+	return (compat_43_sys_sigsetmask(p, &ua, retval));
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: sparc32_syscall.h,v 1.3 1998/08/26 13:46:56 mrg Exp $	*/
+/*	$NetBSD: sparc32_syscall.h,v 1.4 1998/10/01 14:27:57 eeh Exp $	*/
 
 /*
  * System call numbers.
@@ -10,8 +10,8 @@
 /* syscall: "syscall" ret: "int" args: "int" "..." */
 #define	sparc32_SYS_syscall	0
 
-/* syscall: "exit" ret: "void" args: "int" */
-#define	sparc32_SYS_exit	1
+/* syscall: "compat_sparc32_exit" ret: "void" args: "int" */
+#define	sparc32_SYS_compat_sparc32_exit	1
 
 /* syscall: "fork" ret: "int" args: */
 #define	sparc32_SYS_fork	2
@@ -25,13 +25,13 @@
 /* syscall: "compat_sparc32_open" ret: "int" args: "const sparc32_charp" "int" "..." */
 #define	sparc32_SYS_compat_sparc32_open	5
 
-/* syscall: "close" ret: "int" args: "int" */
-#define	sparc32_SYS_close	6
+/* syscall: "compat_sparc32_close" ret: "int" args: "int" */
+#define	sparc32_SYS_compat_sparc32_close	6
 
 /* syscall: "compat_sparc32_wait4" ret: "int" args: "int" "sparc32_intp" "int" "sparc32_rusagep_t" */
 #define	sparc32_SYS_compat_sparc32_wait4	7
 
-				/* 8 is compat_43 compat_sparc32_ocreat */
+#define	sparc32_SYS_compat_43_compat_sparc32_ocreat	8
 
 /* syscall: "compat_sparc32_link" ret: "int" args: "const sparc32_charp" "const sparc32_charp" */
 #define	sparc32_SYS_compat_sparc32_link	9
@@ -43,8 +43,8 @@
 /* syscall: "compat_sparc32_chdir" ret: "int" args: "const sparc32_charp" */
 #define	sparc32_SYS_compat_sparc32_chdir	12
 
-/* syscall: "fchdir" ret: "int" args: "int" */
-#define	sparc32_SYS_fchdir	13
+/* syscall: "compat_sparc32_fchdir" ret: "int" args: "int" */
+#define	sparc32_SYS_compat_sparc32_fchdir	13
 
 /* syscall: "compat_sparc32_mknod" ret: "int" args: "const sparc32_charp" "mode_t" "dev_t" */
 #define	sparc32_SYS_compat_sparc32_mknod	14
@@ -61,7 +61,7 @@
 /* syscall: "compat_sparc32_getfsstat" ret: "int" args: "sparc32_statfsp_t" "sparc32_long" "int" */
 #define	sparc32_SYS_compat_sparc32_getfsstat	18
 
-				/* 19 is compat_43 compat_sparc32_olseek */
+#define	sparc32_SYS_compat_43_compat_sparc32_olseek	19
 
 /* syscall: "getpid" ret: "pid_t" args: */
 #define	sparc32_SYS_getpid	20
@@ -72,8 +72,8 @@
 /* syscall: "compat_sparc32_unmount" ret: "int" args: "const sparc32_charp" "int" */
 #define	sparc32_SYS_compat_sparc32_unmount	22
 
-/* syscall: "setuid" ret: "int" args: "uid_t" */
-#define	sparc32_SYS_setuid	23
+/* syscall: "compat_sparc32_setuid" ret: "int" args: "uid_t" */
+#define	sparc32_SYS_compat_sparc32_setuid	23
 
 /* syscall: "getuid" ret: "uid_t" args: */
 #define	sparc32_SYS_getuid	24
@@ -114,18 +114,18 @@
 /* syscall: "sync" ret: "void" args: */
 #define	sparc32_SYS_sync	36
 
-/* syscall: "kill" ret: "int" args: "int" "int" */
-#define	sparc32_SYS_kill	37
+/* syscall: "compat_sparc32_kill" ret: "int" args: "int" "int" */
+#define	sparc32_SYS_compat_sparc32_kill	37
 
-				/* 38 is compat_43 compat_sparc32_stat43 */
+#define	sparc32_SYS_compat_43_compat_sparc32_stat43	38
 
 /* syscall: "getppid" ret: "pid_t" args: */
 #define	sparc32_SYS_getppid	39
 
-				/* 40 is compat_43 compat_sparc32_lstat43 */
+#define	sparc32_SYS_compat_43_compat_sparc32_lstat43	40
 
-/* syscall: "dup" ret: "int" args: "int" */
-#define	sparc32_SYS_dup	41
+/* syscall: "compat_sparc32_dup" ret: "int" args: "int" */
+#define	sparc32_SYS_compat_sparc32_dup	41
 
 /* syscall: "pipe" ret: "int" args: */
 #define	sparc32_SYS_pipe	42
@@ -145,8 +145,7 @@
 /* syscall: "getgid" ret: "gid_t" args: */
 #define	sparc32_SYS_getgid	47
 
-/* syscall: "sigprocmask" ret: "int" args: "int" "sigset_t" */
-#define	sparc32_SYS_sigprocmask	48
+#define	sparc32_SYS_compat_13_sigprocmask13	48
 
 /* syscall: "compat_sparc32___getlogin" ret: "int" args: "sparc32_charp" "u_int" */
 #define	sparc32_SYS_compat_sparc32___getlogin	49
@@ -157,16 +156,14 @@
 /* syscall: "compat_sparc32_acct" ret: "int" args: "const sparc32_charp" */
 #define	sparc32_SYS_compat_sparc32_acct	51
 
-/* syscall: "sigpending" ret: "int" args: */
-#define	sparc32_SYS_sigpending	52
+#define	sparc32_SYS_compat_13_sigpending13	52
 
-				/* 53 is compat_13 compat_sparc32_sigaltstack13 */
+#define	sparc32_SYS_compat_13_compat_sparc32_sigaltstack13	53
 
 /* syscall: "compat_sparc32_ioctl" ret: "int" args: "int" "sparc32_u_long" "..." */
 #define	sparc32_SYS_compat_sparc32_ioctl	54
 
-/* syscall: "reboot" ret: "int" args: "int" */
-#define	sparc32_SYS_reboot	55
+#define	sparc32_SYS_compat_12_compat_sparc32_reboot	55
 
 				/* 55 is obsolete oreboot */
 /* syscall: "compat_sparc32_revoke" ret: "int" args: "const sparc32_charp" */
@@ -181,32 +178,32 @@
 /* syscall: "compat_sparc32_execve" ret: "int" args: "const sparc32_charp" "sparc32_charpp" "sparc32_charpp" */
 #define	sparc32_SYS_compat_sparc32_execve	59
 
-/* syscall: "umask" ret: "mode_t" args: "mode_t" */
-#define	sparc32_SYS_umask	60
+/* syscall: "compat_sparc32_umask" ret: "mode_t" args: "mode_t" */
+#define	sparc32_SYS_compat_sparc32_umask	60
 
 /* syscall: "compat_sparc32_chroot" ret: "int" args: "const sparc32_charp" */
 #define	sparc32_SYS_compat_sparc32_chroot	61
 
-				/* 62 is compat_43 compat_sparc32_fstat43 */
+#define	sparc32_SYS_compat_43_compat_sparc32_fstat43	62
 
-				/* 63 is compat_43 compat_sparc32_ogetkerninfo */
+#define	sparc32_SYS_compat_43_compat_sparc32_ogetkerninfo	63
 
-				/* 64 is compat_43 ogetpagesize */
+#define	sparc32_SYS_compat_43_ogetpagesize	64
 
-				/* 65 is compat_12 compat_sparc32_msync */
+#define	sparc32_SYS_compat_12_compat_sparc32_msync	65
 
 /* syscall: "vfork" ret: "int" args: */
 #define	sparc32_SYS_vfork	66
 
 				/* 67 is obsolete vread */
 				/* 68 is obsolete vwrite */
-/* syscall: "sbrk" ret: "int" args: "int" */
-#define	sparc32_SYS_sbrk	69
+/* syscall: "compat_sparc32_sbrk" ret: "int" args: "int" */
+#define	sparc32_SYS_compat_sparc32_sbrk	69
 
-/* syscall: "sstk" ret: "int" args: "int" */
-#define	sparc32_SYS_sstk	70
+/* syscall: "compat_sparc32_sstk" ret: "int" args: "int" */
+#define	sparc32_SYS_compat_sparc32_sstk	70
 
-				/* 71 is compat_43 compat_sparc32_ommap */
+#define	sparc32_SYS_compat_43_compat_sparc32_ommap	71
 
 /* syscall: "vadvise" ret: "int" args: "int" */
 #define	sparc32_SYS_vadvise	72
@@ -234,27 +231,27 @@
 /* syscall: "getpgrp" ret: "int" args: */
 #define	sparc32_SYS_getpgrp	81
 
-/* syscall: "setpgid" ret: "int" args: "int" "int" */
-#define	sparc32_SYS_setpgid	82
+/* syscall: "compat_sparc32_setpgid" ret: "int" args: "int" "int" */
+#define	sparc32_SYS_compat_sparc32_setpgid	82
 
 /* syscall: "compat_sparc32_setitimer" ret: "int" args: "int" "const sparc32_itimervalp_t" "sparc32_itimervalp_t" */
 #define	sparc32_SYS_compat_sparc32_setitimer	83
 
-				/* 84 is compat_43 owait */
+#define	sparc32_SYS_compat_43_owait	84
 
-				/* 85 is compat_12 compat_sparc32_oswapon */
+#define	sparc32_SYS_compat_12_compat_sparc32_oswapon	85
 
 /* syscall: "compat_sparc32_getitimer" ret: "int" args: "int" "sparc32_itimervalp_t" */
 #define	sparc32_SYS_compat_sparc32_getitimer	86
 
-				/* 87 is compat_43 compat_sparc32_ogethostname */
+#define	sparc32_SYS_compat_43_compat_sparc32_ogethostname	87
 
-				/* 88 is compat_43 compat_sparc32_osethostname */
+#define	sparc32_SYS_compat_43_compat_sparc32_osethostname	88
 
-				/* 89 is compat_43 ogetdtablesize */
+#define	sparc32_SYS_compat_43_ogetdtablesize	89
 
-/* syscall: "dup2" ret: "int" args: "int" "int" */
-#define	sparc32_SYS_dup2	90
+/* syscall: "compat_sparc32_dup2" ret: "int" args: "int" "int" */
+#define	sparc32_SYS_compat_sparc32_dup2	90
 
 /* syscall: "compat_sparc32_fcntl" ret: "int" args: "int" "int" "..." */
 #define	sparc32_SYS_compat_sparc32_fcntl	92
@@ -262,26 +259,26 @@
 /* syscall: "compat_sparc32_select" ret: "int" args: "int" "sparc32_fd_setp_t" "sparc32_fd_setp_t" "sparc32_fd_setp_t" "sparc32_timevalp_t" */
 #define	sparc32_SYS_compat_sparc32_select	93
 
-/* syscall: "fsync" ret: "int" args: "int" */
-#define	sparc32_SYS_fsync	95
+/* syscall: "compat_sparc32_fsync" ret: "int" args: "int" */
+#define	sparc32_SYS_compat_sparc32_fsync	95
 
-/* syscall: "setpriority" ret: "int" args: "int" "int" "int" */
-#define	sparc32_SYS_setpriority	96
+/* syscall: "compat_sparc32_setpriority" ret: "int" args: "int" "int" "int" */
+#define	sparc32_SYS_compat_sparc32_setpriority	96
 
-/* syscall: "socket" ret: "int" args: "int" "int" "int" */
-#define	sparc32_SYS_socket	97
+/* syscall: "compat_sparc32_socket" ret: "int" args: "int" "int" "int" */
+#define	sparc32_SYS_compat_sparc32_socket	97
 
 /* syscall: "compat_sparc32_connect" ret: "int" args: "int" "const sparc32_sockaddrp_t" "int" */
 #define	sparc32_SYS_compat_sparc32_connect	98
 
-				/* 99 is compat_43 compat_sparc32_oaccept */
+#define	sparc32_SYS_compat_43_compat_sparc32_oaccept	99
 
-/* syscall: "getpriority" ret: "int" args: "int" "int" */
-#define	sparc32_SYS_getpriority	100
+/* syscall: "compat_sparc32_getpriority" ret: "int" args: "int" "int" */
+#define	sparc32_SYS_compat_sparc32_getpriority	100
 
-				/* 101 is compat_43 compat_sparc32_osend */
+#define	sparc32_SYS_compat_43_compat_sparc32_osend	101
 
-				/* 102 is compat_43 compat_sparc32_orecv */
+#define	sparc32_SYS_compat_43_compat_sparc32_orecv	102
 
 /* syscall: "compat_sparc32_sigreturn" ret: "int" args: "sparc32_sigcontextp_t" */
 #define	sparc32_SYS_compat_sparc32_sigreturn	103
@@ -292,31 +289,28 @@
 /* syscall: "compat_sparc32_setsockopt" ret: "int" args: "int" "int" "int" "const sparc32_voidp" "int" */
 #define	sparc32_SYS_compat_sparc32_setsockopt	105
 
-/* syscall: "listen" ret: "int" args: "int" "int" */
-#define	sparc32_SYS_listen	106
+/* syscall: "compat_sparc32_listen" ret: "int" args: "int" "int" */
+#define	sparc32_SYS_compat_sparc32_listen	106
 
 				/* 107 is obsolete vtimes */
-				/* 108 is compat_43 compat_sparc32_osigvec */
+#define	sparc32_SYS_compat_43_compat_sparc32_osigvec	108
 
-/* syscall: "sigblock" ret: "int" args: "int" */
-#define	sparc32_SYS_sigblock	109
+#define	sparc32_SYS_compat_43_compat_sparc32_sigblock	109
 
-/* syscall: "sigsetmask" ret: "int" args: "int" */
-#define	sparc32_SYS_sigsetmask	110
+#define	sparc32_SYS_compat_43_compat_sparc32_sigsetmask	110
 
 				/* 109 is obsolete sigblock */
 				/* 110 is obsolete sigsetmask */
-/* syscall: "sigsuspend" ret: "int" args: "int" */
-#define	sparc32_SYS_sigsuspend	111
+#define	sparc32_SYS_compat_13_sigsuspend13	111
 
-				/* 112 is compat_43 compat_sparc32_osigstack */
+#define	sparc32_SYS_compat_43_compat_sparc32_osigstack	112
 
-				/* 113 is compat_43 compat_sparc32_orecvmsg */
+#define	sparc32_SYS_compat_43_compat_sparc32_orecvmsg	113
 
-				/* 114 is compat_43 compat_sparc32_osendmsg */
+#define	sparc32_SYS_compat_43_compat_sparc32_osendmsg	114
 
-/* syscall: "vtrace" ret: "int" args: "int" "int" */
-#define	sparc32_SYS_vtrace	115
+/* syscall: "compat_sparc32_vtrace" ret: "int" args: "int" "int" */
+#define	sparc32_SYS_compat_sparc32_vtrace	115
 
 				/* 115 is obsolete vtrace */
 /* syscall: "compat_sparc32_gettimeofday" ret: "int" args: "sparc32_timevalp_t" "sparc32_timezonep_t" */
@@ -338,29 +332,29 @@
 /* syscall: "compat_sparc32_settimeofday" ret: "int" args: "const sparc32_timevalp_t" "const sparc32_timezonep_t" */
 #define	sparc32_SYS_compat_sparc32_settimeofday	122
 
-/* syscall: "fchown" ret: "int" args: "int" "uid_t" "gid_t" */
-#define	sparc32_SYS_fchown	123
+/* syscall: "compat_sparc32_fchown" ret: "int" args: "int" "uid_t" "gid_t" */
+#define	sparc32_SYS_compat_sparc32_fchown	123
 
-/* syscall: "fchmod" ret: "int" args: "int" "mode_t" */
-#define	sparc32_SYS_fchmod	124
+/* syscall: "compat_sparc32_fchmod" ret: "int" args: "int" "mode_t" */
+#define	sparc32_SYS_compat_sparc32_fchmod	124
 
-				/* 125 is compat_43 compat_sparc32_orecvfrom */
+#define	sparc32_SYS_compat_43_compat_sparc32_orecvfrom	125
 
-/* syscall: "setreuid" ret: "int" args: "uid_t" "uid_t" */
-#define	sparc32_SYS_setreuid	126
+/* syscall: "compat_sparc32_setreuid" ret: "int" args: "uid_t" "uid_t" */
+#define	sparc32_SYS_compat_sparc32_setreuid	126
 
-/* syscall: "setregid" ret: "int" args: "gid_t" "gid_t" */
-#define	sparc32_SYS_setregid	127
+/* syscall: "compat_sparc32_setregid" ret: "int" args: "gid_t" "gid_t" */
+#define	sparc32_SYS_compat_sparc32_setregid	127
 
 /* syscall: "compat_sparc32_rename" ret: "int" args: "const sparc32_charp" "const sparc32_charp" */
 #define	sparc32_SYS_compat_sparc32_rename	128
 
-				/* 129 is compat_43 compat_sparc32_otruncate */
+#define	sparc32_SYS_compat_43_compat_sparc32_otruncate	129
 
-				/* 130 is compat_43 compat_sparc32_oftruncate */
+#define	sparc32_SYS_compat_43_compat_sparc32_oftruncate	130
 
-/* syscall: "flock" ret: "int" args: "int" "int" */
-#define	sparc32_SYS_flock	131
+/* syscall: "compat_sparc32_flock" ret: "int" args: "int" "int" */
+#define	sparc32_SYS_compat_sparc32_flock	131
 
 /* syscall: "compat_sparc32_mkfifo" ret: "int" args: "const sparc32_charp" "mode_t" */
 #define	sparc32_SYS_compat_sparc32_mkfifo	132
@@ -368,8 +362,8 @@
 /* syscall: "compat_sparc32_sendto" ret: "sparc32_ssize_t" args: "int" "const sparc32_voidp" "sparc32_size_t" "int" "const sparc32_sockaddrp_t" "int" */
 #define	sparc32_SYS_compat_sparc32_sendto	133
 
-/* syscall: "shutdown" ret: "int" args: "int" "int" */
-#define	sparc32_SYS_shutdown	134
+/* syscall: "compat_sparc32_shutdown" ret: "int" args: "int" "int" */
+#define	sparc32_SYS_compat_sparc32_shutdown	134
 
 /* syscall: "compat_sparc32_socketpair" ret: "int" args: "int" "int" "int" "sparc32_intp" */
 #define	sparc32_SYS_compat_sparc32_socketpair	135
@@ -387,20 +381,18 @@
 /* syscall: "compat_sparc32_adjtime" ret: "int" args: "const sparc32_timevalp_t" "sparc32_timevalp_t" */
 #define	sparc32_SYS_compat_sparc32_adjtime	140
 
-				/* 141 is compat_43 compat_sparc32_ogetpeername */
+#define	sparc32_SYS_compat_43_compat_sparc32_ogetpeername	141
 
-				/* 142 is compat_43 ogethostid */
+#define	sparc32_SYS_compat_43_ogethostid	142
 
-/* syscall: "sethostid" ret: "int" args: "int32_t" */
-#define	sparc32_SYS_sethostid	143
+#define	sparc32_SYS_compat_43_compat_sparc32_sethostid	143
 
 				/* 143 is obsolete sethostid */
-				/* 144 is compat_43 compat_sparc32_ogetrlimit */
+#define	sparc32_SYS_compat_43_compat_sparc32_ogetrlimit	144
 
-				/* 145 is compat_43 compat_sparc32_osetrlimit */
+#define	sparc32_SYS_compat_43_compat_sparc32_osetrlimit	145
 
-/* syscall: "killpg" ret: "int" args: "int" "int" */
-#define	sparc32_SYS_killpg	146
+#define	sparc32_SYS_compat_43_compat_sparc32_killpg	146
 
 				/* 146 is obsolete killpg */
 /* syscall: "setsid" ret: "int" args: */
@@ -409,14 +401,14 @@
 /* syscall: "compat_sparc32_quotactl" ret: "int" args: "const sparc32_charp" "int" "int" "sparc32_caddr_t" */
 #define	sparc32_SYS_compat_sparc32_quotactl	148
 
-				/* 149 is compat_43 oquota */
+#define	sparc32_SYS_compat_43_oquota	149
 
-				/* 150 is compat_43 compat_sparc32_ogetsockname */
+#define	sparc32_SYS_compat_43_compat_sparc32_ogetsockname	150
 
 /* syscall: "compat_sparc32_nfssvc" ret: "int" args: "int" "sparc32_voidp" */
 #define	sparc32_SYS_compat_sparc32_nfssvc	155
 
-				/* 156 is compat_43 compat_sparc32_ogetdirentries */
+#define	sparc32_SYS_compat_43_compat_sparc32_ogetdirentries	156
 
 /* syscall: "compat_sparc32_statfs" ret: "int" args: "const sparc32_charp" "sparc32_statfsp_t" */
 #define	sparc32_SYS_compat_sparc32_statfs	157
@@ -427,11 +419,11 @@
 /* syscall: "compat_sparc32_getfh" ret: "int" args: "const sparc32_charp" "sparc32_fhandlep_t" */
 #define	sparc32_SYS_compat_sparc32_getfh	161
 
-				/* 162 is compat_09 compat_sparc32_ogetdomainname */
+#define	sparc32_SYS_compat_09_compat_sparc32_ogetdomainname	162
 
-				/* 163 is compat_09 compat_sparc32_osetdomainname */
+#define	sparc32_SYS_compat_09_compat_sparc32_osetdomainname	163
 
-				/* 164 is compat_09 compat_sparc32_uname */
+#define	sparc32_SYS_compat_09_compat_sparc32_uname	164
 
 /* syscall: "compat_sparc32_sysarch" ret: "int" args: "int" "sparc32_voidp" */
 #define	sparc32_SYS_compat_sparc32_sysarch	165
@@ -457,14 +449,14 @@
 /* syscall: "compat_sparc32_ntp_adjtime" ret: "int" args: "sparc32_timexp_t" */
 #define	sparc32_SYS_compat_sparc32_ntp_adjtime	176
 
-/* syscall: "setgid" ret: "int" args: "gid_t" */
-#define	sparc32_SYS_setgid	181
+/* syscall: "compat_sparc32_setgid" ret: "int" args: "gid_t" */
+#define	sparc32_SYS_compat_sparc32_setgid	181
 
-/* syscall: "setegid" ret: "int" args: "gid_t" */
-#define	sparc32_SYS_setegid	182
+/* syscall: "compat_sparc32_setegid" ret: "int" args: "gid_t" */
+#define	sparc32_SYS_compat_sparc32_setegid	182
 
-/* syscall: "seteuid" ret: "int" args: "uid_t" */
-#define	sparc32_SYS_seteuid	183
+/* syscall: "compat_sparc32_seteuid" ret: "int" args: "uid_t" */
+#define	sparc32_SYS_compat_sparc32_seteuid	183
 
 /* syscall: "compat_sparc32_lfs_bmapv" ret: "int" args: "sparc32_fsid_tp_t" "sparc32_block_infop_t" "int" */
 #define	sparc32_SYS_compat_sparc32_lfs_bmapv	184
@@ -478,11 +470,11 @@
 /* syscall: "compat_sparc32_lfs_segwait" ret: "int" args: "sparc32_fsid_tp_t" "sparc32_timevalp_t" */
 #define	sparc32_SYS_compat_sparc32_lfs_segwait	187
 
-				/* 188 is compat_12 compat_sparc32_stat12 */
+#define	sparc32_SYS_compat_12_compat_sparc32_stat12	188
 
-				/* 189 is compat_12 compat_sparc32_fstat12 */
+#define	sparc32_SYS_compat_12_compat_sparc32_fstat12	189
 
-				/* 190 is compat_12 compat_sparc32_lstat12 */
+#define	sparc32_SYS_compat_12_compat_sparc32_lstat12	190
 
 /* syscall: "compat_sparc32_pathconf" ret: "sparc32_long" args: "const sparc32_charp" "int" */
 #define	sparc32_SYS_compat_sparc32_pathconf	191
@@ -496,7 +488,7 @@
 /* syscall: "compat_sparc32_setrlimit" ret: "int" args: "int" "const sparc32_rlimitp_t" */
 #define	sparc32_SYS_compat_sparc32_setrlimit	195
 
-				/* 196 is compat_12 compat_sparc32_getdirentries */
+#define	sparc32_SYS_compat_12_compat_sparc32_getdirentries	196
 
 /* syscall: "compat_sparc32_mmap" ret: "sparc32_voidp" args: "sparc32_voidp" "sparc32_size_t" "int" "int" "int" "sparc32_long" "off_t" */
 #define	sparc32_SYS_compat_sparc32_mmap	197
@@ -504,14 +496,14 @@
 /* syscall: "__syscall" ret: "quad_t" args: "quad_t" "..." */
 #define	sparc32_SYS___syscall	198
 
-/* syscall: "lseek" ret: "off_t" args: "int" "int" "off_t" "int" */
-#define	sparc32_SYS_lseek	199
+/* syscall: "compat_sparc32_lseek" ret: "off_t" args: "int" "int" "off_t" "int" */
+#define	sparc32_SYS_compat_sparc32_lseek	199
 
 /* syscall: "compat_sparc32_truncate" ret: "int" args: "const sparc32_charp" "int" "off_t" */
 #define	sparc32_SYS_compat_sparc32_truncate	200
 
-/* syscall: "ftruncate" ret: "int" args: "int" "int" "off_t" */
-#define	sparc32_SYS_ftruncate	201
+/* syscall: "compat_sparc32_ftruncate" ret: "int" args: "int" "int" "off_t" */
+#define	sparc32_SYS_compat_sparc32_ftruncate	201
 
 /* syscall: "compat_sparc32___sysctl" ret: "int" args: "sparc32_intp" "u_int" "sparc32_voidp" "sparc32_size_tp" "sparc32_voidp" "sparc32_size_t" */
 #define	sparc32_SYS_compat_sparc32___sysctl	202
@@ -528,8 +520,8 @@
 /* syscall: "compat_sparc32_futimes" ret: "int" args: "int" "const sparc32_timevalp_t" */
 #define	sparc32_SYS_compat_sparc32_futimes	206
 
-/* syscall: "getpgid" ret: "int" args: "pid_t" */
-#define	sparc32_SYS_getpgid	207
+/* syscall: "compat_sparc32_getpgid" ret: "int" args: "pid_t" */
+#define	sparc32_SYS_compat_sparc32_getpgid	207
 
 /* syscall: "compat_sparc32_reboot" ret: "int" args: "int" "sparc32_charp" */
 #define	sparc32_SYS_compat_sparc32_reboot	208
@@ -546,8 +538,8 @@
 /* syscall: "compat_sparc32_semop" ret: "int" args: "int" "sparc32_sembufp_t" "sparc32_size_t" */
 #define	sparc32_SYS_compat_sparc32_semop	222
 
-/* syscall: "semconfig" ret: "int" args: "int" */
-#define	sparc32_SYS_semconfig	223
+/* syscall: "compat_sparc32_semconfig" ret: "int" args: "int" */
+#define	sparc32_SYS_compat_sparc32_semconfig	223
 
 /* syscall: "compat_sparc32_msgctl" ret: "int" args: "int" "int" "sparc32_msqid_dsp_t" */
 #define	sparc32_SYS_compat_sparc32_msgctl	224
@@ -585,8 +577,8 @@
 /* syscall: "compat_sparc32_nanosleep" ret: "int" args: "const sparc32_timespecp_t" "sparc32_timespecp_t" */
 #define	sparc32_SYS_compat_sparc32_nanosleep	240
 
-/* syscall: "fdatasync" ret: "int" args: "int" */
-#define	sparc32_SYS_fdatasync	241
+/* syscall: "compat_sparc32_fdatasync" ret: "int" args: "int" */
+#define	sparc32_SYS_compat_sparc32_fdatasync	241
 
 /* syscall: "compat_sparc32___posix_rename" ret: "int" args: "const sparc32_charp" "const sparc32_charp" */
 #define	sparc32_SYS_compat_sparc32___posix_rename	270
@@ -630,17 +622,17 @@
 /* syscall: "compat_sparc32___posix_chown" ret: "int" args: "const sparc32_charp" "uid_t" "gid_t" */
 #define	sparc32_SYS_compat_sparc32___posix_chown	283
 
-/* syscall: "__posix_fchown" ret: "int" args: "int" "uid_t" "gid_t" */
-#define	sparc32_SYS___posix_fchown	284
+/* syscall: "compat_sparc32___posix_fchown" ret: "int" args: "int" "uid_t" "gid_t" */
+#define	sparc32_SYS_compat_sparc32___posix_fchown	284
 
 /* syscall: "compat_sparc32___posix_lchown" ret: "int" args: "const sparc32_charp" "uid_t" "gid_t" */
 #define	sparc32_SYS_compat_sparc32___posix_lchown	285
 
-/* syscall: "getsid" ret: "pid_t" args: "pid_t" */
-#define	sparc32_SYS_getsid	286
+/* syscall: "compat_sparc32_getsid" ret: "pid_t" args: "pid_t" */
+#define	sparc32_SYS_compat_sparc32_getsid	286
 
-/* syscall: "fktrace" ret: "int" args: "const int" "int" "int" "int" */
-#define	sparc32_SYS_fktrace	288
+/* syscall: "compat_sparc32_fktrace" ret: "int" args: "const int" "int" "int" "int" */
+#define	sparc32_SYS_compat_sparc32_fktrace	288
 
 /* syscall: "compat_sparc32_preadv" ret: "sparc32_ssize_t" args: "int" "const sparc32_iovecp_t" "int" "int" "off_t" */
 #define	sparc32_SYS_compat_sparc32_preadv	289
