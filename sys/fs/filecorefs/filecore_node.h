@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.h,v 1.1.4.4 2004/09/18 14:52:49 skrll Exp $	*/
+/*	$NetBSD: filecore_node.h,v 1.1.4.5 2004/09/21 13:34:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.

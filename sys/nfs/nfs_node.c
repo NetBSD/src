@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.68.2.4 2004/09/18 14:56:20 skrll Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.68.2.5 2004/09/21 13:38:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.68.2.4 2004/09/18 14:56:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.68.2.5 2004/09/21 13:38:36 skrll Exp $");
 
 #include "opt_nfs.h"
 
@@ -147,12 +147,13 @@ nfs_nhdone()
  * nfsnode structure is returned.
  */
 int
-nfs_nget1(mntp, fhp, fhsize, npp, lkflags)
+nfs_nget1(mntp, fhp, fhsize, npp, lkflags, l)
 	struct mount *mntp;
 	nfsfh_t *fhp;
 	int fhsize;
 	struct nfsnode **npp;
 	int lkflags;
+	struct lwp *l;
 {
 	struct nfsnode *np;
 	struct nfsnodehashhead *nhpp;
@@ -224,11 +225,11 @@ nfs_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct nfsnode *np;
 	struct sillyrename *sp;
-	struct proc *p = ap->a_p;
+	struct lwp *l = ap->a_l;
 	struct vnode *vp = ap->a_vp;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	boolean_t removed;
@@ -243,7 +244,7 @@ nfs_inactive(v)
 	} else
 		sp = NULL;
 	if (sp != NULL)
-		nfs_vinvalbuf(vp, 0, sp->s_cred, p, 1);
+		nfs_vinvalbuf(vp, 0, sp->s_cred, l, 1);
 	removed = (np->n_flag & NREMOVED) != 0;
 	np->n_flag &= (NMODIFIED | NFLUSHINPROG | NFLUSHWANT | NQNFSEVICTED |
 		NQNFSNONCACHE | NQNFSWRITE);
@@ -259,7 +260,7 @@ nfs_inactive(v)
 
 	/* XXXMP only kernel_lock protects vp */
 	if (removed)
-		vrecycle(vp, NULL, p);
+		vrecycle(vp, NULL, l);
 
 	if (sp != NULL) {
 

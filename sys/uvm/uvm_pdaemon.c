@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.51.2.2 2004/09/18 14:57:12 skrll Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.51.2.3 2004/09/21 13:39:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.51.2.2 2004/09/18 14:57:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.51.2.3 2004/09/21 13:39:29 skrll Exp $");
 
 #include "opt_uvmhist.h"
 

@@ -1,4 +1,4 @@
-# $NetBSD: files.podulebus,v 1.13.24.2 2004/09/18 14:50:39 skrll Exp $
+# $NetBSD: files.podulebus,v 1.13.24.3 2004/09/21 13:32:37 skrll Exp $
 
 device	podulebus { [slot = -1] }
 define	podloader

@@ -1,4 +1,4 @@
-#	$NetBSD: files.pf,v 1.1.2.3 2004/09/18 14:54:16 skrll Exp $
+#	$NetBSD: files.pf,v 1.1.2.4 2004/09/21 13:36:35 skrll Exp $
 
 defpseudo pf:		ifnet
 defpseudo pflog:	ifnet

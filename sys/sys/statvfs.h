@@ -1,4 +1,4 @@
-/*	$NetBSD: statvfs.h,v 1.4.2.4 2004/09/18 14:56:30 skrll Exp $	 */
+/*	$NetBSD: statvfs.h,v 1.4.2.5 2004/09/21 13:38:50 skrll Exp $	 */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -139,12 +139,12 @@ struct statvfs {
 
 #if defined(_KERNEL) || defined(_STANDALONE)
 struct mount;
-struct proc;
+struct lwp;
 
 int	set_statvfs_info(const char *, int, const char *, int,
-    struct mount *, struct proc *);
+    struct mount *, struct lwp *);
 void	copy_statvfs_info(struct statvfs *, const struct mount *);
-int	dostatvfs(struct mount *, struct statvfs *, struct proc *, int, int);
+int	dostatvfs(struct mount *, struct statvfs *, struct lwp *, int, int);
 #else
 __BEGIN_DECLS
 int	statvfs(const char *__restrict, struct statvfs *__restrict);

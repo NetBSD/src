@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020reg.h,v 1.1.44.2 2004/09/18 14:51:16 skrll Exp $ */
+/*	$NetBSD: stp4020reg.h,v 1.1.44.3 2004/09/21 13:33:13 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

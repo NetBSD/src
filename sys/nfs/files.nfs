@@ -1,4 +1,4 @@
-#	$NetBSD: files.nfs,v 1.2.6.2 2004/09/18 14:56:20 skrll Exp $
+#	$NetBSD: files.nfs,v 1.2.6.3 2004/09/21 13:38:35 skrll Exp $
 
 deffs	fs_nfs.h		NFS
 

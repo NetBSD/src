@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_aselect.h,v 1.3.42.2 2004/09/18 14:50:53 skrll Exp $	*/
+/*	$NetBSD: rf_aselect.h,v 1.3.42.3 2004/09/21 13:32:50 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.

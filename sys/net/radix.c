@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.c,v 1.19.6.3 2004/09/18 14:54:16 skrll Exp $	*/
+/*	$NetBSD: radix.c,v 1.19.6.4 2004/09/21 13:36:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radix.c,v 1.19.6.3 2004/09/18 14:54:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radix.c,v 1.19.6.4 2004/09/21 13:36:42 skrll Exp $");
 
 #ifndef _NET_RADIX_H_
 #include <sys/param.h>

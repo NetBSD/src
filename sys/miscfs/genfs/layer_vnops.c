@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.10.16.2 2004/09/18 14:54:15 skrll Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.10.16.3 2004/09/21 13:36:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -67,7 +67,7 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *	$Id: layer_vnops.c,v 1.10.16.2 2004/09/18 14:54:15 skrll Exp $
+ *	$Id: layer_vnops.c,v 1.10.16.3 2004/09/21 13:36:30 skrll Exp $
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */
@@ -232,7 +232,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.10.16.2 2004/09/18 14:54:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.10.16.3 2004/09/21 13:36:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_cb.c,v 1.13.10.2 2004/09/18 14:54:16 skrll Exp $	*/
+/*	$NetBSD: raw_cb.c,v 1.13.10.3 2004/09/21 13:36:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_cb.c,v 1.13.10.2 2004/09/18 14:54:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_cb.c,v 1.13.10.3 2004/09/21 13:36:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

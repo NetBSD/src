@@ -1,4 +1,4 @@
-/*	$NetBSD: key_debug.h,v 1.1.4.3 2004/09/18 14:55:32 skrll Exp $	*/
+/*	$NetBSD: key_debug.h,v 1.1.4.4 2004/09/21 13:37:48 skrll Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key_debug.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: key_debug.h,v 1.10 2001/08/05 08:37:52 itojun Exp $	*/
 

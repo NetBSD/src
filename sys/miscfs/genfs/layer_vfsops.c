@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vfsops.c,v 1.9.2.4 2004/09/18 14:54:15 skrll Exp $	*/
+/*	$NetBSD: layer_vfsops.c,v 1.9.2.5 2004/09/21 13:36:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.9.2.4 2004/09/18 14:54:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.9.2.5 2004/09/21 13:36:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -93,14 +93,14 @@ __KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.9.2.4 2004/09/18 14:54:15 skrll E
  * when that filesystem was mounted.
  */
 int
-layerfs_start(mp, flags, p)
+layerfs_start(mp, flags, l)
 	struct mount *mp;
 	int flags;
-	struct proc *p;
+	struct lwp *l;
 {
 
 	return (0);
-	/* return VFS_START(MOUNTTOLAYERMOUNT(mp)->layerm_vfs, flags, p); */
+	/* return VFS_START(MOUNTTOLAYERMOUNT(mp)->layerm_vfs, flags, l); */
 }
 
 int
@@ -131,23 +131,23 @@ layerfs_root(mp, vpp)
 }
 
 int
-layerfs_quotactl(mp, cmd, uid, arg, p)
+layerfs_quotactl(mp, cmd, uid, arg, l)
 	struct mount *mp;
 	int cmd;
 	uid_t uid;
 	void *arg;
-	struct proc *p;
+	struct lwp *l;
 {
 
 	return VFS_QUOTACTL(MOUNTTOLAYERMOUNT(mp)->layerm_vfs,
-				cmd, uid, arg, p);
+				cmd, uid, arg, l);
 }
 
 int
-layerfs_statvfs(mp, sbp, p)
+layerfs_statvfs(mp, sbp, l)
 	struct mount *mp;
 	struct statvfs *sbp;
-	struct proc *p;
+	struct lwp *l;
 {
 	int error;
 	struct statvfs *sbuf = malloc(sizeof(*sbuf), M_TEMP, M_WAITOK);
@@ -160,7 +160,7 @@ layerfs_statvfs(mp, sbp, p)
 
 	(void)memset(sbuf, 0, sizeof(*sbuf));
 
-	error = VFS_STATVFS(MOUNTTOLAYERMOUNT(mp)->layerm_vfs, sbuf, p);
+	error = VFS_STATVFS(MOUNTTOLAYERMOUNT(mp)->layerm_vfs, sbuf, l);
  	if (error)
 		goto done;
 
@@ -185,11 +185,11 @@ done:
 }
 
 int
-layerfs_sync(mp, waitfor, cred, p)
+layerfs_sync(mp, waitfor, cred, l)
 	struct mount *mp;
 	int waitfor;
 	struct ucred *cred;
-	struct proc *p;
+	struct lwp *l;
 {
 
 	/*
@@ -207,7 +207,8 @@ layerfs_vget(mp, ino, vpp)
 	int error;
 	struct vnode *vp;
 
-	if ((error = VFS_VGET(MOUNTTOLAYERMOUNT(mp)->layerm_vfs, ino, &vp))) {
+	if ((error = VFS_VGET(MOUNTTOLAYERMOUNT(mp)->layerm_vfs,
+	    ino, &vp))) {
 		*vpp = NULL;
 		return (error);
 	}
@@ -229,7 +230,8 @@ layerfs_fhtovp(mp, fidp, vpp)
 	int error;
 	struct vnode *vp;
 
-	if ((error = VFS_FHTOVP(MOUNTTOLAYERMOUNT(mp)->layerm_vfs, fidp, &vp)))
+	if ((error = VFS_FHTOVP(MOUNTTOLAYERMOUNT(mp)->layerm_vfs,
+	    fidp, &vp)))
 		return (error);
 
 	if ((error = layer_node_create(mp, vp, vpp))) {

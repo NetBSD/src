@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.143.2.4 2004/09/18 14:53:03 skrll Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.143.2.5 2004/09/21 13:35:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.143.2.4 2004/09/18 14:53:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.143.2.5 2004/09/21 13:35:08 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -917,7 +917,7 @@ trapsignal(struct lwp *l, const ksiginfo_t *ksi)
 		p->p_stats->p_ru.ru_nsignals++;
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_PSIG))
-			ktrpsig(p, signum, SIGACTION_PS(ps, signum).sa_handler,
+			ktrpsig(l, signum, SIGACTION_PS(ps, signum).sa_handler,
 			    &p->p_sigctx.ps_sigmask, ksi);
 #endif
 		kpsendsig(l, ksi, &p->p_sigctx.ps_sigmask);
@@ -1847,7 +1847,7 @@ postsig(int signum)
 	if (action == SIG_DFL) {
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_PSIG))
-			ktrpsig(p, signum, action,
+			ktrpsig(l, signum, action,
 			    p->p_sigctx.ps_flags & SAS_OLDMASK ?
 			    &p->p_sigctx.ps_oldmask : &p->p_sigctx.ps_sigmask,
 			    NULL);
@@ -1886,7 +1886,7 @@ postsig(int signum)
 		ksi = ksiginfo_get(p, signum);
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_PSIG))
-			ktrpsig(p, signum, action,
+			ktrpsig(l, signum, action,
 			    p->p_sigctx.ps_flags & SAS_OLDMASK ?
 			    &p->p_sigctx.ps_oldmask : &p->p_sigctx.ps_sigmask,
 			    ksi);
@@ -2090,7 +2090,7 @@ restart:
 	if (error)
 		return error;
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_SYSSPACE, name, p);
+	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_SYSSPACE, name, l);
 	error = vn_open(&nd, O_CREAT | O_NOFOLLOW | FWRITE, S_IRUSR | S_IWUSR);
 	if (error)
 		return (error);
@@ -2098,7 +2098,7 @@ restart:
 
 	if (vn_start_write(vp, &mp, V_NOWAIT) != 0) {
 		VOP_UNLOCK(vp, 0);
-		if ((error = vn_close(vp, FWRITE, cred, p)) != 0)
+		if ((error = vn_close(vp, FWRITE, cred, l)) != 0)
 			return (error);
 		if ((error = vn_start_write(NULL, &mp,
 		    V_WAIT | V_SLEEPONLY | V_PCATCH)) != 0)
@@ -2108,14 +2108,14 @@ restart:
 
 	/* Don't dump to non-regular files or files with links. */
 	if (vp->v_type != VREG ||
-	    VOP_GETATTR(vp, &vattr, cred, p) || vattr.va_nlink != 1) {
+	    VOP_GETATTR(vp, &vattr, cred, l) || vattr.va_nlink != 1) {
 		error = EINVAL;
 		goto out;
 	}
 	VATTR_NULL(&vattr);
 	vattr.va_size = 0;
-	VOP_LEASE(vp, p, cred, LEASE_WRITE);
-	VOP_SETATTR(vp, &vattr, cred, p);
+	VOP_LEASE(vp, l, cred, LEASE_WRITE);
+	VOP_SETATTR(vp, &vattr, cred, l);
 	p->p_acflag |= ACORE;
 
 	/* Now dump the actual core file. */
@@ -2123,7 +2123,7 @@ restart:
  out:
 	VOP_UNLOCK(vp, 0);
 	vn_finished_write(mp, 0);
-	error1 = vn_close(vp, FWRITE, cred, p);
+	error1 = vn_close(vp, FWRITE, cred, l);
 	if (error == 0)
 		error = error1;
 	return (error);

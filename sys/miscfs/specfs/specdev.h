@@ -1,4 +1,4 @@
-/*	$NetBSD: specdev.h,v 1.23.2.2 2004/09/18 14:54:15 skrll Exp $	*/
+/*	$NetBSD: specdev.h,v 1.23.2.3 2004/09/21 13:36:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.57.2.4 2004/09/18 14:51:24 skrll Exp $	*/
+/*	$NetBSD: ch.c,v 1.57.2.5 2004/09/21 13:33:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.57.2.4 2004/09/18 14:51:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.57.2.5 2004/09/21 13:33:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -253,7 +253,7 @@ chattach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-chopen(dev_t dev, int flags, int fmt, struct proc *p)
+chopen(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	struct ch_softc *sc;
 	struct scsipi_periph *periph;
@@ -306,7 +306,7 @@ chopen(dev_t dev, int flags, int fmt, struct proc *p)
 }
 
 static int
-chclose(dev_t dev, int flags, int fmt, struct proc *p)
+chclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	struct ch_softc *sc = ch_cd.cd_devs[CHUNIT(dev)];
 	struct scsipi_periph *periph = sc->sc_periph;
@@ -342,7 +342,7 @@ chread(dev_t dev, struct uio *uio, int flags)
 }
 
 static int
-chioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
+chioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 {
 	struct ch_softc *sc = ch_cd.cd_devs[CHUNIT(dev)];
 	int error = 0;
@@ -434,7 +434,7 @@ chioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 
 	default:
 		error = scsipi_do_ioctl(sc->sc_periph, dev, cmd, data,
-		    flags, p);
+		    flags, l);
 		break;
 	}
 
@@ -442,7 +442,7 @@ chioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 }
 
 static int
-chpoll(dev_t dev, int events, struct proc *p)
+chpoll(dev_t dev, int events, struct lwp *l)
 {
 	struct ch_softc *sc = ch_cd.cd_devs[CHUNIT(dev)];
 	int revents;
@@ -455,7 +455,7 @@ chpoll(dev_t dev, int events, struct proc *p)
 	if (sc->sc_events == 0)
 		revents |= events & (POLLIN | POLLRDNORM);
 	else
-		selrecord(p, &sc->sc_selq);
+		selrecord(l, &sc->sc_selq);
 
 	return (revents);
 }

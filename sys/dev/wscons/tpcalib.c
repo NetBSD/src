@@ -1,4 +1,4 @@
-/*	$NetBSD: tpcalib.c,v 1.2.2.3 2004/09/18 14:52:24 skrll Exp $	*/
+/*	$NetBSD: tpcalib.c,v 1.2.2.4 2004/09/21 13:34:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 TAKEMURA Shin All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpcalib.c,v 1.2.2.3 2004/09/18 14:52:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpcalib.c,v 1.2.2.4 2004/09/21 13:34:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

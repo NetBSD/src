@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.c,v 1.9.2.3 2004/09/18 14:56:06 skrll Exp $	*/
+/*	$NetBSD: natm.c,v 1.9.2.4 2004/09/21 13:38:23 skrll Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.9.2.3 2004/09/18 14:56:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.9.2.4 2004/09/21 13:38:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,9 @@ u_long natm0_recvspace = 16*1024;
  * user requests
  */
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
+#if defined(__NetBSD__)
+int natm_usrreq(so, req, m, nam, control, l)
+#elif defined(__OpenBSD__)
 int natm_usrreq(so, req, m, nam, control, p)
 #elif defined(__FreeBSD__)
 int natm_usrreq(so, req, m, nam, control)
@@ -79,7 +81,9 @@ int natm_usrreq(so, req, m, nam, control)
 struct socket *so;
 int req;
 struct mbuf *m, *nam, *control;
-#if defined(__NetBSD__) || defined(__OpenBSD__)
+#if defined(__NetBSD__)
+struct lwp *l;
+#elif deifned(__OpenBSD__)
 struct proc *p;
 #endif
 
@@ -92,6 +96,9 @@ struct proc *p;
   struct atm_rawioctl ario;
   struct ifnet *ifp;
   int proto = so->so_proto->pr_protocol;
+#if defined(__NetBSD__)
+  struct proc *p = l ? l->l_proc : NULL;
+#endif
 
   s = SPLSOFTNET();
 

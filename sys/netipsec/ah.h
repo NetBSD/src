@@ -1,4 +1,4 @@
-/*	$NetBSD: ah.h,v 1.1.4.3 2004/09/18 14:55:32 skrll Exp $	*/
+/*	$NetBSD: ah.h,v 1.1.4.4 2004/09/21 13:37:48 skrll Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ah.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$KAME: ah.h,v 1.13 2000/10/18 21:28:00 itojun Exp $	*/
 

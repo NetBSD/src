@@ -1,4 +1,4 @@
-/*	$NetBSD: ttycom.h,v 1.11.16.2 2004/09/18 14:56:31 skrll Exp $	*/
+/*	$NetBSD: ttycom.h,v 1.11.16.3 2004/09/21 13:38:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994

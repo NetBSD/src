@@ -1,4 +1,4 @@
-/*	$NetBSD: midiio.h,v 1.9.2.2 2004/09/18 14:56:30 skrll Exp $	*/
+/*	$NetBSD: midiio.h,v 1.9.2.3 2004/09/21 13:38:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

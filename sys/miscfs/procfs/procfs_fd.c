@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_fd.c,v 1.5.2.2 2004/09/18 14:54:15 skrll Exp $	*/
+/*	$NetBSD: procfs_fd.c,v 1.5.2.3 2004/09/21 13:36:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_fd.c,v 1.5.2.2 2004/09/18 14:54:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_fd.c,v 1.5.2.3 2004/09/21 13:36:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,12 +49,13 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_fd.c,v 1.5.2.2 2004/09/18 14:54:15 skrll Exp 
 #include <miscfs/procfs/procfs.h>
 
 int
-procfs_dofd(curp, p, pfs, uio)
-	struct proc *curp;
+procfs_dofd(curl, p, pfs, uio)
+	struct lwp *curl;
 	struct proc *p;
 	struct pfsnode *pfs;
 	struct uio *uio;
 {
+	struct proc *curp = curl->l_proc;
 	int error;
 	struct file *fp;
 	struct proc *pown;
@@ -78,7 +79,7 @@ procfs_dofd(curp, p, pfs, uio)
 		panic("bad uio op");
 	}
 
-	FILE_UNUSE(fp, pown);
+	FILE_UNUSE(fp, proc_representative_lwp(pown));
 
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ioctl_compat.h,v 1.13.6.2 2004/09/18 14:56:30 skrll Exp $	*/
+/*	$NetBSD: ioctl_compat.h,v 1.13.6.3 2004/09/21 13:38:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.70.2.2 2004/09/18 14:53:41 skrll Exp $
+#	$NetBSD: Makefile,v 1.70.2.3 2004/09/21 13:35:53 skrll Exp $
 
 LIB=		kern
 NOPIC=		# defined

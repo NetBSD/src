@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map_i.h,v 1.24.6.2 2004/09/18 14:57:12 skrll Exp $	*/
+/*	$NetBSD: uvm_map_i.h,v 1.24.6.3 2004/09/21 13:39:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.

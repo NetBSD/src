@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsd.h,v 1.13.18.2 2004/09/18 14:50:54 skrll Exp $	*/
+/*	$NetBSD: rf_netbsd.h,v 1.13.18.3 2004/09/21 13:32:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_subr.c,v 1.24.2.2 2004/09/18 14:53:04 skrll Exp $	*/
+/*	$NetBSD: tty_subr.c,v 1.24.2.3 2004/09/21 13:35:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_subr.c,v 1.24.2.2 2004/09/18 14:53:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_subr.c,v 1.24.2.3 2004/09/21 13:35:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

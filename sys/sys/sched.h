@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.17.2.2 2004/09/18 14:56:30 skrll Exp $ */
+/* $NetBSD: sched.h,v 1.17.2.3 2004/09/21 13:38:49 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.

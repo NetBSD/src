@@ -1,4 +1,4 @@
-/*	$NetBSD: bereg.h,v 1.5.2.2 2004/09/18 14:51:16 skrll Exp $	*/
+/*	$NetBSD: bereg.h,v 1.5.2.3 2004/09/21 13:33:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

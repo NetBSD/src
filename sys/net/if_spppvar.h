@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppvar.h,v 1.7.2.2 2004/09/18 14:54:16 skrll Exp $	*/
+/*	$NetBSD: if_spppvar.h,v 1.7.2.3 2004/09/21 13:36:41 skrll Exp $	*/
 
 /*
  * Defines for synchronous PPP/Cisco link level subroutines.

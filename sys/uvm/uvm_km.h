@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.h,v 1.12.2.2 2004/09/18 14:57:12 skrll Exp $	*/
+/*	$NetBSD: uvm_km.h,v 1.12.2.3 2004/09/21 13:39:27 skrll Exp $	*/
 
 /*
  *

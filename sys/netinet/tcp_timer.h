@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.h,v 1.19.2.2 2004/09/18 14:54:54 skrll Exp $	*/
+/*	$NetBSD: tcp_timer.h,v 1.19.2.3 2004/09/21 13:37:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

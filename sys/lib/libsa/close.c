@@ -1,4 +1,4 @@
-/*	$NetBSD: close.c,v 1.9.28.2 2004/09/18 14:54:01 skrll Exp $	*/
+/*	$NetBSD: close.c,v 1.9.28.3 2004/09/21 13:36:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1993

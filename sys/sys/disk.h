@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.22.2.2 2004/09/18 14:56:30 skrll Exp $	*/
+/*	$NetBSD: disk.h,v 1.22.2.3 2004/09/21 13:38:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.

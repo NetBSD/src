@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwovar.h,v 1.2.12.2 2004/09/18 14:51:34 skrll Exp $ */
+/*	$NetBSD: bwtwovar.h,v 1.2.12.3 2004/09/21 13:33:26 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.

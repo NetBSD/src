@@ -1,4 +1,4 @@
-/*	$NetBSD: gmon.h,v 1.6.62.2 2004/09/18 14:56:30 skrll Exp $	*/
+/*	$NetBSD: gmon.h,v 1.6.62.3 2004/09/21 13:38:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1992, 1993

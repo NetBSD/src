@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.59.2.3 2004/09/18 14:56:20 skrll Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.59.2.4 2004/09/21 13:38:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.59.2.3 2004/09/18 14:56:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.59.2.4 2004/09/21 13:38:35 skrll Exp $");
 
 #include "opt_nfs.h"
 #include "opt_nfs_boot.h"
@@ -95,10 +95,10 @@ int nfs_boot_bootstatic = 1; /* BOOTSTATIC enabled (default) */
 
 /* mountd RPC */
 static int md_mount __P((struct sockaddr_in *mdsin, char *path,
-	struct nfs_args *argp, struct proc *procp));
+	struct nfs_args *argp, struct lwp *l));
 
 static void nfs_boot_defrt __P((struct in_addr *));
-static  int nfs_boot_getfh __P((struct nfs_dlmount *ndm, struct proc *));
+static  int nfs_boot_getfh __P((struct nfs_dlmount *ndm, struct lwp *));
 
 
 /*
@@ -107,9 +107,9 @@ static  int nfs_boot_getfh __P((struct nfs_dlmount *ndm, struct proc *));
  * save all the boot parameters in the nfs_diskless struct.
  */
 int
-nfs_boot_init(nd, procp)
+nfs_boot_init(nd, lwp)
 	struct nfs_diskless *nd;
-	struct proc *procp;
+	struct lwp *lwp;
 {
 	struct ifnet *ifp;
 	int error;
@@ -139,13 +139,13 @@ nfs_boot_init(nd, procp)
 #else
 		printf("nfs_boot: trying BOOTP\n");
 #endif
-		error = nfs_bootdhcp(nd, procp);
+		error = nfs_bootdhcp(nd, lwp);
 	}
 #endif
 #ifdef NFS_BOOT_BOOTPARAM
 	if (error && nfs_boot_bootparam) {
 		printf("nfs_boot: trying RARP (and RPC/bootparam)\n");
-		error = nfs_bootparam(nd, procp);
+		error = nfs_bootparam(nd, lwp);
 	}
 #endif
 	if (error)
@@ -161,29 +161,29 @@ nfs_boot_init(nd, procp)
 	/*
 	 * Now fetch the NFS file handles as appropriate.
 	 */
-	error = nfs_boot_getfh(&nd->nd_root, procp);
+	error = nfs_boot_getfh(&nd->nd_root, lwp);
 
 	if (error)
-		nfs_boot_cleanup(nd, procp);
+		nfs_boot_cleanup(nd, lwp);
 
 	return (error);
 }
 
 void
-nfs_boot_cleanup(nd, procp)
+nfs_boot_cleanup(nd, lwp)
 	struct nfs_diskless *nd;
-	struct proc *procp;
+	struct lwp *lwp;
 {
 
-	nfs_boot_deladdress(nd->nd_ifp, procp, nd->nd_myip.s_addr);
-	nfs_boot_ifupdown(nd->nd_ifp, procp, 0);
+	nfs_boot_deladdress(nd->nd_ifp, lwp, nd->nd_myip.s_addr);
+	nfs_boot_ifupdown(nd->nd_ifp, lwp, 0);
 	nfs_boot_flushrt(nd->nd_ifp);
 }
 
 int
-nfs_boot_ifupdown(ifp, procp, up)
+nfs_boot_ifupdown(ifp, lwp, up)
 	struct ifnet *ifp;
-	struct proc *procp;
+	struct lwp *lwp;
 	int up;
 {
 	struct socket *so;
@@ -197,7 +197,7 @@ nfs_boot_ifupdown(ifp, procp, up)
 	 * Get a socket to use for various things in here.
 	 * After this, use "goto out" to cleanup and return.
 	 */
-	error = socreate(AF_INET, &so, SOCK_DGRAM, 0, procp);
+	error = socreate(AF_INET, &so, SOCK_DGRAM, 0, lwp);
 	if (error) {
 		printf("ifupdown: socreate, error=%d\n", error);
 		return (error);
@@ -208,7 +208,7 @@ nfs_boot_ifupdown(ifp, procp, up)
 	 * Get the old interface flags and or IFF_UP into them so
 	 * things like media selection flags are not clobbered.
 	 */
-	error = ifioctl(so, SIOCGIFFLAGS, (caddr_t)&ireq, procp);
+	error = ifioctl(so, SIOCGIFFLAGS, (caddr_t)&ireq, lwp);
 	if (error) {
 		printf("ifupdown: GIFFLAGS, error=%d\n", error);
 		goto out;
@@ -217,7 +217,7 @@ nfs_boot_ifupdown(ifp, procp, up)
 		ireq.ifr_flags |= IFF_UP;
 	else
 		ireq.ifr_flags &= ~IFF_UP;
-	error = ifioctl(so, SIOCSIFFLAGS, (caddr_t)&ireq, procp);
+	error = ifioctl(so, SIOCSIFFLAGS, (caddr_t)&ireq, lwp);
 	if (error) {
 		printf("ifupdown: SIFFLAGS, error=%d\n", error);
 		goto out;
@@ -232,9 +232,9 @@ out:
 }
 
 int
-nfs_boot_setaddress(ifp, procp, addr, netmask, braddr)
+nfs_boot_setaddress(ifp, lwp, addr, netmask, braddr)
 	struct ifnet *ifp;
-	struct proc *procp;
+	struct lwp *lwp;
 	u_int32_t addr, netmask, braddr;
 {
 	struct socket *so;
@@ -246,7 +246,7 @@ nfs_boot_setaddress(ifp, procp, addr, netmask, braddr)
 	 * Get a socket to use for various things in here.
 	 * After this, use "goto out" to cleanup and return.
 	 */
-	error = socreate(AF_INET, &so, SOCK_DGRAM, 0, procp);
+	error = socreate(AF_INET, &so, SOCK_DGRAM, 0, lwp);
 	if (error) {
 		printf("setaddress: socreate, error=%d\n", error);
 		return (error);
@@ -277,7 +277,7 @@ nfs_boot_setaddress(ifp, procp, addr, netmask, braddr)
 		sin->sin_addr.s_addr = braddr;
 	} /* else leave broadcast addr unspecified (len=0) */
 
-	error = ifioctl(so, SIOCAIFADDR, (caddr_t)&iareq, procp);
+	error = ifioctl(so, SIOCAIFADDR, (caddr_t)&iareq, lwp);
 	if (error) {
 		printf("setaddress, error=%d\n", error);
 		goto out;
@@ -291,9 +291,9 @@ out:
 }
 
 int
-nfs_boot_deladdress(ifp, procp, addr)
+nfs_boot_deladdress(ifp, lwp, addr)
 	struct ifnet *ifp;
-	struct proc *procp;
+	struct lwp *lwp;
 	u_int32_t addr;
 {
 	struct socket *so;
@@ -305,7 +305,7 @@ nfs_boot_deladdress(ifp, procp, addr)
 	 * Get a socket to use for various things in here.
 	 * After this, use "goto out" to cleanup and return.
 	 */
-	error = socreate(AF_INET, &so, SOCK_DGRAM, 0, procp);
+	error = socreate(AF_INET, &so, SOCK_DGRAM, 0, lwp);
 	if (error) {
 		printf("deladdress: socreate, error=%d\n", error);
 		return (error);
@@ -319,7 +319,7 @@ nfs_boot_deladdress(ifp, procp, addr)
 	sin->sin_family = AF_INET;
 	sin->sin_addr.s_addr = addr;
 
-	error = ifioctl(so, SIOCDIFADDR, (caddr_t)&ireq, procp);
+	error = ifioctl(so, SIOCDIFADDR, (caddr_t)&ireq, lwp);
 	if (error) {
 		printf("deladdress, error=%d\n", error);
 		goto out;
@@ -360,10 +360,10 @@ nfs_boot_enbroadcast(so)
 }
 
 int
-nfs_boot_sobind_ipport(so, port, procp)
+nfs_boot_sobind_ipport(so, port, l)
 	struct socket *so;
 	u_int16_t port;
-	struct proc *procp;
+	struct lwp *l;
 {
 	struct mbuf *m;
 	struct sockaddr_in *sin;
@@ -375,7 +375,7 @@ nfs_boot_sobind_ipport(so, port, procp)
 	sin->sin_family = AF_INET;
 	sin->sin_addr.s_addr = INADDR_ANY;
 	sin->sin_port = htons(port);
-	error = sobind(so, m, procp);
+	error = sobind(so, m, l);
 	m_freem(m);
 	return (error);
 }
@@ -390,7 +390,7 @@ nfs_boot_sobind_ipport(so, port, procp)
 #define TOTAL_TIMEOUT   30	/* seconds */
 
 int
-nfs_boot_sendrecv(so, nam, sndproc, snd, rcvproc, rcv, from_p, context, procp)
+nfs_boot_sendrecv(so, nam, sndproc, snd, rcvproc, rcv, from_p, context, lwp)
 	struct socket *so;
 	struct mbuf *nam;
 	int (*sndproc) __P((struct mbuf*, void*, int));
@@ -398,7 +398,7 @@ nfs_boot_sendrecv(so, nam, sndproc, snd, rcvproc, rcv, from_p, context, procp)
 	int (*rcvproc) __P((struct mbuf*, void*));
 	struct mbuf **rcv, **from_p;
 	void *context;
-	struct proc *procp;
+	struct lwp *lwp;
 {
 	int error, rcvflg, timo, secs, waited;
 	struct mbuf *m, *from;
@@ -436,7 +436,7 @@ send_again:
 		error = ENOBUFS;
 		goto out;
 	}
-	error = (*so->so_send)(so, nam, NULL, m, NULL, 0, procp);
+	error = (*so->so_send)(so, nam, NULL, m, NULL, 0, lwp);
 	if (error) {
 		printf("nfs_boot: sosend: %d\n", error);
 		goto out;
@@ -459,7 +459,7 @@ send_again:
 			m = NULL;
 		}
 		uio.uio_resid = 1 << 16; /* ??? */
-		uio.uio_procp = procp;
+		uio.uio_lwp = lwp;
 		rcvflg = 0;
 		error = (*so->so_receive)(so, &from, &uio, &m, NULL, &rcvflg);
 		if (error == EWOULDBLOCK) {
@@ -560,9 +560,9 @@ nfs_boot_flushrt(ifp)
  * (once for root and once for swap)
  */
 static int
-nfs_boot_getfh(ndm, p)
+nfs_boot_getfh(ndm, l)
 	struct nfs_dlmount *ndm;	/* output */
-	struct proc *p;
+	struct lwp *l;
 {
 	struct nfs_args *args;
 	struct sockaddr_in *sin;
@@ -617,7 +617,7 @@ nfs_boot_getfh(ndm, p)
 	 * Get file handle using RPC to mountd/mount
 	 */
 	sin = (struct sockaddr_in *)&ndm->ndm_saddr;
-	error = md_mount(sin, pathname, args, p);
+	error = md_mount(sin, pathname, args, l);
 	if (error) {
 		printf("nfs_boot: mountd `%s', error=%d\n",
 		       ndm->ndm_host, error);
@@ -632,7 +632,7 @@ retry:
 	error = krpc_portmap(sin, NFS_PROG,
 		    (args->flags & NFSMNT_NFSV3) ? NFS_VER3 : NFS_VER2,
 		    (args->sotype == SOCK_STREAM) ? IPPROTO_TCP : IPPROTO_UDP,
-		    &port, p);
+		    &port, l);
 	if (port == htons(0))
 		error = EIO;
 	if (error) {
@@ -656,11 +656,11 @@ retry:
  * Also, sets sin->sin_port to the NFS service port.
  */
 static int
-md_mount(mdsin, path, argp, procp)
+md_mount(mdsin, path, argp, lwp)
 	struct sockaddr_in *mdsin;		/* mountd server address */
 	char *path;
 	struct nfs_args *argp;
-	struct proc *procp;
+	struct lwp *lwp;
 {
 	/* The RPC structures */
 	struct rdata {
@@ -684,7 +684,7 @@ md_mount(mdsin, path, argp, procp)
 		 * Get port number for MOUNTD.
 		 */
 		error = krpc_portmap(mdsin, RPCPROG_MNT, mntver,
-		                    IPPROTO_UDP, &mdsin->sin_port, procp);
+		                    IPPROTO_UDP, &mdsin->sin_port, lwp);
 		if (error)
 			continue;
 
@@ -695,7 +695,7 @@ md_mount(mdsin, path, argp, procp)
 
 		/* Do RPC to mountd. */
 		error = krpc_call(mdsin, RPCPROG_MNT, mntver,
-		                  RPCMNT_MOUNT, &m, NULL, procp);
+		                  RPCMNT_MOUNT, &m, NULL, lwp);
 		if (error != EPROGMISMATCH)
 			break;
 		/* Try lower version of mountd. */

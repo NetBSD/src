@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.h,v 1.11.24.2 2004/09/18 14:54:16 skrll Exp $	*/
+/*	$NetBSD: radix.h,v 1.11.24.3 2004/09/21 13:36:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993

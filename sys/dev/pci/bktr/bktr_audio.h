@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_audio.h,v 1.4 2003/03/11 23:11:21 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_audio.h,v 1.2.2.2 2004/09/18 14:50:23 skrll Exp $	*/
+/*	$NetBSD: bktr_audio.h,v 1.2.2.3 2004/09/21 13:32:19 skrll Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_audio.h,v 1.2 1999/10/28 13:58:14 roger Exp$ */
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.6.2.2 2004/09/18 14:53:03 skrll Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.6.2.3 2004/09/21 13:35:11 skrll Exp $	*/
 /*-
  * Copyright (c) 2001,2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.6.2.2 2004/09/18 14:53:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.6.2.3 2004/09/21 13:35:11 skrll Exp $");
 
 /*
  * New device switch framework is developing.

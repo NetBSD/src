@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.83.2.5 2004/09/18 14:53:04 skrll Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.83.2.6 2004/09/21 13:35:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.83.2.5 2004/09/18 14:53:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.83.2.6 2004/09/21 13:35:17 skrll Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -407,13 +407,13 @@ sosend_loan(struct socket *so, struct uio *uio, struct mbuf *m, long space)
 
 	/* XXX KDASSERT */
 	KASSERT(npgs <= M_EXT_MAXPAGES);
-	KASSERT(uio->uio_procp != NULL);
+	KASSERT(uio->uio_lwp != NULL);
 
 	lva = sokvaalloc(len, so);
 	if (lva == 0)
 		return 0;
 
-	error = uvm_loan(&uio->uio_procp->p_vmspace->vm_map, sva, len,
+	error = uvm_loan(&uio->uio_lwp->l_proc->p_vmspace->vm_map, sva, len,
 	    m->m_ext.ext_pgs, UVM_LOAN_TOPAGE);
 	if (error) {
 		sokvafree(lva, len);
@@ -451,12 +451,14 @@ sosend_loan(struct socket *so, struct uio *uio, struct mbuf *m, long space)
  */
 /*ARGSUSED*/
 int
-socreate(int dom, struct socket **aso, int type, int proto, struct proc *p)
+socreate(int dom, struct socket **aso, int type, int proto, struct lwp *l)
 {
 	const struct protosw	*prp;
 	struct socket	*so;
+	struct proc	*p;
 	int		error, s;
 
+	p = l->l_proc;
 	if (proto)
 		prp = pffindproto(dom, proto, type);
 	else
@@ -484,7 +486,7 @@ socreate(int dom, struct socket **aso, int type, int proto, struct proc *p)
 	else
 		so->so_uid = UID_MAX;
 	error = (*prp->pr_usrreq)(so, PRU_ATTACH, (struct mbuf *)0,
-	    (struct mbuf *)(long)proto, (struct mbuf *)0, p);
+	    (struct mbuf *)(long)proto, (struct mbuf *)0, l);
 	if (error) {
 		so->so_state |= SS_NOFDREF;
 		sofree(so);
@@ -497,13 +499,13 @@ socreate(int dom, struct socket **aso, int type, int proto, struct proc *p)
 }
 
 int
-sobind(struct socket *so, struct mbuf *nam, struct proc *p)
+sobind(struct socket *so, struct mbuf *nam, struct lwp *l)
 {
 	int	s, error;
 
 	s = splsoftnet();
 	error = (*so->so_proto->pr_usrreq)(so, PRU_BIND, (struct mbuf *)0,
-	    nam, (struct mbuf *)0, p);
+	    nam, (struct mbuf *)0, l);
 	splx(s);
 	return (error);
 }
@@ -515,7 +517,7 @@ solisten(struct socket *so, int backlog)
 
 	s = splsoftnet();
 	error = (*so->so_proto->pr_usrreq)(so, PRU_LISTEN, (struct mbuf *)0,
-	    (struct mbuf *)0, (struct mbuf *)0, (struct proc *)0);
+	    (struct mbuf *)0, (struct mbuf *)0, (struct lwp *)0);
 	if (error) {
 		splx(s);
 		return (error);
@@ -603,7 +605,7 @@ soclose(struct socket *so)
 	if (so->so_pcb) {
 		int error2 = (*so->so_proto->pr_usrreq)(so, PRU_DETACH,
 		    (struct mbuf *)0, (struct mbuf *)0, (struct mbuf *)0,
-		    (struct proc *)0);
+		    (struct lwp *)0);
 		if (error == 0)
 			error = error2;
 	}
@@ -624,7 +626,7 @@ soabort(struct socket *so)
 {
 
 	return (*so->so_proto->pr_usrreq)(so, PRU_ABORT, (struct mbuf *)0,
-	    (struct mbuf *)0, (struct mbuf *)0, (struct proc *)0);
+	    (struct mbuf *)0, (struct mbuf *)0, (struct lwp *)0);
 }
 
 int
@@ -640,7 +642,7 @@ soaccept(struct socket *so, struct mbuf *nam)
 	if ((so->so_state & SS_ISDISCONNECTED) == 0 ||
 	    (so->so_proto->pr_flags & PR_ABRTACPTDIS) == 0)
 		error = (*so->so_proto->pr_usrreq)(so, PRU_ACCEPT,
-		    (struct mbuf *)0, nam, (struct mbuf *)0, (struct proc *)0);
+		    (struct mbuf *)0, nam, (struct mbuf *)0, (struct lwp *)0);
 	else
 		error = ECONNABORTED;
 
@@ -649,7 +651,7 @@ soaccept(struct socket *so, struct mbuf *nam)
 }
 
 int
-soconnect(struct socket *so, struct mbuf *nam, struct proc *p)
+soconnect(struct socket *so, struct mbuf *nam, struct lwp *l)
 {
 	int		s, error;
 
@@ -668,7 +670,7 @@ soconnect(struct socket *so, struct mbuf *nam, struct proc *p)
 		error = EISCONN;
 	else
 		error = (*so->so_proto->pr_usrreq)(so, PRU_CONNECT,
-		    (struct mbuf *)0, nam, (struct mbuf *)0, p);
+		    (struct mbuf *)0, nam, (struct mbuf *)0, l);
 	splx(s);
 	return (error);
 }
@@ -681,7 +683,7 @@ soconnect2(struct socket *so1, struct socket *so2)
 	s = splsoftnet();
 	error = (*so1->so_proto->pr_usrreq)(so1, PRU_CONNECT2,
 	    (struct mbuf *)0, (struct mbuf *)so2, (struct mbuf *)0,
-	    (struct proc *)0);
+	    (struct lwp *)0);
 	splx(s);
 	return (error);
 }
@@ -702,7 +704,7 @@ sodisconnect(struct socket *so)
 	}
 	error = (*so->so_proto->pr_usrreq)(so, PRU_DISCONNECT,
 	    (struct mbuf *)0, (struct mbuf *)0, (struct mbuf *)0,
-	    (struct proc *)0);
+	    (struct lwp *)0);
  bad:
 	splx(s);
 	sodopendfree(so);
@@ -729,12 +731,14 @@ sodisconnect(struct socket *so)
  */
 int
 sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
-	struct mbuf *control, int flags, struct proc *p)
+	struct mbuf *control, int flags, struct lwp *l)
 {
 	struct mbuf	**mp, *m;
+	struct proc	*p;
 	long		space, len, resid, clen, mlen;
 	int		error, s, dontroute, atomic;
 
+	p = l->l_proc;
 	sodopendfree(so);
 
 	clen = 0;
@@ -885,7 +889,7 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 				so->so_state |= SS_MORETOCOME;
 			error = (*so->so_proto->pr_usrreq)(so,
 			    (flags & MSG_OOB) ? PRU_SENDOOB : PRU_SEND,
-			    top, addr, control, p);
+			    top, addr, control, curlwp);	/* XXX */
 			if (dontroute)
 				so->so_options &= ~SO_DONTROUTE;
 			if (resid > 0)
@@ -931,7 +935,8 @@ int
 soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 	struct mbuf **mp0, struct mbuf **controlp, int *flagsp)
 {
-	struct proc * p;
+	struct lwp *l;
+	struct proc *p;
 	struct mbuf	*m, **mp;
 	int		flags, len, error, s, offset, moff, type, orig_resid;
 	const struct protosw	*pr;
@@ -942,7 +947,8 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 	mp = mp0;
 	type = 0;
 	orig_resid = uio->uio_resid;
-	p = uio->uio_procp;
+	l = uio->uio_lwp;
+	p = l->l_proc;
 
 	if (paddr)
 		*paddr = 0;
@@ -960,7 +966,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 		m = m_get(M_WAIT, MT_DATA);
 		error = (*pr->pr_usrreq)(so, PRU_RCVOOB, m,
 		    (struct mbuf *)(long)(flags & MSG_PEEK),
-		    (struct mbuf *)0, p);
+		    (struct mbuf *)0, l);
 		if (error)
 			goto bad;
 		do {
@@ -977,7 +983,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 		*mp = (struct mbuf *)0;
 	if (so->so_state & SS_ISCONFIRMING && uio->uio_resid)
 		(*pr->pr_usrreq)(so, PRU_RCVD, (struct mbuf *)0,
-		    (struct mbuf *)0, (struct mbuf *)0, p);
+		    (struct mbuf *)0, (struct mbuf *)0, l);
 
  restart:
 	if ((error = sblock(&so->so_rcv, SBLOCKWAIT(flags))) != 0)
@@ -1093,7 +1099,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 				if (dom->dom_externalize && p &&
 				    mtod(m, struct cmsghdr *)->cmsg_type ==
 				    SCM_RIGHTS)
-					error = (*dom->dom_externalize)(m, p);
+					error = (*dom->dom_externalize)(m, l);
 				*controlp = m;
 				so->so_rcv.sb_mb = m->m_next;
 				m->m_next = 0;
@@ -1286,7 +1292,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 				(*pr->pr_usrreq)(so, PRU_RCVD,
 				    (struct mbuf *)0,
 				    (struct mbuf *)(long)flags,
-				    (struct mbuf *)0, p);
+				    (struct mbuf *)0, l);
 			SBLASTRECORDCHK(&so->so_rcv, "soreceive sbwait 2");
 			SBLASTMBUFCHK(&so->so_rcv, "soreceive sbwait 2");
 			error = sbwait(&so->so_rcv);
@@ -1323,7 +1329,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 		SBLASTMBUFCHK(&so->so_rcv, "soreceive 4");
 		if (pr->pr_flags & PR_WANTRCVD && so->so_pcb)
 			(*pr->pr_usrreq)(so, PRU_RCVD, (struct mbuf *)0,
-			    (struct mbuf *)(long)flags, (struct mbuf *)0, p);
+			    (struct mbuf *)(long)flags, (struct mbuf *)0, l);
 	}
 	if (orig_resid == uio->uio_resid && orig_resid &&
 	    (flags & MSG_EOR) == 0 && (so->so_state & SS_CANTRCVMORE) == 0) {
@@ -1353,7 +1359,7 @@ soshutdown(struct socket *so, int how)
 		sorflush(so);
 	if (how == SHUT_WR || how == SHUT_RDWR)
 		return (*pr->pr_usrreq)(so, PRU_SHUTDOWN, (struct mbuf *)0,
-		    (struct mbuf *)0, (struct mbuf *)0, (struct proc *)0);
+		    (struct mbuf *)0, (struct mbuf *)0, (struct lwp *)0);
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufsmount.h,v 1.13.2.3 2004/09/18 14:56:59 skrll Exp $	*/
+/*	$NetBSD: ufsmount.h,v 1.13.2.4 2004/09/21 13:39:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993

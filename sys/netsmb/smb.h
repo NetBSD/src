@@ -1,4 +1,4 @@
-/*	$NetBSD: smb.h,v 1.12.2.2 2004/09/18 14:56:06 skrll Exp $	*/
+/*	$NetBSD: smb.h,v 1.12.2.3 2004/09/21 13:38:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov

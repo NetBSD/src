@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.h,v 1.4.2.4 2004/09/18 14:52:37 skrll Exp $	*/
+/*	$NetBSD: cd9660_node.h,v 1.4.2.5 2004/09/21 13:34:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994

@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_if.c,v 1.5.2.3 2004/09/18 14:52:37 skrll Exp $	*/
+/*	$NetBSD: pf_if.c,v 1.5.2.4 2004/09/21 13:34:43 skrll Exp $	*/
 /*	$OpenBSD: pf_if.c,v 1.11 2004/03/15 11:38:23 cedric Exp $ */
 
 /*

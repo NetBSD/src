@@ -1,4 +1,4 @@
-/*	$NetBSD: bzero.S,v 1.6.22.2 2004/09/18 14:54:01 skrll Exp $	*/
+/*	$NetBSD: bzero.S,v 1.6.22.3 2004/09/21 13:36:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 	.asciz "@(#)bzero.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: bzero.S,v 1.6.22.2 2004/09/18 14:54:01 skrll Exp $")
+	RCSID("$NetBSD: bzero.S,v 1.6.22.3 2004/09/21 13:36:13 skrll Exp $")
 #endif
 #endif  /* LIBC_SCCS and not lint */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.27.2.2 2004/09/18 14:51:16 skrll Exp $	*/
+/*	$NetBSD: magma.c,v 1.27.2.3 2004/09/21 13:33:13 skrll Exp $	*/
 /*
  * magma.c
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.27.2.2 2004/09/18 14:51:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.27.2.3 2004/09/21 13:33:13 skrll Exp $");
 
 #if 0
 #define MAGMA_DEBUG

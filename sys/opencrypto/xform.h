@@ -1,4 +1,4 @@
-/*	$NetBSD: xform.h,v 1.5.4.3 2004/09/18 14:56:20 skrll Exp $ */
+/*	$NetBSD: xform.h,v 1.5.4.4 2004/09/21 13:38:44 skrll Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.h,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.h,v 1.10 2002/04/22 23:10:09 deraadt Exp $	*/
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: saerrno.h,v 1.7.42.2 2004/09/18 14:54:02 skrll Exp $	*/
+/*	$NetBSD: saerrno.h,v 1.7.42.3 2004/09/21 13:36:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993

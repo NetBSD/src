@@ -1,4 +1,4 @@
-/*	$NetBSD: example_syscall.c,v 1.3.6.2 2004/09/18 14:54:14 skrll Exp $	*/
+/*	$NetBSD: example_syscall.c,v 1.3.6.3 2004/09/21 13:36:25 skrll Exp $	*/
 
 /*
  * example_syscall.c
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: example_syscall.c,v 1.3.6.2 2004/09/18 14:54:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: example_syscall.c,v 1.3.6.3 2004/09/21 13:36:25 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>

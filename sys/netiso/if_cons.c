@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cons.c,v 1.14.2.2 2004/09/18 14:55:52 skrll Exp $	*/
+/*	$NetBSD: if_cons.c,v 1.14.2.3 2004/09/21 13:38:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -64,7 +64,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: if_cons.c,v 1.14.2.2 2004/09/18 14:55:52 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: if_cons.c,v 1.14.2.3 2004/09/21 13:38:00 skrll Exp $");
 
 #include "opt_iso.h"
 

@@ -33,7 +33,7 @@
  * otherwise) arising in any way out of the use of this software, even if
  * advised of the possibility of such damage.
  *
- * $Id: vinumconfig.c,v 1.3.2.3 2004/09/18 14:52:13 skrll Exp $
+ * $Id: vinumconfig.c,v 1.3.2.4 2004/09/21 13:34:15 skrll Exp $
  * $FreeBSD$
  */
 

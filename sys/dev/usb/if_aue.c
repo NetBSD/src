@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.82.2.2 2004/09/18 14:51:46 skrll Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.82.2.3 2004/09/21 13:33:43 skrll Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.82.2.2 2004/09/18 14:51:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.82.2.3 2004/09/21 13:33:43 skrll Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: qdreg.h,v 1.5.2.2 2004/09/18 14:50:40 skrll Exp $	*/
+/*	$NetBSD: qdreg.h,v 1.5.2.3 2004/09/21 13:32:38 skrll Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.

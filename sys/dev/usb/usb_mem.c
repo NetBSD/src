@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.26.2.2 2004/09/18 14:51:46 skrll Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.26.2.3 2004/09/21 13:33:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.26.2.2 2004/09/18 14:51:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.26.2.3 2004/09/21 13:33:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.35.2.3 2004/09/18 14:51:45 skrll Exp $	*/
+/*	$NetBSD: tc.c,v 1.35.2.4 2004/09/21 13:33:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.35.2.3 2004/09/18 14:51:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.35.2.4 2004/09/21 13:33:42 skrll Exp $");
 
 #include "opt_tcverbose.h"
 

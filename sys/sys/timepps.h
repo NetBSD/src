@@ -1,4 +1,4 @@
-/*	$NetBSD: timepps.h,v 1.4.24.2 2004/09/18 14:56:31 skrll Exp $	*/
+/*	$NetBSD: timepps.h,v 1.4.24.3 2004/09/21 13:38:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone

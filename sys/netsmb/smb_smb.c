@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_smb.c,v 1.20.2.2 2004/09/18 14:56:06 skrll Exp $	*/
+/*	$NetBSD: smb_smb.c,v 1.20.2.3 2004/09/21 13:38:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.20.2.2 2004/09/18 14:56:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.20.2.3 2004/09/21 13:38:24 skrll Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ smb_smb_negotiate(struct smb_vc *vcp, struct smb_cred *scred)
 	u_int16_t dindex, tw, swlen, bc;
 	int error, maxqsz;
 
-	KASSERT(scred->scr_p == vcp->vc_iod->iod_p);
+	KASSERT(scred->scr_l == vcp->vc_iod->iod_l);
 
 	vcp->vc_hflags = 0;
 	vcp->vc_hflags2 = 0;
@@ -266,7 +266,7 @@ smb_smb_ssnsetup(struct smb_vc *vcp, struct smb_cred *scred)
 	char *pp, *up, *pbuf, *encpass;
 	int error, plen, uniplen, ulen, upper;
 
-	KASSERT(scred->scr_p == vcp->vc_iod->iod_p);
+	KASSERT(scred->scr_l == vcp->vc_iod->iod_l);
 
 	upper = 0;
 
@@ -404,7 +404,7 @@ smb_smb_ssnclose(struct smb_vc *vcp, struct smb_cred *scred)
 	struct mbchain *mbp;
 	int error;
 
-	KASSERT(scred->scr_p == vcp->vc_iod->iod_p);
+	KASSERT(scred->scr_l == vcp->vc_iod->iod_l);
 
 	if (vcp->vc_smbuid == SMB_UID_UNKNOWN)
 		return 0;

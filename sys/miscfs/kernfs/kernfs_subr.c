@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_subr.c,v 1.6.2.4 2004/09/18 14:54:15 skrll Exp $	*/
+/*	$NetBSD: kernfs_subr.c,v 1.6.2.5 2004/09/21 13:36:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.6.2.4 2004/09/18 14:54:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.6.2.5 2004/09/21 13:36:30 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: xirc.c,v 1.11.2.3 2004/09/18 14:50:24 skrll Exp $	*/
+/*	$NetBSD: xirc.c,v 1.11.2.4 2004/09/21 13:32:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.11.2.3 2004/09/18 14:50:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.11.2.4 2004/09/21 13:32:22 skrll Exp $");
 
 #include "opt_inet.h" 
 #include "opt_ns.h"

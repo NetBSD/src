@@ -1,4 +1,4 @@
-/*	$NetBSD: tcdevs_data.h,v 1.18.24.2 2004/09/18 14:51:45 skrll Exp $	*/
+/*	$NetBSD: tcdevs_data.h,v 1.18.24.3 2004/09/21 13:33:42 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.

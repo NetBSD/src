@@ -1,4 +1,4 @@
-/*	$NetBSD: xlat_mbr_fstype.c,v 1.2.4.3 2004/09/18 14:53:41 skrll Exp $	*/
+/*	$NetBSD: xlat_mbr_fstype.c,v 1.2.4.4 2004/09/21 13:35:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0,"$NetBSD: xlat_mbr_fstype.c,v 1.2.4.3 2004/09/18 14:53:41 skrll Exp $");
+__KERNEL_RCSID(0,"$NetBSD: xlat_mbr_fstype.c,v 1.2.4.4 2004/09/21 13:35:54 skrll Exp $");
 
 
 #include <sys/disklabel.h>

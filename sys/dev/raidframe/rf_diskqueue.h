@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.h,v 1.12.2.2 2004/09/18 14:50:54 skrll Exp $	*/
+/*	$NetBSD: rf_diskqueue.h,v 1.12.2.3 2004/09/21 13:32:52 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: power.h,v 1.2.2.2 2004/09/18 14:56:30 skrll Exp $	*/
+/*	$NetBSD: power.h,v 1.2.2.3 2004/09/21 13:38:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.34.2.2 2004/09/18 14:55:14 skrll Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.34.2.3 2004/09/21 13:37:34 skrll Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*

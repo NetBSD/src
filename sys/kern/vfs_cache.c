@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.45.2.4 2004/09/18 14:53:04 skrll Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.45.2.5 2004/09/21 13:35:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.45.2.4 2004/09/18 14:53:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.45.2.5 2004/09/21 13:35:17 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"

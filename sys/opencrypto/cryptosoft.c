@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.8.4.3 2004/09/18 14:56:20 skrll Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.8.4.4 2004/09/21 13:38:44 skrll Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.8.4.3 2004/09/18 14:56:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.8.4.4 2004/09/21 13:38:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
