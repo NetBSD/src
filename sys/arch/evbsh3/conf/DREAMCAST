@@ -1,4 +1,4 @@
-#	$NetBSD: DREAMCAST,v 1.1 2000/07/13 18:11:53 msaitoh Exp $
+#	$NetBSD: DREAMCAST,v 1.2 2000/07/31 20:57:46 msaitoh Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -30,6 +30,8 @@ options		INITTODR_ALWAYS_USE_RTC
 options		BRAINS
 options		USE_RTCCLK
 options		SYNC_CLOCK_TO_RTC
+
+makeoptions 	LDSCRIPTBASE="shl.x"	# for little endian
 
 options		LED_ADDR=0xa8000000
 
