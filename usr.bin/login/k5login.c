@@ -1,4 +1,4 @@
-/*	$NetBSD: k5login.c,v 1.21 2001/09/17 12:34:44 assar Exp $	*/
+/*	$NetBSD: k5login.c,v 1.22 2002/02/20 08:17:17 joda Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -55,7 +55,7 @@
 #if 0
 static char sccsid[] = "@(#)klogin.c	5.11 (Berkeley) 7/12/92";
 #endif
-__RCSID("$NetBSD: k5login.c,v 1.21 2001/09/17 12:34:44 assar Exp $");
+__RCSID("$NetBSD: k5login.c,v 1.22 2002/02/20 08:17:17 joda Exp $");
 #endif /* not lint */
 
 #ifdef KERBEROS5
@@ -361,7 +361,7 @@ krb5_to4 (struct passwd *pw, krb5_context context, krb5_ccache id)
 							      &cred, &c);
 			if(ret == 0) {
 				snprintf(krb4tkfile, sizeof(krb4tkfile),
-					 "%s%d",TKT_ROOT, getuid());
+					 "%s%d",TKT_ROOT, pw->pw_uid);
 				krb_set_tkt_string(krb4tkfile);
 				tf_setup(&c, c.pname, c.pinst);
 				if (chown(krb4tkfile, pw->pw_uid,
