@@ -1,4 +1,4 @@
-/*	$NetBSD: cal.c,v 1.6 1995/03/26 03:10:24 glass Exp $	*/
+/*	$NetBSD: cal.c,v 1.7 1997/10/18 12:24:59 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -36,17 +36,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1989, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cal.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: cal.c,v 1.6 1995/03/26 03:10:24 glass Exp $";
+__RCSID("$NetBSD: cal.c,v 1.7 1997/10/18 12:24:59 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -108,7 +108,7 @@ char *j_day_headings = "  S   M  Tu   W  Th   F   S";
 /* leap year -- account for gregorian reformation in 1752 */
 #define	leap_year(yr) \
 	((yr) <= 1752 ? !((yr) % 4) : \
-	!((yr) % 4) && ((yr) % 100) || !((yr) % 400))
+	!(((yr) % 4) && ((yr) % 100)) || !((yr) % 400))
 
 /* number of centuries since 1700, not inclusive */
 #define	centuries_since_1700(yr) \
@@ -131,6 +131,7 @@ int	day_in_week __P((int, int, int));
 int	day_in_year __P((int, int, int));
 void	j_yearly __P((int));
 void	monthly __P((int, int));
+int	main __P((int, char **));
 void	trim_trailing_spaces __P((char *));
 void	usage __P((void));
 void	yearly __P((int));
@@ -144,8 +145,8 @@ main(argc, argv)
 	time_t now;
 	int ch, month, year, yflag;
 
-	yflag = 0;
-	while ((ch = getopt(argc, argv, "jy")) != EOF)
+	yflag = year = 0;
+	while ((ch = getopt(argc, argv, "jy")) != -1)
 		switch(ch) {
 		case 'j':
 			julian = 1;
@@ -375,7 +376,7 @@ ascii_day(p, day)
 		return;
 	}
 	if (julian) {
-		if (val = day / 100) {
+		if ((val = day / 100) != 0) {
 			day %= 100;
 			*p++ = val + '0';
 			display = 1;
