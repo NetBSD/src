@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo.c,v 1.1.1.1 2002/10/03 07:46:03 jdolecek Exp $	*/
+/*	$NetBSD: fifo.c,v 1.2 2002/10/29 10:39:36 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <inttypes.h>
 
