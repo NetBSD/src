@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.13 2004/08/14 16:06:37 dsl Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.14 2004/08/20 21:23:08 hubertf Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1029,7 +1029,7 @@ message Sectors {Sektoren}
 message Select_medium {Medium auswählen}
 message ftp {FTP}
 message nfs {NFS}
-message cdrom {CDROM}
+message cdrom {CD-ROM / DVD}
 message floppy {Diskette}
 message local_fs {Ungemountetes Dateisysytem}
 message local_dir {Lokales Verzeichnis}
