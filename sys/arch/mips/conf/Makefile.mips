@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.27 2002/06/04 21:39:11 thorpej Exp $
+#	$NetBSD: Makefile.mips,v 1.28 2002/11/09 07:31:08 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -58,7 +58,7 @@ GENASSYM=	${MIPS}/mips/genassym.cf
 CPPFLAGS+=	-D${MACHINE}
 DEFGP?=		-G 0
 GP?=		${DEFGP}
-CFLAGS+=	${ENDIAN} ${GP} -mno-abicalls -mno-half-pic
+CFLAGS+=	${ENDIAN} ${GP} -mno-abicalls
 .if defined(HAVE_GCC3)
 AFLAGS+=	${ENDIAN} -x assembler-with-cpp
 .else
