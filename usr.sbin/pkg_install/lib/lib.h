@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.25 1999/08/24 00:48:39 hubertf Exp $ */
+/* $NetBSD: lib.h,v 1.26 1999/09/09 01:31:44 hubertf Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -99,24 +99,24 @@
 /* Enumerated constants for plist entry types */
 typedef enum pl_ent_t {
 	PLIST_SHOW_ALL = -1,
-	PLIST_FILE,
-	PLIST_CWD,
-	PLIST_CMD,
-	PLIST_CHMOD,
-	PLIST_CHOWN,
-	PLIST_CHGRP,
-	PLIST_COMMENT,
-	PLIST_IGNORE,
-	PLIST_NAME,
-	PLIST_UNEXEC,
-	PLIST_SRC,
-	PLIST_DISPLAY,
-	PLIST_PKGDEP,
-	PLIST_MTREE,
-	PLIST_DIR_RM,
-	PLIST_IGNORE_INST,
-	PLIST_OPTION,
-	PLIST_PKGCFL
+	PLIST_FILE,		/*  0 */
+	PLIST_CWD,		/*  1 */
+	PLIST_CMD,		/*  2 */
+	PLIST_CHMOD,		/*  3 */
+	PLIST_CHOWN,		/*  4 */
+	PLIST_CHGRP,		/*  5 */
+	PLIST_COMMENT,		/*  6 */
+	PLIST_IGNORE,		/*  7 */
+	PLIST_NAME,		/*  8 */
+	PLIST_UNEXEC,		/*  9 */
+	PLIST_SRC,		/* 10 */
+	PLIST_DISPLAY,		/* 11 */
+	PLIST_PKGDEP,		/* 12 */
+	PLIST_MTREE,		/* 13 */
+	PLIST_DIR_RM,		/* 14 */
+	PLIST_IGNORE_INST,	/* 15 */
+	PLIST_OPTION,		/* 16 */
+	PLIST_PKGCFL		/* 17 */
 }       pl_ent_t;
 
 /* Types */
