@@ -1,4 +1,4 @@
-# $Id: SS5,v 1.1 1994/05/05 07:50:05 deraadt Exp $
+# $Id: SS5,v 1.2 1994/05/12 08:22:41 deraadt Exp $
 # SPARCstation 1, 1+, 2, etc.
 
 include	"std.sparc"
@@ -18,7 +18,7 @@ options		KTRACE			# system call tracing support
 #options	KGDBDEV=0xc01, KGDBRATE=38400	# device & baud rate
 options		RCONSOLE		# fast rasterop console
 options		MAXFDESCS=1024
-#options	SYSVMSG,SYSVSEM,SYSVSHM
+#options	SYSVMSG,SYSVSEM
 
 # Filesystem options
 options		FFS
