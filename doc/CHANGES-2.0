@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.376 2004/08/11 19:49:32 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.377 2004/08/11 19:52:40 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6364,3 +6364,11 @@ gnu/lib/libgcc3/libgcc_s/Makefile		1.8
 
 	Look for libgcc.map in ${.OBJDIR}. PR#26515
 	[skrll, ticket #736]
+
+usr.sbin/racoon/racoon/Makefile			1.21
+doc/HACKS					1.37
+
+	Add -fno-strict-aliasing to CFLAGS to avoid gcc warning
+	"dereferencing type-punned pointer will break strict-aliasing rules"
+	which occurs when compiling crypto_openssl.c with -O[23s].
+	[junyoung, ticket #738]
