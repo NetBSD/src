@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.6 1995/07/18 04:10:56 briggs Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.7 1995/08/09 03:22:50 briggs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -131,7 +131,12 @@ gotit:
 		}
 	}
 verybad:
-	printf("no suitable %s -- hit any key to reboot\n", root_swap);
+	printf("no suitable %s", root_swap);
+	if (root_swap[0] == 's') {
+		printf("\n");
+		goto doswap;
+	}
+	printf(" -- hit any key to reboot\n", root_swap);
 	cngetc();
 	doboot();
 	printf("      Automatic reboot failed.\n");
