@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.59 2005/02/03 19:20:02 perry Exp $	*/
+/*	$NetBSD: signal.h,v 1.60 2005/02/26 22:25:34 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -254,7 +254,7 @@ struct	sigevent {
 #define SIGEV_THREAD	2
 #define SIGEV_SA	3
 #endif /* (_POSIX_C_SOURCE - 0) >= 199309L || ... */
-     
+
 #endif	/* _POSIX_C_SOURCE || _XOPEN_SOURCE || _NETBSD_SOURCE */
 
 /*

@@ -1,8 +1,8 @@
-/*	$NetBSD: md4.h,v 1.3 2005/02/03 19:20:01 perry Exp $	*/
+/*	$NetBSD: md4.h,v 1.4 2005/02/26 22:25:34 perry Exp $	*/
 
 /*
- * This file is derived from the RSA Data Security, Inc. MD4 Message-Digest 
- * Algorithm and has been modified by Jason R. Thorpe <thorpej@NetBSD.org>      
+ * This file is derived from the RSA Data Security, Inc. MD4 Message-Digest
+ * Algorithm and has been modified by Jason R. Thorpe <thorpej@NetBSD.org>
  * for portability and formatting.
  */
 
