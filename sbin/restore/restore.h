@@ -1,4 +1,4 @@
-/*	$NetBSD: restore.h,v 1.16 2004/10/22 22:38:38 bouyer Exp $	*/
+/*	$NetBSD: restore.h,v 1.17 2005/01/08 14:30:39 fredb Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -49,6 +49,7 @@ extern int	Nflag;		/* do not write the disk */
 extern int	vflag;		/* print out actions taken */
 extern int	uflag;		/* unlink file before writing to it */
 extern int	yflag;		/* always try to recover from tape errors */
+extern int	dotflag;	/* restore owner/mode of "." directory */
 /*
  * Global variables
  */

@@ -1,4 +1,4 @@
-.\"	$NetBSD: restore.8,v 1.47 2004/10/24 17:01:22 wiz Exp $
+.\"	$NetBSD: restore.8,v 1.48 2005/01/08 14:30:39 fredb Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -105,6 +105,23 @@ Unless the
 flag is specified (see below),
 the appearance of a directory name refers to
 the files and (recursively) subdirectories of that directory.
+.Pp
+If any file arguments are given with the
+.Fl x
+flag,
+or specified in the command shell with the
+.Fl i
+flag,
+the permissions of the root directory
+.Em will not
+be applied to the current directory,
+unless one of those file arguments explicitly represents the root inode
+.Po e.g.:
+a literal
+.Ql \&.
+.Pc .
+This is a change from the traditional behaviour,
+which used to be to always prompt the user.
 .Pp
 Exactly one of the following flags is required:
 .Bl -tag -width Ds
