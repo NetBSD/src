@@ -1,4 +1,4 @@
-/*	$NetBSD: fsinfo.c,v 1.5 2002/11/29 23:06:25 christos Exp $	*/
+/*	$NetBSD: fsinfo.c,v 1.6 2002/12/06 03:50:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997-2002 Erez Zadok
@@ -185,9 +185,9 @@ Usage: %s [-v] [-a autodir] [-h hostname] [-b bootparams] [-d dumpsets]\n\
   }
 
   if (g_argv[0])
-    log("g_argv[0] = %s", g_argv[0]);
+    logit("g_argv[0] = %s", g_argv[0]);
   else
-    log("g_argv[0] = (nil)");
+    logit("g_argv[0] = (nil)");
 }
 
 
