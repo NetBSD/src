@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.7 2003/08/07 10:04:34 agc Exp $	*/
+/*	$NetBSD: extern.h,v 1.8 2003/08/12 08:41:36 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@ u_short	dkcksum(struct disklabel *);
 void	fatal(const char *fmt, ...)
      __attribute__((__format__(__printf__,1,2)));
 u_int	log2(u_int);
-int	make_lfs(int, struct disklabel *, struct partition *, int,
+int	make_lfs(int, uint, struct partition *, int,
 		int, int, int, int, int, daddr_t, int, int, u_int32_t);
 
 extern char	*progname;
