@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.90 1997/05/16 21:39:59 gwr Exp $	*/
+/*	$NetBSD: tty.c,v 1.91 1997/05/17 00:19:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -1937,7 +1937,7 @@ ttyinfo(tp)
 			register struct vmspace *vm = pick->p_vmspace;
 			tmp = pgtok(vm_resident_count(vm));
 		}
-		ttyprintf(tp, "%ldk\n", tmp);
+		ttyprintf(tp, "%dk\n", tmp);
 	}
 	tp->t_rocount = 0;	/* so pending input will be retyped if BS */
 }
