@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.183 2002/06/14 13:18:53 itojun Exp $
+.\"	$NetBSD: main,v 1.184 2002/06/15 14:41:09 itojun Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1713,7 +1713,7 @@ the software that we have mentioned in this document:
 .ps 8
 .vs 9
 .Ht <font size=-1>
-.(item
+.(item -compact
 .so ../common/legal.common -----------------------------------------------
 .so legal -----------------------------------------------
 .item)
