@@ -1,4 +1,4 @@
-/* $NetBSD: pcb.h,v 1.2 2001/01/11 22:03:52 bjh21 Exp $ */
+/* $NetBSD: pcb.h,v 1.3 2001/03/08 21:30:35 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -44,7 +44,6 @@ struct pcb {
 	struct	fpframe pcb_ff;
 	void	*pcb_onfault;  /* return here after failed page fault */
 	label_t	*pcb_onfault_lj; /* longjmp here ditto */
-	label_t *pcb_onundef_lj; /* longjmp here on undefined instruction */
 };
 
 /*
