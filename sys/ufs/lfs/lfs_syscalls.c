@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.89 2003/04/02 10:39:42 fvdl Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.90 2003/05/17 01:44:39 nakayama Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.89 2003/04/02 10:39:42 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.90 2003/05/17 01:44:39 nakayama Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -664,7 +664,7 @@ sys_lfs_bmapv(struct lwp *l, void *v, register_t *retval)
 		return (error);
 
 	blkcnt = SCARG(uap, blkcnt);
-	if ((u_int) blkcnt > SIZE_T_MAX / sizeof(BLOCK_INFO))
+	if ((size_t) blkcnt > SIZE_T_MAX / sizeof(BLOCK_INFO))
 		return (EINVAL);
 	blkiov = malloc(blkcnt * sizeof(BLOCK_INFO), M_SEGMENT, M_WAITOK);
 	blkiov15 = malloc(blkcnt * sizeof(BLOCK_INFO_15), M_SEGMENT, M_WAITOK);
