@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.4 1998/09/15 20:03:50 pk Exp $ */
+/*	$NetBSD: promdev.c,v 1.5 1998/10/05 07:13:07 christos Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -59,7 +59,7 @@ ssize_t	prom0_recv __P((struct promdata *, void *, size_t));
 static char	*prom_mapin __P((u_long, int, int));
 
 int	getdevtype __P((int, char *));
-int	getprop __P((int, char *, void *, int));
+int	getpropval __P((int, char *, void *, int));
 char	*getpropstring __P((int, char *));
 
 static void	prom0_fake __P((void));
@@ -580,7 +580,7 @@ getdevtype(fd, name)
  * OpenPROM nodes & property routines (from <sparc/autoconf.c>).
  */
 int
-getprop(node, name, buf, bufsiz)
+getpropval(node, name, buf, bufsiz)
 	int node;
 	char *name;
 	void *buf;
@@ -613,7 +613,7 @@ getpropstring(node, name)
 	register int len;
 	static char stringbuf[64];
 
-	len = getprop(node, name, (void *)stringbuf, sizeof stringbuf - 1);
+	len = getpropval(node, name, (void *)stringbuf, sizeof stringbuf - 1);
 	if (len == -1)
 		len = 0;
 	stringbuf[len] = '\0';	/* usually unnecessary */
