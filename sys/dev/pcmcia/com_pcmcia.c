@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.19 1998/12/24 03:59:00 marc Exp $	*/
+/*	$NetBSD: com_pcmcia.c,v 1.20 1999/05/23 00:48:46 christos Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -99,14 +99,13 @@
 #include <dev/isa/isareg.h>
 
 struct com_dev {
-	char *name;
-	char *cis1_info[4];
+	char	*name;
+	char	*cis1_info[4];
 };
 
 /* Devices that we need to match by CIS strings */
 static struct com_dev com_devs[] = {
-	{ PCMCIA_STR_MEGAHERTZ_XJ2288,
-	  PCMCIA_CIS_MEGAHERTZ_XJ2288 },
+	{ PCMCIA_STR_MEGAHERTZ_XJ2288, PCMCIA_CIS_MEGAHERTZ_XJ2288 },
 };
 
 
@@ -135,7 +134,7 @@ struct com_pcmcia_softc {
 
 struct cfattach com_pcmcia_ca = {
 	sizeof(struct com_pcmcia_softc), com_pcmcia_match, com_pcmcia_attach,
-	    com_pcmcia_detach, com_activate
+	com_pcmcia_detach, com_activate
 };
 
 /* Look for pcmcia cards with particular CIS strings */
@@ -147,9 +146,9 @@ com_dev_match(card)
 
 	for (i = 0; i < com_devs_size; i++) {
 		for (j = 0; j < 4; j++)
-		       	if (com_devs[i].cis1_info[j] &&
+			if (com_devs[i].cis1_info[j] &&
 			    strcmp(com_devs[i].cis1_info[j],
-				   card->cis1_info[j]))
+			    card->cis1_info[j]) != 0)
 				break;
 		if (j == 4)
 			return &com_devs[i];
@@ -171,48 +170,48 @@ com_pcmcia_match(parent, match, aux)
 
 	/* 1. Does it claim to be a serial device? */
 	if (pa->pf->function == PCMCIA_FUNCTION_SERIAL)
-	    return 1;
+		return 1;
 
 	/* 2. Does it have all four 'standard' port ranges? */
 	comportmask = 0;
 	for (cfe = pa->pf->cfe_head.sqh_first; cfe;
-	     cfe = cfe->cfe_list.sqe_next) {
-	  switch (cfe->iospace[0].start) {
-	  case IO_COM1:
-	    comportmask |= 1;
-	    break;
-	  case IO_COM2:
-	    comportmask |= 2;
-	    break;
-	  case IO_COM3:
-	    comportmask |= 4;
-	    break;
-	  case IO_COM4:
-	    comportmask |= 8;
-	    break;
-	  }
+	    cfe = cfe->cfe_list.sqe_next) {
+		switch (cfe->iospace[0].start) {
+		case IO_COM1:
+			comportmask |= 1;
+			break;
+		case IO_COM2:
+			comportmask |= 2;
+			break;
+		case IO_COM3:
+			comportmask |= 4;
+			break;
+		case IO_COM4:
+			comportmask |= 8;
+			break;
+		}
 	}
 
 	if (comportmask == 15)
-	    return 1;
+		return 1;
 
 	/* 3. Is this a card we know about? */
 	if (com_dev_match(pa->card) != NULL)
-	    return 1;
+		return 1;
 
 	return 0;
 }
 
 void
 com_pcmcia_attach(parent, self, aux)
-	struct device *parent, *self;
+	struct device  *parent, *self;
 	void *aux;
 {
 	struct com_pcmcia_softc *psc = (void *) self;
 	struct com_softc *sc = &psc->sc_com;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
-	int autoalloc = 0;
+	int             autoalloc = 0;
 
 	psc->sc_pf = pa->pf;
 
@@ -220,7 +219,7 @@ retry:
 	/* find a cfe we can use */
 
 	for (cfe = pa->pf->cfe_head.sqh_first; cfe;
-	     cfe = cfe->cfe_list.sqe_next) {
+	    cfe = cfe->cfe_list.sqe_next) {
 #if 0
 		/*
 		 * Some modem cards (e.g. Xircom CM33) also have
@@ -234,25 +233,25 @@ retry:
 			continue;
 
 		if (autoalloc == 0) {
-			/* 
-			 * cfe->iomask == 3 is our test for the "generic" config table 
-			 * entry, which we want to avoid on the first pass and use
-			 * exclusively on the second pass. 
+			/*
+			 * cfe->iomask == 3 is our test for the "generic"
+			 * config table entry, which we want to avoid on the
+			 * first pass and use exclusively on the second pass.
 			 */
-			if ((cfe->iomask != 3) && (cfe->iospace[0].start != 0)) {
-				if (!pcmcia_io_alloc(pa->pf, cfe->iospace[0].start,
-									 cfe->iospace[0].length, 
-									 0, 
-									 &psc->sc_pcioh)) {
+			if ((cfe->iomask != 3) && 
+			    (cfe->iospace[0].start != 0)) {
+				if (!pcmcia_io_alloc(pa->pf,
+				    cfe->iospace[0].start, 
+				    cfe->iospace[0].length, 0,
+				    &psc->sc_pcioh)) {
 					goto found;
 				}
 			}
 		} else {
-		    if (cfe->iomask == 3) {
-				if (!pcmcia_io_alloc(pa->pf, 0, 
-									 cfe->iospace[0].length,
-									 cfe->iospace[0].length,
-									 &psc->sc_pcioh)) {
+			if (cfe->iomask == 3) {
+				if (!pcmcia_io_alloc(pa->pf, 0,
+				    cfe->iospace[0].length,
+				    cfe->iospace[0].length, &psc->sc_pcioh)) {
 					goto found;
 				}
 			}
@@ -265,7 +264,6 @@ retry:
 		printf(": can't allocate i/o space\n");
 		return;
 	}
-
 found:
 	sc->sc_iot = psc->sc_pcioh.iot;
 	sc->sc_ioh = psc->sc_pcioh.ioh;
@@ -285,32 +283,31 @@ found:
 		printf(": can't map i/o space\n");
 		return;
 	}
-
 	sc->sc_iobase = -1;
 	sc->sc_frequency = COM_FREQ;
 
 	sc->enable = com_pcmcia_enable;
 	sc->disable = com_pcmcia_disable;
-	
+
 	printf(": serial device\n%s", sc->sc_dev.dv_xname);
 
 	com_attach_subr(sc);
 
 	sc->enabled = 0;
-	
+
 	com_pcmcia_disable1(sc);
 }
 
 int
 com_pcmcia_detach(self, flags)
-	struct device *self;
+	struct device  *self;
 	int flags;
 {
-	struct com_pcmcia_softc *psc = (struct com_pcmcia_softc *)self;
+	struct com_pcmcia_softc *psc = (struct com_pcmcia_softc *) self;
 	int error;
 
 	if ((error = com_detach(self, flags)) != 0)
-		return (error);
+		return error;
 
 	/* Unmap our i/o window. */
 	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
@@ -318,7 +315,7 @@ com_pcmcia_detach(self, flags)
 	/* Free our i/o space. */
 	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
 
-	return (0);
+	return 0;
 }
 
 int
@@ -332,8 +329,8 @@ com_pcmcia_enable(sc)
 	psc->sc_ih = pcmcia_intr_establish(pf, IPL_SERIAL, comintr, sc);
 	if (psc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt\n",
-		       sc->sc_dev.dv_xname);
-		return (1);
+		    sc->sc_dev.dv_xname);
+		return 1;
 	}
 	return com_pcmcia_enable1(sc);
 }
@@ -346,8 +343,8 @@ com_pcmcia_enable1(sc)
 	struct pcmcia_function *pf = psc->sc_pf;
 	int ret;
 
-	if ((ret = pcmcia_function_enable(pf)))
-	    return(ret);
+	if ((ret = pcmcia_function_enable(pf)) != 0)
+		return ret;
 
 	if ((psc->sc_pf->sc->card.product == PCMCIA_PRODUCT_3COM_3C562) ||
 	    (psc->sc_pf->sc->card.product == PCMCIA_PRODUCT_3COM_3CXEM556)) {
@@ -357,12 +354,11 @@ com_pcmcia_enable1(sc)
 
 		reg = pcmcia_ccr_read(pf, PCMCIA_CCR_OPTION);
 		if (reg & 0x08) {
-		    reg &= ~0x08;
-		    pcmcia_ccr_write(pf, PCMCIA_CCR_OPTION, reg);
+			reg &= ~0x08;
+			pcmcia_ccr_write(pf, PCMCIA_CCR_OPTION, reg);
 		}
 	}
-
-	return(ret);
+	return ret;
 }
 
 void
