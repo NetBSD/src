@@ -1,4 +1,4 @@
-/*	$NetBSD: ip.c,v 1.2 1999/07/30 16:08:59 ad Exp $ */
+/*	$NetBSD: ip.c,v 1.3 2000/01/04 15:17:00 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ip.c,v 1.2 1999/07/30 16:08:59 ad Exp $");
+__RCSID("$NetBSD: ip.c,v 1.3 2000/01/04 15:17:00 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -54,7 +54,7 @@ __RCSID("$NetBSD: ip.c,v 1.2 1999/07/30 16:08:59 ad Exp $");
 
 #define LHD(row, str)		mvwprintw(wnd, row, 10, str)
 #define RHD(row, str)		mvwprintw(wnd, row, 45, str);
-#define SHOW(stat, row, col)	mvwprintw(wnd, row, col, "%9lu", curstat.stat)
+#define SHOW(stat, row, col)	mvwprintw(wnd, row, col, "%9llu", curstat.stat)
 
 struct mystat {
 	struct ipstat i;
@@ -135,12 +135,12 @@ labelip(void)
 void
 showip(void)
 {
-	u_long totalout;
+	u_quad_t totalout;
 
 	totalout = curstat.i.ips_forward + curstat.i.ips_localout;
 
 	SHOW(i.ips_total, 0, 0);
-	mvwprintw(wnd, 0, 35, "%9lu", totalout);
+	mvwprintw(wnd, 0, 35, "%9llu", totalout);
 	SHOW(i.ips_delivered, 1, 0);
 	SHOW(i.ips_badsum, 2, 0);
 	SHOW(i.ips_tooshort, 3, 0);
