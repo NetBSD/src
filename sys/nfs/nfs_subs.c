@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.91 2001/02/14 15:36:45 fvdl Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.92 2001/02/21 21:39:57 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -571,7 +571,7 @@ extern time_t nqnfsstarttime;
 extern int nqsrv_clockskew;
 extern int nqsrv_writeslack;
 extern int nqsrv_maxlease;
-extern int nqnfs_piggy[NFS_NPROCS];
+extern const int nqnfs_piggy[NFS_NPROCS];
 extern struct nfsnodehashhead *nfsnodehashtbl;
 extern u_long nfsnodehash;
 

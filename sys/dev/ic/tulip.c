@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.89 2001/01/17 19:37:09 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.90 2001/02/21 21:39:55 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
 #include <dev/ic/tulipreg.h>
 #include <dev/ic/tulipvar.h>
 
-const char *tlp_chip_names[] = TULIP_CHIP_NAMES;
+const char * const tlp_chip_names[] = TULIP_CHIP_NAMES;
 
 const struct tulip_txthresh_tab tlp_10_txthresh_tab[] =
     TLP_TXTHRESH_TAB_10;
@@ -2898,7 +2898,7 @@ tlp_idle(sc, bits)
 	struct tulip_softc *sc;
 	u_int32_t bits;
 {
-	static const char *tlp_tx_state_names[] = {
+	static const char * const tlp_tx_state_names[] = {
 		"STOPPED",
 		"RUNNING - FETCH",
 		"RUNNING - WAIT",
@@ -2908,7 +2908,7 @@ tlp_idle(sc, bits)
 		"SUSPENDED",
 		"RUNNING - CLOSE",
 	};
-	static const char *tlp_rx_state_names[] = {
+	static const char * const tlp_rx_state_names[] = {
 		"STOPPED",
 		"RUNNING - FETCH",
 		"RUNNING - CHECK",
@@ -2918,7 +2918,7 @@ tlp_idle(sc, bits)
 		"RUNNING - FLUSH",
 		"RUNNING - QUEUE",
 	};
-	static const char *dm9102_tx_state_names[] = {
+	static const char * const dm9102_tx_state_names[] = {
 		"STOPPED",
 		"RUNNING - FETCH",
 		"RUNNING - SETUP",
@@ -2928,7 +2928,7 @@ tlp_idle(sc, bits)
 		"RUNNING - CLOSE - WRITE STATUS",
 		"SUSPENDED",
 	};
-	static const char *dm9102_rx_state_names[] = {
+	static const char * const dm9102_rx_state_names[] = {
 		"STOPPED",
 		"RUNNING - FETCH",
 		"RUNNING - WAIT",
@@ -2939,7 +2939,7 @@ tlp_idle(sc, bits)
 		"RUNNING - FLUSH",
 	};
 
-	const char **tx_state_names, **rx_state_names;
+	const char * const *tx_state_names, * const *rx_state_names;
 	u_int32_t csr, ackmask = 0;
 	int i;
 
