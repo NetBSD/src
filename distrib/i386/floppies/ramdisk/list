@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.21 1999/08/12 15:34:19 bouyer Exp $
+#	$NetBSD: list,v 1.22 1999/09/07 06:54:21 christos Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/ramdiskbin		ramdiskbin
@@ -16,6 +16,7 @@ LINK	ramdiskbin			bin/mt
 LINK	ramdiskbin			bin/mv
 LINK	ramdiskbin			bin/pax
 LINK	ramdiskbin			bin/pwd
+LINK	ramdiskbin			bin/rcmd
 LINK	ramdiskbin			bin/rm
 LINK	ramdiskbin			bin/sh
 LINK	ramdiskbin			bin/stty
