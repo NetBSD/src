@@ -10,6 +10,7 @@
 
 #include "cvs.h"
 #include "getline.h"
+#include <stdarg.h>
 
 #ifdef HAVE_NANOSLEEP
 # include "xtime.h"
@@ -73,6 +74,21 @@ xrealloc (ptr, bytes)
 	error (1, 0, buf);
     }
     return (cp);
+}
+
+int
+xasprintf(char **buf, const char *fmt, ...)
+{
+    int len;
+    va_list ap;
+
+    va_start(ap, fmt);
+    len = vasprintf(buf, fmt, ap);
+    va_end(ap);
+
+    if (len == -1)
+	error(1, 0, "out of memory: xasprintf(..., \"%s\", ...) failed", fmt);
+    return len;
 }
 
 /* Two constants which tune expand_string.  Having MIN_INCR as large
