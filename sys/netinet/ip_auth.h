@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_auth.h,v 1.9 2002/01/24 08:23:11 martti Exp $	*/
+/*	$NetBSD: ip_auth.h,v 1.10 2002/01/24 08:23:41 martti Exp $	*/
 
 /*
  * Copyright (C) 1997-2001 by Darren Reed & Guido Van Rooij.
@@ -8,7 +8,6 @@
  * Id: ip_auth.h,v 2.3.2.5 2001/11/04 13:15:51 darrenr Exp
  *
  */
-
 #ifndef _NETINET_IP_AUTH_H_
 #define _NETINET_IP_AUTH_H_
 
@@ -61,5 +60,4 @@ extern	int	fr_auth_ioctl __P((caddr_t, int, u_long, frentry_t *, frentry_t **));
 #else
 extern	int	fr_auth_ioctl __P((caddr_t, int, int, frentry_t *, frentry_t **));
 #endif
-
 #endif /* _NETINET_IP_AUTH_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.41 2002/01/24 08:23:12 martti Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.42 2002/01/24 08:23:42 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2002 by Darren Reed.
@@ -24,7 +24,7 @@
 # define SOLARIS (defined(sun) && (defined(__svr4__) || defined(__SVR4)))
 #endif
 
-#if defined(__FreeBSD__) && defined(KERNEL) && !defined(_KERNEL)
+#if defined(KERNEL) && !defined(_KERNEL)
 # define	_KERNEL
 #endif
 
@@ -282,7 +282,7 @@ typedef	struct	frentry {
 #define	FR_RETRST	0x00080	/* Return TCP RST packet - reset connection */
 #define	FR_RETICMP	0x00100	/* Return ICMP unreachable packet */
 #define	FR_FAKEICMP	0x00180	/* Return ICMP unreachable with fake source */
-#define	FR_NOMATCH	0x00200	/* no match occurred */
+#define	FR_NOMATCH	0x00200	/* no match occured */
 #define	FR_ACCOUNT	0x00400	/* count packet bytes */
 #define	FR_KEEPFRAG	0x00800	/* keep fragment information */
 #define	FR_KEEPSTATE	0x01000	/* keep `connection' state information */
@@ -510,12 +510,10 @@ extern	int	iplioctl __P((dev_t, int, caddr_t, int));
 extern	int	iplopen __P((dev_t, int));
 extern	int	iplclose __P((dev_t, int));
 #else /* #ifndef _KERNEL */
-# if defined(__NetBSD__)
-/* Pesudo-device attach routine; no-op, really. */
+# if defined(__NetBSD__) && defined(PFIL_HOOKS)
 extern	void	ipfilterattach __P((int));
-# else
-extern	int	iplattach __P((void));
 # endif
+extern	int	iplattach __P((void));
 extern	int	ipl_enable __P((void));
 extern	int	ipl_disable __P((void));
 extern	void	ipflog_init __P((void));
@@ -545,12 +543,6 @@ extern	int	fr_qin __P((queue_t *, mblk_t *));
 extern	int	fr_qout __P((queue_t *, mblk_t *));
 extern	int	iplread __P((dev_t, struct uio *, cred_t *));
 # else /* SOLARIS */
-#if defined(__NetBSD__)
-extern	int	fr_check_wrapper __P((void *, struct mbuf **,
-		    struct ifnet *, int));
-extern	int	fr_check_wrapper6 __P((void *, struct mbuf **,
-		    struct ifnet *, int));
-#endif
 extern	int	fr_check __P((ip_t *, int, void *, int, mb_t **));
 extern	int	(*fr_checkp) __P((ip_t *, int, void *, int, mb_t **));
 extern	int	ipfr_fastroute __P((mb_t *, mb_t **, fr_info_t *, frdest_t *));
@@ -606,9 +598,7 @@ extern	int	iplread(struct inode *, struct file *, char *, int);
 extern	char	*memstr __P((char *, char *, int, int));
 extern	void	fixskip __P((frentry_t **, frentry_t *, int));
 extern	int	countbits __P((u_32_t));
-#ifndef	__NetBSD__
 extern	int	ipldetach __P((void));
-#endif
 extern	u_short	ipf_cksum __P((u_short *, int));
 extern	int	ircopyptr __P((void *, void *, size_t));
 extern	int	iwcopyptr __P((void *, void *, size_t));

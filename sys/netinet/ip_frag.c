@@ -1,26 +1,17 @@
-/*	$NetBSD: ip_frag.c,v 1.26 2002/01/24 08:23:12 martti Exp $	*/
+/*	$NetBSD: ip_frag.c,v 1.27 2002/01/24 08:23:43 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
-#if !defined(lint)
-#if defined(__NetBSD__)
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_frag.c,v 1.26 2002/01/24 08:23:12 martti Exp $");
-#else
-static const char sccsid[] = "@(#)ip_frag.c	1.11 3/24/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_frag.c,v 2.10.2.7 2000/11/27 10:26:56 darrenr Exp";
-#endif
-#endif
-
-#if defined(__FreeBSD__) && defined(KERNEL) && !defined(_KERNEL)
+#if defined(KERNEL) && !defined(_KERNEL)
 # define      _KERNEL
 #endif
 
-#include <sys/param.h>
 #include <sys/errno.h>
+#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/file.h>
 #if !defined(_KERNEL) && !defined(KERNEL)
@@ -98,8 +89,13 @@ extern struct timeout ipfr_slowtimer_ch;
 #endif
 
 #if !defined(lint)
+#if defined(__NetBSD__)
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ip_frag.c,v 1.27 2002/01/24 08:23:43 martti Exp $");
+#else
 static const char sccsid[] = "@(#)ip_frag.c	1.11 3/24/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_frag.c,v 2.10.2.18 2002/01/01 15:09:11 darrenr Exp";
+#endif
 #endif
 
 

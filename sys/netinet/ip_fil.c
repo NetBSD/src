@@ -1,25 +1,15 @@
-/*	$NetBSD: ip_fil.c,v 1.73 2002/01/24 08:23:11 martti Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.74 2002/01/24 08:23:41 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
-#if !defined(lint)
-#if defined(__NetBSD__)
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil.c,v 1.73 2002/01/24 08:23:11 martti Exp $");
-#else
-static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.17 2000/10/19 15:39:42 darrenr Exp";
-#endif
-#endif
-
 #ifndef	SOLARIS
 #define	SOLARIS	(defined(sun) && (defined(__svr4__) || defined(__SVR4)))
 #endif
 
-#if defined(__FreeBSD__) && defined(KERNEL) && !defined(_KERNEL)
+#if defined(KERNEL) && !defined(_KERNEL)
 # define	_KERNEL
 #endif
 #if defined(_KERNEL) && defined(__FreeBSD_version) && \
@@ -44,6 +34,7 @@ static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.17 2000/10/19 15:39:42 da
 # include <fcntl.h>
 #endif
 #include <sys/errno.h>
+#include <sys/types.h>
 #include <sys/file.h>
 #if __FreeBSD_version >= 220000 && defined(_KERNEL)
 # include <sys/fcntl.h>
@@ -118,14 +109,22 @@ static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.17 2000/10/19 15:39:42 da
 #if defined(__FreeBSD_version) && (__FreeBSD_version >= 300000)
 # include <sys/malloc.h>
 #endif
+#ifndef	MIN
+# define	MIN(a,b)	(((a)<(b))?(a):(b))
+#endif
 #if !SOLARIS && defined(_KERNEL) && !defined(__sgi)
 # include <sys/kernel.h>
 extern	int	ip_optcopy __P((struct ip *, struct ip *));
 #endif
 
 #if !defined(lint)
+#if defined(__NetBSD__)
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ip_fil.c,v 1.74 2002/01/24 08:23:41 martti Exp $");
+#else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.48 2002/01/01 13:34:05 darrenr Exp";
+#endif
 #endif
 
 
@@ -308,9 +307,9 @@ char *s;
 
 
 /*
- * BSD pseudo-device attach routine; this is a no-op.
+ * Try to detect the case when compiling for NetBSD with pseudo-device
  */
-# if defined(__NetBSD__)
+# if defined(__NetBSD__) && defined(PFIL_HOOKS)
 void
 ipfilterattach(count)
 int count;
@@ -366,18 +365,6 @@ int iplattach()
 	}
 
 # ifdef NETBSD_PF
-#  if __NetBSD_Version__ >= 105150000
-	ph_inet = pfil_head_get(PFIL_TYPE_AF, AF_INET);
-#ifdef USE_INET6
-	ph_inet6 = pfil_head_get(PFIL_TYPE_AF, AF_INET6);
-#endif
-	if (ph_inet == NULL
-#ifdef USE_INET6
-	    && ph_inet6 == NULL
-#endif
-	   )
-		return ENODEV;
-#  endif
 #  if __NetBSD_Version__ >= 104200000
 #   if __NetBSD_Version__ >= 105110000
 	if (
@@ -854,7 +841,7 @@ int mode;
 void fr_forgetifp(ifp)
 void *ifp;
 {
-	frentry_t *f;
+	register frentry_t *f;
 
 	WRITE_ENTER(&ipf_mutex);
 	for (f = ipacct[0][fr_active]; (f != NULL); f = f->fr_next)
@@ -1151,7 +1138,7 @@ int ioflag;
 int IPL_EXTERN(read)(dev, uio)
 #  endif
 dev_t dev;
-struct uio *uio;
+register struct uio *uio;
 # endif /* __sgi */
 {
 # ifdef IPFILTER_LOG
@@ -1501,14 +1488,14 @@ iplinit()
 	}
 	ip_init();
 }
-# endif /* !IPFILTER_LKM && __FreeBSD_version < 300000 */
+# endif /* ! __NetBSD__ */
 
 
 /*
  * Return the length of the entire mbuf.
  */
 size_t mbufchainlen(m0)
-struct mbuf *m0;
+register struct mbuf *m0;
 {
 #if BSD >= 199306
 	return m0->m_pkthdr.len;
@@ -1527,9 +1514,9 @@ struct mbuf *m0, **mpp;
 fr_info_t *fin;
 frdest_t *fdp;
 {
-	struct ip *ip, *mhip;
-	struct mbuf *m = m0;
-	struct route *ro;
+	register struct ip *ip, *mhip;
+	register struct mbuf *m = m0;
+	register struct route *ro;
 	int len, off, error = 0, hlen, code;
 	struct ifnet *ifp, *sifp;
 	struct sockaddr_in *dst;
@@ -1731,7 +1718,7 @@ frdest_t *fdp;
 
     {
 	int mhlen, firstlen = len;
-	struct mbuf **mnext = &m->m_nextpkt;
+	struct mbuf **mnext = &m->m_act;
 
 	/*
 	 * Loop through length of segment after first fragment,
@@ -1782,7 +1769,7 @@ frdest_t *fdp;
 		mhip->ip_sum = 0;
 		mhip->ip_sum = in_cksum(m, mhlen);
 		*mnext = m;
-		mnext = &m->m_nextpkt;
+		mnext = &m->m_act;
 	}
 	/*
 	 * Update first fragment by trimming what's been copied out
@@ -1795,8 +1782,8 @@ frdest_t *fdp;
 	ip->ip_sum = in_cksum(m0, hlen);
 sendorfree:
 	for (m = m0; m; m = m0) {
-		m0 = m->m_nextpkt;
-		m->m_nextpkt = 0;
+		m0 = m->m_act;
+		m->m_act = 0;
 		if (error == 0)
 # if BSD >= 199306
 			error = (*ifp->if_output)(ifp, m,

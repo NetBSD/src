@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_log.c,v 1.16 2002/01/24 08:23:13 martti Exp $	*/
+/*	$NetBSD: ip_log.c,v 1.17 2002/01/24 08:23:43 martti Exp $	*/
 
 /*
  * Copyright (C) 1997-2001 by Darren Reed.
@@ -9,15 +9,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_log.c,v 1.16 2002/01/24 08:23:13 martti Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_log.c,v 1.17 2002/01/24 08:23:43 martti Exp $");
 
 #include <sys/param.h>
-#include <sys/proc.h>
 #if defined(KERNEL) && !defined(_KERNEL)
 # define       _KERNEL
 #endif
-#if defined(__NetBSD__) && (NetBSD >= 199905) && !defined(IPFILTER_LKM) && \
-    !defined(_LKM)
+#if defined(__NetBSD__) && (NetBSD >= 199905) && !defined(IPFILTER_LKM)
 # include "opt_ipfilter_log.h"
 #endif
 #ifdef  __FreeBSD__
@@ -79,9 +77,6 @@ __KERNEL_RCSID(0, "$NetBSD: ip_log.c,v 1.16 2002/01/24 08:23:13 martti Exp $");
 #  include <sys/dditypes.h>
 #  include <sys/cmn_err.h>
 # endif
-# ifndef linux
-#  include <sys/protosw.h>
-# endif
 # include <sys/protosw.h>
 # include <sys/socket.h>
 
@@ -118,6 +113,11 @@ __KERNEL_RCSID(0, "$NetBSD: ip_log.c,v 1.16 2002/01/24 08:23:13 martti Exp $");
 # if (__FreeBSD_version >= 300000)
 #  include <sys/malloc.h>
 # endif
+
+# ifndef MIN
+#  define	MIN(a,b)	(((a)<(b))?(a):(b))
+# endif
+
 
 # if SOLARIS || defined(__sgi)
 extern	kmutex_t	ipl_mutex;
@@ -164,7 +164,7 @@ fr_info_t *fin;
 mb_t *m;
 {
 	ipflog_t ipfl;
-	size_t mlen, hlen;
+	register size_t mlen, hlen;
 	size_t sizes[2];
 	void *ptrs[2];
 	int types[2];

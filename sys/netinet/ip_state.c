@@ -1,24 +1,16 @@
-/*	$NetBSD: ip_state.c,v 1.33 2002/01/24 08:23:15 martti Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.34 2002/01/24 08:23:45 martti Exp $	*/
 
 /*
  * Copyright (C) 1995-2002 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
-#if !defined(lint)
-#if defined(__NetBSD__)
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.33 2002/01/24 08:23:15 martti Exp $");
-#else
-static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_state.c,v 2.30.2.28 2001/01/08 14:04:46 darrenr Exp";
-#endif
-#endif
-
 #include <sys/errno.h>
+#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/file.h>
 #if defined(__NetBSD__) && (NetBSD >= 199905) && !defined(IPFILTER_LKM) && \
-    defined(_KERNEL) && !defined(_LKM)
+    defined(_KERNEL)
 # include "opt_ipfilter_log.h"
 #endif
 #if defined(_KERNEL) && defined(__FreeBSD_version) && \
@@ -100,8 +92,12 @@ static const char rcsid[] = "@(#)Id: ip_state.c,v 2.30.2.28 2001/01/08 14:04:46 
 #endif
 
 #if !defined(lint)
+#if defined(__NetBSD__)
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.34 2002/01/24 08:23:45 martti Exp $");
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_state.c,v 2.30.2.58 2002/01/15 14:36:49 darrenr Exp";
+#endif
 #endif
 
 #ifndef	MIN
@@ -812,13 +808,13 @@ u_int flags;
  * SYN or a RST or FIN which indicate time to close up shop.
  */
 int fr_tcpstate(is, fin, ip, tcp)
-ipstate_t *is;
+register ipstate_t *is;
 fr_info_t *fin;
 ip_t *ip;
 tcphdr_t *tcp;
 {
-	tcp_seq seq, ack, end;
-	int ackskew;
+	register tcp_seq seq, ack, end;
+	register int ackskew;
 	tcpdata_t  *fdata, *tdata;
 	u_short	win, maxwin;
 	int ret = 0;

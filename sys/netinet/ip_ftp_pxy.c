@@ -1,7 +1,7 @@
-/*	$NetBSD: ip_ftp_pxy.c,v 1.20 2002/01/24 08:23:13 martti Exp $	*/
+/*	$NetBSD: ip_ftp_pxy.c,v 1.21 2002/01/24 08:23:43 martti Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_ftp_pxy.c,v 1.20 2002/01/24 08:23:13 martti Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_ftp_pxy.c,v 1.21 2002/01/24 08:23:43 martti Exp $");
 
 /*
  * Simple FTP transparent proxy for in-kernel use.  For use with the NAT
@@ -228,7 +228,7 @@ int dlen;
 #endif
 	if (inc != 0) {
 #if SOLARIS || defined(__sgi)
-		u_32_t	sum1, sum2;
+		register u_32_t	sum1, sum2;
 
 		sum1 = ip->ip_len;
 		sum2 = ip->ip_len + inc;
@@ -488,7 +488,7 @@ int dlen;
 #endif /* SOLARIS */
 	if (inc != 0) {
 #if SOLARIS || defined(__sgi)
-		u_32_t	sum1, sum2;
+		register u_32_t	sum1, sum2;
 
 		sum1 = ip->ip_len;
 		sum2 = ip->ip_len + inc;

@@ -1,25 +1,17 @@
-/*	$NetBSD: fil.c,v 1.51 2002/01/24 08:23:09 martti Exp $	*/
+/*	$NetBSD: fil.c,v 1.52 2002/01/24 08:23:40 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
-#if !defined(lint)
-#if defined(__NetBSD__)
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.51 2002/01/24 08:23:09 martti Exp $");
-#else
-static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: fil.c,v 2.35.2.30 2000/12/17 05:49:22 darrenr Exp";
-#endif
-#endif
-
 #include <sys/errno.h>
+#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/file.h>
 #if defined(__NetBSD__) && (NetBSD >= 199905) && !defined(IPFILTER_LKM) && \
-    defined(_KERNEL) && !defined(_LKM)
+    defined(_KERNEL)
 # include "opt_ipfilter_log.h"
 #endif
 #if (defined(KERNEL) || defined(_KERNEL)) && defined(__FreeBSD_version) && \
@@ -98,11 +90,19 @@ static const char rcsid[] = "@(#)Id: fil.c,v 2.35.2.30 2000/12/17 05:49:22 darre
 #   include "opt_ipfilter.h"
 #  endif
 # endif
+#ifndef	MIN
+# define	MIN(a,b)	(((a)<(b))?(a):(b))
+#endif
 #include "netinet/ipl.h"
 
 #if !defined(lint)
+#if defined(__NetBSD__)
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.52 2002/01/24 08:23:40 martti Exp $");
+#else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.35.2.48 2002/01/07 10:57:22 darrenr Exp";
+#endif
 #endif
 
 #ifndef	_KERNEL
@@ -476,9 +476,9 @@ int fr_tcpudpchk(ft, fin)
 frtuc_t *ft;
 fr_info_t *fin;
 {
-	u_short po, tup;
-	char i;
-	int err = 1;
+	register u_short po, tup;
+	register char i;
+	register int err = 1;
 
 	/*
 	 * Both ports should *always* be in the first fragment.
@@ -568,11 +568,11 @@ fr_info_t *fin;
 int fr_scanlist(passin, ip, fin, m)
 u_32_t passin;
 ip_t *ip;
-fr_info_t *fin;
+register fr_info_t *fin;
 void *m;
 {
-	struct frentry *fr;
-	fr_ip_t *fi = &fin->fin_fi;
+	register struct frentry *fr;
+	register fr_ip_t *fi = &fin->fin_fi;
 	int rulen, portcmp = 0, off, skip = 0, logged = 0;
 	u_32_t pass, passt, passl;
 	frentry_t *frl;
@@ -623,8 +623,8 @@ void *m;
 
 		FR_VERBOSE((":i"));
 		{
-			u_32_t	*ld, *lm, *lip;
-			int i;
+			register u_32_t	*ld, *lm, *lip;
+			register int i;
 
 			lip = (u_32_t *)fi;
 			lm = (u_32_t *)&fr->fr_mip;
@@ -787,66 +787,6 @@ void *m;
 	return pass;
 }
 
-#if defined(__NetBSD_Version__) && (__NetBSD_Version__ >= 105110000) && \
-    defined(_KERNEL)
-#include <net/pfil.h>
-
-int
-fr_check_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
-{
-	struct ip *ip = mtod(*mp, struct ip *);
-	int rv, hlen = ip->ip_hl << 2;
-
-#if defined(M_CSUM_TCPv4)
-	/*
-	 * If the packet is out-bound, we can't delay checksums
-	 * here.  For in-bound, the checksum has already been
-	 * validated.
-	 */
-	if (dir == PFIL_OUT) {
-		if ((*mp)->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
-			in_delayed_cksum(*mp);
-			(*mp)->m_pkthdr.csum_flags &=
-			    ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
-		}
-	}
-#endif /* M_CSUM_TCPv4 */
-
-	/*
-	 * We get the packet with all fields in network byte
-	 * order.  We expect ip_len and ip_off to be in host
-	 * order.  We frob them, call the filter, then frob
-	 * them back.
-	 *
-	 * Note, we don't need to update the checksum, because
-	 * it has already been verified.
-	 */
-	NTOHS(ip->ip_len);
-	NTOHS(ip->ip_off);
-
-	rv = fr_check(ip, hlen, ifp, (dir == PFIL_OUT), mp);
-
-	if (rv == 0 && *mp != NULL) {
-		ip = mtod(*mp, struct ip *);
-		HTONS(ip->ip_len);
-		HTONS(ip->ip_off);
-	}
-
-	return (rv);
-}
-
-#ifdef USE_INET6
-#include <netinet/ip6.h>
-
-int
-fr_check_wrapper6(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
-{
-	
-	return (fr_check(mtod(*mp, struct ip *), sizeof(struct ip6_hdr),
-	    ifp, (dir == PFIL_OUT), mp));
-}
-#endif
-#endif /* __NetBSD_Version >= 105110000 && _KERNEL */
 
 /*
  * frcheck - filter check
@@ -875,7 +815,7 @@ int out;
 	frentry_t *fr = NULL, *list;
 	u_32_t pass, apass;
 #if !SOLARIS || !defined(_KERNEL)
-	mb_t *m = *mp;
+	register mb_t *m = *mp;
 #endif
 
 #ifdef	_KERNEL
@@ -1336,10 +1276,10 @@ logit:
  * length is in bytes
  */
 u_short ipf_cksum(addr, len)
-u_short *addr;
-int len;
+register u_short *addr;
+register int len;
 {
-	u_32_t sum = 0;
+	register u_32_t sum = 0;
 
 	for (sum = 0; len > 1; len -= 2)
 		sum += *addr++;
@@ -1554,12 +1494,12 @@ nodata:
  */
 void
 m_copydata(m, off, len, cp)
-	mb_t *m;
-	int off;
-	int len;
+	register mb_t *m;
+	register int off;
+	register int len;
 	caddr_t cp;
 {
-	unsigned count;
+	register unsigned count;
 
 	if (off < 0 || len < 0)
 		panic("m_copydata");
@@ -1593,12 +1533,12 @@ m_copydata(m, off, len, cp)
 void
 m_copyback(m0, off, len, cp)
 	struct	mbuf *m0;
-	int off;
-	int len;
+	register int off;
+	register int len;
 	caddr_t cp;
 {
-	int mlen;
-	struct mbuf *m = m0, *n;
+	register int mlen;
+	register struct mbuf *m = m0, *n;
 	int totlen = 0;
 
 	if (m0 == 0)
@@ -1724,8 +1664,8 @@ minor_t unit;
 int *nfreedp;
 frentry_t **listp;
 {
-	int freed = 0, i;
-	frentry_t *fp;
+	register int freed = 0, i;
+	register frentry_t *fp;
 
 	while ((fp = *listp)) {
 		*listp = fp->fr_next;
@@ -1961,7 +1901,7 @@ struct in_addr *inp;
 
 
 static void frsynclist(fr)
-frentry_t *fr;
+register frentry_t *fr;
 {
 	for (; fr; fr = fr->fr_next) {
 		if (fr->fr_ifa != NULL) {
