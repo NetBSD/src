@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.c,v 1.9 2004/03/23 03:39:11 uwe Exp $	*/
+/*	$NetBSD: kloader.c,v 1.10 2004/03/25 04:04:28 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.9 2004/03/23 03:39:11 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.10 2004/03/25 04:04:28 uwe Exp $");
 
 #include "debug_kloader.h"
 
@@ -239,6 +239,7 @@ kloader_load()
 #else
 			sz += round_page(ph[i].p_filesz);
 #endif
+			sz += PAGE_SIZE; /* compensate for partial last tag */
 		}
 	}
 
