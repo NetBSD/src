@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.204 2004/04/27 14:46:07 matt Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.205 2004/05/07 00:55:15 jonathan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.204 2004/04/27 14:46:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.205 2004/05/07 00:55:15 jonathan Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -220,6 +220,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.204 2004/04/27 14:46:07 matt Exp $")
 
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
+#include <netipsec/ipsec_var.h>			/* XXX ipsecstat namespace */
 #include <netipsec/key.h>
 #ifdef INET6
 #include <netipsec/ipsec6.h>
