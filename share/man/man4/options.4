@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.27 1997/10/04 17:36:25 veego Exp $
+.\"	$NetBSD: options.4,v 1.28 1997/10/08 09:45:19 mycroft Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -884,6 +884,20 @@ panics.
 These option set the number of pages available for the buffer cache.
 Their default value is a machine dependent value, often calculated as
 between 5% and 10% of total available RAM.
+.El
+.Ss i386-specific Options
+.Bl -ohang
+.It Cd options REALBASEMEM
+Overrides the base memory size passed in from the boot block.  Use this option
+only if the boot block reports the size incorrectly.  (Note that some BIOSes
+put the extended BIOS data area at the top of base memory, and therefore report
+a smaller base memory size to prevents programs overwriting it.  This is
+correct behavior, and you should not use the
+.Em REALBASEMEM
+option to access this memory.)
+.It Cd options REALEXTMEM
+Overrides the extended memory size passed in from the boot block.  Use this
+option only if the boot block reports the size incorrectly.
 .El
 .\" The following requests should be uncommented and used where appropriate.
 .\" .Sh FILES
