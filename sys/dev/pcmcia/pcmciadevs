@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.118 2001/02/10 14:08:10 ichiro Exp $
+$NetBSD: pcmciadevs,v 1.119 2001/02/11 03:27:49 ichiro Exp $
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
 /*-
@@ -211,7 +211,7 @@ product SOCKET LP_ETHER		0x000d Socket Communications LP-E
 product TDK LAK_CD021BX		0x0200 TDK LAK-CD021BX Ethernet
 product TDK DFL9610		0x0d0a TDK DFL9610 Ethernet & Digital Cellular
 product TDK LAK_CF010		0x0900 TDK LAC-CF010
-product TDF LAK_CD011WL		0x0000 TDK LAK-CD011WL
+product TDK LAK_CD011WL		0x0000 TDK LAK-CD011WL
 
 /* Xircom Products */
 product XIRCOM CE		0x0108 Xircom CreditCard Ethernet
