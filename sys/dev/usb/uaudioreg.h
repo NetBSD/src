@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudioreg.h,v 1.11 2002/10/23 02:32:37 christos Exp $	*/
+/*	$NetBSD: uaudioreg.h,v 1.12 2004/11/05 19:08:29 kent Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -122,6 +122,18 @@ struct usb_audio_streaming_type1_descriptor {
 struct usb_audio_cluster {
 	uByte		bNrChannels;
 	uWord		wChannelConfig;
+#define	UA_CHANNEL_LEFT		0x0001
+#define	UA_CHANNEL_RIGHT	0x0002
+#define	UA_CHANNEL_CENTER	0x0004
+#define	UA_CHANNEL_LFE		0x0008
+#define	UA_CHANNEL_L_SURROUND	0x0010
+#define	UA_CHANNEL_R_SURROUND	0x0020
+#define	UA_CHANNEL_L_CENTER	0x0040
+#define	UA_CHANNEL_R_CENTER	0x0080
+#define	UA_CHANNEL_SURROUND	0x0100
+#define	UA_CHANNEL_L_SIDE	0x0200
+#define	UA_CHANNEL_R_SIDE	0x0400
+#define	UA_CHANNEL_TOP		0x0800
 	uByte		iChannelNames;
 } UPACKED;
 
