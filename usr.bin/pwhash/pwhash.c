@@ -1,3 +1,4 @@
+/*	$NetBSD: pwhash.c,v 1.2 2002/10/02 07:35:30 wiz Exp $	*/
 /*	$OpenBSD: encrypt.c,v 1.16 2002/02/16 21:27:45 millert Exp $	*/
 
 /*
@@ -58,7 +59,7 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "usage: %s [-k] [-b rounds] [-m] [-s salt] [-p | string]\n",
+	    "usage: %s [-b rounds] [-k] [-m] [-s salt] [-p | string]\n",
 	    __progname);
 	exit(1);
 }
