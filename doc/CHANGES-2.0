@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.288 2004/06/22 07:38:48 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.289 2004/06/22 08:00:54 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -4262,4 +4262,42 @@ usr.sbin/pwd_mkdb/pwd_mkdb.c			1.29
 	NetBSD releases. Includes fixes for PR toolchain/17762 and
 	toolchain/25944.
 	[jmc, ticket #527]
+
+gnu/dist/gcc/gcc/f/com.h			1.2
+
+	Typo in return type. From PR toolchain/25933.
+	[jmc, ticket #528]
+
+tools/Makefile.gnuhost				1.28
+
+	Add $MAKE to env also. From PR toolchain/25952.
+	[jmc, ticket #529]
+
+distrib/acorn32/stand/Makefile			1.18
+gnu/usr.bin/binutils/ld/Makefile		1.18
+gnu/usr.bin/gcc3/host-libiberty/Makefile	1.6
+share/zoneinfo/Makefile				1.38
+sys/arch/bebox/stand/boot/Makefile		1.20
+sys/arch/cobalt/stand/boot/Makefile		1.8
+sys/arch/evbarm/stand/gzboot/Makefile.gzboot	1.10
+sys/arch/hpc/stand/Makefile			1.15
+sys/arch/hpcmips/stand/Makefile			1.9
+sys/arch/i386/stand/Makefile.booters		1.57
+sys/arch/i386/stand/boot/Makefile.boot		1.15
+sys/arch/i386/stand/bootxx/Makefile.bootxx	1.14
+sys/arch/macppc/stand/ofwboot/Makefile		1.44
+sys/arch/mipsco/stand/Makefile.booters		1.9
+sys/arch/pmax/stand/Makefile.booters		1.44
+sys/arch/sbmips/stand/Makefile.bootprogs	1.5
+sys/arch/sparc/stand/Makefile.buildboot		1.22
+sys/arch/sparc/stand/ofwboot/Makefile		1.12
+sys/arch/vax/floppy/Makefile			1.2
+sys/arch/xen/conf/Makefile.xen			1.5
+sys/arch/xen/stand/xen12load/Makefile		1.3
+tools/Makefile.gnuhost				1.29
+
+	Ignore errors on some rm -rf's for platforms that aren't quite
+	POSIX compliant and return errors on r/o source (FreeBSD) for -rf.
+	Fixes PR toolchain/25022.
+	[jmc, ticket #531]
 
