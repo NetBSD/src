@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.326 2003/03/25 23:35:48 pooka Exp $
+#	$NetBSD: bsd.own.mk,v 1.327 2003/04/11 22:40:31 thorpej Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -370,10 +370,22 @@ NOLINT=		# defined
 NOPROFILE=	# defined
 .endif
 
+# On the MIPS, all libs are compiled with ABIcalls (and are thus PIC),
+# not just shared libraries, so don't build the _pic version.
+.if ${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb"
+MKPICLIB:=	no
+.endif
+
 # If the ns32k port is using an external toolchain, shared libraries
 # are not yet supported.
 .if ${MACHINE_ARCH} == "ns32k" && defined(EXTERNAL_TOOLCHAIN)
 NOPIC=		# defined
+.endif
+
+# On VAX using ELF, all objects are PIC, not just shared libraries,
+# so don't build the _pic version.
+.if ${MACHINE_ARCH} == "vax" && ${OBJECT_FMT} == "ELF"
+MKPICLIB:=	no
 .endif
 
 # Location of the file that contains the major and minor numbers of the
@@ -457,7 +469,7 @@ NOHTML=
 
 # MK* options which default to "yes".
 .for var in BFD CATPAGES CRYPTO DOC GCC GDB HESIOD IEEEFP INFO KERBEROS \
-	LINKLIB LINT MAN NLS OBJ PIC PICINSTALL PROFILE SHARE SKEY YP
+	LINKLIB LINT MAN NLS OBJ PIC PICINSTALL PICLIB PROFILE SHARE SKEY YP
 MK${var}?=	yes
 .endfor
 
@@ -474,6 +486,10 @@ MKKERBEROS:=	no
 .if ${MKLINKLIB} == "no"
 MKPICINSTALL:=	no
 MKPROFILE:=	no
+.endif
+
+.if ${MKPIC} == "no"
+MKPICLIB:=	no
 .endif
 
 .if ${MKMAN} == "no"
