@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.42 2001/04/13 15:01:29 pooka Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.43 2001/04/13 17:05:27 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ typedef	__int64_t	Elf64_Sword;
 #define	ELF64_FSZ_SWORD	8
 typedef	__uint64_t	Elf64_Word;
 #define	ELF64_FSZ_WORD	8
-#endif
+#endif /* __sparc_v9__ */
 typedef	__int64_t	Elf64_Sxword;
 #define	ELF64_FSZ_XWORD	8
 typedef	__uint64_t	Elf64_Xword;
