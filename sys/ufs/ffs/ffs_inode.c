@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.35.2.2 2001/09/30 13:17:24 he Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.35.2.3 2002/02/26 21:13:18 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -291,6 +291,22 @@ ffs_truncate(v)
 		error = VOP_BALLOC(ovp, length - 1, 1, ap->a_cred, aflags, &bp);
 		if (error)
 			return (error);
+		/*
+		 * When we are doing soft updates and the VOP_BALLOC
+		 * above fills in a direct block hole with a full sized
+		 * block that will be truncated down to a fragment below,
+		 * we must flush out the block dependency with an FSYNC
+		 * so that we do not get a soft updates inconsistency
+		 * when we create the fragment below.
+		 */
+		if (DOINGSOFTDEP(ovp) && lbn < NDADDR &&
+		    fragroundup(fs, blkoff(fs, length)) < fs->fs_bsize) {
+			error = VOP_FSYNC(ovp, ap->a_cred, FSYNC_WAIT, 0, 0,
+			    ap->a_p);
+			if (error != 0)
+				return error;
+		}
+
 		oip->i_ffs_size = length;
 		size = blksize(fs, oip, lbn);
 		(void) uvm_vnp_uncache(ovp);
