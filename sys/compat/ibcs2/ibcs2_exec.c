@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.29 2000/06/21 05:45:18 matt Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.30 2000/06/21 06:40:04 matt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -374,11 +374,13 @@ exec_ibcs2_coff_prep_omagic(p, epp, fp, ap)
 		  VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	/* set up command for bss segment */
-	if (ap->a_bsize > 0)
+	if (ap->a_bsize > 0) {
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, ap->a_bsize,
 			  COFF_SEGMENT_ALIGN(fp, ap, ap->a_dstart + ap->a_dsize),
 			  NULLVP, 0,
 			  VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+		epp->ep_dsize += ap->a_bsize;
+	}
 	
 	return exec_ibcs2_coff_setup_stack(p, epp);
 }
@@ -438,6 +440,8 @@ exec_ibcs2_coff_prep_nmagic(p, epp, fp, ap)
 			/* otherwise copy the individual pieces */
 			toverlap = epp->ep_tsize - tsize;
 			doverlap = round_page(epp->ep_daddr) - epp->ep_daddr;
+			if (doverlap > epp->ep_dsize)
+				doverlap = epp->ep_dsize;
 		}
 	} else {
 		tsize = epp->ep_tsize;
@@ -470,14 +474,16 @@ exec_ibcs2_coff_prep_nmagic(p, epp, fp, ap)
 			COFF_DATOFF(fp, ap)));
 	}
 
-	/* set up command for data segment */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn, epp->ep_dsize - doverlap,
-		  epp->ep_daddr + doverlap, epp->ep_vp,
-		  COFF_DATOFF(fp, ap) + doverlap,
-		  VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
-	DPRINTF((" map_readvn(%#lx/%#lx@%#lx)",
-		epp->ep_daddr + doverlap, epp->ep_dsize - doverlap,
-		COFF_DATOFF(fp, ap) + doverlap));
+	if (epp->ep_dsize > doverlap) {
+		/* set up command for data segment */
+		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn,
+			  epp->ep_dsize - doverlap, epp->ep_daddr + doverlap,
+			  epp->ep_vp, COFF_DATOFF(fp, ap) + doverlap,
+			  VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+		DPRINTF((" map_readvn(%#lx/%#lx@%#lx)",
+			epp->ep_daddr + doverlap, epp->ep_dsize - doverlap,
+			COFF_DATOFF(fp, ap) + doverlap));
+	}
 
 	/* Handle page remainders for pagedvn.
 	 */
@@ -493,6 +499,7 @@ exec_ibcs2_coff_prep_nmagic(p, epp, fp, ap)
 			DPRINTF((" map_zero(%#lx/%#lx)",
 				dend, ap->a_bsize - dspace));
 		}
+		epp->ep_dsize += ap->a_bsize;
 	}
 	DPRINTF(("\n"));
 
