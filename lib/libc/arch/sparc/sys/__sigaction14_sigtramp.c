@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigaction14_sigtramp.c,v 1.3 2003/10/12 14:42:03 pk Exp $	*/
+/*	$NetBSD: __sigaction14_sigtramp.c,v 1.4 2004/03/23 16:19:41 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -58,6 +58,7 @@ __libc_sigaction14(int sig, const struct sigaction *act, struct sigaction *oact)
 	 * is not set in the sigaction.
 	 */
 	if (act && (act->sa_flags & SA_SIGINFO) == 0) {
+		int sav = errno;
 		rv =  __sigaction_sigtramp(sig, act, oact,
 					   __sigtramp_sigcontext_1, 1);
 		/*
@@ -67,6 +68,7 @@ __libc_sigaction14(int sig, const struct sigaction *act, struct sigaction *oact)
 		 */
 		if (rv >= 0 || errno != EINVAL)
 			return rv;
+		errno = sav;
 	}
 
 	return __sigaction_sigtramp(sig, act, oact, __sigtramp_siginfo_2, 2);
