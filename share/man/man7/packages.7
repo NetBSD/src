@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.29 2000/07/06 15:22:02 hubertf Exp $
+.\"	$NetBSD: packages.7,v 1.30 2000/07/06 17:00:04 hubertf Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -638,6 +638,10 @@ nothing, depending on what's available.
 Actually compile the sources.
 .It install	
 Install the results of a build.
+.It bin-install	
+Install a binary package if available, do a 
+.Dq make package
+else.
 .It reinstall	
 Install the results of a build, ignoring
 .Dq already installed
