@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.52 2001/05/26 21:27:19 chs Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.53 2001/07/04 21:38:00 chs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995 Jan-Simon Pendry.
@@ -1989,32 +1989,15 @@ union_getpages(v)
 		int a_flags;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-	struct vm_page *pg;
-	int error, npages, i;
+	int error;
 
 	/*
 	 * just call into the underlying layer to get the pages.
-	 * XXXUBC for now, mark pages from the lower layer read-only
-	 * so that write faults will come back here again.
 	 */
 
 	ap->a_vp = OTHERVP(vp);
 	simple_unlock(&vp->v_uvm.u_obj.vmobjlock);
 	simple_lock(&ap->a_vp->v_uvm.u_obj.vmobjlock);
 	error = VCALL(ap->a_vp, VOFFSET(vop_getpages), ap);
-	if (error || ap->a_vp == UPPERVP(vp)) {
-		return error;
-	}
-	npages = *ap->a_count;
-	simple_lock(&ap->a_vp->v_uvm.u_obj.vmobjlock);
-	for (i = 0; npages > 0; i++) {
-		pg = ap->a_m[i];
-		if (pg == NULL || pg == PGO_DONTCARE) {
-			continue;
-		}
-		pg->flags |= PG_RDONLY;
-		npages--;
-	}
-	simple_unlock(&ap->a_vp->v_uvm.u_obj.vmobjlock);
-	return 0;
+	return error;
 }
