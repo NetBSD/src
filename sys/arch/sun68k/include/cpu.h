@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.1 2001/06/14 12:57:11 fredette Exp $	*/
+/*	$NetBSD: cpu.h,v 1.2 2001/06/27 19:08:58 fredette Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -47,7 +47,7 @@
 #ifndef _CPU_H_
 #define _CPU_H_
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
 #endif
 
