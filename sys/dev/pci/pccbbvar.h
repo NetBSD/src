@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbbvar.h,v 1.6 2000/02/05 18:42:37 chopps Exp $	*/
+/*	$NetBSD: pccbbvar.h,v 1.7 2000/03/01 23:40:26 thorpej Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
  *
@@ -108,9 +108,11 @@ struct pccbb_win_chain {
 	bus_addr_t wc_end;		/* instead of [start, end). */
 	int wc_flags;
 	bus_space_handle_t wc_handle;
-	struct pccbb_win_chain *wc_next;
+	TAILQ_ENTRY(pccbb_win_chain) wc_list;
 };
 #define	PCCBB_MEM_CACHABLE	1
+
+TAILQ_HEAD(pccbb_win_chain_head, pccbb_win_chain);
 
 struct pccbb_softc {
 	struct device sc_dev;
@@ -152,8 +154,8 @@ struct pccbb_softc {
 	/* CardBus stuff */
 	struct cardslot_softc *sc_csc;
 
-	struct pccbb_win_chain *sc_memwindow;
-	struct pccbb_win_chain *sc_iowindow;
+	struct pccbb_win_chain_head sc_memwindow;
+	struct pccbb_win_chain_head sc_iowindow;
 
 	/* pcmcia stuff */
 	struct pcic_handle sc_pcmcia_h;
@@ -164,7 +166,7 @@ struct pccbb_softc {
 #define	PCCBB_PCMCIA_16BITONLY	0x04	/* 32-bit mode disable */
 
 	struct proc *sc_event_thread;
-	 SIMPLEQ_HEAD(, pcic_event) sc_events;
+	SIMPLEQ_HEAD(, pcic_event) sc_events;
 
 	/* interrupt handler list on the bridge */
 	struct pccbb_intrhand_list *sc_pil;
