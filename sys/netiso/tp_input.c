@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_input.c,v 1.11 1996/10/13 02:04:37 christos Exp $	*/
+/*	$NetBSD: tp_input.c,v 1.11.14.1 1998/01/29 10:48:12 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -304,10 +304,11 @@ tp_newsocket(so, fname, cons_channel, class_to_use, netservice)
 			head = so->so_head;
 			t = so;
 			printf("so %p so_head %p so_q0 %p, q0len %d\n",
-			       t, t->so_head, t->so_q0, t->so_q0len);
-			while ((t = t->so_q0) && t != so && t != head)
+			       t, t->so_head, t->so_q0.tqh_first, t->so_q0len);
+			while ((t = t->so_q0.tqh_first) && t != so && t != head)
 				printf("so %p so_head %p so_q0 %p, q0len %d\n",
-				       t, t->so_head, t->so_q0, t->so_q0len);
+				       t, t->so_head, t->so_q0.tqh_first,
+				       t->so_q0len);
 		}
 	}
 #endif
