@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.465 2002/08/16 15:03:02 heinz Exp $
+$NetBSD: pcidevs,v 1.466 2002/08/23 15:56:30 bouyer Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1789,6 +1789,8 @@ product PROMISE ULTRA100X 0x0d30 Ultra100X/ATA Bus Master IDE Accelerator
 product PROMISE ULTRA100TX2 0x4d68 Ultra100TX2/ATA Bus Master IDE Accelerator
 product PROMISE ULTRA100TX2v2 0x6268 Ultra100TX2v2/ATA Bus Master IDE Accelerator
 product PROMISE ULTRA133 0x4d69 Ultra133/ATA Bus Master IDE Accelerator
+product PROMISE ULTRA133TX2 0x5275 Ultra133TX2/ATA Bus Master IDE Accelerator
+product PROMISE ULTRA133TX2v2 0x6269 Ultra133TX2v2/ATA Bus Master IDE Accelerator
 
 /* QLogic products */
 product QLOGIC ISP1020	0x1020	ISP1020
