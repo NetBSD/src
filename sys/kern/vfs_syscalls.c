@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.155 2000/03/30 09:27:15 augustss Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.156 2000/04/17 14:31:22 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -2128,6 +2128,49 @@ sys_fchflags(p, v, retval)
 out:
 	VOP_UNLOCK(vp, 0);
 	FILE_UNUSE(fp, p);
+	return (error);
+}
+
+/*
+ * Change flags of a file given a file descriptor; this version does
+ * not follow links.
+ */
+int
+sys_lchflags(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	register struct sys_chflags_args /* {
+		syscallarg(const char *) path;
+		syscallarg(u_long) flags;
+	} */ *uap = v;
+	register struct vnode *vp;
+	struct vattr vattr;
+	int error;
+	struct nameidata nd;
+
+	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
+	if ((error = namei(&nd)) != 0)
+		return (error);
+	vp = nd.ni_vp;
+	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	/* Non-superusers cannot change the flags on devices, even if they
+	   own them. */
+	if (suser(p->p_ucred, &p->p_acflag)) {
+		if ((error = VOP_GETATTR(vp, &vattr, p->p_ucred, p)) != 0)
+			goto out;
+		if (vattr.va_type == VCHR || vattr.va_type == VBLK) {
+			error = EINVAL;
+			goto out;
+		}
+	}
+	VATTR_NULL(&vattr);
+	vattr.va_flags = SCARG(uap, flags);
+	error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
+out:
+	vput(vp);
 	return (error);
 }
 

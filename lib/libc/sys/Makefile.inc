@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.98 2000/01/31 15:14:19 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.99 2000/04/17 14:31:21 mrg Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -46,7 +46,7 @@ ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o \
 	__getlogin.o getpeername.o getpgid.o getpgrp.o \
 	getpriority.o getrlimit.o getrusage.o getsid.o getsockname.o \
 	getsockopt.o gettimeofday.o ioctl.o kill.o ktrace.o \
-	lchmod.o lchown.o __lstat13.o lfs_bmapv.o lfs_markv.o \
+	lchflags.o lchmod.o lchown.o __lstat13.o lfs_bmapv.o lfs_markv.o \
 	lfs_segclean.o lfs_segwait.o link.o listen.o lutimes.o \
 	madvise.o mincore.o minherit.o mkdir.o mkfifo.o mknod.o \
 	mlock.o mlockall.o mount.o mprotect.o __msgctl13.o msgget.o msgrcv.o \
