@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.19 2004/01/14 20:41:59 jdolecek Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.20 2004/01/25 14:00:57 bjh21 Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -216,7 +216,6 @@
 #	altq	ALTQ control interface
 #	apm	power management device
 #	audio*	audio devices
-#	beep	PC speaker
 #	bell*	OPM bell device (x68k)
 #	bktr	Brooktree 848/849/878/879 based TV cards
 #	bpf*	packet filter
@@ -1055,10 +1054,6 @@ irframe*)
 fcom*)
 	unit=${i#fcom}
 	mkdev fcom$unit c %fcom_chr% $unit "" "" $u_uucp
-	;;
-
-beep)
-	mkdev beep c %beep_chr% 0
 	;;
 
 openfirm)
