@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.67 1998/11/06 05:58:09 mrg Exp $	*/
+/*	$NetBSD: unistd.h,v 1.68 1998/11/09 12:45:11 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -233,6 +233,7 @@ long	 gethostid __P((void));
 int	 gethostname __P((char *, size_t));
 __pure int
 	 getpagesize __P((void));		/* legacy */
+pid_t	 getpgid __P((pid_t));
 #if defined(_XOPEN_SOURCE)
 int	 lchown __P((const char *, uid_t, gid_t)) __RENAME(__posix_lchown);
 #else
@@ -277,7 +278,6 @@ int	 select __P((int, fd_set *, fd_set *, fd_set *, struct timeval *));
     (_XOPEN_SOURCE - 0) >= 500
 ssize_t	 pread __P((int, void *, size_t, off_t));
 ssize_t	 pwrite __P((int, const void *, size_t, off_t));
-pid_t	 getpgid __P((pid_t));
 #endif
 
 
