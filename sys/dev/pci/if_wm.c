@@ -1,7 +1,7 @@
-/*	$NetBSD: if_wm.c,v 1.68 2004/02/19 05:19:52 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.69 2004/04/09 17:51:18 thorpej Exp $	*/
 
 /*
- * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
+ * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
  * All rights reserved.
  *
  * Written by Jason R. Thorpe for Wasabi Systems, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.68 2004/02/19 05:19:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.69 2004/04/09 17:51:18 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -344,6 +344,16 @@ do {									\
 #define	WM_CDTXADDR(sc, x)	((sc)->sc_cddma + WM_CDTXOFF((x)))
 #define	WM_CDRXADDR(sc, x)	((sc)->sc_cddma + WM_CDRXOFF((x)))
 
+#define	WM_CDTXADDR_LO(sc, x)	(WM_CDTXADDR((sc), (x)) & 0xffffffffU)
+#define	WM_CDTXADDR_HI(sc, x)						\
+	(sizeof(bus_addr_t) == 8 ?					\
+	 (uint64_t)WM_CDTXADDR((sc), (x)) >> 32 : 0)
+
+#define	WM_CDRXADDR_LO(sc, x)	(WM_CDRXADDR((sc), (x)) & 0xffffffffU)
+#define	WM_CDRXADDR_HI(sc, x)						\
+	(sizeof(bus_addr_t) == 8 ?					\
+	 (uint64_t)WM_CDRXADDR((sc), (x)) >> 32 : 0)
+
 #define	WM_CDTXSYNC(sc, x, n, ops)					\
 do {									\
 	int __x, __n;							\
@@ -393,10 +403,8 @@ do {									\
 	 */								\
 	__m->m_data = __m->m_ext.ext_buf + (sc)->sc_align_tweak;	\
 									\
-	__rxd->wrx_addr.wa_low =					\
-	    htole32(__rxs->rxs_dmamap->dm_segs[0].ds_addr + 		\
-		(sc)->sc_align_tweak);					\
-	__rxd->wrx_addr.wa_high = 0;					\
+	wm_set_dma_addr(&__rxd->wrx_addr,				\
+	    __rxs->rxs_dmamap->dm_segs[0].ds_addr + (sc)->sc_align_tweak); \
 	__rxd->wrx_len = 0;						\
 	__rxd->wrx_cksum = 0;						\
 	__rxd->wrx_status = 0;						\
@@ -657,6 +665,16 @@ wm_io_write(struct wm_softc *sc, int reg, uint32_t val)
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, 4, val);
 }
 
+static __inline void
+wm_set_dma_addr(__volatile wiseman_addr_t *wa, bus_addr_t v)
+{
+	wa->wa_low = htole32(v & 0xffffffffU);
+	if (sizeof(bus_addr_t) == 8)
+		wa->wa_high = htole32((uint64_t) v >> 32);
+	else
+		wa->wa_high = 0;
+}
+
 static const struct wm_product *
 wm_lookup(const struct pci_attach_args *pa)
 {
@@ -711,7 +729,10 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 		panic("wm_attach: impossible");
 	}
 
-	sc->sc_dmat = pa->pa_dmat;
+	if (pci_dma64_available(pa))
+		sc->sc_dmat = pa->pa_dmat64;
+	else
+		sc->sc_dmat = pa->pa_dmat;
 
 	preg = PCI_REVISION(pci_conf_read(pc, pa->pa_tag, PCI_CLASS_REG));
 	aprint_naive(": Ethernet controller\n");
@@ -913,10 +934,15 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Allocate the control data structures, and create and load the
 	 * DMA map for it.
+	 *
+	 * NOTE: All Tx descriptors must be in the same 4G segment of
+	 * memory.  So must Rx descriptors.  We simplify by allocating
+	 * both sets within the same 4G segment.
 	 */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
-	    sizeof(struct wm_control_data), PAGE_SIZE, 0, &seg, 1, &rseg,
-	    0)) != 0) {
+				      sizeof(struct wm_control_data),
+				      PAGE_SIZE, (bus_size_t) 0x100000000ULL,
+				      &seg, 1, &rseg, 0)) != 0) {
 		aprint_error(
 		    "%s: unable to allocate control data, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -924,24 +950,26 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
-	    sizeof(struct wm_control_data), (caddr_t *)&sc->sc_control_data,
-	    0)) != 0) {
+				    sizeof(struct wm_control_data),
+				    (caddr_t *)&sc->sc_control_data, 0)) != 0) {
 		aprint_error("%s: unable to map control data, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail_1;
 	}
 
 	if ((error = bus_dmamap_create(sc->sc_dmat,
-	    sizeof(struct wm_control_data), 1,
-	    sizeof(struct wm_control_data), 0, 0, &sc->sc_cddmamap)) != 0) {
+				       sizeof(struct wm_control_data), 1,
+				       sizeof(struct wm_control_data), 0, 0,
+				       &sc->sc_cddmamap)) != 0) {
 		aprint_error("%s: unable to create control data DMA map, "
 		    "error = %d\n", sc->sc_dev.dv_xname, error);
 		goto fail_2;
 	}
 
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_cddmamap,
-	    sc->sc_control_data, sizeof(struct wm_control_data), NULL,
-	    0)) != 0) {
+				     sc->sc_control_data,
+				     sizeof(struct wm_control_data), NULL,
+				     0)) != 0) {
 		aprint_error(
 		    "%s: unable to load control data DMA map, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -953,8 +981,8 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	for (i = 0; i < WM_TXQUEUELEN; i++) {
 		if ((error = bus_dmamap_create(sc->sc_dmat, ETHER_MAX_LEN_JUMBO,
-		    WM_NTXSEGS, MCLBYTES, 0, 0,
-		    &sc->sc_txsoft[i].txs_dmamap)) != 0) {
+					       WM_NTXSEGS, MCLBYTES, 0, 0,
+					  &sc->sc_txsoft[i].txs_dmamap)) != 0) {
 			aprint_error("%s: unable to create Tx DMA map %d, "
 			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
 			goto fail_4;
@@ -966,7 +994,8 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	for (i = 0; i < WM_NRXDESC; i++) {
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
-		    MCLBYTES, 0, 0, &sc->sc_rxsoft[i].rxs_dmamap)) != 0) {
+					       MCLBYTES, 0, 0,
+					  &sc->sc_rxsoft[i].rxs_dmamap)) != 0) {
 			aprint_error("%s: unable to create Rx DMA map %d, "
 			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
 			goto fail_5;
@@ -1566,13 +1595,8 @@ wm_start(struct ifnet *ifp)
 		for (nexttx = sc->sc_txnext, seg = 0;
 		     seg < dmamap->dm_nsegs;
 		     seg++, nexttx = WM_NEXTTX(nexttx)) {
-			/*
-			 * Note: we currently only use 32-bit DMA
-			 * addresses.
-			 */
-			sc->sc_txdescs[nexttx].wtx_addr.wa_high = 0;
-			sc->sc_txdescs[nexttx].wtx_addr.wa_low =
-			    htole32(dmamap->dm_segs[seg].ds_addr);
+			wm_set_dma_addr(&sc->sc_txdescs[nexttx].wtx_addr,
+			    dmamap->dm_segs[seg].ds_addr);
 			sc->sc_txdescs[nexttx].wtx_cmdlen =
 			    htole32(cksumcmd | dmamap->dm_segs[seg].ds_len);
 			sc->sc_txdescs[nexttx].wtx_fields.wtxu_status = 0;
@@ -2281,15 +2305,15 @@ wm_init(struct ifnet *ifp)
 	sc->sc_txctx_tucs = 0xffffffff;
 
 	if (sc->sc_type < WM_T_82543) {
-		CSR_WRITE(sc, WMREG_OLD_TBDAH, 0);
-		CSR_WRITE(sc, WMREG_OLD_TBDAL, WM_CDTXADDR(sc, 0));
+		CSR_WRITE(sc, WMREG_OLD_TBDAH, WM_CDTXADDR_HI(sc, 0));
+		CSR_WRITE(sc, WMREG_OLD_TBDAL, WM_CDTXADDR_LO(sc, 0));
 		CSR_WRITE(sc, WMREG_OLD_TDLEN, sizeof(sc->sc_txdescs));
 		CSR_WRITE(sc, WMREG_OLD_TDH, 0);
 		CSR_WRITE(sc, WMREG_OLD_TDT, 0);
 		CSR_WRITE(sc, WMREG_OLD_TIDV, 128);
 	} else {
-		CSR_WRITE(sc, WMREG_TBDAH, 0);
-		CSR_WRITE(sc, WMREG_TBDAL, WM_CDTXADDR(sc, 0));
+		CSR_WRITE(sc, WMREG_TBDAH, WM_CDTXADDR_HI(sc, 0));
+		CSR_WRITE(sc, WMREG_TBDAL, WM_CDTXADDR_LO(sc, 0));
 		CSR_WRITE(sc, WMREG_TDLEN, sizeof(sc->sc_txdescs));
 		CSR_WRITE(sc, WMREG_TDH, 0);
 		CSR_WRITE(sc, WMREG_TDT, 0);
@@ -2315,8 +2339,8 @@ wm_init(struct ifnet *ifp)
 	 * descriptor rings.
 	 */
 	if (sc->sc_type < WM_T_82543) {
-		CSR_WRITE(sc, WMREG_OLD_RDBAH0, 0);
-		CSR_WRITE(sc, WMREG_OLD_RDBAL0, WM_CDRXADDR(sc, 0));
+		CSR_WRITE(sc, WMREG_OLD_RDBAH0, WM_CDRXADDR_HI(sc, 0));
+		CSR_WRITE(sc, WMREG_OLD_RDBAL0, WM_CDRXADDR_LO(sc, 0));
 		CSR_WRITE(sc, WMREG_OLD_RDLEN0, sizeof(sc->sc_rxdescs));
 		CSR_WRITE(sc, WMREG_OLD_RDH0, 0);
 		CSR_WRITE(sc, WMREG_OLD_RDT0, 0);
@@ -2329,8 +2353,8 @@ wm_init(struct ifnet *ifp)
 		CSR_WRITE(sc, WMREG_OLD_RDT1, 0);
 		CSR_WRITE(sc, WMREG_OLD_RDTR1, 0);
 	} else {
-		CSR_WRITE(sc, WMREG_RDBAH, 0);
-		CSR_WRITE(sc, WMREG_RDBAL, WM_CDRXADDR(sc, 0));
+		CSR_WRITE(sc, WMREG_RDBAH, WM_CDRXADDR_HI(sc, 0));
+		CSR_WRITE(sc, WMREG_RDBAL, WM_CDRXADDR_LO(sc, 0));
 		CSR_WRITE(sc, WMREG_RDLEN, sizeof(sc->sc_rxdescs));
 		CSR_WRITE(sc, WMREG_RDH, 0);
 		CSR_WRITE(sc, WMREG_RDT, 0);
