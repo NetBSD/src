@@ -37,8 +37,6 @@
 #include <machine/psl.h>
 #include <machine/trap.h>
 
-#define	BYTE_MSF
-
 typedef	vm_offset_t	db_addr_t;	/* address - unsigned */
 typedef	int		db_expr_t;	/* expression - signed */
 struct mc68020_saved_state {
