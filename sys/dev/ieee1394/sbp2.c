@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp2.c,v 1.11 2002/12/18 04:48:33 jmc Exp $	*/
+/*	$NetBSD: sbp2.c,v 1.12 2002/12/28 10:54:47 jmc Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbp2.c,v 1.11 2002/12/18 04:48:33 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbp2.c,v 1.12 2002/12/28 10:54:47 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -79,6 +79,11 @@ static void sbp2_enable_status(struct ieee1394_abuf *, int);
 static void sbp2_null_resp(struct ieee1394_abuf *, int);
 static void sbp2_doorbell_reset(struct ieee1394_abuf *, int);
 static void sbp2_status_resp(struct sbp2_status *, void *);
+static struct sbp2_pagetable *sbp2_alloc_pt(struct uio *, u_int8_t, 
+    struct sbp2_orb *);
+static void sbp2_pt_resp(struct ieee1394_abuf *, int);
+static void sbp2_free_pt(struct sbp2_pagetable *);
+
 #ifdef SBP2_DEBUG
 static void sbp2_agent_status(struct ieee1394_abuf *, int);
 #endif
@@ -482,7 +487,7 @@ sbp2_login(struct sbp2 *sbp2, struct sbp2_lun *lun)
 	 * seem to return status on a dummy orb regardless so don't 2nd guess.
 	 */
 
-	orb->cmd.ab_data[4] |= SBP2_ORB_NOTIFY_MASK;
+	orb->cmd.ab_data[4] |= htonl(SBP2_ORB_NOTIFY_MASK);
 	orb->cmd.ab_subok = 1;
 	orb->cmd.ab_cb = sbp2_orb_resp;
 	orb->cmd.ab_cbarg = orb;
@@ -505,14 +510,14 @@ sbp2_login_ans(struct ieee1394_abuf *ab, int rcode)
 	/* Got a read so allocate the buffer and write out the response. */
 	
 	if (orb->state != SBP2_ORB_INIT_STATE) {
+		orb->cmd.ab_tcode = IEEE1394_TCODE_READ_REQ_BLOCK;
 		sbp2_free_orb(orb);
 		return;
 	}
 	
-	sc->sc1394_callback.sc1394_unreg(ab, 0);
-
 	if (rcode) {
 		DPRINTF(("sbp2_login: Bad return code: %d\n", rcode));
+		orb->cmd.ab_tcode = IEEE1394_TCODE_READ_REQ_BLOCK;
 		sbp2_free_orb(orb);
 		return;
 	}
@@ -694,6 +699,9 @@ sbp2_runcmd(struct sbp2 *sbp2, struct sbp2_cmd *cmd)
 	struct ieee1394_softc *psc =
 	    (struct ieee1394_softc *) sbp2->sc->sc1394_dev.dv_parent;
 	struct sbp2_lun *lun;
+	struct uio io;
+	struct iovec iov;
+	u_int32_t t;
 	u_int64_t addr;
 	
 #ifdef FW_DEBUG
@@ -752,32 +760,67 @@ sbp2_runcmd(struct sbp2 *sbp2, struct sbp2_cmd *cmd)
 	orb->sbp2 = sbp2;
 	
 	if (cmd->data) {
-		/* XXX: Handle uio and large data chunks via page tables. */
-		if ((cmd->datalen == 0) || (cmd->datalen > SBP2_MAXPHYS))
-			return NULL;
-
-		sbp2_alloc_data_mapping(sbp2, &orb->data_map, cmd->data,
-		    cmd->datalen, cmd->rw);
-		orb->data.ab_req = sbp2->sc;
-		if (cmd->rw == SBP_WRITE)
-			orb->data.ab_tcode = IEEE1394_TCODE_WRITE_REQ_BLOCK;
-		else
-			orb->data.ab_tcode = IEEE1394_TCODE_READ_REQ_BLOCK;
-		orb->data.ab_length = cmd->datalen;
-		orb->data.ab_addr = orb->data_map.fwaddr;
-		orb->data.ab_cb = sbp2_data_resp;
-		orb->data.ab_cbarg = orb;
-		orb->data.ab_data = (u_int32_t *)cmd->data;
-		orb->cmd.ab_data[2] =
-		    IEEE1394_CREATE_ADDR_HIGH(orb->data.ab_addr);
-		orb->cmd.ab_data[2] |=
-		    htonl((0xffc0 | psc->sc1394_node_id) << 16);
-		orb->cmd.ab_data[3] =
-		    IEEE1394_CREATE_ADDR_LOW(orb->data.ab_addr);
-		orb->cmd.ab_data[4] |= htonl(0x00900000);
-		orb->cmd.ab_data[4] |= htonl(cmd->datalen);
-		
-		sbp2->sc->sc1394_callback.sc1394_inreg(&orb->data, 1);
+		if ((cmd->datalen == 0) || (cmd->datalen > SBP2_MAXPHYS)) {
+			/* Handle uio and large data chunks via page tables. */
+			if (cmd->datalen) {
+				io.uio_iov = &iov;
+				io.uio_iovcnt = 1;
+				io.uio_offset = 0;
+				io.uio_resid = cmd->datalen;
+				io.uio_segflg = UIO_SYSSPACE;
+				if (cmd->rw == SBP_WRITE)
+					io.uio_rw = UIO_WRITE;
+				else
+					io.uio_rw = UIO_READ;
+				io.uio_procp = NULL;
+				iov.iov_base = cmd->data;
+				iov.iov_len = cmd->datalen;
+				orb->pt = sbp2_alloc_pt(&io, cmd->rw, orb);
+			} else 
+				orb->pt = 
+				    sbp2_alloc_pt((struct uio *)cmd->data, 
+					cmd->rw, orb);
+		 	if (orb->pt == NULL) {
+				sbp2_free_orb (orb);
+				return NULL;
+			}
+			orb->cmd.ab_data[2] =
+			    IEEE1394_CREATE_ADDR_HIGH(orb->pt->pt_ent.ab_addr);
+			orb->cmd.ab_data[2] |=
+			    htonl((0xffc0 | psc->sc1394_node_id) << 16);
+			orb->cmd.ab_data[3] =
+			    IEEE1394_CREATE_ADDR_LOW(orb->pt->pt_ent.ab_addr);
+			t = SBP2_ORB_SET_MAXTRANS(sbp2->sc->sc1394_link_speed);
+			orb->cmd.ab_data[4] |= htonl(t);
+			orb->cmd.ab_data[4] |= htonl(SBP2_ORB_PAGETABLE_MASK);
+			orb->cmd.ab_data[4] |= htonl(orb->pt->pt_cnt);
+		} else {
+			sbp2_alloc_data_mapping(sbp2, &orb->data_map, cmd->data,
+		    	    cmd->datalen, cmd->rw);
+			orb->data_map.orb = orb;
+			orb->data.ab_length = cmd->datalen;
+			orb->data.ab_addr = orb->data_map.fwaddr;
+			orb->data.ab_cb = sbp2_data_resp;
+			orb->data.ab_cbarg = &orb->data_map;
+			orb->data.ab_data = (u_int32_t *)cmd->data;
+			orb->data.ab_req = sbp2->sc;
+			if (cmd->rw == SBP_WRITE)
+				orb->data.ab_tcode = 
+				    IEEE1394_TCODE_WRITE_REQ_BLOCK;
+			else
+				orb->data.ab_tcode = 
+				    IEEE1394_TCODE_READ_REQ_BLOCK;
+			orb->cmd.ab_data[2] =
+			    IEEE1394_CREATE_ADDR_HIGH(orb->data.ab_addr);
+			orb->cmd.ab_data[2] |=
+			    htonl((0xffc0 | psc->sc1394_node_id) << 16);
+			orb->cmd.ab_data[3] =
+			    IEEE1394_CREATE_ADDR_LOW(orb->data.ab_addr);
+			t = SBP2_ORB_SET_MAXTRANS(sbp2->sc->sc1394_link_speed);
+			orb->cmd.ab_data[4] |= htonl(t);
+			orb->cmd.ab_data[4] |= htonl(cmd->datalen);
+			sbp2->sc->sc1394_callback.sc1394_inreg(&orb->data, 1);
+		}
 	}
 	
 	simple_lock(&sbp2->orblist_lock);
@@ -988,8 +1031,6 @@ sbp2_orb_resp(struct ieee1394_abuf *abuf, int status)
 		
 		if (orb != CIRCLEQ_FIRST(&orb->sbp2->orbs)) {
 			orb->cmd.ab_tcode = IEEE1394_TCODE_READ_REQ_BLOCK;
-			orb->sbp2->sc->sc1394_callback.sc1394_unreg(&orb->cmd,
-			    0);
 
 			CIRCLEQ_REMOVE(&orb->sbp2->orbs, orb, orb_list);
 			simple_unlock(&orb->sbp2->orblist_lock);
@@ -1012,22 +1053,23 @@ static void
 sbp2_data_resp(struct ieee1394_abuf *abuf, int rcode)
 {
 	struct sbp2_orb *orb;
+	struct sbp2_mapping *data_map;
 	u_int32_t offset;
 	unsigned char *addr;
 	
 	switch (abuf->ab_tcode) {
 
-	case IEEE1394_TCODE_READ_RESP_BLOCK:
 	case IEEE1394_TCODE_WRITE_REQ_BLOCK:
 		return;
 		break;
 	case IEEE1394_TCODE_READ_REQ_BLOCK:
-		orb = abuf->ab_cbarg;
+		data_map = abuf->ab_cbarg;
+		orb = data_map->orb;
 	
 		simple_lock(&orb->orb_lock);
 
-		addr = orb->data_map.laddr;
-		offset = abuf->ab_retaddr - orb->data_map.fwaddr;
+		addr = data_map->laddr;
+		offset = abuf->ab_retaddr - data_map->fwaddr;
 
 		orb->resp.ab_addr = abuf->ab_retaddr;
 		orb->resp.ab_tcode = IEEE1394_TCODE_READ_RESP_BLOCK;
@@ -1035,8 +1077,8 @@ sbp2_data_resp(struct ieee1394_abuf *abuf, int rcode)
 		orb->resp.ab_length = abuf->ab_retlen;
 		orb->resp.ab_req = abuf->ab_req;
 		orb->resp.ab_data = (u_int32_t *)(addr + offset);
-		orb->resp.ab_cb = sbp2_data_resp;
-		orb->resp.ab_cbarg = orb;
+		orb->resp.ab_cb = sbp2_null_resp;
+		orb->resp.ab_cbarg = data_map;
 		orb->sbp2->sc->sc1394_callback.sc1394_write(&orb->resp);
 		simple_unlock(&orb->orb_lock);
 		break;
@@ -1133,10 +1175,14 @@ sbp2_free_orb(struct sbp2_orb *orb)
 	simple_lock(&orb->orb_lock);
 	DPRINTFN(2, ("Freeing orb at addr: 0x%016qx status_rec: 0x%0x\n", 
 	    orb->cmd.ab_addr, orb->status_rec));
+	orb->sbp2->sc->sc1394_callback.sc1394_unreg(&orb->cmd, 0);
 	if (orb->data_map.laddr) {
 		orb->sbp2->sc->sc1394_callback.sc1394_unreg(&orb->data, 1);
 		sbp2_free_data_mapping(orb->sbp2, &orb->data_map);
 	}
+	if (orb->pt)
+		sbp2_free_pt(orb->pt);
+
 	sbp2_free_addr(orb->sbp2, orb->cmd.ab_addr);
 
 	simple_lock(&sbp2_freeorbs_lock);
@@ -1144,6 +1190,7 @@ sbp2_free_orb(struct sbp2_orb *orb)
 	memset(&orb->status, 0, sizeof(struct sbp2_status));
 	memset(&orb->data_map, 0, sizeof(struct sbp2_mapping));
 	orb->sbp2 = NULL;
+	orb->pt = NULL;
 	orb->lun = NULL;
 	orb->cb = NULL;
 	orb->cb_arg = NULL;
@@ -1388,4 +1435,165 @@ sbp2_free_addr(struct sbp2 *sbp2, u_int64_t addr)
 	if (sbp2->map->next_addr > off)
 		sbp2->map->next_addr = off;
 	simple_unlock(&sbp2->map->maplock);
+}
+
+static struct sbp2_pagetable *
+sbp2_alloc_pt(struct uio *io, u_int8_t rw, struct sbp2_orb *orb)
+{
+	struct sbp2_pagetable *pt;
+	struct sbp2_mapping *map;
+	struct ieee1394_softc *sc;
+	ssize_t len;
+	char *addr;
+	int i, j, k, cnt;
+
+	pt = malloc (sizeof (*pt), M_1394DATA, M_ZERO | M_WAITOK);
+
+	/* Compute number of entries. */
+
+	for (i = 0; i < io->uio_iovcnt; i++) {
+		if (io->uio_iov[i].iov_len <= SBP2_PHYS_SEGMENT)
+			pt->pt_cnt++;
+		else {
+			pt->pt_cnt += 
+			    io->uio_iov[i].iov_len / SBP2_PHYS_SEGMENT;
+			if (io->uio_iov[i].iov_len % SBP2_PHYS_SEGMENT)
+				pt->pt_cnt++;
+		}
+#ifdef DEBUG
+		/* Overflow'd 16 bits. */
+		if (pt->pt_cnt == 0) {
+			DPRINTFN(1, ("pt_cnt overflow\n"));
+			free (pt, M_1394DATA);
+			return NULL;
+		}
+#endif
+	}
+
+	sc = orb->sbp2->sc;
+
+	pt->pt_ent.ab_data = malloc (SBP2_PTENT_SIZE * pt->pt_cnt, M_1394DATA, 
+	    M_ZERO | M_WAITOK);
+	sbp2_alloc_data_mapping(orb->sbp2, &pt->pt_map, 
+	    (char *)pt->pt_ent.ab_data, SBP2_PTENT_SIZE * pt->pt_cnt, SBP_READ);
+
+	pt->pt_ent.ab_addr = pt->pt_map.fwaddr;
+
+	pt->pt_ent.ab_length = SBP2_PTENT_SIZE * pt->pt_cnt;
+	pt->pt_ent.ab_tcode = IEEE1394_TCODE_READ_REQ_BLOCK;
+	pt->pt_ent.ab_req = sc;
+	pt->pt_ent.ab_cb = sbp2_pt_resp;
+	pt->pt_ent.ab_cbarg = orb;
+	pt->pt_data = malloc (sizeof (struct ieee1394_abuf) * pt->pt_cnt,
+	    M_1394DATA, M_ZERO | M_WAITOK);
+
+	j = 0;
+	for (i = 0; i < io->uio_iovcnt; i++) {
+		if (io->uio_iov[i].iov_len <= SBP2_PHYS_SEGMENT) {
+			cnt = 1;
+		} else {
+			cnt = io->uio_iov[i].iov_len / SBP2_PHYS_SEGMENT;
+			if (io->uio_iov[i].iov_len % SBP2_PHYS_SEGMENT)
+				cnt++;
+		}
+		len = io->uio_iov[i].iov_len;
+		for (k = 0; k < cnt; k++) {
+#ifdef DIAGNOSTIC
+			if (len == 0)
+				panic ("len is zero");
+#endif
+			map = malloc (sizeof (struct sbp2_mapping), M_1394DATA, 
+			    M_ZERO | M_WAITOK);
+			pt->pt_data[j].ab_cbarg = map;
+			addr = (char *)io->uio_iov[i].iov_base + 
+			    (k * SBP2_PHYS_SEGMENT);
+			if (len > SBP2_PHYS_SEGMENT) {
+				len -= SBP2_PHYS_SEGMENT;
+				sbp2_alloc_data_mapping(orb->sbp2, map, addr,
+			    	    SBP2_PHYS_SEGMENT, rw);
+				pt->pt_data[j].ab_length = SBP2_PHYS_SEGMENT;
+				pt->pt_ent.ab_data[j * SBP2_PTENT_SIZEQ] =
+			    	    SBP2_PT_MAKELEN(SBP2_PHYS_SEGMENT);
+			} else {
+				sbp2_alloc_data_mapping(orb->sbp2, map, addr,
+			    	    len, rw);
+				pt->pt_data[j].ab_length = len;
+				pt->pt_ent.ab_data[j * SBP2_PTENT_SIZEQ] =
+				    SBP2_PT_MAKELEN(len);
+				len -= len;
+			}
+			pt->pt_data[j].ab_addr = map->fwaddr;
+			pt->pt_data[j].ab_req = sc;
+			if (rw == SBP_WRITE)
+				pt->pt_data[j].ab_tcode = 
+				    IEEE1394_TCODE_WRITE_REQ_BLOCK;
+			else
+				pt->pt_data[j].ab_tcode = 
+				    IEEE1394_TCODE_READ_REQ_BLOCK;
+			map->orb = orb;
+			pt->pt_data[j].ab_cb = sbp2_data_resp;
+			pt->pt_data[j].ab_data = (u_int32_t *)addr;
+			pt->pt_ent.ab_data[j * SBP2_PTENT_SIZEQ] |=
+			    IEEE1394_CREATE_ADDR_HIGH(map->fwaddr);
+			pt->pt_ent.ab_data[(j * SBP2_PTENT_SIZEQ) + 1] =
+			    IEEE1394_CREATE_ADDR_LOW(map->fwaddr);
+			sc->sc1394_callback.sc1394_inreg(&pt->pt_data[j], 1);
+			j++;
+		} 
+	}
+	sc->sc1394_callback.sc1394_inreg(&pt->pt_ent, 1);
+	return pt;
+}
+
+static void 
+sbp2_pt_resp(struct ieee1394_abuf *abuf, int rcode)
+{
+	struct sbp2_orb *orb = abuf->ab_cbarg;
+	struct sbp2_pagetable *pt = orb->pt;
+	u_int32_t offset;
+
+	if (rcode) {
+		DPRINTF(("sbp2_pt_resp: Bad return code: %d\n", rcode));
+		return;
+        }
+
+	simple_lock(&orb->orb_lock);
+
+	/*
+	 * The target is allowed to read these 1 entry at a time so construct
+	 * responses in a different abuf to allow for this.
+	 */
+
+	offset = abuf->ab_retaddr - abuf->ab_addr;
+	pt->pt_resp.ab_addr = abuf->ab_retaddr;
+	pt->pt_resp.ab_tcode = IEEE1394_TCODE_READ_RESP_BLOCK;
+	pt->pt_resp.ab_tlabel = abuf->ab_tlabel;
+	pt->pt_resp.ab_length = abuf->ab_retlen;
+	pt->pt_resp.ab_req = abuf->ab_req;
+	pt->pt_resp.ab_data = (u_int32_t *)((u_int8_t *)abuf->ab_data + offset);
+	pt->pt_resp.ab_cb = sbp2_null_resp;
+	pt->pt_resp.ab_cbarg = orb;
+	abuf->ab_req->sc1394_callback.sc1394_write(&pt->pt_resp);
+	simple_unlock(&orb->orb_lock);
+	return;
+}
+
+static void
+sbp2_free_pt(struct sbp2_pagetable *pt)
+{
+	struct sbp2_orb *orb = pt->pt_ent.ab_cbarg;
+	struct ieee1394_softc *sc = orb->sbp2->sc;
+	int i;
+
+	sc->sc1394_callback.sc1394_unreg(&pt->pt_ent, 1);
+	sbp2_free_data_mapping(orb->sbp2, &pt->pt_map);
+
+	for (i = 0; i < pt->pt_cnt; i++) {
+		sc->sc1394_callback.sc1394_unreg(&pt->pt_data[i], 1);
+		sbp2_free_data_mapping(orb->sbp2, pt->pt_data[i].ab_cbarg);
+		free (pt->pt_data[i].ab_cbarg, M_1394DATA);
+	}
+	free (pt->pt_data, M_1394DATA);
+	free (pt->pt_ent.ab_data, M_1394DATA);
+	free (pt, M_1394DATA);
 }

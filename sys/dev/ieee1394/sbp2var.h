@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp2var.h,v 1.4 2002/12/19 09:59:47 jmc Exp $	*/
+/*	$NetBSD: sbp2var.h,v 1.5 2002/12/28 10:54:47 jmc Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -84,6 +84,9 @@ struct sbp2_status {
 
 struct sbp2_pagetable {
 	struct ieee1394_abuf pt_ent;
+	struct ieee1394_abuf pt_resp;
+	struct sbp2_mapping pt_map;
+
 	u_int16_t pt_cnt;
 	struct ieee1394_abuf *pt_data; /* cbarg == data_mapping */
 };
