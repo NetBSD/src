@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.26 1998/07/27 01:51:29 thorpej Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.27 1998/07/27 13:39:52 bouyer Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -203,6 +203,11 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 # ISA console.  You can only configure one of these!
 pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
 #vt0	at isa? port 0x60 irq 1		# PCVT console driver
+
+# Keyboard layout configuration for pccons
+#options        FRENCH_KBD
+#options        GERMAN_KBD
+#options        NORVEGIAN_KBD
 
 #pcppi0	at isa?
 #sysbeep0	at pcppi?
