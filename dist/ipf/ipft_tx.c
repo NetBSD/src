@@ -1,11 +1,9 @@
-/*	$NetBSD: ipft_tx.c,v 1.2 2000/05/03 11:40:16 veego Exp $	*/
+/*	$NetBSD: ipft_tx.c,v 1.2.4.1 2002/02/09 16:55:04 he Exp $	*/
 
 /*
- * Copyright (C) 1995-2000 by Darren Reed.
+ * Copyright (C) 1995-2001 by Darren Reed.
  *
- * Redistribution and use in source and binary forms are permitted
- * provided that this notice is preserved and due credit is given
- * to the original author and the contributors.
+ * See the IPFILTER.LICENCE file for details on licencing.
  */
 #include <stdio.h>
 #include <ctype.h>
@@ -45,7 +43,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipft_tx.c	1.7 6/5/96 (C) 1993 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipft_tx.c,v 2.3 2000/03/13 22:10:24 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipft_tx.c,v 2.3.2.4 2001/06/26 10:43:18 darrenr Exp";
 #endif
 
 extern	int	opts;
@@ -56,9 +54,9 @@ static	int	text_open __P((char *)), text_close __P((void));
 static	int	text_readip __P((char *, int, char **, int *));
 static	int	parseline __P((char *, ip_t *, char **, int *));
 
-static	char	_tcp_flagset[] = "FSRPAU";
+static	char	_tcp_flagset[] = "FSRPAUEC";
 static	u_char	_tcp_flags[] = { TH_FIN, TH_SYN, TH_RST, TH_PUSH,
-				TH_ACK, TH_URG };
+				TH_ACK, TH_URG, TH_ECN, TH_CWR };
 
 struct	ipread	iptext = { text_open, text_close, text_readip };
 static	FILE	*tfp = NULL;
@@ -225,12 +223,12 @@ int	*out;
 	bzero(ipopts, sizeof(ipopts));
 	ip->ip_hl = sizeof(*ip) >> 2;
 	ip->ip_v = IPVERSION;
-	for (i = 0, cps[0] = strtok(line, " \b\t\r\n"); cps[i] && i < 19; )
+	for (i = 0, cps[0] = strtok(line, " \b\t\r\n"); cps[i] && (i < 19); )
 		cps[++i] = strtok(NULL, " \b\t\r\n");
-	if (i < 2)
-		return 1;
 
 	cpp = cps;
+	if (!*cpp)
+		return 1;
 
 	c = **cpp;
 	if (!isalpha(c) || (tolower(c) != 'o' && tolower(c) != 'i')) {
@@ -239,12 +237,16 @@ int	*out;
 	}
 	*out = (tolower(c) == 'o') ? 1 : 0;
 	cpp++;
+	if (!*cpp)
+		return 1;
 
 	if (!strcasecmp(*cpp, "on")) {
 		cpp++;
 		if (!*cpp)
 			return 1;
 		*ifn = strdup(*cpp++);
+		if (!*cpp)
+			return 1;
 	}
 
 	c = **cpp;
