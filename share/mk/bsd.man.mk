@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.29 1997/05/06 21:29:41 mycroft Exp $
+#	$NetBSD: bsd.man.mk,v 1.30 1997/05/07 15:53:32 mycroft Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .if !target(.MAIN)
@@ -9,6 +9,8 @@
 .MAIN:		all
 .endif
 .PHONY:		catinstall maninstall catpages manpages catlinks manlinks cleanman
+install:	${MANINSTALL}
+
 
 MANTARGET?=	cat
 NROFF?=		nroff
@@ -48,21 +50,6 @@ __installpage: .USE
 .endif
 
 
-# Rules for source page installation
-.if defined(MANPAGES) && !empty(MANPAGES)
-.   for P in ${MANPAGES}
-manpages:: ${DESTDIR}${MANDIR}/man${P:T:E}${MANSUBDIR}/${P}${MCOMPRESSSUFFIX}
-.	if !defined(UPDATE)
-.PHONY: ${DESTDIR}${MANDIR}/${P:T:E}${MANSUBDIR}/${P}${MCOMPRESSSUFFIX}
-.	endif
-
-.PRECIOUS: ${DESTDIR}${MANDIR}/man${P:T:E}${MANSUBDIR}/${P}${MCOMPRESSSUFFIX}
-${DESTDIR}${MANDIR}/man${P:T:E}${MANSUBDIR}/${P}${MCOMPRESSSUFFIX}: ${P} __installpage
-.   endfor
-.else
-manpages::
-.endif
-
 # Rules for cat'ed man page installation
 .if defined(CATPAGES) && !empty(CATPAGES)
 .   for P in ${CATPAGES}
@@ -80,6 +67,21 @@ ${DESTDIR}${MANDIR}/${P:T:E}${MANSUBDIR}/${P:T:R}.0${MCOMPRESSSUFFIX}: ${P} __in
 .   endfor
 .else
 catpages::
+.endif
+
+# Rules for source page installation
+.if defined(MANPAGES) && !empty(MANPAGES)
+.   for P in ${MANPAGES}
+manpages:: ${DESTDIR}${MANDIR}/man${P:T:E}${MANSUBDIR}/${P}${MCOMPRESSSUFFIX}
+.	if !defined(UPDATE)
+.PHONY: ${DESTDIR}${MANDIR}/${P:T:E}${MANSUBDIR}/${P}${MCOMPRESSSUFFIX}
+.	endif
+
+.PRECIOUS: ${DESTDIR}${MANDIR}/man${P:T:E}${MANSUBDIR}/${P}${MCOMPRESSSUFFIX}
+${DESTDIR}${MANDIR}/man${P:T:E}${MANSUBDIR}/${P}${MCOMPRESSSUFFIX}: ${P} __installpage
+.   endfor
+.else
+manpages::
 .endif
 
 catlinks: catpages

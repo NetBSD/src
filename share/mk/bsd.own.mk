@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.35 1997/05/07 08:42:20 mycroft Exp $
+#	$NetBSD: bsd.own.mk,v 1.36 1997/05/07 15:53:33 mycroft Exp $
 
 .if defined(MAKECONF) && exists(${MAKECONF})
 .include "${MAKECONF}"
@@ -80,6 +80,22 @@ NOLINT=
 NOPROFILE=
 .endif
 
-TARGETS+=	all clean cleandir depend includes install lint obj realinstall tags
-.PHONY:		all clean cleandir depend includes install lint obj realinstall tags \
+TARGETS+=	all clean cleandir depend includes install lint obj tags
+.PHONY:		all clean cleandir depend includes install lint obj tags \
 		beforedepend afterdepend beforeinstall afterinstall
+
+.if !target(install)
+install: _SUBDIRUSE afterinstall
+afterinstall: beforeinstall
+.if !target(beforeinstall)
+beforeinstall:
+.endif
+.if !target(afterinstall)
+afterinstall:
+.endif
+.endif
+
+.if !target(clean)
+clean: _SUBDIRUSE
+cleandir: _SUBDIRUSE clean
+.endif
