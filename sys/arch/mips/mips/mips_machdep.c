@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.104 2000/10/04 21:41:47 cgd Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.105 2000/10/05 00:53:01 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.104 2000/10/04 21:41:47 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.105 2000/10/05 00:53:01 cgd Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -103,6 +103,7 @@ long *mips_locoresw[3];
 extern long *mips1_locoresw[];	/* locore_mips1.S */
 extern long *mips3_locoresw[];	/* locore_mips3.S */
 
+int cpu_arch;
 int cpu_mhz;
 int mips_num_tlb_entries;
 
@@ -351,14 +352,14 @@ mips_vector_init()
 #ifdef MIPS1
 	case MIPS_R2000:
 	case MIPS_R3000:
-		cpu_arch = 1;
+		cpu_arch = CPU_ARCH_MIPS1;
 		mips_num_tlb_entries = MIPS1_TLB_NUM_TLB_ENTRIES;
 		mips_L1ICacheSize = mips1_icsize();
 		mips_L1DCacheSize = mips1_dcsize();
 		break;
 #ifdef ENABLE_MIPS_TX3900
 	case MIPS_TX3900:
-		cpu_arch = 1;
+		cpu_arch = CPU_ARCH_MIPS1;
 		switch (MIPS_PRID_REV_MAJ(cpu_id)) {
 		default:
 			panic("not supported revision");
@@ -383,29 +384,29 @@ mips_vector_init()
 
 #ifdef MIPS3
 	case MIPS_R4000:
-		cpu_arch = 3;
+		cpu_arch = CPU_ARCH_MIPS3;
 		mips_num_tlb_entries = MIPS3_TLB_NUM_TLB_ENTRIES;
 		mips3_L1TwoWayCache = 0;
 		break;
 	case MIPS_R4100:
-		cpu_arch = 3;
+		cpu_arch = CPU_ARCH_MIPS3;
 		mips_num_tlb_entries = 32;
 		mips3_L1TwoWayCache = 0;
 		break;
 	case MIPS_R4300:
-		cpu_arch = 3;
+		cpu_arch = CPU_ARCH_MIPS3;
 		mips_num_tlb_entries = MIPS_R4300_TLB_NUM_TLB_ENTRIES;
 		mips3_L1TwoWayCache = 0;
 		break;
 	case MIPS_R4600:
-		cpu_arch = 3;
+		cpu_arch = CPU_ARCH_MIPS3;
 		mips_num_tlb_entries = MIPS3_TLB_NUM_TLB_ENTRIES;
 		mips3_L1TwoWayCache = 1;
 		/* disable interrupt while cacheflush to workaround the bug */
 		break;
 #ifdef ENABLE_MIPS_R4700 /* ID conflict */
 	case MIPS_R4700:
-		cpu_arch = 3;
+		cpu_arch = CPU_ARCH_MIPS3;
 		mips_num_tlb_entries = MIPS3_TLB_NUM_TLB_ENTRIES;
 		mips3_L1TwoWayCache = 1;
 		break;
@@ -414,14 +415,14 @@ mips_vector_init()
 	case MIPS_R5000:
 #endif
 	case MIPS_RM5200:
-		cpu_arch = 4;
+		cpu_arch = CPU_ARCH_MIPS4;
 		mips_num_tlb_entries = MIPS3_TLB_NUM_TLB_ENTRIES;
 		mips3_L1TwoWayCache = 1;
 		break;
 
 	case MIPS_R10000:
 	case MIPS_R12000:
-		cpu_arch = 4;
+		cpu_arch = CPU_ARCH_MIPS4;
 		mips_num_tlb_entries = 64;
 		mips3_L1TwoWayCache = 1;
 		break;
@@ -436,7 +437,7 @@ mips_vector_init()
 		 * note that the Config register has a non-standard base
 		 * for IC and DC (2^9 instead of 2^12).
 		 */
-		cpu_arch = 3;
+		cpu_arch = CPU_ARCH_MIPS3;
 		mips_num_tlb_entries = 16;  /* each entry maps 2 pages */
 		mips3_L1TwoWayCache = 1;    /* note: line size is 16bytes */
 		mips3_csizebase = 0x200;    /* non-standard base in Config */
@@ -449,17 +450,15 @@ mips_vector_init()
 		cpu_reboot(RB_HALT, NULL);
 	}
 
-	switch (cpu_arch) {
 #ifdef MIPS1
-	case 1:
+	if (!CPUISMIPS3) {
 		mips1_TBIA(mips_num_tlb_entries);
 		mips1_vector_init();
 		memcpy(mips_locoresw, mips1_locoresw, sizeof(mips_locoresw));
-		break;
+	} else
 #endif
 #ifdef MIPS3
-	case 3:
-	case 4:
+	if (CPUISMIPS3) {
 		mips3_SetWIRED(0);
 		mips3_TBIA(mips_num_tlb_entries);
 		mips3_SetWIRED(MIPS3_TLB_WIRED_UPAGES);
@@ -470,10 +469,11 @@ mips_vector_init()
 		}
 		mips3_vector_init(mips3_csizebase);
 		memcpy(mips_locoresw, mips3_locoresw, sizeof(mips_locoresw));
-		break;
+	} else
+
 #endif
-	default:
-		printf("MIPS ISA %d: not supported\n", cpu_arch);
+	{
+		printf("cpu_arch 0x%x: not supported\n", cpu_arch);
 		cpu_reboot(RB_HALT, NULL);
 	}
 }
@@ -594,7 +594,7 @@ cpu_identify()
 
 	printf("cpu0: ");
 #ifdef MIPS1
-	if (cpu_arch == 1) {
+	if (!CPUISMIPS3) {
 #ifdef ENABLE_MIPS_TX3900
 		printf("%dKB/%dB Instruction %s, %dKB/%dB Data 2-way set associative, %d TLB entries",
 		       mips_L1ICacheSize / 1024, mips_L1ICacheLSize,
@@ -608,7 +608,7 @@ cpu_identify()
 	}
 #endif
 #ifdef MIPS3
-	if (cpu_arch >= 3) {
+	if (CPUISMIPS3) {
 		printf("L1 cache: %dKB/%dB instruction, %dKB/%dB data",
 		    mips_L1ICacheSize / 1024, mips_L1ICacheLSize,
 		    mips_L1DCacheSize / 1024, mips_L1DCacheLSize);
@@ -648,7 +648,7 @@ cpu_identify()
 	 * but printf() doesn't work in it.
 	 */
 #if !defined(MIPS3_L2CACHE_ABSENT)
-	if (cpu_arch >= 3 && !mips_L2CachePresent) {
+	if (CPUISMIPS3 && !mips_L2CachePresent) {
 		printf("This kernel doesn't work without L2 cache.\n"
 		    "Please add \"options MIPS3_L2CACHE_ABSENT\" "
 		    "to the kernel config file.\n");

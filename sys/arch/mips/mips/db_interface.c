@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.32 2000/08/10 08:01:24 jeffs Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.33 2000/10/05 00:53:00 cgd Exp $	*/
 
 /*
  * Mach Operating System
@@ -310,11 +310,11 @@ db_write_bytes(addr, size, data)
 		kdbpoke_1(p, *(char*)data);
 	}
 #ifdef MIPS1
-	if (cpu_arch == 1)
+	if (!CPUISMIPS3)
 		mips1_FlushICache((vaddr_t) addr, size);
 #endif
 #ifdef MIPS3
-	if (cpu_arch >= 3) {
+	if (CPUISMIPS3) {
 		MachHitFlushDCache((vaddr_t) addr, size);
 		MachFlushICache((vaddr_t) addr, size);
 	}
@@ -330,7 +330,7 @@ db_tlbdump_cmd(addr, have_addr, count, modif)
 	char *modif;
 {
 #ifdef MIPS1
-	if (cpu_arch == 1) {
+	if (!CPUISMIPS3) {
 		struct mips1_tlb {
 			u_int32_t tlb_hi;
 			u_int32_t tlb_lo;
@@ -352,7 +352,7 @@ db_tlbdump_cmd(addr, have_addr, count, modif)
 	}
 #endif
 #ifdef MIPS3
-	if (cpu_arch >= 3) {
+	if (CPUISMIPS3) {
 		struct tlb tlb;
 		int i;
 

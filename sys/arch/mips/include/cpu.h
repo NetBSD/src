@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.44 2000/08/25 01:04:08 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.45 2000/10/05 00:52:59 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -86,7 +86,17 @@
 
 #else /* run-time test */
 extern int cpu_arch;
-#define CPUISMIPS3	(cpu_arch >= 3)
+
+#define	CPU_ARCH_MIPS1	(1 << 0)
+#define	CPU_ARCH_MIPS2	(1 << 1)
+#define	CPU_ARCH_MIPS3	(1 << 2)
+#define	CPU_ARCH_MIPS4	(1 << 3)
+#define	CPU_ARCH_MIPS5	(1 << 4)
+#define	CPU_ARCH_MIPS32	(1 << 5)
+#define	CPU_ARCH_MIPS64	(1 << 6)
+
+/* This test is ... rather bogus */
+#define CPUISMIPS3	((cpu_arch & (CPU_ARCH_MIPS3 | CPU_ARCH_MIPS4)) != 0)
 #endif /* run-time test */
 
 /*
