@@ -1,4 +1,4 @@
-/* $NetBSD: pte.h,v 1.26 1999/04/09 00:38:11 thorpej Exp $ */
+/* $NetBSD: pte.h,v 1.27 2002/10/14 05:11:23 chs Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,7 +85,6 @@
 
 typedef	alpha_pt_entry_t	pt_entry_t;
 
-#define	PT_ENTRY_NULL	((pt_entry_t *) 0)
 #define	PTESHIFT	3			/* pte size == 1 << PTESHIFT */
 
 #define	PG_V		ALPHA_PTE_VALID
