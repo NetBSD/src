@@ -1,4 +1,4 @@
-/*	$NetBSD: srt1.c,v 1.2 2003/01/06 18:22:01 reinoud Exp $	*/
+/*	$NetBSD: srt1.c,v 1.3 2003/09/21 14:17:13 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -34,6 +34,7 @@
 
 /* Command-line parsing from i386 doscommain.c */
 
+#include <lib/libkern/libkern.h>
 #include <lib/libsa/stand.h>
 #include <riscoscalls.h>
 #include <srt0.h>
