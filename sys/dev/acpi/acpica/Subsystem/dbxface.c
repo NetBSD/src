@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dbxface - AML Debugger external interfaces
- *              $Revision: 1.3 $
+ *              xRevision: 67 $
  *
  ******************************************************************************/
 
@@ -115,16 +115,17 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbxface.c,v 1.3 2002/06/15 01:47:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbxface.c,v 1.4 2002/12/23 00:22:08 kanaoka Exp $");
 
 #include "acpi.h"
 #include "amlcode.h"
 #include "acdebug.h"
+#include "acdisasm.h"
 
 
-#ifdef ENABLE_DEBUGGER
+#ifdef ACPI_DEBUGGER
 
-#define _COMPONENT          ACPI_DEBUGGER
+#define _COMPONENT          ACPI_CA_DEBUGGER
         ACPI_MODULE_NAME    ("dbxface")
 
 
@@ -157,9 +158,18 @@ AcpiDbSingleStep (
 
     ACPI_FUNCTION_ENTRY ();
 
+
+    /* Check the abort flag */
+
+    if (AcpiGbl_AbortMethod)
+    {
+        AcpiGbl_AbortMethod = FALSE;
+        return (AE_ABORT_METHOD);
+    }
+
     /* Check for single-step breakpoint */
 
-    if (WalkState->MethodBreakpoint && 
+    if (WalkState->MethodBreakpoint &&
        (WalkState->MethodBreakpoint <= Op->Common.AmlOffset))
     {
         /* Check if the breakpoint has been reached or passed */
@@ -173,7 +183,7 @@ AcpiDbSingleStep (
 
     /* Check for user breakpoint (Must be on exact Aml offset) */
 
-    else if (WalkState->UserBreakpoint && 
+    else if (WalkState->UserBreakpoint &&
             (WalkState->UserBreakpoint == Op->Common.AmlOffset))
     {
         AcpiOsPrintf ("***UserBreakpoint*** at AML offset %X\n", Op->Common.AmlOffset);
@@ -181,7 +191,6 @@ AcpiDbSingleStep (
         AcpiGbl_StepToNextCall = FALSE;
         WalkState->MethodBreakpoint = 0;
     }
-
 
     /*
      * Check if this is an opcode that we are interested in --
@@ -270,7 +279,7 @@ AcpiDbSingleStep (
 
         /* Now we can display it */
 
-        AcpiDbDisplayOp (WalkState, DisplayOp, ACPI_UINT32_MAX);
+        AcpiDmDisassemble (WalkState, DisplayOp, ACPI_UINT32_MAX);
 
         if ((Op->Common.AmlOpcode == AML_IF_OP) ||
             (Op->Common.AmlOpcode == AML_WHILE_OP))
@@ -284,7 +293,6 @@ AcpiDbSingleStep (
                 AcpiOsPrintf ("Predicate = [False], Skipping IF block\n");
             }
         }
-
         else if (Op->Common.AmlOpcode == AML_ELSE_OP)
         {
             AcpiOsPrintf ("Predicate = [False], ELSE block was executed\n");
@@ -294,6 +302,11 @@ AcpiDbSingleStep (
 
         Op->Common.Next = Next;
         AcpiOsPrintf ("\n");
+        if ((AcpiGbl_DbOutputToFile)        ||
+            (AcpiDbgLevel & ACPI_LV_PARSE))
+        {
+            AcpiOsPrintf ("\n");
+        }
         AcpiDbgLevel = OriginalDebugLevel;
     }
 
@@ -335,7 +348,6 @@ AcpiDbSingleStep (
         WalkState->MethodBreakpoint = 1;  /* Must be non-zero! */
     }
 
-
     /* TBD: [Investigate] what are the namespace locking issues here */
 
     /* AcpiUtReleaseMutex (ACPI_MTX_NAMESPACE); */
@@ -361,7 +373,6 @@ AcpiDbSingleStep (
                 return (Status);
             }
         }
-
         else
         {
             /* Single threaded, we must get a command line ourselves */
@@ -422,7 +433,7 @@ AcpiDbInitialize (void)
     AcpiGbl_DbOutputToFile      = FALSE;
 
     AcpiGbl_DbDebugLevel        = ACPI_LV_VERBOSITY2;
-    AcpiGbl_DbConsoleDebugLevel = NORMAL_DEFAULT | ACPI_LV_TABLES;
+    AcpiGbl_DbConsoleDebugLevel = ACPI_NORMAL_DEFAULT | ACPI_LV_TABLES;
     AcpiGbl_DbOutputFlags       = ACPI_DB_CONSOLE_OUTPUT;
 
     AcpiGbl_DbOpt_tables        = FALSE;
@@ -459,6 +470,7 @@ AcpiDbInitialize (void)
             AcpiOsPrintf ("Could not get debugger mutex\n");
             return (Status);
         }
+
         Status = AcpiUtAcquireMutex (ACPI_MTX_DEBUG_CMD_READY);
         if (ACPI_FAILURE (Status))
         {
@@ -478,7 +490,6 @@ AcpiDbInitialize (void)
 
     if (!AcpiGbl_DbOpt_verbose)
     {
-        AcpiGbl_DbDisasmIndent = "    ";
         AcpiGbl_DbOpt_disasm = TRUE;
         AcpiGbl_DbOpt_stats = FALSE;
     }
@@ -514,4 +525,4 @@ AcpiDbTerminate (void)
 }
 
 
-#endif /* ENABLE_DEBUGGER */
+#endif /* ACPI_DEBUGGER */

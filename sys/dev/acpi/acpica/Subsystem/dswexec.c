@@ -2,7 +2,7 @@
  *
  * Module Name: dswexec - Dispatcher method execution callbacks;
  *                        dispatch to interpreter.
- *              $Revision: 1.3 $
+ *              xRevision: 96 $
  *
  *****************************************************************************/
 
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dswexec.c,v 1.3 2002/06/15 01:47:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dswexec.c,v 1.4 2002/12/23 00:22:08 kanaoka Exp $");
 
 #define __DSWEXEC_C__
 
@@ -420,7 +420,6 @@ AcpiDsExecBeginOp (
 }
 
 
-
 /*****************************************************************************
  *
  * FUNCTION:    AcpiDsExecEndOp
@@ -447,7 +446,6 @@ AcpiDsExecEndOp (
     UINT32                  OpClass;
     ACPI_PARSE_OBJECT       *NextOp;
     ACPI_PARSE_OBJECT       *FirstArg;
-    UINT32                  i;
 
 
     ACPI_FUNCTION_TRACE_PTR ("DsExecEndOp", WalkState);
@@ -530,16 +528,7 @@ AcpiDsExecEndOp (
 
         /* Always delete the argument objects and clear the operand stack */
 
-        for (i = 0; i < WalkState->NumOperands; i++)
-        {
-            /*
-             * Remove a reference to all operands, including both
-             * "Arguments" and "Targets".
-             */
-            AcpiUtRemoveReference (WalkState->Operands[i]);
-            WalkState->Operands[i] = NULL;
-        }
-        WalkState->NumOperands = 0;
+        AcpiDsClearOperands (WalkState);
 
         /*
          * If a result object was returned from above, push it on the
@@ -605,6 +594,9 @@ AcpiDsExecEndOp (
             Status = AcpiDsResolveOperands (WalkState);
             if (ACPI_FAILURE (Status))
             {
+                /* On error, clear all resolved operands */
+
+                AcpiDsClearOperands (WalkState);
                 break;
             }
 
@@ -663,7 +655,7 @@ AcpiDsExecEndOp (
 
             case AML_INT_EVAL_SUBTREE_OP:
 
-                Status = AcpiDsEvalDataObjectOperands (WalkState, Op, 
+                Status = AcpiDsEvalDataObjectOperands (WalkState, Op,
                                 AcpiNsGetAttachedObject (Op->Common.Parent->Common.Node));
                 break;
 

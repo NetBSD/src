@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: utalloc - local cache and memory allocation routines
- *              $Revision: 1.3 $
+ *              xRevision: 128 $
  *
  *****************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utalloc.c,v 1.3 2002/06/15 01:47:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utalloc.c,v 1.4 2002/12/23 00:22:16 kanaoka Exp $");
 
 #define __UTALLOC_C__
 
@@ -1108,12 +1108,12 @@ AcpiUtDumpAllocations (
 
     if (!NumOutstanding)
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_OK,
+        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
             "No outstanding allocations.\n"));
     }
     else
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_OK,
+        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
             "%d(%X) Outstanding allocations\n",
             NumOutstanding, NumOutstanding));
     }
