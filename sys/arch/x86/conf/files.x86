@@ -1,7 +1,8 @@
-#	$NetBSD: files.x86,v 1.6 2003/04/25 21:54:30 fvdl Exp $
+#	$NetBSD: files.x86,v 1.7 2003/05/11 18:24:12 fvdl Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG
+defflag opt_mpacpi.h MPACPI
 
 # MTRR support
 defflag                 MTRR
@@ -29,6 +30,11 @@ file	arch/x86/x86/ioapic.c		ioapic needs-flag
 
 # MP configuration using Intel SMP specification 1.4
 file 	arch/x86/x86/mpbios.c		mpbios
+
+# MP configuration using ACPI
+file 	arch/x86/x86/mpacpi.c		mpacpi & acpi
+
+file    arch/x86/x86/acpi_machdep.c	acpi
 
 file	arch/x86/pci/pci_machdep.c	pci
 
