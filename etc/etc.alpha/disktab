@@ -1,4 +1,4 @@
-#	$NetBSD: disktab,v 1.5 1997/10/27 04:45:38 cjs Exp $
+#	$NetBSD: disktab,v 1.6 1998/07/15 18:24:09 mjacob Exp $
 
 # A DEC RZ25, configured so that all of the free partition IDs are at
 # the end, etc.  A good setup to make a disk image from...
@@ -8,6 +8,22 @@ rz25|RZ25|DEC RZ25 SCSI:\
 	:pb#111600:ob#111600:tb=swap:\
 	:pc#823608:oc#0:\
 	:pd#600408:od#223200:bd#8192:fd#1024:td=4.2BSD:
+
+# Single Partition RZ28
+rz28|RZ28|DEC RZ28 SCSI:\
+	:dt=SCSI:se#512:ns#99:nt#16:sc#1584:nc#2595:\
+	:pa#3616272:oa#0:ta=4.2BSD:ba#16384:fa#2048:\
+	:pb#494208:ob#3616272:tb=swap:\
+	:pc#4110480:oc#0:
+
+# Single Root Partition RZ29, Large Spare Partition on 'e'
+rz29|RZ28|DEC RZ28 SCSI:\
+	:dt=SCSI:se#512:ns#113:nt#20:sc#2260:nc#3708:\
+	:rm#5400:\
+	:pa#2034000:oa#0:ta=4.2BSD:ba#8192:fa#1024:\
+	:pb#4190040:ob#2034000:tb=swap:\
+	:pc#8380080:oc#0:\
+	:pe#2156040:oe#6224040:te=4.2BSD:be#8192:fe#1024:
 
 # A Quantum ProDrive 210S.
 pd210s:Quantum PD 210S:\
