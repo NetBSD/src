@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.8 1995/12/19 03:33:06 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.9 1997/10/17 10:38:20 lukem Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -31,9 +31,9 @@
 #include "snmp.h"
 #endif
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] =
-	"@(#) $NetBSD: main.c,v 1.8 1995/12/19 03:33:06 cgd Exp $";
+__RCSID("@(#) $NetBSD: main.c,v 1.9 1997/10/17 10:38:20 lukem Exp $");
 #endif
 
 extern char *configfilename;
