@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.61 2001/11/13 03:04:50 uwe Exp $ */
+/*	$NetBSD: iommu.c,v 1.62 2001/12/04 00:05:07 darrenr Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -35,6 +35,7 @@
  * SUCH DAMAGE.
  *
  */
+#include "opt_sparc_arch.h"
 
 #include <sys/param.h>
 #include <sys/extent.h>

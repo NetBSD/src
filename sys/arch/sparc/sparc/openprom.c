@@ -1,4 +1,4 @@
-/*	$NetBSD: openprom.c,v 1.11 2001/09/26 20:53:08 eeh Exp $ */
+/*	$NetBSD: openprom.c,v 1.12 2001/12/04 00:05:07 darrenr Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,6 +43,7 @@
  *
  *	@(#)openprom.c	8.1 (Berkeley) 6/11/93
  */
+#include "opt_sparc_arch.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
