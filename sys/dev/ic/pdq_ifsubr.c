@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.31 2001/06/13 10:46:03 wiz Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.32 2001/06/25 04:46:28 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -187,6 +187,7 @@ pdq_ifstart(
 	sc->sc_if.if_flags |= IFF_OACTIVE;
 	return;
     }
+    sc->sc_flags |= PDQIF_DOWNCALL;
     for (;; tx = 1) {
 	IFQ_POLL(&ifp->if_snd, m);
 	if (m == NULL)
@@ -227,6 +228,7 @@ pdq_ifstart(
 	ifp->if_flags |= IFF_OACTIVE;
     if (tx)
 	PDQ_DO_TYPE2_PRODUCER(sc->sc_pdq);
+    sc->sc_flags &= ~PDQIF_DOWNCALL;
 }
 
 void
@@ -281,7 +283,8 @@ pdq_os_restart_transmitter(
     sc->sc_if.if_flags &= ~IFF_OACTIVE;
     if (IFQ_IS_EMPTY(&sc->sc_if.if_snd) == 0) {
 	sc->sc_if.if_timer = PDQ_OS_TX_TIMEOUT;
-	pdq_ifstart(&sc->sc_if);
+	if ((sc->sc_flags & PDQIF_DOWNCALL) != 0)
+	    pdq_ifstart(&sc->sc_if);
     } else {
 	sc->sc_if.if_timer = 0;
     }
