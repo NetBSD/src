@@ -1,4 +1,4 @@
-/*	$NetBSD: mhzc.c,v 1.1 1999/09/28 17:58:55 thorpej Exp $	*/
+/*	$NetBSD: mhzc.c,v 1.2 1999/09/28 22:46:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -464,13 +464,6 @@ mhzc_enable(sc, flag)
 	}
 
 	/*
-	 * Perform any special enable magic necessary.
-	 */
-	if (sc->sc_product->mp_enable != NULL &&
-	    (*sc->sc_product->mp_enable)(sc) != 0)
-		return (1);
-
-	/*
 	 * Establish our interrupt handler.
 	 *
 	 * XXX Note, we establish this at IPL_NET.  This is suboptimal
@@ -489,6 +482,16 @@ mhzc_enable(sc, flag)
 	}
 
 	if (pcmcia_function_enable(sc->sc_pf)) {
+		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+		return (1);
+	}
+
+	/*
+	 * Perform any special enable magic necessary.
+	 */
+	if (sc->sc_product->mp_enable != NULL &&
+	    (*sc->sc_product->mp_enable)(sc) != 0) {
+		pcmcia_function_disable(sc->sc_pf);
 		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
 		return (1);
 	}
