@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.124 2003/02/03 17:09:57 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.125 2003/03/09 13:59:56 he Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -421,15 +421,14 @@ lcsplx(ipl)
 #include "akbd.h"
 #include "ukbd.h"
 #include "ofb.h"
-#include "ite.h"
 #include "zstty.h"
 
 void
 cninit()
 {
-#if (NITE > 0 || NZSTTY > 0)
+#if (NZSTTY > 0)
 	struct consdev *cp;
-#endif /* (NITE > 0 || NZSTTY > 0) */
+#endif /* (NZSTTY > 0) */
 	int stdout, node;
 	char type[16];
 
@@ -448,19 +447,6 @@ cninit()
 		return;
 	}
 #endif /* NOFB > 0 */
-
-#if NITE > 0
-	if (strcmp(type, "display") == 0) {
-		extern struct consdev consdev_ite;
-
-		cp = &consdev_ite;
-		(*cp->cn_probe)(cp);
-		(*cp->cn_init)(cp);
-		cn_tab = cp;
-
-		return;
-	}
-#endif
 
 #if NZSTTY > 0
 	if (strcmp(type, "serial") == 0) {
