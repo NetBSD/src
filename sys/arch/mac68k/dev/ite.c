@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.21.4.1 1996/06/01 00:15:32 scottr Exp $	*/
+/*	$NetBSD: ite.c,v 1.21.4.2 1996/06/02 06:08:28 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -834,7 +834,7 @@ iteopen(dev, mode, devtype, p)
 
 	if (ite_tty == NULL) {
 		tp = ite_tty = ttymalloc();
-		tty_attach(tp);
+		/* tty_attach(tp);  * XXX - not yet */
 	} else
 		tp = ite_tty;
 	if ((tp->t_state & (TS_ISOPEN | TS_XCLUDE)) == (TS_ISOPEN | TS_XCLUDE)
