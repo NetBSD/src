@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 2000/11/02 20:17:01 veego Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2000/11/03 07:07:58 dan Exp $
 
 DIST=		${.CURDIR}/../../../dist
 
@@ -7,4 +7,4 @@ CPPFLAGS+=	-DHAVE_CONFIG_H -I${.CURDIR} -I${.CURDIR}/../include \
 
 MKMAN=		no
 
-BINDIR=		${DESTDIR}/usr/bin
+BINDIR?=	/usr/bin
