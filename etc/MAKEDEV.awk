@@ -1,6 +1,6 @@
 #!/usr/bin/awk -
 #
-#	$NetBSD: MAKEDEV.awk,v 1.13 2004/03/16 23:08:10 enami Exp $
+#	$NetBSD: MAKEDEV.awk,v 1.14 2004/03/18 22:51:59 enami Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -211,7 +211,7 @@ BEGIN {
 	print "# Generated from:"
 
 	# MAKEDEV.awk (this script) RCS Id
-	ARCSID = "$NetBSD: MAKEDEV.awk,v 1.13 2004/03/16 23:08:10 enami Exp $"
+	ARCSID = "$NetBSD: MAKEDEV.awk,v 1.14 2004/03/18 22:51:59 enami Exp $"
 	gsub(/\$/, "", ARCSID)
 	print "#	" ARCSID
 	
@@ -261,14 +261,30 @@ BEGIN {
 	sub(/%DISKMINOROFFSET%/, DISKMINOROFFSET)
 	sub(/%RAWDISK_OFF%/, RAWDISK_OFF)
 	sub(/%RAWDISK_NAME%/, RAWDISK_NAME)
-	for (u in uid)
-		gsub("%uid_" u "%", uid[u])
-	for (g in gid)
-		gsub("%gid_" g "%", gid[g])
-	if ($0 ~ /%[gu]id_[a-z]*%/) {
-		print "ERROR unmatched gid or uid in `" $0 "'"> "/dev/stderr"
-		exit 1
+	parsed = ""
+	line = $0
+	while (match(line, /%[gu]id_[a-z]*%/)) {
+		typ = substr(line, RSTART + 1, 3);
+		nam = substr(line, RSTART + 5, RLENGTH - 6);
+		if (typ == "uid") {
+			if (!(nam in uid)) {
+				print "ERROR unmatched uid in `" $0 "'" > \
+				    "/dev/stderr"
+				exit 1
+			} else
+				id = uid[nam];
+		} else {
+			if (!(nam in gid)) {
+				print "ERROR unmatched gid in `" $0 "'" > \
+				    "/dev/stderr"
+				exit 1
+			} else
+				id = gid[nam];
+		}
+		parsed = parsed substr(line, 0, RSTART - 1) id
+		line = substr(line, RSTART + RLENGTH)
 	}
+	$0 = parsed line
 
 	# if device substitutions are not active, do nothing more
 	if (!devsubst) {
@@ -284,13 +300,28 @@ BEGIN {
 		# character and block devices. If no unknown character
 		# or block device definition remains within the entry,
 		# print it to output, otherwise scrap it.
-		for (c in chr)
-			gsub("%" c "_chr%", chr[c], deventry)
-		for (b in blk)
-			gsub("%" b "_blk%", blk[b], deventry)
+		parsed = ""
+		while (match(deventry, /%[a-z]*_(blk|chr)%/)) {
+			nam = substr(deventry, RSTART + 1, RLENGTH - 6);
+			typ = substr(deventry, RSTART + RLENGTH - 4, 3);
+			if (typ == "blk") {
+				if (!(nam in blk)) {
+					deventry = $0
+					next
+				} else
+					dev = blk[nam];
+			} else {
+				if (!(nam in chr)) {
+					deventry = $0
+					next
+				} else
+					dev = chr[nam];
+			}
+			parsed = parsed substr(deventry, 0, RSTART - 1) dev
+			deventry = substr(deventry, RSTART + RLENGTH)
+		}
 
-		if (deventry !~ /%[a-z]*_(chr|blk)%/)
-			print deventry
+		print parsed deventry
 	}
 	deventry = $0
 	next
