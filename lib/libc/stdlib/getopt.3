@@ -1,4 +1,4 @@
-.\"	$NetBSD: getopt.3,v 1.28 2003/09/10 00:03:42 itojun Exp $
+.\"	$NetBSD: getopt.3,v 1.29 2003/09/10 09:35:41 wiz Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)getopt.3	8.5 (Berkeley) 4/27/95
 .\"
-.Dd August 11, 2002
+.Dd September 10, 2003
 .Dt GETOPT 3
 .Os
 .Sh NAME
@@ -65,16 +65,16 @@ may contain the following elements: individual characters, and
 characters followed by a colon to indicate an option argument
 is to follow.
 For example, an option string
-.Li "\&""x""
+.Qq x
 recognizes an option
 .Dq Fl x ,
 and an option string
-.Li "\&""x:""
+.Qq x:
 recognizes an option and argument
 .Dq Fl x Ar argument .
 It does not matter to
 .Fn getopt
-if a following argument has leading white space.
+if a following argument has leading whitespace.
 .Pp
 On return from
 .Fn getopt ,
@@ -94,7 +94,7 @@ saves the last
 option character returned by
 .Fn getopt .
 .Pp
-The variable
+The variables
 .Va opterr
 and
 .Va optind
@@ -119,12 +119,10 @@ must be reinitialized.
 .Pp
 The
 .Fn getopt
-function
-returns \-1
-when the argument list is exhausted.
+function returns \-1 when the argument list is exhausted.
 The interpretation of options in the argument list may be cancelled
 by the option
-.Ql --
+.Dq --
 (double dash) which causes
 .Fn getopt
 to signal the end of argument processing and return \-1.
@@ -132,6 +130,33 @@ When all options have been processed (i.e., up to the first non-option
 argument),
 .Fn getopt
 returns \-1.
+.Sh RETURN VALUES
+The
+.Fn getopt
+function returns the next known option character in
+.Fa optstring .
+If
+.Fn getopt
+encounters a character not found in
+.Fa optstring
+or if it detects a missing option argument,
+it returns
+.Sq \&?
+(question mark).
+If
+.Fa optstring
+has a leading
+.Sq \&:
+then a missing option argument causes
+.Sq \&:
+to be returned instead of
+.Sq \&? .
+In either case, the variable
+.Va optopt
+is set to the character that caused the error.
+The
+.Fn getopt
+function returns \-1 when the argument list is exhausted.
 .Sh DIAGNOSTICS
 If the
 .Fn getopt
@@ -139,24 +164,23 @@ function encounters a character not found in the string
 .Fa optstring
 or detects
 a missing option argument it writes an error message to
-.Va stderr
+.Em stderr
 and returns
-.Ql \&? .
+.Sq \&? .
 Setting
 .Va opterr
 to a zero will disable these error messages.
 If
-.Va optstring
+.Fa optstring
 has a leading
-.Ql \&:
+.Sq \&:
 then a missing option argument causes a
-.Ql \&:
+.Sq \&:
 to be returned in addition to suppressing any error messages.
 .Pp
 Option arguments are allowed to begin with
-.Dq Li \- ;
-this is reasonable but
-reduces the amount of error checking possible.
+.Sq - ;
+this is reasonable but reduces the amount of error checking possible.
 .Sh EXTENSIONS
 The
 .Va optreset
@@ -192,6 +216,10 @@ while ((ch = getopt(argc, argv, "bf:")) != -1)
 argc -= optind;
 argv += optind;
 .Ed
+.Sh SEE ALSO
+.Xr getopt 1 ,
+.Xr getopt_long 3 ,
+.Xr getsubopt 3
 .Sh HISTORY
 The
 .Fn getopt
@@ -208,10 +236,10 @@ This was changed by
 to decouple
 .Fn getopt
 from
-.Pa \*[Lt]stdio.h\*[Gt] .
+.Aq Pa stdio.h .
 .Pp
 A single dash
-.Dq Li -
+.Pq Sq -
 may be specified as a character in
 .Fa optstring ,
 however it should
@@ -220,11 +248,22 @@ have an argument associated with it.
 This allows
 .Fn getopt
 to be used with programs that expect
-.Dq Li -
+.Sq -
 as an option flag.
 This practice is wrong, and should not be used in any current development.
 It is provided for backward compatibility
 .Em only .
+Care should be taken not to use
+.Sq -
+as the first character in
+.Fa optstring
+to avoid a semantic conflict with
+.Tn GNU
+.Fn getopt ,
+which assigns different meaning to an
+.Fa optstring
+that begins with a
+.Sq - .
 By default, a single dash causes
 .Fn getopt
 to return \-1.
@@ -241,9 +280,9 @@ It is provided for backward compatibility
 .Em only .
 The following code fragment works in most cases.
 .Bd -literal -offset indent
-int length;
-char *p;
 int c;
+long length;
+char *p;
 
 while ((c = getopt(argc, argv, "0123456789")) != -1) {
 	switch (c) {
@@ -251,9 +290,9 @@ while ((c = getopt(argc, argv, "0123456789")) != -1) {
 	case '5': case '6': case '7': case '8': case '9':
 		p = argv[optind - 1];
 		if (p[0] == '-' \*[Am]\*[Am] p[1] == c \*[Am]\*[Am] !p[2])
-			length = atoi(++p);
+			length = c - '0';
 		else
-			length = atoi(argv[optind] + 1);
+			length = strtol(argv[optind] + 1, NULL, 10);
 		break;
 	}
 }
