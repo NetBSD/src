@@ -1,4 +1,4 @@
-/*	$NetBSD: vacation.c,v 1.28 2004/04/04 10:29:20 wiz Exp $	*/
+/*	$NetBSD: vacation.c,v 1.29 2004/04/05 23:11:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
 #endif
-__RCSID("$NetBSD: vacation.c,v 1.28 2004/04/04 10:29:20 wiz Exp $");
+__RCSID("$NetBSD: vacation.c,v 1.29 2004/04/05 23:11:34 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -413,7 +413,8 @@ junkmail(void)
 				++p;
 			else
 				p = from;
-			for (; *p; ++p);
+			for (; *p; ++p)
+				continue;
 		}
 	len = p - from;
 	for (cur = ignore; cur->name; ++cur)
@@ -442,13 +443,13 @@ recent(void)
 	if ((db->get)(db, &key, &data, 0))
 		next = SECSPERDAY * DAYSPERWEEK;
 	else
-		memmove(&next, data.data, sizeof(next));
+		(void)memmove(&next, data.data, sizeof(next));
 
 	/* get record for this address */
 	key.data = from;
 	key.size = strlen(from);
 	if (!(db->get)(db, &key, &data, 0)) {
-		memmove(&then, data.data, sizeof(then));
+		(void)memmove(&then, data.data, sizeof(then));
 		if (next == (time_t)LONG_MAX ||			/* XXX */
 		    then + next > time(NULL))
 			return(1);
@@ -522,11 +523,11 @@ sendmessage(const char *myname)
 			exit(1);
 		}
 		if (i == 0) {
-			dup2(pvect[0], 0);
-			close(pvect[0]);
-			close(pvect[1]);
-			close(fileno(mfp));
-			execl(_PATH_SENDMAIL, "sendmail", "-f", myname,
+			(void)dup2(pvect[0], 0);
+			(void)close(pvect[0]);
+			(void)close(pvect[1]);
+			(void)close(fileno(mfp));
+			(void)execl(_PATH_SENDMAIL, "sendmail", "-f", myname,
 			    "--", from, NULL);
 			syslog(LOG_ERR, "%s: can't exec %s: %m",
 			    getprogname(), _PATH_SENDMAIL);
@@ -534,10 +535,15 @@ sendmessage(const char *myname)
 		}
 		(void)close(pvect[0]);
 		sfp = fdopen(pvect[1], "w");
+		if (sfp == NULL) {
+			syslog(LOG_ERR, "%s: can't fdopen %d: %m",
+			    getprogname(), pvect[1]);
+			_exit(1);
+		}
 	} 
-	fprintf(sfp, "To: %s\n", from);
+	(void)fprintf(sfp, "To: %s\n", from);
 	while (fgets(buf, sizeof buf, mfp))
-		fputs(buf, sfp);
+		(void)fputs(buf, sfp);
 	(void)fclose(mfp);
 	if (sfp != stdout)
 		(void)fclose(sfp);
