@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.91 2000/06/04 02:05:13 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.92 2000/06/04 02:16:05 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1869,7 +1869,6 @@ KernelWakeupFunc(vbp)
 			queue->raidPtr->status[queue->row] = rf_rs_degraded;
 			queue->raidPtr->numFailures++;
 			queue->raidPtr->numNewFailures++;
-			/* XXX here we should bump the version number for each component, and write that data out */
 		} else {	/* Disk is already dead... */
 			/* printf("Disk already marked as dead!\n"); */
 		}
