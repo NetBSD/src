@@ -1,4 +1,4 @@
-.\"	$NetBSD: random.3,v 1.9.10.1 2000/10/17 01:14:49 tv Exp $
+.\"	$NetBSD: random.3,v 1.9.10.2 2002/01/14 15:36:30 he Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -120,7 +120,12 @@ the nearest known amount.
 Using less than 8 bytes will cause an error).
 The seed for the initialization (which specifies a starting point for
 the random number sequence, and provides for restarting at the same
-point) is also an argument.
+point) is also an argument.  The state array passed to
+.Fn initstate
+must be aligned to a 32-bit boundary.  This can be achieved by using
+a suitably-sized array of ints, and casting the array to char * when
+passing it to
+.Fn initstate .
 The
 .Fn initstate
 function
