@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.122 1998/12/10 18:13:29 mjacob Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.122.4.1 1999/08/02 22:07:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -423,7 +423,7 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_CDROM, T_REMOV,
 	 "ShinaKen", "CD-ROM DM-3x1S", "1.04"}, SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
-	 "JVC     ", "R2626           ", "1.55"}, SDEV_NOLUNS},
+	 "JVC     ", "R2626",            ""},     SDEV_NOLUNS},
 	{{T_DIRECT, T_FIXED,
 	 "MICROP  ", "1588-15MBSUN0669", ""},     SDEV_AUTOSAVE},
 	{{T_DIRECT, T_FIXED,
@@ -558,7 +558,7 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_SCANNER, T_FIXED,
 	 "UMAX    ", "Astra 1200S     ", "V2.9"}, SDEV_NOLUNS},
 	{{T_SCANNER, T_FIXED,
-	 "UMAX    ", "Astra 1220S     ", "V1.2"}, SDEV_NOLUNS},
+	 "UMAX    ", "Astra 1220S     ", ""}, SDEV_NOLUNS},
 	{{T_SCANNER, T_FIXED,
 	 "UMAX    ", "UMAX S-6E       ", "V2.0"}, SDEV_NOLUNS},
 	{{T_SCANNER, T_FIXED,
