@@ -1,4 +1,4 @@
-/* $NetBSD: repulse.c,v 1.1 2001/08/25 21:15:44 is Exp $ */
+/* $NetBSD: repulse.c,v 1.2 2001/10/03 00:04:47 augustss Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -128,7 +128,7 @@ struct audio_hw_if rep_hw_if = {
 	rep_get_props,
 	/* trigger_output */ 0,
 	/* trigger_input */ 0,
-
+	/* dev_ioctl */ 0,
 };
 
 /* hardware registers */
