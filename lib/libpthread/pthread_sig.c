@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.1.2.21 2002/12/19 02:42:59 thorpej Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.1.2.22 2002/12/20 15:33:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <lwp.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <ucontext.h>
