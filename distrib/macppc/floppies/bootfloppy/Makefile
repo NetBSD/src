@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2000/09/13 15:53:29 matt Exp $
+#	$NetBSD: Makefile,v 1.12 2001/01/24 06:11:40 jmc Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -30,7 +30,7 @@ dependall all: netbsd.ram.gz
 	dd if=/dev/zero of=${IMAGE} bs=1440k count=1
 	vnconfig -t ${DISKTYPE} -v -c ${VND} ${IMAGE}
 	disklabel -f ${DESTDIR}/etc/disktab -rw ${VND} ${DISKTYPE}
-	newfs -B be -m 0 -o space -i 65536 -c 80 -f 512 -b 4096 ${VND_RDEV}
+	newfs -B be -m 0 -o space -i 56000 -c 80 -f 512 -b 4096 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	cp ${MDEC}/ofwboot ${MOUNT_POINT}/boot
 	cp netbsd.ram.gz ${MOUNT_POINT}/netbsd
