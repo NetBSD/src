@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.7 1996/02/09 22:28:45 christos Exp $	*/
+/*	$NetBSD: lfs.h,v 1.8 1996/12/05 19:01:46 is Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -148,20 +148,20 @@ struct lfs {
 /* These fields are set at mount time and are meaningless on disk. */
 	struct segment *lfs_sp;		/* current segment being written */
 	struct vnode *lfs_ivnode;	/* vnode for the ifile */
-	u_long	  lfs_seglock;		/* single-thread the segment writer */
+	u_int32_t  lfs_seglock;		/* single-thread the segment writer */
 	pid_t	  lfs_lockpid;		/* pid of lock holder */
-	u_long	  lfs_iocount;		/* number of ios pending */
-	u_long	  lfs_writer;		/* don't allow any dirops to start */
-	u_long	  lfs_dirops;		/* count of active directory ops */
-	u_long	  lfs_doifile;		/* Write ifile blocks on next write */
-	u_long	  lfs_nactive;		/* Number of segments since last ckp */
+	u_int32_t lfs_iocount;		/* number of ios pending */
+	u_int32_t lfs_writer;		/* don't allow any dirops to start */
+	u_int32_t lfs_dirops;		/* count of active directory ops */
+	u_int32_t lfs_doifile;		/* Write ifile blocks on next write */
+	u_int32_t lfs_nactive;		/* Number of segments since last ckp */
 	int8_t	  lfs_fmod;		/* super block modified flag */
 	int8_t	  lfs_clean;		/* file system is clean flag */
 	int8_t	  lfs_ronly;		/* mounted read-only flag */
 	int8_t	  lfs_flags;		/* currently unused flag */
 	u_char	  lfs_fsmnt[MNAMELEN];	/* name mounted on */
 
-	int32_t	  lfs_pad[40];		/* round to 512 bytes */
+	int8_t	  lfs_pad[162];		/* round to 512 bytes */
 };
 
 /*
