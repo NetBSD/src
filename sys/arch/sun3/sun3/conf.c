@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.39 1995/04/13 22:01:25 gwr Exp $	*/
+/*	$NetBSD: conf.c,v 1.40 1995/04/26 23:24:13 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1994 Adam Glass, Gordon W. Ross
@@ -109,10 +109,10 @@ cdev_decl(st);
 cdev_decl(cd);
 
 #include "pty.h"
-#define	pts_tty		pt_tty
+#define	ptstty		ptytty
 #define	ptsioctl	ptyioctl
 cdev_decl(pts);
-#define	ptc_tty		pt_tty
+#define	ptctty		ptytty
 #define	ptcioctl	ptyioctl
 cdev_decl(ptc);
 
@@ -355,12 +355,12 @@ dev_type_cnprobe(zscnprobe_a);
 dev_type_cnprobe(zscnprobe_b);
 
 struct	consdev constab[] = {
-#if NZS > 1
-	cons_init(kd),
-#endif
 #if NZS > 0
 	{ zscnprobe_a, zscninit, zscngetc, zscnputc, zscnpollc },
 	{ zscnprobe_b, zscninit, zscngetc, zscnputc, zscnpollc },
+#endif
+#if NZS > 1
+	cons_init(kd),
 #endif
 #if NPROM
 	cons_init(prom),
