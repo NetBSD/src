@@ -1,5 +1,5 @@
-#	from: @(#)Makefile.inc	5.6 (Berkeley) 3/5/91
-#	$NetBSD: Makefile.inc,v 1.42 1998/01/23 18:58:05 cgd Exp $
+#	from: @(#)Makefile.inc	8.1 (Berkeley) 6/4/93
+#	$NetBSD: Makefile.inc,v 1.43 1998/01/30 23:38:12 perry Exp $
 
 # string sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/string ${.CURDIR}/string

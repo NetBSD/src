@@ -1,8 +1,8 @@
-/*	$NetBSD: abort.c,v 1.9 1997/07/13 20:16:33 christos Exp $	*/
+/*	$NetBSD: abort.c,v 1.10 1998/01/30 23:37:42 perry Exp $	*/
 
 /*
- * Copyright (c) 1985 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1985, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,9 +36,9 @@
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char *sccsid = "from: @(#)abort.c	5.11 (Berkeley) 2/23/91";
+static char sccsid[] = "@(#)abort.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: abort.c,v 1.9 1997/07/13 20:16:33 christos Exp $");
+__RCSID("$NetBSD: abort.c,v 1.10 1998/01/30 23:37:42 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

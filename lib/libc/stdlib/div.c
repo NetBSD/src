@@ -1,8 +1,8 @@
-/*	$NetBSD: div.c,v 1.5 1997/07/13 20:16:40 christos Exp $	*/
+/*	$NetBSD: div.c,v 1.6 1998/01/30 23:37:52 perry Exp $	*/
 
 /*
- * Copyright (c) 1990 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Chris Torek.
@@ -39,9 +39,9 @@
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char *sccsid = "from: @(#)div.c	5.2 (Berkeley) 4/16/91";
+static char sccsid[] = "@(#)div.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: div.c,v 1.5 1997/07/13 20:16:40 christos Exp $");
+__RCSID("$NetBSD: div.c,v 1.6 1998/01/30 23:37:52 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

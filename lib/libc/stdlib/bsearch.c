@@ -1,8 +1,8 @@
-/*	$NetBSD: bsearch.c,v 1.6 1997/07/13 20:16:38 christos Exp $	*/
+/*	$NetBSD: bsearch.c,v 1.7 1998/01/30 23:37:50 perry Exp $	*/
 
 /*
- * Copyright (c) 1990 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,9 +36,9 @@
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char *sccsid = "from: @(#)bsearch.c	5.4 (Berkeley) 2/23/91";
+static char sccsid[] = "@(#)bsearch.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: bsearch.c,v 1.6 1997/07/13 20:16:38 christos Exp $");
+__RCSID("$NetBSD: bsearch.c,v 1.7 1998/01/30 23:37:50 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -69,7 +69,8 @@ bsearch(key, base0, nmemb, size, compar)
 	register int (*compar) __P((const void *, const void *));
 {
 	register const char *base = base0;
-	register int lim, cmp;
+	register size_t lim;
+	register int cmp;
 	register const void *p;
 
 	for (lim = nmemb; lim != 0; lim >>= 1) {
@@ -80,7 +81,7 @@ bsearch(key, base0, nmemb, size, compar)
 		if (cmp > 0) {	/* key > p: move right */
 			base = (char *)p + size;
 			lim--;
-		} /* else move left */
+		}		/* else move left */
 	}
 	return (NULL);
 }

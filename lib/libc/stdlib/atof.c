@@ -1,8 +1,8 @@
-/*	$NetBSD: atof.c,v 1.8 1997/07/13 20:16:36 christos Exp $	*/
+/*	$NetBSD: atof.c,v 1.9 1998/01/30 23:37:46 perry Exp $	*/
 
 /*
- * Copyright (c) 1988 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,9 +36,9 @@
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char *sccsid = "from: @(#)atof.c	5.3 (Berkeley) 1/8/93";
+static char sccsid[] = "@(#)atof.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: atof.c,v 1.8 1997/07/13 20:16:36 christos Exp $");
+__RCSID("$NetBSD: atof.c,v 1.9 1998/01/30 23:37:46 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,5 +48,5 @@ double
 atof(ascii)
 	const char *ascii;
 {
-	return(strtod(ascii, (char **)NULL));
+	return (strtod(ascii, NULL));
 }
