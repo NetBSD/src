@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.46 1997/12/20 20:23:15 kleink Exp $	*/
+/*	$NetBSD: unistd.h,v 1.47 1998/01/05 06:14:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -177,7 +177,12 @@ useconds_t ualarm __P((useconds_t, useconds_t));
 int	 undelete __P((const char *));
 int	 usleep __P((useconds_t));
 void	*valloc __P((size_t));			/* obsoleted by malloc() */
+#ifdef __LIBC12_SOURCE__
 pid_t	 vfork __P((void));
+pid_t	 __vfork14 __P((void));
+#else
+pid_t	 vfork __P((void))			__RENAME(__vfork14);
+#endif
 
 int	 getopt __P((int, char * const *, const char *));
 extern	 char *optarg;			/* getopt(3) external variables */
