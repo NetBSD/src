@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.36 2001/06/22 13:25:03 itojun Exp $	*/
+/*	$NetBSD: ping6.c,v 1.37 2001/08/19 01:21:42 itojun Exp $	*/
 /*	$KAME: ping6.c,v 1.129 2001/06/22 13:16:02 itojun Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.36 2001/06/22 13:25:03 itojun Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.37 2001/08/19 01:21:42 itojun Exp $");
 #endif
 #endif
 
@@ -145,6 +145,11 @@ __RCSID("$NetBSD: ping6.c,v 1.36 2001/06/22 13:25:03 itojun Exp $");
 #include <md5.h>
 #else
 #include "md5.h"
+#endif
+
+/* portability */
+#if (defined(__bsdi__) && _BSDI_VERSION < 199802) || (defined(__FreeBSD__) && __FreeBSD__ < 3)
+#define socklen_t	int
 #endif
 
 #define MAXPACKETLEN	131072
@@ -213,6 +218,7 @@ char rcvd_tbl[MAX_DUP_CHK / 8];
 struct addrinfo *res;
 struct sockaddr_in6 dst;	/* who to ping6 */
 struct sockaddr_in6 src;	/* src addr of this packet */
+socklen_t srclen;
 int datalen = DEFDATALEN;
 int s;				/* socket file descriptor */
 u_char outpack[MAXPACKETLEN];
@@ -221,7 +227,6 @@ char DOT = '.';
 char *hostname;
 int ident;			/* process id to identify our packets */
 u_int8_t nonce[8];		/* nonce field for node information */
-struct in6_addr srcaddr;
 int hoplimit = -1;		/* hoplimit */
 int pathmtu = 0;		/* path MTU for the destination.  0 = unspec. */
 
@@ -479,10 +484,25 @@ main(argc, argv)
 #endif
 		case 'S':
 			/* XXX: use getaddrinfo? */
-			if (inet_pton(AF_INET6, optarg, (void *)&srcaddr) != 1)
-				errx(1, "invalid IPv6 address: %s", optarg);
+			bzero(&hints, sizeof(struct addrinfo));
+			hints.ai_flags = AI_NUMERICHOST; /* allow hostname? */
+			hints.ai_family = AF_INET6;
+			hints.ai_socktype = SOCK_RAW;
+			hints.ai_protocol = IPPROTO_ICMPV6;
+
+			ret_ga = getaddrinfo(optarg, NULL, &hints, &res);
+			if (ret_ga) {
+				errx(1, "invalid source address: %s",
+				     gai_strerror(ret_ga));
+			}
+			/*
+			 * res->ai_family must be AF_INET6 and res->ai_addrlen
+			 * must be sizeof(src).
+			 */
+			memcpy(&src, res->ai_addr, res->ai_addrlen);
+			srclen = res->ai_addrlen;
+			freeaddrinfo(res);
 			options |= F_SRCADDR;
-			usepktinfo++;
 			break;
 		case 's':		/* size of packet to send */
 			datalen = strtol(optarg, &e, 10);
@@ -575,10 +595,8 @@ main(argc, argv)
 	hints.ai_protocol = IPPROTO_ICMPV6;
 
 	ret_ga = getaddrinfo(target, NULL, &hints, &res);
-	if (ret_ga) {
-		fprintf(stderr, "ping6: %s\n", gai_strerror(ret_ga));
-		exit(1);
-	}
+	if (ret_ga)
+		errx(1, "%s", gai_strerror(ret_ga));
 	if (res->ai_canonname)
 		hostname = res->ai_canonname;
 	else
@@ -592,6 +610,12 @@ main(argc, argv)
 	if ((s = socket(res->ai_family, res->ai_socktype,
 	    res->ai_protocol)) < 0)
 		err(1, "socket");
+
+	/* set the source address if specified. */
+	if ((options & F_SRCADDR) &&
+	    bind(s, (struct sockaddr *)&src, srclen) != 0) {
+		err(1, "bind");
+	}
 
 	/*
 	 * let the kerel pass extension headers of incoming packets,
@@ -808,10 +832,6 @@ main(argc, argv)
 			errx(1, "%s: invalid interface name", ifname);
 #endif
 	}
-	/* set the source address */
-	if (options & F_SRCADDR)/* pktinfo must be valid */
-		pktinfo->ipi6_addr = srcaddr;
-
 	if (hoplimit != -1) {
 		scmsgp->cmsg_len = CMSG_LEN(sizeof(int));
 		scmsgp->cmsg_level = IPPROTO_IPV6;
@@ -883,9 +903,10 @@ main(argc, argv)
 		scmsgp = CMSG_NXTHDR(&smsghdr, scmsgp);
 	}
 
-	{
+	if (!(options & F_SRCADDR)) {
 		/*
-		 * source selection
+		 * get the source address. XXX since we revoked the root
+		 * privilege, we cannot use a raw socket for this.
 		 */
 		int dummy, len = sizeof(src);
 
@@ -1355,7 +1376,7 @@ dnsdecode(sp, ep, base, buf, bufsiz)
 			while (i-- > 0 && cp < ep) {
 				l = snprintf(cresult, sizeof(cresult),
 				    isprint(*cp) ? "%c" : "\\%03o", *cp & 0xff);
-				if (l >= sizeof(cresult))
+				if (l >= sizeof(cresult) || l < 0)
 					return NULL;
 				if (strlcat(buf, cresult, bufsiz) >= bufsiz)
 					return NULL;	/*result overrun*/
@@ -2149,14 +2170,14 @@ summary()
 }
 
 /*subject type*/
-static char *niqcode[] = {
+static const char *niqcode[] = {
 	"IPv6 address",
 	"DNS label",	/*or empty*/
 	"IPv4 address",
 };
 
 /*result code*/
-static char *nircode[] = {
+static const char *nircode[] = {
 	"Success", "Refused", "Unknown",
 };
 
