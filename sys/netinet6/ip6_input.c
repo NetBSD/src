@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.65 2003/08/07 16:33:26 agc Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.66 2003/09/06 03:36:33 itojun Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.65 2003/08/07 16:33:26 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.66 2003/09/06 03:36:33 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -170,7 +170,6 @@ ip6_init()
 	ip6intrq.ifq_maxlen = ip6qmaxlen;
 	nd6_init();
 	frag6_init();
-	ip6_flow_seq = arc4random();
 
 	ip6_init2((void *)0);
 

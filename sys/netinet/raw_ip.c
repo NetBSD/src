@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.75 2003/09/04 09:16:59 itojun Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.76 2003/09/06 03:36:31 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.75 2003/09/04 09:16:59 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.76 2003/09/06 03:36:31 itojun Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_mrouting.h"
@@ -379,7 +379,7 @@ rip_output(m, va_alist)
 		HTONS(ip->ip_len);
 		HTONS(ip->ip_off);
 		if (ip->ip_id == 0)
-			ip->ip_id = htons(ip_id++);
+			ip->ip_id = htons(ip_randomid());
 		opts = NULL;
 		/* XXX prevent ip_output from overwriting header fields */
 		flags |= IP_RAWOUTPUT;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.151 2003/09/04 09:17:01 itojun Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.152 2003/09/06 03:36:31 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.151 2003/09/04 09:17:01 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.152 2003/09/06 03:36:31 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -497,7 +497,7 @@ tcp_template(tp)
 		if (ip6_auto_flowlabel) {
 			ip6->ip6_flow &= ~IPV6_FLOWLABEL_MASK;
 			ip6->ip6_flow |=
-				(htonl(ip6_flow_seq++) & IPV6_FLOWLABEL_MASK);
+			    (htonl(ip6_randomflowlabel()) & IPV6_FLOWLABEL_MASK);
 		}
 		ip6->ip6_vfc &= ~IPV6_VERSION_MASK;
 		ip6->ip6_vfc |= IPV6_VERSION;
@@ -803,7 +803,7 @@ tcp_respond(tp, template, m, th0, ack, seq, flags)
 		ip6->ip6_flow &= ~IPV6_FLOWINFO_MASK;
 		if (ip6_auto_flowlabel) {
 			ip6->ip6_flow |=
-				(htonl(ip6_flow_seq++) & IPV6_FLOWLABEL_MASK);
+			    (htonl(ip6_randomflowlabel()) & IPV6_FLOWLABEL_MASK);
 		}
 		break;
 	    }

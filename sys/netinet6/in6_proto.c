@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.52 2003/09/05 01:35:08 itojun Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.53 2003/09/06 03:36:32 itojun Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.52 2003/09/05 01:35:08 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.53 2003/09/06 03:36:32 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -262,14 +262,12 @@ int	ip6_maxfrags = 200;
 int	ip6_log_interval = 5;
 int	ip6_hdrnestlimit = 50;	/* appropriate? */
 int	ip6_dad_count = 1;	/* DupAddrDetectionTransmits */
-u_int32_t ip6_flow_seq;
 int	ip6_auto_flowlabel = 1;
 int	ip6_use_deprecated = 1;	/* allow deprecated addr (RFC2462 5.5.4) */
 int	ip6_rr_prune = 5;	/* router renumbering prefix
 				 * walk list every 5 sec. */
 int	ip6_v6only = 1;
 
-u_int32_t ip6_id = 0UL;
 int	ip6_keepfaith = 0;
 time_t	ip6_log_time = (time_t)0L;
 
