@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.42 2001/01/12 18:53:21 itojun Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.43 2001/10/09 12:43:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: traceroute.c,v 1.42 2001/01/12 18:53:21 itojun Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.43 2001/10/09 12:43:37 yamt Exp $");
 #endif
 #endif
 
@@ -353,6 +353,7 @@ void	freehostinfo(struct hostinfo *);
 void	getaddr(u_int32_t *, char *);
 struct	hostinfo *gethostinfo(char *);
 u_short	in_cksum(u_short *, int);
+u_short	in_cksum2(u_short, u_short *, int);
 char	*inetname(struct in_addr);
 int	main(int, char **);
 int	packet_ok(u_char *, int, struct sockaddr_in *, int);
@@ -1067,7 +1068,6 @@ send_probe(register int seq, int ttl, register struct timeval *tp)
 {
 	register int cc;
 	register struct udpiphdr * ui;
-	struct ip tip;
 	int oldmtu = packlen;
 
 again:
@@ -1113,22 +1113,28 @@ again:
 			if (outicmp->icmp_cksum == 0)
 				outicmp->icmp_cksum = 0xffff;
 		} else {
-			/* Checksum (must save and restore ip header) */
-			tip = *outip;
+			u_short sum;
+			struct {
+				struct in_addr src;
+				struct in_addr dst;
+				u_int8_t zero;
+				u_int8_t protocol;
+				u_int16_t len;
+			} __attribute__((__packed__)) phdr;
+
+			/* Checksum */
 			ui = (struct udpiphdr *)outip;
-#ifndef __NetBSD__
-			ui->ui_next = 0;
-			ui->ui_prev = 0;
-			ui->ui_x1 = 0;
-#else
-			memset(ui->ui_x1, 0, sizeof(ui->ui_x1));
-#endif
-			ui->ui_len = outudp->uh_ulen;
+			memset(&phdr, 0, sizeof(phdr));
+			phdr.src = ui->ui_src;
+			phdr.dst = ((struct sockaddr_in *)&whereto)->sin_addr;
+			phdr.protocol = ui->ui_pr;
+			phdr.len = outudp->uh_ulen;
 			outudp->uh_sum = 0;
-			outudp->uh_sum = in_cksum((u_short *)ui, packlen);
+			sum = in_cksum2(0, (u_short *)&phdr, sizeof(phdr));
+			sum = in_cksum2(sum, (u_short *)outudp, ntohs(outudp->uh_ulen));
+			outudp->uh_sum = ~sum;
 			if (outudp->uh_sum == 0)
 				outudp->uh_sum = 0xffff;
-			*outip = tip;
 		}
 	}
 
@@ -1349,16 +1355,23 @@ print(register u_char *buf, register int cc, register struct sockaddr_in *from)
 		Printf(" %d bytes to %s", cc, inet_ntoa (ip->ip_dst));
 }
 
+u_short
+in_cksum(u_short *addr, int len)
+{
+
+	return ~in_cksum2(0, addr, len);
+}
+
 /*
  * Checksum routine for Internet Protocol family headers (C Version)
  */
 u_short
-in_cksum(register u_short *addr, register int len)
+in_cksum2(u_short seed, register u_short *addr, register int len)
 {
 	register int nleft = len;
 	register u_short *w = addr;
 	register u_short answer;
-	register int sum = 0;
+	register int sum = seed;
 
 	/*
 	 *  Our algorithm is simple, using a 32 bit accumulator (sum),
@@ -1380,7 +1393,7 @@ in_cksum(register u_short *addr, register int len)
 	 */
 	sum = (sum >> 16) + (sum & 0xffff);	/* add hi 16 to low 16 */
 	sum += (sum >> 16);			/* add carry */
-	answer = ~sum;				/* truncate to 16 bits */
+	answer = sum;				/* truncate to 16 bits */
 	return (answer);
 }
 
