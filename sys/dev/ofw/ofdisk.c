@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.8 1997/10/08 23:35:41 thorpej Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.9 1998/01/12 09:33:32 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -65,9 +65,7 @@ struct cfattach ofdisk_ca = {
 	sizeof(struct ofd_softc), ofdprobe, ofdattach
 };
 
-struct cfdriver ofdisk_cd = {
-	NULL, "ofdisk", DV_DISK
-};
+extern struct cfdriver ofdisk_cd;
 
 void ofdstrategy __P((struct buf *));
 
