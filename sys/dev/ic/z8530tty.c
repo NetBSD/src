@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.4 1996/03/17 00:48:54 thorpej Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.5 1996/03/18 23:06:02 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -346,11 +346,10 @@ zsopen(dev, flags, mode, p)
 
 	/* Wait for carrier. */
 	for (;;) {
-		register int rr0;
 
 		/* Might never get status intr if carrier already on. */
-		rr0 = zs_read_csr(cs);
-		if (rr0 & ZSRR0_DCD) {
+		cs->cs_rr0 = zs_read_csr(cs);
+		if (cs->cs_rr0 & ZSRR0_DCD) {
 			tp->t_state |= TS_CARR_ON;
 			break;
 		}
@@ -799,11 +798,13 @@ zstty_rxint(cs)
 	put = zst->zst_rbput;
 
 nextchar:
-	/* Read the input data ASAP. */
-	c = zs_read_data(cs);
 
-	/* Save the status register too. */
+	/*
+	 * First read the status, because reading the received char
+	 * destroys the status of this char.
+	 */
 	rr1 = zs_read_reg(cs, 1);
+	c = zs_read_data(cs);
 
 	if (rr1 & (ZSRR1_FE | ZSRR1_DO | ZSRR1_PE)) {
 		/* Clear the receive error. */
