@@ -1,4 +1,4 @@
-/*	$NetBSD: backupfile.c,v 1.6 1998/11/06 22:40:13 christos Exp $	*/
+/*	$NetBSD: backupfile.c,v 1.7 2002/03/08 21:57:33 kristerw Exp $	*/
 
 /* backupfile.c -- make Emacs style backup file names
    Copyright (C) 1990 Free Software Foundation, Inc.
@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: backupfile.c,v 1.6 1998/11/06 22:40:13 christos Exp $");
+__RCSID("$NetBSD: backupfile.c,v 1.7 2002/03/08 21:57:33 kristerw Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -74,16 +74,13 @@ enum backup_type backup_type = none;
 char *simple_backup_suffix = "~";
 
 /* backupfile.c */
-char *find_backup_file_name __P((char *));
-static int max_backup_version __P((char *, char *));
-static char *make_version_name __P((char *, int));
-static int version_number __P((char *, char *, int));
-static char *concat __P((char *, char *));
-char *basename __P((char *));
-char *dirname __P((char *));
-int argmatch __P((char *, char **));
-void invalid_arg __P((char *, char *, int));
-enum backup_type get_version __P((char *));
+static int max_backup_version(char *, char *);
+static char *make_version_name(char *, int);
+static int version_number(char *, char *, int);
+static char *concat(char *, char *);
+static char *dirname(char *);
+static int argmatch(char *, char **);
+static void invalid_arg(char *, char *, int);
 
 #ifndef NODIR
 /* Return the name of the new backup file for file FILE,
@@ -92,8 +89,7 @@ enum backup_type get_version __P((char *));
    Do not call this function if backup_type == none. */
 
 char *
-find_backup_file_name (file)
-     char *file;
+find_backup_file_name(char *file)
 {
   char *dir;
   char *base_versions;
@@ -124,8 +120,7 @@ find_backup_file_name (file)
    FILE should already have ".~" appended to it. */
 
 static int
-max_backup_version (file, dir)
-     char *file, *dir;
+max_backup_version(char *file, char *dir)
 {
   DIR *dirp;
   struct direct *dp;
@@ -157,9 +152,7 @@ max_backup_version (file, dir)
    "FILE.~VERSION~".  Return 0 if out of memory. */
 
 static char *
-make_version_name (file, version)
-     char *file;
-     int version;
+make_version_name(char *file, int version)
 {
   char *backup_name;
 
@@ -175,10 +168,7 @@ make_version_name (file, version)
    BASE should already have ".~" appended to it. */
 
 static int
-version_number (base, backup, base_length)
-     char *base;
-     char *backup;
-     int base_length;
+version_number(char *base, char *backup, int base_length)
 {
   int version;
   char *p;
@@ -198,8 +188,7 @@ version_number (base, backup, base_length)
    If out of memory, return 0. */
 
 static char *
-concat (str1, str2)
-     char *str1, *str2;
+concat(char *str1, char *str2)
 {
   char *newstr;
   char str1_length = strlen (str1);
@@ -215,8 +204,7 @@ concat (str1, str2)
 /* Return NAME with any leading path stripped off.  */
 
 char *
-basename (name)
-     char *name;
+basename(char *name)
 {
   char *base;
 
@@ -229,9 +217,8 @@ basename (name)
    Assumes that trailing slashes have already been
    removed.  */
 
-char *
-dirname (path)
-     char *path;
+static char *
+dirname(char *path)
 {
   char *newpath;
   char *slash;
@@ -265,10 +252,8 @@ dirname (path)
    of the matched element, else -1 if it does not match any element
    or -2 if it is ambiguous (is a prefix of more than one element). */
 
-int
-argmatch (arg, optlist)
-     char *arg;
-     char **optlist;
+static int
+argmatch(char *arg, char **optlist)
 {
   int i;			/* Temporary index in OPTLIST. */
   int arglen;			/* Length of ARG. */
@@ -304,11 +289,8 @@ argmatch (arg, optlist)
    VALUE is the invalid value that was given.
    PROBLEM is the return value from argmatch. */
 
-void
-invalid_arg (kind, value, problem)
-     char *kind;
-     char *value;
-     int problem;
+static void
+invalid_arg(char *kind, char *value, int problem)
 {
   fprintf (stderr, "patch: ");
   if (problem == -1)
@@ -332,8 +314,7 @@ static enum backup_type backup_types[] =
    Unique abbreviations are accepted. */
 
 enum backup_type
-get_version (version)
-     char *version;
+get_version(char *version)
 {
   int i;
 

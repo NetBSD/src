@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.4 1998/02/22 13:33:49 christos Exp $	*/
+/*	$NetBSD: config.h,v 1.5 2002/03/08 21:57:33 kristerw Exp $	*/
 
 /* config.h
  * This file was produced by running the config.h.SH script, which
@@ -83,53 +83,3 @@
  *	This is defined if the system has unistd.h.
  */
 #define	HAVE_UNISTD_H	/**/
-
-/* Reg1:
- *	This symbol, along with Reg2, Reg3, etc. is either the word "register"
- *	or null, depending on whether the C compiler pays attention to this
- *	many register declarations.  The intent is that you don't have to
- *	order your register declarations in the order of importance, so you
- *	can freely declare register variables in sub-blocks of code and as
- *	function parameters.  Do not use Reg<n> more than once per routine.
- */
-
-#define Reg1 register		/**/
-#define Reg2 register		/**/
-#define Reg3 register		/**/
-#define Reg4 register		/**/
-#define Reg5 register		/**/
-#define Reg6 register		/**/
-#define Reg7 		/**/
-#define Reg8 		/**/
-#define Reg9 		/**/
-#define Reg10 		/**/
-#define Reg11 		/**/
-#define Reg12 		/**/
-#define Reg13 		/**/
-#define Reg14 		/**/
-#define Reg15 		/**/
-#define Reg16 		/**/
-
-/* VOIDFLAGS:
- *	This symbol indicates how much support of the void type is given by this
- *	compiler.  What various bits mean:
- *
- *	    1 = supports declaration of void
- *	    2 = supports arrays of pointers to functions returning void
- *	    4 = supports comparisons between pointers to void functions and
- *		    addresses of void functions
- *
- *	The package designer should define VOIDUSED to indicate the requirements
- *	of the package.  This can be done either by #defining VOIDUSED before
- *	including config.h, or by defining defvoidused in Myinit.U.  If the
- *	level of void support necessary is not present, defines void to int.
- */
-#ifndef VOIDUSED
-#define VOIDUSED 7
-#endif
-#define VOIDFLAGS 7
-#if (VOIDFLAGS & VOIDUSED) != VOIDUSED
-#define void int		/* is void to be avoided? */
-#define M_VOID		/* Xenix strikes again */
-#endif
-
