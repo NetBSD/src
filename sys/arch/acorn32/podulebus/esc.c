@@ -1,4 +1,4 @@
-/*	$NetBSD: esc.c,v 1.9 2002/10/05 17:16:34 chs Exp $	*/
+/*	$NetBSD: esc.c,v 1.10 2003/04/01 02:13:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -55,7 +55,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: esc.c,v 1.9 2002/10/05 17:16:34 chs Exp $");
+__RCSID("$NetBSD: esc.c,v 1.10 2003/04/01 02:13:53 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -223,7 +223,7 @@ escinitialize(dev)
 	*pte &= ~L2_C;
 	PTE_SYNC(pte);
 	cpu_tlb_flushD();
-	cpu_dcache_wbinv_range((vm_offset_t)dev->sc_bump_va, NBPG);
+	cpu_dcache_wbinv_range((vm_offset_t)dev->sc_bump_va, PAGE_SIZE);
 
 	printf(" dmabuf V0x%08x P0x%08x", (u_int)dev->sc_bump_va, (u_int)dev->sc_bump_pa);
 }
