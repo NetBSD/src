@@ -1,4 +1,4 @@
-/*	$NetBSD: mc146818var.h,v 1.1 2003/10/29 17:00:41 tsutsui Exp $	*/
+/*	$NetBSD: mc146818var.h,v 1.2 2003/11/01 21:58:43 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2003 Izumi Tsutsui.  All rights reserved.
@@ -35,7 +35,7 @@ struct mc146818_softc {
 	struct todr_chip_handle sc_handle;	/* TODR handle */
 	u_int sc_year0;				/* year counter offset */
 	u_int sc_flag;				/* MD flags */
-#define NO_CENTURY_ADJUST	0x0001		/* don't adjust century */
+#define MC146818_NO_CENT_ADJUST	0x0001		/* don't adjust century */
 
 	/* MD chip register read/write functions */
 	u_int (*sc_mcread)(struct mc146818_softc *, u_int);
