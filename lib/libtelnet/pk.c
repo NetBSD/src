@@ -33,7 +33,7 @@
 #ifdef notdef
 __FBSDID("$FreeBSD: src/contrib/telnet/libtelnet/pk.c,v 1.10 2002/08/22 06:19:07 nsayer Exp $");
 #else
-__RCSID("$NetBSD: pk.c,v 1.3 2005/02/19 22:47:51 christos Exp $");
+__RCSID("$NetBSD: pk.c,v 1.4 2005/02/19 22:55:35 christos Exp $");
 #endif
 
 /* public key routines */
@@ -57,7 +57,7 @@ __RCSID("$NetBSD: pk.c,v 1.3 2005/02/19 22:47:51 christos Exp $");
 
 #include "pk.h"
  
-static void adjust(char keyout[HEXKEYBYTES+1], char *keyin);
+static void adjust(char *, const char *);
 
 /*
  * Choose top 128 bits of the common key to use as our idea key.
@@ -69,7 +69,7 @@ extractideakey(BIGNUM *ck, IdeaData *ideakey)
 	BIGNUM *z = BN_new();
 	BIGNUM *base = BN_new();
 	BN_CTX *ctx = BN_CTX_new();
-	int i;
+	size_t i;
 	char *k;
 
 	(void)BN_zero(a);
@@ -80,7 +80,7 @@ extractideakey(BIGNUM *ck, IdeaData *ideakey)
 	for (i = 0; i < ((KEYSIZE - 128) / 8); i++)
 		BN_div(a, z, a, base, ctx);
 
-	k = (char *)ideakey;
+	k = (char *)(void *)ideakey;
 	for (i = 0; i < 16; i++) {
 		BN_div(a, z, a, base, ctx);
 		*k++ = (char)BN_get_word(z);
@@ -103,7 +103,7 @@ extractdeskey(BIGNUM *ck, DesData *deskey)
 	BIGNUM *z = BN_new();
 	BIGNUM *base = BN_new();
 	BN_CTX *ctx = BN_CTX_new();
-	int i;
+	size_t i;
 	char *k;
 
 	(void)BN_zero(z);
@@ -159,9 +159,9 @@ common_key(char *xsecret, char *xpublic, IdeaData *ideakey, DesData *deskey)
  * Generate a seed
  */
 static void
-getseed(char *seed, int seedsize)
+getseed(char *seed, size_t seedsize)
 {
-	int i;
+	size_t i;
 
 	for (i = 0; i < seedsize; i++)
 		seed[i] = arc4random() & 0xff;
@@ -175,7 +175,7 @@ genkeys(char *public, char *secret)
 {
 	size_t i;
  
-#	define BASEBITS (8*sizeof(short) - 1)
+#	define BASEBITS (8 * sizeof(short) - 1)
 #	define BASE (1 << BASEBITS)
  
 	BIGNUM *pk = BN_new();
@@ -225,38 +225,36 @@ genkeys(char *public, char *secret)
  * Adjust the input key so that it is 0-filled on the left
  */
 static void
-adjust(char keyout[HEXKEYBYTES+1], char *keyin)
+adjust(char *keyout, const char *keyin)
 {
-	char *p;
+	const char *p;
 	char *s;
 
 	for (p = keyin; *p; p++) 
-		;
-	for (s = keyout + HEXKEYBYTES; p >= keyin; p--, s--) {
+		continue;
+	for (s = keyout + HEXKEYBYTES; p >= keyin; p--, s--)
 		*s = *p;
-	}
-	while (s >= keyout) {
+	while (s >= keyout)
 		*s-- = '0';
-	}
 }
 
-static char hextab[17] = "0123456789ABCDEF";
+static const char hextab[] = "0123456789ABCDEF";
 
 /* given a DES key, cbc encrypt and translate input to terminated hex */
 void
-pk_encode(char *in, char *out, DesData *key)
+pk_encode(const char *in, char *out, DesData *key)
 {
 	char buf[256];
 	DesData i;
 	des_key_schedule k;
-	int l,op,deslen;
+	size_t l, op, deslen;
 
-	memset(&i,0,sizeof(i));
-	memset(buf,0,sizeof(buf));
-	deslen = ((strlen(in) + 7)/8)*8;
+	(void)memset(&i, 0, sizeof(i));
+	(void)memset(buf, 0, sizeof(buf));
+	deslen = ((strlen(in) + 7) / 8) * 8;
 	des_key_sched(key, k);
-	des_cbc_encrypt(in,buf,deslen, k,&i,DES_ENCRYPT);
-	for (l=0,op=0;l<deslen;l++) {
+	des_cbc_encrypt(in, buf, deslen, k, &i, DES_ENCRYPT);
+	for (l = 0, op = 0; l < deslen; l++) {
 		out[op++] = hextab[(buf[l] & 0xf0) >> 4];
 		out[op++] = hextab[(buf[l] & 0x0f)];
 	}
@@ -265,28 +263,30 @@ pk_encode(char *in, char *out, DesData *key)
 
 /* given a DES key, translate input from hex and decrypt */
 void
-pk_decode(char *in, char *out, DesData *key)
+pk_decode(const char *in, char *out, DesData *key)
 {
 	char buf[256];
 	DesData i;
 	des_key_schedule k;
-	int n1,n2,op;
+	int n1, n2, op;
 	size_t l;
+	size_t len = strlen(in) / 2;
 
-	memset(&i,0,sizeof(i));
-	memset(buf,0,sizeof(buf));
-	for (l=0,op=0;l<strlen(in)/2;l++,op+=2) {
+	(void)memset(&i, 0, sizeof(i));
+	(void)memset(buf, 0, sizeof(buf));
+
+	for (l = 0, op = 0; l < len; l++, op += 2) {
 		if (in[op] > '9')
 			n1 = in[op] - 'A' + 10;
 		else
 			n1 = in[op] - '0';
-		if (in[op+1] > '9')
-			n2 = in[op+1] - 'A' + 10;
+		if (in[op + 1] > '9')
+			n2 = in[op + 1] - 'A' + 10;
 		else
-			n2 = in[op+1] - '0';
-		buf[l] = n1*16 +n2;
+			n2 = in[op + 1] - '0';
+		buf[l] = (char)(n1 * 16 + n2);
 	}
 	des_key_sched(key, k);
-	des_cbc_encrypt(buf,out,strlen(in)/2, k,&i,DES_DECRYPT);
-	out[strlen(in)/2] = '\0';
+	des_cbc_encrypt(buf, out, len, k, &i, DES_DECRYPT);
+	out[len] = '\0';
 }
