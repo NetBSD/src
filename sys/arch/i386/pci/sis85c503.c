@@ -1,4 +1,4 @@
-/*	$NetBSD: sis85c503.c,v 1.1 1999/11/17 01:21:21 thorpej Exp $	*/
+/*	$NetBSD: sis85c503.c,v 1.1.8.1 2000/08/10 22:25:57 soda Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@ sis85c503_get_intr(v, clink, irqp)
 	reg = SIS85C503_CFG_PIRQ_REG(reg, clink);
 
 	if (reg & SIS85C503_CFG_PIRQ_ROUTE_DISABLE)
-		*irqp = 0xff;
+		*irqp = I386_PCI_INTERRUPT_LINE_NO_CONNECTION;
 	else
 		*irqp = reg & SIS85C503_CFG_PIRQ_INTR_MASK;
 

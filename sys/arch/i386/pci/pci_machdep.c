@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.36 2000/06/04 19:14:47 cgd Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.36.2.1 2000/08/10 22:25:57 soda Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -479,7 +479,7 @@ pci_intr_map(pc, intrtag, pin, line, ihp)
 		goto bad;
 	}
 
-	if (pin > 4) {
+	if (pin > PCI_INTERRUPT_PIN_MAX) {
 		printf("pci_intr_map: bad interrupt pin %d\n", pin);
 		goto bad;
 	}
@@ -498,7 +498,7 @@ pci_intr_map(pc, intrtag, pin, line, ihp)
 	 * that the BIOS did its job, we also recognize that as meaning that
 	 * the BIOS has not configured the device.
 	 */
-	if (line == 0 || line == 255) {
+	if (line == 0 || line == I386_PCI_INTERRUPT_LINE_NO_CONNECTION) {
 		printf("pci_intr_map: no mapping for pin %c\n", '@' + pin);
 		goto bad;
 	} else {
