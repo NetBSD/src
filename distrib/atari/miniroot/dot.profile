@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.1.1.1 1996/05/19 19:43:38 leo Exp $
+#	$NetBSD: dot.profile,v 1.2 1996/06/23 14:04:54 leo Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -46,6 +46,39 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 
 	# run update, so that installed software is written as it goes.
 	update
+
+	# Select a keyboard map
+	_maps=`ls /usr/share/keymap/atari | sed 's/\.map//g'`
+	while [ ! -z "$_maps" ]; do
+		echo "The available keyboard maps are:"
+		_num=0
+		for i in $_maps; do
+			echo "	$_num  $i"
+			_num=`expr $_num + 1`
+		done
+		echo
+		echo -n "Select the number of the map you want to activate: "
+		read _ans
+
+		# Delete all non-nummeric characters from the users answer
+		if [ ! -z "$_ans" ]; then
+			_ans=`echo $_ans | sed 's/[^0-9]//g`
+		fi
+
+		# Check if the answer is valid (in range). Note that an answer
+		# < 0 cannot happen because the sed(1) above also removes the
+		# sign.
+		if [ -z "$_ans" -o "$_ans" -ge $_num ]; then
+		    echo "You entered an invalid response, please try again."
+		    continue
+		fi
+
+		# Got a valid answer, activate the map...
+		set -- $_maps
+		shift $_ans
+		/usr/sbin/loadkmap -f /usr/share/keymap/atari/$1.map
+		break
+	done
 
 	# Installing or upgrading?
 	_forceloop=""
