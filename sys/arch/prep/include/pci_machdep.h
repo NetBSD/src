@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.4 2000/12/28 22:59:10 sommerfeld Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.5 2001/06/15 15:50:05 nonaka Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -56,7 +56,7 @@ typedef void *pci_chipset_tag_t;
 typedef int pcitag_t;
 typedef int pci_intr_handle_t;
 
-extern struct prep_bus_dma_tag pci_bus_dma_tag;
+extern struct powerpc_bus_dma_tag pci_bus_dma_tag;
 
 /*
  * Functions provided to machine-independent PCI code.
