@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_dtablesize.c,v 1.7 1996/12/18 01:06:37 mrg Exp $	*/
+/*	$NetBSD: rpc_dtablesize.c,v 1.8 1996/12/18 20:57:15 cgd Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,11 +32,10 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)rpc_dtablesize.c 1.2 87/08/11 Copyr 1987 Sun Micro";*/
 /*static char *sccsid = "from: @(#)rpc_dtablesize.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: rpc_dtablesize.c,v 1.7 1996/12/18 01:06:37 mrg Exp $";
+static char *rcsid = "$NetBSD: rpc_dtablesize.c,v 1.8 1996/12/18 20:57:15 cgd Exp $";
 #endif
 
-#include <sys/param.h>
-#include <sys/sysctl.h>
+#include <unistd.h>
 
 /*
  * Cache the result of sysconf(_SC_OPEN_MAX), so we don't have to do an
