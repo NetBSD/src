@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_sun.c,v 1.15 2002/07/04 14:37:14 junyoung Exp $ */
+/* $NetBSD: wsemul_sun.c,v 1.16 2002/07/09 07:15:21 junyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 /* XXX DESCRIPTION/SOURCE OF INFORMATION */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_sun.c,v 1.15 2002/07/04 14:37:14 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_sun.c,v 1.16 2002/07/09 07:15:21 junyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -566,36 +566,36 @@ wsemul_sun_translate(void *cookie, keysym_t in, char **out)
 	}
 
 	switch (in) {
-	    case KS_Home:
-	    case KS_KP_Home:
-	    case KS_KP_Begin:
+	case KS_Home:
+	case KS_KP_Home:
+	case KS_KP_Begin:
 		*out = "\033[214z";
 		return (6);
-	    case KS_Prior:
-	    case KS_KP_Prior:
+	case KS_Prior:
+	case KS_KP_Prior:
 		*out = "\033[216z";
 		return (6);
-	    case KS_Next:
-	    case KS_KP_Next:
+	case KS_Next:
+	case KS_KP_Next:
 		*out = "\033[222z";
 		return (6);
-	    case KS_Up:
-	    case KS_KP_Up:
+	case KS_Up:
+	case KS_KP_Up:
 		*out = "\033[A";
 		return (3);
-	    case KS_Down:
-	    case KS_KP_Down:
+	case KS_Down:
+	case KS_KP_Down:
 		*out = "\033[B";
 		return (3);
-	    case KS_Left:
-	    case KS_KP_Left:
+	case KS_Left:
+	case KS_KP_Left:
 		*out = "\033[D";
 		return (3);
-	    case KS_Right:
-	    case KS_KP_Right:
+	case KS_Right:
+	case KS_KP_Right:
 		*out = "\033[C";
 		return (3);
-	    case KS_KP_Delete:
+	case KS_KP_Delete:
 		*out = "\177";
 		return (1);
 	}
