@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.166 2003/04/10 19:38:26 manu Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.167 2003/04/10 20:57:01 manu Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.166 2003/04/10 19:38:26 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.167 2003/04/10 20:57:01 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -264,7 +264,7 @@ check_exec(struct proc *p, struct exec_package *epp)
 	 * Set up default address space limits.  Can be overridden
 	 * by individual exec packages.
 	 * 
-	 * XXX probably shoul be all done in the exec pakages.
+	 * XXX probably should be all done in the exec pakages.
 	 */
 	epp->ep_vm_minaddr = VM_MIN_ADDRESS;
 	epp->ep_vm_maxaddr = VM_MAXUSER_ADDRESS;
