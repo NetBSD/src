@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_xxx.c	7.17 (Berkeley) 4/20/91
- *	$Id: kern_xxx.c,v 1.13 1994/05/07 00:49:08 cgd Exp $
+ *	$Id: kern_xxx.c,v 1.14 1994/05/16 09:57:42 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -39,7 +39,6 @@
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
-#include <sys/utsname.h>
 
 #if defined(COMPAT_43) || defined(COMPAT_SUNOS)
 /* ARGSUSED */
@@ -150,9 +149,19 @@ osetdomainname(p, uap, retval)
 	domainname[domainnamelen] = 0;
 	return (error);
 }
+#endif /* COMPAT_43 || COMPAT_SUNOS */
+
+#ifdef COMPAT_09
+struct outsname {
+	char	sysname[32];
+	char	nodename[32];
+	char	release[32];
+	char	version[32];
+	char	machine[32];
+};
 
 struct ouname_args {
-	struct utsname	*name;
+	struct outsname	*name;
 };
 /* ARGSUSED */
 int
@@ -161,11 +170,29 @@ ouname(p, uap, retval)
 	struct ouname_args *uap;
 	int *retval;
 {
-	strncpy(utsname.nodename, hostname, sizeof(utsname.nodename)-1);
-	return (copyout((caddr_t)&utsname, (caddr_t)uap->name,
-	    sizeof(struct utsname)));
+	struct outsname outsname;
+	char *cp, *dp, *ep;
+	extern char ostype[], osrelease[];
+
+	strncpy(outsname.sysname, ostype, sizeof(outsname.sysname));
+	strncpy(outsname.nodename, hostname, sizeof(outsname.nodename));
+	strncpy(outsname.release, osrelease, sizeof(outsname.release));
+	dp = outsname.version;
+	ep = &outsname.version[sizeof(outsname.version) - 1];
+	for (cp = version; *cp && *cp != '('; cp++)
+		;
+	for (cp++; *cp && *cp != ')' && dp < ep; cp++)
+		*dp++ = *cp;
+	for (; *cp && *cp != '#'; cp++)
+		;
+	for (; *cp && *cp != ':' && dp < ep; cp++)
+		*dp++ = *cp;
+	*dp = '\0';
+	strncpy(outsname.machine, MACHINE, sizeof(outsname.machine));
+	return (copyout((caddr_t)&outsname, (caddr_t)uap->name,
+	    sizeof(struct outsname)));
 }
-#endif /* COMPAT_43 || COMPAT_SUNOS */
+#endif /* COMPAT_09 */
 
 struct reboot_args {
 	int	opt;
