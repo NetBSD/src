@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.42 2000/07/29 20:06:28 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.43 2000/08/08 21:11:46 soda Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -740,6 +740,19 @@ machine_ConfigCache()
 		mips_L2CachePresent = 1;
 		mips_L2CacheSize = 128 * 1024;
 #endif
+		/*
+		 * if page zero in the idle loop is enabled,
+		 * commands dump core due to incoherent cache.
+		 */
+		vm_page_zero_enable = FALSE; /* XXX - should be enabled */
+		break;
+	case DESKSTATION_RPC44:
+	case DESKSTATION_TYNE:
+	case SNI_RM200:
+	case ALGOR_P4032:
+	case ALGOR_P5064:
+		/* XXX - use safe default, since those are not tested. */
+		vm_page_zero_enable = FALSE; /* XXX - should be enabled */
 		break;
 	case NEC_R94:
 		mips_L2CacheSize = 512 * 1024;
