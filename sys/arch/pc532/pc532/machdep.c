@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.88 1998/09/17 02:02:00 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.89 1998/09/30 20:20:03 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -198,6 +198,9 @@ vm_map_t buffer_map;
 #endif
 
 extern	char etext[], end[];
+#if defined(DDB)
+extern char *esym;
+#endif
 extern	paddr_t avail_start, avail_end;
 extern	int nkpde;
 extern	int ieee_handler_disable;
@@ -541,7 +544,7 @@ sendsig(catcher, sig, mask, code)
 	struct proc *p = curproc;
 	struct reg *regs;
 	struct sigframe *fp, frame;
-	struct sigacts *ps = p->p_sigacts;
+	struct sigacts *psp = p->p_sigacts;
 	int onstack;
 
 	regs = p->p_md.md_regs;
@@ -1318,11 +1321,7 @@ consinit()
 	}
 #endif
 #if defined (DDB)
-	{
-		extern int *esym;
-
-		ddb_init(*(int *)end, ((int *)end) + 1, esym);
-	}
+	ddb_init(*(int *)end, ((int *)end) + 1, (int *)esym);
         if(boothowto & RB_KDB)
                 Debugger();
 #endif
