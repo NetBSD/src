@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbdkeymap.h,v 1.19 2003/04/26 01:06:06 uwe Exp $ */
+/*	$NetBSD: hpckbdkeymap.h,v 1.20 2003/05/18 19:06:11 uwe Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -815,12 +815,12 @@ const struct hpckbd_keymap_table {
 		CMDMAP(jornada6x0_us_keydesc),
 		KB_US },
 	/* European English (ABB) */
-	{	&platid_mask_MACH_HP_JORNADA_680EU,
+	{	&platid_mask_MACH_HP_JORNADA_680HU,
 		jornada6x0_intl_keytrans,
 		jornada6x0_special_keymap,
 		CMDMAP(jornada6x0_intl_keydesc),
 		KB_US },
-	{	&platid_mask_MACH_HP_JORNADA_690EU,
+	{	&platid_mask_MACH_HP_JORNADA_690HU,
 		jornada6x0_intl_keytrans,
 		jornada6x0_special_keymap,
 		CMDMAP(jornada6x0_intl_keydesc),
