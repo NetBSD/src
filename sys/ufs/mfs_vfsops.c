@@ -31,23 +31,23 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mfs_vfsops.c	7.19 (Berkeley) 4/16/91
- *	$Id: mfs_vfsops.c,v 1.2 1993/05/20 03:53:26 cgd Exp $
+ *	$Id: mfs_vfsops.c,v 1.3 1993/12/17 08:11:58 mycroft Exp $
  */
 
-#include "param.h"
-#include "time.h"
-#include "kernel.h"
-#include "proc.h"
-#include "buf.h"
-#include "mount.h"
-#include "signalvar.h"
-#include "vnode.h"
+#include <sys/param.h>
+#include <sys/time.h>
+#include <sys/kernel.h>
+#include <sys/proc.h>
+#include <sys/buf.h>
+#include <sys/mount.h>
+#include <sys/signalvar.h>
+#include <sys/vnode.h>
 
-#include "quota.h"
-#include "inode.h"
-#include "ufsmount.h"
-#include "mfsnode.h"
-#include "fs.h"
+#include <ufs/quota.h>
+#include <ufs/inode.h>
+#include <ufs/ufsmount.h>
+#include <ufs/mfsnode.h>
+#include <ufs/fs.h>
 
 extern struct vnodeops mfs_vnodeops;
 

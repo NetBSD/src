@@ -13,33 +13,34 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: cd.c,v 1.18 1993/08/04 19:33:44 brezak Exp $
+ *	$Id: cd.c,v 1.19 1993/12/17 08:50:33 mycroft Exp $
  */
 
 #define SPLCD splbio
 #define ESUCCESS 0
 
 #include "cd.h"
-#include "sys/types.h"
-#include "sys/param.h"
-#include "sys/dkbad.h"
-#include "sys/systm.h"
-#include "sys/conf.h"
-#include "sys/file.h"
-#include "sys/stat.h"
-#include "sys/ioctl.h"
-#include "sys/buf.h"
-#include "sys/uio.h"
-#include "sys/malloc.h"
-#include "sys/cdio.h"
 
-#include "sys/errno.h"
-#include "sys/disklabel.h"
-#include "scsi/scsi_all.h"
-#include "scsi/scsi_cd.h"
-#include "scsi/cddefs.h"
-#include "scsi/scsi_disk.h"	/* rw_big and start_stop come from there */
-#include "scsi/scsiconf.h"
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/dkbad.h>
+#include <sys/systm.h>
+#include <sys/conf.h>
+#include <sys/file.h>
+#include <sys/stat.h>
+#include <sys/ioctl.h>
+#include <sys/buf.h>
+#include <sys/uio.h>
+#include <sys/malloc.h>
+#include <sys/cdio.h>
+#include <sys/errno.h>
+#include <sys/disklabel.h>
+
+#include <scsi/scsi_all.h>
+#include <scsi/scsi_cd.h>
+#include <scsi/cddefs.h>
+#include <scsi/scsi_disk.h>	/* rw_big and start_stop come from there */
+#include <scsi/scsiconf.h>
 
 long int cdstrats,cdqueues;
 

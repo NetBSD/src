@@ -1,13 +1,12 @@
 /*
- *	$Id: ch.c,v 1.4 1993/08/01 19:26:19 mycroft Exp $
+ *	$Id: ch.c,v 1.5 1993/12/17 08:50:45 mycroft Exp $
  */
 
-#include	<sys/types.h>
-#include	<ch.h>
+#include "ch.h"
 
+#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
-
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/buf.h>

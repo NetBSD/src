@@ -37,18 +37,18 @@
  *
  *	from: Utah Hdr: vm_unix.c 1.1 89/11/07
  *	from: @(#)vm_unix.c	7.2 (Berkeley) 4/20/91
- *	$Id: vm_unix.c,v 1.5 1993/09/04 01:29:42 cgd Exp $
+ *	$Id: vm_unix.c,v 1.6 1993/12/17 07:57:20 mycroft Exp $
  */
 
 /*
  * Traditional sbrk/grow interface to VM
  */
-#include "param.h"
-#include "systm.h"
-#include "proc.h"
-#include "resourcevar.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/resourcevar.h>
 
-#include "vm.h"
+#include <vm/vm.h>
 
 struct obreak_args {
 	char	*nsiz;

@@ -3,7 +3,7 @@
  * Dummy driver for a device we can't identify.
  * by Julian Elischer (julian@tfs.com)
  *
- *      $Id: uk.c,v 1.1 1993/11/24 04:52:53 mycroft Exp $
+ *      $Id: uk.c,v 1.2 1993/12/17 08:51:13 mycroft Exp $
  */
 
 
@@ -11,8 +11,10 @@
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
+
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
+
 #define NUK 16
 
 /*

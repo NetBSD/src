@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_pageout.c	7.4 (Berkeley) 5/7/91
- *	$Id: vm_pageout.c,v 1.5 1993/10/02 00:00:23 cgd Exp $
+ *	$Id: vm_pageout.c,v 1.6 1993/12/17 07:57:11 mycroft Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -67,12 +67,12 @@
  *	The proverbial page-out daemon.
  */
 
-#include "param.h"
+#include <sys/param.h>
 
-#include "vm.h"
-#include "vm_page.h"
-#include "vm_pageout.h"
-#include "vmmeter.h"
+#include <vm/vm.h>
+#include <vm/vm_page.h>
+#include <vm/vm_pageout.h>
+#include <sys/vmmeter.h>
 
 int	vm_pages_needed;		/* Event on which pageout daemon sleeps */
 int	vm_pageout_free_min = 0;	/* Stop pageout to wait for pagers at this free level */

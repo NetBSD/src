@@ -31,21 +31,21 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mfs_vnops.c	7.22 (Berkeley) 4/16/91
- *	$Id: mfs_vnops.c,v 1.3 1993/08/24 14:54:14 mycroft Exp $
+ *	$Id: mfs_vnops.c,v 1.4 1993/12/17 08:12:01 mycroft Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "time.h"
-#include "kernel.h"
-#include "proc.h"
-#include "buf.h"
-#include "vnode.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/time.h>
+#include <sys/kernel.h>
+#include <sys/proc.h>
+#include <sys/buf.h>
+#include <sys/vnode.h>
 
-#include "mfsnode.h"
-#include "mfsiom.h"
+#include <ufs/mfsnode.h>
+#include <ufs/mfsiom.h>
 
-#include "machine/vmparam.h"
+#include <machine/vmparam.h>
 
 /*
  * mfs vnode operations.

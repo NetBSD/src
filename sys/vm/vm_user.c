@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_user.c	7.3 (Berkeley) 4/21/91
- *	$Id: vm_user.c,v 1.3 1993/07/17 16:03:18 mycroft Exp $
+ *	$Id: vm_user.c,v 1.4 1993/12/17 07:57:21 mycroft Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -67,12 +67,12 @@
  *	User-exported virtual memory functions.
  */
 
-#include "param.h"
-#include "systm.h"
-#include "proc.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
 
-#include "vm.h"
-#include "vm_page.h"
+#include <vm/vm.h>
+#include <vm/vm_page.h>
 
 simple_lock_data_t	vm_alloc_lock;	/* XXX */
 

@@ -61,16 +61,16 @@
  * rights to redistribute these changes.
  */
 
-#include "param.h"
-#include "systm.h"
-#include "proc.h"
-#include "resourcevar.h"
-#include "buf.h"
-#include "user.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/resourcevar.h>
+#include <sys/buf.h>
+#include <sys/user.h>
 
-#include "vm.h"
-#include "vm_page.h"
-#include "vm_kern.h"
+#include <vm/vm.h>
+#include <vm/vm_page.h>
+#include <vm/vm_kern.h>
 
 int	avefree = 0;		/* XXX */
 int	readbuffers = 0;	/* XXX allow kgdb to read kernel buffer pool */
@@ -279,7 +279,7 @@ vm_init_limits(p)
 		ptoa(vm_page_free_count);
 }
 
-#include "../vm/vm_pageout.h"
+#include <vm/vm_pageout.h>
 
 #ifdef DEBUG
 int	enableswap = 1;

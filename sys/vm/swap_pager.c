@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: swap_pager.c 1.4 91/04/30
  *	from: @(#)swap_pager.c	7.4 (Berkeley) 5/7/91
- *	$Id: swap_pager.c,v 1.11 1993/11/29 16:05:20 pk Exp $
+ *	$Id: swap_pager.c,v 1.12 1993/12/17 07:56:37 mycroft Exp $
  */
 
 /*
@@ -47,24 +47,23 @@
  *	Deal with async writes in a better fashion
  */
 
-#include "param.h"
-#include "proc.h"
-#include "buf.h"
-#include "map.h"
-#include "systm.h"
-#include "miscfs/specfs/specdev.h"	 /* XXX */
-#include "vnode.h"
-#include "malloc.h"
-#include "queue.h"
+#include <sys/param.h>
+#include <sys/proc.h>
+#include <sys/buf.h>
+#include <sys/map.h>
+#include <sys/systm.h>
+#include <miscfs/specfs/specdev.h>	 /* XXX */
+#include <sys/vnode.h>
+#include <sys/malloc.h>
 
-#include "vm_param.h"
-#include "queue.h"
-#include "lock.h"
-#include "vm_prot.h"
-#include "vm_object.h"
-#include "vm_page.h"
-#include "vm_pageout.h"
-#include "swap_pager.h"
+#include <vm/vm_param.h>
+#include <vm/queue.h>
+#include <vm/lock.h>
+#include <vm/vm_prot.h>
+#include <vm/vm_object.h>
+#include <vm/vm_page.h>
+#include <vm/vm_pageout.h>
+#include <vm/swap_pager.h>
 
 #define NSWSIZES	16	/* size of swtab */
 #define NPENDINGIO	64	/* max # of pending cleans */

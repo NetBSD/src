@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_object.c	7.4 (Berkeley) 5/7/91
- *	$Id: vm_object.c,v 1.9 1993/09/23 22:20:29 mycroft Exp $
+ *	$Id: vm_object.c,v 1.10 1993/12/17 07:57:02 mycroft Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -67,12 +67,12 @@
  *	Virtual memory object module.
  */
 
-#include "param.h"
-#include "malloc.h"
-#include "systm.h"
+#include <sys/param.h>
+#include <sys/malloc.h>
+#include <sys/systm.h>
 
-#include "vm.h"
-#include "vm_page.h"
+#include <vm/vm.h>
+#include <vm/vm_page.h>
 
 /*
  *	Virtual memory objects maintain the actual data
