@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.55 2003/07/14 16:00:52 itojun Exp $	*/
+/*	$NetBSD: commands.c,v 1.56 2003/07/14 16:06:46 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.55 2003/07/14 16:00:52 itojun Exp $");
+__RCSID("$NetBSD: commands.c,v 1.56 2003/07/14 16:06:46 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,9 +89,7 @@ __RCSID("$NetBSD: commands.c,v 1.55 2003/07/14 16:00:52 itojun Exp $");
 #include <arpa/telnet.h>
 
 #include "general.h"
-
 #include "ring.h"
-
 #include "externs.h"
 #include "defines.h"
 #include "types.h"
@@ -542,21 +540,12 @@ lclchars(int n)
 static int
 togdebug(int n)
 {
-#ifndef	NOT43
     if (net > 0 &&
 	(SetSockOpt(net, SOL_SOCKET, SO_DEBUG, debug)) < 0) {
 	    perror("setsockopt (SO_DEBUG)");
     }
-#else	/* NOT43 */
-    if (debug) {
-	if (net > 0 && SetSockOpt(net, SOL_SOCKET, SO_DEBUG, 1) < 0)
-	    perror("setsockopt (SO_DEBUG)");
-    } else
-	printf("Cannot turn off socket debugging\n");
-#endif	/* NOT43 */
     return 1;
 }
-
 
 static int
 togcrlf(int n)
@@ -2059,7 +2048,6 @@ filestuff(int fd)
 {
     int res;
 
-#ifdef	F_GETOWN
     setconnmode(0);
     res = fcntl(fd, F_GETOWN, 0);
     setcommandmode();
@@ -2069,7 +2057,6 @@ filestuff(int fd)
 	return;
     }
     printf("\tOwner is %d.\n", res);
-#endif
 
     setconnmode(0);
     res = fcntl(fd, F_GETFL, 0);
@@ -2468,7 +2455,7 @@ static Command cmdtab[] = {
 #ifdef TN3270
 	{ "transcom",	transcomhelp,	settranscom,	0 },
 #endif	/* defined(TN3270) */
-#if	defined(AUTHENTICATION)
+#ifdef AUTHENTICATION
 	{ "auth",	authhelp,	auth_cmd,	0 },
 #endif
 #ifdef	ENCRYPTION

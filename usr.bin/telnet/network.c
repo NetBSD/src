@@ -1,4 +1,4 @@
-/*	$NetBSD: network.c,v 1.14 2003/06/18 20:51:00 christos Exp $	*/
+/*	$NetBSD: network.c,v 1.15 2003/07/14 16:06:48 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)network.c	8.2 (Berkeley) 12/15/93";
 #else
-__RCSID("$NetBSD: network.c,v 1.14 2003/06/18 20:51:00 christos Exp $");
+__RCSID("$NetBSD: network.c,v 1.15 2003/07/14 16:06:48 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,10 +53,8 @@ __RCSID("$NetBSD: network.c,v 1.14 2003/06/18 20:51:00 christos Exp $");
 #include <arpa/telnet.h>
 
 #include "ring.h"
-
 #include "defines.h"
 #include "externs.h"
-#include "fdset.h"
 
 Ring		netoring, netiring;
 unsigned char	netobuf[2*BUFSIZ], netibuf[BUFSIZ];

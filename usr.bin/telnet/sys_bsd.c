@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_bsd.c,v 1.26 2003/07/14 16:00:53 itojun Exp $	*/
+/*	$NetBSD: sys_bsd.c,v 1.27 2003/07/14 16:06:48 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 from: static char sccsid[] = "@(#)sys_bsd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_bsd.c,v 1.26 2003/07/14 16:00:53 itojun Exp $");
+__RCSID("$NetBSD: sys_bsd.c,v 1.27 2003/07/14 16:06:48 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,9 +60,6 @@ __RCSID("$NetBSD: sys_bsd.c,v 1.26 2003/07/14 16:00:53 itojun Exp $");
 #include <arpa/telnet.h>
 
 #include "ring.h"
-
-#include "fdset.h"
-
 #include "defines.h"
 #include "externs.h"
 #include "types.h"
@@ -229,24 +226,12 @@ tcval(int func)
     case SLC_XOFF:	return(&termStopChar);
     case SLC_FORW1:	return(&termForw1Char);
     case SLC_FORW2:	return(&termForw2Char);
-# ifdef	VDISCARD
     case SLC_AO:	return(&termFlushChar);
-# endif
-# ifdef	VSUSP
     case SLC_SUSP:	return(&termSuspChar);
-# endif
-# ifdef	VWERASE
     case SLC_EW:	return(&termWerasChar);
-# endif
-# ifdef	VREPRINT
     case SLC_RP:	return(&termRprntChar);
-# endif
-# ifdef	VLNEXT
     case SLC_LNEXT:	return(&termLiteralNextChar);
-# endif
-# ifdef	VSTATUS
     case SLC_AYT:	return(&termAytChar);
-# endif
 
     case SLC_SYNCH:
     case SLC_BRK:
@@ -260,27 +245,6 @@ void
 TerminalDefaultChars(void)
 {
     memmove(new_tc.c_cc, old_tc.c_cc, sizeof(old_tc.c_cc));
-# ifndef	VDISCARD
-    termFlushChar = CONTROL('O');
-# endif
-# ifndef	VWERASE
-    termWerasChar = CONTROL('W');
-# endif
-# ifndef	VREPRINT
-    termRprntChar = CONTROL('R');
-# endif
-# ifndef	VLNEXT
-    termLiteralNextChar = CONTROL('V');
-# endif
-# ifndef	VSTART
-    termStartChar = CONTROL('Q');
-# endif
-# ifndef	VSTOP
-    termStopChar = CONTROL('S');
-# endif
-# ifndef	VSTATUS
-    termAytChar = CONTROL('T');
-# endif
 }
 
 #ifdef notdef
