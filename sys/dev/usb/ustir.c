@@ -1,4 +1,4 @@
-/*	$NetBSD: ustir.c,v 1.6 2002/11/26 18:49:50 christos Exp $	*/
+/*	$NetBSD: ustir.c,v 1.7 2002/12/28 04:16:33 dsainty Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.6 2002/11/26 18:49:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.7 2002/12/28 04:16:33 dsainty Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -976,6 +976,7 @@ ustir_close(void *h, int flag, int mode, usb_proc_ptr p)
 	return 0;
 }
 
+/* ARGSUSED */
 Static int
 ustir_read(void *h, struct uio *uio, int flag)
 {
@@ -1045,6 +1046,7 @@ ustir_read(void *h, struct uio *uio, int flag)
 	return error;
 }
 
+/* ARGSUSED */
 Static int
 ustir_write(void *h, struct uio *uio, int flag)
 {
@@ -1191,6 +1193,7 @@ filt_ustirrdetach(struct knote *kn)
 	splx(s);
 }
 
+/* ARGSUSED */
 static int
 filt_ustirread(struct knote *kn, long hint)
 {
@@ -1211,6 +1214,7 @@ filt_ustirwdetach(struct knote *kn)
 	splx(s);
 }
 
+/* ARGSUSED */
 static int
 filt_ustirwrite(struct knote *kn, long hint)
 {
