@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.416 2002/03/27 13:12:11 abs Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.417 2002/04/05 20:38:31 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.413 2002/03/27 13:11:37 abs Exp 
+ *	NetBSD: pcidevs,v 1.414 2002/04/05 20:37:45 mycroft Exp 
  */
 
 /*
@@ -5182,10 +5182,16 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "Broadband Adapter",
 	},
 	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_ROSB4,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_OSB4,
 	    0,
 	    "ServerWorks",
-	    "ROSB4 SouthBridge",
+	    "OSB4 SouthBridge",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CSB5,
+	    0,
+	    "ServerWorks",
+	    "CSB5 SouthBridge",
 	},
 	{
 	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_XX5,
@@ -5230,16 +5236,22 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "CMIC_HE Host",
 	},
 	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_IDE,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_OSB4_IDE,
 	    0,
 	    "ServerWorks",
-	    "IDE",
+	    "OSB4 IDE",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CSB5_IDE,
+	    0,
+	    "ServerWorks",
+	    "CSB5 IDE",
 	},
 	{
 	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_USB,
 	    0,
 	    "ServerWorks",
-	    "USB",
+	    "OSB4/CSB5 USB",
 	},
 	{
 	    PCI_VENDOR_SGI, PCI_PRODUCT_SGI_IOC3,
@@ -6307,7 +6319,13 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C598PCI,
 	    0,
 	    "VIA Technologies",
-	    "VT82C598 (Apollo MVP3) Host-PCI",
+	    "VT82C598 (Apollo MVP3) Host-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8605PCI,
+	    0,
+	    "VIA Technologies",
+	    "VT8605 (Apollo ProMedia 133) Host-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_ISA,
@@ -6445,25 +6463,31 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8501AGP,
 	    0,
 	    "VIA Technologies",
-	    "VT8501 PCI-AGP",
+	    "VT8501 CPU-AGP Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C597AGP,
 	    0,
 	    "VIA Technologies",
-	    "VT82C597 (Apollo VP3) PCI-AGP",
+	    "VT82C597 (Apollo VP3) CPU-AGP Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C598AGP,
 	    0,
 	    "VIA Technologies",
-	    "VT82C598 (Apollo MVP3) PCI-AGP",
+	    "VT82C598 (Apollo MVP3) CPU-AGP Bridge",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8605AGP,
+	    0,
+	    "VIA Technologies",
+	    "VT8605 (Apollo ProMedia 133) Host-AGP Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8366AGP,
 	    0,
 	    "VIA Technologies",
-	    "VT8366 CPU-AGP",
+	    "VT8366 CPU-AGP Bridge",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_60x0,
