@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetgrent.c,v 1.19 1999/01/19 08:07:58 lukem Exp $	*/
+/*	$NetBSD: getnetgrent.c,v 1.20 1999/01/19 08:30:47 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnetgrent.c,v 1.19 1999/01/19 08:07:58 lukem Exp $");
+__RCSID("$NetBSD: getnetgrent.c,v 1.20 1999/01/19 08:30:47 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -299,7 +299,7 @@ lookup(name, line, bywhat)
 	int	  bywhat;
 {
 	int		r;
-	static ns_dtab	dtab[] = {
+	static const ns_dtab dtab[] = {
 		NS_FILES_CB(_local_lookup, NULL)
 		NS_DNS_CB(_nis_lookup, NULL)
 		{ 0 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.30 1999/01/19 08:07:58 lukem Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.31 1999/01/19 08:30:46 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrent.c	8.2 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: getgrent.c,v 1.30 1999/01/19 08:07:58 lukem Exp $");
+__RCSID("$NetBSD: getgrent.c,v 1.31 1999/01/19 08:30:46 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -428,7 +428,7 @@ __grscancompat(search, gid, name)
 	gid_t		 gid;
 	const char	*name;
 {
-	static ns_dtab	dtab[] = {
+	static const ns_dtab dtab[] = {
 		NS_FILES_CB(_bad_grscan, "files")
 		NS_DNS_CB(_dns_grscan, NULL)
 		NS_NIS_CB(_nis_grscan, NULL)
@@ -536,7 +536,7 @@ grscan(search, gid, name)
 	const char	*name;
 {
 	int		r;
-	static ns_dtab	dtab[] = {
+	static const ns_dtab dtab[] = {
 		NS_FILES_CB(_local_grscan, NULL)
 		NS_DNS_CB(_dns_grscan, NULL)
 		NS_NIS_CB(_nis_grscan, NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.35 1999/01/19 08:04:27 lukem Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.36 1999/01/19 08:30:47 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.35 1999/01/19 08:04:27 lukem Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.36 1999/01/19 08:30:47 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -96,6 +96,10 @@ static int __hashpw __P((DBT *));
 static int __initdb __P((void));
 
 const char __yp_token[] = "__YP!";	/* Let pwd_mkdb pull this in. */
+static const ns_src compatsrc[] = {
+	{ NSSRC_COMPAT, NS_SUCCESS },
+	{ 0 }
+};
 
 #ifdef YP
 static char     *__ypcurrent, *__ypdomain;
@@ -667,24 +671,28 @@ __getpwcompat(type, uid, name)
 	uid_t		 uid;
 	const char	*name;
 {
-	static ns_dtab	dtab[] = {
+	static const ns_dtab dtab[] = {
 		NS_FILES_CB(_bad_getpw, "files")
 		NS_DNS_CB(_dns_getpw, NULL)
 		NS_NIS_CB(_nis_getpw, NULL)
 		NS_COMPAT_CB(_bad_getpw, "compat")
 		{ 0 }
 	};
+	static const ns_src defaultnis[] = {
+		{ NSSRC_NIS, 	NS_SUCCESS },
+		{ 0 }
+	};
 
 	switch (type) {
 	case _PW_KEYBYNUM:
 		return nsdispatch(NULL, dtab, NSDB_PASSWD_COMPAT, "getpwcompat",
-		    __nsdefaultsrc, type);
+		    defaultnis, type);
 	case _PW_KEYBYNAME:
 		return nsdispatch(NULL, dtab, NSDB_PASSWD_COMPAT, "getpwcompat",
-		    __nsdefaultsrc, type, name);
+		    defaultnis, type, name);
 	case _PW_KEYBYUID:
 		return nsdispatch(NULL, dtab, NSDB_PASSWD_COMPAT, "getpwcompat",
-		    __nsdefaultsrc, type, uid);
+		    defaultnis, type, uid);
 	default:
 		abort();
 	}
@@ -962,7 +970,7 @@ struct passwd *
 getpwent()
 {
 	int		r;
-	static ns_dtab	dtab[] = {
+	static const ns_dtab dtab[] = {
 		NS_FILES_CB(_local_getpw, NULL)
 		NS_DNS_CB(_dns_getpw, NULL)
 		NS_NIS_CB(_nis_getpw, NULL)
@@ -971,7 +979,7 @@ getpwent()
 	};
 
 	_pw_none = 0;
-	r = nsdispatch(NULL, dtab, NSDB_PASSWD, "getpwent", __nsdefaultsrc,
+	r = nsdispatch(NULL, dtab, NSDB_PASSWD, "getpwent", compatsrc,
 	    _PW_KEYBYNUM);
 	if (_pw_none || r != NS_SUCCESS)
 		return (struct passwd *)NULL;
@@ -983,7 +991,7 @@ getpwnam(name)
 	const char *name;
 {
 	int		r;
-	static ns_dtab	dtab[] = {
+	static const ns_dtab dtab[] = {
 		NS_FILES_CB(_local_getpw, NULL)
 		NS_DNS_CB(_dns_getpw, NULL)
 		NS_NIS_CB(_nis_getpw, NULL)
@@ -994,7 +1002,7 @@ getpwnam(name)
 	if (name == NULL || name[0] == '\0')
 		return (struct passwd *)NULL;
 
-	r = nsdispatch(NULL, dtab, NSDB_PASSWD, "getpwnam", __nsdefaultsrc,
+	r = nsdispatch(NULL, dtab, NSDB_PASSWD, "getpwnam", compatsrc,
 	    _PW_KEYBYNAME, name);
 	return (r == NS_SUCCESS ? &_pw_passwd : (struct passwd *)NULL);
 }
@@ -1004,7 +1012,7 @@ getpwuid(uid)
 	uid_t uid;
 {
 	int		r;
-	static ns_dtab	dtab[] = {
+	static const ns_dtab dtab[] = {
 		NS_FILES_CB(_local_getpw, NULL)
 		NS_DNS_CB(_dns_getpw, NULL)
 		NS_NIS_CB(_nis_getpw, NULL)
@@ -1012,7 +1020,7 @@ getpwuid(uid)
 		{ 0 }
 	};
 
-	r = nsdispatch(NULL, dtab, NSDB_PASSWD, "getpwuid", __nsdefaultsrc,
+	r = nsdispatch(NULL, dtab, NSDB_PASSWD, "getpwuid", compatsrc,
 	    _PW_KEYBYUID, uid);
 	return (r == NS_SUCCESS ? &_pw_passwd : (struct passwd *)NULL);
 }
