@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.89 1997/09/23 23:15:51 mjacob Exp $ */
+/* $NetBSD: machdep.c,v 1.90 1997/09/23 23:23:26 mjacob Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89 1997/09/23 23:15:51 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.90 1997/09/23 23:23:26 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,6 +185,10 @@ int bootinfo_valid;
 struct bootinfo bootinfo;
 
 struct platform platform;
+
+u_int32_t vm_mbuf_size = (NMBCLUSTERS*MCLBYTES);
+u_int32_t vm_kmem_size = (NKMEMCLUSTERS*CLBYTES);
+u_int32_t vm_phys_size = (USRIOSIZE*CLBYTES);
 
 #ifdef DDB
 /* start and end of kernel symbol table */
@@ -398,6 +402,26 @@ alpha_init(pfn, ptb, bim, bip)
 	printf("unusedmem = %d\n", unusedmem);
 	printf("unknownmem = %d\n", unknownmem);
 #endif
+
+	/*
+	 * Adjust some parameters if the amount of physmem
+	 * available would cause us to croak. This is completely
+	 * eyeballed and isn't meant to be the final answer.
+	 * vm_phys_size is probably the only one to really worry
+	 * about.
+ 	 *
+	 * It's for booting a GENERIC kernel on a large memory platform.
+	 */
+	if (physmem >= btoc(128 << 20)) {
+		vm_mbuf_size <<= 1;
+		if (physmem >= btoc(1024 << 20)) {
+			vm_kmem_size <<= 4;
+			vm_phys_size <<= 5;
+		} else {
+			vm_kmem_size <<= 3;
+			vm_phys_size <<= 2;
+		}
+	}
 
 	/*
 	 * find out this CPU's page size
