@@ -49,6 +49,7 @@
 #include "icu.h"
 #include "aic.h"
 #include "dp.h"
+#include "ncr.h"
 
 /* Includes and defines for the net software interrupts. */
 #include "net/netisr.h"
@@ -89,6 +90,11 @@ __save_sp: 	.long 0
 __save_fp: 	.long 0
 __old_intbase:	.long 0
 __have_fpu:	.long 0
+
+#if NNCR > 0
+.globl _ncr_needs_finish
+_ncr_needs_finish: .long 0
+#endif
 
 /* spl... support.... */
 .globl	_PL_bio, _PL_tty, _PL_net, _PL_zero
@@ -981,8 +987,13 @@ ENTRY(_int_scsi1)
 	movqd	1,tos
 	bsr _dp_intr
 #else
+#if NNCR > 0
+	movqd	1,tos
+	bsr _ncr5380_intr
+#else
 	movqd	4,tos
-	bsd _bad_intr
+	bsr _bad_intr
+#endif
 #endif
 	br	exit_int
 
@@ -1091,6 +1102,12 @@ do_soft_intr:
 	movqd	0, _want_softclock(pc)
 	
 no_soft:
+#if NNCR > 0
+	cmpqd	0, _ncr_needs_finish(pc)
+	beq	no_ncr
+	bsr	_ncr5380_finish	
+no_ncr:
+#endif
 	cmpqd	0, _want_resched(pc)
 	beq	do_usr_ret
 	movd	18, tos
