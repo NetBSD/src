@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.15 1998/02/06 01:22:54 mrg Exp $ */
+/*	$NetBSD: psl.h,v 1.16 1998/11/26 22:53:13 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -207,6 +207,7 @@ SPL(splfd, 11)
 
 /* zs hardware interrupts are at level 12 */
 SPL(splzs, 12)
+SPL(splserial, 12)	/* XXX - other serial hardware might not be at lvl 12 */
 
 /* audio hardware interrupts are at level 13 */
 SPL(splaudio, 13)
