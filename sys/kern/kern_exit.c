@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.108 2003/01/27 20:30:32 nathanw Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.109 2003/02/14 10:11:57 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.108 2003/01/27 20:30:32 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.109 2003/02/14 10:11:57 dsl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -610,140 +610,192 @@ sys_wait4(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int)			options;
 		syscallarg(struct rusage *)	rusage;
 	} */ *uap = v;
-	struct proc	*p, *q, *t;
-	int		nfound, status, error, s;
+	struct proc	*child, *parent;
+	int		status, error;
 
-	q = l->l_proc;
+	parent = l->l_proc;
 
 	if (SCARG(uap, pid) == 0)
-		SCARG(uap, pid) = -q->p_pgid;
-	if (SCARG(uap, options) &~ (WUNTRACED|WNOHANG|WALTSIG))
+		SCARG(uap, pid) = -parent->p_pgid;
+	if (SCARG(uap, options) & ~(WUNTRACED|WNOHANG|WALTSIG|WALLSIG))
 		return (EINVAL);
 
- loop:
-	nfound = 0;
-	LIST_FOREACH(p, &q->p_children, p_sibling) {
-		if (SCARG(uap, pid) != WAIT_ANY &&
-		    p->p_pid != SCARG(uap, pid) &&
-		    p->p_pgid != -SCARG(uap, pid))
-			continue;
-		/*
-		 * Wait for processes with p_exitsig != SIGCHLD processes only
-		 * if WALTSIG is set; wait for processes with p_exitsig ==
-		 * SIGCHLD only if WALTSIG is clear.
-		 */
-		if (((SCARG(uap, options) & WALLSIG) == 0) &&
-		    ((SCARG(uap, options) & WALTSIG) ?
-		     (p->p_exitsig == SIGCHLD) : (P_EXITSIG(p) != SIGCHLD)))
-			continue;
+	error = find_stopped_child(parent, SCARG(uap,pid), SCARG(uap,options),
+				&child);
+	if (error != 0)
+		return error;
+	if (child == NULL) {
+		*retval = 0;
+		return 0;
+	}
 
-		nfound++;
-		if (p->p_stat == SZOMB) {
-			retval[0] = p->p_pid;
+	retval[0] = child->p_pid;
 
-			if (SCARG(uap, status)) {
-				status = p->p_xstat;	/* convert to int */
-				error = copyout((caddr_t)&status,
-						(caddr_t)SCARG(uap, status),
-						sizeof(status));
-				if (error)
-					return (error);
-			}
-			if (SCARG(uap, rusage) &&
-			    (error = copyout((caddr_t)p->p_ru,
-			    (caddr_t)SCARG(uap, rusage),
-			    sizeof(struct rusage))))
+	if (child->p_stat == SZOMB) {
+		if (SCARG(uap, status)) {
+			status = child->p_xstat;	/* convert to int */
+			error = copyout((caddr_t)&status,
+					(caddr_t)SCARG(uap, status),
+					sizeof(status));
+			if (error)
 				return (error);
-			/*
-			 * If we got the child via ptrace(2) or procfs, and
-			 * the parent is different (meaning the process was
-			 * attached, rather than run as a child), then we need
-			 * to give it back to the old parent, and send the
-			 * parent the exit signal.  The rest of the cleanup
-			 * will be done when the old parent waits on the child.
-			 */
-			if ((p->p_flag & P_TRACED) && p->p_opptr != p->p_pptr){
-				t = p->p_opptr;
-				proc_reparent(p, t ? t : initproc);
-				p->p_opptr = NULL;
-				p->p_flag &= ~(P_TRACED|P_WAITED|P_FSTRACE);
-				if (p->p_exitsig != 0)
-					psignal(p->p_pptr, P_EXITSIG(p));
-				wakeup((caddr_t)p->p_pptr);
-				return (0);
-			}
-			scheduler_wait_hook(q, p);
-			p->p_xstat = 0;
-			ruadd(&q->p_stats->p_cru, p->p_ru);
-			pool_put(&rusage_pool, p->p_ru);
-
-			/*
-			 * Finally finished with old proc entry.
-			 * Unlink it from its process group and free it.
-			 */
-			leavepgrp(p);
-
-			s = proclist_lock_write();
-			LIST_REMOVE(p, p_list);	/* off zombproc */
-			proclist_unlock_write(s);
-
-			LIST_REMOVE(p, p_sibling);
-
-			/*
-			 * Decrement the count of procs running with this uid.
-			 */
-			(void)chgproccnt(p->p_cred->p_ruid, -1);
-
-			/*
-			 * Free up credentials.
-			 */
-			if (--p->p_cred->p_refcnt == 0) {
-				crfree(p->p_cred->pc_ucred);
-				pool_put(&pcred_pool, p->p_cred);
-			}
-
-			/*
-			 * Release reference to text vnode
-			 */
-			if (p->p_textvp)
-				vrele(p->p_textvp);
-
-			/*
-			 * Release any SA state
-			 */
-			if (p->p_sa) {
-				free(p->p_sa->sa_stacks, M_SA);
-				pool_put(&sadata_pool, p->p_sa);
-			}
-
-			pool_put(&proc_pool, p);
-			nprocs--;
-			return (0);
 		}
-		if (p->p_stat == SSTOP && (p->p_flag & P_WAITED) == 0 &&
-		    (p->p_flag & P_TRACED || SCARG(uap, options) & WUNTRACED)) {
-			p->p_flag |= P_WAITED;
-			retval[0] = p->p_pid;
-
-			if (SCARG(uap, status)) {
-				status = W_STOPCODE(p->p_xstat);
-				error = copyout((caddr_t)&status,
-				    (caddr_t)SCARG(uap, status),
-				    sizeof(status));
-			} else
-				error = 0;
-			return (error);
+		if (SCARG(uap, rusage)) {
+			error = copyout((caddr_t)child->p_ru,
+				    (caddr_t)SCARG(uap, rusage),
+				    sizeof(struct rusage));
+			if (error)
+				return (error);
 		}
+
+		proc_free(child);
+		return 0;
 	}
-	if (nfound == 0)
-		return (ECHILD);
-	if (SCARG(uap, options) & WNOHANG) {
-		retval[0] = 0;
-		return (0);
+
+	/* child state must be SSTOP */
+	if (SCARG(uap, status)) {
+		status = W_STOPCODE(child->p_xstat);
+		return copyout((caddr_t)&status,
+				(caddr_t)SCARG(uap, status),
+				sizeof(status));
 	}
-	if ((error = tsleep((caddr_t)q, PWAIT | PCATCH, "wait", 0)) != 0)
-		return (error);
-	goto loop;
+	return 0;
+}
+
+/*
+ * Scan list of child processes for a child process that has stopped or
+ * exited.  Used by sys_wait4 and 'compat' equivalents.
+ */
+int
+find_stopped_child(struct proc *parent, pid_t pid, int options,
+	struct proc **child_p)
+{
+	struct proc *child;
+	int c_found, error;
+
+	 for (;;) {
+		c_found = 0;
+		LIST_FOREACH(child, &parent->p_children, p_sibling) {
+			if (pid != WAIT_ANY &&
+			    child->p_pid != pid &&
+			    child->p_pgid != -pid)
+				continue;
+			/*
+			 * Wait for processes with p_exitsig != SIGCHLD
+			 * processes only if WALTSIG is set; wait for
+			 * processes with p_exitsig == SIGCHLD only
+			 * if WALTSIG is clear.
+			 */
+			if (((options & WALLSIG) == 0) &&
+			    (options & WALTSIG ? child->p_exitsig == SIGCHLD
+						: P_EXITSIG(child) != SIGCHLD))
+				continue;
+
+			c_found = 1;
+			if (child->p_stat == SZOMB &&
+			    (options & WNOZOMBIE) == 0) {
+				*child_p = child;
+				return 0;
+			}
+
+			if (child->p_stat == SSTOP &&
+			    (child->p_flag & P_WAITED) == 0 &&
+			    (child->p_flag & P_TRACED || options & WUNTRACED)) {
+				if ((options & WNOWAIT) == 0)
+					child->p_flag |= P_WAITED;
+				*child_p = child;
+				return 0;
+			}
+		}
+		if (c_found == 0)
+			return ECHILD;
+		if (options & WNOHANG) {
+			*child_p = NULL;
+			return 0;
+		}
+		error = tsleep((caddr_t)parent, PWAIT | PCATCH, "wait", 0);
+		if (error != 0)
+			return error;
+	}
+}
+
+/*
+ * Free a process after parent has taken all the state info.
+ */
+void
+proc_free(struct proc *p)
+{
+	struct proc *parent = p->p_pptr;
+	int s;
+
+	/*
+	 * If we got the child via ptrace(2) or procfs, and
+	 * the parent is different (meaning the process was
+	 * attached, rather than run as a child), then we need
+	 * to give it back to the old parent, and send the
+	 * parent the exit signal.  The rest of the cleanup
+	 * will be done when the old parent waits on the child.
+	 */
+	if ((p->p_flag & P_TRACED) && p->p_opptr != parent){
+		parent = p->p_opptr;
+		if (parent == NULL)
+			parent = initproc;
+		proc_reparent(p, parent);
+		p->p_opptr = NULL;
+		p->p_flag &= ~(P_TRACED|P_WAITED|P_FSTRACE);
+		if (p->p_exitsig != 0)
+			psignal(parent, P_EXITSIG(p));
+		wakeup((caddr_t)parent);
+		return;
+	}
+
+	scheduler_wait_hook(parent, p);
+	p->p_xstat = 0;
+	ruadd(&parent->p_stats->p_cru, p->p_ru);
+	pool_put(&rusage_pool, p->p_ru);
+
+	/*
+	 * Finally finished with old proc entry.
+	 * Unlink it from its process group and free it.
+	 */
+	leavepgrp(p);
+
+	s = proclist_lock_write();
+	LIST_REMOVE(p, p_list);	/* off zombproc */
+	proclist_unlock_write(s);
+
+	LIST_REMOVE(p, p_sibling);
+
+	/*
+	 * Decrement the count of procs running with this uid.
+	 */
+	(void)chgproccnt(p->p_cred->p_ruid, -1);
+
+	/*
+	 * Free up credentials.
+	 */
+	if (--p->p_cred->p_refcnt == 0) {
+		crfree(p->p_cred->pc_ucred);
+		pool_put(&pcred_pool, p->p_cred);
+	}
+
+	/*
+	 * Release reference to text vnode
+	 */
+	if (p->p_textvp)
+		vrele(p->p_textvp);
+
+	/*
+	 * Release any SA state
+	 */
+	if (p->p_sa) {
+		free(p->p_sa->sa_stacks, M_SA);
+		pool_put(&sadata_pool, p->p_sa);
+	}
+
+	pool_put(&proc_pool, p);
+	nprocs--;
+	return;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.157 2003/02/04 13:41:49 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.158 2003/02/14 10:11:56 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -437,6 +437,8 @@ void	wakeup_one(const void *chan);
 void	reaper(void *);
 void	exit1(struct lwp *, int);
 void	exit2(struct lwp *);
+int	find_stopped_child(struct proc *, pid_t, int, struct proc **);
+void	proc_free(struct proc *);
 void	exit_lwps(struct lwp *l);
 int	fork1(struct lwp *, int, int, void *, size_t,
 	    void (*)(void *), void *, register_t *, struct proc **);
