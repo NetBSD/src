@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_var.h,v 1.18 2002/05/12 20:33:51 matt Exp $	*/
+/*	$NetBSD: udp_var.h,v 1.19 2002/06/30 22:40:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -87,6 +87,12 @@ struct	udpstat {
 #ifdef _KERNEL
 extern	struct	inpcbtable udbtable;
 extern	struct	udpstat udpstat;
+
+#ifdef __NO_STRICT_ALIGNMENT
+#define	UDP_HDR_ALIGNED_P(uh)	1
+#else
+#define	UDP_HDR_ALIGNED_P(uh)	((((vaddr_t) (uh)) & 3) == 0)
+#endif
 
 void	 *udp_ctlinput __P((int, struct sockaddr *, void *));
 void	 udp_init __P((void));

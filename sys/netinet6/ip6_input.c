@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.56 2002/06/09 14:43:12 itojun Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.57 2002/06/30 22:40:39 thorpej Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.56 2002/06/09 14:43:12 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.57 2002/06/30 22:40:39 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -269,9 +269,23 @@ ip6_input(m)
 	IP6_EXTHDR_CHECK(m, 0, sizeof(struct ip6_hdr), /*nothing*/);
 #endif
 
-	if (m->m_len < sizeof(struct ip6_hdr)) {
-		struct ifnet *inifp;
-		inifp = m->m_pkthdr.rcvif;
+	/*
+	 * If the IPv6 header is not aligned, slurp it up into a new
+	 * mbuf with space for link headers, in the event we forward
+	 * it.  OTherwise, if it is aligned, make sure the entire base
+	 * IPv6 header is in the first mbuf of the chain.
+	 */
+	if (IP6_HDR_ALIGNED_P(mtod(m, caddr_t)) == 0) {
+		struct ifnet *inifp = m->m_pkthdr.rcvif;
+		if ((m = m_copyup(m, sizeof(struct ip6_hdr),
+				  (max_linkhdr + 3) & ~3)) == NULL) {
+			/* XXXJRT new stat, please */
+			ip6stat.ip6s_toosmall++;
+			in6_ifstat_inc(inifp, ifs6_in_hdrerr);
+			return;
+		}
+	} else if (__predict_false(m->m_len < sizeof(struct ip6_hdr))) {
+		struct ifnet *inifp = m->m_pkthdr.rcvif;
 		if ((m = m_pullup(m, sizeof(struct ip6_hdr))) == NULL) {
 			ip6stat.ip6s_toosmall++;
 			in6_ifstat_inc(inifp, ifs6_in_hdrerr);
@@ -625,6 +639,7 @@ ip6_input(m)
 			return;
 		}
 #endif
+		KASSERT(IP6_HDR_ALIGNED_P(hbh));
 		nxt = hbh->ip6h_nxt;
 
 		/*
@@ -789,6 +804,7 @@ ip6_hopopts_input(plenp, rtalertp, mp, offp)
 		return -1;
 	}
 #endif
+	KASSERT(IP6_HDR_ALIGNED_P(hbh));
 	off += hbhlen;
 	hbhlen -= sizeof(struct ip6_hbh);
 	opt = (u_int8_t *)hbh + sizeof(struct ip6_hbh);
@@ -1150,6 +1166,7 @@ ip6_savecontrol(in6p, mp, ip6, m)
 				return;
 			}
 #endif
+			KASSERT(IP6_HDR_ALIGNED_P(ip6e));
 
 			switch (nxt) {
 		        case IPPROTO_DSTOPTS:
