@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.91 2000/06/06 18:52:46 soren Exp $	*/
+/*	$NetBSD: trap.c,v 1.92 2000/06/27 04:19:03 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -69,7 +69,6 @@
 #endif
 
 #include <vm/vm.h>
-#include <vm/pmap.h>
 
 #include <uvm/uvm_extern.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.35 2000/06/26 04:55:47 simonb Exp $	*/
+/*	$NetBSD: asc.c,v 1.36 2000/06/27 04:19:01 mrg Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -73,7 +73,6 @@
 #include <sys/poll.h>
 
 #include <vm/vm.h>
-#include <vm/pmap.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>

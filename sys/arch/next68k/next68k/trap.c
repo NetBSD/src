@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.23 2000/06/06 18:52:43 soren Exp $	*/
+/*	$NetBSD: trap.c,v 1.24 2000/06/27 04:19:02 mrg Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/trap.c
@@ -83,7 +83,6 @@
 #include <machine/reg.h>
 
 #include <vm/vm.h>
-#include <vm/pmap.h>
 
 #include <m68k/cacheops.h>
 
