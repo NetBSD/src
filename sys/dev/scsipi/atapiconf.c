@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.29 1999/10/20 15:22:27 enami Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.30 2000/01/20 17:10:19 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -367,6 +367,7 @@ atapi_probedev(atapi, target)
 		sa.sa_inqbuf.vendor = model;
 		sa.sa_inqbuf.product = serial_number;
 		sa.sa_inqbuf.revision = firmware_revision;
+		sa.sa_inqptr = NULL;
 
 		finger = (struct scsi_quirk_inquiry_pattern *)scsipi_inqmatch(
 		    &sa.sa_inqbuf, (caddr_t)atapi_quirk_patterns,
