@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.20 2002/10/23 09:12:10 jdolecek Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.21 2002/11/26 19:50:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1219,7 +1219,7 @@ filt_tctrlrdetach(struct knote *kn)
 	int s;
 
 	s = splts102();
-	SLIST_REMOVE(&sc->sc_rsel.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&sc->sc_rsel.sel_klist, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -1244,7 +1244,7 @@ tctrlkqfilter(dev_t dev, struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &sc->sc_rsel.si_klist;
+		klist = &sc->sc_rsel.sel_klist;
 		kn->kn_fop = &tctrlread_filtops;
 		break;
 
