@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.16 1999/03/24 05:51:22 mrg Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.17 1999/07/07 20:23:45 ws Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -206,11 +206,16 @@ vmcmd_map_readvn(p, cmd)
 	struct exec_vmcmd *cmd;
 {
 	int error;
+	long diff;
 
 	if (cmd->ev_len == 0)
 		return(KERN_SUCCESS); /* XXXCDC: should it happen? */
 	
-	cmd->ev_addr = trunc_page(cmd->ev_addr); /* required by uvm_map */
+	diff = cmd->ev_addr - trunc_page(cmd->ev_addr);
+	cmd->ev_addr -= diff;			/* required by uvm_map */
+	cmd->ev_offset -= diff;
+	cmd->ev_len += diff;
+
 	error = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr, 
 			round_page(cmd->ev_len), NULL, UVM_UNKNOWN_OFFSET, 
 			UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY,
@@ -254,11 +259,15 @@ vmcmd_map_zero(p, cmd)
 	struct exec_vmcmd *cmd;
 {
 	int error;
+	long diff;
 
 	if (cmd->ev_len == 0)
 		return(KERN_SUCCESS); /* XXXCDC: should it happen? */
 	
-	cmd->ev_addr = trunc_page(cmd->ev_addr); /* required by uvm_map */
+	diff = cmd->ev_addr - trunc_page(cmd->ev_addr);
+	cmd->ev_addr -= diff;			/* required by uvm_map */
+	cmd->ev_len += diff;
+
 	error = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr, 
 			round_page(cmd->ev_len), NULL, UVM_UNKNOWN_OFFSET, 
 			UVM_MAPFLAG(cmd->ev_prot, UVM_PROT_ALL, UVM_INH_COPY,
