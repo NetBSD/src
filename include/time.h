@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.13 1997/10/04 15:00:42 kleink Exp $	*/
+/*	$NetBSD: time.h,v 1.14 1997/11/02 18:31:38 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -78,7 +78,7 @@ typedef	_BSD_TIMER_T_	timer_t;
 #define CLOCKS_PER_SEC	100
 
 struct tm {
-	int	tm_sec;		/* seconds after the minute [0-60] */
+	int	tm_sec;		/* seconds after the minute [0-61] */
 	int	tm_min;		/* minutes after the hour [0-59] */
 	int	tm_hour;	/* hours since midnight [0-23] */
 	int	tm_mday;	/* day of the month [1-31] */
@@ -129,6 +129,9 @@ time_t posix2time __P((time_t));
 #include <sys/time.h>		/* for struct timespec */
 struct sigevent;
 struct itimerspec;
+int clock_getres __P((clockid_t, struct timespec *));
+int clock_gettime __P((clockid_t, struct timespec *));
+int clock_settime __P((clockid_t, const struct timespec *));
 int nanosleep __P((const struct timespec *, struct timespec *));
 int timer_create __P((clockid_t, struct sigevent *, timer_t *));
 int timer_delete __P((timer_t));
