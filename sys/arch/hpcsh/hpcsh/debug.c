@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.1 2001/02/21 16:28:03 uch Exp $	*/
+/*	$NetBSD: debug.c,v 1.2 2001/06/28 18:59:06 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@
 #include <sys/systm.h>
 
 #include <hpcsh/hpcsh/debug.h>
+#include <hpc/hpc/bootinfo.h>
 
 #define BANNER_LENGTH		80
 
@@ -77,4 +78,42 @@ __dbg_draw_line(int n)
 	for (i = 0; i < n; i++)
 		printf("-");
 }
+
+#ifdef INTERRUPT_MONITOR
+void
+__dbg_heart_beat(enum heart_beat cause) /* 16bpp R:G:B = 5:6:5 only */
+{
+#define LINE_STEP	2
+	struct state{
+		int cnt;
+		int phase;
+		u_int16_t color;
+	};
+	static struct state __state[] = {
+		{ 0, 0, 0x07ff }, /* cyan */
+		{ 0, 0, 0xf81f }, /* magenta */
+		{ 0, 0, 0x001f }, /* blue */
+		{ 0, 0, 0xffe0 }, /* yellow */
+		{ 0, 0, 0x07e0 }, /* green */
+		{ 0, 0, 0xf800 }, /* red */
+		{ 0, 0, 0xffff }, /* white */
+		{ 0, 0, 0x0000 }  /* black */
+	};
+	struct state *state = &__state[cause & 0x7];
+	u_int16_t *fb = (u_int16_t *)bootinfo->fb_addr;
+	int hline = bootinfo->fb_width;
+	u_int16_t color = state->color;
+	int i;
+
+	fb += (cause & 0x7) * bootinfo->fb_line_bytes * LINE_STEP;
+	if (++state->cnt > hline)
+		state->cnt = 0, state->phase ^= 1;
+	
+	for (i = 0; i < 8; i++)
+		*(fb + i) = color;
+	*(fb + state->cnt) = state->phase ? ~color : color;
+#undef LINE_STEP
+}
+#endif /* INTERRUPT_MONITOR */
+
 #endif /* DEBUG */
