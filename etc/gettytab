@@ -9,7 +9,7 @@
 # entries, and in cases where getty is called with no table name
 #
 default:\
-	:ap:fd#1000:im=\r\n%s/%m (%h) (%t)\r\n\r\n:sp#1200:
+	:ap:im=\r\n%s/%m (%h) (%t)\r\n\r\n:sp#1200:
 
 #
 # Fixed speed entries
@@ -113,6 +113,10 @@ X|Xwindow|X window system:\
 
 P|Pc|Pc console:\
 	:np:ap:sp#9600:
+
+# 8 bit clean Sun console
+S|suncons|Sun Console:\
+	:np:sp#9600:
 
 #
 # Wierdo special case for fast crt's with hardcopy devices
