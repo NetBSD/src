@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.59 2002/01/07 21:47:12 thorpej Exp $	*/
+/*	$NetBSD: pss.c,v 1.60 2002/01/08 17:20:44 christos Exp $	*/
 
 /* XXX THIS DRIVER IS BROKEN.  IT WILL NOT EVEN COMPILE. */
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pss.c,v 1.59 2002/01/07 21:47:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pss.c,v 1.60 2002/01/08 17:20:44 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -705,6 +705,17 @@ pssprobe(parent, match, aux)
     void *aux;
 {
     struct pss_softc probesc, *sc = &probesc;
+    struct isa_attach_args *ia = aux;
+
+    if (ia->ia_nio < 1)
+	    return (0);
+    if (ia->ia_nirq < 1)
+	    return (0);
+    if (ia->ia_ndrq < 1)
+	    return (0);
+
+    if (ISA_DIRECT_CONFIG(ia))
+	return (0);
 
     memset(sc, 0, sizeof *sc);
     sc->sc_dev.dv_cfdata = match;
@@ -718,15 +729,15 @@ pssfind(parent, sc, ia)
     struct pss_softc *sc;
     struct isa_attach_args *ia;
 {
-    int iobase = ia->ia_iobase;
-    
+    int iobase = ia->ia_io[0].ir_addr;
+
     if (!PSS_BASE_VALID(iobase)) {
 	printf("pss: configured iobase %x invalid\n", iobase);
 	return 0;
     }
 
-    /* Need to probe for iobase when IOBASEUNK {0x220 0x240} */
-    if (iobase == IOBASEUNK) {
+    /* Need to probe for iobase when ISACF_PORT_DEFAULT {0x220 0x240} */
+    if (iobase == ISACF_PORT_DEFAULT) {
 
 	iobase = 0x220;
 	if ((inw(iobase+PSS_ID_VERS) & 0xff00) == 0x4500)
@@ -758,7 +769,7 @@ pss_found:
     outw(sc->sc_iobase+MIDI_CONFIG, 0);
     outw(sc->sc_iobase+CD_CONFIG, 0);
 
-    if (ia->ia_irq == IRQUNK) {
+    if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT) {
 	int i;
 	for (i = 0; i < 16; i++) {
 	    if (pss_testirq(sc, i) != 0)
@@ -769,28 +780,30 @@ pss_found:
 	    return 0;
 	}
 	else {
-	    ia->ia_irq = i;
+	    ia->ia_irq[0].ir_irq = i;
 	    printf("pss: found IRQ %d free\n", i);
 	}
     }
     else {
-	if (pss_testirq(sc, ia->ia_irq) == 0) {
-	    printf("pss: configured IRQ unavailable (%d)\n", ia->ia_irq);
+	if (pss_testirq(sc, ia->ia_irq[0].ir_irq) == 0) {
+	    printf("pss: configured IRQ unavailable (%d)\n",
+		ia->ia_irq[0].ir_irq);
 	    return 0;
 	}
     }
 
-    /* XXX Need to deal with DRQUNK */
-    if (pss_testdma(sc, ia->ia_drq) == 0) {
-	printf("pss: configured DMA channel unavailable (%d)\n", ia->ia_drq);
+    /* XXX Need to deal with ISACF_DRQ_DEFAULT */
+    if (pss_testdma(sc, ia->ia_drq[0].ir_drq) == 0) {
+	printf("pss: configured DMA channel unavailable (%d)\n",
+	    ia->ia_drq[0].ir_drq);
 	return 0;
     }
       
-    ia->ia_iosize = PSS_NPORT;
+    ia->ia_io[0].ir_size = PSS_NPORT;
 
     /* Initialize PSS irq and dma */
-    pss_setint(ia->ia_irq, sc->sc_iobase+PSS_CONFIG);
-    pss_setdma(sc->sc_drq, sc->sc_iobase+PSS_CONFIG);
+    pss_setint(ia->ia_irq[0].ir_irq, sc->sc_iobase+PSS_CONFIG);
+    pss_setdma(ia->ia_drq[0].ir_drq, sc->sc_iobase+PSS_CONFIG);
 
 #ifdef notyet
     /* Setup the Game port */
@@ -847,7 +860,7 @@ spfind(parent, sc, ia)
     }
 	
     /* Setup WSS interrupt and DMA if auto */
-    if (cf->cf_irq == IRQUNK) {
+    if (cf->cf_irq == ISACF_IRQ_DEFAULT) {
 
 	/* Find unused IRQ for WSS */
 	for (i = 0; i < 12; i++) {
@@ -874,7 +887,7 @@ spfind(parent, sc, ia)
 	}
     }
 
-    if (cf->cf_drq == DRQUNK) {
+    if (cf->cf_drq == ISACF_DRQ_DEFAULT) {
 	/* Find unused DMA channel for WSS */
 	for (i = 0; i < 4; i++) {
 	    if (wss_dma_bits[i]) {
@@ -893,7 +906,8 @@ spfind(parent, sc, ia)
     }
     else {
 	if (pss_testdma(pc, sc->sc_playdrq) == 0) {
-	    printf("sp: configured DMA channel unavailable (%d)\n", sc->sc_playdrq);
+	    printf("sp: configured DMA channel unavailable (%d)\n",
+		sc->sc_playdrq);
 	    return 0;
 	}
 	sc->sc_playdrq = cf->cf_drq;
@@ -949,7 +963,7 @@ pssattach(parent, self, aux)
 {
     struct pss_softc *sc = (struct pss_softc *)self;
     struct isa_attach_args *ia = (struct isa_attach_args *)aux;
-    int iobase = ia->ia_iobase;
+    int iobase = ia->ia_io[0].ir_addr;
     u_char vers;
     struct ad1848_volume vol = {150, 150};
     
@@ -959,11 +973,11 @@ pssattach(parent, self, aux)
     }
 
     sc->sc_iobase = iobase;
-    sc->sc_drq = ia->ia_drq;
+    sc->sc_drq = ia->ia_drq[0].ir_drq;
 
     /* Setup interrupt handler for PSS */
-    sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE, IPL_AUDIO,
-	pssintr, sc);
+    sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq, IST_EDGE,
+	IPL_AUDIO, pssintr, sc);
 
     vers = (inw(sc->sc_iobase+PSS_ID_VERS)&0xff) - 1;
     printf(": ESC614%c\n", (vers > 0)?'A'+vers:' ');
