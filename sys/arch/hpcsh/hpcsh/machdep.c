@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.33 2002/03/10 07:46:13 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.34 2002/03/17 14:05:12 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -274,8 +274,8 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	kernend += sz;
 	mem_clusters[1].start += sz;
 	mem_clusters[1].size -= sz;
-	_DPRINTF("proc0: steal %ld KB, stack: 0x%08x\n", sz >> 10,
-	    proc0.p_addr->u_pcb.kr15);
+	_DPRINTF("proc0: steal %ld KB, stack: 0x%08lx\n", sz >> 10,
+	    proc0.p_addr->u_pcb.pcb_sp);
 
 	/* 
 	 * Debugger.
@@ -309,7 +309,7 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	/* Jump to main */
 	__asm__ __volatile__(
 		"jmp	@%0;"
-		"mov	%1, sp" :: "r"(main), "r"(proc0.p_addr->u_pcb.kr15));
+		"mov	%1, sp" :: "r"(main), "r"(proc0.p_addr->u_pcb.pcb_sp));
 	/* NOTREACHED */
 	while (1)
 		;
