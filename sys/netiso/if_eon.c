@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.20 1997/03/15 18:12:38 is Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.21 1998/01/16 18:54:10 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -203,6 +203,9 @@ eonioctl(ifp, cmd, data)
 			if (ifa->ifa_addr->sa_family != AF_LINK)
 				ifa->ifa_rtrequest = eonrtrequest;
 		}
+		break;
+	default:
+		error = EINVAL;
 		break;
 	}
 	splx(s);
