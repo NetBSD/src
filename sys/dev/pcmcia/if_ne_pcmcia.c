@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.3 1997/10/18 10:56:28 enami Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.4 1997/10/19 14:00:32 enami Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -78,8 +78,8 @@ struct cfattach ne_pcmcia_ca = {
 
 struct ne2000dev {
     char *name;
-    int manufacturer;
-    int product;
+    int32_t manufacturer;
+    int32_t product;
     char *cis1_info0;
     char *cis1_info1;
     int function;
@@ -101,7 +101,9 @@ struct ne2000dev {
       0x0149, 0x0265, "LINKSYS", "E-CARD",
       0, -1, { 0x00, 0x80, 0xc8 } },
     { "Planet SmartCOM 2000",
-      0xffffffff, 0xffff,  "PCMCIA", "UE2212", 0,
+      /* This card doesn't have manufacturer and product id in CIS.  */
+      PCMCIA_MANUFACTURER_INVALID, PCMCIA_PRODUCT_INVALID,
+      "PCMCIA", "UE2212", 0,
       0xff0, { 0x00, 0x00, 0xe8 } },
 #if 0
     /* the rest of these are stolen from the linux pcnet pcmcia device
@@ -213,7 +215,9 @@ struct ne2000dev {
 #define	NE2000_NDEVS	(sizeof(ne2000devs) / sizeof(ne2000devs[0]))
 
 #define ne2000_match(card, fct, n) \
-((((((card)->manufacturer == ne2000devs[(n)].manufacturer) && \
+((((((card)->manufacturer != PCMCIA_MANUFACTURER_INVALID) && \
+    ((card)->manufacturer == ne2000devs[(n)].manufacturer) && \
+    ((card)->product != PCMCIA_PRODUCT_INVALID) && \
     ((card)->product == ne2000devs[(n)].product)) || \
    ((ne2000devs[(n)].cis1_info0) && (ne2000devs[(n)].cis1_info1) && \
     (strcmp((card)->cis1_info[0], ne2000devs[(n)].cis1_info0) == 0) && \

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciavar.h,v 1.2 1997/10/16 23:27:40 thorpej Exp $	*/
+/*	$NetBSD: pcmciavar.h,v 1.3 1997/10/19 14:00:42 enami Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -137,8 +137,15 @@ struct pcmcia_card {
 	/* XXX waste of space? */
 	char		cis1_info_buf[256];
 	char		*cis1_info[4];
-	int		manufacturer;
-	u_int16_t	product;
+	/*
+	 * Use int32_t for manufacturer and product so that they can
+	 * hold the id value found in card CIS and special value that
+	 * indicates no id was found.
+	 */
+	int32_t		manufacturer;
+#define	PCMCIA_MANUFACTURER_INVALID	-1
+	int32_t		product;
+#define	PCMCIA_PRODUCT_INVALID		-1
 	u_int16_t	error;
 	SIMPLEQ_HEAD(, pcmcia_function) pf_head;
 };
@@ -166,8 +173,8 @@ struct pcmcia_softc {
 };
 
 struct pcmcia_attach_args {
-	u_int16_t manufacturer;
-	u_int16_t product;
+	int32_t manufacturer;
+	int32_t product;
 	struct pcmcia_card *card;
 	struct pcmcia_function *pf;
 };
