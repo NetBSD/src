@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: gen-dir-node,v 1.1.1.2 2001/07/25 16:21:23 assar Exp $
+# Id: gen-dir-node,v 1.1 2002/08/25 23:38:39 karl Exp
 # Generate the top-level Info node, given a directory of Info files
 # and (optionally) a skeleton file.  The output will be suitable for a
 # top-level dir file.  The skeleton file contains info topic names in the
@@ -51,7 +51,7 @@ echo "This version was generated on `date`"
 echo "by `whoami`@`hostname` for `(cd ${INFODIR}; pwd)`"
 
 cat << moobler
-\$Id: gen-dir-node,v 1.1.1.2 2001/07/25 16:21:23 assar Exp $
+\Id: gen-dir-node,v 1.1 2002/08/25 23:38:39 karl Exp
 This is the file .../info/dir, which contains the topmost node of the
 Info hierarchy.  The first time you invoke Info you start off
 looking at that node, which is (dir)Top.

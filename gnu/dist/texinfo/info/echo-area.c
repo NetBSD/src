@@ -1,7 +1,9 @@
-/* echo-area.c -- how to read a line in the echo area.
-   $Id: echo-area.c,v 1.1.1.2 2001/07/25 16:20:46 assar Exp $
+/*	$NetBSD: echo-area.c,v 1.1.1.3 2003/01/17 14:54:31 wiz Exp $	*/
 
-   Copyright (C) 1993, 97, 98, 99 Free Software Foundation, Inc.
+/* echo-area.c -- how to read a line in the echo area.
+   Id: echo-area.c,v 1.1 2002/08/25 23:38:38 karl Exp
+
+   Copyright (C) 1993, 1997, 1998, 1999, 2001 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -868,7 +870,10 @@ info_read_completing_internal (window, prompt, completions, force)
           /* If no match, go back and try again. */
           if (i == completions_found_index)
             {
-              inform_in_echo_area (_("Not complete"));
+              if (!completions_found_index)
+                inform_in_echo_area (_("No completions"));
+              else
+                inform_in_echo_area (_("Not complete"));
               continue;
             }
         }
@@ -1258,7 +1263,26 @@ build_completions ()
 
     maybe_free (LCD_reference.label);
     LCD_reference.label = (char *)xmalloc (1 + shortest);
-    strncpy (LCD_reference.label, completions_found[0]->label, shortest);
+    /* Since both the sorting done inside remove_completion_duplicates
+       and all the comparisons above are case-insensitive, it's
+       possible that the completion we are going to return is
+       identical to what the user typed but for the letter-case.  This
+       is confusing, since the user could type FOOBAR<TAB> and get her
+       string change letter-case for no good reason.  So try to find a
+       possible completion whose letter-case is identical, and if so,
+       use that.  */
+    if (completions_found_index > 1)
+      {
+	int req_len = strlen (request);
+
+        for (i = 0; i < completions_found_index; i++)
+          if (strncmp (request, completions_found[i]->label, req_len) == 0)
+            break;
+        /* If none of the candidates match exactly, use the first one.  */
+        if (i >= completions_found_index)
+          i = 0;
+      }
+    strncpy (LCD_reference.label, completions_found[i]->label, shortest);
     LCD_reference.label[shortest] = '\0';
     LCD_completion = &LCD_reference;
   }
