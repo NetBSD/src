@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP2x,v 1.3 2003/12/14 07:31:02 sekiya Exp $
+#	$NetBSD: GENERIC32_IP2x,v 1.4 2003/12/15 05:29:20 lonewolf Exp $
 #
 # Indy
 
@@ -8,7 +8,7 @@ makeoptions	TEXTADDR=0x88069000	# Indy
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.3 $"
+#ident		"GENERIC-$Revision: 1.4 $"
 
 maxusers	32
 
@@ -114,8 +114,6 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
 options 	MIIVERBOSE	# verbose PHY autoconfig messages
-options 	PCIVERBOSE	# verbose PCI device autoconfig messages
-#options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 options 	SCSIVERBOSE	# human readable SCSI error messages
 
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
@@ -126,6 +124,25 @@ options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 #options 	MINIROOTSIZE=8192
 
 #options 	SCSI_DELAY=5
+
+#
+# wscons options
+#
+# builtin terminal emulations
+#options 	WSEMUL_SUN		# sun terminal emulation
+options 	WSEMUL_VT100		# VT100 / VT220 emulation
+# different kernel output - see dev/wscons/wsdisplayvar.h
+options 	WS_KERNEL_FG=WSCOL_GREEN
+#options 	WS_KERNEL_BG=WSCOL_BLACK
+# compatibility to other console drivers
+options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+# see dev/pckbc/wskbdmap_mfii.c for implemented layouts
+#options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
+# the following enables some functions to get mouse console support.
+# if you want a really secure system, it may be better not to enable them,
+# see wsmoused(8), section SECURITY CONSIDERATIONS for more info.
+#options 	WSDISPLAY_CHARFUNCS		# mouse console support
+
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
@@ -151,12 +168,21 @@ hpc0 		at gio? addr 0x1fb80000
 hpc1 		at gio? addr 0x1fb00000
 hpc2 		at gio? addr 0x1f980000
 
+newport*	at gio? slot ?
+wsdisplay* 	at newport? console ?
+
 # HPC devices
 sq* 		at hpc0 offset ?
 wdsc* 		at hpc0 offset ?
 dpclock*	at hpc0 offset ?	# IP20
 dsclock*	at hpc0 offset ?	# IP22/24
 haltwo*         at hpc0 offset ?
+pckbc*		at hpc0 offset ?
+
+pckbd*  	at pckbc?
+pms* 		at pckbc?
+wskbd* 		at pckbd? console ?
+wsmouse* 	at pms? mux 0
 
 #
 # As always, the zs chip is wired funny, so channel 1 is actually the
@@ -164,9 +190,6 @@ haltwo*         at hpc0 offset ?
 #
 zsc* 		at hpc0 offset ?
 zstty*		at zsc? channel ?
-
-#pbus0		at hpc0
-#pckbc0 	at pbus0 device ?
 
 scsibus*	at scsi?		# HPC SCSI
 audio*          at audiobus?
@@ -204,7 +227,8 @@ pseudo-device	sequencer	1	# MIDI sequencer
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
-#pseudo-device	wsfont
+pseudo-device	wsmux                   # mouse & keyboard multiplexor
+pseudo-device	wsfont
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 pseudo-device	vcoda		4	# coda minicache <-> venus comm.
