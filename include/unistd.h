@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.82 2000/04/01 22:37:15 christos Exp $	*/
+/*	$NetBSD: unistd.h,v 1.83 2000/04/02 06:32:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -80,8 +80,6 @@
 #include <sys/types.h>
 #include <sys/unistd.h>
 
-#include <getopt.h>
-
 
 /*
  * IEEE Std 1003.1-90
@@ -144,6 +142,20 @@ int	 tcsetpgrp __P((int, pid_t));
 __aconst char *ttyname __P((int));
 int	 unlink __P((const char *));
 ssize_t	 write __P((int, const void *, size_t));
+
+
+/*
+ * IEEE Std 1003.2-92, adopted in X/Open Portability Guide Issue 4 and later
+ */
+#if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
+    (_POSIX_C_SOURCE - 0) >= 2 || (_XOPEN_SOURCE - 0) >= 4
+int	 getopt __P((int, char * const [], const char *));
+
+extern	 char *optarg;			/* getopt(3) external variables */
+extern	 int opterr;
+extern	 int optind;
+extern	 int optopt;
+#endif
 
 
 /*
@@ -286,6 +298,7 @@ int	 fchroot __P((int));
 int	 getdomainname __P((char *, size_t));
 int	 getgrouplist __P((const char *, gid_t, gid_t *, int *));
 mode_t	 getmode __P((const void *, mode_t));
+int	 getsubopt __P((char **, char * const *, char **));
 __aconst char *getusershell __P((void));
 int	 initgroups __P((const char *, gid_t));
 int	 iruserok __P((u_int32_t, int, const char *, const char *));
@@ -325,6 +338,8 @@ int	 iruserok_sa __P((const void *, int, int, const char *, const char *));
 #endif
 
 extern __const char *__const *sys_siglist __RENAME(__sys_siglist14);
+extern	 int optreset;		/* getopt(3) external variable */
+extern	 char *suboptarg;	/* getsubopt(3) external variable */
 #endif
 
 __END_DECLS
