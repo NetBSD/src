@@ -1,3 +1,4 @@
+/*	$NetBSD: randtable.c,v 1.2 1998/09/14 03:08:18 ross Exp $	*/
 
 /*-------------------------------------------------------------*/
 /*--- Table for randomising repetitive blocks               ---*/
