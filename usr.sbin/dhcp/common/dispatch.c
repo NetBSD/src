@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dispatch.c,v 1.1.1.1 1997/03/29 21:52:16 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dispatch.c,v 1.1.1.2 1997/03/29 23:57:54 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -247,7 +247,7 @@ void discover_interfaces (state)
 				if (!tif)
 					error ("no space to remember ifp.");
 				memcpy (tif, ifp, len);
-				tmp -> ifp = ifp;
+				tmp -> ifp = tif;
 				tmp -> primary_address = foo.sin_addr;
 			}
 
