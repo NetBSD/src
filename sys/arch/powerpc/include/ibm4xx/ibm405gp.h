@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm405gp.h,v 1.2 2001/06/24 01:13:11 simonb Exp $	*/
+/*	$NetBSD: ibm405gp.h,v 1.3 2001/06/25 01:49:15 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -203,7 +203,7 @@
 #define	GPIO0_IR		0x1c	/* Input */
 
 /* Ethernet MAC Registers */
-#define	EMAC0_BASE		0xef000800
+#define	EMAC0_BASE		0xef600800
 
 #define	EMAC0_MR0		0x00	/* Mode Register 0 */
 #define	  MR0_RXI		  0x80000000	/* Receive MAC Idle */
