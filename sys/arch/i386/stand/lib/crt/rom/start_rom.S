@@ -1,4 +1,4 @@
-/*	$NetBSD: start_rom.S,v 1.6 1999/11/03 09:28:15 mycroft Exp $	*/
+/*	$NetBSD: start_rom.S,v 1.7 1999/11/03 09:55:32 mycroft Exp $	*/
 	
 /*
  * ROM startup
@@ -221,10 +221,6 @@ ENTRY(start)
 
 	data32
 	call	_C_LABEL(real_to_prot)
-
-	movw	$(reloc), gdt+bootrealseg+2
-	movb	$(reloc)>>16, gdt+bootrealseg+4
-
 	call	_C_LABEL(main)
 
 	.globl	_C_LABEL(exit)
@@ -283,7 +279,7 @@ bootdataseg = . - gdt
 	/* 16 bit real mode */
 bootrealseg = . - gdt
 	.word	0xffff, 0
-	.byte	0, 0x9e, 0x00, 0
+	.byte	0, 0x9b, 0x0f, 0
 gdtlen = . - gdt
 
 #ifdef __ELF__
@@ -336,7 +332,7 @@ ENTRY(prot_to_real)
 	sub	$reloc, %eax		/* Adjust return address */
 	push	%eax
 	sub	$reloc, %esp		/* Adjust stack pointer */
-	ljmp	$bootrealseg, $(1f-reloc)	/* jump to a 16 bit segment */
+	ljmp	$bootrealseg, $1f	/* jump to a 16 bit segment */
 1:
 	/* clear the PE bit of CR0 */
 	mov	%cr0, %eax
@@ -348,7 +344,7 @@ ENTRY(prot_to_real)
 	 * and reload CS register
 	 */
 	data32
-	ljmp	$(reloc)>>4, $(2f-reloc)
+	ljmp	$(reloc)>>4, $2f-reloc
 2:
 	/* we are in real mode now
 	 * set up the real mode segment registers : DS, SS, ES
