@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: intro.4,v 1.1 1996/03/28 21:30:56 mark Exp $
+.\"	$Id: intro.4,v 1.2 1996/10/15 23:57:42 mark Exp $
 .\"
 .Dd
 .Dt INTRO 4 arm32
@@ -102,11 +102,21 @@ Not all supported devices are listed.
 .Bl -tag -width speaker -offset indent -compact
 .It beep
 VIDC20 beep device interface
+.It vidcvideo
+VIDC20 device interface
+.It rd
+Ramdisk device interface
 .It com
 NS8250-, NS16450-, and NS16550-based asynchronous serial
 communications device interface
+.It ea
+Ether3/Ether5 podule device interface.
 .It eb
 EtherB network slot device interface.
+.It eh
+EtherH network slot device interface.
+.It ie
+Ether1 podule device interface.
 .It quadmouse
 RiscPC quadrature mouse device interface.
 .It lpt
@@ -114,11 +124,21 @@ Parallel port device interface
 .It mem
 Main memory interface
 .It wd
-Standard Internal RiscPC IDE deviceinterface
+Standard Internal RiscPC IDE device interface
+.It fd
+Standard Internal RiscPC floppy device interface
+.It asc
+Acorn SCSI I card device interface
+.It csc
+Cumana SCSI II card device interface
+.It ptsc
+Powertec SCSI II card device interface
+.It oak
+Oak SCSI I card device interface
 .El
 .Sh HISTORY
 The
 .Tn arm32
 .Nm intro
 appeared in
-.Nx 1.0a .
+.Nx 1.1a .
