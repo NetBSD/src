@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.33 2000/09/10 11:44:13 lukem Exp $ */
+/* $NetBSD: vga.c,v 1.34 2000/09/15 14:13:01 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -348,7 +348,8 @@ bad:
  */
 #define vga_valid_primary_font(f) \
 	(f->encoding == WSDISPLAY_FONTENC_IBM || \
-	f->encoding == WSDISPLAY_FONTENC_ISO)
+	f->encoding == WSDISPLAY_FONTENC_ISO || \
+	f->encoding == WSDISPLAY_FONTENC_ISO7)
 
 int
 vga_selectfont(vc, scr, name1, name2)
@@ -515,22 +516,7 @@ vga_init(vc, iot, memt)
 	vc->nscreens = 0;
 	LIST_INIT(&vc->screens);
 	vc->active = NULL;
-
-#ifndef WSCONS_DEFAULT_TYPE
-#define WSCONS_DEFAULT_TYPE	"80x25"
-#endif
-	vc->currenttype = wsdisplay_screentype_pick(vh->vh_mono ?
-	    &vga_screenlist_mono : &vga_screenlist, WSCONS_DEFAULT_TYPE);
-	if (vc->currenttype == NULL)
-		panic("vga_init: unknown screen type `%s'",
-		    WSCONS_DEFAULT_TYPE);
-			/*
-			 * XXX: here we should ensure that the fontheight
-			 *	and fontwidth match vga_builtinfont's
-			 *	heigth & width...
-			 */
-	vga_setscreentype(vh, vc->currenttype);
-
+	vc->currenttype = vh->vh_mono ? &vga_25lscreen_mono : &vga_25lscreen;
 	callout_init(&vc->vc_switch_callout);
 
 	vc->vc_fonts[0] = &vga_builtinfont;
@@ -584,7 +570,20 @@ vga_cnattach(iot, memt, type, check)
 
 	/* set up bus-independent VGA configuration */
 	vga_init(&vga_console_vc, iot, memt);
+#ifdef VGA_CONSOLE_SCREENTYPE
+	scr = wsdisplay_screentype_pick(vga_console_vc.hdl.vh_mono ?
+	       &vga_screenlist_mono : &vga_screenlist, VGA_CONSOLE_SCREENTYPE);
+	if (!scr)
+		panic("vga_cnattach: invalid screen type");
+	if (scr->fontheight != 16)
+		panic("vga_cnattach: console screen type w/o font");
+	if (scr != vga_console_vc.currenttype) {
+		vga_setscreentype(&vga_console_vc.hdl, scr);
+		vga_console_vc.currenttype = scr;
+	}
+#else
 	scr = vga_console_vc.currenttype;
+#endif
 	vga_init_screen(&vga_console_vc, &vga_console_screen, scr, 1, &defattr);
 
 	vga_console_screen.pcs.active = 1;
@@ -1129,6 +1128,31 @@ vga_pcvt_mapchar(uni, index)
 
 #endif /* WSCONS_SUPPORT_PCVTFONTS */
 
+#ifdef WSCONS_SUPPORT_ISO7FONTS
+
+static int
+vga_iso7_mapchar(int uni, unsigned int *index)
+{
+
+	/*
+	 * U+0384 (GREEK TONOS) to
+	 * U+03ce (GREEK SMALL LETTER OMEGA WITH TONOS)
+	 * map directly to the iso-9 font
+	 */
+	if (uni >= 0x0384 && uni <= 0x03ce) {
+		/* U+0384 is at offset 0xb4 in the font */
+		*index = uni - 0x0384 + 0xb4;
+		return (5);
+	}
+
+	/* XXX more chars in the iso-9 font */
+
+	*index = 0xa4; /* shaded rectangle */
+	return (0);
+}
+
+#endif /* WSCONS_SUPPORT_ISO7FONTS */
+
 static int _vga_mapchar __P((void *, struct vgafont *, int, unsigned int *));
 
 static int
@@ -1154,6 +1178,10 @@ _vga_mapchar(id, font, uni, index)
 #ifdef WSCONS_SUPPORT_PCVTFONTS
 	case WSDISPLAY_FONTENC_PCVT:
 		return (vga_pcvt_mapchar(uni, index));
+#endif
+#ifdef WSCONS_SUPPORT_ISO7FONTS
+	case WSDISPLAY_FONTENC_ISO7:
+		return (vga_iso7_mapchar(uni, index));
 #endif
 	default:
 #ifdef VGAFONTDEBUG
