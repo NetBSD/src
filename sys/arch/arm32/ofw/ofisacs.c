@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisacs.c,v 1.3 1998/05/01 21:18:42 cgd Exp $	*/
+/*	$NetBSD: ofisacs.c,v 1.4 1998/07/07 00:48:11 mark Exp $	*/
 
 /*
  * Copyright 1997
@@ -67,65 +67,65 @@ extern struct cfdriver ofisacs_cd;
 
 int
 ofisacsprobe(parent, cf, aux)
-    struct device *parent;
-    struct cfdata *cf;
-    void *aux;
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
 {
-    struct ofbus_attach_args *oba = aux;
-    char type[64];
-    char name[64];
-    char model[64];
-    char compatible[64];
+	struct ofbus_attach_args *oba = aux;
+	char type[64];
+	char name[64];
+	char model[64];
+	char compatible[64];
 
-    /* At a minimum, must match type and name properties. */
-    if ( OF_getprop(oba->oba_phandle, "device_type", type, sizeof(type)) < 0 ||
-	 strcmp(type, "network") != 0 ||
-	 OF_getprop(oba->oba_phandle, "name", name, sizeof(name)) < 0 ||
-	 strcmp(name, "ethernet") != 0)
+	/* At a minimum, must match type and name properties. */
+	if ( OF_getprop(oba->oba_phandle, "device_type", type,
+	    sizeof(type)) < 0 || strcmp(type, "network") != 0 ||
+	    OF_getprop(oba->oba_phandle, "name", name, sizeof(name)) < 0 ||
+	    strcmp(name, "ethernet") != 0)
+		return 0;
+
+	/* Full match on model. */
+	if ( OF_getprop(oba->oba_phandle, "model", model, sizeof(model)) > 0 &&
+	    strcmp(model, "CS8900") == 0)
+		return 3;
+
+	/* Check for compatible match. */
+	if ( OF_getprop(oba->oba_phandle, "compatible", compatible,
+	    sizeof(compatible)) > 0 && strstr(compatible, "CS8900") != NULL)
+		return 2;
+
+	/* No match. */
 	return 0;
-
-    /* Full match on model. */
-    if ( OF_getprop(oba->oba_phandle, "model", model, sizeof(model)) > 0 &&
-	 strcmp(model, "CS8900") == 0)
-	return 3;
-
-    /* Check for compatible match. */
-    if ( OF_getprop(oba->oba_phandle, "compatible", compatible, sizeof(compatible)) > 0 &&
-	 strstr(compatible, "CS8900") != NULL)
-	return 2;
-
-    /* No match. */
-    return 0;
 }
 
 
 void
 ofisacsattach(parent, dev, aux)
-    struct device *parent, *dev;
-    void *aux;
+	struct device *parent, *dev;
+	void *aux;
 {
-    struct ofbus_attach_args *oba = aux;
-    struct isa_attach_args ia;
+	struct ofbus_attach_args *oba = aux;
+	struct isa_attach_args ia;
 
-    printf("\n");
+	printf("\n");
 
-    /* XXX - Hard-wire the ISA attach args for now. -JJK */
-    ia.ia_iot = &isa_io_bs_tag;
-    ia.ia_memt = &isa_mem_bs_tag;
-    ia.ia_ic = NULL;			/* not used */
-    ia.ia_iobase = 0x0300;
-    ia.ia_iosize = CS8900_IOSIZE;
-    ia.ia_irq = IRQ_ETHERNET;
+	/* XXX - Hard-wire the ISA attach args for now. -JJK */
+	ia.ia_iot = &isa_io_bs_tag;
+	ia.ia_memt = &isa_mem_bs_tag;
+	ia.ia_ic = NULL;			/* not used */
+	ia.ia_iobase = 0x0300;
+	ia.ia_iosize = CS8900_IOSIZE;
+	ia.ia_irq = IRQ_ETHERNET;
 
-    if (OF_getproplen(oba->oba_phandle, "no-dma") < 0)
-      ia.ia_drq = 6;
-    else {
-      ia.ia_drq = DRQUNK;
-      printf("ofisacs: disabling DMA.\n");
-    }
-    ia.ia_maddr = 0xd0000;
-    ia.ia_msize = 4096;
-    ia.ia_aux = (void *)oba->oba_phandle;
+	if (OF_getproplen(oba->oba_phandle, "no-dma") < 0)
+		ia.ia_drq = 6;
+	else {
+		ia.ia_drq = DRQUNK;
+		printf("ofisacs: disabling DMA.\n");
+	}
+	ia.ia_maddr = 0xd0000;
+	ia.ia_msize = 4096;
+	ia.ia_aux = (void *)oba->oba_phandle;
 
-    config_found(dev, &ia, NULL);
+	config_found(dev, &ia, NULL);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_clock.c,v 1.5 1998/06/24 19:31:59 mark Exp $	*/
+/*	$NetBSD: ofwgencfg_clock.c,v 1.6 1998/07/07 00:48:13 mark Exp $	*/
 
 /*
  * Copyright 1997
@@ -61,6 +61,7 @@ int
 clockhandler(frame)
 	struct clockframe *frame;
 {
+
 	hardclock(frame);
 	return(0);	/* Pass the interrupt on down the chain */
 }
@@ -78,6 +79,7 @@ int
 statclockhandler(frame)
 	struct clockframe *frame;
 {
+
 	statclock(frame);
 	return(0);	/* Pass the interrupt on down the chain */
 }
@@ -93,6 +95,7 @@ void
 setstatclockrate(hz)
 	int hz;
 {
+
 #ifdef	OFWGENCFG
 	printf("Not setting statclock: OFW generic has only one clock.\n");
 #endif

@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_irqhandler.c,v 1.3 1998/07/06 00:53:08 mark Exp $ */
+/* $NetBSD: ofw_irqhandler.c,v 1.4 1998/07/07 00:48:12 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -70,8 +70,8 @@ extern u_int intrcnt[];
 u_int irqblock[NIRQS];
 
 typedef struct {
-    vm_offset_t physical;
-    vm_offset_t virtual;
+	vm_offset_t physical;
+	vm_offset_t virtual;
 } pv_addr_t;
              
 extern pv_addr_t systempage;
@@ -529,8 +529,8 @@ int
 fiq_claim(handler)
 	fiqhandler_t *handler;
 {
-    /* Not supported. */
-    return(-1);
+	/* Not supported. */
+	return(-1);
 }
 
 
@@ -544,8 +544,8 @@ int
 fiq_release(handler)
 	fiqhandler_t *handler;
 {
-    /* Not supported. */
-    return(-1);
+	/* Not supported. */
+	return(-1);
 }
 
 /* End of irqhandler.c */
