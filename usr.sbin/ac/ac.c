@@ -14,7 +14,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: ac.c,v 1.2 1994/04/25 18:11:32 cgd Exp $";
+static char rcsid[] = "$Id: ac.c,v 1.3 1994/05/01 04:39:35 cgd Exp $";
 #endif
 
 #include <sys/types.h>
@@ -51,7 +51,7 @@ struct user_list {
  */
 struct tty_list {
 	struct tty_list *next;
-	char	name[UT_LINESIZE+1];
+	char	name[UT_LINESIZE+3];
 	int	len;
 	int	ret;
 };
@@ -129,7 +129,7 @@ add_tty(name)
 		tp->ret = 0;
 		name++;
 	}
-	(void)strncpy(tp->name, name, sizeof (tp->name));
+	(void)strncpy(tp->name, name, sizeof (tp->name) - 1);
 	tp->name[sizeof (tp->name) - 1] = '\0';
 	if ((rcp = strchr(tp->name, '*')) != NULL) {	/* wild card */
 		*rcp = '\0';
@@ -157,7 +157,7 @@ do_tty(name)
 			if (strncmp(name, tp->name, tp->len) == 0)
 				return tp->ret;
 		} else {
-			if (strcmp(name, tp->name) == 0)
+			if (strncmp(name, tp->name, sizeof (tp->name)) == 0)
 				return tp->ret;
 		}
 	}
@@ -175,7 +175,8 @@ on_console(head)
 	struct utmp_list *up;
 
 	for (up = head; up; up = up->next) {
-		if (strcmp(up->usr.ut_line, Console) == 0)
+		if (strncmp(up->usr.ut_line, Console,
+		    sizeof (up->usr.ut_line)) == 0)
 			return 1;
 	}
 	return 0;
@@ -194,7 +195,7 @@ update_user(head, name, secs)
 	struct user_list *up;
 
 	for (up = head; up != NULL; up = up->next) {
-		if (strcmp(up->name, name) == 0) {
+		if (strncmp(up->name, name, sizeof (up->name)) == 0) {
 			up->secs += secs;
 			Total += secs;
 			return head;
@@ -352,17 +353,17 @@ log_out(head, up)
 	time_t secs;
 	
 	for (lp = head, lp2 = NULL; lp != NULL; )
-		if (*up->ut_line == '~' ||
-		    strcmp(lp->usr.ut_line, up->ut_line) == 0) {
+		if (*up->ut_line == '~' || strncmp(lp->usr.ut_line, up->ut_line,
+		    sizeof (up->ut_line)) == 0) {
 			secs = up->ut_time - lp->usr.ut_time;
 			Users = update_user(Users, lp->usr.ut_name, secs);
 #ifdef DEBUG
 			if (Debug)
-				printf(
-				    "%-.*s %s: %s logged out (%2d:%02d:%02d)\n",
-				    19, ctime(&up->ut_time), lp->usr.ut_line,
-				    lp->usr.ut_name, secs / 3600,
-				    (secs % 3600) / 60, secs % 60);
+				printf("%-.*s %-.*s: %-.*s logged out (%2d:%02d:%02d)\n",
+				    19, ctime(&up->ut_time),
+				    sizeof (lp->usr.ut_line), lp->usr.ut_line,
+				    sizeof (lp->usr.ut_name), lp->usr.ut_name,
+				    secs / 3600, (secs % 3600) / 60, secs % 60);
 #endif
 			/*
 			 * now lose it
@@ -419,7 +420,8 @@ log_in(head, up)
 		/*
 		 * this allows us to pick the right logout
 		 */
-		(void)strcpy(up->ut_line, Console);
+		(void)strncpy(up->ut_line, Console, sizeof (up->ut_line) - 1);
+		up->ut_line[sizeof (up->ut_line) - 1] = '\0'; /* paranoid! */
 	}
 #endif
 	/*
@@ -440,10 +442,11 @@ log_in(head, up)
 	memmove((char *)&lp->usr, (char *)up, sizeof (struct utmp));
 #ifdef DEBUG
 	if (Debug) {
-		printf("%-.*s %s: %s logged in", 19, ctime(&lp->usr.ut_time),
-		       up->ut_line, up->ut_name);
+		printf("%-.*s %-.*s: %-.*s logged in", 19,
+		    ctime(&lp->usr.ut_time), sizeof (up->ut_line),
+		       up->ut_line, sizeof (up->ut_name), up->ut_name);
 		if (*up->ut_host)
-			printf(" (%s)", up->ut_host);
+			printf(" (%-.*s)", sizeof (up->ut_host), up->ut_host);
 		putchar('\n');
 	}
 #endif
@@ -492,6 +495,7 @@ ac(fp)
 			break;
 		case '~':			/* reboot or shutdown */
 			head = log_out(head, &usr);
+			FirstTime = usr.ut_time; /* shouldn't be needed */
 			break;
 		default:
 			/*
