@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vm_meter.c	8.7 (Berkeley) 5/10/95
+ *	@(#)vm_meter.c	8.8 (Berkeley) 7/14/95
  */
 
 #include <sys/param.h>
@@ -79,7 +79,7 @@ loadav(avg)
 	for (nrun = 0, p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
 		switch (p->p_stat) {
 		case SSLEEP:
-			if (p->p_priority > PZERO || p->p_slptime != 0)
+			if (p->p_priority > PZERO || p->p_slptime > 1)
 				continue;
 			/* fall through */
 		case SRUN:

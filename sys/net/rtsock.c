@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)rtsock.c	8.6 (Berkeley) 2/11/95
+ *	@(#)rtsock.c	8.7 (Berkeley) 10/12/95
  */
 
 #include <sys/param.h>
@@ -162,7 +162,9 @@ route_output(m, so)
 	rtm->rtm_pid = curproc->p_pid;
 	info.rti_addrs = rtm->rtm_addrs;
 	rt_xaddrs((caddr_t)(rtm + 1), len + (caddr_t)rtm, &info);
-	if (dst == 0)
+	if (dst == 0 || (dst->sa_family >= AF_MAX))
+		senderr(EINVAL);
+	if (gate != 0 && (gate->sa_family >= AF_MAX))
 		senderr(EINVAL);
 	if (genmask) {
 		struct radix_node *t;

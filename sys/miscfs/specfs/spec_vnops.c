@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)spec_vnops.c	8.14 (Berkeley) 5/21/95
+ *	@(#)spec_vnops.c	8.15 (Berkeley) 7/14/95
  */
 
 #include <sys/param.h>
@@ -469,6 +469,7 @@ loop:
 		}
 #ifdef DIAGNOSTIC
 		if (vp->v_dirtyblkhd.lh_first) {
+			splx(s);
 			vprint("spec_fsync: dirty", vp);
 			goto loop;
 		}

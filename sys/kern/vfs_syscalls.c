@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vfs_syscalls.c	8.41 (Berkeley) 6/15/95
+ *	@(#)vfs_syscalls.c	8.42 (Berkeley) 7/31/95
  */
 
 #include <sys/param.h>
@@ -966,14 +966,7 @@ link(p, uap, retval)
 		nd.ni_cnd.cn_flags = LOCKPARENT;
 		nd.ni_dirp = SCARG(uap, link);
 		if ((error = namei(&nd)) == 0) {
-			if (nd.ni_vp != NULL)
-				error = EEXIST;
-			if (!error) {
-				VOP_LEASE(nd.ni_dvp, p, p->p_ucred,
-				    LEASE_WRITE);
-				VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
-				error = VOP_LINK(vp, nd.ni_dvp, &nd.ni_cnd);
-			} else {
+			if (nd.ni_vp != NULL) {
 				VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 				if (nd.ni_dvp == nd.ni_vp)
 					vrele(nd.ni_dvp);
@@ -981,6 +974,12 @@ link(p, uap, retval)
 					vput(nd.ni_dvp);
 				if (nd.ni_vp)
 					vrele(nd.ni_vp);
+				error = EEXIST;
+			} else {
+				VOP_LEASE(nd.ni_dvp, p, p->p_ucred,
+				    LEASE_WRITE);
+				VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
+				error = VOP_LINK(nd.ni_dvp, vp, &nd.ni_cnd);
 			}
 		}
 	}
