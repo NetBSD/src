@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.32 2000/12/11 13:44:01 jdolecek Exp $
+# $NetBSD: obsolete.mi,v 1.33 2000/12/11 19:47:32 ad Exp $
 /usr/bin/genclass
 /usr/bin/gettextize
 /usr/include/bfd
@@ -371,7 +371,9 @@
 /usr/share/mk/bsd.crypto.mk
 /usr/share/mk/bsd.port.mk
 /usr/share/mk/bsd.port.subdir.mk
-/usr/share/lkm/README	
+/usr/share/lkm
+/usr/share/lkm/README
+/usr/share/lkm/misc
 /usr/share/lkm/misc/Makefile
 /usr/share/lkm/misc/README
 /usr/share/lkm/misc/module/Makefile
@@ -379,14 +381,19 @@
 /usr/share/lkm/misc/module/miscmod.c
 /usr/share/lkm/misc/test/Makefile
 /usr/share/lkm/misc/test/testmisc.c
+/usr/share/lkm/syscall
 /usr/share/lkm/syscall/Makefile
 /usr/share/lkm/syscall/README
+/usr/share/lkm/syscall/module
 /usr/share/lkm/syscall/module/Makefile
 /usr/share/lkm/syscall/module/mycall.c
 /usr/share/lkm/syscall/module/newsyscall.c
+/usr/share/lkm/syscall/test
 /usr/share/lkm/syscall/test/Makefile
 /usr/share/lkm/syscall/test/testsyscall.c
+/usr/share/lkm/vfs
 /usr/share/lkm/vfs/Makefile
 /usr/share/lkm/vfs/README
+/usr/share/lkm/vfs/module
 /usr/share/lkm/vfs/module/Makefile
 /usr/share/lkm/vfs/module/kernfsmod.c
