@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.22 1996/03/14 19:45:08 christos Exp $ */
+/*	$NetBSD: kbd.c,v 1.23 1996/04/01 17:34:34 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,12 +59,13 @@
 #include <sys/systm.h>
 #include <sys/tty.h>
 #include <sys/signalvar.h>
+#include <sys/conf.h>
 
 #include <machine/autoconf.h>
+#include <machine/conf.h>
 
 #include <machine/vuid_event.h>
 #include <sparc/dev/event_var.h>
-#include <sparc/dev/dev_conf.h>
 #include <machine/kbd.h>
 #include <machine/kbio.h>
 
