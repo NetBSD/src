@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.256 2003/06/23 11:01:40 martin Exp $ */
+/*	$NetBSD: pmap.c,v 1.257 2003/06/23 13:43:20 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -4309,20 +4309,11 @@ pmap_remove(pm, va, endva)
 }
 
 /*
- * The following magic number was chosen because:
- *	1. It is the same amount of work to cache_flush_page 4 pages
- *	   as to cache_flush_segment 1 segment (so at 4 the cost of
- *	   flush is the same).
- *	2. Flushing extra pages is bad (causes cache not to work).
- *	3. The current code, which malloc()s 5 pages for each process
- *	   for a user vmspace/pmap, almost never touches all 5 of those
- *	   pages.
+ * It is the same amount of work to cache_flush_page 16 pages
+ * as to cache_flush_segment 1 segment, assuming a 64K cache size
+ * and a 4K page size or a 128K cache size and 8K page size.
  */
-#if 0
-#define	PMAP_RMK_MAGIC	(cacheinfo.c_hwflush?5:64)	/* if > magic, use cache_flush_segment */
-#else
-#define	PMAP_RMK_MAGIC	5	/* if > magic, use cache_flush_segment */
-#endif
+#define	PMAP_SFL_THRESHOLD	16	/* if > magic, use cache_flush_segment */
 
 /*
  * Remove a range contained within a single segment.
@@ -4355,7 +4346,7 @@ pmap_rmk4_4c(pm, va, endva, vr, vs)
 	setcontext4(0);
 	/* decide how to flush cache */
 	npg = (endva - va) >> PGSHIFT;
-	if (npg > PMAP_RMK_MAGIC) {
+	if (npg > PMAP_SFL_THRESHOLD) {
 		/* flush the whole segment */
 		perpage = 0;
 		cache_flush_segment(vr, vs, 0);
@@ -4444,7 +4435,7 @@ pmap_rmk4m(pm, va, endva, vr, vs)
 		return;
 	/* decide how to flush cache */
 	npg = (endva - va) >> PGSHIFT;
-	if (npg > PMAP_RMK_MAGIC) {
+	if (npg > PMAP_SFL_THRESHOLD) {
 		/* flush the whole segment */
 		perpage = 0;
 		if (CACHEINFO.c_vactype != VAC_NONE)
@@ -4488,16 +4479,6 @@ pmap_rmk4m(pm, va, endva, vr, vs)
 	sp->sg_npte = nleft;
 }
 #endif /* SUN4M || SUN4D */
-
-/*
- * Just like pmap_rmk_magic, but we have a different threshold.
- * Note that this may well deserve further tuning work.
- */
-#if 0
-#define	PMAP_RMU_MAGIC	(cacheinfo.c_hwflush?4:64)	/* if > magic, use cache_flush_segment */
-#else
-#define	PMAP_RMU_MAGIC	4	/* if > magic, use cache_flush_segment */
-#endif
 
 #if defined(SUN4) || defined(SUN4C)
 
@@ -4575,7 +4556,7 @@ pmap_rmu4_4c(pm, va, endva, vr, vs)
 		/* process has a context, must flush cache */
 		npg = (endva - va) >> PGSHIFT;
 		setcontext4(pm->pm_ctxnum);
-		if (npg > PMAP_RMU_MAGIC) {
+		if (npg > PMAP_SFL_THRESHOLD) {
 			perpage = 0; /* flush the whole segment */
 			cache_flush_segment(vr, vs, pm->pm_ctxnum);
 		} else
@@ -4682,7 +4663,7 @@ pmap_rmu4m(pm, va, endva, vr, vs)
 		/* process has a context, must flush cache */
 		if (CACHEINFO.c_vactype != VAC_NONE) {
 			npg = (endva - va) >> PGSHIFT;
-			if (npg > PMAP_RMU_MAGIC) {
+			if (npg > PMAP_SFL_THRESHOLD) {
 				perpage = 0; /* flush the whole segment */
 				cache_flush_segment(vr, vs, pm->pm_ctxnum);
 			} else
@@ -5869,7 +5850,7 @@ pmap_kremove4_4c(va, len)
 		setcontext4(0);
 		/* decide how to flush cache */
 		npg = (nva - va) >> PGSHIFT;
-		if (npg > PMAP_RMK_MAGIC) {
+		if (npg > PMAP_SFL_THRESHOLD) {
 			/* flush the whole segment */
 			perpage = 0;
 			cache_flush_segment(vr, vs, 0);
@@ -6418,7 +6399,7 @@ pmap_kremove4m(va, len)
 
 		/* decide how to flush cache */
 		npg = (nva - va) >> PGSHIFT;
-		if (npg > PMAP_RMK_MAGIC) {
+		if (npg > PMAP_SFL_THRESHOLD) {
 			/* flush the whole segment */
 			perpage = 0;
 			if (CACHEINFO.c_vactype != VAC_NONE) {
