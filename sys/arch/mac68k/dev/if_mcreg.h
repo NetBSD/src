@@ -1,7 +1,7 @@
-/*	$NetBSD: if_mcreg.h,v 1.2 1997/11/07 13:31:18 briggs Exp $	*/
+/*	$NetBSD: if_mcreg.h,v 1.3 2004/03/26 12:15:46 wiz Exp $	*/
 
 /*-
- * Copyright (c) 1997 David Huang <khym@bga.com>
+ * Copyright (c) 1997 David Huang <khym@azeotrope.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

@@ -1,7 +1,7 @@
-/*	$NetBSD: if_mc.c,v 1.22 2003/07/15 02:43:17 lukem Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.23 2004/03/26 12:15:46 wiz Exp $	*/
 
 /*-
- * Copyright (c) 1997 David Huang <khym@bga.com>
+ * Copyright (c) 1997 David Huang <khym@azeotrope.org>
  * All rights reserved.
  *
  * Portions of this code are based on code by Denton Gentry <denny1@home.com>,
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.22 2003/07/15 02:43:17 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.23 2004/03/26 12:15:46 wiz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"

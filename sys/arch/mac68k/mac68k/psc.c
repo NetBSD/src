@@ -1,7 +1,7 @@
-/*	$NetBSD: psc.c,v 1.7 2003/07/15 02:43:22 lukem Exp $	*/
+/*	$NetBSD: psc.c,v 1.8 2004/03/26 12:15:46 wiz Exp $	*/
 
 /*-
- * Copyright (c) 1997 David Huang <khym@bga.com>
+ * Copyright (c) 1997 David Huang <khym@azeotrope.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psc.c,v 1.7 2003/07/15 02:43:22 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psc.c,v 1.8 2004/03/26 12:15:46 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

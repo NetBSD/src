@@ -1,7 +1,7 @@
-/*	$NetBSD: psc.h,v 1.4 1999/06/28 01:41:13 briggs Exp $	*/
+/*	$NetBSD: psc.h,v 1.5 2004/03/26 12:15:46 wiz Exp $	*/
 
 /*-
- * Copyright (c) 1997 David Huang <khym@bga.com>
+ * Copyright (c) 1997 David Huang <khym@azeotrope.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
