@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.130 2003/11/06 00:32:27 he Exp $	   */
+/*	$NetBSD: pmap.c,v 1.131 2003/12/14 19:39:24 ragge Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.130 2003/11/06 00:32:27 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.131 2003/12/14 19:39:24 ragge Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -279,11 +279,7 @@ pmap_bootstrap()
 
 	physmem = btoc(avail_end);
 
-#if USE_TOPDOWN_VM==1
 	usrptsize = (1024*1024*1024)/VAX_NBPG;	/* 1GB total VM */
-#else
-	usrptsize = PROCPTSIZE * maxproc;
-#endif
 	if (vax_btop(usrptsize)* PPTESZ > avail_end/20)
 		usrptsize = (avail_end/(20 * PPTESZ)) * VAX_NBPG;
 		
