@@ -1,4 +1,4 @@
-/*	$NetBSD: fields.c,v 1.7 2001/01/13 19:04:21 jdolecek Exp $	*/
+/*	$NetBSD: fields.c,v 1.8 2001/02/19 19:41:31 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fields.c,v 1.7 2001/01/13 19:04:21 jdolecek Exp $");
+__RCSID("$NetBSD: fields.c,v 1.8 2001/02/19 19:41:31 jdolecek Exp $");
 __SCCSID("@(#)fields.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -92,7 +92,6 @@ enterkey(keybuf, line, size, fieldtable)
 	pos = (u_char *) line->data - 1;
 	lineend = (u_char *) line->data + line->size-1;
 				/* don't include rec_delimiter */
-	keypos = keybuf->data;
 
 	for (i = 0; i < ncols; i++) {
 		clpos = clist + i;
@@ -114,6 +113,8 @@ enterkey(keybuf, line, size, fieldtable)
 		clist[i].start = clist[i].end = lineend;
 	if (clist[0].start < (u_char *) line->data)
 		++clist[0].start;
+
+	keypos = keybuf->data;
 	endkey = (u_char *) keybuf + size - line->size;
 	for (ftpos = fieldtable + 1; ftpos->icol.num; ftpos++)
 		if ((keypos = enterfield(keypos, endkey, ftpos,
@@ -121,6 +122,11 @@ enterkey(keybuf, line, size, fieldtable)
 			return (1);
 
 	keybuf->offset = keypos - keybuf->data;
+	keybuf->length = keybuf->offset + line->size;
+	if (keybuf->length + sizeof(TRECHEADER) > size) {
+		/* line too long for buffer */
+		return (1);
+	}
 
 	/*
 	 * Make [s]radixsort() only sort by relevant part of key if:
@@ -131,11 +137,6 @@ enterkey(keybuf, line, size, fieldtable)
 	if (UNIQUE || (stable_sort && keybuf->offset < line->size))
 		keypos[-1] = REC_D;
 
-	keybuf->length = keybuf->offset + line->size;
-	if (keybuf->length + sizeof(TRECHEADER) > size) {
-		/* line too long for buffer */
-		return (1);
-	}
 	memcpy(keybuf->data + keybuf->offset, line->data, line->size);
 	return (0);
 }
