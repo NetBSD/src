@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.35 1996/02/12 15:59:55 pk Exp $ */
+/*	$NetBSD: esp.c,v 1.36 1996/02/21 10:21:14 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -1082,9 +1082,9 @@ printf("<<target%d: MSG_MESSAGE_REJECT>>", ecb->xs->sc_link->target);
 						/* Target initiated negotiation */
 						sc->sc_flags |= ESP_SYNCHNEGO;
 						if (ti->flags & T_SYNCMODE) {
-							sc_print_addr(ecb->xs->sc_link);
 #ifdef ESP_DEBUG
-							printf("%s:%d: dropping out of sync mode\n");
+							sc_print_addr(ecb->xs->sc_link);
+							printf("dropping out of sync mode\n");
 #endif
 						}
 						ti->flags &= ~T_SYNCMODE;
