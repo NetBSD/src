@@ -1,5 +1,5 @@
 #! /bin/sh
-#  $NetBSD: build.sh,v 1.56 2002/04/18 01:38:11 tv Exp $
+#  $NetBSD: build.sh,v 1.57 2002/05/02 22:13:31 sommerfeld Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -90,7 +90,7 @@ usage () {
 	echo "    -b: build nbmake and nbmake wrapper script, if needed"
 	echo "    -D: set DESTDIR to dest"
 	echo "    -d: build a full distribution into DESTDIR (including etc files)"
-	echo "    -j: set NBUILDJOBS to njob"
+	echo "    -j: Run up to njob jobs in parallel; see make(1)"
 	echo "    -m: set MACHINE to mach (not required if NetBSD native)"
 	echo "    -n: show commands that would be executed, but do not execute them"
 	echo "    -O: set obj root directory to obj (sets a MAKEOBJDIR pattern)"
@@ -151,7 +151,7 @@ while eval $getoptcmd; do case $opt in
 	-d)	buildtarget=distribution;;
 
 	-j)	eval $optargcmd
-		MAKEFLAGS="$MAKEFLAGS NBUILDJOBS=$OPTARG"; export MAKEFLAGS;;
+		parallel="-j $OPTARG";;
 
 	# -m overrides MACHINE_ARCH unless "-a" is specified
 	-m)	eval $optargcmd
@@ -367,7 +367,7 @@ fi
 eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.56 2002/04/18 01:38:11 tv Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.57 2002/05/02 22:13:31 sommerfeld Exp $
 #
 
 EOF
@@ -384,10 +384,10 @@ EOF
 $runcmd chmod +x "$makewrapper"
 
 if $do_buildsystem; then
-	${runcmd-exec} "$makewrapper" $buildtarget
+	${runcmd-exec} "$makewrapper" $parallel $buildtarget
 elif $do_buildonlytools; then
 	if [ "$MKOBJDIRS" != "no" ]; then
-		$runcmd "$makewrapper" obj-tools || exit 1
+		$runcmd "$makewrapper" $parallel obj-tools || exit 1
 	fi
 	$runcmd cd tools
 	if [ "$UPDATE" = "" ]; then

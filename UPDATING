@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.59 2002/04/29 08:36:20 lukem Exp $
+$NetBSD: UPDATING,v 1.60 2002/05/02 22:13:30 sommerfeld Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -7,6 +7,9 @@ For a more detailed description see Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20020426:
+	NBUILDJOBS obsoleted in favor of just using -j.
 
 20020426:
 	etc/postinstall added, which performs various checks for 

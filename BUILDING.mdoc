@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.15 2002/03/14 18:33:05 thorpej Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.16 2002/05/02 22:13:30 sommerfeld Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -516,17 +516,11 @@ pass) at the start of a build.
 .DFLTy
 .
 .It Sy NBUILDJOBS
-If set, specifies the number of parallel
-.Xr make 1
-processes that should be run simultaneously.  This can speed up builds
-on SMP machines, or machines with much more CPU power than I/O
-availability.  This should be used
-.Em instead
-of the
+Now obsolete.  Use the 
 .Xr make 1
 option
 .Sy -j ,
-in order to ensure proper ordering of build components.
+instead (see below)
 .DFLTu
 .
 .It Sy NOCLEANDIR
@@ -586,6 +580,16 @@ only the options used most frequently with
 builds are listed here.
 .
 .Bl -tag -width "var=value"
+.
+.It Sy -j Em njob
+Run up to
+.Em njob
+.Xr make 1 
+subjobs in parallel.
+Makefiles should use .WAIT or have explicit dependancies 
+as necessary to enforce build ordering.
+If you see build failures with -j, please save complete build logs 
+so the failures can be analyzed.
 .
 .It Sy -m Em dir
 Specify the default directory for searching for system Makefile
@@ -664,11 +668,8 @@ Does a
 .Dq make depend
 immediately followed by a
 .Dq make all .
-This combined target recurses as an atomic unit, so that the
-.Dq make depend
-phase can participate in
-.Sy make -j
-parallelism.
+This improves cache locality of the build since both passes read the source
+files in their entirety.
 .
 .It Sy includes
 Build and install system header files.  Typically needed before any
@@ -803,14 +804,12 @@ etc files will also be installed.  Note this does not build a
 no release sets are placed in ${RELEASEDIR}.
 .
 .It Sy -j Em njob
-Set the value of
-.Sy NBUILDJOBS
-to
-.Em njob .
-This provides similar functionality to the familiar
-.Dq make -j ,
-but preserves the ordering of the top level
-.Dq make build .
+Passed through to 
+.Xr make 1 .
+Makefiles should use .WAIT or have explicit dependancies 
+as necessary to enforce build ordering.
+If you see build failures with -j, please save complete build logs 
+so the failures can be analyzed.
 .
 .It Sy -m Em mach
 Set the value of
@@ -945,6 +944,17 @@ This script can be symlinked into a directory listed in
 .Sy PATH ,
 or called with an absolute path.
 .
+.Sh OBSOLETE VARIABLES
+.
+.Bl -tag -width "NBUILDJOBS"
+.
+.It Sy NBUILDJOBS
+Now obsolete.  Use the 
+.Xr make 1
+option
+.Sy -j ,
+instead.
+.El
 .Sh SEE ALSO
 .Xr make 1 ,
 .Xr hier 7 ,
@@ -963,6 +973,6 @@ and
 .
 .Sh BUGS
 .
-Many platforms are not yet using the
+A few platforms are not yet using the
 .Sy USE_NEW_TOOLCHAIN
 system.
