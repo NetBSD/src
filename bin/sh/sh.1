@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.21 1997/07/10 23:07:04 phil Exp $
+.\"	$NetBSD: sh.1,v 1.22 1997/11/05 14:05:31 kleink Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -1263,7 +1263,7 @@ it faster.  However, if the current directory is
 renamed, the builtin version of pwd will continue to
 print the old name for the directory.
 .TP
-read [ -p prompt ] [ -e ] variable...
+read [ -p prompt ] [ -r ] variable...
 The prompt is printed if the -p option is specified
 and the standard input is a terminal.  Then a line is
 read from the standard input.  The trailing newline
@@ -1276,13 +1276,10 @@ separated them) are assigned to the last variable.
 If there are more variables than pieces, the remaining
 variables are assigned the null string.
 .sp
-The -e option causes any backslashes in the input to
-be treated specially.  If a backslash is followed by
-a newline, the backslash and the newline will be
-deleted.   If a backslash is followed by any other
-character, the backslash will be deleted and the following
-character will be treated as though it were
-not in IFS, even if it is.
+By default, unless the -r option is specified, the backslash
+(\\) acts as an escape character, causing the following
+character to be treated literally.  If a backslash is followed
+by a newline, the backslash and the newline will be deleted.
 .TP
 readonly name...
 The specified names are marked as read only, so that
