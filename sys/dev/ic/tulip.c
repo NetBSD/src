@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.1 1999/09/01 00:32:41 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.2 1999/09/01 05:07:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -202,6 +202,18 @@ tlp_attach(sc, name, enaddr)
 		break;
 	}
 
+	/*
+	 * Set up various chip-specific quirks.
+	 */
+	switch (sc->sc_chip) {
+	case TULIP_CHIP_WB89C840F:
+		sc->sc_flags |= TULIPF_IC_FS;
+		break;
+
+	default:
+		/* Nothing. */
+	}
+
 	SIMPLEQ_INIT(&sc->sc_txfreeq);
 	SIMPLEQ_INIT(&sc->sc_txdirtyq);
 
@@ -363,7 +375,7 @@ tlp_start(ifp)
 {
 	struct tulip_softc *sc = ifp->if_softc;
 	struct mbuf *m0, *m;
-	struct tulip_txsoft *txs;
+	struct tulip_txsoft *txs, *last_txs;
 	bus_dmamap_t dmamap;
 	int error, firsttx, nexttx, lasttx, ofree, seg;
 
@@ -538,6 +550,8 @@ tlp_start(ifp)
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_txfreeq, txs, txs_q);
 		SIMPLEQ_INSERT_TAIL(&sc->sc_txdirtyq, txs, txs_q);
 
+		last_txs = txs;
+
 #if NBPFILTER > 0
 		/*
 		 * Pass the packet to any BPF listeners.
@@ -562,6 +576,18 @@ tlp_start(ifp)
 		sc->sc_txdescs[lasttx].td_ctl |= TDCTL_Tx_IC;
 		TULIP_CDTXSYNC(sc, lasttx, 1,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+
+		/*
+		 * Some clone chips want IC on the *first* segment in
+		 * the packet.  Appease them.
+		 */
+		if ((sc->sc_flags & TULIPF_IC_FS) != 0 &&
+		    last_txs->txs_firstdesc != lasttx) {
+			sc->sc_txdescs[last_txs->txs_firstdesc].td_ctl |=
+			    TDCTL_Tx_IC;
+			TULIP_CDTXSYNC(sc, last_txs->txs_firstdesc, 1,
+			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		}
 
 		/*
 		 * The entire packet chain is set up.  Give the
