@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848reg.h,v 1.7 1998/08/27 20:05:11 pk Exp $	*/
+/*	$NetBSD: ad1848reg.h,v 1.8 1999/09/06 17:07:05 rh Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -166,6 +166,7 @@
 /* Miscellaneous Control reg bits - register I12 */
 #define ID_MASK			0x70
 #define MODE2			0x40
+#define MODE3			0x60
 
 /* Digital Mix Control reg bits - register I13 */
 #define DIGITAL_MIX1_ENABLE	0x01
