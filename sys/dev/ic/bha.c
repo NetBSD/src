@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.22 1998/02/06 23:06:44 thorpej Exp $	*/
+/*	$NetBSD: bha.c,v 1.23 1998/04/28 23:57:53 mjacob Exp $	*/
 
 #undef BHADIAG
 #ifdef DDB
@@ -1139,6 +1139,8 @@ bha_init(sc)
 	initial_ccbs *= sc->sc_link.openings;
 	if (initial_ccbs > BHA_CCB_MAX)
 		initial_ccbs = BHA_CCB_MAX;
+	if (initial_ccbs == 0)	/* yes, this can happen */
+		initial_ccbs = sc->sc_link.openings;
 
 	/* Obtain setup information from. */
 	rlen = sizeof(setup.reply) +
