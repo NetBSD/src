@@ -1,4 +1,4 @@
-/* $NetBSD: gtp.c,v 1.7 2004/04/23 21:13:06 itojun Exp $ */
+/* $NetBSD: gtp.c,v 1.8 2004/10/29 12:57:18 yamt Exp $ */
 /*	$OpenBSD: gtp.c,v 1.1 2002/06/03 16:13:21 mickey Exp $	*/
 
 /*
@@ -29,7 +29,7 @@
 /* Gemtek PCI Radio Card Device Driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtp.c,v 1.7 2004/04/23 21:13:06 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtp.c,v 1.8 2004/10/29 12:57:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ int     gtp_search(void *, int);
 
 /* define our interface to the high-level radio driver */
 
-struct radio_hw_if gtp_hw_if = {
+const struct radio_hw_if gtp_hw_if = {
 	NULL, /* open */
 	NULL, /* close */
 	gtp_get_info,

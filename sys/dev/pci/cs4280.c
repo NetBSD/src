@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.30 2004/09/22 12:20:25 kent Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.31 2004/10/29 12:57:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.30 2004/09/22 12:20:25 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.31 2004/10/29 12:57:18 yamt Exp $");
 
 #include "midi.h"
 
@@ -123,7 +123,7 @@ int  cs4280_check_images(struct cs428x_softc *);
 int  cs4280_checkimage(struct cs428x_softc *, u_int32_t *, u_int32_t, u_int32_t);
 #endif
 
-struct audio_hw_if cs4280_hw_if = {
+const struct audio_hw_if cs4280_hw_if = {
 	cs428x_open,
 	cs428x_close,
 	NULL,
@@ -161,7 +161,7 @@ void cs4280_midi_close(void*);
 int  cs4280_midi_output(void *, int);
 void cs4280_midi_getinfo(void *, struct midi_info *);
 
-struct midi_hw_if cs4280_midi_hw_if = {
+const struct midi_hw_if cs4280_midi_hw_if = {
 	cs4280_midi_open,
 	cs4280_midi_close,
 	cs4280_midi_output,

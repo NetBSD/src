@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.39 2004/03/13 17:52:02 bjh21 Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.40 2004/10/29 12:57:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -65,7 +65,7 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.39 2004/03/13 17:52:02 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.40 2004/10/29 12:57:16 yamt Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>   /* autoconfig functions */
@@ -168,7 +168,7 @@ static struct audio_device vidcaudio_device = {
 	"vidcaudio"
 };
 
-static struct audio_hw_if vidcaudio_hw_if = {
+static const struct audio_hw_if vidcaudio_hw_if = {
 	vidcaudio_open,
 	vidcaudio_close,
 	NULL,

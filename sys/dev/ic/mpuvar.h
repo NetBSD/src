@@ -1,4 +1,4 @@
-/*	$NetBSD: mpuvar.h,v 1.4 2003/12/04 13:57:30 keihan Exp $	*/
+/*	$NetBSD: mpuvar.h,v 1.5 2004/10/29 12:57:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@ struct mpu_softc {
 };
 
 #ifdef _KERNEL
-extern struct midi_hw_if mpu_midi_hw_if;
+extern const struct midi_hw_if mpu_midi_hw_if;
 
 int	mpu_find __P((struct mpu_softc *));
 void	mpu_attach __P((struct mpu_softc *));

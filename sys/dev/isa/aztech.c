@@ -1,4 +1,4 @@
-/* $NetBSD: aztech.c,v 1.8 2003/07/14 15:47:16 lukem Exp $ */
+/* $NetBSD: aztech.c,v 1.9 2004/10/29 12:57:17 yamt Exp $ */
 /* $OpenBSD: aztech.c,v 1.2 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: aztech.c,v 1.11 2001/10/20 13:23:47 pva Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aztech.c,v 1.8 2003/07/14 15:47:16 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aztech.c,v 1.9 2004/10/29 12:57:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,7 @@ void	az_attach(struct device *, struct device * self, void *);
 int	az_get_info(void *, struct radio_info *);
 int	az_set_info(void *, struct radio_info *);
 
-struct radio_hw_if az_hw_if = {
+const struct radio_hw_if az_hw_if = {
 	NULL,	/* open */
 	NULL,	/* close */
 	az_get_info,

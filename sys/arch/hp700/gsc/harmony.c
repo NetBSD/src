@@ -1,4 +1,4 @@
-/*	$NetBSD: harmony.c,v 1.1 2004/09/19 23:03:34 chs Exp $	*/
+/*	$NetBSD: harmony.c,v 1.2 2004/10/29 12:57:16 yamt Exp $	*/
 
 /*	$OpenBSD: harmony.c,v 1.23 2004/02/13 21:28:19 mickey Exp $	*/
 
@@ -85,7 +85,7 @@ int     harmony_trigger_output(void *, void *, void *, int,
 int     harmony_trigger_input(void *, void *, void *, int,
     void (*)(void *), void *, struct audio_params *);
 
-struct audio_hw_if harmony_sa_hw_if = {
+const struct audio_hw_if harmony_sa_hw_if = {
 	harmony_open,
 	harmony_close,
 	NULL,

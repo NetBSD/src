@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.20 2003/11/02 00:23:38 thorpej Exp $	*/
+/*	$NetBSD: awacs.c,v 1.21 2004/10/29 12:57:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.20 2003/11/02 00:23:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.21 2004/10/29 12:57:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -120,7 +120,7 @@ static void swap_bytes_mono16_to_stereo16(void *, u_char *, int);
 CFATTACH_DECL(awacs, sizeof(struct awacs_softc),
     awacs_match, awacs_attach, NULL, NULL);
 
-struct audio_hw_if awacs_hw_if = {
+const struct audio_hw_if awacs_hw_if = {
 	awacs_open,
 	awacs_close,
 	NULL,

@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
+/*	$NetBSD: snapper.c,v 1.2 2004/10/29 12:57:16 yamt Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 
 /*-
@@ -130,7 +130,7 @@ struct cfattach snapper_ca = {
 	snapper_match, snapper_attach
 };
 
-struct audio_hw_if snapper_hw_if = {
+const struct audio_hw_if snapper_hw_if = {
 	snapper_open,
 	snapper_close,
 	NULL,

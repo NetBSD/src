@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.27 2004/09/22 12:20:25 kent Exp $      */
+/*      $NetBSD: esm.c,v 1.28 2004/10/29 12:57:18 yamt Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.27 2004/09/22 12:20:25 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.28 2004/10/29 12:57:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,7 +152,7 @@ void esm_powerhook(int, void *);
 CFATTACH_DECL(esm, sizeof(struct esm_softc),
     esm_match, esm_attach, NULL, NULL);
 
-struct audio_hw_if esm_hw_if = {
+const struct audio_hw_if esm_hw_if = {
 	esm_open,
 	esm_close,
 	NULL,				/* drain */

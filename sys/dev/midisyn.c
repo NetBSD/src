@@ -1,4 +1,4 @@
-/*	$NetBSD: midisyn.c,v 1.13 2003/12/04 13:57:30 keihan Exp $	*/
+/*	$NetBSD: midisyn.c,v 1.14 2004/10/29 12:57:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midisyn.c,v 1.13 2003/12/04 13:57:30 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midisyn.c,v 1.14 2004/10/29 12:57:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -81,7 +81,7 @@ int	midisyn_output(void *, int);
 void	midisyn_getinfo(void *, struct midi_info *);
 int	midisyn_ioctl(void *, u_long, caddr_t, int, struct proc *);
 
-struct midi_hw_if midisyn_hw_if = {
+const struct midi_hw_if midisyn_hw_if = {
 	midisyn_open,
 	midisyn_close,
 	midisyn_output,

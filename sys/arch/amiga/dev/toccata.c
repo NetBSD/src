@@ -1,4 +1,4 @@
-/* $NetBSD: toccata.c,v 1.7 2004/01/10 21:38:32 is Exp $ */
+/* $NetBSD: toccata.c,v 1.8 2004/10/29 12:57:16 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.7 2004/01/10 21:38:32 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.8 2004/10/29 12:57:16 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -183,7 +183,7 @@ int toccata_set_port(void *, mixer_ctrl_t *);
 int toccata_get_port(void *, mixer_ctrl_t *);
 int toccata_query_devinfo(void *, mixer_devinfo_t *);
 
-struct audio_hw_if audiocs_hw_if = {
+const struct audio_hw_if audiocs_hw_if = {
 	toccata_open,
 	toccata_close,
 	0,	/*
