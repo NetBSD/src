@@ -1,4 +1,4 @@
-.\" $NetBSD: usbhidctl.1,v 1.12 2001/10/22 23:51:12 wiz Exp $
+.\" $NetBSD: usbhidctl.1,v 1.13 2001/12/24 10:10:10 augustss Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -79,6 +79,7 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl a
 Show all items and their current values.
+This option fails if the device does not support the GET_REPORT command.
 .It Fl f Ar device
 Specify a path name for the device to operate on.  If
 .Ar device
