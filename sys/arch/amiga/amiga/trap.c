@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.37 1995/09/29 13:51:43 chopps Exp $	*/
+/*	$NetBSD: trap.c,v 1.38 1995/09/30 17:39:51 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -634,11 +634,18 @@ trap(type, code, v, frame)
 	 * Kernel/User page fault
 	 */
 	case T_MMUFLT:
-/*page0*/if (v < NBPG) {
-/*page0*/  printf("page 0 access pc %x fa %x fp %x\n", frame.f_pc, v, &frame);
-/*page0*/  mmudebug |= 0x100;
-/*page0*/  Debugger();
-/*page0*/}
+
+#ifdef DEBUG
+		/* watch for page zero access */
+		/if (v < NBPG) {
+			printf("page 0 access pc %x fa %x fp %x\n", frame.f_pc,
+			    v, &frame);
+			mmudebug |= 0x100;
+#ifdef DDB
+			Debugger();
+#endif
+		}
+#endif
 		if (p && p->p_addr &&
 		    (p->p_addr->u_pcb.pcb_onfault == (caddr_t)fubail ||
 		    p->p_addr->u_pcb.pcb_onfault == (caddr_t)subail)) {
