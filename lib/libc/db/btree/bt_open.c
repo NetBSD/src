@@ -35,8 +35,8 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/* from: static char sccsid[] = "@(#)bt_open.c	8.2 (Berkeley) 9/7/93"; */
-static char *rcsid = "$Id: bt_open.c,v 1.4 1993/09/09 02:41:26 cgd Exp $";
+/* from: static char sccsid[] = "@(#)bt_open.c	8.3 (Berkeley) 9/16/93"; */
+static char *rcsid = "$Id: bt_open.c,v 1.5 1993/09/17 01:06:23 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -157,19 +157,17 @@ __bt_open(fname, flags, mode, openinfo, dflags)
 	/* Allocate and initialize DB and BTREE structures. */
 	if ((t = malloc(sizeof(BTREE))) == NULL)
 		goto err;
-	t->bt_fd = -1;			/* Don't close unopened fd on error. */
-	if ((t->bt_dbp = dbp = malloc(sizeof(DB))) == NULL)
-		goto err;
+	memset(t, 0, sizeof(BTREE));
 	t->bt_bcursor.pgno = P_INVALID;
-	t->bt_bcursor.index = 0;
-	t->bt_stack = NULL;
-	t->bt_sp = t->bt_maxstack = 0;
-	t->bt_kbuf = t->bt_dbuf = NULL;
-	t->bt_kbufsz = t->bt_dbufsz = 0;
+	t->bt_fd = -1;			/* Don't close unopened fd on error. */
 	t->bt_lorder = b.lorder;
 	t->bt_order = NOT;
 	t->bt_cmp = b.compare;
 	t->bt_pfx = b.prefix;
+	t->bt_rfd = -1;
+
+	if ((t->bt_dbp = dbp = malloc(sizeof(DB))) == NULL)
+		goto err;
 	t->bt_flags = 0;
 	if (t->bt_lorder != machine_lorder)
 		SET(t, B_NEEDSWAP);
