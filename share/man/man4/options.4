@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.138 2001/06/12 11:26:21 wiz Exp $
+.\"	$NetBSD: options.4,v 1.139 2001/06/27 13:25:25 darcy Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1279,6 +1279,26 @@ See
 .Xr semctl 2 ,
 .Xr semget 2 ,
 .Xr semop 2 .
+.It Cd options SEMMNI=value
+Sets the number of
+.At V
+style semaphore identifiers.  The GENERIC config file for your port
+will have the default.
+.It Cd options SEMMNS=value
+Sets the number of
+.At V
+style semaphores in the system.  The GENERIC config file for your port
+will have the default.
+.It Cd options SEMUME=value
+Sets the maximum number of undo entries per process for
+.At V
+style semaphores.  The GENERIC config file for your port
+will have the default.
+.It Cd options SEMMNU=value
+Sets the number of undo structures in the system for
+.At V
+style semaphores.  The GENERIC config file for your port
+will have the default.
 .It Cd options SYSVSHM
 Includes support for
 .At V
