@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_sh3.c,v 1.6 2003/07/15 03:35:57 lukem Exp $	*/
+/*	$NetBSD: mmu_sh3.c,v 1.7 2004/12/30 09:48:30 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmu_sh3.c,v 1.6 2003/07/15 03:35:57 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmu_sh3.c,v 1.7 2004/12/30 09:48:30 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,10 +63,11 @@ void
 sh3_tlb_invalidate_addr(int asid, vaddr_t va)
 {
 	u_int32_t a, d;
-	int w;
+	int s, w;
 
 	d = (va & SH3_MMUAA_D_VPN_MASK_4K) | asid;  /* 4K page */
 	va = va & SH3_MMU_VPN_MASK;   /* [16:12] entry index */
+	s = _cpu_exception_suspend();
 
 	/* Probe entry and invalidate it. */
 	for (w = 0; w < SH3_MMU_WAY; w++) {
@@ -77,14 +78,17 @@ sh3_tlb_invalidate_addr(int asid, vaddr_t va)
 			break;
 		}
 	}
+
+	_cpu_exception_resume(s);
 }
 
 void
 sh3_tlb_invalidate_asid(int asid)
 {
 	u_int32_t aw, a;
-	int e, w;
+	int s, e, w;
 
+	s = _cpu_exception_suspend();
 	/* Invalidate entry attribute to ASID */
 	for (w = 0; w < SH3_MMU_WAY; w++) {
 		aw = (w << SH3_MMU_WAY_SHIFT);
@@ -96,14 +100,16 @@ sh3_tlb_invalidate_asid(int asid)
 			}
 		}
 	}
+	_cpu_exception_resume(s);
 }
 
 void
 sh3_tlb_invalidate_all()
 {
 	u_int32_t aw, a;
-	int e, w;
+	int s, e, w;
 
+	s = _cpu_exception_suspend();
 	/* Zero clear all TLB entry to avoid unexpected VPN match. */
 	for (w = 0; w < SH3_MMU_WAY; w++) {
 		aw = (w << SH3_MMU_WAY_SHIFT);
@@ -113,15 +119,18 @@ sh3_tlb_invalidate_all()
 			_reg_write_4(SH3_MMUDA | a, 0);
 		}
 	}
+	_cpu_exception_resume(s);
 }
 
 void
 sh3_tlb_update(int asid, vaddr_t va, u_int32_t pte)
 {
 	u_int32_t oasid;
+	int s;
 
 	KDASSERT(asid < 0x100 && (pte & ~PGOFSET) != 0 && va != 0);
 
+	s = _cpu_exception_suspend();
 	/* Save old ASID */
 	oasid = _reg_read_4(SH3_PTEH) & SH3_PTEH_ASID_MASK;
 
@@ -136,4 +145,5 @@ sh3_tlb_update(int asid, vaddr_t va, u_int32_t pte)
 	/* Restore old ASID */
 	if (asid != oasid)
 		_reg_write_4(SH3_PTEH, oasid);
+	_cpu_exception_resume(s);
 }
