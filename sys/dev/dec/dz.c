@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.3 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: dz.c,v 1.4 2002/09/18 16:51:16 ad Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.3 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.4 2002/09/18 16:51:16 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -152,8 +152,10 @@ dzattach(struct dz_softc *sc, struct evcnt *parent_evcnt)
 
 	/* Initialize our softc structure. Should be done in open? */
 
-	for (n = 0; n < sc->sc_type; n++)
+	for (n = 0; n < sc->sc_type; n++) {
+		sc->sc_dz[n].dz_line = n;
 		sc->sc_dz[n].dz_tty = ttymalloc();
+	}
 
 	evcnt_attach_dynamic(&sc->sc_rintrcnt, EVCNT_TYPE_INTR, parent_evcnt,
 		sc->sc_dev.dv_xname, "rintr");
