@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.14 1995/04/25 19:59:49 pk Exp $	*/
+/*	$NetBSD: obio.c,v 1.15 1995/05/27 08:12:51 pk Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -155,7 +155,11 @@ busattach(parent, child, args, bustype)
 		oca.ca_ra.ra_intr[0].int_vec = -1;
 	oca.ca_ra.ra_nintr = 1;
 	oca.ca_ra.ra_name = cf->cf_driver->cd_name;
-	oca.ca_ra.ra_bp = ca->ca_ra.ra_bp;
+	if (ca->ca_ra.ra_bp != NULL &&
+	    strcmp(ca->ca_ra.ra_bp->name, "sbus") == 0)
+		oca.ca_ra.ra_bp = ca->ca_ra.ra_bp + 1;
+	else
+		oca.ca_ra.ra_bp = NULL;
 	oca.ca_bustype = bustype;
 
 	if ((*cf->cf_driver->cd_match)(parent, cf, &oca) == 0)
