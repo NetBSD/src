@@ -1,4 +1,4 @@
-/*	$NetBSD: cchar.c,v 1.13 1998/07/28 11:51:47 mycroft Exp $	*/
+/* $NetBSD: cchar.c,v 1.14 2003/06/16 17:22:00 perry Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cchar.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: cchar.c,v 1.13 1998/07/28 11:51:47 mycroft Exp $");
+__RCSID("$NetBSD: cchar.c,v 1.14 2003/06/16 17:22:00 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,20 +89,17 @@ const struct cchar cchars2[] = {
 	{ NULL },
 };
 
-static int c_cchar __P((const void *, const void *));
+static int c_cchar(const void *, const void *);
 
 static int
-c_cchar(a, b)
-        const void *a, *b;
+c_cchar(const void *a, const void *b)
 {
         return (strcmp(((const struct cchar *)a)->name,
 	    ((const struct cchar *)b)->name));
 }
 
 int
-csearch(argvp, ip)
-	char ***argvp;
-	struct info *ip;
+csearch(char ***argvp, struct info *ip)
 {
 	struct cchar *cp, tmp;
 	long val;
