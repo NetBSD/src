@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_conf.c,v 1.18 1996/05/19 17:17:55 jonathan Exp $	*/
+/*	$NetBSD: tty_conf.c,v 1.19 1997/04/03 00:54:19 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -140,7 +140,7 @@ struct	linesw linesw[] =
 
 #if NSTRIP > 0
 	{ stripopen, stripclose, ttyerrio, ttyerrio, striptioctl,
-	  stripinput, stripstart, nullmodem },		/* 6- STRIPIPDISC */
+	  stripinput, stripstart, nullmodem },		/* 6- STRIPDISC */
 #else
 	{ ttynodisc, ttyerrclose, ttyerrio, ttyerrio, nullioctl,
 	  ttyerrinput, ttyerrstart, nullmodem },
