@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.5 1995/04/27 07:16:44 phil Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.6 1995/07/28 07:51:38 phil Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -78,22 +78,65 @@ process_read_regs(p, regs)
 	struct proc *p;
 	struct reg *regs;
 {
+	struct on_stack	*r;
+
 	if ((p->p_flag & P_INMEM) == 0)
 		return (EIO);
 
-	regs->r_r0  = p->p_md.md_regs[REG_R0];
-	regs->r_r1  = p->p_md.md_regs[REG_R1];
-	regs->r_r2  = p->p_md.md_regs[REG_R2];
-	regs->r_r3  = p->p_md.md_regs[REG_R3];
-	regs->r_r4  = p->p_md.md_regs[REG_R4];
-	regs->r_r5  = p->p_md.md_regs[REG_R5];
-	regs->r_r6  = p->p_md.md_regs[REG_R6];
-	regs->r_r7  = p->p_md.md_regs[REG_R7];
-	regs->r_sb  = p->p_md.md_regs[REG_SB];
-	regs->r_sp  = p->p_md.md_regs[REG_SP];
-	regs->r_fp  = p->p_md.md_regs[REG_FP];
-	regs->r_pc  = p->p_md.md_regs[REG_PC];
-	regs->r_psr = p->p_md.md_regs[REG_PSR] >> 16;
+	/*
+	 * Figure the offset from the start of the user area for the
+	 * desired process, which is probably not the current process.
+	 * Note that p->p_md.md_regs is a pointer on the kernel stack,
+	 * which is mapped at the same place in each process, but is
+	 * only valid for the currently running process.  However,
+	 * all of the user structures are present in kernel VM, and
+	 * may be accessed via p_addr.  Thus, if we look in the right
+	 * place just after the user structure, we will find the aliased
+	 * kernel stack for the process.
+	 */
+	r = (struct on_stack *)
+		((char *) p->p_addr + ((u_int) p->p_md.md_regs - USRSTACK));
+	regs->r_r0  = r->pcb_reg[REG_R0];
+	regs->r_r1  = r->pcb_reg[REG_R1];
+	regs->r_r2  = r->pcb_reg[REG_R2];
+	regs->r_r3  = r->pcb_reg[REG_R3];
+	regs->r_r4  = r->pcb_reg[REG_R4];
+	regs->r_r5  = r->pcb_reg[REG_R5];
+	regs->r_r6  = r->pcb_reg[REG_R6];
+	regs->r_r7  = r->pcb_reg[REG_R7];
+	regs->r_sb  = r->pcb_sb;
+	regs->r_sp  = r->pcb_usp;
+	regs->r_fp  = r->pcb_fp;
+	regs->r_pc  = r->pcb_pc;
+	regs->r_psr = r->pcb_psr;
+
+	return (0);
+}
+
+int
+process_read_fpregs(p, regs)
+	struct proc *p;
+	struct fpreg *regs;
+{
+	struct pcb	*pcb;
+
+	if ((p->p_flag & P_INMEM) == 0)
+		return (EIO);
+
+	/*
+	 * The floating point registers are stored in the pcb contained
+	 * within the user structure.  Nothing fancy to access them.
+	 */
+	pcb = &p->p_addr->u_pcb;
+	regs->r_fpsr = pcb->pcb_fsr;
+	regs->r_f0 = pcb->pcb_freg[0];
+	regs->r_f1 = pcb->pcb_freg[1];
+	regs->r_f2 = pcb->pcb_freg[2];
+	regs->r_f3 = pcb->pcb_freg[3];
+	regs->r_f4 = pcb->pcb_freg[4];
+	regs->r_f5 = pcb->pcb_freg[5];
+	regs->r_f6 = pcb->pcb_freg[6];
+	regs->r_f7 = pcb->pcb_freg[7];
 
 	return (0);
 }
@@ -103,28 +146,55 @@ process_write_regs(p, regs)
 	struct proc *p;
 	struct reg *regs;
 {
+	struct on_stack	*r;
 	int psr;
 
 	if ((p->p_flag & P_INMEM) == 0)
 		return (EIO);
 
+	r = (struct on_stack *)
+		((char *) p->p_addr + ((u_int) p->p_md.md_regs - USRSTACK));
 	psr = regs->r_psr;
 	if ((psr & PSL_USERSET) != PSL_USERSET)
 		return (EPERM);
 
-	p->p_md.md_regs[REG_R0]  = regs->r_r0;
-	p->p_md.md_regs[REG_R1]  = regs->r_r1;
-	p->p_md.md_regs[REG_R2]  = regs->r_r2;
-	p->p_md.md_regs[REG_R3]  = regs->r_r3;
-	p->p_md.md_regs[REG_R4]  = regs->r_r4;
-	p->p_md.md_regs[REG_R5]  = regs->r_r5;
-	p->p_md.md_regs[REG_R6]  = regs->r_r6;
-	p->p_md.md_regs[REG_R7]  = regs->r_r7;
-	p->p_md.md_regs[REG_SB]  = regs->r_sb;
-	p->p_md.md_regs[REG_SP]  = regs->r_sp;
-	p->p_md.md_regs[REG_FP]  = regs->r_fp;
-	p->p_md.md_regs[REG_PC]  = regs->r_pc;
-	p->p_md.md_regs[REG_PSR] = psr << 16;
+	r->pcb_reg[REG_R0] = regs->r_r0;
+	r->pcb_reg[REG_R1] = regs->r_r1;
+	r->pcb_reg[REG_R2] = regs->r_r2;
+	r->pcb_reg[REG_R3] = regs->r_r3;
+	r->pcb_reg[REG_R4] = regs->r_r4;
+	r->pcb_reg[REG_R5] = regs->r_r5;
+	r->pcb_reg[REG_R6] = regs->r_r6;
+	r->pcb_reg[REG_R7] = regs->r_r7;
+	r->pcb_sb = regs->r_sb;
+	r->pcb_usp = regs->r_sp;
+	r->pcb_fp = regs->r_fp;
+	r->pcb_pc = regs->r_pc;
+	r->pcb_psr = psr;
+
+	return (0);
+}
+
+int
+process_write_fpregs(p, regs)
+	struct proc *p;
+	struct fpreg *regs;
+{
+	struct pcb	*pcb;
+
+	if ((p->p_flag & P_INMEM) == 0)
+		return (EIO);
+
+	pcb = &p->p_addr->u_pcb;
+	pcb->pcb_fsr = regs->r_fpsr;
+	pcb->pcb_freg[0] = regs->r_f0;
+	pcb->pcb_freg[1] = regs->r_f1;
+	pcb->pcb_freg[2] = regs->r_f2;
+	pcb->pcb_freg[3] = regs->r_f3;
+	pcb->pcb_freg[4] = regs->r_f4;
+	pcb->pcb_freg[5] = regs->r_f5;
+	pcb->pcb_freg[6] = regs->r_f6;
+	pcb->pcb_freg[7] = regs->r_f7;
 
 	return (0);
 }
@@ -134,13 +204,17 @@ process_sstep(p, sstep)
 	struct proc *p;
 	int sstep;
 {
+	struct on_stack	*r;
+
 	if ((p->p_flag & P_INMEM) == 0)
 		return (EIO);
 
+	r = (struct on_stack *)
+		((char *) p->p_addr + ((u_int) p->p_md.md_regs - USRSTACK));
 	if (sstep)
-		p->p_md.md_regs[REG_PSR] |= (PSL_T << 16);
+		r->pcb_psr |= PSL_T;
 	else
-		p->p_md.md_regs[REG_PSR] &= ~(PSL_T << 16);
+		r->pcb_psr &= ~PSL_T;
 
 	return (0);
 }
@@ -150,10 +224,14 @@ process_set_pc(p, addr)
 	struct proc *p;
 	caddr_t addr;
 {
+	struct on_stack	*r;
+
 	if ((p->p_flag & P_INMEM) == 0)
 		return (EIO);
 
-	p->p_md.md_regs[REG_PC] = (int)addr;
+	r = (struct on_stack *)
+		((char *) p->p_addr + ((u_int) p->p_md.md_regs - USRSTACK));
+	r->pcb_pc = addr;
 
 	return (0);
 }
