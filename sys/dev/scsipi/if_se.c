@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.45 2003/09/08 01:27:09 mycroft Exp $	*/
+/*	$NetBSD: if_se.c,v 1.46 2004/04/23 21:52:17 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.45 2003/09/08 01:27:09 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.46 2004/04/23 21:52:17 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -356,7 +356,7 @@ seattach(parent, self, aux)
 	se_get_addr(sc, myaddr);
 
 	/* Initialize ifnet structure. */
-	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
+	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, sizeof(ifp->if_xname));
 	ifp->if_softc = sc;
 	ifp->if_start = se_ifstart;
 	ifp->if_ioctl = se_ioctl;

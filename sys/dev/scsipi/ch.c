@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.58 2003/09/08 01:27:08 mycroft Exp $	*/
+/*	$NetBSD: ch.c,v 1.59 2004/04/23 21:52:17 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.58 2003/09/08 01:27:08 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.59 2004/04/23 21:52:17 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -980,8 +980,9 @@ ch_usergetelemstatus(sc, cesr)
 			    (dtperiph = scsipi_lookup_periph(chan,
 			     ces.ces_target, ces.ces_lun)) != NULL &&
 			    dtperiph->periph_dev != NULL) {
-				strcpy(ces.ces_xname,
-				    dtperiph->periph_dev->dv_xname);
+				strlcpy(ces.ces_xname,
+				    dtperiph->periph_dev->dv_xname,
+				    sizeof(ces.ces_xname));
 				ces.ces_flags |= CESTATUS_XNAME_VALID;
 			}
 		}

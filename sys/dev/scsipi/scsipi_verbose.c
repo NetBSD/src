@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_verbose.c,v 1.21 2004/04/22 00:17:13 itojun Exp $	*/
+/*	$NetBSD: scsipi_verbose.c,v 1.22 2004/04/23 21:52:17 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_verbose.c,v 1.21 2004/04/22 00:17:13 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_verbose.c,v 1.22 2004/04/23 21:52:17 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -766,7 +766,7 @@ scsipi_decode_sense(sinfo, flag)
 	if (flag == 0 || flag == 2 || flag == 3)
 		skey = snsbuf[2] & 0xf;
 	if (flag == 0) {			/* Sense Key Only */
-		(void) strcpy(rqsbuf, sense_keys[skey]);
+		(void) strlcpy(rqsbuf, sense_keys[skey], sizeof(rqsbuf));
 		return (rqsbuf);
 	} else if (flag == 1) {			/* ASC/ASCQ Only */
 		asc2ascii(snsbuf[12], snsbuf[13], rqsbuf, sizeof(rqsbuf));
