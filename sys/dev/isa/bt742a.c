@@ -1,4 +1,4 @@
-/*	$NetBSD: bt742a.c,v 1.53 1996/03/16 03:20:25 cgd Exp $	*/
+/*	$NetBSD: bt742a.c,v 1.54 1996/03/16 04:37:40 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -66,6 +66,12 @@
 #include <dev/isa/isadmavar.h>
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
+
+/*              
+ * Note that stdarg.h and the ANSI style va_start macro is used for both
+ * ANSI and traditional C compilers.
+ */
+#include <machine/stdarg.h>
 
 #ifndef DDB
 #define Debugger() panic("should call debugger here (bt742a.c)")
@@ -350,7 +356,8 @@ struct bt_softc {
 #define	BT_SHOWMISC 0x08
 int     bt_debug = 0;
 
-int bt_cmd();	/* XXX must be varargs to prototype */
+int bt_cmd __P((int, struct bt_softc *, int, int, int, u_char *,
+	unsigned, ...));
 int btintr __P((void *));
 void bt_free_ccb __P((struct bt_softc *, struct bt_ccb *, int));
 struct bt_ccb *bt_get_ccb __P((struct bt_softc *, int));
@@ -395,7 +402,7 @@ struct cfdriver btcd = {
 #define BT_RESET_TIMEOUT 1000
 
 /*
- * bt_cmd(iobase, sc, icnt, ocnt,wait, retval, opcode, args)
+ * bt_cmd(iobase, sc, icnt, ocnt, wait, retval, opcode, ... args ...)
  *
  * Activate Adapter command
  *    icnt:   number of args (outbound bytes written after opcode)
@@ -403,22 +410,28 @@ struct cfdriver btcd = {
  *    wait:   number of seconds to wait for response
  *    retval: buffer where to place returned bytes
  *    opcode: opcode BT_NOP, BT_MBX_INIT, BT_START_SCSI ...
- *    args:   parameters
+ *    args:   variable number of parameters
  *
  * Performs an adapter command through the ports.  Not to be confused with a
  * scsi command, which is read in via the dma; one of the adapter commands
  * tells it to read in a scsi command.
  */
 int
-bt_cmd(iobase, sc, icnt, ocnt, wait, retval, opcode, args)
+#ifdef __STDC__
+bt_cmd(int iobase, struct bt_softc *sc, int icnt, int ocnt, int wait,
+    u_char *retval, unsigned opcode, ...)
+#else
+bt_cmd(iobase, sc, icnt, ocnt, wait, retval, opcode, va_alist)
 	int iobase;
 	struct bt_softc *sc;
 	int icnt, ocnt, wait;
 	u_char *retval;
 	unsigned opcode;
-	u_char args;
+	va_dcl
+#endif
 {
-	unsigned *ic = &opcode;
+	va_list ap;
+	unsigned data;
 	const char *name;
 	u_char oc;
 	register i;
@@ -468,9 +481,9 @@ bt_cmd(iobase, sc, icnt, ocnt, wait, retval, opcode, args)
 	 * Output the command and the number of arguments given
 	 * for each byte, first check the port is empty.
 	 */
-	icnt++;
-	/* include the command */
-	while (icnt--) {
+	va_start(ap, opcode);
+	/* test icnt >= 0, to include the command in data sent */
+	for (data = opcode; icnt >= 0; icnt--, data = va_arg(ap, u_char)) {
 		sts = inb(iobase + BT_CTRL_STAT_PORT);
 		for (i = wait; i; i--) {
 			sts = inb(iobase + BT_CTRL_STAT_PORT);
@@ -481,10 +494,12 @@ bt_cmd(iobase, sc, icnt, ocnt, wait, retval, opcode, args)
 		if (!i) {
 			printf("%s: bt_cmd, cmd/data port full\n", name);
 			outb(iobase + BT_CTRL_STAT_PORT, BT_SRST);
+			va_end(ap);
 			return ENXIO;
 		}
-		outb(iobase + BT_CMD_DATA_PORT, (u_char) (*ic++));
+		outb(iobase + BT_CMD_DATA_PORT, data);
 	}
+	va_end(ap);
 	/*
 	 * If we expect input, loop that many times, each time,
 	 * looking for the data register to have valid data
@@ -1006,8 +1021,8 @@ bt_find(ia, sc)
 	 * Check that we actually know how to use this board.
 	 */
 	delay(1000);
-	bt_cmd(iobase, sc, 1, sizeof(info), 0, &info, BT_INQUIRE_EXTENDED,
-	    sizeof(info));
+	bt_cmd(iobase, sc, 1, sizeof(info), 0, (u_char *)&info,
+	    BT_INQUIRE_EXTENDED, sizeof(info));
 	switch (info.bus_type) {
 	case BT_BUS_TYPE_24BIT:
 		/* XXXX How do we avoid conflicting with the aha1542 probe? */
@@ -1026,7 +1041,7 @@ bt_find(ia, sc)
 	 * jumpers and save int level
 	 */
 	delay(1000);
-	bt_cmd(iobase, sc, 0, sizeof(conf), 0, &conf, BT_CONF_GET);
+	bt_cmd(iobase, sc, 0, sizeof(conf), 0, (u_char *)&conf, BT_CONF_GET);
 	switch (conf.chan) {
 	case EISADMA:
 		drq = DRQUNK;
@@ -1137,7 +1152,7 @@ bt_inquire_setup_information(sc)
 	int i;
 
 	/* Inquire Board ID to Bt742 for firmware version */
-	bt_cmd(iobase, sc, 0, sizeof(bID), 0, &bID, BT_INQUIRE);
+	bt_cmd(iobase, sc, 0, sizeof(bID), 0, (u_char *)&bID, BT_INQUIRE);
 	printf(": version %c.%c, ", bID.firm_revision, bID.firm_version);
 
 	if (bID.firm_revision != '2') {	/* XXXX */
@@ -1149,7 +1164,7 @@ bt_inquire_setup_information(sc)
 	bt_cmd(iobase, sc, 0, sizeof(dummy), 10, dummy, BT_DEV_GET);
 
 	/* Obtain setup information from Bt742. */
-	bt_cmd(iobase, sc, 1, sizeof(setup), 0, &setup, BT_SETUP_GET,
+	bt_cmd(iobase, sc, 1, sizeof(setup), 0, (u_char *)&setup, BT_SETUP_GET,
 	    sizeof(setup));
 
 	printf("%s, %s, %d mbxs",
