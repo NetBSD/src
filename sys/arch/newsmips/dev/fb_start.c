@@ -1,4 +1,4 @@
-/*	$NetBSD: fb_start.c,v 1.5 2000/05/27 04:52:30 thorpej Exp $	*/
+/*	$NetBSD: fb_start.c,v 1.6 2000/08/25 01:04:10 thorpej Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -49,11 +49,14 @@
 #include <newsmips/dev/fbdefs.h>
 #define spl7 splhigh
 
+/*
+ * XXX SHOULD USE yield().
+ */
 #ifdef CPU_SINGLE
 #include <machine/cpu.h>
 extern struct tty cons;
 extern int cnstart();
-#define PRE_EMPT	need_resched()
+#define PRE_EMPT	need_resched(curcpu())
 #endif
 
 extern void mem_to_mem();

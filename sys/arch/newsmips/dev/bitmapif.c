@@ -1,4 +1,4 @@
-/*	$NetBSD: bitmapif.c,v 1.3 1999/02/15 04:36:33 hubertf Exp $	*/
+/*	$NetBSD: bitmapif.c,v 1.4 2000/08/25 01:04:09 thorpej Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -68,9 +68,12 @@ extern	SCREEN	screen;
 extern int bitmap_use;
 #endif
 
+/*
+ * XXX SHOULD USE yield()
+ */
 #ifdef CPU_SINGLE
 #include <machine/cpu.h>
-#define PRE_EMPT	need_resched()
+#define PRE_EMPT	need_resched(curcpu())
 #else
 #define	PRE_EMPT
 #endif
