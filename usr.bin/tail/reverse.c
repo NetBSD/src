@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)reverse.c	5.3 (Berkeley) 2/12/92";*/
-static char rcsid[] = "$Id: reverse.c,v 1.2 1993/08/01 18:08:02 mycroft Exp $";
+static char rcsid[] = "$Id: reverse.c,v 1.3 1994/03/28 02:22:35 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -116,7 +116,7 @@ r_reg(fp, style, off, sbp)
 
 	fd = fileno(fp);
 	if ((p =
-	    mmap(NULL, size, PROT_READ, MAP_FILE, fd, (off_t)0)) == (caddr_t)-1)
+	    mmap(NULL, size, PROT_READ, 0, fd, (off_t)0)) == (caddr_t)-1)
 		err("%s", strerror(errno));
 	p += size - 1;
 
