@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.387 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.388 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -120,7 +120,7 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 		project http://www.xorp.org [manu 20040905]
 	libc: Add UUID manipulation routines, adapted from FreeBSD.
 		[thorpej 20040913]
-	uuidgen: Add a UUID generation tool, adapted from FreeBSD,
+	uuidgen(1): Add a UUID generation tool, adapted from FreeBSD,
 		extended slightly with some additional DCE-compatible
 		options.  [thorpej 20040913]
 	heimdal: import version 0.6.3.  [lha 20040913]
@@ -156,3 +156,5 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 	syslogd: Numerous improvements, most from FreeBSD. [thorpej 20041118]
 	kernel: CD9660 Joliet Unicode file names encoded into UTF-8, thus full
 		Unicode range supported. [jdolecek 20041121]
+	getent(1): Add tool to get entries from an administrative database.
+		[lukem 20041123]
