@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.37 2003/08/30 10:30:52 dsl Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.38 2003/08/30 12:48:11 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.37 2003/08/30 10:30:52 dsl Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.38 2003/08/30 12:48:11 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -533,7 +533,7 @@ void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: dumpfs [-Fcimsv] filesys | device [...]\n");
+	(void)fprintf(stderr, "usage: dumpfs [-cFimsv] filesys | device [...]\n");
 	exit(1);
 }
 
