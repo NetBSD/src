@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.24.4.11 2003/02/07 20:13:08 tron Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.24.4.12 2003/02/07 20:15:02 tron Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.24.4.11 2003/02/07 20:13:08 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.24.4.12 2003/02/07 20:15:02 tron Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -993,20 +993,31 @@ pppoe_timeout(void *arg)
 static int
 pppoe_connect(struct pppoe_softc *sc)
 {
-	int x, err;
+	int x, err, retry;
 
 	if (sc->sc_state != PPPOE_STATE_INITIAL)
 		return EBUSY;
 
 	x = splnet();
+	/* save state, in case we fail to send PADI */
+	retry =	sc->sc_padr_retried;
 	sc->sc_state = PPPOE_STATE_PADI_SENT;
 	sc->sc_padr_retried = 0;
 	err = pppoe_send_padi(sc);
-	if (err == 0)
+	if (err != 0) {
+		/*
+		 * We failed to send a single PADI packet.
+		 * This is unfortunate, because we have no good way to recover
+		 * from here.
+		 */
+		 
+		/* recover state and return the error */
+		sc->sc_state = PPPOE_STATE_INITIAL;
+		sc->sc_padr_retried = retry;
+	} else {
 		callout_reset(&sc->sc_timeout, PPPOE_DISC_TIMEOUT,
 		    pppoe_timeout, sc);
-	else
-		pppoe_abort_connect(sc);
+	}
 	splx(x);
 	return err;
 }
@@ -1052,11 +1063,14 @@ pppoe_abort_connect(struct pppoe_softc *sc)
 {
 	printf("%s: could not establish connection\n",
 		sc->sc_sppp.pp_if.if_xname);
-	sc->sc_state = PPPOE_STATE_INITIAL;
-	memcpy(&sc->sc_dest, etherbroadcastaddr, sizeof(sc->sc_dest));
+	sc->sc_state = PPPOE_STATE_CLOSING;
 
 	/* notify upper layer */
 	sc->sc_sppp.pp_down(&sc->sc_sppp);
+
+	/* clear connection state */
+	memcpy(&sc->sc_dest, etherbroadcastaddr, sizeof(sc->sc_dest));
+	sc->sc_state = PPPOE_STATE_INITIAL;
 }
 
 /* Send a PADR packet */
