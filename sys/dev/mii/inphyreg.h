@@ -1,4 +1,4 @@
-/*	$NetBSD: inphyreg.h,v 1.1 1998/08/11 00:00:28 thorpej Exp $	*/
+/*	$NetBSD: inphyreg.h,v 1.2 1999/06/20 16:42:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
 
 #define	MII_INPHY_10TTJDC	0x19	/* 10baseT Tx Jabber Detect Ctr */
 
-#define	MII_INPHY_SCTRL2	0x21	/* 82555 Special Control */
+#define	MII_INPHY_SCTRL2	0x1b	/* 82555 Special Control */
 #define	SCTRL2_LEDMASK		0x0007	/* mask of LEDs control: see below */
 
 #define	LEDMASK_ACTLINK		0x0000	/* A = Activity, L = Link */
