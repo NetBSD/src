@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)cons.c	7.2 (Berkeley) 5/9/91
- *	$Id: cons.c,v 1.8 1993/07/07 11:00:23 deraadt Exp $
+ *	$Id: cons.c,v 1.8.2.1 1993/08/20 08:35:59 cgd Exp $
  */
 
 
@@ -49,6 +49,7 @@
 #include "tty.h"
 #include "file.h"
 #include "conf.h"
+#include "vnode.h"
 
 #include "cons.h"
 
@@ -107,15 +108,25 @@ cninit()
 	(*cp->cn_init)(cp);
 }
 
+static struct vnode   *cnopenvp = NULLVP;
+
 int
 cnopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
 	struct proc *p;
 {
+	int error;
+
 	if (cn_tab == NULL)
 		return (0);
 	dev = cn_tab->cn_dev;
+	if (cnopenvp == NULLVP) {
+		if ((error = cdevvp(dev, &cnopenvp))) {
+			printf("cnopen: getdevvp returned %d !\n", error);
+			return(error);
+		}
+	}
 	return ((*cdevsw[major(dev)].d_open)(dev, flag, mode, p));
 }
  
@@ -125,10 +136,20 @@ cnclose(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
+	int		error;
+
 	if (cn_tab == NULL)
 		return (0);
 	dev = cn_tab->cn_dev;
-	return ((*cdevsw[major(dev)].d_close)(dev, flag, mode, p));
+	if (vcount(cnopenvp) <= 1)
+		error = (*cdevsw[major(dev)].d_close)(dev, flag, mode, p);
+	else
+		error = 0;
+	if (error == 0) {
+		vrele(cnopenvp);
+		cnopenvp = NULLVP;
+	return(error);
+	}
 }
  
 int
