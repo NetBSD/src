@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp.c,v 1.7 1998/01/12 09:40:03 thorpej Exp $	*/
+/*	$NetBSD: if_fxp.c,v 1.8 1998/01/22 08:04:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
@@ -333,16 +333,51 @@ fxp_attach(parent, self, aux)
 	const char *intrstr = NULL;
 	u_int8_t enaddr[6];
 	struct ifnet *ifp;
+	bus_space_tag_t iot, memt;
+	bus_space_handle_t ioh, memh;
+	int ioh_valid, memh_valid;
+
+#if 1 /* XXX: see below */
+	bus_addr_t addr;
+	bus_size_t size;
+	int flags;
+#endif
 
 	/*
 	 * Map control/status registers.
 	 */
-	if (pci_mapreg_map(pa, FXP_PCI_MMBA, PCI_MAPREG_TYPE_MEM, 0,
-	    &sc->sc_st, &sc->sc_sh, NULL, NULL)) {
-		printf(": can't map registers\n");
+	ioh_valid = (pci_mapreg_map(pa, FXP_PCI_IOBA,
+	    PCI_MAPREG_TYPE_IO, 0,
+	    &iot, &ioh, NULL, NULL) == 0);
+#if 0
+	memh_valid = (pci_mapreg_map(pa, FXP_PCI_MMBA,
+	    PCI_MAPREG_TYPE_MEM|PCI_MAPREG_MEM_TYPE_32BIT, 0,
+	    &memt, &memh, &addr, &size) == 0);
+#else
+	/*
+	 * XXX Card reports that it is prefetchable, which causes
+	 * XXX problems on the Alpha.
+	 */
+	memt = pa->pa_memt;
+	memh_valid = (pci_mapreg_info(pa->pa_pc, pa->pa_tag,
+	    FXP_PCI_MMBA, PCI_MAPREG_TYPE_MEM|PCI_MAPREG_MEM_TYPE_32BIT,
+	      &addr, &size, &flags) == 0 &&
+	    bus_space_map(pa->pa_memt, addr, size,
+	      flags & ~BUS_SPACE_MAP_CACHEABLE, &memh) == 0);
+#endif
+
+	if (memh_valid) {
+		sc->sc_st = memt;
+		sc->sc_sh = memh;
+	} else if (ioh_valid) {
+		sc->sc_st = iot;
+		sc->sc_sh = ioh;
+	} else {
+		printf(": unable to map device registers\n");
 		return;
 	}
-	printf(": Intel EtherExpress Pro 10/100B Ethernet\n");
+
+	printf(": Intel EtherExpress Pro 10+/100B Ethernet\n");
 
 	/*
 	 * Allocate our interrupt.
