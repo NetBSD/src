@@ -1,4 +1,4 @@
-/*	$NetBSD: if_elmc_mca.c,v 1.2 2001/03/17 16:59:29 jdolecek Exp $	*/
+/*	$NetBSD: if_elmc_mca.c,v 1.3 2001/03/19 22:33:35 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -119,13 +119,12 @@ elmc_mca_attach(struct device *parent, struct device *self, void *aux)
 	struct ie_softc *sc = &asc->sc_ie;
 	struct mca_attach_args *ma = aux;
 	int pos2, pos3, i, revision;
-	char buf[100];
 	int iobase, irq, pbram_addr;
 	bus_space_handle_t ioh, memh;
 	u_int8_t myaddr[ETHER_ADDR_LEN];
 
-	mca_devinfo(ma->ma_id, buf);
-	printf(" slot %d: %s\n", ma->ma_slot + 1, buf);
+	printf(" slot %d: 3Com EtherLink/MC Ethernet Adapter (3C523)\n",
+		ma->ma_slot + 1);
 
 	pos2 = mca_conf_read(ma->ma_mc, ma->ma_slot, 2);
 	pos3 = mca_conf_read(ma->ma_mc, ma->ma_slot, 3);
