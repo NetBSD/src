@@ -57,13 +57,16 @@ static char sccsid[] = "@(#)whatis.c	8.5 (Berkeley) 11/26/93";
 
 static int *found, foundman;
 
+void dashtrunc __P((char *, char *));
+int match __P((char *, char *));
+void usage __P((void));
+void whatis __P((char **, char *, int));
+
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	extern char *optarg;
-	extern int optind;
 	ENTRY *ep;
 	TAG *tp;
 	int ch, rv;
@@ -98,7 +101,7 @@ main(argc, argv)
 	memset(found, 0, argc * sizeof(int));
 
 	for (p = argv; *p; ++p)			/* trim full paths */
-		if (beg = rindex(*p, '/'))
+		if (beg = strrchr(*p, '/'))
 			*p = beg + 1;
 
 	if (p_augment)
@@ -126,6 +129,7 @@ main(argc, argv)
 	exit(rv);
 }
 
+void
 whatis(argv, path, buildpath)
 	char **argv, *path;
 	int buildpath;
@@ -134,7 +138,7 @@ whatis(argv, path, buildpath)
 	char buf[MAXLINELEN + 1], wbuf[MAXLINELEN + 1];
 
 	for (name = path; name; name = end) {	/* through name list */
-		if (end = index(name, ':'))
+		if (end = strchr(name, ':'))
 			*end++ = '\0';
 
 		if (buildpath) {
@@ -171,6 +175,7 @@ whatis(argv, path, buildpath)
  * match --
  *	match a full word
  */
+int
 match(bp, str)
 	register char *bp, *str;
 {
@@ -195,6 +200,7 @@ match(bp, str)
  * dashtrunc --
  *	truncate a string at " - "
  */
+void
 dashtrunc(from, to)
 	register char *from, *to;
 {
@@ -210,6 +216,7 @@ dashtrunc(from, to)
  * usage --
  *	print usage message and die
  */
+void
 usage()
 {
 	(void)fprintf(stderr,

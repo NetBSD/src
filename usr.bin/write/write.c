@@ -42,24 +42,31 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)write.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: write.c,v 1.3 1994/09/19 08:18:24 mycroft Exp $";
+static char *rcsid = "$Id: write.c,v 1.4 1994/12/21 07:11:00 jtc Exp $";
 #endif /* not lint */
 
+#include <sys/types.h>
 #include <sys/param.h>
-#include <sys/signal.h>
 #include <sys/stat.h>
-#include <sys/file.h>
-#include <sys/time.h>
-
-#include <err.h>
-#include <utmp.h>
 #include <ctype.h>
-#include <pwd.h>
 #include <stdio.h>
 #include <string.h>
+#include <signal.h>
+#include <time.h>
+#include <fcntl.h>
+#include <pwd.h>
+#include <unistd.h>
+#include <utmp.h>
+#include <err.h>
 
-extern int errno;
+void done(); 
+void do_write __P((char *, char *, uid_t));
+void wr_fputs __P((char *));
+void search_utmp __P((char *, char *, char *, uid_t));
+int term_chk __P((char *, int *, time_t *, int));
+int utmp_chk __P((char *, char *));
 
+int
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -68,8 +75,7 @@ main(argc, argv)
 	time_t atime;
 	uid_t myuid;
 	int msgsok, myttyfd;
-	char tty[MAXPATHLEN], *mytty, *ttyname();
-	void done();
+	char tty[MAXPATHLEN], *mytty;
 
 	/* check that sender has write enabled */
 	if (isatty(fileno(stdin)))
@@ -122,6 +128,7 @@ main(argc, argv)
  * utmp_chk - checks that the given user is actually logged in on
  *     the given tty
  */
+int
 utmp_chk(user, tty)
 	char *user, *tty;
 {
@@ -153,6 +160,7 @@ utmp_chk(user, tty)
  * Special case for writing to yourself - ignore the terminal you're
  * writing from, unless that's the only terminal with messages enabled.
  */
+void
 search_utmp(user, tty, mytty, myuid)
 	char *user, *tty, *mytty;
 	uid_t myuid;
@@ -206,6 +214,7 @@ search_utmp(user, tty, mytty, myuid)
  * term_chk - check that a terminal exists, and get the message bit
  *     and the access time
  */
+int
 term_chk(tty, msgsokP, atimeP, showerror)
 	char *tty;
 	int *msgsokP, showerror;
@@ -228,15 +237,15 @@ term_chk(tty, msgsokP, atimeP, showerror)
 /*
  * do_write - actually make the connection
  */
+void
 do_write(tty, mytty, myuid)
 	char *tty, *mytty;
 	uid_t myuid;
 {
 	register char *login, *nows;
 	register struct passwd *pwd;
-	time_t now, time();
-	char *getlogin(), path[MAXPATHLEN], host[MAXHOSTNAMELEN], line[512];
-	void done();
+	time_t now;
+	char path[MAXPATHLEN], host[MAXHOSTNAMELEN], line[512];
 
 	/* Determine our login name before the we reopen() stdout */
 	if ((login = getlogin()) == NULL)
@@ -279,6 +288,7 @@ done()
  * wr_fputs - like fputs(), but makes control characters visible and
  *     turns \n into \r\n
  */
+void
 wr_fputs(s)
 	register char *s;
 {
