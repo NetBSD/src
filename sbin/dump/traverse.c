@@ -1,4 +1,4 @@
-/*	$NetBSD: traverse.c,v 1.14 1995/06/18 21:35:33 cgd Exp $	*/
+/*	$NetBSD: traverse.c,v 1.14.6.1 1996/12/06 01:37:50 rat Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)traverse.c	8.2 (Berkeley) 9/23/93";
 #else
-static char rcsid[] = "$NetBSD: traverse.c,v 1.14 1995/06/18 21:35:33 cgd Exp $";
+static char rcsid[] = "$NetBSD: traverse.c,v 1.14.6.1 1996/12/06 01:37:50 rat Exp $";
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,7 @@ static char rcsid[] = "$NetBSD: traverse.c,v 1.14 1995/06/18 21:35:33 cgd Exp $"
 #ifdef	FS_44INODEFMT
 typedef	quad_t fsizeT;
 #else
-typedef	long fsizeT;
+typedef	int32_t fsizeT;
 #endif
 
 static	int dirindir __P((ino_t ino, daddr_t blkno, int level, long *size));
@@ -507,14 +507,14 @@ void
 writeheader(ino)
 	ino_t ino;
 {
-	register long sum, cnt, *lp;
+	register int32_t sum, cnt, *lp;
 
 	spcl.c_inumber = ino;
 	spcl.c_magic = NFS_MAGIC;
 	spcl.c_checksum = 0;
-	lp = (long *)&spcl;
+	lp = (int32_t *)&spcl;
 	sum = 0;
-	cnt = sizeof(union u_spcl) / (4 * sizeof(long));
+	cnt = sizeof(union u_spcl) / (4 * sizeof(int32_t));
 	while (--cnt >= 0) {
 		sum += *lp++;
 		sum += *lp++;
