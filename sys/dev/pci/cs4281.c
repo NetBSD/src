@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.9 2001/12/13 02:50:30 tacha Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.10 2002/05/15 09:55:45 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.9 2001/12/13 02:50:30 tacha Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.10 2002/05/15 09:55:45 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,7 +238,7 @@ cs4281_attach(parent, self, aux)
 #if 0
 	/* LATENCY_TIMER setting */
 	temp1 = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_BHLC_REG);
-	if ( PCI_LATTIMER(temp1) < 32 ) {
+	if (PCI_LATTIMER(temp1) < 32) {
 		temp1 &= 0xffff00ff;
 		temp1 |= 0x00002000;
 		pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_BHLC_REG, temp1);
@@ -254,7 +254,7 @@ cs4281_attach(parent, self, aux)
 
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, cs4281_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",sc->sc_dev.dv_xname);
+		printf("%s: couldn't establish interrupt", sc->sc_dev.dv_xname);
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
@@ -265,7 +265,7 @@ cs4281_attach(parent, self, aux)
 	/*
 	 * Sound System start-up
 	 */
-	if (cs4281_init(sc,1) != 0)
+	if (cs4281_init(sc, 1) != 0)
 		return;
 
 	sc->type = TYPE_CS4281;
@@ -379,6 +379,7 @@ cs4281_query_encoding(addr, fp)
 	void *addr;
 	struct audio_encoding *fp;
 {
+
 	switch (fp->index) {
 	case 0:
 		strcpy(fp->name, AudioEulinear);
@@ -452,7 +453,7 @@ cs4281_set_params(addr, setmode, usemode, play, rec)
 		p = mode == AUMODE_PLAY ? play : rec;
 		
 		if (p == play) {
-			DPRINTFN(5,("play: sample=%ld precision=%d channels=%d\n",
+			DPRINTFN(5, ("play: sample=%ld precision=%d channels=%d\n",
 				p->sample_rate, p->precision, p->channels));
 			if (p->sample_rate < 6023 || p->sample_rate > 48000 ||
 			    (p->precision != 8 && p->precision != 16) ||
@@ -460,7 +461,7 @@ cs4281_set_params(addr, setmode, usemode, play, rec)
 				return (EINVAL);
 			}
 		} else {
-			DPRINTFN(5,("rec: sample=%ld precision=%d channels=%d\n",
+			DPRINTFN(5, ("rec: sample=%ld precision=%d channels=%d\n",
 				p->sample_rate, p->precision, p->channels));
 			if (p->sample_rate < 6023 || p->sample_rate > 48000 ||
 			    (p->precision != 8 && p->precision != 16) ||
@@ -532,6 +533,7 @@ cs4281_getdev(addr, retp)
      void *addr;
      struct audio_device *retp;
 {
+
 	*retp = cs4281_device;
 	return 0;
 }
@@ -764,7 +766,7 @@ cs4281_power(why, v)
 			return;
 		}
 		sc->sc_suspend = why;
-		cs4281_init(sc,0);
+		cs4281_init(sc, 0);
 		cs4281_reset_codec(sc);
 
 		/* restore ac97 registers */
@@ -807,7 +809,7 @@ cs4281_reset_codec(void *addr)
 
 	sc = addr;
 
-	DPRINTFN(3,("cs4281_reset_codec\n"));
+	DPRINTFN(3, ("cs4281_reset_codec\n"));
 
 	/* Reset codec */
 	BA0WRITE4(sc, CS428X_ACCTL, 0);
@@ -825,9 +827,9 @@ cs4281_reset_codec(void *addr)
 	/* Enable ASYNC generation */
 	BA0WRITE4(sc, CS428X_ACCTL, ACCTL_ESYN);
 
-	/* Wait for Codec ready. Linux driver wait 50ms here */
+	/* Wait for codec ready. Linux driver waits 50ms here */
 	n = 0;
-	while((BA0READ4(sc, CS428X_ACSTS) & ACSTS_CRDY) == 0) {
+	while ((BA0READ4(sc, CS428X_ACSTS) & ACSTS_CRDY) == 0) {
 		delay(100);
 		if (++n > 1000) {
 			printf("reset_codec: AC97 codec ready timeout\n");
@@ -837,7 +839,7 @@ cs4281_reset_codec(void *addr)
 #if defined(ENABLE_SECONDARY_CODEC)
 	/* secondary codec ready*/
 	n = 0;
-	while((BA0READ4(sc, CS4281_ACSTS2) & ACSTS2_CRDY2) == 0) {
+	while ((BA0READ4(sc, CS4281_ACSTS2) & ACSTS2_CRDY2) == 0) {
 		delay(100);
 		if (++n > 1000)
 			return;
@@ -847,12 +849,12 @@ cs4281_reset_codec(void *addr)
 	/* XXX: undocumented but the Linux driver do this */
 	BA0WRITE4(sc, CS4281_SERMC, SERMC_PTCAC97);
 	
-	/* Wait for Codec ready signal */
+	/* Wait for codec ready signal */
 	n = 0;
 	do {
 		delay(1000);
 		if (++n > 1000) {
-			printf("%s: Timeout waiting for Codec ready\n",
+			printf("%s: timeout waiting for codec ready\n",
 			       sc->sc_dev.dv_xname);
 			return;
 		}
@@ -862,12 +864,12 @@ cs4281_reset_codec(void *addr)
 	/* Enable Valid Frame output on ASDOUT */
 	BA0WRITE4(sc, CS428X_ACCTL, ACCTL_ESYN | ACCTL_VFRM);
 	
-	/* Wait until Codec Calibration is finished. Codec register 26h */
+	/* Wait until codec calibration is finished. Codec register 26h */
 	n = 0;
 	do {
 		delay(1);
 		if (++n > 1000) {
-			printf("%s: Timeout waiting for Codec calibration\n",
+			printf("%s: timeout waiting for codec calibration\n",
 			       sc->sc_dev.dv_xname);
 			return ;
 		}
@@ -883,7 +885,7 @@ cs4281_reset_codec(void *addr)
 	do {
 		delay(1000);
 		if (++n > 1000) {
-			printf("%s: Timeout waiting for sampled input slots as valid\n",
+			printf("%s: timeout waiting for sampled input slots as valid\n",
 			       sc->sc_dev.dv_xname);
 			return;
 		}
@@ -940,6 +942,7 @@ cs4281_set_adc_rate(sc, rate)
 	struct cs428x_softc *sc;
 	int rate;
 {
+
 	BA0WRITE4(sc, CS4281_ADCSR, cs4281_sr2regval(rate));
 }
 
@@ -948,6 +951,7 @@ cs4281_set_dac_rate(sc, rate)
 	struct cs428x_softc *sc;
 	int rate;
 {
+
 	BA0WRITE4(sc, CS4281_DACSR, cs4281_sr2regval(rate));
 }
 
@@ -1010,39 +1014,51 @@ cs4281_init(sc, init)
 	n = 0;
 #if 1
 	/* what document says */
-	while (  ( BA0READ4(sc, CS4281_CLKCR1)& (CLKCR1_DLLRDY | CLKCR1_CLKON))
-		 != (CLKCR1_DLLRDY | CLKCR1_CLKON )) {
+	while ((BA0READ4(sc, CS4281_CLKCR1)& (CLKCR1_DLLRDY | CLKCR1_CLKON))
+		 != (CLKCR1_DLLRDY | CLKCR1_CLKON)) {
 		delay(100);
-		if ( ++n > 1000 ) 
+		if (++n > 1000) {
+			printf("%s: timeout waiting for clock stabilization\n",
+			       sc->sc_dev.dv_xname);
 			return -1;
+		}
 	}
 #else
 	/* Cirrus driver for Linux does */
-	while ( !(BA0READ4(sc, CS4281_CLKCR1) & CLKCR1_DLLRDY)) {
+	while (!(BA0READ4(sc, CS4281_CLKCR1) & CLKCR1_DLLRDY)) {
 		delay(1000);
-		if ( ++n > 1000 )
+		if (++n > 1000) {
+			printf("%s: timeout waiting for clock stabilization\n",
+			       sc->sc_dev.dv_xname);
 			return -1;
+		}
 	}
 #endif
 
 	/* Enable ASYNC generation */
 	BA0WRITE4(sc, CS428X_ACCTL, ACCTL_ESYN);
 
-	/* Wait for Codec ready. Linux driver wait 50ms here */
+	/* Wait for codec ready. Linux driver waits 50ms here */
 	n = 0;
-	while((BA0READ4(sc, CS428X_ACSTS) & ACSTS_CRDY) == 0) {
+	while ((BA0READ4(sc, CS428X_ACSTS) & ACSTS_CRDY) == 0) {
 		delay(100);
-		if (++n > 1000)
+		if (++n > 1000) {
+			printf("%s: timeout waiting for codec ready\n",
+			       sc->sc_dev.dv_xname);
 			return -1;
+		}
 	}
 
 #if defined(ENABLE_SECONDARY_CODEC)
 	/* secondary codec ready*/
 	n = 0;
-	while((BA0READ4(sc, CS4281_ACSTS2) & ACSTS2_CRDY2) == 0) {
+	while ((BA0READ4(sc, CS4281_ACSTS2) & ACSTS2_CRDY2) == 0) {
 		delay(100);
-		if (++n > 1000)
+		if (++n > 1000) {
+			printf("%s: timeout waiting for secondary codec ready\n",
+			       sc->sc_dev.dv_xname);
 			return -1;
+		}
 	}
 #endif
 
@@ -1050,12 +1066,12 @@ cs4281_init(sc, init)
 	/* XXX: undocumented but the Linux driver do this */
 	BA0WRITE4(sc, CS4281_SERMC, SERMC_PTCAC97);
 	
-	/* Wait for Codec ready signal */
+	/* Wait for codec ready signal */
 	n = 0;
 	do {
 		delay(1000);
 		if (++n > 1000) {
-			printf("%s: Timeout waiting for Codec ready\n",
+			printf("%s: timeout waiting for codec ready\n",
 			       sc->sc_dev.dv_xname);
 			return -1;
 		}
@@ -1065,12 +1081,12 @@ cs4281_init(sc, init)
 	/* Enable Valid Frame output on ASDOUT */
 	BA0WRITE4(sc, CS428X_ACCTL, ACCTL_ESYN | ACCTL_VFRM);
 	
-	/* Wait until Codec Calibration is finished. Codec register 26h */
+	/* Wait until codec calibration is finished. codec register 26h */
 	n = 0;
 	do {
 		delay(1);
 		if (++n > 1000) {
-			printf("%s: Timeout waiting for Codec calibration\n",
+			printf("%s: timeout waiting for codec calibration\n",
 			       sc->sc_dev.dv_xname);
 			return -1;
 		}
@@ -1086,7 +1102,7 @@ cs4281_init(sc, init)
 	do {
 		delay(1000);
 		if (++n > 1000) {
-			printf("%s: Timeout waiting for sampled input slots as valid\n",
+			printf("%s: timeout waiting for sampled input slots as valid\n",
 			       sc->sc_dev.dv_xname);
 			return -1;
 		}
@@ -1151,7 +1167,7 @@ cs4281_init(sc, init)
 
 	/* map AC97 PCM playback to DMA Channel 0 */
 	/* Reset FEN bit to setup first */
-	BA0WRITE4(sc, CS4281_FCR0, (BA0READ4(sc,CS4281_FCR0) & ~FCRn_FEN));
+	BA0WRITE4(sc, CS4281_FCR0, (BA0READ4(sc, CS4281_FCR0) & ~FCRn_FEN));
 	/*
 	 *| RS[4:0]/|        |
 	 *| LS[4:0] |  AC97  | Slot Function
@@ -1172,7 +1188,7 @@ cs4281_init(sc, init)
 
 	/* map AC97 PCM record to DMA Channel 1 */
 	/* Reset FEN bit to setup first */
-	BA0WRITE4(sc, CS4281_FCR1, (BA0READ4(sc,CS4281_FCR1) & ~FCRn_FEN));
+	BA0WRITE4(sc, CS4281_FCR1, (BA0READ4(sc, CS4281_FCR1) & ~FCRn_FEN));
 	/*
 	 *| RS[4:0]/|
 	 *| LS[4:0] | AC97 | Slot Function
@@ -1195,8 +1211,8 @@ cs4281_init(sc, init)
 
 #if 0
 	/* Disable DMA Channel 2, 3 */
-	BA0WRITE4(sc, CS4281_FCR2, (BA0READ4(sc,CS4281_FCR2) & ~FCRn_FEN));
-	BA0WRITE4(sc, CS4281_FCR3, (BA0READ4(sc,CS4281_FCR3) & ~FCRn_FEN));
+	BA0WRITE4(sc, CS4281_FCR2, (BA0READ4(sc, CS4281_FCR2) & ~FCRn_FEN));
+	BA0WRITE4(sc, CS4281_FCR3, (BA0READ4(sc, CS4281_FCR3) & ~FCRn_FEN));
 #endif
 
 	/* Set the SRC Slot Assignment accordingly */
