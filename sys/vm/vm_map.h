@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_map.h	7.3 (Berkeley) 4/21/91
- *	$Id: vm_map.h,v 1.5 1994/01/08 01:11:29 mycroft Exp $
+ *	$Id: vm_map.h,v 1.6 1994/01/08 05:26:14 mycroft Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -161,17 +161,6 @@ typedef struct {
 } vm_map_version_t;
 
 /*
- *	Macros:		vm_map_lock, etc.
- *	Function:
- *		Perform locking on the data portion of a map.
- */
-
-#define		vm_map_lock(map)	{ lock_write(&(map)->lock); (map)->timestamp++; }
-#define		vm_map_unlock(map)	lock_write_done(&(map)->lock)
-#define		vm_map_lock_read(map)	lock_read(&(map)->lock)
-#define		vm_map_unlock_read(map)	lock_read_done(&(map)->lock)
-
-/*
  *	Exported procedures that operate on vm_map_t.
  */
 boolean_t	vm_map_check_protection
@@ -181,6 +170,7 @@ int		vm_map_copy
 			vm_offset_t, boolean_t, boolean_t));
 vm_map_t	vm_map_create
 		   __P((pmap_t, vm_offset_t, vm_offset_t, boolean_t));
+void		vm_map_deallocate __P((vm_map_t));
 int		vm_map_delete __P((vm_map_t, vm_offset_t, vm_offset_t));
 int		vm_map_find
 		   __P((vm_map_t, vm_object_t, vm_offset_t, vm_offset_t *,
@@ -215,6 +205,11 @@ int		vm_map_submap
 /*
  *	Functions implemented as macros
  */
+#define		vm_map_lock(map)	{ lock_write(&(map)->lock); (map)->timestamp++; }
+#define		vm_map_unlock(map)	lock_write_done(&(map)->lock)
+#define		vm_map_lock_read(map)	lock_read(&(map)->lock)
+#define		vm_map_unlock_read(map)	lock_read_done(&(map)->lock)
+
 #define		vm_map_min(map)		((map)->min_offset)
 #define		vm_map_max(map)		((map)->max_offset)
 #define		vm_map_pmap(map)	((map)->pmap)
