@@ -1,4 +1,4 @@
-/*	$NetBSD: wall.c,v 1.6 1994/11/17 07:17:58 jtc Exp $	*/
+/*	$NetBSD: wall.c,v 1.7 1997/02/11 08:42:04 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)wall.c	8.2 (Berkeley) 11/16/93";
 #endif
-static char rcsid[] = "$NetBSD: wall.c,v 1.6 1994/11/17 07:17:58 jtc Exp $";
+static char rcsid[] = "$NetBSD: wall.c,v 1.7 1997/02/11 08:42:04 mrg Exp $";
 #endif /* not lint */
 
 /*
@@ -139,8 +139,7 @@ makemsg(fname)
 	int fd;
 	char *p, *whom, hostname[MAXHOSTNAMELEN], lbuf[100], tmpname[15];
 
-	(void)strcpy(tmpname, _PATH_TMP);
-	(void)strcat(tmpname, "/wall.XXXXXX");
+	(void)snprintf(tmpname, sizeof tmpname, "%s/wall.XXXXXX", _PATH_TMP);
 	if (!(fd = mkstemp(tmpname)) || !(fp = fdopen(fd, "r+"))) {
 		(void)fprintf(stderr, "wall: can't open temporary file.\n");
 		exit(1);
@@ -162,11 +161,11 @@ makemsg(fname)
 		 * in column 80, but that can't be helped.
 		 */
 		(void)fprintf(fp, "\r%79s\r\n", " ");
-		(void)sprintf(lbuf, "Broadcast Message from %s@%s",
-		    whom, hostname);
+		(void)snprintf(lbuf, sizeof lbuf,
+		    "Broadcast Message from %s@%s", whom, hostname);
 		(void)fprintf(fp, "%-79.79s\007\007\r\n", lbuf);
-		(void)sprintf(lbuf, "        (%s) at %d:%02d ...", ttyname(2),
-		    lt->tm_hour, lt->tm_min);
+		(void)snprintf(lbuf, sizeof lbuf, "        (%s) at %d:%02d ...",
+		    ttyname(2), lt->tm_hour, lt->tm_min);
 		(void)fprintf(fp, "%-79.79s\r\n", lbuf);
 	}
 	(void)fprintf(fp, "%79s\r\n", " ");
