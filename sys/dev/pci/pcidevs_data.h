@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.281 2000/12/23 10:13:20 tsutsui Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.282 2000/12/27 04:16:19 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.277 2000/12/23 10:11:55 tsutsui Exp 
+ *	NetBSD: pcidevs,v 1.278 2000/12/27 04:15:53 augustss Exp 
  */
 
 /*
@@ -3604,6 +3604,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Quadro",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE2MX,
+	    0,
+	    "Nvidia Corporation",
+	    "GeForce2 MX [NV11]",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE2,
 	    0,
 	    "Nvidia Corporation",
@@ -4918,6 +4924,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "V96DPC i960 (Dual) Host-PCI Bridge",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8363_HB,
+	    0,
+	    "VIA Technologies",
+	    "VT8363 KT133 System Controller",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8371_HB,
 	    0,
 	    "VIA Technologies",
@@ -5084,6 +5096,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "VIA Technologies",
 	    "VT86C100A (Rhine-II) 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8363_PPB,
+	    0,
+	    "VIA Technologies",
+	    "VT8363 KT133 PCI to AGP Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8371_PPB,
