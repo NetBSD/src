@@ -29,7 +29,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: mac68k_init.c,v 1.2 1994/06/29 04:59:05 briggs Exp $
+ * $Id: mac68k_init.c,v 1.3 1994/07/02 13:04:49 briggs Exp $
  *
  */
 
@@ -73,15 +73,23 @@ debug_translate(u_int val)
 
 	strprintf("translate", val);
 	p = (u_int *) Sysseg1_pa;
+	/* Get root index */
 	f = (val&SG_IMASK1) >> SG_ISHIFT1;
+
 	p = (u_int *) (p[f] & ~0xf);
+	/* Get segment index */
 	f = (val&SG_IMASK2) >> SG_040ISHIFT;
 	if (p[f]) {
 		p = (u_int *) (p[f] & ~0xf);
-		strprintf("     into", *p);
-	} else {
-		strprintf("     into nothing", 0);
+		/* Get page index */
+		f = (val & SG_040PMASK) >> SG_PSHIFT;
+		if (p[f]) {
+			f = p[f] & ~0xf;
+			strprintf("     into", f + (val & 0xfff));
+			return;
+		}
 	}
+	strprintf("     into nothing", 0);
 }
 	
 /*
@@ -107,7 +115,6 @@ extern void	etext(); /* Okaaaaay... */
 	u_int	p0_ptpa, p0_u_area_pa, i;
 	u_int	sg_proto, pg_proto;
 	u_int	*sg, *pg, *pg2;
-	u_int	foo;
 
 	/* init "tracking" values */
 	vend   = get_top_of_ram();
@@ -115,19 +122,13 @@ extern void	etext(); /* Okaaaaay... */
 	vstart = mac68k_round_page(esym);
 	pstart = vstart + load_addr;
 	pend   = vend   + load_addr;
-strprintf("vstart", vstart);
-strprintf("vend", vend);
-strprintf("pstart", pstart);
-strprintf("pend", pend);
 	avail -= vstart;
-strprintf("avail", avail);
 
 	/*
 	 * Allocate the kernel 1st level segment table.
 	 */
 	Sysseg1_pa = pstart;
 	Sysseg1 = vstart;
-strprintf("Sysseg1", Sysseg1);
 	vstart += NBPG;
 	pstart += NBPG;
 	avail  -= NBPG;
@@ -137,7 +138,6 @@ strprintf("Sysseg1", Sysseg1);
 	 */
 	Sysseg_pa = pstart;
 	Sysseg = vstart;
-strprintf("Sysseg", Sysseg);
 	vstart += NBPG * 16; /* Amiga used 8 instead of 16 */
 	pstart += NBPG * 16; /* Amiga used 8 instead of 16 */
 	avail  -= NBPG * 16; /* Amiga used 8 instead of 16 */
@@ -146,13 +146,9 @@ strprintf("Sysseg", Sysseg);
 	 * Allocate initial page table pages.
 	 */
 	pt = vstart;
-strprintf("pt", pt);
 	ptpa = pstart;
-strprintf("ptpa", ptpa);
 	ptextra = IIOMAPSIZE + NBMAPSIZE;
-strprintf("ptextra", ptextra);
 	ptsize = (Sysptsize + howmany(ptextra, NPTEPG)) << PGSHIFT;
-strprintf("ptsize", ptsize);
 	vstart += ptsize;
 	pstart += ptsize;
 	avail  -= ptsize;
@@ -162,7 +158,6 @@ strprintf("ptsize", ptsize);
 	 */
 	Sysptmap = vstart;
 	Sysptmap_pa = pstart;
-strprintf("Sysptmap_pa", Sysptmap_pa);
 	vstart += NBPG;
 	pstart += NBPG;
 	avail  -= NBPG;
@@ -171,7 +166,6 @@ strprintf("Sysptmap_pa", Sysptmap_pa);
 	 * Set Sysmap; mapped after page table pages.
 	 */
 	Sysmap = (struct pte *) (ptsize << (12));
-strprintf("Sysmap (ptsize << 12)", Sysmap);
 
 	/*
 	 * Initialize segment table and page table map.
@@ -184,8 +178,14 @@ strprintf("Sysmap (ptsize << 12)", Sysmap);
 	sg = (u_int *) Sysseg1_pa;
 	while (sg_proto < ptpa) {
 		*sg++ = sg_proto;
-		sg_proto += MAC_040RTSIZE;
+		sg_proto += MAC_040STSIZE;
 	}
+	/*
+	 * Clear remainder of root table.
+	 */
+	while (sg < (u_int *) Sysseg_pa)
+		*sg++ = SG_NV;
+
 	sg_proto = ptpa | SG_RW | SG_V;
 	pg_proto = ptpa | PG_RW | PG_CI | PG_V;
 	/*
@@ -199,7 +199,7 @@ strprintf("Sysmap (ptsize << 12)", Sysmap);
 			*pg++ = pg_proto;
 		else if (pg < (u_int *) (Sysptmap_pa + NBPG))
 			*pg++ = PG_NV;
-		sg_proto += MAC_040STSIZE;
+		sg_proto += MAC_040PTSIZE;
 		pg_proto += NBPG;
 	}
 	/*
@@ -275,16 +275,13 @@ strprintf("Sysmap (ptsize << 12)", Sysmap);
 	 */
 	while (pg < (u_int *) (ptpa + ptsize))
 		*pg++ = PG_NV;
-	debug_translate(Sysseg1);
 	
 	/*
 	 * Go back and validate I/O space.
 	 */
 	pg      -= ptextra;
 	pg2      = pg;
-strprintf("IOBASE: pg", pg);
 	pg_proto = INTIOBASE | PG_RW | PG_CI | PG_V;
-strprintf("IOBASE: pg_proto", pg_proto);
 	while (pg_proto < INTIOTOP) {
 		*pg++     = pg_proto;
 		pg_proto += NBPG;
@@ -293,9 +290,7 @@ strprintf("IOBASE: pg_proto", pg_proto);
 	/*
 	 * Go validate NuBus space.
 	 */
-strprintf("NBBASE: pg", pg);
 	pg_proto = NBBASE | PG_RW | PG_CI | PG_V; /* Need CI, here? (akb) */
-strprintf("NBBASE: pg_proto", pg_proto);
 	while (pg_proto < NBTOP) {
 		*pg++     = pg_proto;
 		pg_proto += NBPG;
@@ -306,21 +301,14 @@ strprintf("NBBASE: pg_proto", pg_proto);
 	 */
 	IOBase = (u_int) Sysmap - ptextra * NBPG;
 	NuBusBase = IOBase + IIOMAPSIZE * NBPG;
-strprintf("IOBase", IOBase);
-strprintf("NuBusBase", NuBusBase);
-	foo = videoaddr - NBBASE + NuBusBase;
 
 	/*
 	 * Make proper segment table entries for these, now.
 	 */
 	sg_proto = ((u_int)pg2) | SG_RW | SG_V;
 	i =(((u_int) IOBase) & SG_IMASK1) >> SG_ISHIFT1;
-strprintf("i", i);
 	sg = (u_int *) ((((u_int *) Sysseg1)[i]) & ~0x7f);
 	sg += (((u_int) IOBase) & SG_IMASK2) >> SG_040ISHIFT;
-strprintf("*sigh* sg", sg);
-strprintf("*sigh* sg_proto", sg_proto);
-strprintf("*sigh* pg", pg);
 	while (sg_proto < (u_int) pg) {
 		*sg++ = sg_proto;
 		sg_proto += MAC_040PTSIZE;
@@ -338,7 +326,6 @@ strprintf("*sigh* pg", pg);
 	vstart += NBPG;
 	pstart += NBPG;
 	avail  -= NBPG;
-strprintf("p0_ptpa", p0_ptpa);
 
 	p0_u_area_pa = pstart;	/* Base of u-area and end of PT */
 
@@ -380,12 +367,6 @@ strprintf("p0_ptpa", p0_ptpa);
 	 */
 	pmap_bootstrap(pstart, load_addr);
 
-	debug_translate(IOBase);
-	debug_translate(NuBusBase);
-	debug_translate(Sysseg1);
-	debug_translate(0);
-	debug_translate((u_int) etext);
-
 	/*
 	 * Prepare to enable the MMU.
 	 * [Amiga copies kernel over right before this.  This might be
@@ -403,8 +384,6 @@ strprintf("p0_ptpa", p0_ptpa);
 			: : "a" (Sysseg1_pa));
 	asm volatile (".word 0xf518" : : );
 	asm volatile ("movel #0x8000,d0; .word 0x4e7b,0x0003" : : );
-	for (i = 0 ; i < 1152*16 ; i++)
-		*((u_int *) foo)++ = 0xa;
 
 	/*
 	 * (akb) I think that this is
@@ -423,5 +402,4 @@ strprintf("p0_ptpa", p0_ptpa);
 	ASCBase  = (unsigned char *) ((u_int) ASCBase - INTIOBASE + IOBase);
 	videoaddr = videoaddr - NBBASE + NuBusBase;
 	NewScreenAddress();
-strprintf("videoaddr", videoaddr);
 }
