@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.55 2001/06/05 04:38:09 thorpej Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.56 2001/07/08 17:41:14 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@ int	lock_debug_syslog = 0;	/* defaults to syslog, but can be patched */
 
 /*
  * Locking primitives implementation.
- * Locks provide shared/exclusive sychronization.
+ * Locks provide shared/exclusive synchronization.
  */
 
 #if defined(LOCKDEBUG) || defined(DIAGNOSTIC) /* { */
