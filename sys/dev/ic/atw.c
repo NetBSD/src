@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.44 2004/07/15 06:31:43 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.45 2004/07/15 06:32:42 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.44 2004/07/15 06:31:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.45 2004/07/15 06:32:42 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2897,10 +2897,10 @@ atw_rxintr(struct atw_softc *sc)
 		DPRINTF3(sc,
 		    ("%s: rx stat %08x rssi %08x buf1 %08x buf2 %08x\n",
 		    sc->sc_dev.dv_xname,
-		    sc->sc_rxdescs[i].ar_stat,
-		    sc->sc_rxdescs[i].ar_rssi,
-		    sc->sc_rxdescs[i].ar_buf1,
-		    sc->sc_rxdescs[i].ar_buf2));
+		    le32toh(sc->sc_rxdescs[i].ar_stat),
+		    le32toh(sc->sc_rxdescs[i].ar_rssi),
+		    le32toh(sc->sc_rxdescs[i].ar_buf1),
+		    le32toh(sc->sc_rxdescs[i].ar_buf2)));
 
 		/*
 		 * Make sure the packet fits in one buffer.  This should
