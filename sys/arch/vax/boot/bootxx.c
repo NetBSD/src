@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.10 1997/04/10 21:25:20 ragge Exp $ */
+/* $NetBSD: bootxx.c,v 1.11 1997/06/08 17:49:17 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -125,7 +125,7 @@ Xmain()
 
 	bootset = getbootdev();
 
-	printf("\nhowto 0x%x, bdev 0x%x, booting...\n", boothowto, bootdev);
+	printf("\nhowto 0x%x, bdev 0x%x, booting...", boothowto, bootdev);
 	io = open(hej, 0);
 
 	if (io >= 0 && io < SOPEN_MAX) {
@@ -147,7 +147,7 @@ copyunix(aio)
 		printf("Bad format\n");
 		return;
 	}
-	printf("%d", x.a_text);
+
 	if (N_GETMAGIC(x) == ZMAGIC && lseek(io, N_TXTADDR(x), SEEK_SET) == -1)
 		goto shread;
 	if (read(io, (char *) 0x10000, x.a_text) != x.a_text)
@@ -156,17 +156,17 @@ copyunix(aio)
 	if (N_GETMAGIC(x) == ZMAGIC || N_GETMAGIC(x) == NMAGIC)
 		while ((int) addr & CLOFSET)
 			*addr++ = 0;
-	printf("+%d", x.a_data);
+
 	if (read(io, addr + 0x10000, x.a_data) != x.a_data)
 		goto shread;
 	addr += x.a_data;
 	bcopy((void *) 0x10000, 0, (int) addr);
-	printf("+%d", x.a_bss);
+
 	for (i = 0; i < x.a_bss; i++)
 		*addr++ = 0;
 	for (i = 0; i < 128 * 512; i++)	/* slop */
 		*addr++ = 0;
-	printf(" start 0x%x\n", x.a_entry);
+	printf("done. (%d+%d)\n", x.a_text + x.a_data, x.a_bss);
 	hoppabort(x.a_entry, boothowto, bootset);
 	(*((int (*) ()) x.a_entry)) ();
 	return;
