@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.8 1995/04/22 08:34:30 cgd Exp $	*/
+/*	$NetBSD: move.c,v 1.9 1995/04/22 10:16:04 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 7/19/93";
 #else
-static char rcsid[] = "$NetBSD: move.c,v 1.8 1995/04/22 08:34:30 cgd Exp $";
+static char rcsid[] = "$NetBSD: move.c,v 1.9 1995/04/22 10:16:04 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -111,27 +111,6 @@ int delaystr[10];
 short ospeed;
 
 static char str[80];
-
-apr(struct point *ps, char *fmt, ...)
-{
-	va_list ap;
-	struct point p;
-
-	va_start(ap, fmt);
-	p.line = ps->line+1; p.col = ps->col+1;
-	move(&p);
-	(void)vsprintf(str, fmt, ap);
-	pstring(str);
-}
-
-pr(char *fmt, ...)
-{
-	va_list ap;
-
-	va_start(ap, fmt);
-	(void)vsprintf(str, fmt, ap);
-	pstring(str);
-}
 
 move(sp)
 struct point *sp;
