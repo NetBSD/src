@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.11 2001/02/19 22:56:17 cgd Exp $	*/
+/*	$NetBSD: atactl.c,v 1.12 2001/08/28 15:36:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -188,7 +188,7 @@ main(argc, argv)
 		if (strcmp(cmdname, commands[i].cmd_name) == 0)
 			break;
 	if (commands[i].cmd_name == NULL)
-		errx(1, "unknown command: %s\n", cmdname);
+		errx(1, "unknown command: %s", cmdname);
 
 	argnames = commands[i].arg_names;
 
