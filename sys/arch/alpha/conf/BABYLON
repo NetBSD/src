@@ -1,4 +1,4 @@
-# $NetBSD: BABYLON,v 1.13 1999/02/18 20:39:04 thorpej Exp $
+# $NetBSD: BABYLON,v 1.14 1999/04/30 23:34:08 cgd Exp $
 #
 #	BABYLON -- babylon.netbsd.org, the new mail server
 #
@@ -79,7 +79,7 @@ options 	COMPAT_11
 options 	COMPAT_12
 options 	COMPAT_13
 
-# OSF/1 binary compatibility -- CURRENTLY DOES NOT WORK
+# OSF/1 binary compatibility
 #options 	COMPAT_OSF1
 
 # System V-like message queues
