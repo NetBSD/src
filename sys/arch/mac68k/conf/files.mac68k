@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.96 2000/07/30 21:36:04 briggs Exp $
+#	$NetBSD: files.mac68k,v 1.97 2001/01/17 00:07:27 fvdl Exp $
 
 # mac68k-specific configuration info
 
@@ -163,6 +163,7 @@ file	arch/mac68k/mac68k/pmap.c
 file	arch/mac68k/mac68k/pmap_bootstrap.c	compile-with "${NOPROF_C}"
 file	arch/mac68k/mac68k/pram.c
 file	arch/mac68k/mac68k/pramasm.s
+file	arch/mac68k/mac68k/procfs_machdep.c	procfs
 file	arch/mac68k/mac68k/psc.c
 file	arch/mac68k/mac68k/sys_machdep.c
 file	arch/mac68k/mac68k/trap.c
