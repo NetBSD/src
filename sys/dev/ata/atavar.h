@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.62 2004/08/20 20:52:31 thorpej Exp $	*/
+/*	$NetBSD: atavar.h,v 1.63 2004/08/20 22:17:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -406,6 +406,7 @@ struct atac_softc {
 };
 
 #ifdef _KERNEL
+void	ata_channel_attach(struct ata_channel *);
 int	atabusprint(void *aux, const char *);
 int	ataprint(void *aux, const char *);
 
