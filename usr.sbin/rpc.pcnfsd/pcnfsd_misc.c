@@ -1,4 +1,4 @@
-/*	$NetBSD: pcnfsd_misc.c,v 1.5 1998/07/27 15:14:05 mycroft Exp $	*/
+/*	$NetBSD: pcnfsd_misc.c,v 1.6 2002/08/02 02:47:58 christos Exp $	*/
 
 /* RE_SID: @(%)/usr/dosnfs/shades_SCCS/unix/pcnfsd/v2/src/SCCS/s.pcnfsd_misc.c 1.5 92/01/24 19:59:13 SMI */
 /*
@@ -36,6 +36,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 #ifdef ISC_2_0
 #include <sys/fcntl.h>
@@ -292,13 +293,6 @@ run_ps630(f, opts)
 
 
 #ifdef WTMP
-
-#include <utmp.h>
-
-#ifndef	_PATH_WTMP
-#define _PATH_WTMP "/usr/adm/wtmp"
-#endif
-
 void
 wlogin(name, req)
 	char   *name;
@@ -306,9 +300,7 @@ wlogin(name, req)
 {
 	struct sockaddr_in *who;
 	struct hostent *hp;
-	char   *host;
-	struct utmp ut;
-	int     fd;
+	char *host;
 
 	if (!wtmp_enabled)
 		return;
@@ -321,21 +313,18 @@ wlogin(name, req)
 	    sizeof(struct in_addr),
 	    who->sin_family);
 
-	if (hp && (strlen(hp->h_name) <= sizeof(ut.ut_host))) {
+	if (hp) {
 		host = hp->h_name;
 	} else {
 		host = inet_ntoa(who->sin_addr);
 	}
 
-	(void) strcpy(ut.ut_line, "PC-NFS");
-	(void) strncpy(ut.ut_name, name, sizeof ut.ut_name);
-	(void) strncpy(ut.ut_host, host, sizeof ut.ut_host);
-	ut.ut_time = time((time_t *) 0);
-
-	if ((fd = open(_PATH_WTMP, O_WRONLY | O_APPEND, 0)) >= 0) {
-		(void) write(fd, (char *) &ut, sizeof(struct utmp));
-		(void) close(fd);
-	}
+#ifdef SUPPORT_UTMP
+	logwtmp(name, "PC-NFS", host);
+#endif
+#ifdef SUPPORT_UTMPX
+	logwtmpx(name, "PC-NFS", host, USER_PROCESS, 0);
+#endif
 }
 #endif				/* WTMP */
 
