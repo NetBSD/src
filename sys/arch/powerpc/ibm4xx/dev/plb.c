@@ -1,4 +1,4 @@
-/* $NetBSD: plb.c,v 1.9 2003/07/15 02:54:44 lukem Exp $ */
+/* $NetBSD: plb.c,v 1.10 2003/07/25 10:12:44 scw Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plb.c,v 1.9 2003/07/15 02:54:44 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plb.c,v 1.10 2003/07/25 10:12:44 scw Exp $");
 
 #include "locators.h"
 
@@ -76,7 +76,9 @@ __KERNEL_RCSID(0, "$NetBSD: plb.c,v 1.9 2003/07/15 02:54:44 lukem Exp $");
 #include <sys/extent.h>
 #include <sys/malloc.h>
 
-#define _IBM4XX_BUS_DMA_PRIVATE
+#define _POWERPC_BUS_DMA_PRIVATE
+#include <machine/bus.h>
+
 #include <powerpc/ibm4xx/dev/plbvar.h>
 #include <powerpc/ibm4xx/ibm405gp.h>
 
@@ -98,6 +100,29 @@ static int	plb_print(void *, const char *);
 
 CFATTACH_DECL(plb, sizeof(struct device),
     plb_match, plb_attach, NULL, NULL);
+
+/*
+ * "generic" DMA struct, nothing special.
+ */
+struct powerpc_bus_dma_tag ibm4xx_default_bus_dma_tag = {
+	NULL,
+	0,			/* _bounce_thresh */
+	_bus_dmamap_create, 
+	_bus_dmamap_destroy,
+	_bus_dmamap_load,
+	_bus_dmamap_load_mbuf,
+	_bus_dmamap_load_uio,
+	_bus_dmamap_load_raw,
+	_bus_dmamap_unload,
+	_bus_dmamap_sync,
+	_bus_dmamem_alloc,
+	_bus_dmamem_free,
+	_bus_dmamem_map,
+	_bus_dmamem_unmap,
+	_bus_dmamem_mmap,
+	_bus_dma_phys_to_bus_mem_generic,
+	_bus_dma_bus_mem_to_phys_generic,
+};
 
 /*
  * Probe for the plb; always succeeds.
@@ -130,7 +155,6 @@ plb_attach(struct device *parent, struct device *self, void *aux)
 
 	for (i = 0; plb_devs[i].plb_name != NULL; i++) {
 		paa.plb_name = plb_devs[i].plb_name;
-		paa.plb_bt = ibm4xx_make_bus_space_tag(0, 0);
 		paa.plb_dmat = &ibm4xx_default_bus_dma_tag;
 		paa.plb_irq = PLBCF_IRQ_DEFAULT;
 
@@ -139,7 +163,6 @@ plb_attach(struct device *parent, struct device *self, void *aux)
 
 	while (local_plb_devs && local_plb_devs->plb_name != NULL) {
 		paa.plb_name = local_plb_devs->plb_name;
-		paa.plb_bt = ibm4xx_make_bus_space_tag(0, 0);
 		paa.plb_dmat = &ibm4xx_default_bus_dma_tag;
 		paa.plb_irq = PLBCF_IRQ_DEFAULT;
 

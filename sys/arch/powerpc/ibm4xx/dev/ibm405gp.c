@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm405gp.c,v 1.2 2003/07/15 02:54:44 lukem Exp $	*/
+/*	$NetBSD: ibm405gp.c,v 1.3 2003/07/25 10:12:43 scw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,11 +36,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm405gp.c,v 1.2 2003/07/15 02:54:44 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm405gp.c,v 1.3 2003/07/25 10:12:43 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/extent.h>
 
 #include <machine/bus.h>
 #include <dev/pci/pcivar.h>
@@ -48,7 +49,13 @@ __KERNEL_RCSID(0, "$NetBSD: ibm405gp.c,v 1.2 2003/07/15 02:54:44 lukem Exp $");
 #include <powerpc/ibm4xx/ibm405gp.h>
 #include <powerpc/ibm4xx/dev/pcicreg.h>
 
-static bus_space_tag_t	pcicfg_iot = ibm4xx_make_bus_space_tag(0, 0);
+static struct powerpc_bus_space pcicfg_tag = {
+	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
+	IBM405GP_PCIL0_BASE, 0x0, 0x40
+};
+static char ex_storage[EXTENT_FIXED_STORAGE_SIZE(1)]
+    __attribute__((aligned(8)));
+static bus_space_tag_t pcicfg_iot = &pcicfg_tag;
 static bus_space_handle_t pcicfg_ioh = 0;
 
 #define PCI0_MEM_BASE	0x80000000
@@ -57,7 +64,9 @@ static void setup_pcicfg_window(void)
 {
 	if (pcicfg_ioh)
 		return;
-	if (bus_space_map(pcicfg_iot, IBM405GP_PCIL0_BASE, 0x40 , 0, &pcicfg_ioh))
+	if (bus_space_init(&pcicfg_tag,
+	    "pcicfg", ex_storage, sizeof(ex_storage)) ||
+	    bus_space_map(pcicfg_iot, 0, 0x40 , 0, &pcicfg_ioh))
 		panic("Cannot map PCI configuration registers");
 }
 
