@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.1 1999/01/23 06:44:38 mrg Exp $
+#	$NetBSD: list,v 1.2 2000/05/02 16:06:55 sjg Exp $
 
 # UltraSPARC extra's
 LINK	instbin			sbin/disklabel
@@ -41,7 +41,7 @@ COPYDIR	${DESTDIR}/usr/share/zoneinfo	usr/share/zoneinfo
 COPY	${CURDIR}/../../share/termcap/termcap.src usr/share/misc/termcap
 
 # copy the kernel
-COPY	${CURDIR}/../../sys/arch/sparc64/compile/GENERIC/netbsd	netbsd
+COPY	${KERNOBJDIR:-${CURDIR}/../../sys/arch/sparc64/compile}/GENERIC/netbsd	netbsd
 
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/disktab		etc/disktab.shadow

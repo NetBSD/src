@@ -1,4 +1,6 @@
-# $NetBSD: Makefile,v 1.23 1999/04/07 06:47:50 cgd Exp $
+# $NetBSD: Makefile,v 1.24 2000/05/02 16:06:46 sjg Exp $
+
+.include "../../../Makefile.inc"
 
 # Make a distribution for the alpha, on a spare disk.
 # This creates a large, gzipped disk image in ${.OBJDIR}
@@ -10,6 +12,8 @@ all:
 	@echo both 'DESTDIR' and 'DESTDISK' must be defined.
 	@false
 .else
+
+KERNEL?= ${KERNOBJDIR}/GENERIC/netbsd
 
 SECPERCYL=	343
 CYLS=		1189
@@ -41,7 +45,7 @@ build-fs:
 	else \
 		true; \
 	fi
-	cp ${.CURDIR}/../../../sys/arch/alpha/compile/GENERIC/netbsd ${DESTDIR}
+	cp ${KERNEL} ${DESTDIR}
 	ln -s gcc ${DESTDIR}/usr/local/bin/cc
 	(cd ${DESTDIR}/usr/libexec && ln -s \
 	    ../local/lib/gcc-lib/alpha-unknown-netbsd*/*/cpp .)
@@ -97,5 +101,6 @@ clean cleandir distclean:
 	/bin/rm -f ${TARGETS}
 	/bin/rm -f mount-fs build-fs unmount-fs
 
+.include <bsd.kernobj.mk>
 .include <bsd.own.mk>
 .include <bsd.obj.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2000/03/30 04:33:57 fredb Exp $
+#	$NetBSD: Makefile,v 1.5 2000/05/02 16:06:50 sjg Exp $
 
 NOTESOBJDIR!=cd ${.CURDIR}/../../../notes/mac68k; ${MAKE} -V .OBJDIR
 
@@ -30,6 +30,7 @@ all: notes ${CBIN}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${.CURDIR}/${MTREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
+	    KERNOBJDIR=${KERNOBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${TOP}/src/runlist.sh ${.CURDIR}/${LISTS}
 	@echo ""
 	@df -i ${MOUNT_POINT}

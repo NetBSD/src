@@ -1,4 +1,7 @@
-#	$NetBSD: Makefile,v 1.10 2000/02/01 05:02:31 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.11 2000/05/02 16:06:45 sjg Exp $
+
+.include "../../../Makefile.inc"
+.include <bsd.kernobj.mk>
 
 MOUNT_POINT?=	/mnt
 VND?=		vnd0
@@ -7,7 +10,7 @@ VND_RDEV=	/dev/r${VND}a
 VND_CDEV=	/dev/${VND}c
 VND_CRDEV=	/dev/r${VND}c
 MDEC?=		${DESTDIR}/usr/mdec
-KERNEL?=	${.CURDIR}/../../../sys/arch/alpha/compile/GENERIC/netbsd
+KERNEL?=	${KERNOBJDIR}/GENERIC/netbsd
 STRIP?=		strip
 
 GZKERNEL=	netbsd

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.13 1999/05/11 20:46:59 veego Exp $ 
+#	$NetBSD: Makefile.inc,v 1.14 2000/05/02 16:06:53 sjg Exp $ 
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -17,7 +17,7 @@ MDEC=		${DESTDIR}/usr/mdec
 LISTS=		${COMMONDIR}/list ${.CURDIR}/list
 CRUNCHCONF=	${COMMONDIR}/${CBIN}.conf
 MTREE=		${COMMONDIR}/mtree.conf
-ADIR=		${TOP}/../../../sys/arch/pc532
+KERNEL?=	${KERNOBJDIR}/INSTALL/netbsd
 
 DISKTYPE=	boot3
 RAMDISKTYPE=	rd
@@ -53,6 +53,7 @@ ramdisk.fs: ${CBIN} ${LISTS}
 .endif
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
+	    KERNOBJDIR=${KERNOBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTS}
 	@echo ""
 	@df -i ${MOUNT_POINT}
@@ -77,7 +78,7 @@ ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	make -f ${CBIN}.mk all
 
 netbsd.gz: ramdisk.fs
-	cp ${ADIR}/compile/INSTALL/netbsd /var/tmp/$$$$; \
+	cp ${KERNEL} /var/tmp/$$$$; \
 		mdsetimage -v /var/tmp/$$$$ ramdisk.fs; \
 		strip /var/tmp/$$$$; \
 		gzip -9 </var/tmp/$$$$ >netbsd.gz; \
@@ -87,5 +88,6 @@ clean cleandir distclean:
 	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.cro *.c
 	/bin/rm -f netbsd*
 
+.include <bsd.kernobj.mk>
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>

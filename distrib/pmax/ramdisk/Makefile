@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2000/01/06 03:47:56 simonb Exp $
+#	$NetBSD: Makefile,v 1.12 2000/05/02 16:06:54 sjg Exp $
 
 BINDIR=		/installation/netboot
 
@@ -35,6 +35,7 @@ ${IMAGE}: ${CBIN}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} ARCHDIR=${ARCHDIR} \
+	    KERNOBJDIR=${KERNOBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${TOP}/src/runlist.sh ${LISTS}
 	@echo ""
 	@df -i ${MOUNT_POINT}

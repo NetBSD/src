@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 1998/11/19 08:58:03 sakamoto Exp $
+#	$NetBSD: Makefile,v 1.2 2000/05/02 16:06:47 sjg Exp $
 
 TOP=		${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
 
 IMAGE=		boot.fs
-KERN=	${.CURDIR}/../../../../sys/arch/bebox/compile/INSTALL/netbsd
+KERN=	${KERNOBJDIR}/INSTALL/netbsd
 
 .include "${TOP}/bootfloppy-common/Makefile.inc"

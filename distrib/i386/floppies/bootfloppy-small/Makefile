@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.3 1999/03/23 18:10:59 drochner Exp $
+#	$NetBSD: Makefile,v 1.4 2000/05/02 16:06:49 sjg Exp $
 
 TOP=		${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
 
 IMAGE=	boot-small.fs
-KERN?=	${.CURDIR}/../../../../sys/arch/i386/compile/INSTALL_SMALL/netbsd
+KERN?=	${KERNOBJDIR}/INSTALL_SMALL/netbsd
 DISKTYPE=	floppy5
 DISKSIZE=	2400
 

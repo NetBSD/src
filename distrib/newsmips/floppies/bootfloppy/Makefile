@@ -1,11 +1,12 @@
-#	$NetBSD: Makefile,v 1.1 2000/03/04 19:27:03 tsubai Exp $
+#	$NetBSD: Makefile,v 1.2 2000/05/02 16:06:52 sjg Exp $
 
 TOP=		${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
+.include <bsd.kernobj.mk>
 
 IMAGE=		boot.fs
-KERN=		${.CURDIR}/../../../../sys/arch/${MACHINE}/compile/INSTALL/netbsd
+KERN=		${KERNOBJDIR}/INSTALL/netbsd
 
 MOUNT_POINT?=	/mnt
 VND?=		vnd0
@@ -41,6 +42,7 @@ all:	netbsd.ram.gz
 	    -f 1024 -b 8192 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
+	    KERNOBJDIR=${KERNOBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTS}
 	@echo ""
 	@df -i ${MOUNT_POINT}

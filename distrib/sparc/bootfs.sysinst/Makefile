@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.3 2000/05/02 13:57:27 sjg Exp $
+#	$NetBSD: Makefile,v 1.4 2000/05/02 16:06:54 sjg Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${.CURDIR}/../../miniroot
 
 .include "${TOP}/Makefile.inc"
-
 .include <bsd.kernobj.mk>
+
 KERN=		${KERNOBJDIR}/INSTALL/netbsd
 
 MOUNT_POINT?=	/mnt
@@ -43,6 +43,7 @@ all:	netbsd.ram.gz
 	newfs -B be -m 0 -o space -i ${INO_BYTES} -c 80 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	TOPDIR=${TOP} CURDIR=${MINIROOT} OBJDIR=${.OBJDIR} \
+	    KERNOBJDIR=${KERNOBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${MINIROOT}/runlist.sh ${LISTS}
 	@echo ""
 	@df -i ${MOUNT_POINT}

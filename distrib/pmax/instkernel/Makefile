@@ -1,4 +1,7 @@
-#	$NetBSD: Makefile,v 1.15 2000/01/06 03:47:55 simonb Exp $
+#	$NetBSD: Makefile,v 1.16 2000/05/02 16:06:53 sjg Exp $
+
+.include "../../../Makefile.inc"
+.include <bsd.kernobj.mk>
 
 DISKBINDIR=	/installation/diskimage
 KERNBINDIR=	/binary/kernel
@@ -9,7 +12,7 @@ DISKTAB=	${.CURDIR}/disktab.diskimage
 DISKTYPE=	miniroot
 NEWFSOPTS?=	-c 32 -B le -i 32768	# don't need many inodes!
 
-KERN=		${.CURDIR}/../../../sys/arch/pmax/compile/RAMDISK/netbsd
+KERN=		${KERNOBJDIR}/RAMDISK/netbsd
 RAMDISK!=	cd ${.CURDIR}/../ramdisk; ${MAKE} echoimage
 CLEANFILES=	netbsd netbsd.gz netbsd.ecoff netbsd.ecoff.gz ${IMAGE}.gz
 

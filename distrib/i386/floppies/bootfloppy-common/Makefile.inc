@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.23 2000/02/18 02:50:17 enami Exp $
+#	$NetBSD: Makefile.inc,v 1.24 2000/05/02 16:06:48 sjg Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
 COMMONDIR=	${TOP}/bootfloppy-common
+
+.include <bsd.kernobj.mk>
 
 MOUNT_POINT?=	/mnt
 VND?=		vnd0
@@ -43,6 +45,7 @@ realall:	netbsd.ram.gz
 	${MDEC}/installboot -v -f ${MDEC}/biosboot.sym ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
+	    KERNOBJDIR=${KERNOBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTS}
 	@echo ""
 	@df -i ${MOUNT_POINT}

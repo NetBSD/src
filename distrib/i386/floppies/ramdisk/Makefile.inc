@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.10 2000/02/27 20:26:28 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.11 2000/05/02 16:06:49 sjg Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -28,6 +28,7 @@ realall: ${AUXTARGETS} ${CBIN}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
+	    KERNOBJDIR=${KERNOBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTS}
 	@echo ""
 	@df -i ${MOUNT_POINT}

@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.11 2000/01/03 22:03:36 simonb Exp $
+#	$NetBSD: list,v 1.12 2000/05/02 16:06:54 sjg Exp $
 
 # pmax extra's: mountpoint for kernfs
 SPECIAL mkdir			kern
@@ -78,9 +78,9 @@ COPY	${DESTDIR}/boot.pmax	boot.pmax
 COPY	${ARCHDIR}/termcap.rcons usr/share/misc/termcap
 
 # copy the kernel(s)
-COPY	${CURDIR}/../../sys/arch/pmax/compile/GENERIC/netbsd.aout  netbsd
-COPY	${CURDIR}/../../sys/arch/pmax/compile/GENERIC/netbsd.ecoff netbsd.ecoff
-COPY	${CURDIR}/../../sys/arch/pmax/compile/INSTALL/nfsnetbsd.ecoff nfsnetbsd.ecoff
+COPY	${KERNOBJDIR:-${CURDIR}/../../sys/arch/pmax/compile}/GENERIC/netbsd.aout  netbsd
+COPY	${KERNOBJDIR:-${CURDIR}/../../sys/arch/pmax/compile}/GENERIC/netbsd.ecoff netbsd.ecoff
+COPY	${KERNOBJDIR:-${CURDIR}/../../sys/arch/pmax/compile}/INSTALL/nfsnetbsd.ecoff nfsnetbsd.ecoff
 
 # various files that we need in /etc for the install
 #COPY	${DESTDIR}/etc/disktab		etc/disktab.shadow
