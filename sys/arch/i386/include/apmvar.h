@@ -1,4 +1,4 @@
-/*	$NetBSD: apmvar.h,v 1.2 1996/08/30 02:36:00 jtk Exp $	*/
+/*	$NetBSD: apmvar.h,v 1.3 1996/09/08 15:46:08 jtk Exp $	*/
 /*
  *  Copyright (c) 1995 John T. Kohl
  *  All rights reserved.
@@ -73,6 +73,7 @@
 #define		APM_DEV_ALLUNITS	0xff
 
 #define	APM_INSTALLATION_CHECK	0x00	/* int15 only */
+#define		APM_INSTALL_SIGNATURE	0x504d	/* %bh = 'P', %bl = 'M' */
 #define	APM_REALMODE_CONNECT	0x01	/* int15 only */
 #define	APM_16BIT_CONNECT	0x02	/* int15 only */
 #define	APM_32BIT_CONNECT	0x03	/* int15 only */
@@ -174,49 +175,13 @@
 #define APM_BIOS_PM_DISENGAGED	(APM_DISENGAGED << 16)
 
 /*
- * LP (Laptop Package)
- *
- * Copyright (C) 1994 by HOSOKAWA Tatsumi <hosokawa@mt.cs.keio.ac.jp>
- *
- * This software may be used, modified, copied, and distributed, in
- * both source and binary form provided that the above copyright and
- * these terms are retained. Under no circumstances is the author 
- * responsible for the proper functioning of this software, nor does 
- * the author assume any responsibility for damages incurred with its 
- * use.
- *
- * Sep., 1994	Implemented on FreeBSD 1.1.5.1R (Toshiba AVS001WD)
+ * virtual & physical address of the trampoline
+ * that we use: page 1.
  */
-
-/* Error code of APM initializer */
-#define APM_INI_CANTFIND	0xffffffff
-#define APM_INI_NOT32BIT	0xfffffffe
-#define APM_INI_CONNECTERR	0xfffffffd
-#define APM_INI_BADVER		0xfffffffc
-
-#ifdef _LOCORE
+#define APM_BIOSTRAMP	NBPG
 
 
-#define	APM_SIZEOF_GDTE		8
-#define APM_BOOTSTRAP_GDT_NUM	9	/* see i386/boot/table.c */
-
-#define APM_INIT_CS_INDEX	(APM_BOOTSTRAP_GDT_NUM - 3)
-#define APM_INIT_DS_INDEX	(APM_BOOTSTRAP_GDT_NUM - 2)
-#define APM_INIT_CS16_INDEX	(APM_BOOTSTRAP_GDT_NUM - 1)
-#define APM_INIT_CS_SEL		(APM_INIT_CS_INDEX << 3)
-#define APM_INIT_DS_SEL		(APM_INIT_DS_INDEX << 3)
-#define APM_INIT_CS16_SEL	(APM_INIT_CS16_INDEX << 3)
-
-#define APM_CS32_ATTRIB		0xCF9e
-#define APM_CS16_ATTRIB		0x0F9e
-#define APM_DS32_ATTRIB		0xCF92
-
-#define APM_BOOTSTRAP_DS_SEL	0x10
-/* APM initializer physical address */
-#define APM_OURADDR		0x00080000
-#define APM_RELOC(x)	((x) - _apm_init_image)
-
-#else /* !_LOCORE */
+#ifndef _LOCORE
 
 /* filled in by apmcall */ 
 struct apmregs {
@@ -224,6 +189,9 @@ struct apmregs {
     u_short bx;
     u_short cx;
     u_short dx;
+    u_short si;
+    u_short di;
+    u_short flags;
 };
 
 struct apm_connect_info {
