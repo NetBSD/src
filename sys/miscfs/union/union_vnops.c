@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.18 1994/12/29 22:42:10 mycroft Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.19 1994/12/29 22:48:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994 The Regents of the University of California.
@@ -1368,8 +1368,8 @@ start:
 			    un->un_pid > -1 && curproc->p_pid > -1)
 			panic("union: locking against myself");
 #endif
-		un->un_flags |= UN_WANT;
-		sleep((caddr_t) &un->un_flags, PINOD);
+		un->un_flags |= UN_WANTED;
+		sleep((caddr_t)un, PINOD);
 		goto start;
 	}
 
@@ -1405,9 +1405,9 @@ union_unlock(ap)
 
 	un->un_flags &= ~(UN_ULOCK|UN_KLOCK);
 
-	if (un->un_flags & UN_WANT) {
-		un->un_flags &= ~UN_WANT;
-		wakeup((caddr_t) &un->un_flags);
+	if (un->un_flags & UN_WANTED) {
+		un->un_flags &= ~UN_WANTED;
+		wakeup((caddr_t)un);
 	}
 
 #ifdef DIAGNOSTIC
