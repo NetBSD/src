@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.20 2002/11/26 19:27:09 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.21 2003/03/18 19:11:57 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -18,6 +18,7 @@ CPPFLAGS+=	-DDSO_HANDLE
 
 .PATH:		${.CURDIR}/../common_elf
 
+SRCS+=		crt0.c crti.c crtn.c
 OBJS+=		crt0.o gcrt0.o crti.o crtn.o
 .if ${MKPIC} != "no"
 COPTS+=		-fPIC
@@ -26,6 +27,7 @@ COPTS+=		-fPIC
 # If using an external toolchain, we expect crtbegin/crtend to be
 # supplied by that toolchain's run-time support.
 .if !defined(EXTERNAL_TOOLCHAIN)
+SRCS+=		crtbegin.c crtend.c
 OBJS+=		crtbegin.o crtend.o
 .if ${MKPIC} != "no"
 OBJS+=		crtbeginS.o crtendS.o
