@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsys.c,v 1.31.2.3 1997/11/11 01:32:04 mellon Exp $	*/
+/*	$NetBSD: adbsys.c,v 1.31.2.4 1998/02/24 05:42:09 mellon Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -204,7 +204,7 @@ extdms_init(totaladbs)
 	int totaladbs;
 {
 	ADBDataBlock adbdata;
-	int adbindex, adbaddr;
+	int adbindex, adbaddr, count;
 	short cmd;
 	u_char buffer[9];
 
@@ -256,8 +256,18 @@ extdms_init(totaladbs)
 			cmd = (cmd & 0xf3) | 0x0c; /* talk command */
 			ADBOp((Ptr)buffer, (Ptr)extdms_complete,
 			      (Ptr)&extdms_done, cmd);
-			while (!extdms_done)
-				/* busy wait until done */;
+
+			/* Wait until done, but no more than 2 secs */
+			count = 40000;
+			while (!extdms_done && count-- > 0)
+				delay(50);
+
+			if (!extdms_done) {
+#ifdef MRG_DEBUG
+				printf("adb: extdms_init timed out\n");
+#endif
+				return;
+			}
 
 			/* Attempt to initialize Extended Mouse Protocol */
 			buffer[2] = '\004'; /* make handler ID 4 */
@@ -328,7 +338,7 @@ adb_init()
 	ADBSetInfoBlock adbinfo;
 	int totaladbs;
 	int adbindex, adbaddr;
-	int error, cmd, devtype=0;
+	int error, cmd, count, devtype = 0;
 	u_char buffer[9];
 
 #ifdef MRG_ADB
@@ -398,9 +408,14 @@ adb_init()
 				cmd=(((adbaddr<<4) &0xf0) | 0x0d ); /* talk R1 */
 				ADBOp((Ptr)buffer, (Ptr)extdms_complete,
 					(Ptr)&extdms_done, cmd);
-				while (!extdms_done);
-					/* busy wait until done */
-				if (buffer[1]==0x9a && buffer[2]==0x20 )
+
+				/* Wait until done, but no more than 2 secs */
+				count = 40000;
+				while (!extdms_done && count-- > 0)
+					delay(50);
+
+				if (extdms_done &&
+				    buffer[1] == 0x9a && buffer[2] == 0x20)
 					printf("Mouseman (non-EMP) pseudo keyboard");
 				else
 					printf("extended keyboard");
@@ -455,8 +470,17 @@ adb_init()
 			/* talk register 3 */
 			ADBOp((Ptr)buffer, (Ptr)extdms_complete,
 			      (Ptr)&extdms_done, (adbaddr << 4) | 0xf);
-			while (!extdms_done)
-				/* busy-wait until done */;
+
+			/* Wait until done, but no more than 2 secs */
+			count = 40000;
+			while (!extdms_done && count-- > 0)
+				delay(50);
+
+			if (!extdms_done) {
+				printf("ghost mouse?");
+				break;
+			}
+
 			devtype=buffer[2];
 			switch (devtype) {
 			case ADBMS_100DPI:
