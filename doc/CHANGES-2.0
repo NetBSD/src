@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.164 2004/04/29 06:04:36 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.165 2004/04/29 06:06:15 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1672,3 +1672,9 @@ x11/Xserver/os/Makefile				1.11-1.12
 	Define XDMCP_NO_IPV6 along with XDMCP, as per the native XFree86 4.4 
 	build.
 	[lukem, ticket #227]
+
+x11/share/fonts/scaled/TTF/Makefile		1.4
+distrib/sets/lists/xfont/mi			1.21
+
+	Install VeraIt.ttf. PR#25373
+	[lukem, ticket #228]
