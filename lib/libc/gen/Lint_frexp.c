@@ -1,4 +1,4 @@
-/*	$NetBSD: Lint_frexp.c,v 1.1 1997/12/07 00:24:50 matthias Exp $	*/
+/*	$NetBSD: Lint_frexp.c,v 1.2 1998/12/02 09:47:20 christos Exp $	*/
 
 /*
  * This file placed in the public domain.
@@ -7,6 +7,7 @@
 
 #include <math.h>
 
+/*ARGSUSED*/
 double
 frexp(value, eptr)
 	double value;
