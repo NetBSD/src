@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_exec.c,v 1.10 2001/11/13 02:09:20 lukem Exp $	 */
+/*	$NetBSD: sunos32_exec.c,v 1.11 2002/05/05 08:23:03 thorpej Exp $	 */
 
 /*
  * Copyright (c) 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_exec.c,v 1.10 2001/11/13 02:09:20 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_exec.c,v 1.11 2002/05/05 08:23:03 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -51,7 +51,7 @@ extern const char * const sunos32_syscallnames[];
 extern char sunos_sigcode[], sunos_esigcode[];
 void syscall __P((void));
 
-struct emul emul_sunos = {
+const struct emul emul_sunos = {
 	"sunos32",
 	"/emul/sunos",
 	0,
