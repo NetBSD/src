@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.70 2000/01/25 06:53:26 jlam Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.71 2000/01/25 08:07:14 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.68 2000/01/25 01:15:06 sommerfeld Exp 
+ *	NetBSD: pcmciadevs,v 1.70 2000/01/25 08:06:49 mycroft Exp 
  */
 
 /*-
@@ -356,9 +356,9 @@
 #define	PCMCIA_STR_PLANET_SMARTCOM2000	"Planet SmartCOM 2000"
 /*
  * vendor ID of FNW-3600-T is LINKSYS(0x0149) and product ID is 0xc1ab, but
- * it conflicts with LINKSYS Combo EhternetCard.
+ * it conflicts with LINKSYS Combo EthernetCard.
  */
-#define	PCMCIA_CIS_PLANEX_FNW3600T	{ "Fast Ethernet", "Adapter", "1.0", NULL }
+#define	PCMCIA_CIS_PLANEX_FNW3600T	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_PLANEX_FNW3600T	-1
 #define	PCMCIA_STR_PLANEX_FNW3600T	"Planex FNW-3600-T"
 #define	PCMCIA_CIS_DLINK_DE650	{ "D-Link", "DE-650", NULL, NULL }
@@ -400,6 +400,13 @@
 #define	PCMCIA_CIS_SVEC_LANCARD	{ "SVEC", "FD605 PCMCIA EtherNet Card", "V1-1", NULL }
 #define	PCMCIA_PRODUCT_SVEC_LANCARD	-1
 #define	PCMCIA_STR_SVEC_LANCARD	"SVEC PCMCIA Lan Card"
+/*
+ * vendor ID of PN650TX is LINKSYS(0x0149) and product ID is 0xc1ab, but
+ * it conflicts with LINKSYS Combo EthernetCard.
+ */
+#define	PCMCIA_CIS_SVEC_PN650TX	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_SVEC_PN650TX	-1
+#define	PCMCIA_STR_SVEC_PN650TX	"SVEC PN650TX 10/100 Dual Speed Fast Ethernet PC Card"
 #define	PCMCIA_CIS_AMBICOM_AMB8002T	{ "AmbiCom Inc", "AMB8002T", NULL, NULL }
 #define	PCMCIA_PRODUCT_AMBICOM_AMB8002T	-1
 #define	PCMCIA_STR_AMBICOM_AMB8002T	"AmbiCom AMB8002T"
