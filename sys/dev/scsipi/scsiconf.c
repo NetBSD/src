@@ -1,11 +1,12 @@
-/*	$NetBSD: scsiconf.c,v 1.110 1998/10/08 20:24:10 thorpej Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.111 1998/10/10 01:14:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum.
+ * by Charles M. Hannum; Jason R. Thorpe of the Numerical Aerospace
+ * Simulation Facility, NASA Ames Research Center.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -58,6 +59,7 @@
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/conf.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -105,6 +107,7 @@ extern struct cfdriver scsibus_cd;
 
 int scsibusprint __P((void *, const char *));
 
+cdev_decl(scsibus);
 
 int
 scsiprint(aux, pnp)
@@ -715,4 +718,66 @@ scsi_probedev(scsi, target, lun)
 bad:
 	free(sc_link, M_DEVBUF);
 	return;
+}
+
+/****** Entry points for user control of the SCSI bus. ******/
+
+int
+scsibusopen(dev, flag, fmt, p)
+	dev_t dev;
+	int flag, fmt;
+	struct proc *p;
+{
+	struct scsibus_softc *sc;
+	struct scsipi_link *sc_link;
+	int unit = minor(dev);
+
+	if (unit >= scsibus_cd.cd_ndevs ||
+	    (sc = scsibus_cd.cd_devs[unit]) == NULL)
+		return (ENXIO);
+
+	sc_link = sc->adapter_link;
+
+	if (sc_link->flags & SDEV_OPEN)
+		return (EBUSY);
+
+	sc_link->flags |= SDEV_OPEN;
+
+	return (0);
+}
+
+int
+scsibusclose(dev, flag, fmt, p)
+	dev_t dev;
+	int flag, fmt;
+	struct proc *p;
+{
+	struct scsibus_softc *sc = scsibus_cd.cd_devs[minor(dev)];
+	struct scsipi_link *sc_link = sc->adapter_link;
+
+	sc_link->flags &= ~SDEV_OPEN;
+
+	return (0);
+}
+
+int
+scsibusioctl(dev, cmd, addr, flag, p)
+	dev_t dev;
+	u_long cmd;
+	caddr_t addr;
+	int flag;
+	struct proc *p;
+{
+#if 0
+	struct scsibus_softc *sc = scsibus_cd.cd_devs[minor(dev)];
+	struct scsipi_link *sc_link = sc->adapter_link;
+#endif
+	int error;
+
+	switch (cmd) {
+	default:
+		error = ENOTTY;
+	}
+
+	return (error);
 }
