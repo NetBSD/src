@@ -1,4 +1,4 @@
-/*	$NetBSD: crypt.c,v 1.17 2001/01/05 23:11:13 christos Exp $	*/
+/*	$NetBSD: crypt.c,v 1.18 2001/03/01 14:37:35 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)crypt.c	8.1.1.1 (Berkeley) 8/18/93";
 #else
-__RCSID("$NetBSD: crypt.c,v 1.17 2001/01/05 23:11:13 christos Exp $");
+__RCSID("$NetBSD: crypt.c,v 1.18 2001/03/01 14:37:35 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -517,8 +517,8 @@ crypt(key, setting)
 		 * Involve the rest of the password 8 characters at a time.
 		 */
 		while (*key) {
-			if (des_cipher((char *)&keyblock,
-			    (char *)&keyblock, 0L, 1))
+			if (des_cipher((char *)(void *)&keyblock,
+			    (char *)(void *)&keyblock, 0L, 1))
 				return (NULL);
 			for (i = 0; i < 8; i++) {
 				if ((t = 2*(unsigned char)(*key)) != 0)
@@ -556,8 +556,8 @@ crypt(key, setting)
 		salt = (salt<<6) | a64toi[t];
 	}
 	encp += salt_size;
-	if (des_cipher((char *)&constdatablock, (char *)&rsltblock,
-	    salt, num_iter))
+	if (des_cipher((char *)(void *)&constdatablock,
+	    (char *)(void *)&rsltblock, salt, num_iter))
 		return (NULL);
 
 	/*
