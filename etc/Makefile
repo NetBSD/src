@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.230 2002/10/23 19:50:30 perry Exp $
+#	$NetBSD: Makefile,v 1.231 2002/10/23 20:35:45 perry Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -241,6 +241,16 @@ install-etc-files: check_DESTDIR
 	    /dev/null ${DESTDIR}/var/games/cfscores
 	${ETC_INSTALL_FILE} -o games -g games -m 664 \
 	    /dev/null ${DESTDIR}/var/games/criblog
+	${ETC_INSTALL_FILE} -o games -g games -m 660 \
+	    /dev/null ${DESTDIR}/var/games/hackdir/perm
+	${ETC_INSTALL_FILE} -o games -g games -m 660 \
+	    /dev/null ${DESTDIR}/var/games/hackdir/record
+	${ETC_INSTALL_FILE} -o games -g games -m 664 \
+	    /dev/null ${DESTDIR}/var/games/larn/llog12.0
+	${ETC_INSTALL_FILE} -o games -g games -m 664 \
+	    /dev/null ${DESTDIR}/var/games/larn/lscore12.0
+	${ETC_INSTALL_FILE} -o games -g games -m 664 \
+	    /dev/null ${DESTDIR}/var/games/larn/playerids
 	${ETC_INSTALL_FILE} -o games -g games -m 664 \
 	    /dev/null ${DESTDIR}/var/games/robots_roll
 	${ETC_INSTALL_FILE} -o games -g games -m 664 \
@@ -253,12 +263,6 @@ install-etc-files: check_DESTDIR
 	    /dev/null ${DESTDIR}/var/games/snake.log
 	${ETC_INSTALL_FILE} -o games -g games -m 664 \
 	    /dev/null ${DESTDIR}/var/games/tetris.scores
-	${ETC_INSTALL_FILE} -o games -g games -m 664 \
-	    /dev/null ${DESTDIR}/var/games/larn/llog12.0
-	${ETC_INSTALL_FILE} -o games -g games -m 664 \
-	    /dev/null ${DESTDIR}/var/games/larn/lscore12.0
-	${ETC_INSTALL_FILE} -o games -g games -m 664 \
-	    /dev/null ${DESTDIR}/var/games/larn/playerids
 	(cd skel; ${MAKE} distribution)
 	(cd ../usr.bin/mail; ${MAKE} distribution)
 	(cd ../gnu/usr.sbin/postfix/; ${MAKE} distribution)
