@@ -79,6 +79,7 @@
 #endif
 
 #include <machine/cpu.h>
+#include <machine/intr.h>
 #include <machine/pio.h>
 
 #include <dev/isa/isareg.h>

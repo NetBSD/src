@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.32 1996/04/29 19:45:32 christos Exp $	*/
+/*	$NetBSD: wt.c,v 1.33 1996/05/12 23:54:22 mycroft Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -64,6 +64,7 @@
 
 #include <vm/vm_param.h>
 
+#include <machine/intr.h>
 #include <machine/pio.h>
 
 #include <dev/isa/isavar.h>

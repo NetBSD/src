@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isa.c,v 1.4 1996/05/10 05:27:53 thorpej Exp $	*/
+/*	$NetBSD: if_ep_isa.c,v 1.5 1996/05/12 23:52:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@beer.org>
@@ -69,6 +69,7 @@
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
+#include <machine/intr.h>
 
 #include <dev/ic/elink3var.h>
 #include <dev/ic/elink3reg.h>

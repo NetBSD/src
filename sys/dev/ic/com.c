@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.81 1996/05/05 19:50:44 christos Exp $	*/
+/*	$NetBSD: com.c,v 1.82 1996/05/12 23:52:00 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -56,12 +56,8 @@
 #include <sys/types.h>
 #include <sys/device.h>
 
-#ifdef i386							/* XXX */
-#include <machine/cpu.h>					/* XXX */
-#else								/* XXX */
-#include <machine/intr.h>
-#endif								/* XXX */
 #include <machine/bus.h>
+#include <machine/intr.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/comreg.h>

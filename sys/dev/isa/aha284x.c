@@ -1,4 +1,4 @@
-/*	$NetBSD: aha284x.c,v 1.4 1996/04/11 22:28:04 cgd Exp $	*/
+/*	$NetBSD: aha284x.c,v 1.5 1996/05/12 23:51:31 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Graff.  All rights reserved.
@@ -42,6 +42,7 @@
 
 #include <dev/ic/aic7xxxvar.h>
 
+#include <machine/intr.h>
 #include <machine/pio.h>
 
 static int ahe_probe __P((struct device *, void *, void *));
