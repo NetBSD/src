@@ -1,4 +1,4 @@
-/*	$NetBSD: audioio.h,v 1.9 1997/05/07 19:24:37 augustss Exp $	*/
+/*	$NetBSD: audioio.h,v 1.10 1997/05/24 23:23:17 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -113,6 +113,10 @@ typedef struct audio_device {
 #define AUDIO_ENCODING_LINEAR_BE	7
 #define AUDIO_ENCODING_ULINEAR_LE	8
 #define AUDIO_ENCODING_ULINEAR_BE	9
+
+/* Backwards compatibility defines */
+#define AUDIO_ENCODING_PCM16		AUDIO_ENCODING_LINEAR
+#define AUDIO_ENCODING_PCM8		AUDIO_ENCODING_ULINEAR
 
 typedef struct audio_encoding {
 	int index;
