@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.19 2002/09/30 00:39:21 lukem Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.20 2002/10/06 12:09:34 lukem Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -251,6 +251,10 @@ size_t strlcpy(char *, const char *, size_t);
 
 #if !HAVE_STRSEP
 char *strsep(char **, const char *);
+#endif
+
+#if !HAVE_STRTOLL
+long long strtoll(const char *, char **, int);
 #endif
 
 #if !HAVE_USER_FROM_UID
@@ -531,6 +535,7 @@ char *alloca ();
 /* #define, not typedef, as quad_t exists as a struct on some systems */
 #define quad_t long long
 #define u_quad_t unsigned long long
+#define strtoq strtoll
 #define strtouq strtoull
 #endif
 
