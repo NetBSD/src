@@ -1,4 +1,4 @@
-/*	$NetBSD: fpgetround.c,v 1.4 2004/04/02 22:55:19 matt Exp $	*/
+/*	$NetBSD: fpgetround.c,v 1.5 2004/04/04 19:27:19 matt Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -52,10 +52,10 @@ __weak_alias(fpgetround,_fpgetround)
 #define	ROUNDSHFT	0
 
 fp_rnd
-fpgetround()
+fpgetround(void)
 {
-	u_int64_t fpscr;
+	uint64_t fpscr;
 
 	__asm__ __volatile("mffs %0" : "=f"(fpscr));
-	return (((fp_rnd)fpscr & ROUNDBITS) >> ROUNDSHFT);
+	return (((uint32_t)fpscr & ROUNDBITS) >> ROUNDSHFT);
 }

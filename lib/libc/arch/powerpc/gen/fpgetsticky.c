@@ -1,4 +1,4 @@
-/*	$NetBSD: fpgetsticky.c,v 1.4 2004/04/02 22:55:19 matt Exp $	*/
+/*	$NetBSD: fpgetsticky.c,v 1.5 2004/04/04 19:27:19 matt Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -54,8 +54,8 @@ __weak_alias(fpgetsticky,_fpgetsticky)
 fp_except
 fpgetsticky(void)
 {
-	u_int64_t fpscr;
+	uint64_t fpscr;
 
 	__asm__ __volatile("mffs %0" : "=f"(fpscr));
-	return (((fp_except)fpscr & STICKYBITS) >> STICKYSHFT);
+	return (((uint32_t)fpscr & STICKYBITS) >> STICKYSHFT);
 }
