@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.26 2004/08/24 21:31:49 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.27 2005/01/16 23:52:12 chs Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.26 2004/08/24 21:31:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.27 2005/01/16 23:52:12 chs Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_altivec.h"
@@ -2493,11 +2493,10 @@ pmap_print_mmuregs(void)
 	register_t sdr1;
 	
 	cpuvers = MFPVR() >> 16;
-
 	__asm __volatile ("mfsdr1 %0" : "=r"(sdr1));
 #ifndef PPC_OEA64
 	addr = 0;
-	for (i=0; i<16; i++) {
+	for (i = 0; i < 16; i++) {
 		soft_sr[i] = MFSRIN(addr);
 		addr += (1 << ADDR_SR_SHFT);
 	}
@@ -2529,22 +2528,22 @@ pmap_print_mmuregs(void)
 	printf("SDR1:\t0x%lx\n", (long) sdr1);
 #ifndef PPC_OEA64
 	printf("SR[]:\t");
-	for (i=0; i<4; i++)
+	for (i = 0; i < 4; i++)
 		printf("0x%08lx,   ", soft_sr[i]);
 	printf("\n\t");
-	for ( ; i<8; i++)
+	for ( ; i < 8; i++)
 		printf("0x%08lx,   ", soft_sr[i]);
 	printf("\n\t");
-	for ( ; i<12; i++)
+	for ( ; i < 12; i++)
 		printf("0x%08lx,   ", soft_sr[i]);
 	printf("\n\t");
-	for ( ; i<16; i++)
+	for ( ; i < 16; i++)
 		printf("0x%08lx,   ", soft_sr[i]);
 	printf("\n");
 #endif
 
 	printf("%cBAT[]:\t", cpuvers == MPC601 ? 'u' : 'i');
-	for (i=0; i<4; i++) {
+	for (i = 0; i < 4; i++) {
 		printf("0x%08lx 0x%08lx, ",
 			soft_ibat[i].batu, soft_ibat[i].batl);
 		if (i == 1)
@@ -2552,7 +2551,7 @@ pmap_print_mmuregs(void)
 	}
 	if (cpuvers != MPC601) {
 		printf("\ndBAT[]:\t");
-		for (i=0; i<4; i++) {
+		for (i = 0; i < 4; i++) {
 			printf("0x%08lx 0x%08lx, ",
 				soft_dbat[i].batu, soft_dbat[i].batl);
 			if (i == 1)
