@@ -1,0 +1,4 @@
+#$NetBSD: form,v 1.1 2001/04/26 02:44:47 garbled Exp $
+noedit:@@@1@@@			Sysctl name
+escript:18,script2,@@@1@@@	Sysctl value
+list:both,now,boot		Modify at boot time, now, or both?
