@@ -47,11 +47,11 @@
 
 main()
 {
-	struct proc *p = (struct proc *)0;
-	struct vmmeter *vm = (struct vmmeter *)0;
-	struct pcb *pcb = (struct pcb *)0;
-	struct trapframe *tf = (struct trapframe *)0;
-	struct sigframe *sigf = (struct sigframe *)0;
+	struct proc *p = 0;
+	struct vmmeter *vm = 0;
+	struct pcb *pcb = 0;
+	struct trapframe *tf = 0;
+	struct sigframe *sigf = 0;
 	register unsigned i;
 
 #define	def(N,V)	printf("#define\t%s %d\n", N, V)
