@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.34 2000/06/26 21:16:16 christos Exp $	*/
+/*	$NetBSD: df.c,v 1.35 2000/10/15 17:50:10 kleink Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -49,7 +49,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.34 2000/06/26 21:16:16 christos Exp $");
+__RCSID("$NetBSD: df.c,v 1.35 2000/10/15 17:50:10 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,7 +79,7 @@ void	 maketypelist __P((char *));
 long	 regetmntinfo __P((struct statfs **, long));
 void	 usage __P((void));
 
-int	aflag, iflag, kflag, lflag, nflag;
+int	aflag, iflag, kflag, lflag, nflag, Pflag;
 char	**typelist = NULL;
 struct	ufs_args mdev;
 
@@ -94,7 +94,7 @@ main(argc, argv)
 	int ch, i, maxwidth, width;
 	char *mntpt;
 
-	while ((ch = getopt(argc, argv, "aiklnt:")) != -1)
+	while ((ch = getopt(argc, argv, "aiklnPt:")) != -1)
 		switch (ch) {
 		case 'a':
 			aflag = 1;
@@ -110,6 +110,9 @@ main(argc, argv)
 			break;
 		case 'n':
 			nflag = 1;
+			break;
+		case 'P':
+			Pflag = 1;
 			break;
 		case 't':
 			if (typelist != NULL)
@@ -345,12 +348,13 @@ prtstat(sfsp, maxwidth)
 	if (++timesthrough == 1) {
 		if (kflag) {
 			blocksize = 1024;
-			header = "1K-blocks";
+			header = Pflag ? "1024-blocks" : "1K-blocks";
 			headerlen = strlen(header);
 		} else
 			header = getbsize(&headerlen, &blocksize);
-		(void)printf("%-*.*s %s     Used    Avail Capacity",
-		    maxwidth, maxwidth, "Filesystem", header);
+		(void)printf("%-*.*s %s     Used %9s Capacity",
+		    maxwidth, maxwidth, "Filesystem", header,
+		    Pflag ? "Available" : "Avail");
 		if (iflag)
 			(void)printf(" iused   ifree  %%iused");
 		(void)printf("  Mounted on\n");
@@ -358,11 +362,11 @@ prtstat(sfsp, maxwidth)
 	(void)printf("%-*.*s", maxwidth, maxwidth, sfsp->f_mntfromname);
 	used = sfsp->f_blocks - sfsp->f_bfree;
 	availblks = sfsp->f_bavail + used;
-	(void)printf(" %*ld %8ld %8ld", headerlen,
+	(void)printf(" %*ld %8ld %9ld", headerlen,
 	    fsbtoblk(sfsp->f_blocks, sfsp->f_bsize, blocksize),
 	    fsbtoblk(used, sfsp->f_bsize, blocksize),
 	    fsbtoblk(sfsp->f_bavail, sfsp->f_bsize, blocksize));
-	(void)printf(" %6s",
+	(void)printf("%9s",
 	    availblks == 0 ? full : strpct((u_long)used, (u_long)availblks, 0));
 	if (iflag) {
 		inodes = sfsp->f_files;
@@ -459,7 +463,7 @@ usage()
 	extern char *__progname;
 
 	(void)fprintf(stderr,
-	    "Usage: %s [-aikln] [-t type] [file | file_system ...]\n",
+	    "Usage: %s [-aiklnP] [-t type] [file | file_system ...]\n",
 	    __progname);
 	exit(1);
 	/* NOTREACHED */
