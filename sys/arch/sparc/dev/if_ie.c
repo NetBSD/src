@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.13 1995/04/10 16:48:27 mycroft Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.14 1995/04/11 06:03:36 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -298,11 +298,11 @@ static void ie_vmereset __P((struct ie_softc *));
 static void ie_vmeattend __P((struct ie_softc *));
 static void ie_vmerun __P((struct ie_softc *));
 
-int iewatchdog __P((/* short */));
+void iewatchdog __P((/* short */));
 int ieintr __P((void *));
 int ieinit __P((struct ie_softc *));
 int ieioctl __P((struct ifnet *, u_long, caddr_t));
-int iestart __P((struct ifnet *));
+void iestart __P((struct ifnet *));
 void iereset __P((struct ie_softc *));
 static void ie_readframe __P((struct ie_softc *, int));
 static void ie_drop_packet_buffer __P((struct ie_softc *));
@@ -629,7 +629,6 @@ ieattach(parent, self, aux)
 	}
 	ifp->if_unit = sc->sc_dev.dv_unit;
 	ifp->if_name = iecd.cd_name;
-	ifp->if_output = ether_output;
 	ifp->if_start = iestart;
 	ifp->if_ioctl = ieioctl;
 	ifp->if_watchdog = iewatchdog;
@@ -645,8 +644,7 @@ ieattach(parent, self, aux)
 	    ie_hardware_names[sc->hard_type]);
 
 #if NBPFILTER > 0
-	bpfattach(&sc->sc_arpcom.ac_if.if_bpf, ifp, DLT_EN10MB,
-	    sizeof(struct ether_header));
+	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 
 	switch (ca->ca_bustype) {
@@ -678,7 +676,7 @@ ieattach(parent, self, aux)
  * Device timeout/watchdog routine.  Entered if the device neglects to generate
  * an interrupt after a transmit has been started on it.
  */
-int
+void
 iewatchdog(unit)
 	short unit;
 {
@@ -1385,7 +1383,7 @@ ie_drop_packet_buffer(sc)
 /*
  * Start transmission on an interface.
  */
-int
+void
 iestart(ifp)
 	struct ifnet *ifp;
 {
@@ -1940,13 +1938,7 @@ ieioctl(ifp, cmd, data)
 #ifdef INET
 		case AF_INET:
 			ieinit(sc);
-			/*
-			 * See if another station has *our* IP address.
-			 * i.e.: There is an address conflict! If a conflict
-			 * exists, a message is sent to the console.
-			 */
-			sc->sc_arpcom.ac_ipaddr = IA_SIN(ifa)->sin_addr;
-			arpwhohas(&sc->sc_arpcom, &IA_SIN(ifa)->sin_addr);
+			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
 #endif
 #ifdef NS
