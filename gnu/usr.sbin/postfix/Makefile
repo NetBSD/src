@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2001/03/13 18:13:16 itojun Exp $
+#	$NetBSD: Makefile,v 1.8 2002/02/02 23:21:45 perry Exp $
 
 # Note that the order here is picked to look much like that in the
 # original Makefile.in in order to make it easier to visually compare
@@ -12,8 +12,9 @@ SUBDIR= util global dns masterlib .WAIT master postfix \
 	sendmail error pickup cleanup smtpd local \
 	lmtp trivial-rewrite qmgr smtp bounce pipe \
 	showq postalias postcat postconf postdrop \
-	postkick postlock postlog postmap postsuper \
-	spawn flush man # smtpstone proto html
+        postkick postlock postlog postmap postqueue \
+        postsuper nqmgr spawn flush virtual man README_FILES \
+	# smtpstone qmqpd proto html 
 
 .if ${MKSHARE} != "no" || \
 	make(clean) || make(cleandir) || make(distclean) || make(obj)

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2000/04/30 21:22:11 perry Exp $
+#	$NetBSD: Makefile,v 1.2 2002/02/02 23:21:48 perry Exp $
 
 DIST=		${.CURDIR}/../../../dist/postfix/conf
 .PATH:		${DIST}
@@ -8,7 +8,6 @@ DIST=		${.CURDIR}/../../../dist/postfix/conf
 #BINDIR=	${PFIX_LIBEXECDIR}
 BINDIR=		${PFIX_ETCDIR}
 
-SCRIPTS=	postfix-script-sgid
-SCRIPTSNAME=	postfix-script
+SCRIPTS=	postfix-script
 
 .include <bsd.prog.mk>
