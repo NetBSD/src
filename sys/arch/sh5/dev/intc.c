@@ -1,4 +1,4 @@
-/*	$NetBSD: intc.c,v 1.7 2002/10/02 15:52:36 thorpej Exp $	*/
+/*	$NetBSD: intc.c,v 1.8 2002/10/14 14:19:27 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -159,7 +159,7 @@ intcattach(struct device *parent, struct device *self, void *args)
 	intc_reg_write(sc, INTC_REG_ICR_CLEAR, INTC_ICR_CLEAR_IRL_MODE_LEVEL);
 #endif
 
-	sh5_intr_init(31, intc_enable, intc_disable, sc);
+	sh5_intr_init(intc_enable, intc_disable, sc);
 
 	printf(": Interrupt Controller\n");
 }
