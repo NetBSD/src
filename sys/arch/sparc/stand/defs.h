@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.2 1994/11/20 20:54:54 deraadt Exp $ */
+/*	$NetBSD: defs.h,v 1.3 1995/06/26 23:45:06 pk Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -34,7 +34,3 @@
 #include "stand.h"
 
 extern struct promvec	*promvec;
-
-#if 1
-#define printf		(*promvec->pv_printf)
-#endif
