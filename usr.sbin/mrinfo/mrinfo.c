@@ -1,4 +1,4 @@
-/*	$NetBSD: mrinfo.c,v 1.5 1997/10/17 11:18:10 lukem Exp $	*/
+/*	$NetBSD: mrinfo.c,v 1.6 1998/05/09 17:22:08 kleink Exp $	*/
 
 /*
  * This tool requests configuration info from a multicast router
@@ -67,7 +67,7 @@
 static char rcsid[] =
     "@(#) Header: mrinfo.c,v 1.6 93/04/08 15:14:16 van Exp (LBL)";
 #else
-__RCSID("$NetBSD: mrinfo.c,v 1.5 1997/10/17 11:18:10 lukem Exp $");
+__RCSID("$NetBSD: mrinfo.c,v 1.6 1998/05/09 17:22:08 kleink Exp $");
 #endif
 #endif
 
@@ -167,10 +167,8 @@ log(severity, syserr, format, va_alist)
 		vfprintf(stderr, fmt, ap);
 		if (syserr == 0)
 			fprintf(stderr, "\n");
-		else if (syserr < sys_nerr)
-			fprintf(stderr, ": %s\n", sys_errlist[syserr]);
 		else
-			fprintf(stderr, ": errno %d\n", syserr);
+			fprintf(stderr, ": %s\n", strerror(syserr));
 	}
 
 	if (severity <= LOG_ERR)

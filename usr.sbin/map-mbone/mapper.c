@@ -1,4 +1,4 @@
-/*	$NetBSD: mapper.c,v 1.3 1995/12/10 11:12:04 mycroft Exp $	*/
+/*	$NetBSD: mapper.c,v 1.4 1998/05/09 17:22:07 kleink Exp $	*/
 
 /* Mapper for connections between MRouteD multicast routers.
  * Written by Pavel Curtis <Pavel@PARC.Xerox.Com>
@@ -192,10 +192,8 @@ log(severity, syserr, format, va_alist)
 	    vfprintf(stderr, fmt, ap);
 	    if (syserr == 0)
 		fprintf(stderr, "\n");
-	    else if (syserr < sys_nerr)
-		fprintf(stderr, ": %s\n", sys_errlist[syserr]);
 	    else
-		fprintf(stderr, ": errno %d\n", syserr);
+		fprintf(stderr, ": %s\n", strerror(syserr));
     }
 
     if (severity <= LOG_ERR)
