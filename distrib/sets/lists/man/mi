@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.201 2000/01/28 19:32:44 itojun Exp $
+# $NetBSD: mi,v 1.202 2000/02/02 22:57:33 he Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -378,6 +378,7 @@
 ./usr/share/man/cat4/cue.0
 ./usr/share/man/cat4/cy.0
 ./usr/share/man/cat4/ddb.0
+./usr/share/man/cat4/dpt.0
 ./usr/share/man/cat4/drum.0
 ./usr/share/man/cat4/eap.0
 ./usr/share/man/cat4/ec.0
