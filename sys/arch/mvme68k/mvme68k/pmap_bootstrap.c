@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.1.1.1 1995/07/25 23:12:02 chuck Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.2 1996/04/26 19:27:02 chuck Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -52,7 +52,7 @@
 
 extern char *etext;
 extern int Sysptsize;
-extern char *extiobase, *proc0paddr;
+extern char *proc0paddr;
 extern st_entry_t *Sysseg;
 extern pt_entry_t *Sysptmap, *Sysmap;
 
@@ -93,7 +93,7 @@ pmap_bootstrap(nextpa, firstpa)
 	vm_offset_t nextpa;
 	register vm_offset_t firstpa;
 {
-	vm_offset_t kstpa, kptpa, iiopa, eiopa, kptmpa, lkptpa, p0upa;
+	vm_offset_t kstpa, kptpa, eiiopa, iiopa, kptmpa, lkptpa, p0upa;
 	u_int nptpages, kstsize;
 	register st_entry_t protoste, *ste;
 	register pt_entry_t protopte, *pte, *epte;
@@ -110,11 +110,11 @@ pmap_bootstrap(nextpa, firstpa)
 	 *	iiopa		internal IO space
 	 *			PT pages		IIOMAPSIZE pages
 	 *
-	 *	eiopa		external IO space
-	 *			PT pages		EIOMAPSIZE pages
+	 *	eiiopa		page following
+	 *			internal IO space
 	 *
-	 * [ Sysptsize is the number of pages of PT, IIOMAPSIZE and
-	 *   EIOMAPSIZE are the number of PTEs, hence we need to round
+	 * [ Sysptsize is the number of pages of PT, and IIOMAPSIZE
+	 *   is the number of PTEs, hence we need to round
 	 *   the total to a page boundary with IO maps at the end. ]
 	 *
 	 *	kptmpa		kernel PT map		1 page
@@ -134,10 +134,10 @@ pmap_bootstrap(nextpa, firstpa)
 	nextpa += kstsize * NBPG;
 	kptpa = nextpa;
 	nptpages = RELOC(Sysptsize, int) +
-		(IIOMAPSIZE + EIOMAPSIZE + NPTEPG - 1) / NPTEPG;
+		(IIOMAPSIZE + NPTEPG - 1) / NPTEPG;
 	nextpa += nptpages * NBPG;
-	eiopa = nextpa - EIOMAPSIZE * sizeof(pt_entry_t);
-	iiopa = eiopa - IIOMAPSIZE * sizeof(pt_entry_t);
+	eiiopa = nextpa;		/* just a reference for later */
+	iiopa = nextpa - IIOMAPSIZE * sizeof(pt_entry_t);
 	kptmpa = nextpa;
 	nextpa += NBPG;
 	lkptpa = nextpa;
@@ -346,7 +346,7 @@ pmap_bootstrap(nextpa, firstpa)
 	 * them after the MMU is turned on.
 	 */
 	pte = (u_int *)iiopa;
-	epte = (u_int *)eiopa;
+	epte = (u_int *)eiiopa;
 	protopte = INTIOBASE | PG_RW | PG_CI | PG_V;
 	while (pte < epte) {
 		*pte++ = protopte;
@@ -373,20 +373,14 @@ pmap_bootstrap(nextpa, firstpa)
 	RELOC(Sysmap, pt_entry_t *) =
 		(pt_entry_t *)m68k_ptob(nptpages * NPTEPG);
 	/*
-	 * intiobase, intiolimit: base and end of internal (DIO) IO space.
+	 * intiobase, intiolimit: base and end of internal IO space.
 	 * IIOMAPSIZE pages prior to external IO space at end of static
 	 * kernel page table.
 	 */
 	RELOC(intiobase, char *) =
-		(char *)m68k_ptob(nptpages*NPTEPG - (IIOMAPSIZE+EIOMAPSIZE));
+		(char *)m68k_ptob(nptpages*NPTEPG - IIOMAPSIZE);
 	RELOC(intiolimit, char *) =
-		(char *)m68k_ptob(nptpages*NPTEPG - EIOMAPSIZE);
-	/*
-	 * extiobase: base of external (DIO-II) IO space.
-	 * EIOMAPSIZE pages at the end of the static kernel page table.
-	 */
-	RELOC(extiobase, char *) =
-		(char *)m68k_ptob(nptpages*NPTEPG - EIOMAPSIZE);
+		(char *)m68k_ptob(nptpages*NPTEPG);
 
 	/*
 	 * Setup u-area for process 0.

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 1996/01/04 22:22:27 jtc Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6 1996/04/26 19:26:55 chuck Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -80,11 +80,13 @@
 #include <machine/psl.h>
 #include <machine/pte.h>
 #include <dev/cons.h>
-#include <mvme68k/mvme68k/isr.h>
-#include <net/netisr.h>
 
 #define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
 #include <vm/vm_kern.h>
+
+#if 1	/* XXX MVME147 */
+#include <mvme68k/dev/pccreg.h>
+#endif
 
 /* the following is used externally (sysctl_hw) */
 char machine[] = "mvme68k";		/* cpu "architecture" */
@@ -131,10 +133,97 @@ extern struct emul emul_svr4;
 #endif
 
 /*
+ * Note that the value of delay_divisor is roughly
+ * 2048 / cpuspeed (where cpuspeed is in MHz).
+ */
+int	cpuspeed;		/* only used to printing later */
+int	delay_divisor = 82;	/* assume some reasonable value to start */
+
+/* Machine-dependent initialization routines. */
+void	mvme68k_init __P((void));
+#if 1	/* XXX MVME147 */
+void	mvme147_init __P((void));
+#endif
+#if 0	/* XXX MVME162 */
+void	mvme162_init __P((void));
+#endif
+#if 0	/* XXX MVME167 */
+void	mvme167_init __P((void));
+#endif
+
+/*
+ * Wrapper around the machine-specific initialization funtion,
+ * to save some hair in locore.s
+ */
+void
+mvme68k_init()
+{
+
+#ifdef notyet
+	switch (cputyp) {
+#ifdef MVME147
+	case CPU_147:
+		mvme147_init();
+		break;
+#endif
+#ifdef MVME162
+	case CPU_162:
+		mvme162_init();
+		break;
+#endif
+#ifdef MVME167
+	case CPU_167:
+		mvme167_init();
+		break;
+#endif
+	default:
+		panic("mvme68k_init: impossible cputyp");
+	}
+#else
+	mvme147_init();		/* XXX for now */
+#endif
+}
+
+#if 1	/* XXX MVME147 */
+/*
+ * MVME-147 specific initialization.
+ */
+void
+mvme147_init()
+{
+	struct pcc *pcc;
+
+	pcc = (struct pcc *)PCC_VADDR(PCC_REG_OFF);
+
+	/*
+	 * calibrate delay() using the 6.25 usec counter.
+	 * we adjust the delay_divisor until we get the result we want.
+	 */
+	pcc->t1_cr = PCC_TIMERCLEAR;
+	pcc->t1_pload = 0;		/* init value for counter */
+	pcc->t1_int = 0;		/* disable interrupt */
+
+	for (delay_divisor = 140; delay_divisor > 0; delay_divisor--) {
+		pcc->t1_cr = PCC_TIMERSTART;
+		delay(10000);
+		pcc->t1_cr = PCC_TIMERSTOP;
+		if (pcc->t1_count > 1600)  /* 1600 * 6.25usec == 10000usec */
+			break;	/* got it! */
+		pcc->t1_cr = PCC_TIMERCLEAR;
+		/* retry! */
+	}
+
+	/* calculate cpuspeed */
+	cpuspeed = 2048 / delay_divisor;
+}
+#endif	/* MVME147 */
+
+/*
  * Console initialization: called early on from main,
  * before vm init or startup.  Do enough configuration
  * to choose and initialize a console.
  */
+void
 consinit()
 {
 
@@ -487,12 +576,13 @@ identifycpu()
 		t = "16[27]";
 		break;
 	default:
-		t = "unknown";
+		t = "???";
 		break;
 	}
 	mc = (mmutype == MMU_68040 ? "40" :
 		(mmutype == MMU_68030 ? "30" : "20"));
-	sprintf(cpu_model, "Motorola MVME%s MC680%s CPU", t, mc);
+	sprintf(cpu_model, "Motorola MVME%s: %dMHz MC680%s CPU", t, 
+	    cpuspeed, mc);
 	switch (mmutype) {
 	case MMU_68040:
 	case MMU_68030:
@@ -510,12 +600,9 @@ identifycpu()
 		len += sprintf(cpu_model + len,
 		    "+FPU, 4k on-chip physical I/D caches");
 	else if (mmutype == MMU_68030)
-		len += sprintf(cpu_model + len, ", %sMHz MC68882 FPU",
-		       "???");
+		len += sprintf(cpu_model + len, ", MC68882 FPU");
 	else
-		len += sprintf(cpu_model + len, ", %sMHz MC68881 FPU",
-		       "???");
-	strcat(cpu_model, ")");
+		len += sprintf(cpu_model + len, ", MC68881 FPU");
 	printf("%s\n", cpu_model);
 }
 
@@ -1211,116 +1298,47 @@ badbaddr(addr)
 	return(0);
 }
 
-netintr()
-{
-#ifdef INET
-	if (netisr & (1 << NETISR_ARP)) {
-		netisr &= ~(1 << NETISR_ARP);
-		arpintr();
-	}
-	if (netisr & (1 << NETISR_IP)) {
-		netisr &= ~(1 << NETISR_IP);
-		ipintr();
-	}
-#endif
-#ifdef NS
-	if (netisr & (1 << NETISR_NS)) {
-		netisr &= ~(1 << NETISR_NS);
-		nsintr();
-	}
-#endif
-#ifdef ISO
-	if (netisr & (1 << NETISR_ISO)) {
-		netisr &= ~(1 << NETISR_ISO);
-		clnlintr();
-	}
-#endif
-#ifdef CCITT
-	if (netisr & (1 << NETISR_CCITT)) {
-		netisr &= ~(1 << NETISR_CCITT);
-		ccittintr();
-	}
-#endif
-#include "ppp.h"
-#if NPPP > 0
-	if (netisr & (1 << NETISR_PPP)) {
-		netisr &= ~(1 << NETISR_PPP);
-		pppintr();
-	}
-#endif
-}
-
-intrhand(sr)
-	int sr;
-{
-	register struct isr *isr;
-	register int found = 0;
-	register int ipl;
-	extern struct isr isrqueue[];
-	static int straycount;
-
-	ipl = (sr >> 8) & 7;
-printf("intrhand\n");
-	switch (ipl) {
-
-	case 1:
-	case 2:
-	case 3:
-	case 4:
-	case 5:
-	case 6:
-		ipl = ISRIPL(ipl);
-		isr = isrqueue[ipl].isr_forw;
-		for (; isr != &isrqueue[ipl]; isr = isr->isr_forw) {
-			if ((isr->isr_intr)(isr->isr_arg)) {
-				found++;
-				break;
-			}
-		}
-		if (found)
-			straycount = 0;
-		else if (++straycount > 50)
-			panic("intrhand: stray interrupt");
-		else
-			printf("stray interrupt, sr 0x%x\n", sr);
-		break;
-
-	case 0:
-	case 7:
-		if (++straycount > 50)
-			panic("intrhand: unexpected sr");
-		else
-			printf("intrhand: unexpected sr 0x%x\n", sr);
-		break;
-	}
-}
-
-#if (defined(DDB) || defined(DEBUG)) && !defined(PANICBUTTON)
-#define PANICBUTTON
-#endif
-
-#ifdef PANICBUTTON
-int panicbutton = 1;	/* non-zero if panic buttons are enabled */
-int crashandburn = 0;
-int candbdelay = 50;	/* give em half a second */
-
+/* XXX wrapper for locore.s; used only my level 7 autovector */
 void
-candbtimer(arg)
-	void *arg;
-{
-
-	crashandburn = 0;
-}
-#endif
-
-/*
- * Level 7 interrupts can't be caused by anything
- */
-nmihand(frame)
+nmintr(frame)
 	struct frame frame;
 {
-	/* panic?? */
-	printf("unexpected level 7 interrupt ignored\n");
+	nmihand(&frame);
+}
+
+/*
+ * Level 7 interrupts are caused by e.g. the ABORT switch.
+ *
+ * If we have DDB, then break into DDB on ABORT.  In a production
+ * environment, bumping the ABORT switch would be bad, so we enable
+ * panic'ing on ABORT with the kernel option "PANICBUTTON".
+ */
+void
+nmihand(frame)
+	struct frame *frame;
+{
+
+	mvme68k_abort("ABORT SWITCH");
+}
+
+/*
+ * Common code for handling ABORT signals from buttons, switches,
+ * serial lines, etc.
+ */
+void
+mvme68k_abort(cp)
+	const char *cp;
+{
+#ifdef DDB
+	printf("%s\n", cp);
+	Debugger();
+#else
+#ifdef PANICBUTTON
+	panic(cp);
+#else
+	printf("%s ignored\n", cp);
+#endif /* PANICBUTTON */
+#endif /* DDB */
 }
 
 regdump(fp, sbytes)
@@ -1413,24 +1431,6 @@ hexstr(val, len)
 	}
 	return(nbuf);
 }
-
-#ifdef STACKCHECK
-char oflowmsg[] = "k-stack overflow";
-char uflowmsg[] = "k-stack underflow";
-
-badkstack(oflow, fr)
-	int oflow;
-	struct frame fr;
-{
-	extern char kstackatbase[];
-
-	printf("%s: sp should be %x\n", 
-	       oflow ? oflowmsg : uflowmsg,
-	       kstackatbase - (exframesize[fr.f_format] + 8));
-	regdump(&fr, 0);
-	panic(oflow ? oflowmsg : uflowmsg);
-}
-#endif
 
 /*
  * cpu_exec_aout_makecmds():

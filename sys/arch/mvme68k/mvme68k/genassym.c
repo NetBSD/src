@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.3 1996/02/03 05:45:11 mycroft Exp $	*/
+/*	$NetBSD: genassym.c,v 1.4 1996/04/26 19:26:41 chuck Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -158,7 +158,6 @@ main()
 	def("FC_USERD", FC_USERD);
 	def("INTIOBASE", INTIOBASE);
 	def("IIOMAPSIZE", IIOMAPSIZE);
-	def("EIOMAPSIZE", EIOMAPSIZE);
 	def("CACHE_ON", CACHE_ON);
 	def("CACHE_OFF", CACHE_OFF);
 	def("CACHE_CLR", CACHE_CLR);

@@ -1,4 +1,4 @@
-/*      $NetBSD: clock.c,v 1.2 1996/03/17 01:35:09 thorpej Exp $ */
+/*      $NetBSD: clock.c,v 1.3 1996/04/26 19:26:28 chuck Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,14 +44,12 @@
  *      @(#)clock.c     8.1 (Berkeley) 6/11/93
  */
 
-
-
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+
 #include <mvme68k/mvme68k/clockreg.h>
-#include <mvme68k/dev/iio.h>
-#include <mvme68k/dev/pccreg.h>
+#include <mvme68k/mvme68k/clockvar.h>
 
 #include <machine/psl.h>
 #include <machine/cpu.h>
@@ -60,70 +58,44 @@
 #include <sys/gmon.h>
 #endif
 
-struct clocksc {
-	struct device sc_dev;
-	struct clockreg *sc_creg;
-};
-
-struct clockreg *RTCbase = NULL;
-u_char clock_lvl;
+static	struct clockreg *RTCbase = NULL;
+static	caddr_t NVRAMbase = NULL;
+static	int NVRAMsize;
+static	void (*cpu_initclocks_hook) __P((void));
 
 /*
  * autoconf
  */
 
-void clockattach __P((struct device *, struct device *, void *));
-int  clockmatch __P((struct device *, void *, void *));
-
-struct cfattach clock_ca = {
-	sizeof(struct clocksc), clockmatch, clockattach
-};
-
 struct cfdriver clock_cd = {
 	NULL, "clock", DV_DULL, 0
 };
 
-void clockintr __P((void *));
-
-int
-clockmatch(parent, vcf, args)
-	struct device *parent;
-	void *vcf, *args;
-{
-	struct cfdata *cf = vcf;
-
-	return RTCbase == NULL && !badbaddr((caddr_t) IIO_CFLOC_ADDR(cf));
-}
-
-void
-clockattach(parent, self, args)
-	struct device *parent, *self;
-	void *args;
-{
-	iio_print(self->dv_cfdata);
-
-	if (RTCbase)
-		panic("too many clocks configured");
-
-	RTCbase = (struct clockreg *) IIO_CFLOC_ADDR(self->dv_cfdata);
-	clock_lvl = IIO_CFLOC_LEVEL(self->dv_cfdata);
-	if (clock_lvl != CLOCK_LEVEL)
-		panic("wrong interrupt level for clock");
-	pccintr_establish(PCCV_TIMER1, clockintr, clock_lvl, NULL);
-	clock_lvl = clock_lvl | PCC_IENABLE | PCC_TIMERACK;
-
-	printf("\n");
-}
-
 /*
- * clockintr: ack intr and call hardclock
+ * Common parts of clock autoconfiguration.
  */
 void
-clockintr(arg)
-	void *arg;
+clock_config(dev, clockregs, nvram, nvramsize, initfunc)
+	struct device *dev;
+	caddr_t clockregs, nvram;
+	int nvramsize;
+	void (*initfunc) __P((void));
 {
-	sys_pcc->t1_int = clock_lvl;
-	hardclock(arg);
+	extern int delay_divisor;	/* from machdep.c */
+
+	if (RTCbase || NVRAMbase)
+		panic("clock_config: too many clocks configured");
+
+	/* Hook up that which we need. */
+	RTCbase = (struct clockreg *)clockregs;
+	NVRAMbase = nvram;
+	NVRAMsize = nvramsize;
+	cpu_initclocks_hook = initfunc;
+
+	/* Print info about the clock. */
+	printf(": Mostek MK48T0%d, %d bytes of NVRAM\n", (nvramsize / 1024),
+	    nvramsize);
+	printf("%s: delay_divisor %d\n", dev->dv_xname, delay_divisor);
 }
 
 /*
@@ -140,10 +112,9 @@ cpu_initclocks()
 		printf("%d Hz clock not available; using 100 Hz\n", hz);
 		hz = 100;
 	}
-	sys_pcc->t1_pload = PCC_TIMER100HZ;
-	sys_pcc->t1_cr = PCC_TIMERCLEAR;
-	sys_pcc->t1_cr = PCC_TIMERSTART;
-	sys_pcc->t1_int = clock_lvl; 
+
+	/* Call the machine-specific initclocks hook. */
+	(*cpu_initclocks_hook)();
 
 	stathz = 0;
 }
@@ -367,4 +338,3 @@ resettodr()
         cl->cl_year = c.year;
         cl->cl_csr &= ~CLK_WRITE;       /* load them up */
 }
-

@@ -1,6 +1,4 @@
-/*	$NetBSD: locore.s,v 1.5 1996/04/18 18:06:30 chuck Exp $	*/
-
-#undef	STACKCHECK	/* doesn't work any more */
+/*	$NetBSD: locore.s,v 1.6 1996/04/26 19:26:51 chuck Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,19 +41,6 @@
  *
  *	@(#)locore.s	8.6 (Berkeley) 5/27/94
  */
-
-/*
- * STACKCHECK enables two types of kernel stack checking:
- *	1. stack "overflow".  On every clock interrupt we ensure that
- *	   the current kernel stack has not grown into the user struct
- *	   page, i.e. size exceeded UPAGES-1 pages.
- *	2. stack "underflow".  Before every rte to user mode we ensure
- *	   that we will be exactly at the base of the stack after the
- *	   exception frame has been popped.
- * Both checks are performed at splclock since they operate on the
- * global temporary stack.
- */
-/* #define	STACKCHECK */
 
 #include "assym.h"
 #include <mvme68k/mvme68k/vectors.s>
@@ -369,19 +354,6 @@ fault:
 	addql	#8,sp			| pop SP and stack adjust
 	jra	rei			| all done
 
-	.globl	_pcctrap
-_pcctrap:
-	moveml	#0xC0C0,sp@-		| save scratch regs
-	lea	sp@(16),a1		| get pointer to frame
-	movl	a1,sp@-
-	movw	sp@(26),d0
-	movl	d0,sp@-			| push exception vector info
-	movl	sp@(26),sp@-		| and PC
-	jbsr	_pccintr		| doit
-	lea	sp@(12),sp		| pop value args
-	moveml	sp@+,#0x0303		| restore regs
-	jra	rei			| all done
-
 	.globl	_straytrap
 _badtrap:
 	moveml	#0xC0C0,sp@-		| save scratch regs
@@ -414,11 +386,7 @@ Ltrap1:
 	movl	a0,usp			|   user SP
 	moveml	sp@+,#0x7FFF		| restore most registers
 	addql	#8,sp			| pop SP and stack adjust
-#ifdef STACKCHECK
-	jra	Ldorte
-#else
 	rte
-#endif
 
 /*
  * Routines for traps 1 and 2.  The meaning of the two traps depends
@@ -539,56 +507,69 @@ Lsigr1:
 
 /*
  * Interrupt handlers.
- * All device interrupts are auto-vectored.  Most
- * interrupt in the range IPL1 to IPL6.  Here are our assignments:
  *
- *	Level 0:	Spurious: ignored.
- *	Level 1:	networking devices (ethernet)
- *	Level 2:	bio devices (scsi)
- *	Level 3:	
- *	Level 4:	Serial (SCC)
- *	Level 5:	Clock
- *	Level 6:	
- *	Level 7:	Non-maskable (none)
+ * For auto-vectored interrupts, the CPU provides the
+ * vector 0x18+level.  Note we count spurious interrupts,
+ * but don't do anything else with them.
+ *
+ * _intrhand_autovec is the entry point for auto-vectored
+ * interrupts.
+ *
+ * For vectored interrupts, we pull the pc, evec, and exception frame
+ * and pass them to the vectored interrupt dispatcher.  The vectored
+ * interrupt dispatcher will deal with strays.
+ *
+ * _intrhand_vectored is the entry point for vectored interrupts.
  */
-	.globl	_intrhand, _hardclock, _nmihand
 
-_spurintr:
+#define INTERRUPT_SAVEREG	moveml  #0xC0C0,sp@-
+#define INTERRUPT_RESTOREREG	moveml  sp@+,#0x0303
+
+	.globl	_isrdispatch_autovec,_nmintr
+	.globl	_isrdispatch_vectored
+
+_spurintr:	/* Level 0 */
 	addql	#1,_intrcnt+0
 	addql	#1,_cnt+V_INTR
 	jra	rei
 
-_lev1intr:
-_lev2intr:
-_lev3intr:
-_lev4intr:
-_lev5intr:
-_lev6intr:
-	moveml	#0xC0C0,sp@-
-	lea	_intrcnt,a0
-	movw	sp@(22),d0		| use vector offset
-	andw	#0xfff,d0		|   sans frame type
-	addql	#1,a0@(-0x60,d0:w)	|     to increment apropos counter
-	movw	sr,sp@-			| push current SR value
-	clrw	sp@-			|    padded to longword
-	jbsr	_intrhand		| handle interrupt
-	addql	#4,sp			| pop SR
-	moveml	sp@+,#0x0303
-	addql	#1,_cnt+V_INTR
-	jra	rei
+_intrhand_autovec:	/* Levels 1 through 6 */
+	INTERRUPT_SAVEREG
+	movw	sp@(22),sp@-		| push exception vector
+	clrw	sp@-
+	jbsr	_isrdispatch_autovec	| call dispatcher
+	addql	#4,sp
+	INTERRUPT_RESTOREREG
+	jra	rei			| all done
 
-_lev7intr:
+_lev7intr:	/* Level 7: NMI */
 	addql	#1,_intrcnt+32
 	clrl	sp@-
 	moveml	#0xFFFF,sp@-		| save registers
 	movl	usp,a0			| and save
 	movl	a0,sp@(FR_SP)		|   the user stack pointer
-	jbsr	_nmihand		| call handler
+	jbsr	_nmintr			| call handler: XXX wrapper
 	movl	sp@(FR_SP),a0		| restore
 	movl	a0,usp			|   user SP
 	moveml	sp@+,#0x7FFF		| and remaining registers
 	addql	#8,sp			| pop SP and stack adjust
 	jra	rei			| all done
+
+	.globl	_intrhand_vectored
+_intrhand_vectored:
+	INTERRUPT_SAVEREG
+	lea	sp@(16),a1		| get pointer to frame
+	movl	a1,sp@-
+	movw	sp@(26),d0
+	movl	d0,sp@-			| push exception vector info
+	movl	sp@(26),sp@-		| and PC
+	jbsr	_isrdispatch_vectored	| call dispatcher
+	lea	sp@(12),sp		| pop value args
+	INTERRUPT_RESTOREREG
+	jra	rei			| all done
+
+#undef INTERRUPT_SAVEREG
+#undef INTERRUPT_RESTOREREG
 
 /*
  * Emulation of VAX REI instruction.
@@ -607,10 +588,6 @@ _lev7intr:
 	.globl	_astpending
 	.globl	rei
 rei:
-#ifdef STACKCHECK
-	tstl	_panicstr		| have we paniced?
-	jne	Ldorte1			| yes, do not make matters worse
-#endif
 	tstl	_astpending		| AST pending?
 	jeq	Lchksir			| no, go check for SIR
 Lrei1:
@@ -633,11 +610,7 @@ Lrei2:
 	jne	Laststkadj		| yes, go to it
 	moveml	sp@+,#0x7FFF		| no, restore most user regs
 	addql	#8,sp			| toss SP and stack adjust
-#ifdef STACKCHECK
-	jra	Ldorte
-#else
 	rte				| and do real RTE
-#endif
 Laststkadj:
 	lea	sp@(FR_HW),a1		| pointer to HW frame
 	addql	#8,a1			| source pointer
@@ -648,11 +621,7 @@ Laststkadj:
 	movl	a0,sp@(FR_SP)		| new SSP
 	moveml	sp@+,#0x7FFF		| restore user registers
 	movl	sp@,sp			| and our SP
-#ifdef STACKCHECK
-	jra	Ldorte
-#else
 	rte				| and do real RTE
-#endif
 Lchksir:
 	tstb	_ssir			| SIR pending?
 	jeq	Ldorte			| no, all done
@@ -679,63 +648,11 @@ Lsir1:
 	movl	a0,usp			|   user SP
 	moveml	sp@+,#0x7FFF		| and all remaining registers
 	addql	#8,sp			| pop SP and stack adjust
-#ifdef STACKCHECK
-	jra	Ldorte
-#else
 	rte
-#endif
 Lnosir:
 	movl	sp@+,d0			| restore scratch register
 Ldorte:
-#ifdef STACKCHECK
-	movw	#SPL6,sr		| avoid trouble
-	btst	#5,sp@			| are we returning to user mode?
-	jne	Ldorte1			| no, skip it
-	movl	a6,tmpstk-20
-	movl	d0,tmpstk-76
-	moveq	#0,d0
-	movb	sp@(6),d0		| get format/vector
-	lsrl	#3,d0			| convert to index
-	lea	_exframesize,a6		|  into exframesize
-	addl	d0,a6			|  to get pointer to correct entry
-	movw	a6@,d0			| get size for this frame
-	addql	#8,d0			| adjust for unaccounted for bytes
-	lea	_kstackatbase,a6	| desired stack base
-	subl	d0,a6			|   - frame size == our stack
-	cmpl	a6,sp			| are we where we think?
-	jeq	Ldorte2			| yes, skip it
-	lea	tmpstk,a6		| will be using tmpstk
-	movl	sp@(4),a6@-		| copy common
-	movl	sp@,a6@-		|   frame info
-	clrl	a6@-
-	movl	sp,a6@-			| save sp
-	subql	#4,a6			| skip over already saved a6
-	moveml	#0x7FFC,a6@-		| push remaining regs (d0/a6/a7 done)
-	lea	a6@(-4),sp		| switch to tmpstk (skip saved d0)
-	clrl	sp@-			| is an underflow
-	jbsr	_badkstack		| badkstack(0, frame)
-	addql	#4,sp
-	moveml	sp@+,#0x7FFF		| restore most registers
-	movl	sp@,sp			| and SP
-	rte
-Ldorte2:
-	movl	tmpstk-76,d0
-	movl	tmpstk-20,a6
-Ldorte1:
-#endif
 	rte				| real return
-
-#ifdef STACKCHECK
-/*
- * Kernel access to the current processes kernel stack is via a fixed
- * virtual address.  It is at the same address as in the users VA space.
- */
-	.data
-	.set	_kstack,USRSTACK
-	.set	_kstackatbase,USRSTACK+USPACE-4
-	.globl	_kstackatbase
-	.globl	_kstack
-#endif
 
 #define	RELOC(var, ar) \
 	lea	var,ar
@@ -910,9 +827,10 @@ Lenab1:
 	movc	d0,cacr			| clear cache(s)
 Lnocache0:
 /* final setup for C code */
-	movl	#0x8000,d0		| set VBR XXXCDC
+	movl	#_vectab,d0		| set VBR
 	movc	d0,vbr
 	jbsr	_isrinit		| be ready for stray ints
+	jbsr	_mvme68k_init		| early model-dependent init
 	movw	#PSL_LOWIPL,sr		| lower SPL
 	movl	d7,_boothowto		| save reboot flags
 	movl	d6,_bootdev		|   and boot device
@@ -1641,6 +1559,11 @@ ENTRY(spl0)
 Lspldone:
 	rts
 
+ENTRY(getsr)
+	moveq	#0,d0
+	movw	sr,d0
+	rts
+
 ENTRY(_insque)
 	movw	sr,d0
 	movw	#PSL_HIGHIPL,sr		| atomic
@@ -1666,28 +1589,21 @@ ENTRY(_remque)
 	rts
 
 /*
- * delay(int usecs)
- * Delay for "usec" microseconds.  Minimum delay is about 5 uS.
+ * _delay(unsigned N)
  *
- * This routine assumes a 25MHz clock speed, a'la MVME147SA-1
- * This should be determined at run time...
- *
- * XXXCDC: this is wrong and needs to be fixed.   we will work with
- *	jason and fix this the same time the hp300 port is fixed
- * XXXCDC
+ * Delay for at least (N/256) microseconds.
+ * This routine depends on the variable:  delay_divisor
+ * which should be set based on the CPU clock rate.
  */
-	.globl  _delay
-_delay:
-	| d0 = (25 * usecs)
-	moveq	#25,d0
-	mulsl	sp@(4),d0
-	| subtract some overhead
-	moveq	#80,d1
+	.globl	__delay
+__delay:
+	| d0 = arg = (usecs << 8)
+	movl	sp@(4),d0
+	| d1 = delay_divisor
+	movl	_delay_divisor,d1
+L_delay:
 	subl	d1,d0
-| This loop takes 8 clocks per cycle.
-Ldelay:
-	subql	#8,d0
-	jgt	Ldelay
+	jgt	L_delay
 	rts
 
 #ifdef FPCOPROC
@@ -1753,7 +1669,7 @@ _cold:
 	.globl	_want_resched
 _want_resched:
 	.long	0
-	.globl	_intiobase, _intiolimit, _extiobase, _RTCbase
+	.globl	_intiobase, _intiolimit
 	.globl	_proc0paddr
 _proc0paddr:
 	.long	0		| KVA of proc0 u-area
@@ -1761,8 +1677,6 @@ _intiobase:
 	.long	0		| KVA of base of internal IO space
 _intiolimit:
 	.long	0		| KVA of end of internal IO space
-_extiobase:
-	.long	0		| KVA of base of external IO space
 #ifdef DEBUG
 	.globl	fulltflush, fullcflush
 fulltflush:

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.5 1996/04/03 20:42:55 chuck Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.6 1996/04/26 19:27:08 chuck Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -103,10 +103,10 @@ cpu_fork(p1, p2)
 void
 cpu_set_kpc(p, pc)
 	struct proc *p;
-	u_long pc;
+	void (*pc) __P((struct proc *));
 {
 
-	p->p_addr->u_pcb.pcb_regs[6] = pc;	/* A2 */
+	p->p_addr->u_pcb.pcb_regs[6] = (u_long) pc;	/* A2 */
 }
 
 /*
@@ -200,9 +200,10 @@ cpu_coredump(p, vp, cred, chdr)
  * Both addresses are assumed to reside in the Sysmap,
  * and size must be a multiple of CLSIZE.
  */
+void
 pagemove(from, to, size)
 	register caddr_t from, to;
-	int size;
+	size_t size;
 {
 	register vm_offset_t pa;
 
@@ -233,6 +234,7 @@ pagemove(from, to, size)
  * kernel VA space at `vaddr'.  Read/write and cache-inhibit status
  * are specified by `prot'.
  */ 
+void
 physaccess(vaddr, paddr, size, prot)
 	caddr_t vaddr, paddr;
 	register int size, prot;
@@ -249,6 +251,7 @@ physaccess(vaddr, paddr, size, prot)
 	TBIAS();
 }
 
+void
 physunaccess(vaddr, size)
 	caddr_t vaddr;
 	register int size;
@@ -259,6 +262,49 @@ physunaccess(vaddr, size)
 	for (size = btoc(size); size; size--)
 		*pte++ = PG_NV;
 	TBIAS();
+}
+
+/*
+ * Allocate/deallocate a cache-inhibited range of kernel virtual address
+ * space mapping the indicated physical range [pa - pa+size].
+ */
+void *
+iomap(paddr, size)
+	u_long paddr;
+	size_t size;
+{
+	u_long pa, off;
+	vm_offset_t va, rval;
+
+	off = paddr & PGOFSET;
+	pa = m68k_trunc_page(paddr);
+	size += off;
+	size = m68k_round_page(size);
+
+	/* Get some kernel virtual space. */
+	va = kmem_alloc_pageable(kernel_map, size);
+	if (va == 0)
+		return (NULL);
+	rval = va + off;
+
+	/* Map the PA range. */
+	physaccess((caddr_t)va, (caddr_t)pa, size, PG_RW|PG_CI);
+
+	return ((void *)rval);
+}
+
+void
+iounmap(kva, size)
+	void *kva;
+	size_t size;
+{
+	vm_offset_t va;
+
+	va = m68k_trunc_page((vm_offset_t)kva);
+	size = m68k_round_page(size);
+
+	physunaccess((caddr_t)va, size);
+	kmem_free(kernel_map, va, size);
 }
 
 /*

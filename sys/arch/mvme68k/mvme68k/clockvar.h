@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.h,v 1.2 1996/04/26 19:26:46 chuck Exp $	*/
+/*	$NetBSD: clockvar.h,v 1.1 1996/04/26 19:26:33 chuck Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,57 +36,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/queue.h>
-
 /*
- * The location and size of the autovectored interrupt portion
- * of the vector table.
+ * Defintions exported to ASIC-specific clock attachment.
  */
-#define ISRAUTOVEC	0x18
-#define NISRAUTOVEC	8
 
-/*
- * The location and size of the vectored interrupt portion
- * of the vector table.
- */
-#define ISRVECTORED	0x40
-#define NISRVECTORED	192
+extern	struct cfdriver clock_cd;
 
-/*
- * Autovectored interupt handler cookie.
- */
-struct isr_autovec {
-	LIST_ENTRY(isr_autovec) isr_link;
-	int		(*isr_func) __P((void *));
-	void		*isr_arg;
-	int		isr_ipl;
-	int		isr_priority;
-};
-
-typedef LIST_HEAD(, isr_autovec) isr_autovec_list_t;
-
-/*
- * Vectored interrupt handler cookie.  The handler may request to
- * receive the exception frame as an argument by specifying NULL
- * when establishing the interrupt.
- */
-struct isr_vectored {
-	int		(*isr_func) __P((void *));
-	void		*isr_arg;
-	int		isr_ipl;
-};
-
-/*
- * Autovectored ISR priorities.  These are not the same as interrupt levels.
- */
-#define ISRPRI_BIO		0
-#define ISRPRI_NET		1
-#define ISRPRI_TTY		2
-#define ISRPRI_TTYNOBUF		3
-
-void	isrinit __P((void));
-void	isrlink_autovec __P((int (*)(void *), void *, int, int));
-void	isrlink_vectored __P((int (*)(void *), void *, int, int));
-void	isrunlink_vectored __P((int));
-void	isrdispatch_autovec __P((int));
-void	isrdispatch_vectored __P((int, int, void *));
+void	clock_config __P((struct device *, caddr_t, caddr_t, int,
+	    void (*)(void)));

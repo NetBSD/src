@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.4 1996/04/03 20:35:25 chuck Exp $	*/
+/*	$NetBSD: conf.c,v 1.5 1996/04/26 19:26:36 chuck Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -103,7 +103,7 @@ cdev_decl(ptc);
 cdev_decl(log);
 cdev_decl(fd);
 
-#include "zs.h"
+#include "zstty.h"
 cdev_decl(zs);
 
 cdev_decl(sd);
@@ -140,7 +140,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NCD,cd),		/* 9: SCSI CD-ROM */
 	cdev_notdef(),			/* 10 */
 	cdev_notdef(),			/* 11: parallel interface */
-	cdev_tty_init(NZS,zs),		/* 12: SCC serial ports */
+	cdev_tty_init(NZSTTY,zs),	/* 12: SCC serial ports */
 	cdev_notdef(),			/* 13 */
 	cdev_notdef(),			/* 14 */
 	cdev_notdef(),			/* 15 */
@@ -275,12 +275,15 @@ chrtoblk(dev)
  */
 #include <dev/cons.h>
 
-#define zscnpollc      nullcnpollc
-cons_decl(zs);
+#define zsc_pcccngetc		zscngetc
+#define zsc_pcccnputc		zscnputc
+#define zsc_pcccnpollc		nullcnpollc
+#include "zsc_pcc.h"
+cons_decl(zsc_pcc);
 
 struct	consdev constab[] = {
-#if NZS > 0
-	cons_init(zs),
+#if NZSC_PCC > 0
+	cons_init(zsc_pcc),
 #endif
 	{ 0 },
 };
