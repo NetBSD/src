@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.3 1997/07/10 04:53:35 mikel Exp $	*/
+/*	$NetBSD: setup.c,v 1.4 1997/09/14 14:27:31 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -34,11 +34,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-static char rcsid[] = "$NetBSD: setup.c,v 1.3 1997/07/10 04:53:35 mikel Exp $";
+__RCSID("$NetBSD: setup.c,v 1.4 1997/09/14 14:27:31 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,7 +76,7 @@ int
 setup(dev)
 	char *dev;
 {
-	long cg, size, asked, i, j;
+	long cg, asked, i;
 	long bmapsize;
 	struct disklabel *lp;
 	off_t sizepb;
@@ -379,12 +380,11 @@ int
 calcsb(dev, devfd, fs)
 	char *dev;
 	int devfd;
-	register struct m_ext2fs *fs;
+	struct m_ext2fs *fs;
 {
-	register struct disklabel *lp;
-	register struct partition *pp;
-	register char *cp;
-	int i;
+	struct disklabel *lp;
+	struct partition *pp;
+	char *cp;
 
 	cp = strchr(dev, '\0') - 1;
 	if ((cp == (char *)-1 || (*cp < 'a' || *cp > 'h')) && !isdigit(*cp)) {

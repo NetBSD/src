@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.1 1997/06/11 11:21:49 bouyer Exp $	*/
+/*	$NetBSD: inode.c,v 1.2 1997/09/14 14:27:24 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -34,11 +34,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #else
-static char rcsid[] = "$NetBSD: inode.c,v 1.1 1997/06/11 11:21:49 bouyer Exp $";
+__RCSID("$NetBSD: inode.c,v 1.2 1997/09/14 14:27:24 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,10 +68,10 @@ static int iblock __P((struct inodesc *, long, u_int64_t));
 int
 ckinode(dp, idesc)
 	struct ext2fs_dinode *dp;
-	register struct inodesc *idesc;
+	struct inodesc *idesc;
 {
-	register u_int32_t *ap;
-	long ret, n, ndb, offset;
+	u_int32_t *ap;
+	long ret, n, ndb;
 	struct ext2fs_dinode dino;
 	u_int64_t remsize, sizepb;
 	mode_t mode;
@@ -156,9 +157,9 @@ iblock(idesc, ilevel, isize)
 	long ilevel;
 	u_int64_t isize;
 {
-	register daddr_t *ap;
-	register daddr_t *aplim;
-	register struct bufarea *bp;
+	daddr_t *ap;
+	daddr_t *aplim;
+	struct bufarea *bp;
 	int i, n, (*func) __P((struct inodesc *)), nif;
 	u_int64_t sizepb;
 	char buf[BUFSIZ];
@@ -243,7 +244,7 @@ chkrange(blk, cnt)
 	daddr_t blk;
 	int cnt;
 {
-	register int c;
+	int c;
 
 	if ((unsigned)(blk + cnt) > maxfsblock)
 		return (1);
@@ -381,10 +382,10 @@ freeinodebuf()
  */
 void
 cacheino(dp, inumber)
-	register struct ext2fs_dinode *dp;
+	struct ext2fs_dinode *dp;
 	ino_t inumber;
 {
-	register struct inoinfo *inp;
+	struct inoinfo *inp;
 	struct inoinfo **inpp;
 	unsigned int blks;
 
@@ -425,7 +426,7 @@ struct inoinfo *
 getinoinfo(inumber)
 	ino_t inumber;
 {
-	register struct inoinfo *inp;
+	struct inoinfo *inp;
 
 	for (inp = inphead[inumber % numdirs]; inp; inp = inp->i_nexthash) {
 		if (inp->i_number != inumber)
@@ -442,7 +443,7 @@ getinoinfo(inumber)
 void
 inocleanup()
 {
-	register struct inoinfo **inpp;
+	struct inoinfo **inpp;
 
 	if (inphead == NULL)
 		return;
@@ -462,11 +463,11 @@ inodirty()
 
 void
 clri(idesc, type, flag)
-	register struct inodesc *idesc;
+	struct inodesc *idesc;
 	char *type;
 	int flag;
 {
-	register struct ext2fs_dinode *dp;
+	struct ext2fs_dinode *dp;
 
 	dp = ginode(idesc->id_number);
 	if (flag == 1) {
@@ -489,7 +490,7 @@ int
 findname(idesc)
 	struct inodesc *idesc;
 {
-	register struct ext2fs_direct *dirp = idesc->id_dirp;
+	struct ext2fs_direct *dirp = idesc->id_dirp;
 
 	if (dirp->e2d_ino != idesc->id_parent)
 		return (KEEPON);
@@ -502,7 +503,7 @@ int
 findino(idesc)
 	struct inodesc *idesc;
 {
-	register struct ext2fs_direct *dirp = idesc->id_dirp;
+	struct ext2fs_direct *dirp = idesc->id_dirp;
 
 	if (dirp->e2d_ino == 0)
 		return (KEEPON);
@@ -519,8 +520,8 @@ void
 pinode(ino)
 	ino_t ino;
 {
-	register struct ext2fs_dinode *dp;
-	register char *p;
+	struct ext2fs_dinode *dp;
+	char *p;
 	struct passwd *pw;
 	time_t t;
 
@@ -581,8 +582,8 @@ allocino(request, type)
 	ino_t request;
 	int type;
 {
-	register ino_t ino;
-	register struct ext2fs_dinode *dp;
+	ino_t ino;
+	struct ext2fs_dinode *dp;
 	time_t t;
 
 	if (request == 0)

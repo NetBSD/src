@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.1 1997/06/11 11:22:02 bouyer Exp $	*/
+/*	$NetBSD: utilities.c,v 1.2 1997/09/14 14:27:31 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -34,11 +34,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: utilities.c,v 1.1 1997/06/11 11:22:02 bouyer Exp $";
+__RCSID("$NetBSD: utilities.c,v 1.2 1997/09/14 14:27:31 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -123,7 +124,7 @@ reply(question)
 void
 bufinit()
 {
-	register struct bufarea *bp;
+	struct bufarea *bp;
 	long bufcnt, i;
 	char *bufp;
 
@@ -158,7 +159,7 @@ getdatablk(blkno, size)
 	daddr_t blkno;
 	long size;
 {
-	register struct bufarea *bp;
+	struct bufarea *bp;
 
 	for (bp = bufhead.b_next; bp != &bufhead; bp = bp->b_next)
 		if (bp->b_bno == fsbtodb(&sblock, blkno))
@@ -184,7 +185,7 @@ foundit:
 
 void
 getblk(bp, blk, size)
-	register struct bufarea *bp;
+	struct bufarea *bp;
 	daddr_t blk;
 	long size;
 {
@@ -203,9 +204,9 @@ getblk(bp, blk, size)
 void
 flush(fd, bp)
 	int fd;
-	register struct bufarea *bp;
+	struct bufarea *bp;
 {
-	register int i, j;
+	int i;
 
 	if (!bp->b_dirty)
 		return;
@@ -243,7 +244,7 @@ void
 ckfini(markclean)
 	int markclean;
 {
-	register struct bufarea *bp, *nbp;
+	struct bufarea *bp, *nbp;
 	int cnt = 0;
 
 	if (fswritefd < 0) {
@@ -367,7 +368,7 @@ bwrite(fd, buf, blk, size)
 int
 allocblk()
 {
-	register int i;
+	int i;
 
 	for (i = 0; i < maxfsblock - 1; i++) {
 		if (testbmap(i))
@@ -402,7 +403,7 @@ getpathname(namebuf, curdir, ino)
 	ino_t curdir, ino;
 {
 	int len;
-	register char *cp;
+	char *cp;
 	struct inodesc idesc;
 	static int busy = 0;
 
@@ -495,7 +496,7 @@ voidquit(n)
  */
 int
 dofix(idesc, msg)
-	register struct inodesc *idesc;
+	struct inodesc *idesc;
 	char *msg;
 {
 

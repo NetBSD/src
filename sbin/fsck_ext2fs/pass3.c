@@ -1,4 +1,4 @@
-/*	$NetBSD: pass3.c,v 1.1 1997/06/11 11:21:55 bouyer Exp $	*/
+/*	$NetBSD: pass3.c,v 1.2 1997/09/14 14:27:28 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -34,11 +34,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)pass3.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: pass3.c,v 1.1 1997/06/11 11:21:55 bouyer Exp $";
+__RCSID("$NetBSD: pass3.c,v 1.2 1997/09/14 14:27:28 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,7 +53,7 @@ static char rcsid[] = "$NetBSD: pass3.c,v 1.1 1997/06/11 11:21:55 bouyer Exp $";
 void
 pass3()
 {
-	register struct inoinfo **inpp, *inp;
+	struct inoinfo **inpp, *inp;
 	ino_t orphan;
 	int loopcnt;
 

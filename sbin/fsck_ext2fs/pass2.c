@@ -1,4 +1,4 @@
-/*	$NetBSD: pass2.c,v 1.1 1997/06/11 11:21:53 bouyer Exp $	*/
+/*	$NetBSD: pass2.c,v 1.2 1997/09/14 14:27:27 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -34,11 +34,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$NetBSD: pass2.c,v 1.1 1997/06/11 11:21:53 bouyer Exp $";
+__RCSID("$NetBSD: pass2.c,v 1.2 1997/09/14 14:27:27 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,8 +67,8 @@ static int blksort __P((const void *, const void *));
 void
 pass2()
 {
-	register struct ext2fs_dinode *dp;
-	register struct inoinfo **inpp, *inp;
+	struct ext2fs_dinode *dp;
+	struct inoinfo **inpp, *inp;
 	struct inoinfo **inpend;
 	struct inodesc curino;
 	struct ext2fs_dinode dino;
@@ -202,8 +203,8 @@ static int
 pass2check(idesc)
 	struct inodesc *idesc;
 {
-	register struct ext2fs_direct *dirp = idesc->id_dirp;
-	register struct inoinfo *inp;
+	struct ext2fs_direct *dirp = idesc->id_dirp;
+	struct inoinfo *inp;
 	int n, entrysize, ret = 0;
 	struct ext2fs_dinode *dp;
 	char *errmsg;
