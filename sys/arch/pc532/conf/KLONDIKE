@@ -1,4 +1,4 @@
-#	$NetBSD: KLONDIKE,v 1.8 1996/11/24 13:28:53 matthias Exp $
+#	$NetBSD: KLONDIKE,v 1.9 1996/12/23 08:36:37 matthias Exp $
 #
 # KLONDIKE: Matthias Pfaller's pc532
 #
@@ -66,8 +66,8 @@ cd* at scsibus? target ? lun ?		# SCSI CD-ROMs
 st* at scsibus? target ? lun ?		# SCSI tapes
 uk* at scsibus? target ? lun ?		# All the things we don't know
 
-lpt0 at membus? addr 0xffc80030 irq 7
-lpt1 at membus? addr 0xffc80034 irq 6
+lpt0 at mainbus? addr 0xffc80030 irq 7
+lpt1 at mainbus? addr 0xffc80034 irq 6
 
 pseudo-device	pty 16			# pseudo-terminals
 pseudo-device	loop 1			# loopback network
