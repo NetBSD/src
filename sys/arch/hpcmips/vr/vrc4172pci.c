@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4172pci.c,v 1.7 2002/10/02 05:26:54 thorpej Exp $	*/
+/*	$NetBSD: vrc4172pci.c,v 1.8 2003/01/01 01:40:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 TAKEMURA Shin
@@ -213,9 +213,9 @@ vrc4172pci_print(void *aux, const char *pnp)
 	struct pcibus_attach_args *pba = aux;
 
 	if (pnp != NULL)
-		printf("%s at %s", pba->pba_busname, pnp);
+		aprint_normal("%s at %s", pba->pba_busname, pnp);
 	else
-		printf(" bus %d", pba->pba_bus);
+		aprint_normal(" bus %d", pba->pba_bus);
 
 	return (UNCONF);
 }
