@@ -1,4 +1,4 @@
-.\" $NetBSD: gre.4,v 1.2 1998/09/25 08:35:20 hwr Exp $
+.\" $NetBSD: gre.4,v 1.3 1998/09/30 06:13:27 hwr Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,20 +50,29 @@ into IP. These encapsulated datagrams are routed to a destination host,
 where they are decapsulated and further routed to their final destination.
 The so called ``tunnel'' appears to the inner datagrams like one hop.
 .Pp
-This driver currently supports two modes of operation:
+This driver currently supports the following modes of operation:
 .Bl -tag -width abc
-.It IPIP encapsulation (IP protocol number 4). Here packets are 
+.It IPIP encapsulation (IP protocol number 4). 
+Complete IP packets (IP header and IP payload) are 
 directly encapsulated into IP packets
 and sent to the tunnel destionation. This mode allows only for IP in IP
 tunneling.
-.It GRE encapsulation (IP protocol number 47). Encapsulated datagrams are
+.It GRE encapsulation (IP protocol number 47). 
+Encapsulated datagrams are
 prepended by a outer datagram and a GRE header. The GRE header specifies
 the type of the encapsulated datagram and thus allows for tunneling other
 protocols than IP like e.g. AppleTalk (not yet supported). GRE mode is
-also the default tunnel mode on Cisco routers.
+also the default tunnel mode on Cisco routers. This is also the default
+mode of operation of the 
+.Sy gre Ns Ar X
+interfaces.
+.It MOBILE encapsulation (IP protocol number 55). 
+Datagrams are 
+encapsulated into IP, but with a shorter encapsulation. The original
+IP header is modified and the modifications are inserted between the
+so modified header and the original payload. Like IPIP only for IP in IP
+encapsulation.
 .El
-.Pp
-GRE mode is the default mode of operation.
 .Pp
 The network interfaces are named
 .Sy gre Ns Ar 0 ,
@@ -83,10 +92,24 @@ Query the the IP address that is set for the local tunnel end.
 .It GREGADDRD: 
 Query the the IP address that is set for the remote tunnel end.
 .It GRESPROTO: 
-Set the operation mode. The operation mode can (in a limited manner) also
-be given as ``-link0'' (gre) or ``link0'' (ipip) flag on the command line
-of
+Set the operation mode to the the specified IP protocol value. The
+protocol is passed to the interface in (struct ifreq)->ifr_flags.
+The operation mode can also
+be given as 
+.Bl -tag -width bbb
+.It link0
+IPPROTO_GRE
+.It link1
+IPPROTO_IPIP
+.It link2
+IPPROTO_MOBILE
+.El
+to
 .Xr ifconfig .
+As the linkN flags are not mutually exclusive, modes must be set by applying
+positive and negative flags as e.g. 
+.Xr ifconfig 
+link0 -link1 -link2
 .It GREGPROTO: 
 Query operation mode.
 .El
@@ -109,7 +132,7 @@ Host X-- Host A  ----------------tunnel---------- cisco D------Host E
    On host A (NetBSD):
 
    # route add default B
-   # ifconfig greN  A D 
+   # ifconfig greN  A D netmask 0xffffffff linkX up
    # greconfig -i greN -s A -d D
    # route add E D
 
@@ -144,6 +167,16 @@ device needs a route to the destination, that is less specific than the
 one over the tunnel.
 (Basically, there needs to be a route to the decapsulating host that
 does not run over the tunnel, as this would be a loop ..)
+.Pp
+In order to 
+.Xr ifconfig
+to actually mark the interface as up, the keyword ``up'' must be given
+last on its command line.
+.Pp
+The kernel must be set to forward datagrams by either option
+``GATEWAY'' in the kernel config file or by issuing the appropriate 
+option to
+.Xr sysctl .
 .Sh SEE ALSO
 .Xr netintro 4 ,
 .Xr ip 4 ,
@@ -151,11 +184,16 @@ does not run over the tunnel, as this would be a loop ..)
 .Xr inet 4 ,
 .Xr ifconfig 8 ,
 .Xr greconfig 8 ,
-.Xr protocols 5
+.Xr options 4 ,
+.Xr protocols 5 ,
+.Xr sysctl 8
 .Pp
 A description of GRE encapsulation can be found in RFC 1701, RFC 1702.
 .Pp
 A description of IPIP encapsulation can be found in RFC 2003.
+.Pp
+A description of MOBILE encapsulation can be found in RFC 2004.
+
 .Sh BUGS
 The compute_route() code in if_gre.c toggles the last bit of the
 IP-address to provoke the search for a less specific route than the
@@ -165,8 +203,6 @@ the best solution.
 GRE RFC not yet fully implemented (no GRE options), no other protocols
 yet than IP over IP.
 RFC 2003 also not yet fully supportet wrt. options etc.
-.Pp
-Code quality is surely not best and possibly not near anything like KNF
 .Pp
 Traceroute does not work yet over the tunnel :(
 .Pp
