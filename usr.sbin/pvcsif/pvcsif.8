@@ -1,5 +1,5 @@
 .\"
-.\" $NetBSD: pvcsif.8,v 1.3 2002/01/19 11:44:59 wiz Exp $
+.\" $NetBSD: pvcsif.8,v 1.4 2002/02/02 01:37:13 wiz Exp $
 .\"
 .Dd December 29, 1997
 .Dt PVCSIF 8
@@ -44,10 +44,10 @@ For use with a shell, it prints the created interface name.
 .It Fl a
 Lists the existing sub interfaces.
 .El
-.Sh CAVEATS
-Currently,  there is no way to remove a sub interface.
-
 .Sh SEE ALSO
-.Xr pvctxctl 8 ,
+.Xr en 4 ,
+.Xr pvc 4 ,
 .Xr ifconfig 8 ,
-.Xr en 4
+.Xr pvctxctl 8
+.Sh BUGS
+Currently, there is no way to remove a sub interface.
