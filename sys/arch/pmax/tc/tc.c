@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.2 1995/08/10 04:31:46 jonathan Exp $	*/
+/*	$NetBSD: tc.c,v 1.3 1995/09/12 07:28:06 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -31,10 +31,15 @@
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
-/*#include <machine/rpb.h>*/
 
-/*#include <alpha/tc/tc.h>*/
+#ifdef alpha
+#include <machine/rpb.h>
+#include <alpha/tc/tc.h>
+#endif
+
+#ifdef pmax
 #include <pmax/tc/tc.h>
+#endif
 
 struct tc_softc {
 	struct	device sc_dv;
@@ -50,7 +55,7 @@ struct cfdriver tccd =
     { NULL, "tc", tcmatch, tcattach, DV_DULL, sizeof (struct tc_softc) };
 
 void	tc_intr_establish __P((struct confargs *, intr_handler_t handler,
-			       handler_arg_t));
+			       intr_arg_t));
 void	tc_intr_disestablish __P((struct confargs *));
 caddr_t	tc_cvtaddr __P((struct confargs *));
 int	tc_matchname __P((struct confargs *, char *));
@@ -74,6 +79,7 @@ extern int cputype;
 #include <pmax/pmax/kn02.h>
 #include <pmax/pmax/kmin.h>
 #include <pmax/pmax/maxine.h>
+
 #include <pmax/pmax/turbochannel.h>
 
 #include <pmax/pmax/nameglue.h>
@@ -90,19 +96,19 @@ int	tc_ds_ioasic_getdev __P((struct confargs *));
 /* XXX*/
 /* should be handled elsewhere? */
 typedef void (*tc_enable_t) __P ((u_int slotno, intr_handler_t,
-				  int unit, int on)); 
-typedef void (*tc_handler_t) __P((int unit));
+				  void *intr_arg, int on)); 
+typedef int (*tc_handler_t) __P((void *intr_arg));
     
 extern void (*tc_enable_interrupt)  __P ((u_int slotno, tc_handler_t,
-				     int unit, int on)); 
+				     void *intr_arg, int on)); 
 extern void kn03_enable_intr __P((u_int slot, tc_handler_t,
-				  int unit, int on)); 
+				  void *intr_arg, int on)); 
 extern void kn02_enable_intr __P ((u_int slot, tc_handler_t,
-				   int unit, int on)); 
+				   void *intr_arg, int on)); 
 extern void kmin_enable_intr __P ((u_int slot, tc_handler_t,
-				   int unit, int on)); 
+				   void *intr_arg, int on)); 
 extern void xine_enable_intr __P ((u_int slot, tc_handler_t,
-				   int unit, int on)); 
+				   void *intr_arg, int on)); 
 
 /*
  * configuration tables for the four models of
@@ -147,25 +153,25 @@ cpu_tcdesc(cpu)
 {
  /*XXX*/
 #ifdef	pmax
-	if (cputype == DS_3MAXPLUS) {
+	if (cpu == DS_3MAXPLUS) {
 		tc_enable_interrupt = kn03_enable_intr;
 		return &kn03_tc_desc;
-	} else if (cputype == DS_3MAX) {
+	} else if (cpu == DS_3MAX) {
 		tc_enable_interrupt = kn02_enable_intr;
 		return &kn02_tc_desc;
-	} else if (cputype == DS_3MIN) {
+	} else if (cpu == DS_3MIN) {
 		DPRINTF(("tcattach: 3MIN Turbochannel (UNTESTED)\n"));
 		tc_enable_interrupt = kmin_enable_intr;
 		return &kmin_tc_desc;
-	} else if (cputype == DS_MAXINE) {
+	} else if (cpu == DS_MAXINE) {
 		DPRINTF(("MAXINE turbochannel (UNTESTED)\n"));
 		tc_enable_interrupt = xine_enable_intr;
 		return &xine_tc_desc;
-	} else if (cputype == DS_PMAX) {
+	} else if (cpu == DS_PMAX) {
 		DPRINTF(("tcattach: PMAX, no turbochannel\n"));
 		return NULL;
 	} else {
-		panic("tcattach: Unrecognized bus type 0x%x\n", cputype);
+		panic("tcattach: Unrecognized bus type 0x%x\n", cpu);
 	}
 
 #else  /* alpha?*/
@@ -255,12 +261,12 @@ tcattach(parent, self, aux)
 			    nca->ca_name);
 #endif
 
-		if (tc_checkdevmem(nca) == 0)
+		if (tc_checkdevmem(BUS_CVTADDR(nca)) == 0)
 			continue;
 
 		/* If no name, we have to see what might be there. */
 		if (nca->ca_name == NULL) {
-			if (tc_checkslot(nca, namebuf) == 0)
+			if (tc_checkslot(BUS_CVTADDR(nca), namebuf) == 0)
 				continue;
 			nca->ca_name = namebuf;
 		}
@@ -296,7 +302,7 @@ void
 tc_intr_establish(ca, handler, val)
 	struct confargs *ca;
 	intr_handler_t handler;
-	handler_arg_t val;
+	intr_arg_t val;
 {
 	struct tc_softc *sc = tccd.cd_devs[0];
 
@@ -322,12 +328,10 @@ tc_matchname(ca, name)
 }
 
 int
-tc_checkdevmem(ca)
-	struct confargs *ca;
+tc_checkdevmem(addr)
+	caddr_t addr;
 {
-	u_int32_t *datap;
-
-	datap = (u_int32_t *)BUS_CVTADDR(ca);
+	u_int32_t *datap = (u_int32_t *) addr;
 
 	/* Return non-zero if memory was there (i.e. address wasn't bad). */
 	return (!badaddr(datap, sizeof (u_int32_t)));
@@ -337,8 +341,8 @@ u_int tc_slot_romoffs[] = { TC_SLOT_ROM, TC_SLOT_PROTOROM };
 int ntc_slot_romoffs = sizeof tc_slot_romoffs / sizeof tc_slot_romoffs[0];
 
 int
-tc_checkslot(ca, namep)
-	struct confargs *ca;
+tc_checkslot(addr, namep)
+	caddr_t addr;
 	char *namep;
 {
 	struct tc_rommap *romp;
@@ -346,7 +350,7 @@ tc_checkslot(ca, namep)
 
 	for (i = 0; i < ntc_slot_romoffs; i++) {
 		romp = (struct tc_rommap *)
-		    (BUS_CVTADDR(ca) + tc_slot_romoffs[i]);
+		    (addr + tc_slot_romoffs[i]);
 
 		switch (romp->tcr_width.v) {
 		case 1:
