@@ -1,4 +1,4 @@
-/*	$NetBSD: ethfoo_lkm.c,v 1.9 2004/12/12 21:46:58 cube Exp $	*/
+/*	$NetBSD: ethfoo_lkm.c,v 1.10 2004/12/12 22:15:28 cube Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -64,9 +64,7 @@
 #include <sys/device.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
-#if __NetBSD_Version__ > 106200000
 #include <sys/ksyms.h>
-#endif
 #include <sys/lkm.h>
 #include <sys/poll.h>
 #include <sys/select.h>
@@ -377,6 +375,7 @@ ethfoo_attach(struct device *parent, struct device *self, void *aux)
 	u_int8_t enaddr[ETHER_ADDR_LEN] =
 	    { 0xf0, 0x0b, 0xa4, 0xff, 0xff, 0xff };
 	char enaddrstr[18];
+	char sym[] = "bpf_mtap";
 	unsigned long u;
 	uint32_t ui;
 	int error;
@@ -396,22 +395,12 @@ ethfoo_attach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
 	    ethfoo_ether_sprintf(enaddrstr, enaddr));
 
-	/* ksyms interface is only available since mid-1.6R, so require
-	 * at least 1.6T
-	 */
-	{
-#if __NetBSD_Version__ > 106200000
-# ifndef ksyms_getval_from_kernel
-#  define ksyms_getval_from_kernel ksyms_getval
-# endif
-		char sym[] = "bpf_mtap";
-		if (ksyms_getval_from_kernel(NULL, sym, &u,
-		    KSYMS_PROC) != ENOENT)
-			sc->sc_bpf_mtap = (void *)u;
-		else
-#endif
-			sc->sc_bpf_mtap = NULL;
-	}
+	/* ksyms interface is only available since mid-1.6R. */
+	if (ksyms_getval_from_kernel(NULL, sym, &u,
+	    KSYMS_PROC) != ENOENT)
+		sc->sc_bpf_mtap = (void *)u;
+	else
+		sc->sc_bpf_mtap = NULL;
 
 	/*
 	 * Why 1000baseT? Why not? You can add more.
