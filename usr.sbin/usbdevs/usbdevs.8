@@ -1,4 +1,4 @@
-.\" $NetBSD: usbdevs.8,v 1.5 2000/10/15 12:44:11 bjh21 Exp $
+.\" $NetBSD: usbdevs.8,v 1.6 2000/12/30 13:57:44 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,9 +42,10 @@
 .Nd show USB devices connected to the system
 .Sh SYNOPSIS
 .Nm
-.Op Fl v
 .Op Fl a Ar addr
+.Op Fl d
 .Op Fl f Ar dev
+.Op Fl v
 .Sh DESCRIPTION
 .Nm
 prints a listing of all USB devices connected to the system
@@ -55,6 +56,8 @@ The options are as follows:
 .Bl -tag -width Fl
 .It Fl a Ar addr
 only print information about the device at the given address.
+.It Fl d
+Show the device drivers associated with each device.
 .It Fl f Ar dev
 only print information for the given USB controller.
 .It Fl v
