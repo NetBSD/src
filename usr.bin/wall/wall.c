@@ -1,4 +1,4 @@
-/*	$NetBSD: wall.c,v 1.22 2003/03/27 13:21:48 lukem Exp $	*/
+/*	$NetBSD: wall.c,v 1.23 2003/04/21 00:05:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)wall.c	8.2 (Berkeley) 11/16/93";
 #endif
-__RCSID("$NetBSD: wall.c,v 1.22 2003/03/27 13:21:48 lukem Exp $");
+__RCSID("$NetBSD: wall.c,v 1.23 2003/04/21 00:05:30 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -68,6 +68,7 @@ __RCSID("$NetBSD: wall.c,v 1.22 2003/03/27 13:21:48 lukem Exp $");
 #include <util.h>
 
 #include "utmpentry.h"
+#include "term_chk.h"
 
 void	addgroup(char *);
 void	makemsg(const char *);
@@ -96,12 +97,15 @@ main(int argc, char **argv)
 	gid_t egid;
 	struct wallgroup *wg;
 	struct passwd *pw;
+	time_t atime;
 
 	setprogname(argv[0]);
 	egid = getegid();
 	if (setegid(getgid()) == -1)
 		err(1, "setegid");
 	pw = getpwnam("nobody");
+
+	(void)check_sender(&atime, getuid(), egid);
 
 	while ((ch = getopt(argc, argv, "g:n")) != -1)
 		switch (ch) {
