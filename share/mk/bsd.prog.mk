@@ -32,7 +32,7 @@ LIBMP?=		/usr/lib/libmp.a
 LIBPC?=		/usr/lib/libpc.a
 LIBPLOT?=	/usr/lib/libplot.a
 LIBRESOLV?=	/usr/lib/libresolv.a
-LIBRPC?=	/usr/lib/sunrpc.a
+LIBRPC?=	/usr/lib/librpc.a
 LIBTERM?=	/usr/lib/libterm.a
 LIBUTIL?=	/usr/lib/libutil.a
 
