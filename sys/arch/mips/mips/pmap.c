@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83 2000/03/19 19:16:14 soren Exp $	*/
+/*	$NetBSD: pmap.c,v 1.84 2000/03/27 08:56:21 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.83 2000/03/19 19:16:14 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.84 2000/03/27 08:56:21 nisimura Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1841,11 +1841,11 @@ pmap_alloc_asid(p)
 	else {
 		if (pmap_next_asid == MIPS_TLB_NUM_PIDS) {
 			MachTLBFlush();
-			pmap_next_asid = 1;	/* 0 means invalid */
 			pmap_asid_generation++; /* ok to wrap to 0 */
+			pmap_next_asid = 1;	/* 0 means invalid */
+			pmap->pm_asidgen = pmap_asid_generation;
 		}
 		pmap->pm_asid = pmap_next_asid++;
-		pmap->pm_asidgen = pmap_asid_generation;
 	}
 
 #ifdef DEBUG
