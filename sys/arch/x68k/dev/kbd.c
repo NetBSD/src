@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.19 2003/09/21 19:16:53 jdolecek Exp $	*/
+/*	$NetBSD: kbd.c,v 1.20 2003/09/28 21:14:41 cl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.19 2003/09/21 19:16:53 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.20 2003/09/28 21:14:41 cl Exp $");
 
 #include "ite.h"
 #include "bell.h"
@@ -281,8 +281,8 @@ kbdioctl(dev, cmd, data, flag, p)
 		return (0);
 
 	case FIOSETOWN:
-		if (-*(int *)data != k->k_events.ev_io->p_pgid
-		    && *(int *)data != k->k_events.ev_io->p_pid)
+		if (-*(int *)data != k->sc_events.ev_io->p_pgid
+		    && *(int *)data != k->sc_events.ev_io->p_pid)
 			return (EPERM);
 		return 0;
 
