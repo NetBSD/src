@@ -148,7 +148,6 @@ fdattach(struct isa_device *dev)
 	if (unit >= NFDC)
 		return;
 
-	printf(": controller has:\n");
 	for (fdutab = isa_biotab_fdc; fdutab->id_driver != 0; fdutab++) {
 		fdunit = fdutab->id_unit;
 		if (fdunit >= NFD)
@@ -176,12 +175,12 @@ fdattach(struct isa_device *dev)
 			continue;
 
 		if ((fdt & 0xf0) == RTCFDT_12M) {
-			printf("fd%d: <1.2M> on fdc%d slave %d\n", fddrive,
+			printf("fd%d at fdc%d slave %d: <1.2M>\n", fddrive,
 				dev->id_unit, fdunit);
 			fd_unit[fdunit].type = 2;
 		}
 		if ((fdt & 0xf0) == RTCFDT_144M) {
-			printf("fd%d: <1.44M> on fdc%d slave %d\n", fddrive,
+			printf("fd%d at fdc%d slave %d: <1.44M>\n", fddrive,
 				dev->id_unit, fdunit);
 			fd_unit[fdunit].type = 1;
 		}
@@ -190,7 +189,6 @@ fdattach(struct isa_device *dev)
 
 		fd_turnoff(fddrive);
 	}
-	printf("fdc%d", dev->id_unit);
 }
 
 int
