@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.63.2.5 1999/06/22 14:37:43 perry Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.63.2.6 2000/10/10 22:23:03 he Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.63.2.5 1999/06/22 14:37:43 perry Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.63.2.6 2000/10/10 22:23:03 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -1832,20 +1832,20 @@ usage()
 		char *name;
 		char *expn;
 	} usages[] = {
-	{ "%s [-rt] [-C] disk",
+	{ "[-rt] [-C] disk",
 	    "(to read label)" },
-	{ "%s -w [-r] [-f disktab] disk type [ packid ]",
+	{ "-w [-r] [-f disktab] disk type [ packid ]",
 #if NUMBOOT > 0
 	    "(to write label with existing boot program)"
 #else
 	    "(to write label)"
 #endif
 	},
-	{ "%s -e [-r] [-C] disk",
+	{ "-e [-r] [-I] [-C] disk",
 	    "(to edit label)" },
-	{ "%s -i [-r] disk",
+	{ "-i [-I] [-r] disk",
 	    "(to create a label interactively)" },
-	{ "%s -R [-r] disk protofile",
+	{ "-R [-r] disk protofile",
 #if NUMBOOT > 0
 	    "(to restore label with existing boot program)"
 #else
@@ -1854,22 +1854,22 @@ usage()
 	},
 #if NUMBOOT > 0
 # if NUMBOOT > 1
-	{ "%s -B [-f disktab] [ -b xxboot [ -s bootxx ] ] disk [ type ]",
+	{ "-B [-f disktab] [ -b xxboot [ -s bootxx ] ] disk [ type ]",
 	    "(to install boot program with existing label)" },
-	{ "%s -w -B [-f disktab] [ -b xxboot [ -s bootxx ] ] disk type [ packid ]",
+	{ "-w -B [-f disktab] [ -b xxboot [ -s bootxx ] ] disk type [ packid ]",
 	    "(to write label and boot program)" },
-	{ "%s -R -B [-f disktab] [ -b xxboot [ -s bootxx ] ] disk protofile [ type ]",
+	{ "-R -B [-f disktab] [ -b xxboot [ -s bootxx ] ] disk protofile [ type ]",
 	    "(to restore label and boot program)" },
 # else
-	{ "%s -B [-f disktab] [ -b bootprog ] disk [ type ]",
+	{ "-B [-f disktab] [ -b bootprog ] disk [ type ]",
 	    "(to install boot program with existing on-disk label)" },
-	{ "%s -w -B [-f disktab] [ -b bootprog ] disk type [ packid ]",
+	{ "-w -B [-f disktab] [ -b bootprog ] disk type [ packid ]",
 	    "(to write label and install boot program)" },
-	{ "%s -R -B [-f disktab] [ -b bootprog ] disk protofile [ type ]",
+	{ "-R -B [-f disktab] [ -b bootprog ] disk protofile [ type ]",
 	    "(to restore label and install boot program)" },
 # endif
 #endif
-	{ "%s [-NW] disk",
+	{ "[-NW] disk",
 	    "(to write disable/enable label)" },
 	{ NULL,
 	    NULL }
@@ -1878,9 +1878,9 @@ usage()
 
 	for (i = 0; usages[i].name; i++) {
 		(void) fputs(i ? "or " : "Usage: ", stderr);
-		(void) fprintf(stderr, usages[i].name, __progname);
+		(void) fprintf(stderr, "%s %s", __progname, usages[i].name);
 		(void) fputs("\n\t", stderr);
-		(void) fprintf(stderr, usages[i].expn, __progname);
+		(void) fprintf(stderr, "%s %s", __progname, usages[i].expn);
 		(void) fputs("\n", stderr);
 	}
 	exit(1);
