@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.11 2001/12/24 01:21:27 shin Exp $	*/
+/*	$NetBSD: rtc.c,v 1.12 2002/01/27 14:18:12 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura. All rights reserved.
@@ -47,7 +47,7 @@
 
 #include <hpcmips/vr/vr.h>
 #include <hpcmips/vr/vrcpudef.h>
-#include <hpcmips/vr/vripvar.h>
+#include <hpcmips/vr/vripif.h>
 #include <hpcmips/vr/rtcreg.h>
 
 /*
@@ -137,7 +137,7 @@ vrrtc_attach(struct device *parent, struct device *self, void *aux)
 	/* But need to set level 1 interupt mask register, 
 	 * so regsiter fake interrurpt handler
 	 */
-	if (!(sc->sc_ih = vrip_intr_establish(va->va_vc, va->va_intr, 
+	if (!(sc->sc_ih = vrip_intr_establish(va->va_vc, va->va_unit, 0,
 	    IPL_CLOCK, 0, 0))) {
 		printf (":can't map interrupt.\n");
 		return;

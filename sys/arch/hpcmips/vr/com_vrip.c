@@ -1,4 +1,4 @@
-/*	$NetBSD: com_vrip.c,v 1.10 2001/09/28 10:25:16 sato Exp $	*/
+/*	$NetBSD: com_vrip.c,v 1.11 2002/01/27 14:18:12 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi. All rights reserved.
@@ -52,6 +52,7 @@
 
 #include <hpcmips/vr/vr.h>
 #include <hpcmips/vr/vrcpudef.h>
+#include <hpcmips/vr/vripif.h>
 #include <hpcmips/vr/vripvar.h>
 #include <hpcmips/vr/cmureg.h>
 #include <hpcmips/vr/siureg.h>
@@ -166,16 +167,13 @@ com_vrip_probe(struct device *parent, struct cfdata *cf, void *aux)
 	
 	DPRINTF(("==com_vrip_probe"));
 
-	if (va->va_addr == VRIPCF_ADDR_DEFAULT ||
-	    va->va_intr == VRIPCF_INTR_DEFAULT) {
+	if (va->va_addr == VRIPIFCF_ADDR_DEFAULT ||
+	    va->va_unit == VRIPIFCF_UNIT_DEFAULT) {
 		printf(": need addr and intr.\n");
 		return (0);
 	}
 
-	if (!va->va_cf || !va->va_cf->cf_clock)
-		return 0; /* not yet CMU attached. Try again later. */
-
-	va->va_cf->cf_clock(va->va_cc, CMUMASK_SIU, 1);
+	vrip_power(va->va_vc, va->va_unit, 1);
 
 	if (com_is_console(iot, va->va_addr, 0)) {
 		/*
@@ -205,7 +203,7 @@ com_vrip_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_tag_t iot = va->va_iot;
 	bus_space_handle_t ioh;
 
-	vsc->sc_pwctl = sc->sc_dev.dv_cfdata->cf_loc[VRIPCF_PWCTL];
+	vsc->sc_pwctl = sc->sc_dev.dv_cfdata->cf_loc[VRIPIFCF_PWCTL];
 
 	DPRINTF(("==com_vrip_attach"));
 
@@ -222,10 +220,7 @@ com_vrip_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_frequency = VRCOM_FREQ;
 	/* Power management */
-	va->va_cf->cf_clock(va->va_cc, CMUMASK_SIU, 1);
-	/*
-	  va->va_gf->gf_portwrite(va->va_gc, GIUPORT_COM, 1);
-	*/
+	vrip_power(va->va_vc, va->va_unit, 1);
 	/* XXX, locale 'ID' must be need */
 	config_hook_call(CONFIG_HOOK_POWERCONTROL, vsc->sc_pwctl, (void*)1);
 
@@ -233,7 +228,10 @@ com_vrip_attach(struct device *parent, struct device *self, void *aux)
 	com_attach_subr(sc);
 
 	DPRINTF(("Establish intr"));
-	vrip_intr_establish(va->va_vc, va->va_intr, IPL_TTY, comintr, self);
+	if (!vrip_intr_establish(va->va_vc, va->va_unit, 0, IPL_TTY,
+	    comintr, self)) {
+		printf("%s: can't map interrupt line.\n", sc->sc_dev.dv_xname);
+	}
 
 	DPRINTF((":return()"));
 	VPRINTF(("%s: pwctl %d\n", vsc->sc_com.sc_dev.dv_xname, vsc->sc_pwctl));
