@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.51 2004/08/20 22:02:40 thorpej Exp $      */
+/*      $NetBSD: ata.c,v 1.52 2004/08/20 22:17:06 thorpej Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.51 2004/08/20 22:02:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.52 2004/08/20 22:17:06 thorpej Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -141,6 +141,27 @@ ataprint(void *aux, const char *pnp)
 	aprint_normal(" drive %d", adev->adev_drv_data->drive);
 
 	return (UNCONF);
+}
+
+/*
+ * ata_channel_attach:
+ *
+ *	Common parts of attaching an atabus to an ATA controller channel.
+ */
+void
+ata_channel_attach(struct ata_channel *chp)
+{
+
+	if (chp->ch_flags & ATACH_DISABLED)
+		return;
+	
+	callout_init(&chp->ch_callout);
+
+	TAILQ_INIT(&chp->ch_queue->queue_xfer);
+	chp->ch_queue->queue_freeze = 0;
+	chp->ch_queue->active_xfer = NULL;
+
+	chp->atabus = config_found(&chp->ch_atac->atac_dev, chp, atabusprint);
 }
 
 static void
