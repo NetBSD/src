@@ -1,6 +1,6 @@
 #!/usr/gnu/bin/perl
 #
-#	$NetBSD: gcc2netbsd,v 1.9 1996/04/03 08:18:16 phil Exp $
+#	$NetBSD: gcc2netbsd,v 1.10 1996/05/11 11:37:59 mycroft Exp $
 #
 #  Perl script to convert a standard distribution directory for gcc into
 #	a NetBSD source tree.
@@ -95,7 +95,7 @@ $version = "2.7.2";
 	 "genopinit.c", "genoutput.c", "genpeep.c", "genrecog.c" );
 	 
 
-@cppf = ("cccp.c", "cexp.c");
+@cppf = ("cccp.c");
 
 @cppof = ("pcp.h", "cexp.y");
 
@@ -371,7 +371,7 @@ while ($line = <DATA>) {
 	    } elsif ($cmd[2] eq "cc1obj") {
 		&dumpsrcs (@cc1objf, "objc-parse.c");
 	    } elsif ($cmd[2] eq "cpp") {
-		&dumpsrcs (@cppf, @obver);
+		&dumpsrcs (@cppf, "cexp.c", @obver);
 	    } elsif ($cmd[2] eq "g++") {
 		&dumpsrcs (@gplusf, @obver);
 	    } elsif ($cmd[2] eq "common") {
@@ -580,6 +580,8 @@ DPADD+=		/usr/lib/libgnumalloc.a
 YFLAGS=
 
 MLINKS=	cpp.1 cccp.1 cpp.1 gcpp.1
+
+CLEANFILES+= cexp.c
 
 .PATH:		$(.CURDIR)/../common
 
