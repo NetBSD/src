@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.11 2000/05/13 08:45:07 lukem Exp $
+# $NetBSD: network,v 1.12 2000/06/20 08:34:33 enami Exp $
 #
 
 # PROVIDE: network
@@ -32,7 +32,7 @@ network_start()
 		# DHCP later, as we will probably get the
 		# hostname at that time.
 		#
-		if ! checkyesno dhclient; then
+		if ! checkyesno dhclient && [ -z "`hostname`" ]; then
 			warn "\$hostname not set."
 		fi
 	fi
