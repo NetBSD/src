@@ -1,4 +1,4 @@
-/*	$NetBSD: xbits.c,v 1.7 1998/12/17 14:34:52 pk Exp $	*/
+/*	$NetBSD: xbits.c,v 1.8 1999/01/05 10:02:21 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -133,8 +133,10 @@ swapin_sod(sodp, n)
 		sodp->sod_major = md_swap_short(sodp->sod_major);
 		sodp->sod_minor = md_swap_short(sodp->sod_minor);
 		sodp->sod_next = md_swap_long(sodp->sod_next);
-		bits = ((unsigned long *)sodp)[1];
-		sodp->sod_library = ((bits >> 24) & 1);
+		/* swap sod_library flag */
+		bits = ((unsigned char *)sodp)[4];
+		((u_int *)sodp)[1] = 0;		/* clear reserved bits */
+		((unsigned char *)sodp)[4] = ((bits & 1) << 7) | (bits>>7 & 1);
 	}
 }
 
@@ -143,16 +145,7 @@ swapout_sod(sodp, n)
 	struct sod *sodp;
 	int n;
 {
-	unsigned long	bits;
-
-	for (; n; n--, sodp++) {
-		sodp->sod_name = md_swap_long(sodp->sod_name);
-		sodp->sod_major = md_swap_short(sodp->sod_major);
-		sodp->sod_minor = md_swap_short(sodp->sod_minor);
-		sodp->sod_next = md_swap_long(sodp->sod_next);
-		bits = (unsigned long)(sodp->sod_library) << 24;
-		((unsigned long *)sodp)[1] = bits;
-	}
+	swapin_sod(sodp, n);
 }
 
 void
