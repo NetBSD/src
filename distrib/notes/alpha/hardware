@@ -1,4 +1,4 @@
-	$NetBSD: hardware,v 1.4 1998/05/15 03:28:55 ross Exp $	
+	$NetBSD: hardware,v 1.5 1998/05/15 17:20:00 matt Exp $	
 
 NetBSD/alpha _VER runs on the following DEC Alpha platforms:
 
@@ -75,6 +75,8 @@ ISA Bus
 
     Network Cards
         3Com 3c509 Ethernet (ep) 
+        DEC DE200,DE201,DE202 (le)
+        DEC DE203,DE204,DE205 (lc)
 
     Miscellaneous Devices
         PC-style parallel ports (lpt) 
@@ -155,3 +157,20 @@ SCSI and ATAPI CD-ROMs cd0, cd1, ...
 Intel EtherExpress 100 Fast Ethernet adapters
                 fxp0    any     any     [you must assign an interrupt in your
                                          PCI BIOS, or let it do so for you]
+
+DEC DE200,201,202 EtherWORKS II/Turbo ISA Ethernet boards
+                le?	0x300	5	memory at D0000-DFFFF
+                le?	0x200	10	memory at D8000-DFFFF
+
+You should enter the following SRM console command to enable the device:
+
+>>> isacfg -mk -slot ? -dev 0 -handle DE200-LE -irq0 5 -membase0 d0000 -memlen0 10000
+        -iobase0 300 -etyp 1 -enadev 1
+
+DEC DE203,204,205 EtherWORKS III ISA Ethernet boards
+                lc0	0x300	any
+                lc1	0x320	any
+
+You should enter the following SRM console command to enable the device:
+
+>>> add_de205
