@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.66 2003/08/07 10:04:24 agc Exp $
+.\"	$NetBSD: ifconfig.8,v 1.67 2004/02/29 23:27:28 perry Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -226,6 +226,18 @@ Refer to the interfaces' driver specific man page for a complete
 list of available options.
 .It Fl mediaopt Ar opts
 Disable the specified media options on the interface.
+.It Cm mode Ar mode
+If the driver supports the media selection system, set the specified
+operating mode on the interface to
+.Ar mode .
+For IEEE 802.11 wireless interfaces that support multiple operating modes
+this directive is used to select between 802.11a
+.Pq Dq 11a ,
+802.11b
+.Pq Dq 11b ,
+and 802.11g
+.Pq Dq 11g
+operating modes.
 .It Cm instance Ar minst
 Set the media instance to
 .Ar minst .
