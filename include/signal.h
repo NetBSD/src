@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.4 1995/01/05 06:01:18 jtc Exp $	*/
+/*	$NetBSD: signal.h,v 1.5 1995/01/10 01:33:23 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,9 +38,12 @@
 #ifndef _USER_SIGNAL_H
 #define _USER_SIGNAL_H
 
-#include <sys/types.h>
 #include <sys/cdefs.h>
 #include <sys/signal.h>
+
+#if !defined(_ANSI_SOURCE)
+#include <sys/types.h>
+#endif
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
 extern __const char *__const sys_signame[NSIG];
@@ -98,6 +101,7 @@ extern __inline int sigismember(const sigset_t *set, int signo) {
 /* List definitions after function declarations, or Reiser cpp gets upset. */
 #define	sigemptyset(set)	(*(set) = 0, 0)
 #define	sigfillset(set)		(*(set) = ~(sigset_t)0, 0)
+
 #ifndef _POSIX_SOURCE
 int	killpg __P((pid_t, int));
 int	sigblock __P((int));
