@@ -751,7 +751,6 @@
 ./usr/share/examples/ftpd
 ./usr/share/examples/ipf
 ./usr/share/examples/supfiles
-./usr/share/examples/usermgmt
 ./usr/share/games
 ./usr/share/games/atc
 ./usr/share/games/boggle
@@ -993,12 +992,6 @@
 ./usr/share/sendmail/ostype
 ./usr/share/sendmail/sh
 ./usr/share/sendmail/siteconfig
-./usr/share/skel
-./usr/share/skel/dot.cshrc
-./usr/share/skel/dot.login
-./usr/share/skel/dot.mailrc
-./usr/share/skel/dot.profile
-./usr/share/skel/dot.rhosts
 ./usr/share/tabset
 ./usr/share/tabset/3101
 ./usr/share/tabset/9837
