@@ -1,4 +1,4 @@
-/*	$NetBSD: twiddle.c,v 1.1 1999/02/13 20:56:58 pk Exp $	*/
+/*	$NetBSD: twiddle.c,v 1.2 1999/02/22 07:53:52 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -60,19 +60,21 @@
 
 #include <sys/cdefs.h>
 #include <sys/types.h>
-#ifdef __STDC__
-#include <machine/stdarg.h>
-#else
-#include <machine/varargs.h>
-#endif
 
 #include "stand.h"
+
+#define TWIDDLE_CHARS	"|/-\\"
 
 void
 twiddle()
 {
 	static int pos;
 
-	putchar("|/-\\"[pos++ & 3]);
+#ifdef SA_NOPUTCHAR
+	printf("%c\b", TWIDDLE_CHARS[pos++ & 3]);
+#else
+	putchar(TWIDDLE_CHARS[pos++ & 3]);
 	putchar('\b');
+#endif
+
 }
