@@ -1,4 +1,4 @@
-/*	$NetBSD: ispreg.h,v 1.2 1997/03/12 21:07:03 cgd Exp $	*/
+/*	$NetBSD: ispreg.h,v 1.3 1997/08/16 00:20:28 mjacob Exp $	*/
 
 /*
  * Machine Independent (well, as best as possible) register
@@ -60,6 +60,7 @@
 #define	BIU_REGS_OFF		0x00
 
 #define	 PCI_MBOX_REGS_OFF		0x70
+#define	 PCI_MBOX_REGS2100_OFF		0x10
 #define	SBUS_MBOX_REGS_OFF		0x80
 
 #define	 PCI_SXP_REGS_OFF		0x80
@@ -79,14 +80,18 @@
  */
 #define	BIU_BLOCK	0x0100
 #define	BIU_ID_LO	BIU_BLOCK+0x0	/* R  : Bus ID, Low */
+#define		BIU2100_FLASH_ADDR	BIU_BLOCK+0x0
 #define	BIU_ID_HI	BIU_BLOCK+0x2	/* R  : Bus ID, High */
+#define		BIU2100_FLASH_DATA	BIU_BLOCK+0x2
 #define	BIU_CONF0	BIU_BLOCK+0x4	/* R  : Bus Configuration #0 */
 #define	BIU_CONF1	BIU_BLOCK+0x6	/* R  : Bus Configuration #1 */
+#define		BIU2100_CSR		BIU_BLOCK+0x6
 #define	BIU_ICR		BIU_BLOCK+0x8	/* RW : Bus Interface Ctrl */
 #define	BIU_ISR		BIU_BLOCK+0xA	/* R  : Bus Interface Status */
 #define	BIU_SEMA	BIU_BLOCK+0xC	/* RW : Bus Semaphore */
 #define	BIU_NVRAM	BIU_BLOCK+0xE	/* RW : Bus NVRAM */
 #define	CDMA_CONF	BIU_BLOCK+0x20	/* RW*: DMA Configuration */
+#define		CDMA2100_CONTROL	CDMA_CONF
 #define	CDMA_CONTROL	BIU_BLOCK+0x22	/* RW*: DMA Control */
 #define	CDMA_STATUS 	BIU_BLOCK+0x24	/* R  : DMA Status */
 #define	CDMA_FIFO_STS	BIU_BLOCK+0x26	/* R  : DMA FIFO Status */
@@ -98,6 +103,7 @@
 #define	CDMA_ADDR3	BIU_BLOCK+0x32	/* RW*: DMA Address, Word 3 */
 
 #define	DDMA_CONF	BIU_BLOCK+0x40	/* RW*: DMA Configuration */
+#define		TDMA2100_CONTROL	DDMA_CONF
 #define	DDMA_CONTROL	BIU_BLOCK+0x42	/* RW*: DMA Control */
 #define	DDMA_STATUS	BIU_BLOCK+0x44	/* R  : DMA Status */
 #define	DDMA_FIFO_STS	BIU_BLOCK+0x46	/* R  : DMA FIFO Status */
@@ -110,6 +116,7 @@
 #define	DDMA_ADDR3	BIU_BLOCK+0x52	/* RW*: DMA Address, Word 3 */
 
 #define	DFIFO_COMMAND	BIU_BLOCK+0x60	/* RW : Command FIFO Port */
+#define		RDMA2100_CONTROL	DFIFO_COMMAND
 #define	DFIFO_DATA	BIU_BLOCK+0x62	/* RW : Data FIFO Port */
 
 /*
@@ -134,6 +141,19 @@
 #define	BIU_SBUS_CONF1_BURST8		0x0008 	/* Enable 8-byte  bursts */
 #define	BIU_PCI_CONF1_SXP		0x0008	/* SXP register select */
 
+ /* ISP2100 Bus Control/Status Register */
+
+#define	BIU2100_ICSR_REGBSEL		0x30	/* RW: register bank select */
+#define		BIU2100_RISC_REGS	(0 << 4)	/* RISC Regs */
+#define		BIU2100_FB_REGS		(1 << 4)	/* FrameBuffer Regs */
+#define		BIU2100_FPM0_REGS	(2 << 4)	/* FPM 0 Regs */
+#define		BIU2100_FPM1_REGS	(3 << 4)	/* FPM 1 Regs */
+#define	BIU2100_PCI64			0x04	/*  R: 64 Bit PCI slot */
+#define	BIU2100_FLASH_ENABLE		0x02	/* RW: Enable Flash RAM */
+#define	BIU2100_SOFT_RESET		0x01
+/* SOFT RESET FOR ISP2100 is same bit, but in this register, not ICR */
+
+
 /* BUS CONTROL REGISTER */
 #define	BIU_ICR_ENABLE_DMA_INT		0x0020	/* Enable DMA interrupts */
 #define	BIU_ICR_ENABLE_CDMA_INT		0x0010	/* Enable CDMA interrupts */
@@ -142,6 +162,20 @@
 #define	BIU_ICR_ENABLE_ALL_INTS		0x0002	/* Global enable all inter */
 #define	BIU_ICR_SOFT_RESET		0x0001	/* Soft Reset of ISP */
 
+#define	BIU2100_ICR_ENABLE_ALL_INTS	0x8000
+#define	BIU2100_ICR_ENA_FPM_INT		0x0020
+#define	BIU2100_ICR_ENA_FB_INT		0x0010
+#define	BIU2100_ICR_ENA_RISC_INT	0x0008
+#define	BIU2100_ICR_ENA_CDMA_INT	0x0004
+#define	BIU2100_ICR_ENABLE_RXDMA_INT	0x0002
+#define	BIU2100_ICR_ENABLE_TXDMA_INT	0x0001
+#define	BIU2100_ICR_DISABLE_ALL_INTS	0x0000
+
+#define	ENABLE_INTS(isp)	(isp->isp_type & ISP_HA_SCSI)?  \
+ ISP_WRITE(isp, BIU_ICR, BIU_ICR_ENABLE_RISC_INT | BIU_ICR_ENABLE_ALL_INTS) : \
+ ISP_WRITE(isp, BIU_ICR, BIU2100_ICR_ENA_RISC_INT | BIU2100_ICR_ENABLE_ALL_INTS)
+
+#define	DISABLE_INTS(isp)	ISP_WRITE(isp, BIU_ICR, 0)
 
 /* BUS STATUS REGISTER */
 #define	BIU_ISR_DMA_INT			0x0020	/* DMA interrupt pending */
@@ -149,6 +183,14 @@
 #define	BIU_ISR_SXP_INT			0x0008	/* SXP interrupt pending */
 #define	BIU_ISR_RISC_INT		0x0004	/* Risc interrupt pending */
 #define	BIU_ISR_IPEND			0x0002	/* Global interrupt pending */
+
+#define	BIU2100_ISR_INT_PENDING		0x8000	/* Global interrupt pending */
+#define	BIU2100_ISR_FPM_INT		0x0020	/* FPM interrupt pending */
+#define	BIU2100_ISR_FB_INT		0x0010	/* FB interrupt pending */
+#define	BIU2100_ISR_RISC_INT		0x0008	/* Risc interrupt pending */
+#define	BIU2100_ISR_CDMA_INT		0x0004	/* CDMA interrupt pending */
+#define	BIU2100_ISR_RXDMA_INT_PENDING	0x0002	/* Global interrupt pending */
+#define	BIU2100_ISR_TXDMA_INT_PENDING	0x0001	/* Global interrupt pending */
 
 
 /* BUS SEMAPHORE REGISTER */
@@ -175,6 +217,13 @@
 #define	DMA_CNTRL_CLEAR_FIFO		0x0004	/* Clear DMA FIFO */
 #define	DMA_CNTRL_RESET_INT		0x0002	/* Clear DMA interrupt */
 #define	DMA_CNTRL_STROBE		0x0001	/* Start DMA transfer */
+
+/*
+ * Variants of same for 2100
+ */
+#define	DMA_CNTRL2100_CLEAR_CHAN	0x0004
+#define	DMA_CNTRL2100_RESET_INT		0x0002
+
 
 
 /* DMA STATUS REGISTER */
@@ -239,6 +288,8 @@
 #define	INMAILBOX3	MBOX_BLOCK+0x6
 #define	INMAILBOX4	MBOX_BLOCK+0x8
 #define	INMAILBOX5	MBOX_BLOCK+0xA
+#define	INMAILBOX6	MBOX_BLOCK+0xC
+#define	INMAILBOX7	MBOX_BLOCK+0xE
 
 #define	OUTMAILBOX0	MBOX_BLOCK+0x0
 #define	OUTMAILBOX1	MBOX_BLOCK+0x2
@@ -246,7 +297,13 @@
 #define	OUTMAILBOX3	MBOX_BLOCK+0x6
 #define	OUTMAILBOX4	MBOX_BLOCK+0x8
 #define	OUTMAILBOX5	MBOX_BLOCK+0xA
+#define	OUTMAILBOX6	MBOX_BLOCK+0xC
+#define	OUTMAILBOX7	MBOX_BLOCK+0xE
 
+#define	OMBOX_OFFN(n)	(MBOX_BLOCK + (n * 2))
+#define	NMBOX(isp)	\
+	(((((isp)->isp_type & ISP_HA_SCSI) >= ISP_HA_SCSI_1040A) || \
+	 ((isp)->isp_type & ISP_HA_FC))? 8 : 6)
 /*
  * Mailbox Command Complete Status Codes
  */
@@ -266,6 +323,11 @@
 #define	ASYNC_RSP_XFER_ERR		0x8004
 #define	ASYNC_QWAKEUP			0x8005
 #define	ASYNC_TIMEOUT_RESET		0x8006
+
+/* for ISP2100 only */
+#define	ASYNC_LIP_OCCURRED		0x8010
+#define	ASYNC_LOOP_UP			0x8011
+#define	ASYNC_LOOP_DOWN			0x8012
 
 /*
  * SXP Block Register Offsets
@@ -467,6 +529,8 @@
 #define	RISC_LCR	RISC_BLOCK+0x2a	/* RW*: Loop Counter */
 #define	RISC_PC		RISC_BLOCK+0x2c	/* R  : Program Counter */
 #define	RISC_MTR	RISC_BLOCK+0x2e	/* RW*: Memory Timing */
+#define		RISC_MTR2100	RISC_BLOCK+0x30
+
 #define	RISC_EMB	RISC_BLOCK+0x30	/* RW*: Ext Mem Boundary */
 #define	RISC_SP		RISC_BLOCK+0x32	/* RW*: Stack Pointer */
 #define	RISC_HRL	RISC_BLOCK+0x3e	/* R *: Hardware Rev Level */
@@ -507,6 +571,11 @@
 #define	PCI_HCCR_CMD_PARITY		0xA000	/* Write parity enable */
 #define	PCI_HCCR_CMD_PARITY_ERR		0xE000	/* Generate parity error */
 #define	HCCR_CMD_TEST_MODE		0xF000	/* Set Test Mode */
+
+#define	ISP2100_HCCR_PARITY_ENABLE_2	0x0400
+#define	ISP2100_HCCR_PARITY_ENABLE_1	0x0200
+#define	ISP2100_HCCR_PARITY_ENABLE_0	0x0100
+#define	ISP2100_HCCR_PARITY		0x0001
 
 #define	PCI_HCCR_PARITY			0x0400	/* Parity error flag */
 #define	PCI_HCCR_PARITY_ENABLE_1	0x0200	/* Parity enable bank 1 */
