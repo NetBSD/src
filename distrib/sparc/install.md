@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.16 2000/11/17 17:53:53 pk Exp $
+#	$NetBSD: install.md,v 1.17 2000/11/20 11:52:37 pk Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -270,8 +270,8 @@ __congratulations_1
 
 md_lib_is_aout() {
 	local r
-	test -h $f && return 1
-	test -f $f || return 1
+	test -h $1 && return 1
+	test -f $1 || return 1
 
 	r=`file $1 | sed -n -e '/ELF/p'`
 	test -z "$r" || return 1
@@ -284,7 +284,7 @@ md_mv_usr_lib() {
 	root=$1
 	for f in $root/usr/lib/lib*.so.[0-9]*.[0-9]* ; do
 		md_lib_is_aout $f || continue
-		mv $f -f $root/emul/aout/usr/lib || return 1
+		mv -f $f $root/emul/aout/usr/lib || return 1
 	done
 	return 0
 }
@@ -353,19 +353,21 @@ md_mv_aout_libs()
 	fi
 
 	# Finally, move the aout shared libraries from /usr/lib
-	md_mv_usr_lib || return 1
+	md_mv_usr_lib $root || return 1
 
 	# If X11 is installed, move the those libraries as well
 	xlibdir="/usr/X11R6/lib"
 	if [ -d $root/$xlibdir/. ]; then
 		mkdir -p $root/emul/aout/$xlibdir || return 1
-		md_mv_x_lib $xlibdir || return 1
+		md_mv_x_lib $root $xlibdir || return 1
 	fi
+
+	echo "a.out emulation environment setup completed."
 }
 
 md_prepare_upgrade()  
 {
-cat < 'EOF'
+cat << 'EOF'
 This release uses the ELF binary object format. Existing (a.out) binaries
 can still be used on your system after it has been upgraded, provided
 that the shared libraries needed by those binaries are made available
@@ -378,8 +380,11 @@ NetBSD/sparc X11 installation sets, if they are installed.
 
 EOF
 	md_mv_aout_libs || {
-		echo "Failed to setup a.out emulation environment";
-		return 1;
+		echo "Failed to setup a.out emulation environment"
+		return 1
 	}
 	return 0
 }
+
+# Flag to notify upgrade.sh of the existence of md_prepare_upgrade()
+md_upgrade_prep_needed=1
