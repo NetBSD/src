@@ -1,4 +1,4 @@
-.\" $NetBSD: userdel.8,v 1.18 2002/06/24 17:28:07 grant Exp $ */
+.\" $NetBSD: userdel.8,v 1.19 2002/06/24 18:20:54 wiz Exp $ */
 .\"
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -53,7 +53,7 @@ removing that user's home diretory and any subdirectories.
 Default values are taken from the information provided in the
 .Pa /etc/usermgmt.conf
 file, which, if running as root, is created using the built-in defaults if
-it does not exist. 
+it does not exist.
 .Pp
 The first form of the command shown above (utilising the
 .Fl D
@@ -78,7 +78,7 @@ sets the preservation value. If this value is one of
 or a non-zero number, then the user login information will be preserved.
 .El
 .Pp
-In the second form of the command, 
+In the second form of the command,
 after setting any defaults, and then reading values from
 .Pa /etc/usermgmt.conf ,
 the following command line options are processed:
@@ -130,9 +130,6 @@ utility exits 0 on success, and \*[Gt]0 if an error occurs.
 .Xr usermgmt.conf 5 ,
 .Xr nologin 8 ,
 .Xr pwd_mkdb 8
-.Sh BUGS
-.Nm
-does not remove users from supplementary groups.
 .Sh HISTORY
 The
 .Nm
@@ -145,3 +142,6 @@ package by the same author.
 The
 .Nm
 utility was written by Alistair G. Crooks (agc@netbsd.org).
+.Sh BUGS
+.Nm
+does not remove users from supplementary groups.
