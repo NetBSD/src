@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.20 2001/11/30 22:20:03 jhawk Exp $
+#	$NetBSD: Makefile.inc,v 1.21 2001/12/01 17:54:11 jhawk Exp $
 #
 
 # Ross Harvey <ross@netbsd.org>
@@ -6,7 +6,7 @@
 .include <bsd.own.mk>	# So we get /etc/mk.conf vars.
 
 # Whether or not to regenerate tables of contents
-MAKETOCS?=yes
+MKTOCS?=yes
 
 M?=	${.CURDIR:T}
 V!=	/bin/sh ${.CURDIR}/../../../sys/conf/osrelease.sh
@@ -45,7 +45,7 @@ ARGS_MORE=	${PRESET} -dformat=more -P-h -Tascii -mtty-char
 
 all: ${TARGS}
 
-.if ${MAKETOCS} != "no"
+.if ${MKTOCS} != "no"
   TOCDEPS = ${TOCS}
 .else
   TOCDEPS =
