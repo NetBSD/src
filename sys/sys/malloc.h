@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.69 2001/12/04 20:13:20 jdolecek Exp $	*/
+/*	$NetBSD: malloc.h,v 1.70 2001/12/04 23:56:36 enami Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -175,7 +175,7 @@
 #define	M_1394CTL	116	/* IEEE 1394 control structures */
 #define	M_1394DATA	117	/* IEEE 1394 data buffers */
 #define	M_PIPE		118	/* Pipe structures */
-#define M_AGP		119	/* AGP memory */
+#define	M_AGP		119	/* AGP memory */
 #define	M_PROP		120	/* Kernel properties structures */
 #define	M_LAST		121	/* Must be last type + 1 */
 
