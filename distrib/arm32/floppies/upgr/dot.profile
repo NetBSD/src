@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.3 1998/01/09 21:51:37 perry Exp $
+#	$NetBSD: dot.profile,v 1.3.2.1 1999/06/26 23:54:41 cgd Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -40,6 +40,7 @@ umask 022
 
 if [ "X${DONEPROFILE}" = "X" ]; then
 	DONEPROFILE=YES
+	export DONEPROFILE
 
 	# set up some sane defaults
 	echo 'erase ^H, werase ^W, kill ^U, intr ^C'
