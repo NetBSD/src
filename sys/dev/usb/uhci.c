@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.169 2003/02/16 23:15:28 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.170 2003/02/19 01:35:04 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.169 2003/02/16 23:15:28 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.170 2003/02/19 01:35:04 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2589,6 +2589,9 @@ uhci_device_isoc_done(usbd_xfer_handle xfer)
 
 	if (ii->xfer != xfer)
 		/* Not on interrupt list, ignore it. */
+		return;
+
+	if (!uhci_active_intr_info(ii))
 		return;
 
 #ifdef DIAGNOSTIC
