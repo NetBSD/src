@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.32 1995/05/12 20:57:22 mycroft Exp $	*/
+/*	$NetBSD: pmap.c,v 1.33 1995/06/26 05:21:58 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -213,9 +213,7 @@ pmap_bootstrap(virtual_start)
 	pt_entry_t *pte;
 #endif
 	extern int physmem;
-#if notyet
 	extern vm_offset_t reserve_dumppages(vm_offset_t);
-#endif
 
 	/* XXX: allow for msgbuf */
 	avail_end -= i386_round_page(sizeof(struct msgbuf));
@@ -269,12 +267,10 @@ pmap_bootstrap(virtual_start)
 	virtual_avail = va;
 #endif
 
-#if notyet
 	/*
 	 * Reserve pmap space for mapping physical pages during dump.
 	 */
 	virtual_avail = reserve_dumppages(virtual_avail);
-#endif
 
 	/*
 	 * reserve special hunk of memory for use by bus dma as a bounce
