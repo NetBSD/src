@@ -1,4 +1,4 @@
-/*	$NetBSD: ndbm.h,v 1.6 1995/07/20 23:31:11 jtc Exp $	*/
+/*	$NetBSD: ndbm.h,v 1.7 1998/05/07 19:02:04 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,41 +41,52 @@
 #ifndef _NDBM_H_
 #define	_NDBM_H_
 
+#include <sys/featuretest.h>
 #include <db.h>
 
+#if !defined(_XOPEN_SOURCE)
 /* Map dbm interface onto db(3). */
 #define DBM_RDONLY	O_RDONLY
+#endif
 
 /* Flags to dbm_store(). */
 #define DBM_INSERT      0
 #define DBM_REPLACE     1
 
+#if !defined(_XOPEN_SOURCE)
 /*
  * The db(3) support for ndbm(3) always appends this suffix to the
  * file name to avoid overwriting the user's original database.
  */
 #define	DBM_SUFFIX	".db"
+#endif
 
 typedef struct {
-	char *dptr;
-	int dsize;
+	void *dptr;
+	int dsize;		/* XXX */
 } datum;
 
 typedef DB DBM;
+#if !defined(_XOPEN_SOURCE)
 #define	dbm_pagfno(a)	DBM_PAGFNO_NOT_AVAILABLE
+#endif
 
 __BEGIN_DECLS
 void	 dbm_close __P((DBM *));
 int	 dbm_delete __P((DBM *, datum));
 datum	 dbm_fetch __P((DBM *, datum));
 datum	 dbm_firstkey __P((DBM *));
+#if !defined(_XOPEN_SOURCE)
 long	 dbm_forder __P((DBM *, datum));
+#endif
 datum	 dbm_nextkey __P((DBM *));
-DBM	*dbm_open __P((const char *, int, int));
+DBM	*dbm_open __P((const char *, int, mode_t));
 int	 dbm_store __P((DBM *, datum, datum, int));
-int	 dbm_dirfno __P((DBM *));
 int	 dbm_error __P((DBM *));
 int	 dbm_clearerr __P((DBM *));
+#if !defined(_XOPEN_SOURCE)
+int	 dbm_dirfno __P((DBM *));
+#endif
 __END_DECLS
 
 #endif /* !_NDBM_H_ */
