@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.130 2001/08/04 04:25:37 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.131 2001/08/26 06:03:11 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.130 2001/08/04 04:25:37 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.131 2001/08/26 06:03:11 chs Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1912,6 +1912,7 @@ pmap_remove_pv(pmap, va, pa)
 {
 	pv_entry_t pv, npv;
 	int last;
+	int bank, off;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_PVENTRY))
@@ -1919,9 +1920,13 @@ pmap_remove_pv(pmap, va, pa)
 #endif
 	/*
 	 * Remove page from the PV table.
+	 * Return immediately if the page is actually not managed.
 	 */
 
-	pv = pa_to_pvh(pa);
+	bank = vm_physseg_find(atop(pa), &off);
+	if (bank == -1)
+		return;
+	pv = &vm_physmem[bank].pmseg.pvent[off];
 
 	/*
 	 * If it is the first entry on the list, it is actually
