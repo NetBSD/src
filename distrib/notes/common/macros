@@ -1,4 +1,4 @@
-.\"	$NetBSD: macros,v 1.13 2001/11/26 01:16:22 jhawk Exp $
+.\"	$NetBSD: macros,v 1.14 2001/11/26 02:24:30 jhawk Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -311,7 +311,9 @@
 .\"   .Sh  			section header
 .\"   .Ss			subsection header
 .\"   .Ss2			sub2section header
-.\" XXX: Do we want .Te [explicit toc entry, not based on other markup]?
+.\"   .Te depth "item"		Explicit toc entry, not based on other markup
+.\"   .To depth "item"		Like Te, but don't echo the item
+.\" XXX To should be unnecessary if we handle parseable/callable.
 .\"   .Tc			import the TOC
 .\"   .Ti depth page "item"	(internal) output an entry
 .if dTOC \{
@@ -326,6 +328,15 @@
 \.tm .Ti 1 \\n% \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
 ..
 .\}
+.de Te
+.ie rHTML <a name="\\$2">\\$2</a>
+.el \\$2
+.if dTOC \.tm .Ti \\$1 \\n% \\$2
+..
+.de To
+.if rHTML <a name="\\$2"></a>
+.if dTOC \.tm .Ti \\$1 \\n% \\$2
+..
 .de Ti
 .ie rHTML \{.ta (\n(.lu+\w'<a href="#\\$3"></a>'u)R
 \h'3n*\\$1u' <a href="#\\$3">\\$3</a>\a\\$2
