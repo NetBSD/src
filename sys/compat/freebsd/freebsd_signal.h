@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_signal.h,v 1.5 2003/11/17 10:07:58 keihan Exp $ */
+/*	$NetBSD: freebsd_signal.h,v 1.6 2004/03/26 15:01:16 drochner Exp $ */
 
 /*
  * Copyright (c) 2000 Atsushi Onoe
@@ -41,11 +41,7 @@ struct	freebsd_sigaction4 {
 	sigset_t freebsd_sa_mask;		/* signal mask to apply */
 };
 #ifdef _KERNEL
-#ifdef __HAVE_SIGINFO
 void freebsd_sendsig(const ksiginfo_t *, const sigset_t *);
-#else
-void freebsd_sendsig(int, sigset_t *, u_long);
-#endif
 #endif
 
 #endif /* _FREEBSD_SIG_H */
