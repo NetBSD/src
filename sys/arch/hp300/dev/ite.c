@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.40 1998/01/12 18:31:02 thorpej Exp $	*/
+/*	$NetBSD: ite.c,v 1.41 1998/04/20 20:41:05 frueauf Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -552,25 +552,25 @@ itefilter(stat, c)
 	default:
 	case KBD_KEY:
 	        if (!capsmode) {
-			code = kbd_keymap[c];
+			code = kbd_keymap[(int)c];
 			break;
 		}
 		/* FALLTHROUGH */
 
 	case KBD_SHIFT:
-		code = kbd_shiftmap[c];
+		code = kbd_shiftmap[(int)c];
 		break;
 
 	case KBD_CTRL:
-		code = kbd_ctrlmap[c];
+		code = kbd_ctrlmap[(int)c];
 		break;
 		
 	case KBD_CTRLSHIFT:	
-		code = kbd_ctrlshiftmap[c];
+		code = kbd_ctrlshiftmap[(int)c];
 		break;
         }
 
-	if (code == '\0' && (str = kbd_stringmap[c]) != '\0') {
+	if (code == '\0' && (str = kbd_stringmap[(int)c]) != '\0') {
 		while (*str)
 			(*linesw[kbd_tty->t_line].l_rint)(*str++, kbd_tty);
 	} else {
