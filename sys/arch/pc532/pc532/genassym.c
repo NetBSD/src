@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.6 1994/10/26 08:25:01 cgd Exp $	*/
+/*	$NetBSD: genassym.c,v 1.7 1995/05/16 07:30:47 phil Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -39,14 +39,11 @@
  */
 
 #include <sys/param.h>
-#include <sys/buf.h>
-#include <sys/time.h>
 #include <sys/proc.h>
-#include <sys/user.h>
-#include <sys/mbuf.h>
-#include <sys/msgbuf.h>
 #include <sys/resourcevar.h>
-#include <sys/syscall.h>
+#include <sys/device.h>
+#include <vm/vm.h>
+#include <sys/user.h>
 
 #include <machine/cpu.h>
 #include <machine/trap.h>
@@ -61,6 +58,8 @@ main()
 	struct uprof *uprof = (struct uprof *)0;
 	struct pcb *pcb = (struct pcb *)0;
 	struct on_stack *regs = (struct on_stack *)0;
+	struct iv *iv = (struct iv *)0;
+	struct vmmeter *vm = 0;
 	register unsigned i;
 
 	printf("#define\tKERNBASE 0x%x\n", KERNBASE);
@@ -104,11 +103,19 @@ main()
 	printf("#define\tPCB_PL %d\n", &pcb->pcb_pl);
 	printf("#define\tPCB_FLAGS %d\n", &pcb->pcb_flags);
 	printf("#define\tPCB_ONFAULT %d\n", &pcb->pcb_onfault);
+
+	printf("#define\tV_TRAP %d\n", &vm->v_trap);
+	printf("#define\tV_INTR %d\n", &vm->v_intr);
+
+	printf("#define\tIV_VEC %d\n", &iv->iv_vec);
+	printf("#define\tIV_ARG %d\n", &iv->iv_arg);
+	printf("#define\tIV_CNT %d\n", &iv->iv_cnt);
+	printf("#define\tIV_USE %d\n", &iv->iv_use);
+
 	printf("#define\tUSRSTACK 0x%x\n", USRSTACK);
 #ifdef SYSVSHM
 	printf("#define\tSHMMAXPGS %d\n", SHMMAXPGS);
 #endif
-	printf("#define\tB_READ %d\n", B_READ);
 	printf("#define\tENOENT %d\n", ENOENT);
 	printf("#define\tEFAULT %d\n", EFAULT);
 	printf("#define\tENAMETOOLONG %d\n", ENAMETOOLONG);

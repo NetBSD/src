@@ -1,4 +1,4 @@
-/*	$NetBSD: icu.h,v 1.2 1994/10/26 08:24:29 cgd Exp $	*/
+/*	$NetBSD: icu.h,v 1.3 1995/05/16 07:30:41 phil Exp $	*/
 
 /* 
  * Copyright (c) 1993 Philip A. Nelson.
@@ -35,7 +35,7 @@
 
 /* icu.h: defines for use with the ns32532 icu. */
 
-/* To get things working..... */
+/* We don't use vector interrupts, but make it right anyway */
 #define VEC_ICU		0x10
 
 /* The address of the ICU! */
@@ -82,21 +82,6 @@
 #define AIC6250		0
 #define DP8490		1
 
-
-/* Interrupt enable bits.
- *
- * SCSI hard because you cannot disable all the interrupts on the 5380.
- */
-#define IMASK		(~((1 << IR_CLK) |	\
-			   (1 << IR_SCSI0) |	\
-			   (0 << IR_SCSI1) |	/* 8490 off for now */\
-			   (1 << IR_TTY0) |	\
-			   (1 << IR_TTY1) |	\
-			   (1 << IR_TTY2) |	\
-			   (1 << IR_TTY3)	\
-                          )			\
-                        )
-
 /*    edge polarity
  *	0	0	falling edge
  *	0	1	rising edge
@@ -104,36 +89,8 @@
  *	1	1	high level
  *
  */
-#define IEDGE		(~((1<<IR_TTY0)|	\
-			(1<<IR_TTY1)|		\
-			(1<<IR_TTY2)|		\
-			(1<<IR_TTY3)|		\
-			(1<<IR_SCSI0)|		\
-			(0<<IR_SCSI1)))
-
-#define IPOLARITY	(1 << IR_SCSI1)
-
-/* Bit Masks for the SPL routines.  Needs changing if the IR_XXX values
-   change.  This includes software "interrupts" -- Bit masks in the upper
-   half of the word. */
-
-#define SPL_NET		0x20000		/* net */
-#define SPL_SOFTCLK	0x10000		/* Soft clock interrupt. */
-#define SPL_IMP		0x22a80		/* Must include ttyX */
-
-#define SPL_CLK		0x0004		/* 1 << IR_CLK */
-#define SPL_AIC		0x0020
-#define SPL_DP		0x0010
-
-#define SPL_UART0	0x2000		/* TTY0 & TTY1 */
-#define SPL_UART1	0x0800		/* TTY2 & TTY3 */
-#define SPL_UART2	0x0200		/* TTY4 & TTY5 */
-#define SPL_UART3	0x0080		/* TTY6 & TTY7 */
+#define IEDGE		0
+#define IPOLARITY	0
 
 #define ints_off	bicpsrw	PSR_I
 #define ints_on		bispsrw	PSR_I
-
-
-#ifndef LOCORE
-int PL_bio, PL_tty, PL_net, PL_zero;
-#endif

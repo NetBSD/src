@@ -1,4 +1,4 @@
-/* $NetBSD: scn.c,v 1.16 1995/04/27 07:18:02 phil Exp $ */
+/* $NetBSD: scn.c,v 1.17 1995/05/16 07:30:38 phil Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -276,38 +276,9 @@ scnprobe(parent, cf, aux)
 {
   int unit = ((struct cfdata *)cf)->cf_unit;
 
- if (strcmp(*((char **) aux), scncd.cd_name)) {
-    return 0;
-  }
-
   if (unit >= NLINES) {
- 
     return(0);  /* dev is "not working." */
-
   } else {
-
-    switch (unit) {
-	case 0:
-	case 1:  PL_tty |= SPL_UART0; break;
-
-	case 2:
-	case 3:  PL_tty |= SPL_UART1; break;
-
-	case 4:
-	case 5:  PL_tty |= SPL_UART2; break;
-
-	case 6:
-	case 7:  PL_tty |= SPL_UART3; break;
-    }
-
-    /* Set processor levels */
-
-    PL_zero |= PL_tty;
-#if NSL > 0
-    PL_net |= PL_tty;
-    PL_tty |= PL_net;
-#endif
-
     return(1);  /* dev is "working." */
   }
 }
@@ -317,6 +288,7 @@ scnattach(parent, self, aux)
 	struct device	*parent, *self;
 	void		*aux;
 {
+  static char scnints[4] = { IR_TTY0, IR_TTY1, IR_TTY2, IR_TTY3 };
   struct  scn_softc *sc = (void *) self;
   struct  tty  *tp;
   u_char  unit = sc->scn_dev.dv_unit;
@@ -328,15 +300,21 @@ scnattach(parent, self, aux)
   long uart_base;
   long scn_first_adr;
 
-
   if (unit == 0)  DELAY(5);  /* Let the output go out.... */
 
   sc->scn_swflags |= SCN_SW_SOFTCAR;
  
   /* Record unit number, uart, channel a_or_b. */
   rs->unit = unit;
-  rs->uart = &uart[unit>>1];
+  rs->uart = &uart[unit >> 1];
   rs->a_or_b = unit % 2;
+
+  /* Establish interrupt vector */
+  if (rs->a_or_b == 0) {
+    /* Arg 0 is special, so we must pass "unit + 1" */
+    intr_establish(scnints[unit >> 1], (void (*)(void *))scnintr,
+    			(void *)(unit + 1), "scn", IPL_TTY, FALLING_EDGE);
+  }
 
   /* Precalculate port numbers for speed. Magic numbers in the code (once). */
   scn_first_adr = SCN_FIRST_MAP_ADR;  /* to get around a gcc bug. */
@@ -643,13 +621,10 @@ _scnintr(int uart_no)
 #else
 
 /* Change this for real interrupts! */
-scnintr(int uart_no)
+scnintr(int line1)
 #endif
 {
-  int line0 = uart_no << 1;
-  int line1 = (uart_no << 1)+1;
-
-  register struct scn_softc *sc0 = scncd.cd_devs[line0];
+  register struct scn_softc *sc0 = scncd.cd_devs[line1 - 1];
   register struct scn_softc *sc1 = scncd.cd_devs[line1];
 
   register struct tty *tp0 = sc0->scn_tty;

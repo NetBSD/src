@@ -1,7 +1,8 @@
-/*	$NetBSD: lpt.c,v 1.2 1995/05/08 19:37:45 phil Exp $	*/
+/*	$NetBSD: lpt.c,v 1.3 1995/05/16 07:30:33 phil Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
+ * Copyright (c) 1994 Poul-Henning Kamp
  * Copyright (c) 1993, 1994 Charles Hannum.
  * Copyright (c) 1990 William F. Jolitz, TeleMuse
  * All rights reserved.
@@ -53,7 +54,8 @@
 
 /*
  * Device Driver for Matthias's parallel printer port.
- * This driver is based on the i386 lpt driver.
+ * This driver is based on the i386 lpt driver and
+ * some IP code from Poul-Henning Kamp.
  */
 
 #include "lpt.h"
@@ -90,6 +92,9 @@
 #include <sys/device.h>
 #include "lptreg.h"
 
+#define	LPT_INVERT	(LPC_NBUSY|LPC_NERROR|LPC_NACK|LPC_ONLINE)
+#define	LPT_MASK	(LPC_NBUSY|LPC_NERROR|LPC_NACK|LPC_NOPAPER|LPC_ONLINE)
+
 #define	TIMEOUT		hz*16	/* wait up to 16 seconds for a ready */
 #define	STEP		hz/4
 
@@ -97,16 +102,20 @@
 #define	LPT_BSIZE	1024
 
 #if defined(INET) && defined(PLIP)
-#ifndef PLIPMTU			/* MTU for the lp# interfaces */
+#ifndef PLIPMTU			/* MTU for the plip# interfaces */
+#if defined(COMPAT_PLIP10)
 #define	PLIPMTU		1600
+#else
+#define	PLIPMTU		(ETHERMTU - ifp->if_hdrlen)
+#endif
 #endif
 
-#ifndef PLIPMXSPIN1		/* DELAY factor for the lp# interfaces */
-#define	PLIPMXSPIN1	2048	/* Spinning for remote intr to happen */
+#ifndef PLIPMXSPIN1		/* DELAY factor for the plip# interfaces */
+#define	PLIPMXSPIN1	2000	/* Spinning for remote intr to happen */
 #endif
 
-#ifndef PLIPMXSPIN2		/* DELAY factor for the lp# interfaces */
-#define	PLIPMXSPIN2	5120	/* Spinning for remote handshake to happen */
+#ifndef PLIPMXSPIN2		/* DELAY factor for the plip# interfaces */
+#define	PLIPMXSPIN2	6000	/* Spinning for remote handshake to happen */
 #endif
 
 #ifndef PLIPMXERRS		/* Max errors before !RUNNING */
@@ -118,13 +127,6 @@
 #ifndef PLIPRETRY
 #define PLIPRETRY	hz/50	/* Time between retransmits */
 #endif
-#endif
-
-#ifndef DEBUG
-#define lprintf
-#else
-#define lprintf		if (lptdebug) printf
-int lptdebug = 1;
 #endif
 
 struct lpt_softc {
@@ -148,20 +150,28 @@ struct lpt_softc {
 	u_char		*sc_ifbuf;
 	int		sc_iferrs;
 	int		sc_ifretry;
+#if defined(COMPAT_PLIP10)
 	u_char		sc_adrcksum;
+#endif
 #endif
 };
 
-int lptmatch __P((struct device *, void *, void *aux));
-void lptattach __P((struct device *, struct device *, void *));
-int lptintr __P((int));
+#define	LPTUNIT(s)	(minor(s) & 0x1f)
+#define	LPTFLAGS(s)	(minor(s) & 0xe0)
+
+static int lptmatch(struct device *, void *, void *aux);
+static void lptattach(struct device *, struct device *, void *);
+static void lptintr(struct lpt_softc *);
+static int notready(u_char, struct lpt_softc *);
+static void lptout(void *arg);
+static int pushbytes(struct lpt_softc *);
 
 #if defined(INET) && defined(PLIP)
 /* Functions for the plip# interface */
 static void plipattach(struct lpt_softc *,int);
 static int plipioctl(struct ifnet *, u_long, caddr_t);
-static int plipstart(struct ifnet *);
-static void plipintr(int, struct ifnet *);
+static void plipstart(struct ifnet *);
+static void plipintr(struct lpt_softc *);
 #endif
 
 struct cfdriver lptcd = {
@@ -175,26 +185,10 @@ struct cfdriver lptcd = {
 	0
 };
 
-#define	LPTUNIT(s)	(minor(s) & 0x1f)
-#define	LPTFLAGS(s)	(minor(s) & 0xe0)
-
-#define	LPT_INVERT	(LPC_NBUSY|LPC_NERROR|LPC_NACK|LPC_ONLINE)
-#define	LPT_MASK	(LPC_NBUSY|LPC_NERROR|LPC_NACK|LPC_NOPAPER|LPC_ONLINE)
-#define DIAGNOSTIC
-#ifndef DIAGNOSTIC
-#define	NOT_READY()	((i8255->port_c ^ LPT_INVERT) & LPT_MASK)
-#else
-#define	NOT_READY()	notready(i8255->port_c, sc)
-static int notready __P((u_char, struct lpt_softc *));
-#endif
-
-static void lptout __P((void *arg));
-static int pushbytes __P((struct lpt_softc *));
-
 lptmatch(struct device *parent, void *cf, void *aux)
 {
 	volatile struct i8255 *i8255 =
-		(volatile struct i8255 *)((struct cfdata *)cf)->cf_loc[2];
+		(volatile struct i8255 *)((struct cfdata *)cf)->cf_loc[0];
 	int unit = ((struct cfdata *)cf)->cf_unit;
 
 	if (unit >= LPT_MAX)
@@ -206,18 +200,19 @@ lptmatch(struct device *parent, void *cf, void *aux)
 	i8255->port_control = LPT_PROBE_MODE;
 
 	i8255->port_control = LPT_PROBE_CLR;
-	if (i8255->port_c & LPT_PROBE_MASK)
+	if ((i8255->port_c & LPT_PROBE_MASK) != 0)
 		return 0;
 	
 	i8255->port_control = LPT_PROBE_SET;
-	if (!(i8255->port_c & LPT_PROBE_MASK))
+	if ((i8255->port_c & LPT_PROBE_MASK) == 0)
 		return 0;
 
 	i8255->port_control = LPT_PROBE_CLR;
-	if (i8255->port_c & LPT_PROBE_MASK)
+	if ((i8255->port_c & LPT_PROBE_MASK) != 0)
 		return 0;
 
 	i8255->port_control = LPT_MODE;
+	i8255->port_a = LPA_ACTIVE | LPA_NPRIME;
 	
 	return 1;
 }
@@ -227,20 +222,15 @@ lptattach(struct device *parent, struct device *self, void *aux)
 {
 	struct lpt_softc *sc = (struct lpt_softc *) self;
 	volatile struct i8255 *i8255 =
-			(volatile struct i8255 *)self->dv_cfdata->cf_loc[2];
-	int irq;
+			(volatile struct i8255 *)self->dv_cfdata->cf_loc[0];
 
-	if ((irq = self->dv_cfdata->cf_loc[4]) == -1)
-		irq = LPT_IRQ(self->dv_unit);
-#if defined(INET) && defined(PLIP)
-	PL_net |= 1 << irq;
-#endif
-	PL_tty |= 1 << irq;
-	PL_zero |= PL_tty;
+	if ((sc->sc_irq = self->dv_cfdata->cf_loc[1]) == -1)
+		sc->sc_irq = LPT_IRQ(self->dv_unit);
 
 	if ((int)i8255 == -1)
 		i8255 = LPT_ADR(self->dv_unit);
 	i8255->port_control = LPT_MODE;
+	i8255->port_a = LPA_ACTIVE | LPA_NPRIME;
 	i8255->port_control = LPT_IRQDISABLE;
 
 	sc->sc_state = 0;
@@ -248,9 +238,11 @@ lptattach(struct device *parent, struct device *self, void *aux)
 
 #if defined(INET) && defined(PLIP)
 	plipattach(sc, self->dv_unit);
+	intr_establish(sc->sc_irq, lptintr, sc, "lpt", IPL_NET, FALLING_EDGE);
+#else
+	intr_establish(sc->sc_irq, lptintr, sc, "lpt", IPL_NONE, FALLING_EDGE);
 #endif
-
-	printf(" addr 0x%x\n", (int) i8255);
+	printf(" addr 0x%x, irq %d\n", (int) i8255, sc->sc_irq);
 }
 
 /*
@@ -273,21 +265,21 @@ lptopen(dev_t dev, int flag)
 
 	sc->sc_state = LPT_INIT;
 	sc->sc_flags = flags;
-	lprintf("%s: open: flags=0x%x\n", sc->sc_dev.dv_xname, flags);
 
 	if ((flags & LPT_NOPRIME) == 0) {
 		/* assert INIT for 100 usec to start up printer */
-		i8255->port_a = LPA_PRIME;
+		i8255->port_a &= ~LPA_NPRIME;
 		DELAY(100);
 	}
 
 	if (flags & LPT_AUTOLF)
-		i8255->port_a = LPA_SELECT | LPA_ALF;
+		i8255->port_a |= LPA_ALF | LPA_SELECT | LPA_NPRIME;
 	else
-		i8255->port_a = LPA_SELECT;
+		i8255->port_a = (i8255->port_a & ~LPA_ALF)
+				| LPA_SELECT | LPA_NPRIME;
 
 	/* wait till ready (printer running diagnostics) */
-	for (spin = 0; NOT_READY(); spin += STEP) {
+	for (spin = 0; notready(i8255->port_c, sc); spin += STEP) {
 		if (spin >= TIMEOUT) {
 			sc->sc_state = 0;
 			return EBUSY;
@@ -306,11 +298,9 @@ lptopen(dev_t dev, int flag)
 	sc->sc_count  = 0;
 	sc->sc_state  = LPT_OPEN;
 
-	lprintf("%s: opened\n", sc->sc_dev.dv_xname);
 	return 0;
 }
 
-#ifdef DIAGNOSTIC
 int
 notready(u_char status, struct lpt_softc *sc)
 {
@@ -319,21 +309,24 @@ notready(u_char status, struct lpt_softc *sc)
 	if (status != sc->sc_status) {
 		if (status & LPC_NOPAPER)
 			log(LOG_NOTICE, "%s: out of paper\n", sc->sc_dev.dv_xname);
-		else if (status & LPC_ONLINE)
+		if (status & LPC_ONLINE)
 			log(LOG_NOTICE, "%s: offline\n", sc->sc_dev.dv_xname);
-		else if (status & LPC_NERROR)
+		if (status & LPC_NERROR)
 			log(LOG_NOTICE, "%s: output error\n", sc->sc_dev.dv_xname);
+		if (status & LPC_NACK)
+			log(LOG_NOTICE, "%s: NACK low\n", sc->sc_dev.dv_xname);
+		if (status & LPC_NBUSY)
+			log(LOG_NOTICE, "%s: NBUSY low\n", sc->sc_dev.dv_xname);
 		sc->sc_status = status;
 	}
 	return status & LPT_MASK;
 }
-#endif
 
 void
 lptout(void *arg)
 {
 	struct lpt_softc *sc = (struct lpt_softc *) arg;
-	if ((sc->sc_state & LPT_OPEN) == 0)
+	if (sc->sc_count > 0)
 		sc->sc_i8255->port_control = LPT_IRQENABLE;
 }
 
@@ -351,7 +344,6 @@ lptclose(dev_t dev, int flag)
 	sc->sc_state = 0;
 	free(sc->sc_inbuf, M_DEVBUF);
 
-	lprintf("%s: closed\n", sc->sc_dev.dv_xname);
 	return 0;
 }
 
@@ -371,8 +363,8 @@ pushbytes(struct lpt_softc *sc)
 }
 
 /* 
- * Copy a line from user space to a local buffer, then call putc to get the
- * chars moved to the output queue.
+ * Copy a line from user space to a local buffer, then call pushbytes to
+ * get the chars moved to the output queue.
  */
 lptwrite(dev_t dev, struct uio *uio)
 {
@@ -402,38 +394,35 @@ lptwrite(dev_t dev, struct uio *uio)
  * Handle printer interrupts which occur when the printer is ready to accept
  * another char.
  */
-int
-lptintr(int unit)
+void
+lptintr(struct lpt_softc *sc)
 {
-	struct lpt_softc *sc = (struct lpt_softc *) lptcd.cd_devs[unit];
 	volatile struct i8255 *i8255 = sc->sc_i8255;
 
 #if defined(INET) && defined(PLIP)
 	if(sc->sc_arpcom.ac_if.if_flags & IFF_UP) {
-		i8255->port_a |= LPA_ACTIVE;
-		plipintr(unit, &sc->sc_arpcom.ac_if);
-		i8255->port_a &= ~LPA_ACTIVE;
-		return 1;
+		plipintr(sc);
+		return;
 	}
 #endif
 
 	if ((sc->sc_state & LPT_OPEN) == 0) {
 		i8255->port_control = LPT_IRQDISABLE;
-		return 0;
+		return;
 	}
 
 	if (sc->sc_count) {
 		/* is printer online and ready for output? */
-		if (NOT_READY()) {
+		if (notready(i8255->port_c, sc)) {
 			i8255->port_control = LPT_IRQDISABLE;
 			timeout(lptout, sc, STEP);
-			return 0;
+			return;
 		}
 		/* send char */
-		i8255->port_a |= LPA_ACTIVE;
-		i8255->port_b = *sc->sc_cp++;
-		sc->sc_count--;
 		i8255->port_a &= ~LPA_ACTIVE;
+		i8255->port_b = *sc->sc_cp++;
+		i8255->port_a |= LPA_ACTIVE;
+		sc->sc_count--;
 	}
 
 	if (sc->sc_count == 0) {
@@ -441,8 +430,6 @@ lptintr(int unit)
 		i8255->port_control = LPT_IRQDISABLE;
 		wakeup((caddr_t)sc);
 	}
-
-	return 1;
 }
 
 int
@@ -466,17 +453,19 @@ plipattach(struct lpt_softc *sc, int unit)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
 	sc->sc_ifbuf = NULL;
-	ifp->if_name = "plip";
 	ifp->if_unit = unit;
-	ifp->if_type = IFT_ETHER;
-	ifp->if_addrlen = 6;
-	ifp->if_hdrlen = 14;
-	ifp->if_mtu = PLIPMTU;
-	ifp->if_flags = IFF_NOTRAILERS | IFF_BROADCAST | IFF_SIMPLEX;
+	ifp->if_name = "plip";
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
 	ifp->if_output = ether_output;
 	ifp->if_start = plipstart;
 	ifp->if_ioctl = plipioctl;
 	ifp->if_watchdog = 0;
+
+	ifp->if_type = IFT_ETHER;
+	ifp->if_addrlen = 6;
+	ifp->if_hdrlen = 14;
+	ifp->if_mtu = PLIPMTU;
+
 	if_attach(ifp);
 }
 
@@ -500,17 +489,22 @@ plipioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (((ifp->if_flags & IFF_UP) == 0) &&
 		    (ifp->if_flags & IFF_RUNNING)) {
 		        ifp->if_flags &= ~IFF_RUNNING;
-			sc->sc_i8255->port_a &= ~LPA_ACKENABLE;
 			sc->sc_i8255->port_control = LPT_MODE;
+			i8255->port_a = LPA_ACTIVE | LPA_NPRIME;
 			if (sc->sc_ifbuf)
 				free(sc->sc_ifbuf, M_DEVBUF);
 			sc->sc_ifbuf = NULL;
 		}
 		if (((ifp->if_flags & IFF_UP)) &&
 		    ((ifp->if_flags & IFF_RUNNING) == 0)) {
+			if (sc->sc_state) {
+				error = EBUSY;
+				break;
+			}
 			if (!sc->sc_ifbuf)
 				sc->sc_ifbuf =
-					malloc(ifp->if_mtu, M_DEVBUF, M_WAITOK);
+					malloc(ifp->if_mtu + ifp->if_hdrlen,
+					       M_DEVBUF, M_WAITOK);
 		        ifp->if_flags |= IFF_RUNNING;
 			sc->sc_i8255->port_control = LPT_IRQDISABLE;
 			sc->sc_i8255->port_b = 0;
@@ -518,19 +512,18 @@ plipioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		break;
 
-	case SIOCAIFADDR:
-		if (ifa->ifa_addr->sa_family != AF_INET)
-			error = EAFNOSUPPORT;
-		break;
-
 	case SIOCSIFADDR:
 		if (ifa->ifa_addr->sa_family == AF_INET) {
 			if (!sc->sc_ifbuf)
 				sc->sc_ifbuf =
-					malloc(PLIPMTU, M_DEVBUF, M_WAITOK);
+					malloc(PLIPMTU + ifp->if_hdrlen,
+					       M_DEVBUF, M_WAITOK);
+			sc->sc_arpcom.ac_enaddr[0] = 0xfc;
+			sc->sc_arpcom.ac_enaddr[1] = 0xfc;
 			bcopy((caddr_t)&IA_SIN(ifa)->sin_addr,
 			      (caddr_t)&sc->sc_arpcom.ac_enaddr[2], 4);
 			sc->sc_arpcom.ac_ipaddr = IA_SIN(ifa)->sin_addr;
+#if defined(COMPAT_PLIP10)
 			if (ifp->if_flags & IFF_LINK0) {
 				int i;
 				sc->sc_arpcom.ac_enaddr[0] = 0xfd;
@@ -538,19 +531,32 @@ plipioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				for (i = sc->sc_adrcksum = 0; i < 5; i++)
 					sc->sc_adrcksum += sc->sc_arpcom.ac_enaddr[i];
 				sc->sc_adrcksum *= 2;
-			} else {
-				sc->sc_arpcom.ac_enaddr[0] = 0xfc;
-				sc->sc_arpcom.ac_enaddr[1] = 0xfc;
 			}
+#endif
 			ifp->if_flags |= IFF_RUNNING | IFF_UP;
+#if 0
+			for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next) {
+				struct sockaddr_dl *sdl;
+				if ((sdl = (struct sockaddr_dl *)ifa->ifa_addr) &&
+				    sdl->sdl_family == AF_LINK) {
+					sdl->sdl_type = IFT_ETHER;
+					sdl->sdl_alen = ifp->if_addrlen;
+					bcopy((caddr_t)((struct arpcom *)ifp)->ac_enaddr,
+					      LLADDR(sdl), ifp->if_addrlen);
+					break;
+				    }
+			}
+#endif
 			sc->sc_i8255->port_control = LPT_IRQDISABLE;
 			sc->sc_i8255->port_b = 0;
 			sc->sc_i8255->port_a |= LPA_ACKENABLE;
-			arpwhohas(&sc->sc_arpcom, &IA_SIN(ifa)->sin_addr);
+			arp_ifinit(&sc->sc_arpcom, ifa);
 		} else
 			error = EAFNOSUPPORT;
 		break;
 
+	case SIOCAIFADDR:
+	case SIOCDIFADDR:
 	case SIOCSIFDSTADDR:
 		if (ifa->ifa_addr->sa_family != AF_INET)
 			error = EAFNOSUPPORT;
@@ -558,14 +564,15 @@ plipioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	case SIOCSIFMTU:
         	if ((error = suser(p->p_ucred, &p->p_acflag)))
-            		return (error);
+            		return(error);
 		if (ifp->if_mtu != ifr->ifr_metric) {
 		        ifp->if_mtu = ifr->ifr_metric;
 			if (sc->sc_ifbuf) {
 				s = splimp();
 				free(sc->sc_ifbuf, M_DEVBUF);
 				sc->sc_ifbuf =
-					malloc(ifp->if_mtu, M_DEVBUF, M_WAITOK);
+					malloc(ifp->if_mtu + ifp->if_hdrlen,
+					       M_DEVBUF, M_WAITOK);
 				splx(s);
 			}
 		}
@@ -586,35 +593,16 @@ plipreceive(volatile struct i8255 *i8255, u_char *buf, int len)
 {
 	int i;
 	u_char cksum = 0, c;
-#if 1
-	static unsigned char tl[] = {
-		0x00, 0x01, 0x08, 0x09,
-		0x04, 0x05, 0x0c, 0x0d,
-		0x02, 0x03, 0x0a, 0x0b,
-		0x06, 0x07, 0x0e, 0x0f
-	};
-# define LOWNIBBLE (tl[i8255->port_c >> 4])
-
-	static unsigned char th[] = {
-		0x00, 0x10, 0x80, 0x90,
-		0x40, 0x50, 0xc0, 0xd0,
-		0x20, 0x30, 0xa0, 0xb0,
-		0x60, 0x70, 0xe0, 0xf0
-	};
-#define HIGHNIBBLE (th[i8255->port_c >> 4])
-#else
-# define LOWNIBBLE (i8255->port_c >> 4)
-# define HIGHNIBBLE (i8255->port_c & 0xf0)
-#endif
 
 	while (len--) {
-		for (i = PLIPMXSPIN2; (i8255->port_c & LPC_NBUSY); i--)
-			if (i <= 0) return(-1);
-		c = LOWNIBBLE;
+		i = PLIPMXSPIN2;
+		while ((i8255->port_c & LPC_NBUSY) != 0)
+			if (i-- < 0) return -1;
+		c = i8255->port_c >> 4;
 		i8255->port_b = 0x11;
-		for (i = PLIPMXSPIN2; !(i8255->port_c & LPC_NBUSY); i--)
-			if (i <= 0) return(-1);
-		c |= HIGHNIBBLE;
+		while ((i8255->port_c & LPC_NBUSY) == 0)
+			if (i-- < 0) return -1;
+		c |= i8255->port_c & 0xf0;
 		i8255->port_b = 0x01;
 		cksum += (*buf++ = c);
 	}
@@ -623,29 +611,32 @@ plipreceive(volatile struct i8255 *i8255, u_char *buf, int len)
 }
 
 static void
-plipintr(int unit, struct ifnet *ifp)
+plipintr(struct lpt_softc *sc)
 {
 	extern struct mbuf *m_devget(char *, int, int, struct ifnet *, void (*)());
-	struct lpt_softc *sc = (struct lpt_softc *) lptcd.cd_devs[unit];
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	volatile struct i8255 *i8255 = sc->sc_i8255;
 	struct mbuf *m;
 	struct ether_header *eh;
 	u_char *p = sc->sc_ifbuf, minibuf[4];
 	int c, i = 0, s, len, cksum;
 
-	s = splimp();
-	i8255->port_a &= ~LPA_ACKENABLE;
+	i8255->port_a &= ~(LPA_ACKENABLE | LPA_ACTIVE);
 	i8255->port_b = 0x01;
 
+#if defined(COMPAT_PLIP10)
 	if (ifp->if_flags & IFF_LINK0) {
 		if (plipreceive(i8255, minibuf, 3) < 0) goto err;
 		len = (minibuf[1] << 8) | minibuf[2];
-		if (len > ifp->if_mtu) goto err;
+		if (len > (ifp->if_mtu + ifp->if_hdrlen)) goto err;
 
 		switch (minibuf[0]) {
 		case 0xfc:
-			memcpy(p + 0, sc->sc_arpcom.ac_enaddr, 5);
-			memcpy(p + 6, sc->sc_arpcom.ac_enaddr, 5);
+			p[0] = p[ 6] = ifp->ac_enaddr[0];
+			p[1] = p[ 7] = ifp->ac_enaddr[1];
+			p[2] = p[ 8] = ifp->ac_enaddr[2];
+			p[3] = p[ 9] = ifp->ac_enaddr[3];
+			p[4] = p[10] = ifp->ac_enaddr[4];
 			p += 5;
 			if ((cksum = plipreceive(i8255, p, 1)) < 0) goto err;
 			p += 6;
@@ -660,21 +651,26 @@ plipintr(int unit, struct ifnet *ifp)
 		default:
 			goto err;
 		}
-	} else {
+	} else
+#endif
+	{
 		if (plipreceive(i8255, minibuf, 2) < 0) goto err;
 		len = (minibuf[1] << 8) | minibuf[0];
-		if (len > ifp->if_mtu) goto err;
-
+		if (len > (ifp->if_mtu + ifp->if_hdrlen)) {
+			log(LOG_NOTICE, "plip%d: packet > MTU\n", ifp->if_unit);
+			goto err;
+		}
 		if ((cksum = plipreceive(i8255, p, len)) < 0) goto err;
 	}
 	
 	if (plipreceive(i8255, minibuf, 1) < 0) goto err;
 	if (cksum != minibuf[0]) {
-		log(LOG_NOTICE, "plip%d: checksum error\n", unit);
+		log(LOG_NOTICE, "plip%d: checksum error\n", ifp->if_unit);
 		goto err;
 	}
 	i8255->port_b = 0x00;
 
+	s = splimp();
 	if (m = m_devget(sc->sc_ifbuf, len, 0, ifp, NULL)) {
 		/* We assume that the header fit entirely in one mbuf. */
 		eh = mtod(m, struct ether_header *);
@@ -683,11 +679,10 @@ plipintr(int unit, struct ifnet *ifp)
 		m->m_data += sizeof(*eh);
 		ether_input(ifp, eh, m);
 	}
-done:
+	splx(s);
 	sc->sc_iferrs = 0;
 	ifp->if_ipackets++;
-	i8255->port_a |= LPA_ACKENABLE;
-	splx(s);
+	i8255->port_a |= LPA_ACKENABLE | LPA_ACTIVE;
 	return;
 
 err:
@@ -695,16 +690,17 @@ err:
 
 	ifp->if_ierrors++;
 	sc->sc_iferrs++;
-	if(sc->sc_iferrs > PLIPMXERRS) {
+	if (sc->sc_iferrs > PLIPMXERRS
+	    || (sc->sc_iferrs > 5 && (i8255->port_c & LPC_NBUSY))) {
 		/* We are not able to send receive anything for now,
 		 * so stop wasting our time and leave the interrupt
 		 * disabled.
 		 */
 		if (sc->sc_iferrs == PLIPMXERRS + 1)
 			log(LOG_NOTICE, "plip%d: rx hard error\n", ifp->if_unit);
+		i8255->port_a |= LPA_ACTIVE;
 	} else
-		i8255->port_a |= LPA_ACKENABLE;
-	splx(s);
+		i8255->port_a |= LPA_ACKENABLE | LPA_ACTIVE;
 	return;
 }
 
@@ -715,20 +711,17 @@ pliptransmit(volatile struct i8255 *i8255, u_char *buf, int len)
 	u_char cksum = 0, c;
 
 	while (len--) {
+		i = PLIPMXSPIN2;
 		cksum += (c = *buf++);
+		while ((i8255->port_c & LPC_NBUSY) == 0)
+			if (i-- < 0) return -1;
 		i8255->port_b = c & 0x0f;
 		i8255->port_b = c & 0x0f | 0x10;
-		for (i = PLIPMXSPIN2; (i8255->port_c & LPC_NBUSY); i--) {
-			if (i < 0) return -1;
-			if (i8255->port_c & LPC_NACK) return -1;
-		}
 		c >>= 4;
-		i8255->port_b = c & 0x0f | 0x10;
-		i8255->port_b = c & 0x0f;
-		for (i = PLIPMXSPIN2; !(i8255->port_c & LPC_NBUSY); i--) {
-			if (i < 0) return -1;
-			if (i8255->port_c & LPC_NACK) return -1;
-		}
+		while ((i8255->port_c & LPC_NBUSY) != 0)
+			if (i-- < 0) return -1;
+		i8255->port_b = c | 0x10;
+		i8255->port_b = c;
 	}
 	return(cksum);
 }
@@ -736,81 +729,81 @@ pliptransmit(volatile struct i8255 *i8255, u_char *buf, int len)
 /*
  * Setup output on interface.
  */
-static int
+static void
 plipstart(struct ifnet *ifp)
 {
 	struct lpt_softc *sc = (struct lpt_softc *) lptcd.cd_devs[ifp->if_unit];
 	volatile struct i8255 *i8255 = sc->sc_i8255;
 	struct mbuf *m0, *m;
-	u_char *cp, minibuf[4], cksum;
+	u_char minibuf[4], cksum;
 	int len, i, s;
 
-	s = splimp();
-	if (ifp->if_flags & IFF_OACTIVE) {
-		splx(s);
+	if (ifp->if_flags & IFF_OACTIVE)
 		return;
-	}
 	ifp->if_flags |= IFF_OACTIVE;
 
 	if (sc->sc_ifretry)
-		untimeout((void (*)(void *))plipstart, (caddr_t)ifp);
+		untimeout((void (*)(void *))plipstart, ifp);
 
-	i8255->port_a |= LPA_ACTIVE;
+	i8255->port_a &= ~LPA_ACTIVE;
 	for (;;) {
+		s = splimp();
 		IF_DEQUEUE(&ifp->if_snd, m0);
+		splx(s);
 		if (!m0)
 			break;
 
 		for (len = 0, m = m0; m; m = m->m_next)
 			len += m->m_len;
+#if defined(COMPAT_PLIP10)
 		if (ifp->if_flags & IFF_LINK0) {
 			minibuf[0] = 3;
 			minibuf[1] = 0xfd;
 			minibuf[2] = len >> 8;
 			minibuf[3] = len;
-		} else {
+		} else
+#endif
+		{
 			minibuf[0] = 2;
 			minibuf[1] = len;
 			minibuf[2] = len >> 8;
 		}
 
-		for (i = PLIPMXSPIN1; i8255->port_c & LPC_NERROR; i--)
-			if (i <= 0) goto retry;
+		for (i = PLIPMXSPIN1; (i8255->port_c & LPC_NERROR) != 0; i--)
+			if (i < 0) goto retry;
 
 		/* Trigger remote interrupt */
 		i8255->port_a &= ~LPA_ACKENABLE;
 		i8255->port_b = 0x08;
 
-		for (i = PLIPMXSPIN1; !(i8255->port_c & LPC_NERROR); i--) {
-			if (i <= 0 || (i8255->port_c & LPC_NACK
-			  	       && i > PLIPMXSPIN1/3))
+		for (i = PLIPMXSPIN1; (i8255->port_c & LPC_NERROR) == 0; i--)
+			if (i < 0 || (i > PLIPMXSPIN1/3
+			    && i8255->port_c & LPC_NACK)) 
 				goto retry;
-			if ((i & 0x1f) == 0)
-				i8255->port_b ^= 0x08;
-		}
 
 		if (pliptransmit(i8255, minibuf + 1, minibuf[0]) < 0) goto retry;
 		for (cksum = 0, m = m0; m; m = m->m_next) {
-			cp = mtod(m, u_char *);
 			i = pliptransmit(i8255, mtod(m, u_char *), m->m_len);
 			if (i < 0) goto retry;
 			cksum += i;
 		}
 		if (pliptransmit(i8255, &cksum, 1) < 0) goto retry;
-end:
+		i = PLIPMXSPIN2;
+		while ((i8255->port_c & LPC_NBUSY) == 0)
+			if (i-- < 0) goto retry;
 		i8255->port_b = 0x00;
-		if(i > 0) {
-			ifp->if_opackets++;
-			ifp->if_obytes += len + 4;
-		}
+
+		ifp->if_opackets++;
+		ifp->if_obytes += len + 4;
 		sc->sc_ifretry = 0;
+		s = splimp();
 		m_freem(m0);
+		splx(s);
 		i8255->port_a |= LPA_ACKENABLE;
 	}
-	i8255->port_a &= ~LPA_ACTIVE;
+	i8255->port_a |= LPA_ACTIVE;
 	ifp->if_flags &= ~IFF_OACTIVE;
-	splx(s);
-	return(0);
+	return;
 
 retry:
 	if (i8255->port_c & LPC_NACK)
@@ -820,19 +813,26 @@ retry:
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_UP)) == (IFF_RUNNING | IFF_UP)
 	    && sc->sc_ifretry < PLIPMXRETRY) {
 		sc->sc_ifretry++;
+		s = splimp();
 		IF_PREPEND(&ifp->if_snd, m0);
-		timeout((void (*)(void *))plipstart, (caddr_t)ifp, PLIPRETRY);
+		splx(s);
+		timeout((void (*)(void *))plipstart, ifp, PLIPRETRY);
 	} else {
-		if (sc->sc_ifretry != PLIPMXRETRY + 1)
+		if (sc->sc_ifretry == PLIPMXRETRY) {
+			sc->sc_ifretry++;
 			log(LOG_NOTICE, "plip%d: tx hard error\n", ifp->if_unit);
+		}
+		s = splimp();
 		m_freem(m0);
+		splx(s);
 	}
 	ifp->if_flags &= ~IFF_OACTIVE;
 	i8255->port_b = 0x00;
-	i8255->port_a |= LPA_ACKENABLE;
-	i8255->port_a &= ~LPA_ACTIVE;
-	splx(s);
-	return(0);
+	if (sc->sc_iferrs > PLIPMXERRS)
+		i8255->port_a |= LPA_ACTIVE;
+	else
+		i8255->port_a |= LPA_ACKENABLE | LPA_ACTIVE;
+	return;
 }
 
 #endif
