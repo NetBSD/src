@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.14 1996/11/13 23:13:02 cgd Exp $	*/
+/*	$NetBSD: cpu.c,v 1.15 1996/11/13 23:18:07 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -79,7 +79,7 @@ cpuattach(parent, dev, aux)
 	printf(": ");
 	switch (major) {
 	case PCS_PROC_EV3:
-		printf("EV3");
+		printf("EV3 (minor type 0x%x)", minor);
 		break;
 
 	case PCS_PROC_EV4:
@@ -92,13 +92,13 @@ cpuattach(parent, dev, aux)
 			printf("(pass 3)");
 			break;
 		default:
-			printf("(unknown minor type %d)", minor);
+			printf("(unknown minor type 0x%x)", minor);
 			break;
 		}
 		break;
 
 	case PCS_PROC_SIMULATION:
-		printf("simulation");
+		printf("simulation (minor type 0x%x)", minor);
 		break;
 
 	case PCS_PROC_LCA4:
@@ -125,7 +125,7 @@ cpuattach(parent, dev, aux)
 			printf("21068A (pass 1)");
 			break;
 		default:
-			printf("LCA family (unknown minor type %d)", minor);
+			printf("LCA family (unknown minor type 0x%x)", minor);
 			break;
 		}
 		break;
@@ -152,7 +152,7 @@ cpuattach(parent, dev, aux)
 			printf("(pass 4)");
 			break;
 		default:
-			printf("(unknown minor type %d)", minor);
+			printf("(unknown minor type 0x%x)", minor);
 			break;
 		}
 		break;
@@ -173,7 +173,7 @@ cpuattach(parent, dev, aux)
 			printf("(pass 2)");
 			break;
 		default:
-			printf("(unknown minor type %d)", minor);
+			printf("(unknown minor type 0x%x)", minor);
 			break;
 		}
 		break;
@@ -191,7 +191,7 @@ cpuattach(parent, dev, aux)
 			printf("(pass 2)");
 			break;
 		default:
-			printf("(unknown minor type %d)", minor);
+			printf("(unknown minor type 0x%x)", minor);
 			break;
 		}
 		break;
@@ -206,7 +206,7 @@ cpuattach(parent, dev, aux)
 			printf("(pass 1)");
 			break;
 		default:
-			printf("(unknown minor type %d)", minor);
+			printf("(unknown minor type 0x%x)", minor);
 			break;
 		}
 		break;
@@ -221,13 +221,13 @@ cpuattach(parent, dev, aux)
 			printf("(pass 1)");
 			break;
 		default:
-			printf("(unknown minor type %d)", minor);
+			printf("(unknown minor type 0x%x)", minor);
 			break;
 		}
 		break;
 
 	default:
-		printf("UNKNOWN CPU TYPE (%d)", major);
+		printf("UNKNOWN CPU TYPE (0x%x:0x%x)", major, minor);
 		break;
 	}
 	printf("\n");
