@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.63 2003/01/26 04:16:36 ross Exp $
+#	$NetBSD: services,v 1.64 2003/04/26 22:07:14 wiz Exp $
 #
 # Network services, Internet style
 #
@@ -261,8 +261,8 @@ afs3-vlserver	7003/tcp		# volume location database
 afs3-vlserver	7003/udp		# volume location database
 afs3-kaserver	7004/tcp		# AFS/Kerberos authentication service
 afs3-kaserver	7004/udp		# AFS/Kerberos authentication service
-afs3-volser	7005/tcp		# volume managment server
-afs3-volser	7005/udp		# volume managment server
+afs3-volser	7005/tcp		# volume management server
+afs3-volser	7005/udp		# volume management server
 afs3-errors	7006/tcp		# error interpretation service
 afs3-errors	7006/udp		# error interpretation service
 afs3-bos	7007/tcp		# basic overseer process

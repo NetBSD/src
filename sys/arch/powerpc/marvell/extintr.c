@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.7 2003/04/09 15:44:26 matt Exp $	*/
+/*	$NetBSD: extintr.c,v 1.8 2003/04/26 22:07:16 wiz Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
  */
 
 /*
- * extintr.c - external interrupt managment for discovery
+ * extintr.c - external interrupt management for discovery
  *
  *	Interrupts are software-prioritized and preempting,
  *	they are only actually masked when pending.

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-802_11.c,v 1.5 2002/09/30 13:31:57 onoe Exp $	*/
+/*	$NetBSD: print-802_11.c,v 1.6 2003/04/26 22:07:14 wiz Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -28,7 +28,7 @@
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-802_11.c,v 1.7 2002/05/13 08:30:19 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-802_11.c,v 1.5 2002/09/30 13:31:57 onoe Exp $");
+__RCSID("$NetBSD: print-802_11.c,v 1.6 2003/04/26 22:07:14 wiz Exp $");
 #endif
 #endif
 
@@ -524,7 +524,7 @@ static int mgmt_body_print(u_int16_t fc, const struct mgmt_header_t *pmh,
 		return (handle_deauth(fc, pmh, p));
 		break;
 	default:
-		printf("Unhandled Managment subtype(%x)",
+		printf("Unhandled Management subtype(%x)",
 		    FC_SUBTYPE(fc));
 		return 1;
 	}

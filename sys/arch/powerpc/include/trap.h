@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.8 2002/05/19 06:35:45 augustss Exp $	*/
+/*	$NetBSD: trap.h,v 1.9 2003/04/26 22:08:30 wiz Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -57,7 +57,7 @@
 /* The following are only available on 604/750/7400: */
 #define	EXC_PERF	0x0f00		/* Performance Monitoring */
 #define	EXC_BPT		0x1300		/* Instruction Breakpoint */
-#define	EXC_SMI		0x1400		/* System Managment Interrupt */
+#define	EXC_SMI		0x1400		/* System Management Interrupt */
 
 /* The following are only available on 750/7400: */
 #define	EXC_THRM	0x1700		/* Thermal Management Interrupt */
