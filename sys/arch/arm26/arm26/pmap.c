@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.36 2001/11/18 15:57:23 bjh21 Exp $ */
+/* $NetBSD: pmap.c,v 1.37 2002/03/08 20:48:30 thorpej Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -105,7 +105,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.36 2001/11/18 15:57:23 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.37 2002/03/08 20:48:30 thorpej Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -362,7 +362,7 @@ pmap_init2()
 
 	/* Create pmap pool */
 	pool_init(&pmap_pool, sizeof(struct pmap), 0, 0, 0,
-	    "pmappool", 0, NULL, NULL, M_VMPMAP);
+	    "pmappool", NULL);
 	pmap_initialised = 1;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.45 2002/02/09 01:00:09 bouyer Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.46 2002/03/08 20:48:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.45 2002/02/09 01:00:09 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.46 2002/03/08 20:48:41 thorpej Exp $");
 
 #ifdef _KERNEL
 #include <sys/param.h>
@@ -137,7 +137,7 @@ expool_init(void)
 
 #if defined(_KERNEL)
 	pool_init(&expool, sizeof(struct extent_region), 0, 0, 0,
-	    "extent", 0, 0, 0, 0);
+	    "extent", NULL);
 #else
 	expool.pr_size = sizeof(struct extent_region);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.170 2002/03/04 02:25:23 simonb Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.171 2002/03/08 20:48:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.170 2002/03/04 02:25:23 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.171 2002/03/08 20:48:42 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -189,7 +189,7 @@ vntblinit()
 {
 
 	pool_init(&vnode_pool, sizeof(struct vnode), 0, 0, 0, "vnodepl",
-	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_VNODE);
+	    &pool_allocator_nointr);
 
 	/*
 	 * Initialize the filesystem syncer.

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.74 2002/01/22 03:53:55 itojun Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.75 2002/03/08 20:48:43 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.74 2002/01/22 03:53:55 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.75 2002/03/08 20:48:43 thorpej Exp $");
 
 #include "opt_ipsec.h"
 
@@ -164,7 +164,7 @@ in_pcbinit(table, bindhashsize, connecthashsize)
 
 	if (inpcb_pool_initialized == 0) {
 		pool_init(&inpcb_pool, sizeof(struct inpcb), 0, 0, 0,
-		    "inpcbpl", 0, NULL, NULL, M_PCB);
+		    "inpcbpl", NULL);
 		inpcb_pool_initialized = 1;
 	}
 

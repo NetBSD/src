@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.58 2001/12/16 04:51:34 enami Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.59 2002/03/08 20:48:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.58 2001/12/16 04:51:34 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.59 2002/03/08 20:48:47 thorpej Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -278,10 +278,10 @@ uvm_swap_init()
 	 */
 
 	pool_init(&vndxfer_pool, sizeof(struct vndxfer), 0, 0, 0,
-	    "swp vnx", 0, NULL, NULL, 0);
+	    "swp vnx", NULL);
 
 	pool_init(&vndbuf_pool, sizeof(struct vndbuf), 0, 0, 0,
-	    "swp vnd", 0, NULL, NULL, 0);
+	    "swp vnd", NULL);
 
 	/*
 	 * done!

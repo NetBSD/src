@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.6 2002/02/11 10:44:39 wiz Exp $	*/
+/*	$NetBSD: sbic.c,v 1.7 2002/03/08 20:48:34 thorpej Exp $	*/
 
 /*
  * Changes Copyright (c) 2001 Wayne Knowles
@@ -209,7 +209,7 @@ wd33c93_init(dev)
 	if (!wd33c93_pool_initialized) {
 		/* All instances share the same pool */
 		pool_init(&wd33c93_pool, sizeof(struct wd33c93_acb), 0, 0, 0,
-		    "wd33c93_acb", 0, NULL, NULL, 0);
+		    "wd33c93_acb", NULL);
 		++wd33c93_pool_initialized;
 	}
 

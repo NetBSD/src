@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.111 2002/03/04 02:19:10 simonb Exp $ */
+/*	$NetBSD: wdc.c,v 1.112 2002/03/08 20:48:38 thorpej Exp $ */
 
 
 /*
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.111 2002/03/04 02:19:10 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.112 2002/03/08 20:48:38 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -331,7 +331,7 @@ wdcattach(chp)
 	if (inited == 0) {
 		/* Initialize the wdc_xfer pool. */
 		pool_init(&wdc_xfer_pool, sizeof(struct wdc_xfer), 0,
-		    0, 0, "wdcspl", 0, NULL, NULL, M_DEVBUF);
+		    0, 0, "wdcspl", NULL);
 		inited++;
 	}
 	TAILQ_INIT(&chp->ch_queue->sc_xfer);

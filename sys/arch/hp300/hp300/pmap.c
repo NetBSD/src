@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.103 2002/01/02 00:51:34 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.104 2002/03/08 20:48:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -545,7 +545,7 @@ pmap_init()
 	 * Initialize the pmap pools.
 	 */
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
-	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_VMPMAP);
+	    &pool_allocator_nointr);
 
 	/*
 	 * Now it is safe to enable pv_table recording.
