@@ -8,7 +8,7 @@ G_C_OBJS=c-parse.o c-lang.o c-lex.o c-pragma.o c-decl.o c-typeck.o c-convert.o  
 G_CCCP_OBJS=cccp.o cexp.o intl.o prefix.o version.o  mbchar.o
 G_DRIVER_DEFINES=-DSTANDARD_STARTFILE_PREFIX=\"/usr/local/lib/\"  -DSTANDARD_EXEC_PREFIX=\"/usr/local/lib/gcc-lib/\"  -DDEFAULT_TARGET_VERSION=\"2.95.3\"  -DDEFAULT_TARGET_MACHINE=\"mipsel-unknown-netbsd1.5W\"  -DTOOLDIR_BASE_PREFIX=\"/usr/local/\"
 G_GCOV_OBJS=gcov.o intl.o
-G_HOST_LIBS=` case "obstack.o" in ?*) echo obstack.o ;; esac ` ` case "" in ?*) echo  ;; esac ` ` case "" in ?*) echo  ;; esac `    ` case "" in ?*) echo  ;; esac ` ` case "" in ?*) echo  ;; esac `  
+G_PROTO_OBJS=getpwd.o intl.o version.o
 G_HOST_PRINT=print-rtl.o
 G_HOST_RTL=rtl.o bitmap.o
 G_HOST_RTLANAL=rtlanal.o

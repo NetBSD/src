@@ -234,16 +234,16 @@
 #define BFD_ASSEMBLER 1
 
 /* Target alias. */
-#define TARGET_ALIAS "sparc64-unknown-netbsd"
+#define TARGET_ALIAS "sparc64--netbsd"
 
 /* Canonical target. */
-#define TARGET_CANONICAL "sparc64-unknown-netbsd"
+#define TARGET_CANONICAL "sparc64--netbsd"
 
 /* Target CPU. */
 #define TARGET_CPU "sparc64"
 
 /* Target vendor. */
-#define TARGET_VENDOR "unknown"
+#define TARGET_VENDOR ""
 
 /* Target OS. */
 #define TARGET_OS "netbsd"

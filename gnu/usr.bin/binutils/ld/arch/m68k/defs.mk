@@ -8,4 +8,4 @@ G_INCLUDES=-D_GNU_SOURCE -I. -I${DIST}/ld -I../bfd -I${DIST}/ld/../bfd -I${DIST}
 G_OFILES=ldgram.o ldlex.o lexsup.o ldlang.o mri.o ldctor.o ldmain.o  ldwrite.o ldexp.o  ldemul.o ldver.o ldmisc.o  ldfile.o ldcref.o em68kelfnbsd.o em68knbsd.o em68k4knbsd.o 
 G_STRINGIFY=astring.sed
 G_TEXINFOS=ld.texinfo
-G_target_alias=m68k-unknown-netbsdelf
+G_target_alias=m68k--netbsdelf
