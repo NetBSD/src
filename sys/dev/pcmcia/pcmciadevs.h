@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.36 1999/02/19 21:49:43 abs Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.36.2.1 1999/04/27 13:54:48 perry Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.32 1999/02/19 02:52:17 nathanw Exp 
+ *	NetBSD: pcmciadevs,v 1.33.2.1 1999/04/27 13:53:47 perry Exp 
  */
 
 /*-
@@ -123,6 +123,11 @@
 #define	PCMCIA_CIS_MOTOROLA_PM100C	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_MOTOROLA_PM100C	0x0302
 #define	PCMCIA_STR_MOTOROLA_PM100C	"Motorola Personal Messenger 100C CDPD Modem"
+
+/* Fujitsu Products */
+#define	PCMCIA_CIS_FUJITSU_LA501	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_FUJITSU_LA501	0x2000
+#define	PCMCIA_STR_FUJITSU_LA501	"Fujitsu Towa LA501 Ethernet"
 
 /* IBM Products */
 #define	PCMCIA_CIS_IBM_INFOMOVER	{ NULL, NULL, NULL, NULL }
