@@ -1,4 +1,4 @@
-/*	$NetBSD: isp_pci.c,v 1.9 1997/03/28 22:25:01 cgd Exp $	*/
+/*	$NetBSD: isp_pci.c,v 1.10 1997/04/05 02:55:28 mjacob Exp $	*/
 
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
@@ -82,7 +82,8 @@ static struct ispmdvec mdvec = {
 	ISP_RISC_CODE,
 	ISP_CODE_LENGTH,
 	ISP_CODE_ORG,
-/*	BIU_PCI_CONF1_FIFO_16 | BIU_BURST_ENABLE */ 0
+	BIU_PCI_CONF1_FIFO_16 | BIU_BURST_ENABLE,
+	60	/* MAGIC- all known PCI card implementations are 60MHz */
 };
 
 #define	PCI_QLOGIC_ISP	\
