@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.143 2003/08/24 17:52:39 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.144 2003/09/26 03:59:33 chs Exp $	*/
 /*
  * 
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.143 2003/08/24 17:52:39 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.144 2003/09/26 03:59:33 chs Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -2042,6 +2042,9 @@ pmap_enter(pm, va, pa, prot, flags)
 		i = ptelookup_va(va);
 		tte.tag = TSB_TAG(0, pm->pm_ctx, va);
 		s = splhigh();
+		if (wasmapped && (pm->pm_ctx || pm == pmap_kernel())) {
+			tsb_invalidate(pm->pm_ctx, va);
+		}
 		if (flags & (VM_PROT_READ | VM_PROT_WRITE)) {
 			tsb_dmmu[i].tag = tte.tag;
 			__asm __volatile("" : : : "memory");
@@ -2545,7 +2548,6 @@ boolean_t
 pmap_clear_modify(pg)
 	struct vm_page *pg;
 {
-	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	pv_entry_t pv;
 	int changed = 0;
 #ifdef DEBUG
@@ -2605,15 +2607,6 @@ pmap_clear_modify(pg)
 			simple_unlock(&pmap->pm_lock);
 		}
 	}
-
-	/*
-	 * XXX
-	 * This should not be necessary - but empirically it is.
-	 * We need to find the reason this makes a difference and fix
-	 * the root of the problem - then remove this band aid.
-	 */
-	dcache_flush_page(pa);
-
 	pv_check();
 #ifdef DEBUG
 	if (pmap_is_modified(pg)) {
