@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.h,v 1.1 2001/12/28 17:32:36 augustss Exp $	*/
+/*	$NetBSD: uhidev.h,v 1.2 2001/12/29 18:56:52 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -66,6 +66,7 @@ struct uhidev {
 	struct uhidev_softc *sc_parent;
 	uByte sc_report_id;
 	u_int8_t sc_state;
+	int sc_in_rep_size;
 #define	UHIDEV_OPEN	0x01	/* device is open */
 	void (*sc_intr)(struct uhidev *, void *, u_int);
 };
@@ -74,6 +75,7 @@ struct uhidev_attach_arg {
 	struct usb_attach_arg *uaa;
 	struct uhidev_softc *parent;
 	int reportid;
+	int reportsize;
 	int matchlvl;
 };
 
