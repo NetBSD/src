@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.130 2004/08/31 01:15:10 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.131 2004/08/31 01:21:13 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -1439,3 +1439,10 @@ lib/libc/net/gethnamaddr.c			patch
 
 	Now that e.f.f.3.ip6.arpa is ready, we no longer need to query ip6.int.
 	[itojun, ticket #1731]
+
+sys/dev/raidframe/rf_disks.c			1.54
+
+	rf_CheckLabels() needs to die, but for now, we patch it by setting
+	fatal_error when too_fatal is set, and by setting fatal_error in a
+	couple other critical cases.
+	[oster, ticket #1740]
