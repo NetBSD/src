@@ -1,4 +1,4 @@
-/*	$NetBSD: wssvar.h,v 1.7 1999/08/14 21:19:29 augustss Exp $	*/
+/*	$NetBSD: wssvar.h,v 1.8 2005/01/14 03:41:45 kent Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -67,7 +67,7 @@ struct wss_softc {
 
 	bus_space_handle_t sc_opl_ioh;	/* OPL handle */
 
-	int 	mic_mute, cd_mute, dac_mute;
+	int	mic_mute, cd_mute, dac_mute;
 
 	int	mad_chip_type;		/* chip type if MAD emulation of WSS */
 	int	mad_ioindex;
@@ -75,8 +75,8 @@ struct wss_softc {
 	bus_space_handle_t mad_ioh1, mad_ioh2;
 };
 
-void	wssattach __P((struct wss_softc *));
+void	wssattach(struct wss_softc *);
 
-u_int	mad_read __P((struct wss_softc *, int));
-void	mad_write __P((struct wss_softc *, int, int));
-void	madattach __P((struct wss_softc *));
+u_int	mad_read(struct wss_softc *, int);
+void	mad_write(struct wss_softc *, int, int);
+void	madattach(struct wss_softc *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ymvar.h,v 1.8 2002/03/10 13:57:11 itohy Exp $	*/
+/*	$NetBSD: ymvar.h,v 1.9 2005/01/14 03:41:45 kent Exp $	*/
 
 /*-
  * Copyright (c) 1999-2000, 2002 The NetBSD Foundation, Inc.
@@ -165,15 +165,15 @@ struct ym_softc {
 
 	int  master_mute, mic_mute;
 	struct ad1848_volume master_gain;
-	u_int8_t mic_gain;
+	uint8_t mic_gain;
 
-	u_int8_t sc_external_sources;	/* non-zero value prevents power down */
+	uint8_t sc_external_sources;	/* non-zero value prevents power down */
 
-	u_int8_t sc_version;		/* hardware version */
+	uint8_t sc_version;		/* hardware version */
 #define YM_IS_SA3(sc)	((sc)->sc_version > SA3_MISC_VER_711)
 
 	/* 3D encehamcement */
-	u_int8_t sc_eqmode;
+	uint8_t sc_eqmode;
 	struct ad1848_volume sc_treble, sc_bass, sc_wide;
 	/*
 	 * The equalizer of OPL3-SA3 is ``flat'' if it is turned off.
@@ -204,13 +204,13 @@ struct ym_softc {
 	} sc_pow_mode;
 	int	sc_pow_timeout;
 
-	u_int8_t sc_codec_scan[0x20];
+	uint8_t sc_codec_scan[0x20];
 #define YM_SAVE_REG_MAX_SA3	SA3_HVOL_INTR_CNF
 #define YM_SAVE_REG_MAX_SA2	SA3_DMA_CNT_REC_HIGH
-	u_int8_t sc_sa3_scan[YM_SAVE_REG_MAX_SA3 + 1];
+	uint8_t sc_sa3_scan[YM_SAVE_REG_MAX_SA3 + 1];
 
-	u_int16_t sc_on_blocks;
-	u_int16_t sc_turning_off;
+	uint16_t sc_on_blocks;
+	uint16_t sc_turning_off;
 
 	int	sc_in_power_ctl;
 #define YM_POWER_CTL_INUSE	1
@@ -252,10 +252,10 @@ struct ym_softc {
 #define YM_MIXER_TO_XS(m)	(1 << ((m) - YM_CD_MUTE))
 
 #ifdef _KERNEL
-void	ym_power_ctl __P((struct ym_softc *, int, int));
+void	ym_power_ctl(struct ym_softc *, int, int);
 #endif
 #endif /* not AUDIO_NO_POWER_CTL */
 
 #ifdef _KERNEL
-void	ym_attach __P((struct ym_softc *));
+void	ym_attach(struct ym_softc *);
 #endif
