@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.29 1998/04/29 21:37:54 matt Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.30 1998/04/30 17:47:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -39,6 +39,7 @@
 #define _NETINET_IP_VAR_H_
 
 #include <sys/queue.h>
+#include <net/route.h>
 
 /*
  * Overlay for ip header used by other protocols (tcp, udp).
