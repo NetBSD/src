@@ -1,4 +1,4 @@
-.\"	$NetBSD: ossaudio.3,v 1.1 1997/10/16 17:30:59 augustss Exp $
+.\"	$NetBSD: ossaudio.3,v 1.2 1997/10/16 17:46:28 augustss Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -51,3 +51,8 @@ Use the native interface for new programs and the emulation
 library only for porting programs.
 .Sh SEE ALSO
 .Xr audio 4
+.Sh BUGS
+The emulation uses an #define for ioctl() so some obscure programs
+can fail to compile.
+.Pp
+The emulation is incomplete.
