@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.11 2002/04/01 13:59:35 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.12 2002/04/18 15:31:51 bjh21 Exp $
 
 HOSTLIB=	nbcompat
 
 SRCS=		basename.c dirname.c fgetln.c flock.c fparseln.c \
-		getmode.c getopt_long.c libyywrap.c \
+		getmode.c getopt_long.c issetugid.c libyywrap.c \
 		md2c.c md2hl.c md4c.c md4hl.c md5c.c md5hl.c pread.c \
 		pwcache.c pwrite.c pw_scan.c rmd160.c rmd160hl.c setenv.c \
 		setgroupent.c setpassent.c setprogname.c sha1.c sha1hl.c \
