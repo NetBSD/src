@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.5 2004/06/18 21:04:39 martin Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.6 2004/11/13 08:13:58 grant Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -82,7 +82,7 @@ filename(str, ppart)
 		/* ...look whether there is a device with this name */
 		dhandle = OF_finddevice(str);
 #ifdef NOTDEF_DEBUG
-		printf("filename: OF_finddevice(%s) sez %x\n",
+		printf("filename: OF_finddevice(%s) returned %x\n",
 		       str, dhandle);
 #endif
 		*cp = savec;
@@ -476,11 +476,11 @@ devopen(of, name, file)
 			     LABELSECTOR, DEV_BSIZE, buf, &read) != 0
 		    || read != DEV_BSIZE
 		    || (errmsg = getdisklabel(buf, &label))) {
-			if (errmsg) printf("devopen: getdisklabel sez %s\n", errmsg);
+			if (errmsg) printf("devopen: getdisklabel returned %s\n", errmsg);
 			/* Else try MBR partitions */
 			errmsg = search_label(&ofdev, 0, buf, &label, 0);
 			if (errmsg) { 
-				printf("devopen: search_label sez %s\n", errmsg);
+				printf("devopen: search_label returned %s\n", errmsg);
 				error = ERDLAB;
 			}
 			if (error && error != ERDLAB)
