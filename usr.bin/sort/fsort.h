@@ -1,3 +1,5 @@
+/*	$NetBSD: fsort.h,v 1.2 2000/10/07 18:37:10 bjh21 Exp $	*/
+
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -43,7 +45,8 @@
 #define MAXFCT 1000
 #define MAXLLEN ((1 << min(POW-4, 16)) - 14)
 
-extern u_char **keylist, **l2buf, *buffer, *linebuf;
+extern const u_char **keylist, **l2buf;
+extern u_char *buffer, *linebuf;
 
 /* temp files in the stack have a file descriptor, a largest bin (maxb)
  * which becomes the last non-empty bin (lastb) when the actual largest
