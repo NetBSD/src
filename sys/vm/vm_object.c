@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_object.c	7.4 (Berkeley) 5/7/91
- *	$Id: vm_object.c,v 1.12 1994/01/07 19:15:44 mycroft Exp $
+ *	$Id: vm_object.c,v 1.13 1994/01/07 22:22:24 mycroft Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -368,7 +368,7 @@ vm_object_terminate(object)
 	 */
 
 	while (object->paging_in_progress != 0) {
-		vm_object_sleep(object, object, FALSE);
+		vm_object_sleep(object, object);
 		vm_object_lock(object);
 	}
 
