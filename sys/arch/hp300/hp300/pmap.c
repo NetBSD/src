@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	7.5 (Berkeley) 5/10/91
- *	$Id: pmap.c,v 1.6 1994/04/24 11:48:50 mycroft Exp $
+ *	$Id: pmap.c,v 1.7 1994/04/24 12:06:03 mycroft Exp $
  */
 
 /*
@@ -1032,6 +1032,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 	boolean_t wired;
 {
 	register pt_entry_t *pte;
+	register int npte;
 	vm_offset_t opa;
 	boolean_t cacheable = TRUE;
 	boolean_t checkpv = TRUE;
