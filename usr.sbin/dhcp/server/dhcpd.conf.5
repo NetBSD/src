@@ -423,6 +423,20 @@ that the other server is down, in which case the remaining server will
 for allocation, and begin to reuse them.   This is called putting the
 server into the PARTNER-DOWN state.
 .PP
+You can put the server into the PARTNER-DOWN state either by using the
+.B omshell (8)
+command or by stopping the server, editing the last peer state
+declaration in the lease file, and restarting the server.   If you use
+this last method, be sure to leave the date and time of the start of
+the state blank:
+.PP
+.nf
+.B failover peer "\fIname\fB" state {
+.B   my   state partner-down;
+.B   peer state \fIstate\fB at \fIdate\fB;
+.B }
+.fi
+.PP
 When the other server comes back online, it should automatically
 detect that it has been offline and request a complete update from the
 server that was running in the PARTNER-DOWN state, and then both
@@ -445,6 +459,37 @@ providing a way for each peer to behave in the opposite way from the
 other.   So one server must be configured as primary, and the other
 must be configured as secondary, and it doesn't matter too much which
 one is which.
+.SH FAILOVER STARTUP
+When a server starts that has not previously communicated with its
+failover peer, it must establish communications with its failover peer
+and synchronize with it before it can serve clients.   This can happen
+either because you have just configured your DHCP servers to perform
+failover for the first time, or because one of your failover servers
+has failed catastrophically and lost its database.
+.PP
+The initial recovery process is designed to ensure that when one
+failover peer loses its database and then resynchronizes, any leases
+that the failed server gave out before it failed will be honored.
+When the failed server starts up, it notices that it has no saved
+failover state, and attempts to contact its peer.
+.PP
+When it has established contact, it asks the peer for a complete copy
+its peer's lease database.  The peer then sends its complete database,
+and sends a message indicating that it is done.  The failed server
+then waits until MCLT has passed, and once MCLT has passed both
+servers make the transition back into normal operation.  This waiting
+period ensures that any leases the failed server may have given out
+while out of contact with its partner will have expired.
+.PP
+While the failed server is recovering, its partner remains in the
+partner-down state, which means that it is serving all clients.  The
+failed server provides no service at all to DHCP clients until it has
+made the transition into normal operation.
+.PP
+In the case where both servers detect that they have never before
+communicated with their partner, they both come up in this recovery
+state and follow the procedure we have just described.   In this case,
+no service will be provided to DHCP clients until MCLT has expired.
 .SH CONFIGURING FAILOVER
 In order to configure failover, you need to write a peer declaration
 that configures the failover protocol, and you need to write peer
@@ -662,20 +707,8 @@ total number of clients within a particular class or subclass that may
 hold leases at one time, and it is possible to specify automatic
 subclassing based on the contents of the client packet.
 .PP
-To add clients to classes based on conditional evaluation, you would
-write a conditional statement to match the clients you wanted in the
-class, and then put an
-.B add
-statement in the conditional's list of statements:
-.PP
-.nf
-if substring (option dhcp-client-identifier, 1, 3) = "RAS " {
-  add "ras-clients";
-}
-.fi
-.PP
-A nearly equivalent way to do this is to simply specify the conditional
-expression as a matching expression in the class statement:
+To add clients to classes based on conditional evaluation, you can
+specify a matching expression in the class statement:
 .PP
 .nf
 class "ras-clients" {
@@ -691,16 +724,6 @@ this:
 class "ras-clients" {
 }
 .fi
-.PP
-Also, the
-.B add
-statement adds the client to the class as the client's scopes are being
-evaluated - after any address assignment decision has been made.   This means
-that a client that's a member of a class due to an add statement will not
-be affected by pool permits related to that class - when the pool permit list
-is computed, the client will not yet be a member of the pool.   This is an
-inconsistency that will probably be addressed in later versions of the DHCP
-server, but it is important to be aware of it at least for the time being.
 .SH SUBCLASSES
 .PP
 In addition to classes, it is possible to declare subclasses.   A
@@ -1105,14 +1128,24 @@ Note that the zone declarations have to correspond to authority
 records in your name server - in the above example, there must be an
 SOA record for "example.org." and for "17.10.10.in-addr.arpa.".   For
 example, if there were a subdoman "foo.example.org" with no seperate
-SOA, you could not write a zone declaration for "foo.example.org."
+SOA, you could not write a zone declaration for "foo.example.org."  
+Also keep in mind that zone names in your DHCP configuration should end in a
+"."; this is the preferred syntax.  If you do not end your zone name in a
+".", the DHCP server will figure it out.  Also note that in the DHCP
+configuration, zone names are not encapsulated in quotes where there are in
+the DNS configuration.
 .PP
 You should choose your own secret key, of course.  The ISC BIND 8 and
 9 distributions come with a program for generating secret keys called
-dnskeygen.  The version that comes with BIND 9 is likely to produce a
+dnssec-keygen.  The version that comes with BIND 9 is likely to produce a
 substantially more random key, so we recommend you use that one even
-if you are not using BIND 9 as your DNS server.  The key above was
-generated with the command:
+if you are not using BIND 9 as your DNS server.  If you are using BIND 9's
+dnssec-keygen, the above key would be created as follows:
+.nf
+	dnssec-keygen -a HMAC-MD5 -b 128 -n USER DHCP_UPDATER
+
+If you are using the BIND 8 dnskeygen program, the following command will
+generate a key as seen above:
 .nf
 	dnskeygen -H 128 -u -c -n DHCP_UPDATER
 .fi
@@ -1992,11 +2025,11 @@ of the configuration file.
 .RE
 .PP
 The
-.I ping-checks
+.I ping-check
 statement
 .RS 0.25i
 .PP
-.B ping-checks
+.B ping-check
 .I flag\fR\fB;\fR
 .PP
 When the DHCP server is considering dynamically allocating an IP
@@ -2008,7 +2041,7 @@ not respond to the client.
 .PP
 This \fIping check\fR introduces a one-second delay in responding to
 DHCPDISCOVER messages, which can be a problem for some clients.   The
-ping-checks configuration parameter can be used to control checking -
+ping-check configuration parameter can be used to control checking -
 if its value is false, no ping check is done.
 .RE
 .PP
@@ -2092,6 +2125,7 @@ works around a problem with relay agent information options, which is
 that they usually not appear in DHCPREQUEST messages sent by the
 client in the RENEWING state, because such messages are unicast
 directly to the server and not sent through a relay agent.
+.RE
 .PP
 The
 .I update-optimization
@@ -2112,6 +2146,7 @@ and has no effect on the ad-hoc DNS update scheme.   If this
 parameter is not specified, or is false, the DHCP server will only
 update when the client information changes, the client gets a
 different lease, or the client's lease expires.
+.RE
 .PP
 The
 .I update-static-leases
@@ -2130,6 +2165,7 @@ has been done, and therefore will not delete the record when it is not
 in use.   Also, the server must attempt the update each time the
 client renews its lease, which could have a significant performance
 impact in environments that place heavy demands on the DHCP server.
+.RE
 .PP
 The
 .I use-host-decl-names

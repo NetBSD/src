@@ -361,6 +361,220 @@ use a different name server might be declared as follows:
 .PP
 A more complete description of the dhcpd.conf file syntax is provided
 in dhcpd.conf(5).
+.SH OMAPI
+The DHCP server provides the capability to modify some of its
+configuration while it is running, without stopping it, modifying its
+database files, and restarting it.  This capability is currently
+provided using OMAPI - an API for manipulating remote objects.  OMAPI
+clients connect to the server using TCP/IP, authenticate, and can then
+examine the server's current status and make changes to it.
+.PP
+Rather than implementing the underlying OMAPI protocol directly, user
+programs should use the dhcpctl API or OMAPI itself.   Dhcpctl is a
+wrapper that handles some of the housekeeping chores that OMAPI does
+not do automatically.   Dhcpctl and OMAPI are documented in \fBdhcpctl(3)\fR
+and \fBomapi(3)\fR.
+.PP
+OMAPI exports objects, which can then be examined and modified.   The
+DHCP server exports the following objects: lease, host,
+failover-state and group.   Each object has a number of methods that
+are provided: lookup, create, and destroy.   In addition, it is
+possible to look at attributes that are stored on objects, and in some
+cases to modify those attributes.
+.SH THE LEASE OBJECT
+Leases can't currently be created or destroyed, but they can be looked
+up to examine and modify their state.
+.PP
+Leases have the following attributes:
+.PP
+.B state \fIinteger\fR lookup, examine
+.RS 0.5i
+.nf
+1 = free
+2 = active
+3 = expired
+4 = released
+5 = abandoned
+6 = reset
+7 = backup
+8 = reserved
+9 = bootp
+.fi
+.RE
+.PP
+.B ip-address \fIdata\fR lookup, examine
+.RS 0.5i
+The IP address of the lease.
+.RE
+.PP
+.B dhcp-client-identifier \fIdata\fR lookup, examine, update
+.RS 0.5i
+The
+client identifier that the client used when it acquired the lease.
+Not all clients send client identifiers, so this may be empty.
+.RE
+.PP
+.B client-hostname \fIdata\fR examine, update
+.RS 0.5i
+The value the client sent in the host-name option.
+.RE
+.PP
+.B host \fIhandle\fR examine
+.RS 0.5i
+the host declaration associated with this lease, if any.
+.RE
+.PP
+.B subnet \fIhandle\fR examine
+.RS 0.5i
+the subnet object associated with this lease (the subnet object is not
+currently supported).
+.RE
+.PP
+.B pool \fIhandle\fR examine
+.RS 0.5i
+the pool object associted with this lease (the pool object is not
+currently supported).
+.RE
+.PP
+.B billing-class \fIhandle\fR examine
+.RS 0.5i
+the handle to the class to which this lease is currently billed, if
+any (the class object is not currently supported).
+.RE
+.PP
+.B hardware-address \fIdata\fR examine, update
+.RS 0.5i
+the hardware address (chaddr) field sent by the client when it
+acquired its lease.
+.RE
+.PP
+.B hardware-type \fIinteger\fR examine, update
+.RS 0.5i
+the type of the network interface that the client reported when it
+acquired its lease.
+.RE
+.PP
+.B ends \fItime\fR examine
+.RS 0.5i
+the time when the lease's current state ends, as understood by the
+client.
+.RE
+.PP
+.B tstp \fItime\fR examine
+.RS 0.5i
+the time when the lease's current state ends, as understood by the
+server.
+.RE
+.B tsfp \fItime\fR examine
+.RS 0.5i
+the time when the lease's current state ends, as understood by the
+failover peer (if there is no failover peer, this value is
+undefined).
+.RE
+.PP
+.B cltt \fItime\fR examine
+.RS 0.5i
+The time of the last transaction with the client on this lease.
+.RE
+.SH THE HOST OBJECT
+Hosts can be created, destroyed, looked up, examined and modified.
+If a host declaration is created or deleted using OMAPI, that
+information will be recorded in the dhcpd.leases file.   It is
+permissible to delete host declarations that are declared in the
+dhcpd.conf file.
+.PP
+Hosts have the following attributes:
+.PP
+.B name \fIdata\fR lookup, examine, modify
+.RS 0.5i
+the name of the host declaration.   This name must be unique among all
+host declarations.
+.RE
+.PP
+.B group \fIhandle\fR examine, modify
+.RS 0.5i
+the named group associated with the host declaration, if there is one.
+.RE
+.PP
+.B hardware-address \fIdata\fR lookup, examine, modify
+.RS 0.5i
+the link-layer address that will be used to match the client, if any.
+Only valid if hardware-type is also present.
+.RE
+.PP
+.B hardware-type \fIinteger\fR lookup, examine, modify
+.RS 0.5i
+the type of the network interface that will be used to match the
+client, if any.   Only valid if hardware-address is also present.
+.RE
+.PP
+.B dhcp-client-identifier \fIdata\fR lookup, examine, modify
+.RS 0.5i
+the dhcp-client-identifier option that will be used to match the
+client, if any.
+.RE
+.PP
+.B ip-address \fIdata\fR examine, modify
+.RS 0.5i
+a fixed IP address which is reserved for a DHCP client that matches
+this host declaration.   The IP address will only be assigned to the
+client if it is valid for the network segment to which the client is
+connected.
+.RE
+.PP
+.B statements \fIdata\fR modify
+.RS 0.5i
+a list of statements in the format of the dhcpd.conf file that will be
+executed whenever a message from the client is being processed.
+.RE
+.PP
+.B known \fIinteger\fR examine, modify
+.RS 0.5i
+if nonzero, indicates that a client matching this host declaration
+will be treated as \fIknown\fR in pool permit lists.   If zero, the
+client will not be treated as known.
+.RE
+.SH THE GROUP OBJECT
+Named groups can be created, destroyed, looked up, examined and
+modified.  If a group declaration is created or deleted using OMAPI,
+that information will be recorded in the dhcpd.leases file.  It is
+permissible to delete group declarations that are declared in the
+dhcpd.conf file.
+.PP
+Named groups currently can only be associated with
+hosts - this allows one set of statements to be efficiently attached
+to more than one host declaration.   
+.PP
+Groups have the following attributes:
+.PP
+.B name \fIdata\fR
+.RS 0.5i
+the name of the group.  All groups that are created using OMAPI must
+have names, and the names must be unique among all groups.
+.RE
+.PP
+.B statements \fIdata\fR
+.RS 0.5i
+a list of statements in the format of the dhcpd.conf file that will be
+executed whenever a message from a client whose host declaration
+references this group is processed.
+.RE
+.SH THE CONTROL OBJECT
+The control object allows you to shut the server down.   If the server
+is doing failover with another peer, it will make a clean transition
+into the shutdown state and notify its peer, so that the peer can go
+into partner down, and then record the "recover" state in the lease
+file so that when the server is restarted, it will automatically
+resynchronize with its peer.
+.PP
+On shutdown the server will also attempt to cleanly shut down all
+OMAPI connections.  If these connections do not go down cleanly after
+five seconds, they are shut down pre-emptively.  It can take as much
+as 25 seconds from the beginning of the shutdown process to the time
+that the server actually exits.
+.PP
+To shut the server down, open its control object and set the state
+attribute to 2.
 .SH FILES
 .B /etc/dhcpd.conf, /var/db/dhcpd.leases, /var/run/dhcpd.pid,
 .B /var/db/dhcpd.leases~.
@@ -368,8 +582,10 @@ in dhcpd.conf(5).
 dhclient(8), dhcrelay(8), dhcpd.conf(5), dhcpd.leases(5)
 .SH AUTHOR
 .B dhcpd(8)
-was written by Ted Lemon <mellon@vix.com>
-under a contract with Vixie Labs.   Funding
-for this project was provided by the Internet Software Consortium.
-Information about the Internet Software Consortium can be found at
-.B http://www.isc.org/isc.
+was originally written by Ted Lemon under a contract with Vixie Labs.
+Funding for this project was provided by the Internet Software
+Consortium.   Version 3 of the DHCP server was funded by Nominum, Inc.
+Information about the Internet Software Consortium is available at
+.B http://www.isc.org/isc\fR.
+Information about Nominum and support contracts for DHCP and BIND can
+be found at \fBhttp://www.nominum.com\fR.

@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: discover.c,v 1.14 2001/05/26 00:37:45 christos Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: discover.c,v 1.15 2001/06/18 19:01:53 drochner Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -170,8 +170,7 @@ void discover_interfaces (state)
 
 	/* Get the interface configuration information... */
 
-#ifdef SIOCGIFCONF_NULL_BUF_GIVES_CORRECT_LEN
-
+#ifdef SIOCGIFCONF_ZERO_PROBE
 	/* linux will only tell us how long a buffer it wants if we give it
 	 * a null buffer first. So, do a dry run to figure out the length.
 	 * 
@@ -182,24 +181,13 @@ void discover_interfaces (state)
 
 	ic.ifc_len = 0;
 	ic.ifc_ifcu.ifcu_buf = (caddr_t)NULL;
-
-	i = ioctl(sock, SIOCGIFCONF, &ic);
-	if (i < 0)
-		log_fatal ("ioctl: SIOCGIFCONF: %m");
-
-	ic.ifc_ifcu.ifcu_buf = dmalloc ((size_t)ic.ifc_len, MDL);
-	if (!ic.ifc_ifcu.ifcu_buf)
-		log_fatal ("Can't allocate SIOCGIFCONF buffer.");
-
-#else /* SIOCGIFCONF_NULL_BUF_GIVES_CORRECT_LEN */
-
+#else
 	/* otherwise, we just feed it a starting size, and it'll tell us if
 	 * it needs more */
 
 	ic.ifc_len = sizeof buf;
 	ic.ifc_ifcu.ifcu_buf = (caddr_t)buf;
-
-#endif /* SIOCGIFCONF_NULL_BUF_GIVES_CORRECT_LEN */
+#endif
 
       gifconf_again:
 	i = ioctl(sock, SIOCGIFCONF, &ic);
@@ -207,15 +195,34 @@ void discover_interfaces (state)
 	if (i < 0)
 		log_fatal ("ioctl: SIOCGIFCONF: %m");
 
+#ifdef SIOCGIFCONF_ZERO_PROBE
+	/* Workaround for SIOCGIFCONF bug on some Linux versions. */
+	if (ic.ifc_ifcu.ifcu_buf == 0 && ic.ifc_len == 0) {
+		ic.ifc_len = sizeof buf;
+		ic.ifc_ifcu.ifcu_buf = (caddr_t)buf;
+		goto gifconf_again;
+	}
+#endif
+
 	/* If the SIOCGIFCONF resulted in more data than would fit in
 	   a buffer, allocate a bigger buffer. */
-	if (ic.ifc_ifcu.ifcu_buf == buf &&
-	    ic.ifc_len > sizeof buf) {
+	if ((ic.ifc_ifcu.ifcu_buf == buf 
+#ifdef SIOCGIFCONF_ZERO_PROBE
+	     || ic.ifc_ifcu.ifcu_buf == 0
+#endif
+		) && ic.ifc_len > sizeof buf) {
 		ic.ifc_ifcu.ifcu_buf = dmalloc ((size_t)ic.ifc_len, MDL);
 		if (!ic.ifc_ifcu.ifcu_buf)
 			log_fatal ("Can't allocate SIOCGIFCONF buffer.");
 		goto gifconf_again;
+#ifdef SIOCGIFCONF_ZERO_PROBE
+	} else if (ic.ifc_ifcu.ifcu_buf == 0) {
+		ic.ifc_ifcu.ifcu_buf = (caddr_t)buf;
+		ic.ifc_len = sizeof buf;
+		goto gifconf_again;
+#endif
 	}
+
 		
 	/* If we already have a list of interfaces, and we're running as
 	   a DHCP server, the interfaces were requested. */
@@ -419,6 +426,7 @@ void discover_interfaces (state)
 				log_fatal ("Can't allocate interface %s: %s",
 					   name, isc_result_totext (status));
 			tmp -> flags = ir;
+			strncpy (tmp -> name, name, IFNAMSIZ);
 			interface_reference (&tmp -> next, interfaces, MDL);
 			interface_dereference (&interfaces, MDL);
 			interface_reference (&interfaces, tmp, MDL);
@@ -481,6 +489,9 @@ void discover_interfaces (state)
 
 #ifndef HAVE_ARPHRD_IEEE802
 # define ARPHRD_IEEE802 HTYPE_IEEE802
+#endif
+#if defined (HAVE_ARPHRD_IEEE802_TR)
+		      case ARPHRD_IEEE802_TR:
 #endif
 		      case ARPHRD_IEEE802:
 			tmp -> hw_address.hlen = 7;
@@ -844,8 +855,29 @@ isc_result_t dhcp_interface_destroy (omapi_object_t *h,
 		return ISC_R_INVALIDARG;
 	interface = (struct interface_info *)h;
 
-	if (interface -> ifp)
+	if (interface -> ifp) {
 		dfree (interface -> ifp, file, line);
+		interface -> ifp = 0;
+	}
+	if (interface -> next)
+		interface_dereference (&interface -> next, file, line);
+	if (interface -> circuit_id) {
+		dfree (interface -> circuit_id, file, line);
+		interface -> circuit_id = 0;
+		interface -> circuit_id_len = 0;
+	}
+	if (interface -> remote_id) {
+		dfree (interface -> remote_id, file, line);
+		interface -> remote_id = 0;
+		interface -> remote_id_len = 0;
+	}		
+	if (interface -> rbuf) {
+		dfree (interface -> rbuf, file, line);
+		interface -> rbuf = (unsigned char *)0;
+	}
+	if (interface -> client)
+		interface -> client = (struct client_state *)0;
+
 	return ISC_R_SUCCESS;
 }
 
@@ -928,6 +960,9 @@ isc_result_t dhcp_interface_lookup (omapi_object_t **ip,
 	omapi_value_t *tv = (omapi_value_t *)0;
 	isc_result_t status;
 	struct interface_info *interface;
+
+	if (!ref)
+		return ISC_R_NOKEYS;
 
 	/* First see if we were sent a handle. */
 	status = omapi_get_value_str (ref, id, "handle", &tv);

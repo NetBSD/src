@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: print.c,v 1.4 2001/04/02 23:45:56 mellon Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: print.c,v 1.5 2001/06/18 19:01:55 drochner Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -111,7 +111,7 @@ char *quotify_buf (const unsigned char *s, unsigned len,
 			if (s [i] == ' ')
 				*nsp++ = ' ';
 			else if (!isascii (s [i]) || !isprint (s [i])) {
-				sprintf (nsp, "\\%3.3o", s [i]);
+				sprintf (nsp, "\\%03o", s [i]);
 				nsp += 4;
 			} else if (s [i] == '"' || s [i] == '\\') {
 				*nsp++ = '\\';
@@ -133,7 +133,7 @@ char *print_hw_addr (htype, hlen, data)
 	char *s;
 	int i;
 
-	if (hlen == 0)
+	if (hlen <= 0)
 		habuf [0] = 0;
 	else {
 		s = habuf;
@@ -177,6 +177,7 @@ void print_lease (lease)
 void dump_packet_option (struct option_cache *oc,
 			 struct packet *packet,
 			 struct lease *lease,
+			 struct client_state *client,
 			 struct option_state *in_options,
 			 struct option_state *cfg_options,
 			 struct binding_scope **scope,
@@ -193,11 +194,11 @@ void dump_packet_option (struct option_cache *oc,
 		name = "";
 		dot = "";
 	}
-	if (evaluate_option_cache (&ds, packet, lease,
+	if (evaluate_option_cache (&ds, packet, lease, client,
 				   in_options, cfg_options, scope, oc, MDL)) {
 		log_debug ("  option %s%s%s %s;\n",
 			   name, dot, oc -> option -> name,
-			   pretty_print_option (oc -> option -> code,
+			   pretty_print_option (oc -> option,
 						ds.data, ds.len, 1, 1));
 		data_string_forget (&ds, MDL);
 	}
@@ -232,6 +233,7 @@ void dump_packet (tp)
 		for (i = 0; i < tp -> options -> universe_count; i++) {
 			if (tp -> options -> universes [i]) {
 				option_space_foreach (tp, (struct lease *)0,
+						      (struct client_state *)0,
 						      (struct option_state *)0,
 						      tp -> options,
 						      &global_scope,
@@ -954,7 +956,7 @@ static unsigned print_subexpression (expr, buf, len)
 }
 
 void print_expression (name, expr)
-	char *name;
+	const char *name;
 	struct expression *expr;
 {
 	char buf [1024];

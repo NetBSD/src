@@ -28,9 +28,6 @@ dhclient - Dynamic Host Configuration Protocol (DHCP) Client
 .B -d
 ]
 [
-.B -D
-]
-[
 .B -q
 ]
 [
@@ -65,6 +62,9 @@ relay
 ]
 [
 .B -n
+]
+[
+.B -nw
 ]
 [
 .B -w
@@ -182,14 +182,6 @@ flag should be specified.  This is useful when running the client
 under a debugger, or when running it out of inittab on System V
 systems.
 .PP
-The client writes a temporary shell script whenever it invokes
-dhclient-script.   This script is normally deleted after the client
-runs, but it can be helpful when debugging the client script to see
-what the client wrote.   The client can be configured not to delete
-these scripts by specifying the
-.B -D
-flag.
-.PP
 The client normally prints a startup message and displays the
 protocol sequence to the standard error descriptor until it has
 acquired an address, and then only logs messages using the
@@ -204,7 +196,8 @@ required by the DHCP protocol.  Some cable ISPs require their clients
 to notify the server if they wish to release an assigned IP address.
 The
 .B -r
-flag explicitly releases the current lease.
+flag explicitly releases the current lease, and once the lease has been
+released, the client exits.
 .PP
 The
 .B -1
@@ -250,8 +243,45 @@ using the
 flag.   This is most likely to be useful in combination with the
 .B -w
 flag.
+.PP
+The client can also be instructed to become a daemon immediately, rather
+than waiting until it has acquired an IP address.   This can be done by
+supplying the
+.B -nw
+flag.
 .SH CONFIGURATION
 The syntax of the dhclient.conf(5) file is discussed seperately.
+.SH OMAPI
+The DHCP client provides some ability to control it while it is
+running, without stopping it.  This capability is provided using OMAPI,
+an API for manipulating remote objects.  OMAPI clients connect to the
+client using TCP/IP, authenticate, and can then examine the client's
+current status and make changes to it. 
+.PP
+Rather than implementing the underlying OMAPI protocol directly, user
+programs should use the dhcpctl API or OMAPI itself.   Dhcpctl is a
+wrapper that handles some of the housekeeping chores that OMAPI does
+not do automatically.   Dhcpctl and OMAPI are documented in \fBdhcpctl(3)\fR
+and \fBomapi(3)\fR.   Most things you'd want to do with the client can
+be done directly using the \fBomshell(1)\fR command, rather than
+having to write a special program.
+.SH THE CONTROL OBJECT
+The control object allows you to shut the client down, releasing all
+leases that it holds and deleting any DNS records it may have added.
+It also allows you to pause the client - this unconfigures any
+interfaces the client is using.   You can then restart it, which
+causes it to reconfigure those interfaces.   You would normally pause
+the client prior to going into hibernation or sleep on a laptop
+computer.   You would then resume it after the power comes back.
+This allows PC cards to be shut down while the computer is hibernating
+or sleeping, and then reinitialized to their previous state once the
+computer comes out of hibernation or sleep.
+.PP
+The control object has one attribute - the state attribute.   To shut
+the client down, set its state attribute to 2.   It will automatically
+do a DHCPRELEASE.   To pause it, set its state attribute to 3.   To
+resume it, set its state attribute to 4.
+.PP
 .SH FILES
 .B /sbin/dhclient-script
 .B /etc/dhclient.conf, /var/db/dhclient.leases, /var/run/dhclient.pid,

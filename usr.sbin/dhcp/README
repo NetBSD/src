@@ -1,6 +1,6 @@
 	    Internet Software Consortium DHCP Distribution
-		   Version 3, Beta 2, Patchlevel 24
-			    April 5, 2001
+		    Version 3, Release Candidate 8
+			    May 17, 2001
 
 			     README FILE
 
@@ -142,14 +142,14 @@ information.   On Digital Unix, type ``man pfilt''.
 To build the DHCP Distribution, unpack the compressed tar file using
 the tar utility and the gzip command - type something like:
 
-	zcat dhcp-3.0b2pl24.tar.gz |tar xvf -
+	zcat dhcp-3.0rc8.tar.gz |tar xvf -
 
 On BSD/OS, you have to type gzcat, not zcat, and you may run into
 similar problems on other operating systems.
 
 			    CONFIGURING IT
 
-Now, cd to the dhcp-3.0b2pl24 subdirectory that you've just
+Now, cd to the dhcp-3.0rc8 subdirectory that you've just
 created and configure the source tree by typing:
 
 		./configure
@@ -381,18 +381,25 @@ Linux Packet Filter.
 
 SCO has the same problem as Linux (described earlier).  The thing is,
 SCO *really* doesn't want to let you add a host route to the all-ones
-broadcast address.  One technique that has been successful on some
-versions of SCO is the very bizarre command:
+broadcast address.
 
-	ifconfig net0 alias 10.1.1.1 netmask 8.0.0.0
+On more recent versions of SCO, you can do this:
+
+  ifconfig net0 xxx.xxx.xxx.xxx netmask 0xNNNNNNNN broadcast 255.255.255.255
+
+If this doesn't work, you can also try the following strange hack:
+
+  ifconfig net0 alias 10.1.1.1 netmask 8.0.0.0
 
 Apparently this works because of an interaction between SCO's support
 for network classes and the weird netmask.  The 10.* network is just a
 dummy that can generally be assumed to be safe.   Don't ask why this
-works.   Just try it.   If it works for you, great.   If not, SCO is
-supposedly adding hooks to support real DHCP service in a future
-release - I have this on good authority from the people at SCO who do
-*their* DHCP server and client.
+works.   Just try it.   If it works for you, great.   SCO has added
+support for doing DHCP in a more sensible way, but I have not had the
+time or cause to implement them.   If you are interested in this, and
+are able to hack your way out of a wet paper back without assistance,
+we'd appreciate it if you'd give it a try, but don't expect too much
+support from us (sorry!).
 
 				HP-UX
 

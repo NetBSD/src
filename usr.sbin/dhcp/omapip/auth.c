@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: auth.c,v 1.1.1.2 2001/06/18 18:13:21 drochner Exp $ Copyright 1998-2000 The Internet Software Consortium.";
+"$Id: auth.c,v 1.2 2001/06/18 19:01:57 drochner Exp $ Copyright 1998-2000 The Internet Software Consortium.";
 #endif
 
 #include <omapip/omapip_p.h>

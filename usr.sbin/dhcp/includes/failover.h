@@ -239,7 +239,8 @@ enum failover_state {
 	recover_done,
 	shut_down,
 	paused,
-	startup
+	startup,
+	recover_wait
 };
 
 /* Service states are simplifications of failover states, particularly
