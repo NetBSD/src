@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.79 1999/01/24 07:42:34 scottr Exp $
+#	$NetBSD: Makefile,v 1.80 1999/01/24 19:18:54 scottr Exp $
 
 .include <bsd.own.mk>			# for configuration variables.
 
@@ -34,7 +34,7 @@ includes-gnu: includes-include includes-sys
 # do the expected thing.
 .if exists(domestic) && \
     (make(clean) || make(cleandir) || make(obj) || \
-    (!defined(EXPORTABLE_SYSTEM) && (make(includes) || make(install))))
+    (!defined(_BUILD) && (make(includes) || make(install))))
 SUBDIR+= domestic
 .endif
 
@@ -84,14 +84,14 @@ build: beforeinstall
 	    ${MAKE} NOMAN= install && ${MAKE} cleandir)
 .endif
 .endif
-	${MAKE} EXPORTABLE_SYSTEM= includes
+	${MAKE} _BUILD= includes
 	(cd ${.CURDIR}/lib/csu && \
 	    ${MAKE} depend && ${MAKE} ${_J} NOMAN= && ${MAKE} NOMAN= install)
 	(cd ${.CURDIR}/lib && \
 	    ${MAKE} depend && ${MAKE} ${_J} NOMAN= && ${MAKE} NOMAN= install)
 	(cd ${.CURDIR}/gnu/lib && \
 	    ${MAKE} depend && ${MAKE} ${_J} NOMAN= && ${MAKE} NOMAN= install)
-	${MAKE} depend && ${MAKE} ${_J} && ${MAKE} EXPORTABLE_SYSTEM= install
+	${MAKE} depend && ${MAKE} ${_J} && ${MAKE} _BUILD= install
 .if exists(domestic) && !defined(EXPORTABLE_SYSTEM)
 	(cd ${.CURDIR}/domestic && ${MAKE} ${_J} _SLAVE_BUILD= build)
 .endif
