@@ -36,6 +36,9 @@
  *	@(#)xdr_subs.h	7.3 (Berkeley) 6/28/90
  */
 
+#ifndef _NFS_XDR_SUBS_H_
+#define _NFS_XDR_SUBS_H_
+
 /*
  * Macros used for conversion to/from xdr representation by nfs...
  * These use the MACHINE DEPENDENT routines ntohl, htonl
@@ -55,3 +58,4 @@
 				((struct timeval *)(t))->tv_usec=htonl( \
 				((struct timeval *)(f))->tv_usec);}
 
+#endif /* !_NFS_XDR_SUBS_H_ */
