@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile.h,v 1.4 2003/02/24 10:51:05 pk Exp $	 */
+/*	$NetBSD: loadfile.h,v 1.5 2003/04/29 13:03:55 scw Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,10 @@
 int	loadfile(const char *, u_long *, int);
 int	fdloadfile(int fd, u_long *, int);
 
-#include "machine/loadfile_machdep.h"
+#ifndef MACHINE_LOADFILE_MACHDEP
+#define MACHINE_LOADFILE_MACHDEP "machine/loadfile_machdep.h"
+#endif
+#include MACHINE_LOADFILE_MACHDEP
 
 #ifdef BOOT_ECOFF
 #include <sys/exec_ecoff.h>
