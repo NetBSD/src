@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.14 2000/06/15 15:34:32 pk Exp $	*/
+/*	$NetBSD: hme.c,v 1.15 2000/06/25 01:05:16 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -439,16 +439,16 @@ hme_meminit(sc)
 	 * Initialize transmit buffer descriptors
 	 */
 	for (i = 0; i < ntbuf; i++) {
-		HME_XD_SETADDR(hr->rb_txd, i, txbufdma + i * _HME_BUFSZ);
-		HME_XD_SETFLAGS(hr->rb_txd, i, 0);
+		HME_XD_SETADDR(sc->sc_pci, hr->rb_txd, i, txbufdma + i * _HME_BUFSZ);
+		HME_XD_SETFLAGS(sc->sc_pci, hr->rb_txd, i, 0);
 	}
 
 	/*
 	 * Initialize receive buffer descriptors
 	 */
 	for (i = 0; i < nrbuf; i++) {
-		HME_XD_SETADDR(hr->rb_rxd, i, rxbufdma + i * _HME_BUFSZ);
-		HME_XD_SETFLAGS(hr->rb_rxd, i,
+		HME_XD_SETADDR(sc->sc_pci, hr->rb_rxd, i, rxbufdma + i * _HME_BUFSZ);
+		HME_XD_SETFLAGS(sc->sc_pci, hr->rb_rxd, i,
 				HME_XD_OWN | HME_XD_ENCODE_RSIZE(_HME_BUFSZ));
 	}
 
@@ -839,7 +839,7 @@ hme_start(ifp)
 		/*
 		 * Initialize transmit registers and start transmission
 		 */
-		HME_XD_SETFLAGS(txd, ri,
+		HME_XD_SETFLAGS(sc->sc_pci, txd, ri,
 			HME_XD_OWN | HME_XD_SOP | HME_XD_EOP |
 			HME_XD_ENCODE_TSIZE(len));
 
@@ -895,7 +895,7 @@ hme_tint(sc)
 		if (sc->sc_rb.rb_td_nbusy <= 0)
 			break;
 
-		txflags = HME_XD_GETFLAGS(sc->sc_rb.rb_txd, ri);
+		txflags = HME_XD_GETFLAGS(sc->sc_pci, sc->sc_rb.rb_txd, ri);
 
 		if (txflags & HME_XD_OWN)
 			break;
@@ -938,7 +938,7 @@ hme_rint(sc)
 	 * Process all buffers with valid data.
 	 */
 	for (;;) {
-		flags = HME_XD_GETFLAGS(xdr, ri);
+		flags = HME_XD_GETFLAGS(sc->sc_pci, xdr, ri);
 		if (flags & HME_XD_OWN)
 			break;
 
@@ -951,7 +951,7 @@ hme_rint(sc)
 		}
 
 		/* This buffer can be used by the hardware again */
-		HME_XD_SETFLAGS(xdr, ri,
+		HME_XD_SETFLAGS(sc->sc_pci, xdr, ri,
 				HME_XD_OWN | HME_XD_ENCODE_RSIZE(_HME_BUFSZ));
 
 		if (++ri == nrbuf)

@@ -1,4 +1,4 @@
-/*	$NetBSD: hmereg.h,v 1.4 2000/01/28 15:52:34 pk Exp $	*/
+/*	$NetBSD: hmereg.h,v 1.5 2000/06/25 01:05:17 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -264,13 +264,14 @@ struct hme_xd {
 #define HME_XD_SIZE			8
 #define HME_XD_FLAGS(base, index)	((base) + ((index) * HME_XD_SIZE) + 0)
 #define HME_XD_ADDR(base, index)	((base) + ((index) * HME_XD_SIZE) + 4)
-#define HME_XD_GETFLAGS(b, i)				\
-	(*((u_int32_t *)HME_XD_FLAGS(b,i)))
-#define HME_XD_SETFLAGS(b, i, f)	do {		\
-	*((u_int32_t *)HME_XD_FLAGS(b,i)) = (f);	\
+#define HME_XD_GETFLAGS(p, b, i)					\
+	(p) ? le32toh(*((u_int32_t *)HME_XD_FLAGS(b,i))) :		\
+		(*((u_int32_t *)HME_XD_FLAGS(b,i)))
+#define HME_XD_SETFLAGS(p, b, i, f)	do {				\
+	*((u_int32_t *)HME_XD_FLAGS(b,i)) = ((p) ? htole32(f) : (f));	\
 } while(0)
-#define HME_XD_SETADDR(b, i, a)	do {			\
-	*((u_int32_t *)HME_XD_ADDR(b,i)) = (a);		\
+#define HME_XD_SETADDR(p, b, i, a)	do {				\
+	*((u_int32_t *)HME_XD_ADDR(b,i)) = ((p) ? htole32(a) : (a));	\
 } while(0)
 
 /* Descriptor flag values */
