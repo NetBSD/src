@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2410_start.S,v 1.1 2003/07/31 20:11:45 bsh Exp $ */
+/*	$NetBSD: smdk2410_start.S,v 1.2 2003/08/04 12:38:57 bsh Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -53,6 +53,11 @@
 
 	.global	_C_LABEL(smdk2410_start)
 _C_LABEL(smdk2410_start):
+	/* Disable interrupt */
+	mrs	r0, cpsr
+	orr	r0, r0, #I32_bit
+	msr	cpsr, r0
+
 	/* Are we running on right place ? */
 	adr r0, _C_LABEL(smdk2410_start)
 	ldr	r2, =KERNEL_TEXT_ADDR
