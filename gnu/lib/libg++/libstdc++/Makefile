@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1996/12/22 13:35:51 pk Exp $
+#	$NetBSD: Makefile,v 1.6 1997/03/16 15:45:17 veego Exp $
 
 LIB=	stdc++
 
@@ -114,8 +114,8 @@ typeinfoi.po: typeinfoi.cc
 	@rm -f $(.TARGET).o
 
 typeinfoi.so: typeinfoi.cc
-	@echo "$(COMPILE.cc) $(PICFLAG) -frtti $(.IMPSRC) -o $(.TARGET)"
-	@$(COMPILE.cc) $(PICFLAG) -frtti $(.IMPSRC) -o $(.TARGET).o
+	@echo "$(COMPILE.cc) $(CPICFLAGS) -frtti $(.IMPSRC) -o $(.TARGET)"
+	@$(COMPILE.cc) $(CPICFLAGS) -frtti $(.IMPSRC) -o $(.TARGET).o
 	@$(LD) -x -r $(.TARGET).o -o $(.TARGET)
 	@rm -f $(.TARGET).o
 
@@ -132,8 +132,8 @@ stdexcepti.po: stdexcepti.cc
 	@rm -f $(.TARGET).o
 
 stdexcepti.so: stdexcepti.cc
-	@echo "$(COMPILE.cc) $(PICFLAG) -frtti $(.IMPSRC) -o $(.TARGET)"
-	@$(COMPILE.cc) $(PICFLAG) -frtti $(.IMPSRC) -o $(.TARGET).o
+	@echo "$(COMPILE.cc) $(CPICFLAGS) -frtti $(.IMPSRC) -o $(.TARGET)"
+	@$(COMPILE.cc) $(CPICFLAGS) -frtti $(.IMPSRC) -o $(.TARGET).o
 	@$(LD) -x -r $(.TARGET).o -o $(.TARGET)
 	@rm -f $(.TARGET).o
 
