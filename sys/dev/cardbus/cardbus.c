@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.30 2001/03/28 01:55:55 enami Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.31 2001/04/25 09:20:32 haya Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -671,6 +671,12 @@ enable_function(struct cardbus_softc *sc, int cdstatus, int function)
 	if (sc->sc_poweron_func == 0) {
 		/* switch to 3V and/or wait for power to stabilize */
 		if (cdstatus & CARDBUS_3V_CARD) {
+			/*
+			 * sc_poweron_func must be substituted before
+			 * entering sleep, in order to avoid turn on
+			 * power twice.
+			 */
+			sc->sc_poweron_func |= (1 << function);
 			(*sc->sc_cf->cardbus_power)(sc->sc_cc, CARDBUS_VCC_3V);
 		} else {
 			/* No cards other than 3.3V cards. */
