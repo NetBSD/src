@@ -1,3 +1,4 @@
+/* $NetBSD: alpha-opc.c,v 1.1.1.1.2.1 1998/02/07 09:27:37 mellon Exp $ */
 /* alpha-opc.c -- Alpha AXP opcode list
    Copyright 1996 Free Software Foundation, Inc.
    Contributed by Richard Henderson <rth@tamu.edu>,
@@ -1268,7 +1269,7 @@ const struct alpha_opcode alpha_opcodes[] = {
   { "pal1d",		PCD(0x1D), BASE, ARG_PCD },
 
   { "hw_rei",		SPCD(0x1E,0x3FF8000), EV4|EV5, ARG_NONE },
-  { "hw_rei_stBASE",	SPCD(0x1E,0x3FFC000), EV5, ARG_NONE },
+  { "hw_rei_stall",	SPCD(0x1E,0x3FFC000), EV5, ARG_NONE },
   { "pal1e",		PCD(0x1E), BASE, ARG_PCD },
 
   { "hw_stl",		EV4HWMEM(0x1F,0x0), EV4, ARG_EV4HWMEM },
