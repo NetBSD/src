@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvcache.c,v 1.22 2003/04/02 15:14:22 yamt Exp $	*/
+/*	$NetBSD: nfs_srvcache.c,v 1.23 2003/05/21 13:50:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.22 2003/04/02 15:14:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.23 2003/05/21 13:50:54 yamt Exp $");
 
 #include "opt_iso.h"
 
@@ -81,9 +81,6 @@ long numnfsrvcache, desirednfsrvcache = NFSRVCACHESIZ;
 LIST_HEAD(nfsrvhash, nfsrvcache) *nfsrvhashtbl;
 TAILQ_HEAD(nfsrvlru, nfsrvcache) nfsrvlruhead;
 u_long nfsrvhash;
-
-#define TRUE	1
-#define	FALSE	0
 
 #define	NETFAMILY(rp) \
 		(((rp)->rc_flag & RC_INETADDR) ? AF_INET : AF_ISO)

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.167 2003/05/21 13:27:20 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.168 2003/05/21 13:50:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.167 2003/05/21 13:27:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.168 2003/05/21 13:50:55 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -87,10 +87,6 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.167 2003/05/21 13:27:20 yamt Exp $")
 #include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/in_var.h>
-
-/* Defs */
-#define	TRUE	1
-#define	FALSE	0
 
 /*
  * Global vfs data structures for nfs
