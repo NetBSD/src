@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.6 2001/09/16 15:45:43 uch Exp $	*/
+/*	$NetBSD: machdep.h,v 1.7 2001/09/17 17:03:45 uch Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -33,6 +33,10 @@
 extern char cpu_name[];
 extern struct device *booted_device;
 extern int booted_partition;
+
+#include <sys/kcore.h>
+extern phys_ram_seg_t mem_clusters[];
+extern int mem_cluster_cnt;
 
 int	badaddr(void *, u_int);
 void	makebootdev(char *);
