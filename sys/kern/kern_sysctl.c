@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.156 2003/12/29 04:16:25 atatat Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.157 2003/12/29 04:19:28 atatat Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.156 2003/12/29 04:16:25 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.157 2003/12/29 04:19:28 atatat Exp $");
 
 #include "opt_defcorename.h"
 #include "opt_insecure.h"
@@ -1310,7 +1310,6 @@ sysctl_destroy(SYSCTLFN_RWARGS)
 int
 sysctl_lookup(SYSCTLFN_RWARGS)
 {
-	struct proc *p = l->l_proc;
 	int error, rw;
 	size_t sz, len;
 	void *d;
@@ -1327,8 +1326,8 @@ sysctl_lookup(SYSCTLFN_RWARGS)
 	/*
 	 * some nodes are private, so only root can look into them.
 	 */
-	if ((rnode->sysctl_flags & SYSCTL_PRIVATE) &&
-	    (error = suser(p->p_ucred, &p->p_acflag)) != 0)
+	if (l != NULL && (rnode->sysctl_flags & SYSCTL_PRIVATE) &&
+	    (error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag)) != 0)
 		return (error);
 
 	/*
@@ -1383,7 +1382,7 @@ sysctl_lookup(SYSCTLFN_RWARGS)
 	else
 		d = rnode->sysctl_data;
 	if (SYSCTL_TYPE(rnode->sysctl_flags) == CTLTYPE_STRING)
-		sz = strlen(d) + 1;
+		sz = strlen(d) + 1; /* XXX@@@ possible fault here */
 	else
 		sz = rnode->sysctl_size;
 	if (oldp != NULL)
