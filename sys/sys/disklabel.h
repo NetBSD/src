@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)disklabel.h	7.19 (Berkeley) 5/7/91
- *	$Id: disklabel.h,v 1.14 1994/01/26 21:43:19 mw Exp $
+ *	$Id: disklabel.h,v 1.15 1994/01/28 13:39:53 deraadt Exp $
  */
 
 #ifndef _SYS_DISKLABEL_H_
@@ -343,7 +343,7 @@ struct cpu_disklabel {
 #endif /* i386 */
 
 #if defined(hp300) || defined(mac68k) || defined(vax) || defined(pc532) || \
-    defined(sun3) || defined(amiga)
+    defined(sun3) || defined(amiga) || defined(sparc)
 struct cpu_disklabel {
 };
 #endif
