@@ -12,7 +12,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: aha1742.c,v 1.20 1994/03/12 03:34:04 mycroft Exp $
+ *	$Id: aha1742.c,v 1.21 1994/03/12 04:10:11 mycroft Exp $
  */
 
 #include "ahb.h"
@@ -456,11 +456,12 @@ ahb_attach(struct isa_device *dev)
 {
 	static int firsttime;
 	static int firstswitch[NAHB];
-	int masunit = dev->id_parent->id_unit;
+	int masunit;
 	int r;
 
 	if (!dev->id_parent)
 		return 1;
+	masunit = dev->id_parent->id_unit;
 
 	if (!firstswitch[masunit]) {
 		firstswitch[masunit] = 1;

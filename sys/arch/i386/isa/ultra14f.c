@@ -15,7 +15,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: ultra14f.c,v 1.21 1994/03/12 03:34:08 mycroft Exp $
+ *	$Id: ultra14f.c,v 1.22 1994/03/12 04:10:27 mycroft Exp $
  */
  
 #include <sys/types.h>
@@ -430,11 +430,12 @@ struct  isa_device *dev;
 {
 	static int firsttime;
 	static int firstswitch[NUHA];
-	int masunit = dev->id_parent->id_unit;
+	int masunit;
 	int r;
 
 	if (!dev->id_parent)
 		return 1;
+	masunit = dev->id_parent->id_unit;
 
 	if (!firstswitch[masunit]) {
 		firstswitch[masunit] = 1;
