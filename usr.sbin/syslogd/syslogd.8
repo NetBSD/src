@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslogd.8,v 1.36 2004/11/19 02:18:11 thorpej Exp $
+.\"	$NetBSD: syslogd.8,v 1.37 2004/11/19 18:48:29 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -134,12 +134,12 @@ configuration file.
 Without this option, messages at the specified priority or higher are
 logged.
 This option changes the default priority comparison from
-.Sq >=
+.Sq \*[Gt]=
 to
 .Sq = .
 .It Fl v
 Verbose logging.
-If specified once, the numberic facility and priority are logged with
+If specified once, the numeric facility and priority are logged with
 each locally-written message.
 If specified more than once, the names of the facility and priority are
 logged with each locally-written message.
