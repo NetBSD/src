@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.45 2003/02/03 22:29:07 jdolecek Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.46 2003/02/25 21:00:32 jrf Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.45 2003/02/03 22:29:07 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.46 2003/02/25 21:00:32 jrf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -315,6 +315,9 @@ procfs_rw(v)
 
 	case Pfd:
 		return (procfs_dofd(curp, p, pfs, uio));
+
+	case Puptime:
+		return (procfs_douptime(curp, p, pfs, uio));
 
 #ifdef __HAVE_PROCFS_MACHDEP
 	PROCFS_MACHDEP_NODETYPE_CASES
