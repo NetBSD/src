@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.96 2004/09/07 00:24:18 enami Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.97 2004/10/03 09:36:49 toshii Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.96 2004/09/07 00:24:18 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.97 2004/10/03 09:36:49 toshii Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -72,6 +72,13 @@ struct wdc_pcmcia_softc {
 	int sc_state;
 #define WDC_PCMCIA_ATTACHED	3
 };
+
+#ifndef __BUS_SPACE_HAS_STREAM_METHODS
+#define bus_space_read_region_stream_2 bus_space_read_region_2
+#define bus_space_read_region_stream_4 bus_space_read_region_4
+#define bus_space_write_region_stream_2 bus_space_write_region_2
+#define bus_space_write_region_stream_4 bus_space_write_region_4
+#endif /* __BUS_SPACE_HAS_STREAM_METHODS */
 
 static int wdc_pcmcia_match(struct device *, struct cfdata *, void *);
 static int wdc_pcmcia_validate_config_io(struct pcmcia_config_entry *);
