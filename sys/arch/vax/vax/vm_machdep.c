@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.78 2003/01/06 20:30:36 wiz Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.79 2003/01/18 07:10:35 thorpej Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -56,6 +56,7 @@
 #include <machine/cpu.h>
 #include <machine/sid.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include "opt_cputype.h"
@@ -111,13 +112,13 @@ procjmp(void *arg)
  * in both the stack and stacksize args), set up the user stack pointer
  * accordingly.
  *
- * cpu_fork() copies parent process trapframe and creates a fake CALLS
+ * cpu_lwp_fork() copies parent process trapframe and creates a fake CALLS
  * frame on top of it, so that it can safely call child_return().
  * We also take away mapping for the fourth page after pcb, so that
  * we get something like a "red zone" for the kernel stack.
  */
 void
-cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
+cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
     void (*func)(void *), void *arg)
 {
 	struct pcb *pcb;
@@ -127,28 +128,28 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 
 #ifdef DIAGNOSTIC
 	/*
-	 * if p1 != curproc && p1 == &proc0, we're creating a kernel thread.
+	 * if p1 != curlwp && p1 == &proc0, we're creating a kernel thread.
 	 */
-	if (p1 != curproc && p1 != &proc0)
-		panic("cpu_fork: curproc");
+	if (l1 != curlwp && l1 != &lwp0)
+		panic("cpu_lwp_fork: curlwp");
 #endif
 
 	/*
 	 * Copy the trap frame.
 	 */
-	tf = (struct trapframe *)((u_int)p2->p_addr + USPACE) - 1;
-	p2->p_addr->u_pcb.framep = tf;
-	bcopy(p1->p_addr->u_pcb.framep, tf, sizeof(*tf));
+	tf = (struct trapframe *)((u_int)l2->l_addr + USPACE) - 1;
+	l2->l_addr->u_pcb.framep = tf;
+	bcopy(l1->l_addr->u_pcb.framep, tf, sizeof(*tf));
 
 	/*
 	 * Activate address space for the new process.	The PTEs have
 	 * already been allocated by way of pmap_create().
 	 * This writes the page table registers to the PCB.
 	 */
-	pmap_activate(p2);
+	pmap_activate(l2);
 
 	/* Mark guard page invalid in kernel stack */
-	kvtopte((u_int)p2->p_addr + REDZONEADDR)->pg_v = 0;
+	kvtopte((u_int)l2->l_addr + REDZONEADDR)->pg_v = 0;
 
 	/*
 	 * Set up the calls frame above (below) the trapframe
@@ -167,7 +168,7 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 	 * Set up internal defs in PCB. This matches the "fake" CALLS frame
 	 * that were constructed earlier.
 	 */
-	pcb = &p2->p_addr->u_pcb;
+	pcb = &l2->l_addr->u_pcb;
 	pcb->iftrap = NULL;
 	pcb->KSP = (long)cf;
 	pcb->FP = (long)cf;
@@ -192,9 +193,34 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 	 * This is only interesting if the child will return to userspace,
 	 * but doesn't hurt otherwise.
 	 */
-	tf->r0 = p1->p_pid; /* parent pid. (shouldn't be needed) */
+	tf->r0 = l1->l_proc->p_pid; /* parent pid. (shouldn't be needed) */
 	tf->r1 = 1;
 	tf->psl = PSL_U|PSL_PREVU;
+}
+
+void
+cpu_setfunc(l, func, arg)
+	struct lwp *l;
+	void (*func) __P((void *));
+	void *arg;
+{
+	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct trapframe *tf = (struct trapframe *)(l->l_addr + USPACE) - 1;
+	struct callsframe *cf;
+	extern int sret;
+
+	cf = (struct callsframe *)tf - 1;
+	cf->ca_cond = 0;
+	cf->ca_maskpsw = 0x20000000;
+	cf->ca_pc = (unsigned)&sret;
+	cf->ca_argno = 1;
+	cf->ca_arg1 = (long)arg;
+
+	pcb->framep = tf;
+	pcb->KSP = (long)cf;
+	pcb->FP = (long)cf;
+	pcb->AP = (long)&cf->ca_argno;
+	pcb->PC = (long)func + 2;
 }
 
 int
@@ -206,8 +232,8 @@ cpu_exec_aout_makecmds(p, epp)
 }
 
 int
-sys_sysarch(p, v, retval)
-	struct proc *p;
+sys_sysarch(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -221,18 +247,19 @@ sys_sysarch(p, v, retval)
  * way to do this, but good for my purposes so far.
  */
 int
-cpu_coredump(p, vp, cred, chdr)
-	struct proc *p;
+cpu_coredump(l, vp, cred, chdr)
+	struct lwp *l;
 	struct vnode *vp;
 	struct ucred *cred;
 	struct core *chdr;
 {
+	struct proc *p = l->l_proc;
 	struct trapframe *tf;
 	struct md_coredump state;
 	struct coreseg cseg;
 	int error;
 
-	tf = p->p_addr->u_pcb.framep;
+	tf = l->l_addr->u_pcb.framep;
 	CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
 	chdr->c_hdrsize = sizeof(struct core);
 	chdr->c_seghdrsize = sizeof(struct coreseg);

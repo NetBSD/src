@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.20 2002/10/20 02:37:33 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.21 2003/01/18 06:58:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette.
@@ -149,6 +149,7 @@
 #include <sys/core.h>
 #include <sys/kcore.h>
 #include <sys/vnode.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #ifdef	KGDB
 #include <sys/kgdb.h>
@@ -411,12 +412,12 @@ cpu_startup()
  * Set registers on exec.
  */
 void
-setregs(p, pack, stack)
-	struct proc *p;
+setregs(l, pack, stack)
+	struct lwp *l;
 	struct exec_package *pack;
 	u_long stack;
 {
-	struct trapframe *tf = (struct trapframe *)p->p_md.md_regs;
+	struct trapframe *tf = (struct trapframe *)l->l_md.md_regs;
 
 	tf->tf_sr = PSL_USERSET;
 	tf->tf_pc = pack->ep_entry & ~1;
@@ -430,7 +431,7 @@ setregs(p, pack, stack)
 	tf->tf_regs[D7] = 0;
 	tf->tf_regs[A0] = 0;
 	tf->tf_regs[A1] = 0;
-	tf->tf_regs[A2] = (int)p->p_psstr;
+	tf->tf_regs[A2] = (int)l->l_proc->p_psstr;
 	tf->tf_regs[A3] = 0;
 	tf->tf_regs[A4] = 0;
 	tf->tf_regs[A5] = 0;
@@ -438,9 +439,9 @@ setregs(p, pack, stack)
 	tf->tf_regs[SP] = stack;
 
 	/* restore a null state frame */
-	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
+	l->l_addr->u_pcb.pcb_fpregs.fpf_null = 0;
 
-	p->p_md.md_flags = 0;
+	l->l_md.md_flags = 0;
 }
 
 /*

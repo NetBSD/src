@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.12 2002/10/20 02:37:33 chs Exp $	*/
+/*	$NetBSD: locore.s,v 1.13 2003/01/18 06:58:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -141,7 +141,7 @@ L_high_code:
 	movw	#PSL_USER,%sp@-		| tf_sr for user mode
 	clrl	%sp@-			| tf_stackadj
 	lea	%sp@(-64),%sp		| tf_regs[16]
-	lea	_C_LABEL(proc0),%a0	| proc0.p_md.md_regs = 
+	lea	_C_LABEL(lwp0),%a0	| proc0.p_md.md_regs = 
 	movl	%a1,%a0@(P_MDREGS)	|   trapframe
 	jbsr	_C_LABEL(main)		| main(&trapframe)
 	PANIC("main() returned")
@@ -543,209 +543,12 @@ BSS(want_resched,4)
  */
 #include <m68k/m68k/proc_subr.s>
 
-| Message for Lbadsw panic
-Lsw0:
-	.asciz	"cpu_switch"
-	.even
-
-	.data
-GLOBAL(masterpaddr)		| XXX compatibility (debuggers)
-GLOBAL(curpcb)
-	.long	0
-ASBSS(nullpcb,SIZEOF_PCB)
-	.text
-
 /*
- * At exit of a process, do a cpu_switch for the last time.
- * Switch to a safe stack and PCB, and select a new process to run.  The
- * old stack and u-area will be freed by the reaper.
+ * Use common m68k process/lwp switch and context save subroutines.
  */
-ENTRY(switch_exit)
-	movl	%sp@(4),%a0		| struct proc *p
-					| save state into garbage pcb
-	movl	#_ASM_LABEL(nullpcb),_C_LABEL(curpcb)
-	lea	_ASM_LABEL(tmpstk),%sp	| goto a tmp stack
+#undef FPCOPROC
+#include <m68k/m68k/switch_subr.s>
 
-	/* Schedule the vmspace and stack to be freed. */
-	movl	%a0,%sp@-		| exit2(p)
-	jbsr	_C_LABEL(exit2)
-	lea	%sp@(4),%sp		| pop args
-
-#if defined(LOCKDEBUG)
-	/* Acquire sched_lock */
-	jbsr	_C_LABEL(sched_lock_idle)
-#endif
-
-	jra	_C_LABEL(cpu_switch)
-
-/*
- * When no processes are on the runq, cpu_switch() branches to idle
- * to wait for something to come ready.
- */
-Lidle:
-#if defined(LOCKDEBUG)
-	/* Release sched_lock */
-	jbsr	_C_LABEL(sched_unlock_idle)
-#endif
-	stop	#PSL_LOWIPL
-GLOBAL(_Idle)				| See clock.c
-	movw	#PSL_HIGHIPL,%sr
-#if defined(LOCKDEBUG)
-	/* Acquire sched_lock */
-	jbsr	_C_LABEL(sched_lock_idle)
-#endif
-	movl	_C_LABEL(sched_whichqs),%d0
-	jeq	Lidle
-	jra	Lsw1
-
-Lbadsw:
-	movl	#Lsw0,%sp@-
-	jbsr	_C_LABEL(panic)
-	/*NOTREACHED*/
-
-/*
- * cpu_switch()
- * Hacked for sun3
- */
-ENTRY(cpu_switch)
-	movl	_C_LABEL(curpcb),%a0	| current pcb
-	movw	%sr,%a0@(PCB_PS)	| save sr before changing ipl
-#ifdef notyet
-	movl	_C_LABEL(curproc),%sp@-	| remember last proc running
-#endif
-	clrl	_C_LABEL(curproc)
-
-	/*
-	 * Find the highest-priority queue that isn't empty,
-	 * then take the first proc from that queue.
-	 */
-	movl	_C_LABEL(sched_whichqs),%d0
-	jeq	Lidle
-Lsw1:
-	/*
-	 * Interrupts are blocked, sched_lock is held.  If
-	 * we come here via Idle, %d0 contains the contents
-	 * of a non-zero sched_whichqs.
-	 */
-	moveq	#31,%d1
-1:	lsrl	#1,%d0
-	dbcs	%d1,1b
-	eorib	#31,%d1
-
-	movl	%d1,%d0
-	lslb	#3,%d1			| convert queue number to index
-	addl	#_C_LABEL(sched_qs),%d1	| locate queue (q)
-	movl	%d1,%a1
-	movl	%a1@(P_FORW),%a0	| p = q->p_forw
-	cmpal	%d1,%a0			| anyone on queue?
-	jeq	Lbadsw			| no, panic
-#ifdef DIAGNOSTIC
-	tstl	%a0@(P_WCHAN)
-	jne	Lbadsw
-	cmpb	#SRUN,%a0@(P_STAT)
-	jne	Lbadsw
-#endif
-	movl	%a0@(P_FORW),%a1@(P_FORW)	| q->p_forw = p->p_forw
-	movl	%a0@(P_FORW),%a1		| n = p->p_forw
-	movl	%a0@(P_BACK),%a1@(P_BACK)	| n->p_back = q
-	cmpal	%d1,%a1			| anyone left on queue?
-	jne	Lsw2			| yes, skip
-	movl	_C_LABEL(sched_whichqs),%d1
-	bclr	%d0,%d1			| no, clear bit
-	movl	%d1,_C_LABEL(sched_whichqs)
-Lsw2:
-	/* p->p_cpu initialized in fork1() for single-processor */
-	movb	#SONPROC,%a0@(P_STAT)	| p->p_stat = SONPROC
-	movl	%a0,_C_LABEL(curproc)
-	clrl	_C_LABEL(want_resched)
-#ifdef notyet
-	movl	%sp@+,%a1		| XXX - Make this work!
-	cmpl	%a0,%a1			| switching to same proc?
-	jeq	Lswdone			| yes, skip save and restore
-#endif
-	/*
-	 * Save state of previous process in its pcb.
-	 */
-	movl	_C_LABEL(curpcb),%a1
-	moveml	#0xFCFC,%a1@(PCB_REGS)	| save non-scratch registers
-	movl	%usp,%a2		| grab USP (a2 has been saved)
-	movl	%a2,%a1@(PCB_USP)	| and save it
-
-	/*
-	 * Now that we have saved all the registers that must be
-	 * preserved, we are free to use those registers until
-	 * we load the registers for the switched-to process.
-	 * In this section, keep:  %a0=curproc, %a1=curpcb
-	 */
-
-	clrl	%a0@(P_BACK)		| clear back link
-	movl	%a0@(P_ADDR),%a1	| get p_addr
-	movl	%a1,_C_LABEL(curpcb)
-
-#if defined(LOCKDEBUG)
-	/*
-	 * Done mucking with the run queues, release the
-	 * scheduler lock, but keep interrupts out.
-	 */
-	movl	%a0,%sp@-		| not args...
-	movl	%a1,%sp@-		| ...just saving
-	jbsr	_C_LABEL(sched_unlock_idle)
-	movl	%sp@+,%a1
-	movl	%sp@+,%a0
-#endif
-
-	/*
-	 * Load the new VM context (new MMU root pointer)
-	 */
-	movl	%a0@(P_VMSPACE),%a2	| vm = p->p_vmspace
-#ifdef DIAGNOSTIC
-| XXX fredette - tstl with an address register EA not supported
-| on the 68010, too lazy to fix this instance now.
-#if 0
-	tstl	%a2			| vm == VM_MAP_NULL?
-	jeq	Lbadsw			| panic
-#endif
-#endif
-	/*
-	 * Call _pmap_switch().
-	 */
-	movl	%a2@(VM_PMAP),%a2 	| pmap = vm->vm_map.pmap
-	pea	%a2@			| push pmap
-	jbsr	_C_LABEL(_pmap_switch)	| _pmap_switch(pmap)
-	addql	#4,%sp
-	movl	_C_LABEL(curpcb),%a1	| restore p_addr
-| Note: pmap_switch will clear the cache if needed.
-
-	/*
-	 * Reload the registers for the new process.
-	 * After this point we can only use %d0,%d1,%a0,%a1
-	 */
-	moveml	%a1@(PCB_REGS),#0xFCFC	| reload registers
-	movl	%a1@(PCB_USP),%a0
-	movl	%a0,%usp		| and USP
-
-	movw	%a1@(PCB_PS),%d0	| no, restore PS
-#ifdef DIAGNOSTIC
-	btst	#13,%d0			| supervisor mode?
-	jeq	Lbadsw			| no? panic!
-#endif
-	movw	%d0,%sr			| OK, restore PS
-	moveq	#1,%d0			| return 1 (for alternate returns)
-	rts
-
-/*
- * savectx(pcb)
- * Update pcb, saving current processor state.
- */
-ENTRY(savectx)
-	movl	%sp@(4),%a1
-	movw	%sr,%a1@(PCB_PS)
-	movl	%usp,%a0		| grab USP
-	movl	%a0,%a1@(PCB_USP)	| and save it
-	moveml	#0xFCFC,%a1@(PCB_REGS)	| save non-scratch registers
-
-	moveq	#0,%d0			| return 0
-	rts
 
 /*
  * Get callers current SP value.

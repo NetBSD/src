@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.80 2002/08/02 18:19:59 soren Exp $	*/
+/*	$NetBSD: locore2.c,v 1.81 2003/01/18 07:03:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -174,7 +174,7 @@ _save_symtab()
  * pre-vm-sytem virtual memory.  All this really does is to
  * set virtual_avail to the first page following preloaded
  * data (i.e. the kernel and its symbol table) and special
- * things that may be needed very early (proc0 upages).
+ * things that may be needed very early (lwp0 upages).
  * Once that is done, pmap_bootstrap() is called to do the
  * usual preparations for our use of the MMU.
  */
@@ -201,20 +201,20 @@ _vm_init()
 	nextva = m68k_round_page(esym);
 
 	/*
-	 * Setup the u-area pages (stack, etc.) for proc0.
+	 * Setup the u-area pages (stack, etc.) for lwp0.
 	 * This is done very early (here) to make sure the
 	 * fault handler works in case we hit an early bug.
-	 * (The fault handler may reference proc0 stuff.)
+	 * (The fault handler may reference lwp0 stuff.)
 	 */
 	proc0paddr = (struct user *) nextva;
 	nextva += USPACE;
 	memset((caddr_t)proc0paddr, 0, USPACE);
-	proc0.p_addr = proc0paddr;
+	lwp0.l_addr = proc0paddr;
 
 	/*
-	 * Now that proc0 exists, make it the "current" one.
+	 * Now that lwp0 exists, make it the "current" one.
 	 */
-	curproc = &proc0;
+	curlwp = &lwp0;
 	curpcb = &proc0paddr->u_pcb;
 
 	/* This does most of the real work. */
