@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.34 1998/01/15 02:26:29 cgd Exp $
+#	$NetBSD: GENERIC,v 1.35 1998/03/14 17:15:52 mark Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -217,6 +217,9 @@ scsibus* at ptsc?
 
 oak*	at podulebus?			# Oak SCSI I card
 scsibus* at oak?
+
+csa*	at podulebus?			# Cumana SCSI I adpater
+scsibus* at csa?
 
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 st*	at scsibus? target ? lun ?	# SCSI tape drives
