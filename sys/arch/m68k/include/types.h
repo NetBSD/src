@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)types.h	7.9 (Berkeley) 3/9/91
- *	$Id: types.h,v 1.2 1993/05/22 07:58:36 cgd Exp $
+ *	$Id: types.h,v 1.3 1994/03/14 02:12:15 cgd Exp $
  */
 
 #ifndef	_MACHTYPES_H_
@@ -47,5 +47,18 @@ typedef struct label_t {		/* consistent with HP-UX */
 
 typedef	u_long	vm_offset_t;
 typedef	u_long	vm_size_t;
+
+/*
+ * Basic integral types.  Omit the typedef if
+ * not possible for a machine/compiler combination.
+ */
+typedef	signed char		   int8_t;
+typedef	unsigned char		 u_int8_t;
+typedef	short			  int16_t;
+typedef	unsigned short		u_int16_t;
+typedef	int			  int32_t;
+typedef	unsigned int		u_int32_t;
+typedef	long long		  int64_t;
+typedef	unsigned long long	u_int64_t;
 
 #endif	/* _MACHTYPES_H_ */
