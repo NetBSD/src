@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_vnops.c	7.60 (Berkeley) 5/24/91
- *	$Id: nfs_vnops.c,v 1.17 1993/12/22 13:03:22 cgd Exp $
+ *	$Id: nfs_vnops.c,v 1.18 1994/01/04 14:11:04 cgd Exp $
  */
 
 /*
@@ -1029,7 +1029,13 @@ nfs_link(vp, ndp, p)
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
 
 	if (vp->v_mount != ndp->ni_dvp->v_mount) {
-		free(ndp->ni_pnbuf, M_NAMEI);
+		VOP_ABORTOP(ndp);
+		if (ndp->ni_dvp == ndp->ni_vp)
+			vrele(ndp->ni_dvp);
+		else
+			vput(ndp->ni_dvp);
+		if (ndp->ni_vp)
+			vrele(ndp->ni_vp);
 		return (EXDEV);
 	}
 	if (ndp->ni_dvp != vp)
