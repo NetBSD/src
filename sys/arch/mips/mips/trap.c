@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.159 2001/01/14 21:22:57 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.160 2001/01/16 06:01:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,12 +44,11 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.159 2001/01/14 21:22:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.160 2001/01/16 06:01:27 thorpej Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
 #include "opt_ddb.h"
-#include "opt_syscall_debug.h"
 
 #if !defined(MIPS1) && !defined(MIPS3)
 #error  Neither  "MIPS1" (r2000 family), "MIPS3" (r4000 family) was configured.
@@ -129,7 +128,6 @@ const char *trap_type[] = {
 };
 
 void trap __P((unsigned, unsigned, unsigned, unsigned, struct trapframe *));
-void syscall __P((unsigned, unsigned, unsigned));
 void ast __P((unsigned));
 
 vaddr_t MachEmulateBranch __P((struct frame *, vaddr_t, unsigned, int));
@@ -137,120 +135,6 @@ extern void MachEmulateFP __P((unsigned));
 extern void MachFPInterrupt __P((unsigned, unsigned, unsigned, struct frame *));
 
 #define DELAYBRANCH(x) ((int)(x)<0)
-/*
- * Process a system call.
- *
- * System calls are strange beasts.  They are passed the syscall number
- * in v0, and the arguments in the registers (as normal).  They return
- * an error flag in a3 (if a3 != 0 on return, the syscall had an error),
- * and the return value (if any) in v0 and possibly v1.
- */
-void
-syscall(status, cause, opc)
-	unsigned status;
-	unsigned cause;
-	unsigned opc;
-{
-	struct proc *p = curproc;
-	struct frame *frame = (struct frame *)p->p_md.md_regs;
-	int args[8], rval[2], error;
-	size_t code, numsys, nsaved, argsiz;
-	const struct sysent *callp;
-
-	uvmexp.syscalls++;
-
-	if (DELAYBRANCH(cause))
-		frame->f_regs[PC] = MachEmulateBranch(frame, opc, 0, 0);
-	else
-		frame->f_regs[PC] = opc + sizeof(int);
-	callp = p->p_emul->e_sysent;
-	numsys = p->p_emul->e_nsysent;
-	code = frame->f_regs[V0];
-	switch (code) {
-	case SYS_syscall:
-		/*
-		 * Code is first argument, followed by actual args.
-		 */
-		code = frame->f_regs[A0];
-		args[0] = frame->f_regs[A1];
-		args[1] = frame->f_regs[A2];
-		args[2] = frame->f_regs[A3];
-		nsaved = 3;
-		break;
-	case SYS___syscall:
-		/*
-		 * Like syscall, but code is a quad, so as to maintain
-		 * quad alignment for the rest of the arguments.
-		 */
-		code = frame->f_regs[A0 + _QUAD_LOWWORD];
-		args[0] = frame->f_regs[A2];
-		args[1] = frame->f_regs[A3];
-		nsaved = 2;
-		break;
-	default:
-		args[0] = frame->f_regs[A0];
-		args[1] = frame->f_regs[A1];
-		args[2] = frame->f_regs[A2];
-		args[3] = frame->f_regs[A3];
-		nsaved = 4;
-		break;
-	}
-	if (code >= p->p_emul->e_nsysent)
-		callp += p->p_emul->e_nosys;
-	else
-		callp += code;
-	argsiz = callp->sy_argsize / sizeof(int);
-	if (argsiz > nsaved) {
-		error = copyin(
-			(void *)((int *)(vaddr_t)frame->f_regs[SP] + 4),
-			(void *)(args + nsaved),
-			(argsiz - nsaved) * sizeof(int));
-		if (error)
-			goto bad;
-	}
-#ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, args);
-#endif
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p, code, callp->sy_argsize, args);
-#endif
-	rval[0] = 0;
-	rval[1] = frame->f_regs[V1];
-#ifdef DEBUG
-/* XXX save code */
-#endif
-	error = (*callp->sy_call)(p, args, rval);
-
-#ifdef DEBUG
-/* XXX save syscall result in trapdebug */
-#endif
-	switch (error) {
-	case 0:
-		frame->f_regs[V0] = rval[0];
-		frame->f_regs[V1] = rval[1];
-		frame->f_regs[A3] = 0;
-		break;
-	case ERESTART:
-		frame->f_regs[PC] = opc;
-		break;
-	case EJUSTRETURN:
-		break;	/* nothing to do */
-	default:
-	bad:
-		frame->f_regs[V0] = error;
-		frame->f_regs[A3] = 1;
-		break;
-	}
-#ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, rval);
-#endif
-	userret(p);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p, code, error, rval[0]);
-#endif
-}
 
 /*
  * fork syscall returns directly to user process via proc_trampoline,

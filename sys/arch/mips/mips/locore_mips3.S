@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.64 2001/01/14 21:18:40 thorpej Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.65 2001/01/16 06:01:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -654,22 +654,23 @@ NESTED_NOPROFILE(mips3_SystemCall, CALLFRAME_SIZ, ra)
 	REG_S	a1, FRAME_A1(k1)
 	REG_S	a2, FRAME_A2(k1)
 	REG_S	a3, FRAME_A3(k1)
+	lw	a0, _C_LABEL(curproc)		# 1st arg is curproc
 	mfhi	v1
 	#REG_S	t0, FRAME_T0(k1)		# no need to save temp regs
 	#REG_S	t1, FRAME_T1(k1)
 	#REG_S	t2, FRAME_T2(k1)
 	#REG_S	t3, FRAME_T3(k1)
-	mfc0	a0, MIPS_COP_0_STATUS		# 1st arg is STATUS
+	mfc0	a1, MIPS_COP_0_STATUS		# 2nd arg is STATUS
 	#REG_S	t4, FRAME_T4(k1)
 	#REG_S	t5, FRAME_T5(k1)
 	#REG_S	t6, FRAME_T6(k1)
 	#REG_S	t7, FRAME_T7(k1)
-	mfc0	a1, MIPS_COP_0_CAUSE		# 2nd arg is CAUSE
+	mfc0	a2, MIPS_COP_0_CAUSE		# 3rd arg is CAUSE
 	REG_S	s0, FRAME_S0(k1)
 	REG_S	s1, FRAME_S1(k1)
 	REG_S	s2, FRAME_S2(k1)
 	REG_S	s3, FRAME_S3(k1)
-	mfc0	a2, MIPS_COP_0_EXC_PC		# 3rd arg is PC
+	mfc0	a3, MIPS_COP_0_EXC_PC		# 4th arg is PC
 	REG_S	s4, FRAME_S4(k1)
 	REG_S	s5, FRAME_S5(k1)
 	REG_S	s6, FRAME_S6(k1)
@@ -680,10 +681,10 @@ NESTED_NOPROFILE(mips3_SystemCall, CALLFRAME_SIZ, ra)
 	REG_S	sp, FRAME_SP(k1)
 	REG_S	s8, FRAME_S8(k1)
 	REG_S	ra, FRAME_RA(k1)
-	REG_S	a0, FRAME_SR(k1)
+	REG_S	a1, FRAME_SR(k1)
 	REG_S	v0, FRAME_MULLO(k1)
 	REG_S	v1, FRAME_MULHI(k1)
-	REG_S	a2, FRAME_EPC(k1)
+	REG_S	a3, FRAME_EPC(k1)
 	addu	sp, k1, -CALLFRAME_SIZ
 #ifdef __GP_SUPPORT__
 	la	gp, _C_LABEL(_gp)		# switch to kernel GP
@@ -692,17 +693,18 @@ NESTED_NOPROFILE(mips3_SystemCall, CALLFRAME_SIZ, ra)
  * Turn off fpu and enter kernel mode
  */
 	.set	at
-	and	t0, a0, ~(MIPS_SR_COP_1_BIT | MIPS_SR_EXL | MIPS_SR_KSU_MASK)
+	lw	t1, P_MD_SYSCALL(a0)		# t1 = syscall
+	and	t0, a1, ~(MIPS_SR_COP_1_BIT | MIPS_SR_EXL | MIPS_SR_KSU_MASK)
 	.set	noat
 #if defined(DDB) || defined(DEBUG) || defined(KGDB)
-	move	ra, a2
+	move	ra, a3
 	sw	ra, CALLFRAME_RA(sp)
 #endif
 /*
  * Call the system call handler.
  */
 	mtc0	t0, MIPS_COP_0_STATUS		# re-enable interrupts
-	jal	_C_LABEL(syscall)
+	jal	t1
 	nop
 /*
  * Check pending asynchronous traps.

@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.26 2001/01/14 22:32:57 thorpej Exp $	*/
+/*	$NetBSD: types.h,v 1.27 2001/01/16 06:01:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -43,8 +43,6 @@
 
 #include <sys/cdefs.h>
 #include <machine/int_types.h>
-
-#define	__HAVE_AST_PERPROC
 
 /*
  * Note that mips_reg_t is distinct from the register_t defined
@@ -103,6 +101,8 @@ typedef int32_t			register_t;
 
 #define	__SWAP_BROKEN
 
+#define	__HAVE_AST_PERPROC
+#define	__HAVE_SYSCALL_INTERN
 #ifdef MIPS3
 #define __HAVE_CPU_COUNTER
 #endif

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.22 2001/01/14 21:18:39 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.23 2001/01/16 06:01:26 thorpej Exp $
 #
 # Copyright (c) 1997
 #  Jonathan Stone.  All rights reserved.
@@ -65,6 +65,7 @@ define	P_MD_REGS		offsetof(struct proc, p_md.md_regs)
 define	P_MD_UPTE_0		offsetof(struct proc, p_md.md_upte[0])
 define	P_MD_UPTE_1		offsetof(struct proc, p_md.md_upte[1])
 define	P_MD_ASTPENDING		offsetof(struct proc, p_md.md_astpending)
+define	P_MD_SYSCALL		offsetof(struct proc, p_md.md_syscall)
 
 define	U_PCB_FPREGS		offsetof(struct user, u_pcb.pcb_fpregs)
 define	U_PCB_CONTEXT		offsetof(struct user, u_pcb.pcb_context)
