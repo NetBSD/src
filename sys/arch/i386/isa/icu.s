@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icu.s	7.2 (Berkeley) 5/21/91
- *	$Id: icu.s,v 1.19.4.12 1993/10/18 09:10:05 mycroft Exp $
+ *	$Id: icu.s,v 1.19.4.13 1993/10/26 12:03:59 mycroft Exp $
  */
 
 /*
@@ -187,7 +187,7 @@ test_clock:
 test_ast:
 	btrl	$SIR_GENERIC,_sir	# signal handling, rescheduling, ...
 	jnc	2f
-	testb   $SEL_RPL_MASK,TRAPF_CS_OFF(%esp)
+	testb   $SEL_RPL_MASK,TF_CS(%esp)
 					# to non-kernel (i.e., user)?
 	jz	2f			# nope, leave
 	COUNT_EVENT(_intrcnt_spl, 10)
