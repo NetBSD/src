@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.c,v 1.8 2003/01/13 01:20:58 fvdl Exp $	*/
+/*	$NetBSD: acpi_machdep.c,v 1.9 2003/02/14 05:38:39 tshiozak Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.8 2003/01/13 01:20:58 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.9 2003/02/14 05:38:39 tshiozak Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ acpi_md_OsInstallInterruptHandler(UINT32 InterruptNumber,
 		irq = pin = (int)InterruptNumber;
 	}
 
-	ih = intr_establish(irq, pic, pin, IST_LEVEL, IPL_HIGH /* XXX */,
+	ih = intr_establish(irq, pic, pin, IST_LEVEL, IPL_SCHED /* XXX */,
 	    (int (*)(void *)) ServiceRoutine, Context);
 	if (ih == NULL)
 		return (AE_NO_MEMORY);
