@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.28 1997/03/11 00:44:00 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.29 1997/03/12 09:08:29 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -345,7 +345,7 @@ cpumatch_unknown(sc, mp, node)
 	int	node;
 {
 	panic("Unknown CPU type: "
-	      "cpu_vers %d, cpu_impl %d; mmu_vers %d, mmu_impl %d",
+	      "cpu: impl %d, vers %d; mmu: impl %d, vers %d",
 		sc->cpu_impl, sc->cpu_vers,
 		sc->mmu_impl, sc->mmu_vers);
 }
@@ -917,6 +917,7 @@ struct cpu_conf {
 	{ CPU_SUN4M, 1, 3, 1, ANY, "CY7C611", &module_cypress },
 	{ CPU_SUN4M, 1, 0xf, 1, 1, "RT620/625", &module_hypersparc },
 	{ CPU_SUN4M, 4, 0, 0, ANY, "TMS390Z50 v0 or TMS390Z55", &module_viking },
+	{ CPU_SUN4M, 4, 1, 0, ANY, "TMS390Z50 v1", &module_viking },
 	{ CPU_SUN4M, 4, 1, 4, ANY, "TMS390S10", &module_ms1 },
 	{ CPU_SUN4M, 4, 2, 0, ANY, "TI_MS2", &module_ms2 },
 	{ CPU_SUN4M, 4, 3, ANY, ANY, "TI_4_3", &module_viking },
