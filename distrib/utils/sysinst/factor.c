@@ -1,4 +1,4 @@
-/*	$NetBSD: factor.c,v 1.2.2.2 1997/12/20 23:49:04 perry Exp $ */
+/*	$NetBSD: factor.c,v 1.2.2.3 1998/02/24 05:22:35 mellon Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -36,8 +36,10 @@
  *
  */
 
-#include <stdio.h>			/* defs.h uses FILE* */
-#include "defs.h"
+/* Prototypes for strict prototyping. */
+
+static void build_primes (long max);
+void factor (long val, long *fact_list, int fact_size, int *num_fact);
 
 /*
  * primes - prime table, built to include up to 46345 because
@@ -62,8 +64,8 @@ static void build_primes (long max)
 	 */
 	primes[0] = 2;
 	primes[1] = 3;
-	
-	for (pc = primes[num_primes-1]; pc < 46345 && pc*pc < max; pc+=2) {
+
+	for (pc = primes[num_primes-1]; pc < 46345 && pc*pc <= max; pc+=2) {
 		j = 0;
 		rem = 1;
 		while (j<num_primes && primes[j]*primes[j] <= pc) {
@@ -104,26 +106,38 @@ void factor (long val, long *fact_list, int fact_size, int *num_fact)
 		fact_list[(*num_fact)++] = val;
 }
 
-#ifdef TESTING
-#include <stdio.h>
 
-int main(int argc, char **argv)
+#ifdef TESTING
+
+#include <stdio.h>
+#include <stdlib.h>
+
+int
+main(int argc, char **argv)
 {
 	long facts[30];
 	long val;
 	int i, nfact;
+	int arg;
 
 	if (argc < 2) {
-		fprintf (stderr, "usage: %s number\n", argv[0]);
+		fprintf (stderr, "usage: %s numbers\n", argv[0]);
 		exit(1);
 	}
 
-	val = atol(argv[1]);
-	factor (val, facts, 30, &nfact);
+	/* Factor each arg! */
+	for (arg = 1; arg < argc; arg++) {
 
-	printf ("%ld:", val);
-	for (i = 0; i<nfact; i++)
-		printf (" %d", facts[i]);
-	printf ("\n");
+		val = atol(argv[arg]);
+		factor (val, facts, 30, &nfact);
+
+		printf ("%ld:", val);
+		for (i = 0; i<nfact; i++)
+			printf (" %ld", facts[i]);
+		printf ("\n");
+
+	}
+
+	return 0;
 }
 #endif
