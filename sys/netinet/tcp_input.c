@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.197 2004/04/24 23:59:13 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.198 2004/04/25 00:08:54 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.197 2004/04/24 23:59:13 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.198 2004/04/25 00:08:54 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1499,7 +1499,7 @@ after_listen:
 				else if (tp->t_rtttime &&
 				    SEQ_GT(th->th_ack, tp->t_rtseq))
 					tcp_xmit_timer(tp,
-					tcp_now - tp->t_rtttime);
+					  tcp_now - tp->t_rtttime);
 				acked = th->th_ack - tp->snd_una;
 				tcpstat.tcps_rcvackpack++;
 				tcpstat.tcps_rcvackbyte += acked;
