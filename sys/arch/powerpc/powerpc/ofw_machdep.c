@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.5 2000/05/23 13:25:43 tsubai Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.6 2000/09/24 15:57:03 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -60,21 +60,49 @@ void
 mem_regions(memp, availp)
 	struct mem_region **memp, **availp;
 {
-	int phandle, i, j, cnt;
-	
+	int phandle, i, cnt;
+
 	/*
 	 * Get memory.
 	 */
-	if ((phandle = OF_finddevice("/memory")) == -1
-	    || OF_getprop(phandle, "reg",
-			  OFmem, sizeof OFmem[0] * OFMEM_REGIONS)
-	       <= 0
-	    || OF_getprop(phandle, "available",
-			  OFavail, sizeof OFavail[0] * OFMEM_REGIONS)
-	       <= 0)
-		panic("no memory?");
+	if ((phandle = OF_finddevice("/memory")) == -1)
+		goto error;
+
+	bzero(OFmem, sizeof OFmem);
+	cnt = OF_getprop(phandle, "reg",
+		OFmem, sizeof OFmem[0] * OFMEM_REGIONS);
+	if (cnt <= 0)
+		goto error;
+
+	/* Remove zero sized entry in the returned data. */
+	cnt /= sizeof OFmem[0];
+	for (i = 0; i < cnt; i++)
+		if (OFmem[i].size == 0) {
+			bcopy(&OFmem[i + 1], &OFmem[i],
+			      (cnt - i) * sizeof OFmem[0]);
+			cnt--;
+		}
+
+	bzero(OFavail, sizeof OFavail);
+	cnt = OF_getprop(phandle, "available",
+		OFavail, sizeof OFavail[0] * OFMEM_REGIONS);
+	if (cnt <= 0)
+		goto error;
+
+	cnt /= sizeof OFavail[0];
+	for (i = 0; i < cnt; i++)
+		if (OFavail[i].size == 0) {
+			bcopy(&OFavail[i + 1], &OFavail[i],
+			      (cnt - i) * sizeof OFavail[0]);
+			cnt--;
+		}
+
 	*memp = OFmem;
 	*availp = OFavail;
+	return;
+
+error:
+	panic("no memory?");
 }
 
 void
