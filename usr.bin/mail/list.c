@@ -1,4 +1,4 @@
-/*	$NetBSD: list.c,v 1.6 1997/05/13 06:15:56 mikel Exp $	*/
+/*	$NetBSD: list.c,v 1.7 1997/07/09 05:23:36 mikel Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)list.c	8.4 (Berkeley) 5/1/95";
 #else
-static char rcsid[] = "$NetBSD: list.c,v 1.6 1997/05/13 06:15:56 mikel Exp $";
+static char rcsid[] = "$NetBSD: list.c,v 1.7 1997/07/09 05:23:36 mikel Exp $";
 #endif
 #endif /* not lint */
 
@@ -683,6 +683,7 @@ matchsender(str, mesg)
 
 static char *to_fields[] = { "to", "cc", "bcc", 0 };
 
+int
 matchto(str, mesg)
 	char *str;
 {
