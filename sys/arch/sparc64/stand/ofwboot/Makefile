@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 1999/05/09 18:31:21 eeh Exp $
+#	$NetBSD: Makefile,v 1.11 1999/05/09 19:14:15 eeh Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -33,7 +33,7 @@ NEWVERSWHAT=	"OpenFirmware Boot"
 # We may get address conflicts with other bootloaders, say
 # Sun's ufsboot, so we'll pick a reasonably empty address.
 #
-RELOC=		1000000
+RELOC=		800000
 
 ENTRY=		_start
 
