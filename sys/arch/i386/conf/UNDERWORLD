@@ -1,4 +1,4 @@
-#	$NetBSD: UNDERWORLD,v 1.10 2000/01/17 17:47:07 augustss Exp $
+#	$NetBSD: UNDERWORLD,v 1.11 2000/02/26 17:12:37 itojun Exp $
 #
 #	UNDERWORLD - Convenient config for our ol' Pentium boxes (abs)
 #
@@ -34,7 +34,7 @@ options 	XSERVER		# X server support in console drivers
 #options 	"CONSDEVNAME=\"com\"",CONADDR=0x2f8,CONSPEED=57600
 #	you don't want the option below ON iff you are using the
 #	serial console option of the new boot strap code.
-#options	CONS_OVERRIDE	# Always use above! independent of boot info
+#options 	CONS_OVERRIDE	# Always use above! independent of boot info
 
 # The following options override the memory sizes passed in from the boot
 # block.  Use them *only* if the boot block is unable to determine the correct

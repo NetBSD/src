@@ -1,4 +1,4 @@
-#	$NetBSD: DR-EVIL,v 1.9 2000/01/26 06:47:41 thorpej Exp $
+#	$NetBSD: DR-EVIL,v 1.10 2000/02/26 17:12:37 itojun Exp $
 #
 #	DR-EVIL -- Dell Inspiron 3500 laptop used by thorpej@netbsd.org
 #
@@ -37,7 +37,7 @@ options 	XSERVER		# X server support in console drivers
 #options 	"CONSDEVNAME=\"com\"",CONADDR=0x2f8,CONSPEED=57600
 #	you don't want the option below ON iff you are using the
 #	serial console option of the new boot strap code.
-#options	CONS_OVERRIDE	# Always use above! independent of boot info
+#options 	CONS_OVERRIDE	# Always use above! independent of boot info
 
 # The following options override the memory sizes passed in from the boot
 # block.  Use them *only* if the boot block is unable to determine the correct
