@@ -1,4 +1,4 @@
-/*	$NetBSD: tz.c,v 1.15.12.1 1998/07/17 21:20:53 mellon Exp $	*/
+/*	$NetBSD: tz.c,v 1.15.12.2 1998/10/24 01:20:05 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -226,6 +226,8 @@ tzprobe(xxxsd)
 			sc->sc_tapeid = MT_ISEXABYTE;
 			sc->sc_modelen = 17;
 		} else if (bcmp("VIPER 150", pid, 9) == 0) {
+			sc->sc_tapeid = MT_ISVIPER1;
+		} else if (bcmp("5150ES SCSI", pid, 11)) {
 			sc->sc_tapeid = MT_ISVIPER1;
 		} else if (bcmp("Python 25501", pid, 12) == 0) {
 			sc->sc_tapeid = MT_ISPYTHON;
@@ -781,7 +783,7 @@ tzioctl(dev, cmd, data, flag, p)
 	struct mtop *mtop;
 	struct mtget *mtget;
 	int code, count;
-	static tzops[] = {
+	static int tzops[] = {
 		SCSI_WRITE_EOF, SCSI_SPACE, SCSI_SPACE, SCSI_SPACE, SCSI_SPACE,
 		SCSI_REWIND, SCSI_REWIND, SCSI_TEST_UNIT_READY
 	};
