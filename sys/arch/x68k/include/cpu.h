@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.3 1996/09/11 00:25:30 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.4 1997/01/08 04:00:47 oki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -156,6 +156,9 @@ extern char *intiolimit;
 
 /* autoconf.c */
 void	configure __P((void));
+
+/* fpu.c */
+int	fpu_probe __P((void));
 
 /* machdep.c */
 void	dumpconf __P((void));
