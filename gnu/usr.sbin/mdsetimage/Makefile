@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.10 2002/09/17 23:18:32 thorpej Exp $
+#	$NetBSD: Makefile,v 1.11 2002/09/19 03:09:43 lukem Exp $
 
 .include <bsd.own.mk>
 
 .if (defined(HOSTPROG) && \
      (${TOOLCHAIN_MISSING} != "yes" || defined(EXTERNAL_TOOLCHAIN))) || \
     ${MKBFD} != "no"
-TOP=		${.CURDIR}/../..
+TOP=		${NETBSDSRCDIR}/gnu
 DIST=		${TOP}/dist/toolchain
 
 PROG=		mdsetimage
@@ -22,7 +22,7 @@ LDADD+=		-L${IBERTYDIR} -liberty
 .ifndef HOSTPROG
 .include	"${TOP}/lib/libbfd/arch/${MACHINE_ARCH}/defs.mk"
 
-BFDDIR!=	cd ${.CURDIR}/../../lib/libbfd && ${PRINTOBJDIR}
+BFDDIR!=	cd ${TOP}/lib/libbfd && ${PRINTOBJDIR}
 IBERTYDIR!=	cd ${TOP}/lib/libiberty && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${TOP}/lib/libbfd/arch/${MACHINE_ARCH} ${G_INCLUDES}

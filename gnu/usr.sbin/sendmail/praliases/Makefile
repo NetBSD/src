@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.4 2001/01/09 08:52:59 enami Exp $
+#	$NetBSD: Makefile,v 1.5 2002/09/19 03:09:56 lukem Exp $
 
 .include <bsd.own.mk>
 
-DIST=		${.CURDIR}/../../../dist
+DIST=		${NETBSDSRCDIR}/gnu/dist
 .PATH: ${DIST}/sendmail/praliases
 
 PROG=		praliases

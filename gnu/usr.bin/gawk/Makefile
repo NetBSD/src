@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.14 2002/03/30 22:31:13 matt Exp $
+#	$NetBSD: Makefile,v 1.15 2002/09/19 03:09:35 lukem Exp $
 
 .include <bsd.own.mk>
 
-DIST=		${.CURDIR}/../../dist
+DIST=		${NETBSDSRCDIR}/gnu/dist
 .PATH: ${DIST}/gawk ${DIST}/gawk/doc
 
 PROG=		awk
@@ -14,7 +14,7 @@ MLINKS=		awk.1
 TEXINFO=	awk.info
 
 CPPFLAGS+=	-DHAVE_CONFIG_H -DDEFPATH=\".:/usr/share/awk\" \
-		-I${.CURDIR} -I${.CURDIR}/../../dist/gawk
+		-I${.CURDIR} -I${DIST}/gawk
 LDADD=		-lm
 CLEANFILES+=	${PROG}.1 ${PROG}.texi
 

@@ -1,8 +1,12 @@
-#	$NetBSD: Makefile,v 1.3 2001/12/12 01:49:07 tv Exp $
+#	$NetBSD: Makefile,v 1.4 2002/09/19 03:09:44 lukem Exp $
+
+NOMAN=	# defined
+
+.include <bsd.own.mk>
 
 PROG=	cleanup
 
-DIST=	${.CURDIR}/../../../dist/postfix/src/${PROG}
+DIST=	${NETBSDSRCDIR}/gnu/dist/postfix/src/${PROG}
 .PATH:	${DIST}
 
 BINDIR=	${PFIX_LIBEXECDIR}
@@ -14,7 +18,5 @@ SRCS=	cleanup.c cleanup_out.c cleanup_envelope.c cleanup_message.c \
 
 DPADD+= ${LIBPMASTER} ${LIBPGLOBAL} ${LIBPUTIL}
 LDADD+= ${LIBPMASTER} ${LIBPGLOBAL} ${LIBPUTIL}
-
-NOMAN=# defined
 
 .include <bsd.prog.mk>

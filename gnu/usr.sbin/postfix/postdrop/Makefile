@@ -1,8 +1,12 @@
-#	$NetBSD: Makefile,v 1.4 2001/12/12 01:49:10 tv Exp $
+#	$NetBSD: Makefile,v 1.5 2002/09/19 03:09:48 lukem Exp $
+
+NOMAN=	# defined
+
+.include <bsd.own.mk>
 
 PROG=	postdrop
 
-DIST=	${.CURDIR}/../../../dist/postfix/src/${PROG}
+DIST=	${NETBSDSRCDIR}/gnu/dist/postfix/src/${PROG}
 .PATH:	${DIST}
 
 BINDIR=	${PFIX_SBINDIR}
@@ -11,7 +15,5 @@ BINMODE=2555
 
 DPADD+= ${LIBPGLOBAL} ${LIBPUTIL}
 LDADD+= ${LIBPGLOBAL} ${LIBPUTIL}
-
-NOMAN=# defined
 
 .include <bsd.prog.mk>

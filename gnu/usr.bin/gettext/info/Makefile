@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.1 2000/11/02 01:09:03 itojun Exp $
+#	$NetBSD: Makefile,v 1.2 2002/09/19 03:09:37 lukem Exp $
 
 .include <bsd.own.mk>
 
 TEXINFO=	gettext.texi
-INFOFLAGS=	-I${.CURDIR}/../../../dist/gettext/doc
+INFOFLAGS=	-I${NETBSDSRCDIR}/gnu/dist/gettext/doc
 
 .include <bsd.info.mk>
 

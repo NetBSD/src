@@ -1,8 +1,14 @@
-#	$NetBSD: Makefile,v 1.7 2002/02/02 23:21:49 perry Exp $
+#	$NetBSD: Makefile,v 1.8 2002/09/19 03:09:51 lukem Exp $
+
+NOLINT=		# defined
+NOPIC=		# defined
+NOPROFILE=	# defined
+
+.include <bsd.own.mk>
 
 LIB=	util
 
-DIST=	${.CURDIR}/../../../dist/postfix/src/${LIB}
+DIST=	${NETBSDSRCDIR}/gnu/dist/postfix/src/${LIB}
 .PATH:	${DIST}
 
 SRCS    = alldig.c argv.c argv_split.c attr_print0.c attr_print64.c \
@@ -35,10 +41,6 @@ SRCS    = alldig.c argv.c argv_split.c attr_print0.c attr_print64.c \
         write_wait.c
 # IPv6
 #SRCS+=	get_port.c
-
-NOLINT=		# defined
-NOPIC=		# defined
-NOPROFILE=	# defined
 
 # only needed during build
 libinstall::

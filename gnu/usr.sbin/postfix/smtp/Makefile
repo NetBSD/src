@@ -1,8 +1,12 @@
-#	$NetBSD: Makefile,v 1.3 2001/12/12 01:49:13 tv Exp $
+#	$NetBSD: Makefile,v 1.4 2002/09/19 03:09:51 lukem Exp $
+
+NOMAN=	# defined
+
+.include <bsd.own.mk>
 
 PROG=	smtp
 
-DIST=	${.CURDIR}/../../../dist/postfix/src/${PROG}
+DIST=	${NETBSDSRCDIR}/gnu/dist/postfix/src/${PROG}
 .PATH:	${DIST}
 
 BINDIR=	${PFIX_LIBEXECDIR}
@@ -13,7 +17,5 @@ SRCS=	smtp.c smtp_connect.c smtp_proto.c smtp_chat.c smtp_session.c \
 
 DPADD+= ${LIBPMASTER} ${LIBPGLOBAL} ${LIBPDNS} ${LIBPUTIL}
 LDADD+= ${LIBPMASTER} ${LIBPGLOBAL} ${LIBPDNS} ${LIBPUTIL}
-
-NOMAN=# defined
 
 .include <bsd.prog.mk>

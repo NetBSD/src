@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2001/12/12 12:24:21 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2002/09/19 03:09:55 lukem Exp $
 
 NOSHARE=	# defined
 NOPIC=		# defined
@@ -6,7 +6,7 @@ NOPROFILE=	# defined
 
 .include <bsd.own.mk>
 
-DIST=		${.CURDIR}/../../../dist
+DIST=		${NETBSDSRCDIR}/gnu/dist
 .PATH: ${DIST}/sendmail/libsmutil
 
 LIB=		smutil

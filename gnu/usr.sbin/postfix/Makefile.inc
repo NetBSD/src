@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.8 2001/11/11 05:26:53 itojun Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2002/09/19 03:09:43 lukem Exp $
 
 .include <bsd.own.mk>
 
 WARNS?=	0
 
-IDIST=	${.CURDIR}/../../../dist/postfix
+IDIST=	${NETBSDSRCDIR}/gnu/dist/postfix
 
 CPPFLAGS+= -DNETBSD1 -I${DIST} \
 	-I${IDIST}/src/dns -I${IDIST}/src/global -I${IDIST}/src/master \

@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.7 2001/04/19 14:41:32 wiz Exp $
+#	$NetBSD: Makefile,v 1.8 2002/09/19 03:09:41 lukem Exp $
 
 .include "../../Makefile.path"
 
-DIST=		${IIDIST}/contrib/mm/mm
+DIST=		${IDIST}/contrib/mm/mm
 .PATH:		${DIST}
 
 .include <bsd.own.mk>

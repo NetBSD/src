@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 2002/02/02 23:21:48 perry Exp $
+#	$NetBSD: Makefile,v 1.3 2002/09/19 03:09:49 lukem Exp $
 
-DIST=		${.CURDIR}/../../../dist/postfix/conf
+.include <bsd.own.mk>
+
+DIST=		${NETBSDSRCDIR}/gnu/dist/postfix/conf
 .PATH:		${DIST}
 
 # XXX Should go in /usr/libexec/postfix, but we'll need some source

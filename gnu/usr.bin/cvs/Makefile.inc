@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.3 2002/03/06 02:40:06 wiz Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2002/09/19 03:09:34 lukem Exp $
 
 .include <bsd.own.mk>
 
 WARNS?=	0
 
-IDIST=	${.CURDIR}/../../../dist/cvs
+IDIST=	${NETBSDSRCDIR}/gnu/dist/cvs
 
 CPPFLAGS+= -DHAVE_CONFIG_H -I${.CURDIR}/../include -I${IDIST}/lib \
 	-I${IDIST}/diff -I${IDIST}/src

@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.4 2001/07/25 11:58:04 aymeric Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2002/09/19 03:09:41 lukem Exp $
 
-SHLIBPATH = $(.CURDIR)/../../../../libexec/ld.aout_so
+.include <bsd.own.mk>
+
+SHLIBPATH = ${NETBSDSRCDIR}/libexec/ld.aout_so
 
 TARGET_MACHINE_ARCH ?= $(MACHINE_ARCH)
 

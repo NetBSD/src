@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2001/08/03 14:42:35 enami Exp $
+#	$NetBSD: Makefile,v 1.22 2002/09/19 03:09:37 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,7 @@ SRCS+=		grep.c dfa.c kwset.c obstack.c savedir.c getopt.c getopt1.c \
 		search.c stpcpy.c regex.c grepmat.c
 MAN=		grep.1
 
-DIST=		${.CURDIR}/../../dist
+DIST=		${NETBSDSRCDIR}/gnu/dist
 
 CPPFLAGS+=	-DHAVE_CONFIG_H
 CLEANFILES+=    ${PROG}.1 ${PROG}.info ${PROG}.cat1
@@ -32,7 +32,7 @@ FILESNAME_${F}=	grep.mo
 .endif
 
 TEXINFO=	grep.texi
-INFOFLAGS=	-I${.CURDIR}/../../dist/grep/doc
+INFOFLAGS=	-I${NETBSDSRCDIR}/gnu/dist/grep/doc
 
 MLINKS=	grep.1 egrep.1 \
 	grep.1 fgrep.1

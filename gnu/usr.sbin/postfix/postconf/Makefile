@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2002/02/02 23:21:48 perry Exp $
+#	$NetBSD: Makefile,v 1.8 2002/09/19 03:09:48 lukem Exp $
 
 # XXX Note we aren't building ../conf/main.cf.default
 # The shipped makefiles construct it using postconf -d after building
@@ -6,9 +6,13 @@
 # build environment, and the .default file isn't that useful to
 # the user anyway.
 
+NOMAN=	# defined
+
+.include <bsd.own.mk>
+
 PROG=	postconf
 
-DIST=	${.CURDIR}/../../../dist/postfix/src/${PROG}
+DIST=	${NETBSDSRCDIR}/gnu/dist/postfix/src/${PROG}
 .PATH:	${DIST}
 
 BINDIR= ${PFIX_SBINDIR}           
@@ -25,8 +29,6 @@ CPPFLAGS+= -I${.OBJDIR}
 
 DPADD+= ${LIBPGLOBAL} ${LIBPUTIL}
 LDADD+= ${LIBPGLOBAL} ${LIBPUTIL}
-
-NOMAN=# defined
 
 # XXX Note that there is no ${AWK} variable in our build system. This
 # is probably a deficiency.

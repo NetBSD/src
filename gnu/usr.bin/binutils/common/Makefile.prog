@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile.prog,v 1.1 2001/08/06 19:12:01 tv Exp $
+#	$NetBSD: Makefile.prog,v 1.2 2002/09/19 03:09:33 lukem Exp $
 #
 # Common Makefile fragment for a binutils program.
 #
 
 .include <bsd.own.mk>
-TOP=		${.CURDIR}/../../..
+
+TOP=		${NETBSDSRCDIR}/gnu
 DIST=		${TOP}/dist/toolchain
 
 .include "${.CURDIR}/../common/arch/${MACHINE_ARCH}/defs.mk"

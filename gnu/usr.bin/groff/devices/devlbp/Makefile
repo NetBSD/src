@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2001/04/19 14:33:07 wiz Exp $
+#	$NetBSD: Makefile,v 1.2 2002/09/19 03:09:40 lukem Exp $
 
 .include "../../Makefile.path"
 
-.PATH:		${IIDIST}/font/devlbp
+.PATH:		${IDIST}/font/devlbp
 
 DEVICE=		lbp
 FONTFILES=	DESC HB HBI HI HR TB TBI TI TR

@@ -1,4 +1,8 @@
-#	$NetBSD: Makefile,v 1.12 2001/12/12 01:49:06 tv Exp $
+#	$NetBSD: Makefile,v 1.13 2002/09/19 03:09:40 lukem Exp $
+
+NOMAN=		# defined
+NOPROFILE=	# defined
+NOPIC=		# defined
 
 .include "../Makefile.comp"
 
@@ -7,9 +11,6 @@ DIST=		${IDIST}/src/libs/libbib
 
 LIB=		bib
 SRCS=		common.cc index.cc linear.cc search.cc map.c
-NOMAN=		# defined
-NOPROFILE=	# defined
-NOPIC=		# defined
 
 # only needed during build
 libinstall::

@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.5 2001/04/19 14:40:56 wiz Exp $
+#	$NetBSD: Makefile,v 1.6 2002/09/19 03:09:39 lukem Exp $
 
 .include "../../Makefile.path"
 
-.PATH:		${IIDIST}/font/devlatin1
+.PATH:		${IDIST}/font/devlatin1
 
 DEVICE=		latin1
 

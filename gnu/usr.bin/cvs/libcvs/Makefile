@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.4 2001/12/12 12:24:19 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2002/09/19 03:09:34 lukem Exp $
 
 NOLINT=		# defined
 NOPIC=		# defined
 NOPROFILE=	# defined
 
 .include "${.CURDIR}/../Makefile.inc"
+
 LIB=	cvs
 
 DIST=	${IDIST}/lib
