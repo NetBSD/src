@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_12.c,v 1.2 1997/10/16 23:50:36 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls_12.c,v 1.3 1997/10/19 01:52:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -71,7 +71,6 @@ cvtstat(st, ost)
 	ost->st_dev = st->st_dev;
 	ost->st_ino = st->st_ino;
 	ost->st_mode = st->st_mode;
-	ost->st_nlink = st->st_nlink;
 	if (st->st_nlink >= (1 << 15))
 		ost->st_nlink = (1 << 15) - 1;
 	else
@@ -79,15 +78,16 @@ cvtstat(st, ost)
 	ost->st_uid = st->st_uid;
 	ost->st_gid = st->st_gid;
 	ost->st_rdev = st->st_rdev;
+	ost->st_atimespec = st->st_atimespec;
+	ost->st_mtimespec = st->st_mtimespec;
+	ost->st_ctimespec = st->st_ctimespec;
 	ost->st_size = st->st_size;
-	ost->st_atime = st->st_atime;
-	ost->st_mtime = st->st_mtime;
-	ost->st_ctime = st->st_ctime;
-	ost->st_blksize = st->st_blksize;
 	ost->st_blocks = st->st_blocks;
+	ost->st_blksize = st->st_blksize;
 	ost->st_flags = st->st_flags;
 	ost->st_gen = st->st_gen;
 }
+
 /*
  * Read a block of directory entries in a file system independent format.
  */
@@ -133,7 +133,7 @@ compat_12_sys_stat(p, v, retval)
 	register_t *retval;
 {
 	register struct compat_12_sys_stat_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(struct stat12 *) ub;
 	} */ *uap = v;
 	struct stat sb;
@@ -150,7 +150,7 @@ compat_12_sys_stat(p, v, retval)
 	if (error)
 		return (error);
 	cvtstat(&sb, &osb);
-	error = copyout((caddr_t)&osb, (caddr_t)SCARG(uap, ub), sizeof (osb));
+	error = copyout(&osb, SCARG(uap, ub), sizeof (osb));
 	return (error);
 }
 
@@ -166,7 +166,7 @@ compat_12_sys_lstat(p, v, retval)
 	register_t *retval;
 {
 	register struct compat_12_sys_lstat_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(struct stat12 *) ub;
 	} */ *uap = v;
 	struct stat sb;
@@ -186,7 +186,6 @@ compat_12_sys_lstat(p, v, retval)
 	error = copyout(&osb, SCARG(uap, ub), sizeof (osb));
 	return (error);
 }
-
 
 /*
  * Return status information about a file descriptor.
@@ -226,9 +225,9 @@ compat_12_sys_fstat(p, v, retval)
 		panic("compat_12_sys_fstat");
 		/*NOTREACHED*/
 	}
-	cvtstat(&ub, &oub);
-	if (error == 0)
-		error = copyout((caddr_t)&oub, (caddr_t)SCARG(uap, sb),
-		    sizeof (oub));
+	if (error == 0) {
+		cvtstat(&ub, &oub);
+		error = copyout(&oub, SCARG(uap, sb), sizeof (oub));
+	}
 	return (error);
 }
