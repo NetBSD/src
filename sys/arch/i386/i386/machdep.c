@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.506 2002/12/07 15:36:20 junyoung Exp $	*/
+/*	$NetBSD: machdep.c,v 1.507 2002/12/16 18:31:09 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.506 2002/12/07 15:36:20 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.507 2002/12/16 18:31:09 jdolecek Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -3570,6 +3570,12 @@ init386(first_avail)
 		       ptoa(physmem), 2*1024*1024UL);
 		cngetc();
 	}
+
+#ifdef __HAVE_CPU_MAXPROC
+	/* Make sure maxproc is sane */
+	if (maxproc > cpu_maxproc())
+		maxproc = cpu_maxproc();
+#endif
 }
 
 #ifdef COMPAT_NOMID
@@ -3783,4 +3789,17 @@ idt_vec_free(vec)
 	unsetgate(&idt[vec].gd);
 	idt_allocmap[vec] = 0;
 	simple_unlock(&idt_lock);
+}
+
+/*
+ * Number of processes is limited by number of available GDT slots.
+ */
+int
+cpu_maxproc(void)
+{
+#ifdef USER_LDT
+	return ((MAXGDTSIZ - NGDT) / 2);
+#else
+	return (MAXGDTSIZ - NGDT);
+#endif
 }
