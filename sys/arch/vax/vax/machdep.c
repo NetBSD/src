@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.14 1995/06/16 15:36:44 ragge Exp $  */
+/* $NetBSD: machdep.c,v 1.15 1995/07/05 08:29:27 ragge Exp $  */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -81,6 +81,8 @@
 #include "machine/../vax/gencons.h"
 #include "vm/vm_kern.h"
 #include "net/netisr.h"
+
+#include "ppp.h"	/* For NERISR_PPP */
 
 /*
  * We do these external declarations here, maybe they should be done
@@ -527,6 +529,11 @@ netintr()
 	if (netisr & (1 << NETISR_CCITT)) {
 		netisr &= ~(1 << NETISR_CCITT);
 		ccittintr();
+	}
+#endif
+#if NPPP > 0
+	if (n & (1 << NETISR_PPP)) {
+		pppintr();
 	}
 #endif
 }
