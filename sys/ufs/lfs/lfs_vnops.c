@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.86 2003/02/20 04:27:25 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.87 2003/02/22 01:52:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.86 2003/02/20 04:27:25 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.87 2003/02/22 01:52:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1343,6 +1343,7 @@ lfs_putpages(void *v)
 	if (pagedaemon) {
 		++fs->lfs_pdflush;
 		wakeup(&lfs_writer_daemon);
+		simple_unlock(&vp->v_interlock);
 		return EWOULDBLOCK;
 	}
 
@@ -1433,13 +1434,13 @@ lfs_putpages(void *v)
 				sizeof(struct finfo) - sizeof(int32_t);
 
 			/* Give the write a chance to complete */
-			simple_unlock(&vp->v_interlock);
 			preempt(NULL);
 			simple_lock(&vp->v_interlock);
 		}
 		return error;
 	}
 
+	simple_unlock(&vp->v_interlock);
 	/*
 	 * Take the seglock, because we are going to be writing pages.
 	 */
@@ -1486,6 +1487,7 @@ lfs_putpages(void *v)
 		 * XXXUBC across the address space
 		 * XXXXXX do this
 		 */
+	simple_lock(&vp->v_interlock);
 	while ((error = genfs_putpages(v)) == EDEADLK) {
 #ifdef DEBUG_LFS
 		printf("lfs_putpages: genfs_putpages returned EDEADLK [2]"
@@ -1510,7 +1512,6 @@ lfs_putpages(void *v)
 			sizeof(struct finfo) - sizeof(int32_t);
 
 		/* Give the write a chance to complete */
-		simple_unlock(&vp->v_interlock);
 		preempt(NULL);
 		simple_lock(&vp->v_interlock);
 	}
@@ -1559,9 +1560,8 @@ lfs_putpages(void *v)
 				ip->i_number, vp->v_numoutput);
 #endif
 			vp->v_flag |= VBWAIT;
-			simple_unlock(&global_v_numoutput_slock);
-			tsleep(&vp->v_numoutput, PRIBIO + 1, "lfs_vn", 0);
-			simple_lock(&global_v_numoutput_slock);
+			ltsleep(&vp->v_numoutput, PRIBIO + 1, "lfs_vn", 0,
+			    &global_v_numoutput_slock);
 		}
 		simple_unlock(&global_v_numoutput_slock);
 		splx(s);
@@ -1596,6 +1596,7 @@ lfs_checkifempty(struct vnode *vp)
 	     bp = LIST_NEXT(bp, b_vnbufs)) {
 		if (bp->b_lblkno < 0) {
 			splx(s);
+			simple_unlock(&vp->v_interlock);
 			return 0;
 		}
 	}
