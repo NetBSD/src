@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.236 2003/12/14 09:54:01 dyoung Exp $
+#	$NetBSD: INSTALL,v 1.237 2003/12/17 09:18:45 tls Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -508,6 +508,8 @@ pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 sf*	at pci? dev ? function ?	# Adaptec AIC-6915 Ethernet
 sip*	at pci? dev ? function ?	# SiS 900/DP83815 Ethernet
+skc*	at pci? dev ? function ?	# SysKonnect SK9821 Gigabit Ethernet
+sk*	at skc?				# SysKonnect SK9821 Gigabit Ethernet
 ste*	at pci? dev ? function ?	# Sundance ST-201 Ethernet
 stge*	at pci? dev ? function ?	# Sundance/Tamarack TC9021 Gigabit
 ti*	at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet
