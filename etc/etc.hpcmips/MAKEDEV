@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.15 2001/01/08 22:26:26 martin Exp $
+#	$NetBSD: MAKEDEV,v 1.16 2001/05/10 01:03:03 lukem Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -400,9 +400,7 @@ pty*)
 	3)      name=s;;
 	4)      name=t;;
 	5)      name=u;;
-	6)      name=v
-		echo "$0: $i: pty unit conflicts with console ttyv* devices."
-		continue;;
+	6)      name=v;;
 	7)      name=w;;
 	8)      name=x;;
 	9)      name=y;;
