@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.2 1998/08/07 05:55:14 thorpej Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.3 1998/08/08 23:44:12 mycroft Exp $	*/
 
 /*
  * Copyright 1997
@@ -623,7 +623,7 @@ cs_reset_chip(sc)
 	int x;
 
 	/* Disable interrupts at the CPU so reset command is atomic */
-	intState = splimp();
+	intState = splnet();
 
 	/*
 	 * We are now resetting the chip
@@ -963,7 +963,7 @@ cs_init(sc)
 	int intState;
 	int error = CS_OK;
 
-	intState = splimp();
+	intState = splnet();
 
 	/* Mark the interface as down */
 	sc->sc_ethercom.ec_if.if_flags &= ~(IFF_UP | IFF_RUNNING);
@@ -1143,7 +1143,7 @@ cs_ioctl(ifp, cmd, data)
 	int state;
 	int result;
 
-	state = splimp();
+	state = splnet();
 
 	result = 0;		/* only set if something goes wrong */
 
