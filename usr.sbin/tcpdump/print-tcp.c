@@ -1,4 +1,4 @@
-/*	$NetBSD: print-tcp.c,v 1.14 1999/09/04 03:58:13 itojun Exp $	*/
+/*	$NetBSD: print-tcp.c,v 1.15 1999/09/30 14:49:13 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-tcp.c,v 1.55 97/06/15 13:20:28 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-tcp.c,v 1.14 1999/09/04 03:58:13 itojun Exp $");
+__RCSID("$NetBSD: print-tcp.c,v 1.15 1999/09/30 14:49:13 sjg Exp $");
 #endif
 #endif
 
@@ -532,6 +532,14 @@ tcp_print(register const u_char *bp, register u_int length,
 				break;
 		}
 		putchar('>');
+	}
+#ifndef TELNET_PORT
+# define TELNET_PORT 23
+#endif
+	if (!qflag && vflag && length > 0
+	    && (dport == TELNET_PORT || sport == TELNET_PORT)) {
+		hlen = tp->th_off * 4;	/* restore it */
+ 		telnet_print((u_char *)tp + hlen, length);
 	}
 	return;
 bad:
