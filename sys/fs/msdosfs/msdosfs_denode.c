@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.6 2004/04/25 16:42:41 simonb Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.7 2004/05/20 05:39:34 atatat Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.6 2004/04/25 16:42:41 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.7 2004/05/20 05:39:34 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,6 +102,8 @@ msdosfs_init()
 #ifdef _LKM
 	malloc_type_attach(M_MSDOSFSMNT);
 	malloc_type_attach(M_MSDOSFSFAT);
+	pool_init(&msdosfs_denode_pool, sizeof(struct denode), 0, 0, 0,
+	    "msdosnopl", &pool_allocator_nointr);
 #endif
 	dehashtbl = hashinit(desiredvnodes / 2, HASH_LIST, M_MSDOSFSMNT,
 	    M_WAITOK, &dehash);
@@ -144,8 +146,8 @@ void
 msdosfs_done()
 {
 	hashdone(dehashtbl, M_MSDOSFSMNT);
-	pool_destroy(&msdosfs_denode_pool);
 #ifdef _LKM
+	pool_destroy(&msdosfs_denode_pool);
 	malloc_type_detach(M_MSDOSFSFAT);
 	malloc_type_detach(M_MSDOSFSMNT);
 #endif

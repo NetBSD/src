@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.69 2004/05/02 06:59:20 wiz Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.70 2004/05/20 05:39:34 atatat Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.69 2004/05/02 06:59:20 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.70 2004/05/20 05:39:34 atatat Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -159,6 +159,12 @@ extern u_long ext2gennumber;
 void
 ext2fs_init()
 {
+#ifdef _LKM
+	pool_init(&ext2fs_inode_pool, sizeof(struct inode), 0, 0, 0,
+	    "ext2fsinopl", &pool_allocator_nointr);
+	pool_init(&ext2fs_dinode_pool, sizeof(struct ext2fs_dinode), 0, 0, 0,
+	    "ext2dinopl", &pool_allocator_nointr); 
+#endif
 	ufs_init();
 }
 
@@ -172,7 +178,10 @@ void
 ext2fs_done()
 {
 	ufs_done();
+#ifdef _LKM
 	pool_destroy(&ext2fs_inode_pool);
+	pool_destroy(&ext2fs_dinode_pool);
+#endif
 }
 
 /*

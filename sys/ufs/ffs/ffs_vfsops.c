@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.146 2004/04/26 01:40:40 simonb Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.147 2004/05/20 05:39:34 atatat Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.146 2004/04/26 01:40:40 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.147 2004/05/20 05:39:34 atatat Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1524,6 +1524,14 @@ ffs_init()
 	if (ffs_initcount++ > 0)
 		return;
 
+#ifdef _LKM
+	pool_init(&ffs_inode_pool, sizeof(struct inode), 0, 0, 0,
+		  "ffsinopl", &pool_allocator_nointr);
+	pool_init(&ffs_dinode1_pool, sizeof(struct ufs1_dinode), 0, 0, 0, 
+		  "dino1pl", &pool_allocator_nointr);
+	pool_init(&ffs_dinode2_pool, sizeof(struct ufs2_dinode), 0, 0, 0,
+		  "dino2pl", &pool_allocator_nointr);
+#endif
 	softdep_initialize();
 	ufs_init();
 }
@@ -1543,7 +1551,11 @@ ffs_done()
 
 	/* XXX softdep cleanup ? */
 	ufs_done();
+#ifdef _LKM
+	pool_destroy(&ffs_dinode2_pool);
+	pool_destroy(&ffs_dinode1_pool);
 	pool_destroy(&ffs_inode_pool);
+#endif
 }
 
 SYSCTL_SETUP(sysctl_vfs_ffs_setup, "sysctl vfs.ffs subtree setup")
