@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xlibi18n,v 1.1.1.1 2003/09/12 02:50:57 lukem Exp $
+#	$NetBSD: Makefile.xlibi18n,v 1.2 2003/09/12 08:08:23 lukem Exp $
 
 MKLINKLIB=	no
 
@@ -12,8 +12,8 @@ SHLIB_MINOR=	0
 
 CPPFLAGS+=	${X11FLAGS.THREADLIB}
 
-#LM#	LDADD+=		-lX11
-#LM#	DPADD+=		${LIBX11}
+LDADD+=		-lX11
+DPADD+=		${LIBX11}
 
 .PRECIOUS:	${DESTDIR}${LIBDIR}/${LIB}.so.${SHLIB_MAJOR}
 libinstall::	${DESTDIR}${LIBDIR}/${LIB}.so.${SHLIB_MAJOR}

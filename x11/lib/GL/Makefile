@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/12 02:49:56 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/12 08:08:09 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -17,8 +17,8 @@ CPPFLAGS+=	-I${DESTDIR}/${X11INCDIR}/X11 \
 		-I${X11SRCDIR.xc}/extras/Mesa/src \
 		${X11FLAGS.THREADLIB} -DGLXEXT -DGLX_USE_MESA
 
-#LM#	LDADD+=		-lXext -lX11
-#LM#	DPADD+=		${LIBXEXT} ${LIBX11}
+LDADD+=		-lXext -lX11
+DPADD+=		${LIBXEXT} ${LIBX11}
 
 .include <bsd.lib.mk>
 .include <bsd.x11.mk>
