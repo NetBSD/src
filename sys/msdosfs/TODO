@@ -1,12 +1,8 @@
-# $NetBSD: TODO,v 1.5 2000/03/27 10:15:13 jdolecek Exp $
+# $NetBSD: TODO,v 1.6 2000/08/06 20:11:31 jdolecek Exp $
 
-- use the dirty flag Win95 OSR2 introduced, as noted in bin/5638
-- the fat cache (see msdosfs_fat.c, denode->de_fc[]) should prolly
-	hold _all_ clusters for directories - should speed up repetitive
-	scanning through whole directory when extracting an archive
-	into msdosfs filesystem (e.g. tar does unlink followed by create
-	and both these functions need to scan whole directory to check
-	if the file is or isn't there)
-	- doing something similar for files is probably not worth the
-	  efford, because the files are scanned much less frequently
-	  and might be big
+- use the dirty flag introduced by Win95 OSR2, as noted in bin/5638
+- the fat cache (see msdosfs_fat.c, denode->de_fc[]) should probably
+	hold all cluster numbers for directories to speed up file lookup;
+	doing the same for files is likely to not be worth the needed
+	memory, since they are often much bigger and scanned much less
+	frequently
