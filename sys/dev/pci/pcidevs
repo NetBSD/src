@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.85 1998/10/04 23:50:05 tron Exp $
+$NetBSD: pcidevs,v 1.86 1998/10/05 20:34:39 tron Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -422,7 +422,7 @@ vendor HILEVEL		0x118a	HiLevel Technology
 vendor COROLLARY	0x118c	Corrollary
 vendor BITFLOW		0x118d	BitFlow
 vendor HERMSTEDT	0x118e	Hermstedt
-vendor ARTOP		0x1191	Artop Electric
+vendor ACARD		0x1191	ACARD
 vendor DENSAN		0x1192	Densan
 vendor ZEINET		0x1193	Zeinet
 vendor TOUCAN		0x1194	Toucan Technology
@@ -551,6 +551,14 @@ product 3DLABS 500MX	0x0006	GLINT 500MX
 product ACC 2188	0x0000	ACCM 2188 VL-PCI Bridge
 product ACC 2051_HB 	0x2051	2051 PCI Single Chip Solution (host bridge)
 product ACC 2051_ISA 	0x5842	2051 PCI Single Chip Solution (ISA bridge)
+
+/* ACARD products */
+product ACARD AEC6710   0x8002  AEC6710 SCSI
+product ACARD AEC6712UW 0x8010  AEC6712UW SCSI
+product ACARD AEC6712U  0x8020  AEC6712U SCSI
+product ACARD AEC6712S  0x8030  AEC6712S SCSI
+product ACARD AEC6712D  0x8040  AEC6712D SCSI
+product ACARD AEC6712SUW 0x8050 AEC6712SUW SCSI
 
 /* Acer products */
 product ACER M1435	0x1435	M1435 VL-PCI Bridge
@@ -865,10 +873,13 @@ product MADGE COLLAGE155	0x1001	Collage 155 ATM adapter
 /* Matrox products */
 product MATROX ATLAS		0x0518	MGA PX2085 (\"Atlas\")
 product MATROX MILLENNIUM	0x0519	MGA Millennium 2064W (\"Storm\")
-product MATROX MYSTIQUE		0x051A	MGA 1064SG
-product MATROX MILLENNIUM_II	0x051B	MGA Millennium II 2164W
-product MATROX MILLENNIUM_II_AGP	0x051F	MGA Millennium II 2164WA-B AGP
+product MATROX MYSTIQUE		0x051a	MGA Mystique 1064SG
+product MATROX MILLENNIUM2	0x051b	MGA Millennium II 2164W
+product MATROX MILLENNIUM2_AGP	0x051f	MGA Millennium II 2164WA-B AG
+product MATROX G200		0x0521	MGA G200
 product MATROX IMPRESSION	0x0d10	MGA Impression
+product MATROX G100		0x1000	MGA G100
+product MATROX G100_AGP		0x1001	MGA G100 AGP
 
 /* Mylex products */
 product MYLEX 960P	0x0001	DAC960P RAID controller
@@ -980,13 +991,13 @@ product SIS 86C201		0x0001	86C201
 product SIS 86C202		0x0002	86C202
 product SIS 86C205		0x0005	86C205
 product SIS 85C503		0x0008	85C503 or 5597/5598 ISA bridge
-product SIS 5597_VGA	0x0200	5597/5598 integrated VGA
+product SIS 5597_VGA		0x0200	5597/5598 integrated VGA
 product SIS 85C501		0x0406	85C501
 product SIS 85C496		0x0496	85C496
 product SIS 85C601		0x0601	85C601
-product SIS 5597_IDE	0x5513	5597/5598 IDE controller
+product SIS 5597_IDE		0x5513	5597/5598 IDE controller
 product SIS 5597_HB		0x5597	5597/5598 host bridge
-product SIS 5597_USB	0x7001	5597/5598 USB host controller
+product SIS 5597_USB		0x7001	5597/5598 USB host controller
 
 /* SMC products */
 product SMC 37C665	0x1000	FDC 37C665
