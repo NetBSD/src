@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.38 2003/08/30 12:48:11 wiz Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.39 2003/09/26 07:02:43 dsl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.38 2003/08/30 12:48:11 wiz Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.39 2003/09/26 07:02:43 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,7 +61,7 @@ __RCSID("$NetBSD: dumpfs.c,v 1.38 2003/08/30 12:48:11 wiz Exp $");
 #include <unistd.h>
 #include <util.h>
 
-union {
+union fsun {
 	struct fs fs;
 	char pad[MAXBSIZE];
 } fsun;
@@ -75,6 +75,7 @@ union {
 
 #define OPT_FLAG(ch)	(1 << ((ch) & 31))
 #define ISOPT(opt)	(opt_flags & (opt))
+#define opt_alt_super	OPT_FLAG('a')
 #define opt_superblock	OPT_FLAG('s')
 #define opt_cg_summary	OPT_FLAG('m')
 #define opt_cg_info	OPT_FLAG('c')
@@ -82,17 +83,18 @@ union {
 #define opt_verbose	OPT_FLAG('v')
 #define DFLT_OPTS	(opt_superblock | opt_cg_summary | opt_cg_info)
 
-long	dev_bsize = 1;
+long	dev_bsize = 512;
 int	needswap, printold, is_ufs2;
 int	Fflag;
 
 uint	opt_flags;
 
 int	dumpfs(const char *);
-int	print_superblock(const char *, int, off_t);
+int	print_superblock(struct fs *, const char *, int, off_t);
 int	print_cgsum(const char *, int);
 int	print_cginfo(const char *, int);
 int	print_inodes(const char *, int);
+int	print_alt_super(const char *, int);
 int	dumpcg(const char *, int, int);
 int	main(int, char **);
 int	openpartition(const char *, int, char *, size_t);
@@ -101,14 +103,16 @@ void	usage(void);
 void	swap_cg(struct cg *);
 void	print_ufs1_inode(int, int, void *);
 void	print_ufs2_inode(int, int, void *);
+void	fix_superblock(struct fs *);
 
 int
 main(int argc, char *argv[])
 {
 	int ch, eval;
 
-	while ((ch = getopt(argc, argv, "Fcimsv")) != -1)
+	while ((ch = getopt(argc, argv, "Facimsv")) != -1)
 		switch(ch) {
+		case 'a':	/* alternate suberblocks */
 		case 'c':	/* cylinder group info */
 		case 'i':	/* actual inodes */
 		case 'm':	/* cylinder group summary */
@@ -185,33 +189,17 @@ dumpfs(const char *name)
 		break;
 	}
 
-	if (needswap)
-		ffs_sb_swap(&afs, &afs);
+	fix_superblock(&afs);
 
-	printold = (afs.fs_magic == FS_UFS1_MAGIC &&
-		    (afs.fs_old_flags & FS_FLAGS_UPDATED) == 0);
-	if (printold) {
-		afs.fs_flags = afs.fs_old_flags;
-		afs.fs_maxbsize = afs.fs_bsize;
-		afs.fs_time = afs.fs_old_time;
-		afs.fs_size = afs.fs_old_size;
-		afs.fs_dsize = afs.fs_old_dsize;
-		afs.fs_csaddr = afs.fs_old_csaddr;
-		afs.fs_cstotal.cs_ndir = afs.fs_old_cstotal.cs_ndir;
-		afs.fs_cstotal.cs_nbfree = afs.fs_old_cstotal.cs_nbfree;
-		afs.fs_cstotal.cs_nifree = afs.fs_old_cstotal.cs_nifree;
-		afs.fs_cstotal.cs_nffree = afs.fs_old_cstotal.cs_nffree;
-	}
-
-	if (printold && afs.fs_old_postblformat == FS_42POSTBLFMT)
-		afs.fs_old_nrpos = 8;
 	dev_bsize = afs.fs_fsize / fsbtodb(&afs, 1);
 
 	rval = 0;
 	printf("file system: %s\n", name);
 
 	if (ISOPT(opt_superblock))
-		rval = print_superblock(name, fd, sblock_try[i]);
+		rval = print_superblock(&afs, name, fd, sblock_try[i]);
+	if (rval == 0 && ISOPT(opt_alt_super))
+		rval = print_alt_super(name, fd);
 	if (rval == 0 && ISOPT(opt_cg_summary))
 		rval = print_cgsum(name, fd);
 	if (rval == 0 && ISOPT(opt_cg_info))
@@ -227,8 +215,34 @@ dumpfs(const char *name)
 	return rval;
 }
 
+void
+fix_superblock(struct fs *fs)
+{
+
+	if (needswap)
+		ffs_sb_swap(fs, fs);
+
+	printold = (fs->fs_magic == FS_UFS1_MAGIC &&
+		    (fs->fs_old_flags & FS_FLAGS_UPDATED) == 0);
+	if (printold) {
+		fs->fs_flags = fs->fs_old_flags;
+		fs->fs_maxbsize = fs->fs_bsize;
+		fs->fs_time = fs->fs_old_time;
+		fs->fs_size = fs->fs_old_size;
+		fs->fs_dsize = fs->fs_old_dsize;
+		fs->fs_csaddr = fs->fs_old_csaddr;
+		fs->fs_cstotal.cs_ndir = fs->fs_old_cstotal.cs_ndir;
+		fs->fs_cstotal.cs_nbfree = fs->fs_old_cstotal.cs_nbfree;
+		fs->fs_cstotal.cs_nifree = fs->fs_old_cstotal.cs_nifree;
+		fs->fs_cstotal.cs_nffree = fs->fs_old_cstotal.cs_nffree;
+	}
+
+	if (printold && fs->fs_old_postblformat == FS_42POSTBLFMT)
+		fs->fs_old_nrpos = 8;
+}
+
 int
-print_superblock(const char *name, int fd, off_t sblock)
+print_superblock(struct fs *fs, const char *name, int fd, off_t sblock)
 {
 	int i, size;
 	time_t t;
@@ -241,88 +255,88 @@ print_superblock(const char *name, int fd, off_t sblock)
 		printf("endian\tbig-endian\n");
 	else
 		printf("endian\tlittle-endian\n");
-	t = afs.fs_time;
+	t = fs->fs_time;
 	printf("location%lld\tmagic\t%x\ttime\t%s", (long long)sblock,
-	    afs.fs_magic, ctime(&t));
+	    fs->fs_magic, ctime(&t));
 
 	if (is_ufs2)
 		i = 4;
 	else {
 		i = 0;
-		if (!printold && afs.fs_old_postblformat != FS_42POSTBLFMT) {
+		if (!printold && fs->fs_old_postblformat != FS_42POSTBLFMT) {
 			i++;
-			if (afs.fs_old_inodefmt >= FS_44INODEFMT) {
+			if (fs->fs_old_inodefmt >= FS_44INODEFMT) {
 				int max;
 
 				i++;
-				max = afs.fs_maxcontig;
-				size = afs.fs_contigsumsize;
+				max = fs->fs_maxcontig;
+				size = fs->fs_contigsumsize;
 				if ((max < 2 && size == 0)
 				    || (max > 1 && size >= MIN(max, FS_MAXCONTIG)))
 					i++;
 			}
 		}
 	}
-	printf("id\t[ %x %x ]\n", afs.fs_id[0], afs.fs_id[1]);
+	printf("id\t[ %x %x ]\n", fs->fs_id[0], fs->fs_id[1]);
 	printf("cylgrp\t%s\tinodes\t%s\tfslevel %d\tsoftdep %sabled\n",
 	    i < 1 ? "static" : "dynamic",
 	    i < 2 ? "4.2/4.3BSD" : i < 4 ? "4.4BSD" : "FFSv2", i,
-	    (afs.fs_flags & FS_DOSOFTDEP) ? "en" : "dis");
+	    (fs->fs_flags & FS_DOSOFTDEP) ? "en" : "dis");
 	printf("nbfree\t%lld\tndir\t%lld\tnifree\t%lld\tnffree\t%lld\n",
-	    (long long)afs.fs_cstotal.cs_nbfree,
-	    (long long)afs.fs_cstotal.cs_ndir,
-	    (long long)afs.fs_cstotal.cs_nifree,
-	    (long long)afs.fs_cstotal.cs_nffree);
+	    (long long)fs->fs_cstotal.cs_nbfree,
+	    (long long)fs->fs_cstotal.cs_ndir,
+	    (long long)fs->fs_cstotal.cs_nifree,
+	    (long long)fs->fs_cstotal.cs_nffree);
 	printf("ncg\t%d\tsize\t%lld\tblocks\t%lld\n",
-	    afs.fs_ncg, (long long)afs.fs_size, (long long)afs.fs_dsize);
+	    fs->fs_ncg, (long long)fs->fs_size, (long long)fs->fs_dsize);
 	if (printold)
-		printf("ncyl\t%d\n", afs.fs_old_ncyl);
+		printf("ncyl\t%d\n", fs->fs_old_ncyl);
 	printf("bsize\t%d\tshift\t%d\tmask\t0x%08x\n",
-	    afs.fs_bsize, afs.fs_bshift, afs.fs_bmask);
+	    fs->fs_bsize, fs->fs_bshift, fs->fs_bmask);
 	printf("fsize\t%d\tshift\t%d\tmask\t0x%08x\n",
-	    afs.fs_fsize, afs.fs_fshift, afs.fs_fmask);
+	    fs->fs_fsize, fs->fs_fshift, fs->fs_fmask);
 	printf("frag\t%d\tshift\t%d\tfsbtodb\t%d\n",
-	    afs.fs_frag, afs.fs_fragshift, afs.fs_fsbtodb);
+	    fs->fs_frag, fs->fs_fragshift, fs->fs_fsbtodb);
 	printf("bpg\t%d\tfpg\t%d\tipg\t%d\n",
-	    afs.fs_fpg / afs.fs_frag, afs.fs_fpg, afs.fs_ipg);
+	    fs->fs_fpg / fs->fs_frag, fs->fs_fpg, fs->fs_ipg);
 	printf("minfree\t%d%%\toptim\t%s\tmaxcontig %d\tmaxbpg\t%d\n",
-	    afs.fs_minfree, afs.fs_optim == FS_OPTSPACE ? "space" : "time",
-	    afs.fs_maxcontig, afs.fs_maxbpg);
+	    fs->fs_minfree, fs->fs_optim == FS_OPTSPACE ? "space" : "time",
+	    fs->fs_maxcontig, fs->fs_maxbpg);
 	if (printold) {
 		printf("cpg\t%d\trotdelay %dms\trps\t%d\n",
-		    afs.fs_old_cpg, afs.fs_old_rotdelay, afs.fs_old_rps);
+		    fs->fs_old_cpg, fs->fs_old_rotdelay, fs->fs_old_rps);
 		printf("ntrak\t%d\tnsect\t%d\tnpsect\t%d\tspc\t%d\n",
-		    afs.fs_spare2, afs.fs_old_nsect, afs.fs_old_npsect,
-		    afs.fs_old_spc);
+		    fs->fs_spare2, fs->fs_old_nsect, fs->fs_old_npsect,
+		    fs->fs_old_spc);
 		printf("trackskew %d\tinterleave %d\n",
-		    afs.fs_old_trackskew, afs.fs_old_interleave);
+		    fs->fs_old_trackskew, fs->fs_old_interleave);
 	}
 	printf("symlinklen %d\tcontigsumsize %d\n",
-	    afs.fs_maxsymlinklen, afs.fs_contigsumsize);
+	    fs->fs_maxsymlinklen, fs->fs_contigsumsize);
 	printf("maxfilesize 0x%016llx\n",
-	    (unsigned long long)afs.fs_maxfilesize);
-	printf("nindir\t%d\tinopb\t%d\n", afs.fs_nindir, afs.fs_inopb);
+	    (unsigned long long)fs->fs_maxfilesize);
+	printf("nindir\t%d\tinopb\t%d\n", fs->fs_nindir, fs->fs_inopb);
 	if (printold)
-		printf("nspf\t%d\n", afs.fs_old_nspf);
+		printf("nspf\t%d\n", fs->fs_old_nspf);
 	printf("avgfilesize %d\tavgfpdir %d\n",
-	    afs.fs_avgfilesize, afs.fs_avgfpdir);
+	    fs->fs_avgfilesize, fs->fs_avgfpdir);
 	printf("sblkno\t%d\tcblkno\t%d\tiblkno\t%d\tdblkno\t%d\n",
-	    afs.fs_sblkno, afs.fs_cblkno, afs.fs_iblkno, afs.fs_dblkno);
-	printf("sbsize\t%d\tcgsize\t%d\n", afs.fs_sbsize, afs.fs_cgsize);
+	    fs->fs_sblkno, fs->fs_cblkno, fs->fs_iblkno, fs->fs_dblkno);
+	printf("sbsize\t%d\tcgsize\t%d\n", fs->fs_sbsize, fs->fs_cgsize);
 	if (printold)
 		printf("offset\t%d\tmask\t0x%08x\n",
-		    afs.fs_old_cgoffset, afs.fs_old_cgmask);
+		    fs->fs_old_cgoffset, fs->fs_old_cgmask);
 	printf("csaddr\t%lld\tcssize %d\n",
-	    (long long)afs.fs_csaddr, afs.fs_cssize);
+	    (long long)fs->fs_csaddr, fs->fs_cssize);
 	if (printold)
 		printf("shift\t%d\tmask\t0x%08x\n",
-		    afs.fs_spare1[0], afs.fs_spare1[1]);
+		    fs->fs_spare1[0], fs->fs_spare1[1]);
 	printf("cgrotor\t%d\tfmod\t%d\tronly\t%d\tclean\t0x%02x\n",
-	    afs.fs_cgrotor, afs.fs_fmod, afs.fs_ronly, afs.fs_clean);
+	    fs->fs_cgrotor, fs->fs_fmod, fs->fs_ronly, fs->fs_clean);
 	if (printold) {
-		if (afs.fs_old_cpc != 0)
+		if (fs->fs_old_cpc != 0)
 			printf("blocks available in each of %d rotational "
-			       "positions", afs.fs_old_nrpos);
+			       "positions", fs->fs_old_nrpos);
 		else
 			printf("(no rotational position table)\n");
 	}
@@ -372,6 +386,26 @@ print_cgsum(const char *name, int fd)
 	free(afs.fs_csp);
 	afs.fs_csp = NULL;
 
+	return 0;
+}
+
+int
+print_alt_super(const char *name, int fd)
+{
+	union fsun alt;
+	int i;
+	off_t loc;
+
+	for (i = 0; i < afs.fs_ncg; i++) {
+		printf("\nalternate %d:\n", i);
+		loc = fsbtodb(&afs, cgtod(&afs, i)) * dev_bsize - afs.fs_bsize;
+		if (pread(fd, &alt, sizeof alt, loc) != sizeof alt) {
+			warnx("%s: error reading alt %d", name, i);
+			return (1);
+		}
+		if (print_superblock(&alt.fs, name, fd, loc))
+			return 1;
+	}
 	return 0;
 }
 
@@ -533,7 +567,7 @@ void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: dumpfs [-cFimsv] filesys | device [...]\n");
+	(void)fprintf(stderr, "usage: dumpfs [-acFimsv] filesys | device [...]\n");
 	exit(1);
 }
 
