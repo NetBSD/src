@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_mainbus.c,v 1.7 2003/01/23 03:56:45 briggs Exp $	*/
+/*	$NetBSD: i80321_mainbus.c,v 1.8 2003/02/06 03:17:49 briggs Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -160,23 +160,23 @@ i80321_mainbus_attach(struct device *parent, struct device *self, void *aux)
 		panic("i80321: iwin[1] slave");
 	}
 
-	sc->sc_iwin[2].iwin_base_lo = 0 |
-	    PCI_MAPREG_MEM_PREFETCHABLE_MASK |
-	    PCI_MAPREG_MEM_TYPE_64BIT;
-	sc->sc_iwin[2].iwin_base_hi = 0;
-	sc->sc_iwin[2].iwin_xlate = 0;
-	sc->sc_iwin[2].iwin_size = 0;
-
 	if (sc->sc_is_host) {
-		sc->sc_iwin[3].iwin_base_lo = memstart |
+		sc->sc_iwin[2].iwin_base_lo = memstart |
 		    PCI_MAPREG_MEM_PREFETCHABLE_MASK |
 		    PCI_MAPREG_MEM_TYPE_64BIT;
-		sc->sc_iwin[3].iwin_base_hi = 0;
-		sc->sc_iwin[3].iwin_xlate = memstart;
-		sc->sc_iwin[3].iwin_size = memsize;
+		sc->sc_iwin[2].iwin_base_hi = 0;
+		sc->sc_iwin[2].iwin_xlate = memstart;
+		sc->sc_iwin[2].iwin_size = memsize;
 	} else {
-		panic("i80321: iwin[3] slave");
+		panic("i80321: iwin[2] slave");
 	}
+
+	sc->sc_iwin[3].iwin_base_lo = 0 |
+	    PCI_MAPREG_MEM_PREFETCHABLE_MASK |
+	    PCI_MAPREG_MEM_TYPE_64BIT;
+	sc->sc_iwin[3].iwin_base_hi = 0;
+	sc->sc_iwin[3].iwin_xlate = 0;
+	sc->sc_iwin[3].iwin_size = 0;
 
 	/*
 	 * We set up the Outbound Windows as follows:
