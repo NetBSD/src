@@ -309,7 +309,7 @@ TOP	user-configurable defaults for options.
 .br
 /etc/passwd		used to map UID numbers to user names
 .br
-/vmunix		system image
+/netbsd			system image
 .SH BUGS
 Don't shoot me, but the default for
 .B \-I
