@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.41.2.1 2002/06/30 05:54:35 lukem Exp $ */
+/*	$NetBSD: disks.c,v 1.41.2.2 2002/06/30 06:24:01 lukem Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -319,23 +319,31 @@ make_fstab(void)
 #endif		
 	}
 	for (i = 0; i < getmaxpartitions(); i++)
-		if (bsdlabel[i].pi_fstype == FS_BSDFFS)
-			scripting_fprintf(f, "/dev/%s%c %s ffs rw 1 %d\n",
+		if (bsdlabel[i].pi_fstype == FS_BSDFFS) {
+			char *s = "#";
+
+			if (*fsmount[i] != '\0')
+				s++;
+			scripting_fprintf(f, "%s/dev/%s%c %s ffs rw 1 %d\n", s,
 				       diskdev, 'a'+i, fsmount[i],
 				       fsck_num(fsmount[i]));
-		else if (bsdlabel[i].pi_fstype == FS_BSDLFS) {
+		} else if (bsdlabel[i].pi_fstype == FS_BSDLFS) {
 			char *s = "#";
 
 			/* If there is no LFS, just comment it out. */
-			if (!check_lfs_progs())
+			if (!check_lfs_progs() && *fsmount[i] != '\0')
 				s++;
 			scripting_fprintf(f, "%s/dev/%s%c %s lfs rw 1 %d\n", s,
 				       diskdev, 'a'+i, fsmount[i],
 				       fsck_num(fsmount[i]));
-		} else if (bsdlabel[i].pi_fstype == FS_MSDOS)
-			scripting_fprintf(f, "/dev/%s%c %s msdos rw 0 0\n",
+		} else if (bsdlabel[i].pi_fstype == FS_MSDOS) {
+			char *s = "#";
+
+			if (*fsmount[i] != '\0')
+				s++;
+			scripting_fprintf(f, "%s/dev/%s%c %s msdos rw 0 0\n", s,
 				       diskdev, 'a'+i, fsmount[i]);
-		else if (bsdlabel[i].pi_fstype == FS_SWAP) {
+		} else if (bsdlabel[i].pi_fstype == FS_SWAP) {
 			if (swapdev == -1)
 				swapdev = i;
 			scripting_fprintf(f, "/dev/%s%c none swap sw 0 0\n", diskdev, 'a'+i);
