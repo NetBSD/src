@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.20 1995/02/12 19:19:28 chopps Exp $	*/
+/*	$NetBSD: siop.c,v 1.21 1995/07/26 14:30:53 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -157,13 +157,14 @@ int	siopphmm = 0;
 /*
  * default minphys routine for siop based controllers
  */
-void
+u_int
 siop_minphys(bp)
 	struct buf *bp;
 {
 	/*
 	 * no max transfer at this level
 	 */
+	return (minphys(bp));
 }
 
 /*
