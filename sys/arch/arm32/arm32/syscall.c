@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.31 2000/11/26 15:13:50 chs Exp $	*/
+/*	$NetBSD: syscall.c,v 1.32 2000/12/12 05:21:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -72,7 +72,7 @@ u_int arm700bugcount = 0;
 /* Macors to simplify the switch statement below */
 
 #define SYSCALL_SPECIAL_RETURN			\
-	userret(p, frame->tf_pc, sticks);	\
+	userret(p);				\
 	return;
 
 /*
@@ -89,11 +89,9 @@ syscall(frame, code)
 	caddr_t params;
 	const struct sysent *callp;
 	struct proc *p;
-	int error, opc;
+	int error;
 	u_int argsize;
 	int args[8], rval[2];
-	int nsys;
-	u_quad_t sticks;
 	int regparams;
 
 	/*
@@ -106,32 +104,13 @@ syscall(frame, code)
 
 	uvmexp.syscalls++;
 
-	/*
-	 * Trap SWI instructions executed in non-USR32 mode
-	 *
-	 * CONTINUE_AFTER_NONUSR_SYSCALL is used to determine whether the
-	 * kernel should continue running following a swi instruction in
-	 * non-USR32 mode. This was used for debugging and can problably
-	 * be removed altogether
-	 */
+#ifdef DEBUG
+	if ((GetCPSR() & PSR_MODE) != PSR_SVC32_MODE)
+		panic("syscall: Not in SVC32 mode\n");
+#endif	/* DEBUG */
 
-#ifdef DIAGNOSTIC
-	if ((frame->tf_spsr & PSR_MODE) != PSR_USR32_MODE) {
-		printf("syscall: swi 0x%x from non USR32 mode\n", code);
-		printf("syscall: trapframe=%p\n", frame);
-
-#ifdef CONTINUE_AFTER_NONUSR_SYSCALL
-		printf("syscall: The system should now be considered very unstable :-(\n");
-		sigexit(curproc, SIGILL);
-
-		/* Not reached */
-
-		panic("syscall: How did we get here ?\n");
-#else
-		panic("syscall in non USR32 mode\n");
-#endif	/* CONTINUE_AFTER_NONUSR_SYSCALL */
-	}
-#endif	/* DIAGNOSTIC */
+	p = curproc;
+	p->p_md.md_regs = frame;
 
 #ifdef CPU_ARM7
 	/*
@@ -151,45 +130,17 @@ syscall(frame, code)
 	 * then we hit the bug.
 	 */
 	if ((ReadWord(frame->tf_pc - INSN_SIZE) & 0x0f000000) != 0x0f000000) {
-#ifdef ARM700BUGTRACK
-		/* Verbose bug tracking */
-
-		int loop;
-
-		printf("ARM700 just stumbled at 0x%08x\n", frame->tf_pc - INSN_SIZE);
-		printf("Code leading up to this was\n");
-		for (loop = frame->tf_pc - 32; loop < frame->tf_pc; loop += 4)
-			disassemble(loop);
-
-		printf("CPU ID=%08x\n", cpu_id());
-		printf("MMU Fault address=%08x status=%08x\n", cpu_faultaddress(), cpu_faultstatus());
-		printf("Page table entry for 0x%08x at %p = 0x%08x\n",
-		    frame->tf_pc - INSN_SIZE, vtopte(frame->tf_pc - INSN_SIZE),
-		    *vtopte(frame->tf_pc - INSN_SIZE));
-#endif	/* ARM700BUGTRACK */
-
 		frame->tf_pc -= INSN_SIZE;
 		++arm700bugcount;
-
-		userret(curproc, frame->tf_pc, curproc->p_sticks);
-
+		userret(p);
 		return;
 	}
 #endif	/* CPU_ARM7 */
 
-#ifdef DIAGNOSTIC
-	if ((GetCPSR() & PSR_MODE) != PSR_SVC32_MODE)
-		panic("syscall: Not in SVC32 mode\n");
-#endif	/* DIAGNOSTIC */
-
-	p = curproc;
-	sticks = p->p_sticks;
-	p->p_md.md_regs = frame;
-
 	/*
 	 * Support for architecture dependant SWIs
 	 */
-	if (code > 0x00f00000) {
+	if (code & 0x00f00000) {
 		/*
 		 * Support for the Architecture defined SWI's in case the
 		 * processor does not support them.
@@ -204,41 +155,19 @@ syscall(frame, code)
 			break;
 		default:
 			/* Undefined so illegal instruction */
-			trapsignal(p, SIGILL, ReadWord(frame->tf_pc - 4));
+			trapsignal(p, SIGILL, ReadWord(frame->tf_pc - INSN_SIZE));
 			break;
 		}
 
-		userret(p, frame->tf_pc, sticks);
+		userret(p);
 		return;
 	}
 
-#ifdef PMAP_DEBUG
-	/* Debug info */
-    	if (pmap_debug_level >= -1)
-		printf("SYSCALL: code=%08x lr=%08x pid=%d\n",
-		    code, frame->tf_pc, p->p_pid);
-#endif	/* PMAP_DEBUG */
-
-	opc = frame->tf_pc;
 	params = (caddr_t)&frame->tf_r0;
 	regparams = 4;
-	nsys = p->p_emul->e_nsysent;
 	callp = p->p_emul->e_sysent;
 
 	switch (code) {	
-#if defined(DDB) && defined(PORTMASTER)
-	/* Sometimes I want to enter the debugger outside of the interrupt handler */
-	case 0x102e:
-		if (securelevel > 0) {
-			frame->tf_r0 = EPERM;
-			frame->tf_spsr |= PSR_C_bit;	/* carry bit */
-			SYSCALL_SPECIAL_RETURN;
-		}
-		Debugger();
-		SYSCALL_SPECIAL_RETURN;
-		break;
-#endif	/* DDB && PORTMASTER */
-
 	case SYS_syscall:
 		/* Don't have to look in user space, we have it in the trapframe */
 /*		code = fuword(params);*/
@@ -263,19 +192,7 @@ syscall(frame, code)
 		break;
 	}
 
-	/* Validate syscall range */
-	if (code < 0 || code >= nsys)
-		callp += p->p_emul->e_nosys;            /* illegal */
-	else
-		callp += code;
-
-#ifdef VERBOSE_ARM32
-	/* Is the syscal valid ? */
-	if (callp->sy_call == sys_nosys) {
-		printf("syscall: nosys code=%d lr=%08x proc=%08x pid=%d %s\n",
-		    code, frame->tf_pc, (u_int)p, p->p_pid, p->p_comm);
-	}
-#endif
+	callp += (code & (SYS_NSYSENT - 1));
 
 	argsize = callp->sy_argsize;
 	if (argsize > (regparams * sizeof(int)))
@@ -307,14 +224,6 @@ syscall(frame, code)
 
 	switch (error) {
 	case 0:
-		/*
-		 * Reinitialize proc pointer `p' as it may be different
-		 * if this is a child returning from fork syscall.
-		 *
-		 * XXX fork now returns via the child_return so is this
-		 * needed ?
-		 */
-		p = curproc;
 		frame->tf_r0 = rval[0];
 		frame->tf_r1 = rval[1];
 		frame->tf_spsr &= ~PSR_C_bit;	/* carry bit */
@@ -322,10 +231,9 @@ syscall(frame, code)
 
 	case ERESTART:
 		/*
-		 * Reconstruct the pc. opc contains the old pc address which is 
-		 * the instruction after the swi.
+		 * Reconstruct the pc to point at the swi.
 		 */
-		frame->tf_pc = opc - 4;
+		frame->tf_pc -= INSN_SIZE;
 		break;
 
 	case EJUSTRETURN:
@@ -343,7 +251,7 @@ bad:
 	scdebug_ret(p, code, error, rval[0]);
 #endif
 
-	userret(p, frame->tf_pc, sticks);
+	userret(p);
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
@@ -363,7 +271,7 @@ child_return(arg)
 	frame->tf_r0 = 0;
 	frame->tf_spsr &= ~PSR_C_bit;	/* carry bit */	
 
-	userret(p, frame->tf_pc, 0);
+	userret(p);
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))

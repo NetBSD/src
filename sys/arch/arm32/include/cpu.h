@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.22 2000/08/25 01:04:07 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.23 2000/12/12 05:21:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -219,6 +219,8 @@
 /* Hack to treat FPE time as interrupt time so we can measure it */
 #define CLKF_INTR(frame) ((current_intr_depth > 1) || (frame->if_spsr & PSR_MODE) == PSR_UND32_MODE)
 
+#define	PROC_PC(p)	((p)->p_md.md_regs->tf_pc)
+
 /*
  * definitions of cpu-dependent requirements
  * referenced in generic code
@@ -266,7 +268,7 @@ struct pcb;
 void	savectx		__P((struct pcb *pcb));
 
 /* ast.c */
-void userret		__P((register struct proc *p, int pc, u_quad_t oticks));
+void userret		__P((register struct proc *p));
 
 /* machdep.h */
 void bootsync		__P((void));

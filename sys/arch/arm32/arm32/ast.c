@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.19 2000/06/29 08:52:57 mrg Exp $	*/
+/*	$NetBSD: ast.c,v 1.20 2000/12/12 05:21:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -61,10 +61,8 @@
 int want_resched = 0;
 
 void
-userret(p, pc, oticks)
+userret(p)
 	struct proc *p;
-	int pc;
-	u_quad_t oticks;
 {
 	int sig;
 
@@ -103,15 +101,6 @@ userret(p, pc, oticks)
 		while ((sig = (CURSIG(p))) != 0) {
 			postsig(sig);
 		}
-	}
-
-	/*
-	 * Not sure if this profiling bit is working yet ... Not been tested
-	 */
-
-	if (p->p_flag & P_PROFIL) {
-		extern int psratio;
-		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
 	}
 
 	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
@@ -159,7 +148,7 @@ ast(frame)
 		ADDUPROF(p);
 	}
 
-	userret(p, frame->tf_pc, p->p_sticks);
+	userret(p);
 }
 
 /* End of ast.c */
