@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.20.4.2 1996/06/03 20:38:41 thorpej Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.20.4.3 1996/06/03 20:47:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -33,7 +33,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$NetBSD: ypbind.c,v 1.20.4.2 1996/06/03 20:38:41 thorpej Exp $";
+static char rcsid[] = "$NetBSD: ypbind.c,v 1.20.4.3 1996/06/03 20:47:51 thorpej Exp $";
 #endif
 
 #include <sys/param.h>
@@ -484,7 +484,7 @@ ping(ypdb)
 		AUTH_DESTROY(rpcua);
 		return st;
 	}
-	if (xdr_ypdomain_wrap_string(&xdr, &dom)) {
+	if (!xdr_ypdomain_wrap_string(&xdr, &dom)) {
 		st = RPC_CANTENCODEARGS;
 		AUTH_DESTROY(rpcua);
 		return st;
