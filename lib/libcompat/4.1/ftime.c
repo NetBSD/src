@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftime.c,v 1.5 1997/10/09 10:20:10 lukem Exp $");
+__RCSID("$NetBSD: ftime.c,v 1.6 1999/05/04 17:08:32 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -46,7 +46,7 @@ ftime(tbp)
 
         if (gettimeofday(&t, &tz) < 0)
                 return (-1);
-        tbp->millitm = t.tv_usec / 1000;
+        tbp->millitm = (unsigned short)(t.tv_usec / 1000);
         tbp->time = t.tv_sec;
         tbp->timezone = tz.tz_minuteswest;
         tbp->dstflag = tz.tz_dsttime;
