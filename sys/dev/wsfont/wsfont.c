@@ -1,4 +1,4 @@
-/*	$NetBSD: wsfont.c,v 1.3 1999/04/14 18:25:47 ad Exp $ */
+/* $NetBSD: wsfont.c,v 1.4 1999/04/14 23:06:26 ad Exp $ */
 
 /*-
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.3 1999/04/14 18:25:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.4 1999/04/14 23:06:26 ad Exp $");
 
 #include "opt_wsfont.h"
 
@@ -44,14 +44,9 @@ __KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.3 1999/04/14 18:25:47 ad Exp $");
 
 #undef HAVE_FONT
 
-#ifdef FONT_ISO8x16
+#ifdef FONT_QVSS8x15
 #define HAVE_FONT 1
-#include <dev/wsfont/iso8x16.h>
-#endif
-
-#ifdef FONT_BOLD8x16
-#define HAVE_FONT 1
-#include <dev/wsfont/bold8x16.h>
+#include <dev/wsfont/qvss8x15.h>
 #endif
 
 #ifdef FONT_GALLANT12x22
@@ -64,14 +59,14 @@ __KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.3 1999/04/14 18:25:47 ad Exp $");
 #include <dev/wsfont/lucida16x29.h>
 #endif
 
-/* Make sure we always have at least one font. Choose the most ugly one.  */
+/* Make sure we always have at least one font. */
 #ifndef HAVE_FONT
 #define HAVE_FONT 1
-#define FONT_QVSS8x15 1
+#define FONT_BOLD8x16 1
 #endif
 
-#ifdef FONT_QVSS8x15
-#include <dev/wsfont/qvss8x15.h>
+#ifdef FONT_BOLD8x16
+#include <dev/wsfont/bold8x16.h>
 #endif
 
 /* Placeholder struct used for linked list */
