@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.87 1995/05/01 08:25:38 mycroft Exp $	*/
+/*	$NetBSD: pccons.c,v 1.88 1995/05/03 20:46:32 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -775,16 +775,25 @@ pccnpollc(dev, on)
 
 	polling = on;
 	if (!on) {
-		register int s;
+		int unit;
+		struct pc_softc *sc;
+		int s;
 
 		/*
-		 * If disabling polling, make sure there are no bytes left in
-		 * the FIFO, holding up the interrupt line.  Otherwise we
-		 * won't get any further interrupts.
+		 * If disabling polling on a device that's been configured,
+		 * make sure there are no bytes left in the FIFO, holding up
+		 * the interrupt line.  Otherwise we won't get any further
+		 * interrupts.
 		 */
-		s = spltty();
-		pcintr(0);
-		splx(s);
+		unit = PCUNIT(dev);
+		if (pccd.cd_ndevs > unit) {
+			sc = pccd.cd_devs[unit];
+			if (sc != 0) {
+				s = spltty();
+				pcintr(sc);
+				splx(s);
+			}
+		}
 	}
 }	
 
