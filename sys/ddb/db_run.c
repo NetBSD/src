@@ -1,4 +1,4 @@
-/*	$NetBSD: db_run.c,v 1.9 1997/02/03 19:57:41 cgd Exp $	*/
+/*	$NetBSD: db_run.c,v 1.10 1997/02/06 21:17:16 gwr Exp $	*/
 
 /* 
  * Mach Operating System
@@ -78,7 +78,7 @@ db_stop_at_pc(regs, is_breakpoint)
 	     * Breakpoint trap.  Fix up the PC if the
 	     * machine requires it.
 	     */
-	    FIXUP_PC_AFTER_BREAK
+	    FIXUP_PC_AFTER_BREAK(regs);
 	    pc = PC_REGS(regs);
 	}
 #endif
