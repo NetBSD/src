@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.29 1994/06/29 06:44:52 cgd Exp $	*/
+/*	$NetBSD: proc.h,v 1.29.2.1 1994/08/14 07:45:11 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -211,7 +211,9 @@ struct	proc {
 #define	EMUL_SUNOS	1		/* sunos 4.x binaries */
 #define	EMUL_HPUX	2		/* HPUX binaries */
 #define	EMUL_ULTRIX	3		/* Ultrix binaries */
-#define	EMUL_IBCS2	4		/* Intel Binary compatibility; ie. SVR4 */
+#define	EMUL_IBCS2	4		/* Intel Binary compat; ie. SVR4 */
+/*	EMUL_???	5		/* ??? */
+#define	EMUL_OSF1	6		/* OSF/1 binaries */
 
 /*
  * MOVE TO ucred.h?
