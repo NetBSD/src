@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.84 2001/10/07 12:50:54 bjh21 Exp $ */
+/* $NetBSD: vmstat.c,v 1.85 2001/11/21 00:38:50 enami Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.84 2001/10/07 12:50:54 bjh21 Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.85 2001/11/21 00:38:50 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -753,8 +753,8 @@ dointr(int verbose)
 void
 dointr(int verbose)
 {
-	long *intrcnt;
-	long long inttotal, uptime;
+	unsigned long *intrcnt;
+	unsigned long long inttotal, uptime;
 	int nintr, inamlen;
 	char *intrname;
 	struct evcntlist allevents;
@@ -778,9 +778,9 @@ dointr(int verbose)
 	nintr /= sizeof(long);
 	while (--nintr >= 0) {
 		if (*intrcnt || verbose)
-			(void)printf("%-34s %16lld %8lld\n", intrname,
-			    (long long)*intrcnt,
-			    (long long)(*intrcnt / uptime));
+			(void)printf("%-34s %16llu %8llu\n", intrname,
+			    (unsigned long long)*intrcnt,
+			    (unsigned long long)(*intrcnt / uptime));
 		intrname += strlen(intrname) + 1;
 		inttotal += *intrcnt++;
 	}
@@ -810,15 +810,15 @@ event_chain_trashed:
 		    evcnt.ev_namelen + 1) != evcnt.ev_namelen + 1)
 			goto event_chain_trashed;
 
-		(void)printf("%s %s%*s %16lld %8lld\n", evgroup, evname,
+		(void)printf("%s %s%*s %16llu %8llu\n", evgroup, evname,
 		    34 - (evcnt.ev_grouplen + 1 + evcnt.ev_namelen), "",
-		    (long long)evcnt.ev_count,
-		    (long long)(evcnt.ev_count / uptime));
+		    (unsigned long long)evcnt.ev_count,
+		    (unsigned long long)(evcnt.ev_count / uptime));
 
 		inttotal += evcnt.ev_count++;
 	}
-	(void)printf("%-34s %16lld %8lld\n", "Total", inttotal,
-	    (long long)(inttotal / uptime));
+	(void)printf("%-34s %16llu %8llu\n", "Total", inttotal,
+	    (unsigned long long)(inttotal / uptime));
 }
 #endif
 
@@ -826,7 +826,7 @@ void
 doevcnt(int verbose)
 {
 	static const char * evtypes [] = { "misc", "intr", "trap" };
-	long long uptime;
+	unsigned long long uptime;
 	struct evcntlist allevents;
 	struct evcnt evcnt, *evptr;
 	char evgroup[EVCNT_STRING_MAX], evname[EVCNT_STRING_MAX];
@@ -858,10 +858,10 @@ event_chain_trashed:
 		    evcnt.ev_namelen + 1) != evcnt.ev_namelen + 1)
 			goto event_chain_trashed;
 
-		(void)printf("%s %s%*s %16lld %8lld %s\n", evgroup, evname,
+		(void)printf("%s %s%*s %16llu %8llu %s\n", evgroup, evname,
 		    34 - (evcnt.ev_grouplen + 1 + evcnt.ev_namelen), "",
-		    (long long)evcnt.ev_count,
-		    (long long)(evcnt.ev_count / uptime),
+		    (unsigned long long)evcnt.ev_count,
+		    (unsigned long long)(evcnt.ev_count / uptime),
 		    (evcnt.ev_type < sizeof(evtypes)/sizeof(evtypes)
 			? evtypes[evcnt.ev_type] : "?"));
 	}
