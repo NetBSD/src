@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.142 2000/06/29 08:11:27 mrg Exp $	*/
+/*	$NetBSD: trap.c,v 1.143 2000/07/02 04:40:40 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,15 +44,9 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.142 2000/06/29 08:11:27 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.143 2000/07/02 04:40:40 cgd Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
-#include "opt_inet.h"
-#include "opt_atalk.h"
-#include "opt_ccitt.h"
-#include "opt_iso.h"
-#include "opt_ns.h"
-#include "opt_natm.h"
 #include "opt_ktrace.h"
 #include "opt_ddb.h"
 #include "opt_syscall_debug.h"
@@ -64,7 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.142 2000/06/29 08:11:27 mrg Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/socket.h>
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/syscall.h>
@@ -87,47 +80,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.142 2000/06/29 08:11:27 mrg Exp $");
 #include <mips/psl.h>
 
 #include <net/netisr.h>
-#include <net/if.h>
-
-#ifdef INET
-#include <net/route.h>
-#include <netinet/in.h>
-#include <netinet/ip_var.h>
-#include "arp.h"
-#if NARP > 0
-#include <netinet/if_inarp.h>
-#endif
-#endif
-#ifdef INET6
-# ifndef INET
-#  include <netinet/in.h>
-# endif
-#include <netinet/ip6.h>
-#include <netinet6/ip6_var.h>
-#endif
-#ifdef NS
-#include <netns/ns_var.h>
-#endif
-#ifdef ISO
-#include <netiso/iso.h>
-#include <netiso/clnp.h>
-#endif
-#ifdef CCITT
-#include <netccitt/x25.h>
-#include <netccitt/pk.h>
-#include <netccitt/pk_extern.h>
-#endif
-#ifdef NATM
-#include <netnatm/natm.h>
-#endif
-#ifdef NETATALK
-#include <netatalk/at_extern.h>
-#endif
-#include "ppp.h"
-#if NPPP > 0
-#include <net/ppp_defs.h>
-#include <net/if_ppp.h>
-#endif
 
 #ifdef DDB
 #include <machine/db_machdep.h>

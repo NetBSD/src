@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.76 2000/06/29 08:10:45 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.77 2000/07/02 04:40:39 cgd Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -33,12 +33,6 @@
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
-#include "opt_inet.h"
-#include "opt_atalk.h"
-#include "opt_ccitt.h"
-#include "opt_iso.h"
-#include "opt_ns.h"
-#include "opt_natm.h"
 #include "adb.h"
 #include "opt_ipkdb.h"
 
@@ -61,21 +55,6 @@
 #include <uvm/uvm_extern.h>
 
 #include <net/netisr.h>
-
-#ifdef INET
-#include <net/if.h>
-#include <netinet/in.h>
-#include <netinet/if_inarp.h>
-#include <netinet/ip_var.h>
-#endif
-
-#ifdef INET6
-# ifndef INET
-#  include <netinet/in.h>
-# endif
-#include <netinet/ip6.h>
-#include <netinet6/ip6_var.h>
-#endif
 
 #include <machine/bat.h>
 #include <machine/powerpc.h>
