@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.31 2004/11/29 00:07:22 ws Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.32 2004/12/21 11:33:04 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.31 2004/11/29 00:07:22 ws Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.32 2004/12/21 11:33:04 fvdl Exp $");
 
 #include "opt_acpi.h"
 #include "opt_mpbios.h"
@@ -234,7 +234,7 @@ mpacpi_nonpci_intr(APIC_HEADER *hdrp, void *aux)
 			mpi->redir |= IOAPIC_REDLO_ACTLO;
 			break;
 		}
-		mpi->redir |= (IOAPIC_REDLO_DEL_LOPRI<<IOAPIC_REDLO_DEL_SHIFT);
+		mpi->redir |= (IOAPIC_REDLO_DEL_FIXED<<IOAPIC_REDLO_DEL_SHIFT);
 		switch (isa_ovr->TriggerMode) {
 		case MPS_INTTR_DEF:
 		case MPS_INTTR_LEVEL:
@@ -638,7 +638,7 @@ mpacpi_pciroute(struct mpacpi_pcibus *mpr)
 		mpi->type = MPS_INTTYPE_INT;
 
 		/* Defaults for PCI (active low, level triggered) */
-		mpi->redir = (IOAPIC_REDLO_DEL_LOPRI<<IOAPIC_REDLO_DEL_SHIFT) |
+		mpi->redir = (IOAPIC_REDLO_DEL_FIXED<<IOAPIC_REDLO_DEL_SHIFT) |
 		    IOAPIC_REDLO_LEVEL | IOAPIC_REDLO_ACTLO;
 		mpi->flags = MPS_INTPO_ACTLO | (MPS_INTTR_LEVEL << 2);
 		mpi->cpu_id = 0;
@@ -752,7 +752,7 @@ mpacpi_config_irouting(struct acpi_softc *acpi)
 		mpi->ioapic_ih = APIC_INT_VIA_APIC |
 		    (ioapic->sc_apicid << APIC_INT_APIC_SHIFT) |
 		    (i << APIC_INT_PIN_SHIFT);
-		mpi->redir = (IOAPIC_REDLO_DEL_LOPRI<<IOAPIC_REDLO_DEL_SHIFT);
+		mpi->redir = (IOAPIC_REDLO_DEL_FIXED<<IOAPIC_REDLO_DEL_SHIFT);
 		mpi->flags = MPS_INTPO_DEF | (MPS_INTTR_DEF << 2);
 		mpi->global_int = i;
 		ioapic->sc_pins[i].ip_map = mpi;
