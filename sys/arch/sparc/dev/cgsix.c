@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.19 1996/02/25 21:46:03 pk Exp $ */
+/*	$NetBSD: cgsix.c,v 1.20 1996/02/27 22:09:28 thorpej Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -71,11 +71,17 @@
 #include <machine/autoconf.h>
 #include <machine/pmap.h>
 #include <machine/fbvar.h>
+#if defined(SUN4)
+#include <machine/eeprom.h>
+#endif
 
 #include <sparc/dev/btreg.h>
 #include <sparc/dev/btvar.h>
 #include <sparc/dev/cgsixreg.h>
 #include <sparc/dev/sbusvar.h>
+#if defined(SUN4)
+#include <sparc/dev/pfourreg.h>
+#endif
 
 union cursor_cmap {		/* colormap, like bt_cmap, but tiny */
 	u_char	cm_map[2][3];	/* 2 R/G/B entries */
@@ -150,19 +156,41 @@ cgsixmatch(parent, vcf, aux)
 	struct cfdata *cf = vcf;
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
-	struct cg6_layout *p = (struct cg6_layout *)ra->ra_vaddr;
+	struct cg6_layout *p = (struct cg6_layout *)ra->ra_paddr;
+	void *tmp;
+	extern void *bus_tmp __P((void *, int));	/* XXX */
+	extern void bus_untmp __P((void));		/* XXX */
 
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return (0);
+
+	/*
+	 * Mask out invalid flags from the user.
+	 */
+	cf->cf_flags &= FB_USERMASK;
+
 	if (ca->ca_bustype == BUS_SBUS)
 		return (1);
-#ifdef SUN4
-	ra->ra_len = NBPG;
-	bus_tmp(&p->cg6_fhc_un.un_fhc, ca->ca_bustype);
-	return (probeget(&p->cg6_fhc_un.un_fhc, 4) != 0);
-#else
-	return (0);
+
+#if defined(SUN4)
+	if (CPU_ISSUN4 && (ca->ca_bustype == BUS_OBIO)) {
+		/*
+		 * Check for a pfour framebuffer.  This is done somewhat
+		 * differently on the cgsix than other pfour framebuffers.
+		 */
+		bus_untmp();
+		tmp = bus_tmp(ra->ra_paddr + CGSIX_FHC_OFFSET, ca->ca_bustype);
+		if (probeget(tmp, 4) == -1)
+			return (0);
+
+		if (fb_pfour_id(tmp) == PFOUR_ID_FASTCOLOR) {
+			cf->cf_flags |= FB_PFOUR;
+			return (1);
+		}
+	}
 #endif
+
+	return (0);
 }
 
 /*
@@ -177,49 +205,15 @@ cgsixattach(parent, self, args)
 	register struct confargs *ca = args;
 	register int node, ramsize, i;
 	register volatile struct bt_regs *bt;
-	int isconsole, sbus = 1;
+	struct fbdevice *fb = &sc->sc_fb;
+	int isconsole = 0, sbus = 1;
 	char *nam;
 	extern struct tty *fbconstty;
 
-	sc->sc_fb.fb_driver = &cg6_fbdriver;
-	sc->sc_fb.fb_device = &sc->sc_dev;
-	sc->sc_fb.fb_type.fb_type = FBTYPE_SUNFAST_COLOR;
-	sc->sc_fb.fb_flags = sc->sc_dev.dv_cfdata->cf_flags;
-
-	switch (ca->ca_bustype) {
-	case BUS_OBIO:
-		if (CPU_ISSUN4M) {   /* 4m has framebuffer on obio */
-			node = ca->ca_ra.ra_node;
-			nam = getpropstring(node, "model");
-			break;
-		}
-	case BUS_VME32:
-	case BUS_VME16:
-		sbus = node = 0;
-		nam = "cgsix";
-		break;
-
-	case BUS_SBUS:
-		node = ca->ca_ra.ra_node;
-		nam = getpropstring(node, "model");
-		break;
-
-	case BUS_MAIN:
-		printf("cgsix on mainbus?\n");
-		return;
-	}
-
-	isconsole = node == fbnode && fbconstty != NULL;
-
-	sc->sc_fb.fb_type.fb_depth = 8;
-	fb_setsize(&sc->sc_fb, sc->sc_fb.fb_type.fb_depth,
-	    1152, 900, node, ca->ca_bustype);
-
-	ramsize = sc->sc_fb.fb_type.fb_height * sc->sc_fb.fb_linebytes;
-	sc->sc_fb.fb_type.fb_cmsize = 256;
-	sc->sc_fb.fb_type.fb_size = ramsize;
-	printf(": %s, %d x %d", nam,
-	    sc->sc_fb.fb_type.fb_width, sc->sc_fb.fb_type.fb_height);
+	fb->fb_driver = &cg6_fbdriver;
+	fb->fb_device = &sc->sc_dev;
+	fb->fb_type.fb_type = FBTYPE_SUNFAST_COLOR;
+	fb->fb_flags = sc->sc_dev.dv_cfdata->cf_flags;
 
 	/*
 	 * Dunno what the PROM has mapped, though obviously it must have
@@ -241,6 +235,73 @@ cgsixattach(parent, self, args)
 	sc->sc_tec = (volatile struct cg6_tec_xxx *)
 	    mapiodev(ca->ca_ra.ra_reg, O(cg6_tec_un.un_tec),
 		     sizeof *sc->sc_tec, ca->ca_bustype);
+
+	switch (ca->ca_bustype) {
+	case BUS_OBIO:
+		sbus = node = 0;
+		if (fb->fb_flags & FB_PFOUR)
+			nam = "cgsix/p4";
+		else
+			nam = "cgsix";
+
+#if defined(SUN4M)
+		if (CPU_ISSUN4M) {   /* 4m has framebuffer on obio */
+			node = ca->ca_ra.ra_node;
+			nam = getpropstring(node, "model");
+			break;
+		}
+#endif
+		break;
+
+	case BUS_VME32:
+	case BUS_VME16:
+		sbus = node = 0;
+		nam = "cgsix";
+		break;
+
+	case BUS_SBUS:
+		node = ca->ca_ra.ra_node;
+		nam = getpropstring(node, "model");
+		break;
+
+	case BUS_MAIN:
+		printf("cgsix on mainbus?\n");
+		return;
+	}
+
+	/* Don't have to map the pfour register on the cgsix. */
+	fb->fb_pfour = NULL;
+
+	fb->fb_type.fb_depth = 8;
+	fb_setsize(fb, fb->fb_type.fb_depth, 1152, 900,
+	    node, ca->ca_bustype);
+
+	ramsize = fb->fb_type.fb_height * fb->fb_linebytes;
+	fb->fb_type.fb_cmsize = 256;
+	fb->fb_type.fb_size = ramsize;
+	printf(": %s, %d x %d", nam, fb->fb_type.fb_width,
+	    fb->fb_type.fb_height);
+
+#if defined(SUN4)
+	if (CPU_ISSUN4) {
+		struct eeprom *eep = (struct eeprom *)eeprom_va;
+		int constype = (fb->fb_flags & FB_PFOUR) ? EE_CONS_P4OPT :
+		    EE_CONS_COLOR;
+		/* 
+		 * Assume this is the console if there's no eeprom info
+		 * to be found.
+		 */
+		if (eep == NULL || eep->eeConsole == constype)
+			isconsole = (fbconstty != NULL);
+		else
+			isconsole = 0;
+	}
+#endif
+
+#if defined(SUN4C) || defined(SUN4M)  
+	if (CPU_ISSUN4COR4M)
+		isconsole = node == fbnode && fbconstty != NULL;
+#endif
 
 	sc->sc_fhcrev = (*sc->sc_fhc >> FHC_REV_SHIFT) &
 	    (FHC_REV_MASK >> FHC_REV_SHIFT);
@@ -267,9 +328,11 @@ cgsixattach(parent, self, args)
 #endif
 	} else
 		printf("\n");
+#if defined(SUN4C) || defined(SUN4M)
 	if (sbus)
 		sbus_establish(&sc->sc_sd, &sc->sc_dev);
-	if (node == fbnode)
+#endif
+	if (CPU_ISSUN4 || (node == fbnode))
 		fb_attach(&sc->sc_fb, isconsole);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.21 1996/02/27 09:10:24 pk Exp $ */
+/*	$NetBSD: cgthree.c,v 1.22 1996/02/27 22:09:32 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,7 +80,6 @@ struct cgthree_softc {
 	struct rom_reg	sc_phys;	/* phys address description */
 	volatile struct fbcontrol *sc_fbc;	/* Brooktree registers */
 	int	sc_bustype;		/* type of bus we live on */
-	int	sc_blanked;		/* true if blanked */
 	union	bt_cmap sc_cmap;	/* Brooktree color map */
 };
 
@@ -110,6 +109,8 @@ extern int nullop();
 static int cgthree_cnputc();
 
 static void cgthreeloadcmap __P((struct cgthree_softc *, int, int));
+static void cgthree_set_video __P((struct cgthree_softc *, int));
+static int cgthree_get_video __P((struct cgthree_softc *));
 
 /*
  * Match a cgthree.
@@ -122,6 +123,11 @@ cgthreematch(parent, vcf, aux)
 	struct cfdata *cf = vcf;
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
+
+	/*
+	 * Mask out invalid flags from the user.
+	 */
+	cf->cf_flags &= FB_USERMASK;
 
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return (0);
@@ -210,8 +216,9 @@ cgthreeattach(parent, self, args)
 	bt->bt_addr = 0;
 	for (i = 0; i < 256 * 3 / 4; i++)
 		sc->sc_cmap.cm_chip[i] = bt->bt_cmap;
+
 	/* make sure we are not blanked */
-	BT_INIT(bt);
+	BT_INIT(bt, 0);
 
 	if (isconsole) {
 		printf(" (console)\n");
@@ -295,15 +302,11 @@ cgthreeioctl(dev, cmd, data, flags, p)
 		break;
 
 	case FBIOGVIDEO:
-		*(int *)data = sc->sc_blanked;
+		*(int *)data = cgthree_get_video(sc);
 		break;
 
 	case FBIOSVIDEO:
-		if (*(int *)data)
-			cgthreeunblank(&sc->sc_dev);
-		else
-			sc->sc_fbc->fbc_ctrl &= ~FBC_VENAB;
-			/* if (!sbus) BT_BLANK(&sc->sc_fbc.fbc_dac); (?) */
+		cgthree_set_video(sc, *(int *)data);
 		break;
 
 	default:
@@ -319,10 +322,28 @@ static void
 cgthreeunblank(dev)
 	struct device *dev;
 {
-	struct cgthree_softc *sc = (struct cgthree_softc *)dev;
 
-	sc->sc_fbc->fbc_ctrl |= FBC_VENAB;
-	/* if (!sbus) BT_UNBLANK(&sc->sc_fbc.fbc_dac); (?) */
+	cgthree_set_video((struct cgthree_softc *)dev, 1);
+}
+
+static void
+cgthree_set_video(sc, enable)
+	struct cgthree_softc *sc;
+	int enable;
+{
+
+	if (enable)
+		sc->sc_fbc->fbc_ctrl |= FBC_VENAB;
+	else
+		sc->sc_fbc->fbc_ctrl &= FBC_VENAB;
+}
+
+static int
+cgthree_get_video(sc)
+	struct cgthree_softc *sc;
+{
+
+	return ((sc->sc_fbc->fbc_ctrl & FBC_VENAB) != 0);
 }
 
 /*
