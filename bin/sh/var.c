@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.35 2004/10/02 12:16:53 dsl Exp $	*/
+/*	$NetBSD: var.c,v 1.36 2004/10/06 10:23:43 enami Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.35 2004/10/02 12:16:53 dsl Exp $");
+__RCSID("$NetBSD: var.c,v 1.36 2004/10/06 10:23:43 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -590,7 +590,7 @@ exportcmd(int argc, char **argv)
 			vp = find_var(name, NULL, NULL);
 			if (vp != NULL) {
 				vp->flags |= flag;
-				return 0;
+				continue;
 			}
 		}
 		setvar(name, p, flag);
