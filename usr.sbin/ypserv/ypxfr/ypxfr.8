@@ -1,4 +1,4 @@
-.\"	$NetBSD: ypxfr.8,v 1.3 1997/10/07 14:23:59 lukem Exp $
+.\"	$NetBSD: ypxfr.8,v 1.3.2.1 1997/11/28 09:54:55 mellon Exp $
 .\"
 .\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -45,13 +45,17 @@
 .Ar mapname
 .Sh DESCRIPTION
 .Nm
-is the utility in YP that transfers maps to the local host.
+is the utility in
+.Tn YP
+that transfers maps to the local host.
 .Pp
 .Pp
 The options are as follows:
 .Bl -tag -width indent
 .It Fl b
-Preserve the entry in the database informing a YP server to use
+Preserve the entry in the database informing a
+.Tn YP
+server to use
 DNS to get information about unknown hosts. This option will only have
 effect on the maps
 .Pa hosts.byname
