@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.169 2003/10/15 11:28:59 hannken Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.170 2003/10/25 09:06:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.169 2003/10/15 11:28:59 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.170 2003/10/25 09:06:51 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -996,7 +996,7 @@ kpsignal1(struct proc *p, ksiginfo_t *ksi, void *data, int dolock)
 static void 
 kpsignal2(struct proc *p, const ksiginfo_t *ksi, int dolock)
 {
-	struct lwp *l, *suspended;
+	struct lwp *l, *suspended = NULL;
 	int	s = 0, prop, allsusp;
 	sig_t	action;
 	int	signum = ksi->ksi_signo;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.44 2003/09/22 12:59:57 christos Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.45 2003/10/25 09:10:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.44 2003/09/22 12:59:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.45 2003/10/25 09:10:35 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -403,6 +403,7 @@ pipeselwakeup(selp, sigp, data, code)
 	void *data;
 	int code;
 {
+/*###406 [cc] warning: `band' might be used uninitialized in this function%%%*/
 	int band;
 
 	selnotify(&selp->pipe_sel, 0);
@@ -426,6 +427,7 @@ pipeselwakeup(selp, sigp, data, code)
 		break;
 #endif
 	default:
+		band = 0;
 #ifdef DIAGNOSTIC
 		printf("bad siginfo code %d in pipe notification.\n", code);
 #endif
