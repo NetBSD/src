@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanerd.c,v 1.51 2004/04/21 01:05:32 christos Exp $	*/
+/*	$NetBSD: cleanerd.c,v 1.52 2005/02/26 05:43:04 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";
 #else
-__RCSID("$NetBSD: cleanerd.c,v 1.51 2004/04/21 01:05:32 christos Exp $");
+__RCSID("$NetBSD: cleanerd.c,v 1.52 2005/02/26 05:43:04 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -291,18 +291,14 @@ main(int argc, char **argv)
 		lasttime=0;
 		loopcount=0;
 	    loop:
-		if ((childpid=fork()) < 0) {
-			syslog(LOG_ERR,"%s: couldn't fork, exiting: %m",
-				fs_name);
-			exit(1);
-		}
+		if ((childpid=fork()) < 0)
+			log_exit(0, LOG_ERR,"%s: couldn't fork, exiting: %m",
+				 fs_name);
 		if(childpid == 0) {
 			/* Record child's pid */
 			asprintf(&pidname, "lfs_cleanerd:s:%s", fs_name);
-			if (!pidname) {
-				syslog(LOG_WARNING,"malloc failed: %m");
-				exit(1);
-			}
+			if (!pidname)
+				log_exit(0, LOG_WARNING,"malloc failed: %m");
 			while((cp = strchr(pidname, '/')) != NULL)
 				*cp = '|';
 			pidfile(pidname);
@@ -313,10 +309,8 @@ main(int argc, char **argv)
 		} else {
 			/* Record parent's pid */
 			asprintf(&pidname, "lfs_cleanerd:m:%s", fs_name);
-			if (!pidname) {
-				syslog(LOG_WARNING,"malloc failed: %m");
-				exit(1);
-			}
+			if (!pidname)
+				log_exit(0, LOG_WARNING,"malloc failed: %m");
 			while((cp = strchr(pidname, '/')) != NULL)
 				*cp = '|';
 			pidfile(pidname);
@@ -329,16 +323,15 @@ main(int argc, char **argv)
 				loopcount=0;
 			}
 			lasttime = now;
-			if(loopcount > LOOP_THRESHOLD) {
-				syslog(LOG_ERR,"%s: cleanerd looping, exiting",
-					fs_name);
-				exit(1);
-			}
-			if (fs_getmntinfo(&lstatvfsp, fs_name, MOUNT_LFS) == 0) {
-				/* fs has been unmounted(?); exit quietly */
-				syslog(LOG_ERR,"lfs_cleanerd: fs %s unmounted, exiting", fs_name);
-				exit(0);
-			}
+			if (loopcount > LOOP_THRESHOLD)
+				log_exit(0, LOG_ERR,
+					 "%s: cleanerd looping, exiting",
+					 fs_name);
+			/* Check for unmounted fs */
+			if (fs_getmntinfo(&lstatvfsp, fs_name, MOUNT_LFS) == 0)
+				log_exit(0, LOG_NOTICE,
+				        "lfs_cleanerd: %s unmounted, exiting",
+				        fs_name);
 			goto loop;
 		}
 	} else
@@ -379,8 +372,11 @@ main(int argc, char **argv)
 		fsid = lstatvfsp->f_fsidx;
 		if(debug > 1)
 			syslog(LOG_DEBUG,"Cleaner going to sleep.");
-		if (lfs_segwait_emul(ifile_fd, &timeout) < 0)
+		if (lfs_segwait_emul(ifile_fd, &timeout) < 0) {
+			if (errno == ESHUTDOWN) /* FS unmounted */
+				exit(0);
 			syslog(LOG_WARNING,"LFCNSEGWAIT: %m");
+		}
 		if(debug > 1)
 			syslog(LOG_DEBUG,"Cleaner waking up.");
 	}
@@ -402,7 +398,8 @@ clean_loop(FS_INFO *fsp, int nsegs, long options)
 	 * number of free blocks.
 	 */
 	fsb_per_seg = segtod(lfsp, 1);
-	max_free_segs = fsp->fi_cip->bfree / fsb_per_seg + lfsp->lfs_minfreeseg;
+	max_free_segs = MAX(fsp->fi_cip->bfree, 0) / fsb_per_seg +
+			lfsp->lfs_minfreeseg;
 	
 	/* 
 	 * We will clean if there are not enough free blocks or total clean
@@ -411,7 +408,7 @@ clean_loop(FS_INFO *fsp, int nsegs, long options)
 	now = time((time_t *)NULL);
 
 	if(debug > 1) {
-		syslog(LOG_DEBUG, "fsb_per_seg = %lu bfree = %u avail = %d",
+		syslog(LOG_DEBUG, "fsb_per_seg = %lu bfree = %d avail = %d",
 		       fsb_per_seg, fsp->fi_cip->bfree, fsp->fi_cip->avail);
 		syslog(LOG_DEBUG, "clean segs = %d, max_free_segs = %ld",
 		       fsp->fi_cip->clean, max_free_segs);
@@ -427,7 +424,7 @@ clean_loop(FS_INFO *fsp, int nsegs, long options)
 		if(debug)
 			syslog(LOG_DEBUG, "Cleaner Running  at %s"
 			       " (%d of %lu segments available, avail = %d,"
-			       " bfree = %u)",
+			       " bfree = %d)",
 			       ctime(&now), fsp->fi_cip->clean, max_free_segs,
 			       fsp->fi_cip->avail, fsp->fi_cip->bfree);
 		clean_fs(fsp, cost_benefit, nsegs, options);
@@ -558,8 +555,8 @@ clean_fs(FS_INFO *fsp, unsigned long (*cost_func)(FS_INFO *, SEGUSE *),
 		nsegs = MAX(nsegs, fsp->fi_lfs.lfs_minfreeseg);
 #endif
 	/* But back down if we haven't got that many free to clean into */
-	if(fsp->fi_cip->clean < nsegs)
-		nsegs = fsp->fi_cip->clean;
+	if (nsegs > fsp->fi_cip->clean / 2)
+		nsegs = MAX(1, fsp->fi_cip->clean / 2);
 
 	if (debug > 1)
 		syslog(LOG_DEBUG, "clean_fs: found %ld segments to clean in %s",
@@ -571,10 +568,20 @@ clean_fs(FS_INFO *fsp, unsigned long (*cost_func)(FS_INFO *, SEGUSE *),
 
 		/* Check which cleaning algorithm to use. */
 		if (options & CLEAN_BYTES) {
-			/* Count bytes */
+			/*
+			 * Count bytes.  Be careful here not to run us out
+			 * of segments to write into.  We try to stay below
+			 * our given number of segments minus 1/4 segment,
+			 * unless we can't clean anything without going over
+			 * the limit (e.g. nsegs == 1 and the preferred
+			 * segment to clean is 80% full).
+			 */
 			cleaned_bytes = 0;
-			to_clean = nsegs * fsp->fi_lfs.lfs_ssize;
-			for (; i && cleaned_bytes < to_clean; i--, ++sp) {
+			to_clean = nsegs * fsp->fi_lfs.lfs_ssize -
+				   fsp->fi_lfs.lfs_ssize / 4;
+			for (; i && (cleaned_bytes == 0 ||
+				     cleaned_bytes + sp->sl_bytes <= to_clean);
+			       i--, ++sp) {
 				if (add_segment(fsp, sp, sbp) < 0) {
 					syslog(LOG_WARNING,"add_segment failed"
 					       " segment %ld: %m", sp->sl_id);
@@ -763,7 +770,8 @@ add_segment(FS_INFO *fsp, struct seglist *slp, SEGS_AND_BLOCKS *sbp)
 
 	/* get the current disk address of blocks contained by the segment */
 	if ((error = lfs_bmapv_emul(ifile_fd, tba, num_blocks)) < 0) {
-		syslog(LOG_WARNING, "add_segment: LFCNBMAPV failed");
+		if (errno != ESHUTDOWN)
+			syslog(LOG_WARNING, "add_segment: LFCNBMAPV failed");
 		goto out;
 	}
 
@@ -973,7 +981,8 @@ clean_segments(FS_INFO *fsp, SEGS_AND_BLOCKS *sbp)
 	for (bp = sbp->ba; sbp->nb > 0; bp += clean_blocks) {
 		clean_blocks = maxblocks < sbp->nb ? maxblocks : sbp->nb;
 		if ((error = lfs_markv_emul(ifile_fd, bp, clean_blocks)) < 0) {
-			syslog(LOG_WARNING,"clean_segment: LFCNMARKV failed: %m");
+			if (errno != ESHUTDOWN)
+				syslog(LOG_WARNING,"clean_segment: LFCNMARKV failed: %m");
 			++cleaner_stats.segs_error;
 			if (errno == ENOENT) break;
 		}
