@@ -1,4 +1,4 @@
-/*	$NetBSD: rtfps.c,v 1.6 1994/11/18 22:03:37 mycroft Exp $	*/
+/*	$NetBSD: rtfps.c,v 1.7 1994/11/18 22:25:19 mycroft Exp $	*/
 
 /*
  * Multi-port serial card interrupt demuxing support.
@@ -90,15 +90,15 @@ rtfpsattach(parent, self, aux)
 	struct rtfps_attach_args ra;
 	struct isa_attach_args isa;
 	static int irqport[] = {
-		-1,    -1,    -1,    -1,
-		-1,    -1,    -1,    -1,
-		-1, 0x2f2, 0x6f2, 0x6f3,
-		-1,    -1,    -1,    -1
+		IOBASEUNK, IOBASEUNK, IOBASEUNK, IOBASEUNK,
+		IOBASEUNK, IOBASEUNK, IOBASEUNK, IOBASEUNK,
+		IOBASEUNK,     0x2f2,     0x6f2,     0x6f3,
+		IOBASEUNK, IOBASEUNK, IOBASEUNK, IOBASEUNK
 	};
 
 	sc->sc_iobase = ia->ia_iobase;
 
-	if (ia->ia_irq >= 16 || irqport[ia->ia_irq] == -1)
+	if (ia->ia_irq >= 16 || irqport[ia->ia_irq] == IOBASEUNK)
 		panic("rtfpsattach: invalid irq");
 	sc->sc_irqport = irqport[ia->ia_irq];
 

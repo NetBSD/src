@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.68 1994/11/18 22:03:25 mycroft Exp $	*/
+/*	$NetBSD: isa.c,v 1.69 1994/11/18 22:25:17 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -76,9 +76,9 @@ isaprint(aux, isa)
 		printf(" iomem 0x%x", kvtop(ia->ia_maddr));
 	if (ia->ia_msize > 1)
 		printf("-0x%x", kvtop(ia->ia_maddr) + ia->ia_msize - 1);
-	if (ia->ia_irq != -1)
+	if (ia->ia_irq != IRQUNK)
 		printf(" irq %d", ia->ia_irq);
-	if (ia->ia_drq != -1)
+	if (ia->ia_drq != DRQUNK)
 		printf(" drq %d", ia->ia_drq);
 	/* XXXX print flags */
 	return (QUIET);
