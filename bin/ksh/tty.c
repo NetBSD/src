@@ -1,4 +1,11 @@
-/*	$NetBSD: tty.c,v 1.3 1998/04/07 10:29:50 fair Exp $	*/
+/*	$NetBSD: tty.c,v 1.4 2003/06/23 11:39:06 agc Exp $	*/
+
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: tty.c,v 1.4 2003/06/23 11:39:06 agc Exp $");
+#endif
+
 
 #include "sh.h"
 #include "ksh_stat.h"

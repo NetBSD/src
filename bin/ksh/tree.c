@@ -1,8 +1,14 @@
-/*	$NetBSD: tree.c,v 1.3 1999/10/20 15:10:00 hubertf Exp $	*/
+/*	$NetBSD: tree.c,v 1.4 2003/06/23 11:39:05 agc Exp $	*/
 
 /*
  * command tree climbing
  */
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: tree.c,v 1.4 2003/06/23 11:39:05 agc Exp $");
+#endif
+
 
 #include "sh.h"
 

@@ -1,8 +1,14 @@
-/*	$NetBSD: main.c,v 1.9 2002/09/25 02:55:03 provos Exp $	*/
+/*	$NetBSD: main.c,v 1.10 2003/06/23 11:39:00 agc Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
  */
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: main.c,v 1.10 2003/06/23 11:39:00 agc Exp $");
+#endif
+
 
 #define	EXTERN				/* define EXTERNs in sh.h */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.6 2001/08/20 12:20:01 wiz Exp $	*/
+/*	$NetBSD: vi.c,v 1.7 2003/06/23 11:39:08 agc Exp $	*/
 
 /*
  *	vi command editing
@@ -6,6 +6,12 @@
  *	bludgeoned to fit pdksh by Larry Bouzane, Jeff Sparkes & Eric Gisin
  *
  */
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: vi.c,v 1.7 2003/06/23 11:39:08 agc Exp $");
+#endif
+
 #include "config.h"
 #ifdef VI
 
