@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.49 1994/12/03 00:00:57 christos Exp $
+#	$NetBSD: Makefile,v 1.50 1995/01/12 19:18:41 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
 
@@ -38,7 +38,8 @@ realinstall:
 	done
 	@echo installing ${DIRS}
 	@-for i in ${DIRS}; do \
-		install -d -o bin -g bin -m 755 ${DESTDIR}/usr/include/$$i; \
+		install -d -o ${BINDIR} -g ${BINGRP} -m 755 \
+			${DESTDIR}/usr/include/$$i; \
 		(cd $$i; for j in *.[ih]; do \
 			cmp -s $$j ${DESTDIR}/usr/include/$$i/$$j || \
 			install -c -m 444 $$j ${DESTDIR}/usr/include/$$i/$$j; \
@@ -61,27 +62,29 @@ realinstall:
 		xargs chmod u=rwx,go=rx
 
 beforeinstall:
-	install -d -o bin -g bin -m 755 ${DESTDIR}/usr/include
+	install -d -o ${BINOWN} -g ${BINGRP} -m 755 ${DESTDIR}/usr/include
 
 copies:
 	@echo copies: ${LDIRS}
 	@-for i in ${LDIRS}; do \
 		rm -rf ${DESTDIR}/usr/include/$$i; \
-		install -d -o bin -g bin -m 755 ${DESTDIR}/usr/include/$$i ; \
+		install -d -o ${BINOWN} -g ${BINGRP} -m 755 \
+			${DESTDIR}/usr/include/$$i ; \
 	done
 	cd ../sys; \
 	pax -rw -pa -L \
 	    `find ${LDIRS} -type f -name '*.h' '!' -path 'netiso/xebec/*' \
 	    -print` ${DESTDIR}/usr/include
 	rm -rf ${DESTDIR}/usr/include/machine
-	install -d -o bin -g bin -m 755 ${DESTDIR}/usr/include/machine
+	install -d -o ${BINOWN} -g ${BINGRP} -m 755 \
+		${DESTDIR}/usr/include/machine
 	pax -rw -pa -s "|../sys/arch/${MACHINE}/include||" \
 	    ../sys/arch/${MACHINE}/include/*.h \
 	    ${DESTDIR}/usr/include/machine   
 	rm -rf ${DESTDIR}/usr/include/${MACHINE_ARCH}
 	if test ${MACHINE} != ${MACHINE_ARCH} -a \
 	    -d ../sys/arch/${MACHINE_ARCH}/include; then \
-		install -d -o bin -g bin -m 755 \
+		install -d -o ${BINOWN} -g ${BINGRP} -m 755 \
     	    	    ${DESTDIR}/usr/include/${MACHINE_ARCH}; \
 		pax -rw -pa -s "|../sys/arch/${MACHINE_ARCH}/include||" \
 		    ../sys/arch/${MACHINE_ARCH}/include/*.h \

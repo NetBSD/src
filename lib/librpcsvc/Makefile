@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.10 1994/06/14 02:45:56 cgd Exp $
+#	$Id: Makefile,v 1.11 1995/01/12 19:27:15 jtc Exp $
 
 RPCDIR=		${.CURDIR}/src
 .PATH:		${RPCDIR}
@@ -18,7 +18,8 @@ all:		${HDRS}
 beforedepend:	${HDRS}
 
 beforeinstall:
-	install -d -o bin -g bin -m 755 ${DESTDIR}/usr/include/rpcsvc
+	install -d -o ${BINOWN} -g ${BINGRP} -m 755 \
+		${DESTDIR}/usr/include/rpcsvc
 	@for i in $(HDRS); do \
 	    cmp -s $$i ${DESTDIR}/usr/include/rpcsvc/$$i > /dev/null 2>&1 || \
 		install -c -o ${BINOWN} -g ${BINGRP} -m 444 $$i \
