@@ -1,4 +1,4 @@
-/* $NetBSD: pass1.c,v 1.17 2003/08/07 10:04:23 agc Exp $	 */
+/* $NetBSD: pass1.c,v 1.18 2004/07/18 20:51:30 yamt Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -197,9 +197,8 @@ checkinode(ino_t inumber, struct inodesc * idesc)
 			pfatal("PARTIALLY ALLOCATED INODE I=%u", inumber);
 			if (reply("CLEAR") == 1) {
 				vp = vget(fs, inumber);
-				dp = VTOD(vp);
-				clearinode(dp);
-				inodirty(VTOI(vp));
+				clearinode(inumber);
+				vnode_destroy(vp);
 			}
 		}
 		statemap[inumber] = USTATE;
@@ -304,9 +303,8 @@ unknown:
 	if (reply("CLEAR") == 1) {
 		statemap[inumber] = USTATE;
 		vp = vget(fs, inumber);
-		dp = VTOD(vp);
-		clearinode(dp);
-		inodirty(VTOI(vp));
+		clearinode(inumber);
+		vnode_destroy(vp);
 	}
 }
 
