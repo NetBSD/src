@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.97 2003/03/21 06:16:56 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.98 2003/03/21 06:26:37 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.97 2003/03/21 06:16:56 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.98 2003/03/21 06:26:37 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1238,7 +1238,7 @@ lfs_fcntl(void *v)
 
 	fsidp = &ap->a_vp->v_mount->mnt_stat.f_fsid;
 
-	switch(ap->a_command) {
+	switch (ap->a_command) {
 	    case LFCNSEGWAITALL:
 		fsidp = NULL;
 		/* FALLSTHROUGH */
@@ -1859,7 +1859,7 @@ lfs_putpages(void *v)
 
 		s = splbio();
 		simple_lock(&global_v_numoutput_slock);
-		while(vp->v_numoutput > 0) {
+		while (vp->v_numoutput > 0) {
 #ifdef DEBUG
 			printf("ino %d sleeping on num %d\n",
 				ip->i_number, vp->v_numoutput);
