@@ -1,6 +1,6 @@
 #!/usr/gnu/bin/perl
 #
-#	$NetBSD: gcc2netbsd,v 1.7 1996/03/11 06:53:27 phil Exp $
+#	$NetBSD: gcc2netbsd,v 1.8 1996/03/12 21:28:52 phil Exp $
 #
 #  Perl script to convert a standard distribution directory for gcc into
 #	a NetBSD source tree.
@@ -89,7 +89,7 @@ $version = "2.7.2";
 
 @commonplus = ("lang-specs.h", "lang-options.h"); 
 
-@genf = ("bi-opcode.c", "bi-arity.c", "bi-opname.c", "bi-parser.c",
+@genf = ("bi-opcode.c", "bi-arity.c", "bi-opname.c",
 	 "bi-lexer.c", "genattr.c", "genattrtab.c", "gencodes.c",
 	 "genconfig.c", "genemit.c", "genextract.c", "genflags.c",
 	 "genopinit.c", "genoutput.c", "genpeep.c", "genrecog.c" );
@@ -201,7 +201,7 @@ sub dumpgens {
     print ODATA "beforedepend: ";
     foreach $n (@genh)  { print ODATA "insn-$n.h "; };
     foreach $n (@genbc)  { print ODATA "bc-$n.h "; };
-    print ODATA "\n\n";
+    print ODATA "c-parse.h\n\n";
 
     foreach $n (@genh) {
 	print ODATA "insn-$n.h: gen$n\n";
@@ -240,7 +240,8 @@ sub dumpgens {
     }
 
     # special clean files ...
-    print ODATA "CLEANFILES += bi-lexer.o bi-parser.o\n\n";
+    print ODATA
+	"CLEANFILES += bi-lexer.o bi-parser.o bi-parser.c bi-parser.h\n\n";
 }
 
 #
@@ -364,11 +365,11 @@ while ($line = <DATA>) {
 	    if ($cmd[2] eq "cc") {
 		&dumpsrcs (@ccf, @obver);
 	    } elsif ($cmd[2] eq "cc1") {
-		&dumpsrcs (@cc1f);
+		&dumpsrcs (@cc1f, "c-parse.c");
 	    } elsif ($cmd[2] eq "cc1plus") {
-		&dumpsrcs (@cc1plusf);
+		&dumpsrcs (@cc1plusf, "parse.c");
 	    } elsif ($cmd[2] eq "cc1obj") {
-		&dumpsrcs (@cc1objf);
+		&dumpsrcs (@cc1objf, "objc-parse.c");
 	    } elsif ($cmd[2] eq "cpp") {
 		&dumpsrcs (@cppf, @obver);
 	    } elsif ($cmd[2] eq "g++") {
@@ -459,7 +460,7 @@ NOPROFILE=
 XXXX != cd $(.CURDIR)/../common; \
 	 printf "xxxx:\n\techo -I\$${.OBJDIR}\n" | ${MAKE} -r -s -f - xxxx
 
-CFLAGS+=-I. -I${.CURDIR} -I${.CURDIR}/../arch \
+CFLAGS+=-I${.CURDIR} -I${.CURDIR}/../arch \
 	-I${.CURDIR}/../arch/$(MACHINE_ARCH) $(XXXX)
 
 MD= ${.CURDIR}/../arch/${MACHINE_ARCH}/${MACHINE_ARCH}.md
@@ -472,15 +473,13 @@ BCDEF= ${.CURDIR}/bytecode.def
 
 %% gens
 
-CLEANFILES += bi-parser.c bi-parser.h
-
 bi-lexer.o: bi-parser.h
 
 bi-parser.h: bi-parser.c
 bi-parser.c: bi-parser.y
-        $(YACC) -b bi -d $(.IMPSRC)
-        mv -f bi.tab.c bi-parser.c
-        mv -f bi.tab.h bi-parser.h
+	$(YACC) -b bi -d $(.IMPSRC)
+	mv -f bi.tab.c bi-parser.c
+	mv -f bi.tab.h bi-parser.h
 
 CLEANFILES += c-parse.c c-parse.h
 
@@ -488,9 +487,9 @@ c-lex.o: c-parse.h
 
 c-parse.h: c-parse.c
 c-parse.c: c-parse.y
-        $(YACC) -b c -d $(.IMPSRC)
-        mv -f c.tab.c c-parse.c
-        mv -f c.tab.h c-parse.h
+	$(YACC) -b c -d $(.IMPSRC)
+	mv -f c.tab.c c-parse.c
+	mv -f c.tab.h c-parse.h
 
 install:
 
@@ -526,6 +525,10 @@ PROG=		cc1
 
 %% srcs cc1
 
+CLEANFILES+= c-parse.c
+
+.PATH:	${.CURDIR}/../common
+
 .include <../Makefile.cc1>
 %% file cc1plus/Makefile
 %% NetBSD
@@ -534,8 +537,16 @@ PROG=	cc1plus
 
 %% srcs cc1plus
 
-CLEANFILES+=	c-parse.c
-.PATH:		$(.CURDIR)/../common
+lex.o pt.o spew.o: parse.h
+
+CLEANFILES+=	parse.c parse.h
+
+parse.h: parse.c
+parse.c: parse.y
+	$(YACC) -d $(.IMPSRC)
+	grep '^#define[         ]*YYEMPTY' y.tab.c >>y.tab.h
+	mv -f y.tab.c parse.c
+	mv -f y.tab.h parse.h
 
 .include <../Makefile.cc1>
 %% file cc1obj/Makefile
@@ -544,6 +555,8 @@ CLEANFILES+=	c-parse.c
 PROG=           cc1obj
 
 %% srcs cc1obj
+
+CLEANFILES+=	objc-parse.c
 
 .PATH:          $(.CURDIR)/../cc1
 
@@ -584,8 +597,8 @@ PROG=           g++
 %% srcs g++
 MAN=		g++.1
 BINDIR=		/usr/bin
-CFLAGS+=        -I$(.CURDIR) -I$(.CURDIR)/../common \
-                -I$(.CURDIR)/../arch -I$(.CURDIR)/../arch/$(MACHINE_ARCH) \
+CFLAGS+=	-I$(.CURDIR) -I$(.CURDIR)/../common \
+		-I$(.CURDIR)/../arch -I$(.CURDIR)/../arch/$(MACHINE_ARCH) \
 		-DGCC_NAME=\"/usr/bin/cc\"
 LDADD+=		-lgnumalloc
 DPADD+=		/usr/lib/libgnumalloc.a
