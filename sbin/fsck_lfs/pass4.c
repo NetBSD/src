@@ -1,4 +1,4 @@
-/* $NetBSD: pass4.c,v 1.6 2003/03/28 08:09:54 perseant Exp $	 */
+/* $NetBSD: pass4.c,v 1.7 2003/03/29 00:09:43 perseant Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -124,12 +124,16 @@ pass4check(struct inodesc * idesc)
 	daddr_t blkno = idesc->id_blkno;
 	SEGUSE *sup;
 	struct ubuf *bp;
-	int sn;
+	int sn, doanyway = 0;
 
+	sn = dtosn(fs, blkno);
+	/* If preening, bmap is not valid for non-active segs */
+	if (preen && !(seg_table[sn].su_flags & SEGUSE_ACTIVE))
+		doanyway = 1;
 	for (ndblks = fragstofsb(fs, idesc->id_numfrags); ndblks > 0; blkno++, ndblks--) {
 		if (chkrange(blkno, 1)) {
 			res = SKIP;
-		} else if (testbmap(blkno)) {
+		} else if (testbmap(blkno) || doanyway) {
 			for (dlp = duplist; dlp; dlp = dlp->next) {
 				if (dlp->dup != blkno)
 					continue;
@@ -140,7 +144,6 @@ pass4check(struct inodesc * idesc)
 				break;
 			}
 			if (dlp == 0) {
-				sn = dtosn(fs, blkno);
 				clrbmap(blkno);
 				LFS_SEGENTRY(sup, fs, sn, bp);
 				sup->su_nbytes -= fsbtob(fs, 1);

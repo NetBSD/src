@@ -1,4 +1,4 @@
-/* $NetBSD: setup.c,v 1.13 2003/03/28 08:09:55 perseant Exp $ */
+/* $NetBSD: setup.c,v 1.14 2003/03/29 00:09:43 perseant Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -314,6 +314,8 @@ setup(const char *dev)
 	for (i = 0; i < fs->lfs_nseg; i++) {
 		LFS_SEGENTRY(sup, fs, i, bp);
 		seg_table[i].su_flags = sup->su_flags & ~SEGUSE_ACTIVE;
+		if (preen)
+			seg_table[i].su_nbytes = sup->su_nbytes;
 		brelse(bp);
 	}
 
@@ -351,6 +353,24 @@ setup(const char *dev)
 		    (unsigned long) maxino * sizeof(int16_t));
 		goto badsblabel;
 	}
+
+	if (preen) {
+		n_files = fs->lfs_nfiles;
+		n_blks  = fs->lfs_dsize - fs->lfs_bfree;
+		numdirs = maxino;
+		inplast = 0; 
+		listmax = numdirs + 10;
+		inpsort = (struct inoinfo **) calloc((unsigned) listmax,
+			sizeof(struct inoinfo *));
+		inphead = (struct inoinfo **) calloc((unsigned) numdirs, 
+			sizeof(struct inoinfo *));
+		if (inpsort == NULL || inphead == NULL) { 
+			printf("cannot alloc %lu bytes for inphead\n",
+				(unsigned long) numdirs * sizeof(struct inoinfo *));  
+			exit(1);
+		}
+	}
+
 	return (1);
 
 badsblabel:
