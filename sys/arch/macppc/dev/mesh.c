@@ -1,4 +1,4 @@
-/*	$NetBSD: mesh.c,v 1.6 2000/10/23 21:04:27 tsubai Exp $	*/
+/*	$NetBSD: mesh.c,v 1.7 2000/10/31 16:57:07 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 2000	Tsubai Masanari.
@@ -195,11 +195,17 @@ mesh_match(parent, cf, aux)
 	void *aux;
 {
 	struct confargs *ca = aux;
+	char compat[32];
 
-	if (strcmp(ca->ca_name, "mesh") != 0)
-		return 0;
+	if (strcmp(ca->ca_name, "mesh") == 0)
+		return 1;
 
-	return 1;
+	bzero(compat, sizeof(compat));
+	OF_getprop(ca->ca_node, "compatible", compat, sizeof(compat));
+	if (strcmp(compat, "chrp,mesh0") == 0)
+		return 1;
+
+	return 0;
 }
 
 void
