@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.19 1999/08/24 00:48:38 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.20 1999/11/29 19:48:45 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.38 1997/10/13 15:03:51 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.19 1999/08/24 00:48:38 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.20 1999/11/29 19:48:45 hubertf Exp $");
 #endif
 #endif
 
@@ -127,11 +127,17 @@ make_dist(char *home, char *pkg, char *suffix, package_t *plist)
 	if (BuildInfo) {
 		(void) fprintf(totar, "%s\n", BUILD_INFO_FNAME);
 	}
+	if (SizePkg) {
+		(void) fprintf(totar, "%s\n", SIZE_PKG_FNAME);
+	}
+	if (SizeAll) {
+		(void) fprintf(totar, "%s\n", SIZE_ALL_FNAME);
+	}
 
 	for (p = plist->head; p; p = p->next) {
 		if (p->type == PLIST_FILE)
 			fprintf(totar, "%s\n", p->name);
-		else if (p->type == PLIST_CWD || p->type == PLIST_SRC)
+		else if (p->type == PLIST_CWD)
 			fprintf(totar, "-C\n%s\n", p->name);
 		else if (p->type == PLIST_IGNORE)
 			p = p->next;
@@ -257,13 +263,6 @@ pkg_perform(lpkg_head_t *pkgs)
 			printf(".\n");
 	}
 
-	/* If a SrcDir override is set, add it now */
-	if (SrcDir) {
-		if (Verbose && !PlistOnly)
-			printf("Using SrcDir value of %s\n", SrcDir);
-		add_plist(&plist, PLIST_SRC, SrcDir);
-	}
-
 	/* Slurp in the packing list */
 	read_plist(&plist, pkg_in);
 
@@ -345,6 +344,16 @@ pkg_perform(lpkg_head_t *pkgs)
 		copy_file(home, BuildInfo, BUILD_INFO_FNAME);
 		add_plist(&plist, PLIST_IGNORE, NULL);
 		add_plist(&plist, PLIST_FILE, BUILD_INFO_FNAME);
+	}
+	if (SizePkg) {
+		copy_file(home, SizePkg, SIZE_PKG_FNAME);
+		add_plist(&plist, PLIST_IGNORE, NULL);
+		add_plist(&plist, PLIST_FILE, SIZE_PKG_FNAME);
+	}
+	if (SizeAll) {
+		copy_file(home, SizeAll, SIZE_ALL_FNAME);
+		add_plist(&plist, PLIST_IGNORE, NULL);
+		add_plist(&plist, PLIST_FILE, SIZE_ALL_FNAME);
 	}
 
 	/* Finally, write out the packing list */
