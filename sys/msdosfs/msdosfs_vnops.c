@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.80 1999/04/21 17:13:22 abs Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.81 1999/05/24 23:01:13 tron Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -380,10 +380,10 @@ msdosfs_setattr(v)
 		return (EINVAL);
 	}
 	/*
-	 * Directories must not ever get their attributes modified
+	 * Silently ignore attributes modifications on directories.
 	 */
 	if (ap->a_vp->v_type == VDIR)
-		return EISDIR;
+		return 0;
 
 	if (vap->va_size != VNOVAL) {
 		error = detrunc(dep, (u_long)vap->va_size, 0, cred, ap->a_p);
