@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mount.h	7.22 (Berkeley) 6/3/91
- *	$Id: mount.h,v 1.25 1994/04/12 05:03:12 cgd Exp $
+ *	$Id: mount.h,v 1.26 1994/04/14 04:06:39 cgd Exp $
  */
 
 #ifndef _SYS_MOUNT_H_
@@ -55,10 +55,11 @@ struct fid {
  * file system statistics
  */
 
-#define MNAMELEN 90	/* length of buffer for returned name */
+#define	MFSNAMELEN	15	/* length of fs type name, not inc. null */
+#define	MNAMELEN	90	/* length of buffer for returned name */
 
 struct statfs {
-	short	f_type;			/* type of filesystem (see below) */
+	short	f_type;			/* type of filesystem (unused; zero) */
 	short	f_flags;		/* copy of mount flags */
 	long	f_fsize;		/* fundamental file system block size */
 	long	f_bsize;		/* optimal transfer block size */
@@ -68,7 +69,8 @@ struct statfs {
 	long	f_files;		/* total file nodes in file system */
 	long	f_ffree;		/* free file nodes in fs */
 	fsid_t	f_fsid;			/* file system id */
-	long	f_spare[9];		/* spare for later */
+	long	f_spare[5];		/* spare for later */
+	char	f_fstypename[MFSNAMELEN+1]; /* fs type name (inc. null) */
 	char	f_mntonname[MNAMELEN];	/* directory on which mounted */
 	char	f_mntfromname[MNAMELEN];/* mounted filesystem */
 };
@@ -76,21 +78,20 @@ struct statfs {
 /*
  * File system types.
  */
-#define	MOUNT_NONE	0
-#define	MOUNT_EXPORT	MOUNT_NONE	/* use this for export mounting (mountd) */
-#define	MOUNT_UFS	1		/* UNIX "Fast" Filesystem */
-#define	MOUNT_NFS	2		/* Network Filesystem */
-#define	MOUNT_MFS	3		/* Memory Filesystem */
-#define	MOUNT_MSDOS	4		/* MSDOS Filesystem */
-#define	MOUNT_ISOFS	5		/* iso9660 cdrom */
-#define	MOUNT_FDESC	6		/* /dev/fd filesystem */
-#define	MOUNT_KERNFS	7		/* kernel variable filesystem */
-#define	MOUNT_DEVFS	8		/* device node filesystem */
+#define	MOUNT_EXPORT	((char *)0)	/* use this for exporting (mountd) */
+
+#define	MOUNT_UFS	"ufs"		/* UNIX "Fast" Filesystem */
+#define	MOUNT_NFS	"nfs"		/* Network Filesystem */
+#define	MOUNT_MFS	"mfs"		/* Memory Filesystem */
+#define	MOUNT_MSDOS	"msdos"		/* MSDOS Filesystem */
+#define	MOUNT_ISOFS	"isofs"		/* iso9660 cdrom */
+#define	MOUNT_FDESC	"fdesc"		/* /dev/fd filesystem */
+#define	MOUNT_KERNFS	"kernfs"	/* kernel variable filesystem */
+/* XXX SLOT 8 IS CURRENTLY EMPTY */
 /* XXX SLOT 9 IS CURRENTLY EMPTY */
-#define	MOUNT_PROCFS	10		/* proc filesystem */
-#define	MOUNT_LOFS	11		/* loopback filesystem */
-#define	MOUNT_PORTAL	12		/* portal filesystem */
-#define	MOUNT_MAXTYPE	MOUNT_PORTAL
+#define	MOUNT_PROCFS	"procfs"	/* proc filesystem */
+#define	MOUNT_LOFS	"lofs"		/* loopback filesystem */
+#define	MOUNT_PORTAL	"portal"	/* portal filesystem */
 
 /*
  * Structure per mounted file system.
@@ -162,6 +163,7 @@ struct nameidata;
 #endif
 
 struct vfsops {
+	char	*vfs_name;
 	int	(*vfs_mount)	__P((struct mount *mp, char *path, caddr_t data,
 				    struct nameidata *ndp, struct proc *p));
 	int	(*vfs_start)	__P((struct mount *mp, int flags,
@@ -308,6 +310,7 @@ void	vfs_unlock __P((struct mount *mp)); /* unlock a vfs */
 struct	mount *getvfs __P((fsid_t *fsid));  /* return vfs given fsid */
 struct	mount *rootfs;			    /* ptr to root mount structure */
 extern struct vfsops *vfssw[];		    /* mount filesystem type table */
+extern int nvfssw;			    /* number of vfssw entries */
 
 #else /* KERNEL */
 
@@ -318,7 +321,7 @@ int	fstatfs __P((int, struct statfs *));
 int	getfh __P((const char *, fhandle_t *));
 int	getfsstat __P((struct statfs *, long, int));
 int	getmntinfo __P((struct statfs **, int));
-int	mount __P((int, const char *, int, void *));
+int	mount __P((char *, const char *, int, void *));
 int	statfs __P((const char *, struct statfs *));
 int	unmount __P((const char *, int));
 __END_DECLS

@@ -37,7 +37,7 @@
  * From:
  *	Id: lofs_vfsops.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: lofs_vfsops.c,v 1.2 1994/01/05 15:11:51 cgd Exp $
+ *	$Id: lofs_vfsops.c,v 1.3 1994/04/14 04:06:00 cgd Exp $
  */
 
 /*
@@ -53,35 +53,6 @@
 #include <sys/namei.h>
 #include <sys/malloc.h>
 #include <miscfs/lofs/lofs.h>
-
-#if 0
-/*
- * Allocate a new unique fsid
- */
-getnewfsid(mp, mtype)
-	struct mount *mp;
-	int mtype;
-{
-static u_short xxxfs_mntid;
-
-	fsid_t tfsid;
-
-	mp->mnt_stat.f_fsid.val[0] = makedev(nblkdev + 11, 0);	/* XXX */
-	mp->mnt_stat.f_fsid.val[1] = MOUNT_LOFS;
-	if (xxxfs_mntid == 0)
-		++xxxfs_mntid;
-	tfsid.val[0] = makedev(nblkdev, xxxfs_mntid);
-	tfsid.val[1] = mtype;
-	while (getvfs(&tfsid)) {
-#ifdef DIAGNOSTIC
-		printf("mntid %d in use\n", xxxfs_mntid);
-#endif
-		tfsid.val[0]++;
-		xxxfs_mntid++;
-	}
-	mp->mnt_stat.f_fsid.val[0] = tfsid.val[0];
-}
-#endif
 
 /*
  * Mount loopback copy of existing name space
@@ -182,7 +153,7 @@ lofs_mount(mp, path, data, ndp, p)
 	if (LOFSVP(rootvp)->v_mount->mnt_flag & MNT_LOCAL)
 		mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_data = (qaddr_t) amp;
-	getnewfsid(mp, MOUNT_LOFS);
+	getnewfsid(mp, (int)MOUNT_LOFS);
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
 	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
@@ -342,6 +313,8 @@ lofs_statfs(mp, sbp, p)
 		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
 		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
 	}
+	strncpy(&sbp->f_fstypename[0], mstat.f_fstypename, MFSNAMELEN);
+	sbp->f_fstypename[MFSNAMELEN] = '\0';
 	return (0);
 }
 
@@ -370,6 +343,7 @@ lofs_vptofh(vp, fhp)
 int lofs_init __P((void));
 
 struct vfsops lofs_vfsops = {
+	MOUNT_LOFS,
 	lofs_mount,
 	lofs_start,
 	lofs_unmount,
