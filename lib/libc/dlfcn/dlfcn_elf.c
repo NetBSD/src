@@ -1,4 +1,4 @@
-/*	$NetBSD: dlfcn_elf.c,v 1.1 2000/04/02 15:35:52 minoura Exp $	*/
+/*	$NetBSD: dlfcn_elf.c,v 1.2 2000/07/06 02:48:41 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Takuya SHIOZAKI
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: dlfcn_elf.c,v 1.1 2000/04/02 15:35:52 minoura Exp $");
+__RCSID("$NetBSD: dlfcn_elf.c,v 1.2 2000/07/06 02:48:41 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #if defined(PIC) || defined(lint)
@@ -42,11 +42,11 @@ __weak_extern(__mainprog_obj)
 extern const Obj_Entry *__mainprog_obj;
 
 #ifdef __weak_alias
-__weak_alias(dlopen,__dlopen);
-__weak_alias(dlclose,__dlclose);
-__weak_alias(dlsym,__dlsym);
-__weak_alias(dlerror,__dlerror);
-__weak_alias(dladdr,__dladdr);
+__weak_alias(dlopen,__dlopen)
+__weak_alias(dlclose,__dlclose)
+__weak_alias(dlsym,__dlsym)
+__weak_alias(dlerror,__dlerror)
+__weak_alias(dladdr,__dladdr)
 #endif
 
 #include <dlfcn_stubs.c>
