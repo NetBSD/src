@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops.h,v 1.3 2002/09/12 12:37:49 scw Exp $	*/
+/*	$NetBSD: cacheops.h,v 1.4 2002/10/01 07:50:36 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -37,6 +37,13 @@
 
 #ifndef __SH5_CACHEOPS_H
 #define __SH5_CACHEOPS_H
+
+/*
+ * The SH5 architecture manual specifies that the cacheops always operate
+ * on a cacheline size of 32. I'm not sure if this will always be the
+ * case, but for now let's believe the docs.
+ */
+#define	SH5_CACHELINE_SIZE	32
 
 extern void (*__cpu_cache_dpurge)(vaddr_t, paddr_t, vsize_t);
 extern void (*__cpu_cache_dpurge_iinv)(vaddr_t, paddr_t, vsize_t);
