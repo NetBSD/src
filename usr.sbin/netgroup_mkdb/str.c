@@ -30,13 +30,14 @@
  */
 
 #ifndef lint
-static char *rcsid = "$Id: str.c,v 1.1 1994/12/04 17:11:04 christos Exp $";
+static char *rcsid = "$Id: str.c,v 1.2 1995/04/24 13:25:55 cgd Exp $";
 #endif
 
 /*
  * Counted strings
  */
 #include <stdlib.h>
+#include <string.h>
 
 #include "util.h"
 #include "str.h"
