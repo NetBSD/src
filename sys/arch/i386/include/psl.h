@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.17 1995/03/28 18:17:11 jtc Exp $	*/
+/*	$NetBSD: psl.h,v 1.18 1995/06/04 08:29:41 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -76,6 +76,7 @@
 #define	IPL_NET		1	/* network */
 #define	IPL_TTY		2	/* terminal */
 #define	IPL_CLOCK	3	/* clock */
+#define	IPL_IMP		4	/* memory allocation */
 
 /* Interrupt sharing types. */
 #define	IST_NONE	0	/* none */
@@ -132,9 +133,9 @@ splx(ncpl)
  * Hardware interrupt masks
  */
 #define	splbio()	splraise(imask[IPL_BIO])
-#define	splimp()	splraise(imask[IPL_NET])
 #define	spltty()	splraise(imask[IPL_TTY])
 #define	splclock()	splraise(imask[IPL_CLOCK])
+#define	splimp()	splraise(imask[IPL_IMP])
 #define	splstatclock()	splclock()
 
 /*
