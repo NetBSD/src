@@ -1,3 +1,3 @@
-#	$NetBSD: Makefile,v 1.1 1999/04/01 17:10:35 dbj Exp $
+#	$NetBSD: Makefile,v 1.2 2001/01/14 21:37:57 mycroft Exp $
 
-.include <bsd.prog.mk>
+.include <bsd.man.mk>
