@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_param.h,v 1.14 2003/02/20 22:16:08 atatat Exp $	*/
+/*	$NetBSD: uvm_param.h,v 1.15 2003/03/14 08:35:05 matt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -196,7 +196,6 @@ typedef int	boolean_t;
 # endif /* VM_DEFAULT_ADDRESS */
 #endif /* !__USING_TOPDOWN_VM */
 
-extern psize_t		mem_size;	/* size of physical memory (bytes) */
 extern int		ubc_nwins;	/* number of UBC mapping windows */
 extern int		ubc_winshift;	/* shift for a UBC mapping window */
 
