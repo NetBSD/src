@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.18 1996/07/11 19:34:02 ragge Exp $	*/
+/*	$NetBSD: uda.c,v 1.19 1996/07/20 19:00:22 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -189,7 +189,7 @@ udaattach(parent, self, aux)
 	volatile struct udadevice *udaddr;
 	volatile struct mscp *mp;
 	struct	uda_softc *sc = (void *)self;
-	struct  uba_attach_args *ua = aux;
+	struct	uba_attach_args *ua = aux;
 	struct	uba_softc *uh = (void *)parent;
 	struct	mscp_info *mi;
 	struct	mscp_attach_args ma;
@@ -211,7 +211,7 @@ udaattach(parent, self, aux)
 	 */
 	sc->sc_unit.uu_softc = sc;	/* Backpointer to softc */
 	sc->sc_unit.uu_dgo = udadgo;	/* go routine called from adapter */
-	sc->sc_unit.uu_keepbdp = cpunumber == VAX_750 ? 1 : 0;
+	sc->sc_unit.uu_keepbdp = vax_cputype == VAX_750 ? 1 : 0;
 
 	/*
 	 * Map the communication area and command and
@@ -258,7 +258,7 @@ udago(usc)
  * If we are not called from within udastart(), we must have been
  * blocked, so call udastart to do more requests (if any).  If
  * this calls us again immediately we will not recurse, because
- * that time we will be in udastart().  Clever....
+ * that time we will be in udastart().	Clever....
  */
 void
 udadgo(uu)
@@ -358,7 +358,7 @@ udaintr(ctlr)
 	struct mscp_pack *ud;
 
 #ifdef QBA
-	if(cpunumber == VAX_78032)
+	if(vax_cputype == VAX_TYP_UV2)
 		splx(sc->sc_ipl);	/* Qbus interrupt protocol is odd */
 #endif
 	sc->sc_wticks = 0;	/* reset interrupt watchdog */
