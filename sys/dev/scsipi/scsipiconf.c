@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.c,v 1.9 2000/05/15 16:35:49 dante Exp $	*/
+/*	$NetBSD: scsipiconf.c,v 1.10 2000/06/09 08:54:25 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -58,9 +58,42 @@
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/proc.h>
+
+#include <vm/vm.h>
 
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsipiconf.h>
+
+int
+scsipi_command(sc_link, cmd, cmdlen, data_addr, datalen, retries, timeout, bp,
+    flags)
+	struct scsipi_link *sc_link;
+	struct scsipi_generic *cmd;
+	int cmdlen;
+	u_char *data_addr;
+	int datalen;
+	int retries;
+	int timeout;
+	struct buf *bp;
+	int flags;
+{
+	int error;
+
+	if ((flags & XS_CTL_DATA_ONSTACK) != 0) {
+		/*
+		 * If the I/O buffer is allocated on stack, the
+		 * process must NOT be swapped out, as the device will
+		 * be accessing the stack.
+		 */
+		PHOLD(curproc);
+	}
+	error = (*sc_link->scsipi_cmd)(sc_link, cmd, cmdlen, data_addr,
+	    datalen, retries, timeout, bp, flags);
+	if ((flags & XS_CTL_DATA_ONSTACK) != 0)
+		PRELE(curproc);
+	return (error);
+}
 
 /*
  * Return a priority based on how much of the inquiry data matches

@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_scsi.c,v 1.14 2000/05/31 09:15:48 augustss Exp $	*/
+/*	$NetBSD: sd_scsi.c,v 1.15 2000/06/09 08:54:28 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -193,7 +193,8 @@ sd_scsibus_mode_sense(sd, scsipi_sense, page, flags)
 	 */
 	return (scsipi_command(sd->sc_link,
 	    cmd, len, (u_char *)scsipi_sense, sizeof(*scsipi_sense),
-	    SDRETRIES, 6000, NULL, flags | XS_CTL_DATA_IN | XS_CTL_SILENT));
+	    SDRETRIES, 6000, NULL,
+	    flags | XS_CTL_DATA_IN | XS_CTL_SILENT | XS_CTL_DATA_ONSTACK));
 }
 
 static int
@@ -226,7 +227,7 @@ sd_scsibus_get_optparms(sd, dp, flags)
 	if ((error = scsipi_command(sd->sc_link,  
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),  
 	    (u_char *)&scsipi_sense, sizeof(scsipi_sense), SDRETRIES,
-	    6000, NULL, flags | XS_CTL_DATA_IN)) != 0)
+	    6000, NULL, flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK)) != 0)
 		return (SDGP_RESULT_OFFLINE);		/* XXX? */
 
 	dp->blksize = _3btol(scsipi_sense.blk_desc.blklen);

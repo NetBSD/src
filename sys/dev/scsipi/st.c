@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.123 2000/06/06 17:16:02 soren Exp $ */
+/*	$NetBSD: st.c,v 1.124 2000/06/09 08:54:29 enami Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1633,7 +1633,8 @@ st_read_block_limits(st, flags)
 	 */
 	error = scsipi_command(sc_link, (struct scsipi_generic *)&cmd,
 	    sizeof(cmd), (u_char *)&block_limits, sizeof(block_limits),
-	    ST_RETRIES, ST_CTL_TIME, NULL, flags | XS_CTL_DATA_IN);
+	    ST_RETRIES, ST_CTL_TIME, NULL,
+	    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK);
 	if (error)
 		return (error);
 
@@ -1687,7 +1688,8 @@ st_mode_sense(st, flags)
 	 */
 	error = scsipi_command(sc_link, (struct scsipi_generic *)&cmd,
 	    sizeof(cmd), (u_char *)&scsipi_sense, scsipi_sense_len,
-	    ST_RETRIES, ST_CTL_TIME, NULL, flags | XS_CTL_DATA_IN);
+	    ST_RETRIES, ST_CTL_TIME, NULL,
+	    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK);
 	if (error)
 		return (error);
 
@@ -1769,7 +1771,8 @@ st_mode_select(st, flags)
 	 */
 	return (scsipi_command(sc_link, (struct scsipi_generic *)&cmd,
 	    sizeof(cmd), (u_char *)&scsi_select, scsi_select_len,
-	    ST_RETRIES, ST_CTL_TIME, NULL, flags | XS_CTL_DATA_OUT));
+	    ST_RETRIES, ST_CTL_TIME, NULL,
+	    flags | XS_CTL_DATA_OUT | XS_CTL_DATA_ONSTACK));
 }
 
 int
@@ -1813,7 +1816,8 @@ again:
 	error = scsipi_command(sc_link,
 	    (struct scsipi_generic *)&scmd, sizeof(scmd), 
 	    (u_char *)&scsi_pdata, scsi_dlen,
-	    ST_RETRIES, ST_CTL_TIME, NULL, flags | XS_CTL_DATA_IN);
+	    ST_RETRIES, ST_CTL_TIME, NULL,
+	    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK);
 
 	if (error) {
 		if (scmd.byte2 != SMS_DBD) {
@@ -1899,7 +1903,8 @@ again:
 	error = scsipi_command(sc_link,
 	    (struct scsipi_generic *)&mcmd, sizeof(mcmd),
 	    (u_char *)&scsi_pdata, scsi_dlen,
-	    ST_RETRIES, ST_CTL_TIME, NULL, flags | XS_CTL_DATA_OUT);
+	    ST_RETRIES, ST_CTL_TIME, NULL,
+	    flags | XS_CTL_DATA_OUT | XS_CTL_DATA_ONSTACK);
 
 	if (error && (scmd.page & SMS_PAGE_CODE) == 0xf) {
 		/*
@@ -2220,7 +2225,7 @@ st_rdpos(st, hard, blkptr)
 	error = scsipi_command(st->sc_link,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd), (u_char *)&posdata,
 	    sizeof(posdata), ST_RETRIES, ST_CTL_TIME, NULL,
-	    XS_CTL_SILENT | XS_CTL_DATA_IN);
+	    XS_CTL_SILENT | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK);
 
 	if (error == 0) {
 #if	0

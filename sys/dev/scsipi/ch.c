@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.42 2000/01/04 22:47:12 mjacob Exp $	*/
+/*	$NetBSD: ch.c,v 1.43 2000/06/09 08:54:21 enami Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -135,7 +135,7 @@ int	ch_ousergetelemstatus __P((struct ch_softc *, int, u_int8_t *));
 int	ch_usergetelemstatus __P((struct ch_softc *,
 	    struct changer_element_status_request *));
 int	ch_getelemstatus __P((struct ch_softc *, int, int, void *,
-	    size_t, int));
+	    size_t, int, int));
 int	ch_setvoltag __P((struct ch_softc *,
 	    struct changer_set_voltag_request *));
 int	ch_get_params __P((struct ch_softc *, int));
@@ -697,7 +697,8 @@ ch_ousergetelemstatus(sc, chet, uptr)
 	 * order to read all data.
 	 */
 	error = ch_getelemstatus(sc, sc->sc_firsts[chet],
-	    sc->sc_counts[chet], &st_hdr, sizeof(st_hdr), 0);
+	    sc->sc_counts[chet], &st_hdr, sizeof(st_hdr),
+	    XS_CTL_DATA_ONSTACK, 0);
 	if (error)
 		return (error);
 
@@ -718,7 +719,7 @@ ch_ousergetelemstatus(sc, chet, uptr)
 	 */
 	data = malloc(size, M_DEVBUF, M_WAITOK);
 	error = ch_getelemstatus(sc, sc->sc_firsts[chet],
-	    sc->sc_counts[chet], data, size, 0);
+	    sc->sc_counts[chet], data, size, 0, 0);
 	if (error)
 		goto done;
 
@@ -794,7 +795,7 @@ ch_usergetelemstatus(sc, cesr)
 	 * in order to read all the data.
 	 */
 	error = ch_getelemstatus(sc, sc->sc_firsts[cesr->cesr_type] +
-	    cesr->cesr_unit, cesr->cesr_count, &st_hdr, sizeof(st_hdr),
+	    cesr->cesr_unit, cesr->cesr_count, &st_hdr, sizeof(st_hdr), 0,
 	    cesr->cesr_flags);
 	if (error)
 		return (error);
@@ -816,7 +817,8 @@ ch_usergetelemstatus(sc, cesr)
 	 */
 	data = malloc(size, M_DEVBUF, M_WAITOK);
 	error = ch_getelemstatus(sc, sc->sc_firsts[cesr->cesr_type] +
-	    cesr->cesr_unit, cesr->cesr_count, data, size, cesr->cesr_flags);
+	    cesr->cesr_unit, cesr->cesr_count, data, size, 0,
+	    cesr->cesr_flags);
 	if (error)
 		goto done;
 
@@ -982,11 +984,12 @@ ch_usergetelemstatus(sc, cesr)
 }
 
 int
-ch_getelemstatus(sc, first, count, data, datalen, flags)
+ch_getelemstatus(sc, first, count, data, datalen, scsiflags, flags)
 	struct ch_softc *sc;
 	int first, count;
 	void *data;
 	size_t datalen;
+	int scsiflags;
 	int flags;
 {
 	struct scsi_read_element_status cmd;
@@ -1008,7 +1011,8 @@ ch_getelemstatus(sc, first, count, data, datalen, flags)
 	 */
 	return (scsipi_command(sc->sc_link,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd),
-	    (u_char *)data, datalen, CHRETRIES, 100000, NULL, XS_CTL_DATA_IN));
+	    (u_char *)data, datalen, CHRETRIES, 100000, NULL,
+	    scsiflags | XS_CTL_DATA_IN));
 }
 
 int
@@ -1076,7 +1080,7 @@ ch_setvoltag(sc, csvr)
 	return (scsipi_command(sc->sc_link,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd),
 	    (u_char *)data, datalen, CHRETRIES, 100000, NULL,
-	    datalen ? XS_CTL_DATA_OUT : 0));
+	    datalen ? XS_CTL_DATA_OUT | XS_CTL_DATA_ONSTACK : 0));
 }
 
 int
@@ -1149,7 +1153,7 @@ ch_get_params(sc, scsiflags)
 	error = scsipi_command(sc->sc_link,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd), (u_char *)&sense_data,
 	    sizeof(sense_data), CHRETRIES, 6000, NULL,
-	    scsiflags | XS_CTL_DATA_IN);
+	    scsiflags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK);
 	if (error) {
 		printf("%s: could not sense element address page\n",
 		    sc->sc_dev.dv_xname);
@@ -1182,7 +1186,7 @@ ch_get_params(sc, scsiflags)
 	error = scsipi_command(sc->sc_link,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd), (u_char *)&sense_data,
 	    sizeof(sense_data), CHRETRIES, 6000, NULL,
-	    scsiflags | XS_CTL_DATA_IN);
+	    scsiflags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK);
 	if (error) {
 		printf("%s: could not sense capabilities page\n",
 		    sc->sc_dev.dv_xname);

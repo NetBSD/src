@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.146 2000/05/30 15:16:41 augustss Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.147 2000/06/09 08:54:23 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -721,7 +721,8 @@ scsi_probedev(scsi, target, lun)
 
 	/* Now go ask the device all about itself. */
 	bzero(&inqbuf, sizeof(inqbuf));
-	if (scsipi_inquire(sc_link, &inqbuf, XS_CTL_DISCOVERY) != 0)
+	if (scsipi_inquire(sc_link, &inqbuf,
+	    XS_CTL_DISCOVERY | XS_CTL_DATA_ONSTACK) != 0)
 		goto bad;
 
 	{

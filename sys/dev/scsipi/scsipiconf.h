@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.43 2000/05/31 09:15:48 augustss Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.44 2000/06/09 08:54:26 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -329,6 +329,7 @@ struct scsipi_xfer {
 #define	XS_CTL_URGENT		0x00008000	/* urgent operation */
 #define	XS_CTL_SIMPLE_TAG	0x00010000	/* use a Simple Tag */
 #define	XS_CTL_ORDERED_TAG	0x00020000	/* use an Ordered Tag */
+#define	XS_CTL_DATA_ONSTACK	0x00040000	/* data is alloc'ed on stack */
 
 /*
  * scsipi_xfer status flags
@@ -383,17 +384,6 @@ struct scsi_quirk_inquiry_pattern {
 };
 
 /*
- * Macro to issue a SCSI command.  Treat it like a function:
- *
- *	int scsipi_command __P((struct scsipi_link *link,
- *	    struct scsipi_generic *scsipi_cmd, int cmdlen,
- *	    u_char *data_addr, int datalen, int retries,
- *	    int timeout, struct buf *bp, int flags));
- */
-#define	scsipi_command(l, c, cl, da, dl, r, t, b, f)			\
-	(*(l)->scsipi_cmd)((l), (c), (cl), (da), (dl), (r), (t), (b), (f))
-
-/*
  * Default number of retries, used for generic routines.
  */
 #define SCSIPIRETRIES 4
@@ -406,6 +396,9 @@ struct scsi_quirk_inquiry_pattern {
 
 #ifdef _KERNEL
 void	scsipi_init __P((void));
+int	scsipi_command __P((struct scsipi_link *,
+	    struct scsipi_generic *, int, u_char *, int,
+	    int, int, struct buf *, int));
 caddr_t	scsipi_inqmatch __P((struct scsipi_inquiry_pattern *, caddr_t,
 	    int, int, int *));
 char	*scsipi_dtype __P((int));
