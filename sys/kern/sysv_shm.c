@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.22 1994/06/29 06:33:17 cgd Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.23 1994/07/04 23:25:12 glass Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles Hannum.  All rights reserved.
@@ -237,7 +237,7 @@ shmat(p, uap, retval)
 		attach_va = round_page(p->p_vmspace->vm_daddr + MAXDSIZ);
 	}
 	error = vm_mmap(&p->p_vmspace->vm_map, &attach_va, size, prot,
-	    VM_PROT_DEFAULT, flags, uap->shmid, 0);
+	    VM_PROT_DEFAULT, flags, (caddr_t) uap->shmid, 0);
 	if (error)
 		return error;
 	shmmap_s->va = attach_va;
@@ -389,7 +389,7 @@ shmget_allocate_segment(p, uap, mode, retval)
 	    malloc(sizeof(struct shm_handle), M_SHM, M_WAITOK);
 	shmid = IXSEQ_TO_IPCID(segnum, shmseg->shm_perm);
 	result = vm_mmap(sysvshm_map, &shm_handle->kva, size, VM_PROT_ALL,
-	    VM_PROT_DEFAULT, MAP_ANON, shmid, 0);
+	    VM_PROT_DEFAULT, MAP_ANON, (caddr_t) shmid, 0);
 	if (result != KERN_SUCCESS) {
 		shmseg->shm_perm.mode = SHMSEG_FREE;
 		shm_last_free = segnum;
