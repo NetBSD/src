@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.1 1999/01/04 00:04:05 tron Exp $
+/*	$NetBSD: namespace.h,v 1.2 1999/03/09 13:23:08 mrg Exp $
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -40,19 +40,29 @@
 #ifndef _NAMESPACE_H_
 #define _NAMESPACE_H_
 
-#define inet_addr		_inet_addr
-#define inet_aton		_inet_aton
-#define inet_pton		_inet_pton
-#define	fp_nquery		__fp_nquery
-#define	fp_resstat		__fp_resstat
-#define hostalias		__hostalias
-#define p_class			__p_class
-#define p_type			__p_type
-#define putlong			__putlong
-#define putshort		__putshort
-#define res_dnok		__res_dnok
-#define res_hnok		__res_hnok	
-#define res_send_setqhook	_res_send_setqhook
-#define res_send_setrhook	_res_send_setrhook
+#define dn_expand		bind_dn_expand
+#define inet_addr		bind_inet_addr
+#define inet_aton		bind_inet_aton
+#define inet_pton		bind_inet_pton
+#define fp_nquery		bind_fp_nquery
+#define fp_resstat		bind_fp_resstat
+#define hostalias		bind_hostalias
+#define p_class			bind_p_class
+#define p_type			bind_p_type
+#define putlong			bind_putlong
+#define _getlong		bind_getlong
+#define putshort		bind_putshort
+#define res_dnok		bind_res_dnok
+#define _getshort		bind__getshort
+#define res_hnok		bind_res_hnok	
+#define res_send_setqhook	bind_res_send_setqhook
+#define res_send_setrhook	bind_res_send_setrhook
+#define __p_type_syms		bind_p_type_syms
+#define __p_class_syms		bind_p_class_syms
+#define __putshort		bind_putshort
+#define __putlong		bind_putlong
+#define res_querydomain		bind_res_querydomain
+#define res_query		bind_res_query
+#define res_search		bind_res_search
 
 #endif /* _NAMESPACE_H_ */
