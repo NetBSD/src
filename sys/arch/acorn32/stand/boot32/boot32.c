@@ -1,4 +1,4 @@
-/*	$NetBSD: boot32.c,v 1.7 2003/01/06 02:54:03 reinoud Exp $	*/
+/*	$NetBSD: boot32.c,v 1.8 2003/01/06 18:22:00 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2002 Reinoud Zandijk
@@ -783,8 +783,8 @@ void sort_memory_map(void) {
 		for (in = out+1, in_page = out_page+1; in < totalpages; in++, in_page++) {
 			if (in_page->physical < out_page->physical) {
 				memcpy(&temp_page, in_page,    sizeof(struct page_info));
-				memcpy(out_page,   in_page,    sizeof(struct page_info));
-				memcpy(in_page,    &temp_page, sizeof(struct page_info));
+				memcpy(in_page,    out_page,   sizeof(struct page_info));
+				memcpy(out_page,   &temp_page, sizeof(struct page_info));
 			};
 			count++;
 			if ((count & 0x3ffff) == 0) twirl();
