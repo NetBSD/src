@@ -1,4 +1,4 @@
-/*	$NetBSD: umount.c,v 1.22 1997/12/18 07:11:49 mikel Exp $	*/
+/*	$NetBSD: umount.c,v 1.23 1998/04/01 15:20:25 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1989, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)umount.c	8.8 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: umount.c,v 1.22 1997/12/18 07:11:49 mikel Exp $");
+__RCSID("$NetBSD: umount.c,v 1.23 1998/04/01 15:20:25 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,6 @@ __RCSID("$NetBSD: umount.c,v 1.22 1997/12/18 07:11:49 mikel Exp $");
 #include <sys/mount.h>
 #include <sys/time.h>
 #include <sys/socket.h>
-#include <sys/socketvar.h>
 
 #include <netdb.h>
 #include <rpc/rpc.h>
