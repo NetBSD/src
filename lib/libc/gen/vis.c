@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.16 1999/11/28 22:51:37 wennmach Exp $	*/
+/*	$NetBSD: vis.c,v 1.17 1999/12/07 18:20:28 wennmach Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.16 1999/11/28 22:51:37 wennmach Exp $");
+__RCSID("$NetBSD: vis.c,v 1.17 1999/12/07 18:20:28 wennmach Exp $");
 #endif /* not lint */
 
 #include "namespace.h"
@@ -96,16 +96,8 @@ do {									      \
 do {									      \
 	int isextra, isc;						      \
 	isextra = strchr(extra, c) != NULL;				      \
-	if (isascii(c) && isgraph(c)) {					      \
-		if (isextra) *dst++ = '\\';				      \
-		*dst++ = c;						      \
-		break;							      \
-	}								      \
-	if (iswhite(c) && !isextra) {					      \
-		*dst++ = c;						      \
-		break;							      \
-	}								      \
-	if ((flag & VIS_SAFE) && issafe(c)) {				      \
+	if (!isextra && isascii(c) && (isgraph(c) || iswhite(c) ||	      \
+	    ((flag & VIS_SAFE) && issafe(c)))) {			      \
 		*dst++ = c;						      \
 		break;							      \
 	}								      \
@@ -145,7 +137,7 @@ do {									      \
 		}							      \
 	}								      \
 	if (isc) break;							      \
-	if (((c & 0177) == ' ') || (flag & VIS_OCTAL)) {		      \
+	if (isextra || ((c & 0177) == ' ') || (flag & VIS_OCTAL)) {	      \
 		*dst++ = '\\';						      \
 		*dst++ = (u_char)(((u_int32_t)(u_char)c >> 6) & 03) + '0';    \
 		*dst++ = (u_char)(((u_int32_t)(u_char)c >> 3) & 07) + '0';    \
@@ -169,8 +161,8 @@ do {									      \
 
 
 /*
- * vis - visually encode characters, backslash-escaping the characters
- *	 pointed to by extra
+ * svis - visually encode characters, also encoding the characters
+ * 	  pointed to by `extra'
  */
 char *
 svis(dst, c, flag, nextc, extra)
@@ -191,8 +183,8 @@ svis(dst, c, flag, nextc, extra)
  * strsvis, strsvisx - visually encode characters from src into dst
  *
  *	Extra is a pointer to a \0-terminated list of characters to
- *	be backslash-escaped. These functions are useful e. g. to
- *	encode strings in such a way that they are not interpreted
+ *	be encoded, too. These functions are useful e. g. to
+ *	encode strings in such a way so that they are not interpreted
  *	by a shell.
  *	
  *	Dst must be 4 times the size of src to account for possible
