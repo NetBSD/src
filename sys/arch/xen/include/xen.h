@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.3 2004/04/24 18:24:14 cl Exp $	*/
+/*	$NetBSD: xen.h,v 1.4 2004/04/24 18:55:02 cl Exp $	*/
 
 /*
  *
@@ -29,6 +29,18 @@
 #define _XEN_H
 
 #ifndef _LOCORE
+
+union xen_cmdline_parseinfo {
+	char			xcp_bootdev[16]; /* sizeof(dv_xname) */
+	struct xen_netinfo	xcp_netinfo;
+	char			xcp_console[16];
+};
+
+#define	XEN_PARSE_BOOTDEV	0
+#define	XEN_PARSE_NETINFO	1
+#define	XEN_PARSE_CONSOLE	2
+
+void	xen_parse_cmdline(int, union xen_cmdline_parseinfo *);
 
 void	xenconscn_attach(void);
 
