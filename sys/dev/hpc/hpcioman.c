@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcioman.c,v 1.5 2001/11/13 12:47:56 lukem Exp $ */
+/*	$NetBSD: hpcioman.c,v 1.6 2002/01/13 14:00:38 takemura Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcioman.c,v 1.5 2001/11/13 12:47:56 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcioman.c,v 1.6 2002/01/13 14:00:38 takemura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,14 +99,33 @@ hpcioman_search(struct device *parent, struct cfdata *cf, void *aux)
 	hma.hma_hc = (*haa->haa_getchip)(haa->haa_sc, cf->cf_iochip);
 
 	/* interrupt mode */
-	hma.hma_intr_mode = HPCIO_INTR_HOLD;
 	if (cf->cf_level != HPCIOMANCF_LEVEL_DEFAULT) {
+		switch (cf->cf_hold) {
+		case 1:
+			hma.hma_intr_mode = HPCIO_INTR_HOLD;
+			break;
+		case 0:
+		case HPCIOMANCF_HOLD_DEFAULT:
+		default:
+			hma.hma_intr_mode = HPCIO_INTR_THROUGH;
+			break;
+		}
 		hma.hma_intr_mode |= HPCIO_INTR_LEVEL;
 		if (cf->cf_level == 0)
 			hma.hma_intr_mode |= HPCIO_INTR_LOW;
 		else
 			hma.hma_intr_mode |= HPCIO_INTR_HIGH;
 	} else {
+		switch (cf->cf_hold) {
+		case 0:
+			hma.hma_intr_mode = HPCIO_INTR_THROUGH;
+			break;
+		case 1:
+		case HPCIOMANCF_HOLD_DEFAULT:
+		default:
+			hma.hma_intr_mode = HPCIO_INTR_HOLD;
+			break;
+		}
 		hma.hma_intr_mode |= HPCIO_INTR_EDGE;
 		switch (cf->cf_edge) {
 		case 1:
@@ -145,6 +164,7 @@ hpcioman_search(struct device *parent, struct cfdata *cf, void *aux)
 		else
 			hma.hma_initvalue = hma.hma_on;
 	}
+	hma.hma_connect = cf->cf_connect;
 
 	config_attach(parent, cf, &hma, hpcioman_print);
 
@@ -163,7 +183,8 @@ hpcioman_print(void *aux, const char *pnp)
 		    hma->hma_port, type, hma->hma_id);
 		if (type == CONFIG_HOOK_BUTTONEVENT ||
 		    type == CONFIG_HOOK_PMEVENT || 
-		    type == CONFIG_HOOK_EVENT) {
+		    type == CONFIG_HOOK_EVENT ||
+		    type == CONFIG_HOOK_PCIINTR) {
 			if (hma->hma_intr_mode & HPCIO_INTR_EDGE)
 				printf (", interrupt edge [%s%s]",
 				    (hma->hma_intr_mode&HPCIO_INTR_POSEDGE)
