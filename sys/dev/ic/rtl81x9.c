@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.11.4.3 2001/02/26 21:19:32 he Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.11.4.4 2001/03/13 20:43:55 he Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -564,7 +564,9 @@ STATIC void rtk_setmulti(sc)
 
 	rxfilt = CSR_READ_4(sc, RTK_RXCFG);
 
-	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
+	if (ifp->if_flags & IFF_PROMISC) {
+allmulti:
+		ifp->if_flags |= IFF_ALLMULTI;
 		rxfilt |= RTK_RXCFG_RX_MULTI;
 		CSR_WRITE_4(sc, RTK_RXCFG, rxfilt);
 		CSR_WRITE_4(sc, RTK_MAR0, 0xFFFFFFFF);
@@ -581,7 +583,7 @@ STATIC void rtk_setmulti(sc)
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 		    ETHER_ADDR_LEN) != 0)
-			continue;
+			goto allmulti;
 
 		h = rtk_calchash(enm->enm_addrlo);
 		if (h < 32)
@@ -591,6 +593,8 @@ STATIC void rtk_setmulti(sc)
 		mcnt++;
 		ETHER_NEXT_MULTI(step, enm);
 	}
+
+	ifp->if_flags &= ~IFF_ALLMULTI;
 
 	if (mcnt)
 		rxfilt |= RTK_RXCFG_RX_MULTI;
