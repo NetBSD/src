@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.6 1998/09/27 14:32:14 pk Exp $ */
+/*	$NetBSD: asm.h,v 1.7 1999/01/19 23:05:52 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -127,4 +127,17 @@
 	int _v; \
 	__asm __volatile("ldstub [%1],%0" : "=r" (_v) : "r" (loc) : "memory"); \
 	_v; \
+})
+
+/* read ancillary state register */
+#define	rdasr(asr) _rdasr(asr)
+#define	_rdasr(asr) ({ \
+	register int _rdasr_v; \
+	__asm __volatile("rd %%asr" #asr ",%0" : "=r" (_rdasr_v)); \
+})
+
+/* write ancillary state register */
+#define	wrasr(value, asr) _wrasr(value, asr)
+#define	_wrasr(value, asr) ({ \
+	__asm __volatile("wr %0,%%asr" #asr : : "r" ((int)(value))); \
 })
