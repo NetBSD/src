@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.16 2003/12/04 19:38:21 atatat Exp $	*/
+/*	$NetBSD: machdep.c,v 1.17 2003/12/30 12:33:16 pk Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16 2003/12/04 19:38:21 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 2003/12/30 12:33:16 pk Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -423,7 +423,6 @@ hppa_init(paddr_t start)
 	vaddr_t vstart, vend;
 	int error;
 	int hptsize;	/* size of HPT table if supported */
-	int sz;
 	u_int *p, *q;
 	struct pdc_cpuid pdc_cpuid PDC_ALIGNMENT;
 	const char *model;
@@ -701,12 +700,6 @@ hptsize=256;	/* XXX one page for now */
 	 */
 
 	physmem = totalphysmem;
-	sz = (int)allocsys(NULL, NULL);
-	memset((void *)vstart, 0, sz);
-	if (allocsys((caddr_t)vstart, NULL) - (caddr_t)vstart != sz)
-		panic("startup: table size inconsistency");
-	vstart += sz;
-	vstart = hppa_round_page(vstart);
 
 	/* Allocate the msgbuf. */
 	msgbufaddr = (caddr_t) vstart;
@@ -837,8 +830,6 @@ void
 cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
-	vsize_t size;
-	u_int i, base, residual;
 	char pbuf[3][9];
 #ifdef PMAPDEBUG
 	extern int pmapdebug;
@@ -868,44 +859,7 @@ cpu_startup(void)
 	printf("real mem = %s (%s reserved for PROM, %s used by NetBSD)\n",
 	    pbuf[0], pbuf[1], pbuf[2]);
 
-	/*
-	 * Now allocate buffers proper.  They are different than the above
-	 * in that they usually occupy more virtual memory than physical.
-	 */
-	size = MAXBSIZE * nbuf;
-	if (uvm_map(kernel_map, (vaddr_t *)(void *)&buffers, round_page(size),
-	    NULL, UVM_UNKNOWN_OFFSET, 0, UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
-	    UVM_INH_NONE, UVM_ADV_NORMAL, 0)) != 0)
-		panic("cpu_startup: cannot allocate VM for buffers");
-	minaddr = (vaddr_t)buffers;
-	base = bufpages / nbuf;
-	residual = bufpages % nbuf;
-	for (i = 0; i < nbuf; i++) {
-		vsize_t curbufsize;
-		vaddr_t curbuf;
-		struct vm_page *pg;
-
-		/*
-		 * First <residual> buffers get (base+1) physical pages
-		 * allocated for them.  The rest get (base) physical pages.
-		 *
-		 * The rest of each buffer occupies virtual space,
-		 * but has no physical memory allocated for it.
-		 */
-		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = PAGE_SIZE * ((i < residual) ? (base+1) : base);
-
-		while (curbufsize) {
-			if ((pg = uvm_pagealloc(NULL, 0, NULL, 0)) == NULL)
-				panic("cpu_startup: not enough memory for "
-				    "buffer cache");
-			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
-				VM_PROT_READ|VM_PROT_WRITE);
-			curbuf += PAGE_SIZE;
-			curbufsize -= PAGE_SIZE;
-		}
-	}
-
+	minaddr = 0;
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
@@ -926,10 +880,7 @@ cpu_startup(void)
 	pmapdebug = opmapdebug;
 #endif
 	format_bytes(pbuf[0], sizeof(pbuf[0]), ptoa(uvmexp.free));
-	format_bytes(pbuf[1], sizeof(pbuf[1]), bufpages * PAGE_SIZE);
 	printf("avail mem = %s\n", pbuf[0]);
-	printf("using %u buffers containing %s of memory\n",
-	    nbuf, pbuf[1]);
 
 	/*
 	 * Allocate a virtual page (for use by /dev/mem)
@@ -937,12 +888,6 @@ cpu_startup(void)
 	 * it has to be in the normal kernel VA range.
 	 */
 	vmmap = uvm_km_valloc_wait(kernel_map, PAGE_SIZE);
-
-	/*
-	 * Set up buffers, so they can be used to read disk labels.
-	 */
-	bufinit();
-
 }
 
 /*

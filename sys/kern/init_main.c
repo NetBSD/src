@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.227 2003/11/14 07:13:25 jonathan Exp $	*/
+/*	$NetBSD: init_main.c,v 1.228 2003/12/30 12:33:23 pk Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.227 2003/11/14 07:13:25 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.228 2003/12/30 12:33:23 pk Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -257,6 +257,9 @@ main(void)
 
 	/* Initialize callouts. */
 	callout_startup();
+
+	/* Initialize the buffer cache */
+	bufinit();
 
 	/*
 	 * Initialize mbuf's.  Do this now because we might attempt to

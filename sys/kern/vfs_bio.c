@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.99 2003/12/02 04:18:19 dbj Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.100 2003/12/30 12:33:23 pk Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -77,24 +77,44 @@
  *		UNIX Operating System (Addison Welley, 1989)
  */
 
+#include "opt_bufcache.h"
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.99 2003/12/02 04:18:19 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.100 2003/12/30 12:33:23 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/malloc.h>
 #include <sys/resourcevar.h>
+#include <sys/sysctl.h>
 #include <sys/conf.h>
 
 #include <uvm/uvm.h>
 
 #include <miscfs/specfs/specdev.h>
+
+#ifndef	BUFPAGES
+# define BUFPAGES 0
+#endif
+
+#ifdef BUFCACHE
+# if (BUFCACHE < 5) || (BUFCACHE > 95)
+#  error BUFCACHE is not between 5 and 95
+# endif
+#else
+# define BUFCACHE 30
+#endif
+
+u_int	nbuf;			/* XXX - for softdep_lockedbufs */
+u_int	bufpages = BUFPAGES;	/* optional hardwired count */
+u_int	bufcache = BUFCACHE;	/* max % of RAM to use for buffer cache */
+
 
 /* Macros to clear/set/test flags. */
 #define	SET(t, f)	(t) |= (f)
@@ -121,12 +141,11 @@ struct bio_ops bioops;	/* I/O operation notification */
 /*
  * Definitions for the buffer free lists.
  */
-#define	BQUEUES		4		/* number of free buffer queues */
+#define	BQUEUES		3		/* number of free buffer queues */
 
 #define	BQ_LOCKED	0		/* super-blocks &c */
 #define	BQ_LRU		1		/* lru, useful buffers */
 #define	BQ_AGE		2		/* rubbish */
-#define	BQ_EMPTY	3		/* buffer headers with no memory */
 
 TAILQ_HEAD(bqueues, buf) bufqueues[BQUEUES];
 int needbuffer;
@@ -141,6 +160,70 @@ struct simplelock bqueue_slock = SIMPLELOCK_INITIALIZER;
  * Buffer pool for I/O buffers.
  */
 struct pool bufpool;
+
+/* XXX - somewhat gross.. */
+#if MAXBSIZE == 0x2000
+#define NMEMPOOLS 4
+#elif MAXBSIZE == 0x4000
+#define NMEMPOOLS 5
+#elif MAXBSIZE == 0x8000
+#define NMEMPOOLS 6
+#else
+#define NMEMPOOLS 7
+#endif
+
+#define MEMPOOL_INDEX_OFFSET 10		/* smallest pool is 1k */
+#if (1 << (NMEMPOOLS + MEMPOOL_INDEX_OFFSET - 1)) != MAXBSIZE
+#error update vfs_bio buffer memory parameters
+#endif
+
+/* Buffer memory pools */
+struct pool bmempools[NMEMPOOLS];
+
+struct vm_map *buf_map;
+
+/*
+ * Buffer memory pool allocator.
+ */
+static void *bufpool_page_alloc(struct pool *pp, int flags)
+{
+	return (void *)uvm_km_kmemalloc1(buf_map,
+					uvm.kernel_object, MAXBSIZE, MAXBSIZE,
+					UVM_UNKNOWN_OFFSET,
+					(flags & PR_WAITOK)?0:UVM_KMF_NOWAIT);
+}
+
+static void bufpool_page_free(struct pool *pp, void *v)
+{
+	uvm_km_free(kernel_map, (vaddr_t)v, MAXBSIZE);
+}
+
+struct pool_allocator bufmempool_allocator = {
+	bufpool_page_alloc, bufpool_page_free, MAXBSIZE,
+};
+
+/* Buffer memory management variables */
+u_long bufmem_valimit;
+u_long bufmem_hiwater;
+u_long bufmem_lowater;
+u_long bufmem;
+
+/*
+ * MD code can call this to set a hard limit on the amount
+ * of virtual memory used by the buffer cache.
+ */
+int buf_setvalimit(vsize_t sz)
+{
+
+	/* We need to accommodate at least NMEMPOOLS of MAXBSIZE each */
+	if (sz < NMEMPOOLS * MAXBSIZE)
+		return EINVAL;
+
+	bufmem_valimit = sz;
+	return 0;
+}
+
+static int buf_trim(void);
 
 /*
  * bread()/breadn() helper.
@@ -158,16 +241,14 @@ int count_lock_queue(void);
 
 #ifdef DEBUG
 int debug_verify_freelist = 0;
-int checkfreelist(struct buf *, struct bqueues *);
-int
-checkfreelist(struct buf *bp, struct bqueues *dp)
+static int checkfreelist(struct buf *bp, struct bqueues *dp)
 {
-  struct buf *b;
-  TAILQ_FOREACH(b, dp, b_freelist) {
-    if (b == bp)
-      return 1;
-  }
-  return 0;
+	struct buf *b;
+	TAILQ_FOREACH(b, dp, b_freelist) {
+		if (b == bp)
+			return 1;
+	}
+	return 0;
 }
 #endif
 
@@ -179,11 +260,10 @@ bremfree(bp)
 
 	LOCK_ASSERT(simple_lock_held(&bqueue_slock));
 
-  KDASSERT(!debug_verify_freelist ||
-      checkfreelist(bp, &bufqueues[BQ_AGE]) ||
-      checkfreelist(bp, &bufqueues[BQ_LRU]) ||
-      checkfreelist(bp, &bufqueues[BQ_LOCKED]) ||
-      checkfreelist(bp, &bufqueues[BQ_EMPTY]));
+	KDASSERT(!debug_verify_freelist ||
+		checkfreelist(bp, &bufqueues[BQ_AGE]) ||
+		checkfreelist(bp, &bufqueues[BQ_LRU]) ||
+		checkfreelist(bp, &bufqueues[BQ_LOCKED]) );
 
 	/*
 	 * We only calculate the head of the freelist when removing
@@ -206,45 +286,189 @@ bremfree(bp)
 	TAILQ_REMOVE(dp, bp, b_freelist);
 }
 
+u_long buf_memcalc()
+{
+	u_long n;
+
+	/*
+	 * Determine the upper bound of memory to use for buffers.
+	 *
+	 *	- If bufpages is specified, use that as the number
+	 *	  pages.
+	 *
+	 *	- Otherwise, use bufcache as the percentage of
+	 *	  physical memory.
+	 */
+	if (bufpages != 0) {
+		n = bufpages;
+	} else {
+		if (bufcache < 5) {
+			printf("forcing bufcache %d -> 5", bufcache);
+			bufcache = 5;
+		}
+		if (bufcache > 95) {
+			printf("forcing bufcache %d -> 95", bufcache);
+			bufcache = 95;
+		}
+		n = physmem / 100 * bufcache;
+	}
+
+	n <<= PAGE_SHIFT;
+	if (bufmem_valimit != 0 && n > bufmem_valimit)
+		n = bufmem_valimit;
+
+	return (n);
+}
+
 /*
  * Initialize buffers and hash links for buffers.
  */
 void
 bufinit()
 {
-	struct buf *bp;
 	struct bqueues *dp;
-	u_int i, base, residual;
+	int smallmem;
+	u_int i;
 
 	/*
-	 * Initialize the buffer pool.  This pool is used for buffers
-	 * which are strictly I/O control blocks, not buffer cache
-	 * buffers.
+	 * Initialize buffer cache memory parameters.
+	 */
+	bufmem = 0;
+	bufmem_hiwater = buf_memcalc();
+	/* lowater is approx. 2% of memory (with bufcache=30) */
+	bufmem_lowater = (bufmem_hiwater >> 4);
+	if (bufmem_lowater < 64 * 1024)
+		/* Ensure a reasonable minimum value */
+		bufmem_lowater = 64 * 1024;
+
+	if (bufmem_valimit != 0) {
+		vaddr_t minaddr = 0, maxaddr;
+		buf_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
+					  bufmem_valimit, VM_MAP_PAGEABLE,
+					  FALSE, 0);
+		if (buf_map == NULL)
+			panic("bufinit: cannot allocate submap");
+	} else
+		buf_map = kernel_map;
+
+	/*
+	 * Initialize the buffer pools.
 	 */
 	pool_init(&bufpool, sizeof(struct buf), 0, 0, 0, "bufpl", NULL);
 
+	/* On "small" machines use small pool page sizes where possible */
+	smallmem = (physmem < atop(16*1024*1024));
+
+	for (i = 0; i < NMEMPOOLS; i++) {
+		struct pool_allocator *pa;
+		struct pool *pp = &bmempools[i];
+		u_int size = 1 << (i + MEMPOOL_INDEX_OFFSET);
+		char *name = malloc(8, M_TEMP, M_WAITOK);
+		snprintf(name, 8, "buf%dk", 1 << i);
+		pa = (size <= PAGE_SIZE && smallmem)
+			? &pool_allocator_nointr
+			: &bufmempool_allocator;
+		pool_init(pp, size, 0, 0, 0, name, pa);
+		pool_setlowat(pp, 1);
+	}
+
+	/* Initialize the buffer queues */
 	for (dp = bufqueues; dp < &bufqueues[BQUEUES]; dp++)
 		TAILQ_INIT(dp);
+
+	/*
+	 * Estimate hash table size based on the amount of memory we
+	 * intend to use for the buffer cache. The average buffer
+	 * size is dependent on our clients (i.e. filesystems).
+	 *
+	 * For now, use an empirical 3K per buffer.
+	 */
+	nbuf = (bufmem_hiwater / 1024) / 3;
 	bufhashtbl = hashinit(nbuf, HASH_LIST, M_CACHE, M_WAITOK, &bufhash);
-	base = bufpages / nbuf;
-	residual = bufpages % nbuf;
-	for (i = 0; i < nbuf; i++) {
-		bp = &buf[i];
-		memset((char *)bp, 0, sizeof(*bp));
-		BUF_INIT(bp);
-		bp->b_dev = NODEV;
-		bp->b_vnbufs.le_next = NOLIST;
-		bp->b_data = buffers + i * MAXBSIZE;
-		if (i < residual)
-			bp->b_bufsize = (base + 1) * PAGE_SIZE;
-		else
-			bp->b_bufsize = base * PAGE_SIZE;
-		bp->b_flags = B_INVAL;
-		dp = bp->b_bufsize ? &bufqueues[BQ_AGE] : &bufqueues[BQ_EMPTY];
-		binsheadfree(bp, dp);
-		binshash(bp, &invalhash);
-	}
 }
+
+static int
+buf_lotsfree(void)
+{
+	return (bufmem < bufmem_lowater ||
+		(bufmem < bufmem_hiwater && uvmexp.free > 2*uvmexp.freetarg));
+}
+
+/*
+ * Return estimate of # of buffers we think need to be
+ * released to help resolve low memory conditions.
+ */
+static int
+buf_canrelease(void)
+{
+	int n;
+
+	if (bufmem < bufmem_lowater)
+		return 0;
+
+	n = uvmexp.freetarg - uvmexp.free;
+	if (n < 0)
+		n = 0;
+	return 2*n;
+}
+
+/*
+ * Buffer memory allocation helper functions
+ */
+static __inline__ u_long buf_mempoolidx(u_long size)
+{
+	u_int n = 0;
+
+	size -= 1;
+	size >>= MEMPOOL_INDEX_OFFSET;
+	while (size) {
+		size >>= 1;
+		n += 1;
+	}
+	if (n >= NMEMPOOLS)
+		panic("buf mem pool index %d", n);
+	return n;
+}
+
+static __inline__ u_long buf_roundsize(u_long size)
+{
+	/* Round up to nearest power of 2 */
+	return (1 << (buf_mempoolidx(size) + MEMPOOL_INDEX_OFFSET));
+}
+
+static __inline__ caddr_t buf_malloc(size_t size)
+{
+	u_int n = buf_mempoolidx(size);
+	caddr_t addr;
+	int s;
+
+	while (1) {
+		addr = pool_get(&bmempools[n], PR_NOWAIT);
+		if (addr != NULL)
+			break;
+
+		/* No memory, see if we can free some. If so, try again */
+		if (buf_drain(1) > 0)
+			continue;
+
+		/* Wait for buffers to arrive on the LRU queue */
+		s = splbio();
+		simple_lock(&bqueue_slock);
+		needbuffer = 1;
+		ltsleep(&needbuffer, PNORELOCK | (PRIBIO+1),
+			"buf_malloc", 0, &bqueue_slock);
+		splx(s);
+	}
+
+	return addr;
+}
+
+static void buf_mrelease(caddr_t addr, size_t size)
+{
+
+	pool_put(&bmempools[buf_mempoolidx(size)], addr);
+}
+
 
 static __inline struct buf *
 bio_doread(vp, blkno, size, cred, async)
@@ -611,7 +835,6 @@ brelse(bp)
 
   KDASSERT(!debug_verify_freelist || !checkfreelist(bp, &bufqueues[BQ_AGE]));
   KDASSERT(!debug_verify_freelist || !checkfreelist(bp, &bufqueues[BQ_LRU]));
-  KDASSERT(!debug_verify_freelist || !checkfreelist(bp, &bufqueues[BQ_EMPTY]));
   KDASSERT(!debug_verify_freelist || !checkfreelist(bp, &bufqueues[BQ_LOCKED]));
 
 	if ((bp->b_bufsize <= 0) || ISSET(bp->b_flags, B_INVAL)) {
@@ -628,7 +851,7 @@ brelse(bp)
 		}
 		if (bp->b_bufsize <= 0)
 			/* no data */
-			bufq = &bufqueues[BQ_EMPTY];
+			goto already_queued;
 		else
 			/* invalid data */
 			bufq = &bufqueues[BQ_AGE];
@@ -671,6 +894,12 @@ already_queued:
 	/* Allow disk interrupts. */
 	simple_unlock(&bp->b_interlock);
 	simple_unlock(&bqueue_slock);
+	if (bp->b_bufsize <= 0) {
+#ifdef DEBUG
+		memset((char *)bp, 0, sizeof(*bp));
+#endif
+		pool_put(&bufpool, bp);
+	}
 	splx(s);
 }
 
@@ -714,6 +943,7 @@ getblk(vp, blkno, size, slpflag, slptimeo)
 {
 	struct buf *bp;
 	int s, err;
+	int preserve;
 
 start:
 	s = splbio();
@@ -743,8 +973,9 @@ start:
 #endif
 		SET(bp->b_flags, B_BUSY);
 		bremfree(bp);
+		preserve = 1;
 	} else {
-		if ((bp = getnewbuf(slpflag, slptimeo)) == NULL) {
+		if ((bp = getnewbuf(slpflag, slptimeo, 0)) == NULL) {
 			simple_unlock(&bqueue_slock);
 			splx(s);
 			goto start;
@@ -753,6 +984,7 @@ start:
 		binshash(bp, BUFHASH(vp, blkno));
 		bp->b_blkno = bp->b_lblkno = bp->b_rawblkno = blkno;
 		bgetvp(vp, bp);
+		preserve = 0;
 	}
 	simple_unlock(&bp->b_interlock);
 	simple_unlock(&bqueue_slock);
@@ -764,7 +996,7 @@ start:
 	if (ISSET(bp->b_flags, B_LOCKED)) {
 		KASSERT(bp->b_bufsize >= size);
 	} else {
-		allocbuf(bp, size);
+		allocbuf(bp, size, preserve);
 	}
 	return (bp);
 }
@@ -781,7 +1013,7 @@ geteblk(size)
 
 	s = splbio();
 	simple_lock(&bqueue_slock);
-	while ((bp = getnewbuf(0, 0)) == 0)
+	while ((bp = getnewbuf(0, 0, 0)) == 0)
 		;
 
 	SET(bp->b_flags, B_INVAL);
@@ -789,7 +1021,7 @@ geteblk(size)
 	simple_unlock(&bqueue_slock);
 	simple_unlock(&bp->b_interlock);
 	splx(s);
-	allocbuf(bp, size);
+	allocbuf(bp, size, 0);
 	return (bp);
 }
 
@@ -802,94 +1034,56 @@ geteblk(size)
  * responsibility to fill out the buffer's additional contents.
  */
 void
-allocbuf(bp, size)
+allocbuf(bp, size, preserve)
 	struct buf *bp;
 	int size;
+	int preserve;
 {
-	struct buf *nbp;
-	vsize_t desired_size;
-	int s;
+	vsize_t oldsize, desired_size;
+	caddr_t addr;
+	int s, delta;
 
-	desired_size = round_page((vsize_t)size);
+	desired_size = buf_roundsize(size);
 	if (desired_size > MAXBSIZE)
-		panic("allocbuf: buffer larger than MAXBSIZE requested");
+		printf("allocbuf: buffer larger than MAXBSIZE requested");
 
-	if (bp->b_bufsize == desired_size)
-		goto out;
-
-	/*
-	 * If the buffer is smaller than the desired size, we need to snarf
-	 * it from other buffers.  Get buffers (via getnewbuf()), and
-	 * steal their pages.
-	 */
-	while (bp->b_bufsize < desired_size) {
-		int amt;
-
-		/* find a buffer */
-		s = splbio();
-		simple_lock(&bqueue_slock);
-		while ((nbp = getnewbuf(0, 0)) == NULL)
-			;
-
-		SET(nbp->b_flags, B_INVAL);
-		binshash(nbp, &invalhash);
-
-		simple_unlock(&nbp->b_interlock);
-		simple_unlock(&bqueue_slock);
-		splx(s);
-
-		/* and steal its pages, up to the amount we need */
-		amt = min(nbp->b_bufsize, (desired_size - bp->b_bufsize));
-		pagemove((nbp->b_data + nbp->b_bufsize - amt),
-			 bp->b_data + bp->b_bufsize, amt);
-		bp->b_bufsize += amt;
-		nbp->b_bufsize -= amt;
-
-		/* reduce transfer count if we stole some data */
-		if (nbp->b_bcount > nbp->b_bufsize)
-			nbp->b_bcount = nbp->b_bufsize;
-
-#ifdef DIAGNOSTIC
-		if (nbp->b_bufsize < 0)
-			panic("allocbuf: negative bufsize");
-#endif
-		brelse(nbp);
-	}
-
-	/*
-	 * If we want a buffer smaller than the current size,
-	 * shrink this buffer.  Grab a buf head from the EMPTY queue,
-	 * move a page onto it, and put it on front of the AGE queue.
-	 * If there are no free buffer headers, leave the buffer alone.
-	 */
-	if (bp->b_bufsize > desired_size) {
-		s = splbio();
-		simple_lock(&bqueue_slock);
-		if ((nbp = TAILQ_FIRST(&bufqueues[BQ_EMPTY])) == NULL) {
-			/* No free buffer head */
-			simple_unlock(&bqueue_slock);
-			splx(s);
-			goto out;
-		}
-		/* No need to lock nbp since it came from the empty queue */
-		bremfree(nbp);
-		SET(nbp->b_flags, B_BUSY | B_INVAL);
-		simple_unlock(&bqueue_slock);
-		splx(s);
-
-		/* move the page to it and note this change */
-		pagemove(bp->b_data + desired_size,
-		    nbp->b_data, bp->b_bufsize - desired_size);
-		nbp->b_bufsize = bp->b_bufsize - desired_size;
-		bp->b_bufsize = desired_size;
-		nbp->b_bcount = 0;
-
-		/* release the newly-filled buffer and leave */
-		brelse(nbp);
-	}
-
-out:
 	bp->b_bcount = size;
+
+	oldsize = bp->b_bufsize;
+	if (oldsize == desired_size)
+		return;
+
+	/*
+	 * If we want a buffer of a different size, re-allocate the
+	 * buffer's memory; copy old content only if needed.
+	 */
+	addr = buf_malloc(desired_size);
+	if (preserve)
+		memcpy(addr, bp->b_data, MIN(oldsize,desired_size));
+	if (bp->b_data != NULL)
+		buf_mrelease(bp->b_data, oldsize);
+	bp->b_data = addr;
+	bp->b_bufsize = desired_size;
+
+	/*
+	 * Update overall buffer memory counter (protected by bqueue_slock)
+	 */
+	delta = (long)desired_size - (long)oldsize;
+
+	s = splbio();
+	simple_lock(&bqueue_slock);
+	if ((bufmem += delta) > bufmem_hiwater) {
+		/*
+		 * Need to trim overall memory usage.
+		 */
+		while (buf_canrelease()) {
+			if (buf_trim() == 0)
+				break;
+		}
+	}
+
+	simple_unlock(&bqueue_slock);
+	splx(s);
 }
 
 /*
@@ -897,17 +1091,31 @@ out:
  * Select something from a free list.
  * Preference is to AGE list, then LRU list.    
  *
- * Called with buffer queues locked.
+ * Called at splbio and with buffer queues locked.
  * Return buffer locked.
  */
 struct buf *
-getnewbuf(slpflag, slptimeo)
-	int slpflag, slptimeo;
+getnewbuf(slpflag, slptimeo, from_bufq)
+	int slpflag, slptimeo, from_bufq;
 {
 	struct buf *bp;
 
 start:
 	LOCK_ASSERT(simple_lock_held(&bqueue_slock));
+
+	/*
+	 * Get a new buffer from the pool; but use NOWAIT because
+	 * we have the buffer queues locked.
+	 */
+	if (buf_lotsfree() && !from_bufq &&
+	    (bp = pool_get(&bufpool, PR_NOWAIT)) != NULL) {
+		memset((char *)bp, 0, sizeof(*bp));
+		BUF_INIT(bp);
+		bp->b_dev = NODEV;
+		bp->b_vnbufs.le_next = NOLIST;
+		bp->b_flags = B_BUSY;
+		return (bp);
+	}
 
 	if ((bp = TAILQ_FIRST(&bufqueues[BQ_AGE])) != NULL ||
 	    (bp = TAILQ_FIRST(&bufqueues[BQ_LRU])) != NULL) {
@@ -920,6 +1128,11 @@ start:
 			"getnewbuf", slptimeo, &bqueue_slock);
 		return (NULL);
 	}
+
+#ifdef DIAGNOSTIC
+	if (bp->b_bufsize <= 0)
+		panic("buffer %p: on queue but empty", bp);
+#endif
 
 	if (ISSET(bp->b_flags, B_VFLUSH)) {
 		/*
@@ -971,6 +1184,62 @@ start:
 	
 	bremhash(bp);
 	return (bp); 
+}
+
+/*
+ * Attempt to free an aged buffer off the queues.
+ * Called at splbio and with queue lock held.
+ * Returns the amount of buffer memory freed.
+ */
+int buf_trim(void)
+{
+	struct buf *bp;
+	long size = 0;
+	int wanted;
+
+	/* Instruct getnewbuf() to get buffers off the queues */
+	if ((bp = getnewbuf(PCATCH,1,1)) == NULL)
+		return 0;
+
+	wanted = ISSET(bp->b_flags, B_WANTED);
+	simple_unlock(&bp->b_interlock);
+	if (wanted) {
+		printf("buftrim: got WANTED buffer\n");
+		SET(bp->b_flags, B_INVAL);
+		binshash(bp, &invalhash);
+		simple_unlock(&bqueue_slock);
+		goto out;
+	}
+	size = bp->b_bufsize;
+	bufmem -= size;
+	simple_unlock(&bqueue_slock);
+	if (size > 0) {
+		buf_mrelease(bp->b_data, size);
+		bp->b_bcount = bp->b_bufsize = 0;
+	}
+
+out:
+	/* brelse() will return the buffer to the global buffer pool */
+	brelse(bp);
+	simple_lock(&bqueue_slock);
+	return size;
+}
+
+int buf_drain(int n)
+{
+	int s, size = 0;
+
+	/* If not asked for a specific amount, make our own estimate */
+	if (n == 0)
+		n = buf_canrelease();
+
+	s = splbio();
+	simple_lock(&bqueue_slock);
+	while (n-- > 0 && bufmem > bufmem_lowater)
+		size += buf_trim();
+	simple_unlock(&bqueue_slock);
+	splx(s);
+	return size;
 }
 
 /*
@@ -1073,6 +1342,195 @@ count_lock_queue()
 	return (n);
 }
 
+/*
+ * Wait for all buffers to complete I/O
+ * Return the number of "stuck" buffers.
+ */
+int
+buf_syncwait(void)
+{
+	struct buf *bp;
+	int iter, nbusy, nbusy_prev = 0, dcount, s, ihash;
+
+	dcount = 10000;
+	for (iter = 0; iter < 20;) {
+		s = splbio();
+		simple_lock(&bqueue_slock);
+		nbusy = 0;
+		for (ihash = 0; ihash < bufhash+1; ihash++) {
+		    LIST_FOREACH(bp, &bufhashtbl[ihash], b_hash) {
+			if ((bp->b_flags & (B_BUSY|B_INVAL|B_READ)) == B_BUSY)
+				nbusy++;
+			/*
+			 * With soft updates, some buffers that are
+			 * written will be remarked as dirty until other
+			 * buffers are written.
+			 */
+			if (bp->b_vp && bp->b_vp->v_mount
+			    && (bp->b_vp->v_mount->mnt_flag & MNT_SOFTDEP)
+			    && (bp->b_flags & B_DELWRI)) {
+				simple_lock(&bp->b_interlock);
+				bremfree(bp);
+				bp->b_flags |= B_BUSY;
+				nbusy++;
+				simple_unlock(&bp->b_interlock);
+				simple_unlock(&bqueue_slock);
+				bawrite(bp);
+				if (dcount-- <= 0) {
+					printf("softdep ");
+					goto fail;
+				}
+				simple_lock(&bqueue_slock);
+			}
+		    }
+		}
+
+		simple_unlock(&bqueue_slock);
+		splx(s);
+
+		if (nbusy == 0)
+			break;
+		if (nbusy_prev == 0)
+			nbusy_prev = nbusy;
+		printf("%d ", nbusy);
+		tsleep(&nbusy, PRIBIO, "bflush",
+		    (iter == 0) ? 1 : hz / 25 * iter);
+		if (nbusy >= nbusy_prev) /* we didn't flush anything */
+			iter++;
+		else
+			nbusy_prev = nbusy;
+	}
+
+	if (nbusy) {
+fail:;
+#if defined(DEBUG) || defined(DEBUG_HALT_BUSY)
+		printf("giving up\nPrinting vnodes for busy buffers\n");
+		for (ihash = 0; ihash < bufhash+1; ihash++) {
+		    LIST_FOREACH(bp, &bufhashtbl[ihash], b_hash) {
+			if ((bp->b_flags & (B_BUSY|B_INVAL|B_READ)) == B_BUSY)
+				vprint(NULL, bp->b_vp);
+		    }
+		}
+#endif
+	}
+
+	return nbusy;
+}
+
+#define KERN_BUFSLOP 20
+static int
+sysctl_dobuf(SYSCTLFN_ARGS)
+{
+	struct buf *bp;
+	char *dp;
+	u_int i, elem_size;
+	size_t len, buflen, needed;
+	int error, s;
+
+	dp = oldp;
+	len = buflen = oldp != NULL ? *oldlenp : 0;
+	error = 0;
+	needed = 0;
+	elem_size = sizeof(struct buf);
+
+	s = splbio();
+	simple_lock(&bqueue_slock);
+	for (i = 0; i < BQUEUES; i++) {
+		TAILQ_FOREACH(bp, &bufqueues[i], b_freelist) {
+			if (len >= sizeof(elem_size)) {
+				error = copyout(bp, dp, elem_size);
+				if (error)
+					goto cleanup;
+				dp += elem_size;
+				len -= elem_size;
+			}
+			needed += elem_size;
+		}
+	}
+cleanup:
+	simple_unlock(&bqueue_slock);
+	splx(s);
+
+	if (oldp != NULL) {
+		*oldlenp = (char *)dp - (char *)oldp;
+		if (needed > *oldlenp)
+			error = ENOMEM;
+	} else {
+		needed += KERN_BUFSLOP;
+		*oldlenp = needed;
+	}
+
+	return (error);
+}
+
+static int sysctlnum_bufcache, sysctlnum_bufmemhiwater, sysctlnum_bufmemlowater;
+
+static int
+sysctl_bufvm_update(SYSCTLFN_ARGS)
+{
+	int t, error;
+	struct sysctlnode node;
+
+	node = *rnode;
+	node.sysctl_data = &t;
+	t = *(int*)rnode->sysctl_data;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+
+	if (rnode->sysctl_num == sysctlnum_bufcache) {
+		if (t < 0 || t > 100)
+			return (EINVAL);
+		bufcache = t;
+		bufmem_hiwater = buf_memcalc();
+		bufmem_lowater = (bufmem_hiwater >> 4);
+	} else if (rnode->sysctl_num == sysctlnum_bufmemlowater) {
+		bufmem_lowater = t;
+	} else if (rnode->sysctl_num == sysctlnum_bufmemhiwater) {
+		bufmem_hiwater = t;
+	} else
+		return (EINVAL);
+
+	/* Drain until below new high water mark */
+	while ((t = bufmem - bufmem_hiwater) >= 0) {
+		if (buf_drain(t / (2*1024)) <= 0)
+			break;
+	}
+
+	return 0;
+}
+
+SYSCTL_SETUP(sysctl_kern_buf_setup, "sysctl kern.buf subtree setup")
+{
+	struct sysctlnode *rnode;
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "buf", NULL,
+		       sysctl_dobuf, 0, NULL, 0,
+		       CTL_KERN, KERN_BUF, CTL_EOL);
+
+	rnode = NULL;
+	if (sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+			   CTLTYPE_INT, "bufcache", &rnode,
+			   sysctl_bufvm_update, 0, &bufcache, 0,
+			   CTL_VM, CTL_CREATE, CTL_EOL) == 0)
+		sysctlnum_bufcache = rnode->sysctl_num;
+
+	rnode = NULL;
+	if (sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+			   CTLTYPE_INT, "bufmem_lowater", &rnode,
+			   sysctl_bufvm_update, 0, &bufmem_lowater, 0,
+			   CTL_VM, CTL_CREATE, CTL_EOL) == 0)
+		sysctlnum_bufmemlowater = rnode->sysctl_num;
+
+	rnode = NULL;
+	if (sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+			   CTLTYPE_INT, "bufmem_hiwater", &rnode,
+			   sysctl_bufvm_update, 0, &bufmem_hiwater, 0,
+			   CTL_VM, CTL_CREATE, CTL_EOL) == 0)
+		sysctlnum_bufmemhiwater = rnode->sysctl_num;
+}
+
 #ifdef DEBUG
 /*
  * Print out statistics on the current allocation of the buffer pool.
@@ -1086,7 +1544,7 @@ vfs_bufstats()
 	struct buf *bp;
 	struct bqueues *dp;
 	int counts[(MAXBSIZE / PAGE_SIZE) + 1];
-	static char *bname[BQUEUES] = { "LOCKED", "LRU", "AGE", "EMPTY" };
+	static char *bname[BQUEUES] = { "LOCKED", "LRU", "AGE" };
 
 	for (dp = bufqueues, i = 0; dp < &bufqueues[BQUEUES]; dp++, i++) {
 		count = 0;

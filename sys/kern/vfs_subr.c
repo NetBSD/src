@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.212 2003/12/04 19:38:24 atatat Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.213 2003/12/30 12:33:24 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.212 2003/12/04 19:38:24 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.213 2003/12/30 12:33:24 pk Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -2605,8 +2605,6 @@ extern struct simplelock bqueue_slock; /* XXX */
 void
 vfs_shutdown()
 {
-	struct buf *bp;
-	int iter, nbusy, nbusy_prev = 0, dcount, s;
 	struct lwp *l = curlwp;
 	struct proc *p;
 
@@ -2626,61 +2624,11 @@ vfs_shutdown()
 	sys_sync(l, NULL, NULL);
 
 	/* Wait for sync to finish. */
-	dcount = 10000;
-	for (iter = 0; iter < 20;) {
-		nbusy = 0;
-		for (bp = &buf[nbuf]; --bp >= buf; ) {
-			if ((bp->b_flags & (B_BUSY|B_INVAL|B_READ)) == B_BUSY)
-				nbusy++;
-			/*
-			 * With soft updates, some buffers that are
-			 * written will be remarked as dirty until other
-			 * buffers are written.
-			 */
-			if (bp->b_vp && bp->b_vp->v_mount
-			    && (bp->b_vp->v_mount->mnt_flag & MNT_SOFTDEP)
-			    && (bp->b_flags & B_DELWRI)) {
-				s = splbio();
-				simple_lock(&bqueue_slock);
-				bremfree(bp);
-				simple_unlock(&bqueue_slock);
-				bp->b_flags |= B_BUSY;
-				splx(s);
-				nbusy++;
-				bawrite(bp);
-				if (dcount-- <= 0) {
-					printf("softdep ");
-					goto fail;
-				}
-			}
-		}
-		if (nbusy == 0)
-			break;
-		if (nbusy_prev == 0)
-			nbusy_prev = nbusy;
-		printf("%d ", nbusy);
-		tsleep(&nbusy, PRIBIO, "bflush",
-		    (iter == 0) ? 1 : hz / 25 * iter);
-		if (nbusy >= nbusy_prev) /* we didn't flush anything */
-			iter++;
-		else
-			nbusy_prev = nbusy;
-	}
-	if (nbusy) {
-fail:
-#if defined(DEBUG) || defined(DEBUG_HALT_BUSY)
-		printf("giving up\nPrinting vnodes for busy buffers\n");
-		for (bp = &buf[nbuf]; --bp >= buf; )
-			if ((bp->b_flags & (B_BUSY|B_INVAL|B_READ)) == B_BUSY)
-				vprint(NULL, bp->b_vp);
-
+	if (buf_syncwait() != 0) {
 #if defined(DDB) && defined(DEBUG_HALT_BUSY)
 		Debugger();
 #endif
-
-#else  /* defined(DEBUG) || defined(DEBUG_HALT_BUSY) */
 		printf("giving up\n");
-#endif /* defined(DEBUG) || defined(DEBUG_HALT_BUSY) */
 		return;
 	} else
 		printf("done\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.49 2003/08/10 02:03:31 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.50 2003/12/30 12:33:19 pk Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.49 2003/08/10 02:03:31 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.50 2003/12/30 12:33:19 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,17 +105,9 @@ STATIC boolean_t __pmap_map_change(pmap_t, vaddr_t, paddr_t, vm_prot_t,
 void
 pmap_bootstrap()
 {
-	size_t sz;
-	caddr_t v;
 
 	/* Steal msgbuf area */
 	initmsgbuf((caddr_t)uvm_pageboot_alloc(MSGBUFSIZE), MSGBUFSIZE);
-
-	/* Allocate space for system data structures. */
-	sz = (size_t)allocsys(NULL, NULL);
-	v = (caddr_t)uvm_pageboot_alloc(sz);
-	if ((allocsys(v, NULL) - v) != sz)
-		panic("pmap_bootstrap: table size inconsistency");
 
 	avail_start = ptoa(vm_physmem[0].start);
 	avail_end = ptoa(vm_physmem[vm_nphysseg - 1].end);

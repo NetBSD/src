@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.80 2003/11/07 14:48:28 yamt Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.81 2003/12/30 12:33:24 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.80 2003/11/07 14:48:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.81 2003/12/30 12:33:24 pk Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -379,7 +379,7 @@ lfs_truncate(void *v)
 		if (ovp->v_type != VDIR)
 			memset((char *)bp->b_data + offset, 0,
 			       (u_int)(size - offset));
-		allocbuf(bp, size);
+		allocbuf(bp, size, 1);
 		if ((bp->b_flags & (B_LOCKED | B_CALL)) == B_LOCKED)
 			locked_queue_bytes -= obufsize - bp->b_bufsize;
 		if (bp->b_flags & B_DELWRI)

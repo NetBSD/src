@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.2 2003/08/07 16:26:36 agc Exp $	*/
+/*	$NetBSD: cpu.h,v 1.3 2003/12/30 12:33:15 pk Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -278,7 +278,6 @@ void	dumpconf __P((void));
 int	cpu_maxproc __P((void));
 void	cpu_reset __P((void));
 void	x86_64_proc0_tss_ldt_init __P((void));
-void	x86_64_bufinit __P((void));
 void	x86_64_init_pcb_tss_ldt __P((struct cpu_info *));
 void	cpu_proc_fork __P((struct proc *, struct proc *));
 

@@ -1,4 +1,4 @@
-/* $NetBSD: start.c,v 1.4 2003/09/30 00:35:30 thorpej Exp $ */
+/* $NetBSD: start.c,v 1.5 2003/12/30 12:33:13 pk Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.4 2003/09/30 00:35:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.5 2003/12/30 12:33:13 pk Exp $");
 
 #include <sys/msgbuf.h>
 #include <sys/user.h>
@@ -93,9 +93,6 @@ void
 start(initbootconfig)
 	struct bootconfig *initbootconfig;
 {
-	size_t size;
-	caddr_t v;
-	char pbuf[9];
 	int onstack;
 
 	/*
@@ -154,23 +151,6 @@ start(initbootconfig)
 	}
 #endif
 
-	/*
-	 * Allocate space for system data structures.  These data structures
-	 * are allocated here instead of cpu_startup() because physical
-	 * memory is directly addressable.  We don't have to map these into
-	 * virtual address space.  This trick is stolen from the alpha port.
-	 */
-	size = (vsize_t)allocsys(0, NULL);
-	v = MEMC_PHYS_BASE + bootconfig.freebase;
-	bootconfig.freebase += size;
-	if (bootconfig.freebase > ptoa(physmem)) {
-		format_bytes(pbuf, sizeof(pbuf), size);
-		panic("start: out of memory (wanted %s)", pbuf);
-	}
-	bzero(v, size);
-	if ((allocsys(v, NULL) - v) != size)
-		panic("start: table size inconsistency");
-	
 	/* Tell UVM about memory */
 #if NARCVIDEO == 0
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.241 2003/12/04 19:38:22 atatat Exp $ */
+/*	$NetBSD: machdep.c,v 1.242 2003/12/30 12:33:22 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.241 2003/12/04 19:38:22 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.242 2003/12/30 12:33:22 pk Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -162,16 +162,12 @@ struct extent *dvmamap24;
 void	dumpsys __P((void));
 void	stackdump __P((void));
 
-caddr_t	mdallocsys __P((caddr_t));
-
 /*
  * Machine-dependent startup code
  */
 void
 cpu_startup()
 {
-	caddr_t v;
-	u_int i, base, residual;
 #ifdef DEBUG
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
@@ -286,70 +282,12 @@ cpu_startup()
 	}
 
 	/*
-	 * Find out how much space we need, allocate it,
-	 * and then give everything true virtual addresses.
-	 */
-	size = (vsize_t)allocsys(NULL, mdallocsys);
-
-	if ((v = (caddr_t)uvm_km_alloc(kernel_map, round_page(size))) == 0)
-		panic("startup: no room for tables");
-
-	if ((vsize_t)(allocsys(v, mdallocsys) - v) != size)
-		panic("startup: table size inconsistency");
-
-        /*
-         * allocate virtual and physical memory for the buffers.
-         */
-        size = MAXBSIZE * nbuf;         /* # bytes for buffers */
-
-        /* allocate VM for buffers... area is not managed by VM system */
-        if (uvm_map(kernel_map, (void *)&buffers, round_page(size),
-                    NULL, UVM_UNKNOWN_OFFSET, 0,
-                    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-                                UVM_ADV_NORMAL, 0)) != 0)
-        	panic("cpu_startup: cannot allocate VM for buffers");
-
-        minaddr = (vaddr_t) buffers;
-        if ((bufpages / nbuf) >= btoc(MAXBSIZE)) {
-        	bufpages = btoc(MAXBSIZE) * nbuf; /* do not overallocate RAM */
-        }
-        base = bufpages / nbuf;
-        residual = bufpages % nbuf;
-
-        /* now allocate RAM for buffers */
-	for (i = 0 ; i < nbuf ; i++) {
-		vaddr_t curbuf;
-		vsize_t curbufsize;
-		struct vm_page *pg;
-
-		/*
-		 * each buffer has MAXBSIZE bytes of VM space allocated.  of
-		 * that MAXBSIZE space we allocate and map (base+1) pages
-		 * for the first "residual" buffers, and then we allocate
-		 * "base" pages for the rest.
-		 */
-		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = PAGE_SIZE * ((i < residual) ? (base+1) : base);
-
-		while (curbufsize) {
-			pg = uvm_pagealloc(NULL, 0, NULL, 0);
-			if (pg == NULL)
-				panic("cpu_startup: "
-				    "not enough RAM for buffer cache");
-			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
-			    VM_PROT_READ | VM_PROT_WRITE);
-			curbuf += PAGE_SIZE;
-			curbufsize -= PAGE_SIZE;
-		}
-	}
-	pmap_update(pmap_kernel());
-
-	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
 	 */
-        exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-                                 16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
+	minaddr = 0;
+	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
+				   16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
 
 	if (CPU_ISSUN4 || CPU_ISSUN4C) {
 		/*
@@ -374,27 +312,8 @@ cpu_startup()
 #endif
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * PAGE_SIZE);
-	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
-
-	/*
-	 * Set up buffers, so they can be used to read disk labels.
-	 */
-	bufinit();
 
 	pmap_redzone();
-}
-
-caddr_t
-mdallocsys(v)
-	caddr_t v;
-{
-
-	/* Clip bufpages if necessary. */
-	if (CPU_ISSUN4C && bufpages > (128 * (65536/MAXBSIZE)))
-		bufpages = (128 * (65536/MAXBSIZE));
-
-	return (v);
 }
 
 /*
@@ -871,7 +790,7 @@ compat_16_sys___sigreturn14(l, v, retval)
  *
  *	Send an an upcall to userland.
  */
-void 
+void
 cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
 	   void *sas, void *ap, void *sp, sa_upcall_t upcall)
 {

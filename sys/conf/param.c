@@ -1,4 +1,4 @@
-/*	$NetBSD: param.c,v 1.43 2003/10/30 20:37:01 drochner Exp $	*/
+/*	$NetBSD: param.c,v 1.44 2003/12/30 12:33:23 pk Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: param.c,v 1.43 2003/10/30 20:37:01 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: param.c,v 1.44 2003/12/30 12:33:23 pk Exp $");
 
 #include "opt_rtc_offset.h"
 #include "opt_sysv.h"
@@ -184,14 +184,6 @@ struct	msginfo msginfo = {
 	MSGSEG		/* number of message segments */
 };
 #endif
-
-/*
- * These have to be allocated somewhere; allocating
- * them here forces loader errors if this file is omitted
- * (if they've been externed everywhere else; hah!).
- */
-struct	buf *buf;
-char	*buffers;
 
 /*
  * These control when and to what priority a process gets after a certain

@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.65 2003/12/04 15:00:32 yamt Exp $	*/
+/*	$NetBSD: buf.h,v 1.66 2003/12/30 12:33:24 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -278,7 +278,7 @@ extern	u_int bufpages;		/* Number of memory pages in the buffer pool. */
 extern	struct pool bufpool;
 
 __BEGIN_DECLS
-void	allocbuf __P((struct buf *, int));
+void	allocbuf __P((struct buf *, int, int));
 void	bawrite __P((struct buf *));
 void	bdirty __P((struct buf *));
 void	bdwrite __P((struct buf *));
@@ -300,16 +300,20 @@ int	cluster_read __P((struct vnode *, u_quad_t, daddr_t, long,
 void	cluster_write __P((struct buf *, u_quad_t));
 struct buf *getblk __P((struct vnode *, daddr_t, int, int, int));
 struct buf *geteblk __P((int));
-struct buf *getnewbuf __P((int, int));
+struct buf *getnewbuf __P((int, int, int));
 struct buf *incore __P((struct vnode *, daddr_t));
 
 void	minphys __P((struct buf *));
 int	physio __P((void (*)(struct buf *), struct buf *, dev_t,
 		    int, void (*)(struct buf *), struct uio *));
 
-void  brelvp __P((struct buf *));
-void  reassignbuf __P((struct buf *, struct vnode *));
-void  bgetvp __P((struct vnode *, struct buf *));
+void	brelvp __P((struct buf *));
+void	reassignbuf __P((struct buf *, struct vnode *));
+void	bgetvp __P((struct vnode *, struct buf *));
+int	buf_syncwait __P((void));
+u_long	buf_memcalc __P((void));
+int	buf_drain __P((int));
+int	buf_setvalimit __P((vsize_t));
 #ifdef DDB
 void	vfs_buf_print __P((struct buf *, int, void (*)(const char *, ...)));
 #endif
