@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.18 1997/10/04 16:31:36 christos Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.19 1997/10/17 13:57:02 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: traceroute.c,v 1.18 1997/10/04 16:31:36 christos Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.19 1997/10/17 13:57:02 lukem Exp $");
 #endif
 #endif
 
@@ -360,7 +360,7 @@ main(int argc, char **argv)
 		prog = argv[0];
 
 	opterr = 0;
-	while ((op = getopt(argc, argv, "dDFInlrvxf:g:i:m:p:q:s:t:w:")) != EOF)
+	while ((op = getopt(argc, argv, "dDFInlrvxf:g:i:m:p:q:s:t:w:")) != -1)
 		switch (op) {
 
 		case 'd':
