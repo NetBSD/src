@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.11 2000/03/02 10:29:22 enami Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.12 2000/03/06 10:31:27 enami Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_wi.c,v 1.11 2000/03/02 10:29:22 enami Exp $
+ *	$Id: if_wi.c,v 1.12 2000/03/06 10:31:27 enami Exp $
  */
 
 /*
@@ -116,7 +116,7 @@
 
 #if !defined(lint)
 static const char rcsid[] =
-	"$Id: if_wi.c,v 1.11 2000/03/02 10:29:22 enami Exp $";
+	"$Id: if_wi.c,v 1.12 2000/03/06 10:31:27 enami Exp $";
 #endif
 
 #ifdef foo
@@ -232,35 +232,29 @@ wi_attach(parent, self, aux)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct wi_ltv_macaddr	mac;
 	struct wi_ltv_gen	gen;
-	u_int8_t empty_macaddr[ETHER_ADDR_LEN];
+	static const u_int8_t empty_macaddr[ETHER_ADDR_LEN] = {
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+	};
 
-	ifp = &sc->sc_ethercom.ec_if;
-	sc->wi_resource = 0;
-
-	/* Enable the card */
+	/* Enable the card. */
 	sc->sc_pf = pa->pf;
 	pcmcia_function_init(sc->sc_pf, sc->sc_pf->cfe_head.sqh_first);
 	if (pcmcia_function_enable(sc->sc_pf)) {
 		printf(": function enable failed\n");
-		return;
+		goto enable_failed;
 	}
 
-	/* allocate/map ISA I/O space */
-
+	/* Allocate/map I/O space. */
 	if (pcmcia_io_alloc(sc->sc_pf, 0, WI_IOSIZ, WI_IOSIZ,
 	    &sc->sc_pcioh) != 0) {
 		printf(": can't allocate i/o space\n");
-		pcmcia_function_disable(sc->sc_pf);
-		return;
+		goto ioalloc_failed;
 	}
 	if (pcmcia_io_map(sc->sc_pf, PCMCIA_WIDTH_IO16, 0,
 	    WI_IOSIZ, &sc->sc_pcioh, &sc->sc_iowin) != 0) {
 		printf(": can't map i/o space\n");
-		pcmcia_io_free(sc->sc_pf, &sc->sc_pcioh);
-		pcmcia_function_disable(sc->sc_pf);
-		return;
+		goto iomap_failed;
 	}
-	sc->wi_resource |= WI_RES_IO;
 	sc->wi_btag = sc->sc_pcioh.iot;
 	sc->wi_bhandle = sc->sc_pcioh.ioh;
 
@@ -278,15 +272,15 @@ wi_attach(parent, self, aux)
 	wi_read_record(sc, (struct wi_ltv_gen *)&mac);
 	memcpy(sc->sc_macaddr, mac.wi_mac_addr, ETHER_ADDR_LEN);
 
-	/* check if we got anything meaningful */
-	bzero(empty_macaddr, sizeof(empty_macaddr));
+	/*
+	 * Check if we got anything meaningful.
+	 *
+	 * Is it really enough just checking against null ethernet address?
+	 * Or, check against possible vendor?  XXX.
+	 */
 	if (bcmp(sc->sc_macaddr, empty_macaddr, ETHER_ADDR_LEN) == 0) {
 		printf(": could not get mac address, attach failed\n");
-		pcmcia_io_unmap(sc->sc_pf, sc->sc_iowin);
-		pcmcia_io_free(sc->sc_pf, &sc->sc_pcioh);
-		pcmcia_function_disable(sc->sc_pf);
-		sc->wi_resource &= ~WI_RES_IO;
-		return;
+		goto bad_enaddr;
 	}
 
 	printf("\n%s: address %s\n", sc->sc_dev.dv_xname,
@@ -366,12 +360,21 @@ wi_attach(parent, self, aux)
 	bpfattach(&sc->sc_ethercom.ec_if.if_bpf, ifp, DLT_EN10MB,
 	    sizeof(struct ether_header));
 #endif
-	sc->wi_resource |= WI_RES_NET;
 
 	sc->sc_sdhook = shutdownhook_establish(wi_shutdown, sc);
 
 	/* Disable the card now, and turn it on when the interface goes up */
 	pcmcia_function_disable(sc->sc_pf);
+	return;
+
+ bad_enaddr:
+	pcmcia_io_unmap(sc->sc_pf, sc->sc_iowin);
+ iomap_failed:
+	pcmcia_io_free(sc->sc_pf, &sc->sc_pcioh);
+ ioalloc_failed:
+	pcmcia_function_disable(sc->sc_pf);
+ enable_failed:
+	sc->sc_iowin = -1;
 }
 
 static void wi_rxeof(sc)
@@ -1595,26 +1598,27 @@ wi_detach(self, flags)
 	struct wi_softc *sc = (struct wi_softc *)self;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
+	if (sc->sc_iowin == -1)
+		/* Nothing to detach. */
+		return (0);
+
 	untimeout(wi_inquire, sc);
-	shutdownhook_disestablish(sc->sc_sdhook);
+	if (sc->sc_sdhook != NULL)
+		shutdownhook_disestablish(sc->sc_sdhook);
 	wi_disable(sc);
 
 	/* Delete all remaining media. */
 	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
 
-	if (sc->wi_resource & WI_RES_NET) {
 #if NBPFILTER > 0
-		bpfdetach(ifp);
+	bpfdetach(ifp);
 #endif
-		ether_ifdetach(ifp);
-		if_detach(ifp);
-	}
+	ether_ifdetach(ifp);
+	if_detach(ifp);
 
-	if (sc->wi_resource & WI_RES_IO) {
-		/* unmap and free our i/o windows */
-		pcmcia_io_unmap(sc->sc_pf, sc->sc_iowin);
-		pcmcia_io_free(sc->sc_pf, &sc->sc_pcioh);
-	}
+	/* Unmap and free our i/o windows */
+	pcmcia_io_unmap(sc->sc_pf, sc->sc_iowin);
+	pcmcia_io_free(sc->sc_pf, &sc->sc_pcioh);
 
 	return (0);
 }
