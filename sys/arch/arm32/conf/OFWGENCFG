@@ -1,4 +1,4 @@
-#	$NetBSD: OFWGENCFG,v 1.5 1998/08/14 03:56:21 mark Exp $
+#	$NetBSD: OFWGENCFG,v 1.6 1998/08/25 22:07:47 mark Exp $
 #
 #	OFWGENCFG: 'generic' configuration for Open Firmware boards.
 #
@@ -16,6 +16,7 @@ maxusers	32
 
 options		RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options	NTP		# NTP phase/frequency locked loop
+options 	UVM		# Use UVM instead of Mach VM.
 
 # CPU options
 
