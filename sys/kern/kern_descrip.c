@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.44 1997/07/17 17:54:40 phil Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.45 1997/10/15 17:27:46 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -118,7 +118,7 @@ sys_dup(p, v, retval)
 	register_t *retval;
 {
 	struct sys_dup_args /* {
-		syscallarg(u_int) fd;
+		syscallarg(int) fd;
 	} */ *uap = v;
 	register struct filedesc *fdp = p->p_fd;
 	register int old = SCARG(uap, fd);
@@ -143,8 +143,8 @@ sys_dup2(p, v, retval)
 	register_t *retval;
 {
 	struct sys_dup2_args /* {
-		syscallarg(u_int) from;
-		syscallarg(u_int) to;
+		syscallarg(int) from;
+		syscallarg(int) to;
 	} */ *uap = v;
 	register struct filedesc *fdp = p->p_fd;
 	register int old = SCARG(uap, from), new = SCARG(uap, to);
