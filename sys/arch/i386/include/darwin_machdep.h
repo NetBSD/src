@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_machdep.h,v 1.2 2003/12/05 20:34:45 christos Exp $ */
+/*	$NetBSD: darwin_machdep.h,v 1.3 2004/07/04 15:22:29 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -75,5 +75,9 @@ struct darwin_sigframe {
 struct darwin_slock {
 	int	dummy;
 };
+
+/* XXX Copied from ppc and possibly wrong */
+#define DARWIN_USRSTACK              0xbfff0000
+#define DARWIN_USRSTACK32    0x00000000bfff000L
 
 #endif /* !_DARWIN_MACHDEP_H_ */
