@@ -1,4 +1,4 @@
-#	$NetBSD: files.sbus,v 1.8 1998/09/23 08:48:25 pk Exp $
+#	$NetBSD: files.sbus,v 1.9 1998/11/22 22:17:27 pk Exp $
 #
 # Config file and device description for machine-independent SBUS code.
 # Included by ports that need it.
@@ -77,4 +77,11 @@ attach	mtty at magma
 device	mbpp
 attach	mbpp at magma
 file	dev/sbus/magma.c		magma | mtty | mbpp needs-flag
+
+# STP4020 SBus to PCMCIA bridge (`nell' to friends)
+#XXX: next line should go into `conf/files'
+define	pcic {}
+device	nell: pcic
+attach	nell at sbus
+file	dev/sbus/stp4020.c		nell
 
