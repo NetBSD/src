@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay.c,v 1.5 1998/08/13 02:10:52 eeh Exp $ */
+/* $NetBSD: pcdisplay.c,v 1.6 1999/01/11 21:35:54 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -113,7 +113,6 @@ static int pcdisplay_alloc_screen __P((void *, const struct wsscreen_descr *,
 				       void **, int *, int *, long *));
 static void pcdisplay_free_screen __P((void *, void *));
 static void pcdisplay_show_screen __P((void *, void *));
-static int pcdisplay_load_font __P((void *, void *, int, int, int, void *));
 
 const struct wsdisplay_accessops pcdisplay_accessops = {
 	pcdisplay_ioctl,
@@ -121,7 +120,7 @@ const struct wsdisplay_accessops pcdisplay_accessops = {
 	pcdisplay_alloc_screen,
 	pcdisplay_free_screen,
 	pcdisplay_show_screen,
-	pcdisplay_load_font
+	0 /* load_font */
 };
 
 static int
@@ -398,16 +397,6 @@ pcdisplay_show_screen(v, cookie)
 	if (cookie != sc->sc_dc)
 		panic("pcdisplay_show_screen: bad screen");
 #endif
-}
-
-static int
-pcdisplay_load_font(v, cookie, first, num, stride, data)
-	void *v;
-	void *cookie;
-	int first, num, stride;
-	void *data;
-{
-	return (EINVAL);
 }
 
 static int
