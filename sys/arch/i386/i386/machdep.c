@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.356 1999/05/25 23:19:00 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.357 1999/05/25 23:30:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -2306,8 +2306,12 @@ i386_mem_add_mapping(bpa, size, cacheable, bshp)
 	*bshp = (bus_space_handle_t)(va + (bpa & PGOFSET));
 
 	for (; pa < endpa; pa += NBPG, va += NBPG) {
+#if defined(PMAP_NEW)
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+#else
 		pmap_enter(pmap_kernel(), va, pa,
 		    VM_PROT_READ | VM_PROT_WRITE, TRUE, 0);
+#endif
 
 		/*
 		 * PG_N doesn't exist on 386's, so we assume that
