@@ -1,4 +1,4 @@
-/*	$NetBSD: library.c,v 1.15 2000/01/18 08:02:30 perseant Exp $	*/
+/*	$NetBSD: library.c,v 1.15.4.1 2000/09/14 18:53:19 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)library.c	8.3 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: library.c,v 1.15 2000/01/18 08:02:30 perseant Exp $");
+__RCSID("$NetBSD: library.c,v 1.15.4.1 2000/09/14 18:53:19 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -290,7 +290,7 @@ redo_read:
 	fsp->fi_ifilep  = (IFILE *)((caddr_t)fsp->fi_segusep + SEGTABSIZE(fsp));
 
 	/*
-	 * The number of ifile entries is equal to the number of blocks
+	 * The number of ifile entries is equal to the number of
 	 * blocks in the ifile minus the ones allocated to cleaner info
 	 * and segment usage table multiplied by the number of ifile
 	 * entries per page.
