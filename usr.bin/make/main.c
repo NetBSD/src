@@ -44,7 +44,7 @@ char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)main.c	5.25 (Berkeley) 4/1/91"; */
-static char *rcsid = "$Id: main.c,v 1.14 1994/06/06 22:45:33 jtc Exp $";
+static char *rcsid = "$Id: main.c,v 1.15 1994/06/16 18:50:13 jtc Exp $";
 #endif /* not lint */
 
 /*-
@@ -334,7 +334,6 @@ Main_ParseArgLine(line)
 {
 	char **argv;			/* Manufactured argument vector */
 	int argc;			/* Number of arguments in argv */
-	char *p1;
 
 	if (line == NULL)
 		return;
@@ -343,7 +342,7 @@ Main_ParseArgLine(line)
 	if (!*line)
 		return;
 
-	argv = brk_string(line, &argc);
+	argv = brk_string(line, &argc, TRUE);
 	MainParseArgs(argc, argv);
 }
 
