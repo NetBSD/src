@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.26 2000/05/31 05:28:28 thorpej Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.27 2000/06/05 20:38:25 pk Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@ struct module_info {
 	void (*sp_vcache_flush_segment)__P((int, int));
 	void (*sp_vcache_flush_region)__P((int));
 	void (*sp_vcache_flush_context)__P((void));
-	void (*pcache_flush_line)__P((int, int));
+	void (*pcache_flush_page)__P((int, int));
 	void (*pure_vcache_flush)__P((void));
 	void (*cache_flush_all)__P((void));
 	void (*memerr)__P((unsigned, u_int, u_int, struct trapframe *));
@@ -280,7 +280,7 @@ struct cpu_info {
 	void	(*vcache_flush_context)__P((void));
 	void	(*sp_vcache_flush_context)__P((void));
 
-	void	(*pcache_flush_line)__P((int, int));
+	void	(*pcache_flush_page)__P((int, int));
 	void	(*pure_vcache_flush)__P((void));
 	void	(*cache_flush_all)__P((void));
 
