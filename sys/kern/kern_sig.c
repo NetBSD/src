@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.133 2003/02/07 21:43:18 nathanw Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.134 2003/02/15 18:10:16 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.133 2003/02/07 21:43:18 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.134 2003/02/15 18:10:16 dsl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -1709,7 +1709,8 @@ build_corename(struct proc *p, char dst[MAXPATHLEN])
 				i = snprintf(d, end - d, "%d", p->p_pid);
 				break;
 			case 'u':
-				i = snprintf(d, end - d, "%s",
+				i = snprintf(d, end - d, "%.*s",
+				    (int)sizeof p->p_pgrp->pg_session->s_login,
 				    p->p_pgrp->pg_session->s_login);
 				break;
 			case 't':

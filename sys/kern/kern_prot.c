@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.71 2003/02/01 06:23:43 thorpej Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.72 2003/02/15 18:10:16 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.71 2003/02/01 06:23:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.72 2003/02/15 18:10:16 dsl Exp $");
 
 #include "opt_compat_43.h"
 
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.71 2003/02/01 06:23:43 thorpej Exp $
 #include <sys/timeb.h>
 #include <sys/times.h>
 #include <sys/malloc.h>
+#include <sys/syslog.h>
 
 #include <sys/mount.h>
 #include <sys/sa.h>
@@ -801,13 +802,21 @@ sys___setlogin(l, v, retval)
 		syscallarg(const char *) namebuf;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
+	struct session *s = p->p_pgrp->pg_session;
+	char newname[sizeof s->s_login + 1];
 	int error;
 
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
-	error = copyinstr(SCARG(uap, namebuf), p->p_pgrp->pg_session->s_login,
-	    sizeof(p->p_pgrp->pg_session->s_login) - 1, (size_t *)0);
-	if (error == ENAMETOOLONG)
-		error = EINVAL;
-	return (error);
+	error = copyinstr(SCARG(uap, namebuf), &newname, sizeof newname, NULL);
+	if (error != 0)
+		return error == ENAMETOOLONG ? EINVAL : error;
+
+	if (s->s_flags & S_LOGIN_SET && p->p_pid != s->s_sid &&
+	    strncmp(newname, s->s_login, sizeof s->s_login) != 0)
+		log(LOG_WARNING, "%s (pid %d) changing logname from %.*s to %s",
+			p->p_comm, p->p_pid, (int)sizeof s->s_login, s->s_login, newname);
+	s->s_flags |= S_LOGIN_SET;
+	strncpy(s->s_login, newname, sizeof s->s_login);
+	return 0;
 }

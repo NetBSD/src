@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.158 2003/02/14 10:11:56 dsl Exp $	*/
+/*	$NetBSD: proc.h,v 1.159 2003/02/15 18:10:15 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -61,6 +61,8 @@
  */
 struct session {
 	int		s_count;	/* Ref cnt; pgrps in session */
+	u_int		s_flags;
+#define	S_LOGIN_SET	1		/* s_login set in this session */
 	struct proc	*s_leader;	/* Session leader */
 	struct vnode	*s_ttyvp;	/* Vnode of controlling terminal */
 	struct tty	*s_ttyp;	/* Controlling terminal */
