@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.6 2001/01/23 23:58:31 bjh21 Exp $ */
+/* $NetBSD: cpu.c,v 1.7 2001/02/25 15:33:34 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.6 2001/01/23 23:58:31 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.7 2001/02/25 15:33:34 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/proc.h>
@@ -63,7 +63,7 @@ struct cpu_softc {
 	struct device sc_dev;
 };
 
-struct cfattach cpu_ca = {
+struct cfattach cpu_root_ca = {
 	sizeof(struct cpu_softc), cpu_match, cpu_attach
 };
 
