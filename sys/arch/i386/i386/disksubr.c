@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.17 1995/01/13 09:57:39 mycroft Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.18 1995/01/13 10:30:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -390,7 +390,8 @@ bounds_check_with_label(bp, lp, wlabel)
 	}
 
 	/* calculate cylinder for disksort to order transfers with */
-	bp->b_cylin = (bp->b_blkno + p->p_offset) / lp->d_secpercyl;
+	bp->b_cylin = (bp->b_blkno + p->p_offset) /
+	    (lp->d_secsize / DEV_BSIZE) / lp->d_secpercyl;
 	return (1);
 
 bad:
