@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_sun.c,v 1.7 1997/07/22 17:41:09 drochner Exp $	*/
+/*	$NetBSD: netif_sun.c,v 1.8 1997/09/05 04:51:06 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -65,7 +65,7 @@
 int debug;
 int errno;
 
-static void sun3_getether __P((u_char *));
+static void _getether __P((u_char *));
 
 struct iodesc sockets[SOPEN_MAX];
 
@@ -80,18 +80,18 @@ static struct devdata {
 	char dd_myea[6];
 } prom_dd;
 
-static struct idprom sun3_idprom;
+static struct idprom _idprom;
 
 
 void
-sun3_getether(ea)
+_getether(ea)
 	u_char *ea;
 {
 	u_char *src, *dst;
 	int len, x;
 
-	if (sun3_idprom.idp_format == 0) {
-		dst = (char*)&sun3_idprom;
+	if (_idprom.idp_format == 0) {
+		dst = (char*)&_idprom;
 		src = (char*)IDPROM_BASE;
 		len = IDPROM_SIZE;
 		do {
@@ -99,7 +99,7 @@ sun3_getether(ea)
 			*dst++ = x;
 		} while (--len > 0);
 	}
-	MACPY(sun3_idprom.idp_etheraddr, ea);
+	MACPY(_idprom.idp_etheraddr, ea);
 }
 
 
@@ -173,7 +173,7 @@ netif_init(aux)
 #endif
 
 	/* Record our ethernet address. */
-	sun3_getether(dd->dd_myea);
+	_getether(dd->dd_myea);
 	dd->dd_opens = 0;
 
 	return(dd);
