@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.13 1997/04/24 22:49:39 thorpej Exp $	*/
+/*	$NetBSD: asm.h,v 1.14 1997/07/14 07:44:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -53,14 +53,8 @@
 
 #define	_ASM_LABEL(name)	name
 
-#ifndef _KERNEL
 #define	_ENTRY(name) \
 	.text; .even; .globl name; .type name,@function; name:
-#else
-#define	_ENTRY(name) \
-	.text; .even; .globl name; name:
-#endif
-
 
 #ifdef GPROF
 #define _PROF_PROLOG	link a6,#0; jbsr mcount; unlk a6
