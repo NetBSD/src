@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.84 2004/07/06 04:30:29 minoura Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.85 2004/07/14 03:06:08 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.84 2004/07/06 04:30:29 minoura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.85 2004/07/14 03:06:08 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -505,7 +505,7 @@ skip_ipsec2:;
 		error = ipsec6_output_tunnel(&state, sp, flags);
 
 		m = state.m;
-		ro = (struct route_in6 *)state.ro;
+		ro_pmtu = ro = (struct route_in6 *)state.ro;
 		dst = (struct sockaddr_in6 *)state.dst;
 		if (error) {
 			/* mbuf is already reclaimed in ipsec6_output_tunnel. */
@@ -721,6 +721,10 @@ skip_ipsec2:;
 	if ((error = ip6_getpmtu(ro_pmtu, ro, ifp, &finaldst, &mtu,
 	    &alwaysfrag)) != 0)
 		goto bad;
+#ifdef IPSEC
+	if (needipsectun)
+		mtu = IPV6_MMTU;
+#endif
 
 	/*
 	 * The caller of this function may specify to use the minimum MTU
