@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.47 2003/12/29 03:13:25 lukem Exp $
+# $NetBSD: maketars,v 1.48 2004/01/03 02:38:58 lukem Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-b] [-x] [-i installdir] [-a arch] [-m machine] [-s setsdir]
@@ -38,8 +38,8 @@ Usage: ${prog} [-b] [-x] [-i idir] [-a arch] [-m machine] [-s setsdir]
 	-b		make netbsd + x11 lists
 	-x		only make x11 lists
 	-i idir		install sets to idir instead of creating tar files
-	-a arch		set arch (e.g, m68k, mipseb, mipsel, powerpc) [$machine_arch]
-	-m machine	set machine (e.g, amiga, i386, macppc) [$machine]
+	-a arch		set arch (e.g, m68k, mipseb, mipsel, powerpc) [$MACHINE_ARCH]
+	-m machine	set machine (e.g, amiga, i386, macppc) [$MACHINE]
 	-s setsdir	directory to find sets [$setsdir]
 	-M metalog	metalog file
 	-N etcdir	etc dir for metalog use [$dest/etc]
@@ -63,11 +63,11 @@ while getopts bxi:a:m:s:M:N:d:t: ch; do
 		installdir=${OPTARG}
 		;;
 	a)
-		machine_arch=${OPTARG}
-		machine_cpu=$(arch_to_cpu ${OPTARG})
+		MACHINE_ARCH=${OPTARG}
+		MACHINE_CPU=$(arch_to_cpu ${OPTARG})
 		;;
 	m)
-		machine=${OPTARG}
+		MACHINE=${OPTARG}
 		;;
 	s)
 		setsdir=${OPTARG}
@@ -147,7 +147,7 @@ for setname in $lists; do
 		fi
 		echo "Creating $out"
 	fi
-	${HOST_SH} $setsdir/makeflist -a $machine_arch -m $machine \
+	${HOST_SH} $setsdir/makeflist -a $MACHINE_ARCH -m $MACHINE \
 	    -s $setsdir $setname > $SDIR/flist.$setname
 	if [ -n "$metalog" ]; then
 		awk -f getdirs.awk $SDIR/flist.$setname | sort -u \

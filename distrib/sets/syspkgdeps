@@ -22,8 +22,8 @@ usage()
 {
 	cat 1>&2 <<USAGE
 Usage: ${0##*/} [-a arch] [-m machine] [-s setsdir] [-p prefix] setname [...]
-	-a arch		set arch (e.g, m68k, mips, powerpc)	[$machine_arch]
-	-m machine	set machine (e.g, amiga, i386, macppc)	[$machine]
+	-a arch		set arch (e.g, m68k, mips, powerpc)	[$MACHINE_ARCH]
+	-m machine	set machine (e.g, amiga, i386, macppc)	[$MACHINE]
 	-s setsdir	directory to find sets			[$setsdir]
 	-p prefix	prefix for created plist		[$prefix]
 	setname [...]	sets to find dependencies for
@@ -35,11 +35,11 @@ USAGE
 while getopts a:m:ps: ch; do
 	case ${ch} in
 	a)
-		machine_arch=${OPTARG}
-		machine_cpu=$(arch_to_cpu ${OPTARG})
+		MACHINE_ARCH=${OPTARG}
+		MACHINE_CPU=$(arch_to_cpu ${OPTARG})
 		;;
 	m)
-		machine=${OPTARG}
+		MACHINE=${OPTARG}
 		;;
 	p)
 		prefix=${OPTARG}
