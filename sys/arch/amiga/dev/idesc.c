@@ -1,4 +1,4 @@
-/*	$NetBSD: idesc.c,v 1.38.2.1 1999/04/16 20:34:40 mhitch Exp $	*/
+/*	$NetBSD: idesc.c,v 1.38.2.2 1999/04/17 18:22:35 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -219,6 +219,7 @@ struct ide_softc {
 #define IDEF_ATAPI	0x02	/* it's an ATAPI device */
 #define IDEF_ACAPLEN	0x04
 #define	IDEF_ACAPDRQ	0x08
+#define	IDEF_SENSE	0x10	/* Doing a request sense command */
 	short	sc_error;
 	char	sc_drive;
 	char	sc_state;
@@ -1140,6 +1141,7 @@ idego(dev, xs)
 			printf("idego: atapi cmd %02x\n", xs->cmd->opcode);
 #endif
 		dev->sc_cur = ide;
+		ide->sc_flags &= ~IDEF_SENSE;
 		return (idestart(dev));
 	}
 	if (xs->cmd->opcode != SCSI_READ_COMMAND && xs->cmd->opcode != READ_BIG &&
@@ -1393,8 +1395,8 @@ ide_atapi_icmd(dev, target, cbuf, clen, buf, len)
 	u_short *bf;
 
 	clen = dev->sc_flags & IDEF_ACAPLEN ? 16 : 12;
-	ide->sc_buf = xs->data;
-	ide->sc_bcount = xs->datalen;
+	ide->sc_buf = buf;
+	ide->sc_bcount = len;
 
 	if (wait_for_unbusy(dev) != 0) {
 		printf("ide_atapi_icmd: not ready, st = %02x\n",
@@ -1477,7 +1479,7 @@ ide_atapi_intr(dev)
 			printf("atapi_intr: controller busy\n");
 			return (0);
 		} else {
-			xs->error = XS_SENSE;
+			xs->error = XS_SHORTSENSE;
 			xs->sense.atapi_sense = regs->ide_error;
 			ide_atapi_done(dev);
 			return (0);
@@ -1592,13 +1594,26 @@ again:
 		if (ide_debug)
 			printf("PHASE_COMPLETED\n");
 #endif
-		if (status & IDES_ERR) {
+		if (ide->sc_flags & IDEF_SENSE) {
+			ide->sc_flags &= ~IDEF_SENSE;
+			if ((status & IDES_ERR) == 0)
+				xs->error = XS_SENSE;
+		} else if (status & IDES_ERR) {
+			struct scsipi_sense rqs;
+
 			printf("ide_atapi_intr: error status %x err %x\n",
 			    status, err);
-			if (err & ~0x28) {	/* Ignore media change bits */
-				xs->error = XS_SENSE;
-				xs->sense.atapi_sense = err;
-			}
+			xs->error = XS_SHORTSENSE;
+			xs->sense.atapi_sense = err;
+			ide->sc_flags |= IDEF_SENSE;
+			rqs.opcode = REQUEST_SENSE;
+			rqs.byte2 = xs->sc_link->scsipi_scsi.lun << 5;
+			rqs.length = sizeof(xs->sense.scsi_sense);
+			rqs.unused[0] = rqs.unused[1] = rqs.control = 0;
+			ide_atapi_icmd(dev, xs->sc_link->scsipi_scsi.target,
+			    &rqs, sizeof(rqs), &xs->sense.scsi_sense,
+			    sizeof(xs->sense.scsi_sense));
+			return(1);
 		}
 		if (ide->sc_bcount != 0)
 			printf("ide_atapi_intr: %ld bytes remaining\n", ide->sc_bcount);
@@ -1610,7 +1625,7 @@ again:
 		}
 		printf("ide_atapi_intr: unknown phase %x\n", phase);
 		if (status & IDES_ERR) {
-			xs->error = XS_SENSE;
+			xs->error = XS_SHORTSENSE;
 			xs->sense.atapi_sense = err;
 		} else
 			xs->error = XS_DRIVER_STUFFUP;
@@ -1626,7 +1641,7 @@ ide_atapi_done(dev)
 {
 	struct scsipi_xfer *xs = dev->sc_xs;
 
-	if (xs->error == XS_SENSE) {
+	if (xs->error == XS_SHORTSENSE) {
 		int atapi_sense = xs->sense.atapi_sense;
 
 		bzero((char *)&xs->sense.scsi_sense, sizeof(xs->sense.scsi_sense));
@@ -1640,6 +1655,10 @@ ide_atapi_done(dev)
 		if (atapi_sense & 0x04)
 			;		/* command aborted */
 #endif
+		ide_scsidone(dev, SCSI_CHECK);
+		return;
+	}
+	if (xs->error == XS_SENSE) {
 		ide_scsidone(dev, SCSI_CHECK);
 		return;
 	}
