@@ -173,12 +173,7 @@ Short_Repository (repository)
  *    back further someday, so that the trailing "/." doesn't get into
  *    repository in the first place, but we haven't taken things that
  *    far yet.''        --Jim Kingdon (recurse.c, 07-Sep-97)
- *
- * Ahh, all too true.  The major consideration is RELATIVE_REPOS.  If
- * the "/." doesn't end up in the repository while RELATIVE_REPOS is
- * defined, there will be nothing in the CVS/Repository file.  I
- * haven't verified that the remote protocol will handle that
- * correctly yet, so I've not made that change. */
+ */
 
 void
 Sanitize_Repository_Name (repository)
