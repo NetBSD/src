@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.58 2000/10/02 18:43:35 abs Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.59 2000/10/19 14:32:21 ad Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -297,7 +297,7 @@ scsibus* at ahb?
 scsibus* at ahc?
 scsibus* at aic?
 scsibus* at bha?
-#scsibus* at dpt?
+scsibus* at dpt?
 #scsibus* at isp?
 #scsibus* at nca?
 #scsibus* at ncr?
@@ -314,8 +314,11 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 #uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 # RAID controllers and devices
-#cac*	at pci? dev ? function ?	# Compaq array controller
-#ca*	at cac? unit ?			# Compaq array disk device
+#cac*	at eisa?			# Compaq EISA array controllers
+#cac*	at pci? dev ? function ?	# Compaq PCI array controllers
+#twe*	at pci? dev ? function ?	# 3ware Escalade RAID controllers
+#lsu*	at cac? unit ?			# Compaq array disk devices
+#lsu*	at twe? unit ?			# 3ware array disk devices
 
 # IDE and related devices
 
