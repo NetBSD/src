@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_debug.c,v 1.1.2.6 2001/12/30 02:25:39 nathanw Exp $	*/
+/*	$NetBSD: pthread_debug.c,v 1.1.2.7 2002/01/28 18:38:56 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -76,16 +76,15 @@ pthread__debuglog_init(int force)
 	struct pthread_msgbuf* buf;
 
 	debugshmid = shmget(PTHREAD__DEBUG_SHMKEY, PTHREAD__DEBUG_SHMSIZE,
-	    IPC_CREAT | S_IRWXU);
+	    IPC_CREAT | S_IRWXU | S_IRWXG | S_IRWXO);
 	
 	if (debugshmid == -1)
-		err(1, "Couldn't get shared debug log: %s\n", strerror(errno));
+		err(1, "Couldn't get shared debug log");
 
 	debuglog = shmat(debugshmid, 0, 0);
 
 	if (debuglog == (void *)-1)
-		err(1, "Couldn't map shared debug log (ID %d): %s\n",
-		    debugshmid, strerror(errno));
+		err(1, "Couldn't map shared debug log (ID %d)", debugshmid);
 
 	buf = (struct pthread_msgbuf *)debuglog;
 
