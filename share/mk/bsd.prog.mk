@@ -1,9 +1,11 @@
-#	$NetBSD: bsd.prog.mk,v 1.46.2.1 1994/07/20 04:58:14 cgd Exp $
+#	$NetBSD: bsd.prog.mk,v 1.46.2.2 1994/08/24 19:11:24 mycroft Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
 .endif
+
+.include <bsd.own.mk>
 
 .SUFFIXES: .out .o .c .cc .C .y .l .s .8 .7 .6 .5 .4 .3 .2 .1 .0
 
