@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.2 2001/10/28 13:14:05 lukem Exp $	*/
+/*	$NetBSD: makefs.c,v 1.3 2001/10/29 07:30:08 lukem Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint
-__RCSID("$NetBSD: makefs.c,v 1.2 2001/10/28 13:14:05 lukem Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.3 2001/10/29 07:30:08 lukem Exp $");
 #endif	/* !__lint */
 
 #include <assert.h>
@@ -199,7 +199,7 @@ main(int argc, char *argv[])
 	if (debug) {
 		printf("debug mask: 0x%08x\n", debug);
 		printf("start time: %ld.%ld, %s",
-		    start_time.tv_sec, start_time.tv_nsec,
+		    (long)start_time.tv_sec, (long)start_time.tv_nsec,
 		    ctime(&start_time.tv_sec));
 	}
 	argc -= optind;
