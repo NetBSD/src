@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.176 2003/04/29 05:53:11 nakayama Exp $	*/
+/*	$NetBSD: locore.s,v 1.177 2003/05/18 22:11:32 martin Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -1428,7 +1428,7 @@ pmap_screwup:
 #define CHKREG(r)
 #endif
 
-#ifdef DEBUG_NOTDEF
+#ifdef NOTDEF_DEBUG
 /*
  * A hardware red zone is impossible.  We simulate one in software by
  * keeping a `red zone' pointer; if %sp becomes less than this, we panic.
@@ -3803,7 +3803,7 @@ _C_LABEL(kgdb_trap_glue):
 	bg	1b
 	 inc	8, %l0
 
-#ifdef DEBUG
+#ifdef NOTDEF_DEBUG
 	/* save old red zone and then turn it off */
 	sethi	%hi(_C_LABEL(redzone)), %l7
 	ld	[%l7 + %lo(_C_LABEL(redzone))], %l6
@@ -3826,7 +3826,7 @@ _C_LABEL(kgdb_trap_glue):
 	 * after we reset the stack pointer.
 	 */
 	mov	%l4, %sp
-#ifdef DEBUG
+#ifdef NOTDEF_DEBUG
 	st	%l6, [%l7 + %lo(_C_LABEL(redzone))]	! restore red zone
 #endif
 	ret
@@ -3855,7 +3855,7 @@ kgdb_rett:
 	ld	[%g1], %g2		! pick up new %psr
 	ld	[%g1 + 12], %g3		! set %y
 	wr	%g3, 0, %y
-#ifdef DEBUG
+#ifdef NOTDEF_DEBUG
 	st	%l6, [%l7 + %lo(_C_LABEL(redzone))] ! and restore red zone
 #endif
 	wr	%g0, 0, %wim		! enable window changes
@@ -3888,9 +3888,9 @@ kgdb_rett:
 	sethi	%hi(CPCB), %l1
 	LDPTR	[%l1 + %lo(CPCB)], %l1
 	and	%l0, 31, %l0		! CWP = %psr & 31;
-	st	%l0, [%l1 + PCB_WIM]	! cpcb->pcb_wim = CWP;
+!	st	%l0, [%l1 + PCB_WIM]	! cpcb->pcb_wim = CWP;
 	save	%g0, %g0, %g0		! back to window to reload
-	LOADWIN(%sp)
+!	LOADWIN(%sp)
 	save	%g0, %g0, %g0		! back to trap window
 	/* note, we have not altered condition codes; safe to just rett */
 	RETT
@@ -11819,7 +11819,7 @@ ENTRY(longjmp)
 	ret
 	 restore	%i2, 0, %o0
 
-#ifdef DDB
+#if defined(DDB) || defined(KGDB)
 	/*
 	 * Debug stuff.  Dump the trap registers into buffer & set tl=0.
 	 *
