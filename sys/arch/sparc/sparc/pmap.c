@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.44 1995/04/19 20:59:29 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.45 1995/05/08 17:56:49 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -221,7 +221,7 @@ struct mmuentry {
 	struct	pmap *me_pmap;		/* pmap, if in use */
 	u_short	me_vreg;		/* associated virtual region/segment */
 	u_short	me_vseg;		/* associated virtual region/segment */
-	pmeg_t	me_cookie;		/* hardware SMEG/PMEG number */
+	u_short	me_cookie;		/* hardware SMEG/PMEG number */
 };
 struct mmuentry *mmusegments;	/* allocated in pmap_bootstrap */
 struct mmuentry *mmuregions;	/* allocated in pmap_bootstrap */
@@ -287,6 +287,8 @@ vm_offset_t	avail_end;	/* last free physical page number */
 vm_offset_t	virtual_avail;	/* first free virtual page number */
 vm_offset_t	virtual_end;	/* last free virtual page number */
 #endif
+
+int mmu_has_hole;
 
 vm_offset_t prom_vstart;	/* For /dev/kmem */
 vm_offset_t prom_vend;
@@ -1140,15 +1142,20 @@ region_free(pm, smeg)
  * PTE not valid, or segment not loaded at all).
  */
 int
-mmu_pagein(pm, va, bits)
+mmu_pagein(pm, va, prot)
 	register struct pmap *pm;
-	register int va, bits;
+	register int va, prot;
 {
 	register int *pte;
 	register struct mmuentry *me;
-	register int vr, vs, pmeg, i, s;
+	register int vr, vs, pmeg, i, s, bits;
 	struct regmap *rp;
 	struct segmap *sp;
+
+	if (prot != VM_PROT_NONE)
+		bits = PG_V | ((prot & VM_PROT_WRITE) ? PG_W : 0);
+	else
+		bits = 0;
 
 	vr = VA_VREG(va);
 	vs = VA_VSEG(va);
@@ -1696,6 +1703,17 @@ pmap_bootstrap(nctx, nregion, nsegment)
 #endif
 	extern caddr_t reserve_dumppages(caddr_t);
 
+	switch (cputyp) {
+	case CPU_SUN4C:
+		mmu_has_hole = 1;
+		break;
+	case CPU_SUN4:
+		if (cpumod != SUN4_400) {
+			mmu_has_hole = 1;
+			break;
+		}
+	}
+
 	cnt.v_page_size = NBPG;
 	vm_set_page_size();
 
@@ -1992,9 +2010,9 @@ pmap_bootstrap(nctx, nregion, nsegment)
 		else
 #endif
 			for (p = 0, vr = 0; vr < NUREG; vr++) {
-				if (vr == 32) {
-					vr = (256 - 32);
-					p = (caddr_t)VRTOVA(vr);
+				if (VA_INHOLE(p)) {
+					p = (caddr_t)MMU_HOLE_END;
+					vr = VA_VREG(p);
 				}
 				for (j = NSEGRG; --j >= 0; p += NBPSG)
 					setsegmap(p, seginval);
@@ -3094,6 +3112,14 @@ pmap_enter(pm, va, pa, prot, wired)
 
 	if (pm == NULL)
 		return;
+
+	if (VA_INHOLE(va)) {
+#ifdef DEBUG
+		printf("pmap_enter: pm %x, va %x, pa %x: in MMU hole\n",
+			pm, va, pa);
+#endif
+		return;
+	}
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_ENTER)
