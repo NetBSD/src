@@ -79,7 +79,7 @@ To prepare for installing via a tape:
 	in tar format.
 
 		NOTE: the tape devices with which NetBSD/pmax is
-		beleived to work is the DEC TK-50. This is a very slow
+		believed to work is the DEC TK-50. This is a very slow
 		device.  Installation via disk or network is recommended
 		if at all possible.
 
