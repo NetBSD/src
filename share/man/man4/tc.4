@@ -1,4 +1,4 @@
-.\" $NetBSD: tc.4,v 1.1 2001/09/21 09:11:41 gmcgarry Exp $
+.\" $NetBSD: tc.4,v 1.2 2001/09/21 23:53:52 ad Exp $
 .\"
 .\" Copyright (c) 1996, 1997 Jonathan Stone.
 .\" All rights reserved.
@@ -84,7 +84,9 @@ PMAG-B CX colour unaccelerated 2-D framebuffer
 .It mfb
 PMAG-A MX monochrome framebuffer
 .It px
-PMAG-C, PMAG-D, PMAG-E and PMAG-F ``PixelStamp'' accelerated graphics
+PMAG-C PX accelerated graphics boards
+.It pxg
+PMAG-D, PMAG-E and PMAG-F PXG accelerated graphics
 boards
 .It sfb
 PMAGB-BA HX colour unaccelerated 2-D framebuffer
@@ -107,6 +109,7 @@ baseboard IO control ASIC for DEC TurboChannel systems
 .Xr le 4 ,
 .Xr mfb 4 ,
 .Xr px 4 ,
+.Xr pxg 4 ,
 .Xr sfb 4 ,
 .Xr tcds 4 ,
 .Xr tfb 4
