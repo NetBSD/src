@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.5 1995/03/22 01:28:53 scottb Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.6 1995/05/01 19:33:17 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -162,7 +162,7 @@ ibcs2_waitsys(p, uap, retval)
 #define WAITPID_EFLAGS	0x8c4	/* OF, SF, ZF, PF */
 	
 	SCARG(&w4, rusage) = NULL;
-	if ((p->p_md.md_regs[tEFLAGS] & WAITPID_EFLAGS) == WAITPID_EFLAGS) {
+	if ((p->p_md.md_regs->tf_eflags & WAITPID_EFLAGS) == WAITPID_EFLAGS) {
 		/* waitpid */
 		SCARG(&w4, pid) = SCARG(uap, a1);
 		SCARG(&w4, status) = (int *)SCARG(uap, a2);
