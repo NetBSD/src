@@ -1,4 +1,4 @@
-#	$NetBSD: INSTADP,v 1.17.4.1 1996/08/25 17:22:19 thorpej Exp $
+#	$NetBSD: INSTADP,v 1.17.4.2 1996/09/04 07:40:55 thorpej Exp $
 #
 #	INSTADP -- like GENERICADP.  This supports only Adaptec SCSI
 #                     adapters.  This kernel is GENERICADP with lines
@@ -120,11 +120,11 @@ ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN and 3C507
 ie1	at isa? port 0x300 irq 10		# EtherExpress
 #le0	at isa? port 0x320 irq 10 drq 7		# IsoLan, NE2100, and DEPCA
 ep*	at eisa? slot ?				# 3C579 ethernet cards
-fea*	at eisa? slot ?				# DEC DEFEA FDDI cards
+#fea*	at eisa? slot ?				# DEC DEFEA FDDI cards
 le*	at pci? dev ? function ?		# PCnet-PCI based ethernet cards
 de*	at pci? dev ? function ?		# DC21X4X-based ethernet cards
 ep*	at pci? dev ? function ?		# 3C590 ethernet cards
-fpa*	at pci? dev ? function ?		# DEC DEFPA FDDI cards
+#fpa*	at pci? dev ? function ?		# DEC DEFPA FDDI cards
 
 pseudo-device	loop	1		# network loopback
 pseudo-device	sl	2		# CSLIP
