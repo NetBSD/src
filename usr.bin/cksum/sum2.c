@@ -1,4 +1,4 @@
-/*	$NetBSD: sum2.c,v 1.6 1997/10/17 11:37:23 lukem Exp $	*/
+/*	$NetBSD: sum2.c,v 1.7 2001/03/21 03:16:38 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sum2.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sum2.c,v 1.6 1997/10/17 11:37:23 lukem Exp $");
+__RCSID("$NetBSD: sum2.c,v 1.7 2001/03/21 03:16:38 atatat Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,7 @@ csum2(fd, cval, clen)
 	register int fd;
 	u_int32_t *cval, *clen;
 {
-	register u_int32_t crc, total;
+	register u_int32_t thecrc, total;
 	register int nr;
 	register u_char *p;
 	u_char buf[8192];
@@ -60,21 +60,21 @@ csum2(fd, cval, clen)
 	/*
 	 * Draft 8 POSIX 1003.2:
 	 *
-	 *   s = sum of all bytes
-	 *   r = s % 2^16 + (s % 2^32) / 2^16
-	 * crc = (r % 2^16) + r / 2^16
+	 *      s = sum of all bytes
+	 *      r = s % 2^16 + (s % 2^32) / 2^16
+	 * thecrc = (r % 2^16) + r / 2^16
 	 */
-	crc = total = 0;
+	thecrc = total = 0;
 	while ((nr = read(fd, buf, sizeof(buf))) > 0)
 		for (total += nr, p = buf; nr--; ++p)
-			crc += *p;
+			thecrc += *p;
 	if (nr < 0)
 		return(1);
 
-	crc = (crc & 0xffff) + (crc >> 16);
-	crc = (crc & 0xffff) + (crc >> 16);
+	thecrc = (thecrc & 0xffff) + (thecrc >> 16);
+	thecrc = (thecrc & 0xffff) + (thecrc >> 16);
 
-	*cval = crc;
+	*cval = thecrc;
 	*clen = total;
 	return(0);
 }

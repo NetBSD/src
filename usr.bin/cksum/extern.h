@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.8 2001/03/20 18:48:10 atatat Exp $	*/
+/*	$NetBSD: extern.h,v 1.9 2001/03/21 03:16:38 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int	ccrc __P((int, u_int32_t *, u_int32_t *));
+int	crc __P((int, u_int32_t *, u_int32_t *));
 void	pcrc __P((char *, u_int32_t, u_int32_t));
 void	psum1 __P((char *, u_int32_t, u_int32_t));
 void	psum2 __P((char *, u_int32_t, u_int32_t));
