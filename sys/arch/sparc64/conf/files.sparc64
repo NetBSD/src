@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.43 2001/02/02 07:32:45 mrg Exp $
+#	$NetBSD: files.sparc64,v 1.44 2001/02/05 12:47:47 mrg Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -249,8 +249,9 @@ file	arch/sparc64/sparc64/svr4_machdep.c	compat_svr4
 # SunOS Binary Compatibility (COMPAT_SUNOS), 32-bit & 64-bit kernel
 # (64-bit also depends on COMPAT_NETBSD32)
 include "compat/sunos/files.sunos"
+file	arch/sparc64/sparc64/sunos_machdep.c	compat_sunos & !compat_netbsd32
 include "compat/sunos32/files.sunos32"
-file	arch/sparc64/sparc64/sunos_machdep.c	compat_sunos
+file	arch/sparc64/sparc64/sunos32_machdep.c	compat_sunos & compat_netbsd32
 
 # Miscellaneous
 file	netns/ns_cksum.c		ns
