@@ -1,4 +1,4 @@
-/*	$NetBSD: rmail.c,v 1.13 1999/01/11 22:40:00 kleink Exp $	*/
+/*	$NetBSD: rmail.c,v 1.13.10.1 2000/10/17 22:41:49 tv Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rmail.c	8.3 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: rmail.c,v 1.13 1999/01/11 22:40:00 kleink Exp $");
+__RCSID("$NetBSD: rmail.c,v 1.13.10.1 2000/10/17 22:41:49 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,7 +86,8 @@ __RCSID("$NetBSD: rmail.c,v 1.13 1999/01/11 22:40:00 kleink Exp $");
 # define MAX(a, b)	((a) < (b) ? (b) : (a))
 #endif
 
-void err __P((int, const char *, ...));
+void err __P((int, const char *, ...))
+     __attribute((__format__(__printf__, 2, 3)));
 void usage __P((void));
 int main __P((int, char *[]));
 
