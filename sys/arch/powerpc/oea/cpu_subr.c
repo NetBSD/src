@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.6 2003/04/02 02:47:19 thorpej Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.7 2003/04/04 04:04:49 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -50,7 +50,10 @@
 
 #include <dev/sysmon/sysmonvar.h>
 
+static void cpu_enable_l2cr(register_t);
+static void cpu_enable_l3cr(register_t);
 static void cpu_config_l2cr(int);
+static void cpu_config_l3cr(int);
 static void cpu_print_speed(void);
 #if NSYSMON_ENVSYS > 0
 static void cpu_tau_setup(struct cpu_info *);
@@ -63,6 +66,119 @@ static int cpu_tau_streinfo __P((struct sysmon_envsys *,
 int cpu;
 int ncpus;
 
+struct fmttab {
+	register_t fmt_mask;
+	register_t fmt_value;
+	const char *fmt_string;
+};
+
+static const struct fmttab cpu_7450_l2cr_formats[] = {
+	{ L2CR_L2E, 0, " disabled" },
+	{ L2CR_L2DO|L2CR_L2IO, L2CR_L2DO, " data-only" },
+	{ L2CR_L2DO|L2CR_L2IO, L2CR_L2IO, " instruction-only" },
+	{ L2CR_L2DO|L2CR_L2IO, L2CR_L2DO|L2CR_L2IO, " locked" },
+	{ L2CR_L2E, ~0, " 256KB L2 cache" },
+	{ 0 }
+};
+
+static const struct fmttab cpu_7450_l3cr_formats[] = {
+	{ L3CR_L3DO|L3CR_L3IO, L3CR_L3DO, " data-only" },
+	{ L3CR_L3DO|L3CR_L3IO, L3CR_L3IO, " instruction-only" },
+	{ L3CR_L3DO|L3CR_L3IO, L3CR_L3DO|L3CR_L3IO, " locked" },
+	{ L3CR_L3SIZ, L3SIZ_2M, " 2MB" },
+	{ L3CR_L3SIZ, L3SIZ_1M, " 1MB" },
+	{ L3CR_L3PE|L3CR_L3APE, L3CR_L3PE|L3CR_L3APE, " parity" },
+	{ L3CR_L3PE|L3CR_L3APE, L3CR_L3PE, " data-parity" },
+	{ L3CR_L3PE|L3CR_L3APE, L3CR_L3APE, " address-parity" },
+	{ L3CR_L3PE|L3CR_L3APE, 0, " no-parity" },
+	{ L3CR_L3SIZ, ~0, " L3 cache" },
+	{ L3CR_L3RT, L3RT_MSUG2_DDR, " (DDR SRAM)" },
+	{ L3CR_L3RT, L3RT_PIPELINE_LATE, " (LW SRAM)" },
+	{ L3CR_L3RT, L3RT_PB2_SRAM, " (PB2 SRAM)" },
+	{ L3CR_L3CLK, ~0, " at" },
+	{ L3CR_L3CLK, L3CLK_20, " 2:1" },
+	{ L3CR_L3CLK, L3CLK_25, " 2.5:1" },
+	{ L3CR_L3CLK, L3CLK_30, " 3:1" },
+	{ L3CR_L3CLK, L3CLK_35, " 3.5:1" },
+	{ L3CR_L3CLK, L3CLK_40, " 4:1" },
+	{ L3CR_L3CLK, L3CLK_50, " 5:1" },
+	{ L3CR_L3CLK, L3CLK_60, " 6:1" },
+	{ L3CR_L3CLK, ~0, " ratio" },
+	{ 0, 0 },
+};
+
+static const struct fmttab cpu_ibm750_l2cr_formats[] = {
+	{ L2CR_L2E, 0, " disabled" },
+	{ L2CR_L2DO|L2CR_L2IO, L2CR_L2DO, " data-only" },
+	{ L2CR_L2DO|L2CR_L2IO, L2CR_L2IO, " instruction-only" },
+	{ L2CR_L2DO|L2CR_L2IO, L2CR_L2DO|L2CR_L2IO, " locked" },
+	{ 0, ~0, " 512KB" },
+	{ L2CR_L2WT, L2CR_L2WT, " WT" },
+	{ L2CR_L2WT, 0, " WB" },
+	{ L2CR_L2PE, L2CR_L2PE, " with ECC" },
+	{ 0, ~0, " L2 cache" },
+	{ 0 }
+};
+
+static const struct fmttab cpu_l2cr_formats[] = {
+	{ L2CR_L2E, 0, " disabled" },
+	{ L2CR_L2DO|L2CR_L2IO, L2CR_L2DO, " data-only" },
+	{ L2CR_L2DO|L2CR_L2IO, L2CR_L2IO, " instruction-only" },
+	{ L2CR_L2DO|L2CR_L2IO, L2CR_L2DO|L2CR_L2IO, " locked" },
+	{ L2CR_L2PE, L2CR_L2PE, " parity" },
+	{ L2CR_L2PE, 0, " no-parity" },
+	{ L2CR_L2SIZ, L2SIZ_2M, " 2MB" },
+	{ L2CR_L2SIZ, L2SIZ_1M, " 1MB" },
+	{ L2CR_L2SIZ, L2SIZ_512K, " 512KB" },
+	{ L2CR_L2SIZ, L2SIZ_256K, " 256KB" },
+	{ L2CR_L2WT, L2CR_L2WT, " WT" },
+	{ L2CR_L2WT, 0, " WB" },
+	{ L2CR_L2E, ~0, " L2 cache" },
+	{ L2CR_L2RAM, L2RAM_FLOWTHRU_BURST, " (FB SRAM)" },
+	{ L2CR_L2RAM, L2RAM_PIPELINE_LATE, " (LW SRAM)" },
+	{ L2CR_L2RAM, L2RAM_PIPELINE_BURST, " (PB SRAM)" },
+	{ L2CR_L2CLK, ~0, " at" },
+	{ L2CR_L2CLK, L2CLK_10, " 1:1" },
+	{ L2CR_L2CLK, L2CLK_15, " 1.5:1" },
+	{ L2CR_L2CLK, L2CLK_20, " 2:1" },
+	{ L2CR_L2CLK, L2CLK_25, " 2.5:1" },
+	{ L2CR_L2CLK, L2CLK_30, " 3:1" },
+	{ L2CR_L2CLK, L2CLK_35, " 3.5:1" },
+	{ L2CR_L2CLK, L2CLK_40, " 4:1" },
+	{ L2CR_L2CLK, ~0, " ratio" },
+	{ 0 }
+};
+
+static void cpu_fmttab_print(const struct fmttab *, register_t);
+
+struct cputab {
+	const char name[8];
+	uint16_t version;
+	uint16_t revfmt;
+};
+#define	REVFMT_MAJMIN	1		/* %u.%u */
+#define	REVFMT_HEX	2		/* 0x%04x */
+#define	REVFMT_DEC	3		/* %u */
+static const struct cputab models[] = {
+	{ "601",	MPC601,		REVFMT_DEC },
+	{ "602",	MPC602,		REVFMT_DEC },
+	{ "603",	MPC603,		REVFMT_MAJMIN },
+	{ "603e",	MPC603e,	REVFMT_MAJMIN },
+	{ "603ev",	MPC603ev,	REVFMT_MAJMIN },
+	{ "604",	MPC604,		REVFMT_MAJMIN },
+	{ "604ev",	MPC604ev,	REVFMT_MAJMIN },
+	{ "620",	MPC620,  	REVFMT_HEX },
+	{ "750",	MPC750,		REVFMT_MAJMIN },
+	{ "750FX",	IBM750FX,	REVFMT_MAJMIN },
+	{ "7400",	MPC7400,	REVFMT_MAJMIN },
+	{ "7410",	MPC7410,	REVFMT_MAJMIN },
+	{ "7450",	MPC7450,	REVFMT_MAJMIN },
+	{ "7455",	MPC7455,	REVFMT_MAJMIN },
+	{ "8240",	MPC8240,	REVFMT_MAJMIN },
+	{ "",		0,		REVFMT_HEX }
+};
+
+
 #ifdef MULTIPROCESSOR
 struct cpu_info cpu_info[CPU_MAXNUM];
 #else
@@ -71,6 +187,16 @@ struct cpu_info cpu_info[1];
 
 int cpu_altivec;
 char cpu_model[80];
+
+void
+cpu_fmttab_print(const struct fmttab *fmt, register_t data)
+{
+	for (; fmt->fmt_mask != 0 || fmt->fmt_value != 0; fmt++) {
+		if ((~fmt->fmt_mask & fmt->fmt_value) != 0 ||
+		    (data & fmt->fmt_mask) == fmt->fmt_value)
+			aprint_normal("%s", fmt->fmt_string);
+	}
+}
 
 void
 cpu_probe_cache(void)
@@ -289,10 +415,14 @@ cpu_setup(self, ci)
 	 */
 	if (vers == MPC750 || vers == MPC7400 || vers == IBM750FX ||
 	    vers == MPC7410 || vers == MPC7450 || vers == MPC7455) {
-		aprint_normal("%s", self->dv_xname);
+		aprint_normal("%s: ", self->dv_xname);
 		cpu_print_speed();
-		aprint_normal("%s", self->dv_xname);
-		cpu_config_l2cr(vers);
+		if (vers == MPC7450 || vers == MPC7455) {
+			cpu_config_l3cr(vers);
+		} else {
+			cpu_config_l2cr(pvr);
+		}
+		aprint_normal("\n");
 	}
 
 #if NSYSMON_ENVSYS > 0
@@ -349,33 +479,6 @@ cpu_setup(self, ci)
 	}
 #endif
 }
-
-struct cputab {
-	const char name[8];
-	uint16_t version;
-	uint16_t revfmt;
-};
-#define	REVFMT_MAJMIN	1		/* %u.%u */
-#define	REVFMT_HEX	2		/* 0x%04x */
-#define	REVFMT_DEC	3		/* %u */
-static const struct cputab models[] = {
-	{ "601",	MPC601,		REVFMT_DEC },
-	{ "602",	MPC602,		REVFMT_DEC },
-	{ "603",	MPC603,		REVFMT_MAJMIN },
-	{ "603e",	MPC603e,	REVFMT_MAJMIN },
-	{ "603ev",	MPC603ev,	REVFMT_MAJMIN },
-	{ "604",	MPC604,		REVFMT_MAJMIN },
-	{ "604ev",	MPC604ev,	REVFMT_MAJMIN },
-	{ "620",	MPC620,  	REVFMT_HEX },
-	{ "750",	MPC750,		REVFMT_MAJMIN },
-	{ "750FX",	IBM750FX,	REVFMT_MAJMIN },
-	{ "7400",	MPC7400,	REVFMT_MAJMIN },
-	{ "7410",	MPC7410,	REVFMT_MAJMIN },
-	{ "7450",	MPC7450,	REVFMT_MAJMIN },
-	{ "7455",	MPC7455,	REVFMT_MAJMIN },
-	{ "8240",	MPC8240,	REVFMT_MAJMIN },
-	{ "",		0,		REVFMT_HEX }
-};
 
 void
 cpu_identify(char *str, size_t len)
@@ -450,9 +553,124 @@ u_int l3cr_config = 0;
 #endif
 
 void
-cpu_config_l2cr(int vers)
+cpu_enable_l2cr(register_t l2cr)
 {
-	u_int l2cr, x, msr;
+	register_t msr, x;
+
+	/* Disable interrupts and set the cache config bits. */
+	msr = mfmsr();
+	mtmsr(msr & ~PSL_EE);
+#ifdef ALTIVEC
+	if (cpu_altivec)
+		__asm __volatile("dssall");
+#endif
+	__asm __volatile("sync");
+	mtspr(SPR_L2CR, l2cr & ~L2CR_L2E);
+	__asm __volatile("sync");
+
+	/* Wait for L2 clock to be stable (640 L2 clocks). */
+	delay(100);
+
+	/* Invalidate all L2 contents. */
+	mtspr(SPR_L2CR, l2cr | L2CR_L2I);
+	do {
+		x = mfspr(SPR_L2CR);
+	} while (x & L2CR_L2IP);
+
+	/* Enable L2 cache. */
+	l2cr |= L2CR_L2E;
+	mtspr(SPR_L2CR, l2cr);
+	mtmsr(msr);
+}
+
+void
+cpu_enable_l3cr(register_t l3cr)
+{
+	register_t x;
+
+	/* By The Book (numbered steps from section 3.7.1.3 of MPC7450UM) */
+				
+	/*
+	 * 1: Set all L3CR bits for final config except L3E, L3I, L3PE, and
+	 *    L3CLKEN.  (also mask off reserved bits in case they were included
+	 *    in L3CR_CONFIG)
+	 */
+	l3cr &= ~(L3CR_L3E|L3CR_L3I|L3CR_L3PE|L3CR_L3CLKEN|L3CR_RESERVED);
+	mtspr(SPR_L3CR, l3cr);
+
+	/* 2: Set L3CR[5] (otherwise reserved bit) to 1 */
+	l3cr |= 0x04000000;
+	mtspr(SPR_L3CR, l3cr);
+
+	/* 3: Set L3CLKEN to 1*/
+	l3cr |= L3CR_L3CLKEN;
+	mtspr(SPR_L3CR, l3cr);
+
+	/* 4/5: Perform a global cache invalidate (ref section 3.7.3.6) */
+	__asm __volatile("dssall;sync");
+	/* L3 cache is already disabled, no need to clear L3E */
+	mtspr(SPR_L3CR, l3cr|L3CR_L3I);
+	do {
+		x = mfspr(SPR_L3CR);
+	} while (x & L3CR_L3I);
+	
+	/* 6: Clear L3CLKEN to 0 */
+	l3cr &= ~L3CR_L3CLKEN;
+	mtspr(SPR_L3CR, l3cr);
+
+	/* 7: Perform a 'sync' and wait at least 100 CPU cycles */
+	__asm __volatile("sync");
+	delay(100);
+
+	/* 8: Set L3E and L3CLKEN */
+	l3cr |= (L3CR_L3E|L3CR_L3CLKEN);
+	mtspr(SPR_L3CR, l3cr);
+
+	/* 9: Perform a 'sync' and wait at least 100 CPU cycles */
+	__asm __volatile("sync");
+	delay(100);
+}
+
+void
+cpu_config_l2cr(int pvr)
+{
+	register_t l2cr;
+
+	l2cr = mfspr(SPR_L2CR);
+
+	/*
+	 * For MP systems, the firmware may only configure the L2 cache
+	 * on the first CPU.  In this case, assume that the other CPUs
+	 * should use the same value for L2CR.
+	 */
+	if ((l2cr & L2CR_L2E) != 0 && l2cr_config == 0) {
+		l2cr_config = l2cr;
+	}
+
+	/*
+	 * Configure L2 cache if not enabled.
+	 */
+	if ((l2cr & L2CR_L2E) == 0 && l2cr_config != 0)
+		cpu_enable_l2cr(l2cr_config);
+
+	if ((l2cr & L2CR_L2E) == 0)
+		return;
+
+	aprint_normal(",");
+	if ((pvr >> 16) == IBM750FX ||
+	    (pvr & 0xffffff00) == 0x00082200 /* IBM750CX */ ||
+	    (pvr & 0xffffef00) == 0x00082300 /* IBM750CXe */) {
+		cpu_fmttab_print(cpu_ibm750_l2cr_formats, l2cr);
+	} else {
+		cpu_fmttab_print(cpu_l2cr_formats, l2cr);
+	}
+}
+
+void
+cpu_config_l3cr(int vers)
+{
+	register_t l2cr;
+	register_t l3cr;
 
 	l2cr = mfspr(SPR_L2CR);
 
@@ -469,182 +687,36 @@ cpu_config_l2cr(int vers)
 	 * Configure L2 cache if not enabled.
 	 */
 	if ((l2cr & L2CR_L2E) == 0 && l2cr_config != 0) {
-		l2cr = l2cr_config;
+		cpu_enable_l2cr(l2cr_config);
+		l2cr = mfspr(SPR_L2CR);
+	}
+	
+	aprint_normal(",");
+	cpu_fmttab_print(cpu_7450_l2cr_formats, l2cr);
 
-		/* Disable interrupts and set the cache config bits. */
-		msr = mfmsr();
-		mtmsr(msr & ~PSL_EE);
-#ifdef ALTIVEC
-		if (cpu_altivec)
-			__asm __volatile("dssall");
-#endif
-		__asm __volatile("sync");
-		mtspr(SPR_L2CR, l2cr & ~L2CR_L2E);
-		__asm __volatile("sync");
+	l3cr = mfspr(SPR_L3CR);
 
-		/* Wait for L2 clock to be stable (640 L2 clocks). */
-		delay(100);
-
-		/* Invalidate all L2 contents. */
-		mtspr(SPR_L2CR, l2cr | L2CR_L2I);
-		do {
-			x = mfspr(SPR_L2CR);
-		} while (x & L2CR_L2IP);
-
-		/* Enable L2 cache. */
-		l2cr |= L2CR_L2E;
-		mtspr(SPR_L2CR, l2cr);
-		mtmsr(msr);
+	/*
+	 * For MP systems, the firmware may only configure the L3 cache
+	 * on the first CPU.  In this case, assume that the other CPUs
+	 * should use the same value for L3CR.
+	 */
+	if ((l3cr & L3CR_L3E) != 0 && l3cr_config == 0) {
+		l3cr_config = l3cr;
 	}
 
-	if (l2cr & L2CR_L2E) {
-		if (vers == MPC7450 || vers == MPC7455) {
-			u_int l3cr;
-
-			aprint_normal(": 256KB L2 cache");
-
-			l3cr = mfspr(SPR_L3CR);
-
-			/*
-			 * Configure L3 cache if not enabled.
-			 */
-			if ((l3cr & L3CR_L3E) == 0 && l3cr_config != 0) {
-				/* By The Book (numbered steps from section 3.7.1.3 of MPC7450UM) */
-				
-				/* 1: Set all L3CR bits for final config except L3E, L3I, L3PE, and L3CLKEN */
-				/*  (also mask off reserved bits in case they were included in L3CR_CONFIG) */
-				l3cr = l3cr_config & ~(L3CR_L3E|L3CR_L3I|L3CR_L3PE|L3CR_L3CLKEN|L3CR_RESERVED);
-				mtspr(SPR_L3CR, l3cr);
-
-				/* 2: Set L3CR[5] (otherwise reserved bit) to 1 */
-				l3cr |= 0x04000000;
-				mtspr(SPR_L3CR, l3cr);
-
-				/* 3: Set L3CLKEN to 1*/
-				l3cr |= L3CR_L3CLKEN;
-				mtspr(SPR_L3CR, l3cr);
-
-				/* 4/5: Perform a global cache invalidate (ref section 3.7.3.6) */
-				__asm __volatile("dssall;sync");
-				/* L3 cache is already disabled, no need to clear L3E */
-				mtspr(SPR_L3CR, l3cr|L3CR_L3I);
-				do {
-					x = mfspr(SPR_L3CR);
-				} while (x & L3CR_L3I);
-				
-				/* 6: Clear L3CLKEN to 0 */
-				l3cr &= ~L3CR_L3CLKEN;
-				mtspr(SPR_L3CR, l3cr);
-
-				/* 7: Perform a 'sync' and wait at least 100 CPU cycles */
-				__asm __volatile("sync");
-				delay(100);
-
-				/* 8: Set L3E and L3CLKEN */
-				l3cr |= (L3CR_L3E|L3CR_L3CLKEN);
-				mtspr(SPR_L3CR, l3cr);
-
-				/* 9: Perform a 'sync' and wait at least 100 CPU cycles */
-				__asm __volatile("sync");
-				delay(100);
-			}
-			
-			if (l3cr & L3CR_L3E) {
-				aprint_normal(", %cMB L3 cache at ",
-				   l3cr & L3CR_L3SIZ ? '2' : '1');
-				switch (l3cr & L3CR_L3CLK) {
-				case L3CLK_20:
-					aprint_normal("2:1 ratio");
-					break;
-				case L3CLK_25:
-					aprint_normal("2.5:1 ratio");
-					break;
-				case L3CLK_30:
-					aprint_normal("3:1 ratio");
-					break;
-				case L3CLK_35:
-					aprint_normal("3.5:1 ratio");
-					break;
-				case L3CLK_40:
-					aprint_normal("4:1 ratio");
-					break;
-				case L3CLK_50:
-					aprint_normal("5:1 ratio");
-					break;
-				case L3CLK_60:
-					aprint_normal("6:1 ratio");
-					break;
-				default:
-					aprint_normal("unknown ratio");
-					break;
-				}
-			}
-			aprint_normal("\n");
-			return;
-		}
-		if (vers == IBM750FX) {
-			aprint_normal(": 512KB L2 cache\n");
-			return;
-		}
-		switch (l2cr & L2CR_L2SIZ) {
-		case L2SIZ_256K:
-			aprint_normal(": 256KB");
-			break;
-		case L2SIZ_512K:
-			aprint_normal(": 512KB");
-			break;
-		case L2SIZ_1M:
-			aprint_normal(": 1MB");
-			break;
-		case 0:
-			if (vers == MPC7410) {
-				aprint_normal(": 2MB");
-				break;
-			}
-			/* FALLTHROUGH */
-		default:
-			aprint_normal(": unknown size");
-			break;
-		}
-		if (l2cr & L2CR_L2WT) {
-			aprint_normal(" write-through");
-		} else {
-			aprint_normal(" write-back");
-		}
-		switch (l2cr & (L2CR_L2DO|L2CR_L2IO)) {
-		case L2CR_L2DO|L2CR_L2IO:
-			aprint_normal(" locked");
-			break;
-		case L2CR_L2DO:
-			aprint_normal(" data-only");
-			break;
-		case L2CR_L2IO:
-			aprint_normal(" instruction-only");
-			break;
-		case 0:
-			break;
-		}
-		switch (l2cr & L2CR_L2RAM) {
-		case L2RAM_FLOWTHRU_BURST:
-			aprint_normal(" Flow-through synchronous burst SRAM");
-			break;
-		case L2RAM_PIPELINE_BURST:
-			aprint_normal(" Pipelined synchronous burst SRAM");
-			break;
-		case L2RAM_PIPELINE_LATE:
-			aprint_normal(" Pipelined synchronous late-write SRAM");
-			break;
-		default:
-			aprint_normal(" unknown type");
-		}
-
-		if (l2cr & L2CR_L2PE)
-			aprint_normal(" with parity");
-		aprint_normal(" L2 cache");
-	} else
-		aprint_normal(": L2 cache not enabled");
-
-	aprint_normal("\n");
+	/*
+	 * Configure L3 cache if not enabled.
+	 */
+	if ((l3cr & L3CR_L3E) == 0 && l3cr_config != 0) {
+		cpu_enable_l3cr(l3cr_config);
+		l3cr = mfspr(SPR_L3CR);
+	}
+	
+	if (l3cr & L3CR_L3E) {
+		aprint_normal(",");
+		cpu_fmttab_print(cpu_7450_l3cr_formats, l3cr);
+	}
 }
 
 void
@@ -652,13 +724,13 @@ cpu_print_speed(void)
 {
 	uint64_t cps;
 
-	mtspr(SPR_MMCR0, SPR_MMCR0_FC);
+	mtspr(SPR_MMCR0, MMCR0_FC);
 	mtspr(SPR_PMC1, 0);
-	mtspr(SPR_MMCR0, SPR_MMCR0_PMC1SEL(PMCN_CYCLES));
+	mtspr(SPR_MMCR0, MMCR0_PMC1SEL(PMCN_CYCLES));
 	delay(100000);
 	cps = (mfspr(SPR_PMC1) * 10) + 4999;
 
-	aprint_normal(": %lld.%02lld MHz\n", cps / 1000000, (cps / 10000) % 100);
+	aprint_normal("%lld.%02lld MHz", cps / 1000000, (cps / 10000) % 100);
 }
 
 #if NSYSMON_ENVSYS > 0
