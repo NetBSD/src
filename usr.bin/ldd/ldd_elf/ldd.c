@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.13 2002/09/24 09:58:03 junyoung Exp $	*/
+/*	$NetBSD: ldd.c,v 1.14 2002/10/09 15:43:34 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -128,7 +128,7 @@ main(
 	    warn("%s", *argv);
 	    continue;
 	}
-	_rtld_objmain = _rtld_map_object(*argv, fd, NULL);
+	_rtld_objmain = _rtld_map_object(xstrdup(*argv), fd, NULL);
 	if (_rtld_objmain == NULL) {
 		if (ldd_aout(*argv, fd) < 0)
 		    warnx("%s", _rtld_error_message);
