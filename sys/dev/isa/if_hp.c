@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: if_hp.c,v 1.13 1994/01/24 00:17:26 deraadt Exp $
+ *	$Id: if_hp.c,v 1.14 1994/02/10 17:18:01 mycroft Exp $
  */
 
 /*
@@ -407,7 +407,6 @@ hpattach(dvp)
 	    hp_id(ns->hp_type), ns->ns_mode & DSDC_WTS ? 32 : 16,
 	    ether_sprintf(ns->ns_addrp));
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
-	ifp->if_init = hpinit;
 	ifp->if_output = ether_output;
 	ifp->if_start = hpstart;
 	ifp->if_ioctl = hpioctl;
