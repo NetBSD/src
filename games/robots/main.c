@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.13 2000/01/19 19:02:27 jsm Exp $	*/
+/*	$NetBSD: main.c,v 1.14 2000/01/19 19:19:43 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.13 2000/01/19 19:02:27 jsm Exp $");
+__RCSID("$NetBSD: main.c,v 1.14 2000/01/19 19:19:43 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -126,7 +126,7 @@ main(ac, av)
 						break;
 					  
 					  default:
-						fprintf(stderr, "robots: uknown option: %c\n", *sp);
+						fprintf(stderr, "robots: unknown option: %c\n", *sp);
 						bad_arg = TRUE;
 						break;
 					}
