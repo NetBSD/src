@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.2 1996/02/01 06:12:16 jonathan Exp $	*/
+/*	$NetBSD: if_le.c,v 1.3 1996/02/26 23:38:38 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -160,8 +160,6 @@ lematch(parent, match, aux)
 	if (parent->dv_cfdata->cf_driver == &tccd) {
 		struct tcdev_attach_args *d = aux;
 
-		if (!tc_submatch(match, aux))
-			return (0);
 		if (strncmp("PMAD-AA ", d->tcda_modname, TC_ROM_LLEN) &&
 		    strncmp("PMAD-BA ", d->tcda_modname, TC_ROM_LLEN))
 			return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcvar.h,v 1.1 1995/12/20 00:48:36 cgd Exp $	*/
+/*	$NetBSD: tcvar.h,v 1.2 1996/02/26 23:38:44 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -51,27 +51,33 @@ typedef enum {
 /*
  * Arguments used to attach TurboChannel busses.
  */
-struct tc_attach_args {
-	u_int	tca_nslots;
-	struct tc_slotdesc *tca_slots;
+struct tcbus_attach_args {
+	char		*tba_busname;		/* XXX should be common */
 
-	u_int	tca_nbuiltins;
-	const struct tc_builtin *tca_builtins;
+	/* Bus information */
+	u_int		tba_speed;		/* 0 -> 12.5MHz, 1 -> 25MHz */
+	u_int		tba_nslots;
+	struct tc_slotdesc *tba_slots;
+	u_int		tba_nbuiltins;
+	const struct tc_builtin *tba_builtins;
+	
 
-	void	(*tca_intr_establish) __P((struct device *, void *,
+	/* TC bus resource management; XXX will move elsewhere eventually. */
+	void	(*tba_intr_establish) __P((struct device *, void *,
 		    tc_intrlevel_t, int (*)(void *), void *));
-	void	(*tca_intr_disestablish) __P((struct device *, void *));
+	void	(*tba_intr_disestablish) __P((struct device *, void *));
 };
 
 /*
  * Arguments used to attach TurboChannel devices.
  */
-struct tcdev_attach_args {
-	char	tcda_modname[TC_ROM_LLEN+1];
-	u_int	tcda_slot;
-	tc_offset_t tcda_offset;
-	tc_addr_t tcda_addr;
-	void	*tcda_cookie;
+struct tc_attach_args {
+	char		ta_modname[TC_ROM_LLEN+1];
+	u_int		ta_slot;
+	tc_offset_t	ta_offset;
+	tc_addr_t	ta_addr;
+	void		*ta_cookie;
+	u_int		ta_busspeed;		/* 0 -> 12.5MHz, 1 -> 25MHz */
 };
 
 /*
@@ -79,9 +85,9 @@ struct tcdev_attach_args {
  * code to the TurboChannel bus driver.
  */
 struct tc_slotdesc {
-	tc_addr_t tcs_addr;
-	void	*tcs_cookie;
-	int	tcs_used;
+	tc_addr_t	tcs_addr;
+	void		*tcs_cookie;
+	int		tcs_used;
 };
 
 /*
@@ -89,10 +95,10 @@ struct tc_slotdesc {
  * machine-dependent code to the TurboChannel bus driver.
  */
 struct tc_builtin {
-	char	*tcb_modname;
-	u_int	tcb_slot;
-	tc_offset_t tcb_offset;
-	void	*tcb_cookie;
+	char		*tcb_modname;
+	u_int		tcb_slot;
+	tc_offset_t	tcb_offset;
+	void		*tcb_cookie;
 };
 
 /*
