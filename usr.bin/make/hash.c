@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.8 1997/09/28 03:31:04 lukem Exp $	*/
+/*	$NetBSD: hash.c,v 1.9 2000/06/11 07:54:32 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: hash.c,v 1.8 1997/09/28 03:31:04 lukem Exp $";
+static char rcsid[] = "$NetBSD: hash.c,v 1.9 2000/06/11 07:54:32 mycroft Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)hash.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: hash.c,v 1.8 1997/09/28 03:31:04 lukem Exp $");
+__RCSID("$NetBSD: hash.c,v 1.9 2000/06/11 07:54:32 mycroft Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -74,7 +74,7 @@ static void RebuildTable __P((Hash_Table *));
  * at which we rebuild the table to make it larger.
  */
 
-#define rebuildLimit 8
+#define rebuildLimit 3
 
 /*
  *---------------------------------------------------------
