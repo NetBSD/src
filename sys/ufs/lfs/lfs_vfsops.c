@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.116 2003/04/29 17:45:11 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.117 2003/05/18 12:59:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.116 2003/04/29 17:45:11 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.117 2003/05/18 12:59:06 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -117,6 +117,8 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.116 2003/04/29 17:45:11 perseant Ex
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/genfs/genfs_node.h>
 static int lfs_gop_write(struct vnode *, struct vm_page **, int, int);
+static boolean_t lfs_issequential_hole(const struct ufsmount *,
+    daddr_t, daddr_t);
 
 static int lfs_mountfs(struct vnode *, struct mount *, struct proc *);
 
@@ -488,7 +490,7 @@ update_meta(struct lfs *fs, ino_t ino, int version, daddr_t lbn,
 			    (lbn << fs->lfs_bshift) + 1;
 	}
 
-	error = ufs_bmaparray(vp, lbn, &odaddr, &a[0], &num, NULL);
+	error = ufs_bmaparray(vp, lbn, &odaddr, &a[0], &num, NULL, NULL);
 	if (error) {
 #ifdef DEBUG_LFS_RFW
 		printf("update_meta: ufs_bmaparray returned %d\n", error);
@@ -549,7 +551,7 @@ update_meta(struct lfs *fs, ino_t ino, int version, daddr_t lbn,
 
 #ifdef DEBUG_LFS_RFW
 	/* Now look again to make sure it worked */
-	ufs_bmaparray(vp, lbn, &odaddr, &a[0], &num, NULL );
+	ufs_bmaparray(vp, lbn, &odaddr, &a[0], &num, NULL, NULL);
 	if (dbtofsb(fs, odaddr) != ndaddr)
 		printf("update_meta: failed setting ino %d lbn %" PRId64
 		    " to %" PRId64 "\n", ino, lbn, ndaddr);
@@ -1738,6 +1740,28 @@ lfs_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp, si
 	/* NOTREACHED */
 }
 
+static boolean_t
+lfs_issequential_hole(const struct ufsmount *ump,
+    daddr_t daddr0, daddr_t daddr1)
+{
+
+	/* NOTE: all we want to know here is 'hole or not'. */
+
+	/*
+	 * treat UNWRITTENs and all resident blocks as 'contiguous'
+	 */
+	if (daddr0 != 0 && daddr1 != 0)
+		return TRUE;
+
+	/*
+	 * both are in hole?
+	 */
+	if (daddr0 == 0 && daddr1 == 0)
+		return TRUE; /* all holes are 'contiguous' for us. */
+
+	return FALSE;
+}
+
 /*
  * lfs_gop_write functions exactly like genfs_gop_write, except that
  * (1) it requires the seglock to be held by its caller, and sp->fip
@@ -1761,7 +1785,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 	daddr_t lbn, blkno;
 	struct vm_page *pg;
 	struct buf *mbp, *bp;
-	struct vnode *devvp;
+	struct vnode *devvp = VTOI(vp)->i_devvp;
 	struct inode *ip = VTOI(vp);
 	struct lfs *fs = ip->i_lfs;
 	struct segment *sp = fs->lfs_sp;
@@ -1890,18 +1914,16 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 	    bytes > 0;
 	    offset += iobytes, bytes -= iobytes) {
 		lbn = offset >> fs_bshift;
-		error = VOP_BMAP(vp, lbn, &devvp, &blkno, &run);
+		error = ufs_bmaparray(vp, lbn, &blkno, NULL, NULL, &run,
+		    lfs_issequential_hole);
 		if (error) {
-			UVMHIST_LOG(ubchist, "VOP_BMAP() -> %d", error,0,0,0);
+			UVMHIST_LOG(ubchist, "ufs_bmaparray() -> %d",
+			    error,0,0,0);
 			skipbytes += bytes;
 			bytes = 0;
 			break;
 		}
 
-		/*
-		 * XXX this finds holes for us, but it also doesn't cluster
-		 * XXX pages which are not already contiguous on disk.
-		 */
 		iobytes = MIN((((off_t)lbn + 1 + run) << fs_bshift) - offset,
 		    bytes);
 		if (blkno == (daddr_t)-1) {

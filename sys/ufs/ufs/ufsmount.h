@@ -1,4 +1,4 @@
-/*	$NetBSD: ufsmount.h,v 1.12 2003/04/05 13:37:36 fvdl Exp $	*/
+/*	$NetBSD: ufsmount.h,v 1.13 2003/05/18 12:59:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -136,7 +136,6 @@ struct ufsmount {
  */
 #define MNINDIR(ump)			((ump)->um_nindir)
 #define	blkptrtodb(ump, b)		((b) << (ump)->um_bptrtodb)
-#define	is_sequential(ump, a, b)	((b) == (a) + ump->um_seqinc)
 #endif /* _KERNEL */
 
 #endif /* !_UFS_UFS_UFSMOUNT_H_ */
