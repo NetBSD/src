@@ -1,4 +1,4 @@
-/*	$NetBSD: int.c,v 1.8 2004/07/06 23:56:13 sekiya Exp $	*/
+/*	$NetBSD: int.c,v 1.9 2004/07/08 10:10:49 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.8 2004/07/06 23:56:13 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.9 2004/07/08 10:10:49 sekiya Exp $");
 
 #include "opt_cputype.h"
 
@@ -232,7 +232,7 @@ int_local0_intr(u_int32_t status, u_int32_t cause, u_int32_t pc,
 	   FIFO and dispatch.
 	 */
 	bus_space_write_4(iot, ioh, INT2_LOCAL0_MASK, l0mask & (0xfe));
-	if ( (l0stat & l0mask) == 0)
+	if ( (l0mask & 0x01) && ((l0stat & l0mask) == 0) )
 	  l0stat = 0x01;
 
 	for (i = 0; i < 8; i++) {
