@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.18 1999/03/27 07:17:50 simonb Exp $
+#	$NetBSD: Makefile.booters,v 1.19 1999/03/31 02:35:14 simonb Exp $
 #
 #	NOTE: $S must correspond to the top of the 'sys' tree
 
@@ -66,7 +66,7 @@ cleandir distclean: cleanlibdir
 cleanlibdir:
 	rm -rf lib
 
-LIBS=	${LIBPMAX} ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} ${LIBPMAX}
+LIBS=	${LIBPMAX} ${LIBKERN} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBPMAX}
 VERS_O?=vers.o
 
 vers.o:	${VERSIONFILE}
