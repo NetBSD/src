@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.6 2001/03/05 04:54:07 wdk Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.7 2001/06/11 01:50:54 wiz Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -302,7 +302,7 @@ bad:
  * Convertion table for mapping partition numbers and types between
  * a MIPS volume header and a BSD partition table.
  *
- * Mips volume header compatability is required in order to boot
+ * Mips volume header compatibility is required in order to boot
  * NetBSD from the Mips stand alone shell, but due to the differences
  * in the partition numbers used along with different methods for
  * determining partition types we must use a table for mapping the

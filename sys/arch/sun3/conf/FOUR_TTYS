@@ -1,4 +1,4 @@
-#	$NetBSD: FOUR_TTYS,v 1.24 2001/02/22 07:11:08 chs Exp $
+#	$NetBSD: FOUR_TTYS,v 1.25 2001/06/11 01:50:55 wiz Exp $
 
 # FOUR_TTYS Sun3 (3/50, 3/60, 3/110, 3/160, 3/260)
 # like GENERIC but both zs chips are used as ttys
@@ -38,7 +38,7 @@ options 	DDB
 #options 	SCSIDEBUG
 #options 	SCSIVERBOSE		# Verbose SCSI errors
 
-# Compatability options
+# Compatibility options
 options 	COMPAT_SUNOS	# can run SunOS 4.1.1 executables
 options 	COMPAT_43	# and 4.3BSD and ...
 options 	COMPAT_10	# NetBSD 1.0

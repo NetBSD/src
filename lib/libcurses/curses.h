@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.56 2001/04/21 16:19:37 jdc Exp $	*/
+/*	$NetBSD: curses.h,v 1.57 2001/06/11 01:50:51 wiz Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -391,7 +391,7 @@ extern chtype _acs_char[NUM_ACS];
 #define	ACS_VLINE	_acs_char['x']
 #define	ACS_BULLET	_acs_char['~']
 
-/* System V compatability */
+/* System V compatibility */
 #define	ACS_SBBS	ACS_LRCORNER
 #define	ACS_BBSS	ACS_URCORNER
 #define	ACS_BSSB	ACS_ULCORNER

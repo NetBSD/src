@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_addr.c,v 1.11 2000/10/04 14:52:27 sommerfeld Exp $	*/
+/*	$NetBSD: ns_addr.c,v 1.12 2001/06/11 01:50:51 wiz Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)ns_addr.c	8.1 (Berkeley) 6/7/93";
 #else
-__RCSID("$NetBSD: ns_addr.c,v 1.11 2000/10/04 14:52:27 sommerfeld Exp $");
+__RCSID("$NetBSD: ns_addr.c,v 1.12 2001/06/11 01:50:51 wiz Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -73,7 +73,7 @@ ns_addr(name)
 	 * First, figure out what he intends as a field separtor.
 	 * Despite the way this routine is written, the prefered
 	 * form  2-272.AA001234H.01777, i.e. XDE standard.
-	 * Great efforts are made to insure backward compatability.
+	 * Great efforts are made to insure backward compatibility.
 	 */
 	if ((hostname = strchr(buf, '#')) != NULL)
 		separator = '#';

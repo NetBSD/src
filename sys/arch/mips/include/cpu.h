@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.50 2001/01/14 21:18:39 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.51 2001/06/11 01:50:54 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -53,7 +53,7 @@
 #define CPU_ROOT_DEVICE		3	/* string: root device name */
 
 /*
- * Platform can override, but note this breaks userland compatability
+ * Platform can override, but note this breaks userland compatibility
  * with other mips platforms.
  */
 #ifndef CPU_MAXID

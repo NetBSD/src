@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.157 2001/03/10 23:55:31 is Exp $
+#	$NetBSD: GENERIC,v 1.158 2001/06/11 01:50:52 wiz Exp $
 
 #
 #if 0
@@ -16,7 +16,7 @@
 
 include "arch/amiga/conf/std.amiga"
 
-#ident 		"GENERIC-$Revision: 1.157 $"
+#ident 		"GENERIC-$Revision: 1.158 $"
 
 #ifdef INSTALL_CONFIGURATION
 makeoptions	COPTS="-Os"
@@ -121,7 +121,7 @@ options 	NFSSERVER	# Network File System server side code
 				# immutable) behave as system flags.
 
 #
-# Compatability options for various existing systems
+# Compatibility options for various existing systems
 #
 
 #ifndef INSTALL_CONFIGURATION

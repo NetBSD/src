@@ -1,4 +1,4 @@
-# $NetBSD: DISKLESS,v 1.31 2001/02/22 07:11:08 chs Exp $
+# $NetBSD: DISKLESS,v 1.32 2001/06/11 01:50:55 wiz Exp $
 
 # DISKLESS - Root and swap on NFS
 # Desktop machines only (3/50, 3/60, 3/110)
@@ -38,7 +38,7 @@ maxusers	2
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 #options 	PMAP_DEBUG
 
-# Compatability options
+# Compatibility options
 #options 	COMPAT_SUNOS	# can run SunOS 4.1.1 executables
 #options 	COMPAT_43	# and 4.3BSD and ...
 #options 	COMPAT_10	# NetBSD 1.0

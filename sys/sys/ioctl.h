@@ -1,4 +1,4 @@
-/*	$NetBSD: ioctl.h,v 1.29 2001/06/09 17:28:32 chs Exp $	*/
+/*	$NetBSD: ioctl.h,v 1.30 2001/06/11 01:50:57 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -99,7 +99,7 @@ __END_DECLS
 
 /*
  * Keep outside _SYS_IOCTL_H_
- * Compatability with old terminal driver
+ * Compatibility with old terminal driver
  *
  * Source level -> #define USE_OLD_TTY
  * Kernel level -> options COMPAT_43 or COMPAT_SUNOS or ...

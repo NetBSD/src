@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC3X,v 1.38 2001/02/22 07:11:08 chs Exp $
+# $NetBSD: GENERIC3X,v 1.39 2001/06/11 01:50:55 wiz Exp $
 
 # GENERIC Sun3X (3/80, 3/470)
 # Supports root on: ie0, le0, sd*, ...
@@ -38,7 +38,7 @@ options 	DDB
 #options 	SCSIDEBUG
 #options 	SCSIVERBOSE		# Verbose SCSI errors
 
-# Compatability options
+# Compatibility options
 options 	COMPAT_SUNOS	# can run SunOS 4.1.1 executables
 #options 	COMPAT_SVR4	# can run SVR4 executables
 options 	COMPAT_43	# and 4.3BSD and ...
