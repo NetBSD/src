@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.26 1995/01/03 01:30:50 mycroft Exp $	*/
+/*	$NetBSD: lpt.c,v 1.27 1995/01/22 00:12:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -348,10 +348,10 @@ not_ready(status, sc)
 	new = status & ~sc->sc_laststatus;
 	sc->sc_laststatus = status;
 
-	if (new & LPS_NOPAPER)
-		log(LOG_NOTICE, "%s: out of paper\n", sc->sc_dev.dv_xname);
-	else if (new & LPS_SELECT)
+	if (new & LPS_SELECT)
 		log(LOG_NOTICE, "%s: offline\n", sc->sc_dev.dv_xname);
+	else if (new & LPS_NOPAPER)
+		log(LOG_NOTICE, "%s: out of paper\n", sc->sc_dev.dv_xname);
 	else if (new & LPS_NERR)
 		log(LOG_NOTICE, "%s: output error\n", sc->sc_dev.dv_xname);
 
