@@ -1,4 +1,4 @@
-/*	$NetBSD: rarpd.c,v 1.28 1998/09/29 09:21:35 mrg Exp $	*/
+/*	$NetBSD: rarpd.c,v 1.29 1998/10/06 00:23:55 matt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -28,7 +28,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: rarpd.c,v 1.28 1998/09/29 09:21:35 mrg Exp $");
+__RCSID("$NetBSD: rarpd.c,v 1.29 1998/10/06 00:23:55 matt Exp $");
 #endif
 
 
@@ -81,8 +81,10 @@ __RCSID("$NetBSD: rarpd.c,v 1.28 1998/09/29 09:21:35 mrg Exp $");
 struct if_info {
 	int     ii_fd;		/* BPF file descriptor */
 	u_char  ii_eaddr[6];	/* Ethernet address of this interface */
-	u_long  ii_ipaddr;	/* IP address of this interface */
-	u_long  ii_netmask;	/* subnet or net mask */
+	u_int32_t  ii_ipaddr;	/* IP address of this interface */
+	u_int32_t  ii_netmask;	/* subnet or net mask */
+	char	*ii_name;	/* interface name */
+	struct if_info *ii_alias;
 	struct if_info *ii_next;
 };
 /*
@@ -94,22 +96,22 @@ struct if_info *iflist;
 u_int32_t choose_ipaddr __P((u_int32_t **, u_int32_t, u_int32_t));
 void	debug __P((const char *,...));
 void	init_all __P((void));
-void	init_one __P((char *));
-u_long	ipaddrtonetmask __P((u_long));
+void	init_one __P((char *, u_int32_t));
+u_int32_t	ipaddrtonetmask __P((u_int32_t));
 void	lookup_eaddr __P((char *, u_char *));
-void	lookup_ipaddr __P((char *, u_long *, u_long *));
+void	lookup_ipaddr __P((char *, u_int32_t *, u_int32_t *));
 int	main __P((int, char **));
 void	rarp_loop __P((void));
 int	rarp_open __P((char *));
 void	rarp_process __P((struct if_info *, u_char *));
-void	rarp_reply __P((struct if_info *, struct ether_header *, u_long,
+void	rarp_reply __P((struct if_info *, struct ether_header *, u_int32_t,
 			struct hostent *));
 void	rarperr __P((int, const char *,...));
 
 #if defined(__NetBSD__)
 #include "mkarp.h"
 #else
-void	update_arptab __P((u_char *, u_long));
+void	update_arptab __P((u_char *, u_int32_t));
 #endif
 
 void	usage __P((void));
@@ -118,7 +120,7 @@ static int	bpf_open __P((void));
 static int	rarp_check __P((u_char *, int));
 
 #ifdef REQUIRE_TFTPBOOT
-int	rarp_bootable __P((u_long));
+int	rarp_bootable __P((u_int32_t));
 #endif
 
 int     aflag = 0;		/* listen on "all" interfaces  */
@@ -171,7 +173,7 @@ main(argc, argv)
 	if (aflag)
 		init_all();
 	else
-		init_one(ifname);
+		init_one(ifname, INADDR_ANY);
 
 	if ((!fflag) && (!dflag)) {
 		FILE *fp;
@@ -195,25 +197,46 @@ main(argc, argv)
  * mask and Ethernet address, and open a BPF file for it.
  */
 void
-init_one(ifname)
+init_one(ifname, ipaddr)
 	char   *ifname;
+	u_int32_t ipaddr;
 {
+	struct if_info *h;
 	struct if_info *p;
 	int fd;
 
-	fd = rarp_open(ifname);
-	if (fd < 0)
-		return;
+	for (h = iflist; h != NULL; h = h->ii_next) {
+		if (!strcmp(h->ii_name, ifname))
+			break;
+	}
+	if (h == NULL) {
+		fd = rarp_open(ifname);
+		if (fd < 0)
+			return;
+	} else {
+		fd = h->ii_fd;
+	}
 
 	p = (struct if_info *)malloc(sizeof(*p));
 	if (p == 0) {
 		rarperr(FATAL, "malloc: %s", strerror(errno));
 		/* NOTREACHED */
 	}
-	p->ii_next = iflist;
-	iflist = p;
+	p->ii_name = strdup(ifname);
+	if (p->ii_name == 0) {
+		rarperr(FATAL, "malloc: %s", strerror(errno));
+		/* NOTREACHED */
+	}
+	if (h != NULL) {
+		p->ii_alias = h->ii_alias;
+		h->ii_alias = p;
+	} else {
+		p->ii_next = iflist;
+		iflist = p;
+	}
 
 	p->ii_fd = fd;
+	p->ii_ipaddr = ipaddr;
 	lookup_eaddr(ifname, p->ii_eaddr);
 	lookup_ipaddr(ifname, &p->ii_ipaddr, &p->ii_netmask);
 }
@@ -248,8 +271,12 @@ init_all()
 	ifreq.ifr_name[0] = '\0';
 	for (i = 0; i < ifc.ifc_len;
 	     i += len, ifr = (struct ifreq *)((caddr_t)ifr + len)) {
+#define SIN(s)	((struct sockaddr_in *) (s))
 		len = sizeof(ifr->ifr_name) + ifr->ifr_addr.sa_len;
-		if (!strncmp(ifreq.ifr_name, ifr->ifr_name, sizeof(ifr->ifr_name)))
+		if (ifr->ifr_addr.sa_family != AF_INET)
+			continue;
+		if (!strncmp(ifreq.ifr_name, ifr->ifr_name, sizeof(ifr->ifr_name))
+		    && SIN(&ifreq.ifr_addr)->sin_addr.s_addr == SIN(&ifr->ifr_addr)->sin_addr.s_addr)
 			continue;
 		ifreq = *ifr;
 		if (ioctl(fd, SIOCGIFFLAGS, (caddr_t)ifr) < 0) {
@@ -260,7 +287,8 @@ init_all()
 		if ((ifr->ifr_flags &
 		    (IFF_UP | IFF_LOOPBACK | IFF_POINTOPOINT)) != IFF_UP)
 			continue;
-		init_one(ifr->ifr_name);
+		init_one(ifr->ifr_name, SIN(&ifreq.ifr_addr)->sin_addr.s_addr);
+#undef	SIN
 	}
 	(void)close(fd);
 }
@@ -524,7 +552,7 @@ rarp_loop()
  */
 int
 rarp_bootable(addr)
-	u_long  addr;
+	u_int32_t  addr;
 {
 	register struct dirent *dent;
 	register DIR *d;
@@ -583,7 +611,7 @@ rarp_process(ii, pkt)
 {
 	struct ether_header *ep;
 	struct hostent *hp;
-	u_long  target_ipaddr;
+	u_int32_t  target_ipaddr;
 	char    ename[MAXHOSTNAMELEN + 1];
 	struct	in_addr in;
 
@@ -607,8 +635,12 @@ rarp_process(ii, pkt)
 		rarperr(FATAL, "cannot handle non IP addresses");
 		/* NOTREACHED */
 	}
-	target_ipaddr = choose_ipaddr((u_int32_t **) hp->h_addr_list,
-	    ii->ii_ipaddr & ii->ii_netmask, ii->ii_netmask);
+	for (; ii != NULL; ii = ii->ii_alias) {
+		target_ipaddr = choose_ipaddr((u_int32_t **) hp->h_addr_list,
+		    ii->ii_ipaddr & ii->ii_netmask, ii->ii_netmask);
+		if (target_ipaddr != 0)
+			break;
+	}
 
 	if (target_ipaddr == 0) {
 
@@ -684,29 +716,44 @@ lookup_eaddr(ifname, eaddr)
 void
 lookup_ipaddr(ifname, addrp, netmaskp)
 	char   *ifname;
-	u_long *addrp;
-	u_long *netmaskp;
+	u_int32_t *addrp;
+	u_int32_t *netmaskp;
 {
 	int     fd;
-	struct ifreq ifr;
 
 	/* Use datagram socket to get IP address. */
 	if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
 		rarperr(FATAL, "socket: %s", strerror(errno));
 		/* NOTREACHED */
 	}
-	(void)strncpy(ifr.ifr_name, ifname, sizeof ifr.ifr_name);
-	if (ioctl(fd, SIOCGIFADDR, (char *) &ifr) < 0) {
-		rarperr(FATAL, "SIOCGIFADDR: %s", strerror(errno));
-		/* NOTREACHED */
+	if (*addrp == INADDR_ANY) {
+		struct ifreq ifr;
+		memset(&ifr, 0, sizeof(ifr));
+		(void)strncpy(ifr.ifr_name, ifname, sizeof ifr.ifr_name);
+		if (ioctl(fd, SIOCGIFADDR, (char *) &ifr) < 0) {
+			rarperr(FATAL, "SIOCGIFADDR: %s", strerror(errno));
+			/* NOTREACHED */
+		}
+		*addrp = ((struct sockaddr_in *) & ifr.ifr_addr)->sin_addr.s_addr;
+		if (ioctl(fd, SIOCGIFNETMASK, (char *) &ifr) < 0) {
+			perror("SIOCGIFNETMASK");
+			unlink(_PATH_RARPDPID);
+			exit(1);
+		}
+		*netmaskp = ((struct sockaddr_in *) & ifr.ifr_addr)->sin_addr.s_addr;
+	} else {
+		struct ifaliasreq ifra;
+		memset(&ifra, 0, sizeof(ifra));
+		(void)strncpy(ifra.ifra_name, ifname, sizeof ifra.ifra_name);
+		((struct sockaddr_in *) & ifra.ifra_addr)->sin_family = AF_INET;
+		((struct sockaddr_in *) & ifra.ifra_addr)->sin_addr.s_addr = *addrp;
+		if (ioctl(fd, SIOCGIFALIAS, (char *) &ifra) < 0) {
+			rarperr(FATAL, "SIOCGIFALIAS: %s", strerror(errno));
+			/* NOTREACHED */
+		}
+		*addrp = ((struct sockaddr_in *) & ifra.ifra_addr)->sin_addr.s_addr;
+		*netmaskp = ((struct sockaddr_in *) & ifra.ifra_mask)->sin_addr.s_addr;
 	}
-	*addrp = ((struct sockaddr_in *) & ifr.ifr_addr)->sin_addr.s_addr;
-	if (ioctl(fd, SIOCGIFNETMASK, (char *) &ifr) < 0) {
-		perror("SIOCGIFNETMASK");
-		unlink(_PATH_RARPDPID);
-		exit(1);
-	}
-	*netmaskp = ((struct sockaddr_in *) & ifr.ifr_addr)->sin_addr.s_addr;
 	/* If SIOCGIFNETMASK didn't work, figure out a mask from the IP
 	 * address class. */
 	if (*netmaskp == 0)
@@ -724,7 +771,7 @@ lookup_ipaddr(ifname, addrp, netmaskp)
 void
 update_arptab(ep, ipaddr)
 	u_char *ep;
-	u_long  ipaddr;
+	u_int32_t  ipaddr;
 {
 	struct arpreq request;
 	struct sockaddr_in *sin;
@@ -787,7 +834,7 @@ void
 rarp_reply(ii, ep, ipaddr, hp)
 	struct if_info *ii;
 	struct ether_header *ep;
-	u_long  ipaddr;
+	u_int32_t  ipaddr;
 	struct hostent *hp;
 {
 	int     n;
@@ -855,9 +902,9 @@ rarp_reply(ii, ep, ipaddr, hp)
  * Get the netmask of an IP address.  This routine is used if
  * SIOCGIFNETMASK doesn't work.
  */
-u_long
+u_int32_t
 ipaddrtonetmask(addr)
-	u_long  addr;
+	u_int32_t  addr;
 {
 
 	if (IN_CLASSA(addr))
