@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.137 1999/07/15 18:02:08 ross Exp $
+$NetBSD: pcidevs,v 1.138 1999/07/20 20:58:20 drochner Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1166,6 +1166,7 @@ product TEKRAM2	DC690C		0x690c	DC-690C
 
 /* Texas Instruments products */
 product	TI	TLAN		0x0500	TLAN
+product	TI	TVP4020		0x3d07	TVP4020 Permedia 2
 product	TI	PCILYNX		0x8000	LYNX FireWire Host Controller
 product TI	PCI1130		0xac12	PCI1130 PCI-CardBus Bridge
 product TI	PCI1031		0xac13	PCI1031 PCI-pcmcia Bridge
