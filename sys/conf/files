@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.379 2000/07/30 21:34:47 briggs Exp $
+#	$NetBSD: files,v 1.380 2000/08/01 20:01:52 mjacob Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -250,7 +250,7 @@ file	dev/ic/aha.c			aha
 # Qlogic ISP 10x0 SCSI Controllers
 defopt	opt_isp.h	ISP_DISABLE_1020_SUPPORT ISP_DISABLE_1080_SUPPORT
 			ISP_DISABLE_2100_SUPPORT ISP_DISABLE_2200_SUPPORT
-			ISP_DISABLE_FW ISP_TARGET_MODE
+			ISP_DISABLE_FW ISP_LOGDEFAULT ISP_TARGET_MODE
 device	isp: scsi
 file	dev/ic/isp.c			isp
 file	dev/ic/isp_netbsd.c		isp
