@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.16 1997/05/01 13:26:56 pk Exp $
+#	$NetBSD: install.sub,v 1.17 1997/09/01 21:16:01 is Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -771,8 +771,8 @@ __install_cdrom_1
 	_partition_range=`md_get_partition_range`
 	resp=""		# force one iteration
 	while [ "X${resp}" = X"" ]; do
-		echo -n "Partition? [c] "
-		getresp "c"
+		echo -n "Partition? [a] "
+		getresp "a"
 		case "$resp" in
 			$_partition_range)
 				_partition=$resp
@@ -810,7 +810,7 @@ __install_cdrom_2
 	done
 
 	# Mount the CD-ROM
-	if ! mount -t ${_filesystem} -o ro \
+	if ! mount -t ${_fstype} -o ro \
 	    /dev/${_drive}${_partition} /mnt2 ; then
 		echo "Cannot mount CD-ROM drive.  Aborting."
 		return
