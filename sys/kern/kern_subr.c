@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.54 2000/01/25 03:42:36 enami Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.55 2000/01/25 09:23:59 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -540,7 +540,7 @@ setroot(bootdv, bootpartition)
 	int bootpartition;
 {
 	struct device *dv;
-	int len, print_newline = 0;
+	int len;
 #ifdef MEMORY_DISK_HOOKS
 	int i;
 #endif
@@ -670,11 +670,11 @@ setroot(bootdv, bootpartition)
 				break;
 			}
 			if (len == 4 && strcmp(buf, "none") == 0) {
-				dumpspec = "none";
+				dumpdv = NULL;
 				break;
 			}
 			dv = getdisk(buf, len, 1, &ndumpdev, 1);
-			if (dv) {
+			if (dv != NULL) {
 				dumpdv = dv;
 				break;
 			}
@@ -788,13 +788,12 @@ setroot(bootdv, bootpartition)
 
 	switch (rootdv->dv_class) {
 	case DV_IFNET:
-		/* Nothing. */
+		printf("root on %s", rootdv->dv_xname);
 		break;
 
 	case DV_DISK:
 		printf("root on %s%c", rootdv->dv_xname,
 		    DISKPART(rootdev) + 'a');
-		print_newline = 1;
 		break;
 
 	default:
@@ -805,16 +804,7 @@ setroot(bootdv, bootpartition)
 
 	/*
 	 * Now configure the dump device.
-	 */
-
-	if (dumpspec != NULL && strcmp(dumpspec, "none") == 0) {
-		/*
-		 * Operator doesn't want a dump device.
-		 */
-		goto nodumpdev;
-	}
-
-	/*
+	 *
 	 * If we haven't figured out the dump device, do so, with
 	 * the following rules:
 	 *
@@ -829,22 +819,14 @@ setroot(bootdv, bootpartition)
 	 *	    of the root device.
 	 */
 
-	if (boothowto & RB_ASKNAME) {
-		if (dumpdv == NULL) {
+	if (boothowto & RB_ASKNAME) {		/* (a) */
+		if (dumpdv == NULL)
+			goto nodumpdev;
+	} else if (dumpspec != NULL) {		/* (b) */
+		if (strcmp(dumpspec, "none") == 0 || dumpdev == NODEV) {
 			/*
-			 * Just return; dumpdev is already set to NODEV
-			 * and we don't want to print a newline in this
-			 * case.
-			 */
-			return;
-		}
-		goto out;
-	}
-
-	if (dumpspec != NULL) {
-		if (dumpdev == NODEV) {
-			/*
-			 * Looks like they tried to pick a network
+			 * Operator doesn't want a dump device.
+			 * Or looks like they tried to pick a network
 			 * device.  Oops.
 			 */
 			goto nodumpdev;
@@ -869,21 +851,22 @@ setroot(bootdv, bootpartition)
 			 */
 			goto nodumpdev;
 		}
-	} else if (rootdv->dv_class == DV_IFNET)
-		goto nodumpdev;
-	else {
-		dumpdv = rootdv;
-		dumpdev = MAKEDISKDEV(major(rootdev), dumpdv->dv_unit, 1);
+	} else {				/* (c) */
+		if (rootdv->dv_class == DV_IFNET)
+			goto nodumpdev;
+		else {
+			dumpdv = rootdv;
+			dumpdev = MAKEDISKDEV(major(rootdev),
+			    dumpdv->dv_unit, 1);
+		}
 	}
 
- out:
 	printf(" dumps on %s%c\n", dumpdv->dv_xname, DISKPART(dumpdev) + 'a');
 	return;
 
  nodumpdev:
 	dumpdev = NODEV;
-	if (print_newline)
-		printf("\n");
+	printf("\n");
 }
 
 static int
