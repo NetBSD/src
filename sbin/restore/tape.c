@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.42 2000/07/07 13:24:33 enami Exp $	*/
+/*	$NetBSD: tape.c,v 1.43 2001/01/24 23:14:04 enami Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.9 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.42 2000/07/07 13:24:33 enami Exp $");
+__RCSID("$NetBSD: tape.c,v 1.43 2001/01/24 23:14:04 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -1293,11 +1293,11 @@ findinode(header)
 
 		case TS_TAPE:
 			panic("unexpected tape header\n");
-			/* NOTREACHED */
+			break;
 
 		default:
 			panic("unknown tape header type %d\n", spcl.c_type);
-			/* NOTREACHED */
+			break;
 
 		}
 	} while (header->c_type == TS_ADDR);
