@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211subr.c,v 1.14 2002/09/29 10:17:00 onoe Exp $	*/
+/*	$NetBSD: if_ieee80211subr.c,v 1.15 2002/09/30 05:35:28 onoe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.14 2002/09/29 10:17:00 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.15 2002/09/30 05:35:28 onoe Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -138,6 +138,7 @@ ieee80211_ifattach(struct ifnet *ifp)
 	    sizeof(struct ieee80211_frame_addr4), &ic->ic_rawbpf);
 #endif
 	ieee80211_crc_init();
+	ic->ic_iv = arc4random();
 	memcpy(ic->ic_chan_active, ic->ic_chan_avail,
 	    sizeof(ic->ic_chan_active));
 	if (isclr(ic->ic_chan_active, ic->ic_ibss_chan)) {
@@ -148,7 +149,7 @@ ieee80211_ifattach(struct ifnet *ifp)
 			}
 		}
 	}
-	ic->ic_des_chan = -1;
+	ic->ic_des_chan = IEEE80211_CHAN_ANY;
 	ic->ic_fixed_rate = -1;
 	if (ic->ic_lintval == 0)
 		ic->ic_lintval = 100;	/* default sleep */
@@ -208,7 +209,6 @@ void
 ieee80211_ifdetach(struct ifnet *ifp)
 {
 	struct ieee80211com *ic = (void *)ifp;
-	struct ieee80211_node *ni;
 	int s;
 
 	s = splnet();
@@ -217,8 +217,7 @@ ieee80211_ifdetach(struct ifnet *ifp)
 		free(ic->ic_wep_ctx, M_DEVBUF);
 		ic->ic_wep_ctx = NULL;
 	}
-	while ((ni = TAILQ_FIRST(&ic->ic_node)) != NULL)
-		ieee80211_free_node(ic, ni);  
+	ieee80211_free_allnodes(ic);
 	ether_ifdetach(ifp);
 }
 
@@ -805,10 +804,12 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCS80211CHANNEL:
 		chan = (struct ieee80211_channel *)data;
-		if (chan->i_channel > IEEE80211_CHAN_MAX ||
+		if (chan->i_channel == IEEE80211_CHAN_ANY)
+			ic->ic_des_chan = IEEE80211_CHAN_ANY;
+		else if (chan->i_channel > IEEE80211_CHAN_MAX ||
 		    isclr(ic->ic_chan_active, chan->i_channel)) {
-			/* invalid channel request to clear current config */
-			ic->ic_des_chan = -1;
+			error = EINVAL;
+			break;
 		} else
 			ic->ic_ibss_chan = ic->ic_des_chan = chan->i_channel;
 		switch (ic->ic_state) {
@@ -818,7 +819,7 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 		default:
 			if (ic->ic_opmode == IEEE80211_M_STA) {
-				if (ic->ic_des_chan >= 0 &&
+				if (ic->ic_des_chan != IEEE80211_CHAN_ANY &&
 				    ic->ic_bss.ni_chan != ic->ic_des_chan)
 					error = ENETRESET;
 			} else {
@@ -1088,7 +1089,8 @@ ieee80211_end_scan(struct ifnet *ifp)
 		fail = 0;
 		if (isclr(ic->ic_chan_active, ni->ni_chan))
 			fail |= 0x01;
-		if (ic->ic_des_chan >= 0 && ni->ni_chan != ic->ic_des_chan)
+		if (ic->ic_des_chan != IEEE80211_CHAN_ANY &&
+		    ni->ni_chan != ic->ic_des_chan)
 			fail |= 0x01;
 		if (ic->ic_opmode == IEEE80211_M_ADHOC) {
 			if ((ni->ni_capinfo & IEEE80211_CAPINFO_IBSS) == 0)
@@ -1161,9 +1163,10 @@ ieee80211_end_scan(struct ifnet *ifp)
 }
 
 struct ieee80211_node *
-ieee80211_alloc_node(struct ieee80211com *ic, int copy)
+ieee80211_alloc_node(struct ieee80211com *ic, u_int8_t *macaddr, int copy)
 {
 	struct ieee80211_node *ni;
+	int hash;
 
 	ni = malloc(sizeof(struct ieee80211_node) + ic->ic_bss_privlen,
 	    M_DEVBUF, M_NOWAIT);
@@ -1173,11 +1176,16 @@ ieee80211_alloc_node(struct ieee80211com *ic, int copy)
 		memcpy(ni, &ic->ic_bss, sizeof(struct ieee80211_node));
 	else
 		memset(ni, 0, sizeof(struct ieee80211_node));
+	IEEE80211_ADDR_COPY(ni->ni_macaddr, macaddr);
 	if (ic->ic_bss_privlen) {
 		ni->ni_private = &ni[1];
 		memset(ni->ni_private, 0, ic->ic_bss_privlen);
-	}
+	} else
+		ni->ni_private = NULL;
+
+	hash = IEEE80211_NODE_HASH(macaddr);
 	TAILQ_INSERT_TAIL(&ic->ic_node, ni, ni_list);
+	LIST_INSERT_HEAD(&ic->ic_hash[hash], ni, ni_hash);
 	if (ic->ic_opmode == IEEE80211_M_ADHOC ||
 	    ic->ic_opmode == IEEE80211_M_HOSTAP)
 		ic->ic_inact_timer = IEEE80211_INACT_WAIT;
@@ -1188,8 +1196,10 @@ struct ieee80211_node *
 ieee80211_find_node(struct ieee80211com *ic, u_int8_t *macaddr)
 {
 	struct ieee80211_node *ni;
+	int hash;
 
-	TAILQ_FOREACH(ni, &ic->ic_node, ni_list) {
+	hash = IEEE80211_NODE_HASH(macaddr);
+	LIST_FOREACH(ni, &ic->ic_hash[hash], ni_hash) {
 		if (IEEE80211_ADDR_EQ(ni->ni_macaddr, macaddr))
 			break;
 	}
@@ -1201,9 +1211,19 @@ ieee80211_free_node(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
 
 	TAILQ_REMOVE(&ic->ic_node, ni, ni_list);
+	LIST_REMOVE(ni, ni_hash);
 	free(ni, M_DEVBUF);
 	if (TAILQ_EMPTY(&ic->ic_node))
 		ic->ic_inact_timer = 0;
+}
+
+void
+ieee80211_free_allnodes(struct ieee80211com *ic)
+{
+	struct ieee80211_node *ni;
+
+	while ((ni = TAILQ_FIRST(&ic->ic_node)) != NULL)
+		ieee80211_free_node(ic, ni);  
 }
 
 int
@@ -1619,9 +1639,8 @@ ieee80211_recv_beacon(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 	}
 #endif
 	if (ni == NULL) {
-		if ((ni = ieee80211_alloc_node(ic, 0)) == NULL)
+		if ((ni = ieee80211_alloc_node(ic, wh->i_addr2, 0)) == NULL)
 			return;
-		IEEE80211_ADDR_COPY(ni->ni_macaddr, wh->i_addr2);
 		ni->ni_esslen = ssid[1];
 		memset(ni->ni_essid, 0, sizeof(ni->ni_essid));
 		memcpy(ni->ni_essid, ssid + 2, ssid[1]);
@@ -1711,11 +1730,10 @@ ieee80211_recv_prreq(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 
 	ni = ieee80211_find_node(ic, wh->i_addr2);
 	if (ni == NULL) {
-		if ((ni = ieee80211_alloc_node(ic, 1)) == NULL)
+		if ((ni = ieee80211_alloc_node(ic, wh->i_addr2, 1)) == NULL)
 			return;
 		DPRINTF(("ieee80211_recv_prreq: new req from %s\n",
 		    ether_sprintf(wh->i_addr2)));
-		IEEE80211_ADDR_COPY(ni->ni_macaddr, wh->i_addr2);
 		allocbs = 1;
 	} else
 		allocbs = 0;
@@ -1786,9 +1804,9 @@ ieee80211_recv_auth(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 		allocbs = 0;
 		ni = ieee80211_find_node(ic, wh->i_addr2);
 		if (ni == NULL) {
-			if ((ni = ieee80211_alloc_node(ic, 0)) == NULL)
+			ni = ieee80211_alloc_node(ic, wh->i_addr2, 0);
+			if (ni == NULL)
 				return;
-			IEEE80211_ADDR_COPY(ni->ni_macaddr, wh->i_addr2);
 			IEEE80211_ADDR_COPY(ni->ni_bssid, ic->ic_bss.ni_bssid);
 			allocbs = 1;
 		}
@@ -2158,8 +2176,7 @@ ieee80211_new_state(struct ifnet *ifp, enum ieee80211_state nstate, int mgt)
 				free(ic->ic_wep_ctx, M_DEVBUF);
 				ic->ic_wep_ctx = NULL;
 			}
-			while ((ni = TAILQ_FIRST(&ic->ic_node)) != NULL)
-				ieee80211_free_node(ic, ni);  
+			ieee80211_free_allnodes(ic);
 			break;
 		}
 		break;
@@ -2209,8 +2226,7 @@ ieee80211_new_state(struct ifnet *ifp, enum ieee80211_state nstate, int mgt)
 				    " rescanning\n",
 				    ifp->if_xname,
 				    ether_sprintf(ic->ic_bss.ni_bssid));
-			while ((ni = TAILQ_FIRST(&ic->ic_node)) != NULL)
-				ieee80211_free_node(ic, ni);  
+			ieee80211_free_allnodes(ic);
 			/* FALLTHRU */
 		case IEEE80211_S_AUTH:
 		case IEEE80211_S_ASSOC:
@@ -2318,7 +2334,7 @@ ieee80211_wep_crypt(struct ifnet *ifp, struct mbuf *m0, int txflag)
 	struct ieee80211com *ic = (void *)ifp;
 	struct mbuf *m, *n, *n0;
 	struct ieee80211_frame *wh;
-	int left, len, moff, noff, kid;
+	int i, left, len, moff, noff, kid;
 	u_int32_t iv, crc;
 	u_int8_t *ivp;
 	void *ctx;
@@ -2361,18 +2377,21 @@ ieee80211_wep_crypt(struct ifnet *ifp, struct mbuf *m0, int txflag)
 	if (txflag) {
 		kid = ic->ic_wep_txkey;
 		wh->i_fc[1] |= IEEE80211_FC1_WEP;
+                iv = ic->ic_iv;
 		/*
-		 * XXX
-		 * IV must not duplicate during the lifetime of the key.
-		 * But no mechanism to renew keys is defined in IEEE 802.11
-		 * WEP.  And IV may be duplicated between other stations
-		 * because of the session key itself is shared.
-		 * So we use pseudo random IV here, though it is not the
-		 * best way.
+		 * Skip 'bad' IVs from Fluhrer/Mantin/Shamir:
+		 * (B, 255, N) with 3 <= B < 8
 		 */
-		iv = random();
+		if (iv >= 0x03ff00 &&
+		    (iv & 0xf8ff00) == 0x00ff00)
+			iv += 0x000100;
+		ic->ic_iv = iv + 1;
+		/* put iv in little endian to prepare 802.11i */
 		ivp = mtod(n, u_int8_t *) + noff;
-		memcpy(ivp, (caddr_t)&iv, IEEE80211_WEP_IVLEN);
+		for (i = 0; i < IEEE80211_WEP_IVLEN; i++) {
+			ivp[i] = iv & 0xff;
+			iv >>= 8;
+		}
 		ivp[IEEE80211_WEP_IVLEN] = kid << 6;	/* pad and keyid */
 		noff += IEEE80211_WEP_IVLEN + IEEE80211_WEP_KIDLEN;
 	} else {
