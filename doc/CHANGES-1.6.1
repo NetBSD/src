@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.84 2003/01/06 04:37:18 jmc Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.85 2003/01/11 23:08:16 jmc Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -2930,3 +2930,57 @@ distrib/sets/lists/comp/mi			1.440.2.4-1.440.2.5 (hand patch)
 	
 	Add rpc_com.h
 	[fvdl, ticket #1037] 
+
+usr.sbin/pppd/pppd/main.c			1.41-1.42
+
+	Use "%u" instead "%d" in format string for bytes count reported at
+	termination. This should fix PR bin/19731.
+	[tron, ticket #1058]
+
+lib/libc/stdio/snprintf.c			1.16-1.17
+lib/libc/stdio/vsnprintf.c			1.16-1.17
+
+	Fix two bugs:
+	1. snprintf(foo, 0. "XXX") is guaranteed not to write in foo by the
+	   standard (ISO/IEC 9899 7.19.6.5) but our implementation handles this
+	   as if the buffer has a size of (size_t)-1.
+	2. snprintf(NULL, 0, "XXX") leaks memory since cantwrite() allocates
+	   memory if _bf._base == NULL, and this buffer is never freed
+	   (PR 16483).
+	[kristerw, ticket #1059]
+
+sys/netinet6/esp_rijndael.c			1.8-1.9
+sys/netkey/keydb.h				1.11-1.12 (hand patched)
+sys/netkey/keysock.c				1.20-1.21
+
+	allocate route_in6 in struct secashead, to avoid mistakenly overrun
+	the end of secashead.  Fixes PR18751.
+	[itojun, ticket #1060]
+
+sys/net/if_spppsubr.c				1.47-1.48
+
+	correct tcp header chasing in pp_fastq processing. should fix kern/17491
+	[tron, ticket #1061]
+
+sys/arch/atari/conf/GENERIC.in			1.29-1.30
+sys/arch/atari/conf/ATARITT			1.47.4.1-1.47.4.2 (regen)
+sys/arch/atari/conf/BOOT			1.46.4.1-1.46.4.2 (regen)
+sys/arch/atari/conf/BOOTX			1.40.4.1-1.40.4.2 (regen)
+sys/arch/atari/conf/FALCON			1.47.4.1-1.47.4.2 (regen)
+sys/arch/atari/conf/HADES			1.37.4.2-1.37.4.3 (regen)
+sys/arch/atari/conf/MILAN-ISAIDE		1.12.4.3-1.12.4.4 (regen)
+sys/arch/atari/conf/MILAN-PCIIDE		1.12.4.3-1.12.4.4 (regen)
+
+	Since 1.6 we have 3 images (not 2!):
+	  - 1Mb on HD floppy's
+	  - 1.44Mb on HD floppy's
+	  - 1.44Mb on a DD floppy
+	[leo, ticket #1062]
+
+sys/adosfs/advnops.c				via hand patch of diffs 
+						from 1.1-1.2 of 
+						sys/fs/adosfs/advnops.c
+
+	Don't scale file block numbers. Fixes mmap() and UBCified read() 
+	problems.
+	[lonewolf, ticket #1063]
