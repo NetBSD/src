@@ -1,4 +1,4 @@
-/*	$NetBSD: tuba_subr.c,v 1.2 1994/06/29 06:40:52 cgd Exp $	*/
+/*	$NetBSD: tuba_subr.c,v 1.3 1995/04/15 01:55:45 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -252,7 +252,8 @@ tuba_tcpinput(m, src, dst)
 	short ostate;
 	struct in_addr laddr;
 	int dropsocket = 0, iss = 0;
-	u_long tiwin, ts_val, ts_ecr;
+	u_long tiwin;
+	u_int32_t ts_val, ts_ecr;
 	int ts_present = 0;
 
 	if ((m->m_flags & M_PKTHDR) == 0)
