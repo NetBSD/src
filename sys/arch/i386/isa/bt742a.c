@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: bt742a.c,v 1.28 1994/06/03 15:56:18 mycroft Exp $
+ *      $Id: bt742a.c,v 1.28.2.1 1994/07/28 05:24:27 cgd Exp $
  */
 
 /*
@@ -63,6 +63,7 @@
 #include <machine/pio.h>
 
 #include <i386/isa/isavar.h>
+#include <i386/isa/dmavar.h>
 #include <i386/isa/icu.h>
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
@@ -351,8 +352,8 @@ struct bt_softc {
 	struct bt_mbx bt_mbx;		/* all our mailboxes */
 	struct bt_ccb *bt_ccb_free;	/* list of free CCBs */
 	struct bt_ccb *ccbhash[CCB_HASH_SIZE];	/* phys to kv hash */
-	int bt_int;			/* int. read off board */
-	int bt_dma;			/* DMA channel read of board */
+	u_short bt_int;			/* int. read off board */
+	u_short bt_dma;			/* DMA channel read of board */
 	int bt_scsi_dev;		/* adapters scsi id */
 	int numccbs;			/* how many we have malloc'd */
 	struct scsi_link sc_link;	/* prototype for devs */
@@ -566,31 +567,27 @@ btprobe(parent, self, aux)
 	if (bt_find(bt) != 0)
 		return 0;
 
-#ifdef NEWCONFIG
 	/*
 	 * If it's there, put in it's interrupt vectors and dma channel
 	 */
-	if (ia->ia_irq == IRQUNK) {
-		ia->ia_irq = (1 << bt->bt_int);
-	} else {
-		if (ia->ia_irq != (1 << bt->bt_int)) {
-			printf("bt%d: irq mismatch, %x != %x\n",
-				bt->sc_dev.dv_unit, ia->ia_irq,
-				1 << bt->bt_int);
+	if (ia->ia_irq != IRQUNK) {
+		if (ia->ia_irq != bt->bt_int) {
+			printf("bt%d: irq mismatch; kernel configured %d != board configured %d\n",
+				bt->sc_dev.dv_unit, ffs(ia->ia_irq) - 1,
+				ffs(bt->bt_int) - 1);
                 	return 0;
 		}
-	}
+	} else
+		ia->ia_irq = bt->bt_int;
 
-	if (ia->ia_drq == DRQUNK) {
-		ia->ia_drq = bt->bt_dma;
-	} else {
+	if (ia->ia_drq != DRQUNK) {
 		if (ia->ia_drq != bt->bt_dma) {
-			printf("bt%d: drq mismatch, %x != %x\n",
+			printf("bt%d: drq mismatch; kernel configured %d != board configured %d\n",
 				bt->sc_dev.dv_unit, ia->ia_drq, bt->bt_dma);
                 	return 0;
 		}
-	}
-#endif
+	} else
+		ia->ia_drq = bt->bt_dma;
 	
 	ia->ia_msize = 0;
 	ia->ia_iosize = 4;
@@ -612,6 +609,9 @@ btattach(parent, self, aux)
 {
         struct isa_attach_args *ia = aux;
 	struct bt_softc *bt = (void *)self;
+
+	if (ia->ia_drq != DRQUNK)
+		isa_dmacascade(ia->ia_drq);
 
 	bt_init(bt);
 
@@ -1074,26 +1074,18 @@ bt_find(bt)
 	bt_cmd(bt, 0, sizeof(conf), 0, &conf, BT_CONF_GET);
 	switch (conf.chan) {
 	case EISADMA:
-		bt->bt_dma = -1;
+		bt->bt_dma = DRQUNK;
 		break;
 	case CHAN0:
-		outb(0x0b, 0x0c);
-		outb(0x0a, 0x00);
 		bt->bt_dma = 0;
 		break;
 	case CHAN5:
-		outb(0xd6, 0xc1);
-		outb(0xd4, 0x01);
 		bt->bt_dma = 5;
 		break;
 	case CHAN6:
-		outb(0xd6, 0xc2);
-		outb(0xd4, 0x02);
 		bt->bt_dma = 6;
 		break;
 	case CHAN7:
-		outb(0xd6, 0xc3);
-		outb(0xd4, 0x03);
 		bt->bt_dma = 7;
 		break;
 	default:
@@ -1104,22 +1096,22 @@ bt_find(bt)
 
 	switch (conf.intr) {
 	case INT9:
-		bt->bt_int = 9;
+		bt->bt_int = IRQ9;
 		break;
 	case INT10:
-		bt->bt_int = 10;
+		bt->bt_int = IRQ10;
 		break;
 	case INT11:
-		bt->bt_int = 11;
+		bt->bt_int = IRQ11;
 		break;
 	case INT12:
-		bt->bt_int = 12;
+		bt->bt_int = IRQ12;
 		break;
 	case INT14:
-		bt->bt_int = 14;
+		bt->bt_int = IRQ14;
 		break;
 	case INT15:
-		bt->bt_int = 15;
+		bt->bt_int = IRQ15;
 		break;
 	default:
 		printf("%s: illegal int setting %x\n", bt->sc_dev.dv_xname,
