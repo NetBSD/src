@@ -1,7 +1,7 @@
 #
 # NEWS3400 config file
 #
-# 	$NetBSD: WAPIKO,v 1.2 1998/03/04 22:14:14 thorpej Exp $
+# 	$NetBSD: WAPIKO,v 1.3 1998/04/30 14:16:13 tsubai Exp $
 #
 include		"arch/newsmips/conf/std.newsmips"
 
@@ -28,7 +28,7 @@ options 	SCSIVERBOSE		# Verbose SCSI errors
 options 	COMPAT_43		# compatibility with 4.3BSD binaries
 options 	COMPAT_12		# NetBSD 1.2 binary compatibility
 options 	COMPAT_13		# NetBSD 1.3 binary compatibility
-options 	EXEC_AOUT		# exec a.out binaries
+#options 	EXEC_AOUT		# exec a.out binaries
 #options 	EXEC_ECOFF		# exec ecoff binaries
 
 # Filesystem options
