@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.75.2.1 1997/10/30 05:34:23 mellon Exp $	*/
+/*	$NetBSD: pmap.c,v 1.75.2.2 1997/11/05 22:27:54 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 /*
  * Some notes:
  *
- * sun3s have contexts (8).  In our mapping of the world, the kernel is mapped
+ * sun3s have contexts (8).  In this pmap design, the kernel is mapped
  * into all contexts.  Processes take up a known portion of the context,
  * and compete for the available contexts on a LRU basis.
  *
@@ -70,6 +70,22 @@
  *       kernel is in all contexts
  */
 
+/*
+ * Project1:  Use a "null" context for processes that have not
+ * touched any user-space address recently.  This is efficient
+ * for things that stay in the kernel for a while, waking up
+ * to handle some I/O then going back to sleep (i.e. nfsd).
+ * If and when such a process returns to user-mode, it will
+ * fault and be given a real context at that time.
+ *
+ * This also lets context switch be fast, because all we need
+ * to do there for the MMU is slam the context register.
+ *
+ * Project2:  Use a private pool of PV elements.  This pool can be
+ * fixed size because the total mapped virtual space supported by
+ * the MMU H/W (and this pmap) is fixed for all time.
+ */
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -81,6 +97,8 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
+
+#include <m68k/m68k.h>
 
 #include <machine/cpu.h>
 #include <machine/control.h>
@@ -94,145 +112,30 @@
 #include <machine/pte.h>
 #include <machine/vmparam.h>
 
+#ifdef DDB
+#include <ddb/db_output.h>
+#else
+#define db_printf printf
+#endif
+
+/* Verify this correspondence between definitions. */
 #if	(PMAP_OBIO << PG_MOD_SHIFT) != PGT_OBIO
 #error	"PMAP_XXX definitions don't match pte.h!"
 #endif
 
-/* This is defined in locore.s */
-extern char kernel_text[];
-
-/* These are defined by the linker */
-extern char etext[], edata[], end[];
-
-extern void copypage __P((const void*, void*));
-extern void zeropage __P((void*));
 
 /*
- * For simplicity, this interface retains the variables
- * that were used in the old interface (without NONCONTIG).
- * These are set in pmap_bootstrap() and used in
- * pmap_next_page().
+ * Local convenience macros
  */
-vm_offset_t virtual_avail, virtual_end;
-vm_offset_t avail_start, avail_end;
 
-/* used to skip the Sun3/50 video RAM */
-static vm_offset_t hole_start, hole_size;
+#define TAILQ_FIRST(headp)	((headp)->tqh_first)
 
-/* statistics... */
-struct pmap_stats {
-	int	ps_enter_firstpv;	/* pv heads entered */
-	int	ps_enter_secondpv;	/* pv nonheads entered */
-	int	ps_unlink_pvfirst;	/* of pv_unlinks on head */
-	int	ps_unlink_pvsearch;	/* of pv_unlink searches */
-	int	ps_pmeg_faultin;	/* pmegs reloaded */
-	int	ps_changeprots;		/* of calls to changeprot */
-	int	ps_changewire;		/* useless wiring changes */
-	int	ps_npg_prot_all;	/* of active pages protected */
-	int	ps_npg_prot_actual;	/* pages actually affected */
-	int	ps_vac_uncached;	/* non-cached due to bad alias */
-	int	ps_vac_recached;	/* re-cached when bad alias gone */
-} pmap_stats;
-
-struct context_state {
-	TAILQ_ENTRY(context_state) context_link;
-	int            context_num;
-	struct pmap   *context_upmap;
-};
-
-typedef struct context_state *context_t;
-
+/* User segments from 0 to KERNBASE */
+#define	NUSEG	(KERNBASE / NBSG)
+/* The remainder are kernel segments. */
+#define	NKSEG	(NSEGMAP - NUSEG)
 
 #define VA_SEGNUM(x)	((u_int)(x) >> SEGSHIFT)
-
-/* This is for pmap_next_page() */
-static vm_offset_t avail_next;
-
-/* This is where we map a PMEG without a context. */
-static vm_offset_t temp_seg_va;
-
-/* XXX - Why do we need this? */
-#define	managed(pa)	(((pa) >= avail_start) && ((pa) < avail_end))
-
-
-#define	NKSEG	(NSEGMAP - (KERNBASE / NBSG)) /* is KERNBASE ok? */
-#define	NUSEG	(NSEGMAP-NKSEG)
-
-/*
- * locking issues:
- *
- */
-
-/*
- * Note that PMAP_LOCK is used in routines called at splnet() and
- * MUST NOT lower the priority.  For this reason we arrange that:
- *    splimp = max(splnet,splbio)
- * Would splvm() be more natural here? (same level as splimp).
- */
-#define splpmap splimp
-#define PMAP_LOCK() s = splpmap()
-#define PMAP_UNLOCK() splx(s)
-
-#define TAILQ_EMPTY(headp) \
-		!((headp)->tqh_first)
-
-#define TAILQ_REMOVE_FIRST(result, headp, entries) \
-{ \
-	result = (headp)->tqh_first; \
-	if (result) TAILQ_REMOVE(headp, result, entries); \
-	}
-
-/*
- * pv support, i.e stuff that maps from physical pages to virtual addresses
- *
- */
-
-/*
- * XXX - Could eliminate this by causing managed() to return 0
- * ( avail_start = avail_end = 0 )
- */
-int pv_initialized = 0;
-
-struct pv_entry {
-	struct pv_entry *pv_next;
-	pmap_t	       pv_pmap;
-	vm_offset_t      pv_va;
-	/* XXX - put flags in low byte of pv_va */
-	unsigned int     pv_flags;
-};
-typedef struct pv_entry *pv_entry_t;
-
-pv_entry_t pv_head_table = NULL;
-#ifdef	DIAGNOSTIC
-static struct pv_entry * pa_to_pvp __P((vm_offset_t pa));
-static struct pv_entry *
-pa_to_pvp(pa)
-	vm_offset_t pa;
-{
-	struct pv_entry *pvp;
-	if (pa < avail_start || pa >= avail_end) {
-		panic("pmap:pa_to_pvp: bad pa=0x%lx", pa);
-	}
-	pvp = &pv_head_table[PA_PGNUM(pa)];
-	return pvp;
-}
-#else
-#define pa_to_pvp(pa) &pv_head_table[PA_PGNUM(pa)]
-#endif
-
-/* These are as in the MMU but shifted by PV_SHIFT. */
-#define PV_SHIFT	24
-#define PV_VALID  0x80
-#define PV_WRITE  0x40
-#define PV_SYSTEM 0x20
-#define PV_NC     0x10
-#define PV_PERM   0xF0
-#define PV_TYPE   0x0C
-#define PV_REF    0x02
-#define PV_MOD    0x01
-
-#define MAKE_PV_REAL(pv_flags) ((pv_flags & PV_PERM) << PV_SHIFT)
-#define PG_TO_PV_FLAGS(pte) (((PG_PERM) & pte) >> PV_SHIFT)
 
 /*
  * Only "main memory" pages are registered in the pv_lists.
@@ -252,173 +155,11 @@ pa_to_pvp(pa)
 #define MEM_BITS	(PG_TYPE | PA_PGNUM(0xF0000000))
 #define	IS_MAIN_MEM(pte) (((pte) & MEM_BITS) == 0)
 
-
 /*
- * cache support
+ * Is there a Virtually Addressed Cache (VAC) alias problem
+ * if one page is mapped at both a1 and a2?
  */
 #define	BADALIAS(a1, a2)	(((int)(a1) ^ (int)(a2)) & SEGOFSET)
-
-/*
- * Save the MOD bit from the given PTE using its PA
- */
-static void
-save_modref_bits(int pte)
-{
-	pv_entry_t pvhead;
-
-	if (pv_initialized == 0)
-		return;
-
-	/* Only main memory is ever in the pv_lists */
-	if (!IS_MAIN_MEM(pte))
-		return;
-
-	pvhead = pa_to_pvp(PG_PA(pte));
-	pvhead->pv_flags |= ((pte & PG_MODREF) >> PV_SHIFT);
-}
-
-#define pmap_lock(pmap) simple_lock(&pmap->pm_lock)
-#define pmap_unlock(pmap) simple_unlock(&pmap->pm_lock)
-#define pmap_add_ref(pmap) ++pmap->pm_refcount
-#define pmap_del_ref(pmap) --pmap->pm_refcount
-#define pmap_refcount(pmap) pmap->pm_refcount
-
-#define PM_UPDATE_CACHE 1
-
-static int pmap_version = 1;
-struct pmap 	kernel_pmap_store;
-#define kernel_pmap (&kernel_pmap_store)
-
-/* protection conversion */
-static unsigned int protection_converter[8];
-#define pmap_pte_prot(x) protection_converter[x&7]
-
-/*
- * pmeg structures, queues, and macros
- */
-#define PMEGQ_FREE     0
-#define PMEGQ_INACTIVE 1
-#define PMEGQ_ACTIVE   2
-#define PMEGQ_KERNEL   3
-#define PMEGQ_NONE     4
-
-struct pmeg_state {
-	TAILQ_ENTRY(pmeg_state) pmeg_link;
-	int            pmeg_index;
-	pmap_t         pmeg_owner;
-	int            pmeg_version;
-	vm_offset_t    pmeg_va;
-	int            pmeg_wired;
-	int            pmeg_reserved;
-	int            pmeg_vpages;
-	int            pmeg_qstate;
-};
-
-typedef struct pmeg_state *pmeg_t;
-
-#define PMEG_INVAL (NPMEG-1)
-#define PMEG_NULL (pmeg_t) NULL
-
-/* XXX - Replace pmeg_kernel_queue with pmeg_wired_queue ? */
-TAILQ_HEAD(pmeg_tailq, pmeg_state);
-struct pmeg_tailq pmeg_free_queue, pmeg_inactive_queue,
-	pmeg_active_queue, pmeg_kernel_queue;
-
-static struct pmeg_state pmeg_array[NPMEG];
-
-#ifdef	PMAP_DEBUG
-void pmap_print __P((pmap_t pmap));
-void pv_print __P((vm_offset_t pa));
-
-static pmeg_t pmeg_p __P((int sme));
-static void pmeg_verify_empty __P((vm_offset_t va));
-static void pmeg_print __P((pmeg_t pmegp));
-
-static pmeg_t
-pmeg_p(sme)
-	int sme;
-{
-	if (sme < 0 || sme >= SEGINV)
-		panic("pmeg_p: bad sme");
-	return &pmeg_array[sme];
-}
-#else
-#define pmeg_p(x) &pmeg_array[x]
-#endif
-
-#define is_pmeg_wired(pmegp) (pmegp->pmeg_wired != 0)
-
-/*
- * context structures, and queues
- */
-#define	CTXINVAL -1
-#define	has_context(pmap)	(pmap->pm_ctxnum >= 0)
-
-TAILQ_HEAD(context_tailq, context_state);
-struct context_tailq context_free_queue, context_active_queue;
-
-static struct context_state context_array[NCONTEXT];
-
-/*
- * location to store virtual addresses
- * to be used in copy/zero operations
- * (set in sun3_startup.c)
- */
-vm_offset_t tmp_vpages[2] = {
-	MONSHORTSEG,
-	MONSHORTSEG + NBPG };
-int tmp_vpages_inuse;
-
-
-/*
- * prototypes
- */
-static int get_pte_pmeg __P((int, int));
-static void set_pte_pmeg __P((int, int, int));
-
-static void context_allocate __P((pmap_t pmap));
-static void context_free __P((pmap_t pmap));
-static void context_init __P((void));
-
-static void pmeg_init __P((void));
-static void pmeg_reserve __P((int pmeg_num));
-
-static pmeg_t pmeg_allocate __P((pmap_t pmap, vm_offset_t va));
-static void pmeg_mon_init __P((vm_offset_t sva, vm_offset_t eva, int keep));
-static void pmeg_release __P((pmeg_t pmegp));
-static void pmeg_free __P((pmeg_t pmegp));
-static pmeg_t pmeg_cache __P((pmap_t pmap, vm_offset_t va));
-static void pmeg_set_wiring __P((pmeg_t pmegp, vm_offset_t va, int));
-
-static int pv_link __P((pmap_t pmap, vm_offset_t, vm_offset_t, u_int));
-static void pv_unlink __P((pmap_t, vm_offset_t, vm_offset_t));
-static void pv_remove_all __P((vm_offset_t pa));
-static void pv_changepte __P((pv_entry_t, int, int));
-static void pv_syncflags __P((pv_entry_t head));
-static void pv_init __P((void));
-
-static void pmeg_clean __P((pmeg_t pmegp));
-static void pmeg_clean_free __P((void));
-
-static void protection_init __P((void));
-
-static void pmap_common_init __P((pmap_t pmap));
-static void pmap_user_init __P((pmap_t pmap));
-
-static void pmap_enter_kernel __P((vm_offset_t va, vm_offset_t pa,
-	vm_prot_t prot, boolean_t wired, int pte_proto));
-static void pmap_enter_user __P((pmap_t pmap, vm_offset_t va, vm_offset_t pa,
-	vm_prot_t prot, boolean_t wired, int pte_proto));
-
-static void pmap_protect1 __P((pmap_t, vm_offset_t, vm_offset_t));
-static void pmap_protect_mmu __P((pmap_t, vm_offset_t, vm_offset_t));
-static void pmap_protect_noctx __P((pmap_t, vm_offset_t, vm_offset_t));
-
-static void pmap_remove1 __P((pmap_t pmap, vm_offset_t, vm_offset_t));
-static void pmap_remove_mmu __P((pmap_t, vm_offset_t, vm_offset_t));
-static void pmap_remove_noctx __P((pmap_t, vm_offset_t, vm_offset_t));
-
-static int  pmap_fault_reload __P((struct pmap *, vm_offset_t, int));
 
 
 /*
@@ -447,6 +188,84 @@ int pmap_db_watchva = -1;
 int pmap_db_watchpmeg = -1;
 #endif	/* PMAP_DEBUG */
 
+
+/*
+ * Miscellaneous variables.
+ *
+ * For simplicity, this interface retains the variables
+ * that were used in the old interface (without NONCONTIG).
+ * These are set in pmap_bootstrap() and used in
+ * pmap_next_page().
+ */
+vm_offset_t virtual_avail, virtual_end;
+vm_offset_t avail_start, avail_end;
+#define	managed(pa)	(((pa) >= avail_start) && ((pa) < avail_end))
+
+/* used to skip the Sun3/50 video RAM */
+static vm_offset_t hole_start, hole_size;
+
+/* This is for pmap_next_page() */
+static vm_offset_t avail_next;
+
+/* This is where we map a PMEG without a context. */
+static vm_offset_t temp_seg_va;
+
+/*
+ * Location to store virtual addresses
+ * to be used in copy/zero operations.
+ */
+vm_offset_t tmp_vpages[2] = {
+	MONSHORTSEG,
+	MONSHORTSEG + NBPG };
+int tmp_vpages_inuse;
+
+static int pmap_version = 1;
+struct pmap kernel_pmap_store;
+#define kernel_pmap (&kernel_pmap_store)
+static u_char kernel_segmap[NSEGMAP];
+
+/* protection conversion */
+static unsigned int protection_converter[8];
+#define pmap_pte_prot(x) protection_converter[x&7]
+
+/* statistics... */
+struct pmap_stats {
+	int	ps_enter_firstpv;	/* pv heads entered */
+	int	ps_enter_secondpv;	/* pv nonheads entered */
+	int	ps_unlink_pvfirst;	/* of pv_unlinks on head */
+	int	ps_unlink_pvsearch;	/* of pv_unlink searches */
+	int	ps_pmeg_faultin;	/* pmegs reloaded */
+	int	ps_changeprots;		/* of calls to changeprot */
+	int	ps_changewire;		/* useless wiring changes */
+	int	ps_npg_prot_all;	/* of active pages protected */
+	int	ps_npg_prot_actual;	/* pages actually affected */
+	int	ps_vac_uncached;	/* non-cached due to bad alias */
+	int	ps_vac_recached;	/* re-cached when bad alias gone */
+} pmap_stats;
+
+
+/*
+ * locking issues:  These used to do spl* stuff.
+ * XXX: Use these for reentrance detection?
+ */
+#define PMAP_LOCK() 	(void)/XXX
+#define PMAP_UNLOCK()	(void)/XXX
+
+#define pmap_lock(pmap) simple_lock(&pmap->pm_lock)
+#define pmap_unlock(pmap) simple_unlock(&pmap->pm_lock)
+#define pmap_add_ref(pmap) ++pmap->pm_refcount
+#define pmap_del_ref(pmap) --pmap->pm_refcount
+#define pmap_refcount(pmap) pmap->pm_refcount
+
+/*
+ * Note that splpmap() is used in routines called at splnet() and
+ * MUST NOT lower the priority.  For this reason we arrange that:
+ *    splimp = max(splnet,splbio)
+ * Would splvm() be more natural here? (same level as splimp).
+ */
+
+#define splpmap splimp
+
 #ifdef	PMAP_DEBUG
 #define	CHECK_SPL() do { \
 	if ((getsr() & PSL_IPL) < PSL_IPL4) \
@@ -456,79 +275,361 @@ int pmap_db_watchpmeg = -1;
 #define	CHECK_SPL() (void)0
 #endif	/* PMAP_DEBUG */
 
+
+/*
+ * PV support.
+ * (i.e. Find all virtual mappings of a physical page.)
+ */
+
+/*
+ * XXX - Could eliminate this by causing managed() to return 0
+ * ( avail_start = avail_end = 0 )
+ */
+int pv_initialized = 0;
+
+/* One of these for each mapped virtual page. */
+struct pv_entry {
+	struct pv_entry *pv_next;
+	pmap_t	       pv_pmap;
+	vm_offset_t      pv_va;
+};
+typedef struct pv_entry *pv_entry_t;
+
+/* Table of PV list heads (per physical page). */
+static struct pv_entry **pv_head_tbl;
+
+/* Free list of PV entries. */
+static struct pv_entry *pv_free_list;
+
+/* Table of flags (per physical page). */
+static u_char *pv_flags_tbl;
+
+/* These are as in the MMU but shifted by PV_SHIFT. */
+#define PV_SHIFT	24
+#define PV_VALID  0x80
+#define PV_WRITE  0x40
+#define PV_SYSTEM 0x20
+#define PV_NC     0x10
+#define PV_PERM   0xF0
+#define PV_TYPE   0x0C
+#define PV_REF    0x02
+#define PV_MOD    0x01
+
+
+/*
+ * context structures, and queues
+ */
+
+struct context_state {
+	TAILQ_ENTRY(context_state) context_link;
+	int            context_num;
+	struct pmap   *context_upmap;
+};
+typedef struct context_state *context_t;
+
+#define INVALID_CONTEXT -1	/* impossible value */
+#define EMPTY_CONTEXT 0
+#define FIRST_CONTEXT 1
+#define	has_context(pmap)	((pmap)->pm_ctxnum != EMPTY_CONTEXT)
+
+TAILQ_HEAD(context_tailq, context_state)
+	context_free_queue, context_active_queue;
+
+static struct context_state context_array[NCONTEXT];
+
+
+/*
+ * PMEG structures, queues, and macros
+ */
+#define PMEGQ_FREE     0
+#define PMEGQ_INACTIVE 1
+#define PMEGQ_ACTIVE   2
+#define PMEGQ_KERNEL   3
+#define PMEGQ_NONE     4
+
+struct pmeg_state {
+	TAILQ_ENTRY(pmeg_state) pmeg_link;
+	int            pmeg_index;
+	pmap_t         pmeg_owner;
+	int            pmeg_version;
+	vm_offset_t    pmeg_va;
+	int            pmeg_wired;
+	int            pmeg_reserved;
+	int            pmeg_vpages;
+	int            pmeg_qstate;
+};
+
+typedef struct pmeg_state *pmeg_t;
+
+#define PMEG_INVAL (NPMEG-1)
+#define PMEG_NULL (pmeg_t) NULL
+
+/* XXX - Replace pmeg_kernel_queue with pmeg_wired_queue ? */
+TAILQ_HEAD(pmeg_tailq, pmeg_state)
+	pmeg_free_queue, pmeg_inactive_queue,
+	pmeg_active_queue, pmeg_kernel_queue;
+
+static struct pmeg_state pmeg_array[NPMEG];
+
+
+/*
+ * prototypes
+ */
+static int get_pte_pmeg __P((int, int));
+static void set_pte_pmeg __P((int, int, int));
+
+static void context_allocate __P((pmap_t pmap));
+static void context_free __P((pmap_t pmap));
+static void context_init __P((void));
+
+static void pmeg_init __P((void));
+static void pmeg_reserve __P((int pmeg_num));
+
+static pmeg_t pmeg_allocate __P((pmap_t pmap, vm_offset_t va));
+static void pmeg_mon_init __P((vm_offset_t sva, vm_offset_t eva, int keep));
+static void pmeg_release __P((pmeg_t pmegp));
+static void pmeg_free __P((pmeg_t pmegp));
+static pmeg_t pmeg_cache __P((pmap_t pmap, vm_offset_t va));
+static void pmeg_set_wiring __P((pmeg_t pmegp, vm_offset_t va, int));
+
+static int pv_link __P((pmap_t pmap, vm_offset_t, vm_offset_t, int));
+static void pv_unlink __P((pmap_t, vm_offset_t, vm_offset_t));
+static void pv_remove_all __P((vm_offset_t pa));
+static void pv_changepte __P((vm_offset_t pa, int, int));
+static u_int pv_syncflags __P((pv_entry_t));
+static void pv_init __P((void));
+
+static void pmeg_clean __P((pmeg_t pmegp));
+static void pmeg_clean_free __P((void));
+
+static void protection_init __P((void));
+
+static void pmap_common_init __P((pmap_t pmap));
+static void pmap_kernel_init __P((pmap_t pmap));
+static void pmap_user_init __P((pmap_t pmap));
+
+static void pmap_enter_kernel __P((vm_offset_t va, vm_offset_t pa,
+	vm_prot_t prot, boolean_t wired, int pte_proto));
+static void pmap_enter_user __P((pmap_t pmap, vm_offset_t va, vm_offset_t pa,
+	vm_prot_t prot, boolean_t wired, int pte_proto));
+
+static void pmap_protect1 __P((pmap_t, vm_offset_t, vm_offset_t));
+static void pmap_protect_mmu __P((pmap_t, vm_offset_t, vm_offset_t));
+static void pmap_protect_noctx __P((pmap_t, vm_offset_t, vm_offset_t));
+
+static void pmap_remove1 __P((pmap_t pmap, vm_offset_t, vm_offset_t));
+static void pmap_remove_mmu __P((pmap_t, vm_offset_t, vm_offset_t));
+static void pmap_remove_noctx __P((pmap_t, vm_offset_t, vm_offset_t));
+
+static int  pmap_fault_reload __P((struct pmap *, vm_offset_t, int));
+
+#ifdef	PMAP_DEBUG
+void pmap_print __P((pmap_t pmap));
+void pv_print __P((vm_offset_t pa));
+void pmeg_print __P((pmeg_t pmegp));
+static void pmeg_verify_empty __P((vm_offset_t va));
+#endif	/* PMAP_DEBUG */
+
+
+/*
+ * Various in-line helper functions.
+ */
+
+static inline pmap_t
+current_pmap __P((void))
+{
+	struct proc *p;
+	struct vmspace *vm;
+	vm_map_t	map;
+	pmap_t	pmap;
+
+	p = curproc;	/* XXX */
+	if (p == NULL)
+		pmap = kernel_pmap;
+	else {
+		vm = p->p_vmspace;
+		map = &vm->vm_map;
+		pmap = vm_map_pmap(map);
+	}
+
+	return (pmap);
+}
+
+static inline struct pv_entry **
+pa_to_pvhead(vm_offset_t pa)
+{
+	int idx;
+
+	idx = PA_PGNUM(pa);
+#ifdef	DIAGNOSTIC
+	if (idx > physmem)
+		panic("pmap:pa_to_pvhead: bad pa=0x%lx", pa);
+#endif
+	return (&pv_head_tbl[idx]);
+}
+
+static inline u_char *
+pa_to_pvflags(vm_offset_t pa)
+{
+	int idx;
+
+	idx = PA_PGNUM(pa);
+#ifdef	DIAGNOSTIC
+	if (idx > physmem)
+		panic("pmap:pa_to_pvflags: idx=0x%x", idx);
+#endif
+	return (&pv_flags_tbl[idx]);
+}
+
+static inline pmeg_t
+pmeg_p(int sme)
+{
+#ifdef	DIAGNOSTIC
+	if (sme < 0 || sme >= SEGINV)
+		panic("pmeg_p: bad sme");
+#endif
+	return &pmeg_array[sme];
+}
+
+#define is_pmeg_wired(pmegp) (pmegp->pmeg_wired != 0)
+
+static void
+pmeg_set_wiring(pmegp, va, flag)
+	pmeg_t pmegp;
+	vm_offset_t va;
+	int flag;
+{
+	int idx, mask;
+
+	idx = VA_PTE_NUM(va);
+	mask = 1 << idx;
+
+	if (flag)
+		pmegp->pmeg_wired |= mask;
+	else
+		pmegp->pmeg_wired &= ~mask;
+}
+
+/*
+ * Save the MOD bit from the given PTE using its PA
+ */
+static void
+save_modref_bits(int pte)
+{
+	u_char *pv_flags;
+
+	if (pv_initialized == 0)
+		return;
+
+	/* Only main memory is ever in the pv_lists */
+	if (!IS_MAIN_MEM(pte))
+		return;
+
+	CHECK_SPL();
+
+	pv_flags = pa_to_pvflags(PG_PA(pte));
+	*pv_flags |= ((pte & PG_MODREF) >> PV_SHIFT);
+}
+
+
+/****************************************************************
+ * Context management functions.
+ */
+
+/* part of pmap_bootstrap */
+static void
+context_init()
+{
+	int i;
+
+	TAILQ_INIT(&context_free_queue);
+	TAILQ_INIT(&context_active_queue);
+
+	/* Leave EMPTY_CONTEXT out of the free list. */
+	context_array[0].context_upmap = kernel_pmap;
+
+	for (i = 1; i < NCONTEXT; i++) {
+		context_array[i].context_num = i;
+		context_array[i].context_upmap = NULL;
+		TAILQ_INSERT_TAIL(&context_free_queue, &context_array[i],
+						  context_link);
+#ifdef	PMAP_DEBUG
+		if (pmap_debug & PMD_CONTEXT)
+			printf("context_init: sizeof(context_array[0])=%d\n",
+				   sizeof(context_array[0]));
+#endif
+	}
+}
+
+/* Get us a context (steal one if necessary). */
 static void
 context_allocate(pmap)
 	pmap_t pmap;
 {
 	context_t context;
-	int s;
 
-	PMAP_LOCK();
-#ifdef	PMAP_DEBUG
-	if (pmap_debug & PMD_CONTEXT)
-		printf("context_allocate: for pmap %p\n", pmap);
-#endif
+	CHECK_SPL();
+
+#ifdef	DIAGNOSTIC
 	if (pmap == kernel_pmap)
 		panic("context_allocate: kernel_pmap");
 	if (has_context(pmap))
 		panic("pmap: pmap already has context allocated to it");
-	context = (&context_free_queue)->tqh_first;
+#endif
+
+	context = TAILQ_FIRST(&context_free_queue);
 	if (context == NULL) {
 		/* Steal the head of the active queue. */
-		context = (&context_active_queue)->tqh_first;
+		context = TAILQ_FIRST(&context_active_queue);
 		if (context == NULL)
 			panic("pmap: no contexts left?");
-		context_free(context->context_upmap);
 #ifdef	PMAP_DEBUG
 		if (pmap_debug & PMD_CONTEXT)
-			printf("context_allocate: pmap %p, take context %p num %d\n",
-				   pmap, context, context->context_num);
+			printf("context_allocate: steal ctx %d from pmap %p\n",
+				   context->context_num, context->context_upmap);
 #endif
+		context_free(context->context_upmap);
+		context = TAILQ_FIRST(&context_free_queue);
 	}
-	TAILQ_REMOVE_FIRST(context, &context_free_queue, context_link);
-	TAILQ_INSERT_TAIL(&context_active_queue, context, context_link);
+	TAILQ_REMOVE(&context_free_queue, context, context_link);
+
 	if (context->context_upmap != NULL)
 		panic("pmap: context in use???");
-	pmap->pm_ctxnum = context->context_num;
+
 	context->context_upmap = pmap;
-#ifdef	PMAP_DEBUG
-	if (pmap_debug & PMD_CONTEXT)
-		printf("context_allocate: pmap %p given context %p num %d\n",
-			   pmap, context, context->context_num);
-#endif
+	pmap->pm_ctxnum = context->context_num;
+
+	TAILQ_INSERT_TAIL(&context_active_queue, context, context_link);
 
 	/*
 	 * We could reload the MMU here, but that would
 	 * artificially move PMEGs from the inactive queue
 	 * to the active queue, so do lazy reloading.
 	 * XXX - Need to reload wired pmegs though...
+	 * XXX: Verify the context it is empty?
 	 */
-
-	PMAP_UNLOCK();
 }
 
+/*
+ * Unload the context and put it on the free queue.
+ */
 static void
 context_free(pmap)		/* :) */
 	pmap_t pmap;
 {
 	int saved_ctxnum, ctxnum;
-	int i, s, sme;
+	int i, sme;
 	context_t contextp;
 	vm_offset_t va;
 
-	PMAP_LOCK();
+	CHECK_SPL();
 
 	ctxnum = pmap->pm_ctxnum;
-#ifdef	PMAP_DEBUG
-	if (pmap_debug & PMD_CONTEXT)
-		printf("context_free: freeing context num %d of pmap %p\n",
-			   ctxnum, pmap);
-#endif
-
-	if (ctxnum < 0 || ctxnum >= NCONTEXT)
-		panic("pmap: can't free a non-existent context");
+	if (ctxnum < FIRST_CONTEXT || ctxnum >= NCONTEXT)
+		panic("pmap: context_free ctxnum");
 	contextp = &context_array[ctxnum];
 
+	/* Temporary context change. */
 	saved_ctxnum = get_context();
 	set_context(ctxnum);
 
@@ -539,71 +640,74 @@ context_free(pmap)		/* :) */
 #endif
 
 	/* Unload MMU (but keep in SW segmap). */
-	va = 0;
-	for (i=0; i < NUSEG; i++) {
-		if (pmap->pm_segmap[i] != SEGINV) {
-			/* The MMU might have a valid sme. */
-			sme = get_segmap(va);
-			if (sme != SEGINV) {
-#ifdef	PMAP_DEBUG
-				/* Validate SME found in MMU. */
-				if (sme != pmap->pm_segmap[i])
-					panic("context_free: unknown sme at va=0x%lx", va);
-				if (pmap_debug & PMD_SEGMAP)
-					printf("pmap: set_segmap ctx=%d v=0x%lx old=0x%x new=ff (cf)\n",
-						   ctxnum, m68k_trunc_seg(va), sme);
+	for (i=0, va=0; i < NUSEG; i++, va+=NBSG) {
+
+#if !defined(PMAP_DEBUG)
+		/* Short-cut using the S/W segmap (if !debug). */
+		if (pmap->pm_segmap[i] == SEGINV)
+			continue;
 #endif
-				/* Did cache flush above (whole context). */
-				set_segmap(va, SEGINV);
-				pmeg_release(pmeg_p(sme));
-			}
-		}
-		va += NBSG;
+
+		/* Check the H/W segmap. */
+		sme = get_segmap(va);
+		if (sme == SEGINV)
+			continue;
+
+		/* Found valid PMEG in the segmap. */
+#ifdef	PMAP_DEBUG
+		if (pmap_debug & PMD_SEGMAP)
+			printf("pmap: set_segmap ctx=%d v=0x%lx old=0x%x new=ff (cf)\n",
+				   ctxnum, va, sme);
+#endif
+#ifdef	DIAGNOSTIC
+		if (sme != pmap->pm_segmap[i])
+			panic("context_free: unknown sme at va=0x%lx", va);
+#endif
+		/* Did cache flush above (whole context). */
+		set_segmap(va, SEGINV);
+		/* In this case, do not clear pm_segmap. */
+		/* XXX: Maybe inline this call? */
+		pmeg_release(pmeg_p(sme));
 	}
+
+	/* Restore previous context. */
 	set_context(saved_ctxnum);
-	contextp->context_upmap = NULL;
+
+	/* Dequeue, update, requeue. */
 	TAILQ_REMOVE(&context_active_queue, contextp, context_link);
-	TAILQ_INSERT_TAIL(&context_free_queue, contextp,
-					  context_link);/* active??? XXX */
-	pmap->pm_ctxnum = CTXINVAL;
-#ifdef	PMAP_DEBUG
-	if (pmap_debug & PMD_CONTEXT)
-		printf("context_free: pmap %p context removed\n", pmap);
-#endif
-	PMAP_UNLOCK();
+	pmap->pm_ctxnum = EMPTY_CONTEXT;
+	contextp->context_upmap = NULL;
+	TAILQ_INSERT_TAIL(&context_free_queue, contextp, context_link);
 }
+
+
+/****************************************************************
+ * PMEG management functions.
+ */
 
 static void
-context_init()
+pmeg_init()
 {
-	int i;
+	int x;
 
-	TAILQ_INIT(&context_free_queue);
-	TAILQ_INIT(&context_active_queue);
+	/* clear pmeg array, put it all on the free pmeq queue */
 
-	for (i=0; i < NCONTEXT; i++) {
-		context_array[i].context_num = i;
-		context_array[i].context_upmap = NULL;
-		TAILQ_INSERT_TAIL(&context_free_queue, &context_array[i],
-						  context_link);
-#ifdef	PMAP_DEBUG
-		if (pmap_debug & PMD_CONTEXT)
-			printf("context_init: context num %d is %p\n",
-				   i, &context_array[i]);
-#endif
+	TAILQ_INIT(&pmeg_free_queue);
+	TAILQ_INIT(&pmeg_inactive_queue);
+	TAILQ_INIT(&pmeg_active_queue);
+	TAILQ_INIT(&pmeg_kernel_queue);
+
+	bzero(pmeg_array, NPMEG*sizeof(struct pmeg_state));
+	for (x =0 ; x<NPMEG; x++) {
+		TAILQ_INSERT_TAIL(&pmeg_free_queue, &pmeg_array[x],
+				  pmeg_link);
+		pmeg_array[x].pmeg_qstate = PMEGQ_FREE;
+		pmeg_array[x].pmeg_index = x;
 	}
-}
 
-#ifdef	PMAP_DEBUG
-void
-pmap_print(pmap)
-	pmap_t pmap;
-{
-	printf(" pm_ctxnum=%d\n", pmap->pm_ctxnum);
-	printf(" pm_version=0x%x\n", pmap->pm_version);
-	printf(" pm_segmap=%p\n", pmap->pm_segmap);
+	/* The last pmeg is not usable. */
+	pmeg_reserve(SEGINV);
 }
-#endif	/* PMAP_DEBUG */
 
 /*
  * Reserve a pmeg (forever) for use by PROM, etc.
@@ -627,7 +731,7 @@ pmeg_reserve(sme)
 		sunmon_abort();
 	}
 
-	/* XXX - Owned by kernel, but not really usable... */
+	/* Owned by kernel, but not really usable... */
 	pmegp->pmeg_owner = kernel_pmap;
 	pmegp->pmeg_reserved++;	/* keep count, just in case */
 	TAILQ_REMOVE(&pmeg_free_queue, pmegp, pmeg_link);
@@ -674,86 +778,63 @@ pmeg_mon_init(sva, eva, keep)
 	}
 }
 
+/*
+ * This is used only during pmap_bootstrap, so we can
+ * get away with borrowing a slot in the segmap.
+ */
 static void
 pmeg_clean(pmegp)
 	pmeg_t pmegp;
 {
-	int i;
+	int sme;
+	vm_offset_t va;
 
-	for (i = 0; i < NPAGSEG; i++)
-		set_pte_pmeg(pmegp->pmeg_index, i, PG_INVAL);
+	sme = get_segmap(0);
+	if (sme != SEGINV)
+		panic("pmeg_clean");
+
+	sme = pmegp->pmeg_index;
+	set_segmap(0, sme);
+
+	for (va = 0; va < NBSG; va += NBPG)
+		set_pte(va, PG_INVAL);
+
+	set_segmap(0, SEGINV);
 }
 
 /*
  * This routine makes sure that pmegs on the pmeg_free_queue contain
  * no valid ptes.  It pulls things off the queue, cleans them, and
- * puts them at the end.  Ending condition is finding the first queue element
- * at the head of the queue again.
+ * puts them at the end.  The ending condition is finding the first
+ * queue element at the head of the queue again.
  */
-
 static void
 pmeg_clean_free()
 {
 	pmeg_t pmegp, pmegp_first;
 
-	CHECK_SPL();
-
-	if (TAILQ_EMPTY(&pmeg_free_queue))
+	pmegp = TAILQ_FIRST(&pmeg_free_queue);
+	if (pmegp == NULL)
 		panic("pmap: no free pmegs available to clean");
 
 	pmegp_first = NULL;
 
 	for (;;) {
-
-		TAILQ_REMOVE_FIRST(pmegp, &pmeg_free_queue, pmeg_link);
+		pmegp = TAILQ_FIRST(&pmeg_free_queue);
+		TAILQ_REMOVE(&pmeg_free_queue, pmegp, pmeg_link);
 
 		pmegp->pmeg_qstate = PMEGQ_NONE;
-
 		pmeg_clean(pmegp);
+		pmegp->pmeg_qstate = PMEGQ_FREE;
 
 		TAILQ_INSERT_TAIL(&pmeg_free_queue, pmegp, pmeg_link);
-		pmegp->pmeg_qstate = PMEGQ_FREE;
 
 		if (pmegp == pmegp_first)
 			break;
 		if (pmegp_first == NULL)
 			pmegp_first = pmegp;
-
 	}
 }
-
-#ifdef	PMAP_DEBUG
-static void
-pmeg_verify_empty(va)
-	vm_offset_t va;
-{
-	vm_offset_t eva;
-	int pte;
-
-	for (eva = va + NBSG;  va < eva; va += NBPG) {
-		pte = get_pte(va);
-		if (pte & PG_VALID)
-			panic("pmeg_verify_empty");
-	}
-}
-#endif	/* PMAP_DEBUG */
-
-#ifdef	PMAP_DEBUG
-void
-pmeg_print(pmegp)
-	pmeg_t pmegp;
-{
-	printf("link_next=%p  link_prev=%p\n",
-	    pmegp->pmeg_link.tqe_next,
-	    pmegp->pmeg_link.tqe_prev);
-	printf("index=0x%x owner=%p own_vers=0x%x\n",
-	    pmegp->pmeg_index, pmegp->pmeg_owner, pmegp->pmeg_version);
-	printf("va=0x%lx wired=0x%x reserved=0x%x vpgs=0x%x qstate=0x%x\n",
-	    pmegp->pmeg_va, pmegp->pmeg_wired,
-	    pmegp->pmeg_reserved, pmegp->pmeg_vpages,
-	    pmegp->pmeg_qstate);
-}
-#endif	/* PMAP_DEBUG */
 
 /*
  * Allocate a PMEG by whatever means necessary.
@@ -775,13 +856,13 @@ pmeg_allocate(pmap, va)
 #endif
 
 	/* Get one onto the free list if necessary. */
-	pmegp = pmeg_free_queue.tqh_first;
+	pmegp = TAILQ_FIRST(&pmeg_free_queue);
 	if (!pmegp) {
 		/* Try inactive queue... */
-		pmegp = pmeg_inactive_queue.tqh_first;
+		pmegp = TAILQ_FIRST(&pmeg_inactive_queue);
 		if (!pmegp) {
 			/* Try active queue... */
-			pmegp = pmeg_active_queue.tqh_first;
+			pmegp = TAILQ_FIRST(&pmeg_active_queue);
 		}
 		if (!pmegp) {
 			panic("pmeg_allocate: failed");
@@ -800,28 +881,23 @@ pmeg_allocate(pmap, va)
 	}
 
 	/* OK, free list has something for us to take. */
-	pmegp = pmeg_free_queue.tqh_first;
-#ifdef	PMAP_DEBUG
-	if (!pmegp) {
+	pmegp = TAILQ_FIRST(&pmeg_free_queue);
+#ifdef	DIAGNOSTIC
+	if (pmegp == NULL)
 		panic("pmeg_allocagte: still none free?");
-	}
-	if (pmegp->pmeg_qstate != PMEGQ_FREE)
-		panic("pmeg_allocate: bad on free queue: 0x%x", pmegp);
+	if ((pmegp->pmeg_qstate != PMEGQ_FREE) ||
+		(pmegp->pmeg_index == SEGINV) ||
+		(pmegp->pmeg_vpages))
+		panic("pmeg_allocate: bad pmegp=%p", pmegp);
 #endif
-	TAILQ_REMOVE(&pmeg_free_queue, pmegp, pmeg_link);
-
 #ifdef	PMAP_DEBUG
 	if (pmegp->pmeg_index == pmap_db_watchpmeg) {
-		printf("pmeg_allocate: watch pmeg 0x%x\n", pmegp->pmeg_index);
+		db_printf("pmeg_allocate: watch pmegp=%p\n", pmegp);
 		Debugger();
 	}
 #endif
-#ifdef	DIAGNOSTIC
-	if (pmegp->pmeg_index == SEGINV)
-		panic("pmeg_allocate: pmeg_index=ff");
-	if (pmegp->pmeg_vpages)
-		panic("pmeg_allocate: vpages!=0, pmegp=0x%x", pmegp);
-#endif
+
+	TAILQ_REMOVE(&pmeg_free_queue, pmegp, pmeg_link);
 
 	/* Reassign this PMEG for the caller. */
 	pmegp->pmeg_owner = pmap;
@@ -836,14 +912,6 @@ pmeg_allocate(pmap, va)
 	} else {
 		TAILQ_INSERT_TAIL(&pmeg_active_queue, pmegp, pmeg_link);
 		pmegp->pmeg_qstate = PMEGQ_ACTIVE;
-#ifdef	PMAP_DEBUG
-		if (pmap_debug & PMD_SEGMAP) {
-			printf("pm_segmap: pmap=%p i=0x%x old=0x%x new=0x%x (pget)\n",
-				   pmap, VA_SEGNUM(va),
-				   pmap->pm_segmap[VA_SEGNUM(va)],
-				   pmegp->pmeg_index);
-		}
-#endif
 	}
 	/* Caller will verify that it's empty (if debugging). */
 	return pmegp;
@@ -858,21 +926,13 @@ static void
 pmeg_release(pmegp)
 	pmeg_t pmegp;
 {
+
 	CHECK_SPL();
 
-#ifdef	PMAP_DEBUG
-	if (pmegp->pmeg_qstate == PMEGQ_INACTIVE) {
-		printf("pmeg_release: already inactive\n");
-		Debugger();
-		return;
-	}
-#endif
-
 #ifdef	DIAGNOSTIC
-	if (pmegp->pmeg_owner == kernel_pmap)
-		panic("pmeg_release: kernel_pmap");
-	if (pmegp->pmeg_qstate != PMEGQ_ACTIVE)
-		panic("pmeg_release: not q_active 0x%x", pmegp);
+	if ((pmegp->pmeg_owner == kernel_pmap) ||
+		(pmegp->pmeg_qstate != PMEGQ_ACTIVE))
+		panic("pmeg_release: bad pmeg=%p", pmegp);
 #endif
 
 	TAILQ_REMOVE(&pmeg_active_queue, pmegp, pmeg_link);
@@ -888,10 +948,11 @@ static void
 pmeg_free(pmegp)
 	pmeg_t pmegp;
 {
+
 	CHECK_SPL();
 
-#ifdef	PMAP_DEBUG
-	/* XXX - Caller should verify that it's empty. */
+#ifdef	DIAGNOSTIC
+	/* Caller should verify that it's empty. */
 	if (pmegp->pmeg_vpages != 0)
 		panic("pmeg_free: vpages");
 #endif
@@ -913,7 +974,7 @@ pmeg_free(pmegp)
 
 #ifdef	PMAP_DEBUG
 	if (pmegp->pmeg_index == pmap_db_watchpmeg) {
-		printf("pmeg_free: watch pmeg 0x%x\n",
+		db_printf("pmeg_free: watch pmeg 0x%x\n",
 			   pmegp->pmeg_index);
 		Debugger();
 	}
@@ -938,12 +999,9 @@ pmeg_cache(pmap, va)
 
 	CHECK_SPL();
 
-#ifdef	PMAP_DEBUG
+#ifdef	DIAGNOSTIC
 	if (pmap == kernel_pmap)
 		panic("pmeg_cache: kernel_pmap");
-#endif
-
-#ifdef	DIAGNOSTIC
 	if (va & SEGOFSET) {
 		panic("pmap:pmeg_cache: va=0x%lx", va);
 	}
@@ -951,9 +1009,11 @@ pmeg_cache(pmap, va)
 
 	if (pmap->pm_segmap == NULL)
 		return PMEG_NULL;
+
 	segnum = VA_SEGNUM(va);
 	if (segnum > NUSEG)		/* out of range */
 		return PMEG_NULL;
+
 	sme = pmap->pm_segmap[segnum];
 	if (sme == SEGINV)	/* nothing cached */
 		return PMEG_NULL;
@@ -962,7 +1022,7 @@ pmeg_cache(pmap, va)
 
 #ifdef	PMAP_DEBUG
 	if (pmegp->pmeg_index == pmap_db_watchpmeg) {
-		printf("pmeg_cache: watch pmeg 0x%x\n", pmegp->pmeg_index);
+		db_printf("pmeg_cache: watch pmeg 0x%x\n", pmegp->pmeg_index);
 		Debugger();
 	}
 #endif
@@ -976,18 +1036,18 @@ pmeg_cache(pmap, va)
 		(pmegp->pmeg_va != va))
 	{
 #ifdef	PMAP_DEBUG
-		printf("pmap:pmeg_cache: invalid pmeg: sme=0x%x\n", sme);
+		db_printf("pmap:pmeg_cache: invalid pmeg: sme=0x%x\n", sme);
 		pmeg_print(pmegp);
-		Debugger(); /* XXX */
+		Debugger();
 #endif
 		pmap->pm_segmap[segnum] = SEGINV;
 		return PMEG_NULL; /* cache lookup failed */
 	}
 
-#ifdef	PMAP_DEBUG
+#ifdef	DIAGNOSTIC
 	/* Make sure it is on the inactive queue. */
 	if (pmegp->pmeg_qstate != PMEGQ_INACTIVE)
-		panic("pmeg_cache: pmeg was taken: 0x%x", pmegp);
+		panic("pmeg_cache: pmeg was taken: %p", pmegp);
 #endif
 
 	TAILQ_REMOVE(&pmeg_inactive_queue, pmegp, pmeg_link);
@@ -997,113 +1057,132 @@ pmeg_cache(pmap, va)
 	return pmegp;
 }
 
-static void
-pmeg_set_wiring(pmegp, va, flag)
-	pmeg_t pmegp;
-	vm_offset_t va;
-	int flag;
-{
-	int idx, mask;
-
-	CHECK_SPL();
-	idx = VA_PTE_NUM(va);
-	mask = 1 << idx;
-
-	if (flag)
-		pmegp->pmeg_wired |= mask;
-	else
-		pmegp->pmeg_wired &= ~mask;
-}
-
-static void
-pmeg_init()
-{
-	int x;
-
-	/* clear pmeg array, put it all on the free pmeq queue */
-
-	TAILQ_INIT(&pmeg_free_queue);
-	TAILQ_INIT(&pmeg_inactive_queue);
-	TAILQ_INIT(&pmeg_active_queue);
-	TAILQ_INIT(&pmeg_kernel_queue);
-
-	bzero(pmeg_array, NPMEG*sizeof(struct pmeg_state));
-	for (x =0 ; x<NPMEG; x++) {
-		TAILQ_INSERT_TAIL(&pmeg_free_queue, &pmeg_array[x],
-				  pmeg_link);
-		pmeg_array[x].pmeg_qstate = PMEGQ_FREE;
-		pmeg_array[x].pmeg_index = x;
-	}
-
-	/* The last pmeg is not usable. */
-	pmeg_reserve(SEGINV);
-}
-
 #ifdef	PMAP_DEBUG
-/* call from debugger */
-void
-pv_print(pa)
-	vm_offset_t pa;
+static void
+pmeg_verify_empty(va)
+	vm_offset_t va;
 {
-	pv_entry_t pv;
+	vm_offset_t eva;
+	int pte;
 
-	if (!pv_initialized)
-		return;
-
-	pv = pa_to_pvp(pa);
-	printf("pv_list for pa 0x%lx: flags=0x%x\n", pa, pv->pv_flags);
-	while (pv) {
-		printf("pv_entry %p pmap %p va 0x%lx next %p\n",
-			   pv, pv->pv_pmap, pv->pv_va, pv->pv_next);
-		pv = pv->pv_next;
+	for (eva = va + NBSG;  va < eva; va += NBPG) {
+		pte = get_pte(va);
+		if (pte & PG_VALID)
+			panic("pmeg_verify_empty");
 	}
 }
 #endif	/* PMAP_DEBUG */
+
+
+/****************************************************************
+ * Physical-to-virutal lookup support
+ *
+ * Need memory for the pv_alloc/pv_free list heads
+ * and elements.  We know how many to allocate since
+ * there is one list head for each physical page, and
+ * at most one element for each PMEG slot.
+ */
+static void
+pv_init()
+{
+	int npp, nvp, sz;
+	pv_entry_t pv;
+	char *p;
+
+	/* total allocation size */
+	sz = 0;
+
+	/*
+	 * Data for each physical page.
+	 * Each "mod/ref" flag is a char.
+	 * Each PV head is a pointer.
+	 * Note physmem is in pages.
+	 */
+	npp = ALIGN(physmem);
+	sz += (npp * sizeof(*pv_flags_tbl));
+	sz += (npp * sizeof(*pv_head_tbl));
+
+	/*
+	 * Data for each virtual page (all PMEGs).
+	 * One pv_entry for each page frame.
+	 */
+	nvp = NPMEG * NPAGSEG;
+	sz += (nvp * sizeof(*pv_free_list));
+
+	/* Now allocate the whole thing. */
+	sz = m68k_round_page(sz);
+	p = (char*) kmem_alloc(kernel_map, sz);
+	if (p == NULL)
+		panic("pmap:pv_init: alloc failed");
+	bzero(p, sz);
+
+	/* Now divide up the space. */
+	pv_flags_tbl = (void *) p;
+	p += (npp * sizeof(*pv_flags_tbl));
+	pv_head_tbl = (void*) p;
+	p += (npp * sizeof(*pv_head_tbl));
+	pv_free_list = (void *) p;
+	p += (nvp * sizeof(*pv_free_list));
+
+	/* Finally, make pv_free_list into a list. */
+	for (pv = pv_free_list; (char*)pv < p; pv++)
+		pv->pv_next = &pv[1];
+	pv[-1].pv_next = 0;
+
+	pv_initialized++;
+}
 
 /*
  * Set or clear bits in all PTEs mapping a page.
  * Also does syncflags work while we are there...
  */
 static void
-pv_changepte(head, set_bits, clear_bits)
-	pv_entry_t head;
+pv_changepte(pa, set_bits, clear_bits)
+	vm_offset_t pa;
 	int set_bits;
 	int clear_bits;
 {
-	pv_entry_t pv;
+	pv_entry_t *head, pv;
+	u_char *pv_flags;
 	pmap_t pmap;
 	vm_offset_t va;
-	int pte, sme, s;
+	int pte, sme;
 	int saved_ctx;
 	boolean_t in_ctx;
+	u_int flags;
+
+	CHECK_SPL();
 
 	if (!pv_initialized)
 		return;
-	if (head->pv_pmap == NULL)
-		return;
 	if ((set_bits == 0) && (clear_bits == 0))
 		return;
+
+	pv_flags = pa_to_pvflags(pa);
+	head     = pa_to_pvhead(pa);
+
+	/* If no mappings, no work to do. */
+	if (*head == NULL)
+		return;
+
 #ifdef	DIAGNOSTIC
 	/* This function should only clear these bits: */
 	if (clear_bits & ~(PG_WRITE | PG_NC | PG_REF | PG_MOD))
 		panic("pv_changepte: clear=0x%x\n", clear_bits);
 #endif
 
-	s = splpmap();
+	flags = 0;
 	saved_ctx = get_context();
-
-	for (pv = head; pv != NULL; pv = pv->pv_next) {
+	for (pv = *head; pv != NULL; pv = pv->pv_next) {
 		pmap = pv->pv_pmap;
 		va = pv->pv_va;
 		sme = SEGINV;	/* kill warning */
 
 #ifdef	DIAGNOSTIC
-		/*
-		 * Only the head may have a null pmap, and
-		 * we checked for that above.
-		 */
 		if (pmap == NULL)
 			panic("pv_changepte: null pmap");
+		if (pmap->pm_segmap == NULL)
+			panic("pv_changepte: null segmap");
 #endif
 
 		/* Is the PTE currently accessable in some context? */
@@ -1132,8 +1211,6 @@ pv_changepte(head, set_bits, clear_bits)
 			/*
 			 * The PTE is not in any context.
 			 */
-			if (pmap->pm_segmap == NULL)
-				panic("pv_changepte: null segmap");
 			sme = pmap->pm_segmap[VA_SEGNUM(va)];
 			if (sme == SEGINV)
 				panic("pv_changepte: SEGINV");
@@ -1143,14 +1220,14 @@ pv_changepte(head, set_bits, clear_bits)
 #ifdef	DIAGNOSTIC
 		/*
 		 * PV entries point only to valid mappings.
-		 * XXX - Make sure pv_unlink() was done...
+		 * Make sure pv_unlink() was done...
 		 */
 		if ((pte & PG_VALID) == 0)
 			panic("pv_changepte: not PG_VALID at va=0x%lx\n", va);
 #endif
 		/* Get these while it's easy. */
 		if (pte & PG_MODREF) {
-			head->pv_flags |= ((pte & PG_MODREF) >> PV_SHIFT);
+			flags |= (pte & PG_MODREF);
 			pte &= ~PG_MODREF;
 		}
 
@@ -1165,36 +1242,38 @@ pv_changepte(head, set_bits, clear_bits)
 			set_pte_pmeg(sme, VA_PTE_NUM(va), pte);
 		}
 	}
-
 	set_context(saved_ctx);
-	splx(s);
-	return;
+
+	*pv_flags |= (flags >> PV_SHIFT);
 }
 
 /*
- * Sync ref and mod bits in pvlist
- * (turns off same in hardware PTEs).
+ * Return ref and mod bits from pvlist,
+ * and turns off same in hardware PTEs.
  */
-static void
-pv_syncflags(head)
-	pv_entry_t head;
-{
+static u_int
+pv_syncflags(pv)
 	pv_entry_t pv;
+{
 	pmap_t pmap;
 	vm_offset_t va;
-	int pte, sme, s;
+	int pte, sme;
 	int saved_ctx;
 	boolean_t in_ctx;
+	u_int flags;
+
+	CHECK_SPL();
 
 	if (!pv_initialized)
-		return;
-	if (head->pv_pmap == NULL)
-		return;
+		return(0);
 
-	PMAP_LOCK();
+	/* If no mappings, no work to do. */
+	if (pv == NULL)
+		return (0);
+
+	flags = 0;
 	saved_ctx = get_context();
-
-	for (pv = head; pv != NULL; pv = pv->pv_next) {
+	for ( ; pv != NULL; pv = pv->pv_next) {
 		pmap = pv->pv_pmap;
 		va = pv->pv_va;
 		sme = SEGINV;	/* kill warning */
@@ -1206,6 +1285,8 @@ pv_syncflags(head)
 		 */
 		if (pmap == NULL)
 			panic("pv_syncflags: null pmap");
+		if (pmap->pm_segmap == NULL)
+			panic("pv_syncflags: null segmap");
 #endif
 
 		/* Is the PTE currently accessable in some context? */
@@ -1236,8 +1317,6 @@ pv_syncflags(head)
 			 * XXX - Consider syncing MODREF bits
 			 * when the PMEG looses its context?
 			 */
-			if (pmap->pm_segmap == NULL)
-				panic("pv_syncflags: null segmap");
 			sme = pmap->pm_segmap[VA_SEGNUM(va)];
 			if (sme == SEGINV)
 				panic("pv_syncflags: SEGINV");
@@ -1247,14 +1326,14 @@ pv_syncflags(head)
 #ifdef	DIAGNOSTIC
 		/*
 		 * PV entries point only to valid mappings.
-		 * XXX - Make sure pv_unlink() was done...
+		 * Make sure pv_unlink() was done...
 		 */
 		if ((pte & PG_VALID) == 0)
 			panic("pv_syncflags: not PG_VALID at va=0x%lx\n", va);
 #endif
 		/* OK, do what we came here for... */
 		if (pte & PG_MODREF) {
-			head->pv_flags |= ((pte & PG_MODREF) >> PV_SHIFT);
+			flags |= (pte & PG_MODREF);
 			pte &= ~PG_MODREF;
 		}
 
@@ -1265,41 +1344,39 @@ pv_syncflags(head)
 			set_pte_pmeg(sme, VA_PTE_NUM(va), pte);
 		}
 	}
-
 	set_context(saved_ctx);
 
-	PMAP_UNLOCK();
-	return;
+	return (flags >> PV_SHIFT);
 }
 
-
-/* pv_entry support routines */
+/* Remove all mappings for the physical page. */
 static void
 pv_remove_all(pa)
 	vm_offset_t pa;
 {
-	pv_entry_t pv;
+	pv_entry_t *head, pv;
 	pmap_t pmap;
 	vm_offset_t va;
+
+	CHECK_SPL();
 
 #ifdef PMAP_DEBUG
 	if (pmap_debug & PMD_REMOVE)
 		printf("pv_remove_all(0x%lx)\n", pa);
 #endif
+
 	if (!pv_initialized)
 		return;
 
-	/* The PV head never moves. */
-	pv = pa_to_pvp(pa);
-	while (pv->pv_pmap != NULL) {
+	head = pa_to_pvhead(pa);
+	while ((pv = *head) != NULL) {
 		pmap = pv->pv_pmap;
 		va   = pv->pv_va;
 		pmap_remove1(pmap, va, va + NBPG);
 #ifdef PMAP_DEBUG
 		/* Make sure it went away. */
-		if ((pv->pv_pmap == pmap) && (pv->pv_va == va))
-		{
-			printf("pv_remove_all: head unchanged for pa=0x%lx\n", pa);
+		if (pv == *head) {
+			db_printf("pv_remove_all: head unchanged for pa=0x%lx\n", pa);
 			Debugger();
 		}
 #endif
@@ -1317,69 +1394,66 @@ static int
 pv_link(pmap, pa, va, flags)
 	pmap_t pmap;
 	vm_offset_t pa, va;
-	u_int flags;
+	int flags;
 {
-	pv_entry_t head, npv;
+	pv_entry_t *head, pv;
+	u_char *pv_flags;
 
 	if (!pv_initialized)
 		return 0;
 
+	CHECK_SPL();
+
 #ifdef PMAP_DEBUG
 	if ((pmap_debug & PMD_LINK) || (va == pmap_db_watchva)) {
-		printf("pv_link(%p, 0x%lx, 0x%lx, 0x%x)\n",
-			pmap, pa, va, flags);
+		printf("pv_link(%p, 0x%lx, 0x%lx)\n", pmap, pa, va);
 		/* pv_print(pa); */
 	}
 #endif
 
-	CHECK_SPL();
-
-	/* Only the non-cached bit is of interest. */
+	/* Only the non-cached bit is of interest here. */
 	flags = flags & PV_NC;
 
-	head = pa_to_pvp(pa);
-	if (head->pv_pmap == NULL) {
-		/* not currently mapped anywhere */
-		pmap_stats.ps_enter_firstpv++;
-		head->pv_va = va;
-		head->pv_pmap = pmap,
-		head->pv_next = NULL;
-		head->pv_flags = flags;
-		return (flags);
-	}
+	pv_flags = pa_to_pvflags(pa);
+	head     = pa_to_pvhead(pa);
 
-#ifdef PMAP_DEBUG
-	/* XXX - See if this mapping is already in the list? */
-	for (npv = head; npv != NULL; npv = npv->pv_next) {
-		if ((npv->pv_pmap == pmap) && (npv->pv_va == va))
+#ifdef	DIAGNOSTIC
+	/* See if this mapping is already in the list. */
+	for (pv = *head; pv != NULL; pv = pv->pv_next) {
+		if ((pv->pv_pmap == pmap) && (pv->pv_va == va))
 			panic("pv_link: duplicate entry for PA=0x%lx", pa);
 	}
 #endif
 
 	/*
-	 * Before entering the new mapping, see if it will cause
-	 * old mappings to become aliased (need cache inhibit).
+	 * Does this new mapping cause VAC alias problems?
 	 */
-	pmap_stats.ps_enter_secondpv++;
-
-	head->pv_flags |= flags;
-	if ((head->pv_flags & PV_NC) == 0) {
-		for (npv = head; npv != NULL; npv = npv->pv_next) {
-			if (BADALIAS(va, npv->pv_va)) {
-				head->pv_flags |= PV_NC;
-				pv_changepte(head, PG_NC, 0);
+	*pv_flags |= flags;
+	if ((*pv_flags & PV_NC) == 0) {
+		for (pv = *head; pv != NULL; pv = pv->pv_next) {
+			if (BADALIAS(va, pv->pv_va)) {
+				*pv_flags |= PV_NC;
+				pv_changepte(pa, PG_NC, 0);
 				pmap_stats.ps_vac_uncached++;
 				break;
 			}
 		}
 	}
-	npv = (pv_entry_t) malloc(sizeof(*npv), M_VMPVENT, M_WAITOK);
-	npv->pv_next = head->pv_next;
-	npv->pv_pmap = pmap;
-	npv->pv_va   = va;
-	head->pv_next = npv;
 
-	return (head->pv_flags & PV_NC);
+	/* Allocate a PV element (pv_alloc()). */
+	pv = pv_free_list;
+	if (pv == NULL)
+		panic("pv_link: pv_alloc");
+	pv_free_list = pv->pv_next;
+	pv->pv_next = 0;
+
+	/* Insert new entry at the head. */
+	pv->pv_pmap = pmap;
+	pv->pv_va   = va;
+	pv->pv_next = *head;
+	*head = pv;
+
+	return (*pv_flags & PV_NC);
 }
 
 /*
@@ -1397,90 +1471,80 @@ pv_unlink(pmap, pa, va)
 	pmap_t pmap;
 	vm_offset_t pa, va;
 {
-	pv_entry_t head, npv;
+	pv_entry_t *head, *ppv, pv;
+	u_char *pv_flags;
 
 	if (!pv_initialized)
 		return;
 
+	CHECK_SPL();
+
 #ifdef PMAP_DEBUG
-	if ((pmap_debug & PMD_UNLINK) ||
-		(va == pmap_db_watchva))
-	{
+	if ((pmap_debug & PMD_LINK) || (va == pmap_db_watchva)) {
 		printf("pv_unlink(%p, 0x%lx, 0x%lx)\n", pmap, pa, va);
+		/* pv_print(pa); */
 	}
 #endif
-	head = pa_to_pvp(pa);
 
-#ifdef DIAGNOSTIC
-	if (head->pv_pmap == NULL)
-		panic("pv_unlink: empty list");
-#endif
+	pv_flags = pa_to_pvflags(pa);
+	head     = pa_to_pvhead(pa);
 
 	/*
-	 * First entry is special (sigh).
+	 * Find the entry.
 	 */
-	npv = head->pv_next;
-	if (head->pv_pmap == pmap && head->pv_va == va) {
-		pmap_stats.ps_unlink_pvfirst++;
-		if (npv != NULL) {
-			/* Copy next entry into (fixed) head. */
-			head->pv_next = npv->pv_next;
-			head->pv_pmap = npv->pv_pmap;
-			head->pv_va   = npv->pv_va;
-			free((caddr_t)npv, M_VMPVENT);
-		} else {
-			/* No next entry, list is now empty. */
-			head->pv_pmap = NULL;
-		}
-	} else {
-		register pv_entry_t prev;
-
-		for (prev = head;; prev = npv, npv = npv->pv_next) {
-			pmap_stats.ps_unlink_pvsearch++;
-			if (npv == NULL) {
-				printf("pv_unlink: not on list (pa=0x%lx,va=0x%lx)\n",
-					   pa, va);
-				Debugger();	/* XXX */
-				return;
-			}
-			if (npv->pv_pmap == pmap && npv->pv_va == va)
-				break;
-		}
-		prev->pv_next = npv->pv_next;
-		free((caddr_t)npv, M_VMPVENT);
+	ppv = head;
+	pv = *ppv;
+	while (pv) {
+		if ((pv->pv_pmap == pmap) && (pv->pv_va == va))
+			goto found;
+		ppv = &pv->pv_next;
+		pv  =  pv->pv_next;
 	}
+#ifdef PMAP_DEBUG
+	db_printf("pv_unlink: not found (pa=0x%lx,va=0x%lx)\n", pa, va);
+	Debugger();
+#endif
+	return;
 
-	if (head->pv_flags & PV_NC) {
-		/*
-		 * Not cached: check to see if we can fix that now.
-		 */
-		va = head->pv_va;
-		for (npv = head->pv_next; npv != NULL; npv = npv->pv_next)
-			if (BADALIAS(va, npv->pv_va))
-				return;
-		head->pv_flags &= ~PV_NC;
-		pv_changepte(head, 0, PG_NC);
-		pmap_stats.ps_vac_recached++;
+found:
+	/* Unlink this entry from the list and clear it. */
+	*ppv = pv->pv_next;
+	pv->pv_pmap = NULL;
+	pv->pv_va   = 0;
+
+	/* Insert it on the head of the free list. (pv_free()) */
+	pv->pv_next = pv_free_list;
+	pv_free_list = pv;
+	pv = NULL;
+
+	/* Do any non-cached mappings remain? */
+	if ((*pv_flags & PV_NC) == 0)
+		return;
+	if ((pv = *head) == NULL)
+		return;
+
+	/*
+	 * Have non-cached mappings.  See if we can fix that now.
+	 */
+	va = pv->pv_va;
+	for (pv = pv->pv_next; pv != NULL; pv = pv->pv_next) {
+		/* If there is a DVMA mapping, leave it NC. */
+		if (va >= DVMA_SPACE_START)
+			return;
+		/* If there are VAC alias problems, leave NC. */
+		if (BADALIAS(va, pv->pv_va))
+			return;
 	}
+	/* OK, there are no "problem" mappings. */
+	*pv_flags &= ~PV_NC;
+	pv_changepte(pa, 0, PG_NC);
+	pmap_stats.ps_vac_recached++;
 }
 
-static void
-pv_init()
-{
-	int sz;
 
-	sz = PA_PGNUM(avail_end);
-	sz *= sizeof(struct pv_entry);
-
-	pv_head_table = (pv_entry_t) kmem_alloc(kernel_map, sz);
-	if (!pv_head_table) {
-		mon_printf("pmap: kmem_alloc() of pv table failed\n");
-		sunmon_abort();
-	}
-	bzero((caddr_t) pv_head_table, sz);
-
-	pv_initialized++;
-}
+/****************************************************************
+ * Bootstrap and Initialization, etc.
+ */
 
 void
 protection_init()
@@ -1508,7 +1572,6 @@ protection_init()
 		}
 	}
 }
-/* pmap maintenance routines */
 
 void
 pmap_common_init(pmap)
@@ -1517,7 +1580,7 @@ pmap_common_init(pmap)
 	bzero(pmap, sizeof(struct pmap));
 	pmap->pm_refcount=1;
 	pmap->pm_version = pmap_version++;
-	pmap->pm_ctxnum = CTXINVAL;
+	pmap->pm_ctxnum = EMPTY_CONTEXT;
 	simple_lock_init(&pmap->pm_lock);
 }
 
@@ -1534,6 +1597,7 @@ pmap_bootstrap(nextva)
 	MachMonRomVector *rvec;
 	vm_offset_t va, eva;
 	int i, pte, sme;
+	extern char etext[];
 
 	nextva = m68k_round_page(nextva);
 	rvec = romVectorPtr;
@@ -1747,6 +1811,9 @@ pmap_bootstrap(nextva)
 	 * Reserve a segment for the kernel to use to access a pmeg
 	 * that is not currently mapped into any context/segmap.
 	 * The kernel temporarily maps such a pmeg into this segment.
+	 *
+	 * XXX: Now that context zero is reserved as kernel-only,
+	 * we could borrow context zero for these temporary uses.
 	 */
 	temp_seg_va = virtual_avail;
 	virtual_avail += NBSG;
@@ -1768,11 +1835,37 @@ pmap_bootstrap(nextva)
 	/* after setting up some structures */
 
 	pmap_common_init(kernel_pmap);
+	pmap_kernel_init(kernel_pmap);
 
 	context_init();
 
 	pmeg_clean_free();
 }
+
+/*
+ * Give the kernel pmap a segmap, just so there are not
+ * so many special cases required.  Maybe faster too,
+ * because this lets pmap_remove() and pmap_protect()
+ * use a S/W copy of the segmap to avoid function calls.
+ */
+void
+pmap_kernel_init(pmap)
+	 pmap_t pmap;
+{
+	vm_offset_t va;
+	int i, sme;
+
+	for (i=0, va=0; i < NSEGMAP; i++, va+=NBSG) {
+		sme = get_segmap(va);
+		kernel_segmap[i] = sme;
+	}
+	pmap->pm_segmap = kernel_segmap;
+}
+
+
+/****************************************************************
+ * PMAP interface functions.
+ */
 
 /*
  * For our convenience, vm_page.c implements:
@@ -1837,7 +1930,7 @@ pmap_next_page(paddr)
 
 	/* Have memory, will travel... */
 	*paddr = avail_next;
-	avail_next += PAGE_SIZE;
+	avail_next += NBPG;
 	return TRUE;
 }
 
@@ -1949,14 +2042,25 @@ void
 pmap_release(pmap)
 	struct pmap *pmap;
 {
+	int s;
+
+	s = splpmap();
 
 	if (pmap == kernel_pmap)
 		panic("pmap_release: kernel_pmap!");
 
-	if (has_context(pmap))
+	if (has_context(pmap)) {
+#ifdef	PMAP_DEBUG
+		if (pmap_debug & PMD_CONTEXT)
+			printf("pmap_release(%p): free ctx %d\n",
+				   pmap, pmap->pm_ctxnum);
+#endif
 		context_free(pmap);
+	}
 	free(pmap->pm_segmap, M_VMPMAP);
 	pmap->pm_segmap = NULL;
+
+	splx(s);
 }
 
 
@@ -1972,7 +2076,7 @@ pmap_destroy(pmap)
 	int count;
 
 	if (pmap == NULL)
-		return;	/* XXX - Duh! */
+		return;	/* Duh! */
 
 #ifdef PMAP_DEBUG
 	if (pmap_debug & PMD_CREATE)
@@ -1990,43 +2094,6 @@ pmap_destroy(pmap)
 }
 
 /*
- *	  pmap_page_protect:
- *
- *	  Lower the permission for all mappings to a given page.
- */
-void
-pmap_page_protect(pa, prot)
-	vm_offset_t	 pa;
-	vm_prot_t	   prot;
-{
-	int s;
-
-	PMAP_LOCK();
-
-#ifdef PMAP_DEBUG
-	if (pmap_debug & PMD_PROTECT)
-		printf("pmap_page_protect(0x%lx, 0x%lx)\n", pa, prot);
-#endif
-	switch (prot) {
-	case VM_PROT_ALL:
-		break;
-	case VM_PROT_READ:
-	case VM_PROT_READ|VM_PROT_EXECUTE:
-		pv_changepte(pa_to_pvp(pa), 0, PG_WRITE);
-		break;
-	default:
-		/* remove mapping for all pmaps that have it:
-		 *
-		 * follow pv trail to pmaps and temporarily delete it that way.
-		 * keep looping till all mappings go away
-		 */
-		pv_remove_all(pa);
-	}
-
-	PMAP_UNLOCK();
-}
-
-/*
  *	Add a reference to the specified pmap.
  */
 void
@@ -2040,658 +2107,6 @@ pmap_reference(pmap)
 	}
 }
 
-/*
- * Remove some mappings, all in one PMEG,
- * where that PMEG is currently in the MMU.
- * The current context is already correct.
- * If no PTEs remain valid in the PMEG, free it.
- */
-void
-pmap_remove_mmu(pmap, sva, eva)
-	pmap_t pmap;
-	vm_offset_t sva, eva;
-{
-	pmeg_t pmegp;
-	vm_offset_t va;
-	int pte, sme;
-	int flush_by_page = 0;
-
-#ifdef	PMAP_DEBUG
-	if ((pmap_debug & PMD_REMOVE) ||
-		((sva <= pmap_db_watchva && eva > pmap_db_watchva)))
-		printf("pmap_remove_mmu(%p, 0x%lx, 0x%lx)\n", pmap, sva, eva);
-#endif
-
-	/* Interrupt level handled by caller. */
-	CHECK_SPL();
-
-#ifdef	DIAGNOSTIC
-	if (pmap != kernel_pmap) {
-		if (pmap->pm_ctxnum != get_context())
-			panic("pmap_remove_mmu: wrong context");
-	}
-#endif
-
-	va = m68k_trunc_seg(sva);
-	sme = get_segmap(va);
-#ifdef	DIAGNOSTIC
-	/* Make sure it is valid and known. */
-	if (sme == SEGINV)
-		panic("pmap_remove_mmu: SEGINV");
-	if (pmap->pm_segmap && (pmap->pm_segmap[VA_SEGNUM(sva)] != sme))
-		panic("pmap_remove_mmu: incorrect sme, va=0x%lx", va);
-#endif
-	pmegp = pmeg_p(sme);
-
-	/* have pmeg, will travel */
-
-#ifdef	DIAGNOSTIC
-	/* Make sure we own the pmeg, right va, etc. */
-	if ((pmegp->pmeg_va != va) ||
-		(pmegp->pmeg_owner != pmap) ||
-		(pmegp->pmeg_version != pmap->pm_version))
-	{
-		printf("pmap_remove_mmu: wrong pmeg, sme=0x%x\n", sme);
-#ifdef	PMAP_DEBUG
-		pmeg_print(pmegp);
-		Debugger();	/* XXX */
-#endif
-		panic("bye");
-	}
-	if (pmegp->pmeg_vpages <= 0)
-		panic("pmap_remove_mmu: no valid pages?");
-#endif
-
-#ifdef	HAVECACHE
-	if (cache_size) {
-		/*
-		 * If the range to be removed is larger than the cache,
-		 * it will be cheaper to flush this segment entirely.
-		 */
-		if (cache_size < (eva - sva)) {
-			/* cheaper to flush whole segment */
-			cache_flush_segment(va);
-		} else {
-			flush_by_page = 1;
-		}
-	}
-#endif
-
-	/* Invalidate the PTEs in the given range. */
-	for (va = sva; va < eva; va += NBPG) {
-		pte = get_pte(va);
-		if (pte & PG_VALID) {
-#ifdef	HAVECACHE
-			if (flush_by_page) {
-				cache_flush_page(va);
-				/* Get fresh mod/ref bits from write-back. */
-				pte = get_pte(va);
-			}
-#endif
-			if (IS_MAIN_MEM(pte)) {
-				save_modref_bits(pte);
-				pv_unlink(pmap, PG_PA(pte), va);
-			}
-#ifdef	PMAP_DEBUG
-			if ((pmap_debug & PMD_SETPTE) || (va == pmap_db_watchva)) {
-				printf("pmap: set_pte pmap=%p va=0x%lx old=0x%x new=0x%x (rrmmu)\n",
-					   pmap, va, pte, PG_INVAL);
-			}
-#endif
-			set_pte(va, PG_INVAL);
-			pmegp->pmeg_vpages--;
-		}
-	}
-
-	if (pmegp->pmeg_vpages <= 0) {
-		/* We are done with this pmeg. */
-		if (is_pmeg_wired(pmegp)) {
-#ifdef	PMAP_DEBUG
-			if (pmap_debug & PMD_WIRING) {
-				printf("pmap: removing wired pmeg: %p\n", pmegp);
-				Debugger(); /* XXX */
-			}
-#endif	/* PMAP_DEBUG */
-		}
-
-		/* First, remove it from the MMU. */
-		if (kernel_pmap == pmap) {
-			/* Did cache flush above. */
-			set_segmap_allctx(sva, SEGINV);
-		} else {
-#ifdef	PMAP_DEBUG
-			if (pmap_debug & PMD_SEGMAP) {
-				printf("pmap: set_segmap ctx=%d v=0x%lx old=0x%x new=ff (rm2)\n",
-					   get_context(), m68k_trunc_seg(sva),
-					   pmegp->pmeg_index);
-			}
-#endif
-			/* Did cache flush above. */
-			set_segmap(sva, SEGINV);
-			pmap->pm_segmap[VA_SEGNUM(sva)] = SEGINV;
-		}
-		/* Now, put it on the free list. */
-		pmeg_free(pmegp);
-	}
-}
-
-void
-pmap_remove_noctx(pmap, sva, eva)
-	pmap_t pmap;
-	vm_offset_t sva, eva;
-{
-	int pte, sme, ptenum, segnum;
-	vm_offset_t va;
-	pmeg_t pmegp;
-
-#ifdef	PMAP_DEBUG
-	if ((pmap_debug & PMD_REMOVE) ||
-		((sva <= pmap_db_watchva && eva > pmap_db_watchva)))
-		printf("pmap_remove_noctx(%p, 0x%lx, 0x%lx)\n",
-			pmap, sva, eva);
-#endif
-
-	/* Interrupt level handled by caller. */
-	CHECK_SPL();
-
-#ifdef	PMAP_DEBUG
-	/* Kernel always in a context (actually, in all contexts). */
-	if (pmap == kernel_pmap)
-		panic("pmap_remove_noctx: kernel_pmap");
-	if (pmap->pm_segmap == NULL)
-		panic("pmap_remove_noctx: null segmap");
-#endif
-
-	segnum = VA_SEGNUM(sva);
-	sme = pmap->pm_segmap[segnum];
-	pmegp = pmeg_p(sme);
-
-	for (va = sva; va < eva; va += NBPG) {
-		ptenum = VA_PTE_NUM(va);
-		pte = get_pte_pmeg(pmegp->pmeg_index, ptenum);
-		if (pte & PG_VALID) {
-			if (IS_MAIN_MEM(pte)) {
-				save_modref_bits(pte);
-				pv_unlink(pmap, PG_PA(pte), va);
-			}
-#ifdef	PMAP_DEBUG
-			if ((pmap_debug & PMD_SETPTE) || (va == pmap_db_watchva)) {
-				printf("pmap: set_pte pmap=%p va=0x%lx old=0x%x new=0x%x (rrncx)\n",
-					   pmap, va, pte, PG_INVAL);
-			}
-#endif
-			set_pte_pmeg(pmegp->pmeg_index, ptenum, PG_INVAL);
-			pmegp->pmeg_vpages--;
-		}
-	}
-	if (pmegp->pmeg_vpages <= 0) {
-		if (is_pmeg_wired(pmegp))
-			panic("pmap: removing wired");
-
-		pmap->pm_segmap[segnum] = SEGINV;
-		pmeg_free(pmegp);
-	}
-}
-
-/*
- * guaraunteed to be within one segment
- */
-void
-pmap_remove1(pmap, sva, eva)
-	pmap_t pmap;
-	vm_offset_t sva, eva;
-{
-	int s, sme;
-	int old_ctx;
-	boolean_t in_ctx;
-
-	PMAP_LOCK();
-
-#ifdef	DIAGNOSTIC
-	if (m68k_trunc_seg(sva) != m68k_trunc_seg(eva-NBPG))
-		panic("pmap_remove1: bad range!");
-#endif
-
-	/* cases: kernel: always has context, always available
-	 *
-	 *		user: has context, is available
-	 *		user: has no context, is available
-	 *		user: has no context, is not available (NOTHING) |_ together
-	 *		user: has context, isn't available (NOTHING)	 |
-	 */
-
-	if (pmap == kernel_pmap) {
-		sme = get_segmap(sva);
-		if (sme != SEGINV)
-			pmap_remove_mmu(pmap, sva, eva);
-	} else {
-		/* It is a user pmap. */
-		if (pmap->pm_segmap[VA_SEGNUM(sva)] != SEGINV) {
-			/* There is a PMEG, but maybe not active. */
-			old_ctx = CTXINVAL;
-			in_ctx = FALSE;
-			if (has_context(pmap)) {
-				old_ctx = get_context();
-				set_context(pmap->pm_ctxnum);
-				sme = get_segmap(sva);
-				if (sme != SEGINV)
-					in_ctx = TRUE;
-			}
-			if (in_ctx == TRUE) {
-				/*
-				 * The PMEG is in the current context.
-				 */
-				pmap_remove_mmu(pmap, sva, eva);
-			} else {
-				/*
-				 * There is a PMEG to deal with,
-				 * but it is not active.
-				 */
-				pmap_remove_noctx(pmap, sva, eva);
-			}
-			if (old_ctx != CTXINVAL) {
-				set_context(old_ctx);
-			}
-		}
-	}
-
-	PMAP_UNLOCK();
-	return;
-}
-
-/*
- *	Remove the given range of addresses from the specified map.
- *
- *	It is assumed that the start and end are properly
- *	rounded to the page size.
- */
-void
-pmap_remove(pmap, sva, eva)
-	pmap_t pmap;
-	vm_offset_t sva, eva;
-{
-	register vm_offset_t va, neva;
-
-	if (pmap == NULL)
-		return;
-
-	if (pmap == kernel_pmap) {
-		if (sva < virtual_avail)
-			sva = virtual_avail;
-		if (eva > DVMA_SPACE_END) {
-#ifdef	PMAP_DEBUG
-			printf("pmap_remove: eva=0x%lx\n", eva);
-			Debugger();
-#endif
-			eva = DVMA_SPACE_END;
-		}
-	} else {
-		if (eva > VM_MAXUSER_ADDRESS)
-			eva = VM_MAXUSER_ADDRESS;
-	}
-
-	va = sva;
-	while (va < eva) {
-		neva = m68k_trunc_seg(va) + NBSG;
-		if (neva > eva)
-			neva = eva;
-		pmap_remove1(pmap, va, neva);
-		va = neva;
-	}
-}
-
-static void
-pmap_enter_kernel(va, pa, prot, wired, new_pte)
-	vm_offset_t va;
-	vm_offset_t pa;
-	vm_prot_t prot;
-	boolean_t wired;
-	int new_pte;
-{
-	int s, sme, old_pte;
-	int nflags, do_pv;
-	vm_offset_t seg_va;
-	pmeg_t pmegp;
-
-	/*
-	  keep in hardware only, since its mapped into all contexts anyway;
-	  need to handle possibly allocating additional pmegs
-	  need to make sure they cant be stolen from the kernel;
-	  map any new pmegs into all contexts, make sure rest of pmeg is null;
-	  deal with pv_stuff; possibly caching problems;
-	  must also deal with changes too.
-	  */
-
-	/*
-	 * In detail:
-	 *
-	 * (a) lock pmap
-	 * (b) Is the VA in a already mapped segment, if so
-	 *	 look to see if that VA address is "valid".  If it is, then
-	 *	 action is a change to an existing pte
-	 * (c) if not mapped segment, need to allocate pmeg
-	 * (d) if adding pte entry or changing physaddr of existing one,
-	 *		use pv_stuff, for change, pmap_remove() possibly.
-	 * (e) change/add pte
-	 */
-
-#ifdef PMAP_DEBUG
-	if (va < virtual_avail) {
-		printf("pmap_enter_kernel: va=0x%lx < virtual_avail\n", va);
-		Debugger();
-	}
-#endif
-#ifdef	DIAGNOSTIC
-	if ((va < virtual_avail) || (va >= DVMA_SPACE_END))
-		panic("pmap_enter_kernel: bad va=0x%lx", va);
-	if ((new_pte & (PG_VALID | PG_SYSTEM)) != (PG_VALID | PG_SYSTEM))
-		panic("pmap_enter_kernel: bad pte");
-#endif
-
-	if (va >= DVMA_SPACE_START) {
-		/* This is DVMA space.  Always want it non-cached. */
-		new_pte |= PG_NC;
-	}
-
-	seg_va = m68k_trunc_seg(va);
-	do_pv = TRUE;
-
-	PMAP_LOCK();
-
-	sme = get_segmap(va);
-	if (sme == SEGINV) {
-		pmegp = pmeg_allocate(kernel_pmap, m68k_trunc_seg(va));
-		sme = pmegp->pmeg_index;
-		set_segmap_allctx(va, sme);
-#ifdef PMAP_DEBUG
-		if (pmap_debug & PMD_SEGMAP) {
-			printf("pmap: set_segmap pmap=%p va=0x%lx sme=0x%x (ek1)\n",
-				   kernel_pmap, seg_va, sme);
-		}
-		pmeg_verify_empty(m68k_trunc_seg(va));
-#endif
-		/* There are no existing mappings to deal with. */
-		old_pte = 0;
-		goto add_pte;
-	}
-
-	/* Found an existing pmeg.  Modify it... */
-	pmegp = pmeg_p(sme);
-#ifdef	DIAGNOSTIC
-	/* Make sure it is ours. */
-	if (pmegp->pmeg_owner != kernel_pmap)
-		panic("pmap_enter_kernel: MMU has bad pmeg 0x%x", sme);
-#endif
-
-	/*
-	 * Found existing PMEG.  Does mapping already exist?
-	 *	(a) if so, is it same pa then really a protection change
-	 *	(b) if not same, pa then we have to unlink from old pa
-	 *	(c)
-	 */
-	old_pte = get_pte(va);
-	if ((old_pte & PG_VALID) == 0)
-		goto add_pte;
-
-	/* Have valid translation.  Flush cache before changing it. */
-#ifdef	HAVECACHE
-	if (cache_size) {
-		cache_flush_page(va);
-		/* Get fresh mod/ref bits from write-back. */
-		old_pte = get_pte(va);
-	}
-#endif
-
-	/* XXX - removing valid page here, way lame... -glass */
-	pmegp->pmeg_vpages--;
-
-	if (!IS_MAIN_MEM(old_pte)) {
-		/* Was not main memory, so no pv_entry for it. */
-		goto add_pte;
-	}
-
-	/* Old mapping was main memory.  Save mod/ref bits. */
-	save_modref_bits(old_pte);
-
-	/*
-	 * If not changing the type or pfnum then re-use pv_entry.
-	 * Note we get here only with old_pte having PGT_OBMEM.
-	 */
-	if ((old_pte & (PG_TYPE|PG_FRAME)) ==
-		(new_pte & (PG_TYPE|PG_FRAME)) )
-	{
-		do_pv = FALSE;		/* re-use pv_entry */
-		new_pte |= (old_pte & PG_NC);
-		goto add_pte;
-	}
-
-	/* OK, different type or PA, have to kill old pv_entry. */
-	pv_unlink(kernel_pmap, PG_PA(old_pte), va);
-
- add_pte:	/* can be destructive */
-	pmeg_set_wiring(pmegp, va, wired);
-
-	/* Anything but MAIN_MEM is mapped non-cached. */
-	if (!IS_MAIN_MEM(new_pte)) {
-		new_pte |= PG_NC;
-		do_pv = FALSE;
-	}
-	if (do_pv) {
-		nflags = pv_link(kernel_pmap, pa, va,
-						 PG_TO_PV_FLAGS(new_pte & PG_NC));
-		if (nflags & PV_NC)
-			new_pte |= PG_NC;
-	}
-#ifdef	PMAP_DEBUG
-	if ((pmap_debug & PMD_SETPTE) || (va == pmap_db_watchva)) {
-		printf("pmap: set_pte pmap=%p va=0x%lx old=0x%x new=0x%x (ek)\n",
-			   kernel_pmap, va, old_pte, new_pte);
-	}
-#endif
-	/* cache flush done above */
-	set_pte(va, new_pte);
-	pmegp->pmeg_vpages++;
-
-	PMAP_UNLOCK();
-}
-
-
-void
-pmap_enter_user(pmap, va, pa, prot, wired, new_pte)
-	pmap_t pmap;
-	vm_offset_t va;
-	vm_offset_t pa;
-	vm_prot_t prot;
-	boolean_t wired;
-	int new_pte;
-{
-	int s, old_ctx;
-	int sme, segnum, old_pte;
-	int nflags, do_pv;
-	vm_offset_t seg_va;
-	pmeg_t pmegp;
-
-#ifdef	PMAP_DEBUG
-	/*
-	 * Some user pages are wired here, and a later
-	 * call to pmap_change_wiring() will unwire them.
-	 * XXX - Need a separate list for wired user pmegs
-	 * so they can not be stolen from the active list.
-	 * XXX - Note: vm_fault.c assumes pmap_extract will
-	 * work on wired mappings, so must preserve them...
-	 */
-	if (wired && (pmap_debug & PMD_WIRING)) {
-		printf("pmap_enter_user: attempt to wire user page, ignored\n");
-		printf("pmap=%p va=0x%lx pa=0x%lx\n", pmap, va, pa);
-	}
-#endif
-#ifdef	DIAGNOSTIC
-	if (va >= VM_MAXUSER_ADDRESS)
-		panic("pmap_enter_user: bad va=0x%lx", va);
-	if ((new_pte & (PG_VALID | PG_SYSTEM)) != PG_VALID)
-		panic("pmap_enter_user: bad pte");
-#endif
-
-	segnum = VA_SEGNUM(va);
-	seg_va = m68k_trunc_seg(va);
-	do_pv = TRUE;
-
-	PMAP_LOCK();
-
-	/*
-	 * Make sure the current context is correct.
-	 * Even though we call pmap_activate when we switch
-	 * to a new process, the VM system occasionally will
-	 * activate enough other pmaps that we can loose our
-	 * own context and have to reallocate one here.
-	 */
-	old_ctx = get_context();
-	if (old_ctx != pmap->pm_ctxnum) {
-#ifdef	PMAP_DEBUG
-		if (pmap_debug & PMD_SWITCH) {
-			printf("pmap_enter_user: wrong context\n");
-			Debugger();
-		}
-#endif
-		if (!has_context(pmap)) {
-#ifdef	PMAP_DEBUG
-			if (pmap_debug & PMD_SWITCH) {
-				printf("pmap_enter_user: pmap without context\n");
-				Debugger();
-			}
-#endif
-			context_allocate(pmap);
-		}
-		set_context(pmap->pm_ctxnum);
-	}
-
-	/*
-	 * Have correct context, now get a PMEG.
-	 */
-	if (pmap->pm_segmap[segnum] == SEGINV) {
-		/* Not in cache; need to allocate a new PMEG. */
-#ifdef	PMAP_DEBUG
-		/* should not be in hardware */
-		sme = get_segmap(va);
-		if (sme != SEGINV)
-			panic("pmap_enter_user: unknown sme at VA=0x%lx", va);
-#endif
-		/* This will get us an "active" PMEG */
-		pmegp = pmeg_allocate(pmap, seg_va);
-		sme = pmegp->pmeg_index;
-		pmap->pm_segmap[segnum] = sme;
-		set_segmap(va, sme);
-#ifdef	PMAP_DEBUG
-		if (pmap_debug & PMD_SEGMAP) {
-			printf("pmap: set_segmap pmap=%p va=0x%lx sme=0x%x (eu1)\n",
-				   pmap, seg_va, sme);
-		}
-		pmeg_verify_empty(seg_va);
-#endif
-		/* There are no existing mappings to deal with. */
-		old_pte = 0;
-		goto add_pte;
-	}
-
-	/* There is a PMEG but it might be inactive. */
-	sme = get_segmap(va);
-	if (sme != SEGINV) {
-		/* It is already active. */
-		pmegp = pmeg_p(sme);
-#ifdef	PMAP_DEBUG
-		/* Make sure it is the right PMEG. */
-		if (sme != pmap->pm_segmap[segnum])
-			panic("pmap_enter_user: wrong sme at VA=0x%lx", seg_va);
-#endif
-	} else {
-		/* Make the PMEG active. */
-		pmegp = pmeg_cache(pmap, seg_va);
-		if (pmegp == NULL)
-			panic("pmap_enter_user: pmeg_cache lost");
-		/* found cached pmeg - just reinstall in segmap */
-		sme = pmegp->pmeg_index;
-		set_segmap(va, sme);
-#ifdef	PMAP_DEBUG
-		if (pmap_debug & PMD_SEGMAP) {
-			printf("pmap: set_segmap pmap=%p va=0x%lx sme=0x%x (eu2)\n",
-				   pmap, seg_va, sme);
-		}
-#endif
-	}
-
-	/*
-	 * Found existing PMEG.  Does mapping already exist?
-	 *	(a) if so, is it same pa then really a protection change
-	 *	(b) if not same, pa then we have to unlink from old pa
-	 *	(c)
-	 */
-	old_pte = get_pte(va);
-	if ((old_pte & PG_VALID) == 0)
-		goto add_pte;
-
-	/* Have valid translation.  Flush cache before changing it. */
-#ifdef	HAVECACHE
-	if (cache_size) {
-		cache_flush_page(va);
-		/* Get fresh mod/ref bits from write-back. */
-		old_pte = get_pte(va);
-	}
-#endif
-
-	/* XXX - removing valid page here, way lame... -glass */
-	pmegp->pmeg_vpages--;
-
-	if (!IS_MAIN_MEM(old_pte)) {
-		/* Was not main memory, so no pv_entry for it. */
-		goto add_pte;
-	}
-
-	/* Old mapping was main memory.  Save mod/ref bits. */
-	save_modref_bits(old_pte);
-
-	/*
-	 * If not changing the type or pfnum then re-use pv_entry.
-	 * Note we get here only with old_pte having PGT_OBMEM.
-	 */
-	if ((old_pte & (PG_TYPE|PG_FRAME)) ==
-		(new_pte & (PG_TYPE|PG_FRAME)) )
-	{
-		do_pv = FALSE;		/* re-use pv_entry */
-		new_pte |= (old_pte & PG_NC);
-		goto add_pte;
-	}
-
-	/* OK, different type or PA, have to kill old pv_entry. */
-	pv_unlink(pmap, PG_PA(old_pte), va);
-
- add_pte:
-	/* XXX - Wiring changes on user pmaps? */
-	/* pmeg_set_wiring(pmegp, va, wired); */
-
-	/* Anything but RAM is mapped non-cached. */
-	if (!IS_MAIN_MEM(new_pte)) {
-		new_pte |= PG_NC;
-		do_pv = FALSE;
-	}
-	if (do_pv) {
-		nflags = pv_link(pmap, pa, va,
-						 PG_TO_PV_FLAGS(new_pte & PG_NC));
-		if (nflags & PV_NC)
-			new_pte |= PG_NC;
-	}
-#ifdef	PMAP_DEBUG
-	if ((pmap_debug & PMD_SETPTE) || (va == pmap_db_watchva)) {
-		printf("pmap: set_pte pmap=%p va=0x%lx old=0x%x new=0x%x (eu)\n",
-			   pmap, va, old_pte, new_pte);
-	}
-#endif
-	/* cache flush done above */
-	set_pte(va, new_pte);
-	pmegp->pmeg_vpages++;
-
-	set_context(old_ctx);
-	PMAP_UNLOCK();
-}
 
 /*
  *	Insert the given physical page (p) at
@@ -2709,7 +2124,6 @@ pmap_enter_user(pmap, va, pa, prot, wired, new_pte)
  *	or lose information.  That is, this routine must actually
  *	insert this page into the given map NOW.
  */
-
 void
 pmap_enter(pmap, va, pa, prot, wired)
 	pmap_t pmap;
@@ -2749,15 +2163,344 @@ pmap_enter(pmap, va, pa, prot, wired)
 	 *   be in the mmu either.
 	 *
 	 */
-	PMAP_LOCK();
+	s = splpmap();
 	if (pmap == kernel_pmap) {
-		/* This can be called recursively through malloc. */
 		pte_proto |= PG_SYSTEM;
 		pmap_enter_kernel(va, pa, prot, wired, pte_proto);
 	} else {
 		pmap_enter_user(pmap, va, pa, prot, wired, pte_proto);
 	}
-	PMAP_UNLOCK();
+	splx(s);
+}
+
+static void
+pmap_enter_kernel(pgva, pa, prot, wired, new_pte)
+	vm_offset_t pgva;
+	vm_offset_t pa;
+	vm_prot_t prot;
+	boolean_t wired;
+	int new_pte;
+{
+	int do_pv, old_pte, sme;
+	vm_offset_t segva;
+	pmeg_t pmegp;
+
+	CHECK_SPL();
+
+	/*
+	  keep in hardware only, since its mapped into all contexts anyway;
+	  need to handle possibly allocating additional pmegs
+	  need to make sure they cant be stolen from the kernel;
+	  map any new pmegs into all contexts, make sure rest of pmeg is null;
+	  deal with pv_stuff; possibly caching problems;
+	  must also deal with changes too.
+	  */
+
+	/*
+	 * In detail:
+	 *
+	 * (a) lock pmap
+	 * (b) Is the VA in a already mapped segment, if so
+	 *	 look to see if that VA address is "valid".  If it is, then
+	 *	 action is a change to an existing pte
+	 * (c) if not mapped segment, need to allocate pmeg
+	 * (d) if adding pte entry or changing physaddr of existing one,
+	 *		use pv_stuff, for change, pmap_remove() possibly.
+	 * (e) change/add pte
+	 */
+
+#ifdef	DIAGNOSTIC
+	if ((pgva < virtual_avail) || (pgva >= DVMA_SPACE_END))
+		panic("pmap_enter_kernel: bad va=0x%lx", pgva);
+	if ((new_pte & (PG_VALID | PG_SYSTEM)) != (PG_VALID | PG_SYSTEM))
+		panic("pmap_enter_kernel: bad pte");
+#endif
+
+	if (pgva >= DVMA_SPACE_START) {
+		/* This is DVMA space.  Always want it non-cached. */
+		new_pte |= PG_NC;
+	}
+
+	segva = m68k_trunc_seg(pgva);
+	do_pv = TRUE;
+
+	sme = get_segmap(segva);
+	if (sme == SEGINV) {
+		pmegp = pmeg_allocate(kernel_pmap, segva);
+		sme = pmegp->pmeg_index;
+		kernel_segmap[VA_SEGNUM(segva)] = sme;
+		set_segmap_allctx(segva, sme);
+#ifdef PMAP_DEBUG
+		if (pmap_debug & PMD_SEGMAP) {
+			printf("pmap: set_segmap pmap=%p va=0x%lx sme=0x%x (ek)\n",
+				   kernel_pmap, segva, sme);
+		}
+		pmeg_verify_empty(segva);
+#endif
+		/* There are no existing mappings to deal with. */
+		old_pte = 0;
+		goto add_pte;
+	}
+
+	/* Found an existing pmeg.  Modify it... */
+	pmegp = pmeg_p(sme);
+#ifdef	DIAGNOSTIC
+	/* Make sure it is ours. */
+	if (pmegp->pmeg_owner != kernel_pmap)
+		panic("pmap_enter_kernel: MMU has bad pmeg 0x%x", sme);
+#endif
+
+	/*
+	 * We have a PMEG.  Is the VA already mapped to somewhere?
+	 *	(a) if so, is it same pa? (really a protection change)
+	 *	(b) if not same pa, then we have to unlink from old pa
+	 */
+	old_pte = get_pte(pgva);
+	if ((old_pte & PG_VALID) == 0)
+		goto add_pte;
+
+	/* Have valid translation.  Flush cache before changing it. */
+#ifdef	HAVECACHE
+	if (cache_size) {
+		cache_flush_page(pgva);
+		/* Get fresh mod/ref bits from write-back. */
+		old_pte = get_pte(pgva);
+	}
+#endif
+
+	/* XXX - removing valid page here, way lame... -glass */
+	pmegp->pmeg_vpages--;
+
+	if (!IS_MAIN_MEM(old_pte)) {
+		/* Was not main memory, so no pv_entry for it. */
+		goto add_pte;
+	}
+
+	/* Old mapping was main memory.  Save mod/ref bits. */
+	save_modref_bits(old_pte);
+
+	/*
+	 * If not changing the type or pfnum then re-use pv_entry.
+	 * Note we get here only with old_pte having PGT_OBMEM.
+	 */
+	if ((old_pte & (PG_TYPE|PG_FRAME)) ==
+		(new_pte & (PG_TYPE|PG_FRAME)) )
+	{
+		do_pv = FALSE;		/* re-use pv_entry */
+		new_pte |= (old_pte & PG_NC);
+		goto add_pte;
+	}
+
+	/* OK, different type or PA, have to kill old pv_entry. */
+	pv_unlink(kernel_pmap, PG_PA(old_pte), pgva);
+
+ add_pte:	/* can be destructive */
+	pmeg_set_wiring(pmegp, pgva, wired);
+
+	/* Anything but MAIN_MEM is mapped non-cached. */
+	if (!IS_MAIN_MEM(new_pte)) {
+		new_pte |= PG_NC;
+		do_pv = FALSE;
+	}
+	if (do_pv) {
+		int nc = (new_pte & PG_NC) ? PV_NC : 0;
+		nc = pv_link(kernel_pmap, pa, pgva, nc);
+		if (nc & PV_NC)
+			new_pte |= PG_NC;
+	}
+#ifdef	PMAP_DEBUG
+	if ((pmap_debug & PMD_SETPTE) || (pgva == pmap_db_watchva)) {
+		printf("pmap: set_pte pmap=%p va=0x%lx old=0x%x new=0x%x (ek)\n",
+			   kernel_pmap, pgva, old_pte, new_pte);
+	}
+#endif
+	/* cache flush done above */
+	set_pte(pgva, new_pte);
+	pmegp->pmeg_vpages++;
+}
+
+
+void
+pmap_enter_user(pmap, pgva, pa, prot, wired, new_pte)
+	pmap_t pmap;
+	vm_offset_t pgva;
+	vm_offset_t pa;
+	vm_prot_t prot;
+	boolean_t wired;
+	int new_pte;
+{
+	int do_pv, old_pte, sme;
+	vm_offset_t segva;
+	pmeg_t pmegp;
+
+	CHECK_SPL();
+
+#ifdef	DIAGNOSTIC
+	if (pgva >= VM_MAXUSER_ADDRESS)
+		panic("pmap_enter_user: bad va=0x%lx", pgva);
+	if ((new_pte & (PG_VALID | PG_SYSTEM)) != PG_VALID)
+		panic("pmap_enter_user: bad pte");
+#endif
+#ifdef	PMAP_DEBUG
+	/*
+	 * Some user pages are wired here, and a later
+	 * call to pmap_change_wiring() will unwire them.
+	 * XXX - Need a separate list for wired user pmegs
+	 * so they can not be stolen from the active list.
+	 * XXX - Note: vm_fault.c assumes pmap_extract will
+	 * work on wired mappings, so must preserve them...
+	 * XXX: Maybe keep a list of wired PMEGs?
+	 */
+	if (wired && (pmap_debug & PMD_WIRING)) {
+		db_printf("pmap_enter_user: attempt to wire user page, ignored\n");
+		Debugger();
+	}
+#endif
+
+	/* Validate this assumption. */
+	if (pmap != current_pmap()) {
+#ifdef	PMAP_DEBUG
+		/* XXX: does this ever happen? */
+		db_printf("pmap_enter_user: not curproc\n");
+		Debugger();
+#endif
+		/* XXX: Just throw it out (fault it in later). */
+		/* XXX: But must remember it if wired... */
+		return;
+	}
+
+	segva = m68k_trunc_seg(pgva);
+	do_pv = TRUE;
+
+	/*
+	 * If this pmap was sharing the "empty" context,
+	 * allocate a real context for its exclusive use.
+	 */
+	if (!has_context(pmap)) {
+		context_allocate(pmap);
+#ifdef PMAP_DEBUG
+		if (pmap_debug & PMD_CONTEXT)
+			printf("pmap_enter(%p) got context %d\n",
+				   pmap, pmap->pm_ctxnum);
+#endif
+		set_context(pmap->pm_ctxnum);
+	} else {
+#ifdef	PMAP_DEBUG
+		/* Make sure context is correct. */
+		if (pmap->pm_ctxnum != get_context()) {
+			db_printf("pmap_enter_user: wrong context\n");
+			Debugger();
+			/* XXX: OK to proceed? */
+			set_context(pmap->pm_ctxnum);
+		}
+#endif
+	}
+
+	/*
+	 * We have a context.  Do we have a PMEG?
+	 */
+	sme = get_segmap(segva);
+	if (sme != SEGINV) {
+		/* Found a PMEG in the segmap.  Cool. */
+		pmegp = pmeg_p(sme);
+#ifdef	PMAP_DEBUG
+		/* Make sure it is the right PMEG. */
+		if (sme != pmap->pm_segmap[VA_SEGNUM(segva)])
+			panic("pmap_enter_user: wrong sme at VA=0x%lx", segva);
+#endif
+	} else {
+		/* Not in the segmap.  Try the S/W cache. */
+		pmegp = pmeg_cache(pmap, segva);
+		if (pmegp) {
+			/* Found PMEG in cache.  Just reload it. */
+			sme = pmegp->pmeg_index;
+			set_segmap(segva, sme);
+		} else {
+			/* PMEG not in cache, so allocate one. */
+			pmegp = pmeg_allocate(pmap, segva);
+			sme = pmegp->pmeg_index;
+			pmap->pm_segmap[VA_SEGNUM(segva)] = sme;
+			set_segmap(segva, sme);
+#ifdef	PMAP_DEBUG
+			pmeg_verify_empty(segva);
+#endif
+		}
+#ifdef	PMAP_DEBUG
+		if (pmap_debug & PMD_SEGMAP) {
+			printf("pmap: set_segmap pmap=%p va=0x%lx sme=0x%x (eu)\n",
+				   pmap, segva, sme);
+		}
+#endif
+	}
+
+	/*
+	 * We have a PMEG.  Is the VA already mapped to somewhere?
+	 *	(a) if so, is it same pa? (really a protection change)
+	 *	(b) if not same pa, then we have to unlink from old pa
+	 */
+	old_pte = get_pte(pgva);
+	if ((old_pte & PG_VALID) == 0)
+		goto add_pte;
+
+	/* Have valid translation.  Flush cache before changing it. */
+#ifdef	HAVECACHE
+	if (cache_size) {
+		cache_flush_page(pgva);
+		/* Get fresh mod/ref bits from write-back. */
+		old_pte = get_pte(pgva);
+	}
+#endif
+
+	/* XXX - removing valid page here, way lame... -glass */
+	pmegp->pmeg_vpages--;
+
+	if (!IS_MAIN_MEM(old_pte)) {
+		/* Was not main memory, so no pv_entry for it. */
+		goto add_pte;
+	}
+
+	/* Old mapping was main memory.  Save mod/ref bits. */
+	save_modref_bits(old_pte);
+
+	/*
+	 * If not changing the type or pfnum then re-use pv_entry.
+	 * Note we get here only with old_pte having PGT_OBMEM.
+	 */
+	if ((old_pte & (PG_TYPE|PG_FRAME)) ==
+		(new_pte & (PG_TYPE|PG_FRAME)) )
+	{
+		do_pv = FALSE;		/* re-use pv_entry */
+		new_pte |= (old_pte & PG_NC);
+		goto add_pte;
+	}
+
+	/* OK, different type or PA, have to kill old pv_entry. */
+	pv_unlink(pmap, PG_PA(old_pte), pgva);
+
+ add_pte:
+	/* XXX - Wiring changes on user pmaps? */
+	/* pmeg_set_wiring(pmegp, pgva, wired); */
+
+	/* Anything but RAM is mapped non-cached. */
+	if (!IS_MAIN_MEM(new_pte)) {
+		new_pte |= PG_NC;
+		do_pv = FALSE;
+	}
+	if (do_pv) {
+		int nc = (new_pte & PG_NC) ? PV_NC : 0;
+		nc = pv_link(pmap, pa, pgva, nc);
+		if (nc & PV_NC)
+			new_pte |= PG_NC;
+	}
+#ifdef	PMAP_DEBUG
+	if ((pmap_debug & PMD_SETPTE) || (pgva == pmap_db_watchva)) {
+		printf("pmap: set_pte pmap=%p va=0x%lx old=0x%x new=0x%x (eu)\n",
+			   pmap, pgva, old_pte, new_pte);
+	}
+#endif
+	/* cache flush done above */
+	set_pte(pgva, new_pte);
+	pmegp->pmeg_vpages++;
 }
 
 
@@ -2767,7 +2510,7 @@ pmap_enter(pmap, va, pa, prot, wired)
  * If that does not prodce a valid mapping,
  * call vm_fault as usual.
  *
- * XXX - Should merge this with the next function.
+ * XXX: Merge this with the next function?
  */
 int
 _pmap_fault(map, va, ftype)
@@ -2782,9 +2525,10 @@ _pmap_fault(map, va, ftype)
 	if (map == kernel_map) {
 		/* Do not allow faults below the "managed" space. */
 		if (va < virtual_avail) {
-			/* Most pages below virtual_avail are read-only. */
-			printf("pmap_fault: kernel_map & va < avail\n");
-			Debugger();
+			/*
+			 * Most pages below virtual_avail are read-only,
+			 * so I will assume it is a protection failure.
+			 */
 			return KERN_PROTECTION_FAILURE;
 		}
 	} else {
@@ -2812,61 +2556,80 @@ _pmap_fault(map, va, ftype)
  *	it has a valid PTE at va.
  * Otherwise return zero and let VM code handle it.
  */
-int pmap_fault_reload(pmap, va, ftype)
+int
+pmap_fault_reload(pmap, pgva, ftype)
 	pmap_t pmap;
-	vm_offset_t va;
+	vm_offset_t pgva;
 	vm_prot_t ftype;
 {
-	int rv, s, pte, chkpte, sme, ctx;
-	vm_offset_t seg_va;
+	int rv, s, pte, chkpte, sme;
+	vm_offset_t segva;
 	pmeg_t pmegp;
 
+	if (pgva >= VM_MAXUSER_ADDRESS)
+		return (0);
 	if (pmap->pm_segmap == NULL) {
 #ifdef	PMAP_DEBUG
-		printf("pmap_fault_reload: null segmap\n");
+		db_printf("pmap_fault_reload: null segmap\n");
 		Debugger();
 #endif
 		return (0);
 	}
-	if (va >= VM_MAXUSER_ADDRESS)
-		return (0);
-	seg_va = m68k_trunc_seg(va);
 
-	/* Make sure context is correct. */
-	ctx = get_context();
-	if (ctx != pmap->pm_ctxnum) {
-#ifdef	PMAP_DEBUG
-		printf("pmap_fault_reload: wrong context\n");
-		Debugger();
-#endif
-		/* XXX - What to do... */
+	/* Short-cut using the S/W segmap. */
+	if (pmap->pm_segmap[VA_SEGNUM(pgva)] == SEGINV)
 		return (0);
-	}
 
+	segva = m68k_trunc_seg(pgva);
 	chkpte = PG_VALID;
 	if (ftype & VM_PROT_WRITE)
 		chkpte |= PG_WRITE;
-
-	PMAP_LOCK();
-
 	rv = 0;
-	sme = get_segmap(seg_va);
+
+	s = splpmap();
+
+	/*
+	 * Given that we faulted on a user-space address, we will
+	 * probably need a context.  Get a context now so we can
+	 * try to resolve the fault with a segmap reload.
+	 */
+	if (!has_context(pmap)) {
+		context_allocate(pmap);
+#ifdef PMAP_DEBUG
+		if (pmap_debug & PMD_CONTEXT)
+			printf("pmap_fault(%p) got context %d\n",
+				   pmap, pmap->pm_ctxnum);
+#endif
+		set_context(pmap->pm_ctxnum);
+	} else {
+#ifdef	PMAP_DEBUG
+		/* Make sure context is correct. */
+		if (pmap->pm_ctxnum != get_context()) {
+			db_printf("pmap_fault_reload: wrong context\n");
+			Debugger();
+			/* XXX: OK to proceed? */
+			set_context(pmap->pm_ctxnum);
+		}
+#endif
+	}
+
+	sme = get_segmap(segva);
 	if (sme == SEGINV) {
 		/* See if there is something to reload. */
-		pmegp = pmeg_cache(pmap, seg_va);
+		pmegp = pmeg_cache(pmap, segva);
 		if (pmegp) {
 			/* Found one!  OK, reload it. */
 			pmap_stats.ps_pmeg_faultin++;
 			sme = pmegp->pmeg_index;
-			set_segmap(seg_va, sme);
-			pte = get_pte(va);
+			set_segmap(segva, sme);
+			pte = get_pte(pgva);
 			if (pte & chkpte)
 				rv = 1;
 		}
 	}
 
-	PMAP_UNLOCK();
-	return (0);
+	splx(s);
+	return (rv);
 }
 
 
@@ -2877,16 +2640,20 @@ void
 pmap_clear_modify(pa)
 	register vm_offset_t pa;
 {
-	register pv_entry_t	pvhead;
+	register pv_entry_t	*head;
+	u_char *pv_flags;
+	int s;
 
 	if (!pv_initialized)
 		return;
-	if (!managed(pa))
-		return;
 
-	pvhead = pa_to_pvp(pa);
-	pv_syncflags(pvhead);
-	pvhead->pv_flags &= ~PV_MOD;
+	pv_flags = pa_to_pvflags(pa);
+	head     = pa_to_pvhead(pa);
+
+	s = splpmap();
+	*pv_flags |= pv_syncflags(*head);
+	*pv_flags &= ~PV_MOD;
+	splx(s);
 }
 
 /*
@@ -2894,18 +2661,25 @@ pmap_clear_modify(pa)
  */
 int
 pmap_is_modified(pa)
-	register vm_offset_t pa;
+	vm_offset_t pa;
 {
-	register pv_entry_t	pvhead;
+	pv_entry_t	*head;
+	u_char *pv_flags;
+	int rv, s;
 
 	if (!pv_initialized)
 		return (0);
-	if (!managed(pa))
-		return (0);
-	pvhead = pa_to_pvp(pa);
-	if ((pvhead->pv_flags & PV_MOD) == 0)
-		pv_syncflags(pvhead);
-	return (pvhead->pv_flags & PV_MOD);
+
+	pv_flags = pa_to_pvflags(pa);
+	head     = pa_to_pvhead(pa);
+
+	s = splpmap();
+	if ((*pv_flags & PV_MOD) == 0)
+		*pv_flags |= pv_syncflags(*head);
+	rv = (*pv_flags & PV_MOD);
+	splx(s);
+
+	return (rv);
 }
 
 /*
@@ -2916,16 +2690,20 @@ void
 pmap_clear_reference(pa)
 	register vm_offset_t pa;
 {
-	register pv_entry_t	pvhead;
+	register pv_entry_t	*head;
+	u_char *pv_flags;
+	int s;
 
 	if (!pv_initialized)
 		return;
-	if (!managed(pa))
-		return;
 
-	pvhead = pa_to_pvp(pa);
-	pv_syncflags(pvhead);
-	pvhead->pv_flags &= ~PV_REF;
+	pv_flags = pa_to_pvflags(pa);
+	head     = pa_to_pvhead(pa);
+
+	s = splpmap();
+	*pv_flags |= pv_syncflags(*head);
+	*pv_flags &= ~PV_REF;
+	splx(s);
 }
 
 /*
@@ -2936,58 +2714,43 @@ int
 pmap_is_referenced(pa)
 	vm_offset_t	pa;
 {
-	register pv_entry_t	pvhead;
+	register pv_entry_t	*head;
+	u_char *pv_flags;
+	int rv, s;
 
 	if (!pv_initialized)
 		return (0);
-	if (!managed(pa))
-		return (0);
-	pvhead = pa_to_pvp(pa);
-	if ((pvhead->pv_flags & PV_REF) == 0)
-		pv_syncflags(pvhead);
-	return (pvhead->pv_flags & PV_REF);
+
+	pv_flags = pa_to_pvflags(pa);
+	head     = pa_to_pvhead(pa);
+
+	s = splpmap();
+	if ((*pv_flags & PV_REF) == 0)
+		*pv_flags |= pv_syncflags(*head);
+	rv = (*pv_flags & PV_REF);
+	splx(s);
+
+	return (rv);
 }
 
 
 /*
  * This is called by locore.s:cpu_switch() when it is
  * switching to a new process.  Load new translations.
+ *
+ * Note that we do NOT allocate a context here, but
+ * share the "kernel only" context until we really
+ * need our own context for user-space mappings in
+ * pmap_enter_user().
  */
 void
 pmap_activate(pmap)
 	pmap_t pmap;
 {
-	int old_ctx;
 
 	CHECK_SPL();
-	old_ctx = get_context();
-
-	/*
-	 * XXX - Should delay context allocation until later,
-	 * when pmap_enter() is called for this pmap.  That
-	 * could be arranged using a "kernel only" context
-	 * (one with no user-space mappings) for all pmaps
-	 * that do not yet have a "real" context.
-	 */
-	if (!has_context(pmap)) {
-		context_allocate(pmap);
-#ifdef PMAP_DEBUG
-		if (pmap_debug & PMD_SWITCH)
-			printf("pmap_activate(%p) takes context %d\n",
-				   pmap, pmap->pm_ctxnum);
-#endif
-	}
-
-	if (pmap->pm_ctxnum != old_ctx) {
-#ifdef	PMAP_DEBUG
-		if (pmap_debug & PMD_SWITCH) {
-			printf("pmap_activate(%p) old_ctx=%d new_ctx=%d\n",
-				   pmap, old_ctx, pmap->pm_ctxnum);
-		}
-#endif
-		set_context(pmap->pm_ctxnum);
-		ICIA();
-	}
+	set_context(pmap->pm_ctxnum);
+	ICIA();
 }
 
 
@@ -3022,8 +2785,10 @@ pmap_change_wiring(pmap, va, wired)
 	 */
 	if (pmap != kernel_pmap) {
 #ifdef PMAP_DEBUG
-		if (pmap_debug & PMD_WIRING)
-			printf("  (user pmap -- ignored)\n");
+		if (pmap_debug & PMD_WIRING) {
+			db_printf("  (user pmap -- ignored)\n");
+			Debugger();
+		}
 #endif
 		return;
 	}
@@ -3031,7 +2796,7 @@ pmap_change_wiring(pmap, va, wired)
 	ptenum = VA_PTE_NUM(va);
 	wiremask = 1 << ptenum;
 
-	PMAP_LOCK();
+	s = splpmap();
 
 	sme = get_segmap(va);
 	if (sme == SEGINV)
@@ -3041,7 +2806,8 @@ pmap_change_wiring(pmap, va, wired)
 		pmegp->pmeg_wired |= wiremask;
 	else
 		pmegp->pmeg_wired &= ~wiremask;
-	PMAP_UNLOCK();
+
+	splx(s);
 }
 
 /*
@@ -3077,12 +2843,14 @@ pmap_extract(pmap, va)
 	vm_offset_t pa;
 
 	pte = 0;
-	PMAP_LOCK();
+	s = splpmap();
+
 	if (pmap == kernel_pmap) {
 		sme = get_segmap(va);
 		if (sme != SEGINV)
 			pte = get_pte(va);
 	} else {
+		/* This is rare, so do it the easy way. */
 		segnum = VA_SEGNUM(va);
 		sme = pmap->pm_segmap[segnum];
 		if (sme != SEGINV) {
@@ -3090,10 +2858,14 @@ pmap_extract(pmap, va)
 			pte = get_pte_pmeg(sme, ptenum);
 		}
 	}
-	PMAP_UNLOCK();
+
+	splx(s);
+
 	if ((pte & PG_VALID) == 0) {
-		printf("pmap_extract: invalid va=0x%lx\n", va);
+#ifdef PMAP_DEBUG
+		db_printf("pmap_extract: invalid va=0x%lx\n", va);
 		Debugger();
+#endif
 		pte = 0;
 	}
 	pa = PG_PA(pte);
@@ -3103,6 +2875,41 @@ pmap_extract(pmap, va)
 	}
 #endif
 	return (pa);
+}
+
+
+/*
+ *	  pmap_page_protect:
+ *
+ *	  Lower the permission for all mappings to a given page.
+ */
+void
+pmap_page_protect(pa, prot)
+	vm_offset_t	 pa;
+	vm_prot_t	   prot;
+{
+	int s;
+
+	s = splpmap();
+
+#ifdef PMAP_DEBUG
+	if (pmap_debug & PMD_PROTECT)
+		printf("pmap_page_protect(0x%lx, 0x%lx)\n", pa, prot);
+#endif
+	switch (prot) {
+	case VM_PROT_ALL:
+		break;
+	case VM_PROT_READ:
+	case VM_PROT_READ|VM_PROT_EXECUTE:
+		pv_changepte(pa, 0, PG_WRITE);
+		break;
+	default:
+		/* remove mapping for all pmaps that have it */
+		pv_remove_all(pa);
+		break;
+	}
+
+	splx(s);
 }
 
 /*
@@ -3156,203 +2963,6 @@ pmap_pinit(pmap)
 }
 #endif	/* __VM_PMAP_HACK */
 
-/*
- * Remove write permissions, all in one PMEG,
- * where that PMEG is currently in the MMU.
- * The current context is already correct.
- */
-void
-pmap_protect_mmu(pmap, sva, eva)
-	pmap_t pmap;
-	vm_offset_t sva, eva;
-{
-	pmeg_t pmegp;
-	vm_offset_t va;
-	int pte, sme;
-	int flush_by_page = 0;
-
-	/* Interrupt level handled by caller. */
-	CHECK_SPL();
-
-#ifdef	DIAGNOSTIC
-	if (pmap != kernel_pmap) {
-		if (pmap->pm_ctxnum != get_context())
-			panic("pmap_protect_mmu: wrong context");
-	}
-#endif
-
-	va = m68k_trunc_seg(sva);
-	sme = get_segmap(va);
-#ifdef	DIAGNOSTIC
-	/* Make sure it is valid and known. */
-	if (sme == SEGINV)
-		panic("pmap_protect_mmu: SEGINV");
-	if (pmap->pm_segmap && (pmap->pm_segmap[VA_SEGNUM(sva)] != sme))
-		panic("pmap_protect_mmu: incorrect sme, va=0x%lx", va);
-#endif
-	pmegp = pmeg_p(sme);
-
-	/* have pmeg, will travel */
-
-#ifdef	DIAGNOSTIC
-	/* Make sure we own the pmeg, right va, etc. */
-	if ((pmegp->pmeg_va != va) ||
-		(pmegp->pmeg_owner != pmap) ||
-		(pmegp->pmeg_version != pmap->pm_version))
-	{
-		printf("pmap_protect_mmu: wrong pmeg, sme=0x%x\n", sme);
-#ifdef	PMAP_DEBUG
-		pmeg_print(pmegp);
-		Debugger();	/* XXX */
-#endif
-		panic("bye");
-	}
-	if (pmegp->pmeg_vpages <= 0)
-		panic("pmap_protect_mmu: no valid pages?");
-#endif
-
-#ifdef	HAVECACHE
-	if (cache_size) {
-		/*
-		 * If the range to be removed is larger than the cache,
-		 * it will be cheaper to flush this segment entirely.
-		 */
-		if (cache_size < (eva - sva)) {
-			/* cheaper to flush whole segment */
-			cache_flush_segment(va);
-		} else {
-			flush_by_page = 1;
-		}
-	}
-#endif
-
-	/* Remove write permission on PTEs in the given range. */
-	for (va = sva; va < eva; va += NBPG) {
-		pte = get_pte(va);
-		if (pte & PG_VALID) {
-#ifdef	HAVECACHE
-			if (flush_by_page) {
-				cache_flush_page(va);
-				/* Get fresh mod/ref bits from write-back. */
-				pte = get_pte(va);
-			}
-#endif
-			if (IS_MAIN_MEM(pte)) {
-				save_modref_bits(pte);
-			}
-			pte &= ~(PG_WRITE | PG_MODREF);
-			set_pte(va, pte);
-		}
-	}
-}
-
-/*
- * Remove write permissions, all in one PMEG,
- * where it is not currently in any context.
- */
-void
-pmap_protect_noctx(pmap, sva, eva)
-	pmap_t pmap;
-	vm_offset_t sva, eva;
-{
-	int pte, sme, ptenum, segnum;
-	vm_offset_t va;
-	pmeg_t pmegp;
-
-	/* Interrupt level handled by caller. */
-	CHECK_SPL();
-
-#ifdef	PMAP_DEBUG
-	/* Kernel always in a context (actually, in all contexts). */
-	if (pmap == kernel_pmap)
-		panic("pmap_protect_noctx: kernel_pmap");
-	if (pmap->pm_segmap == NULL)
-		panic("pmap_protect_noctx: null segmap");
-#endif
-
-	segnum = VA_SEGNUM(sva);
-	sme = pmap->pm_segmap[segnum];
-	pmegp = pmeg_p(sme);
-
-	/* Remove write permission on PTEs in the given range. */
-	for (va = sva; va < eva; va += NBPG) {
-		ptenum = VA_PTE_NUM(va);
-		pte = get_pte_pmeg(sme, ptenum);
-		if (pte & PG_VALID) {
-			if (IS_MAIN_MEM(pte)) {
-				save_modref_bits(pte);
-			}
-			pte &= ~(PG_WRITE | PG_MODREF);
-			set_pte_pmeg(sme, ptenum, pte);
-		}
-	}
-}
-
-/*
- * Remove write permissions in given range.
- * (guaranteed to be within one segment)
- * similar to pmap_remove1()
- */
-void
-pmap_protect1(pmap, sva, eva)
-	pmap_t pmap;
-	vm_offset_t sva, eva;
-{
-	int s, sme;
-	int old_ctx;
-	boolean_t in_ctx;
-
-	PMAP_LOCK();
-
-#ifdef	PMAP_DEBUG
-	if ((pmap_debug & PMD_PROTECT) ||
-		((sva <= pmap_db_watchva && eva > pmap_db_watchva)))
-		printf("pmap_protect1(%p, 0x%lx, 0x%lx)\n",
-			pmap, sva, eva);
-#endif
-#ifdef	DIAGNOSTIC
-	if (m68k_trunc_seg(sva) != m68k_trunc_seg(eva-NBPG))
-		panic("pmap_protect1: bad range!");
-#endif
-
-	if (pmap == kernel_pmap) {
-		sme = get_segmap(sva);
-		if (sme != SEGINV)
-			pmap_protect_mmu(pmap, sva, eva);
-	} else {
-		/* It is a user pmap. */
-		if (pmap->pm_segmap[VA_SEGNUM(sva)] != SEGINV) {
-			/* There is a PMEG, but maybe not active. */
-			old_ctx = CTXINVAL;
-			in_ctx = FALSE;
-			if (has_context(pmap)) {
-				old_ctx = get_context();
-				set_context(pmap->pm_ctxnum);
-				sme = get_segmap(sva);
-				if (sme != SEGINV)
-					in_ctx = TRUE;
-			}
-			if (in_ctx == TRUE) {
-				/*
-				 * The PMEG is in the current context.
-				 */
-				pmap_protect_mmu(pmap, sva, eva);
-			} else {
-				/*
-				 * There is a PMEG to deal with,
-				 * but it is not active.
-				 */
-				pmap_protect_noctx(pmap, sva, eva);
-			}
-			if (old_ctx != CTXINVAL) {
-				set_context(old_ctx);
-			}
-		}
-	}
-
-	PMAP_UNLOCK();
-	return;
-}
 
 /*
  *	Reduce the permissions on the specified
@@ -3361,11 +2971,12 @@ pmap_protect1(pmap, sva, eva)
  */
 void
 pmap_protect(pmap, sva, eva, prot)
-	pmap_t	pmap;
-	vm_offset_t	sva, eva;
+	pmap_t pmap;
+	vm_offset_t sva, eva;
 	vm_prot_t	prot;
 {
 	vm_offset_t va, neva;
+	int segnum;
 
 	if (pmap == NULL)
 		return;
@@ -3381,9 +2992,9 @@ pmap_protect(pmap, sva, eva, prot)
 	}
 
 #ifdef	PMAP_DEBUG
-	if (pmap_debug & PMD_PROTECT)
-		printf("pmap_protect(%p, 0x%lx, 0x%lx, 0x%x)\n",
-			pmap, sva, eva, prot);
+	if ((pmap_debug & PMD_PROTECT) ||
+		((sva <= pmap_db_watchva && eva > pmap_db_watchva)))
+		printf("pmap_protect(%p, 0x%lx, 0x%lx)\n", pmap, sva, eva);
 #endif
 
 	if (pmap == kernel_pmap) {
@@ -3391,7 +3002,7 @@ pmap_protect(pmap, sva, eva, prot)
 			sva = virtual_avail;
 		if (eva > DVMA_SPACE_END) {
 #ifdef	PMAP_DEBUG
-			printf("pmap_protect: eva=0x%lx\n", eva);
+			db_printf("pmap_protect: eva=0x%lx\n", eva);
 			Debugger();
 #endif
 			eva = DVMA_SPACE_END;
@@ -3402,14 +3013,528 @@ pmap_protect(pmap, sva, eva, prot)
 	}
 
 	va = sva;
+	segnum = VA_SEGNUM(va);
 	while (va < eva) {
 		neva = m68k_trunc_seg(va) + NBSG;
 		if (neva > eva)
 			neva = eva;
-		pmap_protect1(pmap, va, neva);
+		if (pmap->pm_segmap[segnum] != SEGINV)
+			pmap_protect1(pmap, va, neva);
 		va = neva;
+		segnum++;
 	}
 }
+
+/*
+ * Remove write permissions in given range.
+ * (guaranteed to be within one segment)
+ * similar to pmap_remove1()
+ */
+void
+pmap_protect1(pmap, sva, eva)
+	pmap_t pmap;
+	vm_offset_t sva, eva;
+{
+	int old_ctx, s, sme;
+	boolean_t in_ctx;
+
+	s = splpmap();
+
+#ifdef	DIAGNOSTIC
+	if (m68k_trunc_seg(sva) != m68k_trunc_seg(eva-1))
+		panic("pmap_protect1: bad range!");
+#endif
+
+	if (pmap == kernel_pmap) {
+		sme = get_segmap(sva);
+		if (sme != SEGINV)
+			pmap_protect_mmu(pmap, sva, eva);
+		goto out;
+	}
+	/* It is a user pmap. */
+
+	/* There is a PMEG, but maybe not active. */
+	old_ctx = INVALID_CONTEXT;
+	in_ctx = FALSE;
+	if (has_context(pmap)) {
+		/* Temporary context change. */
+		old_ctx = get_context();
+		set_context(pmap->pm_ctxnum);
+		sme = get_segmap(sva);
+		if (sme != SEGINV)
+			in_ctx = TRUE;
+	}
+
+	if (in_ctx == TRUE)
+		pmap_protect_mmu(pmap, sva, eva);
+	else
+		pmap_protect_noctx(pmap, sva, eva);
+
+	if (old_ctx != INVALID_CONTEXT) {
+		/* Restore previous context. */
+		set_context(old_ctx);
+	}
+
+out:
+	splx(s);
+}
+
+/*
+ * Remove write permissions, all in one PMEG,
+ * where that PMEG is currently in the MMU.
+ * The current context is already correct.
+ */
+void
+pmap_protect_mmu(pmap, sva, eva)
+	pmap_t pmap;
+	vm_offset_t sva, eva;
+{
+	pmeg_t pmegp;
+	vm_offset_t pgva, segva;
+	int pte, sme;
+	int flush_by_page = 0;
+
+	CHECK_SPL();
+
+#ifdef	DIAGNOSTIC
+	if (pmap != kernel_pmap) {
+		if (pmap->pm_ctxnum != get_context())
+			panic("pmap_protect_mmu: wrong context");
+	}
+#endif
+
+	segva = m68k_trunc_seg(sva);
+	sme = get_segmap(segva);
+
+#ifdef	DIAGNOSTIC
+	/* Make sure it is valid and known. */
+	if (sme == SEGINV)
+		panic("pmap_protect_mmu: SEGINV");
+	if (pmap->pm_segmap && (pmap->pm_segmap[VA_SEGNUM(segva)] != sme))
+		panic("pmap_protect_mmu: incorrect sme, va=0x%lx", segva);
+#endif
+
+	pmegp = pmeg_p(sme);
+	/* have pmeg, will travel */
+
+#ifdef	DIAGNOSTIC
+	/* Make sure we own the pmeg, right va, etc. */
+	if ((pmegp->pmeg_va != segva) ||
+		(pmegp->pmeg_owner != pmap) ||
+		(pmegp->pmeg_version != pmap->pm_version))
+	{
+		panic("pmap_protect_mmu: bad pmeg=%p", pmegp);
+	}
+	if (pmegp->pmeg_vpages <= 0)
+		panic("pmap_protect_mmu: no valid pages?");
+#endif
+
+#ifdef	HAVECACHE
+	if (cache_size) {
+		/*
+		 * If the range to be removed is larger than the cache,
+		 * it will be cheaper to flush this segment entirely.
+		 */
+		if (cache_size < (eva - sva)) {
+			/* cheaper to flush whole segment */
+			cache_flush_segment(segva);
+		} else {
+			flush_by_page = 1;
+		}
+	}
+#endif
+
+	/* Remove write permission in the given range. */
+	for (pgva = sva; pgva < eva; pgva += NBPG) {
+		pte = get_pte(pgva);
+		if (pte & PG_VALID) {
+#ifdef	HAVECACHE
+			if (flush_by_page) {
+				cache_flush_page(pgva);
+				/* Get fresh mod/ref bits from write-back. */
+				pte = get_pte(pgva);
+			}
+#endif
+			if (IS_MAIN_MEM(pte)) {
+				save_modref_bits(pte);
+			}
+			pte &= ~(PG_WRITE | PG_MODREF);
+			set_pte(pgva, pte);
+		}
+	}
+}
+
+/*
+ * Remove write permissions, all in one PMEG,
+ * where it is not currently in any context.
+ * XXX: Re-work this so it borrows context zero.
+ */
+void
+pmap_protect_noctx(pmap, sva, eva)
+	pmap_t pmap;
+	vm_offset_t sva, eva;
+{
+	int old_ctx, pte, sme, segnum;
+	vm_offset_t pgva, segva;
+
+	CHECK_SPL();
+
+#ifdef	DIAGNOSTIC
+	/* Kernel always in a context (actually, in all contexts). */
+	if (pmap == kernel_pmap)
+		panic("pmap_protect_noctx: kernel_pmap");
+	if (pmap->pm_segmap == NULL)
+		panic("pmap_protect_noctx: null segmap");
+#endif
+
+	segva = m68k_trunc_seg(sva);
+	segnum = VA_SEGNUM(segva);
+	sme = pmap->pm_segmap[segnum];
+	if (sme == SEGINV)
+		return;
+
+	/*
+	 * Borrow the EMPTY_CONTEXT so we can access the PMEG
+	 * at its normal virtual address.
+	 */
+	old_ctx = get_context();
+	set_context(EMPTY_CONTEXT);
+	set_segmap(segva, sme);
+
+	/* Remove write permission in the given range. */
+	for (pgva = sva; pgva < eva; pgva += NBPG) {
+		pte = get_pte(pgva);
+		if (pte & PG_VALID) {
+			/* No cache flush needed. */
+			if (IS_MAIN_MEM(pte)) {
+				save_modref_bits(pte);
+			}
+			pte &= ~(PG_WRITE | PG_MODREF);
+			set_pte(pgva, pte);
+		}
+	}
+
+	/*
+	 * Make the EMPTY_CONTEXT really empty again, and
+	 * restore the previous context.
+	 */
+	set_segmap(segva, SEGINV);
+	set_context(old_ctx);
+}
+
+
+/*
+ *	Remove the given range of addresses from the specified map.
+ *
+ *	It is assumed that the start and end are properly
+ *	rounded to the page size.
+ */
+void
+pmap_remove(pmap, sva, eva)
+	pmap_t pmap;
+	vm_offset_t sva, eva;
+{
+	vm_offset_t va, neva;
+	int segnum;
+
+	if (pmap == NULL)
+		return;
+
+#ifdef	PMAP_DEBUG
+	if ((pmap_debug & PMD_REMOVE) ||
+		((sva <= pmap_db_watchva && eva > pmap_db_watchva)))
+		printf("pmap_remove(%p, 0x%lx, 0x%lx)\n", pmap, sva, eva);
+#endif
+
+	if (pmap == kernel_pmap) {
+		if (sva < virtual_avail)
+			sva = virtual_avail;
+		if (eva > DVMA_SPACE_END) {
+#ifdef	PMAP_DEBUG
+			db_printf("pmap_remove: eva=0x%lx\n", eva);
+			Debugger();
+#endif
+			eva = DVMA_SPACE_END;
+		}
+	} else {
+		if (eva > VM_MAXUSER_ADDRESS)
+			eva = VM_MAXUSER_ADDRESS;
+	}
+
+	va = sva;
+	segnum = VA_SEGNUM(va);
+	while (va < eva) {
+		neva = m68k_trunc_seg(va) + NBSG;
+		if (neva > eva)
+			neva = eva;
+		if (pmap->pm_segmap[segnum] != SEGINV)
+			pmap_remove1(pmap, va, neva);
+		va = neva;
+		segnum++;
+	}
+}
+
+/*
+ * Remove user mappings, all within one segment
+ */
+void
+pmap_remove1(pmap, sva, eva)
+	pmap_t pmap;
+	vm_offset_t sva, eva;
+{
+	int old_ctx, s, sme;
+	boolean_t in_ctx;
+
+	s = splpmap();
+
+#ifdef	DIAGNOSTIC
+	if (m68k_trunc_seg(sva) != m68k_trunc_seg(eva-1))
+		panic("pmap_remove1: bad range!");
+#endif
+
+	if (pmap == kernel_pmap) {
+		sme = get_segmap(sva);
+		if (sme != SEGINV)
+			pmap_remove_mmu(pmap, sva, eva);
+		goto out;
+	}
+	/* It is a user pmap. */
+
+	/* There is a PMEG, but maybe not active. */
+	old_ctx = INVALID_CONTEXT;
+	in_ctx = FALSE;
+	if (has_context(pmap)) {
+		/* Temporary context change. */
+		old_ctx = get_context();
+		set_context(pmap->pm_ctxnum);
+		sme = get_segmap(sva);
+		if (sme != SEGINV)
+			in_ctx = TRUE;
+	}
+
+	if (in_ctx == TRUE)
+		pmap_remove_mmu(pmap, sva, eva);
+	else
+		pmap_remove_noctx(pmap, sva, eva);
+
+	if (old_ctx != INVALID_CONTEXT) {
+		/* Restore previous context. */
+		set_context(old_ctx);
+	}
+
+out:
+	splx(s);
+}
+
+/*
+ * Remove some mappings, all in one PMEG,
+ * where that PMEG is currently in the MMU.
+ * The current context is already correct.
+ * If no PTEs remain valid in the PMEG, free it.
+ */
+void
+pmap_remove_mmu(pmap, sva, eva)
+	pmap_t pmap;
+	vm_offset_t sva, eva;
+{
+	pmeg_t pmegp;
+	vm_offset_t pgva, segva;
+	int pte, sme;
+	int flush_by_page = 0;
+
+	CHECK_SPL();
+
+#ifdef	DIAGNOSTIC
+	if (pmap != kernel_pmap) {
+		if (pmap->pm_ctxnum != get_context())
+			panic("pmap_remove_mmu: wrong context");
+	}
+#endif
+
+	segva = m68k_trunc_seg(sva);
+	sme = get_segmap(segva);
+
+#ifdef	DIAGNOSTIC
+	/* Make sure it is valid and known. */
+	if (sme == SEGINV)
+		panic("pmap_remove_mmu: SEGINV");
+	if (pmap->pm_segmap && (pmap->pm_segmap[VA_SEGNUM(segva)] != sme))
+		panic("pmap_remove_mmu: incorrect sme, va=0x%lx", segva);
+#endif
+
+	pmegp = pmeg_p(sme);
+	/* have pmeg, will travel */
+
+#ifdef	DIAGNOSTIC
+	/* Make sure we own the pmeg, right va, etc. */
+	if ((pmegp->pmeg_va != segva) ||
+		(pmegp->pmeg_owner != pmap) ||
+		(pmegp->pmeg_version != pmap->pm_version))
+	{
+		panic("pmap_remove_mmu: bad pmeg=%p", pmegp);
+	}
+	if (pmegp->pmeg_vpages <= 0)
+		panic("pmap_remove_mmu: no valid pages?");
+#endif
+
+#ifdef	HAVECACHE
+	if (cache_size) {
+		/*
+		 * If the range to be removed is larger than the cache,
+		 * it will be cheaper to flush this segment entirely.
+		 */
+		if (cache_size < (eva - sva)) {
+			/* cheaper to flush whole segment */
+			cache_flush_segment(segva);
+		} else {
+			flush_by_page = 1;
+		}
+	}
+#endif
+
+	/* Invalidate the PTEs in the given range. */
+	for (pgva = sva; pgva < eva; pgva += NBPG) {
+		pte = get_pte(pgva);
+		if (pte & PG_VALID) {
+#ifdef	HAVECACHE
+			if (flush_by_page) {
+				cache_flush_page(pgva);
+				/* Get fresh mod/ref bits from write-back. */
+				pte = get_pte(pgva);
+			}
+#endif
+			if (IS_MAIN_MEM(pte)) {
+				save_modref_bits(pte);
+				pv_unlink(pmap, PG_PA(pte), pgva);
+			}
+#ifdef	PMAP_DEBUG
+			if ((pmap_debug & PMD_SETPTE) || (pgva == pmap_db_watchva)) {
+				printf("pmap: set_pte pmap=%p va=0x%lx"
+					   " old=0x%x new=0x%x (rrmmu)\n",
+					   pmap, pgva, pte, PG_INVAL);
+			}
+#endif
+			set_pte(pgva, PG_INVAL);
+			pmegp->pmeg_vpages--;
+		}
+	}
+
+	if (pmegp->pmeg_vpages <= 0) {
+		/* We are done with this pmeg. */
+		if (is_pmeg_wired(pmegp)) {
+#ifdef	PMAP_DEBUG
+			if (pmap_debug & PMD_WIRING) {
+				db_printf("pmap: removing wired pmeg: %p\n", pmegp);
+				Debugger();
+			}
+#endif	/* PMAP_DEBUG */
+		}
+
+#ifdef	PMAP_DEBUG
+		if (pmap_debug & PMD_SEGMAP) {
+			printf("pmap: set_segmap ctx=%d v=0x%lx old=0x%x new=ff (rm)\n",
+			    pmap->pm_ctxnum, segva, pmegp->pmeg_index);
+		}
+		pmeg_verify_empty(segva);
+#endif
+
+		/* Remove it from the MMU. */
+		if (kernel_pmap == pmap) {
+			/* Did cache flush above. */
+			set_segmap_allctx(segva, SEGINV);
+		} else {
+			/* Did cache flush above. */
+			set_segmap(segva, SEGINV);
+		}
+		pmap->pm_segmap[VA_SEGNUM(segva)] = SEGINV;
+		/* Now, put it on the free list. */
+		pmeg_free(pmegp);
+	}
+}
+
+/*
+ * Remove some mappings, all in one PMEG,
+ * where it is not currently in any context.
+ * XXX: Re-work this so it borrows context zero.
+ */
+void
+pmap_remove_noctx(pmap, sva, eva)
+	pmap_t pmap;
+	vm_offset_t sva, eva;
+{
+	pmeg_t pmegp;
+	int old_ctx, pte, sme, segnum;
+	vm_offset_t pgva, segva;
+
+	CHECK_SPL();
+
+#ifdef	DIAGNOSTIC
+	/* Kernel always in a context (actually, in all contexts). */
+	if (pmap == kernel_pmap)
+		panic("pmap_remove_noctx: kernel_pmap");
+	if (pmap->pm_segmap == NULL)
+		panic("pmap_remove_noctx: null segmap");
+#endif
+
+	segva = m68k_trunc_seg(sva);
+	segnum = VA_SEGNUM(segva);
+	sme = pmap->pm_segmap[segnum];
+	if (sme == SEGINV)
+		return;
+	pmegp = pmeg_p(sme);
+
+	/*
+	 * Borrow the EMPTY_CONTEXT so we can access the PMEG
+	 * at its normal virtual address.
+	 */
+	old_ctx = get_context();
+	set_context(EMPTY_CONTEXT);
+	set_segmap(segva, sme);
+
+	/* Invalidate the PTEs in the given range. */
+	for (pgva = sva; pgva < eva; pgva += NBPG) {
+		pte = get_pte(pgva);
+		if (pte & PG_VALID) {
+			/* No cache flush needed. */
+			if (IS_MAIN_MEM(pte)) {
+				save_modref_bits(pte);
+				pv_unlink(pmap, PG_PA(pte), pgva);
+			}
+#ifdef	PMAP_DEBUG
+			if ((pmap_debug & PMD_SETPTE) || (pgva == pmap_db_watchva)) {
+				printf("pmap: set_pte pmap=%p va=0x%lx"
+					   " old=0x%x new=0x%x (rrncx)\n",
+					   pmap, pgva, pte, PG_INVAL);
+			}
+#endif
+			set_pte(pgva, PG_INVAL);
+			pmegp->pmeg_vpages--;
+		}
+	}
+
+	/*
+	 * Make the EMPTY_CONTEXT really empty again, and
+	 * restore the previous context.
+	 */
+	set_segmap(segva, SEGINV);
+	set_context(old_ctx);
+
+	if (pmegp->pmeg_vpages <= 0) {
+		/* We are done with this pmeg. */
+		if (is_pmeg_wired(pmegp)) {
+#ifdef	PMAP_DEBUG
+			if (pmap_debug & PMD_WIRING) {
+				db_printf("pmap: removing wired pmeg: %p\n", pmegp);
+				Debugger();
+			}
+#endif	/* PMAP_DEBUG */
+		}
+
+		pmap->pm_segmap[segnum] = SEGINV;
+		pmeg_free(pmegp);
+	}
+}
+
 
 /*
  * Count resident pages in this pmap.
@@ -3493,11 +3618,12 @@ pmap_copy_page(src, dst)
 	int pte;
 	int s;
 
+	s = splpmap();
+
 #ifdef	PMAP_DEBUG
 	if (pmap_debug & PMD_COW)
 		printf("pmap_copy_page: 0x%lx -> 0x%lx\n", src, dst);
 #endif
-	PMAP_LOCK();
 
 	if (tmp_vpages_inuse)
 		panic("pmap_copy_page: vpages inuse");
@@ -3514,7 +3640,8 @@ pmap_copy_page(src, dst)
 	set_pte(tmp_vpages[0], PG_INVAL);
 
 	tmp_vpages_inuse--;
-	PMAP_UNLOCK();
+
+	splx(s);
 }
 
 /*
@@ -3530,11 +3657,12 @@ pmap_zero_page(pa)
 	int pte;
 	int s;
 
+	s = splpmap();
+
 #ifdef	PMAP_DEBUG
 	if (pmap_debug & PMD_COW)
 		printf("pmap_zero_page: 0x%lx\n", pa);
 #endif
-	PMAP_LOCK();
 
 	if (tmp_vpages_inuse)
 		panic("pmap_zero_page: vpages inuse");
@@ -3548,7 +3676,8 @@ pmap_zero_page(pa)
 	set_pte(tmp_vpages[0], PG_INVAL);
 
 	tmp_vpages_inuse--;
-	PMAP_UNLOCK();
+
+	splx(s);
 }
 
 /*
@@ -3642,7 +3771,9 @@ pmap_get_pagemap(pt, off)
 
 /*
  * Helper functions for changing unloaded PMEGs
+ * XXX: These should go away.  (Borrow context zero instead.)
  */
+
 static int temp_seg_inuse;
 
 static int
@@ -3685,6 +3816,61 @@ set_pte_pmeg(int pmeg_num, int page_num, int pte)
 
 	temp_seg_inuse--;
 }
+
+#ifdef	PMAP_DEBUG
+/* Things to call from the debugger. */
+
+void
+pmap_print(pmap)
+	pmap_t pmap;
+{
+	db_printf(" pm_ctxnum=%d\n", pmap->pm_ctxnum);
+	db_printf(" pm_version=0x%x\n", pmap->pm_version);
+	db_printf(" pm_segmap=%p\n", pmap->pm_segmap);
+}
+
+void
+pmeg_print(pmegp)
+	pmeg_t pmegp;
+{
+	db_printf("link_next=%p  link_prev=%p\n",
+	    pmegp->pmeg_link.tqe_next,
+	    pmegp->pmeg_link.tqe_prev);
+	db_printf("index=0x%x owner=%p own_vers=0x%x\n",
+	    pmegp->pmeg_index, pmegp->pmeg_owner, pmegp->pmeg_version);
+	db_printf("va=0x%lx wired=0x%x reserved=0x%x vpgs=0x%x qstate=0x%x\n",
+	    pmegp->pmeg_va, pmegp->pmeg_wired,
+	    pmegp->pmeg_reserved, pmegp->pmeg_vpages,
+	    pmegp->pmeg_qstate);
+}
+
+void
+pv_print(pa)
+	vm_offset_t pa;
+{
+	pv_entry_t pv;
+	int idx;
+
+	if (!pv_initialized) {
+		db_printf("no pv_flags_tbl\n");
+		return;
+	}
+	idx = PA_PGNUM(pa);
+	if (idx > physmem) {
+		db_printf("bad address\n");
+		return;
+	}
+	db_printf("pa=0x%lx, flags=0x%x\n",
+			  pa, pv_flags_tbl[idx]);
+
+	pv = pv_head_tbl[idx];
+	while (pv) {
+		db_printf(" pv_entry %p pmap %p va 0x%lx next %p\n",
+			   pv, pv->pv_pmap, pv->pv_va, pv->pv_next);
+		pv = pv->pv_next;
+	}
+}
+#endif	/* PMAP_DEBUG */
 
 /*
  * Local Variables:
