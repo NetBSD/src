@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.20 2002/03/03 14:36:48 uch Exp $
+# $NetBSD: GENERIC,v 1.21 2002/03/24 18:14:27 uch Exp $
 #
 # GENERIC machine description file
 # 
@@ -38,10 +38,21 @@ options		SH3
 #	HITACHI HPW50PA		25MHz		100MHz
 #
 
+#options		KSTACK_DEBUG
 options 	DDB			# in-kernel debugger
+#options 	KGDB			# in-kernel debugger
+#makeoptions	DEBUG="-g"	# compile full symbol table
+#options	KGDB_DEVRATE=19200
+# HP Jornada
+#options 	"KGDB_DEVNAME=\"scif\""
+# HITACHI PERSONA (SH3)
+#options 	"KGDB_DEVNAME=\"hd64461uart\""
+# HITACHI PERSONA (SH4)
+#options 	"KGDB_DEVNAME=\"hd64465uart\""
+
 options 	DIAGNOSTIC		# extra kernel debugging checks
 options 	DEBUG			# extra kernel debugging support
-options 	KTRACE			# system call tracing support
+#options 	KTRACE			# system call tracing support
 options 	KLOADER_KERNEL_PATH="\"/netbsd\""
 
 # Standard system options
@@ -98,9 +109,9 @@ wskbd*		at hpckbd? mux 1
 # Serial Devices
 # don't need to define SCICONSOLE. you can select from bootloader.
 options 	SCIFCN_SPEED=19200
-scif0 at shb? port 0xa4000008 irq 12
+scif0 at shb?
 
-hd64461if* at shb? irq 4
+hd64461if* at shb?
 hd64461pcmcia*	at hd64461if?
 hd64461video*	at hd64461if?
 
