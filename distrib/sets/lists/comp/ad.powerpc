@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.24 2002/04/06 12:15:28 wiz Exp $
+# $NetBSD: ad.powerpc,v 1.25 2002/04/10 17:17:11 briggs Exp $
 ./usr/bin/elf2aout	comp-sysutil-bin
 ./usr/include/powerpc	comp-c-include
 ./usr/include/powerpc/ansi.h	comp-c-include
@@ -17,6 +17,7 @@
 ./usr/include/powerpc/fpu.h	comp-c-include
 ./usr/include/powerpc/frame.h	comp-c-include
 ./usr/include/powerpc/ibm4xx	comp-c-include
+./usr/include/powerpc/ibm4xx/cpu.h	comp-c-include
 ./usr/include/powerpc/ibm4xx/pmap.h	comp-c-include
 ./usr/include/powerpc/ibm4xx/pte.h	comp-c-include
 ./usr/include/powerpc/ibm4xx/tlb.h	comp-c-include
