@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_addr_fixup.c,v 1.1 2000/04/28 17:19:10 uch Exp $	*/
+/*	$NetBSD: pci_addr_fixup.c,v 1.2 2000/05/17 09:50:34 uch Exp $	*/
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi.  All rights reserved.
@@ -95,7 +95,7 @@ pci_addr_fixup(pc, bus)
 	const char *verbose_header = 
 		"[%s]-----------------------\n"
 		"  device vendor product\n"
-		"  register space address    size       mask\n"
+		"  register space address    size\n"
 		"--------------------------------------------\n";
 	const char *verbose_footer = 
 		"--------------------------[%3d devices bogus]\n";
@@ -131,6 +131,9 @@ pci_addr_fixup(pc, bus)
 	pci_device_foreach(pc, bus, pciaddr_resource_reserve);
 	DPRINTF((verbose_footer, pciaddr.nbogus));
 
+	if (pciaddr.nbogus == 0)
+		goto end; /* no need to fixup */
+
 	/* 
 	 * 2. reserve non-PCI area.
 	 */
@@ -164,6 +167,7 @@ pci_addr_fixup(pc, bus)
 	pci_device_foreach(pc, bus, pciaddr_resource_allocate);
 	DPRINTF((verbose_footer, pciaddr.nbogus));
 
+ end:
 	extent_destroy(pciaddr.extent_mem);
 	extent_destroy(pciaddr.extent_port);
 }
@@ -197,7 +201,7 @@ pciaddr_resource_manage(pc, tag, func)
 	pciaddr_resource_manage_func_t func;
 {
 	struct extent *ex;
-	pcireg_t val, mask, mask2;
+	pcireg_t val, mask;
 	bus_addr_t addr;
 	bus_size_t size;
 	int error, useport, usemem, mapreg, type, reg_start, reg_end;
@@ -229,9 +233,6 @@ pciaddr_resource_manage(pc, tag, func)
 		pci_conf_write(pc, tag, mapreg, ~0);
 
 		mask = pci_conf_read(pc, tag, mapreg);
-		pci_conf_write(pc, tag, mapreg, 0);
-
-		mask2 = pci_conf_read(pc, tag, mapreg);
 		pci_conf_write(pc, tag, mapreg, val);
 	
 		type = PCI_MAPREG_TYPE(val);
@@ -255,9 +256,9 @@ pciaddr_resource_manage(pc, tag, func)
 		/* reservation/allocation phase */
 		error += (*func) (pc, tag, mapreg, ex, type, &addr, size);
 
-		DPRINTF(("\n\t%02xh %s 0x%08x 0x%08x %x", 
+		DPRINTF(("\n\t%02xh %s 0x%08x 0x%08x", 
 			 mapreg, type ? "port" : "mem ", 
-			 (unsigned int)addr, (unsigned int)size, mask2));
+			 (unsigned int)addr, (unsigned int)size));
 	}
     
 	/* enable/disable PCI device */
@@ -293,13 +294,13 @@ pciaddr_do_resource_allocate(pc, tag, mapreg, ex, type, addr, size)
 	
 	start = type == PCI_MAPREG_TYPE_MEM ? pciaddr.mem_alloc_start
 		: pciaddr.port_alloc_start;
-	if (start < ex->ex_start || start + size >= ex->ex_end) {
+	if (start < ex->ex_start || start + size - 1 >= ex->ex_end) {
 		DPRINTF(("No available resources. fixup failed\n"));
 		return (1);
 	}
-	error = extent_alloc_subregion(ex, start, start + size, size, size,
-				       0, EX_FAST|EX_NOWAIT|EX_MALLOCOK, 
-				       addr);
+	error = extent_alloc_subregion(ex, start, start + size - 1, size,
+				       size, 0,
+				       EX_FAST|EX_NOWAIT|EX_MALLOCOK, addr);
 	if (error) {
 		DPRINTF(("No available resources. fixup failed\n"));
 		return (1);
