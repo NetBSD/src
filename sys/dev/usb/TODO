@@ -4,8 +4,6 @@ Implement request timeout and abort in ohci.c.
 
 Implement request abort in uhci.c.
 
-Use the new device attach/detach framework for USB.
-
 Implement isochronous transfer mode.
 
 Implement audio driver.
@@ -15,5 +13,3 @@ Do bandwidth accounting.
 Use lock manager locks.
 
 Implement a modem driver for the Abstract Control Model.
-
-Implement USB suspend/resume for APM suspend/resume.
