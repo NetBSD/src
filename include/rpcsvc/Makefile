@@ -1,14 +1,14 @@
 #
 # @(#)Makefile	2.3 88/08/11 4.0 RPCSRC
 #
-# $Header: /cvsroot/src/include/rpcsvc/Attic/Makefile,v 1.5 1993/05/06 13:28:50 proven Exp $
+# $Header: /cvsroot/src/include/rpcsvc/Attic/Makefile,v 1.6 1993/06/03 19:20:02 brezak Exp $
 #
 
 .SUFFIXES: .x
 
 RPCCOM = rpcgen
 
-HDRS= klm_prot.h mount.h nfs_prot.h nlm_prot.h rex.h rquota.h rnusers.h\
+HDRS= klm_prot.h mount.h nfs_prot.h nlm_prot.h rex.h rnusers.h\
       rquota.h rstat.h rwall.h sm_inter.h spray.h yppasswd.h yp.h
 XFILES= bootparam_prot.x klm_prot.x mount.x nfs_prot.x nlm_prot.x \
       rex.x rnusers.x rquota.x rstat.x rwall.x sm_inter.x spray.x \
