@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.62 1999/10/18 05:45:37 cgd Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.63 1999/10/19 16:51:45 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -770,7 +770,7 @@ sys/netinet/ip_flow.c				1.14
   multicast packets which contain ip unicast packets; these packets
   would only be generated from misconfigured/buggy systems.
 
-sys/adosfs/advfsops.c				1.37
+sys/adosfs/advfsops.c				1.37-1.38
 sys/coda/coda_vnops.c				1.14
 sys/filecorefs/filecore_vfsops.c		1.8
 sys/isofs/cd9660/cd9660_vfsops.c		1.40
@@ -779,6 +779,7 @@ sys/miscfs/union/union_subr.c			1.36
 sys/msdosfs/msdosfs_vfsops.c			1.63
 sys/ufs/ext2fs/ext2fs_vfsops.c			1.28
 sys/ufs/ffs/ffs_vfsops.c			1.53
+sys/ufs/lfs/lfs_vfsops.c			1.39
 sys/uvm/uvm_swap.c				1.29
 
   In spec_close(), call the device's close routine with the vnode
@@ -800,3 +801,19 @@ sys/dev/pci/ncr.c				1.87
   for normal operation, but allows the driver to function properly
   even with some broken drives at the cost of some performance on
   drives that have a very low tagged command limit.
+
+sys/dev/wscons/wsdisplay.c			1.31
+sys/dev/wscons/wsdisplay_compat_usl.c		1.10
+sys/dev/wscons/wsdisplayvar.h			1.13
+
+  Enable VT-switching ioctls on ttyEcfg, which allows Linux X servers
+  to work when properly configured (with symlink /emul/linux/dev/tty0
+  -> /dev/ttyEcfg).
+
+sys/arch/macppc/include/disklabel.h		1.4
+sys/arch/macppc/macppc/disksubr.c		1.5
+
+  Add support for reading MacOS-partitioned disks. Stolen from the mac68k
+  port, but modified in that macppc searches for netbsd-partitioned
+  disks before MacOS partitioned disks, since installboot generates a
+  fake MacOS partition table which isn't the one we want to use.
