@@ -44,7 +44,6 @@
 #include <compat/ibcs2/ibcs2_syscallargs.h>
 #include <compat/ibcs2/ibcs2_util.h>
 
-
 static int
 cvt_o_flags(flags)
 	int flags;
@@ -151,11 +150,12 @@ oflags2ioflags(flags)
 }
 
 int
-ibcs2_open(p, uap, retval)
+ibcs2_open(p, v, retval)
 	struct proc *p;
-	struct ibcs2_open_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ibcs2_open_args *uap = v;
 	int noctty = SCARG(uap, flags) & IBCS2_O_NOCTTY;
 	int ret;
 	caddr_t sg = stackgap_init(p->p_emul);
@@ -179,11 +179,12 @@ ibcs2_open(p, uap, retval)
 }
 
 int
-ibcs2_creat(p, uap, retval)
+ibcs2_creat(p, v, retval)
         struct proc *p;  
-	struct ibcs2_creat_args *uap;
+	void *v;
 	int *retval;
 {       
+	struct ibcs2_creat_args *uap = v;
 	struct open_args cup;   
 	caddr_t sg = stackgap_init(p->p_emul);
 
@@ -195,11 +196,12 @@ ibcs2_creat(p, uap, retval)
 }       
 
 int
-ibcs2_access(p, uap, retval)
+ibcs2_access(p, v, retval)
         struct proc *p;
-        struct ibcs2_access_args *uap;
+	void *v;
         int *retval;
 {
+	struct ibcs2_access_args *uap = v;
         struct access_args cup;
         caddr_t sg = stackgap_init(p->p_emul);
 
@@ -210,11 +212,12 @@ ibcs2_access(p, uap, retval)
 }
 
 int
-ibcs2_fcntl(p, uap, retval)
+ibcs2_fcntl(p, v, retval)
 	struct proc *p;
-	struct ibcs2_fcntl_args *uap;
+	void *v;
 	int *retval;
 {
+	struct ibcs2_fcntl_args *uap = v;
 	int error;
 	struct fcntl_args fa;
 	struct flock *flp;
