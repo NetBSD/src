@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.38 1999/08/10 23:35:43 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.39 1999/08/23 22:29:41 ross Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.38 1999/08/10 23:35:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.39 1999/08/23 22:29:41 ross Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -219,7 +219,7 @@ cpuattach(parent, dev, aux)
 			printf("%s-%d", cpunametable[i].cpu_major_name, minor);
 			s = cpunametable[i].cpu_minor_names;
 			for(i = 0; s && s[i]; ++i) {
-				if (i == minor) {
+				if (i == minor && strlen(s[i]) != 0) {
 					printf(" (%s)\n", s[i]);
 					goto recognized;
 				}
