@@ -1,4 +1,4 @@
-/* $NetBSD: pppoectl.c,v 1.5 2002/01/07 12:22:02 martin Exp $ */
+/* $NetBSD: pppoectl.c,v 1.6 2002/03/02 16:27:02 martin Exp $ */
 
 /*
  * Copyright (c) 1997 Joerg Wunsch
@@ -61,7 +61,7 @@ int
 main(int argc, char **argv)
 {
 	int s, c;
-	int errs = 0, verbose = 0, dump = 0;
+	int errs = 0, verbose = 0, dump = 0, dns1 = 0, dns2 = 0;
 	size_t off, len;
 	const char *ifname, *cp;
 	const char *eth_if_name, *access_concentrator, *service;
@@ -71,8 +71,9 @@ main(int argc, char **argv)
 	struct spppidletimeout timeout;
 	struct spppauthfailurestats authfailstats;
 	struct spppauthfailuresettings authfailset;
+	struct spppdnssettings dnssettings;
 	int mib[2];
-	int set_auth = 0, set_lcp = 0, set_idle_to = 0, set_auth_failure = 0;
+	int set_auth = 0, set_lcp = 0, set_idle_to = 0, set_auth_failure = 0, set_dns = 0;
 	struct clockinfo clockinfo;
 
 	setprogname(argv[0]);
@@ -80,7 +81,7 @@ main(int argc, char **argv)
 	eth_if_name = NULL;
 	access_concentrator = NULL;
 	service = NULL;
-	while ((c = getopt(argc, argv, "vde:s:a:")) != -1)
+	while ((c = getopt(argc, argv, "vde:s:a:n:")) != -1)
 		switch (c) {
 		case 'v':
 			verbose++;
@@ -100,6 +101,18 @@ main(int argc, char **argv)
 
 		case 'a':
 			access_concentrator = optarg;
+			break;
+
+		case 'n':
+			if (strcmp(optarg, "1") == 0)
+				dns1 = 1;
+			else if (strcmp(optarg, "2") == 0)
+				dns2 = 1;
+			else {
+				fprintf(stderr, "bad argument \"%s\" to -n (only 1 or two allowed)\n",
+					optarg);
+				errs++;
+			}
 			break;
 
 		default:
@@ -143,6 +156,29 @@ main(int argc, char **argv)
 		return 0;
 	}
 
+	if (dns1 || dns2) {
+		/* print DNS addresses */
+		int e;
+		struct spppdnsaddrs addrs;
+		memset(&addrs, 0, sizeof addrs);
+		strncpy(addrs.ifname, ifname, sizeof addrs.ifname);
+		e = ioctl(s, SPPPGETDNSADDRS, &addrs);
+		if (e) 
+			print_error(ifname, e, "SPPPGETDNSADDRS");
+		if (dns1)
+			printf("%d.%d.%d.%d\n",
+				(addrs.dns[0] >> 24) & 0xff,
+				(addrs.dns[0] >> 16) & 0xff,
+				(addrs.dns[0] >> 8) & 0xff,
+				addrs.dns[0] & 0xff);
+		if (dns2)
+			printf("%d.%d.%d.%d\n",
+				(addrs.dns[1] >> 24) & 0xff,
+				(addrs.dns[1] >> 16) & 0xff,
+				(addrs.dns[1] >> 8) & 0xff,
+				addrs.dns[1] & 0xff);
+	}
+
 	if (dump) {
 		/* dump PPPoE session state */
 		struct pppoeconnectionstate state;
@@ -152,7 +188,7 @@ main(int argc, char **argv)
 		strncpy(state.ifname, ifname, sizeof state.ifname);
 		e = ioctl(s, PPPOEGETSESSION, &state);
 		if (e) 
-			print_error(ifname, e, "PPPOEGETSESSION,");
+			print_error(ifname, e, "PPPOEGETSESSION");
 
 		printf("%s:\tstate = ", ifname);
 		switch(state.state) {
@@ -187,6 +223,8 @@ main(int argc, char **argv)
 	strncpy(authfailstats.ifname, ifname, sizeof authfailstats.ifname);
 	memset(&authfailset, 0, sizeof authfailset);
 	strncpy(authfailset.ifname, ifname, sizeof authfailset.ifname);
+	memset(&dnssettings, 0, sizeof dnssettings);
+	strncpy(dnssettings.ifname, ifname, sizeof dnssettings.ifname);
 
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_CLOCKRATE;
@@ -199,7 +237,7 @@ main(int argc, char **argv)
 
 	hz = clockinfo.hz;
 		
-	if (argc == 0) {
+	if (argc == 0 && !(dns1||dns2)) {
 		/* list only mode */
 
 		/* first pass, get name lenghts */
@@ -310,6 +348,9 @@ main(int argc, char **argv)
 		} else if (startswith("max-auth-failure=")) {
 			authfailset.max_failures = atoi(argv[0]+off);
 			set_auth_failure = 1;
+		} else if (startswith("query-dns=")) {
+			dnssettings.query_dns = atoi(argv[0]+off);
+			set_dns = 1;
 		} else
 			errx(EX_DATAERR, "bad parameter: \"%s\"", argv[0]);
 
@@ -333,6 +374,10 @@ main(int argc, char **argv)
 		if (ioctl(s, SPPPSETAUTHFAILURE, &authfailset) == -1)
 			err(EX_OSERR, "SPPPSETAUTHFAILURE");
 	}
+	if (set_dns) {
+		if (ioctl(s, SPPPSETDNSOPTS, &dnssettings) == -1)
+			err(EX_OSERR, "SPPPSETDNSOPTS");
+	}
 
 	if (verbose) {
 		if (ioctl(s, SPPPGETAUTHFAILURES, &authfailstats) == -1)
@@ -351,6 +396,7 @@ usage(void)
 	    "usage:\n"
 	    "       %s [-v] ifname [{my|his}auth{proto|name|secret}=...] \\\n"
             "                      [callin] [always] [{no}rechallenge]\n"
+            "                      [query-dns=3]\n"
 	    "           to set authentication names, passwords\n"
 	    "           and (optional) paramaters\n"
 	    "       %s [-v] ifname lcp-timeout=ms|idle-timeout=s|max-auth-failure=count\n"
@@ -362,7 +408,9 @@ usage(void)
 	    "           to specify (optional) data for PPPoE sessions\n"
 	    "       %s -d ifname\n"
 	    "           to dump the current PPPoE session state\n"
-	    , prog, prog, prog, prog, prog);
+	    "       %s -n (1|2)\n"
+	    "           to print DNS addresses retrieved via query-dns\n"
+	    , prog, prog, prog, prog, prog, prog);
 	exit(EX_USAGE);
 }
 

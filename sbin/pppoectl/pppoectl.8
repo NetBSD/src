@@ -1,4 +1,4 @@
-.\" $NetBSD: pppoectl.8,v 1.6 2002/01/09 20:20:54 martin Exp $
+.\" $NetBSD: pppoectl.8,v 1.7 2002/03/02 16:27:02 martin Exp $
 .\" Copyright (C) 1997 by Joerg Wunsch, Dresden
 .\" All rights reserved.
 .\"
@@ -25,7 +25,7 @@
 .\"
 .\" From: spppcontrol.1,v 1.1.1.1 1997/10/11 11:30:30 joerg Exp
 .\"
-.\" $Id: pppoectl.8,v 1.6 2002/01/09 20:20:54 martin Exp $
+.\" $Id: pppoectl.8,v 1.7 2002/03/02 16:27:02 martin Exp $
 .\"
 .\" last edit-date: [Thu Aug 31 10:47:33 2000]
 .\"
@@ -48,6 +48,7 @@
 .Op Fl s Ar service-name
 .Op Fl a Ar access-concentrator-name
 .Op Fl d
+.Op Fl n Ar 1 \&| 2
 .Ar ifname
 .Sh DESCRIPTION
 There are two basic modes of operation: configuring security related
@@ -69,6 +70,10 @@ specifies the name of the service connected to.
 .It Fl d
 dump the current connection state information (this parameter is typically
 used alone, for informational purposes, not during interface configuration).
+.It Fl n Ar 1 \&| 2
+print the IP address of the primary or secondary DNS name server for this
+PPP connection. This is only available if DNS query is enabled, see
+.Ar query-dns .
 .El
 .Pp
 Typically, not both the access concentrator name and the service name are
@@ -223,6 +228,25 @@ retry count. If
 is set to
 .Em 0
 this feature is disabled.
+.It Ar query-dns Ns \&= Ns Em flags
+During PPP protocol negotiation we can query the peer for addreses of two name
+servers. If
+.Ar flags
+is
+.Em 1
+only the first server address will be requested, if
+.Ar flags
+is
+.Em 2
+the second will be requested. Setting
+.Ar flags
+to 
+.Em 3
+queries both.
+.Pp
+The result of the negotiation can be retrieved with the
+.Fl n
+option.
 .El
 .Sh EXAMPLES
 .Bd -literal
