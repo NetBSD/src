@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.43 1998/08/06 04:37:57 perry Exp $	*/
+/*	$NetBSD: bpf.c,v 1.44 1998/08/18 06:32:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -559,11 +559,12 @@ bpf_wakeup(d)
 	struct proc *p;
 
 	wakeup((caddr_t)d);
-	if (d->bd_async)
+	if (d->bd_async) {
 		if (d->bd_pgid > 0)
 			gsignal (d->bd_pgid, SIGIO);
 		else if ((p = pfind (-d->bd_pgid)) != NULL)
 			psignal (p, SIGIO);
+	}
 
 #if BSD >= 199103
 	selwakeup(&d->bd_sel);
@@ -1071,11 +1072,12 @@ bpfpoll(dev, events, p)
 	/*
 	 * An imitation of the FIONREAD ioctl code.
 	 */
-	if (events & (POLLIN | POLLRDNORM))
+	if (events & (POLLIN | POLLRDNORM)) {
 		if (d->bd_hlen != 0 || (d->bd_immediate && d->bd_slen != 0))
 			revents |= events & (POLLIN | POLLRDNORM);
 		else
 			selrecord(p, &d->bd_sel);
+	}
 
 	splx(s);
 	return (revents);

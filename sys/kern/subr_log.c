@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.16 1998/08/04 04:03:15 perry Exp $	*/
+/*	$NetBSD: subr_log.c,v 1.17 1998/08/18 06:27:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -198,11 +198,12 @@ logpoll(dev, events, p)
 	int revents = 0;
 	int s = splhigh();
 
-	if (events & (POLLIN | POLLRDNORM))
+	if (events & (POLLIN | POLLRDNORM)) {
 		if (msgbufp->msg_bufr != msgbufp->msg_bufx)
 			revents |= events & (POLLIN | POLLRDNORM);
 		else
 			selrecord(p, &logsoftc.sc_selp);
+	}
 
 	splx(s);
 	return (revents);
