@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.10 2003/10/10 22:47:10 jdolecek Exp $
+#	$NetBSD: MAKEDEV,v 1.11 2003/10/17 19:22:58 jdolecek Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -58,7 +58,6 @@
 #	cgd*	cryptographic disk devices
 #	raid*	RAIDframe disk devices
 #	ld*	Logical disk devices (e.g., hardware RAID)
-#	ed*	PS/2 ESDI disk devices
 #
 # Console ports:
 #	ttyv0	pccons
@@ -477,7 +476,7 @@ ss*)
 	chmod 640 $name$unit n$name$unit en$name$unit
 	;;
 
-ccd*|cgd*|fd*|ld*|raid*|sd*|vnd*|wd*|ed*)
+ccd*|cgd*|fd*|ld*|raid*|sd*|vnd*|wd*)
 	case $i in
 	ccd*) name=ccd;	unit=${i#ccd};	blk=16;	chr=18;;
 	cgd*) name=cgd;	unit=${i#cgd};	blk=20;	chr=81;;
@@ -487,7 +486,6 @@ ccd*|cgd*|fd*|ld*|raid*|sd*|vnd*|wd*|ed*)
 	sd*) name=sd;	unit=${i#sd};	blk=4;	chr=13;;
 	vnd*) name=vnd;	unit=${i#vnd};	blk=14;	chr=41;;
 	wd*) name=wd;	unit=${i#wd};	blk=0;	chr=3;;
-	ed*) name=ed;	unit=${i#ed};	blk=20;	chr=79;;
 	esac
 	rm -f $name$unit? r$name$unit?
 	mknod ${name}${unit}a	b $blk $(($unit * 16 + 0))
