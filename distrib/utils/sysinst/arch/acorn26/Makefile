@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2002/05/02 23:02:50 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.2 2003/01/11 19:44:07 christos Exp $
 #
 # Makefile for acorn32
 #
@@ -7,7 +7,7 @@
 
 SRCS=	menu_defs.c msg_defs.c main.c install.c upgrade.c \
 	txtwalk.c run.c factor.c net.c disks.c disks_lfs.c util.c  geom.c \
-	label.c target.c md.c aout2elf.c
+	label.c target.c md.c aout2elf.c savenewlabel.c sizemultname.c
 
 md.o:	menu_defs.h msg_defs.h
 
