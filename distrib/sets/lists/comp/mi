@@ -879,8 +879,6 @@
 ./usr/include/sys/user.h
 ./usr/include/sys/utsname.h
 ./usr/include/sys/vadvise.h
-./usr/include/sys/vcmd.h
-./usr/include/sys/vlimit.h
 ./usr/include/sys/vmmeter.h
 ./usr/include/sys/vnode.h
 ./usr/include/sys/vnode_if.h
