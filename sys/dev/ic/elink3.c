@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.63 1999/10/30 12:07:08 enami Exp $	*/
+/*	$NetBSD: elink3.c,v 1.63.2.1 1999/11/05 11:42:21 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1348,11 +1348,7 @@ eptxstat(sc)
 			if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)
 				printf("%s: jabber (%x)\n",
 				       sc->sc_dev.dv_xname, i);
-#if 1
-			ep_reset_cmd(sc, ELINK_COMMAND, TX_RESET);
-#else
 			epreset(sc);
-#endif
 		} else if (i & TXS_UNDERRUN) {
 			++sc->sc_ethercom.ec_if.if_oerrors;
 			if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)
@@ -1363,11 +1359,7 @@ eptxstat(sc)
 				    sc->tx_start_thresh = min(ETHER_MAX_LEN,
 					    sc->tx_start_thresh + 20);
 			sc->tx_succ_ok = 0;
-#if 1
-			ep_reset_cmd(sc, ELINK_COMMAND, TX_RESET);
-#else
 			epreset(sc);
-#endif
 		} else if (i & TXS_MAX_COLLISION) {
 			++sc->sc_ethercom.ec_if.if_collisions;
 			bus_space_write_2(iot, ioh, ELINK_COMMAND, TX_ENABLE);
