@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_fixup.h,v 1.3 2001/08/27 08:21:21 haya Exp $	*/
+/*	$NetBSD: pci_intr_fixup.h,v 1.3.24.1 2004/04/28 05:19:09 jmc Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -54,6 +54,8 @@ int pci_intr_fixup __P((pci_chipset_tag_t, bus_space_tag_t, u_int16_t *));
  * Init functions for our known PCI ICUs.
  */
 int	piix_init __P((pci_chipset_tag_t, bus_space_tag_t, pcitag_t,
+	    pciintr_icu_tag_t *, pciintr_icu_handle_t *));
+int	ich_init __P((pci_chipset_tag_t, bus_space_tag_t, pcitag_t,
 	    pciintr_icu_tag_t *, pciintr_icu_handle_t *));
 int	opti82c558_init __P((pci_chipset_tag_t, bus_space_tag_t, pcitag_t,
 	    pciintr_icu_tag_t *, pciintr_icu_handle_t *));
