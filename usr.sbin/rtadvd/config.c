@@ -1,4 +1,5 @@
-/*	$NetBSD: config.c,v 1.6 2000/03/13 06:16:46 itojun Exp $	*/
+/*	$NetBSD: config.c,v 1.7 2000/05/23 11:37:58 itojun Exp $	*/
+/*	$KAME: config.c,v 1.12 2000/05/22 22:23:07 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -57,7 +58,7 @@
 #include <errno.h>
 #include <string.h>
 #include <stdlib.h>
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <search.h>
 #endif
 #include <unistd.h>
@@ -260,6 +261,8 @@ getconfig(intface)
 			/* link into chain */
 			insque(pfx, &tmp->prefix);
 
+			pfx->origin = PREFIX_FROM_CONFIG;
+
 			makeentry(entbuf, i, "prefixlen", added);
 			MAYHAVE(val, entbuf, 64);
 			if (val < 0 || val > 128) {
@@ -438,6 +441,7 @@ get_prefix(struct rainfo *rai)
 		pp->preflifetime = DEF_ADVPREFERREDLIFETIME;
 		pp->onlinkflg = 1;
 		pp->autoconfflg = 1;
+		pp->origin = PREFIX_FROM_KERNEL;
 
 		/* link into chain */
 		insque(pp, &rai->prefix);
@@ -493,6 +497,7 @@ add_prefix(struct rainfo *rai, struct in6_prefixreq *ipr)
 	prefix->preflifetime = ipr->ipr_pltime;
 	prefix->onlinkflg = ipr->ipr_raf_onlink;
 	prefix->autoconfflg = ipr->ipr_raf_auto;
+	prefix->origin = PREFIX_FROM_DYNAMIC;
 
 	insque(prefix, &rai->prefix);
 
@@ -520,7 +525,7 @@ add_prefix(struct rainfo *rai, struct in6_prefixreq *ipr)
 /*
  * Delete a prefix to the list of specified interface and reconstruct
  * the outgoing packet.
- * The prefix must be in the list
+ * The prefix must be in the list.
  */
 void
 delete_prefix(struct rainfo *rai, struct prefix *prefix)

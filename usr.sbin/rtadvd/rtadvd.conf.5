@@ -1,6 +1,9 @@
+.\"	$NetBSD: rtadvd.conf.5,v 1.3 2000/05/23 11:37:59 itojun Exp $
+.\"	$KAME: rtadvd.conf.5,v 1.5 2000/05/22 22:22:56 itojun Exp $
+.\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
-.\" 
+.\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
 .\" are met:
@@ -12,7 +15,7 @@
 .\" 3. Neither the name of the project nor the names of its contributors
 .\"    may be used to endorse or promote products derived from this software
 .\"    without specific prior written permission.
-.\" 
+.\"
 .\" THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
 .\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 .\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -25,9 +28,6 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$NetBSD: rtadvd.conf.5,v 1.2 1999/07/03 18:12:18 itojun Exp $
-.\"     KAME Id: rtadvd.conf.5,v 1.1.2.13.2.4.4.1 1999/02/12 08:13:34 sumikawa Exp
-.\"
 .Dd May 17, 1998
 .Dt RTADVD.CONF 5
 .Os
@@ -35,39 +35,42 @@
 .Nm rtadvd.conf
 .Nd config file for router advertisement daemon
 .Sh DESCRIPTION
-The file describes how the router advertisement packet must be constructed
+This file describes how the router advertisement packet must be constructed
 for each of the interfaces.
 .Pp
-It obeys famous
+It obeys the famous
 .Xr termcap 5
 file format.
 Each line in the file describes a network interface.
 Fields are separated by a colon
-.Po
-.Dq \&:
-.Pc ,
+.Pq Sq \&: ,
 and each field contains one capability description.
-Lines may be concatenated by \e character.
-The comment marker is `#' character.
+Lines may be concatenated by
+.Sq \e
+character.
+The comment marker is the
+.Sq \#
+character.
 .Pp
 .Sh CAPABILITIES
 Capabilities describe the value to be filled into ICMPv6 router
-advertisement message and to control
+advertisement messages and to control
 .Xr rtadvd 8
 behavior.
 Therefore, you are encouraged to read IETF neighbor discovery documents
-if you would like to modify sample configuration file.
+if you would like to modify the sample configuration file.
 .Pp
 Note that almost all items have default values.
 If you omit an item, the default value of the item will be used.
 .Pp
-There are two items to control interval of sending router advertisements.
+There are two items which control the interval of sending router advertisements.
 .Bl -tag -width indent
 .It Cm \&maxinterval
 (num) The maximum time allowed between sending unsolicited
 multicast router advertisements
 .Pq unit: seconds .
-The default value is 600. Its value must be no less than 4 seconds
+The default value is 600.
+Its value must be no less than 4 seconds
 and no greater than 1800 seconds.
 .It Cm \&mininterval
 (num) The minimum time allowed between sending unsolicited multicast
@@ -81,14 +84,14 @@ the value of
 .El
 .Pp
 The following items are for ICMPv6 router advertisement message
-header. 
+header.
 .Bl -tag -width indent
 .It Cm \&chlim
 (num) The value for Cur Hop Limit field.
 The default value is 64.
 .It Cm \&raflags
 (num) Flags field in router advertisement message header.
-Bit 7 
+Bit 7
 .Po
 .Li 0x80
 .Pc
@@ -130,15 +133,15 @@ If its value is more than 1, you must specify the index of the prefix
 for each item below.
 Indices vary from 0 to N-1, where N is the
 value of
-.Ic addrs.
-Each index shall follows the name of each item, e.g.
+.Ic addrs .
+Each index shall follows the name of each item, e.g.,
 .Dq prefixlen2 .
 .It Cm \&prefixlen
 (num) Prefix length field.
 The default value is 64.
 .It Cm \&pinfoflags
 (num) Flags field in prefix information option.
-Bit 7 
+Bit 7
 .Po
 .Li 0x80
 .Pc
@@ -148,7 +151,7 @@ and Bit 6
 .Li 0x40
 .Pc
 means Autonomous address-configuration flag bit.
-The default value is 0xc0, i.e. both bits are set.
+The default value is 0xc0, i.e., both bits are set.
 .It Cm \&addr
 (str) The address filled into Prefix field.
 Since
@@ -177,7 +180,8 @@ which will be attached to router advertisement header.
 .It Cm \&mtu
 (num or str) MTU (maximum transmission unit) field.
 If 0 is specified, it means that the option will not be included.
-The default value is 0. If the special string
+The default value is 0.
+If the special string
 .Dq auto
 is specified for this item, MTU option will be included and its value
 will be set to the interface MTU automatically.
@@ -243,7 +247,7 @@ RFC 2461
 .Sh HISTORY
 The
 .Xr rtadvd 8
-and the configuration file 
+and the configuration file
 .Nm
 first appeared in WIDE Hydrangea IPv6 protocol stack kit.
 .\" .Sh BUGS

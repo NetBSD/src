@@ -1,4 +1,5 @@
-/*	$NetBSD: advcap.c,v 1.4 2000/03/13 06:16:46 itojun Exp $	*/
+/*	$NetBSD: advcap.c,v 1.5 2000/05/23 11:37:58 itojun Exp $	*/
+/*	$KAME: advcap.c,v 1.4 2000/05/23 11:17:40 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983 The Regents of the University of California.
@@ -137,7 +138,7 @@ getent(bp, name, cp)
 		tf = open(RM = cp, O_RDONLY);
 	}
 	if (tf < 0) {
-		syslog(LOG_WARNING,
+		syslog(LOG_INFO,
 		       "<%s> open: %s", __FUNCTION__, strerror(errno));
 		return (-2);
 	}
