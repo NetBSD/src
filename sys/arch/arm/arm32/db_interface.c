@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.33 2003/08/25 04:51:10 mrg Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.34 2003/10/26 23:11:15 chris Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.33 2003/08/25 04:51:10 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.34 2003/10/26 23:11:15 chris Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -232,6 +232,9 @@ db_write_text(vaddr_t addr, size_t size, char *data)
 	vaddr_t pgva;
 	size_t limit, savesize;
 	char *dst;
+
+	/* XXX: gcc */
+	oldpte = 0;
 
 	if ((savesize = size) == 0)
 		return;

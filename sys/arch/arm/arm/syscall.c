@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.20 2003/10/08 00:28:41 thorpej Exp $	*/
+/*	$NetBSD: syscall.c,v 1.21 2003/10/26 23:11:15 chris Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.20 2003/10/08 00:28:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.21 2003/10/26 23:11:15 chris Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -335,6 +335,8 @@ syscall_fancy(struct trapframe *frame, struct lwp *l, u_int32_t insn)
 	u_int nap, nargs;
 	register_t *ap, *args, copyargs[MAXARGS], rval[2];
 	ksiginfo_t ksi;
+
+	args = NULL;
 
 	KERNEL_PROC_LOCK(p);
 
