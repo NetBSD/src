@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.16.2.3 1999/02/25 03:58:29 chs Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.16.2.4 1999/04/29 05:33:35 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -233,8 +233,8 @@ struct vnodeopv_entry_desc ffs_fifoop_entries[] = {
 struct vnodeopv_desc ffs_fifoop_opv_desc =
 	{ &ffs_fifoop_p, ffs_fifoop_entries };
 
-int doclusterread = 1;
-int doclusterwrite = 1;
+int doclusterread = 0;
+int doclusterwrite = 0;
 
 #include <ufs/ufs/ufs_readwrite.c>
 
