@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_input.c,v 1.32 2003/07/22 11:18:25 itojun Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.33 2003/08/06 14:47:32 itojun Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.32 2003/07/22 11:18:25 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.33 2003/08/06 14:47:32 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -834,9 +834,9 @@ noreplaycheck:
 				goto bad;
 			}
 			m_adj(n, stripsiz);
-			m_cat(m, n);
 			/* m_cat does not update m_pkthdr.len */
 			m->m_pkthdr.len += n->m_pkthdr.len;
+			m_cat(m, n);
 		}
 
 		ip6 = mtod(m, struct ip6_hdr *);

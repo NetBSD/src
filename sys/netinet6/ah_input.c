@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_input.c,v 1.40 2003/07/22 11:18:25 itojun Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.41 2003/08/06 14:47:32 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.40 2003/07/22 11:18:25 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.41 2003/08/06 14:47:32 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -458,9 +458,9 @@ ah4_input(m, va_alist)
 				goto fail;
 			}
 			m_adj(n, stripsiz);
-			m_cat(m, n);
 			/* m_cat does not update m_pkthdr.len */
 			m->m_pkthdr.len += n->m_pkthdr.len;
+			m_cat(m, n);
 		}
 
 		if (m->m_len < sizeof(*ip)) {
@@ -895,9 +895,9 @@ ah6_input(mp, offp, proto)
 				goto fail;
 			}
 			m_adj(n, stripsiz);
-			m_cat(m, n);
 			/* m_cat does not update m_pkthdr.len */
 			m->m_pkthdr.len += n->m_pkthdr.len;
+			m_cat(m, n);
 		}
 		ip6 = mtod(m, struct ip6_hdr *);
 		/* XXX jumbogram */
