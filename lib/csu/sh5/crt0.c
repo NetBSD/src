@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.1 2002/07/05 13:31:28 scw Exp $	*/
+/*	$NetBSD: crt0.c,v 1.2 2002/07/10 13:13:47 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -44,6 +44,12 @@
 void	_start(int argc, char **argv, char **envp, void (*cleanup)(void),
 	    const Obj_Entry *obj, struct ps_strings *ps_strings);
 
+__asm(	"	.text			\n"
+	"	.align 3		\n"
+	"	.globl start		\n"
+	"start:	pta/l	__start, tr0	\n"
+	"	blink	tr0, r63");
+
 void
 _start(int argc, char **argv, char **envp, void (*cleanup)(void),
     const Obj_Entry *obj, struct ps_strings *ps_strings)
@@ -84,7 +90,7 @@ _start(int argc, char **argv, char **envp, void (*cleanup)(void),
  * NOTE: Leave the RCS ID _after_ _start(), in case it gets placed in .text.
   */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.1 2002/07/05 13:31:28 scw Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.2 2002/07/10 13:13:47 scw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"

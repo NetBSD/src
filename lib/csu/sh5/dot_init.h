@@ -1,4 +1,4 @@
-/*	$NetBSD: dot_init.h,v 1.1 2002/07/05 13:31:28 scw Exp $	*/
+/*	$NetBSD: dot_init.h,v 1.2 2002/07/10 13:13:48 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -101,8 +101,13 @@
 		"	blink	tr0, r63		\n"\
 		".previous")
 
+#if __GNUC__ < 3
+#define	MD_INIT_SECTION_PROLOGUE MD_SECTION_PROLOGUE(.init, _init_fallthru)
+#define	MD_FINI_SECTION_PROLOGUE MD_SECTION_PROLOGUE(.fini, _fini_fallthru)
+#else
 #define	MD_INIT_SECTION_PROLOGUE MD_SECTION_PROLOGUE(.init, init_fallthru)
 #define	MD_FINI_SECTION_PROLOGUE MD_SECTION_PROLOGUE(.fini, fini_fallthru)
+#endif
 
 #define	MD_INIT_SECTION_EPILOGUE MD_SECTION_EPILOGUE(.init)
 #define	MD_FINI_SECTION_EPILOGUE MD_SECTION_EPILOGUE(.fini)
