@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.44 1994/03/10 21:38:46 mycroft Exp $
+ *	$Id: isa.c,v 1.45 1994/03/12 03:29:20 mycroft Exp $
  */
 
 /*
@@ -94,8 +94,7 @@ u_short *Crtat = (u_short *)MONO_BUF;
 #define	DMA2_MODE	(IO_DMA2 + 2*11)	/* mode register */
 #define	DMA2_FFC	(IO_DMA2 + 2*12)	/* clear first/last FF */
 
-int config_isadev(struct isa_device *, u_int *);
-void config_attach(struct isa_driver *, struct isa_device *);
+int config_isadev(struct isa_device *);
 static void sysbeepstop(int);
 
 /*
@@ -111,14 +110,9 @@ isa_configure()
 	INTREN(IRQ_SLAVE);
 	enable_intr();
 
-	for (dvp = isa_devtab_tty; dvp->id_driver; dvp++)
-		config_isadev(dvp, &ttymask);
-	for (dvp = isa_devtab_bio; dvp->id_driver; dvp++)
-		config_isadev(dvp, &biomask);
-	for (dvp = isa_devtab_net; dvp->id_driver; dvp++)
-		config_isadev(dvp, &netmask);
-	for (dvp = isa_devtab_null; dvp->id_driver; dvp++)
-		config_isadev(dvp, (u_int *) NULL);
+	for (dvp = isa_devtab; dvp->id_driver; dvp++)
+		if (!dvp->id_parent || dvp->id_parent->id_alive)
+			config_isadev(dvp);
 
 	printf("biomask %x ttymask %x netmask %x\n",
 	       biomask, ttymask, netmask);
@@ -135,17 +129,16 @@ isa_configure()
 /*
  * Configure an ISA device.
  */
-config_isadev(isdp, mp)
+config_isadev(isdp)
 	struct isa_device *isdp;
-	u_int *mp;
 {
 	struct isa_driver *dp = isdp->id_driver;
  
-	if (isdp->id_masunit != -1) {
+	if (isdp->id_parent) {
 		/* Not really an ISA device; just call the probe and attach. */
 		isdp->id_alive = (*dp->probe)(isdp);
 		if (isdp->id_alive)
-			config_attach(dp, isdp);
+			(void)(*dp->attach)(isdp);
 		return;
 	}
 
@@ -189,7 +182,7 @@ config_isadev(isdp, mp)
 			printf(" flags 0x%x", isdp->id_flags);
 		printf(" on isa\n");
 
-		config_attach(dp, isdp);
+		(void)(*dp->attach)(isdp);
 
 		if (isdp->id_irq) {
 			int intrno;
@@ -197,39 +190,10 @@ config_isadev(isdp, mp)
 			intrno = ffs(isdp->id_irq)-1;
 			setidt(ICU_OFFSET+intrno, isdp->id_intr,
 				 SDT_SYS386IGT, SEL_KPL);
-			if(mp)
-				INTRMASK(*mp,isdp->id_irq);
+			if (isdp->id_mask)
+				INTRMASK(*isdp->id_mask, isdp->id_irq);
 			INTREN(isdp->id_irq);
 		}
-	}
-}
-
-void
-config_attach(struct isa_driver *dp, struct isa_device *isdp)
-{
-	extern struct isa_device isa_subdev[];
-	struct isa_device *dvp;
-
-	(void)(*dp->attach)(isdp);
-
-	/* XXXX This is for SCSI controllers, and it sucks. */
-	for (dvp = isa_subdev; dvp->id_driver; dvp++) {
-		if (dvp->id_driver != dp)
-			continue;
-		if (dvp->id_masunit != isdp->id_unit)
-			continue;
-		if (dvp->id_physid == -1)
-			continue;
-		dvp->id_alive = (*dp->attach)(dvp);
-	}
-	for (dvp = isa_subdev; dvp->id_driver; dvp++) {
-		if (dvp->id_driver != dp)
-			continue;
-		if (dvp->id_masunit != isdp->id_unit)
-			continue;
-		if (dvp->id_physid != -1)
-			continue;
-		dvp->id_alive = (*dp->attach)(dvp);
 	}
 }
 
