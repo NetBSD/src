@@ -1,4 +1,4 @@
-/*	$NetBSD: valloc.c,v 1.7 1997/07/21 14:07:47 jtc Exp $	*/
+/*	$NetBSD: valloc.c,v 1.8 1998/02/27 20:11:34 perry Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)valloc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: valloc.c,v 1.7 1997/07/21 14:07:47 jtc Exp $");
+__RCSID("$NetBSD: valloc.c,v 1.8 1998/02/27 20:11:34 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -55,7 +55,7 @@ valloc(i)
 	size_t i;
 {
 	long valsiz = getpagesize(), j;
-	void *cp = malloc(i + (valsiz-1));
+	void *cp = malloc((size_t)(i + (valsiz-1)));
 
 	j = ((long)cp + (valsiz-1)) &~ (valsiz-1);
 	return ((void *)j);
