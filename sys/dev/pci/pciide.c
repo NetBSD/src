@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.68.2.21 2001/02/26 21:50:56 he Exp $	*/
+/*	$NetBSD: pciide.c,v 1.68.2.22 2001/03/13 21:23:35 he Exp $	*/
 
 
 /*
@@ -189,6 +189,7 @@ int  acer_pci_intr __P((void *));
 void pdc202xx_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
 void pdc202xx_setup_channel __P((struct channel_softc*));
 int  pdc202xx_pci_intr __P((void *));
+int  pdc20265_pci_intr __P((void *));
 
 void opti_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
 void opti_setup_channel __P((struct channel_softc*));
@@ -3160,10 +3161,13 @@ hpt_pci_intr(arg)
 }
 
 
-/* A macro to test product */
+/* Macros to test product */
 #define PDC_IS_262(sc)							\
 	((sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA66 ||	\
 	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA100 ||	\
+	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA100X)
+#define PDC_IS_265(sc)							\
+	((sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA100 ||	\
 	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA100X)
 
 void
@@ -3206,7 +3210,9 @@ pdc202xx_chip_map(sc, pa)
 	}
 	sc->sc_wdcdev.PIO_cap = 4;
 	sc->sc_wdcdev.DMA_cap = 2;
-	if (PDC_IS_262(sc))
+	if (PDC_IS_265(sc))
+		sc->sc_wdcdev.UDMA_cap = 5;
+	else if (PDC_IS_262(sc))
 		sc->sc_wdcdev.UDMA_cap = 4;
 	else
 		sc->sc_wdcdev.UDMA_cap = 2;
@@ -3237,7 +3243,11 @@ pdc202xx_chip_map(sc, pa)
 	}
 
 	mode = PDC2xx_SCR_DMA;
-	if (PDC_IS_262(sc)) {
+	if (PDC_IS_265(sc)) {
+		/* the BIOS set it up this way */
+		mode = PDC2xx_SCR_SET_GEN(mode, 0x3);
+		mode |= 0x80000000;
+	} else if (PDC_IS_262(sc)) {
 		mode = PDC2xx_SCR_SET_GEN(mode, PDC262_SCR_GEN_LAT);
 	} else {
 		/* the BIOS set it up this way */
@@ -3272,8 +3282,12 @@ pdc202xx_chip_map(sc, pa)
 			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
 			continue;
 		}
-		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
-		    pdc202xx_pci_intr);
+		if (PDC_IS_265(sc))
+			pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
+			    pdc20265_pci_intr);
+		else
+			pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
+			    pdc202xx_pci_intr);
 		if (cp->hw_ok == 0)
 			continue;
 		if (pciide_chan_candisable(cp))
@@ -3304,6 +3318,10 @@ pdc202xx_setup_channel(chp)
 	pciide_channel_dma_setup(cp);
 
 	idedma_ctl = 0;
+	WDCDEBUG_PRINT(("pdc202xx_setup_channel %s: scr 0x%x\n",
+	    sc->sc_wdcdev.sc_dev.dv_xname,
+	    bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh, PDC262_U66)),
+	    DEBUG_PROBE);
 
 	/* Per channel settings */
 	if (PDC_IS_262(sc)) {
@@ -3331,6 +3349,10 @@ pdc202xx_setup_channel(chp)
 			scr &= ~PDC262_U66_EN(channel);
 		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
 		    PDC262_U66, scr);
+		WDCDEBUG_PRINT(("pdc202xx_setup_channel %s:%d: ATAPI 0x%x\n",
+		    sc->sc_wdcdev.sc_dev.dv_xname, channel,
+		    bus_space_read_4(sc->sc_dma_iot, sc->sc_dma_ioh,
+		    PDC262_ATAPI(channel))), DEBUG_PROBE);
 		if (chp->ch_drive[0].drive_flags & DRIVE_ATAPI ||
 			chp->ch_drive[1].drive_flags & DRIVE_ATAPI) {
 			if (((chp->ch_drive[0].drive_flags & DRIVE_UDMA) &&
@@ -3419,11 +3441,48 @@ pdc202xx_pci_intr(arg)
 		if (scr & PDC2xx_SCR_INT(i)) {
 			crv = wdcintr(wdc_cp);
 			if (crv == 0)
-				printf("%s:%d: bogus intr\n",
-				    sc->sc_wdcdev.sc_dev.dv_xname, i);
+				printf("%s:%d: bogus intr (reg 0x%x)\n",
+				    sc->sc_wdcdev.sc_dev.dv_xname, i, scr);
 			else
 				rv = 1;
 		}
+	}
+	return rv;
+}
+
+int
+pdc20265_pci_intr(arg)
+	void *arg;
+{
+	struct pciide_softc *sc = arg;
+	struct pciide_channel *cp;
+	struct channel_softc *wdc_cp;
+	int i, rv, crv; 
+	u_int32_t dmastat;
+
+	rv = 0;
+	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
+		cp = &sc->pciide_channels[i];
+		wdc_cp = &cp->wdc_channel;
+		/* If a compat channel skip. */
+		if (cp->compat)
+			continue;
+		/*
+		 * The Ultra/100 seems to assert PDC2xx_SCR_INT * spuriously,
+		 * however it asserts INT in IDEDMA_CTL even for non-DMA ops.
+		 * So use it instead (requires 2 reg reads instead of 1,
+		 * but we can't do it another way).
+		 */
+		dmastat = bus_space_read_1(sc->sc_dma_iot,
+		    sc->sc_dma_ioh, IDEDMA_CTL + IDEDMA_SCH_OFFSET * i);
+		if((dmastat & IDEDMA_CTL_INTR) == 0)
+			continue;
+		crv = wdcintr(wdc_cp);
+		if (crv == 0)
+			printf("%s:%d: bogus intr\n",
+			    sc->sc_wdcdev.sc_dev.dv_xname, i);
+		else
+			rv = 1;
 	}
 	return rv;
 }
