@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.99 1996/05/12 23:12:33 mycroft Exp $	*/
+/*	$NetBSD: pccons.c,v 1.99.4.1 1996/06/04 20:03:53 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -523,9 +523,10 @@ pcopen(dev, flag, mode, p)
 	if (sc == 0)
 		return ENXIO;
 
-	if (!sc->sc_tty)
+	if (!sc->sc_tty) {
 		tp = sc->sc_tty = ttymalloc();
-	else
+		tty_attach(tp);
+	} else
 		tp = sc->sc_tty;
 
 	tp->t_oproc = pcstart;
