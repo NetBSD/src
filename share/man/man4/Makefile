@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.104 1999/09/08 14:23:04 hubertf Exp $
+#	$NetBSD: Makefile,v 1.105 1999/09/13 22:58:22 augustss Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	ahb.4 ahc.4 aria.4 atalk.4 audio.4 bha.4 bpf.4 ccd.4 cd.4 ch.4 \
@@ -14,7 +14,8 @@ MAN=	ahb.4 ahc.4 aria.4 atalk.4 audio.4 bha.4 bpf.4 ccd.4 cd.4 ch.4 \
 	wsdisplay.4 wskbd.4 wsmouse.4 wsmux.4 ym.4 zstty.4
 
 # USB devices
-MAN+=	uaudio.4 ugen.4 uhid.4 ukbd.4 ulpt.4 umass.4 umodem.4 ums.4 usb.4
+MAN+=	uaudio.4 ugen.4 uhid.4 ukbd.4 ulpt.4 umass.4 umodem.4 ums.4 usb.4 \
+	uhci.4 ohci.4
 
 # machine-independent buses
 MAN+=	eisa.4 isa.4 isapnp.4 pci.4 pcmcia.4
