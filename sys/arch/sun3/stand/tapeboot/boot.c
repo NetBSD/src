@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.3 1998/02/05 04:57:21 gwr Exp $ */
+/*	$NetBSD: boot.c,v 1.4 1998/06/29 20:18:07 gwr Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -59,11 +59,17 @@ char	line[80];
 main()
 {
 	char *cp, *file;
-	int	io;
 
 	printf(">> NetBSD tapeboot [%s]\n", version);
 	prom_get_boot_info();
 
+	/*
+	 * Can not hold open the tape device as is done
+	 * in the other boot programs because it does
+	 * its position-to-segment on open.
+	 */
+
+	/* If running on a Sun3X, use segment 2. */
 	if (_is3x)
 		defname[0] = '2';
 	file = defname;
