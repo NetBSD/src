@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.10 2002/05/08 18:10:19 scw Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.10.2.1 2002/07/15 10:36:05 gehenna Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.10 2002/05/08 18:10:19 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.10.2.1 2002/07/15 10:36:05 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,7 @@ USB_DECLARE_DRIVER(uftdi);
 USB_MATCH(uftdi)
 {
 	USB_MATCH_START(uftdi, uaa);
-	
+
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
 
@@ -207,7 +207,7 @@ USB_ATTACH(uftdi)
 			       ": %s\n", devname, usbd_errstr(err));
 			goto bad;
 		}
-		
+
 		addr = ed->bEndpointAddress;
 		dir = UE_GET_DIR(ed->bEndpointAddress);
 		attr = ed->bmAttributes & UE_XFERTYPE;
@@ -230,7 +230,7 @@ USB_ATTACH(uftdi)
 		       USBDEVNAME(sc->sc_dev));
 		goto bad;
 	}
-	
+
 	uca.portno = FTDI_PIT_SIOA;
 	/* bulkin, bulkout set above */
 	uca.ibufsize = UFTDIIBUFSIZE;
@@ -547,7 +547,7 @@ uftdi_break(void *vsc, int portno, int onoff)
 	int data;
 
 	DPRINTF(("uftdi_break: sc=%p, port=%d onoff=%d\n", vsc, portno,
-		  onoff)); 
+		  onoff));
 
 	if (onoff) {
 		data = sc->last_lcr | FTDI_SIO_SET_BREAK;

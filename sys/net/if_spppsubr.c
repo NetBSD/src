@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.46.2.1 2002/05/30 13:52:25 gehenna Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.46.2.2 2002/07/15 10:36:50 gehenna Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.46.2.1 2002/05/30 13:52:25 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.46.2.2 2002/07/15 10:36:50 gehenna Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -597,7 +597,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		if (sp->state[IDX_IPCP] == STATE_OPENED) {
 			schednetisr (NETISR_IP);
 			inq = &ipintrq;
-			sp->pp_last_activity = time.tv_sec;
+			sp->pp_last_activity = mono_time.tv_sec;
 		}
 		break;
 #endif
@@ -612,7 +612,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		if (sp->state[IDX_IPV6CP] == STATE_OPENED) {
 			schednetisr (NETISR_IPV6);
 			inq = &ip6intrq;
-			sp->pp_last_activity = time.tv_sec;
+			sp->pp_last_activity = mono_time.tv_sec;
 		}
 		break;
 #endif
@@ -680,7 +680,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 
 	s = splnet();
 
-	sp->pp_last_activity = time.tv_sec;
+	sp->pp_last_activity = mono_time.tv_sec;
 
 	if ((ifp->if_flags & IFF_UP) == 0 ||
 	    (ifp->if_flags & (IFF_RUNNING | IFF_AUTO)) == 0) {
@@ -707,11 +707,20 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family, &pktattr);
 
 #ifdef INET
-	if (dst->sa_family == AF_INET)
-	{
-		/* Check mbuf length here??? */
-		struct ip *ip = mtod (m, struct ip*);
-		struct tcphdr *tcp = (struct tcphdr*) ((int32_t*)ip + ip->ip_hl);
+	if (dst->sa_family == AF_INET) {
+		struct ip *ip = NULL;
+		struct tcphdr *th = NULL;
+
+		if (m->m_len >= sizeof(struct ip)) {
+			ip = mtod (m, struct ip*);
+			if (ip->ip_p == IPPROTO_TCP &&
+			    m->m_len >= sizeof(struct ip) + (ip->ip_hl << 2) +
+			    sizeof(struct tcphdr)) {
+				th = (struct tcphdr *)
+				    ((caddr_t)ip + (ip->ip_hl << 2));
+			}
+		} else
+			ip = NULL;
 
 		/*
 		 * When using dynamic local IP address assignment by using
@@ -723,12 +732,12 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 		 * - don't let packets with src ip addr 0 thru
 		 * - we flag TCP packets with src ip 0 as an error
 		 */	
+		if (ip && ip->ip_src.s_addr == INADDR_ANY) {
+			u_int8_t proto = ip->ip_p;
 
-		if(ip->ip_src.s_addr == INADDR_ANY)	/* -hm */
-		{
 			m_freem(m);
 			splx(s);
-			if(ip->ip_p == IPPROTO_TCP)
+			if (proto == IPPROTO_TCP)
 				return(EADDRNOTAVAIL);
 			else
 				return(0);
@@ -739,12 +748,10 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 		 * in front of the queue.
 		 */
 		 
-		if (! IF_QFULL (&sp->pp_fastq) &&
-		    ((ip->ip_tos & IPTOS_LOWDELAY) ||
-	    	    ((ip->ip_p == IPPROTO_TCP &&
-	    	    m->m_len >= sizeof (struct ip) + sizeof (struct tcphdr) &&
-	    	    (INTERACTIVE (ntohs (tcp->th_sport)))) ||
-	    	    INTERACTIVE (ntohs (tcp->th_dport)))))
+		if (!IF_QFULL(&sp->pp_fastq) &&
+		    ((ip && (ip->ip_tos & IPTOS_LOWDELAY)) ||
+		     (th && (INTERACTIVE(ntohs(th->th_sport)) ||
+		      INTERACTIVE(ntohs(th->th_dport))))))
 			ifq = &sp->pp_fastq;
 	}
 #endif
@@ -881,7 +888,8 @@ nosupport:
 			if (rv == 0)
 				rv = ENOBUFS;
 		}
-		IF_ENQUEUE(ifq, m);
+		else
+			IF_ENQUEUE(ifq, m);
 	} else
 		IFQ_ENQUEUE(&ifp->if_snd, m, &pktattr, rv);
 	if (rv != 0) {
@@ -1279,6 +1287,8 @@ sppp_cisco_send(struct sppp *sp, int type, int32_t par1, int32_t par2)
 		IF_DROP (&sp->pp_fastq);
 		IF_DROP (&ifp->if_snd);
 		m_freem (m);
+		++ifp->if_oerrors;
+		return;
 	} else
 		IF_ENQUEUE (&sp->pp_cpq, m);
 	if (! (ifp->if_flags & IFF_OACTIVE))
@@ -1344,6 +1354,7 @@ sppp_cp_send(struct sppp *sp, u_short proto, u_char type,
 		IF_DROP (&ifp->if_snd);
 		m_freem (m);
 		++ifp->if_oerrors;
+		return;
 	} else
 		IF_ENQUEUE (&sp->pp_cpq, m);
 	if (! (ifp->if_flags & IFF_OACTIVE))
@@ -2024,7 +2035,7 @@ sppp_lcp_up(struct sppp *sp)
 	STDDCL;
 
 	/* Initialize activity timestamp: opening a connection is an activity */
-	sp->pp_last_activity = time.tv_sec;
+	sp->pp_last_activity = mono_time.tv_sec;
 
 	/*
 	 * If this interface is passive or dial-on-demand, and we are
@@ -4576,6 +4587,7 @@ sppp_auth_send(const struct cp *cp, struct sppp *sp,
 		IF_DROP (&ifp->if_snd);
 		m_freem (m);
 		++ifp->if_oerrors;
+		return;
 	} else
 		IF_ENQUEUE (&sp->pp_cpq, m);
 	if (! (ifp->if_flags & IFF_OACTIVE))
@@ -4594,7 +4606,7 @@ sppp_keepalive(void *dummy)
 	time_t now;
 
 	s = splnet();
-	now = time.tv_sec;
+	now = mono_time.tv_sec;
 	for (sp=spppq; sp; sp=sp->pp_next) {
 		struct ifnet *ifp = &sp->pp_if;
 

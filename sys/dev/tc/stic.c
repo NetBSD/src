@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.17.4.1 2002/05/16 11:30:54 gehenna Exp $	*/
+/*	$NetBSD: stic.c,v 1.17.4.2 2002/07/15 10:35:58 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.17.4.1 2002/05/16 11:30:54 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.17.4.2 2002/07/15 10:35:58 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,7 +183,7 @@ void	stic_erasecols(void *, int, int, int, long);
 void	stic_eraserows(void *, int, int, long);
 int	stic_mapchar(void *, int, u_int *);
 void	stic_putchar(void *, int, int, u_int, long);
-int	stic_alloc_attr(void *, int, int, int, long *);
+int	stic_allocattr(void *, int, int, int, long *);
 
 dev_type_open(sticopen);
 dev_type_close(sticclose);
@@ -274,7 +274,7 @@ static const struct wsdisplay_emulops stic_emulops = {
 	stic_erasecols,
 	stic_copyrows,
 	stic_eraserows,
-	stic_alloc_attr
+	stic_allocattr
 };
 
 static struct wsscreen_descr stic_stdscreen = {
@@ -476,7 +476,7 @@ stic_cnattach(struct stic_info *si)
 	si->si_flags |= SI_CURENB_CHANGED;
 	stic_flush(si);
 
-	stic_alloc_attr(ss, 0, 0, 0, &defattr);
+	stic_allocattr(ss, 0, 0, 0, &defattr);
 	stic_eraserows(ss, 0, si->si_consh, 0);
 	wsdisplay_cnattach(&stic_stdscreen, ss, 0, 0, defattr);
 }
@@ -671,7 +671,7 @@ stic_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	*curxp = 0;
 	*curyp = 0;
 
-	stic_alloc_attr(ss, 0, 0, 0, attrp);
+	stic_allocattr(ss, 0, 0, 0, attrp);
 	return (0);
 }
 
@@ -784,7 +784,7 @@ stic_do_switch(void *cookie)
 }
 
 int
-stic_alloc_attr(void *cookie, int fg, int bg, int flags, long *attr)
+stic_allocattr(void *cookie, int fg, int bg, int flags, long *attr)
 {
 	long tmp;
 

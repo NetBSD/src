@@ -1,4 +1,4 @@
-/*	$NetBSD: ustir.c,v 1.2 2002/03/17 18:02:53 augustss Exp $	*/
+/*	$NetBSD: ustir.c,v 1.2.4.1 2002/07/15 10:36:23 gehenna Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.2 2002/03/17 18:02:53 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.2.4.1 2002/07/15 10:36:23 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -547,7 +547,7 @@ deframe_rd_ur(struct ustir_softc *sc)
 
 		sc->sc_rd_index = sc->sc_rd_count - buflen;
 
-		DPRINTFN(1,("%s: result=%d\n", __FUNCTION__, (int)fresult));
+		DPRINTFN(1,("%s: result=%d\n", __func__, (int)fresult));
 
 		switch (fresult) {
 		case FR_IDLE:
@@ -593,7 +593,7 @@ Static void
 ustir_periodic(struct ustir_softc *sc)
 {
 	DPRINTFN(60, ("%s: direction = %d\n",
-		      __FUNCTION__, sc->sc_direction));
+		      __func__, sc->sc_direction));
 
 	if (sc->sc_direction == udir_output ||
 	    sc->sc_direction == udir_stalled) {
@@ -601,7 +601,7 @@ ustir_periodic(struct ustir_softc *sc)
 		u_int8_t regval;
 
 		DPRINTFN(60, ("%s: reading status register\n",
-			      __FUNCTION__));
+			      __func__));
 
 		err = ustir_read_reg(sc, STIR_REG_STATUS,
 				     &regval);
@@ -611,7 +611,7 @@ ustir_periodic(struct ustir_softc *sc)
 			       usbd_errstr(err));
 		} else {
 			DPRINTFN(10, ("%s: status register = 0x%x\n",
-				      __FUNCTION__,
+				      __func__,
 				      (unsigned int)regval));
 			if (sc->sc_direction == udir_output &&
 			    !(regval & STIR_RSTATUS_FFDIR))
@@ -626,7 +626,7 @@ ustir_periodic(struct ustir_softc *sc)
 				sc->sc_direction = udir_stalled;
 
 				DPRINTFN(10, ("%s: clearing FIFO error\n",
-					      __FUNCTION__));
+					      __func__));
 
 				err = ustir_write_reg(sc, STIR_REG_STATUS,
 						      STIR_RSTATUS_FFCLR);
@@ -660,7 +660,7 @@ ustir_thread(void *arg)
 {
 	struct ustir_softc *sc = arg;
 
-	DPRINTFN(20, ("%s: starting polling thread\n", __FUNCTION__));
+	DPRINTFN(20, ("%s: starting polling thread\n", __func__));
 
 	while (!sc->sc_closing) {
 		if (!sc->sc_rd_readinprogress && !USTIR_BLOCK_RX_DATA(sc))
@@ -682,7 +682,7 @@ ustir_thread(void *arg)
 		}
 	}
 
-	DPRINTFN(20, ("%s: exiting polling thread\n", __FUNCTION__));
+	DPRINTFN(20, ("%s: exiting polling thread\n", __func__));
 
 	sc->sc_thread = NULL;
 
@@ -701,7 +701,7 @@ ustir_rd_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 	struct ustir_softc *sc = priv;
 	u_int32_t size;
 
-	DPRINTFN(60, ("%s: sc=%p\n", __FUNCTION__, sc));
+	DPRINTFN(60, ("%s: sc=%p\n", __func__, sc));
 
 	/* Read is no longer in progress */
 	sc->sc_rd_readinprogress = 0;
@@ -728,12 +728,12 @@ ustir_rd_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 	sc->sc_rd_count = size;
 
 	DPRINTFN(((size > 0 || sc->sc_rd_err != 0) ? 20 : 60),
-		 ("%s: sc=%p size=%u, err=%d\n", __FUNCTION__,
+		 ("%s: sc=%p size=%u, err=%d\n", __func__,
 		  sc, size, sc->sc_rd_err));
 
 #ifdef USTIR_DEBUG
 	if (ustirdebug >= 20 && size > 0)
-		ustir_dumpdata(sc->sc_rd_buf, size, __FUNCTION__);
+		ustir_dumpdata(sc->sc_rd_buf, size, __func__);
 #endif
 
 	if (!deframe_rd_ur(sc)) {
@@ -744,7 +744,7 @@ ustir_rd_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 			 * within expected time...
 			 */
 			DPRINTFN(5,("%s: incoming packet timeout\n",
-				    __FUNCTION__));
+				    __func__));
 			deframe_clear(&sc->sc_framestate);
 		} else if (size > 0) {
 			/*
@@ -778,7 +778,7 @@ ustir_start_read(struct ustir_softc *sc)
 {
 	usbd_status err;
 
-	DPRINTFN(60,("%s: sc=%p, size=%d\n", __FUNCTION__, sc,
+	DPRINTFN(60,("%s: sc=%p, size=%d\n", __func__, sc,
 		     sc->sc_params.maxsize));
 
 	if (sc->sc_dying)
@@ -800,7 +800,7 @@ ustir_start_read(struct ustir_softc *sc)
 
 	if (sc->sc_rd_err) {
 		sc->sc_rd_err = 0;
-		DPRINTFN(0, ("%s: clear stall\n", __FUNCTION__));
+		DPRINTFN(0, ("%s: clear stall\n", __func__));
 		usbd_clear_endpoint_stall(sc->sc_rd_pipe);
 	}
 
@@ -810,7 +810,7 @@ ustir_start_read(struct ustir_softc *sc)
 			USBD_NO_TIMEOUT, ustir_rd_cb);
 	err = usbd_transfer(sc->sc_rd_xfer);
 	if (err != USBD_IN_PROGRESS) {
-		DPRINTFN(0, ("%s: err=%d\n", __FUNCTION__, err));
+		DPRINTFN(0, ("%s: err=%d\n", __func__, err));
 		return err;
 	}
 	return USBD_NORMAL_COMPLETION;
@@ -842,7 +842,7 @@ ustir_open(void *h, int flag, int mode, usb_proc_ptr p)
 	int error;
 	usbd_status err;
 
-	DPRINTFN(0, ("%s: sc=%p\n", __FUNCTION__, sc));
+	DPRINTFN(0, ("%s: sc=%p\n", __func__, sc));
 
 	err = usbd_open_pipe(sc->sc_iface, sc->sc_rd_addr, 0, &sc->sc_rd_pipe);
 	if (err) {
@@ -927,7 +927,7 @@ ustir_close(void *h, int flag, int mode, usb_proc_ptr p)
 {
 	struct ustir_softc *sc = h;
 
-	DPRINTFN(0, ("%s: sc=%p\n", __FUNCTION__, sc));
+	DPRINTFN(0, ("%s: sc=%p\n", __func__, sc));
 
 	sc->sc_refcnt++;
 
@@ -978,7 +978,7 @@ ustir_read(void *h, struct uio *uio, int flag)
 	int error;
 	u_int uframelen;
 
-	DPRINTFN(1,("%s: sc=%p\n", __FUNCTION__, sc));
+	DPRINTFN(1,("%s: sc=%p\n", __func__, sc));
 
 	if (sc->sc_dying)
 		return EIO;
@@ -997,7 +997,7 @@ ustir_read(void *h, struct uio *uio, int flag)
 	do {
 		s = splusb();
 		while (sc->sc_ur_framelen == 0) {
-			DPRINTFN(5,("%s: calling tsleep()\n", __FUNCTION__));
+			DPRINTFN(5,("%s: calling tsleep()\n", __func__));
 			error = tsleep(&sc->sc_ur_framelen, PZERO | PCATCH,
 				       "usirrd", 0);
 			if (sc->sc_dying)
@@ -1005,7 +1005,7 @@ ustir_read(void *h, struct uio *uio, int flag)
 			if (error) {
 				splx(s);
 				DPRINTFN(0, ("%s: tsleep() = %d\n",
-					     __FUNCTION__, error));
+					     __func__, error));
 				goto ret;
 			}
 		}
@@ -1013,7 +1013,7 @@ ustir_read(void *h, struct uio *uio, int flag)
 
 		uframelen = sc->sc_ur_framelen;
 		DPRINTFN(1,("%s: sc=%p framelen=%u, hdr=0x%02x\n",
-			    __FUNCTION__, sc, uframelen, sc->sc_ur_buf[0]));
+			    __func__, sc, uframelen, sc->sc_ur_buf[0]));
 		if (uframelen > uio->uio_resid)
 			error = EINVAL;
 		else
@@ -1031,7 +1031,7 @@ ustir_read(void *h, struct uio *uio, int flag)
 		}
 	} while (uframelen == 0);
 
-	DPRINTFN(1,("%s: return %d\n", __FUNCTION__, error));
+	DPRINTFN(1,("%s: return %d\n", __func__, error));
 
  ret:
 	if (--sc->sc_refcnt < 0)
@@ -1049,7 +1049,7 @@ ustir_write(void *h, struct uio *uio, int flag)
 	u_int8_t *wrbuf;
 	int s;
 
-	DPRINTFN(1,("%s: sc=%p\n", __FUNCTION__, sc));
+	DPRINTFN(1,("%s: sc=%p\n", __func__, sc));
 
 	if (sc->sc_dying)
 		return EIO;
@@ -1073,14 +1073,14 @@ ustir_write(void *h, struct uio *uio, int flag)
 	s = splusb();
 	while (sc->sc_direction != udir_output &&
 	       sc->sc_direction != udir_idle) {
-		DPRINTFN(5, ("%s: calling tsleep()\n", __FUNCTION__));
+		DPRINTFN(5, ("%s: calling tsleep()\n", __func__));
 		error = tsleep(&sc->sc_wr_buf, PZERO | PCATCH,
 			       "usirwr", 0);
 		if (sc->sc_dying)
 			error = EIO;
 		if (error) {
 			splx(s);
-			DPRINTFN(0, ("%s: tsleep() = %d\n", __FUNCTION__,
+			DPRINTFN(0, ("%s: tsleep() = %d\n", __func__,
 				     error));
 			goto ret;
 		}
@@ -1102,7 +1102,7 @@ ustir_write(void *h, struct uio *uio, int flag)
 	} else {
 		u_int32_t btlen;
 
-		DPRINTFN(1, ("%s: transfer %u bytes\n", __FUNCTION__,
+		DPRINTFN(1, ("%s: transfer %u bytes\n", __func__,
 			     (unsigned int)wrlen));
 
 		wrbuf[2] = sirlength & 0xff;
@@ -1114,14 +1114,14 @@ ustir_write(void *h, struct uio *uio, int flag)
 
 #ifdef USTIR_DEBUG
 		if (ustirdebug >= 20)
-			ustir_dumpdata(wrbuf, btlen, __FUNCTION__);
+			ustir_dumpdata(wrbuf, btlen, __func__);
 #endif
 
 		err = usbd_bulk_transfer(sc->sc_wr_xfer, sc->sc_wr_pipe,
 					 USBD_FORCE_SHORT_XFER | USBD_NO_COPY,
 					 USTIR_WR_TIMEOUT,
 					 wrbuf, &btlen, "ustiwr");
-		DPRINTFN(2, ("%s: err=%d\n", __FUNCTION__, err));
+		DPRINTFN(2, ("%s: err=%d\n", __func__, err));
 		if (err) {
 			if (err == USBD_INTERRUPTED)
 				error = EINTR;
@@ -1138,7 +1138,7 @@ ustir_write(void *h, struct uio *uio, int flag)
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(USBDEV(sc->sc_dev));
 
-	DPRINTFN(1,("%s: sc=%p done\n", __FUNCTION__, sc));
+	DPRINTFN(1,("%s: sc=%p done\n", __func__, sc));
 	return error;
 }
 
@@ -1148,25 +1148,25 @@ ustir_poll(void *h, int events, usb_proc_ptr p)
 	struct ustir_softc *sc = h;
 	int revents = 0;
 
-	DPRINTFN(1,("%s: sc=%p\n", __FUNCTION__, sc));
+	DPRINTFN(1,("%s: sc=%p\n", __func__, sc));
 
 	if (events & (POLLOUT | POLLWRNORM)) {
 		if (sc->sc_direction != udir_input) {
 			revents |= events & (POLLOUT | POLLWRNORM);
 		} else {
 			DPRINTFN(2,("%s: recording write select\n",
-				    __FUNCTION__));
+				    __func__));
 			selrecord(p, &sc->sc_wr_sel);
 		}
 	}
 
 	if (events & (POLLIN | POLLRDNORM)) {
 		if (sc->sc_ur_framelen != 0) {
-			DPRINTFN(2,("%s: have data\n", __FUNCTION__));
+			DPRINTFN(2,("%s: have data\n", __func__));
 			revents |= events & (POLLIN | POLLRDNORM);
 		} else {
 			DPRINTFN(2,("%s: recording read select\n",
-				    __FUNCTION__));
+				    __func__));
 			selrecord(p, &sc->sc_rd_sel);
 		}
 	}
@@ -1200,7 +1200,7 @@ Static int ustir_ioctl(void *h, u_long cmd, caddr_t addr, int flag, usb_proc_ptr
 
 		err = ustir_read_reg(sc, regnum, &regdata);
 
-		DPRINTFN(10, ("%s: regget(%u) = 0x%x\n", __FUNCTION__,
+		DPRINTFN(10, ("%s: regget(%u) = 0x%x\n", __func__,
 			      regnum, (unsigned int)regdata));
 
 		*(unsigned int *)addr = regdata;
@@ -1222,7 +1222,7 @@ Static int ustir_ioctl(void *h, u_long cmd, caddr_t addr, int flag, usb_proc_ptr
 			break;
 		}
 
-		DPRINTFN(10, ("%s: regset(%u, 0x%x)\n", __FUNCTION__,
+		DPRINTFN(10, ("%s: regset(%u, 0x%x)\n", __func__,
 			      regnum, (unsigned int)regdata));
 
 		err = ustir_write_reg(sc, regnum, regdata);
@@ -1262,7 +1262,7 @@ ustir_set_params(void *h, struct irda_params *p)
 	struct ustir_speedrec const *speedblk;
 	int i;
 
-	DPRINTFN(0, ("%s: sc=%p, speed=%d ebofs=%d maxsize=%d\n", __FUNCTION__,
+	DPRINTFN(0, ("%s: sc=%p, speed=%d ebofs=%d maxsize=%d\n", __func__,
 		     sc, p->speed, p->ebofs, p->maxsize));
 
 	if (sc->sc_dying)
@@ -1306,17 +1306,17 @@ ustir_set_params(void *h, struct irda_params *p)
 		 */
 		regmode |= STIR_RMODE_FFSPRST;
 
-		DPRINTFN(10, ("%s: setting BRATE = %x\n", __FUNCTION__,
+		DPRINTFN(10, ("%s: setting BRATE = %x\n", __func__,
 			      (unsigned int)regbrate));
 		err = ustir_write_reg(sc, STIR_REG_BRATE, regbrate);
 		if (!err) {
-			DPRINTFN(10, ("%s: setting MODE = %x\n", __FUNCTION__,
+			DPRINTFN(10, ("%s: setting MODE = %x\n", __func__,
 				      (unsigned int)regmode));
 			err = ustir_write_reg(sc, STIR_REG_MODE, regmode);
 		}
 		if (err) {
 			DPRINTFN(10, ("%s: error setting register: %s\n",
-				      __FUNCTION__, usbd_errstr(err)));
+				      __func__, usbd_errstr(err)));
 			return EIO;
 		}
 	}
@@ -1329,7 +1329,7 @@ ustir_get_speeds(void *h, int *speeds)
 {
 	struct ustir_softc *sc = h;
 
-	DPRINTFN(0, ("%s: sc=%p\n", __FUNCTION__, sc));
+	DPRINTFN(0, ("%s: sc=%p\n", __func__, sc));
 
 	if (sc->sc_dying)
 		return EIO;
@@ -1353,7 +1353,7 @@ ustir_get_turnarounds(void *h, int *turnarounds)
 {
 	struct ustir_softc *sc = h;
 
-	DPRINTFN(0, ("%s: sc=%p\n", __FUNCTION__, sc));
+	DPRINTFN(0, ("%s: sc=%p\n", __func__, sc));
 
 	if (sc->sc_dying)
 		return EIO;

@@ -1,4 +1,4 @@
-/* $NetBSD: egavar.h,v 1.1 1999/12/13 16:28:57 drochner Exp $ */
+/* $NetBSD: egavar.h,v 1.1.24.1 2002/07/15 10:35:24 gehenna Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -32,4 +32,4 @@
  *
  */
 
-int ega_cnattach __P((bus_space_tag_t, bus_space_tag_t));
+int ega_cnattach(bus_space_tag_t, bus_space_tag_t);

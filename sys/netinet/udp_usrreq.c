@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.93.2.1 2002/06/20 15:52:32 gehenna Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.93.2.2 2002/07/15 10:37:03 gehenna Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.93.2.1 2002/06/20 15:52:32 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.93.2.2 2002/07/15 10:37:03 gehenna Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -262,6 +262,7 @@ udp_input(m, va_alist)
 		return;
 	}
 #endif
+	KASSERT(UDP_HDR_ALIGNED_P(uh));
 
 	/* destination port of 0 is illegal, based on RFC768. */
 	if (uh->uh_dport == 0)
@@ -418,6 +419,7 @@ udp6_input(mp, offp, proto)
 		return IPPROTO_DONE;
 	}
 #endif
+	KASSERT(UDP_HDR_ALIGNED_P(uh));
 	ulen = ntohs((u_short)uh->uh_ulen);
 	/*
 	 * RFC2675 section 4: jumbograms will have 0 in the UDP header field,

@@ -1,4 +1,4 @@
-/*	$NetBSD: udsbr.c,v 1.6 2002/02/12 10:51:49 tron Exp $	*/
+/*	$NetBSD: udsbr.c,v 1.6.8.1 2002/07/15 10:36:04 gehenna Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.6 2002/02/12 10:51:49 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.6.8.1 2002/07/15 10:36:04 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,7 +231,7 @@ udsbr_setfreq(struct udsbr_softc *sc, int freq)
          * that the radio wants.  This frequency is 10.7MHz above
          * the actual frequency.  We then need to convert to
          * units of 12.5kHz.  We add one to the IFM to make rounding
-         * easier. 
+         * easier.
          */
         freq = (freq * 1000 + 10700001) / 12500;
 	(void)udsbr_req(sc, 0x01, (freq >> 8) & 0xff, freq & 0xff);
