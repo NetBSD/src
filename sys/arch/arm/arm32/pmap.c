@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.37 2002/02/05 21:14:36 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.38 2002/02/06 17:32:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.37 2002/02/05 21:14:36 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.38 2002/02/06 17:32:35 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -2614,7 +2614,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	 * Get a pointer to the page.  Later on in this function, we
 	 * test for a managed page by checking pg != NULL.
 	 */
-	pg = PHYS_TO_VM_PAGE(pa);
+	pg = pmap_initialized ? PHYS_TO_VM_PAGE(pa) : NULL;
 
 	/* get lock */
 	PMAP_MAP_TO_HEAD_LOCK();
@@ -2711,7 +2711,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 		/*
 		 * Enter on the PV list if part of our managed memory
 		 */
-		if (pmap_initialized && pg != NULL) {
+		if (pg != NULL) {
 			if (pve == NULL) {
 				pve = pmap_alloc_pv(pmap, ALLOCPV_NEED);
 				if (pve == NULL) {
@@ -2725,7 +2725,6 @@ pmap_enter(pmap, va, pa, prot, flags)
 			/* enter_pv locks pvh when adding */
 			pmap_enter_pv(pg, pve, pmap, va, NULL, nflags);
 		} else {
-			pg = NULL;
 			if (pve != NULL)
 				pmap_free_pv(pmap, pve);
 		}
@@ -2743,7 +2742,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	if (pmap != pmap_kernel() && va != 0)
 		npte |= PT_AP(AP_U);
 
-	if (pmap_initialized && pg != NULL) {
+	if (pg != NULL) {
 #ifdef DIAGNOSTIC
 		if ((flags & VM_PROT_ALL) & ~prot)
 			panic("pmap_enter: access_type exceeds prot");
@@ -2773,7 +2772,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 
 	*pte = npte;
 
-	if (pmap_initialized && pg != NULL) {
+	if (pg != NULL) {
 		boolean_t pmap_active = FALSE;
 		/* XXX this will change once the whole of pmap_enter uses
 		 * map_ptes
@@ -2967,8 +2966,8 @@ pmap_pte(pmap, va)
 
 	/* Do we have a valid pde ? If not we don't have a page table */
 	if (!pmap_pde_page(pmap_pde(pmap, va))) {
-		PDEBUG(0, printf("pmap_pte: failed - pde = %p\n",
-		    pmap_pde(pmap, va)));
+		PDEBUG(0, printf("pmap_pte: failed - pde = %p (0x%08x)\n",
+		    pmap_pde(pmap, va)) *pmap_pde(pmap, va));
 		return(NULL); 
 	}
 
@@ -3097,23 +3096,15 @@ pmap_extract(pmap, va, pap)
 
 
 /*
- * Copy the range specified by src_addr/len from the source map to the
- * range dst_addr/len in the destination map.
+ * pmap_copy:
  *
- * This routine is only advisory and need not do anything.
+ *	Copy the range specified by src_addr/len from the source map to the
+ *	range dst_addr/len in the destination map.
+ *
+ *	This routine is only advisory and need not do anything.
  */
+/* Call deleted in <arm/arm32/pmap.h> */
 
-void
-pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
-	struct pmap *dst_pmap;
-	struct pmap *src_pmap;
-	vaddr_t dst_addr;
-	vsize_t len;
-	vaddr_t src_addr;
-{
-	PDEBUG(0, printf("pmap_copy(%p, %p, %lx, %lx, %lx)\n",
-	    dst_pmap, src_pmap, dst_addr, len, src_addr));
-}
 
 #if defined(PMAP_DEBUG)
 void
@@ -3352,32 +3343,19 @@ pmap_copy_on_write(pg)
 	pmap_clearbit(pg, PT_Wr);
 }
 
+/*
+ * pmap_is_modified:
+ *
+ *	Test to see if the specified page has been modified.
+ */
+/* See <arm/arm32/pmap.h> */
 
-boolean_t
-pmap_is_modified(pg)
-	struct vm_page *pg;
-{
-	boolean_t result;
-    
-	result = pmap_testbit(pg, PT_M);
-	PDEBUG(1, printf("pmap_is_modified pa=%08lx %x\n",
-	    VM_PAGE_TO_PHYS(pg), result));
-	return (result);
-}
-
-
-boolean_t
-pmap_is_referenced(pg)
-	struct vm_page *pg;
-{
-	boolean_t result;
-	
-	result = pmap_testbit(pg, PT_H);
-	PDEBUG(0, printf("pmap_is_referenced pa=%08lx %x\n",
-	    VM_PAGE_TO_PHYS(pg), result));
-	return (result);
-}
-
+/*
+ * pmap_is_referenced:
+ *
+ *	Test to see if the specified page has been referenced.
+ */
+/* See <arm/arm32/pmap.h> */
 
 int
 pmap_modified_emulation(pmap, va)
