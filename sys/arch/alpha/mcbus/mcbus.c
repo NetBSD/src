@@ -1,4 +1,4 @@
-/* $NetBSD: mcbus.c,v 1.7 1999/11/16 18:37:24 mjacob Exp $ */
+/* $NetBSD: mcbus.c,v 1.8 2001/05/02 01:24:29 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.7 1999/11/16 18:37:24 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.8 2001/05/02 01:24:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.7 1999/11/16 18:37:24 mjacob Exp $");
 
 #include <alpha/mcbus/mcbusreg.h>
 #include <alpha/mcbus/mcbusvar.h>
+
+#include <alpha/pci/mcpciareg.h>
 
 #include "locators.h"
 
@@ -140,25 +142,25 @@ mcbusattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	static const char *bcs[8] = {
-		"(no bcache)", "1MB BCache", "2MB BCache", "4MB BCache",
-		"??(4)??", "??(5)??", "??(6)??", "??(7)??"
+	static const char *bcs[CPU_BCacheMask + 1] = {
+		"No", "1MB", "2MB", "4MB",
 	};
 	struct mcbus_dev_attach_args ta;
 	mcbus_softc_t *mbp = (mcbus_softc_t *)self;
 	int i, mid;
 
-	printf("\n");
+	printf(": %s BCache\n", mcbus_primary.mcbus_valid ?
+	    bcs[mcbus_primary.mcbus_bcache] : "Unknown");
 
 	mbp->mcbus_types[0] = MCBUS_TYPE_RES;
-	for (mid = 1; mid <= MCBUS_MID_MAX; ++mid) {
+	for (mid = 1; mid <= MCBUS_MID_MAX; ++mid)
 		mbp->mcbus_types[mid] = MCBUS_TYPE_UNK;
-	}
 
 	/*
 	 * Find and "configure" memory.
 	 */
 	ta.ma_name = mcbus_cd.cd_name;
+
 	/*
 	 * XXX If we ever support more than one MCBUS, we'll
 	 * XXX have to probe for them, and map them to unit
@@ -184,11 +186,11 @@ mcbusattach(parent, self, aux)
 		ta.ma_gid = MCBUS_GID_FROM_INSTANCE(0);
 		ta.ma_mid = mid;
 		ta.ma_type = MCBUS_TYPE_PCI;
-		if (MCPCIA_EXISTS(ta.ma_mid, ta.ma_gid)) {
+		if (MCPCIA_EXISTS(ta.ma_mid, ta.ma_gid))
 			(void) config_found_sm(self, &ta, mcbusprint, mcbussbm);
-		}
 	}
 
+#if 0
 	/*
 	 * Deal with hooking CPU instances to MCBUS module ids.
 	 *
@@ -202,7 +204,6 @@ mcbusattach(parent, self, aux)
 		printf("%s mid %d: %s %s\n", self->dv_xname,
 		    mid, mcbus_node_type_str(MCBUS_TYPE_CPU),
 		    bcs[mcbus_primary.mcbus_bcache & 0x7]);
-#if 0
 		ta.ma_name = mcbus_cd.cd_name;
 		/*
 		 * XXX If we ever support more than one MCBUS, we'll
@@ -214,8 +215,8 @@ mcbusattach(parent, self, aux)
 		ta.ma_type = MCBUS_TYPE_CPU;
 		mbp->mcbus_types[mid] = MCBUS_TYPE_CPU;
 		(void) config_found_sm(self, &ta, mcbusprint, mcbussbm);
-#endif
 	}
+#endif
 
 	/*
 	 * Now clean up after configuring everything.
