@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.25 1998/06/24 01:06:26 ross Exp $ */
+/* $NetBSD: cpu.c,v 1.26 1998/09/22 06:24:26 ross Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.25 1998/06/24 01:06:26 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.26 1998/09/22 06:24:26 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,42 @@ struct cfattach cpu_ca = {
 };
 
 extern struct cfdriver cpu_cd;
+
+static char *ev4minor[] = {
+	"pass 2 or 2.1", "pass 3", 0
+}, *lcaminor[] = {
+	"",
+	"21066 pass 1 or 1.1", "21066 pass 2",
+	"21068 pass 1 or 1.1", "21068 pass 2",
+	"21066A pass 1", "21068A pass 1", 0
+}, *ev5minor[] = {
+	"", "pass 2, rev BA or 2.2, rev CA", "pass 2.3, rev DA or EA",
+	"pass 3", "pass 3.2", "pass 4", 0
+}, *ev45minor[] = {
+	"", "pass 1", "pass 1.1", "pass 2", 0
+}, *ev56minor[] = {
+	"", "pass 1", "pass 2", 0
+}, *ev6minor[] = {
+	"", "pass 1", 0
+}, *pca56minor[] = {
+	"", "pass 1", 0
+};
+
+struct cputable_struct {
+	int	cpu_major_code;
+	char	*cpu_major_name;
+	char	**cpu_minor_names;
+} cpunametable[] = {
+	{ PCS_PROC_EV3,		"EV3",		0		},
+	{ PCS_PROC_EV4,		"21064",	ev4minor	},
+	{ PCS_PROC_SIMULATION,	"Sim",		0		},
+	{ PCS_PROC_LCA4,	"LCA",		lcaminor	},
+	{ PCS_PROC_EV5,		"21164",	ev5minor	},
+	{ PCS_PROC_EV45,	"21064A",	ev45minor	},
+	{ PCS_PROC_EV56,	"21164A",	ev56minor	},
+	{ PCS_PROC_EV6,		"21264",	ev6minor	},
+	{ PCS_PROC_PCA56,	"PCA56",	pca56minor	}
+};
 
 static int
 cpumatch(parent, cfdata, aux)
@@ -73,6 +109,8 @@ cpuattach(parent, dev, aux)
 	void *aux;
 {
 	struct mainbus_attach_args *ma = aux;
+	int i;
+	char **s;
         struct pcs *p;
 #ifdef DEBUG
 	int needcomma;
@@ -86,160 +124,23 @@ cpuattach(parent, dev, aux)
 	printf(": ID %d%s, ", ma->ma_slot,
 	    ma->ma_slot == hwrpb->rpb_primary_cpu_id ? " (primary)" : "");
 
-	switch (major) {
-	case PCS_PROC_EV3:
-		printf("EV3 (minor type 0x%x)", minor);
-		break;
-
-	case PCS_PROC_EV4:
-		printf("21064 ");
-		switch (minor) {
-		case 0:
-			printf("(pass 2 or 2.1)");
-			break;
-		case 1:
-			printf("(pass 3)");
-			break;
-		default:
-			printf("(unknown minor type 0x%x)", minor);
-			break;
+	for(i = 0; i < sizeof cpunametable / sizeof cpunametable[0]; ++i) {
+		if (cpunametable[i].cpu_major_code == major) {
+			printf("%s", cpunametable[i].cpu_major_name);
+			s = cpunametable[i].cpu_minor_names;
+			for(i = 0; s && s[i]; ++i) {
+				if (i == minor) {
+					printf(" (%s)\n", s[i]);
+					goto recognized;
+				}
+			}
+			printf(" (unknown minor type %d)\n", minor);
+			goto recognized;
 		}
-		break;
-
-	case PCS_PROC_SIMULATION:
-		printf("simulation (minor type 0x%x)", minor);
-		break;
-
-	case PCS_PROC_LCA4:
-		switch (minor) {
-		case 0:
-			printf("LCA family (reserved minor type)");
-			break;
-		case 1:
-			printf("21066 (pass 1 or 1.1)");
-			break;
-		case 2:
-			printf("21066 (pass 2)");
-			break;
-		case 3:
-			printf("21068 (pass 1 or 1.1)");
-			break;
-		case 4:
-			printf("21068 (pass 2)");
-			break;
-		case 5:
-			printf("21066A (pass 1)");
-			break;
-		case 6:
-			printf("21068A (pass 1)");
-			break;
-		default:
-			printf("LCA family (unknown minor type 0x%x)", minor);
-			break;
-		}
-		break;
-
-	case PCS_PROC_EV5:
-		printf("21164 ");
-		switch (minor) {
-		case 0:
-			printf("(reserved minor type/pass 1)");
-			break;
-		case 1:
-			printf("(pass 2 or 2.2)");
-			break;
-		case 2:
-			printf("(pass 2.3)");
-			break;
-		case 3:
-			printf("(pass 3)");
-			break;
-		case 4:
-			printf("(pass 3.2)");
-			break;
-		case 5:
-			printf("(pass 4)");
-			break;
-		default:
-			printf("(unknown minor type 0x%x)", minor);
-			break;
-		}
-		break;
-
-	case PCS_PROC_EV45:
-		printf("21064A ");
-		switch (minor) {
-		case 0:
-			printf("(reserved minor type)");
-			break;
-		case 1:
-			printf("(pass 1)");
-			break;
-		case 2:
-			printf("(pass 1.1)");
-			break;
-		case 3:
-			printf("(pass 2)");
-			break;
-		default:
-			printf("(unknown minor type 0x%x)", minor);
-			break;
-		}
-		break;
-
-	case PCS_PROC_EV56:
-		printf("21164A ");
-		switch (minor) {
-		case 0:
-			printf("(reserved minor type)");
-			break;
-		case 1:
-			printf("(pass 1)");
-			break;
-		case 2:
-			printf("(pass 2)");
-			break;
-		default:
-			printf("(unknown minor type 0x%x)", minor);
-			break;
-		}
-		break;
-
-	case PCS_PROC_EV6:
-		printf("21264 ");
-		switch (minor) {
-		case 0:
-			printf("(reserved minor type)");
-			break;
-		case 1:
-			printf("(pass 1)");
-			break;
-		default:
-			printf("(unknown minor type 0x%x)", minor);
-			break;
-		}
-		break;
-
-	case PCS_PROC_PCA56:
-		printf("21164PC ");
-		switch (minor) {
-		case 0:
-			printf("(reserved minor type)");
-			break;
-		case 1:
-			printf("(pass 1)");
-			break;
-		default:
-			printf("(unknown minor type 0x%x)", minor);
-			break;
-		}
-		break;
-
-	default:
-		printf("UNKNOWN CPU TYPE (0x%x:0x%x)", major, minor);
-		break;
 	}
-	printf("\n");
+	printf("UNKNOWN CPU TYPE (%d:%d)", major, minor);
+
+recognized:
 
 #ifdef DEBUG
 	/* XXX SHOULD CHECK ARCHITECTURE MASK, TOO */
