@@ -1,4 +1,4 @@
-/*	$NetBSD: uio.h,v 1.22 2002/03/30 20:28:13 erh Exp $	*/
+/*	$NetBSD: uio.h,v 1.23 2002/03/31 07:11:35 erh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -64,9 +64,9 @@ typedef	__off_t		off_t;	/* file offset */
 #define	off_t		__off_t
 #endif
 
-#ifdef _KERNEL
 enum	uio_rw { UIO_READ, UIO_WRITE };
 
+#ifdef _KERNEL
 /* Segment flag values. */
 enum uio_seg {
 	UIO_USERSPACE,		/* from user data space */
