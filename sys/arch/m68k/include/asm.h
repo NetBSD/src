@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.10 1995/03/26 17:08:36 briggs Exp $	*/
+/*	$NetBSD: asm.h,v 1.11 1996/09/24 00:05:55 jtc Exp $	*/
 
 /*
  * Copyright (c) 1994 Allen Briggs
@@ -61,15 +61,32 @@
 
 
 #ifdef PROF
-#define ENTRY(name) \
-	_ENTRY(_C_LABEL(name)); link a6,#0; jbsr mcount; unlk a6
-#define ALTENTRY(name, rname) \
-	ENTRY(name); jra rname+12
+#define _PROF_PROLOG	link a6,#0; jbsr mcount; unlk a6
 #else
-#define ENTRY(name)		_ENTRY(_C_LABEL(name))
+#define _PROF_PROLOG
+#endif
+
+#define ENTRY(name)		_ENTRY(_C_LABEL(name)) _PROF_PROLOG
+#define	ASENTRY(name)		_ENTRY(_ASM_LABEL(name)) _PROF_PROLOG
+
+/*
+ * The m68k ALTENTRY macro is very different than the traditional
+ * implementation used by other NetBSD ports.  Usually ALTENTRY 
+ * simply provides an alternate function entry point.  The m68k
+ * definition takes a second argument and jumps inside the second
+ * function when profiling is enabled.
+ *
+ * The m68k behavior is similar to the ENTRY2 macro found in
+ * solaris' asm_linkage.h.
+ *
+ * Providing ENTRY2 and changing all the code that uses ALTENTRY
+ * to use it would be a desirable change.
+ */
+#ifdef PROF
+#define ALTENTRY(name, rname)	ENTRY(name); jra rname+12
+#else
 #define ALTENTRY(name, rname)	_ENTRY(_C_LABEL(name))
 #endif
-#define	ASENTRY(name)		_ENTRY(_ASM_LABEL(name))
 
 #define RCSID(x)		.text; .asciz x
 
