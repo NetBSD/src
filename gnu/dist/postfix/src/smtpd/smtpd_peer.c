@@ -151,7 +151,7 @@ void    smtpd_peer_init(SMTPD_STATE *state)
 	int error = -1;
 
 #ifdef INET6
-	(void)getnameinfo(sa, len, hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST);
+	(void)getnameinfo(sa, len, abuf, sizeof(abuf), NULL, 0, NI_NUMERICHOST);
 #else
 	in = &((struct sockaddr_in *)sa)->sin_addr;
 	inet_ntop(AF_INET, in, abuf, sizeof(abuf));
