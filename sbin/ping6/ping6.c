@@ -1,5 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.17 2000/08/09 14:36:01 itojun Exp $	*/
-/*	$KAME: ping6.c,v 1.66 2000/08/09 14:34:15 itojun Exp $	*/
+/*	$KAME: ping6.c,v 1.74 2000/08/14 02:48:14 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -81,7 +80,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.17 2000/08/09 14:36:01 itojun Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.18 2000/08/14 02:54:43 itojun Exp $");
 #endif
 #endif
 
@@ -130,6 +129,9 @@ __RCSID("$NetBSD: ping6.c,v 1.17 2000/08/09 14:36:01 itojun Exp $");
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#ifdef __OpenBSD__
+#include <math.h>
+#endif
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -141,7 +143,11 @@ __RCSID("$NetBSD: ping6.c,v 1.17 2000/08/09 14:36:01 itojun Exp $");
 #include <netinet6/ipsec.h>
 #endif
 
+#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 #include <md5.h>
+#else
+#include "md5.h"
+#endif
 
 #define MAXPACKETLEN	131072
 #define	IP6LEN		40
@@ -224,7 +230,7 @@ long npackets;			/* max packets to transmit */
 long nreceived;			/* # of packets we got back */
 long nrepeats;			/* number of duplicates */
 long ntransmitted;		/* sequence # for outbound packets = #sent */
-int interval = 1;		/* interval between packets */
+struct timeval interval = {1, 0}; /* interval between packets */
 int hoplimit = -1;		/* hoplimit */
 
 /* timing */
@@ -232,6 +238,9 @@ int timing;			/* flag to do timing */
 double tmin = 999999999.0;	/* minimum round trip time */
 double tmax = 0.0;		/* maximum round trip time */
 double tsum = 0.0;		/* sum of all times, for doing average */
+#ifdef __OpenBSD__
+double tsumsq = 0.0;		/* sum of all times squared, for std. dev. */
+#endif
 
 /* for node addresses */
 u_short naflags;
@@ -290,11 +299,14 @@ main(argc, argv)
 #ifdef USE_RFC2292BIS
 	struct ip6_rthdr *rthdr = NULL;
 #endif
+#ifndef __OpenBSD__
 	struct timeval tv;
+#endif
 #ifdef IPSEC_POLICY_IPSEC
 	char *policy_in = NULL;
 	char *policy_out = NULL;
 #endif
+	double intval;
 
 	/* just to be sure */
 	memset(&smsghdr, 0, sizeof(&smsghdr));
@@ -392,10 +404,23 @@ main(argc, argv)
 #endif
 			break;
 		case 'i':		/* wait between sending packets */
-			interval = strtol(optarg, &e, 10);
-			if (interval <= 0 || *optarg == '\0' || *e != '\0')
-				errx(1,
-				    "illegal timing interval -- %s", optarg);
+			intval = strtod(optarg, &e);
+			if (*optarg == '\0' || *e != '\0')
+				errx(1, "illegal timing interval %s", optarg);
+			if (intval < 1 && getuid()) {
+				errx(1, "%s: only root may use interval < 1s",
+				    strerror(EPERM));
+			}
+			interval.tv_sec = (long)intval;
+			interval.tv_usec =
+			    (long)((intval - interval.tv_sec) * 1000000);
+			if (interval.tv_sec < 0)
+				errx(1, "illegal timing interval %s", optarg);
+			/* less than 1/hz does not make sense */
+			if (interval.tv_sec == 0 && interval.tv_usec < 10000) {
+				warnx("too small interval, raised to 0.01");
+				interval.tv_usec = 10000;
+			}
 			options |= F_INTERVAL;
 			break;
 		case 'l':
@@ -553,11 +578,17 @@ main(argc, argv)
 			*datap++ = i;
 
 	ident = getpid() & 0xFFFF;
+#ifndef __OpenBSD__
 	gettimeofday(&tv, NULL);
 	srand((unsigned int)(tv.tv_sec ^ tv.tv_usec ^ (long)ident));
 	memset(nonce, 0, sizeof(nonce));
 	for (i = 0; i < sizeof(nonce); i += sizeof(int))
 		*((int *)&nonce[i]) = rand();
+#else
+	memset(nonce, 0, sizeof(nonce));
+	for (i = 0; i < sizeof(nonce); i += sizeof(u_int32_t))
+		*((u_int32_t *)&nonce[i]) = arc4random();
+#endif
 
 	if ((s = socket(res->ai_family, res->ai_socktype, res->ai_protocol)) < 0)
 		err(1, "socket");
@@ -893,8 +924,7 @@ main(argc, argv)
 
 	if ((options & F_FLOOD) == 0) {
 		(void)signal(SIGALRM, onalrm);
-		itimer.it_interval.tv_sec = interval;
-		itimer.it_interval.tv_usec = 0;
+		itimer.it_interval = interval;
 		itimer.it_value.tv_sec = 0;
 		itimer.it_value.tv_usec = 1;
 		(void)setitimer(ITIMER_REAL, &itimer, NULL);
@@ -1233,6 +1263,9 @@ pr_pack(buf, cc, mhdr)
 			triptime = ((double)tv.tv_sec) * 1000.0 +
 			    ((double)tv.tv_usec) / 1000.0;
 			tsum += triptime;
+#ifdef __OpenBSD__
+			tsumsq += triptime * triptime;
+#endif
 			if (triptime < tmin)
 				tmin = triptime;
 			if (triptime > tmax)
@@ -1322,13 +1355,23 @@ pr_pack(buf, cc, mhdr)
 			if ((ni->ni_flags & NI_SUPTYPE_FLAG_COMPRESS) != 0) {
 				printf(", compressed bitmap");
 				break;
+			} else {
+				size_t clen;
+				u_int32_t v;
+				cp = (u_char *)(ni + 1);
+				clen = (size_t)(end - cp);
+				if (clen == 0 || clen > 8192 || clen % 4) {
+					printf(", invalid length(%lu)",
+					    (u_long)clen);
+					break;
+				}
+				printf(", bitmap = 0x");
+				for (dp = end - 4; dp >= cp; dp -= 4) {
+					memcpy(&v, dp, sizeof(v));
+					v = (u_int32_t)ntohl(v);
+					printf("%08x", v);
+				}
 			}
-			cp = (u_char *)(ni + 1);
-			if (cp + 4 != end) {
-				printf(", invalid length");
-				break;
-			}
-			printf(", bitmap = 0x%08x", ntohl(*(u_int32_t *)cp));
 			break;
 		case NI_QTYPE_NODEADDR:
 			pr_nodeaddr(ni, end - (u_char *)ni);
@@ -1360,7 +1403,7 @@ pr_pack(buf, cc, mhdr)
 					 * name-lookup special handling for
 					 * truncated name
 					 */
-					if (cp + 1 < end && !*cp &&
+					if (cp + 1 <= end && !*cp &&
 					    strlen(dnsname) > 0) {
 						dnsname[strlen(dnsname) - 1] = '\0';
 						cp++;
@@ -1703,7 +1746,6 @@ onint(notused)
 void
 summary()
 {
-	register int i;
 
 	(void)printf("\n--- %s ping6 statistics ---\n", hostname);
 	(void)printf("%ld packets transmitted, ", ntransmitted);
@@ -1721,9 +1763,18 @@ summary()
 	(void)putchar('\n');
 	if (nreceived && timing) {
 		/* Only display average to microseconds */
-		i = 1000.0 * tsum / (nreceived + nrepeats);
-		(void)printf("round-trip min/avg/max = %g/%g/%g ms\n",
-		    tmin, ((double)i) / 1000.0, tmax);
+		double num = nreceived + nrepeats;
+		double avg = tsum / num;
+#ifdef __OpenBSD__
+		double dev = sqrt(tsumsq / num - avg * avg);
+		(void)printf(
+		    "round-trip min/avg/max/std-dev = %.3f/%.3f/%.3f/%.3f ms\n",
+		    tmin, avg, tmax, dev);
+#else
+		(void)printf(
+		    "round-trip min/avg/max = %.3f/%.3f/%.3f ms\n",
+		    tmin, avg, tmax);
+#endif
 		(void)fflush(stdout);
 	}
 }
