@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.c,v 1.28 2002/09/03 06:17:26 tron Exp $	*/
+/*	$NetBSD: dd.c,v 1.29 2002/09/04 04:21:54 enami Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: dd.c,v 1.28 2002/09/03 06:17:26 tron Exp $");
+__RCSID("$NetBSD: dd.c,v 1.29 2002/09/04 04:21:54 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -360,6 +360,14 @@ dd_close(void)
 	}
 	if (out.dbcnt)
 		dd_out(1);
+
+	/*
+	 * Reporting nfs write error may be defered until next
+	 * write(2) or close(2) system call.  So, we need to do an
+	 * extra check.  If an output is stdout, the file structure
+	 * may be shared among with other processes and close(2) just
+	 * decreases the reference count.
+	 */
 	if (out.fd == STDOUT_FILENO && fsync(out.fd) == -1 && errno != EINVAL)
 		err(1, "fsync stdout");
 	if (close(out.fd) == -1)
