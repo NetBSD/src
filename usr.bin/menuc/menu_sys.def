@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.21 1999/06/20 20:21:03 cgd Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.22 2000/04/22 21:34:25 thorpej Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -146,12 +146,20 @@ static void ins_keyseq (struct keyseq **seq, struct keyseq *ins)
 
 static void init_keyseq (void)
 {
+	/*
+	 * XXX XXX XXX THIS SHOULD BE NUKED FROM ORBIT!  DO THIS
+	 * XXX XXX XXX WITH NORMAL CURSES FACILITIES!
+	 */
+	extern struct tinfo *_cursesi_genbuf;
+
 	int i;
+
 	for (i=0; i<_mc_num_key_seq; i++) {
 		if (_mc_key_seq[i].termcap_name)
 			_mc_key_seq[i].chars =
-				tgetstr (_mc_key_seq[i].termcap_name,
-					 &str_ptr);
+				t_getstr (_cursesi_genbuf,
+				      _mc_key_seq[i].termcap_name,
+				      &str_ptr, NULL);
 		if (_mc_key_seq[i].chars != NULL &&
 		    (_mc_key_seq[i].numchars = strlen(_mc_key_seq[i].chars))
 		    > 0)
