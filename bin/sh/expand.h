@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.h,v 1.9 1998/01/31 12:45:07 christos Exp $	*/
+/*	$NetBSD: expand.h,v 1.10 1999/02/05 07:52:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,3 +67,9 @@ void expari __P((int));
 int patmatch __P((char *, char *));
 void rmescapes __P((char *));
 int casematch __P((union node *, char *));
+
+/* From arith.y */
+int arith __P((char *));
+int expcmd __P((int , char **));
+void arith_lex_reset __P((void));
+int yylex __P((void));
