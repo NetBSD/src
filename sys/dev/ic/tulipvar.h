@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.33 2000/04/04 19:22:52 thorpej Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.34 2000/05/25 16:47:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -506,8 +506,8 @@ do {									\
 	__rxd->td_bufaddr2 =						\
 	    htole32(TULIP_CDRXADDR((sc), TULIP_NEXTRX((x))));		\
 	__rxd->td_ctl =							\
-	    htole32(((__m->m_ext.ext_size - 1) << TDCTL_SIZE1_SHIFT) |	\
-	    (sc)->sc_tdctl_ch |						\
+	    htole32((((__m->m_ext.ext_size - 1) & ~0x3U)		\
+	    << TDCTL_SIZE1_SHIFT) | (sc)->sc_tdctl_ch |			\
 	    ((x) == (TULIP_NRXDESC - 1) ? sc->sc_tdctl_er : 0));	\
 	__rxd->td_status = htole32(TDSTAT_OWN|TDSTAT_Rx_FS|TDSTAT_Rx_LS); \
 	TULIP_CDRXSYNC((sc), (x), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE); \
