@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.4 1998/09/09 00:07:54 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.5 1998/09/30 23:01:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -49,6 +49,7 @@
  * for the next68k port
  */
 
+#include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
 
 #include "assym.h"
