@@ -1,7 +1,7 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
 #
-#	$NetBSD: bsd.port.mk,v 1.28 1997/12/29 20:10:24 hubertf Exp $
+#	$NetBSD: bsd.port.mk,v 1.29 1998/01/15 09:37:27 agc Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -529,6 +529,12 @@ MTREE_ARGS?=	-U -f ${MTREE_FILE} -d -e -p
 .if (${OPSYS} == "OpenBSD")
 .include <bsd.own.mk>
 MAKE_ENV+=	EXTRA_SYS_MK_INCLUDES="<bsd.own.mk>"
+.elif (${OPSYS} == "NetBSD")
+NEED_OWN_INSTALL_TARGET=	no
+.include <bsd.own.mk>
+SHAREOWN = ${DOCOWN}
+SHAREGRP = ${DOCGRP}
+SHAREMODE = ${DOCMODE}
 .endif
 
 # A few aliases for *-install targets
@@ -1890,13 +1896,3 @@ ${PLIST}: ${PLIST_SRC}
 
 
 .endif # __ARCH_OK
-
-.if (${OPSYS} == "NetBSD")
-.include <bsd.own.mk>
-
-SHAREOWN = ${DOCOWN}
-SHAREGRP = ${DOCGRP}
-SHAREMODE = ${DOCMODE}
-
-.endif
-
