@@ -1,10 +1,10 @@
-/*	$NetBSD: diodevs_data.h,v 1.8 2002/04/17 20:51:11 gmcgarry Exp $	*/
+/*	$NetBSD: diodevs_data.h,v 1.9 2003/05/25 04:59:57 tsutsui Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: diodevs,v 1.5 2002/04/17 20:50:45 gmcgarry Exp 
+ *	NetBSD: diodevs,v 1.6 2003/05/25 04:56:36 tsutsui Exp 
  */
 
 /*-
