@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.1.2.9 2002/12/10 15:33:48 thorpej Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.1.2.10 2003/01/07 00:54:29 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -151,7 +151,7 @@ td_thr_iter(td_proc_t *proc, int (*call)(td_thread_t *, void *), void *callarg)
 	td_thread_t *thread;
 
 	if (proc->allqueue == 0) {
-		val = LOOKUP(proc, "allqueue", &allqaddr);
+		val = LOOKUP(proc, "pthread__allqueue", &allqaddr);
 		if (val != 0)
 			return val;
 		proc->allqueue = allqaddr;
@@ -668,7 +668,7 @@ td_map_id2thr(td_proc_t *proc, int threadid, td_thread_t **threadp)
 
 
 	if (proc->allqueue == 0) {
-		val = LOOKUP(proc, "allqueue", &allqaddr);
+		val = LOOKUP(proc, "pthread__allqueue", &allqaddr);
 		if (val != 0)
 			return val;
 		proc->allqueue = allqaddr;
