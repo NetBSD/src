@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_out.c,v 1.8 1995/08/30 00:29:44 fvdl Exp $	*/
+/*	$NetBSD: pcvt_out.c,v 1.9 1995/09/03 01:20:41 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore
@@ -75,7 +75,6 @@
 static void check_scroll ( struct video_state *svsp );
 static void hp_entry ( U_char ch, struct video_state *svsp );
 void update_hp ( struct video_state *svsp );
-static void vt_coldinit ( void );
 static void wrfkl ( int num, u_char *string, struct video_state *svsp );
 static void writefkl ( int num, u_char *string, struct video_state *svsp );
 
@@ -875,7 +874,7 @@ sput (u_char *s, U_char kernel, int len, int page)
 /*---------------------------------------------------------------------------*
  *	this is the absolute cold initialization of the emulator
  *---------------------------------------------------------------------------*/
-static void
+void
 vt_coldinit(void)
 {
 	extern u_short csd_ascii[];		/* pcvt_tbl.h */

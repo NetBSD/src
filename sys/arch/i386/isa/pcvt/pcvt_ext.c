@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_ext.c,v 1.11 1995/08/30 00:29:18 fvdl Exp $	*/
+/*	$NetBSD: pcvt_ext.c,v 1.12 1995/09/03 01:20:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Hellmuth Michaelis and Joerg Wunsch
@@ -2516,9 +2516,11 @@ usl_vt_ioctl(Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		{
 		case K_RAW:
 		case K_XLATE:
-			if (vsx == vsp && vsx->kbd_state != mode)
-				kbd_setmode(mode);
-			vsx->kbd_state = mode;
+			if (vsx->kbd_state != mode) {
+				if (vsx == vsp)
+					kbd_setmode(mode);
+				vsx->kbd_state = mode;
+			}
 			return 0;
 		}
 		return EINVAL;	/* end KDSKBMODE */
