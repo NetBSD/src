@@ -1,4 +1,4 @@
-/*	$NetBSD: mkindex.c,v 1.7 1999/12/07 07:47:08 jsm Exp $	*/
+/* $NetBSD: mkindex.c,v 1.8 2000/07/31 11:29:48 simonb Exp $ */
 
 /*-
  * Copyright (c) 1993
@@ -36,28 +36,25 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
-#endif /* not lint */
+static char copyright[] = "@(#) Copyright (c) 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 
-#ifndef lint
 #if 0
 static char sccsid[] = "@(#)mkindex.c	8.1 (Berkeley) 6/11/93";
 #else
-__RCSID("$NetBSD: mkindex.c,v 1.7 1999/12/07 07:47:08 jsm Exp $");
+static char rcsid[] =
+    "$NetBSD: mkindex.c,v 1.8 2000/07/31 11:29:48 simonb Exp $";
 #endif
 #endif /* not lint */
 
-#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "bog.h"
 
-int main __P((void));
-char *nextword __P((FILE *, char *, int *, int *));
+int main(void);
+char *nextword(FILE *, char *, int *, int *);
 
 int
 main(void)
@@ -89,8 +86,10 @@ main(void)
 	for (i = prev + 1; i <= 'z'; i++)
 		printf("%c %6ld %6ld\n", i, off, off - 1);
 	fflush(stdout);
-	if (ferror(stdout))
-		err(1, "writing standard output");
+	if (ferror(stdout)) {
+		perror("error writing standard output");
+		exit(1);
+	}
 	exit(0);
 }
 
