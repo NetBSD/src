@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.4 2004/02/13 11:36:20 wiz Exp $ */
+/* $NetBSD: lapic.c,v 1.4.2.1 2004/05/06 05:33:14 jmc Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.4 2004/02/13 11:36:20 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.4.2.1 2004/05/06 05:33:14 jmc Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -232,7 +232,7 @@ u_int32_t lapic_delaytab[26];
 void
 lapic_clockintr(void *arg, struct intrframe frame)
 {
-#if defined(I586_CPU) || defined(I686_CPU)
+#if defined(I586_CPU) || defined(I686_CPU) || defined(__x86_64__)
 	static int microset_iter; /* call cc_microset once/sec */
 	struct cpu_info *ci = curcpu();
 
