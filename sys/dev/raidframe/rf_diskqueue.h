@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.h,v 1.7 2002/08/02 04:01:51 oster Exp $	*/
+/*	$NetBSD: rf_diskqueue.h,v 1.8 2002/09/15 21:19:50 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -71,7 +71,6 @@ struct RF_DiskQueueData_s {
 	long    entryTime;
 	RF_DiskQueueData_t *next;
 	RF_DiskQueueData_t *prev;
-	caddr_t buf2;		/* for read-op-write */
 	dev_t   dev;		/* the device number for in-kernel version */
 	RF_DiskQueue_t *queue;	/* the disk queue to which this req is
 				 * targeted */
