@@ -1,3 +1,5 @@
+/*	$NetBSD: phantstruct.h,v 1.2 1995/03/24 04:00:11 cgd Exp $	*/
+
 /*
  * phantstruct.h - structure definitions for Phantasia
  */

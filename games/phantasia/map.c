@@ -1,3 +1,5 @@
+/*	$NetBSD: map.c,v 1.2 1995/03/24 03:58:58 cgd Exp $	*/
+
 #define	minusminus	plusplus
 #define	minusplus	plusminus
 
