@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.50 2000/06/27 17:29:21 mrg Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
  *
@@ -277,7 +277,7 @@ uvmfault_amapcopy(ufi)
  * page in that anon.
  *
  * => maps, amap, and anon locked by caller.
- * => if we fail (result != VM_PAGER_OK) we unlock everything except anon.
+ * => if we fail (result != VM_PAGER_OK) we unlock everything.
  * => if we are successful, we return with everything still locked.
  * => we don't move the page on the queues [gets moved later]
  * => if we allocate a new page [we_own], it gets put on the queues.
@@ -1063,7 +1063,7 @@ ReFault:
 
 	/*
 	 * let uvmfault_anonget do the dirty work.
-	 * if it fails (!OK) it will unlock all but the anon for us.
+	 * if it fails (!OK) it will unlock everything for us.
 	 * if it succeeds, locks are still valid and locked.
 	 * also, if it is OK, then the anon's page is on the queues.
 	 * if the page is on loan from a uvm_object, then anonget will
@@ -1071,20 +1071,28 @@ ReFault:
 	 */
 
 	result = uvmfault_anonget(&ufi, amap, anon);
-	if (result != VM_PAGER_OK) {
-		simple_unlock(&anon->an_lock);
-	}
+	switch (result) {
+	case VM_PAGER_OK:
+		break; 
 
-	if (result == VM_PAGER_REFAULT)
+	case VM_PAGER_REFAULT:
 		goto ReFault;
 
-	if (result == VM_PAGER_AGAIN) {
-		tsleep((caddr_t)&lbolt, PVM, "fltagain1", 0);
-		goto ReFault;
-	}
+	case VM_PAGER_ERROR:
+		/*
+		 * An error occurred while trying to bring in the
+		 * page -- this is the only error we return right
+		 * now.
+		 */
+		return (KERN_PROTECTION_FAILURE);	/* XXX */
 
-	if (result != VM_PAGER_OK)
-		return (KERN_PROTECTION_FAILURE);		/* XXX??? */
+	default:
+#ifdef DIAGNOSTIC
+		panic("uvm_fault: uvmfault_anonget -> %d", result);
+#else
+		return (KERN_PROTECTION_FAILURE);
+#endif
+	}
 
 	/*
 	 * uobj is non null if the page is on loan from an object (i.e. uobj)
