@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.68 2000/06/09 17:14:06 tsubai Exp $
+#	$NetBSD: GENERIC,v 1.69 2000/06/11 10:56:16 tsubai Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include		"arch/macppc/conf/std.macppc"
 
-#ident 		"GENERIC-$Revision: 1.68 $"
+#ident 		"GENERIC-$Revision: 1.69 $"
 
 maxusers	32
 
@@ -224,7 +224,7 @@ ch*	at scsibus? target ? lun ?	# SCSI autochangers
 ss*	at scsibus? target ? lun ?	# SCSI scanners
 uk*	at scsibus? target ? lun ?	# SCSI unknown
 
-wdc*	at obio? flags 0x0
+wdc*	at obio? flags 0x1
 wd*	at pciide? channel ? drive ?
 wd*	at wdc? channel ? drive ? flags 0x0000
 
