@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.7 1996/11/19 03:15:51 jtc Exp $	*/
+/*	$NetBSD: SYS.h,v 1.8 1997/03/08 06:32:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,7 +43,8 @@
 #include <machine/asm.h>
 
 #ifdef __STDC__
-#define SYSTRAP(x)	movl \#SYS_ ## x,d0; trap \#0
+#define	IMMEDIATE	#
+#define SYSTRAP(x)	movl IMMEDIATE SYS_ ## x ## ,d0; trap IMMEDIATE 0
 #else
 #define SYSTRAP(x)	movl #SYS_/**/x,d0; trap #0
 #endif
