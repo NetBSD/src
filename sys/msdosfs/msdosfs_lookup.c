@@ -13,7 +13,7 @@
  * 
  * October 1992
  * 
- *	$Id: msdosfs_lookup.c,v 1.7 1994/02/14 21:47:57 mycroft Exp $
+ *	$Id: msdosfs_lookup.c,v 1.8 1994/03/03 00:51:35 paulus Exp $
  */
 
 #include <sys/param.h>
@@ -106,10 +106,10 @@ msdosfs_lookup(vdp, ndp, p)
 
 		if (error == ENOENT)
 			return error;
-#ifdef DIAGNOSTIC
+#ifdef PARANOID
 		if (vdp == ndp->ni_rootdir && ndp->ni_isdotdot)
 			panic("msdosfs_lookup: .. thru root");
-#endif
+#endif				/* PARANOID */
 		pdp = dp;
 		vdp = ndp->ni_vp;
 		dp = VTODE(vdp);
@@ -160,7 +160,7 @@ msdosfs_lookup(vdp, ndp, p)
 #if defined(MSDOSFSDEBUG)
 		printf("msdosfs_lookup(): looking for . or .. in root directory\n");
 #endif				/* defined(MSDOSFSDEBUG) */
-		cluster == MSDOSFSROOT;
+		cluster = MSDOSFSROOT;
 		diroff = MSDOSFSROOT_OFS;
 		goto foundroot;
 	}
@@ -314,7 +314,7 @@ found:	;
 	 * this point.
 	 */
 	isadir = dep->deAttributes & ATTR_DIRECTORY;
-	scn = dep->deStartCluster;
+	scn = getushort(dep->deStartCluster);
 
 foundroot:;
 	/*
@@ -482,7 +482,8 @@ createde(dep, ndp, depp)
 		if (error)
 			return error;
 	}
-	*ndep = dep->de_de;
+	DE_EXTERNALIZE(ndep, dep);
+
 	/*
 	 * If they want us to return with the denode gotten.
 	 */
@@ -672,15 +673,16 @@ doscheckpath(source, target)
 			error = ENOTDIR;
 			break;
 		}
-		if (ep->deStartCluster == source->de_StartCluster) {
+		scn = getushort(ep->deStartCluster);
+		if (scn == source->de_StartCluster) {
 			error = EINVAL;
 			break;
 		}
-		if (ep->deStartCluster == MSDOSFSROOT)
+		if (scn == MSDOSFSROOT)
 			break;
 		deput(dep);
 		/* NOTE: deget() clears dep on error */
-		error = deget(pmp, ep->deStartCluster, 0, ep, &dep);
+		error = deget(pmp, scn, 0, ep, &dep);
 		brelse(bp);
 		bp = NULL;
 		if (error)
