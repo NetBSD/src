@@ -1,4 +1,4 @@
-#	$NetBSD: files.amigappc,v 1.1 2000/05/25 22:11:58 is Exp $
+#	$NetBSD: files.amigappc,v 1.2 2000/07/04 14:18:07 is Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -285,28 +285,28 @@ attach	otgsc at zbus
 file	arch/amiga/dev/otgsc.c		otgsc needs-flag
 
 # ncr 57c710 controllers
-define	siop
-file	arch/amiga/dev/siop.c		siop
+define	asiop
+file	arch/amiga/dev/siop.c		asiop
 
 # PPI Zeus
-device	zssc: scsi, siop
+device	zssc: scsi, asiop
 attach	zssc at zbus
 file	arch/amiga/dev/zssc.c		zssc needs-flag
 
 # CSA Magnum
-device	mgnsc: scsi, siop
+device	mgnsc: scsi, asiop
 attach	mgnsc at zbus
 file	arch/amiga/dev/mgnsc.c		mgnsc needs-flag
 
 # MacroSystems USA Warp Engine
-device	wesc: scsi, siop
+device	wesc: scsi, asiop
 attach	wesc at zbus
 file	arch/amiga/dev/wesc.c		wesc needs-flag
 
 # C= A4091 & A4000T
-device	afsc: scsi, siop
+device	afsc: scsi, asiop
 attach	afsc at zbus
-device	aftsc: scsi, siop
+device	aftsc: scsi, asiop
 attach	aftsc at mainbus
 file	arch/amiga/dev/afsc.c		afsc | aftsc needs-flag
 
@@ -362,7 +362,7 @@ attach	idesc at mainbus
 file	arch/amiga/dev/idesc.c		idesc needs-flag
 
 # MacroSystem DraCo internal
-device	drsc: scsi, siop
+device	drsc: scsi, asiop
 attach	drsc at mainbus
 file  arch/amiga/dev/drsc.c           drsc needs-flag
 

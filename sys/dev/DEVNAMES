@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.8 2000/07/04 14:01:31 tsutsui Exp $
+#	$NetBSD: DEVNAMES,v 1.9 2000/07/04 14:18:06 is Exp $
 #
 # This file contains all used device names and defined attributes in 
 # alphabetical order. New devices added to the system somewhere should first 
@@ -73,6 +73,7 @@ asc			mac68k
 asc			pmax
 asc			vax
 asiop			amiga		Attribute
+asiop			amigappc	Attribute
 ast			MI		
 aster			amiga
 aster			amigappc
@@ -854,7 +855,6 @@ simide			arm32
 sio			alpha
 sio			luna68k
 siop			MI
-siop			amigappc
 siopng			amiga		Attribute
 siotty			luna68k
 sip			MI		
