@@ -1,4 +1,4 @@
-#	$NetBSD: SWINGER,v 1.45 2003/10/08 11:55:44 bouyer Exp $
+#	$NetBSD: SWINGER,v 1.46 2003/10/18 08:12:07 lukem Exp $
 #	from NetBSD: GENERIC,v 1.325 2000/04/14 14:53:32 augustss Exp
 #
 #	SWINGER -- thorpej's Abit BP6+dual Celeron
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"SWINGER-$Revision: 1.45 $"
+#ident 		"SWINGER-$Revision: 1.46 $"
 
 maxusers	64		# estimated number of users
 
@@ -431,20 +431,8 @@ wdc*	at isapnp?
 #wdc0	at isa? port 0x1f0 irq 14 flags 0x00
 #wdc1	at isa? port 0x170 irq 15 flags 0x00
 
-# ATA bus support
-atabus* at pciide? channel ?
-atabus* at acardide? channel ?
-atabus* at aceride? channel ? 
-atabus* at cmdide? channel ? 
-atabus* at cypide? channel ?
-atabus* at hptide? channel ?
-atabus* at optiide? channel ?
-atabus* at piixide? channel ?
-atabus* at pdcide? channel ?
-atabus* at siside? channel ?
-atabus* at slide? channel ?
-atabus* at viaide? channel ?
-atabus* at wdc? channel ?
+# ATA (IDE) bus support
+atabus* at ata?
 
 # IDE drives
 # Flags are used only with controllers that support DMA operations
