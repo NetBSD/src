@@ -1,4 +1,4 @@
-/*	$NetBSD: strcpy.S,v 1.3 1998/04/03 22:58:10 matthias Exp $	*/
+/*	$NetBSD: strcpy.S,v 1.4 1999/06/06 19:49:11 matthias Exp $	*/
 
 /* 
  * Written by Randy Hyde, 1993
@@ -8,7 +8,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: strcpy.S,v 1.3 1998/04/03 22:58:10 matthias Exp $")
+	RCSID("$NetBSD: strcpy.S,v 1.4 1999/06/06 19:49:11 matthias Exp $")
 #endif
 
 /*
@@ -23,16 +23,15 @@ KENTRY(strcpy, 8)
 	movd	B_ARG0,r2
 
 	/*
-	 * First begin by seeing if we can doubleword align the
-	 * pointers. The following code only aligns the pointer in R2.
-	 * If the L.O. two bits of R1 do not match, it's going to run
-	 * slower but there is nothing we can do about that. Better to
-	 * have at least one of them double word aligned rather than
-	 * neither.
+	 * We need to double word align the src (R1). When we read
+	 * by double words we can read potentially up to 3 bytes
+	 * past the null terminating byte. We can avoid spurious page
+	 * faults by double word aligning the source. It also runs
+	 * faster.  IWD
 	 */
 
 	movqd	3,r3
-	andd	r2,r3
+	andd	r1,r3
 
 0:	casew	1f(pc)[r3:w]
 1:	.word	5f-0b
@@ -61,13 +60,13 @@ KENTRY(strcpy, 8)
 	addqd	1,r2
 
 	/*
-	 * Okay, when we get down here R2 points at a double word
-	 * aligned destination block of bytes, R1 points at another
+	 * Okay, when we get down here R1 points at a double word
+	 * aligned source block of bytes, R2 points at the destination
 	 * block of bytes (typically, though not always double word
 	 * aligned).
 	 * This guy processes four bytes at a time and checks for the
 	 * zero terminating byte amongst the bytes in the double word.
-	 * This algorithm is de to Dave Rand.
+	 * This algorithm is due to Dave Rand.
 	 *
 	 * Sneaky test for zero amongst four bytes:
 	 *
