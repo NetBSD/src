@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.39 1999/03/31 01:26:40 thorpej Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.40 1999/04/01 00:23:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1991, 1993
@@ -69,8 +69,7 @@ void	*mclpool_alloc __P((unsigned long, int, int));
 void	mclpool_release __P((void *, unsigned long, int));
 
 /*
- * Initialize the mbuf allcator.  Note, this cannot allocate any
- * memory itself; we are called before mb_map has been allocated.
+ * Initialize the mbuf allcator.
  */
 void
 mbinit()
