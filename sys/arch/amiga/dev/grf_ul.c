@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_ul.c,v 1.6 1995/10/09 02:08:45 chopps Exp $	*/
+/*	$NetBSD: grf_ul.c,v 1.7 1995/10/09 02:14:46 chopps Exp $	*/
 #define UL_DEBUG
 
 /*
@@ -564,16 +564,16 @@ ul_getvmode (gp, vm)
 	 * of sync start?
 	 */
 
-	vm->hblank_start = md->hblank_start * 2;
-	vm->hblank_stop  = md->hblank_stop * 2;
-	vm->hsync_start  = md->hsync_start * 2;
-	vm->hsync_stop   = md->hsync_stop * 2;
+	vm->hblank_start = (md->hblank_start - md->hblank_stop) * 2;
+	vm->hblank_stop  = (md->htotal - 1) * 2;
+	vm->hsync_start  = (md->hsync_start  - md->hblank_stop) * 2;
+	vm->hsync_stop   = (md->hsync_stop + md->htotal - md->hblank_stop) * 2;
 	vm->htotal       = md->htotal * 2;
 
-	vm->vblank_start = md->vblank_start;
-	vm->vblank_stop  = md->vblank_stop;
-	vm->vsync_start  = md->vsync_start;
-	vm->vsync_stop   = md->vsync_stop;
+	vm->vblank_start = md->vblank_start - md->vblank_stop;
+	vm->vblank_stop  = md->vtotal - 1;
+	vm->vsync_start  = md->vsync_start - md->vblank_stop;
+	vm->vsync_stop   = md->vsync_stop + md->vtotal - md->vblank_stop;
 	vm->vtotal       = md->vtotal;
 
 	return 0;
