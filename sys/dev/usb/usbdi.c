@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.51 1999/11/18 23:32:33 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.52 1999/11/26 01:40:01 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -791,8 +791,7 @@ usb_transfer_complete(xfer)
 		[pipe->endpoint->edesc->bmAttributes & UE_XFERTYPE];
 
 	xfer->done = 1;
-	if (xfer->status == USBD_NORMAL_COMPLETION &&
-	    xfer->actlen < xfer->length &&
+	if (!xfer->status && xfer->actlen < xfer->length &&
 	    !(xfer->flags & USBD_SHORT_XFER_OK)) {
 		DPRINTFN(-1,("usbd_transfer_cb: short transfer %d<%d\n",
 			     xfer->actlen, xfer->length));
