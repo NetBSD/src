@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)zic.c	5.3 (Berkeley) 4/20/91";*/
-static char rcsid[] = "$Id: zic.c,v 1.2 1993/08/01 18:23:05 mycroft Exp $";
+static char rcsid[] = "$Id: zic.c,v 1.3 1993/11/03 09:46:23 cgd Exp $";
 #endif /* not lint */
 
 #ifdef notdef
@@ -1594,7 +1594,7 @@ const char * const	type;
 		return (year % 4) == 0;
 	if (strcmp(type, "nonpres") == 0)
 		return (year % 4) != 0;
-	(void) sprintf(buf, "yearistype %d %s", year, type);
+	(void) sprintf(buf, "yearistype.sh %d %s", year, type);
 	result = system(buf);
 	if (result == 0)
 		return TRUE;
