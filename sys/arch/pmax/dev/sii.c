@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.20 1996/10/22 23:15:10 mhitch Exp $	*/
+/*	$NetBSD: sii.c,v 1.21 1997/04/29 01:58:38 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -688,6 +688,8 @@ again:
 		 * and to just clear the bit if it's set.
 		 */
 		if (cstat & SII_BER) {
+			regs->cstat = SII_BER;
+			wbflush();
 		}
 #endif
 
@@ -718,6 +720,7 @@ again:
 				cstat); /* XXX */
 			if (cstat & SII_DST) {
 				sc->sc_target = regs->destat;
+				state = &sc->sc_st[sc->sc_target];
 				state->prevComm = 0;
 			} else
 				panic("sc_target 1");
@@ -1606,6 +1609,7 @@ sii_GetByte(regs, phase, ack)
 
 	dstat = regs->dstat;
 	state = regs->cstat & SII_STATE_MSK;
+	i = -1;
 	if (!(dstat & SII_IBF) || (dstat & SII_MIS)) {
 		regs->comm = state | phase;
 		wbflush();
