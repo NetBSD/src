@@ -1,4 +1,4 @@
-/*	$NetBSD: config_hook.h,v 1.8 2000/10/22 10:42:32 uch Exp $	*/
+/*	$NetBSD: config_hook.h,v 1.9 2000/10/27 08:04:49 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -92,6 +92,9 @@ int	config_hook_call __P((int type, long id, void *msg));
 #define CONFIG_HOOK_PMEVENT_HARDPOWER		2
 #define CONFIG_HOOK_PMEVENT_BATTERY		3
 #define CONFIG_HOOK_PMEVENT_AC			4
+#define CONFIG_HOOK_PMEVENT_BATTERYVAL		5
+#define CONFIG_HOOK_PMEVENT_ACADAPTER		6
+#define CONFIG_HOOK_PMEVENT_CHARGE		7
 
 /* misc event */
 #define CONFIG_HOOK_EVENT		3
@@ -115,7 +118,32 @@ int	config_hook_call __P((int type, long id, void *msg));
 #define CONFIG_HOOK_OUT_COM2_DTR		6
 #define CONFIG_HOOK_OUT_COM3_DTR		7
 
-#define CONFIG_HOOK_NTYPES 		5
+/* get power value */
+#define CONFIG_HOOK_GETPOWER			5
+#define CONFIG_HOOK_GETPOWER_COM0		0
+#define CONFIG_HOOK_GETPOWER_COM1		1
+#define CONFIG_HOOK_GETPOWER_COM2		2
+#define CONFIG_HOOK_GETPOWER_COM3		3
+#define CONFIG_HOOK_GETPOWER_LCDLIGHT		4
+#define CONFIG_HOOK_GETPOWER_LCD		5
+#define CONFIG_HOOK_GETPOWER_SPEAKER		6
+
+/* misc get value */
+#define CONFIG_HOOK_GET			6
+#define CONFIG_HOOK_GET_LED			0
+#define CONFIG_HOOK_GETMAX_LED			1
+#define CONFIG_HOOK_GET_CONTRAST		2
+#define CONFIG_HOOK_GETMAX_CONTRAST		3
+#define CONFIG_HOOK_GET_BRIGHTNESS		4
+#define CONFIG_HOOK_GETMAX_BRIGHTNESS		5
+
+/* misc set value */
+#define CONFIG_HOOK_SET			7
+#define CONFIG_HOOK_SET_LED			0
+#define CONFIG_HOOK_SET_CONTRAST		1
+#define CONFIG_HOOK_SET_BRIGHTNESS		2
+
+#define CONFIG_HOOK_NTYPES 		8
 
 /*
  * nicknames for including from configration file.
@@ -159,6 +187,9 @@ int	config_hook_call __P((int type, long id, void *msg));
 #define PME_HARDPOWER	CONFIG_HOOK_PMEVENT_HARDPOWER
 #define PME_BATTERY	CONFIG_HOOK_PMEVENT_BATTERY
 #define PME_AC		CONFIG_HOOK_PMEVENT_AC
+#define PME_BATTVAL	CONFIG_HOOK_PMEVENT_BATTERYVAL
+#define PME_ACADAPTER	CONFIG_HOOK_PMEVENT_ACADAPTER
+#define PME_CHARGE	CONFIG_HOOK_PMEVENT_CHAEGE
 #define COM0_CTS	CONFIG_HOOK_EVENT_COM0_CTS
 #define COM1_CTS	CONFIG_HOOK_EVENT_COM1_CTS
 #define COM2_CTS	CONFIG_HOOK_EVENT_COM2_CTS
@@ -195,6 +226,8 @@ int	config_hook_call __P((int type, long id, void *msg));
 #define PWCTL_LED_FLASH5	((void *)4)	/* flash 500msec */
 #define PWCTL_LED_BLINK		((void *)5)	/* blink 1sec interval */
 #define PWCTL_LED_BLINK2	((void *)6)	/* blink 2sec interval */
+#define PWCTL_LED_VALUE_P(x) (PWCTL_LED_OFF >= (x) \
+				 && (x) <= PWCTL_LED_BLINK2)
 
 /*
  * PMEVENT_AC event value
@@ -202,6 +235,8 @@ int	config_hook_call __P((int type, long id, void *msg));
 #define PMEVENT_AC_OFF		((void *)0)
 #define PMEVENT_AC_ON_CHARGE	((void *)1)
 #define PMEVENT_AC_ON_NOCHARGE	((void *)2)
+#define PMEVENT_AC_VALUE_P(x) (PMEVENT_AC_OFF >= (x) \
+				 && (x) <= PMEVENT_AC_ON_NOCHARGE)
 
 /*
  * PMEVENT_BATTERY event value
@@ -212,4 +247,6 @@ int	config_hook_call __P((int type, long id, void *msg));
 #define PMEVENT_BATT_HALF	((void *)3)
 #define PMEVENT_BATT_3BY4	((void *)4)
 #define PMEVENT_BATT_FULL	((void *)5)
+#define PMEVENT_BATT_VALUE_P(x) (PMEVENT_BATT_CRITICAL >= (x) \
+				 && (x) <= PMEVENT_BATT_FULL)
 #endif /* _CONFIG_HOOK_H_ */
