@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.h,v 1.6 2003/12/14 09:56:53 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.h,v 1.7 2004/04/30 22:51:04 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -30,7 +30,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/net80211/ieee80211_ioctl.h,v 1.4 2003/10/17 23:15:30 sam Exp $
+ * $FreeBSD: src/sys/net80211/ieee80211_ioctl.h,v 1.5 2004/03/30 22:57:57 sam Exp $
  */
 #ifndef _NET80211_IEEE80211_IOCTL_H_
 #define _NET80211_IEEE80211_IOCTL_H_
@@ -120,6 +120,11 @@ struct ieee80211req {
 #define 	IEEE80211_POWERSAVE_ON		IEEE80211_POWERSAVE_CAM
 #define IEEE80211_IOC_POWERSAVESLEEP	11
 #define	IEEE80211_IOC_RTSTHRESHOLD	12
+#define IEEE80211_IOC_PROTMODE		13
+#define 	IEEE80211_PROTMODE_OFF		0
+#define 	IEEE80211_PROTMODE_CTS		1
+#define 	IEEE80211_PROTMODE_RTSCTS	2
+#define IEEE80211_IOC_TXPOWER		14
 
 #ifndef IEEE80211_CHAN_ANY
 #define	IEEE80211_CHAN_ANY	0xffff		/* token for ``any channel'' */
