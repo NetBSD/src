@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.20 1996/09/16 18:00:27 scottr Exp $	*/
+/*	$NetBSD: genassym.c,v 1.21 1997/01/07 07:42:17 scottr Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -184,12 +184,17 @@ main(void)
 	printf("#define\tSYS_execve %d\n", SYS_execve);
 	printf("#define\tSYS_sigreturn %d\n", SYS_sigreturn);
 
+	printf("#define\tCPU_68020 %d\n", CPU_68020);
+	printf("#define\tCPU_68030 %d\n", CPU_68030);
+	printf("#define\tCPU_68040 %d\n", CPU_68040);
+
+	printf("#define\tMMU_68851 %d\n", MMU_68851);
+	printf("#define\tMMU_68030 %d\n", MMU_68030);
+	printf("#define\tMMU_68040 %d\n", MMU_68040);
+
 	printf("#define\tFPU_68881 %d\n", FPU_68881);
 	printf("#define\tFPU_68882 %d\n", FPU_68882);
 	printf("#define\tFPU_68040 %d\n", FPU_68040);
 
-	printf("#define\tMMU_68040 %d\n", MMU_68040);
-	printf("#define\tMMU_68030 %d\n", MMU_68030);
-	printf("#define\tMMU_68851 %d\n", MMU_68851);
 	exit(0);
 }
