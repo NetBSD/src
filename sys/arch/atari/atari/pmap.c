@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.52 1999/09/12 01:17:02 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.53 1999/09/16 11:58:49 leo Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -771,7 +771,7 @@ pmap_create()
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_CREATE))
-		printf("pmap_create(%lx)\n", size);
+		printf("pmap_create\n");
 #endif
 
 	pmap = (pmap_t) malloc(sizeof *pmap, M_VMPMAP, M_WAITOK);
@@ -1819,11 +1819,12 @@ pmap_clear_modify(pg)
  *	Clear the reference bit on the specified physical page.
  */
 
-void
+boolean_t
 pmap_clear_reference(pg)
 	struct vm_page *pg;
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
+	boolean_t rv;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
