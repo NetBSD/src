@@ -1,4 +1,4 @@
-/*	$NetBSD: apecs.c,v 1.8 1996/07/09 00:54:25 cgd Exp $	*/
+/*	$NetBSD: apecs.c,v 1.9 1996/07/11 03:30:11 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -44,7 +44,9 @@
 #include <dev/pci/pcivar.h>
 #include <alpha/pci/apecsreg.h>
 #include <alpha/pci/apecsvar.h>
+#if defined(DEC_2100_A50)
 #include <alpha/pci/pci_2100_a50.h>
+#endif
 
 int	apecsmatch __P((struct device *, void *, void *));
 void	apecsattach __P((struct device *, struct device *, void *));
@@ -68,7 +70,6 @@ apecsmatch(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct cfdata *cf = match;
 	struct confargs *ca = aux;
 
 	/* Make sure that we're looking for an APECS. */

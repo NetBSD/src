@@ -1,4 +1,4 @@
-/*	$NetBSD: cia.c,v 1.7 1996/07/09 00:54:38 cgd Exp $	*/
+/*	$NetBSD: cia.c,v 1.8 1996/07/11 03:30:13 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -70,7 +70,6 @@ ciamatch(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct cfdata *cf = match;
 	struct confargs *ca = aux;
 
 	/* Make sure that we're looking for a CIA. */
@@ -108,7 +107,6 @@ ciaattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct confargs *ca = aux;
 	struct cia_softc *sc = (struct cia_softc *)self;
 	struct cia_config *ccp;
 	struct pcibus_attach_args pba;
