@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.103 1998/12/20 16:06:25 drochner Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.104 1998/12/21 13:43:11 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.98 1998/12/20 16:05:32 drochner Exp 
+ *	NetBSD: pcidevs,v 1.99 1998/12/21 13:37:00 drochner Exp 
  */
 
 /*
@@ -1369,25 +1369,25 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443LX_AGP,
 	    0,
 	    "Intel",
-	    "82443LX AGP Device (PAC)",
+	    "82443LX AGP Interface (PAC)",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443BX,
 	    0,
 	    "Intel",
-	    "82443BX PCI AGP Controller (PAC)",
+	    "82443BX Host Bridge/Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443BX_AGP,
 	    0,
 	    "Intel",
-	    "82443BX AGP Device (PAC)",
+	    "82443BX AGP Interface",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443BX_AGP_NOT,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443BX_NOAGP,
 	    0,
 	    "Intel",
-	    "82443BX AGP Device (PAC) (AGP disabled)",
+	    "82443BX Host Bridge/Controller (AGP disabled)",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCI450_PB,
