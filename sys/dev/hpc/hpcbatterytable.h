@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcbatterytable.h,v 1.1 2001/07/19 11:40:19 sato Exp $	*/
+/*	$NetBSD: hpcbatterytable.h,v 1.2 2001/07/24 09:23:30 sato Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 SATO Kazumi
@@ -166,5 +166,6 @@ struct platid_data hpcbattery_parameters[] = {
 	{ &platid_mask_MACH_NEC_MCR_SIGMARION, &hpcbattery_sigmarion_spec },
 	{ &platid_mask_MACH_IBM_WORKPAD_Z50, &hpcbattery_z50_spec },
 #endif /* hpcmips */
+	{ NULL, NULL }	/* terminator, don't delete */
 };
 /* end */
