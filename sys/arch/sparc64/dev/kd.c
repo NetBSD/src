@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.2 1999/04/25 16:16:31 eeh Exp $	*/
+/*	$NetBSD: kd.c,v 1.3 1999/05/22 20:34:56 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -518,8 +518,13 @@ kdcngetc(dev)
 	int code, class, data, keysym;
 
 	if (!zs_conschan) {
-		/* Not initialized yet */
-		return -1;
+		char c0;
+
+		while ((code = OF_read(OF_stdin(), &c0, sizeof(c0))) != sizeof(c0)) {
+			if (code != -2 && code != 0)
+				return -1;
+		}
+		return (c0);
 	} else {
 		for (;;) {
 			code = zs_getc(zs_conschan);
