@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegwr.c,v 1.11 2002/08/02 03:42:33 oster Exp $	*/
+/*	$NetBSD: rf_dagdegwr.c,v 1.12 2003/12/29 02:38:17 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagdegwr.c,v 1.11 2002/08/02 03:42:33 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagdegwr.c,v 1.12 2003/12/29 02:38:17 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -331,7 +331,6 @@ rf_CommonCreateSimpleDegradedWriteDAG(raidPtr, asmap, dag_h, bp, flags,
 	 * be avoided. */
 
 	RF_MallocAndAdd(parityPDA, sizeof(RF_PhysDiskAddr_t), (RF_PhysDiskAddr_t *), allocList);
-	parityPDA->row = asmap->parityInfo->row;
 	parityPDA->col = asmap->parityInfo->col;
 	parityPDA->startSector = ((asmap->parityInfo->startSector / sectorsPerSU)
 	    * sectorsPerSU) + (failedPDA->startSector % sectorsPerSU);
@@ -354,7 +353,6 @@ rf_CommonCreateSimpleDegradedWriteDAG(raidPtr, asmap, dag_h, bp, flags,
 		{
 			RF_MallocAndAdd(parityPDA, sizeof(RF_PhysDiskAddr_t),
 			    (RF_PhysDiskAddr_t *), allocList);
-			parityPDA->row = asmap->qInfo->row;
 			parityPDA->col = asmap->qInfo->col;
 			parityPDA->startSector = ((asmap->qInfo->startSector / sectorsPerSU)
 			    * sectorsPerSU) + (failedPDA->startSector % sectorsPerSU);
@@ -512,7 +510,7 @@ rf_CommonCreateSimpleDegradedWriteDAG(raidPtr, asmap, dag_h, bp, flags,
 	termNode->antType[0] = rf_control;
 }
 #define CONS_PDA(if,start,num) \
-  pda_p->row = asmap->if->row;    pda_p->col = asmap->if->col; \
+  pda_p->col = asmap->if->col; \
   pda_p->startSector = ((asmap->if->startSector / secPerSU) * secPerSU) + start; \
   pda_p->numSector = num; \
   pda_p->next = NULL; \
@@ -613,9 +611,9 @@ rf_WriteGenerateFailedAccessASMs(
 			continue;
 		pda_p->type = RF_PDA_TYPE_DATA;
 		pda_p->raidAddress = sosAddr + (i * secPerSU);
-		(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->row), &(pda_p->col), &(pda_p->startSector), 0);
+		(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->col), &(pda_p->startSector), 0);
 		/* skip over dead disks */
-		if (RF_DEAD_DISK(raidPtr->Disks[pda_p->row][pda_p->col].status))
+		if (RF_DEAD_DISK(raidPtr->Disks[pda_p->col].status))
 			continue;
 		switch (state) {
 		case 1:	/* fone */
@@ -636,7 +634,7 @@ rf_WriteGenerateFailedAccessASMs(
 			pda_p++;
 			pda_p->type = RF_PDA_TYPE_DATA;
 			pda_p->raidAddress = sosAddr + (i * secPerSU);
-			(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->row), &(pda_p->col), &(pda_p->startSector), 0);
+			(raidPtr->Layout.map->MapSector) (raidPtr, pda_p->raidAddress, &(pda_p->col), &(pda_p->startSector), 0);
 			pda_p->numSector = ftwo->numSector;
 			pda_p->raidAddress += ftwo_start;
 			pda_p->startSector += ftwo_start;

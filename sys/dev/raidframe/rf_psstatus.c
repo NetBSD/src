@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_psstatus.c,v 1.14 2003/12/21 15:56:20 oster Exp $	*/
+/*	$NetBSD: rf_psstatus.c,v 1.15 2003/12/29 02:38:18 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,7 +37,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.14 2003/12/21 15:56:20 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.15 2003/12/29 02:38:18 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -240,13 +240,12 @@ rf_PSStatusDelete(raidPtr, pssTable, pssPtr)
 }
 /* deletes an entry from the ps status table after reconstruction has completed */
 void 
-rf_RemoveFromActiveReconTable(raidPtr, row, psid, which_ru)
+rf_RemoveFromActiveReconTable(raidPtr, psid, which_ru)
 	RF_Raid_t *raidPtr;
-	RF_RowCol_t row;
 	RF_ReconUnitNum_t which_ru;
 	RF_StripeNum_t psid;
 {
-	RF_PSStatusHeader_t *hdr = &(raidPtr->reconControl[row]->pssTable[RF_HASH_PSID(raidPtr, psid)]);
+	RF_PSStatusHeader_t *hdr = &(raidPtr->reconControl->pssTable[RF_HASH_PSID(raidPtr, psid)]);
 	RF_ReconParityStripeStatus_t *p, *pt;
 	RF_CallbackDesc_t *cb, *cb1;
 
@@ -256,7 +255,7 @@ rf_RemoveFromActiveReconTable(raidPtr, row, psid, which_ru)
 			break;
 	}
 	if (p == NULL) {
-		rf_PrintPSStatusTable(raidPtr, row);
+		rf_PrintPSStatusTable(raidPtr);
 	}
 	RF_ASSERT(p);		/* it must be there */
 
@@ -360,10 +359,9 @@ RealPrintPSStatusTable(raidPtr, pssTable)
 }
 
 void 
-rf_PrintPSStatusTable(raidPtr, row)
+rf_PrintPSStatusTable(raidPtr)
 	RF_Raid_t *raidPtr;
-	RF_RowCol_t row;
 {
-	RF_PSStatusHeader_t *pssTable = raidPtr->reconControl[row]->pssTable;
+	RF_PSStatusHeader_t *pssTable = raidPtr->reconControl->pssTable;
 	RealPrintPSStatusTable(raidPtr, pssTable);
 }

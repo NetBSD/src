@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_parityscan.c,v 1.18 2003/02/09 10:04:33 jdolecek Exp $	*/
+/*	$NetBSD: rf_parityscan.c,v 1.19 2003/12/29 02:38:18 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_parityscan.c,v 1.18 2003/02/09 10:04:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_parityscan.c,v 1.19 2003/12/29 02:38:18 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -74,7 +74,7 @@ rf_RewriteParity(raidPtr)
 		/* There isn't any parity. Call it "okay." */
 		return (RF_PARITY_OKAY);
 	}
-	if (raidPtr->status[0] != rf_rs_optimal) {
+	if (raidPtr->status != rf_rs_optimal) {
 		/*
 		 * We're in degraded mode.  Don't try to verify parity now! 
 		 * XXX: this should be a "we don't want to", not a 
@@ -320,37 +320,35 @@ rf_TryToRedirectPDA(raidPtr, pda, parity)
 	RF_PhysDiskAddr_t *pda;
 	int     parity;
 {
-	if (raidPtr->Disks[pda->row][pda->col].status == rf_ds_reconstructing) {
-		if (rf_CheckRUReconstructed(raidPtr->reconControl[pda->row]->reconMap, pda->startSector)) {
+	if (raidPtr->Disks[pda->col].status == rf_ds_reconstructing) {
+		if (rf_CheckRUReconstructed(raidPtr->reconControl->reconMap, pda->startSector)) {
 			if (raidPtr->Layout.map->flags & RF_DISTRIBUTE_SPARE) {
 #if RF_DEBUG_VERIFYPARITY
-				RF_RowCol_t or = pda->row, oc = pda->col;
+				RF_RowCol_t oc = pda->col;
 				RF_SectorNum_t os = pda->startSector;
 #endif
 				if (parity) {
-					(raidPtr->Layout.map->MapParity) (raidPtr, pda->raidAddress, &pda->row, &pda->col, &pda->startSector, RF_REMAP);
+					(raidPtr->Layout.map->MapParity) (raidPtr, pda->raidAddress, &pda->col, &pda->startSector, RF_REMAP);
 #if RF_DEBUG_VERIFYPARITY
 					if (rf_verifyParityDebug)
-						printf("VerifyParity: Redir P r %d c %d sect %ld -> r %d c %d sect %ld\n",
-						    or, oc, (long) os, pda->row, pda->col, (long) pda->startSector);
+						printf("VerifyParity: Redir P c %d sect %ld -> c %d sect %ld\n",
+						    oc, (long) os, pda->col, (long) pda->startSector);
 #endif
 				} else {
-					(raidPtr->Layout.map->MapSector) (raidPtr, pda->raidAddress, &pda->row, &pda->col, &pda->startSector, RF_REMAP);
+					(raidPtr->Layout.map->MapSector) (raidPtr, pda->raidAddress, &pda->col, &pda->startSector, RF_REMAP);
 #if RF_DEBUG_VERIFYPARITY
 					if (rf_verifyParityDebug)
-						printf("VerifyParity: Redir D r %d c %d sect %ld -> r %d c %d sect %ld\n",
-						    or, oc, (long) os, pda->row, pda->col, (long) pda->startSector);
+						printf("VerifyParity: Redir D c %d sect %ld -> c %d sect %ld\n",
+						   oc, (long) os, pda->col, (long) pda->startSector);
 #endif
 				}
 			} else {
-				RF_RowCol_t spRow = raidPtr->Disks[pda->row][pda->col].spareRow;
-				RF_RowCol_t spCol = raidPtr->Disks[pda->row][pda->col].spareCol;
-				pda->row = spRow;
+				RF_RowCol_t spCol = raidPtr->Disks[pda->col].spareCol;
 				pda->col = spCol;
 			}
 		}
 	}
-	if (RF_DEAD_DISK(raidPtr->Disks[pda->row][pda->col].status))
+	if (RF_DEAD_DISK(raidPtr->Disks[pda->col].status))
 		return (1);
 	return (0);
 }

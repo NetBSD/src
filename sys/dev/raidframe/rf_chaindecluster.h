@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_chaindecluster.h,v 1.4 2001/01/26 04:14:14 oster Exp $	*/
+/*	$NetBSD: rf_chaindecluster.h,v 1.5 2003/12/29 02:38:17 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -40,13 +40,13 @@ rf_ConfigureChainDecluster(RF_ShutdownList_t ** listp, RF_Raid_t * raidPtr,
 RF_ReconUnitCount_t rf_GetNumSpareRUsChainDecluster(RF_Raid_t * raidPtr);
 void 
 rf_MapSectorChainDecluster(RF_Raid_t * raidPtr, RF_RaidAddr_t raidSector,
-    RF_RowCol_t * row, RF_RowCol_t * col, RF_SectorNum_t * diskSector, int remap);
+    RF_RowCol_t * col, RF_SectorNum_t * diskSector, int remap);
 void 
 rf_MapParityChainDecluster(RF_Raid_t * raidPtr, RF_RaidAddr_t raidSector,
-    RF_RowCol_t * row, RF_RowCol_t * col, RF_SectorNum_t * diskSector, int remap);
+    RF_RowCol_t * col, RF_SectorNum_t * diskSector, int remap);
 void 
 rf_IdentifyStripeChainDecluster(RF_Raid_t * raidPtr, RF_RaidAddr_t addr,
-    RF_RowCol_t ** diskids, RF_RowCol_t * outRow);
+    RF_RowCol_t ** diskids);
 void 
 rf_MapSIDToPSIDChainDecluster(RF_RaidLayout_t * layoutPtr,
     RF_StripeNum_t stripeID, RF_StripeNum_t * psID,

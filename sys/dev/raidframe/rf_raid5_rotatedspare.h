@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid5_rotatedspare.h,v 1.3 1999/02/05 00:06:16 oster Exp $	*/
+/*	$NetBSD: rf_raid5_rotatedspare.h,v 1.4 2003/12/29 02:38:18 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,13 +37,13 @@ rf_ConfigureRAID5_RS(RF_ShutdownList_t ** listp, RF_Raid_t * raidPtr,
 RF_ReconUnitCount_t rf_GetNumSpareRUsRAID5_RS(RF_Raid_t * raidPtr);
 void 
 rf_MapSectorRAID5_RS(RF_Raid_t * raidPtr, RF_RaidAddr_t raidSector,
-    RF_RowCol_t * row, RF_RowCol_t * col, RF_SectorNum_t * diskSector, int remap);
+    RF_RowCol_t * col, RF_SectorNum_t * diskSector, int remap);
 void 
 rf_MapParityRAID5_RS(RF_Raid_t * raidPtr, RF_RaidAddr_t raidSector,
-    RF_RowCol_t * row, RF_RowCol_t * col, RF_SectorNum_t * diskSector, int remap);
+    RF_RowCol_t * col, RF_SectorNum_t * diskSector, int remap);
 void 
 rf_IdentifyStripeRAID5_RS(RF_Raid_t * raidPtr, RF_RaidAddr_t addr,
-    RF_RowCol_t ** diskids, RF_RowCol_t * outRow);
+    RF_RowCol_t ** diskids);
 void 
 rf_MapSIDToPSIDRAID5_RS(RF_RaidLayout_t * layoutPtr,
     RF_StripeNum_t stripeID, RF_StripeNum_t * psID,

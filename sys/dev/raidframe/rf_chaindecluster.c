@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_chaindecluster.c,v 1.9 2002/09/23 02:40:08 oster Exp $	*/
+/*	$NetBSD: rf_chaindecluster.c,v 1.10 2003/12/29 02:38:17 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_chaindecluster.c,v 1.9 2002/09/23 02:40:08 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_chaindecluster.c,v 1.10 2003/12/29 02:38:17 oster Exp $");
 
 #include "rf_archs.h"
 
@@ -86,8 +86,6 @@ rf_ConfigureChainDecluster(
 		info->stripeIdentifier[i][1] = (i + 1) % raidPtr->numCol;
 	}
 
-	RF_ASSERT(raidPtr->numRow == 1);
-
 	/* fill in the remaining layout parameters */
 	num_used_stripeUnitsPerDisk = layoutPtr->stripeUnitsPerDisk - (layoutPtr->stripeUnitsPerDisk %
 	    (2 * raidPtr->numCol - 2));
@@ -131,7 +129,6 @@ void
 rf_MapSectorChainDecluster(
     RF_Raid_t * raidPtr,
     RF_RaidAddr_t raidSector,
-    RF_RowCol_t * row,
     RF_RowCol_t * col,
     RF_SectorNum_t * diskSector,
     int remap)
@@ -142,7 +139,6 @@ rf_MapSectorChainDecluster(
 	RF_StripeNum_t sparing_region_id;
 	int     col_before_remap;
 
-	*row = 0;
 	sparing_region_id = SUID / info->stripeUnitsPerSparingRegion;
 	index_within_region = SUID % info->stripeUnitsPerSparingRegion;
 	index_within_disk = index_within_region / raidPtr->numCol;
@@ -180,7 +176,6 @@ void
 rf_MapParityChainDecluster(
     RF_Raid_t * raidPtr,
     RF_RaidAddr_t raidSector,
-    RF_RowCol_t * row,
     RF_RowCol_t * col,
     RF_SectorNum_t * diskSector,
     int remap)
@@ -191,7 +186,6 @@ rf_MapParityChainDecluster(
 	RF_StripeNum_t sparing_region_id;
 	int     col_before_remap;
 
-	*row = 0;
 	if (!remap) {
 		*col = SUID % raidPtr->numCol;
 		*col = (*col + 1) % raidPtr->numCol;
@@ -223,8 +217,7 @@ void
 rf_IdentifyStripeChainDecluster(
     RF_Raid_t * raidPtr,
     RF_RaidAddr_t addr,
-    RF_RowCol_t ** diskids,
-    RF_RowCol_t * outRow)
+    RF_RowCol_t ** diskids)
 {
 	RF_ChaindeclusterConfigInfo_t *info = (RF_ChaindeclusterConfigInfo_t *) raidPtr->Layout.layoutSpecificInfo;
 	RF_StripeNum_t SUID;
@@ -232,7 +225,6 @@ rf_IdentifyStripeChainDecluster(
 
 	SUID = addr / raidPtr->Layout.sectorsPerStripeUnit;
 	col = SUID % raidPtr->numCol;
-	*outRow = 0;
 	*diskids = info->stripeIdentifier[col];
 }
 
@@ -268,7 +260,6 @@ rf_RAIDCDagSelect(
 #endif
 {
 	RF_ASSERT(RF_IO_IS_R_OR_W(type));
-	RF_ASSERT(raidPtr->numRow == 1);
 
 	if (asmap->numDataFailed + asmap->numParityFailed > 1) {
 		RF_ERRORMSG("Multiple disks failed in a single group!  Aborting I/O operation.\n");
@@ -278,7 +269,7 @@ rf_RAIDCDagSelect(
 	*createFunc = (type == RF_IO_TYPE_READ) ? (RF_VoidFuncPtr) rf_CreateFaultFreeReadDAG : (RF_VoidFuncPtr) rf_CreateRaidOneWriteDAG;
 
 	if (type == RF_IO_TYPE_READ) {
-		if ((raidPtr->status[0] == rf_rs_degraded) || (raidPtr->status[0] == rf_rs_reconstructing))
+		if ((raidPtr->status == rf_rs_degraded) || (raidPtr->status == rf_rs_reconstructing))
 			*createFunc = (RF_VoidFuncPtr) rf_CreateRaidCDegradedReadDAG;	/* array status is
 											 * degraded, implement
 											 * workload shifting */
