@@ -1,0 +1,59 @@
+#	$NetBSD: SCAPA,v 1.1 1995/04/22 12:47:57 cgd Exp $
+#
+# Kernel for scapa.pdl.cs.cmu.edu.
+
+include "std.alpha"
+
+makeoptions	CC="gcc -Werror"
+makeoptions	DEBUG="-g"
+
+maxusers 8
+
+# CPU Support
+options		DEC_2100_A50	# "Avanti":		AlphaStation 400 4/233
+
+options		COLDHALTLOOP
+# needs to be set per system
+options		TIMEZONE="5*60"		# Minutes west of GMT (for param.c)
+options		DST=1			# Daylight savings rules (for param.c)
+
+# Standard system options
+options		SWAPPAGER, VNODEPAGER, DEVPAGER # Paging (mandatory)
+options		DEBUG, DIAGNOSTIC	# Extra kernel debugging
+options		KTRACE			# System call tracing support
+
+# File system options
+options		FIFO		# POSIX fifo support (in all file systems)
+options		FFS		# Fast file system
+options		MFS		# Memory-based file system
+options		NFSCLIENT	# Sun NFS-compatible file system client
+
+# Networking options
+options		INET		# Internet protocol suite
+
+# 4.3BSD compatibility.  Should be optional, but necessary for now.
+options		COMPAT_43
+
+# OSF/1 binary compatibility
+options		COMPAT_OSF1
+
+# Loadable Kernel Modules
+options		LKM
+
+config		netbsd	root on nfs swap on nfs
+
+pci*	at	mainbus0
+
+#ncr*	at	pci?
+#
+#scsibus* at	scsi?
+#
+#sd*	at	scsibus? target ? lun ?
+#st*	at	scsibus? target ? lun ?
+#cd*	at	scsibus? target ? lun ?
+
+pseudo-device	bpfilter
+pseudo-device	loop
+pseudo-device	pty
+pseudo-device	sl
+pseudo-device	vnd
