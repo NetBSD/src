@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.14 1999/11/18 15:11:15 joda Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.15 1999/11/18 16:57:41 joda Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 and 1999
@@ -45,6 +45,7 @@
 #include <machine/bus.h>
 
 #include <dev/cardbus/cardbusvar.h>
+#include <dev/cardbus/cardbusdevs.h>
 #include <dev/cardbus/pccardcis.h>
 
 #include <dev/cardbus/cardbus_exrom.h>
