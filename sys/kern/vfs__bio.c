@@ -45,7 +45,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: vfs__bio.c,v 1.6 1993/07/17 16:23:05 mycroft Exp $
+ *	$Id: vfs__bio.c,v 1.7 1993/07/18 05:15:25 mycroft Exp $
  */
 
 #include "param.h"
@@ -60,6 +60,17 @@
 
 static	struct buf *getnewbuf __P((int));
 extern	vm_map_t buffer_map;
+
+struct	buf *buf;		/* the buffer pool itself */
+char	*buffers;
+int	nbuf;			/* number of buffer headers */
+int	bufpages;		/* number of memory pages in the buffer pool */
+struct	buf *swbuf;		/* swap I/O headers */
+int	nswbuf;
+struct	bufhd bufhash[BUFHSZ];	/* heads of hash lists */
+struct	buf bfreelist[BQUEUES];	/* heads of available lists */
+struct	buf bswlist;		/* head of free swap header list */
+struct	buf *bclnlist;		/* head of cleaned page list */
 
 /*
  * Initialize buffer headers and related structures.
