@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.2 2003/04/28 23:16:19 bjh21 Exp $	*/
+/*	$NetBSD: signal.h,v 1.3 2003/09/20 22:26:16 matt Exp $	*/
 
 /*	$OpenBSD: signal.h,v 1.1 1998/06/23 19:45:27 mickey Exp $	*/
 
@@ -24,6 +24,9 @@
  *
  * 	Utah $Hdr: signal.h 1.3 94/12/16$
  */
+
+#ifndef _HPPA_SIGNAL_H__
+#define _HPPA_SIGNAL_H__
 
 /*
  * Machine-dependent signal definitions
@@ -100,3 +103,5 @@ struct sigframe {
 };
 
 #endif /* _KERNEL */
+
+#endif /* _HPPA_SIGNAL_H__ */
