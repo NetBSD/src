@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.107 1994/05/22 10:17:26 deraadt Exp $
+ *	$Id: machdep.c,v 1.108 1994/05/23 03:02:24 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -147,8 +147,9 @@ cpu_startup()
 	 */
 	/* avail_end was pre-decremented in pmap_bootstrap to compensate */
 	for (i = 0; i < btoc(sizeof(struct msgbuf)); i++)
-		pmap_enter(pmap_kernel(), (caddr_t)msgbufp + i * NBPG,
-			   avail_end + i * NBPG, VM_PROT_ALL, TRUE);
+		pmap_enter(kernel_pmap,
+		    (vm_offset_t)((caddr_t)msgbufp + i * NBPG),
+		    avail_end + i * NBPG, VM_PROT_ALL, TRUE);
 	msgbufmapped = 1;
 
 	printf(version);
@@ -171,7 +172,7 @@ cpu_startup()
 	 */
 	size = MAXBSIZE * nbuf;
 	buffer_map = kmem_suballoc(kernel_map, (vm_offset_t *)&buffers,
-				   &maxaddr, size, FALSE);
+				   &maxaddr, size, TRUE);
 	minaddr = (vm_offset_t)buffers;
 	if (vm_map_find(buffer_map, vm_object_allocate(size), (vm_offset_t)0,
 			&minaddr, size, FALSE) != KERN_SUCCESS)
