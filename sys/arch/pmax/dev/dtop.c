@@ -120,7 +120,6 @@ SOFTWARE.
 
 extern int pmax_boardtype;
 
-extern int ttrstrt	__P((void *));
 void dtop_keyboard_repeat	__P((void *));
 int dtop_null_device_handler	__P((dtop_device_t, dtop_message_t, int, int));
 int dtop_locator_handler	__P((dtop_device_t, dtop_message_t, int, int));
@@ -304,19 +303,18 @@ dtopwrite(dev, uio, flag)
 }
 
 /*ARGSUSED*/
-dtopioctl(dev, cmd, data, flag, p)
+dtopioctl(dev, cmd, data, flag)
 	dev_t dev;
 	int cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
 {
 	register struct tty *tp;
 	register int unit = minor(dev);
 	int error;
 
 	tp = &dtop_tty[unit];
-	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
+	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag);
 	if (error >= 0)
 		return (error);
 	error = ttioctl(tp, cmd, data, flag);

@@ -67,7 +67,6 @@
 #include <sys/tty.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
-#include <sys/ioctl.h>
 #include <sys/file.h>
 #include <sys/errno.h>
 #include <sys/proc.h>
