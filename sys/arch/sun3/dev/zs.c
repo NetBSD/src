@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.43 1996/12/17 20:52:12 gwr Exp $	*/
+/*	$NetBSD: zs.c,v 1.44 1997/01/18 19:17:28 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -26,8 +26,8 @@
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
@@ -65,7 +65,7 @@
 #include <machine/obio.h>
 #include <machine/mon.h>
 
-#include "zs_cons.h"
+#include <sun3/dev/zs_cons.h>
 
 /*
  * XXX: Hard code this to make console init easier...
@@ -108,7 +108,9 @@ struct zsdevice {
 
 
 /* Default OBIO addresses. */
-static int zs_physaddr[NZSC] = { OBIO_KEYBD_MS, OBIO_ZS };
+static int zs_physaddr[NZSC] = {
+	OBIO_ZS_KBD_MS,
+	OBIO_ZS_TTY_AB };
 
 /* Saved PROM mappings */
 static struct zsdevice *zsaddr[NZSC];	/* See zs_init() */
@@ -155,7 +157,7 @@ zs_init()
 
 	for (i = 0; i < NZSC; i++) {
 		zsaddr[i] = (struct zsdevice *)
-			obio_find_mapping(zs_physaddr[i], OBIO_ZS_SIZE);
+			obio_find_mapping(zs_physaddr[i], sizeof(struct zschan));
 	}
 }
 
