@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.15.2.2 1999/04/20 22:49:05 cjs Exp $
+#	$NetBSD: list,v 1.15.2.3 1999/06/22 16:54:01 perry Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/ramdiskbin		ramdiskbin
@@ -99,14 +99,7 @@ COPY	termcap.mini			usr/share/misc/termcap
 COPY	disktab.preinstall		etc/disktab.preinstall
 
 #the lists of obsolete files used by sysinst
-COPY dist/base_obsolete dist/base_obsolete
-COPY dist/comp_obsolete dist/comp_obsolete
-COPY dist/games_obsolete dist/games_obsolete
-COPY dist/man_obsolete dist/man_obsolete
-COPY dist/misc_obsolete dist/misc_obsolete
-COPY dist/secr_obsolete dist/secr_obsolete
-COPY dist/xbase_obsolete dist/xbase_obsolete
-COPY dist/xserver_obsolete dist/xserver_obsolete
+SPECIAL	sh ${CURDIR}/../../../../distrib/sets/makeobsolete -b -s ${CURDIR}/../../../../distrib/sets -t ./dist 
 
 # and the installation tools
 COPY	dot.profile			.profile
