@@ -1,4 +1,4 @@
-/*	$Id: pass5.c,v 1.1 1999/03/18 02:02:19 perseant Exp $	*/
+/*	$NetBSD: pass5.c,v 1.2 1999/07/03 19:55:03 kleink Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.6 (Berkeley) 11/30/94";
 #else
-static char rcsid[] = "$Id: pass5.c,v 1.1 1999/03/18 02:02:19 perseant Exp $";
+static char rcsid[] = "$NetBSD: pass5.c,v 1.2 1999/07/03 19:55:03 kleink Exp $";
 #endif
 #endif /* not lint */
 
