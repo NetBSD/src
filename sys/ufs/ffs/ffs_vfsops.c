@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.155 2004/09/21 03:10:36 thorpej Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.156 2004/11/21 19:21:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.155 2004/09/21 03:10:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.156 2004/11/21 19:21:51 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1614,28 +1614,28 @@ SYSCTL_SETUP(sysctl_vfs_ffs_setup, "sysctl vfs.ffs subtree setup")
 	 * @@@ should we even bother with these first three?
 	 */
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "doclusterread", NULL,
 		       sysctl_notavail, 0, NULL, 0,
 		       CTL_VFS, 1, FFS_CLUSTERREAD, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "doclusterwrite", NULL,
 		       sysctl_notavail, 0, NULL, 0,
 		       CTL_VFS, 1, FFS_CLUSTERWRITE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "doreallocblks", NULL,
 		       sysctl_notavail, 0, NULL, 0,
 		       CTL_VFS, 1, FFS_REALLOCBLKS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "doasyncfree",
 		       SYSCTL_DESCR("Release dirty blocks asynchronously"),
 		       NULL, 0, &doasyncfree, 0,
 		       CTL_VFS, 1, FFS_ASYNCFREE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "log_changeopt",
 		       SYSCTL_DESCR("Log changes in optimization strategy"),
 		       NULL, 0, &ffs_log_changeopt, 0,
