@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.40 2003/02/18 02:00:08 perseant Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.41 2003/02/20 04:27:24 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by the NetBSD
- *      Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -87,7 +87,7 @@ MALLOC_DECLARE(M_SEGMENT);
  */
 #define LFS_WRITEINDIR	 1 /* flush indirect blocks on non-checkpoint writes */
 #define LFS_CLEAN_VNHEAD 2 /* put prev unrefed cleaned vnodes on head of free list */
-#define LFS_DOSTATS      3
+#define LFS_DOSTATS	 3
 #define LFS_MAXPAGES	 4
 #define LFS_MAXID	 5
 
