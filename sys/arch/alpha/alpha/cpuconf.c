@@ -1,4 +1,4 @@
-/* $NetBSD: cpuconf.c,v 1.24 2000/06/01 03:41:23 thorpej Exp $ */
+/* $NetBSD: cpuconf.c,v 1.25 2000/06/11 21:19:23 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -192,12 +192,19 @@ extern void api_up1000_init __P((void));
 #define	api_up1000_init		platform_not_configured
 #endif
 
+#include "opt_dec_2000_300.h"
+#ifdef DEC_2000_300
+extern void dec_2000_300_init __P((void));
+#else
+#define	dec_2000_300_init	platform_not_configured
+#endif
+
 static const struct cpuinit cpuinit[] = {
 	cpu_notsupp(ST_ADU, "Alpha Demo Unit"),
 	cpu_notsupp(ST_DEC_4000, "DEC 4000 (``Cobra'')"),
 	cpu_notsupp(ST_DEC_7000, "DEC 7000 (``Ruby'')"),
 	cpu_init(ST_DEC_3000_500, dec_3000_500_init, "DEC_3000_500"),
-	cpu_notsupp(ST_DEC_2000_300, "DEC 2000/300 (``Jensen'')"),
+	cpu_init(ST_DEC_2000_300, dec_2000_300_init, "DEC_2000_300"),
 	cpu_init(ST_DEC_3000_300, dec_3000_300_init, "DEC_3000_300"),
 	cpu_init(ST_AVALON_A12, avalon_a12_init, "AVALON_A12"),
 	cpu_init(ST_DEC_2100_A500, dec_2100_a500_init, "DEC_2100_A500"),
