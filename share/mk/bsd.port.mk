@@ -1,7 +1,7 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
 #
-#	$NetBSD: bsd.port.mk,v 1.58 1998/03/09 18:36:51 agc Exp $
+#	$NetBSD: bsd.port.mk,v 1.59 1998/03/23 07:42:50 hubertf Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -221,6 +221,10 @@ NetBSD_MAINTAINER=	agc@netbsd.org
 #                 on this architecture. Set to YES to insist on
 #                 e.g. fetching all distfiles (for interactive use in
 #                 ${PORTSDIR}, mostly. 
+# ALL_TARGET	- The target to pass to make in the package when building.
+#		  (default: "all")
+# INSTALL_TARGET- The target to pass to make in the package when installing.
+#		  (default: "install")
 #
 # Motif support:
 #
