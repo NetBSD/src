@@ -1,4 +1,4 @@
-# $NetBSD: md.bebox,v 1.6 2000/02/03 05:27:58 jwise Exp $
+# $NetBSD: md.bebox,v 1.7 2000/03/17 22:54:05 tron Exp $
 ./usr/include/bebox	comp-c-include
 ./usr/include/bebox/_G_config.h	comp-c-include
 ./usr/include/bebox/ansi.h	comp-c-include
@@ -17,6 +17,7 @@
 ./usr/include/bebox/display.h	comp-c-include
 ./usr/include/bebox/elf_machdep.h	comp-c-include
 ./usr/include/bebox/endian.h	comp-c-include
+./usr/include/bebox/endian_machdep.h	comp-c-include
 ./usr/include/bebox/float.h	comp-c-include
 ./usr/include/bebox/fpu.h	comp-c-include
 ./usr/include/bebox/frame.h	comp-c-include

@@ -1,4 +1,4 @@
-# $NetBSD: md.alpha,v 1.23 2000/02/27 23:46:04 mycroft Exp $
+# $NetBSD: md.alpha,v 1.24 2000/03/17 22:54:04 tron Exp $
 ./usr/include/alpha	comp-c-include
 ./usr/include/alpha/_G_config.h	comp-c-include
 ./usr/include/alpha/alpha_cpu.h	comp-c-include
@@ -20,6 +20,7 @@
 ./usr/include/alpha/ecoff_machdep.h	comp-c-include
 ./usr/include/alpha/elf_machdep.h	comp-c-include
 ./usr/include/alpha/endian.h	comp-c-include
+./usr/include/alpha/endian_machdep.h	comp-c-include
 ./usr/include/alpha/fbio.h	comp-c-include
 ./usr/include/alpha/float.h	comp-c-include
 ./usr/include/alpha/frame.h	comp-c-include

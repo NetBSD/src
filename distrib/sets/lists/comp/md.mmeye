@@ -15,6 +15,7 @@
 ./usr/include/mmeye/disklabel.h	comp-c-include
 ./usr/include/mmeye/elf_machdep.h	comp-c-include
 ./usr/include/mmeye/endian.h	comp-c-include
+./usr/include/mmeye/endian_machdep.h	comp-c-include
 ./usr/include/mmeye/exec_coff.h	comp-c-include
 ./usr/include/mmeye/float.h	comp-c-include
 ./usr/include/mmeye/frame.h	comp-c-include
