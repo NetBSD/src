@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.18 1996/04/25 18:29:21 jtc Exp $	*/
+/*	$NetBSD: stdio.h,v 1.19 1998/01/19 07:35:06 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -268,6 +268,16 @@ int	 fileno __P((FILE *));
 __END_DECLS
 #endif /* not ANSI */
 
+#if 1	/* _POSIX_C_SOURCE >= 199506L */
+extern void	flockfile __P((FILE *));
+extern int	ftrylockfile __P((FILE *));
+extern void	funlockfile __P((FILE *));
+extern int	getc_unlocked __P((FILE *));
+extern int	getchar_unlocked __P((void));
+extern int	putc_unlocked __P((int, FILE *));
+extern int	putchar_unlocked __P((int));
+#endif
+
 /*
  * Routines that are purely local.
  */
@@ -353,19 +363,28 @@ static __inline int __sputc(int _c, FILE *_p) {
 #define	__sclearerr(p)	((void)((p)->_flags &= ~(__SERR|__SEOF)))
 #define	__sfileno(p)	((p)->_file)
 
+#ifndef lint
+#ifndef _REENTRANT
 #define	feof(p)		__sfeof(p)
 #define	ferror(p)	__sferror(p)
 #define	clearerr(p)	__sclearerr(p)
 
-#ifndef _ANSI_SOURCE
-#define	fileno(p)	__sfileno(p)
-#endif
-
-#ifndef lint
 #define	getc(fp)	__sgetc(fp)
 #define putc(x, fp)	__sputc(x, fp)
+#endif /* _REENTRANT */
 #endif /* lint */
 
 #define	getchar()	getc(stdin)
 #define	putchar(x)	putc(x, stdout)
+
+#ifndef _ANSI_SOURCE
+#define	fileno(p)	__sfileno(p)
+
+#define getc_unlocked(fp)	__sgetc(fp)
+#define putc_unlocked(x, fp)	__sputc(x, fp)
+
+#define getchar_unlocked()	getc_unlocked(stdin)
+#define putchar_unlocked(x)	putc_unlocked(x, stdout)
+#endif /* _ANSI_SOURCE */
+
 #endif /* _STDIO_H_ */
