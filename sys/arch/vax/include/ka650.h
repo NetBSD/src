@@ -1,4 +1,4 @@
-/*	$NetBSD: ka650.h,v 1.3 1996/04/08 18:35:49 ragge Exp $	*/
+/*	$NetBSD: ka650.h,v 1.4 1996/05/19 16:43:20 ragge Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -237,7 +237,7 @@ struct ka650_ipcr {
 /* prototypes */
 struct sbi_attach_args;
 
-void	uvaxIII_conf __P((void *, void *, void *));
+void	uvaxIII_conf __P((struct device *, struct device *, void *));
 int	uvaxIII_clock __P((void));
 void	uvaxIII_memenable __P((struct sbi_attach_args *, struct device *));
 void	uvaxIII_memerr __P((void));

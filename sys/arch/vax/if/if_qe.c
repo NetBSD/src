@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qe.c,v 1.14 1996/05/07 01:37:34 thorpej Exp $ */
+/*	$NetBSD: if_qe.c,v 1.15 1996/05/19 16:43:07 ragge Exp $ */
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -363,7 +363,7 @@ qeattach(parent, self, aux)
 
 	printf("\n");
 	sc->qe_vaddr = addr;
-	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	bcopy(sc->qe_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	/*
 	 * The Deqna is cable of transmitting broadcasts, but
@@ -450,7 +450,8 @@ qeinit(sc)
 		    sizeof (struct ether_header), (int)btoc(MAXPACKETSIZE),
 		    sc->qe_ifr, NRCV, sc->qe_ifw, NXMT) == 0) {
 	fail:
-			printf("qe%d: can't allocate uba resources\n", unit);
+			printf("%s: can't allocate uba resources\n", 
+			    sc->qe_dev.dv_xname);
 			sc->qe_if.if_flags &= ~IFF_UP;
 			return;
 		}
