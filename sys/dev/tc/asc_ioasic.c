@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_ioasic.c,v 1.5 1997/04/06 10:07:56 jonathan Exp $	*/
+/*	$NetBSD: asc_ioasic.c,v 1.6 1997/05/25 05:48:14 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -85,7 +85,7 @@ asc_ioasic_attach(parent, self, aux)
 {
 	register struct ioasicdev_attach_args *d = aux;
 	register asc_softc_t asc = (asc_softc_t) self;
-	int bufsiz, speed;
+	int bufsiz;
 
 	void *ascaddr;
 	int unit;
