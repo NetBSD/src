@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.34 1997/05/19 22:08:56 pk Exp $	*/
+/*	$NetBSD: vnd.c,v 1.35 1997/05/25 16:21:45 pk Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -447,7 +447,7 @@ vndiodone(bp)
 	}
 	pbp->b_resid -= vbp->vb_buf.b_bcount;
 	putvndbuf(vbp);
-	disk_unbusy(&vnd->sc_dkdev, (pbp->b_bcount - pbp->b_resid));
+	disk_unbusy(&vnd->sc_dkdev, vbp->vb_buf.b_bcount - vbp->vb_buf.b_resid);
 	if (pbp->b_resid == 0) {
 #ifdef DEBUG
 		if (vnddebug & VDB_IO)
