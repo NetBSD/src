@@ -1,4 +1,4 @@
-/*	$NetBSD: valloc.c,v 1.5 1995/02/25 15:40:04 cgd Exp $	*/
+/*	$NetBSD: valloc.c,v 1.6 1997/07/13 19:46:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)valloc.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: valloc.c,v 1.5 1995/02/25 15:40:04 cgd Exp $";
+__RCSID("$NetBSD: valloc.c,v 1.6 1997/07/13 19:46:26 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

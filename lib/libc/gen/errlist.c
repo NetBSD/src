@@ -1,4 +1,4 @@
-/*	$NetBSD: errlist.c,v 1.4 1995/02/25 13:40:51 cgd Exp $	*/
+/*	$NetBSD: errlist.c,v 1.5 1997/07/13 19:45:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1985, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)errlst.c	8.2 (Berkeley) 11/16/93";
 #else
-static char *rcsid = "$NetBSD: errlist.c,v 1.4 1995/02/25 13:40:51 cgd Exp $";
+__RCSID("$NetBSD: errlist.c,v 1.5 1997/07/13 19:45:46 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

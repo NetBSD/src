@@ -1,4 +1,4 @@
-/*	$NetBSD: scandir.c,v 1.6 1995/02/25 08:51:42 cgd Exp $	*/
+/*	$NetBSD: scandir.c,v 1.7 1997/07/13 19:46:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)scandir.c	8.3 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$NetBSD: scandir.c,v 1.6 1995/02/25 08:51:42 cgd Exp $";
+__RCSID("$NetBSD: scandir.c,v 1.7 1997/07/13 19:46:13 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
