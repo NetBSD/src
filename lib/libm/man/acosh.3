@@ -30,11 +30,11 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)acosh.3	5.2 (Berkeley) 5/6/91
-.\"	$Id: acosh.3,v 1.7 1996/03/30 01:33:59 jtc Exp $
+.\"	$Id: acosh.3,v 1.8 1997/03/29 23:10:56 christos Exp $
 .\"
 .Dd May 6, 1991
 .Dt ACOSH 3
-.Os BSD 4.3
+.Os
 .Sh NAME
 .Nm acosh
 .Nd inverse hyperbolic cosine function
@@ -54,14 +54,23 @@ of the real
 argument
 .Ar x .
 .Sh RETURN VALUES
-Exceptional cases are handled by
-.Xr matherr 3 .
+.\" POSIX_MODE
+If x is less than one,
+.Fn acosh "x"
+and
+.Fn acoshf "x"
+return NaN and set the global variable
+.Va errno
+to EDOM.
+.\" SVR4_MODE
+.\" call 
+.\" .Xr matherr 3 .
 .Sh SEE ALSO
 .Xr asinh 3 ,
 .Xr atanh 3 ,
 .Xr exp 3 ,
-.Xr math 3 ,
-.Xr matherr 3
+.Xr math 3
+.\" .Xr matherr 3
 .Sh HISTORY
 The
 .Fn acosh

@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)cosh.3	5.1 (Berkeley) 5/2/91
-.\"	$Id: cosh.3,v 1.6 1995/04/14 18:40:04 jtc Exp $
+.\"	$Id: cosh.3,v 1.7 1997/03/29 23:11:00 christos Exp $
 .\"
 .Dd May 2, 1991
 .Dt COSH 3
@@ -52,8 +52,17 @@ and
 functions compute the hyperbolic cosine of
 .Fa x .
 .Sh RETURN VALUES
-Exceptional conditions are handled by
-.Xr matherr 3 .
+If the magnitude of x is too large,
+.Fn cosh "x"
+and
+.Fn coshf "x"
+.\" POSIX_MODE
+return Inf and sets the global variable
+.Va errno
+to ERANGE.
+.\" SYSV_MODE
+.\" call
+.\" .Xr matherr 3 .
 .Sh SEE ALSO
 .Xr acos 3 ,
 .Xr asin 3 ,
@@ -64,5 +73,5 @@ Exceptional conditions are handled by
 .Xr sinh 3 ,
 .Xr tan 3 ,
 .Xr tanh 3 ,
-.Xr math 3 ,
-.Xr matherr 3
+.Xr math 3
+.\" .Xr matherr 3

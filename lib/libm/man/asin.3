@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)asin.3	5.1 (Berkeley) 5/2/91
-.\"	$Id: asin.3,v 1.6 1995/04/14 18:39:56 jtc Exp $
+.\"	$Id: asin.3,v 1.7 1997/03/29 23:10:57 christos Exp $
 .\"
 .Dd May 2, 1991
 .Dt ASIN 3
@@ -56,8 +56,17 @@ in the range
 .Bq -\*(Pi/2, +\*(Pi/2 .
 .Ek
 .Sh RETURN VALUES
-Exceptional cases are handled by 
-.Xr matherr 3 .
+.\" POSIX_MODE
+If |x|>1,
+.Fn asin "x"
+and
+.Fn asinf "x"
+return NaN and set the global variable
+.Va errno
+to EDOM.
+.\" SYSV_MODE
+.\" call
+.\" .Xr matherr 3 .
 .Sh SEE ALSO
 .Xr acos 3 ,
 .Xr atan 3 ,
@@ -68,5 +77,5 @@ Exceptional cases are handled by
 .Xr sinh 3 ,
 .Xr tan 3 ,
 .Xr tanh 3 ,
-.Xr math 3 ,
-.Xr matherr 3
+.Xr math 3
+.\" .Xr matherr 3
