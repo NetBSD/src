@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.10 1995/05/31 06:08:17 mycroft Exp $	*/
+/*	$NetBSD: igmp.c,v 1.11 1995/06/01 15:59:04 mycroft Exp $	*/
 
 /*
  * Internet Group Management Protocol (IGMP) routines.
@@ -186,7 +186,7 @@ igmp_input(m, iphlen)
 				IN_NEXT_MULTI(step, inm);
 			}
 		} else {
-			if (!IN_MULTICAST(ip->ip_dst.s_addr)) {
+			if (!IN_MULTICAST(ntohl(ip->ip_dst.s_addr))) {
 				++igmpstat.igps_rcv_badqueries;
 				m_freem(m);
 				return;
