@@ -1,5 +1,5 @@
-/*	$NetBSD: if_stf.c,v 1.5.2.8 2001/04/21 17:46:41 bouyer Exp $	*/
-/*	$KAME: if_stf.c,v 1.51 2001/01/22 07:27:16 itojun Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.5.2.9 2001/04/23 15:30:30 bouyer Exp $	*/
+/*	$KAME: if_stf.c,v 1.53 2001/02/16 03:00:30 itojun Exp $	*/
 
 /*
  * Copyright (C) 2000 WIDE Project.

@@ -1,5 +1,5 @@
-/*	$NetBSD: if_gif.c,v 1.2.4.7 2001/04/21 17:46:39 bouyer Exp $	*/
-/*	$KAME: if_gif.c,v 1.34 2000/10/07 03:58:53 itojun Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.2.4.8 2001/04/23 15:30:29 bouyer Exp $	*/
+/*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
