@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.27 1998/07/02 11:39:56 is Exp $	*/
+/*	$NetBSD: in_var.h,v 1.28 1998/07/16 06:45:09 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -121,7 +121,13 @@ struct	in_aliasreq {
 #define IN_IFADDR_HASH_SIZE 293
 #endif
 
-#define	IN_IFADDR_HASH(x) in_ifaddrhashtbl[(u_long)(x) & in_ifaddrhash]
+/*
+ * This is a bit unconventional, and wastes a little bit of space, but
+ * because we want a very even hash function we don't use & in_ifaddrhash
+ * here, but rather % the hash size, which should obviously be prime.
+ */
+
+#define	IN_IFADDR_HASH(x) in_ifaddrhashtbl[(u_long)(x) % IN_IFADDR_HASH_SIZE]
 
 u_long in_ifaddrhash;				/* size of hash table - 1 */
 int	in_ifaddrentries;			/* total number of addrs */
