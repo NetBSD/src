@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.15 1998/03/27 01:47:06 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.16 1998/03/30 17:34:58 chuck Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -3105,9 +3105,16 @@ uvm_map_printit(map, full, pr)
 	vm_map_entry_t entry;
 
 	(*pr)("MAP %p: [0x%lx->0x%lx]\n", map, map->min_offset,map->max_offset);
-	(*pr)("\tpmap=%p, #ent=%d, sz=%d, ref=%d, main=%c, version=%d\n",
-	    map->pmap, map->nentries, map->size, map->ref_count,
+	(*pr)("\t#ent=%d, sz=%d, ref=%d, main=%c, version=%d\n",
+	    map->nentries, map->size, map->ref_count,
 	    (map->is_main_map) ? 'T' : 'F', map->timestamp);
+#ifdef pmap_resident_count
+	(*pr)("\tpmap=%p(resident=%d)\n", map->pmap, 
+	    pmap_resident_count(map->pmap));
+#else
+	/* XXXCDC: this should be required ... */
+	(*pr)("\tpmap=%p(resident=<<NOT SUPPORTED!!!>>)\n", map->pmap);
+#endif
 	if (!full)
 		return;
 	for (entry = map->header.next; entry != &map->header;
