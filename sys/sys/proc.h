@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.53 1997/10/10 08:19:50 mycroft Exp $	*/
+/*	$NetBSD: proc.h,v 1.54 1998/01/04 03:53:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -267,6 +267,12 @@ struct	pcred {
 		swapin(p);						\
 }
 #define	PRELE(p)	(--(p)->p_holdcnt)
+
+/*
+ * Flags passed to fork1().
+ */
+#define	FORK_PPWAIT	0x01		/* block parent until child exit */
+#define	FORK_SHAREVM	0x02		/* share vmspace with parent */
 
 #define	PIDHASH(pid)	(&pidhashtbl[(pid) & pidhash])
 extern LIST_HEAD(pidhashhead, proc) *pidhashtbl;
