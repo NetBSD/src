@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.13 2004/05/06 02:14:03 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.c,v 1.14 2004/05/06 02:16:59 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.13 2004/03/30 22:57:57 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.13 2004/05/06 02:14:03 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.14 2004/05/06 02:16:59 dyoung Exp $");
 #endif
 
 /*
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.13 2004/05/06 02:14:03 dyoung 
  */
 
 #include "opt_inet.h"
-#include "opt_ipx.h"
 
 #include <sys/endian.h>
 #include <sys/param.h>
@@ -68,11 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.13 2004/05/06 02:14:03 dyoung 
 #include <netinet/if_ether.h>
 #endif /* __FreeBSD__ */
 #include <netinet/if_inarp.h>
-#endif
-
-#ifdef IPX
-#include <netipx/ipx.h>
-#include <netipx/ipx_if.h>
 #endif
 
 #include <net80211/ieee80211_var.h>
@@ -1380,24 +1374,6 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			}
 			arp_ifinit(ifp, ifa);
 			break;
-#endif
-#ifdef IPX
-		/*
-		 * XXX - This code is probably wrong,
-		 *	 but has been copied many times.
-		 */
-		case AF_IPX: {
-			struct ipx_addr *ina = &(IA_SIPX(ifa)->sipx_addr);
-			struct arpcom *ac = (struct arpcom *)ifp;
-
-			if (ipx_nullhost(*ina))
-				ina->x_host = *(union ipx_host *) ac->ac_enaddr;
-			else
-				bcopy((caddr_t) ina->x_host.c_host,
-				      (caddr_t) ac->ac_enaddr,
-				      sizeof(ac->ac_enaddr));
-			/* fall thru... */
-		}
 #endif
 		default:
 			if ((ifp->if_flags & IFF_UP) == 0) {
