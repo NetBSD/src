@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.30 2002/05/30 04:39:15 itojun Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.31 2002/06/07 04:07:55 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.30 2002/05/30 04:39:15 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.31 2002/06/07 04:07:55 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -195,7 +195,7 @@ static int pim6;
 	       switch (xxs) { \
 		      case 2: \
 			  delta += 1000000; \
-			      /* fall through */ \
+			      /* FALLTHORUGH */ \
 		      case 1: \
 			  delta += 1000000; \
 			  break; \
