@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.66.2.2 1999/06/24 00:06:01 perry Exp $ */
+/*	$NetBSD: wdc.c,v 1.66.2.3 1999/08/25 11:18:38 he Exp $ */
 
 
 /*
@@ -533,7 +533,6 @@ wdcintr(arg)
 	}
 
 	WDCDEBUG_PRINT(("wdcintr\n"), DEBUG_INTR);
-	untimeout(wdctimeout, chp);
 	chp->ch_flags &= ~WDCF_IRQ_WAIT;
 	xfer = chp->ch_queue->sc_xfer.tqh_first;
 	return xfer->c_intr(chp, xfer, 1);
@@ -595,16 +594,32 @@ __wdcwait_reset(chp, drv_mask)
 {
 	int timeout;
 	u_int8_t st0, st1;
+#ifdef WDCDEBUG
+	u_int8_t sc0, sn0, cl0, ch0;
+	u_int8_t sc1, sn1, cl1, ch1;
+#endif
 	/* wait for BSY to deassert */
 	for (timeout = 0; timeout < WDCNDELAY_RST;timeout++) {
 		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 		    WDSD_IBM); /* master */
 		delay(10);
 		st0 = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_status);
+#ifdef WDCDEBUG
+		sc0 = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_seccnt);
+		sn0 = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_sector);
+		cl0 = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_cyl_lo);
+		ch0 = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_cyl_hi);
+#endif
 		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 		    WDSD_IBM | 0x10); /* slave */
 		delay(10);
 		st1 = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_status);
+#ifdef WDCDEBUG
+		sc1 = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_seccnt);
+		sn1 = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_sector);
+		cl1 = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_cyl_lo);
+		ch1 = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_cyl_hi);
+#endif
 
 		if ((drv_mask & 0x01) == 0) {
 			/* no master */
@@ -632,6 +647,15 @@ __wdcwait_reset(chp, drv_mask)
 	if (st1 & WDCS_BSY)
 		drv_mask &= ~0x02;
 end:
+	WDCDEBUG_PRINT(("%s:%d:0: after reset, sc=0x%x sn=0x%x "
+	    "cl=0x%x ch=0x%x\n",
+	     chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
+	     chp->channel, sc0, sn0, cl0, ch0), DEBUG_PROBE);
+	WDCDEBUG_PRINT(("%s:%d:1: after reset, sc=0x%x sn=0x%x "
+	    "cl=0x%x ch=0x%x\n",
+	     chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
+	     chp->channel, sc1, sn1, cl1, ch1), DEBUG_PROBE);
+
 	WDCDEBUG_PRINT(("%s:%d: wdcwait_reset() end, st0=0x%x, st1=0x%x\n",
 	    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe", chp->channel,
 	    st0, st1), DEBUG_PROBE);
@@ -717,7 +741,11 @@ wdctimeout(arg)
 		 * Call the interrupt routine. If we just missed and interrupt,
 		 * it will do what's needed. Else, it will take the needed
 		 * action (reset the device).
+		 * Before that we need to reinstall the timeout callback,
+		 * in case it will miss another irq while in this transfer
+		 * We arbitray chose it to be 1s
 		 */
+		timeout(wdctimeout, chp, hz);
 		xfer->c_flags |= C_TIMEOU;
 		chp->ch_flags &= ~WDCF_IRQ_WAIT;
 		xfer->c_intr(chp, xfer, 1);
@@ -1119,6 +1147,9 @@ __wdccommand_done(chp, xfer)
 
 	WDCDEBUG_PRINT(("__wdccommand_done %s:%d:%d\n",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive), DEBUG_FUNCS);
+
+	untimeout(wdctimeout, chp);
+
 	if (chp->ch_status & WDCS_DWF)
 		wdc_c->flags |= AT_DF;
 	if (chp->ch_status & WDCS_ERR) {
