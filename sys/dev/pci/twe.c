@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.8 2001/01/22 17:40:15 ad Exp $	*/
+/*	$NetBSD: twe.c,v 1.9 2001/01/23 20:47:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -462,9 +462,11 @@ twe_intr(void *arg)
 	if ((status & TWE_STS_ATTN_INTR) != 0) {
 		rv = twe_param_get(sc, TWE_PARAM_AEN, TWE_PARAM_AEN_UnitCode,
 		    2, twe_aen_handler, NULL);
-		if (rv != 0)
+		if (rv != 0) {
 			printf("%s: unable to retrieve AEN (%d)\n",
 			    sc->sc_dv.dv_xname, rv);
+			TWE_OUTL(sc, TWE_REG_CTL, TWE_CTL_CLEAR_ATTN_INTR);
+		}
 		caught = 1;
 	}
 
