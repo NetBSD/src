@@ -1,4 +1,4 @@
-/*	$NetBSD: date.c,v 1.11 1995/09/07 06:21:05 jtc Exp $	*/
+/*	$NetBSD: date.c,v 1.12 1997/01/09 16:31:05 tls Exp $	*/
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: date.c,v 1.11 1995/09/07 06:21:05 jtc Exp $";
+static char rcsid[] = "$NetBSD: date.c,v 1.12 1997/01/09 16:31:05 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -149,9 +149,9 @@ main(argc, argv)
 #define	ATOI2(ar)	((ar)[0] - '0') * 10 + ((ar)[1] - '0'); (ar) += 2;
 void
 setthetime(p)
-	register char *p;
+	char *p;
 {
-	register struct tm *lt;
+	struct tm *lt;
 	struct timeval tv;
 	char *dot, *t;
 
