@@ -1,7 +1,7 @@
-/*	$NetBSD: tp_driver.c,v 1.17 2004/04/19 05:16:46 matt Exp $	*/
+/*	$NetBSD: tp_driver.c,v 1.18 2004/04/20 02:13:26 matt Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_driver.c,v 1.17 2004/04/19 05:16:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_driver.c,v 1.18 2004/04/20 02:13:26 matt Exp $");
 
 #include "tp_states.h"
 
@@ -26,6 +26,7 @@ static const struct act_ent {
 #include <sys/errno.h>
 
 #include <netiso/tp_param.h>
+#include <netiso/tp_var.h>
 #include <netiso/tp_stat.h>
 #include <netiso/tp_pcb.h>
 #include <netiso/tp_tpdu.h>
@@ -33,7 +34,6 @@ static const struct act_ent {
 #include <netiso/tp_trace.h>
 #include <netiso/iso_errno.h>
 #include <netiso/tp_seq.h>
-#include <netiso/tp_var.h>
 #include <netiso/cons.h>
 
 #define DRIVERTRACE TPPTdriver

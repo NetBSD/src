@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_pcb.h,v 1.15 2003/08/07 16:33:41 agc Exp $	*/
+/*	$NetBSD: tp_pcb.h,v 1.16 2004/04/20 02:13:26 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -119,38 +119,38 @@ struct tp_refinfo {
 struct nl_protosw {
 	int		nlp_afamily;	/* address family */
 	void		(*nlp_putnetaddr)	/* puts addresses in nl pcb */
-				__P((void *, struct sockaddr *, int));
+				(void *, struct sockaddr *, int);
 	void		(*nlp_getnetaddr)	/* gets addresses from nl pcb */
-				__P((void *, struct mbuf *, int));
+				(void *, struct mbuf *, int);
 	int		(*nlp_cmpnetaddr)	/* compares address in pcb */
-				__P((void *, struct sockaddr *, int));
+				(void *, struct sockaddr *, int);
 						/* with sockaddr */
 	void		(*nlp_putsufx)		/* puts transport suffixes in */
-				__P((void *, caddr_t, int, int));
+				(void *, caddr_t, int, int);
 						/* nl pcb */
 	void		(*nlp_getsufx)		/* gets transport suffixes */
-				__P((void *, u_short *, caddr_t, int));
+				(void *, u_short *, caddr_t, int);
 						/* from nl pcb */
 	void		(*nlp_recycle_suffix)	/* clears suffix from nl pcb */
-				__P((void *));		 
+				(void *);		 
 	int		(*nlp_mtu)		/* figures out mtu based on */
-				__P((void *));	/* nl used */
+				(void *);	/* nl used */
 	int		(*nlp_pcbbind)		/* bind to pcb for net level */
-				__P((void *, struct mbuf *, struct proc *));
+				(void *, struct mbuf *, struct proc *);
 	int		(*nlp_pcbconn)		/* connect for net level */
-				__P((void *, struct mbuf *));
+				(void *, struct mbuf *);
 	void		(*nlp_pcbdisc)		/* disconnect net level */
-				__P((void *));
+				(void *);
 	void		(*nlp_pcbdetach)	/* detach net level pcb */
-				__P((void *));
+				(void *);
 	int		(*nlp_pcballoc)		/* allocate a net level pcb */
-				__P((struct socket *, void *));
+				(struct socket *, void *);
 	int		(*nlp_output)		/* prepare a packet to give */
-				__P((struct mbuf *, ...)); /* to nl */
+				(struct mbuf *, ...); /* to nl */
 	int		(*nlp_dgoutput)		/* prepare a packet to give */
-				__P((struct mbuf *, ...)); /*to nl*/
+				(struct mbuf *, ...); /*to nl*/
 	int		(*nlp_ctloutput)	/* hook for network set/get */
-				__P((int, int, caddr_t, struct mbuf *));
+				(int, int, caddr_t, struct mbuf *);
 						/* options */
 	caddr_t		nlp_pcblist;	/* list of xx_pcb's for connections */
 };

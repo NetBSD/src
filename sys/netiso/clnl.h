@@ -1,4 +1,4 @@
-/*	$NetBSD: clnl.h,v 1.7 2003/08/07 16:33:32 agc Exp $	*/
+/*	$NetBSD: clnl.h,v 1.8 2004/04/20 02:13:26 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,5 +59,5 @@ SOFTWARE.
  */
 struct clnl_protosw {
 	/* input routine */
-	void            (*clnl_input) __P((struct mbuf *, ...));
+	void            (*clnl_input) (struct mbuf *, ...);
 };
