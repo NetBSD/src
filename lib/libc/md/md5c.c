@@ -1,4 +1,4 @@
-/*	$NetBSD: md5c.c,v 1.9 1999/02/09 00:54:31 explorer Exp $	*/
+/*	$NetBSD: md5c.c,v 1.10 1999/05/03 15:01:50 christos Exp $	*/
 
 /*
  * This file is derived from the RSA Data Security, Inc. MD5 Message-Digest
@@ -213,6 +213,7 @@ MD5Update(context, input, inputLen)
 
 	/* Transform as many times as possible. */
 	if (inputLen >= partLen) {
+		/* LINTED const castaway ok */
 		memcpy((POINTER)&context->buffer[idx],
 		    (POINTER)input, partLen);
 		MD5Transform(context->state, context->buffer);
@@ -225,6 +226,7 @@ MD5Update(context, input, inputLen)
 		i = 0;
 
 	/* Buffer remaining input */
+	/* LINTED const castaway ok */
 	memcpy((POINTER)&context->buffer[idx], (POINTER)&input[i],
 	    inputLen - i);
 }
@@ -256,7 +258,7 @@ MD5Final(digest, context)
 	Encode(digest, context->state, 16);
 
 	/* Zeroize sensitive information. */
-	ZEROIZE((POINTER)context, sizeof(*context));
+	ZEROIZE((POINTER)(void *)context, sizeof(*context));
 }
 
 /*
@@ -349,5 +351,5 @@ MD5Transform(state, block)
 	state[3] += d;
 
 	/* Zeroize sensitive information. */
-	ZEROIZE((POINTER)x, sizeof (x));
+	ZEROIZE((POINTER)(void *)x, sizeof (x));
 }
