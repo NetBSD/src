@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.h,v 1.20 2001/05/28 02:50:52 chs Exp $	*/
+/*	$NetBSD: cd9660_node.h,v 1.21 2001/09/15 16:12:56 chs Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -65,7 +65,7 @@ typedef	struct	{
  * FOr device# (major,minor) translation table
  */
 struct iso_dnode {
-	struct iso_dnode *d_next, **d_prev;	/* hash chain */
+	LIST_ENTRY(iso_dnode) d_hash;
 	dev_t		i_dev;		/* device where dnode resides */
 	ino_t		i_number;	/* the identity of the inode */
 	dev_t		d_dev;		/* device # for translation */
@@ -73,7 +73,7 @@ struct iso_dnode {
 #endif
 
 struct iso_node {
-	struct	iso_node *i_next, **i_prev;	/* hash chain */
+	LIST_ENTRY(iso_node) i_hash;
 	struct	vnode *i_vnode;	/* vnode associated with this inode */
 	struct	vnode *i_devvp;	/* vnode for block I/O */
 	u_long	i_flag;		/* see below */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.20 2000/11/08 14:28:16 ad Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.21 2001/09/15 16:13:07 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -408,8 +408,8 @@ quotaon(p, mp, type, fname)
 	 * NB: only need to add dquot's for inodes being modified.
 	 */
 again:
-	for (vp = mp->mnt_vnodelist.lh_first; vp != NULL; vp = nextvp) {
-		nextvp = vp->v_mntvnodes.le_next;
+	for (vp = LIST_FIRST(&mp->mnt_vnodelist); vp != NULL; vp = nextvp) {
+		nextvp = LIST_NEXT(vp, v_mntvnodes);
 		if (vp->v_type == VNON ||vp->v_writecount == 0)
 			continue;
 		if (vget(vp, LK_EXCLUSIVE))
@@ -419,7 +419,7 @@ again:
 			break;
 		}
 		vput(vp);
-		if (vp->v_mntvnodes.le_next != nextvp || vp->v_mount != mp)
+		if (LIST_NEXT(vp, v_mntvnodes) != nextvp || vp->v_mount != mp)
 			goto again;
 	}
 	ump->um_qflags[type] &= ~QTF_OPENING;
@@ -452,8 +452,8 @@ quotaoff(p, mp, type)
 	 * deleting any references to quota file being closed.
 	 */
 again:
-	for (vp = mp->mnt_vnodelist.lh_first; vp != NULL; vp = nextvp) {
-		nextvp = vp->v_mntvnodes.le_next;
+	for (vp = LIST_FIRST(&mp->mnt_vnodelist); vp != NULL; vp = nextvp) {
+		nextvp = LIST_NEXT(vp, v_mntvnodes);
 		if (vp->v_type == VNON)
 			continue;
 		if (vget(vp, LK_EXCLUSIVE))
@@ -463,7 +463,7 @@ again:
 		ip->i_dquot[type] = NODQUOT;
 		dqrele(vp, dq);
 		vput(vp);
-		if (vp->v_mntvnodes.le_next != nextvp || vp->v_mount != mp)
+		if (LIST_NEXT(vp, v_mntvnodes) != nextvp || vp->v_mount != mp)
 			goto again;
 	}
 	dqflush(qvp);
@@ -635,10 +635,10 @@ qsync(mp)
 	 */
 	simple_lock(&mntvnode_slock);
 again:
-	for (vp = mp->mnt_vnodelist.lh_first; vp != NULL; vp = nextvp) {
+	for (vp = LIST_FIRST(&mp->mnt_vnodelist); vp != NULL; vp = nextvp) {
 		if (vp->v_mount != mp)
 			goto again;
-		nextvp = vp->v_mntvnodes.le_next;
+		nextvp = LIST_NEXT(vp, v_mntvnodes);
 		if (vp->v_type == VNON)
 			continue;
 		simple_lock(&vp->v_interlock);
@@ -657,7 +657,7 @@ again:
 		}
 		vput(vp);
 		simple_lock(&mntvnode_slock);
-		if (vp->v_mntvnodes.le_next != nextvp)
+		if (LIST_NEXT(vp, v_mntvnodes) != nextvp)
 			goto again;
 	}
 	simple_unlock(&mntvnode_slock);
@@ -668,8 +668,8 @@ again:
  * Code pertaining to management of the in-core dquot data structures.
  */
 #define DQHASH(dqvp, id) \
-	(&dqhashtbl[((((long)(dqvp)) >> 8) + id) & dqhash])
-LIST_HEAD(dqhash, dquot) *dqhashtbl;
+	(((((long)(dqvp)) >> 8) + id) & dqhash)
+LIST_HEAD(dqhashhead, dquot) *dqhashtbl;
 u_long dqhash;
 
 /*
@@ -688,6 +688,31 @@ dqinit()
 	dqhashtbl =
 	    hashinit(desiredvnodes, HASH_LIST, M_DQUOT, M_WAITOK, &dqhash);
 	TAILQ_INIT(&dqfreelist);
+}
+
+void
+dqreinit()
+{
+	struct dquot *dq;
+	struct dqhashhead *oldhash, *hash;
+	struct vnode *dqvp;
+	u_long oldmask, mask, hashval;
+	int i;
+
+	hash = hashinit(desiredvnodes, HASH_LIST, M_DQUOT, M_WAITOK, &mask);
+	oldhash = dqhashtbl;
+	oldmask = dqhash;
+	dqhashtbl = hash;
+	dqhash = mask;
+	for (i = 0; i <= oldmask; i++) {
+		while ((dq = LIST_FIRST(&oldhash[i])) != NULL) {
+			dqvp = dq->dq_ump->um_quotas[dq->dq_type];
+			LIST_REMOVE(dq, dq_hash);
+			hashval = DQHASH(dqvp, dq->dq_id);
+			LIST_INSERT_HEAD(&dqhashtbl[hashval], dq, dq_hash);
+		}
+	}
+	hashdone(oldhash, M_DQUOT);
 }
 
 /*
@@ -712,7 +737,7 @@ dqget(vp, id, ump, type, dqp)
 	struct dquot **dqp;
 {
 	struct dquot *dq;
-	struct dqhash *dqh;
+	struct dqhashhead *dqh;
 	struct vnode *dqvp;
 	struct iovec aiov;
 	struct uio auio;
@@ -726,8 +751,8 @@ dqget(vp, id, ump, type, dqp)
 	/*
 	 * Check the cache first.
 	 */
-	dqh = DQHASH(dqvp, id);
-	for (dq = dqh->lh_first; dq; dq = dq->dq_hash.le_next) {
+	dqh = &dqhashtbl[DQHASH(dqvp, id)];
+	LIST_FOREACH(dq, dqh, dq_hash) {
 		if (dq->dq_id != id ||
 		    dq->dq_ump->um_quotas[dq->dq_type] != dqvp)
 			continue;
@@ -910,7 +935,7 @@ dqflush(vp)
 	struct vnode *vp;
 {
 	struct dquot *dq, *nextdq;
-	struct dqhash *dqh;
+	struct dqhashhead *dqh;
 
 	/*
 	 * Move all dquot's that used to refer to this quota
@@ -918,14 +943,14 @@ dqflush(vp)
 	 * fall off the head of the free list and be re-used).
 	 */
 	for (dqh = &dqhashtbl[dqhash]; dqh >= dqhashtbl; dqh--) {
-		for (dq = dqh->lh_first; dq; dq = nextdq) {
-			nextdq = dq->dq_hash.le_next;
+		for (dq = LIST_FIRST(dqh); dq; dq = nextdq) {
+			nextdq = LIST_NEXT(dq, dq_hash);
 			if (dq->dq_ump->um_quotas[dq->dq_type] != vp)
 				continue;
 			if (dq->dq_cnt)
 				panic("dqflush: stray dquot");
 			LIST_REMOVE(dq, dq_hash);
-			dq->dq_ump = (struct ufsmount *)0;
+			dq->dq_ump = NULL;
 		}
 	}
 }

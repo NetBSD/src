@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.43 2001/05/30 11:57:19 mrg Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.44 2001/09/15 16:13:04 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -100,6 +100,7 @@ struct vfsops ext2fs_vfsops = {
 	ext2fs_fhtovp,
 	ext2fs_vptofh,
 	ext2fs_init,
+	ext2fs_reinit,
 	ext2fs_done,
 	ext2fs_sysctl,
 	ext2fs_mountroot,
@@ -122,6 +123,12 @@ ext2fs_init()
 	pool_init(&ext2fs_inode_pool, sizeof(struct inode), 0, 0, 0,
 	    "ext2fsinopl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
 	    M_EXT2FSNODE);
+}
+
+void
+ext2fs_reinit()
+{
+	ufs_reinit();
 }
 
 void

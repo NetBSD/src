@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.14 2001/08/30 03:55:42 chs Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.15 2001/09/15 16:13:04 chs Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -706,8 +706,7 @@ softdep_flushfiles(oldmnt, flags, p)
 LIST_HEAD(pagedep_hashhead, pagedep) *pagedep_hashtbl;
 u_long	pagedep_hash;		/* size of hash table - 1 */
 #define	PAGEDEP_HASH(mp, inum, lbn) \
-	(&pagedep_hashtbl[((((register_t)(mp)) >> 13) + (inum) + (lbn)) & \
-	    pagedep_hash])
+	(((((register_t)(mp)) >> 13) + (inum) + (lbn)) & pagedep_hash)
 static struct sema pagedep_in_progress;
 
 /*
@@ -733,14 +732,14 @@ pagedep_lookup(ip, lbn, flags, pagedeppp)
 		panic("pagedep_lookup: lock not held");
 #endif
 	mp = ITOV(ip)->v_mount;
-	pagedephd = PAGEDEP_HASH(mp, ip->i_number, lbn);
+	pagedephd = &pagedep_hashtbl[PAGEDEP_HASH(mp, ip->i_number, lbn)];
 top:
-	for (pagedep = LIST_FIRST(pagedephd); pagedep;
-	     pagedep = LIST_NEXT(pagedep, pd_hash))
+	LIST_FOREACH(pagedep, pagedephd, pd_hash) {
 		if (ip->i_number == pagedep->pd_ino &&
 		    lbn == pagedep->pd_lbn &&
 		    mp == pagedep->pd_mnt)
 			break;
+	}
 	if (pagedep) {
 		*pagedeppp = pagedep;
 		return (1);
@@ -778,7 +777,7 @@ LIST_HEAD(inodedep_hashhead, inodedep) *inodedep_hashtbl;
 static u_long	inodedep_hash;	/* size of hash table - 1 */
 static long	num_inodedep;	/* number of inodedep allocated */
 #define	INODEDEP_HASH(fs, inum) \
-      (&inodedep_hashtbl[((((register_t)(fs)) >> 13) + (inum)) & inodedep_hash])
+	(((((register_t)(fs)) >> 13) + (inum)) & inodedep_hash)
 static struct sema inodedep_in_progress;
 
 /*
@@ -803,12 +802,12 @@ inodedep_lookup(fs, inum, flags, inodedeppp)
 		panic("inodedep_lookup: lock not held");
 #endif
 	firsttry = 1;
-	inodedephd = INODEDEP_HASH(fs, inum);
+	inodedephd = &inodedep_hashtbl[INODEDEP_HASH(fs, inum)];
 top:
-	for (inodedep = LIST_FIRST(inodedephd); inodedep;
-	     inodedep = LIST_NEXT(inodedep, id_hash))
+	LIST_FOREACH(inodedep, inodedephd, id_hash) {
 		if (inum == inodedep->id_ino && fs == inodedep->id_fs)
 			break;
+	}
 	if (inodedep) {
 		*inodedeppp = inodedep;
 		return (1);
@@ -929,6 +928,55 @@ softdep_initialize()
 	for (i = 0; i < PCBPHASHSIZE; i++) {
 		LIST_INIT(&pcbphashhead[i]);
 	}
+}
+
+/*
+ * Reinitialize pagedep hash table.
+ */
+void
+softdep_reinitialize()
+{
+	struct pagedep_hashhead *oldhash1, *hash1;
+	struct pagedep *pagedep;
+	struct inodedep_hashhead *oldhash2, *hash2;
+	struct inodedep *inodedep;
+	u_long oldmask1, oldmask2, mask1, mask2, val;
+	int i;
+
+	hash1 = hashinit(desiredvnodes / 5, HASH_LIST, M_PAGEDEP, M_WAITOK,
+	    &mask1);
+	hash2 = hashinit(desiredvnodes, HASH_LIST, M_INODEDEP, M_WAITOK,
+	    &mask2);
+
+	max_softdeps = desiredvnodes * 4;
+
+	ACQUIRE_LOCK(&lk);
+	oldhash1 = pagedep_hashtbl;
+	oldmask1 = pagedep_hash;
+	pagedep_hashtbl = hash1;
+	pagedep_hash = mask1;
+	oldhash2 = inodedep_hashtbl;
+	oldmask2 = inodedep_hash;
+	inodedep_hashtbl = hash2;
+	inodedep_hash = mask2;
+	for (i = 0; i <= oldmask1; i++) {
+		while ((pagedep = LIST_FIRST(&oldhash1[i])) != NULL) {
+			LIST_REMOVE(pagedep, pd_hash);
+			val = PAGEDEP_HASH(pagedep->pd_mnt, pagedep->pd_ino,
+			    pagedep->pd_lbn);
+			LIST_INSERT_HEAD(&hash1[val], pagedep, pd_hash);
+		}
+	}
+	for (i = 0; i <= oldmask2; i++) {
+		while ((inodedep = LIST_FIRST(&oldhash2[i])) != NULL) {
+			LIST_REMOVE(inodedep, id_hash);
+			val = INODEDEP_HASH(inodedep->id_fs, inodedep->id_ino);
+			LIST_INSERT_HEAD(&hash2[val], inodedep, id_hash);
+		}
+	}
+	FREE_LOCK(&lk);
+	hashdone(oldhash1, M_PAGEDEP);
+	hashdone(oldhash2, M_INODEDEP);
 }
 
 /*
@@ -4568,8 +4616,7 @@ clear_remove(p)
 		pagedephd = &pagedep_hashtbl[next++];
 		if (next >= pagedep_hash)
 			next = 0;
-		for (pagedep = LIST_FIRST(pagedephd); pagedep;
-		     pagedep = LIST_NEXT(pagedep, pd_hash)) {
+		LIST_FOREACH(pagedep, pagedephd, pd_hash) {
 			if (LIST_FIRST(&pagedep->pd_dirremhd) == NULL)
 				continue;
 			mp = pagedep->pd_mnt;

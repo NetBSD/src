@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.19 2001/08/17 02:18:48 lukem Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.20 2001/09/15 16:13:04 chs Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -114,6 +114,7 @@ void ffs_setblock __P((struct fs *, u_char *, ufs_daddr_t));
 
 /* ffs_vfsops.c */
 void ffs_init __P((void));
+void ffs_reinit __P((void));
 void ffs_done __P((void));
 int ffs_mountroot __P((void));
 int ffs_mount __P((struct mount *, const char *, void *, struct nameidata *,
@@ -146,6 +147,7 @@ __END_DECLS
  * Soft dependency function prototypes.
  */
 void	softdep_initialize __P((void));
+void	softdep_reinitialize __P((void));
 int	softdep_mount __P((struct vnode *, struct mount *, struct fs *,
 	    struct ucred *));
 int	softdep_flushfiles __P((struct mount *, int, struct proc *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.56 2001/07/07 14:53:55 jdolecek Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.57 2001/09/15 16:12:57 chs Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -93,6 +93,7 @@ struct vfsops cd9660_vfsops = {
 	cd9660_fhtovp,
 	cd9660_vptofh,
 	cd9660_init,
+	cd9660_reinit,
 	cd9660_done,
 	cd9660_sysctl,
 	cd9660_mountroot,
@@ -742,6 +743,9 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 {
 	struct iso_mnt *imp;
 	struct iso_node *ip;
+#ifdef ISODEVMAP
+	struct iso_dnode *dp;
+#endif
 	struct buf *bp;
 	struct vnode *vp, *nvp;
 	dev_t dev;
@@ -891,7 +895,7 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 		 * if device, look at device number table for translation
 		 */
 #ifdef	ISODEVMAP
-		if (dp = iso_dmap(dev, ino, 0))
+		if ((dp = iso_dmap(dev, ino, 0)) != NULL)
 			ip->inode.iso_rdev = dp->d_dev;
 #endif
 		vp->v_op = cd9660_specop_p;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.93 2001/07/27 21:19:09 thorpej Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.94 2001/09/15 16:12:57 chs Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -351,6 +351,9 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		if (old_vnodes > desiredvnodes) {
 		        desiredvnodes = old_vnodes;
 			return (EINVAL);
+		}
+		if (error == 0) {
+			vfs_reinit();
 		}
 		return (error);
 	case KERN_MAXPROC:

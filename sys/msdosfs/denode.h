@@ -1,4 +1,4 @@
-/*	$NetBSD: denode.h,v 1.32 2001/05/28 02:50:52 chs Exp $	*/
+/*	$NetBSD: denode.h,v 1.33 2001/09/15 16:13:00 chs Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -134,8 +134,7 @@ struct fatcache {
  * contained within a vnode.
  */
 struct denode {
-	struct denode *de_next;	/* Hash chain forward */
-	struct denode **de_prev; /* Hash chain back */
+	LIST_ENTRY(denode) de_hash;
 	struct vnode *de_vnode;	/* addr of vnode we are part of */
 	struct vnode *de_devvp;	/* vnode of blk dev we live on */
 	u_long de_flag;		/* flag bits */

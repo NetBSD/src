@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.h,v 1.4 2001/05/28 02:50:51 chs Exp $	*/
+/*	$NetBSD: filecore_node.h,v 1.5 2001/09/15 16:12:56 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -46,7 +46,7 @@
 #define doff_t	long
 
 struct filecore_node {
-	struct	filecore_node *i_next, **i_prev;	/* hash chain */
+	LIST_ENTRY(filecore_node) i_hash;
 	struct	vnode *i_vnode;	/* vnode associated with this inode */
 	struct	vnode *i_devvp;	/* vnode for block I/O */
 	u_long	i_flag;		/* see below */

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmount.h,v 1.20 2001/02/12 20:02:30 fvdl Exp $	*/
+/*	$NetBSD: nfsmount.h,v 1.21 2001/09/15 16:13:02 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -191,6 +191,7 @@ int	nfs_vptofh __P((struct vnode *vp, struct fid *fhp));
 int	nfs_fsinfo __P((struct nfsmount *, struct vnode *, struct ucred *,
 			struct proc *));
 void	nfs_vfs_init __P((void));
+void	nfs_vfs_reinit __P((void));
 void	nfs_vfs_done __P((void));
 
 /*

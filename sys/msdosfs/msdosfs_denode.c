@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.50 2001/02/18 20:17:04 chs Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.51 2001/09/15 16:13:00 chs Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -67,10 +67,10 @@
 #include <msdosfs/denode.h>
 #include <msdosfs/fat.h>
 
-struct denode **dehashtbl;
+LIST_HEAD(ihashhead, denode) *dehashtbl;
 u_long dehash;			/* size of hash table - 1 */
-#define	DEHASH(dev, dcl, doff)	(((dev) + (dcl) + (doff) / sizeof(struct direntry)) \
-				 & dehash)
+#define	DEHASH(dev, dcl, doff) \
+    (((dev) + (dcl) + (doff) / sizeof(struct direntry)) & dehash)
 
 struct simplelock msdosfs_ihash_slock;
 
@@ -85,12 +85,44 @@ static void msdosfs_hashrem __P((struct denode *));
 void
 msdosfs_init()
 {
-	dehashtbl = hashinit(desiredvnodes/2, HASH_LIST, M_MSDOSFSMNT,
+	dehashtbl = hashinit(desiredvnodes / 2, HASH_LIST, M_MSDOSFSMNT,
 	    M_WAITOK, &dehash);
 	simple_lock_init(&msdosfs_ihash_slock);
 	pool_init(&msdosfs_denode_pool, sizeof(struct denode), 0, 0, 0,
 	    "msdosnopl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
 	    M_MSDOSFSNODE);
+}
+
+/*
+ * Reinitialize inode hash table.
+ */
+
+void
+msdosfs_reinit()
+{
+	struct denode *dep;
+	struct ihashhead *oldhash, *hash;
+	u_long oldmask, mask, val;
+	int i;
+
+	hash = hashinit(desiredvnodes / 2, HASH_LIST, M_MSDOSFSMNT, M_WAITOK,
+	    &mask);
+
+	simple_lock(&msdosfs_ihash_slock);
+	oldhash = dehashtbl;
+	oldmask = dehash;
+	dehashtbl = hash;
+	dehash = mask;
+	for (i = 0; i <= oldmask; i++) {
+		while ((dep = LIST_FIRST(&oldhash[i])) != NULL) {
+			LIST_REMOVE(dep, de_hash);
+			val = DEHASH(dep->de_dev, dep->de_dirclust,
+			    dep->de_diroffset);
+			LIST_INSERT_HEAD(&hash[val], dep, de_hash);
+		}
+	}
+	simple_unlock(&msdosfs_ihash_slock);
+	hashdone(oldhash, M_MSDOSFSMNT);
 }
 
 void
@@ -111,8 +143,7 @@ msdosfs_hashget(dev, dirclust, diroff)
 
 loop:
 	simple_lock(&msdosfs_ihash_slock);
-	for (dep = dehashtbl[DEHASH(dev, dirclust, diroff)]; dep;
-	     dep = dep->de_next) {
+	LIST_FOREACH(dep, &dehashtbl[DEHASH(dev, dirclust, diroff)], de_hash) {
 		if (dirclust == dep->de_dirclust &&
 		    diroff == dep->de_diroffset &&
 		    dev == dep->de_dev &&
@@ -133,16 +164,13 @@ static void
 msdosfs_hashins(dep)
 	struct denode *dep;
 {
-	struct denode **depp, *deq;
+	struct ihashhead *depp;
+	int val;
 
-	/* XXX use queue macros here */
 	simple_lock(&msdosfs_ihash_slock);
-	depp = &dehashtbl[DEHASH(dep->de_dev, dep->de_dirclust, dep->de_diroffset)];
-	if ((deq = *depp) != NULL)
-		deq->de_prev = &dep->de_next;
-	dep->de_next = deq;
-	dep->de_prev = depp;
-	*depp = dep;
+	val = DEHASH(dep->de_dev, dep->de_dirclust, dep->de_diroffset);
+	depp = &dehashtbl[val];
+	LIST_INSERT_HEAD(depp, dep, de_hash);
 	simple_unlock(&msdosfs_ihash_slock);
 }
 
@@ -150,17 +178,8 @@ static void
 msdosfs_hashrem(dep)
 	struct denode *dep;
 {
-	struct denode *deq;
-
-	/* XXX use queue macros here */
 	simple_lock(&msdosfs_ihash_slock);
-	if ((deq = dep->de_next) != NULL)
-		deq->de_prev = dep->de_prev;
-	*dep->de_prev = deq;
-#ifdef DIAGNOSTIC
-	dep->de_next = NULL;
-	dep->de_prev = NULL;
-#endif
+	LIST_REMOVE(dep, de_hash);
 	simple_unlock(&msdosfs_ihash_slock);
 }
 

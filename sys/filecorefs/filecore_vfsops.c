@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.14 2001/05/30 11:42:13 mrg Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.15 2001/09/15 16:12:56 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -79,6 +79,7 @@ struct vfsops filecore_vfsops = {
 	filecore_fhtovp,
 	filecore_vptofh,
 	filecore_init,
+	filecore_reinit,
 	filecore_done,
 	filecore_sysctl,
 	NULL,				/* filecore_mountroot */
