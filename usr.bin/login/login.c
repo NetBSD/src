@@ -1,4 +1,4 @@
-/*     $NetBSD: login.c,v 1.54 2000/02/14 03:21:02 aidan Exp $       */
+/*     $NetBSD: login.c,v 1.55 2000/03/07 13:59:19 enami Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.54 2000/02/14 03:21:02 aidan Exp $");
+__RCSID("$NetBSD: login.c,v 1.55 2000/03/07 13:59:19 enami Exp $");
 #endif /* not lint */
 
 /*
@@ -137,9 +137,9 @@ int	failures;
 char	term[64], *envinit[1], *hostname, *username, *tty;
 
 static const char copyrightstr[] = "\
-Copyright (c) 1996, 1997, 1998, 1999, 2000
-\tThe NetBSD Foundation, Inc.  All rights reserved.
-Copyright (c) 1980, 1983, 1986, 1988, 1990, 1991, 1993, 1994
+Copyright (c) 1996, 1997, 1998, 1999, 2000\n\
+\tThe NetBSD Foundation, Inc.  All rights reserved.\n\
+Copyright (c) 1980, 1983, 1986, 1988, 1990, 1991, 1993, 1994\n\
 \tThe Regents of the University of California.  All rights reserved.\n\n";
 
 int
@@ -259,15 +259,14 @@ main(argc, argv)
 
 #ifdef LOGIN_CAP
 	/* Get "login-retries" and "login-backoff" from default class */
-	if((lc = login_getclass(NULL)))
-		{
-		login_retries = (int) login_getcapnum(lc, "login-retries",
-					DEFAULT_RETRIES, DEFAULT_RETRIES);
-		login_backoff = (int) login_getcapnum(lc, "login-backoff", 
-					DEFAULT_BACKOFF, DEFAULT_BACKOFF);
+	if ((lc = login_getclass(NULL)) != NULL) {
+		login_retries = (int)login_getcapnum(lc, "login-retries",
+		    DEFAULT_RETRIES, DEFAULT_RETRIES);
+		login_backoff = (int)login_getcapnum(lc, "login-backoff", 
+		    DEFAULT_BACKOFF, DEFAULT_BACKOFF);
 		login_close(lc);
 		lc = NULL;
-		}
+	}
 #endif
 
 #ifdef KERBEROS5
@@ -477,7 +476,8 @@ main(argc, argv)
 	if (chdir(pwd->pw_dir) < 0) {
 #ifdef LOGIN_CAP
                 if (login_getcapbool(lc, "requirehome", 0)) {
-			(void) printf("Home directory %s required\n", pwd->pw_dir);
+			(void)printf("Home directory %s required\n",
+			    pwd->pw_dir);
                         sleepexit(1);
 		}
 #endif	
@@ -488,7 +488,7 @@ main(argc, argv)
 		(void)printf("Logging in with home = \"/\".\n");
 	}
 
-	if(!quietlog)
+	if (!quietlog)
 		quietlog = access(_PATH_HUSHLOGIN, F_OK) == 0;
 
 	/* regain special privileges */
@@ -498,8 +498,8 @@ main(argc, argv)
 
 #ifdef LOGIN_CAP
         pw_warntime = login_getcaptime(lc, "password-warn",
-                                    _PASSWORD_WARNDAYS * SECSPERDAY,
-                                    _PASSWORD_WARNDAYS * SECSPERDAY);
+            _PASSWORD_WARNDAYS * SECSPERDAY,
+            _PASSWORD_WARNDAYS * SECSPERDAY);
 #endif
 
 	if (pwd->pw_change || pwd->pw_expire)
@@ -509,7 +509,7 @@ main(argc, argv)
 			(void)printf("Sorry -- your account has expired.\n");
 			sleepexit(1);
 		} else if (pwd->pw_expire - tp.tv_sec < pw_warntime && 
-			   !quietlog)
+		    !quietlog)
 			(void)printf("Warning: your account expires on %s",
 			    ctime(&pwd->pw_expire));
 	}
@@ -520,7 +520,7 @@ main(argc, argv)
 			(void)printf("Sorry -- your password has expired.\n");
 			sleepexit(1);
 		} else if (pwd->pw_change - tp.tv_sec < pw_warntime && 
-			   !quietlog)
+		    !quietlog)
 			(void)printf("Warning: your password expires on %s",
 			    ctime(&pwd->pw_change));
 
@@ -576,8 +576,8 @@ main(argc, argv)
 	if (*pwd->pw_shell == '\0')
 		pwd->pw_shell = _PATH_BSHELL;
 #ifdef LOGIN_CAP
-	if((shell = login_getcapstr(lc, "shell", NULL, NULL))) {
-		if(!(shell = strdup(shell))) {
+	if ((shell = login_getcapstr(lc, "shell", NULL, NULL)) != NULL) {
+		if ((shell = strdup(shell)) == NULL) {
                 	syslog(LOG_NOTICE, "Cannot alloc mem");
                 	sleepexit(1);
 		}
@@ -588,14 +588,14 @@ main(argc, argv)
 	(void)setenv("HOME", pwd->pw_dir, 1);
 	(void)setenv("SHELL", pwd->pw_shell, 1);
 	if (term[0] == '\0') {
-		char *tt = (char *) stypeof(tty);
+		char *tt = (char *)stypeof(tty);
 #ifdef LOGIN_CAP
-		if(!tt)
+		if (tt == NULL)
 			tt = login_getcapstr(lc, "term", NULL, NULL);
 #endif
 		/* unknown term -> "su" */
-		(void)strncpy(term, tt ? tt : "su", sizeof(term));
-		}
+		(void)strncpy(term, tt != NULL ? tt : "su", sizeof(term));
+	}
 	(void)setenv("TERM", term, 0);
 	(void)setenv("LOGNAME", pwd->pw_name, 1);
 	(void)setenv("USER", pwd->pw_name, 1);
@@ -624,8 +624,8 @@ main(argc, argv)
 			syslog(LOG_NOTICE, "ROOT LOGIN (%s) ON %s FROM %s",
 			    username, tty, hostname);
 		else
-			syslog(LOG_NOTICE,
-				"ROOT LOGIN (%s) ON %s", username, tty);
+			syslog(LOG_NOTICE, "ROOT LOGIN (%s) ON %s",
+			    username, tty);
 	}
 
 #if defined(KERBEROS) || defined(KERBEROS5)
@@ -637,13 +637,11 @@ main(argc, argv)
 		char *fname;
 #ifdef LOGIN_CAP
 		fname = login_getcapstr(lc, "copyright", NULL, NULL);
-		if (fname && access(fname, F_OK) == 0)
+		if (fname != NULL && access(fname, F_OK) == 0)
 			motd(fname);
 		else
-			(void)printf(copyrightstr);
-#else
-		(void)printf(copyrightstr);
 #endif
+			(void)printf(copyrightstr);
 
 #ifdef LOGIN_CAP
                 fname = login_getcapstr(lc, "welcome", NULL, NULL);
@@ -724,8 +722,11 @@ dofork()
 	if (!(child = fork()))
 		return; /* Child process */
 
-	/* Setup stuff?  This would be things we could do in parallel with login */
-	(void) chdir("/");	/* Let's not keep the fs busy... */
+	/*
+	 * Setup stuff?  This would be things we could do in parallel
+	 * with login
+	 */
+	(void)chdir("/");	/* Let's not keep the fs busy... */
 
 	/* If we're the parent, watch the child until it dies */
 	while (wait(0) != child)
@@ -872,6 +873,7 @@ void
 badlogin(name)
 	char *name;
 {
+
 	if (failures == 0)
 		return;
 	if (hostname) {
