@@ -1,4 +1,4 @@
-/*	$NetBSD: lsi64854var.h,v 1.2 1998/08/31 11:13:10 pk Exp $ */
+/*	$NetBSD: lsi64854var.h,v 1.3 1998/09/21 21:26:52 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -103,3 +103,4 @@ struct lsi64854_softc {
 void	lsi64854_attach	__P((struct lsi64854_softc *));
 int	lsi64854_scsi_intr	__P((void *));
 int	lsi64854_enet_intr	__P((void *));
+int	lsi64854_pp_intr	__P((void *));
