@@ -1,4 +1,4 @@
-/* $NetBSD: stty.c,v 1.6 2000/06/14 17:25:13 cgd Exp $ */
+/* $NetBSD: stty.c,v 1.7 2000/09/14 01:24:32 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -35,9 +35,9 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: stty.c,v 1.6 2000/06/14 17:25:13 cgd Exp $");
-#endif /* not lint */
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: stty.c,v 1.7 2000/09/14 01:24:32 msaitoh Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
 #include <errno.h>

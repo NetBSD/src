@@ -1,4 +1,4 @@
-/*	$NetBSD: ruserpass.c,v 1.7 1999/09/20 04:48:04 lukem Exp $	*/
+/*	$NetBSD: ruserpass.c,v 1.8 2000/09/14 01:24:32 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993, 1994
@@ -34,13 +34,13 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
+#if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)ruserpass.c	8.4 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: ruserpass.c,v 1.7 1999/09/20 04:48:04 lukem Exp $");
+__RCSID("$NetBSD: ruserpass.c,v 1.8 2000/09/14 01:24:32 msaitoh Exp $");
 #endif
-#endif /* not lint */
+#endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
