@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_conv.c,v 1.7 1997/07/13 18:51:49 christos Exp $	*/
+/*	$NetBSD: bt_conv.c,v 1.8 1998/12/09 12:42:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)bt_conv.c	8.5 (Berkeley) 8/17/94";
 #else
-__RCSID("$NetBSD: bt_conv.c,v 1.7 1997/07/13 18:51:49 christos Exp $");
+__RCSID("$NetBSD: bt_conv.c,v 1.8 1998/12/09 12:42:46 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -94,7 +94,7 @@ __bt_pgin(t, pg, pp)
 	if ((h->flags & P_TYPE) == P_BINTERNAL)
 		for (i = 0; i < top; i++) {
 			M_16_SWAP(h->linp[i]);
-			p = (char *)GETBINTERNAL(h, i);
+			p = (char *)(void *)GETBINTERNAL(h, i);
 			P_32_SWAP(p);
 			p += sizeof(u_int32_t);
 			P_32_SWAP(p);
@@ -109,7 +109,7 @@ __bt_pgin(t, pg, pp)
 	else if ((h->flags & P_TYPE) == P_BLEAF)
 		for (i = 0; i < top; i++) {
 			M_16_SWAP(h->linp[i]);
-			p = (char *)GETBLEAF(h, i);
+			p = (char *)(void *)GETBLEAF(h, i);
 			P_32_SWAP(p);
 			p += sizeof(u_int32_t);
 			P_32_SWAP(p);
@@ -154,7 +154,7 @@ __bt_pgout(t, pg, pp)
 	top = NEXTINDEX(h);
 	if ((h->flags & P_TYPE) == P_BINTERNAL)
 		for (i = 0; i < top; i++) {
-			p = (char *)GETBINTERNAL(h, i);
+			p = (char *)(void *)GETBINTERNAL(h, i);
 			P_32_SWAP(p);
 			p += sizeof(u_int32_t);
 			P_32_SWAP(p);
@@ -169,7 +169,7 @@ __bt_pgout(t, pg, pp)
 		}
 	else if ((h->flags & P_TYPE) == P_BLEAF)
 		for (i = 0; i < top; i++) {
-			p = (char *)GETBLEAF(h, i);
+			p = (char *)(void *)GETBLEAF(h, i);
 			P_32_SWAP(p);
 			p += sizeof(u_int32_t);
 			P_32_SWAP(p);
@@ -212,7 +212,7 @@ mswap(pg)
 {
 	char *p;
 
-	p = (char *)pg;
+	p = (char *)(void *)pg;
 	P_32_SWAP(p);		/* magic */
 	p += sizeof(u_int32_t);
 	P_32_SWAP(p);		/* version */

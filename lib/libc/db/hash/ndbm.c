@@ -1,4 +1,4 @@
-/*	$NetBSD: ndbm.c,v 1.14 1998/05/07 19:11:14 kleink Exp $	*/
+/*	$NetBSD: ndbm.c,v 1.15 1998/12/09 12:42:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)ndbm.c	8.4 (Berkeley) 7/21/94";
 #else
-__RCSID("$NetBSD: ndbm.c,v 1.14 1998/05/07 19:11:14 kleink Exp $");
+__RCSID("$NetBSD: ndbm.c,v 1.15 1998/12/09 12:42:50 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -212,7 +212,7 @@ dbm_store(db, key, data, flags)
 	dbtdata.data = data.dptr;
 	dbtdata.size = data.dsize;
 	return ((db->put)(db, &dbtkey, &dbtdata,
-	    (flags == DBM_INSERT) ? R_NOOVERWRITE : 0));
+	    (u_int)((flags == DBM_INSERT) ? R_NOOVERWRITE : 0)));
 }
 
 extern int

@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.h,v 1.7 1996/11/07 06:48:02 jtc Exp $	*/
+/*	$NetBSD: hash.h,v 1.8 1998/12/09 12:42:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -143,11 +143,11 @@ typedef struct htab	 {		/* Memory resident data structure */
 #define ALL_SET			((u_int32_t)0xFFFFFFFF)
 #define ALL_CLEAR		0
 
-#define PTROF(X)	((BUFHEAD *)((ptrdiff_t)(X)&~0x3))
-#define ISMOD(X)	((u_int32_t)(ptrdiff_t)(X)&0x1)
-#define DOMOD(X)	((X) = (char *)((ptrdiff_t)(X)|0x1))
-#define ISDISK(X)	((u_int32_t)(ptrdiff_t)(X)&0x2)
-#define DODISK(X)	((X) = (char *)((ptrdiff_t)(X)|0x2))
+#define PTROF(X)	((BUFHEAD *)(void *)((u_long)(X)&~0x3))
+#define ISMOD(X)	((u_int32_t)(u_long)(X)&0x1)
+#define DOMOD(X)	((X) = (char *)(void *)((u_long)(X)|0x1))
+#define ISDISK(X)	((u_int32_t)(u_long)(X)&0x2)
+#define DODISK(X)	((X) = (char *)(void *)((u_long)(X)|0x2))
 
 #define BITS_PER_MAP	32
 
@@ -172,7 +172,8 @@ typedef struct htab	 {		/* Memory resident data structure */
 #define	OADDR_OF(S,O)	((u_int32_t)((u_int32_t)(S) << SPLITSHIFT) + (O))
 
 #define BUCKET_TO_PAGE(B) \
-	(B) + hashp->HDRPAGES + ((B) ? hashp->SPARES[__log2((B)+1)-1] : 0)
+	(B) + hashp->HDRPAGES + \
+	((B) ? hashp->SPARES[__log2((u_int32_t)((B)+1))-1] : 0)
 #define OADDR_TO_PAGE(B) 	\
 	BUCKET_TO_PAGE ( (1 << SPLITNUM((B))) -1 ) + OPAGENUM((B));
 
