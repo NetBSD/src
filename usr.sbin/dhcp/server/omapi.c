@@ -50,7 +50,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: omapi.c,v 1.2.2.2 2000/10/18 04:11:45 tv Exp $ Copyright (c) 1999-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: omapi.c,v 1.2.2.3 2001/04/04 20:55:41 he Exp $ Copyright (c) 1999-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -279,11 +279,6 @@ isc_result_t dhcp_lease_get_value (omapi_object_t *h, omapi_object_t *id,
 		return omapi_make_const_value (value, name,
 					       lease -> uid,
 					       lease -> uid_len, MDL);
-	} else if (!omapi_ds_strcmp (name, "hostname")) {
-		if (lease -> hostname)
-			return omapi_make_string_value
-				(value, name, lease -> hostname, MDL);
-		return ISC_R_NOTFOUND;
 	} else if (!omapi_ds_strcmp (name, "client-hostname")) {
 		if (lease -> client_hostname)
 			return omapi_make_string_value
@@ -353,13 +348,9 @@ isc_result_t dhcp_lease_destroy (omapi_object_t *h, const char *file, int line)
 		lease -> uid = &lease -> uid_buf [0];
 		lease -> uid_len = 0;
 	}
-	if (lease -> hostname) {
-		dfree (lease -> hostname, MDL);
-		lease -> hostname = (char *)0;
-	}
 	if (lease -> client_hostname) {
 		dfree (lease -> client_hostname, MDL);
-		lease -> hostname = (char *)0;
+		lease -> client_hostname = (char *)0;
 	}
 	if (lease -> host)
 		host_dereference (&lease -> host, file, line);
@@ -471,15 +462,6 @@ isc_result_t dhcp_lease_stuff_values (omapi_object_t *c,
 			if (status != ISC_R_SUCCESS)
 				return status;
 		}
-	}
-
-	if (lease -> hostname) {
-		status = omapi_connection_put_name (c, "hostname");
-		if (status != ISC_R_SUCCESS)
-			return status;
-		status = omapi_connection_put_string (c, lease -> hostname);
-		if (status != ISC_R_SUCCESS)
-			return status;
 	}
 
 	if (lease -> client_hostname) {
@@ -934,6 +916,7 @@ isc_result_t dhcp_host_get_value (omapi_object_t *h, omapi_object_t *id,
 	    if (host -> fixed_addr &&
 		evaluate_option_cache (&ip_addrs, (struct packet *)0,
 				       (struct lease *)0,
+				       (struct client_state *)0,
 				       (struct option_state *)0,
 				       (struct option_state *)0,
 				       &global_scope,
@@ -1021,7 +1004,7 @@ isc_result_t dhcp_host_signal_handler (omapi_object_t *h,
 		if (!host -> name) {
 			char hnbuf [64];
 			sprintf (hnbuf, "nh%08lx%08lx",
-				 cur_time, (unsigned long)host);
+				 (unsigned long)cur_time, (unsigned long)host);
 			host -> name = dmalloc (strlen (hnbuf) + 1, MDL);
 			if (!host -> name)
 				return ISC_R_NOMEMORY;
@@ -1067,6 +1050,7 @@ isc_result_t dhcp_host_stuff_values (omapi_object_t *c,
 	if (host -> fixed_addr &&
 	    evaluate_option_cache (&ip_addrs, (struct packet *)0,
 				   (struct lease *)0,
+				   (struct client_state *)0,
 				   (struct option_state *)0,
 				   (struct option_state *)0,
 				   &global_scope,
@@ -1204,11 +1188,53 @@ isc_result_t dhcp_host_lookup (omapi_object_t **lp,
 	/* Now look for a hardware address. */
 	status = omapi_get_value_str (ref, id, "hardware-address", &tv);
 	if (status == ISC_R_SUCCESS) {
-		host = (struct host_decl *)0;
-		host_hash_lookup (&host, host_hw_addr_hash,
-				  tv -> value -> u.buffer.value,
-				  tv -> value -> u.buffer.len, MDL);
+		unsigned char *haddr;
+		unsigned int len;
+
+		len = tv -> value -> u.buffer.len + 1;
+		haddr = dmalloc (len, MDL);
+		if (!haddr) {
+			omapi_value_dereference (&tv, MDL);
+			return ISC_R_NOMEMORY;
+		}
+
+		memcpy (haddr + 1, tv -> value -> u.buffer.value, len - 1);
 		omapi_value_dereference (&tv, MDL);
+
+		status = omapi_get_value_str (ref, id, "hardware-type", &tv);
+		if (status == ISC_R_SUCCESS) {
+			if (tv -> value -> type == omapi_datatype_data) {
+				if ((tv -> value -> u.buffer.len != 4) ||
+				    (tv -> value -> u.buffer.value[0] != 0) ||
+				    (tv -> value -> u.buffer.value[1] != 0) ||
+				    (tv -> value -> u.buffer.value[2] != 0)) {
+					omapi_value_dereference (&tv, MDL);
+					dfree (haddr, MDL);
+					return ISC_R_INVALIDARG;
+				}
+
+				haddr[0] = tv -> value -> u.buffer.value[3];
+			} else if (tv -> value -> type == omapi_datatype_int) {
+				haddr[0] = (unsigned char)
+					tv -> value -> u.integer;
+			} else {
+				omapi_value_dereference (&tv, MDL);
+				dfree (haddr, MDL);
+				return ISC_R_INVALIDARG;
+			}
+
+			omapi_value_dereference (&tv, MDL);
+		} else {
+			/* If no hardware-type is specified, default to
+			   ethernet.  This may or may not be a good idea,
+			   but Telus is currently relying on this behavior.
+			   - DPN */
+			haddr[0] = HTYPE_ETHER;
+		}
+
+		host = (struct host_decl *)0;
+		host_hash_lookup (&host, host_hw_addr_hash, haddr, len, MDL);
+		dfree (haddr, MDL);
 			
 		if (*lp && *lp != (omapi_object_t *)host) {
 			omapi_object_dereference (lp, MDL);
