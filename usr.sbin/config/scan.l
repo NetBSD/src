@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.17 1997/10/10 10:41:19 mycroft Exp $	*/
+/*	$NetBSD: scan.l,v 1.18 1998/01/12 07:37:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -86,6 +86,7 @@ and		return AND;
 at		return AT;
 attach		return ATTACH;
 build		return BUILD;
+class		return CLASS;
 compile-with	return COMPILE_WITH;
 config		return CONFIG;
 define		return DEFINE;
