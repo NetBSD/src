@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec.h,v 1.8 1996/06/13 18:33:55 christos Exp $	 */
+/*	$NetBSD: svr4_exec.h,v 1.9 1996/09/26 20:52:45 cgd Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -61,7 +61,7 @@
 # define SVR4_INTERP_ADDR	0
 #endif
 
-int svr4_elf_probe __P((struct proc *, struct exec_package *, Elf32_Ehdr *,
-    char *, u_long *));
+int svr4_elf32_probe __P((struct proc *, struct exec_package *, Elf32_Ehdr *,
+    char *, Elf32_Addr *));
 
 #endif /* !_SVR4_EXEC_H_ */
