@@ -1,4 +1,4 @@
-/*	$NetBSD: tetris.c,v 1.14 2000/01/21 02:10:57 jsm Exp $	*/
+/*	$NetBSD: tetris.c,v 1.15 2002/06/02 22:17:38 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -92,8 +92,8 @@ static	void	setup_board __P((void));
 static void
 setup_board()
 {
-	register int i;
-	register cell *p;
+	int i;
+	cell *p;
 
 	p = board;
 	for (i = B_SIZE; i; i--)
@@ -106,8 +106,8 @@ setup_board()
 static void
 elide()
 {
-	register int i, j, base;
-	register cell *p;
+	int i, j, base;
+	cell *p;
 
 	for (i = A_FIRST; i < A_LAST; i++) {
 		base = i * B_COLS + 1;
@@ -133,9 +133,9 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register int pos, c;
-	register const char *keys;
-	register int level = 2;
+	int pos, c;
+	const char *keys;
+	int level = 2;
 	char key_write[6][10];
 	int ch, i, j;
 	int fd;
