@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.4 1998/08/11 04:18:25 mycroft Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.5 1998/08/11 05:57:40 mycroft Exp $	*/
 
 /*
  * Copyright 1997
@@ -653,9 +653,9 @@ cs_reset_chip(sc)
 	 */
 
 	/* Transition SBHE to switch chip from 8-bit to 16-bit */
-	bus_space_read_1(sc->sc_iot, sc->sc_ioh, PORT_PKTPG_PTR);
+	bus_space_read_1(sc->sc_iot, sc->sc_ioh, PORT_PKTPG_PTR + 0);
 	bus_space_read_1(sc->sc_iot, sc->sc_ioh, PORT_PKTPG_PTR + 1);
-	bus_space_read_1(sc->sc_iot, sc->sc_ioh, PORT_PKTPG_PTR);
+	bus_space_read_1(sc->sc_iot, sc->sc_ioh, PORT_PKTPG_PTR + 0);
 	bus_space_read_1(sc->sc_iot, sc->sc_ioh, PORT_PKTPG_PTR + 1);
 
 	/* Wait until the EEPROM is not busy */
@@ -881,7 +881,7 @@ cs_initChip(sc)
 		 * Write the packet page base physical address to the memory
 		 * base register.
 		 */
-		CS_WRITE_PACKET_PAGE(sc, PKTPG_MEM_BASE,
+		CS_WRITE_PACKET_PAGE(sc, PKTPG_MEM_BASE + 0,
 		    sc->sc_pktpgaddr & 0xFFFF);
 		CS_WRITE_PACKET_PAGE(sc, PKTPG_MEM_BASE + 2,
 		    sc->sc_pktpgaddr >> 16);
@@ -932,7 +932,7 @@ cs_initChip(sc)
 
 	/* Put Ethernet address into the Individual Address register */
 	myea = (u_int16_t *)sc->sc_enaddr;
-	CS_WRITE_PACKET_PAGE(sc, PKTPG_IND_ADDR, myea[0]);
+	CS_WRITE_PACKET_PAGE(sc, PKTPG_IND_ADDR + 0, myea[0]);
 	CS_WRITE_PACKET_PAGE(sc, PKTPG_IND_ADDR + 2, myea[1]);
 	CS_WRITE_PACKET_PAGE(sc, PKTPG_IND_ADDR + 4, myea[2]);
 
@@ -1034,14 +1034,14 @@ cs_set_ladr_filt(sc, ec)
 	 * later, otherwise we will leave it.
 	 */
 	ifp->if_flags &= ~IFF_ALLMULTI;
-
 	af[0] = af[1] = af[2] = af[3] = 0x0000;
-	ETHER_FIRST_MULTI(step, ec, enm);
+
 	/*
 	 * Loop through all the multicast addresses unless we get a range of
 	 * addresses, in which case we will just accept all packets.
 	 * Justification for this is given in the next comment.
 	 */
+	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
 		    sizeof enm->enm_addrlo)) {
@@ -1073,10 +1073,10 @@ cs_set_ladr_filt(sc, ec)
 	}
 
 	/* now program the chip with the addresses */
-	CS_WRITE_PACKET_PAGE(sc, PKTPG_LOG_ADDR + 2, af[0]);
+	CS_WRITE_PACKET_PAGE(sc, PKTPG_LOG_ADDR + 0, af[0]);
 	CS_WRITE_PACKET_PAGE(sc, PKTPG_LOG_ADDR + 2, af[1]);
-	CS_WRITE_PACKET_PAGE(sc, PKTPG_LOG_ADDR + 2, af[2]);
-	CS_WRITE_PACKET_PAGE(sc, PKTPG_LOG_ADDR + 2, af[3]);
+	CS_WRITE_PACKET_PAGE(sc, PKTPG_LOG_ADDR + 4, af[2]);
+	CS_WRITE_PACKET_PAGE(sc, PKTPG_LOG_ADDR + 6, af[3]);
 	return;
 }
 
