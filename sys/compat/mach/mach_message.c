@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.41 2003/12/24 23:22:22 manu Exp $ */
+/*	$NetBSD: mach_message.c,v 1.42 2003/12/26 16:31:29 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.41 2003/12/24 23:22:22 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.42 2003/12/26 16:31:29 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -844,7 +844,7 @@ mach_trade_rights_complex(l, mm)
 	mcm = (struct mach_complex_msg *)mm->mm_msg;
 	count = mcm->mcm_body.msgh_descriptor_count;
 	begin = (u_long)mcm;
-	end = (u_long)&mcm->mcm_desc[count + 1];
+	end = (u_long)&mcm->mcm_desc.gen[count + 1];
 
 	if ((end - begin) > mm->mm_size) {
 #ifdef DEBUG_MACH
@@ -854,11 +854,11 @@ mach_trade_rights_complex(l, mm)
 	}
 
 	for (i = 0; i < count; i++) {
-		switch (mcm->mcm_desc[i].type) {
+		switch (mcm->mcm_desc.gen[i].type) {
 		case MACH_MSG_PORT_DESCRIPTOR:
 			mach_trade_rights(l, mm->mm_l, 
-			    &mcm->mcm_port_desc[i].name, 
-			    mcm->mcm_port_desc[i].disposition);
+			    &mcm->mcm_desc.port[i].name, 
+			    mcm->mcm_desc.port[i].disposition);
 			break;
 
 		case MACH_MSG_OOL_PORTS_DESCRIPTOR: {	/* XXX untested */
@@ -876,9 +876,9 @@ mach_trade_rights_complex(l, mm)
 			
 			rp = mm->mm_l->l_proc;
 			lp = l->l_proc;
-			disp = mcm->mcm_ool_ports_desc[i].disposition;
-			rumnp = mcm->mcm_ool_ports_desc[i].address;
-			count = mcm->mcm_ool_ports_desc[i].count;
+			disp = mcm->mcm_desc.ool_ports[i].disposition;
+			rumnp = mcm->mcm_desc.ool_ports[i].address;
+			count = mcm->mcm_desc.ool_ports[i].count;
 			size = count * sizeof(*kmnp);
 			kaddr = NULL;
 			lumnp = NULL;
@@ -897,7 +897,7 @@ mach_trade_rights_complex(l, mm)
 			    size, MACH_OOL_FREE|MACH_OOL_TRACE)) != 0)
 				return MACH_SEND_INVALID_DATA;
 
-			mcm->mcm_ool_ports_desc[i].address = lumnp;
+			mcm->mcm_desc.ool_ports[i].address = lumnp;
 			break;
 		}
 
@@ -917,8 +917,8 @@ mach_trade_rights_complex(l, mm)
 			
 			rp = mm->mm_l->l_proc;
 			lp = l->l_proc;
-			rudata = mcm->mcm_ool_desc[i].address;
-			size = mcm->mcm_ool_desc[i].size;
+			rudata = mcm->mcm_desc.ool[i].address;
+			size = mcm->mcm_desc.ool[i].size;
 			kdata = NULL;
 			ludata = NULL;
 
@@ -937,13 +937,13 @@ mach_trade_rights_complex(l, mm)
 			    size, MACH_OOL_FREE|MACH_OOL_TRACE)) != 0)
 				return MACH_SEND_INVALID_DATA;
 
-			mcm->mcm_ool_ports_desc[i].address = ludata;
+			mcm->mcm_desc.ool_ports[i].address = ludata;
 			break;
 		}
 		default:
 #ifdef DEBUG_MACH
 			printf("unknown descriptor type %d\n",
-			    mcm->mcm_desc[i].type);
+			    mcm->mcm_desc.gen[i].type);
 #endif
 			break;
 		}
@@ -1102,9 +1102,9 @@ mach_add_port_desc(msg, name)
 
 	i = mcm->mcm_body.msgh_descriptor_count;
 
-	mcm->mcm_port_desc[i].name = name;
-	mcm->mcm_port_desc[i].disposition = MACH_MSG_TYPE_MOVE_SEND;
-	mcm->mcm_port_desc[i].type = MACH_MSG_PORT_DESCRIPTOR;
+	mcm->mcm_desc.port[i].name = name;
+	mcm->mcm_desc.port[i].disposition = MACH_MSG_TYPE_MOVE_SEND;
+	mcm->mcm_desc.port[i].type = MACH_MSG_PORT_DESCRIPTOR;
 	
 	mcm->mcm_body.msgh_descriptor_count++;
 	return;
@@ -1126,11 +1126,11 @@ mach_add_ool_ports_desc(msg, addr, count)
 
 	i = mcm->mcm_body.msgh_descriptor_count;
 
-	mcm->mcm_ool_ports_desc[i].address = addr;
-	mcm->mcm_ool_ports_desc[i].count = count;
-	mcm->mcm_ool_ports_desc[i].copy = MACH_MSG_ALLOCATE;
-	mcm->mcm_ool_ports_desc[i].disposition = MACH_MSG_TYPE_MOVE_SEND;
-	mcm->mcm_ool_ports_desc[i].type = MACH_MSG_OOL_PORTS_DESCRIPTOR;
+	mcm->mcm_desc.ool_ports[i].address = addr;
+	mcm->mcm_desc.ool_ports[i].count = count;
+	mcm->mcm_desc.ool_ports[i].copy = MACH_MSG_ALLOCATE;
+	mcm->mcm_desc.ool_ports[i].disposition = MACH_MSG_TYPE_MOVE_SEND;
+	mcm->mcm_desc.ool_ports[i].type = MACH_MSG_OOL_PORTS_DESCRIPTOR;
 	
 	mcm->mcm_body.msgh_descriptor_count++;
 	return;
@@ -1151,11 +1151,11 @@ inline void mach_add_ool_desc(msg, addr, size)
 
 	i = mcm->mcm_body.msgh_descriptor_count;
 
-	mcm->mcm_ool_desc[i].address = addr;
-	mcm->mcm_ool_desc[i].size = size;
-	mcm->mcm_ool_desc[i].deallocate = 0;
-	mcm->mcm_ool_desc[i].copy = MACH_MSG_ALLOCATE;
-	mcm->mcm_ool_desc[i].type = MACH_MSG_OOL_DESCRIPTOR;
+	mcm->mcm_desc.ool[i].address = addr;
+	mcm->mcm_desc.ool[i].size = size;
+	mcm->mcm_desc.ool[i].deallocate = 0;
+	mcm->mcm_desc.ool[i].copy = MACH_MSG_ALLOCATE;
+	mcm->mcm_desc.ool[i].type = MACH_MSG_OOL_DESCRIPTOR;
 	
 	mcm->mcm_body.msgh_descriptor_count++;
 	return;
