@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.108 2004/10/30 18:08:36 thorpej Exp $	*/
+/*	$NetBSD: elink3.c,v 1.109 2005/01/11 04:16:27 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.108 2004/10/30 18:08:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.109 2005/01/11 04:16:27 briggs Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -1853,8 +1853,9 @@ epshutdown(arg)
 	int s = splnet(); 
 
 	if (sc->enabled) {
-		epstop(&sc->sc_ethercom.ec_if, 1);
+		epstop(&sc->sc_ethercom.ec_if, 0);
 		ep_reset_cmd(sc, ELINK_COMMAND, GLOBAL_RESET);
+		epdisable(sc);
 		sc->enabled = 0;
 	}
 	splx(s);
