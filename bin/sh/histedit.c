@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.6 1995/03/21 09:09:09 cgd Exp $	*/
+/*	$NetBSD: histedit.c,v 1.7 1995/03/31 21:58:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: histedit.c,v 1.6 1995/03/21 09:09:09 cgd Exp $";
+static char rcsid[] = "$NetBSD: histedit.c,v 1.7 1995/03/31 21:58:13 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -407,6 +407,8 @@ int
 not_fcnumber(s)
         char *s;
 {
+	if (s == NULL)
+		return 0;
         if (*s == '-')
                 s++;
 	return (!is_number(s));
