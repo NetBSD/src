@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.3 2002/09/07 20:43:32 scw Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.4 2002/09/11 10:57:50 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -108,10 +108,10 @@ static void *intr_arg;
 struct evcnt _sh5_intr_events[NIPL];
 static char *intr_names[NIPL] = {
 	"none",
-	"softmisc", "softclock", "softnet", "softserial",
-	"irq5", "irq6", "irq7", "irq8",
-	"irq9", "irq10", "irq11", "irq12",
-	"irq13", "clock", "irq15"
+	"softmisc", "softclock", "softnet", "ipl4",
+	"ipl5", "ipl6", "ipl7", "ipl8",
+	"ipl9", "softserial", "ipl11", "ipl12",
+	"ipl13", "clock", "ipl15"
 };
 
 void sh5_intr_dispatch(struct intrframe *);
