@@ -1,2 +1,4 @@
 .\" This file is loaded after doc.tmac.
 .\" Put any local modifications to doc.tmac here.
+.ds doc-operating-system-NetBSD-2.0.1 2.0.1
+.ds doc-operating-system-NetBSD-2.0.2 2.0.2
