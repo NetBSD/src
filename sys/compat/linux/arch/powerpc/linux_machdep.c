@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.5 2001/02/05 19:44:32 manu Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.6 2001/03/18 11:31:44 manu Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@ linux_setregs(p, pack, stack)
  * Adapted from arch/powerpc/powerpc/sig_machdep.c:sendsig and
  * compat/linux/arch/i386/linux_machdep.c:linux_sendsig
  *
- * XXX Does not work well yet.
+ * XXX Does not work well yet with RT signals
  *
  */
 
@@ -196,7 +196,7 @@ linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 
 	/*
 	 * Copy Linux's signal trampoline on the user stack It should not
-	 * be used, but Linux binaries might expect him to be there.
+	 * be used, but Linux binaries might expect it to be there.
 	 */
 	frame.ltramp[0] = 0x38997777; /* li r0, 0x7777 */
 	frame.ltramp[1] = 0x44000002; /* sc */
@@ -457,7 +457,9 @@ linux_sys_modify_ldt(p, v, retval)
   return 0;
 }
 
-/* hack to make svgalib work */
+/* 
+ * major device numbers remapping
+ */
 dev_t
 linux_fakedev(dev)
 	dev_t dev;
