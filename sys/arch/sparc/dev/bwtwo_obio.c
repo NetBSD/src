@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo_obio.c,v 1.5 2002/03/11 16:27:01 pk Exp $ */
+/*	$NetBSD: bwtwo_obio.c,v 1.5.4.1 2002/05/19 08:20:00 gehenna Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -101,7 +101,6 @@
 #include <machine/autoconf.h>
 #include <machine/eeprom.h>
 #include <machine/ctlreg.h>
-#include <machine/conf.h>
 #include <sparc/sparc/asm.h>
 
 #include <dev/sun/fbio.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.37 2002/05/12 15:05:41 ichiro Exp $	*/
+/*	$NetBSD: cpu.c,v 1.37.2.1 2002/05/19 08:20:04 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -45,14 +45,14 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.37 2002/05/12 15:05:41 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.37.2.1 2002/05/19 08:20:04 gehenna Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/proc.h>
+#include <sys/conf.h>
 #include <uvm/uvm_extern.h>
-#include <machine/conf.h>
 #include <machine/cpu.h>
 
 #include <arm/cpuconf.h>
