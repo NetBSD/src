@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kinc.mk,v 1.13 2000/04/24 14:22:05 simonb Exp $
+#	$NetBSD: bsd.kinc.mk,v 1.14 2000/06/06 05:40:47 mycroft Exp $
 
 # System configuration variables:
 #
@@ -77,13 +77,13 @@ ${DESTDIR}${INCSDIR}:
 incinstall:: ${DESTDIR}${INCSDIR}
 
 .if defined(INCS)
-.for I in ${INCS}
-incinstall:: ${DESTDIR}${INCSDIR}/$I
-
-.PRECIOUS: ${DESTDIR}${INCSDIR}/$I
+incinstall:: ${INCS:@I@${DESTDIR}${INCSDIR}/$I@}
 .if !defined(UPDATE)
-.PHONY: ${DESTDIR}${INCSDIR}/$I
+.PHONY: ${INCS:@I@${DESTDIR}${INCSDIR}/$I@}
 .endif
+.PRECIOUS: ${INCS:@I@${DESTDIR}${INCSDIR}/$I@}
+
+.for I in ${INCS}
 ${DESTDIR}${INCSDIR}/$I: ${DESTDIR}${INCSDIR} $I 
 	@cmp -s ${.CURDIR}/$I ${.TARGET} > /dev/null 2>&1 || \
 	    (echo "${INSTALL} ${RENAME} ${PRESERVE} ${INSTPRIV} -c \
@@ -95,13 +95,13 @@ ${DESTDIR}${INCSDIR}/$I: ${DESTDIR}${INCSDIR} $I
 .endif
 
 .if defined(DEPINCS)
-.for I in ${DEPINCS}
-incinstall:: ${DESTDIR}${INCSDIR}/$I
-
-.PRECIOUS: ${DESTDIR}${INCSDIR}/$I
+incinstall:: ${DEPINCS:@I@${DESTDIR}${INCSDIR}/$I@}
 .if !defined(UPDATE)
-.PHONY: ${DESTDIR}${INCSDIR}/$I
+.PHONY: ${DEPINCS:@I@${DESTDIR}${INCSDIR}/$I@}
 .endif
+.PRECIOUS: ${DEPINCS:@I@${DESTDIR}${INCSDIR}/$I@}
+
+.for I in ${DEPINCS}
 ${DESTDIR}${INCSDIR}/$I: ${DESTDIR}${INCSDIR} $I 
 	@cmp -s $I ${.TARGET} > /dev/null 2>&1 || \
 	    (echo "${INSTALL} ${RENAME} ${PRESERVE} -c -o ${BINOWN} \

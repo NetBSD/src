@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.doc.mk,v 1.45 2000/04/28 10:47:34 tron Exp $
+#	$NetBSD: bsd.doc.mk,v 1.46 2000/06/06 05:40:47 mycroft Exp $
 #	@(#)bsd.doc.mk	8.1 (Berkeley) 8/14/93
 
 .if !target(__initialized__)
@@ -49,17 +49,19 @@ cleandoc:
 	rm -f paper.* [eE]rrs mklog ${CLEANFILES}
 
 .if ${MKDOC} != "no"
-FILES?=	${SRCS}
-.for F in ${FILES} ${EXTRA} Makefile
-docinstall:: ${DESTDIR}${DOCDIR}/${DIR}/${F}
+FILES?=${SRCS}
+ALLFILES=Makefile ${FILES} ${EXTRA}
+
+docinstall:: ${ALLFILES:@F@${DESTDIR}${DOCDIR}/${DIR}/${F}@}
 .if !defined(UPDATE)
-.PHONY: ${DESTDIR}${DOCDIR}/${DIR}/${F}
+.PHONY: ${ALLFILES:@F@${DESTDIR}${DOCDIR}/${DIR}/${F}@}
 .endif
+.PRECIOUS: ${ALLFILES:@F@${DESTDIR}${DOCDIR}/${DIR}/${F}@}
+
+.for F in ${ALLFILES}
 .if !defined(BUILD) && !make(all) && !make(${F})
 ${DESTDIR}${DOCDIR}/${DIR}/${F}: .MADE
 .endif
-
-.PRECIOUS: ${DESTDIR}${DOCDIR}/${DIR}/${F}
 ${DESTDIR}${DOCDIR}/${DIR}/${F}: ${F}
 	${INSTALL} ${RENAME} ${PRESERVE} ${INSTPRIV} -c -o ${DOCOWN} \
 	    -g ${DOCGRP} -m ${DOCMODE} ${.ALLSRC} ${.TARGET}
