@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.43 2000/10/19 01:07:42 itojun Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.44 2000/11/10 03:37:42 enami Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -468,10 +468,24 @@ rt_xaddrs(cp, cplim, rtinfo)
 		rtinfo->rti_info[i] = sa = (struct sockaddr *)cp;
 		ADVANCE(cp, sa);
 	}
-	/* Check for bad data length, or extra addresses specified */
-	if ( (cp != cplim) || (rtinfo->rti_addrs & (~0 << i)) )
-		return 1;
-	return 0;
+
+	/* Check for extra addresses specified.  */
+	if ((rtinfo->rti_addrs & (~0 << i)) != 0)
+		return (1);
+	/* Check for bad data length.  */
+	if (cp != cplim) {
+		if (i == RTAX_NETMASK + 1 &&
+		    cp - ROUNDUP(sa->sa_len) + sa->sa_len == cplim)
+			/*
+			 * The last sockaddr was netmask.
+			 * We accept this for now for the sake of old
+			 * binaries or third party softwares.
+			 */
+			;
+		else
+			return (1);
+	}
+	return (0);
 }
 
 static struct mbuf *
