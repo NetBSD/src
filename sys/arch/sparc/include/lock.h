@@ -1,7 +1,7 @@
-/*	$NetBSD: lock.h,v 1.3 1998/11/04 06:19:55 chs Exp $ */
+/*	$NetBSD: lock.h,v 1.3.8.1 1999/08/02 20:09:13 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -47,21 +47,28 @@
 
 #include <sparc/sparc/asm.h>
 
-static void	simple_lock_init __P((__volatile struct simplelock *));
-static void	simple_lock __P((__volatile struct simplelock *));
-static int	simple_lock_try __P((__volatile struct simplelock *));
-static void	simple_unlock __P((__volatile struct simplelock *));
+/*
+ * The value for SIMPLELOCK_LOCKED is what ldstub() naturally stores
+ * `lock_data' given its address (and the fact that SPARC is big-endian).
+ */
+#undef SIMPLELOCK_LOCKED
+#define	SIMPLELOCK_LOCKED	0xff000000
+
+static void	cpu_simple_lock_init __P((__volatile struct simplelock *));
+static void	cpu_simple_lock __P((__volatile struct simplelock *));
+static int	cpu_simple_lock_try __P((__volatile struct simplelock *));
+static void	cpu_simple_unlock __P((__volatile struct simplelock *));
 
 static __inline__ void
-simple_lock_init (alp)
+cpu_simple_lock_init (alp)
 	__volatile struct simplelock *alp;
 {
 
-	alp->lock_data = 0;
+	alp->lock_data = SIMPLELOCK_UNLOCKED;
 }
 
 static __inline__ void
-simple_lock (alp)
+cpu_simple_lock (alp)
 	__volatile struct simplelock *alp;
 {
 
@@ -72,32 +79,27 @@ simple_lock (alp)
 	 * becaused the cache-coherency logic does not have to
 	 * broadcast invalidates on the lock while we spin on it.
 	 */
-	while (ldstub(&alp->lock_data) != 0) {
-		while (alp->lock_data != 0)
+	while (ldstub(&alp->lock_data) != SIMPLELOCK_UNLOCKED) {
+		while (alp->lock_data != SIMPLELOCK_UNLOCKED)
 			/*void*/;
 	}
 }
 
 static __inline__ int
-simple_lock_try (alp)
+cpu_simple_lock_try (alp)
 	__volatile struct simplelock *alp;
 {
 
-	return (ldstub(&alp->lock_data) == 0);
+	return (ldstub(&alp->lock_data) == SIMPLELOCK_UNLOCKED);
 }
 
 static __inline__ void
-simple_unlock (alp)
+cpu_simple_unlock (alp)
 	__volatile struct simplelock *alp;
 {
 
-	alp->lock_data = 0;
+	alp->lock_data = SIMPLELOCK_UNLOCKED;
 }
-
-#if defined(LOCKDEBUG)
-#define simple_lock_dump()
-#define simple_lock_freecheck(start, end)
-#endif /* LOCKDEBUG */
 
 #endif /* _KERNEL */
 

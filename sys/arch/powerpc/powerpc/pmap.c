@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.19.2.1.2.1 1999/06/21 01:01:06 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.19.2.1.2.2 1999/08/02 20:07:16 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -1106,22 +1106,22 @@ pte_find(pm, va)
 /*
  * Get the physical page address for the given pmap/virtual address.
  */
-paddr_t
-pmap_extract(pm, va)
+boolean_t
+pmap_extract(pm, va, pap)
 	struct pmap *pm;
 	vaddr_t va;
+	paddr_t *pap;
 {
 	pte_t *ptp;
-	paddr_t o;
 	int s = splimp();
 	
 	if (!(ptp = pte_find(pm, va))) {
 		splx(s);
-		return 0;
+		return (FALSE);
 	}
-	o = (ptp->pte_lo & PTE_RPGN) | (va & ADDR_POFF);
+	*pap = (ptp->pte_lo & PTE_RPGN) | (va & ADDR_POFF);
 	splx(s);
-	return o;
+	return (TRUE);
 }
 
 /*
@@ -1362,8 +1362,8 @@ pmap_activate(p)
 	 */
 	if (pcb->pcb_pm != pmap) {
 		pcb->pcb_pm = pmap;
-		pcb->pcb_pmreal = (struct pmap *)pmap_extract(pmap_kernel(),
-		    (vaddr_t)pcb->pcb_pm);
+		(void) pmap_extract(pmap_kernel(), (vaddr_t)pcb->pcb_pm,
+		    (paddr_t *)&pcb->pcb_pmreal);
 	}
 
 	if (p == curproc) {
@@ -1418,6 +1418,6 @@ pmap_procwr(p, va, len)
 {
 	paddr_t pa;
 
-	pa = pmap_extract(p->p_vmspace->vm_map.pmap, va);
+	(void) pmap_extract(p->p_vmspace->vm_map.pmap, va, &pa);
 	__syncicache((void *)pa, len);
 }

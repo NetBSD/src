@@ -1,7 +1,7 @@
-/*	$NetBSD: conf.h,v 1.14.6.1 1999/08/02 20:09:13 thorpej Exp $	*/
+/*	$NetBSD: loadfile_machdep.h,v 1.1.2.2 1999/08/02 19:58:23 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -36,76 +36,22 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define mmread mmrw
-#define mmwrite mmrw
-cdev_decl(mm);
+#define BOOT_ECOFF
+#define BOOT_ELF
+#define ELFSIZE 32
 
-/* open, close, ioctl */
-#define	cdev_openprom_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) nullop, 0, (dev_type_poll((*))) enodev, \
-	(dev_type_mmap((*))) enodev }
+#define LOAD_KERNEL	(LOAD_ALL & ~LOAD_TEXTA)
+#define COUNT_KERNEL	(COUNT_ALL & ~COUNT_TEXTA)
 
-cdev_decl(openprom);
-
-cdev_decl(cn);
-
-cdev_decl(zs);
-cdev_decl(com);
-
-bdev_decl(fd);
-cdev_decl(fd);
-
-cdev_decl(fb);
-
-/* open, close, read, write, ioctl, poll */
-#define	cdev_gen_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) nullop, \
-	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev }
-
-cdev_decl(ms);
-
-cdev_decl(kbd);
-cdev_decl(kd);
-
-cdev_decl(bwtwo);
-
-cdev_decl(cgtwo);
-
-cdev_decl(cgthree);
-
-cdev_decl(cgfour);
-
-cdev_decl(cgsix);
-
-cdev_decl(cgeight);
-
-cdev_decl(tcx);
-
-cdev_decl(cgfourteen);
-
-cdev_decl(p9100);	/* pnozz */
-
-bdev_decl(xd);
-cdev_decl(xd);
-
-bdev_decl(xy);
-cdev_decl(xy);
-
-bdev_decl(sw);
-cdev_decl(sw);
-
-bdev_decl(md);
-cdev_decl(md);
-
-bdev_decl(raid);
-cdev_decl(raid);
-
-cdev_decl(mtty);
-cdev_decl(mbpp);
-
-cdev_decl(bpp);
-
-cdev_decl(scsibus);
+#define LOADADDR(a)		(((u_long)(a)) + offset)
+#define ALIGNENTRY(a)		((u_long)(a))
+#define READ(f, b, c)		read((f), (void *)LOADADDR(b), (c))
+#define BCOPY(s, d, c)		memcpy((void *)LOADADDR(d), (void *)(s), (c))
+#define BZERO(d, c)		memset((void *)LOADADDR(d), 0, (c))
+#define	WARN(a)			(void)(printf a, \
+				    printf((errno ? ": %s\n" : "\n"), \
+				    strerror(errno)))
+#define PROGRESS(a)		(void) printf a
+#define ALLOC(a)		alloc(a)
+#define FREE(a, b)		free(a, b)
+#define OKMAGIC(a)		((a) == OMAGIC)

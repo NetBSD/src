@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.14.4.1 1999/06/21 00:53:59 thorpej Exp $
+# $NetBSD: GENERIC,v 1.14.4.2 1999/08/02 19:59:40 thorpej Exp $
 #
 # GENERIC next68k
 #
@@ -47,6 +47,7 @@ options 	COMPAT_10	# NetBSD 1.0
 options 	COMPAT_11	# NetBSD 1.1
 options 	COMPAT_12	# NetBSD 1.2
 options 	COMPAT_13	# NetBSD 1.3
+options 	COMPAT_14	# NetBSD 1.4
 
 # @@ COMPAT_M68K4K doesn't compile because my egcs cross compiler isn't defining __m68k__
 #   I don't know whether the compiler is broken or whether 
@@ -89,10 +90,10 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	EON		# OSI tunneling over IP
 #options 	CCITT,LLC,HDLC	# X.25
 #options 	NETATALK	# AppleTalk networking protocols
-#options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
-#options 	PPP_DEFLATE	# Deflate compression support for PPP
-#options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
-#options 	PFIL_HOOKS	# pfil(9) packet filter hooks
+options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+options 	PPP_DEFLATE	# Deflate compression support for PPP
+options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 
 # Compatibility with 4.2BSD implementation of TCP/IP.  Not recommended.
 #options 	TCP_COMPAT_42
@@ -181,6 +182,7 @@ pseudo-device	tun		2	# network tunneling over tty
 pseudo-device	ipfilter		# ip filter
 # rnd is EXPERIMENTAL
 #pseudo-device	rnd			# /dev/random and in-kernel generator
+#pseudo-device	wsmux		2	# mouse & keyboard multiplexor
 
 pseudo-device	pty		64	# pseudo-terminals
 pseudo-device	vnd		4	# paging to files

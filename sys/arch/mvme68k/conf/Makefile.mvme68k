@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mvme68k,v 1.39 1999/01/15 23:37:06 thorpej Exp $
+#	$NetBSD: Makefile.mvme68k,v 1.39.6.1 1999/08/02 19:57:20 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -56,6 +56,8 @@ AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-n -Ttext 8000 -e start
 STRIPFLAGS=	-d
 
+%INCLUDES
+
 HOSTED_CC=	${CC}
 HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
 HOSTED_CFLAGS=	${CFLAGS}
@@ -112,8 +114,9 @@ DEBUG?=
 .if ${DEBUG} == "-g"
 LINKFLAGS+=	-X
 SYSTEM_LD_TAIL+=; \
-		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
-		echo ${STRIP} ${STRIPFLAGS} $@; ${STRIP} ${STRIPFLAGS} $@
+		echo mv -f $@ $@.gdb; mv -f $@ $@.gdb; \
+		echo ${STRIP} ${STRIPFLAGS} -o $@ $@.gdb; \
+		${STRIP} ${STRIPFLAGS} -o $@ $@.gdb
 .else
 LINKFLAGS+=	-S
 .endif

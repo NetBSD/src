@@ -1,4 +1,4 @@
-/*	$NetBSD: findcons.c,v 1.8.6.1 1999/06/21 00:58:39 thorpej Exp $	*/
+/*	$NetBSD: findcons.c,v 1.8.6.2 1999/08/02 20:06:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: findcons.c,v 1.8.6.1 1999/06/21 00:58:39 thorpej Exp $$");
+__KERNEL_RCSID(0, "$NetBSD: findcons.c,v 1.8.6.2 1999/08/02 20:06:03 thorpej Exp $$");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,6 +78,7 @@ struct consdev cd;
 #include <machine/tc_machdep.h>
 
 #include <pmax/pmax/asic.h>		/* scc serial console addresses */
+#include <pmax/pmax/kn01.h>
 #include <pmax/pmax/kn03.h>
 #include <pmax/pmax/kmin.h>
 #include <pmax/pmax/maxine.h>
@@ -275,9 +276,17 @@ pm_screen(crtslot)
 	int crtslot;
 {
 #if NPM > 0
-	if (pminit(0, 0, 1)) {
+	struct fbinfo *fi;
+	caddr_t base;
+	
+	base = (caddr_t)MIPS_PHYS_TO_KSEG1(KN01_SYS_PCC);
+	
+	if (fballoc(base, &fi))
+		return (0);
+	
+	if (pminit(fi, base, 0, 1)) {
 		cd.cn_pri = CN_INTERNAL;
-		return(1);
+		return (1);
 	}
 #endif
 	return (0);
@@ -292,11 +301,20 @@ int
 xcfb_screen(crtslot)
 	int crtslot;
 {
+#if NXCFB > 0
+	struct fbinfo *fi;
+	caddr_t base;
+#endif
 	if (systype != DS_MAXINE)
 		return 0;
-
 #if NXCFB > 0
-	if (crtslot == 3 && xcfbinit(NULL, NULL, 0, 0)) {
+	
+	base = (caddr_t)MIPS_PHYS_TO_KSEG1(XINE_PHYS_CFB_START);
+	
+	if (fballoc(base, &fi))
+		return (0);
+
+	if (crtslot == 3 && xcfbinit(fi, base, 0, 1)) {
 		cd.cn_pri = CN_INTERNAL;
 		return(1);
 	} else
