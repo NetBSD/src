@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.98 2001/02/06 18:47:09 christos Exp $
+#	$NetBSD: Makefile,v 1.98.2.1 2001/08/08 16:27:06 nathanw Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -77,6 +77,7 @@ INCSDIR=	/usr/include
 .include "${.CURDIR}/stdlib/Makefile.inc"
 .include "${.CURDIR}/string/Makefile.inc"
 .include "${.CURDIR}/termios/Makefile.inc"
+.include "${.CURDIR}/thread-stub/Makefile.inc"
 .include "${.CURDIR}/time/Makefile.inc"
 .include "${.CURDIR}/sys/Makefile.inc"
 .include "${.CURDIR}/yp/Makefile.inc"
