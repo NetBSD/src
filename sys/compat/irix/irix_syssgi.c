@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.c,v 1.31 2002/10/12 08:53:46 manu Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.32 2002/10/13 22:13:47 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.31 2002/10/12 08:53:46 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.32 2002/10/13 22:13:47 manu Exp $");
 
 #include "opt_ddb.h"
 
@@ -171,6 +171,39 @@ irix_sys_syssgi(p, v, retval)
 		SCARG(&cup, who) = (int)SCARG(uap, arg1);
 		SCARG(&cup, rusage) = (struct rusage *)SCARG(uap, arg2);
 		return sys_getrusage(p, &cup, retval);
+		break;
+	}
+
+	case IRIX_SGI_NUM_MODULES: /* <sys/systeminfo.h> get_num_modules() */
+		*retval = 1;
+		return 0;
+		break;
+		
+	case IRIX_SGI_MODULE_INFO: { /* <sys/systeminfo.h> get_module_info() */
+		int module_num = (int)SCARG(uap, arg1);
+		struct irix_module_info_s *imip = SCARG(uap, arg2);
+		int mss = (int)SCARG(uap, arg3);
+		struct irix_module_info_s imi;
+		char *idx;
+
+		if (module_num != 0)
+			return EINVAL;
+
+		imi.serial_num = (u_int64_t)hostid;
+		imi.mod_num = 0;
+		(void)snprintf(imi.serial_str, IRIX_MAX_SERIAL_SIZE, 
+		    "0800%08x", (u_int32_t)hostid);
+
+		/* Convert to upper case */
+		for (idx = imi.serial_str; *idx; idx++)
+			if (*idx >= 'a' && *idx <= 'f')
+				*idx += ('A' - 'a');
+
+		/* Don't copyout irrelevant data on user request */
+		if (mss > sizeof(struct irix_module_info_s))
+			mss = sizeof(struct irix_module_info_s);
+
+		return copyout(&imi, imip, mss);
 		break;
 	}
 
