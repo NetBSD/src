@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.23 1998/02/27 09:17:18 scottr Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.24 1998/09/22 16:01:51 scottr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -106,7 +106,7 @@ static void setScratch __P((struct part_map_entry *, struct disklabel *, int));
 static int getNamedType
 __P((struct part_map_entry *, int, struct disklabel *, int, int, int *));
 static char *read_mac_label __P((dev_t, void (*)(struct buf *),
-		register struct disklabel *, struct cpu_disklabel *));
+		struct disklabel *, struct cpu_disklabel *));
 
 /*
  * Find an entry in the disk label that is unused and return it
@@ -386,7 +386,7 @@ static char *
 read_mac_label(dev, strat, lp, osdep)
 	dev_t dev;
 	void (*strat)(struct buf *);
-	register struct disklabel *lp;
+	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
 	struct buf *bp;
@@ -474,10 +474,10 @@ char *
 readdisklabel(dev, strat, lp, osdep)
 	dev_t dev;
 	void (*strat)(struct buf *);
-	register struct disklabel *lp;
+	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
-	register struct buf *bp;
+	struct buf *bp;
 	char *msg = NULL;
 	struct disklabel *dlp;
 
@@ -487,7 +487,7 @@ readdisklabel(dev, strat, lp, osdep)
 	if (lp->d_secpercyl == 0) {
 		return msg = "Zero secpercyl";
 	}
-	bp = geteblk((int)lp->d_secsize * MAXPARTITIONS);
+	bp = geteblk((int)lp->d_secsize);
 
 	bp->b_dev = dev;
 	bp->b_blkno = 0;
@@ -496,12 +496,13 @@ readdisklabel(dev, strat, lp, osdep)
 	bp->b_flags = B_BUSY | B_READ;
 	bp->b_cylin = 1 / lp->d_secpercyl;
 	(*strat)(bp);
+
 	if (biowait(bp)) {
 		msg = "I/O error reading block zero";
 	} else {
-		u_int16_t	*sbSigp;
+		u_int16_t *sbSigp;
 
-		sbSigp = (u_int16_t *) bp->b_un.b_addr;
+		sbSigp = (u_int16_t *)bp->b_un.b_addr;
 		if (*sbSigp == 0x4552) {
 			msg = read_mac_label(dev, strat, lp, osdep);
 		} else {
@@ -509,12 +510,12 @@ readdisklabel(dev, strat, lp, osdep)
 			if (dlp->d_magic == DISKMAGIC) {
 				*lp = *dlp;
 			} else {
-				msg = "no disk label--NetBSD or Macintosh";
+				msg = "no disk label -- NetBSD or Macintosh";
 			}
 		}
 	}
 
-	bp->b_flags = B_INVAL | B_AGE | B_READ;
+	bp->b_flags = B_INVAL;
 	brelse(bp);
 	return (msg);
 }
@@ -524,13 +525,13 @@ readdisklabel(dev, strat, lp, osdep)
  */
 int
 setdisklabel(olp, nlp, openmask, osdep)
-	register struct disklabel *olp, *nlp;
+	struct disklabel *olp, *nlp;
 	u_long openmask;
 	struct cpu_disklabel *osdep;
 {
 #if 0
-	register i;
-	register struct partition *opp, *npp;
+	int i;
+	struct partition *opp, *npp;
 
 	if (nlp->d_magic != DISKMAGIC || nlp->d_magic2 != DISKMAGIC ||
 	    dkcksum(nlp) != 0)
@@ -572,7 +573,7 @@ int
 writedisklabel(dev, strat, lp, osdep)
 	dev_t dev;
 	void (*strat)(struct buf *);
-	register struct disklabel *lp;
+	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
 #if 0
