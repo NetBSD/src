@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.20 2003/07/25 08:26:21 dsl Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.21 2003/07/26 17:07:39 salo Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -56,7 +56,7 @@
 #include "msg_defs.h"
 #include "menu_defs.h"
 
-/* For the current state of this file blame abs@netbsd.org */
+/* For the current state of this file blame abs@NetBSD.org */
 /* Even though he wasn't the last to hack it, but he did admit doing so :-) */
 
 #define	PART_ANY	-1

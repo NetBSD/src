@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.63 2003/06/01 17:36:07 mbw Exp $
+.\"	$NetBSD: sysinst,v 1.64 2003/07/26 17:07:01 salo Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -701,7 +701,7 @@ Further information can be found on
 .\}
 .if \n[macppc] \{\
 Further information can be found on
-.Lk http://www.netbsd.org/Ports/macppc/x11.html
+.Lk http://www.NetBSD.org/Ports/macppc/x11.html
 .\}
 .bullet)
 .bullet)
@@ -759,7 +759,7 @@ ROM issues which prevent you from enabling 32-bit addressing.
 Please see the
 .Nx*M
 FAQ at
-.Lk http://www.netbsd.org/Ports/mac68k/faq/
+.Lk http://www.NetBSD.org/Ports/mac68k/faq/
 for more information.
 .tag)
 .Pp
@@ -790,7 +790,7 @@ from the
 menu.
 .Pp
 If the system does not come up, send mail to
-.Mt port-mac68k@netbsd.org
+.Mt port-mac68k@NetBSD.org
 describing your software, your hardware, and as complete a description of
 the problem as you can.
 As an alternative, try using the Traditional
@@ -1214,7 +1214,7 @@ reports
 .Dl "I can not find any hard disk for use by NetBSD"
 or the drive you wish to install onto is missing, then you should look at
 the FAQ entry
-.Lk http://www.netbsd.org/Ports/macppc/faq.html#nodisk
+.Lk http://www.NetBSD.org/Ports/macppc/faq.html#nodisk
 .\}
 .\}
 .It

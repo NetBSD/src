@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.37 2002/12/09 14:03:55 scw Exp $
+.\"	$NetBSD: xfer,v 1.38 2003/07/26 17:07:02 salo Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -216,7 +216,7 @@ diskless.
 No file transfer is needed, and all you have to do is to prepare files on
 the server.
 More information about diskless setting can be found at
-.Lk http://www.netbsd.org/Documentation/network/netboot/
+.Lk http://www.NetBSD.org/Documentation/network/netboot/
 .Pp
 The
 .Tn NEWS
@@ -296,7 +296,7 @@ diskless.
 No file transfer is needed, and all you have to do is to prepare files on
 the server.
 More information about diskless setting can be found at
-.Lk http://www.netbsd.org/Documentation/network/netboot/
+.Lk http://www.NetBSD.org/Documentation/network/netboot/
 .Pp
 On NWS-3xxx machines, PROM also supports network boot but it uses
 unusual protocol and it does not supported by
@@ -645,7 +645,7 @@ Finally, you need to know the numeric IP address of the
 machine itself.
 If you don't have access to a functioning nameserver during
 installation, the IP address of
-.Sy ftp.netbsd.org
+.Sy ftp.NetBSD.org
 is
 .Li 204.152.184.75
 (as of June, 2002).

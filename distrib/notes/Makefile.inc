@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.33 2003/07/10 10:34:11 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.34 2003/07/26 17:06:52 salo Exp $
 #
 
-# Ross Harvey <ross@netbsd.org>
+# Ross Harvey <ross@NetBSD.org>
 
 .include <bsd.own.mk>	# So we get /etc/mk.conf vars.
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"

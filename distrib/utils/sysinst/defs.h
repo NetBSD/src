@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.99 2003/07/25 08:26:21 dsl Exp $	*/
+/*	$NetBSD: defs.h,v 1.100 2003/07/26 17:07:39 salo Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -209,7 +209,7 @@ EXTERN int  clean_dist_dir INIT(0);
 /* Absolute path name where the distribution should be extracted from. */
 
 #if !defined(SYSINST_FTP_HOST)
-#define	SYSINST_FTP_HOST	"ftp.netbsd.org"
+#define	SYSINST_FTP_HOST	"ftp.NetBSD.org"
 #endif
 
 #if !defined(SYSINST_FTP_DIR)
