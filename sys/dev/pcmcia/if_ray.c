@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.46 2004/08/07 05:35:50 mycroft Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.47 2004/08/09 18:51:32 mycroft Exp $	*/
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.46 2004/08/07 05:35:50 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.47 2004/08/09 18:51:32 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -707,14 +707,15 @@ ray_enable(sc)
 
 	RAY_DPRINTF(("%s: enable\n", sc->sc_xname));
 
-	if ((error = ray_init(sc)) == 0) {
-		sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_NET,
-		    ray_intr, sc);
-		if (sc->sc_ih == NULL) {
-			ray_stop(sc);
-			return (EIO);
-		}
-	}
+	sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_NET,
+	    ray_intr, sc);
+	if (sc->sc_ih == NULL)
+		return (EIO);
+
+	error = ray_init(sc);
+	if (error)
+		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+
 	return (error);
 }
 
