@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raidframe.h,v 1.5 1999/03/02 03:18:48 oster Exp $	*/
+/*	$NetBSD: rf_raidframe.h,v 1.6 1999/08/10 18:18:30 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -139,5 +139,5 @@ typedef struct RF_DeviceConfig_s {
 #define RAIDFRAME_ADD_HOT_SPARE     _IOW ('r', 22, RF_SingleComponent_t)
 #define RAIDFRAME_REMOVE_HOT_SPARE  _IOW ('r', 23, RF_SingleComponent_t)
 #define RAIDFRAME_REBUILD_IN_PLACE  _IOW ('r', 24, RF_SingleComponent_t)
-
+#define RAIDFRAME_CHECK_PARITY      _IOWR ('r', 25, int)
 #endif				/* !_RF__RF_RAIDFRAME_H_ */
