@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.63.2.7 2001/12/29 21:09:09 sommerfeld Exp $	*/
+/*	$NetBSD: clock.c,v 1.63.2.8 2002/01/28 04:21:40 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -90,7 +90,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.63.2.7 2001/12/29 21:09:09 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.63.2.8 2002/01/28 04:21:40 sommerfeld Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -756,17 +756,24 @@ inittodr(base)
 	extern struct timeval tsc_time;
 #endif
 	/*
-	 * We mostly ignore the suggested time and go for the RTC clock time
-	 * stored in the CMOS RAM.  If the time can't be obtained from the
-	 * CMOS, or if the time obtained from the CMOS is 5 or more years
-	 * less than the suggested time, we used the suggested time.  (In
-	 * the latter case, it's likely that the CMOS battery has died.)
+	 * We mostly ignore the suggested time (which comes from the
+	 * file system) and go for the RTC clock time stored in the
+	 * CMOS RAM.  If the time can't be obtained from the CMOS, or
+	 * if the time obtained from the CMOS is 5 or more years less
+	 * than the suggested time, we used the suggested time.  (In
+	 * the latter case, it's likely that the CMOS battery has
+	 * died.)
 	 */
 
-	if (base && base < 25*SECYR) {	/* if before 1995, something's odd... */
+	/*
+	 * XXX Traditionally, the dates in this code snippet get
+	 * updated every few years. It would be neater if they could
+	 * somehow be automatically set when the kernel was built.
+	 */
+	if (base && base < 30*SECYR) {	/* if before 2000, something's odd. */
 		printf("WARNING: preposterous time in file system\n");
-		/* read the system clock anyway */
-		base = 27*SECYR + 186*SECDAY + SECDAY/2;
+		/* Since the fs time is silly, set the base time to 2002 */
+		base = 32*SECYR;
 	}
 
 	s = splclock();

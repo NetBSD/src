@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.300.2.24 2001/12/29 23:21:18 sommerfeld Exp $
+# $NetBSD: GENERIC,v 1.300.2.25 2002/01/28 04:21:35 sommerfeld Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.300.2.24 $"
+#ident 		"GENERIC-$Revision: 1.300.2.25 $"
 
 maxusers	32		# estimated number of users
 
@@ -77,6 +77,8 @@ options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 options 	LKM		# loadable kernel modules
+
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks
@@ -473,8 +475,8 @@ wds0	at isa? port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
 wds1	at isa? port 0x358 irq 11 drq 5
 
 # CardBus SCSI cards
-#ahc*	at cardbus? dev ? function ?	# Adaptec ADP-1480
 #adv*	at cardbus? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
+#ahc*	at cardbus? dev ? function ?	# Adaptec ADP-1480
 
 # MCA SCSI cards
 aha*	at mca? slot ?			# Adaptec AHA-1640
@@ -776,9 +778,14 @@ uaudio*	at uhub? port ? configuration ?
 # USB MIDI
 umidi* at uhub? port ? configuration ?
 
-# USB IrDA bridges
+# USB IrDA
+# USB-IrDA bridge spec
 uirda* at uhub? port ? configuration ? interface ?
 irframe* at uirda?
+
+# SigmaTel STIr4200 USB/IrDA Bridge
+ustir* at uhub? port ?
+irframe* at ustir?
 
 # USB Ethernet adapters
 aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
@@ -816,6 +823,10 @@ scsibus* at usscanner? channel ?
 # Y@P firmware loader
 uyap* at uhub? port ?
 
+# D-Link DSB-R100 USB radio
+udsbr*	at uhub? port ?
+radio*	at udsbr?
+
 # USB Generic driver
 ugen*	at uhub? port ?
 
@@ -838,6 +849,7 @@ clct*	at pci? dev ? function ?	# Cirrus Logic CS4281
 cmpci*	at pci? dev ? function ?	# C-Media CMI8338/8738
 eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
 emuxki*	at pci? dev ? function ?	# Creative SBLive! and PCI512
+esa*	at pci? dev ? function ?	# ESS Allegro-1 / Maestro-3 PCI Audio
 esm*	at pci? dev ? function ?	# ESS Maestro-1/2/2e PCI Audio Accelerator
 eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
 fms*	at pci? dev ? function ?	# Forte Media FM801
@@ -858,8 +870,8 @@ ym*	at isapnp?			# Yamaha OPL3-SA3 audio
 #ess0	at isa? port 0x220 irq 5 drq 1 drq2 5	# ESS 18XX
 gus0	at isa? port 0x220 irq 7 drq 1 drq2 6	# Gravis Ultra Sound
 pas0	at isa? port 0x220 irq 7 drq 1		# ProAudio Spectrum
-pss0	at isa? port 0x220 irq 7 drq 6		# Personal Sound System
-sp0	at pss0 port 0x530 irq 10 drq 0		# 	sound port driver
+#pss0	at isa? port 0x220 irq 7 drq 6		# Personal Sound System
+#sp0	at pss0 port 0x530 irq 10 drq 0		# 	sound port driver
 sb0	at isa? port 0x220 irq 5 drq 1 drq2 5	# SoundBlaster
 wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
 
@@ -891,6 +903,7 @@ audio*	at clct?
 audio*	at cmpci?
 audio*	at eap?
 audio*	at emuxki?
+audio*	at esa?
 #audio*	at esl?
 audio*	at esm?
 audio*	at eso?
@@ -901,7 +914,7 @@ audio*	at guspnp?
 audio*	at neo?
 audio*	at pas?
 audio*	at sb?
-audio*	at sp?
+#audio*	at sp?
 audio*	at sv?
 audio*	at uaudio?
 audio*	at wss?
@@ -933,10 +946,34 @@ midi*	at umidi?		# USB MIDI
 #spkr0	at pcppi?		# PC speaker
 
 
+# FM-Radio devices
+# ISA radio devices
+#az0	at isa? port 0x350      # Aztech/PackardBell FM Radio Card
+#az1	at isa? port 0x358
+#rt0	at isa? port 0x20c      # AIMS Lab Radiotrack & compatible
+#rt1	at isa? port 0x284
+#rt2	at isa? port 0x30c
+#rt3	at isa? port 0x384
+#rtii0	at isa? port 0x20c      # AIMS Lab Radiotrack II FM Radio Card
+#rtii1	at isa? port 0x30c
+#sf2r0	at isa? port 0x384      # SoundForte RadioLink SF16-FMR2 FM Radio Card
+
+# PCI radio devices
+#mr*	at pci? dev ? function ? # Guillemot Maxi Radio FM 2000 Radio Card
+
+# Radio support
+#radio*	at az?
+#radio*	at mr?
+#radio*	at rt?
+#radio*	at rtii?
+#radio*	at sf2r?
+
+
 # TV cards
 
 # Brooktree 848/849/878/879 based TV cards
 bktr* at pci? dev ? function ?
+radio* at bktr?
 
 
 # Mice
@@ -975,6 +1012,9 @@ joy*	at pci?				# Game ports (usually on audio cards)
 # Planetconnect Satellite receiver driver.
 #satlink0 at isa? port 0x300 drq 1
 
+# Middle Digital, Inc. PCI-Weasel serial console board control
+# devices (watchdog timer, etc.)
+weasel* at pci?
 
 # Pull in optional local configuration
 include	"arch/i386/conf/GENERIC.local"
@@ -984,8 +1024,17 @@ include	"arch/i386/conf/GENERIC.local"
 
 # disk/mass storage pseudo-devices
 pseudo-device	ccd		4	# concatenated/striped disk devices
-#pseudo-device	raid		4	# RAIDframe disk driver
+# RAIDframe is broken with MULTIPROCESSOR / LOCKDEBUG
+#pseudo-device	raid		8	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+# Options to enable various other RAIDframe RAID types.
+# options	RF_INCLUDE_EVENODD=1
+# options	RF_INCLUDE_RAID5_RS=1
+# options	RF_INCLUDE_PARITYLOGGING=1
+# options	RF_INCLUDE_CHAINDECLUSTER=1
+# options	RF_INCLUDE_INTERDECLUSTER=1
+# options 	RF_INCLUDE_PARITY_DECLUSTERING=1
+# options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd		4	# disk-like interface to files
 

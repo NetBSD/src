@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.22.2.7 2001/12/29 21:09:04 sommerfeld Exp $
+#	$NetBSD: GENERIC_TINY,v 1.22.2.8 2002/01/28 04:21:36 sommerfeld Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -56,6 +56,8 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	NMBCLUSTERS=256
 
 #options 	LKM		# loadable kernel modules
+
+options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks

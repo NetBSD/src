@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.135.2.7 2001/12/29 21:09:05 sommerfeld Exp $	*/
+/*	$NetBSD: conf.c,v 1.135.2.8 2002/01/28 04:21:38 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.135.2.7 2001/12/29 21:09:05 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.135.2.8 2002/01/28 04:21:38 sommerfeld Exp $");
 
 #include "opt_compat_svr4.h"
 
@@ -169,6 +169,8 @@ cdev_decl(audio);
 cdev_decl(midi);
 #include "sequencer.h"
 cdev_decl(music);
+#include "radio.h"
+cdev_decl(radio);
 cdev_decl(svr4_net);
 cdev_decl(ccd);
 cdev_decl(raid);
@@ -193,6 +195,8 @@ cdev_decl(urio);
 cdev_decl(uscanner);
 #include "vcoda.h"
 cdev_decl(vc_nb_);
+#include "netsmb.h"
+cdev_decl(nsmb_dev_);
 
 #include "ipfilter.h"
 #include "satlink.h"
@@ -253,6 +257,9 @@ cdev_decl(wsfont);
 
 #include "pci.h"
 cdev_decl(pci);
+
+#include "clockctl.h"
+cdev_decl(clockctl);
 
 struct cdevsw	cdevsw[] =
 {
@@ -350,6 +357,9 @@ struct cdevsw	cdevsw[] =
 	cdev__oci_init(NDPTI,dpti),	/* 84: DPT/Adaptec RAID management */
 	cdev_ir_init(NIRFRAMEDRV,irframe),/* 85: IrDA frame driver */
 	cdev_ir_init(NCIR,cir),		/* 86: Consumer Ir */
+	cdev_radio_init(NRADIO,radio),	/* 87: generic radio I/O */
+	cdev_netsmb_init(NNETSMB,nsmb_dev_),/* 88: SMB */
+	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 89: clockctl pseudo device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -478,6 +488,9 @@ static int chrtoblktbl[] = {
 	/* 84 */	NODEV,
 	/* 85 */	NODEV,
 	/* 86 */	NODEV,
+	/* 87 */	NODEV,
+	/* 88 */	NODEV,
+	/* 89 */	NODEV,
 };
 
 /*

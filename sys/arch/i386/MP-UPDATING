@@ -1,3 +1,12 @@
+Last Synchronized: Sun Jan 27 22:33:13 EST 2002
+
+Yet another mergeup.
+
+Note that the mainline got RAIDframe added to GENERIC; however, this
+has been commented out on the branch because RAIDframe currently
+doesn't use locks correctly; with LOCKDEBUG, you'll panic, which means
+without LOCKDEBUG, you'll likely probably deadlock/hang in ugly ways.
+
 Last Synchronized: Sat Dec 29 14:45:06 EST 2001
 
 Yet another mergeup.  

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC_ISDN,v 1.3.2.3 2001/12/29 21:09:04 sommerfeld Exp $
+# $NetBSD: GENERIC_ISDN,v 1.3.2.4 2002/01/28 04:21:36 sommerfeld Exp $
 #
 # GENERIC kernel with all supported ISDN devices and drivers
 
@@ -43,6 +43,7 @@ options 	ISICPNP_ELSA_PCC16	# later variant of ELSA QuickStep
 options 	ISICPNP_SEDLBAUER	# Sedlbauer WinSpeed
 options 	ISICPNP_DYNALINK	# Dynalink IS64PH
 options 	ISICPNP_SIEMENS_ISURF2	# Siemens I-Surf
+options		ISICPNP_ITKIX		# ITK IX PnP cards
 isic* at isapnp?
 #
 #---------------------------------------------------------------------

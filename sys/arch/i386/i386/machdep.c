@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.376.2.31 2001/12/29 23:31:02 sommerfeld Exp $	*/
+/*	$NetBSD: machdep.c,v 1.376.2.32 2002/01/28 04:21:38 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.376.2.31 2001/12/29 23:31:02 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.376.2.32 2002/01/28 04:21:38 sommerfeld Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -788,7 +788,9 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			{
 				0, "Athlon Model 1", "Athlon Model 2",
 				"Duron", "Athlon Model 4 (Thunderbird)",
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, "Athlon Model 6 (Palomino)",
+				"Athlon Model 7 (Morgan)", 0, 0, 0, 0,
+				0, 0, 0, 0,
 				"K7 (Athlon)"	/* Default */
 			},
 			NULL,
@@ -2685,6 +2687,10 @@ initgdt(union descriptor *tgdt)
 	    SDT_MEMERA, SEL_UPL, 1, 1);
 	setsegment(&gdt[GUDATA_SEL].sd, 0, i386_btop(VM_MAXUSER_ADDRESS) - 1,
 	    SDT_MEMRWA, SEL_UPL, 1, 1);
+#ifdef COMPAT_MACH
+	setgate(&gdt[GMACHCALLS_SEL].gd, &IDTVEC(mach_trap), 1,
+	    SDT_SYS386CGT, SEL_UPL);
+#endif
 #if NBIOSCALL > 0
 	/* bios trampoline GDT entries */
 	setsegment(&gdt[GBIOSCODE_SEL].sd, 0, 0xfffff, SDT_MEMERA, SEL_KPL, 0,
@@ -3102,6 +3108,7 @@ init386(first_avail)
 
 	setsegment(&gdt[GLDT_SEL].sd, ldt, NLDT * sizeof(ldt[0]) - 1,
 	    SDT_SYSLDT, SEL_KPL, 0, 0);
+
 	/* make ldt gates and memory segments */
 	setgate(&ldt[LSYS5CALLS_SEL].gd, &IDTVEC(osyscall), 1,
 	    SDT_SYS386CGT, SEL_UPL);
