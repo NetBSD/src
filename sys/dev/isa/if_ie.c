@@ -40,7 +40,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: if_ie.c,v 1.11 1994/05/13 06:13:55 mycroft Exp $
+ *	$Id: if_ie.c,v 1.12 1994/07/16 13:45:59 mycroft Exp $
  */
 
 /*
@@ -387,7 +387,7 @@ sl_probe(sc, ia)
 	default:
 		/* Anything else is not recognized or cannot be used. */
 		printf("%s: unknown AT&T board type code %d\n",
-		    sc->sc_dev.dv_xname, sc->hard_type);
+		    sc->sc_dev.dv_xname, SL_BOARD(c));
 		return 0;
 	}
 
