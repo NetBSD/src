@@ -1,4 +1,4 @@
-/*	$NetBSD: crl.c,v 1.14 2003/01/19 22:29:23 ragge Exp $	*/
+/*	$NetBSD: crl.c,v 1.15 2003/01/30 00:28:19 matt Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -271,7 +271,7 @@ crlintr(arg)
 		break;
 
 	case CRL_S_HWERR:
-		printf("crl: hard error sn%d\n", bp->b_blkno);
+		printf("crl: hard error sn" PRId64 "\n", bp->b_blkno);
 		crltab.crl_active = CRL_F_ABORT;
 		mtpr(STXCS_IE | CRL_F_ABORT, PR_STXCS);
 		break;
