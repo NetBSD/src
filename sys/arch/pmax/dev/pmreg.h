@@ -1,4 +1,4 @@
-/*	$NetBSD: pmreg.h,v 1.4 1994/10/26 21:09:13 cgd Exp $	*/
+/*	$NetBSD: pmreg.h,v 1.5 1995/09/13 05:46:02 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -92,19 +92,3 @@ typedef volatile struct PCCRegs {
 	/* offset for cursor X & Y locations */
 #define PCC_X_OFFSET	212
 #define PCC_Y_OFFSET	34
-
-typedef volatile struct VDACRegs {
-	u_char	mapWA;		/* address register (color map write) */
-	char	pad1[3];
-	u_char	map;		/* color map */
-	char	pad2[3];
-	u_char	mask;		/* pixel read mask */
-	char	pad3[3];
-	u_char	mapRA;		/* address register (color map read) */
-	char	pad4[3];
-	u_char	overWA;		/* address register (overlay map write) */
-	char	pad5[3];
-	u_char	over;		/* overlay map */
-	char	pad6[7];
-	u_char	overRA;		/* address register (overlay map read) */
-} VDACRegs;
