@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.81 2001/04/14 13:25:46 kleink Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.82 2001/06/03 02:21:35 chs Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -132,7 +132,6 @@ int	procfs_setattr	__P((void *));
 #define	procfs_ioctl	genfs_enoioctl
 #define	procfs_poll	genfs_poll
 #define procfs_revoke	genfs_revoke
-#define	procfs_mmap	genfs_eopnotsupp
 #define	procfs_fsync	genfs_nullop
 #define	procfs_seek	genfs_nullop
 #define	procfs_remove	genfs_eopnotsupp_rele
@@ -148,7 +147,7 @@ int	procfs_inactive	__P((void *));
 int	procfs_reclaim	__P((void *));
 #define	procfs_lock	genfs_lock
 #define	procfs_unlock	genfs_unlock
-int	procfs_bmap	__P((void *));
+#define	procfs_bmap	genfs_badop
 #define	procfs_strategy	genfs_badop
 int	procfs_print	__P((void *));
 int	procfs_pathconf	__P((void *));
@@ -183,7 +182,6 @@ const struct vnodeopv_entry_desc procfs_vnodeop_entries[] = {
 	{ &vop_ioctl_desc, procfs_ioctl },		/* ioctl */
 	{ &vop_poll_desc, procfs_poll },		/* poll */
 	{ &vop_revoke_desc, procfs_revoke },		/* revoke */
-	{ &vop_mmap_desc, procfs_mmap },		/* mmap */
 	{ &vop_fsync_desc, procfs_fsync },		/* fsync */
 	{ &vop_seek_desc, procfs_seek },		/* seek */
 	{ &vop_remove_desc, procfs_remove },		/* remove */
@@ -210,7 +208,7 @@ const struct vnodeopv_entry_desc procfs_vnodeop_entries[] = {
 	{ &vop_vfree_desc, procfs_vfree },		/* vfree */
 	{ &vop_truncate_desc, procfs_truncate },	/* truncate */
 	{ &vop_update_desc, procfs_update },		/* update */
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
+	{ NULL, NULL }
 };
 const struct vnodeopv_desc procfs_vnodeop_opv_desc =
 	{ &procfs_vnodeop_p, procfs_vnodeop_entries };
@@ -295,37 +293,6 @@ procfs_close(v)
 		break;
 	}
 
-	return (0);
-}
-
-/*
- * do block mapping for pfsnode (vp).
- * since we don't use the buffer cache
- * for procfs this function should never
- * be called.  in any case, it's not clear
- * what part of the kernel ever makes use
- * of this function.  for sanity, this is the
- * usual no-op bmap, although returning
- * (EIO) would be a reasonable alternative.
- */
-int
-procfs_bmap(v)
-	void *v;
-{
-	struct vop_bmap_args /* {
-		struct vnode *a_vp;
-		daddr_t  a_bn;
-		struct vnode **a_vpp;
-		daddr_t *a_bnp;
-		int * a_runp;
-	} */ *ap = v;
-
-	if (ap->a_vpp != NULL)
-		*ap->a_vpp = ap->a_vp;
-	if (ap->a_bnp != NULL)
-		*ap->a_bnp = ap->a_bn;
-	if (ap->a_runp != NULL)
-		*ap->a_runp = 0;
 	return (0);
 }
 
