@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.10 1998/02/06 00:22:43 pk Exp $	*/
+/*	$NetBSD: xd.c,v 1.11 1998/04/24 20:20:33 pk Exp $	*/
 
 /*
  *
@@ -1634,15 +1634,15 @@ xdc_submit_iorq(xdcsc, iorqno, type)
  */
 int
 xdc_piodriver(xdcsc, iorqno, freeone)
-	struct xdc_softc *xdcsc;
-	char    iorqno;
-	int     freeone;
+	struct	xdc_softc *xdcsc;
+	int	iorqno;
+	int	freeone;
 
 {
-	int     nreset = 0;
-	int     retval = 0;
-	u_long  count;
-	struct xdc *xdc = xdcsc->xdc;
+	int	nreset = 0;
+	int	retval = 0;
+	u_long	count;
+	struct	xdc *xdc = xdcsc->xdc;
 #ifdef XDC_DEBUG
 	printf("xdc_piodriver(%s, %d, freeone=%d)\n", xdcsc->sc_dev.dv_xname,
 	    iorqno, freeone);
