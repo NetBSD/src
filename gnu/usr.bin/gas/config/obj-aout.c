@@ -228,6 +228,10 @@ symbolS *symbol_rootP;
 		temp = S_GET_NAME(symbolP);
 		S_SET_OFFSET(symbolP, symbolP->sy_name_offset);
 		
+		/* Any symbol still undefined and is not a dbg symbol is made N_EXT. */
+		if (!S_IS_DEBUG(symbolP) && !S_IS_DEFINED(symbolP))
+			S_SET_EXTERNAL(symbolP);
+		
 		/*
 		 * Put aux info in lower four bits of `n_other' field
 		 * Do this only now, because things like S_IS_DEFINED()
@@ -236,10 +240,6 @@ symbolS *symbol_rootP;
 		S_SET_OTHER(symbolP,
 			(symbolP->sy_bind << 4) | (symbolP->sy_aux & 0xf) );
 
-		/* Any symbol still undefined and is not a dbg symbol is made N_EXT. */
-		if (!S_IS_DEBUG(symbolP) && !S_IS_DEFINED(symbolP))
-			S_SET_EXTERNAL(symbolP);
-		
 		if (S_GET_TYPE(symbolP) == N_SIZE) {
 			expressionS	*exp = (expressionS*)symbolP->sy_sizexp;
 			long		size = 0;
@@ -468,7 +468,7 @@ object_headers *headers;
 	
 	/* JF deal with forward references first... */
 	for (symbolP = symbol_rootP; symbolP; symbolP = symbol_next(symbolP)) {
-		if (symbolP->sy_forward) {
+		if (symbolP->sy_forward && symbolP->sy_forward != symbolP) {
 			S_SET_SEGMENT(symbolP,
 				      S_GET_SEGMENT(symbolP->sy_forward));
 			S_SET_VALUE(symbolP, S_GET_VALUE(symbolP)
@@ -478,8 +478,8 @@ object_headers *headers;
 			symbolP->sy_aux |= symbolP->sy_forward->sy_aux;
 			if (S_IS_EXTERNAL(symbolP->sy_forward))
 				S_SET_EXTERNAL(symbolP);
-			symbolP->sy_forward=0;
 		} /* if it has a forward reference */
+		symbolP->sy_forward=0;
 	} /* walk the symbol chain */
 	
 	tc_crawl_symbol_chain(headers);
@@ -488,7 +488,7 @@ object_headers *headers;
 	while ((symbolP  = *symbolPP) != NULL) {
 		if (flagseen['R'] && (S_GET_SEGMENT(symbolP) == SEG_DATA)) {
 			S_SET_SEGMENT(symbolP, SEG_TEXT);
-		} /* if pusing data into text */
+		} /* if pushing data into text */
 		
 		S_SET_VALUE(symbolP, S_GET_VALUE(symbolP) + symbolP->sy_frag->fr_address);
 		
