@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.29 1996/12/17 07:32:55 is Exp $	*/
+/*	$NetBSD: genassym.c,v 1.30 1997/02/02 07:05:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -71,6 +71,25 @@ main()
 	struct CIA *cia = (struct CIA *)0;
 	struct isr *isr = (struct isr *)0;
 	struct mdproc *mdproc = (struct mdproc *)0;
+
+	printf("#define\tMMU_68060 %d\n", MMU_68060);
+	printf("#define\tMMU_68040 %d\n", MMU_68040);
+	printf("#define\tMMU_68030 %d\n", MMU_68030);
+	printf("#define\tMMU_68851 %d\n", MMU_68851);
+
+	printf("#define\tCPU_68020 %d\n", CPU_68020);
+	printf("#define\tCPU_68030 %d\n", CPU_68030);
+	printf("#define\tCPU_68040 %d\n", CPU_68040);
+	printf("#define\tCPU_68060 %d\n", CPU_68060);
+
+	printf("#define\tEC_NONE %d\n"0, EC_NONE);
+
+	printf("#define\tFPU_NONE %d\n", FPU_NONE);
+	printf("#define\tFPU_68881 %d\n", FPU_68881);
+	printf("#define\tFPU_68882 %d\n", FPU_68882);
+	printf("#define\tFPU_68040 %d\n", FPU_68040);
+	printf("#define\tFPU_68060 %d\n", FPU_68060);
+	printf("#define\tFPU_UNKNOWN %d\n", FPU_UNKNOWN);
 
 	printf("#define\tP_FORW %p\n", (void *)&p->p_forw);
 	printf("#define\tP_BACK %p\n", (void *)&p->p_back);
@@ -169,7 +188,6 @@ main()
 	printf("#define\tISR_FORW %p\n", (void *)&isr->isr_forw);
 	printf("#define\tISR_INTR %p\n", (void *)&isr->isr_intr);
 	printf("#define\tISR_ARG %p\n", (void *)&isr->isr_arg);
-	printf("#define\tMMU_68040 %d\n", MMU_68040);
 #ifdef DRACO
 	printf("#define\tDRACO %d\n", DRACO);
 #endif
