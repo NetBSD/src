@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_ioctl.c,v 1.24 2002/09/23 04:49:32 simonb Exp $	*/
+/*	$NetBSD: ibcs2_ioctl.c,v 1.25 2002/09/23 04:55:09 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_ioctl.c,v 1.24 2002/09/23 04:49:32 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_ioctl.c,v 1.25 2002/09/23 04:55:09 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -454,8 +454,6 @@ ibcs2_sys_ioctl(p, v, retval)
 	    }
 
 	case IBCS2_TCSBRK:
-		DPRINTF(("ibcs2_ioctl(%d): TCSBRK ", p->p_pid));
-		return ENOSYS;
 	    {
 		int t;
 		t = (int) SCARG(uap, data);
