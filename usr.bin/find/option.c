@@ -1,4 +1,4 @@
-/*	$NetBSD: option.c,v 1.17 2001/12/02 12:46:39 kleink Exp $	*/
+/*	$NetBSD: option.c,v 1.18 2002/09/27 15:56:28 provos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "from: @(#)option.c	8.2 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: option.c,v 1.17 2001/12/02 12:46:39 kleink Exp $");
+__RCSID("$NetBSD: option.c,v 1.18 2002/09/27 15:56:28 provos Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,9 @@ static OPTION const options[] = {
 	{ "-cnewer",	N_CNEWER,	c_cnewer,	1 },
 	{ "-ctime",	N_CTIME,	c_ctime,	1 },
 	{ "-depth",	N_DEPTH,	c_depth,	0 },
+	{ "-empty",	N_EMPTY,	c_empty,	0 },
 	{ "-exec",	N_EXEC,		c_exec,		1 },
+	{ "-execdir",	N_EXECDIR,	c_execdir,	1 },
 	{ "-flags",	N_FLAGS,	c_flags,	1 },
 	{ "-follow",	N_FOLLOW,	c_follow,	0 },
 	{ "-fstype",	N_FSTYPE,	c_fstype,	1 },
@@ -82,6 +84,8 @@ static OPTION const options[] = {
 	{ "-iregex",	N_IREGEX,	c_iregex,	1 },
 	{ "-links",	N_LINKS,	c_links,	1 },
 	{ "-ls",	N_LS,		c_ls,		0 },
+	{ "-maxdepth",	N_MAXDEPTH,	c_maxdepth,	1 },
+	{ "-mindepth",	N_MINDEPTH,	c_mindepth,	1 },
 	{ "-mmin",	N_MMIN,		c_mmin,		1 },
 	{ "-mtime",	N_MTIME,	c_mtime,	1 },
 	{ "-name",	N_NAME,		c_name,		1 },
