@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.14 1994/10/27 04:16:03 cgd Exp $	*/
+/*	$NetBSD: endian.h,v 1.15 1995/03/28 18:16:54 jtc Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991 Regents of the University of California.
@@ -68,7 +68,7 @@ __END_DECLS
 
 #ifdef __GNUC__
 
-#if defined(KERNEL) && !defined(I386_CPU)
+#if defined(_KERNEL) && !defined(I386_CPU)
 #define __byte_swap_long(x) \
 ({ register unsigned long __x = (x); \
    __asm ("bswap %1" \
@@ -82,7 +82,7 @@ __END_DECLS
 	: "=r" (__x) \
 	: "0" (__x)); \
    __x; })
-#endif	/* KERNEL && ... */
+#endif	/* _KERNEL && ... */
 
 #define __byte_swap_word(x) \
 ({ register unsigned short __x = (x); \

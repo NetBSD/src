@@ -1,4 +1,4 @@
-/*	$NetBSD: mips1_pte.h,v 1.4 1994/10/26 21:09:55 cgd Exp $	*/
+/*	$NetBSD: mips1_pte.h,v 1.5 1995/03/28 18:19:26 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -93,7 +93,7 @@ typedef union pt_entry {
 #define PG_SHIFT	12
 #define	PG_PFNUM(x)	(((x) & PG_FRAME) >> PG_SHIFT)
 
-#if defined(KERNEL) && !defined(LOCORE)
+#if defined(_KERNEL) && !defined(LOCORE)
 /*
  * Kernel virtual address to page table entry and visa versa.
  */

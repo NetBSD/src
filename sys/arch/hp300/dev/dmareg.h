@@ -1,4 +1,4 @@
-/*	$NetBSD: dmareg.h,v 1.4 1994/10/26 07:23:41 cgd Exp $	*/
+/*	$NetBSD: dmareg.h,v 1.5 1995/03/28 18:15:59 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -96,7 +96,7 @@ struct	dmareg {
 #define DMA_ALIGN	0x20
 #define DMA_WRAP	0x40
 
-#ifdef KERNEL
+#ifdef _KERNEL
 /*
  * Macros to attempt to hide the HW differences between the 98620B DMA
  * board and the 1TQ4-0401 DMA chip (68020C "board").  The latter

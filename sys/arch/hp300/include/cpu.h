@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.9 1994/10/26 07:26:19 cgd Exp $	*/
+/*	$NetBSD: cpu.h,v 1.10 1995/03/28 18:16:30 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -163,7 +163,7 @@ extern unsigned char ssir;
 #define	MHZ_33		4
 #define	MHZ_50		6
 
-#ifdef KERNEL
+#ifdef _KERNEL
 extern	int machineid, mmutype, ectype;
 extern	char *intiobase, *intiolimit;
 

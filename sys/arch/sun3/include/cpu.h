@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.14 1994/11/21 21:33:29 gwr Exp $	*/
+/*	$NetBSD: cpu.h,v 1.15 1995/03/28 18:20:44 jtc Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -44,7 +44,7 @@
  *	cpu.h,v 1.2 1993/05/22 07:58:17 cgd Exp
  */
 
-#ifdef KERNEL
+#ifdef _KERNEL
 
 /*
  * Exported definitions unique to sun3/68k cpu support.
@@ -169,4 +169,4 @@ extern	char *intiobase, *intiolimit;
 
 #define IC_CLEAR (IC_CLR|IC_ENABLE)
 
-#endif	/* KERNEL */
+#endif	/* _KERNEL */

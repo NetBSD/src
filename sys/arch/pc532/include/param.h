@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.10 1995/03/18 07:23:39 cgd Exp $	*/
+/*	$NetBSD: param.h,v 1.11 1995/03/28 18:18:22 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -48,7 +48,7 @@
 #ifndef _MACHINE_PARAM_H_
 #define _MACHINE_PARAM_H_
 
-#ifdef KERNEL
+#ifdef _KERNEL
 #include <machine/cpu.h>
 #endif
 
@@ -165,7 +165,7 @@
 #define ns532_btop(x)		((unsigned)(x) >> PGSHIFT)
 #define ns532_ptob(x)		((unsigned)(x) << PGSHIFT)
 
-#ifndef KERNEL
+#ifndef _KERNEL
 #define	DELAY(n)	{ volatile int N = (n); while (--N > 0); }
 #endif
 
