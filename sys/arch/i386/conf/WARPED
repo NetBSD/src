@@ -1,4 +1,4 @@
-#	$NetBSD: WARPED,v 1.31 1998/02/06 07:21:49 mrg Exp $
+#	$NetBSD: WARPED,v 1.32 1998/02/06 11:20:45 mrg Exp $
 #
 #	WARPED - ftp/sup.netbsd.org server machine
 #
@@ -40,11 +40,6 @@ options 	RTC_OFFSET=480	# hardware clock is this many mins. west of GMT
 options 	KTRACE		# system call tracing, a la ktrace(1)
 
 #options 	UVM		# Use UVM instead of Mach VM.
-
-# These are required for Mach VM
-options 	VNODEPAGER	# paging to vnodes
-options 	SWAPPAGER	# pageout
-options 	DEVPAGER	# paging to devices
 
 #options 	SYSVMSG		# System V-like message queues
 #options 	SYSVSEM		# System V-like semaphores
