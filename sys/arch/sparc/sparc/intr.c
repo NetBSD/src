@@ -42,7 +42,7 @@
  *	@(#)intr.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: intr.c,v 1.20 92/11/26 03:04:53 torek Exp  (LBL)
- * $Id: intr.c,v 1.3 1994/02/01 06:01:39 deraadt Exp $
+ * $Id: intr.c,v 1.4 1994/04/20 12:45:37 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -120,10 +120,8 @@ soft01intr(fp)
 			splx(s);
 			sir.sir_which[SIR_NET] = 0;
 #ifdef INET
-#ifdef NETISR_ARP
 			if (n & (1 << NETISR_ARP))
 				arpintr();
-#endif
 			if (n & (1 << NETISR_IP))
 				ipintr();
 #endif
