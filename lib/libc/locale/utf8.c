@@ -1,4 +1,4 @@
-/*	$NetBSD: utf8.c,v 1.1 2000/12/21 12:17:35 itojun Exp $	*/
+/*	$NetBSD: utf8.c,v 1.2 2000/12/21 12:19:44 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	citrus Id: utf8.c,v 1.9 2000/12/21 07:15:25 itojun Exp
+ *	citrus Id: utf8.c,v 1.10 2000/12/21 12:18:55 itojun Exp
  */
 
 /*-
@@ -69,7 +69,7 @@
 #if 0
 static char sccsid[] = "@(#)utf2.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: utf8.c,v 1.1 2000/12/21 12:17:35 itojun Exp $");
+__RCSID("$NetBSD: utf8.c,v 1.2 2000/12/21 12:19:44 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -183,7 +183,6 @@ _UTF8_sgetrune(rl, string, n, result, state)
 		/* sanity check on value range */
 		i = findlen(v);
 		if (i != c) {
-			abort();
 			if (result)
 				*result = string;
 			return (___INVALID_RUNE(rl));
