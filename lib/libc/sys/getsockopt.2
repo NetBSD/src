@@ -1,4 +1,4 @@
-.\"	$NetBSD: getsockopt.2,v 1.13 1998/04/28 22:28:31 fair Exp $
+.\"	$NetBSD: getsockopt.2,v 1.14 1998/07/28 09:43:30 is Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -244,6 +244,8 @@ if flow control does not allow the smaller of the low water mark value
 or the entire request to be processed.
 A
 .Xr select 2
+or
+.Xr poll 2
 operation testing the ability to write to a socket will return true
 only if the low water mark amount could be processed.
 The default value for
@@ -356,6 +358,8 @@ is not in a valid part of the process address space.
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr socket 2 ,
+.Xr select 2 ,
+.Xr poll 2 ,
 .Xr getprotoent 3 ,
 .Xr protocols 5
 .Sh BUGS

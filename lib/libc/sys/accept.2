@@ -1,4 +1,4 @@
-.\"	$NetBSD: accept.2,v 1.7 1996/01/31 20:14:42 mycroft Exp $
+.\"	$NetBSD: accept.2,v 1.8 1998/07/28 09:43:30 is Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -98,9 +98,11 @@ is used with connection-based socket types, currently with
 .Pp
 It is possible to
 .Xr select 2
+or
+.Xr poll 2
 a socket for the purposes of doing an
 .Fn accept
-by selecting it for read.
+by selecting or polling it for read.
 .Pp
 For certain protocols which require an explicit confirmation,
 such as
@@ -163,6 +165,7 @@ The system file table is full.
 .Xr bind 2 ,
 .Xr connect 2 ,
 .Xr listen 2 ,
+.Xr poll ,
 .Xr select 2 ,
 .Xr socket 2
 .Sh HISTORY
