@@ -1071,7 +1071,7 @@ void convert_iif() {
 #ifdef PIC
 			int reloc_mode;
 			if ((i == 4 || i == 6)
-			    && flagseen['k']
+			    && picmode
 			    && (iif.iifP[i].addr_mode == 18 || iif.iifP[i].addr_mode == 26))
 				reloc_mode = RELOC_GLOB_DAT;
 			else
@@ -1569,7 +1569,7 @@ relax_addressT segment_address_in_file;
 	    | ((!S_IS_DEFINED(fixP->fx_addsy)
 	       && fixP->fx_pcrel
 	       && fixP->fx_addsy != got_symbol
-	       && flagseen['k']) ? 0x10 : 0)
+	       && picmode) ? 0x10 : 0)
 #endif
 	    | (fixP->fx_im_disp & 3) << 5;
 
@@ -1578,7 +1578,7 @@ relax_addressT segment_address_in_file;
 	case NO_RELOC:
 	    break;
 	case RELOC_32:
-	    if (flagseen['k'] && S_IS_EXTERNAL(fixP->fx_addsy)) {
+	    if (picmode && S_IS_EXTERNAL(fixP->fx_addsy)) {
 		r_symbolnum = fixP->fx_addsy->sy_number;
 		r_flags |= 8;	/* set extern bit */
 	    }

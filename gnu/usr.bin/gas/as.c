@@ -32,7 +32,7 @@
  *
  */
 #ifndef lint
-static char rcsid[] = "$Id: as.c,v 1.3 1993/10/02 20:57:15 pk Exp $";
+static char rcsid[] = "$Id: as.c,v 1.4 1996/04/14 11:31:18 pk Exp $";
 #endif
 
 #include <stdio.h>
@@ -225,11 +225,6 @@ char **argv;
 				break;
 			}
 				
-#if 00000
-			case 'k':
-				break;
-#endif
-				
 			case 'L': /* -L means keep L* symbols */
 				break;
 				
@@ -290,6 +285,10 @@ char **argv;
 		 */
 		*work_argv = NULL; /* NULL means 'not a file-name' */
 	}
+#ifdef PIC
+	if (flagseen['K'] || flagseen['k'])
+		picmode = 1;
+#endif
 #ifdef DONTDEF
 	if (gdb_begin(gdb_symbol_file_name) == 0)
 	    flagseen['G'] = 0;	/* Don't do any gdbsym stuff. */
