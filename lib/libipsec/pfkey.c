@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey.c,v 1.8 2000/02/08 13:17:52 itojun Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.9 2000/03/13 21:23:56 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -94,7 +94,7 @@ ipsec_check_keylen(supported, alg_id, keylen)
 
 	/* validity check */
 	if (ipsec_supported == NULL) {
-		ipsec_errcode = EIPSEC_DO_GET_SUPP_LIST;
+		__ipsec_errcode = EIPSEC_DO_GET_SUPP_LIST;
 		return -1;
 	}
 	switch (supported) {
@@ -102,7 +102,7 @@ ipsec_check_keylen(supported, alg_id, keylen)
 	case SADB_EXT_SUPPORTED_ENCRYPT:
 		break;
 	default:
-		ipsec_errcode = EIPSEC_INVAL_ARGUMENT;
+		__ipsec_errcode = EIPSEC_INVAL_ARGUMENT;
 		return -1;
 	}
 
@@ -133,18 +133,18 @@ ipsec_check_keylen(supported, alg_id, keylen)
 	    }
 	}
 
-	ipsec_errcode = EIPSEC_NOT_SUPPORTED;
+	__ipsec_errcode = EIPSEC_NOT_SUPPORTED;
 	return -1;
 	/* NOTREACHED */
 
     found:
 	if (keylen < alg->sadb_alg_minbits
 	 || keylen > alg->sadb_alg_maxbits) {
-		ipsec_errcode = EIPSEC_INVAL_KEYLEN;
+		__ipsec_errcode = EIPSEC_INVAL_KEYLEN;
 		return -1;
 	}
 
-	ipsec_errcode = EIPSEC_NO_ERROR;
+	__ipsec_errcode = EIPSEC_NO_ERROR;
 	return 0;
 }
 
@@ -161,7 +161,7 @@ u_int
 pfkey_set_softrate(type, rate)
 	u_int type, rate;
 {
-	ipsec_errcode = EIPSEC_NO_ERROR;
+	__ipsec_errcode = EIPSEC_NO_ERROR;
 
 	if (rate > 100 || rate == 0)
 		rate = 100;
@@ -181,7 +181,7 @@ pfkey_set_softrate(type, rate)
 		return 0;
 	}
 
-	ipsec_errcode = EIPSEC_INVAL_ARGUMENT;
+	__ipsec_errcode = EIPSEC_INVAL_ARGUMENT;
 	return 1;
 }
 
@@ -227,15 +227,15 @@ pfkey_send_getspi(so, satype, mode, src, dst, min, max, reqid, seq)
 
 	/* validity check */
 	if (src == NULL || dst == NULL) {
-		ipsec_errcode = EIPSEC_INVAL_ARGUMENT;
+		__ipsec_errcode = EIPSEC_INVAL_ARGUMENT;
 		return -1;
 	}
 	if (src->sa_family != dst->sa_family) {
-		ipsec_errcode = EIPSEC_FAMILY_MISMATCH;
+		__ipsec_errcode = EIPSEC_FAMILY_MISMATCH;
 		return -1;
 	}
 	if (min > max || (min > 0 && min <= 255)) {
-		ipsec_errcode = EIPSEC_INVAL_SPI;
+		__ipsec_errcode = EIPSEC_INVAL_SPI;
 		return -1;
 	}
 
@@ -252,7 +252,7 @@ pfkey_send_getspi(so, satype, mode, src, dst, min, max, reqid, seq)
 	}
 
 	if ((newmsg = CALLOC(len, struct sadb_msg *)) == NULL) {
-		ipsec_set_strerror(strerror(errno));
+		__ipsec_set_strerror(strerror(errno));
 		return -1;
 	}
 
@@ -293,7 +293,7 @@ pfkey_send_getspi(so, satype, mode, src, dst, min, max, reqid, seq)
 	if (len < 0)
 		return -1;
 
-	ipsec_errcode = EIPSEC_NO_ERROR;
+	__ipsec_errcode = EIPSEC_NO_ERROR;
 	return len;
 }
 
@@ -456,7 +456,7 @@ pfkey_recv_register(so)
 			sup->sadb_supported_len = PFKEY_EXTLEN(sup);
 			break;
 		default:
-			ipsec_errcode = EIPSEC_INVAL_SATYPE;
+			__ipsec_errcode = EIPSEC_INVAL_SATYPE;
 			free(newmsg);
 			return -1;
 		}
@@ -466,7 +466,7 @@ pfkey_recv_register(so)
 	}
 
 	if (tlen < 0) {
-		ipsec_errcode = EIPSEC_INVAL_SATYPE;
+		__ipsec_errcode = EIPSEC_INVAL_SATYPE;
 		return -1;
 	}
 
@@ -475,7 +475,7 @@ pfkey_recv_register(so)
 
 	ipsec_supported = newmsg;
 
-	ipsec_errcode = EIPSEC_NO_ERROR;
+	__ipsec_errcode = EIPSEC_NO_ERROR;
 	return 0;
 }
 
@@ -564,16 +564,16 @@ pfkey_send_spdadd(so, src, prefs, dst, prefd, proto, policy, policylen, seq)
 
 	/* validity check */
 	if (src == NULL || dst == NULL) {
-		ipsec_errcode = EIPSEC_INVAL_ARGUMENT;
+		__ipsec_errcode = EIPSEC_INVAL_ARGUMENT;
 		return -1;
 	}
 	if (src->sa_family != dst->sa_family) {
-		ipsec_errcode = EIPSEC_FAMILY_MISMATCH;
+		__ipsec_errcode = EIPSEC_FAMILY_MISMATCH;
 		return -1;
 	}
 	if (prefs > (_INALENBYAF(src->sa_family) << 3)
 	 || prefd > (_INALENBYAF(dst->sa_family) << 3)) {
-		ipsec_errcode = EIPSEC_INVAL_PREFIXLEN;
+		__ipsec_errcode = EIPSEC_INVAL_PREFIXLEN;
 		return -1;
 	}
 
@@ -586,7 +586,7 @@ pfkey_send_spdadd(so, src, prefs, dst, prefd, proto, policy, policylen, seq)
 		+ policylen;
 
 	if ((newmsg = CALLOC(len, struct sadb_msg *)) == NULL) {
-		ipsec_set_strerror(strerror(errno));
+		__ipsec_set_strerror(strerror(errno));
 		return -1;
 	}
 
@@ -612,7 +612,7 @@ pfkey_send_spdadd(so, src, prefs, dst, prefd, proto, policy, policylen, seq)
 	if (len < 0)
 		return -1;
 
-	ipsec_errcode = EIPSEC_NO_ERROR;
+	__ipsec_errcode = EIPSEC_NO_ERROR;
 	return len;
 }
 
@@ -636,16 +636,16 @@ pfkey_send_spddelete(so, src, prefs, dst, prefd, proto, seq)
 
 	/* validity check */
 	if (src == NULL || dst == NULL) {
-		ipsec_errcode = EIPSEC_INVAL_ARGUMENT;
+		__ipsec_errcode = EIPSEC_INVAL_ARGUMENT;
 		return -1;
 	}
 	if (src->sa_family != dst->sa_family) {
-		ipsec_errcode = EIPSEC_FAMILY_MISMATCH;
+		__ipsec_errcode = EIPSEC_FAMILY_MISMATCH;
 		return -1;
 	}
 	if (prefs > (_INALENBYAF(src->sa_family) << 3)
 	 || prefd > (_INALENBYAF(dst->sa_family) << 3)) {
-		ipsec_errcode = EIPSEC_INVAL_PREFIXLEN;
+		__ipsec_errcode = EIPSEC_INVAL_PREFIXLEN;
 		return -1;
 	}
 
@@ -657,7 +657,7 @@ pfkey_send_spddelete(so, src, prefs, dst, prefd, proto, seq)
 		+ PFKEY_ALIGN8(_SALENBYAF(src->sa_family));
 
 	if ((newmsg = CALLOC(len, struct sadb_msg *)) == NULL) {
-		ipsec_set_strerror(strerror(errno));
+		__ipsec_set_strerror(strerror(errno));
 		return -1;
 	}
 
@@ -682,7 +682,7 @@ pfkey_send_spddelete(so, src, prefs, dst, prefd, proto, seq)
 	if (len < 0)
 		return -1;
 
-	ipsec_errcode = EIPSEC_NO_ERROR;
+	__ipsec_errcode = EIPSEC_NO_ERROR;
 	return len;
 }
 
@@ -742,35 +742,35 @@ pfkey_send_x1(so, type, satype, mode, src, dst, spi, reqid, wsize,
 
 	/* validity check */
 	if (src == NULL || dst == NULL) {
-		ipsec_errcode = EIPSEC_INVAL_ARGUMENT;
+		__ipsec_errcode = EIPSEC_INVAL_ARGUMENT;
 		return -1;
 	}
 	if (src->sa_family != dst->sa_family) {
-		ipsec_errcode = EIPSEC_FAMILY_MISMATCH;
+		__ipsec_errcode = EIPSEC_FAMILY_MISMATCH;
 		return -1;
 	}
 
 	switch (satype) {
 	case SADB_SATYPE_ESP:
 		if (e_type == SADB_EALG_NONE) {
-			ipsec_errcode = EIPSEC_NO_ALGS;
+			__ipsec_errcode = EIPSEC_NO_ALGS;
 			return -1;
 		}
 		break;
 	case SADB_SATYPE_AH:
 		if (e_type != SADB_EALG_NONE) {
-			ipsec_errcode = EIPSEC_INVAL_ALGS;
+			__ipsec_errcode = EIPSEC_INVAL_ALGS;
 			return -1;
 		}
 		if (a_type == SADB_AALG_NONE) {
-			ipsec_errcode = EIPSEC_NO_ALGS;
+			__ipsec_errcode = EIPSEC_NO_ALGS;
 			return -1;
 		}
 		break;
 	case SADB_X_SATYPE_IPCOMP:
 		break;
 	default:
-		ipsec_errcode = EIPSEC_INVAL_SATYPE;
+		__ipsec_errcode = EIPSEC_INVAL_SATYPE;
 		return -1;
 	}
 
@@ -790,7 +790,7 @@ pfkey_send_x1(so, type, satype, mode, src, dst, spi, reqid, wsize,
 		len += (sizeof(struct sadb_key) + PFKEY_ALIGN8(a_keylen));
 
 	if ((newmsg = CALLOC(len, struct sadb_msg *)) == NULL) {
-		ipsec_set_strerror(strerror(errno));
+		__ipsec_set_strerror(strerror(errno));
 		return -1;
 	}
 
@@ -828,7 +828,7 @@ pfkey_send_x1(so, type, satype, mode, src, dst, spi, reqid, wsize,
 	if (len < 0)
 		return -1;
 
-	ipsec_errcode = EIPSEC_NO_ERROR;
+	__ipsec_errcode = EIPSEC_NO_ERROR;
 	return len;
 }
 
@@ -846,11 +846,11 @@ pfkey_send_x2(so, type, satype, mode, src, dst, spi)
 
 	/* validity check */
 	if (src == NULL || dst == NULL) {
-		ipsec_errcode = EIPSEC_INVAL_ARGUMENT;
+		__ipsec_errcode = EIPSEC_INVAL_ARGUMENT;
 		return -1;
 	}
 	if (src->sa_family != dst->sa_family) {
-		ipsec_errcode = EIPSEC_FAMILY_MISMATCH;
+		__ipsec_errcode = EIPSEC_FAMILY_MISMATCH;
 		return -1;
 	}
 
@@ -863,7 +863,7 @@ pfkey_send_x2(so, type, satype, mode, src, dst, spi)
 		+ PFKEY_ALIGN8(dst->sa_len);
 
 	if ((newmsg = CALLOC(len, struct sadb_msg *)) == NULL) {
-		ipsec_set_strerror(strerror(errno));
+		__ipsec_set_strerror(strerror(errno));
 		return -1;
 	}
 
@@ -887,7 +887,7 @@ pfkey_send_x2(so, type, satype, mode, src, dst, spi)
 	if (len < 0)
 		return -1;
 
-	ipsec_errcode = EIPSEC_NO_ERROR;
+	__ipsec_errcode = EIPSEC_NO_ERROR;
 	return len;
 }
 
@@ -907,7 +907,7 @@ pfkey_send_x3(so, type, satype)
 	switch (type) {
 	case SADB_X_PROMISC:
 		if (satype != 0 && satype != 1) {
-			ipsec_errcode = EIPSEC_INVAL_SATYPE;
+			__ipsec_errcode = EIPSEC_INVAL_SATYPE;
 			return -1;
 		}
 		break;
@@ -919,7 +919,7 @@ pfkey_send_x3(so, type, satype)
 		case SADB_X_SATYPE_IPCOMP:
 			break;
 		default:
-			ipsec_errcode = EIPSEC_INVAL_SATYPE;
+			__ipsec_errcode = EIPSEC_INVAL_SATYPE;
 			return -1;
 		}
 	}
@@ -928,7 +928,7 @@ pfkey_send_x3(so, type, satype)
 	len = sizeof(struct sadb_msg);
 
 	if ((newmsg = CALLOC(len, struct sadb_msg *)) == NULL) {
-		ipsec_set_strerror(strerror(errno));
+		__ipsec_set_strerror(strerror(errno));
 		return -1;
 	}
 
@@ -941,7 +941,7 @@ pfkey_send_x3(so, type, satype)
 	if (len < 0)
 		return -1;
 
-	ipsec_errcode = EIPSEC_NO_ERROR;
+	__ipsec_errcode = EIPSEC_NO_ERROR;
 	return len;
 }
 
@@ -958,7 +958,7 @@ pfkey_open()
 	const int bufsiz = 128 * 1024;	/*is 128K enough?*/
 
 	if ((so = socket(PF_KEY, SOCK_RAW, PF_KEY_V2)) < 0) {
-		ipsec_set_strerror(strerror(errno));
+		__ipsec_set_strerror(strerror(errno));
 		return -1;
 	}
 
@@ -969,7 +969,7 @@ pfkey_open()
 	(void)setsockopt(so, SOL_SOCKET, SO_SNDBUF, &bufsiz, sizeof(bufsiz));
 	(void)setsockopt(so, SOL_SOCKET, SO_RCVBUF, &bufsiz, sizeof(bufsiz));
 
-	ipsec_errcode = EIPSEC_NO_ERROR;
+	__ipsec_errcode = EIPSEC_NO_ERROR;
 	return so;
 }
 
@@ -985,7 +985,7 @@ pfkey_close(so)
 {
 	(void)close(so);
 
-	ipsec_errcode = EIPSEC_NO_ERROR;
+	__ipsec_errcode = EIPSEC_NO_ERROR;
 	return;
 }
 
@@ -1005,37 +1005,37 @@ pfkey_recv(so)
 
 	while ((len = recv(so, (caddr_t)&buf, sizeof(buf), MSG_PEEK)) < 0) {
 		if (errno == EINTR) continue;
-		ipsec_set_strerror(strerror(errno));
+		__ipsec_set_strerror(strerror(errno));
 		return NULL;
 	}
 
 	if (len < sizeof(buf)) {
 		recv(so, (caddr_t)&buf, sizeof(buf), 0);
-		ipsec_errcode = EIPSEC_MAX;
+		__ipsec_errcode = EIPSEC_MAX;
 		return NULL;
 	}
 
 	/* read real message */
 	reallen = PFKEY_UNUNIT64(buf.sadb_msg_len);
 	if ((newmsg = CALLOC(reallen, struct sadb_msg *)) == 0) {
-		ipsec_set_strerror(strerror(errno));
+		__ipsec_set_strerror(strerror(errno));
 		return NULL;
 	}
 
 	while ((len = recv(so, (caddr_t)newmsg, reallen, 0)) < 0) {
 		if (errno == EINTR) continue;
-		ipsec_set_strerror(strerror(errno));
+		__ipsec_set_strerror(strerror(errno));
 		free(newmsg);
 		return NULL;
 	}
 
 	if (len != reallen) {
-		ipsec_errcode = EIPSEC_SYSTEM_ERROR;
+		__ipsec_errcode = EIPSEC_SYSTEM_ERROR;
 		free(newmsg);
 		return NULL;
 	}
 
-	ipsec_errcode = EIPSEC_NO_ERROR;
+	__ipsec_errcode = EIPSEC_NO_ERROR;
 	return newmsg;
 }
 
@@ -1052,11 +1052,11 @@ pfkey_send(so, msg, len)
 	int len;
 {
 	if ((len = send(so, (caddr_t)msg, len, 0)) < 0) {
-		ipsec_set_strerror(strerror(errno));
+		__ipsec_set_strerror(strerror(errno));
 		return -1;
 	}
 
-	ipsec_errcode = EIPSEC_NO_ERROR;
+	__ipsec_errcode = EIPSEC_NO_ERROR;
 	return len;
 }
 
@@ -1083,7 +1083,7 @@ pfkey_align(msg, mhp)
 
 	/* validity check */
 	if (msg == NULL || mhp == NULL) {
-		ipsec_errcode = EIPSEC_INVAL_ARGUMENT;
+		__ipsec_errcode = EIPSEC_INVAL_ARGUMENT;
 		return -1;
 	}
 
@@ -1100,7 +1100,7 @@ pfkey_align(msg, mhp)
 		/* duplicate check */
 		/* XXX Are there duplication either KEY_AUTH or KEY_ENCRYPT ?*/
 		if (mhp[ext->sadb_ext_type] != NULL) {
-			ipsec_errcode = EIPSEC_INVAL_EXTTYPE;
+			__ipsec_errcode = EIPSEC_INVAL_EXTTYPE;
 			return -1;
 		}
 
@@ -1128,7 +1128,7 @@ pfkey_align(msg, mhp)
 			mhp[ext->sadb_ext_type] = (caddr_t)ext;
 			break;
 		default:
-			ipsec_errcode = EIPSEC_INVAL_EXTTYPE;
+			__ipsec_errcode = EIPSEC_INVAL_EXTTYPE;
 			return -1;
 		}
 
@@ -1137,7 +1137,7 @@ pfkey_align(msg, mhp)
 		ext = (struct sadb_ext *)((caddr_t)ext + extlen);
 	}
 
-	ipsec_errcode = EIPSEC_NO_ERROR;
+	__ipsec_errcode = EIPSEC_NO_ERROR;
 	return 0;
 }
 
@@ -1160,7 +1160,7 @@ pfkey_check(mhp)
 
 	/* validity check */
 	if (mhp == NULL || mhp[0] == NULL) {
-		ipsec_errcode = EIPSEC_INVAL_ARGUMENT;
+		__ipsec_errcode = EIPSEC_INVAL_ARGUMENT;
 		return -1;
 	}
 
@@ -1168,13 +1168,13 @@ pfkey_check(mhp)
 
 	/* check version */
 	if (msg->sadb_msg_version != PF_KEY_V2) {
-		ipsec_errcode = EIPSEC_INVAL_VERSION;
+		__ipsec_errcode = EIPSEC_INVAL_VERSION;
 		return -1;
 	}
 
 	/* check type */
 	if (msg->sadb_msg_type > SADB_MAX) {
-		ipsec_errcode = EIPSEC_INVAL_MSGTYPE;
+		__ipsec_errcode = EIPSEC_INVAL_MSGTYPE;
 		return -1;
 	}
 
@@ -1189,7 +1189,7 @@ pfkey_check(mhp)
 		case SADB_GET:
 		case SADB_ACQUIRE:
 		case SADB_EXPIRE:
-			ipsec_errcode = EIPSEC_INVAL_SATYPE;
+			__ipsec_errcode = EIPSEC_INVAL_SATYPE;
 			return -1;
 		}
 		break;
@@ -1202,7 +1202,7 @@ pfkey_check(mhp)
 		case SADB_X_SPDGET:
 		case SADB_X_SPDDUMP:
 		case SADB_X_SPDFLUSH:
-			ipsec_errcode = EIPSEC_INVAL_SATYPE;
+			__ipsec_errcode = EIPSEC_INVAL_SATYPE;
 			return -1;
 		}
 		break;
@@ -1210,14 +1210,14 @@ pfkey_check(mhp)
 	case SADB_SATYPE_OSPFV2:
 	case SADB_SATYPE_RIPV2:
 	case SADB_SATYPE_MIP:
-		ipsec_errcode = EIPSEC_NOT_SUPPORTED;
+		__ipsec_errcode = EIPSEC_NOT_SUPPORTED;
 		return -1;
 	case 1:	/* XXX: What does it do ? */
 		if (msg->sadb_msg_type == SADB_X_PROMISC)
 			break;
 		/*FALLTHROUGH*/
 	default:
-		ipsec_errcode = EIPSEC_INVAL_SATYPE;
+		__ipsec_errcode = EIPSEC_INVAL_SATYPE;
 		return -1;
 	}
 
@@ -1230,13 +1230,13 @@ pfkey_check(mhp)
 		dst0 = (struct sadb_address *)(mhp[SADB_EXT_ADDRESS_DST]);
 
 		if (src0->sadb_address_proto != dst0->sadb_address_proto) {
-			ipsec_errcode = EIPSEC_PROTO_MISMATCH;
+			__ipsec_errcode = EIPSEC_PROTO_MISMATCH;
 			return -1;
 		}
 
 		if (PFKEY_ADDR_SADDR(src0)->sa_family
 		 != PFKEY_ADDR_SADDR(dst0)->sa_family) {
-			ipsec_errcode = EIPSEC_FAMILY_MISMATCH;
+			__ipsec_errcode = EIPSEC_FAMILY_MISMATCH;
 			return -1;
 		}
 
@@ -1245,7 +1245,7 @@ pfkey_check(mhp)
 		case AF_INET6:
 			break;
 		default:
-			ipsec_errcode = EIPSEC_INVAL_FAMILY;
+			__ipsec_errcode = EIPSEC_INVAL_FAMILY;
 			return -1;
 		}
 
@@ -1255,7 +1255,7 @@ pfkey_check(mhp)
 		 */
 	}
 
-	ipsec_errcode = EIPSEC_NO_ERROR;
+	__ipsec_errcode = EIPSEC_NO_ERROR;
 	return 0;
 }
 

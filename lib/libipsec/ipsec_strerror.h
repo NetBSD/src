@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_strerror.h,v 1.4 2000/01/31 14:15:31 itojun Exp $	*/
+/*	$NetBSD: ipsec_strerror.h,v 1.5 2000/03/13 21:23:56 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -29,8 +29,8 @@
  * SUCH DAMAGE.
  */
 
-extern int ipsec_errcode;
-extern void ipsec_set_strerror __P((char *));
+extern int __ipsec_errcode;
+extern void __ipsec_set_strerror __P((char *));
 
 #define EIPSEC_NO_ERROR		0	/*success*/
 #define EIPSEC_NOT_SUPPORTED	1	/*not supported*/
