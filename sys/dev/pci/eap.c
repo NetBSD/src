@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.45 2001/04/24 21:03:33 mycroft Exp $	*/
+/*	$NetBSD: eap.c,v 1.45.2.1 2001/09/13 01:15:53 thorpej Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -1113,7 +1113,7 @@ eap_trigger_output(
 
 	DPRINTF(("eap_trigger_output: DAC2_ADDR=0x%x, DAC2_SIZE=0x%x\n",
 		 (int)DMAADDR(p), 
-		 EAP_SET_SIZE(0, (((char *)end - (char *)start) >> 2) - 1)));
+		 (int)EAP_SET_SIZE(0, (((char *)end - (char *)start) >> 2) - 1)));
 	EWRITE4(sc, EAP_MEMPAGE, EAP_DAC_PAGE);
 	EWRITE4(sc, EAP_DAC2_ADDR, DMAADDR(p));
 	EWRITE4(sc, EAP_DAC2_SIZE, 
@@ -1181,7 +1181,7 @@ eap_trigger_input(
 
 	DPRINTF(("eap_trigger_input: ADC_ADDR=0x%x, ADC_SIZE=0x%x\n",
 		 (int)DMAADDR(p), 
-		 EAP_SET_SIZE(0, (((char *)end - (char *)start) >> 2) - 1)));
+		 (int)EAP_SET_SIZE(0, (((char *)end - (char *)start) >> 2) - 1)));
 	EWRITE4(sc, EAP_MEMPAGE, EAP_ADC_PAGE);
 	EWRITE4(sc, EAP_ADC_ADDR, DMAADDR(p));
 	EWRITE4(sc, EAP_ADC_SIZE, 

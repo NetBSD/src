@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.6.2.1 2001/08/25 06:15:10 thorpej Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.6.2.2 2001/09/13 01:13:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -278,6 +278,42 @@ void	sa110_context_switch	__P((void));
 void	sa110_setup		__P((char *string));
 #endif	/* CPU_SA110 */
 
+#ifdef CPU_XSCALE
+void	xscale_setttb		__P((u_int ttb));
+void	xscale_tlb_flushID	__P((void));
+void	xscale_tlb_flushID_SE	__P((u_int va));
+void	xscale_tlb_flushI	__P((void));
+void	xscale_tlb_flushD	__P((void));
+void	xscale_tlb_flushD_SE	__P((u_int va));
+
+void	xscale_cache_flushID	__P((void));
+void	xscale_cache_flushI	__P((void));
+void	xscale_cache_flushD	__P((void));
+void	xscale_cache_flushD_SE	__P((u_int entry));
+
+void	xscale_cache_cleanID	__P((void));
+void	xscale_cache_cleanD	__P((void));
+void	xscale_cache_cleanD_E	__P((u_int entry));
+
+void	xscale_cache_purgeID	__P((void));
+void	xscale_cache_purgeID_E	__P((u_int entry));
+void	xscale_cache_purgeD	__P((void));
+void	xscale_cache_purgeD_E	__P((u_int entry));
+
+void	xscale_drain_writebuf	__P((void));
+
+void	xscale_cache_syncI	__P((void));
+void	xscale_cache_cleanID_rng	__P((u_int start, u_int end));
+void	xscale_cache_cleanD_rng	__P((u_int start, u_int end));
+void	xscale_cache_purgeID_rng	__P((u_int start, u_int end));
+void	xscale_cache_purgeD_rng	__P((u_int start, u_int end));
+void	xscale_cache_syncI_rng	__P((u_int start, u_int end));
+
+void	xscale_context_switch	__P((void));
+
+void	xscale_setup		__P((char *string));
+#endif	/* CPU_XSCALE */
+
 #define tlb_flush	cpu_tlb_flushID
 #define setttb		cpu_setttb
 #define cache_clean	cpu_cache_purgeID
@@ -300,7 +336,7 @@ void	sa110_setup		__P((char *string));
 
 /*
  * Functions to manipulate the CPSR
- * (in arm32/arm32/setcpsr.S)
+ * (in arm/arm32/setcpsr.S)
  */
 
 u_int SetCPSR		__P((u_int bic, u_int eor));
@@ -308,7 +344,7 @@ u_int GetCPSR		__P((void));
 
 /*
  * Functions to manipulate cpu r13
- * (in arm32/arm32/setstack.S)
+ * (in arm/arm32/setstack.S)
  */
 
 void set_stackptr	__P((u_int mode, u_int address));

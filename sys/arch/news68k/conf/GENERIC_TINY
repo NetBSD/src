@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC_TINY,v 1.3 2001/07/08 16:32:21 abs Exp $
+# 	$NetBSD: GENERIC_TINY,v 1.3.2.1 2001/09/13 01:14:06 thorpej Exp $
 
 #	news68k GENERIC config file for low memory machines;
 #
 include		"arch/news68k/conf/std.news68k"
 
-#ident 		"GENERIC_TINY-$Revision: 1.3 $"
+#ident 		"GENERIC_TINY-$Revision: 1.3.2.1 $"
 
 maxusers	4
 
@@ -185,5 +185,6 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 #pseudo-device	vlan			# IEEE 802.1q encapsulation
+#pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	rnd			# /dev/random and in-kernle generator
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.

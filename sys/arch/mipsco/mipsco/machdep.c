@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.28 2001/07/08 04:25:36 wdk Exp $	*/
+/*	$NetBSD: machdep.c,v 1.28.2.1 2001/09/13 01:14:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28 2001/07/08 04:25:36 wdk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28.2.1 2001/09/13 01:14:02 thorpej Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -448,7 +448,7 @@ cpu_startup()
 			curbufsize -= PAGE_SIZE;
 		}
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively

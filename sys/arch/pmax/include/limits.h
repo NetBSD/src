@@ -1,12 +1,3 @@
-/*	$NetBSD: limits.h,v 1.12 2000/01/09 15:34:43 ad Exp $	*/
-
-#ifndef	_PMAX_LIMITS_H_
-#define	_PMAX_LIMITS_H_
+/*	$NetBSD: limits.h,v 1.12.8.1 2001/09/13 01:14:18 thorpej Exp $	*/
 
 #include <mips/limits.h>
-
-#ifdef _KERNEL
-#define CLK_TCK		60		/* ticks per second */
-#endif
-
-#endif	/* !_PMAX_LIMITS_H_ */

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.340.2.2 2001/08/25 06:16:26 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.340.2.3 2001/09/13 01:16:01 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.347 2001/08/23 03:41:36 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.356 2001/09/10 15:07:50 eeh Exp 
  */
 
 /*
@@ -958,6 +958,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "MAC-IO I/O Controller (Pangea)",
 	},
 	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PANGEA_USB,
+	    0,
+	    "Apple Computer",
+	    "Pangea USB Controller",
+	},
+	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PANGEA_AGP,
 	    0,
 	    "Apple Computer",
@@ -976,22 +982,28 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "Pangea Host-PCI Bridge",
 	},
 	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNIN_AGP,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH_AGP2,
 	    0,
 	    "Apple Computer",
-	    "Uni-N AGP Interface",
+	    "UniNorth AGP Interface",
 	},
 	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNIN_PCI1,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH3,
 	    0,
 	    "Apple Computer",
-	    "Uni-N Host-External PCI Bridge",
+	    "UniNorth Host-PCI Bridge",
 	},
 	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNIN_PCI2,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH4,
 	    0,
 	    "Apple Computer",
-	    "Uni-N Host-Internal PCI Bridge",
+	    "UniNorth Host-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PANGEA_FW,
+	    0,
+	    "Apple Computer",
+	    "Pangea Firewire",
 	},
 	{
 	    PCI_VENDOR_ARC, PCI_PRODUCT_ARC_1000PV,
@@ -1418,6 +1430,24 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Applied Micro Circuits",
 	    "Myrinet LANai Interface",
+	},
+	{
+	    PCI_VENDOR_AMCIRCUITS, PCI_PRODUCT_AMCIRCUITS_CAMAC,
+	    0,
+	    "Applied Micro Circuits",
+	    "FZJ/ZEL CAMAC controller",
+	},
+	{
+	    PCI_VENDOR_AMCIRCUITS, PCI_PRODUCT_AMCIRCUITS_VICBUS,
+	    0,
+	    "Applied Micro Circuits",
+	    "FZJ/ZEL VICBUS interface",
+	},
+	{
+	    PCI_VENDOR_AMCIRCUITS, PCI_PRODUCT_AMCIRCUITS_PCISYNC,
+	    0,
+	    "Applied Micro Circuits",
+	    "FZJ/ZEL Synchronisation module",
 	},
 	{
 	    PCI_VENDOR_AMCIRCUITS, PCI_PRODUCT_AMCIRCUITS_S5920,
@@ -2227,7 +2257,13 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_DPT, PCI_PRODUCT_DPT_SC_RAID,
 	    0,
 	    "Distributed Processing Technology",
-	    "SmartCache/SmartRAID",
+	    "SmartCache/SmartRAID (EATA)",
+	},
+	{
+	    PCI_VENDOR_DPT, PCI_PRODUCT_DPT_I960_PPB,
+	    0,
+	    "Distributed Processing Technology",
+	    "PCI-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_DPT, PCI_PRODUCT_DPT_RAID_I2O,
@@ -2320,6 +2356,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "Maestro 2E PCI Audio Accelerator",
 	},
 	{
+	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_ALLEGRO1,
+	    0,
+	    "ESS Technology Inc",
+	    "Allegro-1 PCI Audio Accelerator",
+	},
+	{
 	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTRO3,
 	    0,
 	    "ESS Technology Inc",
@@ -2330,6 +2372,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ESS Technology Inc",
 	    "Maestro 3 Modem",
+	},
+	{
+	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTRO3_2,
+	    0,
+	    "ESS Technology Inc",
+	    "Maestro 3 PCI Audio Accelerator",
 	},
 	{
 	    PCI_VENDOR_ESSTECH2, PCI_PRODUCT_ESSTECH2_MAESTRO1,
@@ -2396,6 +2444,36 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Future Domain",
 	    "TMC-18C30 (36C70)",
+	},
+	{
+	    PCI_VENDOR_FZJZEL, PCI_PRODUCT_FZJZEL_GIGALINK,
+	    0,
+	    "FZ Juelich / ZEL",
+	    "Gigabit link / STR1100",
+	},
+	{
+	    PCI_VENDOR_FZJZEL, PCI_PRODUCT_FZJZEL_PLXHOTLINK,
+	    0,
+	    "FZ Juelich / ZEL",
+	    "HOTlink interface",
+	},
+	{
+	    PCI_VENDOR_FZJZEL, PCI_PRODUCT_FZJZEL_PLXCAMAC,
+	    0,
+	    "FZ Juelich / ZEL",
+	    "CAMAC controller",
+	},
+	{
+	    PCI_VENDOR_FZJZEL, PCI_PRODUCT_FZJZEL_PROFIBUS,
+	    0,
+	    "FZ Juelich / ZEL",
+	    "PROFIBUS interface",
+	},
+	{
+	    PCI_VENDOR_FZJZEL, PCI_PRODUCT_FZJZEL_AMCCHOTLINK,
+	    0,
+	    "FZ Juelich / ZEL",
+	    "old HOTlink interface",
 	},
 	{
 	    PCI_VENDOR_EFFICIENTNETS, PCI_PRODUCT_EFFICIENTNETS_ENI155PF,
@@ -2474,6 +2552,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Hi/Fn",
 	    "6500",
+	},
+	{
+	    PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_7811,
+	    0,
+	    "Hi/Fn",
+	    "7811",
+	},
+	{
+	    PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_7951,
+	    0,
+	    "Hi/Fn",
+	    "7951",
 	},
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_MCABRIDGE,
@@ -2692,6 +2782,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "PRO/1000 Gigabit Ethernet (i82453-SC)",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IN_BUSINESS,
+	    0,
+	    "Intel",
+	    "InBusiness Fast Ethernet LAN Controller",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_0,
 	    0,
 	    "Intel",
@@ -2800,70 +2896,16 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "82815 Graphics",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IN_BUSINESS,
-	    0,
-	    "Intel",
-	    "InBusiness Fast Ethernet LAN Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_01,
-	    0,
-	    "Intel",
-	    "82815 (Solano) PCI to AGP Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_02,
-	    0,
-	    "Intel",
-	    "82815 (Solano) Internal GUI Accelerator",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_10,
-	    0,
-	    "Intel",
-	    "82815 (Solano) Host to Hub Bridge, AGP Not Implemented",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_12,
-	    0,
-	    "Intel",
-	    "82815 (Solano) Internal GUI Accelerator",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_20,
-	    0,
-	    "Intel",
-	    "82815 (Solano) Host to Hub Bridge, AGP Implemented",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_21,
-	    0,
-	    "Intel",
-	    "82815 (Solano) PCI to AGP Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_30,
-	    0,
-	    "Intel",
-	    "82815 (Solano) Host to Hub Bridge (Fully featured chipset)",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_31,
-	    0,
-	    "Intel",
-	    "82815 (Solano) PCI to AGP Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_32,
-	    0,
-	    "Intel",
-	    "82815 (Solano) Interal GUI Accelerator",
-	},
-	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82806AA,
 	    0,
 	    "Intel",
 	    "82806AA PCI64 Hub Advanced Programmable Interrupt Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IXP1200,
+	    0,
+	    "Intel",
+	    "IXP1200 Network Processor",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82559ER,
@@ -4988,6 +5030,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Sun Microsystems",
 	    "USB controller",
+	},
+	{
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_GEMNETWORK,
+	    0,
+	    "Sun Microsystems",
+	    "GEM Gigabit Ethernet",
 	},
 	{
 	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_SIMBA,
@@ -9295,6 +9343,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_LAVA, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Lava Semiconductor Manufacturing, Inc.",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_FZJZEL, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "FZ Juelich / ZEL",
 	    NULL,
 	},
 	{

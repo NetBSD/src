@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.h,v 1.4 2001/05/25 04:06:17 chs Exp $	*/
+/*	$NetBSD: uvm_pglist.h,v 1.4.2.1 2001/09/13 01:16:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,8 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _PGLIST_H_
-#define _PGLIST_H_
+#ifndef _UVM_UVM_PGLIST_H_
+#define _UVM_UVM_PGLIST_H_
 
 /*
  * This defines the type of a page queue, e.g. active list, inactive
@@ -61,4 +61,4 @@ struct pgfreelist {
 	struct pgflbucket *pgfl_buckets;
 };
 
-#endif /* _PGLIST_H_ */
+#endif /* _UVM_UVM_PGLIST_H_ */

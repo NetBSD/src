@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.15.2.1 2001/08/25 06:15:12 thorpej Exp $ */
+/* $NetBSD: locore.S,v 1.15.2.2 2001/09/13 01:13:12 thorpej Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -409,7 +409,7 @@ ENTRY(fiq_getregs)
 	 */
 /* LINTSTUB: Func: void int_on(void) */
 ENTRY(int_on)
-	bics	r15, r14, #(R15_IRQ_DISABLE | R15_FIQ_DISABLE)
+	bics	r15, r14, #(R15_IRQ_DISABLE)
 /* LINTSTUB: Func: void int_off(void) */
 ENTRY(int_off)
 	orrs	r15, r14, #(R15_IRQ_DISABLE)
@@ -423,6 +423,12 @@ ENTRY_NP(int_restore)
 	tst	r0, #(R15_IRQ_DISABLE)	/* Were IRQs already disabled? */
 	biceqs	r15, r14, #(R15_IRQ_DISABLE)	/* No, enable again */
 	movs	r15, r14			/* Yes, just return */
+/* LINTSTUB: Func: void fiq_off(void) */
+ENTRY(fiq_off)
+	orrs	r15, r14, #(R15_FIQ_DISABLE)
+/* LINTSTUB: Func: void fiq_on(void) */
+ENTRY(fiq_on)
+	bics	r15, r14, #(R15_FIQ_DISABLE)
 
 	/*
 	 * Low-level context-switch operation.  cpu_switch() is in C -- this
@@ -498,4 +504,4 @@ _C_LABEL(intrcnt):
 	.global	_C_LABEL(eintrcnt)
 _C_LABEL(eintrcnt):
 
-RCSID("$NetBSD: locore.S,v 1.15.2.1 2001/08/25 06:15:12 thorpej Exp $")
+RCSID("$NetBSD: locore.S,v 1.15.2.2 2001/09/13 01:13:12 thorpej Exp $")

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.88.2.1 2001/07/10 13:22:49 lukem Exp $	*/
+/*	$NetBSD: conf.h,v 1.88.2.2 2001/09/13 01:16:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -193,14 +193,14 @@ extern struct cdevsw cdevsw[];
         dev_init(c,n,open), dev_init(c,n,close), dev_noimpl(read,enodev), \
         dev_noimpl(write,enodev), dev_init(c,n,ioctl), \
         dev_noimpl(stop,enodev), 0, dev_init(c,n,poll), \
-	dev_noimpl(mmap,enodev), dev_noimpl(kqfilter,enodev), 0 }
+	dev_noimpl(mmap,enodev), dev_init(c,n,kqfilter), 0 }
 
 /*  open, close, ioctl, poll, mmap */
 #define cdev__ocipm_init(c,n) { \
         dev_init(c,n,open), dev_init(c,n,close), dev_noimpl(read,enodev), \
         dev_noimpl(write,enodev), dev_init(c,n,ioctl), \
         dev_noimpl(stop,enodev), 0, dev_init(c,n,poll), \
-	dev_init(c,n,mmap), dev_noimpl(kqfilter,enodev), 0 }
+	dev_init(c,n,mmap), dev_init(c,n,kqfilter), 0 }
 
 /*  open, close, read, ioctl */
 #define	cdev__ocri_init(c,n) { \
@@ -234,35 +234,42 @@ extern struct cdevsw cdevsw[];
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_noimpl(write,enodev), dev_init(c,n,ioctl), \
 	dev_noimpl(stop,enodev), 0, dev_init(c,n,poll), \
-	dev_noimpl(mmap,enodev), dev_noimpl(kqfilter,enodev), 0 }
+	dev_noimpl(mmap,enodev), dev_init(c,n,kqfilter), 0 }
 
 /*  open, close, read, write, poll */
 #define	cdev__ocrwp_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_noimpl(ioctl,enodev), \
 	dev_noimpl(stop,enodev), 0, dev_init(c,n,poll), \
-	dev_noimpl(mmap,enodev), dev_noimpl(kqfilter,enodev), 0 }
+	dev_noimpl(mmap,enodev), dev_init(c,n,kqfilter), 0 }
 
 /*  open, close, read, write, ioctl, poll */
 #define cdev__ocrwip_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), dev_noimpl(stop,enodev), \
 	0, dev_init(c,n,poll), dev_noimpl(mmap,enodev), \
-	dev_noimpl(kqfilter,enodev), 0 }
+	dev_init(c,n,kqfilter), 0 }
 
 /*  open, close, (read), (write), ioctl, poll, mmap */
 #define	cdev__ocRWipm_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), \
 	dev_noimpl(read,nullop), dev_noimpl(write,nullop), \
 	dev_init(c,n,ioctl), dev_noimpl(stop,enodev), 0, \
-	dev_init(c,n,poll), dev_init(c,n,mmap), dev_noimpl(kqfilter,enodev), 0 }
+	dev_init(c,n,poll), dev_init(c,n,mmap), dev_init(c,n,kqfilter), 0 }
+
+/*  open, close, ioctl, mmap */
+#define	cdev__ocim_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), \
+	dev_noimpl(read,enodev), dev_noimpl(write,enodev), \
+	dev_init(c,n,ioctl), dev_noimpl(stop,enodev), 0, \
+	dev_noimpl(poll,enodev), dev_init(c,n,mmap), 0 }
 
 /*  open, close, read, write, ioctl, stop, poll */
 #define	cdev__ocrwisp_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
 	0, dev_init(c,n,poll), dev_noimpl(mmap,enodev), \
-	dev_noimpl(kqfilter,enodev), 0 }
+	dev_init(c,n,kqfilter), 0 }
 
 /*  open, close, write, ioctl */
 #define	cdev__ocwi_init(c,n) { \
@@ -323,7 +330,7 @@ but needs own kqfilter */
 	dev_init(c,n,open), dev_noimpl(close,nullop), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), dev_noimpl(stop,nullop), \
 	0, dev_init(c,n,poll), dev_noimpl(mmap,enodev), \
-	dev_noimpl(kqfilter,enodev), D_TTY }
+	dev_init(c,n,kqfilter), D_TTY }
 
 /* open, close, read, write, mmap */
 #define cdev_mm_init(c,n) { \
@@ -387,7 +394,7 @@ but needs own kqfilter */
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), dev_noimpl(stop,enodev), \
 	0, dev_init(c,n,poll), dev_init(c,n,mmap), \
-	dev_noimpl(kqfilter,enodev), 0 }
+	dev_init(c,n,kqfilter), 0 }
 
 /* open, close, read, ioctl */
 #define cdev_ipf_init(c,n)	cdev__ocri_init(c,n)

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.24 2001/02/22 07:11:13 chs Exp $	*/
+/*	$NetBSD: locore2.c,v 1.24.4.1 2001/09/13 01:15:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@ _save_symtab()
 static void
 _vm_init()
 {
-	vm_offset_t nextva;
+	vaddr_t nextva;
 
 	/*
 	 * First preserve our symbol table, which might have been
@@ -175,7 +175,7 @@ _vm_init()
 	 */
 	proc0paddr = (struct user *) nextva;
 	nextva += USPACE;
-	bzero((caddr_t)proc0paddr, USPACE);
+	memset((caddr_t)proc0paddr, 0, USPACE);
 	proc0.p_addr = proc0paddr;
 
 	/*
@@ -200,7 +200,7 @@ _bootstrap()
 {
 
 	/* First, Clear BSS. */
-	bzero(edata, end - edata);
+	memset(edata, 0, end - edata);
 
 	/* Set v_handler, get boothowto. */
 	sunmon_init();

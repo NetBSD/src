@@ -1,4 +1,4 @@
-/*	$NetBSD: imc.c,v 1.2 2001/07/08 23:59:31 thorpej Exp $	*/
+/*	$NetBSD: imc.c,v 1.2.2.1 2001/09/13 01:14:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -36,6 +36,8 @@
 #include <machine/autoconf.h>
 #include <machine/bus.h>
 #include <machine/machtype.h>
+
+#include <sgimips/dev/imcreg.h>
 
 #include "locators.h"
 
@@ -81,7 +83,7 @@ imc_match(parent, match, aux)
 		return (0);
 
 	/* Make sure it's actually there and readable */
-	if (badaddr((void*)MIPS_PHYS_TO_KSEG1(0x1fa0001c), sizeof(u_int32_t)))
+	if (badaddr((void*)MIPS_PHYS_TO_KSEG1(IMC_SYSID), sizeof(u_int32_t)))
 		return (0);
 
 	return (1);
@@ -96,11 +98,15 @@ imc_attach(parent, self, aux)
 	u_int32_t reg;
 	struct imc_attach_args iaa;
 	struct imc_softc *isc = (void *) self;
-        u_int32_t sysid = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fa0001c);
+        u_int32_t sysid = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(IMC_SYSID);
 
-	isc->eisa_present = (sysid >> 4) & 1;
+	/* EISA present bit is on even on Indys, so don't trust it! */
+	if (mach_subtype == MACH_SGI_IP22_FULLHOUSE)
+	    isc->eisa_present = (sysid & IMC_SYSID_HAVEISA);
+	else 
+	    isc->eisa_present = 0;
 
-	printf("\nimc0: Revision %d", (sysid & 0x03));
+	printf("\nimc0: Revision %d", (sysid & IMC_SYSID_REVMASK));
 
 	if (isc->eisa_present)
 	    printf(", EISA bus present");
@@ -108,38 +114,69 @@ imc_attach(parent, self, aux)
 	printf("\n");
 
 	/* Clear CPU/GIO error status registers to clear any leftover bits. */
-	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fa000ec) = 0;
-	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fa000fc) = 0;
+	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(IMC_CPU_ERRSTAT) = 0;
+	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(IMC_GIO_ERRSTAT) = 0;
 
 	/* 
-	 * Enable parity reporting on memory/GIO accesses, turn off parity 
-	 * checking on CPU reads from memory (flags cribbed from Linux -- 
-	 * why is the last one off?).  Also, enable MC interrupt writes to
-	 * the CPU.
+	 * Enable parity reporting on GIO/main memory transactions.
+	 * Disable parity checking on CPU bus transactions (as turning
+	 * it on seems to cause spurious bus errors), but enable parity
+	 * checking on CPU reads from main memory (note that this bit 
+	 * has the opposite sense... Turning it on turns the checks off!).
+	 * Finally, turn on interrupt writes to the CPU from the MC.
 	 */
-	reg = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fa00004);
-	reg |= 0x4002060;
-	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fa00004) = reg;
+	reg = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(IMC_CPUCTRL0);
+	reg &= ~IMC_CPUCTRL0_NCHKMEMPAR;
+	reg |= (IMC_CPUCTRL0_GPR | IMC_CPUCTRL0_MPR | IMC_CPUCTRL0_INTENA);
+	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(IMC_CPUCTRL0) = reg;
 	
 	/* Setup the MC write buffer depth */
-	reg = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fa0000c);
-	reg &= ~0xf;
-	reg |= 0xd;
-	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fa0000c) = reg;
+	reg = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(IMC_CPUCTRL1);
+	reg = (reg & ~IMC_CPUCTRL1_MCHWMSK) | 13;
+	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(IMC_CPUCTRL1) = reg;
 
-	/* Set GIO64 arbitrator configuration register. */
+	/* 
+	 * Set GIO64 arbitrator configuration register:
+	 *
+	 * Preserve PROM-set graphics-related bits, as they seem to depend
+	 * on the graphics variant present and I'm not sure how to figure 
+	 * that out or 100% sure what the correct settings are for each.
+	 */
+	reg = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(IMC_GIO64ARB);
+	reg &= (IMC_GIO64ARB_GRX64 | IMC_GIO64ARB_GRXRT | IMC_GIO64ARB_GRXMST);
 
 	/* GIO64 invariant for all IP22 platforms: one GIO bus, HPC1 @ 64 */
-	reg = 0x401;
+	reg |= IMC_GIO64ARB_ONEGIO | IMC_GIO64ARB_HPC64;
 
-	/* XXXrkb: I2 setting for now */
-	reg |= 0xc222;	/* GFX, HPC2 @ 64, EXP1,2 pipelined, EISA masters */
-	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fa00084) = reg;
+	/* Rest of settings are machine/board dependant */
+	switch (mach_subtype) {
+	  case MACH_SGI_IP22_GUINESS:
+	    /* EISA can bus-master, is 64-bit */
+	    reg |= (IMC_GIO64ARB_EISAMST | IMC_GIO64ARB_EISA64);
+	    break;
+
+	  case MACH_SGI_IP22_FULLHOUSE:
+	    /*
+	     * All Fullhouse boards have a 64-bit HPC2 and pipelined
+	     * EXP0 slot.
+	     */
+	    reg |= (IMC_GIO64ARB_HPCEXP64 | IMC_GIO64ARB_EXP0PIPE);
+
+	    if (mach_boardrev < 2) {
+		/* EXP0 realtime, EXP1 can master */
+		reg |= (IMC_GIO64ARB_EXP0RT | IMC_GIO64ARB_EXP1MST);
+	    } else {
+		/* EXP1 pipelined as well, EISA masters */
+		reg |= (IMC_GIO64ARB_EXP1PIPE | IMC_GIO64ARB_EISAMST);
+	    }
+	    break;
+	}
+	*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(IMC_GIO64ARB) = reg;
 
 	if (isc->eisa_present) {
 #if notyet
 	    memset(&iaa, 0, sizeof(iaa));
-	    
+
 	    iaa.iaa_name = "eisa";
 	    (void)config_found(self, (void*)&iaa, imc_print);
 #endif

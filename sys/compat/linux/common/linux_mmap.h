@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_mmap.h,v 1.8 2001/01/19 12:35:47 manu Exp $	*/
+/*	$NetBSD: linux_mmap.h,v 1.8.4.1 2001/09/13 01:15:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@ struct linux_sys_mmap_args {
 	syscallarg(int) prot;
 	syscallarg(int) flags;
 	syscallarg(int) fd;
-	syscallarg(off_t) offset;
+	syscallarg(linux_off_t) offset;
 };
 
 #ifdef _KERNEL

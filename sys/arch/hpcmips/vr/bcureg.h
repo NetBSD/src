@@ -1,4 +1,4 @@
-/*	$NetBSD: bcureg.h,v 1.6.2.1 2001/08/25 06:15:21 thorpej Exp $	*/
+/*	$NetBSD: bcureg.h,v 1.6.2.2 2001/09/13 01:13:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001 SATO Kazumi. All rights reserved.
@@ -38,7 +38,7 @@
  *	BCU (Bus Control Unit) Registers definitions.
  *		start 0xB000000 (vr4101,4102,4111,4121)
  *		start 0xA000000 (vr4181)
- *		start 0xF000000 (vr4122)
+ *		start 0xF000000 (vr4122, vr4131)
  */
 
 #define	BCUCNT1_REG_W		0x000	/* BCU Control Register 1 */
@@ -63,16 +63,16 @@
 #define		BCUCNT1_PAGE128		(1<<12)	/* 128bit */
 #define		BCUCNT1_PAGE64		(0<<12)	/* 64bit */
 
-#define		BCUCNT1_PAGESIZEMASK	(3<<12)	/* PageROM PAGESIZE (= 4122) */
+#define		BCUCNT1_PAGESIZEMASK	(3<<12)	/* PageROM PAGESIZE (= 4122, 4131) */
 #define		BCUCNT1_PASESIZE32	(2<<12)	/* 32 byte */
 #define		BCUCNT1_PASESIZE16	(1<<12)	/* 16 byte */
 #define		BCUCNT1_PASESIZE8	(0<<12)	/* 8 byte */
 
-#define		BCUCNT1_PAGE2MASK	(1<<10)	/* (<= 4122,>= 4102) */
+#define		BCUCNT1_PAGE2MASK	(1<<10)	/* (<= 4131,>= 4102) */
 #define		BCUCNT1_PAGE2PAGE	(1<<10)	/* Page ROM */
 #define		BCUCNT1_PAGE2ORD	(0<<10)	/* Prginary ROM */
 
-#define		BCUCNT1_PAGE0MASK	(1<<8)	/* (<= 4122,>= 4102) */
+#define		BCUCNT1_PAGE0MASK	(1<<8)	/* (<= 4131,>= 4102) */
 #define		BCUCNT1_PAGE0PAGE	(1<<8)	/* Page ROM */
 #define		BCUCNT1_PAGE0ORD	(0<<8)	/* Prginary ROM */
 
@@ -80,7 +80,7 @@
 #define		BCUCNT1_REF1024		(1<<7)	/* 1024 cycles/128ms */
 #define		BCUCNT1_REF4096		(0<<7)	/* 4096 cycles/128ms */
 
-#define		BCUCNT1_ROMWEN2		(1<<6)	/* Enable Flash memory write ROM 2 (<= 4122,>= 4102) */
+#define		BCUCNT1_ROMWEN2		(1<<6)	/* Enable Flash memory write ROM 2 (<= 4131,>= 4102) */
 #define		BCUCNT1_ROMWEN2EN	(1<<6)	/* Enable */
 #define		BCUCNT1_ROMWEN2DS	(0<<6)	/* Prohibit */
 
@@ -92,7 +92,7 @@
 #define		BCUCNT1_ROMWENEN	(1<<5)	/* Enable */
 #define		BCUCNT1_ROMWENDS	(0<<5)	/* Prohibit */
 
-#define		BCUCNT1_ROMWEN0		(1<<4)	/* Enable Flash memory write ROM 0 (<= 4122,>= 4102, =4181) */
+#define		BCUCNT1_ROMWEN0		(1<<4)	/* Enable Flash memory write ROM 0 (<= 4131,>= 4102, =4181) */
 #define		BCUCNT1_ROMWEN0EN	(1<<4)	/* Enable */
 #define		BCUCNT1_ROMWEN0DS	(0<<4)	/* Prohibit */
 
@@ -104,7 +104,7 @@
 #define		BCUCNT1_BCPUREN		(1<<3)	/* CPU bus cycle control enable */
 #define		BCUCNT1_BCPURDIS	(0<<3)	/* CPU bus cycle control disable */
 
-#define		BCUCNT1_HLD		(1<<2)	/* Bus hold enable (= 4122) */
+#define		BCUCNT1_HLD		(1<<2)	/* Bus hold enable (= 4122, 4131) */
 #define		BCUCNT1_HLDEN		(1<<2)	/* enable */
 #define		BCUCNT1_HLDDIS		(1<<2)	/* disable */
 
@@ -131,7 +131,7 @@
 
 #define BCUBR_REG_W		0x002	/* BCU Bus Restrain Register (= 4101) */
 
-#define BCUROMSIZE_REG_W	0x004	/* ROM size setting register (= 4122) */
+#define BCUROMSIZE_REG_W	0x004	/* ROM size setting register (= 4122, 4131) */
 #define		BCUROMSIZE_SIZE3	(7<<12)	/* Bank3 size */
 #define		BCUROMSIZE_SIZE3_64	(5<<12)	/* 64MB */
 #define		BCUROMSIZE_SIZE3_32	(4<<12)	/* 32MB */
@@ -162,7 +162,7 @@
 
 #define	BCUBRCNT_REG_W		0x004	/* BCU Bus Restrain Count Register (= 4101) */
 
-#define BCUROMSPEED_REG_W	0x006	/* BCU ROM Speed Register (=4122) */
+#define BCUROMSPEED_REG_W	0x006	/* BCU ROM Speed Register (=4122, 4131) */
 #define		BCUROMSPEED_PATIME	(0x3<<12)	/* Page Access time */
 #define		BCUROMSPEED_PATIME_5VT	(0x3<<12)	/* 5VTClock */
 #define		BCUROMSPEED_PATIME_4VT	(0x2<<12)	/* 4VTClock */
@@ -189,7 +189,7 @@
 
 #define BCUBCL_REG_W		0x006	/* BCU CPU Restrain Disable Register (= 4101) */
 
-#define BCUIO0SPEED_REG_W	0x008	/* BCU IO0 Speed Register (=4122) */
+#define BCUIO0SPEED_REG_W	0x008	/* BCU IO0 Speed Register (=4122, 4131) */
 #define		BCUIO0SPEED_RWCS	(0x3<<12)	/* R/W - CS time */
 #define		BCUIO0SPEED_RWCS_5VT	(0x3<<12)	/* 5VTClock */
 #define		BCUIO0SPEED_RWCS_4VT	(0x2<<12)	/* 4VTClock */
@@ -252,7 +252,7 @@
 
 #define BCUBCLCNT_REG_W		0x008	/* BCU CPU Restrain Disable Count Register (= 4101) */
 
-#define BCUIO1SPEED_REG_W	0x00A	/* BCU IO1 Speed Register (=4122) */
+#define BCUIO1SPEED_REG_W	0x00A	/* BCU IO1 Speed Register (=4122, 4131) */
 #define		BCUIO1SPEED_RWCS	(0x3<<12)	/* R/W - CS time */
 #define		BCUIO1SPEED_RWCS_5VT	(0x3<<12)	/* 5VTClock */
 #define		BCUIO1SPEED_RWCS_4VT	(0x2<<12)	/* 4VTClock */
@@ -407,6 +407,7 @@
 
 #define		BCUREVID_RIDMASK	(0xf<<12)	/* Revision ID */
 #define		BCUREVID_RIDSHFT	(12)		/* Revision ID */
+#define		BCUREVID_RID_4131	(0x5)		/* VR4131 */
 #define		BCUREVID_RID_4122	(0x4)		/* VR4122 */
 #define		BCUREVID_RID_4121	(0x3)		/* VR4121 */
 #define		BCUREVID_RID_4111	(0x2)		/* VR4111 */
@@ -442,7 +443,7 @@
 #define			BCUCLKSPEED_DIVT6	0x6
 #define		BCUCLKSPEED_DIVTSHFT	(12)		
 
-#define		BCUCLKSPEED_TDIVMODE	(0x1<<12)	/* (= 4122) */
+#define		BCUCLKSPEED_TDIVMODE	(0x1<<12)	/* (= 4122, 4131) */
 #define			BCUCLKSPEED_TDIV4	0x1
 #define			BCUCLKSPEED_TDIV2	0x0
 #define		BCUCLKSPEED_TDIVSHFT	(12)		
@@ -465,7 +466,7 @@
 #define			BCUCLKSPEED_DIVVT2_5	0xa
 #define		BCUCLKSPEED_DIVVTSHFT	(8)		
 
-#define		BCUCLKSPEED_VTDIVMODE	(0x7<<8)	/* (= 4122) */
+#define		BCUCLKSPEED_VTDIVMODE	(0x7<<8)	/* (= 4122, 4131) */
 #define			BCUCLKSPEED_VTDIV6	0x6
 #define			BCUCLKSPEED_VTDIVT5	0x5
 #define			BCUCLKSPEED_VTDIVT4	0x4
@@ -500,7 +501,7 @@
 #define		BCUCNT3_LCD32		(1<<7)		/* LCD bus 32bit */
 #define		BCUCNT3_LCD16		(0<<7)		/* LCD bus 16bit */
 
-#define		BCUCNT3_SYSDIREN	(1<<3)		/* SYSDIR or GPIO6(=4122)*/
+#define		BCUCNT3_SYSDIREN	(1<<3)		/* SYSDIR or GPIO6(=4122, 4131)*/
 #define		BCUCNT3_SYSDIR		(1<<3)		/* SYSDIR */
 #define		BCUCNT3_GPIO6		(0<<3)		/* GPIO6 */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: soft_spl.c,v 1.4 2001/04/12 19:43:47 thorpej Exp $	*/
+/*	$NetBSD: soft_spl.c,v 1.4.2.1 2001/09/13 01:14:13 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1997 Wolfgang Solfrank.
@@ -31,7 +31,9 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/param.h>
+#include <sys/systm.h>
 
+#include <machine/autoconf.h>
 
 static int soft_splhigh __P((void));
 static int soft_spl0 __P((void));
@@ -82,8 +84,7 @@ static int cpl;
 static int clockpending, softclockpending, softnetpending;
 
 static int
-splraise(bits)
-	int bits;
+splraise(int bits)
 {
 	int old;
 	
@@ -97,7 +98,7 @@ static int
 soft_splx(new)
 	int new;
 {
-	int pending, old = cpl;
+	int old = cpl;
 	int emsr, dmsr;
 
 	asm volatile ("mfmsr %0" : "=r"(emsr));
@@ -111,7 +112,6 @@ soft_splx(new)
 		asm volatile ("mtmsr %0" :: "r"(dmsr));
 		if (clockpending && !(cpl & SPLCLOCK)) {
 			struct clockframe frame;
-			extern int intr_depth;
 
 			cpl |= SPLCLOCK;
 			clockpending--;
@@ -240,11 +240,8 @@ soft_irq_establish(irq, level, handler, arg)
  * It is intended for use during interrupt exit (as the name implies :-)).
  */
 static void
-intr_return(frame, level)
-	struct clockframe *frame;
-	int level;
+intr_return(struct clockframe *frame, int level)
 {
-	int pending, old = cpl;
 	int emsr, dmsr;
 
 	asm volatile ("mfmsr %0" : "=r"(emsr));
@@ -257,8 +254,6 @@ intr_return(frame, level)
 
 		asm volatile ("mtmsr %0" :: "r"(dmsr));
 		if (clockpending && !(cpl & SPLCLOCK)) {
-			extern int intr_depth;
-
 			cpl |= SPLCLOCK;
 			clockpending--;
 			asm volatile ("mtmsr %0" :: "r"(emsr));
@@ -275,7 +270,7 @@ intr_return(frame, level)
 			softclockpending = 0;
 			asm volatile ("mtmsr %0" :: "r"(emsr));
 			
-			softclock();
+			softclock(NULL);
 			continue;
 		}
 		if (softnetpending && !(cpl & SPLSOFTNET)) {

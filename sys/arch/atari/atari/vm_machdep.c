@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.36.2.1 2001/08/25 06:15:17 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.36.2.2 2001/09/13 01:13:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -173,7 +173,7 @@ pagemove(from, to, size)
 		to += PAGE_SIZE;
 		size -= PAGE_SIZE;
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 }
 
 /*
@@ -357,7 +357,7 @@ vmapbuf(bp, len)
 		kva += PAGE_SIZE;
 		len -= PAGE_SIZE;
 	} while (len);
-	pmap_update();
+	pmap_update(pmap_kernel());
 }
 
 /*

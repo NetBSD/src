@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.45 2001/02/03 12:40:58 tsutsui Exp $	*/
+/*	$NetBSD: clock.c,v 1.45.4.1 2001/09/13 01:14:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -164,7 +164,7 @@ set_clk_mode(on, off, enable_clk)
 	u_char on, off;
 	int enable_clk;
 {
-	register u_char interreg;
+	u_char interreg;
 
 	/*
 	 * If we have not yet mapped the register,
@@ -303,7 +303,7 @@ clock_intr(cf)
  */
 void
 microtime(tvp)
-	register struct timeval *tvp;
+	struct timeval *tvp;
 {
 	int s = splhigh();
 	static struct timeval lasttime;

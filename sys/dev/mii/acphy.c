@@ -1,4 +1,4 @@
-/*	$NetBSD: acphy.c,v 1.1.2.2 2001/08/25 06:16:21 thorpej Exp $	*/
+/*	$NetBSD: acphy.c,v 1.1.2.3 2001/09/13 01:15:44 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,10 +80,7 @@ const struct mii_phydesc acphys[] = {
 };
 
 int
-acphymatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+acphymatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -94,9 +91,7 @@ acphymatch(parent, match, aux)
 }
 
 void
-acphyattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+acphyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
@@ -130,10 +125,7 @@ acphyattach(parent, self, aux)
 }
 
 int
-acphy_service(sc, mii, cmd)
-	struct mii_softc *sc;
-	struct mii_data *mii;
-	int cmd;
+acphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
@@ -192,8 +184,7 @@ acphy_service(sc, mii, cmd)
 }
 
 void
-acphy_status(sc)
-	struct mii_softc *sc;
+acphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;

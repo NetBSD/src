@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.13 2001/04/13 23:29:59 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.13.2.1 2001/09/13 01:13:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,6 +83,17 @@ void clearsoftnet __P((void));
 int  splsoftnet   __P((void));
 
 void do_pending_int __P((void));
+
+void ext_intr __P((void));
+void *intr_establish __P((int, int, int, int (*)(void *), void *));
+void intr_disestablish __P((void *));
+void intr_calculatemasks __P((void));
+int  isa_intr __P((void));
+void isa_intr_mask __P((int));
+void isa_intr_clr __P((int));
+
+void enable_intr __P((void));
+void disable_intr __P((void));
 
 static __inline int splraise __P((int));
 static __inline int spllower __P((int));

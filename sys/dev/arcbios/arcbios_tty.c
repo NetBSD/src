@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios_tty.c,v 1.1 2001/07/08 19:58:03 thorpej Exp $	*/
+/*	$NetBSD: arcbios_tty.c,v 1.1.2.1 2001/09/13 01:15:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -47,8 +47,6 @@ struct callout arcbios_tty_ch = CALLOUT_INITIALIZER;
 
 static struct tty *arcbios_tty[1];
 
-extern struct consdev arcbios_cn;
-
 void	arcbios_tty_start(struct tty *);
 void	arcbios_tty_poll(void *);
 int	arcbios_tty_param(struct tty *, struct termios *);
@@ -60,7 +58,7 @@ arcbios_ttyopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int unit = minor(dev);
 	struct tty *tp;
-	int s, maj, error = 0, setuptimeout = 0;
+	int s, error = 0, setuptimeout = 0;
 
 	if (unit != 0)
 		return (ENODEV);
@@ -87,14 +85,6 @@ arcbios_ttyopen(dev_t dev, int flag, int mode, struct proc *p)
 		ttsetwater(tp);
 
 		setuptimeout = 1;
-
-		/*
-		 * Initialize the ARC BIOS console device major.
-		 */
-		for (maj = 0; maj < nchrdev; maj++)
-			if (cdevsw[maj].d_open == arcbios_ttyopen)
-				break;
-		arcbios_cn.cn_dev = makedev(maj, 0);
 	} else if (tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0) {
 		splx(s);
 		return (EBUSY);

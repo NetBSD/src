@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.3 2001/06/10 03:16:31 briggs Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.3.2.1 2001/09/13 01:14:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -56,7 +56,6 @@
 #include <sys/device.h>
 
 #include <powerpc/mpc6xx/pte.h>
-#include <machine/intr.h>
 
 struct device *booted_device;
 int booted_partition;
@@ -64,8 +63,6 @@ int booted_partition;
 void findroot __P((void));
 void disable_intr(void);
 void enable_intr(void);
-
-void identifycpu(void);
 
 /*
  * Determine i/o configuration for a machine.
@@ -141,66 +138,3 @@ findroot(void)
 		}
 	}
 }
-
-#define MPC601		0x01
-#define MPC603		0x03
-#define MPC604		0x04
-#define MPC602		0x05
-#define MPC603e		0x06
-#define MPC603ev	0x07
-#define MPC750		0x08
-#define MPC604ev	0x09
-#define MPC7400		0x0c
-#define MPC620		0x14
-#define MPC8240		0x81
-
-int cpu;
-char cpu_model[80];
-char cpu_name[] = "PowerPC";	/* cpu architecture */
-
-struct cputab {
-	int	version;
-	char	*name;
-};
-static struct cputab models[] = {
-	{ MPC601,     "601" },
-	{ MPC603,     "603" },
-	{ MPC604,     "604" },
-	{ MPC602,     "602" },
-	{ MPC603e,   "603e" },
-	{ MPC603ev, "603ev" },
-	{ MPC750,     "750" },
-	{ MPC604ev, "604ev" },
-	{ MPC7400,   "7400" },
-	{ MPC620,     "620" },
-	{ MPC8240,   "8240" },
-	{ 0, NULL }
-};
-
-void
-identifycpu()
-{
-	int pvr;
-	struct cputab *cp = models;
-
-	/*
-	 * Find cpu type
-	 */
-	asm ("mfpvr %0" : "=r"(pvr));
-	cpu = pvr >> 16;
-	while (cp->name) {
-		if (cp->version == cpu)
-			break;
-		cp++;
-	}
-	if (cp->name)
-		strcpy(cpu_model, cp->name);
-	else
-		sprintf(cpu_model, "Version 0x%x", cpu);
-
-	sprintf(cpu_model + strlen(cpu_model), " (Revision %d.%d)",
-		(pvr >> 8) & 0xff, pvr & 0xff);
-
-	printf("CPU: %s %s\n", cpu_name, cpu_model);
-}
-

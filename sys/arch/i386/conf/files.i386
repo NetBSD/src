@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.188.2.1 2001/08/03 04:11:41 lukem Exp $
+#	$NetBSD: files.i386,v 1.188.2.2 2001/09/13 01:13:44 thorpej Exp $
 #
 # new style config file for i386 architecture
 #
@@ -6,7 +6,7 @@
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 8
 
-maxusers 2 16 64
+maxusers 2 16 128
 
 # APM options
 defopt	opt_apm.h	APM_DISABLE APM_FORCE_64K_SEGMENTS APM_NO_IDLE
@@ -34,6 +34,9 @@ defopt	DUMMY_NOPS
 
 # Performance counter support
 defopt	PERFCTRS
+
+# MTRR support
+defopt	MTRR
 
 # X server support in console drivers
 defopt	opt_xserver.h	XSERVER XSERVER_DDB
@@ -71,6 +74,7 @@ file	arch/i386/i386/machdep.c
 file	arch/i386/i386/math_emulate.c	math_emulate
 file	arch/i386/i386/mem.c
 file	arch/i386/i386/microtime.s
+file	arch/i386/i386/mtrr_i686.c	mtrr
 file	netns/ns_cksum.c		ns
 file	arch/i386/i386/pmap.c
 file	arch/i386/i386/process_machdep.c
@@ -83,6 +87,11 @@ file	arch/i386/i386/vm_machdep.c
 file	dev/cons.c
 
 file	arch/i386/i386/pmc.c		perfctrs
+
+file	crypto/des/arch/i386/des_enc.S		ipsec & ipsec_esp
+#file	crypto/des/arch/i386/des_cbc.S		ipsec & ipsec_esp
+file	crypto/blowfish/arch/i386/bf_enc.S	ipsec & ipsec_esp
+#file	crypto/blowfish/arch/i386/bf_cbc.S	ipsec & ipsec_esp
 
 #
 # Machine-independent SCSI drivers
@@ -134,6 +143,8 @@ device	mainbus: isabus, eisabus, mcabus, pcibus, mainbus, bios32
 attach	mainbus at root
 file	arch/i386/i386/mainbus.c	mainbus
 
+define	agpbus { }
+
 #
 # PCI-only drivers
 # XXX MUST BE INCLUDED BEFORE files.isa, as long as files.isa attaches
@@ -150,6 +161,7 @@ file	arch/i386/pci/opti82c700.c	pcibios & pcibios_intr_fixup
 file	arch/i386/pci/sis85c503.c	pcibios & pcibios_intr_fixup
 file	arch/i386/pci/via82c586.c	pcibios & pcibios_intr_fixup
 file	arch/i386/pci/amd756.c		pcibios & pcibios_intr_fixup
+file	arch/i386/pci/ali1543.c		pcibios & pcibios_intr_fixup
 file	arch/i386/pci/pci_bus_fixup.c	pcibios & pcibios_bus_fixup
 file	arch/i386/pci/pci_addr_fixup.c	pcibios & pcibios_addr_fixup
 defopt	PCI_CONF_MODE
@@ -157,10 +169,22 @@ file	arch/i386/pci/pciide_machdep.c	pciide
 file	arch/i386/pci/pcic_pci_machdep.c	pcic_pci
 
 # PCI-Host bridge chipsets
-device	pchb: pcibus
+device	pchb: pcibus, agpbus
 attach	pchb at pci
-file	arch/i386/pci/pchb.c		pchb
+file	arch/i386/pci/pchb.c		pchb			needs-flag
 file	arch/i386/pci/pchb_rnd.c	pchb & rnd
+
+# AGP control devices inside PCI-Host bridges
+device 	agp
+attach 	agp at agpbus
+file 	dev/pci/agp.c			agp			needs-flag
+file 	dev/pci/agp_ali.c		agp
+file 	dev/pci/agp_amd.c		agp
+file 	dev/pci/agp_intel.c		agp
+file 	dev/pci/agp_sis.c		agp
+file 	dev/pci/agp_via.c		agp
+file	dev/pci/agp_i810.c		agp
+file 	arch/i386/pci/agp_machdep.c	agp
 
 # PCI-EISA bridges
 device	pceb: eisabus, isabus
@@ -244,6 +268,7 @@ attach	opms at pckbc with opms_pckbc
 file	arch/i386/isa/pms.c		opms | opms_hack | opms_pckbc needs-flag
 
 include	"dev/wscons/files.wscons"
+include	"dev/wsfont/files.wsfont"
 
 include	"dev/pckbc/files.pckbc"
 

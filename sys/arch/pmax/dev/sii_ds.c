@@ -1,4 +1,4 @@
-/*	$NetBSD: sii_ds.c,v 1.17 2001/04/25 17:53:21 bouyer Exp $	*/
+/*	$NetBSD: sii_ds.c,v 1.17.2.1 2001/09/13 01:14:18 thorpej Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -24,17 +24,12 @@
 
 #include <machine/locore.h>
 
-#if NXSII > 0
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 #include <dev/scsipi/scsi_message.h>
 
 #include <machine/bus.h>
-#include <pmax/dev/device.h>		/* XXX old pmax SCSI drivers */
-#else
-#include <pmax/dev/device.h>		/* XXX old pmax SCSI drivers */
-#endif
 #include <pmax/dev/siireg.h>
 #include <pmax/dev/siivar.h>
 
@@ -62,17 +57,9 @@ static int	sii_ds_match __P((struct device* parent, struct cfdata *match,
 static void	sii_ds_attach __P((struct device *parent, struct device *self,
 		    void *aux));
 
-#if NXSII > 0
-struct cfattach xsii_ds_ca = {
-	sizeof(struct siisoftc), sii_ds_match, sii_ds_attach
-};
-#else
-extern struct cfattach sii_ds_ca;
 struct cfattach sii_ds_ca = {
 	sizeof(struct siisoftc), sii_ds_match, sii_ds_attach
 };
-#endif
-
 
 /* define a safe address in the SCSI buffer for doing status & message DMA */
 #define SII_BUF_ADDR	(MIPS_PHYS_TO_KSEG1(KN01_SYS_SII_B_START) \
@@ -126,10 +113,8 @@ sii_ds_attach(parent, self, aux)
 	}
 
 	/* Do the common parts of attachment. */
-#if NXSII > 0
 	sc->sc_adapter.adapt_request = sii_scsi_request;
 	sc->sc_adapter.adapt_minphys = minphys;
-#endif
 	siiattach(sc);
 
 	/* tie pseudo-slot to device */

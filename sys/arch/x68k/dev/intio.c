@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.8 2000/06/29 07:07:53 mrg Exp $	*/
+/*	$NetBSD: intio.c,v 1.8.4.1 2001/09/13 01:15:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/extent.h>
-#include <uvm/uvm_extern.h>	/* XXX needed? */
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/cpu.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.69.2.1 2001/08/25 06:16:02 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.69.2.2 2001/09/13 01:15:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -407,7 +407,7 @@ mmu_vtop(vva)
 	va = (vaddr_t)vva;
 #ifdef	PMAP_DEBUG
 	if ((va < KERNBASE) || (va >= virtual_contig_end))
-		panic("mmu_ptov");
+		panic("mmu_vtop");
 #endif
 	return (va - KERNBASE);
 }
@@ -675,17 +675,17 @@ pmap_bootstrap(nextva)
 	 */
 	size = sizeof(mmu_long_dte_t) * MMU_A_TBL_SIZE;
 	kernAbase = pmap_bootstrap_alloc(size);
-	bzero(kernAbase, size);
+	memset(kernAbase, 0, size);
 
 	/* Now the level-B kernel tables... */
 	size = sizeof(mmu_short_dte_t) * MMU_B_TBL_SIZE * KERN_B_TABLES;
 	kernBbase = pmap_bootstrap_alloc(size);
-	bzero(kernBbase, size);
+	memset(kernBbase, 0, size);
 
 	/* Now the level-C kernel tables... */
 	size = sizeof(mmu_short_pte_t) * MMU_C_TBL_SIZE * KERN_C_TABLES;
 	kernCbase = pmap_bootstrap_alloc(size);
-	bzero(kernCbase, size);
+	memset(kernCbase, 0, size);
 	/*
 	 * Note: In order for the PV system to work correctly, the kernel
 	 * and user-level C tables must be allocated contiguously.
@@ -1095,7 +1095,7 @@ pmap_init_a_tables()
 		 * or kernel, mapping.  This ensures that every process has
 		 * the kernel mapped in the top part of its address space.
 		 */
-		bcopy(kernAbase, a_tbl->at_dtbl, MMU_A_TBL_SIZE * 
+		memcpy(a_tbl->at_dtbl, kernAbase, MMU_A_TBL_SIZE * 
 			sizeof(mmu_long_dte_t));
 
 		/*
@@ -2092,7 +2092,7 @@ pmap_kremove(va, len)
 
 #ifdef	PMAP_DEBUG
 	if ((sva & PGOFSET) || (eva & PGOFSET))
-		panic("pmap_remove_kernel: alignment");
+		panic("pmap_kremove: alignment");
 #endif
 
 	idx  = m68k_btop(va - KERNBASE);
@@ -2129,7 +2129,7 @@ pmap_map(va, pa, endpa, prot)
 		pa += NBPG;
 		sz -= NBPG;
 	} while (sz > 0);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	return(va);
 }
 
@@ -2492,7 +2492,7 @@ void
 pmap_pinit(pmap)
 	pmap_t pmap;
 {
-	bzero(pmap, sizeof(struct pmap));
+	memset(pmap, 0, sizeof(struct pmap));
 	pmap->pm_a_tmgr = NULL;
 	pmap->pm_a_phys = kernAphys;
 	pmap->pm_refcount = 1;

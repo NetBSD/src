@@ -1,4 +1,4 @@
-# $NetBSD: std.i386,v 1.20 2001/05/26 17:46:12 sommerfeld Exp $
+# $NetBSD: std.i386,v 1.20.4.1 2001/09/13 01:13:45 thorpej Exp $
 #
 # standard, required NetBSD/i386 'options'
 
@@ -8,4 +8,8 @@ options 	EXEC_AOUT	# exec a.out binaries
 options		EXEC_ELF32	# exec ELF binaries
 options 	EXEC_SCRIPT	# exec #! scripts
 
-options		INET6_MD_CKSUM	# machine-dependant code for in6_cksum
+options 	INET6_MD_CKSUM	# machine-dependant code for in6_cksum
+options 	CRYPTO_MD_DES_ENC	# machine-dependant code for DES
+#options 	CRYPTO_MD_DES_CBC	# machine-dependant DES CBC code
+options 	CRYPTO_MD_BF_ENC	# machine-dependant code for BF_encrypt
+#options 	CRYPTO_MD_BF_CBC	# careful: uses bswapl, requires 486

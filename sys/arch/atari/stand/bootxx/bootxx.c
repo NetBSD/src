@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.4 2000/09/24 12:32:33 jdolecek Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.4.4.1 2001/09/13 01:13:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -30,11 +30,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-asm("	.text
-	.even
-start:
-	bras	_bootxx
-");
 #define	boot_BSD	bsd_startup
 
 #include <stand.h>
@@ -43,7 +38,11 @@ start:
 #include <libkern.h>
 #include <kparamb.h>
 #include <sys/boot_flag.h>
+#ifndef __ELF__
 #include <sys/exec.h>
+#else
+#include <sys/exec_elf.h>
+#endif
 #include <sys/reboot.h>
 #include <machine/cpu.h>
 
@@ -66,7 +65,7 @@ bootxx(readsector, disklabel, autoboot)
 
 	bzero(edata, end - edata);
 
-	printf("\033v\nNetBSD/Atari boot loader ($Revision: 1.4 $)\n\n");
+	printf("\033v\nNetBSD/Atari boot loader ($Revision: 1.4.4.1 $)\n\n");
 
 	if (init_dskio(readsector, disklabel, -1))
 		return(-1);
@@ -126,24 +125,24 @@ sys_info(od)
 
 	if ((jar = *ADDR_P_COOKIE)) {
 		while (jar[0]) {
-			if (jar[0] == 0x5f435055L) { /* _CPU	*/
-				switch(jar[1]) {
+			if ((jar[0] == 0x5f435055L) && ((jar[1] % 10) == 0)) { /* _CPU  */
+				switch(jar[1] / 10) {
 					case 0:
 						od->cputype |= ATARI_68000;
 						break;
-					case 10:
+					case 1:
 						od->cputype |= ATARI_68010;
 						break;
-					case 20:
+					case 2:
 						od->cputype |= ATARI_68020;
 						break;
-					case 30:
+					case 3:
 						od->cputype |= ATARI_68030;
 						break;
-					case 40:
+					case 4:
 						od->cputype |= ATARI_68040;
 						break;
-					case 60:
+					case 6:
 						od->cputype |= ATARI_68060;
 						break;
 				}
@@ -230,6 +229,7 @@ done:
 	}
 }
 
+#ifndef __ELF__		/* a.out */
 int
 load_BSD(od)
 	osdsc		*od;
@@ -248,7 +248,7 @@ load_BSD(od)
 	if (read(fd, &hdr, sizeof(hdr)) != sizeof(hdr))
 		goto error;
 	err = 3;
-	if (N_GETMAGIC(hdr) != NMAGIC)
+	if ((N_GETMAGIC(hdr) != NMAGIC) && (N_GETMAGIC(hdr) != OMAGIC))
 		goto error;
 
 	/*
@@ -315,3 +315,169 @@ error:
 	printf("Error %d in load_BSD.\n", err);
 	return(-1);
 }
+
+#else			/* __ELF__ */
+
+#define ELFMAGIC	((ELFMAG0 << 24) | (ELFMAG1 << 16) | (ELFMAG2 << 8) | ELFMAG3)
+
+int
+load_BSD(od)
+	osdsc		*od;
+{
+    int err, fd, i, j;
+    Elf32_Ehdr ehdr;
+    Elf32_Word kernsize;
+#if 0
+    Elf32_Word symsize, symstart;
+#endif
+
+    /*
+     * Read kernel's exec-header.
+     */
+    od->kstart = NULL;
+    err = 1;
+    if ((fd = open(od->osname, 0)) < 0)
+	goto error;
+    err = 2;
+    if (read(fd, &ehdr, sizeof(ehdr)) != sizeof(ehdr))
+	goto error;
+    err = 3;
+    if (*((u_int *)ehdr.e_ident) != ELFMAGIC)
+	goto error;
+    err = 4;
+    if (lseek(fd, (off_t)ehdr.e_phoff, SEEK_SET) < 0)
+	goto error;
+
+    /*
+     * calculate highest used address
+     */
+    i = ehdr.e_phnum + 1;
+    kernsize = 0;
+    while (--i) {
+	Elf32_Phdr phdr;
+	Elf32_Word sum;
+	err = 5;
+	if (read(fd, &phdr, sizeof(phdr)) != sizeof(phdr))
+	    goto error;
+	sum = phdr.p_vaddr + phdr.p_memsz;
+	if ((phdr.p_flags & (PF_W|PF_X)) && (sum > kernsize))
+	    kernsize = sum;
+    }
+
+#if 0
+    /*
+     * look for symbols and calculate the size
+     */
+    err = 6;
+    if (lseek(fd, (off_t)ehdr.e_shoff, SEEK_SET) < 0)
+	goto error;
+    i = ehdr.e_shnum + 1;
+    symsize = 0;
+    symstart = 0;
+    while (--i) {
+	Elf32_Shdr shdr;
+	err = 7;
+	if (read(fd, &shdr, sizeof(shdr)) != sizeof(shdr))
+	    goto error;
+	if ((shdr.sh_type == SHT_SYMTAB) || (shdr.sh_type == SHT_STRTAB))
+	    symsize += shdr.sh_size;
+    }
+
+    if (symsize) {
+	symstart = kernsize;
+	kernsize += symsize + sizeof(ehdr) + ehdr.e_shoff * sizeof(Elf32_Shdr);
+    }
+#endif
+
+    od->ksize = kernsize;
+    od->kentry = ehdr.e_entry;
+    od->k_esym = 0;
+
+    err = 10;
+    if ((od->kstart = alloc(od->ksize)) == NULL)
+	goto error; 
+
+    /*
+     * read segements, clear bss
+     */
+    i = ehdr.e_phnum + 1;
+    j = 0;
+    while (--i) {
+	Elf32_Phdr phdr;
+	Elf32_Word pos;
+	u_char *p;
+	pos = ehdr.e_phoff + j * sizeof(phdr);
+	err = 11;
+	if (lseek(fd, (off_t)pos, SEEK_SET) < 0)
+	    goto error;
+	err = 12;
+	if (read(fd, &phdr, sizeof(phdr)) != sizeof(phdr))
+	    goto error;
+	if (phdr.p_flags & (PF_W|PF_X)) {
+	    err = 13;
+            if (lseek(fd, (off_t)phdr.p_offset, SEEK_SET) < 0)
+		goto error;
+	    p = (u_char *)(od->kstart) + phdr.p_vaddr;
+	    err = 14;
+	    if (read(fd, p, phdr.p_filesz) != phdr.p_filesz)
+		goto error;
+	    if (phdr.p_memsz > phdr.p_filesz)
+		bzero(p + phdr.p_filesz, phdr.p_memsz - phdr.p_filesz);
+	}
+	++j;
+    }
+
+#if 0
+    /*
+     * read symbol and string
+     */
+    if (symsize) {
+	Elf32_Word pos;
+	int k = ehdr.e_shoff;
+	j = symstart + sizeof(ehdr);
+	pos = symstart + sizeof(ehdr) + ehdr.e_shoff * sizeof(Elf32_Shdr);
+	bzero((u_char *)(od->kstart) + j, ehdr.e_shoff * sizeof(Elf32_Shdr));
+	i = ehdr.e_shnum + 1;
+	while (--i) {
+	    Elf32_Shdr shdr;
+	    u_char *p;
+	    err = 20;
+	    if (lseek(fd, (off_t)k, SEEK_SET) < 0)
+		goto error;
+	    err = 21;
+	    if (read(fd, &shdr, sizeof(shdr)) != sizeof(shdr))
+		goto error;
+	    if ((shdr.sh_type == SHT_SYMTAB) || (shdr.sh_type == SHT_STRTAB)) {
+		err = 22;
+		if (lseek(fd, (off_t)shdr.sh_offset, SEEK_SET) < 0)
+		    goto error;
+		p = (u_char *)(od->kstart) + pos;
+		err = 23;
+		if (read(fd, p, shdr.sh_size) != shdr.sh_size)
+		    goto error;
+		shdr.sh_offset = pos;
+		pos += shdr.sh_size;
+		bcopy(&shdr, (u_char *)(od->kstart) + j, sizeof(shdr));
+	    }
+	    j += sizeof(shdr);
+	    k += sizeof(shdr);
+	}
+	ehdr.e_shoff = symstart + sizeof(ehdr);
+	bcopy(&ehdr, (u_char *)(od->kstart) + symstart, sizeof(ehdr));
+    }
+#endif
+
+    return(0);
+
+error:
+    
+    if (fd >= 0) {
+	if (od->kstart)
+	    free(od->kstart, od->ksize);
+	close(fd);
+    }
+    printf("Error %d in load_BSD.\n", err);
+    return(-1);
+
+}
+#endif /* __ELF__ */

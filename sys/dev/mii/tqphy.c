@@ -1,4 +1,4 @@
-/*	$NetBSD: tqphy.c,v 1.14 2001/06/02 21:39:42 thorpej Exp $	*/
+/*	$NetBSD: tqphy.c,v 1.14.2.1 2001/09/13 01:15:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -88,16 +88,16 @@
 
 #include <dev/mii/tqphyreg.h>
 
-int	tqphymatch __P((struct device *, struct cfdata *, void *));
-void	tqphyattach __P((struct device *, struct device *, void *));
+int	tqphymatch(struct device *, struct cfdata *, void *);
+void	tqphyattach(struct device *, struct device *, void *);
 
 struct cfattach tqphy_ca = {
 	sizeof(struct mii_softc), tqphymatch, tqphyattach, mii_phy_detach,
 	    mii_phy_activate
 };
 
-int	tqphy_service __P((struct mii_softc *, struct mii_data *, int));
-void	tqphy_status __P((struct mii_softc *));
+int	tqphy_service(struct mii_softc *, struct mii_data *, int);
+void	tqphy_status(struct mii_softc *);
 
 const struct mii_phy_funcs tqphy_funcs = {
 	tqphy_service, tqphy_status, mii_phy_reset,
@@ -115,10 +115,7 @@ const struct mii_phydesc tqphys[] = {
 };
 
 int
-tqphymatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+tqphymatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -129,9 +126,7 @@ tqphymatch(parent, match, aux)
 }
 
 void
-tqphyattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+tqphyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
@@ -166,10 +161,7 @@ tqphyattach(parent, self, aux)
 }
 
 int
-tqphy_service(sc, mii, cmd)
-	struct mii_softc *sc;
-	struct mii_data *mii;
-	int cmd;
+tqphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
@@ -231,8 +223,7 @@ tqphy_service(sc, mii, cmd)
 }
 
 void
-tqphy_status(sc)
-	struct mii_softc *sc;
+tqphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cesfic,v 1.2 2001/05/29 02:20:22 mrg Exp $
+#	$NetBSD: Makefile.cesfic,v 1.2.2.1 2001/09/13 01:13:31 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -39,8 +39,8 @@ CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes -Wno-format
 .if (${HAVE_GCC28} != "")
 CWARNFLAGS+=	-Wno-main
 .endif
-CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -msoft-float #-Wa,-mwarn-no-reg-prefixes
-AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE -Wa,-m68030 -Wa,-m68851 -Wa,-m68040 -Wa,-mwarn-no-reg-prefixes
+CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -msoft-float
+AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE -Wa,-m68030 -Wa,-m68851 -Wa,-m68040
 LINKFLAGS=	-n -Ttext 2000 -e start
 STRIPFLAGS?=	-d
 

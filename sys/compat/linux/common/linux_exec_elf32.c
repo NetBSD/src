@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.51.4.1 2001/08/03 04:12:43 lukem Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.51.4.2 2001/09/13 01:15:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -306,20 +306,15 @@ ELFNAME2(linux,probe)(p, epp, eh, itp, pos)
 	int error;
 	size_t len;
 
+	if (((error = ELFNAME2(linux,signature)(p, epp, eh, itp)) != 0) &&
 #ifdef LINUX_GCC_SIGNATURE
-	if ((error = ELFNAME2(linux,signature)(p, epp, eh, itp)) != 0)
-		if ((error = ELFNAME2(linux,gcc_signature)(p, epp, eh)) != 0)
-			return error;
-#else
+	    ((error = ELFNAME2(linux,gcc_signature)(p, epp, eh)) != 0) &&
+#endif
 #ifdef LINUX_ATEXIT_SIGNATURE
-	if ((error = ELFNAME2(linux,signature)(p, epp, eh, itp)) != 0)
-		if ((error = ELFNAME2(linux,atexit_signature)(p, epp, eh)) != 0)
+	    ((error = ELFNAME2(linux,atexit_signature)(p, epp, eh)) != 0) &&
+#endif
+	    1) 
 			return error;
-#else
-	if ((error = ELFNAME2(linux,signature)(p, epp, eh, itp)) != 0)
-		return error;
-#endif
-#endif
 
 	if (itp[0]) {
 		if ((error = emul_find(p, NULL, epp->ep_esch->es_emul->e_path,

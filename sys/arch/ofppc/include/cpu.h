@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.16 2001/05/30 12:28:48 mrg Exp $	*/
+/*	$NetBSD: cpu.h,v 1.16.2.1 2001/09/13 01:14:12 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -33,95 +33,19 @@
 #ifndef	_MACHINE_CPU_H_
 #define	_MACHINE_CPU_H_
 
-#if defined(_KERNEL_OPT)
-#include "opt_lockdebug.h"
-#endif
+#include <sys/device.h>
 
-#include <machine/frame.h>
-
-#include <sys/sched.h>
-struct cpu_info {
-	struct schedstate_percpu ci_schedstate; /* scheduler state */
-#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
-	u_long ci_spin_locks;		/* # of spin locks held */
-	u_long ci_simple_locks;		/* # of simple locks held */
-#endif
+struct cpu_softc {
+	struct device sc_dev;
+	int sc_ofnode;
 };
 
-#ifdef _KERNEL
-extern struct cpu_info cpu_info_store;
 
-#define	curcpu()		(&cpu_info_store)
-#endif
-
-struct machvec {
-	int (*splhigh) __P((void));
-	int (*spl0) __P((void));
-	int (*splbio) __P((void));
-	int (*splnet) __P((void));
-	int (*spltty) __P((void));
-	int (*splvm) __P((void));
-	int (*splclock) __P((void));
-	int (*spllowersoftclock) __P((void));
-	int (*splsoftclock) __P((void));
-	int (*splsoftnet) __P((void));
-	int (*splx) __P((int));
-	void (*setsoftclock) __P((void));
-	void (*setsoftnet) __P((void));
-	void (*clock_return) __P((struct clockframe *, int));
-	void (*irq_establish) __P((int, int, void (*)(void *), void *));
-};
-extern struct machvec machine_interface;
-
-#include <machine/psl.h>
-
-#define	splhigh()	((*machine_interface.splhigh)())
-#define	spl0()		((*machine_interface.spl0)())
-#define	splbio()	((*machine_interface.splbio)())
-#define	splnet()	((*machine_interface.splnet)())
-#define	spltty()	((*machine_interface.spltty)())
-#define	splvm()		((*machine_interface.splvm)())
-#define	splclock()	((*machine_interface.splclock)())
-#define	spllowersoftclock() ((*machine_interface.spllowersoftclock)())
-#define	splsoftclock()	((*machine_interface.splsoftclock)())
-#define	splstatclock()	splclock()
-#define	splsoftnet()	((*machine_interface.splsoftnet)())
-#define	splx(new)	((*machine_interface.splx)(new))
-#define	setsoftclock()	((*machine_interface.setsoftclock)())
-#define	setsoftnet()	((*machine_interface.setsoftnet)())
-#define	clock_return(frame, level)		\
-	((*machine_interface.clock_return)((frame), (level)))
-#define	irq_establish(irq, level, handler, arg)	\
-	((*machine_interface.irq_establish)((irq), (level), (handler), (arg)))
-
-#define	splsched()	splhigh()
-#define	spllock()	splhigh()
-
-#define	CLKF_USERMODE(frame)	(((frame)->srr1 & PSL_PR) != 0)
-#define	CLKF_BASEPRI(frame)	((frame)->pri == 0)
-#define	CLKF_PC(frame)		((frame)->srr0)
-#define	CLKF_INTR(frame)	((frame)->depth >= 0)
-
-#define	PROC_PC(p)		(trapframe(p)->srr0)
-
-#define	cpu_swapout(p)
-#define cpu_wait(p)
-#define	cpu_number()		0
-
-extern void delay __P((unsigned));
-#define	DELAY(n)		delay(n)
-
-extern __volatile int want_resched;
-extern __volatile int astpending;
-
-#define	need_resched(ci)	(want_resched = 1, astpending = 1)
-#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, astpending = 1)
-#define	signotify(p)		(astpending = 1)
-
+#if defined(_KERNEL)
+#define	CPU_MAXNUM	1
 extern char *bootpath;
-
-#if defined(_KERNEL) || defined(_STANDALONE)
-#define	CACHELINESIZE	32
+extern struct cfdriver cpu_cd;
+extern struct machvec machine_interface;
 #endif
 
 #include <powerpc/cpu.h>

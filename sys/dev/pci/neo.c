@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.8 2001/03/14 11:38:55 drochner Exp $	*/
+/*	$NetBSD: neo.c,v 1.8.4.1 2001/09/13 01:15:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -1018,8 +1018,6 @@ neo_mappage(void *addr, void *mem, off_t off, int prot)
 	vaddr_t v = (vaddr_t) mem;
 	bus_addr_t pciaddr;
 
-	/* XXX Need new mapping code. */
-
 	if (v == sc->pbuf_vaddr)
 		pciaddr = sc->pbuf_pciaddr;
 	else if (v == sc->rbuf_vaddr)
@@ -1027,11 +1025,8 @@ neo_mappage(void *addr, void *mem, off_t off, int prot)
 	else
 		return (-1);
 
-#ifdef __i386__
-	return (i386_btop(pciaddr + off));
-#else
-	return (-1);
-#endif
+	return (bus_space_mmap(sc->bufiot, pciaddr, off, prot,
+	    BUS_SPACE_MAP_LINEAR));
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.13 2001/05/02 10:32:10 scw Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.13.2.1 2001/09/13 01:15:48 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -53,6 +53,9 @@ struct ofcons_softc {
 #define	OFPOLL		1
 
 #define	OFBURSTLEN	128	/* max number of bytes to write in one chunk */
+
+cdev_decl(ofcons_);
+cons_decl(ofcons_);
 
 static int stdin, stdout;
 

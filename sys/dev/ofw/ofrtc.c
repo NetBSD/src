@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrtc.c,v 1.7 1998/03/21 02:05:17 cgd Exp $	*/
+/*	$NetBSD: ofrtc.c,v 1.7.28.1 2001/09/13 01:15:49 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -34,8 +34,11 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/conf.h>
 
 #include <dev/ofw/openfirm.h>
+
+cdev_decl(ofrtc_);
 
 struct ofrtc_softc {
 	struct device sc_dev;
@@ -53,10 +56,7 @@ struct cfattach ofrtc_ca = {
 extern struct cfdriver ofrtc_cd;
 
 static int
-ofrtc_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+ofrtc_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct ofbus_attach_args *oba = aux;
 	char type[8];
@@ -73,9 +73,7 @@ ofrtc_match(parent, match, aux)
 }
 
 static void
-ofrtc_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ofrtc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ofrtc_softc *of = (void *)self;
 	struct ofbus_attach_args *oba = aux;
@@ -94,10 +92,7 @@ ofrtc_attach(parent, self, aux)
 }
 
 int
-ofrtc_open(dev, flags, fmt)
-	dev_t dev;
-	int flags;
-	int fmt;
+ofrtc_open(dev_t dev, int flags, int fmt, struct proc *p)
 {
 	struct ofrtc_softc *of;
 	int unit = minor(dev);
@@ -129,26 +124,20 @@ ofrtc_open(dev, flags, fmt)
 }
 
 int
-ofrtc_close(dev, flags, fmt)
-	dev_t dev;
-	int flags;
-	int fmt;
+ofrtc_close(dev_t dev, int flags, int fmt, struct proc *p)
 {
 	return 0;
 }
 
 static void
-twodigit(bp, i)
-	char *bp;
-	int i;
+twodigit(char *bp, int i)
 {
 	*bp++ = i / 10 + '0';
 	*bp = i % 10 + '0';
 }
 
 static int
-twodigits(bp)
-	char *bp;
+twodigits(char *bp)
 {
 	int i;
 	
@@ -157,10 +146,7 @@ twodigits(bp)
 }
 
 int
-ofrtc_read(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+ofrtc_read(dev_t dev, struct uio *uio, int flag)
 {
 	struct ofrtc_softc *of = ofrtc_cd.cd_devs[minor(dev)];
 	int date[6];
@@ -192,10 +178,7 @@ ofrtc_read(dev, uio, flag)
 }
 
 int
-ofrtc_write(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+ofrtc_write(dev_t dev, struct uio *uio, int flag)
 {
 	struct ofrtc_softc *of = ofrtc_cd.cd_devs[minor(dev)];
 	char buf[14];

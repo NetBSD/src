@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.36 1998/12/13 19:08:43 kleink Exp $	*/
+/*	$NetBSD: obio.c,v 1.36.22.1 2001/09/13 01:14:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -211,9 +211,10 @@ static caddr_t prom_mappings[SAVE_SLOTS];
  * a mapping will have to be created.
  */
 caddr_t
-obio_find_mapping(int pa, int sz)
+obio_find_mapping(paddr_t pa, psize_t sz)
 {
-	vaddr_t off, va;
+	vsize_t off;
+	vaddr_t va;
 
 	off = pa & PGOFSET;
 	pa -= off;
@@ -246,11 +247,12 @@ obio_find_mapping(int pa, int sz)
 static void
 save_prom_mappings __P((void))
 {
-	vm_offset_t pa, segva, pgva;
+	paddr_t pa;
+	vaddr_t segva, pgva;
 	int pte, sme, i;
 
-	segva = (vm_offset_t)SUN3_MONSTART;
-	while (segva < (vm_offset_t)SUN3_MONEND) {
+	segva = (vaddr_t)SUN3_MONSTART;
+	while (segva < (vaddr_t)SUN3_MONEND) {
 		sme = get_segmap(segva);
 		if (sme == SEGINV) {
 			segva += NBSG;
@@ -293,7 +295,7 @@ save_prom_mappings __P((void))
  * These are all the OBIO address that are required early in
  * the life of the kernel.  All are less than one page long.
  */
-static vm_offset_t required_mappings[] = {
+static paddr_t required_mappings[] = {
 	/* Basically the first six OBIO devices. */
 	OBIO_ZS_KBD_MS,
 	OBIO_ZS_TTY_AB,
@@ -301,16 +303,16 @@ static vm_offset_t required_mappings[] = {
 	OBIO_CLOCK,
 	OBIO_MEMERR,
 	OBIO_INTERREG,
-	(vm_offset_t)-1,	/* end marker */
+	(paddr_t)-1,	/* end marker */
 };
 
 static void
 make_required_mappings __P((void))
 {
-	vm_offset_t *rmp;
+	paddr_t *rmp;
 
 	rmp = required_mappings;
-	while (*rmp != (vm_offset_t)-1) {
+	while (*rmp != (paddr_t)-1) {
 		if (!obio_find_mapping(*rmp, NBPG)) {
 			/*
 			 * XXX - Ack! Need to create one!

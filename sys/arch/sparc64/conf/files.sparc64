@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.48.2.1 2001/08/25 06:15:54 thorpej Exp $
+#	$NetBSD: files.sparc64,v 1.48.2.2 2001/09/13 01:14:39 thorpej Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -47,11 +47,6 @@ file	arch/sparc64/dev/pci_machdep.c		psycho
 # IOMMU is for both
 file	arch/sparc64/dev/iommu.c		sbus | psycho
 
-# can't use ppb for SUNW,simba
-device  simba: pcibus
-attach  simba at pci
-file	arch/sparc64/dev/simba.c		simba
-
 include "dev/ata/files.ata"
 
 device ebus {[addr = -1]}: pcibus
@@ -64,6 +59,9 @@ include "dev/mii/files.mii"
 device clock: mk48txx
 attach clock at mainbus, sbus with clock_sbus
 attach clock at ebus with clock_ebus
+
+device rtc
+attach rtc at ebus with rtc_ebus
 
 device timer
 attach timer at mainbus, sbus

@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.3 2001/01/20 17:14:20 bjh21 Exp $
+# $NetBSD: genassym.cf,v 1.3.4.1 2001/09/13 01:13:11 thorpej Exp $
 #
 # Copyright (c) 1999 Ben Harris
 # All rights reserved.
@@ -29,6 +29,7 @@
 
 include <sys/param.h>
 
+include <sys/mbuf.h>
 include <sys/proc.h>
 include <sys/user.h>
 include <machine/pcb.h>
@@ -46,3 +47,7 @@ define	IF_R15		offsetof(struct irqframe, if_r15)
 define	IF_SIZE		sizeof(struct irqframe)
 
 define	SIGF_SC		offsetof(struct sigframe, sf_sc)
+
+define	M_NEXT		offsetof(struct mbuf, m_next)
+define	M_DATA		offsetof(struct mbuf, m_data)
+define	M_LEN		offsetof(struct mbuf, m_len)

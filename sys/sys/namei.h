@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.h,v 1.20 2000/11/24 07:25:52 chs Exp $	*/
+/*	$NetBSD: namei.h,v 1.20.4.1 2001/09/13 01:16:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -149,6 +149,7 @@ struct nameidata {
 	(ndp)->ni_segflg = segflg; \
 	(ndp)->ni_dirp = namep; \
 	(ndp)->ni_cnd.cn_proc = p; \
+	(ndp)->ni_cnd.cn_cred = p->p_ucred; \
 }
 #endif
 

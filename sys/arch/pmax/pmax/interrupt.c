@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.1.2.2 2001/08/25 06:15:45 thorpej Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.1.2.3 2001/09/13 01:14:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -61,6 +61,8 @@ struct evcnt pmax_clock_evcnt =
     EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "clock", "intr");
 struct evcnt pmax_fpu_evcnt =
     EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "fpu", "intr");
+struct evcnt pmax_memerr_evcnt =
+    EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "memerr", "intr");
 
 /* XXX XXX XXX */
 extern void MachFPInterrupt(unsigned, unsigned, unsigned, struct frame *);

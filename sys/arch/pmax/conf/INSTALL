@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.40 2001/07/08 16:32:23 abs Exp $
+# 	$NetBSD: INSTALL,v 1.40.2.1 2001/09/13 01:14:16 thorpej Exp $
 #
 # Distribution	install kernel (any model)
 #    netbsd:	cut-down kernel for miniroots.
@@ -130,10 +130,11 @@ sii*	at	ibus0 addr ?		# DC7061 onboard SCSI
 # SCSI configuration							#
 #########################################################################
 
-# SCSI configuration for old 4.4BSD/pmax DECstation SCSI driver
-oldscsibus*	at sii?
-oldscsibus*	at asc?
-include 	"arch/pmax/conf/scsi.pmax"
+scsibus* at sii?
+scsibus* at asc?
+sd*	at scsibus? target ? lun ?	# SCSI disks
+st*	at scsibus? target ? lun ?	# SCSI tapes
+cd*	at scsibus? target ? lun ?	# SCSI CD-ROMs 
 
 #########################################################################
 # Pseudo-devices							#

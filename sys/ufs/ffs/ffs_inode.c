@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.41 2001/05/30 11:57:18 mrg Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.41.4.1 2001/09/13 01:16:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -239,7 +239,7 @@ ffs_truncate(v)
 		voff_t eoz;
 
 		size = blksize(fs, oip, lblkno(fs, length));
-		eoz = min(lblktosize(fs, lblkno(fs, length)) + size, osize);
+		eoz = MIN(lblktosize(fs, lblkno(fs, length)) + size, osize);
 		uvm_vnp_zerorange(ovp, length, eoz - length);
 		uobj = &ovp->v_uvm.u_obj;
 		simple_lock(&uobj->vmobjlock);

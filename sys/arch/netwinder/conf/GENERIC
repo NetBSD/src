@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.5.2.1 2001/08/25 06:15:39 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.5.2.2 2001/09/13 01:14:05 thorpej Exp $
 #
 #	GENERIC -- Netwinder Architecture Kernel
 #
@@ -224,6 +224,7 @@ pseudo-device	vnd		4	# disk-like interface to files
 
 # network pseudo-devices
 pseudo-device	bpfilter	4	# Berkeley packet filter
+#pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	loop			# network loopback
 
 # miscellaneous pseudo-devices

@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcarm,v 1.20.2.1 2001/08/03 04:11:31 lukem Exp $
+#	$NetBSD: files.hpcarm,v 1.20.2.2 2001/09/13 01:13:38 thorpej Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -18,13 +18,14 @@ define todservice {}
 file	dev/md_root.c				memory_disk_hooks
 major   {md = 18}
 
+file	arch/arm/arm32/conf.c
+
 # Standard keyboard driver
 #device	kbd
 #file	arch/hpcarm/dev/kbd.c			kbd needs-flag
 
 # Generic MD files
 file	arch/hpcarm/hpcarm/autoconf.c
-file	arch/hpcarm/hpcarm/conf.c
 file	arch/hpcarm/hpcarm/cpuswitch.S
 file	arch/hpcarm/hpcarm/exception.S
 file	arch/hpcarm/hpcarm/fault.c
@@ -38,7 +39,6 @@ file	arch/hpcarm/hpcarm/setstack.S
 file	arch/hpcarm/hpcarm/softintr.c
 file	arch/hpcarm/hpcarm/spl.S
 file	arch/hpcarm/hpcarm/stubs.c
-file	arch/hpcarm/hpcarm/vm_machdep.c
 
 # ARM FPE
 #file	arch/hpcarm/fpe-arm/armfpe_glue.S	armfpe

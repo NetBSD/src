@@ -1,4 +1,4 @@
-#	$NetBSD: files.sandpoint,v 1.7 2001/06/18 02:00:51 christos Exp $
+#	$NetBSD: files.sandpoint,v 1.7.2.1 2001/09/13 01:14:28 thorpej Exp $
 #
 # Motorola's "SandPoint" evaluation board's specific configuration info
 #
@@ -63,7 +63,9 @@ major	{raid = 18}
 define mainbus { }
 device	mainbus: isabus, pcibus, mainbus
 attach	mainbus at root
-file	arch/sandpoint/sandpoint/mainbus.c	mainbus
+device	cpu
+attach	cpu at mainbus
+file	arch/sandpoint/sandpoint/mainbus.c	mainbus|cpu needs-flag
 
 #
 # PCI-only drivers

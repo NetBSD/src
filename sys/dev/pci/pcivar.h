@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.46 2001/05/04 15:13:17 bouyer Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.46.2.1 2001/09/13 01:16:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -179,5 +179,8 @@ const struct pci_quirkdata *
  * Misc.
  */
 char   *pci_findvendor __P((pcireg_t));
+int	pci_find_device(struct pci_attach_args *pa,
+			int (*match)(struct pci_attach_args *));
+
 
 #endif /* _DEV_PCI_PCIVAR_H_ */

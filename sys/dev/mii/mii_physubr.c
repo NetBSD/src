@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.25.2.1 2001/08/03 04:13:13 lukem Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.25.2.2 2001/09/13 01:15:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -101,11 +101,10 @@ const struct mii_media mii_media_table[MII_NMEDIA] = {
 	  GTCR_ADV_1000TFDX },
 };
 
-void	mii_phy_auto_timeout __P((void *));
+void	mii_phy_auto_timeout(void *);
 
 void
-mii_phy_setmedia(sc)
-	struct mii_softc *sc;
+mii_phy_setmedia(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
@@ -151,9 +150,7 @@ mii_phy_setmedia(sc)
 }
 
 int
-mii_phy_auto(sc, waitfor)
-	struct mii_softc *sc;
-	int waitfor;
+mii_phy_auto(struct mii_softc *sc, int waitfor)
 {
 	int bmsr, i;
 
@@ -232,8 +229,7 @@ mii_phy_auto(sc, waitfor)
 }
 
 void
-mii_phy_auto_timeout(arg)
-	void *arg;
+mii_phy_auto_timeout(void *arg)
 {
 	struct mii_softc *sc = arg;
 	int s, bmsr;
@@ -251,8 +247,7 @@ mii_phy_auto_timeout(arg)
 }
 
 int
-mii_phy_tick(sc)
-	struct mii_softc *sc;
+mii_phy_tick(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
@@ -301,8 +296,7 @@ mii_phy_tick(sc)
 }
 
 void
-mii_phy_reset(sc)
-	struct mii_softc *sc;
+mii_phy_reset(struct mii_softc *sc)
 {
 	int reg, i;
 
@@ -325,8 +319,7 @@ mii_phy_reset(sc)
 }
 
 void
-mii_phy_down(sc)
-	struct mii_softc *sc;
+mii_phy_down(struct mii_softc *sc)
 {
 
 	if (sc->mii_flags & MIIF_DOINGAUTO) {
@@ -336,17 +329,14 @@ mii_phy_down(sc)
 }
 
 void
-mii_phy_status(sc)
-	struct mii_softc *sc;
+mii_phy_status(struct mii_softc *sc)
 {
 
 	PHY_STATUS(sc);
 }
 
 void
-mii_phy_update(sc, cmd)
-	struct mii_softc *sc;
-	int cmd;
+mii_phy_update(struct mii_softc *sc, int cmd)
 {
 	struct mii_data *mii = sc->mii_pdata;
 
@@ -361,8 +351,7 @@ mii_phy_update(sc, cmd)
 }
 
 void
-mii_phy_statusmsg(sc)
-	struct mii_softc *sc;
+mii_phy_statusmsg(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifnet *ifp = mii->mii_ifp;
@@ -406,8 +395,7 @@ mii_phy_statusmsg(sc)
  * of media names.  Does not print a newline.
  */
 void
-mii_phy_add_media(sc)
-	struct mii_softc *sc;
+mii_phy_add_media(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	const char *sep = "";
@@ -418,6 +406,21 @@ mii_phy_add_media(sc)
 	if ((sc->mii_flags & MIIF_NOISOLATE) == 0)
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_NONE, 0, sc->mii_inst),
 		    MII_MEDIA_NONE);
+
+	/*
+	 * There are different interpretations for the bits in
+	 * HomePNA PHYs.  And there is really only one media type
+	 * that is supported.
+	 */
+	if (sc->mii_flags & MIIF_IS_HPNA) {
+		if (sc->mii_capabilities & BMSR_10THDX) {
+			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_HPNA_1, 0,
+					 sc->mii_inst),
+			    MII_MEDIA_10_T);
+			PRINT("HomePNA1");
+		}
+		return;
+	}
 
 	if (sc->mii_capabilities & BMSR_10THDX) {
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_T, 0, sc->mii_inst),
@@ -505,8 +508,7 @@ mii_phy_add_media(sc)
 }
 
 void
-mii_phy_delete_media(sc)
-	struct mii_softc *sc;
+mii_phy_delete_media(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 
@@ -514,9 +516,7 @@ mii_phy_delete_media(sc)
 }
 
 int
-mii_phy_activate(self, act)
-	struct device *self;
-	enum devact act;
+mii_phy_activate(struct device *self, enum devact act)
 {
 	int rv = 0;
 
@@ -534,9 +534,7 @@ mii_phy_activate(self, act)
 }
 
 int
-mii_phy_detach(self, flags)
-	struct device *self;
-	int flags;
+mii_phy_detach(struct device *self, int flags)
 {
 	struct mii_softc *sc = (void *) self;
 

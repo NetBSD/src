@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.14.2.2 2001/08/25 06:15:08 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.14.2.3 2001/09/13 01:13:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -142,7 +142,7 @@
 #include <machine/param.h>
 #include <machine/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.14.2.2 2001/08/25 06:15:08 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.14.2.3 2001/09/13 01:13:07 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -602,7 +602,7 @@ pmap_alloc_pvpage(pmap, mode)
 	 */
 
 	pmap_kenter_pa(pv_cachedva, VM_PAGE_TO_PHYS(pg), VM_PROT_ALL);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	pvpage = (struct pv_page *) pv_cachedva;
 	pv_cachedva = 0;
 	return (pmap_add_pvpage(pvpage, mode != ALLOCPV_NONEED));
@@ -984,11 +984,11 @@ pmap_map(va, spa, epa, prot)
 	int prot;
 {
 	while (spa < epa) {
-		pmap_enter(pmap_kernel(), va, spa, prot, 0);
+		pmap_kenter_pa(va, spa, prot);
 		va += NBPG;
 		spa += NBPG;
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 	return(va);
 }
 
@@ -1378,8 +1378,7 @@ pmap_alloc_l1pt(void)
 	while (m && va < (pt->pt_va + PD_SIZE)) {
 		pa = VM_PAGE_TO_PHYS(m);
 
-		pmap_enter(pmap_kernel(), va, pa,
-		    VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
 
 		/* Revoke cacheability and bufferability */
 		/* XXX should be done better than this */
@@ -1389,7 +1388,7 @@ pmap_alloc_l1pt(void)
 		m = m->pageq.tqe_next;
 	}
 	pmap_unmap_ptes(pmap_kernel());
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 #ifdef DIAGNOSTIC
 	if (m)
@@ -1408,8 +1407,8 @@ pmap_free_l1pt(pt)
 	struct l1pt *pt;
 {
 	/* Separate the physical memory for the virtual space */
-	pmap_remove(pmap_kernel(), pt->pt_va, pt->pt_va + PD_SIZE);
-	pmap_update();
+	pmap_kremove(pt->pt_va, PD_SIZE);
+	pmap_update(pmap_kernel());
 
 	/* Return the physical memory */
 	uvm_pglistfree(&pt->pt_plist);
@@ -1548,7 +1547,7 @@ pmap_pinit(pmap)
 	/* Map zero page for the pmap. This will also map the L2 for it */
 	pmap_enter(pmap, 0x00000000, systempage.pv_pa,
 	    VM_PROT_READ, VM_PROT_READ | PMAP_WIRED);
-	pmap_update();
+	pmap_update(pmap);
 }
 
 
@@ -1607,7 +1606,7 @@ pmap_destroy(pmap)
 	
 	/* Remove the zero page mapping */
 	pmap_remove(pmap, 0x00000000, 0x00000000 + NBPG);
-	pmap_update();
+	pmap_update(pmap);
 
 	/*
 	 * Free any page tables still mapped
@@ -1809,11 +1808,6 @@ pmap_find_pvh(phys)
 	int bank, off;
 	struct pv_head *pvh;
 
-#ifdef DIAGNOSTIC
-	if (!pmap_initialized)
-		panic("pmap_find_pv: !pmap_initialized");
-#endif
-
 	if ((bank = vm_physseg_find(atop(phys), &off)) == -1)
 		panic("pmap_find_pv: not a real page, phys=%lx\n", phys);
 	pvh = &vm_physmem[bank].pmseg.pvhead[off];
@@ -1835,12 +1829,10 @@ pmap_zero_page(phys)
 	struct pv_head *pvh;
 
 	/* Get an entry for this page, and clean it it. */
-	PMAP_HEAD_TO_MAP_LOCK();
 	pvh = pmap_find_pvh(phys);
 	simple_lock(&pvh->pvh_lock);
 	pmap_clean_page(pvh->pvh_list, FALSE);
 	simple_unlock(&pvh->pvh_lock);
-	PMAP_HEAD_TO_MAP_UNLOCK();
 	
 	/*
 	 * Hook in the page, zero it, and purge the cache for that
@@ -1917,20 +1909,21 @@ pmap_copy_page(src, dest)
 	paddr_t dest;
 {
 	struct pv_head *src_pvh, *dest_pvh;
+	boolean_t cleanedcache;
 	
-	PMAP_HEAD_TO_MAP_LOCK();
 	/* Get PV entries for the pages, and clean them if needed. */
 	src_pvh = pmap_find_pvh(src);
-	simple_lock(&src_pvh->pvh_lock);
-	dest_pvh = pmap_find_pvh(dest);
-	simple_lock(&dest_pvh->pvh_lock);
-	if (!pmap_clean_page(src_pvh->pvh_list, TRUE))
-		pmap_clean_page(dest_pvh->pvh_list, FALSE);
 	
-	simple_unlock(&dest_pvh->pvh_lock);
+	simple_lock(&src_pvh->pvh_lock);
+	cleanedcache = pmap_clean_page(src_pvh->pvh_list, TRUE);
 	simple_unlock(&src_pvh->pvh_lock);
-	PMAP_HEAD_TO_MAP_UNLOCK();
 
+	if (cleanedcache == 0) { 
+		dest_pvh = pmap_find_pvh(dest);
+		simple_lock(&dest_pvh->pvh_lock);
+		pmap_clean_page(dest_pvh->pvh_list, FALSE);
+		simple_unlock(&dest_pvh->pvh_lock);
+	}
 	/*
 	 * Map the pages into the page hook points, copy them, and purge
 	 * the cache for the appropriate page. Invalidate the TLB

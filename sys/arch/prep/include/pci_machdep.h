@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.5 2001/06/15 15:50:05 nonaka Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.5.2.1 2001/09/13 01:14:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -29,6 +29,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef _MACHINE_PCI_MACHDEP_H_
+#define _MACHINE_PCI_MACHDEP_H_
 
 /*
  * Machine-specific definitions for PCI autoconfiguration.
@@ -56,6 +58,7 @@ typedef void *pci_chipset_tag_t;
 typedef int pcitag_t;
 typedef int pci_intr_handle_t;
 
+#ifdef _KERNEL
 extern struct powerpc_bus_dma_tag pci_bus_dma_tag;
 
 /*
@@ -75,3 +78,9 @@ const struct evcnt *pci_intr_evcnt(pci_chipset_tag_t, pci_intr_handle_t);
 void		*pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
 		    int, int (*)(void *), void *);
 void		pci_intr_disestablish(pci_chipset_tag_t, void *);
+void		pci_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev,
+		    int func, int swiz, int *iline);
+
+#endif /* _KERNEL */
+
+#endif /* _MACHINE_PCI_MACHDEP_H_ */

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3100.c,v 1.32.2.1 2001/08/25 06:15:44 thorpej Exp $ */
+/* $NetBSD: dec_3100.c,v 1.32.2.2 2001/09/13 01:14:19 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -210,7 +210,7 @@ dec_3100_intr(status, cause, pc, ipending)
 
 	if (ipending & MIPS_INT_MASK_4) {
 		dec_3100_errintr();
-		intrcnt[ERROR_INTR]++;
+		pmax_memerr_evcnt.ev_count++;
 	}
 	_splset(MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
 }

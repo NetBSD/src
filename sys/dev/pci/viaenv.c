@@ -1,4 +1,4 @@
-/*	$NetBSD: viaenv.c,v 1.3 2000/06/24 00:37:20 thorpej Exp $	*/
+/*	$NetBSD: viaenv.c,v 1.3.6.1 2001/09/13 01:16:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -296,7 +296,7 @@ viaenv_attach(struct device * parent, struct device * self, void *aux)
 	}
 	printf("\n");
 
-	lockinit(&sc->sc_lock, 0, "viaenv", 0, 0);
+	lockinit(&sc->sc_lock, PWAIT, "viaenv", 0, 0);
 
 	/* Initialize sensors */
 	for (i = 0; i < VIANUMSENSORS; ++i) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.51 2001/03/21 22:25:54 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.51.2.1 2001/09/13 01:13:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -300,11 +300,12 @@ struct cdevsw cdevsw[] = {
 #else
 	cdev_notdef(),			/* 77: */
 #endif
-	cdev_i4b_init(NI4B, i4b),		/* 78: i4b main device */
-	cdev_i4bctl_init(NI4BCTL, i4bctl),	/* 79: i4b control device */
-	cdev_i4brbch_init(NI4BRBCH, i4brbch),	/* 80: i4b raw b-channel access */
-	cdev_i4btrc_init(NI4BTRC, i4btrc),	/* 81: i4b trace device */
-	cdev_i4btel_init(NI4BTEL, i4btel),	/* 82: i4b phone device */
+        cdev_notdef(),			/* 78: bicons pseudo-dev */
+	cdev_i4b_init(NI4B, i4b),		/* 79: i4b main device */
+	cdev_i4bctl_init(NI4BCTL, i4bctl),	/* 80: i4b control device */
+	cdev_i4brbch_init(NI4BRBCH, i4brbch),	/* 81: i4b raw b-channel access */
+	cdev_i4btrc_init(NI4BTRC, i4btrc),	/* 82: i4b trace device */
+	cdev_i4btel_init(NI4BTEL, i4btel),	/* 83: i4b phone device */
 
 };
 
@@ -430,6 +431,7 @@ static int chrtoblktbl[] = {
     /* 80 */	    NODEV,
     /* 81 */	    NODEV,
     /* 82 */	    NODEV,
+    /* 83 */	    NODEV,
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.10 2000/09/30 20:40:34 leo Exp $	*/
+/*	$NetBSD: installboot.c,v 1.10.4.1 2001/09/13 01:13:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -50,7 +50,6 @@
 #define	FSTYPENAMES
 #include <sys/disklabel.h>
 #include <machine/ahdilabel.h>
-#include <machine/asm.h>
 
 #include "installboot.h"
 
@@ -169,7 +168,8 @@ main (argc, argv)
 static void
 oscheck ()
 {
-	struct nlist	kbv[] = { { _C_LABEL("bootversion") }, { NULL } };
+	struct nlist	kbv[] = { { ___STRING(_C_LABEL(bootversion)) },
+				  { NULL } };
 	kvm_t		*kd_kern;
 	char		errbuf[_POSIX2_LINE_MAX];
 	u_short		kvers;

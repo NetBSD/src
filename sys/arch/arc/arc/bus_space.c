@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.3 2000/11/09 06:05:40 thorpej Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.3.6.1 2001/09/13 01:13:02 thorpej Exp $	*/
 /*	NetBSD: bus_machdep.c,v 1.1 2000/01/26 18:48:00 drochner Exp 	*/
 
 /*-
@@ -68,6 +68,7 @@ arc_bus_space_init(bst, name, paddr, vaddr, start, size)
 	bst->bs_map = arc_bus_space_map;
 	bst->bs_unmap = arc_bus_space_unmap;
 	bst->bs_subregion = arc_bus_space_subregion;
+	bst->bs_mmap = arc_bus_space_mmap;
 	bst->bs_alloc = arc_bus_space_alloc;
 	bst->bs_free = arc_bus_space_free;
 	bst->bs_aux = NULL;
@@ -250,6 +251,27 @@ arc_bus_space_subregion(bst, bsh, offset, size, nbshp)
 {
 	*nbshp = bsh + offset;
 	return (0);
+}
+
+paddr_t
+arc_bus_space_mmap(bst, addr, off, prot, flags)
+	bus_space_tag_t bst;
+	bus_addr_t addr;
+	off_t off;
+	int prot;
+	int flags;
+{
+
+	/*
+	 * XXX We do not disallow mmap'ing of EISA/PCI I/O space here,
+	 * XXX which we should be doing.
+	 */
+
+	if (addr < bst->bs_start ||
+	    (addr + off) >= (bst->bs_start + bst->bs_size))
+		return (-1);
+
+	return (mips_btop(bst->bs_pbase + (addr - bst->bs_start) + off));
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.44.4.1 2001/08/25 06:17:16 thorpej Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.44.4.2 2001/09/13 01:16:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -62,7 +62,7 @@ static ufs_daddr_t ffs_alloccg __P((struct inode *, int, ufs_daddr_t, int));
 static ufs_daddr_t ffs_alloccgblk __P((struct inode *, struct buf *,
 					ufs_daddr_t));
 static ufs_daddr_t ffs_clusteralloc __P((struct inode *, int, ufs_daddr_t, int));
-static ino_t ffs_dirpref __P((struct fs *, ino_t));
+static ino_t ffs_dirpref __P((struct inode *));
 static ufs_daddr_t ffs_fragextend __P((struct inode *, int, long, int, int));
 static void ffs_fserr __P((struct fs *, u_int, char *));
 static u_long ffs_hashalloc
@@ -120,8 +120,8 @@ ffs_alloc(ip, lbn, bpref, size, cred, bnp)
 	if (ITOV(ip)->v_type == VREG && lbn > 0) {
 		struct vm_page *pg;
 		struct uvm_object *uobj = &ITOV(ip)->v_uvm.u_obj;
-		voff_t off = trunc_page(lblktosize(fs, (voff_t)lbn));
-		voff_t endoff = round_page(lblktosize(fs, (voff_t)lbn) + size);
+		voff_t off = trunc_page(lblktosize(fs, lbn));
+		voff_t endoff = round_page(lblktosize(fs, lbn) + size);
 
 		simple_lock(&uobj->vmobjlock);
 		while (off < endoff) {
@@ -642,12 +642,24 @@ ffs_valloc(v)
 	if (fs->fs_cstotal.cs_nifree == 0)
 		goto noinodes;
 
-	ipref = pip->i_number;
 	if ((mode & IFMT) == IFDIR)
-		ipref = ffs_dirpref(fs, ipref);
+		ipref = ffs_dirpref(pip);
+	else
+		ipref = pip->i_number;
 	if (ipref >= fs->fs_ncg * fs->fs_ipg)
 		ipref = 0;
 	cg = ino_to_cg(fs, ipref);
+	/*
+	 * Track number of dirs created one after another
+	 * in a same cg without intervening by files.
+	 */
+	if ((mode & IFMT) == IFDIR) {
+		if (fs->fs_contigdirs[cg] < 65535)
+			fs->fs_contigdirs[cg]++;
+	} else {
+		if (fs->fs_contigdirs[cg] > 0)
+			fs->fs_contigdirs[cg]--;
+	}
 	ino = (ino_t)ffs_hashalloc(pip, cg, (long)ipref, mode, ffs_nodealloccg);
 	if (ino == 0)
 		goto noinodes;
@@ -680,68 +692,112 @@ noinodes:
 }
 
 /*
- * Find a cylinder in which to place a directory.
+ * Find a cylinder group in which to place a directory.
  *
- * The policy implemented by this algorithm is to select from among
- * those cylinder groups with above the average number of free inodes
- * and a "reasonable" number of free blocks, the one with the smallest
- * number of directories.  If there are no cylinder groups with a
- * reasonable number of free blocks, we select a CG with *any* free
- * blocks or free frags.
+ * The policy implemented by this algorithm is to allocate a
+ * directory inode in the same cylinder group as its parent
+ * directory, but also to reserve space for its files inodes
+ * and data. Restrict the number of directories which may be
+ * allocated one after another in the same cylinder group
+ * without intervening allocation of files.
  *
- * "Reasonable" here is arbitrarily defined as "at least 25% of the
- * average amount of free space."
- *
- * This complex policy is intended to avoid pathological (linear
- * search) allocation performance when a filesystem contains many
- * small cylinder groups with few directory inodes and no free blocks;
- * this was observed in practice with the old allocation policy (which
- * ignored the distribution of free blocks).  Under the old policy,
- * when a new filesystem is populated with a number of files somewhat
- * larger than the CG size, and then a second tree containing a large
- * number of files and directories is created, mkdir() performance
- * would degrade catastrophically, taking many seconds and involving
- * thousands of disk reads to complete.
- *
- * XXX TODO: we currently ignore our "ipref" argument; we may want to
- * add a heuristic to determine whether to place a directory in the
- * same CG as its parent to reduce the amount of seeking required in
- * the course of tree-walks.
+ * If we allocate a first level directory then force allocation
+ * in another cylinder group.
  */
 static ino_t
-ffs_dirpref(fs, ipref)
-	struct fs *fs;
-	ino_t ipref;
+ffs_dirpref(pip)
+	struct inode *pip;
 {
-	int cg, minndir, mincg, avgifree, bfreethresh;
-	int minndirf, mincgf;
-	struct csum *cs;
+	register struct fs *fs;
+	int cg, prefcg, dirsize, cgsize;
+	int avgifree, avgbfree, avgndir, curdirsize;
+	int minifree, minbfree, maxndir;
+	int mincg, minndir;
+	int maxcontigdirs;
+
+	fs = pip->i_fs;
 
 	avgifree = fs->fs_cstotal.cs_nifree / fs->fs_ncg;
-	bfreethresh = fs->fs_cstotal.cs_nbfree / fs->fs_ncg;
-	bfreethresh >>= 2;
-	minndir = fs->fs_ipg;
-	minndirf = fs->fs_ipg;	
-	mincg = 0;
-	mincgf = 0;
-	for (cg = 0; cg < fs->fs_ncg; cg++) {
-		cs = &fs->fs_cs(fs, cg);
-		if (cs->cs_nifree >= avgifree) {
-			if ((cs->cs_ndir < minndir) &&
-			    (cs->cs_nbfree > bfreethresh)) {
+	avgbfree = fs->fs_cstotal.cs_nbfree / fs->fs_ncg;
+	avgndir = fs->fs_cstotal.cs_ndir / fs->fs_ncg;
+
+	/*
+	 * Force allocation in another cg if creating a first level dir.
+	 */
+	if (ITOV(pip)->v_flag & VROOT) {
+		prefcg = random() % fs->fs_ncg;
+		mincg = prefcg;
+		minndir = fs->fs_ipg;
+		for (cg = prefcg; cg < fs->fs_ncg; cg++)
+			if (fs->fs_cs(fs, cg).cs_ndir < minndir &&
+			    fs->fs_cs(fs, cg).cs_nifree >= avgifree &&
+			    fs->fs_cs(fs, cg).cs_nbfree >= avgbfree) {
 				mincg = cg;
-				minndir = cs->cs_ndir;
+				minndir = fs->fs_cs(fs, cg).cs_ndir;
 			}
-			if ((cs->cs_ndir < minndirf) &&
-			    ((cs->cs_nffree + cs->cs_nbfree) > 0)) {
-				mincgf = cg;
-				minndirf = cs->cs_ndir;
+		for (cg = 0; cg < prefcg; cg++)
+			if (fs->fs_cs(fs, cg).cs_ndir < minndir &&
+			    fs->fs_cs(fs, cg).cs_nifree >= avgifree &&
+			    fs->fs_cs(fs, cg).cs_nbfree >= avgbfree) {
+				mincg = cg;
+				minndir = fs->fs_cs(fs, cg).cs_ndir;
 			}
-		}
+		return ((ino_t)(fs->fs_ipg * mincg));
 	}
-	if (minndir == fs->fs_ipg)
-		mincg = mincgf;
-	return ((ino_t)(fs->fs_ipg * mincg));
+
+	/*
+	 * Count various limits which used for
+	 * optimal allocation of a directory inode.
+	 */
+	maxndir = min(avgndir + fs->fs_ipg / 16, fs->fs_ipg);
+	minifree = avgifree - fs->fs_ipg / 4;
+	if (minifree < 0)
+		minifree = 0;
+	minbfree = avgbfree - fs->fs_fpg / fs->fs_frag / 4;
+	if (minbfree < 0)
+		minbfree = 0;
+	cgsize = fs->fs_fsize * fs->fs_fpg;
+	dirsize = fs->fs_avgfilesize * fs->fs_avgfpdir;
+	curdirsize = avgndir ? (cgsize - avgbfree * fs->fs_bsize) / avgndir : 0;
+	if (dirsize < curdirsize)
+		dirsize = curdirsize;
+	maxcontigdirs = min(cgsize / dirsize, 255);
+	if (fs->fs_avgfpdir > 0)
+		maxcontigdirs = min(maxcontigdirs,
+				    fs->fs_ipg / fs->fs_avgfpdir);
+	if (maxcontigdirs == 0)
+		maxcontigdirs = 1;
+
+	/*
+	 * Limit number of dirs in one cg and reserve space for 
+	 * regular files, but only if we have no deficit in
+	 * inodes or space.
+	 */
+	prefcg = ino_to_cg(fs, pip->i_number);
+	for (cg = prefcg; cg < fs->fs_ncg; cg++)
+		if (fs->fs_cs(fs, cg).cs_ndir < maxndir &&
+		    fs->fs_cs(fs, cg).cs_nifree >= minifree &&
+	    	    fs->fs_cs(fs, cg).cs_nbfree >= minbfree) {
+			if (fs->fs_contigdirs[cg] < maxcontigdirs)
+				return ((ino_t)(fs->fs_ipg * cg));
+		}
+	for (cg = 0; cg < prefcg; cg++)
+		if (fs->fs_cs(fs, cg).cs_ndir < maxndir &&
+		    fs->fs_cs(fs, cg).cs_nifree >= minifree &&
+	    	    fs->fs_cs(fs, cg).cs_nbfree >= minbfree) {
+			if (fs->fs_contigdirs[cg] < maxcontigdirs)
+				return ((ino_t)(fs->fs_ipg * cg));
+		}
+	/*
+	 * This is a backstop when we are deficient in space.
+	 */
+	for (cg = prefcg; cg < fs->fs_ncg; cg++)
+		if (fs->fs_cs(fs, cg).cs_nifree >= avgifree)
+			return ((ino_t)(fs->fs_ipg * cg));
+	for (cg = 0; cg < prefcg; cg++)
+		if (fs->fs_cs(fs, cg).cs_nifree >= avgifree)
+			break;
+	return ((ino_t)(fs->fs_ipg * cg));
 }
 
 /*

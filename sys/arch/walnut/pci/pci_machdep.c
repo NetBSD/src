@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.2 2001/06/24 01:15:41 simonb Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.2.2.1 2001/09/13 01:15:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -254,5 +254,5 @@ pci_conf_hook(pci_chipset_tag_t pc, int bus, int dev, int func, int id)
 		/* Don't configure the bridge and PCI probe. */
 		return 0;
 	}
-	return PCI_CONF_ALL;
+	return PCI_CONF_ALL & ~PCI_CONF_MAP_ROM;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.18 2000/11/21 05:49:08 chs Exp $	  */
+/*	$NetBSD: pte.h,v 1.18.4.1 2001/09/13 01:15:06 thorpej Exp $	  */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -51,7 +51,7 @@ struct pte {
 
 typedef struct pte	pt_entry_t;	/* Mach page table entry */
 
-#endif _LOCORE
+#endif /* _LOCORE */
 
 #define PT_ENTRY_NULL	((pt_entry_t *) 0)
 

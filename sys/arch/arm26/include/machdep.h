@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.h,v 1.2 2001/06/14 22:56:56 thorpej Exp $ */
+/* $NetBSD: machdep.h,v 1.2.2.1 2001/09/13 01:13:13 thorpej Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -55,9 +55,16 @@ extern void atomic_clear_bit	__P((u_int *address, u_int clearmask));
 extern register_t set_r13_irq	__P((register_t r13_irq));
 extern void int_on	__P((void));
 extern void int_off	__P((void));
+extern void fiq_on	__P((void));
+extern void fiq_off	__P((void));
 extern void cpu_loswitch(struct switchframe **, struct switchframe *);
 extern void proc_trampoline(void); /* not quite true */
 
 /* pmap.c */
 extern register_t update_memc	__P((register_t, register_t));
+
+/* rtc.c */
+extern int cmos_read(int);
+extern int cmos_write(int, int);
+
 #endif

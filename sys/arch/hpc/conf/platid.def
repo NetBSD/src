@@ -1,4 +1,4 @@
-/*	$NetBSD: platid.def,v 1.9.2.1 2001/08/03 04:11:29 lukem Exp $	*/
+/*	$NetBSD: platid.def,v 1.9.2.2 2001/09/13 01:13:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -47,6 +47,8 @@ MIPS {
       4121
       4181
       4122
+      4131
+      4181A
     }
   }
   TX {
@@ -54,7 +56,7 @@ MIPS {
       3911 3912 
     }
     3920 {
-      3922
+      3922 3927
     }
   }
 }
@@ -108,6 +110,8 @@ NEC {
       CPU=MIPS_VR_4111 500A --" MobilePro 750c"
       CPU=MIPS_VR_4121 530 -"530" 430 -"430" 530A --" MobilePro 780"
                        sigmarion ---"DoCoMo sigmarion"
+                       550 -"550" 450 -"450"
+      CPU=MIPS_VR_4131 sigmarion2 ---"DoCoMo sigmarionII"
     }
     7XX "700 series" {
       CPU=MIPS_VR_4121 700 -"700" 700A --" MobilePro 800"
@@ -252,7 +256,7 @@ Victor {
   InterLink {
     MP {
       CPU=MIPS_TX_3922 MPC101
-      CPU=MIPS_VR_4122 MPC303
+      CPU=MIPS_VR_4122 MPC303 MPC304
     }
   }
 }
@@ -330,9 +334,29 @@ HITACHI {
 
 #ifdef hpcsh
 LGE {
-	Phenom "Phenom" {
+	Phenom " Phenom" {
 		CPU=SH_3_7709
 			H220C	-" H-220C"
 	}
 }
 #endif /* hpcsh */
+
+#ifdef hpcmips
+LASER5 {
+	L " L-" {
+		CPU=MIPS_VR_4181
+			CARD	"CARD+"
+		CPU=MIPS_VR_4122
+			BOARD	"BOARD"
+	}
+}
+#endif /* hpcmips */
+
+#ifdef hpcmips
+AGENDA {
+	VR " VR" {
+		CPU=MIPS_VR_4181
+			VR3	-" VR3+"
+	}
+}
+#endif /* hpcmips */

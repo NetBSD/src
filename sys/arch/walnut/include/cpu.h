@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.1 2001/06/13 06:01:55 simonb Exp $	*/
+/*	$NetBSD: cpu.h,v 1.1.2.1 2001/09/13 01:15:10 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -33,48 +33,7 @@
 #ifndef	_MACHINE_CPU_H_
 #define	_MACHINE_CPU_H_
 
-#if defined(_KERNEL) && !defined(_LKM)
-#include "opt_lockdebug.h"
-#endif
-
-#include <machine/frame.h>
-#include <machine/psl.h>
-#include <machine/intr.h>
-
-#ifdef _KERNEL
-#include <sys/sched.h>
-struct cpu_info {
-	struct schedstate_percpu ci_schedstate; /* scheduler state */
-#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
-	u_long ci_spin_locks;		/* # of spin locks held */
-	u_long ci_simple_locks;		/* # of simple locks held */
-#endif
-};
-
-extern struct cpu_info cpu_info_store;
-extern volatile int want_resched;
-extern volatile int astpending;
-
-#define curcpu()		(&cpu_info_store)
-#define cpu_number()		0
-
-#define	CLKF_USERMODE(frame)	(((frame)->srr1 & PSL_PR) != 0)
-#define	CLKF_BASEPRI(frame)	((frame)->pri == 0)
-#define	CLKF_PC(frame)		((frame)->srr0)
-#define	CLKF_INTR(frame)	((frame)->depth > 0)
-
-#define	PROC_PC(p)		(trapframe(p)->srr0)
-
-#define	cpu_swapout(p)
-#define cpu_wait(p)
-
-void delay(unsigned int);
-#define	DELAY(n)		delay(n)
-
-#define	need_resched(ci)	(want_resched = 1, astpending = 1)
-#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, astpending = 1)
-#define	signotify(p)		(astpending = 1)
-
+#if defined(_KERNEL)
 extern char bootpath[];
 
 void calc_delayconst(void);

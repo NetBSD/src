@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.25 2001/07/08 16:32:23 abs Exp $
+#	$NetBSD: GENERIC,v 1.25.2.1 2001/09/13 01:14:25 thorpej Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/prep/conf/std.prep"
 
-#ident		"GENERIC-$Revision: 1.25 $"
+#ident		"GENERIC-$Revision: 1.25.2.1 $"
 
 maxusers	32
 
@@ -207,6 +207,7 @@ lpt0	at isa? port 0x3bc irq 7	# standard PC parallel ports
 # SCSI Controllers and Devices
 
 # PCI SCSI controllers
+adw*	at pci? dev ? function ?	# AdvanSys 9x0UW[D], 3940U[2,3]W SCSI
 ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
 iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
 pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
@@ -216,6 +217,7 @@ siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI
 aic*	at pcmcia? function ?		# Adaptec APA-1460 SCSI
 
 # SCSI bus support
+scsibus* at adw?
 scsibus* at ahc?
 scsibus* at aic?
 scsibus* at iha?
@@ -265,9 +267,15 @@ uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 ep*	at pci? dev ? function ?	# 3Com 3c59x
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
-#le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
+pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
+sip*	at pci? dev ? function ?	# SiS 900/DP83815 Ethernet
+tlp*	at pci? dev ? function ?	# DECchip 21x4x (and clones) Ethernet
+#options 	TLP_MATCH_21040
+#options 	TLP_MATCH_21041
+#options 	TLP_MATCH_21140
+#options 	TLP_MATCH_21142
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 
 # ISA network interfaces
@@ -418,6 +426,7 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		2	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		2	# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
+#pseudo-device	bridge			# simple inter-network bridging
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals

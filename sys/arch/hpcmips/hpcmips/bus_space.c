@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.8 2001/04/24 04:30:58 thorpej Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.8.2.1 2001/09/13 01:13:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  *
  */
-/*	$NetBSD: bus_space.c,v 1.8 2001/04/24 04:30:58 thorpej Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.8.2.1 2001/09/13 01:13:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@ hpcmips_init_bus_space_extent(t)
 		for (; pa < endpa; pa += NBPG, va += NBPG) {
 			pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
 		}
-		pmap_update();
+		pmap_update(pmap_kernel());
 	}
 
 	t->t_extent = (void*)extent_create(t->t_name, t->t_base, 

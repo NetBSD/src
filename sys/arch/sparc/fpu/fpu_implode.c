@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_implode.c,v 1.7 2000/08/03 18:32:08 eeh Exp $ */
+/*	$NetBSD: fpu_implode.c,v 1.7.4.1 2001/09/13 01:14:34 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -531,4 +531,11 @@ fpu_implode(fe, fp, type, space)
 	default:
 		panic("fpu_implode");
 	}
+#ifdef SUN4U
+	DPRINTF(FPE_REG, ("fpu_implode: %x %x %x %x\n", 
+		space[0], space[1], space[2], space[3]));
+#else
+	DPRINTF(FPE_REG, ("fpu_implode: %x %x\n", 
+		space[0], space[1]));
+#endif
 }

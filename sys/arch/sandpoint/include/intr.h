@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.2 2001/04/13 23:30:04 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.2.2.1 2001/09/13 01:14:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -188,27 +188,9 @@ set_sint(pending)
 /*
  * Motorola SandPoint PPC eval board interrupt list
  */
-#define	SANDPOINT_INTR_PCI0		0
-#define	SANDPOINT_INTR_IDE0		SANDPOINT_INTR_PCI0
-#define	SANDPOINT_INTR_PCI1		1
-#define	SANDPOINT_INTR_IDE1		SANDPOINT_INTR_PCI1
-#define	SANDPOINT_INTR_ISA		SANDPOINT_INTR_PCI1
-#define	SANDPOINT_INTR_PCI2		2
-#define	SANDPOINT_INTR_PCI3		3
-#define	SANDPOINT_INTR_SERCON		4	/* Not used on Unity X4 */
-#define	SANDPOINT_INTR_I2C		5
-#define	SANDPOINT_INTR_DMA0		6
-#define	SANDPOINT_INTR_DMA1		7
-#define	SANDPOINT_INTR_I2O		8
-#define	SANDPOINT_INTR_TIMER0		9
-#define	SANDPOINT_INTR_TIMER1		10
-#define	SANDPOINT_INTR_TIMER2		11
-#define	SANDPOINT_INTR_TIMER3		12
+#define	ICU_LEN		25
+#define	ICU_MASK	0x01ffffff
 
-#define	OPENPIC_MAX_EXTERNAL_INT	4
-
-#define	ICU_LEN		13
-#define	ICU_MASK	0x00001fff
 #define	LEGAL_IRQ(x)	((x) >= 0 && (x) < ICU_LEN)
 
 #define	SINT_ISA	0x10000000

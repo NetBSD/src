@@ -1,4 +1,4 @@
-/*	$NetBSD: cg4.c,v 1.21 2000/06/29 07:18:58 mrg Exp $	*/
+/*	$NetBSD: cg4.c,v 1.21.4.1 2001/09/13 01:14:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -378,7 +378,7 @@ cg4mmap(dev, off, prot)
 	int prot;
 {
 	struct cg4_softc *sc = cgfour_cd.cd_devs[minor(dev)];
-	register int physbase;
+	int physbase;
 
 	if (off & PGOFSET)
 		panic("cg4mmap");

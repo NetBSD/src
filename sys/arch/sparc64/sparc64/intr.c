@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.38.4.1 2001/08/03 04:12:29 lukem Exp $ */
+/*	$NetBSD: intr.c,v 1.38.4.2 2001/09/13 01:14:42 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -178,7 +178,7 @@ setsoftnet() {
  * Only `prewired' interrupts appear here; boot-time configured devices
  * are attached via intr_establish() below.
  */
-struct intrhand *intrhand[15] = {
+struct intrhand *intrhand[16] = {
 	NULL,			/*  0 = error */
 	&soft01intr,		/*  1 = software level 1 + Sbus */
 	NULL,	 		/*  2 = Sbus level 2 (4m: Sbus L1) */
@@ -193,7 +193,8 @@ struct intrhand *intrhand[15] = {
 	NULL,			/* 11 = floppy */
 	NULL,			/* 12 = zs hardware interrupt */
 	NULL,			/* 13 = audio chip */
-	NULL			/* 14 = counter 1 = profiling timer */
+	NULL,			/* 14 = counter 1 = profiling timer */
+	NULL			/* 15 = async faults */
 };
 
 int fastvec = 0;

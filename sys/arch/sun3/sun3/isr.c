@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.44 2000/07/02 04:40:45 cgd Exp $	*/
+/*	$NetBSD: isr.c,v 1.44.4.1 2001/09/13 01:14:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -126,7 +126,7 @@ void isr_autovec(cf)
 	struct clockframe cf;
 {
 	struct isr *isr;
-	register int n, ipl, vec;
+	int n, ipl, vec;
 
 	vec = (cf.cf_vo & 0xFFF) >> 2;
 	if ((vec < AUTOVEC_BASE) || (vec >= (AUTOVEC_BASE+8)))
@@ -194,7 +194,7 @@ isr_vectored(cf)
 	struct clockframe cf;
 {
 	struct vector_handler *vh;
-	register int ipl, vec;
+	int ipl, vec;
 
 	vec = (cf.cf_vo & 0xFFF) >> 2;
 	ipl = getsr();

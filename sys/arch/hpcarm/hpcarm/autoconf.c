@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2 2001/05/13 13:53:09 bjh21 Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2.2.1 2001/09/13 01:13:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -48,6 +48,8 @@
 
 #include <machine/bootconfig.h>
 #include <machine/irqhandler.h>
+
+#include "sacom.h"
 
 struct device *booted_device;
 int booted_partition;
@@ -184,4 +186,22 @@ void
 device_register(struct device *dev, void *aux)
 {
 }
-/* End of autoconf.c */
+
+/*
+ * This entire table could be autoconfig()ed but that would mean that
+ * the kernel's idea of the console would be out of sync with that of
+ * the standalone boot.  I think it best that they both use the same
+ * known algorithm unless we see a pressing need otherwise.
+ */
+
+#include <dev/cons.h>
+
+cons_decl(com);   
+cons_decl(sacom);
+
+struct consdev constab[] = {
+#if (NSACOM > 0)
+	cons_init(sacom),
+#endif
+	{ 0 },
+};

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.54.2.1 2001/08/03 04:13:32 lukem Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.54.2.2 2001/09/13 01:16:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -440,6 +440,7 @@ struct scsipi_periph {
 #define PQUIRK_ONLYBIG		0x00008000	/* only use SCSI_{R,W}_BIG */
 #define PQUIRK_BYTE5_ZERO	0x00010000	/* byte5 in capacity is wrong */
 #define PQUIRK_NO_FLEX_PAGE	0x00020000	/* does not support flex geom page */
+#define PQUIRK_NOBIGMODESENSE	0x00040000	/* has no big mode-sense op */
 
 
 /*
@@ -713,8 +714,6 @@ static __inline u_int32_t _3ltol __P((const u_int8_t *bytes))
 	__attribute__ ((unused));
 static __inline u_int32_t _4ltol __P((const u_int8_t *bytes))
 	__attribute__ ((unused));
-static __inline void bswap __P((char *, int))
-	__attribute__ ((unused));
 
 static __inline void
 _lto2b(val, bytes)
@@ -852,17 +851,6 @@ _4ltol(bytes)
 	     (bytes[2] << 16) |
 	     (bytes[3] << 24);
 	return (rv);
-}
-
-static __inline void
-bswap (buf, len)
-	char *buf;
-	int len;
-{
-	u_int16_t *p = (u_int16_t *)(buf + len);
-
-	while (--p >= (u_int16_t *)buf)
-		*p = (*p & 0xff) << 8 | (*p >> 8 & 0xff);
 }
 
 #endif /* _DEV_SCSIPI_SCSIPICONF_H_ */

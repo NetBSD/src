@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.15.4.1 2001/08/25 06:15:45 thorpej Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.15.4.2 2001/09/13 01:14:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -66,7 +66,7 @@
 
 	.set	noreorder
 
-#if NSII > 0 || NXSII > 0
+#if NSII > 0
 /*
  * Copy data to a DMA buffer padded with 16 bits of data, 16
  * bits of padding per 32bit word (e.g., for pmin/pmax sii DMA).
@@ -139,7 +139,7 @@ LEAF(CopyFromBuffer)
 	j	ra
 	nop
 END(CopyFromBuffer)
-#endif	/* NSII > 0 || NXSII > 0 */
+#endif	/* NSII > 0 */
 
 /*
  * Write-buffer flush for writebuffer hardware on DEC mips r2000a
@@ -176,18 +176,16 @@ EXPORT(intrnames)
 	.asciiz	"serial1"
 	.asciiz	"ether"
 	.asciiz	"scsi"
-	.asciiz	"memory"
 	.asciiz	"optslot0"
 	.asciiz	"optslot1"
 	.asciiz	"optslot2"
 	.asciiz "dtop"
 	.asciiz "isdn"
-	.asciiz	"floppy"
-	.asciiz	"stray"
+	.asciiz "floppy"
 EXPORT(eintrnames)
 	.align	2
 EXPORT(intrcnt)
-	.word	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0
+	.word	0,0,0,0, 0,0,0,0, 0,0,0,0
 EXPORT(eintrcnt)
 	.word	0	# This shouldn't be needed but with 4.4bsd's as, the eintrcnt
 			#  label ends end up in a different section otherwise.

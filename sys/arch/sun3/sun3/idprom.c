@@ -1,4 +1,4 @@
-/*	$NetBSD: idprom.c,v 1.23 1999/04/08 04:08:01 gwr Exp $	*/
+/*	$NetBSD: idprom.c,v 1.23.22.1 2001/09/13 01:14:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@ idprom_etheraddr(eaddrp)
 	u_char *eaddrp;
 {
 
-	bcopy(identity_prom.idp_etheraddr, eaddrp, 6);
+	memcpy(eaddrp, identity_prom.idp_etheraddr, 6);
 }
 
 /*
@@ -141,7 +141,7 @@ static void
 idprom_get(dst)
 	u_char *dst;
 {
-	vm_offset_t src;	/* control space address */
+	vaddr_t src;	/* control space address */
 	int len, x;
 
 	src = IDPROM_BASE;

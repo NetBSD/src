@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.186.2.1 2001/08/25 06:16:14 thorpej Exp $	*/
+/*	$NetBSD: com.c,v 1.186.2.2 2001/09/13 01:15:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -442,6 +442,8 @@ com_attach_subr(sc)
 	}
 
 #ifdef COM_HAYESP
+	sc->sc_prescaler = 0;			/* set prescaler to x1. */
+
 	/* Look for a Hayes ESP board. */
 	for (hayespp = hayesp_ports; *hayespp != 0; hayespp++) {
 		bus_space_handle_t hayespioh;
@@ -1356,12 +1358,32 @@ comparam(tp, t)
 	struct termios *t;
 {
 	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(tp->t_dev));
-	int ospeed = comspeed(t->c_ospeed, sc->sc_frequency);
+	int ospeed;
 	u_char lcr;
 	int s;
 
 	if (COM_ISALIVE(sc) == 0)
 		return (EIO);
+
+#ifdef COM_HAYESP
+	if (ISSET(sc->sc_hwflags, COM_HW_HAYESP)) {
+		int prescaler, speed;
+
+		/*
+		 * Calculate UART clock prescaler.  It should be in
+		 * range of 0 .. 3.
+		 */
+		for (prescaler = 0, speed = t->c_ospeed; prescaler < 4;
+		    prescaler++, speed /= 2)
+			if ((ospeed = comspeed(speed, sc->sc_frequency)) > 0)
+				break;
+
+		if (prescaler == 4)
+			return (EINVAL);
+		sc->sc_prescaler = prescaler;
+	} else
+#endif
+	ospeed = comspeed(t->c_ospeed, sc->sc_frequency);
 
 	/* Check requested parameters. */
 	if (ospeed < 0)
@@ -1575,6 +1597,14 @@ com_loadchannelregs(sc)
 	bus_space_write_1(iot, ioh, com_lcr, sc->sc_lcr);
 	bus_space_write_1(iot, ioh, com_mcr, sc->sc_mcr_active = sc->sc_mcr);
 	bus_space_write_1(iot, ioh, com_fifo, sc->sc_fifo);
+#ifdef COM_HAYESP
+	if (ISSET(sc->sc_hwflags, COM_HW_HAYESP)) {
+		bus_space_write_1(iot, sc->sc_hayespioh, HAYESP_CMD1,
+		    HAYESP_SETPRESCALER);
+		bus_space_write_1(iot, sc->sc_hayespioh, HAYESP_CMD2,
+		    sc->sc_prescaler);
+	}
+#endif
 
 	bus_space_write_1(iot, ioh, com_ier, sc->sc_ier);
 }

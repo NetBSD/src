@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.99.2.2 2001/08/25 06:17:21 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.99.2.3 2001/09/13 01:16:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -80,6 +80,7 @@
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
+#include <sys/kernel.h>
 
 #ifdef SYSVSHM
 #include <sys/shm.h>
@@ -108,6 +109,7 @@ struct pool uvm_vmspace_pool;
  */
 
 struct pool uvm_map_entry_pool;
+struct pool uvm_map_entry_kmem_pool;
 
 #ifdef PMAP_GROWKERNEL
 /*
@@ -192,8 +194,6 @@ static void uvm_map_unreference_amap __P((struct vm_map_entry *, int));
 
 /*
  * uvm_mapent_alloc: allocate a map entry
- *
- * => XXX: static pool for kernel map?
  */
 
 static __inline struct vm_map_entry *
@@ -202,36 +202,36 @@ uvm_mapent_alloc(map)
 {
 	struct vm_map_entry *me;
 	int s;
-	UVMHIST_FUNC("uvm_mapent_alloc");
-	UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC("uvm_mapent_alloc"); UVMHIST_CALLED(maphist);
 
-	if ((map->flags & VM_MAP_INTRSAFE) == 0 &&
-	    map != kernel_map && kernel_map != NULL /* XXX */) {
-		me = pool_get(&uvm_map_entry_pool, PR_WAITOK);
-		me->flags = 0;
-		/* me can't be null, wait ok */
-	} else {
-		s = splvm();	/* protect kentry_free list with splvm */
+	if (map->flags & VM_MAP_INTRSAFE || cold) {
+		s = splvm();
 		simple_lock(&uvm.kentry_lock);
 		me = uvm.kentry_free;
 		if (me) uvm.kentry_free = me->next;
 		simple_unlock(&uvm.kentry_lock);
 		splx(s);
-		if (!me)
-	panic("mapent_alloc: out of static map entries, check MAX_KMAPENT");
+		if (me == NULL) {
+			panic("uvm_mapent_alloc: out of static map entries, "
+			      "check MAX_KMAPENT (currently %d)",
+			      MAX_KMAPENT);
+		}
 		me->flags = UVM_MAP_STATIC;
+	} else if (map == kernel_map) {
+		me = pool_get(&uvm_map_entry_kmem_pool, PR_WAITOK);
+		me->flags = UVM_MAP_KMEM;
+	} else {
+		me = pool_get(&uvm_map_entry_pool, PR_WAITOK);
+		me->flags = 0;
 	}
 
-	UVMHIST_LOG(maphist, "<- new entry=0x%x [kentry=%d]",
-		me, ((map->flags & VM_MAP_INTRSAFE) != 0 || map == kernel_map)
-		? TRUE : FALSE, 0, 0);
+	UVMHIST_LOG(maphist, "<- new entry=0x%x [kentry=%d]", me,
+	    ((map->flags & VM_MAP_INTRSAFE) != 0 || map == kernel_map), 0, 0);
 	return(me);
 }
 
 /*
  * uvm_mapent_free: free map entry
- *
- * => XXX: static pool for kernel map?
  */
 
 static __inline void
@@ -239,19 +239,21 @@ uvm_mapent_free(me)
 	struct vm_map_entry *me;
 {
 	int s;
-	UVMHIST_FUNC("uvm_mapent_free");
-	UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC("uvm_mapent_free"); UVMHIST_CALLED(maphist);
+
 	UVMHIST_LOG(maphist,"<- freeing map entry=0x%x [flags=%d]",
 		me, me->flags, 0, 0);
-	if ((me->flags & UVM_MAP_STATIC) == 0) {
-		pool_put(&uvm_map_entry_pool, me);
-	} else {
-		s = splvm();	/* protect kentry_free list with splvm */
+	if (me->flags & UVM_MAP_STATIC) {
+		s = splvm();
 		simple_lock(&uvm.kentry_lock);
 		me->next = uvm.kentry_free;
 		uvm.kentry_free = me;
 		simple_unlock(&uvm.kentry_lock);
 		splx(s);
+	} else if (me->flags & UVM_MAP_KMEM) {
+		pool_put(&uvm_map_entry_kmem_pool, me);
+	} else {
+		pool_put(&uvm_map_entry_pool, me);
 	}
 }
 
@@ -362,6 +364,8 @@ uvm_map_init()
 	pool_init(&uvm_map_entry_pool, sizeof(struct vm_map_entry),
 	    0, 0, 0, "vmmpepl", 0,
 	    pool_page_alloc_nointr, pool_page_free_nointr, M_VMMAP);
+	pool_init(&uvm_map_entry_kmem_pool, sizeof(struct vm_map_entry),
+	    0, 0, 0, "vmmpekpl", 0, NULL, NULL, M_VMMAP);
 }
 
 /*
@@ -1128,7 +1132,7 @@ uvm_unmap_remove(map, start, end, entry_list)
 		first_entry = entry;
 		entry = next;		/* next entry, please */
 	}
-	pmap_update();
+	pmap_update(vm_map_pmap(map));
 
 	/*
 	 * now we've cleaned up the map and are ready for the caller to drop
@@ -1624,7 +1628,7 @@ uvm_map_extract(srcmap, start, len, dstmap, dstaddrp, flags)
 			/* end of 'while' loop */
 			fudge = 0;
 		}
-		pmap_update();
+		pmap_update(srcmap->pmap);
 
 		/*
 		 * unlock dstmap.  we will dispose of deadentry in
@@ -1835,7 +1839,7 @@ uvm_map_protect(map, start, end, new_prot, set_max)
 		}
 		current = current->next;
 	}
-	pmap_update();
+	pmap_update(map->pmap);
 
  out:
 	vm_map_unlock(map);
@@ -3124,7 +3128,7 @@ uvmspace_fork(vm1)
 					     old_entry->end,
 					     old_entry->protection &
 					     ~VM_PROT_WRITE);
-				pmap_update();
+				pmap_update(old_map->pmap);
 			      }
 			      old_entry->etype |= UVM_ET_NEEDSCOPY;
 			    }
@@ -3164,7 +3168,7 @@ uvmspace_fork(vm1)
 					 new_entry->end,
 					 new_entry->protection &
 					          ~VM_PROT_WRITE);
-			    pmap_update();
+			    pmap_update(new_pmap);
 			  }
 
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.3.2.1 2001/08/25 06:16:44 thorpej Exp $	*/
+/*	$NetBSD: si.c,v 1.3.2.2 2001/09/13 01:16:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996,2000 The NetBSD Foundation, Inc.
@@ -628,8 +628,15 @@ si_intr_on(ncr_sc)
 {
 	u_int16_t csr;
 
-	si_dma_setup(ncr_sc);
+	/* Clear DMA start address and counters */
+	SIREG_WRITE(ncr_sc, SIREG_DMA_ADDRH, 0);
+	SIREG_WRITE(ncr_sc, SIREG_DMA_ADDRL, 0);
+	SIREG_WRITE(ncr_sc, SIREG_DMA_CNTH, 0);
+	SIREG_WRITE(ncr_sc, SIREG_DMA_CNTL, 0);
+
+	/* Enter receive mode (for safety) and enable DMA engine */
 	csr = SIREG_READ(ncr_sc, SIREG_CSR);
+	csr &= ~SI_CSR_SEND;
 	csr |= SI_CSR_DMA_EN;
 	SIREG_WRITE(ncr_sc, SIREG_CSR, csr);
 }
@@ -665,9 +672,22 @@ void
 si_dma_setup(ncr_sc)
 	struct ncr5380_softc *ncr_sc;
 {
+	struct si_softc *sc = (struct si_softc *)ncr_sc;
+	struct sci_req *sr = ncr_sc->sc_current;
+	struct si_dma_handle *dh = sr->sr_dma_hand;
 	u_int16_t csr;
+	u_long dva;
+	int xlen;
+
+	/*
+	 * Set up the DMA controller.
+	 * Note that (dh->dh_len < sc_datalen)
+	 */
 
 	csr = SIREG_READ(ncr_sc, SIREG_CSR);
+
+	/* Disable DMA while we're setting up the transfer */
+	csr &= ~SI_CSR_DMA_EN;
 
 	/* Reset the FIFO */
 	csr &= ~SI_CSR_FIFO_RES;		/* active low */
@@ -675,16 +695,43 @@ si_dma_setup(ncr_sc)
 	csr |= SI_CSR_FIFO_RES;
 	SIREG_WRITE(ncr_sc, SIREG_CSR, csr);
 
-	/* Set direction (assume recv here) */
-	csr &= ~SI_CSR_SEND;
-	SIREG_WRITE(ncr_sc, SIREG_CSR, csr);
-	/* Assume worst alignment */
-	csr |= SI_CSR_BPCON;
+	/*
+	 * Get the DVMA mapping for this segment.
+	 */
+	dva = (u_long)(dh->dh_dvma);
+	if (dva & 1)
+		panic("si_dma_setup: bad dmaaddr=0x%lx", dva);
+	xlen = ncr_sc->sc_datalen;
+	xlen &= ~1;
+	sc->sc_xlen = xlen;	/* XXX: or less... */
+
+#ifdef	DEBUG
+	if (si_debug & 2) {
+		printf("si_dma_start: dh=%p, dmaaddr=0x%lx, xlen=%d\n",
+			   dh, dva, xlen);
+	}
+#endif
+	/* Set direction (send/recv) */
+	if (dh->dh_flags & SIDH_OUT) {
+		csr |= SI_CSR_SEND;
+	} else {
+		csr &= ~SI_CSR_SEND;
+	}
+
+	/* Set byte-packing control */
+	if (dva & 2) {
+		csr |= SI_CSR_BPCON;
+	} else {
+		csr &= ~SI_CSR_BPCON;
+	}
+
 	SIREG_WRITE(ncr_sc, SIREG_CSR, csr);
 
-	SIREG_WRITE(ncr_sc, SIREG_DMA_ADDRH, 0);
-	SIREG_WRITE(ncr_sc, SIREG_DMA_ADDRL, 0);
+	/* Load start address */
+	SIREG_WRITE(ncr_sc, SIREG_DMA_ADDRH, (u_int16_t)(dva >> 16));
+	SIREG_WRITE(ncr_sc, SIREG_DMA_ADDRL, (u_int16_t)(dva & 0xFFFF));
 
+	/* Clear DMA counters; these will be set in si_dma_start() */
 	SIREG_WRITE(ncr_sc, SIREG_DMA_CNTH, 0);
 	SIREG_WRITE(ncr_sc, SIREG_DMA_CNTL, 0);
 
@@ -701,61 +748,13 @@ si_dma_start(ncr_sc)
 	struct si_softc *sc = (struct si_softc *)ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;
 	struct si_dma_handle *dh = sr->sr_dma_hand;
-	u_long dva;
 	int xlen;
 	u_int mode;
 	u_int16_t csr;
 
-	/*
-	 * Get the DVMA mapping for this segment.
-	 */
-	dva = (u_long)(dh->dh_dvma);
-	if (dva & 1)
-		panic("si_dma_start: bad dmaaddr=0x%lx", dva);
-	xlen = ncr_sc->sc_datalen;
-	xlen &= ~1;
-	sc->sc_xlen = xlen;	/* XXX: or less... */
+	xlen = sc->sc_xlen;
 
-#ifdef	DEBUG
-	if (si_debug & 2) {
-		printf("si_dma_start: dh=%p, dmaaddr=0x%lx, xlen=%d\n",
-			   dh, dva, xlen);
-	}
-#endif
-
-	/*
-	 * Set up the DMA controller.
-	 * Note that (dh->dh_len < sc_datalen)
-	 */
-
-	csr = SIREG_READ(ncr_sc, SIREG_CSR);
-
-	/* Disable DMA while we're setting up the transfer */
-	csr &= ~SI_CSR_DMA_EN;
-
-	/* Reset FIFO (again?) */
-	csr &= ~SI_CSR_FIFO_RES;		/* active low */
-	SIREG_WRITE(ncr_sc, SIREG_CSR, csr);
-	csr |= SI_CSR_FIFO_RES;
-	SIREG_WRITE(ncr_sc, SIREG_CSR, csr);
-
-	/* Set direction (send/recv) */
-	if (dh->dh_flags & SIDH_OUT) {
-		csr |= SI_CSR_SEND;
-	} else {
-		csr &= ~SI_CSR_SEND;
-	}
-	SIREG_WRITE(ncr_sc, SIREG_CSR, csr);
-
-	if (dva & 2) {
-		csr |= SI_CSR_BPCON;
-	} else {
-		csr &= ~SI_CSR_BPCON;
-	}
-	SIREG_WRITE(ncr_sc, SIREG_CSR, csr);
-
-	SIREG_WRITE(ncr_sc, SIREG_DMA_ADDRH, (u_int16_t)(dva >> 16));
-	SIREG_WRITE(ncr_sc, SIREG_DMA_ADDRL, (u_int16_t)(dva & 0xFFFF));
+	/* Load transfer length */
 	SIREG_WRITE(ncr_sc, SIREG_DMA_CNTH, (u_int16_t)(xlen >> 16));
 	SIREG_WRITE(ncr_sc, SIREG_DMA_CNTL, (u_int16_t)(xlen & 0xFFFF));
 	SIREG_WRITE(ncr_sc, SIREG_FIFO_CNTH, (u_int16_t)(xlen >> 16));
@@ -787,11 +786,12 @@ si_dma_start(ncr_sc)
 		NCR5380_WRITE(ncr_sc, sci_irecv, 0); /* start it */
 	}
 
+	ncr_sc->sc_state |= NCR_DOINGDMA;
+
 	/* Enable DMA engine */
+	csr = SIREG_READ(ncr_sc, SIREG_CSR);
 	csr |= SI_CSR_DMA_EN;
 	SIREG_WRITE(ncr_sc, SIREG_CSR, csr);
-
-	ncr_sc->sc_state |= NCR_DOINGDMA;
 
 #ifdef	DEBUG
 	if (si_debug & 2) {

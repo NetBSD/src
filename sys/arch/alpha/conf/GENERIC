@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.189.2.1 2001/08/25 06:15:02 thorpej Exp $
+# $NetBSD: GENERIC,v 1.189.2.2 2001/09/13 01:12:55 thorpej Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 #
@@ -6,7 +6,7 @@
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"GENERIC-$Revision: 1.189.2.1 $"
+#ident 		"GENERIC-$Revision: 1.189.2.2 $"
 
 maxusers 32
 
@@ -474,6 +474,7 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
+pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	sequencer	1	# MIDI sequencer
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness too

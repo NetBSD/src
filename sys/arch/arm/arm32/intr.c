@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.1.2.2 2001/08/03 04:10:58 lukem Exp $	*/
+/*	$NetBSD: intr.c,v 1.1.2.3 2001/09/13 01:13:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/irqhandler.h>
+#include <machine/intr.h>
 #include <machine/cpu.h>
 
 #include <net/netisr.h>

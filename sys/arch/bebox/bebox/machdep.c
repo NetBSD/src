@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.63.2.2 2001/08/25 06:15:17 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.63.2.3 2001/09/13 01:13:26 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -53,12 +53,18 @@
 #include <sys/systm.h>
 #include <sys/user.h>
 
+#ifdef DDB
+#include <machine/db_machdep.h>
+#include <ddb/db_extern.h>
+#endif
+
 #include <uvm/uvm_extern.h>
 
 #include <net/netisr.h>
 
 #include <powerpc/mpc6xx/bat.h>
 #include <machine/bootinfo.h>
+#include <machine/autoconf.h>
 #define _POWERPC_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -109,9 +115,6 @@ char bootinfo[BOOTINFO_MAXSIZE];
 char machine[] = MACHINE;		/* machine */
 char machine_arch[] = MACHINE_ARCH;	/* machine architecture */
 
-/* Our exported CPU info; we have only one right now. */  
-struct cpu_info cpu_info_store;
-
 struct pcb *curpcb;
 struct pmap *curpm;
 struct proc *fpuproc;
@@ -141,24 +144,24 @@ initppc(startkernel, endkernel, args, btinfo)
 	u_int startkernel, endkernel, args;
 	void *btinfo;
 {
-	extern trapcode, trapsize;
-	extern alitrap, alisize;
-	extern dsitrap, dsisize;
-	extern isitrap, isisize;
-	extern decrint, decrsize;
-	extern tlbimiss, tlbimsize;
-	extern tlbdlmiss, tlbdlmsize;
-	extern tlbdsmiss, tlbdsmsize;
+	extern int trapcode, trapsize;
+	extern int alitrap, alisize;
+	extern int dsitrap, dsisize;
+	extern int isitrap, isisize;
+	extern int decrint, decrsize;
+	extern int tlbimiss, tlbimsize;
+	extern int tlbdlmiss, tlbdlmsize;
+	extern int tlbdsmiss, tlbdsmsize;
 #ifdef DDB
-	extern ddblow, ddbsize;
+	extern int ddblow, ddbsize;
 	extern void *startsym, *endsym;
 #endif
 #ifdef IPKDB
-	extern ipkdblow, ipkdbsize;
+	extern int ipkdblow, ipkdbsize;
 #endif
 	extern void consinit __P((void));
 	extern void ext_intr __P((void));
-	int exc, scratch, i;
+	int exc, scratch;
 
 	/*
 	 * copy bootinfo
@@ -372,58 +375,12 @@ mem_regions(mem, avail)
  * This should probably be in autoconf!				XXX
  */
 int cpu;
-char cpu_model[80];
-char cpu_name[] = "PowerPC";	/* cpu architecture */
-
-void
-identifycpu()
-{
-	int phandle, pvr;
-	char name[32];
-
-	/*
-	 * Find cpu type
-	 */
-	asm ("mfpvr %0" : "=r"(pvr));
-	cpu = pvr >> 16;
-	switch (cpu) {
-	case 1:
-		sprintf(cpu_model, "601");
-		break;
-	case 3:
-		sprintf(cpu_model, "603");
-		break;
-	case 4:
-		sprintf(cpu_model, "604");
-		break;
-	case 5:
-		sprintf(cpu_model, "602");
-		break;
-	case 6:
-		sprintf(cpu_model, "603e");
-		break;
-	case 7:
-		sprintf(cpu_model, "603ev");
-		break;
-	case 9:
-		sprintf(cpu_model, "604ev");
-		break;
-	case 20:
-		sprintf(cpu_model, "620");
-		break;
-	default:
-		sprintf(cpu_model, "Version %x", cpu);
-		break;
-	}
-	sprintf(cpu_model + strlen(cpu_model), " (Revision %x)", pvr & 0xffff);
-	printf("CPU: %s %s\n", cpu_name, cpu_model);
-}
 
 void
 install_extint(handler)
 	void (*handler) __P((void));
 {
-	extern extint, extsize;
+	extern int extint, extsize;
 	extern u_long extint_call;
 	u_long offset = (u_long)handler - (u_long)&extint_call;
 	int omsr, msr;
@@ -463,7 +420,7 @@ cpu_startup()
 		panic("initppc: no room for interrupt register");
 	pmap_enter(pmap_kernel(), bebox_mb_reg, MOTHER_BOARD_REG,
 	    VM_PROT_READ|VM_PROT_WRITE, VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -474,11 +431,11 @@ cpu_startup()
 		pmap_enter(pmap_kernel(), msgbuf_vaddr + i * NBPG,
 		    msgbuf_paddr + i * NBPG, VM_PROT_READ|VM_PROT_WRITE,
 		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
 
 	printf("%s", version);
-	identifycpu();
+	cpu_identify(NULL, 0);
 
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
@@ -536,7 +493,7 @@ cpu_startup()
 			curbufsize -= PAGE_SIZE;
 		}
 	}
-	pmap_update();
+	pmap_update(kernel_map->pmap);
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
@@ -748,7 +705,7 @@ cpu_reboot(howto, what)
 		printf("halted\n\n");
 #if 0
 		ppc_exit();
-#endif 0
+#endif
 	}
 	if (!cold && (howto & RB_DUMP))
 		dumpsys();
@@ -773,7 +730,7 @@ cpu_reboot(howto, what)
 		*ap1 = 0;
 #if 0
 	ppc_boot(str);
-#endif 0
+#endif
 	while (1);
 }
 
@@ -810,6 +767,6 @@ mapiodev(pa, len)
 		faddr += NBPG;
 		taddr += NBPG;
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 	return (void *)(va + off);
 }

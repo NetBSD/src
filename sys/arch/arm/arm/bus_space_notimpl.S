@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_notimpl.S,v 1.1 2001/06/18 22:26:15 bjh21 Exp $	*/
+/*	$NetBSD: bus_space_notimpl.S,v 1.1.4.1 2001/09/13 01:13:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -64,6 +64,13 @@ LABEL(func)							;	\
 LLABEL(__C(func,_text))						;	\
 	.asciz	FTEXT(func,: args at 0x%08x\n)			;	\
 	.align	0						;
+
+
+/*
+ * misc functions
+ */
+
+NOT_IMPL(mmap)
 
 
 /*

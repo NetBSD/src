@@ -1,4 +1,4 @@
-/* $NetBSD: amigagraph.h,v 1.3 1999/02/16 23:34:11 is Exp $ */
+/* $NetBSD: amigagraph.h,v 1.3.22.1 2001/09/13 01:13:01 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -80,4 +80,4 @@
 struct Window {
 	u_int8_t dum1[136];
 };
-#endif AMIGA_GRAPH_H
+#endif /* AMIGA_GRAPH_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_changer.h,v 1.15 2001/06/24 10:18:13 wiz Exp $	*/
+/*	$NetBSD: scsi_changer.h,v 1.15.2.1 2001/09/13 01:16:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1999 Jason R. Thorpe <thorpej@and.com>
@@ -300,12 +300,6 @@ struct scsi_send_volume_tag {
 #define ELEMENT_TYPE_ST		0x02
 #define ELEMENT_TYPE_IE		0x03
 #define ELEMENT_TYPE_DT		0x04
-
-/*
- * XXX The following definitions should be common to all SCSI device types.
- */
-#define PGCODE_MASK	0x3f	/* valid page number bits in pg_code */
-#define PGCODE_PS	0x80	/* indicates page is savable */
 
 /*
  * Device capabilities page.

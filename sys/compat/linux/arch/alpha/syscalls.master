@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.35 2001/07/04 10:25:32 jdolecek Exp $
+	$NetBSD: syscalls.master,v 1.35.2.1 2001/09/13 01:15:16 thorpej Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -173,7 +173,7 @@
 70	UNIMPL
 ;71	ALIAS		osf1_sys_mmap
 71	NOARGS		{ int linux_sys_mmap(unsigned long addr, size_t len, \
-			    int prot, int flags, int fd, off_t offset); }
+			    int prot, int flags, int fd, linux_off_t offset); }
 72	UNIMPL
 73	NOARGS		{ int sys_munmap(void *addr, size_t len); }
 74	NOARGS		{ int sys_mprotect(void *addr, size_t len, int prot); }

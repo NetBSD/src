@@ -1,4 +1,4 @@
-/*	$NetBSD: icsphy.c,v 1.22 2001/06/02 21:39:39 thorpej Exp $	*/
+/*	$NetBSD: icsphy.c,v 1.22.2.1 2001/09/13 01:15:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -87,17 +87,17 @@
 
 #include <dev/mii/icsphyreg.h>
 
-int	icsphymatch __P((struct device *, struct cfdata *, void *));
-void	icsphyattach __P((struct device *, struct device *, void *));
+int	icsphymatch(struct device *, struct cfdata *, void *);
+void	icsphyattach(struct device *, struct device *, void *);
 
 struct cfattach icsphy_ca = {
 	sizeof(struct mii_softc), icsphymatch, icsphyattach, mii_phy_detach,
 	    mii_phy_activate
 };
 
-int	icsphy_service __P((struct mii_softc *, struct mii_data *, int));
-void	icsphy_status __P((struct mii_softc *));
-void	icsphy_reset __P((struct mii_softc *));
+int	icsphy_service(struct mii_softc *, struct mii_data *, int);
+void	icsphy_status(struct mii_softc *);
+void	icsphy_reset(struct mii_softc *);
 
 const struct mii_phy_funcs icsphy_funcs = {
 	icsphy_service, icsphy_status, icsphy_reset,
@@ -112,10 +112,7 @@ const struct mii_phydesc icsphys[] = {
 };
 
 int
-icsphymatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+icsphymatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -126,9 +123,7 @@ icsphymatch(parent, match, aux)
 }
 
 void
-icsphyattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+icsphyattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
@@ -158,10 +153,7 @@ icsphyattach(parent, self, aux)
 }
 
 int
-icsphy_service(sc, mii, cmd)
-	struct mii_softc *sc;
-	struct mii_data *mii;
-	int cmd;
+icsphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
@@ -223,8 +215,7 @@ icsphy_service(sc, mii, cmd)
 }
 
 void
-icsphy_status(sc)
-	struct mii_softc *sc;
+icsphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;

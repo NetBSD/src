@@ -1,4 +1,4 @@
-/*	$NetBSD: gentbi.c,v 1.2.2.2 2001/08/03 04:13:13 lukem Exp $	*/
+/*	$NetBSD: gentbi.c,v 1.2.2.3 2001/09/13 01:15:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -88,26 +88,23 @@
 #include <dev/mii/miivar.h>
 #include <dev/mii/miidevs.h>
 
-int	gentbimatch __P((struct device *, struct cfdata *, void *));
-void	gentbiattach __P((struct device *, struct device *, void *));
+int	gentbimatch(struct device *, struct cfdata *, void *);
+void	gentbiattach(struct device *, struct device *, void *);
 
 struct cfattach gentbi_ca = {
 	sizeof(struct mii_softc), gentbimatch, gentbiattach,
 	    mii_phy_detach, mii_phy_activate
 };
 
-int	gentbi_service __P((struct mii_softc *, struct mii_data *, int));
-void	gentbi_status __P((struct mii_softc *));
+int	gentbi_service(struct mii_softc *, struct mii_data *, int);
+void	gentbi_status(struct mii_softc *);
 
 const struct mii_phy_funcs gentbi_funcs = {
 	gentbi_service, gentbi_status, mii_phy_reset,
 };
 
 int
-gentbimatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+gentbimatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
@@ -140,9 +137,7 @@ gentbimatch(parent, match, aux)
 }
 
 void
-gentbiattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+gentbiattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
@@ -179,10 +174,7 @@ gentbiattach(parent, self, aux)
 }
 
 int
-gentbi_service(sc, mii, cmd)
-	struct mii_softc *sc;
-	struct mii_data *mii;
-	int cmd;
+gentbi_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
@@ -241,8 +233,7 @@ gentbi_service(sc, mii, cmd)
 }
 
 void
-gentbi_status(sc)
-	struct mii_softc *sc;
+gentbi_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;

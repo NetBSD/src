@@ -1,7 +1,3 @@
-/*	$NetBSD: limits.h,v 1.1 1998/02/18 13:48:20 tsubai Exp $	*/
+/*	$NetBSD: limits.h,v 1.1.28.1 2001/09/13 01:14:08 thorpej Exp $	*/
 
 #include <mips/limits.h>
-
-#ifdef _KERNEL
-#define CLK_TCK		60		/* ticks per second */
-#endif

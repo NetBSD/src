@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_sbus.c,v 1.14 2001/04/25 17:53:37 bouyer Exp $	*/
+/*	$NetBSD: esp_sbus.c,v 1.14.2.1 2001/09/13 01:16:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -298,6 +298,13 @@ espattach_sbus(parent, self, aux)
 		printf("\n");
 		panic("espattach: no dma found");
 	}
+
+	/*
+	 * The `ESC' DMA chip must be reset before we can access
+	 * the esp registers.
+	 */
+	if (esc->sc_dma->sc_rev == DMAREV_ESC)
+		DMA_RESET(esc->sc_dma);
 
 	/*
 	 * Map my registers in, if they aren't already in virtual

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.5 2001/06/20 14:11:45 nonaka Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.5.2.1 2001/09/13 01:14:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -135,7 +135,7 @@ isa_attach_hook(parent, self, iba)
 }
 
 int
-isa_intr()
+isa_intr(void)
 {
 	int irq;
 

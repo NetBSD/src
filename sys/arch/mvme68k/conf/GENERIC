@@ -1,8 +1,8 @@
-#	$NetBSD: GENERIC,v 1.26.2.1 2001/08/03 04:12:01 lukem Exp $
+#	$NetBSD: GENERIC,v 1.26.2.2 2001/09/13 01:14:02 thorpej Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
-#ident 		"GENERIC-$Revision: 1.26.2.1 $"
+#ident 		"GENERIC-$Revision: 1.26.2.2 $"
 
 # Boards this kernel supports
 options 	MVME147
@@ -76,6 +76,7 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
+pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	vnd 2
 

@@ -1,4 +1,3 @@
-/*	$NetBSD: lock.h,v 1.1 2000/06/14 15:39:58 soren Exp $	*/
+/*	$NetBSD: lock.h,v 1.1.10.1 2001/09/13 01:14:31 thorpej Exp $	*/
 
-/* Just use the common mips definition */
 #include <mips/lock.h>

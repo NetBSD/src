@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.30.2.1 2001/08/25 06:15:12 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.30.2.2 2001/09/13 01:13:12 thorpej Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -105,7 +105,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30.2.1 2001/08/25 06:15:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30.2.2 2001/09/13 01:13:12 thorpej Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -985,7 +985,7 @@ pmap_reference(pmap_t pmap)
  * now.
  */
 void
-pmap_update(void)
+pmap_update(struct pmap *pmap)
 {
 	UVMHIST_FUNC("pmap_update");
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.2.2.1 2001/08/03 04:10:37 lukem Exp $	*/
+/*	$NetBSD: bus.h,v 1.2.2.2 2001/09/13 01:12:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -146,6 +146,9 @@ struct algor_bus_space {
 
 	/* get kernel virtual address */
 	void *		(*bs_vaddr)(void *, bus_space_handle_t);
+
+	/* mmap for user */
+	paddr_t		(*bs_mmap)(void *, bus_addr_t, off_t, int, int);
 
 	/* barrier */
 	void		(*bs_barrier)(void *, bus_space_handle_t,
@@ -331,6 +334,12 @@ do {									\
  */
 #define bus_space_vaddr(t, h) \
 	(*(t)->bs_vaddr)((t)->bs_cookie, (h))
+
+/*
+ * Mmap for user.
+ */
+#define	bus_space_mmap(t, a, o, p, f)					\
+	(*(t)->bs_mmap)((t)->bs_cookie, (a), (o), (p), (f))
 
 /*
  * Bus barrier operations.

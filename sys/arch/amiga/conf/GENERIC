@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.160 2001/07/08 16:32:13 abs Exp $
+#	$NetBSD: GENERIC,v 1.160.2.1 2001/09/13 01:12:59 thorpej Exp $
 
 #
 #if 0
@@ -16,7 +16,7 @@
 
 include "arch/amiga/conf/std.amiga"
 
-#ident 		"GENERIC-$Revision: 1.160 $"
+#ident 		"GENERIC-$Revision: 1.160.2.1 $"
 
 #ifdef INSTALL_CONFIGURATION
 makeoptions	COPTS="-Os"
@@ -358,6 +358,9 @@ melody* 	at zbus0		# Melody MPEG audio decoder
 audio*		at melody?
 #endif
 
+repulse*	at zbus0		# ALiENDESiGN Repulse
+audio*		at repulse?
+
 # Ethernet cards:
 le*		at zbus0		# A2065, Ameristar, Ariadne
 ne*		at zbus0		# AriadneII, X-surf
@@ -470,6 +473,7 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
+pseudo-device	bridge			# simple inter-network bridging
 
 pseudo-device	view		4	# views (needed for grfcc)
 pseudo-device	pty			# pseudo-terminals

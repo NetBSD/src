@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmc_media.c,v 1.6.2.1 2001/08/03 04:13:15 lukem Exp $	*/
+/*	$NetBSD: if_lmc_media.c,v 1.6.2.2 2001/09/13 01:15:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -400,7 +400,7 @@ lmc_ds3_watchdog (lmc_softc_t * const sc)
 	sc->lmc_miireg16 = lmc_mii_readreg (sc, 0, 16);
 	if (sc->lmc_miireg16 & 0x0018)
 	{
-#if 0
+#if 1
 		printf("%s: AIS Received\n", sc->lmc_xname);
 #endif
 		lmc_led_on (sc, LMC_DS3_LED1 | LMC_DS3_LED2);
@@ -530,7 +530,7 @@ lmc_ds3_get_link_status(lmc_softc_t * const sc)
 
 	lmc_mii_writereg(sc, 0, 17, 7);
 	link_status = lmc_mii_readreg(sc, 0, 18);
-
+// printf("lmc_ds3_get_link_status: %x\n", link_status);
 	if ((link_status & LMC_FRAMER_REG0_DLOS) == 0)
 		return 1;
 	else

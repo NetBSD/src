@@ -1,7 +1,3 @@
-/*	$NetBSD: bsd-aout.h,v 1.1 2000/08/12 22:58:07 wdk Exp $	*/
-
-/* bsd-aout.h
-
-   4.4bsd a.out format, for backwards compatibility...  */
+/*	$NetBSD: bsd-aout.h,v 1.1.6.1 2001/09/13 01:14:01 thorpej Exp $	*/
 
 #include <mips/bsd-aout.h>
