@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.35 1996/05/16 22:57:32 pk Exp $	*/
+/*	$NetBSD: if_le.c,v 1.36 1996/07/06 00:01:34 abrown Exp $	*/
 
 /*-
  * Copyright (c) 1996
@@ -108,6 +108,7 @@ struct cfattach le_ca = {
 hide void lewrcsr __P((struct am7990_softc *, u_int16_t, u_int16_t));
 hide u_int16_t lerdcsr __P((struct am7990_softc *, u_int16_t));
 hide void lehwinit __P((struct am7990_softc *));
+hide void lenocarrier __P((struct am7990_softc *));
 
 hide void
 lewrcsr(sc, port, val)
@@ -145,12 +146,55 @@ lehwinit(sc)
 
 		if (ifp->if_flags & IFF_LINK0)
 			lesc->sc_dma->sc_regs->csr |= DE_AUI_TP;
-		else
+		else if (ifp->if_flags & IFF_LINK1)
 			lesc->sc_dma->sc_regs->csr &= ~DE_AUI_TP;
 
 		delay(20000);	/* must not touch le for 20ms */
 	}
 #endif
+}
+
+hide void
+lenocarrier(sc)
+	struct am7990_softc *sc;
+{
+#if defined(SUN4M)
+	struct le_softc *lesc = (struct le_softc *)sc;
+
+	if (CPU_ISSUN4M && lesc->sc_dma) {
+		struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+
+		/* 
+		 * Check if the user has requested a certain cable type, and
+		 * if so, honor that request.
+		 */
+		if (ifp->if_flags & IFF_LINK0)
+			printf("%s: lost carrier on UTP port\n",
+			       sc->sc_dev.dv_xname);
+		else if (ifp->if_flags & IFF_LINK1)
+			printf("%s: lost carrier on AUI port\n",
+			       sc->sc_dev.dv_xname);
+		else {
+			/*
+			 * Switch cable type and inform the user that
+			 * we have done so
+			 */
+			if (lesc->sc_dma->sc_regs->csr & DE_AUI_TP) {
+				printf("%s: no carrier on UTP port, "
+				       "switching to AUI port\n",
+				       sc->sc_dev.dv_xname);
+				lesc->sc_dma->sc_regs->csr &= ~DE_AUI_TP;
+			} else {
+				printf("%s: no carrier on AUI port, "
+				       "switching to UTP port\n",
+				       sc->sc_dev.dv_xname);
+				lesc->sc_dma->sc_regs->csr |= DE_AUI_TP;
+			}
+			delay(20000); /* make cable selection stick */
+		}
+	} else
+#endif
+		printf("%s: lost carrier\n",sc->sc_dev.dv_xname);
 }
 
 int
@@ -218,6 +262,7 @@ leattach(parent, self, aux)
 	sc->sc_rdcsr = lerdcsr;
 	sc->sc_wrcsr = lewrcsr;
 	sc->sc_hwinit = lehwinit;
+	sc->sc_nocarrier = lenocarrier;
 
 	am7990_config(sc);
 
