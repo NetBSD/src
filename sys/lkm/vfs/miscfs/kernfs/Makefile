@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1998/02/11 11:57:21 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 1998/02/18 03:55:23 perry Exp $
 
 .include "../Makefile.inc"
 
@@ -16,4 +16,7 @@ SRCS+=	kernfs_vfsops.c kernfs_vnops.c
 # XXX
 .if defined(UVM)
 CPPFLAGS+=      -DUVM
+.endif
+.if defined(PMAP_NEW)
+CPPFLAGS+=      -DPMAP_NEW
 .endif
