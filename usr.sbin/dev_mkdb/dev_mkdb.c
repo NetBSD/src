@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,38 +32,39 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1990 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1990, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)dev_mkdb.c	5.9 (Berkeley) 5/17/91";*/
-static char rcsid[] = "$Id: dev_mkdb.c,v 1.4 1993/10/22 10:38:33 mycroft Exp $";
+/*static char sccsid[] = "from: @(#)dev_mkdb.c	8.1 (Berkeley) 6/6/93";*/
+static char rcsid[] = "$Id: dev_mkdb.c,v 1.5 1995/01/30 21:12:44 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
-#include <fcntl.h>
-#undef DIRBLKSIZ
-#include <dirent.h>
-#include <nlist.h>
-#include <kvm.h>
+
 #include <db.h>
+#include <dirent.h>
+#include <err.h>
 #include <errno.h>
-#include <unistd.h>
-#include <stdio.h>
+#include <fcntl.h>
+#include <kvm.h>
+#include <nlist.h>
 #include <paths.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
-void error(), usage();
+void	usage __P((void));
 
+int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
-	extern int optind;
 	register DIR *dirp;
 	register struct dirent *dp;
 	struct stat sb;
@@ -86,29 +87,34 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
+	if (argc > 0)
+		usage();
+
 	if (chdir(_PATH_DEV))
-		error(_PATH_DEV);
+		err(1, "%s", _PATH_DEV);
 
 	dirp = opendir(".");
 
-	(void)snprintf(dbtmp, sizeof(dbtmp), "%s/dev.tmp", _PATH_VARRUN);
-	(void)snprintf(dbname, sizeof(dbtmp), "%s/dev.db", _PATH_VARRUN);
-	db = dbopen(dbtmp, O_CREAT|O_RDWR|O_EXCL, DEFFILEMODE, DB_HASH,
-	    (HASHINFO *)NULL);
-	if (!db)
-		error(dbtmp);
+	(void)snprintf(dbtmp, sizeof(dbtmp), "%sdev.tmp", _PATH_VARRUN);
+	(void)snprintf(dbname, sizeof(dbtmp), "%sdev.db", _PATH_VARRUN);
+	db = dbopen(dbtmp, O_CREAT|O_EXLOCK|O_RDWR|O_TRUNC,
+	    S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH, DB_HASH, NULL);
+	if (db == NULL)
+		err(1, "%s", dbtmp);
 
 	/*
 	 * Keys are a mode_t followed by a dev_t.  The former is the type of
-	 * the file (mode & S_IFMT), the latter is the st_rdev field.
+	 * the file (mode & S_IFMT), the latter is the st_rdev field.  Note
+	 * that the structure may contain padding, so we have to clear it
+	 * out here.
 	 */
+	bzero(&bkey, sizeof(bkey));
 	key.data = &bkey;
 	key.size = sizeof(bkey);
 	data.data = buf;
 	while (dp = readdir(dirp)) {
 		if (lstat(dp->d_name, &sb)) {
-			(void)fprintf(stderr, "dev_mkdb: can't stat %s\n",
-				dp->d_name);
+			warn("%s", dp->d_name);
 			continue;
 		}
 
@@ -129,28 +135,18 @@ main(argc, argv)
 		buf[dp->d_namlen] = '\0';
 		data.size = dp->d_namlen + 1;
 		if ((db->put)(db, &key, &data, 0))
-			error(dbtmp);
+			err(1, "dbput %s", dbtmp);
 	}
 	(void)(db->close)(db);
-	if (rename(dbtmp, dbname)) {
-		(void)fprintf(stderr, "dev_mkdb: %s to %s: %s.\n",
-		    dbtmp, dbname, strerror(errno));
-		exit(1);
-	}
+	if (rename(dbtmp, dbname))
+		err(1, "rename %s to %s", dbtmp, dbname);
 	exit(0);
-}
-
-void
-error(n)
-	char *n;
-{
-	(void)fprintf(stderr, "dev_mkdb: %s: %s\n", n, strerror(errno));
-	exit(1);
 }
 
 void
 usage()
 {
+
 	(void)fprintf(stderr, "usage: dev_mkdb\n");
 	exit(1);
 }

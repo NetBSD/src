@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	5.1 (Berkeley) 2/12/91
-#	$Id: Makefile,v 1.3 1994/12/22 11:34:08 cgd Exp $
+#	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
+#	$Id: Makefile,v 1.4 1995/01/30 21:12:41 mycroft Exp $
 
 PROG=	dev_mkdb
 MAN=	dev_mkdb.8
