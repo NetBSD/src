@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.111 1998/03/22 16:14:39 drochner Exp $
+#	$NetBSD: files.i386,v 1.112 1998/04/15 21:27:47 drochner Exp $
 #
 # new style config file for i386 architecture
 #
@@ -178,14 +178,6 @@ include "dev/wscons/files.wscons"
 
 include "dev/pckbc/files.pckbc"
 
-device	vga: wsemuldisplaydev
-file	dev/ic/vga.c	vga	needs-flag
-file	dev/ic/vga_subr.c	vga
-attach	vga at isa with vga_isa
-file	dev/isa/vga_isa.c	vga_isa		needs-flag
-attach	vga at pci with vga_pci
-file	dev/pci/vga_pci.c	vga_pci		needs-flag
-
 # Floppy disk controller
 device	fdc {drive = -1}
 attach	fdc at isa
@@ -193,11 +185,6 @@ device	fd: disk, isadma
 attach	fd at fdc
 file	arch/i386/isa/fd.c		fdc needs-flag
 major	{fd = 2}
-
-# PC speaker
-device	spkr
-attach	spkr at pckbcport
-file	arch/i386/isa/spkr.c		spkr needs-flag
 
 # Game adapter (joystick)
 device	joy
