@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: err.h,v 1.1.1.2 2000/08/02 19:59:47 assar Exp $ */
+/* $Id: err.h,v 1.2 2001/01/06 23:30:57 christos Exp $ */
 
 #ifndef __ERR_H__
 #define __ERR_H__
@@ -41,8 +41,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
-
-extern const char *__progname;
 
 #if !defined(__GNUC__) && !defined(__attribute__)
 #define __attribute__(x)
