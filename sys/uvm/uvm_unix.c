@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_unix.c,v 1.15 2000/07/10 13:37:00 mrg Exp $	*/
+/*	$NetBSD: uvm_unix.c,v 1.16 2000/08/24 06:09:25 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -185,12 +185,13 @@ uvm_coredump(p, vp, cred, chdr)
 	struct vmspace *vm = p->p_vmspace;
 	vm_map_t map = &vm->vm_map;
 	vm_map_entry_t entry;
-	vaddr_t start, end;
+	vaddr_t start, end, maxstack;
 	struct coreseg cseg;
 	off_t offset;
 	int flag, error = 0;
 
 	offset = chdr->c_hdrsize + chdr->c_seghdrsize + chdr->c_cpusize;
+	maxstack = trunc_page(USRSTACK - ctob(vm->vm_ssize));
 
 	for (entry = map->header.next; entry != &map->header;
 	    entry = entry->next) {
@@ -213,10 +214,11 @@ uvm_coredump(p, vp, cred, chdr)
 			end = VM_MAXUSER_ADDRESS;
 
 		if (start >= (vaddr_t)vm->vm_maxsaddr) {
-			flag = CORE_STACK;
-			start = trunc_page(USRSTACK - ctob(vm->vm_ssize));
-			if (start >= end)
+			if (end <= maxstack)
 				continue;
+			if (start < maxstack)
+				start = maxstack;
+			flag = CORE_STACK;
 		} else
 			flag = CORE_DATA;
 
