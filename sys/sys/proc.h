@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.177 2003/11/17 19:21:24 christos Exp $	*/
+/*	$NetBSD: proc.h,v 1.178 2003/11/27 23:16:47 manu Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -478,7 +478,7 @@ void	cpu_wait __P((struct lwp *));
 void	child_return(void *);
 
 int	proc_isunder(struct proc *, struct proc *);
-void	proc_stop(struct proc *);
+void	proc_stop(struct proc *, int);
 
 void	proclist_lock_read(void);
 void	proclist_unlock_read(void);
