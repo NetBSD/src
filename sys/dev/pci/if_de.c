@@ -1,4 +1,4 @@
-/*    $NetBSD: if_de.c,v 1.15 1996/03/27 04:07:01 cgd Exp $       */
+/*    $NetBSD: if_de.c,v 1.16 1996/03/30 05:10:29 cgd Exp $       */
 
 /*-
  * Copyright (c) 1994, 1995 Matt Thomas (matt@lkg.dec.com)
@@ -108,6 +108,9 @@
 
 #if defined(__NetBSD__)
 #include <machine/bus.h>
+#ifdef __alpha__
+#include <machine/intr.h>
+#endif
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/ic/dc21040reg.h>
@@ -310,7 +313,8 @@ struct _tulip_softc_t {
     struct device tulip_dev;		/* base device */
     void *tulip_ih;			/* intrrupt vectoring */
     void *tulip_ats;			/* shutdown hook */
-    bus_chipset_tag_t tulip_bc;		/* bus chipset tag */
+    bus_chipset_tag_t tulip_bc;
+    pci_chipset_tag_t tulip_pc;
 #ifdef TULIP_IOMAPPED
     bus_io_handle_t tulip_ioh;		/* I/O region handle */
 #else
@@ -2430,6 +2434,8 @@ tulip_pci_attach(
 #if defined(__NetBSD__)
     tulip_softc_t * const sc = (tulip_softc_t *) self;
     struct pci_attach_args * const pa = (struct pci_attach_args *) aux;
+    bus_chipset_tag_t bc = pa->pa_bc;
+    pci_chipset_tag_t pc = pa->pa_pc;
 #if defined(TULIP_IOMAPPED)
     bus_io_addr_t iobase;
     bus_io_size_t iosize;
@@ -2438,6 +2444,7 @@ tulip_pci_attach(
     bus_mem_size_t memsize;
 #endif
     int unit = sc->tulip_dev.dv_unit;
+    const char *intrstr = NULL;
 #endif
     int retval, idx, revinfo, id;
 #if !defined(TULIP_IOMAPPED) && !defined(__bsdi__) && !defined(__NetBSD__)
@@ -2473,7 +2480,7 @@ tulip_pci_attach(
     }
 #endif
 #if defined(__NetBSD__)
-    revinfo = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_CFRV) & 0xFF;
+    revinfo = pci_conf_read(pc, pa->pa_tag, PCI_CFRV) & 0xFF;
     id = pa->pa_id;
 #endif
 
@@ -2555,16 +2562,17 @@ tulip_pci_attach(
 #endif /* __bsdi__ */
 
 #if defined(__NetBSD__)
-    sc->tulip_bc = pa->pa_bc;
+    sc->tulip_bc = bc;
+    sc->tulip_pc = pc;
 #if defined(TULIP_IOMAPPED)
-    retval = pci_io_find(pa->pa_pc, pa->pa_tag, PCI_CBIO, &iobase, &iosize);
+    retval = pci_io_find(pc, pa->pa_tag, PCI_CBIO, &iobase, &iosize);
     if (!retval)
-	retval = bus_io_map(pa->pa_bc, iobase, iosize, &sc->tulip_ioh);
+	retval = bus_io_map(bc, iobase, iosize, &sc->tulip_ioh);
 #else
-    retval = pci_mem_find(pa->pa_pc, pa->pa_tag, PCI_CBMA, &membase, &memsize,
+    retval = pci_mem_find(pc, pa->pa_tag, PCI_CBMA, &membase, &memsize,
 	NULL);
     if (!retval)
-	retval = bus_mem_map(pa->pa_bc, membase, memsize, 0, &sc->tulip_memh);
+	retval = bus_mem_map(bc, membase, memsize, 0, &sc->tulip_memh);
 #endif
     csr_base = 0;
     if (retval) {
@@ -2602,29 +2610,26 @@ tulip_pci_attach(
 #if defined(__NetBSD__)
 	if (sc->tulip_boardsw->bd_type != TULIP_DC21040_ZX314_SLAVE) {
 	    pci_intr_handle_t intrhandle;
-	    const char *intrstr;
 
-	    if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
+	    if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
 		pa->pa_intrline, &intrhandle)) {
-		printf("%s: couldn't map interrupt\n", self->dv_xname);
+		printf(": couldn't map interrupt\n", self->dv_xname);
 		return;
 	    }
-	    intrstr = pci_intr_string(pa->pa_pc, intrhandle);
-	    sc->tulip_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_NET,
+	    intrstr = pci_intr_string(pc, intrhandle);
+	    sc->tulip_ih = pci_intr_establish(pc, intrhandle, IPL_NET,
 		tulip_intr, sc);
 	    if (sc->tulip_ih == NULL) {
-		printf("%s: couldn't establish interrupt", self->dv_xname);
+		printf(": couldn't establish interrupt", self->dv_xname);
                 if (intrstr != NULL)
                         printf(" at %s", intrstr);
                 printf("\n");
 		return;
 	    }
-	    if (intrstr != NULL)
-		printf("%s: interrupting at %s\n", self->dv_xname, intrstr);
 	}
 	sc->tulip_ats = shutdownhook_establish(tulip_pci_shutdown, sc);
 	if (sc->tulip_ats == NULL)
-	    printf("%s%d: warning: couldn't establish shutdown hook\n",
+	    printf("\n%s%d: warning: couldn't establish shutdown hook",
 		   sc->tulip_name, sc->tulip_unit);
 #endif
 #if defined(__FreeBSD__)
@@ -2651,6 +2656,10 @@ tulip_pci_attach(
 #endif
 	tulip_reset(sc);
 	tulip_attach(sc);
+#if defined(__NetBSD__)
+	if (intrstr != NULL)
+	    printf("%s: interrupting at %s\n", self->dv_xname, intrstr);
+#endif
     }
 }
 #endif /* NDE > 0 */
