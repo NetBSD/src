@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.37 1996/09/05 15:46:26 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.38 1996/11/30 01:13:05 is Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -88,6 +88,7 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #include "ms.h"
 #include "view.h"
 #include "mfcs.h"
+#include "drcom.h"
 dev_decl(filedesc,open);
 #include "bpfilter.h"
 #include "tun.h"
@@ -126,6 +127,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 29 */
 	cdev_lkm_dummy(),		/* 30 */
  	cdev_tty_init(NMSC,msc),	/* 31: A2232 MSC Multiport serial */
+	cdev_tty_init(NDRCOM,drcom),	/* 32: DraCo com ports */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
