@@ -1,4 +1,4 @@
-/*	$NetBSD: list.h,v 1.5 1996/11/06 17:59:11 christos Exp $	*/
+/*	$NetBSD: list.h,v 1.6 2002/05/16 19:48:18 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -51,7 +51,7 @@
 
 #ifndef _SPRITE
 #include "sprite.h"
-#endif _SPRITE
+#endif /* _SPRITE */
 
 /*
  * This module defines the list abstraction, which enables one to link
