@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.124 1998/11/13 04:12:35 thorpej Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.125 1998/11/14 06:38:54 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -168,6 +168,18 @@ sys_mount(p, v, retval)
 			vput(vp);
 			return (EOPNOTSUPP);	/* Needs translation */
 		}
+		/*
+		 * In "highly secure" mode, don't let the caller do anything
+		 * but downgrade a filesystem from read-write to read-only.
+		 * (see also below; MNT_UPDATE is required.)
+		 */
+		if (securelevel >= 2 &&
+		    (SCARG(uap, flags) !=
+		    (mp->mnt_flag | MNT_RDONLY |
+		    MNT_RELOAD | MNT_FORCE | MNT_UPDATE))) {
+			vput(vp);
+			return (EPERM);
+		}
 		mp->mnt_flag |=
 		    SCARG(uap, flags) & (MNT_RELOAD | MNT_FORCE | MNT_UPDATE);
 		/*
@@ -196,6 +208,9 @@ sys_mount(p, v, retval)
 		}                     
 		VOP_UNLOCK(vp, 0);
 		goto update;
+	} else {
+		if (securelevel >= 2)
+			return (EPERM);
 	}
 	/*
 	 * If the user is not root, ensure that they own the directory
