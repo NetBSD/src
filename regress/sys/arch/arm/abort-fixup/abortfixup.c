@@ -1,4 +1,4 @@
-/* $NetBSD: abortfixup.c,v 1.4 2002/03/17 12:32:28 bjh21 Exp $ */
+/* $NetBSD: abortfixup.c,v 1.5 2002/03/17 13:46:45 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,19 +39,22 @@
 
 #include <sys/types.h>
 
-__RCSID("$NetBSD: abortfixup.c,v 1.4 2002/03/17 12:32:28 bjh21 Exp $");
+__RCSID("$NetBSD: abortfixup.c,v 1.5 2002/03/17 13:46:45 bjh21 Exp $");
 
+#include <setjmp.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdio.h>
+
+jmp_buf buf;
 
 void
 sighandler(int sig)
 {
 
 	/* Catching SIGSEGV means the test passed. */
-	exit(0);
+	longjmp(buf, 1);
 }
 
 int
@@ -61,8 +64,7 @@ main(void)
 	if (signal(SIGSEGV, sighandler) == SIG_ERR)
 		err(1, "signal");
 
-	printf("ARM 6/7 abort fixup panic regression test\n");
-	printf("    It should not panic!\n");
+	printf("ARM6/7 abort fixup panic\n");
 
 	/*
  	 * issue an instruction that for certain generates a page
@@ -70,14 +72,36 @@ main(void)
 	 * routines due to its structure.
 	 */
 
-	__asm __volatile ("
-		mov r0, #0
-		mov r1, r0
-		str r1, [r0], r1, ror #10
-	");
+	if (setjmp(buf) == 0) {
+		__asm __volatile ("
+			mov r0, #0
+			mov r1, r0
+			str r1, [r0], r1, ror #10
+		");
+		
+		/* Should not be reached if OK */
+		printf("!!! Regression test FAILED - no SEGV recieved\n");
+		exit(1);
+	}
 
-	/* Should not be reached if OK */
-	printf("!!! Regression test FAILED - no SEGV recieved\n");
-	return 1;
+	printf("ARM2/3 abort address panic\n");
+
+	/* Similar but pre-indexed, to check ARM2/3 abort address function. */
+
+	if (setjmp(buf) == 0) {
+		__asm __volatile ("
+			mov r0, #0
+			mov r1, r0
+			str r1, [r0, r1, ror #10]
+		");
+		
+		/* Should not be reached if OK */
+		printf("!!! Regression test FAILED - no SEGV recieved\n");
+		exit(1);
+	}
+
+	printf("All OK\n");
+
+	exit(0);
 };
 
