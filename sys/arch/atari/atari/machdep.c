@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3 1995/04/22 20:25:15 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4 1995/04/27 20:34:13 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -123,14 +123,6 @@ char machine[] = "atari";
 void
 consinit()
 {
-
-	/*
-	 * Set cpuspeed immediately since cninit() called routines
-	 * might use delay.[
-	 */
-
-	cpuspeed = MHZ_33;	/* XXX */
-
 	/*
 	 * Initialize the console before we print anything out.
 	 */
