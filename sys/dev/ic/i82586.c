@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.4 1997/07/28 22:35:49 pk Exp $	*/
+/*	$NetBSD: i82586.c,v 1.5 1997/07/29 20:24:47 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997 Paul Kranenburg.
@@ -133,6 +133,8 @@ Mode of operation:
 #include <netns/ns.h>
 #include <netns/ns_if.h>
 #endif
+
+#include <machine/bus.h>
 
 #include <dev/ic/i82586reg.h>
 #include <dev/ic/i82586var.h>
@@ -300,6 +302,7 @@ void *v;
 	struct ie_softc *sc = v;
 	register u_short status;
 
+	bus_space_barrier(sc->bt, sc->bh, 0, 0, BUS_SPACE_BARRIER_READ);
 	status = SWAP(sc->scb->ie_status);
 
         /*
@@ -348,6 +351,7 @@ loop:
 		printf("%s: cna\n", sc->sc_dev.dv_xname);
 #endif
 
+	bus_space_barrier(sc->bt, sc->bh, 0, 0, BUS_SPACE_BARRIER_READ);
 	status = SWAP(sc->scb->ie_status);
 	if (status & IE_ST_WHENCE)
 		goto loop;
@@ -407,10 +411,11 @@ void
 ietint(sc)
 	struct ie_softc *sc;
 {
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int status;
 
-	sc->sc_ethercom.ec_if.if_timer = 0;
-	sc->sc_ethercom.ec_if.if_flags &= ~IFF_OACTIVE;
+	ifp->if_timer = 0;
+	ifp->if_flags &= ~IFF_OACTIVE;
 
 	status = SWAP(sc->xmit_cmds[sc->xctail]->ie_xmit_status);
 
@@ -418,24 +423,27 @@ ietint(sc)
 		printf("ietint: command still busy!\n");
 
 	if (status & IE_STAT_OK) {
-		sc->sc_ethercom.ec_if.if_opackets++;
-		sc->sc_ethercom.ec_if.if_collisions += (status & IE_XS_MAXCOLL);
-	} else if (status & IE_STAT_ABORT) {
-		printf("%s: send aborted\n", sc->sc_dev.dv_xname);
-		sc->sc_ethercom.ec_if.if_oerrors++;
-	} else if (status & IE_XS_NOCARRIER) {
-		printf("%s: no carrier\n", sc->sc_dev.dv_xname);
-		sc->sc_ethercom.ec_if.if_oerrors++;
-	} else if (status & IE_XS_LOSTCTS) {
-		printf("%s: lost CTS\n", sc->sc_dev.dv_xname);
-		sc->sc_ethercom.ec_if.if_oerrors++;
-	} else if (status & IE_XS_UNDERRUN) {
-		printf("%s: DMA underrun\n", sc->sc_dev.dv_xname);
-		sc->sc_ethercom.ec_if.if_oerrors++;
-	} else if (status & IE_XS_EXCMAX) {
-		printf("%s: too many collisions\n", sc->sc_dev.dv_xname);
-		sc->sc_ethercom.ec_if.if_collisions += 16;
-		sc->sc_ethercom.ec_if.if_oerrors++;
+		ifp->if_opackets++;
+		ifp->if_collisions += (status & IE_XS_MAXCOLL);
+	} else {
+		ifp->if_oerrors++;
+		/*
+		 * Check SQE and DEFERRED?
+		 * What if more than one bit is set?
+		 */
+		if (status & IE_STAT_ABORT)
+			printf("%s: send aborted\n", sc->sc_dev.dv_xname);
+		else if (status & IE_XS_NOCARRIER)
+			printf("%s: no carrier\n", sc->sc_dev.dv_xname);
+		else if (status & IE_XS_LOSTCTS)
+			printf("%s: lost CTS\n", sc->sc_dev.dv_xname);
+		else if (status & IE_XS_UNDERRUN)
+			printf("%s: DMA underrun\n", sc->sc_dev.dv_xname);
+		else if (status & IE_XS_EXCMAX) {
+			printf("%s: too many collisions\n",
+				sc->sc_dev.dv_xname);
+			sc->sc_ethercom.ec_if.if_collisions += 16;
+		}
 	}
 
 	/*
@@ -456,7 +464,7 @@ ietint(sc)
 	if (sc->xmit_busy > 0)
 		iexmit(sc);
 
-	iestart(&sc->sc_ethercom.ec_if);
+	iestart(ifp);
 }
 
 /*
@@ -617,6 +625,7 @@ ie_packet_len(sc)
 	int oldhead = head;
 
 	do {
+		bus_space_barrier(sc->bt, sc->bh, 0, 0, BUS_SPACE_BARRIER_READ);
 		i = SWAP(sc->rbuffs[head]->ie_rbd_actual);
 		if ((i & IE_RBD_USED) == 0) {
 #ifdef IEDEBUG
@@ -710,7 +719,7 @@ ieget(sc, ehp, to_bpf)
 	/*
 	 * Snarf the Ethernet header.
 	 */
-	bcopy((caddr_t)sc->cbuffs[head], (caddr_t)ehp, sizeof *ehp);
+	(sc->memcopy)((caddr_t)sc->cbuffs[head], (caddr_t)ehp, sizeof *ehp);
 
 	/*
 	 * As quickly as possible, check if this packet is for us.
@@ -776,8 +785,8 @@ ieget(sc, ehp, to_bpf)
 		    thismblen = m->m_len - thismboff;
 		len = min(thisrblen, thismblen);
 
-		bcopy((caddr_t)(sc->cbuffs[head] + thisrboff),
-		    mtod(m, caddr_t) + thismboff, (u_int)len);
+		(sc->memcopy)((caddr_t)(sc->cbuffs[head] + thisrboff),
+			       mtod(m, caddr_t) + thismboff, (u_int)len);
 		resid -= len;
 
 		if (len == thismblen) {
@@ -846,8 +855,9 @@ ie_readframe(sc, num)
 
 #ifdef IEDEBUG
 	if (sc->sc_debug & IED_READFRAME)
-		printf("%s: frame from ether %s type %x\n", sc->sc_dev.dv_xname,
-		    ether_sprintf(eh.ether_shost), (u_int)eh.ether_type);
+		printf("%s: frame from ether %s type 0x%x\n",
+			sc->sc_dev.dv_xname,
+			ether_sprintf(eh.ether_shost), (u_int)eh.ether_type);
 #endif
 
 #if NBPFILTER > 0
@@ -903,6 +913,7 @@ ie_drop_packet_buffer(sc)
 	int i;
 
 	do {
+		bus_space_barrier(sc->bt, sc->bh, 0, 0, BUS_SPACE_BARRIER_READ);
 		i = SWAP(sc->rbuffs[sc->rbhead]->ie_rbd_actual);
 		if ((i & IE_RBD_USED) == 0) {
 			/*
@@ -975,7 +986,7 @@ iestart(ifp)
 
 		buffer = sc->xmit_cbuffs[sc->xchead];
 		for (m = m0; m != 0; m = m->m_next) {
-			bcopy(mtod(m, caddr_t), buffer, m->m_len);
+			(sc->memcopy)(mtod(m, caddr_t), buffer, m->m_len);
 			buffer += m->m_len;
 		}
 
@@ -1064,10 +1075,11 @@ iereset(sc)
 		printf("%s: disable commands timed out\n", sc->sc_dev.dv_xname);
 
 
-#if notdef
+#if 1
 	if (sc->hwreset)
 		(sc->hwreset)(sc);
 #endif
+	ie_ack(sc, IE_ST_WHENCE);
 #ifdef notdef
 	if (!check_ie_present(sc, sc->sc_maddr, sc->sc_msize))
 		panic("ie disappeared!\n");
@@ -1099,6 +1111,7 @@ command_and_wait(sc, cmd, pcmd, mask)
 	int i;
 
 	scb->ie_command = (u_short)SWAP(cmd);
+	bus_space_barrier(sc->bt, sc->bh, 0, 0, BUS_SPACE_BARRIER_WRITE);
 	(sc->chan_attn)(sc);
 
 	if (IE_ACTION_COMMAND(cmd) && pcmd) {
@@ -1176,7 +1189,7 @@ run_tdr(sc, cmd)
 		printf("%s: TDR detected a short %d clocks away\n",
 		    sc->sc_dev.dv_xname, result & IE_TDR_TIME);
 	else
-		printf("%s: TDR returned unknown status %x\n",
+		printf("%s: TDR returned unknown status 0x%x\n",
 		    sc->sc_dev.dv_xname, result);
 }
 

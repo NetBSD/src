@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586var.h,v 1.2 1997/07/28 22:26:12 pk Exp $	*/
+/*	$NetBSD: i82586var.h,v 1.3 1997/07/29 20:24:46 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -124,7 +124,9 @@
 
 struct ie_softc {
 	struct device sc_dev;   /* device structure */
-	struct intrhand sc_ih;  /* interrupt info */
+
+	bus_space_tag_t bt;
+	bus_space_handle_t bh;
 
 	caddr_t sc_iobase;      /* KVA of base of 24 bit addr space */
 	caddr_t sc_maddr;       /* KVA of base of chip's RAM (16bit addr sp.)*/
