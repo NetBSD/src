@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.23 2004/03/26 12:15:46 wiz Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.23.4.1 2005/01/24 21:43:53 he Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@azeotrope.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.23 2004/03/26 12:15:46 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.23.4.1 2005/01/24 21:43:53 he Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -273,7 +273,8 @@ mcioctl(ifp, cmd, data)
 			 * Multicast list has changed; set the hardware
 			 * filter accordingly. But remember UP flag!
 			 */
-			mcreset(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				mcreset(sc);
 			err = 0;
 		}
 		break;
