@@ -1,4 +1,7 @@
-# $NetBSD: Makefile,v 1.2 2000/06/16 22:46:47 thorpej Exp $
+# $NetBSD: Makefile,v 1.2.2.1 2001/04/05 23:25:25 he Exp $
+
+.include <bsd.own.mk>
+
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/lib/gssapi
 
@@ -15,6 +18,7 @@ SRCS	 =		\
 	canonicalize_name.c	\
 	compare_name.c		\
 	context_time.c		\
+	copy_ccache.c		\
 	create_emtpy_oid_set.c	\
 	decapsulate.c		\
 	delete_sec_context.c	\
@@ -43,14 +47,15 @@ SRCS	 =		\
 	unwrap.c		\
 	v1.c			\
 	verify_mic.c		\
-	wrap.c
+	wrap.c			\
+	address_to_krb5addr.c
 
 INCSDIR= /usr/include/gssapi
 
 INCS=	gssapi.h
 
-ASN1!=	cd ${.CURDIR}/../libasn1 && ${MAKE} print-objdir
-KRB5!=	cd ${.CURDIR}/../libkrb5 && ${MAKE} print-objdir
+ASN1!=	cd ${.CURDIR}/../libasn1 && ${PRINTOBJDIR}
+KRB5!=	cd ${.CURDIR}/../libkrb5 && ${PRINTOBJDIR}
 
 CPPFLAGS+= -I.					\
 	 -I${DIST}/heimdal/lib/gssapi		\
