@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.93 1997/05/22 17:35:42 kleink Exp $	*/
+/*	$NetBSD: tty.c,v 1.94 1997/06/17 20:41:59 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -268,33 +268,47 @@ ttyinput(c, tp)
 	}
 	++tk_nin;
 
-	/* Handle exceptional conditions (break, parity, framing). */
 	cc = tp->t_cc;
+
+	/*
+	 * Handle exceptional conditions (break, parity, framing).
+	 */
 	iflag = tp->t_iflag;
 	if ((error = (ISSET(c, TTY_ERRORMASK))) != 0) {
 		CLR(c, TTY_ERRORMASK);
-		if (ISSET(error, TTY_FE) && !c) {	/* Break. */
+		if (ISSET(error, TTY_FE) && c == 0) {		/* Break. */
 			if (ISSET(iflag, IGNBRK))
-				goto endcase;
-			else if (ISSET(iflag, BRKINT) &&
-			    ISSET(lflag, ISIG) &&
-			    (cc[VINTR] != _POSIX_VDISABLE))
-				c = cc[VINTR];
+				return (0);
+			else if (ISSET(iflag, BRKINT)) {
+				ttyflush(tp, FREAD | FWRITE);
+				pgsignal(tp->t_pgrp, SIGINT, 1);
+				return (0);
+			}
 			else if (ISSET(iflag, PARMRK))
 				goto parmrk;
-		} else if ((ISSET(error, TTY_PE) &&
-			    ISSET(iflag, INPCK)) || ISSET(error, TTY_FE)) {
+		}
+		else if ((ISSET(error, TTY_PE) && ISSET(iflag, INPCK)) ||
+		    ISSET(error, TTY_FE)) {
 			if (ISSET(iflag, IGNPAR))
-				goto endcase;
+				return (0);
 			else if (ISSET(iflag, PARMRK)) {
 parmrk:				(void)putc(0377 | TTY_QUOTE, &tp->t_rawq);
-				(void)putc(0 | TTY_QUOTE, &tp->t_rawq);
-				(void)putc(c | TTY_QUOTE, &tp->t_rawq);
-				goto endcase;
-			} else
+				(void)putc(0    | TTY_QUOTE, &tp->t_rawq);
+				(void)putc(c    | TTY_QUOTE, &tp->t_rawq);
+				return (0);
+			}
+			else
 				c = 0;
 		}
 	}
+	else if (c == 0377 &&
+	    ISSET(iflag, ISTRIP|IGNPAR|INPCK|PARMRK) == (INPCK|PARMRK)) {
+		/* "Escape" a valid character of '\377'. */
+		(void)putc(0377 | TTY_QUOTE, &tp->t_rawq);
+		(void)putc(0377 | TTY_QUOTE, &tp->t_rawq);
+		goto endcase;
+	}
+
 	/*
 	 * In tandem mode, check high water mark.
 	 */
