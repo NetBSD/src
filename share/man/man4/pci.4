@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.33 2000/05/15 06:31:56 bouyer Exp $
+.\"	$NetBSD: pci.4,v 1.33.4.1 2001/05/01 11:49:11 he Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -179,6 +179,8 @@ ESS Solo-1 PCI AudioDrive sound device.
 Forte Media FM801 sound device.
 .It sv
 S3 SonicVibes sound device.
+.It yds
+Yamaha YMF724/740/744/754-based audio device.
 .El
 .Pp
 .Ss Miscellaneous devices
@@ -246,6 +248,7 @@ USB UHCI host controller
 .Xr sv 4 ,
 .Xr tl 4 ,
 .Xr usb 4
+.Xr yds 4
 .Sh HISTORY
 The machine-independent
 .Tn PCI
