@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.91 2004/03/17 14:35:53 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.92 2004/03/17 15:22:57 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.91 2004/03/17 14:35:53 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.92 2004/03/17 15:22:57 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -778,7 +778,6 @@ PROM_getprop(node, name, size, nitem, bufp)
 	void	*buf;
 	long	len;
 
-	*nitem = 0;
 	len = PROM_getproplen(node, name);
 	if (len <= 0)
 		return (ENOENT);
@@ -791,6 +790,9 @@ PROM_getprop(node, name, size, nitem, bufp)
 		/* No storage provided, so we allocate some */
 		buf = malloc(len, M_DEVBUF, M_NOWAIT);
 		if (buf == NULL)
+			return (ENOMEM);
+	} else {
+		if (size * (*nitem) < len)
 			return (ENOMEM);
 	}
 
@@ -824,17 +826,18 @@ PROM_getpropstring(node, name)
 {
 	static char stringbuf[32];
 
-	return (PROM_getpropstringA(node, name, stringbuf));
+	return (PROM_getpropstringA(node, name, stringbuf, sizeof stringbuf));
 }
 
 /* Alternative PROM_getpropstring(), where caller provides the buffer */
 char *
-PROM_getpropstringA(node, name, buffer)
+PROM_getpropstringA(node, name, buffer, bufsize)
 	int node;
 	char *name;
 	char *buffer;
+	size_t bufsize;
 {
-	int blen;
+	int blen = bufsize - 1;
 
 	if (PROM_getprop(node, name, 1, &blen, &buffer) != 0)
 		blen = 0;
