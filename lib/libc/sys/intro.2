@@ -1,4 +1,4 @@
-.\"	$NetBSD: intro.2,v 1.10 1998/02/02 05:20:30 perry Exp $
+.\"	$NetBSD: intro.2,v 1.11 1998/02/06 08:52:36 mikel Exp $
 .\"
 .\" Copyright (c) 1980, 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)intro.2	8.5 (Berkeley) 2/27/95
 .\"
-.Dd February 27, 1995
+.Dd February 6, 1998
 .Dt INTRO 2
 .Os BSD 4
 .Sh NAME
@@ -409,6 +409,18 @@ locks was reached.
 .It Er 78 ENOSYS Em "Function not implemented" .
 Attempted a system call that is not available on this 
 system.
+.It Er 79 EFTYPE Em "Inappropriate file type or format" .
+Attempted a file operation on a file of a type for which it was invalid.
+.It Er 80 EAUTH Em "Authentication error" .
+Attempted to use an invalid authentication ticket to mount an
+.Tn NFS
+filesystem.
+.It Er 81 ENEEDAUTH Em "Need authenticator" .
+An authentication ticket must be obtained before the given
+.Tn NFS
+filesystem may be mounted.
+.It Er 82 EIDRM Em "Identifier removed" .
+An IPC identifier was removed while the current process was waiting on it.
 .Sh DEFINITIONS
 .Bl -tag -width Ds
 .It  Process ID .
