@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.57 1996/10/26 08:12:09 ragge Exp $
+#	$NetBSD: Makefile,v 1.58 1996/11/20 04:33:24 lukem Exp $
 #	from: @(#)Makefile	5.11 (Berkeley) 5/21/91
 
 TZDIR=		/usr/share/zoneinfo
@@ -79,13 +79,15 @@ distribution: distrib-dirs
 		${DESTDIR}/var/db/locate.database
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
 		${DESTDIR}/var/log/lastlog
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 640 /dev/null \
 		${DESTDIR}/var/log/lpd-errs
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 600 /dev/null \
 		${DESTDIR}/var/log/maillog
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
 		${DESTDIR}/var/log/messages
-	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 600 /dev/null \
+		${DESTDIR}/var/log/secure
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
 		${DESTDIR}/var/log/wtmp
 	${INSTALL} -c -o daemon -g staff -m 664 /dev/null \
 		${DESTDIR}/var/msgs/bounds
