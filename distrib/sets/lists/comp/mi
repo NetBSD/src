@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.251 2000/08/01 00:53:14 wiz Exp $
+#	$NetBSD: mi,v 1.252 2000/08/03 00:09:40 itojun Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -2910,6 +2910,7 @@
 ./usr/share/man/cat9/pool_setlowat.0		comp-kern-catman
 ./usr/share/man/cat9/powerhook_disestablish.0		comp-kern-catman
 ./usr/share/man/cat9/powerhook_establish.0		comp-kern-catman
+./usr/share/man/cat9/ppsratecheck.0		comp-kern-catman
 ./usr/share/man/cat9/printf.0		comp-kern-catman
 ./usr/share/man/cat9/psignal.0		comp-kern-catman
 ./usr/share/man/cat9/ratecheck.0		comp-kern-catman
@@ -4555,6 +4556,7 @@
 ./usr/share/man/man9/pool_setlowat.9		comp-kern-man
 ./usr/share/man/man9/powerhook_disestablish.9		comp-kern-man
 ./usr/share/man/man9/powerhook_establish.9		comp-kern-man
+./usr/share/man/man9/ppsratecheck.9		comp-kern-man
 ./usr/share/man/man9/printf.9		comp-kern-man
 ./usr/share/man/man9/psignal.9		comp-kern-man
 ./usr/share/man/man9/ratecheck.9		comp-kern-man
