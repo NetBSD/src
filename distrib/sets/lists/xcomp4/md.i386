@@ -1,0 +1,6 @@
+# $NetBSD: md.i386,v 1.1 2002/02/15 22:29:23 tron Exp $
+./usr/X11R6/man/cat3/XF86VidModeDeleteModeLine.0
+./usr/X11R6/man/cat3/XF86VidModeGetViewPort.0
+./usr/X11R6/man/cat3/XF86VidModeSetViewPort.0
+./usr/X11R6/man/cat3/XF86VidModeSwitchToMode.0
+./usr/X11R6/man/cat3/XF86VidModeValidateModeLine.0
