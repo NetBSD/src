@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.29 1999/10/01 05:08:31 lukem Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.30 1999/10/05 00:54:07 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.4 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmdtab.c,v 1.29 1999/10/01 05:08:31 lukem Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.30 1999/10/05 00:54:07 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,9 +64,7 @@ char	debughelp[] =	"toggle/set debugging mode";
 char	deletehelp[] =	"delete remote file";
 char	disconhelp[] =	"terminate ftp session";
 char	domachelp[] =	"execute macro";
-#ifndef NO_EDITCOMPLETE
 char	edithelp[] =	"toggle command line editing";
-#endif /* !NO_EDITCOMPLETE */
 char	epsv4help[] =	"toggle use of EPSV/EPRT on IPv4 ftp";
 char	formhelp[] =	"set file transfer format";
 char	gatehelp[] =	"toggle gate-ftp; specify host[:port] to change proxy";
@@ -157,9 +155,7 @@ struct cmd cmdtab[] = {
 	{ "delete",	deletehelp,	0, 1, 1, CMPL(r)	delete },
 	{ "dir",	lshelp,		1, 1, 1, CMPL(rl)	ls },
 	{ "disconnect",	disconhelp,	0, 1, 1, CMPL0		disconnect },
-#ifndef NO_EDITCOMPLETE
 	{ "edit",	edithelp,	0, 0, 0, CMPL0		setedit },
-#endif /* !NO_EDITCOMPLETE */
 	{ "epsv4",	epsv4help,	0, 0, 0, CMPL0		setepsv4 },
 	{ "exit",	quithelp,	0, 0, 0, CMPL0		quit },
 	{ "form",	formhelp,	0, 1, 1, CMPL0		setform },

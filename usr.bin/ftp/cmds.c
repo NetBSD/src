@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.68 1999/10/01 08:01:12 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.69 1999/10/05 00:54:07 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.68 1999/10/01 08:01:12 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.69 1999/10/05 00:54:07 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -719,9 +719,13 @@ status(argc, argv)
 	fprintf(ttyout, "Use of PORT cmds: %s.\n", onoff(sendport));
 	fprintf(ttyout, "Use of EPSV/EPRT cmds for IPv4: %s%s.\n", onoff(epsv4),
 	    epsv4bad ? " (disabled for this connection)" : "");
-#ifndef NO_EDITCOMPLETE
-	fprintf(ttyout, "Command line editing: %s.\n", onoff(editing));
-#endif /* !NO_EDITCOMPLETE */
+	fprintf(ttyout, "Command line editing: %s.\n",
+#ifdef NO_EDITCOMPLETE
+	    "support not compiled in"
+#else	/* !def NO_EDITCOMPLETE */
+	    onoff(editing)
+#endif	/* !def NO_EDITCOMPLETE */
+	    );
 	if (macnum > 0) {
 		fputs("Macros:\n", ttyout);
 		for (i=0; i<macnum; i++) {
@@ -769,7 +773,6 @@ setbell(argc, argv)
 	code = togglevar(argc, argv, &bell, "Bell mode");
 }
 
-#ifndef NO_EDITCOMPLETE
 /*
  * Set command line editing
  */
@@ -780,10 +783,15 @@ setedit(argc, argv)
 	char *argv[];
 {
 
+#ifdef NO_EDITCOMPLETE
+	if (verbose)
+		fputs("Editing support not compiled in; ignoring command.\n",
+		    ttyout);
+#else	/* !def NO_EDITCOMPLETE */
 	code = togglevar(argc, argv, &editing, "Editing mode");
 	controlediting();
+#endif	/* !def NO_EDITCOMPLETE */
 }
-#endif /* !NO_EDITCOMPLETE */
 
 /*
  * Turn on packet tracing.
