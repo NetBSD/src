@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.163 1997/03/12 19:49:11 fvdl Exp $	*/
+/*	$NetBSD: locore.s,v 1.164 1997/03/14 19:50:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -413,16 +413,6 @@ try586:	/* Use the `cpuid' instruction. */
 #define	APM_PDE_SPACE	0			/* XXX NAME IS TOTALLY BOGUS */
 #endif
 #define	TABLESIZE	((1+UPAGES+APM_PDE_SPACE) * NBPG) /* + nkpde * NBPG */
-
-	/* Clear the BSS. */
-	movl	$RELOC(_edata),%edi
-	movl	$(RELOC(_end)+3),%ecx
-	subl	%edi,%ecx
-	shrl	$2,%ecx
-	xorl	%eax,%eax
-	cld
-	rep
-	stosl
 
 	/* Find end of kernel image. */
 	movl	$RELOC(_end),%edi
