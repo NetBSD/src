@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.22 2000/10/02 12:22:53 fvdl Exp $
+#	$NetBSD: GENERIC_TINY,v 1.23 2001/01/16 03:38:23 augustss Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -469,6 +469,9 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 #aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
 #cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 #kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+
+# Y@P firmware loader
+#uyap* at uhub? port ?
 
 # USB Generic driver
 #ugen*	at uhub? port ?

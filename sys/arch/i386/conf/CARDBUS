@@ -1,4 +1,4 @@
-#	$NetBSD: CARDBUS,v 1.29 2001/01/09 00:47:18 lukem Exp $
+#	$NetBSD: CARDBUS,v 1.30 2001/01/16 03:38:23 augustss Exp $
 #
 #	CARDBUS: GENERIC + CardBus support.  Additionally, some
 #	things typically not found on laptops have been commented out.
@@ -8,7 +8,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident		"CARDBUS-$Revision: 1.29 $"
+#ident		"CARDBUS-$Revision: 1.30 $"
 
 maxusers	32		# estimated number of users
 
@@ -712,6 +712,9 @@ ucom*	at uvisor?
 
 # USB scanners
 uscanner* at uhub? port ?
+
+# Y@P firmware loader
+uyap* at uhub? port ?
 
 # USB Generic driver
 ugen*	at uhub? port ?
