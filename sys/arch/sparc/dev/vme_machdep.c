@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.40 2002/12/06 16:04:11 pk Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.41 2002/12/10 12:16:25 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -834,7 +834,7 @@ sparc_vme_intr_establish(cookie, vih, level, func, arg)
 		bzero(ih, sizeof *ih);
 		ih->ih_fun = sc->sc_vmeintr;
 		ih->ih_arg = vih;
-		intr_establish(pil, 0, ih);
+		intr_establish(pil, 0, ih, NULL);
 	} else {
 		svih->next = (vme_intr_handle_t)ih->ih_arg;
 		ih->ih_arg = vih;
