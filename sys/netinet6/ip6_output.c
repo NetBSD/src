@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.86 2004/12/04 16:10:25 peter Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.87 2004/12/21 11:37:47 drochner Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.86 2004/12/04 16:10:25 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.87 2004/12/21 11:37:47 drochner Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1809,16 +1809,19 @@ ip6_setmoptions(optname, im6op, m)
 			break;
 		}
 		bcopy(mtod(m, u_int *), &ifindex, sizeof(ifindex));
-		if (ifindex < 0 || if_indexlim <= ifindex ||
-		    !ifindex2ifnet[ifindex]) {
-			error = ENXIO;	/* XXX EINVAL? */
-			break;
-		}
-		ifp = ifindex2ifnet[ifindex];
-		if (ifp == NULL || (ifp->if_flags & IFF_MULTICAST) == 0) {
-			error = EADDRNOTAVAIL;
-			break;
-		}
+		if (ifindex != 0) {
+			if (ifindex < 0 || if_indexlim <= ifindex ||
+			    !ifindex2ifnet[ifindex]) {
+				error = ENXIO;	/* XXX EINVAL? */
+				break;
+			}
+			ifp = ifindex2ifnet[ifindex];
+			if ((ifp->if_flags & IFF_MULTICAST) == 0) {
+				error = EADDRNOTAVAIL;
+				break;
+			}
+		} else
+			ifp = NULL;
 		im6o->im6o_multicast_ifp = ifp;
 		break;
 
@@ -1887,18 +1890,18 @@ ip6_setmoptions(optname, im6op, m)
 
 		/*
 		 * If the interface is specified, validate it.
-		 */
-		if (mreq->ipv6mr_interface < 0 ||
-		    if_indexlim <= mreq->ipv6mr_interface ||
-		    !ifindex2ifnet[mreq->ipv6mr_interface]) {
-			error = ENXIO;	/* XXX EINVAL? */
-			break;
-		}
-		/*
 		 * If no interface was explicitly specified, choose an
 		 * appropriate one according to the given multicast address.
 		 */
-		if (mreq->ipv6mr_interface == 0) {
+		if (mreq->ipv6mr_interface != 0) {
+			if (mreq->ipv6mr_interface < 0 ||
+			    if_indexlim <= mreq->ipv6mr_interface ||
+			    !ifindex2ifnet[mreq->ipv6mr_interface]) {
+				error = ENXIO;	/* XXX EINVAL? */
+				break;
+			}
+			ifp = ifindex2ifnet[mreq->ipv6mr_interface];
+		} else {
 			/*
 			 * If the multicast address is in node-local scope,
 			 * the interface should be a loopback interface.
@@ -1923,8 +1926,7 @@ ip6_setmoptions(optname, im6op, m)
 				ifp = ro.ro_rt->rt_ifp;
 				rtfree(ro.ro_rt);
 			}
-		} else
-			ifp = ifindex2ifnet[mreq->ipv6mr_interface];
+		}
 
 		/*
 		 * See if we found an interface, and confirm that it
@@ -1989,13 +1991,16 @@ ip6_setmoptions(optname, im6op, m)
 		 * If an interface address was specified, get a pointer
 		 * to its ifnet structure.
 		 */
-		if (mreq->ipv6mr_interface < 0 ||
-		    if_indexlim <= mreq->ipv6mr_interface ||
-		    !ifindex2ifnet[mreq->ipv6mr_interface]) {
-			error = ENXIO;	/* XXX EINVAL? */
-			break;
-		}
-		ifp = ifindex2ifnet[mreq->ipv6mr_interface];
+		if (mreq->ipv6mr_interface != 0) {
+			if (mreq->ipv6mr_interface < 0 ||
+			    if_indexlim <= mreq->ipv6mr_interface ||
+			    !ifindex2ifnet[mreq->ipv6mr_interface]) {
+				error = ENXIO;	/* XXX EINVAL? */
+				break;
+			}
+			ifp = ifindex2ifnet[mreq->ipv6mr_interface];
+		} else
+			ifp = NULL;
 		/*
 		 * Put interface index into the multicast address,
 		 * if the address has link-local scope.
