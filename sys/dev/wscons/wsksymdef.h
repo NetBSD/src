@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymdef.h,v 1.35 2000/07/06 16:29:49 hannken Exp $ */
+/*	$NetBSD: wsksymdef.h,v 1.36 2000/10/01 03:29:13 takemura Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -420,6 +420,16 @@
 #define KS_Cmd_Debugger		0xf420
 #define KS_Cmd_ResetEmul	0xf421
 #define KS_Cmd_ResetClose	0xf422
+#define KS_Cmd_BacklightOn	0xf423
+#define KS_Cmd_BacklightOff	0xf424
+#define KS_Cmd_BacklightToggle	0xf425
+#define KS_Cmd_BrightnessUp	0xf426
+#define KS_Cmd_BrightnessDown	0xf427
+#define KS_Cmd_BrightnessRotate	0xf428
+#define KS_Cmd_ContrastUp	0xf429
+#define KS_Cmd_ContrastDown	0xf42a
+#define KS_Cmd_ContrastRotate	0xf42b
+
 
 /*
  * Group 5 (internal)
@@ -479,6 +489,7 @@
 #define KB_DVORAK		0x0010	/* Dvorak layout */
 #define KB_METAESC		0x0020	/* generate ESC prefix on ALT-key */
 #define KB_IOPENER		0x0040	/* f1-f12 -> ESC,f1-f11 */
+#define KB_MACHDEP		0x0080	/* machine dependent */
 
 #define KB_ENCTAB \
 	{ KB_USER,	"user" }, \
@@ -500,6 +511,7 @@
 	{ KB_SWAPCTRLCAPS, "swapctrlcaps" }, \
 	{ KB_DVORAK,	"dvorak" }, \
 	{ KB_METAESC,	"metaesc" }, \
-	{ KB_IOPENER,	"iopener" }
+	{ KB_IOPENER,	"iopener" }, \
+	{ KB_MACHDEP,	"machdep" }
 
 #endif /* !_DEV_WSCONS_WSKSYMDEF_H_ */
