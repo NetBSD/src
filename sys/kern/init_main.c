@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.145 1999/04/01 00:22:45 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.146 1999/04/12 00:22:08 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -246,7 +246,7 @@ main()
 	p->p_stat = SRUN;
 	p->p_nice = NZERO;
 	p->p_emul = &emul_netbsd;
-	memcpy(p->p_comm, "swapper", sizeof("swapper"));
+	strncpy(p->p_comm, "swapper", MAXCOMLEN);
 
 	/* Create credentials. */
 	cred0.p_refcnt = 1;
@@ -471,6 +471,7 @@ start_init(arg)
 	/*
 	 * Now in process 1.
 	 */
+	strncpy(p->p_comm, "init", MAXCOMLEN);
 
 	/*
 	 * This is not the right way to do this.  We really should
