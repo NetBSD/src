@@ -1482,7 +1482,7 @@ void delete_hash_entry PROTO ((struct hash_table *,
 			       const unsigned char *, unsigned));
 void *hash_lookup PROTO ((struct hash_table *,
 			  const unsigned char *, unsigned));
-int casecmp (const void *s, const void *t, unsigned len);
+int casecmp (const void *s, const void *t, size_t len);
 
 /* tables.c */
 extern struct universe dhcp_universe;
