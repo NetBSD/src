@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.45 2002/06/04 13:59:23 isaki Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.46 2002/06/04 14:02:32 isaki Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -51,7 +51,7 @@ struct audio_params {
 	/* Software en/decode functions, set if SW coding required by HW */
 	void	(*sw_code)(void *, u_char *, int);
 	int	factor;				/* coding space change */
-	int	factor_denom;		/* denominator of factor */
+	int	factor_denom;			/* denominator of factor */
 	/*
 	 * The following four members represent what format is used in a
 	 * hardware.  If hw_sample_rate != sample_rate || hw_channels !=
