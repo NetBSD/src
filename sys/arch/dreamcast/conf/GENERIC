@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.36 2003/06/14 16:28:32 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.37 2003/08/24 17:33:27 marcus Exp $
 #
 # GENERIC machine description file
 # 
@@ -166,6 +166,9 @@ rtk*		at pci? dev ? function ?	# SEGA Broadband Adapter
 ukphy*		at mii? phy ?
 
 mbe*		at g2bus?			# SEGA LAN Adapter
+
+aica*		at g2bus?			# AICA Sound Processing Unit
+audio*		at aica?
 
 #pseudo-device	cgd		2	# cryptographic disk devices
 pseudo-device	md		1	# memory disk device (ramdisk)
