@@ -107,7 +107,6 @@ s_sym(fn, fd, ep)
 	int fd;
 	register EXEC *ep;
 {
-	static int pagesize = -1;
 	register off_t fsize;
 
 	/* If no symbols or data/text relocation info, quit. */
@@ -119,11 +118,7 @@ s_sym(fn, fd, ep)
 	 * and NMAGIC formats have the text/data immediately following the
 	 * header.  ZMAGIC format wastes the rest of of header page.
 	 */
-	if (ep->a_magic == ZMAGIC)
-		fsize = pagesize == -1 ? (pagesize = getpagesize()) : pagesize;
-	else
-		fsize = sizeof(EXEC);
-	fsize += ep->a_text + ep->a_data;
+	fsize = N_RELOFF(*ep);
 
 	/* Set symbol size and relocation info values to 0. */
 	ep->a_syms = ep->a_trsize = ep->a_drsize = 0;
