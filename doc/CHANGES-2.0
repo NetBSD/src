@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.511 2004/11/12 05:52:29 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.512 2004/11/12 05:53:39 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7916,3 +7916,9 @@ usr.bin/rlogin/rlogin.c				1.31
 	- Fix bug in port parsing code; s_port must be in network byte order.
 	- Factor out port parsing code and add error checking to it.
 	[hubert, ticket #928]
+
+distrib/notes/common/contents			1.109
+
+	Add mention of the xetc set; configuration files for X which could be
+	locally modified.
+	[929, ticket #he]
