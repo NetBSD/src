@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.24 1999/09/25 21:11:55 is Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.25 1999/09/27 04:18:45 itohy Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -165,7 +165,7 @@ static char asm_buffer[256];
 static char info_buffer[256];
 
 db_addr_t 
-db_disasm(db_addr_t, moto_syntax)
+db_disasm(loc, moto_syntax)
 	db_addr_t loc;
 	boolean_t moto_syntax;
 {
