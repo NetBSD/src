@@ -1,4 +1,4 @@
-/*	$NetBSD: vndvar.h,v 1.2 1997/10/09 07:47:50 jtc Exp $	*/
+/*	$NetBSD: vndvar.h,v 1.2.2.1 1997/12/09 20:28:41 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -126,6 +126,7 @@ struct vnd_softc {
 #define	VNF_LABELLING	0x04	/* unit is currently being labelled */
 #define	VNF_WANTED	0x08	/* someone is waiting to obtain a lock */
 #define	VNF_LOCKED	0x10	/* unit is locked */
+#define	VNF_BUSY	0x20	/* unit is busy */
 
 /*
  * Before you can use a unit, it must be configured with VNDIOCSET.

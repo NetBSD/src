@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.50 1997/10/20 00:11:03 fvdl Exp $	*/
+/*	$NetBSD: vnd.c,v 1.50.2.1 1997/12/09 20:28:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -140,6 +140,8 @@ struct vndxfer {
 	struct buf	*vx_bp;		/* Pointer to parent buffer */
 	int		vx_error;
 	int		vx_pending;	/* # of pending aux buffers */
+	int		vx_flags;
+#define VX_BUSY		1
 };
 
 struct vndbuf {
@@ -311,9 +313,8 @@ vndstrategy(bp)
 {
 	int unit = vndunit(bp->b_dev);
 	struct vnd_softc *vnd = &vnd_softc[unit];
-	struct vndbuf *nbp;
 	struct vndxfer *vnx;
-	int bn, bsize, resid;
+	int s, bn, bsize, resid;
 	caddr_t addr;
 	int sz, flags, error, wlabel;
 	struct disklabel *lp;
@@ -378,14 +379,16 @@ vndstrategy(bp)
 
 	/* Allocate a header for this transfer and link it to the buffer */
 	vnx = getvndxfer();
+	vnx->vx_flags = VX_BUSY;
 	vnx->vx_error = 0;
 	vnx->vx_pending = 0;
 	vnx->vx_bp = bp;
 
 	for (resid = bp->b_resid; resid; resid -= sz) {
+		struct vndbuf *nbp;
 		struct vnode *vp;
 		daddr_t nbn;
-		int off, s, nra, dolock = 0;
+		int off, nra, dolock = 0;
 
 		nra = 0;
 		/*
@@ -415,17 +418,9 @@ vndstrategy(bp)
 		 * a hassle (in the write case).
 		 */
 		if (error) {
-			vnx->vx_error = error;
 			s = splbio();
-			if (vnx->vx_pending == 0) {
-				bp->b_error = error;
-				bp->b_flags |= B_ERROR;
-				putvndxfer(vnx);
-				splx(s);
-				goto done;
-			}
-			splx(s);
-			return;
+			vnx->vx_error = error;
+			goto out;
 		}
 
 #ifdef DEBUG
@@ -450,15 +445,11 @@ vndstrategy(bp)
 		nbp->vb_buf.b_bcount = sz;
 		nbp->vb_buf.b_bufsize = bp->b_bufsize;
 		nbp->vb_buf.b_error = 0;
-		if (vp->v_type == VBLK || vp->v_type == VCHR)
-			nbp->vb_buf.b_dev = vp->v_rdev;
-		else
-			nbp->vb_buf.b_dev = NODEV;
 		nbp->vb_buf.b_data = addr;
 		nbp->vb_buf.b_blkno = nbn + btodb(off);
 		nbp->vb_buf.b_proc = bp->b_proc;
 		nbp->vb_buf.b_iodone = vndiodone;
-		nbp->vb_buf.b_vp = vp;
+		nbp->vb_buf.b_vp = NULLVP;
 		nbp->vb_buf.b_rcred = vnd->sc_cred;	/* XXX crdup? */
 		nbp->vb_buf.b_wcred = vnd->sc_cred;	/* XXX crdup? */
 		if (bp->b_dirtyend == 0) {
@@ -489,16 +480,32 @@ vndstrategy(bp)
 		 */
 		nbp->vb_buf.b_cylin = nbp->vb_buf.b_blkno;
 		s = splbio();
-		vnx->vx_pending++;
-		disksort(&vnd->sc_tab, &nbp->vb_buf);
-		if (vnd->sc_tab.b_active < vnd->sc_maxactive) {
-			vnd->sc_tab.b_active++;
-			vndstart(vnd);
+		if (vnx->vx_error != 0) {
+			putvndbuf(nbp);
+			goto out;
 		}
+		vnx->vx_pending++;
+		bgetvp(vp, &nbp->vb_buf);
+		disksort(&vnd->sc_tab, &nbp->vb_buf);
+		vndstart(vnd);
 		splx(s);
 		bn += sz;
 		addr += sz;
 	}
+
+	s = splbio();
+
+out: /* Arrive here at splbio */
+	vnx->vx_flags &= ~VX_BUSY;
+	if (vnx->vx_pending == 0) {
+		if (vnx->vx_error != 0) {
+			bp->b_error = vnx->vx_error;
+			bp->b_flags |= B_ERROR;
+		}
+		putvndxfer(vnx);
+		biodone(bp);
+	}
+	splx(s);
 	return;
 
  done:
@@ -515,27 +522,39 @@ void
 vndstart(vnd)
 	register struct vnd_softc *vnd;
 {
-	register struct buf *bp;
+	struct buf	*bp;
 
 	/*
 	 * Dequeue now since lower level strategy routine might
 	 * queue using same links
 	 */
-	bp = vnd->sc_tab.b_actf;
-	vnd->sc_tab.b_actf = bp->b_actf;
+
+	if ((vnd->sc_flags & VNF_BUSY) != 0)
+		return;
+
+	vnd->sc_flags |= VNF_BUSY;
+
+	while (vnd->sc_tab.b_active < vnd->sc_maxactive) {
+		bp = vnd->sc_tab.b_actf;
+		if (bp == NULL)
+			break;
+		vnd->sc_tab.b_actf = bp->b_actf;
+		vnd->sc_tab.b_active++;
 #ifdef DEBUG
-	if (vnddebug & VDB_IO)
-		printf("vndstart(%ld): bp %p vp %p blkno 0x%x addr %p cnt 0x%lx\n",
-		    (long) (vnd-vnd_softc), bp, bp->b_vp, bp->b_blkno,
-		    bp->b_data, bp->b_bcount);
+		if (vnddebug & VDB_IO)
+			printf("vndstart(%ld): bp %p vp %p blkno 0x%x addr %p cnt 0x%lx\n",
+			    (long) (vnd-vnd_softc), bp, bp->b_vp, bp->b_blkno,
+			    bp->b_data, bp->b_bcount);
 #endif
 
-	/* Instrumentation. */
-	disk_busy(&vnd->sc_dkdev);
+		/* Instrumentation. */
+		disk_busy(&vnd->sc_dkdev);
 
-	if ((bp->b_flags & B_READ) == 0)
-		bp->b_vp->v_numoutput++;
-	VOP_STRATEGY(bp);
+		if ((bp->b_flags & B_READ) == 0)
+			bp->b_vp->v_numoutput++;
+		VOP_STRATEGY(bp);
+	}
+	vnd->sc_flags &= ~VNF_BUSY;
 }
 
 void
@@ -570,30 +589,48 @@ vndiodone(bp)
 #endif
 		vnx->vx_error = vbp->vb_buf.b_error;
 	}
+
+	if (vbp->vb_buf.b_vp != NULLVP)
+		brelvp(&vbp->vb_buf);
+
 	putvndbuf(vbp);
 
 	/*
 	 * Wrap up this transaction if it has run to completion or, in
 	 * case of an error, when all auxiliary buffers have returned.
 	 */
-	if (pbp->b_resid == 0 || (vnx->vx_error && vnx->vx_pending == 0)) {
+	if (vnx->vx_error != 0) {
+		pbp->b_flags |= B_ERROR;
+		pbp->b_error = vnx->vx_error;
+		if ((vnx->vx_flags & VX_BUSY) == 0 && vnx->vx_pending == 0) {
 
-		if (vnx->vx_error != 0) {
-			pbp->b_flags |= B_ERROR;
-			pbp->b_error = vnx->vx_error;
-		}
-		putvndxfer(vnx);
 #ifdef DEBUG
-		if (vnddebug & VDB_IO)
-			printf("vndiodone: pbp %p iodone\n", pbp);
+			if (vnddebug & VDB_IO)
+				printf("vndiodone: pbp %p iodone: error %d\n",
+					pbp, vnx->vx_error);
 #endif
-		biodone(pbp);
+			putvndxfer(vnx);
+			biodone(pbp);
+		}
+	} else if (pbp->b_resid == 0) {
+
+#ifdef DIAGNOSTIC
+		if (vnx->vx_pending != 0)
+			panic("swiodone: vnx pending: %d", vnx->vx_pending);
+#endif
+
+		if ((vnx->vx_flags & VX_BUSY) == 0) {
+#ifdef DEBUG
+			if (vnddebug & VDB_IO)
+				printf("vndiodone: pbp %p iodone\n", pbp);
+#endif
+			putvndxfer(vnx);
+			biodone(pbp);
+		}
 	}
 
-	if (vnd->sc_tab.b_actf)
-		vndstart(vnd);
-	else
-		vnd->sc_tab.b_active--;
+	vnd->sc_tab.b_active--;
+	vndstart(vnd);
 	splx(s);
 }
 
