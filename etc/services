@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.76 2004/06/23 11:58:48 itojun Exp $
+#	$NetBSD: services,v 1.77 2004/08/09 05:24:38 simonb Exp $
 #
 # Network services, Internet style
 #
@@ -363,6 +363,8 @@ terabase	4000/tcp	icq	# used for both Terabase and ICQ
 terabase	4000/udp	icq	# used for both Terabase and ICQ
 radmin-port	4899/tcp		# RAdmin Port
 radmin-port	4899/udp		# RAdmin Port
+mdns		5353/tcp		# Multicast DNS
+mdns		5353/udp		# Multicast DNS
 http-alt	8080/tcp		# HTTP Alternate (see port 80)
 http-alt	8080/udp		# HTTP Alternate (see port 80)
 
