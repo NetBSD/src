@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: wtf,v 1.5 1999/08/13 03:02:06 sommerfeld Exp $
+#	$NetBSD: wtf,v 1.6 1999/11/15 19:14:01 hubertf Exp $
 #
 # Public domain
 #
@@ -18,8 +18,8 @@ fi
 rv=0
 while [ $# -gt 0 ] ; do
 	target=`echo $1 | tr '[a-z]' '[A-Z]'`
-	ans=`sed -ne "/^$target[[:space:]]/s/^$target[[:space:]]*//p" \
-		< $acronyms 2>/dev/null`
+	ans=`fgrep $target < $acronyms 2>/dev/null \
+             | sed -ne "/^$target[[:space:]]/s/^$target[[:space:]]*//p"`
 	if [ "$ans" != "" ] ; then
 		echo "$target: $ans"
 	else
