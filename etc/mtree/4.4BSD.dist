@@ -1,4 +1,4 @@
-#	$NetBSD: 4.4BSD.dist,v 1.31 1996/08/16 17:26:30 explorer Exp $
+#	$NetBSD: 4.4BSD.dist,v 1.32 1996/08/28 22:16:42 explorer Exp $
 #	from: @(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -188,6 +188,11 @@ uucp
 ..
 
 # ./usr/libexec
+..
+
+# ./usr/lkm
+lkm
+# ./usr/lkm
 ..
 
 # ./usr/local

@@ -1,4 +1,4 @@
-#	$NetBSD: 4.4BSD.usr,v 1.5 1996/08/16 17:26:32 explorer Exp $
+#	$NetBSD: 4.4BSD.usr,v 1.6 1996/08/28 22:16:47 explorer Exp $
 #
 #	   user: bostic
 #	machine: vangogh.CS.Berkeley.EDU
@@ -454,6 +454,11 @@ plot            type=dir uname=root gname=wheel mode=0755
 # ./libexec
 ..
 
+# ./lkm
+/set type=file gname=wheel uname=root mode=0755
+lkm            type=dir
+# ./lkm
+..
 
 # ./local
 /set type=file gname=wheel uname=root mode=0755
