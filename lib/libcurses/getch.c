@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.29 2000/05/25 06:46:26 jdc Exp $	*/
+/*	$NetBSD: getch.c,v 1.30 2000/07/31 16:22:46 itojun Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.29 2000/05/25 06:46:26 jdc Exp $");
+__RCSID("$NetBSD: getch.c,v 1.30 2000/07/31 16:22:46 itojun Exp $");
 #endif
 #endif					/* not lint */
 
@@ -674,8 +674,8 @@ mvwgetch(WINDOW *win, int y, int x)
 int
 wgetch(WINDOW *win)
 {
-	int     inp, weset;
-	char    c;
+	int inp, weset;
+	int c;
 
 	if (!(win->flags & __SCROLLOK) && (win->flags & __FULLWIN)
 	    && win->curx == win->maxx - 1 && win->cury == win->maxy - 1
@@ -742,7 +742,7 @@ wgetch(WINDOW *win)
 			clearerr(stdin);
 			inp = ERR;
 		} else {
-			inp = (unsigned int) c;
+			inp = c;
 		}
 	}
 #ifdef DEBUG
