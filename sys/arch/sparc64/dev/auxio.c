@@ -1,4 +1,4 @@
-/*	$NetBSD: auxio_ebus.c,v 1.4 2000/04/13 09:53:49 mrg Exp $	*/
+/*	$NetBSD: auxio.c,v 1.1 2000/04/15 03:08:13 mrg Exp $	*/
 
 /*
  * Copyright (c) 2000 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 /*
- * AUXIO registers support on the Ebus2.
+ * AUXIO registers support on the sbus & ebus2.
  */
 
 #include <sys/param.h>
@@ -43,26 +43,27 @@
 
 #include <sparc64/dev/ebusreg.h>
 #include <sparc64/dev/ebusvar.h>
+#include <sparc64/dev/sbusvar.h>
 #include <sparc64/dev/auxioreg.h>
 #include <sparc64/dev/auxiovar.h>
 
 #define	AUXIO_ROM_NAME		"auxio"
 
+/*
+ * ebus code.
+ */
 int	auxio_ebus_match __P((struct device *, struct cfdata *, void *));
 void	auxio_ebus_attach __P((struct device *, struct device *, void *));
+int	auxio_sbus_match __P((struct device *, struct cfdata *, void *));
+void	auxio_sbus_attach __P((struct device *, struct device *, void *));
 
 struct cfattach auxio_ebus_ca = {
-	sizeof(struct device), auxio_ebus_match, auxio_ebus_attach
+	sizeof(struct auxio_softc), auxio_ebus_match, auxio_ebus_attach
 };
 
-/*
- * We export this structure so that anyone who wishes to fiddle the
- * AUXIO registers can.
- *
- * XXX we need to better design the access here for when there are
- * multiple Ebus2's in one system..
- */
-struct auxio_registers auxio_registers;
+struct cfattach auxio_sbus_ca = {
+	sizeof(struct auxio_softc), auxio_sbus_match, auxio_sbus_attach
+};
 
 int
 auxio_ebus_match(parent, cf, aux)
@@ -80,59 +81,83 @@ auxio_ebus_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+	struct auxio_softc *sc = (struct auxio_softc *)self;
 	struct ebus_attach_args *ea = aux;
-	int i, first = 1;
 
-	/*
-	 * for each of the registers found, if we know the matching
-	 * AUXIO register, set it up.
-	 */
-	for (i = 0; i < ea->ea_nregs; i++) {
-
-#define	SHOWIT(s) do { \
-	if (first) { \
-		first = 0; \
-		printf(": found"); \
-	} \
-	printf(" %s", s); \
-} while (0)
-
-		if (ea->ea_regs[i].lo == AUXIO_FD) {
-			SHOWIT("fd");
-			auxio_registers.auxio_fd.lo = ea->ea_regs[i].lo;
-			auxio_registers.auxio_fd.hi = ea->ea_regs[i].hi;
-		} else if (ea->ea_regs[i].lo == AUXIO_AUDIO) {
-			SHOWIT("audio");
-			auxio_registers.auxio_audio.lo = ea->ea_regs[i].lo;
-			auxio_registers.auxio_audio.hi = ea->ea_regs[i].hi;
-		} else if (ea->ea_regs[i].lo == AUXIO_POWER) {
-			SHOWIT("power");
-			auxio_registers.auxio_power.lo = ea->ea_regs[i].lo;
-			auxio_registers.auxio_power.hi = ea->ea_regs[i].hi;
-		} else if (ea->ea_regs[i].lo == AUXIO_LED) {
-			SHOWIT("led");
-			auxio_registers.auxio_led.lo = ea->ea_regs[i].lo;
-			auxio_registers.auxio_led.hi = ea->ea_regs[i].hi;
-		} else if (ea->ea_regs[i].lo == AUXIO_PCI) {
-			SHOWIT("pci");
-			auxio_registers.auxio_pci.lo = ea->ea_regs[i].lo;
-			auxio_registers.auxio_pci.hi = ea->ea_regs[i].hi;
-		} else if (ea->ea_regs[i].lo == AUXIO_FREQ) {
-			SHOWIT("freq");
-			auxio_registers.auxio_freq.lo = ea->ea_regs[i].lo;
-			auxio_registers.auxio_freq.hi = ea->ea_regs[i].hi;
-		} else if (ea->ea_regs[i].lo == AUXIO_SCSI) {
-			SHOWIT("scsi");
-			auxio_registers.auxio_scsi.lo = ea->ea_regs[i].lo;
-			auxio_registers.auxio_scsi.hi = ea->ea_regs[i].hi;
-		} else if (ea->ea_regs[i].lo == AUXIO_TEMP) {
-			SHOWIT("temp");
-			auxio_registers.auxio_temp.lo = ea->ea_regs[i].lo;
-			auxio_registers.auxio_temp.hi = ea->ea_regs[i].hi;
-		} else {
-			printf(": unknown auxio register %x.%x",
-			    ea->ea_regs[i].hi, ea->ea_regs[i].lo);
-		}
+	if (ea->ea_nregs < 1 || ea->ea_nvaddrs < 1) {
+		printf(": no registers??\n");
+		return;
 	}
+
+	if (ea->ea_nregs != 5 || ea->ea_nvaddrs != 5) {
+		printf(": not 5 (%d) registers, only setting led",
+		    ea->ea_nregs);
+		sc->sc_flags = AUXIO_LEDONLY|AUXIO_EBUS;
+	} else {
+		sc->sc_flags = AUXIO_EBUS;
+		sc->sc_registers.auxio_pci = (u_int32_t *)(u_long)ea->ea_vaddrs[1];
+		sc->sc_registers.auxio_freq = (u_int32_t *)(u_long)ea->ea_vaddrs[2];
+		sc->sc_registers.auxio_scsi = (u_int32_t *)(u_long)ea->ea_vaddrs[3];
+		sc->sc_registers.auxio_temp = (u_int32_t *)(u_long)ea->ea_vaddrs[4];
+	}
+	sc->sc_registers.auxio_led = (u_int32_t *)(u_long)ea->ea_vaddrs[0];
+	
+	if (!auxio_reg)
+		auxio_reg = (u_char *)(u_long)ea->ea_vaddrs[0];
+
 	printf("\n");
+}
+
+int
+auxio_sbus_match(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	struct sbus_attach_args *sa = aux;
+
+	return (strcmp(AUXIO_ROM_NAME, sa->sa_name) == 0);
+}
+
+void
+auxio_sbus_attach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct auxio_softc *sc = (struct auxio_softc *)self;
+	struct sbus_attach_args *sa = aux;
+
+	if (sa->sa_nreg < 1 || sa->sa_npromvaddrs < 1) {
+		printf(": no registers??\n");
+		return;
+	}
+
+	if (sa->sa_nreg != 1 || sa->sa_npromvaddrs != 1) {
+		printf(": not 1 (%d/%d) registers??", sa->sa_nreg, sa->sa_npromvaddrs);
+		return;
+	}
+
+	/* sbus auxio only has one set of registers */
+	sc->sc_flags = AUXIO_LEDONLY|AUXIO_SBUS;
+	sc->sc_registers.auxio_led = (u_int32_t *)(u_long)sa->sa_promvaddr;
+
+	if (!auxio_reg)
+		auxio_reg = (u_char *)(u_long)sa->sa_promvaddr;
+
+	printf("\n");
+}
+
+/*
+ * old interface; used by fd driver for now
+ */
+unsigned int
+auxregbisc(bis, bic)
+	int bis, bic;
+{
+	register int v, s = splhigh();
+
+	v = *auxio_reg;
+	*auxio_reg = ((v | bis) & ~bic) | AUXIO_LED_MB1;
+	splx(s);
+	return v;
 }

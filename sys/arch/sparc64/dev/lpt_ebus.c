@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_ebus.c,v 1.4 2000/04/08 04:33:10 mrg Exp $	*/
+/*	$NetBSD: lpt_ebus.c,v 1.5 2000/04/15 03:08:13 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -89,7 +89,7 @@ lpt_ebus_attach(parent, self, aux)
 	 *
 	 * Use the prom address if there.
 	 */
-	if (ea->ea_naddrs)
+	if (ea->ea_nvaddrs)
 		sc->sc_ioh = (bus_space_handle_t)ea->ea_vaddrs[0];
 	else if (ebus_bus_map(sc->sc_iot, 0,
 			      EBUS_PADDR_FROM_REG(&ea->ea_regs[0]),
