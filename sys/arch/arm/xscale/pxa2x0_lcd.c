@@ -1,4 +1,4 @@
-/* $Id: pxa2x0_lcd.c,v 1.2 2003/04/01 23:19:12 thorpej Exp $ */
+/* $Id: pxa2x0_lcd.c,v 1.3 2003/06/05 13:48:28 scw Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -121,9 +121,8 @@ pxa2x0_lcd_attach_sub( struct pxa2x0_softc *parent,
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	uint32_t tmp;
-	int error;
+	int error, nldd;
 
-	
 	iot = parent->saip.sc_iot;
 
 	sc->n_screens = 0;
@@ -158,50 +157,29 @@ pxa2x0_lcd_attach_sub( struct pxa2x0_softc *parent,
 	/*
 	 * setup GP[77:58] for LCD
 	 */
-	{
-		bus_space_handle_t gpioh = parent->saip.sc_gpioh;
-		uint32_t  gafr1, gafr2, gpdr1, gpdr2;
-		int panelinfo = geom->panel_info;
+	/* Always use [FLP]CLK, ACBIAS */
+	pxa2x0_gpio_set_function(74, GPIO_ALT_FN_2_OUT);
+	pxa2x0_gpio_set_function(75, GPIO_ALT_FN_2_OUT);
+	pxa2x0_gpio_set_function(76, GPIO_ALT_FN_2_OUT);
+	pxa2x0_gpio_set_function(77, GPIO_ALT_FN_2_OUT);
 
-		gpdr1 = bus_space_read_4( iot, gpioh, GPIO_GPDR1 );
-		gpdr2 = bus_space_read_4( iot, gpioh, GPIO_GPDR2 );
-		gafr1 = bus_space_read_4( iot, gpioh, GPIO_GAFR1_U );
-		gafr2 = bus_space_read_4( iot, gpioh, GPIO_GAFR2_L );
-
-		/* Always use L_DD[3:0], [FLP]CLK, ACBIAS */
-		gafr1 = (gafr1 & ~(0xff<<20)) | (0xaa<<20);
-		gafr2 = (gafr2 & ~(0xff<<20)) | (0xaa<<20);
-		gpdr1 |= 0x0f<<26;
-		gpdr2 |= 0x0f<<10;
-
-		if( (panelinfo & LCDPANEL_ACTIVE) ||
-		    ((panelinfo & (LCDPANEL_MONOCHROME|LCDPANEL_DUAL))
-			== LCDPANEL_DUAL ) ){
-			/* active and color dual panel need L_DD[15:0] */
-			gafr1 = (gafr1 & ~(0x0f<<28)) | (0x0a<<28);
-			gafr2 = (gafr2 & ~0xfffff) | 0xaaaaa;
-			gpdr1 |= 0x03<<30;
-			gpdr2 |= 0x3ff;
-		}
-		else if( (panelinfo & LCDPANEL_DUAL) ||
-		    !(panelinfo & LCDPANEL_MONOCHROME ) ){
-			/* dual or color need L_DD[7:0] */
-
-			gafr1 = (gafr1 & ~(0x0f<<28)) | (0x0a<<28);
-			gafr2 = (gafr2 & ~0x0f) | 0x0a;
-			gpdr1 |= 0x03<<30;
-			gpdr2 |= 0x03;
-		}
-
-
-		bus_space_write_4( iot, gpioh, GPIO_GAFR1_U, gafr1 );
-		bus_space_write_4( iot, gpioh, GPIO_GAFR2_L, gafr2 );
-		bus_space_write_4( iot, gpioh, GPIO_GPDR1, gpdr1 );
-		bus_space_write_4( iot, gpioh, GPIO_GPDR2, gpdr2 );
+	if ((geom->panel_info & LCDPANEL_ACTIVE) ||
+	    ((geom->panel_info & (LCDPANEL_MONOCHROME|LCDPANEL_DUAL)) ==
+	    LCDPANEL_DUAL)) {
+		/* active and color dual panel need L_DD[15:0] */
+		nldd = 16;
+	} else
+	if ((geom->panel_info & LCDPANEL_DUAL) ||
+	    !(geom->panel_info & LCDPANEL_MONOCHROME)) {
+		/* dual or color need L_DD[7:0] */
+		nldd = 8;
+	} else {
+		/* Otherwise just L_DD[3:0] */
+		nldd = 4;
 	}
-		    
-	
 
+	while (nldd--)
+		pxa2x0_gpio_set_function(58 + nldd, GPIO_ALT_FN_2_OUT);
 
 	pxa2x0_lcd_geometry( sc, geom );
 }
