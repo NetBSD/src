@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.1.2.7 2001/07/20 21:16:31 nathanw Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.1.2.8 2001/07/24 21:18:25 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -145,7 +145,7 @@ void*	pthread__malloc(size_t size);
 void	pthread__free(void *ptr);
 
 /* Set up/clean up a thread's basic state. */
-void pthread__initthread(pthread_t t);
+void	pthread__initthread(pthread_t t);
 
 /* Go do something else. Don't go back on the run queue */
 void	pthread__block(pthread_t self, pt_spin_t* queuelock);
@@ -189,7 +189,7 @@ void	pthread_spinlock(pthread_t thread, pt_spin_t *lock);
 int	pthread_spintrylock(pthread_t thread, pt_spin_t *lock);
 void	pthread_spinunlock(pthread_t thread, pt_spin_t *lock);
 
-void pthread__signal(pthread_t t, int sig, int code);
+void	pthread__signal(pthread_t t, int sig, int code);
 
 
 
