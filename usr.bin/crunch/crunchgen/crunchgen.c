@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.54 2003/12/27 22:28:38 jmc Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.55 2003/12/28 09:21:36 jmc Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.54 2003/12/27 22:28:38 jmc Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.55 2003/12/28 09:21:36 jmc Exp $");
 #endif
 
 #include <stdlib.h>
@@ -939,12 +939,13 @@ void prog_makefile_rules(FILE *outmk, prog_t *p)
     else
 	    fprintf(outmk, "%s.cro: %s_stub.o ${%s_OBJPATHS}\n",
 		p->name, p->name, p->ident);
-    fprintf(outmk, "\t${LD} -dc -r -o %s.cro %s_stub.o $(%s_OBJPATHS)\n", 
+    fprintf(outmk, "\t${LD} -r -o %s.cro %s_stub.o $(%s_OBJPATHS)\n", 
 	    p->name, p->name, p->ident);
 #ifdef NEW_TOOLCHAIN
 #ifdef RENAME_SYMS
-    fprintf(outmk, "\t${NM} -ng %s.cro | grep -wv U | ", p->name);
-    fprintf(outmk, "grep -vw _crunched_%s_stub | ", p->ident);
+    fprintf(outmk, "\t${NM} -ng %s.cro | grep -v '^ *U' | ", p->name);
+    fprintf(outmk, "grep -v '^[0-9a-fA-F][0-9a-fA-F]* C' | ");
+    fprintf(outmk, "grep -wv _crunched_%s_stub | ", p->ident);
     for (lst = p->keepsymbols; lst != NULL; lst = lst->next)
 	fprintf(outmk, "grep -vw %s | ", lst->str);
     fprintf(outmk, "env CRO=%s.cro awk "
