@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.44 1999/11/05 22:54:43 drochner Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.45 1999/11/17 01:22:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -75,6 +75,18 @@ void findroot __P((struct device **, int *));
 extern struct disklist *i386_alldisks;
 extern int i386_ndisks;
 
+#include "bios32.h"
+#if NBIOS32 > 0
+#include <machine/bios32.h>
+#endif
+
+#include "opt_pcibios.h"
+#ifdef PCIBIOS
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pcivar.h>
+#include <i386/pci/pcibios.h>
+#endif
+
 /*
  * Determine i/o configuration for a machine.
  */
@@ -83,6 +95,13 @@ cpu_configure()
 {
 
 	startrtclock();
+
+#if NBIOS32 > 0
+	bios32_init();
+#endif
+#ifdef PCIBIOS
+	pcibios_init();
+#endif
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("configure: mainbus not configured");
