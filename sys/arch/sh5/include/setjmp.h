@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.h,v 1.1 2002/07/05 13:32:01 scw Exp $	*/
+/*	$NetBSD: setjmp.h,v 1.2 2002/07/10 10:22:43 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -98,13 +98,13 @@
 #define	_JB_SIGMASK	37
 
 #define	_JB_DR0		38
-#define	_JB_DR0		39
-#define	_JB_DR0		40
-#define	_JB_DR0		41
-#define	_JB_DR0		42
-#define	_JB_DR0		43
-#define	_JB_DR0		44
-#define	_JB_DR0		45
+#define	_JB_DR1		39
+#define	_JB_DR2		40
+#define	_JB_DR3		41
+#define	_JB_DR4		42
+#define	_JB_DR5		43
+#define	_JB_DR6		44
+#define	_JB_DR7		45
 
 #define	_JBLEN		46
 
