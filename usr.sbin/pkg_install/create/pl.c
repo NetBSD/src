@@ -1,11 +1,11 @@
-/*	$NetBSD: pl.c,v 1.6 1998/10/09 11:16:58 agc Exp $	*/
+/*	$NetBSD: pl.c,v 1.7 1998/10/09 18:27:33 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pl.c,v 1.11 1997/10/08 07:46:35 charnier Exp";
 #else
-__RCSID("$NetBSD: pl.c,v 1.6 1998/10/09 11:16:58 agc Exp $");
+__RCSID("$NetBSD: pl.c,v 1.7 1998/10/09 18:27:33 agc Exp $");
 #endif
 #endif
 
@@ -37,68 +37,76 @@ __RCSID("$NetBSD: pl.c,v 1.6 1998/10/09 11:16:58 agc Exp $");
 
 /* Check a list for files that require preconversion */
 void
-check_list(char *home, Package *pkg)
+check_list(char *home, package_t *pkg)
 {
-    char *where = home;
-    char *there = NULL;
-    PackingList p = pkg->head;
+	plist_t	*tmp;
+	plist_t	*p;
+	char	*cwd = home;
+	char	*there = NULL;
+	char	*cp;
+	char	name[FILENAME_MAX];
+	char	buf[LegibleChecksumLen];
 
-    while (p) {
-	if (p->type == PLIST_CWD)
-	    where = p->name;
-	else if (p->type == PLIST_IGNORE)
-	    p = p->next;
-	else if (p->type == PLIST_SRC) {
-	    there = p->name;
+	for (p = pkg->head ; p ; p = p->next) {
+		switch (p->type) {
+		case PLIST_CWD:
+			cwd = p->name;
+			break;
+		case PLIST_IGNORE:
+			p = p->next;
+			break;
+		case PLIST_SRC:
+			there = p->name;
+			break;
+		case PLIST_FILE:
+			(void) snprintf(name, sizeof(name), "%s/%s", there ? there : cwd, p->name);
+			if ((cp = MD5File(name, buf)) != NULL) {
+				tmp = new_plist_entry();
+				tmp->name = copy_string(strconcat("MD5:", cp));
+				tmp->type = PLIST_COMMENT;
+				tmp->next = p->next;
+				tmp->prev = p;
+				p->next = tmp;
+				p = tmp;
+			}
+			break;
+		default:
+			break;
+		}
 	}
-	else if (p->type == PLIST_FILE) {
-	    char *cp, name[FILENAME_MAX], buf[33];
-
-	    (void) snprintf(name, sizeof(name), "%s/%s", there ? there : where, p->name);
-	    if ((cp = MD5File(name, buf)) != NULL) {
-		PackingList tmp = new_plist_entry();
-
-		tmp->name = copy_string(strconcat("MD5:", cp));
-		tmp->type = PLIST_COMMENT;
-		tmp->next = p->next;
-		tmp->prev = p;
-		p->next = tmp;
-		p = tmp;
-	    }
-	}
-	p = p->next;
-    }
 }
 
 static int
 trylink(const char *from, const char *to)
 {
-    if (link(from, to) == 0)
-	return 0;
-    if (errno == ENOENT) {
-	/* try making the container directory */
-	char *cp = strrchr(to, '/');
-	if (cp)
-	    vsystem("mkdir -p %.*s", cp - to,
-		    to);
-	return link(from, to);
-    }
-    return -1;
+	char	*cp;
+
+	if (link(from, to) == 0) {
+		return 0;
+	}
+	if (errno == ENOENT) {
+		/* try making the container directory */
+		if ((cp = strrchr(to, '/')) != (char *) NULL) {
+			vsystem("mkdir -p %.*s", (size_t)(cp - to), to);
+		}
+		return link(from, to);
+	}
+	return -1;
 }
 
 #define STARTSTRING "tar cf -"
 #define TOOBIG(str) strlen(str) + 6 + strlen(home) + where_count > maxargs
-#define PUSHOUT() /* push out string */ \
-	if (where_count > sizeof(STARTSTRING)-1) { \
-		    strcat(where_args, "|tar xpf -"); \
-		    if (system(where_args)) { \
-			cleanup(0); \
-			errx(2, "can't invoke tar pipeline"); \
-		    } \
-		    memset(where_args, 0, maxargs); \
- 		    last_chdir = NULL; \
-		    strcpy(where_args, STARTSTRING); \
-		    where_count = sizeof(STARTSTRING)-1; \
+#define PUSHOUT() /* push out string */					\
+	if (where_count > sizeof(STARTSTRING)-1) {			\
+		    strcat(where_args, "|tar xpf -");			\
+		    if (system(where_args)) {				\
+			cleanup(0);					\
+			errx(2, "can't invoke tar pipeline");		\
+		    }							\
+		    memset(where_args, 0, maxargs);			\
+ 		    last_chdir = NULL;					\
+		    strcpy(where_args, STARTSTRING);			\
+		    where_count = sizeof(STARTSTRING)-1;		\
 	}
 
 /*
@@ -106,9 +114,9 @@ trylink(const char *from, const char *to)
  * have already been copied in an earlier pass through the list.
  */
 void
-copy_plist(char *home, Package *plist)
+copy_plist(char *home, package_t *plist)
 {
-    PackingList p = plist->head;
+    plist_t *p = plist->head;
     char *where = home;
     char *there = NULL, *mythere;
     char *where_args, *last_chdir, *root = "/";

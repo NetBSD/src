@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.11 1998/10/09 11:16:58 agc Exp $	*/
+/*	$NetBSD: perform.c,v 1.12 1998/10/09 18:27:33 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.38 1997/10/13 15:03:51 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.11 1998/10/09 11:16:58 agc Exp $");
+__RCSID("$NetBSD: perform.c,v 1.12 1998/10/09 18:27:33 agc Exp $");
 #endif
 #endif
 
@@ -39,7 +39,7 @@ __RCSID("$NetBSD: perform.c,v 1.11 1998/10/09 11:16:58 agc Exp $");
 #include <unistd.h>
 
 static void sanity_check(void);
-static void make_dist(char *, char *, char *, Package *);
+static void make_dist(char *, char *, char *, package_t *);
 
 static char *home;
 
@@ -49,7 +49,7 @@ pkg_perform(char **pkgs)
     char *pkg = *pkgs;		/* Only one arg to create */
     char *cp;
     FILE *pkg_in, *fp;
-    Package plist;
+    package_t plist;
     char *suffix;  /* What we tack on to the end of the finished package */
 
     /* Preliminary setup */
@@ -214,10 +214,10 @@ pkg_perform(char **pkgs)
 }
 
 static void
-make_dist(char *home, char *pkg, char *suffix, Package *plist)
+make_dist(char *home, char *pkg, char *suffix, package_t *plist)
 {
     char tball[FILENAME_MAX];
-    PackingList p;
+    plist_t *p;
     int ret;
     char *args[50];	/* Much more than enough. */
     int nargs = 0;

@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.24 1998/10/08 12:57:59 agc Exp $	*/
+/*	$NetBSD: perform.c,v 1.25 1998/10/09 18:27:32 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.24 1998/10/08 12:57:59 agc Exp $");
+__RCSID("$NetBSD: perform.c,v 1.25 1998/10/09 18:27:32 agc Exp $");
 #endif
 #endif
 
@@ -58,7 +58,7 @@ pkg_perform(char **pkgs)
     return err_cnt;
 }
 
-static Package Plist;
+static package_t Plist;
 static char *Home;
 
 /* called to see if pkg is already installed as some other version */
@@ -85,7 +85,7 @@ pkg_do(char *pkg)
     char *dbdir;
     FILE *cfile;
     int code;
-    PackingList p;
+    plist_t *p;
     struct stat sb;
     int inPlace;
 

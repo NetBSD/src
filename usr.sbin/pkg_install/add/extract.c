@@ -1,11 +1,11 @@
-/*	$NetBSD: extract.c,v 1.10 1998/10/09 11:16:57 agc Exp $	*/
+/*	$NetBSD: extract.c,v 1.11 1998/10/09 18:27:32 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "FreeBSD - Id: extract.c,v 1.17 1997/10/08 07:45:35 charnier Exp";
 #else
-__RCSID("$NetBSD: extract.c,v 1.10 1998/10/09 11:16:57 agc Exp $");
+__RCSID("$NetBSD: extract.c,v 1.11 1998/10/09 18:27:32 agc Exp $");
 #endif
 #endif
 
@@ -57,9 +57,9 @@ __RCSID("$NetBSD: extract.c,v 1.10 1998/10/09 11:16:57 agc Exp $");
 	}
 
 static void
-rollback(char *name, char *home, PackingList start, PackingList stop)
+rollback(char *name, char *home, plist_t *start, plist_t *stop)
 {
-    PackingList q;
+    plist_t *q;
     char try[FILENAME_MAX], bup[FILENAME_MAX], *dir;
 
     dir = home;
@@ -83,9 +83,9 @@ rollback(char *name, char *home, PackingList start, PackingList stop)
 }
 
 void
-extract_plist(char *home, Package *pkg)
+extract_plist(char *home, package_t *pkg)
 {
-    PackingList p = pkg->head;
+    plist_t *p = pkg->head;
     char *last_file;
     char *where_args, *perm_args, *last_chdir;
     int maxargs, where_count = 0, perm_count = 0, add_count;

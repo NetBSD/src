@@ -1,11 +1,11 @@
-/*	$NetBSD: show.c,v 1.7 1998/10/09 11:05:58 agc Exp $	*/
+/*	$NetBSD: show.c,v 1.8 1998/10/09 18:27:35 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: show.c,v 1.11 1997/10/08 07:47:38 charnier Exp";
 #else
-__RCSID("$NetBSD: show.c,v 1.7 1998/10/09 11:05:58 agc Exp $");
+__RCSID("$NetBSD: show.c,v 1.8 1998/10/09 18:27:35 agc Exp $");
 #endif
 #endif
 
@@ -36,12 +36,12 @@ __RCSID("$NetBSD: show.c,v 1.7 1998/10/09 11:05:58 agc Exp $");
 
 /* structure to define entries for the "show table" */
 typedef struct show_t {
-	plist_t	sh_type;	/* type of entry */
-	char	*sh_quiet;	/* message when quiet */
-	char	*sh_verbose;	/* message when verbose */
+	pl_ent_t	sh_type;	/* type of entry */
+	char		*sh_quiet;	/* message when quiet */
+	char		*sh_verbose;	/* message when verbose */
 } show_t;
 
-/* the entries in this table must be ordered the same as plist_t constants */
+/* the entries in this table must be ordered the same as pl_ent_t constants */
 static show_t	showv[] = {
 	{	PLIST_FILE,	"%s",		"File: %s" },
 	{	PLIST_CWD,	"@cwd: %s",	"\tCWD to: %s" },
@@ -51,7 +51,7 @@ static show_t	showv[] = {
 	{	PLIST_CHGRP,	"@chgrp %s",	"\tCHGRP to %s" },
 	{	PLIST_COMMENT,	"@comment %s",	"\tComment: %s" },
 	{	PLIST_IGNORE,	NULL,	NULL },
-	{	PLIST_NAME,	"@name %s",	"\tPackage name: " },
+	{	PLIST_NAME,	"@name %s",	"\tPackage name: %s" },
 	{	PLIST_UNEXEC,	"@unexec %s",	"\tUNEXEC '%s'" },
 	{	PLIST_SRC,	"@srcdir: %s",	"\tSRCDIR to: %s" },
 	{	PLIST_DISPLAY,	"@display %s",	"\tInstall message file: %s" },
@@ -111,10 +111,10 @@ show_index(char *title, char *fname)
 
 /* Show a packing list item type.  If type is PLIST_SHOW_ALL, show all */
 void
-show_plist(char *title, Package *plist, plist_t type)
+show_plist(char *title, package_t *plist, pl_ent_t type)
 {
-    PackingList	p;
-    Boolean	ign;
+    plist_t *p;
+    Boolean ign;
 
     if (!Quiet) {
 	printf("%s%s", InfoPrefix, title);
@@ -168,11 +168,11 @@ show_plist(char *title, Package *plist, plist_t type)
 
 /* Show all files in the packing list (except ignored ones) */
 void
-show_files(char *title, Package *plist)
+show_files(char *title, package_t *plist)
 {
-	PackingList	p;
-	Boolean		ign;
-	char		*dir = ".";
+	plist_t	*p;
+	Boolean	ign;
+	char	*dir = ".";
 
 	if (!Quiet) {
 		printf("%s%s", InfoPrefix, title);
