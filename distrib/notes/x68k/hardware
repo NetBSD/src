@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.8.8.2 2001/04/21 20:56:32 he Exp $
+.\"	$NetBSD: hardware,v 1.8.8.3 2002/06/06 16:01:03 he Exp $
 .
 .Nx*M
 \*V runs on the Sharp X68030 series PCs with a
@@ -79,6 +79,8 @@ The mouse / trackball
 NS16550 serial
 .It
 Neptune-X ethernet
+.It
+Nereid ethernet
 .bullet)
 .Pp
 Hopefully, the AD-PCM sound device will be supported in the future releases.
