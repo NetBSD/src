@@ -1,19 +1,18 @@
-# .cshrc initialization
+#	$NetBSD: dot.cshrc,v 1.3 1997/10/17 09:26:56 mrg Exp $
+#csh .cshrc file
 
-alias df	df -k
-alias du	du -k
-alias f		finger
-alias h		'history -r | more'
+alias h		history 25
 alias j		jobs -l
 alias la	ls -a
 alias lf	ls -FA
-alias ll	ls -lgsA
+alias ll	ls -lA
 alias su	su -m
-alias tset	'set noglob histchars=""; eval `\tset -s \!*`; unset noglob histchars'
-alias x		exit
-alias z		suspend
 
-set path = (~/bin /bin /usr/{bin,new,games,local,old} .)
+setenv	EDITOR	vi
+setenv	EXINIT	'set autoindent'
+setenv	PAGER	more
+
+set path = (~/bin /bin /usr/{bin,X11/bin,contrib/bin,games,old/bin} /usr/local/bin)
 
 if ($?prompt) then
 	# An interactive shell -- set some stuff up
@@ -22,7 +21,6 @@ if ($?prompt) then
 	set ignoreeof
 	set mail = (/var/mail/$USER)
 	set mch = `hostname -s`
-	alias cd 'cd \!*; set prompt = "$mch:q"":$cwd:t {\!} "'
-	cd .
-	umask 22
+	set prompt = "${mch:q}: {\!} "
+	umask 2
 endif
