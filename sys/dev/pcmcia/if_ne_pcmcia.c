@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.1.2.3 1997/10/15 02:41:33 enami Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.1.2.4 1997/10/16 17:30:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -405,12 +405,6 @@ ne_pcmcia_attach(parent, self, aux)
 
 	ne2000_attach(nsc, enaddr);
 
-	/* set up the interrupt */
-	psc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_NET, dp8390_intr, dsc);
-	if (psc->sc_ih == NULL)
-		printf("%s: couldn't establish interrupt\n",
-		    dsc->sc_dev.dv_xname);
-
 	pcmcia_function_disable(pa->pf);
 }
 
@@ -419,6 +413,15 @@ ne_pcmcia_enable(dsc)
 	struct dp8390_softc *dsc;
 {
 	struct ne_pcmcia_softc *psc = (struct ne_pcmcia_softc *)dsc;
+
+	/* set up the interrupt */
+	psc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, dp8390_intr,
+	    dsc);
+	if (psc->sc_ih == NULL) {
+		printf("%s: couldn't establish interrupt\n",
+		    dsc->sc_dev.dv_xname);
+		return (1);
+	}
 
 	return (pcmcia_function_enable(psc->sc_pf));
 }
@@ -430,4 +433,6 @@ ne_pcmcia_disable(dsc)
 	struct ne_pcmcia_softc *psc = (struct ne_pcmcia_softc *)dsc;
 
 	pcmcia_function_disable(psc->sc_pf);
+
+	pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
 }
