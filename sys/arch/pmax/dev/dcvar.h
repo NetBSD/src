@@ -1,4 +1,4 @@
-/*	$NetBSD: dcvar.h,v 1.8 2000/01/09 03:55:34 simonb Exp $	*/
+/*	$NetBSD: dcvar.h,v 1.9 2000/02/03 04:09:13 nisimura Exp $	*/
 
 /*
  * External declarations from DECstation dc serial driver.
@@ -39,8 +39,6 @@ int	dcintr __P((void * xxxunit));
  * Following declaratios for console code.
  * XXX should be redesigned to expose less driver internals.
  */
-void	dc_consinit __P((dev_t dev, void *dcaddr));
-int	dc_ds_consinit __P((dev_t dev));
 int	dcGetc __P((dev_t dev));
 void	dcPutc __P((dev_t dev, int c));
 
@@ -48,6 +46,9 @@ void	dcPutc __P((dev_t dev, int c));
 extern void	(*dcDivertXInput) __P((int));
 extern void	(*dcMouseEvent) __P((void *));
 extern void	(*dcMouseButtons) __P((void *));
+
+void dc_cnattach __P((paddr_t, int));
+void dckbd_cnattach __P((paddr_t));
 
 #endif	/* _DCVAR_H */
 #endif	/* _KERNEL */

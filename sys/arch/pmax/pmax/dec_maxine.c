@@ -1,4 +1,4 @@
-/* $NetBSD: dec_maxine.c,v 1.25 2000/01/14 13:45:26 simonb Exp $ */
+/* $NetBSD: dec_maxine.c,v 1.26 2000/02/03 04:09:03 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,26 +73,30 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.25 2000/01/14 13:45:26 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.26 2000/02/03 04:09:03 nisimura Exp $");
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 
 #include <machine/cpu.h>
-#include <machine/intr.h>
 #include <machine/sysconf.h>
+#include <mips/mips/mips_mcclock.h>
 
-#include <mips/mips/mips_mcclock.h>	/* mcclock CPUspeed estimation */
+#include <dev/tc/tcvar.h>
+#include <dev/tc/ioasicvar.h>
+#include <dev/tc/ioasicreg.h>
 
-/* all these to get ioasic_base */
-#include <sys/device.h>			/* struct cfdata for.. */
-#include <dev/tc/tcvar.h>		/* tc type definitions for.. */
-#include <dev/tc/ioasicreg.h>		/* ioasic interrrupt masks */
-#include <dev/tc/ioasicvar.h>		/* ioasic_base */
-
+#include <pmax/pmax/maxine.h>
 #include <pmax/pmax/machdep.h>
-#include <pmax/pmax/maxine.h>		/* baseboard addresses (constants) */
-#include <pmax/pmax/memc.h>		/* 3min/maxine memory errors */
+#include <pmax/pmax/memc.h>
+
+#include <pmax/dev/xcfbvar.h>
+#include <pmax/dev/dtopvar.h>
+#include <pmax/tc/sccvar.h>
+
+#include "rasterconsole.h"
+#include "xcfb.h"
 
 /*
  * Forward declarations
@@ -191,7 +195,37 @@ dec_maxine_bus_reset()
 static void
 dec_maxine_cons_init()
 {
-	/* notyet */
+	int kbd, crt, screen;
+	extern int tcfb_cnattach __P((int));		/* XXX */
+
+	kbd = crt = screen = 0;
+	prom_findcons(&kbd, &crt, &screen);
+
+	if (screen > 0) {
+#if NRASTERCONSOLE > 0
+		if (crt == 3) {
+#if NXCFB > 0
+			xcfb_cnattach();
+			dtikbd_cnattach();
+			return;
+#endif
+		}
+		else if (tcfb_cnattach(crt) > 0) {
+			dtikbd_cnattach();
+			return;
+		}
+#endif
+		printf("No framebuffer device configured for slot %d: ", crt);
+		printf("using serial console\n");
+	}
+	/*
+	 * Delay to allow PROM putchars to complete.
+	 * FIFO depth * character time,
+	 * character time = (1000000 / (defaultrate / 10))
+	 */
+	DELAY(160000000 / 9600);        /* XXX */
+
+	scc_cnattach(ioasic_base, 0x100000);
 }
 
 static void

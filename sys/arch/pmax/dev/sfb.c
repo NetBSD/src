@@ -1,4 +1,4 @@
-/*	$NetBSD: sfb.c,v 1.36 2000/01/10 03:24:34 simonb Exp $	*/
+/*	$NetBSD: sfb.c,v 1.37 2000/02/03 04:09:17 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -80,9 +80,6 @@
  * rights to redistribute these changes.
  */
 
-#include "fb.h"
-#include "sfb.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -108,6 +105,7 @@
  */
 static struct fbuaccess sfbu;
 static struct pmax_fbtty sfbfb;
+static struct fbinfo *sfb_fi;
 
 
 /*
@@ -116,6 +114,7 @@ static struct pmax_fbtty sfbfb;
 
 static int	sfbmatch __P((struct device *, struct cfdata *, void *));
 static void	sfbattach __P((struct device *, struct device *, void *));
+static int	sfbinit __P((struct fbinfo *, caddr_t, int, int));
 static int	sfb_intr __P((void *sc));
 
 struct cfattach sfb_ca = {
@@ -133,6 +132,20 @@ struct fbdriver sfb_driver = {
 	bt459CursorColor
 };
 
+int
+sfb_cnattach(addr)
+paddr_t addr;
+{
+	struct fbinfo *fi;
+	caddr_t base;
+
+	base = (caddr_t)MIPS_PHYS_TO_KSEG1(addr);
+	fbcnalloc(&fi);
+	if (sfbinit(fi, base, 0, 1) < 0)
+	      return (0);
+	sfb_fi = fi;
+	return (1);
+}
 
 /* match and attach routines cut-and-pasted from cfb */
 
@@ -147,14 +160,6 @@ sfbmatch(parent, match, aux)
 	/* make sure that we're looking for this type of device. */
 	if (!TC_BUS_MATCHNAME(ta, "PMAGB-BA"))
 		return (0);
-
-	/*
-	 * if the TC rom ident matches, assume the VRAM is present too.
-	 */
-#if 0
-	if (badaddr( ((caddr_t)ta->ta_addr) + SFB_OFFSET_VRAM, 4))
-		return (0);
-#endif
 
 	return (1);
 }
@@ -174,13 +179,20 @@ sfbattach(parent, self, aux)
 	int unit = self->dv_unit;
 	struct fbinfo *fi;
 
-	/* Allocate a struct fbinfo and point the softc at it */
-	if (fballoc(sfbaddr, &fi) == 0 && !sfbinit(fi, sfbaddr, unit, 0))
-			return;
+	if (sfb_fi)
+		fi = sfb_fi;
+	else {
+		if (fballoc(&fi) < 0 || sfbinit(fi, sfbaddr, unit, 0) < 0)
+		return; /* failed */
+	}
+	((struct fbsoftc *)self)->sc_fi = fi;
 
-	if ((((struct fbsoftc *)self)->sc_fi = fi) == NULL)
-		return;
-		
+	printf(": %dx%dx%d%s",
+		fi->fi_type.fb_width,
+		fi->fi_type.fb_height,
+		fi->fi_type.fb_depth,
+		(sfb_fi) ? " console" : "");
+
 #if 0 /*XXX*/
 
 	/*
@@ -198,7 +210,6 @@ sfbattach(parent, self, aux)
 	 * interrupt handler, which interrupts during vertical-retrace.
 	 */
 	tc_intr_establish(parent, ta->ta_cookie, TC_IPL_NONE, sfb_intr, fi);
-	fbconnect ("PMAGB-BA", fi, 0);
 	printf("\n");
 }
 
@@ -206,7 +217,7 @@ sfbattach(parent, self, aux)
 /*
  * Initialization
  */
-int
+static int
 sfbinit(fi, base, unit, silent)
 	struct fbinfo *fi;
 	char *base;
@@ -288,19 +299,10 @@ sfbinit(fi, base, unit, silent)
 	 * Initialize the color map, the screen, and the mouse.
 	 */
 	if (tb_kbdmouseconfig(fi)) {
-		printf(" (mouse/keyboard config failed)");
-		return (0);
+		return (-1);
 	}
-
-
-	/*sfbInitColorMap();*/  /* done by bt459init() */
-
-	/*
-	 * Connect to the raster-console pseudo-driver
-	 */
-
-	fbconnect ("PMAGB-BA", fi, silent);
-	return (1);
+	fbconnect(fi);
+	return (0);
 }
 
 

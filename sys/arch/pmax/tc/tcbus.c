@@ -1,7 +1,7 @@
-/*	$NetBSD: tcbus.c,v 1.7 2000/01/14 13:45:28 simonb Exp $	*/
+/*	$NetBSD: tcbus.c,v 1.8 2000/02/03 04:09:07 nisimura Exp $	*/
 
 /*
- * Copyright (c) 1999 Tohru Nishimura.  All rights reserved.
+ * Copyright (c) 1999, 2000 Tohru Nishimura.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.7 2000/01/14 13:45:28 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.8 2000/02/03 04:09:07 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,15 +195,15 @@ tc_ds_intr_disestablish(dev, arg)
 #include "sfb.h"
 #include "px.h"
 
-#include <machine/fbio.h>
-#include <machine/fbvar.h>
+#include <machine/pmioctl.h>	/* XXX */
+#include <machine/fbio.h>	/* XXX */
+#include <machine/fbvar.h>	/* XXX */
+#include <pmax/dev/fbreg.h>	/* XXX */
 #include <pmax/dev/cfbvar.h>
 #include <pmax/dev/mfbvar.h>
-#include <machine/pmioctl.h>	/* XXX shouldn't need this here for pxvar.h */
-#include <pmax/dev/fbreg.h>	/* XXX shouldn't need this here for pxvar.h */
-#include <pmax/dev/pxreg.h>	/* XXX shouldn't need this here for pxvar.h */
-#include <pmax/dev/pxvar.h>
 #include <pmax/dev/sfbvar.h>
+#include <pmax/dev/pxreg.h>
+#include <pmax/dev/pxvar.h>
 
 #include <machine/dec_prom.h>
 
@@ -211,9 +211,8 @@ int
 tcfb_cnattach(slotno)
 	int slotno;
 {
-	tc_addr_t tcaddr;
+	paddr_t tcaddr;
 	char tcname[TC_ROM_LLEN];
-	struct fbinfo *fi;
 
 	tcaddr = (*callv->_slot_address)(slotno);
 	if (tc_badaddr(tcaddr) || tc_checkslot(tcaddr, tcname) == 0)
@@ -221,32 +220,26 @@ tcfb_cnattach(slotno)
 
 #if NSFB > 0
 	if (strncmp("PMAGB-BA", tcname, TC_ROM_LLEN) == 0) {
-		fballoc((caddr_t)tcaddr, &fi);
-		sfbinit(fi, (caddr_t)tcaddr, 0, 1);
-		return 1;
+		return sfb_cnattach(tcaddr);
 	}
 #endif
 #if NCFB > 0
 	if (strncmp("PMAG-BA ", tcname, TC_ROM_LLEN) == 0) {
-		fballoc((caddr_t)tcaddr, &fi);
-		cfbinit(fi, (caddr_t)tcaddr, 0, 1);
-		return 1;
+		return cfb_cnattach(tcaddr);
 	}
 #endif
 #if NMFB > 0
 	if (strncmp("PMAG-AA ", tcname, TC_ROM_LLEN) == 0) {
-		fballoc((caddr_t)tcaddr, &fi);
-		mfbinit(fi, (caddr_t)tcaddr, 0, 1);
-		return 1;
+		return mfb_cnattach(tcaddr);
 	}
 #endif
 #if NPX > 0
 	if (strncmp("PMAG-CA ", tcname, TC_ROM_LLEN) == 0
 	    || strncmp("PMAG-DA ", tcname, TC_ROM_LLEN) == 0
 	    || strncmp("PMAG-FA ", tcname, TC_ROM_LLEN) == 0) {
-		fballoc((caddr_t)tcaddr, &fi);
-		px_init(fi, (caddr_t)tcaddr, 0, 1);
-		return 1;
+		int px_cnattach __P((paddr_t)); /* XXX much simpler XXX */
+
+		return px_cnattach(tcaddr);
 	}
 #endif
 	return 0;
