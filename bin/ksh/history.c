@@ -1,4 +1,4 @@
-/*	$NetBSD: history.c,v 1.5 2003/06/23 11:38:57 agc Exp $	*/
+/*	$NetBSD: history.c,v 1.6 2004/02/26 08:24:03 jdolecek Exp $	*/
 
 /*
  * command history
@@ -19,7 +19,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: history.c,v 1.5 2003/06/23 11:38:57 agc Exp $");
+__RCSID("$NetBSD: history.c,v 1.6 2004/02/26 08:24:03 jdolecek Exp $");
 #endif
 
 
@@ -393,7 +393,7 @@ hist_get(str, approx, allow_cur)
 
 	if (getn(str, &n)) {
 		hp = histptr + (n < 0 ? n : (n - hist_source->line));
-		if (hp < history) {
+		if (hp < histlist) {
 			if (approx)
 				hp = hist_get_oldest();
 			else {
@@ -415,12 +415,12 @@ hist_get(str, approx, allow_cur)
 		int anchored = *str == '?' ? (++str, 0) : 1;
 
 		/* the -1 is to avoid the current fc command */
-		n = findhist(histptr - history - 1, 0, str, anchored);
+		n = findhist(histptr - histlist - 1, 0, str, anchored);
 		if (n < 0) {
 			bi_errorf("%s: not in history", str);
 			hp = (char **) 0;
 		} else
-			hp = &history[n];
+			hp = &histlist[n];
 	}
 	return hp;
 }
@@ -430,7 +430,7 @@ static char **
 hist_get_newest(allow_cur)
 	int allow_cur;
 {
-	if (histptr < history || (!allow_cur && histptr == history)) {
+	if (histptr < histlist || (!allow_cur && histptr == histlist)) {
 		bi_errorf("no history (yet)");
 		return (char **) 0;
 	}
@@ -443,11 +443,11 @@ hist_get_newest(allow_cur)
 static char **
 hist_get_oldest()
 {
-	if (histptr <= history) {
+	if (histptr <= histlist) {
 		bi_errorf("no history (yet)");
 		return (char **) 0;
 	}
-	return history;
+	return histlist;
 }
 
 /******************************/
@@ -458,7 +458,7 @@ histbackup()
 {
 	static int last_line = -1;
 
-	if (histptr >= history && last_line != hist_source->line) {
+	if (histptr >= histlist && last_line != hist_source->line) {
 		hist_source->line--;
 		afree((void*)*histptr, APERM);
 		histptr--;
@@ -485,14 +485,14 @@ int
 histnum(n)
 	int	n;
 {
-	int	last = histptr - history;
+	int	last = histptr - histlist;
 
 	if (n < 0 || n >= last) {
 		current = histptr;
 		curpos = last;
 		return last;
 	} else {
-		current = &history[n];
+		current = &histlist[n];
 		curpos = n;
 		return n;
 	}
@@ -511,18 +511,18 @@ findhist(start, fwd, str, anchored)
 	int	anchored;
 {
 	char	**hp;
-	int	maxhist = histptr - history;
+	int	maxhist = histptr - histlist;
 	int	incr = fwd ? 1 : -1;
 	int	len = strlen(str);
 
 	if (start < 0 || start >= maxhist)
 		start = maxhist;
 
-	hp = &history[start];
-	for (; hp >= history && hp <= histptr; hp += incr)
+	hp = &histlist[start];
+	for (; hp >= histlist && hp <= histptr; hp += incr)
 		if ((anchored && strncmp(*hp, str, len) == 0)
 		    || (!anchored && strstr(*hp, str)))
-			return hp - history;
+			return hp - histlist;
 
 	return -1;
 }
@@ -536,18 +536,18 @@ sethistsize(n)
 	int n;
 {
 	if (n > 0 && n != histsize) {
-		int cursize = histptr - history;
+		int cursize = histptr - histlist;
 
 		/* save most recent history */
 		if (n < cursize) {
-			memmove(history, histptr - n, n * sizeof(char *));
+			memmove(histlist, histptr - n, n * sizeof(char *));
 			cursize = n;
 		}
 
-		history = (char **)aresize(history, n*sizeof(char *), APERM);
+		histlist = (char **)aresize(histlist, n*sizeof(char *), APERM);
 
 		histsize = n;
-		histptr = history + cursize;
+		histptr = histlist + cursize;
 	}
 }
 
@@ -585,7 +585,7 @@ sethistfile(name)
 		afree(hname, APERM);
 		hname = NULL;
 		/* let's reset the history */
-		histptr = history - 1;
+		histptr = histlist - 1;
 		hist_source->line = 0;
 	}
 # endif
@@ -599,10 +599,10 @@ sethistfile(name)
 void
 init_histvec()
 {
-	if (history == (char **)NULL) {
+	if (histlist == (char **)NULL) {
 		histsize = HISTORYSIZE;
-		history = (char **)alloc(histsize*sizeof (char *), APERM);
-		histptr = history - 1;
+		histlist = (char **)alloc(histsize*sizeof (char *), APERM);
+		histptr = histlist - 1;
 	}
 }
 
@@ -619,11 +619,11 @@ histsave(lno, cmd, dowrite)
 	register char **hp = histptr;
 	char *cp;
 
-	if (++hp >= history + histsize) { /* remove oldest command */
-		afree((void*)history[0], APERM);
-		memmove(history, history + 1,
-			sizeof(history[0]) * (histsize - 1));
-		hp = &history[histsize - 1];
+	if (++hp >= histlist + histsize) { /* remove oldest command */
+		afree((void*)histlist[0], APERM);
+		memmove(histlist, histlist + 1,
+			sizeof(histlist[0]) * (histsize - 1));
+		hp = &histlist[histsize - 1];
 	}
 	*hp = str_save(cmd, APERM);
 	/* trash trailing newline but allow imbedded newlines */
@@ -742,11 +742,11 @@ hist_finish()
   if (once++)
     return;
   /* check how many we have */
-  i = histptr - history;
+  i = histptr - histlist;
   if (i >= histsize)
     hp = &histptr[-histsize];
   else
-    hp = history;
+    hp = histlist;
   if (hname && (fh = fopen(hname, "w")))
   {
     for (i = 0; hp + i <= histptr && hp[i]; i++)
@@ -787,9 +787,9 @@ histsave(lno, cmd, dowrite)
 
 	hp = histptr;
 
-	if (++hp >= history + histsize) { /* remove oldest command */
-		afree((void*)*history, APERM);
-		for (hp = history; hp < history + histsize - 1; hp++)
+	if (++hp >= histlist + histsize) { /* remove oldest command */
+		afree((void*)*histlist, APERM);
+		for (hp = histlist; hp < histlist + histsize - 1; hp++)
 			hp[0] = hp[1];
 	}
 	*hp = c;
@@ -1052,7 +1052,7 @@ histload(s, base, bytes)
 		case sline:
 			if (*base == '\0') {
 				/* worry about line numbers */
-				if (histptr >= history && lno-1 != s->line) {
+				if (histptr >= histlist && lno-1 != s->line) {
 					/* a replacement ? */
 					histinsert(s, lno, line);
 				}
@@ -1077,7 +1077,7 @@ histinsert(s, lno, line)
 {
 	register char **hp;
 
-	if (lno >= s->line-(histptr-history) && lno <= s->line) {
+	if (lno >= s->line-(histptr-histlist) && lno <= s->line) {
 		hp = &histptr[lno-s->line];
 		if (*hp)
 			afree((void*)*hp, APERM);

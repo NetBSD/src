@@ -1,10 +1,10 @@
-/*	$NetBSD: lex.h,v 1.4 2001/09/16 16:34:23 wiz Exp $	*/
+/*	$NetBSD: lex.h,v 1.5 2004/02/26 08:24:03 jdolecek Exp $	*/
 
 /*
  * Source input, lexer and parser
  */
 
-/* $Id: lex.h,v 1.4 2001/09/16 16:34:23 wiz Exp $ */
+/* $Id: lex.h,v 1.5 2004/02/26 08:24:03 jdolecek Exp $ */
 
 #define	IDENT	64
 
@@ -126,7 +126,7 @@ EXTERN	char	ident [IDENT+1];
 #ifdef HISTORY
 # define HISTORYSIZE	128	/* size of saved history */
 
-EXTERN	char  **history;	/* saved commands */
+EXTERN	char  **histlist;	/* saved commands */
 EXTERN	char  **histptr;	/* last history item */
 EXTERN	int	histsize;	/* history size */
 #endif /* HISTORY */
