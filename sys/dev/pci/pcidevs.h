@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.516 2003/03/13 17:55:57 joda Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.517 2003/03/18 00:53:03 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.513 2003/03/13 17:55:24 joda Exp 
+ *	NetBSD: pcidevs,v 1.514 2003/03/18 00:45:54 thorpej Exp 
  */
 
 /*
@@ -1061,6 +1061,7 @@
 #define	PCI_PRODUCT_CMDTECH_670	0x0670		/* USB0670 */
 #define	PCI_PRODUCT_CMDTECH_673	0x0673		/* USB0673 */
 #define	PCI_PRODUCT_CMDTECH_680	0x0680		/* SiI0680 */
+#define	PCI_PRODUCT_CMDTECH_3112	0x3112		/* SiI3112 SATALink */
 
 /* C-Media products */
 #define	PCI_PRODUCT_CMEDIA_CMI8338A	0x0100		/* CMI8338A PCI Audio Device */
