@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.552 2003/07/14 08:00:43 jmmv Exp $
+$NetBSD: pcidevs,v 1.553 2003/07/17 11:44:27 hannken Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1035,6 +1035,7 @@ product BROADCOM BCM5703X	0x16a7	BCM5703X 10/100/1000 Ethernet
 product BROADCOM BCM5704C	0x1648	BCM5704C Gigabit Ethernet (1000BASE-T)
 product BROADCOM BCM5704S	0x16a8	BCM5704S Gigabit Ethernet (1000BASE-X)
 product BROADCOM BCM5705	0x1653	BCM5705 10/100/1000 Ethernet
+product BROADCOM BCM5705M	0x165d	BCM5705M 10/100/1000 Ethernet
 product BROADCOM BCM4401	0x4401	BCM4401 10/100 Ethernet
 
 /* Brooktree products */

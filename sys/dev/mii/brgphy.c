@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.17 2003/04/29 01:49:33 thorpej Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.18 2003/07/17 11:44:26 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.17 2003/04/29 01:49:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.18 2003/07/17 11:44:26 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,6 +105,7 @@ void	brgphy_5401_reset(struct mii_softc *);
 void	brgphy_5411_reset(struct mii_softc *);
 void	brgphy_5703_reset(struct mii_softc *);
 void	brgphy_5704_reset(struct mii_softc *);
+void	brgphy_5705_reset(struct mii_softc *);
 
 const struct mii_phy_funcs brgphy_funcs = {
 	brgphy_service, brgphy_status, mii_phy_reset,
@@ -124,6 +125,10 @@ const struct mii_phy_funcs brgphy_5703_funcs = {
 
 const struct mii_phy_funcs brgphy_5704_funcs = {
 	brgphy_service, brgphy_status, brgphy_5704_reset,
+};
+
+const struct mii_phy_funcs brgphy_5705_funcs = {
+	brgphy_service, brgphy_status, brgphy_5705_reset,
 };
 
 
@@ -148,6 +153,9 @@ const struct mii_phydesc brgphys[] = {
 
 	{ MII_OUI_BROADCOM,		MII_MODEL_BROADCOM_BCM5704,
 	  MII_STR_BROADCOM_BCM5704 },
+
+	{ MII_OUI_BROADCOM,		MII_MODEL_BROADCOM_BCM5705,
+	  MII_STR_BROADCOM_BCM5705 },
 
 	{ 0,				0,
 	  NULL },
@@ -223,6 +231,10 @@ brgphyattach(struct device *parent, struct device *self, void *aux)
 		    sc->mii_dev.dv_xname);
 		break;
 
+	case MII_MODEL_BROADCOM_BCM5705:
+		sc->mii_funcs = &brgphy_5705_funcs;
+		break;
+
 	default:
 		sc->mii_funcs = &brgphy_funcs;
 		break;
@@ -276,7 +288,8 @@ brgphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
-		mii_phy_reset(sc);	/* XXX hardware bug work-around */
+		if (sc->mii_funcs != &brgphy_5705_funcs)
+			mii_phy_reset(sc);    /* XXX hardware bug work-around */
 		mii_phy_setmedia(sc);
 		break;
 
@@ -425,6 +438,16 @@ brgphy_5704_reset(struct mii_softc *sc)
 
 	mii_phy_reset(sc);
 	bcm5704_load_dspcode(sc);
+}
+
+/*
+ * Hardware bug workaround.  Do nothing since after
+ * reset the 5705 PHY would get stuck in 10/100 MII mode.
+ */
+
+void
+brgphy_5705_reset(struct mii_softc *sc)
+{
 }
 
 /* Turn off tap power management on 5401. */
