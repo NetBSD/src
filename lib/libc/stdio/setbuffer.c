@@ -1,4 +1,4 @@
-/*	$NetBSD: setbuffer.c,v 1.6 1998/02/03 18:41:21 perry Exp $	*/
+/*	$NetBSD: setbuffer.c,v 1.7 1998/11/15 17:19:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setbuffer.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: setbuffer.c,v 1.6 1998/02/03 18:41:21 perry Exp $");
+__RCSID("$NetBSD: setbuffer.c,v 1.7 1998/11/15 17:19:53 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,7 +54,7 @@ setbuffer(fp, buf, size)
 	int size;
 {
 
-	(void)setvbuf(fp, buf, buf ? _IOFBF : _IONBF, size);
+	(void)setvbuf(fp, buf, buf ? _IOFBF : _IONBF, (size_t)size);
 }
 
 /*

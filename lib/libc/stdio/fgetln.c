@@ -1,4 +1,4 @@
-/*	$NetBSD: fgetln.c,v 1.6 1998/10/16 12:39:54 kleink Exp $	*/
+/*	$NetBSD: fgetln.c,v 1.7 1998/11/15 17:19:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fgetline.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fgetln.c,v 1.6 1998/10/16 12:39:54 kleink Exp $");
+__RCSID("$NetBSD: fgetln.c,v 1.7 1998/11/15 17:19:53 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -110,7 +110,7 @@ fgetln(fp, lenp)
 	}
 
 	/* look for a newline in the input */
-	if ((p = memchr((void *)fp->_p, '\n', fp->_r)) != NULL) {
+	if ((p = memchr((void *)fp->_p, '\n', (size_t)fp->_r)) != NULL) {
 		char *ret;
 
 		/*
@@ -153,7 +153,7 @@ fgetln(fp, lenp)
 		off = len;
 		if (__srefill(fp))
 			break;	/* EOF or error: return partial line */
-		if ((p = memchr((void *)fp->_p, '\n', fp->_r)) == NULL)
+		if ((p = memchr((void *)fp->_p, '\n', (size_t)fp->_r)) == NULL)
 			continue;
 
 		/* got it: finish up the line (like code above) */
