@@ -1,4 +1,4 @@
-/*	$NetBSD: uhareg.h,v 1.7 1998/08/17 00:26:34 mycroft Exp $	*/
+/*	$NetBSD: uhareg.h,v 1.8 2000/06/08 18:22:15 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -242,5 +242,4 @@ struct uha_mscp {
 	bus_dmamap_t	dmamap_xfer;
 
 };
-#pragma pack(4)
-
+#pragma pack()
