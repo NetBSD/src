@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.273 2001/08/17 22:23:05 thorpej Exp $
+# $NetBSD: mi,v 1.274 2001/08/19 17:18:01 mrg Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -484,7 +484,7 @@
 ./usr/libexec			base-sys-usr
 ./usr/libexec/atrun		base-cron-bin
 ./usr/libexec/comsat		base-mail-bin
-./usr/libexec/cpp		base-util-bin
+./usr/libexec/cpp0		base-util-bin
 ./usr/libexec/dnskeygen		base-bind-bin
 ./usr/libexec/fingerd		base-netutil-bin
 ./usr/libexec/ftpd		base-netutil-bin
