@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_clock.c,v 1.17 1998/03/26 21:27:12 mark Exp $	*/
+/*	$NetBSD: iomd_clock.c,v 1.18 1998/06/02 21:57:58 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -53,6 +53,7 @@
 #include <sys/device.h>
 
 #include <machine/irqhandler.h>
+#include <machine/cpufunc.h>
 #include <arm32/iomd/iomdvar.h>
 #include <arm32/iomd/iomdreg.h>
 
@@ -311,6 +312,31 @@ void
 need_proftick(p)
 	struct proc *p;
 {
+}
+
+/*
+ * Estimated loop for n microseconds
+ */
+
+/* Need to re-write this to use the timers */
+
+/* One day soon I will actually do this */
+
+int delaycount = 50;
+
+void
+delay(n)
+	u_int n;
+{
+	u_int i;
+
+	if (n == 0) return;
+	while (--n > 0) {
+		if (cputype == ID_SA110)	/* XXX - Seriously gross hack */
+			for (i = delaycount; --i;);
+		else
+			for (i = 8; --i;);
+	}
 }
 
 /* End of iomd_clock.c */
