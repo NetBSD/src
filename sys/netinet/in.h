@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.49 2000/07/28 12:13:34 kleink Exp $	*/
+/*	$NetBSD: in.h,v 1.50 2000/08/25 13:35:05 tron Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -352,7 +352,9 @@ struct ip_mreq {
 #define	IPCTL_MAXFLOWS         13	/* maximum ip flows allowed */
 #define	IPCTL_HOSTZEROBROADCAST 14	/* is host zero a broadcast addr? */
 #define IPCTL_GIF_TTL 	       15	/* default TTL for gif encap packet */
-#define	IPCTL_MAXID	       16
+#define IPCTL_LOWPORTMIN       16	/* minimum reserved port */
+#define IPCTL_LOWPORTMAX       17	/* maximum reserved port */
+#define	IPCTL_MAXID	       18
 
 #define	IPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -371,6 +373,8 @@ struct ip_mreq {
 	{ "maxflows", CTLTYPE_INT }, \
 	{ "hostzerobroadcast", CTLTYPE_INT }, \
 	{ "gifttl", CTLTYPE_INT }, \
+	{ "lowportmin", CTLTYPE_INT }, \
+	{ "lowportmax", CTLTYPE_INT }, \
 }
 #endif /* !_XOPEN_SOURCE */
 
