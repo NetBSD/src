@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.270 2004/11/14 04:15:40 mbw Exp $
+.\"	$NetBSD: main,v 1.271 2004/11/17 12:51:20 hira Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1550,6 +1550,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta HAYAKAWA Koichi Ta Mt haya@NetBSD.org
 .It Ta John Heasley Ta Mt heas@NetBSD.org
 .It Ta Ren\('e Hexel Ta Mt rh@NetBSD.org
+.It Ta Kouichirou Hiratsuka Ta Mt hira@NetBSD.org
 .It Ta Michael L. Hitch Ta Mt mhitch@NetBSD.org
 .It Ta Christian E. Hopps Ta Mt chopps@NetBSD.org
 .It Ta Ken Hornstein Ta Mt kenh@NetBSD.org
