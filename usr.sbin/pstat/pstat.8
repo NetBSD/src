@@ -1,7 +1,6 @@
 .\" Copyright (c) 1980, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
-.\"	@(#)pstat.8	8.4 (Berkeley) 4/19/94
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
 .\" are met:
@@ -30,7 +29,8 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)pstat.8	8.4 (Berkeley) 4/19/94
+.\"     from: @(#)pstat.8	8.4 (Berkeley) 4/19/94
+.\"	$Id: pstat.8,v 1.2 1994/05/13 21:48:00 cgd Exp $
 .\"
 .Dd April 19, 1994
 .Dt PSTAT 8
@@ -53,7 +53,7 @@ is given, the information is sought there, otherwise
 in
 .Pa /dev/kmem .
 The required namelist is taken from
-.Pa /vmunix
+.Pa /netbsd
 unless 
 .Ar system
 is specified.
@@ -294,7 +294,7 @@ major and minor device of special file.
 .El
 .Sh FILES
 .Bl -tag -width /dev/kmemxxx -compact
-.It Pa /vmunix
+.It Pa /netbsd
 namelist
 .It Pa /dev/kmem
 default source of tables

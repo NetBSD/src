@@ -38,7 +38,8 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
+/* from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94"; */
+static char *rcsid = "$Id: pstat.c,v 1.2 1994/05/13 21:48:02 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -48,14 +49,21 @@ static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #include <sys/ucred.h>
 #define KERNEL
 #include <sys/file.h>
+#ifdef notyet
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
+#else
+#include <ufs/quota.h>
+#include <ufs/inode.h>
+#endif
 #define NFS
 #include <sys/mount.h>
 #undef NFS
 #undef KERNEL
 #include <sys/stat.h>
+#ifdef notyet
 #include <nfs/nfsnode.h>
+#endif
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
@@ -162,8 +170,10 @@ struct e_vnode *
 struct e_vnode *
 	loadvnodes __P((int *));
 void	mount_print __P((struct mount *));
+#ifdef notyet
 void	nfs_header __P((void));
 int	nfs_print __P((struct vnode *));
+#endif
 void	swapmode __P((void));
 void	ttymode __P((void));
 void	ttyprt __P((struct tty *, int));
@@ -288,34 +298,25 @@ vnodemode()
 			maddr = vp->v_mount;
 			mount_print(mp);
 			vnode_header();
-			switch(ST.f_type) {
-			case MOUNT_UFS:
-			case MOUNT_MFS:
+			if (!strncmp(ST.f_fstypename, MOUNT_UFS, MFSNAMELEN) ||
+			    !strncmp(ST.f_fstypename, MOUNT_MFS, MFSNAMELEN)) {
 				ufs_header();
-				break;
-			case MOUNT_NFS:
+#ifdef notyet
+			} else if (!strncmp(ST.f_fstypename, MOUNT_NFS,
+			    MFSNAMELEN)) {
 				nfs_header();
-				break;
-			case MOUNT_NONE:
-			case MOUNT_MSDOS:
-			default:
-				break;
+#endif
 			}
 			(void)printf("\n");
 		}
 		vnode_print(evp->avnode, vp);
-		switch(ST.f_type) {
-		case MOUNT_UFS:
-		case MOUNT_MFS:
+		if (!strncmp(ST.f_fstypename, MOUNT_UFS, MFSNAMELEN) ||
+		    !strncmp(ST.f_fstypename, MOUNT_MFS, MFSNAMELEN)) {
 			ufs_print(vp);
-			break;
-		case MOUNT_NFS:
+#ifdef notyet
+		} else if (!strncmp(ST.f_fstypename, MOUNT_NFS, MFSNAMELEN)) {
 			nfs_print(vp);
-			break;
-		case MOUNT_NONE:
-		case MOUNT_MSDOS:
-		default:
-			break;
+#endif
 		}
 		(void)printf("\n");
 	}
@@ -403,6 +404,7 @@ ufs_print(vp)
 	char *name;
 	mode_t type;
 
+#ifdef notyet
 	KGETRET(VTOI(vp), &inode, sizeof(struct inode), "vnode's inode");
 	flag = ip->i_flag;
 	if (flag & IN_LOCKED)
@@ -439,9 +441,11 @@ ufs_print(vp)
 			(void)printf(" %7s", name);
 	else
 		(void)printf(" %7qd", ip->i_size);
+#endif
 	return (0);
 }
 
+#ifdef notyet
 void
 nfs_header() 
 {
@@ -491,6 +495,7 @@ nfs_print(vp)
 		(void)printf(" %7qd", np->n_size);
 	return (0);
 }
+#endif
 	
 /*
  * Given a pointer to a mount structure in kernel space,
@@ -528,27 +533,8 @@ mount_print(mp)
 
 #define ST	mp->mnt_stat
 	(void)printf("*** MOUNT ");
-	switch (ST.f_type) {
-	case MOUNT_NONE:
-		type = "none";
-		break;
-	case MOUNT_UFS:
-		type = "ufs";
-		break;
-	case MOUNT_NFS:
-		type = "nfs";
-		break;
-	case MOUNT_MFS:
-		type = "mfs";
-		break;
-	case MOUNT_MSDOS:
-		type = "pc";
-		break;
-	default:
-		type = "unknown";
-		break;
-	}
-	(void)printf("%s %s on %s", type, ST.f_mntfromname, ST.f_mntonname);
+	(void)printf("%s %s on %s", ST.f_fstypename,
+	    ST.f_mntfromname, ST.f_mntonname);
 	if (flags = mp->mnt_flag) {
 		char *comma = "(";
 
