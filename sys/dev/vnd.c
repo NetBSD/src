@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.65 2000/03/30 12:45:27 augustss Exp $	*/
+/*	$NetBSD: vnd.c,v 1.66 2000/08/19 10:44:02 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -375,7 +375,7 @@ vndstrategy(bp)
 
  	bsize = vnd->sc_vp->v_mount->mnt_stat.f_iosize;
 	addr = bp->b_data;
-	flags = bp->b_flags | B_CALL;
+	flags = (bp->b_flags & (B_READ|B_ASYNC)) | B_CALL;
 
 	/* Allocate a header for this transfer and link it to the buffer */
 	s = splbio();
@@ -536,9 +536,10 @@ vndstart(vnd)
 		vnd->sc_active++;
 #ifdef DEBUG
 		if (vnddebug & VDB_IO)
-			printf("vndstart(%ld): bp %p vp %p blkno 0x%x addr %p cnt 0x%lx\n",
+			printf("vndstart(%ld): bp %p vp %p blkno 0x%x"
+				" flags %lx addr %p cnt 0x%lx flags %lx\n",
 			    (long) (vnd-vnd_softc), bp, bp->b_vp, bp->b_blkno,
-			    bp->b_data, bp->b_bcount);
+			    bp->b_flags, bp->b_data, bp->b_bcount);
 #endif
 
 		/* Instrumentation. */
