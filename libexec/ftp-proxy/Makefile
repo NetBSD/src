@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.5 2004/10/14 00:14:52 christos Exp $
+#	$NetBSD: Makefile,v 1.6 2004/11/11 09:49:59 yamt Exp $
 #	$OpenBSD: Makefile,v 1.4 2003/11/20 23:23:09 avsm Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/4/94
 
 PROG=	ftp-proxy
-SRCS=	ftp-proxy.c getline.c util.c ipf.c pf.c
+SRCS=	ftp-proxy.c getline.c util.c ipf.c
 MAN=	ftp-proxy.8
 
 WARNS?=	2

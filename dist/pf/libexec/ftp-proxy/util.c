@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.3 2004/06/30 13:29:43 darrenr Exp $	*/
+/*	$NetBSD: util.c,v 1.4 2004/11/11 09:50:00 yamt Exp $	*/
 /*	$OpenBSD: util.c,v 1.18 2004/01/22 16:10:30 beck Exp $ */
 
 /*
@@ -73,6 +73,73 @@ debuglog(int debug_level, const char *fmt, ...)
 		vsyslog(LOG_DEBUG, fmt, ap);
 	va_end(ap);
 }
+
+int
+get_proxy_env(int connected_fd, struct sockaddr_in *real_server_sa_ptr,
+    struct sockaddr_in *client_sa_ptr)
+{
+	struct pfioc_natlook natlook;
+	socklen_t slen;
+	int fd;
+
+	slen = sizeof(*real_server_sa_ptr);
+	if (getsockname(connected_fd, (struct sockaddr *)real_server_sa_ptr,
+	    &slen) != 0) {
+		syslog(LOG_ERR, "getsockname() failed (%m)");
+		return(-1);
+	}
+	slen = sizeof(*client_sa_ptr);
+	if (getpeername(connected_fd, (struct sockaddr *)client_sa_ptr,
+	    &slen) != 0) {
+		syslog(LOG_ERR, "getpeername() failed (%m)");
+		return(-1);
+	}
+
+	/*
+	 * Build up the pf natlook structure.
+	 * Just for IPv4 right now
+	 */
+	memset((void *)&natlook, 0, sizeof(natlook));
+	natlook.af = AF_INET;
+	natlook.saddr.addr32[0] = client_sa_ptr->sin_addr.s_addr;
+	natlook.daddr.addr32[0] = real_server_sa_ptr->sin_addr.s_addr;
+	natlook.proto = IPPROTO_TCP;
+	natlook.sport = client_sa_ptr->sin_port;
+	natlook.dport = real_server_sa_ptr->sin_port;
+	natlook.direction = PF_OUT;
+
+	/*
+	 * Open the pf device and lookup the mapping pair to find
+	 * the original address we were supposed to connect to.
+	 */
+	fd = open("/dev/pf", O_RDWR);
+	if (fd == -1) {
+		syslog(LOG_ERR, "cannot open /dev/pf (%m)");
+		exit(EX_UNAVAILABLE);
+	}
+
+	if (ioctl(fd, DIOCNATLOOK, &natlook) == -1) {
+		syslog(LOG_INFO,
+		    "pf nat lookup failed %s:%hu (%m)",
+		    inet_ntoa(client_sa_ptr->sin_addr),
+		    ntohs(client_sa_ptr->sin_port));
+		close(fd);
+		return(-1);
+	}
+	close(fd);
+
+	/*
+	 * Now jam the original address and port back into the into
+	 * destination sockaddr_in for the proxy to deal with.
+	 */
+	memset((void *)real_server_sa_ptr, 0, sizeof(struct sockaddr_in));
+	real_server_sa_ptr->sin_port = natlook.rdport;
+	real_server_sa_ptr->sin_addr.s_addr = natlook.rdaddr.addr32[0];
+	real_server_sa_ptr->sin_len = sizeof(struct sockaddr_in);
+	real_server_sa_ptr->sin_family = AF_INET;
+	return(0);
+}
+
 
 /*
  * Transfer one unit of data across a pair of sockets
