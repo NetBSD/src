@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn8ae.c,v 1.15 2000/06/04 19:14:25 cgd Exp $ */
+/* $NetBSD: pci_kn8ae.c,v 1.16 2000/06/05 21:47:28 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn8ae.c,v 1.15 2000/06/04 19:14:25 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn8ae.c,v 1.16 2000/06/05 21:47:28 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,10 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_kn8ae.c,v 1.15 2000/06/04 19:14:25 cgd Exp $");
 #include <alpha/pci/dwlpxvar.h>
 #include <alpha/pci/pci_kn8ae.h>
 
-#ifndef EVCNT_COUNTERS
-#include <machine/intrcnt.h>
-#endif
-
 int	dec_kn8ae_intr_map __P((void *, pcitag_t, int, int,
 	    pci_intr_handle_t *));
 const char *dec_kn8ae_intr_string __P((void *, pci_intr_handle_t));
@@ -71,10 +67,6 @@ struct vectab {
 	void *arg;
 } vectab[DWLPX_NIONODE][DWLPX_NHOSE][DWLPX_MAXDEV];
 static u_int32_t imaskcache[DWLPX_NIONODE][DWLPX_NHOSE][NHPC];
-
-#ifdef EVCNT_COUNTERS
-struct evcnt kn8ae_intr_evcnt;
-#endif
 
 int	kn8ae_spurious __P((void *));
 void	kn8ae_iointr __P((void *framep, unsigned long vec));
@@ -264,11 +256,6 @@ kn8ae_iointr(framep, vec)
 	struct vectab *vp;
 	int ionode, hose, device;
 	if ((vec & DWLPX_VEC_EMARK) != 0) {
-#ifdef	EVCNT_COUNTERS
-		kn8ae_intr_evcnt.ev_count++;
-#else
-		intrcnt[INTRCNT_KN8AE_IRQ]++;
-#endif
 		dwlpx_iointr(framep, vec);
 		return;
 	}
@@ -279,11 +266,6 @@ kn8ae_iointr(framep, vec)
 	ionode = DWLPX_MVEC_IONODE(vec);
 	hose = DWLPX_MVEC_HOSE(vec);
 	device = DWLPX_MVEC_PCISLOT(vec);
-#ifdef	EVCNT_COUNTERS
-	kn8ae_intr_evcnt.ev_count++;
-#else
-	intrcnt[INTRCNT_KN8AE_IRQ+1]++;
-#endif
 
 	if (ionode < 0 || ionode >= DWLPX_NIONODE ||
 	    hose < 0 || hose >= DWLPX_NHOSE ||

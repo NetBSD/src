@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn300.c,v 1.19 2000/06/04 19:14:24 cgd Exp $ */
+/* $NetBSD: pci_kn300.c,v 1.20 2000/06/05 21:47:27 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.19 2000/06/04 19:14:24 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.20 2000/06/05 21:47:27 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -55,10 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.19 2000/06/04 19:14:24 cgd Exp $");
 #include <alpha/pci/mcpciareg.h>
 #include <alpha/pci/mcpciavar.h>
 #include <alpha/pci/pci_kn300.h>
-
-#ifndef EVCNT_COUNTERS
-#include <machine/intrcnt.h>
-#endif
 
 #include "sio.h"
 #if NSIO > 0 || NPCEB > 0
@@ -83,10 +79,6 @@ static struct alpha_shared_intr *kn300_pci_intr;
 
 static struct mcpcia_config *mcpcia_eisaccp = NULL;
 
-#ifdef EVCNT_COUNTERS
-struct evcnt kn300_intr_evcnt;
-#endif
-
 void	kn300_iointr __P((void *, unsigned long));
 void	kn300_enable_intr __P((struct mcpcia_config *, int));
 void	kn300_disable_intr __P((struct mcpcia_config *, int));
@@ -96,14 +88,20 @@ pci_kn300_pickintr(ccp, first)
 	struct mcpcia_config *ccp;
 	int first;
 {
+	char *cp;
 	pci_chipset_tag_t pc = &ccp->cc_pc;
 
 	if (first) {
 		int g;
 
-		kn300_pci_intr = alpha_shared_intr_alloc(NIRQ);
+		kn300_pci_intr = alpha_shared_intr_alloc(NIRQ, 16);
 		for (g = 0; g < NIRQ; g++) {
 			alpha_shared_intr_set_maxstrays(kn300_pci_intr, g, 25);
+			cp = alpha_shared_intr_string(kn300_pci_intr, g);
+			sprintf(cp, "irq %d", g);
+			evcnt_attach_dynamic(alpha_shared_intr_evcnt(
+			    kn300_pci_intr, g), EVCNT_TYPE_INTR, NULL,
+			    "kn300", cp);
 			savirqs[g] = (char) -1;
 		}
 		set_iointr(kn300_iointr);
@@ -201,8 +199,7 @@ dec_kn300_intr_evcnt(ccv, ih)
 	pci_intr_handle_t ih;
 {
 
-	/* XXX for now, no evcnt parent reported */
-	return (NULL);
+	return (alpha_shared_intr_evcnt(kn300_pci_intr, ih & 0x3ff));
 }
 
 void *
@@ -261,10 +258,6 @@ kn300_iointr(framep, vec)
 #endif
 	} 
 
-#ifdef	EVCNT_COUNTERS
-	kn300_intr_evcnt.ev_count++;
-#endif
-
 	irq = (vec - MCPCIA_VEC_PCI) >> 4;
 
 	/*
@@ -273,25 +266,13 @@ kn300_iointr(framep, vec)
 	 * to them.
 	 */
 	if (vec == MCPCIA_I2C_CVEC) {
-#ifndef	EVCNT_COUNTERS
-		intrcnt[INTRCNT_KN300_I2C_CTRL]++;
-#endif
 		printf("i2c: controller interrupt\n");
 		return;
 	}
 	if (vec == MCPCIA_I2C_BVEC) {
-#ifndef	EVCNT_COUNTERS
-		intrcnt[INTRCNT_KN300_I2C_BUS]++;
-#endif
 		printf("i2c: bus interrupt\n");
 		return;
 	}
-
-#ifndef	EVCNT_COUNTERS
-	if (savirqs[irq] >= 0 && savirqs[irq] <= INTRCNT_KN300_NCR810) {
-		intrcnt[INTRCNT_KN300_IRQ + savirqs[irq]]++;
-	}
-#endif
 
 	if (alpha_shared_intr_dispatch(kn300_pci_intr, irq)) {
 		/*

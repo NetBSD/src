@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn8ae.h,v 1.3 1997/04/07 02:00:05 cgd Exp $ */
+/* $NetBSD: pci_kn8ae.h,v 1.4 2000/06/05 21:47:28 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -31,7 +31,3 @@
  */
 
 void	pci_kn8ae_pickintr __P((struct dwlpx_config *, int));
-
-#ifdef EVCNT_COUNTERS
-extern struct evcnt kn8ae_intr_evcnt;
-#endif

@@ -1,4 +1,4 @@
-/* $NetBSD: tcdsvar.h,v 1.12 2000/06/02 04:35:07 nisimura Exp $ */
+/* $NetBSD: tcdsvar.h,v 1.13 2000/06/05 21:47:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -40,6 +40,7 @@ struct tcds_slotconfig {
 
 	int	(*sc_intrhand) __P((void *));	/* intr. handler */
 	void	*sc_intrarg;			/* intr. handler arg. */
+	struct evcnt sc_evcnt;			/* intr. count */
 
 	/*
 	 * Sets of bits in TCDS CIR and IMER that enable/check
