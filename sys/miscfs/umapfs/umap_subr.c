@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_subr.c,v 1.8 1996/03/05 02:35:39 thorpej Exp $	*/
+/*	$NetBSD: umap_subr.c,v 1.9 1996/10/10 22:54:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@ umapfs_init()
 {
 
 #ifdef UMAPFS_DIAGNOSTIC
-	printf("umapfs_init\n");		/* printed during system boot */
+	kprintf("umapfs_init\n");		/* printed during system boot */
 #endif
 	umap_node_hashtbl = hashinit(NUMAPNODECACHE, M_CACHE, &umap_node_hash);
 }
@@ -145,7 +145,7 @@ umap_node_find(mp, targetvp)
 	struct vnode *vp;
 
 #ifdef UMAPFS_DIAGNOSTIC
-	printf("umap_node_find(mp = %x, target = %x)\n", mp, targetvp);
+	kprintf("umap_node_find(mp = %x, target = %x)\n", mp, targetvp);
 #endif
 
 	/*
@@ -167,7 +167,7 @@ loop:
 			 */
 			if (vget(vp, 0)) {
 #ifdef UMAPFS_DIAGNOSTIC
-				printf ("umap_node_find: vget failed.\n");
+				kprintf ("umap_node_find: vget failed.\n");
 #endif
 				goto loop;
 			}
@@ -176,7 +176,7 @@ loop:
 	}
 
 #ifdef UMAPFS_DIAGNOSTIC
-	printf("umap_node_find(%x, %x): NOT found\n", mp, targetvp);
+	kprintf("umap_node_find(%x, %x): NOT found\n", mp, targetvp);
 #endif
 
 	return (0);
@@ -313,7 +313,7 @@ umap_node_create(mp, targetvp, newvpp)
 		 * Get new vnode.
 		 */
 #ifdef UMAPFS_DIAGNOSTIC
-		printf("umap_node_create: create new alias vnode\n");
+		kprintf("umap_node_create: create new alias vnode\n");
 #endif
 		/*
 		 * Make new vnode reference the umap_node.
@@ -352,7 +352,7 @@ umap_checkvp(vp, fil, lno)
 	 * with funny vop vector.
 	 */
 	if (vp->v_op != umap_vnodeop_p) {
-		printf ("umap_checkvp: on non-umap-node\n");
+		kprintf("umap_checkvp: on non-umap-node\n");
 		while (umap_checkvp_barrier) /*WAIT*/ ;
 		panic("umap_checkvp");
 	}
@@ -360,26 +360,26 @@ umap_checkvp(vp, fil, lno)
 	if (a->umap_lowervp == NULL) {
 		/* Should never happen */
 		int i; u_long *p;
-		printf("vp = %x, ZERO ptr\n", vp);
+		kprintf("vp = %x, ZERO ptr\n", vp);
 		for (p = (u_long *) a, i = 0; i < 8; i++)
 			printf(" %x", p[i]);
-		printf("\n");
+		kprintf("\n");
 		/* wait for debugger */
 		while (umap_checkvp_barrier) /*WAIT*/ ;
 		panic("umap_checkvp");
 	}
 	if (a->umap_lowervp->v_usecount < 1) {
 		int i; u_long *p;
-		printf("vp = %x, unref'ed lowervp\n", vp);
+		kprintf("vp = %x, unref'ed lowervp\n", vp);
 		for (p = (u_long *) a, i = 0; i < 8; i++)
-			printf(" %x", p[i]);
-		printf("\n");
+			kprintf(" %x", p[i]);
+		kprintf("\n");
 		/* wait for debugger */
 		while (umap_checkvp_barrier) /*WAIT*/ ;
 		panic ("umap with unref'ed lowervp");
 	}
 #if 0
-	printf("umap %x/%d -> %x/%d [%s, %d]\n",
+	kprintf("umap %x/%d -> %x/%d [%s, %d]\n",
 	        a->umap_vnode, a->umap_vnode->v_usecount,
 		a->umap_lowervp, a->umap_lowervp->v_usecount,
 		fil, lno);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.55 1996/09/01 01:56:10 mycroft Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.56 1996/10/10 22:46:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -848,7 +848,7 @@ issignal(p)
 				 * Are you sure you want to ignore SIGSEGV
 				 * in init? XXX
 				 */
-				printf("Process (pid %d) got signal %d\n",
+				kprintf("Process (pid %d) got signal %d\n",
 				    p->p_pid, signum);
 #endif
 				break;		/* == ignore */
@@ -889,7 +889,7 @@ issignal(p)
 			 */
 			if ((prop & SA_CONT) == 0 &&
 			    (p->p_flag & P_TRACED) == 0)
-				printf("issignal\n");
+				kprintf("issignal\n");
 			break;		/* == ignore */
 
 		default:
@@ -1062,7 +1062,7 @@ coredump(p)
 	if (USPACE + ctob(vm->vm_dsize + vm->vm_ssize) >=
 	    p->p_rlimit[RLIMIT_CORE].rlim_cur)
 		return (EFAULT);
-	sprintf(name, "%s.core", p->p_comm);
+	ksprintf(name, "%s.core", p->p_comm);
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, name, p);
 	error = vn_open(&nd, O_CREAT | FWRITE, S_IRUSR | S_IWUSR);
 	if (error)

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.74 1996/09/07 12:41:02 mycroft Exp $	*/
+/*	$NetBSD: tty.c,v 1.75 1996/10/10 22:46:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -1700,7 +1700,7 @@ ttyrub(c, tp)
 				break;
 			default:			/* XXX */
 #define	PANICSTR	"ttyrub: would panic c = %d, val = %d\n"
-				(void)printf(PANICSTR, c, CCLASS(c));
+				(void)kprintf(PANICSTR, c, CCLASS(c));
 #ifdef notdef
 				panic(PANICSTR, c, CCLASS(c));
 #endif

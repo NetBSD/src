@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.18 1996/07/12 22:00:44 thorpej Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.19 1996/10/10 22:46:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.  All rights reserved.
@@ -183,9 +183,9 @@ hp0g: hard error reading fsbn 12345 of 12344-12347 (hp0 bn %d cn %d tn %d sn %d)
  * if the offset of the error in the transfer and a disk label
  * are both available.  blkdone should be -1 if the position of the error
  * is unknown; the disklabel pointer may be null from drivers that have not
- * been converted to use them.  The message is printed with printf
+ * been converted to use them.  The message is printed with kprintf
  * if pri is LOG_PRINTF, otherwise it uses log at the specified priority.
- * The message should be completed (with at least a newline) with printf
+ * The message should be completed (with at least a newline) with kprintf
  * or addlog, respectively.  There is no trailing space.
  */
 void
@@ -205,7 +205,7 @@ diskerr(bp, dname, what, pri, blkdone, lp)
 		log(pri, fmt);
 		pr = addlog;
 	} else
-		pr = printf;
+		pr = kprintf;
 	(*pr)("%s%d%c: %s %sing fsbn ", dname, unit, partname, what,
 	    bp->b_flags & B_READ ? "read" : "writ");
 	sn = bp->b_blkno;

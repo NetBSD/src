@@ -1,4 +1,4 @@
-/*	$NetBSD: null_subr.c,v 1.6 1996/05/10 22:50:52 jtk Exp $	*/
+/*	$NetBSD: null_subr.c,v 1.7 1996/10/10 22:54:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@ nullfs_init()
 {
 
 #ifdef NULLFS_DIAGNOSTIC
-	printf("nullfs_init\n");		/* printed during system boot */
+	kprintf("nullfs_init\n");		/* printed during system boot */
 #endif
 	null_node_hashtbl = hashinit(NNULLNODECACHE, M_CACHE, &null_node_hash);
 }
@@ -113,7 +113,7 @@ loop:
 			 * the lower node.
 			 */
 			if (vget(vp, 0)) {
-				printf ("null_node_find: vget failed.\n");
+				kprintf ("null_node_find: vget failed.\n");
 				goto loop;
 			};
 			return (vp);
@@ -265,7 +265,7 @@ null_node_create(mp, lowervp, newvpp, takelock)
 		 * Get new vnode.
 		 */
 #ifdef NULLFS_DIAGNOSTIC
-		printf("null_node_create: create new alias vnode\n");
+		kprintf("null_node_create: create new alias vnode\n");
 #endif
 
 		/*
@@ -317,7 +317,7 @@ null_checkvp(vp, fil, lno)
 	 * with a funny vop vector.
 	 */
 	if (vp->v_op != null_vnodeop_p) {
-		printf ("null_checkvp: on non-null-node\n");
+		kprintf ("null_checkvp: on non-null-node\n");
 		while (null_checkvp_barrier) /*WAIT*/ ;
 		panic("null_checkvp");
 	};
@@ -325,26 +325,26 @@ null_checkvp(vp, fil, lno)
 	if (a->null_lowervp == NULL) {
 		/* Should never happen */
 		int i; u_long *p;
-		printf("vp = %x, ZERO ptr\n", vp);
+		kprintf("vp = %x, ZERO ptr\n", vp);
 		for (p = (u_long *) a, i = 0; i < 8; i++)
-			printf(" %x", p[i]);
-		printf("\n");
+			kprintf(" %x", p[i]);
+		kprintf("\n");
 		/* wait for debugger */
 		while (null_checkvp_barrier) /*WAIT*/ ;
 		panic("null_checkvp");
 	}
 	if (a->null_lowervp->v_usecount < 1) {
 		int i; u_long *p;
-		printf("vp = %x, unref'ed lowervp\n", vp);
+		kprintf("vp = %x, unref'ed lowervp\n", vp);
 		for (p = (u_long *) a, i = 0; i < 8; i++)
-			printf(" %x", p[i]);
-		printf("\n");
+			kprintf(" %x", p[i]);
+		kprintf("\n");
 		/* wait for debugger */
 		while (null_checkvp_barrier) /*WAIT*/ ;
 		panic ("null with unref'ed lowervp");
 	};
 #ifdef notyet
-	printf("null %x/%d -> %x/%d [%s, %d]\n",
+	kprintf("null %x/%d -> %x/%d [%s, %d]\n",
 	        NULLTOV(a), NULLTOV(a)->v_usecount,
 		a->null_lowervp, a->null_lowervp->v_usecount,
 		fil, lno);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.34 1996/08/14 05:43:19 explorer Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.35 1996/10/10 22:46:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -164,7 +164,7 @@ lkmclose(dev, flag, mode, p)
 
 	if (!(lkm_v & LKM_ALLOC)) {
 #ifdef DEBUG
-		printf("LKM: close before open!\n");
+		kprintf("LKM: close before open!\n");
 #endif	/* DEBUG */
 		return (EBADF);
 	}
@@ -239,8 +239,8 @@ lkmioctl(dev, cmd, data, flag, p)
 		resrvp->addr = curp->area; /* ret kernel addr */
 
 #ifdef DEBUG
-		printf("LKM: LMRESERV (actual   = 0x%08lx)\n", curp->area);
-		printf("LKM: LMRESERV (adjusted = 0x%08lx)\n",
+		kprintf("LKM: LMRESERV (actual   = 0x%08lx)\n", curp->area);
+		kprintf("LKM: LMRESERV (adjusted = 0x%08lx)\n",
 			trunc_page(curp->area));
 #endif	/* DEBUG */
 		lkm_state = LKMS_RESERVED;
@@ -272,13 +272,13 @@ lkmioctl(dev, cmd, data, flag, p)
 		if ((curp->offset + i) < curp->size) {
 			lkm_state = LKMS_LOADING;
 #ifdef DEBUG
-			printf("LKM: LMLOADBUF (loading @ %ld of %ld, i = %d)\n",
+			kprintf("LKM: LMLOADBUF (loading @ %ld of %ld, i = %d)\n",
 			curp->offset, curp->size, i);
 #endif	/* DEBUG */
 		} else {
 			lkm_state = LKMS_LOADED;
 #ifdef DEBUG
-			printf("LKM: LMLOADBUF (loaded)\n");
+			kprintf("LKM: LMLOADBUF (loaded)\n");
 #endif	/* DEBUG */
 		}
 		curp->offset += i;
@@ -293,7 +293,7 @@ lkmioctl(dev, cmd, data, flag, p)
 
 		lkmunreserve();	/* coerce state to LKM_IDLE */
 #ifdef DEBUG
-		printf("LKM: LMUNRESERV\n");
+		kprintf("LKM: LMUNRESERV\n");
 #endif	/* DEBUG */
 		break;
 
@@ -315,7 +315,7 @@ lkmioctl(dev, cmd, data, flag, p)
 		default:
 
 #ifdef DEBUG
-			printf("lkm_state is %02x\n", lkm_state);
+			kprintf("lkm_state is %02x\n", lkm_state);
 #endif	/* DEBUG */
 			return ENXIO;
 		}
@@ -338,7 +338,7 @@ lkmioctl(dev, cmd, data, flag, p)
 
 		curp->used = 1;
 #ifdef DEBUG
-		printf("LKM: LMREADY\n");
+		kprintf("LKM: LMREADY\n");
 #endif	/* DEBUG */
 		lkm_state = LKMS_IDLE;
 		break;
