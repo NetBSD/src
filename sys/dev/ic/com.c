@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.117 1997/10/19 20:01:08 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.118 1997/10/21 01:25:41 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -350,7 +350,9 @@ com_attach_subr(sc)
 	int iobase = sc->sc_iobase;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
+#ifdef COM16650
 	u_int8_t lcr;
+#endif
 #ifdef COM_HAYESP
 	int	hayesp_ports[] = { 0x140, 0x180, 0x280, 0x300, 0 };
 	int	*hayespp;
@@ -421,6 +423,7 @@ com_attach_subr(sc)
 		    == FIFO_TRIGGER_14) {
 			SET(sc->sc_hwflags, COM_HW_FIFO);
 
+#ifdef COM16650
 			/*
 			 * IIR changes into the EFR if LCR is set to LCR_EERS
 			 * on 16650s. We also know IIR != 0 at this point.
@@ -447,12 +450,16 @@ com_attach_subr(sc)
 					printf(": st16650a, working fifo\n");
 					sc->sc_fifolen = 32;
 				}
-			} else {
+			} else
+#endif
+			{
 				printf(": ns16550a, working fifo\n");
 				sc->sc_fifolen = 16;
 			}
 
+#ifdef COM16650
 			bus_space_write_1(iot, ioh, com_lcr, LCR_8BITS);
+#endif
 		} else
 			printf(": ns16550, broken fifo\n");
 	else
