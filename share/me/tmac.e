@@ -1,4 +1,4 @@
-.\"     $NetBSD: tmac.e,v 1.5 1998/04/20 02:34:24 thorpej Exp $
+.\"     $NetBSD: tmac.e,v 1.6 1998/05/05 06:12:35 mycroft Exp $
 .\"
 .nr _0 \n(.c
 .\" Copyright (c) 1988, 1993
@@ -1117,15 +1117,15 @@
 .nr $s 4n			\" column separation
 .bd S B 3
 .\"		*** OTHER INITIALIZATION ***
-.ds [ \u\x'-0.25v'
-.ds ] \d
+.ds { \u\x'-0.25v'
+.ds } \d
 .ds < \d\x'0.25v'
 .ds > \u
 .ds - --
 .if t \
 \{\
-.	ds [ \v'-0.4m'\x'-0.2m'\s-3
-.	ds ] \s0\v'0.4m'
+.	ds { \v'-0.4m'\x'-0.2m'\s-3
+.	ds } \s0\v'0.4m'
 .	ds < \v'0.4m'\x'0.2m'\s-3
 .	ds > \s0\v'-0.4m'
 .	ds - \(em
