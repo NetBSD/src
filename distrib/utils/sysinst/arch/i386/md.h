@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.36 2003/05/07 10:20:22 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.37 2003/05/07 19:02:58 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -151,8 +151,6 @@ extern struct mbr_bootsel *mbs;
 #define LIB_MOVE	1
  
 extern int defbootselpart, defbootseldisk;
-
-void disp_bootsel (struct mbr_partition *, struct mbr_bootsel *);
 
 /*
  *  prototypes for MD code.

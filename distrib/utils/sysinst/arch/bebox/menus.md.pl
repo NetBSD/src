@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.pl,v 1.3 2003/05/07 10:20:20 dsl Exp $	*/
+/*	$NetBSD: menus.md.pl,v 1.4 2003/05/07 19:02:55 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: menus.md.en,v 1.14 2001/11/29 23:20:57 thorpej Exp 	*/
 
@@ -98,25 +98,7 @@ menu editpart, title  "Wybierz aby zmienic";
 			   msg_display_add(MSG_newline);
 			};
 	option "Rodzaj", sub menu chooseid;
-	option "Poczatek i rozmiar", action 
-		{	char buf[40]; int start, size;
-			msg_prompt_add (MSG_start, NULL, buf, 40);
-			start = NUMSEC(atoi(buf),sizemult,dlcylsize);
-			if (sizemult > 1 && start < bsec)
-				start = bsec;
-			msg_prompt_add (MSG_size, NULL, buf, 40);
-			size = NUMSEC(atoi(buf),sizemult,dlcylsize);
-			if (sizemult > 1 && start == bsec)
-				size -= bsec;
-			if (start + size > bsize)
-				size = bsize - start;
-			if (size < 0) {
-				size = 0;
-				start = 0;
-			}
-			part[editpart].mbrp_start = start;
-			part[editpart].mbrp_size = size;
-		};
+	option "Poczatek i rozmiar", action { edit_ptn_bounds(); };
 	option "Ustaw aktywna", action { activepart = editpart; };
 	option "Partycje OK", exit;
 
