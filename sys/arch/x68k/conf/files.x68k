@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.9 1997/03/17 19:46:56 gwr Exp $
+#	$NetBSD: files.x68k,v 1.10 1997/04/09 21:03:20 thorpej Exp $
 #
 # new style config file for x68k architecture
 #
@@ -36,9 +36,6 @@ file	arch/x68k/x68k/trap.c
 file	arch/x68k/x68k/vm_machdep.c
 file	arch/x68k/x68k/db_memrw.c	ddb
 file	arch/x68k/x68k/fpu.c
-file	arch/m68k/m68k/copy.s
-file	arch/m68k/m68k/bcopy.s
-file	arch/m68k/m68k/copypage.s
 file	dev/cons.c
 file	dev/cninit.c			ite
 major	{vnd = 6}
