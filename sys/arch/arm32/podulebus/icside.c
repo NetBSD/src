@@ -1,4 +1,4 @@
-/*	$NetBSD: icside.c,v 1.5 1998/01/13 02:10:27 thorpej Exp $	*/
+/*	$NetBSD: icside.c,v 1.6 1998/01/18 04:09:48 mark Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -101,7 +101,7 @@ icside_print(aux, name)
 	void *aux;
 	const char *name;
 {
-	struct podule_attach_args *pa = aux;
+/*	struct podule_attach_args *pa = aux;*/
 
 	/* XXXX print flags */
 	return (QUIET);
@@ -139,7 +139,6 @@ icside_attach(parent, self, aux)
 {
 	struct icside_softc *sc = (void *)self;
 	struct podule_attach_args *pa = (void *)aux;
-	int dummy;
 
 	/* Note the podule number and validate */
 

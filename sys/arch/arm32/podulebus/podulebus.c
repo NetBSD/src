@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.24 1998/01/13 02:10:36 thorpej Exp $ */
+/* $NetBSD: podulebus.c,v 1.25 1998/01/18 04:09:50 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -504,8 +504,10 @@ podulebusattach(parent, self, aux)
 {
 	int loop;
 	struct podule_attach_args pa;
+#if 0
 	int easi_time;
 	int bit;
+#endif
 	int boolean;
 	char argstring[20];
 

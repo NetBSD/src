@@ -1,4 +1,4 @@
-/*	$NetBSD: amps.c,v 1.2 1998/01/13 02:10:24 thorpej Exp $	*/
+/*	$NetBSD: amps.c,v 1.3 1998/01/18 04:09:46 mark Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -163,7 +163,6 @@ amps_attach(parent, self, aux)
 	struct amps_softc *sc = (void *)self;
 	struct podule_attach_args *pa = (void *)aux;
 	struct amps_attach_args aa;
-	bus_space_tag_t ioh;
 
 	/* Note the podule number and validate */
 

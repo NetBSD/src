@@ -1,4 +1,4 @@
-/*	$NetBSD: if_em.c,v 1.3 1998/01/13 02:10:33 thorpej Exp $	*/
+/*	$NetBSD: if_em.c,v 1.4 1998/01/18 04:09:49 mark Exp $	*/
 
 /*
  * Copyright (C) 1997 Mark Brinicombe
@@ -92,8 +92,6 @@ struct cfattach em_ca = {
 	sizeof(struct em_softc), emprobe, emattach
 };
 
-static struct bus_space em_bs_tag;
-
 /*
  * Determine if the device is present.
  */
@@ -121,11 +119,8 @@ emattach(parent, self, aux)
 	void *aux;
 {
 	struct podule_attach_args *pa = (void *)aux;
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
 	struct em_softc *emsc = (void *)self;
 	struct dp8390_softc *sc = &emsc->sc_dp8390;
-	struct cfdata *cf = sc->sc_dev.dv_cfdata;
 	int dsr;
 	int loop;
 

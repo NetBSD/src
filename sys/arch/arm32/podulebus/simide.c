@@ -1,4 +1,4 @@
-/*	$NetBSD: simide.c,v 1.4 1998/01/13 02:10:39 thorpej Exp $	*/
+/*	$NetBSD: simide.c,v 1.5 1998/01/18 04:09:53 mark Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -171,7 +171,6 @@ simide_attach(parent, self, aux)
 	struct simide_softc *sc = (void *)self;
 	struct podule_attach_args *pa = (void *)aux;
 	struct simide_attach_args sa;
-	bus_space_tag_t ioh;
 	int status;
 
 	/* Note the podule number and validate */
