@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.29 1996/05/20 16:56:20 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -162,7 +162,7 @@ udp_input(m, va_alist)
 	/*
 	 * Checksum extended UDP header and data.
 	 */
-	if (udpcksum && uh->uh_sum) {
+	if (uh->uh_sum) {
 		bzero(((struct ipovly *)ip)->ih_x1,
 		    sizeof ((struct ipovly *)ip)->ih_x1);
 		((struct ipovly *)ip)->ih_len = uh->uh_ulen;
