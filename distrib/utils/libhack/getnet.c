@@ -1,4 +1,4 @@
-/*	$NetBSD: getnet.c,v 1.3 2003/08/07 09:27:57 agc Exp $	*/
+/*	$NetBSD: getnet.c,v 1.4 2004/05/09 01:49:56 sommerfeld Exp $	*/
 
 /* Copyright (c) 1993 Carlos Leandro and Rui Salgueiro
  *	Dep. Matematica Universidade de Coimbra, Portugal, Europe
@@ -68,8 +68,8 @@ __weak_alias(getnetbyname,_getnetbyname)
 
 struct netent *
 getnetbyaddr(net, net_type)
-	register u_long net;
-	register int net_type;
+	uint32_t net;
+	int net_type;
 {
 	return (NULL);
 }
