@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.49 1999/12/20 00:33:17 mjacob Exp $ */
+/* $NetBSD: isp_pci.c,v 1.50 2000/02/12 02:22:37 mjacob Exp $ */
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  * Matthew Jacob (mjacob@nas.nasa.gov)
@@ -61,6 +61,9 @@ static int isp_pci_intr __P((void *));
 #ifndef	ISP_1080_RISC_CODE
 #define	ISP_1080_RISC_CODE	NULL
 #endif
+#ifndef	ISP_12160_RISC_CODE
+#define	ISP_12160_RISC_CODE	NULL
+#endif
 #ifndef	ISP_2100_RISC_CODE
 #define	ISP_2100_RISC_CODE	NULL
 #endif
@@ -98,6 +101,25 @@ static struct ispmdvec mdvec_1080 = {
 	isp_pci_reset1,
 	isp_pci_dumpregs,
 	ISP_1080_RISC_CODE,
+	0,
+	ISP_CODE_ORG,
+	0,
+	BIU_BURST_ENABLE|BIU_PCI_CONF1_FIFO_64,
+	0
+};
+#endif
+
+#ifndef	ISP_DISABLE_12160_SUPPORT
+static struct ispmdvec mdvec_12160 = {
+	isp_pci_rd_reg_1080,
+	isp_pci_wr_reg_1080,
+	isp_pci_mbxdma,
+	isp_pci_dmasetup,
+	isp_pci_dmateardown,
+	NULL,
+	isp_pci_reset1,
+	isp_pci_dumpregs,
+	ISP_12160_RISC_CODE,
 	0,
 	ISP_CODE_ORG,
 	0,
@@ -164,6 +186,10 @@ static struct ispmdvec mdvec_2200 = {
 #define	PCI_PRODUCT_QLOGIC_ISP1280	0x1280
 #endif
 
+#ifndef	PCI_PRODUCT_QLOGIC_ISP12160
+#define	PCI_PRODUCT_QLOGIC_ISP12160	0x12160
+#endif
+
 #ifndef	PCI_PRODUCT_QLOGIC_ISP2100
 #define	PCI_PRODUCT_QLOGIC_ISP2100	0x2100
 #endif
@@ -182,6 +208,9 @@ static struct ispmdvec mdvec_2200 = {
 
 #define	PCI_QLOGIC_ISP1280	\
 	((PCI_PRODUCT_QLOGIC_ISP1280 << 16) | PCI_VENDOR_QLOGIC)
+
+#define	PCI_QLOGIC_ISP12160	\
+	((PCI_PRODUCT_QLOGIC_ISP12160 << 16) | PCI_VENDOR_QLOGIC)
 
 #define	PCI_QLOGIC_ISP2100	\
 	((PCI_PRODUCT_QLOGIC_ISP2100 << 16) | PCI_VENDOR_QLOGIC)
@@ -235,6 +264,10 @@ isp_pci_probe(parent, match, aux)
 	case PCI_QLOGIC_ISP1080:
 	case PCI_QLOGIC_ISP1240:
 	case PCI_QLOGIC_ISP1280:
+		return (1);
+#endif
+#ifndef	ISP_DISABLE_12160_SUPPORT
+	case PCI_QLOGIC_ISP12160:
 		return (1);
 #endif
 #ifndef	ISP_DISABLE_2100_SUPPORT
@@ -343,6 +376,21 @@ isp_pci_attach(parent, self, aux)
 	if (pa->pa_id == PCI_QLOGIC_ISP1280) {
 		isp->isp_mdvec = &mdvec_1080;
 		isp->isp_type = ISP_HA_SCSI_1280;
+		isp->isp_param =
+		    malloc(2 * sizeof (sdparam), M_DEVBUF, M_NOWAIT);
+		if (isp->isp_param == NULL) {
+			printf(nomem, isp->isp_name);
+			return;
+		}
+		bzero(isp->isp_param, 2 * sizeof (sdparam));
+		pcs->pci_poff[DMA_BLOCK >> _BLK_REG_SHFT] =
+		    ISP1080_DMA_REGS_OFF;
+	}
+#endif
+#ifndef	ISP_DISABLE_12160_SUPPORT
+	if (pa->pa_id == PCI_QLOGIC_ISP12160) {
+		isp->isp_mdvec = &mdvec_12160;
+		isp->isp_type = ISP_HA_SCSI_12160;
 		isp->isp_param =
 		    malloc(2 * sizeof (sdparam), M_DEVBUF, M_NOWAIT);
 		if (isp->isp_param == NULL) {
@@ -559,7 +607,7 @@ isp_pci_wr_reg(isp, regoff, val)
 	}
 }
 
-#ifndef	ISP_DISABLE_1080_SUPPORT
+#if !defined(ISP_DISABLE_1080_SUPPORT) && !defined(ISP_DISABLE_12160_SUPPORT)
 static u_int16_t
 isp_pci_rd_reg_1080(isp, regoff)
 	struct ispsoftc *isp;
