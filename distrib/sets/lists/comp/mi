@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.218 2000/05/18 07:22:58 shin Exp $
+#	$NetBSD: mi,v 1.219 2000/05/25 04:20:46 shin Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -1375,6 +1375,10 @@
 ./usr/share/man/cat2/ktrace.0	comp-syscall-catman
 ./usr/share/man/cat2/lchmod.0	comp-syscall-catman
 ./usr/share/man/cat2/lchown.0	comp-syscall-catman
+./usr/share/man/cat2/lfs_bmapv.0	comp-syscall-catman
+./usr/share/man/cat2/lfs_markv.0	comp-syscall-catman
+./usr/share/man/cat2/lfs_segclean.0	comp-syscall-catman
+./usr/share/man/cat2/lfs_segwait.0	comp-syscall-catman
 ./usr/share/man/cat2/link.0	comp-syscall-catman
 ./usr/share/man/cat2/listen.0	comp-syscall-catman
 ./usr/share/man/cat2/lseek.0	comp-syscall-catman
@@ -2895,6 +2899,10 @@
 ./usr/share/man/man2/ktrace.2		comp-syscall-man
 ./usr/share/man/man2/lchmod.2		comp-syscall-man
 ./usr/share/man/man2/lchown.2		comp-syscall-man
+./usr/share/man/man2/lfs_bmapv.2	comp-syscall-man
+./usr/share/man/man2/lfs_markv.2	comp-syscall-man
+./usr/share/man/man2/lfs_segclean.2	comp-syscall-man
+./usr/share/man/man2/lfs_segwait.2	comp-syscall-man
 ./usr/share/man/man2/link.2		comp-syscall-man
 ./usr/share/man/man2/listen.2		comp-syscall-man
 ./usr/share/man/man2/lseek.2		comp-syscall-man
