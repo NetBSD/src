@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_sunos.8,v 1.5 1995/06/11 22:34:31 pk Exp $
+.\"	$NetBSD: compat_sunos.8,v 1.6 1995/06/11 23:05:17 pk Exp $
 .\"
 .\" Copyright (c) 1984 Theo de Raadt
 .\" All rights reserved.
@@ -50,42 +50,43 @@ Static executables will normally run without any extra setup.
 This procedure details the directories and files that must be
 setup to allow dynamically linked executables to work.
 .Pp
-The files you need are on your Sun machine.
+The files you need are on your SunOS machine.
 You need to worry about the legal issues of ensuring that you
 have a right to use the required files on your machine.
-.Pp
-.Bl -tag -width 123 -compact
-.It 1.
 On your NetBSD machine, do the following:
-.nf
-mkdir -p /emul/sunos/usr/lib /emul/sunos/usr/5lib
+.Pp
+.Bl -enum -inset -offset 123 -compact
+.It
+.Li mkdir -p /emul/sunos/usr/lib /emul/sunos/usr/5lib
 .fi
 .Pp
-.It 2.
-cp SunOS:/usr/lib/lib*.so.*.* NetBSD:/emul/sunos/usr/lib
+.It
+.Li cp SunOS:/usr/lib/lib*.so.*.* NetBSD:/emul/sunos/usr/lib
 .Pp
-.It 3.
-cp SunOS:/usr/5lib/lib*.so.*.* NetBSD:/emul/sunos/usr/5lib
+.It
+.Li cp SunOS:/usr/5lib/lib*.so.*.* NetBSD:/emul/sunos/usr/5lib
 .Pp
-.It 4.
-cp SunOS:/usr/lib/ld.so NetBSD:/emul/sunos/usr/lib/ld.so
+.It
+.Li cp SunOS:/usr/lib/ld.so NetBSD:/emul/sunos/usr/lib/ld.so
 .Pp
-.It 6.
+.It
 If you ever expect to use YP, you will want to create a link:
 .nf
-ln -s /var/run/ypbind.lock /etc/ypbind.lock
+.Li ln -s /var/run/ypbind.lock /etc/ypbind.lock
 .fi
 .El
 .Pp
 Alternatively, you can use an NFS mount to accomplish the same
 effect.
-.Pp
-.Bl -tag -width 123 -compact
-.It 1.
 On your NetBSD machine, do the following:
-.nf
-mkdir -p /emul/sunos/usr
-mount SunOS:/usr /emul/sunos/usr
+.Pp
+.Bl -enum -inset -offset 123 -compact
+.Pp
+.It
+.Li mkdir -p /emul/sunos/usr
+.Pp
+.It
+.Li mount SunOS:/usr /emul/sunos/usr
 .fi
 .El
 .Pp
