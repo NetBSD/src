@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-krb5.c,v 1.10 2002/09/09 06:45:17 itojun Exp $	*/
+/*	$NetBSD: auth-krb5.c,v 1.11 2002/10/01 14:07:26 itojun Exp $	*/
 /*
  *    Kerberos v5 authentication and ticket-passing routines.
  *
@@ -29,7 +29,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-krb5.c,v 1.8 2002/03/19 10:49:35 markus Exp $");
+RCSID("$OpenBSD: auth-krb5.c,v 1.9 2002/09/09 06:48:06 itojun Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: cipher.c,v 1.11 2002/06/24 05:48:29 itojun Exp $	*/
+/*	$NetBSD: cipher.c,v 1.12 2002/10/01 14:07:29 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: cipher.c,v 1.60 2002/06/23 03:26:52 deraadt Exp $");
+RCSID("$OpenBSD: cipher.c,v 1.61 2002/07/12 15:50:17 markus Exp $");
 
 #include "xmalloc.h"
 #include "log.h"
@@ -526,7 +526,7 @@ evp_rijndael(void)
 	rijndal_cbc.cleanup = ssh_rijndael_cleanup;
 	rijndal_cbc.do_cipher = ssh_rijndael_cbc;
 	rijndal_cbc.flags = EVP_CIPH_CBC_MODE | EVP_CIPH_VARIABLE_LENGTH |
-	    EVP_CIPH_ALWAYS_CALL_INIT;
+	    EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_CUSTOM_IV;
 	return (&rijndal_cbc);
 }
 #endif

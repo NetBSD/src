@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor_mm.c,v 1.2 2002/07/01 06:17:12 itojun Exp $	*/
+/*	$NetBSD: monitor_mm.c,v 1.3 2002/10/01 14:07:33 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: monitor_mm.c,v 1.7 2002/06/28 01:49:31 millert Exp $");
+RCSID("$OpenBSD: monitor_mm.c,v 1.8 2002/08/02 14:43:15 millert Exp $");
 
 #include <sys/mman.h>
 
@@ -161,8 +161,10 @@ mm_malloc(struct mm_master *mm, size_t size)
 
 	if (size == 0)
 		fatal("mm_malloc: try to allocate 0 space");
+	if (size > SIZE_T_MAX - MM_MINSIZE + 1)
+		fatal("mm_malloc: size too big");
 
-	size = ((size + MM_MINSIZE - 1) / MM_MINSIZE) * MM_MINSIZE;
+	size = ((size + (MM_MINSIZE - 1)) / MM_MINSIZE) * MM_MINSIZE;
 
 	RB_FOREACH(mms, mmtree, &mm->rb_free) {
 		if (mms->size >= size)
