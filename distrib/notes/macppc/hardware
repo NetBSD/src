@@ -1,4 +1,4 @@
-.\"$NetBSD: hardware,v 1.30 2002/07/11 02:33:29 mbw Exp $
+.\"$NetBSD: hardware,v 1.31 2002/08/07 19:36:31 mbw Exp $
 .
 Currently,
 .Nx*M
@@ -182,6 +182,9 @@ These models might work, but have not been tested as of the release of
 .(bullet -offset indent
 CPU upgrades
 .(bullet -compact
+Only one CPU in a multiprocessor system is supported with the GENERIC kernel.
+All CPUs are supported with the experimental GENERIC.MP kernel.
+.It
 Most CPU upgrades are supported.
 Some older models will not automatically enable the L2 cache on
 a G3 or G4 processor.
@@ -474,15 +477,6 @@ FireWire (IEEE 1394)
 .It
 Advanced power management (cannot put system to
 .Sq sleep )
-.It
-Multiple processors
-.(Note
-Although
-.Nx*M
-can boot with more than one processor present, it will not use the additional
-CPUs
-.Note)
-.Pp
 .It
 On-board video capture
 .bullet)
