@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.2 2001/06/08 04:48:56 simonb Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.3 2001/10/29 23:34:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -102,8 +102,8 @@ struct algor_pci_chipset {
     (*(c)->pc_intr_establish)((c)->pc_intr_v, (ih), (l), (h), (a))
 #define	pci_intr_disestablish(c, iv)					\
     (*(c)->pc_intr_disestablish)((c)->pc_intr_v, (iv))
-#define	pci_conf_interrupt(c, b, d, f, s, lp)				\
-    (*(c)->pc_conf_interrupt)((c)->pc_intr_v, (b), (d), (f), (s), (lp))
+#define	pci_conf_interrupt(c, b, d, p, s, lp)				\
+    (*(c)->pc_conf_interrupt)((c)->pc_intr_v, (b), (d), (p), (s), (lp))
 
 /*
  * algor-specific PCI functions.
