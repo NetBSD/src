@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_svr4.8,v 1.1 1996/07/06 17:14:50 christos Exp $
+.\"	$NetBSD: compat_svr4.8,v 1.2 1996/09/01 16:32:09 christos Exp $
 .\"
 .\" Copyright (c) 1996 Christos Zoulas
 .\" All rights reserved.
@@ -40,9 +40,24 @@
 .Sh DESCRIPTION
 NetBSD supports running SVR4/iBCS2 binaries. This code has been tested on
 i386 and sparc systems. Most programs should work, but not ones that use
-the /proc filesystem, sound, or threads (unfortunately ttsession uses threads).
-.\" XXX: What else?
-
+or depend on:
+.sp
+.Bl -tag -width 123 -compact -offset indent
+.It kernel internal data structures
+.br
+.It the /proc filesystem
+.br
+.It the pty subsystem
+.br
+.It the ticotsord loopback rpc mechanism (nis uses this)
+.br
+.It sound and video interfaces
+.br
+.It threads (ttsession uses threads)
+.br
+.It the streams administrative driver
+.El
+.sp
 The SVR4 compatibility feature is active
 for kernels compiled with the
 .Nm COMPAT_SVR4
@@ -115,4 +130,5 @@ Setup the configuration files and devices:
 An alternative method is to mount a whole svr4 partition in /emul/svr4
 and then override with other mounts /emul/svr4/etc and /emul/svr4/dev.
 .Sh BUGS
-Many system calls are still not emulated.
+Many system calls are still not emulated. The streams emulation is
+incomplete (socketpair does not work yet.)
