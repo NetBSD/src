@@ -1,4 +1,4 @@
-/*	$NetBSD: chmod.c,v 1.19 1998/07/28 04:12:10 mycroft Exp $	*/
+/*	$NetBSD: chmod.c,v 1.20 1998/07/28 05:31:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)chmod.c	8.8 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: chmod.c,v 1.19 1998/07/28 04:12:10 mycroft Exp $");
+__RCSID("$NetBSD: chmod.c,v 1.20 1998/07/28 05:31:22 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -223,4 +223,5 @@ usage()
 	(void)fprintf(stderr,
 	    "usage: chmod [-R [-H | -L | -P]] [-h] mode file ...\n");
 	exit(1);
+	/* NOTREACHED */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.29 1998/07/28 03:47:15 mycroft Exp $	*/
+/*	$NetBSD: df.c,v 1.30 1998/07/28 05:31:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -49,7 +49,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.29 1998/07/28 03:47:15 mycroft Exp $");
+__RCSID("$NetBSD: df.c,v 1.30 1998/07/28 05:31:24 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -444,4 +444,5 @@ usage()
 {
 	(void)fprintf(stderr, "usage: df [-ikln] [-t type] [file | file_system ...]\n");
 	exit(1);
+	/* NOTREACHED */
 }

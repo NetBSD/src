@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.26 1998/05/02 18:04:09 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.27 1998/07/28 05:31:28 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: options.c,v 1.26 1998/05/02 18:04:09 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.27 1998/07/28 05:31:28 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -493,6 +493,7 @@ out:
 		*optptr = NULL;
 		flushall();
 		exraise(EXERROR);
+		/* NOTREACHED */
 	}
 	return done;
 }

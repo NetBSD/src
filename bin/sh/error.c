@@ -1,4 +1,4 @@
-/*	$NetBSD: error.c,v 1.18 1998/01/31 12:36:16 christos Exp $	*/
+/*	$NetBSD: error.c,v 1.19 1998/07/28 05:31:27 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)error.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: error.c,v 1.18 1998/01/31 12:36:16 christos Exp $");
+__RCSID("$NetBSD: error.c,v 1.19 1998/07/28 05:31:27 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -116,6 +116,7 @@ onint() {
 		exraise(EXINT);
 	else
 		_exit(128 + SIGINT);
+	/* NOTREACHED */
 }
 
 
@@ -147,6 +148,7 @@ exverror(cond, msg, ap)
 	}
 	flushall();
 	exraise(cond);
+	/* NOTREACHED */
 }
 
 

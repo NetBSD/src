@@ -1,4 +1,4 @@
-/*	$NetBSD: stty.c,v 1.13 1997/07/20 21:31:27 christos Exp $	*/
+/*	$NetBSD: stty.c,v 1.14 1998/07/28 05:31:29 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)stty.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: stty.c,v 1.13 1997/07/20 21:31:27 christos Exp $");
+__RCSID("$NetBSD: stty.c,v 1.14 1998/07/28 05:31:29 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -157,6 +157,7 @@ args:	argc -= optind;
 	if (i.wset && ioctl(i.fd, TIOCSWINSZ, &i.win) < 0)
 		warn("TIOCSWINSZ");
 	exit(0);
+	/* NOTREACHED */
 }
 
 void
@@ -164,5 +165,6 @@ usage()
 {
 
 	(void)fprintf(stderr, "usage: stty [-a|-e|-g] [-f file] [options]\n");
-	exit (1);
+	exit(1);
+	/* NOTREACHED */
 }

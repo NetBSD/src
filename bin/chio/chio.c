@@ -1,4 +1,4 @@
-/*	$NetBSD: chio.c,v 1.9 1998/07/28 03:47:14 mycroft Exp $	*/
+/*	$NetBSD: chio.c,v 1.10 1998/07/28 05:31:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Jason R. Thorpe <thorpej@and.com>
@@ -39,7 +39,7 @@
 #ifndef lint
 __COPYRIGHT(
     "@(#) Copyright (c) 1996, 1998 Jason R. Thorpe.  All rights reserved.");
-__RCSID("$NetBSD: chio.c,v 1.9 1998/07/28 03:47:14 mycroft Exp $");
+__RCSID("$NetBSD: chio.c,v 1.10 1998/07/28 05:31:22 mycroft Exp $");
 #endif
 
 #include <sys/param.h>
@@ -766,4 +766,5 @@ usage()
 	(void) fprintf(stderr, "\tchio -f /dev/ch1 status\n");
 	(void) fprintf(stderr, "\tchio -f /dev/cd0a cdlu load 1\n");
 	exit(1);
+	/* NOTREACHED */
 }

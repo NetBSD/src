@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.29 1998/07/28 05:15:47 mycroft Exp $	*/
+/*	$NetBSD: ls.c,v 1.30 1998/07/28 05:31:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: ls.c,v 1.29 1998/07/28 05:15:47 mycroft Exp $");
+__RCSID("$NetBSD: ls.c,v 1.30 1998/07/28 05:31:25 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -314,6 +314,7 @@ main(argc, argv)
 	else
 		traverse(1, dotav, fts_options);
 	exit(0);
+	/* NOTREACHED */
 }
 
 static int output;			/* If anything output. */

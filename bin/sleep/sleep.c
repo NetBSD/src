@@ -1,4 +1,4 @@
-/*	$NetBSD: sleep.c,v 1.13 1998/04/09 07:03:29 fair Exp $	*/
+/*	$NetBSD: sleep.c,v 1.14 1998/07/28 05:31:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)sleep.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: sleep.c,v 1.13 1998/04/09 07:03:29 fair Exp $");
+__RCSID("$NetBSD: sleep.c,v 1.14 1998/07/28 05:31:29 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,8 +107,10 @@ main(argc, argv)
 
 	if (fracflag) {
 		val = atof(arg);
-		if (val <= 0)
+		if (val <= 0) {
 			exit(0);
+			/* NOTREACHED */
+		}
 		ival = floor(val);
 		fval = (1000000000 * (val-ival));
 		ntime.tv_sec = ival;
@@ -116,8 +118,10 @@ main(argc, argv)
 	}
 	else{
 		ntime.tv_sec = atol(arg);
-		if (ntime.tv_sec <= 0)
+		if (ntime.tv_sec <= 0) {
 			exit(0);
+			/* NOTREACHED */
+		}
 		ntime.tv_nsec = 0;
 	}
 
@@ -132,6 +136,7 @@ usage()
 {
 	(void)fputs("usage: sleep seconds\n", stderr);
 	exit(1);
+	/* NOTREACHED */
 }
 
 /* ARGSUSED */
@@ -140,4 +145,5 @@ alarmhandle(i)
 	int i;
 {
 	_exit(0);
+	/* NOTREACHED */
 }

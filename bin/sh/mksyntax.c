@@ -1,4 +1,4 @@
-/*	$NetBSD: mksyntax.c,v 1.16 1997/07/18 17:46:59 thorpej Exp $	*/
+/*	$NetBSD: mksyntax.c,v 1.17 1998/07/28 05:31:28 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mksyntax.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mksyntax.c,v 1.16 1997/07/18 17:46:59 thorpej Exp $");
+__RCSID("$NetBSD: mksyntax.c,v 1.17 1998/07/28 05:31:28 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -137,10 +137,12 @@ main(argc, argv)
 	if ((cfile = fopen("syntax.c", "w")) == NULL) {
 		perror("syntax.c");
 		exit(2);
+		/* NOTREACHED */
 	}
 	if ((hfile = fopen("syntax.h", "w")) == NULL) {
 		perror("syntax.h");
 		exit(2);
+		/* NOTREACHED */
 	}
 	fputs(writer, hfile);
 	fputs(writer, cfile);
@@ -160,6 +162,7 @@ main(argc, argv)
 	if (nbits > 9) {
 		fputs("Characters can't have more than 9 bits\n", stderr);
 		exit(2);
+		/* NOTREACHED */
 	}
 	size = (1 << nbits) + 1;
 	base = 1;
@@ -263,6 +266,7 @@ main(argc, argv)
 	if (! digit_contig)
 		digit_convert();
 	exit(0);
+	/* NOTREACHED */
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.7 1997/09/14 07:22:27 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.8 1998/07/28 05:31:24 mycroft Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
    for the ed line editor. */
@@ -39,7 +39,7 @@ __COPYRIGHT(
 #if 0
 static char *rcsid = "@(#)main.c,v 1.1 1994/02/01 00:34:42 alm Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.7 1997/09/14 07:22:27 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.8 1998/07/28 05:31:24 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -144,6 +144,7 @@ top:
 		default:
 			fprintf(stderr, usage, argv[0]);
 			exit(1);
+			/* NOTREACHED */
 		}
 	argv += optind;
 	argc -= optind;

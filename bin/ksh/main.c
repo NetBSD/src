@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.3 1997/07/20 17:42:08 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.4 1998/07/28 05:31:25 mycroft Exp $	*/
 
 /*
  * startup, main loop, enviroments and error handling
@@ -263,8 +263,10 @@ main(argc, argv)
 	/* this to note if monitor is set on command line (see below) */
 	Flag(FMONITOR) = 127;
 	argi = parse_args(argv, OF_CMDLINE, (int *) 0);
-	if (argi < 0)
+	if (argi < 0) {
 		exit(1);
+		/* NOTREACHED */
+	}
 
 	if (Flag(FCOMMAND)) {
 		s = pushs(SSTRING, ATEMP);
@@ -690,8 +692,10 @@ quitenv()
 	register struct env *ep = e;
 	register int fd;
 
-	if (ep->oenv == NULL) /* cleanup_parents_env() was called */
+	if (ep->oenv == NULL) { /* cleanup_parents_env() was called */
 		exit(exstat);	/* exit child */
+		/* NOTREACHED */
+	}
 	if (ep->oenv->loc != ep->loc)
 		popblock();
 	if (ep->savefd != NULL) {

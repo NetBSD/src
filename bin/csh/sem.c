@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.13 1998/07/28 02:47:21 mycroft Exp $	*/
+/*	$NetBSD: sem.c,v 1.14 1998/07/28 05:31:23 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sem.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: sem.c,v 1.13 1998/07/28 02:47:21 mycroft Exp $");
+__RCSID("$NetBSD: sem.c,v 1.14 1998/07/28 05:31:23 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -479,6 +479,7 @@ int i;
 	xfree((ptr_t) v);
     }
     _exit(i);
+    /* NOTREACHED */
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: cat.c,v 1.17 1998/01/27 16:37:31 kleink Exp $	*/
+/*	$NetBSD: cat.c,v 1.18 1998/07/28 05:31:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cat.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: cat.c,v 1.17 1998/01/27 16:37:31 kleink Exp $");
+__RCSID("$NetBSD: cat.c,v 1.18 1998/07/28 05:31:22 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -112,6 +112,7 @@ main(argc, argv)
 			(void)fprintf(stderr,
 			    "usage: cat [-benstuv] [-] [file ...]\n");
 			exit(1);
+			/* NOTREACHED */
 		}
 	argv += optind;
 

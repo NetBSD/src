@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.3 1997/07/20 17:42:03 christos Exp $	*/
+/*	$NetBSD: exec.c,v 1.4 1998/07/28 05:31:25 mycroft Exp $	*/
 
 /*
  * execute command tree
@@ -428,8 +428,10 @@ execute(t, flags)
 	exstat = rv;
 
 	quitenv();		/* restores IO */
-	if ((flags&XEXEC))
+	if ((flags&XEXEC)) {
 		exit(rv);	/* exit child */
+		/* NOTREACHED */
+	}
 	if (rv != 0 && !(flags & XERROK)) {
 		if (Flag(FERREXIT))
 			unwind(LERROR);

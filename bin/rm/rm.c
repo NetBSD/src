@@ -1,4 +1,4 @@
-/*	$NetBSD: rm.c,v 1.22 1998/07/28 04:01:03 mycroft Exp $	*/
+/*	$NetBSD: rm.c,v 1.23 1998/07/28 05:31:27 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rm.c	8.8 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: rm.c,v 1.22 1998/07/28 04:01:03 mycroft Exp $");
+__RCSID("$NetBSD: rm.c,v 1.23 1998/07/28 05:31:27 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -438,4 +438,5 @@ usage()
 
 	(void)fprintf(stderr, "usage: rm [-dfiPRrW] file ...\n");
 	exit(1);
+	/* NOTREACHED */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.22 1998/07/27 17:06:48 mycroft Exp $	*/
+/*	$NetBSD: ps.c,v 1.23 1998/07/28 05:31:26 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.22 1998/07/27 17:06:48 mycroft Exp $");
+__RCSID("$NetBSD: ps.c,v 1.23 1998/07/28 05:31:26 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -167,6 +167,7 @@ main(argc, argv)
 		case 'L':
 			showkey();
 			exit(0);
+			/* NOTREACHED */
 		case 'l':
 			parsefmt(lfmt);
 			fmt = 1;
@@ -330,8 +331,10 @@ main(argc, argv)
 	 * print header
 	 */
 	printheader();
-	if (nentries == 0)
+	if (nentries == 0) {
 		exit(0);
+		/* NOTREACHED */
+	}
 	/*
 	 * sort proc list
 	 */
@@ -358,6 +361,7 @@ main(argc, argv)
 		}
 	}
 	exit(eval);
+	/* NOTREACHED */
 }
 
 static void
@@ -498,4 +502,5 @@ usage()
 	    "[-M core] [-N system] [-W swap]",
 	    "ps [-L]");
 	exit(1);
+	/* NOTREACHED */
 }

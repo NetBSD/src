@@ -1,4 +1,4 @@
-/*	$NetBSD: rcp.c,v 1.20 1998/02/03 07:48:44 mycroft Exp $	*/
+/*	$NetBSD: rcp.c,v 1.21 1998/07/28 05:31:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: rcp.c,v 1.20 1998/02/03 07:48:44 mycroft Exp $");
+__RCSID("$NetBSD: rcp.c,v 1.21 1998/07/28 05:31:27 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -202,11 +202,13 @@ main(argc, argv)
 		(void)response();
 		source(argc, argv);
 		exit(errs);
+		/* NOTREACHED */
 	}
 
 	if (tflag) {			/* Receive data. */
 		sink(argc, argv);
 		exit(errs);
+		/* NOTREACHED */
 	}
 
 	if (argc < 2)
@@ -241,6 +243,7 @@ main(argc, argv)
 			verifydir(argv[argc - 1]);
 	}
 	exit(errs);
+	/* NOTREACHED */
 }
 
 void
@@ -261,8 +264,10 @@ toremote(targ, argc, argv)
 		tuser = argv[argc - 1];
 		if (*tuser == '\0')
 			tuser = NULL;
-		else if (!okname(tuser))
+		else if (!okname(tuser)) {
 			exit(1);
+			/* NOTREACHED */
+		}
 	} else {
 		thost = argv[argc - 1];
 		tuser = NULL;
@@ -316,10 +321,14 @@ toremote(targ, argc, argv)
 					rem = rcmd(&host, port, pwname,
 					    tuser ? tuser : pwname,
 					    bp, 0);
-				if (rem < 0)
+				if (rem < 0) {
 					exit(1);
-				if (response() < 0)
+					/* NOTREACHED */
+				}
+				if (response() < 0) {
 					exit(1);
+					/* NOTREACHED */
+				}
 				(void)free(bp);
 			}
 			source(1, argv+i);
@@ -566,6 +575,7 @@ sink(argc, argv)
 	if (argc != 1) {
 		run_err("ambiguous target");
 		exit(1);
+		/* NOTREACHED */
 	}
 	targ = *argv;
 	if (targetshouldbedirectory)
@@ -590,8 +600,10 @@ sink(argc, argv)
 			if (iamremote == 0)
 				(void)write(STDERR_FILENO,
 				    buf + 1, strlen(buf + 1));
-			if (buf[0] == '\02')
+			if (buf[0] == '\02') {
 				exit(1);
+				/* NOTREACHED */
+			}
 			++errs;
 			continue;
 		}
@@ -634,6 +646,7 @@ sink(argc, argv)
 			if (first) {
 				run_err("%s", cp);
 				exit(1);
+				/* NOTREACHED */
 			}
 			SCREWUP("expected control record");
 		}
@@ -717,6 +730,7 @@ bad:			run_err("%s: %s", np, strerror(errno));
 					run_err("%s", j ? strerror(errno) :
 					    "dropped connection");
 					exit(1);
+					/* NOTREACHED */
 				}
 				amt -= j;
 				cp += j;
@@ -778,6 +792,7 @@ bad:			run_err("%s: %s", np, strerror(errno));
 screwup:
 	run_err("protocol error: %s", why);
 	exit(1);
+	/* NOTREACHED */
 }
 
 #ifdef KERBEROS
@@ -875,6 +890,7 @@ usage()
 	    "usage: rcp [-p] f1 f2; or: rcp [-pr] f1 ... fn directory\n");
 #endif
 	exit(1);
+	/* NOTREACHED */
 }
 
 #if __STDC__

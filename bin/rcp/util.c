@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.4 1997/07/20 20:47:33 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.5 1998/07/28 05:31:27 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: util.c,v 1.4 1997/07/20 20:47:33 christos Exp $");
+__RCSID("$NetBSD: util.c,v 1.5 1998/07/28 05:31:27 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,6 +87,7 @@ verifydir(cp)
 	}
 	run_err("%s: %s", cp, strerror(errno));
 	exit(1);
+	/* NOTREACHED */
 }
 
 int
@@ -126,6 +127,7 @@ susystem(s)
 	case 0:
 		execl(_PATH_BSHELL, "sh", "-c", s, NULL);
 		_exit(127);
+		/* NOTREACHED */
 	}
 	istat = signal(SIGINT, SIG_IGN);
 	qstat = signal(SIGQUIT, SIG_IGN);
@@ -169,4 +171,5 @@ lostconn(signo)
 	if (!iamremote)
 		warnx("lost connection");
 	exit(1);
+	/* NOTREACHED */
 }

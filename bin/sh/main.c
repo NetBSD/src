@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.26 1997/07/04 21:02:07 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.27 1998/07/28 05:31:28 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.26 1997/07/04 21:02:07 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.27 1998/07/28 05:31:28 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -374,15 +374,3 @@ exitcmd(argc, argv)
 	/*NOTREACHED*/
 	return 0;
 }
-
-
-#ifdef notdef
-/*
- * Should never be called.
- */
-
-void
-exit(exitstatus) {
-	_exit(exitstatus);
-}
-#endif
