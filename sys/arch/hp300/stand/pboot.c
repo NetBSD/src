@@ -1,4 +1,4 @@
-/*	$NetBSD: pboot.c,v 1.5 1995/02/21 09:06:15 mycroft Exp $	*/
+/*	$NetBSD: pboot.c,v 1.6 1995/08/04 07:55:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: pboot.c,v 1.5 1995/02/21 09:06:15 mycroft Exp $";
+static char rcsid[] = "$NetBSD: pboot.c,v 1.6 1995/08/04 07:55:47 thorpej Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -70,7 +70,7 @@ main()
 	int currname = 0;
 
 	printf("\n>> NetBSD BOOT HP9000/%s CPU [%s]\n",
-	       getmachineid(), "$Revision: 1.5 $");
+	       getmachineid(), "$Revision: 1.6 $");
 
 	bdev   = B_TYPE(bootdev);
 	badapt = B_ADAPTOR(bootdev);

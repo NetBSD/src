@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.3 1995/02/20 00:12:11 mycroft Exp $	*/
+/*	$NetBSD: if_le.c,v 1.4 1995/08/04 07:55:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -37,8 +37,7 @@
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 
-#include <lib/libnetboot/netboot.h>
-#include <lib/libnetboot/netif.h>
+#include <lib/libsa/netif.h>
 
 #include <hp300/dev/device.h>
 #include <hp300/dev/if_lereg.h>
