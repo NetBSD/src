@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.8 2002/07/10 02:05:25 chuck Exp $ */
+/* $NetBSD: pms.c,v 1.9 2002/09/13 23:39:05 martin Exp $ */
 
 /*-
  * Copyright (c) 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.8 2002/07/10 02:05:25 chuck Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.9 2002/09/13 23:39:05 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -503,13 +503,17 @@ pmsinput(vsc, data)
 	u_int changed;
 	int dx, dy, dz = 0;
 	int newbuttons = 0;
+	int s;
 
 	if (!sc->sc_enabled) {
 		/* Interrupts are not expected.	 Discard the byte. */
 		return;
 	}
 
-	microtime(&sc->current);
+	s = splclock();
+	sc->current = mono_time;
+	splx(s);
+
 	if (sc->inputstate > 0) {
 		struct timeval diff;
 
@@ -518,15 +522,14 @@ pmsinput(vsc, data)
 		 * Empirically, the delay should be about 1700us on a standard
 		 * PS/2 port.  I have seen delays as large as 4500us (rarely)
 		 * in regular use.  When using a confused mouse, I generally
-		 * see delays at least as large as 30,000us.  This serves as
-		 * a rough geometric compromise. -seebs
+		 * see delays at least as large as 30,000us.  -seebs
 		 *
 		 * The thinkpad trackball returns at 22-23ms. So we use
-		 * 25ms. In the future, I'll implement adaptable timeout
+		 * >= 40ms. In the future, I'll implement adaptable timeout
 		 * by increasing the timeout if the mouse reset happens
 		 * too frequently -christos
 		 */
-		if (diff.tv_sec > 0 || diff.tv_usec > 25000) {
+		if (diff.tv_sec > 0 || diff.tv_usec >= 40000) {
 			DPRINTF(("pms_input: unusual delay (%ld.%06ld s), "
 			    "scheduling reset\n",
 			    (long)diff.tv_sec, (long)diff.tv_usec));
