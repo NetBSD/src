@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.46 1999/04/24 08:01:07 simonb Exp $	*/
+/*	$NetBSD: rz.c,v 1.47 1999/09/17 20:04:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.46 1999/04/24 08:01:07 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.47 1999/09/17 20:04:49 thorpej Exp $");
 
 /*
  * SCSI CCS (Command Command Set) disk driver.
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.46 1999/04/24 08:01:07 simonb Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/buf.h>
 #include <sys/errno.h>
 #include <sys/fcntl.h>
@@ -1663,7 +1664,6 @@ rzdump(dev, blkno, va, size)
 	int error;
 	struct rz_softc *sc;
 	struct disklabel *lp;
-	extern int cold;
 
 	/* Check for recursive dump; if so, punt. */
 	if (rzdoingadump)

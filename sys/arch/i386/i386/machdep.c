@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.364 1999/09/12 01:17:06 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.365 1999/09/17 19:59:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1186,7 +1186,6 @@ cpu_reboot(howto, bootstr)
 	int howto;
 	char *bootstr;
 {
-	extern int cold;
 
 	if (cold) {
 		howto |= RB_HALT;

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.86 1999/08/12 20:23:49 ragge Exp $	 */
+/* $NetBSD: machdep.c,v 1.87 1999/09/17 20:07:20 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -121,7 +121,6 @@ extern int virtual_avail, virtual_end;
  * We do these external declarations here, maybe they should be done
  * somewhere else...
  */
-int		cold = 1;
 int		want_resched;
 char		machine[] = MACHINE;		/* from <machine/param.h> */
 char		machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */

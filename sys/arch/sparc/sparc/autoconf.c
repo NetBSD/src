@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.122 1999/09/15 18:10:42 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.123 1999/09/17 20:04:52 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -99,7 +99,6 @@
  * the configuration process, and are used in initializing
  * the machine.
  */
-int	cold;		/* if 1, still working on cold-start */
 int	fbnode;		/* node ID of ROM's console frame buffer */
 int	optionsnode;	/* node ID of ROM's options */
 int	mmu_3l;		/* SUN4_400 models have a 3-level MMU */
@@ -826,7 +825,6 @@ cpu_configure()
 	bzero(proc0paddr, sizeof(struct user));
 
 	(void)spl0();
-	cold = 0;
 }
 
 struct device *altbootdev;

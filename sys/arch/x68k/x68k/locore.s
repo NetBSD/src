@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.48 1999/08/05 15:58:17 minoura Exp $	*/
+/*	$NetBSD: locore.s,v 1.49 1999/09/17 20:07:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1750,9 +1750,6 @@ GLOBAL(fputype)
 
 GLOBAL(protorp)
 	.long	0,0		| prototype root pointer
-
-GLOBAL(cold)
-	.long	1		| cold start flag
 
 GLOBAL(want_resched)
 	.long	0

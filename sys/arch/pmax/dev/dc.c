@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.48 1999/04/24 08:01:03 simonb Exp $	*/
+/*	$NetBSD: dc.c,v 1.49 1999/09/17 20:04:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.48 1999/04/24 08:01:03 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.49 1999/09/17 20:04:48 thorpej Exp $");
 
 /*
  * devDC7085.c --
@@ -193,7 +193,6 @@ struct speedtab dcspeedtab[] = {
 /*
  * Console line variables, for use when cold
  */
-extern int cold;
 dcregs *dc_cons_addr = 0;
 static struct dc_softc coldcons_softc;
 

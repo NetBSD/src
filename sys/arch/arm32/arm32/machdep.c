@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.70 1999/07/08 18:05:24 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.71 1999/09/17 19:59:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -113,8 +113,6 @@ extern int pmap_debug_level;
 int kernel_debug = 0;
 
 struct user *proc0paddr;
-
-int cold = 1;
 
 /* Prototypes */
 
