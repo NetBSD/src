@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.41 2001/05/16 03:55:15 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.42 2001/05/16 21:41:52 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -116,7 +116,7 @@ struct isposinfo {
  * Required Macros/Defines
  */
 
-#define	INLINE			inline
+#define	INLINE			__inline
 
 #define	ISP2100_SCRLEN		0x400
 
@@ -284,20 +284,20 @@ struct isposinfo {
 void isp_attach(struct ispsoftc *);
 void isp_uninit(struct ispsoftc *);
 
-static inline void isp_lock(struct ispsoftc *);
-static inline void isp_unlock(struct ispsoftc *);
-static inline char *strncat(char *, const char *, size_t);
-static inline u_int64_t
+static INLINE void isp_lock(struct ispsoftc *);
+static INLINE void isp_unlock(struct ispsoftc *);
+static INLINE char *strncat(char *, const char *, size_t);
+static INLINE u_int64_t
 isp_microtime_sub(struct timeval *, struct timeval *);
 static void isp_wait_complete(struct ispsoftc *);
 #if	_BYTE_ORDER == _BIG_ENDIAN
-static inline void isp_swizzle_request(struct ispsoftc *, ispreq_t *);
-static inline void isp_unswizzle_response(struct ispsoftc *, void *, u_int16_t);
-static inline void isp_swizzle_icb(struct ispsoftc *, isp_icb_t *);
-static inline void
+static INLINE void isp_swizzle_request(struct ispsoftc *, ispreq_t *);
+static INLINE void isp_unswizzle_response(struct ispsoftc *, void *, u_int16_t);
+static INLINE void isp_swizzle_icb(struct ispsoftc *, isp_icb_t *);
+static INLINE void
 isp_unswizzle_and_copy_pdbp(struct ispsoftc *, isp_pdb_t *, void *);
-static inline void isp_swizzle_sns_req(struct ispsoftc *, sns_screq_t *);
-static inline void isp_unswizzle_sns_rsp(struct ispsoftc *, sns_scrsp_t *, int);
+static INLINE void isp_swizzle_sns_req(struct ispsoftc *, sns_screq_t *);
+static INLINE void isp_unswizzle_sns_rsp(struct ispsoftc *, sns_scrsp_t *, int);
 #endif
 
 /*
@@ -337,7 +337,7 @@ static inline void isp_unswizzle_sns_rsp(struct ispsoftc *, sns_scrsp_t *, int);
 /*
  * Platform specific 'inline' or support functions
  */
-static inline void
+static INLINE void
 isp_lock(struct ispsoftc *isp)
 {
 	int s = splbio();
@@ -348,7 +348,7 @@ isp_lock(struct ispsoftc *isp)
 	}
 }
 
-static inline void
+static INLINE void
 isp_unlock(struct ispsoftc *isp)
 {
 	if (isp->isp_osinfo.islocked-- <= 1) {
@@ -357,7 +357,7 @@ isp_unlock(struct ispsoftc *isp)
 	}
 }
 
-static inline char *
+static INLINE char *
 strncat(char *d, const char *s, size_t c)
 {
         char *t = d;
@@ -375,7 +375,7 @@ strncat(char *d, const char *s, size_t c)
         return (t);
 }
 
-static inline u_int64_t
+static INLINE u_int64_t
 isp_microtime_sub(struct timeval *b, struct timeval *a)
 {
 	struct timeval x;
@@ -387,7 +387,7 @@ isp_microtime_sub(struct timeval *b, struct timeval *a)
 	return (elapsed);
 }
 
-static inline void
+static INLINE void
 isp_wait_complete(struct ispsoftc *isp)
 {
 	if (isp->isp_osinfo.onintstack || isp->isp_osinfo.no_mbox_ints) {
@@ -435,7 +435,7 @@ isp_wait_complete(struct ispsoftc *isp)
 }
 
 #if	_BYTE_ORDER == _BIG_ENDIAN
-static inline void
+static INLINE void
 isp_swizzle_request(struct ispsoftc *isp, ispreq_t *rq)
 {
 	if (IS_FC(isp)) {
@@ -458,7 +458,7 @@ isp_swizzle_request(struct ispsoftc *isp, ispreq_t *rq)
 	}
 }
 
-static inline void
+static INLINE void
 isp_unswizzle_response(struct ispsoftc *isp, void *rp, u_int16_t optr)
 {
 	ispstatusreq_t *sp = rp;
@@ -483,7 +483,7 @@ isp_unswizzle_response(struct ispsoftc *isp, void *rp, u_int16_t optr)
 	}
 }
 
-static inline void
+static INLINE void
 isp_swizzle_icb(struct ispsoftc *isp, isp_icb_t *icbp)
 {
 	_ISP_SWAP8(icbp->icb_version, icbp->_reserved0);
@@ -514,7 +514,7 @@ isp_swizzle_icb(struct ispsoftc *isp, isp_icb_t *icbp)
 	icbp->icb_respaddr[3] = bswap16(icbp->icb_respaddr[3]);
 }
 
-static inline void
+static INLINE void
 isp_unswizzle_and_copy_pdbp(struct ispsoftc *isp, isp_pdb_t *dst, void *src)
 {
 	isp_pdb_t *pdbp = src;
@@ -578,7 +578,7 @@ isp_unswizzle_and_copy_pdbp(struct ispsoftc *isp, isp_pdb_t *dst, void *src)
 	dst->pdb_initiator = pdbp->pdb_target;
 }
 
-static inline void
+static INLINE void
 isp_swizzle_sns_req(struct ispsoftc *isp, sns_screq_t *reqp)
 {
 	u_int16_t index, nwords = reqp->snscb_sblen;
@@ -593,7 +593,7 @@ isp_swizzle_sns_req(struct ispsoftc *isp, sns_screq_t *reqp)
 	}
 }
 
-static inline void
+static INLINE void
 isp_unswizzle_sns_rsp(struct ispsoftc *isp, sns_scrsp_t *resp, int nwords)
 {
 	int index;
@@ -613,7 +613,6 @@ isp_unswizzle_sns_rsp(struct ispsoftc *isp, sns_scrsp_t *resp, int nwords)
 /*
  * Common inline functions
  */
-#define	INLINE	inline
 #include <dev/ic/isp_inline.h>
 
 #if	!defined(ISP_DISABLE_FW) && !defined(ISP_COMPILE_FW)
