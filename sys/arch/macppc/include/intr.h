@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1 1998/05/15 10:15:53 tsubai Exp $	*/
+/*	$NetBSD: intr.h,v 1.2 1998/07/18 21:27:27 is Exp $	*/
 /*	$OpenBSD: intr.h,v 1.1 1997/10/13 10:53:45 pefo Exp $ */
 
 /*
@@ -163,6 +163,8 @@ softintr(ipl)
 #define splclock()	splraise(imask[IPL_CLOCK])
 #define splstatclock()	splclock()
 #define	splserial()	splraise(imask[IPL_SERIAL])
+
+#define spllpt()	spltty()
 
 /*
  * Software interrupt masks
