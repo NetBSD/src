@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_subr.c,v 1.11 1997/09/10 13:44:28 christos Exp $	*/
+/*	$NetBSD: umap_subr.c,v 1.12 1998/02/07 02:44:53 chs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -81,7 +81,7 @@ umapfs_init()
 #ifdef UMAPFS_DIAGNOSTIC
 	printf("umapfs_init\n");		/* printed during system boot */
 #endif
-	umap_node_hashtbl = hashinit(NUMAPNODECACHE, M_CACHE, &umap_node_hash);
+	umap_node_hashtbl = hashinit(NUMAPNODECACHE, M_CACHE, M_WAITOK, &umap_node_hash);
 }
 
 /*

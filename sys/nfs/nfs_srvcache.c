@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvcache.c,v 1.12 1996/02/18 11:53:49 fvdl Exp $	*/
+/*	$NetBSD: nfs_srvcache.c,v 1.13 1998/02/07 02:44:59 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -143,7 +143,7 @@ void
 nfsrv_initcache()
 {
 
-	nfsrvhashtbl = hashinit(desirednfsrvcache, M_NFSD, &nfsrvhash);
+	nfsrvhashtbl = hashinit(desirednfsrvcache, M_NFSD, M_WAITOK, &nfsrvhash);
 	TAILQ_INIT(&nfsrvlruhead);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.26 1998/02/05 08:00:16 mrg Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.27 1998/02/07 02:44:54 chs Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -82,7 +82,7 @@ static void msdosfs_hashrem __P((struct denode *));
 void
 msdosfs_init()
 {
-	dehashtbl = hashinit(desiredvnodes/2, M_MSDOSFSMNT, &dehash);
+	dehashtbl = hashinit(desiredvnodes/2, M_MSDOSFSMNT, M_WAITOK, &dehash);
 }
 
 static struct denode *

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_ihash.c,v 1.5 1997/07/15 19:08:18 fvdl Exp $	*/
+/*	$NetBSD: ufs_ihash.c,v 1.6 1998/02/07 02:45:03 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -62,7 +62,7 @@ void
 ufs_ihashinit()
 {
 	lockinit(&ufs_hashlock, PINOD, "ufs_hashlock", 0, 0);
-	ihashtbl = hashinit(desiredvnodes, M_UFSMNT, &ihash);
+	ihashtbl = hashinit(desiredvnodes, M_UFSMNT, M_WAITOK, &ihash);
 }
 
 /*

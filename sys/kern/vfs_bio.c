@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.52 1997/07/08 22:03:30 pk Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.53 1998/02/07 02:44:48 chs Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -139,7 +139,7 @@ bufinit()
 
 	for (dp = bufqueues; dp < &bufqueues[BQUEUES]; dp++)
 		TAILQ_INIT(dp);
-	bufhashtbl = hashinit(nbuf, M_CACHE, &bufhash);
+	bufhashtbl = hashinit(nbuf, M_CACHE, M_WAITOK, &bufhash);
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
 	for (i = 0; i < nbuf; i++) {

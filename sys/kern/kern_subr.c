@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.32 1998/02/05 07:59:55 mrg Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.33 1998/02/07 02:44:47 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -220,8 +220,8 @@ again:
  * General routine to allocate a hash table.
  */
 void *
-hashinit(elements, type, hashmask)
-	int elements, type;
+hashinit(elements, type, flags, hashmask)
+	int elements, type, flags;
 	u_long *hashmask;
 {
 	long hashsize;
@@ -233,7 +233,7 @@ hashinit(elements, type, hashmask)
 	for (hashsize = 1; hashsize <= elements; hashsize <<= 1)
 		continue;
 	hashsize >>= 1;
-	hashtbl = malloc((u_long)hashsize * sizeof(*hashtbl), type, M_WAITOK);
+	hashtbl = malloc((u_long)hashsize * sizeof(*hashtbl), type, flags);
 	for (i = 0; i < hashsize; i++)
 		LIST_INIT(&hashtbl[i]);
 	*hashmask = hashsize - 1;

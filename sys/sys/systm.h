@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.73 1998/02/05 08:00:43 mrg Exp $	*/
+/*	$NetBSD: systm.h,v 1.74 1998/02/07 02:45:02 chs Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -156,7 +156,7 @@ int	lkmenodev __P((void));
 #endif
 
 int	seltrue __P((dev_t dev, int events, struct proc *p));
-void	*hashinit __P((int count, int type, u_long *hashmask));
+void	*hashinit __P((int count, int type, int flags, u_long *hashmask));
 int	sys_nosys __P((struct proc *, void *, register_t *));
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.17 1997/05/05 07:13:57 mycroft Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.18 1998/02/07 02:44:44 chs Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -81,9 +81,9 @@ void
 cd9660_init()
 {
 
-	isohashtbl = hashinit(desiredvnodes, M_ISOFSMNT, &isohash);
+	isohashtbl = hashinit(desiredvnodes, M_ISOFSMNT, M_WAITOK, &isohash);
 #ifdef ISODEVMAP
-	idvhashtbl = hashinit(desiredvnodes / 8, M_ISOFSMNT, &idvhash);
+	idvhashtbl = hashinit(desiredvnodes / 8, M_ISOFSMNT, M_WAITOK, &idvhash);
 #endif
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.24 1997/10/19 01:46:24 fvdl Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.25 1998/02/07 02:44:58 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -72,7 +72,7 @@ void
 nfs_nhinit()
 {
 
-	nfsnodehashtbl = hashinit(desiredvnodes, M_NFSNODE, &nfsnodehash);
+	nfsnodehashtbl = hashinit(desiredvnodes, M_NFSNODE, M_WAITOK, &nfsnodehash);
 	lockinit(&nfs_hashlock, PINOD, "nfs_hashlock", 0, 0);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: null_subr.c,v 1.9 1997/09/10 13:44:22 christos Exp $	*/
+/*	$NetBSD: null_subr.c,v 1.10 1998/02/07 02:44:51 chs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -81,7 +81,7 @@ nullfs_init()
 #ifdef NULLFS_DIAGNOSTIC
 	printf("nullfs_init\n");		/* printed during system boot */
 #endif
-	null_node_hashtbl = hashinit(NNULLNODECACHE, M_CACHE, &null_node_hash);
+	null_node_hashtbl = hashinit(NNULLNODECACHE, M_CACHE, M_WAITOK, &null_node_hash);
 }
 
 /*
