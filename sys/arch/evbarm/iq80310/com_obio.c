@@ -1,3 +1,5 @@
+/*	$NetBSD: com_obio.c,v 1.2 2001/11/07 00:33:23 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,42 +41,50 @@
 #include <sys/device.h>
 #include <sys/termios.h>
 
-#include <machine/autoconf.h>
+#include <machine/bus.h>
+
+#include <evbarm/iq80310/iq80310var.h>
+#include <evbarm/iq80310/obiovar.h>
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 
-static int com_obio_match (struct device *, struct cfdata *, void *);
-static void com_obio_attach (struct device *, struct device *, void *);
+struct com_obio_softc {
+	struct com_softc sc_com;
 
-struct cfattach com_obio_ca = {
-	sizeof(struct com_softc), com_obio_match, com_obio_attach
+	void *sc_ih;
 };
 
-extern struct cfdriver com_cd;
+int	com_obio_match(struct device *, struct cfdata *, void *);
+void	com_obio_attach(struct device *, struct device *, void *);
 
-static int
+struct cfattach com_obio_ca = {
+	sizeof(struct com_obio_softc), com_obio_match, com_obio_attach
+};
+
+int
 com_obio_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	struct obio_attach_args *oa = aux;
-	return strcmp(com_cd.cd_name, oa->oa_name) == 0 &&
-	    cf->obiocf_instance == oa->oa_instance;
+	struct obio_attach_args *oba = aux;
+
+	if (strcmp(cf->cf_driver->cd_name, oba->oba_name) == 0)
+		return (1);
+
+	return (0);
 }
 
-static void
+void
 com_obio_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct obio_attach_args *oa = aux;
-	struct com_softc *sc = (struct com_softc *) self;
+	struct obio_attach_args *oba = aux;
+	struct com_obio_softc *osc = (void *) self;
+	struct com_softc *sc = &osc->sc_com;
 	int error;
 
-	KASSERT(oa->oa_nregions > 0);
-
-	sc->sc_iot = oa->oa_memt;
-	sc->sc_iobase = oa->oa_addrs[0];
+	sc->sc_iot = oba->oba_st;
+	sc->sc_iobase = oba->oba_addr;
 	sc->sc_frequency = COM_FREQ;
-	error = bus_space_map(sc->sc_iot, oa->oa_addrs[0],
-	    oa->oa_lens[0], 0, &sc->sc_ioh);
+	error = bus_space_map(sc->sc_iot, oba->oba_addr, 8, 0, &sc->sc_ioh);
 
 	if (error) {
 		printf(": failed to map registers: %d\n", error);
@@ -82,5 +92,10 @@ com_obio_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	com_attach_subr(sc);
-	obio_intr_establish(oa, comintr, sc);
+
+	osc->sc_ih = iq80310_intr_establish(oba->oba_irq, IPL_SERIAL,
+	    comintr, sc);
+	if (osc->sc_ih == NULL)
+		printf("%s: unable to establish interrupt at CPLD irq %d\n",
+		    sc->sc_dev.dv_xname, oba->oba_irq);
 }
