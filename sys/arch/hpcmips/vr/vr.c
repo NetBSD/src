@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.40 2002/11/24 06:02:24 shin Exp $	*/
+/*	$NetBSD: vr.c,v 1.41 2003/04/02 03:58:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002
@@ -350,7 +350,7 @@ vr_find_dram(paddr_t addr, paddr_t end)
 		end = VR_FIND_DRAMLIM;
 #endif /* VR_FIND_DRAMLIM */
 	n = mem_cluster_cnt;
-	for (; addr < end; addr += NBPG) {
+	for (; addr < end; addr += PAGE_SIZE) {
 
 		page = (void *)MIPS_PHYS_TO_KSEG1(addr);
 		if (badaddr(page, 4))
@@ -374,25 +374,25 @@ vr_find_dram(paddr_t addr, paddr_t end)
 
 #ifdef NARLY_MEMORY_PROBE
 		x = random();
-		for (i = 0; i < NBPG; i += 4)
+		for (i = 0; i < PAGE_SIZE; i += 4)
 			*(volatile int *)(page+i) = (x ^ i);
 		wbflush();
-		for (i = 0; i < NBPG; i += 4)
+		for (i = 0; i < PAGE_SIZE; i += 4)
 			if (*(volatile int *)(page+i) != (x ^ i))
 				goto bad;
 
 		x = random();
-		for (i = 0; i < NBPG; i += 4)
+		for (i = 0; i < PAGE_SIZE; i += 4)
 			*(volatile int *)(page+i) = (x ^ i);
 		wbflush();
-		for (i = 0; i < NBPG; i += 4)
+		for (i = 0; i < PAGE_SIZE; i += 4)
 			if (*(volatile int *)(page+i) != (x ^ i))
 				goto bad;
 #endif /* NARLY_MEMORY_PROBE */
 
 		if (!mem_clusters[n].size)
 			mem_clusters[n].start = addr;
-		mem_clusters[n].size += NBPG;
+		mem_clusters[n].size += PAGE_SIZE;
 		continue;
 
 	bad:
