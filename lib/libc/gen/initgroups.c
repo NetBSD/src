@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)initgroups.c	5.7 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: initgroups.c,v 1.3 1993/08/26 00:44:47 jtc Exp $";
+static char *rcsid = "$Id: initgroups.c,v 1.4 1994/03/30 03:51:32 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -52,7 +52,8 @@ initgroups(uname, agroup)
 	const char *uname;
 	int agroup;
 {
-	int groups[NGROUPS], ngroups = 0;
+	gid_t groups[NGROUPS];
+	int ngroups = 0;
 	register struct group *grp;
 	register int i;
 
