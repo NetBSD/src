@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_obio.c,v 1.20 2003/11/11 15:01:05 pk Exp $	*/
+/*	$NetBSD: if_le_obio.c,v 1.21 2004/03/15 23:51:12 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_obio.c,v 1.20 2003/11/11 15:01:05 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_obio.c,v 1.21 2004/03/15 23:51:12 pk Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -162,8 +162,6 @@ leattach_obio(parent, self, aux)
 	bus_dma_tag_t dmatag;
 	int rseg;
 	int error;
-	/* XXX the following declarations should be elsewhere */
-	extern void myetheraddr __P((u_char *));
 
 	lesc->sc_bustag = oba->oba_bustag;
 	lesc->sc_dmatag = dmatag = oba->oba_dmatag;
@@ -219,7 +217,7 @@ leattach_obio(parent, self, aux)
 	sc->sc_nsupmedia = NLEMEDIA;
 	sc->sc_defaultmedia = lemedia[0];
 
-	myetheraddr(sc->sc_enaddr);
+	prom_getether(0, sc->sc_enaddr);
 
 	sc->sc_copytodesc = lance_copytobuf_contig;
 	sc->sc_copyfromdesc = lance_copyfrombuf_contig;
