@@ -1,4 +1,4 @@
-/* $NetBSD: db_disasm.c,v 1.1 1997/09/06 02:00:48 thorpej Exp $ */
+/* $NetBSD: db_disasm.c,v 1.2 1997/09/16 06:52:16 thorpej Exp $ */
 
 /* 
  * Mach Operating System
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.1 1997/09/06 02:00:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.2 1997/09/16 06:52:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ typedef union {
  */
 static char *op_name[64] = {
 /* 0 */	"call_pal", "op1", "op2", "op3", "op4",	"op5",	"op6",	"op7",
-/* 8 */	"lda",	"ldah",	"op10",	"ldq_u","op12",	"op13",	"op14",	"stq_u",
+/* 8 */	"lda",	"ldah",	"ldbu",	"ldq_u","ldwu",	"stw",	"stb",	"stq_u",
 /*16 */	"arit",	"logical","bit","mul",	"op20",	"vaxf",	"ieeef","anyf",
 /*24 */	"spec",	"hw_mfpr","jump","hw_ld","op28","hw_mtpr","hw_rei","hw_st",
 /*32 */	"ldf",	"ldg",	"lds",	"ldt",	"stf",	"stg",	"sts",	"stt",
@@ -242,15 +242,34 @@ static const char *arit_cF[1] = {
 static const char **arit_opname[8] = {
 	arit_c0, arit_c2, 0, 0, arit_c9, arit_cB, arit_cD, arit_cF
 };
-#define arit_name(op)	arit_opname[((op)&0xe)>>1] ?			\
-			  arit_opname[((op)&0xe)>>1][((op)&0x70)>>4] : 0
+
+static __inline const char *arit_name __P((int));
+static __inline const char *
+arit_name(op)
+	int op;
+{
+	static char unk[32];
+	const char *name = NULL;
+
+	if (arit_opname[((op)&0xe)>>1])
+		name = arit_opname[((op)&0xe)>>1][((op)&0x70)>>4];
+
+	if (name != NULL)
+		return (name);
+
+	sprintf(unk, "?arit 0x%x?", op);
+	return (unk);
+}
 
 /*
  * Something similar for this one, except there are only
- * 14 entries so the row indexing is done by enumeration
+ * 16 entries so the row indexing is done by enumeration
  * of the low nibble (valid values 0/4/6/8).  Then we can
  * just shift the high nibble to index inside the row
  * (valid values are 0/2/4 or 1/2/4/6)
+ *
+ * There are two functions that don't play by these simple rules,
+ * so we special-case them.
  */
 static const char *logical_c0[4] = {
 	"and", "or", "xor", 0
@@ -264,12 +283,33 @@ static const char *logical_c6[4] = {
 static const char *logical_c8[4] = {
 	"andnot", "ornot", "xornot", 0
 };
-#define logical_name(op)						\
-		((((op) & 0xf) == 0) ? logical_c0[((op)>>5)&3] :	\
-		((((op) & 0xf) == 4) ? logical_c4[((op)>>5)&3] :	\
-		((((op) & 0xf) == 6) ? logical_c6[((op)>>5)&3] :	\
-		((((op) & 0xf) == 8) ? logical_c8[((op)>>5)&3] :	\
-		 0))))
+
+static __inline const char *logical_name __P((int));
+static __inline const char *
+logical_name(op)
+	int op;
+{
+	static char unk[32];
+	const char *name = NULL;
+
+	if (op == op_amask)
+		return ("amask");
+	else if (op == op_implver)
+		return ("implver");
+
+	switch (op & 0xf) {
+	case 0: name = logical_c0[((op)>>5)&3]; break;
+	case 4: name = logical_c4[((op)>>5)&3]; break;
+	case 6: name = logical_c6[((op)>>5)&3]; break;
+	case 8: name = logical_c8[((op)>>5)&3]; break;
+	}
+
+	if (name != NULL)
+		return (name);
+
+	sprintf(unk, "?logical 0x%x?", op);
+	return (unk);
+}
 
 /*
  * This is the messy one. First, we single out the dense
@@ -292,11 +332,29 @@ static const char *bitop_c67ab[4][4] = {
 /* 6 */	{ "extbl", "extwl", "extll", 0 },
 /* 7 */	{ 0, "inswh", "inslh", "insqh" },
 };
-#define bitop_name(op)							\
-		((((op)&0x70)==0x30) ?					\
-		   (((op)==op_zap) ? "zap" : bitop_c3[((op)&0xe)>>1]) :	\
-		((((op)&0xf)==0x02) ? bitop_c2[(op)>>4] :		\
-		bitop_c67ab[(((op)&1)|(((op)&0x4)>>1))] [(((op)&0x30)>>4)]))
+
+static __inline const char *bitop_name __P((int));
+static __inline const char *
+bitop_name(op)
+	int op;
+{
+	static char unk[32];
+	const char *name = NULL;
+
+	if ((op & 0x70) == 0x30)
+		name = (op == op_zap) ? "zap" : bitop_c3[((op)&0xe)>>1];
+	else if ((op & 0xf) == 0x02)
+		name = bitop_c2[(op)>>4];
+	else
+		name =
+		    bitop_c67ab[(((op)&1)|(((op)&0x4)>>1))][(((op)&0x30)>>4)];
+
+	if (name != NULL)
+		return (name);
+
+	sprintf(unk, "?bit 0x%x?", op);
+	return (unk);
+}
 
 /*
  * Only 5 entries in this one
@@ -304,7 +362,23 @@ static const char *bitop_c67ab[4][4] = {
 static const char *mul_opname[4] = {
 	"mull", "mulq", "mull/v", "mulq/v"
 };
-#define mul_name(op)	(((op)==op_umulh) ? "umulh" : mul_opname[((op)>>5)&3])
+
+static __inline const char *mul_name __P((int));
+static __inline const char *
+mul_name(op)
+	int op;
+{
+	static char unk[32];
+	const char *name = NULL;
+
+	name = (op == op_umulh) ? "umulh" : mul_opname[((op)>>5)&3];
+
+	if (name != NULL)
+		return (name);
+
+	sprintf(unk, "?mul 0x%x?", op);
+	return (unk);
+}
 
 /*
  * These are few, the high nibble is enough to dispatch.
@@ -313,8 +387,23 @@ static const char *mul_opname[4] = {
 static const char *special_opname[8] = {
 	"drain_t", 0, "mb", 0, "fetch", "fetch_m", "rpcc", "rc"
 };
-#define special_name(op)	(((op)==op_rs) ? "rs" :			\
-				 special_opname[(op)>>13])
+
+static __inline const char *special_name __P((int));
+static __inline const char *
+special_name(op)
+	int op;
+{
+	static char unk[32];
+	const char *name;
+
+	name = (op == op_rs) ? "rs" : special_opname[(op)>>13];
+
+	if (name != NULL)
+		return (name);
+
+	sprintf(unk, "?special 0x%x?", op);
+	return (unk);
+}
 
 /*
  * This is trivial
@@ -324,13 +413,15 @@ static const char *jump_opname[4] = {
 };
 #define jump_name(ix)	jump_opname[ix]
 
-static const char *float_name __P((const struct tbl[], int));
+static const char *float_name __P((const struct tbl[], int, const char *type));
 
 static const char *
-float_name(tbl, op)
+float_name(tbl, op, type)
 	const struct tbl tbl[];
 	int op;
+	const char *type;
 {
+	static char unk[32];
 	int i;
 
 	for (i = 0; tbl[i].name != NULL; i++) {
@@ -338,12 +429,13 @@ float_name(tbl, op)
 			return (tbl[i].name);
 	}
 
-	return (NULL);
+	sprintf(unk, "?%s 0x%x?", type, op);
+	return (unk);
 }
 
-#define vaxf_name(op)	float_name(vaxf_tbl, op)
-#define ieeef_name(op)	float_name(ieeef_tbl, op)
-#define anyf_name(op)	float_name(anyf_tbl, op)
+#define vaxf_name(op)	float_name(vaxf_tbl, op, "vaxfl")
+#define ieeef_name(op)	float_name(ieeef_tbl, op, "ieeefl")
+#define anyf_name(op)	float_name(anyf_tbl, op, "anyfl")
 
 static const struct tbl anyf_tbl[] = {
 	{ "cvtlq",	0x010},
@@ -749,22 +841,18 @@ alpha_print_instruction(iadr, i, showregs)
 		 * just need different opcode strings
 		 */
 		opcode = arit_name(i.operate_lit_format.function);
-		opcode = opcode ? opcode : "?aritm?";
 		goto operate;
 		break;
 	case op_logical:
 		opcode = logical_name(i.operate_lit_format.function);
-		opcode = opcode ? opcode : "?logical?";
 		goto operate;
 		break;
 	case op_bit:
 		opcode = bitop_name(i.operate_lit_format.function);
-		opcode = opcode ? opcode : "?bit?";
 		goto operate;
 		break;
 	case op_mul:
 		opcode = mul_name(i.operate_lit_format.function);
-		opcode = opcode ? opcode : "?mul?";
 operate:
 		/*
 		 * Nice and uniform, just check for literals
@@ -782,17 +870,14 @@ operate:
 		 * The three floating point groups are even simpler
 		 */
 		opcode = vaxf_name(i.float_format.function);
-		opcode = opcode ? opcode : "?vaxfl?";
 		goto foperate;
 		break;
 	case op_ieee_float:
 		opcode = ieeef_name(i.float_format.function);
-		opcode = opcode ? opcode : "?ieeefl?";
 		goto foperate;
 		break;
 	case op_any_float:
 		opcode = anyf_name(i.float_format.function);
-		opcode = opcode ? opcode : "?anyfl?";
 foperate:
 		db_printf("%s\tf%d,f%d,f%d", opcode,
 			i.float_format.fs,
@@ -808,7 +893,6 @@ foperate:
 
 			code = (i.mem_format.displacement)&0xffff;
 			opcode = special_name(code);
-			opcode = opcode ? opcode : "?special?";
 
 			switch (code) {
 			case op_fetch:
