@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.6 1997/04/12 19:48:00 gwr Exp $
+#	$NetBSD: GENERIC,v 1.7 1997/05/07 02:20:27 lukem Exp $
 #
 # GENERIC Sun3x (3/80, 3/470)
 # Supports root on: le0, sd*
@@ -24,23 +24,23 @@ options 	DDB
 #options 	KGDBDEV=0x0C01	# ttya=0C00 ttyb=0C01
 
 # Filesystem options
-file-system 	FFS		# ufs file system
-file-system 	NFS		# nfs client support
-file-system 	CD9660		# ISO 9660 + Rock Ridge file system
+file-system	FFS		# ufs file system
+file-system	NFS		# nfs client support
+file-system	CD9660		# ISO 9660 + Rock Ridge file system
 file-system	MSDOSFS		# MS-DOS FAT file system
-file-system 	FDESC		# /dev/fd/*
-file-system 	KERNFS		# /kern
-file-system 	NULLFS		# loopback file system
-file-system 	PROCFS		# /proc
-file-system 	UNION		# union file system
-file-system 	MFS		# memory-based filesystem
+file-system	FDESC		# /dev/fd/*
+file-system	KERNFS		# /kern
+file-system	NULLFS		# loopback file system
+file-system	PROCFS		# /proc
+file-system	UNION		# union file system
+file-system	MFS		# memory-based filesystem
 
 options 	NFSSERVER	# nfs server support
 options 	FIFO		# FIFOs; RECOMMENDED
 
 # Networking options
 options 	INET		# IP prototol stack support
-#options	GATEWAY		# IP packet forwarding
+#options 	GATEWAY		# IP packet forwarding
 options 	TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
 # XXX - Work-around for root on slow servers (insurance...)
 options 	NFS_BOOT_RWSIZE=1024
@@ -117,16 +117,16 @@ ss* at scsibus? target ? lun ?		# SCSI scanners
 uk* at scsibus? target ? lun ?		# unknown SCSI devices
 
 # Memory-disk drivers
-pseudo-device	md	2
+pseudo-device	md		2
 
 # Misc.
-pseudo-device	loop	1		# network loopback
-pseudo-device	bpfilter 8		# packet filter
-pseudo-device	sl	2		# CSLIP
-pseudo-device	ppp	2		# PPP
-pseudo-device	tun	2		# network tunneling over tty
+pseudo-device	loop		1	# network loopback
+pseudo-device	bpfilter	8	# packet filter
+pseudo-device	sl		2	# CSLIP
+pseudo-device	ppp		2	# PPP
+pseudo-device	tun		2	# network tunneling over tty
 #pseudo-device	ipfilter		# ip filter
 
-pseudo-device	pty	64		# pseudo-terminals
-#pseudo-device	vnd	4		# paging to files
-#pseudo-device	ccd	4		# concatenated disks
+pseudo-device	pty		64	# pseudo-terminals
+#pseudo-device	vnd		4	# paging to files
+#pseudo-device	ccd		4	# concatenated disks

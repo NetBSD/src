@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS3X,v 1.5 1997/03/24 17:39:04 gwr Exp $
+#	$NetBSD: DISKLESS3X,v 1.6 1997/05/07 02:20:26 lukem Exp $
 
 #
 # DISKLESS Sun3x (3/80, 3/470)
@@ -25,17 +25,17 @@ options 	DDB
 #options 	KGDBDEV=0x0C01
 
 # Filesystem options
-file-system 	NFS		# nfs client support
-file-system 	FDESC		# /dev/fd/*
-file-system 	KERNFS		# /kern
-file-system 	NULLFS		# loopback file system
-file-system 	PROCFS		# /proc
+file-system	NFS		# nfs client support
+file-system	FDESC		# /dev/fd/*
+file-system	KERNFS		# /kern
+file-system	NULLFS		# loopback file system
+file-system	PROCFS		# /proc
 
 options 	FIFO		# FIFOs; RECOMMENDED
 
 # Networking options
 options 	INET		# IP prototol stack support
-#options	GATEWAY		# IP packet forwarding
+#options 	GATEWAY		# IP packet forwarding
 options 	TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
 # XXX - Work-around for root on slow servers (insurance...)
 options 	NFS_BOOT_RWSIZE=1024
@@ -58,11 +58,11 @@ config		netbsd root on ? type nfs
 #
 # Serial ports
 #
-zstty0 at zsc1 channel 0	# ttya
-zstty1 at zsc1 channel 1	# ttyb
+zstty0	at zsc1 channel 0	# ttya
+zstty1	at zsc1 channel 1	# ttyb
 
-kbd0   at zsc0 channel 0	# keyboard
-ms0    at zsc0 channel 1	# mouse
+kbd0	at zsc0 channel 0	# keyboard
+ms0	at zsc0 channel 1	# mouse
 
 #
 # Network devices
@@ -78,6 +78,6 @@ le0 at obio0 addr 0x65002000 ipl 3
 bwtwo0 at obmem0 addr 0x50400000 ipl 4
 
 # Misc.
-pseudo-device	loop	1		# network loopback
+pseudo-device	loop		1	# network loopback
 
-pseudo-device	pty	32		# pseudo-terminals
+pseudo-device	pty		32	# pseudo-terminals
