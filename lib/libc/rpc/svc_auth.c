@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_auth.c,v 1.10 1999/09/20 04:39:24 lukem Exp $	*/
+/*	$NetBSD: svc_auth.c,v 1.11 2000/06/02 23:11:16 fvdl Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -15,66 +15,68 @@
  * Sun RPC is provided with no support and without any obligation on the
  * part of Sun Microsystems, Inc. to assist in its use, correction,
  * modification or enhancement.
- *
+ * 
  * SUN MICROSYSTEMS, INC. SHALL HAVE NO LIABILITY WITH RESPECT TO THE
  * INFRINGEMENT OF COPYRIGHTS, TRADE SECRETS OR ANY PATENTS BY SUN RPC
  * OR ANY PART THEREOF.
- *
+ * 
  * In no event will Sun Microsystems, Inc. be liable for any lost revenue
  * or profits or other special, indirect and consequential damages, even if
  * Sun has been advised of the possibility of such damages.
- *
+ * 
  * Sun Microsystems, Inc.
  * 2550 Garcia Avenue
  * Mountain View, California  94043
  */
-
-#include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char *sccsid = "@(#)svc_auth.c 1.19 87/08/11 Copyr 1984 Sun Micro";
-static char *sccsid = "@(#)svc_auth.c	2.1 88/08/07 4.0 RPCSRC";
-#else
-__RCSID("$NetBSD: svc_auth.c,v 1.10 1999/09/20 04:39:24 lukem Exp $");
-#endif
-#endif
-
 /*
- * svc_auth_nodes.c, Server-side rpc authenticator interface,
- * *WITHOUT* DES authentication.
- *
- * Copyright (C) 1984, Sun Microsystems, Inc.
+ * Copyright (c) 1986-1991 by Sun Microsystems Inc. 
  */
 
-#include <assert.h>
+/* #ident	"@(#)svc_auth.c	1.16	94/04/24 SMI" */
 
-#include <rpc/rpc.h>
+#if 0
+#if !defined(lint) && defined(SCCSIDS)
+static char sccsid[] = "@(#)svc_auth.c 1.26 89/02/07 Copyr 1984 Sun Micro";
+#endif
+#endif
 
 /*
- * svcauthsw is the bdevsw of server side authentication. 
- * 
+ * svc_auth.c, Server-side rpc authenticator interface.
+ *
+ */
+
+#include "namespace.h"
+#include "reentrant.h"
+#include <sys/types.h>
+#include <rpc/rpc.h>
+#include <stdlib.h>
+
+#ifdef __weak_alias
+__weak_alias(svc_auth_reg,_svc_auth_reg)
+#endif
+
+/*
+ * svcauthsw is the bdevsw of server side authentication.
+ *
  * Server side authenticators are called from authenticate by
  * using the client auth struct flavor field to index into svcauthsw.
- * The server auth flavors must implement a routine that looks  
- * like: 
- * 
+ * The server auth flavors must implement a routine that looks
+ * like:
+ *
  *	enum auth_stat
  *	flavorx_auth(rqst, msg)
- *		struct svc_req *rqst; 
- *		struct rpc_msg *msg;
+ *		register struct svc_req *rqst;
+ *		register struct rpc_msg *msg;
  *
  */
 
-static const struct {
-	enum auth_stat (*authenticator) __P((struct svc_req *,
-    struct rpc_msg *));
-} svcauthsw[] = {
-	{ _svcauth_null },		/* AUTH_NULL */
-	{ _svcauth_unix },		/* AUTH_UNIX */
-	{ _svcauth_short }		/* AUTH_SHORT */
+/* declarations to allow servers to specify new authentication flavors */
+struct authsvc {
+	int	flavor;
+	enum	auth_stat (*handler) __P((struct svc_req *, struct rpc_msg *));
+	struct	authsvc	  *next;
 };
-#define	AUTH_MAX	2		/* HIGHEST AUTH NUMBER */
-
+static struct authsvc *Auths = NULL;
 
 /*
  * The call rpc message, msg has been obtained from the wire.  The msg contains
@@ -96,31 +98,122 @@ static const struct {
  */
 enum auth_stat
 _authenticate(rqst, msg)
-	struct svc_req *rqst;
+	register struct svc_req *rqst;
 	struct rpc_msg *msg;
 {
-	int cred_flavor;
+	register int cred_flavor;
+	register struct authsvc *asp;
+	enum auth_stat dummy;
+#ifdef __REENT
+	extern mutex_t authsvc_lock;
+#endif
 
-	_DIAGASSERT(rqst != NULL);
-	_DIAGASSERT(msg != NULL);
+/* VARIABLES PROTECTED BY authsvc_lock: asp, Auths */
 
 	rqst->rq_cred = msg->rm_call.cb_cred;
 	rqst->rq_xprt->xp_verf.oa_flavor = _null_auth.oa_flavor;
 	rqst->rq_xprt->xp_verf.oa_length = 0;
 	cred_flavor = rqst->rq_cred.oa_flavor;
-	if ((cred_flavor <= AUTH_MAX) && (cred_flavor >= AUTH_NULL)) {
-		return ((*(svcauthsw[cred_flavor].authenticator))(rqst, msg));
+	switch (cred_flavor) {
+	case AUTH_NULL:
+		dummy = _svcauth_null(rqst, msg);
+		return (dummy);
+	case AUTH_SYS:
+		dummy = _svcauth_unix(rqst, msg);
+		return (dummy);
+	case AUTH_SHORT:
+		dummy = _svcauth_short(rqst, msg);
+		return (dummy);
+#if 0
+	case AUTH_DES:
+		dummy = __svcauth_des(rqst, msg);
+		return (dummy);
+#endif
+	default:
+		break;
 	}
+
+	/* flavor doesn't match any of the builtin types, so try new ones */
+	mutex_lock(&authsvc_lock);
+	for (asp = Auths; asp; asp = asp->next) {
+		if (asp->flavor == cred_flavor) {
+			enum auth_stat as;
+
+			as = (*asp->handler)(rqst, msg);
+			mutex_unlock(&authsvc_lock);
+			return (as);
+		}
+	}
+	mutex_unlock(&authsvc_lock);
 
 	return (AUTH_REJECTEDCRED);
 }
 
-/* ARGSUSED */
+/*ARGSUSED*/
 enum auth_stat
 _svcauth_null(rqst, msg)
 	struct svc_req *rqst;
 	struct rpc_msg *msg;
 {
-
 	return (AUTH_OK);
+}
+
+/*
+ *  Allow the rpc service to register new authentication types that it is
+ *  prepared to handle.  When an authentication flavor is registered,
+ *  the flavor is checked against already registered values.  If not
+ *  registered, then a new Auths entry is added on the list.
+ *
+ *  There is no provision to delete a registration once registered.
+ *
+ *  This routine returns:
+ *	 0 if registration successful
+ *	 1 if flavor already registered
+ *	-1 if can't register (errno set)
+ */
+
+int
+svc_auth_reg(cred_flavor, handler)
+	register int cred_flavor;
+	enum auth_stat (*handler) __P((struct svc_req *, struct rpc_msg *));
+{
+	register struct authsvc *asp;
+#ifdef __REENT
+	extern mutex_t authsvc_lock;
+#endif
+
+	switch (cred_flavor) {
+	    case AUTH_NULL:
+	    case AUTH_SYS:
+	    case AUTH_SHORT:
+#if 0
+	    case AUTH_DES:
+#endif
+		/* already registered */
+		return (1);
+
+	    default:
+		mutex_lock(&authsvc_lock);
+		for (asp = Auths; asp; asp = asp->next) {
+			if (asp->flavor == cred_flavor) {
+				/* already registered */
+				mutex_unlock(&authsvc_lock);
+				return (1);
+			}
+		}
+
+		/* this is a new one, so go ahead and register it */
+		asp = (struct authsvc *)mem_alloc(sizeof (*asp));
+		if (asp == NULL) {
+			mutex_unlock(&authsvc_lock);
+			return (-1);
+		}
+		asp->flavor = cred_flavor;
+		asp->handler = handler;
+		asp->next = Auths;
+		Auths = asp;
+		mutex_unlock(&authsvc_lock);
+		break;
+	}
+	return (0);
 }

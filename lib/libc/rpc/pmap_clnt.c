@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_clnt.c,v 1.14 2000/01/22 22:19:18 mycroft Exp $	*/
+/*	$NetBSD: pmap_clnt.c,v 1.15 2000/06/02 23:11:12 fvdl Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_clnt.c 1.37 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_clnt.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_clnt.c,v 1.14 2000/01/22 22:19:18 mycroft Exp $");
+__RCSID("$NetBSD: pmap_clnt.c,v 1.15 2000/06/02 23:11:12 fvdl Exp $");
 #endif
 #endif
 
@@ -54,6 +54,11 @@ __RCSID("$NetBSD: pmap_clnt.c,v 1.14 2000/01/22 22:19:18 mycroft Exp $");
 #include <rpc/pmap_prot.h>
 #include <rpc/pmap_clnt.h>
 
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "rpc_com.h"
+
 #ifdef __weak_alias
 __weak_alias(pmap_set,_pmap_set)
 __weak_alias(pmap_unset,_pmap_unset)
@@ -61,68 +66,59 @@ __weak_alias(pmap_unset,_pmap_unset)
 
 static const struct timeval tottimeout = { 60, 0 };
 
-/*
- * Set a mapping between program,version and port.
- * Calls the pmap service remotely to do the mapping.
- */
 bool_t
-pmap_set(program, version, protocol, port)
-	u_long program;
-	u_long version;
-	int protocol;
-	u_short port;
+pmap_set(u_long program, u_long version, int protocol, int port)
 {
-	struct sockaddr_in myaddress;
-	int socket = RPC_ANYSOCK;
-	CLIENT *client;
-	struct pmap parms;
 	bool_t rslt;
+	struct netbuf *na;
+	struct netconfig *nconf;
+	char buf[32];
 
-	if (get_myaddress(&myaddress) != 0)
+	if ((protocol != IPPROTO_UDP) && (protocol != IPPROTO_TCP)) {
 		return (FALSE);
-	client = clnttcp_create(&myaddress, PMAPPROG, PMAPVERS,
-	    &socket, RPCSMALLMSGSIZE, RPCSMALLMSGSIZE);
-	if (client == (CLIENT *)NULL)
-		return (FALSE);
-	parms.pm_prog = program;
-	parms.pm_vers = version;
-	parms.pm_prot = protocol;
-	parms.pm_port = port;
-	if (CLNT_CALL(client, PMAPPROC_SET, (xdrproc_t)xdr_pmap, 
-	    &parms, (xdrproc_t)xdr_bool, &rslt, tottimeout) != RPC_SUCCESS) {
-		clnt_perror(client, "Cannot register service");
-		rslt = FALSE;
 	}
-	CLNT_DESTROY(client);
+	nconf = __rpc_getconfip(protocol == IPPROTO_UDP ? "udp" : "tcp");
+	if (nconf == NULL) {
+		return (FALSE);
+	}
+	snprintf(buf, sizeof buf, "0.0.0.0.%d.%d", port >> 8 & 0xff,
+	    port & 0xff);
+	na = uaddr2taddr(nconf, buf);
+	if (na == NULL) {
+		freenetconfigent(nconf);
+		return (FALSE);
+	}
+	rslt = rpcb_set(program, version, nconf, na);
+	free(na);
+	freenetconfigent(nconf);
 	return (rslt);
 }
 
 /*
- * Remove the mapping between program,version and port.
+ * Remove the mapping between program, version and port.
  * Calls the pmap service remotely to do the un-mapping.
  */
 bool_t
-pmap_unset(program, version)
-	u_long program;
-	u_long version;
+pmap_unset(u_long program, u_long version)
 {
-	struct sockaddr_in myaddress;
-	int socket = RPC_ANYSOCK;
-	CLIENT *client;
-	struct pmap parms;
-	bool_t rslt;
+	struct netconfig *nconf;
+	bool_t udp_rslt = FALSE;
+	bool_t tcp_rslt = FALSE;
 
-	if (get_myaddress(&myaddress) != 0)
-		return (FALSE);
-	client = clnttcp_create(&myaddress, PMAPPROG, PMAPVERS,
-	    &socket, RPCSMALLMSGSIZE, RPCSMALLMSGSIZE);
-	if (client == (CLIENT *)NULL)
-		return (FALSE);
-	parms.pm_prog = program;
-	parms.pm_vers = version;
-	parms.pm_port = parms.pm_prot = 0;
-	CLNT_CALL(client, PMAPPROC_UNSET, (xdrproc_t)xdr_pmap, &parms,
-	    (xdrproc_t)xdr_bool, &rslt, tottimeout);
-	CLNT_DESTROY(client);
-	return (rslt);
+	nconf = __rpc_getconfip("udp");
+	if (nconf != NULL) {
+		udp_rslt = rpcb_unset(program, version, nconf);
+		freenetconfigent(nconf);
+	}
+	nconf = __rpc_getconfip("tcp");
+	if (nconf != NULL) {
+		tcp_rslt = rpcb_unset(program, version, nconf);
+		freenetconfigent(nconf);
+	}
+	/*
+	 * XXX: The call may still succeed even if only one of the
+	 * calls succeeded.  This was the best that could be
+	 * done for backward compatibility.
+	 */
+	return (tcp_rslt || udp_rslt);
 }
