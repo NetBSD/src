@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.10 1996/09/26 21:50:56 cgd Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.11 1996/09/30 23:02:14 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -74,9 +74,9 @@
 #define	ELFNAMEEND(x)	CONCAT(x,CONCAT(_elf,ELFSIZE))
 #define	ELFDEFNNAME(x)	CONCAT(ELF,CONCAT(ELFSIZE,CONCAT(_,x)))
 
-int ELFNAME(check_header) __P((Elf_Ehdr *, int));
-int ELFNAME(load_file) __P((struct proc *, char *, struct exec_vmcmd_set *,
-			    u_long *, struct elf_args *, Elf_Addr *));
+static int ELFNAME(check_header) __P((Elf_Ehdr *, int));
+static int ELFNAME(load_file) __P((struct proc *, char *,
+	    struct exec_vmcmd_set *, u_long *, struct elf_args *, Elf_Addr *));
 static void ELFNAME(load_psection) __P((struct exec_vmcmd_set *,
 	struct vnode *, Elf_Phdr *, Elf_Addr *, u_long *, int *));
 
@@ -193,7 +193,7 @@ ELFNAME(copyargs)(pack, arginfo, stack, argp)
  * just one comparison can be done. Unfortunately, there is both
  * em_486 and em_386, so this would not work on the i386.
  */
-int
+static int
 ELFNAME(check_header)(eh, type)
 	Elf_Ehdr *eh;
 	int type;
@@ -322,7 +322,7 @@ ELFNAME(read_from)(p, vp, off, buf, size)
  * [stolen from coff_load_shlib()]. Made slightly generic
  * so it might be used externally.
  */
-int
+static int
 ELFNAME(load_file)(p, path, vcset, entry, ap, last)
 	struct proc *p;
 	char *path;
