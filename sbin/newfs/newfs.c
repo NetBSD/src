@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.26 1997/09/15 06:23:04 lukem Exp $	*/
+/*	$NetBSD: newfs.c,v 1.27 1997/09/16 14:05:43 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -41,9 +41,9 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
+static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.26 1997/09/15 06:23:04 lukem Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.27 1997/09/16 14:05:43 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,6 +59,7 @@ __RCSID("$NetBSD: newfs.c,v 1.26 1997/09/15 06:23:04 lukem Exp $");
 #include <sys/sysctl.h>
 
 #include <ufs/ufs/dir.h>
+#include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
 
 #include <ctype.h>
@@ -279,7 +280,7 @@ main(argc, argv)
 			break;
 		case 'o':
 			if (mfs)
-				getmntopts(optarg, mopts, &mntflags);
+				getmntopts(optarg, mopts, &mntflags, 0);
 			else {
 				if (strcmp(optarg, "space") == 0)
 					opt = FS_OPTSPACE;
@@ -478,7 +479,7 @@ havelabel:
 	 * transfer size permitted by the controller or buffering.
 	 */
 	if (maxcontig == 0)
-		maxcontig = MAX(1, MIN(MAXPHYS, MAXBSIZE) / bsize - 1);
+		maxcontig = MAX(1, MIN(MAXPHYS, MAXBSIZE) / bsize);
 	if (density == 0)
 		density = NFPI * fsize;
 	if (minfree < MINFREE && opt != FS_OPTSPACE) {
