@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.64 2000/04/23 16:38:52 matt Exp $
+#	$NetBSD: GENERIC,v 1.65 2000/05/08 19:09:49 ragge Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
 
 include		"arch/vax/conf/std.vax"
 
-#ident 		"GENERIC-$Revision: 1.64 $"
+#ident 		"GENERIC-$Revision: 1.65 $"
 
 # Here are all different supported CPU types listed.
 options 	"VAX8600"
@@ -14,12 +14,15 @@ options 	"VAX780"
 options 	"VAX750"
 options 	"VAX630"	# MV II
 options 	"VAX650"	# MV III, 3600, 3800, 3900
+options 	"VAX660"	# VAX 4000/200
 options 	"VAX670"	# VAX 4000/300
+options 	"VAX680"	# VAX 4000/500
 options 	"VAX410"	# VS 2000
 options 	"VAX43"		# VS 3100/76
 options 	"VAX46"		# VS 4000/60
 options 	"VAX48"		# VS 4000 VLC
 options 	"VAX49"		# VS 4000/90
+#options 	"VAX53"		# VAX 4000/105A
 
 # Max users on system; this is just a hint
 maxusers	8
@@ -137,6 +140,7 @@ smg0		at vsbus0 csr 0x200f0000 # Small monochrome display ctlr.
 # Ibus, the internal bus on most Microvaxen
 uba0		at ibus0 		# Qbus adapter
 ze0		at ibus0 		# SGEC on-board ethernet
+#dz0		at ibus0		# VAX 4000/105A serial lines
 #shac0		at ibus0 		# DSSI controller
 
 # Devices connected at VAXBI
