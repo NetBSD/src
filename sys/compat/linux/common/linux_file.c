@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.36 2001/01/22 20:08:05 jdolecek Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.37 2001/01/22 21:31:37 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -495,7 +495,10 @@ linux_stat1(p, v, retval, dolstat)
 
 	sg = stackgap_init(p->p_emul);
 	st = stackgap_alloc(&sg, sizeof (struct stat));
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	if (dolstat)
+		CHECK_ALT_SYMLINK(p, &sg, SCARG(uap, path));
+	else
+		CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&sa, ub) = st;
 	SCARG(&sa, path) = SCARG(uap, path);
@@ -911,9 +914,6 @@ linux_sys_pread(p, v, retval)
 		syscallarg(linux_off_t) offset;
 	} */ *uap = v;
 	struct sys_pread_args pra;
-	caddr_t sg;
-
-	sg = stackgap_init(p->p_emul);
 
 	SCARG(&pra, fd) = SCARG(uap, fd);
 	SCARG(&pra, buf) = SCARG(uap, buf);
@@ -939,9 +939,6 @@ linux_sys_pwrite(p, v, retval)
 		syscallarg(linux_off_t) offset;
 	} */ *uap = v;
 	struct sys_pwrite_args pra;
-	caddr_t sg;
-
-	sg = stackgap_init(p->p_emul);
 
 	SCARG(&pra, fd) = SCARG(uap, fd);
 	SCARG(&pra, buf) = SCARG(uap, buf);
