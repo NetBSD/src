@@ -1,4 +1,4 @@
-.\"	$NetBSD: atppc.4,v 1.11 2004/01/28 19:44:39 jdolecek Exp $
+.\"	$NetBSD: atppc.4,v 1.12 2004/01/28 20:02:22 jdolecek Exp $
 .\"
 .\" Copyright (c) 1998, 1999, Nicolas Souchu
 .\" Copyright (c) 2003, 2004 Gary Thorpe <gathorpe@users.sourceforge.net> 
@@ -73,13 +73,6 @@ supports the following data transfer modes: Centronics Compatible
 (Standard), Nibble, Byte (PS2), Fast Centronics, ECP, and EPP.
 Standard and Fast Centronics modes are write only, Nibble and Byte
 modes are read only, and ECP and EPP modes are bidirectional.
-.Ss Software Interfaces
-The driver provides some generic methods that can apply to many
-AT-like parallel port devices (such as non-generic chip sets): see
-.Xr atppc 9 .
-.Nm
-implements the parport interface defined in
-.Xr ppbus 9 .
 .Ss Supported Devices
 .Nm
 supports only generic chip sets on the ISA bus.
