@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.18 1998/11/22 23:38:53 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.19 1998/11/22 23:56:49 mrg Exp $	*/
 /* #define NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define HWREF 
 /* #define BOOT_DEBUG */
@@ -2582,7 +2582,7 @@ pmap_clear_modify(pa)
 
 	if (!IS_VM_PHYSADDR(pa)) {
 		pv_check();
-		return 0;
+		goto out;
 	}
 
 	/* Clear all mappings */
@@ -2648,6 +2648,7 @@ pmap_clear_modify(pa)
 	}
 #endif
 #endif
+out:
 #if defined(PMAP_NEW)
 	return (changed);
 #endif
@@ -2677,7 +2678,7 @@ pmap_clear_reference(pa)
 #endif
 	if (!IS_VM_PHYSADDR(pa)) {
 		pv_check();
-		return 0;
+		goto out;
 	}
 	/* Clear all references */
 	s = splimp();
@@ -2745,6 +2746,7 @@ pmap_clear_reference(pa)
 	}
 #endif
 #endif
+out:
 #if defined(PMAP_NEW)
 	return (changed);
 #endif
