@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.30.2.14 2002/08/27 06:03:16 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.30.2.15 2002/08/28 18:17:53 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30.2.14 2002/08/27 06:03:16 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30.2.15 2002/08/28 18:17:53 wrstuden Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -1701,8 +1701,8 @@ pmap_activate(struct lwp *l)
 	(void) pmap_extract(pmap_kernel(), (vaddr_t)pmap->pm_pdir,
 	    (paddr_t *)&pcb->pcb_pagedir);
 
-	PDEBUG(0, printf("pmap_activate: p=%p pmap=%p pcb=%p pdir=%p l1=%p\n",
-	    p, pmap, pcb, pmap->pm_pdir, pcb->pcb_pagedir));
+	PDEBUG(0, printf("pmap_activate: l=%p pmap=%p pcb=%p pdir=%p l1=%p\n",
+	    l, pmap, pcb, pmap->pm_pdir, pcb->pcb_pagedir));
 
 	if (l == curlwp) {
 		PDEBUG(0, printf("pmap_activate: setting TTB\n"));
