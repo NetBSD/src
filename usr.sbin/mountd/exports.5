@@ -1,4 +1,4 @@
-.\"	$NetBSD: exports.5,v 1.18 2000/06/12 15:40:35 itojun Exp $
+.\"	$NetBSD: exports.5,v 1.19 2000/06/20 00:54:04 hubertf Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -64,6 +64,12 @@ server and there may be only one default entry for each server
 filesystem that applies to all other hosts.
 The latter exports the filesystem to the ``world'' and should
 be used only when the filesystem contains public information.
+.Pp
+If you have modified the
+.Pa /etc/exports
+file, send the mountd a SIGHUP to make it re-read the
+.Pa /etc/exports
+file: ``kill -HUP `cat /var/run/mountd.pid`''.
 .Pp
 In a mount entry,
 the first field(s) specify the directory path(s) within a server filesystem
