@@ -1,4 +1,4 @@
-/*	$NetBSD: xprintf.c,v 1.6 2000/04/02 23:04:32 soren Exp $	 */
+/*	$NetBSD: xprintf.c,v 1.7 2000/07/03 03:32:57 matt Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -30,6 +30,7 @@
 #include <sys/cdefs.h>
 #include "rtldenv.h"
 #include <string.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
 #ifdef __STDC__
@@ -94,12 +95,12 @@ xvsnprintf(buf, buflen, fmt, ap)
 				unsigned long long uval;
 				char digits[sizeof(int) * 3], *dp = digits;
 #define	SARG() \
-(size & SZ_SHORT ? va_arg(ap, short) : \
+(size & SZ_SHORT ? (short) va_arg(ap, int) : \
 size & SZ_LONG ? va_arg(ap, long) : \
 size & SZ_QUAD ? va_arg(ap, long long) : \
 va_arg(ap, int))
 #define	UARG() \
-(size & SZ_SHORT ? va_arg(ap, unsigned short) : \
+(size & SZ_SHORT ? (unsigned short) va_arg(ap, unsigned int) : \
 size & SZ_LONG ? va_arg(ap, unsigned long) : \
 size & SZ_QUAD ? va_arg(ap, unsigned long long) : \
 va_arg(ap, unsigned int))
