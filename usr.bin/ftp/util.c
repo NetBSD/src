@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.92 2000/04/13 08:13:31 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.93 2000/04/24 05:59:39 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.92 2000/04/13 08:13:31 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.93 2000/04/24 05:59:39 itojun Exp $");
 #endif /* not lint */
 
 /*
@@ -103,6 +103,9 @@ __RCSID("$NetBSD: util.c,v 1.92 2000/04/13 08:13:31 lukem Exp $");
 #include <time.h>
 #include <tzfile.h>
 #include <unistd.h>
+#ifdef INET6
+#include <netdb.h>
+#endif
 
 #include "ftp_var.h"
 
@@ -1413,9 +1416,18 @@ isipv6addr(addr)
 {
 	int rv = 0;
 #ifdef INET6
-	struct sockaddr_in6 su_sin6;
+	struct addrinfo hints, *res;
 
-	rv = inet_pton(AF_INET6, addr, &su_sin6.sin6_addr);
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = PF_INET6;
+	hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
+	hints.ai_flags = AI_NUMERICHOST;
+	if (getaddrinfo(addr, "0", &hints, &res) != 0)
+		rv = 0;
+	else {
+		rv = 1;
+		freeaddrinfo(res);
+	}
 	if (debug)
 		fprintf(ttyout, "isipv6addr: got %d for %s\n", rv, addr);
 #endif
