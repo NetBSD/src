@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Hugh Smith at The University of Guelph.
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)misc.c	5.2 (Berkeley) 2/26/91";
+static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -54,20 +54,19 @@ tmp()
 {
 	sigset_t set, oset;
 	int fd;
-	char path[MAXPATHLEN];
+	char *envtmp, path[MAXPATHLEN];
 
-	bcopy(_PATH_RANTMP, path, sizeof(_PATH_RANTMP));
-
-	sigemptyset(&set);
-	sigaddset(&set, SIGHUP);
-	sigaddset(&set, SIGINT);
-	sigaddset(&set, SIGQUIT);
-	sigaddset(&set, SIGTERM);
+	if ((envtmp = getenv("TMPDIR")) != NULL)
+		(void)sprintf(path, "%s%s", envtmp, strrchr(_PATH_RANTMP, '/'));
+	else
+		bcopy(_PATH_RANTMP, path, sizeof(_PATH_RANTMP));
+	
+	sigfillset(&set);
 	(void)sigprocmask(SIG_BLOCK, &set, &oset);
 	if ((fd = mkstemp(path)) == -1)
-		error(tname);
+		error(path);
         (void)unlink(path);
-	(void)sigprocmask(SIG_SETMASK, &oset, (sigset_t *)NULL);
+	(void)sigprocmask(SIG_SETMASK, &oset, NULL);
 	return(fd);
 }
 
@@ -75,9 +74,9 @@ void *
 emalloc(len)
 	int len;
 {
-	char *p;
+	void *p;
 
-	if (!(p = malloc((u_int)len)))
+	if ((p = malloc((u_int)len)) == NULL)
 		error(archive);
 	return(p);
 }
