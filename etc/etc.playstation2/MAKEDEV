@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.16 2002/06/19 15:00:06 wiz Exp $
+#	$NetBSD: MAKEDEV,v 1.17 2002/06/19 15:02:08 wiz Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -33,6 +33,7 @@
 #		Tries to make the 'standard' number of each type.
 #	std	standard devices
 #	ramdisk	devices to be put into INSTALL kernel ramdisks.
+#	usbs	make USB devices
 #
 # Disks:
 #	wd*	"winchester" disk drives (ST506,IDE,ESDI,RLL,...)
@@ -53,6 +54,15 @@
 # Pseudo terminals:
 #	pty*	set of 62 master and slave pseudo terminals
 #	opty	first 16 ptys, to save inodes on install media
+#
+# USB devices:
+#	usb*	USB control devices
+#	uhid*	USB generic HID devices
+#	ulpt*	USB printer devices
+#	ugen*	USB generic devices
+#	urio*	USB Diamond Rio 500 devices
+#	uscanner*	USB scanners
+#	ttyU*	USB modems
 #
 # Special purpose devices:
 #	clockctl clock control for non root users
