@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.13 1997/06/11 10:10:01 bouyer Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.14 1998/01/13 03:30:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -211,7 +211,7 @@ lfs_markv(p, v, retval)
 			    (error = copyin(blkp->bi_bp, bp->b_data,
 			    bsize)))
 				goto err2;
-			if ((error = VOP_BWRITE(bp)) != 0);
+			if ((error = VOP_BWRITE(bp)) != 0)
 				goto err2;
 		}
 		while (lfs_gatherblock(sp, bp, NULL));
