@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.38 2002/03/28 16:47:49 thorpej Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.39 2002/04/05 16:58:03 thorpej Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -55,6 +55,8 @@
 #include <machine/cpu.h>
 #include <machine/bootconfig.h>
 #include <arch/arm/arm/disassem.h>
+
+#include <uvm/uvm.h>
 
 #include <arm/cpufunc.h>
 
@@ -751,7 +753,7 @@ set_cpufuncs()
 #endif	/* CPU_ARM8 */
 #ifdef CPU_ARM9
 	if (cputype == CPU_ID_ARM920T) {
-		pte_cache_mode = PT_C;	/* Select write-through cacheing. */
+		pte_cache_mode = L2_C;	/* Select write-through cacheing. */
 		cpufuncs = arm9_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 1;	/* V4 or higher */
 		get_cachetype_cp15();
@@ -809,7 +811,7 @@ set_cpufuncs()
 			:
 			: "r" (BCUCTL_E0|BCUCTL_E1|BCUCTL_EV));
 
-		pte_cache_mode = PT_C;	/* Select write-through cacheing. */
+		pte_cache_mode = L2_C;	/* Select write-through cacheing. */
 		cpufuncs = xscale_cpufuncs;
 
 		/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.12 2002/04/03 23:33:35 thorpej Exp $	*/
+/*	$NetBSD: ofw.c,v 1.13 2002/04/05 16:58:11 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -77,7 +77,7 @@
 #define IO_VIRT_SIZE 0x01000000
 
 #define	KERNEL_IMG_PTS		2
-#define	KERNEL_VMDATA_PTS	(KERNEL_VM_SIZE >> (PDSHIFT + 2))
+#define	KERNEL_VMDATA_PTS	(KERNEL_VM_SIZE >> (L1_S_SHIFT + 2))
 #define	KERNEL_OFW_PTS		4
 #define	KERNEL_IO_PTS		4
 
@@ -973,7 +973,7 @@ ofw_callbackhandler(args)
 
 			ap_bits >>= 10;
 			for (; npages > 0; pte++, pa += NBPG, npages--)
-				*pte = (pa | PT_AP(ap_bits) | L2_SPAGE | cb_bits);
+				*pte = (pa | L2_AP(ap_bits) | L2_TYPE_S | cb_bits);
 		}
 
 		/* Clean out tlb. */
@@ -1056,7 +1056,7 @@ ofw_callbackhandler(args)
 			args->nreturns = 2;
 		} else {
 			/* Existing mapping. */
-			pa = (pte & PG_FRAME) | (va & ~PG_FRAME);
+			pa = (pte & L2_S_FRAME) | (va & L2_S_OFFSET);
 			mode = (pte & 0x0C00) | (0 << 5) | (pte & 0x000C);	/* AP | DOM | CB */
 
 			args_n_results[nargs + 1] = 0;
@@ -1229,17 +1229,17 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 
 	/* Allocate/initialize space for the proc0, NetBSD-managed */
 	/* page tables that we will be switching to soon. */
-	ofw_claimpages(&virt_freeptr, &proc0_pagedir, PD_SIZE);
-	ofw_claimpages(&virt_freeptr, &proc0_pt_pte, PT_SIZE);
-	ofw_claimpages(&virt_freeptr, &proc0_pt_sys, PT_SIZE);
+	ofw_claimpages(&virt_freeptr, &proc0_pagedir, L1_TABLE_SIZE);
+	ofw_claimpages(&virt_freeptr, &proc0_pt_pte, L2_TABLE_SIZE);
+	ofw_claimpages(&virt_freeptr, &proc0_pt_sys, L2_TABLE_SIZE);
 	for (i = 0; i < KERNEL_IMG_PTS; i++)
-		ofw_claimpages(&virt_freeptr, &proc0_pt_kernel[i], PT_SIZE);
+		ofw_claimpages(&virt_freeptr, &proc0_pt_kernel[i], L2_TABLE_SIZE);
 	for (i = 0; i < KERNEL_VMDATA_PTS; i++)
-		ofw_claimpages(&virt_freeptr, &proc0_pt_vmdata[i], PT_SIZE);
+		ofw_claimpages(&virt_freeptr, &proc0_pt_vmdata[i], L2_TABLE_SIZE);
 	for (i = 0; i < KERNEL_OFW_PTS; i++)
-		ofw_claimpages(&virt_freeptr, &proc0_pt_ofw[i], PT_SIZE);
+		ofw_claimpages(&virt_freeptr, &proc0_pt_ofw[i], L2_TABLE_SIZE);
 	for (i = 0; i < KERNEL_IO_PTS; i++)
-		ofw_claimpages(&virt_freeptr, &proc0_pt_io[i], PT_SIZE);
+		ofw_claimpages(&virt_freeptr, &proc0_pt_io[i], L2_TABLE_SIZE);
 
 	/* Allocate/initialize space for stacks. */
 #ifndef	OFWGENCFG
@@ -1298,7 +1298,7 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 			 * The only allowable regions are page0, the
 			 * kernel-static area, and the ofw area.
 			 */
-			switch (va >> (PDSHIFT + 2)) {
+			switch (va >> (L1_S_SHIFT + 2)) {
 			case 0:
 				/* page0 */
 				break;
@@ -1306,22 +1306,22 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 #if KERNEL_IMG_PTS != 2
 #error "Update ofw translation range list"
 #endif
-			case ( KERNEL_BASE                 >> (PDSHIFT + 2)):
-			case ((KERNEL_BASE   + 0x00400000) >> (PDSHIFT + 2)):
+			case ( KERNEL_BASE                 >> (L1_S_SHIFT + 2)):
+			case ((KERNEL_BASE   + 0x00400000) >> (L1_S_SHIFT + 2)):
 				/* kernel static area */
 				break;
 
-			case ( OFW_VIRT_BASE               >> (PDSHIFT + 2)):
-			case ((OFW_VIRT_BASE + 0x00400000) >> (PDSHIFT + 2)):
-			case ((OFW_VIRT_BASE + 0x00800000) >> (PDSHIFT + 2)):
-			case ((OFW_VIRT_BASE + 0x00C00000) >> (PDSHIFT + 2)):
+			case ( OFW_VIRT_BASE               >> (L1_S_SHIFT + 2)):
+			case ((OFW_VIRT_BASE + 0x00400000) >> (L1_S_SHIFT + 2)):
+			case ((OFW_VIRT_BASE + 0x00800000) >> (L1_S_SHIFT + 2)):
+			case ((OFW_VIRT_BASE + 0x00C00000) >> (L1_S_SHIFT + 2)):
 				/* ofw area */
 				break;
 
-			case ( IO_VIRT_BASE               >> (PDSHIFT + 2)):
-			case ((IO_VIRT_BASE + 0x00400000) >> (PDSHIFT + 2)):
-			case ((IO_VIRT_BASE + 0x00800000) >> (PDSHIFT + 2)):
-			case ((IO_VIRT_BASE + 0x00C00000) >> (PDSHIFT + 2)):
+			case ( IO_VIRT_BASE               >> (L1_S_SHIFT + 2)):
+			case ((IO_VIRT_BASE + 0x00400000) >> (L1_S_SHIFT + 2)):
+			case ((IO_VIRT_BASE + 0x00800000) >> (L1_S_SHIFT + 2)):
+			case ((IO_VIRT_BASE + 0x00C00000) >> (L1_S_SHIFT + 2)):
 				/* io area */
 				break;
 
@@ -1346,19 +1346,19 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 	 * has-mapped/will-map elsewhere.
 	 */
 	ofw_discardmappings(proc0_pt_kernel[KERNEL_IMG_PTS - 1].pv_va,
-	    proc0_pt_sys.pv_va, PT_SIZE);
+	    proc0_pt_sys.pv_va, L2_TABLE_SIZE);
 	for (i = 0; i < KERNEL_IMG_PTS; i++)
 		ofw_discardmappings(proc0_pt_kernel[KERNEL_IMG_PTS - 1].pv_va,
-		    proc0_pt_kernel[i].pv_va, PT_SIZE);
+		    proc0_pt_kernel[i].pv_va, L2_TABLE_SIZE);
 	for (i = 0; i < KERNEL_VMDATA_PTS; i++)
 		ofw_discardmappings(proc0_pt_kernel[KERNEL_IMG_PTS - 1].pv_va,
-		    proc0_pt_vmdata[i].pv_va, PT_SIZE);
+		    proc0_pt_vmdata[i].pv_va, L2_TABLE_SIZE);
 	for (i = 0; i < KERNEL_OFW_PTS; i++)
 		ofw_discardmappings(proc0_pt_kernel[KERNEL_IMG_PTS - 1].pv_va,
-		    proc0_pt_ofw[i].pv_va, PT_SIZE);
+		    proc0_pt_ofw[i].pv_va, L2_TABLE_SIZE);
 	for (i = 0; i < KERNEL_IO_PTS; i++)
 		ofw_discardmappings(proc0_pt_kernel[KERNEL_IMG_PTS - 1].pv_va,
-		    proc0_pt_io[i].pv_va, PT_SIZE);
+		    proc0_pt_io[i].pv_va, L2_TABLE_SIZE);
 	ofw_discardmappings(proc0_pt_kernel[KERNEL_IMG_PTS - 1].pv_va,
 	    msgbuf.pv_va, MSGBUFSIZE);
 
@@ -1370,7 +1370,7 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 	 */
 	pmap_map_entry(L1pagetable, proc0_pt_pte.pv_va,
 	    proc0_pt_pte.pv_pa, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
-	for (i = 0; i < (PD_SIZE / NBPG); ++i)
+	for (i = 0; i < (L1_TABLE_SIZE / NBPG); ++i)
 		pmap_map_entry(L1pagetable,
 		    proc0_pagedir.pv_va + NBPG * i,
 		    proc0_pagedir.pv_pa + NBPG * i,
@@ -1422,8 +1422,8 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 		vm_offset_t va = tp->virt;
 		vm_offset_t pa = tp->phys;
 
-		if (((va & (NBPD - 1)) == 0) && ((pa & (NBPD - 1)) == 0)) {
-			int nsections = tp->size / NBPD;
+		if (((va | pa) & L1_S_OFFSET) == 0) {
+			int nsections = tp->size / L1_S_SIZE;
 
 			while (nsections--) {
 				/* XXXJRT prot?? */
@@ -1431,8 +1431,8 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 				    VM_PROT_READ|VM_PROT_WRITE,
 				    (tp->mode & 0xC) == 0xC ? PTE_CACHE
 							    : PTE_NOCACHE);
-				va += NBPD;
-				pa += NBPD;
+				va += L1_S_SIZE;
+				pa += L1_S_SIZE;
 			}
 		}
 	}
@@ -1644,7 +1644,7 @@ ofw_map(pa, size, cb_bits)
 
 	ofw_claimvirt(va, size, 0); /* make sure OFW knows about the memory */
 
-	ofw_settranslation(va, pa, size, PT_AP(AP_KRW) | cb_bits);
+	ofw_settranslation(va, pa, size, L2_AP(AP_KRW) | cb_bits);
 
 	return va;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_start.S,v 1.1 2002/03/03 21:22:15 thorpej Exp $	*/
+/*	$NetBSD: iq80310_start.S,v 1.2 2002/04/05 16:58:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -78,8 +78,8 @@ _C_LABEL(iq80310_start):
 	add	r0, pc, #(Ltable - . - 8)
 	ldr	r0, [r0]			/* r0 = &l1table */
 
-	mov	r3, #(AP_KRW << AP_SECTION_SHIFT)
-	orr	r3, r3, #(L1_SECTION)
+	mov	r3, #(L1_S_AP(AP_KRW))
+	orr	r3, r3, #(L1_TYPE_S)
 	mov	r2, #0x100000			/* advance by 1MB */
 	mov	r1, #0x1000			/* 4096MB */
 1:
@@ -94,8 +94,8 @@ _C_LABEL(iq80310_start):
 	add	r0, pc, #(Ltable - . - 8)	/* r0 = &l1table */
 	ldr	r0, [r0]
 
-	mov	r3, #(AP_KRW << AP_SECTION_SHIFT)
-	orr	r3, r3, #(L1_SECTION)
+	mov	r3, #(L1_S_AP(AP_KRW))
+	orr	r3, r3, #(L1_TYPE_S)
 	orr	r3, r3, #0xa0000000
 	add	r0, r0, #(0xc00 * 4)		/* offset to 0xc00xxxxx */
 	mov	r1, #0x40			/* 64MB */

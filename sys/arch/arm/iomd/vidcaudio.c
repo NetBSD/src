@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.6 2002/03/10 15:47:44 bjh21 Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.7 2002/04/05 16:58:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.6 2002/03/10 15:47:44 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.7 2002/04/05 16:58:06 thorpej Exp $");
 
 #include <sys/conf.h>   /* autoconfig functions */
 #include <sys/device.h> /* device calls */
@@ -512,7 +512,7 @@ vidcaudio_stereo(channel, position)
 	return 0;
 }
 
-#define PHYS(x, y) pmap_extract(pmap_kernel(), ((x)&PG_FRAME), (paddr_t *)(y))
+#define PHYS(x, y) pmap_extract(pmap_kernel(), ((x)&L2_S_FRAME), (paddr_t *)(y))
 
 /*
  * Program the next buffer to be used

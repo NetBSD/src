@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.28 2002/04/03 23:33:31 thorpej Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.29 2002/04/05 16:58:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -477,12 +477,12 @@ initarm(bootargs)
 	kernel_l1pt.pv_pa = 0;
 	for (loop = 0; loop <= NUM_KERNEL_PTS; ++loop) {
 		/* Are we 16KB aligned for an L1 ? */
-		if ((physical_freestart & (PD_SIZE - 1)) == 0
+		if ((physical_freestart & (L1_TABLE_SIZE - 1)) == 0
 		    && kernel_l1pt.pv_pa == 0) {
-			valloc_pages(kernel_l1pt, PD_SIZE / NBPG);
+			valloc_pages(kernel_l1pt, L1_TABLE_SIZE / NBPG);
 		} else {
 			alloc_pages(kernel_pt_table[loop1].pv_pa,
-			    PT_SIZE / NBPG);
+			    L2_TABLE_SIZE / NBPG);
 			kernel_pt_table[loop1].pv_va =
 			    kernel_pt_table[loop1].pv_pa;
 			++loop1;
@@ -491,7 +491,7 @@ initarm(bootargs)
 
 #ifdef DIAGNOSTIC
 	/* This should never be able to happen but better confirm that. */
-	if (!kernel_l1pt.pv_pa || (kernel_l1pt.pv_pa & (PD_SIZE-1)) != 0)
+	if (!kernel_l1pt.pv_pa || (kernel_l1pt.pv_pa & (L1_TABLE_SIZE-1)) != 0)
 		panic("initarm: Failed to align the kernel page directory\n");
 #endif
 
@@ -503,7 +503,7 @@ initarm(bootargs)
 	alloc_pages(systempage.pv_pa, 1);
 
 	/* Allocate a page for the page table to map kernel page tables*/
-	valloc_pages(kernel_ptpt, PT_SIZE / NBPG);
+	valloc_pages(kernel_ptpt, L2_TABLE_SIZE / NBPG);
 
 	/* Allocate stacks for all modes */
 	valloc_pages(irqstack, IRQ_STACK_SIZE);
@@ -613,7 +613,7 @@ initarm(bootargs)
 	    UPAGES * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
 	pmap_map_chunk(l1pagetable, kernel_l1pt.pv_va, kernel_l1pt.pv_pa,
-	    PD_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+	    L1_TABLE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 	/* Map the page table that maps the kernel pages */
 	pmap_map_entry(l1pagetable, kernel_ptpt.pv_va, kernel_ptpt.pv_pa,
@@ -660,7 +660,7 @@ initarm(bootargs)
 		    l1_sec_table[loop].pa + l1_sec_table[loop].size - 1,
 		    l1_sec_table[loop].va);
 #endif
-		for (sz = 0; sz < l1_sec_table[loop].size; sz += L1_SEC_SIZE)
+		for (sz = 0; sz < l1_sec_table[loop].size; sz += L1_S_SIZE)
 			pmap_map_section(l1pagetable,
 			    l1_sec_table[loop].va + sz,
 			    l1_sec_table[loop].pa + sz,
