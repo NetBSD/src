@@ -625,7 +625,7 @@ struct client_lease {
 	struct auth_key *key;      /* Key used in basic DHCP authentication. */
 
 	unsigned int is_static : 1;    /* If set, lease is from config file. */
-	unsigned int is_bootp: 1;   /* If set, lease was aquired with BOOTP. */
+	unsigned int is_bootp: 1;   /* If set, lease was acquired with BOOTP. */
 
 	struct option_state *options;	     /* Options supplied with lease. */
 };
