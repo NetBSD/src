@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.272 2000/10/27 22:44:05 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.273 2000/11/03 15:57:34 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.268 2000/10/27 22:43:28 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.269 2000/11/03 15:54:02 ad Exp 
  */
 
 /*
@@ -3612,61 +3612,61 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_PEQUR, PCI_PRODUCT_PEQUR_ROSB4,
 	    0,
-	    "Pequr Technology",
+	    "",
 	    "ROSB4 SouthBridge",
 	},
 	{
 	    PCI_VENDOR_PEQUR, PCI_PRODUCT_PEQUR_XX5,
 	    0,
-	    "Pequr Technology",
+	    "",
 	    "PCIHB5",
 	},
 	{
 	    PCI_VENDOR_PEQUR, PCI_PRODUCT_PEQUR_CIOB20,
 	    0,
-	    "Pequr Technology",
+	    "",
 	    "I/O Bridge",
 	},
 	{
 	    PCI_VENDOR_PEQUR, PCI_PRODUCT_PEQUR_XX7,
 	    0,
-	    "Pequr Technology",
+	    "",
 	    "PCIHB7",
 	},
 	{
 	    PCI_VENDOR_PEQUR, PCI_PRODUCT_PEQUR_CNB20HE,
 	    0,
-	    "Pequr Technology",
+	    "",
 	    "CNB20HE Host",
 	},
 	{
 	    PCI_VENDOR_PEQUR, PCI_PRODUCT_PEQUR_CNB20LE,
 	    0,
-	    "Pequr Technology",
+	    "",
 	    "CNB20LE Host",
 	},
 	{
 	    PCI_VENDOR_PEQUR, PCI_PRODUCT_PEQUR_CIOB30,
 	    0,
-	    "Pequr Technology",
+	    "",
 	    "CIOB30",
 	},
 	{
 	    PCI_VENDOR_PEQUR, PCI_PRODUCT_PEQUR_CMIC_HE,
 	    0,
-	    "Pequr Technology",
+	    "",
 	    "CMIC_HE Host",
 	},
 	{
 	    PCI_VENDOR_PEQUR, PCI_PRODUCT_PEQUR_IDE,
 	    0,
-	    "Pequr Technology",
+	    "",
 	    "IDE",
 	},
 	{
 	    PCI_VENDOR_PEQUR, PCI_PRODUCT_PEQUR_USB,
 	    0,
-	    "Pequr Technology",
+	    "",
 	    "USB",
 	},
 	{
@@ -7534,9 +7534,9 @@ struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
-	    PCI_VENDOR_PEQUR, 0,
+	    PCI_VENDOR_SERVERWORKS, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Pequr Technology",
+	    "ServerWorks",
 	    NULL,
 	},
 	{
