@@ -1,7 +1,8 @@
 %{
-/*	$NetBSD: cgram.y,v 1.8 1995/10/02 17:31:35 jpo Exp $	*/
+/*	$NetBSD: cgram.y,v 1.9 1996/12/22 11:30:49 cgd Exp $	*/
 
 /*
+ * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
  * Copyright (c) 1994, 1995 Jochen Pohl
  * All Rights Reserved.
  *
@@ -33,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: cgram.y,v 1.8 1995/10/02 17:31:35 jpo Exp $";
+static char rcsid[] = "$NetBSD: cgram.y,v 1.9 1996/12/22 11:30:49 cgd Exp $";
 #endif
 
 #include <stdlib.h>
@@ -228,7 +229,8 @@ translation_unit:
 	;
 
 ext_decl:
-	  func_def {
+	  asm_stmnt
+	| func_def {
 		glclup(0);
 		clrwflgs();
 	  }
