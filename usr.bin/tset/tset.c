@@ -1,4 +1,4 @@
-/*	$NetBSD: tset.c,v 1.13 2003/08/07 11:16:49 agc Exp $	*/
+/*	$NetBSD: tset.c,v 1.14 2004/07/23 13:35:22 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tset.c	8.1 (Berkeley) 6/9/93";
 #endif
-__RCSID("$NetBSD: tset.c,v 1.13 2003/08/07 11:16:49 agc Exp $");
+__RCSID("$NetBSD: tset.c,v 1.14 2004/07/23 13:35:22 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -314,6 +314,7 @@ void
 usage()
 {
 	(void)fprintf(stderr,
-"usage: tset [-IQrSs] [-] [-e ch] [-i ch] [-k ch] [-m mapping] [terminal]\n");
+"usage: %s [-EIQrSs] [-] [-e ch] [-i ch] [-k ch] [-m mapping] [terminal]\n",
+	getprogname());
 	exit(1);
 }
