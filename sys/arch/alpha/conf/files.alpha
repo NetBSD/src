@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.118.2.2 2000/07/12 20:56:02 thorpej Exp $
+# $NetBSD: files.alpha,v 1.118.2.3 2000/08/11 18:00:03 thorpej Exp $
 #
 # alpha-specific configuration info
 
@@ -244,6 +244,8 @@ file	arch/alpha/isa/isapnp_machdep.c	isapnp
 #
 
 include "dev/eisa/files.eisa"
+
+file	arch/alpha/eisa/eisa_machdep.c	eisa
 
 device	jensenio {[port = -1]}: eisabus, isabus, isadma_bounce
 attach	jensenio at mainbus
