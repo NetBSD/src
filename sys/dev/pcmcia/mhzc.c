@@ -1,4 +1,4 @@
-/*	$NetBSD: mhzc.c,v 1.4 2000/02/04 01:27:13 cgd Exp $	*/
+/*	$NetBSD: mhzc.c,v 1.5 2000/02/05 04:44:00 enami Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -128,6 +128,7 @@ struct mhzc_softc {
 #define	MHZC_ETHERNET_MAPPED	0x02
 #define	MHZC_MODEM_ENABLED	0x04
 #define	MHZC_ETHERNET_ENABLED	0x08
+#define	MHZC_IOSPACE_ALLOCED	0x10
 
 int	mhzc_match __P((struct device *, struct cfdata *, void *));
 void	mhzc_attach __P((struct device *, struct device *, void *));
@@ -248,15 +249,16 @@ mhzc_attach(parent, self, aux)
 	if (mhzc_alloc_ethernet(sc) == 0) {
 		printf("%s: unable to allocate space for Ethernet portion\n",
 		    sc->sc_dev.dv_xname);
-		return;
+		goto alloc_ethernet_failed;
 	}
 
 	/* Enable the card. */
 	pcmcia_function_init(pa->pf, cfe);
 	if (pcmcia_function_enable(pa->pf)) {
 		printf(": function enable failed\n");
-		return;
+		goto enable_failed;
 	}
+	sc->sc_flags |= MHZC_IOSPACE_ALLOCED;
 
 	if (sc->sc_product->mp_enable != NULL)
 		(*sc->sc_product->mp_enable)(sc);
@@ -265,6 +267,15 @@ mhzc_attach(parent, self, aux)
 	sc->sc_ethernet = config_found(&sc->sc_dev, "sm", mhzc_print);
 
 	pcmcia_function_disable(pa->pf);
+	return;
+
+ enable_failed:
+	/* Free the Ethernet's I/O space. */
+	pcmcia_io_free(sc->sc_pf, &sc->sc_ethernet_pcioh);
+
+ alloc_ethernet_failed:
+	/* Free the Modem's I/O space. */
+	pcmcia_io_free(sc->sc_pf, &sc->sc_modem_pcioh);
 }
 
 int
@@ -315,11 +326,6 @@ mhzc_alloc_ethernet(sc)
 		}
 	}
 
-	/*
-	 * Weren't able to allocate space for the Ethernet, so we
-	 * free the Modem's I/O space.
-	 */
-	pcmcia_io_free(sc->sc_pf, &sc->sc_modem_pcioh);
 	return (0);
 }
 
@@ -348,12 +354,16 @@ mhzc_detach(self, flags)
 		rv = config_detach(sc->sc_ethernet, flags);
 		if (rv != 0)
 			return (rv);
+		sc->sc_ethernet = NULL;
 	}
 
 	if (sc->sc_modem != NULL) {
 		rv = config_detach(sc->sc_modem, flags);
 		if (rv != 0)
 			return (rv);
+#ifdef not_necessary
+		sc->sc_modem = NULL;
+#endif
 	}
 
 	/* Unmap our i/o windows. */
@@ -363,8 +373,10 @@ mhzc_detach(self, flags)
 		pcmcia_io_unmap(sc->sc_pf, sc->sc_ethernet_io_window);
 
 	/* Free our i/o spaces. */
-	pcmcia_io_free(sc->sc_pf, &sc->sc_modem_pcioh);
-	pcmcia_io_free(sc->sc_pf, &sc->sc_ethernet_pcioh);
+	if (sc->sc_flags & MHZC_IOSPACE_ALLOCED) {
+		pcmcia_io_free(sc->sc_pf, &sc->sc_modem_pcioh);
+		pcmcia_io_free(sc->sc_pf, &sc->sc_ethernet_pcioh);
+	}
 
 	return (0);
 }
@@ -644,6 +656,7 @@ mhzc_em3336_ascii_enaddr(cisstr, myla)
 #if NCOM_MHZC > 0
 int	com_mhzc_match __P((struct device *, struct cfdata *, void *));
 void	com_mhzc_attach __P((struct device *, struct device *, void *));
+int	com_mhzc_detach __P((struct device *, int));
 
 /* No mhzc-specific goo in the softc; it's all in the parent. */
 struct cfattach com_mhzc_ca = {
@@ -729,12 +742,11 @@ com_mhzc_disable(sc)
 #if NSM_MHZC > 0
 int	sm_mhzc_match __P((struct device *, struct cfdata *, void *));
 void	sm_mhzc_attach __P((struct device *, struct device *, void *));
-int	sm_mhzc_detach __P((struct device *, int));
 
 /* No mhzc-specific goo in the softc; it's all in the parent. */
 struct cfattach sm_mhzc_ca = {
 	sizeof(struct smc91cxx_softc), sm_mhzc_match, sm_mhzc_attach,
-	    sm_mhzc_detach, smc91cxx_activate
+	    smc91cxx_detach, smc91cxx_activate
 };
 
 int	sm_mhzc_enable __P((struct smc91cxx_softc *));
@@ -787,25 +799,6 @@ sm_mhzc_attach(parent, self, aux)
 
 	/* Perform generic initialization. */
 	smc91cxx_attach(sc, myla);
-}
-
-int
-sm_mhzc_detach(self, flags)
-	struct device *self;
-	int flags;
-{
-#ifdef notyet
-	struct smc91cxx_softc *sc = (void *)self;
-
-	/*
-	 * Our softc is about to go away, so drop our reference
-	 * to the ifnet.
-	 */
-	if_delref(sc->sc_ec.ec_if);
-	return (0);
-#else
-	return (EBUSY);
-#endif
 }
 
 int
