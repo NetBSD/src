@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.31 2000/06/19 23:30:34 eeh Exp $ */
+/*	$NetBSD: autoconf.c,v 1.32 2000/06/24 04:42:55 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -201,6 +201,11 @@ bootstrap(nctx)
 #if defined(DDB) && defined(DB_ELF_SYMBOLS)
 	extern void *ssym, *esym;
 #endif
+#ifndef	__arch64__
+	/* Assembly glue for the PROM */
+	extern void OF_sym2val32 __P((void *));
+	extern void OF_val2sym32 __P((void *));
+#endif
 
 	/* 
 	 * Initialize ddb first and register OBP callbacks.
@@ -227,6 +232,8 @@ bootstrap(nctx)
 #ifdef __arch64__
 	/* This can only be installed on an 64-bit system cause otherwise our stack is screwed */
 	OF_set_symbol_lookup(OF_sym2val, OF_val2sym);
+#else
+	OF_set_symbol_lookup(OF_sym2val32, OF_val2sym32);
 #endif
 #endif
 
