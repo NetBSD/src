@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.2 1996/06/23 14:04:54 leo Exp $
+#	$NetBSD: dot.profile,v 1.3 1996/07/15 06:31:54 leo Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -48,7 +48,7 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	update
 
 	# Select a keyboard map
-	_maps=`ls /usr/share/keymap/atari | sed 's/\.map//g'`
+	_maps=`ls /usr/share/keymaps/atari | sed 's/\.map//g'`
 	while [ ! -z "$_maps" ]; do
 		echo "The available keyboard maps are:"
 		_num=0
@@ -76,7 +76,7 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 		# Got a valid answer, activate the map...
 		set -- $_maps
 		shift $_ans
-		/usr/sbin/loadkmap -f /usr/share/keymap/atari/$1.map
+		/usr/sbin/loadkmap -f /usr/share/keymaps/atari/$1.map
 		break
 	done
 
