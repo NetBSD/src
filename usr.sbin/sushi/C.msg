@@ -56,6 +56,8 @@ $set 3 run.c stuff
 15 with the spacebar.  Press the ENTER key to return from the list popup.
 16 No help is available for this screen.
 17 Are you sure? (Y/n)
+18 The data entered in this field is invalid.
+19 Please enter the correct information before continuing.
 $set 4 menu titles and stuff
 1 Select choice
 2 Generating form data, please wait
