@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.31 2004/01/20 19:26:53 matt Exp $	*/
+/*	$NetBSD: math.h,v 1.32 2004/01/20 19:52:40 kleink Exp $	*/
 
 /*
  * ====================================================
@@ -97,8 +97,6 @@ extern __const union __float_u __nanf;
 #define	FP_ZERO		0x04
 /* NetBSD extensions */
 #define	_FP_LOMD	0x80		/* range for machine-specific classes */
-#define	FP_DIRTYZERO	0x80		/* VAX */
-#define	FP_ROP		0x81		/* VAX */
 #define	_FP_HIMD	0xff
 
 #endif /* !_ANSI_SOURCE && ... */
