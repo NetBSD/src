@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm32,v 1.44 1999/01/23 22:18:42 sommerfe Exp $
+#	$NetBSD: Makefile.arm32,v 1.45 1999/01/29 22:20:49 tron Exp $
 
 # Makefile for NetBSD
 #
@@ -177,7 +177,7 @@ depend: .depend
 .depend: ${SRCS} assym.h param.c
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${ARM32}/arm32/locore.S
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
-	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
+	test -z "${SFILES}" || ${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
 	    ${CPPFLAGS} < ${ARM32}/arm32/genassym.cf
 	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
