@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.103 2003/05/17 07:52:52 lukem Exp $
+#	$NetBSD: build.sh,v 1.104 2003/05/18 10:57:11 lukem Exp $
 #
 # Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -783,7 +783,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.103 2003/05/17 07:52:52 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.104 2003/05/18 10:57:11 lukem Exp $
 #
 
 EOF
@@ -798,6 +798,7 @@ exec "\${TOOLDIR}/bin/${toolprefix}make" \${1+"\$@"}
 EOF
 	[ "${runcmd}" = "echo" ] && echo EOF
 	${runcmd} chmod +x "${makewrapper}"
+	statusmsg "makewrapper:     ${makewrapper}"
 	statusmsg "Updated ${makewrapper}"
 }
 
@@ -948,6 +949,7 @@ main()
 		esac
 	done
 
+	statusmsg "${progname} started: ${build_start}"
 	statusmsg "${progname} ended:   $(date)"
 	if [ -s "${results}" ]; then
 		echo "===> Summary of results:"
