@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect.c,v 1.22 2002/07/10 10:28:00 itojun Exp $	*/
+/*	$NetBSD: sshconnect.c,v 1.23 2002/07/12 13:28:36 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect.c,v 1.130 2002/07/10 10:28:15 itojun Exp $");
+RCSID("$OpenBSD: sshconnect.c,v 1.131 2002/07/12 13:29:09 itojun Exp $");
 
 #include <openssl/bn.h>
 
@@ -42,19 +42,6 @@ extern Options options;
 extern char *__progname;
 extern uid_t original_real_uid;
 extern uid_t original_effective_uid;
-
-#if 0
-static const char *
-sockaddr_ntop(struct sockaddr *sa, socklen_t salen)
-{
-	static char addrbuf[NI_MAXHOST];
-
-	if (getnameinfo(sa, salen, addrbuf, sizeof(addrbuf), NULL, 0,
-	    NI_NUMERICHOST) != 0)
-		fatal("sockaddr_ntop: getnameinfo NI_NUMERICHOST failed");
-	return addrbuf;
-}
-#endif
 
 /*
  * Connect to the given ssh server using a proxy command.
@@ -306,6 +293,8 @@ ssh_connect(const char *host, struct sockaddr_storage * hostaddr,
 			} else {
 				if (errno == ECONNREFUSED)
 					full_failure = 0;
+				debug("connect to address %s port %s: %s",
+				    ntop, strport, strerror(errno));
 				/*
 				 * Close the failed socket; there appear to
 				 * be some problems when reusing a socket for
