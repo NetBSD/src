@@ -69,7 +69,7 @@
  *		added DCD event detection
  *		added software fifo's
  *
- * $Id: ser.c,v 1.6 1994/06/26 12:57:27 briggs Exp $
+ * $Id: ser.c,v 1.7 1994/07/09 06:38:55 briggs Exp $
  *
  *	Mac II serial device interface
  *
@@ -94,6 +94,7 @@
 #include <sys/device.h>
 #include "serreg.h"
 #include <machine/cpu.h>
+#include <machine/frame.h>
 
 /*#define DEBUG*/
 #undef DEBUG
@@ -135,58 +136,63 @@ static char serial_0_string[] = "MacBSD Serial Driver, Port 0\n\r";
 static char serial_1_string[] = "MacBSD Serial Driver, Port 1\n\r";
 
 
+/* SCC initialization string from Steve Allen (wormey@eskimo.com) */
+/* Same as from console.c, but w/ interrupts enabled. */
 static unsigned char ser_0_init_bytes[]={
-#if 0	/* BG -- I made this table from scratch according to the docs. */
-	9, SER_W9_NV | SER_W9_DLC,	/* No interrupt vector */
-					/* Disable lower chain */	
-	4, SER_W4_1SBIT,		/* One stop bit, clock times 1 */
-	10, SER_W10_NRZ,		/* NRZ mode encoding */
-	11, SER_W11_TXBR | SER_W11_RXBR,/* Receive and Transmit using BR clock */
-	12, 102,			
-	13, 0,				/* Time code for 19200 baud */
-	14, SER_W14_ENBBR,		/* Enable BR clock */
-	15, SER_W15_ABRTINT,		/* Abort pending interrupts */
-	3, SER_W3_RX8DBITS | SER_W3_ENBRX,
-					/* Receive 8 bit data, rx int ready */
-	5, SER_W5_TX8DBITS | SER_W5_ENBTX,
-					/* Receive 8 bit data, rx int ready */
-	0, SER_W0_ENBRXRDY,		/* Enable rx int on next char */
-	1, SER_W1_ENBRXRDY | SER_W1_ENBTXRDY,
-					/* Enable receive and transmit ints */
-	9, SER_W9_MIE			/* Enable Master Interrupt */
-#else	/* but it doesn't work as well as this hacked job does: */
-	2, 0,
-	10, 0,
-	11, 0x50,
-	4, 0x44,
-	3, 0xc1,
-	5, 0x68,
-	14, 0x01,
-	15, 0x80,
-	12, 4,
-	13, 0,
-	1, 0x13,
-	0, 0x10,
-	0, 0x20,
-	9, 0x08
-#endif
+	 9, 0xc0,	/* hardware reset */
+	 4, 0x44,	/* Transmit/Receive control.  Select Async or Sync
+			   mode and clock multiplier. */
+	 3, 0xc0,	/* select receiver control.  Bit d0 (rx enable)
+			   must be set to 0 at this time. */
+	 5, 0xe2,	/* select transmit control.  Bit d3 (tx enable)
+			   must be set to 0 at this time. */
+	 9, 0x06,	/* select interrupt control.  Bit d3 (mie)
+			   must be set to 0 at this time. */
+	10, 0x00,	/* miscellaneous control. */
+	11, 0x50,	/* clock control. */
+	12, 0x0b,	/* time constant LB. */
+	13, 0x00,	/* time constant HB. */
+	14, 0x82,	/* miscellaneous control.  Bit d0 (BR gen enable)
+			   must be set to 0 at this time. */
+	 3, 0xc1,	/* set d0 (rx enable). */
+	 5, 0xea,	/* set d3 (tx enable). */
+	 0, 0x80,	/* reset txCRC. */
+	14, 0x83,	/* BR gen enable.  Enable DPLL. */
+	 1, 0x00,	/* make sure DMA not set. */
+	15, 0x00,	/* disable external interrupts. */
+	 0, 0x10,	/* reset ext/status twice. */
+	 0, 0x10,
+	 1, 0x0a,	/* enable rcv and xmit interrupts. */
+	 9, 0x0e,	/* enable master interrupt bit d3. */
 };
 
+/* SCC initialization string from Steve Allen (wormey@eskimo.com) */
 static unsigned char ser_1_init_bytes[]={
-	2, 0,
-	10, 0,
-	11, 0x50,
-	4, 0x44,
-	3, 0xc1,
-	5, 0x68,
-	14, 0x01,
-	15, 0x80,
-	12, 4,
-	13, 0,
-	1, 0x13,
-	0, 0x10,
-	0, 0x20,
-	9, 0x08
+	 9, 0xc0,	/* hardware reset */
+	 4, 0x44,	/* Transmit/Receive control.  Select Async or Sync
+			   mode and clock multiplier. */
+	 3, 0xc0,	/* select receiver control.  Bit d0 (rx enable)
+			   must be set to 0 at this time. */
+	 5, 0xe2,	/* select transmit control.  Bit d3 (tx enable)
+			   must be set to 0 at this time. */
+	 9, 0x06,	/* select interrupt control.  Bit d3 (mie)
+			   must be set to 0 at this time. */
+	10, 0x00,	/* miscellaneous control. */
+	11, 0x50,	/* clock control. */
+	12, 0x0b,	/* time constant LB. */
+	13, 0x00,	/* time constant HB. */
+	14, 0x82,	/* miscellaneous control.  Bit d0 (BR gen enable)
+			   must be set to 0 at this time. */
+	 3, 0xc1,	/* set d0 (rx enable). */
+	 5, 0xea,	/* set d3 (tx enable). */
+	 0, 0x80,	/* reset txCRC. */
+	14, 0x83,	/* BR gen enable.  Enable DPLL. */
+	 1, 0x00,	/* make sure DMA not set. */
+	15, 0x00,	/* disable external interrupts. */
+	 0, 0x10,	/* reset ext/status twice. */
+	 0, 0x10,
+	 1, 0x0a,	/* enable rcv and xmit interrupts. */
+	 9, 0x0e,	/* enable master interrupt bit d3. */
 };
 
 extern int matchbyname();
@@ -389,6 +395,53 @@ static volatile unsigned int ser_outtail[NSER] = {0,0};
    do i/o from our local buffers and signal the upper layer with
    a software interrupt.
 */
+
+static int outhead = 0, outtail = 0, outlen = 0, write_ack = 0;
+static unsigned char outbuf[OUTBUFLEN];
+ser_intr(struct frame *fp)
+{
+   /* This function is called by locore.s on a level 4 interrupt. */
+extern	int serial_boot_echo;
+   int reg0, ch, s;
+   unsigned char c;
+   char str[20];
+
+   if(!serial_boot_echo)
+	return(serintr());
+
+   while(*sccA & SER_R0_RXREADY)
+   {
+      ch = *(sccA+4);
+      *sccA = SER_W0_RSTESINTS;  /* Reset external/status interrupt */
+/*      conintr(0, ch); */
+   }
+   reg0 = *sccA;  /* Get status */
+   if(reg0 & SER_R0_TXUNDERRUN)
+   {
+      *sccA = SER_W0_RSTTXUNDERRUN;
+      *sccA = SER_W0_RSTESINTS;
+      /* macconputchar(0, (int)'!'); */
+   }
+   if(reg0 & SER_R0_TXREADY)
+   {
+/*    sprintf(str,"<%d>",outlen);
+      puts(vtnum, str); */
+      write_ack = 0;
+      *sccA = SER_W0_RSTTXPND;
+      *sccA = SER_W0_RSTIUS; /* Reset highest interrupt pending */
+      if (outlen > 0)
+      {
+        c = outbuf[outtail];
+        outtail = (outtail + 1) % OUTBUFLEN;
+        s = splhigh();
+        *(sccA+4) = c;
+        write_ack = 1;
+        outlen--;
+        splx(s);
+      }
+   }
+   return(1);
+}
  
 extern int
 serintr(void)
