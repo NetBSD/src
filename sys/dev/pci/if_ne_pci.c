@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pci.c,v 1.3 1997/10/27 23:31:41 thorpej Exp $	*/
+/*	$NetBSD: if_ne_pci.c,v 1.4 1997/10/27 23:34:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -149,8 +149,8 @@ ne_pci_attach(parent, self, aux)
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_WINBOND) {
 		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_WINBOND_NEXXX:
-			typestr = "Winbond";
+		case PCI_PRODUCT_WINBOND_W89C940F:
+			typestr = "Winbond 89C940F";
 			break;
 		}
 	}
