@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.16 1997/01/23 14:01:56 mrg Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.17 1997/05/20 15:59:59 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: getpwent.c,v 1.16 1997/01/23 14:01:56 mrg Exp $";
+static char rcsid[] = "$NetBSD: getpwent.c,v 1.17 1997/05/20 15:59:59 lukem Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -139,8 +139,8 @@ const char *name;
 static void
 __ypproto_set()
 {
-	register char *ptr;
-	register struct passwd *pw = &_pw_passwd;
+	char *ptr;
+	struct passwd *pw = &_pw_passwd;
 
 	/* make this the new prototype */
 	ptr = (char *)prbuf;
@@ -290,38 +290,33 @@ again:
 		}
 		switch(__ypmode) {
 		case YPMODE_FULL:
+			data = NULL;
 			if(__ypcurrent) {
 				r = yp_next(__ypdomain, "passwd.byname",
 					__ypcurrent, __ypcurrentlen,
 					&key, &keylen, &data, &datalen);
 				free(__ypcurrent);
-				if(r != 0) {
+				if(r != 0)
 					__ypcurrent = NULL;
-					__ypmode = YPMODE_NONE;
-					if(data)
-						free(data);
-					data = NULL;
-					goto again;
+				else {
+					__ypcurrent = key;
+					__ypcurrentlen = keylen;
 				}
-				__ypcurrent = key;
-				__ypcurrentlen = keylen;
-				bcopy(data, line, datalen);
-				free(data);
-				data = NULL;
 			} else {
 				r = yp_first(__ypdomain, "passwd.byname",
 					&__ypcurrent, &__ypcurrentlen,
 					&data, &datalen);
-				if(r != 0) {
-					__ypmode = YPMODE_NONE;
-					if(data)
-						free(data);
-					goto again;
-				}
-				bcopy(data, line, datalen);
-				free(data);
-				data = NULL;
 			}
+			if(r != 0) {
+				__ypmode = YPMODE_NONE;
+				if(data)
+					free(data);
+				data = NULL;
+				goto again;
+			}
+			bcopy(data, line, datalen);
+			free(data);
+			data = NULL;
 			break;
 		case YPMODE_NETGRP:
 			s = getnetgrent(&host, &user, &dom);
@@ -331,6 +326,7 @@ again:
 				goto again;
 			}
 			if(user && *user) {
+				data = NULL;
 				r = yp_match(__ypdomain, "passwd.byname",
 					user, strlen(user),
 					&data, &datalen);
@@ -347,16 +343,17 @@ again:
 			}
 			bcopy(data, line, datalen);
 			free(data);
-			data = (char *)NULL;
+			data = NULL;
 			break;
 		case YPMODE_USER:
 			if(name != (char *)NULL) {
+				data = NULL;
 				r = yp_match(__ypdomain, "passwd.byname",
 					name, strlen(name),
 					&data, &datalen);
 				__ypmode = YPMODE_NONE;
 				free(name);
-				name = (char *)NULL;
+				name = NULL;
 				if(r != 0) {
 					if(data)
 						free(data);
@@ -903,7 +900,7 @@ static int
 __hashpw(key)
 	DBT *key;
 {
-	register char *p, *t;
+	char *p, *t;
 	static u_int max;
 	static char *line;
 	DBT data;
