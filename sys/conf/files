@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.228 1998/08/07 00:00:57 augustss Exp $
+#	$NetBSD: files,v 1.229 1998/08/09 08:58:18 mrg Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -50,6 +50,7 @@ defopt	CCITT				#
 defopt	HDLC				# CCITT over HDLC
 defopt	LLC				# CCITT over LLC2 (also IEEE LLC?)
 defopt	NATM				# "native" ATM protocols
+defopt	PFIL_HOOKS			# pfil(9)
 
 # networking options
 defopt	GATEWAY
