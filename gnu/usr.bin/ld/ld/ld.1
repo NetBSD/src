@@ -1,4 +1,4 @@
-.\"	$NetBSD: ld.1,v 1.15 1998/07/25 11:58:49 ross Exp $
+.\"	$NetBSD: ld.1,v 1.16 1998/07/26 02:51:59 ross Exp $
 .\"
 .\" Copyright (c) 1993 Paul Kranenburg
 .\" All rights reserved.
@@ -246,23 +246,22 @@ file name.
 A positional qualifier to force loading from archives.
 For each archive mentioned on the commandline after this option,
 include every object file from the archive in the link, rather than
-searching the archive for the required object files.  This is normally used
+searching the archive for the required object files. This is normally used
 when building shared libraries.
 
-The positional syntax is not currently implemented; 
+On COFF systems, the positional syntax is not currently implemented; 
 .Fl Fl whole-archive
 is treated exactly as
 .Fl B Ns Ar forcearchive .
 .It Fl Fl no-whole-archive
-This option  should turn off the effect of a preceding
+This option turns off the effect of a preceding
 .Fl Fl whole-archive 
 for any subsequent archive files on the command line.
-It is currently ignored.
+It is currently ignored on COFF systems.
 .It Fl Fl export-dynamic
 Specifies that all symbols should be added to the
-dynamic symbol table.  Enables shared libraries to dynamically link 
-to application symbols.
-Ignored on COFF systems.
+dynamic symbol table. This option is needed only by programs that make run-time
+decisions to load modules they were never linked with. Ignored on COFF systems.
 .El
 .Sh ENVIRONMENT
 .Nm
