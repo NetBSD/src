@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.15 1995/08/04 01:14:55 mycroft Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.16 1995/08/17 02:57:39 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -48,7 +48,7 @@ struct socket {
 	short	so_options;		/* from socket call, see socket.h */
 	short	so_linger;		/* time to linger while closing */
 	short	so_state;		/* internal state flags SS_*, below */
-	caddr_t	so_pcb;			/* protocol control block */
+	void	*so_pcb;		/* protocol control block */
 	struct	protosw *so_proto;	/* protocol handle */
 /*
  * Variables for connection queueing.

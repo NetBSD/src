@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_subr.c,v 1.9 1995/08/04 01:09:57 mycroft Exp $	*/
+/*	$NetBSD: pk_subr.c,v 1.10 1995/08/17 02:57:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) University of British Columbia, 1984
@@ -111,7 +111,7 @@ struct socket *so;
 			sbreserve (&lcp -> lcd_sb, pk_sendspace);
 	}
 	if (so) {
-		so -> so_pcb = (caddr_t) lcp;
+		so -> so_pcb = lcp;
 		so -> so_error = error;
 	}
 	return (lcp);

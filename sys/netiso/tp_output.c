@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_output.c,v 1.9 1995/08/16 00:38:54 mycroft Exp $	*/
+/*	$NetBSD: tp_output.c,v 1.10 1995/08/17 02:57:34 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -446,7 +446,7 @@ tp_ctloutput(cmd, so, level, optname, mp)
 	 * the tpcb is gone 
 	 */
 	if ((so->so_state & (SS_ISCONNECTED | SS_ISCONFIRMING)) ==  0) {
-		if ( so->so_pcb == (caddr_t)0 ) {
+		if ( so->so_pcb == 0 ) {
 			error = ENOTCONN; goto done;
 		}
 		if ( (tpcb->tp_state == TP_REFWAIT || tpcb->tp_state == TP_CLOSING) &&

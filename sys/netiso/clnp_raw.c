@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_raw.c,v 1.7 1995/06/13 07:58:14 mycroft Exp $	*/
+/*	$NetBSD: clnp_raw.c,v 1.8 1995/08/17 02:57:30 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -286,7 +286,7 @@ clnp_usrreq(so, req, m, nam, control)
 		if (rp == 0)
 			return (ENOBUFS);
 		bzero((caddr_t)rp, sizeof *rp);
-		so->so_pcb = (caddr_t)rp;
+		so->so_pcb = rp;
 		break;
 
 	case PRU_DETACH:
