@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciavar.h,v 1.5 1998/07/19 17:28:17 christos Exp $	*/
+/*	$NetBSD: pcmciavar.h,v 1.6 1998/10/10 21:59:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -240,6 +240,9 @@ void	pcmcia_function_disable __P((struct pcmcia_function *));
 #define	pcmcia_io_alloc(pf, start, size, align, pciop)			\
 	(pcmcia_chip_io_alloc((pf)->sc->pct, pf->sc->pch, (start),	\
 	 (size), (align), (pciop)))
+
+#define	pcmcia_io_free(pf, pciohp)					\
+	(pcmcia_chip_io_free((pf)->sc->pct, (pf)->sc->pch, (pciohp)))
 
 int	pcmcia_io_map __P((struct pcmcia_function *, int, bus_addr_t,
 	    bus_size_t, struct pcmcia_io_handle *, int *));
