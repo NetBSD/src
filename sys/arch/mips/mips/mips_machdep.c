@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.120.2.19 2002/08/13 02:18:30 nathanw Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.120.2.20 2002/08/13 03:29:33 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -120,7 +120,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.120.2.19 2002/08/13 02:18:30 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.120.2.20 2002/08/13 03:29:33 simonb Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -138,6 +138,8 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.120.2.19 2002/08/13 02:18:30 nath
 #include <sys/savar.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
+#include <sys/syscallargs.h>
+#include <sys/sysctl.h>
 #include <sys/user.h>
 #include <sys/msgbuf.h>
 #include <sys/conf.h>
@@ -1147,10 +1149,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 }
 
 
-
-struct sigframe {
-	struct	sigcontext sf_sc;	/* actual context */
-};
 
 #ifdef DEBUG
 int sigdebug = 0;
