@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.12 2000/05/10 11:15:32 pk Exp $	*/
+/*	$NetBSD: if_le.c,v 1.13 2000/05/10 14:25:43 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -236,7 +236,7 @@ leattach_sbus(parent, self, aux)
 		}
 
 		/* Allocate DMA buffer */
-		if ((error = bus_dmamem_alloc(dmatag, MEMSIZE, NBPG, 0,
+		if ((error = bus_dmamem_alloc(dmatag, MEMSIZE, 0, 0,
 					 &seg, 1, &rseg,
 					 BUS_DMA_NOWAIT|BUS_DMA_24BIT)) != 0){
 			printf("%s: DMA buffer allocation error %d\n",

@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.25 2000/05/10 14:16:11 pk Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.26 2000/05/10 14:25:43 pk Exp $ */
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -302,7 +302,7 @@ isp_sbus_mbxdma(isp)
 	}
 
 	/* Allocate DMA buffer */
-	if (bus_dmamem_alloc(dmatag, len, NBPG, 0,
+	if (bus_dmamem_alloc(dmatag, len, 0, 0,
 				&seg, 1, &rseg, BUS_DMA_NOWAIT)) {
 		goto dmafail;
 	}
@@ -335,7 +335,7 @@ isp_sbus_mbxdma(isp)
 	}
 
 	/* Allocate DMA buffer */
-	if (bus_dmamem_alloc(dmatag, len, NBPG, 0,
+	if (bus_dmamem_alloc(dmatag, len, 0, 0,
 				&seg, 1, &rseg, BUS_DMA_NOWAIT)) {
 		goto dmafail;
 	}
