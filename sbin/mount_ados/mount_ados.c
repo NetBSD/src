@@ -29,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: mount_ados.c,v 1.2 1994/07/30 19:04:01 chopps Exp $";
+static char rcsid[] = "$Id: mount_ados.c,v 1.3 1995/01/18 08:37:51 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -45,13 +45,18 @@ static char rcsid[] = "$Id: mount_ados.c,v 1.2 1994/07/30 19:04:01 chopps Exp $"
 #include <string.h>
 #include <unistd.h>
 
-#ifndef LETS_GET_SMALL
+#include "mntopts.h"
+
+struct mntopt mopts[] = {
+	MOPT_STDOPTS,
+	{ NULL }
+};
+
 gid_t	a_gid __P((char *));
 uid_t	a_uid __P((char *));
 mode_t	a_mask __P((char *));
-#endif
 void	usage __P((void));
-		
+
 int
 main(argc, argv)
 	int argc;
@@ -59,18 +64,14 @@ main(argc, argv)
 {
 	struct adosfs_args args;
 	struct stat sb;
-	int c, opts, set_gid, set_uid, set_mask;
+	int c, mntflags, set_gid, set_uid, set_mask;
 	char *dev, *dir, ndir[MAXPATHLEN+1];
 
-	opts = set_gid = set_uid = set_mask = 0;
+	mntflags = set_gid = set_uid = set_mask = 0;
 	(void)memset(&args, '\0', sizeof(args));
 
-	while ((c = getopt(argc, argv, "F:u:g:m:")) != EOF) {
+	while ((c = getopt(argc, argv, "u:g:m:o:")) != EOF) {
 		switch (c) {
-		case 'F':
-			opts |= atoi(optarg);
-			break;
-#ifndef LETS_GET_SMALL
 		case 'u':
 			args.uid = a_uid(optarg);
 			set_uid = 1;
@@ -83,7 +84,9 @@ main(argc, argv)
 			args.mask = a_mask(optarg);
 			set_mask = 1;
 			break;
-#endif
+		case 'o':
+			getmntopts(optarg, mopts, &mntflags);
+			break;
 		case '?':
 		default:
 			usage();
@@ -107,6 +110,11 @@ main(argc, argv)
 	}
 
 	args.fspec = dev;
+	args.export.ex_root = -2;	/* unchecked anyway on DOS fs */
+	if (mntflags & MNT_RDONLY)
+		args.export.ex_flags = MNT_EXRDONLY;
+	else
+		args.export.ex_flags = 0;
 	if (!set_gid || !set_uid || !set_mask) {
 		if (stat(dir, &sb) == -1)
 			err(1, "stat %s", dir);
@@ -119,13 +127,12 @@ main(argc, argv)
 			args.mask = sb.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
 	}
 
-	if (mount(MOUNT_ADOSFS, dir, opts, &args) < 0)
+	if (mount(MOUNT_ADOSFS, dir, mntflags, &args) < 0)
 		err(1, "mount");
 
 	exit (0);
 }
 
-#ifndef LETS_GET_SMALL
 gid_t
 a_gid(s)
 	char *s;
@@ -186,16 +193,7 @@ a_mask(s)
 void
 usage()
 {
-	fprintf(stderr, "usage: mount_ados [-F flags] [-u user] [-g group] [-m mask] bdev dir\n");
+
+	fprintf(stderr, "usage: mount_ados [-o options] [-u user] [-g group] [-m mask] bdev dir\n");
 	exit(1);
 }
-
-#else
-
-void
-usage()
-{
-	fprintf(stderr, "usage: mount_ados [-F flags] bdev dir\n");
-	exit(1);
-}
-#endif
