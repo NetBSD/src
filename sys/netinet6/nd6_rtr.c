@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.5 1999/07/30 10:35:38 itojun Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.6 1999/07/31 18:41:17 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -160,7 +160,7 @@ nd6_rs_input(m, off, icmp6len)
 			ip6_sprintf(&saddr6), ifp->if_addrlen, lladdrlen - 2);
 	}
 
-	nd6_cache_lladdr(ifp, &saddr6, lladdr, lladdrlen, ND_ROUTER_SOLICIT);
+	nd6_cache_lladdr(ifp, &saddr6, lladdr, lladdrlen, ND_ROUTER_SOLICIT, 0);
 }
 
 /*
@@ -374,7 +374,7 @@ nd6_ra_input(m, off, icmp6len)
 			ip6_sprintf(&saddr6), ifp->if_addrlen, lladdrlen - 2);
 	}
 
-	nd6_cache_lladdr(ifp, &saddr6, lladdr, lladdrlen, ND_ROUTER_ADVERT);
+	nd6_cache_lladdr(ifp, &saddr6, lladdr, lladdrlen, ND_ROUTER_ADVERT, 0);
     }
 }
 

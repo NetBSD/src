@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.6 1999/07/30 10:35:38 itojun Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.7 1999/07/31 18:41:17 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -64,7 +64,9 @@
  *	@(#)udp_var.h	8.1 (Berkeley) 6/10/93
  */
 
+#ifdef __NetBSD__	/*XXX*/
 #include "opt_ipsec.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -443,6 +445,7 @@ udp6_ctlinput(cmd, sa, ip6, m, off)
 {
 	register struct udphdr *uhp;
 	struct udphdr uh;
+	struct sockaddr_in6 sa6;
 
 #if 0
 	if (cmd == PRC_IFNEWADDR)
@@ -452,11 +455,24 @@ udp6_ctlinput(cmd, sa, ip6, m, off)
 	if (!PRC_IS_REDIRECT(cmd) &&
 	    ((unsigned)cmd >= PRC_NCMDS || inet6ctlerrmap[cmd] == 0))
 		return;
+
+	/* translate addresses into internal form */
+	sa6 = *(struct sockaddr_in6 *)sa;
+	if (IN6_IS_ADDR_LINKLOCAL(&sa6.sin6_addr))
+		sa6.sin6_addr.s6_addr16[1] = htons(m->m_pkthdr.rcvif->if_index);
+
 	if (ip6) {
 		/*
 		 * XXX: We assume that when IPV6 is non NULL,
 		 * M and OFF are valid.
 		 */
+		struct in6_addr s;
+
+		/* translate addresses into internal form */
+		memcpy(&s, &ip6->ip6_dst, sizeof(s));
+		if (IN6_IS_ADDR_LINKLOCAL(&s))
+			s.s6_addr16[1] = htons(m->m_pkthdr.rcvif->if_index);
+
 		if (m->m_len < off + sizeof(uh)) {
 			/*
 			 * this should be rare case,
@@ -466,11 +482,12 @@ udp6_ctlinput(cmd, sa, ip6, m, off)
 			uhp = &uh;
 		} else
 			uhp = (struct udphdr *)(mtod(m, caddr_t) + off);
-		(void) in6_pcbnotify(&udb6, sa, uhp->uh_dport, &ip6->ip6_src,
+		(void) in6_pcbnotify(&udb6, (struct sockaddr *)&sa6,
+					uhp->uh_dport, &s,
 					uhp->uh_sport, cmd, udp6_notify);
 	} else {
-		(void) in6_pcbnotify(&udb6, sa, 0, &zeroin6_addr, 0, cmd,
-					udp6_notify);
+		(void) in6_pcbnotify(&udb6, (struct sockaddr *)&sa6, 0,
+					&zeroin6_addr, 0, cmd, udp6_notify);
 	}
 }
 

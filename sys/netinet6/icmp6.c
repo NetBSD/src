@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.9 1999/07/30 10:35:35 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.10 1999/07/31 18:41:16 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,9 @@
 
 #if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
 #include "opt_inet.h"
+#ifdef __NetBSD__	/*XXX*/
 #include "opt_ipsec.h"
+#endif
 #endif
 
 #include <sys/param.h>
@@ -98,6 +100,7 @@
 #endif
 #include <netinet6/nd6.h>
 #include <netinet6/in6_ifattach.h>
+#include <netinet6/ip6protosw.h>
 
 #ifdef IPSEC
 #include <netkey/key.h>
@@ -106,7 +109,7 @@
 
 #include "faith.h"
 
-extern struct protosw inet6sw[];
+extern struct ip6protosw inet6sw[];
 extern u_char ip6_protox[];
 
 struct icmp6stat icmp6stat;
@@ -129,8 +132,10 @@ static int ni6_addrs __P((struct icmp6_nodeinfo *, struct mbuf *,
 			  struct ifnet **));
 static int ni6_store_addrs __P((struct icmp6_nodeinfo *, struct icmp6_nodeinfo *,
 				struct ifnet *, int));
+#ifdef __NetBSD__
 static struct rtentry *icmp6_mtudisc_clone __P((struct sockaddr *));
 static void icmp6_mtudisc_timeout __P((struct rtentry *, struct rttimer *));
+#endif
 
 #ifdef COMPAT_RFC1885
 static struct route_in6 icmp6_reflect_rt;
@@ -514,9 +519,11 @@ icmp6_input(mp, offp, proto)
 		}
 		nicmp6->icmp6_type = ICMP6_ECHO_REPLY;
 		nicmp6->icmp6_code = 0;
-		icmp6stat.icp6s_reflect++;
-		icmp6stat.icp6s_outhist[ICMP6_ECHO_REPLY]++;
-		icmp6_reflect(n, noff);
+		if (n) {
+			icmp6stat.icp6s_reflect++;
+			icmp6stat.icp6s_outhist[ICMP6_ECHO_REPLY]++;
+			icmp6_reflect(n, noff);
+		}
 		break;
 
 	case ICMP6_ECHO_REPLY:
@@ -1238,11 +1245,11 @@ icmp6_reflect(m, off)
 		sin6->sin6_len = sizeof(struct sockaddr_in6);
 		sin6->sin6_addr = ip6->ip6_dst;
 
-#ifdef __NetBSD__
-		rtalloc((struct route *)&icmp6_reflect_rt.ro_rt);
-#else
+#ifdef __FreeBSD__
 		rtalloc_ign((struct route *)&icmp6_reflect_rt.ro_rt,
 			    RTF_PRCLONING);
+#else
+		rtalloc((struct route *)&icmp6_reflect_rt.ro_rt);
 #endif
 	}
 
@@ -1463,7 +1470,8 @@ icmp6_redirect_input(m, off)
 	}
 
 	/* RFC 2461 8.3 */
-	nd6_cache_lladdr(ifp, &redtgt6, lladdr, lladdrlen, ND_REDIRECT);
+	nd6_cache_lladdr(ifp, &redtgt6, lladdr, lladdrlen, ND_REDIRECT,
+			 is_onlink ? ND_REDIRECT_ONLINK : ND_REDIRECT_ROUTER);
 
 	if (!is_onlink) {	/* better router case. perform rtredirect. */
 		/* perform rtredirect */

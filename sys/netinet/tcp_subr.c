@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.74 1999/07/23 15:21:17 itojun Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.75 1999/07/31 18:41:15 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1054,6 +1054,7 @@ tcp6_ctlinput(cmd, sa, ip6, m, off)
 	void (*notify) __P((struct in6pcb *, int)) = tcp6_notify;
 	int nmatch;
 	extern struct in6_addr zeroin6_addr;	/* netinet6/in6_pcb.c */
+	struct sockaddr_in6 sa6;
 
 	if (cmd == PRC_QUENCH)
 		notify = tcp6_quench;
@@ -1062,21 +1063,23 @@ tcp6_ctlinput(cmd, sa, ip6, m, off)
 	else if (!PRC_IS_REDIRECT(cmd) &&
 		 ((unsigned)cmd > PRC_NCMDS || inet6ctlerrmap[cmd] == 0))
 		return;
+
+	/* translate addresses into internal form */
+	sa6 = *(struct sockaddr_in6 *)sa;
+	if (IN6_IS_ADDR_LINKLOCAL(&sa6.sin6_addr))
+		sa6.sin6_addr.s6_addr16[1] = htons(m->m_pkthdr.rcvif->if_index);
+
 	if (ip6) {
 		/*
 		 * XXX: We assume that when ip6 is non NULL,
 		 * M and OFF are valid.
 		 */
+		struct in6_addr s;
 
 		/* translate addresses into internal form */
-		if (IN6_IS_ADDR_LINKLOCAL(&ip6->ip6_src)) {
-			ip6->ip6_src.s6_addr16[1] =
-				htons(m->m_pkthdr.rcvif->if_index);
-		}
-		if (IN6_IS_ADDR_LINKLOCAL(&ip6->ip6_dst)) {
-			ip6->ip6_dst.s6_addr16[1] =
-				htons(m->m_pkthdr.rcvif->if_index);
-		}
+		memcpy(&s, &ip6->ip6_dst, sizeof(s));
+		if (IN6_IS_ADDR_LINKLOCAL(&s))
+			s.s6_addr16[1] = htons(m->m_pkthdr.rcvif->if_index);
 
 		if (m->m_len < off + sizeof(th)) {
 			/*
@@ -1087,8 +1090,8 @@ tcp6_ctlinput(cmd, sa, ip6, m, off)
 			thp = &th;
 		} else
 			thp = (struct tcphdr *)(mtod(m, caddr_t) + off);
-		nmatch = in6_pcbnotify(&tcb6, sa, thp->th_dport, &ip6->ip6_src,
-		    thp->th_sport, cmd, notify);
+		nmatch = in6_pcbnotify(&tcb6, (struct sockaddr *)&sa6,
+		    thp->th_dport, &s, thp->th_sport, cmd, notify);
 		if (nmatch == 0 && syn_cache_count &&
 		    (inet6ctlerrmap[cmd] == EHOSTUNREACH ||
 		     inet6ctlerrmap[cmd] == ENETUNREACH ||
@@ -1098,12 +1101,12 @@ tcp6_ctlinput(cmd, sa, ip6, m, off)
 			sin6.sin6_len = sizeof(sin6);
 			sin6.sin6_family = AF_INET6;
 			sin6.sin6_port = thp->th_sport;
-			sin6.sin6_addr = ip6->ip6_src;
+			sin6.sin6_addr = s;
 			syn_cache_unreach((struct sockaddr *)&sin6, sa, thp);
 		}
 	} else {
-		(void) in6_pcbnotify(&tcb6, sa, 0, &zeroin6_addr,
-				     0, cmd, notify);
+		(void) in6_pcbnotify(&tcb6, (struct sockaddr *)&sa6, 0,
+				     &zeroin6_addr, 0, cmd, notify);
 	}
 }
 #endif

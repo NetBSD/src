@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.7 1999/07/30 10:35:37 itojun Exp $	*/
+/*	$NetBSD: nd6.c,v 1.8 1999/07/31 18:41:17 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1241,12 +1241,13 @@ nd6_ioctl(cmd, data, ifp)
  * on reception of inbound ND6 packets. (RS/RA/NS/redirect)
  */
 struct rtentry *
-nd6_cache_lladdr(ifp, from, lladdr, lladdrlen, type)
+nd6_cache_lladdr(ifp, from, lladdr, lladdrlen, type, code)
 	struct ifnet *ifp;
 	struct in6_addr *from;
 	char *lladdr;
 	int lladdrlen;
 	int type;	/* ICMP6 type */
+	int code;	/* type dependent information */
 {
 	struct rtentry *rt = NULL;
 	struct llinfo_nd6 *ln = NULL;
@@ -1386,23 +1387,35 @@ fail:
 	 * This case is rare but we figured that we MUST NOT set IsRouter.
 	 *
 	 * newentry olladdr  lladdr  llchange	    NS  RS  RA	redir
-	 *	0	n	n	--	(1)	c   ?
-	 *	0	y	n	--	(2)	c   s
-	 *	0	n	y	--	(3)	c   s
-	 *	0	y	y	n	(4)	c   s
-	 *	0	y	y	y	(5)	c   s
-	 *	1	--	n	--	(6) c	c 	c
-	 *	1	--	y	--	(7) c	c   s	c
+	 *							D R
+	 *	0	n	n	--	(1)	c   ?     s
+	 *	0	y	n	--	(2)	c   s     s
+	 *	0	n	y	--	(3)	c   s     s
+	 *	0	y	y	n	(4)	c   s     s
+	 *	0	y	y	y	(5)	c   s     s
+	 *	1	--	n	--	(6) c	c 	c s
+	 *	1	--	y	--	(7) c	c   s	c s
 	 *
 	 *					(c=clear s=set)
 	 */
 	switch (type & 0xff) {
 	case ND_NEIGHBOR_SOLICIT:
-	case ND_REDIRECT:
 		/*
 		 * New entry must have is_router flag cleared.
 		 */
 		if (is_newentry)	/*(6-7)*/
+			ln->ln_router = 0;
+		break;
+	case ND_REDIRECT:
+		/*
+		 * If the icmp is a redirect to a better router, always set the
+		 * is_router flag. Otherwise, if the entry is newly created, 
+		 * clear the flag. [RFC 2461, sec 8.3]
+		 * 
+		 */
+		if (code == ND_REDIRECT_ROUTER)
+			ln->ln_router = 1;
+		else if (is_newentry) /*(6-7)*/
 			ln->ln_router = 0;
 		break;
 	case ND_ROUTER_SOLICIT:

@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.8 1999/07/09 22:57:31 thorpej Exp $	*/
+/*	$NetBSD: key.c,v 1.9 1999/07/31 18:41:17 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 
-/* KAME Id: key.c,v 1.1.6.5.2.18 1999/07/04 02:06:37 itojun Exp */
+/* KAME Id: key.c,v 1.1.6.5.2.20 1999/07/31 08:34:27 itojun Exp */
 
 /*
  * This code is referd to RFC 2367,
@@ -38,7 +38,9 @@
 
 #if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
 #include "opt_inet.h"
+#ifdef __NetBSD__
 #include "opt_ipsec.h"
+#endif
 #endif
 
 #ifdef __NetBSD__
@@ -110,9 +112,15 @@ static int key_blockacq_lifetime = 20;	/* lifetime for blocking SADB_ACQUIRE.*/
 static u_int32_t acq_seq = 0;
 static int key_tick_init_random = 0;
 
+#ifdef RESTRICTED_DIR
 static struct keytree sptree[SADB_X_DIR_MAX];		/* SPD */
 static struct keytree saidxtree[SADB_X_DIR_MAX];	/* SADB */
 static struct keytree regtree[SADB_SATYPE_MAX + 1];
+#else
+static struct keytree sptree;		/* SPD */
+static struct keytree saidxtree;	/* SADB */
+static struct keytree regtree[SADB_SATYPE_MAX + 1];
+#endif
 #ifndef IPSEC_NONBLOCK_ACQUIRE
 static struct keytree acqtree;
 #endif
@@ -129,6 +137,7 @@ static u_int saorder_state_any[] = {
 	SADB_SASTATE_MATURE, SADB_SASTATE_DYING, 
 	SADB_SASTATE_LARVAL, SADB_SASTATE_DEAD
 };
+#ifdef RESTRICTED_DIR
 static u_int saorder_dir_output[] = {
 	SADB_X_DIR_OUTBOUND, SADB_X_DIR_BIDIRECT
 };
@@ -138,6 +147,7 @@ static u_int saorder_dir_input[] = {
 static u_int saorder_dir_any[] = {
 	SADB_X_DIR_OUTBOUND, SADB_X_DIR_INBOUND, SADB_X_DIR_BIDIRECT
 };
+#endif
 
 #ifdef __FreeBSD__
 #if defined(IPSEC_DEBUG)
@@ -202,6 +212,7 @@ typedef void (timeout_t)(void *);
 #define KEY_NEWBUF(dst, t, src, len) \
 	((dst) = (t)key_newbuf((src), (len)))
 
+#ifdef RESTRICTED_DIR
 #define KEY_SADBLOOP(statements) \
     {\
 	u_int diridx, dir;\
@@ -233,6 +244,31 @@ typedef void (timeout_t)(void *);
 		}\
 	}\
     }
+#else
+#define KEY_SADBLOOP(statements) \
+    {\
+	u_int stateidx;\
+	for (saidx = (struct secasindex *)saidxtree.head;\
+	     saidx != NULL;\
+	     saidx = saidx->next) {\
+		for (stateidx = 0;\
+		     stateidx < _ARRAYLEN(saorder_state_any); \
+		     stateidx++) {\
+			state = saorder_state_any[stateidx];\
+			{statements}\
+		}\
+	}\
+    }
+
+#define KEY_SPDBLOOP(statements) \
+    {\
+	for (sp = (struct secpolicy *)sptree.head;\
+	     sp != NULL;\
+	     sp = sp->next) {\
+		{statements}\
+	}\
+    }
+#endif
 
 
 /* key statistics */
@@ -243,12 +279,21 @@ struct _keystat {
 #if 0
 static int key_checkpolicy __P((struct secpolicy *));
 #endif
+#ifdef RESTRICTED_DIR
 static struct secas *key_allocsa_policy __P((struct secindex *,
 					struct ipsecrequest *, int, u_int *));
+#else
+static struct secas *key_allocsa_policy __P((struct secindex *,
+					struct ipsecrequest *));
+#endif
 static struct secas *key_do_allocsa_policy __P((struct secasindex *,
 					u_int, u_int, u_int));
 
+#ifdef RESTRICTED_DIR
 static struct secasindex *key_newsaidx __P((struct secindex *, u_int));
+#else
+static struct secasindex *key_newsaidx __P((struct secindex *));
+#endif
 static void key_delsaidx __P((struct secasindex *));
 static struct secas *key_newsa __P((caddr_t *, struct secasindex *));
 #if 0 
@@ -256,7 +301,11 @@ static struct secas *key_newsa2 __P((u_int, struct secasindex *));
 #endif
 static void key_delsa __P((struct secas *));
 
+#ifdef RESTRICTED_DIR
 static struct secasindex *key_getsaidx __P((struct secindex *, u_int));
+#else
+static struct secasindex *key_getsaidx __P((struct secindex *));
+#endif
 static struct secasindex *key_getsaidxfromany __P((struct secindex *));
 static struct secas *key_checkspi __P((u_int32_t, u_int));
 static struct secas *key_getsabyspi __P((struct secasindex *, u_int, u_int32_t));
@@ -270,8 +319,13 @@ static caddr_t key_setsadbaddr __P((caddr_t, u_int, u_int,
 				caddr_t, u_int, u_int, u_int));
 
 static void key_delsp __P((struct secpolicy *));
+#ifdef RESTRICTED_DIR
 static struct secpolicy *key_getinspointforsp __P((struct secpolicy *, u_int));
 static struct secpolicy *key_getsp __P((struct secindex *, u_int));
+#else
+static struct secpolicy *key_getinspointforsp __P((struct secpolicy *));
+static struct secpolicy *key_getsp __P((struct secindex *));
+#endif
 static struct sadb_msg *key_spdadd __P((caddr_t *));
 static struct sadb_msg *key_spddelete __P((caddr_t *));
 static struct sadb_msg *key_spdflush __P((caddr_t *));
@@ -283,13 +337,17 @@ static u_int key_getspreqmsglen __P((struct secpolicy *));
 static void *key_newbuf __P((void *, u_int));
 static void key_insnode __P((void *, void *, void *));
 static void key_remnode __P((void *));
+#ifdef RESTRICTED_DIR
 static u_int key_checkdir __P((struct secindex *, struct sockaddr *));
 static u_int key_getaddrtype __P((u_int, caddr_t, u_int));
-static int key_ismysubnet __P((u_int, caddr_t, u_int));
+#endif
 #ifdef INET6
 static int key_ismyaddr6 __P((caddr_t));
 #endif
+#ifdef RESTRICTED_DIR
+static int key_ismysubnet __P((u_int, caddr_t, u_int));
 static int key_isloopback __P((u_int, caddr_t));
+#endif /*RESTRICTED_DIR*/
 static int key_cmpidx __P((struct secindex *, struct secindex *));
 static int key_cmpidxwithmask __P((struct secindex *, struct secindex *));
 static int key_bbcmp __P((caddr_t, caddr_t, u_int));
@@ -335,13 +393,16 @@ key_allocsp(idx)
 	struct secindex *idx;
 {
 	struct secpolicy *sp;
+#ifdef RESTRICTED_DIR
 	u_int *order;
 	u_int diridx, diridxlen, dir;
+#endif
 
 	/* sanity check */
 	if (idx == NULL)
 		panic("key_allocsp: NULL pointer is passed.\n");
 
+#ifdef RESTRICTED_DIR
 	/* checking the direciton. */ 
 	dir = key_checkdir(idx, NULL);
 	switch (dir) {
@@ -361,8 +422,10 @@ key_allocsp(idx)
 	default:
 		panic("key_allocsp: Invalid direction is passed.\n");
 	}
+#endif
 
 	/* get a SP entry */
+#ifdef RESTRICTED_DIR
 	for (diridx = 0; diridx < diridxlen; diridx++) {
 
 		dir = order[diridx];
@@ -377,6 +440,18 @@ key_allocsp(idx)
 				goto found;
 		}
 	}
+#else
+	for (sp = (struct secpolicy *)sptree.head;
+	     sp != NULL;
+	     sp = sp->next) {
+
+		if (sp->state == IPSEC_SPSTATE_DEAD)
+			continue;
+
+		if (key_cmpidxwithmask(&sp->idx, idx))
+			goto found;
+	}
+#endif
 
 	return NULL;
 
@@ -470,9 +545,13 @@ key_checkrequest(isr)
 		isr->sa = NULL;
 	}
 
+#ifdef RESTRICTED_DIR
 	isr->sa = key_allocsa_policy(&isr->sp->idx, isr,
 	                             _ARRAYLEN(saorder_dir_output),
 	                             saorder_dir_output);
+#else
+	isr->sa = key_allocsa_policy(&isr->sp->idx, isr);
+#endif
 
 	/* When there is SA. */
 	if (isr->sa != NULL)
@@ -517,17 +596,26 @@ key_checkrequest(isr)
  *	others:	found and return the pointer.
  */
 static struct secas *
+#ifdef RESTRICTED_DIR
 key_allocsa_policy(idx, isr, diridxplen, diridxp)
 	struct secindex *idx;
 	struct ipsecrequest *isr;
 	int diridxplen;
 	u_int diridxp[];
+#else
+key_allocsa_policy(idx, isr)
+	struct secindex *idx;
+	struct ipsecrequest *isr;
+#endif
 {
 	struct secasindex *saidx;
 	struct secas *sa;
 	u_int stateidx, state;
+#ifdef RESTRICTED_DIR
 	u_int diridx, dir;
+#endif
 
+#ifdef RESTRICTED_DIR
 	for (diridx = 0; diridx < diridxplen; diridx++) {
 
 		dir = diridxp[diridx];
@@ -544,6 +632,15 @@ key_allocsa_policy(idx, isr, diridxplen, diridxp)
 				goto found;
 		}
 	}
+#else
+	for (saidx = (struct secasindex *)saidxtree.head;
+	     saidx != NULL;
+	     saidx = saidx->next) {
+
+		if (key_cmpidxwithmask(&saidx->idx, idx))
+			goto found;
+	}
+#endif
 
 	return NULL;
 
@@ -670,7 +767,9 @@ key_allocsa(family, src, dst, proto, spi)
 	struct secasindex *saidx;
 	struct secas *sa;
 	u_int stateidx, state;
+#ifdef RESTRICTED_DIR
 	u_int dir;
+#endif
 
 	/* sanity check */
 	if (src == NULL || dst == NULL)
@@ -694,11 +793,13 @@ key_allocsa(family, src, dst, proto, spi)
 		return NULL;
 	}
 
+#ifdef RESTRICTED_DIR
 	/* set direction */
 	if (key_isloopback(family, dst))
 		dir = SADB_X_DIR_BIDIRECT;
 	else
 		dir = SADB_X_DIR_INBOUND;
+#endif
 
 	/*
 	 * searching SADB.
@@ -713,6 +814,7 @@ key_allocsa(family, src, dst, proto, spi)
 	 *	sa->saidx->idx.src == IP2.src
 	 *	sa->saidx->idx.dst == IP2.dst
 	 */
+#ifdef RESTRICTED_DIR
 	for (saidx = (struct secasindex *)saidxtree[dir].head;
 	     saidx != NULL;
 	     saidx = saidx->next) {
@@ -757,6 +859,52 @@ key_allocsa(family, src, dst, proto, spi)
 			}
 		}
 	}
+#else
+	for (saidx = (struct secasindex *)saidxtree.head;
+	     saidx != NULL;
+	     saidx = saidx->next) {
+
+		/* search valid state */
+		for (stateidx = 0;
+		     stateidx < _ARRAYLEN(saorder_state_valid);
+		     stateidx++) {
+
+			state = saorder_state_valid[stateidx];
+			for (sa = (struct secas *)saidx->satree[state].head;
+			     sa != NULL;
+			     sa = sa->next) {
+
+				/* sanity check */
+				if (sa->state != state) {
+					printf("key_allocsa: "
+						"invalid sa->state "
+						"(queue: %d SA: %d)\n",
+						state, sa->state);
+					continue;
+				}
+
+				if (sa->type != proto)
+					continue;
+				if (sa->spi != spi)
+					continue;
+
+				if (sa->proxy == NULL
+				 && key_bbcmp(src, (caddr_t)&sa->saidx->idx.src,
+				              sa->saidx->idx.prefs)
+				 && key_bbcmp(dst, (caddr_t)&sa->saidx->idx.dst,
+				              sa->saidx->idx.prefd)) {
+					goto found;
+				}
+
+				if (sa->proxy != NULL
+				 && bcmp(dst, _INADDRBYSA(sa->proxy),
+				      _INALENBYAF(sa->proxy->sa_family)) == 0) {
+					goto found;
+				}
+			}
+		}
+	}
+#endif
 
 	/* not found */
 	return NULL;
@@ -936,9 +1084,14 @@ key_delsp(sp)
  *	others	: found, pointer to a SP.
  */
 static struct secpolicy *
+#ifdef RESTRICTED_DIR
 key_getinspointforsp(sp, dir)
 	struct secpolicy *sp;
 	u_int dir;
+#else
+key_getinspointforsp(sp)
+	struct secpolicy *sp;
+#endif
 {
 	if (sp == NULL)
 		return NULL;
@@ -946,12 +1099,21 @@ key_getinspointforsp(sp, dir)
 	/* XXX Do code !*/
 	return NULL;
 
+#ifdef RESTRICTED_DIR
 	for (sp = (struct secpolicy *)sptree[dir].head;
 	     sp != NULL;
 	     sp = sp->next) {
 		/* XXX Do code ! */
 		;
 	}
+#else
+	for (sp = (struct secpolicy *)sptree.head;
+	     sp != NULL;
+	     sp = sp->next) {
+		/* XXX Do code ! */
+		;
+	}
+#endif
 
 	return NULL;
 }
@@ -962,9 +1124,14 @@ key_getinspointforsp(sp, dir)
  *	others	: found, pointer to a SP.
  */
 static struct secpolicy *
+#ifdef RESTRICTED_DIR
 key_getsp(idx, dir)
 	struct secindex *idx;
 	u_int dir;
+#else
+key_getsp(idx)
+	struct secindex *idx;
+#endif
 {
 	struct secpolicy *sp;
 
@@ -972,6 +1139,7 @@ key_getsp(idx, dir)
 	if (idx == NULL)
 		panic("key_getsp: NULL pointer is passed.\n");
 
+#ifdef RESTRICTED_DIR
 	for (sp = (struct secpolicy *)sptree[dir].head;
 	     sp != NULL;
 	     sp = sp->next) {
@@ -980,6 +1148,16 @@ key_getsp(idx, dir)
 		if (key_cmpidx(&sp->idx, idx))
 			return sp;
 	}
+#else
+	for (sp = (struct secpolicy *)sptree.head;
+	     sp != NULL;
+	     sp = sp->next) {
+		if (sp->state != IPSEC_SPSTATE_ALIVE)
+			continue;
+		if (key_cmpidx(&sp->idx, idx))
+			return sp;
+	}
+#endif
 
 	return NULL;
 }
@@ -1208,7 +1386,9 @@ key_spdadd(mhp)
 	struct sadb_x_policy *xpl0;
 	struct secindex idx;
 	struct secpolicy *newsp;
+#ifdef RESTRICTED_DIR
 	u_int dir;
+#endif
 
 	/* sanity check */
 	if (mhp == NULL || mhp[0] == NULL)
@@ -1234,6 +1414,7 @@ key_spdadd(mhp)
 		return NULL;
 	}
 
+#ifdef RESTRICTED_DIR
 	/* checking the direciton. */ 
 	dir = key_checkdir(&idx, NULL);
 	switch (dir) {
@@ -1249,13 +1430,22 @@ key_spdadd(mhp)
 	default:
 		panic("key_spdadd: unexpected direction %u", dir);
 	}
+#endif
 
 	/* Is there SP in SPD ? */
+#ifdef RESTRICTED_DIR
 	if (key_getsp(&idx, dir)) {
 		printf("key_spdadd: a SPD entry exists already.\n");
 		msg0->sadb_msg_errno = EEXIST;
 		return NULL;
 	}
+#else
+	if (key_getsp(&idx)) {
+		printf("key_spdadd: a SPD entry exists already.\n");
+		msg0->sadb_msg_errno = EEXIST;
+		return NULL;
+	}
+#endif
 
 	/* check policy */
 	/* key_spdadd() accepts DISCARD, NONE and IPSEC. */
@@ -1286,7 +1476,11 @@ key_spdadd(mhp)
 	 * By key_getinspointforsp(), searching SPD for the place where
 	 * SP sould be inserted, and insert into sptree
 	 */
+#ifdef RESTRICTED_DIR
 	key_insnode(&sptree[dir], key_getinspointforsp(newsp, dir), newsp);
+#else
+	key_insnode(&sptree, key_getinspointforsp(newsp), newsp);
+#endif
 
     {
 	struct sadb_msg *newmsg;
@@ -1341,7 +1535,9 @@ key_spddelete(mhp)
 	struct sadb_address *src0, *dst0;
 	struct secindex idx;
 	struct secpolicy *sp;
+#ifdef RESTRICTED_DIR
 	u_int dir;
+#endif
 
 	/* sanity check */
 	if (mhp == NULL || mhp[0] == NULL)
@@ -1365,6 +1561,7 @@ key_spddelete(mhp)
 		return NULL;
 	}
 
+#ifdef RESTRICTED_DIR
 	/* checking the direciton. */ 
 	dir = key_checkdir(&idx, NULL);
 	switch (dir) {
@@ -1380,13 +1577,22 @@ key_spddelete(mhp)
 	default:
 		panic("key_spddelete: unexpected direction %u", dir);
 	}
+#endif
 
 	/* Is there SP in SPD ? */
+#ifdef RESTRICTED_DIR
 	if ((sp = key_getsp(&idx, dir)) == NULL) {
 		printf("key_spddelete: no SP found.\n");
 		msg0->sadb_msg_errno = ENOENT;
 		return NULL;
 	}
+#else
+	if ((sp = key_getsp(&idx)) == NULL) {
+		printf("key_spddelete: no SP found.\n");
+		msg0->sadb_msg_errno = ENOENT;
+		return NULL;
+	}
+#endif
 
 	sp->state = IPSEC_SPSTATE_DEAD;
 
@@ -1551,10 +1757,14 @@ key_setdumpsp(sp, newmsg)
 	/* XXX this is DEBUG use. */
 	caddr_t x = (caddr_t)&newmsg->sadb_msg_reserved;
 
+#ifdef RESTRICTED_DIR
 	for (x[0] = 0; x[0] < _ARRAYLEN(saorder_dir_any); x[0]++) {
 		if (sp->spt == &sptree[saorder_dir_any[(int)x[0]]])
 			break;
 	}
+#else
+	x[0] = 0;
+#endif
 
 	x[1] = sp->refcnt;
     }
@@ -1726,9 +1936,14 @@ key_delsecidx(idx)
  *	others	: pointer to new SA index leaf.
  */
 static struct secasindex *
+#ifdef RESTRICTED_DIR
 key_newsaidx(idx, dir)
 	struct secindex *idx;
 	u_int dir;
+#else
+key_newsaidx(idx)
+	struct secindex *idx;
+#endif
 {
 	struct secasindex *newsaidx = NULL;
 
@@ -1753,7 +1968,11 @@ key_newsaidx(idx, dir)
 	bcopy(&idx->dst, &newsaidx->idx.dst, _INALENBYAF(idx->family));
 
 	/* add to saidxtree */
+#ifdef RESTRICTED_DIR
 	key_insnode(&saidxtree[dir], NULL, newsaidx);
+#else
+	key_insnode(&saidxtree, NULL, newsaidx);
+#endif
 
 	return(newsaidx);
 }
@@ -1773,7 +1992,11 @@ key_delsaidx(saidx)
 	if (saidx == NULL)
 		panic("key_delsaidx: NULL pointer is passed.\n");
 
+#ifdef __NetBSD__
 	s = splsoftnet();	/*called from softclock()*/
+#else
+	s = splnet();	/*called from softclock()*/
+#endif
 
 	/* searching all SA registerd in the secindex. */
 	for (stateidx = 0;
@@ -1996,12 +2219,18 @@ key_delsa(sa)
  *	others	: found, pointer to a SA.
  */
 static struct secasindex *
+#ifdef RESTRICTED_DIR
 key_getsaidx(idx, dir)
 	struct secindex *idx;
 	u_int dir;
+#else
+key_getsaidx(idx)
+	struct secindex *idx;
+#endif
 {
 	struct secasindex *saidx;
 
+#ifdef RESTRICTED_DIR
 	for (saidx = (struct secasindex *)saidxtree[dir].head;
 	     saidx != NULL;
 	     saidx = saidx->next) {
@@ -2009,6 +2238,15 @@ key_getsaidx(idx, dir)
 		if (key_cmpidx(&saidx->idx, idx))
 			return(saidx);
 	}
+#else
+	for (saidx = (struct secasindex *)saidxtree.head;
+	     saidx != NULL;
+	     saidx = saidx->next) {
+
+		if (key_cmpidx(&saidx->idx, idx))
+			return(saidx);
+	}
+#endif
 
 	return NULL;
 }
@@ -2024,14 +2262,22 @@ key_getsaidxfromany(idx)
 	struct secindex *idx;
 {
 	struct secasindex *saidx;
+#ifdef RESTRICTED_DIR
 	u_int diridx;
+#endif
 
+#ifdef RESTRICTED_DIR
 	for (diridx = 0; diridx < _ARRAYLEN(saorder_dir_any); diridx++) {
 
 		saidx = key_getsaidx(idx, saorder_dir_any[diridx]);
 		if (saidx != NULL)
 			return(saidx);
 	}
+#else
+	saidx = key_getsaidx(idx);
+	if (saidx != NULL)
+		return(saidx);
+#endif
 
 	return NULL;
 }
@@ -2048,10 +2294,13 @@ key_checkspi(spi, proto)
 	u_int proto;
 {
 	struct secasindex *saidx;
+#ifdef RESTRICTED_DIR
 	u_int diridx, dir;
+#endif
 	struct secas *sa;
 
 	/* check all status of INBOUND SADB. */
+#ifdef RESTRICTED_DIR
 	for (diridx = 0; diridx < _ARRAYLEN(saorder_dir_input); diridx++) {
 
 		dir = saorder_dir_input[diridx];
@@ -2064,6 +2313,16 @@ key_checkspi(spi, proto)
 				return sa;
 		}
 	}
+#else
+	for (saidx = (struct secasindex *)saidxtree.head;
+	     saidx != NULL;
+	     saidx = saidx->next) {
+
+		sa = key_getsabyspi(saidx, proto, spi);
+		if (sa != NULL)
+			return sa;
+	}
+#endif
 
 	return NULL;
 }
@@ -2663,10 +2922,14 @@ key_setdumpsa(sa, newmsg)
 	/* XXX this is DEBUG use. */
 	caddr_t x = (caddr_t)&newmsg->sadb_msg_reserved;
 
+#ifdef RESTRICTED_DIR
 	for (x[0] = 0; x[0] < _ARRAYLEN(saorder_dir_any); x[0]++) {
 		if (sa->saidx->saidxt == &saidxtree[saorder_dir_any[(int)x[0]]])
 			break;
 	}
+#else
+	x[0] = (unsigned char)sa->seq;
+#endif
 
 	x[1] = sa->refcnt;
     }
@@ -2993,6 +3256,7 @@ key_remnode(node)
 	return;
 }
 
+#ifdef RESTRICTED_DIR
 /*
  * The relation between the direction of SA and the addresses.
  *
@@ -3121,6 +3385,7 @@ key_checkdir(idx, proxy)
 
 	return _sec_dirtype[srctype][dsttype][proxytype];
 }
+#endif /*RESTRICTED_DIR*/
 
 /* compare my own address
  * OUT:	1: true, i.e. my address.
@@ -3221,8 +3486,9 @@ key_ismyaddr6(addr)
 
 	return 0;
 }
-#endif
+#endif /*INET6*/
 
+#ifdef RESTRICTED_DIR
 /* compare my subnet address
  * OUT:	1:	true, i.e. my address.
  *	0:	false
@@ -3299,6 +3565,7 @@ key_isloopback(family, addr)
 
 	return 0;
 }
+#endif /*RESTRICTED_DIR*/
 
 /*
  * compare two secindex structure.
@@ -3423,15 +3690,22 @@ key_bbcmp(p1, p2, bits)
 void
 key_timehandler(void)
 {
+#ifdef RESTRICTED_DIR
 	u_int diridx, dir;
+#endif
 	int s;
 
+#ifdef __NetBSD__
 	s = splsoftnet();	/*called from softclock()*/
+#else
+	s = splnet();	/*called from softclock()*/
+#endif
 
 	/* SPD */
     {
 	struct secpolicy *sp, *spnext;
 
+#ifdef RESTRICTED_DIR
 	for (diridx = 0; diridx < _ARRAYLEN(saorder_dir_any); diridx++) {
 
 		dir = saorder_dir_any[diridx];
@@ -3445,6 +3719,17 @@ key_timehandler(void)
 				key_freesp(sp);
 		}
 	}
+#else
+	for (sp = (struct secpolicy *)sptree.head;
+	     sp != NULL;
+	     sp = spnext) {
+
+		spnext = sp->next;
+
+		if (sp->state == IPSEC_SPSTATE_DEAD)
+			key_freesp(sp);
+	}
+#endif
     }
 
 	/* SAD */
@@ -3452,6 +3737,7 @@ key_timehandler(void)
 	struct secasindex *saidx, *saidxnext;
 	struct secas *sa, *sanext;
 
+#ifdef RESTRICTED_DIR
 	for (diridx = 0; diridx < _ARRAYLEN(saorder_dir_any); diridx++) {
 
 		dir = saorder_dir_any[diridx];
@@ -3620,6 +3906,172 @@ key_timehandler(void)
 			key_issaidx_dead(saidx);
 		}
 	}
+#else
+	for (saidx = (struct secasindex *)saidxtree.head;
+	     saidx != NULL;
+	     saidx = saidxnext) {
+
+		saidxnext = saidx->next; /* save for removing */
+
+		/* if LARVAL entry doesn't become MATURE, delete it. */
+		for (sa = (struct secas *)saidx->satree[SADB_SASTATE_LARVAL].head;
+		     sa != NULL;
+		     sa = sanext) {
+
+			sanext = sa->next; /* save */
+
+			sa->tick++;
+
+			if (key_larval_lifetime < sa->tick) {
+				key_freesa(sa);
+			}
+		}
+
+		/*
+		 * check MATURE entry to start to send expire message
+		 * whether or not.
+		 */
+		for (sa = (struct secas *)saidx->satree[SADB_SASTATE_MATURE].head;
+		     sa != NULL;
+		     sa = sanext) {
+
+			sanext = sa->next; /* save */
+
+			sa->tick++;
+
+			/* we don't need to check. */
+			if (sa->lft_s == NULL)
+				continue;
+
+			/* sanity check */
+			if (sa->lft_c == NULL) {
+				printf("key_timehandler: "
+					"There is no the CURRENT, "
+					"why?\n");
+				continue;
+			}
+
+			/* compare SOFT lifetime and tick */
+			if (sa->lft_s->sadb_lifetime_addtime != 0
+			 && sa->lft_s->sadb_lifetime_addtime < sa->tick) {
+				/*
+				 * check SA to be used whether or not.
+				 * when SA hasn't been used, delete it.
+				 */
+				if (sa->lft_c->sadb_lifetime_usetime == 0) {
+					key_sa_chgstate(sa, SADB_SASTATE_DEAD);
+					key_freesa(sa);
+					sa = NULL;
+				} else {
+					key_sa_chgstate(sa, SADB_SASTATE_DYING);
+					/*
+					 * XXX If we keep to send expire
+					 * message in the status of
+					 * DYING. Do remove below code.
+					 */
+					key_expire(sa);
+				}
+			}
+			/* check SOFT lifetime by bytes */
+			/*
+			 * XXX I don't know the way to delete this SA
+			 * when new SA is installed.  Caution when it's
+			 * installed too big lifetime by time.
+			 */
+			else if (sa->lft_s->sadb_lifetime_bytes != 0
+			      && sa->lft_s->sadb_lifetime_bytes < sa->lft_c->sadb_lifetime_bytes) {
+
+				key_sa_chgstate(sa, SADB_SASTATE_DYING);
+				/*
+				 * XXX If we keep to send expire
+				 * message in the status of
+				 * DYING. Do remove below code.
+				 */
+				key_expire(sa);
+			}
+		}
+
+		/* check DYING entry to change status to DEAD. */
+		for (sa = (struct secas *)saidx->satree[SADB_SASTATE_DYING].head;
+		     sa != NULL;
+		     sa = sanext) {
+
+			sanext = sa->next; /* save */
+
+			sa->tick++;
+
+			/* we don't need to check. */
+			if (sa->lft_h == NULL)
+				continue;
+
+			/* sanity check */
+			if (sa->lft_c == NULL) {
+				printf("key_timehandler: "
+					"There is no the CURRENT, "
+					"why?\n");
+				continue;
+			}
+
+			/* compare HARD lifetime and tick */
+			if (sa->lft_h->sadb_lifetime_addtime != 0
+			 && sa->lft_h->sadb_lifetime_addtime < sa->tick) {
+				key_sa_chgstate(sa, SADB_SASTATE_DEAD);
+				key_freesa(sa);
+				sa = NULL;
+			}
+#if 0	/* XXX Should we keep to send expire message until HARD lifetime ? */
+			else if (sa->lft_s != NULL
+			      && sa->lft_s->sadb_lifetime_addtime != 0
+			      && sa->lft_s->sadb_lifetime_addtime < sa->tick) {
+				/*
+				 * XXX: should be checked to be
+				 * installed the valid SA.
+				 */
+
+				/*
+				 * If there is no SA then sending
+				 * expire message.
+				 */
+				key_expire(sa);
+			}
+#endif
+			/* check HARD lifetime by bytes */
+			else if (sa->lft_h->sadb_lifetime_bytes != 0
+			      && sa->lft_h->sadb_lifetime_bytes < sa->lft_c->sadb_lifetime_bytes) {
+				key_sa_chgstate(sa, SADB_SASTATE_DEAD);
+				key_freesa(sa);
+				sa = NULL;
+			}
+		}
+
+		/* delete entry in DEAD */
+		for (sa = (struct secas *)saidx->satree[SADB_SASTATE_DEAD].head;
+		     sa != NULL;
+		     sa = sanext) {
+
+			sanext = sa->next; /* save */
+
+			/* sanity check */
+			if (sa->state != SADB_SASTATE_DEAD) {
+				printf("key_timehandler: "
+					"invalid sa->state "
+					"(queue: %d SA: %d): "
+					"kill it anyway\n",
+					SADB_SASTATE_DEAD, sa->state);
+			}
+
+			/*
+			 * do not call key_freesa() here.
+			 * sa should already be freed, and sa->refcnt
+			 * shows other references to sa
+			 * (such as from SPD).
+			 */
+		}
+
+		/* If there is no SA entry in SA index, marking DEAD. */
+		key_issaidx_dead(saidx);
+	}
+#endif
     }
 
 #ifndef IPSEC_NONBLOCK_ACQUIRE
@@ -3702,7 +4154,9 @@ key_getspi(mhp)
 	struct secindex idx;
 	struct secasindex *newsaidx;
 	struct secas *newsa;
+#ifdef RESTRICTED_DIR
 	u_int dir;
+#endif
 	u_int32_t spi;
 
 	/* sanity check */
@@ -3727,6 +4181,7 @@ key_getspi(mhp)
 		return NULL;
 	}
 
+#ifdef RESTRICTED_DIR
 	/* check the direciton. */ 
 	/*
 	 * We call key_checkdir with both the source address and
@@ -3754,6 +4209,7 @@ key_getspi(mhp)
 	default:
 		panic("key_getspi: unexpected direction.\n");
 	}
+#endif
 
 	/* SPI allocation */
 	spi = key_do_getnewspi((struct sadb_spirange *)mhp[SADB_EXT_SPIRANGE],
@@ -3764,6 +4220,7 @@ key_getspi(mhp)
 	}
 
 	/* get a SA index */
+#ifdef RESTRICTED_DIR
 	if ((newsaidx = key_getsaidx(&idx, dir)) == NULL) {
 
 		/* create a new SA index */
@@ -3773,6 +4230,17 @@ key_getspi(mhp)
 			return NULL;
 		}
 	}
+#else
+	if ((newsaidx = key_getsaidx(&idx)) == NULL) {
+
+		/* create a new SA index */
+		if ((newsaidx = key_newsaidx(&idx)) == NULL) {
+			printf("key_getspi: No more memory.\n");
+			msg0->sadb_msg_errno = ENOBUFS;
+			return NULL;
+		}
+	}
+#endif
 
 	/* get a new SA */
 	if ((newsa = key_newsa(mhp, newsaidx)) == NULL) {
@@ -3940,7 +4408,9 @@ key_update(mhp)
 	struct secindex idx;
 	struct secasindex *saidx;
 	struct secas *sa;
+#ifdef RESTRICTED_DIR
 	u_int dir;
+#endif
 
 	/* sanity check */
 	if (mhp == NULL || mhp[0] == NULL)
@@ -3984,6 +4454,7 @@ key_update(mhp)
 		return NULL;
 	}
 
+#ifdef RESTRICTED_DIR
 	/*
 	 * check the direciton with proxy address.
 	 * We assumed that SA direction is not changed if valid SA.
@@ -4017,13 +4488,22 @@ key_update(mhp)
 	}
     }
 #endif
+#endif
 
 	/* get a SA index */
+#ifdef RESTRICTED_DIR
 	if ((saidx = key_getsaidx(&idx, dir)) == NULL) {
 		printf("key_update: no SA index found.\n");
 		msg0->sadb_msg_errno = ENOENT;
 		return NULL;
 	}
+#else
+	if ((saidx = key_getsaidx(&idx)) == NULL) {
+		printf("key_update: no SA index found.\n");
+		msg0->sadb_msg_errno = ENOENT;
+		return NULL;
+	}
+#endif
 
 	/* find a SA with sequence number. */
 	if ((sa = key_getsabyseq(saidx, msg0->sadb_msg_seq)) == NULL) {
@@ -4147,7 +4627,9 @@ key_add(mhp)
 	struct secindex idx;
 	struct secasindex *newsaidx;
 	struct secas *newsa;
+#ifdef RESTRICTED_DIR
 	u_int dir;
+#endif
 
 	/* sanity check */
 	if (mhp == NULL || mhp[0] == NULL)
@@ -4191,6 +4673,7 @@ key_add(mhp)
 		return NULL;
 	}
 
+#ifdef RESTRICTED_DIR
 	/* checking the direciton. */ 
 	dir = key_checkdir(&idx, proxy);
 	switch (dir) {
@@ -4228,8 +4711,10 @@ key_add(mhp)
 	default:
 		panic("key_add: unexpected direction %u", dir);
 	}
+#endif
 
 	/* get a SA index */
+#ifdef RESTRICTED_DIR
 	if ((newsaidx = key_getsaidx(&idx, dir)) == NULL) {
 
 		/* create a new SA index */
@@ -4239,6 +4724,17 @@ key_add(mhp)
 			return NULL;
 		}
 	}
+#else
+	if ((newsaidx = key_getsaidx(&idx)) == NULL) {
+
+		/* create a new SA index */
+		if ((newsaidx = key_newsaidx(&idx)) == NULL) {
+			printf("key_add: No more memory.\n");
+			msg0->sadb_msg_errno = ENOBUFS;
+			return NULL;
+		}
+	}
+#endif
 
 	/* create new SA entry. */
 	/* We can create new SA only if SPI is differenct. */
@@ -4538,13 +5034,16 @@ key_acquire(idx, proto, proxy)
 #if 0 /* XXX Do it ?*/
 	u_int16_t idexttype;
 #endif
+#ifdef RESTRICTED_DIR
 	u_int dir;
+#endif
 	int error;
 
 	/* sanity check */
 	if (idx == NULL)
 		panic("key_acquire: NULL pointer is passed.\n");
 
+#ifdef RESTRICTED_DIR
 	/* check the direciton. */
 	dir = key_checkdir(idx, NULL);
 	switch (dir) {
@@ -4559,6 +5058,7 @@ key_acquire(idx, proto, proxy)
 	default:
 		panic("key_acquire: unexpected direction.\n");
 	}
+#endif
 
 #if 0 /* XXX Do it ?*/
 	switch (dir) {
@@ -4902,7 +5402,9 @@ key_acquire2(mhp)
 	struct sockaddr *proxy;
 	struct secindex idx;
 	struct secasindex *saidx;
+#ifdef RESTRICTED_DIR
 	u_int dir;
+#endif
 
 	/* sanity check */
 	if (mhp == NULL || mhp[0] == NULL)
@@ -4947,6 +5449,7 @@ key_acquire2(mhp)
 		return NULL;
 	}
 
+#ifdef RESTRICTED_DIR
 	/* checking the direciton. */ 
 	dir = key_checkdir(&idx, proxy);
 	switch (dir) {
@@ -4962,13 +5465,22 @@ key_acquire2(mhp)
 	default:
 		panic("key_acquire2: unexpected direction %u", dir);
 	}
+#endif
 
 	/* get a SA index */
+#ifdef RESTRICTED_DIR
 	if ((saidx = key_getsaidx(&idx, dir)) != NULL) {
 		printf("key_acquire2: a SA exists already.\n");
 		msg0->sadb_msg_errno = EEXIST;
 		return NULL;
 	}
+#else
+	if ((saidx = key_getsaidx(&idx)) != NULL) {
+		printf("key_acquire2: a SA exists already.\n");
+		msg0->sadb_msg_errno = EEXIST;
+		return NULL;
+	}
+#endif
 
 	msg0->sadb_msg_errno = key_acquire(&idx, msg0->sadb_msg_satype, proxy);
 	if (msg0->sadb_msg_errno != 0) {
@@ -5193,7 +5705,11 @@ key_expire(sa)
 {
 	int s;
 
+#ifdef __NetBSD__
 	s = splsoftnet();	/*called from softclock()*/
+#else
+	s = splnet();	/*called from softclock()*/
+#endif
 
 	/* sanity check */
 	if (sa == NULL)
@@ -5921,12 +6437,20 @@ key_init()
 	bzero((caddr_t)&key_cb, sizeof(key_cb));
 
 	/* SAD */
+#ifdef RESTRICTED_DIR
 	for (i = 0; i < SADB_X_DIR_MAX; i++)
 		bzero(&saidxtree[i], sizeof(saidxtree[i]));
+#else
+	bzero(&saidxtree, sizeof(saidxtree));
+#endif
 
 	/* SPD */
+#ifdef RESTRICTED_DIR
 	for (i = 0; i < SADB_X_DIR_MAX; i++)
 		bzero(&sptree[i], sizeof(saidxtree[i]));
+#else
+	bzero(&sptree, sizeof(saidxtree));
+#endif
 
 	/* system default */
 	ip4_def_policy.policy = IPSEC_POLICY_NONE;
@@ -6095,8 +6619,11 @@ key_sa_routechange(dst)
 {
 	struct secasindex *saidx;
 	struct route *ro;
+#ifdef RESTRICTED_DIR
 	u_int diridx, dir;
+#endif
 
+#ifdef RESTRICTED_DIR
 	for (diridx = 0; diridx < _ARRAYLEN(saorder_dir_output); diridx++) {
 
 		dir = saorder_dir_output[diridx];
@@ -6112,6 +6639,19 @@ key_sa_routechange(dst)
 			}
 		}
 	}
+#else
+	for (saidx = (struct secasindex *)saidxtree.head;
+	     saidx != NULL;
+	     saidx = saidx->next) {
+
+		ro = &saidx->sa_route;
+		if (ro->ro_rt && dst->sa_len == ro->ro_dst.sa_len
+		 && bcmp(dst, &ro->ro_dst, dst->sa_len) == 0) {
+			RTFREE(ro->ro_rt);
+			ro->ro_rt = (struct rtentry *)NULL;
+		}
+	}
+#endif
 
 	return;
 }

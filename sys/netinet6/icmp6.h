@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.h,v 1.3 1999/07/03 21:30:18 thorpej Exp $	*/
+/*	$NetBSD: icmp6.h,v 1.4 1999/07/31 18:41:16 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -127,7 +127,8 @@ struct icmp6_hdr {
 
 #define ICMP6_DST_UNREACH_NOROUTE	0	/* no route to destination */
 #define ICMP6_DST_UNREACH_ADMIN	 	1	/* administratively prohibited */
-#define ICMP6_DST_UNREACH_NOTNEIGHBOR	2	/* not a neighbor */
+#define ICMP6_DST_UNREACH_NOTNEIGHBOR	2	/* not a neighbor(obsolete) */
+#define ICMP6_DST_UNREACH_BEYONDSCOPE	2	/* beyond scope of source address */
 #define ICMP6_DST_UNREACH_ADDR		3	/* address unreachable */
 #define ICMP6_DST_UNREACH_NOPORT	4	/* port unreachable */
 
@@ -147,6 +148,10 @@ struct icmp6_hdr {
 #define ICMP6_ROUTER_RENUMBERING_COMMAND  0	/* rr command */
 #define ICMP6_ROUTER_RENUMBERING_RESULT   1	/* rr result */
 #define ICMP6_ROUTER_RENUMBERING_SEQNUM_RESET   255	/* rr seq num reset */
+
+/* Used in kernel only */
+#define ND_REDIRECT_ONLINK	0	/* redirect to an on-link node */
+#define ND_REDIRECT_ROUTER	1	/* redirect to a better router */
 
 /*
  * Multicast Listener Discovery

@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.5 1999/07/06 12:23:26 itojun Exp $	*/
+/*	$NetBSD: keysock.c,v 1.6 1999/07/31 18:41:18 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -125,7 +125,11 @@ key_usrreq(so, req, m, nam, control, p)
 	register struct keycb *kp = (struct keycb *)sotorawcb(so);
 	int s;
 
+#ifdef __NetBSD__
 	s = splsoftnet();
+#else
+	s = splnet();
+#endif
 	if (req == PRU_ATTACH) {
 		MALLOC(kp, struct keycb *, sizeof(*kp), M_PCB, M_WAITOK);
 		so->so_pcb = (caddr_t)kp;
@@ -268,7 +272,12 @@ key_output(m, va_alist)
 	}
 	m_copydata(m, 0, len, (caddr_t)msg);
 
-	s = splsoftnet();	/*XXX giant lock*/
+	/*XXX giant lock*/
+#ifdef __NetBSD__
+	s = splsoftnet();
+#else
+	s = splnet();
+#endif
 	if ((len = key_parse(&msg, so, &target)) == 0) {
 		/* discard. i.e. no need to reply. */
 		error = 0;
