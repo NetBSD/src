@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.24 2003/05/01 12:49:17 yamt Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.25 2003/05/01 13:06:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.24 2003/05/01 12:49:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.25 2003/05/01 13:06:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,18 +67,18 @@ int	lockf_debug = 0;
 #define SELF	0x1
 #define OTHERS	0x2
 
-static int lf_clearlock __P((struct lockf *));
-static int lf_findoverlap __P((struct lockf *,
-	    struct lockf *, int, struct lockf ***, struct lockf **));
-static struct lockf * lf_getblock __P((struct lockf *));
-static int lf_getlock __P((struct lockf *, struct flock *));
-static int lf_setlock __P((struct lockf *));
-static void lf_split __P((struct lockf *, struct lockf *));
-static void lf_wakelock __P((struct lockf *));
+static int lf_clearlock(struct lockf *);
+static int lf_findoverlap(struct lockf *,
+	    struct lockf *, int, struct lockf ***, struct lockf **);
+static struct lockf *lf_getblock(struct lockf *);
+static int lf_getlock(struct lockf *, struct flock *);
+static int lf_setlock(struct lockf *);
+static void lf_split(struct lockf *, struct lockf *);
+static void lf_wakelock(struct lockf *);
 
 #ifdef LOCKF_DEBUG
-static void lf_print __P((char *, struct lockf *));
-static void lf_printlist __P((char *, struct lockf *));
+static void lf_print(char *, struct lockf *);
+static void lf_printlist(char *, struct lockf *);
 #endif
 
 /*
@@ -105,10 +105,7 @@ static void lf_printlist __P((char *, struct lockf *));
  * Do an advisory lock operation.
  */
 int
-lf_advlock(ap, head, size)
-	struct vop_advlock_args *ap;
-	struct lockf **head;
-	off_t size;
+lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 {
 	struct flock *fl = ap->a_fl;
 	struct lockf *lock;
@@ -204,8 +201,7 @@ lf_advlock(ap, head, size)
  * Set a byte-range lock.
  */
 static int
-lf_setlock(lock)
-	struct lockf *lock;
+lf_setlock(struct lockf *lock)
 {
 	struct lockf *block;
 	struct lockf **head = lock->lf_head;
@@ -459,8 +455,7 @@ lf_setlock(lock)
  * and remove it (or shrink it), then wakeup anyone we can.
  */
 static int
-lf_clearlock(unlock)
-	struct lockf *unlock;
+lf_clearlock(struct lockf *unlock)
 {
 	struct lockf **head = unlock->lf_head;
 	struct lockf *lf = *head;
@@ -529,9 +524,7 @@ lf_clearlock(unlock)
  * and if so return its process identifier.
  */
 static int
-lf_getlock(lock, fl)
-	struct lockf *lock;
-	struct flock *fl;
+lf_getlock(struct lockf *lock, struct flock *fl)
 {
 	struct lockf *block;
 
@@ -563,8 +556,7 @@ lf_getlock(lock, fl)
  * return the first blocking lock.
  */
 static struct lockf *
-lf_getblock(lock)
-	struct lockf *lock;
+lf_getblock(struct lockf *lock)
 {
 	struct lockf **prev, *overlap, *lf = *(lock->lf_head);
 
@@ -592,12 +584,8 @@ lf_getblock(lock)
  *	 may be more than one.
  */
 static int
-lf_findoverlap(lf, lock, type, prev, overlap)
-	struct lockf *lf;
-	struct lockf *lock;
-	int type;
-	struct lockf ***prev;
-	struct lockf **overlap;
+lf_findoverlap(struct lockf *lf, struct lockf *lock, int type,
+    struct lockf ***prev, struct lockf **overlap)
 {
 	off_t start, end;
 
@@ -702,9 +690,7 @@ lf_findoverlap(lf, lock, type, prev, overlap)
  * two or three locks as necessary.
  */
 static void
-lf_split(lock1, lock2)
-	struct lockf *lock1;
-	struct lockf *lock2;
+lf_split(struct lockf *lock1, struct lockf *lock2)
 {
 	struct lockf *splitlock;
 
@@ -749,8 +735,7 @@ lf_split(lock1, lock2)
  * Wakeup a blocklist
  */
 static void
-lf_wakelock(listhead)
-	struct lockf *listhead;
+lf_wakelock(struct lockf *listhead)
 {
 	struct lockf *wakelock;
 
@@ -771,9 +756,7 @@ lf_wakelock(listhead)
  * Print out a lock.
  */
 static void
-lf_print(tag, lock)
-	char *tag;
-	struct lockf *lock;
+lf_print(char *tag, struct lockf *lock)
 {
 	
 	printf("%s: lock %p for ", tag, lock);
@@ -793,9 +776,7 @@ lf_print(tag, lock)
 }
 
 static void
-lf_printlist(tag, lock)
-	char *tag;
-	struct lockf *lock;
+lf_printlist(char *tag, struct lockf *lock)
 {
 	struct lockf *lf, *blk;
 
