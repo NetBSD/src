@@ -1,4 +1,4 @@
-/* $NetBSD: sccvar.h,v 1.5 1997/04/06 22:30:32 cgd Exp $ */
+/* $NetBSD: sccvar.h,v 1.5.16.1 1999/08/08 07:19:05 cgd Exp $ */
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University
@@ -108,3 +108,5 @@ typedef struct {
 #define	SCCMOUSE_PORT	0x1
 #define	SCCCOMM3_PORT	0x2
 #define	SCCKBD_PORT	0x3
+
+int	alpha_donot_kludge_scc;
