@@ -1,14 +1,14 @@
-NetBSD/sparc 1.2 runs on the following classes of machines:
+NetBSD/sparc RELEASE runs on the following classes of machines:
 	- sun4c (e.g. the SS1, SS1+, SS2, IPC, ELC, IPX, and SLC)
 	- sun4 (e.g. the 4/100, 4/200, and 4/300.   note that support
 		for the 4/400 processor is incomplete)
 	- sun4m (e.g. Classic, LX, SS4, SS5, SS10, and SS20)
 
-NetBSD/sparc 1.2 does *not* run on these machines (yet):
+NetBSD/sparc RELEASE does *not* run on these machines (yet):
 	- sun-4/400 (lacking support for the I/O cache, and has
 			ethernet problems)
 	- sun4d (e.g. sparc center 2000)
-	- sun4u (e.g. ultra1/ultra2/ultra server)
+	- sun4u (e.g. Ultrasparcs)
 
 The minimal configuration requires 4M of RAM and ~60M of disk space.
 To install the entire system requires much more disk space, and to run
