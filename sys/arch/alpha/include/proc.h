@@ -1,4 +1,4 @@
-/* $NetBSD: proc.h,v 1.9 2001/01/19 18:51:18 thorpej Exp $ */
+/* $NetBSD: proc.h,v 1.10 2001/04/26 03:10:46 ross Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -41,5 +41,23 @@ struct mdproc {
 	void	(*md_syscall)(struct proc *, u_int64_t, struct trapframe *);
 	__volatile int md_astpending;	/* AST pending for this process */
 };
-
+/*
+ * md_flags usage
+ * --------------
+ * MDP_FPUSED
+ * 	A largely unused bit indicating the presence of FPU history.
+ * 	Cleared on exec. Set but not used by the fpu context switcher
+ * 	itself.
+ * 
+ * MDP_FP_C
+ * 	The architected FP Control word. It should forever begin at bit 1,
+ * 	as the bits are AARM specified and this way it doesn't need to be
+ * 	shifted.
+ * 
+ * 	Until C99 there was never an IEEE 754 API, making most of the
+ * 	standard useless.  Because of overlapping AARM, OSF/1, NetBSD, and
+ * 	C99 API's, the use of the MDP_FP_C bits is defined variously in
+ * 	ieeefp.h and fpu.h.
+ */
 #define	MDP_FPUSED	0x0001		/* Process used the FPU */
+#define	MDP_FP_C      0x7ffffe		/* Extended FP_C Quadword bits */

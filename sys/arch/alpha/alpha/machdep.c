@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.240 2001/04/24 04:30:50 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.241 2001/04/26 03:10:44 ross Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.240 2001/04/24 04:30:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.241 2001/04/26 03:10:44 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.240 2001/04/24 04:30:50 thorpej Exp $"
 #include <sys/core.h>
 #include <sys/kcore.h>
 #include <machine/kcore.h>
+#include <machine/fpu.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -188,6 +189,7 @@ void	*ksym_start, *ksym_end;
 int	alpha_unaligned_print = 1;	/* warn about unaligned accesses */
 int	alpha_unaligned_fix = 1;	/* fix up unaligned accesses */
 int	alpha_unaligned_sigbus = 0;	/* don't SIGBUS on fixed-up accesses */
+int	alpha_fp_sync_complete = 0;	/* fp fixup if sync even without /s */
 
 /*
  * XXX This should be dynamically sized, but we have the chicken-egg problem!
@@ -1540,7 +1542,7 @@ sendsig(catcher, sig, mask, code)
 	ksc.sc_ownedfp = p->p_md.md_flags & MDP_FPUSED;
 	bcopy(&p->p_addr->u_pcb.pcb_fp, (struct fpreg *)ksc.sc_fpregs,
 	    sizeof(struct fpreg));
-	ksc.sc_fp_control = 0;					/* XXX ? */
+	ksc.sc_fp_control = alpha_read_fp_c(p);
 	bzero(ksc.sc_reserved, sizeof ksc.sc_reserved);		/* XXX */
 	bzero(ksc.sc_xxx, sizeof ksc.sc_xxx);			/* XXX */
 
@@ -1667,7 +1669,8 @@ sys___sigreturn14(p, v, retval)
 		fpusave_proc(p, 0);
 	bcopy((struct fpreg *)ksc.sc_fpregs, &p->p_addr->u_pcb.pcb_fp,
 	    sizeof(struct fpreg));
-	/* XXX ksc.sc_fp_control ? */
+	p->p_addr->u_pcb.pcb_fp.fpr_cr = ksc.sc_fpcr;
+	p->p_md.md_flags = ksc.sc_fp_control & MDP_FP_C;
 
 	/* Restore signal stack. */
 	if (ksc.sc_onstack & SS_ONSTACK)
@@ -1733,6 +1736,10 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_rdstring(oldp, oldlenp, newp,
 		    bootinfo.booted_kernel));
 
+	case CPU_FP_SYNC_COMPLETE:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &alpha_fp_sync_complete));
+
 	default:
 		return (EOPNOTSUPP);
 	}
@@ -1768,14 +1775,6 @@ setregs(p, pack, stack)
 	bzero(tfp->tf_regs, FRAME_SIZE * sizeof tfp->tf_regs[0]);
 #endif
 	bzero(&p->p_addr->u_pcb.pcb_fp, sizeof p->p_addr->u_pcb.pcb_fp);
-	p->p_addr->u_pcb.pcb_fp.fpr_cr =  FPCR_INED
-					| FPCR_UNFD
-					| FPCR_UNDZ
-					| FPCR_DYN(FP_RN)
-					| FPCR_OVFD
-					| FPCR_DZED
-					| FPCR_INVD
-					| FPCR_DNZ;
 	alpha_pal_wrusp(stack);
 	tfp->tf_regs[FRAME_PS] = ALPHA_PSL_USERSET;
 	tfp->tf_regs[FRAME_PC] = pack->ep_entry & ~3;
@@ -1787,6 +1786,10 @@ setregs(p, pack, stack)
 	tfp->tf_regs[FRAME_T12] = tfp->tf_regs[FRAME_PC];	/* a.k.a. PV */
 
 	p->p_md.md_flags &= ~MDP_FPUSED;
+	if (__predict_true((p->p_md.md_flags & IEEE_INHERIT) == 0)) {
+		p->p_md.md_flags &= ~MDP_FP_C;
+		p->p_addr->u_pcb.pcb_fp.fpr_cr = FPCR_DYN(FP_RN);
+	}
 	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
 		fpusave_proc(p, 0);
 }

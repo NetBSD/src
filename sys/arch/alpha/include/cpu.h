@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.54 2001/04/21 16:27:11 thorpej Exp $ */
+/* $NetBSD: cpu.h,v 1.55 2001/04/26 03:10:46 ross Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -169,9 +169,6 @@ void	cpu_pause_resume_all(int);
 #define	fpcurproc	curcpu()->ci_fpcurproc
 #define	curpcb		curcpu()->ci_curpcb
 
-extern	u_long cpu_implver;		/* from IMPLVER instruction */
-extern	u_long cpu_amask;		/* from AMASK instruction */
-
 /*
  * definitions of cpu-dependent requirements
  * referenced in generic code
@@ -252,7 +249,8 @@ do {									\
 #define	CPU_UNALIGNED_FIX	4	/* int: fix unaligned accesses */
 #define	CPU_UNALIGNED_SIGBUS	5	/* int: SIGBUS unaligned accesses */
 #define	CPU_BOOTED_KERNEL	6	/* string: booted kernel name */
-#define	CPU_MAXID		7	/* 6 valid machdep IDs */
+#define	CPU_FP_SYNC_COMPLETE	7	/* int: always fixup sync fp traps */
+#define	CPU_MAXID		8	/* 7 valid machdep IDs */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
@@ -262,6 +260,7 @@ do {									\
 	{ "unaligned_fix", CTLTYPE_INT }, \
 	{ "unaligned_sigbus", CTLTYPE_INT }, \
 	{ "booted_kernel", CTLTYPE_STRING }, \
+	{ "fp_sync_complete", CTLTYPE_INT }, \
 }
 
 #ifdef _KERNEL

@@ -1,4 +1,4 @@
-/* $NetBSD: sys_machdep.c,v 1.12 2001/01/03 22:15:38 thorpej Exp $ */
+/* $NetBSD: sys_machdep.c,v 1.13 2001/04/26 03:10:45 ross Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,15 +65,17 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.12 2001/01/03 22:15:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.13 2001/04/26 03:10:45 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/proc.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
+#include <machine/fpu.h>
 #include <machine/sysarch.h>
 
 #include <dev/pci/pcivar.h>
@@ -96,11 +98,33 @@ sys_sysarch(struct proc *p, void *v, register_t *retval)
 
 	switch(SCARG(uap, op)) {
 	case ALPHA_FPGETMASK:
+		*retval = FP_C_TO_NETBSD_MASK(p->p_md.md_flags);
+		break;
+	case ALPHA_FPGETSTICKY:
+		*retval = FP_C_TO_NETBSD_FLAG(p->p_md.md_flags);
+		break;
 	case ALPHA_FPSETMASK:
 	case ALPHA_FPSETSTICKY:
-		/* XXX kernel Magick required here */
-		break;
+	    {
+		fp_except m;
+		u_int64_t md_flags;
+		struct alpha_fp_except_args args;
 
+		error = copyin(SCARG(uap, parms), &args, sizeof args);
+		if (error)
+			return error;
+		m = args.mask;
+		md_flags = p->p_md.md_flags;
+		if (SCARG(uap, op) == ALPHA_FPSETMASK) {
+			*retval = FP_C_TO_NETBSD_MASK(md_flags);
+			md_flags = SET_FP_C_MASK(md_flags, m);
+		} else {
+			*retval = FP_C_TO_NETBSD_FLAG(md_flags);
+			md_flags = SET_FP_C_FLAG(md_flags, m);
+		}
+		alpha_write_fp_c(p, md_flags);
+		break;
+	    }
 	case ALPHA_BUS_GET_WINDOW_COUNT:
 	    {
 		struct alpha_bus_get_window_count_args args;

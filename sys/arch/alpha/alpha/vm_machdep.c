@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.67 2001/04/24 04:30:50 thorpej Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.68 2001/04/26 03:10:45 ross Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.67 2001/04/24 04:30:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.68 2001/04/26 03:10:45 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,8 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize,
 	struct user *up = p2->p_addr;
 
 	p2->p_md.md_tf = p1->p_md.md_tf;
-	p2->p_md.md_flags = p1->p_md.md_flags & MDP_FPUSED;
+
+	p2->p_md.md_flags = p1->p_md.md_flags & (MDP_FPUSED | MDP_FP_C);
 
 	/*
 	 * Cache the physical address of the pcb, so we can
