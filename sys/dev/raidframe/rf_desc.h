@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_desc.h,v 1.16 2004/12/12 20:53:15 oster Exp $	*/
+/*	$NetBSD: rf_desc.h,v 1.17 2005/02/13 20:27:48 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -84,8 +84,7 @@ struct RF_RaidAccessDesc_s {
 						 be cleaned up at the end of
 						 this IO */
 	RF_AccessStripeMapHeader_t *asmap;	/* the asm for this I/O */
-	void   *bp;		/* buf pointer for this RAID acc.  ignored
-				 * outside the kernel */
+	struct buf *bp;		/* buf pointer for this RAID acc */
 	RF_AccTraceEntry_t tracerec;	/* perf monitoring information for a
 					 * user access (not for dag stats) */
 	void    (*callbackFunc) (RF_CBParam_t);	/* callback function for this
