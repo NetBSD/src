@@ -1,4 +1,4 @@
-/*	$NetBSD: ras.h,v 1.1 2002/08/28 07:16:33 gmcgarry Exp $	*/
+/*	$NetBSD: ras.h,v 1.2 2003/06/28 14:52:10 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -55,12 +55,15 @@ struct ras {
 
 #ifdef _KERNEL
 
+struct pool;
 struct proc;
 
 caddr_t ras_lookup(struct proc *, caddr_t);
 
 int ras_fork(struct proc *, struct proc *);
 int ras_purgeall(struct proc *);
+
+extern struct pool ras_pool;
 
 #else
 

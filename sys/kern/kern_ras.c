@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ras.c,v 1.4 2003/01/18 10:06:29 thorpej Exp $	*/
+/*	$NetBSD: kern_ras.c,v 1.5 2003/06/28 14:52:10 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.4 2003/01/18 10:06:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.5 2003/06/28 14:52:10 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -66,8 +66,6 @@ int ras_debug = 0;
 
 int ras_install(struct proc *, caddr_t, size_t);
 int ras_purge(struct proc *, caddr_t, size_t);
-
-extern struct pool ras_pool;
 
 /*
  * Check the specified address to see if it is within the
