@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.66.2.6 2000/01/23 12:27:44 he Exp $ */
+/*	$NetBSD: wdc.c,v 1.66.2.7 2000/01/23 12:30:20 he Exp $ */
 
 
 /*
@@ -314,6 +314,7 @@ wdcattach(chp)
 			continue;
 
 		/* Issue a IDENTIFY command, to try to detect slave ghost */
+		ata_get_params(&chp->ch_drive[i], AT_POLL, &params);
 		if (ata_get_params(&chp->ch_drive[i], AT_POLL, &params) ==
 		    CMD_OK) {
 			/* If IDENTIFY succeded, this is not an OLD ctrl */
