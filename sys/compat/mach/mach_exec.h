@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.h,v 1.10 2002/12/19 22:23:06 manu Exp $	 */
+/*	$NetBSD: mach_exec.h,v 1.11 2002/12/27 09:59:25 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@ struct mach_emuldata {
 	 * list for all process, which is protected by a lock. This
 	 * lock protects the per processes lists.
 	 */
-	LIST_HEAD(med_rights, mach_right) med_right;
+	LIST_HEAD(med_right, mach_right) med_right;
 
 	struct mach_port *med_bootstrap;/* task bootstrap port */
 	struct mach_port *med_kernel;	/* task kernel port */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.15 2002/12/24 12:29:06 manu Exp $ */
+/*	$NetBSD: mach_task.c,v 1.16 2002/12/27 09:59:27 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.15 2002/12/24 12:29:06 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.16 2002/12/27 09:59:27 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -73,16 +73,16 @@ mach_task_get_special_port(args)
 
 	switch (req->req_which_port) {
 	case MACH_TASK_KERNEL_PORT:
-		mr = mach_right_get(med->med_kernel, p, MACH_PORT_RIGHT_SEND);
+		mr = mach_right_get(med->med_kernel, p, MACH_PORT_TYPE_SEND);
 		break;
 
 	case MACH_TASK_HOST_PORT:
-		mr = mach_right_get(med->med_host, p, MACH_PORT_RIGHT_SEND);
+		mr = mach_right_get(med->med_host, p, MACH_PORT_TYPE_SEND);
 		break;
 
 	case MACH_TASK_BOOTSTRAP_PORT:
 		mr = mach_right_get(med->med_bootstrap, 
-		    p, MACH_PORT_RIGHT_SEND);
+		    p, MACH_PORT_TYPE_SEND);
 		break;
 
 	case MACH_TASK_WIRED_LEDGER_PORT:
@@ -141,11 +141,11 @@ mach_ports_lookup(args)
 	msp[6] = MACH_PORT_DEAD;
 
 	msp[MACH_TASK_KERNEL_PORT] = 
-	    mach_right_get(med->med_kernel, p, MACH_PORT_RIGHT_SEND);
+	    mach_right_get(med->med_kernel, p, MACH_PORT_TYPE_SEND);
 	msp[MACH_TASK_HOST_PORT] = 
-	    mach_right_get(med->med_host, p, MACH_PORT_RIGHT_SEND);
+	    mach_right_get(med->med_host, p, MACH_PORT_TYPE_SEND);
 	msp[MACH_TASK_BOOTSTRAP_PORT] = 
-	    mach_right_get(med->med_bootstrap, p, MACH_PORT_RIGHT_SEND);
+	    mach_right_get(med->med_bootstrap, p, MACH_PORT_TYPE_SEND);
 
 	/*
 	 * On Darwin, the data seems always null, so ifdef this out
@@ -195,7 +195,7 @@ mach_task_set_special_port(args)
 	if (mach_right_check(mr, p, MACH_PORT_TYPE_ALL_RIGHTS) == 0)
 		return mach_msg_error(args, EPERM);
 
-	if (mr->mr_type == MACH_PORT_RIGHT_DEAD_NAME)
+	if (mr->mr_type == MACH_PORT_TYPE_DEAD_NAME)
 		return mach_msg_error(args, EINVAL);
 
 	med = (struct mach_emuldata *)p->p_emuldata;

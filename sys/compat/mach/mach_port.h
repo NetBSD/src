@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.h,v 1.10 2002/12/19 22:23:07 manu Exp $ */
+/*	$NetBSD: mach_port.h,v 1.11 2002/12/27 09:59:26 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -234,6 +234,7 @@ void mach_right_put(struct mach_right *);
 void mach_right_put_shlocked(struct mach_right *);
 void mach_right_put_exclocked(struct mach_right *);
 int mach_right_check(struct mach_right *, struct proc *, int);
+int mach_right_check_all(struct mach_right *, int);
 
 /* In-kernel Mach port description */
 struct mach_port {

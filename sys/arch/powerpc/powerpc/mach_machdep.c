@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_machdep.c,v 1.7 2002/12/12 08:23:27 manu Exp $ */
+/*	$NetBSD: mach_machdep.c,v 1.8 2002/12/27 09:59:25 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.7 2002/12/12 08:23:27 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.8 2002/12/27 09:59:25 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,6 +122,7 @@ mach_create_thread_child(arg)
 	struct exec_macho_powerpc_thread_state *regs;
 
 	mctc = (struct mach_create_thread_child_args *)arg;
+	p = *mctc->mctc_proc;
 
 	if (mctc->mctc_flavor != MACHO_POWERPC_THREAD_STATE) {
 		mctc->mctc_child_done = 1;
@@ -129,7 +130,12 @@ mach_create_thread_child(arg)
 		killproc(p, "mach_create_thread_child: unknown flavor");
 	}
 	
-	p = *mctc->mctc_proc;
+	/* 
+	 * Copy right from parent. Will disaprear the 
+	 * day we will have struct lwp.
+	 */
+	mach_copy_right(p->p_pptr, p);
+
 	tf = trapframe(p);
 	regs = (struct exec_macho_powerpc_thread_state *)mctc->mctc_state;
 
