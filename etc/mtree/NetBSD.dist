@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.260 2004/04/28 14:17:56 lukem Exp $
+#	$NetBSD: NetBSD.dist,v 1.261 2004/05/07 00:55:15 jonathan Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -277,6 +277,7 @@
 ./usr/include/netccitt
 ./usr/include/netinet
 ./usr/include/netinet6
+./usr/include/netipsec
 ./usr/include/netisdn
 ./usr/include/netiso
 ./usr/include/netkey
