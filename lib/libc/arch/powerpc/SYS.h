@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.2 1997/05/02 18:15:28 kleink Exp $	*/
+/*	$NetBSD: SYS.h,v 1.3 1997/07/16 16:11:48 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -74,7 +74,7 @@
 				blr
 
 #define PSEUDO(x,y)		_SYSCALL_NOERROR(x,y)		;\
-				bnlsr				;\
+				bnslr				;\
 				b	PIC_PLT(cerror)
 
 #define RSYSCALL_NOERROR(x)	PSEUDO_NOERROR(x,x)
