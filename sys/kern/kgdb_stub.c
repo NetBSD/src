@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.7 2000/07/18 21:49:08 jeffs Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.8 2001/07/07 22:58:00 wdk Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -338,6 +338,8 @@ kgdb_trap(type, regs)
 		/* not debugging */
 		return (0);
 	}
+
+	db_clear_single_step(regs);
 
 	if (db_trap_callback) db_trap_callback(1);
 
