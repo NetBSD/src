@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.27 1998/09/16 21:30:58 is Exp $	*/
+/*	$NetBSD: comvar.h,v 1.28 1998/09/21 00:33:17 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -136,7 +136,7 @@ int cominit __P((bus_space_tag_t, int, int, int, tcflag_t,
 	bus_space_handle_t *));
 
 #ifndef __GENERIC_SOFT_INTERRUPTS
-#if defined(alpha) || defined(arc)
+#if defined(arc)
 #define	__NO_SOFT_SERIAL_INTERRUPT
 #endif
 #ifdef __NO_SOFT_SERIAL_INTERRUPT
