@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.19 1999/10/22 20:59:08 is Exp $	*/
+/*	$NetBSD: extern.h,v 1.20 1999/11/01 01:35:58 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -143,6 +143,7 @@ int chk_path __P((char *, uid_t, gid_t));
 void set_ftime __P((char *fnm, time_t mtime, time_t atime, int frc));
 int set_ids __P((char *, uid_t, gid_t));
 void set_pmode __P((char *, mode_t));
+void set_chflags __P((char *fnm, u_int32_t flags));
 int file_write __P((int, char *, int, int *, int *, int, char *));
 void file_flush __P((int, char *, int));
 void rdfile_close __P((ARCHD *, int *));
@@ -225,6 +226,7 @@ extern int Zflag;
 extern int vfpart;
 extern int patime;
 extern int pmtime;
+extern int pfflags;
 extern int pmode;
 extern int pids;
 extern int exit_val;
