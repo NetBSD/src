@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.48 1999/08/16 12:35:18 kleink Exp $
+#  $NetBSD: Makefile,v 1.49 1999/08/16 23:10:20 kleink Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -145,7 +145,7 @@ MKLINT=no
 
 MAN+=	acos.3 acosh.3 asin.3 asinh.3 atan.3 atan2.3 atanh.3 ceil.3 \
 	cos.3 cosh.3 erf.3 exp.3 fabs.3 floor.3 fmod.3 hypot.3 ieee.3 \
-	ieee_test.3 j0.3 lgamma.3 math.3 rint.3 sin.3 sinh.3 sqrt.3 \
+	ieee_test.3 isinff.3 j0.3 lgamma.3 math.3 rint.3 sin.3 sinh.3 sqrt.3 \
 	tan.3 tanh.3
 
 MLINKS+=acos.3 acosf.3
@@ -172,6 +172,7 @@ MLINKS+=ieee.3 copysign.3 ieee.3 copysignf.3 ieee.3 finite.3 ieee.3 finitef.3 \
 MLINKS+=ieee_test.3 logb.3 ieee_test.3 logbf.3
 MLINKS+=ieee_test.3 scalb.3 ieee_test.3 scalbf.3
 MLINKS+=ieee_test.3 significand.3 ieee_test.3 significandf.3
+MLINKS+=isinff.3 isnanf.3
 MLINKS+=j0.3 j0f.3 j0.3 j1.3 j0.3 j1f.3 j0.3 jn.3 j0.3 jnf.3 \
 	j0.3 y0.3 j0.3 y0f.3 j0.3 y1.3 j0.3 y1f.3 j0.3 yn.3 j0.3 ynf.3
 MLINKS+=lgamma.3 lgammaf.3 lgamma.3 lgamma_r.3 lgamma.3 lgammaf_r.3 \
