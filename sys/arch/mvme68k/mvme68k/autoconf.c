@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4 1996/04/04 06:25:45 cgd Exp $ */
+/*	$NetBSD: autoconf.c,v 1.5 1996/04/26 19:26:25 chuck Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -63,6 +63,7 @@
 #include <machine/vmparam.h>
 #include <machine/cpu.h>
 #include <machine/pte.h>
+
 #include <mvme68k/mvme68k/isr.h>
 
 /*
@@ -72,10 +73,10 @@
  */
 int	cold;			/* if 1, still working on cold-start */
 int	cpuspeed = MHZ_16;	/* relative cpu speed */
-struct	isr isrqueue[NISR];
 
 void mainbus_attach __P((struct device *, struct device *, void *));
 int  mainbus_match __P((struct device *, void *, void *));
+int  mainbus_print __P((void *, char *));
 
 struct mainbus_softc {
 	struct device sc_dev;
@@ -88,6 +89,20 @@ struct cfattach mainbus_ca = {
 struct cfdriver mainbus_cd = {
 	NULL, "mainbus", DV_DULL, 0
 };
+
+static	char *mainbusdevs_147[] = {
+	"pcc", NULL
+};
+
+#ifdef notyet
+static	char *mainbusdevs_162[] = {
+	"mc", "flash", "sram", NULL
+};
+
+static	char *mainbusdevs_167[] = {	/* includes 166, 177 */
+	"pcctwo", "sram", NULL
+};
+#endif
 
 int
 mainbus_match(parent, cf, args)
@@ -103,11 +118,58 @@ mainbus_attach(parent, self, args)
 	struct device *parent, *self;
 	void *args;
 {
+	char **devices;
+	int i;
+
 	printf("\n");
 
-	while (config_found(self, NULL, NULL) != NULL)
-		;
+	/*
+	 * Attach children appropriate for this CPU.
+	 */
+#ifdef notyet
+	switch (cputyp) {
+#ifdef MVME147
+	case CPU_147:
+		devices = mainbusdevs_147;
+		break;
+#endif
+
+#ifdef MVME162
+	case CPU_162:
+		devices = mainbusdevs_162;
+		break;
+#endif
+
+#ifdef MVME167
+	case CPU_167:
+		devices = mainbusdevs_167;
+		break;
+#endif
+
+	default:
+		panic("mainbus_attach: impossible CPU type");
+	}
+#else
+	devices = mainbusdevs_147;	/* XXX for now... */
+#endif
+
+	for (i = 0; devices[i] != NULL; ++i)
+		(void)config_found(self, devices[i], mainbus_print);
 }
+
+int
+mainbus_print(aux, cp)
+	void *aux;
+	char *cp;
+{
+	char *devname = aux;
+
+	if (cp)
+		printf("%s at %s", devname, cp);
+
+	return (UNCONF);
+}
+
 /*
  * Determine mass storage and memory configuration for a machine.
  */
@@ -128,27 +190,6 @@ configure()
 #endif
 	swapconf();
 	cold = 0;
-}
-
-isrinit()
-{
-	register int i;
-
-	for (i = 0; i < NISR; i++)
-		isrqueue[i].isr_forw = isrqueue[i].isr_back = &isrqueue[i];
-}
-
-void
-isrlink(isr)
-	register struct isr *isr;
-{
-	int i = ISRIPL(isr->isr_ipl);
-
-	if (i < 0 || i >= NISR) {
-		printf("bad IPL %d\n", i);
-		panic("configure");
-	}
-	insque(isr, isrqueue[i].isr_back);
 }
 
 /*
