@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.4 2003/09/29 09:08:20 scw Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.5 2004/08/21 11:01:33 rearnsha Exp $	*/
 
 #if defined(__ARMEB__)
 #define ELF32_MACHDEP_ENDIANNESS	ELFDATA2MSB
@@ -93,3 +93,6 @@
 /* Processor specific section header flags */
 #define SHF_ENTRYSECT		0x10000000
 #define SHF_COMDEF		0x80000000
+
+/* Processor specific symbol types */
+#define STT_ARM_TFUNC		STT_LOPROC
