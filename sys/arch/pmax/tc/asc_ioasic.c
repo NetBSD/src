@@ -1,4 +1,4 @@
-/* $NetBSD: asc_ioasic.c,v 1.3 2000/02/28 18:51:25 mhitch Exp $ */
+/* $NetBSD: asc_ioasic.c,v 1.4 2000/03/04 05:42:56 mhitch Exp $ */
 
 /*
  * Copyright (c) 2000 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.3 2000/02/28 18:51:25 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.4 2000/03/04 05:42:56 mhitch Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -131,9 +131,13 @@ asc_ioasic_attach(parent, self, aux)
 	struct ioasicdev_attach_args *d = aux;
 	struct asc_softc *asc = (struct asc_softc *)self;	
 	struct ncr53c9x_softc *sc = &asc->sc_ncr53c9x;
-/* XXX */
-	extern int slot_in_progress;	/* TC slot being probed */
-	slot_in_progress = 3;		/* IOASIC always resides in TC slot 3 */
+/* XXX Hook into dk_establish() to determine boot device */
+	extern int booted_slot;		/* TC slot of boot device */
+	extern struct device *booted_controller;
+
+	/* Is this the controller we booted from? */
+	if (booted_slot == 3)		/* IOASIC always resides in TC slot 3 */
+		booted_controller = self;
 /* XXX */
 
 	/*

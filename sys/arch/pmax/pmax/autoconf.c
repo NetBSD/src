@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.51 2000/03/03 17:46:49 mhitch Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.52 2000/03/04 05:42:55 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.51 2000/03/03 17:46:49 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.52 2000/03/04 05:42:55 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.51 2000/03/03 17:46:49 mhitch Exp $")
 
 struct intrhand intrtab[MAX_DEV_NCOOKIES];
 struct device *booted_device;
+struct device *booted_controller;
 int	booted_slot, booted_unit, booted_partition;
 char	*booted_protocol;
 
@@ -137,13 +138,16 @@ cpu_rootconf()
 {
 #if NRZ > 0
 	struct device *dv;
-	char name[4];
+	char name[5];
 
-	/*
-	 * N.B., below works for rz drive on primary SCSI controller.
-	 */
 	if (booted_device == NULL) {
-		snprintf(name, sizeof(name), "rz%d", booted_unit);
+		int ctlr_no;
+
+		if (booted_controller)
+			ctlr_no = booted_controller->dv_unit;
+		else
+			ctlr_no = 0;
+		snprintf(name, sizeof(name), "rz%d", booted_unit + ctlr_no * 8);
 		for (dv = TAILQ_FIRST(&alldevs); dv; dv = TAILQ_NEXT(dv, dv_list)) {
 			if (dv->dv_class == DV_DISK && !strcmp(dv->dv_xname, name)) {
 				booted_device = dv;
@@ -172,8 +176,6 @@ struct xx_softc {
 };	
 #define	SCSITARGETID(dev) ((struct xx_softc *)dev)->sc_link->scsipi_scsi.target
 
-int slot_in_progress; /* XXX - TC slot being probed, ugly backdoor interface */
-
 void
 dk_establish(dk, dev)
 	struct disk *dk;
@@ -181,7 +183,7 @@ dk_establish(dk, dev)
 {
 	if (booted_device || strcmp(booted_protocol, "SCSI"))
 		return;
-	if (booted_slot != slot_in_progress)
+	if (dev->dv_parent == NULL || dev->dv_parent->dv_parent != booted_controller)
 		return;
 	if (booted_unit != SCSITARGETID(dev))
 		return;
