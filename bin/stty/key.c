@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)key.c	5.3 (Berkeley) 6/10/91";*/
-static char rcsid[] = "$Id: key.c,v 1.6 1993/08/01 18:57:38 mycroft Exp $";
+static char rcsid[] = "$Id: key.c,v 1.7 1994/03/13 14:28:19 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -246,7 +246,7 @@ void
 f_sane(ip)
 	struct info *ip;
 {
-	ip->t.c_cflag = TTYDEF_CFLAG | (ip->t.c_cflag & CLOCAL);
+	ip->t.c_cflag = TTYDEF_CFLAG | (ip->t.c_cflag & (CLOCAL|CRTSCTS));
 	ip->t.c_iflag = TTYDEF_IFLAG;
 	ip->t.c_iflag |= ICRNL;
 	/* preserve user-preference flags in lflag */
