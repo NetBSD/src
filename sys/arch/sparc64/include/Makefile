@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2003/08/26 11:51:13 uwe Exp $
+#	$NetBSD: Makefile,v 1.20 2004/05/08 21:51:51 kleink Exp $
 
 INCSDIR= /usr/include/sparc64
 
@@ -19,6 +19,7 @@ INCS=	ansi.h aout_machdep.h asm.h autoconf.h \
 	setjmp.h signal.h stdarg.h svr4_machdep.h \
 	trap.h types.h \
 	varargs.h vmparam.h vuid_event.h \
+	wchar_limits.h \
 	z8530var.h
 
 .include <bsd.kinc.mk>
