@@ -1,12 +1,12 @@
-/*	$NetBSD: machdep.c,v 1.315 1998/08/15 05:10:23 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.316 1998/08/15 05:16:42 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center, by Chris G. Demetriou and by Charles M. Hannum.
+ * by Charles M. Hannum and by Jason R. Thorpe of the Numerical Aerospace
+ * Simulation Facility, NASA Ames Research Center.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
