@@ -1,4 +1,4 @@
-/*	$NetBSD: nhpib.c,v 1.23 2000/03/25 20:14:44 frueauf Exp $	*/
+/*	$NetBSD: nhpib.c,v 1.24 2002/03/15 05:55:36 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -74,6 +74,9 @@
 /*
  * Internal/98624 HPIB driver
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nhpib.c,v 1.24 2002/03/15 05:55:36 gmcgarry Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>

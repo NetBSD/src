@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.27 2001/12/08 03:34:38 gmcgarry Exp $	*/
+/*	$NetBSD: ct.c,v 1.28 2002/03/15 05:55:35 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -84,6 +84,9 @@
  *	merge with cs80 disk driver
  *	finish support of 9145
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.28 2002/03/15 05:55:35 gmcgarry Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>

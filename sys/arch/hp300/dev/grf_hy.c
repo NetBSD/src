@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_hy.c,v 1.15 2001/12/14 08:34:27 gmcgarry Exp $	*/
+/*	$NetBSD: grf_hy.c,v 1.16 2002/03/15 05:55:35 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -82,6 +82,9 @@
 /*
  * Graphics routines for HYPERION frame buffer
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: grf_hy.c,v 1.16 2002/03/15 05:55:35 gmcgarry Exp $");                                                  
 
 #include "opt_compat_hpux.h"
 

@@ -1,4 +1,7 @@
-/*	$NetBSD: procfs_machdep.c,v 1.4 2001/01/18 17:48:00 tv Exp $	*/
+/*	$NetBSD: procfs_machdep.c,v 1.5 2002/03/15 05:55:38 gmcgarry Exp $	*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.5 2002/03/15 05:55:38 gmcgarry Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>

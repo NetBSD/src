@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.29 2001/12/08 03:34:39 gmcgarry Exp $	*/
+/*	$NetBSD: scsi.c,v 1.30 2002/03/15 05:55:37 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -77,9 +77,13 @@
 #ifndef DEBUG
 #define DEBUG
 #endif
+
 /*
  * HP9000/3xx 98658 SCSI host adaptor driver.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: scsi.c,v 1.30 2002/03/15 05:55:37 gmcgarry Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>

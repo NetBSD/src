@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.15 2002/02/23 21:54:32 gmcgarry Exp $	*/
+/*	$NetBSD: mt.c,v 1.16 2002/03/15 05:55:36 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -65,6 +65,9 @@
  * Modified for 4.4BSD by Mark Davies and Andrew Vignaux, Department of
  * Computer Science, Victoria University of Wellington
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.16 2002/03/15 05:55:36 gmcgarry Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
