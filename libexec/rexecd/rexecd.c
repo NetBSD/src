@@ -1,4 +1,4 @@
-/*	$NetBSD: rexecd.c,v 1.19 2005/01/08 03:14:02 ginsbach Exp $	*/
+/*	$NetBSD: rexecd.c,v 1.20 2005/01/10 19:01:09 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)rexecd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rexecd.c,v 1.19 2005/01/08 03:14:02 ginsbach Exp $");
+__RCSID("$NetBSD: rexecd.c,v 1.20 2005/01/10 19:01:09 ginsbach Exp $");
 #endif
 #endif /* not lint */
 
@@ -103,7 +103,7 @@ main(int argc, char *argv[])
 	if (getpeername(0, (struct sockaddr *)&from, &fromlen) < 0)
 		err(1, "getpeername");
 
-	doit(0, (struct sockaddr *)&from);
+	doit(STDIN_FILENO, (struct sockaddr *)&from);
 	exit(0);
 }
 
@@ -131,7 +131,7 @@ doit(int f, struct sockaddr *fromp)
 	port = 0;
 	for (;;) {
 		char c;
-		if (read(f, &c, STDIN_FILENO) != 1) {
+		if (read(f, &c, 1) != 1) {
 			if (dolog)
 				syslog(LOG_ERR,
 				    "initial read failed");
