@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_tworeg.h,v 1.1.16.2 2000/03/13 19:09:03 scw Exp $ */
+/*	$NetBSD: vme_tworeg.h,v 1.1.16.3 2000/03/14 12:43:37 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -506,11 +506,21 @@
 
 
 /*
- * Define the layout of the VMEChip2's GCSR [registers].
- * These follow the standard VMEbus GCSR layout.
+ * Locations of the three fixed VMEbus I/O ranges
  */
-struct vme_two_gcsr {
-	u_int32_t		gcsr_not_yet;
-};
+#define	VME2_IO0_LOCAL_START		(0xffff0000u)
+#define	VME2_IO0_MASK			(0x0000ffffu)
+#define	VME2_IO0_VME_START		(0x00000000u)
+#define	VME2_IO0_VME_END		(0x0000ffffu)
+
+#define	VME2_IO1_LOCAL_START		(0xf0000000u)
+#define	VME2_IO1_MASK			(0x00ffffffu)
+#define	VME2_IO1_VME_START		(0x00000000u)
+#define	VME2_IO1_VME_END		(0x00ffffffu)
+
+#define	VME2_IO2_LOCAL_START		(0xf1000000u)
+#define	VME2_IO2_MASK			(0xffffffffu)
+#define	VME2_IO2_VME_START		(0xf1000000u)	/* Maybe starts@ 0x0? */
+#define	VME2_IO2_VME_END		(0xff7fffffu)
 
 #endif /* _MVME68K_VME_TWOREG_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_two.c,v 1.1.16.2 2000/03/13 19:09:03 scw Exp $ */
+/*	$NetBSD: vme_two.c,v 1.1.16.3 2000/03/14 12:43:37 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -81,16 +81,18 @@ static struct vme_two_handler {
 				 sizeof(struct vme_two_handler))
 
 static	struct  vmetwo_softc *vmetwo_sc;
-static	int	vmetwo_local_isr_trampoline __P((void *));
-static	void	vmetwo_intr_establish __P((struct vmetwo_softc *, int, int,
-					void (*)(void *), void *));
-static	void	vmetwo_intr_disestablish __P((struct vmetwo_softc *, int, int));
+
+void	vmetwo_master_range __P((struct vmetwo_softc *, int,
+				struct vmetwo_range *));
+int	vmetwo_local_isr_trampoline __P((void *));
+void	vmetwo_intr_establish __P((struct vmetwo_softc *, int, int,
+				void (*)(void *), void *));
+void	vmetwo_intr_disestablish __P((struct vmetwo_softc *, int, int));
 
 #ifdef DIAGNOSTIC
 static const char *_vme2_mod_string __P((vme_addr_t,vme_size_t,
     vme_am_t, vme_datasize_t));
 #endif
-
 
 
 int
@@ -126,7 +128,7 @@ vmetwo_attach(parent, self, aux)
 	int i;
 
 	ma = (struct mainbus_attach_args *) aux;
-	sc = (struct vmetwo_softc *) self;
+	sc = vmetwo_sc = (struct vmetwo_softc *) self;
 
 	sc->sc_dmat = pa->pa_dmat;
 	sc->sc_bust = pa->pa_bust;
@@ -138,17 +140,17 @@ vmetwo_attach(parent, self, aux)
 	bus_space_map(pa->pa_bust, pa->pa_offset + VME2REG_LCSR_OFFSET,
 	    VME2REG_LCSR_SIZE, 0, &sc->sc_lcrh);
 
+#ifdef notyet
 	/*
 	 * Map the global control registers
 	 */
 	bus_space_map(pa->pa_bust, pa->pa_offset + VME2REG_GCSR_OFFSET,
 	    VME2REG_GCSR_SIZE, 0, &sc->sc_gcrh);
+#endif
 
 	/* Clear out the ISR handler array */
-	for (i = 0; i < VMETWO_HANDLERS_SZ; i++) {
+	for (i = 0; i < VMETWO_HANDLERS_SZ; i++)
 		vme_two_handlers[i].isr_hand = NULL;
-		vme_two_handlers[i].isr_arg = NULL;
-	}
 
 	/*
 	 * Initialize the chip.
@@ -162,8 +164,7 @@ vmetwo_attach(parent, self, aux)
 
 	/* Zap all the IRQ level registers */
 	for (i = 0; i < VME2_NUM_IL_REGS; i++)
-		vme2_reg_write(sc,
-		    VME2LCSR_LOCAL_INTERRUPT_LEVEL_BASE + (i * 4), 0);
+		vme2_reg_write(sc, VME2LCSR_INTERRUPT_LEVEL_BASE + (i * 4), 0);
 
 	/* Disable the VMEbus Slave Windows for now */
 	vme2_reg_write(sc, VME2LCSR_SLAVE_CTRL, 0);
@@ -177,7 +178,7 @@ vmetwo_attach(parent, self, aux)
 	/* Set the VMEChip2's vector base register to the required value */
 	reg = vme2_reg_read(sc, VME2LCSR_VECTOR_BASE);
 	reg &= ~VME2_VECTOR_BASE_MASK;
-	reg |=  VME2_VECTOR_BASE_REG_VALUE;
+	reg |= VME2_VECTOR_BASE_REG_VALUE;
 	vme2_reg_write(sc, VME2LCSR_VECTOR_BASE, reg);
 
 	/* Set the Master Interrupt Enable bit now */
@@ -190,90 +191,77 @@ vmetwo_attach(parent, self, aux)
 
 	/*
 	 * Figure out what bits of the VMEbus we can access.
-	 * First record the `fixed' maps...
+	 * First record the `fixed' maps (if they're enabled)
 	 */
-	sc->sc_ranges[0].vr_am = VME_AM_A16;
-	sc->sc_ranges[0].vr_datasize = VME_D32 | VME_D16 | VME_D8;
-	sc->sc_ranges[0].vr_locstart = 0xffff0000u;
-	sc->sc_ranges[0].vr_vmestart = 0xffff0000u;
-	sc->sc_ranges[0].vr_vmeend = 0xffffffffu
-	sc->sc_ranges[1].vr_am = VME_AM_A24;
-	sc->sc_ranges[1].vr_datasize = VME_D16 | VME_D8;
-	sc->sc_ranges[1].vr_locstart = 0xf0000000u;
-	sc->sc_ranges[1].vr_vmestart = 0xf0000000u;
-	sc->sc_ranges[1].vr_vmeend = 0xf0ffffffu
-	sc->sc_ranges[2].vr_am = VME_AM_A32;
-	sc->sc_ranges[2].vr_datasize = VME_D16 | VME_D8;
-	sc->sc_ranges[2].vr_locstart = 0xf1000000u;
-	sc->sc_ranges[2].vr_vmestart = 0xf1000000u;
-	sc->sc_ranges[2].vr_vmeend = 0xff7fffffu
+	reg = vme2_reg_read(sc, VME2LCSR_IO_CONTROL);
+	if ( reg & VME2_IO_CONTROL_I1EN ) {
+
+		/* This range is fixed to A16, DATA */
+		sc->sc_ranges[0].vr_am = VME_AM_A16 | VME_AM_DATA;
+
+		/* However, SUPER/USER is selectable... */
+		if ( reg & VME2_IO_CONTROL_I1SU )
+			sc->sc_ranges[0].vr_am |= VME_AM_SUPER;
+		else
+			sc->sc_ranges[0].vr_am |= VME_AM_USER;
+
+		/* As is the datasize */
+		if ( reg & VME2_IO_CONTROL_I1D16 )
+			sc->sc_ranges[0].vr_datasize = VME_D16;
+		else
+			sc->sc_ranges[0].vr_datasize = VME_D32 | VME_D16;
+
+		sc->sc_ranges[0].vr_locstart = VME2_IO0_LOCAL_START;
+		sc->sc_ranges[0].vr_mask = VME2_IO0_MASK;
+		sc->sc_ranges[0].vr_vmestart = VME2_IO0_VME_START;
+		sc->sc_ranges[0].vr_vmeend = VME2_IO0_VME_END
+	} else
+		sc->sc_ranges[0].vr_am = VME_AM_DISABLED;
+
+	if ( reg & VME2_IO_CONTROL_I2EN ) {
+		/* These two ranges are fixed to A24D16 and A32D16 */
+		sc->sc_ranges[1].vr_am = VME_AM_A24;
+		sc->sc_ranges[1].vr_datasize = VME_D16;
+		sc->sc_ranges[2].vr_am = VME_AM_A32;
+		sc->sc_ranges[2].vr_datasize = VME_D16;
+
+		/* However, SUPER/USER is selectable */
+		if ( reg & VME2_IO_CONTROL_I2SU ) {
+			sc->sc_ranges[1].vr_am |= VME_AM_SUPER;
+			sc->sc_ranges[2].vr_am |= VME_AM_SUPER;
+		} else {
+			sc->sc_ranges[1].vr_am |= VME_AM_USER;
+			sc->sc_ranges[2].vr_am |= VME_AM_USER;
+		}
+
+		/* As is PROGRAM/DATA */
+		if ( reg & VME2_IO_CONTROL_I2PD ) {
+			sc->sc_ranges[1].vr_am |= VME_AM_PRG;
+			sc->sc_ranges[2].vr_am |= VME_AM_PRG;
+		} else {
+			sc->sc_ranges[1].vr_am |= VME_AM_DATA;
+			sc->sc_ranges[2].vr_am |= VME_AM_DATA;
+		}
+
+		sc->sc_ranges[1].vr_locstart = VME2_IO1_LOCAL_START;
+		sc->sc_ranges[1].vr_mask = VME2_IO1_MASK;
+		sc->sc_ranges[1].vr_vmestart = VME2_IO1_VME_START;
+		sc->sc_ranges[1].vr_vmeend = VME2_IO1_VME_END
+
+		sc->sc_ranges[2].vr_locstart = VME2_IO2_LOCAL_START;
+		sc->sc_ranges[2].vr_mask = VME2_IO2_MASK;
+		sc->sc_ranges[2].vr_vmestart = VME2_IO2_VME_START;
+		sc->sc_ranges[2].vr_vmeend = VME2_IO2_VME_END
+	} else {
+		sc->sc_ranges[1].vr_am = VME_AM_DISABLED;
+		sc->sc_ranges[2].vr_am = VME_AM_DISABLED;
+	}
 
 	/*
 	 * Now read the progammable maps
 	 */
-	for (i = 0; i < VME2_MASTER_WINDOWS; i++) {
-		u_int32_t start, end, attr, mask;
-
-		reg = vme2_reg_read(sc, VME2LCSR_MASTER_ENABLE);
-		if ( (reg & VME2_MASTER_ENABLE(i)) == 0 ) {
-			sc->sc_ranges[i + 3].vr_am = VME2_AM_DISABLED;
-			continue;
-		}
-
-		reg = vme2_reg_read(sc, VME2LCSR_MASTER_ATTR);
-		attr >>= VME2_MASTER_ATTR_AM_SHIFT(i);
-
-		switch ( attr & VME_AM_ADRSIZEMASK ) {
-		    case VME_AM_A32:
-			mask = 0xffffffffu;
-			break;
-
-		    case VME_AM_A24:
-			mask = 0x00ffffffu;
-			break;
-
-		    case VME_AM_A16:
-			mask = 0x0000ffffu;
-			break;
-
-		    case VME_AM_USERDEF:
-			printf("%s: User-defined address mods not supported\n",
-			    sc->sc_dev.dv_xname);
-			sc->sc_ranges[i].vr_am = VME2_AM_DISABLED;
-			continue;
-		}
-
-		reg = vme2_reg_read(sc, VME2LCSR_MASTER_ADDRESS(i));
-		start = (reg & VME2_MAST_ADDRESS_START_MASK);
-		start <<= VME2_MAST_ADDRESS_START_SHIFT;
-		end = (reg & VME2_MAST_ADDRESS_END_MASK);
-		end <<= VME2_MAST_ADDRESS_END_SHIFT;
-
-		sc->sc_ranges[i + 3].vr_am = attr & VME2_MASTER_ATTR_AM_MASK;
-		sc->sc_ranges[i + 3].vr_datasize = VME_D32 | VME_D16 | VME_D8;
-		sc->sc_ranges[i + 3].vr_vmestart = start;
-		sc->sc_ranges[i + 3].vr_vmeend = end - 1;
-		sc->sc_ranges[i + 3].vr_vmemask = mask;
-
-		if ( (attr & VME2_MASTER_ATTR_D16) != 0 )
-			sc->sc_ranges[i + 3].vr_datasize &= ~VME_D32;
-
-		/*
-		 * Local->VMEbus map '4' has a translation offset
-		 */
-		if ( i == 3 ) {
-			reg = vme2_reg_read(sc, VME2LCSR_MAST4_TRANS);
-			start = (reg & VME2_MAST4_TRANS_ADDRESS_MASK);
-			start <<= VME2_MAST4_TRANS_ADDRESS_SHIFT;
-			reg &= VME2_MAST4_TRANS_SELECT_MASK;
-			reg <<= VME2_MAST4_TRANS_SELECT_SHIFT;
-			start &= reg;
-			mask &= ~reg;
-		}
-
-		sc->sc_ranges[i + 3].vr_locstart = start;
-		sc->sc_ranges[i + 3].vr_locmask = mask;
-	}
+	for (i = 0; i < VME2_MASTER_WINDOWS; i++)
+		vmetwo_master_range(sc, i, &(sc->sc_ranges[i + 3]));
 
 #ifdef DIAGNOSTIC
 	for (i = 0; i < VME2_NRANGES; i++) {
@@ -283,16 +271,14 @@ vmetwo_attach(parent, self, aux)
 			continue;
 		}
 
-		printf("%s: Map#%d: Local=0x%x:0x%x, VME=%s:0x%x\n",
+		printf("%s: Map#%d: 0x%x -> %s\n",
 		    sc->sc_dev.dv_xname, i,
 		    sc->sc_ranges[i].vr_locstart,
-		    sc->sc_ranges[i].vr_locsmask,
 		    _vme2_mod_string(sc->sc_ranges[i].vr_vmestart,
 			(sc->sc_ranges[i].vr_vmeend -
 			sc->sc_ranges[i].vr_vmestart) + 1,
 			sc->sc_ranges[i].vr_am,
-			sc->sc_ranges[i].vr_datasize),
-			sc->sc_ranges[i].vr_vmemask);
+			sc->sc_ranges[i].vr_datasize));
 	}
 #endif
 
@@ -315,8 +301,11 @@ vmetwo_attach(parent, self, aux)
 	 * A16 address space).
 	 * The _vmetwo_bus_map() function re-uses this mapping to satisfy
 	 * requests to map A16 ranges.
+	 *
+	 * XXXSCW: Should we do the same for progammable maps which address
+	 * A16 space?
 	 */
-	if ( bus_space_map(sc->sc_vmet, 0xffff0000u, 0x10000,
+	if ( bus_space_map(sc->sc_vmet, VME2_IO0_LOCAL_START, 0x10000,
 	    0, &sc->sc_a16bush) < 0 ) {
 		panic("vme_pcc_attach: failed to map A16 VMEbus space");
 		/* NOTREACHED */
@@ -326,12 +315,92 @@ vmetwo_attach(parent, self, aux)
 	vaa.va_bdt = sc->sc_dmat;
 	vaa.va_slaveconfig = NULL;
 
-	vmetwo_sc = sc;
 	/* Let the NMI handler deal with level 7 ABORT switch interrupts */
 	vmetwo_intr_establish(sc, 7, VME2_VEC_ABORT, (void *)nmihand, NULL);
 
 	/* Attach the MI VMEbus glue. */
 	config_found(self, &vaa, 0);
+}
+
+void
+vmetwo_master_range(sc, range, vr)
+	struct vmetwo_softc *sc;
+	int range;
+	struct vmetwo_range *vr;
+{
+	u_int32_t start, end, attr;
+	u_int32_t reg;
+
+	/*
+	 * First, check if the range is actually enabled...
+	 */
+	reg = vme2_reg_read(sc, VME2LCSR_MASTER_ENABLE);
+	if ( (reg & VME2_MASTER_ENABLE(range)) == 0 ) {
+		vr->vr_am = VME2_AM_DISABLED;
+		return;
+	}
+
+	/*
+	 * Fetch and record the range's attributes
+	 */
+	attr = vme2_reg_read(sc, VME2LCSR_MASTER_ATTR);
+	attr >>= VME2_MASTER_ATTR_AM_SHIFT(range);
+	vr->vr_am = attr & VME2_MASTER_ATTR_AM_MASK;
+
+	/*
+	 * Fix up the datasizes available through this range
+	 */
+	if ( attr & VME2_MASTER_ATTR_D16 )
+		vr->vr_datasize = VME_D16 | VME_D8;
+	else
+		vr->vr_datasize = VME_D32 | VME_D16 | VME_D8;
+
+	/*
+	 * XXX
+	 * It would be nice if users of the MI VMEbus code could pass down
+	 * whether they can tolerate Write-Posting to their device(s).
+	 * XXX
+	 */
+
+	/*
+	 * Fetch the local-bus start and end addresses for the range
+	 */
+	reg = vme2_reg_read(sc, VME2LCSR_MASTER_ADDRESS(range));
+	start = (reg & VME2_MAST_ADDRESS_START_MASK);
+	start <<= VME2_MAST_ADDRESS_START_SHIFT;
+	end = (reg & VME2_MAST_ADDRESS_END_MASK);
+	end <<= VME2_MAST_ADDRESS_END_SHIFT;
+
+	vr->vr_locstart = start;
+
+	/*
+	 * Local->VMEbus map '4' has optional translation bits, so
+	 * the VMEbus start and end addresses may need to be adjusted.
+	 *
+	 * Note that if the translation register is zero, translation
+	 * is not enabled. This code works either way.
+	 */
+	if ( range == 3 ) {
+		reg = vme2_reg_read(sc, VME2LCSR_MAST4_TRANS);
+		reg &= VME2_MAST4_TRANS_SELECT_MASK;
+		reg <<= VME2_MAST4_TRANS_SELECT_SHIFT;
+		vr->vr_mask = ~reg;
+		start &= ~reg;
+		end &= ~reg;
+
+		reg = vme2_reg_read(sc, VME2LCSR_MAST4_TRANS);
+		reg &= VME2_MAST4_TRANS_ADDRESS_MASK;
+		reg <<= VME2_MAST4_TRANS_ADDRESS_SHIFT;
+		start |= reg;
+		end |= reg;
+	} else
+		vr->vr_mask = 0xffffffffu;
+
+	/*
+	 * Fixup the VMEbus addresses this range corresponds to
+	 */
+	vr->vr_vmestart = start;
+	vr->vr_vmeend = end - 1;
 }
 
 int
@@ -359,6 +428,10 @@ _vmetwo_map(vsc, vmeaddr, len, am, datasize, swap, tag, handle, resc)
 	mask = 0;
 	paddr = 0;
 
+	/*
+	 * Scan each enabled range to see if we can access the
+	 * requested VMEbus addresses
+	 */
 	for (i = 0, vr = &sc->sc_ranges[0]; i < VME2_NRANGES; i++, vr++) {
 		u_int32_t start, end;
 
@@ -375,12 +448,12 @@ _vmetwo_map(vsc, vmeaddr, len, am, datasize, swap, tag, handle, resc)
 		/*
 		 * Now check the range accesses the required VMEbus range
 		 */
-		if ( vmeaddr >= (vr->vr_vmestart & vr->vr_vmemask) &&
-		     end <= (vr->vr_vmeend & vr->vr_vmemask) ) {
+		if ( vmeaddr >= vr->vr_vmestart && end <= vr->vr_vmeend ) {
 			/*
-			 * We have a match.
+			 * We have a match. Compute the required local-bus
+			 * address which maps to the VMEbus start address.
 			 */
-			paddr = vr->vr_locstart + (vmeaddr & vr->vr_locmask);
+			paddr = vr->vr_locstart | (vmeaddr & vr->vr_mask);
 			break;
 		}
 	}
@@ -393,6 +466,10 @@ _vmetwo_map(vsc, vmeaddr, len, am, datasize, swap, tag, handle, resc)
 		return ENOMEM;
 	}
 
+	/*
+	 * The fixed A16 I/O range is permanently mapped; we just
+	 * need to grab a sub-region for it.
+	 */
 	if ( i == VME2_RANGE_FIXED_A16 )
 		bus_space_subregion(sc->sc_vmet, sc->sc_a16bush,
 		    vmeaddr, len, handle);
@@ -400,19 +477,22 @@ _vmetwo_map(vsc, vmeaddr, len, am, datasize, swap, tag, handle, resc)
 	if ( (rv = bus_space_map(sc->sc_vmet, paddr, len, 0, handle)) != 0 )
 		return rv;
 
+	/* Allocate space for the resource tag */
 	if ( (pm = malloc(sizeof(*pm), M_DEVBUF, M_NOWAIT)) == NULL ) {
 		if ( i != VME2_RANGE_FIXED_A16 )
 			bus_space_unmap(sc->sc_vmet, *handle, len);
 		return ENOMEM;
 	}
 
-	*tag = sc->sc_vmet;
+	/* Record the range's details */
 	pm->pm_am = am;
 	pm->pm_datasize = datasize;
 	pm->pm_addr = vmeaddr;
 	pm->pm_size = len;
 	pm->pm_handle = *handle;
 	pm->pm_range = i;
+
+	*tag = sc->sc_vmet;
 	*resc = (vme_mapresc_t *) pm;
 
 	return 0;
@@ -428,6 +508,7 @@ _vmetwo_unmap(vsc, resc)
 	sc = (struct vmetwo_softc *) vsc;
 	pm = (struct vmetwo_mapresc_t *) resc;
 
+	/* Never unmap the fixed A16 I/O range */
 	if ( pm->pm_range != VME2_RANGE_FIXED_A16 )
 		bus_space_unmap(sc->sc_vmet, pm->pm_handle, pm->pm_size);
 
@@ -449,6 +530,7 @@ _vmetwo_probe(vsc, vmeaddr, len, am, datasize, callback, arg)
 	vme_mapresc_t resc;
 	int rv;
 
+	/* Get a temporary mapping to the VMEbus range */
 	rv = _vmetwo_map(vsc, vmeaddr, len, am, datasize, 0,
 	    &tag, &handle, &resc);
 	if ( rv )
@@ -495,6 +577,7 @@ _vmetwo_intr_establish(vsc, handle, prior, func, arg)
 	struct vmetwo_softc *sc;
 	int level, vector;
 
+	/* Extract the interrupt's level and vector */
 	sc = (struct vmetwo_softc *) vsc;
 	level = ((int)handle) >> 8;
 	vector = ((int)handle) & 0xff;
@@ -502,7 +585,7 @@ _vmetwo_intr_establish(vsc, handle, prior, func, arg)
 	vmetwo_intr_establish(sc, level, vector, func, arg);
 }
 
-static void
+void
 _vmetwo_intr_disestablish(vsc, handle)
 	void *vsc;
 	vme_intr_handle_t handle;
@@ -510,6 +593,7 @@ _vmetwo_intr_disestablish(vsc, handle)
 	struct vmetwo_softc *sc;
 	int level, vector;
 
+	/* Extract the interrupt's level and vector */
 	sc = (struct vme_pcc_softc *) vsc;
 	level = ((int)handle) >> 8;
 	vector = ((int)handle) & 0xff;
@@ -565,7 +649,7 @@ _vmetwo_dmamem_free(vsc, segs, nsegs)
 {
 }
 
-static int
+int
 vmetwo_local_isr_trampoline(arg)
 	void *arg;
 {
@@ -591,7 +675,7 @@ vmetwo_local_isr_trampoline(arg)
 	return 1;
 }
 
-static void
+void
 vmetwo_intr_establish(sc, lvl, vec, hand, arg)
 	struct vmetwo_softc *sc;
 	int lvl, vec;
@@ -650,6 +734,11 @@ vmetwo_intr_establish(sc, lvl, vec, hand, arg)
 	/* Hook the interrupt */
 	isrlink_vectored(hand, arg, lvl, vec);
 
+	/*
+	 * Do we need to tell the VMEChip2 to let the interrupt through?
+	 * (This is always true for locally-generated interrupts, but only
+	 * needs doing once for each VMEbus interrupt level which is hooked)
+	 */
 	if ( doenable ) {
 		int iloffset = VME2_ILOFFSET_FROM_VECTOR(bitoff) +
 		    VME2LCSR_INTERRUPT_LEVEL_BASE;
@@ -674,7 +763,7 @@ vmetwo_intr_establish(sc, lvl, vec, hand, arg)
 	splx(s);
 }
 
-static void
+void
 vmetwo_intr_disestablish(sc, lvl, vec)
 	struct vmetwo_softc *sc;
 	int lvl, vec;
@@ -688,6 +777,12 @@ vmetwo_intr_disestablish(sc, lvl, vec)
 	if ( vec < 0 || vec > 0xff ) {
 		printf("%s: Illegal vector offset: 0x%x\n",
 		    sc->sc_dev.dv_xname, vec);
+		panic("vmetwo_intr_disestablish");
+	}
+
+	if ( lvl < 1 || lvl > 7 ) {
+		printf("%s: Illegal interrupt level: %d\n",
+		    sc->sc_dev.dv_xname, lvl);
 		panic("vmetwo_intr_disestablish");
 	}
 #endif
@@ -711,10 +806,22 @@ vmetwo_intr_disestablish(sc, lvl, vec)
 		 * controlled by an offset of 0x00 - 0x07
 		 */
 		bitoff = lvl - 1;
-		sc->sc_irqref[lvl]--;
-		doclear = (sc->sc_irqref[lvl] == 0);
+#ifdef DEBUG
+		if ( sc->sc_irqref[lvl] == 0 ) {
+			printf("%s: VMEirq#%d: Reference count already zero!\n",
+			    sc->sc_dev.dv_xname, lvl);
+			panic("vmetwo_intr_disestablish");
+		}
+#endif
+		doclear = (sc->sc_irqref[lvl]-- == 0);
 	}
 
+	/*
+	 * Do we need to tell the VMEChip2 to block the interrupt?
+	 * (This is always true for locally-generated interrupts, but only
+	 * needs doing once when the last VMEbus handler for any given level
+	 * has been unhooked.)
+	 */
 	if ( doclear ) {
 		iloffset = VME2_ILOFFSET_FROM_VECTOR(bitoff) +
 		    VME2LCSR_INTERRUPT_LEVEL_BASE;
@@ -736,7 +843,7 @@ vmetwo_intr_disestablish(sc, lvl, vec)
 	}
 
 	/* Un-hook it */
-	isrunlink_vectored(vec + VME2_VECTOR_BASE);
+	isrunlink_vectored(vec);
 
 	splx(s);
 }
