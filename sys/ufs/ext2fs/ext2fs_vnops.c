@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.23 2000/01/28 16:00:23 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.24 2000/03/22 01:03:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -307,9 +307,9 @@ ext2fs_setattr(v)
 	 * Check for unsettable attributes.
 	 */
 	if ((vap->va_type != VNON) || (vap->va_nlink != (nlink_t)VNOVAL) ||
-		(vap->va_fsid != VNOVAL) || (vap->va_fileid != VNOVAL) ||
-		(vap->va_blocksize != VNOVAL) || (vap->va_rdev != VNOVAL) ||
-		((int)vap->va_bytes != VNOVAL) || (vap->va_gen != VNOVAL)) {
+	    (vap->va_fsid != VNOVAL) || (vap->va_fileid != VNOVAL) ||
+	    (vap->va_blocksize != VNOVAL) || (vap->va_rdev != VNOVAL) ||
+	    ((int)vap->va_bytes != VNOVAL) || (vap->va_gen != VNOVAL)) {
 		return (EINVAL);
 	}
 	if (vap->va_flags != VNOVAL) {
@@ -320,19 +320,20 @@ ext2fs_setattr(v)
 			return (error);
 #ifdef EXT2FS_SYSTEM_FLAGS
 		if (cred->cr_uid == 0) {
-			if ((ip->i_e2fs_flags & (EXT2_APPEND | EXT2_IMMUTABLE)) &&
-				securelevel > 0)
+			if ((ip->i_e2fs_flags &
+			    (EXT2_APPEND | EXT2_IMMUTABLE)) && securelevel > 0)
 				return (EPERM);
 			ip->i_e2fs_flags &= ~(EXT2_APPEND | EXT2_IMMUTABLE);
-			ip->i_e2fs_flags |= (vap->va_flags & SF_APPEND) ? EXT2_APPEND : 0 |
-					(vap->va_flags & SF_IMMUTABLE) ? EXT2_IMMUTABLE: 0;
-		} else {
+			ip->i_e2fs_flags |=
+			    (vap->va_flags & SF_APPEND) ?  EXT2_APPEND : 0 |
+			    (vap->va_flags & SF_IMMUTABLE) ? EXT2_IMMUTABLE : 0;
+		} else
 			return (EPERM);
-		}
 #else
 		ip->i_e2fs_flags &= ~(EXT2_APPEND | EXT2_IMMUTABLE);
-		ip->i_e2fs_flags |= (vap->va_flags & UF_APPEND) ? EXT2_APPEND : 0 |
-				(vap->va_flags & UF_IMMUTABLE) ? EXT2_IMMUTABLE: 0;
+		ip->i_e2fs_flags |=
+		    (vap->va_flags & UF_APPEND) ? EXT2_APPEND : 0 |
+		    (vap->va_flags & UF_IMMUTABLE) ? EXT2_IMMUTABLE : 0;
 #endif
 		ip->i_flag |= IN_CHANGE;
 		if (vap->va_flags & (IMMUTABLE | APPEND))
