@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.36 2001/01/10 00:36:44 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.37 2001/02/04 22:09:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.36 2001/01/10 00:36:44 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.37 2001/02/04 22:09:01 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,7 +77,9 @@ __RCSID("$NetBSD: main.c,v 1.36 2001/01/10 00:36:44 lukem Exp $");
 #include "pathnames.h"
 #include "extern.h"
 
+extern char **environ;
 extern char *__progname;
+extern char editedhost[];
 
 /*
  * Set the amount of running time that getty should accumulate
@@ -193,7 +195,6 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	extern char **environ;
 	char *tname;
 	int repcnt = 0, failopenlogged = 0, uugetty = 0, first_time = 1;
 	struct rlimit limit;
@@ -644,7 +645,6 @@ static void
 putf(cp)
 	const char *cp;
 {
-	extern char editedhost[];
 	time_t t;
 	char *slash, db[100];
 
