@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.83 2003/10/20 13:53:47 yamt Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.84 2003/10/28 02:01:46 cl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.83 2003/10/20 13:53:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.84 2003/10/28 02:01:46 cl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3287,6 +3287,7 @@ nfsrv_statfs(nfsd, slp, procp, mrq)
 		return (0);
 	nfsm_build(sfp, struct nfs_statfs *, NFSX_STATFS(v3));
 	if (v3) {
+		tval = 0;	/* XXX: gcc m68k */
 		tval = (u_quad_t)((quad_t)sf->f_blocks * (quad_t)sf->f_bsize);
 		txdr_hyper(tval, &sfp->sf_tbytes);
 		tval = (u_quad_t)((quad_t)sf->f_bfree * (quad_t)sf->f_bsize);
