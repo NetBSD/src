@@ -1,4 +1,12 @@
-/*	$NetBSD: pte.h,v 1.1.1.1 1998/06/09 07:53:05 dbj Exp $	*/
+/*	$NetBSD: pte.h,v 1.2 1998/08/28 23:05:54 dbj Exp $	*/
+
+/*
+ * This file was taken from from mvme68k/include/pte.h and
+ * should probably be re-synced when needed.
+ * Darrin B Jewell <jewell@mit.edu>  Fri Aug 28 03:22:07 1998
+ * original cvs id: NetBSD: pte.h,v 1.1.1.1 1995/07/25 23:12:17 chuck Exp
+ */
+
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,12 +50,11 @@
  *	@(#)pte.h	8.1 (Berkeley) 6/10/93
  */
 
-#ifndef	_NEXT68K_PTE_H_
-#define	_NEXT68K_PTE_H_
+#ifndef	_MACHINE_PTE_H_
+#define	_MACHINE_PTE_H_
 
 /*
- * next68K hardware segment/page table entries
- * derived from hp300
+ * m68k hardware segment/page table entries
  */
 
 #if 0
@@ -150,4 +157,4 @@ typedef int	pt_entry_t;	/* Mach page table entry */
 #define	kvtophys(va) \
 	((kvtopte(va)->pg_pfnum << PGSHIFT) | ((int)(va) & PGOFSET))
 
-#endif /* !_NEXT68K_PTE_H_ */
+#endif /* !_MACHINE_PTE_H_ */
