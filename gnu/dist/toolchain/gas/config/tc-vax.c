@@ -314,7 +314,9 @@ md_apply_fix (fixP, valP)
      valueT *valP;
 {
 #ifdef OBJ_ELF
-  if ((fixP->fx_addsy == NULL && fixP->fx_subsy == NULL)
+  if (((fixP->fx_addsy == NULL && fixP->fx_subsy == NULL)
+       && fixP->fx_r_type != BFD_RELOC_32_PLT_PCREL
+       && fixP->fx_r_type != BFD_RELOC_32_GOT_PCREL)
       || fixP->fx_r_type == NO_RELOC)
 #endif
     number_to_chars_littleendian (fixP->fx_where + fixP->fx_frag->fr_literal,
@@ -999,10 +1001,19 @@ md_assemble (instruction_string)
 		      if (length == 0)
 			{
 			  know (operandP->vop_short == ' ');
-			  p = frag_var (rs_machine_dependent, 10, 2,
+#ifndef OBJ_VMS
+			  if (S_IS_WEAK (this_add_symbol)
+			      || S_IS_EXTERNAL (this_add_symbol))
+			    p = frag_var (rs_machine_dependent, 10, 2,
+			       ENCODE_RELAX (STATE_PC_RELATIVE, STATE_UNDF),
+					  this_add_symbol, this_add_number,
+					  opcode_low_byteP);
+			  else
+#endif
+			    p = frag_var (rs_machine_dependent, 10, 2,
 			       ENCODE_RELAX (STATE_PC_RELATIVE, STATE_BYTE),
-					this_add_symbol, this_add_number,
-					opcode_low_byteP);
+					  this_add_symbol, this_add_number,
+					  opcode_low_byteP);
 			  know (operandP->vop_mode == 10 + at);
 			  *p = at << 4;
 			  /* At is the only context we need to carry
@@ -1222,7 +1233,12 @@ md_estimate_size_before_relax (fragP, segment)
 {
   if (RELAX_LENGTH (fragP->fr_subtype) == STATE_UNDF)
     {
-      if (S_GET_SEGMENT (fragP->fr_symbol) != segment)
+      if (S_GET_SEGMENT (fragP->fr_symbol) != segment
+#ifndef OBJ_VMS
+	  || S_IS_WEAK (fragP->fr_symbol)
+	  || S_IS_EXTERNAL (fragP->fr_symbol)
+#endif
+	  )
 	{
 	  /* Non-relaxable cases.  */
 	  int reloc_type = NO_RELOC;
