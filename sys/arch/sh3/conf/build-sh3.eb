@@ -2,9 +2,6 @@
 
 # just helping for cross compilation.
 
-DESTDIR=/export/up1000/home/itojun/NetBSD/sh3eb
-export DESTDIR
-
 MACHINE=evbsh3
 MACHINE_ARCH=sh3eb
 # just in case you forgot to specify this when you built gcc...
