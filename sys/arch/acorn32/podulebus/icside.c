@@ -1,4 +1,4 @@
-/*	$NetBSD: icside.c,v 1.5 2002/09/15 11:00:11 bjh21 Exp $	*/
+/*	$NetBSD: icside.c,v 1.6 2002/09/15 11:27:47 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -40,14 +40,10 @@
  * information
  */
 
-/*
- * BUGS:
- * Cold boot (hard reset or power-on) booting straight to NetBSD:
- * panic: wdcstart: channel waiting for irq
- * Booting via desktop avoinds this.
- */
-
 #include <sys/param.h>
+
+__KERNEL_RCSID(0, "$NetBSD: icside.c,v 1.6 2002/09/15 11:27:47 bjh21 Exp $");
+
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/device.h>
@@ -98,9 +94,9 @@ struct icside_softc {
 	} sc_chan[ICSIDE_MAX_CHANNELS];
 };
 
-int	icside_probe	__P((struct device *, struct cfdata *, void *));
-void	icside_attach	__P((struct device *, struct device *, void *));
-int	icside_intr	__P((void *));
+int	icside_probe(struct device *, struct cfdata *, void *);
+void	icside_attach(struct device *, struct device *, void *);
+int	icside_intr(void *);
 void	icside_v6_shutdown(void *);
 
 struct cfattach icside_ca = {
@@ -157,12 +153,10 @@ struct ide_version {
  */
 
 int
-icside_probe(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+icside_probe(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct podule_attach_args *pa = (void *)aux;
+
 	return (pa->pa_product == PODULE_ICS_IDE);
 }
 
@@ -173,9 +167,7 @@ icside_probe(parent, cf, aux)
  */
 
 void
-icside_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+icside_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct icside_softc *sc = (void *)self;
 	struct podule_attach_args *pa = (void *)aux;
@@ -338,8 +330,7 @@ icside_v6_shutdown(void *arg)
  * If the interrupt was from our card pass it on to the wdc interrupt handler
  */
 int
-icside_intr(arg)
-	void *arg;
+icside_intr(void *arg)
 {
 	struct icside_channel *icp = arg;
 	volatile u_char *intraddr = (volatile u_char *)icp->ic_irqaddr;
