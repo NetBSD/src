@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.662 2004/01/12 03:08:06 lukem Exp $
+#	$NetBSD: mi,v 1.663 2004/01/13 09:19:42 lukem Exp $
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
 ./usr/bin/as					comp-util-bin		bfd
@@ -55,9 +55,7 @@
 ./usr/bin/xstr					comp-c-bin
 ./usr/bin/yacc					comp-c-bin
 ./usr/include/a.out.h				comp-c-include
-./usr/include/adosfs				comp-c-include
 ./usr/include/adosfs/adosfs.h			comp-c-include
-./usr/include/altq				comp-c-include
 ./usr/include/altq/altq.h			comp-c-include
 ./usr/include/altq/altq_afmap.h			comp-c-include
 ./usr/include/altq/altq_blue.h			comp-c-include
@@ -122,16 +120,13 @@
 ./usr/include/cdk/template.h			comp-c-include
 ./usr/include/cdk/viewer.h			comp-c-include
 ./usr/include/cpio.h				comp-c-include
-./usr/include/crypto				comp-c-include
 ./usr/include/crypto/cryptodev.h		comp-c-include
 ./usr/include/ctype.h				comp-c-include
 ./usr/include/curses.h				comp-c-include
 ./usr/include/db.h				comp-c-include
 ./usr/include/des.h				comp-c-include		crypto
-./usr/include/dev/apm				comp-c-include
 ./usr/include/dev/apm/apmbios.h			comp-c-include
 ./usr/include/dev/apm/apmio.h			comp-c-include
-./usr/include/dev/ata				comp-c-include
 ./usr/include/dev/ata/atareg.h			comp-c-include
 ./usr/include/dev/ata/atavar.h			comp-c-include
 ./usr/include/dev/ata/satareg.h			comp-c-include
@@ -143,31 +138,24 @@
 ./usr/include/dev/cgdvar.h			comp-c-include
 ./usr/include/dev/clock_subr.h			comp-obsolete		obsolete
 ./usr/include/dev/cons.h			comp-obsolete		obsolete
-./usr/include/dev/dec				comp-c-include
 ./usr/include/dev/dec/clockvar.h		comp-obsolete		obsolete
 ./usr/include/dev/dec/dec_boot.h		comp-c-include
 ./usr/include/dev/dec/lk201.h			comp-c-include
 ./usr/include/dev/dec/mcclock_pad32.h		comp-obsolete		obsolete
 ./usr/include/dev/dec/mcclockvar.h		comp-obsolete		obsolete
-./usr/include/dev/dmover			comp-c-include
 ./usr/include/dev/dmover/dmover_io.h		comp-c-include
-./usr/include/dev/eisa				comp-obsolete		obsolete
 ./usr/include/dev/eisa/ahbreg.h			comp-obsolete		obsolete
 ./usr/include/dev/eisa/eisadevs.h		comp-obsolete		obsolete
 ./usr/include/dev/eisa/eisadevs_data.h		comp-obsolete		obsolete
 ./usr/include/dev/eisa/eisareg.h		comp-obsolete		obsolete
 ./usr/include/dev/eisa/eisavar.h		comp-obsolete		obsolete
 ./usr/include/dev/fssvar.h			comp-c-include
-./usr/include/dev/hpc				comp-c-include
 ./usr/include/dev/hpc/hpcfbio.h			comp-c-include
-./usr/include/dev/i2c				comp-obsolete		obsolete
 ./usr/include/dev/i2c/i2c_bus.h			comp-obsolete		obsolete
 ./usr/include/dev/i2c/i2c_eeprom.h		comp-obsolete		obsolete
-./usr/include/dev/i2o				comp-c-include
 ./usr/include/dev/i2o/i2o.h			comp-c-include
 ./usr/include/dev/i2o/iopio.h			comp-c-include
 ./usr/include/dev/i2o/iopvar.h			comp-obsolete		obsolete
-./usr/include/dev/ic				comp-c-include
 ./usr/include/dev/ic/ad1848reg.h		comp-obsolete		obsolete
 ./usr/include/dev/ic/ahareg.h			comp-obsolete		obsolete
 ./usr/include/dev/ic/ahavar.h			comp-obsolete		obsolete
@@ -279,12 +267,9 @@
 ./usr/include/dev/ic/wi_ieee.h			comp-c-include
 ./usr/include/dev/ic/z8530reg.h			comp-obsolete		obsolete
 ./usr/include/dev/ic/z8530sc.h			comp-obsolete		obsolete
-./usr/include/dev/ieee1394			comp-c-include
 ./usr/include/dev/ieee1394/fwiso_ioctl.h	comp-c-include
-./usr/include/dev/ir				comp-c-include
 ./usr/include/dev/ir/irdaio.h			comp-c-include
 ./usr/include/dev/irdaio.h			comp-obsolete		obsolete
-./usr/include/dev/isa				comp-c-include
 ./usr/include/dev/isa/ad1848var.h		comp-obsolete		obsolete
 ./usr/include/dev/isa/ahareg.h			comp-obsolete		obsolete
 ./usr/include/dev/isa/ariareg.h			comp-obsolete		obsolete
@@ -340,20 +325,15 @@
 ./usr/include/dev/isa/wssvar.h			comp-obsolete		obsolete
 ./usr/include/dev/isa/wtreg.h			comp-c-include
 ./usr/include/dev/isa/ymvar.h			comp-obsolete		obsolete
-./usr/include/dev/isapnp			comp-obsolete		obsolete
 ./usr/include/dev/isapnp/if_levar.h		comp-obsolete		obsolete
 ./usr/include/dev/isapnp/isapnpreg.h		comp-obsolete		obsolete
 ./usr/include/dev/isapnp/isapnpvar.h		comp-obsolete		obsolete
 ./usr/include/dev/kttcpio.h			comp-c-include
 ./usr/include/dev/md.h				comp-c-include
-./usr/include/dev/microcode			comp-obsolete		obsolete
-./usr/include/dev/microcode/aic7xxx		comp-obsolete		obsolete
 ./usr/include/dev/microcode/aic7xxx/aic7xxx_reg.h	comp-obsolete		obsolete
 ./usr/include/dev/microcode/aic7xxx/aic7xxx_seq.h	comp-obsolete		obsolete
-./usr/include/dev/microcode/isp			comp-obsolete		obsolete
 ./usr/include/dev/microcode/isp/asm_pci.h	comp-obsolete		obsolete
 ./usr/include/dev/microcode/isp/asm_sbus.h	comp-obsolete		obsolete
-./usr/include/dev/mii				comp-obsolete		obsolete
 ./usr/include/dev/mii/generic_phy.h		comp-obsolete		obsolete
 ./usr/include/dev/mii/icsphyreg.h		comp-obsolete		obsolete
 ./usr/include/dev/mii/inphyreg.h		comp-obsolete		obsolete
@@ -372,13 +352,10 @@
 ./usr/include/dev/mii/tlphyvar.h		comp-obsolete		obsolete
 ./usr/include/dev/mii/tqphyreg.h		comp-obsolete		obsolete
 ./usr/include/dev/mulaw.h			comp-obsolete		obsolete
-./usr/include/dev/ofisa				comp-obsolete		obsolete
 ./usr/include/dev/ofisa/ofisavar.h		comp-obsolete		obsolete
-./usr/include/dev/ofw				comp-c-include
 ./usr/include/dev/ofw/ofw_pci.h			comp-obsolete		obsolete
 ./usr/include/dev/ofw/openfirm.h		comp-obsolete		obsolete
 ./usr/include/dev/ofw/openfirmio.h		comp-c-include
-./usr/include/dev/pci				comp-c-include
 ./usr/include/dev/pci/if_devar.h		comp-obsolete		obsolete
 ./usr/include/dev/pci/if_fxpreg.h		comp-obsolete		obsolete
 ./usr/include/dev/pci/if_fxpvar.h		comp-obsolete		obsolete
@@ -404,28 +381,22 @@
 ./usr/include/dev/pci/tweio.h			comp-c-include
 ./usr/include/dev/pci/twereg.h			comp-c-include
 ./usr/include/dev/pci/vga_pcivar.h		comp-obsolete		obsolete
-./usr/include/dev/pckbc				comp-c-include
 ./usr/include/dev/pckbc/pckbdreg.h		comp-c-include
 ./usr/include/dev/pckbc/pckbdvar.h		comp-obsolete		obsolete
 ./usr/include/dev/pckbc/psmreg.h		comp-obsolete		obsolete
-./usr/include/dev/pcmcia			comp-c-include
 ./usr/include/dev/pcmcia/if_cnwioctl.h		comp-c-include
 ./usr/include/dev/pcmcia/if_rayreg.h		comp-c-include
 ./usr/include/dev/pcmcia/if_wi_ieee.h		comp-obsolete		obsolete
 ./usr/include/dev/pcmcia/pcmciachip.h		comp-obsolete		obsolete
 ./usr/include/dev/pcmcia/pcmciareg.h		comp-obsolete		obsolete
 ./usr/include/dev/pcmcia/pcmciavar.h		comp-obsolete		obsolete
-./usr/include/dev/raidframe			comp-c-include
 ./usr/include/dev/raidframe/raidframeio.h	comp-c-include
 ./usr/include/dev/raidframe/raidframevar.h	comp-c-include
 ./usr/include/dev/ramdisk.h			comp-obsolete		obsolete
-./usr/include/dev/rcons				comp-obsolete		obsolete
 ./usr/include/dev/rcons/raster.h		comp-obsolete		obsolete
 ./usr/include/dev/rcons/rcons.h			comp-obsolete		obsolete
 ./usr/include/dev/rcons/rcons_subr.h		comp-obsolete		obsolete
-./usr/include/dev/sbus				comp-c-include
 ./usr/include/dev/sbus/mbppio.h			comp-c-include
-./usr/include/dev/scsipi			comp-c-include
 ./usr/include/dev/scsipi/atapi_all.h		comp-obsolete		obsolete
 ./usr/include/dev/scsipi/atapi_cd.h		comp-obsolete		obsolete
 ./usr/include/dev/scsipi/atapi_disk.h		comp-obsolete		obsolete
@@ -451,7 +422,6 @@
 ./usr/include/dev/scsipi/ses.h			comp-c-include
 ./usr/include/dev/scsipi/ss_mustek.h		comp-obsolete		obsolete
 ./usr/include/dev/scsipi/ssvar.h		comp-obsolete		obsolete
-./usr/include/dev/sun				comp-c-include
 ./usr/include/dev/sun/disklabel.h		comp-c-include
 ./usr/include/dev/sun/event_var.h		comp-obsolete		obsolete
 ./usr/include/dev/sun/fbio.h			comp-c-include
@@ -461,7 +431,6 @@
 ./usr/include/dev/sun/kbio.h			comp-c-include
 ./usr/include/dev/sun/sun_boot.h		comp-obsolete		obsolete
 ./usr/include/dev/sun/vuid_event.h		comp-c-include
-./usr/include/dev/tc				comp-c-include
 ./usr/include/dev/tc/ascvar.h			comp-obsolete		obsolete
 ./usr/include/dev/tc/clockvar.h			comp-obsolete		obsolete
 ./usr/include/dev/tc/if_levar.h			comp-obsolete		obsolete
@@ -477,13 +446,11 @@
 ./usr/include/dev/tc/tcdsvar.h			comp-obsolete		obsolete
 ./usr/include/dev/tc/tcreg.h			comp-obsolete		obsolete
 ./usr/include/dev/tc/tcvar.h			comp-obsolete		obsolete
-./usr/include/dev/usb				comp-c-include
 ./usr/include/dev/usb/urio.h			comp-c-include
 ./usr/include/dev/usb/usb.h			comp-c-include
 ./usr/include/dev/usb/usbcdc.h			comp-obsolete		obsolete
 ./usr/include/dev/usb/usbdevs.h			comp-obsolete		obsolete
 ./usr/include/dev/usb/usbhid.h			comp-c-include
-./usr/include/dev/vinum				comp-c-include
 ./usr/include/dev/vinum/request.h		comp-c-include
 ./usr/include/dev/vinum/statetexts.h		comp-c-include
 ./usr/include/dev/vinum/vinumext.h		comp-c-include
@@ -494,7 +461,6 @@
 ./usr/include/dev/vinum/vinumstate.h		comp-c-include
 ./usr/include/dev/vinum/vinumutil.h		comp-c-include
 ./usr/include/dev/vinum/vinumvar.h		comp-c-include
-./usr/include/dev/vme				comp-c-include
 ./usr/include/dev/vme/vmevar.h			comp-obsolete		obsolete
 ./usr/include/dev/vme/xdreg.h			comp-obsolete		obsolete
 ./usr/include/dev/vme/xdvar.h			comp-obsolete		obsolete
@@ -504,7 +470,6 @@
 ./usr/include/dev/vndioctl.h			comp-obsolete		obsolete
 ./usr/include/dev/vndvar.h			comp-c-include
 ./usr/include/dev/vnioctl.h			comp-obsolete		obsolete
-./usr/include/dev/wscons			comp-c-include
 ./usr/include/dev/wscons/ascii.h		comp-obsolete		obsolete
 ./usr/include/dev/wscons/wscons_callbacks.h	comp-obsolete		obsolete
 ./usr/include/dev/wscons/wscons_raster.h	comp-obsolete		obsolete
@@ -527,7 +492,6 @@
 ./usr/include/eti.h				comp-c-include
 ./usr/include/event.h				comp-c-include
 ./usr/include/fcntl.h				comp-c-include
-./usr/include/filecorefs			comp-c-include
 ./usr/include/filecorefs/filecore_mount.h	comp-c-include
 ./usr/include/float.h				comp-c-include
 ./usr/include/fmtmsg.h				comp-c-include
@@ -585,7 +549,6 @@
 ./usr/include/g++/fmultmap.h			comp-obsolete		obsolete
 ./usr/include/g++/fmultset.h			comp-obsolete		obsolete
 ./usr/include/g++/fset.h			comp-obsolete		obsolete
-./usr/include/g++/gen				comp-obsolete		obsolete
 ./usr/include/g++/gen/AVLMap.ccP		comp-obsolete		obsolete
 ./usr/include/g++/gen/AVLMap.hP			comp-obsolete		obsolete
 ./usr/include/g++/gen/AVLSet.ccP		comp-obsolete		obsolete
@@ -788,8 +751,6 @@
 ./usr/include/ifaddrs.h				comp-c-include
 ./usr/include/inttypes.h			comp-c-include
 ./usr/include/iso646.h				comp-c-include
-./usr/include/isofs				comp-c-include
-./usr/include/isofs/cd9660			comp-c-include
 ./usr/include/isofs/cd9660/cd9660_extern.h	comp-c-include
 ./usr/include/isofs/cd9660/cd9660_mount.h	comp-c-include
 ./usr/include/isofs/cd9660/cd9660_node.h	comp-c-include
@@ -848,7 +809,6 @@
 ./usr/include/langinfo.h			comp-c-include
 ./usr/include/libgen.h				comp-c-include
 ./usr/include/libintl.h				comp-c-include
-./usr/include/libmilter				comp-sendmail-include
 ./usr/include/libmilter/mfapi.h			comp-sendmail-include	sendmail
 ./usr/include/libmilter/mfdef.h			comp-sendmail-include	sendmail
 ./usr/include/limits.h				comp-c-include
@@ -866,39 +826,24 @@
 ./usr/include/md5.h				comp-c-include
 ./usr/include/memory.h				comp-c-include
 ./usr/include/menu.h				comp-c-include
-./usr/include/milter				comp-obsolete		obsolete
 ./usr/include/milter/mfapi.h			comp-obsolete		obsolete
 ./usr/include/milter/mfdef.h			comp-obsolete		obsolete
-./usr/include/miscfs				comp-c-include
-./usr/include/miscfs/fdesc			comp-c-include
 ./usr/include/miscfs/fdesc/fdesc.h		comp-c-include
-./usr/include/miscfs/fifofs			comp-c-include
 ./usr/include/miscfs/fifofs/fifo.h		comp-c-include
-./usr/include/miscfs/genfs			comp-c-include
 ./usr/include/miscfs/genfs/genfs.h		comp-c-include
 ./usr/include/miscfs/genfs/genfs_node.h		comp-c-include
 ./usr/include/miscfs/genfs/layer.h		comp-c-include
-./usr/include/miscfs/kernfs			comp-c-include
 ./usr/include/miscfs/kernfs/kernfs.h		comp-c-include
-./usr/include/miscfs/nullfs			comp-c-include
 ./usr/include/miscfs/nullfs/null.h		comp-c-include
-./usr/include/miscfs/overlay			comp-c-include
 ./usr/include/miscfs/overlay/overlay.h		comp-c-include
-./usr/include/miscfs/portal			comp-c-include
 ./usr/include/miscfs/portal/portal.h		comp-c-include
-./usr/include/miscfs/procfs			comp-c-include
 ./usr/include/miscfs/procfs/procfs.h		comp-c-include
-./usr/include/miscfs/specfs			comp-c-include
 ./usr/include/miscfs/specfs/specdev.h		comp-c-include
-./usr/include/miscfs/syncfs			comp-c-include
 ./usr/include/miscfs/syncfs/syncfs.h		comp-c-include
-./usr/include/miscfs/umapfs			comp-c-include
 ./usr/include/miscfs/umapfs/umap.h		comp-c-include
-./usr/include/miscfs/union			comp-c-include
 ./usr/include/miscfs/union/union.h		comp-c-include
 ./usr/include/mntopts.h				comp-c-include
 ./usr/include/mpool.h				comp-c-include
-./usr/include/msdosfs				comp-c-include
 ./usr/include/msdosfs/bootsect.h		comp-c-include
 ./usr/include/msdosfs/bpb.h			comp-c-include
 ./usr/include/msdosfs/denode.h			comp-c-include
@@ -1012,7 +957,6 @@
 ./usr/include/netinet/tcpip.h			comp-c-include
 ./usr/include/netinet/udp.h			comp-c-include
 ./usr/include/netinet/udp_var.h			comp-c-include
-./usr/include/netinet6				comp-c-include
 ./usr/include/netinet6/ah.h			comp-c-include
 ./usr/include/netinet6/esp.h			comp-c-include
 ./usr/include/netinet6/icmp6.h			comp-obsolete		obsolete
@@ -1070,7 +1014,6 @@
 ./usr/include/netiso/tp_user.h			comp-c-include
 ./usr/include/netiso/tp_var.h			comp-c-include
 ./usr/include/netiso/tuba_table.h		comp-obsolete		obsolete
-./usr/include/netkey				comp-c-include
 ./usr/include/netkey/key.h			comp-c-include
 ./usr/include/netkey/key_debug.h		comp-c-include
 ./usr/include/netkey/key_var.h			comp-c-include
@@ -1090,7 +1033,6 @@
 ./usr/include/netns/spp_debug.h			comp-c-include
 ./usr/include/netns/spp_timer.h			comp-c-include
 ./usr/include/netns/spp_var.h			comp-c-include
-./usr/include/netsmb				comp-c-include
 ./usr/include/nfs/krpc.h			comp-c-include
 ./usr/include/nfs/nfs.h				comp-c-include
 ./usr/include/nfs/nfs_var.h			comp-c-include
@@ -1213,7 +1155,6 @@
 ./usr/include/randomid.h			comp-c-include
 ./usr/include/ranlib.h				comp-c-include
 ./usr/include/re_comp.h				comp-c-include
-./usr/include/readline				comp-c-include
 ./usr/include/readline.h			comp-obsolete		obsolete
 ./usr/include/readline/history.h		comp-c-include
 ./usr/include/readline/readline.h		comp-c-include
@@ -1524,7 +1465,6 @@
 ./usr/include/uvm/uvm_vnode.h			comp-obsolete		obsolete
 ./usr/include/varargs.h				comp-c-include
 ./usr/include/vis.h				comp-c-include
-./usr/include/vm				comp-obsolete		obsolete
 ./usr/include/vm/device_pager.h			comp-obsolete		obsolete
 ./usr/include/vm/lock.h				comp-obsolete		obsolete
 ./usr/include/vm/pglist.h			comp-obsolete		obsolete
