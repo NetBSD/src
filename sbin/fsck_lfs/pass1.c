@@ -1,4 +1,4 @@
-/*	$Id: pass1.c,v 1.1 1999/03/18 02:02:19 perseant Exp $	*/
+/*	$Id: pass1.c,v 1.2 1999/03/24 05:32:23 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -124,8 +124,8 @@ pass1()
         inphead = (struct inoinfo **)calloc((unsigned)numdirs,
             sizeof(struct inoinfo *));
         if (inpsort == NULL || inphead == NULL) {
-                printf("cannot alloc %u bytes for inphead\n",
-                    (unsigned)numdirs * sizeof(struct inoinfo *));
+                printf("cannot alloc %lu bytes for inphead\n",
+                    (unsigned long)numdirs * sizeof(struct inoinfo *));
 		exit(1);
         }
 
@@ -190,7 +190,7 @@ checkinode(inumber, idesc)
 	if (/* dp->di_size < 0 || */
 	    dp->di_size + sblock.lfs_bsize - 1 < dp->di_size) {
 		if (debug)
-			printf("bad size %qu:", dp->di_size);
+			printf("bad size %qu:", (unsigned long long)dp->di_size);
 		goto unknown;
 	}
 	if (!preen && mode == IFMT && reply("HOLD BAD BLOCK") == 1) {
@@ -203,7 +203,7 @@ checkinode(inumber, idesc)
 	if (ndb < 0) {
 		if (debug)
 			printf("bad size %qu ndb %d:",
-				dp->di_size, ndb);
+				(unsigned long long)dp->di_size, ndb);
 		goto unknown;
 	}
 	if (mode == IFBLK || mode == IFCHR)
@@ -227,7 +227,7 @@ checkinode(inumber, idesc)
 			if (debug) {
 				symbuf[dp->di_size] = 0;
 				printf("convert symlink %d(%s) of size %qd\n",
-					inumber, symbuf, dp->di_size);
+					inumber, symbuf, (long long)dp->di_size);
 			}
 			dp = ginode(inumber);
 			memcpy(dp->di_shortlink, symbuf, (long)dp->di_size);
