@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.20 2005/02/21 01:17:29 chs Exp $	*/
+/*	$NetBSD: profile.h,v 1.21 2005/02/25 02:01:59 chs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -86,7 +86,7 @@ __cpu_simple_lock_t __mcount_lock;
 #define	MCOUNT_ENTER							\
 	s = (int)read_psl();						\
 	disable_intr();							\
-	MCOUNT_ENTR_MP
+	MCOUNT_ENTER_MP
 
 #define	MCOUNT_EXIT							\
 	MCOUNT_EXIT_MP							\
