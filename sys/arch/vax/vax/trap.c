@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.56 2000/06/29 07:14:34 mrg Exp $     */
+/*	$NetBSD: trap.c,v 1.57 2000/07/17 02:54:05 matt Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -297,9 +297,13 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 		return;
 #endif
 	}
-
-	if (trapsig)
+	if (trapsig) {
+		if (sig == SIGSEGV || sig == SIGILL)
+			printf("pid %d (%s): sig %d: type %lx, code %lx, pc %lx, psl %lx\n",
+			       p->p_pid, p->p_comm, sig, frame->trap,
+			       frame->code, frame->pc, frame->psl);
 		trapsignal(p, sig, frame->code);
+	}
 
 	if (umode == 0)
 		return;
