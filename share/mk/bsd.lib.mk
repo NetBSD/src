@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.171 2000/07/03 21:08:55 christos Exp $
+#	$NetBSD: bsd.lib.mk,v 1.172 2000/07/06 16:48:48 matt Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -101,6 +101,10 @@ MKPICLIB= no
 AINC+=-DABICALLS
 AFLAGS+= -fPIC
 AS+=	-KPIC
+
+.elif ${MACHINE_ARCH} == "vax" && ${OBJECT_FMT} == "ELF"
+# On the VAX, all object are PIC by default, not just sharedlibs.
+MKPICLIB= no
 
 .elif ${MACHINE_ARCH} == "sparc" && ${OBJECT_FMT} == "ELF"
 
