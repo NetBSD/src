@@ -1,3 +1,5 @@
+/*	$NetBSD: com.c,v 1.38 1994/10/27 04:17:01 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
  * Copyright (c) 1991 The Regents of the University of California.
@@ -31,8 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: com.c,v 1.37 1994/10/26 18:06:30 mycroft Exp $
+ *	@(#)com.c	7.5 (Berkeley) 5/16/91
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: locore.s,v 1.90 1994/10/27 04:15:24 cgd Exp $	*/
+
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
 /*-
@@ -36,8 +38,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.89 1994/10/26 01:32:18 mycroft Exp $
+ *	@(#)locore.s	7.3 (Berkeley) 5/13/91
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: if_egreg.h,v 1.2 1994/10/27 04:17:26 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993 Dean Huxley (dean@fsa.ca)
  * All rights reserved.
@@ -26,8 +28,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: if_egreg.h,v 1.1 1994/08/23 18:00:10 deraadt Exp $
  */
 
 /*

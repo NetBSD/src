@@ -1,3 +1,5 @@
+/*	$NetBSD: asm.h,v 1.3 1994/10/27 04:21:04 cgd Exp $	*/
+
 /*
  * source in this file came from
  * the 386BSD boot blocks written by Julian Elsicher.
@@ -27,8 +29,6 @@
  * 
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
- *
- *	$Id: asm.h,v 1.2 1993/08/02 17:52:48 mycroft Exp $
  */
 
 #define S_ARG0	 4(%esp)

@@ -1,7 +1,7 @@
+/*	$NetBSD: i8237reg.h,v 1.4 1994/10/27 04:18:39 cgd Exp $	*/
+
 /*
  * Intel 8237 DMA Controller
- *
- *	$Id: i8237reg.h,v 1.3 1994/03/01 18:18:07 mycroft Exp $
  */
 
 #define	DMA37MD_SINGLE	0x40	/* single pass mode */

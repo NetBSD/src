@@ -1,10 +1,10 @@
+/*	$NetBSD: arp.h,v 1.3 1994/10/27 04:21:03 cgd Exp $	*/
+
 /*
  * source in this file came from
  * the Mach ethernet boot written by Leendert van Doorn.
  *
  * Ethernet Address Resolution Protocol (see RFC 826)
- *
- *	$Id: arp.h,v 1.2 1993/08/02 17:52:47 mycroft Exp $
  */
 
 /*

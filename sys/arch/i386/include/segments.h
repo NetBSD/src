@@ -1,3 +1,5 @@
+/*	$NetBSD: segments.h,v 1.7 1994/10/27 04:16:24 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1989, 1990 William F. Jolitz
  * Copyright (c) 1990 The Regents of the University of California.
@@ -34,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)segments.h	7.1 (Berkeley) 5/9/91
- *	$Id: segments.h,v 1.6 1994/04/03 18:53:53 mycroft Exp $
+ *	@(#)segments.h	7.1 (Berkeley) 5/9/91
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: asbootblk.c,v 1.4 1994/10/27 04:21:46 cgd Exp $	*/
+
 /*
  * sys/i386/stand/asbootblk.c
  *
@@ -28,8 +30,6 @@
  *
  * This bootblock does not support fdisk partitions, and can only be used
  * as the master boot block.
- *
- *	$Id: asbootblk.c,v 1.3 1993/05/22 08:02:07 cgd Exp $
  */
 
 #include "param.h"

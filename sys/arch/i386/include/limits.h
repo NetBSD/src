@@ -1,3 +1,5 @@
+/*	$NetBSD: limits.h,v 1.9 1994/10/27 04:16:09 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)limits.h	7.2 (Berkeley) 6/28/90
- *	$Id: limits.h,v 1.8 1994/10/05 17:16:29 jtc Exp $
+ *	@(#)limits.h	7.2 (Berkeley) 6/28/90
  */
 
 #define	CHAR_BIT	8		/* number of bits in a char */

@@ -1,3 +1,5 @@
+/*	$NetBSD: nvram.h,v 1.3 1994/10/27 04:18:03 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)rtc.h	7.1 (Berkeley) 5/12/91
- *	$Id: nvram.h,v 1.2 1993/09/24 08:49:21 mycroft Exp $
+ *	@(#)rtc.h	7.1 (Berkeley) 5/12/91
  */
 /* 
  * Mach Operating System

@@ -1,3 +1,5 @@
+/*	$NetBSD: esc.c,v 1.2 1994/10/27 04:20:53 cgd Exp $	*/
+
 #include "header.h"
 
 println(s) char *s; {

@@ -1,6 +1,6 @@
+/*	$NetBSD: ncr_reg.h,v 1.3 1994/10/27 04:21:35 cgd Exp $	*/
+
 /**************************************************************************
-**
-**  $Id: ncr_reg.h,v 1.2 1994/10/01 06:28:01 mycroft Exp $
 **
 **  Device driver for the   NCR 53C810   PCI-SCSI-Controller.
 **

@@ -1,3 +1,5 @@
+/*	$NetBSD: io.c,v 1.9 1994/10/27 04:14:38 cgd Exp $	*/
+
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  *
@@ -24,8 +26,6 @@
  * 
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
- *
- *	$Id: io.c,v 1.8 1994/05/01 06:46:31 cgd Exp $
  */
 
 #include <sys/types.h>

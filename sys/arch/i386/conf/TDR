@@ -1,7 +1,6 @@
+#	$NetBSD: TDR,v 1.44 1994/10/27 04:14:59 cgd Exp $
 #
 # Theo Deraadt's 486
-#
-#	$Id: TDR,v 1.43 1994/10/25 21:31:46 cgd Exp $
 #
 machine		"i386"
 cpu		"I386_CPU"

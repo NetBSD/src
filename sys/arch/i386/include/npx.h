@@ -1,3 +1,5 @@
+/*	$NetBSD: npx.h,v 1.11 1994/10/27 04:16:11 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)npx.h	5.3 (Berkeley) 1/18/91
- *	$Id: npx.h,v 1.10 1994/09/22 00:37:13 jtc Exp $
+ *	@(#)npx.h	5.3 (Berkeley) 1/18/91
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: pcvt_ext.c,v 1.5 1994/10/27 04:18:48 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993, 1994 Hellmuth Michaelis and Joerg Wunsch
  *

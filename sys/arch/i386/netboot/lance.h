@@ -1,8 +1,8 @@
+/*	$NetBSD: lance.h,v 1.3 1994/10/27 04:21:16 cgd Exp $	*/
+
 /*
  * source in this file came from
  * the Mach ethernet boot written by Leendert van Doorn.
- *
- *	$Id: lance.h,v 1.2 1993/08/02 17:52:55 mycroft Exp $
  */
 
 /* RAP functions as a select for RDP */

@@ -1,3 +1,5 @@
+/*	$NetBSD: machdep.c,v 1.125 1994/10/27 04:15:28 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
  * Copyright (c) 1992 Terrence R. Lambert.
@@ -35,8 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.124 1994/10/26 01:32:23 mycroft Exp $
+ *	@(#)machdep.c	7.4 (Berkeley) 6/3/91
  */
 
 #include <sys/param.h>

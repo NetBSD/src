@@ -1,3 +1,5 @@
+/*	$NetBSD: bmap.c,v 1.3 1994/10/27 04:21:48 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
  * All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ufs_bmap.c	7.13 (Berkeley) 5/8/91
- *	$Id: bmap.c,v 1.2 1993/05/22 08:02:08 cgd Exp $
+ *	@(#)ufs_bmap.c	7.13 (Berkeley) 5/8/91
  */
 
 #include "param.h"

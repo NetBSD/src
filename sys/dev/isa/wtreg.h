@@ -1,3 +1,5 @@
+/*	$NetBSD: wtreg.h,v 1.5 1994/10/27 04:18:33 cgd Exp $	*/
+
 /*
  * Streamer tape driver.
  * Supports Archive and Wangtek compatible QIC-02/QIC-36 boards.
@@ -15,8 +17,6 @@
  *
  * This driver is derived from the old 386bsd Wangtek streamer tape driver,
  * made by Robert Baron at CMU, based on Intel sources.
- *
- *	$Id: wtreg.h,v 1.4 1994/03/29 04:32:16 mycroft Exp $
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: elink.h,v 1.3 1994/10/27 04:17:11 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
  *
@@ -25,8 +27,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: elink.h,v 1.2 1994/02/16 19:28:20 mycroft Exp $
  */
 
 #define	ELINK_ID_PORT	0x100

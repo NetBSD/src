@@ -1,3 +1,5 @@
+/*	$NetBSD: aha1742.c,v 1.38 1994/10/27 04:16:46 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
  *
@@ -25,8 +27,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *      $Id: aha1742.c,v 1.37 1994/08/22 21:53:23 mycroft Exp $
  */
 
 /*

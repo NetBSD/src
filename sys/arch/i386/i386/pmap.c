@@ -1,3 +1,5 @@
+/*	$NetBSD: pmap.c,v 1.25 1994/10/27 04:15:41 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
  * Copyright (c) 1991 Regents of the University of California.
@@ -35,8 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)pmap.c	7.7 (Berkeley)	5/12/91
- *	$Id: pmap.c,v 1.24 1994/10/18 06:11:15 cgd Exp $
+ *	@(#)pmap.c	7.7 (Berkeley)	5/12/91
  */
 
 /*

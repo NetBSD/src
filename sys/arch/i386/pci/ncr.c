@@ -1,6 +1,6 @@
+/*	$NetBSD: ncr.c,v 1.5 1994/10/27 04:21:32 cgd Exp $	*/
+
 /**************************************************************************
-**
-**  $Id: ncr.c,v 1.4 1994/10/27 02:04:18 andrew Exp $
 **
 **  Device driver for the   NCR 53C810   PCI-SCSI-Controller.
 **
@@ -1327,7 +1327,7 @@ static	u_long	getirr (void)
 
 
 static char ident[] =
-	"\n$Id: ncr.c,v 1.4 1994/10/27 02:04:18 andrew Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.5 1994/10/27 04:21:32 cgd Exp $\n";
 
 u_long	ncr_version = NCR_VERSION
 	+ (u_long) sizeof (struct ncb)
@@ -3434,7 +3434,7 @@ static	int ncr_attach (pcici_t config_id)
 		ncr_name (np));
 	DELAY (1000000);
 #endif
-	printf ("%s scanning for targets 0..%d ($Revision: 1.4 $)\n",
+	printf ("%s scanning for targets 0..%d ($Revision: 1.5 $)\n",
 		ncr_name (np), MAX_TARGET-1);
 
 	/*

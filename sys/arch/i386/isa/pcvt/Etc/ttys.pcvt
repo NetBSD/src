@@ -1,3 +1,4 @@
+#	$NetBSD: ttys.pcvt,v 1.2 1994/10/27 04:19:30 cgd Exp $
 #---------------------------------------------------------------------------
 #
 #	sample /etc/ttys file for pcvt driver and pcvt25h terminal emulation

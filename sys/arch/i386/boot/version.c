@@ -1,9 +1,11 @@
-/*
- *	$Id: version.c,v 1.23 1994/07/27 01:48:31 mycroft Exp $
- */
+/*	$NetBSD: version.c,v 1.24 1994/10/27 04:14:43 cgd Exp $	*/
 
 /*
  *	NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.
+ *
+ *	1.23 -> 1.24
+ *		change RCS ID format.  NOW NEED TO UPDATE STRING BELOW
+ *		BY HAND.
  *
  *	1.22 -> 1.23, 1.21.2.2
  *		fix problem with empty symbol tables. (mycroft)
@@ -38,4 +40,4 @@
  *		look in boot.c revision logs
  */
 
-char *version = "$Revision: 1.23 $";
+char *version = "1.24";
