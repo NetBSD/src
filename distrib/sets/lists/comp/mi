@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.231.2.4 2000/07/17 05:59:56 mrg Exp $
+#	$NetBSD: mi,v 1.231.2.5 2000/08/05 11:10:44 wiz Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -1131,7 +1131,6 @@
 ./usr/include/vm/pmap.h		comp-c-include
 ./usr/include/vm/vm.h		comp-c-include
 ./usr/include/vm/vm_extern.h		comp-c-include
-./usr/include/vm/vm_inherit.h		comp-c-include
 ./usr/include/vm/vm_kern.h		comp-c-include
 ./usr/include/vm/vm_map.h		comp-c-include
 ./usr/include/vm/vm_object.h		comp-c-include
