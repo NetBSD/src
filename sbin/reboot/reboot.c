@@ -1,4 +1,4 @@
-/*	$NetBSD: reboot.c,v 1.28 2001/02/19 22:56:22 cgd Exp $	*/
+/*	$NetBSD: reboot.c,v 1.29 2002/07/20 06:44:45 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n"
 #if 0
 static char sccsid[] = "@(#)reboot.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: reboot.c,v 1.28 2001/02/19 22:56:22 cgd Exp $");
+__RCSID("$NetBSD: reboot.c,v 1.29 2002/07/20 06:44:45 tsutsui Exp $");
 #endif
 #endif /* not lint */
 
@@ -126,7 +126,7 @@ main(argc, argv)
 			strcat(bootstr, *av);
 			strcat(bootstr, " ");
 		}
-		bootstr[len] = '\0';		/* to kill last space */
+		bootstr[len - 1] = '\0';	/* to kill last space */
 		howto |= RB_STRING;
 	} else
 		bootstr = NULL;
