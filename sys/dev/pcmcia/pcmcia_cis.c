@@ -196,10 +196,10 @@ pcmcia_scan_cis(dev, fct, arg)
 						addr+tuple.mult*i);
 		    if (cksum != (sum & 0xff)) {
 			DPRINTF((" failed sum=%x\n", sum));
-#ifdef DIAGNOSTIC
 			printf("%s: CIS checksum failed\n", sc->dev.dv_xname);
-#endif
+#if 0	/* XXX some working cards have bad checksums!! */
 			ret = 1;
+#endif
 		    } else {
 			DPRINTF((" ok\n"));
 		    }
