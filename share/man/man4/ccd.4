@@ -1,4 +1,4 @@
-.\"	$NetBSD: ccd.4,v 1.15 1998/06/07 09:31:31 enami Exp $
+.\"	$NetBSD: ccd.4,v 1.16 1998/07/09 20:53:42 thorpej Exp $
 .\"
 .\" Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -115,6 +115,8 @@ may be configured.
 A
 .Nm
 may be either serially concatenated or interleaved.
+To serially concatenate the partitions, specify the interleave factor of 0.
+.Pp
 If a
 .Nm
 is interleaved correctly, a
