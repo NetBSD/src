@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.246 2001/04/10 05:14:34 enami Exp $
+# $NetBSD: mi,v 1.247 2001/04/11 21:23:26 aymeric Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -544,6 +544,7 @@
 ./usr/libexec/uucp/uuxqt	base-uucp-bin
 ./usr/libexec/uucpd		base-uucp-bin
 ./usr/libexec/uugetty		base-uucp-bin
+./usr/libexec/virecover		base-util-bin
 ./usr/lkm			base-sys-usr
 ./usr/local			base-sys-usr
 ./usr/local/bin			base-sys-usr
