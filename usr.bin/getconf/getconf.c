@@ -1,4 +1,4 @@
-/*	$NetBSD: getconf.c,v 1.14 2002/01/31 00:32:48 kleink Exp $	*/
+/*	$NetBSD: getconf.c,v 1.15 2002/08/04 12:59:13 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getconf.c,v 1.14 2002/01/31 00:32:48 kleink Exp $");
+__RCSID("$NetBSD: getconf.c,v 1.15 2002/08/04 12:59:13 tron Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -78,13 +78,10 @@ const struct conf_variable conf_table[] =
   /* POSIX.1 Minimum Values */
   { "_POSIX_ARG_MAX",		CONSTANT,	_POSIX_ARG_MAX		},
   { "_POSIX_CHILD_MAX",		CONSTANT,	_POSIX_CHILD_MAX	},
-  { "_POSIX_LINK_MAX",		CONSTANT,	_POSIX_LINK_MAX		},
   { "_POSIX_MAX_CANON",		CONSTANT,	_POSIX_MAX_CANON	},
   { "_POSIX_MAX_INPUT",		CONSTANT,	_POSIX_MAX_INPUT	},
-  { "_POSIX_NAME_MAX",		CONSTANT,	_POSIX_NAME_MAX		},
   { "_POSIX_NGROUPS_MAX",	CONSTANT,	_POSIX_NGROUPS_MAX	},
   { "_POSIX_OPEN_MAX",		CONSTANT,	_POSIX_OPEN_MAX		},
-  { "_POSIX_PATH_MAX",		CONSTANT,	_POSIX_PIPE_BUF		},
   { "_POSIX_PIPE_BUF",		CONSTANT,	_POSIX_PIPE_BUF		},
   { "_POSIX_SSIZE_MAX",		CONSTANT,	_POSIX_SSIZE_MAX	},
   { "_POSIX_STREAM_MAX",	CONSTANT,	_POSIX_STREAM_MAX	},
