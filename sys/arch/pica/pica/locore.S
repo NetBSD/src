@@ -1,3 +1,5 @@
+/*	$NetBSD: locore.S,v 1.3 1996/03/31 03:38:21 jonathan Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -48,8 +50,7 @@
  * from: Header: /sprite/src/kernel/vm/ds3100.md/vmPmaxAsm.s,
  *	v 1.1 89/07/10 14:27:41 nelson Exp  SPRITE (DECWRL)
  *
- *	from: @(#)locore.s	8.5 (Berkeley) 1/4/94
- *	$Id: locore.S,v 1.2 1996/03/28 12:50:37 jonathan Exp $
+ *	@(#)locore.s	8.5 (Berkeley) 1/4/94
  */
 
 /*
@@ -84,7 +85,9 @@ start:
  * Initialize stack and call machine startup.
  */
 	la	sp, start - START_FRAME
-	la	gp, _gp
+#ifdef __GP_SUPPORT__
+	la	gp, _C_LABEL(_gp)
+#endif
 	sw	zero, START_FRAME - 4(sp)	# Zero out old ra for debugger
 	jal	mips_init			# mips_init(argc, argv, envp)
 	sw	zero, START_FRAME - 8(sp)	# Zero out old fp for debugger
@@ -93,14 +96,15 @@ start:
 	mtc0	t0, MACH_COP_0_STATUS_REG	#   enable the fp coprocessor
 	li	sp, KERNELSTACK - START_FRAME	# switch to standard stack
 	mfc0	t0, MACH_COP_0_PRID		# read processor ID register
-	nop
+
+	nop					# XXX r4000 pipeline:
 	nop					# wait for new status to
 	nop					# to be effective
 	nop
 	cfc1	t1, MACH_FPC_ID			# read FPU ID register
-	sw	t0, cpu_id			# save PRID register
-	sw	t1, fpu_id			# save FPU ID register
-	jal	main				# main(regs)
+	sw	t0, _C_LABEL(cpu_id)		# save PRID register
+	sw	t1, _C_LABEL(fpu_id)		# save FPU ID register
+	jal	_C_LABEL(main)			# main(regs)
 	move	a0, zero
 /*
  * proc[1] == /etc/init now running here.
@@ -170,19 +174,19 @@ END(__main)
 	.globl	onfault_table
 	.data
 	.align	2
-onfault_table:
+_C_LABEL(onfault_table):
 	.word	0		# invalid index number
 #define BADERR		1
-	.word	baderr
+	.word	_C_LABEL(baderr)
 #define COPYERR		2
-	.word	copyerr
+	.word	_C_LABEL(copyerr)
 #define FSWBERR		3
-	.word	fswberr
+	.word	_C_LABEL(fswberr)
 #define FSWINTRBERR	4
-	.word	fswintrberr
+	.word	_C_LABEL(fswintrberr)
 #ifdef DEBUG
 #define MDBERR		5
-	.word	mdberr
+	.word	_C_LABEL(mdberr)
 #endif
 	.text
 
@@ -350,19 +354,6 @@ smallclr:
 	nop
 END(bzero)
 
-/*
- * fillw(pat, addr, count)
- */
-LEAF(fillw)
-1:
-	addiu	a2, a2, -1
-	sh	a0, 0(a1)
-	bne	a2,zero, 1b
-	addiu	a1, a1, 2
-
-	jr	ra
-	nop
-END(fillw)
 /*
  * bcmp(s1, s2, n)
  */
@@ -532,13 +523,28 @@ smallcpy:
 END(memcpy)
 
 /*
+ * fillw(pat, addr, count)
+ */
+LEAF(fillw)
+1:
+	addiu	a2, a2, -1
+	sh	a0, 0(a1)
+	bne	a2,zero, 1b
+	addiu	a1, a1, 2
+
+	jr	ra
+	nop
+END(fillw)
+
+
+/*
  * Copy a null terminated string within the kernel address space.
  * Maxlength may be null if count not wanted.
  *	copystr(fromaddr, toaddr, maxlength, &lencopied)
  *		caddr_t fromaddr;
  *		caddr_t toaddr;
  *		u_int maxlength;
- *		u_int *lencopied;
+ *		u_int lencopied;
  */
 LEAF(copystr)
 	move	t2, a2			# Save the number of bytes
@@ -732,12 +738,12 @@ NON_LEAF(setrunqueue, STAND_FRAME_SIZE, ra)
 	li	t1, 1			# compute corresponding bit
 	srl	t0, t0, 2		# compute index into 'whichqs'
 	sll	t1, t1, t0
-	lw	t2, whichqs		# set corresponding bit
+	lw	t2, _C_LABEL(whichqs)	# set corresponding bit
 	nop
 	or	t2, t2, t1
-	sw	t2, whichqs
+	sw	t2, _C_LABEL(whichqs)
 	sll	t0, t0, 3		# compute index into 'qs'
-	la	t1, qs
+	la	t1, _C_LABEL(qs)
 	addu	t0, t0, t1		# t0 = qp = &qs[pri >> 2]
 	lw	t1, P_BACK(t0)		# t1 = qp->ph_rlink
 	sw	t0, P_FORW(a0)		# p->p_forw = qp
@@ -759,7 +765,7 @@ NON_LEAF(remrq, STAND_FRAME_SIZE, ra)
 	lbu	t0, P_PRIORITY(a0)	# get from p->p_priority / 4 queue
 	li	t1, 1			# compute corresponding bit
 	srl	t0, t0, 2		# compute index into 'whichqs'
-	lw	t2, whichqs		# check corresponding bit
+	lw	t2, _C_LABEL(whichqs)	# check corresponding bit
 	sll	t1, t1, t0
 	and	v0, t2, t1
 	sw	ra, STAND_RA_OFFSET(sp)	##
@@ -772,14 +778,14 @@ NON_LEAF(remrq, STAND_FRAME_SIZE, ra)
 	sw	v1, P_FORW(v0)		# p->p_back->p_forw = p->p_forw;
 	sw	v0, P_BACK(v1)		# p->p_forw->p_back = p->r_rlink
 	sll	t0, t0, 3		# compute index into 'qs'
-	la	v0, qs
+	la	v0, _C_LABEL(qs)
 	addu	t0, t0, v0		# t0 = qp = &qs[pri >> 2]
 	lw	v0, P_FORW(t0)		# check if queue empty
 	nop
 	bne	v0, t0, 2f		# No. qp->ph_link != qp
 	nop
 	xor	t2, t2, t1		# clear corresponding bit in 'whichqs'
-	sw	t2, whichqs
+	sw	t2, _C_LABEL(whichqs)
 2:
 	sw	zero, P_BACK(a0)	## for firewall checking
 	j	ra
@@ -823,7 +829,7 @@ LEAF(idle)
 	mtc0	t0, MACH_COP_0_STATUS_REG	# enable all interrupts
 	sw	zero, curproc			# set curproc NULL for stats
 1:
-	lw	t0, whichqs			# look for non-empty queue
+	lw	t0, _C_LABEL(whichqs)		# look for non-empty queue
 	nop
 	beq	t0, zero, 1b
 	nop
@@ -841,7 +847,7 @@ NON_LEAF(cpu_switch, STAND_FRAME_SIZE, ra)
 	sw	ra, STAND_RA_OFFSET(sp)
 	.mask	0x80000000, (STAND_RA_OFFSET - STAND_FRAME_SIZE)
 	lw	t2, cnt+V_SWTCH			# for statistics
-	lw	t1, whichqs			# look for non-empty queue
+	lw	t1, _C_LABEL(whichqs)		# look for non-empty queue
 	sw	s0, UADDR+U_PCB_CONTEXT+0	# do a 'savectx()'
 	sw	s1, UADDR+U_PCB_CONTEXT+4
 	sw	s2, UADDR+U_PCB_CONTEXT+8
@@ -863,7 +869,7 @@ sw1:
 	nop
 	nop
 	nop
-	lw	t0, whichqs			# look for non-empty queue
+	lw	t0, _C_LABEL(whichqs)		# look for non-empty queue
 	li	t2, -1				# t2 = lowest bit set
 	beq	t0, zero, idle			# if none, idle
 	move	t3, t0				# t3 = saved whichqs
@@ -876,7 +882,7 @@ sw1:
  * Remove process from queue.
  */
 	sll	t0, t2, 3
-	la	t1, qs
+	la	t1, _C_LABEL(qs)
 	addu	t0, t0, t1			# t0 = qp = &qs[highbit]
 	lw	a0, P_FORW(t0)			# a0 = p = highest pri process
 	nop
@@ -891,7 +897,7 @@ sw1:
 	li	v1, 1				# compute bit in 'whichqs'
 	sll	v1, v1, t2
 	xor	t3, t3, v1			# clear bit in 'whichqs'
-	sw	t3, whichqs
+	sw	t3, _C_LABEL(whichqs)
 3:
 /*
  * Switch to new context.
@@ -947,7 +953,7 @@ END(cpu_switch)
  */
 LEAF(fuword)
 ALEAF(fuiword)
-	blt	a0, zero, fswberr	# make sure address is in user space
+	blt	a0, zero, _C_LABEL(fswberr)	# make sure address is in user space
 	li	v0, FSWBERR
 	sw	v0, UADDR+U_PCB_ONFAULT
 	lw	v0, 0(a0)		# fetch word
@@ -957,7 +963,7 @@ END(fuword)
 
 LEAF(fusword)
 ALEAF(fuisword)
-	blt	a0, zero, fswberr	# make sure address is in user space
+	blt	a0, zero, _C_LABEL(fswberr)	# make sure address is in user space
 	li	v0, FSWBERR
 	sw	v0, UADDR+U_PCB_ONFAULT
 	lhu	v0, 0(a0)		# fetch short
@@ -967,7 +973,7 @@ END(fusword)
 
 LEAF(fubyte)
 ALEAF(fuibyte)
-	blt	a0, zero, fswberr	# make sure address is in user space
+	blt	a0, zero, _C_LABEL(fswberr)	# make sure address is in user space
 	li	v0, FSWBERR
 	sw	v0, UADDR+U_PCB_ONFAULT
 	lbu	v0, 0(a0)		# fetch byte
@@ -976,7 +982,7 @@ ALEAF(fuibyte)
 END(fubyte)
 
 LEAF(suword)
-	blt	a0, zero, fswberr	# make sure address is in user space
+	blt	a0, zero, _C_LABEL(fswberr)	# make sure address is in user space
 	li	v0, FSWBERR
 	sw	v0, UADDR+U_PCB_ONFAULT
 	sw	a1, 0(a0)		# store word
@@ -989,7 +995,7 @@ END(suword)
  * Have to flush instruction cache afterwards.
  */
 LEAF(suiword)
-	blt	a0, zero, fswberr	# make sure address is in user space
+	blt	a0, zero, _C_LABEL(fswberr)	# make sure address is in user space
 	li	v0, FSWBERR
 	sw	v0, UADDR+U_PCB_ONFAULT
 	sw	a1, 0(a0)		# store word
@@ -1004,7 +1010,7 @@ END(suiword)
  */
 LEAF(susword)
 ALEAF(suisword)
-	blt	a0, zero, fswberr	# make sure address is in user space
+	blt	a0, zero, _C_LABEL(fswberr)	# make sure address is in user space
 	li	v0, FSWBERR
 	sw	v0, UADDR+U_PCB_ONFAULT
 	sh	a1, 0(a0)		# store short
@@ -1015,7 +1021,7 @@ END(susword)
 
 LEAF(subyte)
 ALEAF(suibyte)
-	blt	a0, zero, fswberr	# make sure address is in user space
+	blt	a0, zero, _C_LABEL(fswberr)	# make sure address is in user space
 	li	v0, FSWBERR
 	sw	v0, UADDR+U_PCB_ONFAULT
 	sb	a1, 0(a0)		# store byte
@@ -1087,14 +1093,123 @@ LEAF(_remque)
 END(_remque)
 
 /*
+ *----------------------------------------------------------------------------
+ *
+ * mips_r2000_UTLBmiss --
+ * MachUTLBmiss --
+ *
+ *	Vector code for a MIPS-I user-space TLB miss from user-space.
+ *
+ *
+ * This code is copied to the UTLB exception vector address to
+ * handle user level TLB translation misses.
+ * NOTE: This code must be relocatable!!!
+ */
+	.globl	_C_LABEL(mips_R2000_UTLBMiss)
+_C_LABEL(mips_R2000_UTLBMiss):
+	.globl	_C_LABEL(MachUTLBMiss)
+_C_LABEL(MachUTLBMiss):
+	.set	noat
+	mfc0	k0, MACH_COP_0_BAD_VADDR	# get the virtual address
+	lw	k1, UADDR+U_PCB_SEGTAB		# get the current segment table
+	bltz	k0, 1f				# R3000 chip bug
+	srl	k0, k0, SEGSHIFT		# compute segment table index
+	sll	k0, k0, 2
+	addu	k1, k1, k0
+	mfc0	k0, MACH_COP_0_BAD_VADDR	# get the virtual address
+	lw	k1, 0(k1)			# get pointer to segment map
+	srl	k0, k0, PGSHIFT - 2		# compute segment map index
+	andi	k0, k0, (NPTEPG - 1) << 2
+	beq	k1, zero, 2f			# invalid segment map
+	addu	k1, k1, k0			# index into segment map
+	lw	k0, 0(k1)			# get page PTE
+	nop
+	beq	k0, zero, 2f			# dont load invalid entries
+	mtc0	k0, MACH_COP_0_TLB_LOW
+	mfc0	k1, MACH_COP_0_EXC_PC		# get return address
+	tlbwr					# update TLB
+	j	k1
+	rfe
+1:
+	mfc0	k1, MACH_COP_0_EXC_PC		# get return address
+	nop
+	j	k1
+	rfe
+2:
+	j	SlowFault			# handle the rest
+	nop
+	.set	at
+	.globl	_C_LABEL(MachUTLBMissEnd)
+_C_LABEL(MachUTLBMissEnd):
+
+	.globl	_C_LABEL(mips_R2000_UTLBMissEnd)
+_C_LABEL(mips_R2000_UTLBMissEnd):
+
+
+/*
+ *----------------------------------------------------------------------------
+ *
+ * mips_R2000_execption --
+ *
+ *	Vector code for the general exception vector 0x80000080
+ *	on an r2000 or r3000.
+ *
+ * This code is copied to the general exception vector address to
+ * handle all execptions except RESET and UTLBMiss.
+ * NOTE: This code must be relocatable!!!
+ *
+ *----------------------------------------------------------------------------
+ */
+	.globl	_C_LABEL(mips_R2000_exception)
+_C_LABEL(mips_R2000_exception):
+/*
+ * Find out what mode we came from and jump to the proper handler.
+ */
+	.set	noat
+	mfc0	k0, MACH_COP_0_STATUS_REG	# Get the status register
+	mfc0	k1, MACH_COP_0_CAUSE_REG	# Get the cause register value.
+	and	k0, k0, MIPS_3K_SR_KU_PREV	# test for user mode
+	sll	k0, k0, 4			# shift user bit for cause index
+	and	k1, k1, MIPS_3K_CR_EXC_CODE	# Mask out the cause bits.
+	or	k1, k1, k0			# change index to user table
+1:
+	la	k0, _C_LABEL(machExceptionTable) # get base of the jump table
+	addu	k0, k0, k1			# Get the address of the
+						#  function entry.  Note that
+						#  the cause is already
+						#  shifted left by 2 bits so
+						#  we dont have to shift.
+	lw	k0, 0(k0)			# Get the function address
+	nop
+	j	k0				# Jump to the function.
+	nop
+	.set	at
+	.globl	_C_LABEL(mips_R2000_exceptionEnd)
+_C_LABEL(mips_R2000_exceptionEnd):
+
+
+
+/*
+ *----------------------------------------------------------------------------
+ *
+ * mips_R4000_TLBMiss --
+ * MachTLBMiss --
+ *
+ *	Vector code for the TLB-miss exception vector 0x80000180
+ *	on an r4000.
+ *
  * This code is copied to the TLB exception vector address to
  * handle TLB translation misses.
  * NOTE: This code must be relocatable and max 32 instructions!!!
  * Don't check for invalid pte's here. We load them as well and
  * let the processor trap to load the correct value after service.
+ *
+ *----------------------------------------------------------------------------
  */
-	.globl	MachTLBMiss
-MachTLBMiss:
+	.globl	_C_LABEL(mips_R4000_TLBMiss)
+_C_LABEL(mips_R4000_TLBMiss):
+	.globl	_C_LABEL(MachTLBMiss)
+_C_LABEL(MachTLBMiss):
 	.set	noat
 	dmfc0	k0, MACH_COP_0_BAD_VADDR	# get the virtual address
 	lw	k1, UADDR+U_PCB_SEGTAB		# get the current segment table
@@ -1131,50 +1246,12 @@ MachTLBMiss:
 	j	SlowFault
 	nop
 
-	.globl	MachTLBMissEnd
-MachTLBMissEnd:
+	.globl	_C_LABEL(MachTLBMissEnd)
+C_LABEL(MachTLBMissEnd):
+	.globl	_C_LABEL(mips_R4000_TLBMissEnd)
+_C_LABEL(mips_R4000_TLBMissEnd):
 	.set	at
 
-/*
- *----------------------------------------------------------------------------
- *
- * mips_R2000_execption --
- *
- *	Vector code for the general exception vector 0x80000080
- *	on an r2000 or r3000.
- *
- * This code is copied to the general exception vector address to
- * handle all execptions except RESET and UTLBMiss.
- * NOTE: This code must be relocatable!!!
- *
- *----------------------------------------------------------------------------
- */
-	.globl	_C_LABEL(mips_R2000_exception)
-_C_LABEL(mips_R2000_exception):
-/*
- * Find out what mode we came from and jump to the proper handler.
- */
-	.set	noat
-	mfc0	k0, MACH_COP_0_STATUS_REG	# Get the status register
-	mfc0	k1, MACH_COP_0_CAUSE_REG	# Get the cause register value.
-	and	k0, k0, MIPS_3K_SR_KU_PREV	# test for user mode
-	sll	k0, k0, 4			# shift user bit for cause index
-	and	k1, k1, MACH_CR_EXC_CODE	# Mask out the cause bits.
-	or	k1, k1, k0			# change index to user table
-1:
-	la	k0, _C_LABEL(machExceptionTable) # get base of the jump table
-	addu	k0, k0, k1			# Get the address of the
-						#  function entry.  Note that
-						#  the cause is already
-						#  shifted left by 2 bits so
-						#  we dont have to shift.
-	lw	k0, 0(k0)			# Get the function address
-	nop
-	j	k0				# Jump to the function.
-	nop
-	.set	at
-	.globl	_C_LABEL(mips_R2000_exceptionEnd)
-_C_LABEL(mips_R2000_exceptionEnd):
 
 /*
  *----------------------------------------------------------------------------
@@ -1201,7 +1278,7 @@ _C_LABEL(mips_R4000_exception):
 						# sneaky but the bits are
 						# with us........
 	sll	k0, k0, 3			# shift user bit for cause index
-	and	k1, k1, MACH_CR_EXC_CODE	# Mask out the cause bits.
+	and	k1, k1, MIPS_4K_CR_EXC_CODE	# Mask out the cause bits.
 	or	k1, k1, k0			# change index to user table
 1:
 	la	k0, machExceptionTable		# get base of the jump table
@@ -1757,6 +1834,1022 @@ NNON_LEAF(MachUserIntr, STAND_FRAME_SIZE, ra)
 	.set	at
 END(MachUserIntr)
 
+
+/*
+ * Set/clear software interrupt routines.
+ */
+
+LEAF(setsoftclock)
+	mfc0	v0, MACH_COP_0_CAUSE_REG	# read cause register
+	nop
+	or	v0, v0, MACH_SOFT_INT_MASK_0	# set soft clock interrupt
+	mtc0	v0, MACH_COP_0_CAUSE_REG	# save it
+	j	ra
+	nop
+END(setsoftclock)
+
+LEAF(clearsoftclock)
+	mfc0	v0, MACH_COP_0_CAUSE_REG	# read cause register
+	nop
+	and	v0, v0, ~MACH_SOFT_INT_MASK_0	# clear soft clock interrupt
+	mtc0	v0, MACH_COP_0_CAUSE_REG	# save it
+	j	ra
+	nop
+END(clearsoftclock)
+
+LEAF(setsoftnet)
+	mfc0	v0, MACH_COP_0_CAUSE_REG	# read cause register
+	nop
+	or	v0, v0, MACH_SOFT_INT_MASK_1	# set soft net interrupt
+	mtc0	v0, MACH_COP_0_CAUSE_REG	# save it
+	j	ra
+	nop
+END(setsoftnet)
+
+LEAF(clearsoftnet)
+	mfc0	v0, MACH_COP_0_CAUSE_REG	# read cause register
+	nop
+	and	v0, v0, ~MACH_SOFT_INT_MASK_1	# clear soft net interrupt
+	mtc0	v0, MACH_COP_0_CAUSE_REG	# save it
+	j	ra
+	nop
+END(clearsoftnet)
+
+/*
+ * Set/change interrupt priority routines.
+ */
+
+LEAF(MachEnableIntr)
+	mfc0	v0, MACH_COP_0_STATUS_REG	# read status register
+	nop
+	or	v0, v0, MIPS_SR_INT_IE
+	mtc0	v0, MACH_COP_0_STATUS_REG	# enable all interrupts
+	j	ra
+	nop
+END(MachEnableIntr)
+
+LEAF(spl0)
+	mfc0	v0, MACH_COP_0_STATUS_REG	# read status register
+	nop
+	or	t0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
+	mtc0	t0, MACH_COP_0_STATUS_REG	# enable all interrupts
+	j	ra
+	and	v0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
+END(spl0)
+
+LEAF(splsoftclock)
+	mfc0	v0, MACH_COP_0_STATUS_REG	# read status register
+	li	t0, ~MACH_SOFT_INT_MASK_0	# disable soft clock
+	and	t0, t0, v0
+	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
+	nop					# 3 ins to disable
+	j	ra
+	and	v0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
+END(splsoftclock)
+
+LEAF(splsoftnet)
+	mfc0	v0, MACH_COP_0_STATUS_REG	# read status register
+	li	t0, ~(MACH_SOFT_INT_MASK_1|MACH_SOFT_INT_MASK_0)
+	and	t0, t0, v0
+	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
+	j	ra
+	and	v0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
+END(splsoftnet)
+
+LEAF(Mach_spl0)
+	mfc0	v0, MACH_COP_0_STATUS_REG	# read status register
+	li	t0, ~(MACH_INT_MASK_0|MACH_SOFT_INT_MASK_1|MACH_SOFT_INT_MASK_0)
+	and	t0, t0, v0
+	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
+	nop					# 3 ins to disable
+	j	ra
+	and	v0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
+END(Mach_spl0)
+
+LEAF(Mach_spl1)
+	mfc0	v0, MACH_COP_0_STATUS_REG	# read status register
+	li	t0, ~(MACH_INT_MASK_1|MACH_SOFT_INT_MASK_1|MACH_SOFT_INT_MASK_0)
+	and	t0, t0, v0
+	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
+	nop					# 3 ins to disable
+	j	ra
+	and	v0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
+END(Mach_spl1)
+
+LEAF(Mach_spl2)
+	mfc0	v0, MACH_COP_0_STATUS_REG	# read status register
+	li	t0, ~(MACH_INT_MASK_2|MACH_SOFT_INT_MASK_1|MACH_SOFT_INT_MASK_0)
+	and	t0, t0, v0
+	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
+	nop					# 3 ins to disable
+	j	ra
+	and	v0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
+END(Mach_spl2)
+
+LEAF(Mach_spl3)
+	mfc0	v0, MACH_COP_0_STATUS_REG	# read status register
+	li	t0, ~(MACH_INT_MASK_3|MACH_SOFT_INT_MASK_1|MACH_SOFT_INT_MASK_0)
+	and	t0, t0, v0
+	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
+	nop					# 3 ins to disable
+	j	ra
+	and	v0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
+END(Mach_spl3)
+
+LEAF(Mach_spl4)
+	mfc0	v0, MACH_COP_0_STATUS_REG	# read status register
+	li	t0, ~(MACH_INT_MASK_4|MACH_SOFT_INT_MASK_1|MACH_SOFT_INT_MASK_0)
+	and	t0, t0, v0
+	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
+	nop					# 3 ins to disable
+	j	ra
+	and	v0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
+END(Mach_spl4)
+
+LEAF(Mach_spl5)
+	mfc0	v0, MACH_COP_0_STATUS_REG	# read status register
+	li	t0, ~(MACH_INT_MASK_5|MACH_SOFT_INT_MASK_1|MACH_SOFT_INT_MASK_0)
+	and	t0, t0, v0
+	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
+	nop					# 3 ins to disable
+	j	ra
+	and	v0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
+END(Mach_spl5)
+
+
+/*
+ * We define an alternate entry point after mcount is called so it
+ * can be used in mcount without causeing a recursive loop.
+ */
+LEAF(splhigh)
+ALEAF(_splhigh)
+	mfc0	v0, MACH_COP_0_STATUS_REG	# read status register
+	li	t0, ~MIPS_SR_INT_IE	# disable all interrupts
+	and	t0, t0, v0
+	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
+	nop					# 3 ins to disable
+	j	ra
+	and	v0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
+END(splhigh)
+
+/*
+ * Restore saved interrupt mask.
+ */
+LEAF(splx)
+ALEAF(_splx)
+	mfc0	v0, MACH_COP_0_STATUS_REG
+	li	t0, ~(MACH_INT_MASK | MIPS_SR_INT_IE)
+	and	t0, t0, v0
+	or	t0, t0, a0
+	mtc0	t0, MACH_COP_0_STATUS_REG
+	nop					# 3 ins to disable
+	j	ra
+	nop
+END(splx)
+
+/*----------------------------------------------------------------------------
+ *
+ * wbflush --
+ *
+ *	Return when the write buffer is empty.
+ *
+ *	wbflush()
+ *	MachEmptyWriteBuffer()	[[backwards compatibility]]
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	None.
+ *
+ * 	XXX really r4000-specific, but the pmax wbflush() should be
+ *	more tailored, too.
+ *
+ *----------------------------------------------------------------------------
+ */
+LEAF(wbflush)
+ALEAF(MachEmptyWriteBuffer)
+	nop
+	sync
+	j	ra
+	nop
+END(MachEmptyWriteBuffer)
+
+#ifdef notyet /* XXX XXX  -- r3000 support, not yet */
+
+/*----------------------------------------------------------------------------
+ *
+ *		XXX  START of r3000-specific code  XXX 
+ *
+ *----------------------------------------------------------------------------
+ */
+
+
+
+#if 0
+/*----------------------------------------------------------------------------
+ *
+ * MachTLBModException --
+ *
+ *	Handle a TLB modified exception.
+ *	The BaddVAddr, Context, and EntryHi registers contain the failed
+ *	virtual address.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------------
+ */
+NLEAF(MachTLBModException)
+	.set	noat
+	tlbp					# find the TLB entry
+	mfc0	k0, MACH_COP_0_TLB_LOW		# get the physical address
+	mfc0	k1, MACH_COP_0_TLB_INDEX	# check to be sure its valid
+	or	k0, k0, VMMACH_TLB_MOD_BIT	# update TLB
+	blt	k1, zero, 4f			# not found!!!
+	mtc0	k0, MACH_COP_0_TLB_LOW
+	li	k1, MACH_CACHED_MEMORY_ADDR
+	subu	k0, k0, k1
+	srl	k0, k0, VMMACH_TLB_PHYS_PAGE_SHIFT
+	la	k1, pmap_attributes
+	addu	k0, k0, k1
+	lbu	k1, 0(k0)			# fetch old value
+	nop
+	or	k1, k1, 1			# set modified bit
+	sb	k1, 0(k0)			# save new value
+	mfc0	k0, MACH_COP_0_EXC_PC		# get return address
+	nop
+	j	k0
+	rfe
+4:
+	break	0				# panic
+	.set	at
+END(MachTLBModException)
+#endif
+
+/*----------------------------------------------------------------------------
+ *
+ * MachTLBMissException --
+ *
+ *	Handle a TLB miss exception from kernel mode.
+ *	The BaddVAddr, Context, and EntryHi registers contain the failed
+ *	virtual address.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------------
+ */
+NLEAF(MachTLBMissException)
+	.set	noat
+	mfc0	k0, MACH_COP_0_BAD_VADDR	# get the fault address
+	li	k1, VM_MIN_KERNEL_ADDRESS	# compute index
+	subu	k0, k0, k1
+	lw	k1, _C_LABEL(Sysmapsize)	# index within range?
+	srl	k0, k0, PGSHIFT
+	sltu	k1, k0, k1
+	beq	k1, zero, 1f			# No. check for valid stack
+	nop
+	lw	k1, _C_LABEL(Sysmap)
+	sll	k0, k0, 2			# compute offset from index
+	addu	k1, k1, k0
+	lw	k0, 0(k1)			# get PTE entry
+	mfc0	k1, MACH_COP_0_EXC_PC		# get return address
+	mtc0	k0, MACH_COP_0_TLB_LOW		# save PTE entry
+	and	k0, k0, PG_V			# check for valid entry
+	beq	k0, zero, _C_LABEL(MachKernGenException) # PTE invalid
+	nop
+	tlbwr					# update TLB
+	j	k1
+	rfe
+
+1:
+	subu	k0, sp, UADDR + 0x200		# check to see if we have a
+	sltiu	k0, UPAGES*NBPG - 0x200		#  valid kernel stack
+	bne	k0, zero, _C_LABEL(MachKernGenException) # Go panic
+	nop
+
+	la	a0, start - START_FRAME - 8	# set sp to a valid place
+	sw	sp, 24(a0)
+	move	sp, a0
+	la	a0, 1f
+	mfc0	a2, MACH_COP_0_STATUS_REG
+	mfc0	a3, MACH_COP_0_CAUSE_REG
+	mfc0	a1, MACH_COP_0_EXC_PC
+	sw	a2, 16(sp)
+	sw	a3, 20(sp)
+	sw	sp, 24(sp)
+	move	a2, ra
+	jal	_C_LABEL(printf)
+	mfc0	a3, MACH_COP_0_BAD_VADDR
+	.data
+1:
+	.asciiz	"ktlbmiss: PC %x RA %x ADR %x\nSR %x CR %x SP %x\n"
+	.text
+
+	la	sp, start - START_FRAME		# set sp to a valid place
+	PANIC("kernel stack overflow")
+	.set	at
+END(MachTLBMissException)
+
+
+/*--------------------------------------------------------------------------
+ *
+ * MachTLBWriteIndexed --
+ *
+ *	Write the given entry into the TLB at the given index.
+ *
+ *	MachTLBWriteIndexed(index, highEntry, lowEntry)
+ *		int index;
+ *		int highEntry;
+ *		int lowEntry;
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	TLB entry set.
+ *
+ *--------------------------------------------------------------------------
+ */
+LEAF(MachTLBWriteIndexed)
+	mfc0	v1, MACH_COP_0_STATUS_REG	# Save the status register.
+	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts
+	mfc0	t0, MACH_COP_0_TLB_HI		# Save the current PID.
+
+	sll	a0, a0, VMMACH_TLB_INDEX_SHIFT
+	mtc0	a0, MACH_COP_0_TLB_INDEX	# Set the index.
+	mtc0	a1, MACH_COP_0_TLB_HI		# Set up entry high.
+	mtc0	a2, MACH_COP_0_TLB_LOW		# Set up entry low.
+	nop
+	tlbwi					# Write the TLB
+
+	mtc0	t0, MACH_COP_0_TLB_HI		# Restore the PID.
+	j	ra
+	mtc0	v1, MACH_COP_0_STATUS_REG	# Restore the status register
+END(MachTLBWriteIndexed)
+
+#if 0
+/*--------------------------------------------------------------------------
+ *
+ * MachTLBWriteRandom --
+ *
+ *	Write the given entry into the TLB at a random location.
+ *
+ *	MachTLBWriteRandom(highEntry, lowEntry)
+ *		unsigned highEntry;
+ *		unsigned lowEntry;
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	TLB entry set.
+ *
+ *--------------------------------------------------------------------------
+ */
+LEAF(MachTLBWriteRandom)
+	mfc0	v1, MACH_COP_0_STATUS_REG	# Save the status register.
+	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts
+	mfc0	v0, MACH_COP_0_TLB_HI		# Save the current PID.
+	nop
+
+	mtc0	a0, MACH_COP_0_TLB_HI		# Set up entry high.
+	mtc0	a1, MACH_COP_0_TLB_LOW		# Set up entry low.
+	nop
+	tlbwr					# Write the TLB
+
+	mtc0	v0, MACH_COP_0_TLB_HI		# Restore the PID.
+	j	ra
+	mtc0	v1, MACH_COP_0_STATUS_REG	# Restore the status register
+END(MachTLBWriteRandom)
+#endif
+
+/*--------------------------------------------------------------------------
+ *
+ * MachSetPID --
+ *
+ *	Write the given pid into the TLB pid reg.
+ *
+ *	MachSetPID(pid)
+ *		int pid;
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	PID set in the entry hi register.
+ *
+ *--------------------------------------------------------------------------
+ */
+LEAF(MachSetPID)
+	sll	a0, a0, VMMACH_TLB_PID_SHIFT	# put PID in right spot
+	mtc0	a0, MACH_COP_0_TLB_HI		# Write the hi reg value
+	j	ra
+	nop
+END(MachSetPID)
+
+/*--------------------------------------------------------------------------
+ *
+ * MachTLBFlush --
+ *
+ *	Flush the "random" entries from the TLB.
+ *
+ *	MachTLBFlush()
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	The TLB is flushed.
+ *
+ *--------------------------------------------------------------------------
+ */
+LEAF(MachTLBFlush)
+	mfc0	v1, MACH_COP_0_STATUS_REG	# Save the status register.
+	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts
+	mfc0	t0, MACH_COP_0_TLB_HI		# Save the PID
+	li	t1, MACH_CACHED_MEMORY_ADDR	# invalid address
+	mtc0	t1, MACH_COP_0_TLB_HI		# Mark entry high as invalid
+	mtc0	zero, MACH_COP_0_TLB_LOW	# Zero out low entry.
+/*
+ * Align the starting value (t1) and the upper bound (t2).
+ */
+	li	t1, VMMACH_FIRST_RAND_ENTRY << VMMACH_TLB_INDEX_SHIFT
+	li	t2, VMMACH_NUM_TLB_ENTRIES << VMMACH_TLB_INDEX_SHIFT
+1:
+	mtc0	t1, MACH_COP_0_TLB_INDEX	# Set the index register.
+	addu	t1, t1, 1 << VMMACH_TLB_INDEX_SHIFT	# Increment index.
+	bne	t1, t2, 1b
+	tlbwi					# Write the TLB entry.
+
+	mtc0	t0, MACH_COP_0_TLB_HI		# Restore the PID
+	j	ra
+	mtc0	v1, MACH_COP_0_STATUS_REG	# Restore the status register
+END(MachTLBFlush)
+
+#if 0
+/*--------------------------------------------------------------------------
+ *
+ * MachTLBFlushPID --
+ *
+ *	Flush all entries with the given PID from the TLB.
+ *
+ *	MachTLBFlushPID(pid)
+ *		int pid;
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	All entries corresponding to this PID are flushed.
+ *
+ *--------------------------------------------------------------------------
+ */
+LEAF(MachTLBFlushPID)
+	mfc0	v1, MACH_COP_0_STATUS_REG	# Save the status register.
+	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts
+	mfc0	t0, MACH_COP_0_TLB_HI		# Save the current PID
+	sll	a0, a0, VMMACH_TLB_PID_SHIFT	# Align the pid to flush.
+/*
+ * Align the starting value (t1) and the upper bound (t2).
+ */
+	li	t1, VMMACH_FIRST_RAND_ENTRY << VMMACH_TLB_INDEX_SHIFT
+	li	t2, VMMACH_NUM_TLB_ENTRIES << VMMACH_TLB_INDEX_SHIFT
+	mtc0	t1, MACH_COP_0_TLB_INDEX	# Set the index register
+1:
+	addu	t1, t1, 1 << VMMACH_TLB_INDEX_SHIFT	# Increment index.
+	tlbr					# Read from the TLB
+	mfc0	t4, MACH_COP_0_TLB_HI		# Fetch the hi register.
+	nop
+	and	t4, t4, VMMACH_TLB_PID		# compare PIDs
+	bne	t4, a0, 2f
+	li	v0, MACH_CACHED_MEMORY_ADDR	# invalid address
+	mtc0	v0, MACH_COP_0_TLB_HI		# Mark entry high as invalid
+	mtc0	zero, MACH_COP_0_TLB_LOW	# Zero out low entry.
+	nop
+	tlbwi					# Write the entry.
+2:
+	bne	t1, t2, 1b
+	mtc0	t1, MACH_COP_0_TLB_INDEX	# Set the index register
+
+	mtc0	t0, MACH_COP_0_TLB_HI		# restore PID
+	j	ra
+	mtc0	v1, MACH_COP_0_STATUS_REG	# Restore the status register
+END(MachTLBFlushPID)
+#endif
+
+/*--------------------------------------------------------------------------
+ *
+ * MachTLBFlushAddr --
+ *
+ *	Flush any TLB entries for the given address and TLB PID.
+ *
+ *	MachTLBFlushAddr(highreg)
+ *		unsigned highreg;
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	The process's page is flushed from the TLB.
+ *
+ *--------------------------------------------------------------------------
+ */
+LEAF(MachTLBFlushAddr)
+	mfc0	v1, MACH_COP_0_STATUS_REG	# Save the status register.
+	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts
+	mfc0	t0, MACH_COP_0_TLB_HI		# Get current PID
+	nop
+
+	mtc0	a0, MACH_COP_0_TLB_HI		# look for addr & PID
+	nop
+	tlbp					# Probe for the entry.
+	mfc0	v0, MACH_COP_0_TLB_INDEX	# See what we got
+	li	t1, MACH_CACHED_MEMORY_ADDR	# Load invalid entry.
+	bltz	v0, 1f				# index < 0 => !found
+	mtc0	t1, MACH_COP_0_TLB_HI		# Mark entry high as invalid
+	mtc0	zero, MACH_COP_0_TLB_LOW	# Zero out low entry.
+	nop
+	tlbwi
+1:
+	mtc0	t0, MACH_COP_0_TLB_HI		# restore PID
+	j	ra
+	mtc0	v1, MACH_COP_0_STATUS_REG	# Restore the status register
+END(MachTLBFlushAddr)
+
+/*--------------------------------------------------------------------------
+ *
+ * MachTLBUpdate --
+ *
+ *	Update the TLB if highreg is found; otherwise, enter the data.
+ *
+ *	MachTLBUpdate(highreg, lowreg)
+ *		unsigned highreg, lowreg;
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	None.
+ *
+ *--------------------------------------------------------------------------
+ */
+LEAF(MachTLBUpdate)
+	mfc0	v1, MACH_COP_0_STATUS_REG	# Save the status register.
+	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts
+	mfc0	t0, MACH_COP_0_TLB_HI		# Save current PID
+	nop					# 2 cycles before intr disabled
+	mtc0	a0, MACH_COP_0_TLB_HI		# init high reg.
+	nop
+	tlbp					# Probe for the entry.
+	mfc0	v0, MACH_COP_0_TLB_INDEX	# See what we got
+	mtc0	a1, MACH_COP_0_TLB_LOW		# init low reg.
+	bltz	v0, 1f				# index < 0 => !found
+	sra	v0, v0, VMMACH_TLB_INDEX_SHIFT	# convert index to regular num
+	b	2f
+	tlbwi					# update slot found
+1:
+	mtc0	a0, MACH_COP_0_TLB_HI		# init high reg.
+	nop
+	tlbwr					# enter into a random slot
+2:
+	mtc0	t0, MACH_COP_0_TLB_HI		# restore PID
+	j	ra
+	mtc0	v1, MACH_COP_0_STATUS_REG	# Restore the status register
+END(MachTLBUpdate)
+
+/*--------------------------------------------------------------------------
+ *
+ * MachTLBFind --
+ *
+ *	Search the TLB for the given entry.
+ *
+ *	MachTLBFind(hi)
+ *		unsigned hi;
+ *
+ * Results:
+ *	Returns a value >= 0 if the entry was found (the index).
+ *	Returns a value < 0 if the entry was not found.
+ *
+ * Side effects:
+ *	tlbhi and tlblo will contain the TLB entry found.
+ *
+ *--------------------------------------------------------------------------
+ */
+	.comm	tlbhi, 4
+	.comm	tlblo, 4
+LEAF(MachTLBFind)
+	mfc0	v1, MACH_COP_0_STATUS_REG	# Save the status register.
+	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts
+	mfc0	t0, MACH_COP_0_TLB_HI		# Get current PID
+	nop
+	mtc0	a0, MACH_COP_0_TLB_HI		# Set up entry high.
+	nop
+	tlbp					# Probe for the entry.
+	mfc0	v0, MACH_COP_0_TLB_INDEX	# See what we got
+	nop
+	bltz	v0, 1f				# not found
+	nop
+	tlbr					# read TLB
+	mfc0	t1, MACH_COP_0_TLB_HI		# See what we got
+	mfc0	t2, MACH_COP_0_TLB_LOW		# See what we got
+	sw	t1, tlbhi
+	sw	t2, tlblo
+	srl	v0, v0, VMMACH_TLB_INDEX_SHIFT	# convert index to regular num
+1:
+	mtc0	t0, MACH_COP_0_TLB_HI		# Restore current PID
+	j	ra
+	mtc0	v1, MACH_COP_0_STATUS_REG	# Restore the status register
+END(MachTLBFind)
+
+/*--------------------------------------------------------------------------
+ *
+ * MachTLBRead --
+ *
+ *	Read the TLB entry.
+ *
+ *	MachTLBRead(entry)
+ *		unsigned entry;
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	tlbhi and tlblo will contain the TLB entry found.
+ *
+ *--------------------------------------------------------------------------
+ */
+LEAF(MachTLBRead)
+	mfc0	v1, MACH_COP_0_STATUS_REG	# Save the status register.
+	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts
+	mfc0	t0, MACH_COP_0_TLB_HI		# Get current PID
+
+	sll	a0, a0, VMMACH_TLB_INDEX_SHIFT
+	mtc0	a0, MACH_COP_0_TLB_INDEX	# Set the index register
+	nop
+	tlbr					# Read from the TLB
+	mfc0	t3, MACH_COP_0_TLB_HI		# fetch the hi entry
+	mfc0	t4, MACH_COP_0_TLB_LOW		# fetch the low entry
+	sw	t3, tlbhi
+	sw	t4, tlblo
+
+	mtc0	t0, MACH_COP_0_TLB_HI		# restore PID
+	j	ra
+	mtc0	v1, MACH_COP_0_STATUS_REG	# Restore the status register
+END(MachTLBRead)
+
+/*--------------------------------------------------------------------------
+ *
+ * MachTLBGetPID --
+ *
+ *	MachTLBGetPID()
+ *
+ * Results:
+ *	Returns the current TLB pid reg.
+ *
+ * Side effects:
+ *	None.
+ *
+ *--------------------------------------------------------------------------
+ */
+LEAF(MachTLBGetPID)
+	mfc0	v0, MACH_COP_0_TLB_HI		# get PID
+	nop
+	and	v0, v0, VMMACH_TLB_PID		# mask off PID
+	j	ra
+	srl	v0, v0, VMMACH_TLB_PID_SHIFT	# put PID in right spot
+END(MachTLBGetPID)
+
+
+/*----------------------------------------------------------------------------
+ *
+ *	R3000 cache sizing and flushing code.
+ *
+ *----------------------------------------------------------------------------
+ */
+
+
+/*----------------------------------------------------------------------------
+ *
+ * MachConfigCache --
+ *
+ *	Size the caches.
+ *	NOTE: should only be called from mach_init().
+ *
+ * Results:
+ *     	None.
+ *
+ * Side effects:
+ *	The size of the data cache is stored into machDataCacheSize and the
+ *	size of instruction cache is stored into machInstCacheSize.
+ *
+ *----------------------------------------------------------------------------
+ */
+NON_LEAF(MachConfigCache, STAND_FRAME_SIZE, ra)
+	subu	sp, sp, STAND_FRAME_SIZE
+	sw	ra, STAND_RA_OFFSET(sp)		# Save return address.
+	.mask	0x80000000, (STAND_RA_OFFSET - STAND_FRAME_SIZE)
+	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts.
+	la	v0, 1f
+	or	v0, MACH_UNCACHED_MEMORY_ADDR	# Run uncached.
+	j	v0
+	nop
+1:
+/*
+ * This works because jal doesn't change pc[31..28] and the
+ * linker still thinks SizeCache is in the cached region so it computes
+ * the correct address without complaining.
+ */
+	jal	_C_LABEL(SizeCache)		# Get the size of the d-cache.
+	nop
+	sw	v0, _C_LABEL(machDataCacheSize)
+	nop					# Make sure sw out of pipe
+	nop
+	nop
+	nop
+	li	v0, MACH_SR_SWAP_CACHES		# Swap caches
+	mtc0	v0, MACH_COP_0_STATUS_REG
+	nop					# Insure caches stable
+	nop
+	nop
+	nop
+	jal	_C_LABEL(SizeCache)		# Get the size of the i-cache.
+	nop
+	mtc0	zero, MACH_COP_0_STATUS_REG	# Swap back caches and enable.
+	nop
+	nop
+	nop
+	nop
+	sw	v0, _C_LABEL(machInstCacheSize)
+	la	t0, 1f
+	j	t0				# Back to cached mode
+	nop
+1:
+	lw	ra, STAND_RA_OFFSET(sp)		# Restore return addr
+	addu	sp, sp, STAND_FRAME_SIZE	# Restore sp.
+	j	ra
+	nop
+END(MachConfigCache)
+
+/*----------------------------------------------------------------------------
+ *
+ * SizeCache --
+ *
+ *	Get the size of the cache.
+ *
+ * Results:
+ *	The size of the cache.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------------
+ */
+LEAF(SizeCache)
+	mfc0	t0, MACH_COP_0_STATUS_REG	# Save the current status reg.
+	nop
+	or	v0, t0, MACH_SR_ISOL_CACHES	# Isolate the caches.
+	nop					# Make sure no stores in pipe
+	mtc0	v0, MACH_COP_0_STATUS_REG
+	nop					# Make sure isolated
+	nop
+	nop
+/*
+ * Clear cache size boundaries.
+ */
+	li	v0, MACH_MIN_CACHE_SIZE
+	li	v1, MACH_CACHED_MEMORY_ADDR
+	li	t2, MACH_MAX_CACHE_SIZE
+1:
+	addu	t1, v0, v1			# Compute address to clear
+	sw	zero, 0(t1)			# Clear cache memory
+	bne	v0, t2, 1b
+	sll	v0, v0, 1
+
+	li	v0, -1
+	sw	v0, 0(v1)			# Store marker in cache
+	li	v0, MACH_MIN_CACHE_SIZE
+2:
+	addu	t1, v0, v1			# Compute address
+	lw	t3, 0(t1)			# Look for marker
+	nop
+	bne	t3, zero, 3f			# Found marker.
+	nop
+	bne	v0, t2, 2b			# keep looking
+	sll	v0, v0, 1			# cache size * 2
+
+	move	v0, zero			# must be no cache
+3:
+	mtc0	t0, MACH_COP_0_STATUS_REG
+	nop					# Make sure unisolated
+	nop
+	nop
+	nop
+	j	ra
+	nop
+END(SizeCache)
+
+/*----------------------------------------------------------------------------
+ *
+ * MachFlushCache --
+ *
+ *	Flush the caches.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	The contents of the caches is flushed.
+ *
+ *----------------------------------------------------------------------------
+ */
+LEAF(MachFlushCache)
+	lw	t1, _C_LABEL(machInstCacheSize)	# Must load before isolating
+	lw	t2, _C_LABEL(machDataCacheSize)	# Must load before isolating
+	mfc0	t3, MACH_COP_0_STATUS_REG 	# Save the status register.
+	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts.
+	la	v0, 1f
+	or	v0, MACH_UNCACHED_MEMORY_ADDR	# Run uncached.
+	j	v0
+	nop
+/*
+ * Flush the instruction cache.
+ */
+1:
+	li	v0, MACH_SR_ISOL_CACHES | MACH_SR_SWAP_CACHES
+	mtc0	v0, MACH_COP_0_STATUS_REG	# Isolate and swap caches.
+	li	t0, MACH_UNCACHED_MEMORY_ADDR
+	subu	t0, t0, t1
+	li	t1, MACH_UNCACHED_MEMORY_ADDR
+	la	v0, 1f				# Run cached
+	j	v0
+	nop
+1:
+	addu	t0, t0, 4
+	bne	t0, t1, 1b
+	sb	zero, -4(t0)
+
+	la	v0, 1f
+	or	v0, MACH_UNCACHED_MEMORY_ADDR
+	j	v0				# Run uncached
+	nop
+/*
+ * Flush the data cache.
+ */
+1:
+	li	v0, MACH_SR_ISOL_CACHES
+	mtc0	v0, MACH_COP_0_STATUS_REG	# Isolate and swap back caches
+	li	t0, MACH_UNCACHED_MEMORY_ADDR
+	subu	t0, t0, t2
+	la	v0, 1f
+	j	v0				# Back to cached mode
+	nop
+1:
+	addu	t0, t0, 4
+	bne	t0, t1, 1b
+	sb	zero, -4(t0)
+
+	nop					# Insure isolated stores
+	nop					#   out of pipe.
+	nop
+	nop
+	mtc0	t3, MACH_COP_0_STATUS_REG	# Restore status reg.
+	nop					# Insure cache unisolated.
+	nop
+	nop
+	nop
+	j	ra
+	nop
+END(MachFlushCache)
+
+/*----------------------------------------------------------------------------
+ *
+ * MachFlushICache --
+ *
+ *	void MachFlushICache(addr, len)
+ *		vm_offset_t addr, len;
+ *
+ *	Flush instruction cache for range of addr to addr + len - 1.
+ *	The address can be any valid address so long as no TLB misses occur.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	The contents of the cache is flushed.
+ *
+ *----------------------------------------------------------------------------
+ */
+LEAF(MachFlushICache)
+	mfc0	t0, MACH_COP_0_STATUS_REG	# Save SR
+	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts.
+
+	la	v1, 1f
+	or	v1, MACH_UNCACHED_MEMORY_ADDR	# Run uncached.
+	j	v1
+	nop
+1:
+	bc0f	1b				# make sure stores are complete
+	li	v1, MACH_SR_ISOL_CACHES | MACH_SR_SWAP_CACHES
+	mtc0	v1, MACH_COP_0_STATUS_REG
+	nop
+	addu	a1, a1, a0			# compute ending address
+1:
+	addu	a0, a0, 4
+	bne	a0, a1, 1b
+	sb	zero, -4(a0)
+
+	mtc0	t0, MACH_COP_0_STATUS_REG	# enable interrupts
+	j	ra				# return and run cached
+	nop
+END(MachFlushICache)
+
+/*----------------------------------------------------------------------------
+ *
+ * MachFlushDCache --
+ *
+ *	void MachFlushDCache(addr, len)
+ *		vm_offset_t addr, len;
+ *
+ *	Flush data cache for range of addr to addr + len - 1.
+ *	The address can be any valid address so long as no TLB misses occur.
+ *	(Be sure to use cached K0SEG kernel addresses)
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	The contents of the cache is flushed.
+ *
+ *----------------------------------------------------------------------------
+ */
+LEAF(MachFlushDCache)
+	mfc0	t0, MACH_COP_0_STATUS_REG	# Save SR
+	mtc0	zero, MACH_COP_0_STATUS_REG	# Disable interrupts.
+	nop
+1:
+	bc0f	1b				# make sure stores are complete
+# BUG: should drain write buffer.
+# The insn above does not work on some all DEC machines, or all variants
+# of the mips architecture.
+	li	v1, MACH_SR_ISOL_CACHES
+	mtc0	v1, MACH_COP_0_STATUS_REG
+	nop
+	addu	t1, a1, a0			# compute ending address
+1:
+	sb	zero, 0(a0)
+	sb	zero, 4(a0)
+	sb	zero, 8(a0)
+	sb	zero, 12(a0)
+	sb	zero, 16(a0)
+	sb	zero, 20(a0)
+	sb	zero, 24(a0)
+	addu	a0, 32
+	bltu	a0, t1, 1b
+	sb	zero, -4(a0)
+
+	nop					# drain pipeline
+	nop
+	mtc0	t0, MACH_COP_0_STATUS_REG	# enable interrupts
+	nop
+	j	ra				# return and run cached
+	nop
+END(MachFlushDCache)
+
+/*----------------------------------------------------------------------------
+ *
+ *		XXX  END of r3000-specific code  XXX 
+ *
+ *----------------------------------------------------------------------------
+ */
+#endif	/* XXX XXX  -- r3000 support, not yet */
+
+
+
+#if 1	/* R4000 support  */
+
+/*----------------------------------------------------------------------------
+ *
+ *		XXX  START of r4000-specific code  XXX 
+ *
+ *----------------------------------------------------------------------------
+ */
+
+
+/*----------------------------------------------------------------------------
+ *
+ *	R4000 TLB exception handlers
+ *
+ *----------------------------------------------------------------------------
+*/
+
+
 /*----------------------------------------------------------------------------
  *
  * MachTLBMInvalidException --
@@ -1919,199 +3012,6 @@ sys_stk_chk:
 	.set	at
 END(MachTLBMissException)
 
-/*
- * Set/clear software interrupt routines.
- */
-
-LEAF(setsoftclock)
-	mfc0	v0, MACH_COP_0_CAUSE_REG	# read cause register
-	nop
-	or	v0, v0, MACH_SOFT_INT_MASK_0	# set soft clock interrupt
-	mtc0	v0, MACH_COP_0_CAUSE_REG	# save it
-	j	ra
-	nop
-END(setsoftclock)
-
-LEAF(clearsoftclock)
-	mfc0	v0, MACH_COP_0_CAUSE_REG	# read cause register
-	nop
-	and	v0, v0, ~MACH_SOFT_INT_MASK_0	# clear soft clock interrupt
-	mtc0	v0, MACH_COP_0_CAUSE_REG	# save it
-	j	ra
-	nop
-END(clearsoftclock)
-
-LEAF(setsoftnet)
-	mfc0	v0, MACH_COP_0_CAUSE_REG	# read cause register
-	nop
-	or	v0, v0, MACH_SOFT_INT_MASK_1	# set soft net interrupt
-	mtc0	v0, MACH_COP_0_CAUSE_REG	# save it
-	j	ra
-	nop
-END(setsoftnet)
-
-LEAF(clearsoftnet)
-	mfc0	v0, MACH_COP_0_CAUSE_REG	# read cause register
-	nop
-	and	v0, v0, ~MACH_SOFT_INT_MASK_1	# clear soft net interrupt
-	mtc0	v0, MACH_COP_0_CAUSE_REG	# save it
-	j	ra
-	nop
-END(clearsoftnet)
-
-/*
- * Set/change interrupt priority routines.
- */
-
-LEAF(MachEnableIntr)
-	mfc0	v0, MACH_COP_0_STATUS_REG	# read status register
-	nop
-	or	v0, v0, MIPS_SR_INT_IE
-	mtc0	v0, MACH_COP_0_STATUS_REG	# enable all interrupts
-	j	ra
-	nop
-END(MachEnableIntr)
-
-LEAF(spl0)
-	mfc0	v0, MACH_COP_0_STATUS_REG	# read status register
-	nop
-	or	t0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
-	mtc0	t0, MACH_COP_0_STATUS_REG	# enable all interrupts
-	j	ra
-	and	v0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
-END(spl0)
-
-LEAF(splsoftclock)
-	mfc0	v0, MACH_COP_0_STATUS_REG	# read status register
-	li	t0, ~MACH_SOFT_INT_MASK_0	# disable soft clock
-	and	t0, t0, v0
-	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
-	nop					# 3 ins to disable
-	j	ra
-	and	v0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
-END(splsoftclock)
-
-LEAF(splsoftnet)
-	mfc0	v0, MACH_COP_0_STATUS_REG	# read status register
-	li	t0, ~(MACH_SOFT_INT_MASK_1|MACH_SOFT_INT_MASK_0)
-	and	t0, t0, v0
-	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
-	j	ra
-	and	v0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
-END(splsoftnet)
-
-LEAF(Mach_spl0)
-	mfc0	v0, MACH_COP_0_STATUS_REG	# read status register
-	li	t0, ~(MACH_INT_MASK_0|MACH_SOFT_INT_MASK_1|MACH_SOFT_INT_MASK_0)
-	and	t0, t0, v0
-	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
-	nop					# 3 ins to disable
-	j	ra
-	and	v0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
-END(Mach_spl0)
-
-LEAF(Mach_spl1)
-	mfc0	v0, MACH_COP_0_STATUS_REG	# read status register
-	li	t0, ~(MACH_INT_MASK_1|MACH_SOFT_INT_MASK_0|MACH_SOFT_INT_MASK_1)
-	and	t0, t0, v0
-	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
-	nop					# 3 ins to disable
-	j	ra
-	and	v0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
-END(Mach_spl1)
-
-LEAF(Mach_spl2)
-	mfc0	v0, MACH_COP_0_STATUS_REG	# read status register
-	li	t0, ~(MACH_INT_MASK_2|MACH_SOFT_INT_MASK_1|MACH_SOFT_INT_MASK_0)
-	and	t0, t0, v0
-	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
-	nop					# 3 ins to disable
-	j	ra
-	and	v0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
-END(Mach_spl2)
-
-LEAF(Mach_spl3)
-	mfc0	v0, MACH_COP_0_STATUS_REG	# read status register
-	li	t0, ~(MACH_INT_MASK_3|MACH_SOFT_INT_MASK_1|MACH_SOFT_INT_MASK_0)
-	and	t0, t0, v0
-	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
-	nop					# 3 ins to disable
-	j	ra
-	and	v0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
-END(Mach_spl3)
-
-LEAF(Mach_spl4)
-	mfc0	v0, MACH_COP_0_STATUS_REG	# read status register
-	li	t0, ~(MACH_INT_MASK_4|MACH_SOFT_INT_MASK_1|MACH_SOFT_INT_MASK_0)
-	and	t0, t0, v0
-	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
-	nop					# 3 ins to disable
-	j	ra
-	and	v0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
-END(Mach_spl4)
-
-LEAF(Mach_spl5)
-	mfc0	v0, MACH_COP_0_STATUS_REG	# read status register
-	li	t0, ~(MACH_INT_MASK_5|MACH_SOFT_INT_MASK_1|MACH_SOFT_INT_MASK_0)
-	and	t0, t0, v0
-	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
-	nop					# 3 ins to disable
-	j	ra
-	and	v0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
-END(Mach_spl5)
-
-/*
- * We define an alternate entry point after mcount is called so it
- * can be used in mcount without causeing a recursive loop.
- */
-LEAF(splhigh)
-ALEAF(_splhigh)
-	mfc0	v0, MACH_COP_0_STATUS_REG	# read status register
-	li	t0, ~MIPS_SR_INT_IE	# disable all interrupts
-	and	t0, t0, v0
-	mtc0	t0, MACH_COP_0_STATUS_REG	# save it
-	nop					# 3 ins to disable
-	j	ra
-	and	v0, v0, (MACH_INT_MASK | MIPS_SR_INT_IE)
-END(splhigh)
-
-/*
- * Restore saved interrupt mask.
- */
-LEAF(splx)
-ALEAF(_splx)
-	mfc0	v0, MACH_COP_0_STATUS_REG
-	li	t0, ~(MACH_INT_MASK | MIPS_SR_INT_IE)
-	and	t0, t0, v0
-	or	t0, t0, a0
-	mtc0	t0, MACH_COP_0_STATUS_REG
-	nop					# 3 ins to disable
-	j	ra
-	nop
-END(splx)
-
-/*----------------------------------------------------------------------------
- *
- * MachEmptyWriteBuffer --
- *
- *	Return when the write buffer is empty.
- *
- *	MachEmptyWriteBuffer()
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	None.
- *
- *----------------------------------------------------------------------------
- */
-LEAF(MachEmptyWriteBuffer)
-	nop
-	sync
-	j	ra
-	nop
-END(MachEmptyWriteBuffer)
 
 /*--------------------------------------------------------------------------
  *
@@ -2485,307 +3385,14 @@ LEAF(MachTLBGetPID)
 END(MachTLBGetPID)
 
 
-/*----------------------------------------------------------------------------
- *
- * MachSwitchFPState --
- *
- *	Save the current state into 'from' and restore it from 'to'.
- *
- *	MachSwitchFPState(from, to)
- *		struct proc *from;
- *		struct user *to;
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	None.
- *
- *----------------------------------------------------------------------------
- */
-LEAF(MachSwitchFPState)
-	mfc0	t1, MACH_COP_0_STATUS_REG	# Save old SR
-	li	t0, MACH_SR_COP_1_BIT		# enable the coprocessor
-	mtc0	t0, MACH_COP_0_STATUS_REG
-
-	beq	a0, zero, 1f			# skip save if NULL pointer
-	nop
-/*
- * First read out the status register to make sure that all FP operations
- * have completed.
- */
-	lw	a0, P_ADDR(a0)			# get pointer to pcb for proc
-	cfc1	t0, MACH_FPC_CSR		# stall til FP done
-	cfc1	t0, MACH_FPC_CSR		# now get status
-	li	t3, ~MACH_SR_COP_1_BIT
-	lw	t2, U_PCB_REGS+(PS * 4)(a0)	# get CPU status register
-	sw	t0, U_PCB_FPREGS+(32 * 4)(a0)	# save FP status
-	and	t2, t2, t3			# clear COP_1 enable bit
-	sw	t2, U_PCB_REGS+(PS * 4)(a0)	# save new status register
-/*
- * Save the floating point registers.
- */
-	swc1	$f0, U_PCB_FPREGS+(0 * 4)(a0)
-	swc1	$f1, U_PCB_FPREGS+(1 * 4)(a0)
-	swc1	$f2, U_PCB_FPREGS+(2 * 4)(a0)
-	swc1	$f3, U_PCB_FPREGS+(3 * 4)(a0)
-	swc1	$f4, U_PCB_FPREGS+(4 * 4)(a0)
-	swc1	$f5, U_PCB_FPREGS+(5 * 4)(a0)
-	swc1	$f6, U_PCB_FPREGS+(6 * 4)(a0)
-	swc1	$f7, U_PCB_FPREGS+(7 * 4)(a0)
-	swc1	$f8, U_PCB_FPREGS+(8 * 4)(a0)
-	swc1	$f9, U_PCB_FPREGS+(9 * 4)(a0)
-	swc1	$f10, U_PCB_FPREGS+(10 * 4)(a0)
-	swc1	$f11, U_PCB_FPREGS+(11 * 4)(a0)
-	swc1	$f12, U_PCB_FPREGS+(12 * 4)(a0)
-	swc1	$f13, U_PCB_FPREGS+(13 * 4)(a0)
-	swc1	$f14, U_PCB_FPREGS+(14 * 4)(a0)
-	swc1	$f15, U_PCB_FPREGS+(15 * 4)(a0)
-	swc1	$f16, U_PCB_FPREGS+(16 * 4)(a0)
-	swc1	$f17, U_PCB_FPREGS+(17 * 4)(a0)
-	swc1	$f18, U_PCB_FPREGS+(18 * 4)(a0)
-	swc1	$f19, U_PCB_FPREGS+(19 * 4)(a0)
-	swc1	$f20, U_PCB_FPREGS+(20 * 4)(a0)
-	swc1	$f21, U_PCB_FPREGS+(21 * 4)(a0)
-	swc1	$f22, U_PCB_FPREGS+(22 * 4)(a0)
-	swc1	$f23, U_PCB_FPREGS+(23 * 4)(a0)
-	swc1	$f24, U_PCB_FPREGS+(24 * 4)(a0)
-	swc1	$f25, U_PCB_FPREGS+(25 * 4)(a0)
-	swc1	$f26, U_PCB_FPREGS+(26 * 4)(a0)
-	swc1	$f27, U_PCB_FPREGS+(27 * 4)(a0)
-	swc1	$f28, U_PCB_FPREGS+(28 * 4)(a0)
-	swc1	$f29, U_PCB_FPREGS+(29 * 4)(a0)
-	swc1	$f30, U_PCB_FPREGS+(30 * 4)(a0)
-	swc1	$f31, U_PCB_FPREGS+(31 * 4)(a0)
-
-1:
-/*
- *  Restore the floating point registers.
- */
-	lw	t0, U_PCB_FPREGS+(32 * 4)(a1)	# get status register
-	lwc1	$f0, U_PCB_FPREGS+(0 * 4)(a1)
-	lwc1	$f1, U_PCB_FPREGS+(1 * 4)(a1)
-	lwc1	$f2, U_PCB_FPREGS+(2 * 4)(a1)
-	lwc1	$f3, U_PCB_FPREGS+(3 * 4)(a1)
-	lwc1	$f4, U_PCB_FPREGS+(4 * 4)(a1)
-	lwc1	$f5, U_PCB_FPREGS+(5 * 4)(a1)
-	lwc1	$f6, U_PCB_FPREGS+(6 * 4)(a1)
-	lwc1	$f7, U_PCB_FPREGS+(7 * 4)(a1)
-	lwc1	$f8, U_PCB_FPREGS+(8 * 4)(a1)
-	lwc1	$f9, U_PCB_FPREGS+(9 * 4)(a1)
-	lwc1	$f10, U_PCB_FPREGS+(10 * 4)(a1)
-	lwc1	$f11, U_PCB_FPREGS+(11 * 4)(a1)
-	lwc1	$f12, U_PCB_FPREGS+(12 * 4)(a1)
-	lwc1	$f13, U_PCB_FPREGS+(13 * 4)(a1)
-	lwc1	$f14, U_PCB_FPREGS+(14 * 4)(a1)
-	lwc1	$f15, U_PCB_FPREGS+(15 * 4)(a1)
-	lwc1	$f16, U_PCB_FPREGS+(16 * 4)(a1)
-	lwc1	$f17, U_PCB_FPREGS+(17 * 4)(a1)
-	lwc1	$f18, U_PCB_FPREGS+(18 * 4)(a1)
-	lwc1	$f19, U_PCB_FPREGS+(19 * 4)(a1)
-	lwc1	$f20, U_PCB_FPREGS+(20 * 4)(a1)
-	lwc1	$f21, U_PCB_FPREGS+(21 * 4)(a1)
-	lwc1	$f22, U_PCB_FPREGS+(22 * 4)(a1)
-	lwc1	$f23, U_PCB_FPREGS+(23 * 4)(a1)
-	lwc1	$f24, U_PCB_FPREGS+(24 * 4)(a1)
-	lwc1	$f25, U_PCB_FPREGS+(25 * 4)(a1)
-	lwc1	$f26, U_PCB_FPREGS+(26 * 4)(a1)
-	lwc1	$f27, U_PCB_FPREGS+(27 * 4)(a1)
-	lwc1	$f28, U_PCB_FPREGS+(28 * 4)(a1)
-	lwc1	$f29, U_PCB_FPREGS+(29 * 4)(a1)
-	lwc1	$f30, U_PCB_FPREGS+(30 * 4)(a1)
-	lwc1	$f31, U_PCB_FPREGS+(31 * 4)(a1)
-
-	and	t0, t0, ~MACH_FPC_EXCEPTION_BITS
-	ctc1	t0, MACH_FPC_CSR
-	nop
-
-	mtc0	t1, MACH_COP_0_STATUS_REG	# Restore the status register.
-	j	ra
-	nop
-END(MachSwitchFPState)
 
 /*----------------------------------------------------------------------------
  *
- * MachSaveCurFPState --
- *
- *	Save the current floating point coprocessor state.
- *
- *	MachSaveCurFPState(p)
- *		struct proc *p;
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	machFPCurProcPtr is cleared.
+ *	R4000 cache sizing and flushing code.
  *
  *----------------------------------------------------------------------------
  */
-LEAF(MachSaveCurFPState)
-	lw	a0, P_ADDR(a0)			# get pointer to pcb for proc
-	mfc0	t1, MACH_COP_0_STATUS_REG	# Disable interrupts and
-	li	t0, MACH_SR_COP_1_BIT		#  enable the coprocessor
-	mtc0	t0, MACH_COP_0_STATUS_REG
-	sw	zero, machFPCurProcPtr		# indicate state has been saved
-/*
- * First read out the status register to make sure that all FP operations
- * have completed.
- */
-	lw	t2, U_PCB_REGS+(PS * 4)(a0)	# get CPU status register
-	li	t3, ~MACH_SR_COP_1_BIT
-	and	t2, t2, t3			# clear COP_1 enable bit
-	cfc1	t0, MACH_FPC_CSR		# stall til FP done
-	cfc1	t0, MACH_FPC_CSR		# now get status
-	sw	t2, U_PCB_REGS+(PS * 4)(a0)	# save new status register
-	sw	t0, U_PCB_FPREGS+(32 * 4)(a0)	# save FP status
-/*
- * Save the floating point registers.
- */
-	swc1	$f0, U_PCB_FPREGS+(0 * 4)(a0)
-	swc1	$f1, U_PCB_FPREGS+(1 * 4)(a0)
-	swc1	$f2, U_PCB_FPREGS+(2 * 4)(a0)
-	swc1	$f3, U_PCB_FPREGS+(3 * 4)(a0)
-	swc1	$f4, U_PCB_FPREGS+(4 * 4)(a0)
-	swc1	$f5, U_PCB_FPREGS+(5 * 4)(a0)
-	swc1	$f6, U_PCB_FPREGS+(6 * 4)(a0)
-	swc1	$f7, U_PCB_FPREGS+(7 * 4)(a0)
-	swc1	$f8, U_PCB_FPREGS+(8 * 4)(a0)
-	swc1	$f9, U_PCB_FPREGS+(9 * 4)(a0)
-	swc1	$f10, U_PCB_FPREGS+(10 * 4)(a0)
-	swc1	$f11, U_PCB_FPREGS+(11 * 4)(a0)
-	swc1	$f12, U_PCB_FPREGS+(12 * 4)(a0)
-	swc1	$f13, U_PCB_FPREGS+(13 * 4)(a0)
-	swc1	$f14, U_PCB_FPREGS+(14 * 4)(a0)
-	swc1	$f15, U_PCB_FPREGS+(15 * 4)(a0)
-	swc1	$f16, U_PCB_FPREGS+(16 * 4)(a0)
-	swc1	$f17, U_PCB_FPREGS+(17 * 4)(a0)
-	swc1	$f18, U_PCB_FPREGS+(18 * 4)(a0)
-	swc1	$f19, U_PCB_FPREGS+(19 * 4)(a0)
-	swc1	$f20, U_PCB_FPREGS+(20 * 4)(a0)
-	swc1	$f21, U_PCB_FPREGS+(21 * 4)(a0)
-	swc1	$f22, U_PCB_FPREGS+(22 * 4)(a0)
-	swc1	$f23, U_PCB_FPREGS+(23 * 4)(a0)
-	swc1	$f24, U_PCB_FPREGS+(24 * 4)(a0)
-	swc1	$f25, U_PCB_FPREGS+(25 * 4)(a0)
-	swc1	$f26, U_PCB_FPREGS+(26 * 4)(a0)
-	swc1	$f27, U_PCB_FPREGS+(27 * 4)(a0)
-	swc1	$f28, U_PCB_FPREGS+(28 * 4)(a0)
-	swc1	$f29, U_PCB_FPREGS+(29 * 4)(a0)
-	swc1	$f30, U_PCB_FPREGS+(30 * 4)(a0)
-	swc1	$f31, U_PCB_FPREGS+(31 * 4)(a0)
 
-	mtc0	t1, MACH_COP_0_STATUS_REG	# Restore the status register.
-	j	ra
-	nop
-END(MachSaveCurFPState)
-
-/*----------------------------------------------------------------------------
- *
- * MachFPTrap --
- *
- *	Handle a floating point Trap.
- *
- *	MachFPTrap(statusReg, causeReg, pc)
- *		unsigned statusReg;
- *		unsigned causeReg;
- *		unsigned pc;
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	None.
- *
- *----------------------------------------------------------------------------
- */
-NON_LEAF(MachFPTrap, STAND_FRAME_SIZE, ra)
-	subu	sp, sp, STAND_FRAME_SIZE
-	mfc0	t0, MACH_COP_0_STATUS_REG
-	sw	ra, STAND_RA_OFFSET(sp)
-	.mask	0x80000000, (STAND_RA_OFFSET - STAND_FRAME_SIZE)
-
-	or	t1, t0, MACH_SR_COP_1_BIT
-	mtc0	t1, MACH_COP_0_STATUS_REG
-	nop
-	nop
-	nop
-	nop
-	cfc1	t1, MACH_FPC_CSR	# stall til FP done
-	cfc1	t1, MACH_FPC_CSR	# now get status
-	nop
-	sll	t2, t1, (31 - 17)	# unimplemented operation?
-	bgez	t2, 3f			# no, normal trap
-	nop
-/*
- * We got an unimplemented operation trap so
- * fetch the instruction, compute the next PC and emulate the instruction.
- */
-	bgez	a1, 1f			# Check the branch delay bit.
-	nop
-/*
- * The instruction is in the branch delay slot so the branch will have to
- * be emulated to get the resulting PC.
- */
-	sw	a2, STAND_FRAME_SIZE + 8(sp)
-	li	a0, UADDR+U_PCB_REGS		# first arg is ptr to CPU registers
-	move	a1, a2				# second arg is instruction PC
-	move	a2, t1				# third arg is floating point CSR
-	jal	MachEmulateBranch		# compute PC after branch
-	move	a3, zero			# fourth arg is FALSE
-/*
- * Now load the floating-point instruction in the branch delay slot
- * to be emulated.
- */
-	lw	a2, STAND_FRAME_SIZE + 8(sp)	# restore EXC pc
-	b	2f
-	lw	a0, 4(a2)			# a0 = coproc instruction
-/*
- * This is not in the branch delay slot so calculate the resulting
- * PC (epc + 4) into v0 and continue to MachEmulateFP().
- */
-1:
-	lw	a0, 0(a2)			# a0 = coproc instruction
-	addu	v0, a2, 4			# v0 = next pc
-2:
-	sw	v0, UADDR+U_PCB_REGS+(PC * 4)	# save new pc
-/*
- * Check to see if the instruction to be emulated is a floating-point
- * instruction.
- */
-	srl	a3, a0, MACH_OPCODE_SHIFT
-	beq	a3, MACH_OPCODE_C1, 4f		# this should never fail
-	nop
-/*
- * Send a floating point exception signal to the current process.
- */
-3:
-	lw	a0, curproc			# get current process
-	cfc1	a2, MACH_FPC_CSR		# code = FP execptions
-	ctc1	zero, MACH_FPC_CSR		# Clear exceptions
-	jal	trapsignal
-	li	a1, SIGFPE
-	b	FPReturn
-	nop
-
-/*
- * Finally, we can call MachEmulateFP() where a0 is the instruction to emulate.
- */
-4:
-	jal	MachEmulateFP
-	nop
-
-/*
- * Turn off the floating point coprocessor and return.
- */
-FPReturn:
-	mfc0	t0, MACH_COP_0_STATUS_REG
-	lw	ra, STAND_RA_OFFSET(sp)
-	and	t0, t0, ~MACH_SR_COP_1_BIT
-	mtc0	t0, MACH_COP_0_STATUS_REG
-	j	ra
-	addu	sp, sp, STAND_FRAME_SIZE
-END(MachFPTrap)
 
 /*----------------------------------------------------------------------------
  *
@@ -3053,6 +3660,349 @@ LEAF(MachInvalidateDCache)
 	j	ra
 	nop
 END(MachInvalidateDCache)
+
+/*----------------------------------------------------------------------------
+ *
+ *			XXX  END of r4000-specific code  XXX 
+ *
+ *----------------------------------------------------------------------------
+ */
+
+/*#endif*/ 	/* r4000 support */
+
+
+
+/*----------------------------------------------------------------------------
+ *
+ * MachSwitchFPState --
+ *
+ *	Return the current value of the cause register.
+ *
+ *	MachGetCauseReg(void)
+ *
+ * Results:
+ *	current value of Cause register.None.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------------
+ */
+LEAF(MachGetCauseReg)
+	mfc0	v0, MACH_COP_0_CAUSE_REG
+	j	ra
+	nop
+END(MachGetCauseReg)
+
+
+/*----------------------------------------------------------------------------
+ *
+ * MachSwitchFPState --
+ *
+ *	Save the current state into 'from' and restore it from 'to'.
+ *
+ *	MachSwitchFPState(from, to)
+ *		struct proc *from;
+ *		struct user *to;
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------------
+ */
+LEAF(MachSwitchFPState)
+	mfc0	t1, MACH_COP_0_STATUS_REG	# Save old SR
+	li	t0, MACH_SR_COP_1_BIT		# enable the coprocessor
+	mtc0	t0, MACH_COP_0_STATUS_REG
+
+	beq	a0, zero, 1f			# skip save if NULL pointer
+	nop
+/*
+ * First read out the status register to make sure that all FP operations
+ * have completed.
+ */
+	lw	a0, P_ADDR(a0)			# get pointer to pcb for proc
+	cfc1	t0, MACH_FPC_CSR		# stall til FP done
+	cfc1	t0, MACH_FPC_CSR		# now get status
+	li	t3, ~MACH_SR_COP_1_BIT
+	lw	t2, U_PCB_REGS+(PS * 4)(a0)	# get CPU status register
+	sw	t0, U_PCB_FPREGS+(32 * 4)(a0)	# save FP status
+	and	t2, t2, t3			# clear COP_1 enable bit
+	sw	t2, U_PCB_REGS+(PS * 4)(a0)	# save new status register
+/*
+ * Save the floating point registers.
+ */
+	swc1	$f0, U_PCB_FPREGS+(0 * 4)(a0)
+	swc1	$f1, U_PCB_FPREGS+(1 * 4)(a0)
+	swc1	$f2, U_PCB_FPREGS+(2 * 4)(a0)
+	swc1	$f3, U_PCB_FPREGS+(3 * 4)(a0)
+	swc1	$f4, U_PCB_FPREGS+(4 * 4)(a0)
+	swc1	$f5, U_PCB_FPREGS+(5 * 4)(a0)
+	swc1	$f6, U_PCB_FPREGS+(6 * 4)(a0)
+	swc1	$f7, U_PCB_FPREGS+(7 * 4)(a0)
+	swc1	$f8, U_PCB_FPREGS+(8 * 4)(a0)
+	swc1	$f9, U_PCB_FPREGS+(9 * 4)(a0)
+	swc1	$f10, U_PCB_FPREGS+(10 * 4)(a0)
+	swc1	$f11, U_PCB_FPREGS+(11 * 4)(a0)
+	swc1	$f12, U_PCB_FPREGS+(12 * 4)(a0)
+	swc1	$f13, U_PCB_FPREGS+(13 * 4)(a0)
+	swc1	$f14, U_PCB_FPREGS+(14 * 4)(a0)
+	swc1	$f15, U_PCB_FPREGS+(15 * 4)(a0)
+	swc1	$f16, U_PCB_FPREGS+(16 * 4)(a0)
+	swc1	$f17, U_PCB_FPREGS+(17 * 4)(a0)
+	swc1	$f18, U_PCB_FPREGS+(18 * 4)(a0)
+	swc1	$f19, U_PCB_FPREGS+(19 * 4)(a0)
+	swc1	$f20, U_PCB_FPREGS+(20 * 4)(a0)
+	swc1	$f21, U_PCB_FPREGS+(21 * 4)(a0)
+	swc1	$f22, U_PCB_FPREGS+(22 * 4)(a0)
+	swc1	$f23, U_PCB_FPREGS+(23 * 4)(a0)
+	swc1	$f24, U_PCB_FPREGS+(24 * 4)(a0)
+	swc1	$f25, U_PCB_FPREGS+(25 * 4)(a0)
+	swc1	$f26, U_PCB_FPREGS+(26 * 4)(a0)
+	swc1	$f27, U_PCB_FPREGS+(27 * 4)(a0)
+	swc1	$f28, U_PCB_FPREGS+(28 * 4)(a0)
+	swc1	$f29, U_PCB_FPREGS+(29 * 4)(a0)
+	swc1	$f30, U_PCB_FPREGS+(30 * 4)(a0)
+	swc1	$f31, U_PCB_FPREGS+(31 * 4)(a0)
+
+1:
+/*
+ *  Restore the floating point registers.
+ */
+	lw	t0, U_PCB_FPREGS+(32 * 4)(a1)	# get status register
+	lwc1	$f0, U_PCB_FPREGS+(0 * 4)(a1)
+	lwc1	$f1, U_PCB_FPREGS+(1 * 4)(a1)
+	lwc1	$f2, U_PCB_FPREGS+(2 * 4)(a1)
+	lwc1	$f3, U_PCB_FPREGS+(3 * 4)(a1)
+	lwc1	$f4, U_PCB_FPREGS+(4 * 4)(a1)
+	lwc1	$f5, U_PCB_FPREGS+(5 * 4)(a1)
+	lwc1	$f6, U_PCB_FPREGS+(6 * 4)(a1)
+	lwc1	$f7, U_PCB_FPREGS+(7 * 4)(a1)
+	lwc1	$f8, U_PCB_FPREGS+(8 * 4)(a1)
+	lwc1	$f9, U_PCB_FPREGS+(9 * 4)(a1)
+	lwc1	$f10, U_PCB_FPREGS+(10 * 4)(a1)
+	lwc1	$f11, U_PCB_FPREGS+(11 * 4)(a1)
+	lwc1	$f12, U_PCB_FPREGS+(12 * 4)(a1)
+	lwc1	$f13, U_PCB_FPREGS+(13 * 4)(a1)
+	lwc1	$f14, U_PCB_FPREGS+(14 * 4)(a1)
+	lwc1	$f15, U_PCB_FPREGS+(15 * 4)(a1)
+	lwc1	$f16, U_PCB_FPREGS+(16 * 4)(a1)
+	lwc1	$f17, U_PCB_FPREGS+(17 * 4)(a1)
+	lwc1	$f18, U_PCB_FPREGS+(18 * 4)(a1)
+	lwc1	$f19, U_PCB_FPREGS+(19 * 4)(a1)
+	lwc1	$f20, U_PCB_FPREGS+(20 * 4)(a1)
+	lwc1	$f21, U_PCB_FPREGS+(21 * 4)(a1)
+	lwc1	$f22, U_PCB_FPREGS+(22 * 4)(a1)
+	lwc1	$f23, U_PCB_FPREGS+(23 * 4)(a1)
+	lwc1	$f24, U_PCB_FPREGS+(24 * 4)(a1)
+	lwc1	$f25, U_PCB_FPREGS+(25 * 4)(a1)
+	lwc1	$f26, U_PCB_FPREGS+(26 * 4)(a1)
+	lwc1	$f27, U_PCB_FPREGS+(27 * 4)(a1)
+	lwc1	$f28, U_PCB_FPREGS+(28 * 4)(a1)
+	lwc1	$f29, U_PCB_FPREGS+(29 * 4)(a1)
+	lwc1	$f30, U_PCB_FPREGS+(30 * 4)(a1)
+	lwc1	$f31, U_PCB_FPREGS+(31 * 4)(a1)
+
+	and	t0, t0, ~MACH_FPC_EXCEPTION_BITS
+	ctc1	t0, MACH_FPC_CSR
+	nop
+
+	mtc0	t1, MACH_COP_0_STATUS_REG	# Restore the status register.
+	j	ra
+	nop
+END(MachSwitchFPState)
+
+/*----------------------------------------------------------------------------
+ *
+ * MachSaveCurFPState --
+ *
+ *	Save the current floating point coprocessor state.
+ *
+ *	MachSaveCurFPState(p)
+ *		struct proc *p;
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	machFPCurProcPtr is cleared.
+ *
+ *----------------------------------------------------------------------------
+ */
+LEAF(MachSaveCurFPState)
+	lw	a0, P_ADDR(a0)			# get pointer to pcb for proc
+	mfc0	t1, MACH_COP_0_STATUS_REG	# Disable interrupts and
+	li	t0, MACH_SR_COP_1_BIT		#  enable the coprocessor
+	mtc0	t0, MACH_COP_0_STATUS_REG
+	sw	zero, _C_LABEL(machFPCurProcPtr)	# indicate state has been saved
+/*
+ * First read out the status register to make sure that all FP operations
+ * have completed.
+ */
+	lw	t2, U_PCB_REGS+(PS * 4)(a0)	# get CPU status register
+	li	t3, ~MACH_SR_COP_1_BIT
+	and	t2, t2, t3			# clear COP_1 enable bit
+	cfc1	t0, MACH_FPC_CSR		# stall til FP done
+	cfc1	t0, MACH_FPC_CSR		# now get status
+	sw	t2, U_PCB_REGS+(PS * 4)(a0)	# save new status register
+	sw	t0, U_PCB_FPREGS+(32 * 4)(a0)	# save FP status
+/*
+ * Save the floating point registers.
+ */
+	swc1	$f0, U_PCB_FPREGS+(0 * 4)(a0)
+	swc1	$f1, U_PCB_FPREGS+(1 * 4)(a0)
+	swc1	$f2, U_PCB_FPREGS+(2 * 4)(a0)
+	swc1	$f3, U_PCB_FPREGS+(3 * 4)(a0)
+	swc1	$f4, U_PCB_FPREGS+(4 * 4)(a0)
+	swc1	$f5, U_PCB_FPREGS+(5 * 4)(a0)
+	swc1	$f6, U_PCB_FPREGS+(6 * 4)(a0)
+	swc1	$f7, U_PCB_FPREGS+(7 * 4)(a0)
+	swc1	$f8, U_PCB_FPREGS+(8 * 4)(a0)
+	swc1	$f9, U_PCB_FPREGS+(9 * 4)(a0)
+	swc1	$f10, U_PCB_FPREGS+(10 * 4)(a0)
+	swc1	$f11, U_PCB_FPREGS+(11 * 4)(a0)
+	swc1	$f12, U_PCB_FPREGS+(12 * 4)(a0)
+	swc1	$f13, U_PCB_FPREGS+(13 * 4)(a0)
+	swc1	$f14, U_PCB_FPREGS+(14 * 4)(a0)
+	swc1	$f15, U_PCB_FPREGS+(15 * 4)(a0)
+	swc1	$f16, U_PCB_FPREGS+(16 * 4)(a0)
+	swc1	$f17, U_PCB_FPREGS+(17 * 4)(a0)
+	swc1	$f18, U_PCB_FPREGS+(18 * 4)(a0)
+	swc1	$f19, U_PCB_FPREGS+(19 * 4)(a0)
+	swc1	$f20, U_PCB_FPREGS+(20 * 4)(a0)
+	swc1	$f21, U_PCB_FPREGS+(21 * 4)(a0)
+	swc1	$f22, U_PCB_FPREGS+(22 * 4)(a0)
+	swc1	$f23, U_PCB_FPREGS+(23 * 4)(a0)
+	swc1	$f24, U_PCB_FPREGS+(24 * 4)(a0)
+	swc1	$f25, U_PCB_FPREGS+(25 * 4)(a0)
+	swc1	$f26, U_PCB_FPREGS+(26 * 4)(a0)
+	swc1	$f27, U_PCB_FPREGS+(27 * 4)(a0)
+	swc1	$f28, U_PCB_FPREGS+(28 * 4)(a0)
+	swc1	$f29, U_PCB_FPREGS+(29 * 4)(a0)
+	swc1	$f30, U_PCB_FPREGS+(30 * 4)(a0)
+	swc1	$f31, U_PCB_FPREGS+(31 * 4)(a0)
+
+	mtc0	t1, MACH_COP_0_STATUS_REG	# Restore the status register.
+	j	ra
+	nop
+END(MachSaveCurFPState)
+
+/*----------------------------------------------------------------------------
+ *
+ * MachFPInterrupt --
+ * MachFPTrap --
+ *
+ *	Handle a floating point interrupt (r3k) or trap (r4k).
+ *	the handlers  are indentical, only the reporting mechanisms differ.
+ *
+ *	MachFPInterrupt(statusReg, causeReg, pc)
+ *		unsigned statusReg;
+ *		unsigned causeReg;
+ *		unsigned pc;
+ *
+ *	MachFPTrap(statusReg, causeReg, pc)
+ *		unsigned statusReg;
+ *		unsigned causeReg;
+ *		unsigned pc;
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------------
+ */
+NON_LEAF(MachFPTrap, STAND_FRAME_SIZE, ra)
+	subu	sp, sp, STAND_FRAME_SIZE
+	mfc0	t0, MACH_COP_0_STATUS_REG
+	sw	ra, STAND_RA_OFFSET(sp)
+	.mask	0x80000000, (STAND_RA_OFFSET - STAND_FRAME_SIZE)
+
+	or	t1, t0, MACH_SR_COP_1_BIT
+	mtc0	t1, MACH_COP_0_STATUS_REG
+	nop
+	nop
+	nop
+	nop
+	cfc1	t1, MACH_FPC_CSR	# stall til FP done
+	cfc1	t1, MACH_FPC_CSR	# now get status
+	nop
+	sll	t2, t1, (31 - 17)	# unimplemented operation?
+	bgez	t2, 3f			# no, normal trap
+	nop
+/*
+ * We got an unimplemented operation trap so
+ * fetch the instruction, compute the next PC and emulate the instruction.
+ */
+	bgez	a1, 1f			# Check the branch delay bit.
+	nop
+/*
+ * The instruction is in the branch delay slot so the branch will have to
+ * be emulated to get the resulting PC.
+ */
+	sw	a2, STAND_FRAME_SIZE + 8(sp)
+	li	a0, UADDR+U_PCB_REGS		# first arg is ptr to CPU registers
+	move	a1, a2				# second arg is instruction PC
+	move	a2, t1				# third arg is floating point CSR
+	jal	_C_LABEL(MachEmulateBranch)	# compute PC after branch
+	move	a3, zero			# fourth arg is FALSE
+/*
+ * Now load the floating-point instruction in the branch delay slot
+ * to be emulated.
+ */
+	lw	a2, STAND_FRAME_SIZE + 8(sp)	# restore EXC pc
+	b	2f
+	lw	a0, 4(a2)			# a0 = coproc instruction
+/*
+ * This is not in the branch delay slot so calculate the resulting
+ * PC (epc + 4) into v0 and continue to MachEmulateFP().
+ */
+1:
+	lw	a0, 0(a2)			# a0 = coproc instruction
+	addu	v0, a2, 4			# v0 = next pc
+2:
+	sw	v0, UADDR+U_PCB_REGS+(PC * 4)	# save new pc
+/*
+ * Check to see if the instruction to be emulated is a floating-point
+ * instruction.
+ */
+	srl	a3, a0, MACH_OPCODE_SHIFT
+	beq	a3, MACH_OPCODE_C1, 4f		# this should never fail
+	nop
+/*
+ * Send a floating point exception signal to the current process.
+ */
+3:
+	lw	a0, _C_LABEL(curproc)		# get current process
+	cfc1	a2, MACH_FPC_CSR		# code = FP execptions
+	ctc1	zero, MACH_FPC_CSR		# Clear exceptions
+	jal	_C_LABEL(trapsignal)
+	li	a1, SIGFPE
+	b	FPReturn
+	nop
+
+/*
+ * Finally, we can call MachEmulateFP() where a0 is the instruction to emulate.
+ */
+4:
+	jal	_C_LABEL(MachEmulateFP)
+	nop
+
+/*
+ * Turn off the floating point coprocessor and return.
+ */
+FPReturn:
+	mfc0	t0, MACH_COP_0_STATUS_REG
+	lw	ra, STAND_RA_OFFSET(sp)
+	and	t0, t0, ~MACH_SR_COP_1_BIT
+	mtc0	t0, MACH_COP_0_STATUS_REG
+	j	ra
+	addu	sp, sp, STAND_FRAME_SIZE
+END(MachFPTrap)
 
 #ifdef DEBUG
 /*

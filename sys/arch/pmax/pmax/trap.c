@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.33 1996/03/25 06:44:17 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.34 1996/03/31 03:38:41 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -94,22 +94,38 @@ void (*machExceptionTable[]) __P((void)) = {
 /*
  * The kernel exception handlers.
  */
-	MachKernIntr,			/* external interrupt */
-	MachKernGenException,		/* TLB modification */
-	MachTLBMissException,		/* TLB miss (load or instr. fetch) */
-	MachTLBMissException,		/* TLB miss (store) */
-	MachKernGenException,		/* address error (load or I-fetch) */
-	MachKernGenException,		/* address error (store) */
-	MachKernGenException,		/* bus error (I-fetch) */
-	MachKernGenException,		/* bus error (load or store) */
-	MachKernGenException,		/* system call */
-	MachKernGenException,		/* breakpoint */
-	MachKernGenException,		/* reserved instruction */
-	MachKernGenException,		/* coprocessor unusable */
-	MachKernGenException,		/* arithmetic overflow */
-	MachKernGenException,		/* r4k trap exception, r3k reserved */
-	MachKernGenException,		/* r4k virt coherence, r3k reserved */
-	MachKernGenException,		/* r4k FP exception, r3k reserved */
+	MachKernIntr,			/* 0 external interrupt */
+	MachKernGenException,		/* 1 TLB modification */
+	MachTLBMissException,		/* 2 TLB miss (load or instr. fetch) */
+	MachTLBMissException,		/* 3 TLB miss (store) */
+	MachKernGenException,		/* 4 address error (load or I-fetch) */
+	MachKernGenException,		/* 5 address error (store) */
+	MachKernGenException,		/* 6 bus error (I-fetch) */
+	MachKernGenException,		/* 7 bus error (load or store) */
+	MachKernGenException,		/* 8 system call */
+	MachKernGenException,		/* 9 breakpoint */
+	MachKernGenException,		/* 10 reserved instruction */
+	MachKernGenException,		/* 11 coprocessor unusable */
+	MachKernGenException,		/* 12 arithmetic overflow */
+	MachKernGenException,		/* 13 r4k trap excpt, r3k reserved */
+	MachKernGenException,		/* 14 r4k virt coherence, r3k reserved */
+	MachKernGenException,		/* 15 r4k FP exception, r3k reserved */
+	MachKernGenException,		/* 16 reserved */
+	MachKernGenException,		/* 17 reserved */
+	MachKernGenException,		/* 18 reserved */
+	MachKernGenException,		/* 19 reserved */
+	MachKernGenException,		/* 20 reserved */
+	MachKernGenException,		/* 21 reserved */
+	MachKernGenException,		/* 22 reserved */
+	MachKernGenException,		/* 23 watch exception */
+	MachKernGenException,		/* 24 reserved */
+	MachKernGenException,		/* 25 reserved */
+	MachKernGenException,		/* 26 reserved */
+	MachKernGenException,		/* 27 reserved */
+	MachKernGenException,		/* 28 reserved */
+	MachKernGenException,		/* 29 reserved */
+	MachKernGenException,		/* 30 reserved */
+	MachKernGenException,		/* 31 virt. coherence exception data */
 /*
  * The user exception handlers.
  */
@@ -129,6 +145,22 @@ void (*machExceptionTable[]) __P((void)) = {
 	MachUserGenException,	        /* 13 */
 	MachUserGenException,	        /* 14 */
 	MachUserGenException,	        /* 15 */
+	MachUserGenException,		/* 16 */
+	MachUserGenException,		/* 17 */
+	MachUserGenException,		/* 18 */
+	MachUserGenException,		/* 19 */
+	MachUserGenException,		/* 20 */
+	MachUserGenException,		/* 21 */
+	MachUserGenException,		/* 22 */
+	MachUserGenException,		/* 23 */
+	MachUserGenException,		/* 24 */
+	MachUserGenException,		/* 25 */
+	MachUserGenException,		/* 26 */
+	MachUserGenException,		/* 27 */
+	MachUserGenException,		/* 28 */
+	MachUserGenException,		/* 29 */
+	MachUserGenException,		/* 20 */
+	MachUserGenException,		/* 31 */
 };
 
 char	*trap_type[] = {
@@ -281,7 +313,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 #endif
 
 	cnt.v_trap++;
-	type = (causeReg & MACH_CR_EXC_CODE) >> MACH_CR_EXC_CODE_SHIFT;
+	type = (causeReg & MIPS_3K_CR_EXC_CODE) >> MACH_CR_EXC_CODE_SHIFT;
 	if (USERMODE(statusReg)) {
 		type |= T_USER;
 		sticks = p->p_sticks;
@@ -291,8 +323,8 @@ trap(statusReg, causeReg, vadr, pc, args)
 	 * Enable hardware interrupts if they were on before.
 	 * We only respond to software interrupts when returning to user mode.
 	 */
-	if (statusReg & MACH_SR_INT_ENA_PREV)
-		splx((statusReg & MACH_HARD_INT_MASK) | MACH_SR_INT_ENA_CUR);
+	if (statusReg & MIPS_3K_SR_INT_ENA_PREV)
+		splx((statusReg & MACH_HARD_INT_MASK) | MIPS_SR_INT_IE);
 
 	switch (type) {
 	case T_TLB_MOD:
@@ -341,8 +373,9 @@ trap(statusReg, causeReg, vadr, pc, args)
 		pte += (vadr >> PGSHIFT) & (NPTEPG - 1);
 		entry = pte->pt_entry;
 #ifdef DIAGNOSTIC
-		if (!(entry & PG_V) || (entry & PG_M))
+		if (!(entry & PG_V) || (entry & PG_M)) {
 			panic("trap: utlbmod: invalid pte");
+		}
 #endif
 		if (entry & PG_RO) {
 			/* write to read only page */
@@ -358,8 +391,9 @@ trap(statusReg, causeReg, vadr, pc, args)
 #ifdef ATTR
 		pmap_attributes[atop(pa)] |= PMAP_ATTR_MOD;
 #else
-		if (!IS_VM_PHYSADDR(pa))
+		if (!IS_VM_PHYSADDR(pa)) {
 			panic("trap: utlbmod: unmanaged page");
+		}
 		PHYS_TO_VM_PAGE(pa)->flags &= ~PG_CLEAN;
 #endif
 		if (!USERMODE(statusReg))
@@ -915,7 +949,7 @@ interrupt(statusReg, causeReg, pc /* XXX what, args */ )
 		intrcnt[SOFTCLOCK_INTR]++;
 		cnt.v_soft++;
 		softclock();
-  	}
+ 	}
 }
 
 
@@ -981,7 +1015,7 @@ trapDump(msg)
 		if (trp->cause == 0)
 			break;
 		printf("%s: ADR %x PC %x CR %x SR %x\n",
-			trap_type[(trp->cause & MACH_CR_EXC_CODE) >>
+			trap_type[(trp->cause & MIPS_3K_CR_EXC_CODE) >>
 				MACH_CR_EXC_CODE_SHIFT],
 			trp->vadr, trp->pc, trp->cause, trp->status);
 		printf("   RA %x SP %x code %d\n", trp->ra, trp->sp, trp->code);
@@ -1000,7 +1034,7 @@ static unsigned GetBranchDest __P((InstFmt *InstPtr));
 /*
  * Return the resulting PC as if the branch was executed.
  */
-u_int
+unsigned
 MachEmulateBranch(regsPtr, instPC, fpcCSR, allowNonBranch)
 	unsigned *regsPtr;
 	unsigned instPC;
@@ -1042,14 +1076,20 @@ MachEmulateBranch(regsPtr, instPC, fpcCSR, allowNonBranch)
 		switch ((int)inst.IType.rt) {
 		case OP_BLTZ:
 		case OP_BLTZAL:
+		case OP_BLTZL:		/* squashed */
+		case OP_BLTZALL:	/* squashed */
+
 			if ((int)(regsPtr[inst.RType.rs]) < 0)
 				retAddr = GetBranchDest((InstFmt *)instPC);
 			else
 				retAddr = instPC + 8;
 			break;
 
-		case OP_BGEZAL:
 		case OP_BGEZ:
+		case OP_BGEZAL:
+		case OP_BGEZL:		/* squashed */
+		case OP_BGEZALL:	/* squashed */
+
 			if ((int)(regsPtr[inst.RType.rs]) >= 0)
 				retAddr = GetBranchDest((InstFmt *)instPC);
 			else
@@ -1068,6 +1108,8 @@ MachEmulateBranch(regsPtr, instPC, fpcCSR, allowNonBranch)
 		break;
 
 	case OP_BEQ:
+	case OP_BEQL:			/* squashed */
+
 		if (regsPtr[inst.RType.rs] == regsPtr[inst.RType.rt])
 			retAddr = GetBranchDest((InstFmt *)instPC);
 		else
@@ -1075,6 +1117,8 @@ MachEmulateBranch(regsPtr, instPC, fpcCSR, allowNonBranch)
 		break;
 
 	case OP_BNE:
+	case OP_BNEL:			/* squashed */
+
 		if (regsPtr[inst.RType.rs] != regsPtr[inst.RType.rt])
 			retAddr = GetBranchDest((InstFmt *)instPC);
 		else
@@ -1082,6 +1126,8 @@ MachEmulateBranch(regsPtr, instPC, fpcCSR, allowNonBranch)
 		break;
 
 	case OP_BLEZ:
+	case OP_BLEZL:				/* squashed */
+
 		if ((int)(regsPtr[inst.RType.rs]) <= 0)
 			retAddr = GetBranchDest((InstFmt *)instPC);
 		else
@@ -1089,6 +1135,8 @@ MachEmulateBranch(regsPtr, instPC, fpcCSR, allowNonBranch)
 		break;
 
 	case OP_BGTZ:
+	case OP_BGTZL:				/* squashed */
+
 		if ((int)(regsPtr[inst.RType.rs]) > 0)
 			retAddr = GetBranchDest((InstFmt *)instPC);
 		else
