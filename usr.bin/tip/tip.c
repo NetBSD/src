@@ -152,6 +152,15 @@ notnumber:
 	loginit();
 
 	/*
+	 * Now that we have the logfile and the ACU open
+	 *  return to the real uid and gid.  These things will
+	 *  be closed on exit.  Swap real and effective uid's
+	 *  so we can get the original permissions back
+	 *  for removing the uucp lock.
+	 */
+	user_uid();
+
+	/*
 	 * Kludge, their's no easy way to get the initialization
 	 *   in the right order, so force it here
 	 */
@@ -161,18 +170,10 @@ notnumber:
 	setparity("even");			/* set the parity table */
 	if ((i = speed(number(value(BAUDRATE)))) == NULL) {
 		printf("tip: bad baud rate %d\n", number(value(BAUDRATE)));
+		daemon_uid();
 		(void)uu_unlock(uucplock);
 		exit(3);
 	}
-
-	/*
-	 * Now that we have the logfile and the ACU open
-	 *  return to the real uid and gid.  These things will
-	 *  be closed on exit.  Swap real and effective uid's
-	 *  so we can get the original permissions back
-	 *  for removing the uucp lock.
-	 */
-	user_uid();
 
 	/*
 	 * Hardwired connections require the
