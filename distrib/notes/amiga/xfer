@@ -32,20 +32,30 @@ To prepare for installing via a tape:
 
 	To install NetBSD from a tape, you need to somehow
 	get the NetBSD file sets you wish to install on
-	your system on to the appropriate kind of tape,
-	in tar format.
+	your system on to the appropriate kind of tape.
 
 	If you're making the tape on a UN*X system, the easiest
 	way to do so is:
 
-		tar cvf <tape_device> <files>
+		dd if=<first file> of=<tape device>
+		dd if=<2nd file> of=<tape device>
+		...
 
 	where "<tape_device>" is the name of the tape device
 	that describes the tape drive you're using (possibly
 	something like /dev/nrst0, but we make no guarantees 8-).
 	If you can't figure it out, ask your system administrator.
-	"<files>" are the names of the "set_name.xx" files
+	"<files>" are the names of the "set_name.tgz" files
 	which you want to be placed on the tape.
+
+	If you have a slow cpu (e.g. 68030 @ 25 MHz) on the target
+	machine, but big tapes, you might want to store the
+	uncompressed installation sets instead.  This will help tape
+	streaming when doing the actual installation. E.g, do:
+
+		gzip -d -c <first file> | dd of=<tape device>
+		gzip -d -c <2nd file> | dd of=<tape device>
+		...
 
 	Once you have done this, you can proceed to the next
 	step in the installation process, preparing your hard disk.
