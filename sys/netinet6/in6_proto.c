@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.5 1999/07/22 03:59:42 itojun Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.6 1999/07/27 06:23:57 explorer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -173,7 +173,12 @@ struct ip6protosw inet6sw[] = {
 { SOCK_STREAM,	&inet6domain,	IPPROTO_TCP,	PR_CONNREQUIRED | PR_WANTRCVD | PR_LISTEN,
   tcp6_input,	0,		tcp6_ctlinput,	tcp_ctloutput,
   tcp_usrreq,
+#ifdef INET
+  /* If inet4, no need to have tcp_slowtimo and tcp_fasttimo happen TWICE */
+  tcp_init,	NULL,		NULL,		tcp_drain,	tcp_sysctl
+#else
   tcp_init,	tcp_fasttimo,	tcp_slowtimo,	tcp_drain,	tcp_sysctl
+#endif
 },
 #endif
 { SOCK_RAW,	&inet6domain,	IPPROTO_RAW,	PR_ATOMIC | PR_ADDR,
