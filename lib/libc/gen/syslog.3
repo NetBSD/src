@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslog.3,v 1.9.12.3 2002/03/22 20:42:13 nathanw Exp $
+.\"	$NetBSD: syslog.3,v 1.9.12.4 2002/08/01 03:28:11 nathanw Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -271,3 +271,21 @@ syslog(LOG_INFO|LOG_LOCAL2, "foobar error: %m");
 These
 functions appeared in
 .Bx 4.2 .
+.Sh CAVEATS
+It is important never to pass a string with user-supplied data as a
+format without using
+.Ql %s .
+An attacker can put format specifiers in the string to mangle your stack,
+leading to a possible security hole.
+This holds true even if you have built the string
+.Dq by hand
+using a function like
+.Fn snprintf ,
+as the resulting string may still contain user-supplied conversion specifiers
+for later interpolation by
+.Fn syslog .
+.Pp
+Always be sure to use the proper secure idiom:
+.Bd -literal -offset indent
+syslog(priority, "%s", string);
+.Ed

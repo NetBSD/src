@@ -1,4 +1,4 @@
-/*	$NetBSD: engine.c,v 1.12.10.1 2002/01/28 20:50:44 nathanw Exp $	*/
+/*	$NetBSD: engine.c,v 1.12.10.2 2002/08/01 03:28:15 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -56,6 +56,7 @@
 #define	print	sprint
 #define	at	sat
 #define	match	smat
+#define	nope	snope
 #endif
 #ifdef LNAMES
 #define	matcher	lmatcher
@@ -67,6 +68,7 @@
 #define	print	lprint
 #define	at	lat
 #define	match	lmat
+#define	nope	lnope
 #endif
 
 /* another structure passed up and down to avoid zillions of parameters */
@@ -126,6 +128,7 @@ static char *pchar __P((int ch));
 #define	SP(t, s, c)	print(m, t, s, c, stdout)
 #define	AT(t, p1, p2, s1, s2)	at(m, t, p1, p2, s1, s2)
 #define	NOTE(str)	{ if (m->eflags&REG_TRACE) printf("=%s\n", (str)); }
+static int nope = 0;
 #else
 #define	SP(t, s, c)	/* nothing */
 #define	AT(t, p1, p2, s1, s2)	/* nothing */
@@ -1148,3 +1151,4 @@ int ch;
 #undef	print
 #undef	at
 #undef	match
+#undef	nope

@@ -1,7 +1,8 @@
-/*	$NetBSD: extern.h,v 1.6.12.3 2002/08/01 03:28:12 nathanw Exp $	*/
+/*	$NetBSD: __sigtramp1.S,v 1.1.2.2 2002/08/01 03:28:08 nathanw Exp $	*/
 
 /*
- * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
+ * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -13,9 +14,9 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Christos Zoulas.
+ *     This product includes software developed at Ludd, University of Lule}.
  * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -29,18 +30,18 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-__BEGIN_DECLS
-extern char *__minbrk;
-int __getcwd __P((char *, size_t));
-int __getlogin __P((char *, size_t));
-int __setlogin __P((const char *));
-void _resumecontext __P((void));
-const char *__strerror __P((int , char *, size_t));
-const char *__strsignal __P((int , char *, size_t));
-char *__dtoa __P((double, int, int, int *, int *, char **));
-int __sysctl __P((int *, unsigned int, void *, size_t *, void *, size_t));
+#include "SYS.h"
 
-struct sigaction;
-int __sigaction_sigtramp __P((int, const struct sigaction *,
-    struct sigaction *, void *, int));
-__END_DECLS
+	.text
+	_ALIGN_TEXT
+
+	.globl	_C_LABEL(__sigtramp_sigcontext_1)
+_C_LABEL(__sigtramp_sigcontext_1):
+	pushr	$0x3f
+	subl2	$0xc,%sp
+	movl	0x24(%sp),%r0
+	calls	$3,(%r0)
+	popr	$0x3f
+	SYSTRAP(__sigreturn14)
+	SYSTRAP(exit)
+	halt	

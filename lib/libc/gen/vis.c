@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.19.6.6 2002/06/21 18:18:12 nathanw Exp $	*/
+/*	$NetBSD: vis.c,v 1.19.6.7 2002/08/01 03:28:12 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.19.6.6 2002/06/21 18:18:12 nathanw Exp $");
+__RCSID("$NetBSD: vis.c,v 1.19.6.7 2002/08/01 03:28:12 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -55,7 +55,7 @@ __weak_alias(svis,_svis)
 __weak_alias(vis,_vis)
 #endif
 
-#if !HAVE_VIS_H
+#if !HAVE_VIS || !HAVE_SVIS
 #include <ctype.h>
 #include <limits.h>
 #include <stdio.h>
@@ -277,8 +277,9 @@ strsvisx(dst, src, len, flag, extra)
 	*dst = '\0';
 	return (dst - start);
 }
+#endif
 
-
+#if !HAVE_VIS
 /*
  * vis - visually encode characters
  */

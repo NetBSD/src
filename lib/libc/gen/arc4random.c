@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.3.2.2 2002/06/21 18:18:07 nathanw Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.3.2.3 2002/08/01 03:28:09 nathanw Exp $	*/
 /*	$OpenBSD: arc4random.c,v 1.6 2001/06/05 05:05:38 pvalchev Exp $	*/
 
 /*
@@ -103,7 +103,7 @@ arc4_stir(as)
 		read(fd, rdat.rnd, sizeof(rdat.rnd));
 		close(fd);
 	}
-#ifdef KERN_ARND
+#ifdef KERN_URND
 	else {
 		int i, mib[2];
 		size_t len;
@@ -112,7 +112,7 @@ arc4_stir(as)
 		 * randomness from sysctl. */
 
 		mib[0] = CTL_KERN;
-		mib[1] = KERN_ARND;
+		mib[1] = KERN_URND;
 
 		for (i = 0; i < sizeof(rdat.rnd) / sizeof(u_int); i ++) {
 			len = sizeof(u_int);

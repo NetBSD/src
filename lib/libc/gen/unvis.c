@@ -1,4 +1,4 @@
-/*	$NetBSD: unvis.c,v 1.19.6.3 2002/04/25 04:01:42 nathanw Exp $	*/
+/*	$NetBSD: unvis.c,v 1.19.6.4 2002/08/01 03:28:12 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)unvis.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: unvis.c,v 1.19.6.3 2002/04/25 04:01:42 nathanw Exp $");
+__RCSID("$NetBSD: unvis.c,v 1.19.6.4 2002/08/01 03:28:12 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -62,7 +62,7 @@ __warn_references(unvis,
     "warning: reference to compatibility unvis(); include <vis.h> for correct reference")
 #endif
 
-#if !HAVE_VIS_H
+#if !HAVE_VIS
 /*
  * decode driven by state machine
  */

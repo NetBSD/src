@@ -1,4 +1,4 @@
-/*	$NetBSD: calloc.c,v 1.9.12.1 2002/08/01 03:28:17 nathanw Exp $	*/
+/*	$NetBSD: __times13.c,v 1.1.2.2 2002/08/01 03:28:09 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -36,30 +36,65 @@
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char sccsid[] = "@(#)calloc.c	8.1 (Berkeley) 6/4/93";
+static char sccsid[] = "@(#)times.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: calloc.c,v 1.9.12.1 2002/08/01 03:28:17 nathanw Exp $");
+__RCSID("$NetBSD: __times13.c,v 1.1.2.2 2002/08/01 03:28:09 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-#include <stdlib.h>
-#include <string.h>
-#include <limits.h>
+#include "namespace.h"
+#include <sys/param.h>
+#include <sys/time.h>
+#include <sys/times.h>
+#include <sys/resource.h>
+
+#include <assert.h>
 #include <errno.h>
+#include <time.h>
 
-void *
-calloc(num, size)
-	size_t num;
-	size_t size;
+#ifdef __weak_alias
+#ifdef __LIBC12_SOURCE__
+__weak_alias(times,_times)
+#endif
+#endif
+
+#ifdef __LIBC12_SOURCE__
+__warn_references(times,
+    "warning: reference to compatibility times(); include <sys/times.h> for correct reference")
+#endif
+
+/*
+ * Convert usec to clock ticks; could do (usec * CLK_TCK) / 1000000,
+ * but this would overflow if we switch to nanosec.
+ */
+#define	CONVTCK(r)	(r.tv_sec * clk_tck + r.tv_usec / (1000000 / clk_tck))
+
+clock_t
+times(tp)
+	struct tms *tp;
 {
-	void *p;
+	struct rusage ru;
+	struct timeval t;
+	static long clk_tck;
+	
+	_DIAGASSERT(tp != NULL);
 
-	if (num && size && SIZE_T_MAX / num < size) {
-		errno = ENOMEM;
-		return NULL;
-	}
-	size *= num;
-	if ((p = malloc(size)) != NULL)
-		memset(p, '\0', size);
-	return(p);
+	/*
+	 * we use a local copy of CLK_TCK because it expands to a
+	 * moderately expensive function call.
+	 */
+	if (clk_tck == 0)
+		clk_tck = CLK_TCK;
+
+	if (getrusage(RUSAGE_SELF, &ru) < 0)
+		return ((clock_t)-1);
+	tp->tms_utime = CONVTCK(ru.ru_utime);
+	tp->tms_stime = CONVTCK(ru.ru_stime);
+	if (getrusage(RUSAGE_CHILDREN, &ru) < 0)
+		return ((clock_t)-1);
+	tp->tms_cutime = CONVTCK(ru.ru_utime);
+	tp->tms_cstime = CONVTCK(ru.ru_stime);
+	if (gettimeofday(&t, (struct timezone *)0))
+		return ((clock_t)-1);
+	return ((clock_t)(CONVTCK(t)));
 }

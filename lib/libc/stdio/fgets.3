@@ -1,4 +1,4 @@
-.\"	$NetBSD: fgets.3,v 1.10.2.3 2002/03/22 20:42:25 nathanw Exp $
+.\"	$NetBSD: fgets.3,v 1.10.2.4 2002/08/01 03:28:16 nathanw Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -139,6 +139,51 @@ and
 .Fn gets
 conform to
 .St -ansiC .
+.Sh CAVEATS
+The following bit of code illustrates a case where the programmer assumes a
+string is too long if it does not contain a newline:
+.Bd -literal
+	char buf[1024], *p;
+
+	while (fgets(buf, sizeof(buf), fp) != NULL) {
+		if ((p = strchr(buf, '\en')) == NULL) {
+			fprintf(stderr, "input line too long.\en");
+			exit(1);
+		}
+		*p = '\e0';
+		printf("%s\en", buf);
+	}
+.Ed
+.Pp
+While the error would be true if a line > 1023 characters were read, it would
+be false in two other cases:
+.Bl -enum -offset indent
+.It
+If the last line in a file does not contain a newline, the string returned by
+.Fn fgets
+will not contain a newline either.
+Thus
+.Fn strchr
+will return
+.Dv NULL
+and the program will terminate, even if the line was valid.
+.It
+All C string functions, including
+.Fn strchr ,
+correctly assume the end of the string is represented by a null
+.Pq Sq \e0
+character.
+If the first character of a line returned by
+.Fn fgets
+were null,
+.Fn strchr
+would immediately return without considering the rest of the returned text
+which may indeed include a newline.
+.El
+.Pp
+Consider using
+.Xr fgetln 3
+instead when dealing with untrusted input.
 .Sh SECURITY CONSIDERATIONS
 Since it is usually impossible to ensure that the next input line
 is less than some arbitrary length, and because overflowing the

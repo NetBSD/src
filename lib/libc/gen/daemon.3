@@ -1,4 +1,4 @@
-.\"	$NetBSD: daemon.3,v 1.8.10.3 2002/03/22 20:42:05 nathanw Exp $
+.\"	$NetBSD: daemon.3,v 1.8.10.4 2002/08/01 03:28:09 nathanw Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -86,6 +86,25 @@ The
 .Fn daemon
 function first appeared in
 .Bx 4.4 .
+.Sh CAVEATS
+Unless the
+.Ar noclose
+argument is non-zero,
+.Fn daemon
+will close the first three file descriptors and redirect them to
+.Pa /dev/null .
+Normally, these correspond to standard input, standard output and
+standard error.
+However, if any of those file descriptors refer to something else they
+will still be closed, resulting in incorrect behavior of the calling program.
+This can happen if any of standard input, standard output or standard error
+have been closed before the program was run.
+Programs using
+.Fn daemon
+should therefore make sure to either call
+.Fn daemon
+before opening any files or sockets or, alternately, verifying that
+any file descriptors obtained have a value greater than 2.
 .Sh BUGS
 .Fn daemon
 uses

@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.25.2.6 2002/06/21 18:18:15 nathanw Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.25.2.7 2002/08/01 03:28:14 nathanw Exp $	*/
 /*	$KAME: getnameinfo.c,v 1.45 2000/09/25 22:43:56 itojun Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnameinfo.c,v 1.25.2.6 2002/06/21 18:18:15 nathanw Exp $");
+__RCSID("$NetBSD: getnameinfo.c,v 1.25.2.7 2002/08/01 03:28:14 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -202,7 +202,7 @@ getnameinfo_inet(sa, salen, host, hostlen, serv, servlen, flags)
 				return EAI_MEMORY;
 			strlcpy(serv, sp->s_name, servlen);
 		} else {
-			snprintf(numserv, sizeof(numserv), "%d", ntohs(port));
+			snprintf(numserv, sizeof(numserv), "%u", ntohs(port));
 			if (strlen(numserv) + 1 > servlen)
 				return EAI_MEMORY;
 			strlcpy(serv, numserv, servlen);
@@ -441,7 +441,7 @@ getnameinfo_link(const struct sockaddr *sa, socklen_t salen,
 		*serv = '\0';
 
 	if (sdl->sdl_nlen == 0 && sdl->sdl_alen == 0 && sdl->sdl_slen == 0) {
-		n = snprintf(host, hostlen, "link#%d", sdl->sdl_index);
+		n = snprintf(host, hostlen, "link#%u", sdl->sdl_index);
 		if (n > hostlen) {
 			*host = '\0';
 			return EAI_MEMORY;
@@ -455,9 +455,9 @@ getnameinfo_link(const struct sockaddr *sa, socklen_t salen,
 		if (sdl->sdl_alen < 2)
 			return EAI_FAMILY;
 		if (LLADDR(sdl)[1] == 0)
-			n = snprintf(host, hostlen, "%d", LLADDR(sdl)[0]);
+			n = snprintf(host, hostlen, "%u", LLADDR(sdl)[0]);
 		else
-			n = snprintf(host, hostlen, "%d.%d",
+			n = snprintf(host, hostlen, "%u.%u",
 			    LLADDR(sdl)[1], LLADDR(sdl)[0]);
 		if (n >= hostlen) {
 			*host = '\0';

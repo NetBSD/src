@@ -1,4 +1,4 @@
-/*	$NetBSD: dlfcn_elf.c,v 1.2 2000/07/06 02:48:41 christos Exp $	*/
+/*	$NetBSD: dlfcn_elf.c,v 1.2.2.1 2002/08/01 03:28:08 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Takuya SHIOZAKI
@@ -27,10 +27,9 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: dlfcn_elf.c,v 1.2 2000/07/06 02:48:41 christos Exp $");
+__RCSID("$NetBSD: dlfcn_elf.c,v 1.2.2.1 2002/08/01 03:28:08 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
-#if defined(PIC) || defined(lint)
 #include "namespace.h"
 
 #define ELFSIZE ARCH_ELFSIZE
@@ -50,4 +49,3 @@ __weak_alias(dladdr,__dladdr)
 #endif
 
 #include <dlfcn_stubs.c>
-#endif /* PIC */
