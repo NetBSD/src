@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.7 1999/05/03 16:21:28 christos Exp $ */
+/*	$NetBSD: stdarg.h,v 1.8 1999/05/04 13:36:44 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,10 +49,6 @@
 
 #include <machine/ansi.h>
 
-#ifdef __arch64__
-/*
- * For sparcv9 code.
- */
 #ifdef __lint__
 #define	__builtin_saveregs(t)		(0)
 #define	__builtin_classify_type(t)	(0)
@@ -62,8 +58,14 @@
 typedef _BSD_VA_LIST_	va_list;
 
 #define	va_start(ap, last) \
-	(__builtin_next_arg(), (ap) = (va_list)__builtin_saveregs())
+	(__builtin_next_arg(last), (ap) = (va_list)__builtin_saveregs())
 
+#define va_end(ap)	
+
+#ifdef __arch64__
+/*
+ * For sparcv9 code.
+ */
 #define	__va_arg(ap, type) \
 	((type)*(unsigned long *)((ap) += 8, (ap) - 8))
 
@@ -83,25 +85,12 @@ typedef _BSD_VA_LIST_	va_list;
 	  (sizeof(type) <= 8 ? __va_arg(ap, type) :			\
 	   (sizeof(type) <= 16 ? __va_arg16(ap, type) :			\
 	    *__va_arg(ap, type *)))))
-
-#define va_end(ap)
 #else
 /* 
  * For sparcv8 code.
  */
-#ifdef __lint__
-#define	__builtin_saveregs(t)		(0)
-#define	__builtin_classify_type(t)	(0)
-#define	__builtin_next_arg(t)		((t) ? 0 : 0)
-#endif
-
-typedef _BSD_VA_LIST_	va_list;
-
 #define	__va_size(type) \
 	(((sizeof(type) + sizeof(long) - 1) / sizeof(long)) * sizeof(long))
-
-#define	va_start(ap, last) \
-	(__builtin_next_arg(last), (ap) = (va_list)__builtin_saveregs())
 
 /*
  * va_arg picks up the next argument of type `type'.  Appending an
@@ -142,7 +131,6 @@ typedef _BSD_VA_LIST_	va_list;
 	 *__va_arg(ap, type *) : __va_size(type) == 8 ?			\
 	 __va_8byte(ap, type) : __va_arg(ap, type))
 
-#define va_end(ap)	
 #endif	
 
 #endif /* !_SPARC64_STDARG_H_ */
