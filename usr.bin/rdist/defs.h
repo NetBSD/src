@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)defs.h	8.1 (Berkeley) 6/9/93
- *	$Id: defs.h,v 1.5 1994/03/07 05:05:20 cgd Exp $
+ *	$Id: defs.h,v 1.6 1996/07/12 00:38:51 thorpej Exp $
  */
 
 #include <sys/param.h>
@@ -150,7 +150,7 @@ extern struct linkbuf *ihead;	/* list of files with more than one link */
 extern struct passwd *pw;	/* pointer to static area used by getpwent */
 extern struct group *gr;	/* pointer to static area used by getgrent */
 extern char host[];		/* host name of master copy */
-extern char buf[];		/* general purpose buffer */
+extern char buf[BUFSIZ];	/* general purpose buffer */
 
 int	 any __P((int, char *));
 char	*colon __P((char *));
