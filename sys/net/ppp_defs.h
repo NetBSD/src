@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_defs.h,v 1.9 2004/04/26 01:41:15 matt Exp $	*/
+/*	$NetBSD: ppp_defs.h,v 1.10 2005/02/20 10:23:13 cube Exp $	*/
 /*	Id: ppp_defs.h,v 1.11 1997/04/30 05:46:24 paulus Exp 	*/
 
 /*
@@ -90,11 +90,13 @@
 #define PPP_IPXCP	0x802b		/* IPX Control Protocol */
 #define PPP_IPV6CP	0x8057		/* IPv6 Control Protocol */
 #define PPP_CCP		0x80fd		/* Compression Control Protocol */
+#define PPP_ECP		0x8053		/* Encryption Control Protocol */
 #define PPP_LCP		0xc021		/* Link Control Protocol */
 #define PPP_PAP		0xc023		/* Password Authentication Protocol */
 #define PPP_LQR		0xc025		/* Link Quality Report protocol */
 #define PPP_CHAP	0xc223		/* Crypto Handshake Auth. Protocol */
 #define PPP_CBCP	0xc029		/* Callback Control Protocol */
+#define PPP_EAP		0xc227		/* Extensible Authentication Protocol */
 
 /*
  * Values for FCS calculations.
