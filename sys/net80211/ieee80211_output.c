@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.22 2004/12/27 05:35:33 mycroft Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.23 2004/12/27 09:25:05 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.10 2004/04/02 23:25:39 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.22 2004/12/27 05:35:33 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.23 2004/12/27 09:25:05 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -293,11 +293,11 @@ bad:
  *          residual octets at end of data slot
  */
 static int
-ieee80211_compute_duration1(int len, uint32_t flags, int rate,
+ieee80211_compute_duration1(int len, int use_ack, uint32_t flags, int rate,
     struct ieee80211_duration *d)
 {
 	int pre, ctsrate;
-	int bitlen, data_dur, remainder;
+	int ack, bitlen, data_dur, remainder;
 
 	/* RTS reserves medium for SIFS | CTS | SIFS | (DATA) | SIFS | ACK
 	 * DATA reserves medium for SIFS | ACK
@@ -344,13 +344,14 @@ ieee80211_compute_duration1(int len, uint32_t flags, int rate,
 
 	d->d_plcp_len = data_dur;
 
+	ack = (use_ack) ? pre + (IEEE80211_DUR_DS_SLOW_ACK * 2) / ctsrate : 0;
+
 	d->d_rts_dur =
 	    pre + (IEEE80211_DUR_DS_SLOW_CTS * 2) / ctsrate +
 	    pre + data_dur +
-	    pre + (IEEE80211_DUR_DS_SLOW_ACK * 2) / ctsrate;
+	    ack;
 
-	d->d_data_dur =
-	    pre + (IEEE80211_DUR_DS_SLOW_ACK * 2) / rate;
+	d->d_data_dur = ack;
 
 	return 0;
 }
@@ -384,7 +385,7 @@ ieee80211_compute_duration(struct ieee80211_frame *wh, int len,
     uint32_t flags, int fraglen, int rate, struct ieee80211_duration *d0,
     struct ieee80211_duration *dn, int *npktp, int debug)
 {
-	int rc;
+	int ack, rc;
 	int firstlen, hdrlen, lastlen, lastlen0, npkt, overlen, paylen;
 
 	if ((wh->i_fc[1] & IEEE80211_FC1_DIR_MASK) == IEEE80211_FC1_DIR_DSTODS)
@@ -435,7 +436,12 @@ ieee80211_compute_duration(struct ieee80211_frame *wh, int len,
 		    __func__, npkt, firstlen, lastlen0, lastlen, fraglen,
 		    overlen, len, rate, flags);
 	}
-	rc = ieee80211_compute_duration1(firstlen + hdrlen, flags, rate, d0);
+
+	ack = !IEEE80211_IS_MULTICAST(wh->i_addr1) &&
+	    (wh->i_fc[1] & IEEE80211_FC0_TYPE_MASK) != IEEE80211_FC0_TYPE_CTL;
+
+	rc = ieee80211_compute_duration1(firstlen + hdrlen,
+	    ack, flags, rate, d0);
 	if (rc == -1)
 		return rc;
 
@@ -443,7 +449,8 @@ ieee80211_compute_duration(struct ieee80211_frame *wh, int len,
 		*dn = *d0;
 		return 0;
 	}
-	return ieee80211_compute_duration1(lastlen + hdrlen, flags, rate, dn);
+	return ieee80211_compute_duration1(lastlen + hdrlen, ack, flags, rate,
+	    dn);
 }
 
 /*
