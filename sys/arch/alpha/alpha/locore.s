@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.60 1999/03/24 05:50:50 mrg Exp $ */
+/* $NetBSD: locore.s,v 1.61 1999/04/19 23:24:14 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -66,6 +66,7 @@
 
 .stabs	__FILE__,100,0,0,kernel_text
 
+#include "opt_ddb.h"
 #include "opt_multiprocessor.h"
 #include "opt_compat_linux.h"
 
@@ -75,7 +76,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.60 1999/03/24 05:50:50 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.61 1999/04/19 23:24:14 thorpej Exp $");
 
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
@@ -514,6 +515,26 @@ LEAF(exception_restore_regs, 0)
 	/* a0, a1, & a2 already set up */
 	ldiq	a3, ALPHA_KENTRY_IF
 	mov	sp, a4			; .loc 1 __LINE__
+#if defined(DDB)
+	/*
+	 * Kernel-mode BUGCHK and BPT traps enter the kernel debugger.
+	 */
+	ldq	t0, (FRAME_PS*8)(sp)
+	and	t0, ALPHA_PSL_USERMODE, t0
+	bne	t0, Lcalltrap		/* usermode */
+
+	cmpeq	a0, ALPHA_IF_CODE_BPT, t0
+	bne	t0, Lcalldbgr		/* got BPT */
+
+	cmpeq	a0, ALPHA_IF_CODE_BUGCHK, t0
+	beq	t0, Lcalltrap		/* not BUGCHK */
+Lcalldbgr:
+	CALL(ddb_trap)
+	beq	v0, Lcalltrap		/* debugger didn't handle trap! */
+	
+	jmp	zero, exception_return	/* debugger handled it, return */
+Lcalltrap:
+#endif
 	CALL(trap)
 	jmp	zero, exception_return	
 	END(XentIF)
