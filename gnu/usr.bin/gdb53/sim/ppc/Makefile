@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2004/04/02 13:06:01 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2004/04/02 13:12:35 mrg Exp $
 
 NOLINT=		# defined
 NOPIC=		# defined
@@ -7,7 +7,7 @@ NOPROFILE=	# defined
 .include <bsd.own.mk>
 
 TOP=	${NETBSDSRCDIR}/gnu
-DIST=	${TOP}/dist/toolchain
+DIST=	${TOP}/dist/gdb
 
 LIB=	sim
 SRCS=	debug.c filter_filename.o bits.c sim-endian.c os_emul.c emul_generic.c \
@@ -29,15 +29,15 @@ libinstall:
 MIC=	${HOST_SH} ${DIST}/move-if-change
 
 HOST_CPPFLAGS+=	-I${DIST}/sim/ppc -I${DIST}/include \
-		-I${DIST}/bfd -I../../gdb \
-		-I${DIST}/gdb  \
+		-I${DIST}/sim/common \
+		-I${DIST}/bfd \
+		-I${DIST}/gdb \
 		-I${DIST}/gdb/config \
 		-I${DIST}/mmalloc \
-		-I${.CURDIR}/../arch/powerpc \
-		-I${TOP}/usr.bin/gdb/arch/powerpc \
-		-I${TOP}/lib/libbfd/arch/powerpc -I.
+		-I${TOP}/usr.bin/gdb53/arch/powerpc \
+		-I.
 PSIM_DEFINES=	-DHAVE_CONFIG_H \
-		-DDEFAULT_INLINE=INLINE_LOCALS \
+		-DDEFAULT_INLINE=PSIM_INLINE_LOCALS \
 		-DWITH_HOST_BYTE_ORDER=BYTE_ORDER \
 		-DWITH_SMP=5 \
 		-DHAVE_TERMIOS_STRUCTURE \
