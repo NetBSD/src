@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.52 2002/07/17 02:43:43 thorpej Exp $ */
+/*	$NetBSD: param.h,v 1.53 2002/07/17 04:55:57 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -211,13 +211,10 @@ extern void	delay __P((unsigned int));
  * extra memory references they'll generate.
  */
 #define CPU_ISSUN4U	(0)
-#define CPU_ISSUN4MOR4U	(CPU_ISSUN4M)
 #if   defined(SUN4M) && defined(SUN4C) && defined(SUN4)
 #	define CPU_ISSUN4M	(cputyp == CPU_SUN4M)
 #	define CPU_ISSUN4C	(cputyp == CPU_SUN4C)
 #	define CPU_ISSUN4	(cputyp == CPU_SUN4)
-#	define CPU_ISSUN4OR4C	(cputyp == CPU_SUN4 || cputyp == CPU_SUN4C)
-#	define CPU_ISSUN4COR4M	(cputyp == CPU_SUN4C || cputyp == CPU_SUN4M)
 #	define NBPG		nbpg
 #	define PGOFSET		pgofset
 #	define PGSHIFT		pgshift
@@ -225,8 +222,6 @@ extern void	delay __P((unsigned int));
 #	define CPU_ISSUN4M	(cputyp == CPU_SUN4M)
 #	define CPU_ISSUN4C	(cputyp == CPU_SUN4C)
 #	define CPU_ISSUN4	(0)
-#	define CPU_ISSUN4OR4C	(cputyp == CPU_SUN4C)
-#	define CPU_ISSUN4COR4M	(cputyp == CPU_SUN4C || cputyp == CPU_SUN4M)
 #	define NBPG		4096
 #	define PGOFSET		(NBPG-1)
 #	define PGSHIFT		SUN4CM_PGSHIFT
@@ -234,8 +229,6 @@ extern void	delay __P((unsigned int));
 #	define CPU_ISSUN4M	(cputyp == CPU_SUN4M)
 #	define CPU_ISSUN4C	(0)
 #	define CPU_ISSUN4	(cputyp == CPU_SUN4)
-#	define CPU_ISSUN4OR4C	(cputyp == CPU_SUN4)
-#	define CPU_ISSUN4COR4M	(cputyp == CPU_SUN4M)
 #	define NBPG		nbpg
 #	define PGOFSET		pgofset
 #	define PGSHIFT		pgshift
@@ -243,8 +236,6 @@ extern void	delay __P((unsigned int));
 #	define CPU_ISSUN4M	(1)
 #	define CPU_ISSUN4C	(0)
 #	define CPU_ISSUN4	(0)
-#	define CPU_ISSUN4OR4C	(0)
-#	define CPU_ISSUN4COR4M	(1)
 #	define NBPG		4096
 #	define PGOFSET		(NBPG-1)
 #	define PGSHIFT		SUN4CM_PGSHIFT
@@ -252,8 +243,6 @@ extern void	delay __P((unsigned int));
 #	define CPU_ISSUN4M	(0)
 #	define CPU_ISSUN4C	(cputyp == CPU_SUN4C)
 #	define CPU_ISSUN4	(cputyp == CPU_SUN4)
-#	define CPU_ISSUN4OR4C	(1)
-#	define CPU_ISSUN4COR4M	(cputyp == CPU_SUN4C)
 #	define NBPG		nbpg
 #	define PGOFSET		pgofset
 #	define PGSHIFT		pgshift
@@ -261,8 +250,6 @@ extern void	delay __P((unsigned int));
 #	define CPU_ISSUN4M	(0)
 #	define CPU_ISSUN4C	(1)
 #	define CPU_ISSUN4	(0)
-#	define CPU_ISSUN4OR4C	(1)
-#	define CPU_ISSUN4COR4M	(1)
 #	define NBPG		4096
 #	define PGOFSET		(NBPG-1)
 #	define PGSHIFT		SUN4CM_PGSHIFT
@@ -270,8 +257,6 @@ extern void	delay __P((unsigned int));
 #	define CPU_ISSUN4M	(0)
 #	define CPU_ISSUN4C	(0)
 #	define CPU_ISSUN4	(1)
-#	define CPU_ISSUN4OR4C	(1)
-#	define CPU_ISSUN4COR4M	(0)
 #	define NBPG		8192
 #	define PGOFSET		(NBPG-1)
 #	define PGSHIFT		SUN4_PGSHIFT
@@ -279,8 +264,6 @@ extern void	delay __P((unsigned int));
 #	define CPU_ISSUN4M	(cputyp == CPU_SUN4M)
 #	define CPU_ISSUN4C	(cputyp == CPU_SUN4C)
 #	define CPU_ISSUN4	(cputyp == CPU_SUN4)
-#	define CPU_ISSUN4OR4C	(cputyp == CPU_SUN4 || cputyp == CPU_SUN4C)
-#	define CPU_ISSUN4COR4M	(cputyp == CPU_SUN4C || cputyp == CPU_SUN4M)
 #	define NBPG		nbpg
 #	define PGOFSET		pgofset
 #	define PGSHIFT		pgshift

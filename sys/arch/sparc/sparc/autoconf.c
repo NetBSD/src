@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.169 2002/06/21 14:38:36 lukem Exp $ */
+/*	$NetBSD: autoconf.c,v 1.170 2002/07/17 04:55:57 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -302,7 +302,7 @@ bootstrap()
 #endif /* SUN4M */
 
 #if defined(SUN4) || defined(SUN4C)
-	if (CPU_ISSUN4OR4C) {
+	if (CPU_ISSUN4 || CPU_ISSUN4C) {
 		/* Map Interrupt Enable Register */
 		pmap_kenter_pa(INTRREG_VA,
 		    INT_ENABLE_REG_PHYSADR | PMAP_NC | PMAP_OBIO,
@@ -940,7 +940,7 @@ cpu_configure()
 #endif /* SUN4M */
 
 #if defined(SUN4) || defined(SUN4C)
-	if (CPU_ISSUN4OR4C)
+	if (CPU_ISSUN4 || CPU_ISSUN4C)
 		ienab_bis(IE_ALLIE);
 #endif
 
