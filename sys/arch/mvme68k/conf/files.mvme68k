@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvme68k,v 1.27 1999/06/07 20:31:32 thorpej Exp $
+#	$NetBSD: files.mvme68k,v 1.28 1999/07/09 02:32:31 thorpej Exp $
 
 # config file for mvme68k
 
@@ -77,7 +77,7 @@ file arch/mvme68k/dev/vme_pcc.c			vmechip_pcc
 attach vmechip at mainbus with vmetwo
 file arch/mvme68k/dev/vme_two.c			vmetwo
 
-include "../../../dev/scsipi/files.scsipi"
+include "dev/scsipi/files.scsipi"
 
 major { sd = 7 }
 major { md = 9 }
