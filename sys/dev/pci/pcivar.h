@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.58 2003/06/29 22:30:27 fvdl Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.59 2003/08/15 07:17:21 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -144,6 +144,16 @@ struct pci_quirkdata {
 	int			quirks;		/* quirks; see below */
 };
 #define	PCI_QUIRK_MULTIFUNCTION		1
+#define	PCI_QUIRK_MONOFUNCTION		2
+#define	PCI_QUIRK_SKIP_FUNC(n)		(4 << n)
+#define	PCI_QUIRK_SKIP_FUNC0		PCI_QUIRK_SKIP_FUNC(0)
+#define	PCI_QUIRK_SKIP_FUNC1		PCI_QUIRK_SKIP_FUNC(1)
+#define	PCI_QUIRK_SKIP_FUNC2		PCI_QUIRK_SKIP_FUNC(2)
+#define	PCI_QUIRK_SKIP_FUNC3		PCI_QUIRK_SKIP_FUNC(3)
+#define	PCI_QUIRK_SKIP_FUNC4		PCI_QUIRK_SKIP_FUNC(4)
+#define	PCI_QUIRK_SKIP_FUNC5		PCI_QUIRK_SKIP_FUNC(5)
+#define	PCI_QUIRK_SKIP_FUNC6		PCI_QUIRK_SKIP_FUNC(6)
+#define	PCI_QUIRK_SKIP_FUNC7		PCI_QUIRK_SKIP_FUNC(7)
 
 struct pci_softc {
 	struct device sc_dev;
