@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.7 1997/10/14 10:28:07 mark Exp $	*/
+/*	$NetBSD: undefined.c,v 1.8 1997/10/17 00:08:38 mark Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -52,6 +52,7 @@
 #include <sys/user.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
+#include <sys/vmmeter.h>
 #ifdef FAST_FPE
 #include <sys/acct.h>
 #endif
