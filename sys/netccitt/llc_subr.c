@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_subr.c,v 1.18 2004/04/18 19:11:39 matt Exp $	*/
+/*	$NetBSD: llc_subr.c,v 1.19 2004/04/22 01:01:40 matt Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: llc_subr.c,v 1.18 2004/04/18 19:11:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: llc_subr.c,v 1.19 2004/04/22 01:01:40 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -265,7 +265,7 @@ llc_setsapinfo(ifp, af, sap, llconf)
 	u_char sap;
 	struct dllconfig* llconf;
 {
-	struct protosw *pp;
+	const struct protosw *pp;
 	struct sockaddr_dl *ifdl_addr;
 	struct rtentry *sirt = (struct rtentry *) 0;
 	struct npaidbentry *sapinfo;

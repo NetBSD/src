@@ -1,4 +1,4 @@
-/*	$NetBSD: at_proto.c,v 1.4 2001/11/15 09:48:26 lukem Exp $	*/
+/*	$NetBSD: at_proto.c,v 1.5 2004/04/22 01:01:40 matt Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_proto.c,v 1.4 2001/11/15 09:48:26 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_proto.c,v 1.5 2004/04/22 01:01:40 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: at_proto.c,v 1.4 2001/11/15 09:48:26 lukem Exp $");
 #include <netatalk/at_extern.h>
 
 
-struct protosw		atalksw[] = {
+const struct protosw atalksw[] = {
     {
 	/* Identifiers */
 	SOCK_DGRAM,	&atalkdomain,	ATPROTO_DDP,	PR_ATOMIC|PR_ADDR,

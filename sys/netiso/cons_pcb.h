@@ -1,4 +1,4 @@
-/*	$NetBSD: cons_pcb.h,v 1.8 2003/08/07 16:33:34 agc Exp $	*/
+/*	$NetBSD: cons_pcb.h,v 1.9 2004/04/22 01:01:41 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -100,7 +100,7 @@ struct cons_pcb {
 	u_short         co_init_ttl;	/* initial value of ttl  */
 	int             co_channel;	/* logical channel */
 	struct ifnet   *co_ifp;	/* interface */
-	struct protosw *co_proto;
+	const struct protosw *co_proto;
 
 	struct ifqueue  co_pending;	/* queue data to send when connection
 					 * completes */
