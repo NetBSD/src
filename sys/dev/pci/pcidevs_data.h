@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.111 1999/02/19 06:56:53 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.112 1999/02/19 19:12:12 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.106 1999/02/19 06:55:15 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.107 1999/02/19 19:11:33 thorpej Exp 
  */
 
 /*
@@ -949,7 +949,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21040,
 	    0,
 	    "Digital Equipment",
-	    "DECchip 21040 (\"Tulip\")",
+	    "DECchip 21040 (\"Tulip\") Ethernet",
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21030,
@@ -973,7 +973,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21140,
 	    0,
 	    "Digital Equipment",
-	    "DECchip 21140 (\"FasterNet\")",
+	    "DECchip 21140 (\"FasterNet\") 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_PBXGB,
@@ -991,7 +991,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21041,
 	    0,
 	    "Digital Equipment",
-	    "DECchip 21041 (\"Tulip Pass 3\")",
+	    "DECchip 21041 (\"Tulip Plus\") Ethernet",
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_DGLPB,
@@ -1003,7 +1003,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21142,
 	    0,
 	    "Digital Equipment",
-	    "DECchip 21142/3",
+	    "DECchip 21142/21143 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21052,
