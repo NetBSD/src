@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.7 1996/09/30 16:35:12 ws Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.8 1996/10/03 05:20:58 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -127,7 +127,7 @@ typedef struct {
 	Elf32_Half      e_shstrndx;		/* String table index */
 } Elf32_Ehdr;
 
-#define	Elf32_e_ident "\177ELF=001"
+#define	Elf32_e_ident "\177ELF\001"
 #define	Elf32_e_siz (sizeof(Elf32_e_ident) - 1)
 #define	ELF32_HDR_SIZE	(sizeof(Elf32_Ehdr))
 
