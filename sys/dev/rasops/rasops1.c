@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops1.c,v 1.7 1999/07/25 17:36:40 ad Exp $ */
+/* 	$NetBSD: rasops1.c,v 1.8 1999/08/20 06:46:44 mouse Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_rasops.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops1.c,v 1.7 1999/07/25 17:36:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops1.c,v 1.8 1999/08/20 06:46:44 mouse Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -182,8 +182,8 @@ rasops1_putchar(cookie, row, col, uc, attr)
 		rmask = ~rasops_rmask[(col + width) & 31];
 		
 		if (uc == (u_int)-1) {
-			bg = bg & ~lmask;
 			width = bg & ~rmask;
+			bg = bg & ~lmask;
 			
 			while (height--) {
 				rp[0] = (rp[0] & lmask) | bg;
