@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.1 2002/02/19 17:21:18 uch Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.2 2002/02/22 19:44:04 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -33,6 +33,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_ddb.h"
+#include "opt_kgdb.h"
+	
 #include <machine/asm.h>
 	
 	.text
@@ -98,3 +101,69 @@ NENTRY(_cpu_exception_resume)
 	ldc	r0, sr		/* SR = r0 (don't move to delay slot) */	
 	rts
 	nop
+
+/*
+ * void _cpu_spin(u_int32_t count)
+ *	loop 'count' * 10 cycle.
+ * [...]
+ * add    IF ID EX MA WB
+ * nop       IF ID EX MA WB
+ * cmp/pl       IF ID EX MA WB -  -
+ * nop             IF ID EX MA -  -  WB
+ * bt                 IF ID EX .  .  MA WB
+ * nop                   IF ID -  -  EX MA WB
+ * nop                      IF -  -  ID EX MA WB
+ * nop                      -  -  -  IF ID EX MA WB
+ * add                                  IF ID EX MA WB
+ * nop                                     IF ID EX MA WB
+ * cmp/pl                                     IF ID EX MA WB -  -
+ * nop                                           IF ID EX MA -  - WB
+ * bt                                               IF ID EX .  . MA
+ * [...]
+ */		
+	.align 5	/* align cache line size (32B) */
+NENTRY(_cpu_spin)
+1:	nop			/* 1 */
+	nop			/* 2 */
+	nop			/* 3 */
+	add	#-1, r4		/* 4 */
+	nop			/* 5 */
+	cmp/pl	r4		/* 6 */
+	nop			/* 7 */
+	bt	1b		/* 8, 9, 10 */
+	rts
+	nop
+
+#if defined(DDB) || defined(KGDB)
+/*	
+ * int setjmp(label_t *):
+ */		
+ENTRY(setjmp)
+	add	#4*9, r4
+	mov.l	r8,  @-r4
+	mov.l	r9,  @-r4
+	mov.l	r10, @-r4
+	mov.l	r11, @-r4
+	mov.l	r12, @-r4
+	mov.l	r13, @-r4
+	mov.l	r14, @-r4
+	mov.l	r15, @-r4
+	sts.l	pr,  @-r4
+	rts
+	xor	r0, r0
+/*
+ * void longjmp(label_t *):
+ */		
+ENTRY(longjmp)
+	lds.l	@r4+, pr
+	mov.l	@r4+, r15
+	mov.l	@r4+, r14
+	mov.l	@r4+, r13
+	mov.l	@r4+, r12
+	mov.l	@r4+, r11
+	mov.l	@r4+, r10
+	mov.l	@r4+, r9
+	mov.l	@r4+, r8
+	rts
+	nop
+#endif /* DDB || KGDB */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu.h,v 1.1 2002/02/17 20:55:50 uch Exp $	*/
+/*	$NetBSD: mmu.h,v 1.2 2002/02/22 19:44:02 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -61,6 +61,7 @@
  */
 
 extern void sh_mmu_init(void);
+extern void sh_mmu_information(void);
 
 extern void (*__sh_mmu_start)(void);
 extern void sh3_mmu_start(void);
