@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.171 1999/11/06 11:18:01 augustss Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.172 1999/11/06 13:50:02 rh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.166 1999/11/06 11:17:30 augustss Exp 
+ *	NetBSD: pcidevs,v 1.167 1999/11/06 13:48:29 rh Exp 
  */
 
 /*
@@ -764,6 +764,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ATI Technologies",
 	    "Mach64 LP",
+	},
+	{
+	    PCI_VENDOR_AURAVISION, PCI_PRODUCT_AURAVISION_VXP524,
+	    0,
+	    "Auravision",
+	    "VxP524 PCI Video Processor",
 	},
 	{
 	    PCI_VENDOR_AUREAL, PCI_PRODUCT_AUREAL_AU8820,
@@ -6271,6 +6277,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_HAL, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "HAL Computer Systems",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_AURAVISION, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Auravision",
 	    NULL,
 	},
 	{
