@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.3 1998/07/12 17:09:43 thorpej Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.4 1999/01/11 11:02:50 christos Exp $	*/
 
 #define	ELF32_MACHDEP_ENDIANNESS	Elf_ed_2lsb
 #define	ELF32_MACHDEP_ID_CASES						\
@@ -29,3 +29,11 @@
 #define	R_386_PC8	23
 
 #define	R_TYPE(name)	__CONCAT(R_386_,name)
+
+/*
+ * Tell the kernel ELF exec code not to try relocating the interpreter
+ * (ld.so) for dynamically-linked ELF binaries.
+ */
+#ifdef _KERNEL
+#define ELF_INTERP_NON_RELOCATABLE
+#endif
