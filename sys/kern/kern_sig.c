@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.178 2003/11/12 21:07:38 dsl Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.179 2003/11/17 19:21:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.178 2003/11/12 21:07:38 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.179 2003/11/17 19:21:56 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -81,7 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.178 2003/11/12 21:07:38 dsl Exp $");
 #include <uvm/uvm_extern.h>
 
 static void	child_psignal(struct proc *, int);
-static void	proc_stop(struct proc *);
 static int	build_corename(struct proc *, char [MAXPATHLEN]);
 static void	ksiginfo_exithook(struct proc *, void *);
 static void	ksiginfo_put(struct proc *, const ksiginfo_t *);
@@ -1583,7 +1582,7 @@ issignal(struct lwp *l)
  * via wakeup.  Signals are handled elsewhere.  The process must not be
  * on the run queue.
  */
-static void
+void
 proc_stop(struct proc *p)
 {
 	struct lwp *l;
