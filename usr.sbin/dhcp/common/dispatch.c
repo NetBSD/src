@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dispatch.c,v 1.1.1.2 1997/03/29 23:57:54 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dispatch.c,v 1.1.1.3 1997/06/03 02:49:23 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -140,7 +140,9 @@ void discover_interfaces (state)
 		   except don't skip down interfaces if we're trying to
 		   get a list of configurable interfaces. */
 		if ((ifr.ifr_flags & IFF_LOOPBACK) ||
+#ifdef IFF_POINTOPOINT
 		    (ifr.ifr_flags & IFF_POINTOPOINT) ||
+#endif
 		    (!(ifr.ifr_flags & IFF_UP) &&
 		     state != DISCOVER_UNCONFIGURED))
 			continue;
@@ -514,7 +516,6 @@ void dispatch ()
 
 		for (l = protocols; l; l = l -> next) {
 			FD_SET (l -> fd, &r);
-			FD_SET (l -> fd, &x);
 			if (l -> fd > max)
 				max = l -> fd;
 		}

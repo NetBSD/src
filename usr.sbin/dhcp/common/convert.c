@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: convert.c,v 1.1.1.1 1997/03/29 21:52:16 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: convert.c,v 1.1.1.2 1997/06/03 02:49:21 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -104,7 +104,7 @@ void putUShort (obuf, val)
 	unsigned char *obuf;
 	u_int16_t val;
 {
-	u_int16_t tmp = htonl (val);
+	u_int16_t tmp = htons (val);
 	memcpy (obuf, &tmp, sizeof tmp);
 }
 
@@ -112,7 +112,7 @@ void putShort (obuf, val)
 	unsigned char *obuf;
 	int16_t val;
 {
-	int16_t tmp = htonl (val);
+	int16_t tmp = htons (val);
 	memcpy (obuf, &tmp, sizeof tmp);
 }
 

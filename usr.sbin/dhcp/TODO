@@ -1,5 +1,18 @@
 Things to do, not in any particular order...
 
+- Dynamic DNS support
+
+- SNMP support
+
+- Asynchronous DNS support (look up names while serving other requests)
+
+- Authentication heirarchies (particularly by MAC address or by DHCP
+  Authentication Protocol key).
+
+- Authentication protocol
+
+- Server-to-server protocol
+
 - Perl scripts to convert from other DHCP and BOOTP servers' config
   files to the ISC DHCPD format.
 

@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: tables.c,v 1.1.1.1 1997/03/29 21:52:17 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: tables.c,v 1.1.1.2 1997/06/03 02:49:34 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -71,7 +71,7 @@ struct option dhcp_options [256] = {
 	{ "time-offset", "l",				&dhcp_universe, 2 },
 	{ "routers", "IA",				&dhcp_universe, 3 },
 	{ "time-servers", "IA",				&dhcp_universe, 4 },
-	{ "name-servers", "IA",				&dhcp_universe, 5 },
+	{ "ien116-name-servers", "IA",			&dhcp_universe, 5 },
 	{ "domain-name-servers", "IA",			&dhcp_universe, 6 },
 	{ "log-servers", "IA",				&dhcp_universe, 7 },
 	{ "cookie-servers", "IA",			&dhcp_universe, 8 },
@@ -151,9 +151,9 @@ struct option dhcp_options [256] = {
 	{ "option-82", "X",				&dhcp_universe, 82 },
 	{ "option-83", "X",				&dhcp_universe, 83 },
 	{ "option-84", "X",				&dhcp_universe, 84 },
-	{ "option-85", "X",				&dhcp_universe, 85 },
-	{ "option-86", "X",				&dhcp_universe, 86 },
-	{ "option-87", "X",				&dhcp_universe, 87 },
+	{ "nds-servers", "IA",				&dhcp_universe, 85 },
+	{ "nds-tree-name", "X",				&dhcp_universe, 86 },
+	{ "nds-context", "X",				&dhcp_universe, 87 },
 	{ "option-88", "X",				&dhcp_universe, 88 },
 	{ "option-89", "X",				&dhcp_universe, 89 },
 	{ "option-90", "X",				&dhcp_universe, 90 },

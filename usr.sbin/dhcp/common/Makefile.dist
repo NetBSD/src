@@ -31,10 +31,10 @@
 
 SRC    = raw.c parse.c nit.c icmp.c dispatch.c conflex.c upf.c bpf.c socket.c \
 	 packet.c memory.c print.c options.c inet.c convert.c \
-	 tree.c tables.c hash.c alloc.c errwarn.c inet_addr.c
+	 tree.c tables.c hash.c alloc.c errwarn.c inet_addr.c dns.c resolv.c
 OBJ    = raw.o parse.o nit.o icmp.o dispatch.o conflex.o upf.o bpf.o socket.o \
 	 packet.o memory.o print.o options.o inet.o convert.o \
-	 tree.o tables.o hash.o alloc.o errwarn.o inet_addr.o
+	 tree.o tables.o hash.o alloc.o errwarn.o inet_addr.o dns.o resolv.o
 
 DEBUG  = -g
 INCLUDES = -I.. -I../includes

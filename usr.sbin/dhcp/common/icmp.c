@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: icmp.c,v 1.1.1.2 1997/03/31 23:45:45 mellon Exp $ Copyright (c) 1997 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: icmp.c,v 1.1.1.3 1997/06/03 02:49:27 mellon Exp $ Copyright (c) 1997 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -63,6 +63,7 @@ void icmp_startup (routep, handler)
 	int protocol = 1;
 	struct sockaddr_in from;
 	int fd;
+	int state;
 
 	/* Only initialize icmp once. */
 	if (icmp_protocol_initialized)
@@ -76,8 +77,14 @@ void icmp_startup (routep, handler)
 
 	/* Get a raw socket for the ICMP protocol. */
 	icmp_protocol_fd = socket (AF_INET, SOCK_RAW, protocol);
-	if (!icmp_protocol_fd)
+	if (icmp_protocol_fd < 0)
 		error ("unable to create icmp socket: %m");
+
+	/* Make sure it does routing... */
+	state = 0;
+	if (setsockopt (icmp_protocol_fd, SOL_SOCKET, SO_DONTROUTE,
+			(char *)&state, sizeof state) < 0)
+		error ("Unable to disable SO_DONTROUTE on ICMP socket: %m");
 
 	add_protocol ("icmp", icmp_protocol_fd, icmp_echoreply, handler);
 }

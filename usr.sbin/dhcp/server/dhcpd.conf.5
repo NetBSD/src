@@ -171,7 +171,7 @@ the entire organization), and so on.   So, for example:
 .nf
 
 	option domain-name "isc.org";
-	option name-servers ns1.isc.org, ns2.isc.org;
+	option domain-name-servers ns1.isc.org, ns2.isc.org;
 
 .ce 1
 Figure 2
@@ -783,9 +783,9 @@ The time-server option specifies a list of RFC 868 time servers
 available to the client.  Servers should be listed in order of
 preference.
 .PP
- \fBoption\fR \fBname-servers\fR \fIip-address\fR [\fB,\fR \fIip-address\fR ... ];
+ \fBoption\fR \fBien116-name-servers\fR \fIip-address\fR [\fB,\fR \fIip-address\fR ... ];
 .PP
-The name-servers option specifies a list of IEN 116 name servers
+The ien116-name-servers option specifies a list of IEN 116 name servers
 available to the client.  Servers should be listed in order of
 preference.
 .PP

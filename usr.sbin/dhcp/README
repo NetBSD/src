@@ -1,104 +1,133 @@
 		     Internet Software Consortium
-	      Dynamic Host Configuration Protocol Server
-			    Beta Release 5
-			   August 29, 1996
+	   Dynamic Host Configuration Protocol Distribution
+			 Engineering Release
+			     May 8, 1997
 
-This is the fifth Beta release of the Internet Software Consortium
-DHCP Server (ISC dhcpd).  In this Beta release, support for the core
-DHCP and BOOTP protocols are provided.  This release currently works
-well on Digital Alpha OSF/1, SunOS 4.1.4, NetBSD, FreeBSD and BSD/OS.
-It can also be run usefully on Solaris as long as only one network
-interface is being used.  It also runs on Ultrix, QNX and Linux as
-long as only one network interface is present and a host route is
-added from that interface to the 255.255.255.255 broadcast address.
+This is an engineering snapshot of work in progress on version 2.0 of
+the Internet Software Consortium DHCP Distribution.   In version 2.0,
+this distribution includes a DHCP server, a DHCP client, and a
+BOOTP/DHCP relay agent.   This is a release of work in progress, and
+should *not* be considered stable.   If it works for you, great.   If
+not, let me know about the problem, but don't expect an immediate fix.
+DHCP server users running a production environment should probably use
+the latest version on the 1.0 release branch, which is more stable,
+having been in a feature freeze since November of 1996.
 
-			    BUILDING DHCPD
+In this release, the server and relay agent currently work well on
+Digital Alpha OSF/1, SunOS 4.1.4, NetBSD, FreeBSD, BSD/OS and Ultrix.
+They can also be run usefully on Solaris as long as only one network
+interface is being used.  They also runs on QNX and Linux as long as
+only one network interface is present and a host route is added from
+that interface to the 255.255.255.255 broadcast address.
 
-To build dhcpd, type ``configure''.   If configure can figure out what
-sort of system you're running on, it will create a custom Makefile for
-you for that system; otherwise, it will complain.   Once you've run
-configure, just type ``make'', and after a while you should have a
-dhcp server.   If you get compile errors on one of the systems
-mentioned above, please let us know.   If you get errors on a system
-not mentioned above, you probably need to think about doing a port.
+The DHCP client currently only configures the network when running on
+NetBSD.   This is because the client depends on a system-dependent
+shell script to do network configuration, and the only such script
+that currently exists in a distributable form is the one for NetBSD.
+A version for Linux is under development.   For other operating
+systems, you would have to develop your own.
 
-			       PORTING
+If you wish to run the DHCP Distribution on Linux, please see the
+Linux-specific notes later in this document.  If you wish to run on a
+SCO release, please see the SCO-specific notes later in this document.
+You particularly need to read these notes if you intend to support
+Windows 95 clients.  If you are running a version of FreeBSD prior to
+2.2, please read the note on FreeBSD.  If you are running HP-UX or
+Ultrix, please read the notes for those operating systems below.
 
-If you want to attempt a port, the first thing to do is to make a copy
-of one of the header files in cf/ for your system and hack the
-variables you find there as needed.   Hack osdep.h to conditionally
-include your header file when compiling on your system.
+		    BUILDING THE DHCP DISTRIBUTION
 
-DHCP servers require more of their network stack than most network
-servers do.   A DHCP server must be able to tell which network
-interface a packet arrived on.   If you have only one interface, this
-is easy, which is why dhcpd works on a lot of systems if you only have
-one network interface.   If you have several network interfaces, dhcpd
-only works on systems for which some kind of low-level network
-interface support is present.   Currently there are low-level network
-drivers for the Berkeley Packet Filter (BPF) and Sun's STREAMS Network
-Interface Tap (NIT).   If you want to make dhcpd work really well on
-your favourite system, and it doesn't support NIT or BPF, you're going
-to need to implement a new low-level driver program along the lines of
-bpf.c or nit.c in order to make this happen.
+To build the DHCP Distribution, type ``configure''.  If configure can
+figure out what sort of system you're running on, it will create a
+custom Makefile for you for that system; otherwise, it will complain.
+If it can't figure out what system you are using, that system is not
+supported - you are on your own.
 
-Even if you only need dhcpd to work on systems with a single
-interface, there can still be problems.  Of all the systems dhcpd
-currently works on, only one (Solaris) has an IP stack that allows the
-all-ones broadcast address (255.255.255.255) to go out onto the
-network unchanged.  Other systems insist on changing 255.255.255.255
-into the local subnet broadcast address (here, that's
-204.254.239.255).  This results in a protocol violation, and while
+Once you've run configure, just type ``make'', and after a while you
+should have a dhcp server.  If you get compile errors on one of the
+supported systems mentioned earlier, please let us know.  If you get
+errors on a system not mentioned above, you will need to do some
+programming or debugging on your own to get the DHCP Distribution working.
+
+				LINUX
+
+In order for dhcpd to work correctly with picky DHCP clients (e.g.,
+Windows 95), it must be able to send packets with an IP destination
+address of 255.255.255.255.  Unfortunately, Linux insists on changing
+255.255.255.255 into the local subnet broadcast address (here, that's
+192.5.5.223).  This results in a DHCP protocol violation, and while
 many DHCP clients don't notice the problem, some (e.g., all Microsoft
 DHCP clients) do.  Clients that have this problem will appear not to
-see DHCOPFFER responses from the server.
+see DHCPOFFER messages from the server.
 
-It is possible to work around this problem on most such systems by
-creating a host route from your network interface address to
-255.255.255.255.   On most systems, you do this with:
+It is possible to work around this problem on some versions of Linux
+by creating a host route from your network interface address to
+255.255.255.255.   The command you need to use to do this on Linux
+varies from version to version.   The easiest version is:
 
-	route add 255.255.255.255 <your-interface-address> 0
+	route add -host 255.255.255.255 dev eth0
 
-or
+On some older Linux systems, you will get an error if you try to do
+this.   On those systems, try adding the following entry to your
+/etc/hosts file:
 
-	route add -host 255.255.255.255 <your-interface-address>
+255.255.255.255	all-ones
 
-Some Linux systems work better with:
+Then, try:
 
-	route add -host 255.255.255.255 dev <your-interface-name>
+	route add -host all-ones dev eth0
 
-On some systems, you will get error messages if you use the route
-command, but may succeed if you write a small program to do the system
-calls.   It would be nice if dhcpd were to do this automatically.
-If you have a patch to do this, send it in!   :')
+Another route that has worked for some users is:
 
+	route add -net 255.255.255.0 dev eth0
 
-			      DEBUGGING
+If you are not using eth0 as your network interface, you should
+specify the network interface you *are* using in your route command.
 
-dhcpd logs to LOG_DAEMON.   Depending on the logging level that you
-choose with syslog, you can get quite a bit of information about what
-dhcpd is doing.   To get the most logging, put the following in your
-/etc/syslog.conf file and restart syslog:
+				 SCO
 
-daemon.debug:	/var/log/daemon.log
+SCO has the same problem as Linux (described earlier).  The thing is,
+SCO *really* doesn't want to let you add a host route to the all-ones
+broadcast address.  One technique that has been successful on some
+versions of SCO is the very bizarre command:
 
-You may, of course, change the filename to suit your taste.  Be sure
-that the log file actually exists before restarting syslogd.  In
-addition to dhcp logging, you may also capture a lot of information
-from other daemons that you aren't interested in.  If this is a
-problem, you may want to edit site.h and redefine the
-DHCPD_LOG_FACILITY macro to, for example, LOG_LOCAL7, and then use
-local7.debug instead of daemon.debug.   You need to recompile and
-reinstall if you make this change.
+	ifconfig net0 alias 10.1.1.1 netmask 8.0.0.0
 
-You can also specify the -d flag on the command line to have dhcpd log
-all of its output to standard error as well as to syslog.   To run
-dhcpd under the debugger, supply the -f flag.
+Apparently this works because of an interaction between SCO's support
+for network classes and the weird netmask.  The 10.* network is just a
+dummy that can generally be assumed to be safe.   Don't ask why this
+works.   Just try it.   If it works for you, great.   If not, SCO is
+supposedly adding hooks to support real DHCP service in a future
+release - I have this on good authority from the people at SCO who do
+*their* DHCP server and client.
 
-More verbose debugging information can be obtained by defining
-DEBUG_PACKET in site.h and recompiling.   This will give you hex dumps
-and symbolic dumps of all DHCP packets that are successfully processed
-or are generated by dhcpd.
+				HP-UX
+
+HP-UX has the same problem with the all-ones broadcast address that
+SCO and Linux have.   It is not entirely clear to me how to get it
+working on HP-UX, but I'm given to understand that some users have
+succeeded.   HP-UX comes with its own DHCP server as of version 10, so
+there hasn't been a lot of interest in this recently.   If you have
+trouble, ask on the mailing list.
+
+				ULTRIX
+
+Now that we have Ultrix packet filter support, the DHCP Distribution
+on Ultrix should be pretty trouble-free.  However, one thing you do
+need to be aware of is that it now requires that the pfilt device be
+configured into your kernel and present in /dev.  If you type ``man
+packetfilter'', you will get some information on how to configure your
+kernel for the packet filter (if it isn't already) and how to make an
+entry for it in /dev.
+
+			       FreeBSD
+
+Versions of FreeBSD prior to 2.2 have a bug in BPF support in that the
+ethernet driver swaps the ethertype field in the ethernet header
+downstream from BPF, which corrupts the output packet.   If you are
+running a version of FreeBSD prior to 2.2, and you find that dhcpd
+can't communicate with its clients, you should #define BROKEN_FREEBSD_BPF 
+in site.h and recompile.
 
 			       SUPPORT
 
@@ -106,29 +135,37 @@ ISC DHCPD is not a commercial product, and is not supported in that
 sense.  However, it has attracted a fairly sizable following on the
 Internet, which means that there are a lot of knowledgable users who
 may be able to help you if you get stuck.  These people generally read
-the dhcpd-users@fugue.com mailing list.
+the dhcp-server@fugue.com mailing list.
 
-If you are going to use dhcpd, you should probably subscribe to
-dhcpd-users, as well as dhcpd-announce.  For details, please see
-http://www.fugue.com/dhcp/lists.  If you don't have WorldWide Web
-access, you can send mail to dhcpd-request@fugue.com and tell me which
-lists you want to subscribe to, but please use the web interface if
-you can, since I have to handle the -request mailing list manually.
+If you are going to use dhcpd, you should probably subscribe to the
+dhcp-server and dhcp-announce mailing lists.  If you will be using
+dhclient, you should subscribe to the dhcp-client mailing list.  For
+details, please see http://www.fugue.com/dhcp/lists.  If you don't
+have WorldWide Web access, you can send mail to dhcp-request@fugue.com
+and tell me which lists you want to subscribe to, but please use the
+web interface if you can, since I have to handle the -request mailing
+list manually, and I will give you the third degree if you make me do
+your subscription manually.
 
-PLEASE DO NOT SEND REQUESTS FOR SUPPORT DIRECTLY TO ME!   The number
-of people using dhcpd is sufficiently large that if I take an
-interrupt every time any one of those people runs into trouble, I will
-never get any more coding done.
+PLEASE DO NOT SEND REQUESTS FOR SUPPORT DIRECTLY TO ME!  The number of
+people using the DHCP Distribution is sufficiently large that if I
+take an interrupt every time any one of those people runs into
+trouble, I will never get any more coding done.
+
+PLEASE DO NOT CALL ME ON THE PHONE FOR SUPPORT!   Answering the phone
+takes a lot more of my time and attention than answering email.  If you
+do call me on the phone, I will tell you to send email to the mailing
+list, and I won't answer your question, so there's no point in doing
+it.
 
 				 BUGS
 
-This release of dhcpd does not contain support for DHCPINFORM.
-Support for DHCPINFORM will be present in the next release.
-DHCPINFORM is somewhat tangential to the main purpose of the DHCP
-protocol, so this probably won't be a major problem for most users.
+This release of the DHCP Distribution does not yet contain support for
+DHCPINFORM.  Support for DHCPINFORM will be present in the release at
+a later time.  DHCPINFORM is somewhat tangential to the main purpose
+of the DHCP protocol, so this probably won't be a major problem for
+most users.
 
-The man page for dhcpd.leases is not yet ready.
+Vendor tags and User tags are not currently supported.
 
-The system is painful to configure.   I will try to get GNU configure
-going in the next release.
 
