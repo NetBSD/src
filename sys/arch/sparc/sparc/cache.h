@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.15 1997/05/06 21:00:55 pk Exp $ */
+/*	$NetBSD: cache.h,v 1.16 1997/07/06 21:15:14 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -53,11 +53,8 @@
  * and write-back (Sun-4).  The write-back caches are much faster
  * but require a bit more care.
  *
- * VAC_NONE is not actually used now, but if someone builds a physical
- * cache Sun-4 (or, more likely, a virtual index/physical tag cache)
- * everything will work.
  */
-enum vactype { VAC_NONE, VAC_WRITETHROUGH, VAC_WRITEBACK };
+enum vactype { VAC_UNKNOWN, VAC_NONE, VAC_WRITETHROUGH, VAC_WRITEBACK };
 
 /*
  * Cache tags can be written in control space, and must be set to 0
