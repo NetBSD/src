@@ -1,4 +1,4 @@
-/*	$NetBSD: bat.h,v 1.4 2003/02/06 23:02:33 matt Exp $	*/
+/*	$NetBSD: bat.h,v 1.5 2003/03/14 06:21:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -70,10 +70,12 @@
 #ifndef	_POWERPC_OEA_BAT_H_
 #define	_POWERPC_OEA_BAT_H_
 
+#ifndef _LOCORE
 struct bat {
 	register_t batu;
 	register_t batl;
 };
+#endif
 
 /* Lower BAT bits (all but PowerPC 601): */
 #define	BAT_RPN		(~0x1ffff)	/* physical block start */
@@ -118,6 +120,9 @@ struct bat {
 
 #define BAT_VA_MATCH_P(batu,va) \
   (((~(((batu)&BAT_BL)<<15))&(va)&BAT_EPI)==((batu)&BAT_EPI))
+
+#define BAT_PA_MATCH_P(batu,batl,pa) \
+  (((~(((batu)&BAT_BL)<<15))&(pa)&BAT_RPN)==((batl)&BAT_RPN))
 
 #define BAT_VALID_P(batu, msr) \
   (((msr)&PSL_PR)?(((batu)&BAT_Vu)==BAT_Vu):(((batu)&BAT_Vs)==BAT_Vs))
@@ -178,10 +183,12 @@ struct bat {
 	((batl) & BAT601_V)
 
 #ifdef	_KERNEL
+#ifndef _LOCORE
 void oea_batinit(paddr_t, ...);
 void oea_iobat_add(paddr_t, register_t);
 void oea_iobat_remove(paddr_t);
 extern struct bat battable[];
+#endif
 #endif
 
 #endif	/* _POWERPC_OEA_BAT_H_ */
