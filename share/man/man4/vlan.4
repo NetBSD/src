@@ -1,4 +1,4 @@
-.\"	$NetBSD: vlan.4,v 1.22 2003/04/16 09:59:40 wiz Exp $
+.\"	$NetBSD: vlan.4,v 1.23 2003/05/07 03:33:49 fair Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 19, 2003
+.Dd May 6, 2003
 .Dt VLAN 4
 .Os
 .Sh NAME
@@ -45,40 +45,67 @@
 .Sh DESCRIPTION
 The
 .Nm
-interface provides support for IEEE 802.1Q Virtual LANs.  This allows the
+interface provides support for
+.Tn IEEE
+802.1Q Virtual Local Area Networks
+.Pq Tn VLAN .
+This supports the
 trunking of more than one network on a single network interface.
 This is particularly useful on routers or on hosts which must be
-connected to many different networks.
+connected to many different networks through a single physical interface.
 .Pp
 To use a
 .Nm vlan
 interface, the administrator must first create the interface and then
-specify the VLAN tag and physical interface associated with the VLAN.
+specify the
+.Tn VLAN
+tag
+.Po
+a 16-bit integer which distinguishes each
+.Tn VLAN
+from any others
+.Pc
+and physical interface associated with the
+.Tn VLAN .
 This can be done by using the
 .Xr ifconfig 8
-.Sq create ,
-.Sq vlan ,
+.Ic create ,
+.Ic vlan ,
 and
-.Sq vlanif
-subcommands, or
+.Ic vlanif
+subcommands from a shell command line or script.
+From within a C program, use the
+.Xr ioctl 2
+system call with the
 .Dv SIOCSIFCREATE
 and
 .Dv SIOCSIFVLAN
-ioctls.
+arguments.
 .Pp
-To be compatible with others 802.1Q devices, the
+To be compatible with other
+.Tn IEEE
+802.1Q devices, the
 .Nm
-interface shall support a 1500 bytes MTU, which means that the parent
-interface will have to handle frames that are 4 bytes larger than the
-Ethernet MTU. Drivers supporting this increased MTU are:
+interface supports a 1500 byte
+.Tn MTU ,
+which means that the parent interface will have to handle packets
+that are 4 bytes larger than the original
+.Tn Ethernet
+standard.
+Drivers supporting this increased
+.Tn MTU
+are:
 .Pp
 .Bl -dash -compact
 .It
-drivers using the dp8390 core (such as
+drivers using the DP8390 core
+.Po
+such as
 .Xr ec 4 ,
 .Xr ne 4 ,
 .Xr we 4 ,
-and possibly others)
+and possibly others
+.Pc
 .It
 .Xr bge 4
 .It
@@ -116,10 +143,51 @@ and possibly others)
 .El
 .Pp
 .Nm
-can be used with devices not supporting the 802.1Q MTU, but then the MTU of the
+can be used with devices not supporting the
+.Tn IEEE
+802.1Q
+.Tn MTU ,
+but then the
+.Tn MTU
+of the
 .Nm
-interface will be 4 bytes too small and will not interoperate properly with
-other 802.1Q devices, unless the MTU of the remote end is also lowered.
+interface will be 4 bytes too small and will not interoperate
+properly with other
+.Tn IEEE
+802.1Q devices, unless the
+.Tn MTU
+of the other hosts on the
+.Tn VLAN
+are also lowered to match.
+.Sh EXAMPLES
+The following will create interface
+.Sy vlan0
+with
+.Tn VLAN
+tag six, on the
+.Tn Ethernet
+interface
+.Sy tlp0 :
+.Bd -literal -offset indent
+ifconfig vlan0 create
+ifconfig vlan0 vlan 6 vlanif tlp0
+.Ed
+.Pp
+After this set up,
+.Tn IP
+addresses (and/or other protocols) can be assigned to the
+.Sy vlan0
+interface.
+All other hosts on the
+.Tn Ethernet
+connected to
+.Sy tlp0
+which configure a
+.Tn VLAN
+and use
+.Tn VLAN
+tag six will see all traffic transmitted through
+.Sy vlan0 .
 .Sh SEE ALSO
 .Xr ifconfig 8
 .Sh HISTORY
@@ -136,7 +204,9 @@ driver was integrated by
 and
 .An Jason R. Thorpe
 .Aq thorpej@zembu.com .
-It was derived from a VLAN implementation that appeared in
+It was derived from a
+.Tn VLAN
+implementation that appeared in
 .Fx
 and
 .Ox .
@@ -144,4 +214,5 @@ and
 The
 .Nm
 interfaces do not currently inherit changes made to the physical
-interfaces's MTU.
+interfaces'
+.Tn MTU .
