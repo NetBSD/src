@@ -1,4 +1,4 @@
-/*	$NetBSD: riscoscalls.h,v 1.4 2001/07/27 21:10:04 bjh21 Exp $	*/
+/*	$NetBSD: riscoscalls.h,v 1.5 2001/07/27 23:09:15 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -52,12 +52,23 @@
 #define XOS_GetEnv		0x020010
 #define OS_Exit			0x000011
 #define XOS_Exit		0x020011
+#define OS_IntOff		0x000014
+#define XOS_IntOff		0x020014
+#define OS_EnterOS		0x000016
+#define XOS_EnterOS		0x020016
+#define OS_FSControl		0x000029
+#define XOS_FSControl		0x020029
+#define OS_ServiceCall		0x000030
+#define XOS_ServiceCall		0x020030
 #define OS_ReadVduVariables	0x000031
 #define XOS_ReadVduVariables	0x020031
 #define OS_ReadMemMapInfo	0x000051
 #define XOS_ReadMemMapInfo	0x020051
 #define OS_ReadMemMapEntries	0x000052
 #define XOS_ReadMemMapEntries	0x020052
+
+#define Cache_Control		0x000280
+#define XCache_Control		0x020280
 
 #ifndef __ASSEMBLER__
 typedef struct os_error {
@@ -135,6 +146,22 @@ extern os_error *xosfind_open(int, char const *, char const *, int *);
 extern char *os_get_env(caddr_t *, void **);
 
 extern void os_exit(os_error const *, int) __attribute__((noreturn));
+
+extern void os_int_off(void);
+
+extern void os_enter_os(void);
+#endif
+
+#define OSFSControl_Shutdown	23
+
+#ifndef __ASSEMBLER__
+extern os_error *xosfscontrol_shutdown(void);
+#endif
+
+#define Service_PreReset	0x45
+
+#ifndef __ASSEMBLER__
+extern void service_pre_reset(void);
 #endif
 
 #define os_MODEVAR_LOG2_BPP		9
@@ -160,6 +187,7 @@ struct os_mem_map_request {
 
 extern void os_read_mem_map_entries(struct os_mem_map_request *);
 
+extern os_error xcache_control(u_int, u_int, u_int *);
 #endif
 
 /* RISC OS Error numbers */

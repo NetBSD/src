@@ -1,4 +1,4 @@
-/*	$NetBSD: riscoscalls.S,v 1.6 2001/07/27 21:10:04 bjh21 Exp $	*/
+/*	$NetBSD: riscoscalls.S,v 1.7 2001/07/27 23:09:15 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -158,6 +158,37 @@ ENTRY(os_exit)
 Labex:
 	.ascii	"ABEX"
 
+ENTRY(os_int_off)
+	mov	ip, sp
+	stmfd	sp!, {fp, ip, lr, pc}
+	sub	fp, ip, #4
+	swi	OS_IntOff
+	ldmdb	fp, {fp, sp, pc}
+
+ENTRY(os_enter_os)
+	mov	ip, sp
+	stmfd	sp!, {fp, ip, lr, pc}
+	sub	fp, ip, #4
+	swi	OS_EnterOS
+	ldmdb	fp, {fp, sp, pc}
+
+ENTRY(xosfscontrol_shutdown)
+	mov	ip, sp
+	stmfd	sp!, {fp, ip, lr, pc}
+	sub	fp, ip, #4
+	mov	r0, #OSFSControl_Shutdown
+	swi	XOS_FSControl
+	movvc	r0, #0
+	ldmdb	fp, {fp, sp, pc}	
+
+ENTRY(service_pre_reset)
+	mov	ip, sp
+	stmfd	sp!, {fp, ip, lr, pc}
+	sub	fp, ip, #4
+	mov	r1, #Service_PreReset
+	swi	OS_ServiceCall
+	ldmdb	fp, {fp, sp, pc}	
+
 ENTRY(os_read_vdu_variables)
 	mov	ip, sp
 	stmfd	sp!, {fp, ip, lr, pc}
@@ -183,4 +214,15 @@ ENTRY(os_read_mem_map_entries)
 	stmfd	sp!, {fp, ip, lr, pc}
 	sub	fp, ip, #4
 	swi	OS_ReadMemMapEntries
+	ldmdb	fp, {fp, sp, pc}
+
+ENTRY(xcache_control)
+	mov	ip, sp
+	stmfd	sp!, {fp, ip, lr, pc}
+	sub	fp, ip, #4
+	swi	XCache_Control
+	ldmvsdb	fp, {fp, sp, pc}
+	teq	r2, #0
+	strne	r0, [r2]
+	mov	r0, #0
 	ldmdb	fp, {fp, sp, pc}
