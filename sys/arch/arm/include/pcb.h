@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.1 2001/09/03 19:20:27 matt Exp $	*/
+/*	$NetBSD: pcb.h,v 1.2 2001/09/09 10:33:43 toshii Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Thomas <matt@3am-software.com>.
@@ -55,15 +55,6 @@ struct pcb_arm32 {
 	u_int	pcb32_und_sp;
 };
 #define	pcb_pagedir	pcb_un.un_32.pcb32_pagedir
-#define	pcb_r8		pcb_un.un_32.pcb32_r8
-#define	pcb_r9		pcb_un.un_32.pcb32_r9
-#define	pcb_r10		pcb_un.un_32.pcb32_r10
-#define	pcb_r11		pcb_un.un_32.pcb32_r11
-#define	pcb_r12		pcb_un.un_32.pcb32_r12
-#define	pcb_sp		pcb_un.un_32.pcb32_sp
-#define	pcb_lr		pcb_un.un_32.pcb32_lr
-#define	pcb_pc		pcb_un.un_32.pcb32_pc
-#define	pcb_und_sp	pcb_un.un_32.pcb32_und_sp
 
 struct pcb_arm26 {
 	struct	switchframe *pcb26_sf;
