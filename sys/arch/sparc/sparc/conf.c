@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.71 2001/10/22 16:40:47 mrg Exp $ */
+/*	$NetBSD: conf.c,v 1.72 2001/12/11 04:29:26 uwe Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -118,10 +118,8 @@ cdev_decl(i4btrc);
 cdev_decl(i4brbch);
 cdev_decl(i4btel);
 
-#ifdef notyet
 #include "pci.h"
 cdev_decl(pci);
-#endif
 
 struct bdevsw	bdevsw[] =
 {
@@ -279,12 +277,8 @@ struct cdevsw	cdevsw[] =
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 120: SCSI bus */
 	cdev_disk_init(NRAID,raid),	/* 121: RAIDframe disk driver */
 	cdev_fb_init(NPNOZZ,p9100),	/* 122: /dev/cgfourteen */
-#ifdef notyet
 	cdev_pci_init(NPCI,pci),	/* 123: PCI bus access device */
-#else
-	cdev_lkm_dummy(),		/* 123 */
-#endif
-	cdev_tty_init(NCLCD,cdtty),	 /* 124: Aurora multiport serial */
+	cdev_tty_init(NCLCD,cdtty),	/* 124: Aurora multiport serial */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
