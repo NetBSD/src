@@ -1,4 +1,4 @@
-#	$NetBSD: files.ufs,v 1.5 2005/01/31 16:55:30 hannken Exp $
+#	$NetBSD: files.ufs,v 1.6 2005/02/10 22:23:19 dsl Exp $
 
 deffs					FFS
 deffs					EXT2FS
@@ -22,7 +22,8 @@ file	ufs/ffs/ffs_alloc.c		ffs | mfs
 file	ufs/ffs/ffs_balloc.c		ffs | mfs
 file	ufs/ffs/ffs_bswap.c		(ffs | mfs) & ffs_ei
 file	ufs/ffs/ffs_inode.c		ffs | mfs
-file	ufs/ffs/ffs_snapshot.c		ffs | mfs
+file	ufs/ffs/ffs_snapshot.c		(ffs | mfs) & ffs_snapshot
+file	ufs/ffs/ffs_snapshot_stub.c	(ffs | mfs) & !ffs_snapshot
 file	ufs/ffs/ffs_softdep.c		ffs & softdep
 file	ufs/ffs/ffs_softdep.stub.c	(ffs & !softdep) |
 					    (!ffs & (lfs | mfs | ext2fs))
