@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.39 1999/07/14 22:13:27 sommerfeld Exp $
+$NetBSD: pcmciadevs,v 1.40 1999/07/22 20:56:38 hwr Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@ $NetBSD: pcmciadevs,v 1.39 1999/07/14 22:13:27 sommerfeld Exp $
 
 vendor FUJITSU			0x0004  Fujitsu Corporation
 vendor SANDISK			0x0045	Sandisk Corporation
-vendor NEWMEDIA			0x0057	NewMedia Corporation
+vendor NEWMEDIA			0x0057	New Media Corporation
 vendor IBM			0x00a4	IBM Corporation
 vendor MOTOROLA			0x0109	Motorola Corporation
 vendor 3COM			0x0101	3Com Corporation
@@ -145,9 +145,9 @@ product TDK XIR_CEM_10		0x110a Xircom CreditCard Ethernet + Modem
 product TDK XIR_PS_CE2_10	0x010b Xircom CreditCard CE2 Ethernet
 product TDK XIR_CNW		0x0802 Xircom CreditCard Netwave
 
-/* NewMedia Products */
-product NEWMEDIA BASICS		0x0019 NewMedia BASICS Ethernet
-product NEWMEDIA BUSTOASTER	0xc102 NewMedia BusToaster SCSI Host Adapter
+/* New Media Products */
+product NEWMEDIA BASICS		0x0019 New Media BASICS Ethernet
+product NEWMEDIA BUSTOASTER	0xc102 New Media BusToaster SCSI Host Adapter
 
 /* Standard Microsystems Corporation Products */
 product SMC 8016		0x0105 SMC 8016 EtherCard
