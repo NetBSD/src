@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.42 2002/08/14 00:23:27 itojun Exp $ */
+/*	$NetBSD: if_gre.c,v 1.43 2003/01/04 23:43:05 wiz Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.42 2002/08/14 00:23:27 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.43 2003/01/04 23:43:05 wiz Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -514,7 +514,7 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
  * which would be taken by ip_output(), as this one will loop back to
  * us. If the interface is p2p as  a--->b, then a routing entry exists
  * If we now send a packet to b (e.g. ping b), this will come down here
- * gets src=a, dst=b tacked on and would from ip_ouput() sent back to
+ * gets src=a, dst=b tacked on and would from ip_output() sent back to
  * if_gre.
  * Goal here is to compute a route to b that is less specific than
  * a-->b. We know that this one exists as in normal operation we have
