@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_socket.c	7.23 (Berkeley) 4/20/91
- *	$Id: nfs_socket.c,v 1.12 1994/05/05 05:39:46 cgd Exp $
+ *	$Id: nfs_socket.c,v 1.13 1994/05/24 02:33:36 cgd Exp $
  */
 
 /*
@@ -565,7 +565,7 @@ errout:
 						*mbp = m2;
 						mbp = &m2->m_next;
 					}
-					siz = MIN(mlen, m->m_len);
+					siz = min(mlen, m->m_len);
 					bcopy(fcp, tcp, siz);
 					m2->m_len += siz;
 					mlen -= siz;

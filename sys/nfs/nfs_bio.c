@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_bio.c	7.19 (Berkeley) 4/16/91
- *	$Id: nfs_bio.c,v 1.10 1994/04/25 03:50:18 cgd Exp $
+ *	$Id: nfs_bio.c,v 1.11 1994/05/24 02:33:34 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -127,7 +127,7 @@ nfs_bioread(vp, uio, ioflag, cred)
 		nfsstats.biocache_reads++;
 		lbn = uio->uio_offset / biosize;
 		on = uio->uio_offset & (biosize-1);
-		n = MIN((unsigned)(biosize - on), uio->uio_resid);
+		n = min((unsigned)(biosize - on), uio->uio_resid);
 		diff = np->n_size - uio->uio_offset;
 		if (diff <= 0)
 			return (error);
@@ -145,20 +145,20 @@ nfs_bioread(vp, uio, ioflag, cred)
 		if (bp->b_resid) {
 		   diff = (on >= (biosize-bp->b_resid)) ? 0 :
 			(biosize-bp->b_resid-on);
-		   n = MIN(n, diff);
+		   n = min(n, diff);
 		}
 		break;
 	    case VLNK:
 		nfsstats.biocache_readlinks++;
 		on = 0;
 		error = bread(vp, (daddr_t)0, NFS_MAXPATHLEN, cred, &bp);
-		n = MIN(uio->uio_resid, NFS_MAXPATHLEN - bp->b_resid);
+		n = min(uio->uio_resid, NFS_MAXPATHLEN - bp->b_resid);
 		break;
 	    case VDIR:
 		nfsstats.biocache_readdirs++;
 		on = 0;
 		error = bread(vp, uio->uio_offset, NFS_DIRBLKSIZ, cred, &bp);
-		n = MIN(uio->uio_resid, NFS_DIRBLKSIZ - bp->b_resid);
+		n = min(uio->uio_resid, NFS_DIRBLKSIZ - bp->b_resid);
 		break;
 	    };
 	    if (error) {
@@ -253,7 +253,7 @@ nfs_write(vp, uio, ioflag, cred)
 		nfsstats.biocache_writes++;
 		lbn = uio->uio_offset / biosize;
 		on = uio->uio_offset & (biosize-1);
-		n = MIN((unsigned)(biosize - on), uio->uio_resid);
+		n = min((unsigned)(biosize - on), uio->uio_resid);
 		if (uio->uio_offset+n > np->n_size) {
 			np->n_size = uio->uio_offset+n;
 			vnode_pager_setsize(vp, np->n_size);
@@ -272,8 +272,8 @@ again:
 			 * otherwise force a write rpc of the old dirty area.
 			 */
 			if (on <= bp->b_dirtyend && (on+n) >= bp->b_dirtyoff) {
-				bp->b_dirtyoff = MIN(on, bp->b_dirtyoff);
-				bp->b_dirtyend = MAX((on+n), bp->b_dirtyend);
+				bp->b_dirtyoff = min(on, bp->b_dirtyoff);
+				bp->b_dirtyend = max((on+n), bp->b_dirtyend);
 			} else {
 				bp->b_proc = p;
 				if (error = bwrite(bp))
