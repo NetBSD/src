@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 1995/10/09 00:11:24 pk Exp $
+#	$NetBSD: Makefile,v 1.12 1996/01/02 08:54:28 thorpej Exp $
 
 PROG=	ld.so
 SRCS=	mdprologue.S rtld.c malloc.c shlib.c etc.c md.c vfprintf.c
@@ -6,7 +6,7 @@ SRCS=	mdprologue.S rtld.c malloc.c shlib.c etc.c md.c vfprintf.c
 MAN= rtld.1
 LDDIR?= $(.CURDIR)/..
 #PICFLAG=-pic
-PICFLAG=-fpic
+PICFLAG=-fpic -fno-function-cse
 CFLAGS+=-I$(LDDIR) -I$(.CURDIR) -I$(LDDIR)/$(MACHINE_ARCH) $(PICFLAG) -DRTLD -DLIBC_SCCS
 LDFLAGS+=-Bshareable -Bsymbolic -assert nosymbolic
 ASFLAGS+=-k
