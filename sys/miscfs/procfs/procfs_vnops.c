@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.97 2003/04/17 18:08:28 jdolecek Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.98 2003/04/17 19:04:25 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.97 2003/04/17 18:08:28 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.98 2003/04/17 19:04:25 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -593,8 +593,11 @@ procfs_getattr(v)
 	case Pfd:
 		if (pfs->pfs_fd != -1) {
 			struct file *fp;
-			if ((error = procfs_getfp(pfs, &fp)) != 0)
+			struct proc *pown;
+
+			if ((error = procfs_getfp(pfs, &pown, &fp)) != 0)
 				return error;
+			FILE_USE(fp);
 			vap->va_nlink = 1;
 			vap->va_uid = fp->f_cred->cr_uid;
 			vap->va_gid = fp->f_cred->cr_gid;
@@ -607,6 +610,7 @@ procfs_getattr(v)
 				vap->va_bytes = vap->va_size = 0;
 				break;
 			}
+			FILE_UNUSE(fp, pown);
 			break;
 		}
 		/*FALLTHROUGH*/
