@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-add.c,v 1.2 2000/10/04 03:43:58 itojun Exp $	*/
+/*	$NetBSD: ssh-add.c,v 1.3 2000/10/29 08:55:59 veego Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ssh-add.c,v 1.2 2000/10/04 03:43:58 itojun Exp $");
+__RCSID("$NetBSD: ssh-add.c,v 1.3 2000/10/29 08:55:59 veego Exp $");
 #endif
 
 #include "includes.h"
@@ -187,7 +187,7 @@ add_file(AuthenticationConnection *ac, const char *filename)
 			snprintf(msg, sizeof msg,
 			    "%sEnter passphrase for %.200s",
 			    count > 0 ?
-			      "You entered the wrong passphrase.  " : "",
+			      "You entered the wrong passphrase.\n" : "",
 			    saved_comment);
 			if (interactive) {
 				snprintf(buf, sizeof buf, "%s: ", msg);
