@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.10 1996/02/09 22:28:58 christos Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.11 1996/03/25 12:53:35 pk Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -349,7 +349,7 @@ lfs_unmount(mp, mntflags, p)
 {
 	register struct ufsmount *ump;
 	register struct lfs *fs;
-	int i, error, flags, ronly;
+	int error, flags, ronly;
 
 	flags = 0;
 	if (mntflags & MNT_FORCE)
@@ -359,6 +359,7 @@ lfs_unmount(mp, mntflags, p)
 	fs = ump->um_lfs;
 #ifdef QUOTA
 	if (mp->mnt_flag & MNT_QUOTA) {
+		int i;
 		error = vflush(mp, fs->lfs_ivnode, SKIPSYSTEM|flags);
 		if (error)
 			return (error);
