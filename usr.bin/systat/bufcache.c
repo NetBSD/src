@@ -1,4 +1,4 @@
-/*	$NetBSD: bufcache.c,v 1.9 2000/11/30 12:08:13 simonb Exp $	*/
+/*	$NetBSD: bufcache.c,v 1.10 2000/12/01 02:19:43 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,15 +38,13 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bufcache.c,v 1.9 2000/11/30 12:08:13 simonb Exp $");
+__RCSID("$NetBSD: bufcache.c,v 1.10 2000/12/01 02:19:43 simonb Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/mount.h>
-#include <sys/queue.h>
 #include <sys/sysctl.h>
-#include <sys/time.h>
 #include <sys/vnode.h>
 
 #include <uvm/uvm_extern.h>
@@ -55,14 +53,12 @@ __RCSID("$NetBSD: bufcache.c,v 1.9 2000/11/30 12:08:13 simonb Exp $");
 #include <errno.h>
 #include <kvm.h>
 #include <nlist.h>
-#include <paths.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
 #include "systat.h"
 #include "extern.h"
-
 
 /*
  * Definitions for the buffer free lists (from sys/kern/vfs_bio.c).
@@ -207,7 +203,7 @@ initbufcache(void)
 			return(0);
 		}
 		if (namelist[X_NBUF].n_type == 0) {
-			error("namelist on %s failed", _PATH_UNIX);
+			error("No namelist");
 			return(0);
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.25 2000/10/11 14:46:18 is Exp $	*/
+/*	$NetBSD: extern.h,v 1.26 2000/12/01 02:19:43 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,15 +46,12 @@ extern struct	mode *curmode;
 extern struct	mode modes[];
 extern struct	text *xtext;
 extern WINDOW	*wnd;
-extern char	**dr_name;
 extern char	c, *namp, hostname[];
 extern double	avenrun[3];
 extern float	*dk_mspw;
 extern kvm_t	*kd;
 extern long	ntext, textp;
-extern int	*dk_select;
 extern int	CMDLINE;
-extern int	dk_ndrive;
 extern int	hz, stathz;
 extern int	naptime, col;
 extern int	nhosts;
@@ -65,6 +62,7 @@ extern int	nflag;
 extern char	*memf;
 extern int	allflag;
 extern int	turns;
+extern gid_t	egid;
 
 struct inpcb;
 #ifdef INET6
@@ -93,7 +91,6 @@ void	 disks_add(char *);
 void	 disks_delete(char *);
 void	 disks_drives(char *);
 void	 display(int);
-int	 dkinit(int, gid_t);
 void	 error(const char *, ...)
      __attribute__((__format__(__printf__, 1, 2)));
 void	 fetchbufcache(void);

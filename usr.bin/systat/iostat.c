@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.16 2000/07/05 11:03:21 ad Exp $	*/
+/*	$NetBSD: iostat.c,v 1.17 2000/12/01 02:19:43 simonb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -38,24 +38,16 @@
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: iostat.c,v 1.16 2000/07/05 11:03:21 ad Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.17 2000/12/01 02:19:43 simonb Exp $");
 #endif not lint
 
 #include <sys/param.h>
-#include <sys/sched.h>
-#include <sys/dkstat.h>
-#include <sys/buf.h>
-#include <sys/time.h>
 
 #include <string.h>
-#include <stdlib.h>
-#include <nlist.h>
-#include <paths.h>
+
 #include "systat.h"
 #include "extern.h"
-
 #include "dkstats.h"
-extern struct _disk	cur;
 
 static  int linesperregion;
 static  double etime;
@@ -90,7 +82,6 @@ closeiostat(WINDOW *w)
 int
 initiostat(void)
 {
-	extern gid_t egid;
 
 	dkinit(1, egid);
 	dkreadstats();

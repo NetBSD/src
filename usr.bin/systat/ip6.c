@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6.c,v 1.7 2000/07/16 03:07:20 itojun Exp $	*/
+/*	$NetBSD: ip6.c,v 1.8 2000/12/01 02:19:43 simonb Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -29,12 +29,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ip6.c,v 1.7 2000/07/16 03:07:20 itojun Exp $");
+__RCSID("$NetBSD: ip6.c,v 1.8 2000/12/01 02:19:43 simonb Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <sys/sysctl.h>
 
 #include <netinet/in.h>
@@ -42,11 +40,8 @@ __RCSID("$NetBSD: ip6.c,v 1.7 2000/07/16 03:07:20 itojun Exp $");
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 
-#include <stdlib.h>
-#include <string.h>
-#include <paths.h>
-#include <nlist.h>
 #include <kvm.h>
+#include <string.h>
 
 #include "systat.h"
 #include "extern.h"

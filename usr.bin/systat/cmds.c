@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.24 2000/09/04 12:28:12 ad Exp $	*/
+/*	$NetBSD: cmds.c,v 1.25 2000/12/01 02:19:43 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,14 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 4/29/95";
 #endif
-__RCSID("$NetBSD: cmds.c,v 1.24 2000/09/04 12:28:12 ad Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.25 2000/12/01 02:19:43 simonb Exp $");
 #endif /* not lint */
 
-#include <stdlib.h>
-#include <unistd.h>
-#include <signal.h>
 #include <ctype.h>
+#include <signal.h>
 #include <string.h>
+#include <unistd.h>
+
 #include "systat.h"
 #include "extern.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: swap.c,v 1.13 2000/07/05 11:03:23 ad Exp $	*/
+/*	$NetBSD: swap.c,v 1.14 2000/12/01 02:19:44 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997 Matthew R. Green.  All rights reserved.
@@ -39,20 +39,16 @@
 #if 0
 static char sccsid[] = "@(#)swap.c	8.3 (Berkeley) 4/29/95";
 #endif
-__RCSID("$NetBSD: swap.c,v 1.13 2000/07/05 11:03:23 ad Exp $");
+__RCSID("$NetBSD: swap.c,v 1.14 2000/12/01 02:19:44 simonb Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
-#include <sys/buf.h>
-#include <sys/conf.h>
-#include <sys/ioctl.h>
-#include <sys/stat.h>
 #include <sys/swap.h>
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
 #include <unistd.h>
 
 #include "systat.h"

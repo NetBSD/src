@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.34 2000/11/29 11:18:33 simonb Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.35 2000/12/01 02:19:44 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.34 2000/11/29 11:18:33 simonb Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.35 2000/12/01 02:19:44 simonb Exp $");
 #endif /* not lint */
 
 /*
@@ -47,29 +47,19 @@ __RCSID("$NetBSD: vmstat.c,v 1.34 2000/11/29 11:18:33 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/dkstat.h>
-#include <sys/buf.h>
-#include <sys/stat.h>
-#include <sys/time.h>
 #include <sys/user.h>
-#include <sys/proc.h>
 #include <sys/namei.h>
-#include <sys/sched.h>
 #include <sys/sysctl.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <ctype.h>
-#include <err.h>
-#include <nlist.h>
-#include <paths.h>
-#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <utmp.h>
-#include <unistd.h>
 
 #include "systat.h"
 #include "extern.h"
+#include "dkstats.h"
 
 static struct Info {
 	u_int64_t time[CPUSTATES];
@@ -79,10 +69,6 @@ static struct Info {
 	long	nchcount;
 	long	*intrcnt;
 } s, s1, s2, z;
-
-#include "dkstats.h"
-extern struct _disk	cur;
-
 
 #define	cnt s.Cnt
 #define oldcnt s1.Cnt
@@ -189,7 +175,6 @@ initvmstat(void)
 	char *intrnamebuf, *cp;
 	int i;
 	static int once = 0;
-	extern gid_t egid;
 
 	if (namelist[0].n_type == 0) {
 		if (kvm_nlist(kd, namelist)) {

@@ -1,4 +1,4 @@
-/*      $NetBSD: ps.c,v 1.16 2000/07/05 11:03:23 ad Exp $  */
+/*      $NetBSD: ps.c,v 1.17 2000/12/01 02:19:44 simonb Exp $  */
 
 /*-
  * Copyright (c) 1999
@@ -45,20 +45,16 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ps.c,v 1.16 2000/07/05 11:03:23 ad Exp $");
+__RCSID("$NetBSD: ps.c,v 1.17 2000/12/01 02:19:44 simonb Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
-#include <sys/dkstat.h>
-#include <sys/dir.h>
-#include <sys/time.h>
-#include <sys/proc.h>
 #include <sys/sched.h>
 #include <sys/sysctl.h>
 #include <sys/user.h>
+
 #include <curses.h>
 #include <math.h>
-#include <nlist.h>
 #include <pwd.h>
 #include <stdlib.h>
 #include <string.h>

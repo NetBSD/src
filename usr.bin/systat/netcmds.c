@@ -1,4 +1,4 @@
-/*	$NetBSD: netcmds.c,v 1.16 2000/07/05 11:03:22 ad Exp $	*/
+/*	$NetBSD: netcmds.c,v 1.17 2000/12/01 02:19:44 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,14 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)netcmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: netcmds.c,v 1.16 2000/07/05 11:03:22 ad Exp $");
+__RCSID("$NetBSD: netcmds.c,v 1.17 2000/12/01 02:19:44 simonb Exp $");
 #endif /* not lint */
 
 /*
  * Common network command support routines.
  */
 #include <sys/param.h>
-#include <sys/socket.h>
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
 
@@ -61,10 +60,11 @@ __RCSID("$NetBSD: netcmds.c,v 1.16 2000/07/05 11:03:22 ad Exp $");
 
 #include <arpa/inet.h>
 
+#include <ctype.h>
 #include <netdb.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
+
 #include "systat.h"
 #include "extern.h"
 
