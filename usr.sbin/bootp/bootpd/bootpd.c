@@ -22,7 +22,7 @@ SOFTWARE.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootpd.c,v 1.11 1999/01/31 10:06:16 mrg Exp $");
+__RCSID("$NetBSD: bootpd.c,v 1.12 1999/01/31 19:12:27 briggs Exp $");
 #endif
 
 /*
@@ -849,7 +849,7 @@ HW addr type is IEEE 802.  convert to %s and check again\n",
 			if (*t == '\0')
 				break;
 		if (t - homedir < BP_FILE_LEN) {
-			report(LOG_INFO, "requested path length > BP_FILE_LEN  file = \"%s\", nul terminating", homedir;
+			report(LOG_INFO, "requested path length > BP_FILE_LEN  file = \"%s\", nul terminating", homedir);
 			homedir[BP_FILE_LEN - 1] = '\0';
 		}
 			
