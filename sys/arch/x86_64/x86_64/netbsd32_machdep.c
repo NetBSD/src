@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.5 2002/06/04 11:14:22 fvdl Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.6 2002/06/12 19:13:28 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -81,7 +81,10 @@ netbsd32_setregs(struct proc *p, struct exec_package *pack, u_long stack)
 
 	p->p_md.md_flags &= ~MDP_USEDFPU;
 	pcb->pcb_flags = 0;
-	pcb->pcb_savefpu.fx_fcw = __NetBSD_NPXCW__;
+        pcb->pcb_savefpu.fp_fxsave.fx_fcw = __NetBSD_NPXCW__;
+        pcb->pcb_savefpu.fp_fxsave.fx_mxcsr = __INITIAL_MXCSR__;  
+	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr_mask = __INITIAL_MXCSR_MASK__;
+
 
 	p->p_flag |= P_32;
 

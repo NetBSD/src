@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.9 2002/06/04 15:44:34 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.10 2002/06/12 19:13:27 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -493,16 +493,17 @@ sendsig(catcher, sig, mask, code)
 	 * fxsave and the ABI.
 	 */
 	sp = (char *)((unsigned long)sp & ~15);
+	fp = (struct sigframe *)sp - 1;
+
 	if (p->p_md.md_flags & MDP_USEDFPU) {
-		frame.sf_fpp = &frame.sf_fp;
-		memcpy(frame.sf_fpp, &p->p_addr->u_pcb.pcb_savefpu,	
+		frame.sf_sc.sc_fpstate = &fp->sf_fp;
+		memcpy(&frame.sf_fp, &p->p_addr->u_pcb.pcb_savefpu.fp_fxsave,
 		    sizeof (struct fxsave64));
 		tocopy = sizeof (struct sigframe);
 	} else {
-		frame.sf_fpp = NULL;
+		frame.sf_sc.sc_fpstate = NULL;
 		tocopy = sizeof (struct sigframe) - sizeof (struct fxsave64);
 	}
-	fp = (struct sigframe *)sp - 1;
 
 	/* Build stack frame for signal trampoline. */
 	frame.sf_signum = sig;
@@ -635,6 +636,15 @@ sys___sigreturn14(p, v, retval)
 	tf->tf_cs = context.sc_cs;
 	tf->tf_rsp = context.sc_rsp;
 	tf->tf_ss = context.sc_ss;
+
+	/* Restore (possibly fixed up) FP state and force it to be reloaded */
+	if (p->p_md.md_flags & MDP_USEDFPU) {
+		if (copyin(context.sc_fpstate,
+		    &p->p_addr->u_pcb.pcb_savefpu.fp_fxsave,
+		    sizeof (struct fxsave64)) != 0)
+			return EFAULT;
+		fpudiscard(p);
+	}
 
 	/* Restore signal stack. */
 	if (context.sc_onstack & SS_ONSTACK)
@@ -982,7 +992,9 @@ setregs(p, pack, stack)
 
 	p->p_md.md_flags &= ~MDP_USEDFPU;
 	pcb->pcb_flags = 0;
-	pcb->pcb_savefpu.fx_fcw = __NetBSD_NPXCW__;
+	pcb->pcb_savefpu.fp_fxsave.fx_fcw = __NetBSD_NPXCW__;
+	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr = __INITIAL_MXCSR__;
+	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr_mask = __INITIAL_MXCSR_MASK__;
 
 	p->p_flag &= ~P_32;
 
