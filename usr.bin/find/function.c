@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.46 2003/08/07 11:13:41 agc Exp $	*/
+/*	$NetBSD: function.c,v 1.47 2004/03/30 22:51:55 heas Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: function.c,v 1.46 2003/08/07 11:13:41 agc Exp $");
+__RCSID("$NetBSD: function.c,v 1.47 2004/03/30 22:51:55 heas Exp $");
 #endif
 #endif /* not lint */
 
@@ -1521,7 +1521,7 @@ c_type(argvp, isok)
 
 	switch (typestring[0]) {
 #ifdef S_IFWHT
-      case 'W':
+	case 'W':
 #ifdef FTS_WHITEOUT
 	      ftsoptions |= FTS_WHITEOUT;
 #endif
