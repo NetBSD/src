@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.13 2003/04/26 14:10:15 ragge Exp $
+# $NetBSD: GENERIC,v 1.14 2003/09/13 13:30:08 chris Exp $
 #
 # GENERIC machine description file
 # 
@@ -93,6 +93,7 @@ options 	INET6		# IPV6
 
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 #options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_16	# NetBSD 1.6 compatibility.
 
 # Binary compatibility with previous versions of NetBSD.
 # None yet, since NetBSD/acorn26 hasn't been released.
