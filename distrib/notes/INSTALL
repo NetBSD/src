@@ -148,6 +148,60 @@ Memory subsystem, kernel threads, and SMP support.
 #include "whatis"
 
 
+Compatibility Issues:
+------------- ------
+
+As with any system which has functionality added and products
+modified to fit within the goals of portability, standards
+adherance, and uniformity, there have been some changes which
+affects compatibility with existing NetBSD products.
+
+The following products may need the suggested work-around to
+work in NetBSD _VER:
+
+* Swap configuration
+
+  Description:
+	Swap partittion configuration is now entirely in the domain
+	of the user and as such all swap partitions need to be added
+	to /etv/fstab.  Common symptoms of upgrades missing this
+	vital step include machine death during builds, and such.
+
+  Fix:
+	The most common position for a swap partition is the `b'
+	partition of the drive the root file system is on.  For
+	diskless systems, check the new swapctl(8) manual for more
+	detail on how this is done.  Example fstab entrys:
+	/dev/sd0b	none	swap	sw,priority=0
+	/dev/sd1b	none	swap	sw,priority=5
+
+* AMANDA, The Advanced Maryland Automatic Network Disk Archiver,
+  from http://www.amanda.org
+
+  Description:
+	Due to a change in the output of dump(8) to ensure
+	consistency in the messages, AMANDA's dump output
+	parser breaks.
+
+	Error messages such as the following may be an
+	indication that this problem is present:
+
+		FAILURE AND STRANGE DUMP SUMMARY:
+		  hostname      wd0e lev 1 FAILED [no backup size line]
+	  
+  Versions affected:
+	2.3.0.4, and most likely earlier versions
+
+  Workaround/Fix:
+	One of:
+	* Apply the patch found at:
+	    ftp://ftp.netbsd.org/pub/NetBSD/misc/patches/amanda-pre-2.4.patch
+	* Upgrade to AMANDA 2.4.0 or newer. The side effect of this is
+	  that the network protocol is incompatible with earlier
+	  versions.
+
+
+
 The Future of NetBSD:
 --- ------ -- ------
 
@@ -317,43 +371,6 @@ Preparing your System for NetBSD Installation:
 --------- ---- ------ --- ------ ------------
 
 #include "prep"
-
-
-Compatibility Issues:
-------------- ------
-
-As with any system which has functionality added and products
-modified to fit within the goals of portability, standards
-adherance, and uniformity, there have been some changes which
-affects compatibility with existing NetBSD products.
-
-The following products may need the suggested work-around to
-work in NetBSD _VER:
-
-* AMANDA, The Advanced Maryland Automatic Network Disk Archiver,
-  from http://www.amanda.org
-
-  Description:
-	Due to a change in the output of dump(8) to ensure
-	consistency in the messages, AMANDA's dump output
-	parser breaks.
-
-	Error messages such as the following may be an
-	indication that this problem is present:
-
-		FAILURE AND STRANGE DUMP SUMMARY:
-		  hostname      wd0e lev 1 FAILED [no backup size line]
-	  
-  Versions affected:
-	2.3.0.4, and most likely earlier versions
-
-  Workaround/Fix:
-	One of:
-	* Apply the patch found at:
-	    ftp://ftp.netbsd.org/pub/NetBSD/misc/patches/amanda-pre-2.4.patch
-	* Upgrade to AMANDA 2.4.0 or newer. The side effect of this is
-	  that the network protocol is incompatible with earlier
-	  versions.
 
 
 Installing the NetBSD System:
