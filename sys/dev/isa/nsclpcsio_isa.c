@@ -1,4 +1,4 @@
-/* $NetBSD: nsclpcsio_isa.c,v 1.4 2002/10/02 03:10:49 thorpej Exp $ */
+/* $NetBSD: nsclpcsio_isa.c,v 1.5 2002/10/22 16:18:26 drochner Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.4 2002/10/02 03:10:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.5 2002/10/22 16:18:26 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,9 +52,8 @@ struct nsclpcsio_softc {
 	struct sysmon_envsys sc_sysmon;
 };
 
-CFATTACH_DECL(nsclpcsio_isa, sizeof(struct nsclpcsio_isa_softc),
+CFATTACH_DECL(nsclpcsio_isa, sizeof(struct nsclpcsio_softc),
     nsclpcsio_isa_match, nsclpcsio_isa_attach, NULL, NULL);
-};
 
 static const struct envsys_range tms_ranges[] = {
 	{ 0, 2, ENVSYS_STEMP },
@@ -128,6 +127,7 @@ nsclpcsio_isa_match(parent, match, aux)
 			iobase = ia->ia_io[0].ir_addr;
 			goto found;
 		}
+		return (0);
 	}
 
 	/* PC87366 has two possible locations depending on wiring */
