@@ -1,11 +1,8 @@
-	$NetBSD: upgrade,v 1.13 1998/01/09 18:46:33 perry Exp $	
+	$NetBSD: upgrade,v 1.14 1998/05/09 03:49:30 ross Exp $	
 
-The upgrade to NetBSD _VER is a binary upgrade; it would be prohibitive
-to make users upgrade by compiling and installing the _VER sources, and
-it would be very difficult to even compile a set of instructions that
-allowed them to do so.  Because of the many changes to the system, it
-is difficult and impractical to upgrade by recompiling from the sources
-and installing.
+The upgrade to NetBSD _VER is a binary upgrade; it can be quite difficult
+to advance to a later version by recompiling from source due primarily
+to interdepencies in the various components.
 
 To do the upgrade, you must have the boot floppy image (boot.fs)
 available.  You must also have at least the "base" and "kern"
