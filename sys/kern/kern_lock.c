@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.26 2000/02/09 16:46:09 sommerfeld Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.27 2000/04/29 03:31:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -201,9 +201,11 @@ do {									\
 #if defined(MULTIPROCESSOR) /* { */
 struct simplelock spinlock_list_slock = SIMPLELOCK_INITIALIZER;
 
-#define	SPINLOCK_LIST_LOCK()	cpu_simple_lock(&spinlock_list_slock)
+#define	SPINLOCK_LIST_LOCK()						\
+	__cpu_simple_lock(&spinlock_list_slock->lock_data)
 
-#define	SPINLOCK_LIST_UNLOCK()	cpu_simple_unlock(&spinlock_list_slock)
+#define	SPINLOCK_LIST_UNLOCK()						\
+	__cpu_simple_unlock(&spinlock_list_slock->lock_data)
 #else
 #define	SPINLOCK_LIST_LOCK()	/* nothing */
 
@@ -665,10 +667,10 @@ TAILQ_HEAD(, simplelock) simplelock_list =
 struct simplelock simplelock_list_slock = SIMPLELOCK_INITIALIZER;
 
 #define	SLOCK_LIST_LOCK()						\
-	cpu_simple_lock(&simplelock_list_slock)
+	__cpu_simple_lock(&simplelock_list_slock->lock_data)
 
 #define	SLOCK_LIST_UNLOCK()						\
-	cpu_simple_unlock(&simplelock_list_slock)
+	__cpu_simple_unlock(&simplelock_list_slock->lock_data)
 
 #define	SLOCK_COUNT(x)							\
 	/* atomic_add_ulong(&curcpu()->ci_simple_locks, (x)) */
@@ -719,9 +721,9 @@ simple_lock_init(alp)
 {
 
 #if defined(MULTIPROCESSOR) /* { */
-	cpu_simple_lock_init(alp);
+	__cpu_simple_lock_init(&alp->lock_data);
 #else
-	alp->lock_data = SIMPLELOCK_UNLOCKED;
+	alp->lock_data = __SIMPLELOCK_UNLOCKED;
 #endif /* } */
 	alp->lock_file = NULL;
 	alp->lock_line = 0;
@@ -745,7 +747,7 @@ _simple_lock(alp, id, l)
 	 * MULTIPROCESSOR case: This is `safe' since if it's not us, we
 	 * don't take any action, and just fall into the normal spin case.
 	 */
-	if (alp->lock_data == SIMPLELOCK_LOCKED) {
+	if (alp->lock_data == __SIMPLELOCK_LOCKED) {
 #if defined(MULTIPROCESSOR) /* { */
 		if (alp->lock_holder == cpu_id) {
 			SLOCK_WHERE("simple_lock: locking against myself\n",
@@ -760,9 +762,9 @@ _simple_lock(alp, id, l)
 
 #if defined(MULTIPROCESSOR) /* { */
 	/* Acquire the lock before modifying any fields. */
-	cpu_simple_lock(alp);
+	__cpu_simple_lock(&alp->lock_data);
 #else
-	alp->lock_data = SIMPLELOCK_LOCKED;
+	alp->lock_data = __SIMPLELOCK_LOCKED;
 #endif /* } */
 
 	alp->lock_file = id;
@@ -796,18 +798,18 @@ _simple_lock_try(alp, id, l)
 	 * don't take any action.
 	 */
 #if defined(MULTIPROCESSOR) /* { */
-	if ((rv = cpu_simple_lock_try(alp)) == 0) {
+	if ((rv = __cpu_simple_lock_try(&alp->lock_data)) == 0) {
 		if (alp->lock_holder == cpu_id)
 			SLOCK_WHERE("simple_lock_try: locking against myself\n",
 			    alp, id, l);
 		goto out;
 	}
 #else
-	if (alp->lock_data == SIMPLELOCK_LOCKED) {
+	if (alp->lock_data == __SIMPLELOCK_LOCKED) {
 		SLOCK_WHERE("simple_lock_try: lock held\n", alp, id, l);
 		goto out;
 	}
-	alp->lock_data = SIMPLELOCK_LOCKED;
+	alp->lock_data = __SIMPLELOCK_LOCKED;
 #endif /* MULTIPROCESSOR */ /* } */
 
 	/*
@@ -846,7 +848,7 @@ _simple_unlock(alp, id, l)
 	 * MULTIPROCESSOR case: This is `safe' because we think we hold
 	 * the lock, and if we don't, we don't take any action.
 	 */
-	if (alp->lock_data == SIMPLELOCK_UNLOCKED) {
+	if (alp->lock_data == __SIMPLELOCK_UNLOCKED) {
 		SLOCK_WHERE("simple_unlock: lock not held\n",
 		    alp, id, l);
 		goto out;
@@ -867,9 +869,9 @@ _simple_unlock(alp, id, l)
 #if defined(MULTIPROCESSOR) /* { */
 	alp->lock_holder = LK_NOCPU;
 	/* Now that we've modified all fields, release the lock. */
-	cpu_simple_unlock(alp);
+	__cpu_simple_unlock(&alp->lock_data);
 #else
-	alp->lock_data = SIMPLELOCK_UNLOCKED;
+	alp->lock_data = __SIMPLELOCK_UNLOCKED;
 #endif /* } */
 
  out:
