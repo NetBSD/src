@@ -1,4 +1,4 @@
-/*	$NetBSD: tftpd.c,v 1.13 1998/07/26 15:02:27 mycroft Exp $	*/
+/*	$NetBSD: tftpd.c,v 1.14 1998/07/29 11:31:22 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tftpd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tftpd.c,v 1.13 1998/07/26 15:02:27 mycroft Exp $");
+__RCSID("$NetBSD: tftpd.c,v 1.14 1998/07/29 11:31:22 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,7 +66,9 @@ __RCSID("$NetBSD: tftpd.c,v 1.13 1998/07/26 15:02:27 mycroft Exp $");
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <grp.h>
 #include <netdb.h>
+#include <pwd.h>
 #include <setjmp.h>
 #include <signal.h>
 #include <stdio.h>
@@ -77,9 +79,7 @@ __RCSID("$NetBSD: tftpd.c,v 1.13 1998/07/26 15:02:27 mycroft Exp $");
 
 #include "tftpsubs.h"
 
-/* XXX svr4 defines UID_NOBODY and GID_NOBODY constants in <sys/param.h> */
-#define UID_NOBODY	32767
-#define GID_NOBODY	32766
+#define	DEFAULTUSER	"nobody"
 
 #define	TIMEOUT		5
 
@@ -140,7 +140,9 @@ struct formats {
 static void
 usage()
 {
-	syslog(LOG_ERR, "Usage: %s [-s] [directory ...]\n", __progname);
+	syslog(LOG_ERR,
+    "Usage: %s [-ln] [-u user] [-g group] [-s directory] [directory ...]",
+		    __progname);
 	exit(1);
 }
 
@@ -149,16 +151,31 @@ main(argc, argv)
 	int    argc;
 	char **argv;
 {
-	register struct tftphdr *tp;
-	register int n = 0;
+	struct passwd *pwent;
+	struct group *grent;
+	struct tftphdr *tp;
+	int n = 0;
 	int ch, on;
 	int fd = 0;
 	struct sockaddr_in sin;
+	char *tgtuser, *tgtgroup, *ep;
+	uid_t curuid, tgtuid;
+	gid_t curgid, tgtgid;
+	long nid;
 
 	openlog("tftpd", LOG_PID | LOG_NDELAY, LOG_DAEMON);
+	tgtuser = DEFAULTUSER;
+	tgtgroup = NULL;
+	curuid = getuid();
+	curgid = getgid();
 
-	while ((ch = getopt(argc, argv, "lns:")) != -1)
+	while ((ch = getopt(argc, argv, "g:lns:u:")) != -1)
 		switch (ch) {
+
+		case 'g':
+			tgtgroup = optarg;
+			break;
+
 		case 'l':
 			logging = 1;
 			break;
@@ -170,6 +187,10 @@ main(argc, argv)
 		case 's':
 			secure = 1;
 			securedir = optarg;
+			break;
+
+		case 'u':
+			tgtuser = optarg;
 			break;
 
 		default:
@@ -191,42 +212,84 @@ main(argc, argv)
 		}
 	}
 
+	if (*tgtuser == '\0' || (tgtgroup != NULL && *tgtgroup == '\0'))
+		usage();
+
+	nid = (strtol(tgtuser, &ep, 10));
+	if (*ep == '\0') {
+		if (nid > UID_MAX) {
+			syslog(LOG_ERR, "uid %ld is too large", nid);
+			exit(1);
+		}
+		pwent = getpwuid((uid_t)nid);
+	} else
+		pwent = getpwnam(tgtuser);
+	if (pwent == NULL) {
+		syslog(LOG_ERR, "unknown user `%s'", tgtuser);
+		exit(1);
+	}
+	tgtuid = pwent->pw_uid;
+	tgtgid = pwent->pw_gid;
+
+	if (tgtgroup != NULL) {
+		nid = (strtol(tgtgroup, &ep, 10));
+		if (*ep == '\0') {
+			if (nid > GID_MAX) {
+				syslog(LOG_ERR, "gid %ld is too large", nid);
+				exit(1);
+			}
+			grent = getgrgid((gid_t)nid);
+		} else
+			grent = getgrnam(tgtgroup);
+		if (grent != NULL)
+			tgtgid = grent->gr_gid;
+		else {
+			syslog(LOG_ERR, "unknown group `%s'", tgtgroup);
+			exit(1);
+		}
+	}
+
 	if (secure) {
 		if (chdir(securedir) < 0) {
 			syslog(LOG_ERR, "chdir %s: %m", securedir);
 			exit(1);
 		}
 		if (chroot(".")) {
-			syslog(LOG_ERR, "chroot: %m\n");
+			syslog(LOG_ERR, "chroot: %m");
 			exit(1);
 		}
 	}
 
-	if (setgid(GID_NOBODY)) {
-		syslog(LOG_ERR, "setgid: %m");
-		exit(1);
+	syslog(LOG_DEBUG, "running as user `%s' (%d), group `%s' (%d)",
+	    tgtuser, tgtuid, tgtgroup ? tgtgroup : "(unspecified)" , tgtgid);
+	if (curgid != tgtgid) {
+		if (setgid(tgtgid)) {
+			syslog(LOG_ERR, "setgid to %d: %m", (int)tgtgid);
+			exit(1);
+		}
+		if (setgroups(0, NULL)) {
+			syslog(LOG_ERR, "setgroups: %m");
+			exit(1);
+		}
 	}
 
-	if (setgroups(0, NULL)) {
-		syslog(LOG_ERR, "setgroups: %m");
-		exit(1);
-	}
-
-	if (setuid(UID_NOBODY)) {
-		syslog(LOG_ERR, "setuid: %m");
-		exit(1);
+	if (curuid != tgtuid) {
+		if (setuid(tgtuid)) {
+			syslog(LOG_ERR, "setuid to %d: %m", (int)tgtuid);
+			exit(1);
+		}
 	}
 
 	on = 1;
 	if (ioctl(fd, FIONBIO, &on) < 0) {
-		syslog(LOG_ERR, "ioctl(FIONBIO): %m\n");
+		syslog(LOG_ERR, "ioctl(FIONBIO): %m");
 		exit(1);
 	}
 	fromlen = sizeof (from);
 	n = recvfrom(fd, buf, sizeof (buf), 0,
 	    (struct sockaddr *)&from, &fromlen);
 	if (n < 0) {
-		syslog(LOG_ERR, "recvfrom: %m\n");
+		syslog(LOG_ERR, "recvfrom: %m");
 		exit(1);
 	}
 	/*
@@ -273,7 +336,7 @@ main(argc, argv)
 		    }
 		}
 		if (pid < 0) {
-			syslog(LOG_ERR, "fork: %m\n");
+			syslog(LOG_ERR, "fork: %m");
 			exit(1);
 		} else if (pid != 0) {
 			exit(0);
@@ -286,17 +349,17 @@ main(argc, argv)
 	close(1);
 	peer = socket(AF_INET, SOCK_DGRAM, 0);
 	if (peer < 0) {
-		syslog(LOG_ERR, "socket: %m\n");
+		syslog(LOG_ERR, "socket: %m");
 		exit(1);
 	}
 	memset(&sin, 0, sizeof(sin));
 	sin.sin_family = AF_INET;
 	if (bind(peer, (struct sockaddr *)&sin, sizeof (sin)) < 0) {
-		syslog(LOG_ERR, "bind: %m\n");
+		syslog(LOG_ERR, "bind: %m");
 		exit(1);
 	}
 	if (connect(peer, (struct sockaddr *)&from, sizeof(from)) < 0) {
-		syslog(LOG_ERR, "connect: %m\n");
+		syslog(LOG_ERR, "connect: %m");
 		exit(1);
 	}
 	tp = (struct tftphdr *)buf;
@@ -314,9 +377,9 @@ tftp(tp, size)
 	struct tftphdr *tp;
 	int size;
 {
-	register char *cp;
+	char *cp;
 	int first = 1, ecode;
-	register struct formats *pf;
+	struct formats *pf;
 	char *filename, *mode = NULL; /* XXX gcc */
 
 	filename = cp = tp->th_stuff;
@@ -494,8 +557,8 @@ sendfile(pf)
 	struct formats *pf;
 {
 	struct tftphdr *dp;
-	register struct tftphdr *ap;    /* ack packet */
-	register int size, n;
+	struct tftphdr *ap;    /* ack packet */
+	int size, n;
 	volatile int block;
 
 	signal(SIGALRM, timer);
@@ -515,7 +578,7 @@ sendfile(pf)
 
 send_data:
 		if (send(peer, dp, size + 4, 0) != size + 4) {
-			syslog(LOG_ERR, "tftpd: write: %m\n");
+			syslog(LOG_ERR, "tftpd: write: %m");
 			goto abort;
 		}
 		read_ahead(file, pf->f_convert);
@@ -524,7 +587,7 @@ send_data:
 			n = recv(peer, ackbuf, sizeof (ackbuf), 0);
 			alarm(0);
 			if (n < 0) {
-				syslog(LOG_ERR, "tftpd: read: %m\n");
+				syslog(LOG_ERR, "tftpd: read: %m");
 				goto abort;
 			}
 			ap->th_opcode = ntohs((u_short)ap->th_opcode);
@@ -564,8 +627,8 @@ recvfile(pf)
 	struct formats *pf;
 {
 	struct tftphdr *dp;
-	register struct tftphdr *ap;    /* ack buffer */
-	register int n, size;
+	struct tftphdr *ap;    /* ack buffer */
+	int n, size;
 	volatile int block;
 
 	signal(SIGALRM, timer);
@@ -580,7 +643,7 @@ recvfile(pf)
 		(void) setjmp(timeoutbuf);
 send_ack:
 		if (send(peer, ackbuf, 4, 0) != 4) {
-			syslog(LOG_ERR, "tftpd: write: %m\n");
+			syslog(LOG_ERR, "tftpd: write: %m");
 			goto abort;
 		}
 		write_behind(file, pf->f_convert);
@@ -589,7 +652,7 @@ send_ack:
 			n = recv(peer, dp, PKTSIZE, 0);
 			alarm(0);
 			if (n < 0) {            /* really? */
-				syslog(LOG_ERR, "tftpd: read: %m\n");
+				syslog(LOG_ERR, "tftpd: read: %m");
 				goto abort;
 			}
 			dp->th_opcode = ntohs((u_short)dp->th_opcode);
@@ -654,7 +717,7 @@ errtomsg(error)
 	int error;
 {
 	static char buf[20];
-	register const struct errmsg *pe;
+	const struct errmsg *pe;
 
 	if (error == 0)
 		return "success";
@@ -675,9 +738,9 @@ static void
 nak(error)
 	int error;
 {
-	register struct tftphdr *tp;
+	struct tftphdr *tp;
 	int length;
-	register const struct errmsg *pe;
+	const struct errmsg *pe;
 
 	tp = (struct tftphdr *)buf;
 	tp->th_opcode = htons((u_short)ERROR);
@@ -695,7 +758,7 @@ nak(error)
 	tp->th_msg[length] = '\0';
 	length += 5;
 	if (send(peer, buf, length, 0) != length)
-		syslog(LOG_ERR, "nak: %m\n");
+		syslog(LOG_ERR, "nak: %m");
 }
 
 static char *

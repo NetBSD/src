@@ -1,4 +1,4 @@
-.\"	$NetBSD: tftpd.8,v 1.7 1998/06/08 12:41:43 lukem Exp $
+.\"	$NetBSD: tftpd.8,v 1.8 1998/07/29 11:31:22 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	from: @(#)tftpd.8	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 4, 1993
+.Dd July 29, 1998
 .Dt TFTPD 8
 .Os BSD 4.2
 .Sh NAME
@@ -43,9 +43,11 @@
 Internet Trivial File Transfer Protocol server
 .Sh SYNOPSIS
 .Nm
-.Op Fl s Ar directory
+.Op Fl g Ar group
 .Op Fl l
 .Op Fl n
+.Op Fl s Ar directory
+.Op Fl u Ar user
 .Op Ar directory ...
 .Sh DESCRIPTION
 .Nm
@@ -92,17 +94,27 @@ The given directories are also treated as a search path for
 relative filename requests.
 .Pp
 The options are:
-.Bl -tag -width Ds
+.Bl -tag -width "directory"
+.It Fl g Ar group
+Change gid to that of
+.Ar group
+on startup.
+If this isn't specified, the gid is set to that of the
+.Ar user
+specified with
+.Fl u .
 .It Fl l
 Logs all requests using
 .Xr syslog 3 .
 .It Fl n
 Suppresses negative acknowledgement of requests for nonexistent
 relative filenames.
-.It Fl s
+.It Fl s Ar directory
 .Nm
 will
 .Xr chroot 2
+to
+.Ar directory
 on startup.
 This is recommended for security reasons (so that files other than
 those in the 
@@ -116,6 +128,21 @@ to
 .Sq \&.
 under
 .Pa /tftpboot .
+.It Fl u Ar user
+Change uid to that of
+.Ar user
+on startup.
+If
+.Fl u
+isn't given,
+.Ar user
+defaults to
+.Dq nobody .
+If
+.Fl g
+isn't also given, change the gid to that of
+.Ar user
+as well.
 .El
 .Pp
 .Sh SEE ALSO
@@ -131,6 +158,13 @@ The
 .Fl s
 flag appeared in
 .Nx 1.0 .
+.Pp
+The
+.Fl g
+and
+.Fl u
+flags appeared in
+.Nx 1.4 .
 .Sh SECURITY CONSIDERATIONS
 You are
 .Em strongly
