@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.15 2003/03/09 00:57:17 lukem Exp $	*/
+/*	$NetBSD: driver.c,v 1.16 2004/11/24 11:57:09 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: driver.c,v 1.15 2003/03/09 00:57:17 lukem Exp $");
+__RCSID("$NetBSD: driver.c,v 1.16 2004/11/24 11:57:09 blymn Exp $");
 
 #include <ctype.h>
 #include "form.h"
@@ -122,9 +122,8 @@ form_driver(FORM *form, int c)
 	if (c < REQ_MIN_REQUEST) {
 		if (isprint(c) || isblank(c)) {
 			do {
-				pos = fieldp->start_char + fieldp->row_xpos
-	       + fieldp->lines[fieldp->start_line + fieldp->cursor_ypos].start;
-
+				pos = fieldp->start_char + fieldp->row_xpos;
+				
 			      /* check if we are allowed to edit this field */
 				if ((fieldp->opts & O_EDIT) != O_EDIT)
 					return E_REQUEST_DENIED;
@@ -301,7 +300,6 @@ form_driver(FORM *form, int c)
 			   * are rolled up into a single function, allow a
 			   * fall through to that function.
 			   */
-			  /* FALLTHROUGH */
 		case REQ_LEFT_FIELD:
 		case REQ_RIGHT_FIELD:
 		case REQ_UP_FIELD:
@@ -312,7 +310,7 @@ form_driver(FORM *form, int c)
 
 			  /* the following commands modify the buffer, check if
 			     this is allowed first before falling through. */
-			  /* FALLTHROUGH */
+
 		case REQ_DEL_PREV:
 			  /*
 			   * need to check for the overloading of this
@@ -444,7 +442,8 @@ form_driver(FORM *form, int c)
 		  /* if we have no error, reset the various offsets */
 		fieldp = form->fields[form->cur_field];
 		fieldp->start_char = 0;
-		fieldp->start_line = 0;
+		fieldp->start_line = fieldp->lines;
+		fieldp->cur_line = fieldp->lines;
 		fieldp->row_xpos = 0;
 		fieldp->cursor_ypos = 0;
 		_formi_init_field_xpos(fieldp);

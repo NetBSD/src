@@ -1,4 +1,4 @@
-/*	$NetBSD: field.c,v 1.22 2003/03/09 00:57:17 lukem Exp $	*/
+/*	$NetBSD: field.c,v 1.23 2004/11/24 11:57:09 blymn Exp $	*/
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
  *                         (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: field.c,v 1.22 2003/03/09 00:57:17 lukem Exp $");
+__RCSID("$NetBSD: field.c,v 1.23 2004/11/24 11:57:09 blymn Exp $");
 
 #include <stdlib.h>
 #include <strings.h>
@@ -53,8 +53,9 @@ FIELD _formi_default_field = {
 	FALSE, /* set to true if buffer 0 has changed. */
 	NO_JUSTIFICATION, /* justification style of the field */
 	FALSE, /* set to true if field is in overlay mode */
+	NULL, /* pointer to the current line cursor is on */
 	0, /* starting char in string (horiz scroll) */
-	0, /* starting line in field (vert scroll) */
+	NULL, /* starting line in field (vert scroll) */
 	0, /* number of rows actually used in field */
 	0, /* actual pos of cursor in row, not same as x pos due to tabs */
 	0, /* x pos of cursor in field */
@@ -75,14 +76,14 @@ FIELD _formi_default_field = {
 	NULL, /* type struct for the field */
 	{NULL, NULL}, /* circle queue glue for sorting fields */
 	NULL, /* args for field type. */
-	0,    /* number of allocated slots in lines array */
 	NULL, /* pointer to the array of lines structures. */
+	NULL, /* list of lines available for reuse */
 	NULL, /* array of buffers for the field */
 };
 
 /* internal function prototypes */
 static int
-field_buffer_init(FIELD *field, int buffer, size_t len);
+field_buffer_init(FIELD *field, int buffer, unsigned int len);
 static FIELD *
 _formi_create_field(FIELD *, int, int, int, int, int, int);
 
@@ -312,9 +313,10 @@ dynamic_field_info(FIELD *field, int *drows, int *dcols, int *max)
  * after the field buffer is set.
  */
 static int
-field_buffer_init(FIELD *field, int buffer, size_t len)
+field_buffer_init(FIELD *field, int buffer, unsigned int len)
 {
 	int status;
+	char *newp;
 	
 	if (buffer == 0) {
 		field->start_char = 0;
@@ -322,16 +324,25 @@ field_buffer_init(FIELD *field, int buffer, size_t len)
 		field->row_xpos = 0;
 		field->cursor_xpos = 0;
 		field->cursor_ypos = 0;
-		field->row_count = 1; /* must be at least one row */
-		field->lines[0].start = 0;
-		field->lines[0].end = (len > 0)? (len - 1) : 0;
-		field->lines[0].length =
-			_formi_tab_expanded_length(field->buffers[0].string,
-						   0, field->lines[0].end);
+		field->row_count = 1; /* must be at least one row  XXX need to shift old rows (if any) to free list??? */
+		field->lines->length = len;
+		if ((newp = realloc(field->lines->string,
+				    (unsigned long) len + 1)) == NULL)
+			return E_SYSTEM_ERROR;
+		field->lines->string = newp;
+		field->lines->allocated = len + 1;
+		strlcpy(field->lines->string, field->buffers[buffer].string,
+			(unsigned long) len + 1);
+		field->lines->expanded =
+			_formi_tab_expanded_length(field->lines->string,
+						   0, field->lines->length);
 
+		field->start_line = field->lines;
+		field->cur_line = field->lines;
+		
 		  /* we have to hope the wrap works - if it does not then the
 		     buffer is pretty much borked */
-		status = _formi_wrap_field(field, 0);
+		status = _formi_wrap_field(field, field->cur_line);
 		if (status != E_OK)
 			return status;
 
@@ -340,7 +351,7 @@ field_buffer_init(FIELD *field, int buffer, size_t len)
 		   * multiline case is handled when the wrap is done.
 		   */
 		if (field->row_count == 1)
-			_formi_calculate_tabs(field, 0);
+			_formi_calculate_tabs(field->lines);
 
 		  /* redraw the field to reflect the new contents. If the field
 		   * is attached....
@@ -399,7 +410,7 @@ set_field_printf(FIELD *field, int buffer, char *fmt, ...)
 int
 set_field_buffer(FIELD *field, int buffer, char *value)
 {
-	size_t len;
+	unsigned int len;
 	int status;
 	
 	if (field == NULL)
@@ -408,7 +419,7 @@ set_field_buffer(FIELD *field, int buffer, char *value)
 	if (buffer >= field->nbuf) /* make sure buffer is valid */
 		return E_BAD_ARGUMENT;
 
-	len = strlen(value);
+	len = (unsigned int) strlen(value);
 	if (((field->opts & O_STATIC) == O_STATIC) && (len > field->cols)
 	    && ((field->rows + field->nrows) == 1))
 		len = field->cols;
@@ -431,10 +442,11 @@ set_field_buffer(FIELD *field, int buffer, char *value)
 #endif
 	
 	if ((field->buffers[buffer].string =
-	     (char *) realloc(field->buffers[buffer].string, len + 1)) == NULL)
+	     (char *) realloc(field->buffers[buffer].string,
+			      (size_t) len + 1)) == NULL)
 		return E_SYSTEM_ERROR;
 
-	strlcpy(field->buffers[buffer].string, value, len + 1);
+	strlcpy(field->buffers[buffer].string, value, (size_t) len + 1);
 	field->buffers[buffer].length = len;
 	field->buffers[buffer].allocated = len + 1;
 	status = field_buffer_init(field, buffer, len);
@@ -458,13 +470,70 @@ char *
 field_buffer(FIELD *field, int buffer)
 {
 
+	char *reformat, *p;
+	_FORMI_FIELD_LINES *linep;
+	
 	if (field == NULL)
 		return NULL;
 
 	if (buffer >= field->nbuf)
 		return NULL;
+
+	  /*
+	   * We force a sync from the line structs to the buffer here.
+	   * Traditional libform say we don't need to because it is
+	   * done on a REQ_VALIDATE but NetBSD libform previously did
+	   * not enforce this because the buffer contents were always
+	   * current.  Changes to line handling make this no longer so
+	   * - the line structs may contain different data to the
+	   * buffer if unsynced.
+	   */
+	if (_formi_sync_buffer(field) != E_OK)
+		return NULL;
 	
-	return field->buffers[buffer].string;
+	if ((field->opts & O_REFORMAT) != O_REFORMAT) {
+		return field->buffers[buffer].string;
+	} else {
+		if (field->row_count > 1) {
+			  /* reformat */
+			reformat = (char *)
+				malloc(strlen(field->buffers[buffer].string)
+				       + ((field->row_count - 1)
+					  * sizeof(char)) + 1);
+
+			if (reformat == NULL)
+				return NULL;
+
+			  /*
+			   * foreach row copy line, append newline, no
+			   * newline on last row.
+			   */
+			p = reformat;
+			linep = field->lines;
+			
+			do
+			{
+				if (linep->length != 0) {
+					strncpy(p, linep->string,
+						(unsigned long) linep->length);
+					p += linep->length;
+				}
+				
+				linep = linep->next;
+				if (linep != NULL)
+					*p = '\n';
+				p++;
+			}
+			while (linep != NULL);
+
+			p = '\0';
+			return reformat;
+		} else {
+			asprintf(&reformat, "%s",
+				 field->buffers[buffer].string);
+			return reformat;
+		}
+	}
 }
 
 /*
@@ -763,11 +832,16 @@ new_field(int rows, int cols, int frow, int fcol, int nrows, int nbuf)
 		return NULL;
 	}
 
-	new->lines_alloced = 1;
-	new->lines[0].length = 0;
-	new->lines[0].start = 0;
-	new->lines[0].end = 0;
-	new->lines[0].tabs = NULL;
+	new->lines->prev = NULL;
+	new->lines->next = NULL;
+	new->lines->allocated = 0;
+	new->lines->length = 0;
+	new->lines->expanded = 0;
+	new->lines->string = NULL;
+	new->lines->hard_ret = FALSE;
+	new->lines->tabs = NULL;
+	new->start_line = new->lines;
+	new->cur_line = new->lines;
 	
 	return new;
 }

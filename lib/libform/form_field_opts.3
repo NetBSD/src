@@ -1,4 +1,4 @@
-.\"	$NetBSD: form_field_opts.3,v 1.8 2003/04/16 13:35:04 wiz Exp $
+.\"	$NetBSD: form_field_opts.3,v 1.9 2004/11/24 11:57:09 blymn Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -76,7 +76,7 @@ currently active one.
 .Sh PARAMETERS
 The following options are available for a field:
 .Pp
-.Bl -tag -width O_AUTOSKIP -compact
+.Bl -tag -width O_REFORMAT -compact
 .It O_VISIBLE
 The field is visible, hence is displayed when the form is posted.
 .It O_ACTIVE
@@ -101,6 +101,18 @@ The field is allowed to contain no data
 The field is not dynamic, it has a fixed size.
 .It O_PASSOK
 An unmodified field is allowed.
+.It O_REFORMAT
+Retain the formatting of a field when the buffer is retrieved.
+If this option is not set then the buffer returned will be a single string
+with no line breaks.
+When this option is set newline characters will be inserted at the point
+where the string has been wrapped in a multiline field.
+This option is an extension to the forms library and must not be used
+in portable code.
+See the
+.Xr field_buffer 3
+man page for how this option modifies the behaviour of
+.Fn field_buffer .
 .El
 .Pp
 The following options are on by default for a field: O_VISIBLE,
@@ -127,3 +139,6 @@ automatically includes both
 .Pa \*[Lt]curses.h\*[Gt]
 and
 .Pa \*[Lt]eti.h\*[Gt] .
+The option O_REFORMAT is a
+.Nx
+ extension and must not be used in portable code.

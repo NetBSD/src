@@ -1,4 +1,4 @@
-/*	$NetBSD: form.c,v 1.14 2003/03/09 00:57:18 lukem Exp $	*/
+/*	$NetBSD: form.c,v 1.15 2004/11/24 11:57:09 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: form.c,v 1.14 2003/03/09 00:57:18 lukem Exp $");
+__RCSID("$NetBSD: form.c,v 1.15 2004/11/24 11:57:09 blymn Exp $");
 
 #include <stdlib.h>
 #include <strings.h>
@@ -547,7 +547,7 @@ data_ahead(FORM *form)
 	cur = form->fields[form->cur_field];
 
 	  /*XXXX wrong */
-	if (cur->lines[cur->start_line + cur->cursor_ypos].length > cur->cols)
+	if (cur->cur_line->expanded > cur->cols)
 		return TRUE;
 
 	return FALSE;

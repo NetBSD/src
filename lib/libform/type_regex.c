@@ -1,4 +1,4 @@
-/*	$NetBSD: type_regex.c,v 1.6 2004/04/23 02:58:27 simonb Exp $	*/
+/*	$NetBSD: type_regex.c,v 1.7 2004/11/24 11:57:09 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: type_regex.c,v 1.6 2004/04/23 02:58:27 simonb Exp $");
+__RCSID("$NetBSD: type_regex.c,v 1.7 2004/11/24 11:57:09 blymn Exp $");
 
 #include <stdlib.h>
 #include <sys/types.h>
@@ -105,7 +105,7 @@ regex_check_field(FIELD *field, char *args)
 {
 	if ((args != NULL) &&
 	    (regexec(&((regex_args *) (void *) field->args)->compiled,
-		   args, 0, NULL, 0) == 0))
+		   args, (size_t) 0, NULL, 0) == 0))
 		return TRUE;
 
 	return FALSE;

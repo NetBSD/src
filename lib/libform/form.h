@@ -1,4 +1,4 @@
-/*	$NetBSD: form.h,v 1.18 2004/01/23 13:01:17 blymn Exp $	*/
+/*	$NetBSD: form.h,v 1.19 2004/11/24 11:57:09 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -64,6 +64,7 @@ typedef unsigned int Form_Options;
 #define O_NULLOK   (0x080)  /* Field is allowed to contain no data */
 #define O_STATIC   (0x100)  /* Field is not dynamic */
 #define O_PASSOK   (0x200)  /* An umodified field is OK */
+#define O_REFORMAT (0x400)  /* Insert newlines at linebreaks on buffer get */
 
 /*
  * Form driver requests - be VERY careful about changing the ordering
@@ -207,8 +208,10 @@ struct _form_field {
 	int buf0_status; /* set to true if buffer 0 has changed. */
 	int justification; /* justification style of the field */
 	int overlay; /* set to true if field is in overlay mode */
+	_FORMI_FIELD_LINES *cur_line; /* pointer to the current line cursor
+					 is on */
 	unsigned int start_char; /* starting char in string (horiz scroll) */
-	unsigned int start_line; /* starting line in field (vert scroll) */
+	_FORMI_FIELD_LINES *start_line; /* start line in field (vert scroll) */
 	unsigned int row_count; /* number of rows actually used in field */
 	unsigned int row_xpos; /* char offset of cursor in field, not same
 				  as cursor_xpos due to tab expansion */
@@ -230,9 +233,8 @@ struct _form_field {
 	FIELDTYPE *type; /* type struct for the field */
 	CIRCLEQ_ENTRY(_form_field) glue; /* circle queue glue for sorting fields */
 	char *args; /* args for field type. */
-	unsigned int lines_alloced; /* number of slots allocated in lines
-				       array */
 	_FORMI_FIELD_LINES *lines; /* array of the starts and ends of lines */
+	_FORMI_FIELD_LINES *free; /* list of lines available for reuse */
 	FORM_STR *buffers; /* array of buffers for the field */
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: type_alpha.c,v 1.10 2004/10/28 21:14:52 dsl Exp $	*/
+/*	$NetBSD: type_alpha.c,v 1.11 2004/11/24 11:57:09 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: type_alpha.c,v 1.10 2004/10/28 21:14:52 dsl Exp $");
+__RCSID("$NetBSD: type_alpha.c,v 1.11 2004/11/24 11:57:09 blymn Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -140,7 +140,7 @@ alpha_check_field(FIELD *field, char *args)
 		return FALSE;
 
 	if ((end - start) >= 1) {
-		strncpy(new, &buf[start], (unsigned) end - start - 1);
+		strncpy(new, &buf[start], (size_t) (end - start - 1));
 		new[end] = '\0';
 	} else
 		new[0] = '\0';

@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.6 2002/08/11 11:57:44 blymn Exp $
+#	$NetBSD: Makefile,v 1.7 2004/11/24 11:57:09 blymn Exp $
 #
 
 CPPFLAGS+=-I${.CURDIR}
 .if defined(DEBUG_FORMS)
-CFLAGS+=-g
+CFLAGS+=-gdwarf-2
 CPPFLAGS+=-DDEBUG
 .endif
 LIB=	form

@@ -1,4 +1,4 @@
-/*	$NetBSD: type_ipv6.c,v 1.9 2004/11/16 06:04:13 itojun Exp $	*/
+/*	$NetBSD: type_ipv6.c,v 1.10 2004/11/24 11:57:09 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: type_ipv6.c,v 1.9 2004/11/16 06:04:13 itojun Exp $");
+__RCSID("$NetBSD: type_ipv6.c,v 1.10 2004/11/24 11:57:09 blymn Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -79,7 +79,7 @@ ipv6_check_field(FIELD *field, char *args)
 	}
 
 	if (getnameinfo(res->ai_addr, res->ai_addrlen, cleaned,
-			sizeof(cleaned), NULL, 0, niflags) != 0) {
+			(socklen_t) sizeof(cleaned), NULL, 0, niflags) != 0) {
 		freeaddrinfo(res);
 		return FALSE;
 	}
