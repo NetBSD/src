@@ -25,7 +25,7 @@ Boston, MA 02111-1307, USA.  */
 
 /* If using g-format floating point, alter math.h.  */
 
-#define	CPP_SPEC "%{mg:-DGFLOAT}"
+#define	CPP_SPEC "%{mg:%{!ansi:-DGFLOAT} -D__GFLOAT}"
 
 /* Choose proper libraries depending on float format.
    Note that there are no profiling libraries for g-format.
@@ -51,13 +51,16 @@ extern int target_flags;
 /* Macros used in the machine description to test the flags.  */
 
 /* Nonzero if compiling code that Unix assembler can assemble.  */
-#define TARGET_UNIX_ASM (target_flags & 1)
+#define MASK_UNIX_ASM 1
+#define TARGET_UNIX_ASM (target_flags & MASK_UNIX_ASM)
 
 /* Nonzero if compiling with VAX-11 "C" style structure alignment */
-#define	TARGET_VAXC_ALIGNMENT (target_flags & 2)
+#define	MASK_VAXC_ALIGNMENT 2
+#define	TARGET_VAXC_ALIGNMENT (target_flags & MASK_VAXC_ALIGNMENT)
 
 /* Nonzero if compiling with `G'-format floating point */
-#define TARGET_G_FLOAT (target_flags & 4)
+#define MASK_G_FLOAT 4
+#define TARGET_G_FLOAT (target_flags & MASK_G_FLOAT)
 
 /* Macro to define tables used to set the flags.
    This is a list in braces of pairs in braces,
@@ -66,19 +69,19 @@ extern int target_flags;
    An empty string NAME is used to identify the default VALUE.  */
 
 #define TARGET_SWITCHES  \
-  { {"unix", 1},  \
-    {"gnu", -1},  \
-    {"vaxc-alignment", 2}, \
-    {"g", 4}, \
-    {"g-float", 4}, \
-    {"d", -4},	\
-    {"d-float", -4}, \
+  { {"unix", MASK_UNIX_ASM},  \
+    {"gnu", -MASK_UNIX_ASM},  \
+    {"vaxc-alignment", MASK_VAXC_ALIGNMENT}, \
+    {"g", MASK_G_FLOAT}, \
+    {"g-float", MASK_G_FLOAT}, \
+    {"d", -MASK_G_FLOAT}, \
+    {"d-float", -MASK_G_FLOAT}, \
     { "", TARGET_DEFAULT}}
 
 /* Default target_flags if no switches specified.  */
 
 #ifndef TARGET_DEFAULT
-#define TARGET_DEFAULT 1
+#define TARGET_DEFAULT MASK_UNIX_ASM
 #endif
 
 /* Target machine storage layout */
@@ -133,7 +136,7 @@ extern int target_flags;
 #define PCC_BITFIELD_TYPE_MATTERS (! TARGET_VAXC_ALIGNMENT)
 
 /* No data type wants to be aligned rounder than this.  */
-#define BIGGEST_ALIGNMENT 32
+#define BIGGEST_ALIGNMENT 64	/* xxxQxI need quadword alignment */
 
 /* No structure field wants to be aligned rounder than this.  */
 #define BIGGEST_FIELD_ALIGNMENT (TARGET_VAXC_ALIGNMENT ? 8 : 32)
@@ -258,7 +261,7 @@ enum reg_class { NO_REGS, ALL_REGS, LIM_REG_CLASSES };
    This is an initializer for a vector of HARD_REG_SET
    of length N_REG_CLASSES.  */
 
-#define REG_CLASS_CONTENTS {0, 0xffff}
+#define REG_CLASS_CONTENTS {{0}, {0xffff}}
 
 /* The same information, inverted:
    Return the class number of the smallest class containing
@@ -276,16 +279,28 @@ enum reg_class { NO_REGS, ALL_REGS, LIM_REG_CLASSES };
 
 #define REG_CLASS_FROM_LETTER(C) NO_REGS
 
-/* The letters I, J, K, L and M in a register constraint string
+/* The letters I, J, K, L, M, N, and O in a register constraint string
    can be used to stand for particular ranges of immediate operands.
    This macro defines what the ranges are.
    C is the letter, and VALUE is a constant value.
    Return 1 if VALUE is in the range specified by C.
 
-   `I' is the constant zero.  */
+   `I' is the constant zero.
+   `J' is a value between 0 .. 63 (inclusive)		S^#
+   `K' is a value between -128 and 127 (inclusive)	B^
+   'L' is a value between -32768 and 32767 (include)	W^ 
+   `M' is a value between 0 and 255 (inclusive)		B^
+   'N' is a value between 0 and 65535 (inclusive)	W^
+   `O' is a value between -63 and -1 (inclusive)	*/
 
-#define CONST_OK_FOR_LETTER_P(VALUE, C) \
-  ((C) == 'I' ? (VALUE) == 0		\
+#define CONST_OK_FOR_LETTER_P(VALUE, C)				\
+  (  (C) == 'I' ?	(VALUE) == 0				\
+   : (C) == 'J' ?	0 <= (VALUE) && (VALUE) < 64		\
+   : (C) == 'K' ?	-128 <= (VALUE) && (VALUE) < 128	\
+   : (C) == 'L' ?	-32768 <= (VALUE) && (VALUE) < 32768	\
+   : (C) == 'M' ?	0 <= (VALUE) && (VALUE) < 256		\
+   : (C) == 'N' ?	0 <= (VALUE) && (VALUE) < 65536		\
+   : (C) == 'O' ?	-64 <= (VALUE) && (VALUE) < 0		\
    : 0)
 
 /* Similar, but for floating constants, and defining letters G and H.
@@ -347,8 +362,7 @@ enum reg_class { NO_REGS, ALL_REGS, LIM_REG_CLASSES };
 /* Given an rtx for the address of a frame,
    return an rtx for the address of the word in the frame
    that holds the dynamic chain--the previous frame's address.  */
-#define DYNAMIC_CHAIN_ADDRESS(frame) \
-gen_rtx (PLUS, Pmode, frame, GEN_INT (12))
+#define DYNAMIC_CHAIN_ADDRESS(FRAME) plus_constant ((FRAME), 12)
 
 /* If we generate an insn to push BYTES bytes,
    this says how many the stack pointer really advances by.
@@ -377,14 +391,14 @@ gen_rtx (PLUS, Pmode, frame, GEN_INT (12))
 /* On the Vax the return value is in R0 regardless.  */   
 
 #define FUNCTION_VALUE(VALTYPE, FUNC)  \
-  gen_rtx (REG, TYPE_MODE (VALTYPE), 0)
+  gen_rtx_REG (TYPE_MODE (VALTYPE), 0)
 
 /* Define how to find the value returned by a library function
    assuming the value has mode MODE.  */
 
 /* On the Vax the return value is in R0 regardless.  */   
 
-#define LIBCALL_VALUE(MODE)  gen_rtx (REG, MODE, 0)
+#define LIBCALL_VALUE(MODE)  gen_rtx_REG (MODE, 0)
 
 /* Define this if PCC uses the nonreentrant convention for returning
    structure and union values.  */
@@ -533,10 +547,10 @@ gen_rtx (PLUS, Pmode, frame, GEN_INT (12))
 #define TRAMPOLINE_TEMPLATE(FILE)					\
 {									\
   ASM_OUTPUT_SHORT (FILE, const0_rtx);					\
-  ASM_OUTPUT_SHORT (FILE, GEN_INT (0x8fd0));	\
+  ASM_OUTPUT_SHORT (FILE, GEN_INT (0x8fd0));				\
   ASM_OUTPUT_INT (FILE, const0_rtx);					\
-  ASM_OUTPUT_BYTE  (FILE, 0x50+STATIC_CHAIN_REGNUM);			\
-  ASM_OUTPUT_SHORT (FILE, GEN_INT (0x9f17));	\
+  ASM_OUTPUT_BYTE  (FILE, 0x50 + STATIC_CHAIN_REGNUM);			\
+  ASM_OUTPUT_SHORT (FILE, GEN_INT (0x9f17));				\
   ASM_OUTPUT_INT (FILE, const0_rtx);					\
 }
 
@@ -552,12 +566,12 @@ gen_rtx (PLUS, Pmode, frame, GEN_INT (12))
    to the start of the trampoline.  */
 #define INITIALIZE_TRAMPOLINE(TRAMP, FNADDR, CXT)			\
 {									\
-  emit_insn (gen_rtx (ASM_INPUT, VOIDmode,				\
+  emit_insn (gen_rtx_ASM_INPUT (VOIDmode,				\
 		      "movpsl -(sp)\n\tpushal 1(pc)\n\trei"));		\
-  emit_move_insn (gen_rtx (MEM, HImode, TRAMP),				\
-		  gen_rtx (MEM, HImode, FNADDR));			\
-  emit_move_insn (gen_rtx (MEM, SImode, plus_constant (TRAMP, 4)), CXT);\
-  emit_move_insn (gen_rtx (MEM, SImode, plus_constant (TRAMP, 11)),	\
+  emit_move_insn (gen_rtx_MEM (HImode, TRAMP),				\
+		  gen_rtx_MEM (HImode, FNADDR));			\
+  emit_move_insn (gen_rtx_MEM (SImode, plus_constant (TRAMP, 4)), CXT);\
+  emit_move_insn (gen_rtx_MEM (SImode, plus_constant (TRAMP, 11)),	\
 		  plus_constant (FNADDR, 2));				\
 }
 
@@ -573,7 +587,7 @@ gen_rtx (PLUS, Pmode, frame, GEN_INT (12))
 
 #define RETURN_ADDR_RTX(COUNT, FRAME)	\
   ((COUNT == 0)				\
-   ? gen_rtx (MEM, Pmode, plus_constant (FRAME, RETURN_ADDRESS_OFFSET)) \
+   ? gen_rtx_MEM (Pmode, plus_constant (FRAME, RETURN_ADDRESS_OFFSET)) \
    : (rtx) 0)
 
 
@@ -828,6 +842,10 @@ gen_rtx (PLUS, Pmode, frame, GEN_INT (12))
    jumps to the default label instead.  */
 #define CASE_DROPS_THROUGH
 
+/* Indicate that jump tables go in the text section.  This is
+   necessary when compiling PIC code.  */
+#define JUMP_TABLES_IN_TEXT_SECTION 1
+
 /* Specify the tree operation to be used to convert reals to integers.  */
 #define IMPLICIT_FIX_EXPR FIX_ROUND_EXPR
 
@@ -1028,11 +1046,11 @@ gen_rtx (PLUS, Pmode, frame, GEN_INT (12))
 
 /* Output before read-only data.  */
 
-#define TEXT_SECTION_ASM_OP ".text"
+#define TEXT_SECTION_ASM_OP "\t.text"
 
 /* Output before writable data.  */
 
-#define DATA_SECTION_ASM_OP ".data"
+#define DATA_SECTION_ASM_OP "\t.data"
 
 /* How to refer to registers in assembler output.
    This sequence is indexed by compiler's hard-register-number (see above).  */
@@ -1158,13 +1176,32 @@ do { char dstr[30];							\
    (The Vax does not use such vectors,
    but we must define this macro anyway.)  */
 
-#define ASM_OUTPUT_ADDR_VEC_ELT(FILE, VALUE)  \
-  fprintf (FILE, "\t.long L%d\n", VALUE)
+#define ASM_OUTPUT_ADDR_VEC_ELT(FILE, VALUE)			\
+  do								\
+    {								\
+      char label[256];						\
+      ASM_GENERATE_INTERNAL_LABEL (label, "L", (VALUE));	\
+      fprintf (FILE, "\t.long ");				\
+      assemble_name (FILE, label);				\
+      fprintf (FILE, "\n");					\
+    }								\
+  while (0)
 
 /* This is how to output an element of a case-vector that is relative.  */
 
-#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, BODY, VALUE, REL)  \
-  fprintf (FILE, "\t.word L%d-L%d\n", VALUE, REL)
+#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, BODY, VALUE, REL)	\
+  do								\
+    {								\
+      char label[256];						\
+      ASM_GENERATE_INTERNAL_LABEL (label, "L", (VALUE));	\
+      fprintf (FILE, "\t.word ");				\
+      assemble_name (FILE, label);				\
+      ASM_GENERATE_INTERNAL_LABEL (label, "L", (REL));		\
+      fprintf (FILE, "-");					\
+      assemble_name (FILE, label);				\
+      fprintf (FILE, "\n");					\
+    }								\
+  while (0)
 
 /* This is how to output an assembler line
    that says to advance the location counter
