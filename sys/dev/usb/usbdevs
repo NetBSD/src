@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.99 2000/05/20 06:29:50 castor Exp $
+$NetBSD: usbdevs,v 1.100 2000/05/30 15:17:18 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -142,6 +142,7 @@ vendor ACTLABS		0x061c	Act Labs, Ltd.
 vendor ALARIS		0x0620	Alaris, Inc.
 vendor APEX		0x0624	Apex, Inc.
 vendor AVISION		0x0638	Avision, Inc.
+vendor TEAC		0x0644	TEAC
 vendor LINKSYS		0x066b	Linksys, Inc.
 vendor ACERSA		0x066e	Acer Semiconductor America, Inc.
 vendor AIWA		0x0677	Aiwa Co., Ltd.
@@ -585,6 +586,9 @@ product STMICRO COMMUNICATOR	0x7554	USB Communicator
 /* Sun Microsystems products */
 product SUN KEYBOARD		0x0005	Type 6 USB
 /* XXX The above is a North American PC style keyboard possibly */
+
+/* TEAC products */
+product TEAC FD05PUB		0x0000	FD-05PUB floppy
 
 /* Telex Communications products */
 product TELEX MIC1		0x0001	Enhanced USB Microphone
