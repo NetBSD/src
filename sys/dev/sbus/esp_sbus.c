@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_sbus.c,v 1.1 1998/08/29 20:32:10 pk Exp $	*/
+/*	$NetBSD: esp_sbus.c,v 1.2 1998/08/29 21:43:00 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -178,7 +178,7 @@ espattach_sbus(parent, self, aux)
 	 * and a back pointer to us, for DMA
 	 */
 	if (esc->sc_dma)
-		esc->sc_dma->sc_ncr53c9x = sc;
+		esc->sc_dma->sc_client = sc;
 	else {
 		printf("\n");
 		panic("espattach: no dma found");
@@ -191,17 +191,15 @@ espattach_sbus(parent, self, aux)
 	if (sa->sa_npromvaddrs)
 		esc->sc_reg = (bus_space_handle_t)sa->sa_promvaddrs[0];
 	else {
-		bus_space_handle_t bh;
 		if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
 				 sa->sa_offset,
 				 sa->sa_size,
 				 BUS_SPACE_MAP_LINEAR,
-				 0, &bh) != 0) {
+				 0, &esc->sc_reg) != 0) {
 			printf("%s @ sbus: cannot map registers\n",
 				self->dv_xname);
 			return;
 		}
-		esc->sc_reg = bh;
 	}
 
 	esc->sc_pri = sa->sa_pri;
@@ -233,7 +231,7 @@ espattach_dma(parent, self, aux)
 	sc->sc_freq = getpropint(sa->sa_node, "clock-frequency", -1);
 
 	esc->sc_dma = (struct lsi64854_softc *)parent;
-	esc->sc_dma->sc_ncr53c9x = sc;
+	esc->sc_dma->sc_client = sc;
 
 	/*
 	 * Map my registers in, if they aren't already in virtual
@@ -242,18 +240,16 @@ espattach_dma(parent, self, aux)
 	if (sa->sa_npromvaddrs)
 		esc->sc_reg = (bus_space_handle_t)sa->sa_promvaddrs[0];
 	else {
-		bus_space_handle_t bh;
 		if (bus_space_map2(sa->sa_bustag,
 				   sa->sa_slot,
 				   sa->sa_offset,
 				   sa->sa_size,
 				   BUS_SPACE_MAP_LINEAR,
-				   0, &bh) != 0) {
+				   0, &esc->sc_reg) != 0) {
 			printf("%s @ dma: cannot map registers\n",
 				self->dv_xname);
 			return;
 		}
-		esc->sc_reg = bh;
 	}
 
 	/* Establish interrupt handler */
