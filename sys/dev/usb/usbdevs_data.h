@@ -1,10 +1,12 @@
-/*	$NetBSD: usbdevs_data.h,v 1.16 1999/01/03 23:57:11 augustss Exp $	*/
+/*	$NetBSD: usbdevs_data.h,v 1.17 1999/01/07 02:18:10 augustss Exp $	*/
+
+/*	FreeBSD $Id: usbdevs_data.h,v 1.17 1999/01/07 02:18:10 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.16 1999/01/03 10:56:33 augustss Exp 
+ *	NetBSD: usbdevs,v 1.18 1999/01/07 01:51:12 augustss Exp 
  */
 
 /*
@@ -98,6 +100,12 @@ struct usb_knowndev usb_knowndevs[] = {
 	    0,
 	    "Genius",
 	    "Flight 2000 joystick",
+	},
+	{
+	    USB_VENDOR_MICROSOFT, USB_PRODUCT_MICROSOFT_INTELLIMOUSE,
+	    0,
+	    "Microsoft",
+	    "IntelliMouse",
 	},
 	{
 	    USB_VENDOR_KENSINGTON, USB_PRODUCT_KENSINGTON_MOUSEINABOX,
@@ -295,6 +303,12 @@ struct usb_knowndev usb_knowndevs[] = {
 	    USB_VENDOR_GENIUS, 0,
 	    USB_KNOWNDEV_NOPROD,
 	    "Genius",
+	    NULL,
+	},
+	{
+	    USB_VENDOR_MICROSOFT, 0,
+	    USB_KNOWNDEV_NOPROD,
+	    "Microsoft",
 	    NULL,
 	},
 	{
