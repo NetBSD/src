@@ -1,4 +1,6 @@
-/*	$NetBSD: gayle_pcmcia.c,v 1.5 2000/09/13 15:00:16 thorpej Exp $	*/
+/*	$NetBSD: gayle_pcmcia.c,v 1.6 2000/09/27 08:24:02 aymeric Exp $	*/
+
+/* public domain */
 
 /* PCMCIA front-end driver for A1200's and A600's. */
 
@@ -161,7 +163,11 @@ pccard_attach(parent, myself, aux)
 	    GAYLE_PCMCIA_ATTR_START;
 	self->attr_space.absm = &amiga_bus_stride_1;
 
-	/* XXX should be invalid */
+	/* XXX we should check if the 4M of common memory are actually
+	 *	RAM or PCMCIA usable.
+	 * For now, we just do as if the 4M were RAM and make common memory
+	 * point to attribute memory, which is OK for some I/O cards.
+	 */
 	self->mem_space.base = (u_int) pcmcia_base;
 	self->mem_space.absm = &amiga_bus_stride_1;
 
@@ -263,11 +269,9 @@ pccard_intr2(arg)
 		if (intreq) {
 			gayle.intreq = (intreq ^ 0x2c) | 0xc0;
 
-			if (slot->flags & SLOT_OCCUPIED &&
-		   	    slot->intr_func != NULL)
+			return slot->flags & SLOT_OCCUPIED &&
+		   		slot->intr_func != NULL &&
 				slot->intr_func(slot->intr_arg);
-
-			return 1;
 		}
 	}
 	return 0;
@@ -341,6 +345,9 @@ pcf_mem_map(pch, kind, addr, size, pcmh, offsetp, windowp)
 {
 	struct pccard_slot *slot = (struct pccard_slot *) pch;
 
+	/* Ignore width requirements */
+	kind &= ~PCMCIA_WIDTH_MEM_MASK;
+
 	switch (kind) {
 	case PCMCIA_MEM_ATTR:
 		pcmh->memt = &slot->sc->attr_space;
@@ -350,7 +357,7 @@ pcf_mem_map(pch, kind, addr, size, pcmh, offsetp, windowp)
 		break;
 	default:
 		/* This means that this code needs an update/a bugfix */
-		printf("Unknown kind of PCMCIA memory (amiga/dev/pccard.c)\n");
+		printf(__FILE__ ": Unknown kind of PCMCIA memory\n");
 		return 1;
 	}
 
@@ -432,7 +439,7 @@ pcf_intr_establish(pch, pf, ipl, func, arg)
 		slot->intr_arg = arg;
 	} else {
 		/* if we are here, we need to put intrs into a list */
-		printf("ARGH! see arch/amiga/dev/pccard.c\n");
+		printf("ARGH! see " __FILE__ "\n");
 		slot = NULL;
 	}
 	splx(s);
