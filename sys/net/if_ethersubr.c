@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.15 1995/09/29 03:37:43 phil Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.16 1995/12/24 03:12:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -88,8 +88,6 @@ u_char	etherbroadcastaddr[6] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 /*
  * Ethernet output routine.
  * Encapsulate a packet of type family for the local net.
- * Use trailer local net encapsulation if enough data in first
- * packet leaves a multiple of 512 bytes of data in remainder.
  * Assumes that ifp is actually pointer to arpcom structure.
  */
 int
@@ -253,9 +251,9 @@ ether_output(ifp, m0, dst, rt0)
 		senderr(EAFNOSUPPORT);
 	}
 
-
 	if (mcopy)
 		(void) looutput(ifp, mcopy, dst, rt);
+
 	/*
 	 * Add local net header.  If no space in first mbuf,
 	 * allocate another.
