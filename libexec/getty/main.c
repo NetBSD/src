@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.40 2001/11/10 17:20:52 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.41 2001/11/10 17:35:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.40 2001/11/10 17:20:52 thorpej Exp $");
+__RCSID("$NetBSD: main.c,v 1.41 2001/11/10 17:35:54 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -140,16 +140,12 @@ const char partab[] = {
 #define	KILL	tmode.c_cc[VKILL]
 #define	EOT	tmode.c_cc[VEOF]
 
-static void	dingdong __P((int));
-static void	interrupt __P((int));
-static void	clearscreen __P((void));
-void		timeoverrun __P((int));
+static void	clearscreen(void);
 
 jmp_buf timeout;
 
 static void
-dingdong(signo)
-	int signo;
+dingdong(int signo)
 {
 
 	alarm(0);
@@ -160,8 +156,7 @@ dingdong(signo)
 jmp_buf	intrupt;
 
 static void
-interrupt(signo)
-	int signo;
+interrupt(int signo)
 {
 
 	signal(SIGINT, interrupt);
@@ -171,28 +166,25 @@ interrupt(signo)
 /*
  * Action to take when getty is running too long.
  */
-void
-timeoverrun(signo)
-	int signo;
+static void
+timeoverrun(int signo)
 {
 
 	syslog(LOG_ERR, "getty exiting due to excessive running time");
 	exit(1);
 }
 
-int		main __P((int, char **));
-static int	getname __P((void));
-static void	oflush __P((void));
-static void	prompt __P((void));
-static void	putchr __P((int));
-static void	putf __P((const char *));
-static void	putpad __P((const char *));
-static void	xputs __P((const char *));
+int		main(int, char *[]);
+static int	getname(void);
+static void	oflush(void);
+static void	prompt(void);
+static void	putchr(int);
+static void	putf(const char *);
+static void	putpad(const char *);
+static void	xputs(const char *);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	const char *progname;
 	char *tname;
@@ -442,7 +434,7 @@ main(argc, argv)
 }
 
 static int
-getname()
+getname(void)
 {
 	int c;
 	char *np;
@@ -557,8 +549,7 @@ getname()
 }
 
 static void
-putpad(s)
-	const char *s;
+putpad(const char *s)
 {
 	int pad = 0;
 	speed_t ospeed = cfgetospeed(&tmode);
@@ -595,8 +586,7 @@ putpad(s)
 }
 
 static void
-xputs(s)
-	const char *s;
+xputs(const char *s)
 {
 	while (*s)
 		putchr(*s++);
@@ -606,8 +596,7 @@ char	outbuf[OBUFSIZ];
 int	obufcnt = 0;
 
 static void
-putchr(cc)
-	int cc;
+putchr(int cc)
 {
 	char c;
 
@@ -626,7 +615,7 @@ putchr(cc)
 }
 
 static void
-oflush()
+oflush(void)
 {
 	if (obufcnt)
 		write(STDOUT_FILENO, outbuf, obufcnt);
@@ -634,7 +623,7 @@ oflush()
 }
 
 static void
-prompt()
+prompt(void)
 {
 
 	putf(LM);
@@ -643,8 +632,7 @@ prompt()
 }
 
 static void
-putf(cp)
-	const char *cp;
+putf(const char *cp)
 {
 	time_t t;
 	char *slash, db[100];
@@ -702,7 +690,7 @@ putf(cp)
 }
 
 static void
-clearscreen()
+clearscreen(void)
 {
 	struct ttyent *typ;
 	struct tinfo *tinfo;
