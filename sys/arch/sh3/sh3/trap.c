@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.23 2001/03/15 06:10:48 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.24 2001/03/18 23:43:54 chs Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -358,8 +358,7 @@ trap(p1, p2, p3, p4, frame)
 			&& map != kernel_map) {
 			nss = btoc(USRSTACK-(unsigned)va);
 			if (nss > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur)) {
-				rv = KERN_FAILURE;
-				goto nogo;
+				nss = 0;
 			}
 		}
 
@@ -714,7 +713,6 @@ tlb_handler(p1, p2, p3, p4, frame)
 	va_save = va;
 	p = curproc;
 	if (p == NULL) {
-		rv = KERN_FAILURE;
 		goto dopanic;
 	} else {
 		if (user) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.83 2001/03/15 06:10:34 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.84 2001/03/18 23:43:53 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -394,8 +394,7 @@ trapmmufault(type, code, v, fp, p, sticks)
 	if (map != kernel_map && (caddr_t)va >= vm->vm_maxsaddr) {
 		nss = btoc(USRSTACK - (unsigned)va);
 		if (nss > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur)) {
-			rv = KERN_FAILURE;
-			goto nogo;
+			nss = 0;
 		}
 	}
 #endif
