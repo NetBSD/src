@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.33 1994/08/15 22:06:47 mycroft Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.34 1994/09/22 02:17:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -169,6 +169,8 @@ check_num:
 		vput(vp);
 		return (EBUSY);
 	}
+	/* Do this early in case we block later. */
+	vfssw[fsindex]->vfs_refcount++;
 	vp->v_mountedhere = mp;
 	mp->mnt_vnodecovered = vp;
 update:
@@ -208,6 +210,7 @@ update:
 		error = VFS_START(mp, 0, p);
 	} else {
 		mp->mnt_vnodecovered->v_mountedhere = (struct mount *)0;
+		vfssw[fsindex]->vfs_refcount--;
 		vfs_unlock(mp);
 		free((caddr_t)mp, M_MOUNT);
 		vput(vp);
@@ -295,6 +298,7 @@ dounmount(mp, flags, p)
 		vrele(coveredvp);
 		TAILQ_REMOVE(&mountlist, mp, mnt_list);
 		mp->mnt_vnodecovered->v_mountedhere = (struct mount *)0;
+		mp->mnt_op->vfs_refcount--;
 		vfs_unlock(mp);
 		if (mp->mnt_vnodelist.lh_first != NULL)
 			panic("unmount: dangling vnode");
