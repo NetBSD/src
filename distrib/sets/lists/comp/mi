@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.727 2004/09/06 21:46:46 yamt Exp $
+#	$NetBSD: mi,v 1.728 2004/09/06 21:47:45 yamt Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -5101,6 +5101,19 @@
 ./usr/share/man/cat9/m_pulldown.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/m_pullup.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/m_split.0			comp-sys-catman		.cat
+./usr/share/man/cat9/m_tag.0			comp-sys-catman		.cat
+./usr/share/man/cat9/m_tag_copy_chain.0		comp-sys-catman		.cat
+./usr/share/man/cat9/m_tag_delete.0		comp-sys-catman		.cat
+./usr/share/man/cat9/m_tag_delete_chain.0	comp-sys-catman		.cat
+./usr/share/man/cat9/m_tag_delete_nonpersistent.0	comp-sys-catman	.cat
+./usr/share/man/cat9/m_tag_find.0		comp-sys-catman		.cat
+./usr/share/man/cat9/m_tag_first.0		comp-sys-catman		.cat
+./usr/share/man/cat9/m_tag_free.0		comp-sys-catman		.cat
+./usr/share/man/cat9/m_tag_get.0		comp-sys-catman		.cat
+./usr/share/man/cat9/m_tag_init.0		comp-sys-catman		.cat
+./usr/share/man/cat9/m_tag_next.0		comp-sys-catman		.cat
+./usr/share/man/cat9/m_tag_prepend.0		comp-sys-catman		.cat
+./usr/share/man/cat9/m_tag_unlink.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/malloc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/malloc_roundup.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/malloc_type_attach.0	comp-sys-catman		.cat
@@ -5123,19 +5136,6 @@
 ./usr/share/man/cat9/mstohz.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/mtocl.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/mtod.0			comp-sys-catman		.cat
-./usr/share/man/cat9/m_tag.0			comp-sys-catman		.cat
-./usr/share/man/cat9/m_tag_copy_chain.0		comp-sys-catman		.cat
-./usr/share/man/cat9/m_tag_delete.0		comp-sys-catman		.cat
-./usr/share/man/cat9/m_tag_delete_chain.0	comp-sys-catman		.cat
-./usr/share/man/cat9/m_tag_delete_nonpersistent.0	comp-sys-catman	.cat
-./usr/share/man/cat9/m_tag_find.0		comp-sys-catman		.cat
-./usr/share/man/cat9/m_tag_first.0		comp-sys-catman		.cat
-./usr/share/man/cat9/m_tag_free.0		comp-sys-catman		.cat
-./usr/share/man/cat9/m_tag_get.0		comp-sys-catman		.cat
-./usr/share/man/cat9/m_tag_init.0		comp-sys-catman		.cat
-./usr/share/man/cat9/m_tag_next.0		comp-sys-catman		.cat
-./usr/share/man/cat9/m_tag_prepend.0		comp-sys-catman		.cat
-./usr/share/man/cat9/m_tag_unlink.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/namecache.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/namecache_print.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/namei.0			comp-sys-catman		.cat
@@ -8846,6 +8846,20 @@
 ./usr/share/man/man9/m_pulldown.9		comp-sys-man		.man
 ./usr/share/man/man9/m_pullup.9			comp-sys-man		.man
 ./usr/share/man/man9/m_split.9			comp-sys-man		.man
+./usr/share/man/man9/m_tag.9			comp-sys-man		.man
+./usr/share/man/man9/m_tag_copy.9		comp-sys-man		.man
+./usr/share/man/man9/m_tag_copy_chain.9		comp-sys-man		.man
+./usr/share/man/man9/m_tag_delete.9		comp-sys-man		.man
+./usr/share/man/man9/m_tag_delete_chain.9	comp-sys-man		.man
+./usr/share/man/man9/m_tag_delete_nonpersistent.9	comp-sys-man	.man
+./usr/share/man/man9/m_tag_find.9		comp-sys-man		.man
+./usr/share/man/man9/m_tag_first.9		comp-sys-man		.man
+./usr/share/man/man9/m_tag_free.9		comp-sys-man		.man
+./usr/share/man/man9/m_tag_get.9		comp-sys-man		.man
+./usr/share/man/man9/m_tag_init.9		comp-sys-man		.man
+./usr/share/man/man9/m_tag_next.9		comp-sys-man		.man
+./usr/share/man/man9/m_tag_prepend.9		comp-sys-man		.man
+./usr/share/man/man9/m_tag_unlink.9		comp-sys-man		.man
 ./usr/share/man/man9/malloc.9			comp-sys-man		.man
 ./usr/share/man/man9/malloc_roundup.9		comp-sys-man		.man
 ./usr/share/man/man9/malloc_type_attach.9	comp-sys-man		.man
@@ -8868,20 +8882,6 @@
 ./usr/share/man/man9/mstohz.9			comp-sys-man		.man
 ./usr/share/man/man9/mtocl.9			comp-sys-man		.man
 ./usr/share/man/man9/mtod.9			comp-sys-man		.man
-./usr/share/man/man9/m_tag.9			comp-sys-man		.man
-./usr/share/man/man9/m_tag_copy.9		comp-sys-man		.man
-./usr/share/man/man9/m_tag_copy_chain.9		comp-sys-man		.man
-./usr/share/man/man9/m_tag_delete.9		comp-sys-man		.man
-./usr/share/man/man9/m_tag_delete_chain.9	comp-sys-man		.man
-./usr/share/man/man9/m_tag_delete_nonpersistent.9	comp-sys-man	.man
-./usr/share/man/man9/m_tag_find.9		comp-sys-man		.man
-./usr/share/man/man9/m_tag_first.9		comp-sys-man		.man
-./usr/share/man/man9/m_tag_free.9		comp-sys-man		.man
-./usr/share/man/man9/m_tag_get.9		comp-sys-man		.man
-./usr/share/man/man9/m_tag_init.9		comp-sys-man		.man
-./usr/share/man/man9/m_tag_next.9		comp-sys-man		.man
-./usr/share/man/man9/m_tag_prepend.9		comp-sys-man		.man
-./usr/share/man/man9/m_tag_unlink.9		comp-sys-man		.man
 ./usr/share/man/man9/namecache.9		comp-sys-man		.man
 ./usr/share/man/man9/namecache_print.9		comp-sys-man		.man
 ./usr/share/man/man9/namei.9			comp-sys-man		.man
