@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2002/04/12 23:47:09 tv Exp $
+#	$NetBSD: Makefile,v 1.14 2002/04/12 23:54:28 tv Exp $
 
 .include <bsd.own.mk>
 .include "${_SRC_TOP_}/distrib/Makefile.inc"
@@ -16,7 +16,7 @@ ${V}=		${${V}DIR}/${F}.fs
 MDSETTARGETS=	INSTALL_SMALL	${RAMDISK_S}	-	\
 		INSTALL_TINY	${RAMDISK_T}	-
 
-MDSETDIR=	binary/kernel
+release:	# do nothing
 
 .include "${DISTRIBDIR}/common/Makefile.mdset"
 
