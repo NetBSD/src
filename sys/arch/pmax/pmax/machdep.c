@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.154 1999/12/04 21:21:19 ragge Exp $ */
+/* $NetBSD: machdep.c,v 1.155 2000/01/08 01:02:39 simonb Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.154 1999/12/04 21:21:19 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.155 2000/01/08 01:02:39 simonb Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -132,7 +132,7 @@ void	mach_init __P((int, char *[], int, int, u_int, char *));
 
 /* Old 4.4bsd/pmax-derived interrupt-enable method */
 
-void (*tc_enable_interrupt) __P ((unsigned, int (*)(void *), void *, int));
+void (*tc_enable_interrupt) __P((unsigned, int (*)(void *), void *, int));
 
 /*XXXjrs*/
 const	struct callback *callv;	/* pointer to PROM entry points */
@@ -140,7 +140,7 @@ const	struct callback *callv;	/* pointer to PROM entry points */
 
 #ifdef DEBUG
 /* stacktrace code violates prototypes to get callee's registers */
-extern void stacktrace __P((void)); /*XXX*/
+void	stacktrace __P((void)); /*XXX*/
 #endif
 
 /* Motherboard or system-specific initialization vector */
@@ -190,7 +190,7 @@ mach_init(argc, argv, code, cv, bim, bip)
 	struct btinfo_symtab *bi_syms;
 	struct exec *aout;		/* XXX backwards compatilbity for DDB */
 #endif
-	extern void makebootdev __P((char *));
+	void makebootdev __P((char *));
 	extern char edata[], end[];
 
 	/* Set up bootinfo structure.  Note that we can't print messages yet! */

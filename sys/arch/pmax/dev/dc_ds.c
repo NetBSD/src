@@ -1,4 +1,4 @@
-/*	$NetBSD: dc_ds.c,v 1.12 1999/12/08 04:03:28 simonb Exp $	*/
+/*	$NetBSD: dc_ds.c,v 1.13 2000/01/08 01:02:35 simonb Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -36,7 +36,7 @@
 /*
  * Autoconfig definition of driver front-end
  */
-int	dc_ds_match  __P((struct device * parent, struct cfdata *match, void *aux));
+int	dc_ds_match __P((struct device * parent, struct cfdata *match, void *aux));
 void	dc_ds_attach __P((struct device *parent, struct device *self, void *aux));
 
 struct cfattach dc_ds_ca = {

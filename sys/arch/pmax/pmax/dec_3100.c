@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3100.c,v 1.19 1999/12/22 22:10:07 simonb Exp $ */
+/* $NetBSD: dec_3100.c,v 1.20 2000/01/08 01:02:38 simonb Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -97,9 +97,8 @@
 void		dec_3100_init __P((void));
 void		dec_3100_bus_reset __P((void));
 
-void		dec_3100_enable_intr
-		   __P ((unsigned slotno, int (*handler)(void *),
-			 void *sc, int onoff));
+void		dec_3100_enable_intr __P((unsigned slotno,
+		    int (*handler)(void *), void *sc, int onoff));
 int		dec_3100_intr __P((unsigned, unsigned, unsigned, unsigned));
 void		dec_3100_cons_init __P((void));
 void		dec_3100_device_register __P((struct device *, void *));

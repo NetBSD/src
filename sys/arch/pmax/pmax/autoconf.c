@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.42 1999/11/15 09:50:22 nisimura Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.43 2000/01/08 01:02:38 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.42 1999/11/15 09:50:22 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.43 2000/01/08 01:02:38 simonb Exp $");
 
 /*
  * Setup the system to run on the current machine.
@@ -84,10 +84,10 @@ int	cpuspeed = 30;	/* approx # instr per usec. */
 tc_option_t tc_slot_info[TC_MAX_LOGICAL_SLOTS];
 
 
-void configure_scsi __P((void));
+void	configure_scsi __P((void));
 
-void findroot __P((struct device **, int *));
-void makebootdev __P((char *));
+void	findroot __P((struct device **, int *));
+void	makebootdev __P((char *));
 
 /*
  * Determine mass storage and memory configuration for a machine.

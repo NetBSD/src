@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.56 2000/01/06 05:22:07 simonb Exp $	*/
+/*	$NetBSD: dc.c,v 1.57 2000/01/08 01:02:35 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.56 2000/01/06 05:22:07 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.57 2000/01/08 01:02:35 simonb Exp $");
 
 /*
  * devDC7085.c --
@@ -118,30 +118,30 @@ extern struct cfdriver dc_cd;
 /*
  * Forward declarations
  */
-struct tty *dctty __P((dev_t  dev));
-void dcstart	__P((struct tty *));
-void dcrint	 __P((struct dc_softc *sc));
-void dcxint	__P((struct tty *));
-int dcmctl	 __P((dev_t dev, int bits, int how));
-void dcscan	__P((void *));
-int dcparam	__P((struct tty *tp, struct termios *t));
-static int cold_dcparam __P((struct tty *tp, struct termios *t,
-			     struct dc_softc *sc));
+struct tty	*dctty __P((dev_t  dev));
+void		 dcstart __P((struct tty *));
+void		 dcrint __P((struct dc_softc *sc));
+void		 dcxint __P((struct tty *));
+int		 dcmctl __P((dev_t dev, int bits, int how));
+void		 dcscan __P((void *));
+int		 dcparam __P((struct tty *tp, struct termios *t));
+static int	 cold_dcparam __P((struct tty *tp, struct termios *t,
+		    struct dc_softc *sc));
+void		 dc_reset __P((dcregs *dcaddr));
 
-extern void ttrstrt __P((void *));
+void		 ttrstrt __P((void *));
 
-void	dc_reset __P ((dcregs *dcaddr));
 
 /* console I/O */
-int  dcGetc	__P((dev_t));
-void dcPutc	__P((dev_t, int));
-void dcPollc	__P((dev_t, int));
-void dc_consinit __P((dev_t dev, dcregs *dcaddr));
+int	dcGetc __P((dev_t));
+void	dcPutc __P((dev_t, int));
+void	dcPollc __P((dev_t, int));
+void	dc_consinit __P((dev_t dev, dcregs *dcaddr));
 
-void dc_tty_init __P((struct dc_softc *sc, dev_t dev));
+void	dc_tty_init __P((struct dc_softc *sc, dev_t dev));
 #if NRASTERCONSOLE > 0
-void dc_kbd_init  __P((struct dc_softc *sc, dev_t dev));
-void dc_mouse_init __P((struct dc_softc *sc, dev_t dev));
+void	dc_kbd_init __P((struct dc_softc *sc, dev_t dev));
+void	dc_mouse_init __P((struct dc_softc *sc, dev_t dev));
 #endif
 
 

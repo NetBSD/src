@@ -1,4 +1,4 @@
-/*	$NetBSD: pm.c,v 1.29 1999/09/05 11:34:30 simonb Exp $	*/
+/*	$NetBSD: pm.c,v 1.30 2000/01/08 01:02:36 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.29 1999/09/05 11:34:30 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.30 2000/01/08 01:02:36 simonb Exp $");
 
 
 #include <sys/param.h>
@@ -97,22 +97,24 @@ struct pmax_fbtty pmfb;
 /*
  * Forward references.
  */
-extern void pmScreenInit __P((struct fbinfo *fi));
-static void pmLoadCursor __P((struct fbinfo *fi, u_short *ptr));
-void pmPosCursor __P((struct fbinfo *fi, int x, int y));
+void		pmScreenInit __P((struct fbinfo *fi));
+static void	pmLoadCursor __P((struct fbinfo *fi, u_short *ptr));
+void		pmPosCursor __P((struct fbinfo *fi, int x, int y));
 
-void bt478CursorColor __P((struct fbinfo *fi, u_int *color));
-void bt478InitColorMap __P((struct fbinfo *fi));
+void		bt478CursorColor __P((struct fbinfo *fi, u_int *color));
+void		bt478InitColorMap __P((struct fbinfo *fi));
 
-void pccCursorOn  __P((struct fbinfo *fi));
-void pccCursorOff __P((struct fbinfo *fi));
-void pmInitColorMap __P((struct fbinfo *fi));
+void		pccCursorOn  __P((struct fbinfo *fi));
+void		pccCursorOff __P((struct fbinfo *fi));
+void		pmInitColorMap __P((struct fbinfo *fi));
 
-int pminit __P((struct fbinfo *fi, caddr_t base, int unit, int console));
-int pmattach __P((struct fbinfo *fi, int unit, int cold_console_flag));
+int		pminit __P((struct fbinfo *fi, caddr_t base, int unit,
+		    int console));
+int		pmattach __P((struct fbinfo *fi, int unit,
+		    int cold_console_flag));
 
-static int pm_video_on __P ((struct fbinfo *));
-static int pm_video_off __P ((struct fbinfo *));
+static int	pm_video_on __P((struct fbinfo *));
+static int	pm_video_off __P((struct fbinfo *));
 
 /* new-style raster-cons "driver" methods */
 

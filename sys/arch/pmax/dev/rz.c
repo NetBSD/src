@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.51 1999/12/06 02:53:50 simonb Exp $	*/
+/*	$NetBSD: rz.c,v 1.52 2000/01/08 01:02:36 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.51 1999/12/06 02:53:50 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.52 2000/01/08 01:02:36 simonb Exp $");
 
 /*
  * SCSI CCS (Command Command Set) disk driver.
@@ -100,32 +100,32 @@ struct rz_softc;
 struct scsi_mode_sense_data;
 struct disk_parms;
 
-int	rzprobe __P((void /*struct pmax_scsi_device*/ *sd));
-void	rzgetdefaultlabel __P((struct rz_softc *, struct disklabel *lp));
-void	rzstart __P((int unit));
-void	rzdone __P((int unit, int error, int resid, int status));
-void	rzgetinfo __P((dev_t dev));
-int	rzsize __P((dev_t dev));
+int		rzprobe __P((void /*struct pmax_scsi_device*/ *sd));
+void		rzgetdefaultlabel __P((struct rz_softc *, struct disklabel *lp));
+void		rzstart __P((int unit));
+void		rzdone __P((int unit, int error, int resid, int status));
+void		rzgetinfo __P((dev_t dev));
+int		rzsize __P((dev_t dev));
 
 /* Machinery for format and drive inquiry commands. */
-int	rz_command __P((struct rz_softc *sc,
+int		rz_command __P((struct rz_softc *sc,
 			struct scsipi_generic *scsipi_cmd, int cmdlen,
 			u_char *data_addr, int data_len,
 			int nretries,	int timeout,
 			struct buf *bp, u_int flags));
 
-static int rz_mode_sense __P((struct rz_softc *sd,
-	struct scsi_mode_sense_data *scsipi_sense,
-	int page, int pagelen, int flags));
-static int rz_getsize __P((struct rz_softc *sc, int flags));
-void	rzgetgeom __P((struct rz_softc *, int flags));
-void	rz_setlabelgeom __P((struct disklabel *lp, struct disk_parms *dp));
-u_long	rz_cdsize __P((struct rz_softc *cd, int flags));
+static int	rz_mode_sense __P((struct rz_softc *sd,
+		    struct scsi_mode_sense_data *scsipi_sense, int page,
+		    int pagelen, int flags));
+static int	rz_getsize __P((struct rz_softc *sc, int flags));
+void		rzgetgeom __P((struct rz_softc *, int flags));
+void		rz_setlabelgeom __P((struct disklabel *lp, struct disk_parms *dp));
+u_long		rz_cdsize __P((struct rz_softc *cd, int flags));
 
 
 struct	pmax_driver rzdriver = {
 	"rz", rzprobe,
-	(void	(*) __P((struct ScsiCmd *cmd))) rzstart,
+	(void (*) __P((struct ScsiCmd *cmd))) rzstart,
 	rzdone,
 };
 
@@ -156,17 +156,15 @@ static struct size rzdefaultpart[MAXPARTITIONS] = {
 };
 
 
-extern char *
-readdisklabel __P((dev_t dev, void (*strat) __P((struct buf *bp)),
-		   struct disklabel *lp, struct cpu_disklabel *osdep));
+char	*readdisklabel __P((dev_t dev, void (*strat) __P((struct buf *bp)),
+	    struct disklabel *lp, struct cpu_disklabel *osdep));
 
 /*
  * Ultrix disklabel declarations
  */
  #ifdef COMPAT_ULTRIX
-extern char *
-compat_label __P((dev_t dev, void (*strat) __P((struct buf *bp)),
-		  struct disklabel *lp, struct cpu_disklabel *osdep));
+char	*compat_label __P((dev_t dev, void (*strat) __P((struct buf *bp)),
+	    struct disklabel *lp, struct cpu_disklabel *osdep));
 #endif	/* COMPAT_ULTRIX */
 
 struct rzstats {
@@ -269,8 +267,8 @@ static char legal_cmds[256] = {
 /*
  * Private forward declarations
  */
-static	int rzready __P((register struct rz_softc *sc));
-static void rzlblkstrat __P((register struct buf *bp, register int bsize));
+static int	rzready __P((register struct rz_softc *sc));
+static void	rzlblkstrat __P((register struct buf *bp, register int bsize));
 
 /*
  * Test to see if the unit is ready and if not, try to make it ready.

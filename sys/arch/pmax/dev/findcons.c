@@ -1,4 +1,4 @@
-/*	$NetBSD: findcons.c,v 1.22 1999/12/23 15:34:18 ad Exp $	*/
+/*	$NetBSD: findcons.c,v 1.23 2000/01/08 01:02:35 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: findcons.c,v 1.22 1999/12/23 15:34:18 ad Exp $$");
+__KERNEL_RCSID(0, "$NetBSD: findcons.c,v 1.23 2000/01/08 01:02:35 simonb Exp $$");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,22 +134,22 @@ struct consdev cd;
  * to pick a console early in boot before autoconfig or
  * malloc are up.
  */
-integrate int	dc_ds_kbd	__P((int prom_slot));
-integrate int	scc_kbd		__P((int prom_slot));
-integrate int	dtop_kbd	__P((int prom_slot));
+integrate int	dc_ds_kbd __P((int prom_slot));
+integrate int	scc_kbd __P((int prom_slot));
+integrate int	dtop_kbd __P((int prom_slot));
 
-integrate int	pm_screen	__P((int prom_slot));
-integrate int	xcfb_screen	__P((int prom_slot));
+integrate int	pm_screen __P((int prom_slot));
+integrate int	xcfb_screen __P((int prom_slot));
 #if NRASTERCONSOLE > 0
-extern int	tcfb_cnattach	__P((int prom_slot));
+int		tcfb_cnattach __P((int prom_slot));
 #endif
 
-integrate int	dc_ds_serial	__P((int prom_slot));
-integrate int	scc_serial	__P((int prom_slot));
+integrate int	dc_ds_serial __P((int prom_slot));
+integrate int	scc_serial __P((int prom_slot));
 
-int	find_kbd	__P((int prom_slot));
-int	find_screen	__P((int prom_slot));
-int	find_serial	__P((int prom_slot));
+int	find_kbd __P((int prom_slot));
+int	find_screen __P((int prom_slot));
+int	find_serial __P((int prom_slot));
 
 extern struct consdev promcd;
 

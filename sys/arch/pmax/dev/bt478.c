@@ -1,4 +1,4 @@
-/*	$NetBSD: bt478.c,v 1.12 1999/12/09 00:16:14 simonb Exp $	*/
+/*	$NetBSD: bt478.c,v 1.13 2000/01/08 01:02:35 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
 
 
 /* XXX qvss ioctl interface uses this */
-void bt478CursorColor __P((struct fbinfo *fi, unsigned int color[]));
+void	bt478CursorColor __P((struct fbinfo *fi, unsigned int color[]));
 
 
 static u_char	bg_RGB[3];	/* background color for the cursor */

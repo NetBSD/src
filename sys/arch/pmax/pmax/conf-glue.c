@@ -1,4 +1,4 @@
-/*	$NetBSD: conf-glue.c,v 1.20 1999/11/15 09:50:18 nisimura Exp $	*/
+/*	$NetBSD: conf-glue.c,v 1.21 2000/01/08 01:02:38 simonb Exp $	*/
 
 /*
  * conf-glue.c:
@@ -117,7 +117,7 @@ struct pmax_scsi_device scsi_dinit[] = {
 };
 
 
-int	nomatch  __P((struct device *parent, struct cfdata *cf, void *aux));
+int	nomatch __P((struct device *parent, struct cfdata *cf, void *aux));
 void	noattach __P((struct device *parent, struct device *self, void *aux));
 
 

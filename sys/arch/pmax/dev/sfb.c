@@ -1,4 +1,4 @@
-/*	$NetBSD: sfb.c,v 1.33 1999/09/05 11:34:30 simonb Exp $	*/
+/*	$NetBSD: sfb.c,v 1.34 2000/01/08 01:02:36 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -117,11 +117,11 @@ struct pmax_fbtty sfbfb;
  * Forward references.
  */
 
-int sfbinit __P((struct fbinfo *fi, caddr_t sfbaddr, int unit, int silent));
+int	sfbinit __P((struct fbinfo *fi, caddr_t sfbaddr, int unit, int silent));
 
-int sfbmatch __P((struct device *, struct cfdata *, void *));
-void sfbattach __P((struct device *, struct device *, void *));
-int sfb_intr __P((void *sc));
+int	sfbmatch __P((struct device *, struct cfdata *, void *));
+void	sfbattach __P((struct device *, struct device *, void *));
+int	sfb_intr __P((void *sc));
 
 struct cfattach sfb_ca = {
 	sizeof(struct fbinfo), sfbmatch, sfbattach

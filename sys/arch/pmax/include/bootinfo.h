@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.3 1999/04/24 08:01:09 simonb Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.4 2000/01/08 01:02:38 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -69,5 +69,5 @@ struct btinfo_symtab {
 };
 
 #ifdef _KERNEL
-void *lookup_bootinfo __P((int));
+void	*lookup_bootinfo __P((int));
 #endif

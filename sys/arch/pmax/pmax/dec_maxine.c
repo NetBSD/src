@@ -1,4 +1,4 @@
-/* $NetBSD: dec_maxine.c,v 1.21 1999/12/03 03:06:11 nisimura Exp $ */
+/* $NetBSD: dec_maxine.c,v 1.22 2000/01/08 01:02:39 simonb Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.21 1999/12/03 03:06:11 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.22 2000/01/08 01:02:39 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -103,9 +103,8 @@ __KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.21 1999/12/03 03:06:11 nisimura Exp
  */
 void		dec_maxine_init __P((void));
 void		dec_maxine_bus_reset __P((void));
-void		dec_maxine_enable_intr
-		   __P ((unsigned slotno, int (*handler)(void *),
-			 void *sc, int onoff));
+void		dec_maxine_enable_intr __P((unsigned slotno,
+		    int (*handler)(void *), void *sc, int onoff));
 int		dec_maxine_intr __P((unsigned, unsigned, unsigned, unsigned));
 void		dec_maxine_device_register __P((struct device *, void *));
 void		dec_maxine_cons_init __P((void));

@@ -1,4 +1,4 @@
-/*	$NetBSD: ims332.h,v 1.4 1999/12/09 00:16:14 simonb Exp $	*/
+/*	$NetBSD: ims332.h,v 1.5 2000/01/08 01:02:35 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -167,13 +167,13 @@
 #define	IMS332_BOOT_64_BIT_MODE		0x000040	/* else 32 */
 #define	IMS332_BOOT_xxx			0xffff80	/* reserved, mbz */
 
-int ims332init (struct fbinfo *);
-void ims332InitColorMap (struct fbinfo *);
-int ims332LoadColorMap (struct fbinfo *, const u_char *, int, int);
-int ims332GetColorMap (struct fbinfo *, u_char *, int, int);
-int ims332_video_off (struct fbinfo *);
-int ims332_video_on (struct fbinfo *);
-void ims332PosCursor (struct fbinfo *, int, int);
-void ims332RestoreCursorColor (struct fbinfo *);
-void ims332CursorColor (struct fbinfo *, unsigned int []);
-void ims332LoadCursor (struct fbinfo *, u_short *);
+int	ims332init __P((struct fbinfo *));
+void	ims332InitColorMap __P((struct fbinfo *));
+int	ims332LoadColorMap __P((struct fbinfo *, const u_char *, int, int));
+int	ims332GetColorMap __P((struct fbinfo *, u_char *, int, int));
+int	ims332_video_off __P((struct fbinfo *));
+int	ims332_video_on __P((struct fbinfo *));
+void	ims332PosCursor __P((struct fbinfo *, int, int));
+void	ims332RestoreCursorColor __P((struct fbinfo *));
+void	ims332CursorColor __P((struct fbinfo *, unsigned int []));
+void	ims332LoadCursor __P((struct fbinfo *, u_short *));

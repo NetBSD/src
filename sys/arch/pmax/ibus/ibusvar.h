@@ -1,4 +1,4 @@
-/* $NetBSD: ibusvar.h,v 1.11 1999/11/24 00:04:06 thorpej Exp $ */
+/* $NetBSD: ibusvar.h,v 1.12 2000/01/08 01:02:37 simonb Exp $ */
 
 #ifndef _IBUSVAR_H_
 #define _IBUSVAR_H_ 1
@@ -11,7 +11,7 @@ struct ibus_softc {
 	struct device	sc_dev;
 
 	void	(*sc_intr_establish) __P((struct device *, void *,
-					int, int (*)(void *), void *));
+		     int, int (*)(void *), void *));
 	void	(*sc_intr_disestablish) __P((struct device *, void *));
 };
 
@@ -25,7 +25,7 @@ struct ibus_dev_attach_args {
 	int	ida_ndevs;
 	struct ibus_attach_args	*ida_devs;
 	void	(*ida_establish) __P((struct device *, void *,
-					int, int (*)(void *), void *));
+		    int, int (*)(void *), void *));
 	void	(*ida_disestablish) __P((struct device *, void *));
 };
 
@@ -39,20 +39,20 @@ struct ibus_attach_args {
 	int	ia_basz;		/* badaddr() size */
 };
 
-void ibusattach __P((struct device *, struct device *, void *));
-int  ibusprint __P((void *, const char *));
-void ibus_intr_establish __P((struct device *, void * cookie, int level,
-			int (*handler)(void *), void *arg));
-void ibus_intr_disestablish __P((struct device *, void *));
+void	ibusattach __P((struct device *, struct device *, void *));
+int	ibusprint __P((void *, const char *));
+void	ibus_intr_establish __P((struct device *, void * cookie, int level,
+	    int (*handler)(void *), void *arg));
+void	ibus_intr_disestablish __P((struct device *, void *));
 
-int  badaddr __P((void *, u_int));
+int	badaddr __P((void *, u_int));
 
-void dec_3100_intr_establish __P((struct device *, void *,
-		int, int (*)(void *), void *));
-void dec_3100_intr_disestablish __P((struct device *, void *));
+void	dec_3100_intr_establish __P((struct device *, void *,
+	    int, int (*)(void *), void *));
+void	dec_3100_intr_disestablish __P((struct device *, void *));
 
-void dec_5100_intr_establish __P((struct device *, void *,
-		int, int (*)(void *), void *));
-void dec_5100_intr_disestablish __P((struct device *, void *));
+void	dec_5100_intr_establish __P((struct device *, void *,
+	    int, int (*)(void *), void *));
+void	dec_5100_intr_disestablish __P((struct device *, void *));
 
 #endif /* _IBUSVAR_H_ */

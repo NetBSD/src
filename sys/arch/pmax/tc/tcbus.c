@@ -1,4 +1,4 @@
-/* $NetBSD: tcbus.c,v 1.3 1999/11/17 03:42:20 nisimura Exp $ */
+/* $NetBSD: tcbus.c,v 1.4 2000/01/08 01:02:40 simonb Exp $ */
 
 /*
  * Copyright (c) 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.3 1999/11/17 03:42:20 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.4 2000/01/08 01:02:40 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.3 1999/11/17 03:42:20 nisimura Exp $");
 void	tc_ds_intr_establish __P((struct device *, void *,
 				int, int (*)(void *), void *));
 void	tc_ds_intr_disestablish __P((struct device *, void *));
-extern void (*tc_enable_interrupt) __P ((unsigned, int (*)(void *), void *, int));
+extern void (*tc_enable_interrupt) __P((unsigned, int (*)(void *), void *, int));
 /* XXX XXX XXX XXX XXX XXX XXX */
 
 bus_dma_tag_t tc_ds_get_dma_tag __P((int));
@@ -206,7 +206,7 @@ tc_ds_intr_disestablish(dev, arg)
 #include <pmax/dev/mfbvar.h>
 #include <pmax/dev/sfbvar.h>
 
-extern int px_init __P((struct fbinfo*, char *, int, int));
+int	px_init __P((struct fbinfo*, char *, int, int));
 
 #include <machine/dec_prom.h>
 

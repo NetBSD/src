@@ -1,4 +1,4 @@
-/*	$NetBSD: siivar.h,v 1.4 1998/05/08 00:05:19 simonb Exp $	*/
+/*	$NetBSD: siivar.h,v 1.5 2000/01/08 01:02:36 simonb Exp $	*/
 
 #ifndef _SIIVAR_H
 #define _SIIVAR_H
@@ -46,7 +46,7 @@ struct siisoftc {
 #endif
 };
 
-int siiintr __P((void *sc));
+int	siiintr __P((void *sc));
 
 /* Machine-indepedent back-end attach entry point */
 void	siiattach __P((struct siisoftc *sc));

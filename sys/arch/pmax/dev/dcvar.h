@@ -1,4 +1,4 @@
-/*	$NetBSD: dcvar.h,v 1.6 1999/12/08 00:13:33 simonb Exp $	*/
+/*	$NetBSD: dcvar.h,v 1.7 2000/01/08 01:02:35 simonb Exp $	*/
 
 /*
  * External declarations from DECstation dc serial driver.
@@ -30,18 +30,17 @@ struct dc_softc {
 /* flags */
 #define DC_KBDMOUSE	0x01		/* keyboard and mouse attached */
 
-int	dcattach __P((struct dc_softc *sc, void *addr,
-			int dtrmask, int rts_ctsmask,
-			int speed, int consline));
+int	dcattach __P((struct dc_softc *sc, void *addr, int dtrmask,
+	    int rts_ctsmask, int speed, int consline));
 int	dcintr __P((void * xxxunit));
 
 /*
  * Following declaratios for console code.
  * XXX shuould be separated, or redesigned.
  */
-extern int dcGetc __P ((dev_t dev));
-extern int dcparam __P((register struct tty *tp, register struct termios *t));
-extern void dcPutc __P((dev_t dev, int c));
+int	dcGetc __P((dev_t dev));
+int	dcparam __P((register struct tty *tp, register struct termios *t));
+void	dcPutc __P((dev_t dev, int c));
 
 /* QVSS-compatible in-kernel X input event parser, pointer tracker */
 void	(*dcDivertXInput) __P((int cc)); /* X windows keyboard input routine */

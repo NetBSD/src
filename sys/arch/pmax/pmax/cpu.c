@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.13 1999/11/15 09:50:20 nisimura Exp $ */
+/* $NetBSD: cpu.c,v 1.14 2000/01/08 01:02:38 simonb Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -34,15 +34,15 @@
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
 
-static int  cpumatch __P((struct device *, struct cfdata *, void *));
-static void cpuattach __P((struct device *, struct device *, void *));
+static int	cpumatch __P((struct device *, struct cfdata *, void *));
+static void	cpuattach __P((struct device *, struct device *, void *));
 
 struct cfattach cpu_ca = {
 	sizeof (struct device), cpumatch, cpuattach
 };
 extern struct cfdriver cpu_cd;
 
-extern void cpu_identify __P((void));
+void	cpu_identify __P((void));
 
 static int
 cpumatch(parent, cf, aux)

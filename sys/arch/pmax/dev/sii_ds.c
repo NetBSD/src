@@ -1,4 +1,4 @@
-/*	$NetBSD: sii_ds.c,v 1.9 1999/11/15 09:54:42 nisimura Exp $	*/
+/*	$NetBSD: sii_ds.c,v 1.10 2000/01/08 01:02:36 simonb Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -36,7 +36,7 @@
 /*
  * Autoconfig definition of driver front-end
  */
-int	sii_ds_match  __P((struct device* parent, struct cfdata *match,
+int	sii_ds_match __P((struct device* parent, struct cfdata *match,
 	    void *aux));
 void	sii_ds_attach __P((struct device *parent, struct device *self, void *aux));
 
@@ -46,17 +46,17 @@ struct cfattach sii_ds_ca = {
 	sizeof(struct siisoftc), sii_ds_match, sii_ds_attach
 };
 
-extern void  CopyToBuffer __P((u_short *src, 	/* NB: must be short aligned */
-		 volatile u_short *dst, int length));
-extern void CopyFromBuffer __P((volatile u_short *src, char *dst, int length));
+void	CopyToBuffer __P((u_short *src, 	/* NB: must be short aligned */
+	     volatile u_short *dst, int length));
+void	CopyFromBuffer __P((volatile u_short *src, char *dst, int length));
 
 void	kn230_copytobuf __P((u_short *src, 	/* NB: must be short aligned */
-		 volatile u_short *dst, int length));
+	    volatile u_short *dst, int length));
 void	kn230_copyfrombuf __P((volatile u_short *src, char *dst, int length));
 
 
 void	kn01_copytobuf __P((u_short *src, 	/* NB: must be short aligned */
-		 volatile u_short *dst, int length));
+	    volatile u_short *dst, int length));
 void	kn01_copyfrombuf __P((volatile u_short *src, char *dst, int length));
 
 

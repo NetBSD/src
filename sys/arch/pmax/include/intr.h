@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.8 1999/08/05 18:08:13 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.9 2000/01/08 01:02:38 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -48,13 +48,13 @@
 
 #include <mips/cpuregs.h>
 
-extern int _splraise __P((int));
-extern int _spllower __P((int));
-extern int _splset __P((int));
-extern int _splget __P((void));
-extern void _splnone __P((void));
-extern void _setsoftintr __P((int));
-extern void _clrsoftintr __P((int));
+int	_splraise __P((int));
+int	_spllower __P((int));
+int	_splset __P((int));
+int	_splget __P((void));
+void	_splnone __P((void));
+void	_setsoftintr __P((int));
+void	_clrsoftintr __P((int));
 
 #define setsoftclock()	_setsoftintr(MIPS_SOFT_INT_MASK_0)
 #define setsoftnet()	_setsoftintr(MIPS_SOFT_INT_MASK_1)

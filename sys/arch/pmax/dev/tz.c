@@ -1,4 +1,4 @@
-/*	$NetBSD: tz.c,v 1.23 1999/11/19 03:04:39 simonb Exp $	*/
+/*	$NetBSD: tz.c,v 1.24 2000/01/08 01:02:36 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -68,7 +68,7 @@
 
 static int	tzprobe __P((void *sd /*struct pmax_scsi_device *sd*/));
 static int	tzcommand __P((dev_t dev, int command, int code,
-		       int count, caddr_t data));
+		    int count, caddr_t data));
 static void	tzstart __P((int unit));
 static void	tzdone __P((int unit, int error, int resid, int status));
 static int	tzmount __P((dev_t dev));

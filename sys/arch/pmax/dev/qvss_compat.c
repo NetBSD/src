@@ -1,4 +1,4 @@
-/*	$NetBSD: qvss_compat.c,v 1.22 1999/12/30 00:57:29 simonb Exp $	*/
+/*	$NetBSD: qvss_compat.c,v 1.23 2000/01/08 01:02:36 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -109,15 +109,15 @@ struct termios; struct dcregs;
 /*
  * Prototypes of local functions
  */
-static	void genKbdEvent __P((int ch));
-static	void genMouseEvent __P((MouseReport *newRepPtr));
-static	void genMouseButtons __P((MouseReport *newRepPtr));
+static void	genKbdEvent __P((int ch));
+static void	genMouseEvent __P((MouseReport *newRepPtr));
+static void	genMouseButtons __P((MouseReport *newRepPtr));
 
 
 #if NSCC > 0
-extern void (*sccDivertXInput) __P((int cc));
-extern void (*sccMouseEvent) __P((int));
-extern void (*sccMouseButtons) __P((int));
+extern void	(*sccDivertXInput) __P((int cc));
+extern void	(*sccMouseEvent) __P((int));
+extern void	(*sccMouseButtons) __P((int));
 #endif
 
 extern struct fbinfo *firstfi;
@@ -588,26 +588,26 @@ genDeconfigMouse()
 #if NDC > 0
 	case DS_PMAX:
 	case DS_3MAX:
-		dcDivertXInput = (void (*) __P((int)) )0;
-		dcMouseEvent = (void (*) __P((int)) )0;
-		dcMouseButtons =  (void (*) __P((int)) )0;
+		dcDivertXInput = (void (*) __P((int)))0;
+		dcMouseEvent = (void (*) __P((int)))0;
+		dcMouseButtons =  (void (*) __P((int)))0;
 		break;
 #endif /* NDC */
 
 #if NSCC > 0
 	case DS_3MIN:
 	case DS_3MAXPLUS:
-		sccDivertXInput = (void (*) __P((int)) )0;
-		sccMouseEvent = (void (*) __P((int)) )0;
-		sccMouseButtons = (void (*) __P((int)) )0;
+		sccDivertXInput = (void (*) __P((int)))0;
+		sccMouseEvent = (void (*) __P((int)))0;
+		sccMouseButtons = (void (*) __P((int)))0;
 		break;
 #endif
 
 #if NDTOP > 0
 	case DS_MAXINE:
-		dtopDivertXInput = (void (*) __P((int)) )0;
-		dtopMouseEvent = (void (*) __P((MouseReport *)) )0;
-		dtopMouseButtons = (void (*) __P((MouseReport *)) )0;
+		dtopDivertXInput = (void (*) __P((int)))0;
+		dtopMouseEvent = (void (*) __P((MouseReport *)))0;
+		dtopMouseButtons = (void (*) __P((MouseReport *)))0;
 		break;
 #endif
 	default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.h,v 1.10 1999/10/11 16:08:47 mrg Exp $	*/
+/*	$NetBSD: scsi.h,v 1.11 2000/01/08 01:02:36 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -565,20 +565,20 @@ struct scsi_fmt_sense {
 /*
  * Routines.
  */
-extern void scsiGroup0Cmd __P((unsigned cmd,	/* group0 SCSI command */
-			       unsigned lun,	/* Logical Unit Number */
-			       register unsigned block,
-			       unsigned count,
-			       register ScsiGroup0Cmd *c));
+void	scsiGroup0Cmd __P((unsigned cmd,	/* group0 SCSI command */
+			   unsigned lun,	/* Logical Unit Number */
+			   register unsigned block,
+			   unsigned count,
+			   register ScsiGroup0Cmd *c));
 
-extern void scsiGroup1Cmd __P((unsigned cmd,	/* group0 SCSI command */
-			       unsigned lun,	/* Logical Unit Number */
-			       register unsigned block,
-			       unsigned count,
-			       register ScsiGroup1Cmd *c));
+void	scsiGroup1Cmd __P((unsigned cmd,	/* group0 SCSI command */
+			   unsigned lun,	/* Logical Unit Number */
+			   register unsigned block,
+			   unsigned count,
+			   register ScsiGroup1Cmd *c));
 
-extern void scsiPrintSense __P((register ScsiClass7Sense *sp, int len));
-extern void scsiPrintInquiry __P((ScsiInquiryData *inqbuf, int len));
+void	scsiPrintSense __P((register ScsiClass7Sense *sp, int len));
+void	scsiPrintInquiry __P((ScsiInquiryData *inqbuf, int len));
 #endif /* _KERNEL */
 
 #endif /* _SCSI_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.36 1999/06/08 23:41:59 simonb Exp $	*/
+/*	$NetBSD: sii.c,v 1.37 2000/01/08 01:02:36 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -79,8 +79,7 @@ void	siiattach __P((struct siisoftc *sc));
 
 extern struct cfdriver sii_cd;
 
-int	siiprint(void*, char*);
-int siiintr __P((void *sc));
+int	siiintr __P((void *sc));
 
 #ifdef USE_NEW_SCSI
 /* Glue to the machine-independent scsi */
@@ -166,19 +165,19 @@ u_char	sii_buf[256];	/* used for extended messages */
  * Other forward references
  */
 
-static void sii_Reset __P((register struct siisoftc *sc, int resetbus));
-static void sii_StartCmd __P((register struct siisoftc *sc, int target));
-static void sii_CmdDone __P((register struct siisoftc *sc, int target,
-			     int error));
-static void sii_DoIntr __P((register struct siisoftc *sc, u_int dstat));
-static void sii_StateChg __P((register struct siisoftc *sc, u_int cstat));
-static int  sii_GetByte __P((register SIIRegs *regs, int phase, int ack));
-static void sii_DoSync __P((register SIIRegs *regs, register State *state));
-static void sii_StartDMA __P((register SIIRegs *regs, int phase,
-			      u_short *dmaAddr, int size));
+static void	sii_Reset __P((register struct siisoftc *sc, int resetbus));
+static void	sii_StartCmd __P((register struct siisoftc *sc, int target));
+static void	sii_CmdDone __P((register struct siisoftc *sc, int target,
+		    int error));
+static void	sii_DoIntr __P((register struct siisoftc *sc, u_int dstat));
+static void	sii_StateChg __P((register struct siisoftc *sc, u_int cstat));
+static int	sii_GetByte __P((register SIIRegs *regs, int phase, int ack));
+static void	sii_DoSync __P((register SIIRegs *regs, register State *state));
+static void	sii_StartDMA __P((register SIIRegs *regs, int phase,
+		    u_short *dmaAddr, int size));
 
-void siistart __P((register ScsiCmd *scsicmd));
-void sii_DumpLog __P((void));
+void		siistart __P((register ScsiCmd *scsicmd));
+void		sii_DumpLog __P((void));
 
 
 /*
