@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2000/04/28 06:21:21 itojun Exp $
+#	$NetBSD: Makefile,v 1.1.4.1 2002/07/01 17:17:08 he Exp $
 
 DIST=	${.CURDIR}/../../../../dist
 .PATH: ${DIST}/bind/doc/bog
@@ -12,12 +12,11 @@ SRCS=	00macs.me 00title.me intro.me ns.me types.me\
 MACROS=	-me
 RM=	rm -f
 CLEANFILES+=	bog.ps
-ROFF=	nroff ${MACROS}
 
 all: bog.ps
 
 bog.ps: ${SRCS}
 	${RM} ${.TARGET}
-	${TBL} ${.ALLSRC} | ${ROFF} >${.TARGET}
+	${TBL} ${.ALLSRC} | ${ROFF} ${MACROS} >${.TARGET}
 
 .include <bsd.doc.mk>
