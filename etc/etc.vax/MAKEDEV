@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.23 1999/01/16 01:40:30 abs Exp $
+#	$NetBSD: MAKEDEV,v 1.24 1999/06/27 20:01:49 abs Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -195,11 +195,11 @@ hp*|hk*|up*|ra*|rl*|rb*|ccd*|vnd*|rd*|sd*|rx*|raid*)
 	hp*) name=hp;	unit=${i#hp};	blk=0; chr=4;;
 	hk*) name=hk;	unit=${i#hk};	blk=3; chr=11;;
 	up*) name=up;	unit=${i#up};	blk=2; chr=13;;
+	raid*) name=raid; unit=${i#raid}; blk=25; chr=73;;
 	ra*) name=ra;	unit=${i#ra};	blk=9;	chr=9;;
 	rb*) name=rb;	unit=${i#rb};	blk=11; chr=23;;
 	rx*) name=rx;	unit=${i#rx};	blk=12; chr=30;;
 	rl*) name=rl;	unit=${i#rl};	blk=14; chr=32;;
-	raid*) name=raid; unit=${i#raid}; blk=25; chr=73;;
 	ccd*) name=ccd;	unit=${i#ccd};	blk=17; chr=54;;
 	vnd*) name=vnd;	unit=${i#vnd};	blk=18; chr=55;;
 	rd*) name=rd;	unit=${i#rd};	blk=19; chr=58;;
