@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.h,v 1.6 2000/09/29 06:35:57 deberg Exp $	*/
+/*	$NetBSD: bus_space.h,v 1.7 2001/05/12 22:35:29 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -149,11 +149,11 @@ typedef u_long	bus_space_handle_t;
 #define	bus_space_read_multi_1(t, h, o, a, c) do {			\
 	(void) t;							\
 	__asm __volatile ("						\
-		movl	%0,a0					;	\
-		movl	%1,a1					;	\
-		movl	%2,d0					;	\
-	1:	movb	a0@,a1@+				;	\
-		subql	#1,d0					;	\
+		movl	%0,%%a0					;	\
+		movl	%1,%%a1					;	\
+		movl	%2,%%d0					;	\
+	1:	movb	%%a0@,%%a1@+				;	\
+		subql	#1,%%d0					;	\
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
@@ -163,11 +163,11 @@ typedef u_long	bus_space_handle_t;
 #define	bus_space_read_multi_2(t, h, o, a, c) do {			\
 	(void) t;							\
 	__asm __volatile ("						\
-		movl	%0,a0					;	\
-		movl	%1,a1					;	\
-		movl	%2,d0					;	\
-	1:	movw	a0@,a1@+				;	\
-		subql	#1,d0					;	\
+		movl	%0,%%a0					;	\
+		movl	%1,%%a1					;	\
+		movl	%2,%%d0					;	\
+	1:	movw	%%a0@,%%a1@+				;	\
+		subql	#1,%%d0					;	\
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
@@ -177,11 +177,11 @@ typedef u_long	bus_space_handle_t;
 #define	bus_space_read_multi_4(t, h, o, a, c) do {			\
 	(void) t;							\
 	__asm __volatile ("						\
-		movl	%0,a0					;	\
-		movl	%1,a1					;	\
-		movl	%2,d0					;	\
-	1:	movl	a0@,a1@+				;	\
-		subql	#1,d0					;	\
+		movl	%0,%%a0					;	\
+		movl	%1,%%a1					;	\
+		movl	%2,%%d0					;	\
+	1:	movl	%%a0@,%%a1@+				;	\
+		subql	#1,%%d0					;	\
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
@@ -205,11 +205,11 @@ typedef u_long	bus_space_handle_t;
 #define	bus_space_read_region_1(t, h, o, a, c) do {			\
 	(void) t;							\
 	__asm __volatile ("						\
-		movl	%0,a0					;	\
-		movl	%1,a1					;	\
-		movl	%2,d0					;	\
-	1:	movb	a0@+,a1@+				;	\
-		subql	#1,d0					;	\
+		movl	%0,%%a0					;	\
+		movl	%1,%%a1					;	\
+		movl	%2,%%d0					;	\
+	1:	movb	%%a0@+,%%a1@+				;	\
+		subql	#1,%%d0					;	\
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
@@ -219,11 +219,11 @@ typedef u_long	bus_space_handle_t;
 #define	bus_space_read_region_2(t, h, o, a, c) do {			\
 	(void) t;							\
 	__asm __volatile ("						\
-		movl	%0,a0					;	\
-		movl	%1,a1					;	\
-		movl	%2,d0					;	\
-	1:	movw	a0@+,a1@+				;	\
-		subql	#1,d0					;	\
+		movl	%0,%%a0					;	\
+		movl	%1,%%a1					;	\
+		movl	%2,%%d0					;	\
+	1:	movw	%%a0@+,%%a1@+				;	\
+		subql	#1,%%d0					;	\
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
@@ -233,11 +233,11 @@ typedef u_long	bus_space_handle_t;
 #define	bus_space_read_region_4(t, h, o, a, c) do {			\
 	(void) t;							\
 	__asm __volatile ("						\
-		movl	%0,a0					;	\
-		movl	%1,a1					;	\
-		movl	%2,d0					;	\
-	1:	movl	a0@+,a1@+				;	\
-		subql	#1,d0					;	\
+		movl	%0,%%a0					;	\
+		movl	%1,%%a1					;	\
+		movl	%2,%%d0					;	\
+	1:	movl	%%a0@+,%%a1@+				;	\
+		subql	#1,%%d0					;	\
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
@@ -282,11 +282,11 @@ typedef u_long	bus_space_handle_t;
 #define	bus_space_write_multi_1(t, h, o, a, c) do {			\
 	(void) t;							\
 	__asm __volatile ("						\
-		movl	%0,a0					;	\
-		movl	%1,a1					;	\
-		movl	%2,d0					;	\
-	1:	movb	a1@+,a0@				;	\
-		subql	#1,d0					;	\
+		movl	%0,%%a0					;	\
+		movl	%1,%%a1					;	\
+		movl	%2,%%d0					;	\
+	1:	movb	%%a1@+,%%a0@				;	\
+		subql	#1,%%d0					;	\
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
@@ -296,11 +296,11 @@ typedef u_long	bus_space_handle_t;
 #define	bus_space_write_multi_2(t, h, o, a, c) do {			\
 	(void) t;							\
 	__asm __volatile ("						\
-		movl	%0,a0					;	\
-		movl	%1,a1					;	\
-		movl	%2,d0					;	\
-	1:	movw	a1@+,a0@				;	\
-		subql	#1,d0					;	\
+		movl	%0,%%a0					;	\
+		movl	%1,%%a1					;	\
+		movl	%2,%%d0					;	\
+	1:	movw	%%a1@+,%%a0@				;	\
+		subql	#1,%%d0					;	\
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
@@ -310,11 +310,11 @@ typedef u_long	bus_space_handle_t;
 #define	bus_space_write_multi_4(t, h, o, a, c) do {			\
 	(void) t;							\
 	__asm __volatile ("						\
-		movl	%0,a0					;	\
-		movl	%1,a1					;	\
-		movl	%2,d0					;	\
-	1:	movl	a1@+,a0@				;	\
-		subql	#1,d0					;	\
+		movl	%0,%%a0					;	\
+		movl	%1,%%a1					;	\
+		movl	%2,%%d0					;	\
+	1:	movl	%%a1@+,%%a0@				;	\
+		subql	#1,%%d0					;	\
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
@@ -338,11 +338,11 @@ typedef u_long	bus_space_handle_t;
 #define	bus_space_write_region_1(t, h, o, a, c) do {			\
 	(void) t;							\
 	__asm __volatile ("						\
-		movl	%0,a0					;	\
-		movl	%1,a1					;	\
-		movl	%2,d0					;	\
-	1:	movb	a1@+,a0@+				;	\
-		subql	#1,d0					;	\
+		movl	%0,%%a0					;	\
+		movl	%1,%%a1					;	\
+		movl	%2,%%d0					;	\
+	1:	movb	%%a1@+,%%a0@+				;	\
+		subql	#1,%%d0					;	\
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
@@ -352,11 +352,11 @@ typedef u_long	bus_space_handle_t;
 #define	bus_space_write_region_2(t, h, o, a, c) do {			\
 	(void) t;							\
 	__asm __volatile ("						\
-		movl	%0,a0					;	\
-		movl	%1,a1					;	\
-		movl	%2,d0					;	\
-	1:	movw	a1@+,a0@+				;	\
-		subql	#1,d0					;	\
+		movl	%0,%%a0					;	\
+		movl	%1,%%a1					;	\
+		movl	%2,%%d0					;	\
+	1:	movw	%%a1@+,%%a0@+				;	\
+		subql	#1,%%d0					;	\
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
@@ -366,11 +366,11 @@ typedef u_long	bus_space_handle_t;
 #define	bus_space_write_region_4(t, h, o, a, c) do {			\
 	(void) t;							\
 	__asm __volatile ("						\
-		movl	%0,a0					;	\
-		movl	%1,a1					;	\
-		movl	%2,d0					;	\
-	1:	movl	a1@+,a0@+				;	\
-		subql	#1,d0					;	\
+		movl	%0,%%a0					;	\
+		movl	%1,%%a1					;	\
+		movl	%2,%%d0					;	\
+	1:	movl	%%a1@+,%%a0@+				;	\
+		subql	#1,%%d0					;	\
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
@@ -394,11 +394,11 @@ typedef u_long	bus_space_handle_t;
 #define	bus_space_set_multi_1(t, h, o, val, c) do {			\
 	(void) t;							\
 	__asm __volatile ("						\
-		movl	%0,a0					;	\
-		movl	%1,d1					;	\
-		movl	%2,d0					;	\
-	1:	movb	d1,a0@					;	\
-		subql	#1,d0					;	\
+		movl	%0,%%a0					;	\
+		movl	%1,%%d1					;	\
+		movl	%2,%%d0					;	\
+	1:	movb	%%d1,%%a0@				;	\
+		subql	#1,%%d0					;	\
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (val), "g" (c)		:	\
@@ -408,11 +408,11 @@ typedef u_long	bus_space_handle_t;
 #define	bus_space_set_multi_2(t, h, o, val, c) do {			\
 	(void) t;							\
 	__asm __volatile ("						\
-		movl	%0,a0					;	\
-		movl	%1,d1					;	\
-		movl	%2,d0					;	\
-	1:	movw	d1,a0@					;	\
-		subql	#1,d0					;	\
+		movl	%0,%%a0					;	\
+		movl	%1,%%d1					;	\
+		movl	%2,%%d0					;	\
+	1:	movw	%%d1,%%a0@				;	\
+		subql	#1,%%d0					;	\
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (val), "g" (c)		:	\
@@ -422,11 +422,11 @@ typedef u_long	bus_space_handle_t;
 #define	bus_space_set_multi_4(t, h, o, val, c) do {			\
 	(void) t;							\
 	__asm __volatile ("						\
-		movl	%0,a0					;	\
-		movl	%1,d1					;	\
-		movl	%2,d0					;	\
-	1:	movl	d1,a0@					;	\
-		subql	#1,d0					;	\
+		movl	%0,%%a0					;	\
+		movl	%1,%%d1					;	\
+		movl	%2,%%d0					;	\
+	1:	movl	%%d1,%%a0@				;	\
+		subql	#1,%%d0					;	\
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (val), "g" (c)		:	\
@@ -450,11 +450,11 @@ typedef u_long	bus_space_handle_t;
 #define	bus_space_set_region_1(t, h, o, val, c) do {			\
 	(void) t;							\
 	__asm __volatile ("						\
-		movl	%0,a0					;	\
-		movl	%1,d1					;	\
-		movl	%2,d0					;	\
-	1:	movb	d1,a0@+					;	\
-		subql	#1,d0					;	\
+		movl	%0,%%a0					;	\
+		movl	%1,%%d1					;	\
+		movl	%2,%%d0					;	\
+	1:	movb	%%d1,%%a0@+				;	\
+		subql	#1,%%d0					;	\
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (val), "g" (c)		:	\
@@ -464,11 +464,11 @@ typedef u_long	bus_space_handle_t;
 #define	bus_space_set_region_2(t, h, o, val, c) do {			\
 	(void) t;							\
 	__asm __volatile ("						\
-		movl	%0,a0					;	\
-		movl	%1,d1					;	\
-		movl	%2,d0					;	\
-	1:	movw	d1,a0@+					;	\
-		subql	#1,d0					;	\
+		movl	%0,%%a0					;	\
+		movl	%1,%%d1					;	\
+		movl	%2,%%d0					;	\
+	1:	movw	%%d1,%%a0@+				;	\
+		subql	#1,%%d0					;	\
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (val), "g" (c)		:	\
@@ -478,11 +478,11 @@ typedef u_long	bus_space_handle_t;
 #define	bus_space_set_region_4(t, h, o, val, c) do {			\
 	(void) t;							\
 	__asm __volatile ("						\
-		movl	%0,a0					;	\
-		movl	%1,d1					;	\
-		movl	%2,d0					;	\
-	1:	movl	d1,a0@+					;	\
-		subql	#1,d0					;	\
+		movl	%0,%%a0					;	\
+		movl	%1,%%d1					;	\
+		movl	%2,%%d0					;	\
+	1:	movl	%%d1,%%a0@+				;	\
+		subql	#1,%%d0					;	\
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (val), "g" (c)		:	\

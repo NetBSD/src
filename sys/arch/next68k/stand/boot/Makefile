@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2000/07/21 22:26:19 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.9 2001/05/12 22:35:30 chs Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -14,7 +14,7 @@ Z_AS=           library
 
 ### find out what to use for libsa
 SA_AS=          library
-#SAMISCMAKEFLAGS= SA_USE_CREAD=yes
+SAMISCMAKEFLAGS= SA_USE_LOADFILE=yes # SA_USE_CREAD=yes
 .include "${S}/lib/libsa/Makefile.inc"
 #LIBSA=          ${SALIB}
 
@@ -37,6 +37,7 @@ SRCS=   boot.c machdep.c conf.c devopen.c rtc.c sd.c scsi.c en.c vers.c build.c
 # @@@ dev_net.c should really be in libsa, but it doesn't
 # declare ip_convertaddr correctly, so I put it here _temporarily_.
 
+CLEANFILES+= srt0.o boot.elf boot.raw machine ${MACHINE_ARCH} limits.h
 CLEANFILES+= vers.c build.c build	# generated dynamically
 
 MKMAN=	no
@@ -46,9 +47,21 @@ LIBS=	${SALIB} ${KERNLIB}
 
 OBJS+=	dev_net.o
 
+AWKPROG='\
+function x(v) { printf "\0%c%c%c", v / 65536, v / 256, v } \
+{ \
+	printf "\0\207\01\07"; \
+	x($$1); \
+	x($$2); \
+	x($$3); \
+	printf "\0\0\0\0\04\070\0\0\0\0\0\0\0\0\0\0" \
+}'
+
 ${PROG}: links srt0.o ${OBJS} ${LIBS}
-	${LD} -N -Ttext ${RELOC} -e start srt0.o ${OBJS} ${LIBS} vers.o -o $@
-	@${SIZE} $@
+	${LD} -N -Ttext ${RELOC} -e start srt0.o ${OBJS} ${LIBS} -o $@.elf
+	@${SIZE} $@.elf
+	@${OBJCOPY} -O binary $@.elf $@.raw
+	@(${SIZE} $@.elf | tail +2 | awk ${AWKPROG} ; cat $@.raw) > $@
 
 # this looks useful to me ... let's see when it will be an official part
 # of libsa
@@ -58,7 +71,7 @@ dev_net.o : ${S}/lib/libsa/dev_net.c
 # startup
 
 srt0.o: ${.CURDIR}/srt0.s
-	${CC} -m68040 ${INCPATH} ${DEFS} -c ${.CURDIR}/srt0.s
+	${CC} -m68040 -x assembler-with-cpp ${INCLUDES} ${DEFS} -c ${.CURDIR}/srt0.s
 
 .PHONY: build.c
 build.c:
@@ -80,10 +93,5 @@ links:
 	ln -s ${S}/arch/${MACHINE_ARCH}/include ${MACHINE_ARCH}
 	rm -f limits.h
 	ln -s machine/limits.h limits.h
-
-clean:
-	rm -f *.o errs core make.out
-	rm -f a.out boot cat ls
-	rm -f machine ${MACHINE_ARCH} limits.h
 
 .include <bsd.prog.mk>

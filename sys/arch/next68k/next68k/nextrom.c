@@ -1,4 +1,4 @@
-/*	$NetBSD: nextrom.c,v 1.11 1999/12/07 06:27:33 dbj Exp $	*/
+/*	$NetBSD: nextrom.c,v 1.12 2001/05/12 22:35:30 chs Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -29,18 +29,30 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_ddb.h"
+
 #include <sys/types.h>
 #include <machine/cpu.h>
 
 #include <next68k/next68k/seglist.h>
-
 #include <next68k/next68k/nextrom.h>
 
+#ifdef DDB
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
+#define ELFSIZE 32
+#include <sys/exec_elf.h>
+#endif
 
 void    next68k_bootargs __P((unsigned char *args[]));
 
 int mon_getc(void);
 int mon_putc(int c);
+
+extern char etext[], edata[], end[];
+int nsym;
+char *ssym, *esym;
 
 volatile struct mon_global *mg;
 
@@ -115,10 +127,70 @@ void
 next68k_bootargs(args)
      unsigned char *args[];
 {
+#ifdef DDB
+	int i;
+	Elf_Ehdr *ehdr;
+	Elf_Shdr *shp;
+	vaddr_t minsym, maxsym;
+	char *reloc_end, *reloc_elfmag;
+#endif
+
 	RELOC(rom_return_sp,u_char *) = args[0];
-  RELOC(mg,char *) = args[1];
+	RELOC(mg,char *) = args[1];
 
 	ROM_PUTS("Welcome to NetBSD/next68k\r\n");
+
+#ifdef DDB
+
+	/*
+	 * Check the ELF headers.
+	 */
+
+	reloc_end = end + NEXT_RAMBASE;
+	reloc_elfmag = ELFMAG + NEXT_RAMBASE;
+	ehdr = (void *)reloc_end;
+
+	for (i = 0; i < SELFMAG; i++) {
+		if (ehdr->e_ident[i] != reloc_elfmag[i]) {
+			ROM_PUTS("save_symtab: bad ELF magic\n");
+			goto ddbdone;
+		}
+	}
+	if (ehdr->e_ident[EI_CLASS] != ELFCLASS32) {
+		ROM_PUTS("save_symtab: bad ELF magic\n");
+		goto ddbdone;
+	}
+
+	/*
+	 * Find the end of the symbols and strings.
+	 */
+
+	maxsym = 0;
+	minsym = ~maxsym;
+	shp = (Elf_Shdr *)(reloc_end + ehdr->e_shoff);
+	for (i = 0; i < ehdr->e_shnum; i++) {
+		if (shp[i].sh_type != SHT_SYMTAB &&
+		    shp[i].sh_type != SHT_STRTAB) {
+			continue;
+		}
+		minsym = MIN(minsym, (vaddr_t)reloc_end + shp[i].sh_offset);
+		maxsym = MAX(maxsym, (vaddr_t)reloc_end + shp[i].sh_offset +
+			     shp[i].sh_size);
+	}
+	RELOC(nsym, int) = 1;
+	RELOC(ssym, char *) = end;
+	RELOC(esym, char *) = (char *)maxsym - NEXT_RAMBASE;
+
+	ROM_PUTS("nsym ");
+	ROM_PUTX(RELOC(nsym, int));
+	ROM_PUTS(" ssym ");
+	ROM_PUTX((vaddr_t)RELOC(ssym, char *));
+	ROM_PUTS(" esym ");
+	ROM_PUTX((vaddr_t)RELOC(esym, char *));
+	ROM_PUTS("\r\n");
+
+ddbdone:
+#endif
 
 	ROM_PUTS("Constructing the segment list...\r\n");
 

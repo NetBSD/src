@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.41 2001/04/24 04:31:05 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.42 2001/05/12 22:35:30 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -101,6 +101,9 @@
 #include <next68k/next68k/rtc.h>
 #include <next68k/next68k/seglist.h>
 
+int nsym;
+char *ssym, *esym;
+
 #define	MAXMEM	64*1024	/* XXX - from cmap.h */
 
 /* the following is used externally (sysctl_hw) */
@@ -171,7 +174,7 @@ int	mem_cluster_cnt;
  * Early initialization, before main() is called.
  */
 void
-next68k_init()
+next68k_init(void)
 {
 	int i;
 
@@ -190,9 +193,10 @@ next68k_init()
 		 * list we want to put the memory on.
 		 */
 		uvm_page_physload(atop(phys_seg_list[i].ps_start),
-				 atop(phys_seg_list[i].ps_end),
-				 atop(phys_seg_list[i].ps_start),
-				 atop(phys_seg_list[i].ps_end), VM_FREELIST_DEFAULT);
+				  atop(phys_seg_list[i].ps_end),
+				  atop(phys_seg_list[i].ps_start),
+				  atop(phys_seg_list[i].ps_end),
+				  VM_FREELIST_DEFAULT);
 	}
 
 	{
@@ -204,11 +208,11 @@ next68k_init()
 		}
 	}
 
-  /* Initialize the interrupt handlers. */
-  isrinit();
+	/* Initialize the interrupt handlers. */
+	isrinit();
 
-  /* Calibrate the delay loop. */
-  next68k_calibrate_delay();
+	/* Calibrate the delay loop. */
+	next68k_calibrate_delay();
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -229,31 +233,23 @@ next68k_init()
 void
 consinit()
 {
-  /*
-   * Generic console: sys/dev/cons.c
-   *	Initializes either ite or ser as console.
-   *	Can be called from locore.s and init_main.c.
-   */
-  static int init = 0;
-  
-  if (!init) {
+	static int init = 0;
 
+	/*
+	 * Generic console: sys/dev/cons.c
+	 *	Initializes either ite or ser as console.
+	 *	Can be called from locore.s and init_main.c.
+	 */
+
+	if (!init) {
 		cninit();
-
 #ifdef KGDB
 		zs_kgdb_init();
 #endif
-
 #ifdef  DDB
 		/* Initialize kernel debugger, if compiled in. */
-		{
-			extern int end;
-			extern int *esym; 
-
-			ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
-		}
+		ddb_init(nsym, ssym, esym);
 #endif
-
 		if (boothowto & RB_KDB) {
 #if defined(KGDB)
 			kgdb_connect(1);
@@ -262,10 +258,10 @@ consinit()
 #endif
 		}
 
-    init = 1;
-  }
-  else
-    next68k_calibrate_delay();
+		init = 1;
+	} else {
+		next68k_calibrate_delay();
+	}
 }
 
 /*
