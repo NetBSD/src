@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.1 2003/04/26 18:39:43 fvdl Exp $	*/
+/*	$NetBSD: limits.h,v 1.2 2003/04/27 22:33:49 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -56,9 +56,9 @@
 #define	INT_MAX		0x7fffffff	/* max value for an int */
 #define	INT_MIN		(-0x7fffffff-1)	/* min value for an int */
 
-#define	ULONG_MAX	0xffffffffUL	/* max value for an unsigned long */
-#define	LONG_MAX	0x7fffffffL	/* max value for a long */
-#define	LONG_MIN	(-0x7fffffffL-1)	/* min value for a long */
+#define	ULONG_MAX	0xffffffffffffffffUL	/* max value for an unsigned long */
+#define	LONG_MAX	0x7fffffffffffffffL	/* max value for a long */
+#define	LONG_MIN	(-0x7fffffffffffffffL-1)	/* min value for a long */
 
 #if !defined(_ANSI_SOURCE)
 #define	SSIZE_MAX	INT_MAX		/* max value for a ssize_t */
