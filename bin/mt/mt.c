@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mt.c	5.6 (Berkeley) 6/6/91";*/
-static char rcsid[] = "$Id: mt.c,v 1.3 1994/03/30 01:50:43 jtc Exp $";
+static char rcsid[] = "$Id: mt.c,v 1.4 1994/04/05 21:13:55 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -65,16 +65,20 @@ struct commands {
 	int c_code;
 	int c_ronly;
 } com[] = {
-	{ "weof",	MTWEOF,	0 },
-	{ "eof",	MTWEOF,	0 },
-	{ "fsf",	MTFSF,	1 },
-	{ "bsf",	MTBSF,	1 },
-	{ "fsr",	MTFSR,	1 },
-	{ "bsr",	MTBSR,	1 },
-	{ "rewind",	MTREW,	1 },
-	{ "offline",	MTOFFL,	1 },
-	{ "rewoffl",	MTOFFL,	1 },
-	{ "status",	MTNOP,	1 },
+	{ "weof",	MTWEOF,	 0 },
+	{ "eof",	MTWEOF,	 0 },
+	{ "fsf",	MTFSF,	 1 },
+	{ "bsf",	MTBSF,	 1 },
+	{ "fsr",	MTFSR,	 1 },
+	{ "bsr",	MTBSR,	 1 },
+	{ "rewind",	MTREW,	 1 },
+	{ "offline",	MTOFFL,	 1 },
+	{ "rewoffl",	MTOFFL,	 1 },
+	{ "status",	MTNOP,	 1 },
+	{ "retension",	MTRETEN, 1 },
+	{ "erase",	MTERASE, 0 },
+	{ "eom",	MTEOM,	 1 },
+	{ "nbsf",	MTNBSF,	 1 },
 	{ 0 }
 };
 
