@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.40.2.1 2000/06/30 16:27:50 simonb Exp $	*/
+/*	$NetBSD: eap.c,v 1.40.2.2 2001/05/01 10:02:12 he Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -345,7 +345,7 @@ eap1371_ready_codec(sc, a, wd)
 			break;
 		delay(1);
 	}
-	if (to > EAP_WRITE_TIMEOUT)
+	if (to >= EAP_WRITE_TIMEOUT)
 		printf("%s: eap1371_ready_codec timeout 1\n", 
 		       sc->sc_dev.dv_xname);
 
@@ -359,7 +359,7 @@ eap1371_ready_codec(sc, a, wd)
 			break;
 		delay(1);
 	}
-	if (to > EAP_WRITE_TIMEOUT)
+	if (to >= EAP_READ_TIMEOUT)
 		printf("%s: eap1371_ready_codec timeout 2\n", 
 		       sc->sc_dev.dv_xname);
 
@@ -369,7 +369,7 @@ eap1371_ready_codec(sc, a, wd)
 			break;
 		delay(1);
 	}
-	if (to > EAP_WRITE_TIMEOUT)
+	if (to >= EAP_READ_TIMEOUT)
 		printf("%s: eap1371_ready_codec timeout 3\n", 
 		       sc->sc_dev.dv_xname);
 
@@ -461,12 +461,15 @@ eap1371_src_read(sc, a)
 	src |= E1371_SRC_ADDR(a);
 	EWRITE4(sc, E1371_SRC, src | E1371_SRC_STATE_OK);
 
-	for (to = 0; to < EAP_READ_TIMEOUT; to++) {
-		t = EREAD4(sc, E1371_SRC);
-		if ((t & E1371_SRC_STATE_MASK) == E1371_SRC_STATE_OK)
-			break;
-		delay(1);
+	if ((eap1371_src_wait(sc) & E1371_SRC_STATE_MASK) != E1371_SRC_STATE_OK) {
+		for (to = 0; to < EAP_READ_TIMEOUT; to++) {
+			t = EREAD4(sc, E1371_SRC);
+			if ((t & E1371_SRC_STATE_MASK) == E1371_SRC_STATE_OK)
+				break;
+			delay(1);
+		}
 	}
+
 	EWRITE4(sc, E1371_SRC, src);
 
 	return t & E1371_SRC_DATAMASK;
@@ -543,7 +546,7 @@ eap1371_set_dac_rate(sc, rate, which)
 	    rate = 48000;
 	if (rate < 4000)
 	    rate = 4000;
-	freq = (rate << 15) / 3000;
+	freq = ((rate << 15) + 1500) / 3000;
 	
 	s = splaudio();
 	eap1371_src_wait(sc);
@@ -804,6 +807,7 @@ eap_intr(p)
 	sic = EREAD4(sc, EAP_SIC);
 	DPRINTFN(5, ("eap_intr: ICSS=0x%08x, SIC=0x%08x\n", intr, sic));
 	if (intr & EAP_I_ADC) {
+#if 0
 		/*
 		 * XXX This is a hack!
 		 * The EAP chip sometimes generates the recording interrupt
@@ -824,14 +828,15 @@ eap_intr(p)
 			}
 		}
 		/* Continue with normal interrupt handling. */
+#endif
 		EWRITE4(sc, EAP_SIC, sic & ~EAP_R1_INTR_EN);
-		EWRITE4(sc, EAP_SIC, sic);
+		EWRITE4(sc, EAP_SIC, sic | EAP_R1_INTR_EN);
 		if (sc->sc_rintr)
 			sc->sc_rintr(sc->sc_rarg);
 	}
 	if (intr & EAP_I_DAC2) {
 		EWRITE4(sc, EAP_SIC, sic & ~EAP_P2_INTR_EN);
-		EWRITE4(sc, EAP_SIC, sic);
+		EWRITE4(sc, EAP_SIC, sic | EAP_P2_INTR_EN);
 		if (sc->sc_pintr)
 			sc->sc_pintr(sc->sc_parg);
 	}
@@ -1132,9 +1137,6 @@ eap_trigger_output(addr, start, end, blksize, intr, arg, param)
 	sc->sc_pintr = intr;
 	sc->sc_parg = arg;
 
-	icsc = EREAD4(sc, EAP_ICSC);
-	EWRITE4(sc, EAP_ICSC, icsc & ~EAP_DAC2_EN);
-
 	sic = EREAD4(sc, EAP_SIC);
 	sic &= ~(EAP_P2_S_EB | EAP_P2_S_MB | EAP_INC_BITS);
 	sic |= EAP_SET_P2_ST_INC(0) | EAP_SET_P2_END_INC(param->precision * param->factor / 8);
@@ -1147,7 +1149,8 @@ eap_trigger_output(addr, start, end, blksize, intr, arg, param)
 		sic |= EAP_P2_S_MB;
 		sampshift++;
 	}
-	EWRITE4(sc, EAP_SIC, sic);
+	EWRITE4(sc, EAP_SIC, sic & ~EAP_P2_INTR_EN);
+	EWRITE4(sc, EAP_SIC, sic | EAP_P2_INTR_EN);
 
 	for (p = sc->sc_dmas; p && KERNADDR(p) != start; p = p->next)
 		;
@@ -1164,8 +1167,12 @@ eap_trigger_output(addr, start, end, blksize, intr, arg, param)
 	EWRITE4(sc, EAP_DAC2_SIZE, 
 		EAP_SET_SIZE(0, (((char *)end - (char *)start) >> 2) - 1));
 
-	EWRITE2(sc, EAP_DAC2_CSR, (blksize >> sampshift) - 1);
+	EWRITE4(sc, EAP_DAC2_CSR, (blksize >> sampshift) - 1);
 
+	if (sc->sc_1371)
+		EWRITE4(sc, E1371_SRC, 0);
+
+	icsc = EREAD4(sc, EAP_ICSC);
 	EWRITE4(sc, EAP_ICSC, icsc | EAP_DAC2_EN);
 
 	DPRINTFN(1, ("eap_trigger_output: set ICSC = 0x%08x\n", icsc));
@@ -1198,9 +1205,6 @@ eap_trigger_input(addr, start, end, blksize, intr, arg, param)
 	sc->sc_rintr = intr;
 	sc->sc_rarg = arg;
 
-	icsc = EREAD4(sc, EAP_ICSC);
-	EWRITE4(sc, EAP_ICSC, icsc & ~EAP_ADC_EN);
-
 	sic = EREAD4(sc, EAP_SIC);
 	sic &= ~(EAP_R1_S_EB | EAP_R1_S_MB);
 	sampshift = 0;
@@ -1212,7 +1216,8 @@ eap_trigger_input(addr, start, end, blksize, intr, arg, param)
 		sic |= EAP_R1_S_MB;
 		sampshift++;
 	}
-	EWRITE4(sc, EAP_SIC, sic);
+	EWRITE4(sc, EAP_SIC, sic & ~EAP_R1_INTR_EN);
+	EWRITE4(sc, EAP_SIC, sic | EAP_R1_INTR_EN);
 
 	for (p = sc->sc_dmas; p && KERNADDR(p) != start; p = p->next)
 		;
@@ -1229,8 +1234,12 @@ eap_trigger_input(addr, start, end, blksize, intr, arg, param)
 	EWRITE4(sc, EAP_ADC_SIZE, 
 		EAP_SET_SIZE(0, (((char *)end - (char *)start) >> 2) - 1));
 
-	EWRITE2(sc, EAP_ADC_CSR, (blksize >> sampshift) - 1);
+	EWRITE4(sc, EAP_ADC_CSR, (blksize >> sampshift) - 1);
 
+	if (sc->sc_1371)
+		EWRITE4(sc, E1371_SRC, 0);
+
+	icsc = EREAD4(sc, EAP_ICSC);
 	EWRITE4(sc, EAP_ICSC, icsc | EAP_ADC_EN);
 
 	DPRINTFN(1, ("eap_trigger_input: set ICSC = 0x%08x\n", icsc));
