@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.12 1998/04/11 18:28:33 is Exp $	*/
+/*	$NetBSD: psl.h,v 1.13 1998/06/14 19:47:14 kleink Exp $	*/
 
 #ifndef _MACHINE_PSL_H_
 #define _MACHINE_PSL_H_
@@ -67,7 +67,7 @@
 /*
  * splserial hack, idea by Jason Thorpe.
  * drivers which need it (at the present only the coms) raise the variable to
- * their serial interupt level.
+ * their serial interrupt level.
  *
  * serialspl is statically initialized in machdep.c at the moment; should 
  * be some driver independent file.
