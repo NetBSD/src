@@ -1,6 +1,7 @@
-#	$NetBSD: MACALLAN,v 1.4 1995/06/27 01:00:38 cgd Exp $
+#	$NetBSD: BUNNY,v 1.1 1995/06/27 00:57:54 cgd Exp $
 #
-# Kernel for macallan.dssc.cs.cmu.edu.
+# Kernel for bunnahabhain.pdl.cs.cmu.edu.
+# Should work on AlphaStation 400s and AlphaStation 200s
 
 machine		alpha
 
@@ -10,7 +11,7 @@ makeoptions	DEBUG="-g"
 maxusers 8
 
 # CPU Support
-options		DEC_3000_500		# 3000/[4-9]00
+options		DEC_2100_A50	# Avanti etc:	AlphaStation 400, 200, etc.
 
 # needs to be set per system
 options		TIMEZONE="5*60"		# Minutes west of GMT (for param.c)
@@ -39,26 +40,40 @@ options		COMPAT_OSF1
 # Loadable Kernel Modules
 options		LKM
 
-config		netbsd	root on sd0 swap on sd0 and sd1
+# Disable kernel security.
+#options	INSECURE
+
+# Misc. options
+options		PCIVERBOSE		# recognize "unknown" PCI devices
+options		BOOTKEY			# ask for keyhit before halt/reboot 
+
+config		netbsd_nfs	root on nfs swap on nfs
+config		netbsd_sd0	root on sd0 swap on sd0
 
 mainbus0 at	root
 
 cpu*	at	mainbus0
 
-tc*	at	mainbus0
-asic0	at	tc? slot ? offset ?
-clock0	at	asic? offset ?
-le0	at	asic? offset ?
-scc0	at	asic? offset ?
-scc1	at	asic? offset ?
-tcds0	at	tc? slot ? offset ?
-esp0	at	tcds? slot ?
-esp1	at	tcds? slot ?
-#sfb*	at	tc? slot ? offset ?
+apecs*	at	mainbus?
+#lca*	at	cpu?
 
-scsibus* at	esp?
+pci*	at	apecs?
+#pci*	at	lca?
 
-sd0	at	scsibus0 target 0 lun 0
+de*	at	pci?
+sio*	at	pci?
+ncr*	at	pci?
+#tga*	at	pci?
+
+isa0	at	sio?
+clock0	at	isa? port 0x70
+#com0	at	isa? port 0x3f8 irq 4		# standard serial ports
+com1	at	isa? port 0x2f8 irq 3
+lpt0	at	isa? port 0x3bc irq 7		# standard parallel port
+wss0	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
+
+scsibus* at	ncr?
+
 sd*	at	scsibus? target ? lun ?
 st*	at	scsibus? target ? lun ?
 cd*	at	scsibus? target ? lun ?
