@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.4 1994/11/20 20:54:40 deraadt Exp $ */
+/*	$NetBSD: sys_machdep.c,v 1.5 1995/09/19 22:59:08 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -114,14 +114,15 @@ vdoualarm(arg)
 }
 #endif
 
-sysarch(p, uap, retval)
+sysarch(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct sysarch_args /* {
 		syscallarg(int) op;
 		syscallarg(char *) parms;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	int error = 0;
 
 	switch(SCARG(uap, op)) {
