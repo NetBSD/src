@@ -1,6 +1,6 @@
-$NetBSD: TODO,v 1.1.2.4 2001/03/27 15:31:51 bouyer Exp $
+$NetBSD: TODO,v 1.1.2.5 2001/04/01 15:03:42 ad Exp $
 
-o Handle device control & private space issues
+o Handle device control issues
 o Resolve portability issues
 o ld_iop: handle removable and non-direct access devices
 o Driver for LAN class device (some code exists already)
