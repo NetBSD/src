@@ -1,4 +1,4 @@
-/*	$NetBSD: fortune.c,v 1.24 2000/10/31 13:27:56 mrg Exp $	*/
+/*	$NetBSD: fortune.c,v 1.25 2001/01/04 17:24:35 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fortune.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fortune.c,v 1.24 2000/10/31 13:27:56 mrg Exp $");
+__RCSID("$NetBSD: fortune.c,v 1.25 2001/01/04 17:24:35 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1117,7 +1117,8 @@ get_pos(fp)
 	}
 	if ((u_int64_t)++(fp->pos) >= fp->tbl.str_numstr)
 		fp->pos -= fp->tbl.str_numstr;
-	DPRINTF(1, (stderr, "pos for %s is %qd\n", fp->name, fp->pos));
+	DPRINTF(1, (stderr, "pos for %s is %lld\n", fp->name,
+	    (long long)fp->pos));
 }
 
 /*
