@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.23 1999/02/28 11:03:35 tron Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.24 1999/02/28 11:16:18 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -290,19 +290,15 @@ main(argc, argv)
 #ifndef SUN_LEN
 #define SUN_LEN(unp) (strlen((unp)->sun_path) + 2)
 #endif
-	/* we can do this because we don't call logpath_add() */
-	if (funixsize == 0) {
-		char	*fake_logpaths[2] = { _PATH_LOG, NULL };
-
-		funixsize = 1;
-		LogPaths = fake_logpaths; 
-	}
+	if (funixsize == 0)
+		logpath_add(&LogPaths, &funixsize, 
+		    &funixmaxsize, _PATH_LOG);
 	funix = (int *)malloc(sizeof(int) * funixsize);
 	if (funix == NULL) {
 		logerror("couldn't allocate funix descriptors");
 		die(0);
 	}
-	for (j = 0, pp = LogPaths; *pp; pp++, j++) {
+	for (j = 0, pp = LogPaths; j < funixsize; pp++, j++) {
 		unlink(*pp);
 		memset(&sunx, 0, sizeof(sunx));
 		sunx.sun_family = AF_LOCAL;
