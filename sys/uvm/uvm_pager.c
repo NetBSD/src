@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.60 2003/04/23 00:55:22 tls Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.61 2003/08/28 13:12:19 pk Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.60 2003/04/23 00:55:22 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.61 2003/08/28 13:12:19 pk Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -363,6 +363,7 @@ uvm_aio_aiodone(bp)
 		 */
 
 		if (error) {
+			int slot;
 			if (!write) {
 				pg->flags |= PG_RELEASED;
 				continue;
@@ -373,6 +374,20 @@ uvm_aio_aiodone(bp)
 				}
 				pg->flags &= ~PG_CLEAN;
 				uvm_pageactivate(pg);
+				slot = 0;
+			} else
+				slot = SWSLOT_BAD;
+
+			if (swap) {
+				if (pg->uobject != NULL) {
+					KASSERT(uao_set_swslot(pg->uobject,
+						pg->offset >> PAGE_SHIFT,
+						slot) == swslot + i);
+				} else {
+					KASSERT(pg->uanon->an_swslot ==
+						swslot + i);
+					pg->uanon->an_swslot = slot;
+				}
 			}
 		}
 
@@ -421,11 +436,16 @@ uvm_aio_aiodone(bp)
 		/* these pages are now only in swap. */
 		simple_lock(&uvm.swap_data_lock);
 		KASSERT(uvmexp.swpgonly + npages <= uvmexp.swpginuse);
-		uvmexp.swpgonly += npages;
+		if (error != ENOMEM)
+			uvmexp.swpgonly += npages;
 		simple_unlock(&uvm.swap_data_lock);
 		if (error) {
-			uvm_swap_markbad(swslot, npages);
+			if (error != ENOMEM)
+				uvm_swap_markbad(swslot, npages);
+			else
+				uvm_swap_free(swslot, npages);
 		}
+		uvmexp.pdpending--;
 	}
 	s = splbio();
 	if (write && (bp->b_flags & B_AGE) != 0) {

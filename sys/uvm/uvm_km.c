@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.63 2003/08/11 16:33:31 pk Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.64 2003/08/28 13:12:18 pk Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -134,7 +134,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.63 2003/08/11 16:33:31 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.64 2003/08/28 13:12:18 pk Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -301,7 +301,7 @@ uvm_km_pgremove(uobj, start, end)
 		 */
 
 		if (pg == NULL &&
-		    uao_find_swslot(uobj, curoff >> PAGE_SHIFT) != 0) {
+		    uao_find_swslot(uobj, curoff >> PAGE_SHIFT) > 0) {
 			swpgonlydelta++;
 		}
 		uao_dropswap(uobj, curoff >> PAGE_SHIFT);
