@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.40 1998/05/26 01:42:53 tv Exp $
+#	$NetBSD: files.arm32,v 1.41 1998/06/09 00:31:23 tv Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -280,6 +280,7 @@ file	arch/arm32/arm32/blockio.S
 file	arch/arm32/arm32/conf.c
 file	arch/arm32/arm32/cpuswitch.S
 file	arch/arm32/arm32/disksubr.c		disk
+file	arch/arm32/arm32/disksubr_mbr.c		disk
 file	arch/arm32/arm32/stubs.c
 file	arch/arm32/arm32/exception.S
 file	arch/arm32/arm32/syscall.c
