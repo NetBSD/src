@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.28 2000/06/16 01:56:36 matt Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.28.2.1 2000/06/22 16:37:09 matt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -374,11 +374,13 @@ exec_ibcs2_coff_prep_omagic(p, epp, fp, ap)
 		  VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	/* set up command for bss segment */
-	if (ap->a_bsize > 0)
+	if (ap->a_bsize > 0) {
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, ap->a_bsize,
 			  COFF_SEGMENT_ALIGN(fp, ap, ap->a_dstart + ap->a_dsize),
 			  NULLVP, 0,
 			  VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+		epp->ep_dsize += ap->a_bsize;
+	}
 	
 	return exec_ibcs2_coff_setup_stack(p, epp);
 }
@@ -395,28 +397,105 @@ exec_ibcs2_coff_prep_nmagic(p, epp, fp, ap)
 	struct coff_filehdr *fp;
 	struct coff_aouthdr *ap;
 {
+	u_long tsize, tend, toverlap, doverlap;
+
 	epp->ep_taddr = COFF_SEGMENT_ALIGN(fp, ap, ap->a_tstart);
 	epp->ep_tsize = ap->a_tsize;
-	epp->ep_daddr = COFF_ROUND(ap->a_dstart, COFF_LDPGSZ);
+	epp->ep_daddr = ap->a_dstart;
 	epp->ep_dsize = ap->a_dsize;
 	epp->ep_entry = ap->a_entry;
 
-	/* set up command for text segment */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn, epp->ep_tsize,
-		  epp->ep_taddr, epp->ep_vp, COFF_TXTOFF(fp, ap),
-		  VM_PROT_READ|VM_PROT_EXECUTE);
+	/* Do the text and data pages overlap?
+	 */
+	tend = epp->ep_taddr + epp->ep_tsize - 1;
+	if (trunc_page(tend) == trunc_page(epp->ep_daddr)) {
+		/* If the first page of text is the first page of data,
+		 * then we consider it all data.
+		 */
+		if (trunc_page(epp->ep_taddr) == trunc_page(epp->ep_daddr)) {
+			tsize = 0;
+		} else {
+			tsize = trunc_page(tend) - epp->ep_taddr;
+		}
 
-	/* set up command for data segment */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn, epp->ep_dsize,
-		  epp->ep_daddr, epp->ep_vp, COFF_DATOFF(fp, ap),
-		  VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+		/* If the text and data file and VA offsets are the
+		 * same, simply bring the data segment to start on
+		 * the start of the page.
+		 */
+		if (epp->ep_daddr - epp->ep_taddr ==
+		    COFF_DATOFF(fp, ap) - COFF_TXTOFF(fp, ap)) {
+			u_long diff = epp->ep_daddr - trunc_page(epp->ep_daddr);
+			epp->ep_daddr -= diff;
+			epp->ep_dsize += diff;
+			epp->ep_tsize = tsize;
+			toverlap = 0;
+			doverlap = 0;
+		} else {
+			/* otherwise copy the individual pieces */
+			toverlap = epp->ep_tsize - tsize;
+			doverlap = round_page(epp->ep_daddr) - epp->ep_daddr;
+			if (doverlap > epp->ep_dsize)
+				doverlap = epp->ep_dsize;
+		}
+	} else {
+		tsize = epp->ep_tsize;
+		toverlap = 0;
+		doverlap = 0;
+	}
+
+	DPRINTF(("nmagic_vmcmds:"));
+	if (tsize > 0) {
+		/* set up command for text segment */
+		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn, tsize,
+			  epp->ep_taddr, epp->ep_vp, COFF_TXTOFF(fp, ap),
+			  VM_PROT_READ|VM_PROT_EXECUTE);
+		DPRINTF((" map_readvn(%#lx/%#lx@%#x)",
+			epp->ep_taddr, tsize, COFF_TXTOFF(fp, ap)));
+	}
+	if (toverlap > 0) {
+		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn, toverlap,
+			  epp->ep_taddr + tsize, epp->ep_vp,
+			  COFF_TXTOFF(fp, ap) + tsize,
+			  VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+		DPRINTF((" map_readvn(%#lx/%#lx@%#lx)",
+			epp->ep_taddr + tsize, toverlap,
+			COFF_TXTOFF(fp, ap) + tsize));
+		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_readvn, doverlap,
+			  epp->ep_daddr, epp->ep_vp,
+			  COFF_DATOFF(fp, ap),
+			  VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+		DPRINTF((" readvn(%#lx/%#lx@%#lx)", epp->ep_daddr, doverlap,
+			COFF_DATOFF(fp, ap)));
+	}
+
+	if (epp->ep_dsize > doverlap) {
+		/* set up command for data segment */
+		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn,
+			  epp->ep_dsize - doverlap, epp->ep_daddr + doverlap,
+			  epp->ep_vp, COFF_DATOFF(fp, ap) + doverlap,
+			  VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+		DPRINTF((" map_readvn(%#lx/%#lx@%#lx)",
+			epp->ep_daddr + doverlap, epp->ep_dsize - doverlap,
+			COFF_DATOFF(fp, ap) + doverlap));
+	}
+
+	/* Handle page remainders for pagedvn.
+	 */
 
 	/* set up command for bss segment */
-	if (ap->a_bsize > 0)
-		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, ap->a_bsize,
-			  COFF_SEGMENT_ALIGN(fp, ap, ap->a_dstart + ap->a_dsize),
-			  NULLVP, 0,
-			  VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+	if (ap->a_bsize > 0) {
+		u_long dend = round_page(epp->ep_daddr + epp->ep_dsize);
+		u_long dspace = dend - (epp->ep_daddr + epp->ep_dsize);
+		if (ap->a_bsize > dspace) {
+			NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero,
+				  ap->a_bsize - dspace, dend, NULLVP, 0,
+				  VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+			DPRINTF((" map_zero(%#lx/%#lx)",
+				dend, ap->a_bsize - dspace));
+		}
+		epp->ep_dsize += ap->a_bsize;
+	}
+	DPRINTF(("\n"));
 
 	return exec_ibcs2_coff_setup_stack(p, epp);
 }
