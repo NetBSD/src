@@ -1,5 +1,35 @@
-/*	$NetBSD: fat.h,v 1.2 1994/06/29 06:35:33 cgd Exp $	*/
+/*	$NetBSD: fat.h,v 1.3 1994/07/18 21:38:11 cgd Exp $	*/
 
+/*-
+ * Copyright (C) 1994 Wolfgang Solfrank.
+ * Copyright (C) 1994 TooLs GmbH.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by TooLs GmbH.
+ * 4. The name of TooLs GmbH may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY TOOLS GMBH ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL TOOLS GMBH BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 /*
  * Written by Paul Popelka (paulp@uts.amdahl.com)
  * 
@@ -42,6 +72,7 @@
 
 #define	MSDOSFSEOF(cn)	(((cn) & 0xfff8) == 0xfff8)
 
+#ifdef KERNEL
 /*
  * These are the values for the function argument to the function
  * fatentry().
@@ -50,10 +81,15 @@
 #define	FAT_SET		0x0002	/* set a fat entry */
 #define	FAT_GET_AND_SET	(FAT_GET | FAT_SET)
 
-#if defined(KERNEL)
-int pcbmap __P((struct denode * dep, u_long findcn, daddr_t * bnp, u_long * cnp));
-int clusterfree __P((struct msdosfsmount * pmp, u_long cn, u_long * oldcnp));
-int clusteralloc __P((struct msdosfsmount * pmp, u_long * retcluster, u_long fillwith));
-int fatentry __P((int function, struct msdosfsmount * pmp, u_long cluster, u_long * oldcontents, u_long newcontents));
-int freeclusterchain __P((struct msdosfsmount * pmp, u_long startchain));
-#endif /* defined(KERNEL) */
+/*
+ * Flags to extendfile:
+ */
+#define	DE_CLEAR	1	/* Zero out the blocks allocated */
+
+int pcbmap __P((struct denode *dep, u_long findcn, daddr_t *bnp, u_long *cnp));
+int clusterfree __P((struct msdosfsmount *pmp, u_long cn, u_long *oldcnp));
+int clusteralloc __P((struct msdosfsmount *pmp, u_long start, u_long count, u_long fillwith, u_long *retcluster, u_long *got));
+int fatentry __P((int function, struct msdosfsmount *pmp, u_long cluster, u_long *oldcontents, u_long newcontents));
+int freeclusterchain __P((struct msdosfsmount *pmp, u_long startchain));
+int extendfile __P((struct denode *dep, u_long count, struct buf **bpp, u_long *ncp, int flags));
+#endif	/* KERNEL */

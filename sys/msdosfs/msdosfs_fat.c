@@ -1,5 +1,35 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.7 1994/07/16 21:33:21 cgd Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.8 1994/07/18 21:38:14 cgd Exp $	*/
 
+/*-
+ * Copyright (C) 1994 Wolfgang Solfrank.
+ * Copyright (C) 1994 TooLs GmbH.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by TooLs GmbH.
+ * 4. The name of TooLs GmbH may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY TOOLS GMBH ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL TOOLS GMBH BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 /*
  * Written by Paul Popelka (paulp@uts.amdahl.com)
  * 
@@ -52,7 +82,6 @@ int fc_largedistance;		/* off by more than LMMAX		 */
 
 /* Byte offset in FAT on filesystem pmp, cluster cn */
 #define	FATOFS(pmp, cn)	(FAT12(pmp) ? (cn) * 3 / 2 : (cn) * 2)
-
 
 static void
 fatblock(pmp, ofs, bnp, sizep, bop)
@@ -261,15 +290,14 @@ fc_purge(dep, frcn)
 }
 
 /*
- * Once the first fat is updated the other copies of the fat must also be
- * updated.  This function does this.
+ * Update all copies of the fat. The first copy is updated last.
  *
  * pmp	 - msdosfsmount structure for filesystem to update
  * bp	 - addr of modified fat block
  * fatbn - block number relative to begin of filesystem of the modified fat block.
  */
 void
-updateotherfats(pmp, bp, fatbn)
+updatefats(pmp, bp, fatbn)
 	struct msdosfsmount *pmp;
 	struct buf *bp;
 	u_long fatbn;
@@ -277,10 +305,10 @@ updateotherfats(pmp, bp, fatbn)
 	int i;
 	struct buf *bpn;
 
-#if defined(MSDOSFSDEBUG)
-	printf("updateotherfats(pmp %08x, bp %08x, fatbn %d)\n",
+#ifdef MSDOSFS_DEBUG
+	printf("updatefats(pmp %08x, bp %08x, fatbn %d)\n",
 	       pmp, bp, fatbn);
-#endif				/* defined(MSDOSFSDEBUG) */
+#endif
 
 	/*
 	 * Now copy the block(s) of the modified fat to the other copies of
@@ -302,6 +330,13 @@ updateotherfats(pmp, bp, fatbn)
 		else
 			bdwrite(bpn);
 	}
+	/*
+	 * Write out the first fat last.
+	 */
+	if (pmp->pm_waitonfat)
+		bwrite(bp);
+	else
+		bdwrite(bp);
 }
 
 /*
@@ -328,10 +363,9 @@ usemap_alloc(pmp, cn)
 	struct msdosfsmount *pmp;
 	u_long cn;
 {
-	pmp->pm_inusemap[cn / 8] |= 1 << (cn % 8);
+	pmp->pm_inusemap[cn / N_INUSEBITS]
+			 |= 1 << (cn % N_INUSEBITS);
 	pmp->pm_freeclustercount--;
-	/* This assumes that the lowest available cluster was allocated */
-	pmp->pm_lookhere = cn + 1;
 }
 
 extern __inline void
@@ -340,9 +374,7 @@ usemap_free(pmp, cn)
 	u_long cn;
 {
 	pmp->pm_freeclustercount++;
-	pmp->pm_inusemap[cn / 8] &= ~(1 << (cn % 8));
-	if (pmp->pm_lookhere > cn)
-		pmp->pm_lookhere = cn;
+	pmp->pm_inusemap[cn / N_INUSEBITS] &= ~(1 << (cn % N_INUSEBITS));
 }
 
 int
@@ -432,7 +464,9 @@ fatentry(function, pmp, cn, oldcontents, newcontents)
 
 	byteoffset = FATOFS(pmp, cn);
 	fatblock(pmp, byteoffset, &bn, &bsize, &bo);
-	error = bread(pmp->pm_devvp, bn, bsize, NOCRED, &bp);
+	if (error = bread(pmp->pm_devvp, bn, bsize, NOCRED, &bp))
+		return error;
+	
 	if (function & FAT_GET) {
 		readcn = getushort(&bp->b_data[bo]);
 		if (FAT12(pmp)) {
@@ -458,14 +492,7 @@ fatentry(function, pmp, cn, oldcontents, newcontents)
 			putushort(&bp->b_data[bo], readcn);
 		} else
 			putushort(&bp->b_data[bo], newcontents);
-		updateotherfats(pmp, bp, bn);
-		/*
-		 * Write out the first fat last.
-		 */
-		if (pmp->pm_waitonfat)
-			bwrite(bp);
-		else
-			bdwrite(bp);
+		updatefats(pmp, bp, bn);
 		bp = NULL;
 		pmp->pm_fmod = 1;
 	}
@@ -475,48 +502,252 @@ fatentry(function, pmp, cn, oldcontents, newcontents)
 }
 
 /*
- * Allocate a free cluster.
+ * Update a contiguous cluster chain
  *
- * pmp	      -
- * retcluster - put the allocated cluster's number here.
- * fillwith   - put this value into the fat entry for the
- *		allocated cluster.
+ * pmp	    - mount point
+ * start    - first cluster of chain
+ * count    - number of clusters in chain
+ * fillwith - what to write into fat entry of last cluster
  */
-int
-clusteralloc(pmp, retcluster, fillwith)
+static int
+fatchain(pmp, start, count, fillwith)
 	struct msdosfsmount *pmp;
-	u_long *retcluster;
+	u_long start;
+	u_long count;
 	u_long fillwith;
 {
 	int error;
-	u_long cn;
-	u_long idx, max_idx, bit, map;
-
-	max_idx = pmp->pm_maxcluster / 8;
-	for (idx = pmp->pm_lookhere / 8; idx <= max_idx; idx++) {
-		map = pmp->pm_inusemap[idx];
-		if (map != 0xff) {
-			for (bit = 0; bit < 8; bit++) {
-				if ((map & (1 << bit)) == 0) {
-					cn = idx * 8 + bit;
-					goto found_one;
+	u_long bn, bo, bsize, byteoffset, readcn, newc;
+	struct buf *bp;
+	
+#ifdef MSDOSFS_DEBUG
+	printf("fatchain(pmp %08x, start %d, count %d, fillwith %d)\n",
+	       pmp, start, count, fillwith);
+#endif
+	/*
+	 * Be sure the clusters are in the filesystem.
+	 */
+	if (start < CLUST_FIRST || start + count - 1 > pmp->pm_maxcluster)
+		return EINVAL;
+	
+	while (count > 0) {
+		byteoffset = FATOFS(pmp, start);
+		fatblock(pmp, byteoffset, &bn, &bsize, &bo);
+		if (error = bread(pmp->pm_devvp, bn, bsize, NOCRED, &bp))
+			return error;
+		while (count > 0) {
+			start++;
+			newc = --count > 0 ? start : fillwith;
+			if (FAT12(pmp)) {
+				readcn = getushort(&bp->b_data[bo]);
+				if (start & 1) {
+					readcn &= 0xf000;
+					readcn |= newc & 0xfff;
+				} else {
+					readcn &= 0x000f;
+					readcn |= newc << 4;
 				}
+				putushort(&bp->b_data[bo], readcn);
+				bo++;
+				if (!(start & 1))
+					bo++;
+			} else {
+				putushort(&bp->b_data[bo], newc);
+				bo += 2;
 			}
+			if (bo >= bsize)
+				break;
 		}
+		updatefats(pmp, bp, bn);
 	}
-	return ENOSPC;
+	pmp->pm_fmod = 1;
+	return 0;
+}
 
-found_one:;
-	error = fatentry(FAT_SET, pmp, cn, 0, fillwith);
-	if (error == 0) {
-		usemap_alloc(pmp, cn);
-		*retcluster = cn;
+/*
+ * Check the length of a free cluster chain starting at start.
+ *
+ * pmp	 - mount point
+ * start - start of chain
+ * count - maximum interesting length
+ */
+int
+chainlength(pmp, start, count)
+	struct msdosfsmount *pmp;
+	u_long start;
+	u_long count;
+{
+	u_long idx, max_idx;
+	u_int map;
+	u_long len;
+	
+	max_idx = (pmp->pm_maxcluster - 1) / N_INUSEBITS;
+	idx = start / N_INUSEBITS;
+	start %= N_INUSEBITS;
+	map = pmp->pm_inusemap[idx];
+	map &= ~((1 << start) - 1);
+	if (map) {
+		len = ffs(map) - 1 - start;
+		return len > count ? count : len;
 	}
-#if defined(MSDOSFSDEBUG)
-	printf("clusteralloc(): allocated cluster %d\n", cn);
-#endif				/* defined(MSDOSFSDEBUG) */
+	len = N_INUSEBITS - start;
+	if (len >= count)
+		return count;
+	while (++idx <= max_idx) {
+		if (len >= count)
+			break;
+		if (map = pmp->pm_inusemap[idx]) {
+			len +=  ffs(map) - 1;
+			break;
+		}
+		len += N_INUSEBITS;
+	}
+	return len > count ? count : len;
+}
+
+/*
+ * Allocate contigous free clusters.
+ *
+ * pmp	      - mount point.
+ * start      - start of cluster chain.
+ * count      - number of clusters to allocate.
+ * fillwith   - put this value into the fat entry for the
+ *		last allocated cluster.
+ * retcluster - put the first allocated cluster's number here.
+ * got	      - how many clusters were actually allocated.
+ */
+int
+chainalloc(pmp, start, count, fillwith, retcluster, got)
+	struct msdosfsmount *pmp;
+	u_long start;
+	u_long count;
+	u_long fillwith;
+	u_long *retcluster;
+	u_long *got;
+{
+	int error;
+	
+	error = fatchain(pmp, start, count, fillwith);
+	if (error == 0) {
+#ifdef MSDOSFS_DEBUG
+		printf("clusteralloc(): allocated cluster chain at %d (%d clusters)\n",
+		       start, count);
+#endif
+		if (retcluster)
+			*retcluster = start;
+		if (got)
+			*got = count;
+		while (count-- > 0)
+			usemap_alloc(pmp, start++);
+	}
 	return error;
 }
+
+/*
+ * Allocate contiguous free clusters.
+ *
+ * pmp	      - mount point.
+ * start      - preferred start of cluster chain.
+ * count      - number of clusters requested.
+ * fillwith   - put this value into the fat entry for the
+ *		last allocated cluster.
+ * retcluster - put the first allocated cluster's number here.
+ * got	      - how many clusters were actually allocated.
+ */
+int
+clusteralloc(pmp, start, count, fillwith, retcluster, got)
+	struct msdosfsmount *pmp;
+	u_long start;
+	u_long count;
+	u_long fillwith;
+	u_long *retcluster;
+	u_long *got;
+{
+	int error;
+	u_long idx, max_idx;
+	u_long len, newst, foundcn, foundl, cn, l;
+	u_int map;
+	
+#ifdef MSDOSFS_DEBUG
+	printf("clusteralloc(): find %d clusters\n",count);
+#endif
+	if (start) {
+		if ((len = chainlength(pmp, start, count)) >= count)
+			return chainalloc(pmp, start, count, fillwith, retcluster, got);
+	} else {
+		/*
+		 * This is a new file, initialize start
+		 */
+		struct timeval tv;
+		
+		microtime(&tv);
+		start = (tv.tv_usec >> 10)|tv.tv_usec;
+		len = 0;
+	}
+	
+	/*
+	 * Start at a (pseudo) random place to maximize cluster runs
+	 * under multiple writers.
+	 */
+	foundcn = newst = (start * 1103515245 + 12345) % (pmp->pm_maxcluster - 1);
+	foundl = 0;
+	
+	max_idx = (pmp->pm_maxcluster - 1) / N_INUSEBITS;
+	idx = newst / N_INUSEBITS;
+	map = pmp->pm_inusemap[idx];
+	map |= (1 << (newst % N_INUSEBITS)) - 1;
+	while (1) {
+		if (map != (u_int)-1) {
+			cn = idx * N_INUSEBITS + ffs(map^(u_int)-1) - 1;
+			if ((l = chainlength(pmp, cn, count)) >= count)
+				return chainalloc(pmp, cn, count, fillwith, retcluster, got);
+			if (l > foundl) {
+				foundcn = cn;
+				foundl = l;
+			}
+			cn += l + 1;
+			if (cn > pmp->pm_maxcluster)
+				break;
+			idx = cn / N_INUSEBITS;
+			map = pmp->pm_inusemap[idx];
+			map |= (1 << (cn % N_INUSEBITS)) - 1;
+			continue;
+		}
+		if (++idx > max_idx)
+			break;
+		map = pmp->pm_inusemap[idx];
+	}
+	for (idx = 0;;) {
+		map = pmp->pm_inusemap[idx];
+		if (map != (u_int)-1) {
+			cn = idx * N_INUSEBITS + ffs(map^(u_int)-1) - 1;
+			if ((l = chainlength(pmp, cn, count)) >= count)
+				return chainalloc(pmp, cn, count, fillwith, retcluster, got);
+			if (l > foundl) {
+				foundcn = cn;
+				foundl = l;
+			}
+			cn += l + 1;
+			if (cn >= newst)
+				break;
+			idx = cn / N_INUSEBITS;
+			map = pmp->pm_inusemap[idx];
+			map |= (1 << (cn % N_INUSEBITS)) - 1;
+			continue;
+		}
+		if (++idx * N_INUSEBITS >= newst)
+			break;
+	}
+
+	if (!foundl)
+		return ENOSPC;
+
+	if (len)
+		return chainalloc(pmp, start, len, fillwith, retcluster, got);
+	else
+		return chainalloc(pmp, foundcn, foundl, fillwith, retcluster, got);
+}
+
 
 /*
  * Free a chain of clusters.
@@ -527,22 +758,48 @@ found_one:;
  *		  freed.
  */
 int
-freeclusterchain(pmp, startcluster)
+freeclusterchain(pmp, cluster)
 	struct msdosfsmount *pmp;
-	u_long startcluster;
+	u_long cluster;
 {
-	u_long nextcluster;
 	int error = 0;
-
-	while (startcluster >= CLUST_FIRST && startcluster <= pmp->pm_maxcluster) {
-		error = clusterfree(pmp, startcluster, &nextcluster);
-		if (error) {
-			printf("freeclusterchain(): free failed, cluster %d\n",
-			    startcluster);
-			break;
+	struct buf *bp = NULL;
+	u_long bn, bo, bsize, byteoffset;
+	u_long readcn, lbn = -1;
+	
+	while (cluster >= CLUST_FIRST && cluster <= pmp->pm_maxcluster) {
+		byteoffset = FATOFS(pmp, cluster);
+		fatblock(pmp, byteoffset, &bn, &bsize, &bo);
+		if (lbn != bn) {
+			if (bp)
+				updatefats(pmp, bp, bn);
+			if (error = bread(pmp->pm_devvp, bn, bsize, NOCRED, &bp))
+				return error;
+			lbn = bn;
 		}
-		startcluster = nextcluster;
+		usemap_free(pmp, cluster);
+		readcn = getushort(&bp->b_data[bo]);
+		if (FAT12(pmp)) {
+			if (cluster & 1) {
+				cluster = readcn >> 4;
+				readcn &= 0x000f;
+				readcn |= MSDOSFSFREE << 4;
+			} else {
+				cluster = readcn;
+				readcn &= 0xf000;
+				readcn |= MSDOSFSFREE & 0xfff;
+			}
+			putushort(&bp->b_data[bo], readcn);
+			cluster &= 0x0fff;
+			if ((cluster&0x0ff0) == 0x0ff0)
+				cluster |= 0xf000;
+		} else {
+			cluster = readcn;
+			putushort(&bp->b_data[bo], MSDOSFSFREE);
+		}
 	}
+	if (bp)
+		updatefats(pmp, bp, bn);
 	return error;
 }
 
@@ -564,8 +821,8 @@ fillinusemap(pmp)
 	 * Mark all clusters in use, we mark the free ones in the fat scan
 	 * loop further down.
 	 */
-	for (cn = 0; cn < (pmp->pm_maxcluster >> 3) + 1; cn++)
-		pmp->pm_inusemap[cn] = 0xff;
+	for (cn = 0; cn < (pmp->pm_maxcluster + N_INUSEBITS - 1) / N_INUSEBITS; cn++)
+		pmp->pm_inusemap[cn] = (u_int)-1;
 
 	/*
 	 * Figure how many free clusters are in the filesystem by ripping
@@ -573,7 +830,6 @@ fillinusemap(pmp)
 	 * zero.  These represent free clusters.
 	 */
 	pmp->pm_freeclustercount = 0;
-	pmp->pm_lookhere = pmp->pm_maxcluster + 1;
 	for (cn = CLUST_FIRST; cn <= pmp->pm_maxcluster; cn++) {
 		byteoffset = FATOFS(pmp, cn);
 		bo = byteoffset % pmp->pm_fatblocksize;
@@ -603,27 +859,32 @@ fillinusemap(pmp)
 /*
  * Allocate a new cluster and chain it onto the end of the file.
  *
- * dep - the file to extend
- * bpp - where to return the address of the buf header for the new
- *	 file block
- * ncp - where to put cluster number of the newly allocated file block
- *	 If this pointer is 0, do not return the cluster number.
- * 
- * NOTE: This function is not responsible for turning on the DEUPD bit of the
+ * dep	 - the file to extend
+ * count - number of clusters to allocate
+ * bpp	 - where to return the address of the buf header for the first new
+ *	   file block
+ * ncp	 - where to put cluster number of the first newly allocated cluster
+ *	   If this pointer is 0, do not return the cluster number.
+ * flags - see fat.h
+ *
+ * NOTE: This function is not responsible for turning on the DE_UPD bit of the
  * de_flag field of the denode and it does not change the de_FileSize
  * field.  This is left for the caller to do.
  */
 int
-extendfile(dep, bpp, ncp)
+extendfile(dep, count, bpp, ncp, flags)
 	struct denode *dep;
+	u_long count;
 	struct buf **bpp;
-	u_int *ncp;
+	u_long *ncp;
+	int flags;
 {
 	int error = 0;
 	u_long frcn;
-	u_long cn;
+	u_long cn, got;
 	struct msdosfsmount *pmp = dep->de_pmp;
-
+	struct buf *bp;
+	
 	/*
 	 * Don't try to extend the root directory
 	 */
@@ -646,52 +907,83 @@ extendfile(dep, bpp, ncp)
 			return error;
 		error = 0;
 	}
-
-	/*
-	 * Allocate another cluster and chain onto the end of the file. If
-	 * the file is empty we make de_StartCluster point to the new
-	 * block.  Note that de_StartCluster being 0 is sufficient to be
-	 * sure the file is empty since we exclude attempts to extend the
-	 * root directory above, and the root dir is the only file with a
-	 * startcluster of 0 that has blocks allocated (sort of).
-	 */
-	if (error = clusteralloc(pmp, &cn, CLUST_EOFE))
-		return error;
-	if (dep->de_StartCluster == 0) {
-		dep->de_StartCluster = cn;
-		frcn = 0;
-	} else {
-		error = fatentry(FAT_SET, pmp, dep->de_fc[FC_LASTFC].fc_fsrcn,
-		    0, cn);
-		if (error) {
-			clusterfree(pmp, cn, NULL);
+	
+	while (count > 0) {
+		/*
+		 * Allocate a new cluster chain and cat onto the end of the file.
+		 * If the file is empty we make de_StartCluster point to the new
+		 * block.  Note that de_StartCluster being 0 is sufficient to be
+		 * sure the file is empty since we exclude attempts to extend the
+		 * root directory above, and the root dir is the only file with a
+		 * startcluster of 0 that has blocks allocated (sort of).
+		 */
+		if (dep->de_StartCluster == 0)
+			cn = 0;
+		else
+			cn = dep->de_fc[FC_LASTFC].fc_fsrcn + 1;
+		if (error = clusteralloc(pmp, cn, count, CLUST_EOFE, &cn, &got))
 			return error;
+		
+		count -= got;
+		
+		/*
+		 * Give them the filesystem relative cluster number if they want
+		 * it.
+		 */
+		if (ncp) {
+			*ncp = cn;
+			ncp = NULL;
 		}
-
-		frcn = dep->de_fc[FC_LASTFC].fc_frcn + 1;
+		
+		if (dep->de_StartCluster == 0) {
+			dep->de_StartCluster = cn;
+			frcn = 0;
+		} else {
+			error = fatentry(FAT_SET, pmp, dep->de_fc[FC_LASTFC].fc_fsrcn,
+					 0, cn);
+			if (error) {
+				clusterfree(pmp, cn, NULL);
+				return error;
+			}
+			
+			frcn = dep->de_fc[FC_LASTFC].fc_frcn + 1;
+		}
+		
+		/*
+		 * Update the "last cluster of the file" entry in the denode's fat
+		 * cache.
+		 */
+		fc_setcache(dep, FC_LASTFC, frcn + got - 1, cn + got - 1);
+		
+		if (flags & DE_CLEAR) {
+			while (got-- > 0) {
+				/*
+				 * Get the buf header for the new block of the file.
+				 */
+				if (dep->de_Attributes & ATTR_DIRECTORY)
+					bp = getblk(pmp->pm_devvp, cntobn(pmp, cn++),
+						    pmp->pm_bpcluster, 0, 0);
+				else {
+					bp = getblk(DETOV(dep), frcn++, pmp->pm_bpcluster, 0, 0);
+					/*
+					 * Do the bmap now, as in msdosfs_write
+					 */
+					if (pcbmap(dep, bp->b_lblkno, &bp->b_blkno, 0))
+						bp->b_blkno = -1;
+					if (bp->b_blkno == -1)
+						panic("extendfile: pcbmap");
+				}
+				clrbuf(bp);
+				if (bpp) {
+					*bpp = bp;
+					bpp = NULL;
+				} else {
+					bp->b_flags |= B_AGE;
+					bawrite(bp);
+				}
+			}
+		}
 	}
-
-	/*
-	 * Update the "last cluster of the file" entry in the denode's fat
-	 * cache.
-	 */
-	fc_setcache(dep, FC_LASTFC, frcn, cn);
-
-	/*
-	 * Get the buf header for the new block of the file.
-	 */
-	if (dep->de_Attributes & ATTR_DIRECTORY)
-		*bpp = getblk(pmp->pm_devvp, cntobn(pmp, cn),
-			      pmp->pm_bpcluster, 0, 0);
-	else
-		*bpp = getblk(DETOV(dep), frcn, pmp->pm_bpcluster, 0, 0);
-	clrbuf(*bpp);
-
-	/*
-	 * Give them the filesystem relative cluster number if they want
-	 * it.
-	 */
-	if (ncp)
-		*ncp = cn;
+	
 	return 0;
 }
