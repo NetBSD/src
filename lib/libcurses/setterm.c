@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.20 2000/04/27 00:21:43 jdc Exp $	*/
+/*	$NetBSD: setterm.c,v 1.21 2000/04/29 00:42:26 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.20 2000/04/27 00:21:43 jdc Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.21 2000/04/29 00:42:26 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,7 +99,8 @@ static char	*aoftspace;		/* Address of _tspace for relocation */
 static char	*tspace;		/* Space for capability strings */
 static size_t   tspace_size;            /* size of tspace */
 
-char *ttytype;
+char	*ttytype;
+attr_t	 __mask_OP, __mask_ME, __mask_UE, __mask_SE;
 
 int
 setterm(char *type)
@@ -191,6 +192,44 @@ setterm(char *type)
   	    (CS == NULL || HO == NULL ||
 	    (SF == NULL && sf == NULL) || (SR == NULL && sr == NULL)) &&
 	    ((AL == NULL && al == NULL) || (DL == NULL && dl == NULL));
+
+	/* Precalculate conflict info for color/attribute end commands. */
+	__mask_OP = __ATTRIBUTES & ~__COLOR;
+	if (OP != NULL) {
+		if (SE != NULL && !strcmp(OP, SE))
+			__mask_OP &= ~__STANDOUT;
+		if (UE != NULL && !strcmp(OP, UE))
+			__mask_OP &= ~__UNDERSCORE;
+		if (ME != NULL && !strcmp(OP, ME))
+			__mask_OP &= ~__TERMATTR;
+	}
+	__mask_ME = __ATTRIBUTES & ~__TERMATTR;
+	if (ME != NULL) {
+		if (SE != NULL && !strcmp(ME, SE))
+			__mask_ME &= ~__STANDOUT;
+		if (UE != NULL && !strcmp(ME, UE))
+			__mask_ME &= ~__UNDERSCORE;
+		if (OP != NULL && !strcmp(ME, OP))
+			__mask_ME &= ~__COLOR;
+	}
+	__mask_UE = __ATTRIBUTES & ~__UNDERSCORE;
+	if (UE != NULL) {
+		if (SE != NULL && !strcmp(UE, SE))
+			__mask_UE &= ~__STANDOUT;
+		if (ME != NULL && !strcmp(UE, ME))
+			__mask_UE &= ~__TERMATTR;
+		if (OP != NULL && !strcmp(UE, OP))
+			__mask_UE &= ~__COLOR;
+	}
+	__mask_SE = __ATTRIBUTES & ~__STANDOUT;
+	if (SE != NULL) {
+		if (UE != NULL && !strcmp(SE, UE))
+			curscr->wattr &= ~__UNDERSCORE;
+		if (ME != NULL && !strcmp(SE, ME))
+			curscr->wattr &= ~__TERMATTR;
+		if (OP != NULL && !strcmp(SE, OP))
+			curscr->wattr &= ~__COLOR;
+	}
 
 	return (unknown ? ERR : OK);
 }
