@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.35 2001/04/13 23:30:12 thorpej Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.36 2001/06/14 05:44:23 itojun Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -139,7 +139,6 @@ arc_output(ifp, m0, dst, rt0)
 
 	myself = *LLADDR(ifp->if_sadl);
 
-	ifp->if_lastchange = time;
 	if ((rt = rt0)) {
 		if ((rt->rt_flags & RTF_UP) == 0) {
 			if ((rt0 = rt = rtalloc1(dst, 1)))
@@ -576,7 +575,6 @@ arc_input(ifp, m)
 
 	ah = mtod(m, struct arc_header *);
 
-	ifp->if_lastchange = time;
 	ifp->if_ibytes += m->m_pkthdr.len;
 
 	if (arcbroadcastaddr == ah->arc_dhost) {

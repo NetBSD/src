@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atmsubr.c,v 1.28 2001/04/13 23:30:12 thorpej Exp $       */
+/*      $NetBSD: if_atmsubr.c,v 1.29 2001/06/14 05:44:23 itojun Exp $       */
 
 /*
  *
@@ -113,7 +113,6 @@ atm_output(ifp, m0, dst, rt0)
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
-	ifp->if_lastchange = time;
 
 	/*
 	 * If the queueing discipline needs packet classification,
@@ -266,7 +265,6 @@ atm_input(ifp, ah, m, rxhand)
 		m_freem(m);
 		return;
 	}
-	ifp->if_lastchange = time;
 	ifp->if_ibytes += m->m_pkthdr.len;
 
 	if (rxhand) {

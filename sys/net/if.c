@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.90 2001/06/07 13:26:48 mrg Exp $	*/
+/*	$NetBSD: if.c,v 1.91 2001/06/14 05:44:23 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -992,6 +992,7 @@ if_down(ifp)
 	struct ifaddr *ifa;
 
 	ifp->if_flags &= ~IFF_UP;
+	microtime(&ifp->if_lastchange);
 	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL;
 	     ifa = TAILQ_NEXT(ifa, ifa_list))
 		pfctlinput(PRC_IFDOWN, ifa->ifa_addr);
@@ -1013,6 +1014,7 @@ if_up(ifp)
 #endif
 
 	ifp->if_flags |= IFF_UP;
+	microtime(&ifp->if_lastchange);
 #ifdef notyet
 	/* this has no effect on IP, and will kill all ISO connections XXX */
 	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL;

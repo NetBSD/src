@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.28 2001/06/04 23:53:13 itojun Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.29 2001/06/14 05:44:24 itojun Exp $	*/
 /*	$KAME: if_gif.c,v 1.49 2001/06/04 12:03:41 itojun Exp $	*/
 
 /*
@@ -298,7 +298,6 @@ gif_output(ifp, m, dst, rt)
 		goto end;
 	}
 
-	ifp->if_lastchange = time;	
 	m->m_flags &= ~(M_BCAST|M_MCAST);
 	if (!(ifp->if_flags & IFF_UP) ||
 	    sc->gif_psrc == NULL || sc->gif_pdst == NULL) {

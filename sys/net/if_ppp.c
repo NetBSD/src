@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.68 2001/04/13 23:30:14 thorpej Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.69 2001/06/14 05:44:24 itojun Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -929,7 +929,6 @@ pppoutput(ifp, m0, dst, rtp)
 	}
 	ppp_restart(sc);
     }
-    ifp->if_lastchange = time;
     ifp->if_opackets++;
     ifp->if_obytes += len;
 
@@ -1647,7 +1646,6 @@ ppp_inproc(sc, m)
     splx(s);
     ifp->if_ipackets++;
     ifp->if_ibytes += ilen;
-    ifp->if_lastchange = time;
 
     if (rv)
 	(*sc->sc_ctlp)(sc);

@@ -1,4 +1,4 @@
-/* $NetBSD: if_xb.c,v 1.6 2001/01/17 00:30:49 thorpej Exp $ */
+/* $NetBSD: if_xb.c,v 1.7 2001/06/14 05:44:28 itojun Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -74,7 +74,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: if_xb.c,v 1.6 2001/01/17 00:30:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xb.c,v 1.7 2001/06/14 05:44:28 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,7 +234,7 @@ xbattach(parent, self, aux)
 	xbfound = 1;
 	ccp = &xb_configuration;
 	xb_init_config(ccp, 1);
-	printf(": driver %s mtu %d\n", "$Revision: 1.6 $", xbi.if_mtu);
+	printf(": driver %s mtu %d\n", "$Revision: 1.7 $", xbi.if_mtu);
 }
 
 static void
@@ -506,7 +506,6 @@ xb_output(ifp, m0, dst, rt0)
 		m_freem(m);
 		return ENETDOWN;
 	}
-	ifp->if_lastchange = time;
 	/*
 	 * We want an IP packet with a link level route, on a silver platter.
 	 */

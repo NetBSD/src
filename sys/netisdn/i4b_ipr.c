@@ -27,7 +27,7 @@
  *	i4b_ipr.c - isdn4bsd IP over raw HDLC ISDN network driver
  *	---------------------------------------------------------
  *
- *	$Id: i4b_ipr.c,v 1.5 2001/03/24 12:40:31 martin Exp $
+ *	$Id: i4b_ipr.c,v 1.6 2001/06/14 05:44:26 itojun Exp $
  *
  * $FreeBSD$
  *
@@ -496,10 +496,6 @@ i4biproutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	}
 #endif
 
-	/* update access time */
-	
-	microtime(&sc->sc_if.if_lastchange);
-
 	/*
 	 * check, if type of service indicates interactive, i.e. telnet,
 	 * traffic. in case it is interactive, put it into the fast queue,
@@ -581,7 +577,6 @@ i4biprioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				error = EAFNOSUPPORT;
 			else
 				sc->sc_if.if_flags |= IFF_UP;
-			microtime(&sc->sc_if.if_lastchange);
 			break;
 
 		case SIOCSIFFLAGS:	/* set interface flags */
@@ -610,7 +605,6 @@ i4biprioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				/* enable debug messages */
 			}
 			
-			microtime(&sc->sc_if.if_lastchange);
 			break;
 
 #if !defined(__OpenBSD__)			
@@ -620,10 +614,7 @@ i4biprioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			else if(ifr->ifr_mtu < I4BIPRMINMTU)
 				error = EINVAL;
 			else
-			{
 				ifp->if_mtu = ifr->ifr_mtu;
-				microtime(&sc->sc_if.if_lastchange);
-			}
 			break;
 #endif /* __OPENBSD__ */
 
@@ -936,8 +927,6 @@ ipr_rx_data_rdy(int unit)
 
 	m->m_pkthdr.len = m->m_len;
 
-	microtime(&sc->sc_if.if_lastchange);
-
 #ifdef I4BIPRADJFRXP
 
 	/*
@@ -1136,8 +1125,6 @@ ipr_tx_queue_empty(int unit)
 				break;
 		}
 
-		microtime(&sc->sc_if.if_lastchange);
-		
 #if NBPFILTER > 0 || NBPF > 0
 		if(sc->sc_if.if_bpf)
 		{

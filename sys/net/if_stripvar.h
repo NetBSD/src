@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stripvar.h,v 1.11 2001/01/15 16:33:32 thorpej Exp $	*/
+/*	$NetBSD: if_stripvar.h,v 1.12 2001/06/14 05:44:25 itojun Exp $	*/
 
 #ifndef _NET_IF_STRIPVAR_H_
 #define _NET_IF_STRIPVAR_H_
@@ -39,6 +39,8 @@ struct strip_softc {
 #define ST_DEAD		0x2		/*    no answer to probe; do reset */
 
 	long sc_statetimo;		/* When (secs) current state ends */
+
+	struct timeval sc_lastpacket;	/* for watchdog */
 };
 
 
