@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.14 2000/11/04 07:02:41 lukem Exp $
+.\"	$NetBSD: upgrade,v 1.15 2002/05/04 21:36:57 mbw Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -36,12 +36,79 @@
 .
 It is possible to easily upgrade your existing
 .Nx*M
-system
-using the upgrade program in the miniroot. If you wish to upgrade
+system using the upgrade program in the miniroot or by manually performing
+the same steps as the miniroot upgrade program.
+.
+.Ss2 Upgrading using the miniroot
+.
+If you wish to upgrade
 your system by this method, simply select the
 .Sy upgrade
 option once the miniroot has booted.
 The upgrade program with then guide you through the procedure.
+.if r_hp300 \{\
+While you can boot the miniroot using the same methods described above for
+a fresh install of
+.Nx*M
+there are easier and less intrusive options since your disk is already
+labeled and bootable.  The easiest is to dump the miniroot to your swap
+partition and boot from that.
+.(enum
+Download the files you'll need to upgrade
+.Pp
+In particular, make sure you have on your locally mounted filesystems
+.Pa base.tgz
+and
+.Pa miniroot.fs.gz
+.It
+Boot your \*M into 
+.Sq "single-user mode" :
+.Pp
+Follow the instructions in the section above on 
+.Sx Chosing a kernel location
+and type 
+.Li -s
+at the prompt.
+.It
+Extract and install a new boot block:
+.Pp
+Make sure you install the bootstrap program distributed with this version of
+.Nx*M .
+.(disp
+.No # Ic "tar -xpvzf base.tgz ./usr/mdec"
+.No # Ic "disklabel -B -b ./usr/mdec/uboot.lif " Ar root-disk
+.disp)
+E.g.:
+.Ar root-disk
+could be
+.Li sd0 
+or 
+.Li rd0 .
+We'll assume 
+.Li rd0
+for now.
+.It
+Install the miniroot filesystem:
+.Pp
+First make sure that your 
+.Sq Li "b"
+partition has enough room for the uncompressed miniroot (otherwise it
+might overwrite another partition or the end of the disk).
+.(disp
+.No # Ic "gunzip miniroot.fs.gz"
+.No # Ic "dd if=miniroot.fs of=/dev/rd0b"
+.disp)
+.It
+Boot the miniroot:
+.Pp
+Follow the instructions in the section above on 
+.Sx Chosing a kernel location
+and type 
+.Li rd0b:netbsd
+at the prompt.
+.enum)
+.Pp
+.\} \" ! r_hp300
 The upgrade program will:
 .(enum
 Enable the network based on your system's current
@@ -76,8 +143,12 @@ capable of running
 Install a new boot block.
 .It
 Check your file systems for integrity.
+.It
+You'll have to reboot your system manually
 .enum)
-.Pp
+.
+.Ss2 Manual upgrade
+.
 While using the miniroot's upgrade program is the preferred method
 of upgrading your system, it is possible to upgrade your system
 manually. To do this, follow the following procedure:
@@ -95,6 +166,23 @@ kernel may be incompatible with your old binaries.
 Back up your pre-existing kernel and copy the \*V
 kernel into your root partition
 .Pq Pa / .
+.ie r_hp300 \{\
+.It
+Extract and install a new boot block:
+.Pp
+Make sure you install the bootstrap program distributed with this version of
+.Nx*M .
+.(disp
+.No # Ic "tar -xpvzf base.tgz ./usr/mdec"
+.No # Ic "disklabel -B -b ./usr/mdec/uboot.lif " Ar root-disk
+.disp)
+E.g.:
+.Ar root-disk
+could be
+.Li sd0 
+or 
+.Li rd0 .
+.\}
 .It
 Reboot with the \*V kernel into single-user mode.
 .It
@@ -124,18 +212,11 @@ binary set:
 .Pp
 .Dl # Ic "cd /"
 .Dl # Ic "pax -zrvpe -f" Em /path/to/ Ns Ic base.tgz
+.if r_mvme68k \{\
 .It
 Install a new boot block:
 .Pp
 .Dl # Ic "cd /usr/mdec"
-.ie r_hp300 \{\
-.Dl # Ic "disklabel -B" Ar root-disk
-E.g.:
-.Ar root-disk
-could be
-.Li sd0 .
-.\}
-.el \{\
 .Dl # Ic "cp bootsd /.bootsd"
 .Dl # Ic "./installboot /.bootsd bootxx \*<" Ar root-disk
 .Pp
