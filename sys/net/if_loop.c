@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.13 1994/10/30 21:48:50 cgd Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.14 1995/07/23 16:33:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -119,7 +119,7 @@ looutput(ifp, m, dst, rt)
 	register struct ifqueue *ifq = 0;
 
 	if ((m->m_flags & M_PKTHDR) == 0)
-		panic("looutput no HDR");
+		panic("looutput: no header mbuf");
 	ifp->if_lastchange = time;
 #if NBPFILTER > 0
 	if (ifp->if_bpf) {
