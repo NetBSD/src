@@ -1,5 +1,5 @@
 /*	$OpenBSD: db_machdep.h,v 1.2 1997/03/21 00:48:48 niklas Exp $	*/
-/*	$NetBSD: db_machdep.h,v 1.12 2002/01/06 00:35:12 dbj Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.13 2002/05/13 06:05:32 matt Exp $	*/
 
 /* 
  * Mach Operating System
@@ -59,7 +59,7 @@ struct powerpc_saved_state {
 	u_int32_t	pid;
 };
 typedef struct powerpc_saved_state db_regs_t;
-db_regs_t	ddb_regs;		/* register state */
+extern	db_regs_t	ddb_regs;		/* register state */
 #define DDB_REGS	(&ddb_regs)
 
 #define	PC_REGS(regs)	((db_addr_t)(regs)->iar)
