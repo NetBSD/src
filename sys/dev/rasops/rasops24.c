@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops24.c,v 1.6 1999/05/18 21:51:59 ad Exp $ */
+/* 	$NetBSD: rasops24.c,v 1.7 1999/08/24 11:07:32 ad Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_rasops.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.6 1999/05/18 21:51:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.7 1999/08/24 11:07:32 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -155,9 +155,9 @@ rasops24_makestamp(ri, attr)
 		stamp[i+2] = (c3 << 24) | c4;
 
 #if BYTE_ORDER == LITTLE_ENDIAN
-		if (!ri->ri_swab) {
+		if ((ri->ri_flg & RI_BSWAP) == 0) {
 #else
-		if (ri->ri_swab) {
+		if ((ri->ri_flg & RI_BSWAP) != 0) {
 #endif
 			stamp[i+0] = bswap32(stamp[i+0]);
 			stamp[i+1] = bswap32(stamp[i+1]);
@@ -559,7 +559,7 @@ rasops24_eraserows(cookie, row, num, attr)
 {
 	struct rasops_info *ri;
 	u_int32_t *dp, clr, stamp[3];
-	int n9, n3, n1, cnt;
+	int n9, n3, n1, cnt, stride;
 	
 	/* 
 	 * If the color is gray, we can cheat and use the generic routines
@@ -591,23 +591,36 @@ rasops24_eraserows(cookie, row, num, attr)
 	stamp[2] = (clr << 24) | clr;
 
 #if BYTE_ORDER == LITTLE_ENDIAN
-	if (!ri->ri_swab) {
+	if ((ri->ri_flg & RI_BSWAP) == 0) {
 #else
-	if (ri->ri_swab) {
+	if ((ri->ri_flg & RI_BSWAP) != 0) {
 #endif
 		stamp[0] = bswap32(stamp[0]);
 		stamp[1] = bswap32(stamp[1]);
 		stamp[2] = bswap32(stamp[2]);
 	}
 
-	num *= ri->ri_font->fontheight;
 	dp = (int32_t *)(ri->ri_bits + row * ri->ri_yscale);
 
-	n9 = ri->ri_emustride / 36;
+	/* 
+	 * XXX the wsdisplay_emulops interface seems a little deficient in
+	 * that there is no way to clear the *entire* screen. We provide a 
+	 * workaround here: if the entire console area is being cleared, and 
+	 * the RI_FULLCLEAR flag is set, clear the entire display.
+	 */ 
+	if (num == ri->ri_rows && (ri->ri_flg & RI_FULLCLEAR) != 0) {
+		stride = ri->ri_stride;
+		num = ri->ri_height;
+	} else {
+		stride = ri->ri_emustride;
+		num *= ri->ri_font->fontheight;
+	}
+
+	n9 = stride / 36;
 	cnt = (n9 << 5) + (n9 << 2); /* (32*n9) + (4*n9) */
-	n3 = (ri->ri_emustride - cnt) / 12;
+	n3 = (stride - cnt) / 12;
 	cnt += (n3 << 3) + (n3 << 2); /* (8*n3) + (4*n3) */
-	n1 = (ri->ri_emustride - cnt) >> 2;
+	n1 = (stride - cnt) >> 2;
 	
 	while (num--) {
 		for (cnt = n9; cnt; cnt--) {
@@ -690,9 +703,9 @@ rasops24_erasecols(cookie, row, col, num, attr)
 	stamp[2] = (clr << 24) | clr;
 
 #if BYTE_ORDER == LITTLE_ENDIAN
-	if (!ri->ri_swab) {
+	if ((ri->ri_flg & RI_BSWAP) == 0) {
 #else
-	if (ri->ri_swab) {
+	if ((ri->ri_flg & RI_BSWAP) != 0) {
 #endif
 		stamp[0] = bswap32(stamp[0]);
 		stamp[1] = bswap32(stamp[1]);
@@ -718,7 +731,7 @@ rasops24_erasecols(cookie, row, col, num, attr)
 		DELTA(rp, ri->ri_stride, int32_t *);
 
 		/* Align to 4 bytes */
-		/* XXX handle with masks, bring under control of ri_swab */
+		/* XXX handle with masks, bring under control of RI_BSWAP */
 		for (cnt = slop; cnt; cnt--) {
 			*dbp++ = (clr >> 16);
 			*dbp++ = (clr >> 8);
@@ -750,7 +763,7 @@ rasops24_erasecols(cookie, row, col, num, attr)
 		}
 			
 		/* Trailing slop */
-		/* XXX handle with masks, bring under control of ri_swab */
+		/* XXX handle with masks, bring under control of RI_BSWAP */
 		dbp = (u_char *)dp;
 		for (cnt = num; cnt; cnt--) {
 			*dbp++ = (clr >> 16);

@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops.h,v 1.6 1999/05/18 21:51:59 ad Exp $ */
+/* 	$NetBSD: rasops.h,v 1.7 1999/08/24 11:07:32 ad Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,8 +39,17 @@
 #ifndef _RASOPS_H_
 #define _RASOPS_H_ 1
 
-/* Avoid dragging in dev/wscons/wsconsio.h */
 struct wsdisplay_font;
+
+/* For rasops_info::ri_flg */
+#define RI_FULLCLEAR	0x01	/* eraserows() hack to clear full screen */
+#define RI_FORCEMONO	0x02	/* monochrome output even if we can do color */
+#define RI_BSWAP	0x04	/* framebuffer endianness doesn't match CPU */
+#define RI_CURSOR	0x08	/* cursor is switched on */
+#define RI_CLEAR	0x10	/* clear display on startup */
+#define RI_CENTER	0x20	/* center onscreen output */
+#define RI_CURSORCLIP	0x40	/* cursor is currently clipped */
+#define RI_CFGDONE	0x80	/* rasops_reconfig() completed successfully */
 
 struct rasops_info {
 	/* These must be filled in by the caller */
@@ -51,14 +60,15 @@ struct rasops_info {
 	int	ri_stride;	/* stride in bytes */
 
 	/* 
-	 * These can optionally be left empty. If you fill ri_font,
+	 * These can optionally be left zeroed out. If you fill ri_font,
 	 * but aren't using wsfont, set ri_wsfcookie to -1.
 	 */
 	struct	wsdisplay_font *ri_font;
-	int	ri_wsfcookie;
+	int	ri_wsfcookie;	/* wsfont cookie */
 	void	*ri_priv;	/* driver private data */
-	u_char	ri_forcemono;	/* force monochrome operation */
-	u_char	ri_swab;	/* swap bytes for 15/16/32 bit depths? */
+	int	ri_crow;	/* cursor row */
+	int	ri_ccol;	/* cursor column */
+	int	ri_flg;		/* various operational flags */
 	
 	/* 
 	 * These are optional and will default if zero. Meaningless 
@@ -79,9 +89,6 @@ struct rasops_info {
 	int	ri_rows;	/* number of rows (characters, not pels) */
 	int	ri_cols;	/* number of columns (characters, not pels) */
 	int	ri_delta;	/* row delta in bytes */
-	int	ri_flg;		/* flags */
-	int	ri_crow;	/* cursor row */
-	int	ri_ccol;	/* cursor column */
 	int	ri_pelbytes;	/* bytes per pel (may be zero) */
 	int	ri_fontscale;	/* fontheight * fontstride */
 	int	ri_xscale;	/* fontwidth * pelbytes */
@@ -89,9 +96,7 @@ struct rasops_info {
 	u_char  *ri_origbits;	/* where screen bits actually start */
 	int	ri_xorigin;	/* where ri_bits begins (x) */
 	int	ri_yorigin;	/* where ri_bits begins (y) */
-	
-	/* For 15, 16, 24, 32 bits */
-	int32_t	ri_devcmap[16]; /* device colormap (WSCOL_*) */
+	int32_t	ri_devcmap[16]; /* color -> framebuffer data */
 
 	/* The emulops you need to use, and the screen caps for wscons */
 	struct	wsdisplay_emulops ri_ops;
@@ -101,35 +106,26 @@ struct rasops_info {
 	void	(*ri_do_cursor) __P((struct rasops_info *));
 };
 
-#define RASOPS_CURSOR		(0x01)	/* cursor is on */
-#define RASOPS_INITTED		(0x02)	/* struct is initialized */
-#define RASOPS_CURSOR_CLIPPED	(0x04)	/* cursor is clipped */
-
 #define DELTA(p, d, cast) ((p) = (cast)((caddr_t)(p) + (d)))
 
 /* 
  * rasops_init().
  *
- * Integer parameters are: number of rows we'd like, number of columns we'd 
- * like, whether we should clear the display and whether we should center
- * the output. Remember that what you'd like is always not what you get.
+ * Integer parameters are the number of rows and columns we'd *like*. 
  *
  * In terms of optimization, fonts that are a multiple of 8 pixels wide
- * work the best: this is important, and will cost you if you don't use 'em.
+ * work the best.
  *
- * rasops_init() takes care of rasops_setfont(). You only need to use this
- * when you want to switch fonts later on. The integer parameters to both
- * are the same. Before calling rasops_setfont(), set ri.ri_font. This
- * should happen at _splhigh_. If (ri_wsfcookie >= 0), you must call
- * wsfont_unlock() on it first.
+ * rasops_init() takes care of rasops_reconfig(). The parameters to both 
+ * are the same. If calling rasops_reconfig() to change the font and
+ * ri_wsfcookie >= 0, you must call wsfont_unlock() on it, and reset it
+ * to -1 (or a new, valid cookie).
  */
 
 /* rasops.c */
-int	rasops_init __P((struct rasops_info *, int, int, int, int));
-int	rasops_setfont __P((struct rasops_info *, int, int, int, int));
+int	rasops_init __P((struct rasops_info *, int, int));
+int	rasops_reconfig __P((struct rasops_info *, int, int));
 void	rasops_unpack_attr __P((long, int *, int *, int *));
-
-/* These should _not_ be called outside rasops */
 void	rasops_eraserows __P((void *, int, int, long));
 void	rasops_erasecols __P((void *, int, int, int, long));
 void	rasops_copycols __P((void *, int, int, int, int));

@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.12 1999/07/21 19:19:03 ad Exp $ */
+/*	 $NetBSD: rasops.c,v 1.13 1999/08/24 11:07:32 ad Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.12 1999/07/21 19:19:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.13 1999/08/24 11:07:32 ad Exp $");
 
 #include "rasops_glue.h"
 
@@ -108,9 +108,9 @@ void	rasops32_init __P((struct rasops_info *));
  * Initalize a 'rasops_info' descriptor.
  */
 int
-rasops_init(ri, wantrows, wantcols, clear, center)
+rasops_init(ri, wantrows, wantcols)
 	struct rasops_info *ri;
-	int wantrows, wantcols, clear, center;
+	int wantrows, wantcols;
 {
 #ifdef _KERNEL	
 	/* Select a font if the caller doesn't care */
@@ -134,10 +134,6 @@ rasops_init(ri, wantrows, wantcols, clear, center)
 			return (-1);
 		}
 
-#ifdef DIAGNOSTIC	
-		if (ri->ri_font == NULL)
-			panic("rasops_init: locked font, but got no pointer\n");
-#endif		
 		ri->ri_wsfcookie = cookie;
 	}
 #endif
@@ -155,30 +151,31 @@ rasops_init(ri, wantrows, wantcols, clear, center)
 	}
 #endif
 
-	/* Fix color palette. We need this for the cursor to work. */
+	/* Fix colormap. We need this for the cursor to work. */
 	rasops_cmap[255*3+0] = 0xff;
 	rasops_cmap[255*3+1] = 0xff;
 	rasops_cmap[255*3+2] = 0xff;
 	
-	/* setfont does most of the work */
-	if (rasops_setfont(ri, wantrows, wantcols, clear, center))
+	if (rasops_reconfig(ri, wantrows, wantcols))
 		return (-1);
  	
 	rasops_init_devcmap(ri);
-	ri->ri_flg = RASOPS_INITTED;
 	return (0);
 }
 
 
 /*
- * Choose a different font. The new font will already be set in ri_font.
+ * Reconfigure (because parameters have changed in some way).
  */
 int
-rasops_setfont(ri, wantrows, wantcols, clear, center)
+rasops_reconfig(ri, wantrows, wantcols)
 	struct rasops_info *ri;
-	int wantrows, wantcols, clear, center;
+	int wantrows, wantcols;
 {
 	int bpp;
+	int s;
+	
+	s = splhigh();
 		
 	if (ri->ri_font->fontwidth > 32 || ri->ri_font->fontwidth < 4)
 		panic("rasops_init: fontwidth assumptions botched!\n");
@@ -186,15 +183,15 @@ rasops_setfont(ri, wantrows, wantcols, clear, center)
 	/* Need this to frob the setup below */
 	bpp = (ri->ri_depth == 15 ? 16 : ri->ri_depth);
 
-	if (ri->ri_flg & RASOPS_INITTED)
+	if ((ri->ri_flg & RI_CFGDONE) != 0)
 		ri->ri_bits = ri->ri_origbits;
 	
 	/* Don't care if the caller wants a hideously small console */
 	if (wantrows < 10)
-		wantrows = 5000;
+		wantrows = 10;
 		
 	if (wantcols < 20)
-		wantcols = 5000;
+		wantcols = 20;
 	
 	/* Now constrain what they get */
 	ri->ri_emuwidth = ri->ri_font->fontwidth * wantcols;
@@ -224,16 +221,16 @@ rasops_setfont(ri, wantrows, wantcols, clear, center)
 
 #ifdef DEBUG	
 	if (ri->ri_delta & 3)
-		panic("rasops_init: delta isn't aligned on 32-bit boundary!");
+		panic("rasops_init: ri_delta not aligned on 32-bit boundary");
 #endif	
 	/* Clear the entire display */
-	if (clear)
-		bzero(ri->ri_bits, ri->ri_stride * ri->ri_height);
+	if ((ri->ri_flg & RI_CLEAR) != 0)
+		memset(ri->ri_bits, 0, ri->ri_stride * ri->ri_height);
 	
 	/* Now centre our window if needs be */ 
 	ri->ri_origbits = ri->ri_bits;
 	
-	if (center) {
+	if ((ri->ri_flg & RI_CENTER) != 0) {
 		ri->ri_bits += ((ri->ri_stride - ri->ri_emustride) >> 1) & ~3;
 		ri->ri_bits += ((ri->ri_height - ri->ri_emuheight) >> 1) * 
 		    ri->ri_stride;
@@ -257,7 +254,7 @@ rasops_setfont(ri, wantrows, wantcols, clear, center)
 	ri->ri_ops.cursor = rasops_cursor;
 	ri->ri_do_cursor = rasops_do_cursor;
 	
-	if (ri->ri_depth < 8 || ri->ri_forcemono) {
+	if (ri->ri_depth < 8 || (ri->ri_flg & RI_FORCEMONO) != 0) {
 		ri->ri_ops.alloc_attr = rasops_alloc_mattr;
 		ri->ri_caps = WSATTR_UNDERLINE | WSATTR_REVERSE;
 	} else {
@@ -304,10 +301,13 @@ rasops_setfont(ri, wantrows, wantcols, clear, center)
 		break;
 #endif
 	default:
-		ri->ri_flg = 0;
+		ri->ri_flg &= ~RI_CFGDONE;
+		splx(s);
 		return (-1);
 	}
 	
+	ri->ri_flg |= RI_CFGDONE;
+	splx(s);
 	return (0);
 }
 
@@ -589,32 +589,32 @@ rasops_cursor(cookie, on, row, col)
 	ri = (struct rasops_info *)cookie;
 	
 	/* Turn old cursor off */
-	if (ri->ri_flg & RASOPS_CURSOR)
+	if ((ri->ri_flg & RI_CURSOR) != 0)
 #ifdef RASOPS_CLIPPING		
-		if (!(ri->ri_flg & RASOPS_CURSOR_CLIPPED))
+		if ((ri->ri_flg & RI_CURSORCLIP) == 0)
 #endif
 			ri->ri_do_cursor(ri);
 
 	/* Select new cursor */
 #ifdef RASOPS_CLIPPING
-	ri->ri_flg &= ~RASOPS_CURSOR_CLIPPED;
+	ri->ri_flg &= ~RI_CURSORCLIP;
 	
 	if (row < 0 || row >= ri->ri_rows)
-		ri->ri_flg |= RASOPS_CURSOR_CLIPPED;
+		ri->ri_flg |= RI_CURSORCLIP;
 	else if (col < 0 || col >= ri->ri_cols)
-		ri->ri_flg |= RASOPS_CURSOR_CLIPPED;
+		ri->ri_flg |= RI_CURSORCLIP;
 #endif
 	ri->ri_crow = row;
 	ri->ri_ccol = col;
 
 	if (on) {
-		ri->ri_flg |= RASOPS_CURSOR;
+		ri->ri_flg |= RI_CURSOR;
 #ifdef RASOPS_CLIPPING		
-		if (!(ri->ri_flg & RASOPS_CURSOR_CLIPPED))
+		if ((ri->ri_flg & RI_CURSORCLIP) == 0)
 #endif
 			ri->ri_do_cursor(ri);
 	} else 
-		ri->ri_flg &= ~RASOPS_CURSOR;
+		ri->ri_flg &= ~RI_CURSOR;
 }
 
 
@@ -675,7 +675,7 @@ rasops_init_devcmap(ri)
 			c = c | (c << 16);
 
 		/* 24bpp does bswap on the fly. {32,16,15}bpp do it here. */
-		if (!ri->ri_swab)
+		if ((ri->ri_flg & RI_BSWAP) == 0)
 			ri->ri_devcmap[i] = c;
 		else if (ri->ri_depth == 32)
 			ri->ri_devcmap[i] = bswap32(c);
@@ -731,11 +731,23 @@ rasops_eraserows(cookie, row, num, attr)
 #endif
 
 	clr = ri->ri_devcmap[(attr >> 16) & 15];
-	num *= ri->ri_font->fontheight;
 	dp = (int32_t *)(ri->ri_bits + row * ri->ri_yscale);
 
-	np = ri->ri_emustride >> 5;
-	nw = (ri->ri_emustride >> 2) & 7;
+	/* 
+	 * XXX the wsdisplay_emulops interface seems a little deficient in
+	 * that there is no way to clear the *entire* screen. We provide a 
+	 * workaround here: if the entire console area is being cleared, and 
+	 * the RI_FULLCLEAR flag is set, clear the entire display.
+	 */ 
+	if (num == ri->ri_rows && (ri->ri_flg & RI_FULLCLEAR) != 0) {
+		np = ri->ri_stride >> 5;
+		nw = (ri->ri_stride >> 2) & 7;
+		num = ri->ri_height;
+	} else {
+		np = ri->ri_emustride >> 5;
+		nw = (ri->ri_emustride >> 2) & 7;
+		num *= ri->ri_font->fontheight;
+	}
 	
 	while (num--) {
 		for (cnt = np; cnt; cnt--) {
