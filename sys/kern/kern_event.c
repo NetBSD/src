@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.1.1.1.2.13 2002/04/09 06:23:47 jdolecek Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.1.1.1.2.14 2002/06/07 08:22:36 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -50,7 +50,7 @@
 #include <sys/filedesc.h>
 #include <sys/syscallargs.h>
 
-static int	kqueue_scan(struct file *fp, int maxevents,
+static int	kqueue_scan(struct file *fp, size_t maxevents,
 		    struct kevent *ulistp, const struct timespec *timeout,
 		    struct proc *p, register_t *retval);
 static void	kqueue_wakeup(struct kqueue *kq);
@@ -525,16 +525,17 @@ sys_kevent(struct proc *p, void *v, register_t *retval)
 	struct sys_kevent_args /* {
 		syscallarg(int) fd;
 		syscallarg(const struct kevent *) changelist;
-		syscallarg(int) nchanges;
+		syscallarg(size_t) nchanges;
 		syscallarg(struct kevent *) eventlist;
-		syscallarg(int) nevents;
+		syscallarg(size_t) nevents;
 		syscallarg(const struct timespec *) timeout;
 	} */ *uap = v;
 	struct kevent	*kevp;
 	struct kqueue	*kq;
 	struct file	*fp;
 	struct timespec	ts;
-	int		i, n, nerrors, error;
+	size_t		i, n;
+	int		nerrors, error;
 
 	/* check that we're dealing with a kq */
 	fp = fd_getfile(p->p_fd, SCARG(uap, fd));
@@ -747,14 +748,15 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
  * as appropriate.
  */
 static int
-kqueue_scan(struct file *fp, int maxevents, struct kevent *ulistp,
+kqueue_scan(struct file *fp, size_t maxevents, struct kevent *ulistp,
 	const struct timespec *tsp, struct proc *p, register_t *retval)
 {
 	struct kqueue	*kq;
 	struct kevent	*kevp;
 	struct timeval	atv;
 	struct knote	*kn, marker;
-	int		s, count, timeout, nkev, error;
+	size_t		count, nkev;
+	int		s, timeout, error;
 
 	kq = (struct kqueue *)fp->f_data;
 	count = maxevents;
