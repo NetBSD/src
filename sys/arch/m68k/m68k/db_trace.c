@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.36 2002/05/14 00:14:53 matt Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.37 2002/10/26 13:24:55 jdolecek Exp $	*/
 
 /* 
  * Mach Operating System
@@ -93,8 +93,6 @@ extern struct pcb *curpcb;
 		(db_get_value((db_addr_t)(addr), sizeof(int), FALSE))
 #define	get16(addr, space) \
 		(db_get_value((db_addr_t)(addr), sizeof(u_short), FALSE))
-
-#define	offsetof(type, member)	((size_t)(&((type *)0)->member))
 
 #define	NREGISTERS	16
 
