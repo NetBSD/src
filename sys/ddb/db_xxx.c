@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.21 2003/04/28 02:49:55 briggs Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.22 2003/05/15 13:18:18 atatat Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -43,7 +43,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.21 2003/04/28 02:49:55 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.22 2003/05/15 13:18:18 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,6 +236,11 @@ db_dmesg(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 	struct kern_msgbuf *mbp;
 	int ch, newl, skip, i;
 	char *p, *bufdata;
+
+        if (!msgbufenabled || msgbufp->msg_magic != MSG_MAGIC) {
+		db_printf("message buffer not available\n");
+		return;
+	}
 
 	mbp = msgbufp;
 	bufdata = &mbp->msg_bufc[0];

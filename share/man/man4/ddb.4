@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.64 2003/05/08 05:38:10 wiz Exp $
+.\"	$NetBSD: ddb.4,v 1.65 2003/05/15 13:18:19 atatat Exp $
 .\"
 .\" Copyright (c) 1997 - 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -356,6 +356,10 @@ or by the breakpoint number returned by
 .Ic break
 if it's prefixed with
 .Sq Cm \&# .
+.It Xo
+.Ic dmesg
+.Xc
+Prints the contents of the kernel message buffer.
 .It Xo
 .Ic dwatch
 .Ar address
@@ -730,7 +734,8 @@ do the wrong thing.
 .It Ic sync
 Force a crash dump, and then reboot.
 .It Xo
-.Ic trace Ns Op Cm /u
+.Ic trace
+.Ic Ns Op Cm /u Ns Op Cm l
 .Sm off
 .Op Ar frame-address
 .Op Cm , Ar count
@@ -746,11 +751,15 @@ is the number of frames to be traced.
 If
 .Ar count
 is omitted, all frames are printed.
+If
+.Cm /l
+is specified, the trace is printed and also stored in the kernel
+message buffer.
 .Pp
 Warning: user-space stack trace is valid only if the machine dependent
 code supports it.
 .It Xo
-.Ic trace/t
+.Ic trace/t Ns Op Cm l
 .Sm off
 .Op Ar pid
 .Op Cm , Ar count
@@ -771,7 +780,11 @@ with
 .Sq 0t
 to force it to be interpreted as decimal (see
 .Sx VARIABLES
-section for radix)
+section for radix).
+If
+.Cm /l
+is specified, the trace is printed and also stored in the kernel
+message buffer.
 .Pp
 Warning: trace by pid is valid only if the machine dependent code
 supports it.
