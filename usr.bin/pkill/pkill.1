@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkill.1,v 1.6 2002/03/04 13:49:07 ad Exp $
+.\"	$NetBSD: pkill.1,v 1.7 2002/03/06 12:03:48 ad Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -136,6 +136,7 @@ Terminal names may be of the form
 .Sq ttyxx
 or the shortened form
 .Sq xx .
+A single dash (`-') matches processes not associated with a terminal.
 .It Fl u Ar euid
 Restrict matches to processes with an effective user ID in the
 comma-separated list
@@ -159,7 +160,8 @@ Note that a running
 .Nm pgrep
 or
 .Nm pkill
-process will never consider itself a potential match.
+process will never consider itself nor system processes (kernel threads) as
+a potential match.
 .Sh EXIT STATUS
 .Nm pgrep
 and
