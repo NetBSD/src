@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.18 1996/03/08 12:32:47 ragge Exp $	*/
+/*	$NetBSD: conf.c,v 1.19 1996/03/09 23:36:09 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -54,7 +54,7 @@ int     lkmenodev();
 #include "hp.h" /* 0 */
 bdev_decl(hp);
 
-#include "tu.h"
+#include "ht.h"
 bdev_decl(ht);
 
 #include "rk.h"
@@ -114,7 +114,7 @@ bdev_decl(vnd);
 struct bdevsw	bdevsw[] =
 {
 	bdev_disk_init(NHP,hp),		/* 0: RP0?/RM0? */
-	bdev_tape_init(NTU,ht),		/* 1: TU77 w/ TM03 */
+	bdev_tape_init(NHT,ht),		/* 1: TU77 w/ TM03 */
 	bdev_disk_init(NUP,up),		/* 2: SC-21/SC-31 */
 	bdev_disk_init(NRK,rk),		/* 3: RK06/07 */
 	bdev_swap_init(1,sw),		/* 4: swap pseudo-device */
