@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.2.2.5 2000/12/14 23:36:40 he Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.2.2.6 2001/04/21 21:28:33 he Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -1557,7 +1557,7 @@ softdep_setup_freeblocks(ip, length)
 	struct vnode *vp;
 	struct buf *bp;
 	struct fs *fs = ip->i_fs;
-	int i, error;
+	int i, error, delay;
 #ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(fs);
 #endif
@@ -1610,6 +1610,16 @@ softdep_setup_freeblocks(ip, length)
 	if ((inodedep->id_state & IOSTARTED) != 0)
 		panic("softdep_setup_freeblocks: inode busy");
 	/*
+	 * Add the freeblks structure to the list of operations that
+	 * must await the zero'ed inode being written to disk. If we
+	 * still have a bitmap dependency (delay == 0), then the inode
+	 * has never been written to disk, so we can process the
+	 * freeblks below once we have deleted the dependencies.
+	 */
+	delay = (inodedep->id_state & DEPCOMPLETE);
+	if (delay)
+		WORKLIST_INSERT(&inodedep->id_bufwait, &freeblks->fb_list);
+	/*
 	 * Because the file length has been truncated to zero, any
 	 * pending block allocation dependency structures associated
 	 * with this inode are obsolete and can simply be de-allocated.
@@ -1639,23 +1649,16 @@ softdep_setup_freeblocks(ip, length)
 		brelse(bp);
 		ACQUIRE_LOCK(&lk);
 	}
+	if (inodedep_lookup(fs, ip->i_number, 0, &inodedep) != 0)
+		(void) free_inodedep(inodedep);
+	FREE_LOCK(&lk);
 	/*
-	 * Add the freeblks structure to the list of operations that
-	 * must await the zero'ed inode being written to disk. If we
-	 * still have a bitmap dependency, then the inode has never been
-	 * written to disk, so we can process the freeblks immediately.
-	 * If the inodedep does not exist, then the zero'ed inode has
-	 * been written and we can also proceed.
+	 * If the inode has never been written to disk (delay == 0),
+	 * then we can process the freeblks now that we have deleted
+	 * the dependencies.
 	 */
-	if (inodedep_lookup(fs, ip->i_number, 0, &inodedep) == 0 ||
-	    free_inodedep(inodedep) ||
-	    (inodedep->id_state & DEPCOMPLETE) == 0) {
-		FREE_LOCK(&lk);
+	if (!delay)
 		handle_workitem_freeblocks(freeblks);
-	} else {
-		WORKLIST_INSERT(&inodedep->id_bufwait, &freeblks->fb_list);
-		FREE_LOCK(&lk);
-	}
 }
 
 /*
