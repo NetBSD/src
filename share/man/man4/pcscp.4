@@ -1,4 +1,4 @@
-.\"    $NetBSD: pcscp.4,v 1.7 2001/09/22 15:58:14 wiz Exp $
+.\"    $NetBSD: pcscp.4,v 1.8 2001/11/07 16:43:12 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"    $NetBSD: pcscp.4,v 1.7 2001/09/22 15:58:14 wiz Exp $
+.\"    $NetBSD: pcscp.4,v 1.8 2001/11/07 16:43:12 tsutsui Exp $
 .\"
 .Dd February 21, 1999
 .Dt PCSCP 4
@@ -58,13 +58,20 @@ host adapter.
 .Pp
 For
 .Tn Tekram
-.Tn DC-390U/F
+.Tn DC-390U/UW/F
 .Tn PCI
 .Tn SCSI
 host adapters, use the
-.Xr ncr 4
-or
 .Xr siop 4
+driver.
+.Pp
+For
+.Tn Tekram
+.Tn DC-395U/UW/F
+.Tn PCI
+.Tn SCSI
+host adapters, use the
+.Xr trm 4
 driver.
 .Sh SEE ALSO
 .Xr cd 4 ,
