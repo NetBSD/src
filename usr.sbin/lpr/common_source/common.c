@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.17 2000/01/27 05:39:50 itojun Exp $	*/
+/*	$NetBSD: common.c,v 1.18 2000/02/18 03:53:16 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: common.c,v 1.17 2000/01/27 05:39:50 itojun Exp $");
+__RCSID("$NetBSD: common.c,v 1.18 2000/02/18 03:53:16 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -132,6 +132,7 @@ getport(rhost, rport)
 	u_int timo = 1;
 	int s, lport = IPPORT_RESERVED - 1;
 	int error;
+	int refuse, trial;
 
 	/*
 	 * Get the host address and port number to connect to.
@@ -148,9 +149,12 @@ getport(rhost, rport)
 	/*
 	 * Try connecting to the server.
 	 */
-	s = -1;
-	for (r = res; r; r = r->ai_next) {
 retry:
+	s = -1;
+	refuse = trial = 0;
+	for (r = res; r; r = r->ai_next) {
+		trial++;
+retryport:
 		seteuid(euid);
 		s = rresvport_af(&lport, r->ai_family);
 		seteuid(uid);
@@ -163,16 +167,17 @@ retry:
 			errno = error;
 			if (errno == EADDRINUSE) {
 				lport--;
-				goto retry;
-			}
-			if (errno == ECONNREFUSED && timo <= 16) {
-				sleep(timo);
-				timo *= 2;
-				goto retry;
-			}
+				goto retryport;
+			} else if (errno == ECONNREFUSED)
+				refuse++;
 			continue;
 		} else
 			break;
+	}
+	if (s < 0 && trial == refuse && timo <= 16) {
+		sleep(timo);
+		timo *= 2;
+		goto retry;
 	}
 	if (res)
 		freeaddrinfo(res);
