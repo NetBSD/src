@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: com.c,v 1.33 1994/08/07 11:27:51 mycroft Exp $
+ *	$Id: com.c,v 1.34 1994/08/21 15:04:37 mycroft Exp $
  */
 
 /*
@@ -313,7 +313,7 @@ comopen(dev, flag, mode, p)
 
 		sc->sc_msr = inb(iobase + com_msr);
 		if (sc->sc_swflags & COM_SW_SOFTCAR || sc->sc_msr & MSR_DCD ||
-		    tp->t_lflag&MDMBUF)
+		    tp->t_cflag & MDMBUF)
 			tp->t_state |= TS_CARR_ON;
 		else
 			tp->t_state &= ~TS_CARR_ON;
