@@ -1,4 +1,4 @@
-/*	$NetBSD: login_cap.c,v 1.19 2004/12/11 06:40:42 christos Exp $	*/
+/*	$NetBSD: login_cap.c,v 1.20 2004/12/20 18:42:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: login_cap.c,v 1.19 2004/12/11 06:40:42 christos Exp $");
+__RCSID("$NetBSD: login_cap.c,v 1.20 2004/12/20 18:42:03 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
  
 #include <sys/types.h>
@@ -642,7 +642,7 @@ setuserpath(login_cap_t *lc, const char *home)
 
 	hlen = strlen(home);
 
-	cpath = p = path = login_getcapstr(lc, "path", NULL, NULL);
+	p = path = login_getcapstr(lc, "path", NULL, NULL);
 	if (p) {
 		while (*p)
 			if (*p++ == '~')
@@ -673,6 +673,7 @@ setuserpath(login_cap_t *lc, const char *home)
 				q += plen;
 			}
 			*q = '\0';
+			cpath = path;
 		} else
 			cpath = _PATH_DEFPATH;
 	} else
