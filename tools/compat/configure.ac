@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.31 2002/11/30 21:43:28 lukem Exp $
+#	$NetBSD: configure.ac,v 1.32 2002/12/16 00:32:00 thorpej Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -77,7 +77,8 @@ NB_CHECK_INTTYPE(64)
 
 # Struct members.
 AC_CHECK_MEMBERS([DIR.dd_fd, struct dirent.d_namlen],,,
-	[#include <dirent.h>])
+[#include <sys/types.h>
+#include <dirent.h>])
 AC_CHECK_MEMBERS([struct stat.st_flags, struct stat.st_gen,
 	struct stat.st_mtimensec],,, [#include <sys/stat.h>])
 AC_CHECK_MEMBERS(struct statfs.f_iosize,,, [#include <sys/mount.h>])
