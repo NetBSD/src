@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.17 1996/12/10 18:20:24 mycroft Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.17.8.1 1997/05/14 18:06:50 mellon Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -102,6 +102,8 @@ tcp_slowtimo()
 	register struct tcpcb *tp;
 	int s;
 	register long i;
+	static int syn_cache_last = 0;
+	extern int tcp_syn_cache_interval;
 
 	s = splsoftnet();
 	tcp_maxidle = TCPTV_KEEPCNT * tcp_keepintvl;
@@ -143,6 +145,10 @@ tpgone:
 		tcp_iss = 0;				/* XXX */
 #endif
 	tcp_now++;					/* for timestamps */
+	if (++syn_cache_last >= tcp_syn_cache_interval) {
+		syn_cache_timer(syn_cache_last);
+		syn_cache_last = 0;
+	}
 	splx(s);
 }
 #ifndef TUBA_INCLUDE
@@ -301,11 +307,13 @@ tcp_timers(tp, timer)
 			 * The keepalive packet must have nonzero length
 			 * to get a 4.2 host to respond.
 			 */
-			tcp_respond(tp, tp->t_template, (struct mbuf *)NULL,
-			    tp->rcv_nxt - 1, tp->snd_una - 1, 0);
+			(void)tcp_respond(tp, tp->t_template,
+					  (struct mbuf *)NULL,
+					  tp->rcv_nxt - 1, tp->snd_una - 1, 0);
 #else
-			tcp_respond(tp, tp->t_template, (struct mbuf *)NULL,
-			    tp->rcv_nxt, tp->snd_una - 1, 0);
+			(void)tcp_respond(tp, tp->t_template,
+					  (struct mbuf *)NULL,
+					  tp->rcv_nxt, tp->snd_una - 1, 0);
 #endif
 			tp->t_timer[TCPT_KEEP] = tcp_keepintvl;
 		} else
