@@ -1,4 +1,4 @@
-/*	$NetBSD: utils.c,v 1.6 2003/06/23 13:05:53 agc Exp $	*/
+/*	$NetBSD: utils.c,v 1.7 2003/07/12 14:08:37 itojun Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: utils.c,v 1.6 2003/06/23 13:05:53 agc Exp $");
+__RCSID("$NetBSD: utils.c,v 1.7 2003/07/12 14:08:37 itojun Exp $");
 #endif
 
 #include "os.h"
@@ -412,12 +412,13 @@ long seconds;
     /* sanity protection */
     if (seconds < 0 || seconds > (99999l * 360l))
     {
-	strcpy(result, "   ???");
+	strlcpy(result, "   ???", sizeof(result));
     }
     else if (seconds >= (1000l * 60l))
     {
 	/* alternate (slow) method displaying hours and tenths */
-	sprintf(result, "%5.1fH", (double)seconds / (double)(60l * 60l));
+	snprintf(result, sizeof(result), "%5.1fH",
+	    (double)seconds / (double)(60l * 60l));
 
 	/* It is possible that the sprintf took more than 6 characters.
 	   If so, then the "H" appears as result[6].  If not, then there
@@ -429,7 +430,8 @@ long seconds;
     {
 	/* standard method produces MMM:SS */
 	/* we avoid printf as must as possible to make this quick */
-	sprintf(result, "%3ld:%02ld", seconds / 60l, seconds % 60l);
+	snprintf(result, sizeof(result), "%3ld:%02ld", seconds / 60l,
+	    seconds % 60l);
     }
     return(result);
 }
