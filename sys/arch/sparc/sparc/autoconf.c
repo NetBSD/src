@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.138 2000/06/08 21:37:43 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.139 2000/06/09 10:47:25 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -805,7 +805,7 @@ cpu_configure()
 	 */
 	bzero(proc0paddr, sizeof(struct user));
 
-	(void)spl0();
+	spl0();
 }
 
 void
