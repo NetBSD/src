@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.13 1995/08/14 02:13:42 mycroft Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.14 1995/09/01 20:06:09 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -322,7 +322,7 @@ svr4_sendsig(catcher, sig, mask, code)
 	extern char svr4_esigcode[], svr4_sigcode[];
 
 	tf = p->p_md.md_regs;
-	oonstack = psp->ps_sigstk.ss_flags & SA_ONSTACK;
+	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 
 	/*
 	 * Allocate space for the signal handler context.
@@ -331,7 +331,7 @@ svr4_sendsig(catcher, sig, mask, code)
 	    (psp->ps_sigonstack & sigmask(sig))) {
 		fp = (struct svr4_sigframe *)(psp->ps_sigstk.ss_base +
 		    psp->ps_sigstk.ss_size - sizeof(struct svr4_sigframe));
-		psp->ps_sigstk.ss_flags |= SA_ONSTACK;
+		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else {
 		fp = (struct svr4_sigframe *)tf->tf_esp - 1;
 	}
