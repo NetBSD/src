@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.112.4.5 2002/01/04 09:26:48 petrov Exp $ */
+/*	$NetBSD: machdep.c,v 1.112.4.6 2002/01/04 19:12:30 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -361,13 +361,12 @@ setregs(l, pack, stack)
 	register struct fpstate64 *fs;
 	register int64_t tstate;
 	int pstate = PSTATE_USER;
-	struct proc *p = l->l_proc;
 #ifdef __arch64__
 	Elf_Ehdr *eh = pack->ep_hdr;
 #endif
 
 	/* Don't allow misaligned code by default */
-	p->p_md.md_flags &= ~MDP_FIXALIGN;
+	l->l_md.md_flags &= ~MDP_FIXALIGN;
 
 	/*
 	 * Set the registers to 0 except for:
@@ -403,16 +402,16 @@ setregs(l, pack, stack)
 		 * we must get rid of it, and the only way to do that is
 		 * to save it.  In any case, get rid of our FPU state.
 		 */
-		if (l == fpproc) {
+		if (l == fplwp) {
 			savefpstate(fs);
-			fpproc = NULL;
+			fplwp = NULL;
 		}
 		free((void *)fs, M_SUBPROC);
 		l->l_md.md_fpstate = NULL;
 	}
 	bzero((caddr_t)tf, sizeof *tf);
 	tf->tf_tstate = tstate;
-	tf->tf_global[1] = (vaddr_t)p->p_psstr;
+	tf->tf_global[1] = (vaddr_t)l->l_proc->p_psstr;
 	/* %g4 needs to point to the start of the data segment */
 	tf->tf_global[4] = 0; 
 	tf->tf_pc = pack->ep_entry & ~3;
@@ -510,7 +509,7 @@ sendsig(catcher, sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
-	struct lwp  *l = curproc;
+	struct lwp *l = curproc;
 	struct proc *p = l->l_proc;
 	struct sigframe *fp;
 	struct trapframe64 *tf;
@@ -795,6 +794,7 @@ cpu_reboot(howto, user_boot_string)
 #endif
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
+		extern struct lwp lwp0;
 		extern int sparc_clock_time_is_ok;
 
 		/* XXX protect against curproc->p_stats.foo refs in sync() */
@@ -2047,7 +2047,7 @@ cpu_getmcontext(l, mcp, flags)
 		 * with it later when it becomes necessary.
 		 * Otherwise, get it from the process's save area.
 		 */
-		if (l == fpproc) {
+		if (l == fplwp) {
 			fsp = &fs;
 			savefpstate(fsp);
 		} else {
@@ -2129,7 +2129,6 @@ cpu_setmcontext(l, mcp, flags)
 	if ((flags & _UC_FPU) != 0 && mcp->__fpregs.__fpu_en != 0) {
 		struct fpstate *fsp;
 		const __fpregset_t *fpr = &mcp->__fpregs;
-		int reload = 0;
 
 		/*
 		 * If we're the current FPU owner, simply reload it from
@@ -2137,17 +2136,12 @@ cpu_setmcontext(l, mcp, flags)
 		 * process' FPU save area (which is used to restore from
 		 * by lazy FPU context switching); allocate it if necessary.
 		 */
-		/*
-		 * XXX Should we really activate the supplied FPU context
-		 * XXX immediately or just fault it in later?
-		 */
 		if ((fsp = l->l_md.md_fpstate) == NULL) {
 			fsp = malloc(sizeof (*fsp), M_SUBPROC, M_WAITOK);
 			l->l_md.md_fpstate = fsp;
-		} else if (l == fpproc) {
+		} else if (l == fplwp) {
 			/* Drop the live context on the floor. */
 			savefpstate(fsp);
-			reload = 1;
 		}
 		/* Note: sizeof fpr->__fpu_fr <= sizeof fsp->fs_regs. */
 		memcpy(fsp->fs_regs, &fpr->__fpu_fr, sizeof (fpr->__fpu_fr));
@@ -2160,9 +2154,6 @@ cpu_setmcontext(l, mcp, flags)
 		mcp->__fpregs.__fpu_qcnt = 0 /*fs.fs_qsize*/; /* See above */
 #endif
 
-		/* Reload context again, if necessary. */
-		if (reload)
-			loadfpstate(fsp);
 	}
 
 	/* XXX mcp->__xrs */

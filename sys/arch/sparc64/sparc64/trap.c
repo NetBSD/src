@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.74.4.4 2002/01/04 09:26:49 petrov Exp $ */
+/*	$NetBSD: trap.c,v 1.74.4.5 2002/01/04 19:12:32 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -429,8 +429,8 @@ userret(l, pc, oticks)
 	int pc;
 	u_quad_t oticks;
 {
-	int sig;
 	struct proc *p = l->l_proc;
+	int sig;
 
 	/* take pending signals */
 	while ((sig = CURSIG(l)) != 0)
@@ -484,7 +484,7 @@ static __inline void share_fpu(l, tf)
 	struct trapframe64 *tf;
 {
 	if (!(tf->tf_tstate & (PSTATE_PRIV<<TSTATE_PSTATE_SHIFT)) &&
-	    (tf->tf_tstate & (PSTATE_PEF<<TSTATE_PSTATE_SHIFT)) && fpproc != l)
+	    (tf->tf_tstate & (PSTATE_PEF<<TSTATE_PSTATE_SHIFT)) && fplwp != l)
 		tf->tf_tstate &= ~(PSTATE_PEF<<TSTATE_PSTATE_SHIFT);
 }
 
@@ -604,35 +604,35 @@ trap(tf, type, pc, tstate)
 		if (type == T_FPDISABLED) {
 extern void db_printf(const char * , ...);
 #ifndef NEW_FPSTATE
-			if (fpproc != NULL) {	/* someone else had it */
-				savefpstate(fpproc->p_md.md_fpstate);
-				fpproc = NULL;
+			if (fplwp != NULL) {	/* someone else had it */
+				savefpstate(fplwp->l_md.md_fpstate);
+				fplwp = NULL;
 				/* Enable the FPU */
 /*				loadfpstate(initfpstate);*/
 			}
 			tf->tf_tstate |= (PSTATE_PEF<<TSTATE_PSTATE_SHIFT);
 			return;
 #else
-			struct lwp *newfpproc;
+			struct lwp *newfplwp;
 
 			/* New scheme */
 			if (CLKF_INTR((struct clockframe *)tf) || !curproc) {
-				newfpproc = &lwp0;
+				newfplwp = &lwp0;
 			} else {
-				newfpproc = curproc;
+				newfplwp = curproc;
 			}
-			if (fpproc != newfpproc) {
-				if (fpproc != NULL) {
+			if (fplwp != newfplwp) {
+				if (fplwp != NULL) {
 				/* someone else had it, maybe? */
-					savefpstate(fpproc->l_md.md_fpstate);
-					fpproc = NULL;
+					savefpstate(fplwp->l_md.md_fpstate);
+					fplwp = NULL;
 				}
 				/* If we have an allocated fpstate, load it */
-				if (newfpproc->l_md.md_fpstate != 0) {
-					fpproc = newfpproc;
-					loadfpstate(fpproc->l_md.md_fpstate);
+				if (newfplwp->l_md.md_fpstate != 0) {
+					fplwp = newfplwp;
+					loadfpstate(fplwp->l_md.md_fpstate);
 				} else
-					fpproc = NULL;
+					fplwp = NULL;
 			}
 			/* Enable the FPU */
 			tf->tf_tstate |= (PSTATE_PEF<<TSTATE_PSTATE_SHIFT);
@@ -689,11 +689,11 @@ badtrap:
 	case T_SVR4_GETHRVTIME:
 	case T_SVR4_GETHRESTIME:
 #if defined(COMPAT_SVR4_32)
-		if (svr4_32_trap(type, p))
+		if (svr4_32_trap(type, l))
 			break;
 #endif
 #if defined(COMPAT_SVR4)
-		if (svr4_trap(type, p))
+		if (svr4_trap(type, l))
 			break;
 #endif
 		goto badtrap;
@@ -742,7 +742,7 @@ badtrap:
 		 */
 		if (!foundfpu) {
 #ifdef notyet
-			fpu_emulate(p, tf, fs);
+			fpu_emulate(l, tf, fs);
 			break;
 #else
 			trapsignal(l, SIGFPE, 0);	/* XXX code?? */
@@ -762,11 +762,11 @@ badtrap:
 			fpu_cleanup(l, fs);
 			break;
 		}
-		if (fpproc != l) {		/* we do not have it */
-			if (fpproc != NULL)	/* someone else had it */
-				savefpstate(fpproc->l_md.md_fpstate);
+		if (fplwp != l) {		/* we do not have it */
+			if (fplwp != NULL)	/* someone else had it */
+				savefpstate(fplwp->l_md.md_fpstate);
 			loadfpstate(fs);
-			fpproc = l;		/* now we do have it */
+			fplwp = l;		/* now we do have it */
 		}
 		tf->tf_tstate |= (PSTATE_PEF<<TSTATE_PSTATE_SHIFT);
 		break;
@@ -792,8 +792,10 @@ badtrap:
 		}
 		
 #define fmt64(x)	(u_int)((x)>>32), (u_int)((x))
-		printf("Alignment error: pid=%d comm=%s dsfsr=%08x:%08x dsfar=%x:%x isfsr=%08x:%08x pc=%lx\n",
-		       p->p_pid, p->p_comm, fmt64(dsfsr), fmt64(dsfar), fmt64(isfsr), pc);
+		printf("Alignment error: pid=%d comm=%s dsfsr=%08x:%08x "
+			"dsfar=%x:%x isfsr=%08x:%08x pc=%lx\n",
+			l->l_proc->p_pid, l->l_proc->p_comm,
+			fmt64(dsfsr), fmt64(dsfar), fmt64(isfsr), pc);
 	}
 		
 #if defined(DDB) && defined(DEBUG)
@@ -802,7 +804,7 @@ badtrap:
 		kdb_trap(type, tf);
 	}
 #endif
-		if ((p->p_md.md_flags & MDP_FIXALIGN) != 0 && 
+		if ((l->l_md.md_flags & MDP_FIXALIGN) != 0 && 
 		    fixalign(l, tf) == 0) {
 			ADVANCE;
 			break;
@@ -820,10 +822,10 @@ badtrap:
 		 * will not match once fpu_cleanup does its job, so
 		 * we must not save again later.)
 		 */
-		if (l != fpproc)
+		if (l != fplwp)
 			panic("fpe without being the FP user");
 		savefpstate(l->l_md.md_fpstate);
-		fpproc = NULL;
+		fplwp = NULL;
 		/* tf->tf_psr &= ~PSR_EF; */	/* share_fpu will do this */
 		if (l->l_md.md_fpstate->fs_qsize == 0) {
 			copyin((caddr_t)pc, &l->l_md.md_fpstate->fs_queue[0].fq_instr, sizeof(int));
@@ -873,7 +875,7 @@ badtrap:
 		uprintf("T_FIXALIGN\n");
 #endif
 		/* User wants us to fix alignment faults */
-		p->p_md.md_flags |= MDP_FIXALIGN;
+		l->l_md.md_flags |= MDP_FIXALIGN;
 		ADVANCE;
 		break;
 
@@ -931,6 +933,7 @@ rwindow_save(l)
 		printf("%s[%d]: rwindow: pcb->stack:",
 		    	l->l_proc->p_comm, l->l_proc->p_pid);
 #endif
+
 	 while (i > 0) {
 		rwdest = rw[i--].rw_in[6];
 #ifdef DEBUG
@@ -1045,7 +1048,7 @@ data_access_fault(tf, type, pc, addr, sfva, sfsr)
 	    (trapdebug&(TDB_ADDFLT|TDB_FOLLOW))) {
 		printf("%ld: data_access_fault(%p, %x, %p, %p, %lx, %lx) "
 			"nsaved=%d\n",
-			(long)(curproc ? curproc->l_proc->p_pid:-1), tf, type,
+			(long)(curproc ? curproc->l_proc->p_pid : -1), tf, type,
 			(void*)addr, (void*)pc,
 			sfva, sfsr, (int)cpcb->pcb_nsaved);
 		if ((trapdebug&TDB_NSAVED && cpcb->pcb_nsaved)) Debugger();
@@ -1274,8 +1277,7 @@ data_access_error(tf, type, afva, afsr, sfva, sfsr)
 {
 	u_long pc;
 	u_int64_t tstate;
-	struct lwp  *l;
-	struct proc *p;
+	struct lwp *l;
 	vaddr_t onfault;
 	u_quad_t sticks;
 #ifdef DEBUG
@@ -1320,8 +1322,7 @@ data_access_error(tf, type, afva, afsr, sfva, sfsr)
 	uvmexp.traps++;
 	if ((l = curproc) == NULL)	/* safety check */
 		l = &lwp0;
-	p = l->l_proc;
-	sticks = p->p_sticks;
+	sticks = l->l_proc->p_sticks;
 
 	pc = tf->tf_pc;
 	tstate = tf->tf_tstate;
@@ -1638,9 +1639,7 @@ text_access_error(tf, type, pc, sfsr, afva, afsr)
 			printf("NULL proc\n");
 		else
 			printf("pid %d(%s); sigmask %x, sigcatch %x\n",
-			    curproc->l_proc->p_pid,
-			    curproc->l_proc->p_comm,
-				/* XXX */
+			       curproc->l_proc->p_pid, curproc->l_proc->p_comm,
 			       curproc->l_proc->p_sigctx.ps_sigmask.__bits[0], 
 			       curproc->l_proc->p_sigctx.ps_sigcatch.__bits[0]);
 	}
@@ -1758,7 +1757,7 @@ syscall(tf, code, pc)
 	int i, nsys, nap;
 	int64_t *ap;
 	const struct sysent *callp;
-	struct lwp *l;
+	struct lwp *l = curproc;
 	struct proc *p;
 	int error = 0, new;
 	union args {
@@ -1771,6 +1770,9 @@ syscall(tf, code, pc)
 	extern struct pcb *cpcb;
 #endif
 
+	/* Don't dereference a non-existent curproc XXX how can this happen? */
+	if (l) p = l->l_proc;
+
 #ifdef DEBUG
 	write_user_windows();
 	if (tf->tf_pc == tf->tf_npc) {
@@ -1780,20 +1782,18 @@ syscall(tf, code, pc)
 	}
 	if ((trapdebug&TDB_NSAVED && cpcb->pcb_nsaved) || trapdebug&(TDB_SYSCALL|TDB_FOLLOW))
 		printf("%d syscall(%lx, %p, %lx)\n",
-		       curproc?curproc->l_proc->p_pid:-1, (u_long)code, tf, (u_long)pc); 
+		       l ? p->p_pid : -1, (u_long)code, tf, (u_long)pc); 
 	if (trapdebug & TDB_FRAME) {
 		print_trapframe(tf);
 	}
 	if ((trapdebug & TDB_TL) && tl()) {
 		printf("%d tl %d syscall(%lx, %p, %lx)\n",
-		       curproc?curproc->l_proc->p_pid:-1, tl(), (u_long)code, tf, (u_long)pc); 
+		       l ? p->p_pid : -1, tl(), (u_long)code, tf, (u_long)pc); 
 		Debugger();
 	}
 #endif
 
 	uvmexp.syscalls++;
-	l = curproc;
-	p = l->l_proc;
 #ifdef DIAGNOSTIC
 	if (tf->tf_tstate & TSTATE_PRIV)
 		panic("syscall from kernel");
@@ -1850,7 +1850,7 @@ syscall(tf, code, pc)
 /*	printf("code=%x, nsys=%x\n", code, nsys); */
 	if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW))
 		printf("%d syscall(%d[%x]): tstate=%x:%x %s\n", 
-		       curproc?curproc->l_proc->p_pid:-1, (int)code, (u_int)code,
+		       l ? p->p_pid : -1, (int)code, (u_int)code,
 		       (int)(tf->tf_tstate>>32), (int)(tf->tf_tstate),
 		       (p->p_emul->e_syscallnames) ?
 		       ((code < 0 || code >= nsys) ? 
@@ -1931,7 +1931,7 @@ syscall(tf, code, pc)
 #if defined(__arch64__) && !defined(COMPAT_NETBSD32)
 #ifdef DEBUG
 #ifdef LKM
-		if ((curproc->l_proc->p_flag & P_32) == 0)
+		if ((p->p_flag & P_32) == 0)
 #endif
 		{
 			printf("syscall(): 32-bit stack on a 64-bit kernel????\n");
@@ -2004,7 +2004,7 @@ syscall(tf, code, pc)
 #endif
 	}
 #ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, (register_t *)&args);
+	scdebug_call(l, code, (register_t *)&args);
 #endif
 	rval[0] = 0;
 	rval[1] = tf->tf_out[1];
@@ -2084,7 +2084,7 @@ syscall(tf, code, pc)
 	}
 
 #ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, rval);
+	scdebug_ret(l, code, error, rval);
 #endif
 	userret(l, pc, sticks);
 #ifdef NOTDEF_DEBUG

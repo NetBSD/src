@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.113.4.2 2002/01/03 06:42:36 petrov Exp $	*/
+/*	$NetBSD: pmap.c,v 1.113.4.3 2002/01/04 19:12:31 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -1432,7 +1432,7 @@ remap_data:
 		cpus->ci_cpcb = (struct pcb *)u0[0]; /* Need better source */
 		cpus->ci_upaid = CPU_UPAID;
 		cpus->ci_number = cpus->ci_upaid; /* How do we figure this out? */
-		cpus->ci_fpproc = NULL;
+		cpus->ci_fplwp = NULL;
 		cpus->ci_spinup = main; /* Call main when we're running. */
 		cpus->ci_initstack = (void *)u0[1];
 		cpus->ci_paddr = cpu0paddr;
@@ -1884,8 +1884,7 @@ void
 pmap_activate(l)
 	struct lwp *l;
 {
-	struct proc *p = l->l_proc;
-	pmap_t pmap = p->p_vmspace->vm_map.pmap;
+	pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap;
 	int s;
 
 	/*
