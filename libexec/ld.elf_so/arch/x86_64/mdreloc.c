@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.17 2002/09/12 22:56:31 mycroft Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.18 2002/09/25 08:37:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -82,6 +82,7 @@
 #include "rtld.h"
 
 void _rtld_bind_start(void);
+caddr_t _rtld_bind __P((const Obj_Entry *, Elf_Word));
 
 void
 _rtld_setup_pltgot(const Obj_Entry *obj)
@@ -221,12 +222,12 @@ _rtld_relocate_plt_lazy(obj)
 	return 0;
 }
 
-int
-_rtld_relocate_plt_object(obj, rela, addrp)
+caddr_t
+_rtld_bind(obj, reloff)
 	const Obj_Entry *obj;
-	const Elf_Rela *rela;
-	caddr_t *addrp;
+	Elf_Word reloff;
 {
+	const Elf_Rela *rela = obj->pltrela + reloff;
 	Elf_Addr *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
 	Elf_Addr new_value;
 	const Elf_Sym  *def;
@@ -245,6 +246,5 @@ _rtld_relocate_plt_object(obj, rela, addrp)
 	if (*where != new_value)
 		*where = new_value;
 
-	*addrp = (caddr_t)(new_value - rela->r_addend);
-	return 0;
+	return (caddr_t)(new_value - rela->r_addend);
 }

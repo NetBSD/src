@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.3 2001/12/14 21:33:59 fvdl Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.4 2002/09/25 08:37:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -70,10 +70,6 @@ _rtld_bind_start:	# (obj, reloff)
 
 	movq	80(%rsp),%rdi
 	movq	88(%rsp),%rsi
-	movq	%rsi,%r11		# multiply by sizeof (Elf64_Rela) (24)
-	shlq	$3,%r11
-	shlq	$4,%rsi			# 16 * index + 8 * index = 24 * index
-	addq	%r11,%rsi
 
 	call	_rtld_bind@PLT		# call the binder
 	movq	%rax,88(%rsp)		# store function in obj
