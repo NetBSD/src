@@ -1,4 +1,4 @@
-/*	$NetBSD: com_obio.c,v 1.7 2000/07/15 19:57:03 matt Exp $	*/
+/*	$NetBSD: com_obio.c,v 1.8 2001/06/20 03:13:19 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,6 +85,7 @@
 #include <sys/syslog.h>
 #include <sys/types.h>
 #include <sys/device.h>
+#include <sys/termios.h>
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
@@ -188,6 +189,17 @@ com_obio_attach(parent, self, aux)
 	 */
 	sc->sc_iot = sa->sa_bustag;
 	sc->sc_iobase = sa->sa_offset;
+	sc->sc_frequency = COM_FREQ;
+
+	/*
+	 * XXX: It would be nice to be able to split console input and
+	 * output to different devices.  For now switch to serial
+	 * console if PROM stdin is on serial (so that we can use DDB).
+	 */
+	if (prom_instance_to_package(prom_stdin()) == sa->sa_node)
+		comcnattach(sc->sc_iot, sc->sc_iobase,
+			    B9600, sc->sc_frequency, (CLOCAL | CREAD | CS8));
+
 	if (!com_is_console(sc->sc_iot, sc->sc_iobase, &sc->sc_ioh) &&
 	    sbus_bus_map(sc->sc_iot, sa->sa_slot,
 			 sc->sc_iobase, sa->sa_size,
@@ -209,7 +221,6 @@ com_obio_attach(parent, self, aux)
 #endif
 	}
 
-	sc->sc_frequency = COM_FREQ;
 	com_attach_subr(sc);
 
 	if (sa->sa_nintr != 0) {
