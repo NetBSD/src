@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.77 2000/11/27 04:36:41 nisimura Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.78 2000/12/10 11:41:20 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -396,6 +396,11 @@ again:
 	if (rnewprocp != NULL)
 		*rnewprocp = p2;
 
+#ifdef KTRACE
+	if (KTRPOINT(p2, KTR_EMUL))
+		ktremul(p2);
+#endif
+
 	/*
 	 * Preserve synchronization semantics of vfork.  If waiting for
 	 * child to exec or exit, set P_PPWAIT on child, and sleep on our
@@ -413,11 +418,6 @@ again:
 		retval[0] = p2->p_pid;
 		retval[1] = 0;
 	}
-
-#ifdef KTRACE
-	if (KTRPOINT(p2, KTR_EMUL))
-		ktremul(p2);
-#endif
 
 	return (0);
 }
