@@ -61,7 +61,8 @@
 #include <openssl/x509v3.h>
 
 
-static int tr_cmp(X509_TRUST **a, X509_TRUST **b);
+static int tr_cmp(const X509_TRUST * const *a,
+		const X509_TRUST * const *b);
 static void trtable_free(X509_TRUST *p);
 
 static int trust_1oidany(X509_TRUST *trust, X509 *x, int flags);
@@ -78,7 +79,7 @@ static int (*default_trust)(int id, X509 *x, int flags) = obj_trust;
 static X509_TRUST trstandard[] = {
 {X509_TRUST_COMPAT, 0, trust_compat, "compatible", 0, NULL},
 {X509_TRUST_SSL_CLIENT, 0, trust_1oidany, "SSL Client", NID_client_auth, NULL},
-{X509_TRUST_SSL_SERVER, 0, trust_1oidany, "SSL Client", NID_server_auth, NULL},
+{X509_TRUST_SSL_SERVER, 0, trust_1oidany, "SSL Server", NID_server_auth, NULL},
 {X509_TRUST_EMAIL, 0, trust_1oidany, "S/MIME email", NID_email_protect, NULL},
 };
 
@@ -88,7 +89,8 @@ IMPLEMENT_STACK_OF(X509_TRUST)
 
 static STACK_OF(X509_TRUST) *trtable = NULL;
 
-static int tr_cmp(X509_TRUST **a, X509_TRUST **b)
+static int tr_cmp(const X509_TRUST * const *a,
+		const X509_TRUST * const *b)
 {
 	return (*a)->trust - (*b)->trust;
 }
@@ -152,15 +154,15 @@ int X509_TRUST_add(int id, int flags, int (*ck)(X509_TRUST *, X509 *, int),
 	idx = X509_TRUST_get_by_id(id);
 	/* Need a new entry */
 	if(idx == -1) {
-		if(!(trtmp = Malloc(sizeof(X509_TRUST)))) {
+		if(!(trtmp = OPENSSL_malloc(sizeof(X509_TRUST)))) {
 			X509err(X509_F_X509_TRUST_ADD,ERR_R_MALLOC_FAILURE);
 			return 0;
 		}
 		trtmp->flags = X509_TRUST_DYNAMIC;
 	} else trtmp = X509_TRUST_get0(idx);
 
-	/* Free existing name if dynamic */
-	if(trtmp->flags & X509_TRUST_DYNAMIC_NAME) Free(trtmp->name);
+	/* OPENSSL_free existing name if dynamic */
+	if(trtmp->flags & X509_TRUST_DYNAMIC_NAME) OPENSSL_free(trtmp->name);
 	/* dup supplied name */
 	if(!(trtmp->name = BUF_strdup(name))) {
 		X509err(X509_F_X509_TRUST_ADD,ERR_R_MALLOC_FAILURE);
@@ -196,8 +198,8 @@ static void trtable_free(X509_TRUST *p)
 	if (p->flags & X509_TRUST_DYNAMIC) 
 		{
 		if (p->flags & X509_TRUST_DYNAMIC_NAME)
-			Free(p->name);
-		Free(p);
+			OPENSSL_free(p->name);
+		OPENSSL_free(p);
 		}
 	}
 
@@ -226,7 +228,8 @@ int X509_TRUST_get_trust(X509_TRUST *xp)
 
 static int trust_1oidany(X509_TRUST *trust, X509 *x, int flags)
 {
-	if(x->aux) return obj_trust(trust->arg1, x, flags);
+	if(x->aux && (x->aux->trust || x->aux->reject))
+		return obj_trust(trust->arg1, x, flags);
 	/* we don't have any trust settings: for compatibility
 	 * we return trusted if it is self signed
 	 */
