@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.77 2004/04/04 18:22:44 pk Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.78 2004/04/08 06:20:30 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.77 2004/04/04 18:22:44 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.78 2004/04/08 06:20:30 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -797,37 +797,43 @@ SYSCTL_SETUP(sysctl_proc_setup, "sysctl proc subtree setup")
 		       CTL_PROC, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_ANYNUMBER,
-		       CTLTYPE_NODE, "curproc", NULL,
+		       CTLTYPE_NODE, "curproc",
+		       SYSCTL_DESCR("Per-process settings"),
 		       NULL, 0, NULL, 0,
 		       CTL_PROC, PROC_CURPROC, CTL_EOL);
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READONLY2|CTLFLAG_ANYWRITE,
-		       CTLTYPE_STRING, "corename", NULL,
+		       CTLTYPE_STRING, "corename",
+		       SYSCTL_DESCR("Core file name"),
 		       sysctl_proc_corename, 0, NULL, MAXPATHLEN,
 		       CTL_PROC, PROC_CURPROC, PROC_PID_CORENAME, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "rlimit", NULL,
+		       CTLTYPE_NODE, "rlimit",
+		       SYSCTL_DESCR("Process limits"),
 		       NULL, 0, NULL, 0,
 		       CTL_PROC, PROC_CURPROC, PROC_PID_LIMIT, CTL_EOL);
 
 #define create_proc_plimit(s, n) do {					\
 	sysctl_createv(clog, 0, NULL, NULL,				\
 		       CTLFLAG_PERMANENT,				\
-		       CTLTYPE_NODE, s, NULL,				\
+		       CTLTYPE_NODE, s,					\
+		       SYSCTL_DESCR("Process " s " limits"),		\
 		       NULL, 0, NULL, 0,				\
 		       CTL_PROC, PROC_CURPROC, PROC_PID_LIMIT, n,	\
 		       CTL_EOL);					\
 	sysctl_createv(clog, 0, NULL, NULL,				\
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE|CTLFLAG_ANYWRITE, \
-		       CTLTYPE_QUAD, "soft", NULL,			\
+		       CTLTYPE_QUAD, "soft",				\
+		       SYSCTL_DESCR("Process soft " s " limit"),	\
 		       sysctl_proc_plimit, 0, NULL, 0,			\
 		       CTL_PROC, PROC_CURPROC, PROC_PID_LIMIT, n,	\
 		       PROC_PID_LIMIT_TYPE_SOFT, CTL_EOL);		\
 	sysctl_createv(clog, 0, NULL, NULL,				\
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE|CTLFLAG_ANYWRITE, \
-		       CTLTYPE_QUAD, "hard", NULL,			\
+		       CTLTYPE_QUAD, "hard",				\
+		       SYSCTL_DESCR("Process hard " s " limit"),	\
 		       sysctl_proc_plimit, 0, NULL, 0,			\
 		       CTL_PROC, PROC_CURPROC, PROC_PID_LIMIT, n,	\
 		       PROC_PID_LIMIT_TYPE_HARD, CTL_EOL);		\
@@ -847,17 +853,20 @@ SYSCTL_SETUP(sysctl_proc_setup, "sysctl proc subtree setup")
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE|CTLFLAG_ANYWRITE,
-		       CTLTYPE_INT, "stopfork", NULL,
+		       CTLTYPE_INT, "stopfork",
+		       SYSCTL_DESCR("Stop process at fork(2)"),
 		       sysctl_proc_stop, 0, NULL, 0,
 		       CTL_PROC, PROC_CURPROC, PROC_PID_STOPFORK, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE|CTLFLAG_ANYWRITE,
-		       CTLTYPE_INT, "stopexec", NULL,
+		       CTLTYPE_INT, "stopexec",
+		       SYSCTL_DESCR("Stop process at execve(2)"),
 		       sysctl_proc_stop, 0, NULL, 0,
 		       CTL_PROC, PROC_CURPROC, PROC_PID_STOPEXEC, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE|CTLFLAG_ANYWRITE,
-		       CTLTYPE_INT, "stopexit", NULL,
+		       CTLTYPE_INT, "stopexit",
+		       SYSCTL_DESCR("Stop process before completing exit"),
 		       sysctl_proc_stop, 0, NULL, 0,
 		       CTL_PROC, PROC_CURPROC, PROC_PID_STOPEXIT, CTL_EOL);
 }
