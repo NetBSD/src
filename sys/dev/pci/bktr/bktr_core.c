@@ -1,6 +1,6 @@
-/*	$NetBSD: bktr_core.c,v 1.11 2000/09/06 19:01:45 thorpej Exp $	*/
+/*	$NetBSD: bktr_core.c,v 1.12 2000/10/28 14:31:58 wiz Exp $	*/
 
-/* FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.109 2000/06/28 15:09:12 roger Exp */
+/* FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.112 2000/10/15 14:18:06 phk Exp */
 
 /*
  * This is part of the Driver for Video Capture Cards (Frame grabbers)
@@ -100,7 +100,6 @@
 
 #ifdef __FreeBSD__
 #include "bktr.h"
-#include "opt_devfs.h"
 #endif /* __FreeBSD__ */
 
 #if (                                                            \
@@ -131,7 +130,10 @@
 #include <sys/bus.h>		/* used by smbus and newbus */
 #endif
 
-#include <machine/clock.h>      /* for DELAY */
+#if (__FreeBSD_version < 500000)
+#include <machine/clock.h>              /* for DELAY */
+#endif
+
 #include <pci/pcivar.h>
 
 #if (__FreeBSD_version >=300000)
@@ -148,8 +150,11 @@
 #include <dev/bktr/bktr_audio.h>
 #include <dev/bktr/bktr_os.h>
 #include <dev/bktr/bktr_core.h>
+#if defined(BKTR_FREEBSD_MODULE)
+#include <dev/bktr/bktr_mem.h>
+#endif
 
-#if (NSMBUS > 0)
+#if defined(BKTR_USE_FREEBSD_SMBUS)
 #include <dev/bktr/bktr_i2c.h>
 #include <dev/smbus/smbconf.h>
 #include <dev/iicbus/iiconf.h>
@@ -445,7 +450,7 @@ static void	remote_read(bktr_ptr_t bktr, struct bktr_remote *remote);
 static int	common_ioctl( bktr_ptr_t bktr, ioctl_cmd_t cmd, caddr_t arg );
 
 
-#if ((!defined(__FreeBSD__)) || (NSMBUS == 0) )
+#if !defined(BKTR_USE_FREEBSD_SMBUS)
 /*
  * i2c primitives for low level control of i2c bus. Added for MSP34xx control
  */
@@ -463,7 +468,8 @@ static int      i2c_read_byte( bktr_ptr_t bktr, unsigned char *data, int last );
 void 
 common_bktr_attach( bktr_ptr_t bktr, int unit, u_long pci_id, u_int rev )
 {
-	vm_offset_t	buf;
+	vm_offset_t	buf = 0;
+	int		need_to_allocate_memory = 1;
 
 /***************************************/
 /* *** OS Specific memory routines *** */
@@ -489,20 +495,47 @@ common_bktr_attach( bktr_ptr_t bktr, int unit, u_long pci_id, u_int rev )
 #endif
 
 #if defined(__FreeBSD__) || defined(__bsdi__)
-	/* allocate space for dma program */
-	bktr->dma_prog     = get_bktr_mem(unit, DMA_PROG_ALLOC);
-	bktr->odd_dma_prog = get_bktr_mem(unit, DMA_PROG_ALLOC);
 
-	/* allocte space for the VBI buffer */
-	bktr->vbidata  = get_bktr_mem(unit, VBI_DATA_SIZE);
-	bktr->vbibuffer = get_bktr_mem(unit, VBI_BUFFER_SIZE);
-
-	/* allocate space for pixel buffer */
-	if ( BROOKTREE_ALLOC )
-		buf = get_bktr_mem(unit, BROOKTREE_ALLOC);
-	else
-		buf = 0;
+/* If this is a module, check if there is any currently saved contiguous memory */
+#if defined(BKTR_FREEBSD_MODULE)
+	if (bktr_has_stored_addresses(unit) == 1) {
+		/* recover the addresses */
+		bktr->dma_prog     = bktr_retrieve_address(unit, BKTR_MEM_DMA_PROG);
+		bktr->odd_dma_prog = bktr_retrieve_address(unit, BKTR_MEM_ODD_DMA_PROG);
+		bktr->vbidata      = bktr_retrieve_address(unit, BKTR_MEM_VBIDATA);
+		bktr->vbibuffer    = bktr_retrieve_address(unit, BKTR_MEM_VBIBUFFER);
+		buf                = bktr_retrieve_address(unit, BKTR_MEM_BUF);
+		need_to_allocate_memory = 0;
+	}
 #endif
+
+	if (need_to_allocate_memory == 1) {
+		/* allocate space for dma program */
+		bktr->dma_prog     = get_bktr_mem(unit, DMA_PROG_ALLOC);
+		bktr->odd_dma_prog = get_bktr_mem(unit, DMA_PROG_ALLOC);
+
+		/* allocte space for the VBI buffer */
+		bktr->vbidata  = get_bktr_mem(unit, VBI_DATA_SIZE);
+		bktr->vbibuffer = get_bktr_mem(unit, VBI_BUFFER_SIZE);
+
+		/* allocate space for pixel buffer */
+		if ( BROOKTREE_ALLOC )
+			buf = get_bktr_mem(unit, BROOKTREE_ALLOC);
+		else
+			buf = 0;
+	}
+#endif	/* FreeBSD or BSDi */
+
+
+/* If this is a module, save the current contiguous memory */
+#if defined(BKTR_FREEBSD_MODULE)
+bktr_store_address(unit, BKTR_MEM_DMA_PROG,     bktr->dma_prog);
+bktr_store_address(unit, BKTR_MEM_ODD_DMA_PROG, bktr->odd_dma_prog);
+bktr_store_address(unit, BKTR_MEM_VBIDATA,      bktr->vbidata);
+bktr_store_address(unit, BKTR_MEM_VBIBUFFER,    bktr->vbibuffer);
+bktr_store_address(unit, BKTR_MEM_BUF,          buf);
+#endif
+
 
 	if ( bootverbose ) {
 		printf("%s: buffer size %d, addr 0x%lx\n",
@@ -3717,7 +3750,7 @@ static int oformat_meteor_to_bt( u_long format )
 				 BT848_DATA_CTL_I2CSDA)
 
 /* Select between old i2c code and new iicbus / smbus code */
-#if (defined(__FreeBSD__) && (NSMBUS > 0))
+#if defined(BKTR_USE_FREEBSD_SMBUS)
 
 /*
  * The hardware interface is actually SMB commands
@@ -3863,7 +3896,7 @@ static void remote_read(bktr_ptr_t bktr, struct bktr_remote *remote) {
 	return;
 }
 
-#else /* defined(__FreeBSD__) && (NSMBUS > 0) */
+#else /* defined(BKTR_USE_FREEBSD_SMBUS) */
 
 /*
  * Program the i2c bus directly
@@ -4119,7 +4152,7 @@ static void remote_read(bktr_ptr_t bktr, struct bktr_remote *remote) {
 	return;
 }
 
-#endif /* defined(__FreeBSD__) && (NSMBUS > 0) */
+#endif /* defined(BKTR_USE_FREEBSD_SMBUS) */
 
 
 #if defined( I2C_SOFTWARE_PROBE )
