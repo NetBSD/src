@@ -1,5 +1,5 @@
 #
-#	$Id: files.pc532,v 1.6 1994/04/01 23:14:56 phil Exp $
+#	$Id: files.pc532,v 1.7 1994/06/05 06:37:34 phil Exp $
 #
 arch/pc532/pc532/autoconf.c		standard 
 arch/pc532/pc532/clock.c		standard
@@ -10,7 +10,6 @@ arch/pc532/pc532/proc_machdep.c		standard
 arch/pc532/pc532/sys_machdep.c		standard
 arch/pc532/pc532/trap.c			standard
 arch/pc532/pc532/vm_machdep.c		standard
-arch/pc532/pc532/icode.c		standard
 arch/pc532/pc532/disksubr.c		standard
 arch/pc532/pc532/ntoh.s			standard
 arch/pc532/pc532/random.s		standard
