@@ -1,13 +1,13 @@
-#       $NetBSD: Makefile,v 1.51 1999/04/03 14:50:21 msaitoh Exp $
+#       $NetBSD: Makefile,v 1.52 1999/05/21 06:26:15 lukem Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
 MAN=	access.9 arp.9 audio.9 bus_space.9 bus_dma.9 copy.9 cpu_reboot.9 \
 	ctxsw.9 disk.9 disklabel.9 doshutdownhooks.9 ethersubr.9 extent.9 \
-	fetch.9 fork1.9 inittodr.9 intro.9 ioctl.9 kprintf.9 log.9 malloc.9 mbuf.9 \
-	microtime.9 panic.9 pfil.9 physio.9 pool.9 psignal.9 resettodr.9 rnd.9 \
-	rt_timer.9 shutdownhook_establish.9 sleep.9 spl.9 store.9 time.9 \
-	timeout.9 uiomove.9 uvm.9 vslock.9 wdc.9
+	fetch.9 fork1.9 humanize_number.9 inittodr.9 intro.9 ioctl.9 kprintf.9 \
+	log.9 malloc.9 mbuf.9 microtime.9 panic.9 pfil.9 physio.9 pool.9 \
+	psignal.9 resettodr.9 rnd.9 rt_timer.9 shutdownhook_establish.9 \
+	sleep.9 spl.9 store.9 time.9 timeout.9 uiomove.9 uvm.9 vslock.9 wdc.9
 MLINKS+=arp.9 arp_ifinit.9 arp.9 arpresolve.9 arp.9 arpintr.9
 MLINKS+=access.9 kernacc.9 access.9 useracc.9
 MLINKS+=bus_space.9 bus_space_alloc.9 bus_space.9 bus_space_barrier.9 \
@@ -67,6 +67,7 @@ MLINKS+=extent.9 extent_create.9 extent.9 extent_destroy.9 \
 	extent.9 extent_print.9
 MLINKS+=fetch.9 fubyte.9 fetch.9 fuibyte.9 fetch.9 fusword.9 \
 	fetch.9 fuswintr.9 fetch.9 fuword.9 fetch.9 fuiword.9
+MLINKS+=humanize_number.9 format_bytes.9
 MLINKS+=kprintf.9 printf.9 kprintf.9 sprintf.9 kprintf.9 vprintf.9 \
 	kprintf.9 uprintf.9 kprintf.9 ttyprintf.9
 MLINKS+=malloc.9 free.9
