@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.18 2002/11/12 14:33:49 itohy Exp $	*/
+/*	$NetBSD: common.c,v 1.19 2004/08/07 21:33:04 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@ __load_rtld(dp)
 
 	/* Map in data segment of ld.so writable */
 	if (mmap(crt.crt_ba+N_DATADDR(hdr), hdr.a_data,
-			PROT_READ|PROT_WRITE,
+			PROT_READ|PROT_WRITE|PROT_EXEC,
 			MAP_FILE|MAP_PRIVATE|MAP_FIXED,
 			crt.crt_ldfd, N_DATOFF(hdr)) == -1) {
 		_FATAL("Cannot map ld.so\n");
