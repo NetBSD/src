@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_atapi.c,v 1.23 2002/10/02 16:52:48 thorpej Exp $	*/
+/*	$NetBSD: cd_atapi.c,v 1.24 2003/07/10 18:18:41 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd_atapi.c,v 1.23 2002/10/02 16:52:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd_atapi.c,v 1.24 2003/07/10 18:18:41 martin Exp $");
 
 #include "rnd.h"
 
@@ -98,6 +98,7 @@ const struct cd_ops cd_atapibus_ops = {
 	cd_atapibus_setvol,
 	cd_atapibus_set_pa_immed,
 	cd_atapibus_load_unload,
+	NULL,	/* no cdo_setblksize */
 };
 
 int
