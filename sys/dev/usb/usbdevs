@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.308 2003/03/19 16:22:24 augustss Exp $
+$NetBSD: usbdevs,v 1.309 2003/03/23 00:57:15 simonb Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1343,6 +1343,7 @@ product TREK THUMBDRIVE		0x1111	ThumbDrive
 product TREK THUMBDRIVE_8MB	0x9988	ThumbDrive 8MB
 
 /* Trumpion products */
+product	TRUMPION T33521		0x1003	USB/MP3 decoder
 product	TRUMPION XXX1100	0x1100	XXX 1100
 
 /* Ultima products */
