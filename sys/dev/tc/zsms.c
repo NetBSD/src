@@ -1,4 +1,4 @@
-/*	$NetBSD: zsms.c,v 1.1 2000/07/05 02:48:50 nisimura Exp $	*/
+/*	$NetBSD: zsms.c,v 1.2 2000/10/14 08:51:51 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,6 +53,9 @@
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
+#include <sys/kernel.h>
+#include <sys/proc.h>
+#include <sys/tty.h>
 
 #include <dev/ic/z8530reg.h>
 #include <machine/z8530var.h>
@@ -97,7 +100,7 @@ struct zsms_softc {		/* driver status information */
 	u_short	zsms_rbuf[ZSMS_RX_RING_SIZE]; /* rr1, data pairs */
 
 	int sc_enabled;		/* input enabled? */
-	int self_test;
+	int sc_selftest;	/* self test in progress */
 
 	int inputstate;
 	u_int buttons;
@@ -184,14 +187,8 @@ zsms_attach(parent, self, aux)
 	a.accessops = &zsms_accessops;
 	a.accesscookie = zsms;
 
-	/* XXX correct following comment block XXX
-	 * Attach the wsmouse, saving a handle to it.
-	 * Note that we don't need to check this pointer against NULL
-	 * here or in pmsintr, because if this fails pms_enable() will
-	 * never be called, so pmsintr() will never be called.
-	 */
 	zsms->sc_enabled = 0;
-	zsms->self_test = 0;
+	zsms->sc_selftest = 0;
 	zsms->sc_wsmousedev = config_found(self, &a, wsmousedevprint);
 }
 
@@ -204,21 +201,17 @@ zsms_enable(v)
 	if (sc->sc_enabled)
 		return EBUSY;
 
-	/* XXX mice presence test should be done in match/attach context XXX */
-	sc->self_test = 1;
-	zs_write_data(sc->zsms_cs, MOUSE_SELF_TEST);
-	DELAY(100000);
-	if (sc->self_test < 0) {
-		sc->self_test = 0;
-		return EBUSY;
-	} else if (sc->self_test == 5) {  
-		sc->self_test = 0;
-		sc->sc_enabled = 1;
+	sc->sc_selftest = 4; /* wait for 4 byte reply upto 1/2 sec */
+	zs_write_data(sc->zsms_cs,  MOUSE_SELF_TEST);
+	(void)tsleep(zsms_enable, TTIPRI, "zsmsopen", hz / 2);
+	if (sc->sc_selftest != 0) {
+		sc->sc_selftest = 0;
+		return ENXIO;
 	}
-	sc->inputstate = 0;
-
+	/* XXX DELAY before mode set? */
 	zs_write_data(sc->zsms_cs, MOUSE_INCREMENTAL);
-
+	sc->sc_enabled = 1;
+	sc->inputstate = 0;
 	return 0;
 }
 
@@ -239,6 +232,7 @@ zsms_ioctl(v, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
+
 	if (cmd == WSMOUSEIO_GTYPE) {
 		*(u_int *)data = WSMOUSE_TYPE_VSXXX;
 		return 0;
@@ -253,23 +247,12 @@ zsms_input(vsc, data)
 {
 	struct zsms_softc *sc = vsc;
 
-	/* XXX mice presence test should be done in match/attach context XXX */
-	if (!sc->sc_enabled) {
-		if (sc->self_test > 0) {
-			if (data < 0) {
-				printf("Timeout on 1st byte of mouse self-test report\n");
-				sc->self_test = -1;
-			} else {
-				sc->self_test++;
-			}
+	if (sc->sc_enabled == 0) {
+		if (sc->sc_selftest > 0) {
+			sc->sc_selftest -= 1;
+			if (sc->sc_selftest == 0)
+				wakeup(zsms_enable);
 		}
-		if (sc->self_test == 3) {
-			if ((data & 0x0f) != 0x2) {
-				printf("We don't have a mouse!!!\n");
-				sc->self_test = -1;
-			}
-		}
-		/* Interrupts are not expected.  Discard the byte. */
 		return;
 	}
 
