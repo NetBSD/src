@@ -1,3 +1,5 @@
+/* $NetBSD: if_awi_pcmcia.c,v 1.4 1999/11/05 05:13:36 sommerfeld Exp $ */
+
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
