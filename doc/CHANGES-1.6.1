@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.70 2002/12/13 07:54:42 jmc Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.71 2002/12/14 00:19:04 jmc Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -2645,3 +2645,8 @@ sys/dev/scsipi/cd_scsi.c			1.26-1.27
 	when trying to play audio CD's on some drives.
 	Fixes PR 7299 and probably PR 15155 and PR 16883 too.
 	[jdc, ticket #969]
+
+sys/sys/param.h					1.153-1.154
+
+	Allow NOFILE to be more easily overridden.
+	[abs, ticket #1033]
