@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.58 1997/07/10 20:46:37 mellon Exp $
+# $NetBSD: GENERIC,v 1.59 1997/07/13 19:32:00 hpeyerl Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -159,6 +159,7 @@ bha*	at	isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI (unt.)
 bha*	at	isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI (unt.)
 uha*	at	isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI (unt.)
 uha*	at	isa? port 0x334 irq ? drq ?	# UltraStor [13]4f SCSI (unt.)
+#satlink0 at	isa? port 0x300 drq 1		# PlanetConnect Satellite receiver.
 
 # EISA devices
 ahb*	at	eisa? slot ?			# Adaptec 174[024] SCSI (unt.)
