@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2800,v 1.13 2004/02/13 10:10:18 wiz Exp $
+#	$NetBSD: SMDK2800,v 1.13.2.1 2004/07/15 20:22:15 he Exp $
 #
 #	SMDK2800 -- Samsung's S3C2800 evaluation board.
 #
@@ -122,6 +122,7 @@ options 	PCI_NETBSD_CONFIGURE	# Do not rely on BIOS/whatever to
 options 	DDB_KEYCODE=0x1d	# Enter ddb on ^]
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Development and Debugging options
 

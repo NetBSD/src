@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.13 2004/02/13 11:36:17 wiz Exp $
+#	$NetBSD: INSTALL,v 1.13.2.1 2004/07/15 20:22:15 he Exp $
 #
 #	Shark installation kernel
 #
@@ -123,6 +123,7 @@ options 	INSECURE		# disable kernel securelevel
 #options 	KMEMSTATS	# kernel memory statistics, XXX temp required
 options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # Development and Debugging options
