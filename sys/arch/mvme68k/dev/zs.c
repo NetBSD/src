@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.11 1996/12/17 22:30:13 gwr Exp $	*/
+/*	$NetBSD: zs.c,v 1.12 1997/02/05 14:06:58 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -26,8 +26,8 @@
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
@@ -165,6 +165,12 @@ zs_config(zsc, chan_addr)
 			cs->cs_defspeed = zs_defspeed[zsc_unit][channel];
 		}
 		cs->cs_defcflag = zs_def_cflag;
+
+		/* Make these correspond to cs_defcflag (-crtscts) */
+		cs->cs_rr0_dcd = ZSRR0_DCD;
+		cs->cs_rr0_cts = 0;
+		cs->cs_wr5_dtr = ZSWR5_DTR | ZSWR5_RTS;
+		cs->cs_wr5_rts = 0;
 
 		cs->cs_channel = channel;
 		cs->cs_private = NULL;
@@ -347,13 +353,16 @@ zs_set_modes(cs, cflag)
 	 * status interrupt to detect CTS changes.
 	 */
 	s = splzs();
+#if 0	/* XXX - See below. */
 	if (cflag & CLOCAL) {
 		cs->cs_rr0_dcd = 0;
 		cs->cs_preg[15] &= ~ZSWR15_DCD_IE;
 	} else {
+		/* XXX - Need to notice DCD change here... */
 		cs->cs_rr0_dcd = ZSRR0_DCD;
 		cs->cs_preg[15] |= ZSWR15_DCD_IE;
 	}
+#endif	/* XXX */
 	if (cflag & CRTSCTS) {
 		cs->cs_wr5_dtr = ZSWR5_DTR;
 		cs->cs_wr5_rts = ZSWR5_RTS;
