@@ -1,4 +1,4 @@
-.\"	$NetBSD: sl.4,v 1.1 1996/08/10 21:26:14 explorer Exp $
+.\"	$NetBSD: sl.4,v 1.2 1997/04/09 04:36:34 mikel Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,15 +40,14 @@
 .Nm sl
 .Nd slip network interface
 .Sh SYNOPSIS
-.Nm pseudo-device sl
-.Op Ar count
+.Cd pseudo-device sl Op Ar count
 .Sh DESCRIPTION
 The
-.Nm sl
+.Nm
 interface allows serial lines to be used as network interfaces using the
-.Em slip
+.Em SLIP
 protocol.  The
-.Nm sl
+.Nm
 interface can use Van Jacobson TCP header compression and ICMP filtering.
 .Sh DIAGNOSTICS
 .Bl -diag
@@ -60,12 +59,11 @@ family; the packet was dropped.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr inet 4 ,
-.Xr slipattach 8 ,
+.Xr slattach 8 ,
 .Xr sliplogin 8 ,
 .Xr slstats 8
 .Sh HISTORY
 The
-.Nm sl
+.Nm
 device appeared in
-.Tn NetBSD
-1.0.
+.Nx 1.0 .
