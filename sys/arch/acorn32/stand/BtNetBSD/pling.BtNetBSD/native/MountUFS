@@ -1,5 +1,5 @@
 REM >Mountufs
-REM $NetBSD: MountUFS,v 1.1 2001/10/05 22:28:03 reinoud Exp $
+REM $NetBSD: MountUFS,v 1.2 2001/12/16 20:54:32 reinoud Exp $
 REM
 REM Copyright (c) 1997 Mark Brinicombe
 REM All rights reserved
@@ -65,16 +65,20 @@ REM The drive is the next argument
 I% = INSTR(env$, " ")
 IF (I% = 0) THEN
   drive$ = env$
+  part$  = "a"    : REM partition a
 ELSE
   drive$ = LEFT$(env$, I% - 1)
   REM Skip to the next argument
   REPEAT
     I% += 1
   UNTIL MID$(env$, I%, 1) <> " "
-  env$ = MID$(env$, I%)
+  env$  = MID$(env$, I%)
+  part$ = env$
 ENDIF
 
 drive% = VAL(drive$)
+part%  = ASC(FNupper(part$))-ASC("A")
+unit%  = drive% - 4
 
 REM Lookup the SWI Number for the DiscOp SWI
 swi$ = filesys$ + "_DiscOp"
@@ -83,9 +87,7 @@ SYS "OS_SWINumberFromString",, swi$ TO swi%
 REM Assemble the unixfs_mount argument
 REM Assumes the filesystem is on the a partition
 swi% = swi% AND NOT(&3F)
-swi% += drive% * 8
-
-REM PRINT filesys$;" (";~swi%;") ";dev$;unit%;CHR$(part%+ASC("a"))
+swi% += drive% * 8 + part%
 
 REM Mount the filesystem
 OSCLI("<BtNetBSD$Dir>.native.unixfs_res")

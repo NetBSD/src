@@ -1,4 +1,4 @@
-| $NetBSD: SettScr,v 1.1 2001/10/05 22:28:00 reinoud Exp $
+| $NetBSD: SettScr,v 1.2 2001/12/16 20:54:29 reinoud Exp $
 
 *BASIC
 
@@ -32,10 +32,11 @@ SAVE "MountUFS"
 *Settype OpenRoot Obey
 *Settype unixfs_res Module
 *Settype wd0a obey
-*Settype wd0d obey
 *Settype wd0e obey
 *Settype wd0f obey
 *Settype wd0g obey
+*Settype wd1a obey
+*Settype wd1e obey
 
 *DIR <rel$dir>.!BtNetBSD.src.Banner
 TEXTLOAD "Banner"
@@ -56,8 +57,12 @@ SAVE "mountufs"
 *Settype KillUnixFS Obey
 *Settype OpenRoot Obey
 *Settype unixfs_res module
-*Settype wd0a Obey
-*Settype wd0e Obey
+*Settype wd0a obey
+*Settype wd0e obey
+*Settype wd0f obey
+*Settype wd0g obey
+*Settype wd1a obey
+*Settype wd1e obey
 
 *DIR <rel$dir>.misc.MkRel
 *Settype MkRelease Obey
