@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.19.4.1 1999/10/19 12:50:38 fvdl Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.19.4.2 1999/10/26 19:15:19 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -249,53 +249,73 @@ ffs_fsync(v)
 	struct timespec ts;
 	int s, error, passes, skipmeta;
 
+	if (vp->v_type == VBLK &&
+	    vp->v_specmountpoint != NULL &&
+	    (vp->v_specmountpoint->mnt_flag & MNT_SOFTDEP))
+		softdep_fsync_mountdev(vp);
+	
 	/* 
 	 * Flush all dirty buffers associated with a vnode
 	 */
-	passes = NIADDR;
+	passes = NIADDR + 1;
 	skipmeta = 0;
-	if (ap->a_flags & FSYNC_DATAONLY)
+	if (ap->a_flags & (FSYNC_DATAONLY|FSYNC_WAIT))
 		skipmeta = 1;
-loop:
 	s = splbio();
-loop2:
+loop:
+	for (bp = vp->v_dirtyblkhd.lh_first; bp;
+	     bp = bp->b_vnbufs.le_next)
+		bp->b_flags &= ~B_SCANNED;
 	for (bp = vp->v_dirtyblkhd.lh_first; bp; bp = nbp) {
 		nbp = bp->b_vnbufs.le_next;
-		if ((bp->b_flags & B_BUSY))
+		if (bp->b_flags & (B_BUSY | B_SCANNED))
 			continue;
 		if ((bp->b_flags & B_DELWRI) == 0)
 			panic("ffs_fsync: not dirty");
 		if (skipmeta && bp->b_lblkno < 0)
 			continue;
-		bp->b_flags |= B_BUSY | B_VFLUSH;
+		bp->b_flags |= B_BUSY | B_VFLUSH | B_SCANNED;
 		splx(s);
 		/*
-		 * Wait for I/O associated with indirect blocks to complete,
-		 * since there is no way to quickly wait for them below.
+		 * On our final pass through, do all I/O synchronously
+		 * so that we can find out if our flush is failing
+		 * because of write errors.
 		 */
-		if (bp->b_vp == vp || !(ap->a_flags & FSYNC_WAIT))
+		if (passes > 0 || !(ap->a_flags & FSYNC_WAIT))
 			(void) bawrite(bp);
 		else if ((error = bwrite(bp)) != 0)
 			return (error);
+		s = splbio();
+		/*
+		 * Since we may have slept during the I/O, we need
+		 * to start from a known point.
+		 */
+		nbp = vp->v_dirtyblkhd.lh_first;
+	}
+	if (skipmeta && !(ap->a_flags & FSYNC_DATAONLY)) {
+		skipmeta = 0;
 		goto loop;
 	}
-	if (skipmeta) {
-		skipmeta = 0;
-		goto loop2;
-	}
 	if (ap->a_flags & FSYNC_WAIT) {
-                while (vp->v_numoutput) {
-                        vp->v_flag |= VBWAIT;
-                        sleep((caddr_t)&vp->v_numoutput, PRIBIO + 1);
-                }
-		/*
-		 * Ensure that any filesystem metatdata associated
+		while (vp->v_numoutput) {
+			vp->v_flag |= VBWAIT;
+			sleep((caddr_t)&vp->v_numoutput, PRIBIO + 1);
+		}
+
+		if (ap->a_flags & FSYNC_DATAONLY) {
+			splx(s);
+			return 0;
+		}
+
+		/* 
+		 * Ensure that any filesystem metadata associated
 		 * with the vnode has been written.
 		 */
 		splx(s);
 		if ((error = softdep_sync_metadata(ap)) != 0)
 			return (error);
 		s = splbio();
+
                 if (vp->v_dirtyblkhd.lh_first) {
                        /*
                         * Block devices associated with filesystems may
@@ -307,7 +327,7 @@ loop2:
                         */
                        if (passes > 0) {
                                passes -= 1;
-                               goto loop2;
+                               goto loop;
                        }
 #ifdef DIAGNOSTIC
 		       if (vp->v_type != VBLK)

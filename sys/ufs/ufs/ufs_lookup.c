@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.26.4.1 1999/10/19 12:50:50 fvdl Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.26.4.2 1999/10/26 19:15:20 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -688,7 +688,7 @@ ufs_makedirentry(ip, cnp, newdirp)
 {
 #ifdef DIAGNOSTIC
 	if ((cnp->cn_flags & SAVENAME) == 0)
-		panic("direnter: missing name");
+		panic("makedirentry: missing name");
 #endif
 	newdirp->d_ino = ip->i_number;
 	newdirp->d_namlen = cnp->cn_namelen;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_vnops.c,v 1.1.2.1 1999/10/19 12:50:15 fvdl Exp $	*/
+/*	$NetBSD: sync_vnops.c,v 1.1.2.2 1999/10/26 19:15:18 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -92,7 +92,7 @@ vfs_allocate_syncvnode(mp)
 		}
 		next = start;
 	}
-	vn_syncer_add_to_worklist(vp, next);
+	vn_syncer_add_to_worklist(vp, syncdelay > 0 ? next % syncdelay : 0);
 	mp->mnt_syncer = vp;
 	return (0);
 }
@@ -123,7 +123,6 @@ sync_fsync(v)
 	/*
 	 * Move ourselves to the back of the sync list.
 	 */
-	LIST_REMOVE(syncvp, v_synclist);
 	vn_syncer_add_to_worklist(syncvp, syncdelay);
 
 	/*
@@ -138,7 +137,8 @@ sync_fsync(v)
 		if (asyncflag)
 			mp->mnt_flag |= MNT_ASYNC;
 		vfs_unbusy(mp);
-	}
+	} else
+		simple_unlock(&mountlist_slock);
 	return (0);
 }
 

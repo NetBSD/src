@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.38 1999/10/18 19:52:24 wrstuden Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.38.4.1 1999/10/26 19:15:15 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -235,7 +235,6 @@ adosfs_mountfs(devvp, mp, p)
         mp->mnt_stat.f_fsid.val[0] = (long)devvp->v_rdev;
         mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_ADOSFS);
 	mp->mnt_flag |= MNT_LOCAL;
-	devvp->v_specflags |= SI_MOUNTEDON;
 
 	/*
 	 * init anode table.
@@ -300,7 +299,6 @@ adosfs_unmount(mp, mntflags, p)
 	if ((error = vflush(mp, NULLVP, flags)) != 0)
 		return (error);
 	amp = VFSTOADOSFS(mp);
-	amp->devvp->v_specflags &= ~SI_MOUNTEDON;
 	vn_lock(amp->devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(amp->devvp, FREAD, NOCRED, p);
 	vput(amp->devvp);

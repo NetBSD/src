@@ -226,6 +226,13 @@ softdep_fsync(vp)
 	return (EIO);
 }
 
+void
+softdep_fsync_mountdev(vp)
+	struct vnode *vp;
+{
+	panic("softdep_fsync_mountdev called");
+}
+
 int
 softdep_sync_metadata(v)
 	void *v;

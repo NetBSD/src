@@ -52,7 +52,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)softdep.h	9.5 (McKusick) 2/11/98
+ *	@(#)softdep.h	9.6 (McKusick) 2/25/99
+ *	$Id: softdep.h,v 1.1.2.2 1999/10/26 19:15:20 fvdl Exp $
  */
 
 #include <sys/queue.h>
@@ -352,7 +353,7 @@ struct allocdirect {
 struct indirdep {
 	struct	worklist ir_list;	/* buffer holding indirect block */
 #	define	ir_state ir_list.wk_state /* indirect block pointer state */
-	ufs_daddr_t *ir_saveddata;	/* buffer cache contents */
+	caddr_t	ir_saveddata;		/* buffer cache contents */
 	struct	buf *ir_savebp;		/* buffer holding safe copy */
 	struct	allocindirhd ir_donehd;	/* done waiting to update safecopy */
 	struct	allocindirhd ir_deplisthd; /* allocindir deps for this block */
@@ -516,6 +517,7 @@ struct mkdir {
 	struct	worklist md_list;	/* id_inowait or buffer holding dir */
 #	define	md_state md_list.wk_state /* type: MKDIR_PARENT or MKDIR_BODY */
 	struct	diradd *md_diradd;	/* associated diradd */
+	struct	buf *md_buf;		/* MKDIR_BODY: buffer holding dir */
 	LIST_ENTRY(mkdir) md_mkdirs;	/* list of all mkdirs */
 };
 LIST_HEAD(mkdirlist, mkdir) mkdirlisthd;
