@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.13 2001/01/11 14:05:24 jdolecek Exp $	*/
+/*	$NetBSD: sort.c,v 1.14 2001/01/11 15:10:46 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: sort.c,v 1.13 2001/01/11 14:05:24 jdolecek Exp $");
+__RCSID("$NetBSD: sort.c,v 1.14 2001/01/11 15:10:46 jdolecek Exp $");
 __SCCSID("@(#)sort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -196,6 +196,11 @@ main(argc, argv)
 				    argv[i]);
 			else
 				stdinflag = 1;
+
+			/* change to /dev/stdin if '-' */
+			if (argv[i][0] == '-')
+				argv[i] = _PATH_STDIN;
+
 		} else if ((ch = access(argv[i], R_OK)))
 			err(2, "%s", argv[i]);
 	}
