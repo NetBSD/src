@@ -101,7 +101,7 @@ done:	argc -= optind;
 		dflag = uflag = 1;
 
 	/* because of the +, getopt is messed up */
-	for (; **argv == '+' || **argv == '-'; ++argv, --argc)
+	for (; *argv && (**argv == '+' || **argv == '-'); ++argv, --argc)
 		switch (**argv) {
 		case '+':
 			if ((numchars = atoi(*argv + 1)) < 0)
