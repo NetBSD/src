@@ -1,4 +1,4 @@
-/*	$NetBSD: printjob.c,v 1.34 2002/07/14 15:28:00 wiz Exp $	*/
+/*	$NetBSD: printjob.c,v 1.35 2002/09/03 18:35:11 abs Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: printjob.c,v 1.34 2002/07/14 15:28:00 wiz Exp $");
+__RCSID("$NetBSD: printjob.c,v 1.35 2002/09/03 18:35:11 abs Exp $");
 #endif
 #endif /* not lint */
 
@@ -117,6 +117,7 @@ static char	logname[32];		/* user's login name */
 static char	pxlength[10] = "-y";	/* page length in pixels */
 static char	pxwidth[10] = "-x";	/* page width in pixels */
 static char	tempfile[] = "errsXXXXXX"; /* file name for filter output */
+static char	tempremote[] = "remoteXXXXXX"; /* file name for remote filter */
 static char	width[10] = "-w";	/* page width in static characters */
 
 static void	abortpr(int);
@@ -124,14 +125,15 @@ static void	banner(char *, char *);
 static int	dofork(int);
 static int	dropit(int);
 static void	init(void);
+static void	setup_ofilter(int);
+static void	close_ofilter(void);
 static void	openpr(void);
 static void	opennet(char *);
 static void	opentty(void);
 static void	openrem(void);
 static int	print(int, char *);
 static int	printit(char *);
-static void	pstatus(const char *, ...)
-	__attribute__((__format__(__printf__, 1, 2)));
+static void	pstatus(const char *, ...);
 static char	response(void);
 static void	scan_out(int, char *, int);
 static char	*scnline(int, char *, int);
@@ -167,6 +169,7 @@ printjob(void)
 	signal(SIGTERM, abortpr);
 
 	(void)mktemp(tempfile);		/* OK */
+	(void)mktemp(tempremote);	/* OK */
 
 	/*
 	 * uses short form file names
@@ -256,13 +259,8 @@ again:
 		else if (i == REPRINT && ++errcnt < 5) {
 			/* try reprinting the job */
 			syslog(LOG_INFO, "restarting %s", printer);
-			if (ofilter > 0) {
-				kill(ofilter, SIGCONT);	/* to be sure */
-				(void)close(ofd);
-				while ((i = wait(NULL)) > 0 && i != ofilter)
-					;
-				ofilter = 0;
-			}
+			if (ofilter > 0)
+				close_ofilter();
 			(void)close(pfd);	/* close printer */
 			if (ftruncate(lfd, pidoff) < 0)
 				syslog(LOG_WARNING, "%s: %s: %m", printer, LO);
@@ -298,6 +296,7 @@ again:
 				(void)write(ofd, TR, strlen(TR));
 		}
 		(void)unlink(tempfile);
+		(void)unlink(tempremote);
 		exit(0);
 	}
 	goto again;
@@ -737,8 +736,8 @@ start:
 
 	if (!WIFEXITED(status)) {
 		syslog(LOG_WARNING,
-		    "%s: Daemon filter '%c' terminated (termsig=%d)",
-			printer, format, WTERMSIG(status));
+		    "%s: Daemon filter '%c' terminated (pid=%d) (termsig=%d)",
+			printer, format, (int)pid, WTERMSIG(status));
 		return(ERROR);
 	}
 	switch (WEXITSTATUS(status)) {
@@ -854,6 +853,29 @@ sendfile(int type, char *file)
 	struct stat stb;
 	char buf[BUFSIZ];
 	int sizerr, resp;
+	extern int rflag;
+
+	if (type == '\3' && rflag && (OF || IF)) {
+		int	save_pfd = pfd;
+
+		(void)unlink(tempremote);
+		pfd = open(tempremote, O_WRONLY|O_CREAT|O_TRUNC|O_EXCL, 0664);
+		if (pfd == -1) {
+			pfd = save_pfd;
+			return ERROR;
+		}
+		setup_ofilter(1);
+		switch (i = print('f', file)) {
+		case ERROR:
+		case REPRINT:
+		case FILTERERR:
+		case ACCESS:
+			return(i);
+		}
+		close_ofilter();
+		pfd = save_pfd;
+		file = tempremote;
+	}
 
 	if (lstat(file, &stb) < 0 || (f = open(file, O_RDONLY)) < 0)
 		return(ERROR);
@@ -865,6 +887,7 @@ sendfile(int type, char *file)
 	if (S_ISLNK(stb.st_mode) && fstat(f, &stb) == 0 &&
 	    (stb.st_dev != fdev || stb.st_ino != fino))
 		return(ACCESS);
+
 	amt = snprintf(buf, sizeof(buf), "%c%lld %s\n", type,
 	    (long long)stb.st_size, file);
 	for (i = 0; ; i++) {
@@ -1164,6 +1187,7 @@ dofork(int action)
 			initgroups(pw->pw_name, pw->pw_gid);
 			setgid(pw->pw_gid);
 			setuid(DU);
+			signal(SIGCHLD, SIG_DFL);
 		}
 		return (pid);
 	}
@@ -1188,6 +1212,7 @@ static void
 abortpr(int signo)
 {
 	(void)unlink(tempfile);
+	(void)unlink(tempremote);
 	kill(0, SIGINT);
 	if (ofilter > 0)
 		kill(ofilter, SIGCONT);
@@ -1276,34 +1301,19 @@ init(void)
 	tof = (cgetcap(bp, "fo", ':') == NULL);
 }
 
-/*
- * Acquire line printer or remote connection.
- */
+/*      
+ * Setup output filter - called once for local printer, or (if -r given to lpd)
+ * once per file for remote printers
+ */     
 static void
-openpr(void)
+setup_ofilter(int check_rflag)
 {
-	int i, nofile;
-	char *cp;
 	extern int rflag;
 
-	if (!remote && *LP) {
-		if ((cp = strchr(LP, '@')))
-			opennet(cp);
-		else
-			opentty();
-	} else if (remote) {
-		openrem();
-	} else {
-		syslog(LOG_ERR, "%s: no line printer device or host name",
-			printer);
-		exit(1);
-	}
-
-	/*
-	 * Start up an output filter, if needed.
-	 */
-	if ((!remote || rflag) && OF) {
+	if (OF && (!remote || (check_rflag && rflag))) {
 		int p[2];
+		int i, nofile;
+		char *cp;
 
 		pipe(p);
 		if ((ofilter = dofork(DOABORT)) == 0) {	/* child */
@@ -1327,6 +1337,51 @@ openpr(void)
 		ofd = pfd;
 		ofilter = 0;
 	}
+}
+
+/*
+ * Close the output filter and reset ofd back to the main pfd descriptor
+ */
+static void
+close_ofilter(void)
+{
+	int i;
+
+	if (ofilter) {
+		kill(ofilter, SIGCONT);	/* to be sure */
+		(void)close(ofd);
+		ofd = pfd;
+		while ((i = wait(NULL)) > 0 && i != ofilter)
+			;
+		ofilter = 0;
+	}
+}
+
+/*
+ * Acquire line printer or remote connection.
+ */
+static void
+openpr(void)
+{
+	char *cp;
+
+	if (!remote && *LP) {
+		if ((cp = strchr(LP, '@')))
+			opennet(cp);
+		else
+			opentty();
+	} else if (remote) {
+		openrem();
+	} else {
+		syslog(LOG_ERR, "%s: no line printer device or host name",
+			printer);
+		exit(1);
+	}
+
+	/*
+	 * Start up an output filter, if needed.
+	 */
+	setup_ofilter(0);
 }
 
 /*

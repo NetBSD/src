@@ -1,4 +1,4 @@
-.\"	$NetBSD: lpd.8,v 1.26 2002/08/12 18:08:13 wiz Exp $
+.\"	$NetBSD: lpd.8,v 1.27 2002/09/03 18:35:11 abs Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -117,10 +117,12 @@ The
 .Fl r
 flag allows the
 .Dq of
-filter to be used if specified for a remote
+and
+.Dq if
+filters to be used if specified for a remote
 printer.  Traditionally,
 .Nm
-would not use the output filter for remote printers.
+would not use filters for remote printers.
 .It Fl s
 The
 .Fl s
