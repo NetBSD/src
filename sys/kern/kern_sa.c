@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.24 2003/09/16 13:46:24 cl Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.25 2003/09/16 15:28:45 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.24 2003/09/16 13:46:24 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.25 2003/09/16 15:28:45 cl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,6 +220,13 @@ sys_sa_stacks(struct lwp *l, void *v, register_t *retval)
 	if ((sa->sa_nstacks == 0) && (sa->sa_vp_wait_count != 0))
 		l->l_flag |= L_SA_UPCALL; 
 
+	/*
+	 * Save addresses of the first and last stack on initial load
+	 * the pagefault code uses the saved address to detect threads
+	 * running on an upcall stack.
+	 * XXX assumes all stacks are adjoining
+	 * XXX assumes initial load includes all stacks ever used
+	 */
 	if (sa->sa_vp_stacks_low == 0) {
 		sa->sa_vp_stacks_low = (uintptr_t)sa->sa_stacks[0].ss_sp;
 		sa->sa_vp_stacks_high = (uintptr_t)sa->sa_stacks[count - 1].ss_sp +
@@ -428,6 +435,22 @@ sa_preempt(struct lwp *l)
 }
 
 
+/* 
+ * Help userspace library resolve locks and critical sections
+ * - recycles the calling LWP and its stack if it was not preempted
+ *   and idle the VP until the sa_id LWP unblocks
+ * - recycles the to be unblocked LWP if the calling LWP was preempted
+ *   and returns control to the userspace library so it can switch to
+ *   the blocked thread
+ * This is used if a thread blocks because of a pagefault and is in a
+ * critical section in the userspace library and the critical section
+ * resolving code cannot continue until the blocked thread is unblocked.
+ * If the userspace library switches to the blocked thread in the second
+ * case, it will either continue (because the pagefault has been handled)
+ * or it will pagefault again.  The second pagefault will be detected by
+ * the double pagefault code and the VP will idle until the pagefault
+ * has been handled.
+ */
 int
 sys_sa_unblockyield(struct lwp *l, void *v, register_t *retval)
 {
@@ -653,6 +676,13 @@ sa_upcall_getstate(struct sadata_upcall *sau, struct lwp *event,
 }
 
 
+/* 
+ * Detect double pagefaults and pagefaults on upcalls.
+ * - double pagefaults are detected by comparing the previous faultaddr
+ *   against the current faultaddr
+ * - pagefaults on upcalls are detected by checking if the userspace
+ *   thread is running on an upcall stack
+ */
 static int
 sa_pagefault(struct lwp *l, ucontext_t *l_ctx)
 {
@@ -781,7 +811,16 @@ sa_switch(struct lwp *l, int type)
 			goto sa_upcall_failed;
 		}
 
-		if (l->l_flag & L_SA_PAGEFAULT && sa_pagefault(l,
+		/* 
+		 * Perform the double/upcall pagefault check.
+		 * We do this only here since we need l's ucontext to
+		 * get l's userspace stack. sa_upcall0 above has saved
+		 * it for us. 
+		 * The L_SA_PAGEFAULT flag is set in the MD
+		 * pagefault code to indicate a pagefault.  The MD
+		 * pagefault code also saves the faultaddr for us.
+		 */
+		if ((l->l_flag & L_SA_PAGEFAULT) && sa_pagefault(l,
 			&sau->sau_state.captured.e_ctx) != 0) {
 			sadata_upcall_free(sau);
 			sa->sa_stacks[sa->sa_nstacks++] = st;
