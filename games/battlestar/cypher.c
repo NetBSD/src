@@ -1,4 +1,4 @@
-/*	$NetBSD: cypher.c,v 1.11 2000/07/23 23:57:23 mycroft Exp $	*/
+/*	$NetBSD: cypher.c,v 1.12 2000/09/08 17:25:32 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cypher.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: cypher.c,v 1.11 2000/07/23 23:57:23 mycroft Exp $");
+__RCSID("$NetBSD: cypher.c,v 1.12 2000/09/08 17:25:32 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -66,7 +66,7 @@ cypher()
 				if (!moveplayer(location[position].up, AHEAD))
 					return (-1);
 			} else {
-				puts("There is no way up");
+				puts("There is no way up.");
 				return (-1);
 			}
 			lflag = 0;
