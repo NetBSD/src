@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)set.c	5.3 (Berkeley) 12/1/92";*/
-static char rcsid[] = "$Id: set.c,v 1.3 1993/08/01 18:04:24 mycroft Exp $";
+static char rcsid[] = "$Id: set.c,v 1.4 1994/02/27 03:41:30 cgd Exp $";
 #endif /* not lint */
 
 #include <termios.h>
@@ -254,10 +254,12 @@ set_init()
 	settle = set_tabs();
 
 	if (isreset) {
+		bp = buf;
 		if (tgetstr("rs", &bp) != 0 || tgetstr("is", &bp) != 0) {
 			tputs(buf, 0, outc);
 			settle = 1;
 		}
+		bp = buf;
 		if (tgetstr("rf", &bp) != 0 || tgetstr("if", &bp) != 0) {
 			cat(buf);
 			settle = 1;
