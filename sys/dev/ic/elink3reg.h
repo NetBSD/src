@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3reg.h,v 1.10 1996/12/29 13:25:23 jonathan Exp $	*/
+/*	$NetBSD: elink3reg.h,v 1.11 1996/12/30 19:18:30 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995 Herb Peyerl <hpeyerl@beer.org>
@@ -434,11 +434,12 @@
 /*
  * XXX Bogus values to allow 10/100 PCI media.
  * Should be replaced with Demon, 3c515, or 10/100 PCMCIA  equivalents.
+ * for now, make sure they don't overlap 3c509 CONFIG_CNTRL bits.
  */
-#define IS_100BASE_T4			(1<<8)
-#define IS_100BASE_TX			(1<<9)
-#define IS_100BASE_FX			(1<<10)
-#define IS_100BASE_MII			(1<<11)
+#define IS_100BASE_T4			(1<<16)
+#define IS_100BASE_TX			(1<<17)
+#define IS_100BASE_FX			(1<<18)
+#define IS_100BASE_MII			(1<<19)
 
 
 /* EEPROM state flags/commands */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pci.c,v 1.15 1996/12/29 13:42:58 jonathan Exp $	*/
+/*	$NetBSD: if_ep_pci.c,v 1.16 1996/12/30 19:18:28 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -133,7 +133,7 @@ ep_pci_attach(parent, self, aux)
 	bus_addr_t iobase;
 	bus_size_t iosize;
 	pci_intr_handle_t ih;
-	u_short conn = 0;
+	u_int conn = 0;
 	pcireg_t i;
 	char *model;
 	const char *intrstr = NULL;
