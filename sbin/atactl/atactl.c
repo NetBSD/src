@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.24 2003/12/20 20:03:20 lha Exp $	*/
+/*	$NetBSD: atactl.c,v 1.25 2003/12/30 19:12:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.24 2003/12/20 20:03:20 lha Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.25 2003/12/30 19:12:35 thorpej Exp $");
 #endif
 
 
@@ -58,7 +58,6 @@ __RCSID("$NetBSD: atactl.c,v 1.24 2003/12/20 20:03:20 lha Exp $");
 #include <util.h>
 
 #include <dev/ata/atareg.h>
-#include <dev/ata/atavar.h>
 #include <dev/ic/wdcreg.h>
 #include <sys/ataio.h>
 
