@@ -1,4 +1,4 @@
-.\"	$NetBSD: doc-common,v 1.20 1999/01/11 19:09:30 garbled Exp $
+.\"	$NetBSD: doc-common,v 1.21 1999/01/13 07:19:16 ross Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -85,15 +85,19 @@
 .nr Oc 3
 .nr Op 14n
 .nr Pa 32n
+.nr Lk 32n
+.nr Mt 32n
 .nr Pf 12n
 .nr Pc 3
 .nr Po 12n
+.nr Nx 8n
 .nr Pq 12n
 .nr Ql 16n
 .nr Sc 3
 .nr So 12n
 .nr Sq 12n
 .nr Sy 6n
+.nr Me 6n
 .nr Sx 16n
 .nr Rv 1
 .nr Tn 10n
@@ -312,7 +316,7 @@
 ..
 .de Ss
 .sp
-.ne 2
+.ne 3
 .ti -.25i
 \&\\*(sH\\$1 \|\\$2 \|\\$3 \|\\$4 \|\\$5 \|\\$6 \|\\$7 \|\\$8 \|\\$9
 \&\fP\s0
