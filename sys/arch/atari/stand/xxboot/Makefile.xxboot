@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.xxboot,v 1.1 2003/05/23 21:56:37 leo Exp $
+#	$NetBSD: Makefile.xxboot,v 1.2 2003/06/28 09:30:26 he Exp $
 
 BINDIR=		/usr/mdec/${BTYPE:tl}
 BINMODE=	${NONBINMODE}
 
 STRIPFLAG=
 LDFLAGS=	-nostdlib -static -Wl,-x,-Ttext,0,-N
-CPPFLAGS+=	-I- -I.. -I../.. -D${BTYPE}
+CPPFLAGS+=	-I- -I${.CURDIR}/.. -I${.CURDIR}/../.. -D${BTYPE}
 
 beforeinstall:
 	${OBJCOPY} -O binary ${PROG} ${PROG}X
