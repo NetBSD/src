@@ -1,4 +1,4 @@
-/* $NetBSD: sio.c,v 1.30 2000/06/13 16:40:37 thorpej Exp $ */
+/* $NetBSD: sio.c,v 1.31 2000/07/12 20:50:00 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -64,15 +64,17 @@
  */
 
 #include "opt_dec_2100_a500.h"
+#include "opt_dec_2100a_a500.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.30 2000/06/13 16:40:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.31 2000/07/12 20:50:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>
@@ -87,8 +89,9 @@ __KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.30 2000/06/13 16:40:37 thorpej Exp $");
 
 #include <alpha/pci/siovar.h>
 
-#ifdef DEC_2100_A500
+#if defined(DEC_2100_A500) || defined(DEC_2100A_A500)
 #include <alpha/pci/pci_2100_a500.h>
+#include <alpha/sableio/sableiovar.h>
 #endif
 
 struct sio_softc {
@@ -102,7 +105,7 @@ struct sio_softc {
 	int		sc_is82c693;
 
 	/* ISA chipset must persist; it's used after autoconfig. */
-	struct alpha_isa_chipset sc_isa_chipset;
+	isa_chipset_tag_t sc_ic;
 };
 
 int	siomatch __P((struct device *, struct cfdata *, void *));
@@ -221,8 +224,9 @@ sio_bridge_callback(self)
 		 * up differently.
 		 */
 		switch (cputype) {
-#ifdef DEC_2100_A500
+#if defined(DEC_2100_A500) || defined(DEC_2100A_A500)
 		case ST_DEC_2100_A500:
+		case ST_DEC_2100A_A500:
 			pci_2100_a500_eisa_pickintr(sc->sc_pc, &ec);
 			break;
 #endif
@@ -243,8 +247,22 @@ sio_bridge_callback(self)
 		config_found(&sc->sc_dv, &sa.sa_eba, sioprint);
 	}
 
-	sc->sc_isa_chipset.ic_v = NULL;
-	sc->sc_isa_chipset.ic_attach_hook = sio_isa_attach_hook;
+	/*
+	 * Deal with platforms which have Odd ISA DMA needs.
+	 */
+	switch (cputype) {
+#ifdef DEC_2100_A500
+	case ST_DEC_2100_A500:
+		sc->sc_ic = sableio_pickisa();
+		break;
+#endif
+	default:
+		sc->sc_ic = malloc(sizeof(*sc->sc_ic), M_DEVBUF, M_WAITOK);
+		memset(sc->sc_ic, 0, sizeof(*sc->sc_ic));
+	}
+
+	sc->sc_ic->ic_v = NULL;
+	sc->sc_ic->ic_attach_hook = sio_isa_attach_hook;
 
 	/*
 	 * Deal with platforms that hook up ISA interrupts differently.
@@ -252,14 +270,14 @@ sio_bridge_callback(self)
 	switch (cputype) {
 #ifdef DEC_2100_A500
 	case ST_DEC_2100_A500:
-		pci_2100_a500_isa_pickintr(sc->sc_pc, &sc->sc_isa_chipset);
+		pci_2100_a500_isa_pickintr(sc->sc_pc, sc->sc_ic);
 		break;
 #endif
 	default:
-		sc->sc_isa_chipset.ic_intr_evcnt = sio_intr_evcnt;
-		sc->sc_isa_chipset.ic_intr_establish = sio_intr_establish;
-		sc->sc_isa_chipset.ic_intr_disestablish = sio_intr_disestablish;
-		sc->sc_isa_chipset.ic_intr_alloc = sio_intr_alloc;
+		sc->sc_ic->ic_intr_evcnt = sio_intr_evcnt;
+		sc->sc_ic->ic_intr_establish = sio_intr_establish;
+		sc->sc_ic->ic_intr_disestablish = sio_intr_disestablish;
+		sc->sc_ic->ic_intr_alloc = sio_intr_alloc;
 	}
 
 	sa.sa_iba.iba_busname = "isa";
@@ -267,7 +285,7 @@ sio_bridge_callback(self)
 	sa.sa_iba.iba_memt = sc->sc_memt;
 	sa.sa_iba.iba_dmat =
 	    alphabus_dma_get_tag(sc->sc_parent_dmat, ALPHA_BUS_ISA);
-	sa.sa_iba.iba_ic = &sc->sc_isa_chipset;
+	sa.sa_iba.iba_ic = sc->sc_ic;
 	config_found(&sc->sc_dv, &sa.sa_iba, sioprint);
 }
 
