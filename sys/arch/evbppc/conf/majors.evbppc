@@ -1,4 +1,4 @@
-#	$NetBSD: majors.evbppc,v 1.9 2003/07/27 14:18:19 itojun Exp $
+#	$NetBSD: majors.evbppc,v 1.10 2003/08/17 11:06:46 hannken Exp $
 #
 # Device majors for evbppc
 # (When possible, make entries the same as macppc)
@@ -22,7 +22,7 @@ device-major	ch		char 16			ch
 device-major	ss		char 17			ss
 device-major	uk		char 18			uk
 #				char 19
-#				char 20
+device-major	lpt		char 20			lpt
 device-major	ipl		char 21			ipfilter
 #				char 22
 #				char 23

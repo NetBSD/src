@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.9 2003/07/27 14:18:02 itojun Exp $
+#	$NetBSD: MAKEDEV,v 1.10 2003/08/17 11:06:47 hannken Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -564,8 +564,8 @@ md*)
 
 lpt*|lpa*)
 	case $i in
-	lpt*) name=lpt;	unit=${i#lpt};	chr=16;	flags=0;;
-	lpa*) name=lpa;	unit=${i#lpa};	chr=16;	flags=128;;
+	lpt*) name=lpt;	unit=${i#lpt};	chr=20;	flags=0;;
+	lpa*) name=lpa;	unit=${i#lpa};	chr=20;	flags=128;;
 	esac
 	rm -f $name$unit
 	mknod $name$unit	c $chr $(($unit + $flags))
