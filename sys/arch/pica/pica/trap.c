@@ -1,3 +1,5 @@
+/*	$NetBSD: trap.c,v 1.15.6.1 1999/07/06 11:02:37 itojun Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -37,23 +39,34 @@
  *
  * from: Utah Hdr: trap.c 1.32 91/04/06
  *
- *	from: @(#)trap.c	8.5 (Berkeley) 1/11/94
- *      $Id: trap.c,v 1.1.1.1 1996/03/13 04:58:13 jonathan Exp $
+ *	@(#)trap.c	8.5 (Berkeley) 1/11/94
  */
+
+#include "opt_inet.h"
+#include "opt_atalk.h"
+#include "opt_iso.h"
+#include "opt_ns.h"
+#include "opt_ktrace.h"
+
+#if #defined(CPU_R4000) && !defined(CPU_R3000)
+#error Must define at least one of CPU_R3000 or CPU_R4000.
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/signalvar.h>
 #include <sys/syscall.h>
 #include <sys/user.h>
 #include <sys/buf.h>
-#include <sys/device.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
 #include <net/netisr.h>
+
+#include <mips/locore.h>
 
 #include <machine/trap.h>
 #include <machine/psl.h>
@@ -69,92 +82,210 @@
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
 
-#include <pica/pica/pica.h>
-
 #include <sys/cdefs.h>
 #include <sys/syslog.h>
+#include <miscfs/procfs/procfs.h>
+
+/* all this to get prototypes for ipintr() and arpintr() */
+#include <sys/socket.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <netinet/if_inarp.h>
+#include <netinet/ip_var.h>
+
+#ifdef NETATALK
+#include <netatalk/at_extern.h>
+#endif
 
 struct	proc *machFPCurProcPtr;		/* pointer to last proc to use FP */
 
-extern void MachKernGenException();
-extern void MachUserGenException();
-extern void MachKernIntr();
-extern void MachUserIntr();
-extern void MachTLBModException();
-extern void MachTLBInvalidException();
-extern unsigned MachEmulateBranch();
+/*
+ * Port-specific hardware interrupt handler
+ */
 
-void (*machExceptionTable[])() = {
+int (*mips_hardware_intr) __P((u_int mask, u_int pc, u_int status,
+			       u_int cause)) =
+	( int (*) __P((u_int, u_int, u_int, u_int)) ) 0;
+
+/*
+ * Exception-handling functions, called via machExceptionTable from locore
+ */
+extern void MachTLBModException __P((void));
+extern void MachTLBInvalidException __P((void));
+extern unsigned MachEmulateBranch __P((unsigned *regsPtr,
+			     unsigned instPC,
+			     unsigned fpcCSR,
+			     int allowNonBranch));
+
+extern void mips_r2000_KernGenException __P((void));
+extern void mips_r2000_UserGenException __P((void));
+extern void mips_r2000_KernIntr __P((void));
+extern void mips_r2000_UserIntr __P((void));
+extern void mips_r2000_TLBModException  __P((void));
+extern void mips_r2000_TLBMissException __P((void));
+
+
+extern void mips_r4000_KernGenException __P((void));
+extern void mips_r4000_UserGenException __P((void));
+extern void mips_r4000_KernIntr __P((void));
+extern void mips_r4000_UserIntr __P((void));
+extern void mips_r4000_TLBModException  __P((void));
+extern void mips_r4000_TLBMissException __P((void));
+extern void mips_r4000_TLBInvalidException __P((void));
+
+
+void (*mips_r4000_ExceptionTable[]) __P((void)) = {
 /*
  * The kernel exception handlers.
  */
-	MachKernIntr,			/* external interrupt */
-	MachKernGenException,		/* TLB modification */
-	MachTLBInvalidException,	/* TLB miss (load or instr. fetch) */
-	MachTLBInvalidException,	/* TLB miss (store) */
-	MachKernGenException,		/* address error (load or I-fetch) */
-	MachKernGenException,		/* address error (store) */
-	MachKernGenException,		/* bus error (I-fetch) */
-	MachKernGenException,		/* bus error (load or store) */
-	MachKernGenException,		/* system call */
-	MachKernGenException,		/* breakpoint */
-	MachKernGenException,		/* reserved instruction */
-	MachKernGenException,		/* coprocessor unusable */
-	MachKernGenException,		/* arithmetic overflow */
-	MachKernGenException,		/* trap exception */
-	MachKernGenException,		/* viritual coherence exception inst */
-	MachKernGenException,		/* floating point exception */
-	MachKernGenException,		/* reserved */
-	MachKernGenException,		/* reserved */
-	MachKernGenException,		/* reserved */
-	MachKernGenException,		/* reserved */
-	MachKernGenException,		/* reserved */
-	MachKernGenException,		/* reserved */
-	MachKernGenException,		/* reserved */
-	MachKernGenException,		/* watch exception */
-	MachKernGenException,		/* reserved */
-	MachKernGenException,		/* reserved */
-	MachKernGenException,		/* reserved */
-	MachKernGenException,		/* reserved */
-	MachKernGenException,		/* reserved */
-	MachKernGenException,		/* reserved */
-	MachKernGenException,		/* reserved */
-	MachKernGenException,		/* viritual coherence exception data */
+	mips_r4000_KernIntr,			/* external interrupt */
+	mips_r4000_KernGenException,		/* TLB modification */
+	mips_r4000_TLBInvalidException,	/* TLB miss (load or instr. fetch) */
+	mips_r4000_TLBInvalidException,	/* TLB miss (store) */
+	mips_r4000_KernGenException,		/* address error (load or I-fetch) */
+	mips_r4000_KernGenException,		/* address error (store) */
+	mips_r4000_KernGenException,		/* bus error (I-fetch) */
+	mips_r4000_KernGenException,		/* bus error (load or store) */
+	mips_r4000_KernGenException,		/* system call */
+	mips_r4000_KernGenException,		/* breakpoint */
+	mips_r4000_KernGenException,		/* reserved instruction */
+	mips_r4000_KernGenException,		/* coprocessor unusable */
+	mips_r4000_KernGenException,		/* arithmetic overflow */
+	mips_r4000_KernGenException,		/* trap exception */
+	mips_r4000_KernGenException,		/* virtual coherence exception inst */
+	mips_r4000_KernGenException,		/* floating point exception */
+	mips_r4000_KernGenException,		/* reserved */
+	mips_r4000_KernGenException,		/* reserved */
+	mips_r4000_KernGenException,		/* reserved */
+	mips_r4000_KernGenException,		/* reserved */
+	mips_r4000_KernGenException,		/* reserved */
+	mips_r4000_KernGenException,		/* reserved */
+	mips_r4000_KernGenException,		/* reserved */
+	mips_r4000_KernGenException,		/* watch exception */
+	mips_r4000_KernGenException,		/* reserved */
+	mips_r4000_KernGenException,		/* reserved */
+	mips_r4000_KernGenException,		/* reserved */
+	mips_r4000_KernGenException,		/* reserved */
+	mips_r4000_KernGenException,		/* reserved */
+	mips_r4000_KernGenException,		/* reserved */
+	mips_r4000_KernGenException,		/* reserved */
+	mips_r4000_KernGenException,		/* virtual coherence exception data */
 /*
  * The user exception handlers.
  */
-	MachUserIntr,			/*  0 */
-	MachUserGenException,		/*  1 */
-	MachUserGenException,		/*  2 */
-	MachUserGenException,		/*  3 */
-	MachUserGenException,		/*  4 */
-	MachUserGenException,		/*  5 */
-	MachUserGenException,		/*  6 */
-	MachUserGenException,		/*  7 */
-	MachUserGenException,		/*  8 */
-	MachUserGenException,		/*  9 */
-	MachUserGenException,		/* 10 */
-	MachUserGenException,		/* 11 */
-	MachUserGenException,		/* 12 */
-	MachUserGenException,		/* 13 */
-	MachUserGenException,		/* 14 */
-	MachUserGenException,		/* 15 */
-	MachUserGenException,		/* 16 */
-	MachUserGenException,		/* 17 */
-	MachUserGenException,		/* 18 */
-	MachUserGenException,		/* 19 */
-	MachUserGenException,		/* 20 */
-	MachUserGenException,		/* 21 */
-	MachUserGenException,		/* 22 */
-	MachUserGenException,		/* 23 */
-	MachUserGenException,		/* 24 */
-	MachUserGenException,		/* 25 */
-	MachUserGenException,		/* 26 */
-	MachUserGenException,		/* 27 */
-	MachUserGenException,		/* 28 */
-	MachUserGenException,		/* 29 */
-	MachUserGenException,		/* 20 */
-	MachUserGenException,		/* 31 */
+	mips_r4000_UserIntr,			/*  0 */
+	mips_r4000_UserGenException,		/*  1 */
+	mips_r4000_UserGenException,		/*  2 */
+	mips_r4000_UserGenException,		/*  3 */
+	mips_r4000_UserGenException,		/*  4 */
+	mips_r4000_UserGenException,		/*  5 */
+	mips_r4000_UserGenException,		/*  6 */
+	mips_r4000_UserGenException,		/*  7 */
+	mips_r4000_UserGenException,		/*  8 */
+	mips_r4000_UserGenException,		/*  9 */
+	mips_r4000_UserGenException,		/* 10 */
+	mips_r4000_UserGenException,		/* 11 */
+	mips_r4000_UserGenException,		/* 12 */
+	mips_r4000_UserGenException,		/* 13 */
+	mips_r4000_UserGenException,		/* 14 */
+	mips_r4000_UserGenException,		/* 15 */
+	mips_r4000_UserGenException,		/* 16 */
+	mips_r4000_UserGenException,		/* 17 */
+	mips_r4000_UserGenException,		/* 18 */
+	mips_r4000_UserGenException,		/* 19 */
+	mips_r4000_UserGenException,		/* 20 */
+	mips_r4000_UserGenException,		/* 21 */
+	mips_r4000_UserGenException,		/* 22 */
+	mips_r4000_UserGenException,		/* 23 */
+	mips_r4000_UserGenException,		/* 24 */
+	mips_r4000_UserGenException,		/* 25 */
+	mips_r4000_UserGenException,		/* 26 */
+	mips_r4000_UserGenException,		/* 27 */
+	mips_r4000_UserGenException,		/* 28 */
+	mips_r4000_UserGenException,		/* 29 */
+	mips_r4000_UserGenException,		/* 20 */
+	mips_r4000_UserGenException,		/* 31 */
+};
+
+/*
+ * XXX bug compatibility. Some versions of the locore code still refer
+ * to the exception vector by the Sprite name.
+ * Note these are all different from the r2000 equivalents. At the very
+ * least,  the MIPS-1 returns from an exception using rfe, and the
+ * MIPS-III uses eret.
+*/
+
+void (*machExceptionTable[]) __P((void)) = {
+/*
+ * The kernel exception handlers.
+ */
+	mips_r4000_KernIntr,			/* external interrupt */
+	mips_r4000_KernGenException,		/* TLB modification */
+	mips_r4000_TLBInvalidException,	/* TLB miss (load or instr. fetch) */
+	mips_r4000_TLBInvalidException,	/* TLB miss (store) */
+	mips_r4000_KernGenException,		/* address error (load or I-fetch) */
+	mips_r4000_KernGenException,		/* address error (store) */
+	mips_r4000_KernGenException,		/* bus error (I-fetch) */
+	mips_r4000_KernGenException,		/* bus error (load or store) */
+	mips_r4000_KernGenException,		/* system call */
+	mips_r4000_KernGenException,		/* breakpoint */
+	mips_r4000_KernGenException,		/* reserved instruction */
+	mips_r4000_KernGenException,		/* coprocessor unusable */
+	mips_r4000_KernGenException,		/* arithmetic overflow */
+	mips_r4000_KernGenException,		/* trap exception */
+	mips_r4000_KernGenException,		/* virtual coherence exception inst */
+	mips_r4000_KernGenException,		/* floating point exception */
+	mips_r4000_KernGenException,		/* reserved */
+	mips_r4000_KernGenException,		/* reserved */
+	mips_r4000_KernGenException,		/* reserved */
+	mips_r4000_KernGenException,		/* reserved */
+	mips_r4000_KernGenException,		/* reserved */
+	mips_r4000_KernGenException,		/* reserved */
+	mips_r4000_KernGenException,		/* reserved */
+	mips_r4000_KernGenException,		/* watch exception */
+	mips_r4000_KernGenException,		/* reserved */
+	mips_r4000_KernGenException,		/* reserved */
+	mips_r4000_KernGenException,		/* reserved */
+	mips_r4000_KernGenException,		/* reserved */
+	mips_r4000_KernGenException,		/* reserved */
+	mips_r4000_KernGenException,		/* reserved */
+	mips_r4000_KernGenException,		/* reserved */
+	mips_r4000_KernGenException,		/* virtual coherence exception data */
+/*
+ * The user exception handlers.
+ */
+	mips_r4000_UserIntr,			/*  0 */
+	mips_r4000_UserGenException,		/*  1 */
+	mips_r4000_UserGenException,		/*  2 */
+	mips_r4000_UserGenException,		/*  3 */
+	mips_r4000_UserGenException,		/*  4 */
+	mips_r4000_UserGenException,		/*  5 */
+	mips_r4000_UserGenException,		/*  6 */
+	mips_r4000_UserGenException,		/*  7 */
+	mips_r4000_UserGenException,		/*  8 */
+	mips_r4000_UserGenException,		/*  9 */
+	mips_r4000_UserGenException,		/* 10 */
+	mips_r4000_UserGenException,		/* 11 */
+	mips_r4000_UserGenException,		/* 12 */
+	mips_r4000_UserGenException,		/* 13 */
+	mips_r4000_UserGenException,		/* 14 */
+	mips_r4000_UserGenException,		/* 15 */
+	mips_r4000_UserGenException,		/* 16 */
+	mips_r4000_UserGenException,		/* 17 */
+	mips_r4000_UserGenException,		/* 18 */
+	mips_r4000_UserGenException,		/* 19 */
+	mips_r4000_UserGenException,		/* 20 */
+	mips_r4000_UserGenException,		/* 21 */
+	mips_r4000_UserGenException,		/* 22 */
+	mips_r4000_UserGenException,		/* 23 */
+	mips_r4000_UserGenException,		/* 24 */
+	mips_r4000_UserGenException,		/* 25 */
+	mips_r4000_UserGenException,		/* 26 */
+	mips_r4000_UserGenException,		/* 27 */
+	mips_r4000_UserGenException,		/* 28 */
+	mips_r4000_UserGenException,		/* 29 */
+	mips_r4000_UserGenException,		/* 20 */
+	mips_r4000_UserGenException,		/* 31 */
 };
 
 char	*trap_type[] = {
@@ -171,9 +302,9 @@ char	*trap_type[] = {
 	"reserved instruction",
 	"coprocessor unusable",
 	"arithmetic overflow",
-	"trap",
-	"viritual coherency instruction",
-	"floating point",
+	"r4k trap/r3k reserved 13",
+	"r4k virtual coherency instruction/r3k reserved 14",
+	"r4k floating point/ r3k reserved 15",
 	"reserved 16",
 	"reserved 17",
 	"reserved 18",
@@ -181,7 +312,7 @@ char	*trap_type[] = {
 	"reserved 20",
 	"reserved 21",
 	"reserved 22",
-	"watch",
+	"r4000 watch",
 	"reserved 24",
 	"reserved 25",
 	"reserved 26",
@@ -189,15 +320,8 @@ char	*trap_type[] = {
 	"reserved 28",
 	"reserved 29",
 	"reserved 30",
-	"viritual coherency data",
+	"r4000 virtual coherency data",
 };
-
-struct {
-	int	int_mask;
-	int	(*int_hand)();
-} cpu_int_tab[8];
-
-int cpu_int_mask;	/* External cpu interrupt mask */
 
 #ifdef DEBUG
 #define TRAPSIZE	10
@@ -210,6 +334,9 @@ struct trapdebug {		/* trap history buffer for debugging */
 	u_int	sp;
 	u_int	code;
 } trapdebug[TRAPSIZE], *trp = trapdebug;
+
+void trapDump __P((char * msg));
+void cpu_getregs __P((int *regs));
 #endif	/* DEBUG */
 
 #ifdef DEBUG	/* stack trace code, also useful for DDB one day */
@@ -217,14 +344,14 @@ extern void stacktrace();
 extern void logstacktrace();
 
 /* extern functions printed by name in stack backtraces */
-extern void idle(), cpu_switch(), splx(), MachEmptyWriteBuffer();
+extern void idle(), cpu_switch(), wbflush();
 extern void MachTLBMiss();
+extern int main __P((void*));
 #endif	/* DEBUG */
 
-static void pica_errintr();
-extern const struct callback *callv;
 extern volatile struct chiptime *Mach_clock_addr;
 extern u_long intrcnt[];
+
 
 /*
  * Handle an exception.
@@ -261,7 +388,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 #endif
 
 	cnt.v_trap++;
-	type = (causeReg & MACH_CR_EXC_CODE) >> MACH_CR_EXC_CODE_SHIFT;
+	type = (causeReg & MIPS_CR_EXC_CODE) >> MIPS_CR_EXC_CODE_SHIFT;
 	if (USERMODE(statusReg)) {
 		type |= T_USER;
 		sticks = p->p_sticks;
@@ -271,8 +398,8 @@ trap(statusReg, causeReg, vadr, pc, args)
 	 * Enable hardware interrupts if they were on before.
 	 * We only respond to software interrupts when returning to user mode.
 	 */
-	if (statusReg & MACH_SR_INT_ENAB)
-		splx((statusReg & MACH_HARD_INT_MASK) | MACH_SR_INT_ENAB);
+	if (statusReg & MIPS_SR_INT_IE)
+		splx((statusReg & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
 
 	switch (type) {
 	case T_TLB_MOD:
@@ -358,11 +485,12 @@ trap(statusReg, causeReg, vadr, pc, args)
 			int rv;
 
 		kernel_fault:
+			/*kernelfaults++;*/
 			va = trunc_page((vm_offset_t)vadr);
 			rv = vm_fault(kernel_map, va, ftype, FALSE);
 			if (rv == KERN_SUCCESS)
 				return (pc);
-			if (i = ((struct pcb *)UADDR)->pcb_onfault) {
+			if ((i = ((struct pcb *)UADDR)->pcb_onfault) != 0) {
 				((struct pcb *)UADDR)->pcb_onfault = 0;
 				return (onfault_table[i]);
 			}
@@ -423,14 +551,22 @@ trap(statusReg, causeReg, vadr, pc, args)
 			goto out;
 		}
 		if (!USERMODE(statusReg)) {
-			if (i = ((struct pcb *)UADDR)->pcb_onfault) {
+			if ((i = ((struct pcb *)UADDR)->pcb_onfault) != 0) {
 				((struct pcb *)UADDR)->pcb_onfault = 0;
 				return (onfault_table[i]);
 			}
 			goto err;
 		}
 		ucode = vadr;
-		i = SIGSEGV;
+		if (rv == KERN_RESOURCE_SHORTAGE) {
+			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
+			       p->p_pid, p->p_comm,
+			       p->p_cred && p->p_ucred ?
+			       p->p_ucred->cr_uid : -1);
+			i = SIGKILL;
+		} else {
+			i = SIGSEGV;
+		}
 		break;
 	    }
 
@@ -506,7 +642,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 			if (code >= numsys)
 				callp += p->p_emul->e_nosys; /* (illegal) */
 			else
-				callp += code; 
+				callp += code;
 			i = callp->sy_argsize / sizeof(int);
 			args.i[0] = locr0[A2];
 			args.i[1] = locr0[A3];
@@ -593,6 +729,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 		trp->vadr = locr0[SP];
 		trp->pc = locr0[PC];
 		trp->ra = locr0[RA];
+		/*trp->sp = (int)&args;*/	/* XXX */
 		trp->code = -code;
 		if (++trp == &trapdebug[TRAPSIZE])
 			trp = trapdebug;
@@ -617,6 +754,11 @@ trap(statusReg, causeReg, vadr, pc, args)
 			locr0[V0] = i;
 			locr0[A3] = 1;
 		}
+
+		/*
+		 * If we modified code or data, flush caches.
+		 * XXX code unyderling ptrace() and/or proc fs should do this?
+		 */
 		if(code == SYS_ptrace)
 			MachFlushCache();
 	done:
@@ -625,7 +767,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 #endif
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_SYSRET))
-			ktrsysret(p->p_tracep, code, i, rval);
+			ktrsysret(p->p_tracep, code, i, rval[0]);
 #endif
 		goto out;
 	    }
@@ -648,7 +790,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 			p->p_comm, p->p_pid, instr, pc,
 			p->p_md.md_ss_addr, p->p_md.md_ss_instr); /* XXX */
 #endif
-		if (p->p_md.md_ss_addr != va || instr != MACH_BREAK_SSTEP) {
+		if (p->p_md.md_ss_addr != va || instr != MIPS_BREAK_SSTEP) {
 			i = SIGTRAP;
 			break;
 		}
@@ -682,13 +824,14 @@ trap(statusReg, causeReg, vadr, pc, args)
 		break;
 
 	case T_COP_UNUSABLE+T_USER:
-		if ((causeReg & MACH_CR_COP_ERR) != 0x10000000) {
+		if ((causeReg & MIPS_CR_COP_ERR) != 0x10000000) {
 			i = SIGILL;	/* only FPU instructions allowed */
 			break;
 		}
-		MachSwitchFPState(machFPCurProcPtr, p->p_md.md_regs);
+		MachSwitchFPState(machFPCurProcPtr,
+				  (struct user*)p->p_md.md_regs);
 		machFPCurProcPtr = p;
-		p->p_md.md_regs[PS] |= MACH_SR_COP_1_BIT;
+		p->p_md.md_regs[PS] |= MIPS_SR_COP_1_BIT;
 		p->p_md.md_flags |= MDP_FPUSED;
 		goto out;
 
@@ -712,7 +855,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 	case T_ADDR_ERR_LD:	/* misaligned access */
 	case T_ADDR_ERR_ST:	/* misaligned access */
 	case T_BUS_ERR_LD_ST:	/* BERR asserted to cpu */
-		if (i = ((struct pcb *)UADDR)->pcb_onfault) {
+		if ((i = ((struct pcb *)UADDR)->pcb_onfault) != 0) {
 			((struct pcb *)UADDR)->pcb_onfault = 0;
 			return (onfault_table[i]);
 		}
@@ -763,9 +906,9 @@ trap(statusReg, causeReg, vadr, pc, args)
 #endif
 		panic("trap");
 	}
-	p->p_md.md_regs[PC] = pc;
-	p->p_md.md_regs[CAUSE] = causeReg;
-	p->p_md.md_regs[BADVADDR] = vadr;
+	p->p_md.md_regs [PC] = pc;
+	p->p_md.md_regs [CAUSE] = causeReg;
+	p->p_md.md_regs [BADVADDR] = vadr;
 	trapsignal(p, i, ucode);
 out:
 	/*
@@ -814,6 +957,7 @@ out:
  * Called from MachKernIntr() or MachUserIntr()
  * Note: curproc might be NULL.
  */
+void
 interrupt(statusReg, causeReg, pc, what, args)
 	unsigned statusReg;	/* status register at time of the exception */
 	unsigned causeReg;	/* cause register at time of exception */
@@ -838,22 +982,10 @@ interrupt(statusReg, causeReg, pc, what, args)
 	cnt.v_intr++;
 	mask = causeReg & statusReg;	/* pending interrupts & enable mask */
 
-	/*
-	 *  Check off all enabled interrupts. Called interrupt routine
-	 *  returns mask of interrupts to reenable.
-	 */
-	for(i = 0; i < 5; i++) {
-		if(cpu_int_tab[i].int_mask & mask) {
-			causeReg &= (*cpu_int_tab[i].int_hand)(mask, pc, statusReg, causeReg);
-		}
-	}
-	/*
-	 *  Reenable all non served hardware levels.
-	 */
-	splx((statusReg & ~causeReg & MACH_HARD_INT_MASK) | MACH_SR_INT_ENAB);
+	splx(pica_hardware_intr(mask, pc, statusReg, causeReg));
 
 
-	if (mask & MACH_SOFT_INT_MASK_0) {
+	if (mask & MIPS_SOFT_INT_MASK_0) {
 		clearsoftclock();
 		cnt.v_soft++;
 		softclock();
@@ -861,19 +993,34 @@ interrupt(statusReg, causeReg, pc, what, args)
 	/*
 	 *  Process network interrupt if we trapped or will very soon
 	 */
-	if ((mask & MACH_SOFT_INT_MASK_1) ||
-	    netisr && (statusReg & MACH_SOFT_INT_MASK_1)) {
+	if ((mask & MIPS_SOFT_INT_MASK_1) ||
+	    netisr && (statusReg & MIPS_SOFT_INT_MASK_1)) {
 		clearsoftnet();
 		cnt.v_soft++;
 		intrcnt[1]++;
 #ifdef INET
+#include "arp.h"
+#if NARP > 0
 		if (netisr & (1 << NETISR_ARP)) {
 			netisr &= ~(1 << NETISR_ARP);
 			arpintr();
 		}
+#endif
 		if (netisr & (1 << NETISR_IP)) {
 			netisr &= ~(1 << NETISR_IP);
 			ipintr();
+		}
+#endif
+#ifdef INET6
+		if (netisr & (1 << NETISR_IPV6)) {
+			netisr &= ~(1 << NETISR_IPV6);
+			ip6intr();
+		}
+#endif
+#ifdef NETATALK
+		if (netisr & (1 << NETISR_ATALK)) {
+			netisr &= ~(1 << NETISR_ATALK);
+			atintr();
 		}
 #endif
 #ifdef NS
@@ -890,13 +1037,14 @@ interrupt(statusReg, causeReg, pc, what, args)
 #endif
 #include "ppp.h"
 #if NPPP > 0
-		if(netisr & (1 << NETISR_PPP)) {
+		if (netisr & (1 << NETISR_PPP)) {
 			netisr &= ~(1 << NETISR_PPP);
 			pppintr();
 		}
 #endif
 	}
-	if (mask & MACH_SOFT_INT_MASK_0) {
+
+	if (mask & MIPS_SOFT_INT_MASK_0) {
 		clearsoftclock();
 		intrcnt[0]++;
 		cnt.v_soft++;
@@ -905,31 +1053,11 @@ interrupt(statusReg, causeReg, pc, what, args)
 }
 
 
-set_intr(mask, int_hand, prio)
-	int	mask;
-	int	(*int_hand)();
-	int	prio;
-{
-	if(prio > 4)
-		panic("set_intr: to high priority");
-
-	if(cpu_int_tab[prio].int_mask != 0)
-		panic("set_intr: int already set");
-
-	cpu_int_tab[prio].int_hand = int_hand;
-	cpu_int_tab[prio].int_mask = mask;
-	cpu_int_mask |= mask >> 10;
-
-	/*
-	 *  Update external interrupt mask but dont enable clock.
-	 */
-	out32(PICA_SYS_EXT_IMASK, cpu_int_mask & (~MACH_INT_MASK_4 >> 10));
-}
-
 /*
  * This is called from MachUserIntr() if astpending is set.
  * This is very similar to the tail of trap().
  */
+void
 softintr(statusReg, pc)
 	unsigned statusReg;	/* status register at time of the exception */
 	unsigned pc;		/* program counter where to continue */
@@ -970,6 +1098,7 @@ softintr(statusReg, pc)
 }
 
 #ifdef DEBUG
+void
 trapDump(msg)
 	char *msg;
 {
@@ -986,49 +1115,14 @@ trapDump(msg)
 		if (trp->cause == 0)
 			break;
 		printf("%s: ADR %x PC %x CR %x SR %x\n",
-			trap_type[(trp->cause & MACH_CR_EXC_CODE) >>
-				MACH_CR_EXC_CODE_SHIFT],
+			trap_type[(trp->cause & MIPS_CR_EXC_CODE) >>
+				MIPS_CR_EXC_CODE_SHIFT],
 			trp->vadr, trp->pc, trp->cause, trp->status);
 		printf("   RA %x SP %x code %d\n", trp->ra, trp->sp, trp->code);
 	}
 	splx(s);
 }
 #endif
-
-/*
- *----------------------------------------------------------------------
- *
- * MemErrorInterrupts --
- *   pica_errintr - for the ACER PICA_61
- *
- *	Handler an interrupt for the control register.
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	None.
- *
- *----------------------------------------------------------------------
- */
-static void
-pica_errintr()
-{
-#if 0
-	volatile u_short *sysCSRPtr =
-		(u_short *)MACH_PHYS_TO_UNCACHED(KN01_SYS_CSR);
-	u_short csr;
-
-	csr = *sysCSRPtr;
-
-	if (csr & KN01_CSR_MERR) {
-		printf("Memory error at 0x%x\n",
-			*(unsigned *)MACH_PHYS_TO_UNCACHED(KN01_SYS_ERRADR));
-		panic("Mem error interrupt");
-	}
-	*sysCSRPtr = (csr & ~KN01_CSR_MBZ) | 0xff;
-#endif
-}
 
 
 /*
@@ -1145,9 +1239,9 @@ MachEmulateBranch(regsPtr, instPC, fpcCSR, allowNonBranch)
 		case OP_BCx:
 		case OP_BCy:
 			if ((inst.RType.rt & COPz_BC_TF_MASK) == COPz_BC_TRUE)
-				condition = fpcCSR & MACH_FPC_COND_BIT;
+				condition = fpcCSR & MIPS_FPU_COND_BIT;
 			else
-				condition = !(fpcCSR & MACH_FPC_COND_BIT);
+				condition = !(fpcCSR & MIPS_FPU_COND_BIT);
 			if (condition)
 				retAddr = GetBranchDest(instPC, inst);
 			else
@@ -1177,13 +1271,14 @@ MachEmulateBranch(regsPtr, instPC, fpcCSR, allowNonBranch)
  * We do this by storing a break instruction after the current instruction,
  * resuming execution, and then restoring the old instruction.
  */
+int
 cpu_singlestep(p)
 	register struct proc *p;
 {
 	register unsigned va;
 	register int *locr0 = p->p_md.md_regs;
 	int i;
-	int bpinstr = MACH_BREAK_SSTEP;
+	int bpinstr = MIPS_BREAK_SSTEP;
 	int curinstr;
 	struct uio uio;
 	struct iovec iov;
@@ -1215,6 +1310,7 @@ cpu_singlestep(p)
 		return (EFAULT);
 	}
 	p->p_md.md_ss_addr = va;
+
 	/*
 	 * Fetch what's at the current location.
 	 */
@@ -1242,7 +1338,7 @@ cpu_singlestep(p)
 	uio.uio_rw = UIO_WRITE;
 	uio.uio_procp = curproc;
 	i = procfs_domem(curproc, p, NULL, &uio);
-	MachFlushCache();
+	MachFlushCache(); /* XXX memory barrier followed by flush icache? */
 
 	if (i < 0)
 		return (EFAULT);
@@ -1255,6 +1351,7 @@ cpu_singlestep(p)
 }
 
 #ifdef DEBUG
+int
 kdbpeek(addr)
 {
 	if (addr & 3) {
@@ -1299,7 +1396,6 @@ stacktrace_subr(a0, a1, a2, a3, printfn)
 	InstFmt i;
 	int more, stksize;
 	int regs[3];
-	extern setsoftclock();
 	extern char start[], edata[];
 	unsigned int frames =  0;
 
@@ -1333,11 +1429,21 @@ specialframe:
 		goto done;
 	}
 
+/*
+ * check for PC between two entry points
+ */
+# define Between(x, y, z) \
+		( ((x) <= (y)) && ((y) < (z)) )
+# define pcBetween(a,b) \
+		Between((unsigned)a, pc, (unsigned)b)
+
+
 	/* Backtraces should contine through interrupts from kernel mode */
-	if (pc >= (unsigned)MachKernIntr && pc < (unsigned)MachUserIntr) {
+#ifdef CPU_R3000
+	if (pcBetween(mips_r2000_KernIntr, mips_r2000_UserIntr)) {
 		/* NOTE: the offsets depend on the code in locore.s */
-		(*printfn)("MachKernIntr+%x: (%x, %x ,%x) -------\n",
-		       pc-(unsigned)MachKernIntr, a0, a1, a2);
+		(*printfn)("r3000 KernIntr+%x: (%x, %x ,%x) -------\n",
+		       pc-(unsigned)mips_r2000_KernIntr, a0, a1, a2);
 		a0 = kdbpeek(sp + 36);
 		a1 = kdbpeek(sp + 40);
 		a2 = kdbpeek(sp + 44);
@@ -1348,27 +1454,69 @@ specialframe:
 		sp = sp + 108;
 		goto specialframe;
 	}
+#endif	/* CPU_R3000 */
+
+#ifdef CPU_R4000
+	if (pcBetween(mips_r4000_KernIntr, mips_r4000_UserIntr)) {
+		/* NOTE: the offsets depend on the code in locore.s */
+		(*printfn)("R4000 KernIntr+%x: (%x, %x ,%x) -------\n",
+		       pc-(unsigned)mips_r4000_KernIntr, a0, a1, a2);
+		a0 = kdbpeek(sp + 36);
+		a1 = kdbpeek(sp + 40);
+		a2 = kdbpeek(sp + 44);
+		a3 = kdbpeek(sp + 48);
+
+		pc = kdbpeek(sp + 20);	/* exc_pc - pc at time of exception */
+		ra = kdbpeek(sp + 92);	/* ra at time of exception */
+		sp = sp + 108;
+		goto specialframe;
+	}
+#endif	/* cpu_r4000 */
 
 
-# define Between(x, y, z) \
-		( ((x) <= (y)) && ((y) < (z)) )
-# define pcBetween(a,b) \
-		Between((unsigned)a, pc, (unsigned)b)
 
 	/*
 	 * Check for current PC in  exception handler code that don't
 	 * have a preceding "j ra" at the tail of the preceding function. 
 	 * Depends on relative ordering of functions in locore.
 	 */
-	if (pcBetween(MachKernGenException, MachUserGenException))
-		subr = (unsigned) MachKernGenException;
-	else if (pcBetween(MachUserGenException,MachKernIntr))
-		subr = (unsigned) MachUserGenException;
-	else if (pcBetween(MachKernIntr, MachUserIntr))
-		subr = (unsigned) MachKernIntr;
-	else if (pcBetween(MachUserIntr, MachTLBInvalidException))
-		subr = (unsigned) MachUserIntr;
-	else if (pcBetween(splx, MachEmptyWriteBuffer))
+
+	/* XXX fixup tests after cutting and pasting in locore.S */
+	/* R4000  exception handlers */
+
+#ifdef CPU_R2000
+	if (pcBetween(mips_r2000_KernGenException, mips_r2000_UserGenException))
+		subr = (unsigned) mips_r2000_KernGenException;
+	else if (pcBetween(mips_r2000_UserGenException,mips_r2000_KernIntr))
+		subr = (unsigned) mips_r2000_UserGenException;
+	else if (pcBetween(mips_r2000_KernIntr, mips_r2000_UserIntr))
+		subr = (unsigned) mips_r2000_KernIntr;
+	else if (pcBetween(mips_r2000_UserIntr, mips_r2000_TLBMissException))
+		subr = (unsigned) mips_r2000_UserIntr;
+
+	else if (pcBetween(mips_r2000_UserIntr, mips_r2000_TLBMissException))
+		subr = (unsigned) mips_r2000_UserIntr;
+	else
+#endif /* CPU_R2000 */
+
+
+#ifdef CPU_R4000
+	/* R4000  exception handlers */
+	if (pcBetween(mips_r4000_KernGenException, mips_r4000_UserGenException))
+		subr = (unsigned) mips_r4000_KernGenException;
+	else if (pcBetween(mips_r4000_UserGenException,mips_r4000_KernIntr))
+		subr = (unsigned) mips_r4000_UserGenException;
+	else if (pcBetween(mips_r4000_KernIntr, mips_r4000_UserIntr))
+		subr = (unsigned) mips_r4000_KernIntr;
+
+
+	else if (pcBetween(mips_r4000_UserIntr, mips_r4000_TLBMissException))
+		subr = (unsigned) mips_r4000_UserIntr;
+	else
+#endif /* CPU_R4000 */
+
+
+	if (pcBetween(splx, wbflush))
 		subr = (unsigned) splx;
 	else if (pcBetween(cpu_switch, fuword))
 		subr = (unsigned) cpu_switch;
@@ -1377,14 +1525,21 @@ specialframe:
 		ra = 0;
 		goto done;
 	}
-	else if (pc >= (unsigned)MachTLBMiss && pc < (unsigned)setsoftclock) {
+#ifdef notyet /* XXX FIXME: the order changed with merged locore */
+	else if (pc >= (unsigned)MachUTLBMiss && pc < (unsigned)setsoftclock) {
 		(*printfn)("<<locore>>");
 		goto done;
 	}
+#endif	/* notyet */
 
 	/* check for bad PC */
 	if (pc & 3 || pc < 0x80000000 || pc >= (unsigned)edata) {
-		(*printfn)("PC 0x%x: not in kernel\n", pc);
+		(*printfn)("PC 0x%x: not in kernel space\n", pc);
+		ra = 0;
+		goto done;
+	}
+	if (!pcBetween(start, (unsigned) edata)) {
+		(*printfn)("PC 0x%x: not in kernel text\n", pc);
 		ra = 0;
 		goto done;
 	}
@@ -1408,7 +1563,9 @@ specialframe:
 	 * Jump here for locore entry pointsn for which the preceding
 	 * function doesn't end in "j ra"
 	 */
+#if 0
 stackscan:
+#endif
 	/* scan forwards to find stack size and any saved registers */
 	stksize = 0;
 	more = 3;
@@ -1529,12 +1686,28 @@ finish:
 #define Name(_fn) { _fn, "_fn"}
 #endif
 static struct { void *addr; char *name;} names[] = {
+	Name(stacktrace),
+	Name(stacktrace_subr),
+	Name(main),
 	Name(interrupt),
 	Name(trap),
-	Name(MachKernGenException),
-	Name(MachUserGenException),
-	Name(MachKernIntr),
-	Name(MachUserIntr),
+#ifdef pmax
+	Name(am7990_meminit),
+#endif
+#ifdef CPU_R3000
+	Name(mips_r2000_KernGenException),
+	Name(mips_r2000_UserGenException),
+	Name(mips_r2000_KernIntr),
+	Name(mips_r2000_UserIntr),
+#endif	/* CPU_R3000 */
+
+#ifdef CPU_R4000
+	Name(mips_r4000_KernGenException),
+	Name(mips_r4000_UserGenException),
+	Name(mips_r4000_KernIntr),
+	Name(mips_r4000_UserIntr),
+#endif	/* CPU_R4000 */
+
 	Name(splx),
 	Name(idle),
 	Name(cpu_switch),
