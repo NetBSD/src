@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.40 1996/10/13 03:21:47 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.41 1996/10/17 06:42:44 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -125,7 +125,7 @@ int mmupid = -1;
 #define MDB_FOLLOW	1
 #define MDB_WBFOLLOW	2
 #define MDB_WBFAILED	4
-#define MDB_ISPID(p)	(p) == mmupid
+#define MDB_ISPID(pid)	((pid) == mmupid)
 #endif
 
 /* trap() and syscall() only called from locore */
@@ -254,6 +254,14 @@ trap(type, code, v, frame)
 		sticks = p->p_sticks;
 		p->p_md.md_regs = frame.f_regs;
 	}
+
+	/* I have verified that this DOES happen! -gwr */
+	if (p == NULL)
+		p = &proc0;
+#ifdef DIAGNOSTIC
+	if (p->p_addr == NULL)
+		panic("trap: no pcb");
+#endif
 
 	switch (type) {
 	default:
@@ -514,7 +522,7 @@ copyfault:
 		    (!p->p_addr->u_pcb.pcb_onfault || KDFAULT(code)))
 			map = kernel_map;
 		else
-			map = &vm->vm_map;
+			map = vm ? &vm->vm_map : kernel_map;
 		if (WRFAULT(code))
 			ftype = VM_PROT_READ | VM_PROT_WRITE;
 		else
@@ -539,7 +547,8 @@ copyfault:
 		 * the current limit and we need to reflect that as an access
 		 * error.
 		 */
-		if ((caddr_t)va >= vm->vm_maxsaddr && map != kernel_map) {
+		if ((vm != NULL && (caddr_t)va >= vm->vm_maxsaddr)
+		    && map != kernel_map) {
 			if (rv == KERN_SUCCESS) {
 				unsigned nss;
 
