@@ -1,4 +1,4 @@
-/* $NetBSD: pppoectl.c,v 1.2 2002/01/04 12:23:00 martin Exp $ */
+/* $NetBSD: pppoectl.c,v 1.3 2002/01/06 20:23:55 martin Exp $ */
 
 /*
  * Copyright (c) 1997 Joerg Wunsch
@@ -48,7 +48,7 @@
 
 static void usage(void);
 static void print_error(const char *ifname, int error, const char * str);
-static void print_vals(const char *ifname, int phase, struct spppauthcfg *sp, int lcp_timeout);
+static void print_vals(const char *ifname, int phase, struct spppauthcfg *sp, int lcp_timeout, time_t idle_timeout);
 const char *phase_name(int phase);
 const char *proto_name(int proto);
 const char *authflags(int flags);
@@ -66,8 +66,9 @@ main(int argc, char **argv)
 	struct spppauthcfg spr;
 	struct sppplcpcfg lcp;
 	struct spppstatus status;
+	struct spppidletimeout timeout;
 	int mib[2];
-	int set_lcp = 0;
+	int set_auth = 0, set_lcp = 0, set_idle_to = 0;
 	struct clockinfo clockinfo;
 
 	eth_if_name = NULL;
@@ -174,6 +175,8 @@ main(int argc, char **argv)
 	strncpy(lcp.ifname, ifname, sizeof lcp.ifname);
 	memset(&status, 0, sizeof status);
 	strncpy(status.ifname, ifname, sizeof status.ifname);
+	memset(&timeout, 0, sizeof timeout);
+	strncpy(timeout.ifname, ifname, sizeof timeout.ifname);
 
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_CLOCKRATE;
@@ -205,8 +208,10 @@ main(int argc, char **argv)
 			err(EX_OSERR, "SPPPGETLCPCFG");
 		if (ioctl(s, SPPPGETSTATUS, &status) == -1)
 			err(EX_OSERR, "SPPPGETSTATUS");
+		if (ioctl(s, SPPPGETIDLETO, &timeout) == -1)
+			err(EX_OSERR, "SPPPGETIDLETO");
 
-		print_vals(ifname, status.phase, &spr, lcp.lcp_timeout);
+		print_vals(ifname, status.phase, &spr, lcp.lcp_timeout, timeout.idle_seconds);
 
 		if (spr.hisname) free(spr.hisname);
 		if (spr.myname) free(spr.myname);
@@ -227,6 +232,7 @@ main(int argc, char **argv)
 				spr.myauth = spr.hisauth = SPPP_AUTHPROTO_NONE;
 			else
 				errx(EX_DATAERR, "bad auth proto: %s", cp);
+			set_auth = 1;
 		} else if (startswith("myauthproto=")) {
 			cp = argv[0] + off;
 			if (strcmp(cp, "pap") == 0)
@@ -237,12 +243,15 @@ main(int argc, char **argv)
 				spr.myauth = SPPP_AUTHPROTO_NONE;
 			else
 				errx(EX_DATAERR, "bad auth proto: %s", cp);
+			set_auth = 1;
 		} else if (startswith("myauthname=")) {
 			spr.myname = argv[0] + off;
 			spr.myname_length = strlen(spr.myname)+1;
+			set_auth = 1;
 		} else if (startswith("myauthsecret=") || startswith("myauthkey=")) {
 			spr.mysecret = argv[0] + off;
 			spr.mysecret_length = strlen(spr.mysecret)+1;
+			set_auth = 1;
 		} else if (startswith("hisauthproto=")) {
 			cp = argv[0] + off;
 			if (strcmp(cp, "pap") == 0)
@@ -253,12 +262,15 @@ main(int argc, char **argv)
 				spr.hisauth = SPPP_AUTHPROTO_NONE;
 			else
 				errx(EX_DATAERR, "bad auth proto: %s", cp);
+			set_auth = 1;
 		} else if (startswith("hisauthname=")) {
 			spr.hisname = argv[0] + off;
 			spr.hisname_length = strlen(spr.hisname)+1;
+			set_auth = 1;
 		} else if (startswith("hisauthsecret=") || startswith("hisauthkey=")) {
 			spr.hissecret = argv[0] + off;
 			spr.hissecret_length = strlen(spr.hissecret)+1;
+			set_auth = 1;
 		} else if (strcmp(argv[0], "callin") == 0)
 			spr.hisauthflags |= SPPP_AUTHFLAG_NOCALLOUT;
 		else if (strcmp(argv[0], "always") == 0)
@@ -280,6 +292,9 @@ main(int argc, char **argv)
 				     argv[0]+off);
 			lcp.lcp_timeout = timeout_arg * hz / 1000;
 			set_lcp = 1;
+		} else if (startswith("idle-timeout=")) {
+			timeout.idle_seconds = atol(argv[0]+off);
+			set_idle_to = 1;
 		} else
 			errx(EX_DATAERR, "bad parameter: \"%s\"", argv[0]);
 
@@ -287,15 +302,21 @@ main(int argc, char **argv)
 		argc--;
 	}
 
-	if (ioctl(s, SPPPSETAUTHCFG, &spr) == -1)
-		err(EX_OSERR, "SPPPSETAUTHCFG");
+	if (set_auth) {
+		if (ioctl(s, SPPPSETAUTHCFG, &spr) == -1)
+			err(EX_OSERR, "SPPPSETAUTHCFG");
+	}
 	if (set_lcp) {
 		if (ioctl(s, SPPPSETLCPCFG, &lcp) == -1)
 			err(EX_OSERR, "SPPPSETLCPCFG");
 	}
+	if (set_idle_to) {
+		if (ioctl(s, SPPPSETIDLETO, &timeout) == -1)
+			err(EX_OSERR, "SPPPSETIDLETO");
+	}
 
 	if (verbose)
-		print_vals(ifname, status.phase, &spr, lcp.lcp_timeout);
+		print_vals(ifname, status.phase, &spr, lcp.lcp_timeout, timeout.idle_seconds);
 
 	return 0;
 }
@@ -310,7 +331,7 @@ usage(void)
 }
 
 static void
-print_vals(const char *ifname, int phase, struct spppauthcfg *sp, int lcp_timeout)
+print_vals(const char *ifname, int phase, struct spppauthcfg *sp, int lcp_timeout, time_t idle_timeout)
 {
 #ifndef __NetBSD__
 	time_t send, recv;
@@ -338,6 +359,11 @@ print_vals(const char *ifname, int phase, struct spppauthcfg *sp, int lcp_timeou
 
 	printf("\tlcp timeout: %.3f s\n",
 	       (double)lcp_timeout / hz);
+
+	if (idle_timeout != 0)
+		printf("\tidle timeout = %lu s\n", (unsigned long)idle_timeout);
+	else
+		printf("\tidle timeout = disabled\n");
 
 #ifndef __NetBSD__
 	printf("\tenable_vj: %s\n",
