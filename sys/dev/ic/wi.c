@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.121 2003/05/13 07:13:49 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.122 2003/05/13 07:17:46 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.121 2003/05/13 07:13:49 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.122 2003/05/13 07:17:46 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -428,6 +428,7 @@ wi_detach(struct wi_softc *sc)
 	return 0;
 }
 
+#ifdef __NetBSD__
 int
 wi_activate(struct device *self, enum devact act)
 {
@@ -473,6 +474,7 @@ wi_power(struct wi_softc *sc, int why)
 	}
 	splx(s);
 }
+#endif /* __NetBSD__ */
 
 void
 wi_shutdown(struct wi_softc *sc)
