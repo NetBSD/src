@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.16 1998/10/13 10:05:39 agc Exp $ */
+/* $NetBSD: lib.h,v 1.17 1998/10/13 17:08:33 agc Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -70,6 +70,7 @@
 #define REQUIRED_BY_FNAME	"+REQUIRED_BY"
 #define DISPLAY_FNAME		"+DISPLAY"
 #define MTREE_FNAME		"+MTREE_DIRS"
+#define BUILD_VERSION_FNAME	"+BUILD_VERSION"
 
 #define CMD_CHAR		'@'	/* prefix for extended PLIST cmd */
 
