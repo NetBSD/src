@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.35 2003/11/02 09:49:20 wiz Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.36 2004/01/16 05:03:02 mrg Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.35 2003/11/02 09:49:20 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.36 2004/01/16 05:03:02 mrg Exp $");
 
 #include "opt_systrace.h"
 
@@ -696,6 +696,7 @@ systrace_enter(struct proc *p, register_t code, void *v)
 	struct fsystrace *fst;
 	struct pcred *pc;
 	int policy, error = 0, maycontrol = 0, issuser = 0;
+	size_t argsize;
 
 	systrace_lock();
 	strp = p->p_systrace;
@@ -756,8 +757,15 @@ systrace_enter(struct proc *p, register_t code, void *v)
 		return (error);
 	}
 
+	/* Get the (adjusted) argsize */
+	argsize = callp->sy_argsize;
+#ifdef _LP64
+	if (p->p_flag & P_32)
+		argsize = argsize << 1;
+#endif
+
 	/* Puts the current process to sleep, return unlocked */
-	error = systrace_msg_ask(fst, strp, code, callp->sy_argsize, v);
+	error = systrace_msg_ask(fst, strp, code, argsize, v);
 
 	/* lock has been released in systrace_msg_ask() */
 	fst = NULL;
@@ -775,7 +783,7 @@ systrace_enter(struct proc *p, register_t code, void *v)
 			}
 			/* Replace the arguments if necessary */
 			if (strp->replace != NULL) {
-				error = systrace_replace(strp, callp->sy_argsize, v);
+				error = systrace_replace(strp, argsize, v);
 			}
 		}
 	}
@@ -886,15 +894,23 @@ systrace_exit(struct proc *p, register_t code, void *v, register_t retval[],
 	systrace_lock();
 	strp = p->p_systrace;
 	if (strp != NULL && ISSET(strp->flags, STR_PROC_SYSCALLRES)) {
+		size_t argsize;
+
 		CLR(strp->flags, STR_PROC_SYSCALLRES);
 		fst = strp->parent;
 		SYSTRACE_LOCK(fst, p);
 		systrace_unlock();
 		DPRINTF(("will ask syscall %lu, strp %p\n", (u_long)code, strp));
 
+		/* Get the (adjusted) argsize */
 		callp = p->p_emul->e_sysent + code;
-		systrace_msg_result(fst, strp, error, code,
-		    callp->sy_argsize, v, retval);
+		argsize = callp->sy_argsize;
+#ifdef _LP64
+		if (p->p_flag & P_32)
+			argsize = argsize << 1;
+#endif
+
+		systrace_msg_result(fst, strp, error, code, argsize, v, retval);
 	} else {
 		DPRINTF(("will not ask syscall %lu, strp %p\n", (u_long)code, strp));
 		systrace_unlock();
