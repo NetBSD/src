@@ -1,4 +1,4 @@
-/*	$NetBSD: pac.c,v 1.14 2000/04/27 13:40:18 msaitoh Exp $	*/
+/*	$NetBSD: pac.c,v 1.15 2000/07/16 21:33:26 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)pac.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: pac.c,v 1.14 2000/04/27 13:40:18 msaitoh Exp $");
+__RCSID("$NetBSD: pac.c,v 1.15 2000/07/16 21:33:26 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,7 +95,6 @@ struct hent {
 static struct	hent	*hashtab[HSHSIZE];	/* Hash table proper */
 
 static void	account __P((FILE *));
-static int	any __P((int, const char *));
 static int	chkprinter __P((const char *));
 static void	dumpit __P((void));
 static int	hash __P((const char *));
@@ -205,33 +204,36 @@ main(argc, argv)
  * is set, then just gather the facts on everyone.
  * Note that we must accomodate both the active and summary file
  * formats here.
+ * Format of accounting file is
+ *	feet_per_page	[runs_count] [hostname:]username
+ * Some software relies on whitespace between runs_count and hostname:username
+ * being optional (such as Ghostscript's unix-lpr.sh).
+ *
  * Host names are ignored if the -m flag is present.
  */
 static void
 account(acct)
 	FILE *acct;
 {
+	char who[BUFSIZ];
 	char linebuf[BUFSIZ];
-	double t;
+	float t;
 	char *cp, *cp2;
 	struct hent *hp;
 	int ic;
 
 	while (fgets(linebuf, BUFSIZ, acct) != NULL) {
-		cp = linebuf;
-		while (any(*cp, " \t"))
-			cp++;
-		t = atof(cp);
-		while (any(*cp, ".0123456789"))
-			cp++;
-		while (any(*cp, " \t"))
-			cp++;
-		for (cp2 = cp; !any(*cp2, " \t\n"); cp2++)
-			;
-		ic = atoi(cp2);
-		*cp2 = '\0';
-		if (mflag && strchr(cp, ':'))
-		    cp = strchr(cp, ':') + 1;
+		if (sscanf(linebuf, "%f %d%s", &t, &ic, who) == 0) {
+			sscanf(linebuf, "%f %s", &t, who);
+			ic = 1;
+		}
+		
+		/* if -m was specified, don't use the hostname part */
+		if (mflag && (cp2 = strchr(who, ':')))
+			cp = cp2 + 1;
+		else
+			cp = who;
+
 		hp = lookup(cp);
 		if (hp == NULL) {
 			if (!allflag)
@@ -280,12 +282,14 @@ dumpit()
 		runs += hp->h_count;
 		feet += hp->h_feetpages;
 		printf("    %7.2f %4d $%7.2f %s\n",
-			hp->h_feetpages, hp->h_count, hp->h_feetpages * price,
+			hp->h_feetpages, hp->h_count, 
+			hp->h_feetpages * price * hp->h_count,
 			hp->h_name);
 	}
 	if (allflag) {
 		printf(" ---------- ---- -------- ----------------------\n");
-		printf("Sum:%7.2f %4d $%7.2f\n", feet, runs, feet * price);
+		printf("Sum:%7.2f %4d $%7.2f\n", feet, runs, 
+			feet * price * runs);
 	}
 }
 
@@ -389,23 +393,6 @@ hash(name)
 	for (cp = name, h = 0; *cp; h = (h << 2) + *cp++)
 		;
 	return((h & 0x7fffffff) % HSHSIZE);
-}
-
-/*
- * Other stuff
- */
-static int
-any(ch, str)
-	int ch;
-	const char *str;
-{
-	int c = ch;
-	const char *cp = str;
-
-	while (*cp)
-		if (*cp++ == c)
-			return(1);
-	return(0);
 }
 
 /*
