@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.20 1999/02/08 14:48:07 sommerfe Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.21 1999/03/13 14:46:20 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsdisplay.c,v 1.20 1999/02/08 14:48:07 sommerfe Exp $";
+    "$NetBSD: wsdisplay.c,v 1.21 1999/03/13 14:46:20 drochner Exp $";
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -591,12 +591,11 @@ wsdisplay_common_attach(sc, console, scrdata, accessops, accesscookie)
 	 * WSDISPLAYIO_ADDSCREEN ioctl is more flexible, so this code
 	 * should go away as soon as we have a userspace utility.
 	 */
-#ifndef WSDISPLAY_DEFAULTSCREENS
-#define WSDISPLAY_DEFAULTSCREENS WSDISPLAY_MAXSCREEN
-#endif
+#ifdef WSDISPLAY_DEFAULTSCREENS
 	for (; i < WSDISPLAY_DEFAULTSCREENS; i++)
 		if (wsdisplay_addscreen(sc, i, 0, 0))
 			break;
+#endif
 }
 
 void
