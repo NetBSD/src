@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.14 1996/07/16 04:51:16 cgd Exp $	*/
+/*	$NetBSD: pmap.c,v 1.15 1996/08/20 23:08:08 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1996 Carnegie Mellon University
@@ -121,10 +121,12 @@ struct pv_entry *pmap_alloc_pv __P((void));
 void pmap_free_pv __P((struct pv_entry *pv));
 vm_page_t vm_page_grab __P((void));
 
+vm_offset_t pmap_resident_extract __P((pmap_t, vm_offset_t));
+
 /* For external use... */
 vm_offset_t kvtophys(vm_offset_t virt)
 {
-	vm_offset_t pmap_resident_extract();
+
 	return pmap_resident_extract(kernel_pmap, virt);
 }
 
@@ -516,6 +518,42 @@ void pmap_remove_range();	/* forward */
 void signal_cpus();		/* forward */
 #endif	/* NCPUS > 1 */
 
+int	pmap_max_asn;
+void	pmap_expand __P((pmap_t, vm_offset_t));
+
+/* XXX */
+#define	PDB_BOOTSTRAP		0x00000001
+#define	PDB_BOOTSTRAP_ALLOC	0x00000002
+#define	PDB_UNMAP_PROM		0x00000004
+#define	PDB_ACTIVATE		0x00000008
+#define	PDB_DEACTIVATE		0x00000010
+#define	PDB_TLBPID_INIT		0x00000020
+#define	PDB_TLBPID_ASSIGN	0x00000040
+#define	PDB_TLBPID_DESTROY	0x00000080
+#define	PDB_ENTER		0x00000100
+#define	PDB_CREATE		0x00000200
+#define	PDB_PINIT		0x00000400
+#define	PDB_EXPAND		0x00000800
+#define	PDB_EXTRACT		0x00001000
+#define	PDB_PTE			0x00002000
+#define	PDB_RELEASE		0x00004000
+#define	PDB_DESTROY		0x00008000
+#define	PDB_COPY_PAGE		0x00010000
+#define	PDB_ZERO_PAGE		0x00020000
+
+#define	PDB_ANOMALOUS		0x20000000
+#define	PDB_FOLLOW		0x40000000
+#define PDB_VERBOSE		0x80000000
+
+int pmapdebug = PDB_ANOMALOUS  |-1 /* -1 */;
+
+#if defined(DEBUG) || 1
+#define	DOPDB(x)	((pmapdebug & (x)) != 0)
+#else
+#define	DOPDB(x)	0
+#endif
+#define	DOVPDB(x)	(DOPDB(x) && DOPDB(PDB_VERBOSE))
+
 /*
  *	Given an offset and a map, compute the address of the
  *	pte.  If the address is invalid with respect to the map
@@ -529,24 +567,46 @@ pt_entry_t *pmap_pte(pmap, addr)
 	register pmap_t		pmap;
 	register vm_offset_t	addr;
 {
-	register pt_entry_t	*ptp;
+	register pt_entry_t	*ptp, *ptep;
 	register pt_entry_t	pte;
 
-	if (pmap->dirbase == 0)
-		return(PT_ENTRY_NULL);
+	if (DOPDB(PDB_FOLLOW|PDB_PTE))
+		printf("pmap_pte(%p, 0x%lx)\n", pmap, addr);
+
+	if (pmap->dirbase == 0) {
+		if (DOVPDB(PDB_FOLLOW|PDB_PTE))
+			printf("pmap_pte: dirbase == 0\n");
+		ptep = PT_ENTRY_NULL;
+		goto out;
+	}
+
 	/* seg1 */
 	pte = *pmap_pde(pmap,addr);
-	if ((pte & ALPHA_PTE_VALID) == 0)
-		return(PT_ENTRY_NULL);
+	if ((pte & ALPHA_PTE_VALID) == 0) {
+		if (DOVPDB(PDB_FOLLOW|PDB_PTE))
+			printf("pmap_pte: l1 not valid\n");
+		ptep = PT_ENTRY_NULL;
+		goto out;
+	}
+
 	/* seg2 */
 	ptp = (pt_entry_t *)ptetokv(pte);
 	pte = ptp[pte2num(addr)];
-	if ((pte & ALPHA_PTE_VALID) == 0)
-		return(PT_ENTRY_NULL);
+	if ((pte & ALPHA_PTE_VALID) == 0) {
+		if (DOVPDB(PDB_FOLLOW|PDB_PTE))
+			printf("pmap_pte: l2 not valid\n");
+		ptep = PT_ENTRY_NULL;
+		goto out;
+	}
+
 	/* seg3 */
 	ptp = (pt_entry_t *)ptetokv(pte);
-	return(&ptp[pte3num(addr)]);
+	ptep = &ptp[pte3num(addr)];
 
+out:
+	if (DOPDB(PDB_FOLLOW|PDB_PTE))
+		printf("pmap_pte: returns %p\n", ptep);
+	return (ptep);
 }
 
 #define DEBUG_PTE_PAGE	1
@@ -568,14 +628,6 @@ extern	vm_offset_t	avail_start, avail_end;
  */
 vm_size_t	pmap_kernel_vm = 5;	/* each one 8 meg worth */
 
-/* XXX */
-int pmapdebug = -1;
-#define	PDB_BOOTSTRAP		0x00000001
-#define	PDB_BOOTSTRAP_ALLOC	0x00000002
-#define	PDB_UNMAP_PROM		0x00000004
-#define	PDB_FOLLOW		0x40000000
-#define PDB_VERBOSE		0x80000000
-
 unsigned int
 pmap_free_pages()
 {
@@ -583,8 +635,9 @@ pmap_free_pages()
 }
 
 void
-pmap_bootstrap(firstaddr, ptaddr)
+pmap_bootstrap(firstaddr, ptaddr, maxasn)
 	vm_offset_t firstaddr, ptaddr;
+	int maxasn;
 {
 	vm_offset_t	pa;
 	pt_entry_t	template;
@@ -594,10 +647,9 @@ pmap_bootstrap(firstaddr, ptaddr)
 	int i;
 	long npages;
 
-#ifdef DEBUG
-        if (pmapdebug & (PDB_FOLLOW|PDB_BOOTSTRAP))
-                printf("pmap_bootstrap(0x%lx, 0x%lx)\n", firstaddr, ptaddr);
-#endif
+        if (DOPDB(PDB_FOLLOW|PDB_BOOTSTRAP))
+                printf("pmap_bootstrap(0x%lx, 0x%lx, %d)\n", firstaddr, ptaddr,
+		    maxasn);
 
 	/* must be page aligned */
 	start = firstaddr = alpha_round_page(firstaddr);
@@ -643,18 +695,15 @@ pmap_bootstrap(firstaddr, ptaddr)
 	 */
 
 	vallocsz(root_kpdes, pt_entry_t *, PAGE_SIZE);
-#ifdef DEBUG
-        if (pmapdebug & (PDB_VERBOSE|PDB_BOOTSTRAP))
+        if (DOVPDB(PDB_BOOTSTRAP))
                 printf("pmap_bootstrap: root_kpdes = %p\n", root_kpdes);
-#endif
 	kernel_pmap->dirbase = root_kpdes;
+	kernel_pmap->dirpfn = alpha_btop(kvtophys((vm_offset_t)root_kpdes));
 
         /* First, copy mappings for things below VM_MIN_KERNEL_ADDRESS */
-#ifdef DEBUG
-        if (pmapdebug & (PDB_VERBOSE|PDB_BOOTSTRAP))
+        if (DOVPDB(PDB_BOOTSTRAP))
                 printf("pmap_bootstrap: setting up root_kpdes (copy 0x%lx)\n",
 		    pdenum(VM_MIN_KERNEL_ADDRESS) * sizeof root_kpdes[0]);
-#endif
 	bzero(root_kpdes, PAGE_SIZE);
         bcopy((caddr_t)ptaddr, root_kpdes,
             pdenum(VM_MIN_KERNEL_ADDRESS) * sizeof root_kpdes[0]);
@@ -664,12 +713,11 @@ pmap_bootstrap(firstaddr, ptaddr)
 	 */
 	pte_ktemplate(template, kvtophys(root_kpdes),
 	    VM_PROT_READ | VM_PROT_WRITE);
-	root_kpdes[pdenum(VPTBASE)] = template & ~ALPHA_PTE_GLOBAL;
-#ifdef DEBUG
-        if (pmapdebug & (PDB_VERBOSE|PDB_BOOTSTRAP))
+	template &= ~ALPHA_PTE_GLOBAL;
+	root_kpdes[pdenum(VPTBASE)] = template;
+        if (DOVPDB(PDB_BOOTSTRAP))
                 printf("pmap_bootstrap: VPT PTE 0x%lx at 0x%lx)\n",
 		    root_kpdes[pdenum(VPTBASE)], &root_kpdes[pdenum(VPTBASE)]);
-#endif
 
 #if 0
 	/*
@@ -688,17 +736,13 @@ pmap_bootstrap(firstaddr, ptaddr)
 	 */
 #define	enough_kseg2()	(PAGE_SIZE)
 
-#ifdef DEBUG
-        if (pmapdebug & (PDB_VERBOSE|PDB_BOOTSTRAP))
+        if (DOVPDB(PDB_BOOTSTRAP))
                 printf("pmap_bootstrap: allocating kvseg segment pages\n");
-#endif
 	vallocsz(pte, pt_entry_t *, enough_kseg2());		/* virtual */
 	pa  = kvtophys(pte);					/* physical */
 	bzero(pte, enough_kseg2());
-#ifdef DEBUG
-        if (pmapdebug & (PDB_VERBOSE|PDB_BOOTSTRAP))
+        if (DOVPDB(PDB_BOOTSTRAP))
                 printf("pmap_bootstrap: kvseg segment pages at %p\n", pte);
-#endif
 
 #undef	enough_kseg2
 
@@ -706,10 +750,8 @@ pmap_bootstrap(firstaddr, ptaddr)
 	 *	Make a note of it in the seg1 table
 	 */
 
-#ifdef DEBUG
-        if (pmapdebug & (PDB_VERBOSE|PDB_BOOTSTRAP))
+        if (DOVPDB(PDB_BOOTSTRAP))
                 printf("pmap_bootstrap: inserting segment pages into root\n");
-#endif
 	tbia();
 	pte_ktemplate(template,pa,VM_PROT_READ|VM_PROT_WRITE);
 	pde = pmap_pde(kernel_pmap,K2SEG_BASE);
@@ -729,10 +771,8 @@ pmap_bootstrap(firstaddr, ptaddr)
 	/*
 	 *	But don't we need some seg2 pagetables to start with ?
 	 */
-#ifdef DEBUG
-        if (pmapdebug & (PDB_VERBOSE|PDB_BOOTSTRAP))
+        if (DOVPDB(PDB_BOOTSTRAP))
                 printf("pmap_bootstrap: allocating kvseg page table pages\n");
-#endif
 	pde = &pte[pte2num(K2SEG_BASE)];
 	for (i = pmap_kernel_vm; i > 0; i--) {
 	    register int j;
@@ -754,20 +794,16 @@ pmap_bootstrap(firstaddr, ptaddr)
 	avail_start = ALPHA_K0SEG_TO_PHYS(firstaddr);
 	avail_end = alpha_ptob(lastusablepage + 1);
 	mem_size = avail_end - avail_start;
-#ifdef DEBUG
-	if (pmapdebug & (PDB_VERBOSE|PDB_BOOTSTRAP))
+	if (DOVPDB(PDB_BOOTSTRAP))
 		printf("pmap_bootstrap: avail: 0x%lx -> 0x%lx (0x%lx)\n",
 		    avail_start, avail_end, mem_size);
-#endif
 
 	/*
 	 *	Allocate memory for the pv_head_table and its
 	 *	lock bits, and the reference/modify byte array.
 	 */
-#ifdef DEBUG
-	if (pmapdebug & (PDB_VERBOSE|PDB_BOOTSTRAP))
+	if (DOVPDB(PDB_BOOTSTRAP))
 		printf("pmap_bootstrap: allocating page management data\n");
-#endif
 
 	npages = ((BYTE_SIZE * mem_size) /
 	          (BYTE_SIZE * (PAGE_SIZE + sizeof (struct pv_entry) + 1) + 1));
@@ -785,41 +821,31 @@ pmap_bootstrap(firstaddr, ptaddr)
 	if (npages > pmap_free_pages())
 		panic("pmap_bootstrap");
 	mem_size = avail_end - avail_start;
-#ifdef DEBUG
-	if (pmapdebug & (PDB_VERBOSE|PDB_BOOTSTRAP))
+	if (DOVPDB(PDB_BOOTSTRAP))
 		printf("pmap_bootstrap: avail: 0x%lx -> 0x%lx (0x%lx)\n",
 		    avail_start, avail_end, mem_size);
-#endif
 
 	/*
-	 *	Assert kernel limits (cuz pmap_expand)
+	 *	Assert kernel limits (because of pmap_expand).
 	 */
 
 	virtual_avail = alpha_round_page(K2SEG_BASE);
 	virtual_end   = trunc_page(K2SEG_BASE + pde2tova(pmap_kernel_vm));
-#ifdef DEBUG
-        if (pmapdebug & (PDB_VERBOSE|PDB_BOOTSTRAP)) {
+        if (DOVPDB(PDB_BOOTSTRAP)) {
 		printf("pmap_bootstrap: virtual_avail = %p\n", virtual_avail);
 		printf("pmap_bootstrap: virtual_end = %p\n", virtual_end);
 	}
-#endif
 
 	/*
 	 *	The distinguished tlbpid value of 0 is reserved for
 	 *	the kernel pmap. Initialize the tlbpid allocator,
 	 *	who knows about this.
 	 */
-#ifdef DEBUG
-        if (pmapdebug & (PDB_VERBOSE|PDB_BOOTSTRAP))
-                printf("pmap_bootstrap: setting up tlbpid machinery\n");
-#endif
 	kernel_pmap->pid = 0;
-	pmap_tlbpid_init();
+	pmap_tlbpid_init(maxasn);
 
-#ifdef DEBUG
-        if (pmapdebug & (PDB_VERBOSE|PDB_BOOTSTRAP))
+        if (DOVPDB(PDB_BOOTSTRAP))
                 printf("pmap_bootstrap: leaving\n");
-#endif
 }
 
 pmap_rid_of_console()
@@ -853,10 +879,8 @@ pmap_bootstrap_alloc(size)
 	vm_offset_t val;
 	extern boolean_t vm_page_startup_initialized;
 
-#ifdef DEBUG
-	if (pmapdebug & (PDB_FOLLOW|PDB_BOOTSTRAP_ALLOC))
+	if (DOPDB(PDB_FOLLOW|PDB_BOOTSTRAP_ALLOC))
 		printf("pmap_bootstrap_alloc(%lx)\n", size);
-#endif
 	if (vm_page_startup_initialized)
 		panic("pmap_bootstrap_alloc: called after startup initialized");
 
@@ -868,10 +892,8 @@ pmap_bootstrap_alloc(size)
 
 	bzero((caddr_t)val, size);
 
-#ifdef DEBUG
-	if (pmapdebug & (PDB_VERBOSE|PDB_BOOTSTRAP_ALLOC))
+	if (DOVPDB(PDB_BOOTSTRAP_ALLOC))
 		printf("pmap_bootstrap_alloc: returns %p\n", val);
-#endif
 	return ((void *)val);
 }
 
@@ -889,29 +911,23 @@ pmap_unmap_prom()
 	extern int prom_mapped;
 	extern pt_entry_t *rom_ptep, rom_pte;
 
-#ifdef DEBUG
-	if (pmapdebug & (PDB_FOLLOW|PDB_UNMAP_PROM))
+	if (DOPDB(PDB_FOLLOW|PDB_UNMAP_PROM))
 		printf("pmap_unmap_prom\n");
-#endif
 
 	/* XXX save old pte so that we can remap prom if necessary */
 	rom_ptep = &root_kpdes[0];				/* XXX */
 	rom_pte = *rom_ptep & ~ALPHA_PTE_ASM;			/* XXX */
 
-#ifdef DEBUG
-	if (pmapdebug & (PDB_VERBOSE|PDB_UNMAP_PROM))
+	if (DOVPDB(PDB_UNMAP_PROM))
 		printf("pmap_unmap_prom: zero 0x%lx, rom_pte was 0x%lx\n",
 		    pdenum(VM_MIN_KERNEL_ADDRESS) * sizeof root_kpdes[0],
 		    rom_pte);
-#endif
 	/* Mark all mappings before VM_MIN_KERNEL_ADDRESS as invalid. */
 	bzero(root_kpdes, pdenum(VM_MIN_KERNEL_ADDRESS) * sizeof root_kpdes[0]);
 	prom_mapped = 0;
 	ALPHA_TBIA();
-#ifdef DEBUG
-	if (pmapdebug & (PDB_VERBOSE|PDB_UNMAP_PROM))
+	if (DOVPDB(PDB_UNMAP_PROM))
 		printf("pmap_unmap_prom: leaving\n");
-#endif
 }
 
 /*
@@ -1052,17 +1068,22 @@ pmap_page_table_page_dealloc(pa)
  *	the map will be used in software only, and
  *	is bounded by that size.
  */
-pmap_t pmap_create(size)
-	vm_size_t	size;
+pmap_t
+pmap_create(size)
+	vm_size_t size;
 {
-	register pmap_t			p;
+	register pmap_t p;
+
+	if (DOPDB(PDB_FOLLOW|PDB_CREATE))
+		printf("pmap_create(%d)\n", size);
 
 	/*
 	 *	A software use-only map doesn't even need a map.
 	 */
 
 	if (size != 0) {
-		return(PMAP_NULL);
+		p = PMAP_NULL;
+		goto out;
 	}
 
 	/* XXX: is it ok to wait here? */
@@ -1072,6 +1093,10 @@ pmap_t pmap_create(size)
 
 	bzero(p, sizeof (*p));
 	pmap_pinit(p);
+
+out:
+	if (DOVPDB(PDB_FOLLOW|PDB_CREATE))
+		printf("pmap_create: returning %p\n", p);
 	return (p);
 }
 
@@ -1079,15 +1104,41 @@ void
 pmap_pinit(p)
 	struct pmap *p;
 {
-	register pmap_statistics_t	stats;
+	register pmap_statistics_t stats;
+	extern struct vmspace vmspace0;
 
+	if (DOPDB(PDB_FOLLOW|PDB_PINIT))
+		printf("pmap_init(%p)\n", p);
+
+#if 0
 	/* XXX cgd WHY NOT pmap_page_table_page_alloc()? */
-	if ((p->dirbase = (void *)kmem_alloc(kernel_map, ALPHA_PGBYTES)) == NULL)
+	p->dirbase = (void *)kmem_alloc(kernel_map, ALPHA_PGBYTES);
+#else
+	p->dirbase = (void *)phystokv(pmap_page_table_page_alloc());
+#endif
+	if (p->dirbase == NULL)
 		panic("pmap_create");
+	p->dirpfn = alpha_btop(pmap_resident_extract(kernel_pmap,
+	    (vm_offset_t)p->dirbase));
 
+	if (DOVPDB(PDB_FOLLOW|PDB_PINIT))
+		printf("pmap_init(%p): dirbase = %p, dirpfn = 0x%x\n", p,
+		    p->dirbase, p->dirpfn);
 	aligned_block_copy(root_kpdes, p->dirbase, ALPHA_PGBYTES);
 	p->ref_count = 1;
 	p->pid = -1;
+	if (DOVPDB(PDB_FOLLOW|PDB_PINIT))
+		printf("pmap_init(%p): first pde = 0x%lx\n", p->dirbase[0]);
+
+	{
+		pt_entry_t template;
+
+		pte_ktemplate(template, kvtophys(p->dirbase),
+		    VM_PROT_READ | VM_PROT_WRITE);
+		template &= ~ALPHA_PTE_GLOBAL;
+		p->dirbase[pdenum(VPTBASE)] = template;
+	}
+printf("PMAP_PINIT: FIRST ENT = 0x%lx\n", p->dirbase[0]);
 
 	simple_lock_init(&p->lock);
 	p->cpus_using = 0;
@@ -1101,7 +1152,9 @@ pmap_pinit(p)
 	stats->resident_count = 0;
 	stats->wired_count = 0;
 
-if (pmap_debug) db_printf("pmap_create(%x->%x)\n", p, p->dirbase);
+out:
+	if (DOVPDB(PDB_FOLLOW|PDB_PINIT))
+		printf("pmap_init: leaving\n", p);
 }
 
 /*
@@ -1116,8 +1169,11 @@ void pmap_destroy(p)
 	register int		c;
 	register spl_t		s;
 
+	if (DOPDB(PDB_FOLLOW|PDB_DESTROY))
+		printf("pmap_destroy(%p)\n", p);
+
 	if (p == PMAP_NULL)
-		return;
+		goto out;
 
 	SPLVM(s);
 	simple_lock(&p->lock);
@@ -1129,6 +1185,9 @@ void pmap_destroy(p)
 		pmap_release(p);
 		free(p, M_VMPMAP);
 	}
+out:
+	if (DOVPDB(PDB_FOLLOW|PDB_DESTROY))
+		printf("pmap_destroy: leaving\n");
 }
 
 void
@@ -1138,7 +1197,16 @@ pmap_release(p)
 	register pt_entry_t	*pdep, *ptep, *eptep;
 	register vm_offset_t	pa;
 
-if (pmap_debug) db_printf("pmap_destroy(%x->%x)\n", p, p->dirbase);
+	if (DOPDB(PDB_FOLLOW|PDB_RELEASE))
+		printf("pmap_release(%p)\n", p);
+
+	if (p->dirbase == NULL) {
+		if (DOPDB(PDB_FOLLOW|PDB_ANOMALOUS|PDB_RELEASE))
+			printf("pmap_release: already reclaimed\n");
+		/* resources already reclaimed */
+		goto out;
+	}
+
 	/*
 	 *	Free the memory maps, then the
 	 *	pmap structure.
@@ -1158,8 +1226,18 @@ if (pmap_debug) db_printf("pmap_destroy(%x->%x)\n", p, p->dirbase);
 		pmap_page_table_page_dealloc(pa);
 	    }
 	}
-	pmap_destroy_tlbpid(p->pid, FALSE);
+	pmap_tlbpid_destroy(p->pid, FALSE);
+
+#if 0
 	kmem_free(kernel_map, (vm_offset_t)p->dirbase, ALPHA_PGBYTES);
+#else
+	pmap_page_table_page_dealloc(kvtophys(p->dirbase));
+#endif
+	p->dirbase = NULL;
+
+out:
+	if (DOVPDB(PDB_FOLLOW|PDB_RELEASE))
+		printf("pmap_release: leaving\n");
 }
 
 /*
@@ -1642,7 +1720,8 @@ db_printf("[%d]pmap_protect(%x,%x,%x,%x)\n", cpu_number(), map, s, e, prot);
  *	or lose information.  That is, this routine must actually
  *	insert this page into the given map NOW.
  */
-void pmap_enter(pmap, v, pa, prot, wired)
+void
+pmap_enter(pmap, v, pa, prot, wired)
 	register pmap_t		pmap;
 	vm_offset_t		v;
 	register vm_offset_t	pa;
@@ -1657,12 +1736,16 @@ void pmap_enter(pmap, v, pa, prot, wired)
 	spl_t			spl;
 	vm_offset_t		old_pa;
 
+	if (DOPDB(PDB_FOLLOW|PDB_ENTER))
+		printf("pmap_enter(%p, 0x%lx, 0x%lx, 0x%x, %d)\n",
+		    pmap, v, pa, prot, wired);
+
 	assert(pa != vm_page_fictitious_addr);
 if (pmap_debug || ((v > pmap_suspect_vs) && (v < pmap_suspect_ve))) 
 db_printf("[%d]pmap_enter(%x(%d), %x, %x, %x, %x)\n", cpu_number(), pmap, pmap->pid, v, pa, prot, wired);
 	if (pmap == PMAP_NULL)
-		return;
-	assert(pmap->pid >= 0);
+		goto out;
+	assert(!pmap_max_asn || pmap->pid >= 0);
 
 	/*
 	 *	Must allocate a new pvlist entry while we're unlocked;
@@ -1702,6 +1785,10 @@ Retry:
 	     *	May be changing its wired attribute or protection
 	     */
 		
+	    if (DOVPDB(PDB_FOLLOW|PDB_ENTER))
+		printf("pmap_enter: same PA already mapped there (0x%lx)\n",
+		    *pte);
+
 	    if (wired && !(*pte & ALPHA_PTE_WIRED))
 		pmap->stats.wired_count++;
 	    else if (!wired && (*pte & ALPHA_PTE_WIRED))
@@ -1727,6 +1814,9 @@ Retry:
 	     *	Remove old mapping from the PV list if necessary.
 	     */
 	    if (*pte) {
+		if (DOVPDB(PDB_FOLLOW|PDB_ENTER))
+			printf("pmap_enter: removing old PTE (0x%lx)\n", *pte);
+
 		/*
 		 *	Invalidate the translation buffer,
 		 *	then remove the mapping.
@@ -1742,6 +1832,8 @@ Retry:
 	    }
 
 	    if (valid_page(pa)) {
+		if (DOVPDB(PDB_FOLLOW|PDB_ENTER))
+			printf("pmap_enter: valid page\n");
 
 		/*
 		 *	Enter the mapping in the PV list for this
@@ -1756,6 +1848,8 @@ Retry:
 		    /*
 		     *	No mappings yet
 		     */
+		    if (DOVPDB(PDB_FOLLOW|PDB_ENTER))
+			printf("pmap_enter: first mapping\n");
 		    pv_h->va = v;
 		    pv_h->pmap = pmap;
 		    pv_h->next = PV_ENTRY_NULL;
@@ -1763,6 +1857,9 @@ Retry:
 			alphacache_Iflush();
 		}
 		else {
+		    if (DOVPDB(PDB_FOLLOW|PDB_ENTER))
+			printf("pmap_enter: second+ mapping\n");
+
 #if	DEBUG
 		    {
 			/* check that this mapping is not already there */
@@ -1825,10 +1922,14 @@ Retry:
 		template |= ALPHA_PTE_WIRED;
 	    i = ptes_per_vm_page;
 	    do {
+		if (DOVPDB(PDB_FOLLOW|PDB_ENTER))
+			printf("pmap_enter: entering PTE 0x%lx at %p\n",
+			    template, pte);
 		*pte = template;
 		pte++;
 		pte_increment_pa(template);
 	    } while (--i > 0);
+	    ALPHA_TBIA();
 	}
 
 	if (pv_e != PV_ENTRY_NULL) {
@@ -1836,6 +1937,9 @@ Retry:
 	}
 
 	PMAP_READ_UNLOCK(pmap, spl);
+out:
+	if (DOVPDB(PDB_FOLLOW|PDB_ENTER))
+		printf("pmap_enter: done\n");
 }
 
 /*
@@ -1895,7 +1999,8 @@ if (pmap_debug) db_printf("pmap_change_wiring(%x,%x,%x)\n", map, v, wired);
  *		with the given map/virtual_address pair.
  */
 
-vm_offset_t pmap_extract(pmap, va)
+vm_offset_t
+pmap_extract(pmap, va)
 	register pmap_t	pmap;
 	vm_offset_t	va;
 {
@@ -1903,13 +2008,19 @@ vm_offset_t pmap_extract(pmap, va)
 	register vm_offset_t	pa;
 	spl_t			spl;
 
-if (pmap_debug) db_printf("[%d]pmap_extract(%x,%x)\n", cpu_number(), pmap, va);
+	if (DOPDB(PDB_FOLLOW|PDB_EXTRACT))
+		printf("pmap_extract(%p, 0x%lx)\n", pmap, va);
+
 	/*
 	 *	Special translation for kernel addresses in
 	 *	K0 space (directly mapped to physical addresses).
 	 */
-	if (ISA_K0SEG(va))
-		return K0SEG_TO_PHYS(va);
+	if (ISA_K0SEG(va)) {
+		pa = K0SEG_TO_PHYS(va);
+		if (DOPDB(PDB_FOLLOW|PDB_EXTRACT))
+			printf("pmap_extract: returns 0x%lx\n", pa);
+		goto out;
+	}
 
 	SPLVM(spl);
 	simple_lock(&pmap->lock);
@@ -1925,10 +2036,15 @@ if (pmap_debug) db_printf("[%d]pmap_extract(%x,%x)\n", cpu_number(), pmap, va);
 	 * Beware: this puts back this thread in the cpus_active set
 	 */
 	SPLX(spl);
+
+out:
+	if (DOPDB(PDB_FOLLOW|PDB_EXTRACT))
+		printf("pmap_extract: returns 0x%lx\n", pa);
 	return(pa);
 }
 
-vm_offset_t pmap_resident_extract(pmap, va)
+vm_offset_t
+pmap_resident_extract(pmap, va)
 	register pmap_t	pmap;
 	vm_offset_t	va;
 {
@@ -1939,8 +2055,10 @@ vm_offset_t pmap_resident_extract(pmap, va)
 	 *	Special translation for kernel addresses in
 	 *	K0 space (directly mapped to physical addresses).
 	 */
-	if (ISA_K0SEG(va))
-		return K0SEG_TO_PHYS(va);
+	if (ISA_K0SEG(va)) {
+		pa = K0SEG_TO_PHYS(va);
+		goto out;
+	}
 
 	if ((pte = pmap_pte(pmap, va)) == PT_ENTRY_NULL)
 	    pa = (vm_offset_t) 0;
@@ -1948,6 +2066,8 @@ vm_offset_t pmap_resident_extract(pmap, va)
 	    pa = (vm_offset_t) 0;
 	else
 	    pa = pte_to_pa(*pte) + (va & ALPHA_OFFMASK);
+
+out:
 	return(pa);
 }
 
@@ -1961,19 +2081,24 @@ vm_offset_t pmap_resident_extract(pmap, va)
  *	Thus it must be called in a loop that checks whether the map
  *	has been expanded enough.
  */
+void
 pmap_expand(map, v)
 	register pmap_t		map;
 	register vm_offset_t	v;
 {
+	pt_entry_t		template;
 	pt_entry_t		*pdp;
 	register vm_page_t	m;
 	register vm_offset_t	pa;
 	register int		i;
 	spl_t			spl;
 
+	if (DOPDB(PDB_FOLLOW|PDB_EXPAND))
+		printf("pmap_expand(%p, 0x%lx)\n", map, v);
+
 	/* Would have to go through all maps to add this page */
 	if (map == kernel_pmap)
-	    panic("pmap_expand");
+		panic("pmap_expand");
 
 	/*
 	 *	Allocate a VM page for the level 2 page table entries,
@@ -1981,38 +2106,47 @@ pmap_expand(map, v)
 	 */
 	pdp = pmap_pde(map,v);
 	if ((*pdp & ALPHA_PTE_VALID) == 0) {
+		pt_entry_t	*pte;
 
-	    pt_entry_t	*pte;
+		if (DOVPDB(PDB_FOLLOW|PDB_EXPAND))
+			printf("pmap_expand: needs pde\n");
 
-	    pa = pmap_page_table_page_alloc();
+		pa = pmap_page_table_page_alloc();
 
-	    /*
-	     * Re-lock the pmap and check that another thread has
-	     * not already allocated the page-table page.  If it
-	     * has, discard the new page-table page (and try
-	     * again to make sure).
-	     */
-	    PMAP_READ_LOCK(map, spl);
-
-	    if (*pdp & ALPHA_PTE_VALID) {
 		/*
-		 * Oops...
+		 * Re-lock the pmap and check that another thread has
+		 * not already allocated the page-table page.  If it
+		 * has, discard the new page-table page (and try
+		 * again to make sure).
 		 */
+		PMAP_READ_LOCK(map, spl);
+
+		if (*pdp & ALPHA_PTE_VALID) {
+			/*
+			 * Oops...
+			 */
+			PMAP_READ_UNLOCK(map, spl);
+			pmap_page_table_page_dealloc(pa);
+			return;
+		}
+
+		/*
+		 * Map the page.
+		 */
+		i = ptes_per_vm_page;
+		pte = pdp;
+		pte_ktemplate(template,pa,VM_PROT_READ|VM_PROT_WRITE);
+		if (map != kernel_pmap)
+			template &= ~ALPHA_PTE_ASM;
+		do {
+			*pte = template;
+			if (DOVPDB(PDB_FOLLOW|PDB_EXPAND))
+				printf("pmap_expand: inserted l1 pte (0x%lx) at %p\n",
+				   template, pte);
+			pte++;
+			pte_increment_pa(template);
+		} while (--i > 0);
 		PMAP_READ_UNLOCK(map, spl);
-		pmap_page_table_page_dealloc(pa);
-		return;
-	    }
-	    /*
-	     *	Map the page.
-	     */
-	    i = ptes_per_vm_page;
-	    pte = pdp;
-	    do {
-	        pte_ktemplate(*pte,pa,VM_PROT_READ|VM_PROT_WRITE);
-	        pte++;
-	        pa += ALPHA_PGBYTES;
-	    } while (--i > 0);
-	    PMAP_READ_UNLOCK(map, spl);
 	}
 
 	/*
@@ -2042,12 +2176,22 @@ pmap_expand(map, v)
 	i = ptes_per_vm_page;
 	pdp = (pt_entry_t *)ptetokv(*pdp);
 	pdp = &pdp[pte2num(v)];
+	pte_ktemplate(template,pa,VM_PROT_READ|VM_PROT_WRITE);
+	if (map != kernel_pmap)
+		template &= ~ALPHA_PTE_ASM;
 	do {
-	    pte_ktemplate(*pdp,pa,VM_PROT_READ|VM_PROT_WRITE);
-	    pdp++;
-	    pa += ALPHA_PGBYTES;
+		*pdp = template;
+		if (DOVPDB(PDB_FOLLOW|PDB_EXPAND))
+			printf("pmap_expand: inserted l2 pte (0x%lx) at %p\n",
+			  template, pdp);
+		pdp++;
+		pte_increment_pa(template);
 	} while (--i > 0);
 	PMAP_READ_UNLOCK(map, spl);
+
+out:
+	if (DOVPDB(PDB_FOLLOW|PDB_EXPAND))
+		printf("pmap_expand: leaving\n");
 	return;
 }
 
@@ -2105,7 +2249,7 @@ void pmap_collect(p)
 	 */
 	PMAP_READ_LOCK(p, spl);
 	PMAP_UPDATE_TLBS(p, VM_MIN_ADDRESS, VM_MAX_ADDRESS);
-	pmap_destroy_tlbpid(p->pid, FALSE);
+	pmap_tlbpid_destroy(p->pid, FALSE);
 
 	for (pdp = p->dirbase;
 	     pdp < pmap_pde(p,VM_MIN_KERNEL_ADDRESS);
@@ -2185,15 +2329,31 @@ void pmap_collect(p)
  *		Binds the given physical map to the given
  *		processor, and returns a hardware map description.
  */
-#if	0
-void pmap_activate(my_pmap, th, my_cpu)
-	register pmap_t	my_pmap;
-	thread_t	th;
-	int		my_cpu;
+void
+pmap_activate(pmap, hwpcb, cpu)
+	register pmap_t	pmap;
+	struct alpha_pcb *hwpcb;
+	int cpu;
 {
+
+        if (DOPDB(PDB_FOLLOW|PDB_ACTIVATE))
+                printf("pmap_activate(%p, %p, %d)\n", pmap, hwpcb, cpu);
+
+#if 0
 	PMAP_ACTIVATE(my_pmap, th, my_cpu);
-}
+#else
+        if (DOVPDB(PDB_ACTIVATE))
+                printf("pmap_activate: old pid = %d\n", pmap->pid);
+        if (pmap->pid < 0) pmap_tlbpid_assign(pmap);
+	hwpcb->apcb_asn = pmap->pid;
+        hwpcb->apcb_ptbr = pmap->dirpfn;
+	if (pmap != kernel_pmap)
+		pmap->cpus_using = TRUE;
+        if (DOVPDB(PDB_ACTIVATE))
+                printf("pmap_activate: new pid = %d, new ptbr = 0x%lx\n",
+		    pmap->pid, pmap->dirpfn);
 #endif
+}
 
 /*
  *	Routine:	pmap_deactivate
@@ -2202,18 +2362,24 @@ void pmap_activate(my_pmap, th, my_cpu)
  *		in use on the specified processor.  (This is a macro
  *		in pmap.h)
  */
-#if	0
-void pmap_deactivate(pmap, th, which_cpu)
-	pmap_t		pmap;
-	thread_t	th;
-	int		which_cpu;
+void
+pmap_deactivate(pmap, hwpcb, cpu)
+	register pmap_t	pmap;
+	struct alpha_pcb *hwpcb;
+	int cpu;
 {
-#ifdef	lint
-	pmap++; th++; which_cpu++;
-#endif
+        if (DOPDB(PDB_FOLLOW|PDB_DEACTIVATE))
+                printf("pmap_deactivate(%p, %p, %d)\n", pmap, hwpcb, cpu);
+
+#if 0
 	PMAP_DEACTIVATE(pmap, th, which_cpu);
-}
+#else
+        if (DOVPDB(PDB_DEACTIVATE))
+                printf("pmap_deactivate: pid = %d, ptbr = 0x%lx\n",
+		    pmap->pid, pmap->dirpfn);
+	pmap->cpus_using = FALSE;
 #endif
+}
 
 /*
  *	Routine:	pmap_kernel
@@ -2237,10 +2403,15 @@ pmap_zero_page(phys)
 	register vm_offset_t	phys;
 {
 
+	if (DOPDB(PDB_FOLLOW|PDB_ZERO_PAGE))
+		printf("pmap_zero_page(0x%lx)\n", phys);
+
 	assert(phys != vm_page_fictitious_addr);
 
-if (pmap_debug || (phys == pmap_suspect_phys)) db_printf("pmap_zero_page(%x)\n", phys);
 	bzero((void *)phystokv(phys), PAGE_SIZE);
+
+	if (DOVPDB(PDB_FOLLOW|PDB_ZERO_PAGE))
+		printf("pmap_zero_page: leaving\n");
 }
 #endif
 
@@ -2253,12 +2424,17 @@ void
 pmap_copy_page(src, dst)
 	vm_offset_t	src, dst;
 {
+
+	if (DOPDB(PDB_FOLLOW|PDB_COPY_PAGE))
+		printf("pmap_copy_page(0x%lx, 0x%lx)\n", src, dst);
+
 	assert(src != vm_page_fictitious_addr);
 	assert(dst != vm_page_fictitious_addr);
 
-if (pmap_debug || (src == pmap_suspect_phys) || (dst == pmap_suspect_phys)) db_printf("pmap_copy_page(%x,%x)\n", src, dst);
 	aligned_block_copy(phystokv(src), phystokv(dst), PAGE_SIZE);
 
+	if (DOVPDB(PDB_FOLLOW|PDB_COPY_PAGE))
+		printf("pmap_copy_page: leaving\n");
 }
 #endif
 
@@ -2791,7 +2967,7 @@ set_ptbr(pmap_t map, pcb_t pcb, boolean_t switchit)
 	/* optimize later */
 	vm_offset_t     pa;
 
-	pa = pmap_resident_extract(kernel_pmap, map->dirbase);
+	pa = pmap_resident_extract(kernel_pmap, (vm_offset_t)map->dirbase);
 printf("set_ptbr (switch = %d): dirbase = 0x%lx, pa = 0x%lx\n", switchit, map->dirbase, pa);
 	if (pa == 0)
 		panic("set_ptbr");
@@ -2819,21 +2995,32 @@ printf("set_ptbr (switch = %d): dirbase = 0x%lx, pa = 0x%lx\n", switchit, map->d
  *	All things considered, I did it right in the MIPS case.
  */
 
-int	pmap_max_asn	= 63;	/* Default value at boot.  Should be 2^ */
+#if 0
+/* above */
+int	pmap_max_asn;
+#endif
 
 decl_simple_lock_data(static, tlbpid_lock)
 static struct pmap **pids_in_use;
 static int pmap_next_pid;
 
-pmap_tlbpid_init()
+pmap_tlbpid_init(maxasn)
+	int maxasn;
 {
 	simple_lock_init(&tlbpid_lock);
 
-#define	MAX_PID_EVER	1023	/* change if necessary, this is one page */
+        if (DOVPDB(PDB_FOLLOW|PDB_TLBPID_INIT))
+                printf("pmap_tlbpid_init: maxasn = %d\n", maxasn);
+
+	pmap_max_asn = maxasn;
+	if (maxasn == 0) {
+		/* ASNs not implemented...  Is this the right way to check? */
+		return;
+	}
+	
 	pids_in_use = (struct pmap **)
-		pmap_bootstrap_alloc( (MAX_PID_EVER+1) * sizeof(struct pmap *));
-	bzero(pids_in_use, (MAX_PID_EVER+1) * sizeof(struct pmap *));
-#undef	MAX_PID_EVER
+		pmap_bootstrap_alloc((maxasn + 1) * sizeof(struct pmap *));
+	bzero(pids_in_use, (maxasn + 1) * sizeof(struct pmap *));
 
 	pmap_next_pid = 1;
 }
@@ -2845,17 +3032,20 @@ pmap_tlbpid_init()
  *	- pmap.pid prevents from making duplicates: if -1 there is no
  *	  pid for it, otherwise there is one and only one entry at that index.
  *
- * pmap_assign_tlbpid	provides a tlbpid for the given pmap, creating
+ * pmap_tlbpid_assign	provides a tlbpid for the given pmap, creating
  *			a new one if necessary
- * pmap_destroy_tlbpid	returns a tlbpid to the pool of available ones
+ * pmap_tlbpid_destroy	returns a tlbpid to the pool of available ones
  */
 
-pmap_assign_tlbpid(map)
+pmap_tlbpid_assign(map)
 	struct pmap *map;
 {
 	register int pid, next_pid;
 
-	if (map->pid < 0) {
+        if (DOVPDB(PDB_FOLLOW|PDB_TLBPID_ASSIGN))
+                printf("pmap_tlbpid_assign: pmap %p had %d\n", map, map->pid);
+
+	if (pmap_max_asn && map->pid < 0) {
 
 		simple_lock(&tlbpid_lock);
 
@@ -2873,7 +3063,7 @@ pmap_assign_tlbpid(map)
 				if (++next_pid == pmap_max_asn)
 					next_pid = 1;
 			}
-			pmap_destroy_tlbpid(next_pid, TRUE);
+			pmap_tlbpid_destroy(next_pid, TRUE);
 		}
 got_a_free_one:
 		pids_in_use[next_pid] = map;
@@ -2884,16 +3074,23 @@ got_a_free_one:
 
 		simple_unlock(&tlbpid_lock);
 	}
+        if (DOVPDB(PDB_FOLLOW|PDB_TLBPID_ASSIGN))
+                printf("pmap_tlbpid_assign: pmap %p got %d\n", map, map->pid);
 }
 
-pmap_destroy_tlbpid(pid, locked)
+pmap_tlbpid_destroy(pid, locked)
 	int 		pid;
 	boolean_t	locked;
 {
 	struct pmap    *map;
 
+        if (DOVPDB(PDB_FOLLOW|PDB_TLBPID_DESTROY))
+                printf("pmap_tlbpid_destroy(%d, %d)\n", pid, locked);
+
 	if (pid < 0)	/* no longer in use */
 		return;
+
+	assert(pmap_max_asn);
 
 	if (!locked) simple_lock(&tlbpid_lock);
 
@@ -2901,6 +3098,7 @@ pmap_destroy_tlbpid(pid, locked)
 	 * Make the pid available, and the map unassigned.
 	 */
 	map = pids_in_use[pid];
+	assert(map != NULL);
 	pids_in_use[pid] = PMAP_NULL;
 	map->pid = -1;
 
@@ -3087,3 +3285,35 @@ pmap_free_pv(pv)
 		break;
 	}
 }
+
+#if 0
+sanity(pmap, addr)
+        register pmap_t         pmap;
+        register vm_offset_t    addr;
+{
+        register pt_entry_t     *ptp;
+        register pt_entry_t     pte;
+	
+	printf("checking dirbase...\n");
+	assert(pmap->dirbase != 0);
+	printf("checking dirpfn...\n");
+	assert(pmap->dirpfn == curproc->p_addr->u_pcb.pcb_hw.apcb_ptbr);
+	printf("checking pid...\n");
+	assert(pmap->pid == curproc->p_addr->u_pcb.pcb_hw.apcb_asn);
+
+	
+        /* seg1 */
+        pte = *pmap_pde(pmap,addr);
+        if ((pte & ALPHA_PTE_VALID) == 0)
+                return(PT_ENTRY_NULL);
+        /* seg2 */
+        ptp = (pt_entry_t *)ptetokv(pte);
+        pte = ptp[pte2num(addr)];
+        if ((pte & ALPHA_PTE_VALID) == 0)
+                return(PT_ENTRY_NULL);
+        /* seg3 */
+        ptp = (pt_entry_t *)ptetokv(pte);
+        return(&ptp[pte3num(addr)]);
+
+}
+#endif
