@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: ipf2netbsd,v 1.4 2000/05/21 18:37:27 veego Exp $
+#	$NetBSD: ipf2netbsd,v 1.4.4.1 2002/02/09 16:55:47 he Exp $
 #
 # Copyright (c) 1999 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -68,7 +68,7 @@ rm -rf $dbase $dsys $dlkm
 mkdir -p $dbase $dsys $dlkm
 cd $r
 pax -rvw . $dbase
-pax -rvw fil.c ip_auth.c ip_auth.h ip_compat.h ip_fil.c ip_fil.h ip_frag.c ip_frag.h ip_ftp_pxy.c ip_log.c ip_nat.c ip_nat.h ip_proxy.c ip_proxy.h ip_raudio_pxy.c ip_rcmd_pxy.c ip_state.c ip_state.h ipl.h $dsys
+pax -rvw fil.c ip_auth.c ip_auth.h ip_compat.h ip_fil.c ip_fil.h ip_frag.c ip_frag.h ip_ftp_pxy.c ip_ipsec_pxy.c ip_log.c ip_nat.c ip_nat.h ip_netbios_pxy.c ip_proxy.c ip_proxy.h ip_raudio_pxy.c ip_rcmd_pxy.c ip_state.c ip_state.h ipl.h $dsys
 pax -rvw mln_ipl.c $dlkm
 cd $dbase/man
 # The ipnat(1) manpage belongs into section 8
