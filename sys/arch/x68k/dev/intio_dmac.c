@@ -1,4 +1,4 @@
-/*	$NetBSD: intio_dmac.c,v 1.11 2001/05/27 02:18:07 minoura Exp $	*/
+/*	$NetBSD: intio_dmac.c,v 1.12 2001/11/25 16:00:05 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -139,7 +139,6 @@ dmac_init_channels(sc)
 	struct dmac_softc *sc;
 {
 	int i;
-	pmap_t pmap = pmap_kernel();
 
 	DPRINTF (3, ("dmac_init_channels\n"));
 	for (i=0; i<DMAC_NCHAN; i++) {
@@ -177,7 +176,9 @@ dmac_alloc_channel(self, ch, name,
 	struct dmac_softc *sc = (void*) intio->sc_dmac;
 	struct dmac_channel_stat *chan = &sc->sc_channels[ch];
 	char intrname[16];
+#ifdef DMAC_ARRAYCHAIN
 	int r, dummy;
+#endif
 
 	printf ("%s: allocating ch %d for %s.\n",
 		sc->sc_dev.dv_xname, ch, name);
@@ -293,7 +294,6 @@ dmac_alloc_xfer (chan, dmat, dmamap)
 	bus_dmamap_t dmamap;
 {
 	struct dmac_dma_xfer *xf = &chan->ch_xfer;
-	struct dmac_softc *sc = (struct dmac_softc*) chan->ch_softc;
 
 	DPRINTF (3, ("dmac_alloc_xfer\n"));
 	xf->dx_channel = chan;
@@ -389,7 +389,10 @@ dmac_start_xfer_offset(self, xf, offset, size)
 	struct dmac_softc *sc = (void*) self;
 	struct dmac_channel_stat *chan = xf->dx_channel;
 	struct x68k_bus_dmamap *dmamap = xf->dx_dmamap;
-	int c, go = DMAC_CCR_STR|DMAC_CCR_INT;
+	int go = DMAC_CCR_STR|DMAC_CCR_INT;
+#ifdef DMAC_ARRAYCHAIN
+	int c;
+#endif
 
 	DPRINTF (3, ("dmac_start_xfer\n"));
 #ifdef DMAC_DEBUG
@@ -543,9 +546,11 @@ dmac_done(arg)
 {
 	struct dmac_channel_stat *chan = arg;
 	struct dmac_softc *sc = (void*) chan->ch_softc;
+#ifdef DMAC_ARRAYCHAIN
 	struct dmac_dma_xfer *xf = &chan->ch_xfer;
 	struct x68k_bus_dmamap *map = xf->dx_dmamap;
 	int c;
+#endif
 
 	DPRINTF (3, ("dmac_done\n"));
 
@@ -624,7 +629,6 @@ dmac_abort_xfer(self, xf)
 {
 	struct dmac_softc *sc = (void*) self;
 	struct dmac_channel_stat *chan = xf->dx_channel;
-	struct x68k_bus_dmamap *dmamap = xf->dx_dmamap;
 
 	bus_space_write_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CCR,
 			  DMAC_CCR_INT | DMAC_CCR_HLT);

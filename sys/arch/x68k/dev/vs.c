@@ -1,4 +1,4 @@
-/*	$NetBSD: vs.c,v 1.10 2001/11/13 09:27:06 isaki Exp $	*/
+/*	$NetBSD: vs.c,v 1.11 2001/11/25 16:00:06 minoura Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -297,7 +297,7 @@ vs_dmaerrintr(void *hdl)
 
 	DPRINTF(1, ("%s: DMA transfer error.\n", sc->sc_dev.dv_xname));
 	/* XXX */
-	vs_dmaintr(hdl);
+	vs_dmaintr(sc);
 
 	return 1;
 }
