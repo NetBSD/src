@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2001/10/13 06:15:15 jmc Exp $
+#	$NetBSD: Makefile,v 1.13 2001/12/09 00:32:51 ross Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -12,8 +12,6 @@ MOUNT_POINT?=	/mnt
 VND?=		vnd0
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
-VND_CDEV=	/dev/${VND}c
-VND_CRDEV=	/dev/r${VND}c
 IMAGE?=		xxx.fs
 MDEC=		${DESTDIR}/usr/mdec
 
@@ -25,8 +23,8 @@ CRUNCHGEN?=	crunchgen
 
 all: ${CBIN} 
 	dd if=/dev/zero of=${IMAGE} count=9000
-	vnconfig -v -c ${VND_CDEV} ${IMAGE}
-#	disklabel -rw ${VND_CDEV} ${DISKTYPE}
+	vnconfig -v -c ${VND} ${IMAGE}
+#	disklabel -rw ${VND} ${DISKTYPE}
 	newfs -B le -m 0 -o space -i 5120 -c 20 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	${MTREE} -def ${.CURDIR}/${MTREECONF} -p ${MOUNT_POINT}/ -u
@@ -41,11 +39,11 @@ all: ${CBIN}
 	@df -i ${MOUNT_POINT}
 	@echo ""
 	umount ${MOUNT_POINT}
-	vnconfig -u ${VND_CDEV}
+	vnconfig -u ${VND}
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND_DEV}
+	-vnconfig -u ${VND}
 	-/bin/rm -f ${IMAGE}
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
@@ -60,3 +58,4 @@ clean cleandir distclean:
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
+.include <bsd.sys.mk>
