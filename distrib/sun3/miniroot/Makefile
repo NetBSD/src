@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 1999/05/16 08:21:53 gwr Exp $
+#	$NetBSD: Makefile,v 1.15 1999/05/21 04:06:20 gwr Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -64,3 +64,13 @@ clean cleandir distclean:
 
 # Standard rules needed by the above...
 .include <bsd.obj.mk>
+
+.if !defined(RELEASEDIR)
+release:
+	@echo setenv RELEASEDIR before doing that!
+	@false
+.else	# RELEASEDIR
+release: ${IMAGE}.gz
+	cp -p ${IMAGE}.gz \
+	 ${RELEASEDIR}/installation/miniroot/${IMAGE}.gz
+.endif	# RELEASEDIR
