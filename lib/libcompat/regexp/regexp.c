@@ -35,12 +35,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: regexp.c,v 1.11 1999/07/02 15:16:42 simonb Exp $");
+__RCSID("$NetBSD: regexp.c,v 1.12 1999/09/16 09:57:06 lukem Exp $");
 #endif /* not lint */
 
+#include <ctype.h>
 #include <regexp.h>
 #include <stdio.h>
-#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 #include "regmagic.h"
