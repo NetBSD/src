@@ -1,4 +1,4 @@
-/*	$NetBSD: apprentice.c,v 1.24 2001/07/22 22:53:00 pooka Exp $	*/
+/*	$NetBSD: apprentice.c,v 1.25 2001/07/22 22:56:50 pooka Exp $	*/
 
 /*
  * apprentice - make one pass through /etc/magic, learning its secrets.
@@ -46,7 +46,7 @@
 #if 0
 FILE_RCSID("@(#)Id: apprentice.c,v 1.42 2001/07/22 21:04:15 christos Exp ")
 #else
-__RCSID("$NetBSD: apprentice.c,v 1.24 2001/07/22 22:53:00 pooka Exp $");
+__RCSID("$NetBSD: apprentice.c,v 1.25 2001/07/22 22:56:50 pooka Exp $");
 #endif
 #endif	/* lint */
 
@@ -338,7 +338,7 @@ parse(magicp, nmagicp, l, action)
 {
 	int i = 0;
 	struct magic *m;
-	char *t, *s;
+	char *t;
 
 #define ALLOC_INCR	200
 	if (*nmagicp + 1 >= maxmagic){
