@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.info.mk,v 1.11 2000/02/19 23:57:12 erh Exp $
+#	$NetBSD: bsd.info.mk,v 1.12 2000/06/06 05:40:47 mycroft Exp $
 
 .if !target(__initialized__)
 __initialized__:
@@ -29,14 +29,6 @@ infoinstall:
 .for F in ${INFOFILES}
 	@${INSTALL_INFO} --remove --info-dir=${DESTDIR}${INFODIR} ${DESTDIR}${INFODIR}/${F}
 	${INSTALL_INFO} --info-dir=${DESTDIR}${INFODIR} ${DESTDIR}${INFODIR}/${F}
-.endfor
-
-.for F in ${INFOFILES}
-FILESDIR_${F}=	${INFODIR}
-FILESOWN_${F}=	${INFOOWN}
-FILESGRP_${F}=	${INFOGRP}
-FILESMODE_${F}=	${INFOMODE}
-FILESNAME_${F}=	${F:T}
 .endfor
 
 realall: ${INFOFILES}
