@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.15 1993/05/20 02:14:49 cgd Exp $
+ *	$Id: machdep.c,v 1.16 1993/05/20 14:33:44 cgd Exp $
  */
 
 #include "param.h"
@@ -140,6 +140,7 @@ cpu_startup()
 	 * Good {morning,afternoon,evening,night}.
 	 */
 	printf(version);
+	identifycpu();
 	printf("real mem  = %d\n", ctob(physmem));
 
 	/*
@@ -254,6 +255,37 @@ again:
 	 * Configure the system.
 	 */
 	configure();
+}
+
+identifycpu()	/* translated from hp300 -- cgd */
+{
+	if (cpu < CPU_MINTYPE || cpu > CPU_MAXTYPE) {
+		printf("unknown cpu type %d\n", cpu);
+		panic("startup: bad cpu id");
+	}
+	printf("CPU: %s\n", cpu_typenames[cpu]);
+
+	/*
+	 * Now that we have told the user what they have,
+	 * let them know if that machine type isn't configured.
+	 */
+	switch (cpu) {
+	case -1:                /* keep compilers happy */
+#if !defined(I386_CPU)
+	case CPU_386:
+	case CPU_386SX:
+#endif
+#if !defined(I486_CPU)
+	case CPU_486:
+	case CPU_486SX:
+#endif
+#if !defined(I586_CPU)
+	case CPU_586:
+#endif
+		panic("CPU type not configured");
+	default:
+		break;
+	}
 }
 
 #ifdef PGINPROF

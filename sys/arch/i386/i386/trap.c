@@ -35,7 +35,7 @@
  *
  *	@(#)trap.c	7.4 (Berkeley) 5/13/91
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/i386/trap.c,v 1.4 1993/05/13 21:39:38 deraadt Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/i386/trap.c,v 1.5 1993/05/20 14:33:47 cgd Exp $";
 
 /*
  * 386 Trap and System call handleing
@@ -166,12 +166,16 @@ copyfault:
 		goto out;
 
 	case T_DNA|T_USER:
-#ifdef	NPX
+#ifdef NPX
 		/* if a transparent fault (due to context switch "late") */
 		if (npxdna()) return;
 #endif
+#ifdef MATH_EMULATE
 		i = math_emulate(&frame);
 		if (i == 0) return;
+#else
+		panic("trap: math emulation necessary!");
+#endif
 		ucode = FPE_FPU_NP_TRAP;
 		break;
 

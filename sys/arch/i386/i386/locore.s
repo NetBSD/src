@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)locore.s	7.3 (Berkeley) 5/13/91
+ *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
+ *	$Id: locore.s,v 1.10 1993/05/20 14:33:41 cgd Exp $
  */
 
 
@@ -140,6 +141,28 @@ start:	movw	$0x1234,%ax
 	movl	%eax,_bootdev-SYSTEM
 	movl	12(%esp),%eax
 	movl	%eax, _cyloffset-SYSTEM
+
+	/* find out our CPU type. */
+        pushfl
+        popl    %eax
+        movl    %eax, %ecx
+        xorl    $0x40000, %eax
+        pushl   %eax
+        popfl
+        pushfl
+        popl    %eax
+        xorl    %ecx, %eax
+        shrl    $18, %eax
+        andl    $1, %eax
+        push    %ecx
+        popfl
+      
+        cmpl    $0, %eax
+        jne     1f
+        movl    $CPU_386, _cpu-SYSTEM
+	jmp	2f
+1:      movl    $CPU_486, _cpu-SYSTEM
+2:
 
 #ifdef garbage
 	/* count up memory */
@@ -293,8 +316,6 @@ begin: /* now running relocated at SYSTEM where the system is linked to run */
 	lea	7*NBPG(%esi),%esi	# skip past stack.
 	pushl	%esi
 	
-	call	_set_cpu_type		# get kind of cpu
-
 	call	_init386		# wire 386 chip for unix operation
 	
 	movl	$0,_PTD
@@ -1852,30 +1873,6 @@ IDTVEC(syscall)
 	pushl	_cpl
 	pushl	$0
 	jmp	doreti
-
-	ALIGN32
-ENTRY(set_cpu_type)
-	pushfl
-	popl	%eax
-	movl	%eax, %ecx
-	xorl	$0x40000, %eax
-	pushl	%eax
-	popfl
-	pushfl
-	popl	%eax
-	xorl	%ecx, %eax
-	shrl	$18, %eax
-	andl	$1, %eax
-	push	%ecx
-	popfl
-      
-	movl	$_cpu, %ecx
-	cmpl	$0, %eax
-	jne	1f
-	movl	$CPU_386, (%ecx)
-	ret
-1:	movl	$CPU_486, (%ecx)
-	ret
 
 	ALIGN32
 ENTRY(htonl)
