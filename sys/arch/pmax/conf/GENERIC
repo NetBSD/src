@@ -2,7 +2,7 @@
 # Distribution kernel (any  model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.14.2.1 1997/08/23 07:11:43 thorpej Exp $
+# 	$NetBSD: GENERIC,v 1.14.2.2 1997/08/27 22:35:15 thorpej Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -29,7 +29,7 @@ options 	"COMPAT_43"		# compatibility with 4.3BSD binaries
 options 	KTRACE			# system call tracing support
 options 	"NKMEMCLUSTERS=1024"	# 4K pages in kernel malloc pool
 
-#options	SCSIVERBOSE		# Verbose SCSI errors
+#options 	SCSIVERBOSE		# Verbose SCSI errors
 
 #Old 4.4bsd/pmax kgdb options
 #options 	KGDB			# support for kernel gdb
