@@ -1,4 +1,4 @@
-#	$NetBSD: printcap,v 1.6 2000/02/02 16:04:51 hubertf Exp $
+#	$NetBSD: printcap,v 1.7 2000/07/03 06:11:23 enami Exp $
 #	from: @(#)printcap	8.1 (Berkeley) 6/9/93
 
 #lp|local line printer:\
@@ -10,7 +10,7 @@
 
 # HP Laserjet with JetDirect ethernet card
 #hp|HP Laserjet:\
-#	:lp=9100@remove_hp:sd=/var/spool/output/hp:\
+#	:lp=9100@remove_hp:sd=/var/spool/lpd/hp:\
 #	:lf=/var/log/lpd-errs:
 
 # Typical remote printer entry.
