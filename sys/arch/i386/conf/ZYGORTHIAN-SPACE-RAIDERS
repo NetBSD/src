@@ -1,4 +1,4 @@
-#	$NetBSD: ZYGORTHIAN-SPACE-RAIDERS,v 1.29 2000/06/01 04:24:01 david Exp $
+#	$NetBSD: ZYGORTHIAN-SPACE-RAIDERS,v 1.30 2000/06/05 23:18:51 gmcgarry Exp $
 #	From: GENERIC,v 1.299 2000/02/03 20:31:42 dante Exp
 #
 #	GENERIC -- everything that's currently supported
@@ -6,7 +6,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.29 $"
+#ident 		"GENERIC-$Revision: 1.30 $"
 
 maxusers	32		# estimated number of users
 
@@ -518,7 +518,7 @@ de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 ray*	at pcmcia? function ?		# Raytheon Raylink (802.11)
 #sm*	at pcmcia? function ?		# Megahertz Ethernet
 wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
-#xe*	at pcmcia? function ?		# Xircom PCMCIA cards
+#xi*	at pcmcia? function ?		# Xircom CreditCard Ethernet
 
 #mhzc*	at pcmcia? function ?		# Megahertz Ethernet/Modem combo cards
 #com*	at mhzc?
