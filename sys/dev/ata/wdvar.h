@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.4 1999/10/20 15:22:25 enami Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.5 2000/04/01 14:32:25 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -61,19 +61,6 @@ struct ata_bio {
     u_int8_t r_error; /* copy of error register */
     daddr_t badsect[127];    /* 126 plus trailing -1 marker */
 };
-
-/* drive states stored in ata_drive_datas */
-#define RECAL          0
-#define RECAL_WAIT     1
-#define PIOMODE	       2
-#define PIOMODE_WAIT   3
-#define DMAMODE        4
-#define DMAMODE_WAIT   5
-#define GEOMETRY       6
-#define GEOMETRY_WAIT  7
-#define MULTIMODE      8
-#define MULTIMODE_WAIT 9
-#define READY          10
 
 int wdc_ata_bio __P((struct ata_drive_datas*, struct ata_bio*)); 
 
