@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -37,25 +37,27 @@
  *
  * from: Utah $Hdr: vm_unix.c 1.1 89/11/07$
  *
- *	@(#)vm_unix.c	7.2 (Berkeley) 4/20/91
+ *	@(#)vm_unix.c	8.2 (Berkeley) 1/9/95
  */
 
 /*
  * Traditional sbrk/grow interface to VM
  */
-#include "param.h"
-#include "systm.h"
-#include "proc.h"
-#include "resourcevar.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/resourcevar.h>
 
-#include "vm.h"
+#include <vm/vm.h>
 
+struct obreak_args {
+	char	*nsiz;
+};
 /* ARGSUSED */
+int
 obreak(p, uap, retval)
 	struct proc *p;
-	struct args {
-		char	*nsiz;
-	} *uap;
+	struct obreak_args *uap;
 	int *retval;
 {
 	register struct vmspace *vm = p->p_vmspace;
@@ -92,9 +94,10 @@ obreak(p, uap, retval)
  * Enlarge the "stack segment" to include the specified
  * stack pointer for the process.
  */
+int
 grow(p, sp)
 	struct proc *p;
-	unsigned sp;
+	vm_offset_t sp;
 {
 	register struct vmspace *vm = p->p_vmspace;
 	register int si;
@@ -102,29 +105,31 @@ grow(p, sp)
 	/*
 	 * For user defined stacks (from sendsig).
 	 */
-	if (sp < (unsigned)vm->vm_maxsaddr)
+	if (sp < (vm_offset_t)vm->vm_maxsaddr)
 		return (0);
 	/*
 	 * For common case of already allocated (from trap).
 	 */
-	if (sp >= (unsigned)vm->vm_maxsaddr + MAXSSIZ - ctob(vm->vm_ssize))
+	if (sp >= USRSTACK - ctob(vm->vm_ssize))
 		return (1);
 	/*
 	 * Really need to check vs limit and increment stack size if ok.
 	 */
-	si = clrnd(btoc(vm->vm_maxsaddr + MAXSSIZ - sp) - vm->vm_ssize);
+	si = clrnd(btoc(USRSTACK-sp) - vm->vm_ssize);
 	if (vm->vm_ssize + si > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur))
 		return (0);
 	vm->vm_ssize += si;
 	return (1);
 }
 
+struct ovadvise_args {
+	int	anom;
+};
 /* ARGSUSED */
+int
 ovadvise(p, uap, retval)
 	struct proc *p;
-	struct args {
-		int	anom;
-	} *uap;
+	struct ovadvise_args *uap;
 	int *retval;
 {
 

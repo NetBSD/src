@@ -1,6 +1,6 @@
 /* 
- * Copyright (c) 1991 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * The Mach Operating System project at Carnegie-Mellon University.
@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)pmap.h	7.4 (Berkeley) 5/7/91
+ *	@(#)pmap.h	8.1 (Berkeley) 6/11/93
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -70,38 +70,53 @@
 #ifndef	_PMAP_VM_
 #define	_PMAP_VM_
 
+/*
+ * Each machine dependent implementation is expected to
+ * keep certain statistics.  They may do this anyway they
+ * so choose, but are expected to return the statistics
+ * in the following structure.
+ */
+struct pmap_statistics {
+	long		resident_count;	/* # of pages mapped (total)*/
+	long		wired_count;	/* # of pages wired */
+};
+typedef struct pmap_statistics	*pmap_statistics_t;
+
 #include <machine/pmap.h>
 
 #ifdef KERNEL
-void		pmap_bootstrap();
-void		pmap_init();
-void		pmap_pinit __P((struct pmap *pmap));
-void		pmap_release __P((struct pmap *pmap));
-vm_offset_t	pmap_map();
-pmap_t		pmap_create();
-void		pmap_destroy();
-void		pmap_reference();
-void		pmap_remove();
-void		pmap_page_protect();
-void		pmap_protect();
-void		pmap_enter();
-vm_offset_t	pmap_extract();
-void		pmap_update();
-void		pmap_collect();
-void		pmap_activate();
-void		pmap_deactivate();
-void		pmap_copy();
-void		pmap_statistics();
-void		pmap_clear_reference();
-boolean_t	pmap_is_referenced();
-#ifndef pmap_kernel
-pmap_t		pmap_kernel();
+__BEGIN_DECLS
+void		*pmap_bootstrap_alloc __P((int));
+void		 pmap_bootstrap( /* machine dependent */ );
+void		 pmap_change_wiring __P((pmap_t, vm_offset_t, boolean_t));
+void		 pmap_clear_modify __P((vm_offset_t pa));
+void		 pmap_clear_reference __P((vm_offset_t pa));
+void		 pmap_collect __P((pmap_t));
+void		 pmap_copy __P((pmap_t,
+		    pmap_t, vm_offset_t, vm_size_t, vm_offset_t));
+void		 pmap_copy_page __P((vm_offset_t, vm_offset_t));
+pmap_t		 pmap_create __P((vm_size_t));
+void		 pmap_destroy __P((pmap_t));
+void		 pmap_enter __P((pmap_t,
+		    vm_offset_t, vm_offset_t, vm_prot_t, boolean_t));
+vm_offset_t	 pmap_extract __P((pmap_t, vm_offset_t));
+void		 pmap_init __P((vm_offset_t, vm_offset_t));
+boolean_t	 pmap_is_modified __P((vm_offset_t pa));
+boolean_t	 pmap_is_referenced __P((vm_offset_t pa));
+vm_offset_t	 pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
+void		 pmap_page_protect __P((vm_offset_t, vm_prot_t));
+void		 pmap_pageable __P((pmap_t,
+		    vm_offset_t, vm_offset_t, boolean_t));
+vm_offset_t	 pmap_phys_address __P((int));
+void		 pmap_pinit __P((pmap_t));
+void		 pmap_protect __P((pmap_t,
+		    vm_offset_t, vm_offset_t, vm_prot_t));
+void		 pmap_reference __P((pmap_t));
+void		 pmap_release __P((pmap_t));
+void		 pmap_remove __P((pmap_t, vm_offset_t, vm_offset_t));
+void		 pmap_update __P((void));
+void		 pmap_zero_page __P((vm_offset_t));
+__END_DECLS
 #endif
 
-void		pmap_redzone();
-boolean_t	pmap_access();
-
-extern pmap_t	kernel_pmap;
-#endif
-
-#endif	_PMAP_VM_
+#endif /* _PMAP_VM_ */
