@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.94 2001/11/20 13:50:07 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.95 2001/11/20 16:09:01 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.94 2001/11/20 13:50:07 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.95 2001/11/20 16:09:01 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -480,13 +480,35 @@ usbd_fill_iface_data(usbd_device_handle dev, int ifaceidx, int altidx)
 				break;
 		}
 		/* passed end, or bad desc */
-		DPRINTF(("usbd_fill_iface_data: bad descriptor(s): %s\n",
-			 ed->bLength == 0 ? "0 length" :
-			 ed->bDescriptorType == UDESC_INTERFACE ? "iface desc":
-			 "out of data"));
+		printf("usbd_fill_iface_data: bad descriptor(s): %s\n",
+		       ed->bLength == 0 ? "0 length" :
+		       ed->bDescriptorType == UDESC_INTERFACE ? "iface desc":
+		       "out of data");
 		goto bad;
 	found:
 		ifc->endpoints[endpt].edesc = ed;
+		if (dev->speed == USB_SPEED_HIGH) {
+			u_int mps;
+			/* Control and bulk endpoints have max packet limits. */
+			switch (UE_GET_XFERTYPE(ed->bmAttributes)) {
+			case UE_CONTROL:
+				mps = USB_2_MAX_CTRL_PACKET;
+				goto check;
+			case UE_BULK:
+				mps = USB_2_MAX_BULK_PACKET;
+			check:
+				if (UGETW(ed->wMaxPacketSize) != mps) {
+					USETW(ed->wMaxPacketSize, mps);
+#ifdef DIAGNOSTIC
+					printf("usbd_fill_iface_data: bad max "
+					       "packet size\n");
+#endif
+				}
+				break;
+			default:
+				break;
+			}
+		}
 		ifc->endpoints[endpt].refcnt = 0;
 		p += ed->bLength;
 	}
@@ -1006,6 +1028,17 @@ usbd_new_device(device_ptr_t parent, usbd_bus_handle bus, int depth,
 			      "failed\n", addr));
 		usbd_remove_device(dev, up);
 		return (err);
+	}
+
+	if (speed == USB_SPEED_HIGH) {
+		/* Max packet size must be 64 (sec 5.5.3). */
+		if (dd->bMaxPacketSize != USB_2_MAX_CTRL_PACKET) {
+#ifdef DIAGNOSTIC
+			printf("usbd_new_device: addr=%d bad max packet size\n",
+			       addr);
+#endif
+			dd->bMaxPacketSize = USB_2_MAX_CTRL_PACKET;
+		}
 	}
 
 	DPRINTF(("usbd_new_device: adding unit addr=%d, rev=%02x, class=%d, "
