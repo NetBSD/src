@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
-#	$Id: Makefile,v 1.43 1994/06/22 15:09:35 mycroft Exp $
+#	$Id: Makefile,v 1.44 1994/07/08 06:17:23 jtc Exp $
 
 # Doing a make install builds /usr/include
 #
@@ -75,18 +75,19 @@ copies:
 	    find ${LSUBDIRS} -type f -name '*.h' -print` ${DESTDIR}/usr/include
 	rm -rf ${DESTDIR}/usr/include/machine
 	install -d -o bin -g bin -m 755 ${DESTDIR}/usr/include/machine
-	cd ../sys/arch/${MACHINE}/include; \
-	    tar cf - *.h | (cd ${DESTDIR}/usr/include/machine; tar xpfB -);
+	pax -rw -pa -s "|../sys/arch/${MACHINE}/include||" \
+	    ../sys/arch/${MACHINE}/include/*.h \
+	    ${DESTDIR}/usr/include/machine   
 	rm -rf ${DESTDIR}/usr/include/${MACHINE_ARCH}
 	if test ${MACHINE} != ${MACHINE_ARCH} -a \
-	    -d ../sys/arch/${MACHINE_ARCH}/include ; then \
+	    -d ../sys/arch/${MACHINE_ARCH}/include; then \
 		install -d -o bin -g bin -m 755 \
-		    ${DESTDIR}/usr/include/${MACHINE_ARCH} ; \
-		cd ../sys/arch/${MACHINE_ARCH}/include ; \
-		tar cf - *.h | \
-		    (cd ${DESTDIR}/usr/include/${MACHINE_ARCH} ; tar xpfB -); \
+    	    	    ${DESTDIR}/usr/include/${MACHINE_ARCH}; \
+		pax -rw -pa -s "|../sys/arch/${MACHINE_ARCH}/include||" \
+		    ../sys/arch/${MACHINE_ARCH}/include/*.h \
+		    ${DESTDIR}/usr/include/${MACHINE_ARCH}; \
 	else \
-		ln -s machine ${DESTDIR}/usr/include/${MACHINE_ARCH} ; \
+		ln -s machine ${DESTDIR}/usr/include/${MACHINE_ARCH}; \
 	fi
 
 symlinks:
