@@ -1,4 +1,4 @@
-/*	$NetBSD: wss_isapnp.c,v 1.3 1998/07/28 14:16:29 augustss Exp $	*/
+/*	$NetBSD: wss_isapnp.c,v 1.4 1998/08/25 22:35:25 pk Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,11 +37,8 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/errno.h>
-#include <sys/ioctl.h>
-#include <sys/syslog.h>
 #include <sys/device.h>
-#include <sys/proc.h>
+#include <sys/errno.h>
 
 #include <machine/bus.h>
 
@@ -96,13 +93,14 @@ wss_isapnp_attach(parent, self, aux)
 	void *aux;
 {
 	struct wss_softc *sc = (struct wss_softc *)self;
+	struct ad1848_softc *ac = &sc->sc_ad1848.sc_ad1848;
 	struct isapnp_attach_args *ipa = aux;
 
 	printf("\n");
 
 	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
 		printf("%s: error in region allocation\n", 
-		       sc->sc_dev.dv_xname);
+		       ac->sc_dev.dv_xname);
 		return;
 	}
 
@@ -112,11 +110,12 @@ wss_isapnp_attach(parent, self, aux)
         sc->mad_chip_type = MAD_NONE;
 
 	/* Set up AD1848 I/O handle. */
+	ac->sc_iot = ipa->ipa_iot;
+	ac->sc_ioh = sc->sc_ioh;
+	ac->mode = 2;
+
 	sc->sc_ad1848.sc_ic  = ipa->ipa_ic;
-	sc->sc_ad1848.sc_iot = ipa->ipa_iot;
-	sc->sc_ad1848.sc_ioh = sc->sc_ioh;
 	sc->sc_ad1848.sc_iooffs = 0;
-	sc->sc_ad1848.mode = 2;
 
         sc->wss_ic  = ipa->ipa_ic;
 	sc->wss_irq = ipa->ipa_irq[0].num;
@@ -124,12 +123,12 @@ wss_isapnp_attach(parent, self, aux)
 	sc->wss_recdrq = 
 		ipa->ipa_ndrq > 1 ? ipa->ipa_drq[1].num : ipa->ipa_drq[0].num;
 
-	if (!ad1848_probe(&sc->sc_ad1848)) {
-		printf("%s: ad1848_probe failed\n", sc->sc_dev.dv_xname);
+	if (!ad1848_isa_probe(&sc->sc_ad1848)) {
+		printf("%s: ad1848_probe failed\n", ac->sc_dev.dv_xname);
 		return;
 	}
 
-	printf("%s: %s %s", sc->sc_dev.dv_xname, ipa->ipa_devident,
+	printf("%s: %s %s", ac->sc_dev.dv_xname, ipa->ipa_devident,
 	       ipa->ipa_devclass);
 
 	wssattach(sc);
