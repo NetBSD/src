@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.26 1997/10/09 21:39:29 scw Exp $	*/
+/*	$NetBSD: locore.s,v 1.27 1997/10/12 15:41:39 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -182,12 +182,13 @@ start:					| start of kernel and .text!
 	movl	0xfffe0774,d1		| End + 1 of onboard memory
 	movl	d1,a0@(4)		| phys_seg_list[0].ps_end
 	clrl	a0@(8)			| phys_seg_list[0].ps_startpage
-	movl	0xfffe0764,d1		| Start of offboard segment
-	movl	d1,a0@(0x0c)		| phys_seg_list[1].ps_start
+	movl	0xfffe0764,a0@(0x0c)	| Start of offboard segment
+	beq	Lsavmaxmem		| Jump if none defined
 	movl	0xfffe0768,d1		| End of offboard segment
 	addql	#1,d1			| +1
 	movl	d1,a0@(0x10)		| phys_seg_list[1].ps_end
 	clrl	a0@(0x14)		| phys_seg_list[1].ps_startpage
+Lsavmaxmem:
 	moveq	#PGSHIFT,d2
 	lsrl	d2,d1			| convert to page (click) number
 	RELOC(_maxmem, a0)
