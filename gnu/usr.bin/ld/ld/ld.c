@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.60 1998/10/31 08:56:24 matt Exp $	*/
+/*	$NetBSD: ld.c,v 1.61 1998/12/15 22:34:38 pk Exp $	*/
 
 /*-
  * This code is derived from software copyrighted by the Free Software
@@ -1741,10 +1741,10 @@ digest_symbols()
 	defined_global_sym_count = 0;
 	digest_pass1();
 
-	each_full_file(consider_relocation, (void *)0);	/* Text */
-	each_full_file(consider_relocation, (void *)1); /* Data */
+	each_full_file((void *)consider_relocation, (void *)0);	/* Text */
+	each_full_file((void *)consider_relocation, (void *)1); /* Data */
 
-	each_file(consider_local_symbols, (void *)0);
+	each_file((void *)consider_local_symbols, (void *)0);
 
 	/*
 	 * Compute total size of sections.
@@ -1754,7 +1754,7 @@ digest_symbols()
 	 * and TEXT_SIZE.
 	 */
 	consider_rrs_section_lengths();
-	each_full_file(consider_file_section_lengths, 0);
+	each_full_file((void *)consider_file_section_lengths, 0);
 	rrs_text_start = text_start + text_size;
 	text_size += rrs_text_size;
 	data_size += rrs_data_size;
@@ -1799,7 +1799,7 @@ printf("set_sect_start = %#x, set_sect_size = %#x\n",
 
 	/* Compute start addresses of each file's sections and symbols.  */
 
-	each_full_file(relocate_file_addresses, 0);
+	each_full_file((void *)relocate_file_addresses, 0);
 	relocate_rrs_addresses();
 
 	/* Pass 2: assign values to symbols */
@@ -2742,7 +2742,7 @@ write_text()
 	if (trace_files)
 		fprintf(stderr, "Copying and relocating text:\n\n");
 
-	each_full_file(copy_text, 0);
+	each_full_file((void *)copy_text, 0);
 	file_close();
 
 	if (trace_files)
@@ -2806,7 +2806,7 @@ write_data()
 	if (fseek(outstream, pos, SEEK_SET) != 0)
 		errx(1, "write_data: fseek");
 
-	each_full_file(copy_data, 0);
+	each_full_file((void *)copy_data, 0);
 	file_close();
 
 	/*
@@ -3173,15 +3173,15 @@ write_rel()
 	if (count != global_sym_count)
 		errx(1, "internal error: write_rel: count = %d", count);
 
-	each_full_file(assign_symbolnums, &count);
+	each_full_file((void *)assign_symbolnums, &count);
 
 	/* Write out the relocations of all files, remembered from copy_text. */
-	each_full_file(coptxtrel, 0);
+	each_full_file((void *)coptxtrel, 0);
 
 	if (trace_files)
 		fprintf(stderr, "\nWriting data relocation:\n\n");
 
-	each_full_file(copdatrel, 0);
+	each_full_file((void *)copdatrel, 0);
 
 	if (trace_files)
 		fprintf(stderr, "\n");
@@ -3653,7 +3653,7 @@ printf("writesym(#%d): %s, type %x\n", syms_written, sp->name, sp->defined);
 	write_string_table();
 
 	/* Write the local symbols defined by the various files.  */
-	each_file(write_file_syms, (void *)&syms_written);
+	each_file((void *)write_file_syms, (void *)&syms_written);
 	file_close();
 
 	if (syms_written != nsyms)

@@ -1,4 +1,4 @@
-/*	$NetBSD: warnings.c,v 1.21 1998/09/04 09:50:47 pk Exp $	*/
+/*	$NetBSD: warnings.c,v 1.22 1998/12/15 22:34:38 pk Exp $	*/
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -97,7 +97,7 @@ print_symbols(outfile)
 	FILE           *outfile;
 {
 	fprintf(outfile, "\nFiles:\n\n");
-	each_file(describe_file_sections, (void *)outfile);
+	each_file((void *)describe_file_sections, (void *)outfile);
 
 	fprintf(outfile, "\nGlobal symbols:\n\n");
 	FOR_EACH_SYMBOL(i, sp) {
@@ -118,7 +118,7 @@ print_symbols(outfile)
 		fprintf(outfile, "\n");
 	} END_EACH_SYMBOL;
 
-	each_file(list_file_locals, (void *)outfile);
+	each_file((void *)list_file_locals, (void *)outfile);
 }
 
 static void
