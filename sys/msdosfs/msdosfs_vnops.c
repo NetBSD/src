@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.41 1995/11/29 15:08:42 ws Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.42 1995/11/29 18:28:54 ws Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -142,6 +142,7 @@ msdosfs_create(ap)
 	ndirent.de_FileSize = 0;
 	ndirent.de_dev = pdep->de_dev;
 	ndirent.de_devvp = pdep->de_devvp;
+	ndirent.de_pmp = pdep->de_pmp;
 	ndirent.de_flag = DE_ACCESS | DE_CREATE | DE_UPDATE;
 	DE_TIMES(&ndirent);
 	if (error = createde(&ndirent, pdep, &dep, cnp))

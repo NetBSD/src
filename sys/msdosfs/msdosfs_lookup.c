@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.21 1995/11/05 18:47:55 ws Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.22 1995/11/29 18:28:51 ws Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -341,8 +341,6 @@ msdosfs_lookup(ap)
 				dp->de_fndoffset = diroff;
 				dp->de_fndcnt = 0;	/* unused anyway */
 				
-				if (cluster == MSDOSFSROOT)
-					blkoff = diroff;
 				goto found;
 			}
 		}	/* for (blkoff = 0; .... */
@@ -428,6 +426,16 @@ found:;
 	 */
 	isadir = dep->deAttributes & ATTR_DIRECTORY;
 	scn = getushort(dep->deStartCluster);
+
+	if (cluster == MSDOSFSROOT)
+		blkoff = diroff;
+	if (isadir) {
+		cluster = scn;
+		if (cluster == MSDOSFSROOT)
+			blkoff = MSDOSFSROOT_OFS;
+		else
+			blkoff = 0;
+	}
 
 	/*
 	 * Now release buf to allow deget to read the entry again.
@@ -658,8 +666,16 @@ createde(dep, ddep, depp, cnp)
 	/*
 	 * If they want us to return with the denode gotten.
 	 */
-	if (depp)
+	if (depp) {
+		if (dep->de_Attributes & ATTR_DIRECTORY) {
+			dirclust = dep->de_StartCluster;
+			if (dirclust == MSDOSFSROOT)
+				diroffset = MSDOSFSROOT_OFS;
+			else
+				diroffset = 0;
+		}
 		return deget(pmp, dirclust, diroffset, depp);
+	}
 	
 	return 0;
 }
