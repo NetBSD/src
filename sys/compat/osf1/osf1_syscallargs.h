@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_syscallargs.h,v 1.43 2001/01/27 07:29:05 thorpej Exp $ */
+/* $NetBSD: osf1_syscallargs.h,v 1.44 2001/04/04 19:52:19 ross Exp $ */
 
 /*
  * System call argument lists.
@@ -298,6 +298,21 @@ struct osf1_sys_shmget_args {
 	syscallarg(int) flags;
 };
 
+struct osf1_sys_stat2_args {
+	syscallarg(const char *) path;
+	syscallarg(struct osf1_stat2 *) ub;
+};
+
+struct osf1_sys_lstat2_args {
+	syscallarg(const char *) path;
+	syscallarg(struct osf1_stat2 *) ub;
+};
+
+struct osf1_sys_fstat2_args {
+	syscallarg(int) fd;
+	syscallarg(struct osf1_stat2 *) sb;
+};
+
 struct osf1_sys_sigaltstack_args {
 	syscallarg(struct osf1_sigaltstack *) nss;
 	syscallarg(struct osf1_sigaltstack *) oss;
@@ -464,6 +479,9 @@ int	osf1_sys_shmat(struct proc *, void *, register_t *);
 int	osf1_sys_shmctl(struct proc *, void *, register_t *);
 int	osf1_sys_shmdt(struct proc *, void *, register_t *);
 int	osf1_sys_shmget(struct proc *, void *, register_t *);
+int	osf1_sys_stat2(struct proc *, void *, register_t *);
+int	osf1_sys_lstat2(struct proc *, void *, register_t *);
+int	osf1_sys_fstat2(struct proc *, void *, register_t *);
 int	sys_getsid(struct proc *, void *, register_t *);
 int	osf1_sys_sigaltstack(struct proc *, void *, register_t *);
 int	osf1_sys_sysinfo(struct proc *, void *, register_t *);
