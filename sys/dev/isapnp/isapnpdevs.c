@@ -1,10 +1,10 @@
-/*	$NetBSD: isapnpdevs.c,v 1.6 1998/09/12 21:49:51 wrstuden Exp $	*/
+/*	$NetBSD: isapnpdevs.c,v 1.7 1998/09/21 20:28:48 mark Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: isapnpdevs,v 1.6 1998/09/12 21:48:57 wrstuden Exp 
+ *	NetBSD: isapnpdevs,v 1.7 1998/09/21 20:25:52 mark Exp 
  */
 
 /*-
@@ -109,6 +109,7 @@ const struct isapnp_devinfo isapnp_ess_devinfo = {
 
 /* Generic Joystick */
 static const char *isapnp_joy_devlogic[] = {
+	"CSC0001",	/* CS4235 */
 	"CSCA801",	/* Terratec EWS64XL */
 	"CTL7002",	/* Creative Vibra16CL */
 	"ESS0001",	/* ESS1868 */
