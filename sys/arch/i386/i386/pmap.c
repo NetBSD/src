@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.146 2003/01/17 23:10:31 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.147 2003/01/22 12:52:17 yamt Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.146 2003/01/17 23:10:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.147 2003/01/22 12:52:17 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -1889,17 +1889,17 @@ pmap_activate(l)
 		 * mark the pmap in use by this processor.
 		 */
 		i386_atomic_setbits_l(&pmap->pm_cpus, (1U << cpu_number()));
-	}
 
 #ifdef KSTACK_CHECK_DR0
-	/*
-	 * setup breakpoint on the top of stack
-	 */
-	if (p == &proc0)
-		dr0(0, 0, 0, 0);
-	else
-		dr0(KSTACK_LOWEST_ADDR(p), 1, 3, 1);
+		/*
+		 * setup breakpoint on the top of stack
+		 */
+		if (l == &lwp0)
+			dr0(0, 0, 0, 0);
+		else
+			dr0(KSTACK_LOWEST_ADDR(l), 1, 3, 1);
 #endif
+	}
 }
 
 /*
