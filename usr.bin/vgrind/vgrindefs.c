@@ -1,4 +1,4 @@
-/*	$NetBSD: vgrindefs.c,v 1.7 1998/10/08 01:32:23 wsanchez Exp $	*/
+/*	$NetBSD: vgrindefs.c,v 1.8 1998/10/16 22:01:57 kleink Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vgrindefs.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: vgrindefs.c,v 1.7 1998/10/08 01:32:23 wsanchez Exp $");
+__RCSID("$NetBSD: vgrindefs.c,v 1.8 1998/10/16 22:01:57 kleink Exp $");
 #endif /* not lint */
 
 #define	BUFSIZ	1024
@@ -47,8 +47,8 @@ __RCSID("$NetBSD: vgrindefs.c,v 1.7 1998/10/08 01:32:23 wsanchez Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <fcntl.h>
 #include <unistd.h>
-#include <sys/fcntl.h>
 /*
  * grindcap - routines for dealing with the language definitions data base
  *	(code stolen almost totally from termcap)
