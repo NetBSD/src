@@ -1,4 +1,4 @@
-/* $NetBSD: rpb.h,v 1.25 1998/06/26 21:55:38 ross Exp $ */
+/* $NetBSD: rpb.h,v 1.26 1998/08/14 16:46:09 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -175,19 +175,19 @@ struct rpb {
 	char		rpb_revision[8];	/*  60; only first 4 valid */
 	u_int64_t	rpb_intr_freq;		/*  68; scaled by 4096 */
 	u_int64_t	rpb_cc_freq;		/*  70: cycle cntr frequency */
-	vm_offset_t	rpb_vptb;		/*  78: */
+	u_long		rpb_vptb;		/*  78: */
 	u_int64_t	rpb_reserved_arch;	/*  80: */
-	vm_offset_t	rpb_tbhint_off;		/*  88: */
+	u_long		rpb_tbhint_off;		/*  88: */
 	u_int64_t	rpb_pcs_cnt;		/*  90: */
 	u_int64_t	rpb_pcs_size;		/*  98; pcs size in bytes */
-	vm_offset_t	rpb_pcs_off;		/*  A0: offset to pcs info */ 
+	u_long		rpb_pcs_off;		/*  A0: offset to pcs info */ 
 	u_int64_t	rpb_ctb_cnt;		/*  A8: console terminal */
 	u_int64_t	rpb_ctb_size;		/*  B0: ctb size in bytes */
-	vm_offset_t	rpb_ctb_off;		/*  B8: offset to ctb */
-	vm_offset_t	rpb_crb_off;		/*  C0: offset to crb */
-	vm_offset_t	rpb_memdat_off;		/*  C8: memory data offset */
-	vm_offset_t	rpb_condat_off;		/*  D0: config data offset */
-	vm_offset_t	rpb_fru_off;		/*  D8: FRU table offset */
+	u_long		rpb_ctb_off;		/*  B8: offset to ctb */
+	u_long		rpb_crb_off;		/*  C0: offset to crb */
+	u_long		rpb_memdat_off;		/*  C8: memory data offset */
+	u_long		rpb_condat_off;		/*  D0: config data offset */
+	u_long		rpb_fru_off;		/*  D8: FRU table offset */
 	u_int64_t	rpb_save_term;		/*  E0: terminal save */
 	u_int64_t	rpb_save_term_val;	/*  E8: */
 	u_int64_t	rpb_rest_term;		/*  F0: terminal restore */
@@ -199,7 +199,7 @@ struct rpb {
 	u_int64_t	rpb_checksum;		/* 120: HWRPB checksum */
 	u_int64_t	rpb_rxrdy;		/* 128: receive ready */
 	u_int64_t	rpb_txrdy;		/* 130: transmit ready */
-	vm_offset_t	rpb_dsrdb_off;		/* 138: HWRPB + DSRDB offset */
+	u_long		rpb_dsrdb_off;		/* 138: HWRPB + DSRDB offset */
 	u_int64_t	rpb_tbhint[8];		/* 149: TB hint block */
 };
 
@@ -233,8 +233,8 @@ struct pcs {
 
 	u_int64_t	pcs_pal_memsize;	/*  88: PAL memory size */
 	u_int64_t	pcs_pal_scrsize;	/*  90: PAL scratch size */
-	vm_offset_t	pcs_pal_memaddr;	/*  98: PAL memory addr */	
-	vm_offset_t	pcs_pal_scraddr;	/*  A0: PAL scratch addr */
+	u_long		pcs_pal_memaddr;	/*  98: PAL memory addr */	
+	u_long		pcs_pal_scraddr;	/*  A0: PAL scratch addr */
 	struct {
 		u_int64_t
 			minorrev	: 8,	/* alphabetic char 'a' - 'z' */
@@ -285,10 +285,10 @@ struct pcs {
 
 	char		pcs_proc_revision[8];	/*  C0: only first 4 valid */
 	char		pcs_proc_sn[16];	/*  C8: only first 10 valid */
-	vm_offset_t	pcs_machcheck;		/*  D8: mach chk phys addr. */
+	u_long		pcs_machcheck;		/*  D8: mach chk phys addr. */
 	u_int64_t	pcs_machcheck_len;	/*  E0: length in bytes */
-	vm_offset_t	pcs_halt_pcbb;		/*  E8: phys addr of halt PCB */
-	vm_offset_t	pcs_halt_pc;		/*  F0: halt PC */
+	u_long		pcs_halt_pcbb;		/*  E8: phys addr of halt PCB */
+	u_long		pcs_halt_pc;		/*  F0: halt PC */
 	u_int64_t	pcs_halt_ps;		/*  F8: halt PS */
 	u_int64_t	pcs_halt_r25;		/* 100: halt argument list */
 	u_int64_t	pcs_halt_r26;		/* 108: halt return addr list */
@@ -325,8 +325,8 @@ struct ctb {
 	u_int64_t	ctb_reserved;		/*  16: */
 	u_int64_t	ctb_len;		/*  24: bytes of info */
 	u_int64_t	ctb_ipl;		/*  32: console ipl level */
-	vm_offset_t	ctb_tintr_vec;		/*  40: transmit vec (0x800) */
-	vm_offset_t	ctb_rintr_vec;		/*  48: receive vec (0x800) */
+	u_long		ctb_tintr_vec;		/*  40: transmit vec (0x800) */
+	u_long		ctb_rintr_vec;		/*  48: receive vec (0x800) */
 
 #define	CTB_GRAPHICS	   3			/* graphics device */
 #define	CTB_NETWORK	0xC0			/* network device */
@@ -334,12 +334,12 @@ struct ctb {
 	u_int64_t	ctb_term_type;		/*  56: terminal type */
 
 	u_int64_t	ctb_keybd_type;		/*  64: keyboard nationality */
-	vm_offset_t	ctb_keybd_trans;	/*  72: trans. table addr */
-	vm_offset_t	ctb_keybd_map;		/*  80: map table addr */
+	u_long		ctb_keybd_trans;	/*  72: trans. table addr */
+	u_long		ctb_keybd_map;		/*  80: map table addr */
 	u_int64_t	ctb_keybd_state;	/*  88: keyboard flags */
 	u_int64_t	ctb_keybd_last;		/*  96: last key entered */
-	vm_offset_t	ctb_font_us;		/* 104: US font table addr */
-	vm_offset_t	ctb_font_mcs;		/* 112: MCS font table addr */
+	u_long		ctb_font_us;		/* 104: US font table addr */
+	u_long		ctb_font_mcs;		/* 112: MCS font table addr */
 	u_int64_t	ctb_font_width;		/* 120: font width, height */
 	u_int64_t	ctb_font_height;	/* 128:		in pixels */
 	u_int64_t	ctb_mon_width;		/* 136: monitor width, height */
@@ -350,11 +350,11 @@ struct ctb {
 	u_int64_t	ctb_cur_height;		/* 176:		in pixels */
 	u_int64_t	ctb_head_cnt;		/* 184: # of heads */
 	u_int64_t	ctb_opwindow;		/* 192: opwindow on screen */
-	vm_offset_t	ctb_head_offset;	/* 200: offset to head info */
-	vm_offset_t	ctb_putchar;		/* 208: output char to TURBO */
+	u_long		ctb_head_offset;	/* 200: offset to head info */
+	u_long		ctb_putchar;		/* 208: output char to TURBO */
 	u_int64_t	ctb_io_state;		/* 216: I/O flags */
 	u_int64_t	ctb_listen_state;	/* 224: listener flags */
-	vm_offset_t	ctb_xaddr;		/* 232: extended info addr */
+	u_long		ctb_xaddr;		/* 232: extended info addr */
 	u_int64_t	ctb_turboslot;		/* 248: TURBOchannel slot # */
 	u_int64_t	ctb_server_off;		/* 256: offset to server info */
 	u_int64_t	ctb_line_off;		/* 264: line parameter offset */
@@ -374,9 +374,9 @@ struct crd {
  */
 struct crb {
 	struct crd	*crb_v_dispatch;	/*   0: virtual dispatch addr */
-	vm_offset_t	 crb_p_dispatch;	/*   8: phys dispatch addr */
+	u_long		 crb_p_dispatch;	/*   8: phys dispatch addr */
 	struct crd	*crb_v_fixup;		/*  10: virtual fixup addr */
-	vm_offset_t	 crb_p_fixup;		/*  18: phys fixup addr */
+	u_long		 crb_p_fixup;		/*  18: phys fixup addr */
 	u_int64_t	 crb_map_cnt;		/*  20: phys/virt map entries */
 	u_int64_t	 crb_page_cnt;		/*  28: pages to be mapped */
 };
@@ -386,16 +386,16 @@ struct crb {
  */
 struct mddt {
 	int64_t	 	mddt_cksum;		/*   0: 7-N checksum */
-	vm_offset_t	mddt_physaddr;		/*   8: bank config addr
+	u_long		mddt_physaddr;		/*   8: bank config addr
 						 * IMPLEMENTATION SPECIFIC
 						 */
 	u_int64_t	mddt_cluster_cnt;	/*  10: memory cluster count */
 	struct mddt_cluster {
-		vm_offset_t	mddt_pfn;	/*   0: starting PFN */
+		u_long		mddt_pfn;	/*   0: starting PFN */
 		u_int64_t	mddt_pg_cnt;	/*   8: 8KB page count */
 		u_int64_t	mddt_pg_test;	/*  10: tested page count */
-		vm_offset_t	mddt_v_bitaddr;	/*  18: bitmap virt addr */
-		vm_offset_t	mddt_p_bitaddr;	/*  20: bitmap phys addr */
+		u_long		mddt_v_bitaddr;	/*  18: bitmap virt addr */
+		u_long		mddt_p_bitaddr;	/*  20: bitmap phys addr */
 		int64_t		mddt_bit_cksum;	/*  28: bitmap checksum */
 
 #define	MDDT_NONVOLATILE		0x10	/* cluster is non-volatile */
