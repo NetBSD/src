@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.49 2003/08/07 16:34:27 agc Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.50 2003/08/09 19:02:53 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.49 2003/08/07 16:34:27 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.50 2003/08/09 19:02:53 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1437,11 +1437,12 @@ bad:
 	 * Write error occurred trying to update the inode
 	 * or the directory so must deallocate the inode.
 	 */
-	PNBUF_PUT(cnp->cn_pnbuf);
-	vput(dvp);
+	tvp->v_type = VNON;	/* Stop explosion if VBLK */
 	ip->i_e2fs_nlink = 0;
 	ip->i_flag |= IN_CHANGE;
 	vput(tvp);
+	PNBUF_PUT(cnp->cn_pnbuf);
+	vput(dvp);
 	return (error);
 }
 
