@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.35 1995/03/18 05:54:10 gwr Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.36 1995/06/02 19:50:17 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -121,7 +121,7 @@ nfs_statfs(mp, sbp, p)
 	vp = NFSTOV(np);
 	nfsstats.rpccnt[NFSPROC_STATFS]++;
 	cred = crget();
-	cred->cr_ngroups = 1;
+	cred->cr_ngroups = 0;
 	nfsm_reqhead(vp, NFSPROC_STATFS, NFSX_FH);
 	nfsm_fhtom(vp);
 	nfsm_request(vp, NFSPROC_STATFS, p, cred);
