@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.14 1997/10/15 06:00:26 explorer Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.15 1997/10/18 14:09:52 drochner Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 /*-
@@ -186,7 +186,10 @@ iyprobe(parent, match, aux)
 	u_int8_t c, d;
 
 	iot = ia->ia_iot;
-	
+
+	if (ia->ia_iobase == IOBASEUNK)
+		return 0;
+
 	if (bus_space_map(iot, ia->ia_iobase, 16, 0, &ioh))
 		return 0;
 
