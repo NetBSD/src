@@ -1,4 +1,4 @@
-.\"	$NetBSD: find.1,v 1.35 2002/09/27 15:56:26 provos Exp $
+.\"	$NetBSD: find.1,v 1.36 2002/09/27 16:56:53 grant Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -55,7 +55,11 @@ recursively descends the directory tree for each
 .Ar file
 listed, evaluating an
 .Ar expression
-(composed of the ``primaries'' and ``operands'' listed below) in terms
+(composed of the
+.Dq primaries
+and
+.Dq operands
+listed below) in terms
 of each file in the tree.
 .Pp
 The options are as follows:
@@ -69,8 +73,9 @@ option causes the file information and file type (see
 returned for each symbolic link encountered on the command line to be
 those of the file referenced by the link, not the link itself.
 If the referenced file does not exist, the file information and type will
-be for the link itself.  File information of all symbolic links not on
-the command line is that of the link itself.
+be for the link itself.
+File information of all symbolic links not on the command line is that
+of the link itself.
 .It Fl L
 The
 .Fl L
@@ -97,8 +102,10 @@ If a file name contains any of the delimiting characters used by
 .Nm xargs ,
 a diagnostic message is displayed on standard error, and the file
 is skipped.
-The delimiting characters include single (`` ' '') and double (`` " '')
-quotes, backslash (``\e''), space, tab and newline characters.
+The delimiting characters include single (') and double (")
+quotes, backslash (
+.Dq \e
+), space, tab and newline characters.
 Alternatively, the
 .Ic -print0
 or
@@ -154,10 +161,9 @@ order.
 .It Fl x
 The
 .Fl x
-option prevents
-.Nm
-from descending into directories that have a device number different
-than that of the file from which the descent began.
+option restricts the search to the file system containing the
+directory specified.
+Does not list mount points to other file systems.
 .El
 .Sh PRIMARIES
 .Bl -tag -width Ds
@@ -200,8 +206,12 @@ True if the program named
 .Ar utility
 returns a zero value as its exit status.
 Optional arguments may be passed to the utility.
-The expression must be terminated by a semicolon (``;'').
-If the string ``{}'' appears anywhere in the utility name or the
+The expression must be terminated by a semicolon (
+.Dq \&;
+).
+If the string
+.Dq {}
+appears anywhere in the utility name or the
 arguments it is replaced by the pathname of the current file.
 .Ar Utility
 will be executed from the directory from which
@@ -215,8 +225,10 @@ primary is identical to the
 primary with the exception that
 .Ar Utility
 will be executed from the directory that holds
-the current file.  The filename substituted for
-the string ``{}'' is not qualified.
+the current file.
+The filename substituted for the string
+.Dq {}
+is not qualified.
 .It Xo
 .Ic -flags
 .Op Fl
@@ -224,7 +236,9 @@ the string ``{}'' is not qualified.
 .Xc
 If
 .Ar flags
-are preceded by a dash (``\-''), this primary evaluates to true
+are preceded by a dash (
+.Dq \-
+), this primary evaluates to true
 if at least all of the bits in
 .Ar flags
 are set in the file's flags bits.
@@ -253,8 +267,12 @@ command can be used to find out the types of filesystems
 that are available on the system:
 .Bd -literal -offset indent
 sysctl vfs
+.Pp
 .Ed
-In addition, there are two pseudo-types, ``local'' and ``rdonly''.
+In addition, there are two pseudo-types,
+.Dq local
+and
+.Dq rdonly .
 The former matches any file system physically mounted on the system where
 the
 .Nm
@@ -290,8 +308,10 @@ links, owner, group, size in bytes, last modification time, and pathname.
 If the file is a block or character special file, the major and minor numbers
 will be displayed instead of the size in bytes.
 If the file is a symbolic link, the pathname of the linked\-to file will be
-displayed preceded by ``\-\*[Gt]''.
-The format is identical to that produced by ``ls \-dgils''.
+displayed preceded by
+.Dq \-\*[Gt] .
+The format is identical to that produced by
+.Dq ls \-dgils .
 .It Ic -maxdepth Ar n
 True if the current search depth is less than or equal to what is specified in
 .Ar n .
@@ -319,7 +339,9 @@ primary with the exception that
 .Nm
 requests user affirmation for the execution of the utility by printing
 a message to the terminal and reading a response.
-If the response is other than ``y'' the command is not executed and the
+If the response is other than
+.Dq y
+the command is not executed and the
 value of the
 .Ar \&ok
 expression is false.
@@ -336,7 +358,9 @@ Special shell pattern matching characters
 may be used as part of
 .Ar pattern  .
 These characters may be matched explicitly by escaping them with a
-backslash (``\e'').
+backslash (
+.Dq \e
+).
 .It Ic -newer Ar file
 True if the current file has a more recent last modification time than
 .Ar file  .
@@ -347,12 +371,22 @@ True if the file belongs to an unknown group.
 .It Ic -path Ar pattern
 True if the pathname being examined matches
 .Ar pattern  .
-Special shell pattern matching characters (``['', ``]'', ``*'', and ``?'')
+Special shell pattern matching characters (
+.Dq \&[ ,
+.Dq \&] ,
+.Dq \&* ,
+and
+.Dq \&?
+)
 may be used as part of
 .Ar pattern  .
 These characters may be matched explicitly by escaping them with a
-backslash (``\e'').
-Slashes (``/'') are treated as normal characters and do not have to be
+backslash (
+.Dq \e
+).
+Slashes (
+.Dq /
+) are treated as normal characters and do not have to be
 matched explicitly.
 .It Xo
 .Ic -perm
@@ -381,11 +415,15 @@ If the mode is octal, only bits 07777
 .Dv S_IRWXO )
 of the file's mode bits participate
 in the comparison.
-If the mode is preceded by a dash (``\-''), this primary evaluates to true
+If the mode is preceded by a dash (
+.Dq \-
+), this primary evaluates to true
 if at least all of the bits in the mode are set in the file's mode bits.
 If the mode is not preceded by a dash, this primary evaluates to true if
 the bits in the mode exactly match the file's mode bits.
-Note, the first character of a symbolic mode may not be a dash (``\-'').
+Note, the first character of a symbolic mode may not be a dash (
+.Dq \-
+).
 .It Ic -print
 This primary always evaluates to true.
 It prints the pathname of the current file to standard output, followed
@@ -434,7 +472,9 @@ True if the file's size, rounded up, in 512\-byte blocks is
 .Ar n  .
 If
 .Ar n
-is followed by a ``c'', then the primary is true if the
+is followed by a
+.Dq c
+, then the primary is true if the
 file's size is
 .Ar n
 bytes.
@@ -472,9 +512,17 @@ is treated as a user id.
 .El
 .Pp
 All primaries which take a numeric argument allow the number to be
-preceded by a plus sign (``+'') or a minus sign (``\-'').
-A preceding plus sign means ``more than n'', a preceding minus sign means
-``less than n'' and neither means ``exactly n'' .
+preceded by a plus sign (
+.Dq +
+) or a minus sign (
+.Dq \-
+).
+A preceding plus sign means
+.Dq more than n
+, a preceding minus sign means
+.Dq less than n
+and neither means
+.Dq exactly n .
 .Sh OPERATORS
 The primaries may be combined using the following operators.
 The operators are listed in order of decreasing precedence.
@@ -521,16 +569,23 @@ to be a separate argument to
 The following examples are shown as given to the shell:
 .Bl -tag -width findx
 .It Li "find  /  \e!  -name  \*q*.c\*q  -print"
-Print out a list of all the files whose names do not end in ``.c''.
+Print out a list of all the files whose names do not end in
+.Dq .c .
 .It Li "find  /  -newer  ttt  -user  wnj  -print"
-Print out a list of all the files owned by user ``wnj'' that are newer
-than the file ``ttt''.
+Print out a list of all the files owned by user
+.Dq wnj
+that are newer than the file
+.Dq ttt .
 .It Li "find  /  \e!  \e(  -newer  ttt  -user  wnj  \e)  -print"
-Print out a list of all the files which are not both newer than ``ttt''
-and owned by ``wnj''.
+Print out a list of all the files which are not both newer than
+.Dq ttt
+and owned by
+.Dq wnj .
 .It Li "find  /  \e(  -newer  ttt  -or  -user wnj  \e)  -print"
-Print out a list of all the files that are either owned by ``wnj'' or
-that are newer than ``ttt''.
+Print out a list of all the files that are either owned by
+.Dq wnj
+or that are newer than
+.Dq ttt .
 .El
 .Sh SEE ALSO
 .Xr chflags 1 ,
@@ -576,24 +631,36 @@ Historically, the
 .Fl h
 and
 .Fl x
-options were implemented using the primaries ``\-depth'', ``\-follow'',
-and ``\-xdev''.
+options were implemented using the primaries
+.Dq \-depth ,
+.Dq \-follow ,
+and
+.Dq \-xdev .
 These primaries always evaluated to true.
 As they were really global variables that took effect before the traversal
 began, some legal expressions could have unexpected results.
-An example is the expression ``\-print \-o \-depth''.
+An example is the expression
+.Dq \-print \-o \-depth .
 As \-print always evaluates to true, the standard order of evaluation
 implies that \-depth would never be evaluated.
 This is not the case.
 .Pp
-The operator ``-or'' was implemented as ``\-o'', and the operator ``-and''
-was implemented as ``\-a''.
+The operator
+.Dq -or
+was implemented as
+.Dq \-o ,
+and the operator
+.Dq -and
+was implemented as
+.Dq \-a .
 .Pp
 Historic implementations of the
 .Ic -exec
 and
 .Ic -ok
-primaries did not replace the string ``{}'' in the utility name or the
+primaries did not replace the string
+.Dq {}
+in the utility name or the
 utility arguments if it had preceding or following non-whitespace characters.
 This version replaces it no matter where in the utility name or arguments
 it appears.
@@ -607,15 +674,29 @@ the time of the Fifth Edition.
 The special characters used by
 .Nm
 are also special characters to many shell programs.
-In particular, the characters ``*'', ``['', ``]'', ``?'', ``('', ``)'',
-``!'', ``\e'' and ``;'' may have to be escaped from the shell.
+In particular, the characters
+.Dq \&* ,
+.Dq \&[ ,
+.Dq \&] ,
+.Dq \&? ,
+.Dq \&( ,
+.Dq \&) ,
+.Dq \&! ,
+.Dq \e
+and
+.Dq \&;
+may have to be escaped from the shell.
 .Pp
 As there is no delimiter separating options and file names or file
 names and the
 .Ar expression ,
-it is difficult to specify files named ``-xdev'' or ``!''.
+it is difficult to specify files named
+.Dq -xdev
+or
+.Dq \&! .
 These problems are handled by the
 .Fl f
 option and the
 .Xr getopt 3
-``--'' construct.
+.Dq --
+construct.
