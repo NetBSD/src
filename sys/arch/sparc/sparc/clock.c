@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.60 1998/03/29 22:11:06 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.61 1998/03/30 14:21:39 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -473,13 +473,13 @@ clockattach_mainbus(parent, self, aux)
 	 * of reloading the cpu type, Ethernet address, etc, by hand from
 	 * the console FORTH interpreter.  I intend not to enjoy it again.
 	 */
-	if (sparc_bus_map(ma->ma_bustag,
-			  ma->ma_iospace,
-			  (bus_addr_t)ma->ma_paddr,
-			  sz,
-			  BUS_SPACE_MAP_LINEAR,
-			  0,
-			  &bh) != 0) {
+	if (bus_space_map2(ma->ma_bustag,
+			   ma->ma_iospace,
+			   ma->ma_paddr,
+			   sz,
+			   BUS_SPACE_MAP_LINEAR,
+			   0,
+			   &bh) != 0) {
 		printf("%s: can't map register\n", self->dv_xname);
 		return;
 	}
@@ -634,12 +634,12 @@ timerattach_mainbus(parent, self, aux)
 	 * we have a fixed virtual address for the timer, to make
 	 * microtime() faster.
 	 */
-	if (sparc_bus_map(ma->ma_bustag,
-			  ma->ma_iospace,
-			 (bus_addr_t)ma->ma_paddr,
-			 sizeof(struct timerreg_4),
-			 BUS_SPACE_MAP_LINEAR,
-			 TIMERREG_VA, &bh) != 0) {
+	if (bus_space_map2(ma->ma_bustag,
+			   ma->ma_iospace,
+			   ma->ma_paddr,
+			   sizeof(struct timerreg_4),
+			   BUS_SPACE_MAP_LINEAR,
+			   TIMERREG_VA, &bh) != 0) {
 		printf("%s: can't map register\n", self->dv_xname);
 		return;
 	}
