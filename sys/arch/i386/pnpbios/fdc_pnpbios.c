@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_pnpbios.c,v 1.4 2002/09/27 20:33:07 thorpej Exp $	*/
+/*	$NetBSD: fdc_pnpbios.c,v 1.5 2002/10/01 12:57:17 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_pnpbios.c,v 1.4 2002/09/27 20:33:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_pnpbios.c,v 1.5 2002/10/01 12:57:17 fvdl Exp $");
 
 #include "rnd.h"
 
@@ -75,10 +75,8 @@ struct fdc_pnpbios_softc {
 };
 
 
-const struct cfattach fdc_pnpbios_ca = {
-	sizeof(struct fdc_pnpbios_softc), fdc_pnpbios_match,
-	    fdc_pnpbios_attach,
-};
+CFATTACH_DECL(fdc_pnpbios, sizeof(struct fdc_pnpbios_softc), fdc_pnpbios_match,
+    fdc_pnpbios_attach, NULL, NULL)
 
 int
 fdc_pnpbios_match(struct device *parent,

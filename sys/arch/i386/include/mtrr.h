@@ -1,4 +1,4 @@
-/* $NetBSD: mtrr.h,v 1.4 2001/09/19 01:26:19 thorpej Exp $ */
+/* $NetBSD: mtrr.h,v 1.5 2002/10/01 12:57:07 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.

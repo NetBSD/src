@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.58 2002/09/26 07:30:18 grant Exp $
+#	$NetBSD: INSTALL_TINY,v 1.59 2002/10/01 12:56:43 fvdl Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -66,7 +66,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 #options 	LKM		# loadable kernel modules
 
-options 	USERCONF	# userconf(4) support
+#options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
@@ -162,7 +162,7 @@ config		netbsd	root on ? type ?
 #
 
 mainbus0 at root
-
+cpu0	at mainbus0
 #apm0	at mainbus0			# Advanced power management
 
 
@@ -405,7 +405,7 @@ ate0	at isa? port 0x2a0 irq ?		# AT1700
 ec0	at isa? port 0x250 iomem 0xd8000 irq 9	# 3Com 3c503 Ethernet
 eg0	at isa? port 0x280 irq 9		# 3C505 ethernet cards
 el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
-ep*	at isa? port ? irq ?			# 3C509 ethernet cards
+ep0	at isa? port ? irq ?			# 3C509 ethernet cards
 ef0	at isa? port 0x360 iomem 0xd0000 irq 7	# 3C507
 ai0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN
 fmv0	at isa? port 0x2a0 irq ?		# FMV-180 series

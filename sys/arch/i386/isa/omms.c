@@ -1,4 +1,4 @@
-/*	$NetBSD: omms.c,v 1.6 2002/09/27 20:33:00 thorpej Exp $	*/
+/*	$NetBSD: omms.c,v 1.7 2002/10/01 12:57:13 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omms.c,v 1.6 2002/09/27 20:33:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omms.c,v 1.7 2002/10/01 12:57:13 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -76,9 +76,8 @@ int ommsprobe __P((struct device *, struct cfdata *, void *));
 void ommsattach __P((struct device *, struct device *, void *));
 int ommsintr __P((void *));
 
-const struct cfattach omms_ca = {
-	sizeof(struct omms_softc), ommsprobe, ommsattach
-};
+CFATTACH_DECL(omms, sizeof(struct omms_softc), ommsprobe, ommsattach,
+    NULL, NULL)
 
 extern struct cfdriver omms_cd;
 
@@ -92,6 +91,7 @@ const struct cdevsw omms_cdevsw = {
 	mmsopen, mmsclose, mmsread, nowrite, mmsioctl,
 	nostop, notty, mmspoll, nommap,
 };
+
 
 #define	MMSUNIT(dev)	(minor(dev))
 
