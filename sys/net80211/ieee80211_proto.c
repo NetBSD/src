@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.c,v 1.12 2004/07/23 08:05:00 mycroft Exp $	*/
+/*	$NetBSD: ieee80211_proto.c,v 1.13 2004/07/23 08:25:25 mycroft Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_proto.c,v 1.8 2004/04/02 20:22:25 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.12 2004/07/23 08:05:00 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.13 2004/07/23 08:25:25 mycroft Exp $");
 #endif
 
 /*
@@ -444,12 +444,10 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int mgt
 			break;
 		case IEEE80211_S_RUN:
 			/* beacon miss */
-			if (ifp->if_flags & IFF_DEBUG) {
-				/* XXX bssid clobbered above */
-				if_printf(ifp, "no recent beacons from %s;"
-				    " rescanning\n",
-				    ether_sprintf(ic->ic_bss->ni_bssid));
-			}
+			IEEE80211_DPRINTF(ic, IEEE80211_MSG_STATE,
+				("no recent beacons from %s; rescanning\n",
+				ether_sprintf(ic->ic_bss->ni_bssid)));
+			/* XXX this clears the scan set */
 			ieee80211_free_allnodes(ic);
 			/* FALLTHRU */
 		case IEEE80211_S_AUTH:
@@ -535,7 +533,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int mgt
 			IASSERT(ni->ni_txrate < ni->ni_rates.rs_nrates,
 				("%s: bogus xmit rate %u setup", __func__,
 					ni->ni_txrate));
-			if (ifp->if_flags & IFF_DEBUG) {
+			if (ieee80211_msg_debug(ic)) {
 				if_printf(ifp, " ");
 				if (ic->ic_opmode == IEEE80211_M_STA)
 					printf("associated ");
