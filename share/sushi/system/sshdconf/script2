@@ -1,0 +1,19 @@
+#!/bin/sh
+# $NetBSD: script2,v 1.1 2001/08/02 05:41:19 garbled Exp $
+
+VAR=`grep "^$1" /etc/sshd.conf | awk '{print $2}'`
+if [ -z "$VAR" ]; then
+	VAR=`grep "^$1" /usr/share/sushi/system/sshdconf/defaults | awk '{print $2}'`
+fi
+if [ -z "$VAR" ]; then
+	echo "no"
+	echo "yes"
+else
+	if [ "$VAR" = "yes" ]; then
+		echo "yes"
+		echo "no"
+	else
+		echo "no"
+		echo "yes"
+	fi
+fi
