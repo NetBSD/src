@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.69 2004/03/09 03:18:03 atatat Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.70 2004/09/17 14:11:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.69 2004/03/09 03:18:03 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.70 2004/09/17 14:11:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -446,7 +446,7 @@ again:
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_READ;
 	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_procp = p;
+	auio.uio_procp = NULL;
 	auio.uio_resid = buflen;
 	auio.uio_offset = off;
 	/*
@@ -579,7 +579,7 @@ again:
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_READ;
 	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_procp = p;
+	auio.uio_procp = NULL;
 	auio.uio_resid = buflen;
 	auio.uio_offset = off;
 	/*

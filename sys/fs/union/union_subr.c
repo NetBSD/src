@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.10 2004/05/12 02:07:39 jrf Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.11 2004/09/17 14:11:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.10 2004/05/12 02:07:39 jrf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.11 2004/09/17 14:11:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -637,7 +637,7 @@ union_copyfile(fvp, tvp, cred, p)
 	 * give up at the first sign of trouble.
 	 */
 
-	uio.uio_procp = p;
+	uio.uio_procp = NULL;
 	uio.uio_segflg = UIO_SYSSPACE;
 	uio.uio_offset = 0;
 

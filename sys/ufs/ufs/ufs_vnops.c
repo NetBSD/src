@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.121 2004/08/15 21:53:03 mycroft Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.122 2004/09/17 14:11:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.121 2004/08/15 21:53:03 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.122 2004/09/17 14:11:27 skrll Exp $");
 
 #ifndef _LKM
 #include "opt_quota.h"
@@ -1539,7 +1539,7 @@ ufs_symlink(void *v)
 	} else
 		error = vn_rdwr(UIO_WRITE, vp, ap->a_target, len, (off_t)0,
 		    UIO_SYSSPACE, IO_NODELOCKED, ap->a_cnp->cn_cred, NULL,
-		    (struct proc *)0);
+		    NULL);
 	if (error)
 		vput(vp);
 	return (error);

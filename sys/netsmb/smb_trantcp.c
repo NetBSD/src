@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_trantcp.c,v 1.16 2004/05/22 22:52:15 jonathan Exp $	*/
+/*	$NetBSD: smb_trantcp.c,v 1.17 2004/09/17 14:11:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.16 2004/05/22 22:52:15 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.17 2004/09/17 14:11:25 skrll Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -411,7 +411,7 @@ nbssn_recvhdr(struct nbpcb *nbp, int *lenp,
 	auio.uio_rw = UIO_READ;
 	auio.uio_offset = 0;
 	auio.uio_resid = sizeof(len);
-	auio.uio_procp = p;
+	auio.uio_procp = NULL;
 #ifndef __NetBSD__
 	error = so->so_proto->pr_usrreqs->pru_soreceive
 	    (so, (struct sockaddr **)NULL, &auio,

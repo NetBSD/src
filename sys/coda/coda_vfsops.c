@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.38 2004/05/25 14:54:56 hannken Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.39 2004/09/17 14:11:23 skrll Exp $	*/
 
 /*
  * 
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.38 2004/05/25 14:54:56 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.39 2004/09/17 14:11:23 skrll Exp $");
 
 #ifdef	_LKM
 #define	NVCODA 4
@@ -269,7 +269,7 @@ coda_mount(vfsp, path, data, ndp, p)
 	MARK_INT_SAT(CODA_MOUNT_STATS);
 
     return set_statvfs_info("/coda", UIO_SYSSPACE, "CODA", UIO_SYSSPACE, vfsp,
-	p);
+	NULL);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_core.c,v 1.9 2003/09/15 18:35:02 christos Exp $	*/
+/*	$NetBSD: netbsd32_core.c,v 1.10 2004/09/17 14:11:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_core.c,v 1.9 2003/09/15 18:35:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_core.c,v 1.10 2004/09/17 14:11:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ coredump_netbsd32(struct lwp *l, struct vnode *vp, struct ucred *cred)
 	/* Now write out the core header. */
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cs.core,
 	    (int)cs.core.c_hdrsize, (off_t)0,
-	    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, NULL, p);
+	    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, NULL, NULL);
 
 	return (error);
 }
@@ -145,7 +145,7 @@ coredump_writesegs_netbsd32(struct proc *p, struct vnode *vp,
 	error = vn_rdwr(UIO_WRITE, vp,
 	    (caddr_t)&cseg, cs->core.c_seghdrsize,
 	    cs->offset, UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
+	    IO_NODELOCKED|IO_UNIT, cred, NULL, NULL);
 	if (error)
 		return (error);
 
