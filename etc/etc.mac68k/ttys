@@ -1,12 +1,12 @@
 #
 #	from: @(#)ttys	5.1 (Berkeley) 4/17/89
-#	$Id: ttys,v 1.7 1994/07/11 22:39:54 briggs Exp $
+#	$Id: ttys,v 1.8 1994/08/03 02:18:29 briggs Exp $
 #
 # name	getty				type	status		comments
 #
 # If the console is marked insecure, single-user requires
 # the root password.
-console	"/usr/libexec/getty Pc"		vt100	on secure
+ttye0	"/usr/libexec/getty Pc"		vt100	on secure
 
 # on the i386, the 'console' line above should be commented out and 
 # the following lines should be uncommented:
