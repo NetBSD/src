@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)cpu.h	5.4 (Berkeley) 5/9/91
- *	$Id: cpu.h,v 1.9 1993/06/16 22:28:12 jtc Exp $
+ *	$Id: cpu.h,v 1.10 1993/09/02 02:10:35 cgd Exp $
  */
 
 /*
@@ -71,8 +71,6 @@ typedef struct intrframe clockframe;
 #define	CLKF_USERMODE(framep)	(ISPL((framep)->if_cs) == SEL_UPL)
 #define	CLKF_BASEPRI(framep)	((framep)->if_ppl == 0)
 #define	CLKF_PC(framep)		((framep)->if_eip)
-
-#define	resettodr()	/* no todr to set */
 
 /*
  * Preempt the current process if in interrupt from user mode,
