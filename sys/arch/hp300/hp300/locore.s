@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.72 1997/04/27 20:50:01 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.73 1997/05/05 21:14:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -46,6 +46,11 @@
 #include "assym.h"
 #include <machine/asm.h>
 #include <machine/trap.h>
+
+#include "opt_useleds.h"
+#ifdef USELEDS
+#include <hp300/hp300/leds.h>
+#endif
 
 #define MMUADDR(ar)	movl	_C_LABEL(MMUbase),ar
 #define CLKADDR(ar)	movl	_C_LABEL(CLKbase),ar
@@ -919,36 +924,33 @@ Lnotim3:
 	movl	a1,sp@-
 #ifdef USELEDS
 	tstl	_C_LABEL(ledaddr)	| using LEDs?
-	jeq	Lnoled0			| no, skip this code
+	jeq	Lnoleds0		| no, skip this code
 	movl	_ASM_LABEL(heartbeat),d0 | get tick count
 	addql	#1,d0			|  increment
 	movl	_C_LABEL(hz),d1
 	addl	#50,d1			| get the timing a little closer
 	cmpl	#0,_ASM_LABEL(beatstatus) | time to slow down?
-	jeq	LSlowThrob
-	lsrl	#3,d1			| fast throb
-LSlowThrob:
+	jeq	Lslowthrob		  | yes, slow down
+	lsrl	#3,d1			| no, fast throb
+Lslowthrob:
 	lsrl	#1,d1			| slow throb
 	cmpl	d0,d1			| are we there yet?
-	jne	Lnoled1			| no, nothing to do
-	tstl	_C_LABEL(inledcontrol)	| already updating LEDs?
-	jne	Lnoled2			| yes, skip it
+	jne	Lnoleds1		| no, nothing to do
 	addl	#1,_ASM_LABEL(beatstatus) | incr beat status
 	cmpl	#3,_ASM_LABEL(beatstatus) | time to reset?
-	ble	LSkipReset
+	ble	Ltwinkle		  | no, twinkle the lights
 	movl	#0,_ASM_LABEL(beatstatus) | reset the status indicator
-LSkipReset:
+Ltwinkle:
 	movl	#LED_PULSE,sp@-
 	movl	#LED_DISK+LED_LANRCV+LED_LANXMT,sp@-
 	clrl	sp@-
 	jbsr	_C_LABEL(ledcontrol)	| toggle pulse, turn all others off
 	lea	sp@(12),sp
-Lnoled2:
 	movql	#0,d0
-Lnoled1:
+Lnoleds1:
 	movl	d0,_ASM_LABEL(heartbeat)
-Lnoled0:
-#endif
+Lnoleds0:
+#endif /* USELEDS */
 	jbsr	_C_LABEL(hardclock)	| hardclock(&frame)
 	addql	#4,sp
 	CLKADDR(a0)
