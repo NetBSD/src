@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.13 2002/06/24 01:13:34 thorpej Exp $ */
+/*	$NetBSD: asm.h,v 1.14 2002/07/20 08:37:30 mrg Exp $ */
 
 /*
  * Copyright (c) 1994 Allen Briggs
@@ -44,6 +44,12 @@
 #ifndef _ASM_H_
 #define _ASM_H_
 
+/* Pull in CCFSZ, CC64FSZ, and BIAS from frame.h */
+#ifndef _LOCORE
+#define _LOCORE
+#endif
+#include <machine/frame.h>
+
 #ifdef __ELF__
 #define	_C_LABEL(name)		name
 #else
@@ -59,23 +65,45 @@
 /*
  * PIC_PROLOGUE() is akin to the compiler generated function prologue for
  * PIC code. It leaves the address of the Global Offset Table in DEST,
- * clobbering register TMP in the process. Using the temporary enables us
- * to work without a stack frame (doing so requires saving %o7) .
+ * clobbering register TMP in the process.
+ *
+ * We can use two code sequences.  We can read the %pc or use the call
+ * instruction that saves the pc in %o7.  Call requires the branch unit and
+ * IEU1, and clobbers %o7 which needs to be restored.  This instruction
+ * sequence takes about 4 cycles due to instruction interdependence.  Reading
+ * the pc takes 4 cycles to dispatch and is always dispatched alone.  That
+ * sequence takes 7 cycles.
  */
+#ifdef __arch64__
+#define PIC_PROLOGUE(dest,tmp) \
+	mov %o7, tmp; \
+	sethi %hi(_GLOBAL_OFFSET_TABLE_-4),dest; \
+	call 0f; \
+	 or dest,%lo(_GLOBAL_OFFSET_TABLE_+4),dest; \
+0: \
+	add dest,%o7,dest; \
+	mov tmp, %o7
+#else
 #define PIC_PROLOGUE(dest,tmp) \
 	mov %o7,tmp; 3: call 4f; nop; 4: \
 	sethi %hi(_C_LABEL(_GLOBAL_OFFSET_TABLE_)-(3b-.)),dest; \
 	or dest,%lo(_C_LABEL(_GLOBAL_OFFSET_TABLE_)-(3b-.)),dest; \
 	add dest,%o7,dest; mov tmp,%o7
+#endif
 
 /*
  * PICCY_SET() does the equivalent of a `set var, %dest' instruction in
  * a PIC-like way, but without involving the Global Offset Table. This
  * only works for VARs defined in the same file *and* in the text segment.
  */
+#ifdef __arch64__
+#define PICCY_SET(var,dest,tmp) \
+	3: rd %pc, tmp; add tmp,(var-3b),dest
+#else
 #define PICCY_SET(var,dest,tmp) \
 	mov %o7,tmp; 3: call 4f; nop; 4: \
 	add %o7,(var-3b),dest; mov tmp,%o7
+#endif
 #else
 #define PIC_PROLOGUE(dest,tmp)
 #define PICCY_OFFSET(var,dest,tmp)
@@ -90,15 +118,29 @@
 #ifdef GPROF
 /* see _MCOUNT_ENTRY in profile.h */
 #ifdef __ELF__
+#ifdef __arch64__
+#define _PROF_PROLOGUE \
+	.data; .align 8; 1: .uaword 0; .uaword 0; \
+	.text; save %sp,-CC64FSZ,%sp; sethi %hi(1b),%o0; call _mcount; \
+	or %o0,%lo(1b),%o0; restore
+#else
 #define _PROF_PROLOGUE \
 	.data; .align 4; 1: .long 0; \
 	.text; save %sp,-96,%sp; sethi %hi(1b),%o0; call _mcount; \
+	or %o0,%lo(1b),%o0; restore
+#endif
+#else
+#ifdef __arch64__
+#define _PROF_PROLOGUE \
+	.data; .align 8; 1: .uaword 0; .uaword 0; \
+	.text; save %sp,-CC64FSZ,%sp; sethi %hi(1b),%o0; call mcount; \
 	or %o0,%lo(1b),%o0; restore
 #else
 #define	_PROF_PROLOGUE \
 	.data; .align 4; 1: .long 0; \
 	.text; save %sp,-96,%sp; sethi %hi(1b),%o0; call mcount; \
 	or %o0,%lo(1b),%o0; restore
+#endif
 #endif
 #else
 #define _PROF_PROLOGUE
@@ -122,6 +164,18 @@
 	alias = sym
 #endif
 
+/*
+ * WARN_REFERENCES: create a warning if the specified symbol is referenced.
+ */
+#ifdef __ELF__
+#ifdef __STDC__
+#define	WARN_REFERENCES(_sym,_msg)				\
+	.section .gnu.warning. ## _sym ; .ascii _msg ; .text
+#else
+#define	WARN_REFERENCES(_sym,_msg)				\
+	.section .gnu.warning./**/_sym ; .ascii _msg ; .text
+#endif /* __STDC__ */
+#else
 #ifdef __STDC__
 #define	__STRING(x)			#x
 #define	WARN_REFERENCES(sym,msg)					\
@@ -133,5 +187,6 @@
 	.stabs msg,30,0,0,0 ;						\
 	.stabs __STRING(_/**/sym),1,0,0,0
 #endif /* __STDC__ */
+#endif /* __ELF__ */
 
 #endif /* _ASM_H_ */
