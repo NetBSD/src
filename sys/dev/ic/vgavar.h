@@ -1,4 +1,4 @@
-/* $NetBSD: vgavar.h,v 1.1 1998/03/22 15:11:49 drochner Exp $ */
+/* $NetBSD: vgavar.h,v 1.2 1998/05/28 16:48:41 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,37 +28,21 @@
  */
 
 struct vga_handle {
-	bus_space_tag_t	vh_iot, vh_memt;
-	bus_space_handle_t vh_ioh_vga, vh_ioh_6845, vh_allmemh, vh_memh;
-
-	int mono; /* flag */
+	struct pcdisplay_handle vh_ph;
+	bus_space_handle_t vh_ioh_vga, vh_allmemh;
+	int vh_mono;
 };
+#define vh_iot vh_ph.ph_iot
+#define vh_memt vh_ph.ph_memt
+#define vh_ioh_6845 vh_ph.ph_ioh_6845
+#define vh_memh vh_ph.ph_memh
 
-static inline u_int8_t _vga_6845_read __P((struct vga_handle *, int));
-static inline void _vga_6845_write __P((struct vga_handle *, int, u_int8_t));
 static inline u_int8_t _vga_attr_read __P((struct vga_handle *, int));
 static inline void _vga_attr_write __P((struct vga_handle *, int, u_int8_t));
 static inline u_int8_t _vga_ts_read __P((struct vga_handle *, int));
 static inline void _vga_ts_write __P((struct vga_handle *, int, u_int8_t));
 static inline u_int8_t _vga_gdc_read __P((struct vga_handle *, int));
 static inline void _vga_gdc_write __P((struct vga_handle *, int, u_int8_t));
-
-static inline u_int8_t _vga_6845_read(vh, reg)
-	struct vga_handle *vh;
-	int reg;
-{
-	bus_space_write_1(vh->vh_iot, vh->vh_ioh_6845, VGA_6845_INDEX, reg);
-	return (bus_space_read_1(vh->vh_iot, vh->vh_ioh_6845, VGA_6845_DATA));
-}
-
-static inline void _vga_6845_write(vh, reg, val)
-	struct vga_handle *vh;
-	int reg;
-	u_int8_t val;
-{
-	bus_space_write_1(vh->vh_iot, vh->vh_ioh_6845, VGA_6845_INDEX, reg);
-	bus_space_write_1(vh->vh_iot, vh->vh_ioh_6845, VGA_6845_DATA, val);
-}
 
 static inline u_int8_t _vga_attr_read(vh, reg)
 	struct vga_handle *vh;
@@ -133,10 +117,6 @@ static inline void _vga_gdc_write(vh, reg, val)
 	bus_space_write_1(vh->vh_iot, vh->vh_ioh_vga, VGA_GDC_DATA, val);
 }
 
-#define vga_6845_read(vh, reg) \
-	_vga_6845_read(vh, offsetof(struct reg_6845, reg))
-#define vga_6845_write(vh, reg, val) \
-	_vga_6845_write(vh, offsetof(struct reg_6845, reg), val)
 #define vga_attr_read(vh, reg) \
 	_vga_attr_read(vh, offsetof(struct reg_vgaattr, reg))
 #define vga_attr_write(vh, reg, val) \
@@ -150,6 +130,10 @@ static inline void _vga_gdc_write(vh, reg, val)
 #define vga_gdc_write(vh, reg, val) \
 	_vga_gdc_write(vh, offsetof(struct reg_vgagdc, reg), val)
 
+#define vga_6845_read(vh, reg) \
+	pcdisplay_6845_read(&(vh)->vh_ph, reg)
+#define vga_6845_write(vh, reg, val) \
+	pcdisplay_6845_write(&(vh)->vh_ph, reg, val)
 
 int	vga_common_probe __P((bus_space_tag_t, bus_space_tag_t));
 void	vga_common_attach __P((struct device *, bus_space_tag_t,
