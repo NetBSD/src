@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.35 2003/04/15 21:12:24 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.36 2003/04/15 22:52:40 tron Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -1032,11 +1032,13 @@ wm_tx_cksum(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 		return (0);
 	}
 
-	/* XXX */
 	if (m0->m_len < (offset + iphl)) {
-		printf("%s: wm_tx_cksum: need to m_pullup, "
-		    "packet dropped\n", sc->sc_dev.dv_xname);
-		return (EINVAL);
+		if ((txs->txs_mbuf = m_pullup(m0, offset + iphl)) == NULL) {
+			printf("%s: wm_tx_cksum: mbuf allocation failed, "
+			    "packet dropped\n", sc->sc_dev.dv_xname);
+			return (ENOMEM);
+		}
+		m0 = txs->txs_mbuf;
 	}
 
 	ip = (struct ip *) (mtod(m0, caddr_t) + offset);
@@ -1265,9 +1267,7 @@ wm_start(struct ifnet *ifp)
 			if (wm_tx_cksum(sc, txs, &cksumcmd,
 					&cksumfields) != 0) {
 				/* Error message already displayed. */
-				m_freem(m0);
 				bus_dmamap_unload(sc->sc_dmat, dmamap);
-				txs->txs_mbuf = NULL;
 				continue;
 			}
 		} else {
