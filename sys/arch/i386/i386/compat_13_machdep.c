@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.2 1998/09/12 10:48:27 mycroft Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.3 1998/09/13 01:42:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -49,8 +49,6 @@
 #ifdef VM86
 #include <machine/vm86.h>
 #endif
-
-void native_sigset13_to_sigset __P((const sigset13_t *, sigset_t *));
 
 int
 compat_13_sys_sigreturn(p, v, retval)
