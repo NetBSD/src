@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.74 1998/02/05 04:57:50 gwr Exp $	*/
+/*	$NetBSD: trap.c,v 1.75 1998/02/26 20:31:13 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -747,12 +747,14 @@ _nodb_trap(type, tf)
 	struct trapframe *tf;
 {
 
+	printf("\r\nKernel ");
 	if ((0 <= type) && (type < trap_types))
-		printf("\r\nKernel %s,", trap_type[type]);
+		printf("%s", trap_type[type]);
 	else
-		printf("\r\nKernel trap 0x%x,", type);
-	printf(" frame=%p\r\n", tf);
-	printf("\r\n*No debugger. Doing PROM abort...\r\n");
+		printf("trap 0x%x", type);
+	printf(", frame=%p\r\n", tf);
+	printf("No debugger; doing PROM abort.\r\n");
+	printf("To continue, type: c <RETURN>\r\n");
 	sunmon_abort();
 	/* OK then, just resume... */
 	tf->tf_sr &= ~PSL_T;
