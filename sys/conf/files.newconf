@@ -1,5 +1,5 @@
 #	from: @(#)files.newconf	7.5 (Berkeley) 5/10/93
-#	$Id: files.newconf,v 1.29 1994/06/10 10:57:03 pk Exp $
+#	$Id: files.newconf,v 1.30 1994/06/21 03:56:22 chopps Exp $
 
 # generic attributes
 define	disk
@@ -200,7 +200,7 @@ file netccitt/pk_usrreq.c	ccitt
 file netimp/if_imp.c		imp needs-count
 file netimp/if_imphost.c	imp needs-count
 file netimp/raw_imp.c	 	imp needs-count
-file netinet/if_ether.c		ether inet
+file netinet/if_ether.c		ether
 file netinet/igmp.c		inet
 file netinet/in.c		inet
 file netinet/in_pcb.c	 	inet
