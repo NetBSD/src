@@ -1,4 +1,4 @@
-/*	$NetBSD: rarpd.c,v 1.47 2002/10/21 01:33:02 lukem Exp $	*/
+/*	$NetBSD: rarpd.c,v 1.48 2003/05/15 14:50:02 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -28,7 +28,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: rarpd.c,v 1.47 2002/10/21 01:33:02 lukem Exp $");
+__RCSID("$NetBSD: rarpd.c,v 1.48 2003/05/15 14:50:02 itojun Exp $");
 #endif
 
 
@@ -70,9 +70,7 @@ __RCSID("$NetBSD: rarpd.c,v 1.47 2002/10/21 01:33:02 lukem Exp $");
 #include <syslog.h>
 #include <unistd.h>
 #include <util.h>
-#ifdef HAVE_IFADDRS_H
 #include <ifaddrs.h>
-#endif
 
 #define FATAL		1	/* fatal error occurred */
 #define NONFATAL	0	/* non fatal error occurred */
@@ -243,7 +241,6 @@ init_one(char *ifname, u_int32_t ipaddr)
 void
 init_all(void)
 {
-#ifdef HAVE_IFADDRS_H
 	struct ifaddrs *ifap, *ifa, *p;
 
 	if (getifaddrs(&ifap) != 0) {
@@ -267,52 +264,6 @@ init_all(void)
 #undef	SIN
 	}
 	freeifaddrs(ifap);
-#else
-	char inbuf[8192*2];
-	struct ifconf ifc;
-	struct ifreq ifreq, ifrd, *ifr, *ifrp;
-	int fd;
-	int i, len;
-
-	if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-		rarperr(FATAL, "socket: %s", strerror(errno));
-		/* NOTREACHED */
-	}
-
-	ifc.ifc_len = sizeof(inbuf);
-	ifc.ifc_buf = inbuf;
-	if (ioctl(fd, SIOCGIFCONF, (caddr_t)&ifc) < 0 ||
-	    ifc.ifc_len < sizeof(struct ifreq)) {
-		rarperr(FATAL, "init_all: SIOCGIFCONF: %s", strerror(errno));
-		/* NOTREACHED */
-	}
-	ifr = &ifrd;
-	ifrp = ifc.ifc_req;
-	ifreq.ifr_name[0] = '\0';
-	for (i = 0; i < ifc.ifc_len;
-	     i += len, ifrp = (struct ifreq *)((caddr_t)ifrp + len)) {
-#define SIN(s)	((struct sockaddr_in *) (s))
-		memcpy(&ifrd, ifrp, sizeof (ifrd));
-		len = sizeof(ifr->ifr_name) + ifr->ifr_addr.sa_len;
-		if (ifr->ifr_addr.sa_family != AF_INET)
-			continue;
-		if (!strncmp(ifreq.ifr_name, ifr->ifr_name, sizeof(ifr->ifr_name))
-		    && SIN(&ifreq.ifr_addr)->sin_addr.s_addr == SIN(&ifr->ifr_addr)->sin_addr.s_addr)
-			continue;
-		ifreq = *ifr;
-		if (ioctl(fd, SIOCGIFFLAGS, (caddr_t)ifr) < 0) {
-			rarperr(FATAL, "init_all: SIOCGIFFLAGS: %s",
-			    strerror(errno));
-			/* NOTREACHED */
-		}
-		if ((ifr->ifr_flags &
-		    (IFF_UP | IFF_LOOPBACK | IFF_POINTOPOINT)) != IFF_UP)
-			continue;
-		init_one(ifr->ifr_name, SIN(&ifreq.ifr_addr)->sin_addr.s_addr);
-#undef	SIN
-	}
-	(void)close(fd);
-#endif
 }
 
 void
@@ -678,7 +629,6 @@ rarp_process(struct if_info *ii, u_char *pkt)
 void
 lookup_eaddr(char *ifname, u_char *eaddr)
 {
-#ifdef HAVE_IFADDRS_H
 	struct ifaddrs *ifap, *ifa;
 	struct sockaddr_dl *sdl;
 
@@ -703,50 +653,6 @@ lookup_eaddr(char *ifname, u_char *eaddr)
 	}
 	rarperr(FATAL, "lookup_eaddr: Never saw interface `%s'!", ifname);
 	freeifaddrs(ifap);
-#else
-	char inbuf[8192*2];
-	struct ifconf ifc;
-	struct ifreq *ifr;
-	struct sockaddr_dl *sdl;
-	int fd;
-	int i, len;
-
-	/* We cannot use SIOCGIFADDR on the BPF descriptor.
-	   We must instead get all the interfaces with SIOCGIFCONF
-	   and find the right one.  */
-
-	/* Use datagram socket to get Ethernet address. */
-	if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-		rarperr(FATAL, "socket: %s", strerror(errno));
-		/* NOTREACHED */
-	}
-
-	ifc.ifc_len = sizeof(inbuf);
-	ifc.ifc_buf = inbuf;
-	if (ioctl(fd, SIOCGIFCONF, (caddr_t)&ifc) < 0 ||
-	    ifc.ifc_len < sizeof(struct ifreq)) {
-		rarperr(FATAL, "lookup_eaddr: SIOGIFCONF: %s", strerror(errno));
-		/* NOTREACHED */
-	}
-	ifr = ifc.ifc_req;
-	for (i = 0; i < ifc.ifc_len;
-	     i += len, ifr = (struct ifreq *)((caddr_t)ifr + len)) {
-		len = sizeof(ifr->ifr_name) + ifr->ifr_addr.sa_len;
-		sdl = (struct sockaddr_dl *)&ifr->ifr_addr;
-		if (sdl->sdl_family != AF_LINK || sdl->sdl_type != IFT_ETHER ||
-		    sdl->sdl_alen != 6)
-			continue;
-		if (!strncmp(ifr->ifr_name, ifname, sizeof(ifr->ifr_name))) {
-			memmove((caddr_t)eaddr, (caddr_t)LLADDR(sdl), 6);
-			debug("%s: %x:%x:%x:%x:%x:%x",
-			    ifr->ifr_name, eaddr[0], eaddr[1],
-			    eaddr[2], eaddr[3], eaddr[4], eaddr[5]);
-			return;
-		}
-	}
-
-	rarperr(FATAL, "lookup_eaddr: Never saw interface `%s'!", ifname);
-#endif
 }
 /*
  * Lookup the IP address and network mask of the interface named 'ifname'.
