@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.36 1997/09/26 15:38:50 is Exp $
+#	$NetBSD: MAKEDEV,v 1.37 1997/10/19 21:09:34 is Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -87,7 +87,8 @@
 #	ss*	SCSI scanner
 #	uk*	SCSI unknown
 #	ch*	SCSI changer
-#	audio*	one unit of the audio device. Unit 0 is custom chip audio.
+#	audio*	one unit of the audio device. On Amiga machines, 
+#		Unit 0 is custom chip audio, if configured.
 #
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
@@ -107,7 +108,7 @@ all)
 	sh $0 ss0 ch0 uk0 uk1 ccd0 ccd1 ccd2 ccd3
 	sh $0 vnd0 vnd1 vnd2 vnd3 vnd4 vnd5 vnd6
 	sh $0 bpf0 bpf1 bpf2 bpf3 tun0 tun1 lkm ipl local
-	sh $0 audio0
+	sh $0 audio0 audio1 audio2 audio3
 	;;
 
 floppy)
