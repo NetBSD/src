@@ -1,4 +1,4 @@
-/*	$NetBSD: rshd.c,v 1.15 1998/07/26 19:51:21 mycroft Exp $	*/
+/*	$NetBSD: rshd.c,v 1.16 1998/08/10 02:57:24 perry Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1992, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: rshd.c,v 1.15 1998/07/26 19:51:21 mycroft Exp $");
+__RCSID("$NetBSD: rshd.c,v 1.16 1998/08/10 02:57:24 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -301,7 +301,7 @@ doit(fromp)
 					hostname = inet_ntoa(fromp->sin_addr);
 					break;
 				}
-				if (!bcmp(hp->h_addr_list[0],
+				if (!memcmp(hp->h_addr_list[0],
 				    (caddr_t)&fromp->sin_addr,
 				    sizeof(fromp->sin_addr))) {
 					hostname = hp->h_name;

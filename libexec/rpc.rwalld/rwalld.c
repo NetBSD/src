@@ -1,4 +1,4 @@
-/*	$NetBSD: rwalld.c,v 1.12 1998/07/03 11:51:19 mrg Exp $	*/
+/*	$NetBSD: rwalld.c,v 1.13 1998/08/10 02:57:24 perry Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rwalld.c,v 1.12 1998/07/03 11:51:19 mrg Exp $");
+__RCSID("$NetBSD: rwalld.c,v 1.13 1998/08/10 02:57:24 perry Exp $");
 #endif /* not lint */
 
 #include <unistd.h>
@@ -171,7 +171,7 @@ wallprog_1(rqstp, transp)
 		svcerr_noproc(transp);
 		goto leave;
 	}
-	bzero((char *)&argument, sizeof(argument));
+	memset((char *)&argument, 0, sizeof(argument));
 	if (!svc_getargs(transp, xdr_argument, (caddr_t)&argument)) {
 		svcerr_decode(transp);
 		goto leave;

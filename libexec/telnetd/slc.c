@@ -1,4 +1,4 @@
-/*	$NetBSD: slc.c,v 1.7 1997/10/16 06:45:45 mikel Exp $	*/
+/*	$NetBSD: slc.c,v 1.8 1998/08/10 02:57:24 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)slc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: slc.c,v 1.7 1997/10/16 06:45:45 mikel Exp $");
+__RCSID("$NetBSD: slc.c,v 1.8 1998/08/10 02:57:24 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -473,7 +473,7 @@ do_opt_slc(ptr, len)
 			def_slcbuf = (unsigned char *)malloc((unsigned)len);
 			if (def_slcbuf == (unsigned char *)0)
 				return;  /* too bad */
-			bcopy(ptr, def_slcbuf, len);
+			memcpy(def_slcbuf, ptr, len);
 		}
 	}
 
