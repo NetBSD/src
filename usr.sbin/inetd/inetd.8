@@ -1,4 +1,4 @@
-.\"	$NetBSD: inetd.8,v 1.35 2001/03/10 11:52:51 fair Exp $
+.\"	$NetBSD: inetd.8,v 1.36 2001/03/16 08:19:13 fair Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -370,25 +370,50 @@ If the service is provided internally, the
 word
 .Dq internal
 should take the place of this entry.
+.Ss Internal Services
 .Pp
 .Nm
 provides several
-.Dq trivial
-services internally by use of
-routines within itself.
+.Qq trivial
+services internally by use of routines within itself.
 These services are
-.Dq echo ,
-.Dq discard ,
-.Dq chargen
+.Qq echo ,
+.Qq discard ,
+.Qq chargen
 (character generator),
-.Dq daytime
+.Qq daytime
 (human readable time), and
-.Dq time
+.Qq time
 (machine readable time,
 in the form of the number of seconds since midnight, January 1, 1900 GMT).
 For details of these services, consult the appropriate
-.Tn RFC
-from the Network Information Center.
+.Tn RFC .
+.Pp
+TCP services without official port numbers can be handled with the
+RFC1078-based tcpmux internal service.
+TCPmux listens on port 1 for requests.
+When a connection is made from a foreign host, the service name
+requested is passed to TCPmux, which performs a lookup in the
+service name table provided by
+.Pa /etc/inetd.conf
+and returns the proper entry for the service.
+TCPmux returns a negative reply if the service doesn't exist,
+otherwise the invoked server is expected to return the positive
+reply if the service type in
+.Pa /etc/inetd.conf
+file has the prefix
+.Qq tcpmux/ .
+If the service type has the
+prefix
+.Qq tcpmux/+ ,
+TCPmux will return the positive reply for the
+process; this is for compatibility with older server code, and also
+allows you to invoke programs that use stdin/stdout without putting any
+special server code in them.
+Services that use TCPmux are
+.Qq nowait
+because they do not have a well-known port nubmer and hence cannot listen
+for new requests.
 .Pp
 .Nm
 rereads its configuration file when it receives a hangup signal,
@@ -400,6 +425,7 @@ creates a file
 .Em /var/run/inetd.pid
 that contains its process identifier.
 .Ss libwrap
+.Pp
 Support for
 .Tn TCP
 wrappers is included with
@@ -417,6 +443,7 @@ and
 for access control facility configurations, as described in
 .Xr hosts_access 5 .
 .Ss IPsec
+.Pp
 The implementation includes a tiny hack to support IPsec policy settings for
 each socket.
 A special form of the comment line, starting with
@@ -432,23 +459,24 @@ the last string will take effect.
 A
 .Li "#@"
 line affects all of the following lines in
-.Pa inetd.conf ,
+.Pa /etc/inetd.conf ,
 so you may want to reset the IPsec policy by using a comment line containing
 only
 .Li "#@"
 .Pq with no policy string .
 .Pp
 If an invalid IPsec policy string appears in
-.Pa inetd.conf ,
+.Pa /etc/inetd.conf ,
 .Nm
 logs an error message using
 .Xr syslog 3
 and terminates itself.
 .Ss IPv6 TCP/UDP behavior
+.Pp
 If you wish to run a server for IPv4 and IPv6 traffic,
 you'll need to run two separate process for the same server program,
 specified as two separate lines on
-.Pa inetd.conf ,
+.Pa /etc/inetd.conf ,
 for
 .Dq tcp4
 and
