@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.30 2001/05/18 04:38:30 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.31 2001/06/02 16:17:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -78,8 +78,6 @@
  *	- Support the 10-bit interface on the DP83820 (for fiber).
  *
  *	- Support jumbo packets on the DP83820.
- *
- *	- Support the IP/TCP/UDP checksumming features of the DP83820.
  *
  *	- Reduce the interrupt load.
  */
@@ -250,6 +248,14 @@ struct sip_softc {
 	struct evcnt sc_ev_txdstall;	/* Tx stalled due to no txd */
 	struct evcnt sc_ev_txintr;	/* Tx interrupts */
 	struct evcnt sc_ev_rxintr;	/* Rx interrupts */
+#ifdef DP83820
+	struct evcnt sc_ev_rxipsum;	/* IP checksums checked in-bound */
+	struct evcnt sc_ev_rxtcpsum;	/* TCP checksums checked in-bound */
+	struct evcnt sc_ev_rxudpsum;	/* UDP checksums checked in-boudn */
+	struct evcnt sc_ev_txipsum;	/* IP checksums comp. out-bound */
+	struct evcnt sc_ev_txtcpsum;	/* TCP checksums comp. out-bound */
+	struct evcnt sc_ev_txudpsum;	/* UDP checksums comp. out-bound */
+#endif /* DP83820 */
 #endif /* SIP_EVENT_COUNTERS */
 
 	u_int32_t sc_txcfg;		/* prototype TXCFG register */
@@ -319,6 +325,11 @@ do {									\
 /*
  * Note we rely on MCLBYTES being a power of two below.
  */
+#ifdef DP83820
+#define	SIP_INIT_RXDESC_EXTSTS	__sipd->sipd_extsts = 0;
+#else
+#define	SIP_INIT_RXDESC_EXTSTS	/* nothing */
+#endif
 #define	SIP_INIT_RXDESC(sc, x)						\
 do {									\
 	struct sip_rxsoft *__rxs = &(sc)->sc_rxsoft[(x)];		\
@@ -328,6 +339,7 @@ do {									\
 	__sipd->sipd_bufptr = htole32(__rxs->rxs_dmamap->dm_segs[0].ds_addr); \
 	__sipd->sipd_cmdsts = htole32(CMDSTS_INTR |			\
 	    ((MCLBYTES - 1) & CMDSTS_SIZE_MASK));			\
+	SIP_INIT_RXDESC_EXTSTS						\
 	SIP_CDRXSYNC((sc), (x), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE); \
 } while (0)
 
@@ -792,6 +804,13 @@ SIP_DECL(attach)(struct device *parent, struct device *self, void *aux)
 	 * And the DP83820 can do VLAN tagging in hardware.
 	 */
 	sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_HWTAGGING;
+
+	/*
+	 * The DP83820 can do IPv4, TCPv4, and UDPv4 checksums
+	 * in hardware.
+	 */
+	ifp->if_capabilities |= IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 |
+	    IFCAP_CSUM_UDPv4;
 #endif /* DP83820 */
 
 	/*
@@ -812,6 +831,20 @@ SIP_DECL(attach)(struct device *parent, struct device *self, void *aux)
 	    NULL, sc->sc_dev.dv_xname, "txintr");
 	evcnt_attach_dynamic(&sc->sc_ev_rxintr, EVCNT_TYPE_INTR,
 	    NULL, sc->sc_dev.dv_xname, "rxintr");
+#ifdef DP83820
+	evcnt_attach_dynamic(&sc->sc_ev_rxipsum, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "rxipsum");
+	evcnt_attach_dynamic(&sc->sc_ev_rxtcpsum, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "rxtcpsum");
+	evcnt_attach_dynamic(&sc->sc_ev_rxudpsum, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "rxudpsum");
+	evcnt_attach_dynamic(&sc->sc_ev_txipsum, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "txipsum");
+	evcnt_attach_dynamic(&sc->sc_ev_txtcpsum, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "txtcpsum");
+	evcnt_attach_dynamic(&sc->sc_ev_txudpsum, EVCNT_TYPE_MISC,
+	    NULL, sc->sc_dev.dv_xname, "txudpsum");
+#endif /* DP83820 */
 #endif /* SIP_EVENT_COUNTERS */
 
 	/*
@@ -877,6 +910,9 @@ SIP_DECL(start)(struct ifnet *ifp)
 	struct sip_txsoft *txs;
 	bus_dmamap_t dmamap;
 	int error, firsttx, nexttx, lasttx, ofree, seg;
+#ifdef DP83820
+	u_int32_t extsts;
+#endif
 
 	/*
 	 * If we've been told to pause, don't transmit any more packets.
@@ -1019,6 +1055,9 @@ SIP_DECL(start)(struct ifnet *ifp)
 		/*
 		 * If VLANs are enabled and the packet has a VLAN tag, set
 		 * up the descriptor to encapsulate the packet for us.
+		 *
+		 * This apparently has to be on the last descriptor of
+		 * the packet.
 		 */
 		if (sc->sc_ethercom.ec_nvlans != 0 &&
 		    (m = m_aux_find(m0, AF_LINK, ETHERTYPE_VLAN)) != NULL) {
@@ -1026,6 +1065,33 @@ SIP_DECL(start)(struct ifnet *ifp)
 			    htole32(EXTSTS_VPKT |
 				    htons(*mtod(m, int *) & EXTSTS_VTCI));
 		}
+
+		/*
+		 * If the upper-layer has requested IPv4/TCPv4/UDPv4
+		 * checksumming, set up the descriptor to do this work
+		 * for us.
+		 *
+		 * This apparently has to be on the first descriptor of
+		 * the packet.
+		 *
+		 * Byte-swap constants so the compiler can optimize.
+		 */
+		extsts = 0;
+		if (m0->m_pkthdr.csum_flags & M_CSUM_IPv4) {
+			KDASSERT(ifp->if_capenable & IFCAP_CSUM_IPv4);
+			SIP_EVCNT_INCR(&sc->sc_ev_txipsum);
+			extsts |= htole32(EXTSTS_IPPKT);
+		}
+		if (m0->m_pkthdr.csum_flags & M_CSUM_TCPv4) {
+			KDASSERT(ifp->if_capenable & IFCAP_CSUM_TCPv4);
+			SIP_EVCNT_INCR(&sc->sc_ev_txtcpsum);
+			extsts |= htole32(EXTSTS_TCPPKT);
+		} else if (m0->m_pkthdr.csum_flags & M_CSUM_UDPv4) {
+			KDASSERT(ifp->if_capenable & IFCAP_CSUM_UDPv4);
+			SIP_EVCNT_INCR(&sc->sc_ev_txudpsum);
+			extsts |= htole32(EXTSTS_UDPPKT);
+		}
+		sc->sc_txdescs[sc->sc_txnext].sipd_extsts |= extsts;
 #endif /* DP83820 */
 
 		/* Sync the descriptors we're using. */
@@ -1547,6 +1613,30 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 			*mtod(vtag, int *) = ntohs(extsts & EXTSTS_VTCI);
 			vtag->m_len = sizeof(int);
 		}
+
+		/*
+		 * Set the incoming checksum information for the
+		 * packet.
+		 */
+		if ((extsts & EXTSTS_IPPKT) != 0) {
+			SIP_EVCNT_INCR(&sc->sc_ev_rxipsum);
+			m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
+			if (extsts & EXTSTS_Rx_IPERR)
+				m->m_pkthdr.csum_flags |= M_CSUM_IPv4_BAD;
+			if (extsts & EXTSTS_TCPPKT) {
+				SIP_EVCNT_INCR(&sc->sc_ev_rxtcpsum);
+				m->m_pkthdr.csum_flags |= M_CSUM_TCPv4;
+				if (extsts & EXTSTS_Rx_TCPERR)
+					m->m_pkthdr.csum_flags |=
+					    M_CSUM_TCP_UDP_BAD;
+			} else if (extsts & EXTSTS_UDPPKT) {
+				SIP_EVCNT_INCR(&sc->sc_ev_rxudpsum);
+				m->m_pkthdr.csum_flags |= M_CSUM_UDPv4;
+				if (extsts & EXTSTS_Rx_UDPERR)
+					m->m_pkthdr.csum_flags |=
+					    M_CSUM_TCP_UDP_BAD;
+			}
+		}
 #endif /* DP83820 */
 
 		/* Pass it on. */
@@ -1783,16 +1873,26 @@ SIP_DECL(init)(struct ifnet *ifp)
 #ifdef DP83820
 	/*
 	 * Initialize the VLAN/IP receive control register.
+	 * We enable checksum computation on all incoming
+	 * packets, and do not reject packets w/ bad checksums.
 	 */
 	reg = 0;
+	if (ifp->if_capenable &
+	    (IFCAP_CSUM_IPv4|IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4))
+		reg |= VRCR_IPEN;
 	if (sc->sc_ethercom.ec_nvlans != 0)
 		reg |= VRCR_VTDEN|VRCR_VTREN;
 	bus_space_write_4(st, sh, SIP_VRCR, reg);
 
 	/*
 	 * Initialize the VLAN/IP transmit control register.
+	 * We enable outgoing checksum computation on a
+	 * per-packet basis.
 	 */
 	reg = 0;
+	if (ifp->if_capenable &
+	    (IFCAP_CSUM_IPv4|IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4))
+		reg |= VTCR_PPCHK;
 	if (sc->sc_ethercom.ec_nvlans != 0)
 		reg |= VTCR_VPPTI;
 	bus_space_write_4(st, sh, SIP_VTCR, reg);

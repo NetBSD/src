@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.107 2001/04/28 04:11:10 itojun Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.108 2001/06/02 16:17:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.107 2001/04/28 04:11:10 itojun Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.108 2001/06/02 16:17:06 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -149,11 +149,15 @@ int	reset_if_flags;
 int	explicit_prefix = 0;
 u_int	vlan_tag = (u_int)-1;
 
+struct ifcapreq g_ifcr;
+int	g_ifcr_updated;
+
 void 	notealias __P((const char *, int));
 void 	notrailers __P((const char *, int));
 void 	setifaddr __P((const char *, int));
 void 	setifdstaddr __P((const char *, int));
 void 	setifflags __P((const char *, int));
+void	setifcaps __P((const char *, int));
 void 	setifbroadaddr __P((const char *, int));
 void 	setifipdst __P((const char *, int));
 void 	setifmetric __P((const char *, int));
@@ -285,6 +289,16 @@ const struct cmd {
 	{ "-mediaopt",	NEXTARG,	A_MEDIAOPTCLR,	unsetmediaopt },
 	{ "instance",	NEXTARG,	A_MEDIAINST,	setmediainst },
 	{ "inst",	NEXTARG,	A_MEDIAINST,	setmediainst },
+	{ "ip4csum",	IFCAP_CSUM_IPv4,0,		setifcaps },
+	{ "-ip4csum",	-IFCAP_CSUM_IPv4,0,		setifcaps },
+	{ "tcp4csum",	IFCAP_CSUM_TCPv4,0,		setifcaps },
+	{ "-tcp4csum",	-IFCAP_CSUM_TCPv4,0,		setifcaps },
+	{ "udp4csum",	IFCAP_CSUM_UDPv4,0,		setifcaps },
+	{ "-udp4csum",	-IFCAP_CSUM_UDPv4,0,		setifcaps },
+	{ "tcp6csum",	IFCAP_CSUM_TCPv6,0,		setifcaps },
+	{ "-tcp6csum",	-IFCAP_CSUM_TCPv6,0,		setifcaps },
+	{ "udp6csum",	IFCAP_CSUM_UDPv6,0,		setifcaps },
+	{ "-udp6csum",	-IFCAP_CSUM_UDPv6,0,		setifcaps },
 	{ 0,		0,		0,		setifaddr },
 	{ 0,		0,		0,		setifdstaddr },
 };
@@ -628,6 +642,13 @@ main(argc, argv)
 			warn("SIOCAIFADDR");
 	}
 
+	if (g_ifcr_updated) {
+		(void) strncpy(g_ifcr.ifcr_name, name,
+		    sizeof(g_ifcr.ifcr_name));
+		if (ioctl(s, SIOCSIFCAP, (caddr_t) &g_ifcr) < 0)
+			err(1, "SIOCSIFCAP");
+	}
+
 	if (reset_if_flags) {
 		(void) strncpy(ifreq.ifr_name, name, sizeof(ifreq.ifr_name));
 		ifreq.ifr_flags = flags;
@@ -688,6 +709,11 @@ getinfo(ifr)
 		mtu = 0;
 	else
 		mtu = ifr->ifr_mtu;
+
+	memset(&g_ifcr, 0, sizeof(g_ifcr));
+	strcpy(g_ifcr.ifcr_name, ifr->ifr_name);
+	(void) ioctl(s, SIOCGIFCAP, (caddr_t) &g_ifcr);
+
 	return (0);
 }
 
@@ -1074,6 +1100,21 @@ setifflags(vname, value)
 		err(1, "SIOCSIFFLAGS");
 
 	reset_if_flags = 1;
+}
+
+void
+setifcaps(vname, value)
+	const char *vname;
+	int value;
+{
+
+	if (value < 0) {
+		value = -value;
+		g_ifcr.ifcr_capenable &= ~value;
+	} else
+		g_ifcr.ifcr_capenable |= value;
+
+	g_ifcr_updated = 1;
 }
 
 #ifdef INET6
@@ -1734,6 +1775,9 @@ int carrier()
 "\020\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5POINTOPOINT\6NOTRAILERS\7RUNNING\10NOARP\
 \11PROMISC\12ALLMULTI\13OACTIVE\14SIMPLEX\15LINK0\16LINK1\17LINK2\20MULTICAST"
 
+#define	IFCAPBITS \
+"\020\1IP4CSUM\2TCP4CSUM\3UDP4CSUM\4TCP6CSUM\5UDP6CSUM"
+
 const int ifm_status_valid_list[] = IFM_STATUS_VALID_LIST;
 
 const struct ifmedia_status_description ifm_status_descriptions[] =
@@ -1759,6 +1803,16 @@ status(ap, alen)
 	if (mtu)
 		printf(" mtu %d", mtu);
 	putchar('\n');
+
+	if (g_ifcr.ifcr_capabilities) {
+		putchar('\t');
+		printb("capabilities", g_ifcr.ifcr_capabilities, IFCAPBITS);
+		putchar('\n');
+
+		putchar('\t');
+		printb("enabled", g_ifcr.ifcr_capenable, IFCAPBITS);
+		putchar('\n');
+	}
 
 	ieee80211_status();
 	vlan_status();
