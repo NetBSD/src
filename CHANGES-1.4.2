@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.64 1999/10/20 23:53:56 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.65 1999/10/20 23:58:01 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -876,3 +876,7 @@ sys/dev/scsipi/scsiconf.c			1.129-1.130
 
   Add quirks for Toshiba XM-3401TA SCSI CD-ROM and CDU-561 CD-ROM,
   fixing PR#7438 and PR#8608.
+
+lib/libc/net/inet_pton.c			1.10
+
+  Fix IPv6 parsing for the benefit of BIND.
