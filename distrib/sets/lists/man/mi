@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.172 1999/11/07 21:04:32 dmcmahill Exp $
+# $NetBSD: mi,v 1.173 1999/11/19 04:36:33 mrg Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -229,6 +229,7 @@
 ./usr/share/man/cat1/pwd.0
 ./usr/share/man/cat1/quota.0
 ./usr/share/man/cat1/rcmd.0
+./usr/share/man/cat1/rcorder.0
 ./usr/share/man/cat1/rcp.0
 ./usr/share/man/cat1/rcs.0
 ./usr/share/man/cat1/rcsclean.0
@@ -1122,6 +1123,7 @@
 ./usr/share/man/man1/pwd.1
 ./usr/share/man/man1/quota.1
 ./usr/share/man/man1/rcmd.1
+./usr/share/man/man1/rcorder.1
 ./usr/share/man/man1/rcp.1
 ./usr/share/man/man1/rcs.1
 ./usr/share/man/man1/rcsclean.1
