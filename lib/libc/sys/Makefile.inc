@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.97 1999/10/27 14:58:28 is Exp $
+#	$NetBSD: Makefile.inc,v 1.98 2000/01/31 15:14:19 christos Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -22,6 +22,11 @@ DPSRCS+= Lint_Ovfork.c Lint___vfork14.c Lint_brk.c Lint_exect.c Lint_fork.c \
 SRCS+=	ftruncate.c getdirentries.c lseek.c mmap.c msync.c \
 	pread.c preadv.c pwrite.c pwritev.c semctl.c \
 	sigaltstack.c stat.c swapon.c truncate.c
+
+# glue to syscalls that may pass structs or unions, which cannot be
+# handled portably and easily by the syscall interface. The glue
+# converts structs and unions to pointers to them.
+SRCS+=	__semctl13.c
 
 # "stub" POSIX.1b interfaces which return -1 and set errno to ENOSYS, so
 # we can avoid bumping libc's minor number as functions are added to the
@@ -49,7 +54,7 @@ ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o \
 	nfssvc.o ntp_adjtime.o ntp_gettime.o open.o pathconf.o \
 	poll.o profil.o quotactl.o read.o \
 	readlink.o readv.o reboot.o recvfrom.o recvmsg.o rename.o revoke.o \
-	rmdir.o select.o semconfig.o semget.o semop.o __semctl13.o sendmsg.o \
+	rmdir.o select.o semconfig.o semget.o semop.o ____semctl13.o sendmsg.o \
 	sendto.o setegid.o seteuid.o setgid.o setgroups.o setitimer.o \
 	setpgid.o setpriority.o setregid.o setreuid.o setrlimit.o \
 	setsid.o setsockopt.o settimeofday.o setuid.o shmat.o \
