@@ -1,4 +1,4 @@
-/*	$NetBSD: icureg.h,v 1.3 2001/04/16 09:55:56 sato Exp $	*/
+/*	$NetBSD: icureg.h,v 1.4 2001/04/18 11:07:27 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura. All rights reserved.
@@ -40,6 +40,15 @@
  *		start 0x0B000080 (vr4102/4111/4121)
  *		start 0x0F000080 (vr4122)
  */
+#include "opt_vr41xx.h"
+#include <hpcmips/vr/vrcpudef.h>
+
+#if !defined SINGLE_VRIP_BASE
+#error currently missconfiguraton.
+#endif
+
+#define NO_REG_W		0	/* no register */
+
 #define SYSINT1_REG_W		0x000	/* Level1 System intr reg 1 */
 #define MSYSINT1_REG_W		0x00c	/* Level1 Mask System intr reg 1 */
 
@@ -84,8 +93,20 @@
 #define		PIUINT_PADLOST		(1<<2)	/* A/D data timeout intr */
 #define		PIUINT_PENCHG		(1)	/* Touch Panel contact intr */
 
-#define AIUINT_REG_W		0x004	/* Level2 AIU intr reg */	
-#define MAIUINT_REG_W		0x010	/* Level2 Mask AIU intr reg */
+#define VR4102_AIUINT_REG_W	0x004	/* Level2 AIU intr reg */	
+#define VR4102_MAIUINT_REG_W	0x010	/* Level2 Mask AIU intr reg */
+#define VR4122_AIUINT_REG_W	NO_REG_W	/* Level2 AIU intr reg */	
+#define VR4122_MAIUINT_REG_W	NO_REG_W	/* Level2 Mask AIU intr reg */
+#if defined SINGLE_VRIP_BASE
+#if defined VRGROUP_4102_4121
+#define AIUINT_REG_W		VR4102_AIUINT_REG_W
+#define MAIUINT_REG_W		VR4102_MAIUINT_REG_W
+#endif /* VRGROUP_4102_4121 */
+#if defined VRGROUP_4122
+#define AIUINT_REG_W		VR4122_AIUINT_REG_W
+#define MAIUINT_REG_W		VR4122_MAIUINT_REG_W
+#endif /* VRGROUP_4122 */
+#endif
 
 #define		AIUINT_INTMEND		(1<<11)	/* Audio input DMA buffer 2 page */
 #define		AIUINT_INTM		(1<<10)	/* Audio input DMA buffer 1 page */
@@ -96,8 +117,20 @@
 #define		AIUINT_INTSIDLE		(1<<1)	/* Audio output idle intr */
 
 
-#define KIUINT_REG_W		0x006	/* Level2 KIU intr reg */
-#define MKIUINT_REG_W		0x012	/* Level2 Mask KIU intr reg */
+#define VR4102_KIUINT_REG_W	0x006	/* Level2 KIU intr reg */
+#define VR4102_MKIUINT_REG_W	0x012	/* Level2 Mask KIU intr reg */
+#define VR4122_KIUINT_REG_W	NO_REG_W	/* Level2 KIU intr reg */
+#define VR4122_MKIUINT_REG_W	NO_REG_W	/* Level2 Mask KIU intr reg */
+#if defined SINGLE_VRIP_BASE
+#if defined VRGROUP_4102_4121
+#define KIUINT_REG_W		VR4102_KIUINT_REG_W
+#define MKIUINT_REG_W		VR4102_MKIUINT_REG_W
+#endif /* VRGROUP_4102_4121 */
+#if defined VRGROUP_4122
+#define KIUINT_REG_W		VR4122_KIUINT_REG_W
+#define MKIUINT_REG_W		VR4122_MKIUINT_REG_W
+#endif /* VRGROUP_4122 */
+#endif
 
 #define		KIUINT_KDATLOST		(1<<2)	/* Key scan data lost */
 #define		KIUINT_KDATRDY		(1<<1)	/* Key scan data complete */
@@ -159,12 +192,20 @@
 #define		SOFTINT_CLEAR0		(0)	/* Softint0 clear */
 
 
-#define SYSINT2_REG_W		0x180	/* Level1 System intr reg 2 */
-#define MSYSINT2_REG_W		0x186	/* Level1 Mask System intr reg 2 */
 #define VR4102_SYSINT2_REG_W	0x180	/* Level1 System intr reg 2 */
 #define VR4102_MSYSINT2_REG_W	0x186	/* Level1 Mask System intr reg 2 */
 #define VR4122_SYSINT2_REG_W	0x020	/* Level1 System intr reg 2 */
 #define VR4122_MSYSINT2_REG_W	0x026	/* Level1 Mask System intr reg 2 */
+#if defined SINGLE_VRIP_BASE
+#if defined VRGROUP_4102_4121
+#define SYSINT2_REG_W		VR4102_SYSINT2_REG_W
+#define MSYSINT2_REG_W		VR4102_MSYSINT2_REG_W
+#endif /* VRGROUP_4102_4121 */
+#if defined VRGROUP_4122
+#define SYSINT2_REG_W		VR4122_SYSINT2_REG_W
+#define MSYSINT2_REG_W		VR4122_MSYSINT2_REG_W
+#endif /* VRGROUP_4122 */
+#endif
 
 #define SYSINT2_INT31			(1<<15)
 #define SYSINT2_INT30			(1<<14)
@@ -188,12 +229,20 @@
 #define SYSINT2_RTCL2			(1<<0)	/* RTCLong2 intr */
 
 
-#define GIUINT_H_REG_W		0x182	/* Level2 GIU intr reg High */
-#define MGIUINT_H_REG_W		0x188	/* Level2 Mask GIU intr reg High */
 #define VR4102_GIUINT_H_REG_W	0x182	/* Level2 GIU intr reg High */
 #define VR4102_MGIUINT_H_REG_W	0x188	/* Level2 Mask GIU intr reg High */
 #define VR4122_GIUINT_H_REG_W	0x022	/* Level2 GIU intr reg High */
 #define VR4122_MGIUINT_H_REG_W	0x028	/* Level2 Mask GIU intr reg High */
+#if defined SINGLE_VRIP_BASE
+#if defined VRGROUP_4102_4121
+#define GIUINT_H_REG_W		VR4102_GIUINT_H_REG_W
+#define MGIUINT_H_REG_W		VR4102_MGIUINT_H_REG_W
+#endif /* VRGROUP_4102_4121 */
+#if defined VRGROUP_4122
+#define GIUINT_H_REG_W		VR4122_GIUINT_H_REG_W
+#define MGIUINT_H_REG_W		VR4122_MGIUINT_H_REG_W
+#endif /* VRGROUP_4122 */
+#endif
 
 #define		GIUINT_GPIO31		(1<<15)	/* GPIO 31 */
 #define		GIUINT_GPIO30		(1<<14)	/* GPIO 30 */
@@ -213,12 +262,20 @@
 #define		GIUINT_GPIO16		(1)	/* GPIO 16 */
 
 
-#define FIRINT_REG_W		0x184	/* Level2 FIR intr reg */
-#define MFIRINT_REG_W		0x18a	/* Level2 Mask FIR intr reg */
 #define VR4102_FIRINT_REG_W	0x184	/* Level2 FIR intr reg */
 #define VR4102_MFIRINT_REG_W	0x18a	/* Level2 Mask FIR intr reg */
 #define VR4122_FIRINT_REG_W	0x024	/* Level2 FIR intr reg */
 #define VR4122_MFIRINT_REG_W	0x02a	/* Level2 Mask FIR intr reg */
+#if defined SINGLE_VRIP_BASE
+#if defined VRGROUP_4102_4121
+#define FIRINT_REG_W		VR4102_FIRINT_REG_W
+#define MFIRINT_REG_W		VR4102_MFIRINT_REG_W
+#endif /* VRGROUP_4102_4121 */
+#if defined VRGROUP_4122
+#define FIRINT_REG_W		VR4122_FIRINT_REG_W
+#define MFIRINT_REG_W		VR4122_MFIRINT_REG_W
+#endif /* VRGROUP_4122 */
+#endif
 
 #define		FIRINT_FIR		(1<<4)	/* FIR intr */
 #define		FIRINT_RECV2		(1<<3)	/* FIR DMA buf recv buffer2 */
@@ -226,22 +283,55 @@
 #define		FIRINT_RECV1		(1<<1)	/* FIR DMA buf recv buffer1 */
 #define		FIRINT_TRNS1		(1)	/* FIR DMA buf transmit buffer1 */
 
-#define PCIINT_REG_W		0x2c	/* Level2 PCI intr reg */
-#define MPCIINT_REG_W		0x32	/* Level2 PCI intr mask */
+#define VR4102_PCIINT_REG_W	NO_REG_W	/* Level2 PCI intr reg */
+#define VR4102_MPCIINT_REG_W	NO_REG_W	/* Level2 PCI intr mask */
 #define VR4122_PCIINT_REG_W	0x2c	/* Level2 PCI intr reg */
 #define VR4122_MPCIINT_REG_W	0x32	/* Level2 PCI intr mask */
+#if defined SINGLE_VRIP_BASE
+#if defined VRGROUP_4102_4121
+#define PCIINT_REG_W		VR4102_PCIINT_REG_W
+#define MPCIINT_REG_W		VR4102_MPCIINT_REG_W
+#endif /* VRGROUP_4102_4121 */
+#if defined VRGROUP_4122
+#define PCIINT_REG_W		VR4122_PCIINT_REG_W
+#define MPCIINT_REG_W		VR4122_MPCIINT_REG_W
+#endif /* VRGROUP_4122 */
+#endif
+
 #define		PCIINT_INT0		(1)	/* PCI INT 0 */
 
-#define SCUINT_REG_W		0x2e	/* Level2 SCU intr reg */
-#define MSCUINT_REG_W		0x34	/* Level2 SCU intr mask */
+#define VR4102_SCUINT_REG_W	NO_REG_W	/* Level2 SCU intr reg */
+#define VR4102_MSCUINT_REG_W	NO_REG_W	/* Level2 SCU intr mask */
 #define VR4122_SCUINT_REG_W	0x2e	/* Level2 SCU intr reg */
 #define VR4122_MSCUINT_REG_W	0x34	/* Level2 SCU intr mask */
+#if defined SINGLE_VRIP_BASE
+#if defined VRGROUP_4102_4121
+#define SCUINT_REG_W		VR4102_SCUINT_REG_W
+#define MSCUINT_REG_W		VR4102_MSCUINT_REG_W
+#endif /* VRGROUP_4102_4121 */
+#if defined VRGROUP_4122
+#define SCUINT_REG_W		VR4122_SCUINT_REG_W
+#define MSCUINT_REG_W		VR4122_MSCUINT_REG_W
+#endif /* VRGROUP_4122 */
+#endif
+
 #define		SCUINT_INT0		(1)	/* SCU INT 0 */
 
-#define CSIINT_REG_W		0x30	/* Level2 CSI intr reg */
-#define MCSIINT_REG_W		0x36	/* Level2 CSI intr mask */
+#define VR4102_CSIINT_REG_W	NO_REG_W	/* Level2 CSI intr reg */
+#define VR4102_MCSIINT_REG_W	NO_REG_W	/* Level2 CSI intr mask */
 #define VR4122_CSIINT_REG_W	0x30	/* Level2 CSI intr reg */
 #define VR4122_MCSIINT_REG_W	0x36	/* Level2 CSI intr mask */
+#if defined SINGLE_VRIP_BASE
+#if defined VRGROUP_4102_4121
+#define CSIINT_REG_W		VR4102_CSIINT_REG_W
+#define MCSIINT_REG_W		VR4102_MCSIINT_REG_W
+#endif /* VRGROUP_4102_4121 */
+#if defined VRGROUP_4122
+#define CSIINT_REG_W		VR4122_CSIINT_REG_W
+#define MCSIINT_REG_W		VR4122_MCSIINT_REG_W
+#endif /* VRGROUP_4122 */
+#endif
+
 #define		CSIINT_TRPAGE2		(1<<6)	/* DMA send page 2 intr */
 #define		CSIINT_TRPAGE1		(1<<5)	/* DMA send page 1 intr */
 #define		CSIINT_TREND		(1<<4)	/* send every data intr */
@@ -250,10 +340,21 @@
 #define		CSIINT_RCPAGE1		(1<<1)	/* DMA recv page 1 intr */
 #define		CSIINT_RCOVER		(1)	/* recv FIFO overrun intr */
 
-#define BCUINT_REG_W		0x38	/* Level2 BCU intr reg */
-#define MBCUINT_REG_W		0x3a	/* Level2 BCU intr mask */
+#define VR4102_BCUINT_REG_W	NO_REG_W	/* Level2 BCU intr reg */
+#define VR4102_MBCUINT_REG_W	NO_REG_W	/* Level2 BCU intr mask */
 #define VR4122_BCUINT_REG_W	0x38	/* Level2 BCU intr reg */
 #define VR4122_MBCUINT_REG_W	0x3a	/* Level2 BCU intr mask */
+#if defined SINGLE_VRIP_BASE
+#if defined VRGROUP_4102_4121
+#define BCUINT_REG_W		VR4102_BCUINT_REG_W
+#define MBCUINT_REG_W		VR4102_MBCUINT_REG_W
+#endif /* VRGROUP_4102_4121 */
+#if defined VRGROUP_4122
+#define BCUINT_REG_W		VR4122_BCUINT_REG_W
+#define MBCUINT_REG_W		VR4122_MBCUINT_REG_W
+#endif /* VRGROUP_4122 */
+#endif
+
 #define		BCUINT_INT		(1)	/* BCU INT */
 
 /* END icureg.h */

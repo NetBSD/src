@@ -1,4 +1,4 @@
-/*	$NetBSD: vrgiu.c,v 1.17 2000/12/27 12:10:05 sato Exp $	*/
+/*	$NetBSD: vrgiu.c,v 1.18 2001/04/18 11:11:11 sato Exp $	*/
 /*-
  * Copyright (c) 1999
  *         Shin Takemura and PocketBSD Project. All rights reserved.
@@ -46,6 +46,8 @@
 #include <machine/bus.h>
 #include <machine/config_hook.h>
 
+#include "opt_vr41xx.h"
+#include <hpcmips/vr/vrcpudef.h>
 #include <hpcmips/vr/vripreg.h>
 #include <hpcmips/vr/vripvar.h>
 #include <hpcmips/vr/vrgiureg.h>
