@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.73 2001/12/18 10:57:42 fvdl Exp $	*/
+/*	$NetBSD: malloc.h,v 1.74 2002/01/04 02:45:33 deberg Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -177,8 +177,16 @@
 #define	M_PIPE		118	/* Pipe structures */
 #define	M_AGP		119	/* AGP memory */
 #define	M_PROP		120	/* Kernel properties structures */
-#define M_NEWDIRBLK	121	/* Unclaimed new dir block (softdeps) */
-#define	M_LAST		122	/* Must be last type + 1 */
+#define	M_NEWDIRBLK	121	/* Unclaimed new dir block (softdeps) */
+#define	M_SMBIOD	122	/* SMB network id daemon */
+#define	M_SMBCONN	123	/* SMB connection */
+#define	M_SMBRQ		124	/* SMB request */
+#define	M_SMBDATA	125	/* Misc netsmb data */
+#define	M_SMBSTR	126	/* netsmb string data */
+#define	M_SMBTEMP	127	/* Temp netsmb data */
+#define	M_NSMBDEV	128	/* NET/SMB device */
+#define	M_ICONV		129	/* ICONV data */
+#define	M_LAST		130	/* Must be last type + 1 */
 
 #define	INITKMEMNAMES { \
 	"free",		/* 0 M_FREE */ \
@@ -303,7 +311,15 @@
 	"AGP",		/* 119 M_AGP */ \
 	"prop",		/* 120 M_PROP */ \
 	"newdirblk",	/* 121 M_NEWDIRBLK */ \
-	NULL,		/* 122 */ \
+	"smbiod",	/* 122 M_SMBIOD */ \
+	"smbconn",	/* 123 M_SMBCONN */ \
+	"smbrq",	/* 124 M_SMBRQ */ \
+	"smbdata",	/* 125 M_SMBDATA */ \
+	"smbstr",	/* 126 M_SMBDATA */ \
+	"smbtemp",	/* 127 M_SMBTEMP */ \
+	"nsmbdev",	/* 128 M_NSMBDEV */ \
+	"iconv",	/* 129 M_ICONV */ \
+	NULL,		/* 130 */ \
 }
 
 struct kmemstats {
