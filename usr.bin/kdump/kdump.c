@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.20 1998/03/30 02:26:07 mrg Exp $	*/
+/*	$NetBSD: kdump.c,v 1.21 1998/09/11 23:09:31 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.20 1998/03/30 02:26:07 mrg Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.21 1998/09/11 23:09:31 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -505,13 +505,26 @@ void
 ktrpsig(psig)
 	struct ktr_psig *psig;
 {
+	int signo, first;
 
 	(void)printf("SIG%s ", sys_signame[psig->signo]);
 	if (psig->action == SIG_DFL)
 		(void)printf("SIG_DFL\n");
-	else
-		(void)printf("caught handler=0x%lx mask=0x%x code=0x%x\n",
-		    (u_long)psig->action, psig->mask, psig->code);
+	else {
+		(void)printf("caught handler=0x%lx mask=(",
+		    (u_long)psig->action);
+		first = 1;
+		for (signo = 1; signo < NSIG; signo++) {
+			if (sigismember(&psig->mask, signo)) {
+				if (first)
+					first = 0;
+				else
+					(void)printf(",");
+				(void)printf("%d", signo);
+			}
+		}
+		(void)printf(") code=0x%x\n", psig->code);
+	}
 }
 
 void
