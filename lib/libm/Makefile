@@ -1,5 +1,5 @@
 #  @(#)Makefile 5.1beta 93/09/24 
-#  $Id: Makefile,v 1.25 1995/02/18 01:46:41 jtc Exp $
+#  $Id: Makefile,v 1.26 1995/05/03 20:42:23 jtc Exp $
 # 
 #  ====================================================
 #  Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -45,9 +45,12 @@
 # Uncomment the following lines if you have a i387 (or i486 or Pentium)
 #.PATH:	${.CURDIR}/arch/i387
 #ARCH_SRCS = e_acos.S e_asin.S e_atan2.S e_exp.S e_fmod.S e_log.S e_log10.S \
-#	    e_remainder.S e_scalb.S e_sqrt.S s_atan.S s_ceil.S s_copysign.S \
-#	    s_cos.S s_finite.S s_floor.S s_ilogb.S s_log1p.S s_logb.S \
-#	    s_rint.S s_scalbn.S s_significand.S s_sin.S s_tan.S
+#	    e_remainder.S e_remainderf.S e_scalb.S e_sqrt.S e_sqrtf.S \
+#	    s_atan.S s_atanf.S s_ceil.S s_ceilf.S s_copysign.S s_copysignf.S \
+#	    s_cos.S s_cosf.S s_finite.S s_finitef.S s_floor.S s_floorf.S \
+#	    s_ilogb.S s_ilogbf.S s_log1p.S s_log1pf.S s_logb.S s_logbf.S \
+#	    s_rint.S s_rintf.S s_scalbn.S s_scalbnf.S s_significand.S \
+#	    s_significandf.S s_sin.S s_sinf.S s_tan.S s_tanf.S
 .elif (${MACHINE_ARCH} == "m68k")
 .PATH:	${.CURDIR}/arch/mc68881
 ARCH_SRCS = e_acos.S e_asin.S e_atanh.S e_cosh.S e_exp.S e_log.S e_log10.S \
