@@ -1,5 +1,5 @@
 #
-#	$Id: files.pc532,v 1.8 1994/08/01 22:58:42 phil Exp $
+#	$Id: files.pc532,v 1.9 1994/09/25 04:23:17 phil Exp $
 #
 arch/pc532/pc532/autoconf.c		standard 
 arch/pc532/pc532/clock.c		standard
@@ -14,7 +14,8 @@ arch/pc532/pc532/disksubr.c		standard
 arch/pc532/pc532/ntoh.s			standard
 arch/pc532/pc532/random.s		standard
 arch/pc532/pc532/ns_cksum.c		optional ns
-arch/pc532/pc532/in_cksum.c		optional inet
+#arch/pc532/pc532/in_cksum.c		optional inet
+netinet/in_cksum.c			optional inet
 arch/pc532/pc532/oc_cksum.s		optional inet
 arch/pc532/dev/scn.c			optional scn device-driver
 arch/pc532/dev/dp.c			optional dp device-driver 
