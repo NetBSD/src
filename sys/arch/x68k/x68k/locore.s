@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.41.2.4 1999/11/21 15:44:19 he Exp $	*/
+/*	$NetBSD: locore.s,v 1.41.2.5 2000/01/15 17:35:53 he Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -641,17 +641,12 @@ Lnotdma:
 	jra	rei
 
 _timertrap:
-	movw	#SPL4,sr		| XXX?
 	moveml	#0xC0C0,sp@-		| save scratch registers
 	addql	#1,_C_LABEL(intrcnt)+36	| count hardclock interrupts
 	lea	sp@(16),a1		| a1 = &clockframe
 	movl	a1,sp@-
 	jbsr	_hardclock		| hardclock(&frame)
 	addql	#4,sp
-#include "ms.h"
-#if NMS > 0
-	jbsr	_ms_modem
-#endif
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS | chalk up another interrupt
 	moveml	sp@+,#0x0303		| restore scratch registers
 	jra	rei			| all done
