@@ -46,12 +46,25 @@ choose.  The steps for the various media are outlined below.
 To install or upgrade NetBSD using DOS floppies, you need to do the
 following:
 
-	Count the number of "set_name.xx" files the make up the
+	NOTE THAT THE NetBSD 1.0 DISTRIBUTION DOES _NOT_ SUPPORT
+	INSTALLATION VIA FLOPPY ON MACHINES WITH ONE FLOPPY DRIVE.
+	If you only have one floppy drive, it is recommended that you
+	install/upgrade the minimum sets (i.e. base10 and etc10 for
+	installation, base10 only for upgrade) via another method,
+	then load and extract the remaining sets by hand.  This will
+	be fixed in a future release.
+
+	Count the number of "set_name.xx" files that make up the
 	distribution sets you want to install or upgrade.  You will
 	need one fifth that number of 1.2M floppies, or one sixth that
 	number of 1.44M floppies.  You should only use one size of
 	floppy for the install or upgrade procedure; you can't use
-	some 1.2M floppies and some 1.44M floppies.
+	some 1.2M floppies and some 1.44M floppies.  Additionally,
+	note that you can't boot and load the distributions from the
+	same floppy drive.  In other words, if you're booting the
+	install floppies from one drive, you will be reading these
+	floppies from the _other_, so be sure to use the right type
+	of floppies!
 
 	Format all of the floppies with DOS.  DO NOT make any of them
 	bootable DOS floppies, i.e. don't use "format/s" to format

@@ -183,6 +183,12 @@ process again from scratch.
 	instructions for the various types are below.
 
 	To install from floppy:
+		NOTE THAT THE NetBSD 1.0 DISTRIBUTION DOES _NOT_
+		SUPPORT INSTALLATION VIA FLOPPY ON MACHINES WITH ONE
+		FLOPPY DRIVE.  If you only have one floppy drive,
+		you'll have to use a different method of installation.
+		This will be fixed in the future.
+
 		The first thing you should do is pick a temporary
 		directory where the distribution files can be stored.
 		To do this, enter the command "Set_tmp_dir", and enter
@@ -198,7 +204,9 @@ process again from scratch.
 		You will be asked which floppy drive to use.  Enter
 		"0" (zero) if you're using the first floppy drive
 		(i.e. what DOS would call "A:"), or enter "1" if
-		you're using the second.
+		you're using the second.  (Remember that you CANNOT
+		use the floppy drive that you booted from.  If you
+		booted from "A:", you must load from "B:".)
 
 		You will be prompted to insert a floppy into the drive,
 		to have its contents copied to your hard disk.  Do so,
