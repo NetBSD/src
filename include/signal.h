@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.18 1998/10/24 16:35:19 kleink Exp $	*/
+/*	$NetBSD: signal.h,v 1.19 1998/11/30 20:36:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -49,9 +49,9 @@
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
     !defined(_XOPEN_SOURCE)
-/* XXX XXX XXX */
-extern __const char *__const sys_signame[SIGUSR2+1];
-extern __const char *__const sys_siglist[SIGUSR2+1];
+extern __const char *__const *sys_signame __RENAME(__sys_signame14);
+extern __const char *__const *sys_siglist __RENAME(__sys_siglist14);
+extern __const int sys_nsig __RENAME(__sys_nsig14);
 #endif
 
 __BEGIN_DECLS

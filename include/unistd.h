@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.68 1998/11/09 12:45:11 kleink Exp $	*/
+/*	$NetBSD: unistd.h,v 1.69 1998/11/30 20:36:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -326,7 +326,7 @@ quad_t	 __syscall __P((quad_t, ...));
 int	 undelete __P((const char *));
 int	 unwhiteout __P((const char *));
 
-extern __const char *__const sys_siglist[];
+extern __const char *__const *sys_siglist __RENAME(__sys_siglist14);
 extern	 int optreset;		/* getopt(3) external variable */
 extern	 char *suboptarg;	/* getsubopt(3) external variable */
 #endif
