@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: cfparse.y,v 1.7 2001/08/02 03:41:42 itojun Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.8 2002/07/14 16:30:42 wiz Exp $	*/
 
 /*
  * Configuration file parser for mrouted.
@@ -23,28 +23,23 @@
  * THE USE OF THIS SOFTWARE.
  */
 #include <stdio.h>
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <string.h>
-#include <varargs.h>
-#endif
 #include "defs.h"
 #include <netdb.h>
 
 /*
  * Local function declarations
  */
-static void		fatal __P((char *fmt, ...))
+static void		fatal(char *fmt, ...)
     __attribute__((__format__(__printf__, 1, 2)));
-static void		warn __P((char *fmt, ...))
+static void		warn(char *fmt, ...)
         __attribute__((__format__(__printf__, 1, 2)));
-static void		yyerror __P((char *s));
-static char *		next_word __P((void));
-static int		yylex __P((void));
-static u_int32_t	valid_if __P((char *s));
-static struct ifreq *	ifconfaddr __P((struct ifconf *ifcp, u_int32_t a));
-int			yyparse __P((void));
+static void		yyerror(char *s);
+static char *		next_word(void);
+static int		yylex(void);
+static u_int32_t	valid_if(char *s);
+static struct ifreq *	ifconfaddr(struct ifconf *ifcp, u_int32_t a);
+int			yyparse(void);
 
 static FILE *f __attribute__((__unused__));	/* XXX egcs */
 extern int udp_socket;
@@ -396,7 +391,6 @@ addrmask	: ADDRMASK	{ $$ = $1; }
 	| ADDR			{ $$.addr = $1; $$.mask = 0; }
 	;
 %%
-#ifdef __STDC__
 static void
 fatal(char *fmt, ...)
 {
@@ -404,25 +398,12 @@ fatal(char *fmt, ...)
 	char buf[200];
 
 	va_start(ap, fmt);
-#else
-/*VARARGS1*/
-static void
-fatal(fmt, va_alist)
-char *fmt;
-va_dcl
-{
-	va_list ap;
-	char buf[200];
-
-	va_start(ap);
-#endif
 	vsprintf(buf, fmt, ap);
 	va_end(ap);
 
 	log(LOG_ERR,0,"%s: %s near line %d", configfilename, buf, lineno);
 }
 
-#ifdef __STDC__
 static void
 warn(char *fmt, ...)
 {
@@ -430,18 +411,6 @@ warn(char *fmt, ...)
 	char buf[200];
 
 	va_start(ap, fmt);
-#else
-/*VARARGS1*/
-static void
-warn(fmt, va_alist)
-char *fmt;
-va_dcl
-{
-	va_list ap;
-	char buf[200];
-
-	va_start(ap);
-#endif
 	vsprintf(buf, fmt, ap);
 	va_end(ap);
 
@@ -618,8 +587,8 @@ static u_int32_t
 valid_if(s)
 char *s;
 {
-	register vifi_t vifi;
-	register struct uvif *v;
+	vifi_t vifi;
+	struct uvif *v;
 
 	for (vifi=0, v=uvifs; vifi<numvifs; vifi++, v++)
 	    if (!strcmp(v->uv_name, s))
