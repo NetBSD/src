@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_ctl.c,v 1.22 2002/01/11 22:02:56 christos Exp $	*/
+/*	$NetBSD: procfs_ctl.c,v 1.22.10.1 2002/07/29 15:37:48 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.22 2002/01/11 22:02:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.22.10.1 2002/07/29 15:37:48 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -226,9 +226,11 @@ procfs_control(curp, p, op, sig)
 		 * Stop the target.
 		 */
 		SET(p->p_flag, P_TRACED|P_FSTRACE);
-		p->p_oppid = p->p_pptr->p_pid;
-		if (p->p_pptr != curp)
+		p->p_opptr = p->p_pptr;
+		if (p->p_pptr != curp) {
+			p->p_pptr->p_flag |= P_CHTRACED;
 			proc_reparent(p, curp);
+		}
 		sig = SIGSTOP;
 		goto sendsig;
 
@@ -250,15 +252,13 @@ procfs_control(curp, p, op, sig)
 
 		if (op == PROCFS_CTL_DETACH) {
 			/* give process back to original parent */
-			if (p->p_oppid != p->p_pptr->p_pid) {
-				struct proc *pp;
-	
-				pp = pfind(p->p_oppid);
+			if (p->p_opptr != p->p_pptr) {
+				struct proc *pp = p->p_opptr;
 				proc_reparent(p, pp ? pp : initproc);
 			}
 
 			/* not being traced any more */
-			p->p_oppid = 0;
+			p->p_opptr = NULL;
 			CLR(p->p_flag, P_TRACED|P_FSTRACE|P_WAITED);
 		}
 
