@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey.c,v 1.18 2003/08/26 03:49:05 itojun Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.19 2003/09/26 22:23:58 wiz Exp $	*/
 /*	$KAME: pfkey.c,v 1.46 2003/08/26 03:37:06 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pfkey.c,v 1.18 2003/08/26 03:49:05 itojun Exp $");
+__RCSID("$NetBSD: pfkey.c,v 1.19 2003/09/26 22:23:58 wiz Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -427,7 +427,7 @@ pfkey_send_getspi(so, satype, mode, src, dst, min, max, reqid, seq)
 		return -1;
 	}
 
-	/* proccessing spi range */
+	/* processing spi range */
 	if (need_spirange) {
 		struct sadb_spirange spirange;
 
