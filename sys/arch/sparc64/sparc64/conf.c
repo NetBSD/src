@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.21.6.1 2002/12/07 21:14:05 he Exp $ */
+/*	$NetBSD: conf.c,v 1.21.6.2 2002/12/12 22:46:27 he Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -87,6 +87,7 @@
 #include "pcons.h"
 #include "com.h"
 #include "bpp.h"
+#include "lpt.h"
 #include "magma.h"		/* has NMTTY and NMBPP */
 #include "siosixteen.h"
 cdev_decl(cdtty);
@@ -208,7 +209,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 34 */
 	cdev_notdef(),			/* 35 */
 	cdev_tty_init(NCOM,com),	/* 36: NS16x50 compatible ports */
-	cdev_notdef(),			/* 37 */
+	cdev_lpt_init(NLPT,lpt),	/* 37: /dev/lpt */
 	cdev_notdef(),			/* 38 */
 	cdev_notdef(),			/* 39: /dev/cgfour */
 	cdev_notdef(),			/* 40 */
