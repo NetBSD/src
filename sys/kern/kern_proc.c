@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.11 1994/12/24 15:07:27 cgd Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.12 1995/03/19 23:44:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -361,13 +361,13 @@ pgrpdump()
 		if (pgrp = pgrphashtbl[i].lh_first) {
 			printf("\tindx %d\n", i);
 			for (; pgrp != 0; pgrp = pgrp->pg_hash.le_next) {
-				printf("\tpgrp %x, pgid %d, sess %x, sesscnt %d, mem %x\n",
+				printf("\tpgrp %p, pgid %d, sess %p, sesscnt %d, mem %p\n",
 				    pgrp, pgrp->pg_id, pgrp->pg_session,
 				    pgrp->pg_session->s_count,
 				    pgrp->pg_members.lh_first);
 				for (p = pgrp->pg_members.lh_first; p != 0;
 				    p = p->p_pglist.le_next) {
-					printf("\t\tpid %d addr %x pgrp %x\n", 
+					printf("\t\tpid %d addr %p pgrp %p\n", 
 					    p->p_pid, p, p->p_pgrp);
 				}
 			}

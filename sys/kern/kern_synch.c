@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.30 1994/10/30 21:47:43 cgd Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.31 1995/03/19 23:44:51 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -425,7 +425,7 @@ sleep(ident, priority)
 
 #ifdef DIAGNOSTIC
 	if (priority > PZERO) {
-		printf("sleep called with priority %d > PZERO, wchan: %x\n",
+		printf("sleep called with priority %d > PZERO, wchan: %p\n",
 		    priority, ident);
 		panic("old sleep");
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.19 1994/12/10 17:14:42 mycroft Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.20 1995/03/19 23:44:59 mycroft Exp $	*/
 
 /*
  * Implementation of SVID semaphores
@@ -292,7 +292,7 @@ __semctl(p, uap, retval)
 	register struct semid_ds *semaptr;
 
 #ifdef SEM_DEBUG
-	printf("call to semctl(%d, %d, %d, 0x%x)\n", semid, semnum, cmd, arg);
+	printf("call to semctl(%d, %d, %d, %p)\n", semid, semnum, cmd, arg);
 #endif
 
 	semlock(p);
@@ -532,7 +532,7 @@ semget(p, uap, retval)
 		bzero(sema[semid].sem_base,
 		    sizeof(sema[semid].sem_base[0])*nsems);
 #ifdef SEM_DEBUG
-		printf("sembase = 0x%x, next = 0x%x\n", sema[semid].sem_base,
+		printf("sembase = %p, next = %p\n", sema[semid].sem_base,
 		    &sem[semtot]);
 #endif
 	} else {
@@ -569,7 +569,7 @@ semop(p, uap, retval)
 	int all_ok, do_wakeup, do_undos;
 
 #ifdef SEM_DEBUG
-	printf("call to semop(%d, 0x%x, %d)\n", semid, sops, nsops);
+	printf("call to semop(%d, %p, %d)\n", semid, sops, nsops);
 #endif
 
 	semlock(p);
@@ -601,7 +601,7 @@ semop(p, uap, retval)
 	if ((eval = copyin(SCARG(uap, sops), sops, nsops * sizeof(sops[0])))
 	    != 0) {
 #ifdef SEM_DEBUG
-		printf("eval = %d from copyin(%08x, %08x, %d)\n", eval,
+		printf("eval = %d from copyin(%p, %p, %d)\n", eval,
 		    SCARG(uap, sops), &sops, nsops * sizeof(sops[0]));
 #endif
 		return(eval);
@@ -933,7 +933,7 @@ semexit(p)
 	 */
 
 #ifdef SEM_DEBUG
-	printf("proc @%08x has undo structure with %d entries\n", p,
+	printf("proc @%p has undo structure with %d entries\n", p,
 	    suptr->un_cnt);
 #endif
 
@@ -956,7 +956,7 @@ semexit(p)
 				panic("semexit - semnum out of range");
 
 #ifdef SEM_DEBUG
-			printf("semexit:  %08x id=%d num=%d(adj=%d) ; sem=%d\n",
+			printf("semexit:  %p id=%d num=%d(adj=%d) ; sem=%d\n",
 			    suptr->un_proc, suptr->un_ent[ix].un_id,
 			    suptr->un_ent[ix].un_num,
 			    suptr->un_ent[ix].un_adjval,

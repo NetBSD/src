@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.12 1994/12/05 06:53:13 mycroft Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.13 1995/03/19 23:44:56 mycroft Exp $	*/
 
 /*
  * Implementation of SVID messages
@@ -136,7 +136,7 @@ msgctl(p, uap, retval)
 	register struct msqid_ds *msqptr;
 
 #ifdef MSG_DEBUG_OK
-	printf("call to msgctl(%d, %d, 0x%x)\n", msqid, cmd, user_msqptr);
+	printf("call to msgctl(%d, %d, %p)\n", msqid, cmd, user_msqptr);
 #endif
 
 	msqid = IPCID_TO_IX(msqid);
@@ -375,7 +375,7 @@ msgsnd(p, uap, retval)
 	short next;
 
 #ifdef MSG_DEBUG_OK
-	printf("call to msgsnd(%d, 0x%x, %d, %d)\n", msqid, user_msgp, msgsz,
+	printf("call to msgsnd(%d, %p, %d, %d)\n", msqid, user_msgp, msgsz,
 	    msgflg);
 #endif
 
@@ -710,7 +710,7 @@ msgrcv(p, uap, retval)
 	short next;
 
 #ifdef MSG_DEBUG_OK
-	printf("call to msgrcv(%d, 0x%x, %d, %ld, %d)\n", msqid, user_msgp,
+	printf("call to msgrcv(%d, %p, %d, %ld, %d)\n", msqid, user_msgp,
 	    msgsz, msgtyp, msgflg);
 #endif
 

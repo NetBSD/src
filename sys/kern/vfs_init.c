@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_init.c,v 1.3 1994/07/24 07:15:19 mycroft Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.4 1995/03/19 23:45:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -122,7 +122,7 @@ vfs_opv_init_explicit(vfs_opv_desc)
 		    vfs_opv_numops * sizeof(PFI), M_VNODE, M_WAITOK);
 		bzero(opv_desc_vector, vfs_opv_numops * sizeof(PFI));
 		*(vfs_opv_desc->opv_desc_vector_p) = opv_desc_vector;
-		DODEBUG(printf("vector at %x allocated\n",
+		DODEBUG(printf("vector at %p allocated\n",
 		    opv_desc_vector_p));
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.5 1994/06/29 06:33:55 cgd Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.6 1995/03/19 23:45:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -47,6 +47,20 @@
 #include <sys/malloc.h>
 #include <sys/fcntl.h>
 #include <sys/lockf.h>
+
+/*
+ * This variable controls the maximum number of processes that will
+ * be checked in doing deadlock detection.
+ */
+int maxlockdepth = MAXDEPTH;
+
+#ifdef LOCKF_DEBUG
+int	lockf_debug = 0;
+#endif
+
+#define NOLOCKF (struct lockf *)0
+#define SELF	0x1
+#define OTHERS	0x2
 
 /*
  * Do an advisory lock operation.
@@ -136,20 +150,6 @@ lf_advlock(head, size, id, op, fl, flags)
 	}
 	/* NOTREACHED */
 }
-
-/*
- * This variable controls the maximum number of processes that will
- * be checked in doing deadlock detection.
- */
-int maxlockdepth = MAXDEPTH;
-
-#ifdef LOCKF_DEBUG
-int	lockf_debug = 0;
-#endif
-
-#define NOLOCKF (struct lockf *)0
-#define SELF	0x1
-#define OTHERS	0x2
 
 /*
  * Set a byte-range lock.
@@ -744,7 +744,7 @@ lf_print(tag, lock)
 	register struct lockf *lock;
 {
 	
-	printf("%s: lock 0x%lx for ", tag, lock);
+	printf("%s: lock %p for ", tag, lock);
 	if (lock->lf_flags & F_POSIX)
 		printf("proc %d", ((struct proc *)(lock->lf_id))->p_pid);
 	else
@@ -758,7 +758,7 @@ lf_print(tag, lock)
 		lock->lf_type == F_UNLCK ? "unlock" :
 		"unknown", lock->lf_start, lock->lf_end);
 	if (lock->lf_block)
-		printf(" block 0x%x\n", lock->lf_block);
+		printf(" block %p\n", lock->lf_block);
 	else
 		printf("\n");
 }
@@ -775,7 +775,7 @@ lf_printlist(tag, lock)
 		major(lock->lf_inode->i_dev),
 		minor(lock->lf_inode->i_dev));
 	for (lf = lock->lf_inode->i_lockf; lf; lf = lf->lf_next) {
-		printf("\tlock 0x%lx for ", lf);
+		printf("\tlock %p for ", lf);
 		if (lf->lf_flags & F_POSIX)
 			printf("proc %d", ((struct proc *)(lf->lf_id))->p_pid);
 		else
@@ -786,7 +786,7 @@ lf_printlist(tag, lock)
 			lf->lf_type == F_UNLCK ? "unlock" :
 			"unknown", lf->lf_start, lf->lf_end);
 		if (lf->lf_block)
-			printf(" block 0x%x\n", lf->lf_block);
+			printf(" block %p\n", lf->lf_block);
 		else
 			printf("\n");
 	}
