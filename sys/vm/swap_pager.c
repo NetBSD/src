@@ -38,7 +38,7 @@
  * from: Utah $Hdr: swap_pager.c 1.4 91/04/30$
  *
  *	from: @(#)swap_pager.c	8.1 (Berkeley) 6/11/93
- *	$Id: swap_pager.c,v 1.17 1994/04/15 07:04:45 cgd Exp $
+ *	$Id: swap_pager.c,v 1.18 1994/04/15 18:02:02 cgd Exp $
  */
 
 /*
@@ -344,7 +344,7 @@ swap_pager_dealloc(pager)
 	 */
 	swp = (sw_pager_t) pager->pg_data;
 	if (swp->sw_flags & SW_NAMED) {
-		TAILQ_INSERT_TAIL(&swap_pager_list, pager, pg_list);
+		TAILQ_REMOVE(&swap_pager_list, pager, pg_list);
 		swp->sw_flags &= ~SW_NAMED;
 	}
 #ifdef DEBUG
