@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.4 2003/07/12 11:47:05 yamt Exp $ */
+/* $NetBSD: lfs.c,v 1.5 2003/07/12 11:57:59 yamt Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -354,6 +354,8 @@ lfs_raw_vget(struct lfs * fs, ino_t ino, int fd, ufs_daddr_t daddr)
 	vp->v_strategy_op = lfs_vop_strategy;
 	vp->v_bwrite_op = lfs_vop_bwrite;
 	vp->v_bmap_op = lfs_vop_bmap;
+	LIST_INIT(&vp->v_cleanblkhd);
+	LIST_INIT(&vp->v_dirtyblkhd);
 
 	++nvnodes;
 	LIST_INSERT_HEAD(&getvnodelist, vp, v_getvnodes);
@@ -461,11 +463,14 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int debug)
 	vfs_init();
 
 	devvp = (struct uvnode *) malloc(sizeof(*devvp));
+	memset(devvp, 0, sizeof(*devvp));
 	devvp->v_fs = NULL;
 	devvp->v_fd = devfd;
 	devvp->v_strategy_op = raw_vop_strategy;
 	devvp->v_bwrite_op = raw_vop_bwrite;
 	devvp->v_bmap_op = raw_vop_bmap;
+	LIST_INIT(&devvp->v_cleanblkhd);
+	LIST_INIT(&devvp->v_dirtyblkhd);
 
 	tryalt = 0;
 	if (sblkno == 0) {
