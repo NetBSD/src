@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: mktokens,v 1.7 1995/05/11 21:29:38 christos Exp $
+#	$NetBSD: mktokens,v 1.8 1996/10/16 14:47:49 christos Exp $
 #
 # Copyright (c) 1991, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -72,7 +72,7 @@ TESAC	1	"esac"
 TNOT	0	"!"
 !
 nl=`wc -l /tmp/ka$$`
-exec > token.def
+exec > token.h
 awk '{print "#define " $1 " " NR-1}' /tmp/ka$$
 echo '
 /* Array indicating which tokens mark the end of a list */
