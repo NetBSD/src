@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83.2.9 2000/08/18 03:22:48 sommerfeld Exp $	*/
+/*	$NetBSD: pmap.c,v 1.83.2.10 2000/08/19 17:27:28 sommerfeld Exp $	*/
 
 /*
  *
@@ -1089,6 +1089,25 @@ pmap_init()
 		addr = (vaddr_t)(vm_physmem[lcv].pmseg.attrs +
 				 (vm_physmem[lcv].end - vm_physmem[lcv].start));
 	}
+#ifdef LOCKDEBUG
+	/*
+	 * Now, initialize all the pv_head locks.
+	 * We only do this if LOCKDEBUG because we know that initialized locks
+	 * are always all-zero if !LOCKDEBUG.
+	 */
+	for (lcv = 0; lcv < vm_nphysseg ; lcv++) {
+		int off, npages;
+		struct pmap_physseg *pmsegp;
+		
+		npages = vm_physmem[lcv].end - vm_physmem[lcv].start;
+		printf("bank %d has %d pages\n", lcv, npages);
+		pmsegp = &vm_physmem[lcv].pmseg;
+		
+		for (off = 0; off <npages; off++)
+			simple_lock_init(&pmsegp->pvhead[off].pvh_lock);
+		
+	}
+#endif
 
 	/*
 	 * now we need to free enough pv_entry structures to allow us to get
