@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.38.2.1 1997/10/29 03:56:01 mellon Exp $
+#	$NetBSD: MAKEDEV,v 1.38.2.2 1997/11/20 08:16:22 mellon Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -83,6 +83,7 @@
 #	aconf	autoconfig information (not yet)
 #	lkm	loadable kernel modules interface.
 #	ipl	ip filter
+#	random	Random number generator
 #	bpf*	Berkeley Packet Filter
 #	tun*	network tunnel driver
 #	ss*	SCSI scanner
@@ -108,7 +109,7 @@ all)
 	sh $0 sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9 cd0 st0
 	sh $0 ss0 ch0 uk0 uk1 ccd0 ccd1 ccd2 ccd3
 	sh $0 vnd0 vnd1 vnd2 vnd3 vnd4 vnd5 vnd6
-	sh $0 bpf0 bpf1 bpf2 bpf3 tun0 tun1 lkm ipl local
+	sh $0 bpf0 bpf1 bpf2 bpf3 tun0 tun1 lkm ipl random local
 	sh $0 audio0 audio1 audio2 audio3
 	;;
 
@@ -449,6 +450,16 @@ audio*)
 	mknod $audioctl c $major $(($unit + 192))
 	chown root.wheel $audio $sound $mixer $audioctl
 	chmod 666 $audio $sound $mixer $audioctl
+	;;
+
+
+random)
+	rm -f random urandom
+	mknod random c 42 0
+	mknod urandom c 42 1
+	chown root.wheel random urandom
+	chmod 444 random
+	chmod 644 urandom
 	;;
 
 local)
