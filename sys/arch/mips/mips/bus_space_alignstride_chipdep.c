@@ -1,4 +1,4 @@
-/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.4 2002/08/19 12:03:48 simonb Exp $ */
+/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.5 2003/03/13 03:04:13 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -714,13 +714,13 @@ inline uint8_t
 __BS(read_1)(void *v, bus_space_handle_t h, bus_size_t off)
 {
 #ifdef CHIP_ACCESSTYPE
-	CHIP_ACCESSTYPE *ptr = (void *)(h + (off << CHIP_ALIGN_STRIDE));
+	volatile CHIP_ACCESSTYPE *ptr = (void *)(h + (off << CHIP_ALIGN_STRIDE));
 	CHIP_ACCESSTYPE rval;
 
 	rval = *ptr;
 	return (rval & 0xff);		/* XXX BigEndian safe? */
 #else	/* !CHIP_ACCESSTYPE */
-	uint8_t *ptr = (void *)(h + (off << CHIP_ALIGN_STRIDE));
+	volatile uint8_t *ptr = (void *)(h + (off << CHIP_ALIGN_STRIDE));
 
 	return (*ptr);
 #endif	/* !CHIP_ACCESSTYPE */
@@ -731,9 +731,9 @@ __BS(read_2)(void *v, bus_space_handle_t h, bus_size_t off)
 {
 #ifdef CHIP_ACCESSTYPE
 #if CHIP_ALIGN_STRIDE >= 1 
-	CHIP_ACCESSTYPE *ptr = (void *)(h + (off << (CHIP_ALIGN_STRIDE - 1)));
+	volatile CHIP_ACCESSTYPE *ptr = (void *)(h + (off << (CHIP_ALIGN_STRIDE - 1)));
 #else
-	CHIP_ACCESSTYPE *ptr = (void *)(h + off);
+	volatile CHIP_ACCESSTYPE *ptr = (void *)(h + off);
 #endif
 	CHIP_ACCESSTYPE rval;
 
@@ -741,9 +741,9 @@ __BS(read_2)(void *v, bus_space_handle_t h, bus_size_t off)
 	return (rval & 0xffff);		/* XXX BigEndian safe? */
 #else	/* !CHIP_ACCESSTYPE */
 #if CHIP_ALIGN_STRIDE >= 1
-	uint16_t *ptr = (void *)(h + (off << (CHIP_ALIGN_STRIDE - 1)));
+	volatile uint16_t *ptr = (void *)(h + (off << (CHIP_ALIGN_STRIDE - 1)));
 #else
-	uint16_t *ptr = (void *)(h + off);
+	volatile uint16_t *ptr = (void *)(h + off);
 #endif
 
 	return (*ptr);
@@ -755,9 +755,9 @@ __BS(read_4)(void *v, bus_space_handle_t h, bus_size_t off)
 {
 	/* XXX XXX XXX should use CHIP_ACCESSTYPE if it's > 32bits */
 #if CHIP_ALIGN_STRIDE >= 2
-	uint32_t *ptr = (void *)(h + (off << (CHIP_ALIGN_STRIDE - 2)));
+	volatile uint32_t *ptr = (void *)(h + (off << (CHIP_ALIGN_STRIDE - 2)));
 #else
-	uint32_t *ptr = (void *)(h + off);
+	volatile uint32_t *ptr = (void *)(h + off);
 #endif
 
 	return (*ptr);
@@ -808,13 +808,13 @@ inline void
 __BS(write_1)(void *v, bus_space_handle_t h, bus_size_t off, uint8_t val)
 {
 #ifdef CHIP_ACCESSTYPE
-	CHIP_ACCESSTYPE *ptr = (void *)(h + (off << CHIP_ALIGN_STRIDE));
+	volatile CHIP_ACCESSTYPE *ptr = (void *)(h + (off << CHIP_ALIGN_STRIDE));
 	CHIP_ACCESSTYPE wval;
 
 	wval = val & 0xff;		/* XXX BigEndian safe? */
 	*ptr = wval;
 #else	/* !CHIP_ACCESSTYPE */
-	uint8_t *ptr = (void *)(h + (off << CHIP_ALIGN_STRIDE));
+	volatile uint8_t *ptr = (void *)(h + (off << CHIP_ALIGN_STRIDE));
 
 	*ptr = val;
 #endif	/* !CHIP_ACCESSTYPE */
@@ -825,9 +825,9 @@ __BS(write_2)(void *v, bus_space_handle_t h, bus_size_t off, uint16_t val)
 {
 #ifdef CHIP_ACCESSTYPE
 #if CHIP_ALIGN_STRIDE >= 1
-	CHIP_ACCESSTYPE *ptr = (void *)(h + (off << (CHIP_ALIGN_STRIDE - 1)));
+	volatile CHIP_ACCESSTYPE *ptr = (void *)(h + (off << (CHIP_ALIGN_STRIDE - 1)));
 #else
-	CHIP_ACCESSTYPE *ptr = (void *)(h + off);
+	volatile CHIP_ACCESSTYPE *ptr = (void *)(h + off);
 #endif
 	CHIP_ACCESSTYPE wval;
 
@@ -835,9 +835,9 @@ __BS(write_2)(void *v, bus_space_handle_t h, bus_size_t off, uint16_t val)
 	*ptr = wval;
 #else	/* !CHIP_ACCESSTYPE */
 #if CHIP_ALIGN_STRIDE >= 1
-	uint16_t *ptr = (void *)(h + (off << (CHIP_ALIGN_STRIDE - 1)));
+	volatile uint16_t *ptr = (void *)(h + (off << (CHIP_ALIGN_STRIDE - 1)));
 #else
-	uint16_t *ptr = (void *)(h + off);
+	volatile uint16_t *ptr = (void *)(h + off);
 #endif
 
 	*ptr = val;
@@ -849,9 +849,9 @@ __BS(write_4)(void *v, bus_space_handle_t h, bus_size_t off, uint32_t val)
 {
 	/* XXX XXX XXX should use CHIP_ACCESSTYPE if it's > 32bits */
 #if CHIP_ALIGN_STRIDE >= 2
-	uint32_t *ptr = (void *)(h + (off << (CHIP_ALIGN_STRIDE - 2)));
+	volatile uint32_t *ptr = (void *)(h + (off << (CHIP_ALIGN_STRIDE - 2)));
 #else
-	uint32_t *ptr = (void *)(h + off);
+	volatile uint32_t *ptr = (void *)(h + off);
 #endif
 
 	*ptr = val;
