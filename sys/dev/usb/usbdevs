@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.102 2000/06/15 17:58:14 augustss Exp $
+$NetBSD: usbdevs,v 1.103 2000/06/19 14:58:02 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -203,6 +203,7 @@ vendor 2WIRE		0x08c8	2Wire, Inc
 vendor AIPTEK		0x08ca	AIPTEK International, Inc.
 vendor SMARTBRIDGES	0x08d1	SmartBridges Pte Ltd.
 vendor BILLIONTON	0x08dd	Billionton Systems, Inc.
+vendor EXTENDED		0x08e9	Extended Systems, Inc.
 vendor AUTHENTEC	0x08ff	AuthenTec, Inc.
 vendor ALATION		0x0910	Alation Systems, Inc.
 vendor BIOMETRIC	0x0929	American Biometric Company
@@ -372,12 +373,15 @@ product ENTREGA EZUSB		0x8000	EZ-USB
 /*product ENTREGA SERIAL	0x8001	DB25 Serial connector*/
 /*product ENTREGA SERIAL_DB9	0x8093	DB9 Serial connector*/
 
-/* e-TEK Labs products */
-product ETEK 1COM		0x8007	Serial port
-
 /* Epson products */
 product EPSON PRINTER2		0x0002	ISD USB Smart Cable for Mac
 product EPSON PRINTER3		0x0003	ISD USB Smart Cable
+
+/* e-TEK Labs products */
+product ETEK 1COM		0x8007	Serial port
+
+/* Extended Systems products */
+product EXTENDED XTNDACCESS	0x0100	XTNDAccess IrDA
 
 /* Gravis products */
 product GRAVIS GAMEPADPRO	0x4001	GamePad Pro
