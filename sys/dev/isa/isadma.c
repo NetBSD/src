@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.12 1995/04/17 12:09:11 cgd Exp $	*/
+/*	$NetBSD: isadma.c,v 1.13 1996/02/20 04:17:05 mycroft Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -35,7 +35,7 @@ isa_dmacascade(chan)
 	int chan;
 {
 
-#ifdef DIAGNOSTIC
+#ifdef ISADMA_DEBUG
 	if (chan < 0 || chan > 7)
 		panic("isa_dmacascade: impossible request"); 
 #endif
@@ -65,7 +65,7 @@ isa_dmastart(flags, addr, nbytes, chan)
 	int waport;
 	caddr_t newaddr;
 
-#ifdef DIAGNOSTIC
+#ifdef ISADMA_DEBUG
 	if (chan < 0 || chan > 7 ||
 	    ((chan & 4) ? (nbytes >= (1<<17) || nbytes & 1 || (u_int)addr & 1) :
 	    (nbytes >= (1<<16))))
@@ -146,7 +146,7 @@ isa_dmaabort(chan)
 	int chan;
 {
 
-#ifdef DIAGNOSTIC
+#ifdef ISADMA_DEBUG
 	if (chan < 0 || chan > 7)
 		panic("isa_dmaabort: impossible request");
 #endif
@@ -160,18 +160,15 @@ isa_dmaabort(chan)
 		outb(DMA2_SMSK, DMA37SM_SET | (chan & 3));
 }
 
-void
-isa_dmadone(flags, addr, nbytes, chan)
-	int flags;
-	caddr_t addr;
-	vm_size_t nbytes;
+int
+isa_dmafinished(chan)
 	int chan;
 {
 	u_char tc;
 
-#ifdef DIAGNOSTIC
+#ifdef ISADMA_DEBUG
 	if (chan < 0 || chan > 7)
-		panic("isa_dmadone: impossible request");
+		panic("isa_dmafinished: impossible request");
 #endif
 
 	/* check that the terminal count was reached */
@@ -179,9 +176,21 @@ isa_dmadone(flags, addr, nbytes, chan)
 		tc = inb(DMA1_SR) & (1 << chan);
 	else
 		tc = inb(DMA2_SR) & (1 << (chan & 3));
-	if (tc == 0)
-		/* XXX probably should panic or something */
-		log(LOG_ERR, "dma channel %d not finished\n", chan);
+	return (tc != 0);
+}
+
+void
+isa_dmadone(flags, addr, nbytes, chan)
+	int flags;
+	caddr_t addr;
+	vm_size_t nbytes;
+	int chan;
+{
+
+#ifdef ISADMA_DEBUG
+	if (chan < 0 || chan > 7)
+		panic("isa_dmadone: impossible request");
+#endif
 
 	/* mask channel */
 	if ((chan & 4) == 0)
