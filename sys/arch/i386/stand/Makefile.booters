@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.27 2001/08/18 12:53:58 enami Exp $
+#	$NetBSD: Makefile.booters,v 1.28 2001/09/22 03:34:19 tv Exp $
 
 BINDIR= /usr/mdec
 STRIPFLAG=
@@ -78,7 +78,7 @@ ${BASE}.sym: ${BSSTART} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}
 ${BASE}.rom: ${GENPROM} ${ROMSTART} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}
 	${LD} -o ${BASE}.sym ${LDFLAGS} -Ttext ${RELOC} ${ROMSTART} ${OBJS} \
 	${LIBLIST} >${BASE}.list
-	objcopy --output-target=binary ${BASE}.sym ${BASE}.bin
+	${OBJCOPY} --output-target=binary ${BASE}.sym ${BASE}.bin
 	(cd ${GENPROMDIR}; ${MAKE} rom BINFILE=${.OBJDIR:Q}/${BASE:Q}.bin \
 		ROMFILE=${.OBJDIR:Q}/${BASE:Q}.rom ROM_SIZE=${ROM_SIZE:Q})
 	rm -f ${BASE}.bin
@@ -86,6 +86,6 @@ ${BASE}.rom: ${GENPROM} ${ROMSTART} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI38
 ${BASE}.com: ${DOSSTART} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}
 	${LD} -o ${BASE}.sym ${LDFLAGS} -Ttext 0x100 ${DOSSTART} ${OBJS} \
 	${LIBLIST} >${BASE}.list
-	objcopy --output-target=binary ${BASE}.sym ${BASE}.com
+	${OBJCOPY} --output-target=binary ${BASE}.sym ${BASE}.com
 
 .include <bsd.prog.mk>
