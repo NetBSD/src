@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.57 1994/03/04 17:45:22 mycroft Exp $
+ *	$Id: wd.c,v 1.58 1994/03/04 17:51:10 mycroft Exp $
  */
 
 #define	QUIETWORKS	/* define this to make wdopen() set DKFL_QUIET */
@@ -949,6 +949,7 @@ wdcontrol(bp)
 		if (wait_for_unbusy(du) < 0) {
 		lose:
 			wdreset(du, 1);
+			splx(s);
 			goto tryagainrecal;
 		}
 		outb(wdc+wd_sdh, WDSD_IBM | (unit << 4));
