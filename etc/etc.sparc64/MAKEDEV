@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.17 2001/01/08 22:26:28 martin Exp $
+#	$NetBSD: MAKEDEV,v 1.18 2001/02/28 00:07:26 mjacob Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -82,6 +82,9 @@
 #	ipl	IP filter
 #	random	Random number generator
 #	scsibus* SCSI busses, see scsictl(8), scsi(4)
+#	ses* SES/SAF-TE SCSI Devices
+#
+
 
 dialin=0
 dialout=524288		# high bit of the minor number
@@ -329,10 +332,11 @@ ss*)
 	chmod 640 $name$unit n$name$unit en$name$unit
 	;;
 
-ch*|uk*)
+ses*|ch*|uk*)
 	case $i in
 	ch*) name=ch;  unit=${i#ch}; chr=19;;
 	uk*) name=uk;  unit=${i#uk}; chr=60;;
+	ses*) name=ses;  unit=${i#ses}; chr=4;;
 	esac
 	rm -f $name$unit
 	mknod ${name}${unit}	c $chr $(($unit + 0))
