@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.5 1998/06/20 14:38:42 mrg Exp $
+#	$NetBSD: list,v 1.6 1998/06/21 07:39:47 mrg Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/ramdiskbin		sysinst
@@ -64,7 +64,7 @@ LINK	sysinst				usr/sbin/chown
 LINK	sysinst				usr/sbin/update
 
 # copy the MAKEDEV script and make some devices
-COPY    ${CURDIR}/../../../../etc/etc.sparc/MAKEDEV          dev/MAKEDEV
+COPY    ${CURDIR}/../../../etc/etc.sparc/MAKEDEV          dev/MAKEDEV
 SPECIAL cd dev; sh MAKEDEV floppy
 SPECIAL /bin/rm dev/MAKEDEV
 
@@ -78,11 +78,11 @@ COPY	${DESTDIR}/usr/mdec/bootxx		usr/mdec/bootxx
 COPY	${CURDIR}/termcap.src 			usr/share/misc/termcap
 
 # various files that we need in /etc for the install
-COPY	${CURDIR}/../../../../etc/etc.sparc/disktab	etc/disktab
-COPY	${CURDIR}/../../../../etc/group		etc/group
-COPY	${CURDIR}/../../../../etc/master.passwd	etc/master.passwd
-COPY	${CURDIR}/../../../../etc/protocols	etc/protocols
-COPY	${CURDIR}/../../../../etc/services	etc/services
+COPY	${CURDIR}/../../../etc/etc.sparc/disktab	etc/disktab
+COPY	${CURDIR}/../../../etc/group		etc/group
+COPY	${CURDIR}/../../../etc/master.passwd	etc/master.passwd
+COPY	${CURDIR}/../../../etc/protocols	etc/protocols
+COPY	${CURDIR}/../../../etc/services	etc/services
 SPECIAL	pwd_mkdb -p -d ./ etc/master.passwd
 
 # the disktab explanation file
