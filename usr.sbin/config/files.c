@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.3 1996/03/03 17:28:10 thorpej Exp $	*/
+/*	$NetBSD: files.c,v 1.4 1996/03/17 03:21:21 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1993
@@ -249,12 +249,10 @@ fixfiles()
 			do {
 				if (ht_lookup(selecttab, nv->nv_name)) {
 					sel = 1;
-					break;
+					if (fi->fi_flags & FI_NEEDSFLAG)
+						nv->nv_int = 1;
 				}
 			} while ((nv = nv->nv_next) != NULL);
-			if (fi->fi_flags & FI_NEEDSFLAG)
-				for (nv = fi->fi_opt; nv; nv = nv->nv_next)
-					nv->nv_int = sel;
 		}
 		/* if selected, we are go */
 		if (sel)
