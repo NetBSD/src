@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.28 1999/01/14 18:45:46 castor Exp $	*/
+/*	$NetBSD: cpu.h,v 1.29 1999/03/23 22:04:01 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -158,11 +158,13 @@ extern u_int32_t mips3_timer_delta;
  * CTL_MACHDEP definitions.
  */
 #define	CPU_CONSDEV		1	/* dev_t: console terminal device */
-#define	CPU_MAXID		2	/* number of valid machdep ids */
+#define	CPU_BOOTED_KERNEL	2	/* string: booted kernel name */
+#define	CPU_MAXID		3	/* number of valid machdep ids */
 
 #define CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
 	{ "console_device", CTLTYPE_STRUCT }, \
+	{ "booted_kernel", CTLTYPE_STRING }, \
 }
 
 #ifdef _KERNEL
