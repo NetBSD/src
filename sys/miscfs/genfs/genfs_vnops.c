@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.44 2001/12/31 06:40:08 chs Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.45 2001/12/31 06:44:58 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.44 2001/12/31 06:40:08 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.45 2001/12/31 06:44:58 chs Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -1349,7 +1349,7 @@ genfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 	mbp->b_bufsize = npages << PAGE_SHIFT;
 	mbp->b_data = (void *)kva;
 	mbp->b_resid = mbp->b_bcount = bytes;
-	mbp->b_flags = B_BUSY|B_WRITE|B_AGE| (async ? B_CALL : 0);
+	mbp->b_flags = B_BUSY|B_WRITE|B_AGE| (async ? (B_CALL|B_ASYNC) : 0);
 	mbp->b_iodone = uvm_aio_biodone;
 	mbp->b_vp = vp;
 	LIST_INIT(&mbp->b_dep);
@@ -1387,7 +1387,7 @@ genfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 			bp->b_data = (char *)kva +
 				(vaddr_t)(offset - pg->offset);
 			bp->b_resid = bp->b_bcount = iobytes;
-			bp->b_flags = B_BUSY|B_WRITE|B_CALL;
+			bp->b_flags = B_BUSY|B_WRITE|B_CALL|B_ASYNC;
 			bp->b_iodone = uvm_aio_biodone1;
 			bp->b_vp = vp;
 			LIST_INIT(&bp->b_dep);
