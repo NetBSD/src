@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.32 2004/01/17 05:07:09 lukem Exp $
+# $NetBSD: mi,v 1.33 2004/01/17 05:19:46 lukem Exp $
 ./etc/fonts/fonts.conf
 ./etc/fonts/fonts.dtd
 ./usr/X11R6/bin/Xmark
@@ -42,6 +42,7 @@
 ./usr/X11R6/bin/showfont
 ./usr/X11R6/bin/showrgb
 ./usr/X11R6/bin/smproxy
+./usr/X11R6/bin/ssh-askpass
 ./usr/X11R6/bin/startx
 ./usr/X11R6/bin/sxpm
 ./usr/X11R6/bin/texteroids
@@ -223,6 +224,7 @@
 ./usr/X11R6/lib/X11/app-defaults/Clock-color
 ./usr/X11R6/lib/X11/app-defaults/Editres
 ./usr/X11R6/lib/X11/app-defaults/Editres-color
+./usr/X11R6/lib/X11/app-defaults/SshAskpass
 ./usr/X11R6/lib/X11/app-defaults/UXTerm
 ./usr/X11R6/lib/X11/app-defaults/Viewres
 ./usr/X11R6/lib/X11/app-defaults/XCalc
@@ -1033,3 +1035,8 @@
 ./usr/X11R6/man/man7/XProjectTeam.7		-unknown-		.man
 ./usr/X11R6/man/man7/XStandards.7		-unknown-		.man
 ./usr/X11R6/man/man7/Xsecurity.7		-unknown-		.man
+./usr/X11R6/share/examples/ssh-askpass/SshAskpass-1337.ad
+./usr/X11R6/share/examples/ssh-askpass/SshAskpass-NeXTish.ad
+./usr/X11R6/share/examples/ssh-askpass/SshAskpass-default.ad
+./usr/X11R6/share/examples/ssh-askpass/SshAskpass-green.ad
+./usr/X11R6/share/examples/ssh-askpass/SshAskpass-motif.ad
