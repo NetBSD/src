@@ -281,29 +281,51 @@ struct pam_module {
  * You are not expected to understand this.
  */
 #if defined(__FreeBSD__)
-#define PAM_SOEXT ".so"
-#else
-#ifndef NO_STATIC_MODULES
-#define NO_STATIC_MODULES
-#endif
-#endif
-#if defined(__GNUC__) && !defined(__PIC__) && !defined(NO_STATIC_MODULES)
-/* gcc, static linking */
-#include <sys/cdefs.h>
-#include <linker_set.h>
-#define OPENPAM_STATIC_MODULES
-#define PAM_EXTERN static
-#define PAM_MODULE_ENTRY(name)						\
+# define PAM_SOEXT ".so"
+# if defined(__GNUC__) && !defined(__PIC__) && !defined(NO_STATIC_MODULES)
+#  define OPENPAM_STATIC_MODULE  /* enable static module macros */
+#  define OPENPAM_STATIC_MODULES /* enable static module support in libpam */
+# endif
+# if defined(OPENPAM_STATIC_MODULES) || defined(OPENPAM_STATIC_MODULE)
+#  include <sys/cdefs.h>
+#  include <linker_set.h>
+# endif
+# if defined(OPENPAM_STATIC_MODULE)
+#  define PAM_EXTERN static
+#  define PAM_MODULE_ENTRY(name)					\
 static char _pam_name[] = name PAM_SOEXT;				\
 static struct pam_module _pam_module = { _pam_name, {			\
     _PAM_SM_AUTHENTICATE, _PAM_SM_SETCRED, _PAM_SM_ACCT_MGMT,		\
     _PAM_SM_OPEN_SESSION, _PAM_SM_CLOSE_SESSION, _PAM_SM_CHAUTHTOK },	\
     NULL, 0, NULL, NULL };						\
 DATA_SET(_openpam_static_modules, _pam_module)
-#else
-/* normal case */
-#define PAM_EXTERN
-#define PAM_MODULE_ENTRY(name)
+# endif
+#endif
+
+#if defined(__NetBSD__)
+# define PAM_SOEXT ".so"
+# if !defined(__GNUC__) || defined(NO_STATIC_MODULES)
+#  undef OPENPAM_STATIC_MODULE  /* disable static module macros */
+#  undef OPENPAM_STATIC_MODULES /* disable static module support in libpam */
+# endif
+# if defined(OPENPAM_STATIC_MODULES) || defined(OPENPAM_STATIC_MODULE)
+#  include <sys/cdefs.h>
+# endif
+# if defined(OPENPAM_STATIC_MODULE)
+#  define PAM_EXTERN static
+#  define PAM_MODULE_ENTRY(name)					\
+static char _pam_name[] = name PAM_SOEXT;				\
+static struct pam_module _pam_module = { _pam_name, {			\
+    _PAM_SM_AUTHENTICATE, _PAM_SM_SETCRED, _PAM_SM_ACCT_MGMT,		\
+    _PAM_SM_OPEN_SESSION, _PAM_SM_CLOSE_SESSION, _PAM_SM_CHAUTHTOK },	\
+    NULL, 0, NULL, NULL };						\
+__link_set_add_data(_openpam_static_modules, _pam_module)
+# endif
+#endif
+
+#if !defined(OPENPAM_STATIC_MODULE)
+#define	PAM_EXTERN		/* nothing */
+#define	PAM_MODULE_ENTRY(name)	/* nothing */
 #endif
 
 #ifdef __cplusplus
