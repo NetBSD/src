@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.26.2.1 1997/07/01 17:34:24 bouyer Exp $	*/
+/*	$NetBSD: sii.c,v 1.26.2.2 1997/07/22 12:21:07 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -77,7 +77,8 @@ void	siiattach __P((struct siisoftc *sc));
 /*
  * Autoconfig definition of driver front-end
  */
-int	old_siimatch  __P((struct device * parent, void *cfdata, void *aux));
+int	old_siimatch  __P((struct device * parent, struct cfdata *cfdata,
+	void *aux));
 void	old_siiattach __P((struct device *parent, struct device *self, void *aux));
 
 extern struct cfattach sii_ca;
@@ -212,7 +213,7 @@ struct	pmax_driver siidriver = {
 int
 old_siimatch(parent, match, aux)
 	struct device *parent;
-	void *match;
+	struct cfdata *match;
 	void *aux;
 {
 	struct confargs *ca = aux;

@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.57.2.2 1997/07/17 13:42:48 bouyer Exp $
+#	$NetBSD: files.amiga,v 1.57.2.3 1997/07/22 12:21:17 bouyer Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -23,6 +23,16 @@ device	clock
 attach	clock at mainbus
 file	arch/amiga/dev/clock.c
 file	dev/clock_subr.c
+
+# A2000 internal hwc
+device	a2kbbc
+attach	a2kbbc at mainbus
+file	arch/amiga/dev/a2kbbc.c		a2kbbc
+
+# A3000/4000 internal hwc
+device	a34kbbc
+attach	a34kbbc at mainbus
+file	arch/amiga/dev/a34kbbc.c	a34kbbc
 
 # keyboard
 device	kbd: event
@@ -279,6 +289,11 @@ file	arch/amiga/dev/idesc.c		idesc needs-flag
 device	drsc: scsi, siop
 attach	drsc at mainbus
 file  arch/amiga/dev/drsc.c           drsc needs-flag
+
+# MacroSystem DraCo internal DS2404 hwc
+device    drbbc
+attach    drbbc at mainbus
+file  arch/amiga/dev/drbbc.c      drbbc
 
 # list of standard files...
 include    "arch/m68k/fpe/files.fpe"
