@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.237 2000/06/12 21:25:21 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.238 2000/06/12 22:33:41 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -590,6 +590,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Advanced Micro Devices",
 	    "79c970 PCnet-PCI LANCE Ethernet",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCNET_HOME,
+	    0,
+	    "Advanced Micro Devices",
+	    "79c978 PCnet-PCI Home",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCSCSI_PCI,
