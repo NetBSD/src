@@ -1,4 +1,4 @@
-/*	$NetBSD: tspld.c,v 1.1 2004/12/23 04:30:19 joff Exp $	*/
+/*	$NetBSD: tspld.c,v 1.2 2004/12/26 22:02:11 joff Exp $	*/
 
 /*-
  * Copyright (c) 2004 Jesse Off
@@ -35,13 +35,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tspld.c,v 1.1 2004/12/23 04:30:19 joff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tspld.c,v 1.2 2004/12/26 22:02:11 joff Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/wdog.h>
 
 #include <machine/bus.h>
+#include <machine/cpu.h>
 #include <machine/autoconf.h>
 #include "isa.h"
 #if NISA > 0
@@ -52,13 +54,21 @@ __KERNEL_RCSID(0, "$NetBSD: tspld.c,v 1.1 2004/12/23 04:30:19 joff Exp $");
 #include <evbarm/tsarm/tsarmreg.h>
 #include <evbarm/tsarm/tspldvar.h>
 #include <arm/ep93xx/ep93xxvar.h>
+#include <arm/arm32/machdep.h>
+#include <arm/cpufunc.h>
+#include <dev/sysmon/sysmonvar.h>
 
 int	tspldmatch __P((struct device *, struct cfdata *, void *));
 void	tspldattach __P((struct device *, struct device *, void *));
+static int	tspld_wdog_setmode __P((struct sysmon_wdog *));
+static int	tspld_wdog_tickle __P((struct sysmon_wdog *));
 
 struct tspld_softc {
         struct device           sc_dev;
         bus_space_tag_t         sc_iot;
+	bus_space_handle_t	sc_wdogfeed_ioh;	
+	bus_space_handle_t	sc_wdogctrl_ioh;	
+	struct sysmon_wdog	sc_wdog;
 };
 
 
@@ -139,6 +149,19 @@ tspldattach(parent, self, aux)
 	}
 	printf("\n");
 
+        bus_space_map(sc->sc_iot, TS7XXX_IO16_HWBASE + TS7XXX_WDOGCTRL, 2, 0, 
+		&sc->sc_wdogctrl_ioh);
+        bus_space_map(sc->sc_iot, TS7XXX_IO16_HWBASE + TS7XXX_WDOGFEED, 2, 0, 
+		&sc->sc_wdogfeed_ioh);
+
+	sc->sc_wdog.smw_name = sc->sc_dev.dv_xname;
+	sc->sc_wdog.smw_cookie = sc;
+	sc->sc_wdog.smw_setmode = tspld_wdog_setmode;
+	sc->sc_wdog.smw_tickle = tspld_wdog_tickle;
+	sc->sc_wdog.smw_period = 8;
+	sysmon_wdog_register(&sc->sc_wdog);
+	tspld_wdog_setmode(&sc->sc_wdog);
+
 	ta.ta_iot = sc->sc_iot;
 	config_found_ia(self, "tspldbus", &ta, NULL);
 			
@@ -161,4 +184,52 @@ tspld_callback(self)
 	iba.iba_memt = &isa_mem_bs_tag;
 	config_found_ia(self, "isabus", &iba, isabusprint);
 #endif
+}
+
+static int
+tspld_wdog_tickle(smw)
+	struct sysmon_wdog *smw;
+{
+	struct tspld_softc *sc = (struct tspld_softc *)smw->smw_cookie;
+
+	bus_space_write_2(sc->sc_iot, sc->sc_wdogfeed_ioh, 0, 0x5);
+	return 0;
+}
+
+static int
+tspld_wdog_setmode(smw)
+	struct sysmon_wdog *smw;
+{
+	int i, ret = 0;
+	struct tspld_softc *sc = (struct tspld_softc *)smw->smw_cookie;
+
+	i = disable_interrupts(I32_bit|F32_bit);
+	if ((smw->smw_mode & WDOG_MODE_MASK) == WDOG_MODE_DISARMED) {
+		bus_space_write_2(sc->sc_iot, sc->sc_wdogfeed_ioh, 0, 0x5);
+		bus_space_write_2(sc->sc_iot, sc->sc_wdogctrl_ioh, 0, 0);
+	} else {
+		bus_space_write_2(sc->sc_iot, sc->sc_wdogfeed_ioh, 0, 0x5);
+		switch (smw->smw_period) {
+		case 1:
+			bus_space_write_2(sc->sc_iot, sc->sc_wdogctrl_ioh, 0,
+				0x3);
+			break;
+		case 2:
+			bus_space_write_2(sc->sc_iot, sc->sc_wdogctrl_ioh, 0,
+				0x5);
+			break;
+		case 4:
+			bus_space_write_2(sc->sc_iot, sc->sc_wdogctrl_ioh, 0,
+				0x6);
+			break;
+		case 8:
+			bus_space_write_2(sc->sc_iot, sc->sc_wdogctrl_ioh, 0,
+				0x7);
+			break;
+		default:
+			ret = EINVAL;
+		}
+	}
+	restore_interrupts(i);
+	return ret;
 }
