@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.h,v 1.23 2003/11/20 22:05:25 manu Exp $	 */
+/*	$NetBSD: mach_exec.h,v 1.24 2003/12/09 12:13:44 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>
 #include <compat/mach/mach_port.h>
-#include <compat/mach/mach_notify.h>
+#include <compat/mach/mach_exception.h>
 
 
 struct mach_emuldata {
