@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.4 2003/06/03 01:20:06 provos Exp $	*/
+/*	$NetBSD: util.c,v 1.5 2003/08/01 06:15:02 provos Exp $	*/
 /*	$OpenBSD: util.c,v 1.8 2002/07/19 14:38:58 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: util.c,v 1.4 2003/06/03 01:20:06 provos Exp $");
+__RCSID("$NetBSD: util.c,v 1.5 2003/08/01 06:15:02 provos Exp $");
 
 #include <sys/types.h>
 #include <string.h>
@@ -47,15 +47,23 @@ strescape(char *str)
 	int i, p;
 
 	for (p = i = 0; i < strlen(str) && p < sizeof(escape) - 1; i++) {
-		switch (str[i]) {
+		char a = str[i];
+		switch (a) {
+		case '\r':
+			a = 'r';
+			goto doescape;
+		case '\n':
+			a = 'n';
+			goto doescape;
 		case '\\':
 		case '\"':
+		doescape:
 			escape[p++] = '\\';
 			if (p >= sizeof(escape) - 1)
 				errx(1, "%s: string too long: %s",
 				    __func__, str);
 		default:
-			escape[p++] = str[i];
+			escape[p++] = a;
 		}
 	}
 

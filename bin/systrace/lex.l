@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.l,v 1.10 2003/06/03 01:20:06 provos Exp $	*/
+/*	$NetBSD: lex.l,v 1.11 2003/08/01 06:15:02 provos Exp $	*/
 /*	$OpenBSD: lex.l,v 1.9 2002/08/04 04:15:50 provos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 
 %{
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lex.l,v 1.10 2003/06/03 01:20:06 provos Exp $");
+__RCSID("$NetBSD: lex.l,v 1.11 2003/08/01 06:15:02 provos Exp $");
 
 #include <sys/types.h>
 #include <sys/tree.h>
@@ -116,6 +116,18 @@ as		{ return AS; }
 		  quoteescape = 0;
 		}
 <quote>[^\\\"]+	{
+		  if (quoteescape) {
+			  switch (yytext[0]) {
+			  case 'n':
+				  yytext[0] = '\n';
+				  break;
+			  case 'r':
+				  yytext[0] = '\r';
+				  break;
+			  default:
+				  break;
+			  }
+		  }
 		  strlcat(quotestr, yytext, sizeof(quotestr));
 		  quoteescape = 0;
 		}
