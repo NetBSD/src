@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.45 1996/03/31 22:38:35 pk Exp $ */
+/*	$NetBSD: esp.c,v 1.46 1996/05/16 20:31:28 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -149,7 +149,7 @@ espattach(parent, self, aux)
 	register struct confargs *ca = aux;
 	struct esp_softc *sc = (void *)self;
 	struct bootpath *bp;
-	int dmachild = strncmp(parent->dv_xname, "espdma", 6) == 0;
+	int dmachild = strncmp(parent->dv_xname, "sbus", 4) != 0;
 
 	/*
 	 * Make sure things are sane. I don't know if this is ever
@@ -462,8 +462,12 @@ esp_init(sc, doreset)
 	sc->sc_phase = sc->sc_prevphase = INVALID_PHASE;
 	for (r = 0; r < 8; r++) {
 		struct esp_tinfo *tp = &sc->sc_tinfo[r];
+/* XXX - config flags per target: low bits: no reselect; high bits: no synch */
+		int fl = sc->sc_dev.dv_cfdata->cf_flags;
 
-		tp->flags = (sc->sc_minsync ? T_NEGOTIATE : 0) |
+		tp->flags = ((sc->sc_minsync && !(fl & (1<<(r+8))))
+				? T_NEGOTIATE : 0) |
+				((fl & (1<<r)) ? T_RSELECTOFF : 0) |
 				T_NEED_TO_RESET;
 		tp->period = sc->sc_minsync;
 		tp->offset = 0;
@@ -581,7 +585,8 @@ espselect(sc, target, lun, cmd, clen)
 	 * Who am I. This is where we tell the target that we are
 	 * happy for it to disconnect etc.
 	 */
-	ESP_WRITE_REG(sc, ESP_FIFO, MSG_IDENTIFY(lun, 1));
+	ESP_WRITE_REG(sc, ESP_FIFO,
+		MSG_IDENTIFY(lun, (ti->flags & T_RSELECTOFF)?0:1));
 
 	if (ti->flags & T_NEGOTIATE) {
 		/* Arbitrate, select and stop after IDENTIFY message */
