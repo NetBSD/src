@@ -1,4 +1,4 @@
-/*	$NetBSD: kb_hb.c,v 1.5 2003/07/15 02:59:26 lukem Exp $	*/
+/*	$NetBSD: kb_hb.c,v 1.6 2004/09/04 11:28:32 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kb_hb.c,v 1.5 2003/07/15 02:59:26 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kb_hb.c,v 1.6 2004/09/04 11:28:32 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: kb_hb.c,v 1.5 2003/07/15 02:59:26 lukem Exp $");
 
 #include <news68k/news68k/isr.h>
 
+#include "ioconf.h"
+
 #define KB_SIZE 0x10 /* XXX */
 #define KB_PRI 5
 
@@ -61,8 +63,6 @@ CFATTACH_DECL(kb_hb, sizeof(struct kb_softc),
     kb_hb_match, kb_hb_attach, NULL, NULL);
 
 struct console_softc kb_hb_conssc;
-
-extern struct cfdriver kb_hb_cd;
 
 int
 kb_hb_match(parent, cf, aux)
