@@ -1,4 +1,4 @@
-#	$NetBSD: files.arc,v 1.42 2003/04/06 09:55:50 tsutsui Exp $
+#	$NetBSD: files.arc,v 1.43 2003/05/04 10:01:20 tsutsui Exp $
 #	$OpenBSD: files.arc,v 1.21 1999/09/11 10:20:20 niklas Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
@@ -160,7 +160,7 @@ include "dev/i2o/files.i2o"
 include	"dev/scsipi/files.scsipi"
 
 #	Symbios 53C94 SCSI interface driver on Jazz-Internal bus
-device	asc: scsi
+device	asc: scsi, ncr53c9x
 attach	asc at jazzio
 file	arch/arc/jazz/asc.c		asc	needs-flag
 
