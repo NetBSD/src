@@ -1,4 +1,4 @@
-/*	$NetBSD: hist.c,v 1.8 2001/01/10 07:45:41 jdolecek Exp $	*/
+/*	$NetBSD: hist.c,v 1.9 2001/05/17 01:02:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)hist.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: hist.c,v 1.8 2001/01/10 07:45:41 jdolecek Exp $");
+__RCSID("$NetBSD: hist.c,v 1.9 2001/05/17 01:02:17 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -134,7 +134,7 @@ hist_get(EditLine *el)
 			return (CC_ERROR);
 		}
 	(void) strncpy(el->el_line.buffer, hp,
-			el->el_line.limit - el->el_line.buffer);
+			(size_t)(el->el_line.limit - el->el_line.buffer));
 	el->el_line.lastchar = el->el_line.buffer + strlen(el->el_line.buffer);
 
 	if (el->el_line.lastchar > el->el_line.buffer) {
