@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile,v 1.6 1997/09/15 01:29:26 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 2002/12/12 11:06:12 scw Exp $
 
 .if (${MACHINE} == "pc532")
 PROG   = bim
 SRCS   = bim.c command.c
+DPADD+= ${LIBUTIL}
+LDADD+= -lutil
 .endif
 
 MAN  = bim.8
