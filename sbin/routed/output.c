@@ -11,7 +11,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *    must display the following acknowledgment:
  *	This product includes software developed by the University of
  *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -31,17 +31,16 @@
  * SUCH DAMAGE.
  */
 
-#if !defined(lint) && !defined(sgi) && !defined(__NetBSD__)
-static char sccsid[] = "@(#)output.c	8.1 (Berkeley) 6/5/93";
+#if !defined(sgi) && !defined(__NetBSD__)
+static char sccsid[] __attribute__((unused)) = "@(#)output.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
-static char rcsid[] = "$NetBSD: output.c,v 1.1.1.6 1998/06/02 17:41:25 thorpej Exp $";
+__RCSID("$NetBSD: output.c,v 1.1.1.7 1999/02/23 09:56:51 christos Exp $");
 #endif
-#ident "$Revision: 1.1.1.6 $"
 
 #include "defs.h"
 
 
-int update_seqno;
+u_int update_seqno;
 
 
 /* walk the tree of routes with this for output
@@ -102,7 +101,7 @@ output(enum output_type type,
 {
 	struct sockaddr_in sin;
 	int flags;
-	char *msg;
+	const char *msg;
 	int res;
 	naddr tgt_mcast;
 	int soc;
@@ -151,7 +150,7 @@ output(enum output_type type,
 			msg = "Send mcast";
 			if (rip_sock_mcast != ifp) {
 #ifdef MCAST_PPP_BUG
-				/* Do not specifiy the primary interface
+				/* Do not specify the primary interface
 				 * explicitly if we have the multicast
 				 * point-to-point kernel bug, since the
 				 * kernel will do the wrong thing if the
@@ -211,7 +210,7 @@ output(enum output_type type,
 
 
 /* Find the first key for a packet to send.
- * Try for a key that is eligable and has not expired, but settle for
+ * Try for a key that is eligible and has not expired, but settle for
  * the last key if they have all expired.
  * If no key is ready yet, give up.
  */
@@ -259,25 +258,26 @@ clr_ws_buf(struct ws_buf *wb,
 
 	wb->lim = wb->base + NETS_LEN;
 	wb->n = wb->base;
-	bzero(wb->n, NETS_LEN*sizeof(*wb->n));
+	memset(wb->n, 0, NETS_LEN*sizeof(*wb->n));
 
-	/* install authentication if appropriate
+	/* (start to) install authentication if appropriate
 	 */
 	if (ap == 0)
 		return;
+
 	na = (struct netauth*)wb->n;
 	if (ap->type == RIP_AUTH_PW) {
 		na->a_family = RIP_AF_AUTH;
 		na->a_type = RIP_AUTH_PW;
-		bcopy(ap->key, na->au.au_pw, sizeof(na->au.au_pw));
+		memcpy(na->au.au_pw, ap->key, sizeof(na->au.au_pw));
 		wb->n++;
 
 	} else if (ap->type ==  RIP_AUTH_MD5) {
 		na->a_family = RIP_AF_AUTH;
 		na->a_type = RIP_AUTH_MD5;
 		na->au.a_md5.md5_keyid = ap->keyid;
-		na->au.a_md5.md5_auth_len = RIP_AUTH_PW_LEN;
-		na->au.a_md5.md5_seqno = clk.tv_sec;
+		na->au.a_md5.md5_auth_len = RIP_AUTH_MD5_LEN;
+		na->au.a_md5.md5_seqno = htonl(clk.tv_sec);
 		wb->n++;
 		wb->lim--;		/* make room for trailer */
 	}
@@ -290,17 +290,18 @@ end_md5_auth(struct ws_buf *wb,
 {
 	struct netauth *na, *na2;
 	MD5_CTX md5_ctx;
+	int len;
 
 
 	na = (struct netauth*)wb->base;
 	na2 = (struct netauth*)wb->n;
+	len = (char *)na2-(char *)wb->buf;
 	na2->a_family = RIP_AF_AUTH;
-	na2->a_type = 1;
-	bcopy(ap->key, na2->au.au_pw, sizeof(na2->au.au_pw));
-	na->au.a_md5.md5_pkt_len = (char *)na2-(char *)(na+1);
+	na2->a_type = htons(1);
+	na->au.a_md5.md5_pkt_len = htons(len);
 	MD5Init(&md5_ctx);
-	MD5Update(&md5_ctx, (u_char *)na,
-		  (char *)(na2+1) - (char *)na);
+	MD5Update(&md5_ctx, (u_char *)wb->buf, len);
+	MD5Update(&md5_ctx, ap->key, RIP_AUTH_MD5_LEN);
 	MD5Final(na2->au.au_pw, &md5_ctx);
 	wb->n++;
 }
@@ -312,7 +313,7 @@ static void
 supply_write(struct ws_buf *wb)
 {
 	/* Output multicast only if legal.
-	 * If we would multcast and it would be illegal, then discard the
+	 * If we would multicast and it would be illegal, then discard the
 	 * packet.
 	 */
 	switch (wb->type) {
@@ -445,7 +446,7 @@ supply_out(struct ag_info *ag)
 /* ARGSUSED */
 static int
 walk_supply(struct radix_node *rn,
-	    struct walkarg *w)
+	    struct walkarg *argp UNUSED)
 {
 #define RT ((struct rt_entry *)rn)
 	u_short ags;
@@ -587,7 +588,7 @@ walk_supply(struct radix_node *rn,
 	 * should knows them as well as we do.
 	 *
 	 * Notice spare routes with the same metric that we are about to
-	 * advertise, to split the horizon on redunant, inactive paths.
+	 * advertise, to split the horizon on redundant, inactive paths.
 	 */
 	if (ws.ifp != 0
 	    && !(ws.state & WS_ST_QUERY)
@@ -902,7 +903,7 @@ rip_query(void)
 	if (rip_sock < 0)
 		return;
 
-	bzero(&buf, sizeof(buf));
+	memset(&buf, 0, sizeof(buf));
 
 	for (ifp = ifnet; ifp; ifp = ifp->int_next) {
 		/* Skip interfaces those already queried.
