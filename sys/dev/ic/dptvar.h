@@ -1,4 +1,4 @@
-/*	$NetBSD: dptvar.h,v 1.3 1999/09/29 17:33:02 ad Exp $	*/
+/*	$NetBSD: dptvar.h,v 1.4 1999/10/04 23:57:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -66,7 +66,7 @@ struct dpt_softc {
 	void	 	*sc_ih;		/* interrupt handler cookie */
 	void		*sc_sdh;	/* shutdown hook */
 	struct dpt_ccb	*sc_ccbs;	/* all our CCBs */
-	struct eata_sp	*sc_sp;		/* EATA status packet */
+	struct eata_sp	*sc_statpack;	/* EATA status packet */
 	int		sc_spoff;	/* status packet offset in dmamap */
 	u_int32_t	sc_sppa;	/* status packet physical address */
 	caddr_t		sc_scr;		/* scratch area */
