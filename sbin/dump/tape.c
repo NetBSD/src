@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.17 1998/07/18 05:04:36 lukem Exp $	*/
+/*	$NetBSD: tape.c,v 1.18 1999/03/23 14:22:59 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.17 1998/07/18 05:04:36 lukem Exp $");
+__RCSID("$NetBSD: tape.c,v 1.18 1999/03/23 14:22:59 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -866,7 +866,7 @@ doslave(cmd, slave_number)
 				wrote = write(tapefd, slp->tblock[0]+size,
 				    writesize-size);
 #ifdef WRITEDEBUG
-			printf("slave %d wrote %d\n", slave_number, wrote);
+			fprintf(stderr, "slave %d wrote %d\n", slave_number, wrote);
 #endif
 			if (wrote < 0) 
 				break;
@@ -877,7 +877,7 @@ doslave(cmd, slave_number)
 
 #ifdef WRITEDEBUG
 		if (size != writesize) 
-		 printf("slave %d only wrote %d out of %d bytes and gave up.\n",
+		 fprintf(stderr, "slave %d only wrote %d out of %d bytes and gave up.\n",
 		     slave_number, size, writesize);
 #endif
 
@@ -907,6 +907,7 @@ doslave(cmd, slave_number)
 		 */
 		(void) kill(nextslave, SIGUSR2);
 	}
+	printcachestats();
 	if (nread != 0)
 		quit("error reading command pipe: %s\n", strerror(errno));
 }

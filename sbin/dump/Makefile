@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 1999/03/09 17:25:52 bouyer Exp $
+#	$NetBSD: Makefile,v 1.22 1999/03/23 14:22:59 bouyer Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 #	dump.h			header file
@@ -16,8 +16,8 @@
 PROG=	dump
 LINKS=	${BINDIR}/dump ${BINDIR}/rdump
 CPPFLAGS+=-DRDUMP
-# CPPFLAGS+= -DDEBUG -DTDEBUG -DFDEBUG -DWRITEDEBUG
-SRCS=	itime.c main.c optr.c dumprmt.c tape.c traverse.c unctime.c \
+# CPPFLAGS+= -DDEBUG -DTDEBUG -DFDEBUG -DWRITEDEBUG -DSTATS -DDIAGNOSTICS
+SRCS=	itime.c main.c optr.c dumprmt.c rcache.c tape.c traverse.c unctime.c \
 	ffs_bswap.c
 BINGRP=	tty
 BINMODE=2555
