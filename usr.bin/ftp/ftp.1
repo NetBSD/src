@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.71 2000/07/18 07:18:36 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.72 2000/07/28 11:45:12 lukem Exp $
 .\"
 .\" Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -68,7 +68,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd July 18, 2000
+.Dd July 28, 2000
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -675,7 +675,7 @@ Display the contents of
 in a machine-parsable form, using
 .Dv MLSD .
 The format of display can be changed with
-.Sq "opts mlst ..." .
+.Sq "remopts mlst ..." .
 .It Ic mlst Op Ar remote-path
 Display the details about
 .Ar remote-path
@@ -683,7 +683,7 @@ Display the details about
 in a machine-parsable form, using
 .Dv MLST .
 The format of display can be changed with
-.Sq "opts mlst ..." .
+.Sq "remopts mlst ..." .
 .It Ic mode Ar mode-name
 Set the file transfer
 .Ic mode
@@ -843,22 +843,6 @@ will also attempt to automatically log the user in to
 the
 .Tn FTP
 server (see below).
-.It Ic opts Ar command Op Ar command-options
-Set options on the remote
-.Tn FTP
-server for
-.Ar command
-to
-.Ar command-options
-(whose absence is handled on a command-specific basis).
-Remote
-.Tn FTP
-commands known to support options include:
-.Sq MLST
-(used for
-.Dv MLSD
-and 
-.Dv MLST ) .
 .It Ic page Ar file
 Retrieve
 .Ic file
@@ -1115,6 +1099,22 @@ is continued from the apparent point of failure.
 This command
 is useful when transferring very large files over networks that
 are prone to dropping connections.
+.It Ic remopts Ar command Op Ar command-options
+Set options on the remote
+.Tn FTP
+server for
+.Ar command
+to
+.Ar command-options
+(whose absence is handled on a command-specific basis).
+Remote
+.Tn FTP
+commands known to support options include:
+.Sq MLST
+(used for
+.Dv MLSD
+and 
+.Dv MLST ) .
 .It Ic rename Op Ar from Op Ar to
 Rename the file
 .Ar from
