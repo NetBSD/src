@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.en,v 1.2 2001/11/29 23:21:00 thorpej Exp $	*/
+/*	$NetBSD: menus.md.en,v 1.3 2002/05/18 07:14:31 uch Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -36,7 +36,7 @@
  *
  */
 
-/* Menu definitions for sysinst. i386 version, machine dependent. */
+/* Menu definitions for sysinst. playstation2 version, machine dependent. */
 
 menu fullpart, title  "Select your choice";
 	option "Use only part of the disk", exit, action  {usefull = 0;};
@@ -136,30 +136,6 @@ menu chooseid, title  "Partition Kind?";
 	option "unused",	exit,	action
 	{
 		part[editpart].mbrp_typ = 0;
-	};
-
-menu cyl1024;
-	display action {
-		msg_display(MSG_cyl1024);
-	};
-	option "Re-edit both MBR and label", exit, action
-	{
-		/* XXX UGH */
-		extern int c1024_resp;
-
-		c1024_resp = 1;
-	};
-	option "Re-edit the label", exit, action
-	{
-		extern int c1024_resp;
-
-		c1024_resp = 2;
-	};
-	option "Use it anyway",	exit, action
-	{	
-		extern int c1024_resp;
-
-		c1024_resp = 3;
 	};
 
 menu editfsparts, y=13, exit;

@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.pl,v 1.2 2002/04/09 19:48:14 hubertf Exp $	*/
+/*	$NetBSD: menus.md.pl,v 1.3 2002/05/18 07:14:32 uch Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: menus.md.en,v 1.2 2001/11/29 23:21:00 thorpej Exp 	*/
 
@@ -138,30 +138,6 @@ menu chooseid, title  "Rodzaj partycji?";
 	option "nie uzywana",	exit,	action
 	{
 		part[editpart].mbrp_typ = 0;
-	};
-
-menu cyl1024;
-	display action {
-		msg_display(MSG_cyl1024);
-	};
-	option "Zmien MBR i disklabel", exit, action
-	{
-		/* XXX UGH */
-		extern int c1024_resp;
-
-		c1024_resp = 1;
-	};
-	option "Zmien disklabel", exit, action
-	{
-		extern int c1024_resp;
-
-		c1024_resp = 2;
-	};
-	option "Uzyj, mimo to",	exit, action
-	{	
-		extern int c1024_resp;
-
-		c1024_resp = 3;
 	};
 
 menu editfsparts, y=13, exit;

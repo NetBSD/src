@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.2 2002/04/09 19:48:14 hubertf Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.3 2002/05/18 07:14:32 uch Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.1 2001/10/15 16:22:52 uch Exp */
 
@@ -291,3 +291,23 @@ message bootsel_header
 
 message bootsel_row
 {%-6d %-32s %s\n}
+
+message askfsroot
+{Bede pytal o rozmiary partcyji, a na niektorych o punkty montazu.
+
+Najpierw partcyja glowna. Masz %d %s wolnego miejsca na dysku.
+Rozmiar partycji glownej? }
+
+message askfsswap
+{
+Nastepnie partycja wymiany. Masz %d %s wolnego miejsca na dysku.
+Rozmiar partycji wymiany? }
+
+message askfsusr
+{
+Nastepnie partycja /usr.  Masz %d %s wolnego miejsca na dysku.
+Rozmiar partycji /usr? }
+
+message askfspart
+{Nastepna partycja jest /dev/%s%c.  Masz %d %s wolnego miejsca na dysku.
+Rozmiar partycji? }
