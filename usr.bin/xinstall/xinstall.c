@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.57 2001/10/29 02:57:21 lukem Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.58 2001/11/12 19:08:31 tv Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.57 2001/10/29 02:57:21 lukem Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.58 2001/11/12 19:08:31 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -503,7 +503,9 @@ install(char *from_name, char *to_name, u_int flags)
 		(void)unlink(to_name);
 		errx(1, "%s: chown/chgrp: %s", to_name, strerror(serrno));
 	}
-	if (!dounpriv && fchmod(to_fd, mode) == -1) {
+	if (dounpriv)
+		mode &= S_IRWXU|S_IRWXG|S_IRWXO;
+	if (fchmod(to_fd, mode) == -1) {
 		serrno = errno;
 		(void)unlink(to_name);
 		errx(1, "%s: chmod: %s", to_name, strerror(serrno));
