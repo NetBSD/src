@@ -1,4 +1,4 @@
-/* $NetBSD: sio.c,v 1.23 1998/04/12 08:32:19 mjacob Exp $ */
+/* $NetBSD: sio.c,v 1.24 1998/05/23 18:35:56 matt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.23 1998/04/12 08:32:19 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.24 1998/05/23 18:35:56 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,6 +185,7 @@ sio_bridge_callback(v)
 	ic.ic_attach_hook = sio_isa_attach_hook;
 	ic.ic_intr_establish = sio_intr_establish;
 	ic.ic_intr_disestablish = sio_intr_disestablish;
+	ic.ic_intr_alloc = sio_intr_alloc;
 
 	sa.sa_iba.iba_busname = "isa";
 	sa.sa_iba.iba_iot = sc->sc_iot;
