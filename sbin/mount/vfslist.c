@@ -1,4 +1,4 @@
-/*	$NetBSD: vfslist.c,v 1.4 2003/08/07 10:04:26 agc Exp $	*/
+/*	$NetBSD: vfslist.c,v 1.5 2005/02/05 14:44:46 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vfslist.c	8.1 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: vfslist.c,v 1.4 2003/08/07 10:04:26 agc Exp $");
+__RCSID("$NetBSD: vfslist.c,v 1.5 2005/02/05 14:44:46 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,9 +48,7 @@ __RCSID("$NetBSD: vfslist.c,v 1.4 2003/08/07 10:04:26 agc Exp $");
 static int	  skipvfs;
 
 int
-checkvfsname(vfsname, vfslist)
-	const char *vfsname;
-	const char **vfslist;
+checkvfsname(const char *vfsname, const char **vfslist)
 {
 
 	if (vfslist == NULL)
@@ -64,8 +62,7 @@ checkvfsname(vfsname, vfslist)
 }
 
 const char **
-makevfslist(fslist)
-	char *fslist;
+makevfslist(char *fslist)
 {
 	const char **av;
 	int i;
