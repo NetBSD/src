@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.96 2003/08/07 10:04:40 agc Exp $
+.\"	$NetBSD: sysctl.8,v 1.97 2003/08/07 10:11:02 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd July 3, 2003
+.Dd August 7, 2003
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -429,6 +429,9 @@ Values and structure are vendor-defined, and no registry
 exists right now.
 .Sh FILES
 .Bl -tag -width xnetinet6/udp6Xvar.hx -compact
+.It Pa /etc/sysctl.conf
+.Nm
+variables set at boot time
 .It Aq Pa sys/sysctl.h
 definitions for top level identifiers, second level kernel and hardware
 identifiers, and user level identifiers
