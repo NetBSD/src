@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.1 1999/09/13 10:31:23 itojun Exp $	*/
+/*	$NetBSD: trap.h,v 1.2 2002/03/17 14:06:39 uch Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -94,5 +94,4 @@
 #define T_PIN_REF_RCMI		0x580	/* Peripheral Interrupt(REF_RCMI) */
 #define T_PIN_REF_ROVI		0x5a0	/* Peripheral Interrupt(REF_ROVI) */
 
-#define T_ASTFLT		0xf00	/* Asynchronous system trap */
 #define T_USER			0x001	/* Trap in user mode */

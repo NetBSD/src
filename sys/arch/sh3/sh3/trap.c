@@ -1,6 +1,7 @@
-/*	$NetBSD: trap.c,v 1.37 2002/03/03 14:31:28 uch Exp $	*/
+/*	$NetBSD: trap.c,v 1.38 2002/03/17 14:06:39 uch Exp $	*/
 
 /*-
+ * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -56,7 +57,6 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/user.h>
-#include <sys/acct.h>
 #include <sys/kernel.h>
 #include <sys/signal.h>
 #ifdef KTRACE
@@ -66,17 +66,15 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <sh3/cpu.h>
+#include <sh3/userret.h>
+#include <sh3/trap.h>
 #include <sh3/trapreg.h>
 #include <sh3/mmu.h>
 
-#include <machine/cpu.h>
-#include <machine/psl.h>
-#include <machine/reg.h>
-#include <machine/trap.h>
 #ifdef DDB
 #include <machine/db_machdep.h>
 #endif
-
 #ifdef KGDB
 #include <sys/kgdb.h>
 #endif
@@ -101,65 +99,25 @@ const char *trap_type[] = {
 };
 const int trap_types = sizeof trap_type / sizeof trap_type[0];
 
-int	trapdebug = 1;
+int trapdebug = 1;
 
-static __inline void userret(struct proc *, int, u_quad_t);
-void trap(struct trapframe *);
-int trapwrite(unsigned);
+void ast(struct trapframe *);
+void tlb_handler(u_int32_t, u_int32_t, struct trapframe *);
+void trap(u_int32_t, u_int32_t, struct trapframe *);
 void syscall(struct trapframe *);
-void tlb_handler(int, int, int, int /* dummy 4 param  */, struct trapframe);
 
 /*
- * Define the code needed before returning to user mode, for
- * trap and syscall.
+ * void trap(u_int32_t ssr, u_int32_t spc, struct trapframe *tf):
+ *	ssr ... SR when exception occur.
+ *	spc ... PC when exception occur.
+ *	tf  ... full user context.
  */
-static __inline void
-userret(struct proc *p, int pc, u_quad_t oticks)
-{
-	int sig;
-
-	/* take pending signals */
-	while ((sig = CURSIG(p)) != 0)
-		postsig(sig);
-	p->p_priority = p->p_usrpri;
-	if (want_resched) {
-		/*
-		 * We are being preempted.
-		 */
-		preempt(NULL);
-		while ((sig = CURSIG(p)) != 0)
-			postsig(sig);
-	}
-
-	/*
-	 * If profiling, charge recent system time to the trapped pc.
-	 */
-	if (p->p_flag & P_PROFIL) {
-		extern int psratio;
-
-		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
-	}
-
-	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
-}
-
-/*
- * trap(frame):
- *	Exception, fault, and trap interface to BSD kernel. This
- * common code is called from assembly language IDT gate entry
- * routines that prepare a suitable stack frame, and restore this
- * frame after the exception has been processed. Note that the
- * effect is as if the arguments were passed call by reference.
- */
-/*ARGSUSED*/
 void
-trap(struct trapframe *tf)
+trap(u_int32_t ssr, u_int32_t spc, struct trapframe *tf)
 {
 	register struct proc *p = curproc;
 	int type = tf->tf_trapno;
-	u_quad_t sticks;
 	struct pcb *pcb = NULL;
-	int resume;
 	vaddr_t va;
 
 	if (p == NULL)
@@ -167,20 +125,22 @@ trap(struct trapframe *tf)
 	uvmexp.traps++;
 
 #ifdef TRAPDEBUG
-	if (trapdebug) {
-		printf("trap %x spc %x ssr %x \n",
-			   tf->tf_trapno, tf->tf_spc, tf->tf_ssr);
-		printf("curproc %p\n", curproc);
+	if (trapdebug > 1) {
+		int expevt = tf->tf_trapno;
+		printf("%s: ", curproc->p_comm);
+		if ((expevt >> 5) < trap_types)
+			printf("%s, ", trap_type[expevt >> 5]);
+		else
+			printf("EXPEVT 0x%03x, ", expevt);
+		printf("spc 0x%x, ssr 0x%x, frame=%p\n",
+		    tf->tf_spc, tf->tf_ssr, tf);
 	}
-#endif
+#endif /* TRAPDEBUG */
 
 	if (!KERNELMODE(tf->tf_ssr)) {
 		type |= T_USER;
-		sticks = p->p_sticks;
 		p->p_md.md_regs = tf;
 	}
-	else
-		sticks = 0;
 
 	switch (type) {
 
@@ -194,7 +154,6 @@ trap(struct trapframe *tf)
 		if (kgdb_trap(T_USERBREAK, tf))
 			return;
 #endif
-
 		if (tf->tf_trapno >> 5 < trap_types)
 			printf("fatal %s", trap_type[tf->tf_trapno >> 5]);
 		else
@@ -234,52 +193,18 @@ trap(struct trapframe *tf)
 			tf->tf_spc = (int)pcb->pcb_onfault;
 			return;
 		}
-
-		/*
-		 * Check for failure during return to user mode.
-		 *
-		 * We do this by looking at the instruction we faulted on.  The
-		 * specific instructions we recognize only happen when
-		 * returning from a trap, syscall, or interrupt.
-		 *
-		 * XXX
-		 * The heuristic used here will currently fail for the case of
-		 * one of the 2 pop instructions faulting when returning from a
-		 * a fast interrupt.  This should not be possible.  It can be
-		 * fixed by rearranging the trap frame so that the stack format
-		 * at this point is the same as on exit from a `slow'
-		 * interrupt.
-		 */
-		switch (*(u_char *)tf->tf_spc) {
-		default:
-			goto we_re_toast;
-		}
-		tf->tf_spc = resume;
-		return;
+		goto we_re_toast; /* XXX notyet */
 
 	case T_ADDRESSERRR|T_USER:		/* protection fault */
 	case T_ADDRESSERRW|T_USER:
 	case T_INVALIDSLOT|T_USER:
 		printf("trap type %x spc %x ssr %x (%s)\n",
-			   type, tf->tf_spc, tf->tf_ssr, p->p_comm);
+		    type, tf->tf_spc, tf->tf_ssr, p->p_comm);
 		trapsignal(p, SIGBUS, type &~ T_USER);
 		goto out;
 
 	case T_INVALIDISN|T_USER:	/* invalid instruction fault */
 		trapsignal(p, SIGILL, type &~ T_USER);
-		goto out;
-
-	case T_ASTFLT :
-		printf("AST fault\n");
-	        return;
-
-	case T_ASTFLT|T_USER:		/* Allow process switch */
-	/* printf("ASTU fault\n"); */
-		uvmexp.softs++;
-		if (p->p_flag & P_OWEUPC) {
-			p->p_flag &= ~P_OWEUPC;
-			ADDUPROF(p);
-		}
 		goto out;
 
 	case T_USERBREAK|T_USER:		/* bpt instruction fault */
@@ -290,7 +215,7 @@ trap(struct trapframe *tf)
 	if ((type & T_USER) == 0)
 		return;
  out:
-	userret(p, tf->tf_spc, sticks);
+	userret(p);
 }
 
 /*
@@ -298,7 +223,6 @@ trap(struct trapframe *tf)
  *	System call request from POSIX system call gate interface to kernel.
  * Like trap(), argument is call by reference.
  */
-/*ARGSUSED*/
 void
 syscall(struct trapframe *frame)
 {
@@ -308,13 +232,11 @@ syscall(struct trapframe *frame)
 	int error, opc, nsys;
 	size_t argsize;
 	register_t code, args[8], rval[2], ocode;
-	u_quad_t sticks;
 
 	uvmexp.syscalls++;
 	if (KERNELMODE(frame->tf_ssr))
 		panic("syscall");
 	p = curproc;
-	sticks = p->p_sticks;
 	p->p_md.md_regs = frame;
 	opc = frame->tf_spc;
 	ocode = code = frame->tf_r0;
@@ -445,7 +367,7 @@ syscall(struct trapframe *frame)
 	if (trapdebug > 1)
 		scdebug_ret(p, code, error, rval);
 #endif
-	userret(p, frame->tf_spc, sticks);
+	userret(p);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, code, error, rval[0]);
@@ -461,7 +383,7 @@ child_return(void *arg)
 	tf->tf_r0 = 0;
 	tf->tf_ssr |= PSL_TBIT; /* This indicates no error. */
 
-	userret(p, tf->tf_spc, 0);
+	userret(p);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, SYS_fork, 0, 0);
@@ -473,9 +395,8 @@ child_return(void *arg)
  * This is called from tlb_miss exception handler.
  */
 void
-tlb_handler(int p1, int p2, int p3, int p4, struct trapframe frame)
+tlb_handler(u_int32_t ssr, u_int32_t spc, struct trapframe *frame)
 {
-	vaddr_t va;
 	int pde_index, sig;
 	unsigned long *pde;
 	unsigned long pte;
@@ -485,7 +406,6 @@ tlb_handler(int p1, int p2, int p3, int p4, struct trapframe frame)
 	struct vmspace *vm;
 	struct vm_map *map;
 	int rv = 0;
-	u_quad_t sticks = 0;
 	vm_prot_t ftype;
 	extern struct vm_map *kernel_map;
 	vaddr_t	va_save;
@@ -494,18 +414,18 @@ tlb_handler(int p1, int p2, int p3, int p4, struct trapframe frame)
 #ifdef RECURSE_TLB_HANDLER
 	int reentrant = 0;
 #endif
+	vaddr_t va;
 
 	uvmexp.traps++;
 
 	va = (vaddr_t)SH_TEA;
-	va = trunc_page(va);
 	pde_index = pdei(va);
 	pd_top = SH_MMU_PD_TOP();
 	pde = SH_MMU_PDE(pd_top, pde_index);
 	exptype = _reg_read_4(SH_(EXPEVT));
 
 	if (((u_long)pde & PG_V) != 0 && exptype != T_TLBPRIVW) {
-		(u_long)pde &= ~PGOFSET;
+		(u_long)pde &= ~PGOFSET;	/* zero attribute bits */
 		pte_index = ptei(va);
 		pte = (u_int32_t)SH_MMU_PDE(pde, pte_index);
 		if ((pte & PG_V) != 0) {
@@ -514,24 +434,26 @@ tlb_handler(int p1, int p2, int p3, int p4, struct trapframe frame)
 			return;
 		}
 	}
-#ifdef TRAP_DEBUG
-	if (trapdebug)
-		printf("tlb_handler#:va(0x%lx),curproc(%p)\n", va, curproc);
+#ifdef TRAPDEBUG
+	if (trapdebug > 1) {
+		printf("tlb_handler: 0x%08lx 0x%03x (%s) %s pagedir=%p "
+		    "spc=0x%08x\n", va, exptype,
+		    curproc ? curproc->p_comm : "idle",
+		    KERNELMODE(frame->tf_ssr) ? "kernel" : "user", pd_top, spc);
+	}
 #endif
 
-	user = !KERNELMODE(frame.tf_ssr);
+	user = !KERNELMODE(ssr);
 
 	pteh_save = SH_PTEH;
 	va_save = va;
 	p = curproc;
 	if (p == NULL) {
+		printf("no curproc\n");
 		goto dopanic;
 	} else {
-		if (user) {
-			sticks = p->p_sticks;
-			p->p_md.md_regs = &frame;
-		} else
-			sticks = 0;
+		if (user)
+			p->p_md.md_regs = frame;
 	}
 
 	/*
@@ -556,7 +478,7 @@ tlb_handler(int p1, int p2, int p3, int p4, struct trapframe frame)
 		ftype = VM_PROT_READ;
 
 #ifdef RECURSE_TLB_HANDLER
-	if (((PSL_BL | PSL_IMASK) & frame.tf_ssr) == 0)
+	if (((PSL_BL | PSL_IMASK) & ssr) == 0)
 		reentrant = 1;
 #endif
 	/* Fault the original page in. */
@@ -564,6 +486,7 @@ tlb_handler(int p1, int p2, int p3, int p4, struct trapframe frame)
 	if (reentrant)
 		_cpu_intr_resume(0);
 #endif
+
 	rv = uvm_fault(map, va, 0, ftype);
 #ifdef RECURSE_TLB_HANDLER
 	if (reentrant)
@@ -605,20 +528,20 @@ tlb_handler(int p1, int p2, int p3, int p4, struct trapframe frame)
 			(u_long)pde &= ~PGOFSET;
 			pte_index = ptei(va);
 			pte = pde[pte_index];
-
 			if ((pte & PG_V) != 0)
 				SH_MMU_PTE_SETUP(va, pte);
 		}
 		__asm __volatile("ldtlb; nop");
+
 		if (user)
-			userret(p, frame.tf_spc, sticks);
+			userret(p);
 		return;
 	}
 
 	if (user == 0) {
 		/* Check for copyin/copyout fault. */
 		if (p != NULL && p->p_addr->u_pcb.pcb_onfault != 0) {
-			frame.tf_spc = (int) p->p_addr->u_pcb.pcb_onfault;
+			frame->tf_spc = (int) p->p_addr->u_pcb.pcb_onfault;
 			return;
 		}
 		goto dopanic;
@@ -635,20 +558,53 @@ tlb_handler(int p1, int p2, int p3, int p4, struct trapframe frame)
 #ifdef DEBUG
 	if (trapdebug) {
 		printf("tlb_handler: fatal user fault: va 0x%lx, spc 0x%x, "
-		    "exptype 0x%x (%s)\n", va, frame.tf_spc, exptype,
+		    "exptype 0x%x (%s)\n", va, spc, exptype,
 		    p->p_comm);
 	}
 #endif
 	trapsignal(p, sig, T_TLBINVALIDR);
-	userret(p, frame.tf_spc, sticks);
+	userret(p);
 	return;
 
  dopanic:
 	printf("tlb_handler: va 0x%lx, spc 0x%x, exptype 0x%x (%s)\n",
-	    va, frame.tf_spc, exptype, p != NULL ? p->p_comm : "no curproc");
+	    va, spc, exptype, p != NULL ? p->p_comm : "no curproc");
 #if defined(DDB)
 	Debugger();
 #else
 	panic("tlb_handler");
 #endif
+}
+
+void
+ast(struct trapframe *tf)
+{
+	struct proc *p = curproc;
+	int sig;
+
+	if (KERNELMODE(tf->tf_ssr))
+		return;
+
+	while (p->p_md.md_astpending) {
+		uvmexp.softs++;
+		p->p_md.md_astpending = 0;
+
+		if (p->p_flag & P_OWEUPC) {
+			p->p_flag &= ~P_OWEUPC;
+			ADDUPROF(p);
+		}
+
+		/* Take pending signals. */
+		while ((sig = CURSIG(p)) != 0)
+			postsig(sig);
+
+		if (want_resched) {
+			/*
+			 * We are being preempted.
+			 */
+			preempt(NULL);
+		}
+
+		userret(p);
+	}
 }

@@ -1,8 +1,13 @@
-/*	$NetBSD: types.h,v 1.7 2002/03/17 14:06:39 uch Exp $	*/
+/*	$NetBSD: userret.h,v 1.1 2002/03/17 14:06:38 uch Exp $	*/
 
-/*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+/*
+ * Copyright (c) 1988 University of Utah.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department and Ralph Campbell.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,36 +37,19 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)types.h	7.5 (Berkeley) 3/9/91
+ * from: Utah Hdr: trap.c 1.32 91/04/06
+ *
+ *	@(#)trap.c	8.5 (Berkeley) 1/11/94
  */
 
-#ifndef	_MACHTYPES_H_
-#define	_MACHTYPES_H_
+#ifndef _SH3_USERRET_H_
+#define	_SH3_USERRET_H_
 
-#include <sys/cdefs.h>
-#include <sh3/int_types.h>
+static __inline void
+userret(struct proc *p)
+{
 
-#if defined(_KERNEL)
-typedef struct label_t {
-	int val[9];
-} label_t;
-#endif
+	curcpu()->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
+}
 
-/* NB: This should probably be if defined(_KERNEL) */
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
-typedef	unsigned long	vm_offset_t;
-typedef	unsigned long	vm_size_t;
-
-typedef unsigned long	paddr_t;
-typedef unsigned long	psize_t;
-typedef unsigned long	vaddr_t;
-typedef unsigned long	vsize_t;
-#endif
-
-typedef int		register_t;
-
-#define	__SWAP_BROKEN
-#define	__HAVE_AST_PERPROC
-#define	__BROKEN_CONFIG_UNIT_USAGE	/* scif, sci driver */
-
-#endif	/* _MACHTYPES_H_ */
+#endif /* !_SH3_USERRET_H_ */
