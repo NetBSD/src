@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.82 2003/02/20 04:27:25 perseant Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.83 2003/02/23 03:32:55 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.82 2003/02/20 04:27:25 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.83 2003/02/23 03:32:55 simonb Exp $");
 
 #define LFS		/* for prototypes in syscallargs.h */
 
@@ -1037,7 +1037,6 @@ extern struct lock ufs_hashlock;
 int
 lfs_fasthashget(dev_t dev, ino_t ino, struct vnode **vpp)
 {
-	struct inode *ip;
 
 	/*
 	 * This is playing fast and loose.  Someone may have the inode
@@ -1053,7 +1052,6 @@ lfs_fasthashget(dev_t dev, ino_t ino, struct vnode **vpp)
 			return EAGAIN;
 #endif
 		}
-		ip = VTOI(*vpp);
 		if (lfs_vref(*vpp)) {
 			clean_inlocked++;
 			return EAGAIN;
