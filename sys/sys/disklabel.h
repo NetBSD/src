@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.55 2000/02/11 02:04:42 oster Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.56 2000/03/16 04:58:35 enami Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -112,8 +112,8 @@ struct disklabel {
 	u_int16_t d_sparespertrack;	/* # of spare sectors per track */
 	u_int16_t d_sparespercyl;	/* # of spare sectors per cylinder */
 	/*
-	 * Alternate cylinders include maintenance, replacement, configuration
-	 * description areas, etc.
+	 * Alternative cylinders include maintenance, replacement,
+	 * configuration description areas, etc.
 	 */
 	u_int32_t d_acylinders;		/* # of alt. cylinders per unit */
 
