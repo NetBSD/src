@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.51 2003/10/03 16:34:31 yamt Exp $	*/
+/*	$NetBSD: procfs.h,v 1.52 2003/12/10 14:19:02 drochner Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -117,10 +117,11 @@ struct pfsnode {
 	u_long		pfs_flags;	/* open flags */
 	u_long		pfs_fileno;	/* unique file id */
 };
-#endif
 
 #define PROCFS_NOTELEN	64	/* max length of a note (/proc/$pid/note) */
 #define PROCFS_CTLLEN 	8	/* max length of a ctl msg (/proc/$pid/ctl */
+
+#endif /* _KERNEL */
 
 struct procfs_args {
 	int version;
