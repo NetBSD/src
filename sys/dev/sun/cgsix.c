@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.5.2.3 2002/06/24 22:10:18 nathanw Exp $ */
+/*	$NetBSD: cgsix.c,v 1.5.2.4 2002/08/23 20:36:26 petrov Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.5.2.3 2002/06/24 22:10:18 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.5.2.4 2002/08/23 20:36:26 petrov Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -960,7 +960,7 @@ cgsixmmap(dev, off, prot)
 
 #ifdef DEBUG
 	{
-	  struct proc *p = curlwp;	/* XXX */
+	  struct proc *p = curlwp->l_proc;	/* XXX */
 	  log(LOG_NOTICE, "cgsixmmap(0x%llx) (%s[%d])\n",
 		(long long)off, p->p_comm, p->p_pid);
 	}
