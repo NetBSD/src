@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.1.1.1 1998/06/20 04:58:51 eeh Exp $ */
+/*	$NetBSD: tcx.c,v 1.2 1998/09/05 16:50:38 pk Exp $ */
 
 /* 
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -68,10 +68,11 @@
 #include <machine/cpu.h>
 #include <machine/conf.h>
 
+#include <dev/sbus/sbusvar.h>
+
 #include <sparc64/dev/btreg.h>
 #include <sparc64/dev/btvar.h>
 #include <sparc64/dev/tcxreg.h>
-#include <sparc64/dev/sbusvar.h>
 
 #if 0
 union cursor_cmap {		/* colormap, like bt_cmap, but tiny */
