@@ -31,12 +31,13 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)comreg.h	7.2 (Berkeley) 5/9/91
- *	$Id: comreg.h,v 1.2 1993/05/22 08:01:09 cgd Exp $
+ *	$Id: comreg.h,v 1.3 1994/03/08 08:12:59 mycroft Exp $
  */
 
+#include <i386/isa/ic/ns16550.h>
 
-/* 16 bit baud rate divisor (lower byte in dca_data, upper in dca_ier) */
-#define	COMBRD(x)	(1843200 / (16*(x)))
+#define	COM_FREQ	1843200	/* 16-bit baud rate divisor */
+#define	COM_TOLERANCE	30	/* baud rate tolerance, in 0.1% units */
 
 /* interrupt enable register */
 #define	IER_ERXRDY	0x1
@@ -105,6 +106,8 @@
 #define	MSR_TERI	0x04
 #define	MSR_DDSR	0x02
 #define	MSR_DCTS	0x01
+
+#define	COM_NPORTS	8
 
 /*
  * WARNING: Serial console is assumed to be at COM1 address
