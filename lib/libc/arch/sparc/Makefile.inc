@@ -1,4 +1,4 @@
-#	$Id: Makefile.inc,v 1.5 1996/11/18 22:37:28 pk Exp $
+#	$NetBSD: Makefile.inc,v 1.6 1997/10/09 10:07:50 lukem Exp $
 
 KMINCLUDES= arch/sparc/SYS.h
 KMSRCS=	bzero.S ffs.S strlen.S htonl.S htons.S \

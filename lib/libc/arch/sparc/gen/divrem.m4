@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  * from: Header: divrem.m4,v 1.4 92/06/25 13:23:57 torek Exp
- * $Id: divrem.m4,v 1.3 1996/11/18 16:08:30 mrg Exp $
+ * $NetBSD: divrem.m4,v 1.4 1997/10/09 10:07:54 lukem Exp $
  */
 
 /*
