@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdb.c,v 1.23 2003/04/02 10:39:29 fvdl Exp $	*/
+/*	$NetBSD: fsdb.c,v 1.24 2003/04/08 14:46:21 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdb.c,v 1.23 2003/04/02 10:39:29 fvdl Exp $");
+__RCSID("$NetBSD: fsdb.c,v 1.24 2003/04/08 14:46:21 fvdl Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -466,9 +466,9 @@ CMDFUNCSTART(blks)
 	}
 	printf("Direct blocks:\n");
 	if (is_ufs2)
-		print_blks32(curinode->dp1.di_db, NDADDR, &blkno);
-	else
 		print_blks64(curinode->dp2.di_db, NDADDR, &blkno);
+	else
+		print_blks32(curinode->dp1.di_db, NDADDR, &blkno);
 
 	if (is_ufs2) {
 		for (i = 0; i < NIADDR; i++) {
