@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa.c,v 1.3 1996/03/02 01:09:37 cgd Exp $	*/
+/*	$NetBSD: eisa.c,v 1.4 1996/03/02 02:25:40 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -133,10 +133,6 @@ eisaattach(parent, self, aux)
 
 		ea.ea_slot = slot;
 		slotaddr = EISA_SLOT_ADDR(slot);
-#if 0
-		printf("%s slot %d: at 0x%x\n", sc->sc_dev.dv_xname, slot,
-		    slotaddr);
-#endif
 
 		/* Get the vendor ID bytes */
 		for (i = 0; i < EISA_NVIDREGS; i++)
@@ -145,7 +141,7 @@ eisaattach(parent, self, aux)
 		/* Check for device existence */
 		if (EISA_VENDID_NODEV(ea.ea_vid)) {
 #if 0
-			printf("%s slot %d: no device\n", sc->sc_dev.dv_xname,
+			printf("no device at %s slot %d\n", sc->sc_dev.dv_xname,
 			    slot);
 			printf("\t(0x%x, 0x%x)\n", ea.ea_vid[0],
 			    ea.ea_vid[1]);
@@ -155,7 +151,7 @@ eisaattach(parent, self, aux)
 
 		/* And check that the firmware didn't biff something badly */
 		if (EISA_VENDID_IDDELAY(ea.ea_vid)) {
-			printf("%s slot %d: slot not configured by BIOS?\n",
+			printf("%s slot %d not configured by BIOS?\n",
 			    self->dv_xname, slot);
 			continue;
 		}
