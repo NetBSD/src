@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.74.4.17 2002/10/18 02:40:11 nathanw Exp $ */
+/*	$NetBSD: trap.c,v 1.74.4.18 2002/11/20 18:32:51 skrll Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -2077,6 +2077,7 @@ syscall(tf, code, pc)
 			/* old system call convention: clear C on success */
 			tf->tf_tstate &= ~(((int64_t)(ICC_C | XCC_C)) <<
 					   TSTATE_CCR_SHIFT);	/* success */
+#if 0
 			dest = tf->tf_npc;
 #endif
 #ifdef DEBUG
