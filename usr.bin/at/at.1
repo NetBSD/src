@@ -1,7 +1,7 @@
-.\" $NetBSD: at.1,v 1.20 2003/02/25 10:35:35 wiz Exp $
+.\" $NetBSD: at.1,v 1.21 2004/07/09 11:29:15 wiz Exp $
 .\" $OpenBSD: at.1,v 1.6 1998/06/05 00:47:46 deraadt Exp $
 .\" $FreeBSD: at.man,v 1.6 1997/02/22 19:54:05 peter Exp $
-.Dd October 15, 2000
+.Dd July 9, 2004
 .Dt AT 1
 .Os
 .Sh NAME
@@ -12,39 +12,34 @@
 .Nd queue, examine or delete jobs for later execution
 .Sh SYNOPSIS
 .Nm at
-.Op Fl V
-.Op Fl q Ar queue
+.Op Fl bdlmrVv
 .Op Fl f Ar file
-.Op Fl mldrbv
+.Op Fl q Ar queue
 .Fl t Ar [[CC]YY]MMDDhhmm[.SS]
 .Nm
-.Op Fl V
-.Op Fl q Ar queue
+.Op Fl bdlmrVv
 .Op Fl f Ar file
-.Op Fl mldrbv
+.Op Fl q Ar queue
 .Ar time
 .Nm
 .Op Fl V
 .Fl c Ar job Op Ar job ...
 .Nm atq
-.Op Fl V
+.Op Fl Vv
 .Op Fl q Ar queue
-.Op Fl v
 .Nm atrm
 .Op Fl V
 .Ar job
 .Op Ar job ...
 .Nm batch
-.Op Fl V
-.Op Fl q Ar queue
+.Op Fl mVv
 .Op Fl f Ar file
-.Op Fl mv
+.Op Fl q Ar queue
 .Op Fl t Ar [[CC]YY]MMDDhhmm[.SS]
 .Nm batch
-.Op Fl V
-.Op Fl q Ar queue
+.Op Fl mVv
 .Op Fl f Ar file
-.Op Fl mv
+.Op Fl q Ar queue
 .Op Ar time
 .Sh DESCRIPTION
 .Nm
@@ -191,9 +186,54 @@ An empty
 means that every user is allowed use these commands.
 This is the default configuration.
 .Sh OPTIONS
-.Bl -tag -width indent
-.It Fl V
-Prints the version number to standard error.
+.Bl -tag -offset indent -width XqXqueueXX
+.It Fl b
+Is an alias for
+.Nm batch .
+.It Fl c
+Cats the jobs listed on the command line to standard output.
+.It Fl d
+Is an alias for
+.Nm atrm .
+.It Fl f Ar file
+Reads the job from
+.Ar file
+rather than standard input.
+.It Fl l
+Is an alias for
+.Nm atq .
+.It Fl m
+Send mail to the user when the job has completed even if there was no
+output.
+.It Fl q Ar queue
+Uses the specified queue.
+A queue designation consists of a single letter.
+Valid queue designations
+range from
+.Sq a
+to
+.Sq z
+and
+.Sq A
+to
+.Sq Z .
+The
+.Sq c
+queue is the default for
+.Nm
+and the
+.Sq E
+queue for
+.Nm batch .
+Queues with higher letters run with increased niceness.
+If a job is submitted to a queue designated with an uppercase letter, it
+is treated as if it had been submitted to batch at that time.
+If
+.Nm atq
+is given a specific queue, it will only show jobs pending in that queue.
+.It Fl r
+Is an alias for
+.Nm atrm .
 .It Fl t
 For both
 .Nm
@@ -228,58 +268,13 @@ The minute of the hour, from 00 to 59.
 .It Ar SS
 The second of the minute, from 00 to 61.
 .El
-.It Fl q Ar queue
-Uses the specified queue.
-A queue designation consists of a single letter.
-Valid queue designations
-range from
-.Sq a
-to
-.Sq z
-and
-.Sq A
-to
-.Sq Z .
-The
-.Sq c
-queue is the default for
-.Nm
-and the
-.Sq E
-queue for
-.Nm batch .
-Queues with higher letters run with increased niceness.
-If a job is submitted to a queue designated with an uppercase letter, it
-is treated as if it had been submitted to batch at that time.
-If
-.Nm atq
-is given a specific queue, it will only show jobs pending in that queue.
-.It Fl m
-Send mail to the user when the job has completed even if there was no
-output.
-.It Fl f Ar file
-Reads the job from
-.Ar file
-rather than standard input.
-.It Fl l
-Is an alias for
-.Nm atq .
-.It Fl d
-Is an alias for
-.Nm atrm .
-.It Fl r
-Is an alias for
-.Nm atrm .
-.It Fl b
-Is an alias for
-.Nm batch .
+.It Fl V
+Prints the version number to standard error.
 .It Fl v
 For
 .Nm atq ,
 shows completed but not yet deleted jobs in the queue.
 Otherwise shows the time the job will be executed.
-.It Fl c
-Cats the jobs listed on the command line to standard output.
 .El
 .Sh FILES
 .Bl -tag -width /var/at/.lockfile -compact
