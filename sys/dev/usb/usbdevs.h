@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.40 1999/08/28 10:01:19 augustss Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.41 1999/09/02 19:17:57 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	aNetBSD: usbdevs,v 1.40 1999/08/28 10:00:56 augustss Exp 
+ *	aNetBSD: usbdevs,v 1.41 1999/09/02 19:13:43 augustss Exp 
  */
 
 /*
@@ -213,6 +213,7 @@
 
 /* Belkin products */
 #define	USB_PRODUCT_BELKIN_F5U002	0x0002		/* Parallel printer adapter */
+#define	USB_PRODUCT_BELKIN_1COM	0x8007		/* Serial port */
 
 /* Logitech products */
 #define	USB_PRODUCT_LOGITECH_M2452	0x0203		/* M2452 keyboard */
@@ -235,7 +236,12 @@
 #define	USB_PRODUCT_ADS_ENET	0x0008		/* Ethernet adapter */
 
 /* Entrega products */
+#define	USB_PRODUCT_ENTREGA_1S	0x0001		/* 1S serial connector */
+#define	USB_PRODUCT_ENTREGA_2S	0x0002		/* 2S serial connector */
+#define	USB_PRODUCT_ENTREGA_1S25	0x0003		/* 1S25 serial connector */
+#define	USB_PRODUCT_ENTREGA_4S	0x0004		/* 4S serial connector */
 #define	USB_PRODUCT_ENTREGA_CENTRONICS	0x0006		/* Centronics connector */
+#define	USB_PRODUCT_ENTREGA_1S9	0x0093		/* 1S9 serial connector */
 #define	USB_PRODUCT_ENTREGA_SERIAL	0x8001		/* DB25 Serial connector */
 
 /* PLX products */
