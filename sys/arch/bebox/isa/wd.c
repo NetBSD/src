@@ -1,7 +1,7 @@
-/*	$NetBSD: wd.c,v 1.1.2.1 1997/11/28 19:49:34 mellon Exp $	*/
+/*	$NetBSD: wd.c,v 1.1.2.2 1998/05/10 04:53:49 mycroft Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
+ * Copyright (c) 1994, 1995, 1998 Charles M. Hannum.  All rights reserved.
  *
  * DMA and multi-sector PIO handling are derived from code contributed by
  * Onno van der Linden.
@@ -108,10 +108,14 @@ struct wd_softc {
 #define	WDF_WANTED	0x02
 #define	WDF_WLABEL	0x04		/* label is writable */
 #define	WDF_LABELLING	0x08		/* writing label */
-/* XXX Nothing resets this yet, but disk change sensing will when ATAPI is
-   implemented. */
+/*
+ * XXX Nothing resets this yet, but disk change sensing will when ATA-4 is
+ * more fully implemented.
+ */
 #define	WDF_LOADED	0x10		/* parameters loaded */
 #define	WDF_32BIT	0x20		/* can do 32-bit transfer */
+#define	WDF_LBA		0x40		/* using LBA mode */
+	int sc_capacity;
 
 	struct wdparams sc_params;	/* ESDI/ATA drive parameters */
 	daddr_t	sc_badsect[127];	/* 126 plus trailing -1 marker */
@@ -342,22 +346,18 @@ wdattach(parent, self, aux)
 	}
 	*q++ = '\0';
 
-	printf(": <%s>\n%s: %dMB, %d cyl, %d head, %d sec, %d bytes/sec\n",
-	    buf, wd->sc_dev.dv_xname,
-	    wd->sc_params.wdp_cylinders *
-	      (wd->sc_params.wdp_heads * wd->sc_params.wdp_sectors) /
-	      (1048576 / DEV_BSIZE),
-	    wd->sc_params.wdp_cylinders,
-	    wd->sc_params.wdp_heads,
-	    wd->sc_params.wdp_sectors,
-	    DEV_BSIZE);
-
-	if ((wd->sc_params.wdp_capabilities & WD_CAP_DMA) != 0 &&
+	printf(": <%s>\n", buf);
+  
+#ifndef NO_ISADMA_SUPPORT
+	if ((wd->sc_params.wdp_capabilities1 & WD_CAP_DMA) != 0 &&
 	    wdc->sc_drq != DRQUNK) {
 		wd->sc_mode = WDM_DMA;
-	} else if (wd->sc_params.wdp_maxmulti > 1) {
+	} else
+#endif
+	if ((wd->sc_params.wdp_multi & 0xff) > 1) {
 		wd->sc_mode = WDM_PIOMULTI;
-		wd->sc_multiple = min(wd->sc_params.wdp_maxmulti, 16);
+		wd->sc_multiple =
+		    min(wd->sc_params.wdp_multi & 0xff, 16);
 	} else {
 		wd->sc_mode = WDM_PIOSINGLE;
 		wd->sc_multiple = 1;
@@ -368,11 +368,41 @@ wdattach(parent, self, aux)
 		printf(" dma transfers,");
 	else
 		printf(" %d-sector %d-bit pio transfers,",
-		    wd->sc_multiple, (wd->sc_flags & WDF_32BIT) == 0 ? 16 : 32);
-	if ((wd->sc_params.wdp_capabilities & WD_CAP_LBA) != 0)
-		printf(" lba addressing\n");
-	else
-		printf(" chs addressing\n");
+		    wd->sc_multiple,
+		    (wd->sc_flags & WDF_32BIT) == 0 ? 16 : 32);
+
+	/* Prior to ATA-4, LBA was optional. */
+	if ((wd->sc_params.wdp_capabilities1 & WD_CAP_LBA) != 0)
+		wd->sc_flags |= WDF_LBA;
+#if 0
+	/* ATA-4 requires LBA. */
+	if (wd->sc_params.wdp_ataversion != 0xffff &&
+	    wd->sc_params.wdp_ataversion >= WD_VER_ATA4)
+		wd->sc_flags |= WDF_LBA;
+#endif
+
+	if ((wd->sc_flags & WDF_LBA) != 0) {
+		printf(" lba mode\n");
+		wd->sc_capacity =
+		    (wd->sc_params.wdp_capacity[1] << 16) |
+		    wd->sc_params.wdp_capacity[0];
+		printf("%s: %dMB, %d sec, %d bytes/sec\n",
+		    self->dv_xname,
+		    wd->sc_capacity / (1048576 / DEV_BSIZE),
+		    wd->sc_capacity, DEV_BSIZE);
+	} else {
+		printf(" chs mode\n");
+		wd->sc_capacity =
+		    wd->sc_params.wdp_cylinders *
+		    wd->sc_params.wdp_heads *
+		    wd->sc_params.wdp_sectors;
+		printf("%s: %dMB, %d cyl, %d head, %d sec, %d bytes/sec\n",
+		    self->dv_xname,
+		    wd->sc_capacity / (1048576 / DEV_BSIZE),
+		    wd->sc_params.wdp_cylinders,
+		    wd->sc_params.wdp_heads,
+		    wd->sc_params.wdp_sectors, DEV_BSIZE);
+	}
 }
 
 /*
@@ -657,7 +687,7 @@ loop:
 			/* Tranfer is okay now. */
 		}
 
-		if ((wd->sc_params.wdp_capabilities & WD_CAP_LBA) != 0) {
+		if ((wd->sc_flags & WDF_LBA) != 0) {
 			sector = (blkno >> 0) & 0xff;
 			cylin = (blkno >> 8) & 0xffff;
 			head = (blkno >> 24) & 0xf;
@@ -1066,7 +1096,7 @@ wdgetdisklabel(wd)
 	lp->d_type = DTYPE_ST506;
 #endif
 	strncpy(lp->d_packname, wd->sc_params.wdp_model, 16);
-	lp->d_secperunit = lp->d_secpercyl * lp->d_ncylinders;
+	lp->d_secperunit = wd->sc_capacity;
 	lp->d_rpm = 3600;
 	lp->d_interleave = 1;
 	lp->d_flags = 0;
@@ -1136,7 +1166,7 @@ wdcontrol(wd)
 		}
 		/* fall through */
 	case GEOMETRY:
-		if ((wd->sc_params.wdp_capabilities & WD_CAP_LBA) != 0)
+		if ((wd->sc_flags & WDF_LBA) != 0)
 			goto multimode;
 		if (wdsetctlr(wd) != 0) {
 			/* Already printed a message. */
@@ -1323,9 +1353,10 @@ wd_get_parms(wd)
 		wd->sc_params.wdp_cylinders = 1024;
 		wd->sc_params.wdp_heads = 8;
 		wd->sc_params.wdp_sectors = 17;
-		wd->sc_params.wdp_maxmulti = 0;
-		wd->sc_params.wdp_usedmovsd = 0;
-		wd->sc_params.wdp_capabilities = 0;
+		wd->sc_params.wdp_multi = 0x0000;
+		wd->sc_params.wdp_capabilities1 = 0x0000;
+		wd->sc_params.wdp_capabilities2 = 0x0000;
+		wd->sc_params.wdp_ataversion = 0x0000;
 	} else {
 		strncpy(wd->sc_dk.dk_label->d_typename, "ESDI/IDE",
 		    sizeof wd->sc_dk.dk_label->d_typename);
@@ -1588,7 +1619,7 @@ wddump(dev, blkno, va, size)
 			/* Tranfer is okay now. */
 		}
 
-		if ((wd->sc_params.wdp_capabilities & WD_CAP_LBA) != 0) {
+		if ((wd->sc_flags & WDF_LBA) != 0) {
 			sector = (xlt_blkno >> 0) & 0xff;
 			cylin = (xlt_blkno >> 8) & 0xffff;
 			head = (xlt_blkno >> 24) & 0xf;
