@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isapnp.c,v 1.1 1997/01/22 23:44:04 mycroft Exp $	*/
+/*	$NetBSD: if_ep_isapnp.c,v 1.2 1997/01/23 11:42:44 veego Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles M. Hannum.  All rights reserved.
@@ -117,14 +117,14 @@ ep_isapnp_attach(parent, self, aux)
 	GO_WINDOW(0);
 	conn = bus_space_read_2(sc->sc_iot, sc->sc_ioh, EP_W0_CONFIG_CTRL);
 
-	printf(": 3Com 3C509B Ethernet\n");
+	printf("\n");
 
 	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
 		printf("%s: error in region allocation\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
-	printf("%s: %s %s", sc->sc_dev.dv_xname, ipa->ipa_devident,
+	printf("%s: %s %s\n", sc->sc_dev.dv_xname, ipa->ipa_devident,
 	    ipa->ipa_devclass);
 
 	sc->sc_ih = isa_intr_establish(ipa->ipa_ic, ipa->ipa_irq[0].num,
