@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: daic.c,v 1.12 2002/04/14 12:24:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: daic.c,v 1.13 2003/02/04 23:26:36 martin Exp $");
 
 /*
  * daic.c: MI driver for Diehl active ISDN cards (S, SX, SXn, SCOM, QUADRO)
@@ -1018,7 +1018,7 @@ daic_connect_request(struct call_desc *cd)
 	id = daic_assign(sc, port, DAIC_GLOBALID_DCHAN, p - parms, parms);
 
 	/* map it to the call descriptor id */
-	assoc = malloc(sizeof(struct outcallentry), 0, M_DEVBUF);
+	assoc = malloc(sizeof(struct outcallentry), M_DEVBUF, 0);
 	assoc->cdid = cd->cdid;
 	assoc->dchan_id = id;
 	x = splnet();
