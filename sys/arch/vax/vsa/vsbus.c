@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.21 2000/01/24 02:40:35 matt Exp $ */
+/*	$NetBSD: vsbus.c,v 1.22 2000/03/04 07:27:50 matt Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -66,14 +66,14 @@
 #include <machine/vsbus.h>
 
 #include "ioconf.h"
+#include "opt_vax46.h"
+#include "opt_vax48.h"
+#include "opt_vax49.h"
 
 int	vsbus_match	__P((struct device *, struct cfdata *, void *));
 void	vsbus_attach	__P((struct device *, struct device *, void *));
 int	vsbus_print	__P((void *, const char *));
 int	vsbus_search	__P((struct device *, struct cfdata *, void *));
-
-void	ka410_attach	__P((struct device *, struct device *, void *));
-void	ka43_attach	__P((struct device *, struct device *, void *));
 
 static struct vax_bus_dma_tag vsbus_bus_dma_tag = {
 	0,
@@ -99,23 +99,9 @@ static struct vax_bus_dma_tag vsbus_bus_dma_tag = {
 
 extern struct vax_bus_space vax_mem_bus_space;
 
-struct	vsbus_softc {
-	struct	device sc_dev;
-#if 0
-	volatile struct vs_cpu *sc_cpu;
-#endif
-	u_char	*sc_intmsk;	/* Mask register */
-	u_char	*sc_intclr;	/* Clear interrupt register */
-	u_char	*sc_intreq;	/* Interrupt request register */
-	u_char	sc_mask;	/* Interrupts to enable after autoconf */
-	struct vax_bus_dma_tag sc_dmatag;
-};
-
 struct	cfattach vsbus_ca = { 
 	sizeof(struct vsbus_softc), vsbus_match, vsbus_attach
 };
-
-uint32_t *vsbus_iomap;
 
 int
 vsbus_print(aux, name)
@@ -153,16 +139,22 @@ vsbus_attach(parent, self, aux)
 	sc->sc_dmatag = vsbus_bus_dma_tag;
 
 	switch (vax_boardtype) {
+#if VAX49
 	case VAX_BTYP_49:
 		temp = vax_map_physmem(0x25c00000, 1);
 		sc->sc_intreq = (char *)temp + 12;
 		sc->sc_intclr = (char *)temp + 12;
 		sc->sc_intmsk = (char *)temp + 8;
+		vsbus_dma_init(sc);
 		break;
+#endif
 
+#if VAX46 || VAX48
 	case VAX_BTYP_48:
 	case VAX_BTYP_46:
+		vsbus_dma_init(sc);
 		/* FALL THROUGH */
+#endif
 
 	default:
 		temp = vax_map_physmem(VS_REGS, 1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.17 1999/06/20 00:58:23 ragge Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.18 2000/03/04 07:27:49 matt Exp $	*/
 
 /* 
  * :set tabs=4
@@ -181,12 +181,12 @@ kdbprinttrap(type, code)
  */
 void
 db_read_bytes(addr, size, data)
-	vm_offset_t	addr;
+	vaddr_t	addr;
 	register size_t	size;
 	register char	*data;
 {
 
-	bcopy((caddr_t)addr, data, size);
+	memcpy(data, (caddr_t)addr, size);
 }
 
 /*
@@ -194,7 +194,7 @@ db_read_bytes(addr, size, data)
  */
 void
 db_write_bytes(addr, size, data)
-	vm_offset_t	addr;
+	vaddr_t	addr;
 	register size_t	size;
 	register char	*data;
 {
