@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.62 2000/11/21 13:54:16 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.63 2000/11/26 11:47:27 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -982,6 +982,12 @@ GLOBAL(proc_trampoline)
  * Use common m68k sigcode.
  */
 #include <m68k/m68k/sigcode.s>
+#ifdef COMPAT_SUNOS
+#include <m68k/m68k/sunos_sigcode.s>
+#endif
+#ifdef COMPAT_SVR4
+#include <m68k/m68k/svr4_sigcode.s>
+#endif
 
 /*
  * Primitives
