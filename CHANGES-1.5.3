@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.25 2002/01/14 15:58:37 he Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.26 2002/01/16 10:20:59 he Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -1295,3 +1295,62 @@ sys/netinet/ip_output.c				1.91
 
   Avoid kernel panic on IPv4 multicast packet transmission if there
   is no IPv4 address assigned to the specified outgoing interface.
+
+sbin/dump/dump.8				1.43,1.45 via patch
+sbin/dump/dump.h				1.30 via patch
+sbin/dump/dumprmt.c				1.27 via patch
+sbin/dump/main.c				1.41,1.50 via patch
+sbin/dump/tape.c				1.31,1.37
+
+  Implement ``-l <timeout>'' option for use with e.g. autochangers.
+
+sbin/dump/dump.h				1.31-1.32 via patch
+sbin/dump/dumprmt.c				1.28-1.29 via patch
+sbin/dump/ffs_inode.c				1.9-1.10 via patch
+sbin/dump/itime.c				1.12-1.13 via patch
+sbin/dump/main.c				1.46-1.48 via patch
+sbin/dump/optr.c				1.25 via patch
+sbin/dump/rcache.c				1.7-1.10 via patch
+sbin/dump/tape.c				1.32-1.35 via patch
+sbin/dump/traverse.c				1.34 via patch
+
+  Various fixes:
+   o Fix error if first tape is write-protected; fixes PR#4754 and PR#6098
+   o Make error codes conform to manual page
+   o Use \a to make noise
+   o Fix estimated number of tapes for huge dumps to cartridges
+   o Use <sys/queue.h> SLIST_* macros instead of homegrown variants
+   o Do not exit if unable to read/create /etc/dumpdates
+   o Support output (tape) device returning ENOSPC for end-of-media on write
+   o Don't dump core if SIGINFO is received before 1 second has elapsed
+   o Only process SIGINFO in currently active child
+   o Ensure current (sub)block isn't past end of file system -- fixes
+     "spins forever but does nothing" bug.
+   o Some other minor fixes (types, whitespace, KNF, unifdef sunos, ...)
+
+sbin/dump/dump.8				1.44 via patch
+sbin/dump/dump.h				1.33 via patch
+sbin/dump/main.c				1.49 via patch
+sbin/dump/tape.c				1.36 via patch
+
+  Add an ``-a'' option to ``auto-size'' the tape, rather than
+  relying upon other options to define the tape size.
+
+gnu/usr.bin/gzip/gzip.c				1.9
+
+  Fix long file name buffer overrun vulnerability.
+
+sys/arch/i386/pci/pchb.c			1.30 via patch
+
+  Also correct the attach flags to enable IO space on the ServerWorks
+  CNB20LE.
+
+sys/dev/ic/wdc.c				1.107 via patch
+sys/dev/ic/wdcvar.h				1.33 via patch
+sys/arch/macppc/dev/wdc_obio.c			1.13,1.15-1.19 via patch
+
+  Add UDMA support and allow separate DMA timings to be programmed
+  for two different devices on the same wdc channel on the macppc.
+  The machine-independent driver is updated to optionally use the
+  WDC_CAPABILITY_SELECT callback whenever a target is selected on
+  a channel.
