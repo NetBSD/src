@@ -1,4 +1,4 @@
-/*      $NetBSD: ps.c,v 1.6 1999/10/11 11:55:27 mrg Exp $  */
+/*      $NetBSD: ps.c,v 1.7 1999/12/05 18:54:34 fredb Exp $  */
 
 /*-
  * Copyright (c) 1999
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ps.c,v 1.6 1999/10/11 11:55:27 mrg Exp $");
+__RCSID("$NetBSD: ps.c,v 1.7 1999/12/05 18:54:34 fredb Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -308,7 +308,7 @@ pmem2float(kp)
 	/* XXX want pmap ptpages, segtab, etc. (per architecture) */
 	szptudot = USPACE/getpagesize();
 	/* XXX don't have info about shared */
-	fracmem = ((double)e->e_vm.vm_rssize + szptudot)/CLSIZE/mempages;
+	fracmem = ((double)e->e_vm.vm_rssize + szptudot)/mempages;
 	return (fracmem >= 0) ? 100.0 * fracmem : 0;
 }
 
