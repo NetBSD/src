@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.2 1998/08/13 02:10:40 eeh Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.3 1998/08/26 10:36:42 mrg Exp $ */
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -72,7 +72,7 @@
 #include <machine/eeprom.h>
 #include <machine/ctlreg.h>
 #include <machine/conf.h>
-#include <sparc64/sparc/asm.h>
+#include <sparc64/sparc64/asm.h>
 
 #include <sparc64/dev/btreg.h>
 #include <sparc64/dev/bwtworeg.h>
