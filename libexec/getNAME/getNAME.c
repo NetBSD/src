@@ -1,4 +1,4 @@
-/*	$NetBSD: getNAME.c,v 1.21 2003/08/07 09:46:40 agc Exp $	*/
+/*	$NetBSD: getNAME.c,v 1.22 2003/09/19 05:41:33 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)getNAME.c	8.1 (Berkeley) 6/30/93";
 #else
-__RCSID("$NetBSD: getNAME.c,v 1.21 2003/08/07 09:46:40 agc Exp $");
+__RCSID("$NetBSD: getNAME.c,v 1.22 2003/09/19 05:41:33 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -191,9 +191,10 @@ static void
 oldman(pathname, name)
 	char *pathname, *name;
 {
-	char *line, *ext, *s;
+	char *line, *ext, *s, *newlinebuf;
 	size_t len, i, extlen;
 	size_t curlen = 0;
+	size_t newmaxlen;
 
 	if (typeflag) {
 		printf("%-60s\tOLD\n", pathname);
@@ -258,9 +259,11 @@ oldman(pathname, name)
 			extlen = 0;
 
 		if (maxlen + extlen < curlen + len + SLOP) {
-			maxlen = 2 * (curlen + len) + SLOP + extlen;
-			if ((linebuf = realloc(linebuf, maxlen)) == NULL)
+			newmaxlen = 2 * (curlen + len) + SLOP + extlen;
+			if ((newlinebuf = realloc(linebuf, newmaxlen)) == NULL)
 				err(1, NULL);
+			linebuf = newlinebuf;
+			maxlen = newmaxlen;
 		}
 		if (i != 0)
 			linebuf[curlen++] = ' ';
@@ -298,9 +301,10 @@ static void
 newman(pathname, name)
 	char *pathname, *name;
 {
-	char *line, *ext, *s;
+	char *line, *ext, *s, *newlinebuf;
 	size_t len, i, extlen;
 	size_t curlen = 0;
+	size_t newmaxlen;
 
 	if (typeflag) {
 		printf("%-60s\tNEW\n", pathname);
@@ -359,9 +363,11 @@ newman(pathname, name)
 			extlen = 0;
 
 		if (maxlen + extlen < curlen + len + SLOP) {
-			maxlen = 2 * (curlen + len) + SLOP + extlen;
-			if ((linebuf = realloc(linebuf, maxlen)) == NULL)
+			newmaxlen = 2 * (curlen + len) + SLOP + extlen;
+			if ((newlinebuf = realloc(linebuf, newmaxlen)) == NULL)
 				err(1, NULL);
+			linebuf = newlinebuf;
+			maxlen = newmaxlen;
 		}
 
 		if (i != 0)
