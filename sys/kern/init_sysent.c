@@ -617,5 +617,23 @@ struct sysent sysent[] = {
 	{ 0, 0,
 	    sys_nosys },			/* 231 = unimplemented shmget */
 #endif
+	{ 2, s(struct sys_clock_gettime_args),
+	    sys_clock_gettime },		/* 232 = clock_gettime */
+	{ 2, s(struct sys_clock_settime_args),
+	    sys_clock_settime },		/* 233 = clock_settime */
+	{ 2, s(struct sys_clock_getres_args),
+	    sys_clock_getres },			/* 234 = clock_getres */
+	{ 0, 0,
+	    sys_nosys },			/* 235 = unimplemented timer_create */
+	{ 0, 0,
+	    sys_nosys },			/* 236 = unimplemented timer_delete */
+	{ 0, 0,
+	    sys_nosys },			/* 237 = unimplemented timer_settime */
+	{ 0, 0,
+	    sys_nosys },			/* 238 = unimplemented timer_gettime */
+	{ 0, 0,
+	    sys_nosys },			/* 239 = unimplemented timer_getoverrun */
+	{ 0, 0,
+	    sys_nosys },			/* 240 = unimplemented nanosleep */
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.18 1996/04/23 10:29:33 mycroft Exp $	*/
+/*	$NetBSD: time.h,v 1.19 1996/11/15 22:48:23 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -127,6 +127,13 @@ struct clockinfo {
 	int	stathz;		/* statistics clock frequency */
 	int	profhz;		/* profiling clock frequency */
 };
+
+#define CLOCK_REALTIME	0
+#define CLOCK_VIRTUAL	1
+#define CLOCK_PROF	2
+
+#define TIMER_RELTIME	0x0	/* relative timer */
+#define TIMER_ABSTIME	0x1	/* absolute timer */
 
 #ifdef _KERNEL
 int	itimerfix __P((struct timeval *tv));

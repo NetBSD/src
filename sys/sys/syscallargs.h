@@ -968,6 +968,21 @@ struct sys_shmget_args {
 	syscallarg(int) shmflg;
 };
 
+struct sys_clock_gettime_args {
+	syscallarg(clockid_t) clock_id;
+	syscallarg(struct timespec *) tp;
+};
+
+struct sys_clock_settime_args {
+	syscallarg(clockid_t) clock_id;
+	syscallarg(const struct timespec *) tp;
+};
+
+struct sys_clock_getres_args {
+	syscallarg(clockid_t) clock_id;
+	syscallarg(struct timespec *) tp;
+};
+
 /*
  * System call prototypes.
  */
@@ -1216,3 +1231,6 @@ int	sys_shmdt	__P((struct proc *, void *, register_t *));
 int	sys_shmget	__P((struct proc *, void *, register_t *));
 #else
 #endif
+int	sys_clock_gettime	__P((struct proc *, void *, register_t *));
+int	sys_clock_settime	__P((struct proc *, void *, register_t *));
+int	sys_clock_getres	__P((struct proc *, void *, register_t *));
