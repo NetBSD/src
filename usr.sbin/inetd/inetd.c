@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.90 2003/04/22 07:45:27 itojun Exp $	*/
+/*	$NetBSD: inetd.c,v 1.91 2003/04/22 07:46:46 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.90 2003/04/22 07:45:27 itojun Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.91 2003/04/22 07:46:46 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -2047,7 +2047,7 @@ print_service(char *action, struct servtab *sep)
 
 	if (isrpcservice(sep))
 		fprintf(stderr,
-		    "%s: %s rpcprog=%d, rpcvers = %d/%d, proto=%s, wait:max=%d.%d, user:group=%s.%s builtin=%lx server=%s"
+		    "%s: %s rpcprog=%d, rpcvers = %d/%d, proto=%s, wait:max=%d.%d, user:group=%s:%s builtin=%lx server=%s"
 #ifdef IPSEC
 		    " policy=\"%s\""
 #endif
@@ -2062,7 +2062,7 @@ print_service(char *action, struct servtab *sep)
 		    );
 	else
 		fprintf(stderr,
-		    "%s: %s proto=%s%s, wait:max=%d.%d, user:group=%s.%s builtin=%lx server=%s"
+		    "%s: %s proto=%s%s, wait:max=%d.%d, user:group=%s:%s builtin=%lx server=%s"
 #ifdef IPSEC
 		    " policy=%s"
 #endif
