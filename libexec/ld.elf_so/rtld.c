@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.70 2002/09/24 06:43:14 junyoung Exp $	 */
+/*	$NetBSD: rtld.c,v 1.71 2002/09/24 08:56:30 junyoung Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -262,12 +262,12 @@ _rtld(sp, relocbase)
 	/* Find the auxiliary vector on the stack. */
 	/* first Elf_Word reserved to address of exit routine */
 #if defined(RTLD_DEBUG)
-	dbg(("sp = %p, argc = %ld, argv = %p <%s>\n", sp, (long)sp[2],
+	dbg(("sp = %p, argc = %ld, argv = %p <%s>", sp, (long)sp[2],
 	     &sp[3], (char *) sp[3]));
-	dbg(("got is at %p, dynamic is at %p\n",
+	dbg(("got is at %p, dynamic is at %p",
 	    _GLOBAL_OFFSET_TABLE_, &_DYNAMIC));
 	debug = 1;
-	dbg(("_ctype_ is %p\n", _ctype_));
+	dbg(("_ctype_ is %p", _ctype_));
 #endif
 
 	sp += 2;		/* skip over return argument space */
@@ -278,7 +278,7 @@ _rtld(sp, relocbase)
 	env = (char **) sp;
 	while (*sp++ != 0) {	/* Skip over environment, and NULL terminator */
 #if defined(RTLD_DEBUG)
-		dbg(("env[%d] = %p %s\n", i++, (void *)sp[-1], (char *)sp[-1]));
+		dbg(("env[%d] = %p %s", i++, (void *)sp[-1], (char *)sp[-1]));
 #endif
 	}
 	aux = (const AuxInfo *) sp;
@@ -336,7 +336,7 @@ _rtld(sp, relocbase)
 	_rtld_init((caddr_t)pAUX_base->a_v, (caddr_t)relocbase);
 
 #ifdef RTLD_DEBUG
-	dbg(("_ctype_ is %p\n", _ctype_));
+	dbg(("_ctype_ is %p", _ctype_));
 #endif
 
 	__progname = _rtld_objself.path;
