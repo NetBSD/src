@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2003/06/03 11:54:48 dsl Exp $
+#	$NetBSD: Makefile,v 1.5 2003/06/06 18:57:13 dsl Exp $
 #
 # can't make here due to crunchgen
 #
@@ -13,9 +13,9 @@ SUBDIR += arch/mvme68k arch/news68k arch/newsmips arch/pc532
 SUBDIR += arch/playstation2 arch/pmax
 SUBDIR += arch/sandpoint arch/sgimips arch/shark
 SUBDIR += arch/sparc arch/sparc64 arch/vax
-.endif
 
-.if SYSINSTLANG
+SYSINSTLANG?=en
+
 .if ${SYSINSTLANG} != fr && ${SYSINSTLANG} != pl
 SUBDIR += arch/atari
 .endif

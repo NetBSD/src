@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.35 2003/06/03 11:54:50 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.36 2003/06/06 18:57:17 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -109,7 +109,6 @@ md_copy_filesystem(void)
 	}
 
 	/* Copy the instbin(s) to the disk */
-	printf ("%s", msg_string(MSG_dotar));
 	if (run_prog (RUN_DISPLAY, NULL, "pax -X -O -r -w -pe / /mnt") != 0)
 		return 1;
 
