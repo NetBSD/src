@@ -1,4 +1,4 @@
-/* $NetBSD: if_ei.c,v 1.5 2001/01/22 22:28:43 bjh21 Exp $ */
+/* $NetBSD: if_ei.c,v 1.6 2001/01/23 22:08:00 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: if_ei.c,v 1.5 2001/01/22 22:28:43 bjh21 Exp $");
+__RCSID("$NetBSD: if_ei.c,v 1.6 2001/01/23 22:08:00 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -83,6 +83,7 @@ struct ei_softc {
 	bus_space_handle_t	sc_rom_h;
 	u_int8_t	sc_idrom[EI_ROMSIZE];
 	struct		irq_handler *sc_ih;
+	struct		evcnt	sc_intrcnt;
 };
 
 struct cfattach ei_ca = {
@@ -193,8 +194,10 @@ ei_attach(struct device *parent, struct device *self, void *aux)
 	i82586_attach(&sc->sc_ie, descr, sc->sc_idrom + EI_ROM_EADDR,
 		      NULL, 0, 0);
 
+	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+	    self->dv_xname, "intr");
 	sc->sc_ih = podulebus_irq_establish(self->dv_parent, pa->pa_slotnum,
-	    IPL_NET, i82586_intr, self, self->dv_xname);
+	    IPL_NET, i82586_intr, self, &sc->sc_intrcnt);
 	if (bootverbose)
 		printf("%s: interrupting at %s\n", self->dv_xname,
 		    irq_string(sc->sc_ih));

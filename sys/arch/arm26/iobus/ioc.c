@@ -1,4 +1,4 @@
-/* $NetBSD: ioc.c,v 1.7 2001/01/07 15:56:02 bjh21 Exp $ */
+/* $NetBSD: ioc.c,v 1.8 2001/01/23 22:07:59 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: ioc.c,v 1.7 2001/01/07 15:56:02 bjh21 Exp $");
+__RCSID("$NetBSD: ioc.c,v 1.8 2001/01/23 22:07:59 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/kernel.h>
@@ -64,7 +64,9 @@ struct ioc_softc {
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh;
 	struct irq_handler	*sc_clkirq;
+	struct evcnt		sc_clkev;
 	struct irq_handler	*sc_sclkirq;
+	struct evcnt		sc_sclkev;
 	u_int8_t		sc_ctl;
 };
 
@@ -361,16 +363,20 @@ cpu_initclocks(void)
 	    (t0_count = IOC_TIMER_RATE / hz) > 65535)
 		panic("ioc_initclocks: Impossible clock rate: %d Hz", hz);
 	ioc_counter_start(self, 0, t0_count);
+	evcnt_attach_dynamic(&sc->sc_clkev, EVCNT_TYPE_INTR, NULL,
+	    sc->sc_dev.dv_xname, "clock");
 	sc->sc_clkirq = irq_establish(IOC_IRQ_TM0, IPL_CLOCK, ioc_irq_clock,
-	    NULL, "hardclock");
+	    NULL, &sc->sc_clkev);
 	if (bootverbose)
 		printf("%s: %d Hz clock interrupting at %s\n",
 		    self->dv_xname, hz, irq_string(sc->sc_clkirq));
 	
 	if (stathz) {
 		setstatclockrate(stathz);
+		evcnt_attach_dynamic(&sc->sc_sclkev, EVCNT_TYPE_INTR, NULL,
+		    sc->sc_dev.dv_xname, "statclock");
 		sc->sc_sclkirq = irq_establish(IOC_IRQ_TM1, IPL_STATCLOCK,
-		    ioc_irq_statclock, NULL, "statclock");
+		    ioc_irq_statclock, NULL, &sc->sc_sclkev);
 		if (bootverbose)
 			printf("%s: %d Hz statclock interrupting at %s\n",
 			    self->dv_xname, stathz, irq_string(sc->sc_sclkirq));
