@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.70 2003/01/06 13:10:28 wiz Exp $	*/
+/*	$NetBSD: i82557.c,v 1.71 2003/01/31 00:26:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.70 2003/01/06 13:10:28 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.71 2003/01/31 00:26:30 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -287,7 +287,8 @@ fxp_attach(struct fxp_softc *sc)
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
 	    sizeof(struct fxp_control_data), PAGE_SIZE, 0, &seg, 1, &rseg,
 	    0)) != 0) {
-		printf("%s: unable to allocate control data, error = %d\n",
+		aprint_error(
+		    "%s: unable to allocate control data, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail_0;
 	}
@@ -295,7 +296,7 @@ fxp_attach(struct fxp_softc *sc)
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
 	    sizeof(struct fxp_control_data), (caddr_t *)&sc->sc_control_data,
 	    BUS_DMA_COHERENT)) != 0) {
-		printf("%s: unable to map control data, error = %d\n",
+		aprint_error("%s: unable to map control data, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail_1;
 	}
@@ -307,7 +308,7 @@ fxp_attach(struct fxp_softc *sc)
 	if ((error = bus_dmamap_create(sc->sc_dmat,
 	    sizeof(struct fxp_control_data), 1,
 	    sizeof(struct fxp_control_data), 0, 0, &sc->sc_dmamap)) != 0) {
-		printf("%s: unable to create control data DMA map, "
+		aprint_error("%s: unable to create control data DMA map, "
 		    "error = %d\n", sc->sc_dev.dv_xname, error);
 		goto fail_2;
 	}
@@ -315,7 +316,8 @@ fxp_attach(struct fxp_softc *sc)
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_dmamap,
 	    sc->sc_control_data, sizeof(struct fxp_control_data), NULL,
 	    0)) != 0) {
-		printf("%s: can't load control data DMA map, error = %d\n",
+		aprint_error(
+		    "%s: can't load control data DMA map, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail_3;
 	}
@@ -327,7 +329,7 @@ fxp_attach(struct fxp_softc *sc)
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
 		    FXP_NTXSEG, MCLBYTES, 0, 0,
 		    &FXP_DSTX(sc, i)->txs_dmamap)) != 0) {
-			printf("%s: unable to create tx DMA map %d, "
+			aprint_error("%s: unable to create tx DMA map %d, "
 			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
 			goto fail_4;
 		}
@@ -339,7 +341,7 @@ fxp_attach(struct fxp_softc *sc)
 	for (i = 0; i < FXP_NRFABUFS; i++) {
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
 		    MCLBYTES, 0, 0, &sc->sc_rxmaps[i])) != 0) {
-			printf("%s: unable to create rx DMA map %d, "
+			aprint_error("%s: unable to create rx DMA map %d, "
 			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
 			goto fail_5;
 		}
@@ -348,7 +350,7 @@ fxp_attach(struct fxp_softc *sc)
 	/* Initialize MAC address and media structures. */
 	fxp_get_info(sc, enaddr);
 
-	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
+	aprint_normal("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(enaddr));
 
 	ifp = &sc->sc_ethercom.ec_if;
@@ -404,14 +406,14 @@ fxp_attach(struct fxp_softc *sc)
 	 */
 	sc->sc_sdhook = shutdownhook_establish(fxp_shutdown, sc);
 	if (sc->sc_sdhook == NULL)
-		printf("%s: WARNING: unable to establish shutdown hook\n",
+		aprint_error("%s: WARNING: unable to establish shutdown hook\n",
 		    sc->sc_dev.dv_xname);
 	/*
   	 * Add suspend hook, for similar reasons..
 	 */
 	sc->sc_powerhook = powerhook_establish(fxp_power, sc);
 	if (sc->sc_powerhook == NULL)
-		printf("%s: WARNING: unable to establish power hook\n",
+		aprint_error("%s: WARNING: unable to establish power hook\n",
 		    sc->sc_dev.dv_xname);
 
 	/* The attach is successful. */
@@ -485,7 +487,7 @@ fxp_80c24_initmedia(struct fxp_softc *sc)
 	 * media is sensed automatically based on how the link partner
 	 * is configured.  This is, in essence, manual configuration.
 	 */
-	printf("%s: Seeq 80c24 AutoDUPLEX media interface present\n",
+	aprint_normal("%s: Seeq 80c24 AutoDUPLEX media interface present\n",
 	    sc->sc_dev.dv_xname);
 	ifmedia_init(&sc->sc_mii.mii_media, 0, fxp_80c24_mediachange,
 	    fxp_80c24_mediastatus);
@@ -557,12 +559,12 @@ fxp_get_info(struct fxp_softc *sc, u_int8_t *enaddr)
 	sc->sc_eeprom_size = 0;
 	fxp_autosize_eeprom(sc);
 	if (sc->sc_eeprom_size == 0) {
-		printf("%s: failed to detect EEPROM size\n",
+		aprint_error("%s: failed to detect EEPROM size\n",
 		    sc->sc_dev.dv_xname);
 		sc->sc_eeprom_size = 6; /* XXX panic here? */
 	}
 #ifdef DEBUG
-	printf("%s: detected %d word EEPROM\n",
+	aprint_debug("%s: detected %d word EEPROM\n",
 	    sc->sc_dev.dv_xname, 1 << sc->sc_eeprom_size);
 #endif
 
@@ -603,18 +605,19 @@ fxp_get_info(struct fxp_softc *sc, u_int8_t *enaddr)
 	if (sc->sc_flags & FXPF_HAS_RESUME_BUG) {
 		fxp_read_eeprom(sc, &data, 10, 1);
 		if (data & 0x02) {		/* STB enable */
-			printf("%s: WARNING: "
+			aprint_error("%s: WARNING: "
 			    "Disabling dynamic standby mode in EEPROM "
 			    "to work around a\n",
 			    sc->sc_dev.dv_xname);
-			printf("%s: WARNING: hardware bug.  You must reset "
+			aprint_normal(
+			    "%s: WARNING: hardware bug.  You must reset "
 			    "the system before using this\n",
 			    sc->sc_dev.dv_xname);
-			printf("%s: WARNING: interface.\n",
+			aprint_normal("%s: WARNING: interface.\n",
 			    sc->sc_dev.dv_xname);
 			data &= ~0x02;
 			fxp_write_eeprom(sc, &data, 10, 1);
-			printf("%s: new EEPROM ID: 0x%04x\n",
+			aprint_normal("%s: new EEPROM ID: 0x%04x\n",
 			    sc->sc_dev.dv_xname, data);
 			fxp_eeprom_update_cksum(sc);
 		}

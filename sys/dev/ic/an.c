@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.23 2002/09/27 15:37:15 provos Exp $	*/
+/*	$NetBSD: an.c,v 1.24 2003/01/31 00:26:27 thorpej Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.23 2002/09/27 15:37:15 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.24 2003/01/31 00:26:27 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -204,7 +204,8 @@ an_attach(struct an_softc *sc)
 	/* Load factory config */
 	if (an_cmd(sc, AN_CMD_READCFG, 0)) {
 		splx(s);
-		printf("%s: failed to load config data\n", sc->an_dev.dv_xname);
+		aprint_error("%s: failed to load config data\n",
+		    sc->an_dev.dv_xname);
 		return(EIO);
 	}
 
@@ -213,7 +214,7 @@ an_attach(struct an_softc *sc)
 	sc->an_config.an_len = sizeof(struct an_ltv_genconfig);
 	if (an_read_record(sc, (struct an_ltv_gen *)&sc->an_config)) {
 		splx(s);
-		printf("%s: read record failed\n", sc->an_dev.dv_xname);
+		aprint_error("%s: read record failed\n", sc->an_dev.dv_xname);
 		return(EIO);
 	}
 
@@ -222,7 +223,7 @@ an_attach(struct an_softc *sc)
 	sc->an_caps.an_len = sizeof(struct an_ltv_caps);
 	if (an_read_record(sc, (struct an_ltv_gen *)&sc->an_caps)) {
 		splx(s);
-		printf("%s: read record failed\n", sc->an_dev.dv_xname);
+		aprint_error("%s: read record failed\n", sc->an_dev.dv_xname);
 		return(EIO);
 	}
 
@@ -231,7 +232,7 @@ an_attach(struct an_softc *sc)
 	sc->an_ssidlist.an_len = sizeof(struct an_ltv_ssidlist);
 	if (an_read_record(sc, (struct an_ltv_gen *)&sc->an_ssidlist)) {
 		splx(s);
-		printf("%s: read record failed\n", sc->an_dev.dv_xname);
+		aprint_error("%s: read record failed\n", sc->an_dev.dv_xname);
 		return(EIO);
 	}
 
@@ -240,7 +241,7 @@ an_attach(struct an_softc *sc)
 	sc->an_aplist.an_len = sizeof(struct an_ltv_aplist);
 	if (an_read_record(sc, (struct an_ltv_gen *)&sc->an_aplist)) {
 		splx(s);
-		printf("%s: read record failed\n", sc->an_dev.dv_xname);
+		aprint_error("%s: read record failed\n", sc->an_dev.dv_xname);
 		return(EIO);
 	}
 
@@ -263,7 +264,7 @@ an_attach(struct an_softc *sc)
 	}
 	/* XXX not sure if persistent key settings should be printed here */
 
-	printf("%s: 802.11 address: %s\n", sc->an_dev.dv_xname,
+	aprint_normal("%s: 802.11 address: %s\n", sc->an_dev.dv_xname,
 	    ether_sprintf(sc->an_caps.an_oemaddr));
 
 	ifp->if_softc = sc;

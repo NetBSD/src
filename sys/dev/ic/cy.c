@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.29 2003/01/06 12:46:10 wiz Exp $	*/
+/*	$NetBSD: cy.c,v 1.30 2003/01/31 00:26:29 thorpej Exp $	*/
 
 /*
  * cy.c
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.29 2003/01/06 12:46:10 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.30 2003/01/31 00:26:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -194,7 +194,7 @@ cy_attach(struct cy_softc *sc)
 			chip -= (CY32_ADDR_FIX << sc->sc_bustype);
 
 #ifdef CY_DEBUG
-		printf("attach CD1400 #%d offset 0x%x\n", cy_chip, chip);
+		aprint_debug("attach CD1400 #%d offset 0x%x\n", cy_chip, chip);
 #endif
 		sc->sc_cd1400_offs[cy_chip] = chip;
 
@@ -227,7 +227,7 @@ cy_attach(struct cy_softc *sc)
 
 	sc->sc_nchannels = port;
 
-	printf("%s: %d channels (ttyCY%03d..ttyCY%03d)\n",
+	aprint_normal("%s: %d channels (ttyCY%03d..ttyCY%03d)\n",
 	    sc->sc_dev.dv_xname, sc->sc_nchannels, cy_attached_ttys,
 	    cy_attached_ttys + (sc->sc_nchannels - 1));
 
