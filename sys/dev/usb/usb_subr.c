@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.20 1998/12/28 21:05:26 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.21 1998/12/29 15:27:16 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -764,8 +764,8 @@ usbd_probe_and_attach(parent, dev, port, addr)
 		if (found != 0)
 			return (USBD_NORMAL_COMPLETION);
 	}
-	/* No interfaces were attach in any of the configurations. */
-	if (dd->bNumConfigurations > 0)
+	/* No interfaces were attached in any of the configurations. */
+	if (dd->bNumConfigurations > 1)/* don't change if only 1 config */
 		usbd_set_config_index(dev, 0, 0);
 
 	DPRINTF(("usbd_probe_and_attach: no interface drivers found\n"));
@@ -1077,6 +1077,8 @@ usbd_fill_deviceinfo(dev, di)
 	di->config = dev->config;
 	usbd_devinfo_vp(dev, di->vendor, di->product);
 	usbd_printBCD(di->revision, UGETW(dev->ddesc.bcdDevice));
+	di->vendorNo = UGETW(dev->ddesc.idVendor);
+	di->productNo = UGETW(dev->ddesc.idProduct);
 	di->class = dev->ddesc.bDeviceClass;
 	di->power = dev->self_powered ? 0 : dev->power;
 	di->lowspeed = dev->lowspeed;
