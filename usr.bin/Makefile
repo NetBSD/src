@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.98 1999/02/15 15:07:14 kleink Exp $
+#	$NetBSD: Makefile,v 1.99 1999/03/02 14:07:24 christos Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
@@ -10,11 +10,11 @@ SUBDIR=	apply apropos asa at audioctl banner basename bdes biff \
 	crontab crunch ctags cut dirname du eject env \
 	error expand false fdformat fgen file find finger fmt fold fpr \
 	from fsplit fstat ftp gencat getconf getopt gprof head hesinfo \
-	hexdump id indent ipcrm ipcs join jot kdump ktrace \
+	hexdump id indent innetgr ipcrm ipcs join jot kdump ktrace \
 	lam last lastcomm ldd leave less lex locate lock \
 	logger login logname look lorder m4 machine mail \
 	make man menuc mesg midiplay mixerctl mkdep mkfifo mkstr modstat \
-	msgc msgs netstat newsyslog nfsstat nice nl nohup pagesize \
+	msgc msgs netgroup netstat newsyslog nfsstat nice nl nohup pagesize \
 	passwd paste patch pr printenv printf quota rdist \
 	renice rev rlogin rpcgen rpcinfo rs rsh rup \
 	ruptime rusers rwall rwho script sed shar shlock \
