@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.42 2004/07/22 15:50:50 mycroft Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.43 2004/08/02 19:31:52 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.42 2004/07/22 15:50:50 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.43 2004/08/02 19:31:52 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -94,7 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.42 2004/07/22 15:50:50 mycroft 
 #include <dev/pci/pcidevs.h>
 
 #include <dev/cardbus/cardbusvar.h>
-#include <dev/cardbus/cardbusdevs.h>
+#include <dev/pci/pcidevs.h>
 
 /*
  * PCI configuration space registers used by the Tulip.
@@ -136,31 +136,34 @@ const struct tulip_cardbus_product {
 	u_int32_t	tcp_product;	/* PCI product ID */
 	tulip_chip_t	tcp_chip;	/* base Tulip chip type */
 } tlp_cardbus_products[] = {
-	{ PCI_VENDOR_DEC,		PCI_PRODUCT_DEC_21142,
+	{ PCI_VENDOR_DEC,	PCI_PRODUCT_DEC_21142,
 	  TULIP_CHIP_21142 },
 
-	{ PCI_VENDOR_XIRCOM,		PCI_PRODUCT_XIRCOM_X3201_3_21143,
+	{ PCI_VENDOR_XIRCOM,	PCI_PRODUCT_XIRCOM_X3201_3_21143,
 	  TULIP_CHIP_X3201_3 },
 
-	{ PCI_VENDOR_ADMTEK,		PCI_PRODUCT_ADMTEK_AN985,
+	{ PCI_VENDOR_ADMTEK,	PCI_PRODUCT_ADMTEK_AN985,
 	  TULIP_CHIP_AN985 },
 
-	{ CARDBUS_VENDOR_ACCTON,	CARDBUS_PRODUCT_ACCTON_EN2242,
+	{ PCI_VENDOR_ACCTON,	PCI_PRODUCT_ACCTON_EN2242,
 	  TULIP_CHIP_AN985 },
 
-	{ CARDBUS_VENDOR_ABOCOM,	CARDBUS_PRODUCT_ABOCOM_FE2500,
+	{ PCI_VENDOR_ABOCOM,	PCI_PRODUCT_ABOCOM_FE2500,
 	  TULIP_CHIP_AN985 },
 
-	{ CARDBUS_VENDOR_ABOCOM,	CARDBUS_PRODUCT_ABOCOM_PCM200,
+	{ PCI_VENDOR_ABOCOM,	PCI_PRODUCT_ABOCOM_PCM200,
 	  TULIP_CHIP_AN985 },
 
-	{ CARDBUS_VENDOR_ABOCOM,	CARDBUS_PRODUCT_ABOCOM_FE2500MX,
+	{ PCI_VENDOR_ABOCOM,	PCI_PRODUCT_ABOCOM_FE2500MX,
 	  TULIP_CHIP_AN985 },
 
-	{ CARDBUS_VENDOR_HAWKING,	CARDBUS_PRODUCT_HAWKING_PN672TX,
+	{ PCI_VENDOR_HAWKING,	PCI_PRODUCT_HAWKING_PN672TX,
 	  TULIP_CHIP_AN985 },
 
-	{ CARDBUS_VENDOR_NETGEAR,	CARDBUS_PRODUCT_NETGEAR_FA511,
+	{ PCI_VENDOR_ADMTEK,	PCI_PRODUCT_ADMTEK_AN985_2,
+	  TULIP_CHIP_AN985 },
+
+	{ PCI_VENDOR_MICROSOFT,	PCI_PRODUCT_MICROSOFT_MN120,
 	  TULIP_CHIP_AN985 },
 
 	{ 0,				0,
@@ -573,18 +576,14 @@ tlp_cardbus_power(sc, why)
 	struct tulip_softc *sc;
 	int why;
 {
-	struct tulip_cardbus_softc *csc = (void *) sc;
 
-	if (why == PWR_RESUME) {
-		/*
-		 * Give the PCI configuration registers a kick
-		 * in the head.
-		 */
-#ifdef DIAGNOSTIC
-		if (TULIP_IS_ENABLED(sc) == 0)
-			panic("tlp_cardbus_power");
-#endif
-		tlp_cardbus_setup(csc);
+	switch (why) {
+	case PWR_RESUME:
+		tlp_cardbus_enable(sc);
+		break;
+	case PWR_SUSPEND:
+		tlp_cardbus_disable(sc);
+		break;
 	}
 }
 
