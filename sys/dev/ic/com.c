@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.113 1997/10/16 00:01:00 thorpej Exp $	*/
+/*	$NetBSD: com.c,v 1.114 1997/10/18 23:11:45 is Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -198,7 +198,7 @@ comspeed(speed, frequency)
 	x = divrnd(frequency / 16, speed);
 	if (x <= 0)
 		return (-1);
-	err = divrnd(frequency * 1000 / 16, speed * x) - 1000;
+	err = divrnd(((quad_t)frequency) * 1000 / 16, speed * x) - 1000;
 	if (err < 0)
 		err = -err;
 	if (err > COM_TOLERANCE)
