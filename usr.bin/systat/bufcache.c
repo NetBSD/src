@@ -1,4 +1,4 @@
-/*	$NetBSD: bufcache.c,v 1.8 2000/07/05 11:03:20 ad Exp $	*/
+/*	$NetBSD: bufcache.c,v 1.9 2000/11/30 12:08:13 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,21 +38,26 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bufcache.c,v 1.8 2000/07/05 11:03:20 ad Exp $");
+__RCSID("$NetBSD: bufcache.c,v 1.9 2000/11/30 12:08:13 simonb Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/mount.h>
 #include <sys/queue.h>
+#include <sys/sysctl.h>
 #include <sys/time.h>
 #include <sys/vnode.h>
 
+#include <uvm/uvm_extern.h>
+
 #include <err.h>
+#include <errno.h>
 #include <kvm.h>
 #include <nlist.h>
 #include <paths.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "systat.h"
@@ -102,6 +107,7 @@ static struct vcache vcache[VCACHE_SIZE];
 static LIST_HEAD(mount_list, ml_entry) mount_list;
 
 static int nbuf, bufpages, bufkb;
+static struct uvmexp_sysctl uvmexp;
 static void *bufaddr;
 static struct buf *buf = NULL;
 static TAILQ_HEAD(bqueues, buf) bufqueues[BQUEUES];
@@ -134,12 +140,14 @@ closebufcache(WINDOW *w)
 void
 labelbufcache(void)
 {
-	mvwprintw(wnd, 0, 0, "There are %d buffers using %d kBytes of memory.",
+	mvwprintw(wnd, 0, 0,
+	    "There are %d metadata buffers using %d kBytes of memory.",
 	    nbuf, bufkb);
 	wclrtoeol(wnd);
 	wmove(wnd, 1, 0);
+	wmove(wnd, 2, 0);
 	wclrtoeol(wnd);
-	mvwaddstr(wnd, 2, 0,
+	mvwaddstr(wnd, 3, 0,
 "File System          Bufs used   %   kB in use   %  Bufsize kB   %  Util %");
 	wclrtoeol(wnd);
 }
@@ -151,8 +159,14 @@ showbufcache(void)
 	long tvalid, tsize;
 	struct ml_entry *ml;
 
+	mvwprintw(wnd, 1, 0,
+	    "There are %llu pages for vnode page cache using %llu kBytes of memory.",
+	    (long long)uvmexp.vnodepages,
+	    (long long) uvmexp.vnodepages * getpagesize() / 1024);
+	wclrtoeol(wnd);
+
 	tbuf = tvalid = tsize = 0;
-	lastrow = 3;	/* Leave room for header. */
+	lastrow = 4;	/* Leave room for header. */
 	for (i = lastrow, ml = LIST_FIRST(&mount_list); ml != NULL;
 	    i++, ml = LIST_NEXT(ml, ml_entries)) {
 
@@ -214,11 +228,21 @@ initbufcache(void)
 void
 fetchbufcache(void)
 {
-	int i, count;
+	int i, count, mib[2];
+	size_t size;
 	struct buf *bp;
 	struct vnode *vn;
 	struct mount *mt;
 	struct ml_entry *ml;
+
+	/* Re-read pages used for vnodes */
+	size = sizeof(uvmexp);
+	mib[0] = CTL_VM;
+	mib[1] = VM_UVMEXP2;
+	if (sysctl(mib, 2, &uvmexp, &size, NULL, 0) < 0) {
+		error("can't get uvmexp: %s\n", strerror(errno));
+		memset(&uvmexp, 0, sizeof(uvmexp));
+	}
 
 	/* Re-read bufqueues lists and buffer cache headers */
 	NREAD(X_BUFQUEUES, bufqueues, sizeof(bufqueues));
