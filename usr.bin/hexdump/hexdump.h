@@ -1,4 +1,4 @@
-/*	$NetBSD: hexdump.h,v 1.6 2001/02/07 18:32:07 christos Exp $	*/
+/*	$NetBSD: hexdump.h,v 1.7 2001/12/07 15:14:29 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -93,7 +93,7 @@ void	 bpad __P((PR *));
 void	 conv_c __P((PR *, u_char *));
 void	 conv_u __P((PR *, u_char *));
 void	 display __P((void));
-void	 doskip __P((char *, int));
+void	 doskip __P((const char *, int));
 /*void	 err __P((const char *, ...));*/
 void	*emalloc __P((int));
 void	 escape __P((char *));
