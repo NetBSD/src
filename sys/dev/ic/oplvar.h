@@ -1,4 +1,4 @@
-/*	$NetBSD: oplvar.h,v 1.1 1998/08/17 21:16:13 augustss Exp $	*/
+/*	$NetBSD: oplvar.h,v 1.2 1998/08/26 12:10:22 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@ struct opl_voice {
 };
 
 struct opl_softc {
-	struct midi_softc sc_mididev;
+	struct midi_softc mididev;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	int	offs;
@@ -58,6 +58,9 @@ struct opl_softc {
 
 	struct opl_voice voices[OPL3_NVOICE];
 	int volume;
+
+	int	(*spkrctl)__P((void *, int));
+	void    *spkrarg;
 };
 
 struct opl_attach_arg {

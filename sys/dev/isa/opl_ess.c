@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_ess.c,v 1.1 1998/08/25 12:52:47 augustss Exp $	*/
+/*	$NetBSD: opl_ess.c,v 1.2 1998/08/26 12:10:22 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -57,6 +57,8 @@
 #include <dev/isa/isavar.h>
 #include <dev/isa/essvar.h>
 
+extern int	ess_speaker_ctl __P((void *, int));
+
 int	opl_ess_match __P((struct device *, struct cfdata *, void *));
 void	opl_ess_attach __P((struct device *, struct device *, void *));
 
@@ -76,9 +78,9 @@ opl_ess_match(parent, match, aux)
 
 	if (aa->type != AUDIODEV_TYPE_OPL)
 		return (0);
+	memset(&sc, 0, sizeof sc);
 	sc.ioh = ssc->sc_ioh;
 	sc.iot = ssc->sc_iot;
-	sc.offs = 0;
 	return (opl_find(&sc));
 }
 
@@ -94,6 +96,8 @@ opl_ess_attach(parent, self, aux)
 	sc->ioh = ssc->sc_ioh;
 	sc->iot = ssc->sc_iot;
 	sc->offs = 0;
+	sc->spkrctl = ess_speaker_ctl;
+	sc->spkrarg = ssc;
 
 	opl_attach(sc);
 }
