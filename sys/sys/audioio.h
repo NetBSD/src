@@ -1,4 +1,4 @@
-/*	$NetBSD: audioio.h,v 1.27 2005/04/05 16:05:56 jmcneill Exp $	*/
+/*	$NetBSD: audioio.h,v 1.28 2005/04/05 16:06:49 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -321,6 +321,6 @@ typedef struct mixer_ctrl {
 #define AudioCrecord	"record"
 #define AudioCmonitor	"monitor"
 #define AudioCequalization	"equalization"
-#define	AudioCmodem	"modem"
+#define AudioCmodem	"modem"
 
 #endif /* !_SYS_AUDIOIO_H_ */
