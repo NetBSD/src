@@ -1,4 +1,4 @@
-.\"	$NetBSD: cnw.4,v 1.3 1999/12/06 14:52:08 augustss Exp $
+.\"	$NetBSD: cnw.4,v 1.4 1999/12/10 15:12:39 sommerfeld Exp $
 .\"
 .\" Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -50,10 +50,13 @@ The
 interface provides access to a theoretical 1 Mb/s wireless ethernet network
 based on the Netwave AirSurfer Wireless LAN (formerly known as the Xircom
 Netwave Wireless LAN).
-Note that the driver does not support more-recent device families
-like Netwave AirSurfer
+.Pp
+Note that the driver does not support newer devices
+such as the Netwave AirSurfer
 .Dq Plus ,
-or BayStack 650/660.
+or the BayStack 650/660, which can use the
+.Xr awi 4
+driver.
 .Pp
 It use 32K of I/O memory mapped to the card along with either 16 I/O ports
 or 4K of additional I/O memory for access to command registers.  The
@@ -82,4 +85,6 @@ and increase memory available to the PCMCIA controller.
 .Xr intro 4 ,
 .Xr arp 4 ,
 .Xr inet 4 ,
+.Xr awi 4 ,
 .Xr pcmcia 4
+
