@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.96 2004/10/30 18:09:22 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.97 2005/01/30 18:56:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.96 2004/10/30 18:09:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.97 2005/01/30 18:56:34 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1799,9 +1799,9 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct sip_rxsoft *rxs;
-	struct mbuf *m, *tailm;
+	struct mbuf *m;
 	u_int32_t cmdsts, extsts;
-	int i, len, frame_len;
+	int i, len;
 
 	for (i = sc->sc_rxptr;; i = SIP_NEXTRX(i)) {
 		rxs = &sc->sc_rxsoft[i];
@@ -1810,6 +1810,7 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 
 		cmdsts = le32toh(sc->sc_rxdescs[i].sipd_cmdsts);
 		extsts = le32toh(sc->sc_rxdescs[i].sipd_extsts);
+		len = CMDSTS_SIZE(cmdsts);
 
 		/*
 		 * NOTE: OWN is set if owned by _consumer_.  We're the
@@ -1859,22 +1860,26 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 
 		SIP_RXCHAIN_LINK(sc, m);
 
+		m->m_len = len;
+
 		/*
 		 * If this is not the end of the packet, keep
 		 * looking.
 		 */
 		if (cmdsts & CMDSTS_MORE) {
-			sc->sc_rxlen += m->m_len;
+			sc->sc_rxlen += len;
 			continue;
 		}
 
 		/*
-		 * Okay, we have the entire packet now...
+		 * Okay, we have the entire packet now.  The chip includes
+		 * the FCS, so we need to trim it.
 		 */
+		m->m_len -= ETHER_CRC_LEN;
+
 		*sc->sc_rxtailp = NULL;
 		m = sc->sc_rxhead;
-		tailm = sc->sc_rxtail;
-		frame_len = sc->sc_rxlen;
+		len = m->m_len + sc->sc_rxlen;
 
 		SIP_RXCHAIN_RESET(sc);
 
@@ -1902,16 +1907,6 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 			m_freem(m);
 			continue;
 		}
-
-		/*
-		 * No errors.
-		 *
-		 * Note, the DP83820 includes the CRC with
-		 * every packet.
-		 */
-		len = CMDSTS_SIZE(cmdsts);
-		frame_len += len;
-		tailm->m_len = len;
 
 		/*
 		 * If the packet is small enough to fit in a
@@ -1997,9 +1992,8 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 		}
 
 		ifp->if_ipackets++;
-		m->m_flags |= M_HASFCS;
 		m->m_pkthdr.rcvif = ifp;
-		m->m_pkthdr.len = frame_len;
+		m->m_pkthdr.len = len;
 
 #if NBPFILTER > 0
 		/*
@@ -2091,7 +2085,7 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 		 * No errors; receive the packet.  Note, the SiS 900
 		 * includes the CRC with every packet.
 		 */
-		len = CMDSTS_SIZE(cmdsts);
+		len = CMDSTS_SIZE(cmdsts) - ETHER_CRC_LEN;
 
 #ifdef __NO_STRICT_ALIGNMENT
 		/*
@@ -2166,7 +2160,6 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 #endif /* __NO_STRICT_ALIGNMENT */
 
 		ifp->if_ipackets++;
-		m->m_flags |= M_HASFCS;
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = len;
 
