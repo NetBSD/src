@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd_gensalt.c,v 1.7 2002/05/28 11:19:17 itojun Exp $	*/
+/*	$NetBSD: pwd_gensalt.c,v 1.8 2002/10/01 20:48:58 provos Exp $	*/
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pwd_gensalt.c,v 1.7 2002/05/28 11:19:17 itojun Exp $");
+__RCSID("$NetBSD: pwd_gensalt.c,v 1.8 2002/10/01 20:48:58 provos Exp $");
 #endif /* not lint */
 
 #include <sys/syslimits.h>
@@ -55,7 +55,7 @@ __RCSID("$NetBSD: pwd_gensalt.c,v 1.7 2002/05/28 11:19:17 itojun Exp $");
 static unsigned char itoa64[] =	 /* 0 ... 63 => ascii - 64 */
 	"./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
-static void to64(char *s, long v, int n);
+void to64(char *s, long v, int n);
 
 int
 pwd_gensalt(char *salt, int max, struct passwd *pwd, char type)
@@ -132,7 +132,7 @@ pwd_gensalt(char *salt, int max, struct passwd *pwd, char type)
 	return (1);
 }
 
-static void
+void
 to64(char *s, long v, int n)
 {
 
