@@ -19,7 +19,6 @@ port-cats
 port-cobalt
 port-dreamcast
 port-evbmips
-port-evbmips
 port-hp300
 port-hpcmips
 port-hpcsh
@@ -40,7 +39,6 @@ port-playstation2
 port-pmax
 port-powerpc
 port-prep
-port-sbmips
 port-sbmips
 port-sgimips
 port-sh3
