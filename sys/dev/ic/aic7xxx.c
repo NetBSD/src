@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.105 2003/05/03 18:11:14 wiz Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.106 2003/07/14 15:47:06 lukem Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.105 2003/05/03 18:11:14 wiz Exp $
+ * $Id: aic7xxx.c,v 1.106 2003/07/14 15:47:06 lukem Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -48,6 +48,9 @@
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc. - April 2003
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.106 2003/07/14 15:47:06 lukem Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.43 2003/06/30 12:41:37 martin Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.44 2003/07/14 15:47:29 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.44 2003/07/14 15:47:29 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

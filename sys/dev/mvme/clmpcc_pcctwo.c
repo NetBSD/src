@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc_pcctwo.c,v 1.5 2002/10/02 16:34:25 thorpej Exp $	*/
+/*	$NetBSD: clmpcc_pcctwo.c,v 1.6 2003/07/14 15:47:19 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Cirrus Logic CD2401 4-channel serial chip. PCCchip2 Front-end.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: clmpcc_pcctwo.c,v 1.6 2003/07/14 15:47:19 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.2 2003/07/07 15:18:24 drochner Exp $ */
+/* $NetBSD: if_txp.c,v 1.3 2003/07/14 15:47:24 lukem Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -30,6 +30,9 @@
 /*
  * Driver for 3c990 (Typhoon) Ethernet ASIC
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.3 2003/07/14 15:47:24 lukem Exp $");
 
 #include "bpfilter.h"
 /* #include "vlan.h" XXX notyet */

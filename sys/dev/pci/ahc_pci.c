@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.41 2003/06/04 11:55:05 pk Exp $
+ * $Id: ahc_pci.c,v 1.42 2003/07/14 15:47:22 lukem Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -48,6 +48,9 @@
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc. - April 2003
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.42 2003/07/14 15:47:22 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

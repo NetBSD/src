@@ -1,4 +1,4 @@
-/*	$NetBSD: testsyscall.c,v 1.1 2000/12/11 13:48:13 jdolecek Exp $	*/
+/*	$NetBSD: testsyscall.c,v 1.2 2003/07/14 15:47:32 lukem Exp $	*/
 
 /*
  * testsyscall.c
@@ -38,6 +38,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: testsyscall.c,v 1.2 2003/07/14 15:47:32 lukem Exp $");
+
 #include <stdio.h>
 
 int

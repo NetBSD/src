@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.15 2003/04/04 01:04:37 perry Exp $	*/
+/*	$NetBSD: autri.c,v 1.16 2003/07/14 15:47:23 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -33,6 +33,9 @@
  * Documentation links:
  * - ftp://ftp.alsa-project.org/pub/manuals/trident/
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.16 2003/07/14 15:47:23 lukem Exp $");
 
 #include "midi.h"
 

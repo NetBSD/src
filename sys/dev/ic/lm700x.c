@@ -1,4 +1,4 @@
-/* $NetBSD: lm700x.c,v 1.1 2002/01/01 21:51:40 augustss Exp $ */
+/* $NetBSD: lm700x.c,v 1.2 2003/07/14 15:47:11 lukem Exp $ */
 /*	$OpenBSD: lm700x.c,v 1.2 2001/12/06 16:28:18 mickey Exp $	*/
 
 /*
@@ -48,6 +48,9 @@
  *
  * The LM7001J and LM7001JM have a 24-bit shift register.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lm700x.c,v 1.2 2003/07/14 15:47:11 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/radioio.h>

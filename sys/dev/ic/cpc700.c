@@ -1,4 +1,4 @@
-/*	$NetBSD: cpc700.c,v 1.5 2003/01/01 00:10:18 thorpej Exp $	*/
+/*	$NetBSD: cpc700.c,v 1.6 2003/07/14 15:47:10 lukem Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -55,6 +55,9 @@
  *
  * XXX This driver assumes that there is only one instance of it.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cpc700.c,v 1.6 2003/07/14 15:47:10 lukem Exp $");
 
 #include "pci.h"
 #include "opt_pci.h"

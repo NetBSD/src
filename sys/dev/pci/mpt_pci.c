@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_pci.c,v 1.1 2003/04/16 22:03:01 thorpej Exp $	*/
+/*	$NetBSD: mpt_pci.c,v 1.2 2003/07/14 15:47:26 lukem Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,6 +40,9 @@
  *
  * NetBSD PCI-specific routines for LSI Fusion adapters.
  */     
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mpt_pci.c,v 1.2 2003/07/14 15:47:26 lukem Exp $");
 
 #include <dev/ic/mpt.h>			/* pulls in all headers */
 

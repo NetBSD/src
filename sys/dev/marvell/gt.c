@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.4 2003/06/12 19:14:37 scw Exp $	*/
+/*	$NetBSD: gt.c,v 1.5 2003/07/14 15:47:16 lukem Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -40,6 +40,9 @@
 /*
  * gt.c -- GT system controller driver
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.5 2003/07/14 15:47:16 lukem Exp $");
 
 #include "opt_marvell.h"
 

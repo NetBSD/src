@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid.c,v 1.4 2003/02/25 21:25:40 thorpej Exp $	*/
+/*	$NetBSD: ata_raid.c,v 1.5 2003/07/14 15:47:01 lukem Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -38,6 +38,9 @@
 /*
  * Support for autoconfiguration of RAID sets on ATA RAID controllers.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.5 2003/07/14 15:47:01 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
