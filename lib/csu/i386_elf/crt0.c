@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.c,v 1.11 2000/06/14 22:52:49 cgd Exp $ */
+/* $NetBSD: crt0.c,v 1.12 2001/12/30 23:23:38 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 Christos Zoulas
@@ -40,24 +40,22 @@
 void ___start __P((int, char **, char **, void (*cleanup) __P((void)),
     const Obj_Entry *, struct ps_strings *));
 
-__asm("
-	.text
-	.align	4
-	.globl	__start
-	.globl	_start
-_start:
-__start:
-	pushl	%ebx			# ps_strings
-	pushl	%ecx			# obj
-	pushl	%edx			# cleanup
-	movl	12(%esp),%eax
-	leal	20(%esp,%eax,4),%ecx
-	leal	16(%esp),%edx
-	pushl	%ecx
-	pushl	%edx
-	pushl	%eax
-	call	___start
-");
+__asm("	.text				\n"
+"	.align	4			\n"
+"	.globl	__start			\n"
+"	.globl	_start			\n"
+"_start:				\n"
+"__start:				\n"
+"	pushl	%ebx			# ps_strings	\n"
+"	pushl	%ecx			# obj		\n"
+"	pushl	%edx			# cleanup	\n"
+"	movl	12(%esp),%eax		\n"
+"	leal	20(%esp,%eax,4),%ecx	\n"
+"	leal	16(%esp),%edx		\n"
+"	pushl	%ecx			\n"
+"	pushl	%edx			\n"
+"	pushl	%eax			\n"
+"	call	___start");
 
 void
 ___start(argc, argv, envp, cleanup, obj, ps_strings)
@@ -100,7 +98,7 @@ ___start(argc, argv, envp, cleanup, obj, ps_strings)
  * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.11 2000/06/14 22:52:49 cgd Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.12 2001/12/30 23:23:38 thorpej Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"
