@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.101 2001/11/25 16:11:56 minoura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.102 2001/12/05 18:04:35 atatat Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,7 +46,7 @@
 #include "opt_kgdb.h"
 #include "opt_compat_netbsd.h"
 #include "opt_m680x0.h"
-#include "opt_fpuemulate.h"
+#include "opt_fpu_emulate.h"
 #include "opt_m060sp.h"
 #include "opt_panicbutton.h"
 #include "opt_extmem.h"
