@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.21 1997/01/27 20:43:56 gwr Exp $	*/
+/*	$NetBSD: mem.c,v 1.22 1997/02/02 08:34:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -67,7 +67,7 @@
 #define	mmread	mmrw
 cdev_decl(mm);
 
-static caddr_t zeropage;
+static caddr_t devzeropage;
 
 /*ARGSUSED*/
 int
@@ -209,13 +209,13 @@ mmrw(dev, uio, flags)
 			 * On the first call, allocate and zero a page
 			 * of memory for use with /dev/zero.
 			 */
-			if (zeropage == NULL) {
-				zeropage = (caddr_t)
+			if (devzeropage == NULL) {
+				devzeropage = (caddr_t)
 				    malloc(CLBYTES, M_TEMP, M_WAITOK);
-				bzero(zeropage, CLBYTES);
+				bzero(devzeropage, CLBYTES);
 			}
 			c = min(iov->iov_len, CLBYTES);
-			error = uiomove(zeropage, c, uio);
+			error = uiomove(devzeropage, c, uio);
 			continue;
 
 		default:
