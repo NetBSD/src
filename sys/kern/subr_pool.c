@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.26 1999/05/10 21:15:42 thorpej Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.27 1999/06/06 22:20:15 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -313,8 +313,11 @@ pr_rmpage(pp, ph)
 	pp->pr_npagefree++;
 
 	if ((pp->pr_roflags & PR_PHINPAGE) == 0) {
+		int s;
 		LIST_REMOVE(ph, ph_hashlist);
+		s = splhigh();
 		pool_put(&phpool, ph);
+		splx(s);
 	}
 
 	if (pp->pr_curpage == ph) {
@@ -995,12 +998,14 @@ pool_prime_page(pp, storage)
 	caddr_t cp = storage;
 	unsigned int align = pp->pr_align;
 	unsigned int ioff = pp->pr_itemoffset;
-	int n;
+	int s, n;
 
 	if ((pp->pr_roflags & PR_PHINPAGE) != 0) {
 		ph = (struct pool_item_header *)(cp + pp->pr_phoffset);
 	} else {
+		s = splhigh();
 		ph = pool_get(&phpool, PR_URGENT);
+		splx(s);
 		LIST_INSERT_HEAD(&pp->pr_hashtab[PR_HASH_INDEX(pp, cp)],
 				 ph, ph_hashlist);
 	}
